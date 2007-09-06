@@ -10,8 +10,9 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Log: $
-  $NoKeywords: $
+  $Date::            $
+  $Rev:$
+  $Author:$
  *---------------------------------------------------------------------------*/
 #ifndef MISC_H_
 #define MISC_H_
@@ -32,6 +33,8 @@ typedef signed char s8;
 typedef signed short int s16;
 typedef signed long int s32;
 typedef signed long long s64;
+typedef volatile u32 vu32;
+typedef vu32 REGType32v;
 
 #define error(...)  do { fprintf(stderr, "Error: ");   \
                              fprintf(stderr, __VA_ARGS__); \

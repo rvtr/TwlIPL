@@ -15,87 +15,89 @@
 #  $NoKeywords: $
 #---------------------------------------------------------------------------
 
-SUPPORT_ECC	= 0
+TARGET_PLATFORM		=	TWL
+
+SUPPORT_ECC			=	0
 
 ifeq ($(SUPPORT_ECC),1)
-ECC_SRCDIR	= ../../libraries/acsign_ecc/common \
-		  ../../libraries/acsign_ecc/common/algae/common/ecc \
-		  ../../libraries/acsign_ecc/common/algae/cmp \
-		  ../../libraries/acsign_ecc/common/algae/ecsource \
+ECC_SRCDIR			=	../../libraries/acsign_ecc/common \
+						../../libraries/acsign_ecc/common/algae/common/ecc \
+						../../libraries/acsign_ecc/common/algae/cmp \
+						../../libraries/acsign_ecc/common/algae/ecsource \
 
-ECC_INCDIR	= ../../libraries/acsign_ecc/include \
-		  ../../libraries/acsign_ecc/common/algae/include \
-		  ../../libraries/acsign_ecc/common/algae/common/include \
+ECC_INCDIR			=	../../libraries/acsign_ecc/include \
+						../../libraries/acsign_ecc/common/algae/include \
+						../../libraries/acsign_ecc/common/algae/common/include \
 
-ECC_SRCS	=	acsign_ecc.c acsign_cryptoc.c \
-			\
-			cmparith.c cmpbits.c cmpcnv.c cmpdiv.c cmpmem.c \
-			cmpmod.c cmpmuldv.c cmpspprt.c cmpsqr.c cmpvectr.c \
-			computem.c ecfpatbl.c ecfpsmul.c \
-			spcprime.c secfpcom.c \
-			\
-			p224v1.c p224v1a.c \
+ECC_SRCS			=	acsign_ecc.c acsign_cryptoc.c \
+						\
+						cmparith.c cmpbits.c cmpcnv.c cmpdiv.c cmpmem.c \
+						cmpmod.c cmpmuldv.c cmpspprt.c cmpsqr.c cmpvectr.c \
+						computem.c ecfpatbl.c ecfpsmul.c \
+						spcprime.c secfpcom.c \
+						\
+						p224v1.c p224v1a.c \
 
-ECC_DEFS 	= -DRSA_PROTOTYPES=RSA_ENABLED \
-                  -DRCOM_BUILD=RSA_ENABLED -DRSA_FAST_INVERSE=RSA_ENABLED \
-                  -DRSA_STD_MEM_FUNCS=RSA_ENABLED -DRSA_STD_ALLOC_FUNCS=RSA_ENABLED \
+ECC_DEFS 			=	-DRSA_PROTOTYPES=RSA_ENABLED \
+						-DRCOM_BUILD=RSA_ENABLED -DRSA_FAST_INVERSE=RSA_ENABLED \
+						-DRSA_STD_MEM_FUNCS=RSA_ENABLED -DRSA_STD_ALLOC_FUNCS=RSA_ENABLED \
 else
-ECC_SRCDIR	=
-ECC_INCDIR	=
-ECC_SRCS	=
-ECC_DEFS	=
+ECC_SRCDIR			=
+ECC_INCDIR			=
+ECC_SRCS			=
+ECC_DEFS			=
 endif
 
-SRCDIR		+= 	../acsign $(ECC_SRCDIR)
-INCDIR		+= 	../acsign/include $(ECC_INCDIR) $(ECC_SRCDIR)
+SRCDIR				+=	../acsign $(ECC_SRCDIR)
+INCDIR				+=	../acsign/include $(ECC_INCDIR) $(ECC_SRCDIR)
 
 
 include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
 
-TARGETS		= makenandfirm.exe
+TARGETS				=	makenandfirm.exe
 
-SOURCES_C	= makenandfirm.c		\
-			out_nandfirm.c		\
-			misc.c		\
-			path.c		\
-			defval.c		\
-            compress.c \
-            wram_regs.c \
-			acsign.c \
-			acsign_nand.c \
-			aes2.c \
-			$(ECC_SRCS)
+SOURCES_C			=	makenandfirm.c \
+						out_nandfirm.c \
+						misc.c \
+						path.c \
+						defval.c \
+						compress.c \
+						wram_regs.c \
+						acsign.c \
+						acsign_nand.c \
+						aes2.c \
+						$(ECC_SRCS)
 
-SOURCES		= $(SORUCES_C)
+SOURCES				=	$(SORUCES_C)
 
-OBJECTS		= $(SOURCES_C:.c=.o) 
+OBJECTS				=	$(SOURCES_C:.c=.o) 
 
-HEADERS		= format_nlist.h	\
-		  makenandfirm.h 		\
-		  path.h		\
-		  format_rom.h		\
-		  misc.h		\
-		  defval.h		\
-		  compress.h		\
+HEADERS				=	format_nlist.h \
+						makenandfirm.h \
+						path.h \
+						format_rom.h \
+						misc.h \
+						defval.h \
+						compress.h \
 
-MACROS	+=	-DSMALL_CODE_SIZE \
-		-DSTANDALONE \
-		-DOPT_32_BIT \
-		-DNO_SPLIT \
-		-DNO_FP_API \
-		-DNO_R_DIAG \
-		$(ECC_DEFS)
+MACROS				+=	-DSMALL_CODE_SIZE \
+						-DSTANDALONE \
+						-DOPT_32_BIT \
+						-DNO_SPLIT \
+						-DNO_FP_API \
+						-DNO_R_DIAG \
+						$(ECC_DEFS)
 
-INSTALL_DIR	= $(FIRM_INSTALL_TOOLSDIR)/bin
-INSTALL_TARGETS	= $(TARGETS)
+INSTALL_DIR			=	$(FIRM_INSTALL_TOOLSDIR)/bin
+INSTALL_TARGETS		=	$(TARGETS)
 
-LDIRT_CLEAN	= $(OBJECTS) $(TARGETS) version.h
+LDIRT_CLEAN			=	$(OBJECTS) $(TARGETS) version.h
 
 
-VPATH		= $(SRCDIR)
-NITRO_INCDIR := $(FIRM_INCDIR) -I$(TWL_INCDIR) -I$(NITRO_INCDIR) $(addprefix -I,$(INCDIR))
+VPATH				=	$(SRCDIR)
+TWL_INCDIR			:=	$(TWL_INCDIR) $(addprefix -I,$(INCDIR)) $(addprefix -I,$(FIRM_INCDIR))
 
-include	$(TWL_NITROSDK_ROOT)/build/buildtools/modulerules.x86
+include	$(TWLSDK_ROOT)/build/buildtools/twl/modulerules.x86
 
 #----------------------------------------------------------------------------
 #  build

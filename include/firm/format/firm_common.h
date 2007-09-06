@@ -10,8 +10,9 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Log: $
-  $NoKeywords: $
+  $Date::            $
+  $Rev:$
+  $Author:$
  *---------------------------------------------------------------------------*/
 #ifndef	FIRM_FORMAT_FIRM_COMMON_H_
 #define	FIRM_FORMAT_FIRM_COMMON_H_

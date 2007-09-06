@@ -11,8 +11,9 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Log: $
-# $NoKeywords: $
+# $Date::            $
+# $Rev:$
+# $Author:$
 #----------------------------------------------------------------------------
 
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs

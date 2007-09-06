@@ -10,8 +10,9 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Log: $
-  $NoKeywords: $
+  $Date::            $
+  $Rev:$
+  $Author:$
  *---------------------------------------------------------------------------*/
 #include    <stdio.h>
 #include    <stdlib.h>                 // atoi()
@@ -33,7 +34,6 @@
 #include    "compress.h"
 
 #define SDK_ASM
-#include <twl/mi/wram_abc.h>
 
 #include    <firm/aes/ARM7/aes_ids.h>
 #include    "../acsign/aes2.h"

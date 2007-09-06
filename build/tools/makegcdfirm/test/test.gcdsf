@@ -18,8 +18,5 @@ ARM9_X2 :		TRUE  # TRUE or FALSE
 NML_OFS :		0x80000
 TWL_OFS :		0x100000
 
-NORFIRM :		./norfirm_print.nor
-NANDFIRM :		./nandfirm_print.nand
-
 ERROR :			ARM7_HASH  # SIGN, HEADER_HASH, ARM9_HASH, ARM7_HASH, HASH_TABLE_HASH or FINAL_HASH
 ERROR :			HEADER_FOOTER  # for debug
