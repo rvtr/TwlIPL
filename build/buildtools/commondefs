@@ -27,7 +27,7 @@ TWL_KEYSDIR			?=	$(FIRM_ROOT)/keys/dummy
 
 
 ifneq ($(filter NORFIRM NANDFIRM GCDFIRM,$(FIRM_TARGET)),)
-TARGET_BIN			?=	$(TARGET_FIRM:.nor=$(DUMMY_KEYS_SUFFIX).nor)
+TARGET_BIN			?=	$(subst .,$(DUMMY_KEYS_SUFFIX).,$(TARGET_FIRM_BIN))
 endif
 
 EMPTY	 	?=

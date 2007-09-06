@@ -30,7 +30,7 @@ SUBDIRS =	\
             ARM9 \
             wram_regs \
 
-TARGET_FIRM		=	norfirm_print.nor
+TARGET_FIRM_BIN	=	norfirm_print.nor
 BINDIR			=	.
 MAKEFIRM_ARM9	=	ARM9/bin/ARM9-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_norfirm9_print.axf
 MAKEFIRM_ARM7	=	ARM7/bin/ARM7-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_norfirm7_print.axf
