@@ -20,8 +20,6 @@ TWLFIRM_COMMONDEFS_ = TRUE
 
 NITRO_NO_STD_PCHDR = TRUE # ƒvƒŠƒRƒ“ƒpƒCƒ‹ƒwƒbƒ_—}Ž~
 
-#TWLFIRM_ROOT	?=	$(shell cygpath -am ../../)
-
 export TWLBROM_ROOT := $(TWLFIRM_ROOT)/bootrom
 
 
@@ -166,9 +164,9 @@ ifeq	($(CODEGEN_PROC),ARM9)
 
 FIRM_LIBS_BASE	?= \
 			   libos \
-			   libmi \
-			   libgcd \
-			   libacsign \
+#			   libmi \
+#			   libgcd \
+#			   libacsign \
 
 FIRM_TWL_LIBS_BASE	?= \
 
@@ -176,11 +174,11 @@ else #	($(CODEGEN_PROC),ARM7)
 
 FIRM_LIBS_BASE	?= \
 			   libos_sp \
-			   libnvram_sp \
-			   libgcd_sp \
-			   libaes_sp \
-			   libacsign_sp \
-			   libfirmsd_sp \
+#			   libnvram_sp \
+#			   libgcd_sp \
+#			   libaes_sp \
+#			   libacsign_sp \
+#			   libfirmsd_sp \
 
 FIRM_TWL_LIBS_BASE	?= \
 
@@ -244,6 +242,14 @@ FIRM_INSTALL_ADDINS	:= $(FIRM_INSTALL_ROOT)/add-ins
 #  Compiler flags
 #
 MACRO_FLAGS += -DFIRM_TARGET_$(FIRM_TARGET)
+
+
+#----------------------------------------------------------------------------
+#  Makelcf change for build firmware
+#
+ifneq ($(filter NORFIRM NANDFIRM GCDFIRM,$(FIRM_TARGET)),)
+MAKELCF			 := $(NITROSDK_ROOT)/tools/bin/makelcf.exe
+endif
 
 #----------------------------------------------------------------------------
 endif	# TWLFIRM_COMMONDEFS_

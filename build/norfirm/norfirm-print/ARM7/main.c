@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlFirm
-  File:     firm.h
+  Project:  TwlFirm - tools - norfirm-print
+  File:     main.c
 
   Copyright 2007 Nintendo.  All rights reserved.
 
@@ -10,23 +10,22 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Date:: 2007-09-06$
-  $Rev$
-  $Author$
+  $Date::            $
+  $Rev:$
+  $Author:$
  *---------------------------------------------------------------------------*/
-#ifndef FIRM_H_
-#define FIRM_H_
+#include <firm.h>
 
-#include <twl.h>
 
-#include <firm/os.h>
-/*
-#include <firm/memorymap.h>
-#include <firm/mi.h>
-#include <firm/nvram.h>
-#include <firm/pm.h>
-#include <firm/gcd.h>
-*/
+void TwlSpMain( void )
+{
+    OS_TPrintf( "\nNOR Boot time is %d msec.\n", OS_TicksToMilliSecondsBROM32(OS_GetTick()));
 
-/* FIRM_H_ */
-#endif
+    OS_InitNOR();
+
+    OS_TPrintf( "\nARM7 starts.\n" );
+    OS_TPrintf( "\nARM7 ends.\n" );
+
+    OS_Terminate();
+}
+
