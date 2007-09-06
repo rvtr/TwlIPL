@@ -1,0 +1,8 @@
+#NORSF ---  Norfirm Spec File
+
+VERSION :		GENERATE
+
+BOOT_NAND :		TRUE  # TRUE or FALSE
+
+NCD_ROMOFS :	0x07fe00
+
