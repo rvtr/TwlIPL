@@ -1,0 +1,80 @@
+#! make -f
+#----------------------------------------------------------------------------
+# Project:  TwlFirm - modulerules - common rules for build system
+# File:     modulerules
+#
+# Copyright 2007 Nintendo.  All rights reserved.
+#
+# These coded instructions, statements, and computer programs contain
+# proprietary information of Nintendo of America Inc. and/or Nintendo
+# Company Ltd., and are protected by Federal copyright law.  They may
+# not be disclosed to third parties or copied or duplicated in any form,
+# in whole or in part, without the prior written consent of Nintendo.
+#
+# $Log: $
+# $NoKeywords: $
+#----------------------------------------------------------------------------
+ifndef TWLFIRM_MODULERULES_
+
+
+ifdef MAKEFIRM_ARM9
+MAKEROM_ARM9		= $(MAKEFIRM_ARM9)
+endif
+ifdef MAKEFIRM_ARM7
+MAKEROM_ARM7		= $(MAKEFIRM_ARM7)
+endif
+
+#----------------------------------------------------------------------------
+### TWL-modulerules
+#
+include	$(TWLSDK_ROOT)/build/buildtools/modulerules
+
+#----------------------------------------------------------------------------
+
+#
+# MAKENORFIRM / MAKENANDFIRM / MAKEGCDFIRM
+#
+
+MAKEFIRM_ARM9		?= $(MAKEROM_ARM9)
+MAKEFIRM_ARM7		?= $(MAKEROM_ARM7)
+
+MAKEFIRM_DEFS	+= -DFIRM_ROOT='$(FIRM_ROOT)' \
+				-DMAKEFIRM_ARM9='$(basename $(MAKEFIRM_ARM9))' \
+				-DMAKEFIRM_ARM7='$(basename $(MAKEFIRM_ARM7))' \
+				-DMAKEFIRM_RSA_PRVKEY='$(MAKEFIRM_RSA_PRVKEY)' \
+
+SDEPENDS_BIN		+= $(MAKEFIRM_RSA_PRVKEY)
+
+
+.PHONY: 	firmtop firmlib
+
+firmtop:
+	@$(MAKE) -C $(TWLFIRM_ROOT)/build
+
+firmlib:
+	@$(MAKE) -C $(TWLFIRM_ROOT)/build/libraries
+
+# .nor
+$(BINDIR)/%.nor: $(SDEPENDS_BIN) $(ROM_SPEC) $(LDEPENDS_BIN) $(EDEPENDS_BIN) $(MAKEFILE) $(MAKENORFIRM) $(MAKEFIRM_RSA_PRVKEY)
+	$(MAKENORFIRM) $(MAKEFIRM_FLAGS) $(MAKEFIRM_DEFS) $(ROM_SPEC) $@
+
+# .nand
+$(BINDIR)/%.nand: $(SDEPENDS_BIN) $(ROM_SPEC) $(LDEPENDS_BIN) $(EDEPENDS_BIN) $(MAKEFILE) $(MAKENANDFIRM) $(MAKEFIRM_RSA_PRVKEY)
+	$(MAKENANDFIRM) $(MAKEFIRM_FLAGS) $(MAKEFIRM_DEFS) $(ROM_SPEC) $@
+
+# .gcd
+$(BINDIR)/%.gcd: $(SDEPENDS_BIN) $(ROM_SPEC) $(LDEPENDS_BIN) $(EDEPENDS_BIN) $(MAKEFILE) $(MAKEGCDFIRM) $(MAKEFIRM_RSA_PRVKEY)
+	$(MAKEGCDFIRM) $(MAKEFIRM_FLAGS) $(MAKEFIRM_DEFS) $(ROM_SPEC) $@
+
+# .rbin
+$(BINDIR)/$(TARGET_BIN_BASENAME).rbin: $(OBJS)
+	objcopy -I elf32-little -O binary $< $@
+
+# .axf
+$(BINDIR)/$(TARGET_BIN_BASENAME).axf: $(OBJS) $(LCFILE) $(MAKEFILE) $(LDEPENDS_NEF) $(EDEPENDS_NEF) $(ALIBRARIES) $(LDRES_FILE) $(CW_LIBCXX)
+	$(LD) $(LDFLAGS) $(LIBRARY_DIRS) @$(call empath,$(LDRES_FILE)) $(call empath,$(LCFILE)) -o $(call empath,$@)
+
+#----------------------------------------------------------------------------
+TWLFIRM_MODULERULES_ = TRUE
+endif	# TWLFIRM_MODULERULES_
+#----- End of modulerules -----
