@@ -10,9 +10,9 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Date::            $
-  $Rev:$
-  $Author:$
+  $Date:: 2007-09-06$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 #ifndef COMPRESS_H_
 #define COMPRESS_H_

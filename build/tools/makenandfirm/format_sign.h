@@ -10,9 +10,9 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Date::            $
-  $Rev:$
-  $Author:$
+  $Date:: 2007-09-06$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 #ifndef FIRM_MAKENANDFIRM_ACSIGN_FORMAT_H_
 #define FIRM_MAKENANDFIRM_ACSIGN_FORMAT_H_
