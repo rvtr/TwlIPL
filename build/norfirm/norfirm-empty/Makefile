@@ -22,12 +22,11 @@ FIRM_TARGET    = NORFIRM
 
 include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
 
-
 #----------------------------------------------------------------------------
 
 SUBDIRS =	\
 
-TARGET_BIN		=	norfirm_empty.nor
+TARGET_FIRM		=	norfirm_empty.nor
 BINDIR			=	.
 MAKEFIRM_RSA_PRVKEY	= $(TWL_KEYSDIR)/rsa/private_nor.der
 
@@ -39,6 +38,9 @@ MAKEROM_ARM7	 	= $(NITROSDK_ROOT)/components/mongoose/ARM7-TS/$(FIRM_BUILD_DIR)/
 NITRO_MAKEROM	=	TRUE
 MAKEFIRM_FLAGS	+=	-p
 FIRM_SPEC		=	norfirm-BB.norsf
+
+LDIRT_CLEAN		+=	$(BINDIR)/$(TARGET_BIN) \
+					rsa_public.sbin \
 
 #----------------------------------------------------------------------------
 

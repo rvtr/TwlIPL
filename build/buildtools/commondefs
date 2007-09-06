@@ -20,8 +20,15 @@ TWLFIRM_COMMONDEFS_ = TRUE
 
 NITRO_NO_STD_PCHDR = TRUE # ƒvƒŠƒRƒ“ƒpƒCƒ‹ƒwƒbƒ_—}Ž~
 
-export TWLBROM_ROOT := $(TWLFIRM_ROOT)/bootrom
+ifndef TWL_KEYSDIR
+DUMMY_KEYS_SUFFIX	=	.dummykey
+endif
+TWL_KEYSDIR			?=	$(FIRM_ROOT)/keys/dummy
 
+
+ifneq ($(filter NORFIRM NANDFIRM GCDFIRM,$(FIRM_TARGET)),)
+TARGET_BIN			?=	$(TARGET_FIRM:.nor=$(DUMMY_KEYS_SUFFIX).nor)
+endif
 
 EMPTY	 	?=
 SPACE 		?= $(EMPTY) $(EMPTY)
@@ -91,14 +98,6 @@ endif
 TWL_BUILD_TYPE	?= $(FIRM_BUILD_TYPE)
 TWL_BUILD_DIR	?= $(FIRM_BUILD_DIR)
 
-
-
-#----------------------------------------------------------------------------
-#  BROM-SDK path settings
-#
-
-BROM_ROOT			:= $(subst $(SPACE),\ ,$(subst \,/,$(TWLBROM_ROOT)))
-BROM_KEYSDIR		:= $(BROM_ROOT)/build/keys
 
 
 #----------------------------------------------------------------------------

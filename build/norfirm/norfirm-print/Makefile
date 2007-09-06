@@ -30,7 +30,7 @@ SUBDIRS =	\
             ARM9 \
             wram_regs \
 
-TARGET_BIN		=	norfirm_print.nor
+TARGET_FIRM		=	norfirm_print.nor
 BINDIR			=	.
 MAKEFIRM_ARM9	=	ARM9/bin/ARM9-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_norfirm9_print.axf
 MAKEFIRM_ARM7	=	ARM7/bin/ARM7-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_norfirm7_print.axf
@@ -40,6 +40,9 @@ LDEPENDS_BIN	+=	wram_regs/wram_regs.rbin
 NITRO_MAKEROM	=	TRUE
 MAKEFIRM_FLAGS	+=	-p
 FIRM_SPEC		=	norfirm-BB.norsf
+
+LDIRT_CLEAN		+=	$(BINDIR)/$(TARGET_BIN) \
+					rsa_public.sbin \
 
 #----------------------------------------------------------------------------
 
