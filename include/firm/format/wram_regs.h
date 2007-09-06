@@ -22,6 +22,38 @@
 extern "C" {
 #endif
 
+
+typedef enum
+{
+	MI_WRAM_A_OFFSET_0KB   = 0,
+	MI_WRAM_A_OFFSET_64KB  = 1,
+	MI_WRAM_A_OFFSET_128KB = 2,
+	MI_WRAM_A_OFFSET_192KB = 3
+} MIWramAOffset;
+
+typedef enum
+{
+	MI_WRAM_BC_OFFSET_0KB   = 0,
+	MI_WRAM_BC_OFFSET_32KB  = 1,
+	MI_WRAM_BC_OFFSET_64KB  = 2,
+	MI_WRAM_BC_OFFSET_96KB  = 3,
+	MI_WRAM_BC_OFFSET_128KB = 4,
+	MI_WRAM_BC_OFFSET_160KB = 5,
+	MI_WRAM_BC_OFFSET_192KB = 6,
+	MI_WRAM_BC_OFFSET_224KB = 7
+} MIWramBCOffset;
+
+
+#define MI_WRAM_MAP_NULL        HW_WRAM_AREA
+
+#define REG_WRAM_MAP_CONV_ADDR( regno, abc, border, addr ) \
+( \
+    ((((addr) - HW_WRAM_AREA) / MI_WRAM_##abc##_SLOT_SIZE) & \
+	 (REG_MI_MBK##regno##_W##abc##_##border##_MASK >> \
+	  REG_MI_MBK##regno##_W##abc##_##border##_SHIFT)) \
+)
+
+
 // WRAMマッピングレジスタ
 typedef struct
 {
