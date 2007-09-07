@@ -7,6 +7,8 @@ OUT_KEY :		rsa_public.sbin
 
 WRAM_RBIN:		../../norfirm/norfirm-print/wram_regs/wram_regs.rbin
 
+MIRROR_OFS:		0x80000
+
 DECOMP_PROC :	ARM9  # ARM9 or ARM7
 
 ARM9_COMP :		FALSE  # TRUE or FALSE, should be before ARM9_SBIN
