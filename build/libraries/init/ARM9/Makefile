@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - libraries
+# Project:  TwlIPL - libraries - init
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -16,24 +16,37 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
+SUBDIRS			=
+#SUBMAKES		= Makefile.CALLTRACE 	\
+#			  Makefile.FUNCTIONCOST
+
+#----------------------------------------------------------------------------
+
+# build ARM & THUMB libraries
+FIRM_CODEGEN_ALL 	?= TRUE
+
+SRCS			= crt0.c \
+
+TARGET_OBJ		= crt0.o
+
+#----------------------------------------------------------------------------
+
+# DEBUG版ビルドの場合、RELEASE版でビルドして
+# DEBUG版のライブラリを装います。
+
+ifdef	NITRO_DEBUG
+NITRO_BUILD_TYPE	= RELEASE
+endif
+
 include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
 
+INSTALL_TARGETS		= $(TARGETS)
+INSTALL_DIR		= $(FIRM_INSTALL_LIBDIR)
+
 
 #----------------------------------------------------------------------------
 
-SUBDIRS		= \
-			os \
-			mi \
-			init \
-#			syscall \
-#			nvram \
-#			gcd \
-#			aes \
-#			acsign \
-#			acsign_ecc \
-#			devices \
-
-#----------------------------------------------------------------------------
+do-build:		$(TARGETS)
 
 include	$(TWLFIRM_ROOT)/build/buildtools/modulerules
 

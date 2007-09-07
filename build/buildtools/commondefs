@@ -163,7 +163,7 @@ ifeq	($(CODEGEN_PROC),ARM9)
 
 FIRM_LIBS_BASE	?= \
 			   libos \
-#			   libmi \
+			   libmi \
 #			   libgcd \
 #			   libacsign \
 

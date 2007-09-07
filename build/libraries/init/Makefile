@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - libraries
+# Project:  TwlIPL - libraries - init
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -21,17 +21,8 @@ include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS		= \
-			os \
-			mi \
-			init \
-#			syscall \
-#			nvram \
-#			gcd \
-#			aes \
-#			acsign \
-#			acsign_ecc \
-#			devices \
+SUBDIRS =	ARM9 \
+		ARM7 \
 
 #----------------------------------------------------------------------------
 

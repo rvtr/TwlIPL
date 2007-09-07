@@ -20,9 +20,9 @@
 #include <twl.h>
 
 #include <firm/os.h>
+#include <firm/mi.h>
 /*
 #include <firm/memorymap.h>
-#include <firm/mi.h>
 #include <firm/nvram.h>
 #include <firm/pm.h>
 #include <firm/gcd.h>
