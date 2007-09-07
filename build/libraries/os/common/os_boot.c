@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 #include <firm/os.h>
 #include <firm/mi.h>
@@ -36,7 +36,7 @@ void OSi_Finalize(void)
     reg_OS_IF = 0xffffffff;
 #ifdef SDK_ARM7
     reg_OS_IE2 = 0;
-    reg_OS_IF2 = 0xffffffff;
+    reg_OS_IF2 = 0xffff;
 #else // SDK_ARM9
     (void)OS_DisableInterrupts();
     DC_Disable();
