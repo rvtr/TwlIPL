@@ -30,10 +30,8 @@ TARGET_FIRM_BIN		=	norfirm_empty.nor
 BINDIR				=	.
 MAKEFIRM_RSA_PRVKEY	= $(TWL_KEYSDIR)/rsa/private_nor.der
 
-#※TwlSDKにはまだちゃんとcomponentsがないので、NitroSDKのものを使用。
-MAKEROM_ARM9	 	= $(NITROSDK_ROOT)/components/printserver/ARM9-TS/$(FIRM_BUILD_DIR)/main.nef
-MAKEROM_ARM7	 	= $(NITROSDK_ROOT)/components/mongoose/ARM7-TS/$(FIRM_BUILD_DIR)/mongoose_sub.nef
-
+MAKEROM_ARM9	 	= 
+MAKEROM_ARM7	 	= 
 
 NITRO_MAKEROM	=	TRUE
 MAKEFIRM_FLAGS	+=	-p
