@@ -28,9 +28,9 @@ FIRM_CODEGEN_ALL 	?= TRUE
 # Codegen for sub processer
 FIRM_PROC		= ARM7
 
-SRCS			= crt0.c \
+SRCS			= crt0_firm.c \
 
-TARGET_OBJ		= crt0.o
+TARGET_OBJ		= crt0_firm.o
 
 
 #----------------------------------------------------------------------------

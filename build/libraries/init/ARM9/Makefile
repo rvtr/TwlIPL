@@ -25,9 +25,9 @@ SUBDIRS			=
 # build ARM & THUMB libraries
 FIRM_CODEGEN_ALL 	?= TRUE
 
-SRCS			= crt0.c \
+SRCS			= crt0_firm.c \
 
-TARGET_OBJ		= crt0.o
+TARGET_OBJ		= crt0_firm.o
 
 #----------------------------------------------------------------------------
 
