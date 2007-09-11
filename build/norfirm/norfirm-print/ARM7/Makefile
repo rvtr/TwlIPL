@@ -17,7 +17,7 @@
 #----------------------------------------------------------------------------
 
 FIRM_PROC      = ARM7
-FIRM_TARGET    = NORFIRM
+FIRM_TARGET    = FIRM
 
 SUBDIRS		=
 
@@ -26,6 +26,8 @@ LINCLUDES	=   ../include
 #----------------------------------------------------------------------------
 
 TARGET_BIN	=	twl_norfirm7_print.axf
+
+CRT0_O		=	crt0_firm.o
 
 SRCS		=	\
                 main.c \

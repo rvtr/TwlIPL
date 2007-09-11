@@ -55,7 +55,7 @@ void OSi_Finalize(void);
 /*---------------------------------------------------------------------------*
   Name:         OSi_GetFromBromAddr
 
-  Description:  data address from bootrom to norfirm
+  Description:  data address from bootrom to firm
 
   Arguments:    None
 
@@ -63,7 +63,7 @@ void OSi_Finalize(void);
  *---------------------------------------------------------------------------*/
 static inline OSFromBromBuf* OSi_GetFromBromAddr( void )
 {
-    return  (OSFromBromBuf*)HW_NORFIRM_FROM_BROM_BUF;
+    return  (OSFromBromBuf*)HW_FIRM_FROM_BROM_BUF;
 }
 
 

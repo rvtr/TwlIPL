@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 #include <firm.h>
 
@@ -21,7 +21,7 @@ void TwlSpMain( void )
 {
     OS_TPrintf( "\nNOR Boot time is %d msec.\n", OS_TicksToMilliSecondsBROM32(OS_GetTick()));
 
-    OS_InitNOR();
+    OS_InitFIRM();
 
     OS_TPrintf( "\nARM7 starts.\n" );
     OS_TPrintf( "\nARM7 ends.\n" );

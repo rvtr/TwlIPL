@@ -11,22 +11,22 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 #include <firm.h>
 
 /*---------------------------------------------------------------------------*
   Name:         OS_InitNOR
 
-  Description:  initialize sdk os for norfirm
+  Description:  initialize sdk os for firm
 
   Arguments:    None
 
   Returns:      None
  *---------------------------------------------------------------------------*/
 #pragma profile off
-void OS_InitNOR(void)
+void OS_InitFIRM(void)
 {
 #ifdef SDK_ARM9
     //---- system shared area check

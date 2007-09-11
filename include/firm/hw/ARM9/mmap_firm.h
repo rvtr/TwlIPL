@@ -21,20 +21,20 @@
 extern "C" {
 #endif
 
-//------------------------------------- NORFIRM
-#define HW_NORFIRM                      HW_WRAM_EX
-#define HW_NORFIRM_END                  (HW_NORFIRM + HW_NORFIRM_SIZE)
-#define HW_NORFIRM_SIZE                 HW_WRAM_C_SIZE_MAX
+//------------------------------------- FIRM
+#define HW_FIRM                         HW_WRAM_EX
+#define HW_FIRM_END                     (HW_FIRM + HW_FIRM_SIZE)
+#define HW_FIRM_SIZE                    HW_WRAM_C_SIZE_MAX
 
-//------------------------------------- NORFIRM_WRAM_ABC
-#define HW_NORFIRM_WRAM_A_MAP_END       HW_WRAM_AREA_END
-#define HW_NORFIRM_WRAM_B_MAP_END       HW_NORFIRM_WRAM_A_MAP_END
-#define HW_NORFIRM_WRAM_C_MAP_END       HW_NORFIRM_WRAM_A_MAP_END
+//------------------------------------- FIRM_WRAM_ABC
+#define HW_FIRM_WRAM_A_MAP_END          HW_WRAM_AREA_END
+#define HW_FIRM_WRAM_B_MAP_END          HW_FIRM_WRAM_A_MAP_END
+#define HW_FIRM_WRAM_C_MAP_END          HW_FIRM_WRAM_A_MAP_END
 
-//------------------------------------- HW_NORFIRM_FROM_BROM_BUF
-#define HW_NORFIRM_FROM_BROM_BUF        (HW_NORFIRM_FROM_BROM_BUF_END - HW_NORFIRM_FROM_BROM_BUF_SIZE)
-#define HW_NORFIRM_FROM_BROM_BUF_END    (HW_ITCM_END - 0x1000)  //  END - 4KB
-#define HW_NORFIRM_FROM_BROM_BUF_SIZE   0x3000  // 12KB
+//------------------------------------- HW_FIRM_FROM_BROM_BUF
+#define HW_FIRM_FROM_BROM_BUF           (HW_FIRM_FROM_BROM_BUF_END - HW_FIRM_FROM_BROM_BUF_SIZE)
+#define HW_FIRM_FROM_BROM_BUF_END       (HW_ITCM_END - 0x1000)  //  END - 4KB
+#define HW_FIRM_FROM_BROM_BUF_SIZE      0x3000  // 12KB
 
 
 #ifdef __cplusplus

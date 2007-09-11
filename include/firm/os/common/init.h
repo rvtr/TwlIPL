@@ -24,15 +24,15 @@ extern "C" {
 #endif
 
 /*---------------------------------------------------------------------------*
-  Name:         OS_InitNOR
+  Name:         OS_InitFIRM
 
-  Description:  initialize sdk os for norfirm
+  Description:  initialize sdk os for firm
 
   Arguments:    None
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void OS_InitNOR(void);
+void OS_InitFIRM(void);
 
 
 #ifdef __cplusplus

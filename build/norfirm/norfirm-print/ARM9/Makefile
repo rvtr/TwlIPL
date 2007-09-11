@@ -16,7 +16,7 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
-FIRM_TARGET    = NORFIRM
+FIRM_TARGET    = FIRM
 
 SUBDIRS		=
 
@@ -25,6 +25,8 @@ LINCLUDES	=   ../include
 #----------------------------------------------------------------------------
 
 TARGET_BIN	=	twl_norfirm9_print.axf
+
+CRT0_O		=	crt0_firm.o
 
 SRCS		=	\
                 main.c \
