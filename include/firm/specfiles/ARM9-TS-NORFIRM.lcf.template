@@ -11,8 +11,8 @@
 #  in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #---------------------------------------------------------------------------
 MEMORY
 {
@@ -65,9 +65,9 @@ SECTIONS
 	SDK_STATIC_START		=.;
 	SDK_STATIC_TEXT_START		=.;
 					#:::::::::: text/rodata
-					crt0.o (.text)
+					crt0_firm.o (.text)
 					libsyscall.a (.text)
-					crt0.o (.rodata)
+					crt0_firm.o (.rodata)
 					#
 					# .version セクションを追加しています。
 					# このセクションに含まれる情報はロットチェックの際に

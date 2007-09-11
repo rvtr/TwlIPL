@@ -11,8 +11,8 @@
 #  in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #---------------------------------------------------------------------------
 MEMORY
 {
@@ -54,7 +54,7 @@ SECTIONS
 	SDK_STATIC_TEXT_START		=.;
 					#:::::::::: text/rodata
 					OBJECT(_start,*)
-					crt0.o (.text)
+					crt0_firm.o (.text)
 					<FOREACH.STATIC.OBJECTS=.text>
 					<STATIC.OBJECT=.text:t>
 					<END.STATIC.OBJECTS>
