@@ -15,7 +15,38 @@
   $Author$
  *---------------------------------------------------------------------------*/
 #include        <firm/mi.h>
-#include        <nitro/code32.h>
+
+
+/*---------------------------------------------------------------------------*
+  Name:         MIi_IsMainMemoryInitialized
+
+  Description:
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL MIi_IsMainMemoryInitialized( void )
+{
+    return  (BOOL)((reg_MI_EXMEMCNT & REG_MI_EXMEMCNT_CE2_MASK) >> REG_MI_EXMEMCNT_CE2_SHIFT);
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         MIi_WaitMainMemoryInitialize
+
+  Description:
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void MIi_WaitMainMemoryInitialize( void )
+{
+    while( MIi_IsMainMemoryInitialized() == FALSE )
+    {
+    }
+}
+
 
 /*---------------------------------------------------------------------------*
   Name:         MIi_InitMainMemCR
@@ -26,6 +57,8 @@
 
   Returns:      None
  *---------------------------------------------------------------------------*/
+#include        <nitro/code32.h>
+
 asm void  MIi_InitMainMemCR( void )
 {
         mov     r12, lr

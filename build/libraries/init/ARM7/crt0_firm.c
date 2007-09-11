@@ -97,6 +97,14 @@ SDK_WEAK_SYMBOL asm void _start( void )
         bmi             @1_2
 #endif
 
+        //---- wait for main memory mode into burst mode
+        ldr             r3, =REG_EXMEMCNT_L_ADDR
+        mov             r1, #REG_MI_EXMEMCNT_L_ECE2_MASK
+@1:
+        ldrh            r2, [r3]
+        tst             r2, r1
+        beq             @1
+
         //---- load autoload block and initialize bss
         bl              do_autoload
 

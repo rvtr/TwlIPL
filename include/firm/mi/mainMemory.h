@@ -71,6 +71,27 @@ extern "C" {
  *---------------------------------------------------------------------------*/
 void  MIi_InitMainMemCR( void );
 
+/*---------------------------------------------------------------------------*
+  Name:         MIi_IsMainMemoryInitialized
+
+  Description:
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL MIi_IsMainMemoryInitialized( void );
+
+/*---------------------------------------------------------------------------*
+  Name:         MIi_WaitMainMemoryInitialize
+
+  Description:
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void MIi_WaitMainMemoryInitialize( void );
 
 #ifdef __cplusplus
 } /* extern "C" */
