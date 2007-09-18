@@ -14,8 +14,8 @@
   $Rev$
   $Author$
  *---------------------------------------------------------------------------*/
-#ifndef	FIRM_FORMAT_FROM_BROM_H_
-#define	FIRM_FORMAT_FROM_BROM_H_
+#ifndef FIRM_FORMAT_FROM_BROM_H_
+#define FIRM_FORMAT_FROM_BROM_H_
 
 #include <firm/gcd/blowfish.h>
 #include <firm/format/sign.h>
@@ -49,12 +49,12 @@ typedef struct
     }
     header;  // 1KB
 
-	u8            rsa_pubkey[RSA_PUBKEY_NUM_FROM_BROM][ACS_PUBKEY_LEN];  // 1KB
-	u8            aes_key[AESKEY_NUM_FROM_BROM][ACS_AES_LEN];  // 128B
-	u8            hash_table_hash[ACS_HASH_LEN];  // 20B
+    u8            rsa_pubkey[RSA_PUBKEY_NUM_FROM_BROM][ACS_PUBKEY_LEN];  // 1KB
+    u8            aes_key[AESKEY_NUM_FROM_BROM][ACS_AES_LEN];  // 128B
+    u8            hash_table_hash[ACS_HASH_LEN];  // 20B
 
-	BLOWFISH_CTX  ds_blowfish;      // 4KB + ƒ¿
-	BLOWFISH_CTX  twl_blowfish;     // 4KB + ƒ¿
+    BLOWFISH_CTX  ds_blowfish;      // 4KB + ƒ¿
+    BLOWFISH_CTX  twl_blowfish;     // 4KB + ƒ¿
 }
 OSFromBrom9Buf;
 
@@ -69,12 +69,12 @@ typedef struct
     }
     header;  // 1KB
 
-	u8            rsa_pubkey[RSA_PUBKEY_NUM_FROM_BROM][ACS_PUBKEY_LEN];  // 512B
-	u8            aes_key[AESKEY_NUM_FROM_BROM][ACS_AES_LEN];  // 64B
-	u8            hash_table_hash[ACS_HASH_LEN];  // 20B
+    u8            rsa_pubkey[RSA_PUBKEY_NUM_FROM_BROM][ACS_PUBKEY_LEN];  // 512B
+    u8            aes_key[AESKEY_NUM_FROM_BROM][ACS_AES_LEN];  // 64B
+    u8            hash_table_hash[ACS_HASH_LEN];  // 20B
 
-	BLOWFISH_CTX  twl_blowfish[2];  // (4KB + ƒ¿) * 2
-  
+    BLOWFISH_CTX  twl_blowfish[2];  // (4KB + ƒ¿) * 2
+
     SDPortContext  SDNandContext;
 }
 OSFromBrom7Buf;
