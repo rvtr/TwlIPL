@@ -29,6 +29,8 @@
 extern "C" {
 #endif
 
+//---- entry point type
+typedef void (*OSEntryPoint) (void);
 
 /*---------------------------------------------------------------------------*
   Name:         OSi_Boot
@@ -36,10 +38,11 @@ extern "C" {
   Description:  boot firm
 
   Arguments:    entry :  entry point
+                w     :    wram settings
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void OSi_Boot( void* entry, MIHeader_WramRegs* w, BOOL to_firm );
+void OSi_Boot( void* entry, MIHeader_WramRegs* w );
 
 /*---------------------------------------------------------------------------*
   Name:         OSi_Finalize
@@ -51,6 +54,17 @@ void OSi_Boot( void* entry, MIHeader_WramRegs* w, BOOL to_firm );
   Returns:      None
  *---------------------------------------------------------------------------*/
 void OSi_Finalize(void);
+
+/*---------------------------------------------------------------------------*
+  Name:         OSi_ClearWorkArea
+
+  Description:  clear work area
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void OSi_ClearWorkArea( void );
 
 /*---------------------------------------------------------------------------*
   Name:         OSi_GetFromBromAddr

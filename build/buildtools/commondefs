@@ -26,7 +26,7 @@ endif
 TWL_KEYSDIR			?=	$(FIRM_ROOT)/keys/dummy
 
 
-ifneq ($(filter NORFIRM NANDFIRM GCDFIRM,$(FIRM_TARGET)),)
+ifneq ($(filter FIRM GCDFIRM,$(FIRM_TARGET)),)
 TARGET_BIN			?=	$(subst .,$(DUMMY_KEYS_SUFFIX).,$(TARGET_FIRM_BIN))
 endif
 
@@ -41,10 +41,10 @@ SPACE 		?= $(EMPTY) $(EMPTY)
 #	FIRM_CODEGEN	= [ARM/THUMB]
 #	FIRM_PROC      = [ARM9/ARM7]
 #
-#	FIRM_TARGET		= [NORFIRM/NANDFIRM/GCDFIRM/APP]
+#	FIRM_TARGET		= [FIRM/GCDFIRM/APP]
 #
 
-FIRM_PLATFORM		?= BB
+FIRM_PLATFORM		?= TS
 FIRM_MEMSIZE		?= 32M
 FIRM_CODEGEN		?= ARM
 FIRM_PROC			?= ARM9
@@ -164,6 +164,7 @@ ifeq	($(CODEGEN_PROC),ARM9)
 FIRM_LIBS_BASE	?= \
 			   libos \
 			   libmi \
+			   libpxi \
 #			   libgcd \
 #			   libacsign \
 
@@ -173,9 +174,12 @@ else #	($(CODEGEN_PROC),ARM7)
 
 FIRM_LIBS_BASE	?= \
 			   libos_sp \
+			   libfatfs_sp \
+			   libpxi_sp \
+			   libaes_sp \
+			   libpm_sp \
 #			   libnvram_sp \
 #			   libgcd_sp \
-#			   libaes_sp \
 #			   libacsign_sp \
 #			   libfirmsd_sp \
 

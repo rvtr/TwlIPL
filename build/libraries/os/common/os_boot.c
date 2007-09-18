@@ -16,9 +16,57 @@
  *---------------------------------------------------------------------------*/
 #include <firm/os.h>
 #include <firm/mi.h>
+#include <firm/pxi.h>
 #ifdef SDK_ARM9
 #include <twl/os/ARM9/os_cache_tag.h>
+#else
+#include <twl/aes/ARM7/lo.h>
 #endif
+
+void OSi_BootCore( OSEntryPoint p );
+
+/*---------------------------------------------------------------------------*
+  Name:         OSi_Boot
+
+  Description:  boot firm
+
+  Arguments:    entry :    entry point
+                w     :    wram settings
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void OSi_Boot( void* entry, MIHeader_WramRegs* w )
+{
+    OSEntryPoint p = (OSEntryPoint)entry;
+
+    (void)OS_DisableInterrupts();
+    OSi_Finalize();
+
+#ifdef SDK_ARM9
+
+    MI_CpuCopy8( w, (void*)REG_MBK1_ADDR, 32 ); // set MBK1 - 8
+    //reg_RBKCNT1_H_ADDR = w->sub_wramlock[4];  // set RBKCNT01
+
+    // request hiding secure rom
+    PXI_NotifyID( FIRM_PXI_ID_DONE_WRAM_SETTING );
+
+    OSi_ClearWorkArea();
+
+#else // SDK_ARM7
+
+    // wait request of hiding secure rom
+    PXI_WaitID( FIRM_PXI_ID_DONE_WRAM_SETTING );
+
+    MI_CpuCopy8( &w->sub_wrammap_a, (void*)REG_MBK6_ADDR, 13 ); // set MBK6 - MBK_C_LOCK
+
+    AESi_SetKeySeedA( (AESKeySeed*)OSi_GetFromBromAddr()->aes_key[2] );    // erase
+
+    OSi_ClearWorkArea();
+
+#endif // SDK_ARM7
+
+    OSi_BootCore( p );
+}
 
 /*---------------------------------------------------------------------------*
   Name:         OSi_Finalize
@@ -55,3 +103,52 @@ void OSi_Finalize(void)
 #endif // SDK_ARM9
 }
 
+extern void SDK_STATIC_DATA_START(void); // static data start address
+extern void SDK_STATIC_BSS_END(void);  // static bss end address
+
+/*---------------------------------------------------------------------------*
+  Name:         OSi_ClearWorkArea
+
+  Description:  clear work area
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+#include <nitro/code32.h>
+asm void OSi_ClearWorkArea( void )
+{
+        mov     r11, lr
+
+        // clear stack with r4-r9
+        mov     r0, #0
+        ldr     r1, =SDK_STATIC_DATA_START
+        ldr     r2, =SDK_STATIC_BSS_END
+        sub     r2, r2, r1
+        bl      MIi_CpuClearFast
+
+        bx      r11
+}
+
+asm void OSi_BootCore( OSEntryPoint p )
+{
+        mov     r11, r0
+
+        // clear stack with r4-r9
+        mov     r0, #0
+#if 0
+        ldr     r1, =HW_FIRM_STACK
+        ldr     r2, =HW_FIRM_STACK_SIZE
+#endif
+        bl      MIi_CpuClearFast
+
+        mov     lr, r11
+
+        // clear registers
+#if 0
+        ldr     sp, =HW_FIRM_STACK
+#endif
+        ldmia   sp, {r0-r12,sp}
+
+        bx      lr
+}

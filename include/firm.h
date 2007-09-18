@@ -20,11 +20,13 @@
 #include <twl.h>
 
 #include <firm/os.h>
+#include <firm/pxi.h>
 #include <firm/mi.h>
+#include <firm/pm.h>
+#include <firm/aes.h>
 /*
 #include <firm/memorymap.h>
 #include <firm/nvram.h>
-#include <firm/pm.h>
 #include <firm/gcd.h>
 */
 

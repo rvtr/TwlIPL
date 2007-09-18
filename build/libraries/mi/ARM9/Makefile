@@ -29,6 +29,7 @@ SRCDIR		= .
 
 SRCS			= \
 				mi_init_mainMemory.c \
+				mi_loader.c \
 
 TARGET_LIB		= libmi$(FIRM_LIBSUFFIX).a
 

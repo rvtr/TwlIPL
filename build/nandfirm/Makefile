@@ -23,6 +23,7 @@ include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
 
 SUBDIRS		= \
 			nandfirm-print \
+			nandfirm-loader \
 
 
 #----------------------------------------------------------------------------

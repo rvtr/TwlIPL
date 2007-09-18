@@ -17,7 +17,7 @@
 #----------------------------------------------------------------------------
 
 
-FIRM_TARGET    = NORFIRM
+FIRM_TARGET    = FIRM
 
 
 include	$(TWLFIRM_ROOT)/build/buildtools/commondefs

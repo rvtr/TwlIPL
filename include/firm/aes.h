@@ -18,10 +18,9 @@
 #define FIRM_AES_H_
 
 #ifdef SDK_ARM7
+#include <twl/aes/common/type.h>
 #include <firm/aes/ARM7/aes_init.h>
 #include <firm/aes/ARM7/aes_ids.h>
-#include <twl/aes/ARM7/instruction.h>
-#include <twl/aes/ARM7/transfer.h>
 #endif // SDK_ARM7
 
 /* FIRM_AES_H_ */

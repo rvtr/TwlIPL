@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlFirm - AES - include
+  Project:  TwlIPL - AES - include
   File:     aes_init.h
 
   Copyright 2007 Nintendo.  All rights reserved.
@@ -22,14 +22,14 @@
 extern "C" {
 #endif
 
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
-
 /*---------------------------------------------------------------------------*
     ä÷êîíËã`
  *---------------------------------------------------------------------------*/
 void AESi_InitGameKeys( u8 game_code[4] );
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 /* TWL_AES_AES_INIT_H_ */
 #endif

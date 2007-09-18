@@ -21,6 +21,9 @@
 #include <twl/mi.h>
 
 #include <firm/mi/mainMemory.h>
+#ifdef SDK_ARM9
+#include <firm/mi/ARM9/mi_loader.h>
+#endif
 
 /* FIRM_MI_H_ */
 #endif

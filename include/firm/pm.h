@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlFirm - include - PM
+  Project:  TwlIPL - include - pm
   File:     pm.h
 
   Copyright 2007 Nintendo.  All rights reserved.
@@ -18,13 +18,11 @@
 #ifndef FIRM_PM_H_
 #define FIRM_PM_H_
 
-#include <twl/pm.h>
-
 #ifdef SDK_ARM7
-#include <../build/libraries/spi/ARM7/pm/include/pm_pmic.h>
-#include <../build/libraries/spi/ARM7/pm/include/pm_pmic_ex.h>
+#include <firm/pm/ARM7/pm_reg_ex.h>
+#include <firm/pm/ARM7/pm_pmic_ex.h>
+#include <firm/pm/ARM7/pm_init.h>
 #endif // SDK_ARM7
-
 
 /* FIRM_PM_H_ */
 #endif
