@@ -30,6 +30,11 @@ SRCS		=	main.c
 
 CRT0_O		=	crt0_firm.o
 
+MAKEROM_ARM7	=	../ARM7/bin/ARM7-TS/Release/main.LTD.TWL.sbin
+MAKEROM_ARM7_BASE	=	../ARM7/bin/ARM7-TS/Release/main
+
+#LCFILE_TEMPLATE =	$(FIRM_SPECDIR)/$(FIRM_PROC)-$(FIRM_PLATFORM)-PARTNER.lcf.template
+
 #SRCDIR		=	# using default
 #LCFILE		=	# using default
 

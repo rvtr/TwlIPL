@@ -30,10 +30,11 @@ extern "C" {
   Description:  load header
 
   Arguments:    pool        pointer to the pool info for SVC_DecryptoSign
+                rsa_key     key address
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL MI_LoadHeader( int* pool );
+BOOL MI_LoadHeader( int* pool, const void* rsa_key );
 
 /*---------------------------------------------------------------------------*
   Name:         MI_LoadMenu

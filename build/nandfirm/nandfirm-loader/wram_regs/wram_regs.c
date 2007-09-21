@@ -47,29 +47,29 @@ MIHeader_WramRegs wram_regs_init =
         REG_MI_MBK_C7_FIELD( 1, MI_WRAM_BC_OFFSET_224KB, MI_WRAM_ARM9 ),
     },
     REG_MI_MBK6_FIELD(  REG_WRAM_MAP_CONV_ADDR( 6, A, EADDR, MI_WRAM_MAP_NULL ),
-                        MI_WRAM_IMAGE_128KB,
+                        MI_WRAM_IMAGE_256KB,
                         REG_WRAM_MAP_CONV_ADDR( 6, A, SADDR, MI_WRAM_MAP_NULL )
                         ),
     REG_MI_MBK7_FIELD(  REG_WRAM_MAP_CONV_ADDR( 7, B, EADDR, HW_WRAM_AREA_HALF + 0x00080000 ),
-                        MI_WRAM_IMAGE_128KB,
+                        MI_WRAM_IMAGE_256KB,
                         REG_WRAM_MAP_CONV_ADDR( 7, B, SADDR, HW_WRAM_AREA_HALF + 0x00040000 )
                         ),
     REG_MI_MBK8_FIELD(  REG_WRAM_MAP_CONV_ADDR( 8, C, EADDR, HW_WRAM_AREA_HALF + 0x00040000 ),
-                        MI_WRAM_IMAGE_128KB,
+                        MI_WRAM_IMAGE_256KB,
                         REG_WRAM_MAP_CONV_ADDR( 8, C, SADDR, HW_WRAM_AREA_HALF )
                         ),
 
     // ARM7
     REG_MI_MBK6_FIELD(  REG_WRAM_MAP_CONV_ADDR( 6, A, EADDR, HW_WRAM_AREA_HALF + 0x00040000 ),
-                        MI_WRAM_IMAGE_128KB,
+                        MI_WRAM_IMAGE_256KB,
                         REG_WRAM_MAP_CONV_ADDR( 6, A, SADDR, HW_WRAM_AREA_HALF )
                         ),
     REG_MI_MBK7_FIELD(  REG_WRAM_MAP_CONV_ADDR( 7, B, EADDR, HW_WRAM_AREA_HALF + 0x00080000 ),
-                        MI_WRAM_IMAGE_128KB,
+                        MI_WRAM_IMAGE_256KB,
                         REG_WRAM_MAP_CONV_ADDR( 7, B, SADDR, HW_WRAM_AREA_HALF + 0x00040000 )
                         ),
     REG_MI_MBK8_FIELD(  REG_WRAM_MAP_CONV_ADDR( 8, C, EADDR, MI_WRAM_MAP_NULL ),
-                        MI_WRAM_IMAGE_128KB,
+                        MI_WRAM_IMAGE_256KB,
                         REG_WRAM_MAP_CONV_ADDR( 8, C, SADDR, MI_WRAM_MAP_NULL )
                         ),
 

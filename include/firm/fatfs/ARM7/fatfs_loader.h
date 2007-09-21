@@ -29,11 +29,22 @@ extern "C" {
 
   Description:  open recent menu file
 
-  Arguments:    None
+  Arguments:    driveno     drive number ('A' is 0)
 
   Returns:      None
  *---------------------------------------------------------------------------*/
 BOOL FATFS_OpenRecentMenu( int driveno );
+
+/*---------------------------------------------------------------------------*
+  Name:         FATFS_OpenSpecifiedMenu
+
+  Description:  open specified menu file
+
+  Arguments:    menufile    target filename
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL FATFS_OpenSpecifiedMenu( const char* menufile );
 
 /*---------------------------------------------------------------------------*
   Name:         FATFS_LoadHeader

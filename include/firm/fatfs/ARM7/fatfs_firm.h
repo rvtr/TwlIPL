@@ -20,6 +20,7 @@
 
 #include <twl/types.h>
 #include <twl/aes/ARM7/lo.h>
+#include <twl/fatfs.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,32 +50,6 @@ void FATFS_EnableAES( AESKeySlot slot, const AESCounter* pCounter );
 void FATFS_DisableAES( void );
 
 /*---------------------------------------------------------------------------*
-  Name:         nandRead
-
-  Description:  normal read
-
-  Arguments:    block: source sector number in NAND
-                dest: dest address (4 bytes alignment)
-                count: sectors to transfer
-
-  Returns:      None
- *---------------------------------------------------------------------------*/
-void nandRead(u32 block, void *dest, u16 count);
-
-/*---------------------------------------------------------------------------*
-  Name:         nandReadAES
-
-  Description:  AES read
-
-  Arguments:    block: source sector number in NAND
-                dest: dest address (4 bytes alignment)
-                count: sectors to transfer
-
-  Returns:      None
- *---------------------------------------------------------------------------*/
-void nandReadAES(u32 block, void *dest, u16 count);
-
-/*---------------------------------------------------------------------------*
   Name:         FATFS_InitFIRM
 
   Description:  init file system
@@ -86,7 +61,7 @@ void nandReadAES(u32 block, void *dest, u16 count);
 BOOL FATFS_InitFIRM( void );
 
 /*---------------------------------------------------------------------------*
-  Name:         FATFS_MountNandFirm
+  Name:         FATFS_MountDriveFirm
 
   Description:  mount nand partition
 
@@ -94,7 +69,7 @@ BOOL FATFS_InitFIRM( void );
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-BOOL FATFS_MountNandFirm( int driveno, int partition_no );
+BOOL FATFS_MountDriveFirm( int driveno, FATFSMediaType media, int partition_no );
 
 #ifdef __cplusplus
 } /* extern "C" */

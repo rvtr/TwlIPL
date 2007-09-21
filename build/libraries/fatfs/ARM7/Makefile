@@ -37,9 +37,9 @@ SRCDIR			= src rom_sdmc
 SRCS			= \
 				fatfs_loader.c 	\
 				fatfs_firm.c 	\
-				sdmc.c		\
-				sdmc_nandinit.c	\
-				drsdmc.c	\
+#				sdmc.c		\
+#				sdmc_nandinit.c	\
+#				drsdmc.c	\
 
 
 TARGET_LIB		= libfatfs_sp$(FIRM_LIBSUFFIX).a

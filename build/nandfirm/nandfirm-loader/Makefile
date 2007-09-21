@@ -19,6 +19,7 @@
 
 FIRM_TARGET    = FIRM
 
+TWL_KEYSDIR = $(FIRM_ROOT)/keys/bootrom
 
 include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
 

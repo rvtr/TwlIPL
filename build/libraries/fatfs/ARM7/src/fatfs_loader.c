@@ -27,14 +27,14 @@
 #define PXI_FIFO_TAG_DATA   PXI_FIFO_TAG_USER_0
 
 static ROM_Header* const rh= (ROM_Header*)(HW_MAIN_MEM_SYSTEM_END - 0x2000);
-static int menu_fd = 0;
+static int menu_fd = -1;
 
 /*---------------------------------------------------------------------------*
   Name:         FATFS_OpenRecentMenu
 
   Description:  open recent menu file
 
-  Arguments:    None
+  Arguments:    driveno     drive number ('A' is 0)
 
   Returns:      None
  *---------------------------------------------------------------------------*/
@@ -47,7 +47,26 @@ BOOL FATFS_OpenRecentMenu( int driveno )
     }
     menufile[0] = (char)('A' + driveno);
     menu_fd = po_open((u8*)menufile, PO_BINARY, 0);
-    if (menu_fd <= 0)
+    if (menu_fd < 0)
+    {
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         FATFS_OpenSpecifiedMenu
+
+  Description:  open specified menu file
+
+  Arguments:    menufile    target filename
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL FATFS_OpenSpecifiedMenu( const char* menufile )
+{
+    menu_fd = po_open((u8*)menufile, PO_BINARY, 0);
+    if (menu_fd < 0)
     {
         return FALSE;
     }
@@ -55,29 +74,29 @@ BOOL FATFS_OpenRecentMenu( int driveno )
 }
 
 #define HEADER_SIZE 0x1000
+#define AUTH_SIZE   0xe00
 
-#define SLOT_SIZE   0x2000
+#define SLOT_SIZE   0x8000
 
 static BOOL FATFS_LoadBuffer(u32 offset, u32 size)
 {
     u8* base = (u8*)MI_GetWramMapStart_B();
-    u8*     curr = base;
     static int count = 0;
 
     // seek first
-    if (!po_lseek(menu_fd, (s32)offset, PSEEK_SET))
+    if (po_lseek(menu_fd, (s32)offset, PSEEK_SET) < 0)
     {
         return FALSE;
     }
     // loading loop
     while (size > 0)
     {
-        u8* dest = curr + count * SLOT_SIZE;                    // target buffer address
+        u8* dest = base + count * SLOT_SIZE;                    // target buffer address
         u32 unit = size < SLOT_SIZE ? size : SLOT_SIZE;         // size
         while (MI_GetWramBankMaster_B(count) != MI_WRAM_ARM7)   // waiting to be master
         {
         }
-        if (!po_read(menu_fd, (u8*)dest, (int)unit))            // reading
+        if (po_read(menu_fd, (u8*)dest, (int)unit) < 0)            // reading
         {
             return FALSE;
         }
@@ -100,7 +119,7 @@ static BOOL FATFS_LoadBuffer(u32 offset, u32 size)
 BOOL FATFS_LoadHeader( void )
 {
     // open the file in FATFS_InitFIRM()
-    if (menu_fd <= 0)
+    if (menu_fd < 0)
     {
         return FALSE;
     }
@@ -108,7 +127,8 @@ BOOL FATFS_LoadHeader( void )
     // load header without AES
     PXI_NotifyID( FIRM_PXI_ID_LOAD_HEADER );
     FATFS_DisableAES();
-    if (!FATFS_LoadBuffer(0, HEADER_SIZE) ||
+    if (!FATFS_LoadBuffer(0, AUTH_SIZE) ||
+        !FATFS_LoadBuffer(AUTH_SIZE, HEADER_SIZE - AUTH_SIZE) ||
         PXI_RecvID() != FIRM_PXI_ID_AUTH_HEADER )
     {
         return FALSE;
@@ -118,7 +138,7 @@ BOOL FATFS_LoadHeader( void )
     {
         AESKeySeed seed;
         AESi_InitGameKeys((u8*)rh->s.game_code);
-        PXI_RecvDataByFifo( PXI_FIFO_TAG_DATA, &seed, AES_BLOCK_SIZE );
+//        PXI_RecvDataByFifo( PXI_FIFO_TAG_DATA, &seed, AES_BLOCK_SIZE );
         AESi_SetKeySeedA(&seed);    // APP
         //AESi_SetKeySeedB(&seed);    // APP & HARD
         //AESi_SetKeySeedC(&seed);    //

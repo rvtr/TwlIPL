@@ -31,6 +31,8 @@ SRCS		=	main.c
 
 CRT0_O		=	crt0_firm.o
 
+#LCFILE_TEMPLATE =	$(FIRM_SPECDIR)/$(FIRM_PROC)-$(FIRM_PLATFORM)-PARTNER.lcf.template
+
 #SRCDIR		=	# using default
 #LCFILE		=	# using default
 

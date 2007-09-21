@@ -43,7 +43,8 @@ void OS_InitFIRM(void)
     //---- Init interProcessor I/F
     //  Sync with ARM7 to enable OS_GetConsoleType()
     //  PXI_Init() must be called before OS_InitArenaEx()
-    PXI_Init();
+    //PXI_Init();
+    PXI_InitFifoFIRM();
 
     //---- Init Arena (arenas except SUBPRIV-WRAM)
     OS_InitArena();
@@ -78,7 +79,7 @@ void OS_InitFIRM(void)
 #endif
     //---- Init Reset System
 #ifndef SDK_SMALL_BUILD
-    OS_InitReset();
+//    OS_InitReset();
 #endif
 
     //---- Init Cartridge
@@ -104,7 +105,8 @@ void OS_InitFIRM(void)
     // for ARM7
 
     //---- Init interProcessor I/F
-    PXI_Init();
+    //PXI_Init();
+    PXI_InitFifoFIRM();
 
     //---- Init Arena (SUBPRIV-WRAM arena)
     OS_InitArena();
@@ -132,7 +134,7 @@ void OS_InitFIRM(void)
 
     //---- Init Reset System
 #ifndef SDK_SMALL_BUILD
-    OS_InitReset();
+//    OS_InitReset();
 #endif
 
     //---- Init Cartridge

@@ -23,7 +23,8 @@
 #include <twl/aes/ARM7/lo.h>
 #endif
 
-void OSi_BootCore( OSEntryPoint p );
+void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w );
+
 
 /*---------------------------------------------------------------------------*
   Name:         OSi_Boot
@@ -38,34 +39,19 @@ void OSi_BootCore( OSEntryPoint p );
 void OSi_Boot( void* entry, MIHeader_WramRegs* w )
 {
     OSEntryPoint p = (OSEntryPoint)entry;
+    void (*OSBootCore)( OSEntryPoint p, MIHeader_WramRegs* w );
 
     (void)OS_DisableInterrupts();
     OSi_Finalize();
 
 #ifdef SDK_ARM9
-
-    MI_CpuCopy8( w, (void*)REG_MBK1_ADDR, 32 ); // set MBK1 - 8
-    //reg_RBKCNT1_H_ADDR = w->sub_wramlock[4];  // set RBKCNT01
-
-    // request hiding secure rom
-    PXI_NotifyID( FIRM_PXI_ID_DONE_WRAM_SETTING );
-
-    OSi_ClearWorkArea();
-
+    OSBootCore = (void*)HW_ITCM;
 #else // SDK_ARM7
-
-    // wait request of hiding secure rom
-    PXI_WaitID( FIRM_PXI_ID_DONE_WRAM_SETTING );
-
-    MI_CpuCopy8( &w->sub_wrammap_a, (void*)REG_MBK6_ADDR, 13 ); // set MBK6 - MBK_C_LOCK
-
-    AESi_SetKeySeedA( (AESKeySeed*)OSi_GetFromBromAddr()->aes_key[2] );    // erase
-
-    OSi_ClearWorkArea();
-
+    OSBootCore = (void*)HW_EXT_WRAM;
 #endif // SDK_ARM7
 
-    OSi_BootCore( p );
+    MI_CpuCopyFast( OSi_BootCore, OSBootCore, 0x200 );
+    OSBootCore(p, w);
 }
 
 /*---------------------------------------------------------------------------*
@@ -79,14 +65,20 @@ void OSi_Boot( void* entry, MIHeader_WramRegs* w )
  *---------------------------------------------------------------------------*/
 void OSi_Finalize(void)
 {
+    (void)OS_DisableInterrupts();
     (void)OS_DisableIrq();
     reg_OS_IE = 0;
     reg_OS_IF = 0xffffffff;
 #ifdef SDK_ARM7
     reg_OS_IE2 = 0;
     reg_OS_IF2 = 0xffff;
+    // set init check flag by bootrom
+    SVC_CpuClear( REG_OS_PAUSE_CHK_MASK, (void*)REG_PAUSE_ADDR, sizeof(u16), 16 );
 #else // SDK_ARM9
-    (void)OS_DisableInterrupts();
+    // set init check flag
+    reg_OS_PAUSE = REG_OS_PAUSE_CHK_MASK;
+    *(u64*)HW_INIT_LOCK_BUF = 0;
+
     DC_Disable();
     DC_FlushAll();
     DC_WaitWriteBufferEmpty();
@@ -130,25 +122,86 @@ asm void OSi_ClearWorkArea( void )
         bx      r11
 }
 
-asm void OSi_BootCore( OSEntryPoint p )
+asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
 {
         mov     r11, r0
+        mov     r10, r1
+
+#ifdef SDK_ARM9
+        // wait for request of wram map
+        ldr     r3, =REG_SUBPINTF_ADDR
+        mov     r2, #REG_PXI_SUBPINTF_A7STATUS_MASK
+@0:
+        ldr     r0, [r3]
+        and     r0, r0, r2
+        cmp     r0, r2
+        bne     @0
+
+        // r10- => r9-r2
+        ldr     r9, =REG_MBK1_ADDR
+        add     r2, r9, #32
+@1:
+        ldr     r3, [r10], #4
+        str     r3, [r9], #4
+        cmp     r9, r2
+        blt     @1
+
+        // notify wram map
+        ldr     r3, =REG_SUBPINTF_ADDR
+        mov     r0, #REG_PXI_SUBPINTF_A9STATUS_MASK
+        str     r0, [r3]
+        // wait for finalizing pxi
+        ldr     r3, =REG_SUBPINTF_ADDR
+@2:
+        ldr     r0, [r3]
+        and     r0, r0, #REG_PXI_SUBPINTF_A7STATUS_MASK
+        cmp     r0, #0
+        bne     @2
+        // finalize pxi
+        mov     r0, #0
+        str     r0, [r3]
+#else
+        // request wram map
+        ldr     r3, =REG_MAINPINTF_ADDR
+        mov     r0, #REG_PXI_MAINPINTF_A7STATUS_MASK
+        str     r0, [r3]
+        // wait for wram map
+        mov     r2, #REG_PXI_MAINPINTF_A9STATUS_MASK
+@0:
+        ldr     r0, [r3]
+        and     r0, r0, r2
+        cmp     r0, r2
+        bne     @0
+        // finalize pxi
+        mov     r0, #0
+        str     r0, [r3]
+
+        // r10- => r9-r2
+        add     r10, r10, #32
+        ldr     r9, =REG_MBK6_ADDR
+        add     r2, r9, #13
+@1:
+        ldr     r3, [r10], #4
+        str     r3, [r9], #4
+        cmp     r9, r2
+        blt     @1
+#endif
 
         // clear stack with r4-r9
         mov     r0, #0
 #if 0
         ldr     r1, =HW_FIRM_STACK
         ldr     r2, =HW_FIRM_STACK_SIZE
-#endif
         bl      MIi_CpuClearFast
+#endif
 
         mov     lr, r11
 
         // clear registers
 #if 0
         ldr     sp, =HW_FIRM_STACK
-#endif
         ldmia   sp, {r0-r12,sp}
+#endif
 
         bx      lr
 }
