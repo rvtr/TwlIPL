@@ -54,6 +54,11 @@ extern void SDK_AUTOLOAD_LIST_END(void);        // end pointer to autoload infor
  *---------------------------------------------------------------------------*/
 SDK_WEAK_SYMBOL asm void _start( void )
 {
+        ldr     r1, =REG_JTAG_ADDR
+        ldrh    r2, [r1]
+        orr     r2, r2, #REG_SCFG_JTAG_CPUJE_MASK | REG_SCFG_JTAG_ARM7SEL_MASK
+        strh    r2, [r1]
+
         //---- set IME = 0
         //     ( use that LSB of HW_REG_BASE equal to 0 )
         mov             r12, #HW_REG_BASE

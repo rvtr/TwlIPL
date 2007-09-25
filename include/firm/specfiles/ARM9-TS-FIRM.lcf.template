@@ -89,9 +89,9 @@ SECTIONS
 		SDK_STATIC_START		=.;
 		SDK_STATIC_TEXT_START		=.;
 				#:::::::::: text/rodata
+				crt0_firm.o (.text)
 				libsyscall.a (.text)
 				OBJECT(_start,*)
-				crt0_firm.o (.text)
 				crt0_firm.o (.rodata)
 				#
 				# .version セクションを追加しています。

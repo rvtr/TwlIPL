@@ -20,7 +20,7 @@
 #include <twl/os/ARM7/debugLED.h>
 
 //#define BOOT_SECURE_SRL   // 本番SRLをブートするときにだけ定義する
-#define FIRM_ENABLE_JTAG
+//#define FIRM_ENABLE_JTAG
 
 #define FATFS_HEAP_SIZE     (64*1024)
 
@@ -28,10 +28,10 @@
 #define BOOT_DEVICE     FATFS_MEDIA_TYPE_SD
 #define PARTITION_NO    0                       // 0固定
 #define MENU_FILE       (char*)L"A:\\menu.srl"          // 対象ファイル(DRIVE_LETTERと合わせること)
-#define MENU_FILE_A     "A:\\menu_a.srl"        // 対象ファイル(DRIVE_LETTERと合わせること)
-#define MENU_FILE_B     "A:\\menu_b.srl"        // 対象ファイル(DRIVE_LETTERと合わせること)
-#define MENU_FILE_L     "A:\\menu_l.srl"        // 対象ファイル(DRIVE_LETTERと合わせること)
-#define MENU_FILE_R     "A:\\menu_r.srl"        // 対象ファイル(DRIVE_LETTERと合わせること)
+#define MENU_FILE_A     (char*)L"A:\\menu_a.srl"        // 対象ファイル(DRIVE_LETTERと合わせること)
+#define MENU_FILE_B     (char*)L"A:\\menu_b.srl"        // 対象ファイル(DRIVE_LETTERと合わせること)
+#define MENU_FILE_L     (char*)L"A:\\menu_l.srl"        // 対象ファイル(DRIVE_LETTERと合わせること)
+#define MENU_FILE_R     (char*)L"A:\\menu_r.srl"        // 対象ファイル(DRIVE_LETTERと合わせること)
 #else
 #define BOOT_DEVICE     FATFS_MEDIA_TYPE_NAND
 #define PARTITION_NO    0                       // 対象パーティション
@@ -43,7 +43,7 @@
 static u64 fatfs_arena[FATFS_HEAP_SIZE/sizeof(u64)];
 
 #ifndef SDK_FINALROM
-static u8 step = 0;
+static u8 step = 0x80;
 #endif
 
 void TwlSpMain( void )
@@ -53,6 +53,10 @@ void TwlSpMain( void )
 #ifndef BOOT_SECURE_SRL
     MIi_CpuClearFast( 0, (void*)OSi_GetFromBromAddr(), sizeof(OSFromBromBuf) );
 #endif
+
+//  I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x03, 0x00);
+//  I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, (0xff));
+
 
 #ifdef FIRM_ENABLE_JTAG
     reg_SCFG_JTAG = REG_SCFG_JTAG_CPUJE_MASK | REG_SCFG_JTAG_ARM7SEL_MASK;

@@ -78,7 +78,7 @@ asm void  MIi_InitMainMemCR( void )
         bl      OS_SpinWait
 
         ldr     r3,  =HW_WRAM_AREA - 2
-#if PLATFORM == BB
+#ifdef SDK_BB
         ldr     r0,  =MMEM_DCR0_BURST_MODE | MMEM_DCR0_BURST_CONTINUOUS \
                     | MMEM_DCR0_PARTIAL_REFRESH_NONE | MMEM_DCR0_SB1
         ldr     r1,  =MMEM_DCR1_1ST_R4_W3  | MMEM_DCR1_BURST_WRITE | MMEM_DCR1_BURST_LINER \
@@ -93,7 +93,7 @@ asm void  MIi_InitMainMemCR( void )
         strh    r0, [r3]
         strh    r1, [r3]
         ldrh    lr, [r2]
-#else // PLATFORM == TS
+#else // SDK_BB
         ldr     r0,  =MMEM_TCR0
         ldr     r1,  =MMEM_TCR1
         ldr     r2,  =MMEM_TCR2
@@ -103,7 +103,7 @@ asm void  MIi_InitMainMemCR( void )
         strh    r0, [r3]
         strh    r1, [r3]
         strh    r2, [r3]
-#endif // PLATFORM == TS
+#endif // SDK_BB
 
         ldr     r3, =REG_EXMEMCNT_ADDR
         mov     r1, #REG_MI_EXMEMCNT_IFM_MASK | REG_MI_EXMEMCNT_CE2_MASK

@@ -25,6 +25,9 @@
 
 void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w );
 
+#ifdef SDK_ARM7
+#include <twl/i2c/ARM7/i2c.h>
+#endif
 
 /*---------------------------------------------------------------------------*
   Name:         OSi_Boot
@@ -51,6 +54,9 @@ void OSi_Boot( void* entry, MIHeader_WramRegs* w )
 #endif // SDK_ARM7
 
     MI_CpuCopyFast( OSi_BootCore, OSBootCore, 0x200 );
+#ifdef SDK_ARM7
+    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, (0xff));
+#endif
     OSBootCore(p, w);
 }
 
@@ -128,6 +134,7 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
         mov     r10, r1
 
 #ifdef SDK_ARM9
+#if 1
         // wait for request of wram map
         ldr     r3, =REG_SUBPINTF_ADDR
         mov     r2, #REG_PXI_SUBPINTF_A7STATUS_MASK
@@ -136,7 +143,7 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
         and     r0, r0, r2
         cmp     r0, r2
         bne     @0
-
+#endif
         // r10- => r9-r2
         ldr     r9, =REG_MBK1_ADDR
         add     r2, r9, #32
@@ -145,7 +152,7 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
         str     r3, [r9], #4
         cmp     r9, r2
         blt     @1
-
+#if 1
         // notify wram map
         ldr     r3, =REG_SUBPINTF_ADDR
         mov     r0, #REG_PXI_SUBPINTF_A9STATUS_MASK
@@ -160,7 +167,9 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
         // finalize pxi
         mov     r0, #0
         str     r0, [r3]
+#endif
 #else
+#if 1
         // request wram map
         ldr     r3, =REG_MAINPINTF_ADDR
         mov     r0, #REG_PXI_MAINPINTF_A7STATUS_MASK
@@ -175,11 +184,12 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
         // finalize pxi
         mov     r0, #0
         str     r0, [r3]
+#endif
 
         // r10- => r9-r2
         add     r10, r10, #32
         ldr     r9, =REG_MBK6_ADDR
-        add     r2, r9, #13
+        add     r2, r9, #15
 @1:
         ldr     r3, [r10], #4
         str     r3, [r9], #4
@@ -189,7 +199,7 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
 
         // clear stack with r4-r9
         mov     r0, #0
-#if 0
+#if 1
         ldr     r1, =HW_FIRM_STACK
         ldr     r2, =HW_FIRM_STACK_SIZE
         bl      MIi_CpuClearFast
@@ -198,7 +208,7 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
         mov     lr, r11
 
         // clear registers
-#if 0
+#if 1
         ldr     sp, =HW_FIRM_STACK
         ldmia   sp, {r0-r12,sp}
 #endif

@@ -24,7 +24,11 @@
 #include <twl/aes/ARM7/lo.h>
 #include <rtfs.h>
 
-#include <twl/os/ARM7/debugLED.h>
+//#include <twl/os/ARM7/debugLED.h>
+
+#define OS_InitDebugLED()       (TRUE)
+#define OS_SetDebugLED(pattern) (TRUE)
+#define OS_GetDebugLED()        (TRUE)
 
 extern u32 NAND_FAT_PARTITION_COUNT;
 
