@@ -33,8 +33,12 @@ typedef signed char s8;
 typedef signed short int s16;
 typedef signed long int s32;
 typedef signed long long s64;
+typedef volatile u8 vu8;
 typedef volatile u32 vu32;
 typedef vu32 REGType32v;
+
+
+
 
 #define error(...)  do { fprintf(stderr, "Error: ");   \
                              fprintf(stderr, __VA_ARGS__); \
