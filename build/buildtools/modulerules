@@ -18,10 +18,10 @@
 ifndef TWLFIRM_MODULERULES_
 
 
-ifdef MAKEFIRM_ARM9
+ifneq ($(MAKEFIRM_ARM9),)
 MAKEROM_ARM9		= $(MAKEFIRM_ARM9)
 endif
-ifdef MAKEFIRM_ARM7
+ifneq ($(MAKEFIRM_ARM7),)
 MAKEROM_ARM7		= $(MAKEFIRM_ARM7)
 endif
 
@@ -72,19 +72,19 @@ $(BINDIR)/$(TARGET_BIN_BASENAME).rbin: $(OBJS)
 	objcopy -I elf32-little -O binary $< $@
 
 # .axf
-$(BINDIR)/$(TARGET_BIN_BASENAME).axf: $(OBJS) $(LCFILE) $(MAKEFILE) $(LDEPENDS_NEF) $(EDEPENDS_NEF) $(ALIBRARIES) $(LDRES_FILE) $(CW_LIBCXX)
-ifeq ($(NITRO_CCTYPE),RVCT)
-	$(LD) $(LDFLAGS) $(LIBRARY_DIRS) -o $@ $(GLIBRARIES) $(OBJS)
-else
-	$(LD) $(LDFLAGS) $(LIBRARY_DIRS) @$(LDRES_FILE) $(LCFILE) -o $@
-ifeq	($(TWL_PLATFORM),TS)
-	cp $(BINDIR)/$(TARGET_BIN_BASENAME).axf $(BINDIR)/$(TARGET_BIN_BASENAME).nef
-else  # ($(TWL_PLATFORM),BB)
-ifdef FIRM_STRIP_AXF
-	$(OBJCOPY) $@ $(BINDIR)/$(TARGET_BIN_BASENAME).sbin
-endif
-endif
-endif
+#$(BINDIR)/$(TARGET_BIN_BASENAME).axf: $(OBJS) $(LCFILE) $(MAKEFILE) $(LDEPENDS_NEF) $(EDEPENDS_NEF) $(ALIBRARIES) $(LDRES_FILE) $(CW_LIBCXX)
+#ifeq ($(NITRO_CCTYPE),RVCT)
+#	$(LD) $(LDFLAGS) $(LIBRARY_DIRS) -o $@ $(GLIBRARIES) $(OBJS)
+#else
+#	$(LD) $(LDFLAGS) $(LIBRARY_DIRS) @$(LDRES_FILE) $(LCFILE) -o $@
+#ifeq	($(TWL_PLATFORM),TS)
+#	cp $(BINDIR)/$(TARGET_BIN_BASENAME).axf $(BINDIR)/$(TARGET_BIN_BASENAME).tef
+#else  # ($(TWL_PLATFORM),BB)
+#ifdef FIRM_STRIP_AXF
+#	$(OBJCOPY) $@ $(BINDIR)/$(TARGET_BIN_BASENAME).sbin
+#endif
+#endif
+#endif
 
 #----------------------------------------------------------------------------
 TWLFIRM_MODULERULES_ = TRUE

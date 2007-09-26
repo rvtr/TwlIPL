@@ -19,9 +19,7 @@
 
 FIRM_TARGET    = FIRM
 
-TWL_KEYSDIR = $(FIRM_ROOT)/keys/bootrom
-
-include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
+TWL_KEYSDIR = $(FIRM_ROOT)/../twl_firmware/bootrom/build/keys
 
 
 #----------------------------------------------------------------------------
@@ -31,25 +29,29 @@ SUBDIRS =	\
             ARM9 \
             wram_regs \
 
-TARGET_FIRM_BIN	=	nandfirm_loader.nand
+TARGET_FIRM_BIN	=	nandfirm_loader.nand nandfirm_loader.srl
 BINDIR			=	.
-MAKEFIRM_ARM9	=	ARM9/bin/ARM9-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_nandfirm9_loader.axf
-MAKEFIRM_ARM7	=	ARM7/bin/ARM7-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_nandfirm7_loader.axf
+MAKEFIRM_ARM9	=	ARM9/bin/ARM9-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_nandfirm9_loader.tef
+MAKEFIRM_ARM7	=	ARM7/bin/ARM7-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_nandfirm7_loader.tef
 MAKEFIRM_RSA_PRVKEY	= $(TWL_KEYSDIR)/rsa/private_nand.der
 LDEPENDS_BIN	+=	wram_regs/wram_regs.rbin
+
+MAKEROM_ARM7_BASE       =       $(basename $(MAKEFIRM_ARM7))
 
 NITRO_MAKEROM	=	TRUE
 MAKEFIRM_FLAGS	+=	-p
 FIRM_SPEC		=	nandfirm.nandsf
 
-LDIRT_CLEAN		+=	$(BINDIR)/$(TARGET_BIN) \
-					rsa_public.sbin \
+LDIRT_CLEAN		+=	$(TARGETS) \
+				$(basename $(firstword $(TARGETS))).tlf \
+				rsa_public.sbin \
+
+include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
 do-build:	$(TARGET_BIN)
 
 include	$(TWLFIRM_ROOT)/build/buildtools/modulerules
-
 
 #===== End of Makefile =====

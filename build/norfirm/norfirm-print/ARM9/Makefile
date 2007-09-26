@@ -24,7 +24,7 @@ LINCLUDES	=   ../include
 
 #----------------------------------------------------------------------------
 
-TARGET_BIN	=	twl_norfirm9_print.axf
+TARGET_BIN	=	twl_norfirm9_print.tef
 
 CRT0_O		=	crt0_firm.o
 

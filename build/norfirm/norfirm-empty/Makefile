@@ -17,10 +17,7 @@
 #----------------------------------------------------------------------------
 
 
-FIRM_TARGET    = NORFIRM
-
-
-include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
+FIRM_TARGET    = FIRM
 
 #----------------------------------------------------------------------------
 
@@ -30,8 +27,8 @@ TARGET_FIRM_BIN		=	norfirm_empty.nor
 BINDIR				=	.
 MAKEFIRM_RSA_PRVKEY	= $(TWL_KEYSDIR)/rsa/private_nor.der
 
-MAKEROM_ARM9	 	= 
-MAKEROM_ARM7	 	= 
+MAKEFIRM_ARM9	 	=
+MAKEFIRM_ARM7	 	=
 
 NITRO_MAKEROM	=	TRUE
 MAKEFIRM_FLAGS	+=	-p
@@ -40,11 +37,12 @@ FIRM_SPEC		=	norfirm-BB.norsf
 LDIRT_CLEAN		+=	$(BINDIR)/$(TARGET_BIN) \
 					rsa_public.sbin \
 
+include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
+
 #----------------------------------------------------------------------------
 
 do-build:	$(TARGET_BIN)
 
 include	$(TWLFIRM_ROOT)/build/buildtools/modulerules
-
 
 #===== End of Makefile =====

@@ -17,10 +17,7 @@
 #----------------------------------------------------------------------------
 
 
-FIRM_TARGET    = NORFIRM
-
-
-include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
+FIRM_TARGET    = FIRM
 
 
 #----------------------------------------------------------------------------
@@ -29,8 +26,8 @@ SUBDIRS =	../../norfirm/norfirm-print
 
 TARGET_FIRM_BIN	=	nandfirm_print.nand
 BINDIR			=	.
-MAKEFIRM_ARM9	=	../../norfirm/norfirm-print/ARM9/bin/ARM9-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_norfirm9_print.axf
-MAKEFIRM_ARM7	=	../../norfirm/norfirm-print/ARM7/bin/ARM7-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_norfirm7_print.axf
+MAKEFIRM_ARM9	=	../../norfirm/norfirm-print/ARM9/bin/ARM9-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_norfirm9_print.tef
+MAKEFIRM_ARM7	=	../../norfirm/norfirm-print/ARM7/bin/ARM7-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_norfirm7_print.tef
 MAKEFIRM_RSA_PRVKEY	= $(TWL_KEYSDIR)/rsa/private_nand.der
 LDEPENDS_BIN	+=	../../norfirm/norfirm-print/wram_regs/wram_regs.rbin
 
@@ -40,6 +37,8 @@ FIRM_SPEC		=	nandfirm-BB.nandsf
 
 LDIRT_CLEAN		+=	$(BINDIR)/$(TARGET_BIN) \
 					rsa_public.sbin \
+
+include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 

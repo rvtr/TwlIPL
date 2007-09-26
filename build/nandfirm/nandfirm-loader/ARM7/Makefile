@@ -25,7 +25,7 @@ LINCLUDES	=   ../include
 
 #----------------------------------------------------------------------------
 
-TARGET_BIN	=	twl_nandfirm7_loader.axf
+TARGET_BIN	=	twl_nandfirm7_loader.tef
 
 SRCS		=	main.c
 

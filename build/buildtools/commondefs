@@ -37,7 +37,7 @@ SPACE 		?= $(EMPTY) $(EMPTY)
 # CodeGen Target
 #
 #	FIRM_PLATFORM  = [BB/EVA/TS]
-#	FIRM_MEMSIZE   = [32M/64M]
+#	FIRM_MEMSIZE   = [16M/32M]
 #	FIRM_CODEGEN	= [ARM/THUMB]
 #	FIRM_PROC      = [ARM9/ARM7]
 #
@@ -45,7 +45,7 @@ SPACE 		?= $(EMPTY) $(EMPTY)
 #
 
 FIRM_PLATFORM		?= TS
-FIRM_MEMSIZE		?= 32M
+FIRM_MEMSIZE		?= 16M
 FIRM_CODEGEN		?= ARM
 FIRM_PROC			?= ARM9
 FIRM_TARGET			?= APP
@@ -209,7 +209,7 @@ MAKEFIRM_RSA_PUBKEY	?= $(FIRM_TOOLSDIR)/openssl/rsa_public.der
 
 MAKEFIRM_FLAGS	?=
 
-ifneq ($(filter NORFIRM NANDFIRM GCDFIRM,$(FIRM_TARGET)),)
+ifneq ($(filter FIRM GCDFIRM,$(FIRM_TARGET)),)
 FIRM_STRIP_AXF	:= TRUE
 endif
 
@@ -250,7 +250,7 @@ MACRO_FLAGS += -DFIRM_TARGET_$(FIRM_TARGET)
 #----------------------------------------------------------------------------
 #  Makelcf change for build firmware
 #
-ifneq ($(filter NORFIRM NANDFIRM GCDFIRM,$(FIRM_TARGET)),)
+ifneq ($(filter FIRM GCDFIRM,$(FIRM_TARGET)),)
 MAKELCF			 := $(NITROSDK_ROOT)/tools/bin/makelcf.exe
 endif
 
