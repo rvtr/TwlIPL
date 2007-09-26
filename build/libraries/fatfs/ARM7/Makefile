@@ -28,18 +28,15 @@ FIRM_CODEGEN_ALL 	?= TRUE
 # Codegen for sub processer
 FIRM_PROC		= ARM7
 
-INCDIR			= rom_sdmc \
+INCDIR			= \
 			  $(TWLSDK_ROOT)/build/libraries/fatfs/ARM7.TWL/include \
 			  $(TWLSDK_ROOT)/build/libraries/fatfs/ARM7.TWL/include/twl/fatfs/ARM7
 
-SRCDIR			= src rom_sdmc
+SRCDIR			= src
 
 SRCS			= \
 				fatfs_loader.c 	\
 				fatfs_firm.c 	\
-#				sdmc.c		\
-#				sdmc_nandinit.c	\
-#				drsdmc.c	\
 
 
 TARGET_LIB		= libfatfs_sp$(FIRM_LIBSUFFIX).a

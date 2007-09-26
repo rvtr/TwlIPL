@@ -54,11 +54,11 @@ void FATFS_DisableAES( void );
 
   Description:  init file system
 
-  Arguments:    None
+  Arguments:    nandContext : nand context to omit initialization (if any)
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-BOOL FATFS_InitFIRM( void );
+BOOL FATFS_InitFIRM( void* nandContext );
 
 /*---------------------------------------------------------------------------*
   Name:         FATFS_MountDriveFirm

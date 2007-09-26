@@ -149,7 +149,6 @@ BOOL MI_LoadHeader( int* pool, const void* rsa_key )
 #endif
     {
         SignatureData sd;
-#if 0
         int i;
         BOOL result = TRUE;
         SVC_DecryptoSign(pool, &sd, rh->signature, rsa_key);
@@ -160,13 +159,12 @@ BOOL MI_LoadHeader( int* pool, const void* rsa_key )
                 result = FALSE;
             }
         }
-#endif
-#if 0
         if ( !result )
         {
+#if 0
             return FALSE;
-        }
 #endif
+        }
         PXI_NotifyID( FIRM_PXI_ID_AUTH_HEADER );
 //        PXI_SendDataByFifo( PXI_FIFO_TAG_DATA, sd.aes_key_seed, AES_BLOCK_SIZE );
         MI_CpuClear8(&sd, sizeof(sd));
@@ -188,16 +186,16 @@ static inline BOOL MIi_LoadModule(void* dest, u32 size, const u8 digest[DIGEST_S
     {
         return FALSE;
     }
-#if 0
     SHA1_GetHash(&ctx, md);
     for ( i = 0; i < DIGEST_SIZE_SHA1; i++ )
     {
         if ( md[i] != digest[i] )
         {
+#if 0
             result = FALSE;
+#endif
         }
     }
-#endif
     return result;
 }
 

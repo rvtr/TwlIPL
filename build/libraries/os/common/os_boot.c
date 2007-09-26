@@ -199,7 +199,7 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
 
         // clear stack with r4-r9
         mov     r0, #0
-#if 1
+#if 0
         ldr     r1, =HW_FIRM_STACK
         ldr     r2, =HW_FIRM_STACK_SIZE
         bl      MIi_CpuClearFast
@@ -208,7 +208,7 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
         mov     lr, r11
 
         // clear registers
-#if 1
+#if 0
         ldr     sp, =HW_FIRM_STACK
         ldmia   sp, {r0-r12,sp}
 #endif

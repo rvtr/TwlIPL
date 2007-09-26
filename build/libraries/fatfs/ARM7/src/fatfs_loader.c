@@ -40,7 +40,7 @@ static int menu_fd = -1;
  *---------------------------------------------------------------------------*/
 BOOL FATFS_OpenRecentMenu( int driveno )
 {
-    char menufile[] = "A:\\ipl\\menu.srl";
+    char *menufile = (char*)L"A:\\ipl\\menu.srl";
     if (driveno < 0 || driveno >= 26)
     {
         return FALSE;

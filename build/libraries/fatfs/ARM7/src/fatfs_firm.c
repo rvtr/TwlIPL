@@ -24,12 +24,6 @@
 #include <twl/aes/ARM7/lo.h>
 #include <rtfs.h>
 
-//#include <twl/os/ARM7/debugLED.h>
-
-#define OS_InitDebugLED()       (TRUE)
-#define OS_SetDebugLED(pattern) (TRUE)
-#define OS_GetDebugLED()        (TRUE)
-
 extern u32 NAND_FAT_PARTITION_COUNT;
 
 #define DMA_PIPE         2
@@ -93,6 +87,15 @@ static inline void MIi_NDmaRecv(u32 ndmaNo, const void *src, void *dest, u32 siz
     MIi_SetWordCount( ndmaNo, size/4 );
     MIi_SetControl( ndmaNo, MI_NDMA_BWORD_16 | MI_NDMA_SRC_FIX | MIi_DEST_INC | MIi_IMM | MI_NDMA_ENABLE );
 }
+static inline void MIi_Sd1_NDmaRecv(u32 ndmaNo, void *dest, u32 size)
+{
+    MIi_SetSrc( ndmaNo, (u32)SDIF_FI );
+    MIi_SetDest( ndmaNo, (u32)dest );
+    MIi_SetInterval( ndmaNo, MI_NDMA_NO_INTERVAL, MI_NDMA_INTERVAL_PS_1 );
+    MIi_SetTotalWordCount( ndmaNo, size/4 );
+    MIi_SetWordCount( ndmaNo, SECTOR_SIZE/4 );
+    MIi_SetControl( ndmaNo, MI_NDMA_BWORD_128 | MI_NDMA_SRC_FIX | MIi_DEST_INC | MI_NDMA_TIMING_SD_1 | MI_NDMA_ENABLE );
+}
 
 static inline void MIi_NDmaPipeSetup(u32 ndmaNo, const void *src, void *dest, u32 size)
 {
@@ -113,13 +116,12 @@ static inline void MIi_NDmaRestart(u32 ndmaNo)
 /*
     専用NAND関数
 */
-//extern void SDCARD_TimerStart(u32 tim);    /* タイムアウト計測スタート */
 extern volatile SDMC_ERR_CODE   SDCARD_ErrStatus;
 extern s16  SDCARD_SDHCFlag;          /* SDHCカードフラグ */
+extern SDPortContext*   SDNandContext;  /* NAND初期化パラメータ */
 
 static inline void WaitFifoFull( void )
 {
-//    SDCARD_TimerStart(SDCARD_RW_TIMEOUT);   /* タイムアウト判定用タイマスタート(2000msec) */
     while( (*SDIF_CNT & SDIF_CNT_FULL) == 0 )
     {
         if ( SDCARD_ErrStatus != SDMC_NORMAL )   // an error was occurred
@@ -133,11 +135,10 @@ static void StartToRead(u32 block, u32 count)
 {
     *SDIF_FSC = count;
     *SDIF_FDS = SECTOR_SIZE;
-    *SDIF_CNT = (*SDIF_CNT & ~SDIF_CNT_FEIE) | SDIF_CNT_FFIE | SDIF_CNT_FCLR | SDIF_CNT_USEFIFO;
+    *SDIF_CNT = (*SDIF_CNT & ~(SDIF_CNT_FEIE | SDIF_CNT_FFIE)) | SDIF_CNT_FCLR | SDIF_CNT_USEFIFO;
     CC_EXT_MODE = CC_EXT_MODE_DMA;
 
     SDCARD_ErrStatus = SDMC_NORMAL;
-//    SDCARD_TimerStart(SDCARD_RW_TIMEOUT);   /* タイムアウト判定用タイマスタート(2000msec) */
     SD_EnableClock();
     SD_EnableSeccnt(count);
     if ( SDCARD_SDHCFlag )
@@ -146,13 +147,13 @@ static void StartToRead(u32 block, u32 count)
     }
     else
     {
-        SD_MultiReadBlock(block * SECTOR_SIZE);
+        SD_MultiReadBlock( block * SECTOR_SIZE );
     }
 }
 
 static void StopToRead( void )
 {
-    if( !SD_CheckFPGAReg(SD_STOP,SD_STOP_SEC_ENABLE) ){
+    if( !SD_CheckFPGAReg( SD_STOP,SD_STOP_SEC_ENABLE ) ){
         SD_StopTransmission();      /* カード転送終了をFPGAに通知（CMD12発行） */
     }
     SD_TransEndFPGA();              /* 転送終了処理(割り込みマスクを禁止に戻す) */
@@ -208,29 +209,18 @@ void FATFS_DisableAES( void )
                 dest: dest address (4 bytes alignment)
                 count: sectors to transfer
 
-  Returns:      None
+  Returns:      0 if success
  *---------------------------------------------------------------------------*/
-static void ReadNormal(u32 block, void *dest, u16 count)
+static u16 ReadNormal(u32 block, void *dest, u16 count)
 {
-OS_SetDebugLED((u8)(0x80 | block));
-    //MI_StopNDma( DMA_PIPE );   // already stopped
-    //MI_StopNDma( DMA_RECV );   // already stopped
+    OS_TPrintf("ReadNormal(%d, 0x%08X, %d) is calling.\n", block, dest, count);
 
+    MIi_Sd1_NDmaRecv( DMA_PIPE, dest, (u32)(count * SECTOR_SIZE) );
     StartToRead( block, count );
-    if ( SDCARD_ErrStatus != SDMC_NORMAL )
-    {
-        return;
-    }
-
-    while ( count-- )   // TODO: 自動起動DMA1つで十分なはず
-    {
-        WaitFifoFull();
-        MIi_NDmaRecv( DMA_PIPE, (void*)SDIF_FI, dest, SECTOR_SIZE );
-        MI_WaitNDma( DMA_PIPE );
-        dest = (void*)((u32)dest + SECTOR_SIZE);
-    }
+    MI_WaitNDma( DMA_PIPE );
     StopToRead();
-OS_SetDebugLED((u8)(0x90 | block));
+
+    return SDCARD_ErrStatus;
 }
 
 /*---------------------------------------------------------------------------*
@@ -242,15 +232,14 @@ OS_SetDebugLED((u8)(0x90 | block));
                 dest: dest address (4 bytes alignment)
                 count: sectors to transfer
 
-  Returns:      None
+  Returns:      0 if success
  *---------------------------------------------------------------------------*/
 #define PIPE_SIZE   64
-static void ReadAES(u32 block, void *dest, u16 count)
+static u16 ReadAES(u32 block, void *dest, u16 count)
 {
     u32 offset = 0; // in bytes
-OS_SetDebugLED((u8)(0xC0 | block));
-    //MI_StopNDma( DMA_PIPE );   // already stopped
-    //MI_StopNDma( DMA_RECV );   // already stopped
+
+    OS_TPrintf("ReadAES(%d, 0x%08X, %d) is calling.\n", block, dest, count);
 
     MIi_NDmaPipeSetup( DMA_PIPE, (void*)SDIF_FI, (void*)REG_AES_IFIFO_ADDR, PIPE_SIZE );
 
@@ -267,7 +256,7 @@ OS_SetDebugLED((u8)(0xC0 | block));
     StartToRead( block, count );
     if ( SDCARD_ErrStatus != SDMC_NORMAL )
     {
-        return;
+        goto err;
     }
 
     while ( block * SECTOR_SIZE > offset )
@@ -278,6 +267,10 @@ OS_SetDebugLED((u8)(0xC0 | block));
         if ( (offset & SECTOR_SIZE) == 0 )
         {
             WaitFifoFull();
+            if ( SDCARD_ErrStatus != SDMC_NORMAL )
+            {
+                goto err;
+            }
         }
         MIi_NDmaRestart( DMA_PIPE );
         offset += PIPE_SIZE;
@@ -285,7 +278,14 @@ OS_SetDebugLED((u8)(0xC0 | block));
     MI_WaitNDma( DMA_PIPE );
     StopToRead();
     MI_WaitNDma( DMA_RECV );
-OS_SetDebugLED((u8)(0xD0 | block));
+    return SDCARD_ErrStatus;
+
+err:
+    MI_StopNDma( DMA_RECV );
+    MI_StopNDma( DMA_PIPE );
+    StopToRead();
+    AESi_Reset();
+    return SDCARD_ErrStatus;
 }
 
 /*---------------------------------------------------------------------------*
@@ -301,36 +301,26 @@ OS_SetDebugLED((u8)(0xD0 | block));
 
   Returns:      TRUE/FALSE
  *---------------------------------------------------------------------------*/
-static BOOL nandRtfsIoFirm( int driveno, u32 block, void* buffer, u16 count, BOOL reading)
+static BOOL nandRtfsIoFirm( int driveno, u32 block, void* buffer, u16 count, BOOL reading )
 {
-    u16               result;
-    SdmcResultInfo    SdResult;
+    u16 result;
 #pragma unused( driveno)
 
-    /**/
     sdmcSelect( (u16)SDMC_PORT_NAND);
 
-    if( reading) {
-        if (useAES)
-        {
-            ReadAES(block, buffer, count);
-        }
-        else
-        {
-            ReadNormal(block, buffer, count);
-        }
-        result = 0; // always success
-//        result = sdmcReadFifo( buffer, count, block, NULL, &SdResult);
-//        result = sdmcRead( buffer, count, block, NULL, &SdResult);
-    }else{
-        result = sdmcWriteFifo( buffer, count, block, NULL, &SdResult);
-//        result = sdmcWrite( buffer, count, block, NULL, &SdResult);
+    if( reading )
+    {
+        result = useAES ?
+                ReadAES( block, buffer, count ) :
+                ReadNormal( block, buffer, count );
     }
-    if( result) {
-        return FALSE;
+    else
+    {
+        SdmcResultInfo SdResult;
+        result = sdmcWriteFifo( buffer, count, block, NULL, &SdResult );
     }
 
-    return TRUE;
+    return result ? FALSE : TRUE;
 }
 
 /*---------------------------------------------------------------------------*
@@ -346,36 +336,26 @@ static BOOL nandRtfsIoFirm( int driveno, u32 block, void* buffer, u16 count, BOO
 
   Returns:      TRUE/FALSE
  *---------------------------------------------------------------------------*/
-static BOOL sdmcRtfsIoFirm( int driveno, u32 block, void* buffer, u16 count, BOOL reading)
+static BOOL sdmcRtfsIoFirm( int driveno, u32 block, void* buffer, u16 count, BOOL reading )
 {
-    u16               result;
-    SdmcResultInfo    SdResult;
+    u16 result;
 #pragma unused( driveno)
 
-    /**/
-    sdmcSelect( (u16)SDMC_PORT_CARD);
+    sdmcSelect( (u16)SDMC_PORT_CARD );
 
-    if( reading) {
-        if (useAES)
-        {
-            ReadAES(block, buffer, count);
-        }
-        else
-        {
-            ReadNormal(block, buffer, count);
-        }
-        result = 0; // always success
-//        result = sdmcReadFifo( buffer, count, block, NULL, &SdResult);
-//        result = sdmcRead( buffer, count, block, NULL, &SdResult);
-    }else{
-        result = sdmcWriteFifo( buffer, count, block, NULL, &SdResult);
-//        result = sdmcWrite( buffer, count, block, NULL, &SdResult);
+    if( reading )
+    {
+        result = useAES ?
+                ReadAES( block, buffer, count ) :
+                ReadNormal( block, buffer, count );
     }
-    if( result) {
-        return FALSE;
+    else
+    {
+        SdmcResultInfo SdResult;
+        result = sdmcWriteFifo( buffer, count, block, NULL, &SdResult );
     }
 
-    return TRUE;
+    return result ? FALSE : TRUE;
 }
 
 /*---------------------------------------------------------------------------*
@@ -394,8 +374,9 @@ static BOOL nandRtfsAttachFirm( int driveno, int partition_no)
     BOOLEAN   result;
     DDRIVE    pdr;
 
-    if( partition_no >= NAND_FAT_PARTITION_COUNT) {
-        return( FALSE);
+    if( partition_no >= NAND_FAT_PARTITION_COUNT )
+    {
+        return FALSE;
     }
 
     pdr.dev_table_drive_io     = nandRtfsIoFirm;
@@ -408,25 +389,26 @@ static BOOL nandRtfsAttachFirm( int driveno, int partition_no)
     pdr.controller_number      = 0;
     pdr.logical_unit_number    = 0;
 
-    switch( partition_no) {
-      case 0:
-        result = rtfs_attach( driveno, &pdr, "SD1p0"); //構造体がFSライブラリ側にコピーされる
+    switch( partition_no )
+    {
+    case 0:
+        result = rtfs_attach( driveno, &pdr, "SD1p0" ); //構造体がFSライブラリ側にコピーされる
         break;
-      case 1:
-        result = rtfs_attach( driveno, &pdr, "SD1p1"); //構造体がFSライブラリ側にコピーされる
+    case 1:
+        result = rtfs_attach( driveno, &pdr, "SD1p1" ); //構造体がFSライブラリ側にコピーされる
         break;
-      case 2:
-        result = rtfs_attach( driveno, &pdr, "SD1p2"); //構造体がFSライブラリ側にコピーされる
+    case 2:
+        result = rtfs_attach( driveno, &pdr, "SD1p2" ); //構造体がFSライブラリ側にコピーされる
         break;
-      case 3:
-        result = rtfs_attach( driveno, &pdr, "SD1p3"); //構造体がFSライブラリ側にコピーされる
+    case 3:
+        result = rtfs_attach( driveno, &pdr, "SD1p3" ); //構造体がFSライブラリ側にコピーされる
         break;
-      default:
+    default:
         result = FALSE;
         break;
     }
 
-    return( result);
+    return result;
 }
 
 /*---------------------------------------------------------------------------*
@@ -455,9 +437,9 @@ static BOOL sdmcRtfsAttachFirm( int driveno)
     pdr.controller_number      = 0;
     pdr.logical_unit_number    = 0;
 
-    result = rtfs_attach( driveno, &pdr, "SD0");    //構造体がFSライブラリ側にコピーされる
+    result = rtfs_attach( driveno, &pdr, "SD0" );    //構造体がFSライブラリ側にコピーされる
 
-    return( result);
+    return result;
 }
 
 /*---------------------------------------------------------------------------*
@@ -469,16 +451,19 @@ static BOOL sdmcRtfsAttachFirm( int driveno)
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-BOOL FATFS_InitFIRM( void )
+BOOL FATFS_InitFIRM( void* nandContext )
 {
     /* RTFSライブラリを初期化 */
-    if(!FATFSi_rtfs_init())
+    if( !FATFSi_rtfs_init() )
     {
         return FALSE;
     }
 
+    /* NAND初期化パラメータの設定 */
+    SDNandContext = (SDPortContext*)nandContext;
+
     /* SDドライバ初期化 */
-    if (FATFSi_sdmcInit(SDMC_NOUSE_DMA, NULL, NULL) != SDMC_NORMAL)
+    if ( FATFSi_sdmcInit( SDMC_NOUSE_DMA, NULL, NULL ) != SDMC_NORMAL )
     {
         return FALSE;
     }
@@ -496,22 +481,22 @@ BOOL FATFS_InitFIRM( void )
  *---------------------------------------------------------------------------*/
 BOOL FATFS_MountDriveFirm( int driveno, FATFSMediaType media, int partition_no )
 {
-    if (media == FATFS_MEDIA_TYPE_NAND)
+    if ( media == FATFS_MEDIA_TYPE_NAND )
     {
         // CAUTION!: 同じ関数を2回呼び出す理由について要確認。
-        if ( !nandRtfsAttachFirm(driveno, partition_no) || nandRtfsAttachFirm(driveno, partition_no))
+        if ( !nandRtfsAttachFirm( driveno, partition_no ) || nandRtfsAttachFirm( driveno, partition_no ) )
         {
             return FALSE;
         }
     }
     else
     {
-        if (partition_no)   // support only 0
+        if ( partition_no )   // support only 0
         {
             return FALSE;
         }
         // CAUTION!: 同じ関数を2回呼び出す理由について要確認。
-        if ( !sdmcRtfsAttachFirm(driveno) || sdmcRtfsAttachFirm(driveno))
+        if ( !sdmcRtfsAttachFirm( driveno ) || sdmcRtfsAttachFirm( driveno ) )
         {
             return FALSE;
         }

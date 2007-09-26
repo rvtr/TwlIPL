@@ -17,6 +17,8 @@
 #include        <nitro/code32.h>
 #include        <firm.h>
 
+#define FIRM_ENABLE_JTAG
+
 extern void TwlMain(void);
 extern void OS_IrqHandler(void);
 extern void *const _start_ModuleParams[];
@@ -54,10 +56,12 @@ extern void SDK_AUTOLOAD_LIST_END(void);        // end pointer to autoload infor
  *---------------------------------------------------------------------------*/
 SDK_WEAK_SYMBOL asm void _start( void )
 {
+#ifdef FIRM_ENABLE_JTAG
         ldr     r1, =REG_JTAG_ADDR
         ldrh    r2, [r1]
         orr     r2, r2, #REG_SCFG_JTAG_CPUJE_MASK | REG_SCFG_JTAG_ARM7SEL_MASK
         strh    r2, [r1]
+#endif
 
         //---- set IME = 0
         //     ( use that LSB of HW_REG_BASE equal to 0 )
@@ -234,13 +238,19 @@ SDK_WEAK_SYMBOL asm void _start_AutoloadDoneCallback( void* argv[] )
 
   Description:  detect main memory size.
                 result is written into (u32*)HW_MMEMCHECKER_SUB.
-                value is [OS_CONSOLE_SIZE_4MB|OS_CONSOLE_SIZE_8MB]
+                value is [OS_CONSOLE_SIZE_4MB|OS_CONSOLE_SIZE_8MB|
+                OS_CONSOLE_SIZE_16MB|OS_CONSOLE_SIZE_32MB]
+
+
+
+
 
   Arguments:    None.
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
-#define OSi_IMAGE_DIFFERENCE 0x400000
+#define OSi_IMAGE_DIFFERENCE  0x400000
+#define OSi_IMAGE_DIFFERENCE2 0xb00000
 
 static asm void detect_main_memory_size( void )
 {
@@ -254,13 +264,39 @@ static asm void detect_main_memory_size( void )
         ldrh    r12, [r3]
         cmp     r1, r12
 
-        movne   r0, #OS_CONSOLE_SIZE_8MB
+
         bne     @2
 
         add     r1, r1, #1
         cmp     r1, #2 // check 2 loop
         bne     @1
+        b       @4
+
+        //---- 8MB or 16MB or 32MB
 @2:
+        // check if running on twl/nitro
+        ldr     r1, =REG_CLK_ADDR
+        ldrh    r12, [r1]
+        tst     r12, #REG_SCFG_CLK_WRAMHCLK_MASK
+        moveq   r0, #OS_CONSOLE_SIZE_8MB
+        beq     @4
+
+        //---- 16MB or 32MB
+        mov     r1, #0
+        add     r3, r2, #OSi_IMAGE_DIFFERENCE2
+@3:
+        strh    r1, [r2]
+        ldrh    r12, [r3]
+        cmp     r1, r12
+
+        movne   r0, #OS_CONSOLE_SIZE_32MB
+        bne     @4
+
+        add     r1, r1, #1
+        cmp     r1, #2 // check 2 loop
+        bne     @3
+        mov     r0, #OS_CONSOLE_SIZE_16MB
+@4:
         strh    r0, [r2]
         bx      lr
 }

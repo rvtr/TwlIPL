@@ -32,7 +32,7 @@ void OS_InitFIRM(void)
 {
 #ifdef SDK_ARM9
     //---- system shared area check
-    SDK_ASSERT((u32)&(OS_GetSystemWork()->command_area) == HW_CMD_AREA);
+//    SDK_ASSERT((u32)&(OS_GetSystemWork()->command_area) == HW_CMD_AREA);
 
     //----------------------------------------------------------------
     // for ARM9
@@ -64,7 +64,7 @@ void OS_InitFIRM(void)
     OS_SetIrqStackChecker();
 
     //---- Init Exception System
-    OS_InitException();
+//    OS_InitException();
 
     //---- Init MI (Wram bank and DMA0 arranged)
     MI_Init();

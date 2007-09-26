@@ -34,16 +34,25 @@ int acPool[3];
 
 void TwlMain( void )
 {
-//    OS_TPrintf( "\nNAND Boot time is %d msec.\n", OS_TicksToMilliSecondsBROM32(OS_GetTick()));
+    /* FromBromで必要なものはここで待避 */
 
-#ifndef BOOT_SECURE_SRL
-#define FIRM_SHARD      HW_TWL_SECONDARY_ROM_HEADER_BUF
-#define FIRM_SHARD_END  HW_TWL_MAIN_MEM_END
-#define FIRM_SHARD_SIZE (FIRM_SHARD_END-FIRM_SHARD)
-    MIi_CpuClearFast( 0, (void*)FIRM_SHARD, FIRM_SHARD_SIZE );
-    DC_FlushRange( (void*)FIRM_SHARD, FIRM_SHARD_SIZE );
-//    MIi_CpuClearFast( 0, (void*)OSi_GetFromBromAddr(), sizeof(OSFromBromBuf) );
+#ifdef BOOT_SECURE_SRL
+    /* 鍵はどこへ？ */
 #endif
+    MIi_CpuClearFast( 0, (void*)OSi_GetFromBromAddr(), sizeof(OSFromBromBuf) );
+
+/* メインメモリのクリア領域  (TODO: Reset時に残す領域がある(ここでは無条件で残すようにする)) */
+#define FIRM_CLEAR_A      (FIRM_CLEAR_A_END-FIRM_CLEAR_A_SIZE)
+#define FIRM_CLEAR_A_END  HW_TWL_MAIN_MEM_END
+#define FIRM_CLEAR_A_SIZE 0x8000
+#define FIRM_CLEAR_B      HW_TWL_MAIN_MEM
+#define FIRM_CLEAR_B_END  (FIRM_CLEAR_B + FIRM_CLEAR_B_SIZE)
+#define FIRM_CLEAR_B_SIZE 0x10000
+//    MIi_CpuClearFast( 0, (void*)FIRM_CLEAR_A, FIRM_CLEAR_A_SIZE );
+    MIi_CpuClearFast( 0, (void*)FIRM_CLEAR_B, FIRM_CLEAR_B_SIZE );
+    DC_FlushRange( (void*)FIRM_CLEAR_A, FIRM_CLEAR_A_SIZE );
+    DC_FlushRange( (void*)FIRM_CLEAR_B, FIRM_CLEAR_B_SIZE );
+
     reg_GX_VRAMCNT_C = REG_GX_VRAMCNT_C_FIELD( TRUE, 0, 0x2);
 
     OS_InitFIRM();
