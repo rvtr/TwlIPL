@@ -114,6 +114,12 @@ SECTIONS
 		SDK_STATIC_SINIT_END		=.;
 				#:::::::::: text/rodata
 		SDK_STATIC_TEXT_END		=.;
+		. = ALIGN(4);
+		SDK_STATIC_ETABLE_START =.;
+		__exception_table_start__ =.;
+				EXCEPTION
+		__exception_table_end__ =.;
+		SDK_STATIC_ETABLE_END =.;
 	
 		#
 		#  DATA BLOCK: READ WRITE
@@ -227,12 +233,6 @@ SECTIONS
 				<END.AUTOLOAD.LIBRARIES>
 				<FOREACH.AUTOLOAD.OBJECTS=.etable>
 				<AUTOLOAD.OBJECT=.exception:t>
-		. = ALIGN(4);
-		SDK_STATIC_ETABLE_START =.;
-		__exception_table_start__ =.;
-				EXCEPTION
-		__exception_table_end__ =.;
-		SDK_STATIC_ETABLE_END =.;
 				<END.AUTOLOAD.OBJECTS>
 				<FOREACH.AUTOLOAD.OBJECTS=.rodata>
 				<AUTOLOAD.OBJECT=.rodata:t>
