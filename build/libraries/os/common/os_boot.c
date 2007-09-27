@@ -23,11 +23,15 @@
 #include <twl/aes/ARM7/lo.h>
 #endif
 
-void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w );
+#if 0
+    課題:
+        OSi_BootCoreのコピー先決定
 
-#ifdef SDK_ARM7
-#include <twl/i2c/ARM7/i2c.h>
+        いろいろクリア (ITCM,DTCM,STACK,TEXT,RODATA,DATAなど (OSi_BootCoreは残す))
+            なので、OSi_BootCoreは次のプログラムですぐに壊されそうなところを使う
 #endif
+
+void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w );
 
 /*---------------------------------------------------------------------------*
   Name:         OSi_Boot
@@ -54,9 +58,7 @@ void OSi_Boot( void* entry, MIHeader_WramRegs* w )
 #endif // SDK_ARM7
 
     MI_CpuCopyFast( OSi_BootCore, OSBootCore, 0x200 );
-#ifdef SDK_ARM7
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, (0xff));
-#endif
+
     OSBootCore(p, w);
 }
 
@@ -134,7 +136,7 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
         mov     r10, r1
 
 #ifdef SDK_ARM9
-#if 1
+
         // wait for request of wram map
         ldr     r3, =REG_SUBPINTF_ADDR
         mov     r2, #REG_PXI_SUBPINTF_A7STATUS_MASK
@@ -143,7 +145,7 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
         and     r0, r0, r2
         cmp     r0, r2
         bne     @0
-#endif
+
         // r10- => r9-r2
         ldr     r9, =REG_MBK1_ADDR
         add     r2, r9, #32
@@ -152,7 +154,7 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
         str     r3, [r9], #4
         cmp     r9, r2
         blt     @1
-#if 1
+
         // notify wram map
         ldr     r3, =REG_SUBPINTF_ADDR
         mov     r0, #REG_PXI_SUBPINTF_A9STATUS_MASK
@@ -167,9 +169,9 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
         // finalize pxi
         mov     r0, #0
         str     r0, [r3]
-#endif
-#else
-#if 1
+
+#else   // ARM7
+
         // request wram map
         ldr     r3, =REG_MAINPINTF_ADDR
         mov     r0, #REG_PXI_MAINPINTF_A7STATUS_MASK
@@ -184,7 +186,6 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
         // finalize pxi
         mov     r0, #0
         str     r0, [r3]
-#endif
 
         // r10- => r9-r2
         add     r10, r10, #32
@@ -195,6 +196,7 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
         str     r3, [r9], #4
         cmp     r9, r2
         blt     @1
+
 #endif
 
         // clear stack with r4-r9

@@ -213,7 +213,7 @@ void FATFS_DisableAES( void )
  *---------------------------------------------------------------------------*/
 static u16 ReadNormal(u32 block, void *dest, u16 count)
 {
-    OS_TPrintf("ReadNormal(%d, 0x%08X, %d) is calling.\n", block, dest, count);
+    //OS_TPrintf("ReadNormal(%d, 0x%08X, %d) is calling.\n", block, dest, count);
 
     MIi_Sd1_NDmaRecv( DMA_PIPE, dest, (u32)(count * SECTOR_SIZE) );
     StartToRead( block, count );
@@ -239,7 +239,7 @@ static u16 ReadAES(u32 block, void *dest, u16 count)
 {
     u32 offset = 0; // in bytes
 
-    OS_TPrintf("ReadAES(%d, 0x%08X, %d) is calling.\n", block, dest, count);
+    //OS_TPrintf("ReadAES(%d, 0x%08X, %d) is calling.\n", block, dest, count);
 
     MIi_NDmaPipeSetup( DMA_PIPE, (void*)SDIF_FI, (void*)REG_AES_IFIFO_ADDR, PIPE_SIZE );
 

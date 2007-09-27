@@ -15,9 +15,7 @@
   $Author$
  *---------------------------------------------------------------------------*/
 #include <firm.h>
-#ifdef SDK_ARM7
-#include <twl/i2c/ARM7/i2c.h>
-#endif
+
 /*---------------------------------------------------------------------------*
   Name:         OS_InitNOR
 
@@ -106,44 +104,33 @@ void OS_InitFIRM(void)
     //----------------------------------------------------------------
     // for ARM7
 
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x03, 0x00);
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, (0xff));
-
     //---- Init interProcessor I/F
     //PXI_Init();
     PXI_InitFifoFIRM();
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, (0xf0));
 
     //---- Init Arena (SUBPRIV-WRAM arena)
     OS_InitArena();
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, (0x3));
 
     //---- Init Spinlock
 //    OS_InitLock();
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, (0x2));
 
     //---- Init IRQ Table
     OS_InitIrqTable();
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, (0x1));
 
 #define SDK_EXCEPTION_BUG
 #ifndef SDK_EXCEPTION_BUG
     //---- Init Exception System
     OS_InitException();
 #endif
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, (0x0));
 
     //---- Init Tick
     OS_InitTick();
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, (0x10));
 
     //---- Init Alarm System
     OS_InitAlarm();
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, (0x20));
 
     //---- Init Thread System
     OS_InitThread();
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, (0x30));
 
     //---- Init Reset System
 #ifndef SDK_SMALL_BUILD
