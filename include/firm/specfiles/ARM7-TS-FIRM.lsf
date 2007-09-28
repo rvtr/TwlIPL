@@ -23,6 +23,9 @@ Static $(TARGET_NAME)
 	Address		0x037f8000
 	Object		$(OBJS_STATIC)
 	Library		$(LLIBS) $(GLIBS) $(CW_LIBS)
+	Object		* (.etable)
 	Object		* (.wram)
-	StackSize	1024 512
+	Object		* (.ltdwram)
+	Object		* (.ltdmain)
+	StackSize	1024 1024
 }

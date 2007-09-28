@@ -113,6 +113,8 @@ extern "C" {
 //---- PMIC_BT_CRCT
 #define PMIC_BT_CRCT_TEMP_ON    (1<< 0)
 #define PMIC_BT_CRCT_AMPR_ON    (1<< 1)
+#define PMIC_BT_CRCT_BT2_ON     (1<< 2)
+#define PMIC_BT_CRCT_BT3_ON     (1<< 3)
 #define PMIC_BT_CRCT_AK_SHIFT   4
 #define PMIC_BT_CRCT_AK_MASK    (0x3<< PMIC_BT_CRCT_AK_SHIFT)
 #define PMIC_BT_CRCT_TK_SHIFT   6

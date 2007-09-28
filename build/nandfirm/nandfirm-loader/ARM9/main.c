@@ -34,6 +34,7 @@ static const u8 rsa_key[128] =
     0xa1, 0x96, 0xc6, 0xf7, 0x61, 0x68, 0x66, 0xe6, 0x65, 0x12, 0xb7, 0xf1, 0x49
 };
 #else
+    /* 鍵はどこへ？ */
 #define RSA_KEY_ADDR    OSi_GetFromBromAddr()->rsa_pubkey[7]
 #endif
 
@@ -74,7 +75,9 @@ static void PreInit(void)
     // メインメモリ関連
 
     // SHARED領域クリア (IS-TWL-DEBUGGERの更新待ち)
-    //MIi_CpuClearFast( 0, (void*)HW_MAIN_MEM_SHARED, HW_MAIN_MEM_SHARED_END-HW_MAIN_MEM_SHARED );
+#ifdef SDK_FINALROM
+    MIi_CpuClearFast( 0, (void*)HW_MAIN_MEM_SHARED, HW_MAIN_MEM_SHARED_END-HW_MAIN_MEM_SHARED );
+#endif
 }
 
 void TwlMain( void )
@@ -100,7 +103,7 @@ void TwlMain( void )
     {
 #ifndef SDK_FINALROM
         // 127: before BootMenu
-        pf_cnt = 127;
+        pf_cnt = PRFILE_MAX-1;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
 

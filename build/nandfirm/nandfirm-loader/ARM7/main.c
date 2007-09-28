@@ -81,13 +81,17 @@ static void PreInit(void)
 
 void TwlSpMain( void )
 {
-#ifdef FIRM_ENABLE_JTAG
-    reg_SCFG_JTAG = REG_SCFG_JTAG_CPUJE_MASK | REG_SCFG_JTAG_ARM7SEL_MASK;
-#endif // FIRM_ENABLE_JTAG
+    // OS_InitDebugLED and OS_SetDebugLED are able to call after OS_Init
+#ifndef SDK_FINALROM
+    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x03, 0x00);
+    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, ++step);
+#endif
 
     PreInit();
 
 #ifndef SDK_FINALROM
+    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, ++step);
+
     // 0: before PXI
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
@@ -99,7 +103,6 @@ void TwlSpMain( void )
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
 
-    OS_InitDebugLED();
     OS_SetDebugLED(++step);
 
     PM_InitFIRM();
@@ -199,7 +202,7 @@ void TwlSpMain( void )
                 {
 #ifndef SDK_FINALROM
                     // 127: before BootMenu
-                    pf_cnt = 127;
+                    pf_cnt = PRFILE_MAX-1;
                     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
                     OS_SetDebugLED(++step);

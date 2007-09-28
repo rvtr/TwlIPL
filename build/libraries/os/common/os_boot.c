@@ -54,7 +54,7 @@ void OSi_Boot( void* entry, MIHeader_WramRegs* w )
 #ifdef SDK_ARM9
     OSBootCore = (void*)HW_ITCM;
 #else // SDK_ARM7
-    OSBootCore = (void*)HW_EXT_WRAM;
+    OSBootCore = (void*)(HW_PRV_WRAM_SYS_STACK_DEFAULT - 0x200);
 #endif // SDK_ARM7
 
     MI_CpuCopyFast( OSi_BootCore, OSBootCore, 0x200 );

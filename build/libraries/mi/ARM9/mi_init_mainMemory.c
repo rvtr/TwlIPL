@@ -63,8 +63,8 @@ asm void  MIi_InitMainMemCR( void )
 {
         mov     r12, lr
 
-        mov     r0, #0x8000        // low period 0.97ms
-        bl      OS_SpinWait
+        mov     r0, #0x10000        // low period 0.97ms
+        bl      OS_SpinWaitCpuCycles
 
         ldr     r3, =REG_EXMEMCNT_ADDR
         mov     r1, #REG_MI_EXMEMCNT_CE2_MASK
@@ -74,8 +74,8 @@ asm void  MIi_InitMainMemCR( void )
 
         strh    r1, [r3]
 
-        mov     r0, #0x8000        // high period 0.97ms
-        bl      OS_SpinWait
+        mov     r0, #0x10000        // high period 0.97ms
+        bl      OS_SpinWaitCpuCycles
 
         ldr     r3,  =HW_WRAM_AREA - 2
 #ifdef SDK_BB

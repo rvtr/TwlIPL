@@ -139,6 +139,18 @@ SECTIONS
 				<FOREACH.STATIC.LIBRARIES=.data>
 				<STATIC.LIBRARY=.data:t>
 				<END.STATIC.LIBRARIES>
+				<FOREACH.STATIC.OBJECTS=.ltdwram>
+				<STATIC.OBJECT=.ltdwram:t>
+				<END.STATIC.OBJECTS>
+				<FOREACH.STATIC.LIBRARIES=.ltdwram>
+				<STATIC.LIBRARY=.ltdwram:t>
+				<END.STATIC.LIBRARIES>
+				<FOREACH.STATIC.OBJECTS=.ltdmain>
+				<STATIC.OBJECT=.ltdmain:t>
+				<END.STATIC.OBJECTS>
+				<FOREACH.STATIC.LIBRARIES=.ltdmain>
+				<STATIC.LIBRARY=.ltdmain:t>
+				<END.STATIC.LIBRARIES>
 				#:::::::::: data
 		SDK_STATIC_DATA_END		=.;
 		. = ALIGN(4);
@@ -179,6 +191,18 @@ SECTIONS
 				<END.STATIC.OBJECTS>
 				<FOREACH.STATIC.LIBRARIES=.bss>
 				<STATIC.LIBRARY=.bss:t>
+				<END.STATIC.LIBRARIES>
+				<FOREACH.STATIC.OBJECTS=.ltdwram>
+				<STATIC.OBJECT=.ltdwram.bss:t>
+				<END.STATIC.OBJECTS>
+				<FOREACH.STATIC.LIBRARIES=.ltdwram>
+				<STATIC.LIBRARY=.ltdwram.bss:t>
+				<END.STATIC.LIBRARIES>
+				<FOREACH.STATIC.OBJECTS=.ltdmain>
+				<STATIC.OBJECT=.ltdmain.bss:t>
+				<END.STATIC.OBJECTS>
+				<FOREACH.STATIC.LIBRARIES=.ltdmain>
+				<STATIC.LIBRARY=.ltdmain.bss:t>
 				<END.STATIC.LIBRARIES>
 				#:::::::::: bss
 		. = ALIGN(4);
