@@ -188,29 +188,21 @@ BOOL FATFS_LoadHeader( void )
     return TRUE;
 }
 
-static void FATFSi_AddCounter(AESCounter* pCounter, u32 nums)
-{
-    u32 data = 0;
-    int i;
-    for (i = 15; i >= 0; i--)
-    {
-        data += pCounter->bytes[i] + (nums & 0xFF);
-        pCounter->bytes[i] = (u8)(data & 0xFF);
-        data >>= 8;
-        nums >>= 8;
-        if ( !data && !nums )
-        {
-            break;
-        }
-    }
-}
+/*---------------------------------------------------------------------------*
+  Name:         FATFSi_GetCounter
 
+  Description:  get counter
+
+  Arguments:    offset  offset from head of ROM_Header
+
+  Returns:      counter
+ *---------------------------------------------------------------------------*/
 static AESCounter* FATFSi_GetCounter( u32 offset )
 {
     static AESCounter counter;
     MI_CpuCopy8(rh->s.main_static_digest, &counter, 12);
     counter.words[3] = 0;
-    FATFSi_AddCounter(&counter, offset - SECURE_AREA_START);
+    AESi_AddCounter(&counter, offset - offsetof(ROM_Header, s.main_ltd_rom_offset));
     return &counter;
 }
 
@@ -271,60 +263,64 @@ BOOL FATFS_LoadMenu( void )
 #endif
     }
     // load ARM9 extended static region with AES
-    if ( rh->s.main_ex_size > 0 )
+    if ( rh->s.main_ltd_size > 0 )
     {
 #ifndef SDK_FINALROM
         // 70: before PXI
         pf_cnt = 70;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-        profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM9_STATIC_EX;    // checkpoint
+        profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM9_LTD_STATIC;    // checkpoint
 #endif
-        PXI_NotifyID( FIRM_PXI_ID_LOAD_ARM9_STATIC_EX );
+        PXI_NotifyID( FIRM_PXI_ID_LOAD_ARM9_LTD_STATIC );
         if ( !rh->s.enable_aes )
         {
             FATFS_DisableAES();
         }
         else
         {
-            FATFS_EnableAES( AES_KEY_SLOT_A, FATFSi_GetCounter( rh->s.main_ex_rom_offset ) );
+            AESi_WaitKey();
+            AESi_LoadKey( AES_KEY_SLOT_A );
+            FATFS_EnableAES( FATFSi_GetCounter( rh->s.main_ltd_rom_offset ) );
         }
-        if ( !FATFS_LoadBuffer( rh->s.main_ex_rom_offset, rh->s.main_ex_size ) ||
-             PXI_RecvID() != FIRM_PXI_ID_AUTH_ARM9_STATIC_EX )
+        if ( !FATFS_LoadBuffer( rh->s.main_ltd_rom_offset, rh->s.main_ltd_size ) ||
+             PXI_RecvID() != FIRM_PXI_ID_AUTH_ARM9_LTD_STATIC )
         {
             return FALSE;
         }
 #ifndef SDK_FINALROM
         // 7x: after PXI
-        profile[pf_cnt++] = (u32)PROFILE_PXI_RECV | FIRM_PXI_ID_AUTH_ARM9_STATIC_EX;    // checkpoint
+        profile[pf_cnt++] = (u32)PROFILE_PXI_RECV | FIRM_PXI_ID_AUTH_ARM9_LTD_STATIC;    // checkpoint
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
     }
     // load ARM7 extended static region with AES
-    if ( rh->s.sub_ex_size > 0 )
+    if ( rh->s.sub_ltd_size > 0 )
     {
 #ifndef SDK_FINALROM
         // 90: before PXI
         pf_cnt = 90;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-        profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM7_STATIC_EX;    // checkpoint
+        profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM7_LTD_STATIC;    // checkpoint
 #endif
-        PXI_NotifyID( FIRM_PXI_ID_LOAD_ARM7_STATIC_EX );
+        PXI_NotifyID( FIRM_PXI_ID_LOAD_ARM7_LTD_STATIC );
         if ( !rh->s.enable_aes )
         {
             FATFS_DisableAES();
         }
         else
         {
-            FATFS_EnableAES( AES_KEY_SLOT_A, FATFSi_GetCounter( rh->s.sub_ex_rom_offset ) );
+            AESi_WaitKey();
+            AESi_LoadKey( AES_KEY_SLOT_A );
+            FATFS_EnableAES( FATFSi_GetCounter( rh->s.sub_ltd_rom_offset ) );
         }
-        if ( !FATFS_LoadBuffer( rh->s.sub_ex_rom_offset, rh->s.sub_ex_size ) ||
-             PXI_RecvID() != FIRM_PXI_ID_AUTH_ARM7_STATIC_EX )
+        if ( !FATFS_LoadBuffer( rh->s.sub_ltd_rom_offset, rh->s.sub_ltd_size ) ||
+             PXI_RecvID() != FIRM_PXI_ID_AUTH_ARM7_LTD_STATIC )
         {
             return FALSE;
         }
 #ifndef SDK_FINALROM
         // 9x: after PXI
-        profile[pf_cnt++] = (u32)PROFILE_PXI_RECV | FIRM_PXI_ID_AUTH_ARM7_STATIC_EX;    // checkpoint
+        profile[pf_cnt++] = (u32)PROFILE_PXI_RECV | FIRM_PXI_ID_AUTH_ARM7_LTD_STATIC;    // checkpoint
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
     }

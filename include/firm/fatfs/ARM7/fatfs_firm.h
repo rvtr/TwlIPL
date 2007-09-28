@@ -31,12 +31,11 @@ extern "C" {
 
   Description:  enable AES data path
 
-  Arguments:    slot        aes key slot number
-                counter     initial counter value
+  Arguments:    counter     initial counter value
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void FATFS_EnableAES( AESKeySlot slot, const AESCounter* pCounter );
+void FATFS_EnableAES( const AESCounter* pCounter );
 
 /*---------------------------------------------------------------------------*
   Name:         FATFS_DisableAES

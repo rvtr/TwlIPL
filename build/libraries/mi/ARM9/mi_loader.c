@@ -454,52 +454,52 @@ BOOL MI_LoadMenu( void )
     }
 
     // load ARM9 extended static region
-    if ( rh->s.main_ex_size > 0 )
+    if ( rh->s.main_ltd_size > 0 )
     {
 #ifndef SDK_FINALROM
         // 70: before PXI
         pf_cnt = 70;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
-        if ( PXI_RecvID() !=  FIRM_PXI_ID_LOAD_ARM9_STATIC_EX ||
+        if ( PXI_RecvID() !=  FIRM_PXI_ID_LOAD_ARM9_LTD_STATIC ||
 #ifndef SDK_FINALROM
             // 71: after PXI
-            ((profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_ARM9_STATIC_EX), FALSE) ||
+            ((profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_ARM9_LTD_STATIC), FALSE) ||
             ((profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick())), FALSE) ||
 #endif
-             !MI_LoadModule( rh->s.main_ex_ram_address, rh->s.main_ex_size, rh->s.main_static_ex_digest ) )
+             !MI_LoadModule( rh->s.main_ltd_ram_address, rh->s.main_ltd_size, rh->s.main_ltd_static_digest ) )
         {
             return FALSE;
         }
 #ifndef SDK_FINALROM
         // 7x: after PXI
-        profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_AUTH_ARM9_STATIC_EX;    // checkpoint
+        profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_AUTH_ARM9_LTD_STATIC;    // checkpoint
 #endif
-        PXI_NotifyID( FIRM_PXI_ID_AUTH_ARM9_STATIC_EX );
+        PXI_NotifyID( FIRM_PXI_ID_AUTH_ARM9_LTD_STATIC );
     }
     // load ARM7 extended static region
-    if ( rh->s.sub_ex_size > 0 )
+    if ( rh->s.sub_ltd_size > 0 )
     {
 #ifndef SDK_FINALROM
         // 90: before PXI
         pf_cnt = 90;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
-        if ( PXI_RecvID() !=  FIRM_PXI_ID_LOAD_ARM7_STATIC_EX ||
+        if ( PXI_RecvID() !=  FIRM_PXI_ID_LOAD_ARM7_LTD_STATIC ||
 #ifndef SDK_FINALROM
             // 91: after PXI
-            ((profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_ARM7_STATIC_EX), FALSE) ||
+            ((profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_ARM7_LTD_STATIC), FALSE) ||
             ((profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick())), FALSE) ||
 #endif
-             !MI_LoadModule( rh->s.sub_ex_ram_address, rh->s.sub_ex_size, rh->s.sub_static_ex_digest ) )
+             !MI_LoadModule( rh->s.sub_ltd_ram_address, rh->s.sub_ltd_size, rh->s.sub_ltd_static_digest ) )
         {
             return FALSE;
         }
 #ifndef SDK_FINALROM
         // 9x: before PXI
-        profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_AUTH_ARM7_STATIC_EX;    // checkpoint
+        profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_AUTH_ARM7_LTD_STATIC;    // checkpoint
 #endif
-        PXI_NotifyID( FIRM_PXI_ID_AUTH_ARM7_STATIC_EX );
+        PXI_NotifyID( FIRM_PXI_ID_AUTH_ARM7_LTD_STATIC );
     }
     return TRUE;
 }

@@ -32,19 +32,6 @@ extern u32 NAND_FAT_PARTITION_COUNT;
 /*
     専用DMA関数
 */
-#define MIi_SRC_INC         (MI_NDMA_SRC_INC      | MI_NDMA_SRC_RELOAD_DISABLE)
-#define MIi_SRC_DEC         (MI_NDMA_SRC_DEC      | MI_NDMA_SRC_RELOAD_DISABLE)
-#define MIi_SRC_FIX         (MI_NDMA_SRC_FIX      | MI_NDMA_SRC_RELOAD_DISABLE)
-#define MIi_SRC_FILLDATA    (MI_NDMA_SRC_FILLDATA | MI_NDMA_SRC_RELOAD_DISABLE)
-
-#define MIi_DEST_INC        (MI_NDMA_DEST_INC     | MI_NDMA_DEST_RELOAD_DISABLE)
-#define MIi_DEST_DEC        (MI_NDMA_DEST_DEC     | MI_NDMA_DEST_RELOAD_DISABLE)
-#define MIi_DEST_FIX        (MI_NDMA_DEST_FIX     | MI_NDMA_DEST_RELOAD_DISABLE)
-#define MIi_DEST_INC_RELOAD (MI_NDMA_SRC_INC      | MI_NDMA_DEST_RELOAD_ENABLE)
-
-#define MIi_IMM             (MI_NDMA_IMM_MODE_ON)
-
-#define MIi_CONT            (MI_NDMA_CONTINUOUS_ON)
 //---------------- register setting
 static inline void MIi_SetSrc( u32 ndmaNo, u32 src )
 {
@@ -70,22 +57,9 @@ static inline void MIi_SetInterval( u32 ndmaNo, u32 intervalTimer, u32 prescaler
 #endif
     MI_NDMA_REG( ndmaNo, MI_NDMA_REG_BCNT_WOFFSET ) = intervalTimer | prescaler;
 }
-static inline void MIi_SetFillData( u32 ndmaNo, u32 data )
-{
-    MI_NDMA_REG( ndmaNo, MI_NDMA_REG_FDATA_WOFFSET ) = data;
-}
 static inline void MIi_SetControl( u32 ndmaNo, u32 contData )
 {
     MI_NDMA_REG( ndmaNo, MI_NDMA_REG_CNT_WOFFSET ) = contData;
-}
-static inline void MIi_NDmaRecv(u32 ndmaNo, const void *src, void *dest, u32 size)
-{
-    MIi_SetSrc( ndmaNo, (u32)src );
-    MIi_SetDest( ndmaNo, (u32)dest );
-    MIi_SetInterval( ndmaNo, MI_NDMA_NO_INTERVAL, MI_NDMA_INTERVAL_PS_1 );
-    MIi_SetTotalWordCount( ndmaNo, size/4 );
-    MIi_SetWordCount( ndmaNo, size/4 );
-    MIi_SetControl( ndmaNo, MI_NDMA_BWORD_16 | MI_NDMA_SRC_FIX | MIi_DEST_INC | MIi_IMM | MI_NDMA_ENABLE );
 }
 static inline void MIi_Sd1_NDmaRecv(u32 ndmaNo, void *dest, u32 size)
 {
@@ -94,7 +68,7 @@ static inline void MIi_Sd1_NDmaRecv(u32 ndmaNo, void *dest, u32 size)
     MIi_SetInterval( ndmaNo, MI_NDMA_NO_INTERVAL, MI_NDMA_INTERVAL_PS_1 );
     MIi_SetTotalWordCount( ndmaNo, size/4 );
     MIi_SetWordCount( ndmaNo, SECTOR_SIZE/4 );
-    MIi_SetControl( ndmaNo, MI_NDMA_BWORD_128 | MI_NDMA_SRC_FIX | MIi_DEST_INC | MI_NDMA_TIMING_SD_1 | MI_NDMA_ENABLE );
+    MIi_SetControl( ndmaNo, MI_NDMA_BWORD_128 | MI_NDMA_SRC_FIX | MI_NDMA_DEST_INC | MI_NDMA_TIMING_SD_1 | MI_NDMA_ENABLE );
 }
 
 static inline void MIi_NDmaPipeSetup(u32 ndmaNo, const void *src, void *dest, u32 size)
@@ -104,7 +78,7 @@ static inline void MIi_NDmaPipeSetup(u32 ndmaNo, const void *src, void *dest, u3
     MIi_SetInterval( ndmaNo, MI_NDMA_NO_INTERVAL, MI_NDMA_INTERVAL_PS_1 );
     MIi_SetTotalWordCount( ndmaNo, size/4 );
     MIi_SetWordCount( ndmaNo, size/4 );
-    MIi_SetControl( ndmaNo, MI_NDMA_BWORD_16 | MI_NDMA_SRC_FIX | MIi_DEST_FIX | MIi_IMM );
+    MIi_SetControl( ndmaNo, MI_NDMA_BWORD_8 | MI_NDMA_SRC_FIX | MI_NDMA_DEST_FIX | MI_NDMA_IMM_MODE_ON );   // AESi_Run is required BWORD_8
 }
 
 static inline void MIi_NDmaRestart(u32 ndmaNo)
@@ -114,7 +88,7 @@ static inline void MIi_NDmaRestart(u32 ndmaNo)
 }
 
 /*
-    専用NAND関数
+    専用SD関数
 */
 extern volatile SDMC_ERR_CODE   SDCARD_ErrStatus;
 extern s16  SDCARD_SDHCFlag;          /* SDHCカードフラグ */
@@ -163,27 +137,30 @@ static void StopToRead( void )
     CC_EXT_MODE = CC_EXT_MODE_PIO;  /* PIOモード(DMAモードOFF) */
 }
 
+/*
+    FATFS-SDMCの間にAESを組み込む
+    一部の設定は、FATFSを迂回して設定することになる。
+*/
+
 #define AES_GET_CNT_BITS(regValue, name)                        \
     ((regValue) & (REG_AES_AES_CNT_##name##_MASK))
 
 static BOOL useAES = FALSE;
+static AESCounter   aesCounter;
 
 /*---------------------------------------------------------------------------*
   Name:         FATFS_EnableAES
 
   Description:  enable AES data path
 
-  Arguments:    slot        aes key slot number
-                counter     initial counter value
+  Arguments:    counter     initial counter value
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void FATFS_EnableAES( AESKeySlot slot, const AESCounter* pCounter )
+void FATFS_EnableAES( const AESCounter* pCounter )
 {
     useAES = TRUE;
-    AESi_WaitKey();
-    AESi_LoadKey( slot );
-    AESi_SetCounter( pCounter );
+    aesCounter = *pCounter;
 }
 
 /*---------------------------------------------------------------------------*
@@ -249,9 +226,11 @@ static u16 ReadAES(u32 block, void *dest, u16 count)
     AESi_Reset();
     AESi_Reset();
     AESi_DmaRecv( DMA_RECV, dest, (u32)(count * SECTOR_SIZE), NULL, NULL );
-//  AESi_SetCounter( &aesCounter ); // remain???
-//  FATFSi_AddCounter( count * SECTOR_SIZE );  // update for next read
+    AESi_SetCounter( &aesCounter );
     AESi_Run( AES_MODE_CTR, 0, (u32)(count * SECTOR_SIZE / AES_BLOCK_SIZE), NULL, NULL );
+
+    // update for next read
+    AESi_AddCounter( &aesCounter, (u32)(count * SECTOR_SIZE / AES_BLOCK_SIZE) );
 
     StartToRead( block, count );
     if ( SDCARD_ErrStatus != SDMC_NORMAL )
@@ -259,7 +238,7 @@ static u16 ReadAES(u32 block, void *dest, u16 count)
         goto err;
     }
 
-    while ( block * SECTOR_SIZE > offset )
+    while ( count * SECTOR_SIZE > offset )
     {
         while ( AES_GET_CNT_BITS( reg_AES_AES_CNT, IFIFO_CNT ) )
         {

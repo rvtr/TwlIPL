@@ -25,9 +25,13 @@
 #include <twl/aes.h>
 #include <firm/format/format_rom_certificate.h>
 
-#define ENABLE_OVERLAY_DIGEST_ANNEX         // この定義が有効なら、OverlayのダイジェストをcompstaticのMB用のものとは別途持つようになる。
 
+//#define ENABLE_OVERLAY_DIGEST_ANNEX           // この定義が有効なら、OverlayのダイジェストをcompstaticのMB用のものとは別途持つようになる。
 
+#define ROM_KEYTABLE2_SIZE              0x3000      // TWL-ROMのTWL専用領域先頭にあるキーテーブル２サイズ。TWL専用領域のセキュア領域は、この後ろから開始。
+#define ROM_TWL_LTD_ALIGN               0x80000     // TWL-ROMのTWL専用領域の設定単位　※仕様書上は512KB
+#define ROM_TWL_LTD_ALIGN_SHIFT         19          // 上記の単位をビットシフトに換算
+#define ROM_TWL_ALL_NORMAL_AREA_FLAG    0x8000
 
 #define DIGEST_SIZE_SHA1        20
 
@@ -54,6 +58,7 @@
 
 #define DEFAULT_ROMFILE_SUFFIX      ".srl"
 #define DEFAULT_LISTFILE_SUFFIX     ".nlf"
+#define DEFAULT_LISTFILE_SUFFIX_TWL ".tlf"
 
 #define ROM_SIZE_MIN            0x20000
 
@@ -62,9 +67,7 @@
 
 #define SECURE_AREA_START       0x00004000
 #define SECURE_AREA_END         0x00008000
-#define SECURE_AREA_MAX         (SECURE_AREA_END - SECURE_AREA_START)
-#define SECURE_EX_AREA_START    0x00050000      //※とりあえず適当。最終的にはrsfで指定した値をROMヘッダに入れて使う
-#define SECURE_EX_AREA_END      ( SECURE_EX_AREA_START + SECURE_AREA_MAX )
+#define SECURE_AREA_SIZE        (SECURE_AREA_END - SECURE_AREA_START)
 
 #define CARD_LATENCY_MASK               0x083f1fff
 #define CARD_MROM_GAME_LATENCY          0x00010017
@@ -103,13 +106,18 @@ typedef struct ROM_Header_Short
     // 0x000 System Reserved
     //
     char    title_name[TITLE_NAME_MAX]; // Soft title name
-    char    game_code[GAME_CODE_MAX];  // Game code
+    char    game_code[GAME_CODE_MAX];   // Game code
     char    maker_code[MAKER_CODE_MAX]; // Maker code
     char    platform_code;              // Platform code    bit0: not support NTR,  bit1: support TWL ( NTR_only=0x00, NTR/TWL=0x03, TWL_only=0x02 )
     u8      rom_type;                  // Rom type
     u8      rom_size;                  // Rom size (2のrom_size乗 Mbit: ex. 128Mbitのときrom_size = 7)
 
-    u8      reserved_A[8];             // System Reserved A ( Set ALL 0 )
+    u8      reserved_A[7];             // System Reserved A ( Set ALL 0 )
+
+    u8      enable_signature:1;        // enable ROM Header signature
+    u8      enable_aes:1;              // enable AES encryption
+    u8      developer_encrypt:1;       // 開発用セキュリティがかかっている場合に"1"。製品版では"0"
+    u8:     5;
 
     u8:     6;
     u8      for_korea:1;               // For Korea
@@ -121,8 +129,8 @@ typedef struct ROM_Header_Short
     u8      comp_arm7_boot_area:1;     // Compress arm7 boot area
     u8      inspect_card:1;             // Show inspect card
     u8      disable_clear_memory_pad:1; // for Debugger
-    u8      enable_aes:1;               // enable AES encryption
-    u8      enable_signature:1;         // enable RSA signature
+    u8      enable_twl_rom_cache_read:1; // Enable TWL ROM cacheRead command
+    u8:     1;
     u8      warning_no_spec_rom_speed:1;// Warning not to specify rom speed
     u8      disable_detect_pull_out:1;  //
 
@@ -216,7 +224,7 @@ typedef struct ROM_Header_Short
     u32     sub_wram_config_data[4];        // developing...
 
     // 0x1B0 - reserved.
-    u8      reserved_EX_A[ 15 ];
+    u8      reserved_ltd_A[ 15 ];
 
     // 0x1BF - TWL expansion flags
     u8      codec_mode:1;               // 0:NTR mode, 1:TWL mode       // undeveloped
@@ -229,75 +237,51 @@ typedef struct ROM_Header_Short
     // 0x1C0 for EX Static modules
     //
     //  ARM9
-    u32     main_ex_rom_offset;           // ROM offset         // undeveloped
-    u8      reserved_EX_B[ 4 ];
-    void   *main_ex_ram_address;          // RAM address        // undeveloped
-    u32     main_ex_size;                 // Module size        // undeveloped
+    u32     main_ltd_rom_offset;           // ROM offset            // undeveloped
+    u8      reserved_ltd_B[ 4 ];
+    void   *main_ltd_ram_address;          // RAM address       // undeveloped
+    u32     main_ltd_size;                 // Module size       // undeveloped
 
     //  ARM7
-    u32     sub_ex_rom_offset;            // ROM offset         // undeveloped
-    u8      reserved_EX_C[ 4 ];
-    void   *sub_ex_ram_address;           // RAM address        // undeveloped
-    u32     sub_ex_size;                  // Module size        // undeveloped
+    u32     sub_ltd_rom_offset;            // ROM offset            // undeveloped
+    u8      reserved_ltd_C[ 4 ];
+    void   *sub_ltd_ram_address;           // RAM address       // undeveloped
+    u32     sub_ltd_size;                  // Module size       // undeveloped
 
-    //
-    // 0x1E0 for File Name Table EX [FNT_ex]
-    //
-    struct ROM_FNT *fnt_ex_offset;        // ROM offset         // undeveloped
-    u32     fnt_ex_size;                  // Table size         // undeveloped
+    // 0x01E0 - 0x01E8 for NITRO digest area offset & size
+    u32     nitro_digest_area_rom_offset;
+    u32     nitro_digest_area_size;
 
-    //
-    // 0x1E8 for File Allocation Table EX [FAT_ex]
-    //
-    struct ROM_FAT *fat_ex_offset;        // ROM offset         // undeveloped
-    u32     fat_ex_size;                  // Table size         // undeveloped
+    // 0x01E8 - 0x01F0 for TWL   digest area offset & size
+    u32     twl_digest_area_rom_offset;
+    u32     twl_digest_area_size;
 
-    //
-    // 0x1F0 for Overlay Tables EX [OVT_ex]
-    //
-    //  ARM9
-    struct ROM_OVT *main_ovt_ex_offset;   // ROM offset         // undeveloped
-    u32     main_ovt_ex_size;             // Table size         // undeveloped
+    // 0x01F0 - 0x01F8 for FS digest table1 offset & size
+    u32     digest1_table_offset;
+    u32     digest1_table_size;
 
-    //  ARM7
-    struct ROM_OVT *sub_ovt_ex_offset;    // ROM offset         // undeveloped
-    u32     sub_ovt_ex_size;              // Table size         // undeveloped
-
+    // 0x01F8 - 0x0200 for FS digest table1 offset
+    u32     digest2_table_offset;
+    u32     digest2_table_size;
 
     // 0x0200 - 0x0208 for FS digest config parameters
-    u32     fs_digest1_block_size;
-    u32     fs_digest2_covered_digest1_num;
+    u32     digest1_block_size;
+    u32     digest2_covered_digest1_num;
 
     // 0x0208 - 0x0210 for Banner for TWL
     u32     banner_twl_offset;
     u32     banner_twl_size;
 
-    // 0x0210 - 0x0220 for FS digest
-    u32     fs_digest1_table_offset;
-    u32     fs_digest1_table_size;
-    u32     fs_digest2_table_offset;
-    u8      reserved_EX_D[ 4 ];         // digest2_table_sizeは他パラメータから算出可能なので不要。( fs_digest1_table_size / fs_digest2_covered_digest1_num )でOK.
+    // 0x0210 - 0x0220 for AES key/seed
+    u8      aes_key[ 16 ];
 
-    // 0x0220 - 0x0230 for FS EX digest
-    u32     fs_ex_digest1_table_offset;
-    u32     fs_ex_digest1_table_size;
-    u32     fs_ex_digest2_table_offset;
-    u8      reserved_EX_E[ 4 ];
-
-    // 0x230 - 0x310 Rom Segment Digest
+    // 0x220 - 0x298 Rom Segment Digest
     u8      main_static_digest[ DIGEST_SIZE_SHA1 ];
     u8      sub_static_digest[ DIGEST_SIZE_SHA1 ];
-    u8      fnt_digest[ DIGEST_SIZE_SHA1 ];
-    u8      fat_digest[ DIGEST_SIZE_SHA1 ];
-    u8      fs_digest2_table_digest[ DIGEST_SIZE_SHA1 ];
-
+    u8      digest2_table_digest[ DIGEST_SIZE_SHA1 ];
     u8      banner_twl_digest[ DIGEST_SIZE_SHA1 ];
-
-    u8      main_static_ex_digest[ DIGEST_SIZE_SHA1 ];
-    u8      sub_static_ex_digest[ DIGEST_SIZE_SHA1 ];
-    u8      fnt_ex_digest[ DIGEST_SIZE_SHA1 ];
-    u8      fat_ex_digest[ DIGEST_SIZE_SHA1 ];
-    u8      fs_digest2_table_ex_digest[ DIGEST_SIZE_SHA1 ];
+    u8      main_ltd_static_digest[ DIGEST_SIZE_SHA1 ];
+    u8      sub_ltd_static_digest[ DIGEST_SIZE_SHA1 ];
 
 
 #ifdef ENABLE_OVERLAY_DIGEST_ANNEX
@@ -310,10 +294,6 @@ typedef struct ROM_Header_Short
     u8      main_overlay_digesttable_digest[ DIGEST_SIZE_SHA1 ];
     u8      sub_overlay_digesttable_digest[ DIGEST_SIZE_SHA1 ];
 
-    u32     main_ex_overlay_digest_table_offset;
-    u32     sub_ex_overlay_digest_table_offset;
-    u8      main_ex_overlay_digesttable_digest[ DIGEST_SIZE_SHA1 ];
-    u8      sub_ex_overlay_digesttable_digest[ DIGEST_SIZE_SHA1 ];
 #endif // ENABLE_OVERLAY_DIGEST_ANNEX
 }
 ROM_Header_Short;
