@@ -19,13 +19,14 @@
 
 #include <twl.h>
 
+#include <firm/memorymap.h>
 #include <firm/os.h>
 #include <firm/pxi.h>
 #include <firm/mi.h>
 #include <firm/pm.h>
 #include <firm/aes.h>
+#include <firm/fatfs.h>
 /*
-#include <firm/memorymap.h>
 #include <firm/nvram.h>
 #include <firm/gcd.h>
 */

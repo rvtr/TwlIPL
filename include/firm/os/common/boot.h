@@ -17,10 +17,7 @@
 #ifndef FIRM_OS_BOOT_H_
 #define FIRM_OS_BOOT_H_
 
-#include <twl/misc.h>
-#include <twl/types.h>
-#include <firm/memorymap.h>
-#include <firm/devices/firm_sdmc/ARM7/sdmc.h>  //from_brom.h—p
+#include <firm.h>
 #include <firm/format/from_brom.h>
 
 #include <nitro/hw/common/armArch.h>

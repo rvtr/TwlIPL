@@ -15,8 +15,6 @@
   $Author$
  *---------------------------------------------------------------------------*/
 #include <firm.h>
-#include <firm/fatfs.h>
-#include <twl/fatfs.h>
 #include <twl/os/ARM7/debugLED.h>
 
 //#define BOOT_SECURE_SRL   // 本番SRLをブートするときにだけ定義する
@@ -41,7 +39,7 @@
 
 static u8 fatfsHeap[FATFS_HEAP_SIZE] __attribute__ ((aligned (32)));
 
-static SDPortContext nandContext;   // 一時待避用 (次に渡すならSHAREDのどこかのアドレスにする)
+static SDPortContextData nandContext;   // 一時待避用 (次に渡すならSHAREDのどこかのアドレスにする)
 
 #ifndef SDK_FINALROM
 static u8 step = 0x80;

@@ -17,12 +17,10 @@
 
 #include <symbols.h>
 
-#include <firm/fatfs.h>
-#include <firm/sdmc.h>
+#include <firm.h>
 #include <firm/format/format_rom.h>
-#include <twl/aes.h>
-#include <twl/aes/ARM7/lo.h>
 #include <rtfs.h>
+#include <devices/sdif_reg.h>
 
 #define PXI_FIFO_TAG_DATA   PXI_FIFO_TAG_USER_0
 

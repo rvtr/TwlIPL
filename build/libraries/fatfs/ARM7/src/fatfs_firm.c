@@ -17,12 +17,12 @@
 
 #include <symbols.h>
 
-#include <firm/fatfs.h>
-#include <firm/sdmc.h>
-#include <firm/format/format_rom.h>
-#include <twl/aes.h>
-#include <twl/aes/ARM7/lo.h>
+#include <firm.h>
 #include <rtfs.h>
+#include <devices/sdif_reg.h>
+#include <devices/sdif_ip.h>
+#include <devices/sdmc_config.h>
+#include <twl/devices/sdmc/ARM7/sdmc.h>
 
 extern u32 NAND_FAT_PARTITION_COUNT;
 
@@ -442,7 +442,7 @@ BOOL FATFS_InitFIRM( void* nandContext )
     SDNandContext = (SDPortContext*)nandContext;
 
     /* SDÉhÉâÉCÉoèâä˙âª */
-    if ( FATFSi_sdmcInit( SDMC_NOUSE_DMA, NULL, NULL ) != SDMC_NORMAL )
+    if ( FATFSi_sdmcInit( SDMC_NOUSE_DMA ) != SDMC_NORMAL )
     {
         return FALSE;
     }

@@ -24,8 +24,6 @@
 #include <firm/format/gcdfirm.h>
 
 
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -37,6 +35,15 @@ extern "C" {
 #define RSA_PUBKEY_NUM_FROM_BROM    4
 #define AESKEY_NUM_FROM_BROM        4
 #endif // SDK_ARM7
+
+
+// sizeof(SDPortContext)
+typedef struct SDportContextData
+{
+    u32 data[17];
+}
+SDPortContextData;
+
 
 typedef struct
 {
@@ -75,7 +82,7 @@ typedef struct
 
     BLOWFISH_CTX  twl_blowfish[2];  // (4KB + ƒ¿) * 2
 
-    SDPortContext  SDNandContext;
+    SDPortContextData  SDNandContext;
 }
 OSFromBrom7Buf;
 

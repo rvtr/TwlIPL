@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <firm/pm.h>
+#include <twl/spi/common/pm_common.h>
 
 #define  OS_MSEC_TO_CPUCYC( msec ) ((u32)( ((HW_CPU_CLOCK/1000) * (u32)(msec)) ))
 
@@ -31,30 +32,30 @@
 void PM_InitFIRM( void )
 {
     // LED
-    PMi_ResetFlags( REG_PMIC_LED_CTL_ADDR, PMIC_LED_CTL_L12_AT_BLK | PMIC_LED_CTL_L12_BLK_BY_SLP );
-    PMi_SetParams( REG_PMIC_LED12_B4_ADDR,
-                   PMIC_LED12_B4_L1_100  | PMIC_LED12_B4_L2_100,
-                   PMIC_LED12_B4_L1_MASK | PMIC_LED12_B4_L2_MASK
+    PMi_ResetFlags( REG_PMIC_LED_CTL_ADDR, PMIC_LED_CTL_AUTO_BLINK | PMIC_LED_CTL_BLINK_BY_SLEEP );
+    PMi_SetParams( REG_PMIC_LVL4_BRT_ADDR,
+                   PMIC_LED_1_BRT_LEVEL_4_100  | PMIC_LED_2_BRT_LEVEL_4_100,
+                   PMIC_LVL4_BRT_LED_1_MASK | PMIC_LVL4_BRT_LED_2_MASK
                  );
-    PMi_SetParams( REG_PMIC_LED12_B3_ADDR,
-                   PMIC_LED12_B3_L1_OFF  | PMIC_LED12_B3_L2_100,
-                   PMIC_LED12_B3_L1_MASK | PMIC_LED12_B3_L2_MASK
+    PMi_SetParams( REG_PMIC_LVL3_BRT_ADDR,
+                   PMIC_LED_1_BRT_LEVEL_3_OFF  | PMIC_LED_2_BRT_LEVEL_3_100,
+                   PMIC_LVL3_BRT_LED_1_MASK | PMIC_LVL3_BRT_LED_2_MASK
                  );
-    PMi_SetParams( REG_PMIC_LED12_B2_ADDR,
-                   PMIC_LED12_B2_L1_100  | PMIC_LED12_B2_L2_OFF,
-                   PMIC_LED12_B2_L1_MASK | PMIC_LED12_B2_L2_MASK
+    PMi_SetParams( REG_PMIC_LVL2_BRT_ADDR,
+                   PMIC_LED_1_BRT_LEVEL_2_100  | PMIC_LED_1_BRT_LEVEL_2_OFF,
+                   PMIC_LVL2_BRT_LED_1_MASK | PMIC_LVL2_BRT_LED_2_MASK
                  );
-    PMi_SetParams( REG_PMIC_LED12_B1_ADDR,
-                   PMIC_LED12_B1_L1_OFF  | PMIC_LED12_B1_L2_OFF,
-                   PMIC_LED12_B1_L1_MASK | PMIC_LED12_B1_L2_MASK
+    PMi_SetParams( REG_PMIC_LVL1_BRT_ADDR,
+                   PMIC_LED_1_BRT_LEVEL_1_OFF  | PMIC_LED_2_BRT_LEVEL_1_OFF,
+                   PMIC_LVL1_BRT_LED_1_MASK | PMIC_LVL1_BRT_LED_2_MASK
                  );
 
     // LCD ON
-    PMi_SetFlags( REG_PMIC_CTL2_ADDR, PMIC_CTL2_LCD_PWR );
+    PMi_SetFlags( REG_PMIC_CTL2_ADDR, PMIC_CTL2_VDD50 );
 
     // back light ON
-    PMi_SetParams( REG_PMIC_BL1_BRT_ADDR, PMIC_BL_BRT_MAX, PMIC_BL1_BRT_MASK );
-    PMi_SetParams( REG_PMIC_BL2_BRT_ADDR, PMIC_BL_BRT_MAX, PMIC_BL2_BRT_MASK );
-    OS_SpinWait( OS_MSEC_TO_CPUCYC( 17*2 ) );
-    PMi_SetFlags( REG_PMIC_CTL2_ADDR, PMIC_CTL2_BKLT1 | PMIC_CTL2_BKLT2 );
+    PMi_SetParams( REG_PMIC_BL_BRT_A_ADDR, PMIC_BACKLIGHT_BRIGHT_MAX, PMIC_BL_BRT_A_MASK ); // TODO: less brightness
+    PMi_SetParams( REG_PMIC_BL_BRT_B_ADDR, PMIC_BACKLIGHT_BRIGHT_MAX, PMIC_BL_BRT_B_MASK ); // TODO: less brightness
+    OS_SpinWaitCpuCycles( OS_MSEC_TO_CPUCYC( 17*4 ) );
+    PMi_SetFlags( REG_PMIC_CTL2_ADDR, PMIC_CTL2_BACK_LIGHT_1 | PMIC_CTL2_BACK_LIGHT_2 );
 }

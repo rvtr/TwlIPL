@@ -19,7 +19,6 @@
 #define FIRM_PM_H_
 
 #ifdef SDK_ARM7
-#include <firm/pm/ARM7/pm_reg_ex.h>
 #include <firm/pm/ARM7/pm_pmic_ex.h>
 #include <firm/pm/ARM7/pm_init.h>
 #endif // SDK_ARM7

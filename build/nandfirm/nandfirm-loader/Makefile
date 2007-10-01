@@ -19,7 +19,8 @@
 
 FIRM_TARGET    = FIRM
 
-TWL_KEYSDIR = $(FIRM_ROOT)/../twl_firmware/bootrom/build/keys
+# if you have no valid key, comment out next line
+#TWL_KEYSDIR = $(FIRM_ROOT)/../twl_firmware/bootrom/build/keys
 
 
 #----------------------------------------------------------------------------
@@ -37,6 +38,7 @@ MAKEFIRM_RSA_PRVKEY	= $(TWL_KEYSDIR)/rsa/private_nand.der
 LDEPENDS_BIN	+=	wram_regs/wram_regs.rbin
 
 MAKEROM_ARM7_BASE       =       $(basename $(MAKEFIRM_ARM7))
+MAKEROM_FLAGS		+=	-F
 
 NITRO_MAKEROM	=	TRUE
 MAKEFIRM_FLAGS	+=	-p
