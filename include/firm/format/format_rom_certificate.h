@@ -27,8 +27,6 @@
 #define TWL_ROM_CERT_MAGIC_NUMBER       0x54524543      // "CERT"の文字列
 
 #define RSA_KEY_LENGTH                  ( 1024 / 8 )
-#define RSA_PUBKEY_1024_DER_MAX         0xc0            // 少しマージンをとってこの値
-#define RSA_PRVKEY_1024_DER_MAX         0x280
 #define ROM_CERT_SIGN_OFFSET            256
 
 #define ROM_HEADER_SIGN_TARGET_SIZE     0xe00
@@ -44,8 +42,8 @@ typedef struct RomCertificateHeader {
 // ROM証明書
 typedef struct RomCertificate {
     RomCertificateHeader    header;
-    u8                      reserved[ ( ROM_CERT_SIGN_OFFSET - sizeof(RomCertificateHeader) - RSA_PUBKEY_1024_DER_MAX ) ];
-    u8                      pubKey[ RSA_PUBKEY_1024_DER_MAX ];
+    u8                      reserved[ ROM_CERT_SIGN_OFFSET - sizeof(RomCertificateHeader) - RSA_KEY_LENGTH ];
+    u8                      pubKeyMod[ RSA_KEY_LENGTH ];
     u8                      sign[ RSA_KEY_LENGTH ];
 }RomCertificate;
 

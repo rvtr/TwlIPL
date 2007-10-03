@@ -33,6 +33,8 @@
 #define ROM_TWL_LTD_ALIGN_SHIFT         19          // 上記の単位をビットシフトに換算
 #define ROM_TWL_ALL_NORMAL_AREA_FLAG    0x8000
 
+#define DS_DLPLAY_SIGNATURE_PADDING_SIZE    512     // DSダウンロードプレイ署名格納エリアサイズ
+
 #define DIGEST_SIZE_SHA1        20
 
 #define DEFAULT_ALIGN           512
@@ -272,8 +274,13 @@ typedef struct ROM_Header_Short
     u32     banner_twl_offset;
     u32     banner_twl_size;
 
-    // 0x0210 - 0x0220 for AES key/seed
-    u8      aes_key[ 16 ];
+    // 0x0210 - 0x0218 for AES target offset & size
+    u32     aes_target_rom_offset;
+    u32     aes_target_size;
+
+    // 0x0218 - 0x0220 for TWL rom valid size
+    u32     twl_rom_valid_size;            // ROM Original Size
+    u8      reserved_ltd_D[ 4 ];
 
     // 0x220 - 0x298 Rom Segment Digest
     u8      main_static_digest[ DIGEST_SIZE_SHA1 ];
