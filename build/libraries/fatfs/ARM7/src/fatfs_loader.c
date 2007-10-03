@@ -43,7 +43,7 @@ BOOL FATFS_OpenRecentMenu( int driveno )
     {
         return FALSE;
     }
-    menufile[0] = (char)('A' + driveno);
+    menufile[0] += (char)driveno;
     menu_fd = po_open((u8*)menufile, PO_BINARY, 0);
     if (menu_fd < 0)
     {
@@ -72,7 +72,7 @@ BOOL FATFS_OpenSpecifiedMenu( const char* menufile )
 }
 
 #define HEADER_SIZE 0x1000
-#define AUTH_SIZE   0xe00
+#define AUTH_SIZE   ROM_HEADER_SIGN_TARGET_SIZE
 
 #define SLOT_SIZE   0x8000
 
@@ -198,10 +198,36 @@ BOOL FATFS_LoadHeader( void )
 static AESCounter* FATFSi_GetCounter( u32 offset )
 {
     static AESCounter counter;
-    MI_CpuCopy8(rh->s.main_static_digest, &counter, 12);
+    MI_CpuCopy8( rh->s.main_static_digest, &counter, 12 );
     counter.words[3] = 0;
-    AESi_AddCounter(&counter, offset - offsetof(ROM_Header, s.main_ltd_rom_offset));
+    AESi_AddCounter( &counter, offset - offsetof(ROM_Header, s.aes_target_rom_offset) );
     return &counter;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         FATFSi_SetupAES
+
+  Description:  setup whiere to use AES
+
+  Arguments:    offset  offset of region from head of ROM_Header
+                size    size of region
+
+  Returns:      counter
+ *---------------------------------------------------------------------------*/
+static void FATFSi_SetupAES( u32 offset, u32 size )
+{
+    if ( !rh->s.enable_aes )
+    {
+        FATFS_DisableAES();
+    }
+    else if ( offset >= rh->s.aes_target_rom_offset &&
+            offset + size <= rh->s.aes_target_rom_offset + rh->s.aes_target_size )
+    {
+        AESi_WaitKey();
+        //AESi_LoadKey( AES_KEY_SLOT_A );
+        AESi_LoadKey( AES_KEY_SLOT_C );
+        FATFS_EnableAES( FATFSi_GetCounter( rh->s.main_ltd_rom_offset ) );
+    }
 }
 
 
@@ -226,7 +252,7 @@ BOOL FATFS_LoadMenu( void )
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM9_STATIC;   // checkpoint
 #endif
         PXI_NotifyID( FIRM_PXI_ID_LOAD_ARM9_STATIC );
-        FATFS_DisableAES();
+        FATFSi_SetupAES( rh->s.main_rom_offset, rh->s.main_size );
         if ( !FATFS_LoadBuffer( rh->s.main_rom_offset, rh->s.main_size ) ||
              PXI_RecvID() != FIRM_PXI_ID_AUTH_ARM9_STATIC )
         {
@@ -248,7 +274,7 @@ BOOL FATFS_LoadMenu( void )
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM7_STATIC;   // checkpoint
 #endif
         PXI_NotifyID( FIRM_PXI_ID_LOAD_ARM7_STATIC );
-        FATFS_DisableAES();
+        FATFSi_SetupAES( rh->s.sub_rom_offset, rh->s.sub_size );
         if ( !FATFS_LoadBuffer( rh->s.sub_rom_offset, rh->s.sub_size ) ||
              PXI_RecvID() != FIRM_PXI_ID_AUTH_ARM7_STATIC )
         {
@@ -270,16 +296,7 @@ BOOL FATFS_LoadMenu( void )
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM9_LTD_STATIC;    // checkpoint
 #endif
         PXI_NotifyID( FIRM_PXI_ID_LOAD_ARM9_LTD_STATIC );
-        if ( !rh->s.enable_aes )
-        {
-            FATFS_DisableAES();
-        }
-        else
-        {
-            AESi_WaitKey();
-            AESi_LoadKey( AES_KEY_SLOT_A );
-            FATFS_EnableAES( FATFSi_GetCounter( rh->s.main_ltd_rom_offset ) );
-        }
+        FATFSi_SetupAES( rh->s.main_ltd_rom_offset, rh->s.main_ltd_size );
         if ( !FATFS_LoadBuffer( rh->s.main_ltd_rom_offset, rh->s.main_ltd_size ) ||
              PXI_RecvID() != FIRM_PXI_ID_AUTH_ARM9_LTD_STATIC )
         {
@@ -301,16 +318,7 @@ BOOL FATFS_LoadMenu( void )
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM7_LTD_STATIC;    // checkpoint
 #endif
         PXI_NotifyID( FIRM_PXI_ID_LOAD_ARM7_LTD_STATIC );
-        if ( !rh->s.enable_aes )
-        {
-            FATFS_DisableAES();
-        }
-        else
-        {
-            AESi_WaitKey();
-            AESi_LoadKey( AES_KEY_SLOT_A );
-            FATFS_EnableAES( FATFSi_GetCounter( rh->s.sub_ltd_rom_offset ) );
-        }
+        FATFSi_SetupAES( rh->s.sub_ltd_rom_offset, rh->s.sub_ltd_size );
         if ( !FATFS_LoadBuffer( rh->s.sub_ltd_rom_offset, rh->s.sub_ltd_size ) ||
              PXI_RecvID() != FIRM_PXI_ID_AUTH_ARM7_LTD_STATIC )
         {

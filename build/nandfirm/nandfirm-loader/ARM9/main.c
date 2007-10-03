@@ -60,6 +60,14 @@ u32 pf_cnt = 0;
 
 static void PreInit(void)
 {
+    /*
+     メインメモリ関連
+    */
+
+    // SHARED領域クリア (IS-TWL-DEBUGGERの更新待ち)
+#ifdef SDK_FINALROM
+    MIi_CpuClearFast( 0, (void*)HW_MAIN_MEM_SHARED, HW_MAIN_MEM_SHARED_END-HW_MAIN_MEM_SHARED );
+#endif
 
     /*
         FromBrom関連
@@ -70,13 +78,6 @@ static void PreInit(void)
 #endif
 
     MIi_CpuClearFast( 0, (void*)OSi_GetFromBromAddr(), sizeof(OSFromBromBuf) );
-
-    // メインメモリ関連
-
-    // SHARED領域クリア (IS-TWL-DEBUGGERの更新待ち)
-#ifdef SDK_FINALROM
-    MIi_CpuClearFast( 0, (void*)HW_MAIN_MEM_SHARED, HW_MAIN_MEM_SHARED_END-HW_MAIN_MEM_SHARED );
-#endif
 }
 
 void TwlMain( void )

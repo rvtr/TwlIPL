@@ -191,7 +191,7 @@ static const u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = {
 
 static BOOL CheckRomCertificate( int* pool, const RomCertificate *pCert, const void* pCAPubKey, u32 gameCode )
 {
-    SignatureData sd;
+    u8 digest[DIGEST_SIZE_SHA1];
     u8 md[DIGEST_SIZE_SHA1];
     int i;
     BOOL result = TRUE;
@@ -204,7 +204,7 @@ static BOOL CheckRomCertificate( int* pool, const RomCertificate *pCert, const v
         result = FALSE;
     }
     // 証明書署名チェック
-    SVC_DecryptoSign( pool, &sd, pCert->sign, pCAPubKey );
+    SVC_DecryptoSign( pool, &digest, pCert->sign, pCAPubKey );
 
     // ダイジェストの計算
     SHA1_Calc( md, pCert, ROM_CERT_SIGN_OFFSET );
@@ -212,7 +212,7 @@ static BOOL CheckRomCertificate( int* pool, const RomCertificate *pCert, const v
     // 比較
     for (i = 0; i < DIGEST_SIZE_SHA1; i++)
     {
-        if ( md[i] != sd.digest[i] )
+        if ( md[i] != digest[i] )
         {
             result = FALSE;
         }
@@ -295,9 +295,7 @@ static /*inline*/ BOOL MI_LoadModule(void* dest, u32 size, const u8 digest[DIGES
     {
         if ( md[i] != digest[i] )
         {
-#if 0   /* Footerもダイジェストに入れる必要がある (いらなくしてもらう) */
             result = FALSE;
-#endif
         }
     }
 
@@ -319,9 +317,7 @@ BOOL MI_LoadHeader( int* pool, const void* rsa_key )
     SHA1_CTX ctx;
     u8 md[DIGEST_SIZE_SHA1];
     SignatureData sd;
-#if 0
     int i;
-#endif
     BOOL result = TRUE;
 
     SHA1_Init(&ctx);
@@ -355,8 +351,7 @@ BOOL MI_LoadHeader( int* pool, const void* rsa_key )
     // コンテンツ証明書
     if ( CheckRomCertificate( pool, &rh->certificate, rsa_key, *(u32*)rh->s.game_code ) )
     {
-#if 0   /* 証明書内の公開鍵FORMATをどうするか */
-        rsa_key = rh->certificate.pubKey;   // ヘッダ用の鍵の取り出し
+        rsa_key = rh->certificate.pubKeyMod;   // ヘッダ用の鍵の取り出し
     }
     else
     {
@@ -371,7 +366,6 @@ BOOL MI_LoadHeader( int* pool, const void* rsa_key )
         {
             result = FALSE;
         }
-#endif
     }
 #ifndef SDK_FINALROM
     // 1x: after RSA, before PXI

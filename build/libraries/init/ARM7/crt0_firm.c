@@ -127,7 +127,7 @@ SDK_WEAK_SYMBOL asm void _start( void )
         bcc             @2
 
         //---- detect main memory size
-        bl              detect_main_memory_size
+//        bl              detect_main_memory_size   // shared memory will be cleared
 
         //---- set interrupt vector
         ldr             r1, =HW_INTR_VECTOR_BUF

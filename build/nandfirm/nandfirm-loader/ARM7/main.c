@@ -214,7 +214,7 @@ void TwlSpMain( void )
     // failed
     PXI_NotifyID( FIRM_PXI_ID_NULL );
 
-    OS_SetDebugLED( (u8)(0xF0 | ++step));
+    OS_SetDebugLED( (u8)(0xF0 | step));
 
     OS_Terminate();
 }
