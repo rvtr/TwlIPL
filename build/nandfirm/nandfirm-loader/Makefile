@@ -20,7 +20,7 @@
 FIRM_TARGET    = FIRM
 
 # if you have no valid key, comment out next line
-#TWL_KEYSDIR = $(FIRM_ROOT)/../twl_firmware/bootrom/build/keys
+TWL_KEYSDIR = $(FIRM_ROOT)/../twl_firmware/bootrom/build/keys
 
 
 #----------------------------------------------------------------------------

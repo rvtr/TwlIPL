@@ -252,7 +252,7 @@ MACRO_FLAGS += -DFIRM_TARGET_$(FIRM_TARGET)
 #  Makelcf change for build firmware
 #
 ifneq ($(filter FIRM GCDFIRM,$(FIRM_TARGET)),)
-MAKELCF			 := $(NITROSDK_ROOT)/tools/bin/makelcf.exe
+MAKELCF			 := $(TWLSDK_ROOT)/tools/bin/makelcf.exe
 endif
 
 #----------------------------------------------------------------------------
