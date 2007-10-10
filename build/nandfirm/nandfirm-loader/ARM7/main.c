@@ -54,13 +54,12 @@ u32 profile[PRFILE_MAX];
 u32 pf_cnt = 0;
 #endif
 
-/*
+/***************************************************************
     PreInit
 
-    FromBootの対応をまとめる
+    FromBootの対応をまとめる＆メインメモリの初期化
     OS_Init前なので注意 (ARM9によるメインメモリ初期化で消されないように注意)
-*/
-
+***************************************************************/
 static void PreInit(void)
 {
 
@@ -75,6 +74,20 @@ static void PreInit(void)
     nandContext = OSi_GetFromBromAddr()->SDNandContext;
 
     MIi_CpuClearFast( 0, (void*)OSi_GetFromBromAddr(), sizeof(OSFromBromBuf) );
+}
+
+/***************************************************************
+    EraseAll
+
+    不正終了しました
+    いろいろ消してください
+    DSモードにして終わるのがよいか？
+***************************************************************/
+static void EraseAll(void)
+{
+#ifdef SDK_FINALROM
+    // TODO
+#endif
 }
 
 void TwlSpMain( void )
@@ -211,11 +224,14 @@ void TwlSpMain( void )
         }
     }
 
-    // failed
-    PXI_NotifyID( FIRM_PXI_ID_NULL );
-
     OS_SetDebugLED( (u8)(0xF0 | step));
 
-    OS_Terminate();
+    EraseAll();
+
+    // failed
+    while (1)
+    {
+        PXI_NotifyID( FIRM_PXI_ID_NULL );
+    }
 }
 

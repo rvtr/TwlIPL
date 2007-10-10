@@ -51,13 +51,12 @@ u32 profile[PRFILE_MAX];
 u32 pf_cnt = 0;
 #endif
 
-/*
+/***************************************************************
     PreInit
 
     FromBootの対応をまとめる＆メインメモリの初期化
     OS_Init前なので注意
-*/
-
+***************************************************************/
 static void PreInit(void)
 {
     /*
@@ -80,6 +79,34 @@ static void PreInit(void)
     MIi_CpuClearFast( 0, (void*)OSi_GetFromBromAddr(), sizeof(OSFromBromBuf) );
 }
 
+/***************************************************************
+    CheckHeader
+
+    ヘッダがシステムメニューとして問題ないかチェック
+    先頭32Bは固定値と思われ (リマスターバージョンは違うかな)
+***************************************************************/
+static BOOL CheckHeader(void)
+{
+#ifdef BOOT_SECURE_SRL
+    // TODO
+#endif
+    return TRUE;
+}
+
+/***************************************************************
+    EraseAll
+
+    不正終了しました
+    いろいろ消してください
+    DSモードにして終わるのがよいか？
+***************************************************************/
+static void EraseAll(void)
+{
+#ifdef SDK_FINALROM
+    // TODO
+#endif
+}
+
 void TwlMain( void )
 {
     PreInit();
@@ -99,7 +126,7 @@ void TwlMain( void )
     SVC_InitSignHeap( acPool, acHeap, sizeof(acHeap) );
 
     // load menu
-    if ( MI_LoadHeader( acPool, RSA_KEY_ADDR ) && MI_LoadMenu() )
+    if ( MI_LoadHeader( acPool, RSA_KEY_ADDR ) && CheckHeader() && MI_LoadMenu() )
     {
 #ifndef SDK_FINALROM
         // 127: before BootMenu
@@ -110,6 +137,12 @@ void TwlMain( void )
         MI_BootMenu();
     }
 
-    OS_Terminate();
+    EraseAll();
+
+    // failed
+    while (1)
+    {
+        PXI_NotifyID( FIRM_PXI_ID_NULL );
+    }
 }
 
