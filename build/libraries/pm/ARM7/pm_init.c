@@ -34,19 +34,19 @@ void PM_InitFIRM( void )
     // LED
     PMi_ResetFlags( REG_PMIC_LED_CTL_ADDR, PMIC_LED_CTL_AUTO_BLINK | PMIC_LED_CTL_BLINK_BY_SLEEP );
     PMi_SetParams( REG_PMIC_LVL4_BRT_ADDR,
-                   PMIC_LED_1_BRT_LEVEL_4_100  | PMIC_LED_2_BRT_LEVEL_4_100,
+                   PMIC_LED_1_BRT_LEVEL_4_OFF  | PMIC_LED_2_BRT_LEVEL_4_OFF,
                    PMIC_LVL4_BRT_LED_1_MASK | PMIC_LVL4_BRT_LED_2_MASK
                  );
     PMi_SetParams( REG_PMIC_LVL3_BRT_ADDR,
-                   PMIC_LED_1_BRT_LEVEL_3_OFF  | PMIC_LED_2_BRT_LEVEL_3_100,
+                   PMIC_LED_1_BRT_LEVEL_3_100  | PMIC_LED_2_BRT_LEVEL_3_OFF,
                    PMIC_LVL3_BRT_LED_1_MASK | PMIC_LVL3_BRT_LED_2_MASK
                  );
     PMi_SetParams( REG_PMIC_LVL2_BRT_ADDR,
-                   PMIC_LED_1_BRT_LEVEL_2_100  | PMIC_LED_1_BRT_LEVEL_2_OFF,
+                   PMIC_LED_1_BRT_LEVEL_2_OFF  | PMIC_LED_1_BRT_LEVEL_2_100,
                    PMIC_LVL2_BRT_LED_1_MASK | PMIC_LVL2_BRT_LED_2_MASK
                  );
     PMi_SetParams( REG_PMIC_LVL1_BRT_ADDR,
-                   PMIC_LED_1_BRT_LEVEL_1_OFF  | PMIC_LED_2_BRT_LEVEL_1_OFF,
+                   PMIC_LED_1_BRT_LEVEL_1_100  | PMIC_LED_2_BRT_LEVEL_1_100,
                    PMIC_LVL1_BRT_LED_1_MASK | PMIC_LVL1_BRT_LED_2_MASK
                  );
 
