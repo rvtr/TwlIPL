@@ -64,12 +64,6 @@ SDK_WEAK_SYMBOL asm void _start( void )
         mov             r12, #HW_REG_BASE
         str             r12, [r12, #REG_IME_OFFSET]
 
-        //---- initialize Main Memory
-        bl              MIi_InitMainMemCR
-
-        //---- initialize cp15
-        bl              init_cp15
-
         //---- initialize stack pointer
         // SVC mode
         mov             r0, #HW_PSR_SVC_MODE
@@ -94,6 +88,29 @@ SDK_WEAK_SYMBOL asm void _start( void )
         mov             r0, #HW_PSR_SYS_MODE
         msr             cpsr_csfx, r0
         sub             sp, r1, #4 // 4byte for stack check code
+        //---- read reset flag from pmic
+
+#ifdef TWL_PLATFORM_TS
+@0:     bl              PXI_RecvByIntf
+        cmp             r0, #FIRM_PXI_ID_COLDBOOT
+        cmpne           r0, #FIRM_PXI_ID_WARMBOOT
+        bne             @0
+
+        //---- initialize Main Memory
+        cmp             r0, #FIRM_PXI_ID_COLDBOOT
+        bleq            MIi_InitMainMemCR
+
+        mov             r0, #FIRM_PXI_ID_INIT_MMEM
+        bl              PXI_SendByIntf
+
+#else // TWL_PLATFORM_BB
+        //---- initialize Main Memory
+        bl              MIi_InitMainMemCR
+
+#endif // TWL_PLATFORM_BB
+
+        //---- initialize cp15
+        bl              init_cp15
 
         //---- clear memory
         // DTCM (16KB)

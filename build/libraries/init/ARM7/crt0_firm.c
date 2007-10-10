@@ -87,6 +87,26 @@ SDK_WEAK_SYMBOL asm void _start( void )
         msr             cpsr_csfx, r0
         sub             sp, r1, #4 // 4byte for stack check code
 
+        //---- read reset flag from pmic
+#ifdef TWL_PLATFORM_TS
+        mov             r0, #REG_PMIC_SW_FLAGS_ADDR
+        bl              PMi_GetRegister
+        ands            r0, r0, #PMIC_SW_FLAGS_WARMBOOT
+        movne           r0, #FIRM_PXI_ID_WARMBOOT
+        moveq           r0, #FIRM_PXI_ID_COLDBOOT
+        bl              PXI_SendByIntf
+        mov             r0, #FIRM_PXI_ID_INIT_MMEM
+        bl              PXI_WaitByIntf
+#endif // TWL_PLATFORM_TS
+
+        //---- wait for main memory mode into burst mode
+        ldr             r3, =REG_EXMEMCNT_L_ADDR
+        mov             r1, #REG_MI_EXMEMCNT_L_ECE2_MASK
+@1:
+        ldrh            r2, [r3]
+        tst             r2, r1
+        beq             @1
+
 #if 0
         // move parameters from IPL's work memory to shared area
         ldr             r0, =IPL_PARAM_CARD_ROM_HEADER
@@ -105,14 +125,6 @@ SDK_WEAK_SYMBOL asm void _start( void )
         cmp             r1, r2
         bmi             @1_2
 #endif
-
-        //---- wait for main memory mode into burst mode
-        ldr             r3, =REG_EXMEMCNT_L_ADDR
-        mov             r1, #REG_MI_EXMEMCNT_L_ECE2_MASK
-@1:
-        ldrh            r2, [r3]
-        tst             r2, r1
-        beq             @1
 
         //---- load autoload block and initialize bss
         bl              do_autoload
