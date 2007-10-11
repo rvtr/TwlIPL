@@ -17,12 +17,14 @@
 #ifndef FIRM_MEMORYMAP_H_
 #define FIRM_MEMORYMAP_H_
 
-#include	<twl/memorymap.h>
+#include    <twl/memorymap.h>
 
-#ifdef	SDK_ARM9
-#include	<firm/hw/ARM9/mmap_firm.h>
+#include    <firm/hw/common/mmap_firm.h>
+
+#ifdef  SDK_ARM9
+#include    <firm/hw/ARM9/mmap_firm.h>
 #else  //SDK_ARM7
-#include	<firm/hw/ARM7/mmap_firm.h>
+#include    <firm/hw/ARM7/mmap_firm.h>
 #endif
 
 /* FIRM_MEMORYMAP_H_ */

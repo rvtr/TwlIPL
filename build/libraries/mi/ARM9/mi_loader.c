@@ -27,8 +27,6 @@ static ROM_Header* const rh = (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
 #define AUTH_SIZE   0xe00
 #define RSA_BLOCK_SIZE  128
 
-#define SLOT_SIZE   0x8000
-
 #define HASH_UNIT   0x800   // TODO: optimizing to maximize cache efficiency
 
 /*
@@ -230,13 +228,13 @@ extern u32 pf_cnt;
 
 static BOOL MI_LoadBuffer(u8* dest, u32 size, SHA1_CTX *ctx)
 {
-    u8*   base = (void*)MI_GetWramMapStart_B();
+    u8* base = (u8*)HW_FIRM_LOAD_BUFFER_BASE;
     static int count = 0;
-
     while (size > 0)
     {
-        u8* src = base + count * SLOT_SIZE;
-        u32 unit = size < SLOT_SIZE ? size : SLOT_SIZE;
+        u8* src = base + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
+        u32 unit = size < HW_FIRM_LOAD_BUFFER_UNIT_SIZE ? size : HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
+OS_TPrintf("%s: src=%X, unit=%X\n", __func__, src, unit);
         if ( PXI_RecvID() != FIRM_PXI_ID_LOAD_PIRIOD )
         {
             return FALSE;
@@ -266,7 +264,7 @@ static BOOL MI_LoadBuffer(u8* dest, u32 size, SHA1_CTX *ctx)
         MI_CpuClearFast( src, unit );
         DC_FlushRange( src, unit );
         MIi_SetWramBankMaster_B(count, MI_WRAM_ARM7);
-        count = (count + 1) & 0x07;
+        count = (count + 1) % HW_FIRM_LOAD_BUFFER_UNIT_NUMS;
         size -= unit;
         dest += unit;
     }

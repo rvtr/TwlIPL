@@ -74,8 +74,6 @@ BOOL FATFS_OpenSpecifiedMenu( const char* menufile )
 #define HEADER_SIZE 0x1000
 #define AUTH_SIZE   ROM_HEADER_SIGN_TARGET_SIZE
 
-#define SLOT_SIZE   0x8000
-
 #ifndef SDK_FINALROM
 #define PROFILE_PXI_SEND    1000000000
 #define PROFILE_PXI_RECV    2000000000
@@ -85,7 +83,7 @@ extern u32 pf_cnt;
 
 static BOOL FATFS_LoadBuffer(u32 offset, u32 size)
 {
-    u8* base = (u8*)MI_GetWramMapStart_B();
+    u8* base = (u8*)HW_FIRM_LOAD_BUFFER_BASE;
     static int count = 0;
 
     // seek first
@@ -100,9 +98,10 @@ static BOOL FATFS_LoadBuffer(u32 offset, u32 size)
     // loading loop
     while (size > 0)
     {
-        u8* dest = base + count * SLOT_SIZE;                    // target buffer address
-        u32 unit = size < SLOT_SIZE ? size : SLOT_SIZE;         // size
-        while (MI_GetWramBankMaster_B(count) != MI_WRAM_ARM7)   // waiting to be master
+        u8* dest = base + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE;    // target buffer address
+        u32 unit = size < HW_FIRM_LOAD_BUFFER_UNIT_SIZE ? size : HW_FIRM_LOAD_BUFFER_UNIT_SIZE; // size
+OS_TPrintf("%s: dest=%X, unit=%X\n", __func__, dest, unit);
+        while (MI_GetWramBankMaster_B(count) != MI_WRAM_ARM7)       // waiting to be master
         {
         }
 #ifndef SDK_FINALROM
@@ -119,7 +118,7 @@ static BOOL FATFS_LoadBuffer(u32 offset, u32 size)
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_PIRIOD;    // checkpoint
 #endif
         PXI_NotifyID( FIRM_PXI_ID_LOAD_PIRIOD );
-        count = (count + 1) & 0x7;
+        count = (count + 1) % HW_FIRM_LOAD_BUFFER_UNIT_NUMS;
         size -= unit;
     }
     return TRUE;
@@ -176,10 +175,15 @@ BOOL FATFS_LoadHeader( void )
         AESKeySeed seed;
         AESi_InitGameKeys((u8*)rh->s.game_code);
         PXI_RecvDataByFifo( PXI_FIFO_TAG_DATA, &seed, AES_BLOCK_SIZE );
+        AESi_WaitKey();
         AESi_SetKeySeedA(&seed);    // APP
+        //AESi_WaitKey();
         //AESi_SetKeySeedB(&seed);    // APP & HARD
+        //AESi_WaitKey();
         //AESi_SetKeySeedC(&seed);    //
+        //AESi_WaitKey();
         //AESi_SetKeySeedD(&seed);    // HARD
+        AESi_WaitKey();
         AESi_SetKeyC(&seed);        // Direct
     }
 
@@ -198,9 +202,9 @@ BOOL FATFS_LoadHeader( void )
 static AESCounter* FATFSi_GetCounter( u32 offset )
 {
     static AESCounter counter;
-    MI_CpuCopy8( rh->s.main_static_digest, &counter, 12 );
-    counter.words[3] = 0;
-    AESi_AddCounter( &counter, offset - offsetof(ROM_Header, s.aes_target_rom_offset) );
+
+    MI_CpuCopy8( rh->s.main_static_digest, &counter, 16 );
+    AESi_AddCounter( &counter, offset - rh->s.aes_target_rom_offset );
     return &counter;
 }
 
@@ -216,17 +220,24 @@ static AESCounter* FATFSi_GetCounter( u32 offset )
  *---------------------------------------------------------------------------*/
 static void FATFSi_SetupAES( u32 offset, u32 size )
 {
-    if ( !rh->s.enable_aes )
-    {
-        FATFS_DisableAES();
-    }
-    else if ( offset >= rh->s.aes_target_rom_offset &&
+    if ( rh->s.enable_aes &&
+            offset >= rh->s.aes_target_rom_offset &&
             offset + size <= rh->s.aes_target_rom_offset + rh->s.aes_target_size )
     {
         AESi_WaitKey();
-        //AESi_LoadKey( AES_KEY_SLOT_A );
-        AESi_LoadKey( AES_KEY_SLOT_C );
-        FATFS_EnableAES( FATFSi_GetCounter( rh->s.main_ltd_rom_offset ) );
+        if (rh->s.developer_encrypt)
+        {
+            AESi_LoadKey( AES_KEY_SLOT_C );
+        }
+        else
+        {
+            AESi_LoadKey( AES_KEY_SLOT_A );
+        }
+        FATFS_EnableAES( FATFSi_GetCounter( offset ) );
+    }
+    else
+    {
+        FATFS_DisableAES();
     }
 }
 

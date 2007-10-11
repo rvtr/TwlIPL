@@ -216,7 +216,7 @@ static u16 ReadAES(u32 block, void *dest, u16 count)
 {
     u32 offset = 0; // in bytes
 
-    //OS_TPrintf("ReadAES(%d, 0x%08X, %d) is calling.\n", block, dest, count);
+    OS_TPrintf("ReadAES(%d, 0x%08X, %d) is calling.\n", block, dest, count);
 
     MIi_NDmaPipeSetup( DMA_PIPE, (void*)SDIF_FI, (void*)REG_AES_IFIFO_ADDR, PIPE_SIZE );
 
@@ -243,7 +243,7 @@ static u16 ReadAES(u32 block, void *dest, u16 count)
         while ( AES_GET_CNT_BITS( reg_AES_AES_CNT, IFIFO_CNT ) )
         {
         }
-        if ( (offset & SECTOR_SIZE) == 0 )
+        if ( (offset & (SECTOR_SIZE-1)) == 0 )
         {
             WaitFifoFull();
             if ( SDCARD_ErrStatus != SDMC_NORMAL )
