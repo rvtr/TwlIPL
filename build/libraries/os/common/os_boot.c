@@ -18,7 +18,7 @@
 #include <firm/mi.h>
 #include <firm/pxi.h>
 #ifdef SDK_ARM9
-#include <twl/os/ARM9/os_cache_tag.h>
+#include <firm/os/ARM9/os_cache_tag.h>
 #else
 #include <twl/aes/ARM7/lo.h>
 #endif

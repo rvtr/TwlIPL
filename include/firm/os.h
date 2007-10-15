@@ -18,13 +18,12 @@
 #ifndef FIRM_OS_H_
 #define FIRM_OS_H_
 
-#include <twl/os.h>
-
 #include <firm/misc.h>
 #include <firm/os/common/init.h>
 #include <firm/os/common/tick_brom.h>
 #include <firm/os/common/boot.h>
 #include <firm/os/common/systemCall.h>
+#include <firm/os/common/system.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -765,6 +765,11 @@ extern GCDWork  GCDi_Work[2];
 extern const BLOWFISH_CTX  GCDi_BlowfishInitTableDS;
 extern const BLOWFISH_CTX  GCDi_BlowfishInitTableGCDFIRM;
 
+
+// ※SecondarySlotのカードロックが用意されていないので、とりあえずPrimarySlotと共用で。
+s32 OS_LockExCard( u16 lockID );
+s32 OS_UnlockExCard( u16 lockID );
+
 #ifdef __cplusplus
 } /* extern "C" */
 

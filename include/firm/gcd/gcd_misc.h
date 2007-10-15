@@ -26,24 +26,67 @@
 extern "C" {
 #endif
 
+#define PXI_FIFO_TAG_GCD	PXI_FIFO_TAG_USER_1
+
+#define reg_MI_MC_DET									   (*(REGType8v *) REG_MC_OFFSET)
+#define reg_MI_MC_SWP								       (*(REGType8v *) ( REG_MC_OFFSET + 1 ) )
+
+#define REG_MCCHAT_OFFSET                                  0x4012
+#define REG_MCCHAT_ADDR                                    (HW_REG_BASE + REG_MCCHAT_OFFSET)
+#define reg_MI_MCCHAT                                      (*( REGType16v *) REG_MCCHAT_ADDR)
+
+/* MCSCRA_L */
+
+#define REG_MCSCRA_L_OFFSET                                0x1b0
+#define REG_MCSCRA_L_ADDR                                  (HW_REG_BASE + REG_MCSCRA_L_OFFSET)
+#define reg_MI_MCSCRA_L                                    (*( REGType32v *) REG_MCSCRA_L_ADDR)
+
+/* MCSCRB_L */
+
+#define REG_MCSCRB_L_OFFSET                                0x1b4
+#define REG_MCSCRB_L_ADDR                                  (HW_REG_BASE + REG_MCSCRB_L_OFFSET)
+#define reg_MI_MCSCRB_L                                    (*( REGType32v *) REG_MCSCRB_L_ADDR)
+
+/* MCSCRA_H */
+
+#define REG_MCSCRA_H_OFFSET                                0x1b8
+#define REG_MCSCRA_H_ADDR                                  (HW_REG_BASE + REG_MCSCRA_H_OFFSET)
+#define reg_MI_MCSCRA_H                                    (*( REGType8v *) REG_MCSCRA_H_ADDR)
+
+/* MCSCRB_H */
+
+#define REG_MCSCRB_H_OFFSET                                0x1ba
+#define REG_MCSCRB_H_ADDR                                  (HW_REG_BASE + REG_MCSCRB_H_OFFSET)
+#define reg_MI_MCSCRB_H                                    (*( REGType8v *) REG_MCSCRB_H_ADDR)
+
+
+#define REG_MI_MCCNT1_A_CSC_SHIFT                          22
+#define REG_MI_MCCNT1_A_CSC_SIZE                           1
+#define REG_MI_MCCNT1_A_CSC_MASK                           0x00400000
+
+#define REG_MI_MC_SWP_E_SHIFT                              7
+#define REG_MI_MC_SWP_E_SIZE                               1
+#define REG_MI_MC_SWP_E_MASK                               0x80
+
+
 
 typedef enum
 {
-    GCD_PAGE_0             = 0x0UL << REG_MI_MCCNT1_PC_SHIFT,
-    GCD_PAGE_1             = 0x1UL << REG_MI_MCCNT1_PC_SHIFT,
-    GCD_PAGE_2             = 0x2UL << REG_MI_MCCNT1_PC_SHIFT,
-    GCD_PAGE_4             = 0x3UL << REG_MI_MCCNT1_PC_SHIFT,
-    GCD_PAGE_8             = 0x4UL << REG_MI_MCCNT1_PC_SHIFT,
-    GCD_PAGE_16            = 0x5UL << REG_MI_MCCNT1_PC_SHIFT,
-    GCD_PAGE_32            = 0x6UL << REG_MI_MCCNT1_PC_SHIFT,
-    GCD_PAGE_STAT          = 0x7UL << REG_MI_MCCNT1_PC_SHIFT
+    GCD_PAGE_0             = 0x0UL << REG_MI_MCCNT1_A_PC_SHIFT,
+    GCD_PAGE_1             = 0x1UL << REG_MI_MCCNT1_A_PC_SHIFT,
+    GCD_PAGE_2             = 0x2UL << REG_MI_MCCNT1_A_PC_SHIFT,
+    GCD_PAGE_4             = 0x3UL << REG_MI_MCCNT1_A_PC_SHIFT,
+    GCD_PAGE_8             = 0x4UL << REG_MI_MCCNT1_A_PC_SHIFT,
+    GCD_PAGE_16            = 0x5UL << REG_MI_MCCNT1_A_PC_SHIFT,
+    GCD_PAGE_32            = 0x6UL << REG_MI_MCCNT1_A_PC_SHIFT,
+    GCD_PAGE_STAT          = 0x7UL << REG_MI_MCCNT1_A_PC_SHIFT
 }
 GCDPageCount;
 
 typedef enum
 {
-    GCD_CKT_150NS          = 0x0UL << REG_MI_MCCNT1_CT_SHIFT,
-    GCD_CKT_240NS          = 0x1UL << REG_MI_MCCNT1_CT_SHIFT
+    GCD_CKT_150NS          = 0x0UL << REG_MI_MCCNT1_A_CT_SHIFT,
+    GCD_CKT_240NS          = 0x1UL << REG_MI_MCCNT1_A_CT_SHIFT
 }
 GCDClockType;
 
@@ -56,15 +99,20 @@ GCDRw;
 
 typedef enum
 {
-    GCD_RESET_LO           = 0x0UL << REG_MI_MCCNT1_RESB_SHIFT,
-    GCD_RESET_HI           = 0x1UL << REG_MI_MCCNT1_RESB_SHIFT
+    GCD_RESET_LO           = 0x0UL << REG_MI_MCCNT1_A_RESB_SHIFT,
+    GCD_RESET_HI           = 0x1UL << REG_MI_MCCNT1_A_RESB_SHIFT
 }
 GCDReset;
 
 typedef enum
 {
-    GCD_LTCK_DISABLE       = 0x0UL << REG_MI_MCCNT1_TRM_SHIFT,
-    GCD_LTCK_ENABLE        = 0x1UL << REG_MI_MCCNT1_TRM_SHIFT
+#ifdef SDK_ARM9
+    GCD_LTCK_DISABLE       = 0x0UL << REG_MI_MCCNT1_A_TRM_SHIFT,
+    GCD_LTCK_ENABLE        = 0x1UL << REG_MI_MCCNT1_A_TRM_SHIFT
+#else
+    GCD_LTCK_DISABLE       = 0x0UL << REG_MI_MCCNT1_A_RTM_SHIFT,
+    GCD_LTCK_ENABLE        = 0x1UL << REG_MI_MCCNT1_A_RTM_SHIFT
+#endif
 }
 GCDLtClkEnable;
 
@@ -75,7 +123,6 @@ typedef struct
     u8  spi;
 }
 NGCDCtrlRegs;
-
 
 // PXIでの通信プロトコル関連定義
 #define GCD_PXI_COMMAND_MASK                0x0000003f  // 開始ワードのコマンド部
@@ -286,8 +333,8 @@ void GCDi_Disable( GCDSlot slot );
 static inline BOOL GCD_IsExisting( GCDSlot slot )
 {
     s32 ofs = (GCD_GetPrimarySlot() ^ slot) * 4;
-    s32 r = ~reg_MI_MC_DET & (REG_MI_MC_DET_DET1_MASK << ofs);
-    return r >> (REG_MI_MC_DET_DET1_SHIFT + ofs);
+    s32 r = ~reg_MI_MC_DET & (REG_MI_MC_SL1_CDET_MASK << ofs);
+    return r >> (REG_MI_MC_SL1_CDET_SHIFT + ofs);
 }
 
 /*---------------------------------------------------------------------------*
@@ -302,8 +349,8 @@ static inline BOOL GCD_IsExisting( GCDSlot slot )
 static inline void GCD_SetDetectMode( GCDSlot slot, u32 mode )
 {
     s32 ofs = (GCD_GetPrimarySlot() ^ slot) * 4;
-    s32 others = reg_MI_MC_DET & ~(REG_MI_MC_DET_MODE1_MASK << ofs);
-    reg_MI_MC_DET = (u8)((mode << (REG_MI_MC_DET_MODE1_SHIFT + ofs)) | others);
+    s32 others = reg_MI_MC_DET & ~(REG_MI_MC_SL1_MODE_MASK << ofs);
+    reg_MI_MC_DET = (u8)((mode << (REG_MI_MC_SL1_MODE_SHIFT + ofs)) | others);
 }
 
 /*---------------------------------------------------------------------------*
@@ -318,8 +365,8 @@ static inline void GCD_SetDetectMode( GCDSlot slot, u32 mode )
 static inline u8 GCD_GetDetectMode( GCDSlot slot )
 {
     s32 ofs = (GCD_GetPrimarySlot() ^ slot) * 4;
-    return  (u8)((reg_MI_MC_DET & (REG_MI_MC_DET_MODE1_MASK << ofs))
-                               >> (REG_MI_MC_DET_MODE1_SHIFT + ofs));
+    return  (u8)((reg_MI_MC_DET & (REG_MI_MC_SL1_MODE_MASK << ofs))
+                               >> (REG_MI_MC_SL1_MODE_SHIFT + ofs));
 }
 
 /*---------------------------------------------------------------------------*
@@ -333,7 +380,7 @@ static inline u8 GCD_GetDetectMode( GCDSlot slot )
  *---------------------------------------------------------------------------*/
 static inline void GCD_SetChatCounter( u16 value )
 {
-    reg_MI_MC_CHT = value;
+    reg_MI_MCCHAT = value;
 }
 
 /*---------------------------------------------------------------------------*
@@ -424,7 +471,7 @@ static inline u32 GCDi_SelectIrqMask( GCDSlot slot, u32 base_mask )
             case OS_IE_CARD_IREQ:
                 mask = OS_IE_CARD_B_IREQ;
                 break;
-            case OS_IE_CARD_DET:
+            case OS_IE_CARD_A_DET:
                 mask = OS_IE_CARD_B_DET;
                 break;
         }

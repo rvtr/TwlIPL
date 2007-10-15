@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - libraries - mi
+# Project:  TwlIPL
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -11,50 +11,55 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date::            $
-# $Rev:$
-# $Author:$
+# $Date:: 2007-10-03#$
+# $Rev: 1319 $
+# $Author: kitase_hirotake $
 #----------------------------------------------------------------------------
 
-SUBDIRS				=	
-SUBMAKES			=	
-
+SUBDIRS				=
 
 #----------------------------------------------------------------------------
 
 # build ARM & THUMB libraries
-FIRM_CODEGEN_ALL	?=	TRUE
+FIRM_CODEGEN_ALL 	?=	True
+
+
 
 SRCDIR				=	. ../common
-
 SRCS				=	\
-						mi_init_mainMemory.c \
-						mi_loader.c \
-						mi_exDma.c \
+						gcd.c \
+						gcd_init.c \
+						blowfish.c \
+						ds_blowfish.c \
+						ds_blowfish_table.c \
+						gcdfirm_blowfish_table.c \
 
-TARGET_LIB			=	libfirm_mi$(FIRM_LIBSUFFIX).a
+TARGET_LIB			=	libgcd$(FIRM_LIBSUFFIX).a
+INCDIR				=	../include
+
+#----------------------------------------------------------------------------
+
+# DEBUG版ビルドの場合、RELEASE版でビルドして
+# DEBUG版のライブラリを装います。
+
+ifdef	NITRO_DEBUG
+NITRO_BUILD_TYPE	=	RELEASE
+endif
 
 include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS		=	$(TARGETS)
 INSTALL_DIR			=	$(FIRM_INSTALL_LIBDIR)
 
-ifdef NITRO_CALLTRACE
-CCFLAGS				+=	-DOS_PROFILE_AVAILABLE -DOS_PROFILE_CALL_TRACE
-endif
-
-ifdef NITRO_FUNCTIONCOST
-CCFLAGS				+=	-DOS_PROFILE_AVAILABLE -DOS_PROFILE_FUNCTION_COST
-endif
-
-ifdef NITRO_TCM_APPLY
-CCFLAGS				+=	-DSDK_TCM_APPLY
-endif
-
 #----------------------------------------------------------------------------
 
 do-build:		$(TARGETS)
 
 include	$(TWLFIRM_ROOT)/build/buildtools/modulerules
+
+LDEPENDS_OBJ      := $(MAKEFIRM_RSA_PUBKEY) \
+
+gcd_acsign.c : $(LDEPENDS_OBJ)
+	touch gcd_acsign.c
 
 #===== End of Makefile =====

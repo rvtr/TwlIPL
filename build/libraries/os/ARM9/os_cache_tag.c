@@ -11,10 +11,10 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
-#include <twl/os/ARM9/os_cache_tag.h>
+#include <firm/os/ARM9/os_cache_tag.h>
 #include <nitro/code32.h>
 
 
