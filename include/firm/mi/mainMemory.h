@@ -22,6 +22,14 @@
 extern "C" {
 #endif
 
+typedef struct
+{
+    u16 cr0;
+    u16 cr1;
+    u16 cr2;
+}
+MIMmemCR;
+
 //----------------------------------------------------------------------
 //                      メインメモリ CRコマンド
 //----------------------------------------------------------------------
@@ -69,7 +77,9 @@ extern "C" {
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void  MIi_InitMainMemCR( void );
+void  MIi_InitMainMemCR( BOOL setCR );
+
+void MIi_GetMainMemCR( MIMmemCR* dest );
 
 /*---------------------------------------------------------------------------*
   Name:         MIi_IsMainMemoryInitialized

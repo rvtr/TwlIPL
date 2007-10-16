@@ -98,7 +98,9 @@ SDK_WEAK_SYMBOL asm void _start( void )
 
         //---- initialize Main Memory
         cmp             r0, #FIRM_PXI_ID_COLDBOOT
-        bleq            MIi_InitMainMemCR
+        moveq           r0, #TRUE
+        movne           r0, #FALSE
+        bl              MIi_InitMainMemCR
 
         mov             r0, #FIRM_PXI_ID_INIT_MMEM
         bl              PXI_SendByIntf
