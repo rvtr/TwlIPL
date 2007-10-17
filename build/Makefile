@@ -26,6 +26,7 @@ SUBDIRS =	\
             libraries \
             norfirm \
 			nandfirm \
+			nand_formatter \
 
 #----------------------------------------------------------------------------
 
