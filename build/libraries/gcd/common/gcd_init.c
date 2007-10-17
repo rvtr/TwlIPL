@@ -96,14 +96,42 @@ static inline MIProcessor MI_GetExCardProcessor(void)
 }
 
 // ※SDKにSecondarySlotのカードロックが用意されていないので、とりあえずPrimarySlotと共用で。
-s32 OS_LockExCard( u16 lockID )
+#ifdef  SDK_ARM9
+#define OSi_ASSERT_ID( id )       SDK_ASSERTMSG( id >= OS_MAINP_LOCK_ID_START && id <= OS_MAINP_SYSTEM_LOCK_ID, \
+                             "lock ID %d is out of bounds", id )
+#else
+#define OSi_ASSERT_ID( id )       SDK_ASSERTMSG( id >= OS_SUBP_LOCK_ID_START && id <= OS_SUBP_SYSTEM_LOCK_ID, \
+                             "lock ID %d is out of bounds", id )
+#endif
+
+static void OSi_AllocateExCardBus(void)
 {
-	return OS_LockCard( lockID );
+#ifdef  SDK_ARM9
+    MIi_SetExCardProcessor(MI_PROCESSOR_ARM9);    // Card for MAIN
+#endif
 }
 
-s32 OS_UnlockExCard( u16 lockID )
+static void OSi_FreeExCardBus(void)
 {
-	return OS_UnlockCard( lockID );
+#ifdef  SDK_ARM9
+    MIi_SetExCardProcessor(MI_PROCESSOR_ARM7);    // Card for SUB
+#endif
+}
+
+#define HW_CARD_B_LOCK_BUF			HW_CTRDG_LOCK_BUF
+
+s32 OS_LockExCard(u16 lockID)
+{
+    OSi_ASSERT_ID(lockID);
+
+    return OS_LockByWord(lockID, (OSLockWord *)HW_CARD_B_LOCK_BUF, OSi_AllocateExCardBus);
+}
+
+s32 OS_UnlockExCard(u16 lockID)
+{
+    OSi_ASSERT_ID(lockID);
+
+    return OS_UnlockByWord(lockID, (OSLockWord *)HW_CARD_B_LOCK_BUF, OSi_FreeExCardBus);
 }
 
 
