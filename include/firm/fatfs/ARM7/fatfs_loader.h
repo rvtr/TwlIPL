@@ -36,7 +36,7 @@ extern "C" {
 BOOL FATFS_OpenRecentMenu( int driveno );
 
 /*---------------------------------------------------------------------------*
-  Name:         FATFS_OpenSpecifiedMenu
+  Name:         FATFS_OpenSpecifiedSrl
 
   Description:  open specified menu file
 
@@ -44,7 +44,7 @@ BOOL FATFS_OpenRecentMenu( int driveno );
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-BOOL FATFS_OpenSpecifiedMenu( const char* menufile );
+BOOL FATFS_OpenSpecifiedSrl( const char* menufile );
 
 /*---------------------------------------------------------------------------*
   Name:         FATFS_LoadHeader
@@ -58,26 +58,26 @@ BOOL FATFS_OpenSpecifiedMenu( const char* menufile );
 BOOL FATFS_LoadHeader( void );
 
 /*---------------------------------------------------------------------------*
-  Name:         FATFS_LoadMenu
+  Name:         FATFS_LoadStatic
 
-  Description:  load menu binary
+  Description:  load static binary
 
   Arguments:    None
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FATFS_LoadMenu( void );
+BOOL FATFS_LoadStatic( void );
 
 /*---------------------------------------------------------------------------*
-  Name:         FATFS_BootMenu
+  Name:         FATFS_Boot
 
-  Description:  boot menu
+  Description:  boot
 
   Arguments:    None
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void FATFS_BootMenu( void );
+void FATFS_Boot( void );
 
 
 #ifdef __cplusplus

@@ -154,16 +154,16 @@ void TwlSpMain( void )
 #endif
                 OS_SetDebugLED(++step);
 
-                if ( FATFS_LoadHeader() && FATFS_LoadMenu() )
+                if ( FATFS_LoadHeader() && FATFS_LoadStatic() )
                 {
 #ifndef SDK_FINALROM
-                    // 127: before BootMenu
+                    // 127: before Boot
                     pf_cnt = PRFILE_MAX-1;
                     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
                     OS_SetDebugLED(++step);
 
-                    FATFS_BootMenu();
+                    FATFS_Boot();
                 }
             }
         }

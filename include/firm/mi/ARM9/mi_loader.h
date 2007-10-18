@@ -37,26 +37,26 @@ extern "C" {
 BOOL MI_LoadHeader( int* pool, const void* rsa_key );
 
 /*---------------------------------------------------------------------------*
-  Name:         MI_LoadMenu
+  Name:         MI_LoadStatic
 
-  Description:  load menu program
+  Description:  load static binary
 
   Arguments:    None
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL MI_LoadMenu( void );
+BOOL MI_LoadStatic( void );
 
 /*---------------------------------------------------------------------------*
-  Name:         MI_BootMenu
+  Name:         MI_Boot
 
-  Description:  boot menu
+  Description:  boot
 
   Arguments:    None
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void MI_BootMenu( void );
+void MI_Boot( void );
 
 #ifdef __cplusplus
 } /* extern "C" */

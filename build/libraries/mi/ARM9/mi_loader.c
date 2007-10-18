@@ -19,6 +19,25 @@
 #include <firm.h>
 #include <firm/format/format_rom.h>
 
+/*
+    PROFILE_ENABLE を定義するとある程度のパフォーマンスチェックができます。
+    利用するためには、main.cかどこかに、u32 profile[256]; u32 pf_cnt; を
+    定義する必要があります。
+*/
+//#define PROFILE_ENABLE
+
+#ifdef SDK_FINALROM // FINALROMで無効化
+#undef PROFILE_ENABLE
+#endif
+
+#ifdef PROFILE_ENABLE
+#define PROFILE_PXI_SEND    1000000000
+#define PROFILE_PXI_RECV    2000000000
+extern u32 profile[];
+extern u32 pf_cnt;
+#endif
+
+
 #define PXI_FIFO_TAG_DATA   PXI_FIFO_TAG_USER_0
 
 static ROM_Header* const rh = (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
@@ -31,6 +50,7 @@ static ROM_Header* const rh = (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
 
 /*
     SHA1
+        ほぼMATHライブラリやDGTライブラリと同じだが、システムコールを使っている
 */
 
 typedef struct SHA1_CTX // 実際には、サイズが同じなら中身は何でも良い
@@ -77,6 +97,7 @@ static inline void SHA1_Calc(u8* md, const void* data, u32 len)
 
 /*
     HMAC (SHA1)
+        ほぼMATHライブラリやDGTライブラリと同じだが、システムコールを使っている
 */
 
 #define DIGEST_HASH_BLOCK_SIZE_SHA1                 (512/8)
@@ -187,6 +208,21 @@ static const u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = {
     0x87, 0x46, 0x58, 0x24,
 };
 
+/*---------------------------------------------------------------------------*
+  Name:         CheckRomCertificate
+
+  Description:  check the certification in the ROM
+
+                ROMヘッダに付加された証明書のチェックを行います。
+                makerom.TWL内のコードに依存します。
+
+  Arguments:    pool        pointer to the pool info for SVC_DecryptoSign
+                pCert       pointer to the certification
+                pCAPubKey   pointer to the public key for the certification
+                gameCode    initial code
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
 static BOOL CheckRomCertificate( int* pool, const RomCertificate *pCert, const void* pCAPubKey, u32 gameCode )
 {
     u8 digest[DIGEST_SIZE_SHA1];
@@ -219,13 +255,38 @@ static BOOL CheckRomCertificate( int* pool, const RomCertificate *pCert, const v
     return result;
 }
 
-#ifndef SDK_FINALROM
-#define PROFILE_PXI_SEND    1000000000
-#define PROFILE_PXI_RECV    2000000000
-extern u32 profile[];
-extern u32 pf_cnt;
-#endif
+/*---------------------------------------------------------------------------*
+  Name:         MI_LoadBuffer
 
+  Description:  receive data from ARM7 and store(move) via WRAM[B]
+
+                LoadBufferメカニズムで、ファイルの内容をARM7から受け取ります。
+                引数でSHA1_CTXを指定していた場合、コピーのついでにSHA1の計算も
+                行います。
+
+                [LoadBufferメカニズム]
+                WRAM[B]を利用して、ARM7,ARM9間のデータ転送を行います。
+                WRAM[B]の各スロットをバケツリレー方式で渡します。
+                1スロット分のデータまたは全データが格納されたとき、ARM7から
+                FIRM_PXI_ID_LOAD_PIRIODを受信します。
+                ARM9は受信後にそのスロットの使用権をARM9に変更してデータを
+                取り出し、完了後にメモリをクリアして(セキュリティ)、使用権を
+                ARM7に戻します。
+
+                [使用条件]
+                WRAM[B]をロックせず、初期状態としてARM7側に倒しておくこと。
+
+                [注意点]
+                offsetとsizeはARM7から通知されません。別の経路で同期を取ってください。
+                SRLファイルを読み込む場合は、互いにROMヘッダを参照できれば十分です。
+                (ROMヘッダ部分は元から知っているはず)
+
+  Arguments:    dest        destination address for received data
+                size        size to load
+                ctx         context for SHA1 if execute SHA1_Update
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
 static BOOL MI_LoadBuffer(u8* dest, u32 size, SHA1_CTX *ctx)
 {
     u8* base = (u8*)HW_FIRM_LOAD_BUFFER_BASE;
@@ -239,7 +300,7 @@ OS_TPrintf("%s: src=%X, unit=%X\n", __func__, src, unit);
         {
             return FALSE;
         }
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // x2...: after PXI
         profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_PIRIOD;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
@@ -271,6 +332,23 @@ OS_TPrintf("%s: src=%X, unit=%X\n", __func__, src, unit);
     return TRUE;
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         MI_LoadModule
+
+  Description:  receive module from ARM7 and store(move) via WRAM[B]
+
+                MI_LoadBufferの上位APIで、引数にSHA1のハッシュ値を渡すことで
+                SHA1ハッシュチェックを行います。
+
+                すでにハッシュ値が分かっていて、ちょうどSHA1の計算範囲全体を
+                読み込む場合に便利です。
+
+  Arguments:    dest        destination address for received data
+                size        size to load
+                digest      digest to compare
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
 static /*inline*/ BOOL MI_LoadModule(void* dest, u32 size, const u8 digest[DIGEST_SIZE_SHA1])
 {
     HMAC_CTX ctx;
@@ -284,7 +362,7 @@ static /*inline*/ BOOL MI_LoadModule(void* dest, u32 size, const u8 digest[DIGES
         return FALSE;
     }
     HMAC_GetHash(&ctx, md);
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
     // xx: after SHA1
     profile[pf_cnt++] = (u32)20202020;  // checkpoint
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
@@ -305,6 +383,14 @@ static /*inline*/ BOOL MI_LoadModule(void* dest, u32 size, const u8 digest[DIGES
 
   Description:  load header
 
+                SRLのROMヘッダ部分をARM7から受け取り、認証します。
+                受信前に、ARM7から FIRM_PXI_ID_LOAD_HEADER を受信します。
+                受信後、認証が通ったならARM7へ FIRM_PXI_ID_AUTH_HEADER を送信
+                します。それ以前に、メインメモリの所定の位置にROMヘッダが格納
+                されていなければなりません。
+                続けて、seedデータを16バイト送信します。
+                makerom.TWLまたはIPLの仕様に依存します。
+
   Arguments:    pool        pointer to the pool info for SVC_DecryptoSign
                 rsa_key     key address
 
@@ -320,12 +406,12 @@ BOOL MI_LoadHeader( int* pool, const void* rsa_key )
 
     SHA1_Init(&ctx);
 
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
     pf_cnt = 10;
 #endif
     // load header (hash target)
     if ( PXI_RecvID() != FIRM_PXI_ID_LOAD_HEADER ||
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 10: after PXI
         ((profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_HEADER), FALSE) ||
         ((profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick())), FALSE) ||
@@ -335,7 +421,7 @@ BOOL MI_LoadHeader( int* pool, const void* rsa_key )
         return FALSE;
     }
     SHA1_GetHash(&ctx, md);
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 1x: after HMAC
         profile[pf_cnt++] = (u32)2020202020;    // checkpoint
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
@@ -365,7 +451,7 @@ BOOL MI_LoadHeader( int* pool, const void* rsa_key )
             result = FALSE;
         }
     }
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
     // 1x: after RSA, before PXI
     profile[pf_cnt++] = (u32)128128128; // checkpoint
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
@@ -385,26 +471,34 @@ BOOL MI_LoadHeader( int* pool, const void* rsa_key )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         MI_LoadMenu
+  Name:         MI_LoadStatic
 
-  Description:  load menu program
+  Description:  load static binary
+
+                ARM9/ARM7のStaticおよびLTD Staticを受信します。
+                受信前に、ARM7からFIRM_PXI_ID_LOAD_*_STATICを受信します。
+                受信後、認証が通ったならARM7へFIRM_PXI_ID_AUTH_*_STATICを送信
+                します。サイズが0の場合は、そのパートのPXI通信すら行いません。
+
+                このAPIを呼び出す前に、メインメモリの所定の位置にROMヘッダが
+                格納されている必要があります。
 
   Arguments:    None
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL MI_LoadMenu( void )
+BOOL MI_LoadStatic( void )
 {
     // load ARM9 static region
     if ( rh->s.main_size > 0 )
     {
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 30: before PXI
         pf_cnt = 30;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
         if ( PXI_RecvID() !=  FIRM_PXI_ID_LOAD_ARM9_STATIC ||
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
             // 31: after PXI
             ((profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_ARM9_STATIC), FALSE) ||
             ((profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick())), FALSE) ||
@@ -413,7 +507,7 @@ BOOL MI_LoadMenu( void )
         {
             return FALSE;
         }
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 3x: after PXI
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_AUTH_ARM9_STATIC;   // checkpoint
 #endif
@@ -423,13 +517,13 @@ BOOL MI_LoadMenu( void )
     // load ARM7 static region
     if ( rh->s.sub_size > 0 )
     {
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 50: before PXI
         pf_cnt = 50;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
         if ( PXI_RecvID() !=  FIRM_PXI_ID_LOAD_ARM7_STATIC ||
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
             // 51: after PXI
             ((profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_ARM7_STATIC), FALSE) ||
             ((profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick())), FALSE) ||
@@ -438,7 +532,7 @@ BOOL MI_LoadMenu( void )
         {
             return FALSE;
         }
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 5x: after PXI
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_AUTH_ARM7_STATIC;   // checkpoint
 #endif
@@ -448,13 +542,13 @@ BOOL MI_LoadMenu( void )
     // load ARM9 extended static region
     if ( rh->s.main_ltd_size > 0 )
     {
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 70: before PXI
         pf_cnt = 70;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
         if ( PXI_RecvID() !=  FIRM_PXI_ID_LOAD_ARM9_LTD_STATIC ||
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
             // 71: after PXI
             ((profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_ARM9_LTD_STATIC), FALSE) ||
             ((profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick())), FALSE) ||
@@ -463,7 +557,7 @@ BOOL MI_LoadMenu( void )
         {
             return FALSE;
         }
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 7x: after PXI
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_AUTH_ARM9_LTD_STATIC;    // checkpoint
 #endif
@@ -472,13 +566,13 @@ BOOL MI_LoadMenu( void )
     // load ARM7 extended static region
     if ( rh->s.sub_ltd_size > 0 )
     {
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 90: before PXI
         pf_cnt = 90;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
         if ( PXI_RecvID() !=  FIRM_PXI_ID_LOAD_ARM7_LTD_STATIC ||
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
             // 91: after PXI
             ((profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_ARM7_LTD_STATIC), FALSE) ||
             ((profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick())), FALSE) ||
@@ -487,7 +581,7 @@ BOOL MI_LoadMenu( void )
         {
             return FALSE;
         }
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 9x: before PXI
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_AUTH_ARM7_LTD_STATIC;    // checkpoint
 #endif
@@ -497,15 +591,20 @@ BOOL MI_LoadMenu( void )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         MI_BootMenu
+  Name:         MI_Boot
 
-  Description:  boot menu
+  Description:  boot
+
+                ROMヘッダの情報を引数に、OSi_Bootを呼び出すだけです。
+
+                このAPIを呼び出す前に、メインメモリの所定の位置にROMヘッダが
+                格納されている必要があります。
 
   Arguments:    None
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void MI_BootMenu( void )
+void MI_Boot( void )
 {
     OSi_Boot( rh->s.main_entry_address, (MIHeader_WramRegs*)rh->s.main_wram_config_data );
 }

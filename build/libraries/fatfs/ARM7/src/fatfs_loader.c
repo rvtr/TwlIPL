@@ -22,6 +22,25 @@
 #include <rtfs.h>
 #include <devices/sdif_reg.h>
 
+/*
+    PROFILE_ENABLE を定義するとある程度のパフォーマンスチェックができます。
+    利用するためには、main.cかどこかに、u32 profile[256]; u32 pf_cnt; を
+    定義する必要があります。
+*/
+//#define PROFILE_ENABLE
+
+#ifdef SDK_FINALROM // FINALROMで無効化
+#undef PROFILE_ENABLE
+#endif
+
+#ifdef PROFILE_ENABLE
+#define PROFILE_PXI_SEND    1000000000
+#define PROFILE_PXI_RECV    2000000000
+extern u32 profile[];
+extern u32 pf_cnt;
+#endif
+
+
 #define PXI_FIFO_TAG_DATA   PXI_FIFO_TAG_USER_0
 
 static ROM_Header* const rh= (ROM_Header*)(HW_MAIN_MEM_SYSTEM_END - 0x2000);
@@ -31,6 +50,10 @@ static int menu_fd = -1;
   Name:         FATFS_OpenRecentMenu
 
   Description:  open recent menu file
+                システムメニューのファイルを特定し、オープンし、ファイルIDを
+                menu_fdにセットします。
+                最終的には、固定のタイトルメタデータを読み込み、eTicketの処理
+                をして、システムメニューのファイルを特定することになる予定。
 
   Arguments:    driveno     drive number ('A' is 0)
 
@@ -53,15 +76,17 @@ BOOL FATFS_OpenRecentMenu( int driveno )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         FATFS_OpenSpecifiedMenu
+  Name:         FATFS_OpenSpecifiedSrl
 
   Description:  open specified menu file
+
+                任意のファイルをオープンし、ファイルIDをmenu_fdにセットします。
 
   Arguments:    menufile    target filename
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-BOOL FATFS_OpenSpecifiedMenu( const char* menufile )
+BOOL FATFS_OpenSpecifiedSrl( const char* menufile )
 {
     menu_fd = po_open((u8*)menufile, PO_BINARY, 0);
     if (menu_fd < 0)
@@ -74,13 +99,36 @@ BOOL FATFS_OpenSpecifiedMenu( const char* menufile )
 #define HEADER_SIZE 0x1000
 #define AUTH_SIZE   ROM_HEADER_SIGN_TARGET_SIZE
 
-#ifndef SDK_FINALROM
-#define PROFILE_PXI_SEND    1000000000
-#define PROFILE_PXI_RECV    2000000000
-extern u32 profile[];
-extern u32 pf_cnt;
-#endif
+/*---------------------------------------------------------------------------*
+  Name:         FATFS_LoadBuffer
 
+  Description:  load data and pass to ARM9 via WRAM[B]
+
+                LoadBufferメカニズムで、FAT中のファイルの内容をARM9に転送します。
+
+                [LoadBufferメカニズム]
+                WRAM[B]を利用して、ARM7,ARM9間のデータ転送を行います。
+                WRAM[B]の各スロットをバケツリレー方式で渡します。
+                1スロット分のデータまたは全データが格納できたとき、ARM9へ
+                FIRM_PXI_ID_LOAD_PIRIODを送信します。
+                データ残がある場合は次のスロットの処理に移ります。
+                2回目以降の呼び出しでは、前回最後のスロットの続きから使用します。
+                使用したいスロットがARM9側に割り当てられているときは、ARM7側に
+                なるまでストールします。
+
+                [使用条件]
+                WRAM[B]をロックせず、初期状態としてARM7側に倒しておくこと。
+
+                [注意点]
+                offsetとsizeはARM9に通知されません。別の経路で同期を取ってください。
+                SRLファイルを読み込む場合は、互いにROMヘッダを参照できれば十分です。
+                (ROMヘッダ部分は元から知っているはず)
+
+  Arguments:    offset      offset of the file to load (512 bytes alignment)
+                size        size to load
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
 static BOOL FATFS_LoadBuffer(u32 offset, u32 size)
 {
     u8* base = (u8*)HW_FIRM_LOAD_BUFFER_BASE;
@@ -91,7 +139,7 @@ static BOOL FATFS_LoadBuffer(u32 offset, u32 size)
     {
         return FALSE;
     }
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
     // x2: after Seek
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
@@ -104,7 +152,7 @@ OS_TPrintf("%s: dest=%X, unit=%X\n", __func__, dest, unit);
         while (MI_GetWramBankMaster_B(count) != MI_WRAM_ARM7)       // waiting to be master
         {
         }
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // x3...: after to wait ARM9
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
@@ -112,7 +160,7 @@ OS_TPrintf("%s: dest=%X, unit=%X\n", __func__, dest, unit);
         {
             return FALSE;
         }
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // x4...: before PXI
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_PIRIOD;    // checkpoint
@@ -127,7 +175,16 @@ OS_TPrintf("%s: dest=%X, unit=%X\n", __func__, dest, unit);
 /*---------------------------------------------------------------------------*
   Name:         FATFS_LoadHeader
 
-  Description:  load menu header
+  Description:  load header
+
+                SRLのROMヘッダ部分を読み込み、ARM9に渡します。
+                送信前に、ARM9へ FIRM_PXI_ID_LOAD_HEADER を送信します。
+                送信後、ARM9から FIRM_PXI_ID_AUTH_HEADER を受信します。
+                この時点で、メインメモリの所定の位置にROMヘッダが格納されたと
+                想定します。
+                問題なければ、seedデータを16バイト受信します。
+                受け取ったseedはSeedAとKeyCに設定されます。
+                makerom.TWLまたはIPLの仕様に依存します。
 
   Arguments:    None
 
@@ -141,7 +198,7 @@ BOOL FATFS_LoadHeader( void )
         return FALSE;
     }
 
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
     // 10: before PXI
     pf_cnt = 10;
     profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_HEADER;    // checkpoint
@@ -151,12 +208,12 @@ BOOL FATFS_LoadHeader( void )
     PXI_NotifyID( FIRM_PXI_ID_LOAD_HEADER );
     FATFS_DisableAES();
     if (!FATFS_LoadBuffer(0, AUTH_SIZE) ||
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 12: after to load half
         ((profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick())), FALSE) ||
 #endif
         !FATFS_LoadBuffer(AUTH_SIZE, HEADER_SIZE - AUTH_SIZE) ||
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 1x: after to load remain
         ((profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick())), FALSE) ||
 #endif
@@ -164,7 +221,7 @@ BOOL FATFS_LoadHeader( void )
     {
         return FALSE;
     }
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
     // 1x: after PXI
     profile[pf_cnt++] = (u32)PROFILE_PXI_RECV | FIRM_PXI_ID_AUTH_HEADER;    // checkpoint
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
@@ -195,6 +252,9 @@ BOOL FATFS_LoadHeader( void )
 
   Description:  get counter
 
+                offsetに対応したAESのカウンタ値を計算します。
+                makerom.TWL内のコードに依存します。
+
   Arguments:    offset  offset from head of ROM_Header
 
   Returns:      counter
@@ -212,6 +272,17 @@ static AESCounter* FATFSi_GetCounter( u32 offset )
   Name:         FATFSi_SetupAES
 
   Description:  setup whiere to use AES
+
+                AES暗号化されたデータを読み込むためのセットアップを行います。
+                fatfs_sdmc.cのドライバを使用していることが条件となります。
+                (TwlSDK標準で行う場合は、その仕様に合わせて修正が必要！)
+
+                このAPIを呼び出す前に、メインメモリの所定の位置にROMヘッダが
+                格納されている必要があります。
+
+                鍵の選択も行っていますが、鍵の設定は別の場所で行っておく
+                必要があります。
+                makerom.TWLまたはIPLの使用に依存します。
 
   Arguments:    offset  offset of region from head of ROM_Header
                 size    size of region
@@ -243,20 +314,28 @@ static void FATFSi_SetupAES( u32 offset, u32 size )
 
 
 /*---------------------------------------------------------------------------*
-  Name:         FATFS_LoadMenu
+  Name:         FATFS_LoadStatic
 
-  Description:  load menu binary
+  Description:  load static binary
+
+                ARM9/ARM7のStaticおよびLTD Staticを読み込みます。
+                送信前に、ARM9へFIRM_PXI_ID_LOAD_*_STATICを送信します。
+                送信後は、ARM9からFIRM_PXI_ID_AUTH_*_STATICを受信します。
+                サイズが0の場合は、そのパートのPXI通信すら行いません。
+
+                このAPIを呼び出す前に、メインメモリの所定の位置にROMヘッダが
+                格納されている必要があります。
 
   Arguments:    None
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FATFS_LoadMenu( void )
+BOOL FATFS_LoadStatic( void )
 {
     // load ARM9 static region without AES
     if ( rh->s.main_size > 0 )
     {
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 30: before PXI
         pf_cnt = 30;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
@@ -269,7 +348,7 @@ BOOL FATFS_LoadMenu( void )
         {
             return FALSE;
         }
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 3x: after PXI
         profile[pf_cnt++] = (u32)PROFILE_PXI_RECV | FIRM_PXI_ID_AUTH_ARM9_STATIC;   // checkpoint
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
@@ -278,7 +357,7 @@ BOOL FATFS_LoadMenu( void )
     // load ARM7 static region without AES
     if ( rh->s.sub_size > 0 )
     {
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 50: before PXI
         pf_cnt = 50;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
@@ -291,7 +370,7 @@ BOOL FATFS_LoadMenu( void )
         {
             return FALSE;
         }
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 5x: after PXI
         profile[pf_cnt++] = (u32)PROFILE_PXI_RECV | FIRM_PXI_ID_AUTH_ARM7_STATIC;   // checkpoint
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
@@ -300,7 +379,7 @@ BOOL FATFS_LoadMenu( void )
     // load ARM9 extended static region with AES
     if ( rh->s.main_ltd_size > 0 )
     {
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 70: before PXI
         pf_cnt = 70;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
@@ -313,7 +392,7 @@ BOOL FATFS_LoadMenu( void )
         {
             return FALSE;
         }
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 7x: after PXI
         profile[pf_cnt++] = (u32)PROFILE_PXI_RECV | FIRM_PXI_ID_AUTH_ARM9_LTD_STATIC;    // checkpoint
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
@@ -322,7 +401,7 @@ BOOL FATFS_LoadMenu( void )
     // load ARM7 extended static region with AES
     if ( rh->s.sub_ltd_size > 0 )
     {
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 90: before PXI
         pf_cnt = 90;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
@@ -335,7 +414,7 @@ BOOL FATFS_LoadMenu( void )
         {
             return FALSE;
         }
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
         // 9x: after PXI
         profile[pf_cnt++] = (u32)PROFILE_PXI_RECV | FIRM_PXI_ID_AUTH_ARM7_LTD_STATIC;    // checkpoint
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
@@ -345,15 +424,20 @@ BOOL FATFS_LoadMenu( void )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         FATFS_BootMenu
+  Name:         FATFS_Boot
 
-  Description:  boot menu
+  Description:  boot
+
+                ROMヘッダの情報を引数に、OSi_Bootを呼び出すだけです。
+
+                このAPIを呼び出す前に、メインメモリの所定の位置にROMヘッダが
+                格納されている必要があります。
 
   Arguments:    None
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void FATFS_BootMenu( void )
+void FATFS_Boot( void )
 {
     OSi_Boot( rh->s.sub_entry_address, (MIHeader_WramRegs*)rh->s.main_wram_config_data );
 }

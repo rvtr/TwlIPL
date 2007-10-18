@@ -31,6 +31,8 @@ extern u32 NAND_FAT_PARTITION_COUNT;
 
 /*
     専用DMA関数
+        MI_NDmaライブラリが全然足りないので、APIを追加
+        最終的には標準ライブラリだけで全部できて欲しい
 */
 //---------------- register setting
 static inline void MIi_SetSrc( u32 ndmaNo, u32 src )
@@ -94,6 +96,18 @@ extern volatile SDMC_ERR_CODE   SDCARD_ErrStatus;
 extern s16  SDCARD_SDHCFlag;          /* SDHCカードフラグ */
 extern SDPortContext*   SDNandContext;  /* NAND初期化パラメータ */
 
+/*---------------------------------------------------------------------------*
+  Name:         WaitFifoFull
+
+  Description:  waiting to fill the SD FIFO
+
+                SDカードからの読み込みデータがFIFOから読み込める状態になるまで
+                ストールします。
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
 static inline void WaitFifoFull( void )
 {
     while( (*SDIF_CNT & SDIF_CNT_FULL) == 0 )
@@ -105,6 +119,18 @@ static inline void WaitFifoFull( void )
     }
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         StartToRead
+
+  Description:  start to read from SD I/F
+
+                SDカードからの読み込みの開始処理を行います。
+
+  Arguments:    block       begining sector to transfer
+                count       number of setctors to transfer
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
 static void StartToRead(u32 block, u32 count)
 {
     *SDIF_FSC = count;
@@ -125,6 +151,17 @@ static void StartToRead(u32 block, u32 count)
     }
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         StopToRead
+
+  Description:  stop to read from SD I/F
+
+                SDカードからの読み込みの完了処理を行います。
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
 static void StopToRead( void )
 {
     if( !SD_CheckFPGAReg( SD_STOP,SD_STOP_SEC_ENABLE ) ){
@@ -153,6 +190,15 @@ static AESCounter   aesCounter;
 
   Description:  enable AES data path
 
+                次に読み込むデータがAES暗号化されていることを、外部から
+                IO関数に通知するためのAPIです。
+
+                このAPIを呼び出した直後に読み込むデータのAESの初期値を指定
+                しておけば、以後のシーケンシャルな呼び出しでの初期値は自動
+                計算されます。
+                ランダムアクセスを行う場合は、そのたびにこのAPIを呼び出す
+                必要があります。
+
   Arguments:    counter     initial counter value
 
   Returns:      None
@@ -168,6 +214,9 @@ void FATFS_EnableAES( const AESCounter* pCounter )
 
   Description:  bypass AES
 
+                次に読み込むデータがAES暗号化されていないことを、外部から
+                IO関数に通知するためのAPIです。
+
   Arguments:    None
 
   Returns:      None
@@ -181,6 +230,10 @@ void FATFS_DisableAES( void )
   Name:         ReadNormal
 
   Description:  normal read
+
+                普通にNAND/SDカードを読み込みます。
+
+                割り込み禁止状態で高速に動作する仕様になっています。
 
   Arguments:    block: source sector number in NAND
                 dest: dest address (4 bytes alignment)
@@ -204,6 +257,12 @@ static u16 ReadNormal(u32 block, void *dest, u16 count)
   Name:         ReadAES
 
   Description:  AES read
+
+                AESをかけながらNAND/SDカードを読み込みます。
+                AESの鍵の設定はあらかじめ行っておく必要があります。
+                AESの初期値の設定は、FATFS_EnableAESの引数から計算されます。
+
+                割り込み禁止状態で高速に動作する仕様になっています。
 
   Arguments:    block: source sector number in NAND
                 dest: dest address (4 bytes alignment)
@@ -272,6 +331,10 @@ err:
 
   Description:  上位層からのセクタリード／ライト要求を受ける
 
+                Readに対してのみ、独自の関数を使用するドライバのIO関数です。
+                AESの有無の判定は断片化時に未検証です。
+                (間に論理領域の読み込みが挟まる可能性があるかも)
+
   Arguments:    driveno : ドライブ番号
                 block : 開始ブロック番号
                 buffer :
@@ -307,6 +370,8 @@ static BOOL nandRtfsIoFirm( int driveno, u32 block, void* buffer, u16 count, BOO
 
   Description:  上位層からのセクタリード／ライト要求を受ける
 
+                Readに対してのみ、独自の関数を使用するドライバのIO関数です。
+
   Arguments:    driveno : ドライブ番号
                 block : 開始ブロック番号
                 buffer :
@@ -341,6 +406,8 @@ static BOOL sdmcRtfsIoFirm( int driveno, u32 block, void* buffer, u16 count, BOO
   Name:         nandRtfsAttachFirm
 
   Description:  sdmcドライバをドライブに割り当てる
+
+                独自のIO関数を使用するように初期化します。
 
   Arguments:    driveno : ドライブ番号
 
@@ -395,6 +462,8 @@ static BOOL nandRtfsAttachFirm( int driveno, int partition_no)
 
   Description:  sdmcドライバをドライブに割り当てる
 
+                独自のIO関数を使用するように初期化します。
+
   Arguments:    driveno : ドライブ番号
 
   Returns:
@@ -426,7 +495,14 @@ static BOOL sdmcRtfsAttachFirm( int driveno)
 
   Description:  init file system
 
-  Arguments:    None
+                FATFSを初期化します。
+                標準のFATFS_Initの使用しない部分を省略しているだけです。
+                以前のNANDコンテキストが残っているなら、初期化時間を著しく
+                短縮できます。
+                FATFS用のメモリヒープ(OS_ARENA_MAIN_SUBPRIVの関連とヒープ)は
+                あらかじめ確保しておいてください。
+
+  Arguments:    nandContext     context of nand driver's previous life
 
   Returns:      None
  *---------------------------------------------------------------------------*/
@@ -452,9 +528,15 @@ BOOL FATFS_InitFIRM( void* nandContext )
 /*---------------------------------------------------------------------------*
   Name:         FATFS_MountDriveFirm
 
-  Description:  mount nand partition
+  Description:  mount specified partition
 
-  Arguments:    None
+                指定したデバイスの指定したパーティションを指定したドライブに
+                マウントします。NANDまたはSDカードのみ対応しています。
+                このAPIでマウントした場合、独自のIO関数を使用するようになります。
+
+  Arguments:    driveno         drive number "A:" is 0
+                media           media type
+                partition_no    pertition number
 
   Returns:      None
  *---------------------------------------------------------------------------*/

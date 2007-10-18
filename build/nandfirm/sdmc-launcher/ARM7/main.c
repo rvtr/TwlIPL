@@ -148,19 +148,19 @@ void TwlSpMain( void )
             switch ( PAD_Read() & PAD_KEYPORT_MASK )
             {
             case 0:
-                result = FATFS_OpenSpecifiedMenu( MENU_FILE );
+                result = FATFS_OpenSpecifiedSrl( MENU_FILE );
                 break;
             case PAD_BUTTON_A:
-                result = FATFS_OpenSpecifiedMenu( MENU_FILE_A );
+                result = FATFS_OpenSpecifiedSrl( MENU_FILE_A );
                 break;
             case PAD_BUTTON_B:
-                result = FATFS_OpenSpecifiedMenu( MENU_FILE_B );
+                result = FATFS_OpenSpecifiedSrl( MENU_FILE_B );
                 break;
             case PAD_BUTTON_L:
-                result = FATFS_OpenSpecifiedMenu( MENU_FILE_L );
+                result = FATFS_OpenSpecifiedSrl( MENU_FILE_L );
                 break;
             case PAD_BUTTON_R:
-                result = FATFS_OpenSpecifiedMenu( MENU_FILE_R );
+                result = FATFS_OpenSpecifiedSrl( MENU_FILE_R );
                 break;
             default:
                 OS_SetDebugLED( (u8)(PAD_Read() & PAD_KEYPORT_MASK) );
@@ -176,16 +176,16 @@ void TwlSpMain( void )
 #endif
                 OS_SetDebugLED(++step);
 
-                if ( FATFS_LoadHeader() && FATFS_LoadMenu() )
+                if ( FATFS_LoadHeader() && FATFS_LoadStatic() )
                 {
 #ifndef SDK_FINALROM
-                    // 127: before BootMenu
+                    // 127: before Boot
                     pf_cnt = PRFILE_MAX-1;
                     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
                     OS_SetDebugLED(++step);
 
-                    FATFS_BootMenu();
+                    FATFS_Boot();
                 }
             }
         }

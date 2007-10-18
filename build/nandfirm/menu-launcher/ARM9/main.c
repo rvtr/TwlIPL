@@ -25,9 +25,17 @@ static u8 acHeap[RSA_HEAP_SIZE] __attribute__ ((aligned (32)));
 static int acPool[3];
 
 /*
-    Profile
+    PROFILE_ENABLE を定義するとある程度のパフォーマンスチェックができます。
+    利用するためには、main.cかどこかに、u32 profile[256]; u32 pf_cnt = 0; を
+    定義する必要があります。
 */
-#ifndef SDK_FINALROM
+#define PROFILE_ENABLE
+
+#ifdef SDK_FINALROM // FINALROMで無効化
+#undef PROFILE_ENABLE
+#endif
+
+#ifdef PROFILE_ENABLE
 #define PRFILE_MAX  128
 u32 profile[PRFILE_MAX];
 u32 pf_cnt = 0;
@@ -89,13 +97,13 @@ void TwlMain( void )
 {
     PreInit();
 
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
     // 0: before PXI
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
 
     OS_InitFIRM();
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
     OS_InitTick();
     // 1: after PXI
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
@@ -104,15 +112,15 @@ void TwlMain( void )
     SVC_InitSignHeap( acPool, acHeap, sizeof(acHeap) );
 
     // load menu
-    if ( MI_LoadHeader( acPool, RSA_KEY_ADDR ) && CheckHeader() && MI_LoadMenu() )
+    if ( MI_LoadHeader( acPool, RSA_KEY_ADDR ) && CheckHeader() && MI_LoadStatic() )
     {
-#ifndef SDK_FINALROM
-        // 127: before BootMenu
+#ifdef PROFILE_ENABLE
+        // 127: before Boot
         pf_cnt = PRFILE_MAX-1;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
 
-        MI_BootMenu();
+        MI_Boot();
     }
 
     EraseAll();
