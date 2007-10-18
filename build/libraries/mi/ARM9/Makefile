@@ -32,7 +32,7 @@ SRCS				=	\
 						mi_loader.c \
 						mi_exDma.c \
 
-TARGET_LIB			=	libfirm_mi$(FIRM_LIBSUFFIX).a
+TARGET_LIB			=	libmi$(FIRM_LIBSUFFIX).a
 
 include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
 
