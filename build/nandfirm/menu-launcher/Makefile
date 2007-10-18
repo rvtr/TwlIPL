@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - build
+# Project:  TwlFirm - nandfirm - menu-launcher
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -30,10 +30,10 @@ SUBDIRS =	\
             ARM9 \
             wram_regs \
 
-TARGET_FIRM_BIN	=	nandfirm_loader.nand nandfirm_loader.srl
+TARGET_FIRM_BIN	=	menu_launcher.nand menu_launcher.srl
 BINDIR			=	.
-MAKEFIRM_ARM9	=	ARM9/bin/ARM9-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_nandfirm9_loader.tef
-MAKEFIRM_ARM7	=	ARM7/bin/ARM7-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_nandfirm7_loader.tef
+MAKEFIRM_ARM9	=	ARM9/bin/ARM9-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/menu_launcher9.tef
+MAKEFIRM_ARM7	=	ARM7/bin/ARM7-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/menu_launcher7.tef
 MAKEFIRM_RSA_PRVKEY	= $(TWL_KEYSDIR)/rsa/private_nand.der
 LDEPENDS_BIN	+=	wram_regs/wram_regs.rbin
 

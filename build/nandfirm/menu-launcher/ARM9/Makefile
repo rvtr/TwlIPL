@@ -16,7 +16,6 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
-FIRM_PROC      = ARM7
 FIRM_TARGET    = FIRM
 
 SUBDIRS		=
@@ -25,7 +24,7 @@ LINCLUDES	=   ../include
 
 #----------------------------------------------------------------------------
 
-TARGET_BIN	=	twl_nandfirm7_loader.tef
+TARGET_BIN	=	menu_launcher9.tef
 
 SRCS		=	main.c
 
@@ -36,9 +35,9 @@ CRT0_O		=	crt0_firm.o
 #SRCDIR		=	# using default
 #LCFILE		=	# using default
 
+
 include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
 
-LLIBRARIES = libaes_sp$(TWL_LIBSUFFIX).a
 
 #----------------------------------------------------------------------------
 

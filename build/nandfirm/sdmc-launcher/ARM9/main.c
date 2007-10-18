@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlFirm - nandfirm - nandrfirm-loader
+  Project:  TwlFirm - nandfirm - sdmc-launcher
   File:     main.c
 
   Copyright 2007 Nintendo.  All rights reserved.
@@ -16,9 +16,6 @@
  *---------------------------------------------------------------------------*/
 #include <firm.h>
 
-//#define BOOT_SECURE_SRL   // 本番SRLをブートするときにだけ定義する
-
-#ifndef BOOT_SECURE_SRL
 #define RSA_KEY_ADDR    rsa_key
 static const u8 rsa_key[128] =
 {
@@ -32,10 +29,6 @@ static const u8 rsa_key[128] =
     0xe0, 0x6d, 0x21, 0x00, 0xcd, 0x42, 0xd8, 0x84, 0x85, 0xe3, 0xb2, 0x02, 0x1a, 0xa5, 0x89, 0x02,
     0xa1, 0x96, 0xc6, 0xf7, 0x61, 0x68, 0x66, 0xe6, 0x65, 0x12, 0xb7, 0xf1, 0x49
 };
-#else
-    /* 鍵はどこへ？ */
-#define RSA_KEY_ADDR    OSi_GetFromBromAddr()->rsa_pubkey[7]
-#endif
 
 #define RSA_HEAP_SIZE   (4*1024)    // RSA用ヒープサイズ (サイズ調整必要)
 
@@ -65,16 +58,14 @@ static void PreInit(void)
 
     // SHARED領域クリア (IS-TWL-DEBUGGERの更新待ち)
 #ifdef SDK_FINALROM
-    MIi_CpuClearFast( 0, (void*)HW_MAIN_MEM_SHARED, HW_MAIN_MEM_SHARED_END-HW_MAIN_MEM_SHARED );
+    //MIi_CpuClearFast( 0, (void*)HW_MAIN_MEM_SHARED, HW_MAIN_MEM_SHARED_END-HW_MAIN_MEM_SHARED );
 #endif
+    // SHARED領域クリア (ここだけでOK?)
+    MIi_CpuClearFast( 0, (void*)HW_PXI_SIGNAL_PARAM_ARM9, HW_MAIN_MEM_SHARED_END-HW_PXI_SIGNAL_PARAM_ARM9);
 
     /*
         FromBrom関連
     */
-
-#ifdef BOOT_SECURE_SRL
-    /* 鍵はどこへ？ */
-#endif
 
     MIi_CpuClearFast( 0, (void*)OSi_GetFromBromAddr(), sizeof(OSFromBromBuf) );
 }
@@ -87,9 +78,6 @@ static void PreInit(void)
 ***************************************************************/
 static BOOL CheckHeader(void)
 {
-#ifdef BOOT_SECURE_SRL
-    // TODO
-#endif
     return TRUE;
 }
 

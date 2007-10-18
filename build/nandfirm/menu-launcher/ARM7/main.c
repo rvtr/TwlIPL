@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlFirm - nandfirm - nandrfirm-loader
+  Project:  TwlFirm - nandfirm - menu-launcher
   File:     main.c
 
   Copyright 2007 Nintendo.  All rights reserved.
@@ -17,22 +17,10 @@
 #include <firm.h>
 #include <twl/os/ARM7/debugLED.h>
 
-//#define BOOT_SECURE_SRL   // 本番SRLをブートするときにだけ定義する
-
 #define FATFS_HEAP_SIZE     (64*1024)   // FATFS用ヒープ (サイズ調整必要)
 
-#ifndef BOOT_SECURE_SRL
-#define BOOT_DEVICE     FATFS_MEDIA_TYPE_SD
-#define PARTITION_NO    0                       // 0固定
-#define MENU_FILE       (char*)L"A:\\menu.srl"          // 対象ファイル(DRIVE_LETTERと合わせること)
-#define MENU_FILE_A     (char*)L"A:\\menu_a.srl"        // 対象ファイル(DRIVE_LETTERと合わせること)
-#define MENU_FILE_B     (char*)L"A:\\menu_b.srl"        // 対象ファイル(DRIVE_LETTERと合わせること)
-#define MENU_FILE_L     (char*)L"A:\\menu_l.srl"        // 対象ファイル(DRIVE_LETTERと合わせること)
-#define MENU_FILE_R     (char*)L"A:\\menu_r.srl"        // 対象ファイル(DRIVE_LETTERと合わせること)
-#else
 #define BOOT_DEVICE     FATFS_MEDIA_TYPE_NAND
 #define PARTITION_NO    0                       // 対象パーティション
-#endif
 
 #define DRIVE_LETTER    'A'                     // マウント先ドライブ名
 #define DRIVE_NO        (DRIVE_LETTER - 'A')    // マウント先ドライブ番号
@@ -67,9 +55,8 @@ static void PreInit(void)
         FromBrom関連
     */
 
-#ifdef BOOT_SECURE_SRL
     /* 鍵はどこへ？ */
-#endif
+
     // NANDパラメータの待避
     nandContext = OSi_GetFromBromAddr()->SDNandContext;
 
@@ -125,27 +112,6 @@ void TwlSpMain( void )
 
     OS_SetDebugLED(++step);
 
-#if 0
-    OS_TPrintf("OS_GetMainArenaHi()        = 0x%08X\n", OS_GetMainArenaHi());
-    OS_TPrintf("OS_GetMainArenaLo()        = 0x%08X\n", OS_GetMainArenaLo());
-    OS_TPrintf("OS_GetSubPrivArenaHi()     = 0x%08X\n", OS_GetSubPrivArenaHi());
-    OS_TPrintf("OS_GetSubPrivArenaLo()     = 0x%08X\n", OS_GetSubPrivArenaLo());
-    OS_TPrintf("OS_GetMainExArenaHi()      = 0x%08X\n", OS_GetMainExArenaHi());
-    OS_TPrintf("OS_GetMainExArenaLo()      = 0x%08X\n", OS_GetMainExArenaLo());
-    OS_TPrintf("OS_GetITCMArenaHi()        = 0x%08X\n", OS_GetITCMArenaHi());
-    OS_TPrintf("OS_GetITCMArenaLo()        = 0x%08X\n", OS_GetITCMArenaLo());
-    OS_TPrintf("OS_GetDTCMArenaHi()        = 0x%08X\n", OS_GetDTCMArenaHi());
-    OS_TPrintf("OS_GetDTCMArenaLo()        = 0x%08X\n", OS_GetDTCMArenaLo());
-    OS_TPrintf("OS_GetSharedArenaHi()      = 0x%08X\n", OS_GetSharedArenaHi());
-    OS_TPrintf("OS_GetSharedArenaLo()      = 0x%08X\n", OS_GetSharedArenaLo());
-    OS_TPrintf("OS_GetWramMainArenaHi()    = 0x%08X\n", OS_GetWramMainArenaHi());
-    OS_TPrintf("OS_GetWramMainArenaLo()    = 0x%08X\n", OS_GetWramMainArenaLo());
-    OS_TPrintf("OS_GetWramSubArenaHi()     = 0x%08X\n", OS_GetWramSubArenaHi());
-    OS_TPrintf("OS_GetWramSubArenaLo()     = 0x%08X\n", OS_GetWramSubArenaLo());
-    OS_TPrintf("OS_GetWramSubPrivArenaHi() = 0x%08X\n", OS_GetWramSubPrivArenaHi());
-    OS_TPrintf("OS_GetWramSubPrivArenaLo() = 0x%08X\n", OS_GetWramSubPrivArenaLo());
-#endif
-
     /* FATFSライブラリ用にカレントヒープに設定 */
     {
         OSHeapHandle hh;
@@ -175,32 +141,8 @@ void TwlSpMain( void )
 #endif
             OS_SetDebugLED(++step);
 
-#ifdef BOOT_SECURE_SRL
             result = FATFS_OpenRecentMenu( DRIVE_NO );
-#else
-            switch ( PAD_Read() & PAD_KEYPORT_MASK )
-            {
-            case 0:
-                result = FATFS_OpenSpecifiedMenu( MENU_FILE );
-                break;
-            case PAD_BUTTON_A:
-                result = FATFS_OpenSpecifiedMenu( MENU_FILE_A );
-                break;
-            case PAD_BUTTON_B:
-                result = FATFS_OpenSpecifiedMenu( MENU_FILE_B );
-                break;
-            case PAD_BUTTON_L:
-                result = FATFS_OpenSpecifiedMenu( MENU_FILE_L );
-                break;
-            case PAD_BUTTON_R:
-                result = FATFS_OpenSpecifiedMenu( MENU_FILE_R );
-                break;
-            default:
-                OS_SetDebugLED( (u8)(PAD_Read() & PAD_KEYPORT_MASK) );
-                OS_Terminate();
-                break;
-            }
-#endif
+
             if ( result )
             {
 #ifndef SDK_FINALROM

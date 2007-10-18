@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - tools - nandfirm-loader
+# Project:  TwlFirm - tools - norfirm-print
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -16,30 +16,25 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
-FIRM_TARGET    = FIRM
-
 SUBDIRS		=
 
 LINCLUDES	=   ../include
 
 #----------------------------------------------------------------------------
 
-TARGET_BIN	=	twl_nandfirm9_loader.tef
+TARGET_BIN	=	wram_regs.rbin
 
-SRCS		=	main.c
-
-CRT0_O		=	crt0_firm.o
-
-MAKEROM_ARM7	=	../ARM7/bin/ARM7-TS/Release/twl_nandfirm7_loader.sbin
-MAKEROM_ARM7_BASE	=	../ARM7/bin/ARM7-TS/Release/twl_nandfirm7_loader
-
-#LCFILE_TEMPLATE =	$(FIRM_SPECDIR)/$(FIRM_PROC)-$(FIRM_PLATFORM)-PARTNER.lcf.template
+SRCS		=	\
+                	wram_regs.c \
 
 #SRCDIR		=	# using default
 #LCFILE		=	# using default
 
 
 include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
+
+INSTALL_DIR	= .
+INSTALL_TARGETS	= $(BINDIR)/$(TARGET_BIN)
 
 
 #----------------------------------------------------------------------------
