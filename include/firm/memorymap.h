@@ -18,6 +18,7 @@
 #define FIRM_MEMORYMAP_H_
 
 #include    <twl/memorymap.h>
+#include    <firm/hw/common/mmap_firm.h>
 
 #ifdef  SDK_ARM9
 #include    <firm/hw/ARM9/mmap_firm.h>
