@@ -121,7 +121,8 @@ void TwlSpMain( void )
         u8     *lo = (u8*)fatfsHeap;
         u8     *hi = (u8*)fatfsHeap + FATFS_HEAP_SIZE;
         lo = OS_InitAlloc(OS_ARENA_MAIN_SUBPRIV, lo, hi, 1);
-        hh = OS_CreateHeap(OS_ARENA_MAIN_SUBPRIV, lo + 32, hi - 32);
+        OS_SetArenaLo(OS_ARENA_MAIN_SUBPRIV, lo);
+        hh = OS_CreateHeap(OS_ARENA_MAIN_SUBPRIV, OS_GetSubPrivArenaLo(), hi);
         OS_SetCurrentHeap(OS_ARENA_MAIN_SUBPRIV, hh);
     }
 
