@@ -19,8 +19,8 @@
 
 FIRM_TARGET    = FIRM
 
-# if you have no valid key, comment out next line
-TWL_KEYSDIR = $(FIRM_ROOT)/../twl_firmware/bootrom/build/keys
+# if you have valid keys, set environment value like below
+#export TWL_KEYSDIR='$(FIRM_ROOT)/../twl_firmware/bootrom/build/keys'
 
 
 #----------------------------------------------------------------------------
