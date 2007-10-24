@@ -33,7 +33,7 @@ static const u8 rsa_key[128] =
 #define RSA_HEAP_SIZE   (4*1024)    // RSA用ヒープサイズ (サイズ調整必要)
 
 static u8 acHeap[RSA_HEAP_SIZE] __attribute__ ((aligned (32)));
-static int acPool[3];
+static SVCSignHeapContext acPool;
 
 /*
     Profile
@@ -111,10 +111,10 @@ void TwlMain( void )
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
 
-    SVC_InitSignHeap( acPool, acHeap, sizeof(acHeap) );
+    SVC_InitSignHeap( &acPool, acHeap, sizeof(acHeap) );
 
     // load menu
-    if ( MI_LoadHeader( acPool, RSA_KEY_ADDR ) && CheckHeader() && MI_LoadStatic() )
+    if ( MI_LoadHeader( &acPool, RSA_KEY_ADDR ) && CheckHeader() && MI_LoadStatic() )
     {
 #ifndef SDK_FINALROM
         // 127: before Boot

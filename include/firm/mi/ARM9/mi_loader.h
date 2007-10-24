@@ -29,12 +29,12 @@ extern "C" {
 
   Description:  load header
 
-  Arguments:    pool        pointer to the pool info for SVC_DecryptoSign
+  Arguments:    pool        pointer to the pool info for SVCSignHeapContext
                 rsa_key     key address
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL MI_LoadHeader( int* pool, const void* rsa_key );
+BOOL MI_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key );
 
 /*---------------------------------------------------------------------------*
   Name:         MI_LoadStatic

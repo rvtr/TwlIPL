@@ -22,7 +22,6 @@
 #include <firm/os/common/init.h>
 #include <firm/os/common/tick_brom.h>
 #include <firm/os/common/boot.h>
-#include <firm/os/common/systemCall.h>
 #include <firm/os/common/system.h>
 
 #ifdef __cplusplus

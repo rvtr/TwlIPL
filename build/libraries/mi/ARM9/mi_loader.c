@@ -48,145 +48,7 @@ static ROM_Header* const rh = (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
 
 #define HASH_UNIT   0x800   // TODO: optimizing to maximize cache efficiency
 
-/*
-    SHA1
-        ほぼMATHライブラリやDGTライブラリと同じだが、システムコールを使っている
-*/
-
-typedef struct SHA1_CTX // 実際には、サイズが同じなら中身は何でも良い
-{
-    u32 h0,h1,h2,h3,h4;
-    u32 Nl,Nh;
-    u32 data[16];
-    int num;
-    void (*sha_block)(struct SHA1_CTX *c, const u8 *W, int num);
-}
-SHA1_CTX;
-
-static inline void SHA1_Init(SHA1_CTX *ctx)
-{
-    if (ctx == NULL)
-        return;
-
-    MI_CpuClear8(ctx, sizeof(SHA1_CTX));
-    SVC_SHA1Init(ctx);
-}
-
-static inline void SHA1_Update(SHA1_CTX *ctx, const void* data, u32 len)
-{
-    if (ctx == NULL)
-        return;
-    if (len > 0 && data == NULL)
-        return;
-    SVC_SHA1Update(ctx, data, len);
-}
-
-static inline void SHA1_GetHash(SHA1_CTX *ctx, u8* md)
-{
-    if (ctx == NULL)
-        return;
-    if (md == NULL)
-        return;
-    SVC_SHA1GetHash(md, ctx);
-}
-
-static inline void SHA1_Calc(u8* md, const void* data, u32 len)
-{
-    SVC_CalcSHA1(md, data, len);
-}
-
-/*
-    HMAC (SHA1)
-        ほぼMATHライブラリやDGTライブラリと同じだが、システムコールを使っている
-*/
-
-#define DIGEST_HASH_BLOCK_SIZE_SHA1                 (512/8)
-typedef struct HMAC_CTX
-{
-    SHA1_CTX    sha1_ctx;
-    u8          key[DIGEST_HASH_BLOCK_SIZE_SHA1];
-    u32         len;
-} HMAC_CTX;
-
-static inline void HMAC_Init( HMAC_CTX *ctx, const void *key, u32 len )
-{
-    u8  ipad[DIGEST_HASH_BLOCK_SIZE_SHA1];
-    int i;
-
-    if ( ctx == NULL )
-        return;
-    if ( len > 0 && key == NULL )
-        return;
-
-    /* 鍵がブロック長よりも長い場合、ハッシュ値を鍵とする. */
-    if ( len > DIGEST_HASH_BLOCK_SIZE_SHA1 )
-    {
-        SHA1_Calc( ctx->key, key, len );
-        ctx->len = DIGEST_SIZE_SHA1;
-    }
-    else
-    {
-        MI_CpuCopy8( key, ctx->key, len );
-        ctx->len = len;
-    }
-    /* 鍵とipadのXOR */
-    for ( i = 0; i < ctx->len; i++ )
-    {
-        ipad[i] = (u8)(ctx->key[i] ^ 0x36);
-    }
-    /* 鍵のパディング部分とipadのXOR */
-    for ( ; i < DIGEST_HASH_BLOCK_SIZE_SHA1; i++ )
-    {
-        ipad[i] = 0x00 ^ 0x36;
-    }
-
-    /* メッセージとの結合とハッシュ値の計算 */
-    SHA1_Init( &ctx->sha1_ctx );
-    SHA1_Update( &ctx->sha1_ctx, ipad, DIGEST_HASH_BLOCK_SIZE_SHA1 );
-}
-
-static inline void HMAC_Update( HMAC_CTX *ctx, void *data, u32 len )
-{
-    if ( ctx == NULL )
-        return;
-    if ( len > 0 && data == NULL )
-        return;
-    /* メッセージとの結合とハッシュ値の計算 */
-    SHA1_Update( &ctx->sha1_ctx, data, len );
-}
-
-static inline void HMAC_GetHash( HMAC_CTX *ctx, u8* md )
-{
-    u8 opad[DIGEST_HASH_BLOCK_SIZE_SHA1];
-    u8 temp[20];
-    int i;
-
-    if ( ctx == NULL )
-        return;
-    if ( md == NULL )
-        return;
-
-    /* メッセージとの結合とハッシュ値の計算 */
-    SHA1_GetHash( &ctx->sha1_ctx, temp );
-
-    /* 鍵とopadのXOR */
-    for ( i = 0; i < ctx->len; i++ )
-    {
-        opad[i] = (u8)(ctx->key[i] ^ 0x5c);
-    }
-    /* 鍵のパディング部分とopadのXOR */
-    for ( ; i < DIGEST_HASH_BLOCK_SIZE_SHA1; i++ )
-    {
-        opad[i] = 0x00 ^ 0x5c;
-    }
-    /* ハッシュ値との結合とハッシュ値の計算 */
-    SHA1_Init( &ctx->sha1_ctx );
-    SHA1_Update( &ctx->sha1_ctx, opad, DIGEST_HASH_BLOCK_SIZE_SHA1 );
-    SHA1_Update( &ctx->sha1_ctx, temp, DIGEST_SIZE_SHA1 );
-    SHA1_GetHash( &ctx->sha1_ctx, md );
-}
-
-static const u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = {
+static const u8 s_digestDefaultKey[ SVC_SHA1_BLOCK_SIZE ] = {
     0x21, 0x06, 0xc0, 0xde,
     0xba, 0x98, 0xce, 0x3f,
     0xa6, 0x92, 0xe3, 0x9d,
@@ -216,14 +78,14 @@ static const u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = {
                 ROMヘッダに付加された証明書のチェックを行います。
                 makerom.TWL内のコードに依存します。
 
-  Arguments:    pool        pointer to the pool info for SVC_DecryptoSign
+  Arguments:    pool        pointer to the SVCSignHeapContext
                 pCert       pointer to the certification
                 pCAPubKey   pointer to the public key for the certification
                 gameCode    initial code
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-static BOOL CheckRomCertificate( int* pool, const RomCertificate *pCert, const void* pCAPubKey, u32 gameCode )
+static BOOL CheckRomCertificate( SVCSignHeapContext* pool, const RomCertificate *pCert, const void* pCAPubKey, u32 gameCode )
 {
     u8 digest[DIGEST_SIZE_SHA1];
     u8 md[DIGEST_SIZE_SHA1];
@@ -238,10 +100,10 @@ static BOOL CheckRomCertificate( int* pool, const RomCertificate *pCert, const v
         result = FALSE;
     }
     // 証明書署名チェック
-    SVC_DecryptoSign( pool, &digest, pCert->sign, pCAPubKey );
+    SVC_DecryptSign( pool, &digest, pCert->sign, pCAPubKey );
 
     // ダイジェストの計算
-    SHA1_Calc( md, pCert, ROM_CERT_SIGN_OFFSET );
+    SVC_CalcSHA1( md, pCert, ROM_CERT_SIGN_OFFSET );
 
     // 比較
     for (i = 0; i < DIGEST_SIZE_SHA1; i++)
@@ -261,8 +123,8 @@ static BOOL CheckRomCertificate( int* pool, const RomCertificate *pCert, const v
   Description:  receive data from ARM7 and store(move) via WRAM[B]
 
                 LoadBufferメカニズムで、ファイルの内容をARM7から受け取ります。
-                引数でSHA1_CTXを指定していた場合、コピーのついでにSHA1の計算も
-                行います。
+                引数でSVCSHA1Contextを指定していた場合、コピーのついでにSHA1の
+                計算も行います。
 
                 [LoadBufferメカニズム]
                 WRAM[B]を利用して、ARM7,ARM9間のデータ転送を行います。
@@ -283,11 +145,11 @@ static BOOL CheckRomCertificate( int* pool, const RomCertificate *pCert, const v
 
   Arguments:    dest        destination address for received data
                 size        size to load
-                ctx         context for SHA1 if execute SHA1_Update
+                ctx         context for SHA1 if execute SVC_SHA1Update
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-static BOOL MI_LoadBuffer(u8* dest, u32 size, SHA1_CTX *ctx)
+static BOOL MI_LoadBuffer(u8* dest, u32 size, SVCSHA1Context *ctx)
 {
     u8* base = (u8*)HW_FIRM_LOAD_BUFFER_BASE;
     static int count = 0;
@@ -295,7 +157,7 @@ static BOOL MI_LoadBuffer(u8* dest, u32 size, SHA1_CTX *ctx)
     {
         u8* src = base + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
         u32 unit = size < HW_FIRM_LOAD_BUFFER_UNIT_SIZE ? size : HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
-OS_TPrintf("%s: src=%X, unit=%X\n", __func__, src, unit);
+        //OS_TPrintf("%s: src=%X, unit=%X\n", __func__, src, unit);
         if ( PXI_RecvID() != FIRM_PXI_ID_LOAD_PIRIOD )
         {
             return FALSE;
@@ -314,7 +176,7 @@ OS_TPrintf("%s: src=%X, unit=%X\n", __func__, src, unit);
                 u8* s = src + done;
                 u8* d = dest + done;
                 u32 u = unit < done + HASH_UNIT ? unit - done : HASH_UNIT;
-                SHA1_Update( ctx, s, u );
+                SVC_SHA1Update( ctx, s, u );
                 MI_CpuCopyFast( s, d, u );
             }
         }
@@ -351,17 +213,17 @@ OS_TPrintf("%s: src=%X, unit=%X\n", __func__, src, unit);
  *---------------------------------------------------------------------------*/
 static /*inline*/ BOOL MI_LoadModule(void* dest, u32 size, const u8 digest[DIGEST_SIZE_SHA1])
 {
-    HMAC_CTX ctx;
+    SVCHMACSHA1Context ctx;
     u8 md[DIGEST_SIZE_SHA1];
     int i;
     BOOL result = TRUE;
 
-    HMAC_Init(&ctx, s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
+    SVC_HMACSHA1Init(&ctx, s_digestDefaultKey, SVC_SHA1_BLOCK_SIZE );
     if ( !MI_LoadBuffer( dest, size, &ctx.sha1_ctx ) )  // UpdateはSHA1と同じ処理
     {
         return FALSE;
     }
-    HMAC_GetHash(&ctx, md);
+    SVC_HMACSHA1GetHash(&ctx, md);
 #ifdef PROFILE_ENABLE
     // xx: after SHA1
     profile[pf_cnt++] = (u32)20202020;  // checkpoint
@@ -391,20 +253,20 @@ static /*inline*/ BOOL MI_LoadModule(void* dest, u32 size, const u8 digest[DIGES
                 続けて、seedデータを16バイト送信します。
                 makerom.TWLまたはIPLの仕様に依存します。
 
-  Arguments:    pool        pointer to the pool info for SVC_DecryptoSign
+  Arguments:    pool        pointer to the pool info for SVCSignHeapContext
                 rsa_key     key address
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL MI_LoadHeader( int* pool, const void* rsa_key )
+BOOL MI_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
 {
-    SHA1_CTX ctx;
+    SVCSHA1Context ctx;
     u8 md[DIGEST_SIZE_SHA1];
     SignatureData sd;
     int i;
     BOOL result = TRUE;
 
-    SHA1_Init(&ctx);
+    SVC_SHA1Init(&ctx);
 
 #ifdef PROFILE_ENABLE
     pf_cnt = 10;
@@ -420,7 +282,7 @@ BOOL MI_LoadHeader( int* pool, const void* rsa_key )
     {
         return FALSE;
     }
-    SHA1_GetHash(&ctx, md);
+    SVC_SHA1GetHash(&ctx, md);
 #ifdef PROFILE_ENABLE
         // 1x: after HMAC
         profile[pf_cnt++] = (u32)2020202020;    // checkpoint
@@ -443,7 +305,7 @@ BOOL MI_LoadHeader( int* pool, const void* rsa_key )
     }
 
     // ヘッダ署名チェック
-    SVC_DecryptoSign( pool, &sd, rh->signature, rsa_key );
+    SVC_DecryptSign( pool, &sd, rh->signature, rsa_key );
     for (i = 0; i < DIGEST_SIZE_SHA1; i++)
     {
         if ( md[i] != sd.digest[i] )

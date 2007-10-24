@@ -22,7 +22,7 @@
 #define RSA_HEAP_SIZE   (4*1024)    // RSA用ヒープサイズ (サイズ調整必要)
 
 static u8 acHeap[RSA_HEAP_SIZE] __attribute__ ((aligned (32)));
-static int acPool[3];
+static SVCSignHeapContext acPool;
 
 /*
     PROFILE_ENABLE を定義するとある程度のパフォーマンスチェックができます。
@@ -109,10 +109,10 @@ void TwlMain( void )
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
 
-    SVC_InitSignHeap( acPool, acHeap, sizeof(acHeap) );
+    SVC_InitSignHeap( &acPool, acHeap, sizeof(acHeap) );
 
     // load menu
-    if ( MI_LoadHeader( acPool, RSA_KEY_ADDR ) && CheckHeader() && MI_LoadStatic() )
+    if ( MI_LoadHeader( &acPool, RSA_KEY_ADDR ) && CheckHeader() && MI_LoadStatic() )
     {
 #ifdef PROFILE_ENABLE
         // 127: before Boot

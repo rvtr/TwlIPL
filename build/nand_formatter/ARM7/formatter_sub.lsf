@@ -38,6 +38,7 @@ Autoload WRAM
 				libpxi_sp.TWL$(CODEGEN).a	\
 				libstd_sp.TWL$(CODEGEN).a	\
 				libexi_sp.TWL$(CODEGEN).a	\
+				libsnd_sp.TWL$(CODEGEN).a	\
 				libspi_sp.TWL$(CODEGEN).a	\
 				libpm_sp.TWL$(CODEGEN).a	\
 				libcdc_sp.TWL$(CODEGEN).a	\

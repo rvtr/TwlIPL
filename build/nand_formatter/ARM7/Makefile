@@ -17,7 +17,7 @@
 #----------------------------------------------------------------------------
 
 TARGET_PLATFORM		=	TWL
-TWL_ARCHGEN        	=	LIMITED
+#TWL_ARCHGEN        	=	LIMITED
 TWL_PROC			=	ARM7
 TWL_NO_STD_PCHDR	=	TRUE
 
