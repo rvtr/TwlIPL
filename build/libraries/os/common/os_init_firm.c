@@ -50,7 +50,7 @@ void OS_InitFIRM(void)
     OS_InitArena();
 
     //---- Init Spinlock
-//    OS_InitLock();
+    OS_InitLock();
 
     //---- Init Arena (extended main)
     OS_InitArenaEx();
@@ -112,7 +112,7 @@ void OS_InitFIRM(void)
     OS_InitArena();
 
     //---- Init Spinlock
-//    OS_InitLock();
+    OS_InitLock();
 
     //---- Init IRQ Table
     OS_InitIrqTable();
