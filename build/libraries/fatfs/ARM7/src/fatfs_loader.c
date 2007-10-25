@@ -34,8 +34,8 @@
 #endif
 
 #ifdef PROFILE_ENABLE
-#define PROFILE_PXI_SEND    1000000000
-#define PROFILE_PXI_RECV    2000000000
+#define PROFILE_PXI_SEND    0x10000000
+#define PROFILE_PXI_RECV    0x20000000
 extern u32 profile[];
 extern u32 pf_cnt;
 #endif
@@ -148,7 +148,7 @@ static BOOL FATFS_LoadBuffer(u32 offset, u32 size)
     {
         u8* dest = base + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE;    // target buffer address
         u32 unit = size < HW_FIRM_LOAD_BUFFER_UNIT_SIZE ? size : HW_FIRM_LOAD_BUFFER_UNIT_SIZE; // size
-OS_TPrintf("%s: dest=%X, unit=%X\n", __func__, dest, unit);
+        //OS_TPrintf("%s: dest=%X, unit=%X\n", __func__, dest, unit);
         while (MI_GetWramBankMaster_B(count) != MI_WRAM_ARM7)       // waiting to be master
         {
         }
@@ -200,9 +200,9 @@ BOOL FATFS_LoadHeader( void )
 
 #ifdef PROFILE_ENABLE
     // 10: before PXI
-    pf_cnt = 10;
-    profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_HEADER;    // checkpoint
+    pf_cnt = 0x10;
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+    profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_HEADER;    // checkpoint
 #endif
     // load header without AES
     PXI_NotifyID( FIRM_PXI_ID_LOAD_HEADER );
@@ -337,7 +337,7 @@ BOOL FATFS_LoadStatic( void )
     {
 #ifdef PROFILE_ENABLE
         // 30: before PXI
-        pf_cnt = 30;
+        pf_cnt = 0x30;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM9_STATIC;   // checkpoint
 #endif
@@ -359,7 +359,7 @@ BOOL FATFS_LoadStatic( void )
     {
 #ifdef PROFILE_ENABLE
         // 50: before PXI
-        pf_cnt = 50;
+        pf_cnt = 0x50;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM7_STATIC;   // checkpoint
 #endif
@@ -381,7 +381,7 @@ BOOL FATFS_LoadStatic( void )
     {
 #ifdef PROFILE_ENABLE
         // 70: before PXI
-        pf_cnt = 70;
+        pf_cnt = 0x70;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM9_LTD_STATIC;    // checkpoint
 #endif
@@ -403,7 +403,7 @@ BOOL FATFS_LoadStatic( void )
     {
 #ifdef PROFILE_ENABLE
         // 90: before PXI
-        pf_cnt = 90;
+        pf_cnt = 0x90;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM7_LTD_STATIC;    // checkpoint
 #endif
