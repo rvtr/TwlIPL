@@ -31,8 +31,10 @@
 #endif
 
 #ifdef PROFILE_ENABLE
-#define PROFILE_PXI_SEND    1000000000
-#define PROFILE_PXI_RECV    2000000000
+#define PROFILE_PXI_SEND    0x10000000
+#define PROFILE_PXI_RECV    0x20000000
+#define PROFILE_SHA1        0xa0000000
+#define PROFILE_RSA         0xb0000000
 extern u32 profile[];
 extern u32 pf_cnt;
 #endif
@@ -46,7 +48,7 @@ static ROM_Header* const rh = (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
 #define AUTH_SIZE   0xe00
 #define RSA_BLOCK_SIZE  128
 
-#define HASH_UNIT   0x800   // TODO: optimizing to maximize cache efficiency
+#define HASH_UNIT   0x1000   // TODO: optimizing to maximize cache efficiency
 
 static const u8 s_digestDefaultKey[ SVC_SHA1_BLOCK_SIZE ] = {
     0x21, 0x06, 0xc0, 0xde,
@@ -186,6 +188,10 @@ static BOOL MI_LoadBuffer(u8* dest, u32 size, SVCSHA1Context *ctx)
         }
         MI_CpuClearFast( src, unit );
         DC_FlushRange( src, unit );
+#ifdef PROFILE_ENABLE
+        // x2...: after copy & clear
+        profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+#endif
         MIi_SetWramBankMaster_B(count, MI_WRAM_ARM7);
         count = (count + 1) % HW_FIRM_LOAD_BUFFER_UNIT_NUMS;
         size -= unit;
@@ -226,7 +232,7 @@ static /*inline*/ BOOL MI_LoadModule(void* dest, u32 size, const u8 digest[DIGES
     SVC_HMACSHA1GetHash(&ctx, md);
 #ifdef PROFILE_ENABLE
     // xx: after SHA1
-    profile[pf_cnt++] = (u32)20202020;  // checkpoint
+    profile[pf_cnt++] = PROFILE_SHA1;  // checkpoint
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
     for ( i = 0; i < DIGEST_SIZE_SHA1; i++ )
@@ -269,7 +275,7 @@ BOOL MI_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
     SVC_SHA1Init(&ctx);
 
 #ifdef PROFILE_ENABLE
-    pf_cnt = 10;
+    pf_cnt = 0x10;
 #endif
     // load header (hash target)
     if ( PXI_RecvID() != FIRM_PXI_ID_LOAD_HEADER ||
@@ -285,7 +291,7 @@ BOOL MI_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
     SVC_SHA1GetHash(&ctx, md);
 #ifdef PROFILE_ENABLE
         // 1x: after HMAC
-        profile[pf_cnt++] = (u32)2020202020;    // checkpoint
+        profile[pf_cnt++] = PROFILE_SHA1;    // checkpoint
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
     // load header (remain)
@@ -315,7 +321,7 @@ BOOL MI_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
     }
 #ifdef PROFILE_ENABLE
     // 1x: after RSA, before PXI
-    profile[pf_cnt++] = (u32)128128128; // checkpoint
+    profile[pf_cnt++] = PROFILE_RSA; // checkpoint
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
     profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_AUTH_HEADER;    // checkpoint
 #endif
@@ -356,7 +362,7 @@ BOOL MI_LoadStatic( void )
     {
 #ifdef PROFILE_ENABLE
         // 30: before PXI
-        pf_cnt = 30;
+        pf_cnt = 0x30;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
         if ( PXI_RecvID() !=  FIRM_PXI_ID_LOAD_ARM9_STATIC ||
@@ -381,7 +387,7 @@ BOOL MI_LoadStatic( void )
     {
 #ifdef PROFILE_ENABLE
         // 50: before PXI
-        pf_cnt = 50;
+        pf_cnt = 0x50;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
         if ( PXI_RecvID() !=  FIRM_PXI_ID_LOAD_ARM7_STATIC ||
@@ -406,7 +412,7 @@ BOOL MI_LoadStatic( void )
     {
 #ifdef PROFILE_ENABLE
         // 70: before PXI
-        pf_cnt = 70;
+        pf_cnt = 0x70;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
         if ( PXI_RecvID() !=  FIRM_PXI_ID_LOAD_ARM9_LTD_STATIC ||
@@ -430,7 +436,7 @@ BOOL MI_LoadStatic( void )
     {
 #ifdef PROFILE_ENABLE
         // 90: before PXI
-        pf_cnt = 90;
+        pf_cnt = 0x90;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
         if ( PXI_RecvID() !=  FIRM_PXI_ID_LOAD_ARM7_LTD_STATIC ||
