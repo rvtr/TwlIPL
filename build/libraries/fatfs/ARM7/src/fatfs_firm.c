@@ -275,8 +275,7 @@ static u16 ReadAES(u32 block, void *dest, u16 count)
 {
     u32 offset = 0; // in bytes
 
-    OS_TPrintf("ReadAES(%d, 0x%08X, %d) is calling.\n", block, dest, count);
-
+    //OS_TPrintf("ReadAES(%d, 0x%08X, %d) is calling.\n", block, dest, count);
     MIi_NDmaPipeSetup( DMA_PIPE, (void*)SDIF_FI, (void*)REG_AES_IFIFO_ADDR, PIPE_SIZE );
 
 /*
@@ -419,11 +418,6 @@ static BOOL nandRtfsAttachFirm( int driveno, int partition_no)
 {
     BOOLEAN   result;
     DDRIVE    pdr;
-
-    if( partition_no >= NAND_FAT_PARTITION_COUNT )
-    {
-        return FALSE;
-    }
 
     pdr.dev_table_drive_io     = nandRtfsIoFirm;
     pdr.dev_table_perform_device_ioctl = nandRtfsCtrl;
