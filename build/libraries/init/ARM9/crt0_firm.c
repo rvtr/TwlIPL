@@ -20,7 +20,8 @@
 extern void TwlMain(void);
 extern void OS_IrqHandler(void);
 static void do_autoload(void);
-static void init_cp15(void);
+static void INITi_InitCoprocessor(void);
+static void INITi_InitRegion(void);
 void    _start(void);
 static void INITi_CpuClear32(register u32 data, register void *destp, register u32 size);
 extern void *const _start_ModuleParams[];
@@ -111,8 +112,11 @@ SDK_WEAK_SYMBOL asm void _start( void )
 
 #endif // TWL_PLATFORM_BB
 
-        //---- initialize cp15
-        bl              init_cp15
+        /* システム制御コプロセッサ初期化 */
+        bl              INITi_InitCoprocessor
+
+        /* リージョン初期設定 */
+        bl              INITi_InitRegion
 
         //---- clear memory
         // DTCM (16KB)
@@ -134,10 +138,10 @@ SDK_WEAK_SYMBOL asm void _start( void )
         bl              INITi_CpuClear32
 
         //---- load autoload block and initialize bss
-        ldr             r1, =_start_ModuleParams
-        ldr             r0, [r1, #20]   // r0 = bottom of compressed data
-        bl              MIi_UncompressBackward
-        bl              do_autoload
+//        ldr             r1, =_start_ModuleParams
+//        ldr             r0, [r1, #20]   // r0 = bottom of compressed data
+//        bl              MIi_UncompressBackward
+//        bl              do_autoload
 
         //---- fill static static bss with 0
         ldr             r0, =_start_ModuleParams
@@ -423,218 +427,231 @@ SDK_WEAK_SYMBOL asm void _start_AutoloadDoneCallback( void* argv[] )
         bx      lr
 }
 
-//-----------------------------------------------------------------------
-//                   システム制御コプロセッサ 初期化
-//-----------------------------------------------------------------------
-static asm void init_cp15(void)
+/*---------------------------------------------------------------------------*
+  Name:         INITi_InitCoprocessor
+  Description:  システム制御コプロセッサを初期化する。
+                同時に、I-TCM 及び D-TCM を使用可能な状態にする。
+  Arguments:    なし。
+  Returns:      なし。
+ *---------------------------------------------------------------------------*/
+static asm void
+INITi_InitCoprocessor(void)
 {
-        // プロテクションユニット/キャッシュ/TCM ディセーブル
+        /* コプロセッサの状態取得 */
+        mrc             p15, 0, r0, c1, c0, 0
 
-        mrc     p15, 0, r0, c1, c0, 0
-        ldr     r1, =HW_C1_ICACHE_ENABLE  | HW_C1_DCACHE_ENABLE  \
-                   | HW_C1_ITCM_ENABLE    | HW_C1_DTCM_ENABLE    \
-                   | HW_C1_ITCM_LOAD_MODE | HW_C1_DTCM_LOAD_MODE \
-                   | HW_C1_LD_INTERWORK_DISABLE                  \
-                   | HW_C1_PROTECT_UNIT_ENABLE
-        bic     r0, r0, r1
-        mcr     p15, 0, r0, c1, c0, 0
+        tst             r0, #HW_C1_PROTECT_UNIT_ENABLE
+        beq             @010
+        tst             r0, #HW_C1_DCACHE_ENABLE
+        beq             @003
 
-        // キャッシュ無効化
-        mov     r0, #0
-        mcr     p15, 0, r0, c7, c5, 0       // 命令キャッシュ
-        mcr     p15, 0, r0, c7, c6, 0       // データキャッシュ
+        /* D-Cache 内容をメモリにライトバック */
+        mov             r1, #0
+@001:   mov             r2, #0
+@002:   orr             r3, r1, r2
+        mcr             p15, 0, r3, c7, c10, 2
+        add             r2, r2, #HW_CACHE_LINE_SIZE
+        cmp             r2, #HW_DCACHE_SIZE / 4
+        blt             @002
+        adds            r1, r1, #1 << HW_C7_CACHE_SET_NO_SHIFT
+        bne             @001
 
-        // ライトバッファ エンプティ待ち
-        mcr     p15, 0, r0, c7, c10, 4
+@003:   /* ライトバッファが空になるのを待つ */
+        mov             r1, #0
+        mcr             p15, 0, r1, c7, c10, 4
 
-/*
-; Region G:    BACK_GROUND:   Base = 0x0,        Size = 4GB,   I:NC NB    / D:NC NB,     I:NA / D:NA
-; Region 0:    IO_VRAM:       Base = 0x04000000, Size = 64MB,  I:NC NB    / D:NC NB,     I:RW / D:RW
-; Region 1Rel: MAIN_MEM+WRAM: Base = 0x02000000, Size = 32MB*, I:Cach Buf / D:Cach Buf,  I:RW / D:RW
-; Region 1Dbg: MAIN_MEM+WRAM: Base = 0x02000000, Size = 32MB,  I:Cach Buf / D:Cach Buf,  I:RW / D:RW
-;                                              (* Size will be arranged in OS_InitArena(). )
-; Region 2Rel: SOUND_DATA:    Base = 0x02380000, Size = 512KB, I:NC NB    / D:NC NB,     I:NA / D:NA
-; Region 2D4M: SOUND_DATA:    Base = 0x02300000, Size = 1MB,   I:NC NB    / D:NC NB,     I:NA / D:NA
-; Region 2D8M: SOUND_DATA:    Base = 0x02600000, Size = 2MB,   I:NC NB    / D:NC NB,     I:NA / D:NA
-; Region 3:    MAIN_MEM_HI:   Base = 0x08000000, Size = 256MB, I:Cach Buf / D:Cach Buf,  I:RW / D:RW
-; Region 3:    CARTRIDGE:     Base = 0x08000000, Size = 128MB, I:NC NB    / D:NC NB,     I:NA / D:RW
-; Region 4:    DTCM:          Base = SOUND_DATA, Size = 16KB,  I:NC NB    / D:NC NB,     I:NA / D:RW
-; Region 5:    ITCM:          Base = 0x01000000, Size = 16MB,  I:NC NB    / D:NC NB,     I:RW / D:RW
+@010:   /* コプロセッサの状態を初期化 */
+        ldr             r1, = HW_C1_ITCM_LOAD_MODE          \
+                            | HW_C1_DTCM_LOAD_MODE          \
+                            | HW_C1_ITCM_ENABLE             \
+                            | HW_C1_DTCM_ENABLE             \
+                            | HW_C1_LD_INTERWORK_DISABLE    \
+                            | HW_C1_ICACHE_ENABLE           \
+                            | HW_C1_DCACHE_ENABLE           \
+                            | HW_C1_PROTECT_UNIT_ENABLE
+        bic             r0, r0, r1
+        ldr             r1, = HW_C1_SB1_BITSET              \
+                            | HW_C1_EXCEPT_VEC_UPPER
+        orr             r0, r0, r1
+        mcr             p15, 0, r0, c1, c0, 0
 
-; Region 6:    BIOS:          Base = 0xffff0000, Size = 32KB,  I:Cach NB  / D:Cach NB,   I:RO / D:RO
-; Region 7:    SHARE_WORK:    Base = 0x027ff000, Size = 4KB,   I:NC NB    / D:NC NB,     I:NA / D:RW
-;(Region 7:    DBG_RESERVE:   Base = 0x02700000, Size = 1MB,   I:NC NB    / D:NC NB,     I:RW / D:RW)
+        /* I-TCM のサイズを設定 */
+        mov             r1, #HW_C9_TCMR_32MB
+        mcr             p15, 0, r1, c9, c1, 1
+        /* D-TCM のサイズ及び領域ベースアドレスを設定 */
+        ldr             r1, =SDK_AUTOLOAD_DTCM_START
+        orr             r1, r1, #HW_C9_TCMR_16KB
+        mcr             p15, 0, r1, c9, c1, 0
+
+        /* I-TCM / D-TCM 使用許可設定 */
+        mov             r1, #HW_C1_ITCM_ENABLE | HW_C1_DTCM_ENABLE
+        orr             r0, r0, r1
+        mcr             p15, 0, r0, c1, c0, 0
+
+        bx              lr
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         INITi_InitRegion
+  Description:  リージョン初期設定を行う。
+  Arguments:    なし。
+  Returns:      なし。
+ *---------------------------------------------------------------------------*/
+/* When hardware is TWL
+; Region G:  BACK_GROUND:  Base = 0x0,        Size = 4GB,   I:NC NB    / D:NC NB,     I:NA / D:NA
+; Region 0:  IO_VRAM:      Base = 0x04000000, Size = 64MB,  I:NC NB    / D:NC NB,     I:RW / D:RW
+; Region 1:  MAINMEM_WRAM: Base = 0x02000000, Size = 32MB,  I:Cach Buf / D:Cach Buf,  I:RW / D:RW
+; Region 2:  ARM7_RESERVE: Base = 0x02f80000, Size = 512KB, I:NC NB    / D:NC NB,     I:NA / D:NA
+; Region 3:  EX_MAINMEM:   Base = 0x0d000000, Size = 16MB,  I:Cach Buf / D:Cach Buf,  I:RW / D:RW
+; Region 4:  DTCM:         Base = 0x02fe0000, Size = 16KB,  I:NC NB    / D:NC NB,     I:NA / D:RW
+; Region 5:  ITCM:         Base = 0x01000000, Size = 16MB,  I:NC NB    / D:NC NB,     I:RW / D:RW
+; Region 6:  BIOS:         Base = 0xffff0000, Size = 32KB,  I:Cach NB  / D:Cach NB,   I:RO / D:RO
+; Region 7:  SHARED_WORK:  Base = 0x02ffc000, Size = 16KB,  I:NC NB    / D:NC NB,     I:NA / D:RW
 */
-#define SET_PROTECTION_A( id, adr, siz )        ldr r0, =(adr|HW_C6_PR_##siz|HW_C6_PR_ENABLE)
-#define SET_PROTECTION_B( id, adr, siz )        mcr     p15, 0, r0, c6, id, 0
-#define REGION_BIT(a,b,c,d,e,f,g,h)     (((a)<<0)|((b)<<1)|((c)<<2)|((d)<<3)|((e)<<4)|((f)<<5)|((g)<<6)|((h)<<7))
-#define REGION_ACC(a,b,c,d,e,f,g,h)     (((a)<<0)|((b)<<4)|((c)<<8)|((d)<<12)|((e)<<16)|((f)<<20)|((g)<<24)|((h)<<28))
+/* When hardware is NITRO
+; Region G:  BACK_GROUND:  Base = 0x0,        Size = 4GB,   I:NC NB    / D:NC NB,     I:NA / D:NA
+; Region 0:  IO_VRAM:      Base = 0x04000000, Size = 64MB,  I:NC NB    / D:NC NB,     I:RW / D:RW
+; Region 1:  MAIN_MEM:     Base = 0x02000000, Size = 8MB*,  I:Cach Buf / D:Cach Buf,  I:RW / D:RW
+;            (* When hardware is not debugger, size will be reduced to 4MB in OS_InitArena() )
+; Region 2:  ARM7_RESERVE: Base = 0x027e0000, Size = 128KB, I:NC NB    / D:NC NB,     I:NA / D:NA
+;            (* When hardware is not debugger, base will be moved to 0x023e0000 in OS_InitArena() )
+; Region 3:  CARTRIDGE:    Base = 0x08000000, Size = 128MB, I:NC NB    / D:NC NB,     I:NA / D:RW
+; Region 4:  DTCM:         Base = 0x02fe0000, Size = 16KB,  I:NC NB    / D:NC NB,     I:NA / D:RW
+; Region 5:  ITCM:         Base = 0x01000000, Size = 16MB,  I:NC NB    / D:NC NB,     I:RW / D:RW
+; Region 6:  BIOS:         Base = 0xffff0000, Size = 32KB,  I:Cach NB  / D:Cach NB,   I:RO / D:RO
+; Region 7:  SHARED_WORK:  Base = 0x02fff000, Size = 4KB,   I:NC NB    / D:NC NB,     I:NA / D:RW
+*/
+
+static asm void
+INITi_InitRegion(void)
+{
+#define SET_PROTECTION_A(id, adr, siz)      ldr r0, =(adr|HW_C6_PR_##siz|HW_C6_PR_ENABLE)
+#define SET_PROTECTION_B(id, adr, siz)      mcr p15, 0, r0, c6, id, 0
+#define REGION_BIT(a, b, c, d, e, f, g, h)  (((a) << 0) | ((b) << 1) | ((c) << 2) | ((d) << 3) | ((e) << 4) | ((f) << 5) | ((g) << 6) | ((h) << 7))
+#define REGION_ACC(a, b, c, d, e, f, g, h)  (((a) << 0) | ((b) << 4) | ((c) << 8) | ((d) << 12) | ((e) << 16) | ((f) << 20) | ((g) << 24) | ((h) << 28))
 #define NA      0
 #define RW      1
 #define RO      5
 
+        /* (0) I/O レジスタ及び VRAM 等 */
+        SET_PROTECTION_A(c0, HW_IOREG, 64MB)
+        SET_PROTECTION_B(c0, HW_IOREG, 64MB)
 
-        //
-        // メモリリージョン初期化
-        //
-        //---- I/O レジスタ & VRAM 等
-        SET_PROTECTION_A( c0, HW_IOREG, 64MB )
-        SET_PROTECTION_B( c0, HW_IOREG, 64MB )
+        /* (4) D-TCM */
+        ldr             r0, =SDK_AUTOLOAD_DTCM_START
+        orr             r0, r0, #HW_C6_PR_16KB | HW_C6_PR_ENABLE
+        SET_PROTECTION_B(c4, SDK_AUTOLOAD_DTCM_START, 16KB)
 
-        //---- メインメモリ
-        SET_PROTECTION_A( c1, HW_MAIN_MEM_MAIN, 32MB )
-        SET_PROTECTION_B( c1, HW_MAIN_MEM_MAIN, 32MB )
+        /* (5) I-TCM */
+        SET_PROTECTION_A(c5, HW_ITCM_IMAGE, 16MB)
+        SET_PROTECTION_B(c5, HW_ITCM_IMAGE, 16MB)
 
-        //---- サウンドデータ領域
-#if     HW_MAIN_MEM_SUB_SIZE+HW_MAIN_MEM_SHARED_SIZE == 0x1000
-        SET_PROTECTION_A( c2, HW_MAIN_MEM_SUB, 4KB )
-        SET_PROTECTION_B( c2, HW_MAIN_MEM_SUB, 4KB )
-#elif   HW_MAIN_MEM_SUB_SIZE+HW_MAIN_MEM_SHARED_SIZE == 0x2000
-        SET_PROTECTION_A( c2, HW_MAIN_MEM_SUB, 8KB )
-        SET_PROTECTION_B( c2, HW_MAIN_MEM_SUB, 8KB )
-#elif   HW_MAIN_MEM_SUB_SIZE+HW_MAIN_MEM_SHARED_SIZE == 0x4000
-        SET_PROTECTION_A( c2, HW_MAIN_MEM_SUB, 16KB )
-        SET_PROTECTION_B( c2, HW_MAIN_MEM_SUB, 16KB )
-#elif   HW_MAIN_MEM_SUB_SIZE+HW_MAIN_MEM_SHARED_SIZE == 0x8000
-        SET_PROTECTION_A( c2, HW_MAIN_MEM_SUB, 32KB )
-        SET_PROTECTION_B( c2, HW_MAIN_MEM_SUB, 32KB )
-#elif   HW_MAIN_MEM_SUB_SIZE+HW_MAIN_MEM_SHARED_SIZE == 0x10000
-        SET_PROTECTION_A( c2, HW_MAIN_MEM_SUB, 64KB )
-        SET_PROTECTION_B( c2, HW_MAIN_MEM_SUB, 64KB )
-#elif   HW_MAIN_MEM_SUB_SIZE+HW_MAIN_MEM_SHARED_SIZE == 0x20000
-        SET_PROTECTION_A( c2, HW_MAIN_MEM_SUB, 128KB )
-        SET_PROTECTION_B( c2, HW_MAIN_MEM_SUB, 128KB )
-#elif   HW_MAIN_MEM_SUB_SIZE+HW_MAIN_MEM_SHARED_SIZE == 0x40000
-        SET_PROTECTION_A( c2, HW_MAIN_MEM_SUB, 256KB )
-        SET_PROTECTION_B( c2, HW_MAIN_MEM_SUB, 256KB )
-#elif   HW_MAIN_MEM_SUB_SIZE+HW_MAIN_MEM_SHARED_SIZE == 0x80000
-        SET_PROTECTION_A( c2, HW_MAIN_MEM_SUB, 512KB )
-        SET_PROTECTION_B( c2, HW_MAIN_MEM_SUB, 512KB )
-#elif   HW_MAIN_MEM_SUB_SIZE+HW_MAIN_MEM_SHARED_SIZE == 0x100000
-        SET_PROTECTION_A( c2, HW_MAIN_MEM_SUB, 1MB )
-        SET_PROTECTION_B( c2, HW_MAIN_MEM_SUB, 1MB )
-#elif   HW_MAIN_MEM_SUB_SIZE+HW_MAIN_MEM_SHARED_SIZE == 0x200000
-        SET_PROTECTION_A( c2, HW_MAIN_MEM_SUB, 2MB )
-        SET_PROTECTION_B( c2, HW_MAIN_MEM_SUB, 2MB )
-#else
-#pragma message(ERROR: Size unmatch HW_MAIN_MEM_SUB_SIZE)
+        /* (6) システムコール ROM */
+        SET_PROTECTION_A(c6, HW_BIOS, 32KB)
+        SET_PROTECTION_B(c6, HW_BIOS, 32KB)
+
+        /* TWL ハードウェア上で動作しているかどうかを調査 */
+        ldr             r1, =REG_CLK_ADDR
+        ldrh            r0, [r1]
+        tst             r0, #REG_SCFG_CLK_WRAMHCLK_MASK
+        beq             @002
+
+@001:   /* ハードウェアが TWL の場合 */
+        /* (1) メインメモリ及び WRAM */
+        SET_PROTECTION_A(c1, HW_TWL_MAIN_MEM_MAIN, 32MB)
+        SET_PROTECTION_B(c1, HW_TWL_MAIN_MEM_MAIN, 32MB)
+
+        /* (2) ARM7 専用メインメモリ空間 */
+        SET_PROTECTION_A(c2, HW_TWL_MAIN_MEM_SUB, 512KB)
+        SET_PROTECTION_B(c2, HW_TWL_MAIN_MEM_SUB, 512KB)
+
+        /* (3) 拡張メインメモリ */
+        SET_PROTECTION_A(c3, HW_TWL_MAIN_MEM_EX, 16MB)
+        SET_PROTECTION_B(c3, HW_TWL_MAIN_MEM_EX, 16MB)
+
+        /* (7) ARM9/ARM7 共有メインメモリ空間 */
+        SET_PROTECTION_A(c7, HW_TWL_MAIN_MEM_SHARED, 16KB)
+        SET_PROTECTION_B(c7, HW_TWL_MAIN_MEM_SHARED, 16KB)
+
+        /* 命令キャッシュ許可 */
+        mov             r0, #REGION_BIT(0, 1, 0, 1, 0, 0, 1, 0)
+        mcr             p15, 0, r0, c2, c0, 1
+
+        /* データキャッシュ許可 */
+//        mov             r0, #REGION_BIT(0, 1, 0, 1, 0, 0, 1, 0)
+        mov             r0, #REGION_BIT(0, 1, 1, 1, 0, 0, 1, 0)
+        mcr             p15, 0, r0, c2, c0, 0
+
+        /* ライトバッファ許可 */
+//        mov             r0, #REGION_BIT(0, 1, 0, 1, 0, 0, 0, 0)
+        mov             r0, #REGION_BIT(0, 1, 1, 1, 0, 0, 0, 0)
+        mcr             p15, 0, r0, c3, c0, 0
+
+        /* 命令アクセス許可 */
+        ldr             r0, =REGION_ACC(RW, RW, NA, RW, NA, RW, RO, NA)
+        mcr             p15, 0, r0, c5, c0, 3
+
+        /* データアクセス許可 */
+//        ldr             r0, =REGION_ACC(RW, RW, NA, RW, RW, RW, RO, RW)
+        ldr             r0, =REGION_ACC(RW, RW, RW, RW, RW, RW, RO, RW)
+        mcr             p15, 0, r0, c5, c0, 2
+//        b               @003
+
+@002:   /* ハードウェアが NITRO の場合 */
+#if 0
+        /* (1) メインメモリ */
+        SET_PROTECTION_A(c1, HW_MAIN_MEM_MAIN, 8MB)
+        SET_PROTECTION_B(c1, HW_MAIN_MEM_MAIN, 8MB)
+        /* Size will be arranged in OS_InitArena(). */
+
+        /* (2) ARM7 専用メインメモリ空間 */
+        SET_PROTECTION_A(c2, (HW_MAIN_MEM_EX_END - HW_MAIN_MEM_SHARED_SIZE - HW_MAIN_MEM_SUB_SIZE), 128KB)
+        SET_PROTECTION_B(c2, (HW_MAIN_MEM_EX_END - HW_MAIN_MEM_SHARED_SIZE - HW_MAIN_MEM_SUB_SIZE), 128KB)
+        /* Base address will be moved in OS_InitArena(). */
+
+        /* (3) カートリッジ */
+        SET_PROTECTION_A(c3, HW_CTRDG_ROM, 128MB)
+        SET_PROTECTION_B(c3, HW_CTRDG_ROM, 128MB)
+
+        /* (7) ARM9/ARM7 共有メインメモリ空間 */
+        SET_PROTECTION_A(c7, HW_MAIN_MEM_SHARED, 4KB)
+        SET_PROTECTION_B(c7, HW_MAIN_MEM_SHARED, 4KB)
+
+        /* 命令キャッシュ許可 */
+        mov             r0, #REGION_BIT(0, 1, 0, 0, 0, 0, 1, 0)
+        mcr             p15, 0, r0, c2, c0, 1
+
+        /* データキャッシュ許可 */
+        mov             r0, #REGION_BIT(0, 1, 0, 0, 0, 0, 1, 0)
+        mcr             p15, 0, r0, c2, c0, 0
+
+        /* ライトバッファ許可 */
+        mov             r0, #REGION_BIT(0, 1, 0, 0, 0, 0, 0, 0)
+        mcr             p15, 0, r0, c3, c0, 0
+
+        /* 命令アクセス許可 */
+        ldr             r0, =REGION_ACC(RW, RW, NA, NA, NA, RW, RO, NA)
+        mcr             p15, 0, r0, c5, c0, 3
+
+        /* データアクセス許可 */
+        ldr             r0, =REGION_ACC(RW, RW, NA, RW, RW, RW, RO, RW)
+        mcr             p15, 0, r0, c5, c0, 2
 #endif
+@003:   /* プロテクションユニット及びキャッシュ使用許可設定 */
+        mrc             p15, 0, r0, c1, c0, 0
+        ldr             r1, = HW_C1_ICACHE_ENABLE       \
+                            | HW_C1_DCACHE_ENABLE       \
+                            | HW_C1_CACHE_ROUND_ROBIN   \
+                            | HW_C1_PROTECT_UNIT_ENABLE
+        orr             r0, r0, r1
+        mcr             p15, 0, r0, c1, c0, 0
 
-        //---- メインメモリ上位イメージ 又は他の用途
-        //      カートリッジ、CPU 内部ワーク RAM 等
-        //SET_PROTECTION_A( c3, HW_MAIN_MEM_HI, 32MB )
-        //SET_PROTECTION_B( c3, HW_MAIN_MEM_HI, 32MB )
-        SET_PROTECTION_A( c3, HW_TWL_MAIN_MEM_IMAGE, 32MB )
-        SET_PROTECTION_B( c3, HW_TWL_MAIN_MEM_IMAGE, 32MB )
+        /* キャッシュの内容を破棄 */
+        mov             r1, #0
+        mcr             p15, 0, r1, c7, c6, 0
+        mcr             p15, 0, r1, c7, c5, 0
 
-        //---- データ TCM
-        //      + CPU 内部ワーク RAM の場合あり
-//#if   (HW_DTCM & 0x3FFF) != 0
-//#pragma message(ERROR: HW_DTCM need to be aligned 16KB!)
-//#endif
-
-//        SET_PROTECTION_A( c4, HW_DTCM, 16KB )
-        ldr     r0, =SDK_AUTOLOAD_DTCM_START
-        orr     r0, r0, #HW_C6_PR_16KB
-        orr     r0, r0, #HW_C6_PR_ENABLE
-        SET_PROTECTION_B( c4, HW_DTCM, 16KB )
-
-        //---- 命令 TCM
-        //      データ TCM より優先が高い、メインメモリ領域までのイメージ
-        SET_PROTECTION_A( c5, HW_ITCM_IMAGE, 16MB )
-        SET_PROTECTION_B( c5, HW_ITCM_IMAGE, 16MB )
-
-        //---- BIOS
-        SET_PROTECTION_A( c6, HW_BIOS, 32KB )
-        SET_PROTECTION_B( c6, HW_BIOS, 32KB )
-
-        //---- SHARED  CPU 間通信ワーク領域
-        SET_PROTECTION_A( c7, HW_MAIN_MEM_SHARED, 4KB )
-        SET_PROTECTION_B( c7, HW_MAIN_MEM_SHARED, 4KB )
-
-#if     HW_MAIN_MEM_SHARED_SIZE != 0x1000
-#pragma message(ERROR: Size unmatch HW_MAIN_MEM_SHARED_SIZE)
-#endif
-
-        //
-        // 命令ＴＣＭ 設定
-        //
-        mov     r0, #HW_C9_TCMR_32MB
-        mcr     p15, 0, r0, c9, c1, 1
-
-        //
-        // データＴＣＭ 設定
-        //
-        ldr     r0, =INITi_HW_DTCM
-        orr     r0, r0, #HW_C9_TCMR_16KB
-        mcr     p15, 0, r0, c9, c1, 0
-
-        //
-        // 命令キャッシュ イネーブル (リージョン設定)
-        //      1: MAIN_MEM + WRAM
-        //      3: MAIN_MEM_HI (or CTRDG)
-        //      6: BIOS
-        //
-        mov     r0, #REGION_BIT(0,1,0,1,0,0,1,0)
-        mcr     p15, 0, r0, c2, c0, 1
-
-        //
-        // データキャッシュ イネーブル (リージョン設定)
-        //      1: MAIN_MEM + WRAM
-        //      3: MAIN_MEM_HI (or CTRDG)
-        //      6: BIOS
-        //
-        mov     r0, #REGION_BIT(0,1,0,1,0,0,1,0)
-        mcr     p15, 0, r0, c2, c0, 0
-
-        //
-        // ライトバッファ イネーブル(リージョン設定)
-        //      1: MAIN_MEM + WRAM
-        //      3: MAIN_MEM_HI (or CTRDG)
-        //
-        mov     r0, #REGION_BIT(0,1,0,1,0,0,0,0)
-        mcr     p15, 0, r0, c3, c0, 0
-
-        //
-        // 命令アクセス許可 (リージョン設定)
-        //  IO_VRAM       : RW
-        //  MAIN_MEM_MAIN : RW
-        //  MAIN_MEM_SUB  : NA
-        //  MAIN_MEM_HI   : RW
-        //  DTCM          : NA
-        //  ITCM          : RW
-        //  BIOS          : RO
-        //  SHARED        : NA
-        //
-        ldr     r0, =REGION_ACC(RW,RW,NA,RW,NA,RW,RO,NA)
-        mcr     p15, 0, r0, c5, c0, 3
-
-        //
-        // データアクセス許可（リージョン設定）
-        //  IO_VRAM       : RW
-        //  MAIN_MEM_MAIN : RW
-        //  MAIN_MEM_SUB  : NA
-        //  MAIN_MEM_HI   : RW
-        //  DTCM          : RW
-        //  ITCM          : RW
-        //  BIOS          : RO
-        //  SHARED        : RW
-        //
-        ldr     r0, =REGION_ACC(RW,RW,NA,RW,RW,RW,RO,RW)
-        mcr     p15, 0, r0, c5, c0, 2
-
-        //
-        // システム制御コプロセッサ マスター設定
-        //
-        mrc     p15, 0, r0, c1, c0, 0
-        ldr     r1,=HW_C1_ICACHE_ENABLE | HW_C1_DCACHE_ENABLE | HW_C1_CACHE_ROUND_ROBIN \
-                  | HW_C1_ITCM_ENABLE   | HW_C1_DTCM_ENABLE                             \
-                  | HW_C1_SB1_BITSET    | HW_C1_EXCEPT_VEC_UPPER                        \
-                  | HW_C1_PROTECT_UNIT_ENABLE
-        orr     r0, r0, r1
-        mcr     p15, 0, r0, c1, c0, 0
-
-        bx      lr
+        bx              lr
 }
 
 
