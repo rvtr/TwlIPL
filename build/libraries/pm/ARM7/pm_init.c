@@ -18,12 +18,13 @@
 #include <firm/pm.h>
 #include <twl/spi/common/pm_common.h>
 
-#define  OS_MSEC_TO_CPUCYC( msec ) ((u32)( ((HW_CPU_CLOCK/1000) * (u32)(msec)) ))
+static OSTick tickINI = 0;
+static BOOL   doneBackLight = FALSE;
 
 /*---------------------------------------------------------------------------*
   Name:         PM_InitFIRM
 
-  Description:  power B/L on
+  Description:  set default parameters
 
   Arguments:    None
 
@@ -31,6 +32,8 @@
  *---------------------------------------------------------------------------*/
 void PM_InitFIRM( void )
 {
+    PM_CheckINIFlag();
+
     // LED
     PMi_ResetFlags( REG_PMIC_LED_CTL_ADDR, PMIC_LED_CTL_AUTO_BLINK | PMIC_LED_CTL_BLINK_BY_SLEEP );
     PMi_SetParams( REG_PMIC_LVL4_BRT_ADDR,
@@ -53,9 +56,62 @@ void PM_InitFIRM( void )
     // LCD ON
     PMi_SetFlags( REG_PMIC_CTL2_ADDR, PMIC_CTL2_VDD50 );
 
-    // back light ON
+    // back light
     PMi_SetParams( REG_PMIC_BL_BRT_A_ADDR, PMIC_BACKLIGHT_BRIGHT_MAX, PMIC_BL_BRT_A_MASK ); // TODO: less brightness
     PMi_SetParams( REG_PMIC_BL_BRT_B_ADDR, PMIC_BACKLIGHT_BRIGHT_MAX, PMIC_BL_BRT_B_MASK ); // TODO: less brightness
-    OS_SpinWaitCpuCycles( OS_MSEC_TO_CPUCYC( 17*4 ) );
-    PMi_SetFlags( REG_PMIC_CTL2_ADDR, PMIC_CTL2_BACK_LIGHT_1 | PMIC_CTL2_BACK_LIGHT_2 );
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         PM_CheckINIFlag
+
+  Description:  Check INI in GX_DISPSTAT (able to call before PM_InitFIRM)
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void PM_CheckINIFlag(void)
+{
+    if ( !tickINI )
+    {
+        if ( reg_GX_DISPSTAT & REG_GX_DISPSTAT_INI_MASK )
+        {
+            tickINI = OS_GetTick();
+        }
+    }
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         PM_BackLightOn
+
+  Description:  power B/L on if not set yet
+
+  Arguments:    force       TRUE: wait until valid condition
+                            FALSE not set unless valid condition
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void PM_BackLightOn( BOOL force )
+{
+    if ( doneBackLight )
+    {
+        return; // have already set
+    }
+    PM_CheckINIFlag();
+    //OS_TPrintf("PM_BackLightOn: %d msec\n", (u32)OS_TicksToMilliSeconds(OS_GetTick()-tickINI));
+    if ( force )
+    {
+        while ((u32)OS_TicksToMilliSeconds(OS_GetTick()-tickINI) < 34)
+        {
+        }
+        PMi_SetFlags( REG_PMIC_CTL2_ADDR, PMIC_CTL2_BACK_LIGHT_1 | PMIC_CTL2_BACK_LIGHT_2 );
+        doneBackLight = TRUE;
+        //OS_TPrintf("PM_BackLightOn: Done\n");
+    }
+    else if ((u32)OS_TicksToMilliSeconds(OS_GetTick()-tickINI) >= 34)
+    {
+        PMi_SetFlags( REG_PMIC_CTL2_ADDR, PMIC_CTL2_BACK_LIGHT_1 | PMIC_CTL2_BACK_LIGHT_2 );
+        doneBackLight = TRUE;
+        //OS_TPrintf("PM_BackLightOn: Done\n");
+    }
 }

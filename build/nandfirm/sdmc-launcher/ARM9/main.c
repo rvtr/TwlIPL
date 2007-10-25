@@ -39,7 +39,7 @@ static SVCSignHeapContext acPool;
     Profile
 */
 #ifndef SDK_FINALROM
-#define PRFILE_MAX  128
+#define PRFILE_MAX  0x100
 u32 profile[PRFILE_MAX];
 u32 pf_cnt = 0;
 #endif
@@ -49,6 +49,8 @@ u32 pf_cnt = 0;
 
     FromBootの対応をまとめる＆メインメモリの初期化
     OS_Init前なので注意
+    MI_LoadHeader前にかなり(数100msec)時間があるので、可能なら
+    OS_Init後にいろいろ処理したい！
 ***************************************************************/
 static void PreInit(void)
 {
@@ -68,6 +70,23 @@ static void PreInit(void)
     */
 
     MIi_CpuClearFast( 0, (void*)OSi_GetFromBromAddr(), sizeof(OSFromBromBuf) );
+}
+
+/***************************************************************
+    PostInit
+
+    MI_LoadHeader前にかなり(数100msec)時間があるので、可能なら
+    OS_Init後にいろいろ処理したい！
+    メインメモリの初期化
+***************************************************************/
+static void PostInit(void)
+{
+    /*
+     メインメモリ関連 (ARM9用の領域を全クリア)
+    */
+
+    MIi_CpuClearFast( 0, (void*)HW_DELIVER_ARG_BUF_END, HW_TWL_MAIN_MEM_MAIN_SIZE-HW_DELIVER_ARG_BUF_SIZE );
+    DC_FlushAll();
 }
 
 /***************************************************************
@@ -101,17 +120,25 @@ void TwlMain( void )
 
 #ifndef SDK_FINALROM
     // 0: before PXI
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSecondsBROM(OS_GetTick());
 #endif
 
     OS_InitFIRM();
 #ifndef SDK_FINALROM
+    OS_EnableIrq();
     OS_InitTick();
     // 1: after PXI
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
 
     SVC_InitSignHeap( &acPool, acHeap, sizeof(acHeap) );
+
+    PostInit();
+
+#ifndef SDK_FINALROM
+        // 2: after PostInit
+        profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+#endif
 
     // load menu
     if ( MI_LoadHeader( &acPool, RSA_KEY_ADDR ) && CheckHeader() && MI_LoadStatic() )

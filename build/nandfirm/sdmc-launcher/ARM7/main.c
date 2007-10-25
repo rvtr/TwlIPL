@@ -42,7 +42,7 @@ static u8 step = 0x80;
     Profile
 */
 #ifndef SDK_FINALROM
-#define PRFILE_MAX  128
+#define PRFILE_MAX  0x100
 u32 profile[PRFILE_MAX];
 u32 pf_cnt = 0;
 #endif
@@ -94,12 +94,14 @@ void TwlSpMain( void )
     I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, ++step);
 
     // 0: before PXI
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSecondsBROM(OS_GetTick());
 #endif
 
     OS_InitFIRM();
+    OS_EnableIrq(); // PMでOS_InitTick()を使っているので (他でも使ってる？)
 
 #ifndef SDK_FINALROM
+    //OS_EnableIrq();
     // 1: after PXI
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
@@ -107,6 +109,7 @@ void TwlSpMain( void )
     OS_SetDebugLED(++step);
 
     PM_InitFIRM();
+    PM_BackLightOn( FALSE );
 
 #ifndef SDK_FINALROM
     // 2: after PM
@@ -115,7 +118,8 @@ void TwlSpMain( void )
 
     OS_SetDebugLED(++step);
 
-    /* FATFSライブラリ用にカレントヒープに設定 */
+    /* FATFSライブラリ用にカレントヒープを設定 */
+    /* WRAM上のfatfsHeapをメインメモリヒープとして登録している */
     {
         OSHeapHandle hh;
         u8     *lo = (u8*)fatfsHeap;
@@ -135,6 +139,7 @@ void TwlSpMain( void )
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
         OS_SetDebugLED(++step);
+        PM_BackLightOn( FALSE );
 
         if ( FATFS_MountDriveFirm( DRIVE_NO, BOOT_DEVICE, PARTITION_NO ) )
         {
@@ -144,6 +149,7 @@ void TwlSpMain( void )
             profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
             OS_SetDebugLED(++step);
+            PM_BackLightOn( FALSE );
 
             switch ( PAD_Read() & PAD_KEYPORT_MASK )
             {
@@ -175,6 +181,7 @@ void TwlSpMain( void )
                 profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
                 OS_SetDebugLED(++step);
+                PM_BackLightOn( FALSE );
 
                 if ( FATFS_LoadHeader() && FATFS_LoadStatic() )
                 {
@@ -184,6 +191,7 @@ void TwlSpMain( void )
                     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
                     OS_SetDebugLED(++step);
+                    PM_BackLightOn( TRUE );
 
                     FATFS_Boot();
                 }
