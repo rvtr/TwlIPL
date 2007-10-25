@@ -7,7 +7,7 @@ OUT_KEY :		rsa_public.sbin
 
 WRAM_RBIN:		./wram_regs/wram_regs.rbin
 
-MIRROR_OFS:		0x80000
+MIRROR_OFS:		0x100000
 
 DECOMP_PROC :	ARM9  # ARM9 or ARM7
 
