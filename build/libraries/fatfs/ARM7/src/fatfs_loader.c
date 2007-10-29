@@ -29,6 +29,10 @@
 */
 //#define PROFILE_ENABLE
 
+#define MODULE_ALIGNMENT    0x10    // 16バイト単位で読み込む
+//#define MODULE_ALIGNMENT  0x200   // 512バイト単位で読み込む
+#define RoundUpModuleSize(value)    (((value) + MODULE_ALIGNMENT - 1) & -MODULE_ALIGNMENT)
+
 #ifdef SDK_FINALROM // FINALROMで無効化
 #undef PROFILE_ENABLE
 #endif
@@ -43,7 +47,7 @@ extern u32 pf_cnt;
 
 #define PXI_FIFO_TAG_DATA   PXI_FIFO_TAG_USER_0
 
-static ROM_Header* const rh= (ROM_Header*)(HW_MAIN_MEM_SYSTEM_END - 0x2000);
+static ROM_Header* const rh= (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
 static int menu_fd = -1;
 
 /*---------------------------------------------------------------------------*
@@ -123,6 +127,14 @@ BOOL FATFS_OpenSpecifiedSrl( const char* menufile )
                 offsetとsizeはARM9に通知されません。別の経路で同期を取ってください。
                 SRLファイルを読み込む場合は、互いにROMヘッダを参照できれば十分です。
                 (ROMヘッダ部分は元から知っているはず)
+
+                補足:
+                ここでは、あるライブラリ内でARM7/ARM9側で歩調を合わせられることを
+                前提にしているが、汎用的にするには(独立ライブラリ化するなら)、
+                送受信でスロットを半分ずつとし、それぞれに受信側のPXIコールバック
+                ＆スレッドを用意し、送信側APIがデータをWRAMに格納した後、他方に
+                destとsizeを通知するという形でOKではないか？
+                (で完了したら返事を返す)
 
   Arguments:    offset      offset of the file to load (512 bytes alignment)
                 size        size to load
@@ -285,15 +297,15 @@ static AESCounter* FATFSi_GetCounter( u32 offset )
                 makerom.TWLまたはIPLの使用に依存します。
 
   Arguments:    offset  offset of region from head of ROM_Header
-                size    size of region
+                size    size of region (for check only)
 
   Returns:      counter
  *---------------------------------------------------------------------------*/
 static void FATFSi_SetupAES( u32 offset, u32 size )
 {
-    if ( rh->s.enable_aes &&
-            offset >= rh->s.aes_target_rom_offset &&
-            offset + size <= rh->s.aes_target_rom_offset + rh->s.aes_target_size )
+    u32 aes_end = rh->s.aes_target_rom_offset + RoundUpModuleSize(rh->s.aes_target_size);
+    u32 arg_end = offset + RoundUpModuleSize(size);
+    if ( rh->s.enable_aes && offset >= rh->s.aes_target_rom_offset && arg_end <= aes_end )
     {
         AESi_WaitKey();
         if (rh->s.developer_encrypt)
@@ -326,6 +338,9 @@ static void FATFSi_SetupAES( u32 offset, u32 size )
                 このAPIを呼び出す前に、メインメモリの所定の位置にROMヘッダが
                 格納されている必要があります。
 
+                ARM9側と異なり、デバイス依存のアライメント修正を行っています。
+                (サイズのみ)
+
   Arguments:    None
 
   Returns:      TRUE if success
@@ -335,6 +350,7 @@ BOOL FATFS_LoadStatic( void )
     // load ARM9 static region without AES
     if ( rh->s.main_size > 0 )
     {
+        u32 aligned = RoundUpModuleSize(rh->s.main_size);
 #ifdef PROFILE_ENABLE
         // 30: before PXI
         pf_cnt = 0x30;
@@ -342,8 +358,8 @@ BOOL FATFS_LoadStatic( void )
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM9_STATIC;   // checkpoint
 #endif
         PXI_NotifyID( FIRM_PXI_ID_LOAD_ARM9_STATIC );
-        FATFSi_SetupAES( rh->s.main_rom_offset, rh->s.main_size );
-        if ( !FATFS_LoadBuffer( rh->s.main_rom_offset, rh->s.main_size ) ||
+        FATFSi_SetupAES( rh->s.main_rom_offset, aligned );
+        if ( !FATFS_LoadBuffer( rh->s.main_rom_offset, aligned ) ||
              PXI_RecvID() != FIRM_PXI_ID_AUTH_ARM9_STATIC )
         {
             return FALSE;
@@ -357,6 +373,7 @@ BOOL FATFS_LoadStatic( void )
     // load ARM7 static region without AES
     if ( rh->s.sub_size > 0 )
     {
+        u32 aligned = RoundUpModuleSize(rh->s.sub_size);
 #ifdef PROFILE_ENABLE
         // 50: before PXI
         pf_cnt = 0x50;
@@ -364,8 +381,8 @@ BOOL FATFS_LoadStatic( void )
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM7_STATIC;   // checkpoint
 #endif
         PXI_NotifyID( FIRM_PXI_ID_LOAD_ARM7_STATIC );
-        FATFSi_SetupAES( rh->s.sub_rom_offset, rh->s.sub_size );
-        if ( !FATFS_LoadBuffer( rh->s.sub_rom_offset, rh->s.sub_size ) ||
+        FATFSi_SetupAES( rh->s.sub_rom_offset, aligned );
+        if ( !FATFS_LoadBuffer( rh->s.sub_rom_offset, aligned ) ||
              PXI_RecvID() != FIRM_PXI_ID_AUTH_ARM7_STATIC )
         {
             return FALSE;
@@ -379,6 +396,7 @@ BOOL FATFS_LoadStatic( void )
     // load ARM9 extended static region with AES
     if ( rh->s.main_ltd_size > 0 )
     {
+        u32 aligned = RoundUpModuleSize(rh->s.main_ltd_size);
 #ifdef PROFILE_ENABLE
         // 70: before PXI
         pf_cnt = 0x70;
@@ -386,8 +404,8 @@ BOOL FATFS_LoadStatic( void )
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM9_LTD_STATIC;    // checkpoint
 #endif
         PXI_NotifyID( FIRM_PXI_ID_LOAD_ARM9_LTD_STATIC );
-        FATFSi_SetupAES( rh->s.main_ltd_rom_offset, rh->s.main_ltd_size );
-        if ( !FATFS_LoadBuffer( rh->s.main_ltd_rom_offset, rh->s.main_ltd_size ) ||
+        FATFSi_SetupAES( rh->s.main_ltd_rom_offset, aligned );
+        if ( !FATFS_LoadBuffer( rh->s.main_ltd_rom_offset, aligned ) ||
              PXI_RecvID() != FIRM_PXI_ID_AUTH_ARM9_LTD_STATIC )
         {
             return FALSE;
@@ -401,6 +419,7 @@ BOOL FATFS_LoadStatic( void )
     // load ARM7 extended static region with AES
     if ( rh->s.sub_ltd_size > 0 )
     {
+        u32 aligned = RoundUpModuleSize(rh->s.sub_ltd_size);
 #ifdef PROFILE_ENABLE
         // 90: before PXI
         pf_cnt = 0x90;
@@ -408,8 +427,8 @@ BOOL FATFS_LoadStatic( void )
         profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM7_LTD_STATIC;    // checkpoint
 #endif
         PXI_NotifyID( FIRM_PXI_ID_LOAD_ARM7_LTD_STATIC );
-        FATFSi_SetupAES( rh->s.sub_ltd_rom_offset, rh->s.sub_ltd_size );
-        if ( !FATFS_LoadBuffer( rh->s.sub_ltd_rom_offset, rh->s.sub_ltd_size ) ||
+        FATFSi_SetupAES( rh->s.sub_ltd_rom_offset, aligned );
+        if ( !FATFS_LoadBuffer( rh->s.sub_ltd_rom_offset, aligned ) ||
              PXI_RecvID() != FIRM_PXI_ID_AUTH_ARM7_LTD_STATIC )
         {
             return FALSE;

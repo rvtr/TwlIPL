@@ -89,14 +89,15 @@ SDK_WEAK_SYMBOL asm void _start( void )
         mov             r0, #HW_PSR_SYS_MODE
         msr             cpsr_csfx, r0
         sub             sp, r1, #4 // 4byte for stack check code
-        //---- read reset flag from pmic
 
+        //---- read reset flag from pmic
 #ifdef TWL_PLATFORM_TS
+#if 0
 @0:     bl              PXI_RecvByIntf
         cmp             r0, #FIRM_PXI_ID_COLDBOOT
         cmpne           r0, #FIRM_PXI_ID_WARMBOOT
         bne             @0
-
+#endif
         //---- initialize Main Memory
         cmp             r0, #FIRM_PXI_ID_COLDBOOT
         moveq           r0, #TRUE

@@ -145,6 +145,14 @@ static BOOL CheckRomCertificate( SVCSignHeapContext* pool, const RomCertificate 
                 SRLファイルを読み込む場合は、互いにROMヘッダを参照できれば十分です。
                 (ROMヘッダ部分は元から知っているはず)
 
+                補足:
+                ここでは、あるライブラリ内でARM7/ARM9側で歩調を合わせられることを
+                前提にしているが、汎用的にするには(独立ライブラリ化するなら)、
+                送受信でスロットを半分ずつとし、それぞれに受信側のPXIコールバック
+                ＆スレッドを用意し、送信側APIがデータをWRAMに格納した後、他方に
+                destとsizeを通知するという形でOKではないか？
+                (で完了したら返事を返す)
+
   Arguments:    dest        destination address for received data
                 size        size to load
                 ctx         context for SHA1 if execute SVC_SHA1Update
@@ -178,8 +186,8 @@ static BOOL MI_LoadBuffer(u8* dest, u32 size, SVCSHA1Context *ctx)
                 u8* s = src + done;
                 u8* d = dest + done;
                 u32 u = unit < done + HASH_UNIT ? unit - done : HASH_UNIT;
-                SVC_SHA1Update( ctx, s, u );
                 MI_CpuCopyFast( s, d, u );
+                SVC_SHA1Update( ctx, s, u );
             }
         }
         else

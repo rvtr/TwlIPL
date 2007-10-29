@@ -86,7 +86,7 @@ SDK_WEAK_SYMBOL asm void _start( void )
         mov             r0, #HW_PSR_SYS_MODE
         msr             cpsr_csfx, r0
         sub             sp, r1, #4 // 4byte for stack check code
-
+#if 0   // not used in FIRM
         //---- read reset flag from pmic
 #ifdef TWL_PLATFORM_TS
         mov             r0, #REG_PMIC_SW_FLAGS_ADDR
@@ -98,7 +98,7 @@ SDK_WEAK_SYMBOL asm void _start( void )
         mov             r0, #FIRM_PXI_ID_INIT_MMEM
         bl              PXI_WaitByIntf
 #endif // TWL_PLATFORM_TS
-
+#endif
         //---- wait for main memory mode into burst mode
         ldr             r3, =REG_EXMEMCNT_L_ADDR
         mov             r1, #REG_MI_EXMEMCNT_L_ECE2_MASK
@@ -127,7 +127,7 @@ SDK_WEAK_SYMBOL asm void _start( void )
 #endif
 
         //---- load autoload block and initialize bss
-        bl              do_autoload
+        //bl              do_autoload
 
         //---- fill static static bss with 0
         ldr             r0, =_start_ModuleParams
@@ -139,7 +139,7 @@ SDK_WEAK_SYMBOL asm void _start( void )
         bcc             @2
 
         //---- detect main memory size
-//        bl              detect_main_memory_size   // shared memory will be cleared
+        //bl              detect_main_memory_size
 
         //---- set interrupt vector
         ldr             r1, =HW_INTR_VECTOR_BUF
@@ -266,6 +266,7 @@ SDK_WEAK_SYMBOL asm void _start_AutoloadDoneCallback( void* argv[] )
 
 static asm void detect_main_memory_size( void )
 {
+#if 0   // NITRO hardware is not supported
         mov     r0, #OS_CONSOLE_SIZE_4MB
         mov     r1, #0
 
@@ -292,7 +293,9 @@ static asm void detect_main_memory_size( void )
         tst     r12, #REG_SCFG_CLK_WRAMHCLK_MASK
         moveq   r0, #OS_CONSOLE_SIZE_8MB
         beq     @4
-
+#else
+        ldr     r2, =HW_MMEMCHECKER_SUB
+#endif
         //---- 16MB or 32MB
         mov     r1, #0
         add     r3, r2, #OSi_IMAGE_DIFFERENCE2
@@ -310,6 +313,21 @@ static asm void detect_main_memory_size( void )
         mov     r0, #OS_CONSOLE_SIZE_16MB
 @4:
         strh    r0, [r2]
+
+        //---- detect chiptype
+        ldr     r2, =REG_OP_ADDR
+        ldrh    r0, [r2]
+        and     r0, r0, #REG_SCFG_OP_OPT_MASK
+
+        //---- detect jtag
+        ldr     r2, =REG_JTAG_ADDR
+        ldrh    r1, [r2]
+        and     r1, r1, #REG_SCFG_JTAG_CPUJE_MASK
+        orr     r0, r0, r1, LSL #1
+
+        ldr     r2, =HW_CHIPTYPE_FLAG
+        strb    r0, [r2]
+
         bx      lr
 }
 
