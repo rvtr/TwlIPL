@@ -1,0 +1,95 @@
+#! make -f
+#----------------------------------------------------------------------------
+# Project:  TwlIPL - commondefs - common definitions for build system
+# File:     commondefs
+#
+#  Copyright 2007 Nintendo.  All rights reserved.
+#
+# These coded instructions, statements, and computer programs contain
+# proprietary information of Nintendo of America Inc. and/or Nintendo
+# Company Ltd., and are protected by Federal copyright law.  They may
+# not be disclosed to third parties or copied or duplicated in any form,
+# in whole or in part, without the prior written consent of Nintendo.
+#
+# $Date:: 2007-09-06$
+# $Rev$
+# $Author$
+#----------------------------------------------------------------------------
+ifndef TWL_SYSMENU_COMMONDEFS_
+TWL_SYSMENU_COMMONDEFS_ = TRUE
+
+NITRO_NO_STD_PCHDR = TRUE # ƒvƒŠƒRƒ“ƒpƒCƒ‹ƒwƒbƒ_—}Ž~
+
+EMPTY	 	?=
+SPACE 		?= $(EMPTY) $(EMPTY)
+
+#----------------------------------------------------------------------------
+#  TWL-SYSTEM-MENU path settings
+#
+
+SYSMENU_ROOT			:= $(subst $(SPACE),\ ,$(subst \,/,$(TWLIPL_ROOT)))
+SYSMENU_BUILDTOOLSDIR	:= $(SYSMENU_ROOT)/build/buildtools
+SYSMENU_INCDIR			:= $(SYSMENU_ROOT)/include
+SYSMENU_TOOLSDIR		:= $(SYSMENU_ROOT)/tools
+SYSMENU_COMPONENTSDIR	:= $(SYSMENU_ROOT)/components
+
+LDEPENDS_LCF			+= $(SYSMENU_BUILDTOOLSDIR)/commondefs.sysmenu
+LDEPENDS_RES			+= $(SYSMENU_BUILDTOOLSDIR)/commondefs.sysmenu
+
+
+#----------------------------------------------------------------------------
+### TWL-commondefs
+#
+#include $(TWLSDK_ROOT)/build/buildtools/commondefs
+include	$(NITROSYSTEM_ROOT)/build/buildtools/commondefs
+
+
+#----------------------------------------------------------------------------
+### SYSTEM_MENU Library settings
+
+SYSMENU_LIBDIR			:= $(SYSMENU_ROOT)/lib/$(TWL_LIBTYPE)
+
+ifeq	($(CODEGEN_PROC),ARM9)
+
+SYSMENU_LIBS	?=	\
+					libsysmenu$(TWL_LIBSUFFIX).a \
+					libmbloader$(TWL_LIBSUFFIX).a \
+					libacsign$(TWL_LIBSUFFIX).a
+
+else #	($(CODEGEN_PROC),ARM7)
+
+SYSMENU_LIBS	?=	\
+					libmbloader_sp$(TWL_LIBSUFFIX).a
+
+endif
+
+
+#----------------------------------------------------------------------------
+#  MY BUILD TOOLS
+#
+OPENSSL			:= $(SYSMENU_TOOLSDIR)/openssl/openssl.exe
+
+MAKESYSMENU_RSA_PRVKEY	?= $(SYSMENU_TOOLSDIR)/openssl/rsa_private.der
+MAKESYSMENU_RSA_PUBKEY	?= $(SYSMENU_TOOLSDIR)/openssl/rsa_public.der
+
+#----------------------------------------------------------------------------
+
+### Global Library resettings
+
+GINCLUDES		:= $(SYSMENU_INCDIR) $(GINCLUDES)
+GLIBRARY_DIRS	:= $(SYSMENU_LIBDIR) $(GLIBRARY_DIRS)
+GLIBRARIES		:= $(SYSMENU_LIBS)   $(GLIBRARIES)
+
+
+#----------------------------------------------------------------------------
+#  TWLSYSMENU_INSTALL_ROOT
+#
+SYSMENU_INSTALL_ROOT			:= $(SYSMENU_ROOT)
+SYSMENU_INSTALL_INCDIR			:= $(SYSMENU_INSTALL_ROOT)/include
+SYSMENU_INSTALL_TOOLSDIR		:= $(SYSMENU_INSTALL_ROOT)/tools
+SYSMENU_INSTALL_LIBDIR			:= $(SYSMENU_INSTALL_ROOT)/lib/$(TWL_LIBTYPE)
+SYSMENU_INSTALL_COMPONENTSDIR	:= $(SYSMENU_INSTALL_ROOT)/components
+
+#----------------------------------------------------------------------------
+endif	# TWL_SYSMENU_COMMONDEFS_
+#----- End of commondefs -----

@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - build
+# Project:  TwlIPL
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -11,25 +11,36 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date::            $
-# $Rev:$
-# $Author:$
+# $Date:: 2007-10-03#$
+# $Rev: 1319 $
+# $Author: kitase_hirotake $
 #----------------------------------------------------------------------------
 
-include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
+
+SUBDIRS			=
 
 
 #----------------------------------------------------------------------------
+TARGET_PLATFORM	=	TWL
+TWL_ARCHGEN		=	LIMITED
+TWL_PROC	   	=	ARM9
 
-SUBDIRS =	\
-            tools \
-            libraries \
-			nandfirm \
-			nand_formatter \
+SRCS			=	crt1.c
+
+TARGET_OBJ		=	crt1.o
+
+LINCLUDES		=	$(COMMON_DIR)
+
+include	$(TWLIPL_ROOT)/build/buildtools/commondefs.sysmenu
+
+INSTALL_TARGETS		=	$(TARGETS)
+INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
 
 #----------------------------------------------------------------------------
 
-include	$(TWLFIRM_ROOT)/build/buildtools/modulerules
+do-build:		$(TARGETS)
+
+include	$(TWLIPL_ROOT)/build/buildtools/modulerules.sysmenu
 
 
 #===== End of Makefile =====

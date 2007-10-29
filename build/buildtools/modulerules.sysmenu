@@ -1,7 +1,7 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - build
-# File:     Makefile
+# Project:  TwlIPL - modulerules - common rules for build system
+# File:     modulerules
 #
 # Copyright 2007 Nintendo.  All rights reserved.
 #
@@ -11,25 +11,20 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date::            $
-# $Rev:$
-# $Author:$
+# $Date:: 2007-09-06$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
-
-include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
-
+ifndef TWL_SYSMENU_MODULERULES_
 
 #----------------------------------------------------------------------------
+### TWL-modulerules
+#
+#include $(TWLSDK_ROOT)/build/buildtools/modulerules
+include	$(NITROSYSTEM_ROOT)/build/buildtools/modulerules
 
-SUBDIRS =	\
-            tools \
-            libraries \
-			nandfirm \
-			nand_formatter \
 
 #----------------------------------------------------------------------------
-
-include	$(TWLFIRM_ROOT)/build/buildtools/modulerules
-
-
-#===== End of Makefile =====
+TWL_SYSMENU_MODULERULES_ = TRUE
+endif	# TWL_SYSMENU_MODULERULES_
+#----- End of modulerules -----

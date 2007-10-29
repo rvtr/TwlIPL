@@ -1,0 +1,56 @@
+#! make -f
+#----------------------------------------------------------------------------
+# Project:  TwlIPL
+# File:     Makefile
+#
+# Copyright 2007 Nintendo.  All rights reserved.
+#
+# These coded instructions, statements, and computer programs contain
+# proprietary information of Nintendo of America Inc. and/or Nintendo
+# Company Ltd., and are protected by Federal copyright law.  They may
+# not be disclosed to third parties or copied or duplicated in any form,
+# in whole or in part, without the prior written consent of Nintendo.
+#
+# $Date:: 2007-10-03#$
+# $Rev: 1319 $
+# $Author: kitase_hirotake $
+#----------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------
+
+SUBDIRS		=
+
+
+#----------------------------------------------------------------------------
+TARGET_PLATFORM		=	TWL
+TWL_ARCHGEN			=	LIMITED
+TWL_PROC	    	=	ARM9
+
+INCDIR				= 	include \
+						$(TWLSDK_ROOT)/build/libraries/mb/common/include
+
+SRCS				=	acsign.c acmemory.c acsign_util.c
+
+TARGET_LIB			=	libacsign$(TWL_LIBSUFFIX).a
+
+
+include	$(TWLIPL_ROOT)/build/buildtools/commondefs.sysmenu
+
+INSTALL_TARGETS		=	$(TARGETS)
+INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
+
+CCFLAGS				+=	-DSMALL_CODE_SIZE	\
+						-DSTANDALONE		\
+						-DOPT_32_BIT		\
+						-DNO_SPLIT			\
+						-DNO_FP_API			\
+						-DNO_R_DIAG			\
+						-DNO_STDIO_H		\
+						-DNO_STDLIB_H
+
+do-build:	$(TARGETS)
+
+include	$(TWLIPL_ROOT)/build/buildtools/modulerules.sysmenu
+
+
+#===== End of Makefile =====
