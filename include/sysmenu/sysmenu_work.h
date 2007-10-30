@@ -134,63 +134,17 @@ typedef enum SYSMMsg {
 //　データ型定義
 //----------------------------------------------------------------------
 
-#ifdef SDK_ARM7		// ※ARM7では、SDKのrtc/ARM9/api.h定義のこのデータはインクルードされないので、ここで定義。
-// 曜日定義
-typedef enum RTCWeek
-{
-	RTC_WEEK_SUNDAY = 0 ,				// 日曜日
-	RTC_WEEK_MONDAY ,					// 月曜日
-	RTC_WEEK_TUESDAY ,					// 火曜日
-	RTC_WEEK_WEDNESDAY ,				// 水曜日
-	RTC_WEEK_TURSDAY ,					// 木曜日
-	RTC_WEEK_FRIDAY ,					// 金曜日
-	RTC_WEEK_SATURDAY ,					// 土曜日
-	RTC_WEEK_MAX
-	
-} RTCWeek;
-
-// 午前・午後定義
-typedef enum RTCNoon
-{
-	RTC_NOON_AM = 0,					// 午前
-	RTC_NOON_PM ,						// 午後
-	RTC_NOON_MAX
-	
-} RTCNoon;
-
-// 日付構造体
-typedef struct RTCDate
-{
-	u32			year;					// 年 ( 0 ~ 99 )
-	u32			month;					// 月 ( 1 ~ 12 )
-	u32			day;					// 日 ( 1 ~ 31 )
-	RTCWeek		week;					// 曜日
-	
-} RTCDate;
-
-// 時刻構造体
-typedef struct RTCTime
-{
-	u32			hour;					// 時 ( 0 ~ 23 )
-	u32			minute;					// 分 ( 0 ~ 59 )
-	u32			second;					// 秒 ( 0 ~ 59 )
-} RTCTime;
-#endif	// SDK_ARM7
-
-
-// スピンロック変数構造体
+// ロック情報
 typedef struct LockVariable{
 	OSLockWord			lock;
 	vu32				value;
 }LockVariable;
-
 
 // RTC日付時刻構造体
 typedef struct RtcDateTime {
 	RTCDate				Date;
 	RTCTime				Time;
 }RtcDateTime;
-
 
 // SYSM共有ワーク構造体
 typedef struct SYSM_work{
@@ -226,7 +180,9 @@ typedef struct SYSM_work{
 //　SYSM共有ワーク領域のアドレス獲得
 //----------------------------------------------------------------------
 
-#define GetSYSMWork()				( (SYSM_work *)HW_RED_RESERVED )
+#define SYSM_GetResetParam()		( (ResetParam *)HW_RED_RESERVED )
+
+#define GetSYSMWork()				( (SYSM_work *)( HW_RED_RESERVED + sizeof(ResetParam) ) )
 
 //・SYSM共有ワーク領域のアドレスを獲得します。
 

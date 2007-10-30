@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlIPL
+# Project:  TwlSDK - demos - simpleShoot-1
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -11,21 +11,42 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date:: 2007-10-03#$
-# $Rev: 1319 $
-# $Author: kitase_hirotake $
+# $Date:: $
+# $Rev:  $
+# $Author:  $
 #----------------------------------------------------------------------------
 
-include	$(TWLSDK_ROOT)/build/buildtools/commondefs
-
-#----------------------------------------------------------------------------
-
-SUBDIRS		=	launcher MachineSettings PictoChat \
-				#DS_DownloadPlay
+SUBDIRS					=	
 
 #----------------------------------------------------------------------------
 
-include	$(TWLSDK_ROOT)/build/buildtools/modulerules
+TARGET_PLATFORM			=	TWL
+TWL_ARCHGEN				=	LIMITED
 
+TARGET_BIN				=	main.srl
+
+#LCFILE_SPEC			=	
+ROM_SPEC				=	main.rsf
+
+MISC_DIR				=	../../Launcher/ARM9/src
+
+SRCS					=	main.c PictoChat.c $(MISC_DIR)/misc.c
+#SRCS_OVERLAY			=	
+
+LINCLUDES				=	$(MISC_DIR)
+#LLIBRARY_DIRS			=	
+#LLIBRARIES				=	
+#LDEPENDS_NEF			=	
+
+include $(TWLIPL_ROOT)/build/buildtools/commondefs.sysmenu
+
+#----------------------------------------------------------------------------
+
+do-build : $(FONT_OBJS) $(TARGETS)
+
+
+include $(TWLIPL_ROOT)/build/buildtools/modulerules.sysmenu
+
+#----------------------------------------------------------------------------
 
 #===== End of Makefile =====

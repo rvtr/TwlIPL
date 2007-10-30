@@ -29,17 +29,42 @@ extern "C" {
 
 // define data----------------------------------------------------------
 
-#define	SYSM_CTRDG_DMA_NO		0		// カートリッジ周辺機器情報の読み込みに使用するDMA番号です。
-										// 同時に使用するDMA番号の中で最も優先が高い番号にして下さい。
-										// 他のDMAへ割り込まれると、読み込みに失敗する可能性があります。
+// タイトル情報
+typedef struct TitleProperty {	// この情報は、ランチャー時には認証通ってないけど、起動時には認証通すので大丈夫だろう。
+	u64		titleID;			// タイトルID
+	void	*pBanner;			// バナーへのポインタ（固定長フォーマットなら偽造されても大丈夫だろう。)
+	u32		rsv;
+}TitleProperty;
+
+
+// リセットパラメータ
+typedef struct ResetParam {
+	u64			bootTitleID;	// 起動するタイトルがあるか？あるならそのタイトルID
+	u32			rsv;
+	BOOL		isLogoSkip;		// ロゴデモをスキップするか？
+}ResetParam;
+
+
+// アプリ認証結果
+typedef enum AuthResult {
+	AUTH_PROCESSING = 0,
+	AUTH_RESULT_SUCCEEDED = 1,
+	AUTH_RESULT_TITLE_POINTER_ERROR = 2,
+	AUTH_RESULT_AUTHENTICATE_FAILED = 3,
+	AUTH_RESULT_ENTRY_ADDRESS_ERROR = 4
+}AuthResult;
 
 
 // global variable------------------------------------------------------
 
 // function-------------------------------------------------------------
 extern void SYSM_Init( void );
-extern BOOL SYSM_WaitARM7Init( void );
-extern s32  SYSM_Main( void );
+extern BOOL SYSM_IsLogoDemoSkip( void );
+extern void SYSM_CaribrateTP( void );
+extern int  SYSM_GetCardTitleList( TitleProperty *pTitleList_Card );
+extern int  SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand );
+extern AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle );
+extern void SYSM_Finalize( void );
 
 extern void SYSM_PermitToBootSelectedTarget( void );
 extern void SYSM_LoadSYSMData( void );
@@ -69,8 +94,6 @@ extern BOOL SYSM_CheckRTCTime( RTCTime *timep );
 extern s64  SYSM_CalcRtcOffsetAndSetDateTime( RTCDate *newDate, RTCTime *newTime );
 extern u32  SYSM_GetDayNum( u32 year, u32 month );
 extern BOOL SYSM_IsLeapYear100( u32 year );
-
-extern BOOL SYSM_IsDebuggerBannerViewMode( void );
 
 // ※以下の関数は、SYSM_Mainがコールされた後に正しい値が取得できるようになります。
 

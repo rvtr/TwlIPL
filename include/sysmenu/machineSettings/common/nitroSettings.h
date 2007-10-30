@@ -43,13 +43,8 @@ typedef enum NvLangCode{
 	LANG_GERMAN   =3,							// ドイツ語
 	LANG_ITALIAN  =4,							// イタリア語
 	LANG_SPANISH  =5,							// スペイン語
-#ifdef IPL2_DEST_CHINA
-  	LANG_CHINESE  =6,							// 中国語
-#endif // IPL2_DEST_CHINA
-#ifdef IPL2_DEST_KOREA
   	LANG_CHINESE  =6,							// 中国語
 	LANG_HANGUL   =7,							// 韓国語
-#endif // IPL2_DEST_KOREA
 	LANG_CODE_MAX
 }NvLangCode;
 
@@ -195,6 +190,9 @@ extern NitroConfigDataEx ncdEx;
 												// NITRO設定データ領域のアドレス獲得
 
 extern void NCD_ClearOwnerInfo( void );			// ニックネーム・誕生日・好きな色のクリア
+extern u8   NCD_GetIPL2Type( void );			
+extern u8  *NCD_GetIPL2Version( void );
+extern u32  NCD_GetNCDRomAddr( void );
 
 //=========================================================
 // データ取得
@@ -392,18 +390,13 @@ static inline void NCD_SetTPCalibration(NvTpCalibData *tp_calibp)
 // 言語コードのセット
 static inline void NCD_SetLanguage(NvLangCode language)
 {
-#ifdef IPL2_DEST_WW
-	GetNCDWork()->option.language = language;
-#else // IPL2_DEST_WW
-	GetNCDExWork()->language				= language;
-	GetNCDExWork()->valid_language_bitmap	= VALID_LANG_BITMAP;
+	GetNCDExWork()->language              = language;
 	
 	if( language >= LANG_CODE_MAX_WW ) {
 		GetNCDWork()->option.language = LANG_ENGLISH;
 	}else {
 		GetNCDWork()->option.language = language;
 	}
-#endif // IPL2_DEST_WW
 }
 
 // RTCオフセット値のセット

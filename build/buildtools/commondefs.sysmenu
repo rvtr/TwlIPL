@@ -29,7 +29,9 @@ SPACE 		?= $(EMPTY) $(EMPTY)
 
 SYSMENU_ROOT			:= $(subst $(SPACE),\ ,$(subst \,/,$(TWLIPL_ROOT)))
 SYSMENU_BUILDTOOLSDIR	:= $(SYSMENU_ROOT)/build/buildtools
-SYSMENU_INCDIR			:= $(SYSMENU_ROOT)/include
+SYSMENU_INCDIR			:= $(SYSMENU_ROOT)/include \
+                           $(TWLSDK_ROOT)/build/libraries/spi/arm9/include \
+                           $(TWLSDK_ROOT)/build/libraries/mb/common/include
 SYSMENU_TOOLSDIR		:= $(SYSMENU_ROOT)/tools
 SYSMENU_COMPONENTSDIR	:= $(SYSMENU_ROOT)/components
 

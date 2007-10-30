@@ -19,10 +19,6 @@
 #include <sysmenu/machineSettings/common/nitroSettings.h>
 #include "spi.h"
 
-#ifndef USED_COMPONENT
-#include <sysmenu/sysmenu_work.h>
-#endif
-
 // define data----------------------------------------------------------
 
 #define NCD_EX_FORCE_ENABLE							// このスイッチを定義すると、SYSMバージョンに関わらず強制的にNitroConfigDataExが有効になる。
@@ -39,6 +35,9 @@
 #define SR_WEN							0x02		// 0:ライト禁止  1:ライト許可
 #define SR_EER							0x20		// 1:イレースエラー発生（SANYO製FLASHのみ）
 
+#define READ_IPL2_HEADER_ADDR			0x18		// IPL2ヘッダのうち、読み込みが必要な部分の先頭アドレス
+#define READ_IPL2_HEADER_SIZE			0x0a		// IPL2ヘッダのうち、読み込みが必要なサイズ
+#define NCD_ROM_ADDR_SHIFT				3
 
 // NVRAM関連送信コマンドステート
 static enum NvramCommState{
@@ -52,49 +51,22 @@ static enum NvramCommState{
 }NvramCommState;
 
 
-// SYSMヘッダ情報
-typedef struct SYSMHeader {
-	u16		bm_arm9_rom_addr;
-	u16		bm_arm7_rom_addr;
-	u16		bm_crc16;
-	u16		ipl2_crc16;
-	u8		ipl2_key[4];
-	u16		ipl2_arm9_rom_addr;
-	u16		ipl2_arm9_ram_addr;
-	u16		ipl2_arm7_rom_addr;
-	u16		ipl2_arm7_ram_addr;
-	u16		ipl2_arm9_romOffsetUnit:3;
-	u16		ipl2_arm9_ramOffsetUnit:3;
-	u16		ipl2_arm7_romOffsetUnit:3;
-	u16		ipl2_arm7_ramOffsetUnit:3;
-	u16		ipl2_arm7_ramSelect:1;
-	u16		ipl2_header_ver:3;
-	u16		ipl2_data_rom_addr;
-	union {
-		struct {
-			u8	timestamp[5];				// SYSMタイムスタンプ [0]:分,[1]:時,[2]:日,[3]:月,[4]:年
-			u8	ipl2_type;					// SYSMタイプ(nitroConfigData.hで定義のSYSM_TYPE...）
-			u8	rsv[2];
-		} version;
-		u8		card_key[8];
-	} info;
+// IPL2ヘッダの一部（0x18からのデータ)
+typedef struct IPL2HeaderPart {
+	struct {
+		u8	timestamp[5];				// IPL2タイムスタンプ [0]:分,[1]:時,[2]:日,[3]:月,[4]:年
+		u8	ipl2_type;					// IPL2タイプ(nitroConfigData.hで定義のIPL2_TYPE...）
+		u8	rsv[2];
+	} version;
+	
 	u16		ncd_rom_addr;
-	union {									// SYSMHeader.info.version.type == SYSM_TYPE_I_DISPLAY_JAPANもしくは
-		u16		sys_rsv_rom_addr;			// SYSMHeader.info.version.timestamp >= 0x0502280851(SYSM_TYPE_NORMAL 3rd.以降）
-		u16		font_bncmp_offset;			// ならば、font_bncmp_offset, font_bnfr_offsetが有効。
-	} rom_addr1;							// ※なお、sys_rsv_rom_addr, app_rsv_rom_addrは、アドレスが変わったので
-	union {									// 　ここに入っている値は無効。ncd_rom_addrからの相対値で算出。
-		u16		app_rsv_rom_addr;
-		u16		font_bnfr_offset;
-	} rom_addr2;
-	u16		ipl2_data_crc16;
 	
-	u8		pad[ 0x18 ];					// ※キャッシュラインに合わせるためのパディング。本来は必要なし。
-	
-} SYSMHeader;	// 0x40bytes
+	u8		pad[ 0x16 ];					// ※キャッシュラインに合わせるためのパディング。本来は必要なし。
+} IPL2HeaderPart;	// 0x20bytes
 
 
 // function's prototype-------------------------------------------------
+static void NCD_ReadIPL2Header( void );
 static int  NVRAMm_checkCorrectNCD(NCDStoreEx *ncdsp);
 static BOOL NCD_CheckDataValue( NCDStoreEx *ncdsp );
 static BOOL NVRAMm_ExecuteCommand( int nv_state, u32 addr, u16 size, u8 *srcp );
@@ -103,7 +75,7 @@ static void Callback_NVRAM(PXIFifoTag tag, u32 data, BOOL err);
 // const data-----------------------------------------------------------
 
 // global variables-----------------------------------------------------
-NitroConfigDataEx 		ncdEx;
+NitroConfigDataEx ncdEx;
 
 // static variables-----------------------------------------------------
 static volatile BOOL	nv_cb_occurred;
@@ -112,97 +84,47 @@ static u16 				ena_ncd_num = NCD_NOT_CORRECT;
 static u16 				next_saveCount;
 static NCDStoreEx		ncds[2] ATTRIBUTE_ALIGN(32);
 
-#ifdef USED_COMPONENT
-static SYSMHeader		ipl2Header ATTRIBUTE_ALIGN(32);
+static IPL2HeaderPart	ipl2Header ATTRIBUTE_ALIGN(32);
 static BOOL				read_ipl2h = FALSE;
-#endif
-
 
 // function's description-----------------------------------------------
 
 //----------------------------------------------------------------------
-// SYSMヘッダ情報の読み出し
+// IPL2ヘッダ情報の読み出し
 //----------------------------------------------------------------------
-#ifndef USED_COMPONENT
-// SYSM上での使用時
-
-// SYSMタイプの取得
-#define NCD_GetSYSMType()			( (u32)GetSYSMWork()->ipl2_type )
-
-// NCD格納ROMアドレスの取得
-#define NCD_GetNCDRomAddr()			( (u32)GetSYSMWork()->ncd_rom_adr )
-
-#else
 // コンポーネント上での使用時
 
-// SYSMヘッダの読み出し
-void NCD_ReadSYSMHeader( void )
+// IPL2ヘッダの読み出し
+static void NCD_ReadIPL2Header( void )
 {
 	if( !read_ipl2h ) {
-		OS_TPrintf( "SYSMHeader:%x\n", sizeof(SYSMHeader) );
-		DC_InvalidateRange( &ipl2Header, sizeof(SYSMHeader) );
-		while( !NVRAMm_ExecuteCommand( COMM_RD, 0, sizeof(SYSMHeader), (u8 *)&ipl2Header ) ) {}
-		read_ipl2h		= TRUE;
+		OS_TPrintf( "IPL2Header:%x\n",   sizeof(IPL2HeaderPart) );
+		DC_InvalidateRange( &ipl2Header, sizeof(IPL2HeaderPart) );
+		while( !NVRAMm_ExecuteCommand( COMM_RD, READ_IPL2_HEADER_ADDR, READ_IPL2_HEADER_SIZE, (u8 *)&ipl2Header ) ) {}
+		read_ipl2h = TRUE;
 	}
 }
 
-// SYSMタイプの取得
-u8 NCD_GetSYSMType( void )
+// IPL2タイプの取得
+u8 NCD_GetIPL2Type( void )
 {
-	NCD_ReadSYSMHeader();
-	return ipl2Header.info.version.ipl2_type;
+	NCD_ReadIPL2Header();
+	return ipl2Header.version.ipl2_type;
 }
 
-// SYSMバージョンの取得
-u8 *NCD_GetSYSMVersion( void )
+// IPL2バージョンの取得
+u8 *NCD_GetIPL2Version( void )
 {
-	NCD_ReadSYSMHeader();
-	return ipl2Header.info.version.timestamp;
+	NCD_ReadIPL2Header();
+	return ipl2Header.version.timestamp;
 }
 
 // NCD格納ROMアドレスの取得
 u32 NCD_GetNCDRomAddr( void )
 {
-	NCD_ReadSYSMHeader();
+	NCD_ReadIPL2Header();
 	return (u32)( ipl2Header.ncd_rom_addr << NCD_ROM_ADDR_SHIFT );
 }
-
-// システム予約領域ROMアドレスの取得
-u32 NCD_GetSysRsvRomAddr( void )
-{
-	NCD_ReadSYSMHeader();
-	return (u32)( ipl2Header.ncd_rom_addr << NCD_ROM_ADDR_SHIFT ) - NCD_SYS_RSV_SIZE;
-}
-
-// アプリ予約領域ROMアドレスの取得
-u32 NCD_GetAppRsvRomAddr( void )
-{
-	NCD_ReadSYSMHeader();
-	return (u32)( ipl2Header.ncd_rom_addr << NCD_ROM_ADDR_SHIFT ) - NCD_SYS_RSV_SIZE - NCD_APP_RSV_SIZE;
-}
-
-// SYSMデータ格納ROMアドレスの取得
-u32 NCD_GetSYSMDataRomAddr( void )
-{
-	NCD_ReadSYSMHeader();
-	return (u32)( ipl2Header.ipl2_data_rom_addr << NCD_ROM_ADDR_SHIFT );
-}
-
-// bncmpフォントデータ格納ROMアドレスの取得
-u32 NCD_GetFontBncmpRomAddr( void )
-{
-	NCD_ReadSYSMHeader();
-	return (u32)( ipl2Header.rom_addr1.font_bncmp_offset << FONT_ROM_ADDR_SHIFT );
-}
-
-// bnfrフォントデータ格納ROMアドレスの取得
-u32 NCD_GetFontBnfrRomAddr( void )
-{
-	NCD_ReadSYSMHeader();
-	return (u32)( ipl2Header.rom_addr2.font_bnfr_offset << FONT_ROM_ADDR_SHIFT );
-}
-#endif
-
 
 //----------------------------------------------------------------------
 // NITRO設定データのリード
@@ -228,7 +150,7 @@ int NVRAMm_ReadNitroConfigData(NitroConfigData *dstp)
 	next_saveCount = (u8)((ncdsp[ena_ncd_num].saveCount + 1) & SAVE_COUNT_MASK);
 	
 	// 有効なNITRO設定データをバッファに転送
-	if(dstp!=NULL) {
+	if( dstp != NULL ) {
 		SVC_CpuCopy( (void *)&ncdsp[ ena_ncd_num ].ncd,    (void *)dstp, sizeof(NitroConfigData), 16);
 		SVC_CpuCopy( (void *)&ncdsp[ ena_ncd_num ].ncd_ex, (void *)&ncdEx, sizeof(NitroConfigDataEx), 16);
 	}
@@ -264,11 +186,12 @@ void NVRAMm_WriteNitroConfigData( NitroConfigData *srcp )
 	
 	// NCD_EXのCRC算出。
 #ifndef NCD_EX_FORCE_ENABLE
-	if( ( NCD_GetSYSMType() != SYSM_TYPE_NTR_WW ) && ( NCD_GetSYSMType() & SYSM_TYPE_NCD_EX_FLAG ) )
+	if( ( NCD_GetIPL2Type() != IPL2_TYPE_NTR_WW ) && ( NCD_GetIPL2Type() & IPL2_TYPE_NCD_EX_FLAG ) )
 #endif
 	{
 		ncdsp->ncd_ex			= *GetNCDExWork();
 		ncdsp->ncd_ex.version	= NITRO_CONFIG_DATA_EX_VERSION;		// バージョンを現在のものに設定。
+		ncdsp->ncd_ex.valid_language_bitmap = VALID_LANG_BITMAP;
 		ncdsp->crc16_ex		 	= SVC_GetCRC16( 0xffff, (const void *)&ncdsp->ncd_ex, sizeof(NitroConfigDataEx) );
 		size					= sizeof(NCDStoreEx);				// ※書き込みサイズをNCDStoreExに拡張。
 	}
@@ -314,9 +237,9 @@ static int NVRAMm_checkCorrectNCD(NCDStoreEx *ncdsp)
 			invalid = TRUE;
 		}
 		
-		// NCDExが有効なSYSMTypeならば、NCDExのCRCチェックを行う。
+		// NCDExが有効なIPL2Typeならば、NCDExのCRCチェックを行う。
 #ifndef NCD_EX_FORCE_ENABLE
-		if( ( NCD_GetSYSMType() != SYSM_TYPE_NTR_WW ) && ( NCD_GetSYSMType() & SYSM_TYPE_NCD_EX_FLAG ) )
+		if( ( NCD_GetIPL2Type() != IPL2_TYPE_NTR_WW ) && ( NCD_GetIPL2Type() & IPL2_TYPE_NCD_EX_FLAG ) )
 #endif
 		{
 			crc = SVC_GetCRC16( 0xffff, (const void *)&ncdsp[i].ncd_ex, sizeof(NitroConfigDataEx) );
@@ -374,9 +297,9 @@ static BOOL NCD_CheckDataValue( NCDStoreEx *ncdsp )
 				   ncdp->option.language, ncdexp->language, ncdexp->valid_language_bitmap );
 		return FALSE;
 	}
-	// NCDExのlanguageチェック（NCDExが有効なのは、下記のSYSMタイプのもの）
+	// NCDExのlanguageチェック（NCDExが有効なのは、下記のIPL2タイプのもの）
 #ifndef NCD_EX_FORCE_ENABLE
-	if( ( NCD_GetSYSMType() != SYSM_TYPE_NTR_WW ) && ( NCD_GetSYSMType() & SYSM_TYPE_NCD_EX_FLAG ) )
+	if( ( NCD_GetIPL2Type() != IPL2_TYPE_NTR_WW ) && ( NCD_GetIPL2Type() & IPL2_TYPE_NCD_EX_FLAG ) )
 #endif
 	{
 		if(   ( ~VALID_LANG_BITMAP & ( 0x0001 << ncdexp->language ) )

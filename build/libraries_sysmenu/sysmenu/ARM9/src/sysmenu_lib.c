@@ -32,21 +32,6 @@ typedef struct BannerCheckParam {
 	u32		size;
 }BannerCheckParam;
 
-
-typedef struct TitleProperty {	// この情報は、ランチャー時には認証通ってないけど、起動時には認証通すので大丈夫だろう。
-	u64		titleID;		// アプリケーション識別ID
-	u32		platform;		// NTR, TWL  (HYBLIDはTWLを返す）
-	void	*pBanner;		// 固定長フォーマットなら偽造されても大丈夫だろう。
-}TitleProperty;
-
-typedef enum AuthState {
-	AUTH_PROCESSING = 0,
-	AUTH_RESULT_SUCCEEDED = 1,
-	AUTH_RESULT_TITLE_POINTER_ERROR = 2,
-	AUTH_RESULT_AUTHENTICATE_FAILED = 3,
-	AUTH_RESULT_ENTRY_ADDRESS_ERROR = 4
-}AuthState;
-
 // extern data-----------------------------------------------------------------
 extern void ReturnFromMain( void );
 extern void	BootFuncEnd( void );
@@ -55,9 +40,14 @@ FS_EXTERN_OVERLAY( ipl2_data );
 FS_EXTERN_OVERLAY( bm_mainp );
 
 // function's prototype-------------------------------------------------------
+static void SYSMi_WaitInitARM7( void );
+static BOOL SYSMi_IsDebuggerBannerViewMode( void );
+
 static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle );
-AuthState SYSM_AuthAndLoadTitle( TitleProperty *pBootTitle );
 void SYSM_Finalize( void );
+void SYSM_RebootLauncher( void );
+void SYSM_RebootTitle( u64 titleID );
+
 
 
 static void INTR_SubpIRQ( void );
@@ -74,8 +64,7 @@ static void SYSMi_CopyInfoFromIPL1( void );
 static void SYSMi_ReadNTRSetting( void );
 static void SYSMi_ReadTWLSetting( void );
 static void SYSMi_VerifyNTRSetting( void );
-static void SYSMi_CheckEntryAddress( void );
-static void SYSMi_CaribrateTP( void );
+static BOOL SYSMi_CheckEntryAddress( void );
 static void SYSMi_WriteAdjustRTC( void );
 static BOOL	SYSMi_SendMessageToARM7( u32 msg );
 static BOOL SYSMi_CheckNitroCardRightly( void );
@@ -134,7 +123,10 @@ void SYSM_Init( void )
 	ncdp  = GetNCDWork();
 //	SYSMi_DispInitialDebugData();									// 初期デバッグ情報表示
 #endif /* __SYSM_DEBUG */
-
+	
+	TP_Init();
+	RTC_Init();
+	
 	// WRAM設定はいる？
 //	MI_SetMainMemoryPriority(MI_PROCESSOR_ARM7);
 //	MI_SetWramBank(MI_WRAM_ARM7_ALL);
@@ -142,11 +134,12 @@ void SYSM_Init( void )
 	SVC_CpuClearFast(0x0000, (u16 *)GetSYSMWork(), sizeof(SYSM_work));	// SYSMワークのクリア
 	
 	// ※ISデバッガかどうかの判定。　BootROMからのパラメータ引渡し？
+	SYSMi_WaitInitARM7();
 }
 
 
 // ARM7側の初期化待ち
-BOOL SYSM_WaitARM7Init( void )
+static void SYSMi_WaitInitARM7( void )
 {
 /*	while( !( SYSM_GetBootFlag() & BFLG_ARM7_INIT_COMPLETED ) ) {
 		SVC_WaitByLoop(0x1000);										// ARM7の初期化が終了するのを待つ。
@@ -154,13 +147,14 @@ BOOL SYSM_WaitARM7Init( void )
 */
 	reg_OS_PAUSE |= REG_OS_PAUSE_CHK_MASK;							// PAUSEレジスタのチェックフラグのセット
 	
-	SYSMi_ReadNTRSetting();											// NOR からNTR本体設定データをリード
 	SYSMi_ReadTWLSetting();											// NANDからTWL本体設定データをリード
 	PMm_SetBackLightBrightness();
-	SYSMi_CaribrateTP();											// 読み出したTWL本体設定データをもとにTPキャリブレーション。
-	SYSMi_WriteAdjustRTC();											// 読み出したTWL本体設定データをもとにRTCクロック補正値をセット。
 	
+	SYSMi_ReadNTRSetting();											// NOR からNTR本体設定データをリード
 	SYSMi_VerifyNTRSetting();										// NVRAMのNTR本体設定データをリードし、不一致箇所があればNTR側をリカバリ。
+	
+	SYSM_CaribrateTP();												// 読み出したTWL本体設定データをもとにTPキャリブレーション。
+	SYSMi_WriteAdjustRTC();											// 読み出したTWL本体設定データをもとにRTCクロック補正値をセット。
 	
 	SYSMi_CheckCardCloneBoot();										// カードがクローンブートかチェック
 	SYSMi_ReadCardBannerFile();										// カードバナーファイルの読み出し。
@@ -169,33 +163,32 @@ BOOL SYSM_WaitARM7Init( void )
 	// デバッガ対応コード
 #ifdef __IS_DEBUGGER_BUILD
 	if( GetSYSMWork()->isOnDebugger ) {
-		if( !SYSM_IsDebuggerBannerViewMode() ){						// デバッガ上動作の場合は、この中でカードブートまでやってしまう。
-			
-			( void )OS_EnableIrqMask( OS_IE_V_BLANK );
-			( void )OS_EnableIrq();
-			( void )OS_EnableInterrupts();
-			( void )GX_VBlankIntr( TRUE );
-			
-			if( SYSMi_ExistCard() ) {
-				( void )SYSM_Main();
-				SYSM_SetBootFlag( BFLG_BOOT_CARD );
-				( void )SYSM_BootCARD();
-				SYSM_PermitToBootSelectedTarget();
-				while(1) {
-					OS_WaitIrq( 1, OS_IE_V_BLANK );					// Vブランク割込終了待ち
-					if( SYSM_Main() ) {								// システムのメイン
-						return TRUE;								// TRUEが帰ってきたらメインループからリターン（カード起動）
-					}
-				}
-			}
+		if( SYSMi_ExistCard() &&
+			!SYSMi_IsDebuggerBannerViewMode() ){					// デバッガ上動作の場合は、この中でカードブートまでやってしまう。
+			SYSM_GetResetParam()->isLogoSkip  = TRUE;
+			SYSM_GetResetParam()->bootTitleID = SYSM_GetCardTitleID();
 		}
 	}else {
 		while( 1 ) {}												// ISデバッガビルドでISデバッガが検出できなかったら停止。
 	}
 #endif // __IS_DEBUGGER_BUILD
 	// ==============================================================
+}
 
-	return FALSE;
+
+int SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
+{
+#pragma unused( pTitleList_Card )
+	return 0;
+}
+
+
+int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand )
+{
+#pragma unused( pTitleList_Nand )
+															// filter_flag : ALL, ALL_APP, SYS_APP, USER_APP, Data only, 等の条件を指定してタイトルリストを取得する。
+															// return : *TitleProperty Array
+	return 0;
 }
 
 
@@ -209,16 +202,21 @@ static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle )
 
 
 // 指定タイトルの認証＆ロード　※１フレームじゃ終わらん。
-AuthState SYSM_AuthAndLoadTitle( TitleProperty *pBootTitle )
+AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle )
 {
-#pragma unused( pBootTitle )
 	// メインメモリのクリア
 	// DSダウンロードプレイの時は、ROMヘッダを退避する
 	// アプリロード
 	// アプリ認証
 	
-	// エントリアドレスの正当性をチェックし、無効な場合は無限ループに入る。
-	SYSMi_CheckEntryAddress();
+	// パラメータチェック
+	if( !SYSMi_CheckTitlePointer( pBootTitle ) ) {
+		return AUTH_RESULT_TITLE_POINTER_ERROR;
+	}
+	// エントリアドレスの正当性をチェック
+	if( !SYSMi_CheckEntryAddress() ) {
+		return AUTH_RESULT_ENTRY_ADDRESS_ERROR;
+	}
 	
 	return AUTH_RESULT_SUCCEEDED;
 }
@@ -260,6 +258,20 @@ void SYSM_Finalize( void )
 }
 
 
+// ランチャーをリブート
+void SYSM_RebootLauncher( void )
+{
+}
+
+
+// 再起動タイトルを指定してのリブート
+void SYSM_RebootTitle( u64 titleID )
+{
+#pragma unused( titleID )
+	
+}
+
+
 #if 0
 // NITRO起動をARM7に通知
 BOOL SYSM_BootCard( void )
@@ -278,13 +290,14 @@ BOOL SYSM_BootCard( void )
 }
 #endif
 
-
+#if 0
 // TPリード可能かどうかを調べる。
 BOOL SYSM_IsTPReadable( void )
 {
 	if( SYSM_GetBootFlag() & BFLG_BOOT_DECIDED )	return FALSE;
 	else											return TRUE;
 }
+#endif
 
 
 // ARM7-ARM9共有リソースのbootFlagへの値のセット
@@ -326,7 +339,7 @@ static void INTR_SubpIRQ( void )
 // ============================================================================
 
 // エントリアドレスの正当性チェック
-static void SYSMi_CheckEntryAddress( void )
+static BOOL SYSMi_CheckEntryAddress( void )
 {
 	// エントリアドレスがROM内登録エリアかAGBカートリッジエリアなら、無限ループに入る。
 	if(   !(   ( (u32)GetRomHeaderAddr()->main_entry_address >= HW_MAIN_MEM              )
@@ -340,9 +353,10 @@ static void SYSMi_CheckEntryAddress( void )
 #ifdef __DEBUG_SECURITY_CODE
 		DispSingleColorScreen( SCREEN_YELLOW );
 #endif
-		while( 1 ) {}
+		return FALSE;
 	}
 	OS_TPrintf("entry address valid.\n");
+	return TRUE;
 }
 
 
@@ -401,8 +415,16 @@ static void SYSMi_MainpRegisterAndRamClear( BOOL isPlatformTWL )
 // サブルーチン
 // ============================================================================
 
+// ロゴデモスキップか？
+BOOL SYSM_IsLogoDemoSkip( void )
+{
+	// ※システムアプリからのハードリセットによるロゴデモ飛ばしも判定に入れる。
+	
+	return SYSMi_IsDebuggerBannerViewMode();
+}
+
 // ISデバッガのバナービューモード起動かどうか？
-BOOL SYSM_IsDebuggerBannerViewMode( void )
+static BOOL SYSMi_IsDebuggerBannerViewMode( void )
 {
 #ifdef __IS_DEBUGGER_BUILD
 	return ( GetSYSMWork()->isOnDebugger &&
@@ -567,15 +589,15 @@ static void SYSMi_CheckCardCloneBoot( void )
 
 
 // タッチパネルキャリブレーション
-static void SYSMi_CaribrateTP( void )
+void SYSM_CaribrateTP( void )
 {
 #ifndef __TP_OFF
 	TPCalibrateParam calibrate;
 	
-	( void )TP_CalcCalibrateParam(&calibrate,							// タッチパネル初期化
+	( void )TP_CalcCalibrateParam( &calibrate,							// タッチパネル初期化
 			GetNCDWork()->tp.raw_x1, GetNCDWork()->tp.raw_y1, (u16)GetNCDWork()->tp.dx1, (u16)GetNCDWork()->tp.dy1,
 			GetNCDWork()->tp.raw_x2, GetNCDWork()->tp.raw_y2, (u16)GetNCDWork()->tp.dx2, (u16)GetNCDWork()->tp.dy2 );
-	TP_SetCalibrateParam(&calibrate);
+	TP_SetCalibrateParam( &calibrate );
 	OS_Printf("TP_calib: %4d %4d %4d %4d %4d %4d\n",
 			GetNCDWork()->tp.raw_x1, GetNCDWork()->tp.raw_y1, (u16)GetNCDWork()->tp.dx1, (u16)GetNCDWork()->tp.dy1,
 			GetNCDWork()->tp.raw_x2, GetNCDWork()->tp.raw_y2, (u16)GetNCDWork()->tp.dx2, (u16)GetNCDWork()->tp.dy2 );

@@ -1,8 +1,0 @@
-#define WAVE_VGROUP000	0
-#define BANK_VGROUP000	0
-#define SEQ_SONG0	0
-#define SEQ_DUMMY	0
-#define	DUMMY	0
-
-extern const u8 _binary_sound_data_sdat[];							// サウンドデータ
-
