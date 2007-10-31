@@ -123,7 +123,7 @@ int SelectLanguageMain( void )
 	
 	// [CANCEL]ボタン押下チェック
 	if( tpd.disp.touch ) {
-		tp_cancel = InRangeTp( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y,
+		tp_cancel = WithinRangeTP( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y,
 							   CANCEL_BUTTON_BOTTOM_X, CANCEL_BUTTON_BOTTOM_Y, &tpd.disp );
 	}
 	

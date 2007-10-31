@@ -256,7 +256,7 @@ int SEQ_OwnerInfo(void)
 	ReadTP();													// タッチパネル入力の取得
 	
 	if(tpd.disp.touch) {											// [RETURN]ボタン押下チェック
-		tp_return = InRangeTp(RETURN_BUTTON_LT_X*8, RETURN_BUTTON_LT_Y*8-4,
+		tp_return = WithinRangeTP(RETURN_BUTTON_LT_X*8, RETURN_BUTTON_LT_Y*8-4,
 							  RETURN_BUTTON_RB_X*8, RETURN_BUTTON_RB_Y*8-4, &tpd.disp);
 	}
 	
@@ -368,7 +368,7 @@ static int SEQ_InputBirthday(void)
 			x_base  = (ownerInfoSel.pos_x + 13) * 8;
 			y_base  = (ownerInfoSel.pos_y + OWNER_INFO_CSR_NEXT_Y_NUM * 1) * 8 + 6;
 			// 入力項目移動のチェック
-			if( InRangeTp( x_base, (y_base - 6), (x_base + 80), (y_base + 6), &tpd.disp) ) {
+			if( WithinRangeTP( x_base, (y_base - 6), (x_base + 80), (y_base + 6), &tpd.disp) ) {
 				if(tpd.disp.x < x_base + 2 * 8) {
 					new_seq = SEQ_MONTH_SET;
 				}else if((tpd.disp.x >= x_base + 3 * 8) && (tpd.disp.x < x_base + 5 * 8)) {
@@ -380,7 +380,7 @@ static int SEQ_InputBirthday(void)
 				ow->seq = new_seq - 1;
 			}else {
 				// 入力値の増減
-				if(InRangeTp( ow->inp.pos_x * 8, (y_base - 30), (ow->inp.pos_x + ow->inp.keta_max) * 8, (y_base + 30), &tpd.disp)) {
+				if(WithinRangeTP( ow->inp.pos_x * 8, (y_base - 30), (ow->inp.pos_x + ow->inp.keta_max) * 8, (y_base + 30), &tpd.disp)) {
 					ow->inp.y_offset = tpd.disp.y - y_base;
 					abs_y_offset     = (ow->inp.y_offset >= 0) ? ow->inp.y_offset : -ow->inp.y_offset;
 					if(abs_y_offset <= 6) {
@@ -538,7 +538,7 @@ static int SEQ_InputFavoriteColor(void)
 			x_base  = FCOLOR_LT_X * 8;
 			y_base  = FCOLOR_LT_Y * 8 + 6;
 			// 入力値の増減
-			if(InRangeTp( ow->inp.pos_x * 8, (y_base - 30), (ow->inp.pos_x + ow->inp.keta_max) * 8, (y_base + 30), &tpd.disp)) {
+			if(WithinRangeTP( ow->inp.pos_x * 8, (y_base - 30), (ow->inp.pos_x + ow->inp.keta_max) * 8, (y_base + 30), &tpd.disp)) {
 				ow->inp.y_offset = tpd.disp.y - y_base;
 				abs_y_offset     = (ow->inp.y_offset >= 0) ? ow->inp.y_offset : -ow->inp.y_offset;
 				if(abs_y_offset <= 6) {
@@ -864,7 +864,7 @@ static BOOL MoveCharCursorTp(CsrPos *csrp)
 	ow->detach_count = 0;
 	
 	if(tpd.disp.touch) {
-		if(InRangeTp(CLIST_LT_X*8, CLIST_LT_Y*8-4, CLIST_RB_X*8-1, CLIST_RB_Y*8-4, &tpd.disp)) {
+		if(WithinRangeTP(CLIST_LT_X*8, CLIST_LT_Y*8-4, CLIST_RB_X*8-1, CLIST_RB_Y*8-4, &tpd.disp)) {
 																		// 少しマージンあり。
 			temp.x = (u16)((tpd.disp.x - CLIST_LT_X * 8) / 8);
 			temp.y = (u16)((tpd.disp.y - (CLIST_LT_Y * 8)) / 16);

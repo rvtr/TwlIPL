@@ -119,10 +119,25 @@ typedef struct MenuParam {
 }MenuParam;
 
 
+// RTCデータ表示位置ワーク
+typedef struct RTCDrawProperty {
+	BOOL	isTopLCD;
+	int		date_x;
+	int		date_y;
+	int		time_x;
+	int		time_y;
+	int		vcount;
+	RTCDate	date;
+	RTCTime	time;
+	RTCDate	date_old;
+	RTCTime	time_old;
+}RTCDrawProperty;
+
 // global variables--------------------------------------------------
 extern TpWork	 tpd;						// タッチパネルデータ
 extern KeyWork	 pad;						// キーパッド入力データ
 extern const u8 *const g_strWeek[ 7 ];		// 曜日文字列
+extern RTCDrawProperty g_rtcDraw;
 
 extern NNSFndAllocator         g_allocator; // メモリアロケータ
 extern NNSG2dFont              gFont;       // フォント
@@ -131,20 +146,20 @@ extern NNSG2dTextCanvas        gTextCanvas; // TextCanvas
 
 // function-------------------------------------------------------------
 void InitBG( void );
+int  GetPrintfWidth( const NNSG2dTextCanvas *pCanvas, const char *fmt, ... );
 void PutStringUTF16   ( int x, int y, int color, const u16 *strUTF16 );
 void PutStringUTF16Sub( int x, int y, int color, const u16 *strUTF16 );
 void PrintfSJIS   ( int x, int y, int color, const char *fmt, ... );
 void PrintfSJISSub( int x, int y, int color, const char *fmt, ... );
 void ReadKeyPad( void );
 void ReadTP( void );
-BOOL WaitDetachTP( void );
-void StartDetachTP( void );
 void DrawMenu( u16 nowCsr, const MenuParam *pMenu );
 BOOL SelectMenuByTP( u16 *nowCsr, const MenuParam *pMenu );
-BOOL InRangeTp( int top_x, int top_y, int bottom_x, int bottom_y, TPData *tgt );
-void InitGetAndDrawRtcData( int drawDatePos_x, int drawDatePos_y, int drawTimePos_x, int drawTimePos_y );
-void GetAndDrawRtcData( void );
+BOOL WithinRangeTP( int top_x, int top_y, int bottom_x, int bottom_y, TPData *tgt );
 void SetBannerIconOBJ( GXOamAttr *pDstOAM, BannerFileV1 *bannerp );
+BOOL GetRTCData( RTCDrawProperty *pRTCDraw, BOOL forceGetFlag );
+void DrawRTCData( RTCDrawProperty *pRTCDraw );
+void GetAndDrawRTCData( RTCDrawProperty *pRTCDraw, BOOL forceGetFlag );
 
 #ifdef __cplusplus
 }

@@ -31,6 +31,9 @@ static void INTR_VBlank( void );
 // global variable-------------------------------------------------------------
 NNSFndAllocator g_allocator;
 int (*g_pNowProcess)( void );
+RTCDrawProperty g_rtcDraw = {
+	TRUE, RTC_DATE_TOP_X, RTC_DATE_TOP_Y, RTC_TIME_TOP_X, RTC_TIME_TOP_Y
+};
 
 // static variable-------------------------------------------------------------
 
@@ -70,8 +73,8 @@ void TwlMain(void)
 	SYSM_CaribrateTP();
 	
 	InitBG();
+	GetAndDrawRTCData( &g_rtcDraw, TRUE );
 	MachineSettingInit();
-	InitGetAndDrawRtcData( RTC_DATE_TOP_X, RTC_DATE_TOP_Y, RTC_TIME_TOP_X, RTC_TIME_TOP_Y );
 	// メインループ----------------------------
 	while ( 1 ) {
 		OS_WaitIrq( 1, OS_IE_V_BLANK );								// Vブランク割り込み待ち
@@ -80,7 +83,7 @@ void TwlMain(void)
 		
 		(void)g_pNowProcess();
 		
-		GetAndDrawRtcData();
+		GetAndDrawRTCData( &g_rtcDraw, FALSE );
 	}
 }
 

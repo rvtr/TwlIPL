@@ -74,6 +74,8 @@ typedef struct RtcDrawPos{
 }RtcDrawPos;
 
 // function's prototype-------------------------------------------------------
+static BOOL WaitDetachTP( void );
+static void StartDetachTP( void );
 static void InitScreen( void );
 static void InitCanvas( void );
 static void GetAndDrawRtcDataCore( BOOL forceGetFlag );
@@ -285,6 +287,24 @@ void PutStringUTF16Sub( int x, int y, int color, const u16 *strUTF16 )
 }
 
 
+// 書式付きで作成した文字列を表示した場合の幅を取得する
+int GetPrintfWidth( const NNSG2dTextCanvas *pCanvas, const char *fmt, ... )
+{
+	int srcLen;
+	int dstLen = sizeof(s_strBufferUTF16);
+	va_list vlist;
+    va_start(vlist, fmt);
+	srcLen = STD_TVSNPrintf( s_strBuffer, sizeof(s_strBuffer), fmt, vlist);
+    va_end(vlist);
+	s_strBuffer[ srcLen ] = 0;
+	
+	(void)STD_ConvertStringSjisToUnicode( s_strBufferUTF16, &dstLen, s_strBuffer, &srcLen, NULL );
+	s_strBufferUTF16[ dstLen ] = 0;
+	
+	return NNS_G2dTextCanvasGetTextWidth( pCanvas, s_strBufferUTF16 );
+}
+
+
 // SJISでPrintf形式で文字表示（内部でUTF16に変換)
 void PrintfSJIS( int x, int y, int color, const char *fmt, ... )
 {
@@ -367,7 +387,7 @@ void ReadTP(void)
 
 
 // TPデタッチを待つ
-BOOL WaitDetachTP( void )
+static BOOL WaitDetachTP( void )
 {
 	// s_detach_countが始動していたら、カウント判定。
 	if(s_detach_count > 0) {
@@ -383,7 +403,7 @@ BOOL WaitDetachTP( void )
 
 
 // TPデタッチ待ちの開始
-void StartDetachTP( void )
+static void StartDetachTP( void )
 {
 	s_detach_count = TP_CSR_DETACH_COUNT;
 }
@@ -451,7 +471,7 @@ BOOL SelectMenuByTP( u16 *nowCsr, const MenuParam *pMenu )
 			OS_TPrintf( "MENU[ %d ] : top_x = %02d  top_y = %02d  bot_x = %02d  bot_y = %02d : ",
 						i, top_x, top_y, bottom_x, bottom_y );
 			
-			if( InRangeTp( top_x, top_y, bottom_x, bottom_y, target ) ) {
+			if( WithinRangeTP( top_x, top_y, bottom_x, bottom_y, target ) ) {
 				OS_TPrintf( "InRange\n" );
 				if( tpd.disp.validity == TP_VALIDITY_VALID ) {		// カーソルをその要素に移動
 					if( csr_old == i ) {
@@ -482,7 +502,7 @@ BOOL SelectMenuByTP( u16 *nowCsr, const MenuParam *pMenu )
 
 
 // 現在のタッチパネル座標が指定領域内にあるかどうかを返す。
-BOOL InRangeTp( int top_x, int top_y, int bottom_x, int bottom_y, TPData *tgt )
+BOOL WithinRangeTP( int top_x, int top_y, int bottom_x, int bottom_y, TPData *tgt )
 {
 	if( ( tgt->x >= top_x    ) &&
 		( tgt->x <= bottom_x ) &&
@@ -493,79 +513,6 @@ BOOL InRangeTp( int top_x, int top_y, int bottom_x, int bottom_y, TPData *tgt )
 		return TRUE;
 	}else {
 		return FALSE;
-	}
-}
-
-
-//===============================================
-// RTCアクセスルーチン
-//===============================================
-
-// RTCデータ取得＆表示の初期化
-void InitGetAndDrawRtcData( int drawDatePos_x, int drawDatePos_y, int drawTimePos_x, int drawTimePos_y)
-{
-	s_vcount = 0;
-	s_rtcPos.date_x = drawDatePos_x;
-	s_rtcPos.date_y = drawDatePos_y;
-	s_rtcPos.time_x = drawTimePos_x;
-	s_rtcPos.time_y = drawTimePos_y;
-	
-	(void)RTC_GetDateTime( &s_rtcDate, &s_rtcTime);
-	GetAndDrawRtcDataCore( TRUE );
-}
-
-
-void GetAndDrawRtcData( void )
-{
-	GetAndDrawRtcDataCore( FALSE );
-}
-
-
-// RTC情報の取得＆表示
-static void GetAndDrawRtcDataCore( BOOL forceGetFlag )
-{
-	u32 year;
-	RTCDate date_old;
-	RTCTime time_old;
-	
-	// RTC情報の取得
-	if( forceGetFlag || ( s_vcount++ == 60 ) ) {
-		s_vcount = 0;
-		MI_CpuCopy16( &s_rtcDate, &date_old, sizeof(RTCDate) );
-		MI_CpuCopy16( &s_rtcTime, &time_old, sizeof(RTCTime) );
-		
-		(void)RTC_GetDateTime( &s_rtcDate, &s_rtcTime );
-		
-		// 前RTC情報の消去
-		{
-			year = s_rtcDate.year + 2000;
-			PrintfSJISSub( s_rtcPos.date_x,  s_rtcPos.date_y, TXT_COLOR_WHITE, "%d/%02d/%02d[%3s]",
-						year,
-						date_old.month,
-						date_old.day,
-						g_strWeek[ date_old.week ]
-						);
-			PrintfSJISSub( s_rtcPos.time_x,  s_rtcPos.time_y, TXT_COLOR_WHITE, "%02d:%02d:%02d",
-						time_old.hour,
-						time_old.minute,
-						time_old.second
-						);
-		}
-		// RTC情報の表示
-		{
-			year = s_rtcDate.year + 2000;
-			PrintfSJISSub( s_rtcPos.date_x,  s_rtcPos.date_y, TXT_COLOR_BLACK, "%d/%02d/%02d[%3s]",
-						year,
-						s_rtcDate.month,
-						s_rtcDate.day,
-						g_strWeek[ s_rtcDate.week ]
-						);
-			PrintfSJISSub( s_rtcPos.time_x,  s_rtcPos.time_y, TXT_COLOR_BLACK, "%02d:%02d:%02d",
-						s_rtcTime.hour,
-						s_rtcTime.minute,
-						s_rtcTime.second
-						);
-		}
 	}
 }
 
@@ -587,4 +534,69 @@ void SetBannerIconOBJ( GXOamAttr *pDstOAM, BannerFileV1 *bannerp )
 					1,												// charactor
 					15,												// palette
 					0);												// affine
+}
+
+
+//===============================================
+// RTCアクセスルーチン
+//===============================================
+
+// RTCデータの取得
+BOOL GetRTCData( RTCDrawProperty *pRTCDraw, BOOL forceGetFlag )
+{
+	if( forceGetFlag || ( pRTCDraw->vcount++ == 59 ) ) {
+		pRTCDraw->vcount = 0;
+		MI_CpuCopy16( &pRTCDraw->date, &pRTCDraw->date_old, sizeof(RTCDate) );
+		MI_CpuCopy16( &pRTCDraw->time, &pRTCDraw->time_old, sizeof(RTCTime) );
+		(void)RTC_GetDateTime( &pRTCDraw->date, &pRTCDraw->time );
+		return TRUE;
+	}
+	return FALSE;
+}
+
+
+// RTCデータの表示
+void DrawRTCData( RTCDrawProperty *pRTCDraw )
+{
+	void (*pPrintFunc)( int x, int y, int color, const char *fmt, ... ) =
+		( pRTCDraw->isTopLCD ) ? PrintfSJISSub : PrintfSJIS;
+	
+	// 前RTC情報の消去
+	{
+		u32 year = pRTCDraw->date_old.year + 2000;
+		pPrintFunc( pRTCDraw->date_x, pRTCDraw->date_y, TXT_COLOR_WHITE, "%04d/%02d/%02d[%3s]",
+					year,
+					pRTCDraw->date_old.month,
+					pRTCDraw->date_old.day,
+					g_strWeek[ pRTCDraw->date_old.week ]
+					);
+		pPrintFunc( pRTCDraw->time_x, pRTCDraw->time_y, TXT_COLOR_WHITE, "%02d:%02d:%02d",
+					pRTCDraw->time_old.hour,
+					pRTCDraw->time_old.minute,
+					pRTCDraw->time_old.second
+					);
+	}
+	// RTC情報の表示
+	{
+		u32 year = pRTCDraw->date.year + 2000;
+		pPrintFunc( pRTCDraw->date_x, pRTCDraw->date_y, TXT_COLOR_BLACK, "%d/%02d/%02d[%3s]",
+					year,
+					pRTCDraw->date.month,
+					pRTCDraw->date.day,
+					g_strWeek[ pRTCDraw->date.week ]
+					);
+		pPrintFunc( pRTCDraw->time_x, pRTCDraw->time_y, TXT_COLOR_BLACK, "%02d:%02d:%02d",
+					pRTCDraw->time.hour,
+					pRTCDraw->time.minute,
+					pRTCDraw->time.second
+					);
+	}
+}
+
+// RTCデータの取得&表示
+void GetAndDrawRTCData( RTCDrawProperty *pRTCDraw, BOOL forceGetFlag )
+{
+	if( GetRTCData( pRTCDraw, forceGetFlag ) ) {
+		DrawRTCData( pRTCDraw );
+	}
 }

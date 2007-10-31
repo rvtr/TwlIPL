@@ -393,11 +393,11 @@ int TP_CalibrationMain( void )
 				SetPoint16x16( tpd.disp.x, tpd.disp.y );
 				
 				// [OK] [CANCEL] [RETRY]ボタン押下チェック
-				tp_ok     = InRangeTp(	OK_BUTTON_TOP_X, OK_BUTTON_TOP_Y,
+				tp_ok     = WithinRangeTP(	OK_BUTTON_TOP_X, OK_BUTTON_TOP_Y,
 						  				OK_BUTTON_BOTTOM_X, OK_BUTTON_BOTTOM_Y, &tpd.disp );
-				tp_cancel = InRangeTp(	CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y,
+				tp_cancel = WithinRangeTP(	CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y,
 						  				CANCEL_BUTTON_BOTTOM_X, CANCEL_BUTTON_BOTTOM_Y, &tpd.disp );
-				tp_retry  = InRangeTp(	RETRY_BUTTON_TOP_X, RETRY_BUTTON_TOP_Y,
+				tp_retry  = WithinRangeTP(	RETRY_BUTTON_TOP_X, RETRY_BUTTON_TOP_Y,
 						  				RETRY_BUTTON_BOTTOM_X, RETRY_BUTTON_BOTTOM_Y, &tpd.disp );
 				
 				if( tpd.raw.validity==TP_VALIDITY_VALID ) {

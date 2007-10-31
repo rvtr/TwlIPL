@@ -22,15 +22,15 @@
 
 // define data------------------------------------------
 	// キャンセルボタンLCD領域
-#define CANCEL_BUTTON_LT_X					( 12 * 8 )
-#define CANCEL_BUTTON_LT_Y					( 21 * 8 )
-#define CANCEL_BUTTON_RB_X					( (CANCEL_BUTTON_LT_X + 8) * 8 )
-#define CANCEL_BUTTON_RB_Y					( (CANCEL_BUTTON_LT_Y + 2) * 8 )
+#define CANCEL_BUTTON_TOP_X					( 12 * 8 )
+#define CANCEL_BUTTON_TOP_Y					( 21 * 8 )
+#define CANCEL_BUTTON_BOTTOM_X				( CANCEL_BUTTON_TOP_X + 5 * 8 )
+#define CANCEL_BUTTON_BOTTOM_Y				( CANCEL_BUTTON_TOP_Y + 2 * 8 )
 	// OKボタンLCD領域
-#define OK_BUTTON_LT_X						( 22 * 8 )
-#define OK_BUTTON_LT_Y						( 21 * 8 )
-#define OK_BUTTON_RB_X						( (OK_BUTTON_LT_X + 8) * 8 )
-#define OK_BUTTON_RB_Y						( (OK_BUTTON_LT_Y + 2) * 8 )
+#define OK_BUTTON_TOP_X						( 22 * 8 )
+#define OK_BUTTON_TOP_Y						( 21 * 8 )
+#define OK_BUTTON_BOTTOM_X					( OK_BUTTON_TOP_X + 2 * 8 )
+#define OK_BUTTON_BOTTOM_Y					( OK_BUTTON_TOP_Y + 2 * 8 )
 
 
 #define SETTING_MENU_ELEMENT_NUM			4						// メインメニューの項目数
@@ -153,7 +153,6 @@ int MachineSettingMain( void )
 {
 	BOOL tp_select;
 	
-	GetAndDrawRtcData();
 	ReadTP();
 	
 	//--------------------------------------
@@ -218,18 +217,18 @@ int MachineSettingMain( void )
 // OK / CANCELボタンの描画
 void DrawOKCancelButton(void)
 {
-	(void)PutStringUTF16( CANCEL_BUTTON_LT_X, CANCEL_BUTTON_LT_Y, TXT_COLOR_CYAN, (const u16 *)L" CANCEL ");
-	(void)PutStringUTF16( OK_BUTTON_LT_X,     OK_BUTTON_LT_Y,     TXT_COLOR_CYAN, (const u16 *)L"   OK   ");
+	(void)PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_CYAN, (const u16 *)L"CANCEL");
+	(void)PutStringUTF16( OK_BUTTON_TOP_X,     OK_BUTTON_TOP_Y,     TXT_COLOR_CYAN, (const u16 *)L"OK");
 }
 
 
 // OK or CANCELボタン押下チェック
 void CheckOKCancelButton(BOOL *tp_ok, BOOL *tp_cancel)
 {
-	*tp_cancel = InRangeTp( CANCEL_BUTTON_LT_X, CANCEL_BUTTON_LT_Y,
-						    CANCEL_BUTTON_RB_X, CANCEL_BUTTON_RB_Y, &tpd.disp );
-	*tp_ok     = InRangeTp( OK_BUTTON_LT_X,     OK_BUTTON_LT_Y,
-						    OK_BUTTON_RB_X,     OK_BUTTON_RB_Y, &tpd.disp );
+	*tp_cancel = WithinRangeTP( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y,
+								CANCEL_BUTTON_BOTTOM_X, CANCEL_BUTTON_BOTTOM_Y, &tpd.disp );
+	*tp_ok     = WithinRangeTP( OK_BUTTON_TOP_X,     OK_BUTTON_TOP_Y,
+								OK_BUTTON_BOTTOM_X,     OK_BUTTON_BOTTOM_Y, &tpd.disp );
 }
 
 
