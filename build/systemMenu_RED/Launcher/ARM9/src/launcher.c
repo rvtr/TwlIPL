@@ -112,18 +112,26 @@ static const u16 *const str_backlight[] = {
 
 #define MAX_TITLE_PROPERTY 40
 static BannerFile *banner;
+static BannerFile *banner2;
 static TitleProperty tp[MAX_TITLE_PROPERTY];
 static GXOamAttr banner_oam_attr;
+static GXOamAttr banner_oam_attr2;
 
 // バナー画像のロード及びOBJ関係初期化
+// 実際には、受け取ったリストからイメージデータのアドレスを取得してVRAMにイメージデータをロードし、
+// 表示するぶんだけ毎フレームGXOamAttrにしてやる必要があるっぽい
+// VRAMに格納したデータへは、リストのインデックスからアクセス？
 static void BannerInit()
 {
 	int l;
 	u32 size = CMN_LoadFile( (void **)&banner, "data/myGameBanner.bnr", &g_allocator);
 	NNS_G2D_ASSERT( size > 0 );
+	size = CMN_LoadFile( (void **)&banner2, "data/myGameBanner2.bnr", &g_allocator);
+	NNS_G2D_ASSERT( size > 0 );
 	
     GX_SetVisiblePlane(GX_PLANEMASK_OBJ | GX_PLANEMASK_BG0);      // display only OBJ&BG0
     GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_32K);     // 2D mapping mode
+    
 	GX_LoadOBJPltt( banner->v1.pltt, 0, BNR_PLTT_SIZE );
 	GX_LoadOBJ(banner->v1.image, 0x20, BNR_IMAGE_SIZE);
 	G2_SetOBJAttr(  &banner_oam_attr,								// OAM pointer
@@ -139,6 +147,22 @@ static void BannerInit()
 					0,												// palette
 					0);												// affine
 	DC_FlushRange(&banner_oam_attr, sizeof(banner_oam_attr));
+	
+	GX_LoadOBJ(banner2->v1.image, 0x20+BNR_IMAGE_SIZE, BNR_IMAGE_SIZE);
+	G2_SetOBJAttr(  &banner_oam_attr2,								// OAM pointer
+					128,												// X position
+					128,												// Y position
+					0,												// Priority
+					GX_OAM_MODE_NORMAL,								// Bitmap mode
+					FALSE,											// mosaic off
+					GX_OAM_EFFECT_NONE,								// affine off
+					GX_OAM_SHAPE_32x32,								// 32x32 size
+					GX_OAM_COLOR_16,								// 16 color
+					17,												// charactor
+					0,												// palette
+					0);												// affine
+	DC_FlushRange(&banner_oam_attr2, sizeof(banner_oam_attr));
+	
 	for(l=0;l<MAX_TITLE_PROPERTY;l++)
 	{
 		tp[l].titleID = 0;
@@ -148,7 +172,10 @@ static void BannerInit()
 
 static void BannerDraw()
 {
+	banner_oam_attr.x++;
+	banner_oam_attr.y++;
 	GX_LoadOAM(&banner_oam_attr, 0, sizeof(banner_oam_attr));
+	GX_LoadOAM(&banner_oam_attr2,BNR_IMAGE_SIZE, sizeof(banner_oam_attr));
 }
 
 #endif //DBGBNR
