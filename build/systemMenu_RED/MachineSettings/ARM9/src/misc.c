@@ -78,7 +78,6 @@ static BOOL WaitDetachTP( void );
 static void StartDetachTP( void );
 static void InitScreen( void );
 static void InitCanvas( void );
-static void GetAndDrawRtcDataCore( BOOL forceGetFlag );
 
 // global variable-------------------------------------------------------------
 KeyWork		pad;													// キーパッド入力データ

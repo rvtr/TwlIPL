@@ -31,6 +31,9 @@
 // function's prototype declaration---------------------
 
 // global variable -------------------------------------
+RTCDrawProperty g_rtcDraw = {
+	TRUE, RTC_DATE_TOP_X, RTC_DATE_TOP_Y, RTC_TIME_TOP_X, RTC_TIME_TOP_Y
+};
 
 // static variable -------------------------------------
 
@@ -49,7 +52,7 @@ void PictoChatInit( void )
 	
 	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"PictoChat");
 	PutStringUTF16( 4 * 8, 8 * 8, TXT_COLOR_BLACK, (const u16 *)L"Under Construction...");
-	InitGetAndDrawRtcData( 72, 80, 64 + 32, 80 + 16 );
+	GetAndDrawRTCData( &g_rtcDraw, TRUE );
 	
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	GX_DispOn();
@@ -66,15 +69,15 @@ void PictoChatMain(void)
 	
 	// [RETURN]ボタン押下チェック
 	if(tpd.disp.touch) {
-		tp_cancel = InRangeTp( RETURN_BUTTON_TOP_X * 8,    RETURN_BUTTON_TOP_Y * 8 - 4,
-							   RETURN_BUTTON_BOTTOM_X * 8, RETURN_BUTTON_BOTTOM_Y * 8 - 4, &tpd.disp );
+		tp_cancel = WithinRangeTP(  RETURN_BUTTON_TOP_X * 8,    RETURN_BUTTON_TOP_Y * 8 - 4,
+									RETURN_BUTTON_BOTTOM_X * 8, RETURN_BUTTON_BOTTOM_Y * 8 - 4, &tpd.disp );
 	}
 	
 	if( ( pad.trg & PAD_BUTTON_B ) || tp_cancel ) {
 //		SYSM_RebootLauncher();
 	}
 	
-	GetAndDrawRtcData();
+	GetAndDrawRTCData( &g_rtcDraw, FALSE );
 }
 
 
