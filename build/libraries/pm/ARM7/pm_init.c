@@ -18,7 +18,6 @@
 #include <firm/pm.h>
 #include <twl/spi/common/pm_common.h>
 
-static OSTick tickINI = 0;
 static BOOL   doneBackLight = FALSE;
 
 /*---------------------------------------------------------------------------*
@@ -32,8 +31,6 @@ static BOOL   doneBackLight = FALSE;
  *---------------------------------------------------------------------------*/
 void PM_InitFIRM( void )
 {
-    PM_CheckINIFlag();
-
     // LED
     PMi_ResetFlags( REG_PMIC_LED_CTL_ADDR, PMIC_LED_CTL_AUTO_BLINK | PMIC_LED_CTL_BLINK_BY_SLEEP );
     PMi_SetParams( REG_PMIC_LVL4_BRT_ADDR,
@@ -62,26 +59,6 @@ void PM_InitFIRM( void )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         PM_CheckINIFlag
-
-  Description:  Check INI in GX_DISPSTAT (able to call before PM_InitFIRM)
-
-  Arguments:    None
-
-  Returns:      None
- *---------------------------------------------------------------------------*/
-void PM_CheckINIFlag(void)
-{
-    if ( !tickINI )
-    {
-        if ( reg_GX_DISPSTAT & REG_GX_DISPSTAT_INI_MASK )
-        {
-            tickINI = OS_GetTick();
-        }
-    }
-}
-
-/*---------------------------------------------------------------------------*
   Name:         PM_BackLightOn
 
   Description:  power B/L on if not set yet
@@ -97,21 +74,15 @@ void PM_BackLightOn( BOOL force )
     {
         return; // have already set
     }
-    PM_CheckINIFlag();
-    //OS_TPrintf("PM_BackLightOn: %d msec\n", (u32)OS_TicksToMilliSeconds(OS_GetTick()-tickINI));
     if ( force )
     {
-        while ((u32)OS_TicksToMilliSeconds(OS_GetTick()-tickINI) < 34)
+        while ( (reg_GX_DISPSTAT & REG_GX_DISPSTAT_INI_MASK) == FALSE )
         {
         }
-        PMi_SetFlags( REG_PMIC_CTL2_ADDR, PMIC_CTL2_BACK_LIGHT_1 | PMIC_CTL2_BACK_LIGHT_2 );
-        doneBackLight = TRUE;
-        //OS_TPrintf("PM_BackLightOn: Done\n");
     }
-    else if ((u32)OS_TicksToMilliSeconds(OS_GetTick()-tickINI) >= 34)
+    if ( reg_GX_DISPSTAT & REG_GX_DISPSTAT_INI_MASK )
     {
         PMi_SetFlags( REG_PMIC_CTL2_ADDR, PMIC_CTL2_BACK_LIGHT_1 | PMIC_CTL2_BACK_LIGHT_2 );
         doneBackLight = TRUE;
-        //OS_TPrintf("PM_BackLightOn: Done\n");
     }
 }
