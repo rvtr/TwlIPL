@@ -192,8 +192,8 @@ typedef struct ROM_Header_Short
     //                  since NITRO-SDK 2.0PR6
     u32     rom_valid_size;            // ROM Original Size
     u32     rom_header_size;           // ROM Header size
-    u32     main_module_param;         // Offset for table of ARM9 module parameters
-    u32     sub_module_param;          // Offset for table of ARM7 module parameters
+    u32     main_module_param_offset;  // Offset for table of ARM9 module parameters
+    u32     sub_module_param_offset;   // Offset for table of ARM7 module parameters
 
     // 0x090 - 0x0C0 System Reserved
     u16     twl_card_normal_area_rom_offset;        // undeveloped
@@ -274,15 +274,23 @@ typedef struct ROM_Header_Short
     u32     banner_twl_offset;
     u32     banner_twl_size;
 
-    // 0x0210 - 0x0218 for AES target offset & size
-    u32     aes_target_rom_offset;
-    u32     aes_target_size;
-
-    // 0x0218 - 0x0220 for TWL rom valid size
+    // 0x0210 - 0x0218 for TWL rom valid size
     u32     twl_rom_valid_size;            // ROM Original Size
     u8      reserved_ltd_D[ 4 ];
 
-    // 0x220 - 0x298 Rom Segment Digest
+    // 0x0218 - 0x0220 for TWL ltd module param offset
+    u32     main_ltd_module_param_offset;  // Offset for table of ARM9 ltd module parameters
+    u32     sub_ltd_module_param_offset;   // Offset for table of ARM7 ltd module parameters
+
+    // 0x0220 - 0x0230 for AES target offset & size
+    u32     aes_target_rom_offset;
+    u32     aes_target_size;
+    u8      reserved_ltd_E[ 8 ];
+
+    // 0x230 - 0x300 reserved.
+    u8      reserved_ltd_F[ 0x300 - 0x230 ];
+
+    // 0x300 - 0x378 Rom Segment Digest
     u8      main_static_digest[ DIGEST_SIZE_SHA1 ];
     u8      sub_static_digest[ DIGEST_SIZE_SHA1 ];
     u8      digest2_table_digest[ DIGEST_SIZE_SHA1 ];
@@ -471,6 +479,8 @@ ROM_ONT;
 #define SIZE_OF_SIGN     136
 #define NITROCODE_LE     0x2106c0de
 #define NITROCODE_BE     0xdec00621
+#define TWLCODE_LE       0x6314c0de
+#define TWLCODE_BE       0xdec01463
 
 //---------------------------------------------------------------------------
 //  Section Y   MDP: Module params
@@ -490,6 +500,18 @@ typedef struct tModuleParam
 }
 tModuleParam;
 
+typedef struct tLtdModuleParam
+{
+    void   *autoload_list;
+    void   *autoload_list_end;
+    void   *autoload_start;
+    void   *compressed_static_end;     // tCompFooter の 1要素分先を指す
+    u32     twl_magic_be;
+    u32     twl_magic_le;
+}
+tLtdModuleParam;
+
+
 typedef struct
 {
     u32     bufferTop:24;
@@ -503,6 +525,7 @@ typedef struct      // compstatic/component.hより抜粋
     u32     magicNumber;               // 認識子 ==MAGICNUMBER_FOOTER
     int     staticParamsOffset;        // StaticParams     へのオフセット
     int     digestParamsOffset;        // SDK_DIGEST_TABLE へのオフセット
+    int     ltdStaticParamsOffset;     // LtdStaticParams  へのオフセット
 }
 StaticFooter;
 
