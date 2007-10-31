@@ -5,4 +5,4 @@
 # Please use 'source ./setup'.
 #----------------------------------------------------------------
 
-export TWLFIRM_ROOT=`cygpath -m $PWD`
+export TWLIPL_ROOT=`cygpath -m $PWD`

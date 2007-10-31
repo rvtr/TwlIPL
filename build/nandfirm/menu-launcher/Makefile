@@ -48,12 +48,12 @@ LDIRT_CLEAN		+=	$(TARGETS) \
 				$(basename $(firstword $(TARGETS))).tlf \
 				rsa_public.sbin \
 
-include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
+include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
 do-build:	$(TARGET_BIN)
 
-include	$(TWLFIRM_ROOT)/build/buildtools/modulerules
+include	$(TWLIPL_ROOT)/build/buildtools/modulerules
 
 #===== End of Makefile =====

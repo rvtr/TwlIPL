@@ -35,7 +35,7 @@ SRCS		=	\
 #LCFILE		=	# using default
 
 
-include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
+include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 
 #----------------------------------------------------------------------------
@@ -43,7 +43,7 @@ include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
 do-build:		$(TARGETS)
 
 
-include	$(TWLFIRM_ROOT)/build/buildtools/modulerules
+include	$(TWLIPL_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====

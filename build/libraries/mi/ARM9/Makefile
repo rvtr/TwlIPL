@@ -34,7 +34,7 @@ SRCS				=	\
 
 TARGET_LIB			=	libmi$(FIRM_LIBSUFFIX).a
 
-include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
+include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS		=	$(TARGETS)
 INSTALL_DIR			=	$(FIRM_INSTALL_LIBDIR)
@@ -55,6 +55,6 @@ endif
 
 do-build:		$(TARGETS)
 
-include	$(TWLFIRM_ROOT)/build/buildtools/modulerules
+include	$(TWLIPL_ROOT)/build/buildtools/modulerules
 
 #===== End of Makefile =====

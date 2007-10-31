@@ -31,7 +31,7 @@ SRCS		=	\
 #LCFILE		=	# using default
 
 
-include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
+include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 INSTALL_DIR	= .
 INSTALL_TARGETS	= $(BINDIR)/$(TARGET_BIN)
@@ -42,7 +42,7 @@ INSTALL_TARGETS	= $(BINDIR)/$(TARGET_BIN)
 do-build:		$(TARGETS)
 
 
-include	$(TWLFIRM_ROOT)/build/buildtools/modulerules
+include	$(TWLIPL_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====

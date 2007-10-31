@@ -36,7 +36,7 @@ CRT0_O		=	crt0_firm.o
 #SRCDIR		=	# using default
 #LCFILE		=	# using default
 
-include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
+include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 LLIBRARIES = libaes_sp$(TWL_LIBSUFFIX).a
 
@@ -45,7 +45,7 @@ LLIBRARIES = libaes_sp$(TWL_LIBSUFFIX).a
 do-build:		$(TARGETS)
 
 
-include	$(TWLFIRM_ROOT)/build/buildtools/modulerules
+include	$(TWLIPL_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====

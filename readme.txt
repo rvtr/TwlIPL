@@ -1,7 +1,13 @@
-ビルドするには NitroSDK4.0 & TwlSDK が必要です。
+1.ビルドに必要なもの
+　NORファーム、NANDファーム
+	・NitroSDK4.0以降
+	・TwlSDK
+　システムメニュー
+　　・TwlSDK
+　　・NitroSystem 070314版(本ツリーのadd-ins内のTwlSDK対応パッチを当てたもの）
 
-下記の環境変数を設定してください。
-例）TWLFIRM_ROOT=c:/TwlIPL
 
-※NORファームをARM7専有WRAMへロードすることはできません
-（ARM9でハッシュをチェックするため）。
+2.環境変数の設定
+　TWLIPL_ROOT
+	ex.) TWLIPL_ROOT=c:/TwlIPL
+

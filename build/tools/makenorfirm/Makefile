@@ -53,7 +53,7 @@ SRCDIR				+=	../acsign $(ECC_SRCDIR)
 INCDIR				+=	../acsign/include $(ECC_INCDIR) $(ECC_SRCDIR)
 
 
-include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
+include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 TARGETS				=	makenorfirm.exe
 

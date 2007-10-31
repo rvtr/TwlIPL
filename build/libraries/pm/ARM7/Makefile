@@ -47,7 +47,7 @@ ifdef	NITRO_DEBUG
 NITRO_BUILD_TYPE	= RELEASE
 endif
 
-include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
+include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS		= $(TARGETS)
 INSTALL_DIR		= $(FIRM_INSTALL_LIBDIR)
@@ -57,6 +57,6 @@ INSTALL_DIR		= $(FIRM_INSTALL_LIBDIR)
 
 do-build:		$(TARGETS)
 
-include	$(TWLFIRM_ROOT)/build/buildtools/modulerules
+include	$(TWLIPL_ROOT)/build/buildtools/modulerules
 
 #===== End of Makefile =====

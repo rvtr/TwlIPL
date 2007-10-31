@@ -15,7 +15,7 @@
 # $NoKeywords: $
 #----------------------------------------------------------------------------
 
-include	$(TWLFIRM_ROOT)/build/buildtools/commondefs
+include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 
 #----------------------------------------------------------------------------
@@ -28,7 +28,7 @@ SUBDIRS +=	ARM7
 
 #----------------------------------------------------------------------------
 
-include	$(TWLFIRM_ROOT)/build/buildtools/modulerules
+include	$(TWLIPL_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====

@@ -50,10 +50,10 @@ SDEPENDS_BIN		+= $(MAKEFIRM_RSA_PRVKEY)
 .PHONY: 	firmtop firmlib
 
 firmtop:
-	@$(MAKE) -C $(TWLFIRM_ROOT)/build
+	@$(MAKE) -C $(TWLIPL_ROOT)/build
 
 firmlib:
-	@$(MAKE) -C $(TWLFIRM_ROOT)/build/libraries
+	@$(MAKE) -C $(TWLIPL_ROOT)/build/libraries
 
 # .nor
 $(BINDIR)/%.nor: $(SDEPENDS_BIN) $(FIRM_SPEC) $(LDEPENDS_BIN) $(EDEPENDS_BIN) $(MAKEFILE) $(MAKENORFIRM)
