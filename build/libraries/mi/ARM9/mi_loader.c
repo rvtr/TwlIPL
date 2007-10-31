@@ -120,7 +120,7 @@ static BOOL CheckRomCertificate( SVCSignHeapContext* pool, const RomCertificate 
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         MI_LoadBuffer
+  Name:         MIi_LoadBuffer
 
   Description:  receive data from ARM7 and store(move) via WRAM[B]
 
@@ -159,10 +159,11 @@ static BOOL CheckRomCertificate( SVCSignHeapContext* pool, const RomCertificate 
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-static BOOL MI_LoadBuffer(u8* dest, u32 size, SVCSHA1Context *ctx)
+static BOOL MIi_LoadBuffer(u8* dest, u32 size, SVCSHA1Context *ctx)
 {
     u8* base = (u8*)HW_FIRM_LOAD_BUFFER_BASE;
     static int count = 0;
+
     while (size > 0)
     {
         u8* src = base + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
@@ -209,52 +210,6 @@ static BOOL MI_LoadBuffer(u8* dest, u32 size, SVCSHA1Context *ctx)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         MI_LoadModule
-
-  Description:  receive module from ARM7 and store(move) via WRAM[B]
-
-                MI_LoadBufferの上位APIで、引数にSHA1のハッシュ値を渡すことで
-                SHA1ハッシュチェックを行います。
-
-                すでにハッシュ値が分かっていて、ちょうどSHA1の計算範囲全体を
-                読み込む場合に便利です。
-
-  Arguments:    dest        destination address for received data
-                size        size to load
-                digest      digest to compare
-
-  Returns:      TRUE if success
- *---------------------------------------------------------------------------*/
-static /*inline*/ BOOL MI_LoadModule(void* dest, u32 size, const u8 digest[DIGEST_SIZE_SHA1])
-{
-    SVCHMACSHA1Context ctx;
-    u8 md[DIGEST_SIZE_SHA1];
-    int i;
-    BOOL result = TRUE;
-
-    SVC_HMACSHA1Init(&ctx, s_digestDefaultKey, SVC_SHA1_BLOCK_SIZE );
-    if ( !MI_LoadBuffer( dest, size, &ctx.sha1_ctx ) )  // UpdateはSHA1と同じ処理
-    {
-        return FALSE;
-    }
-    SVC_HMACSHA1GetHash(&ctx, md);
-#ifdef PROFILE_ENABLE
-    // xx: after SHA1
-    profile[pf_cnt++] = PROFILE_SHA1;  // checkpoint
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-    for ( i = 0; i < DIGEST_SIZE_SHA1; i++ )
-    {
-        if ( md[i] != digest[i] )
-        {
-            result = FALSE;
-        }
-    }
-
-    return result;
-}
-
-/*---------------------------------------------------------------------------*
   Name:         MI_LoadHeader
 
   Description:  load header
@@ -292,7 +247,7 @@ BOOL MI_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
         ((profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_HEADER), FALSE) ||
         ((profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick())), FALSE) ||
 #endif
-         !MI_LoadBuffer( (u8*)rh, AUTH_SIZE, &ctx ) )
+         !MIi_LoadBuffer( (u8*)rh, AUTH_SIZE, &ctx ) )
     {
         return FALSE;
     }
@@ -303,7 +258,7 @@ BOOL MI_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
     // load header (remain)
-    if ( !MI_LoadBuffer( (u8*)rh + AUTH_SIZE, HEADER_SIZE - AUTH_SIZE, NULL ) )
+    if ( !MIi_LoadBuffer( (u8*)rh + AUTH_SIZE, HEADER_SIZE - AUTH_SIZE, NULL ) )
     {
         return FALSE;
     }
@@ -347,6 +302,102 @@ BOOL MI_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
 }
 
 /*---------------------------------------------------------------------------*
+  Name:         MIi_GetTransferSize
+
+  Description:  get size to transfer once
+
+                一度に受信するサイズを返します。
+
+                転送範囲がAES領域をまたぐ場合は、境界までのサイズ (引数より
+                小さなサイズ) を返します。
+                makerom.TWLまたはIPLの使用に依存します。
+
+  Arguments:    offset  offset of region from head of ROM_Header
+                size    size of region
+
+  Returns:      size to transfer once
+ *---------------------------------------------------------------------------*/
+static u32 MIi_GetTransferSize( u32 offset, u32 size )
+{
+    u32 aes_offset = rh->s.aes_target_rom_offset;
+    u32 aes_end = aes_offset + rh->s.aes_target_size;
+    u32 end = offset + size;
+    if ( rh->s.enable_aes )
+    {
+        if ( offset >= aes_offset && offset < aes_end )
+        {
+            if ( end > aes_end )
+            {
+                size = aes_end - offset;
+            }
+        }
+        else
+        {
+            if ( offset < aes_offset && offset + size > aes_offset )
+            {
+                size = aes_offset - offset;
+            }
+        }
+    }
+    return size;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         MIi_LoadModule
+
+  Description:  receive module from ARM7 and store(move) via WRAM[B]
+
+                MIi_LoadBufferの上位APIです。
+
+                AES境界をまたぐ場合は、2回のLoadBufferに分割します。
+
+                すでにハッシュ値が分かっていて、ちょうどSHA1の計算範囲全体を
+                読み込む場合に便利です。
+
+  Arguments:    dest        destination address for received data
+                offset      offset from head of ROM_Header
+                size        size to load
+                digest      digest to compare
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
+static /*inline*/ BOOL MIi_LoadModule(void* dest, u32 offset, u32 size, const u8 digest[DIGEST_SIZE_SHA1])
+{
+    SVCHMACSHA1Context ctx;
+    u8 md[DIGEST_SIZE_SHA1];
+    int i;
+    BOOL result = TRUE;
+
+    SVC_HMACSHA1Init(&ctx, s_digestDefaultKey, SVC_SHA1_BLOCK_SIZE );
+    while ( size > 0 )
+    {
+        u32 unit = MIi_GetTransferSize( offset, size );
+        if ( !MIi_LoadBuffer( dest, unit, &ctx.sha1_ctx ) ) // UpdateはSHA1と同じ処理
+        {
+            return FALSE;
+        }
+        dest = (u8*)dest + unit;
+        offset += unit;
+        size -= unit;
+    }
+    SVC_HMACSHA1GetHash(&ctx, md);
+#ifdef PROFILE_ENABLE
+    // 3x: after SHA1
+    profile[pf_cnt++] = PROFILE_SHA1;  // checkpoint
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+#endif
+    for (i = 0; i < DIGEST_SIZE_SHA1; i++)
+    {
+        if (md[i] != digest[i])
+        {
+            result = FALSE;
+        }
+    }
+    MI_CpuClear8(md, DIGEST_SIZE_SHA1);
+    return result;
+}
+
+/*---------------------------------------------------------------------------*
   Name:         MI_LoadStatic
 
   Description:  load static binary
@@ -365,29 +416,28 @@ BOOL MI_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
  *---------------------------------------------------------------------------*/
 BOOL MI_LoadStatic( void )
 {
+    // load static
+    if ( PXI_RecvID() != FIRM_PXI_ID_LOAD_STATIC )
+    {
+        return FALSE;
+    }
+#ifdef PROFILE_ENABLE
+    // 30: after PXI
+    pf_cnt = 0x30;
+    profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_STATIC;
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+#endif
     // load ARM9 static region
     if ( rh->s.main_size > 0 )
     {
 #ifdef PROFILE_ENABLE
-        // 30: before PXI
-        pf_cnt = 0x30;
+        // 31: before PXI
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
-        if ( PXI_RecvID() !=  FIRM_PXI_ID_LOAD_ARM9_STATIC ||
-#ifdef PROFILE_ENABLE
-            // 31: after PXI
-            ((profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_ARM9_STATIC), FALSE) ||
-            ((profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick())), FALSE) ||
-#endif
-             !MI_LoadModule( rh->s.main_ram_address, rh->s.main_size, rh->s.main_static_digest ) )
+        if ( !MIi_LoadModule(rh->s.main_ram_address, rh->s.main_rom_offset, rh->s.main_size, rh->s.main_static_digest) )
         {
             return FALSE;
         }
-#ifdef PROFILE_ENABLE
-        // 3x: after PXI
-        profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_AUTH_ARM9_STATIC;   // checkpoint
-#endif
-        PXI_NotifyID( FIRM_PXI_ID_AUTH_ARM9_STATIC );
     }
 
     // load ARM7 static region
@@ -398,21 +448,10 @@ BOOL MI_LoadStatic( void )
         pf_cnt = 0x50;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
-        if ( PXI_RecvID() !=  FIRM_PXI_ID_LOAD_ARM7_STATIC ||
-#ifdef PROFILE_ENABLE
-            // 51: after PXI
-            ((profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_ARM7_STATIC), FALSE) ||
-            ((profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick())), FALSE) ||
-#endif
-             !MI_LoadModule( rh->s.sub_ram_address, rh->s.sub_size, rh->s.sub_static_digest ) )
+        if ( !MIi_LoadModule( rh->s.sub_ram_address, rh->s.sub_rom_offset, rh->s.sub_size, rh->s.sub_static_digest ) )
         {
             return FALSE;
         }
-#ifdef PROFILE_ENABLE
-        // 5x: after PXI
-        profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_AUTH_ARM7_STATIC;   // checkpoint
-#endif
-        PXI_NotifyID( FIRM_PXI_ID_AUTH_ARM7_STATIC );
     }
 
     // load ARM9 extended static region
@@ -423,21 +462,10 @@ BOOL MI_LoadStatic( void )
         pf_cnt = 0x70;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
-        if ( PXI_RecvID() !=  FIRM_PXI_ID_LOAD_ARM9_LTD_STATIC ||
-#ifdef PROFILE_ENABLE
-            // 71: after PXI
-            ((profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_ARM9_LTD_STATIC), FALSE) ||
-            ((profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick())), FALSE) ||
-#endif
-             !MI_LoadModule( rh->s.main_ltd_ram_address, rh->s.main_ltd_size, rh->s.main_ltd_static_digest ) )
+        if ( !MIi_LoadModule( rh->s.main_ltd_ram_address, rh->s.main_ltd_rom_offset, rh->s.main_ltd_size, rh->s.main_ltd_static_digest ) )
         {
             return FALSE;
         }
-#ifdef PROFILE_ENABLE
-        // 7x: after PXI
-        profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_AUTH_ARM9_LTD_STATIC;    // checkpoint
-#endif
-        PXI_NotifyID( FIRM_PXI_ID_AUTH_ARM9_LTD_STATIC );
     }
     // load ARM7 extended static region
     if ( rh->s.sub_ltd_size > 0 )
@@ -447,22 +475,17 @@ BOOL MI_LoadStatic( void )
         pf_cnt = 0x90;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
-        if ( PXI_RecvID() !=  FIRM_PXI_ID_LOAD_ARM7_LTD_STATIC ||
-#ifdef PROFILE_ENABLE
-            // 91: after PXI
-            ((profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_ARM7_LTD_STATIC), FALSE) ||
-            ((profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick())), FALSE) ||
-#endif
-             !MI_LoadModule( rh->s.sub_ltd_ram_address, rh->s.sub_ltd_size, rh->s.sub_ltd_static_digest ) )
+        if ( !MIi_LoadModule( rh->s.sub_ltd_ram_address, rh->s.sub_ltd_rom_offset, rh->s.sub_ltd_size, rh->s.sub_ltd_static_digest ) )
         {
             return FALSE;
         }
-#ifdef PROFILE_ENABLE
-        // 9x: before PXI
-        profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_AUTH_ARM7_LTD_STATIC;    // checkpoint
-#endif
-        PXI_NotifyID( FIRM_PXI_ID_AUTH_ARM7_LTD_STATIC );
     }
+#ifdef PROFILE_ENABLE
+    // 9x: before PXI
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+    profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_AUTH_STATIC;    // checkpoint
+#endif
+    PXI_NotifyID( FIRM_PXI_ID_AUTH_STATIC );
     return TRUE;
 }
 

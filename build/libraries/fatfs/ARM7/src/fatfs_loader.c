@@ -294,36 +294,85 @@ static AESCounter* FATFSi_GetCounter( u32 offset )
 
                 鍵の選択も行っていますが、鍵の設定は別の場所で行っておく
                 必要があります。
+
+                転送範囲がAES領域をまたぐ場合は、境界までのサイズ (引数より
+                小さなサイズ) を返します。
                 makerom.TWLまたはIPLの使用に依存します。
 
   Arguments:    offset  offset of region from head of ROM_Header
-                size    size of region (for check only)
+                size    size of region
 
-  Returns:      counter
+  Returns:      size to transfer once
  *---------------------------------------------------------------------------*/
-static void FATFSi_SetupAES( u32 offset, u32 size )
+static u32 FATFSi_SetupAES( u32 offset, u32 size )
 {
-    u32 aes_end = rh->s.aes_target_rom_offset + RoundUpModuleSize(rh->s.aes_target_size);
-    u32 arg_end = offset + RoundUpModuleSize(size);
-    if ( rh->s.enable_aes && offset >= rh->s.aes_target_rom_offset && arg_end <= aes_end )
+    u32 aes_offset = rh->s.aes_target_rom_offset;
+    u32 aes_end = aes_offset + RoundUpModuleSize(rh->s.aes_target_size);
+    u32 end = offset + RoundUpModuleSize(size);
+    if ( rh->s.enable_aes )
     {
-        AESi_WaitKey();
-        if (rh->s.developer_encrypt)
+        if ( offset >= aes_offset && offset < aes_end )
         {
-            AESi_LoadKey( AES_KEY_SLOT_C );
+            if ( end > aes_end )
+            {
+                size = aes_end - offset;
+            }
+            AESi_WaitKey();
+            if (rh->s.developer_encrypt)
+            {
+                AESi_LoadKey( AES_KEY_SLOT_C );
+            }
+            else
+            {
+                AESi_LoadKey( AES_KEY_SLOT_A );
+            }
+            FATFS_EnableAES( FATFSi_GetCounter( offset ) );
         }
         else
         {
-            AESi_LoadKey( AES_KEY_SLOT_A );
+            if ( offset < aes_offset && offset + size > aes_offset )
+            {
+                size = aes_offset - offset;
+            }
+            FATFS_DisableAES();
         }
-        FATFS_EnableAES( FATFSi_GetCounter( offset ) );
     }
     else
     {
         FATFS_DisableAES();
     }
+    return size;
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         FATFSi_LoadModule
+
+  Description:  transfer module to ARM9 via WRAM[B]
+
+                FATFSi_LoadBufferの上位APIです。
+
+                AES境界をまたぐときに2回に分けるだけです。
+
+  Arguments:    offset      offset from head of ROM_Header
+                size        size to load
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
+static /*inline*/ BOOL FATFSi_LoadModule(u32 offset, u32 size)
+{
+    size = RoundUpModuleSize( size );   // アラインメント調整
+    while ( size > 0 )
+    {
+        u32 unit = FATFSi_SetupAES( offset, size ); // 一度の転送サイズ
+        if ( !FATFS_LoadBuffer( offset, unit ) )
+        {
+            return FALSE;
+        }
+        offset += unit;
+        size -= unit;
+    }
+    return TRUE;
+}
 
 /*---------------------------------------------------------------------------*
   Name:         FATFS_LoadStatic
@@ -347,98 +396,77 @@ static void FATFSi_SetupAES( u32 offset, u32 size )
  *---------------------------------------------------------------------------*/
 BOOL FATFS_LoadStatic( void )
 {
+#ifdef PROFILE_ENABLE
+    // 30: LoadStatic
+    pf_cnt = 0x30;
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+    profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_STATIC;    // checkpoint
+#endif
+    PXI_NotifyID( FIRM_PXI_ID_LOAD_STATIC );
+
     // load ARM9 static region without AES
     if ( rh->s.main_size > 0 )
     {
-        u32 aligned = RoundUpModuleSize(rh->s.main_size);
 #ifdef PROFILE_ENABLE
-        // 30: before PXI
-        pf_cnt = 0x30;
+        // 31: before PXI
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-        profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM9_STATIC;   // checkpoint
 #endif
-        PXI_NotifyID( FIRM_PXI_ID_LOAD_ARM9_STATIC );
-        FATFSi_SetupAES( rh->s.main_rom_offset, aligned );
-        if ( !FATFS_LoadBuffer( rh->s.main_rom_offset, aligned ) ||
-             PXI_RecvID() != FIRM_PXI_ID_AUTH_ARM9_STATIC )
+        if ( !FATFSi_LoadModule( rh->s.main_rom_offset, rh->s.main_size ) )
         {
             return FALSE;
         }
-#ifdef PROFILE_ENABLE
-        // 3x: after PXI
-        profile[pf_cnt++] = (u32)PROFILE_PXI_RECV | FIRM_PXI_ID_AUTH_ARM9_STATIC;   // checkpoint
-        profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
     }
     // load ARM7 static region without AES
     if ( rh->s.sub_size > 0 )
     {
-        u32 aligned = RoundUpModuleSize(rh->s.sub_size);
 #ifdef PROFILE_ENABLE
         // 50: before PXI
         pf_cnt = 0x50;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-        profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM7_STATIC;   // checkpoint
 #endif
-        PXI_NotifyID( FIRM_PXI_ID_LOAD_ARM7_STATIC );
-        FATFSi_SetupAES( rh->s.sub_rom_offset, aligned );
-        if ( !FATFS_LoadBuffer( rh->s.sub_rom_offset, aligned ) ||
-             PXI_RecvID() != FIRM_PXI_ID_AUTH_ARM7_STATIC )
+        if ( !FATFSi_LoadModule( rh->s.sub_rom_offset, rh->s.sub_size ) )
         {
             return FALSE;
         }
-#ifdef PROFILE_ENABLE
-        // 5x: after PXI
-        profile[pf_cnt++] = (u32)PROFILE_PXI_RECV | FIRM_PXI_ID_AUTH_ARM7_STATIC;   // checkpoint
-        profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
     }
     // load ARM9 extended static region with AES
     if ( rh->s.main_ltd_size > 0 )
     {
-        u32 aligned = RoundUpModuleSize(rh->s.main_ltd_size);
 #ifdef PROFILE_ENABLE
         // 70: before PXI
         pf_cnt = 0x70;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-        profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM9_LTD_STATIC;    // checkpoint
 #endif
-        PXI_NotifyID( FIRM_PXI_ID_LOAD_ARM9_LTD_STATIC );
-        FATFSi_SetupAES( rh->s.main_ltd_rom_offset, aligned );
-        if ( !FATFS_LoadBuffer( rh->s.main_ltd_rom_offset, aligned ) ||
-             PXI_RecvID() != FIRM_PXI_ID_AUTH_ARM9_LTD_STATIC )
+        if ( !FATFSi_LoadModule( rh->s.main_ltd_rom_offset, rh->s.main_ltd_size ) )
         {
             return FALSE;
         }
-#ifdef PROFILE_ENABLE
-        // 7x: after PXI
-        profile[pf_cnt++] = (u32)PROFILE_PXI_RECV | FIRM_PXI_ID_AUTH_ARM9_LTD_STATIC;    // checkpoint
-        profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
     }
     // load ARM7 extended static region with AES
     if ( rh->s.sub_ltd_size > 0 )
     {
-        u32 aligned = RoundUpModuleSize(rh->s.sub_ltd_size);
 #ifdef PROFILE_ENABLE
         // 90: before PXI
         pf_cnt = 0x90;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-        profile[pf_cnt++] = (u32)PROFILE_PXI_SEND | FIRM_PXI_ID_LOAD_ARM7_LTD_STATIC;    // checkpoint
 #endif
-        PXI_NotifyID( FIRM_PXI_ID_LOAD_ARM7_LTD_STATIC );
-        FATFSi_SetupAES( rh->s.sub_ltd_rom_offset, aligned );
-        if ( !FATFS_LoadBuffer( rh->s.sub_ltd_rom_offset, aligned ) ||
-             PXI_RecvID() != FIRM_PXI_ID_AUTH_ARM7_LTD_STATIC )
+        if ( !FATFSi_LoadModule( rh->s.sub_ltd_rom_offset, rh->s.sub_ltd_size ) )
         {
             return FALSE;
         }
-#ifdef PROFILE_ENABLE
-        // 9x: after PXI
-        profile[pf_cnt++] = (u32)PROFILE_PXI_RECV | FIRM_PXI_ID_AUTH_ARM7_LTD_STATIC;    // checkpoint
-        profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
     }
+
+    // waiting result
+    if ( PXI_RecvID() != FIRM_PXI_ID_AUTH_STATIC )
+    {
+        return FALSE;
+    }
+#ifdef PROFILE_ENABLE
+    // 9x: after PXI
+    profile[pf_cnt++] = (u32)PROFILE_PXI_RECV | FIRM_PXI_ID_AUTH_STATIC;    // checkpoint
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+#endif
+
     return TRUE;
 }
 
