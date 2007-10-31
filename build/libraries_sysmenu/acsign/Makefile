@@ -16,14 +16,16 @@
 # $Author: yada $
 #----------------------------------------------------------------------------
 
-SUBDIRS			=	ARM9
+SUBDIRS				=	ARM9
 
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs.sysmenu
+TARGET_FIRM			=	SYSTEMMENU
+
+include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
 do-build:		$(TARGETS)
 
-include	$(TWLIPL_ROOT)/build/buildtools/modulerules.sysmenu
+include	$(TWLIPL_ROOT)/build/buildtools/modulerules
 
 #===== End of Makefile =====

@@ -22,6 +22,7 @@ SUBDIRS		=
 
 
 #----------------------------------------------------------------------------
+TARGET_FIRM			=	SYSTEMMENU
 TARGET_PLATFORM		=	TWL
 TWL_ARCHGEN			=	LIMITED
 TWL_PROC	    	=	ARM9
@@ -34,7 +35,7 @@ SRCS				=	acsign.c acmemory.c acsign_util.c
 TARGET_LIB			=	libacsign$(TWL_LIBSUFFIX).a
 
 
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs.sysmenu
+include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS		=	$(TARGETS)
 INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
@@ -50,7 +51,7 @@ CCFLAGS				+=	-DSMALL_CODE_SIZE	\
 
 do-build:	$(TARGETS)
 
-include	$(TWLIPL_ROOT)/build/buildtools/modulerules.sysmenu
+include	$(TWLIPL_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====

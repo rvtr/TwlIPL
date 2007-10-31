@@ -20,6 +20,7 @@ SUBDIRS					=
 
 #----------------------------------------------------------------------------
 
+TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
 
@@ -38,14 +39,14 @@ LINCLUDES				=	$(MISC_DIR)
 #LLIBRARIES				=	
 #LDEPENDS_NEF			=	
 
-include $(TWLIPL_ROOT)/build/buildtools/commondefs.sysmenu
+include $(TWLIPL_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
 do-build : $(FONT_OBJS) $(TARGETS)
 
 
-include $(TWLIPL_ROOT)/build/buildtools/modulerules.sysmenu
+include $(TWLIPL_ROOT)/build/buildtools/modulerules
 
 #----------------------------------------------------------------------------
 

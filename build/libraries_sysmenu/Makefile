@@ -16,15 +16,17 @@
 # $Author: kitase_hirotake $
 #----------------------------------------------------------------------------
 
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs.sysmenu
+TARGET_FIRM			=	SYSTEMMENU
+
+include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS		=	sysmenu mb_loader acsign
+SUBDIRS				=	sysmenu mb_loader acsign
 
 #----------------------------------------------------------------------------
 
-include	$(TWLIPL_ROOT)/build/buildtools/modulerules.sysmenu
+include	$(TWLIPL_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====

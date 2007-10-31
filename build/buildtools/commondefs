@@ -20,9 +20,9 @@ TWL_IPL_COMMONDEFS_ = TRUE
 
 
 ifeq	($(TARGET_FIRM),SYSTEMMENU)
-include commondefs.sysmenu
+include $(TWLIPL_ROOT)/build/buildtools/commondefs.sysmenu
 else
-include commondefs.firm
+include $(TWLIPL_ROOT)/build/buildtools/commondefs.firm
 endif
 
 #----------------------------------------------------------------------------

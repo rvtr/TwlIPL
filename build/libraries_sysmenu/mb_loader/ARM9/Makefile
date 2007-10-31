@@ -19,6 +19,7 @@
 SUBDIRS				=
 
 #----------------------------------------------------------------------------
+TARGET_FIRM			=	SYSTEMMENU
 TARGET_PLATFORM		=	TWL
 TWL_ARCHGEN			=	LIMITED
 TWL_PROC	   		=	ARM9
@@ -35,7 +36,7 @@ SRCS				=	mb_loader.c
 TARGET_LIB			=	libmbloader$(TWL_LIBSUFFIX).a
 
 
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs.sysmenu
+include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS		=	$(TARGETS)
 INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
@@ -44,7 +45,7 @@ INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
 
 do-build:		$(TARGETS)
 
-include	$(TWLIPL_ROOT)/build/buildtools/modulerules.sysmenu
+include	$(TWLIPL_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====
