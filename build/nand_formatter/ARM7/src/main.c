@@ -26,6 +26,11 @@
 #include	<nitro/card.h>
 
 
+typedef struct FileProperty {
+	u32			size;
+	const char *path;
+}FileProperty;
+
 extern void		Dummy_FLXWRAM(void);
 extern void		Dummy_FLXMAIN(void);
 #ifdef	SDK_WIRELESS_IN_VRAM
@@ -38,10 +43,24 @@ static void		Pragma_LTDWRAM(void);
 static void		Pragma_LTDMAIN(void);
 
 static void CreateDirectory( const char *pDrive, const char **ppDirList );
-static void CheckDirectory( const char *pDrive, const char **ppDirList );
+static void CheckDirectory ( const char *pDrive, const char **ppDirList );
+static void CreateFile( const FileProperty *pFileList );
+static void CheckFile ( const FileProperty *pFileList );
 
 // const data--------------------------------------------------------
-static const char *s_dirList0[] = {
+
+// FATFSのクラスタサイズは16KB
+static const FileProperty s_fileList[] = {
+	{   128, "F:/sys/ID.sgn"           },	// 現状、全部サイズは適当。中身も空。
+	{  4096, "F:/sys/HWINFO.dat"       },
+	{  4096, "F:/shared1/TWLCFG0.dat"  },
+	{  4096, "F:/shared1/TWLCFG1.dat"  },	// ミラー
+	{  4096, "F:/shared1/WIFICFG0.dat" },
+	{  4096, "F:/shared1/WIFICFG1.dat" },	// ミラー
+	{     0, NULL },
+};
+
+static const char *s_pDirList0[] = {
 	(const char *)"sys",
 	(const char *)"title",
 	(const char *)"ticket",
@@ -51,13 +70,13 @@ static const char *s_dirList0[] = {
 	NULL,
 	};
 
-static const char *s_dirList1[] = {
-	(const char *)"data",
+static const char *s_pDirList1[] = {
 	(const char *)"photo",
 	(const char *)"shared2",
-	(const char *)"tmp",
 	NULL,
 	};
+
+
 
 /*---------------------------------------------------------------------------*/
 #include	<twl/ltdwram_begin.h>
@@ -169,7 +188,7 @@ TwlSpMain(void)
 	// ここを編集したら、SDKのFATFS_Init内の同パラメータも修正する必要がある。
 #define NAND_SIZE				245			// 256MB mobiNANDでの使用可能サイズ（iNANDでは違う値になる。未定。）
 #define PARTITION_RAW_SIZE		4
-#define PARTITION_0_SIZE		190
+#define PARTITION_0_SIZE		213
 #define PARTITION_1_SIZE		( NAND_SIZE - PARTITION_RAW_SIZE - PARTITION_0_SIZE )
 #define NAND_FAT_PARTITION_NUM	2			// FATパーティション数（RAWパーティションを除く）
 		
@@ -236,10 +255,14 @@ TwlSpMain(void)
     }
 
 	// ディレクトリ生成＆チェック
-	CreateDirectory( "F:", s_dirList0 );
-	CheckDirectory ( "F:", s_dirList0 );
-	CreateDirectory( "G:", s_dirList1 );
-	CheckDirectory ( "G:", s_dirList1 );
+	CreateDirectory( "F:", s_pDirList0 );
+	CheckDirectory ( "F:", s_pDirList0 );
+	CreateDirectory( "G:", s_pDirList1 );
+	CheckDirectory ( "G:", s_pDirList1 );
+	
+	// ファイル生成＆チェック
+	CreateFile( &s_fileList[0] );
+	CheckFile ( &s_fileList[0] );
 	
 	// ドライブアンマウント
     {
@@ -309,3 +332,62 @@ static void CheckDirectory( const char *pDrive, const char **ppDirList )
 		ppDirList++;
 	}
 }
+
+
+// ファイル作成
+static void CreateFile( const FileProperty *pFileList )
+{
+	// デフォルトドライブの指定
+	OS_TPrintf( "\nCreate File :\n" );
+	
+	// 指定されたディレクトリをルートに作成
+	while( pFileList->path ) {
+		FATFSFileHandle file;
+		
+		OS_TPrintf( "  %s, %dbytes...", pFileList->path, pFileList->size );
+		if( !FATFS_CreateFile( pFileList->path, TRUE, "rwxrwxrwx" ) ) {
+			OS_TPrintf( "ng.\n" );
+			FATAL_ERROR();
+		}
+		file = FATFS_OpenFile( pFileList->path, "w" );
+		if( !file ) {
+			OS_TPrintf( "ng.\n" );
+			FATAL_ERROR();
+		}
+		if( !FATFS_SetFileLength( file, (int)pFileList->size ) ) {
+			OS_TPrintf( "ng.\n" );
+			FATAL_ERROR();
+		}
+		(void)FATFS_CloseFile( file );
+		OS_TPrintf( "ok.\n" );
+		pFileList++;
+	}
+}
+
+
+// ファイルチェック
+static void CheckFile( const FileProperty *pFileList )
+{
+	// デフォルトドライブの指定
+	OS_TPrintf( "\nCheck File :\n" );
+	
+	// 指定されたディレクトリをルートに作成
+	while( pFileList->path ) {
+		FATFSFileHandle file;
+		
+		OS_TPrintf( "  %s, %dbytes...", pFileList->path, pFileList->size );
+		file = FATFS_OpenFile( pFileList->path, "r" );
+		if( !file ) {
+			OS_TPrintf( "ng.\n" );
+			FATAL_ERROR();
+		}
+		if( FATFS_GetFileLength( file ) != pFileList->size ) {
+			OS_TPrintf( "ng. size = %d\n", FATFS_GetFileLength( file )  );
+			FATAL_ERROR();
+		}
+		(void)FATFS_CloseFile( file );
+		OS_TPrintf( "ok.\n" );
+		pFileList++;
+	}
+}
+
