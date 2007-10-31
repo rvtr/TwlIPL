@@ -29,7 +29,7 @@ TARGET_BIN				=	main.srl
 #LCFILE_SPEC			=	
 ROM_SPEC				=	main.rsf
 
-MISC_DIR				=	../../Launcher/ARM9/src
+MISC_DIR				=	../../MachineSettings/ARM9/src
 
 SRCS					=	main.c PictoChat.c $(MISC_DIR)/misc.c
 #SRCS_OVERLAY			=	

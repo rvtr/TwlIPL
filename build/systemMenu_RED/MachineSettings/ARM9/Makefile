@@ -29,15 +29,13 @@ TARGET_BIN				=	main.srl
 #LCFILE_SPEC			=	
 ROM_SPEC				=	main.rsf
 
-MISC_DIR				=	../../Launcher/ARM9/src
-
-SRCS					=	main.c $(MISC_DIR)/misc.c \
+SRCS					=	main.c misc.c \
 							MachineSetting.c setRTC.c selectLanguage.c calibrationTP.c
 							#setOwnerInfo.c
 
 #SRCS_OVERLAY			=	
 
-LINCLUDES				=	$(MISC_DIR)
+#LINCLUDES				=	
 #LLIBRARY_DIRS			=	
 #LLIBRARIES				=	
 #LDEPENDS_NEF			=	
