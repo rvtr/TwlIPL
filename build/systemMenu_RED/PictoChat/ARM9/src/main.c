@@ -71,7 +71,7 @@ void TwlMain(void)
 		OS_WaitIrq(1, OS_IE_V_BLANK);								// Vブランク割り込み待ち
 		
 		ReadKeyPad();												// キー入力の取得
-		ReadTpData();											// TP入力の取得
+		ReadTP();													// TP入力の取得
 		
 		PictoChatMain();
 	}

@@ -23,20 +23,20 @@
 	// OKボタンLCD領域
 #define OK_BUTTON_TOP_X						( 2 * 8 )
 #define OK_BUTTON_TOP_Y						( 20 * 8 )
-#define OK_BUTTON_BOTTOM_X						( (OK_BUTTON_TOP_X + 8) * 8 )
-#define OK_BUTTON_BOTTOM_Y						( (OK_BUTTON_TOP_Y + 2) * 8 )
+#define OK_BUTTON_BOTTOM_X					( OK_BUTTON_TOP_X + 8 * 8 )
+#define OK_BUTTON_BOTTOM_Y					( OK_BUTTON_TOP_Y + 4 * 8 )
 
 	// キャンセルボタンLCD領域
 #define CANCEL_BUTTON_TOP_X					( 11 * 8 )
 #define CANCEL_BUTTON_TOP_Y					( 20 * 8 )
-#define CANCEL_BUTTON_BOTTOM_X					( (CANCEL_BUTTON_TOP_X+8) * 8 )
-#define CANCEL_BUTTON_BOTTOM_Y					( (CANCEL_BUTTON_TOP_Y+2) * 8 )
+#define CANCEL_BUTTON_BOTTOM_X				( CANCEL_BUTTON_TOP_X + 8 * 8 )
+#define CANCEL_BUTTON_BOTTOM_Y				( CANCEL_BUTTON_TOP_Y + 4 * 8 )
 
 	// リトライボタンLCD領域
 #define RETRY_BUTTON_TOP_X					( 20 * 8 )
 #define RETRY_BUTTON_TOP_Y					( 20 * 8 )
-#define RETRY_BUTTON_BOTTOM_X					( (RETRY_BUTTON_TOP_X+8) * 8 )
-#define RETRY_BUTTON_BOTTOM_Y					( (RETRY_BUTTON_TOP_Y+2) * 8 )
+#define RETRY_BUTTON_BOTTOM_X				( RETRY_BUTTON_TOP_X + 8 * 8 )
+#define RETRY_BUTTON_BOTTOM_Y				( RETRY_BUTTON_TOP_Y + 4 * 8 )
 
 	// キャリブレーション用OBJデータ
 const u16 bitmapOBJPoint[8 * 8 * 5];
@@ -158,6 +158,8 @@ static inline void SetPoint16x16(u16 pos_x, u16 pos_y)
  *---------------------------------------------------------------------------*/
 static void DisplayInit() 
 {
+	MI_CpuClearFast( (void *)HW_OAM, 0x20 );
+	MI_CpuClearFast( s_oamBak, sizeof(s_oamBak) );
 	GX_SetOBJVRamModeBmp( GX_OBJVRAMMODE_BMP_1D_128K );       // 2D mapping OBJ
 	/* Load charactor bitmap data */
 	GX_LoadOBJ( (const void *)IMAGE_DATA, 0x3000 /* 0 */, IMAGE_DATA_SIZE ); // Transfer OBJ bitmap data to VRAM
@@ -391,12 +393,12 @@ int TP_CalibrationMain( void )
 				SetPoint16x16( tpd.disp.x, tpd.disp.y );
 				
 				// [OK] [CANCEL] [RETRY]ボタン押下チェック
-				tp_ok     = InRangeTp(	OK_BUTTON_TOP_X, OK_BUTTON_TOP_Y - 4 * 8,
-						  				OK_BUTTON_BOTTOM_X, OK_BUTTON_BOTTOM_Y - 4 * 8, &tpd.disp );
-				tp_cancel = InRangeTp(	CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y - 4 * 8,
-						  				CANCEL_BUTTON_BOTTOM_X, CANCEL_BUTTON_BOTTOM_Y - 4 * 8, &tpd.disp );
-				tp_retry  = InRangeTp(	RETRY_BUTTON_TOP_X, RETRY_BUTTON_TOP_Y - 4 * 8,
-						  				RETRY_BUTTON_BOTTOM_X, RETRY_BUTTON_BOTTOM_Y - 4 * 8, &tpd.disp );
+				tp_ok     = InRangeTp(	OK_BUTTON_TOP_X, OK_BUTTON_TOP_Y,
+						  				OK_BUTTON_BOTTOM_X, OK_BUTTON_BOTTOM_Y, &tpd.disp );
+				tp_cancel = InRangeTp(	CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y,
+						  				CANCEL_BUTTON_BOTTOM_X, CANCEL_BUTTON_BOTTOM_Y, &tpd.disp );
+				tp_retry  = InRangeTp(	RETRY_BUTTON_TOP_X, RETRY_BUTTON_TOP_Y,
+						  				RETRY_BUTTON_BOTTOM_X, RETRY_BUTTON_BOTTOM_Y, &tpd.disp );
 				
 				if( tpd.raw.validity==TP_VALIDITY_VALID ) {
 					OS_TPrintf( "( %3d, %3d ) -> ( %4d, %4d )\n", tpd.disp.x, tpd.disp.y, tpd.raw.x, tpd.raw.y );

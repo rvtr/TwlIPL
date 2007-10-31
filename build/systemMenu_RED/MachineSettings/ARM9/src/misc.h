@@ -136,7 +136,7 @@ void PutStringUTF16Sub( int x, int y, int color, const u16 *strUTF16 );
 void PrintfSJIS   ( int x, int y, int color, const char *fmt, ... );
 void PrintfSJISSub( int x, int y, int color, const char *fmt, ... );
 void ReadKeyPad( void );
-void ReadTpData( void );
+void ReadTP( void );
 BOOL WaitDetachTP( void );
 void StartDetachTP( void );
 void DrawMenu( u16 nowCsr, const MenuParam *pMenu );

@@ -154,7 +154,7 @@ int MachineSettingMain( void )
 	BOOL tp_select;
 	
 	GetAndDrawRtcData();
-	ReadTpData();
+	ReadTP();
 	
 	//--------------------------------------
 	//  キー入力処理
@@ -226,10 +226,10 @@ void DrawOKCancelButton(void)
 // OK or CANCELボタン押下チェック
 void CheckOKCancelButton(BOOL *tp_ok, BOOL *tp_cancel)
 {
-	*tp_cancel = InRangeTp( CANCEL_BUTTON_LT_X, CANCEL_BUTTON_LT_Y - 4,
-						    CANCEL_BUTTON_RB_X, CANCEL_BUTTON_RB_Y - 4, &tpd.disp );
-	*tp_ok     = InRangeTp( OK_BUTTON_LT_X,     OK_BUTTON_LT_Y - 4,
-						    OK_BUTTON_RB_X,     OK_BUTTON_RB_Y - 4, &tpd.disp );
+	*tp_cancel = InRangeTp( CANCEL_BUTTON_LT_X, CANCEL_BUTTON_LT_Y,
+						    CANCEL_BUTTON_RB_X, CANCEL_BUTTON_RB_Y, &tpd.disp );
+	*tp_ok     = InRangeTp( OK_BUTTON_LT_X,     OK_BUTTON_LT_Y,
+						    OK_BUTTON_RB_X,     OK_BUTTON_RB_Y, &tpd.disp );
 }
 
 

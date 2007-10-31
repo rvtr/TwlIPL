@@ -253,7 +253,7 @@ int SEQ_OwnerInfo(void)
 	BOOL tp_select;
 	BOOL tp_return = FALSE;
 	
-	ReadTpData();													// タッチパネル入力の取得
+	ReadTP();													// タッチパネル入力の取得
 	
 	if(tpd.disp.touch) {											// [RETURN]ボタン押下チェック
 		tp_return = InRangeTp(RETURN_BUTTON_LT_X*8, RETURN_BUTTON_LT_Y*8-4,
@@ -356,7 +356,7 @@ static int SEQ_InputBirthday(void)
 	};
 	
 	
-	ReadTpData();													// タッチパネル入力の取得
+	ReadTP();													// タッチパネル入力の取得
 	
 	ow->inp.y_offset	= 0;
 	
@@ -526,7 +526,7 @@ static int SEQ_InputFavoriteColor(void)
 	};
 	
 	
-	ReadTpData();													// タッチパネル入力の取得
+	ReadTP();													// タッチパネル入力の取得
 	
 	ow->inp.y_offset	= 0;
 	
@@ -656,7 +656,7 @@ static int SEQ_InputNickname(void)
 	
 	ow->csr_old = ow->csr_now;										// 前フレームのカーソル位置を保存
 	
-	ReadTpData();													// タッチパネル入力の取得
+	ReadTP();													// タッチパネル入力の取得
 	
 	tp_input = MoveCharCursorTp(&ow->csr_now);						// TP入力によるカーソル移動
 	
@@ -867,7 +867,7 @@ static BOOL MoveCharCursorTp(CsrPos *csrp)
 		if(InRangeTp(CLIST_LT_X*8, CLIST_LT_Y*8-4, CLIST_RB_X*8-1, CLIST_RB_Y*8-4, &tpd.disp)) {
 																		// 少しマージンあり。
 			temp.x = (u16)((tpd.disp.x - CLIST_LT_X * 8) / 8);
-			temp.y = (u16)((tpd.disp.y - (CLIST_LT_Y * 8 - 4)) / 16);
+			temp.y = (u16)((tpd.disp.y - (CLIST_LT_Y * 8)) / 16);
 			x_bak = temp.x;												// ５文字ごとにある空白列の補正
 			while(x_bak >= 5) {
 				x_bak -= 6;

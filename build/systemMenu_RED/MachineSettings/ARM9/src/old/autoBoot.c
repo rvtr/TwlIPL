@@ -92,7 +92,7 @@ int SEQ_AutoBootSelect(void)
 	BOOL tp_select;
 	BOOL tp_cancel = FALSE;
 	
-	ReadTpData();													// タッチパネル入力の取得
+	ReadTP();													// タッチパネル入力の取得
 	
 	//--------------------------------------
 	//  キー入力処理
@@ -105,8 +105,8 @@ int SEQ_AutoBootSelect(void)
 	
 	// [CANCEL]ボタン押下チェック
 	if(tpd.disp.touch) {
-		tp_cancel = InRangeTp(CANCEL_BUTTON_LT_X*8, CANCEL_BUTTON_LT_Y*8-4,
-							  CANCEL_BUTTON_RB_X*8, CANCEL_BUTTON_RB_Y*8-4, &tpd.disp);
+		tp_cancel = InRangeTp(CANCEL_BUTTON_LT_X*8, CANCEL_BUTTON_LT_Y*8,
+							  CANCEL_BUTTON_RB_X*8, CANCEL_BUTTON_RB_Y*8, &tpd.disp);
 	}
 	
 	if((pad.trg & PAD_BUTTON_A) || (tp_select)) {					// メニュー項目への分岐
@@ -123,7 +123,7 @@ int SEQ_AutoBootSelect(void)
 		return 0;
 	}
 	
-	ReadTpData();
+	ReadTP();
 	
 	return 0;
 }

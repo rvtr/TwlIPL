@@ -103,7 +103,7 @@ int SelectLanguageMain( void )
 {
 	BOOL tp_select,tp_cancel = FALSE;
 	
-	ReadTpData();												// TP入力の取得
+	ReadTP();												// TP入力の取得
 	
 	//--------------------------------------
 	//  キー入力処理
@@ -123,8 +123,8 @@ int SelectLanguageMain( void )
 	
 	// [CANCEL]ボタン押下チェック
 	if( tpd.disp.touch ) {
-		tp_cancel = InRangeTp( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y - 4 * 8,
-							   CANCEL_BUTTON_BOTTOM_X, CANCEL_BUTTON_BOTTOM_Y - 4 * 8, &tpd.disp );
+		tp_cancel = InRangeTp( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y,
+							   CANCEL_BUTTON_BOTTOM_X, CANCEL_BUTTON_BOTTOM_Y, &tpd.disp );
 	}
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || tp_select ) {				// メニュー項目への分岐

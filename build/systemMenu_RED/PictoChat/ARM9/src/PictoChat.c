@@ -62,7 +62,7 @@ void PictoChatMain(void)
 {
 	BOOL tp_cancel = FALSE;
 	
-	ReadTpData();													// タッチパネル入力の取得
+	ReadTP();													// タッチパネル入力の取得
 	
 	// [RETURN]ボタン押下チェック
 	if(tpd.disp.touch) {

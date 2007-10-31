@@ -130,14 +130,14 @@ int SetRTCMain( void )
 	BOOL tp_set		= FALSE;
 	BOOL tp_return	= FALSE;
 	
-	ReadTpData();													// TP入力の取得
+	ReadTP();													// TP入力の取得
 	
 	if(tpd.disp.touch) {
-		tp_set = InRangeTp( DATE_TOP_X,       DATE_TOP_Y - 4,		// [RTC設定]領域押下チェック
-						   (TIME_TOP_X + 8), (TIME_TOP_Y + 2) - 4, &tpd.disp );
+		tp_set = InRangeTp( DATE_TOP_X,       DATE_TOP_Y,		// [RTC設定]領域押下チェック
+						   ( TIME_TOP_X + 8 * 8 ), (TIME_TOP_Y + 2 * 8 ), &tpd.disp );
 																	// [RETURN]ボタン押下チェック
-		tp_return = InRangeTp( RETURN_BUTTON_TOP_X,    RETURN_BUTTON_TOP_Y - 4,
-							   RETURN_BUTTON_BOTTOM_X, RETURN_BUTTON_BOTTOM_Y - 4, &tpd.disp );
+		tp_return = InRangeTp( RETURN_BUTTON_TOP_X,    RETURN_BUTTON_TOP_Y,
+							   RETURN_BUTTON_BOTTOM_X, RETURN_BUTTON_BOTTOM_Y, &tpd.disp );
 	}
 	if( g_initialSet && !GetNCDWork()->option.input_rtc ) {
 		tp_set = TRUE;
@@ -216,7 +216,7 @@ static int InputRtcDateTimeMain( void )
 		SEQ_RETURN=64
 	};
 	
-	ReadTpData();													// タッチパネル入力の取得
+	ReadTP();													// タッチパネル入力の取得
 	CheckOKCancelButton( &tp_ok, &tp_cancel );						// [OK],[CANCEL]ボタン押下チェック
 	
 	s_pRTCWork->inp.y_offset = 0;

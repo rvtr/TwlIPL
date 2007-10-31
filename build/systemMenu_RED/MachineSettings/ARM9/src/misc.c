@@ -331,7 +331,7 @@ void ReadKeyPad(void)
 
 
 // タッチパネルデータの取得-----------------------
-void ReadTpData(void)
+void ReadTP(void)
 {
 	TP_GetCalibratedPoint( &tpd.last, &tpd.raw );					// 前回のTPデータを退避
 	
@@ -444,9 +444,9 @@ BOOL SelectMenuByTP( u16 *nowCsr, const MenuParam *pMenu )
 		if( tpd.disp.touch ) {										// タッチパネルがメニューの要素上でタッチされているなら、
 			NNSG2dTextRect rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, (pMenu->str_elem)[ i ] );
 			u16 top_x = (u16)( pMenu->pos[ i ].x );					// メニュー要素のLCD座標を算出
-			u16 top_y = (u16)( pMenu->pos[ i ].y - 4 );
+			u16 top_y = (u16)( pMenu->pos[ i ].y );
 			u16 bottom_x = (u16)( top_x + rect.width );
-			u16 bottom_y = (u16)( top_y + rect.height + 4 );		// ※Y座標は±4のマージン
+			u16 bottom_y = (u16)( top_y + rect.height );
 			
 			OS_TPrintf( "MENU[ %d ] : top_x = %02d  top_y = %02d  bot_x = %02d  bot_y = %02d : ",
 						i, top_x, top_y, bottom_x, bottom_y );
@@ -488,6 +488,8 @@ BOOL InRangeTp( int top_x, int top_y, int bottom_x, int bottom_y, TPData *tgt )
 		( tgt->x <= bottom_x ) &&
 		( tgt->y >= top_y    ) &&
 		( tgt->y <= bottom_y ) ) {
+		OS_TPrintf( "\nRANGE : tx=%3d ty=%3d bx=%3d by=%3d : x=%3d y=%3d\n",
+					top_x, top_y, bottom_x, bottom_y, tgt->x, tgt->y );
 		return TRUE;
 	}else {
 		return FALSE;
