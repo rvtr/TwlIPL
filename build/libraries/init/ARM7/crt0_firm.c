@@ -19,31 +19,65 @@
 
 #define FIRM_ENABLE_JTAG
 
-extern void TwlMain(void);
-extern void OS_IrqHandler(void);
-extern void *const _start_ModuleParams[];
-static void do_autoload(void);
-static void detect_main_memory_size(void);
 void    _start(void);
 void    _start_AutoloadDoneCallback(void *argv[]);
 
-extern void __call_static_initializers(void);
-extern void _fp_init(void);
+#define     SDK_NITROCODE_LE    0x2106c0de
+#define     SDK_NITROCODE_BE    0xdec00621
 
-// from LCF
-extern unsigned long SDK_IRQ_STACKSIZE[];
-extern void SDK_STATIC_BSS_START(void); // static bss start address
-extern void SDK_STATIC_BSS_END(void);  // static bss start address
-extern void SDK_AUTOLOAD_START(void);  // autoload data will start from here
-extern void SDK_AUTOLOAD_LIST(void);   // start pointer to autoload information
-extern void SDK_AUTOLOAD_LIST_END(void);        // end pointer to autoload information
+#define     SDK_TWLCODE_LE      0x6314c0de
+#define     SDK_TWLCODE_BE      0xdec01463
 
 // volatile parameters in IPL's work memory
 #define IPL_PARAM_CARD_ROM_HEADER      0x023FE940
 #define IPL_PARAM_DOWNLOAD_PARAMETER   0x023FE904
 
+extern void OS_IrqHandler(void);
+extern void _fp_init(void);
+extern void __call_static_initializers(void);
+extern void TwlMain(void);
+
+static void INITi_DoAutoload(void);
+static void INITi_ShelterLtdBinary(void);
+static void detect_main_memory_size(void);
+
+// from LCF
+extern unsigned long SDK_IRQ_STACKSIZE[];
+
+extern void SDK_STATIC_BSS_START(void);         // static bss start address
+extern void SDK_STATIC_BSS_END(void);       // static bss start address
+extern void SDK_AUTOLOAD_LIST(void);        // start pointer to autoload information
+extern void SDK_AUTOLOAD_LIST_END(void);    // end pointer to autoload information
+extern void SDK_AUTOLOAD_START(void);       // autoload data will start from here
+extern void SDK_LTDAUTOLOAD_LIST(void);     // start pointer to autoload information
+extern void SDK_LTDAUTOLOAD_LIST_END(void); // end pointer to autoload information
+extern void SDK_LTDAUTOLOAD_START(void);    // autoload data will start from here
+
 //---- IRQ+SVC stack size in boot (this area is not cleared)
 #define INITi_Initial_Stack   0x100
+
+void   *const _start_ModuleParams[]     =
+{
+    (void *)SDK_AUTOLOAD_LIST,
+    (void *)SDK_AUTOLOAD_LIST_END,
+    (void *)SDK_AUTOLOAD_START,
+    (void *)SDK_STATIC_BSS_START,
+    (void *)SDK_STATIC_BSS_END,
+    (void*)0,       // CompressedStaticEnd. This fixed number will be updated by compstatic tool.
+    (void*)0,       // SDK_VERSION_ID   // SDK version info /* [TODO] ビルドを通すため */
+    (void*)SDK_NITROCODE_BE,
+    (void*)SDK_NITROCODE_LE,
+};
+
+void* const _start_LtdModuleParams[]    =
+{
+    (void*)SDK_LTDAUTOLOAD_LIST,
+    (void*)SDK_LTDAUTOLOAD_LIST_END,
+    (void*)SDK_LTDAUTOLOAD_START,
+    (void*)0,       // CompressedLtdautoloadEnd. This fixed number will be updated by compstatic tool.
+    (void*)SDK_TWLCODE_BE,
+    (void*)SDK_TWLCODE_LE,
+};
 
 /*---------------------------------------------------------------------------*
   Name:         _start
@@ -127,7 +161,7 @@ SDK_WEAK_SYMBOL asm void _start( void )
 #endif
 
         //---- load autoload block and initialize bss
-        //bl              do_autoload
+        //bl              INITi_DoAutoload
 
         //---- fill static static bss with 0
         ldr             r0, =_start_ModuleParams
@@ -159,90 +193,140 @@ SDK_WEAK_SYMBOL asm void _start( void )
 
         bx              r1
 }
+/*---------------------------------------------------------------------------*
+  Name:         INITi_DoAutoload
+  Description:  リンク情報に沿って、各オートロードブロックの固定データ部の展開
+                及び変数部の 0 クリアを行う。
+  Arguments:    なし。
+  Returns:      なし。
+ *---------------------------------------------------------------------------*/
+/*
+ * < 二段階オートロード >
+ * 0x02f88000 に crt0 及び一段目ロード元バイナリが配置されている。
+ *  NITRO と共有可能な WRAM 上に配置されるべきバイナリデータを 0x037c0000 にロードする。
+ *  TWL でしか動作しない WRAM 上に配置されるべきバイナリデータを続きのアドレスにロードする。
+ * 0x02e80000 に二段目ロード元バイナリが配置されている。
+ *  0x04000 バイト分はカード ROM から再読み出し不可なので、0x02f84000 - 0x02f88000 に退避する。
+ *  NITRO と共有可能な MAIN 上に配置されるべきバイナリデータを 0x02f88000 + sizeof(crt0) にロードする。
+ *  TWL でしか動作しない MAIN 上に配置されるべきバイナリデータを続きのアドレスにロードする。
+ */
+static asm void
+INITi_DoAutoload(void)
+{
+@000:
+        stmdb           sp!, {lr}
+        /* WRAM 用ブロックをオートロード */
+        ldr             r1, =_start_ModuleParams
+        ldr             r12, [r1]           // r12 = SDK_AUTOLOAD_LIST
+        ldr             r0, [r1, #4]        // r0 = SDK_AUTOLOAD_LIST_END
+        ldr             r1, [r1, #8]        // r1 = SDK_AUTOLOAD_START
+@001:   cmp             r12, r0
+        bge             @010
+        /* 固定セクションをロード */
+        stmdb           sp!, {r0}
+        ldr             r2, [r12], #4       // r2 = start address of destination range
+        ldr             r3, [r12], #4       // r3 = size of fixed section
+        add             r3, r3, r2          // r3 = end address of destination range of fixed section
+@002:   cmp             r2, r3
+        ldrlt           r0, [r1], #4
+        strlt           r0, [r2], #4
+        blt             @002
+        /* .bss セクションを 0 クリア */
+        mov             r0, #0
+        ldr             r3, [r12], #4       // r3 = size of .bss section
+        add             r3, r3, r2          // r3 = end address of destination range of .bss section
+@003:   cmp             r2, r3
+        strlt           r0, [r2], #4
+        blt             @003
+@004:   ldmia           sp!, {r0}
+        b               @001
+
+@010:   /* メインメモリ用ブロックの存在を確認 */
+        ldr             r1, =HW_TWL_ROM_HEADER_BUF + 0x1dc  /* ARM7 用拡張常駐モジュール ROM サイズ */
+        ldr             r0, [r1]
+        cmp             r0, #0
+        beq             @020
+
+        /* 再読み出し不可部分を退避 */
+        bl              INITi_ShelterLtdBinary
+
+        /* メインメモリ用ブロックをオートロード */
+        ldr             r1, =_start_LtdModuleParams
+        ldr             r12, [r1]           // r12 = SDK_LTDAUTOLOAD_LIST
+        ldr             r0, [r1, #4]        // r0 = SDK_LTDAUTOLOAD_LIST_END
+        ldr             r1, [r1, #8]        // r1 = SDK_LTDAUTOLOAD_START
+@011:   cmp             r12, r0
+        bge             @020
+        /* 固定セクションをロード */
+        stmdb           sp!, {r0}
+        ldr             r2, [r12], #4       // r2 = start address of destination range
+        ldr             r3, [r12], #4       // r3 = size of fixed section
+        add             r3, r3, r2          // r3 = end address of destination range of fixed section
+@012:   cmp             r2, r3
+        ldrlt           r0, [r1], #4
+        strlt           r0, [r2], #4
+        blt             @012
+        /* .bss セクションを 0 クリア */
+        mov             r0, #0
+        ldr             r3, [r12], #4       // r3 = size of .bss section
+        add             r3, r3, r2          // r3 = end address of destination range of .bss section
+@013:   cmp             r2, r3
+        strlt           r0, [r2], #4
+        blt             @013
+@014:   ldmia           sp!, {r0}
+        b               @011
+
+@020:   /* オートロード完了コールバック関数呼び出し */
+        ldr             r0, =_start_ModuleParams
+        ldr             r1, =_start_LtdModuleParams
+        ldmia           sp!, {lr}
+        b               _start_AutoloadDoneCallback
+}
 
 /*---------------------------------------------------------------------------*
-  Name:         do_autoload
-
-  Description:  put autoload data block according to autoload information,
-                and clear static bss by filling with 0.
-
-  Arguments:    None.
-
-  Returns:      None.
+  Name:         INITi_ShelterLtdBinary
+  Description:  TWL 専用のオートロード元バイナリデータの内、カード ROM から
+                再読み出しできない領域のデータを退避エリアに退避する。
+                再読み出しできない領域のデータは ARM7 用と ARM9 用の拡張常駐
+                モジュールの２つに分かれている可能性があるので、冗長ではあるが
+                両方の先頭から 0x4000 分をそれぞれ退避する。
+  Arguments:    なし。
+  Returns:      なし。
  *---------------------------------------------------------------------------*/
-void   *const _start_ModuleParams[] = {
-    (void *)SDK_AUTOLOAD_LIST,
-    (void *)SDK_AUTOLOAD_LIST_END,
-    (void *)SDK_AUTOLOAD_START,
-    (void *)SDK_STATIC_BSS_START,
-    (void *)SDK_STATIC_BSS_END,
-};
-
-static asm void do_autoload( void )
+static asm void
+INITi_ShelterLtdBinary(void)
 {
-#define ptable          r0
-#define infop           r1
-#define infop_end       r2
-#define src             r3
-#define dest            r4
-#define dest_size       r5
-#define dest_end        r6
-#define tmp             r7
+        /* 退避元・先アドレスを調査 */
+        ldr             r1, =HW_TWL_ROM_HEADER_BUF + 0x1d8  /* ARM7 用拡張常駐モジュール RAM アドレス */
+        ldr             r1, [r1]
+        ldr             r3, =HW_TWL_ROM_HEADER_BUF + 0x038  /* ARM7 用常駐モジュール RAM アドレス */
+        ldr             r3, [r3]
+        sub             r2, r3, #0x4000                     /* 再読み出し不可領域サイズ */ /* ARM7 用退避エリア */
 
-        ldr     ptable, =_start_ModuleParams
-        ldr     infop,      [ptable, #0]   // r1 = start pointer to autoload_info
-        ldr     infop_end,  [ptable, #4]   // r2 = end pointer to autoload_info
-        ldr     src,        [ptable, #8]   // r3 = autoload block
+        /* コピー */
+@loop:  ldr             r0, [r1], #4
+        str             r0, [r2], #4
+        cmp             r2, r3
+        blt             @loop
 
-        //---- put each blocks according to autoload information
-@2:
-        cmp     infop, infop_end                // reach to end?
-        beq     @skipout
-
-        ldr     dest,      [infop], #4          // dest
-        ldr     dest_size, [infop], #4          // size
-        add     dest_end, dest, dest_size       // dest_end
-#if 1
-        mov     dest, dest_end
-#else
-@1:
-        cmp     dest, dest_end
-        ldrmi   tmp, [src],  #4                 // [dest++] <- [src++]
-        strmi   tmp, [dest], #4
-        bmi     @1
-#endif
-        //---- fill bss with 0
-        ldr     dest_size, [infop], #4          // size
-        add     dest_end, dest, dest_size       // bss end
-        mov     tmp, #0
-@4:
-        cmp     dest, dest_end
-        strcc   tmp, [dest], #4
-        bcc     @4
-        beq     @2
-
-@skipout:
-        // r0 = autoload_params
-        b       _start_AutoloadDoneCallback   // Jump into the callback
+        bx              lr
 }
 
 /*---------------------------------------------------------------------------*
   Name:         _start_AutoloadDoneCallback
-
-  Description:  hook for end of autoload (This is dummy target for DEBUGGER)
-
-  Arguments:    argv: pointer for autoload parameters
-                     argv[0] = SDK_AUTOLOAD_LIST
-                     argv[1] = SDK_AUTOLOAD_LIST_END
-                     argv[2] = SDK_AUTOLOAD_START
-                     argv[3] = SDK_STATIC_BSS_START
-                     argv[4] = SDK_STATIC_BSS_END
-
-  Returns:      None.
+  Description:  オートロード完了コールバック。
+  Arguments:    argv    -   オートロードパラメータを保持している配列。
+                    argv[0] =   SDK_AUTOLOAD_LIST
+                    argv[1] =   SDK_AUTOLOAD_LIST_END
+                    argv[2] =   SDK_AUTOLOAD_START
+                    argv[3] =   SDK_STATIC_BSS_START
+                    argv[4] =   SDK_STATIC_BSS_END
+  Returns:      なし。
  *---------------------------------------------------------------------------*/
-SDK_WEAK_SYMBOL asm void _start_AutoloadDoneCallback( void* argv[] )
+SDK_WEAK_SYMBOL asm void
+_start_AutoloadDoneCallback(void* argv[])
 {
-        bx      lr
+        bx              lr
 }
 
 /*---------------------------------------------------------------------------*
@@ -283,6 +367,13 @@ static asm void detect_main_memory_size( void )
         add     r1, r1, #1
         cmp     r1, #2 // check 2 loop
         bne     @1
+
+        //---- 4MB
+        // check SMX_CNT
+        ldr     r2, =REG_SMX_CNT_ADDR
+        ldrh    r1, [r2]
+        tst     r1, #0
+        orrne   r0, r0, #OS_CHIPTYPE_SMX_MASK
         b       @4
 
         //---- 8MB or 16MB or 32MB

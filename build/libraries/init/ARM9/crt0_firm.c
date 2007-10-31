@@ -17,34 +17,73 @@
 #include        <nitro/code32.h>
 #include        <firm.h>
 
-extern void TwlMain(void);
-extern void OS_IrqHandler(void);
-static void do_autoload(void);
-static void INITi_InitCoprocessor(void);
-static void INITi_InitRegion(void);
 void    _start(void);
-static void INITi_CpuClear32(register u32 data, register void *destp, register u32 size);
-extern void *const _start_ModuleParams[];
 void    _start_AutoloadDoneCallback(void *argv[]);
 
-extern void __call_static_initializers(void);
+#define     SDK_NITROCODE_LE    0x2106c0de
+#define     SDK_NITROCODE_BE    0xdec00621
+
+#define     SDK_TWLCODE_LE      0x6314c0de
+#define     SDK_TWLCODE_BE      0xdec01463
+
+extern void OS_IrqHandler(void);
 extern void _fp_init(void);
+extern void __call_static_initializers(void);
+extern void TwlMain(void);
+
+static void INITi_CpuClear32(register u32 data, register void *destp, register u32 size);
+static void INITi_InitCoprocessor(void);
+static void INITi_InitRegion(void);
+static void INITi_DoAutoload(void);
+static void INITi_ShelterLtdBinary(void);
 
 // from LCF
 extern unsigned long SDK_IRQ_STACKSIZE[];
-extern void SDK_AUTOLOAD_START(void);  // autoload data will start from here
-extern void SDK_AUTOLOAD_LIST(void);   // start pointer to autoload information
-extern void SDK_AUTOLOAD_LIST_END(void);        // end pointer to autoload information
-extern void SDK_STATIC_BSS_START(void); // static bss start address
-extern void SDK_STATIC_BSS_END(void);  // static bss end address
 
-#include        <nitro/version.h>
+extern void SDK_AUTOLOAD_LIST(void);        // start pointer to autoload information
+extern void SDK_AUTOLOAD_LIST_END(void);    // end pointer to autoload information
+extern void SDK_AUTOLOAD_START(void);       // autoload data will start from here
+extern void SDK_STATIC_BSS_START(void);     // static bss start address
+extern void SDK_STATIC_BSS_END(void);       // static bss end address
+extern void SDK_LTDAUTOLOAD_LIST(void);     // start pointer to autoload information
+extern void SDK_LTDAUTOLOAD_LIST_END(void); // end pointer to autoload information
+extern void SDK_LTDAUTOLOAD_START(void);    // autoload data will start from here
+
+/*---------------------------------------------------------------------------*
+  Name:         _start_ModuleParams
+
+  Description:  autoload/compress/arguments data block
+
+  Arguments:    None.
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+//#include        <nitro/version.h>
 #define         SDK_VERSION_ID   ((u32)SDK_VERSION_MAJOR<<24|\
                                   (u32)SDK_VERSION_MINOR<<16|\
                                   (u32)SDK_VERSION_RELSTEP)
 
-#define     SDK_NITROCODE_LE    0x2106c0de
-#define     SDK_NITROCODE_BE    0xdec00621
+void   *const _start_ModuleParams[]     =
+{
+    (void *)SDK_AUTOLOAD_LIST,
+    (void *)SDK_AUTOLOAD_LIST_END,
+    (void *)SDK_AUTOLOAD_START,
+    (void *)SDK_STATIC_BSS_START,
+    (void *)SDK_STATIC_BSS_END,
+    (void *)0,                         // CompressedStaticEnd
+    (void *)SDK_VERSION_ID,            // SDK version info
+    (void *)SDK_NITROCODE_BE,          // Checker 1
+    (void *)SDK_NITROCODE_LE,          // Checker 2
+};
+void* const _start_LtdModuleParams[]    =
+{
+    (void*)SDK_LTDAUTOLOAD_LIST,
+    (void*)SDK_LTDAUTOLOAD_LIST_END,
+    (void*)SDK_LTDAUTOLOAD_START,
+    (void*)0,       // CompressedLtdautoloadEnd. This fixed number will be updated by compstatic tool.
+    (void*)SDK_TWLCODE_BE,
+    (void*)SDK_TWLCODE_LE,
+};
 
 
 /*---------------------------------------------------------------------------*
@@ -139,20 +178,15 @@ SDK_WEAK_SYMBOL asm void _start( void )
         bl              INITi_CpuClear32
 
         //---- load autoload block and initialize bss
-//        ldr             r1, =_start_ModuleParams
-//        ldr             r0, [r1, #20]   // r0 = bottom of compressed data
-//        bl              MIi_UncompressBackward
-//        bl              do_autoload
+//        bl              INITi_DoAutoload
 
         //---- fill static static bss with 0
-        ldr             r0, =_start_ModuleParams
-        ldr                r1, [r0, #12]   // BSS segment start
-        ldr                r2, [r0, #16]   // BSS segment end
-        mov                r3, r1          // for next step(flush bss)
-        mov                r0, #0
-@1:     cmp                r1, r2
-        strcc              r0, [r1], #4
-        bcc                @1
+        mov             r0, #0
+        ldr             r3, =_start_ModuleParams
+        ldr             r1, [r3, #12]       // SDK_STATIC_BSS_START
+        ldr             r2, [r3, #16]       // SDK_STATIC_BSS_END
+        sub             r2, r2, r1
+        bl              INITi_CpuClear32
 
         //---- flush static bss region
         //     (r0 == #0, r3 == _start_ModuleParams::BSS_segment_start)
@@ -214,33 +248,215 @@ static asm void  INITi_CpuClear32( register u32 data, register void *destp, regi
         bx      lr
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         INITi_DoAutoload
+  Description:  リンク情報に沿って、各オートロードブロックの固定データ部の展開
+                及び変数部の 0 クリアを行う。4M bytes を越える PSRAM メモリ空間
+                に配置されるオートロードブロックの展開は、ハードウェアが TWL で
+                ある場合にだけ行う。オートロード元データとオートロード先が一部
+                重なる場合もあるので、後方から展開を行う。
+  Arguments:    なし。
+  Returns:      なし。
+ *---------------------------------------------------------------------------*/
+/*
+ * < 二段階オートロード >
+ * 0x02000000 に Static セグメント及び一段目ロード元バイナリが(必要に応じて後半が圧縮されて)配置されている。
+ *  圧縮されている場合は、まず 0x02000000 に後方から上書きしつつ解凍する。
+ *  NITRO と共有可能な ITCM 上に配置されるべきバイナリデータを 0x01ff8000 にロードする。
+ *  NITRO と共有可能な DTCM 上に配置されるべきバイナリデータを 0x02fe0000 にロードする。
+ * 0x02400000 に二段目ロード元バイナリが(必要に応じて全て圧縮されて)配置されている。
+ *  0x04000 バイト分はカード ROM から再読み出し不可なので、0x02f80000 - 0x02f84000 に退避する。
+ *  圧縮されている場合は、まず 0x02400000 に後方から上書きしつつ解凍する。
+ *  TWL でしか動作しない WRAM 上に配置されるべきバイナリデータをそれぞれ指定アドレスにロードする。
+ *  TWL でしか動作しないメインメモリ上に配置されるべきバイナリデータを前方からコピーすることでロードする。
+ *  これは、NITRO と共有可能なメインメモリ上に配置されるデータが 0x02400000 を越えないはずであるため、
+ *  配置すべきアドレスは 0x02400000 より小さいアドレスになるはずである為。
+ *  また、オートロード情報リストの実体がメインメモリへのオートロードブロックの .bss セクションのクリアの過程で
+ *  破壊される可能性があるが、一連のオートロード処理の最後の段階なので、破壊されても問題ない。
+ */
+static asm void
+INITi_DoAutoload(void)
+{
+@000:
+        stmdb           sp!, {lr}
+        /* NITRO 共用ブロックの解凍 */
+        ldr             r1, =_start_ModuleParams
+        ldr             r0, [r1, #20]       // r0 = bottom of compressed data
+        bl              MIi_UncompressBackward
+
+@010:
+        /* NITRO 共用ブロックをオートロード */
+        ldr             r1, =_start_ModuleParams
+        ldr             r12, [r1]           // r12 = SDK_AUTOLOAD_LIST
+        ldr             r0, [r1, #4]        // r0 = SDK_AUTOLOAD_LIST_END
+        ldr             r1, [r1, #8]        // r1 = SDK_AUTOLOAD_START
+@011:   cmp             r12, r0
+        bge             @020
+        /* 固定セクションをロード */
+        stmdb           sp!, {r0}
+        ldr             r2, [r12], #4       // r2 = start address of destination range
+        stmdb           sp!, {r2}
+        ldr             r3, [r12], #4       // r3 = size of fixed section
+        add             r3, r3, r2          // r3 = end address of destination range of fixed section
+@012:   cmp             r2, r3
+        ldrlt           r0, [r1], #4
+        strlt           r0, [r2], #4
+        blt             @012
+        /* .bss セクションを 0 クリア */
+        mov             r0, #0              // r0 = number to fill .bss section
+        ldr             r3, [r12], #4       // r3 = size of .bss section
+        add             r3, r3, r2          // r3 = end address of destination range of .bss section
+@013:   cmp             r2, r3
+        strlt           r0, [r2], #4
+        blt             @013
+        /* キャッシュを調整 */
+        ldmia           sp!, {r2}           // r2 = start address of destination range
+        mov             r0, #HW_ITCM_IMAGE
+        cmp             r2, r0
+        addge           r0, r0, #HW_ITCM_SIZE
+        cmpge           r0, r2
+        bgt             @015                // If I-TCM autoload block, skip cache control logic.
+        ldr             r0, =SDK_AUTOLOAD_DTCM_START
+        cmp             r2, r0
+        addge           r0, r0, #HW_DTCM_SIZE
+        cmpge           r0, r2
+        bgt             @015                // If D-TCM autoload block, skip cache control logic.
+        bic             r2, r2, #HW_CACHE_LINE_SIZE - 1     // RoundDown32
+@014:   cmp             r2, r3
+        bge             @015
+        mcr             p15, 0, r2, c7, c14, 1      // Store and Invalidate D-Cache
+        mcr             p15, 0, r2, c7, c5, 1       // Invalidate I-Cache
+        add             r2, r2, #HW_CACHE_LINE_SIZE
+        b               @014
+@015:   ldmia           sp!, {r0}
+        b               @011
+
+@020:
+        /* TWL ハードウェア上で動作しているかどうかを調査 */
+        ldr             r1, =REG_CLK_ADDR
+        ldrh            r0, [r1]
+        tst             r0, #REG_SCFG_CLK_WRAMHCLK_MASK
+        beq             @030
+
+        /* TWL 専用ブロックの存在を確認 */
+        ldr             r1, =HW_TWL_ROM_HEADER_BUF + 0x1cc  /* ARM9 用拡張常駐モジュール ROM サイズ */
+        ldr             r0, [r1]
+        cmp             r0, #0
+        beq             @030
+
+        /* 再読み出し不可部分を退避 */
+        bl              INITi_ShelterLtdBinary
+
+        /* TWL 専用ブロックの解凍 */
+        ldr             r1, =_start_LtdModuleParams
+        ldr             r0, [r1, #12]
+        bl              MIi_UncompressBackward
+
+        /* TWL 専用ブロックをオートロード */
+        ldr             r1, =_start_LtdModuleParams
+        ldr             r12, [r1]           // r12 = SDK_LTDAUTOLOAD_LIST
+        ldr             r0, [r1, #4]        // r0 = SDK_LTDAUTOLOAD_LIST_END
+        ldr             r1, [r1, #8]        // r1 = SDK_LTDAUTOLOAD_START
+@021:   cmp             r12, r0
+        bge             @030
+        /* 固定セクションをロード */
+        stmdb           sp!, {r0}
+        ldr             r2, [r12], #4       // r2 = start address of destination range
+        stmdb           sp!, {r2}
+        ldr             r3, [r12], #4       // r3 = size of fixed section
+        add             r3, r3, r2          // r3 = end address of destination range of fixed section
+@022:   cmp             r2, r3
+        ldrlt           r0, [r1], #4
+        strlt           r0, [r2], #4
+        blt             @022
+        /* .bss セクションを 0 クリア */
+        mov             r0, #0              // r0 = number to fill .bss section
+        ldr             r3, [r12], #4       // r3 = size of .bss section
+        add             r3, r3, r2          // r3 = end address of destination range of .bss section
+@023:   cmp             r2, r3
+        strlt           r0, [r2], #4
+        blt             @023
+        /* キャッシュを調整 */
+        ldmia           sp!, {r2}           // r2 = start address of destination range
+        mov             r0, #HW_ITCM_IMAGE
+        cmp             r2, r0
+        addge           r0, r0, #HW_ITCM_SIZE
+        cmpge           r0, r2
+        bgt             @025                // If I-TCM autoload block, skip cache control logic.
+        ldr             r0, =SDK_AUTOLOAD_DTCM_START
+        cmp             r2, r0
+        addge           r0, r0, #HW_DTCM_SIZE
+        cmpge           r0, r2
+        bgt             @025                // If D-TCM autoload block, skip cache control logic.
+        bic             r2, r2, #HW_CACHE_LINE_SIZE - 1     // RoundDown32
+@024:   cmp             r2, r3
+        bge             @025
+        mcr             p15, 0, r2, c7, c14, 1      // Store and Invalidate D-Cache
+        mcr             p15, 0, r2, c7, c5, 1       // Invalidate I-Cache
+        add             r2, r2, #HW_CACHE_LINE_SIZE
+        b               @024
+@025:   ldmia           sp!, {r0}
+        b               @021
+
+@030:   /* ライトバッファが空になるのを待つ */
+        mov             r0, #0
+        mcr             p15, 0, r0, c7, c10, 4
+
+        /* オートロード完了コールバック関数呼び出し */
+        ldr             r0, =_start_ModuleParams
+        ldr             r1, =_start_LtdModuleParams
+        ldmia           sp!, {lr}
+        b               _start_AutoloadDoneCallback
+}
 
 /*---------------------------------------------------------------------------*
-  Name:         _start_ModuleParams
-
-  Description:  autoload/compress/arguments data block
-
-  Arguments:    None.
-
-  Returns:      None.
+  Name:         INITi_ShelterLtdBinary
+  Description:  TWL 専用のオートロード元バイナリデータの内、カード ROM から
+                再読み出しできない領域のデータを退避エリアに退避する。
+                再読み出しできない領域のデータは ARM7 用と ARM9 用の拡張常駐
+                モジュールの２つに分かれている可能性があるので、冗長ではあるが
+                両方の先頭から 0x4000 分をそれぞれ退避する。
+  Arguments:    なし。
+  Returns:      なし。
  *---------------------------------------------------------------------------*/
-void   *const _start_ModuleParams[] = {
-    (void *)SDK_AUTOLOAD_LIST,
-    (void *)SDK_AUTOLOAD_LIST_END,
-    (void *)SDK_AUTOLOAD_START,
-    (void *)SDK_STATIC_BSS_START,
-    (void *)SDK_STATIC_BSS_END,
-    (void *)0,                         // CompressedStaticEnd
-    (void *)SDK_VERSION_ID,            // SDK version info
-    (void *)SDK_NITROCODE_BE,          // Checker 1
-    (void *)SDK_NITROCODE_LE,          // Checker 2
-};
+static asm void
+INITi_ShelterLtdBinary(void)
+{
+        /* ARM7 専用メインメモリ空間保護リージョンを一旦アクセス可能に変更 */
+        mrc             p15, 0, r0, c5, c0, 3
+        mrc             p15, 0, r1, c5, c0, 2
+        stmdb           sp!, {r0, r1}
+        bic             r0, r0, #(0xf << 8)
+        orr             r0, r0, #(0x1 << 8)
+        bic             r1, r1, #(0xf << 8)
+        orr             r1, r1, #(0x1 << 8)
+        mcr             p15, 0, r0, c5, c0, 3
+        mcr             p15, 0, r1, c5, c0, 2
+
+        /* 退避元・先アドレスを調査 */
+        ldr             r1, =HW_TWL_ROM_HEADER_BUF + 0x1c8  /* ARM9 用拡張常駐モジュール RAM アドレス */
+        ldr             r1, [r1]
+        ldr             r3, =HW_TWL_ROM_HEADER_BUF + 0x038  /* ARM7 用常駐モジュール RAM アドレス */
+        ldr             r3, [r3]
+        sub             r3, r3, #0x4000                     /* 再読み出し不可領域サイズ */ /* ARM7 用退避エリア */
+        sub             r2, r3, #0x4000                     /* 再読み出し不可領域サイズ */ /* ARM9 用退避エリア */
+
+        /* コピー */
+@loop:  ldr             r0, [r1], #4
+        str             r0, [r2], #4
+        cmp             r2, r3
+        blt             @loop
+
+        /* ARM7 専用メインメモリ空間保護リージョン設定を元に戻す */
+        ldmia           sp!, {r0, r1}
+        mcr             p15, 0, r0, c5, c0, 3
+        mcr             p15, 0, r1, c5, c0, 2
+        bx              lr
+}
 
 /*---------------------------------------------------------------------------*
   Name:         MIi_UncompressBackward
-
-  Description:  Uncompress special archive for module compression
-
+  Description:  Uncompress special archive for module compression.
   Arguments:    bottom         = Bottom adrs of packed archive + 1
                 bottom[-8..-6] = offset for top    of compressed data
                                  inp_top = bottom - bottom[-8..-6]
@@ -248,17 +464,16 @@ void   *const _start_ModuleParams[] = {
                                  inp     = bottom - bottom[-5]
                 bottom[-4..-1] = offset for bottom of original data
                                  outp    = bottom + bottom[-4..-1]
-
                 typedef struct
                 {
                    u32         bufferTop:24;
                    u32         compressBottom:8;
                    u32         originalBottom;
                 }  CompFooter;
-
   Returns:      None.
  *---------------------------------------------------------------------------*/
-asm void  MIi_UncompressBackward( register void* bottom )
+asm void
+MIi_UncompressBackward(register void* bottom)
 {
 #define data            r0
 #define inp_top         r1
@@ -269,163 +484,79 @@ asm void  MIi_UncompressBackward( register void* bottom )
 #define count8          r6
 #define index           r7
 #define len             r12
-                cmp     bottom, #0
-                beq     @exit
-                stmfd   sp!,    {r4-r7}
-                ldmdb   bottom, {r1-r2}
-                add     outp,    bottom,  outp
-                sub     inp,     bottom,  inp_top, LSR #24
-                bic     inp_top, inp_top, #0xff000000
-                sub     inp_top, bottom,  inp_top
-                mov     outp_save, outp
+
+        cmp             bottom, #0
+        beq             @exit
+        stmfd           sp!,    {r4-r7}
+        ldmdb           bottom, {r1-r2}
+        add             outp,    bottom,  outp
+        sub             inp,     bottom,  inp_top, LSR #24
+        bic             inp_top, inp_top, #0xff000000
+        sub             inp_top, bottom,  inp_top
+        mov             outp_save, outp
 @loop:
-                cmp     inp, inp_top            // exit if inp==inp_top
-                ble     @end_loop
-                ldrb    flag, [inp, #-1]!       // r4 = compress_flag = *--inp
-                mov     count8, #8
+        cmp             inp, inp_top            // exit if inp==inp_top
+        ble             @end_loop
+        ldrb            flag, [inp, #-1]!       // r4 = compress_flag = *--inp
+        mov             count8, #8
 @loop8:
-                subs    count8, count8, #1
-                blt     @loop
-                tst     flag, #0x80
-                bne     @blockcopy
+        subs            count8, count8, #1
+        blt             @loop
+        tst             flag, #0x80
+        bne             @blockcopy
 @bytecopy:
-                ldrb    data, [inp, #-1]!
-#ifdef  SDK_TEG
-                sub     outp, outp, #1
-                swpb    data, data, [outp]
-#else
-                strb    data, [outp, #-1]!      // Copy 1 byte
-#endif
-                b       @joinhere
+        ldrb            data, [inp, #-1]!
+        strb            data, [outp, #-1]!      // Copy 1 byte
+        b               @joinhere
 @blockcopy:
-                ldrb    len,   [inp, #-1]!
-                ldrb    index, [inp, #-1]!
-                orr     index, index, len, LSL #8
-                bic     index, index, #0xf000
-                add     index, index, #0x0002
-                add     len,   len,   #0x0020
+        ldrb            len,   [inp, #-1]!
+        ldrb            index, [inp, #-1]!
+        orr             index, index, len, LSL #8
+        bic             index, index, #0xf000
+        add             index, index, #0x0002
+        add             len,   len,   #0x0020
 @patterncopy:
-                ldrb    data,  [outp, index]
-#ifdef  SDK_TEG
-                sub     outp, outp, #1
-                swpb    data, data, [outp]
-#else
-                strb    data,  [outp, #-1]!
-#endif
-                subs    len,   len,   #0x0010
-                bge     @patterncopy
+        ldrb            data,  [outp, index]
+        strb            data,  [outp, #-1]!
+        subs            len,   len,   #0x0010
+        bge             @patterncopy
 
 @joinhere:
-                cmp     inp, inp_top
-                mov     flag, flag, LSL #1
-                bgt     @loop8
+        cmp             inp, inp_top
+        mov             flag, flag, LSL #1
+        bgt             @loop8
 @end_loop:
 
-                // DC_FlushRange & IC_InvalidateRange
-                mov     r0, #0
-                bic     inp,  inp_top, #HW_CACHE_LINE_SIZE - 1
+        // DC_FlushRange & IC_InvalidateRange
+        mov             r0, #0
+        bic             inp,  inp_top, #HW_CACHE_LINE_SIZE - 1
 @cacheflush:
-                mcr     p15, 0, r0, c7, c10, 4          // wait writebuffer empty
-                mcr     p15, 0, inp, c7,  c5, 1         // ICache
-                mcr     p15, 0, inp, c7, c14, 1         // DCache
-                add     inp, inp, #HW_CACHE_LINE_SIZE
-                cmp     inp, outp_save
-                blt     @cacheflush
+        mcr             p15, 0, r0, c7, c10, 4          // wait writebuffer empty
+        mcr             p15, 0, inp, c7,  c5, 1         // ICache
+        mcr             p15, 0, inp, c7, c14, 1         // DCache
+        add             inp, inp, #HW_CACHE_LINE_SIZE
+        cmp             inp, outp_save
+        blt             @cacheflush
 
-                ldmfd   sp!, {r4-r7}
-@exit           bx      lr
-}
-
-
-/*---------------------------------------------------------------------------*
-  Name:         do_autoload
-
-  Description:  put autoload data block according to autoload information,
-                and clear static bss by filling with 0.
-
-  Arguments:    None.
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-static asm void do_autoload( void )
-{
-#define ptable          r0
-#define infop           r1
-#define infop_end       r2
-#define src             r3
-#define dest            r4
-#define dest_begin      r5
-#define dest_end        r6
-#define tmp             r7
-
-        ldr     ptable, =_start_ModuleParams
-        ldr     infop,      [ptable, #0]   // r1 = start pointer to autoload_info
-        ldr     infop_end,  [ptable, #4]   // r2 = end pointer to autoload_info
-        ldr     src,        [ptable, #8]   // r3 = autoload block
-
-@2:
-        cmp     infop, infop_end                // reach to end?
-        beq     @skipout
-
-        ldr     dest_begin,[infop], #4          // dest_begin
-        ldr     tmp,       [infop], #4          // size
-        add     dest_end, dest_begin, tmp       // dest_end
-        mov     dest,     dest_begin            // dest working pointer
-#if 1
-        mov     dest, dest_end
-#else
-@1:
-        cmp     dest, dest_end
-        ldrmi   tmp, [src],  #4                 // [dest++] <- [src++]
-        strmi   tmp, [dest], #4
-        bmi     @1
-#endif
-
-        //---- fill bss with 0
-        ldr     tmp, [infop], #4                // size
-        add     dest_end, dest, tmp             // bss end
-        mov     tmp, #0
-@3:
-        cmp     dest, dest_end
-        strcc   tmp, [dest], #4
-        bcc     @3
-
-        //---- cache work (DC_FlushRange & IC_InvalidateRange)
-        bic     dest, dest_begin, #HW_CACHE_LINE_SIZE - 1
-@cacheflush:
-        mcr     p15, 0, dest, c7,  c5, 1         // ICache
-        mcr     p15, 0, dest, c7, c14, 1         // DCache
-        add     dest, dest, #HW_CACHE_LINE_SIZE
-        cmp     dest, dest_end
-        blt     @cacheflush
-
-        b       @2
-
-        // wait writebuffer empty
-        mcr     p15, 0, tmp, c7, c10, 4
-
-@skipout:
-        // r0 = _start_ModuleParams
-        b       _start_AutoloadDoneCallback   // Jump into the callback
+        ldmfd           sp!, {r4-r7}
+@exit   bx              lr
 }
 
 /*---------------------------------------------------------------------------*
   Name:         _start_AutoloadDoneCallback
-
-  Description:  hook for end of autoload (This is dummy target for DEBUGGER)
-
-  Arguments:    argv: pointer for autoload parameters
-                     argv[0] = SDK_AUTOLOAD_LIST
-                     argv[1] = SDK_AUTOLOAD_LIST_END
-                     argv[2] = SDK_AUTOLOAD_START
-                     argv[3] = SDK_STATIC_BSS_START
-                     argv[4] = SDK_STATIC_BSS_END
-
-  Returns:      None.
+  Description:  オートロード完了コールバック。
+  Arguments:    argv    -   オートロードパラメータを保持している配列。
+                    argv[0] =   SDK_AUTOLOAD_LIST
+                    argv[1] =   SDK_AUTOLOAD_LIST_END
+                    argv[2] =   SDK_AUTOLOAD_START
+                    argv[3] =   SDK_STATIC_BSS_START
+                    argv[4] =   SDK_STATIC_BSS_END
+  Returns:      なし。
  *---------------------------------------------------------------------------*/
-SDK_WEAK_SYMBOL asm void _start_AutoloadDoneCallback( void* argv[] )
+SDK_WEAK_SYMBOL asm void
+_start_AutoloadDoneCallback(void* argv[])
 {
-        bx      lr
+        bx              lr
 }
 
 /*---------------------------------------------------------------------------*
