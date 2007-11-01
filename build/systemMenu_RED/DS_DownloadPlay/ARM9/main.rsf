@@ -94,8 +94,7 @@ Property
 	#
 	# BANNER FILE: generated from Banner Spec File
 	#
-	#BannerFile		./etc/myGameBanner.bnr
-	BannerFile		$(TWLSDK_ROOT)/include/twl/specfiles/default.bnr
+	BannerFile		../banner/banner.bnr
 
 	###
 	### Setting for TWL
