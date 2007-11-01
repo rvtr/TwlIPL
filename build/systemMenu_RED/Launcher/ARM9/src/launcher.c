@@ -38,7 +38,7 @@ static void DrawLauncher(u16 nowCsr, const MenuParam *pMenu);
 // global variable -------------------------------------
 
 // static variable -------------------------------------
-static u16 s_csr = 0;													// メニューのカーソル位置
+static int s_csr = 0;													// メニューのカーソル位置
 static const u16 *s_pStrLauncher[ LAUNCHER_ELEMENT_NUM ];				// ロゴメニュー用文字テーブルへのポインタリスト
 
 // const data  -----------------------------------------
@@ -106,76 +106,132 @@ static const u16 *const str_backlight[] = {
 // ランチャー
 //======================================================
 
-// きめうちバナー
+// バナー表示関係（暫定）
 #define DBGBNR
 #ifdef DBGBNR
 
-#define MAX_TITLE_PROPERTY 40
-static BannerFile *banner;
-static BannerFile *banner2;
-static TitleProperty tp[MAX_TITLE_PROPERTY];
-static GXOamAttr banner_oam_attr;
-static GXOamAttr banner_oam_attr2;
+static const u8 TITLE_PROPERTY_NUM = 40;
+static BannerFile *empty_banner;
+static BannerFile *card_banner;
+static BannerFile *pictochat_banner;
+static BannerFile *download_banner;
+static BannerFile *setting_banner;
+static TitleProperty tp[TITLE_PROPERTY_NUM];
+static u8 image_index_list[TITLE_PROPERTY_NUM];
+static const int MAX_SHOW_BANNER = 6;
+static GXOamAttr banner_oam_attr[MAX_SHOW_BANNER];
+static u8 *pbanner_image_list[TITLE_PROPERTY_NUM*2];
+static int banner_count = 0;
 
-// バナー画像のロード及びOBJ関係初期化
-// 実際には、受け取ったリストからイメージデータのアドレスを取得してVRAMにイメージデータをロードし、
-// 表示するぶんだけ毎フレームGXOamAttrにしてやる必要があるっぽい
-// VRAMに格納したデータへは、リストのインデックスからアクセス？
+static void LoadBannerFiles()
+{
+	// ファイル読み込み部分。多分emptyバナーだけ読み込む事になる。本来、アプリ系は外部から取得
+	// 最後に解放しないと駄目。だが、どこで解放すればいいのやら……
+	u32 size = CMN_LoadFile( (void **)&empty_banner, "data/EmptyBanner.bnr", &g_allocator);
+	NNS_G2D_ASSERT( size > 0 );
+	size = CMN_LoadFile( (void **)&card_banner, "data/CardBanner.bnr", &g_allocator);
+	NNS_G2D_ASSERT( size > 0 );
+	size = CMN_LoadFile( (void **)&pictochat_banner, "data/PictochatBanner.bnr", &g_allocator);
+	NNS_G2D_ASSERT( size > 0 );
+	size = CMN_LoadFile( (void **)&download_banner, "data/DownloadBanner.bnr", &g_allocator);
+	NNS_G2D_ASSERT( size > 0 );
+	size = CMN_LoadFile( (void **)&setting_banner, "data/SettingBanner.bnr", &g_allocator);
+	NNS_G2D_ASSERT( size > 0 );
+}
+
+// パレットの読み込みやOBJ関係の初期化
 static void BannerInit()
 {
 	int l;
-	u32 size = CMN_LoadFile( (void **)&banner, "data/myGameBanner.bnr", &g_allocator);
-	NNS_G2D_ASSERT( size > 0 );
-	size = CMN_LoadFile( (void **)&banner2, "data/myGameBanner2.bnr", &g_allocator);
-	NNS_G2D_ASSERT( size > 0 );
+	LoadBannerFiles();
 	
+	// ここでやるべきじゃない気がするBGとOBJの設定
     GX_SetVisiblePlane(GX_PLANEMASK_OBJ | GX_PLANEMASK_BG0);      // display only OBJ&BG0
-    GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_32K);     // 2D mapping mode
+    GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_128K);     // 2D mapping mode
     
-	GX_LoadOBJPltt( banner->v1.pltt, 0, BNR_PLTT_SIZE );
-	GX_LoadOBJ(banner->v1.image, 0x20, BNR_IMAGE_SIZE);
-	G2_SetOBJAttr(  &banner_oam_attr,								// OAM pointer
-					128,												// X position
-					128,												// Y position
-					0,												// Priority
-					GX_OAM_MODE_NORMAL,								// Bitmap mode
-					FALSE,											// mosaic off
-					GX_OAM_EFFECT_NONE,								// affine off
-					GX_OAM_SHAPE_32x32,								// 32x32 size
-					GX_OAM_COLOR_16,								// 16 color
-					1,												// charactor
-					0,												// palette
-					0);												// affine
-	DC_FlushRange(&banner_oam_attr, sizeof(banner_oam_attr));
+    // パレット読み込み
+	GX_LoadOBJPltt( empty_banner->v1.pltt, 0, BNR_PLTT_SIZE );
 	
-	GX_LoadOBJ(banner2->v1.image, 0x20+BNR_IMAGE_SIZE, BNR_IMAGE_SIZE);
-	G2_SetOBJAttr(  &banner_oam_attr2,								// OAM pointer
-					128,												// X position
-					128,												// Y position
-					0,												// Priority
-					GX_OAM_MODE_NORMAL,								// Bitmap mode
-					FALSE,											// mosaic off
-					GX_OAM_EFFECT_NONE,								// affine off
-					GX_OAM_SHAPE_32x32,								// 32x32 size
-					GX_OAM_COLOR_16,								// 16 color
-					17,												// charactor
-					0,												// palette
-					0);												// affine
-	DC_FlushRange(&banner_oam_attr2, sizeof(banner_oam_attr));
-	
-	for(l=0;l<MAX_TITLE_PROPERTY;l++)
+	//OBJATTRの初期化……後で値を弄って場所やらキャラクターを変えたりする
+	for(l=0;l<MAX_SHOW_BANNER;l++)
 	{
-		tp[l].titleID = 0;
-		tp[l].pBanner = banner;
+		G2_SetOBJAttr(  &banner_oam_attr[l],							// OAM pointer
+						128,											// X position
+						96,												// Y position
+						0,												// Priority
+						GX_OAM_MODE_NORMAL,								// Bitmap mode
+						FALSE,											// mosaic off
+						GX_OAM_EFFECT_NONE,								// affine off
+						GX_OAM_SHAPE_32x32,								// 32x32 size
+						GX_OAM_COLOR_16,								// 16 color
+						0,												// charactor
+						0,												// palette
+						0);												// affine
+		DC_FlushRange(&banner_oam_attr[l], sizeof(banner_oam_attr[l]));
 	}
 }
 
-static void BannerDraw()
+// 活線挿抜対応のため、毎回VRAMへのイメージデータロード判定をしている
+static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 {
-	banner_oam_attr.x++;
-	banner_oam_attr.y++;
-	GX_LoadOAM(&banner_oam_attr, 0, sizeof(banner_oam_attr));
-	GX_LoadOAM(&banner_oam_attr2,BNR_IMAGE_SIZE, sizeof(banner_oam_attr));
+	static int count = 0;
+	int l;
+	
+    // TitleProperty……本来は外部から取得
+	for(l=0;l<TITLE_PROPERTY_NUM;l++)
+	{
+		tp[l].titleID = 0;
+		tp[l].pBanner = empty_banner;
+	}
+	tp[0].pBanner = card_banner;
+	tp[1].pBanner = pictochat_banner;
+	tp[2].pBanner = download_banner;
+	tp[3].pBanner = setting_banner;
+	
+	titleprop=tp;
+	
+    // TitlePropertyを見てVRAMにキャラクタデータをロード
+	for(l=0;l<TITLE_PROPERTY_NUM;l++)
+	{
+		u8 m;
+		u8 *pban=((BannerFile *)titleprop[l].pBanner)->v1.image;
+		for(m=0;m<banner_count;m++){
+			if(pban == pbanner_image_list[m]) break;
+		}
+		if(m == banner_count)
+		{
+			if(banner_count<TITLE_PROPERTY_NUM*2-1){//バナー画像バッファオーバー時の処理かなり適当……あとで要変更
+				GX_LoadOBJ(pban, (u32)m*BNR_IMAGE_SIZE , BNR_IMAGE_SIZE);
+				pbanner_image_list[m] = pban;
+				banner_count++;
+			}
+		}
+		image_index_list[l]=m;// 後の参照用
+	}
+
+	count++;
+	
+	// OAMデータを弄って位置など変更
+	for (l=0;l<MAX_SHOW_BANNER;l++)
+	{
+		int num = cursor/12 - 2 + l;
+		if(-1 < num && num < TITLE_PROPERTY_NUM){
+			banner_oam_attr[l].x = 128-16-64-32+l*48-(cursor%12)*4;
+			banner_oam_attr[l].charNo = image_index_list[num]*4;
+			G2_SetOBJEffect(&banner_oam_attr[l],GX_OAM_EFFECT_NONE,0);
+		}else
+		{
+			G2_SetOBJEffect(&banner_oam_attr[l],GX_OAM_EFFECT_NODISPLAY,0);
+		}
+		DC_FlushRange(&banner_oam_attr[l], sizeof(banner_oam_attr[l]));
+		GX_LoadOAM(&banner_oam_attr[l], l * sizeof(banner_oam_attr[l]), sizeof(banner_oam_attr[l]));
+	}
+	// ゲーム名表示
+	{
+		NNSG2dChar *str = ((BannerFile *)titleprop[selected].pBanner)->v1.gameName[GetNCDWork()->option.language];
+		int width = NNS_G2dTextCanvasGetStringWidth(&gTextCanvas, str, NULL);
+		PutStringUTF16( (256-width)/2, 48, TXT_COLOR_BLACK, str );
+	}
 }
 
 #endif //DBGBNR
@@ -204,7 +260,7 @@ void LauncherInit( TitleProperty *pTitleList )
 		s_launcherPos[ 0 ].enable = FALSE;		// DSカードが無い時は、先頭要素を無効にする。
 	}
 	
-	DrawMenu( s_csr, &s_launcherParam );
+	//DrawMenu( s_csr, &s_launcherParam );
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
@@ -228,7 +284,14 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	static BOOL touch_bl = FALSE;
 	BOOL tp_bl_on_off	 = FALSE;
 	BOOL tp_select		 = FALSE;
-	u16	 csr_old;
+	static int csr_v = 0;
+	static int selected = 0;
+	
+	// 文字描画クリア
+	NNS_G2dCharCanvasClear(&gCanvas,TXT_COLOR_WHITE);
+	
+	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
+	DrawBackLightSwitch();
 	
 	// RTC情報の取得＆表示
 	GetAndDrawRtcData();
@@ -255,23 +318,25 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	//--------------------------------------
 	//  キー入力処理
 	//--------------------------------------
-	if(pad.trg & PAD_KEY_DOWN){										// カーソルの移動
-		if( ++s_csr == LAUNCHER_ELEMENT_NUM ) {
-			s_csr = 0;
-		}
+	if(pad.cont & PAD_KEY_RIGHT){										// バナー選択
+		if(csr_v == 0) csr_v = 1;
 	}
-	if( pad.trg & PAD_KEY_UP ){
-		if( --s_csr & 0x80 ) {
-			s_csr = LAUNCHER_ELEMENT_NUM - 1;
-		}
+	if( pad.cont & PAD_KEY_LEFT ){
+		if(csr_v == 0) csr_v = -1;
 	}
-	csr_old = s_csr;
-	tp_select = SelectMenuByTP( &s_csr, &s_launcherParam );
+	s_csr += csr_v;
+	if((TITLE_PROPERTY_NUM-1)*12 < s_csr) s_csr = (TITLE_PROPERTY_NUM-1)*12;
+	if( s_csr < 0 ) s_csr = 0;
+	if(s_csr%12 == 0){
+		csr_v = 0;
+		selected = s_csr/12;
+	}
+	// tp_select = SelectMenuByTP( &s_csr, &s_launcherParam );
 	
-	DrawMenu( s_csr, &s_launcherParam );
+	// DrawMenu( s_csr, &s_launcherParam );
 	
 	#ifdef DBGBNR
-	BannerDraw();
+	BannerDraw( s_csr, selected, NULL );
 	#endif
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {					// メニュー項目への分岐

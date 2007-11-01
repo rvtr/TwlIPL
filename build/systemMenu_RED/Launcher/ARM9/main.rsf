@@ -143,5 +143,5 @@ RomSpec
 	Segment		ALL
 	HostRoot	../../data
 	Root		/data
-	File		NTR_IPL_font_m.NFTR myGameBanner.bnr myGameBanner2.bnr
+	File		NTR_IPL_font_m.NFTR CardBanner.bnr DownloadBanner.bnr EmptyBanner.bnr PictoChatBanner.bnr SettingBanner.bnr
 }
