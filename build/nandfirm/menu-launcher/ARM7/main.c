@@ -135,7 +135,7 @@ void TwlSpMain( void )
 #endif
         OS_SetDebugLED(++step);
 
-        if ( FATFS_MountDriveFirm( DRIVE_NO, BOOT_DEVICE, PARTITION_NO ) )
+        if ( FATFS_MountDriveFIRM( DRIVE_NO, BOOT_DEVICE, PARTITION_NO ) )
         {
             BOOL result;
 #ifndef SDK_FINALROM

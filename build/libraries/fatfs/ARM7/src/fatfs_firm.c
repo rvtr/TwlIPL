@@ -30,66 +30,6 @@ extern u32 NAND_FAT_PARTITION_COUNT;
 #define DMA_RECV         3
 
 /*
-    専用DMA関数
-        MI_NDmaライブラリが全然足りないので、APIを追加
-        最終的には標準ライブラリだけで全部できて欲しい
-*/
-//---------------- register setting
-static inline void MIi_SetSrc( u32 ndmaNo, u32 src )
-{
-    MI_NDMA_REG( ndmaNo, MI_NDMA_REG_SAD_WOFFSET ) = src;
-}
-static inline void MIi_SetDest( u32 ndmaNo, u32 dest )
-{
-    MI_NDMA_REG( ndmaNo, MI_NDMA_REG_DAD_WOFFSET ) = dest;
-}
-static inline void MIi_SetTotalWordCount( u32 ndmaNo, u32 size )
-{
-    MI_NDMA_REG( ndmaNo, MI_NDMA_REG_TCNT_WOFFSET ) = size;
-}
-static inline void MIi_SetWordCount( u32 ndmaNo, u32 size )
-{
-    MI_NDMA_REG( ndmaNo, MI_NDMA_REG_WCNT_WOFFSET ) = size;
-}
-static inline void MIi_SetInterval( u32 ndmaNo, u32 intervalTimer, u32 prescaler )
-{
-#ifdef SDK_ARM7
-    //---- In case of ARM7, intervalTimer==1 is nonsense
-    SDK_ASSERT(intervalTimer != 1);
-#endif
-    MI_NDMA_REG( ndmaNo, MI_NDMA_REG_BCNT_WOFFSET ) = intervalTimer | prescaler;
-}
-static inline void MIi_SetControl( u32 ndmaNo, u32 contData )
-{
-    MI_NDMA_REG( ndmaNo, MI_NDMA_REG_CNT_WOFFSET ) = contData;
-}
-static inline void MIi_Sd1_NDmaRecv(u32 ndmaNo, void *dest, u32 size)
-{
-    MIi_SetSrc( ndmaNo, (u32)SDIF_FI );
-    MIi_SetDest( ndmaNo, (u32)dest );
-    MIi_SetInterval( ndmaNo, MI_NDMA_NO_INTERVAL, MI_NDMA_INTERVAL_PS_1 );
-    MIi_SetTotalWordCount( ndmaNo, size/4 );
-    MIi_SetWordCount( ndmaNo, SECTOR_SIZE/4 );
-    MIi_SetControl( ndmaNo, MI_NDMA_BWORD_128 | MI_NDMA_SRC_FIX | MI_NDMA_DEST_INC | MI_NDMA_TIMING_SD_1 | MI_NDMA_ENABLE );
-}
-
-static inline void MIi_NDmaPipeSetup(u32 ndmaNo, const void *src, void *dest, u32 size)
-{
-    MIi_SetSrc( ndmaNo, (u32)src );
-    MIi_SetDest( ndmaNo, (u32)dest );
-    MIi_SetInterval( ndmaNo, MI_NDMA_NO_INTERVAL, MI_NDMA_INTERVAL_PS_1 );
-    MIi_SetTotalWordCount( ndmaNo, size/4 );
-    MIi_SetWordCount( ndmaNo, size/4 );
-    MIi_SetControl( ndmaNo, MI_NDMA_BWORD_8 | MI_NDMA_SRC_FIX | MI_NDMA_DEST_FIX | MI_NDMA_IMM_MODE_ON );   // AESi_Run is required BWORD_8
-}
-
-static inline void MIi_NDmaRestart(u32 ndmaNo)
-{
-    MI_WaitNDma( ndmaNo );
-    MI_NDMA_REG( ndmaNo, MI_NDMA_REG_CNT_WOFFSET ) |= MI_NDMA_ENABLE;
-}
-
-/*
     専用SD関数
 */
 extern volatile SDMC_ERR_CODE   SDCARD_ErrStatus;
@@ -243,9 +183,15 @@ void FATFS_DisableAES( void )
  *---------------------------------------------------------------------------*/
 static u16 ReadNormal(u32 block, void *dest, u16 count)
 {
-    //OS_TPrintf("ReadNormal(%d, 0x%08X, %d) is calling.\n", block, dest, count);
-
-    MIi_Sd1_NDmaRecv( DMA_PIPE, dest, (u32)(count * SECTOR_SIZE) );
+    MINDmaConfig config =
+    {
+        MI_NDMA_NO_INTERVAL,
+        MI_NDMA_INTERVAL_PS_1,
+        MI_NDMA_BWORD_128,
+        SECTOR_SIZE/4
+    };
+//    OS_TPrintf("ReadNormal(0x%X, 0x%08X, 0x%X) is calling.\n", block, dest, count);
+    MI_NDmaRecvExAsync_Dev( DMA_PIPE, SDIF_FI, dest, (u32)(count * SECTOR_SIZE), NULL, NULL, &config, MI_NDMA_TIMING_SD_1 );
     StartToRead( block, count );
     MI_WaitNDma( DMA_PIPE );
     StopToRead();
@@ -275,8 +221,8 @@ static u16 ReadAES(u32 block, void *dest, u16 count)
 {
     u32 offset = 0; // in bytes
 
-    //OS_TPrintf("ReadAES(%d, 0x%08X, %d) is calling.\n", block, dest, count);
-    MIi_NDmaPipeSetup( DMA_PIPE, (void*)SDIF_FI, (void*)REG_AES_IFIFO_ADDR, PIPE_SIZE );
+//    OS_TPrintf("ReadAES(0x%X, 0x%08X, 0x%X) is calling.\n", block, dest, count);
+    MI_NDmaPipeAsync_SetUp( DMA_PIPE, (void*)SDIF_FI, (void*)REG_AES_IFIFO_ADDR, PIPE_SIZE, NULL, NULL );
 
 /*
     AESのセットアップ＆出力DMA設定
@@ -309,7 +255,7 @@ static u16 ReadAES(u32 block, void *dest, u16 count)
                 goto err;
             }
         }
-        MIi_NDmaRestart( DMA_PIPE );
+        MI_NDmaRestart( DMA_PIPE );
         offset += PIPE_SIZE;
     }
     MI_WaitNDma( DMA_PIPE );
@@ -520,7 +466,7 @@ BOOL FATFS_InitFIRM( void* nandContext )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         FATFS_MountDriveFirm
+  Name:         FATFS_MountDriveFIRM
 
   Description:  mount specified partition
 
@@ -534,7 +480,7 @@ BOOL FATFS_InitFIRM( void* nandContext )
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-BOOL FATFS_MountDriveFirm( int driveno, FATFSMediaType media, int partition_no )
+BOOL FATFS_MountDriveFIRM( int driveno, FATFSMediaType media, int partition_no )
 {
     if ( media == FATFS_MEDIA_TYPE_NAND )
     {

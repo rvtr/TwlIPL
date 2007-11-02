@@ -39,8 +39,8 @@ static SVCSignHeapContext acPool;
     Profile
 */
 #ifndef SDK_FINALROM
-#define PRFILE_MAX  0x100
-u32 profile[PRFILE_MAX];
+#define PROFILE_MAX  0x100
+u32 profile[PROFILE_MAX];
 u32 pf_cnt = 0;
 #endif
 
@@ -145,8 +145,18 @@ void TwlMain( void )
     {
 #ifndef SDK_FINALROM
         // 127: before Boot
-        pf_cnt = PRFILE_MAX-1;
+        pf_cnt = PROFILE_MAX-1;
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+        {
+            int i;
+            OS_TPrintf("\n[ARM9] Begin\n");
+            for (i = 0; i < PROFILE_MAX; i++)
+            {
+                OS_TPrintf("0x%08X\n", profile[i]);
+            }
+            OS_TPrintf("\n[ARM9] End\n");
+            PXI_NotifyID( FIRM_PXI_ID_NULL );
+        }
 #endif
 
         MI_Boot();

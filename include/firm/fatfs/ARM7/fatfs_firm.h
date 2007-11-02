@@ -60,7 +60,7 @@ void FATFS_DisableAES( void );
 BOOL FATFS_InitFIRM( void* nandContext );
 
 /*---------------------------------------------------------------------------*
-  Name:         FATFS_MountDriveFirm
+  Name:         FATFS_MountDriveFIRM
 
   Description:  mount nand partition
 
@@ -68,7 +68,7 @@ BOOL FATFS_InitFIRM( void* nandContext );
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-BOOL FATFS_MountDriveFirm( int driveno, FATFSMediaType media, int partition_no );
+BOOL FATFS_MountDriveFIRM( int driveno, FATFSMediaType media, int partition_no );
 
 #ifdef __cplusplus
 } /* extern "C" */

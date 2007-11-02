@@ -42,8 +42,8 @@ static u8 step = 0x80;
     Profile
 */
 #ifndef SDK_FINALROM
-#define PRFILE_MAX  0x100
-u32 profile[PRFILE_MAX];
+#define PROFILE_MAX  0x100
+u32 profile[PROFILE_MAX];
 u32 pf_cnt = 0;
 #endif
 
@@ -141,7 +141,7 @@ void TwlSpMain( void )
         OS_SetDebugLED(++step);
         PM_BackLightOn( FALSE );
 
-        if ( FATFS_MountDriveFirm( DRIVE_NO, BOOT_DEVICE, PARTITION_NO ) )
+        if ( FATFS_MountDriveFIRM( DRIVE_NO, BOOT_DEVICE, PARTITION_NO ) )
         {
             BOOL result;
 #ifndef SDK_FINALROM
@@ -187,11 +187,21 @@ void TwlSpMain( void )
                 {
 #ifndef SDK_FINALROM
                     // 127: before Boot
-                    pf_cnt = PRFILE_MAX-1;
+                    pf_cnt = PROFILE_MAX-1;
                     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+                    {
+                        int i;
+                        PXI_RecvID();
+                        OS_TPrintf("\n[ARM7] Begin\n");
+                        for (i = 0; i < PROFILE_MAX; i++)
+                        {
+                            OS_TPrintf("0x%08X\n", profile[i]);
+                        }
+                        OS_TPrintf("\n[ARM7] End\n");
+                    }
 #endif
                     OS_SetDebugLED(++step);
-                    PM_BackLightOn( TRUE );
+                    PM_BackLightOn( TRUE ); // last chance
 
                     FATFS_Boot();
                 }

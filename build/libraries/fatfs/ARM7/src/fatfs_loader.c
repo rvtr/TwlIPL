@@ -147,6 +147,7 @@ static BOOL FATFS_LoadBuffer(u32 offset, u32 size)
     static int count = 0;
 
     // seek first
+//    OS_TPrintf("po_lseek(offset=%X);\n", offset);
     if (po_lseek(menu_fd, (s32)offset, PSEEK_SET) < 0)
     {
         return FALSE;
@@ -160,7 +161,6 @@ static BOOL FATFS_LoadBuffer(u32 offset, u32 size)
     {
         u8* dest = base + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE;    // target buffer address
         u32 unit = size < HW_FIRM_LOAD_BUFFER_UNIT_SIZE ? size : HW_FIRM_LOAD_BUFFER_UNIT_SIZE; // size
-        //OS_TPrintf("%s: dest=%X, unit=%X\n", __func__, dest, unit);
         while (MI_GetWramBankMaster_B(count) != MI_WRAM_ARM7)       // waiting to be master
         {
         }
@@ -168,6 +168,7 @@ static BOOL FATFS_LoadBuffer(u32 offset, u32 size)
         // x3...: after to wait ARM9
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
+//        OS_TPrintf("po_read(dest=%X, unit=%X);\n", dest, unit);
         if (po_read(menu_fd, (u8*)dest, (int)unit) < 0)            // reading
         {
             return FALSE;

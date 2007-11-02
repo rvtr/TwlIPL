@@ -369,11 +369,6 @@ static asm void detect_main_memory_size( void )
         bne     @1
 
         //---- 4MB
-        // check SMX_CNT
-        ldr     r2, =REG_SMX_CNT_ADDR
-        ldrh    r1, [r2]
-        tst     r1, #0
-        orrne   r0, r0, #OS_CHIPTYPE_SMX_MASK
         b       @4
 
         //---- 8MB or 16MB or 32MB
@@ -409,6 +404,12 @@ static asm void detect_main_memory_size( void )
         ldr     r2, =REG_OP_ADDR
         ldrh    r0, [r2]
         and     r0, r0, #REG_SCFG_OP_OPT_MASK
+
+        // check SMX_CNT
+        ldr     r2, =REG_SMX_CNT_ADDR
+        ldrh    r1, [r2]
+        tst     r1, #0
+        orrne   r0, r0, #OS_CHIPTYPE_SMX_MASK
 
         //---- detect jtag
         ldr     r2, =REG_JTAG_ADDR
