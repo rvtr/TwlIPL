@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
+#include <twl/nam.h>
 #include <sysmenu.h>
 #include "sysmenu_define.h"
 #include "sysmenu_card.h"
@@ -26,6 +27,8 @@
 
 #define SCREEN_RED						0
 #define SCREEN_YELLOW					1
+
+#define TITLE_ID_BUF_SIZE				40
 
 typedef struct BannerCheckParam {
 	u8		*srcp;
@@ -115,6 +118,16 @@ static inline void DBG_SetRed(u32 y_pos)
 // function's description
 // ============================================================================
 
+static void * AllocForNAM(unsigned long size)
+{
+	return OS_AllocFromHeap( OS_ARENA_MAIN, OS_CURRENT_HEAP_HANDLE, size );
+}
+
+static void FreeForNAM(void *p)
+{
+	OS_FreeToHeap( OS_ARENA_MAIN, OS_CURRENT_HEAP_HANDLE, p);
+}
+
 // SystemMenuの初期化
 void SYSM_Init( void )
 {
@@ -135,6 +148,9 @@ void SYSM_Init( void )
 	
 	// ※ISデバッガかどうかの判定。　BootROMからのパラメータ引渡し？
 	SYSMi_WaitInitARM7();
+	
+	//NAMの初期化
+	NAM_Init(AllocForNAM,FreeForNAM);
 }
 
 
@@ -183,12 +199,27 @@ int SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 }
 
 
-int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand )
+int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size)
 {
-#pragma unused( pTitleList_Nand )
 															// filter_flag : ALL, ALL_APP, SYS_APP, USER_APP, Data only, 等の条件を指定してタイトルリストを取得する。
-															// return : *TitleProperty Array
-	return 0;
+	int l;
+	int gotten;
+	NAMTitleId titleIdArray[TITLE_ID_BUF_SIZE];
+	gotten = NAM_GetTitleList(titleIdArray, TITLE_ID_BUF_SIZE);
+	for(l=0;l<size;l++)
+	{
+		pTitleList_Nand[l].titleID = 0;
+		pTitleList_Nand[l].pBanner = NULL;
+	}
+
+	size = (gotten<size) ? gotten : size;
+	
+	for(l=0;l<size;l++)
+	{
+		pTitleList_Nand[l].titleID = titleIdArray[l];
+	}
+	// return : *TitleProperty Array
+	return size;
 }
 
 

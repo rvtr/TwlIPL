@@ -31,7 +31,6 @@ SRCS			=	sysmenu_lib.c sysmenu_card.c sysmenu_util.c gameBoot.c ninLogoFunc.c cm
 
 TARGET_LIB		=	libsysmenu$(TWL_LIBSUFFIX).a
 
-
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS		=	$(TARGETS)

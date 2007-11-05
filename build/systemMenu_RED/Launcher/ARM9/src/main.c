@@ -59,7 +59,7 @@ void TwlMain( void )
 	};
 	u32 state = START;
 	TitleProperty *pBootTitle = NULL;
-	TitleProperty *pTitleList = NULL;
+	TitleProperty pTitleList[TITLE_PROPERTY_NUM];
 	
     OS_Init();
 	
@@ -98,7 +98,7 @@ void TwlMain( void )
 //	FS_ReadSharedContentFile( ContentID );
 	
 	// NANDアプリリストの取得----------
-	(void)SYSM_GetNandTitleList( pTitleList );
+	(void)SYSM_GetNandTitleList( pTitleList, TITLE_PROPERTY_NUM );
 	
 	while( 1 ) {
 		OS_WaitIrq(1, OS_IE_V_BLANK);							// Vブランク割り込み待ち

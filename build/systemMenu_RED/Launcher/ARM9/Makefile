@@ -40,6 +40,9 @@ LINCLUDES				=	$(SRCDIR)/$(LOGO_DIR)
 #LLIBRARIES				=	
 #LDEPENDS_NEF			=	
 
+LLIBRARIES		+=	libnam$(TWL_LIBSUFFIX).a\
+				libese$(TWL_LIBSUFFIX).a
+
 include $(TWLIPL_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------

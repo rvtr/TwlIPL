@@ -62,7 +62,7 @@ extern void SYSM_Init( void );
 extern BOOL SYSM_IsLogoDemoSkip( void );
 extern void SYSM_CaribrateTP( void );
 extern int  SYSM_GetCardTitleList( TitleProperty *pTitleList_Card );
-extern int  SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand );
+extern int  SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size );
 extern AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle );
 extern void SYSM_Finalize( void );
 
