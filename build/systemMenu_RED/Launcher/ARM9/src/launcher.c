@@ -176,11 +176,11 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
     // TitleProperty˜M‚è
 	for(l=0;l<TITLE_PROPERTY_NUM;l++)
 	{
-		if(titleprop[l].titleID == 0)
+		if(titleprop[l].titleID == 0) //ID‚ªƒ[ƒ‚ÌŽž‚ÍEmpty
 		{
 			titleprop[l].pBanner = empty_banner;
 		}
-		else if(titleprop[l].pBanner == NULL)
+		else if(titleprop[l].pBanner == NULL) //ID‚ªƒ[ƒ‚¶‚á‚È‚¢‚Ì‚Éƒoƒi[‚ªNULL‚È‚çƒm[ƒoƒi[
 		{
 			titleprop[l].pBanner = nobanner_banner;
 		}

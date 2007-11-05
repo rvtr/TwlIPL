@@ -92,6 +92,7 @@ NitroConfigData *ncdp;												// デバッガでのNCデータ　のウォッチ用
 // static variable-------------------------------------------------------------
 static BOOL			s_isBanner = FALSE;
 static BannerFile	s_bannerBuf;
+static NAMTitleId	old_titleIdArray[TITLE_ID_BUF_SIZE];
 
 // const data------------------------------------------------------------------
 
@@ -120,12 +121,12 @@ static inline void DBG_SetRed(u32 y_pos)
 
 static void * AllocForNAM(unsigned long size)
 {
-	return OS_AllocFromHeap( OS_ARENA_MAIN, OS_CURRENT_HEAP_HANDLE, size );
+	return OS_AllocFromHeap( OS_ARENA_WRAM_MAIN, OS_CURRENT_HEAP_HANDLE, size );
 }
 
 static void FreeForNAM(void *p)
 {
-	OS_FreeToHeap( OS_ARENA_MAIN, OS_CURRENT_HEAP_HANDLE, p);
+	OS_FreeToHeap( OS_ARENA_WRAM_MAIN, OS_CURRENT_HEAP_HANDLE, p);
 }
 
 // SystemMenuの初期化
@@ -150,7 +151,9 @@ void SYSM_Init( void )
 	SYSMi_WaitInitARM7();
 	
 	//NAMの初期化
-	NAM_Init(AllocForNAM,FreeForNAM);
+	//NAM_Init(AllocForNAM,FreeForNAM);
+	
+	MI_CpuClearFast(old_titleIdArray, sizeof(old_titleIdArray) );
 }
 
 
@@ -198,18 +201,153 @@ int SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 	return 0;
 }
 
+static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
+{
+    u8* p = (u8*)buffer;
+    s32 remain = size;
+
+    while( remain > 0 )
+    {
+        const s32 len = MATH_IMin(1024, remain);
+        const s32 readLen = FS_ReadFile(pf, p, len);
+
+        if( readLen < 0 )
+        {
+            return readLen;
+        }
+        if( readLen != len )
+        {
+            return size - remain + readLen;
+        }
+
+        remain -= readLen;
+        p      += readLen;
+    }
+
+    return size;
+}
+
+#include <twl/ese.h>
+ESTitleMeta dst[1];
 
 int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size)
 {
 															// filter_flag : ALL, ALL_APP, SYS_APP, USER_APP, Data only, 等の条件を指定してタイトルリストを取得する。
+	// とりあえずALL
 	int l;
 	int gotten;
 	NAMTitleId titleIdArray[TITLE_ID_BUF_SIZE];
+	static BannerFile bannerBuf[TITLE_ID_BUF_SIZE];
 	gotten = NAM_GetTitleList(titleIdArray, TITLE_ID_BUF_SIZE);
+
+	/*
+	{
+		static const char ppp[] = "nand:/title_e/00010001/50434854/content/title.tmd";
+		
+		
+		FSFile  f[1];
+		int len = sizeof(ESTitleMeta);
+		
+		FS_InitFile(f);
+		
+	    if (!FS_OpenFileEx(f, ppp, FS_PERMIT_R))
+	    {    // ファイルが存在すれば上書きします
+	        OS_TWarning("\"%s\" does not exist.\n", ppp);
+	    }
+
+		OS_TPrintf("filelength = %d\n",FS_GetFileLength(f));
+		
+		OS_TPrintf("sizeof(ESTitleMeta) = %d\n",len);
+		
+	    DC_InvalidateRange(dst, (u32)len);
+	    size = FS_ReadFile(f, dst, len);
+	    if (size < 0)
+	    {
+	        OS_TWarning("FS_ReadFile() failed.\n");
+	    }else
+	    {
+	        OS_TWarning("OK.\n");
+		}
+	}
+	*/
+	
+	// バナーの読み込み……別の関数に移すべきかも。
+	// 毎フレーム変化を見る必要がある。
+	// 前のフレームのNAMTitleIdの配列を残しておき、比較。
+	// IDが変化していたら問答無用でバナーを読み込む。
+	for(l=0;l<gotten;l++)
+	{
+		if(titleIdArray[l] != old_titleIdArray[l])
+		{
+			//ヘッダからバナーを読み込む
+			FSFile  file[1];
+			BOOL bSuccess;
+			static const int PATH_LENGTH=1024;
+			char path[PATH_LENGTH];
+			static u8   header[HW_TWL_ROM_HEADER_BUF_SIZE] ATTRIBUTE_ALIGN(32);
+			s32 readLen;
+			s32 offset;
+			
+			readLen = NAM_GetTitleBootContentPath(path, titleIdArray[l]);
+			
+			if(readLen != NAM_OK){
+				OS_TPrintf("NAM_GetTitleBootContentPath failed %d,%lld,%d\n",l,titleIdArray[l],readLen);
+			}
+			
+			bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
+
+			if( ! bSuccess )
+			{
+			OS_TPrintf("SYSM_GetNandTitleList failed: cant open file %s\n",path);
+			    return -1;
+			}
+			
+			// バナーデータオフセットを読み込む
+			bSuccess = FS_SeekFile(file, 0x68, FS_SEEK_SET);
+			if( ! bSuccess )
+			{
+				OS_TPrintf("SYSM_GetNandTitleList failed: cant seek file(0)\n");
+				FS_CloseFile(file);
+			    return -1;
+			}
+			readLen = FS_ReadFile(file, &offset, sizeof(offset));
+			if( readLen != sizeof(offset) )
+			{
+				OS_TPrintf("SYSM_GetNandTitleList failed: cant read file\n");
+				FS_CloseFile(file);
+			    return -1;
+			}
+			
+			bSuccess = FS_SeekFile(file, offset, FS_SEEK_SET);
+			if( ! bSuccess )
+			{
+				OS_TPrintf("SYSM_GetNandTitleList failed: cant seek file(offset)\n");
+				FS_CloseFile(file);
+			    return -1;
+			}
+			readLen = ReadFile(file, &bannerBuf[l], (s32)sizeof(BannerFile));
+			if( readLen != (s32)sizeof(BannerFile) )
+			{
+				OS_TPrintf("SYSM_GetNandTitleList failed: cant read file2\n");
+				FS_CloseFile(file);
+			    return -1;
+			}
+			
+			FS_CloseFile(file);
+			
+		}
+	}
+	for(l=gotten;l<TITLE_ID_BUF_SIZE;l++)
+	{
+		// 念のため0にクリア
+		titleIdArray[l] = 0;
+	}
+	MI_CpuCopyFast(titleIdArray,old_titleIdArray,sizeof(old_titleIdArray));
+	
 	for(l=0;l<size;l++)
 	{
 		pTitleList_Nand[l].titleID = 0;
-		pTitleList_Nand[l].pBanner = NULL;
+		pTitleList_Nand[l].pBanner = 0;
 	}
 
 	size = (gotten<size) ? gotten : size;
@@ -217,6 +355,7 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size)
 	for(l=0;l<size;l++)
 	{
 		pTitleList_Nand[l].titleID = titleIdArray[l];
+		pTitleList_Nand[l].pBanner = &bannerBuf[l];
 	}
 	// return : *TitleProperty Array
 	return size;
