@@ -131,12 +131,11 @@ SDK_WEAK_SYMBOL asm void _start( void )
 
         //---- read reset flag from pmic
 #ifdef TWL_PLATFORM_TS
-#if 0
 @0:     bl              PXI_RecvByIntf
         cmp             r0, #FIRM_PXI_ID_COLDBOOT
         cmpne           r0, #FIRM_PXI_ID_WARMBOOT
         bne             @0
-#endif
+
         //---- initialize Main Memory
         cmp             r0, #FIRM_PXI_ID_COLDBOOT
         moveq           r0, #TRUE
@@ -179,6 +178,9 @@ SDK_WEAK_SYMBOL asm void _start( void )
 
         //---- load autoload block and initialize bss
 //        bl              INITi_DoAutoload
+#ifndef SDK_FINALROM    // for IS-TWL-DEBUGGER
+        bl          _start_AutoloadDoneCallback
+#endif
 
         //---- fill static static bss with 0
         mov             r0, #0

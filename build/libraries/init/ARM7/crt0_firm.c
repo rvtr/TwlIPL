@@ -120,19 +120,26 @@ SDK_WEAK_SYMBOL asm void _start( void )
         mov             r0, #HW_PSR_SYS_MODE
         msr             cpsr_csfx, r0
         sub             sp, r1, #4 // 4byte for stack check code
-#if 0   // not used in FIRM
+
         //---- read reset flag from pmic
 #ifdef TWL_PLATFORM_TS
+#if 0
         mov             r0, #REG_PMIC_SW_FLAGS_ADDR
         bl              PMi_GetRegister
         ands            r0, r0, #PMIC_SW_FLAGS_WARMBOOT
+#else
+        mov             r0, #I2C_SLAVE_MICRO_CONTROLLER
+        mov             r1, #MCU_REG_TEMP_ADDR
+        bl              I2Ci_ReadRegister
+        ands            r0, r0, #0x01   // under construction
+#endif
         movne           r0, #FIRM_PXI_ID_WARMBOOT
         moveq           r0, #FIRM_PXI_ID_COLDBOOT
         bl              PXI_SendByIntf
         mov             r0, #FIRM_PXI_ID_INIT_MMEM
         bl              PXI_WaitByIntf
 #endif // TWL_PLATFORM_TS
-#endif
+
         //---- wait for main memory mode into burst mode
         ldr             r3, =REG_EXMEMCNT_L_ADDR
         mov             r1, #REG_MI_EXMEMCNT_L_ECE2_MASK
@@ -162,6 +169,9 @@ SDK_WEAK_SYMBOL asm void _start( void )
 
         //---- load autoload block and initialize bss
         //bl              INITi_DoAutoload
+#ifndef SDK_FINALROM    // for IS-TWL-DEBUGGER
+        bl          _start_AutoloadDoneCallback
+#endif
 
         //---- fill static static bss with 0
         ldr             r0, =_start_ModuleParams
