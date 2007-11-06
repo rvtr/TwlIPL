@@ -16,28 +16,26 @@
 # $Author: kitase_hirotake $
 #----------------------------------------------------------------------------
 
-SUBDIRS			=	
+SUBDIRS				=	
 
-MYSUBDIRS		=	./
+MYSUBDIRS			=	./
 
 #----------------------------------------------------------------------------
-TARGET_FIRM		=	SYSTEMMENU
-TARGET_PLATFORM	=	TWL
+TARGET_FIRM			=	SYSTEMMENU
+TARGET_PLATFORM		=	TWL
 #TWL_ARCHGEN		=	LIMITED
-TWL_PROC	   	=	ARM9
+TWL_PROC	   		=	ARM9
 
-SRCS			=	sysmenu_lib.c sysmenu_card.c sysmenu_util.c gameBoot.c ninLogoFunc.c cmn.c \
-					settingsAPI.c
+SRCS				=	NTRSettings.c TWLSettings.c
 
-TARGET_LIB		=	libsysmenu$(TWL_LIBSUFFIX).a
+TARGET_LIB			=	libsettings$(TWL_LIBSUFFIX).a
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS		=	$(TARGETS)
 INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
 
-LINCLUDES		=	$(TWLSDK_ROOT)/build/libraries/mb/common/include	\
-					$(TWLSDK_ROOT)/build/libraries/spi/ARM9/include		\
+LINCLUDES			=	$(TWLSDK_ROOT)/build/libraries/spi/ARM9/include		\
 
 #----------------------------------------------------------------------------
 

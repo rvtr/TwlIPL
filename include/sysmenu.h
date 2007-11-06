@@ -21,7 +21,7 @@
 
 #include <sysmenu/rom_header.h>
 #include <sysmenu/banner.h>
-#include <sysmenu/machineSettings.h>
+#include <sysmenu/settings.h>
 #include <sysmenu/sysmenu_work.h>
 #include <sysmenu/mmap.h>
 

@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlIPL
-  File:     machineSettings.h
+  File:     settings.h
 
   Copyright 2007 Nintendo.  All rights reserved.
 
@@ -18,8 +18,8 @@
 #ifndef SYSM_MACHINE_SETTINGS_H_
 #define SYSM_MACHINE_SETTINGS_H_
 
-#include <sysmenu/machineSettings/common/nitroSettings.h>
-#include <sysmenu/machineSettings/common/TWLSettings.h>
+#include <sysmenu/settings/common/NTRSettings.h>
+#include <sysmenu/settings/common/TWLSettings.h>
 
 #ifdef __cplusplus
 extern "C" {

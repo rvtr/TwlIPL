@@ -55,6 +55,7 @@ ifeq	($(CODEGEN_PROC),ARM9)
 
 SYSMENU_LIBS	?=	\
 					libsysmenu$(TWL_LIBSUFFIX).a \
+					libsettings$(TWL_LIBSUFFIX).a \
 					libmbloader$(TWL_LIBSUFFIX).a \
 					libacsign$(TWL_LIBSUFFIX).a
 

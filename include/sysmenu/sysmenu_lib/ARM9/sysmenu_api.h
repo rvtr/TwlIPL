@@ -22,7 +22,7 @@
 #include <sysmenu/rom_header.h>
 #include <sysmenu/banner.h>
 #include <sysmenu/sysmenu_work.h>
-#include <sysmenu/machineSettings.h>
+#include <sysmenu/settings.h>
 
 #ifdef __cplusplus
 extern "C" {

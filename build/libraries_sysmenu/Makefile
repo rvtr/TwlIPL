@@ -22,7 +22,7 @@ include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS				=	sysmenu mb_loader acsign
+SUBDIRS				=	sysmenu settings mb_loader acsign
 
 #----------------------------------------------------------------------------
 
