@@ -729,10 +729,9 @@ INITi_InitRegion(void)
 //        ldr             r0, =REGION_ACC(RW, RW, NA, RW, RW, RW, RO, RW)
         ldr             r0, =REGION_ACC(RW, RW, RW, RW, RW, RW, RO, RW)
         mcr             p15, 0, r0, c5, c0, 2
-//        b               @003
+        b               @003
 
 @002:   /* ハードウェアが NITRO の場合 */
-#if 0
         /* (1) メインメモリ */
         SET_PROTECTION_A(c1, HW_MAIN_MEM_MAIN, 8MB)
         SET_PROTECTION_B(c1, HW_MAIN_MEM_MAIN, 8MB)
@@ -750,7 +749,7 @@ INITi_InitRegion(void)
         /* (7) ARM9/ARM7 共有メインメモリ空間 */
         SET_PROTECTION_A(c7, HW_MAIN_MEM_SHARED, 4KB)
         SET_PROTECTION_B(c7, HW_MAIN_MEM_SHARED, 4KB)
-
+#if 0
         /* 命令キャッシュ許可 */
         mov             r0, #REGION_BIT(0, 1, 0, 0, 0, 0, 1, 0)
         mcr             p15, 0, r0, c2, c0, 1
@@ -769,6 +768,14 @@ INITi_InitRegion(void)
 
         /* データアクセス許可 */
         ldr             r0, =REGION_ACC(RW, RW, NA, RW, RW, RW, RO, RW)
+        mcr             p15, 0, r0, c5, c0, 2
+#else   // NITRO全不許可
+        mov             r0, #REGION_BIT(0, 0, 0, 0, 0, 0, 0, 0)
+        mcr             p15, 0, r0, c2, c0, 1
+        mcr             p15, 0, r0, c2, c0, 0
+        mcr             p15, 0, r0, c3, c0, 0
+        ldr             r0, =REGION_ACC(NA, NA, NA, NA, NA, NA, NA, NA)
+        mcr             p15, 0, r0, c5, c0, 3
         mcr             p15, 0, r0, c5, c0, 2
 #endif
 @003:   /* プロテクションユニット及びキャッシュ使用許可設定 */

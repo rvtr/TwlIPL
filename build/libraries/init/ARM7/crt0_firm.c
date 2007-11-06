@@ -17,7 +17,7 @@
 #include        <nitro/code32.h>
 #include        <firm.h>
 
-#define FIRM_ENABLE_JTAG
+//#define FIRM_ENABLE_JTAG
 
 void    _start(void);
 void    _start_AutoloadDoneCallback(void *argv[]);
@@ -40,6 +40,10 @@ extern void TwlMain(void);
 static void INITi_DoAutoload(void);
 static void INITi_ShelterLtdBinary(void);
 static void detect_main_memory_size(void);
+#ifndef SDK_NOINIT
+static void INITi_ShelterStaticInitializer(u32* ptr);
+static void INITi_CallStaticInitializers(void);
+#endif
 
 // from LCF
 extern unsigned long SDK_IRQ_STACKSIZE[];
@@ -195,6 +199,7 @@ SDK_WEAK_SYMBOL asm void _start( void )
         bl              _fp_init
         bl              TwlSpStartUp
         bl              __call_static_initializers
+//        bl              INITi_CallStaticInitializers
 #endif
 
         //---- start (to 16bit code)
@@ -241,6 +246,13 @@ INITi_DoAutoload(void)
         ldrlt           r0, [r1], #4
         strlt           r0, [r2], #4
         blt             @002
+        /* static initializer テーブル情報を読み出し */
+        ldr             r0, [r12], #4       // r0 = address of the table managing pointers of static initializers
+#ifndef SDK_NOINIT
+        stmdb           sp!, {r0-r3, r12}
+        bl              INITi_ShelterStaticInitializer
+        ldmia           sp!, {r0-r3, r12}
+#endif
         /* .bss セクションを 0 クリア */
         mov             r0, #0
         ldr             r3, [r12], #4       // r3 = size of .bss section
@@ -276,6 +288,13 @@ INITi_DoAutoload(void)
         ldrlt           r0, [r1], #4
         strlt           r0, [r2], #4
         blt             @012
+        /* static initializer テーブル情報を読み出し */
+        ldr             r0, [r12], #4       // r0 = address of the table managing pointers of static initializers
+#ifndef SDK_NOINIT
+        stmdb           sp!, {r0-r3, r12}
+        bl              INITi_ShelterStaticInitializer
+        ldmia           sp!, {r0-r3, r12}
+#endif
         /* .bss セクションを 0 クリア */
         mov             r0, #0
         ldr             r3, [r12], #4       // r3 = size of .bss section
@@ -321,6 +340,78 @@ INITi_ShelterLtdBinary(void)
 
         bx              lr
 }
+
+#ifndef SDK_NOINIT
+/*---------------------------------------------------------------------------*
+  Name:         INITi_ShelterStaticInitializer
+  Description:  各オートロードセグメント内の static initializer へのポインタ
+                テーブルを IRQ スタックの最上部に退避する。
+  Arguments:    ptr     -   セグメント内のポインタテーブルへのポインタ。
+                            テーブルは NULL で終端されている必要がある。
+  Returns:      なし。
+ *---------------------------------------------------------------------------*/
+static asm void
+INITi_ShelterStaticInitializer(u32* ptr)
+{
+        /* 引数確認 */
+        cmp             r0, #0
+        bxeq            lr
+
+        /* 退避場所先頭アドレスを計算 */
+        ldr             r1, =HW_PRV_WRAM_IRQ_STACK_END
+        ldr             r2, =SDK_IRQ_STACKSIZE
+        sub             r1, r1, r2
+
+        /* 退避場所先頭から空き場所を調査 */
+@001:   ldr             r2, [r1]
+        cmp             r2, #0
+        addne           r1, r1, #4
+        bne             @001
+
+        /* 空き場所にテーブルをコピー */
+@002:   ldr             r2, [r0], #4
+        str             r2, [r1], #4
+        cmp             r2, #0
+        bne             @002
+
+        bx              lr
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         INITi_CallStaticInitializers
+  Description:  各オートロードセグメント内の static initializer を呼び出す。
+                オートロード処理によって IRQ スタックの最上部に退避されている
+                関数ポインタテーブルを一つずつ呼び出す。
+  Arguments:    なし。
+  Returns:      なし。
+ *---------------------------------------------------------------------------*/
+static asm void
+INITi_CallStaticInitializers(void)
+{
+        stmdb           sp!, {lr}
+
+        /* テーブル退避場所先頭アドレスを計算 */
+        ldr             r1, =HW_PRV_WRAM_IRQ_STACK_END
+        ldr             r2, =SDK_IRQ_STACKSIZE
+        sub             r1, r1, r2
+
+        /* テーブルに管理されているポインタを一つずつ呼び出し */
+@001:   ldr             r0, [r1]
+        cmp             r0, #0
+        beq             @002
+        stmdb           sp!, {r1}
+        mov             lr, pc
+        bx              r0
+        ldmia           sp!, {r1}
+        /* 一旦呼び出したポインタはゼロクリア (IRQスタックを間借りしている為) */
+        mov             r0, #0
+        str             r0, [r1], #4
+        b               @001
+
+@002:   ldmia           sp!, {lr}
+        bx              lr
+}
+#endif
 
 /*---------------------------------------------------------------------------*
   Name:         _start_AutoloadDoneCallback
