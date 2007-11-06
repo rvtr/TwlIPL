@@ -61,7 +61,8 @@ extern void *(*SYSM_Alloc)( u32 size );
 extern void  (*SYSM_Free)( void *ptr );
 
 // function-------------------------------------------------------------
-extern void SYSM_Init( void );
+extern void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) );
+//extern void SYSM_Init( void );
 extern void SYSM_SetAllocFunc( void *(*pAlloc)(u32), void (*pFree)(void*) );
 
 extern BOOL SYSM_IsLogoDemoSkip( void );

@@ -74,12 +74,12 @@ void TwlMain( void )
 	(void)OS_EnableIrqMask(OS_IE_V_BLANK);
 	(void)GX_VBlankIntr(TRUE);
 	
-	// システムメニュー初期化----------
-	SYSM_Init();											// OS_Initの後でコール。
-	
 	// システムの初期化----------------
 	InitAllocator( &g_allocator );
 	CMN_InitFileSystem( &g_allocator );
+	
+	// システムメニュー初期化----------
+	SYSM_Init( Alloc, Free );											// OS_Initの後でコール。
 	
 	// リセットパラメータの取得--------
 	if( SYSM_GetResetParam()->isLogoSkip ) {
@@ -320,8 +320,23 @@ static void InitAllocator( NNSFndAllocator* pAllocator )
     heapHandle = NNS_FndCreateExpHeap(heapMemory, heapSize);
     SDK_ASSERT( heapHandle != NNS_FND_HEAP_INVALID_HANDLE );
 
-    NNS_FndInitAllocatorForExpHeap(pAllocator, heapHandle, 4);
+    NNS_FndInitAllocatorForExpHeap(pAllocator, heapHandle, 32);
 }
+
+
+// メモリ割り当て
+void *Alloc( u32 size )
+{
+	return NNS_FndAllocFromAllocator( &g_allocator, size );
+}
+
+
+// メモリ解放
+void Free( void *pBuffer )
+{
+	NNS_FndFreeToAllocator( &g_allocator, pBuffer );
+}
+
 
 #if 0
 // mallocシステムの初期化

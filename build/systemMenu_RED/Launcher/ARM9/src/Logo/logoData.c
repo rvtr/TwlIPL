@@ -105,12 +105,11 @@ void LoadLogoData(void)
 {
 	u32 temp[ 0x500 / sizeof(u32) ];
 	u16 *pBuff = NNS_FndAllocFromAllocator( &g_allocator, 0x1000 );
-	MI_CpuClear32( pBuff, 0x1000 );
-	
 	if( pBuff == NULL ) {
 		OS_TPrintf( " %s : memory allocate error.\n", __FUNCTION__ );
 		return;
 	}
+	MI_CpuClear32( pBuff, 0x1000 );
 	
 	UnCompNintendoLogo( (u16 *)Nin_Char_Diff_Huff, pBuff, temp );		// NintendoÉçÉSÇpBuffÇ…ìWäJ
 	MI_CpuCopy32( pBuff, (u32 *)HW_OBJ_VRAM, 0x340 );					// OBJ-VRAMÇ…ÉçÅ[Éh

@@ -129,7 +129,7 @@ static void FreeForNAM(void *p)
 }
 
 // SystemMenuÇÃèâä˙âª
-void SYSM_Init( void )
+void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 {
 #ifdef __SYSM_DEBUG
 	pSysm = GetSYSMWork();
@@ -139,6 +139,8 @@ void SYSM_Init( void )
 	
 	TP_Init();
 	RTC_Init();
+	
+	SYSM_SetAllocFunc( pAlloc, pFree );
 	
 	// WRAMê›íËÇÕÇ¢ÇÈÅH
 //	MI_SetMainMemoryPriority(MI_PROCESSOR_ARM7);

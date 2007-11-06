@@ -130,6 +130,9 @@ extern NNSG2dCharCanvas        gCanvas;     // CharCanvas
 extern NNSG2dTextCanvas        gTextCanvas; // TextCanvas
 
 // function-------------------------------------------------------------
+void *Alloc( u32 size );
+void Free( void *pBuffer );
+
 void InitBG( void );
 void PutStringUTF16   ( int x, int y, int color, const u16 *strUTF16 );
 void PutStringUTF16Sub( int x, int y, int color, const u16 *strUTF16 );
