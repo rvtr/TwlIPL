@@ -49,7 +49,7 @@ static u64	old_titleIdArray[TITLE_PROPERTY_NUM];
 //===============================================
 // Launcher.c
 //===============================================
-static const u16 *const s_pStrLauncherElemTbl[ LAUNCHER_ELEMENT_NUM ][ LANG_CODE_MAX ] = {
+static const u16 *const s_pStrLauncherElemTbl[ LAUNCHER_ELEMENT_NUM ][ TWL_LANG_CODE_MAX ] = {
 	{
 		(const u16 *)L"DSカード",
 		(const u16 *)L"DS Card",
@@ -295,7 +295,7 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	
 	// アプリ名表示
 	{
-		NNSG2dChar *str = ((BannerFile *)titleprop[selected].pBanner)->v1.gameName[GetNCDWork()->option.language];
+		NNSG2dChar *str = ((BannerFile *)titleprop[selected].pBanner)->v1.gameName[ TSD_GetLanguage() ];
 		int width = NNS_G2dTextCanvasGetStringWidth(&gTextCanvas, str, NULL);
 		PutStringUTF16( (256-width)/2, 48, TXT_COLOR_BLACK, str );
 	}
@@ -320,7 +320,7 @@ void LauncherInit( TitleProperty *pTitleList )
 	
 	// NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
 	for( i = 0; i < LAUNCHER_ELEMENT_NUM; i++ ) {
-		s_pStrLauncher[ i ] = s_pStrLauncherElemTbl[ i ][ GetNCDWork()->option.language ];
+		s_pStrLauncher[ i ] = s_pStrLauncherElemTbl[ i ][ TSD_GetLanguage() ];
 	}
 	
 	if( !SYSM_IsNITROCard() ) {
@@ -376,7 +376,7 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	}
 	
 	if( (pad.trg & PAD_BUTTON_R) || (tp_bl_on_off) ) {
-		GetNCDWork()->option.backLightOffFlag ^= 0x01;
+//		TSD_SetBacklightBrightness( TSD_GetBacklightBrightness() ^ 0x01 );
 		DrawBackLightSwitch();
 	}
 	
@@ -449,13 +449,14 @@ static void DrawBackLightSwitch(void)
 {
 	u16		color;
 	
-	if( GetNCDWork()->option.backLightOffFlag ) {
+//	if( GetNCDWork()->option.backLightOffFlag ) {
+	if ( 1 ) {
 		color = TXT_COLOR_BLACK;
 	}else {
 		color = TXT_COLOR_RED;
 	}
 	
 	PutStringUTF16( B_LIGHT_BUTTON_TOP_X, B_LIGHT_BUTTON_TOP_Y, color,
-					str_backlight[ GetNCDWork()->option.backLightOffFlag ] );
+					str_backlight[ 0 ] );
 }
 

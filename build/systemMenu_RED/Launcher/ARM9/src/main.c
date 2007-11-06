@@ -367,11 +367,11 @@ static BOOL CheckBootStatus(void)
 	// NITRO設定データ未入力時の設定メニューショートカット起動
 	//-----------------------------------------------------
 #ifdef __DIRECT_BOOT_BMENU_ENABLE									// ※NITRO設定データ未入力時のブートメニュー直接起動スイッチがONか？
-	if( ( (GetNCDWork()->option.input_tp == 0)
-		||(GetNCDWork()->option.input_language == 0)
-		||(GetNCDWork()->option.input_rtc == 0)
-		||(GetNCDWork()->option.input_favoriteColor == 0)
-		||(GetNCDWork()->option.input_nickname == 0) ) ) {		// TP,言語,RTC,ニックネームがセットされていなければ、ロゴ表示もゲームロードも行わず、ブートメニューをショートカット起動。
+	if( !TSD_IsSetTP() ||
+		!TSD_IsSetLanguage() ||
+		!TSD_IsSetDateTime() ||
+		!TSD_IsSetUserColor() ||
+		!TSD_IsSetNickname() ) {									// TP,言語,RTC,ニックネームがセットされていなければ、ロゴ表示もゲームロードも行わず、ブートメニューをショートカット起動。
 		
 		if( ( pad.cont & PAD_PRODUCTION_NITRO_SHORTCUT ) == PAD_PRODUCTION_NITRO_SHORTCUT ) {
 			other_shortcut_off = TRUE;								// 量産工程用のキーショートカットが押されていたら、設定メニュー起動はなし。
@@ -387,7 +387,9 @@ static BOOL CheckBootStatus(void)
 	//-----------------------------------------------------
 	// キーショートカット起動
 	//-----------------------------------------------------
-	if( !other_shortcut_off && !GetNCDWork()->option.autoBootFlag ) {
+	if( !other_shortcut_off
+//		&& !TSD_IsAutoBoot()
+		) {
 																	// 他ショートカットONかつオート起動OFFの時
 		u32 nowBootFlag = 0;
 		
@@ -410,7 +412,8 @@ static BOOL CheckBootStatus(void)
 	// 自動起動オプション有効時の挙動
 	//-----------------------------------------------------
 #ifndef __SYSM_DEBUG
-	if( GetNCDWork()->option.autoBootFlag ) {
+//	if( TSD_IsAutoBoot() ) {
+	if( 0 ) {
 		if ( SYSM_IsNITROCard() ) {									// NITROカードのみの時はNITRO起動
 			SYSM_SetBootFlag( BFLG_BOOT_NITRO );
 			return TRUE;											// 「ブート内容決定」でリターン
