@@ -121,12 +121,12 @@ static inline void DBG_SetRed(u32 y_pos)
 
 static void * AllocForNAM(unsigned long size)
 {
-	return OS_AllocFromHeap( OS_ARENA_WRAM_MAIN, OS_CURRENT_HEAP_HANDLE, size );
+	return OS_AllocFromHeap( OS_ARENA_MAIN, OS_CURRENT_HEAP_HANDLE, size );
 }
 
 static void FreeForNAM(void *p)
 {
-	OS_FreeToHeap( OS_ARENA_WRAM_MAIN, OS_CURRENT_HEAP_HANDLE, p);
+	OS_FreeToHeap( OS_ARENA_MAIN, OS_CURRENT_HEAP_HANDLE, p);
 }
 
 // SystemMenuの初期化
@@ -239,37 +239,6 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size)
 	NAMTitleId titleIdArray[TITLE_ID_BUF_SIZE];
 	static BannerFile bannerBuf[TITLE_ID_BUF_SIZE];
 	gotten = NAM_GetTitleList(titleIdArray, TITLE_ID_BUF_SIZE);
-
-	/*
-	{
-		static const char ppp[] = "nand:/title_e/00010001/50434854/content/title.tmd";
-		
-		
-		FSFile  f[1];
-		int len = sizeof(ESTitleMeta);
-		
-		FS_InitFile(f);
-		
-	    if (!FS_OpenFileEx(f, ppp, FS_PERMIT_R))
-	    {    // ファイルが存在すれば上書きします
-	        OS_TWarning("\"%s\" does not exist.\n", ppp);
-	    }
-
-		OS_TPrintf("filelength = %d\n",FS_GetFileLength(f));
-		
-		OS_TPrintf("sizeof(ESTitleMeta) = %d\n",len);
-		
-	    DC_InvalidateRange(dst, (u32)len);
-	    size = FS_ReadFile(f, dst, len);
-	    if (size < 0)
-	    {
-	        OS_TWarning("FS_ReadFile() failed.\n");
-	    }else
-	    {
-	        OS_TWarning("OK.\n");
-		}
-	}
-	*/
 	
 	// バナーの読み込み……別の関数に移すべきかも。
 	// 毎フレーム変化を見る必要がある。
@@ -378,6 +347,10 @@ AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle )
 	// DSダウンロードプレイの時は、ROMヘッダを退避する
 	// アプリロード
 	// アプリ認証
+	
+	// 実験用。実際にはこれ使えない（静的に8MBも退避メモリを確保してくれるので無理）
+	// ので、自前のロードプログラムが必要。
+	//NAM_LaunchTitle(pBootTitle->titleID);
 	
 	// パラメータチェック
 	if( !SYSMi_CheckTitlePointer( pBootTitle ) ) {

@@ -18,6 +18,7 @@
 #include <twl.h>
 #include "misc.h"
 #include "launcher.h"
+#include <math.h>
 
 
 // define data------------------------------------------
@@ -28,6 +29,7 @@
 #define B_LIGHT_BUTTON_BOTTOM_X				( B_LIGHT_BUTTON_TOP_X + 7 )
 #define B_LIGHT_BUTTON_BOTTOM_Y				( B_LIGHT_BUTTON_TOP_Y + 2 )
 
+#define CURSOR_PER_SELECT	14
 
 // extern data------------------------------------------
 
@@ -40,6 +42,8 @@ static void DrawLauncher(u16 nowCsr, const MenuParam *pMenu);
 // static variable -------------------------------------
 static int s_csr = 0;													// メニューのカーソル位置
 static const u16 *s_pStrLauncher[ LAUNCHER_ELEMENT_NUM ];				// ロゴメニュー用文字テーブルへのポインタリスト
+
+static u64	old_titleIdArray[TITLE_PROPERTY_NUM];
 
 // const data  -----------------------------------------
 //===============================================
@@ -116,8 +120,8 @@ static BannerFile *card_banner;
 static BannerFile *download_banner;
 static u8 image_index_list[TITLE_PROPERTY_NUM];
 static const int MAX_SHOW_BANNER = 6;
-static GXOamAttr banner_oam_attr[MAX_SHOW_BANNER];
-static u8 *pbanner_image_list[TITLE_PROPERTY_NUM*2];
+static GXOamAttr banner_oam_attr[MAX_SHOW_BANNER+10];// アフィンパラメータ埋める関係で少し大きめ
+static u8 *pbanner_image_list[TITLE_PROPERTY_NUM];
 static int banner_count = 0;
 
 static void LoadBannerFiles()
@@ -140,11 +144,16 @@ static void BannerInit()
 	int l;
 	LoadBannerFiles();
 	
+	MI_CpuClearFast(old_titleIdArray, sizeof(old_titleIdArray) );
+    MI_DmaFill32(3, banner_oam_attr, 192, sizeof(banner_oam_attr));     // let out of the screen if not display
+	
 	// ここでやるべきじゃない気がするBGとOBJの設定
     GX_SetVisiblePlane(GX_PLANEMASK_OBJ | GX_PLANEMASK_BG0);      // display only OBJ&BG0
     GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_128K);     // 2D mapping mode
     
     // パレット読み込み
+    // 本来は、読み込んだバナーによってパレットも変更する必要があるのかもしれないが、どの道最大256色
+    // 17個以上のバナーをそれぞれ違うパレットで同時に表示はできないはず。
 	GX_LoadOBJPltt( empty_banner->v1.pltt, 0, BNR_PLTT_SIZE );
 	
 	//OBJATTRの初期化……後で値を弄って場所やらキャラクターを変えたりする
@@ -163,7 +172,6 @@ static void BannerInit()
 						0,												// palette
 						0);												// affine
 	}
-	G2_SetOBJEffect(&banner_oam_attr[2], GX_OAM_EFFECT_AFFINE_DOUBLE, 0);
 	DC_FlushRange(&banner_oam_attr, sizeof(banner_oam_attr));
 }
 
@@ -171,8 +179,21 @@ static void BannerInit()
 static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 {
 	static int count = 0;
-	int l;
 	
+	int l;
+	MtxFx22 mtx;
+	
+	/*
+	static int testcount=0;
+	testcount++;
+    if( (testcount/5)%2 ==1 ) titleprop[1].titleID = 0;//1secごとにTitlePropertyの2を変化させてみる活線挿抜擬似テスト
+    else
+    {
+		titleprop[1].titleID = 1;
+		titleprop[1].pBanner = download_banner;
+	}
+	*/
+    
     // TitleProperty弄り
 	for(l=0;l<TITLE_PROPERTY_NUM;l++)
 	{
@@ -189,45 +210,79 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
     // TitlePropertyを見てVRAMにキャラクタデータをロード
 	for(l=0;l<TITLE_PROPERTY_NUM;l++)
 	{
+		if(titleprop[l].titleID != old_titleIdArray[l])
+		{
+			// titleID変更されていたら、一からVRAMへのバナー画像ロードしなおし
+			banner_count = 0;
+			break;
+		}
+	}
+	for(l=0;l<TITLE_PROPERTY_NUM;l++)
+	{
 		u8 m;
 		u8 *pban=((BannerFile *)titleprop[l].pBanner)->v1.image;
 		for(m=0;m<banner_count;m++){
-			if(pban == pbanner_image_list[m]) break;
+			if(pban == pbanner_image_list[m]){
+				image_index_list[l]=m;
+				break;
+			}
 		}
 		if(m == banner_count)
 		{
-			if(banner_count<TITLE_PROPERTY_NUM*2-1){//バナー画像バッファオーバー時の処理かなり適当……あとで要変更
+			if(banner_count<TITLE_PROPERTY_NUM-1){
 				GX_LoadOBJ(pban, (u32)m*BNR_IMAGE_SIZE , BNR_IMAGE_SIZE);
 				pbanner_image_list[m] = pban;
 				banner_count++;
+				image_index_list[l]=m;
+			}
+			else
+			{	// バナー画像リストオーバー時は、titleIDが更新されずにバナーのみ入れ替わっている（アニメーション？）
+				// 下の実装では少し不安。一から全部ロードしなおすほうが安心。
+				GX_LoadOBJ(pban, (u32)image_index_list[l]*BNR_IMAGE_SIZE , BNR_IMAGE_SIZE);
+				pbanner_image_list[image_index_list[l]] = pban;
 			}
 		}
-		image_index_list[l]=m;// 後の参照用
+		
+		old_titleIdArray[l] = titleprop[l].titleID;// 後の参照用
 	}
 
 	count++;
 	
+	
+	// アフィンパラメータだけ設定しておく
+	{
+		static double wav;
+		if(cursor%CURSOR_PER_SELECT == 0){
+			double s = sin(wav);
+			mtx._00 = 0x880 - (long)(0x80*s);
+			wav += 0.1;
+		}else{
+			mtx._00 = FX32_HALF + FX32_HALF*(cursor%CURSOR_PER_SELECT)/CURSOR_PER_SELECT;
+			wav = 0;
+		}
+	}
+	mtx._01 = 0;
+	mtx._10 = 0;
+	mtx._11 = mtx._00;
+	G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[0]), &mtx);
+	mtx._00 = FX32_ONE - FX32_HALF*(cursor%CURSOR_PER_SELECT)/CURSOR_PER_SELECT;
+	mtx._11 = mtx._00;
+	G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[4]), &mtx);
+	
 	// OAMデータを弄って位置など変更
 	for (l=0;l<MAX_SHOW_BANNER;l++)
 	{
-		int num = cursor/12 - 2 + l;
+		int num = cursor/CURSOR_PER_SELECT - 2 + l;
 		if(-1 < num && num < TITLE_PROPERTY_NUM){
 			banner_oam_attr[l].charNo = image_index_list[num]*4;
-			if(l == 2)
+			
+			if(l == 2 || l == 3)
 			{
-				GXOamAffine *test = (GXOamAffine *)&banner_oam_attr[2];
-				MtxFx22 mtx;
-				mtx._00 = FX32_ONE;
-				mtx._01 = 0;
-				mtx._10 = 0;
-				mtx._11 = FX32_ONE;
-				G2_SetOBJPosition(&banner_oam_attr[l], 128-32-(cursor%12)*4, 96-16);
-				G2_SetOBJAffine((GXOamAffine *)&banner_oam_attr[l], &mtx);
-				test=test+1;
-				test=test-1;
+				G2_SetOBJEffect(&banner_oam_attr[l], GX_OAM_EFFECT_AFFINE_DOUBLE, l-2);
+				G2_SetOBJPosition(&banner_oam_attr[l], 128-32-64-48+l*56-(cursor%CURSOR_PER_SELECT)*4, 96-16);
 			}else
 			{
-				banner_oam_attr[l].x = 128-16-64-32+l*48-(cursor%12)*4;
+				banner_oam_attr[l].x = 128-16-64-48+l*56-(cursor%CURSOR_PER_SELECT)*4;
 				G2_SetOBJEffect(&banner_oam_attr[l],GX_OAM_EFFECT_NONE,0);
 			}
 		}else
@@ -238,7 +293,7 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	DC_FlushRange(&banner_oam_attr, sizeof(banner_oam_attr));
 	GX_LoadOAM(&banner_oam_attr, 0, sizeof(banner_oam_attr));
 	
-	// ゲーム名表示
+	// アプリ名表示
 	{
 		NNSG2dChar *str = ((BannerFile *)titleprop[selected].pBanner)->v1.gameName[GetNCDWork()->option.language];
 		int width = NNS_G2dTextCanvasGetStringWidth(&gTextCanvas, str, NULL);
@@ -257,7 +312,7 @@ void LauncherInit( TitleProperty *pTitleList )
 	int i;
 	GX_DispOff();
 	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_UCOLOR_GRAY );
 	
 	DrawBackLightSwitch();
 	
@@ -298,7 +353,7 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	static int selected = 0;
 	
 	// 文字描画クリア
-	NNS_G2dCharCanvasClear(&gCanvas,TXT_COLOR_WHITE);
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
 	
 	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
 	DrawBackLightSwitch();
@@ -335,11 +390,11 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 		if(csr_v == 0) csr_v = -1;
 	}
 	s_csr += csr_v;
-	if((TITLE_PROPERTY_NUM-1)*12 < s_csr) s_csr = (TITLE_PROPERTY_NUM-1)*12;
+	if((TITLE_PROPERTY_NUM-1)*CURSOR_PER_SELECT < s_csr) s_csr = (TITLE_PROPERTY_NUM-1)*CURSOR_PER_SELECT;
 	if( s_csr < 0 ) s_csr = 0;
-	if(s_csr%12 == 0){
+	if(s_csr%CURSOR_PER_SELECT == 0){
 		csr_v = 0;
-		selected = s_csr/12;
+		selected = s_csr/CURSOR_PER_SELECT;
 	}
 	// tp_select = SelectMenuByTP( &s_csr, &s_launcherParam );
 	
@@ -350,8 +405,16 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	#endif
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {					// メニュー項目への分岐
+	/*
 		if( s_launcherPos[ 0 ].enable ) {
 			NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
+			return NULL;
+		}
+	*/
+		if(pTitleList[selected].titleID != 0)
+		{
+			NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
+			//return &pTitleList[selected];
 			return NULL;
 		}
 	}
