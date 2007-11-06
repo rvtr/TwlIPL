@@ -80,9 +80,9 @@ static void InitScreen( void );
 static void InitCanvas( void );
 
 // global variable-------------------------------------------------------------
-KeyWork		pad;													// キーパッド入力データ
-TpWork		tpd;													// タッチパネル入力データ
-
+KeyWork					pad;			// キーパッド入力データ
+TpWork					tpd;			// タッチパネル入力データ
+NNSFndAllocator			g_allocator;	// メモリアロケータ
 NNSG2dFont              gFont;          // フォント
 NNSG2dCharCanvas        gCanvas;        // CharCanvas
 NNSG2dTextCanvas        gTextCanvas;    // TextCanvas
@@ -112,8 +112,45 @@ const u8 *const g_strWeek[] ATTRIBUTE_ALIGN(2) = {
 	(const u8 *)"SAT",
 };
 
+
 // ============================================================================
-// function's description
+// メモリ管理
+// ============================================================================
+
+// アロケータの初期化
+void InitAllocator( void )
+{
+	NNSFndAllocator	*pAllocator = &g_allocator;
+    u32   arenaLow      = MATH_ROUNDUP  ( (u32)OS_GetMainArenaLo(), 16 );
+    u32   arenaHigh     = MATH_ROUNDDOWN( (u32)OS_GetMainArenaHi(), 16 );
+    u32   heapSize      = arenaHigh - arenaLow;
+    void* heapMemory    = OS_AllocFromMainArenaLo( heapSize, 16 );
+    NNSFndHeapHandle    heapHandle;
+    SDK_NULL_ASSERT( pAllocator );
+
+    heapHandle = NNS_FndCreateExpHeap( heapMemory, heapSize );
+    SDK_ASSERT( heapHandle != NNS_FND_HEAP_INVALID_HANDLE );
+
+    NNS_FndInitAllocatorForExpHeap( pAllocator, heapHandle, 32 );
+}
+
+
+// メモリ割り当て
+void *Alloc( u32 size )
+{
+	return NNS_FndAllocFromAllocator( &g_allocator, size );
+}
+
+
+// メモリ解放
+void Free( void *pBuffer )
+{
+	NNS_FndFreeToAllocator( &g_allocator, pBuffer );
+}
+
+
+// ============================================================================
+// 画面設定
 // ============================================================================
 
 // BG初期化
@@ -198,6 +235,8 @@ static void InitScreen( void )
 // 文字列描画の初期化
 static void InitCanvas( void )
 {
+	CMN_InitFileSystem( &g_allocator );
+	
     // フォントを読み込みます
 	{
 		void* pFontFile;

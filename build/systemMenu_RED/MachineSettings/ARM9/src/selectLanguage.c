@@ -32,7 +32,7 @@
 // global variable -------------------------------------
 
 // static variable -------------------------------------
-static NvLangCode s_langCode;											// 言語コード
+static TWLLangCode s_langCode;											// 言語コード
 
 // const data  -----------------------------------------
 static const u16 *const s_pStrLanguage[] = {
@@ -81,10 +81,10 @@ void SelectLanguageInit( void )
 	}
 	
 	if( ( GetSYSMWork()->ncd_invalid ) ||
-		( GetNCDWork()->option.language >= LANG_CODE_MAX ) ) {
-		s_langCode = LANG_ENGLISH;
+		( TSD_GetLanguage() >= TWL_LANG_CODE_MAX ) ) {
+		s_langCode = TWL_LANG_ENGLISH;
 	}else {
-		s_langCode = (NvLangCode)GetNCDWork()->option.language;
+		s_langCode = TSD_GetLanguage();
 	}
 	
 	DrawMenu( (u16)s_langCode, &langSel );
@@ -109,13 +109,13 @@ int SelectLanguageMain( void )
 	//  キー入力処理
 	//--------------------------------------
 	if( pad.trg & PAD_KEY_DOWN ) {								// カーソルの移動
-		if( ++s_langCode == LANG_CODE_MAX ) {
-			s_langCode = (NvLangCode)0;
+		if( ++s_langCode == TWL_LANG_CODE_MAX ) {
+			s_langCode = (TWLLangCode)0;
 		}
 	}
 	if( pad.trg & PAD_KEY_UP ) {
 		if( --s_langCode < 0 ) {
-			s_langCode = (NvLangCode)( LANG_CODE_MAX - 1 );
+			s_langCode = (TWLLangCode)( TWL_LANG_CODE_MAX - 1 );
 		}
 	}
 	tp_select = SelectMenuByTP( (u16 *)&s_langCode, &langSel );
@@ -129,12 +129,14 @@ int SelectLanguageMain( void )
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || tp_select ) {				// メニュー項目への分岐
 		GetSYSMWork()->ncd_invalid   		= 0;
-		GetNCDWork()->option.input_language = 1;				// 言語入力フラグを立てる
-		GetNCDWork()->option.language       = s_langCode;
+		
+		TSD_SetLanguage( s_langCode );
+		TSD_SetFlagLanguage( TRUE );							// 言語入力フラグを立てる
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		// NVRAMへの書き込み
+		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		(void)NVRAMm_WriteNitroConfigData( GetNCDWork() );
+		(void)SYSM_WriteTWLSettingsFile();
+		
 		MachineSettingInit();
 		return 0;
 	}else if( ( pad.trg & PAD_BUTTON_B ) || tp_cancel ) {

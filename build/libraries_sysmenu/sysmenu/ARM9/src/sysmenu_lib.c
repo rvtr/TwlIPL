@@ -55,22 +55,15 @@ void SYSM_RebootTitle( u64 titleID );
 
 static void INTR_SubpIRQ( void );
 
-static void SYSMi_CheckCardLoadAddressAndSize( void );
 static void LoadRomRegSizeAdjust( CARDRomRegion *romRegp, u32 load_limit_lo, u32 load_limit_hi );
 static void SYSMi_ReadyBootNitroGame( void );
-static BOOL SYSMi_CheckARM7LoadNITROCard( void );
 static void SYSMi_MainpRegisterAndRamClear( BOOL isPlatformTWL );
 static void ClearMemory( int addr1, int addr2 );
 
 static void SYSMi_CopyInfoFromIPL1( void );
 
-static void SYSMi_ReadNTRSetting( void );
-static void SYSMi_ReadTWLSetting( void );
-static void SYSMi_VerifyNTRSetting( void );
-static BOOL SYSMi_CheckEntryAddress( void );
 static void SYSMi_WriteAdjustRTC( void );
 static BOOL	SYSMi_SendMessageToARM7( u32 msg );
-static BOOL SYSMi_CheckNitroCardRightly( void );
 static int  SYSMi_ExistCard( void );
 static u32  SYSMi_SelectBootType( void );
 static void SYSMi_DispInitialDebugData( void );
@@ -79,10 +72,16 @@ static void SYSMi_DispDebugData( void );
 static void DispSingleColorScreen( int mode );
 
 static void SYSMi_ReadCardBannerFile( void );
-static void SYSMi_CheckCardCloneBoot( void );
 
+static BOOL SYSMi_CheckEntryAddress( void );
+static BOOL SYSMi_CheckARM7LoadNITROCard( void );
+static void SYSMi_CheckCardCloneBoot( void );
+static void SYSMi_CheckRTC( void );
 
 // global variable-------------------------------------------------------------
+void *(*SYSM_Alloc)( u32 size  );
+void  (*SYSM_Free )( void *ptr );
+
 #ifdef __SYSM_DEBUG
 SharedWork		*swp;												// デバッガでのIPL1SharedWorkのウォッチ用
 SYSM_work		*pSysm;											// デバッガでのSYSMワークのウォッチ用
@@ -134,7 +133,7 @@ void SYSM_Init( void )
 {
 #ifdef __SYSM_DEBUG
 	pSysm = GetSYSMWork();
-	ncdp  = GetNCDWork();
+	ncdp  = GetTSD();
 //	SYSMi_DispInitialDebugData();									// 初期デバッグ情報表示
 #endif /* __SYSM_DEBUG */
 	
@@ -156,6 +155,13 @@ void SYSM_Init( void )
 	MI_CpuClearFast(old_titleIdArray, sizeof(old_titleIdArray) );
 }
 
+// システムメニューライブラリ用メモリアロケータの設定
+void SYSM_SetAllocFunc( void *(*pAlloc)(u32), void (*pFree)(void*) )
+{
+	SYSM_Alloc = pAlloc;
+	SYSM_Free  = pFree;
+}
+
 
 // ARM7側の初期化待ち
 static void SYSMi_WaitInitARM7( void )
@@ -166,14 +172,15 @@ static void SYSMi_WaitInitARM7( void )
 */
 	reg_OS_PAUSE |= REG_OS_PAUSE_CHK_MASK;							// PAUSEレジスタのチェックフラグのセット
 	
-	SYSMi_ReadTWLSetting();											// NANDからTWL本体設定データをリード
-	PMm_SetBackLightBrightness();
+//	SYSM_ReadHWInfo();												// NANDからHW情報をリード
+	SYSM_ReadTWLSettingsFile();										// NANDからTWL本体設定データをリード
 	
-	SYSMi_ReadNTRSetting();											// NOR からNTR本体設定データをリード
-	SYSMi_VerifyNTRSetting();										// NVRAMのNTR本体設定データをリードし、不一致箇所があればNTR側をリカバリ。
-	
+	SYSM_SetBackLightBrightness();									// 読み出したTWL本体設定データをもとにバックライト輝度設定
 	SYSM_CaribrateTP();												// 読み出したTWL本体設定データをもとにTPキャリブレーション。
 	SYSMi_WriteAdjustRTC();											// 読み出したTWL本体設定データをもとにRTCクロック補正値をセット。
+	SYSMi_CheckRTC();
+	
+	SYSM_VerifyAndRecoveryNTRSettings();							// NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
 	
 	SYSMi_CheckCardCloneBoot();										// カードがクローンブートかチェック
 	SYSMi_ReadCardBannerFile();										// カードバナーファイルの読み出し。
@@ -481,41 +488,6 @@ static void INTR_SubpIRQ( void )
 // アプリ起動処理
 // ============================================================================
 
-// エントリアドレスの正当性チェック
-static BOOL SYSMi_CheckEntryAddress( void )
-{
-	// エントリアドレスがROM内登録エリアかAGBカートリッジエリアなら、無限ループに入る。
-	if(   !(   ( (u32)GetRomHeaderAddr()->main_entry_address >= HW_MAIN_MEM              )
-			&& ( (u32)GetRomHeaderAddr()->main_entry_address <  SYSM_ARM9_MMEM_ENTRY_ADDR_LIMIT ) )
-	   || !(    (   ( (u32)GetRomHeaderAddr()->sub_entry_address  >= HW_MAIN_MEM      )
-			     && ( (u32)GetRomHeaderAddr()->sub_entry_address  <  SYSM_ARM7_LOAD_MMEM_LAST_ADDR ) )
-			 || (   ( (u32)GetRomHeaderAddr()->sub_entry_address  >= HW_WRAM    )
-				 && ( (u32)GetRomHeaderAddr()->sub_entry_address  <  SYSM_ARM7_LOAD_WRAM_LAST_ADDR ) ) ) )
-	{
-		OS_TPrintf("entry address invalid.\n");
-#ifdef __DEBUG_SECURITY_CODE
-		DispSingleColorScreen( SCREEN_YELLOW );
-#endif
-		return FALSE;
-	}
-	OS_TPrintf("entry address valid.\n");
-	return TRUE;
-}
-
-
-// ARM7によるNITROゲームのロード完了を確認する。
-static BOOL SYSMi_CheckARM7LoadNITROCard( void )
-{
-	if( SYSMi_ExistCard()
-//		&& !( SYSM_GetBootFlag() & BFLG_LOAD_CARD_COMPLETED )
-		) {
-		return FALSE;
-	}
-	return TRUE;
-}
-
-
-
 // SystemMenuで使用したレジスタ＆メモリのクリア
 static void SYSMi_MainpRegisterAndRamClear( BOOL isPlatformTWL )
 {
@@ -579,80 +551,6 @@ static BOOL SYSMi_IsDebuggerBannerViewMode( void )
 }
 
 
-// NITRO設定データの読み出し。
-static void SYSMi_ReadNTRSetting( void )
-{
-	RTCDate date;
-	RTCTime	time;
-	
-	GetSYSMWork()->ncd_invalid = NVRAMm_ReadNitroConfigData( GetNCDWork() );
-																	// NVRAMからNITRO設定データをロード。
-	if( GetSYSMWork()->ncd_invalid ) {								// リードしたNITRO設定データが無効だったら、0クリアしたものを使用。
-		OS_TPrintf(" NCD destroyed.\n" );
-		SVC_CpuClearFast( 0x0000, GetNCDExWork(), sizeof(NitroConfigDataEx) );
-		GetNCDExWork()->version					= NITRO_CONFIG_DATA_EX_VERSION;
-		GetNCDWork()->option.backLightBrightness= 2;				// 出荷時と同じ値に。
-		GetNCDWork()->option.language			= LANG_ENGLISH;		// プリセットが必要なデータはプリセットしておく
-		GetNCDWork()->option.destroyFlashFlag	= 1;
-		GetNCDWork()->owner.birthday.month		= 1;
-		GetNCDWork()->owner.birthday.day		= 1;
-		GetNCDExWork()->valid_language_bitmap	= VALID_LANG_BITMAP;
-	}
-	
-	// RTCのリセット or おかしい値を検出した場合は初回起動シーケンスへ。
-	( void )RTC_GetDateTime( &date, &time );
-	if( !SYSM_CheckRTCDate( &date ) ||
-	    !SYSM_CheckRTCTime( &time )
-#ifndef __IS_DEBUGGER_BUILD											// 青デバッガではRTCの電池がないので、毎回ここにひっかかって設定データが片方クリアされてしまう。これを防ぐスイッチ。
-		|| ( GetSYSMWork()->rtcStatus & 0x01 )
-#endif
-		) {							// RTCの異常を検出したら、rtc入力フラグ＆rtcOffsetを0にしてNVRAMに書き込み。
-		OS_TPrintf("\"RTC reset\" or \"Illegal RTC data\" detect!\n");
-		GetNCDWork()->option.input_rtc		= 0;
-		GetNCDWork()->option.rtcOffset		= 0;
-		GetNCDWork()->option.rtcLastSetYear = 0;
-		( void )NVRAMm_WriteNitroConfigData( GetNCDWork() );
-	}
-}
-
-
-// TWL設定データの読み出し
-static void SYSMi_ReadTWLSetting( void )
-{
-	
-}
-
-
-// NTR設定とTWL設定をベリファイして、不一致があれば、NTR設定を更新
-static void SYSMi_VerifyNTRSetting( void )
-{
-}
-
-
-// RTCの日付が正しいかチェック
-BOOL SYSM_CheckRTCDate( RTCDate *datep )
-{
-	if(	 ( datep->year >= 100 )
-	  || ( datep->month < 1 ) || ( datep->month > 12 )
-	  || ( datep->day   < 1 ) || ( datep->day   > 31 )
-	  || ( datep->week >= RTC_WEEK_MAX ) ) {
-		return FALSE;
-	}
-	return TRUE;
-}
-
-
-// RTCの時刻が正しいかチェック
-BOOL SYSM_CheckRTCTime( RTCTime *timep )
-{
-	if(  ( timep->hour   > 23 )
-	  || ( timep->minute > 59 )
-	  || ( timep->second > 59 ) ) {
-		return FALSE;
-	}
-	return TRUE;
-}
-
 
 // バナーファイルの読み込みの実体
 static void SYSMi_ReadCardBannerFile( void )
@@ -702,6 +600,137 @@ static void SYSMi_ReadCardBannerFile( void )
 }
 
 
+// タッチパネルキャリブレーション
+void SYSM_CaribrateTP( void )
+{
+#ifndef __TP_OFF
+	TPCalibrateParam calibrate;
+	
+	( void )TP_CalcCalibrateParam( &calibrate,							// タッチパネル初期化
+			GetTSD()->tp.data.raw_x1, GetTSD()->tp.data.raw_y1, (u16)GetTSD()->tp.data.dx1, (u16)GetTSD()->tp.data.dy1,
+			GetTSD()->tp.data.raw_x2, GetTSD()->tp.data.raw_y2, (u16)GetTSD()->tp.data.dx2, (u16)GetTSD()->tp.data.dy2 );
+	TP_SetCalibrateParam( &calibrate );
+	OS_Printf("TP_calib: %4d %4d %4d %4d %4d %4d\n",
+			GetTSD()->tp.data.raw_x1, GetTSD()->tp.data.raw_y1, (u16)GetTSD()->tp.data.dx1, (u16)GetTSD()->tp.data.dy1,
+			GetTSD()->tp.data.raw_x2, GetTSD()->tp.data.raw_y2, (u16)GetTSD()->tp.data.dx2, (u16)GetTSD()->tp.data.dy2 );
+#endif
+}
+
+
+// RTCクロック補正値をセット
+static void SYSMi_WriteAdjustRTC( void )
+{
+	// ※TWLの時は、NANDの"/sys/HWINFO.dat"ファイルから該当する情報を取得する。
+#if 0
+	FS_OpenFile( "/sys/HWINFO.dat" );
+	FS_ReadFile( xxxx );
+	raw = xxxx.rtcRaw;
+	( void )RTCi_SetRegAdjust( &raw );
+#endif
+	
+#ifndef __IS_DEBUGGER_BUILD											// デバッガ用ビルド時は補正しない。
+	RTCRawAdjust raw;
+	raw.adjust = 0;
+//	raw.adjust = GetTSD()->rtcClockAdjust;							// ncd_invalid時にはrtcClockAdjustは
+																	// 0クリアされているため補正機能は使用されない
+	( void )RTCi_SetRegAdjust( &raw );
+#endif /* __IS_DEBUGGER_BUILD */
+}
+
+
+// FIFO経由でARM7にメッセージ通知。※PXI_FIFO_TAG_USER_1を使用。
+static BOOL	SYSMi_SendMessageToARM7(u32 msg)
+{
+#pragma unused(msg)
+	return TRUE;
+}
+
+
+// NTR,TWLカード存在チェック 		「リターン　1：カード認識　0：カードなし」
+static int SYSMi_ExistCard( void )
+{
+	if( ( GetRomHeaderAddr()->nintendo_logo_crc16 == 0xcf56 ) &&
+	    ( GetRomHeaderAddr()->header_crc16 == GetSYSMWork()->cardHeaderCrc16) ) {
+		return TRUE;												// NTR,TWLカードあり（NintendoロゴCRC、カードヘッダCRCが正しい場合）
+																	// ※Nintendoロゴデータのチェックは、特許の都合上、ロゴ表示ルーチン起動後に行います。
+	}else {
+		return FALSE;												// NTR,TWLカードなし
+	}
+}
+
+
+// スリープモードへの遷移
+void SYSM_GoSleepMode( void )
+{
+#ifndef __IS_DEBUGGER_BUILD											// デバッガ用ビルド時はスリープしない。
+	PM_GoSleepMode( (PMWakeUpTrigger)( (PAD_DetectFold() ? PM_TRIGGER_COVER_OPEN : 0) | PM_TRIGGER_RTC_ALARM ),
+					0,
+					0 );
+#endif /* __IS_DEBUGGER_BUILD */
+}
+
+
+// バックライト輝度調整
+void SYSM_SetBackLightBrightness( void )
+{
+	( void )PMi_WriteRegister( 4, (u16)TSD_GetBacklightBrightness() );
+	( void )PM_SetBackLight( PM_LCD_ALL, PM_BACKLIGHT_ON );
+}
+
+
+
+
+//======================================================================
+//  各種チェック
+//======================================================================
+
+// Nintendoロゴチェック			「リターン　1:Nintendoロゴ認識成功　0：失敗」
+BOOL SYSM_CheckNinLogo(u16 *logo_cardp)
+{
+	u16 *logo_orgp	= (u16 *)SYSROM9_NINLOGO_ADR;					// ARM9のシステムROMのロゴデータとカートリッジ内のものを比較
+	u16 length		= NINTENDO_LOGO_LENGTH >> 1;
+	
+	while(length--) {
+		if(*logo_orgp++ != *logo_cardp++) return FALSE;
+	}
+	return TRUE;
+}
+
+
+// エントリアドレスの正当性チェック
+static BOOL SYSMi_CheckEntryAddress( void )
+{
+	// エントリアドレスがROM内登録エリアかAGBカートリッジエリアなら、無限ループに入る。
+	if(   !(   ( (u32)GetRomHeaderAddr()->main_entry_address >= HW_MAIN_MEM              )
+			&& ( (u32)GetRomHeaderAddr()->main_entry_address <  SYSM_ARM9_MMEM_ENTRY_ADDR_LIMIT ) )
+	   || !(    (   ( (u32)GetRomHeaderAddr()->sub_entry_address  >= HW_MAIN_MEM      )
+			     && ( (u32)GetRomHeaderAddr()->sub_entry_address  <  SYSM_ARM7_LOAD_MMEM_LAST_ADDR ) )
+			 || (   ( (u32)GetRomHeaderAddr()->sub_entry_address  >= HW_WRAM    )
+				 && ( (u32)GetRomHeaderAddr()->sub_entry_address  <  SYSM_ARM7_LOAD_WRAM_LAST_ADDR ) ) ) )
+	{
+		OS_TPrintf("entry address invalid.\n");
+#ifdef __DEBUG_SECURITY_CODE
+		DispSingleColorScreen( SCREEN_YELLOW );
+#endif
+		return FALSE;
+	}
+	OS_TPrintf("entry address valid.\n");
+	return TRUE;
+}
+
+
+// ARM7によるNITROゲームのロード完了を確認する。
+static BOOL SYSMi_CheckARM7LoadNITROCard( void )
+{
+	if( SYSMi_ExistCard()
+//		&& !( SYSM_GetBootFlag() & BFLG_LOAD_CARD_COMPLETED )
+		) {
+		return FALSE;
+	}
+	return TRUE;
+}
+
+
 // クローンブート判定
 static void SYSMi_CheckCardCloneBoot( void )
 {
@@ -731,91 +760,32 @@ static void SYSMi_CheckCardCloneBoot( void )
 }
 
 
-// タッチパネルキャリブレーション
-void SYSM_CaribrateTP( void )
+// 起動時のRTCチェック
+static void SYSMi_CheckRTC( void )
 {
-#ifndef __TP_OFF
-	TPCalibrateParam calibrate;
+	RTCDate date;
+	RTCTime	time;
 	
-	( void )TP_CalcCalibrateParam( &calibrate,							// タッチパネル初期化
-			GetNCDWork()->tp.raw_x1, GetNCDWork()->tp.raw_y1, (u16)GetNCDWork()->tp.dx1, (u16)GetNCDWork()->tp.dy1,
-			GetNCDWork()->tp.raw_x2, GetNCDWork()->tp.raw_y2, (u16)GetNCDWork()->tp.dx2, (u16)GetNCDWork()->tp.dy2 );
-	TP_SetCalibrateParam( &calibrate );
-	OS_Printf("TP_calib: %4d %4d %4d %4d %4d %4d\n",
-			GetNCDWork()->tp.raw_x1, GetNCDWork()->tp.raw_y1, (u16)GetNCDWork()->tp.dx1, (u16)GetNCDWork()->tp.dy1,
-			GetNCDWork()->tp.raw_x2, GetNCDWork()->tp.raw_y2, (u16)GetNCDWork()->tp.dx2, (u16)GetNCDWork()->tp.dy2 );
+	// RTCのリセット or おかしい値を検出した場合は初回起動シーケンスへ。
+	( void )RTC_GetDateTime( &date, &time );
+	if( !SYSM_CheckRTCDate( &date ) ||
+	    !SYSM_CheckRTCTime( &time )
+#ifndef __IS_DEBUGGER_BUILD											// 青デバッガではRTCの電池がないので、毎回ここにひっかかって設定データが片方クリアされてしまう。これを防ぐスイッチ。
+		|| ( GetSYSMWork()->rtcStatus & 0x01 )
 #endif
-}
-
-
-// RTCクロック補正値をセット
-static void SYSMi_WriteAdjustRTC( void )
-{	
-#ifndef __IS_DEBUGGER_BUILD											// デバッガ用ビルド時は補正しない。
-	RTCRawAdjust raw;
-	
-	raw.adjust = GetNCDWork()->option.rtcClockAdjust;			// ncd_invalid時にはrtcClockAdjustは
-																	// 0クリアされているため補正機能は使用されない
-	( void )RTCi_SetRegAdjust( &raw );
-#endif /* __IS_DEBUGGER_BUILD */
-}
-
-
-// FIFO経由でARM7にメッセージ通知。※PXI_FIFO_TAG_USER_1を使用。
-static BOOL	SYSMi_SendMessageToARM7(u32 msg)
-{
-#pragma unused(msg)
-	return TRUE;
-}
-
-
-// NTR,TWLカード存在チェック 		「リターン　1：カード認識　0：カードなし」
-static int SYSMi_ExistCard( void )
-{
-	if( ( GetRomHeaderAddr()->nintendo_logo_crc16 == 0xcf56 ) &&
-	    ( GetRomHeaderAddr()->header_crc16 == GetSYSMWork()->cardHeaderCrc16) ) {
-		return TRUE;												// NTR,TWLカードあり（NintendoロゴCRC、カードヘッダCRCが正しい場合）
-																	// ※Nintendoロゴデータのチェックは、特許の都合上、ロゴ表示ルーチン起動後に行います。
-	}else {
-		return FALSE;												// NTR,TWLカードなし
+		) {							// RTCの異常を検出したら、rtc入力フラグ＆rtcOffsetを0にしてNVRAMに書き込み。
+		OS_TPrintf("\"RTC reset\" or \"Illegal RTC data\" detect!\n");
+		GetTSD()->flags.isSetDateTime	= 0;
+		GetTSD()->rtcOffset				= 0;
+		GetTSD()->rtcLastSetYear		= 0;
+		// ※※ライトする？
+		SYSM_WriteTWLSettingsFile();
 	}
-}
-
-
-// Nintendoロゴチェック			「リターン　1:Nintendoロゴ認識成功　0：失敗」
-BOOL SYSM_CheckNinLogo(u16 *logo_cardp)
-{
-	u16 *logo_orgp	= (u16 *)SYSROM9_NINLOGO_ADR;					// ARM9のシステムROMのロゴデータとカートリッジ内のものを比較
-	u16 length		= NINTENDO_LOGO_LENGTH >> 1;
-	
-	while(length--) {
-		if(*logo_orgp++ != *logo_cardp++) return FALSE;
-	}
-	return TRUE;
-}
-
-
-// スリープモードへの遷移
-void SYSM_GoSleepMode( void )
-{
-#ifndef __IS_DEBUGGER_BUILD											// デバッガ用ビルド時はスリープしない。
-	PM_GoSleepMode( (PMWakeUpTrigger)( (PAD_DetectFold() ? PM_TRIGGER_COVER_OPEN : 0) | PM_TRIGGER_RTC_ALARM ),
-					0,
-					0 );
-#endif /* __IS_DEBUGGER_BUILD */
-}
-
-
-// バックライト輝度調整
-void PMm_SetBackLightBrightness( void )
-{
-	( void )PMi_WriteRegister( 4, (u16)NCD_GetBackLightBrightness() );
-	( void )PM_SetBackLight( PM_LCD_ALL, PM_BACKLIGHT_ON );
 }
 
 
 //======================================================================
-//  デバッグ関数
+//  デバッグ
 //======================================================================
 
 // 初期データのデバッグ表示

@@ -19,6 +19,7 @@
 #define SYSM_MACHINE_SETTINGS_H_
 
 #include <sysmenu/machineSettings/common/nitroSettings.h>
+#include <sysmenu/machineSettings/common/TWLSettings.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,5 +29,5 @@ extern "C" {
 } /* extern "C" */
 #endif
 
-/* SYSM_MACHINE_SETTINGs_H_ */
+/* SYSM_MACHINE_SETTINGS_H_ */
 #endif

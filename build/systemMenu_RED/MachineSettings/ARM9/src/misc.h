@@ -134,17 +134,20 @@ typedef struct RTCDrawProperty {
 }RTCDrawProperty;
 
 // global variables--------------------------------------------------
-extern TpWork	 tpd;						// タッチパネルデータ
-extern KeyWork	 pad;						// キーパッド入力データ
-extern const u8 *const g_strWeek[ 7 ];		// 曜日文字列
-extern RTCDrawProperty g_rtcDraw;
+extern TpWork			tpd;			// タッチパネルデータ
+extern KeyWork			pad;			// キーパッド入力データ
+extern const u8 *const  g_strWeek[ 7 ];	// 曜日文字列
+extern RTCDrawProperty  g_rtcDraw;
 
-extern NNSFndAllocator         g_allocator; // メモリアロケータ
-extern NNSG2dFont              gFont;       // フォント
-extern NNSG2dCharCanvas        gCanvas;     // CharCanvas
-extern NNSG2dTextCanvas        gTextCanvas; // TextCanvas
+extern NNSFndAllocator  g_allocator; // メモリアロケータ
+extern NNSG2dFont       gFont;       // フォント
+extern NNSG2dCharCanvas gCanvas;     // CharCanvas
+extern NNSG2dTextCanvas gTextCanvas; // TextCanvas
 
 // function-------------------------------------------------------------
+void InitAllocator( void );
+void *Alloc( u32 size );
+void Free( void *pBuffer );
 void InitBG( void );
 int  GetPrintfWidth( const NNSG2dTextCanvas *pCanvas, const char *fmt, ... );
 void PutStringUTF16   ( int x, int y, int color, const u16 *strUTF16 );

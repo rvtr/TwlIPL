@@ -24,12 +24,9 @@
 // define data-----------------------------------------------------------------
 
 // function's prototype-------------------------------------------------------
-static void InitAllocator( NNSFndAllocator* pAllocator );
-static void InitAllocSystem( void );
 static void INTR_VBlank( void );
 
 // global variable-------------------------------------------------------------
-NNSFndAllocator g_allocator;
 
 // static variable-------------------------------------------------------------
 
@@ -61,7 +58,7 @@ void TwlMain(void)
 	(void)RTC_Init();
 	
 	// システムの初期化------------------
-	InitAllocator( &g_allocator );
+	InitAllocator();
 	CMN_InitFileSystem( &g_allocator );
 	
 	InitBG();
@@ -75,23 +72,6 @@ void TwlMain(void)
 		
 		PictoChatMain();
 	}
-}
-
-
-// アロケータの初期化
-static void InitAllocator( NNSFndAllocator* pAllocator )
-{
-    u32   arenaLow      = MATH_ROUNDUP  ((u32)OS_GetMainArenaLo(), 16);
-    u32   arenaHigh     = MATH_ROUNDDOWN((u32)OS_GetMainArenaHi(), 16);
-    u32   heapSize      = arenaHigh - arenaLow;
-    void* heapMemory    = OS_AllocFromMainArenaLo(heapSize, 16);
-    NNSFndHeapHandle    heapHandle;
-    SDK_NULL_ASSERT( pAllocator );
-
-    heapHandle = NNS_FndCreateExpHeap(heapMemory, heapSize);
-    SDK_ASSERT( heapHandle != NNS_FND_HEAP_INVALID_HANDLE );
-
-    NNS_FndInitAllocatorForExpHeap(pAllocator, heapHandle, 4);
 }
 
 

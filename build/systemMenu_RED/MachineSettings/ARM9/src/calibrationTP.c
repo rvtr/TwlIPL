@@ -71,6 +71,7 @@ typedef struct CalibWork {
 	u16					last_y;
 	TPData				sample[2];
 	TPCalibrateParam 	calibrate;
+	TWLTPCalibData		calibData;
 }CalibWork;
 
 // extern data------------------------------------------
@@ -406,20 +407,23 @@ int TP_CalibrationMain( void )
 			}
 			
 			if( ( pad.trg & PAD_BUTTON_A ) || tp_ok ) {
-				GetSYSMWork()->ncd_invalid		= 0;
-				GetNCDWork()->option.input_tp	= 1;				// タッチパネル入力フラグを立てる。
-				GetNCDWork()->tp.raw_x1			= s_pCw->sample[0].x;
-				GetNCDWork()->tp.raw_y1			= s_pCw->sample[0].y;
-				GetNCDWork()->tp.dx1			= 32;
-				GetNCDWork()->tp.dy1			= 32;
-				GetNCDWork()->tp.raw_x2			= s_pCw->sample[1].x;
-				GetNCDWork()->tp.raw_y2			= s_pCw->sample[1].y;
-				GetNCDWork()->tp.dx2			= DISP_X_SIZE - 32;
-				GetNCDWork()->tp.dy2			= DISP_Y_SIZE - 32;
+				GetSYSMWork()->ncd_invalid	= 0;
+				
+				s_pCw->calibData.data.raw_x1	= s_pCw->sample[0].x;
+				s_pCw->calibData.data.raw_y1	= s_pCw->sample[0].y;
+				s_pCw->calibData.data.dx1		= 32;
+				s_pCw->calibData.data.dy1		= 32;
+				s_pCw->calibData.data.raw_x2	= s_pCw->sample[1].x;
+				s_pCw->calibData.data.raw_y2	= s_pCw->sample[1].y;
+				s_pCw->calibData.data.dx2		= DISP_X_SIZE - 32;
+				s_pCw->calibData.data.dy2		= DISP_Y_SIZE - 32;
+				
+				TSD_SetTPCalibration( &s_pCw->calibData );
+				TSD_SetFlagTP( TRUE );								// タッチパネル入力フラグを立てる。
 				// ::::::::::::::::::::::::::::::::::::::::::::::
-				// NVRAMへの書き込み
+				// TWL設定データファイルへの書き込み
 				// ::::::::::::::::::::::::::::::::::::::::::::::
-				(void)NVRAMm_WriteNitroConfigData( GetNCDWork() );
+				(void)SYSM_WriteTWLSettingsFile();
 				
 				ReturnMenu();
 				return 0;
@@ -438,8 +442,8 @@ int TP_CalibrationMain( void )
 	if( ( pad.trg & PAD_BUTTON_B ) || tp_cancel ){
 		(void)TP_CalcCalibrateParam(
 				&s_pCw->calibrate,
-				GetNCDWork()->tp.raw_x1, GetNCDWork()->tp.raw_y1, (u16)GetNCDWork()->tp.dx1, (u16)GetNCDWork()->tp.dy1,
-				GetNCDWork()->tp.raw_x2, GetNCDWork()->tp.raw_y2, (u16)GetNCDWork()->tp.dx2, (u16)GetNCDWork()->tp.dy2 );
+				s_pCw->calibData.data.raw_x1, s_pCw->calibData.data.raw_y1, (u16)s_pCw->calibData.data.dx1, (u16)s_pCw->calibData.data.dy1,
+				s_pCw->calibData.data.raw_x2, s_pCw->calibData.data.raw_y2, (u16)s_pCw->calibData.data.dx2, (u16)s_pCw->calibData.data.dy2 );
 		TP_SetCalibrateParam( &s_pCw->calibrate );
 		ReturnMenu();
 		return 0;
@@ -452,7 +456,7 @@ int TP_CalibrationMain( void )
 // メニューに戻る
 static void ReturnMenu( void )
 {
-	NNS_FndFreeToAllocator( &g_allocator, s_pCw );				// キャリブレーション用変数の開放
+	Free( s_pCw );				// キャリブレーション用変数の開放
 	s_pCw = NULL;
 	OS_Printf("Free :CalibWork\n");
 	MachineSettingInit();
@@ -474,7 +478,7 @@ void TP_CalibrationInit( void )
 	
 	DisplayInit();
 	
-	s_pCw = NNS_FndAllocFromAllocator( &g_allocator, sizeof(CalibWork) );				// キャリブレーション用変数の確保
+	s_pCw = Alloc( sizeof(CalibWork) );				// キャリブレーション用変数の確保
 	if( s_pCw == NULL ) {
 		OS_Panic("ARM9- Fail to allocate memory...\n");
 	}

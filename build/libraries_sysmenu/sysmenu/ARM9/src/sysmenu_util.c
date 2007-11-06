@@ -23,7 +23,7 @@
 // extern data------------------------------------------
 
 // function's prototype declaration---------------------
-static s64 SYSMi_CalcRtcSecOffset( RTCDate *datep, RTCTime *timep );
+static s64 SYSMi_CalcRTCSecOffset( RTCDate *datep, RTCTime *timep );
 
 // global variable -------------------------------------
 
@@ -34,29 +34,11 @@ static s64 SYSMi_CalcRtcSecOffset( RTCDate *datep, RTCTime *timep );
 // function's description-------------------------------
 
 //======================================================================
-//  NITRO設定データ　ワーク制御
-//======================================================================
-
-// NITRO設定データのニックネーム・色・誕生日の初期化。
-void NCD_ClearOwnerInfo( void )
-{
-	NitroConfigData *ncdp = GetNCDWork();
-	
-	MI_CpuClear16( &ncdp->owner, sizeof(NvOwnerInfo) );
-	ncdp->owner.birthday.month			= 1;
-	ncdp->owner.birthday.day			= 1;
-	ncdp->option.input_birthday			= 0;
-	ncdp->option.input_favoriteColor	= 0;
-	ncdp->option.input_nickname			= 0;
-}
-
-
-//======================================================================
 //  RTCオフセット制御
 //======================================================================
 
 // RTCに新しい設定値をセットして、その値をもとにrtcOffset値を算出する。
-s64 SYSM_CalcRtcOffsetAndSetDateTime( RTCDate *newDatep, RTCTime *newTimep )
+s64 SYSM_CalcRTCOffsetAndSetDateTime( RTCDate *newDatep, RTCTime *newTimep )
 {
 	RTCDate oldDate;
 	RTCTime oldTime;
@@ -70,14 +52,14 @@ s64 SYSM_CalcRtcOffsetAndSetDateTime( RTCDate *newDatep, RTCTime *newTimep )
 	oldTime.second = 0;
 	
 	// RTC設定時は、今回の設定でどれだけRTC値が変化したか（秒オフセット単位）を算出。
-	if( ( oldDate.year < NCD_GetRtcLastSetYear() ) && ( NCD_GetInputRTC() ) ) {
+	if( ( oldDate.year < TSD_GetRTCLastSetYear() ) && ( TSD_IsSetDateTime() ) ) {
 		oldDate.year += 100;										// 前回の設定～今回の設定の間にRTCが一周してしまったら、yearは100を加算してoffsetを計算する。
 	}
-	NCD_SetRtcLastSetYear( (u8)newDatep->year );
+	TSD_SetRTCLastSetYear( (u8)newDatep->year );
 	
-	offset0	= SYSMi_CalcRtcSecOffset( &oldDate, &oldTime );			// 設定直前のRTC値のオフセットを算出
-	offset1	= SYSMi_CalcRtcSecOffset(  newDatep, newTimep );		// 新しくセットされたRTC値のオフセットを算出
-	offset	= NCD_GetRtcOffset() + offset1 - offset0;				// 新RTC_ofs と 現在のRTC_ofs の差分の値を加算してリターン。
+	offset0	= SYSMi_CalcRTCSecOffset( &oldDate, &oldTime );			// 設定直前のRTC値のオフセットを算出
+	offset1	= SYSMi_CalcRTCSecOffset(  newDatep, newTimep );		// 新しくセットされたRTC値のオフセットを算出
+	offset	= TSD_GetRTCOffset() + offset1 - offset0;				// 新RTC_ofs と 現在のRTC_ofs の差分の値を加算してリターン。
 	
 	OS_Printf ("Now    Date = year:%3d month:%3d date:%3d  hour:%3d minute:%3d second:%3d\n",
 			   oldDate.year, oldDate.month,  oldDate.day,
@@ -95,7 +77,7 @@ s64 SYSM_CalcRtcOffsetAndSetDateTime( RTCDate *newDatep, RTCTime *newTimep )
 
 // RTCオフセット値の算出
 #define SECOND_OFFSET
-static s64 SYSMi_CalcRtcSecOffset( RTCDate *datep, RTCTime *timep )
+static s64 SYSMi_CalcRTCSecOffset( RTCDate *datep, RTCTime *timep )
 {
 	u32 i;
 	int uruu   = 0;
@@ -160,6 +142,7 @@ u32 SYSM_GetDayNum( u32 year, u32 month )
 }
 */
 
+
 // 簡易うるう年の判定 (うるう年：1、通常の年：0）※RTCのとりうる範2000～2100年に限定する。
 BOOL SYSM_IsLeapYear100( u32 year )
 {
@@ -168,5 +151,30 @@ BOOL SYSM_IsLeapYear100( u32 year )
 	}else {
 		return TRUE;
 	}
+}
+
+
+// RTCの日付が正しいかチェック
+BOOL SYSM_CheckRTCDate( RTCDate *datep )
+{
+	if(	 ( datep->year >= 100 )
+	  || ( datep->month < 1 ) || ( datep->month > 12 )
+	  || ( datep->day   < 1 ) || ( datep->day   > 31 )
+	  || ( datep->week >= RTC_WEEK_MAX ) ) {
+		return FALSE;
+	}
+	return TRUE;
+}
+
+
+// RTCの時刻が正しいかチェック
+BOOL SYSM_CheckRTCTime( RTCTime *timep )
+{
+	if(  ( timep->hour   > 23 )
+	  || ( timep->minute > 59 )
+	  || ( timep->second > 59 ) ) {
+		return FALSE;
+	}
+	return TRUE;
 }
 

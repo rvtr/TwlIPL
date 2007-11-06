@@ -20,14 +20,15 @@
 #include "spi.h"
 
 // define data----------------------------------------------------------
+#if 0
+#define DEBUG_Printf					OS_TPrintf
+#else
+#define DEBUG_Printf(...)				((void)0)
+#endif
 
-#define NCD_EX_FORCE_ENABLE							// このスイッチを定義すると、SYSMバージョンに関わらず強制的にNitroConfigDataExが有効になる。
-													// ※実機上では、このフラグのON,OFFに関係なく正常動作するが、アプリビルドをデバッガや他実機で動作させる際に、ここがONでないとダメ。
-													//   読み込まれていないNCDEXをリードして死亡してしまうので注意。
-
-#define SAVE_COUNT_MAX					0x0080		// NitroConfigData.saveCountの最大値
-#define SAVE_COUNT_MASK					0x007f		// NitroConfigData.saveCountの値の範囲をマスクする。(0x00-0x7f）
-#define NCD_NOT_CORRECT					0x00ff		// NITRO設定データが読み出されていない or 有効なものがないことを示す。
+#define SAVE_COUNT_MAX					0x0080		// NTRSettingsData.saveCountの最大値
+#define SAVE_COUNT_MASK					0x007f		// NTRSettingsData.saveCountの値の範囲をマスクする。(0x00-0x7f）
+#define NSD_NOT_CORRECT					0x00ff		// NTR設定データが読み出されていない or 有効なものがないことを示す。
 #define NVRAM_RETRY_NUM					8			// NVRAMリトライ回数
 
 // NVRAMステータスレジスタ値
@@ -37,7 +38,7 @@
 
 #define READ_IPL2_HEADER_ADDR			0x18		// IPL2ヘッダのうち、読み込みが必要な部分の先頭アドレス
 #define READ_IPL2_HEADER_SIZE			0x0a		// IPL2ヘッダのうち、読み込みが必要なサイズ
-#define NCD_ROM_ADDR_SHIFT				3
+#define NSD_ROM_ADDR_SHIFT				3
 
 // NVRAM関連送信コマンドステート
 static enum NvramCommState{
@@ -54,38 +55,50 @@ static enum NvramCommState{
 // IPL2ヘッダの一部（0x18からのデータ)
 typedef struct IPL2HeaderPart {
 	struct {
-		u8	timestamp[5];				// IPL2タイムスタンプ [0]:分,[1]:時,[2]:日,[3]:月,[4]:年
-		u8	ipl2_type;					// IPL2タイプ(nitroConfigData.hで定義のIPL2_TYPE...）
+		u8	timestamp[5];				// NTR-IPL2タイムスタンプ [0]:分,[1]:時,[2]:日,[3]:月,[4]:年
+		u8	ipl2_type;					// NTR-IPL2タイプ
 		u8	rsv[2];
 	} version;
 	
-	u16		ncd_rom_addr;
+	u16		nsd_rom_addr;
 	
-	u8		pad[ 0x16 ];					// ※キャッシュラインに合わせるためのパディング。本来は必要なし。
+	u8		pad[ 0x16 ];				// ※キャッシュラインに合わせるためのパディング。本来は必要なし。
 } IPL2HeaderPart;	// 0x20bytes
 
 
 // function's prototype-------------------------------------------------
-static void NCD_ReadIPL2Header( void );
-static int  NVRAMm_checkCorrectNCD(NCDStoreEx *ncdsp);
-static BOOL NCD_CheckDataValue( NCDStoreEx *ncdsp );
-static BOOL NVRAMm_ExecuteCommand( int nv_state, u32 addr, u16 size, u8 *srcp );
-static void Callback_NVRAM(PXIFifoTag tag, u32 data, BOOL err);
+u32  NSD_GetNSDRomAddr( void );			// NTRSettingデータのNVRAM格納アドレスを取得
+u8   NSD_GetIPL2Type( void );			// NTR-IPL2タイプを取得
+const u8 *NSD_GetIPL2Timestamp( void );	// NTR-IPL2のタイムスタンプを取得
 
-// const data-----------------------------------------------------------
-
-// global variables-----------------------------------------------------
-NitroConfigDataEx ncdEx;
+static void NSDi_ReadIPL2Header( void );
+static BOOL NSDi_CheckCorrectNSD( NSDStoreEx (*pNSDStoreExArray)[2], u8 region );
+static BOOL NSDi_CheckDataValue( NSDStoreEx *pNSDStore, u8 region );
+static BOOL NVRAMm_ExecuteCommand( int nvState, u32 addr, u16 size, u8 *pSrc );
+static void Callback_NVRAM( PXIFifoTag tag, u32 data, BOOL err );
 
 // static variables-----------------------------------------------------
-static volatile BOOL	nv_cb_occurred;
-static volatile u16		nv_result;
-static u16 				ena_ncd_num = NCD_NOT_CORRECT;
-static u16 				next_saveCount;
-static NCDStoreEx		ncds[2] ATTRIBUTE_ALIGN(32);
+static NSDStoreEx		s_NSDStoreEx ATTRIBUTE_ALIGN(32);
+static IPL2HeaderPart	s_IPL2Header ATTRIBUTE_ALIGN(32);
+static BOOL				s_isReadIPL2H = FALSE;
+static volatile BOOL	s_nvCbOccurred;
+static volatile u16		s_nvResult;
+static int 				s_indexNSD = NSD_NOT_CORRECT;
 
-static IPL2HeaderPart	ipl2Header ATTRIBUTE_ALIGN(32);
-static BOOL				read_ipl2h = FALSE;
+#ifndef SDK_FINALROM
+static NSDStoreEx (*s_pNSDStoreExArray)[2];
+#endif
+// global variables-----------------------------------------------------
+NTRSettingsData			*g_pNSD   = &s_NSDStoreEx.nsd;
+NTRSettingsDataEx		*g_pNSDEx = &s_NSDStoreEx.nsd_ex;
+
+// const data-----------------------------------------------------------
+static const u16 s_validLangBitmapList[] = {
+	NTR_LANG_BITMAP_WW,
+	NTR_LANG_BITMAP_CHINA,
+	NTR_LANG_BITMAP_KOREA,
+};
+
 
 // function's description-----------------------------------------------
 
@@ -95,268 +108,287 @@ static BOOL				read_ipl2h = FALSE;
 // コンポーネント上での使用時
 
 // IPL2ヘッダの読み出し
-static void NCD_ReadIPL2Header( void )
+static void NSDi_ReadIPL2Header( void )
 {
-	if( !read_ipl2h ) {
+	if( !s_isReadIPL2H ) {
 		OS_TPrintf( "IPL2Header:%x\n",   sizeof(IPL2HeaderPart) );
-		DC_InvalidateRange( &ipl2Header, sizeof(IPL2HeaderPart) );
-		while( !NVRAMm_ExecuteCommand( COMM_RD, READ_IPL2_HEADER_ADDR, READ_IPL2_HEADER_SIZE, (u8 *)&ipl2Header ) ) {}
-		read_ipl2h = TRUE;
+		DC_InvalidateRange( &s_IPL2Header, sizeof(IPL2HeaderPart) );
+		while( !NVRAMm_ExecuteCommand( COMM_RD, READ_IPL2_HEADER_ADDR, READ_IPL2_HEADER_SIZE, (u8 *)&s_IPL2Header ) ) {}
+		s_isReadIPL2H = TRUE;
 	}
 }
 
 // IPL2タイプの取得
-u8 NCD_GetIPL2Type( void )
+u8 NSD_GetIPL2Type( void )
 {
-	NCD_ReadIPL2Header();
-	return ipl2Header.version.ipl2_type;
+	NSDi_ReadIPL2Header();
+	return s_IPL2Header.version.ipl2_type;
 }
 
-// IPL2バージョンの取得
-u8 *NCD_GetIPL2Version( void )
+// IPL2タイムスタンプの取得
+const u8 *NSD_GetIPL2Timestamp( void )
 {
-	NCD_ReadIPL2Header();
-	return ipl2Header.version.timestamp;
+	NSDi_ReadIPL2Header();
+	return s_IPL2Header.version.timestamp;
 }
 
-// NCD格納ROMアドレスの取得
-u32 NCD_GetNCDRomAddr( void )
+// NSD格納ROMアドレスの取得
+u32 NSD_GetNSDRomAddr( void )
 {
-	NCD_ReadIPL2Header();
-	return (u32)( ipl2Header.ncd_rom_addr << NCD_ROM_ADDR_SHIFT );
+	NSDi_ReadIPL2Header();
+	return (u32)( s_IPL2Header.nsd_rom_addr << NSD_ROM_ADDR_SHIFT );
 }
 
 //----------------------------------------------------------------------
-// NITRO設定データのリード
+// NTR設定データのリード
 //----------------------------------------------------------------------
-int NVRAMm_ReadNitroConfigData(NitroConfigData *dstp)
+
+// NTR設定データリード済み
+BOOL NSD_IsReadSettings( void )
 {
-	int			result = 0;
-	NCDStoreEx	*ncdsp = &ncds[ 0 ];
+	return ( s_indexNSD != NSD_NOT_CORRECT );
+}
+
+
+BOOL NSD_ReadSettings( u8 region, NSDStoreEx (*pTempBuffer)[2] )
+{
+	NSDStoreEx *pNSDStoreEx = (NSDStoreEx *)pTempBuffer;
+#ifndef SDK_FINALROM
+	s_pNSDStoreExArray = pTempBuffer;
+	OS_TPrintf( "NSDStoreBuff : %08x %08x\n", &(*s_pNSDStoreExArray)[ 0 ], &(*s_pNSDStoreExArray)[ 1 ] );
+#endif
 	
-	DC_InvalidateRange( ncdsp, sizeof(NCDStoreEx) * 2 );
+	DC_InvalidateRange( pNSDStoreEx, sizeof(NSDStoreEx) * 2 );
 	
-	// フラッシュからニ重化されているNITRO設定データを読み出す。
-	while( !NVRAMm_ExecuteCommand( COMM_RD, NCD_GetNCDRomAddr(),                       sizeof(NCDStoreEx), (u8 *)&ncdsp[0]) ) {}
-	while( !NVRAMm_ExecuteCommand( COMM_RD, NCD_GetNCDRomAddr() + SPI_NVRAM_PAGE_SIZE, sizeof(NCDStoreEx), (u8 *)&ncdsp[1]) ) {}
-	OS_TPrintf("NCD read addr=%08x\n", NCD_GetNCDRomAddr() );
+	// フラッシュからニ重化されているNTR設定データを読み出す。
+	while( !NVRAMm_ExecuteCommand( COMM_RD, NSD_GetNSDRomAddr(),                       sizeof(NSDStoreEx), (u8 *)&pNSDStoreEx[ 0 ] ) ) {}
+	while( !NVRAMm_ExecuteCommand( COMM_RD, NSD_GetNSDRomAddr() + SPI_NVRAM_PAGE_SIZE, sizeof(NSDStoreEx), (u8 *)&pNSDStoreEx[ 1 ] ) ) {}
+	OS_TPrintf("NSD read addr=%08x\n", NSD_GetNSDRomAddr() );
 	
 	// 読み出したデータのどちらが有効かを判定する。
-	if(NVRAMm_checkCorrectNCD(ncdsp)) {
-		next_saveCount	= 1;
-		result			= 1;
-		goto END;													// 有効なデータがなければエラー終了。
-	}
-	next_saveCount = (u8)((ncdsp[ena_ncd_num].saveCount + 1) & SAVE_COUNT_MASK);
-	
-	// 有効なNITRO設定データをバッファに転送
-	if( dstp != NULL ) {
-		SVC_CpuCopy( (void *)&ncdsp[ ena_ncd_num ].ncd,    (void *)dstp, sizeof(NitroConfigData), 16);
-		SVC_CpuCopy( (void *)&ncdsp[ ena_ncd_num ].ncd_ex, (void *)&ncdEx, sizeof(NitroConfigDataEx), 16);
+	if( NSDi_CheckCorrectNSD( pTempBuffer, region ) ) {
+		// 有効なNTR設定データを静的バッファに転送
+		MI_CpuCopyFast( (void *)&pNSDStoreEx[ s_indexNSD ], (void *)&s_NSDStoreEx, sizeof(NSDStoreEx) );
+	}else {
+		// 有効なデータがないなら、バッファをクリアする
+		OS_TPrintf( "NSD clear.\n" );
+		NSD_ClearSettings();
+		return FALSE;
 	}
 	
-END:
-	return result;
+	OS_TPrintf("Use NSD[%d]   : saveCount = %d\n", s_indexNSD, s_NSDStoreEx.saveCount);
+	
+	return TRUE;
 }
 
 
 //----------------------------------------------------------------------
-// NITRO設定データのライト
+// NTR設定データのライト
 //----------------------------------------------------------------------
-void NVRAMm_WriteNitroConfigData( NitroConfigData *srcp )
+BOOL NSD_WriteSettings( u8 region )
 {
-	NCDStoreEx *ncdsp = &ncds[ 0 ];
-	u16			size  = sizeof(NCDStore);
-	u32			flash_addr;
-	int			retry;
+	int retry;
+	u32 nvramAddr;
 	
-	// まだNITRO設定データがリードされていなければ、リードを行って必要な情報を取得する。
-	if( ena_ncd_num == NCD_NOT_CORRECT ) {
-		if( NVRAMm_ReadNitroConfigData( NULL ) ) {
-			ena_ncd_num = 0;										// 有効なデータがなければ"0"側にライトする。
-		}
+	// まだNTR設定データがリードされていなければ、リードを行って必要な情報を取得する。
+	if( !NSD_IsReadSettings() ) {
+		OS_TPrintf( "ERROR: Need call NSD_ReadSetting.\n" );
+		return FALSE;
 	}
 	
-	// NCD   のCRC、セーブカウント値、ライトアドレスの算出。
-	ncdsp->ncd				= *srcp;								// *GetNCDWork();　でも一緒やん。
-	ncdsp->ncd.version		= NITRO_CONFIG_DATA_VERSION;			// バージョンを現在のものに設定。
-	ncdsp->crc16	 		= SVC_GetCRC16( 0xffff, (const void *)&ncdsp->ncd,    sizeof(NitroConfigData) );
-	ncdsp->saveCount 		= next_saveCount;
-	next_saveCount	 		= (u8)( ( next_saveCount + 1 ) & SAVE_COUNT_MASK );
+	// NSD   のCRC、セーブカウント値、ライトアドレスの算出。
+	s_NSDStoreEx.nsd.version    = NTR_SETTINGS_DATA_VERSION;	// バージョンを現在のものに設定。
+	s_NSDStoreEx.crc16          = SVC_GetCRC16( 0xffff, (const void *)&s_NSDStoreEx.nsd, sizeof(NTRSettingsData) );
+	s_NSDStoreEx.saveCount      = (u8)( ( s_NSDStoreEx.saveCount + 1 ) & SAVE_COUNT_MASK );
 	
-	// NCD_EXのCRC算出。
-#ifndef NCD_EX_FORCE_ENABLE
-	if( ( NCD_GetIPL2Type() != IPL2_TYPE_NTR_WW ) && ( NCD_GetIPL2Type() & IPL2_TYPE_NCD_EX_FLAG ) )
-#endif
-	{
-		ncdsp->ncd_ex			= *GetNCDExWork();
-		ncdsp->ncd_ex.version	= NITRO_CONFIG_DATA_EX_VERSION;		// バージョンを現在のものに設定。
-		ncdsp->ncd_ex.valid_language_bitmap = VALID_LANG_BITMAP;
-		ncdsp->crc16_ex		 	= SVC_GetCRC16( 0xffff, (const void *)&ncdsp->ncd_ex, sizeof(NitroConfigDataEx) );
-		size					= sizeof(NCDStoreEx);				// ※書き込みサイズをNCDStoreExに拡張。
-	}
+	// NSD_EXのCRC算出。
+	s_NSDStoreEx.nsd_ex.version = NTR_SETTINGS_DATA_EX_VERSION;	// バージョンを現在のものに設定。
+	s_NSDStoreEx.nsd_ex.valid_language_bitmap = s_validLangBitmapList[ region & 0x03 ];	// ※WW,中,韓の３つのみにとりあえず対応
+	s_NSDStoreEx.crc16_ex       = SVC_GetCRC16( 0xffff, (const void *)&s_NSDStoreEx.nsd_ex, sizeof(NTRSettingsDataEx) );
 	
-	// NITRO設定データのライト
-	DC_FlushRange(ncdsp, sizeof(NCDStoreEx));
+	// NTR設定データのライト
+	DC_FlushRange( &s_NSDStoreEx, sizeof(NSDStoreEx) );
 	retry = NVRAM_RETRY_NUM;
 	while( retry-- ) {
-		ena_ncd_num	   ^= 0x01;										// リトライの度に書き込みアドレスを切り替える。
-		flash_addr		= NCD_GetNCDRomAddr() + ena_ncd_num * SPI_NVRAM_PAGE_SIZE;
-		OS_TPrintf("NCD write addr=%08x\n", flash_addr );
+		s_indexNSD ^= 0x01;									// リトライの度に書き込みアドレスを切り替える。
+		nvramAddr = NSD_GetNSDRomAddr() + s_indexNSD * SPI_NVRAM_PAGE_SIZE;
+		OS_TPrintf("NSD write addr=%08x\n", nvramAddr );
 		
-		if( NVRAMm_ExecuteCommand( COMM_WE, flash_addr, size, (u8 *)ncdsp) ) {
+		if( NVRAMm_ExecuteCommand( COMM_WE, nvramAddr, sizeof(NSDStoreEx), (u8 *)&s_NSDStoreEx ) ) {
 			OS_TPrintf("NVRAM Write succeeded.\n");
 			break;
 		}
 		SVC_WaitByLoop( 0x4000 );
 		OS_TPrintf("NVRAM Write retry = %d.\n", NVRAM_RETRY_NUM - retry );
 	}
-}
-
-
-//----------------------------------------------------------------------
-// ミラーリングされているNITRO設定データのどちらが有効かを判定
-//----------------------------------------------------------------------
-
-static int NVRAMm_checkCorrectNCD(NCDStoreEx *ncdsp)
-{
-	u16 i;
-	u16 ncd_valid = 0;
-	
-	// 各ミラーデータのCRC & saveCount正当性チェック
-	for(i = 0; i < 2; i++) {
-		u16  crc;
-		BOOL invalid = FALSE;
-		
-		crc = SVC_GetCRC16( 0xffff, (const void *)&ncdsp[i].ncd, sizeof(NitroConfigData) );
-		
-		if(    ( ncdsp[ i ].crc16          != crc )				// CRCが正しく、saveCount値が0x80以下で、かつバージョンが一致するデータを正当と判断。
-			|| ( ncdsp[ i ].ncd.version    != NITRO_CONFIG_DATA_VERSION )
-			|| ( ncdsp[ i ].saveCount      >= SAVE_COUNT_MAX ) ) {
-			OS_TPrintf("NCD   crc error.\n");
-			invalid = TRUE;
-		}
-		
-		// NCDExが有効なIPL2Typeならば、NCDExのCRCチェックを行う。
-#ifndef NCD_EX_FORCE_ENABLE
-		if( ( NCD_GetIPL2Type() != IPL2_TYPE_NTR_WW ) && ( NCD_GetIPL2Type() & IPL2_TYPE_NCD_EX_FLAG ) )
-#endif
-		{
-			crc = SVC_GetCRC16( 0xffff, (const void *)&ncdsp[i].ncd_ex, sizeof(NitroConfigDataEx) );
-			
-			if(   ( ncdsp[ i ].crc16_ex       != crc )
-			   || ( ncdsp[ i ].ncd_ex.version != NITRO_CONFIG_DATA_EX_VERSION ) ) {
-				OS_TPrintf("NCDEx crc error.\n");
-				invalid = TRUE;
-			}
-		}
-		// NCD, NCDExのCRCが正しいなら、データの中身をチェック。
-		if( !invalid ) {
-			if( NCD_CheckDataValue( &ncdsp[ i ] ) ) {
-				ncd_valid  |= 0x01 << i;						// データがおかしい値でないかもチェック。
-				ena_ncd_num = i;								// 有効なNCDのインデックスを切り替える。
-			}else {
-				invalid = TRUE;
-			}
-		}
-		
-		if( ncd_valid & ( 0x01 << i ) ) {
-			OS_TPrintf("NCD mirror%d is valid.:saveCount = %d\n", i, ncdsp[i].saveCount);
-		}else {
-			OS_TPrintf("NCD mirror%d is invalid.\n", i);
-		}
-	}
-	
-	
-	if( ncd_valid == 0 ) {
-		return 1;
-	}else if( ncd_valid == 0x03 ) {									
-	// ミラーリングされたNCDが両方ともに正当な場合、セーブカウント値が大きい方を有効とする。
-		u16 saveCount = (u8)( ( ncdsp[ 0 ].saveCount + 1 ) & SAVE_COUNT_MASK );
-		if( saveCount != ncdsp[ 1 ].saveCount ) {
-			ena_ncd_num = 0;
-		}
-	}
-	
-	OS_TPrintf("use NCD mirror%d.:saveCount = %d\n", ena_ncd_num, ncdsp[ena_ncd_num].saveCount);
-	
-	return 0;
-}
-
-
-// NITRO設定データの値が正しい値かチェック。	// FALSE:正しくない。TRUE：正しい。
-static BOOL NCD_CheckDataValue( NCDStoreEx *ncdsp )
-{
-	NitroConfigData   *ncdp   = &ncdsp->ncd;
-	NitroConfigDataEx *ncdexp = &ncdsp->ncd_ex;
-	
-	//ncdp->option;
-	// NCDのlanguageチェック
-	if( ~( LANG_BITMAP_WW & VALID_LANG_BITMAP ) & ( 0x0001 << ncdp->option.language ) ) {
-		OS_TPrintf("NCD: invalid language        : org:%02d ex:%02d bitmap:%04x\n",
-				   ncdp->option.language, ncdexp->language, ncdexp->valid_language_bitmap );
-		return FALSE;
-	}
-	// NCDExのlanguageチェック（NCDExが有効なのは、下記のIPL2タイプのもの）
-#ifndef NCD_EX_FORCE_ENABLE
-	if( ( NCD_GetIPL2Type() != IPL2_TYPE_NTR_WW ) && ( NCD_GetIPL2Type() & IPL2_TYPE_NCD_EX_FLAG ) )
-#endif
-	{
-		if(   ( ~VALID_LANG_BITMAP & ( 0x0001 << ncdexp->language ) )
-		   || ( ncdexp->valid_language_bitmap != VALID_LANG_BITMAP  ) ) {
-			
-			OS_TPrintf("NCDEx: invalid language    : org:%02d ex:%02d bitmap:%04x\n",
-					   ncdp->option.language, ncdexp->language, ncdexp->valid_language_bitmap );
-			return FALSE;
-		}
-	}
-	
-	//ncdp->owner;
-	// favoriteColorは4bitなので範囲外はない。
-	// birthday
-	if( ncdp->option.input_birthday ) {
-		if( ( ncdp->owner.birthday.month > 12 ) || ( ncdp->owner.birthday.day > 31 ) ) {
-			OS_TPrintf("NCD: invalid birthday        : %02d/%02d\n", ncdp->owner.birthday.month, ncdp->owner.birthday.day );
-			return FALSE;
-		}
-	}
-	
-	// nickname
-	if( ncdp->option.input_nickname ) {
-		if( ncdp->owner.nickname.length > NCD_NICKNAME_LENGTH ) {
-			OS_TPrintf("NCD: invalid nickname length : %02d\n", ncdp->owner.nickname.length );
-			return FALSE;
-		}
-	}
-	
-	// comment
-	if( ncdp->owner.comment.length  > NCD_COMMENT_LENGTH ) {
-		OS_TPrintf("NCD: invalid comment  length     : %02d\n", ncdp->owner.comment.length );
-		return FALSE;
-	}
-	
-	//ncdp->alarm;
-	if( ( ncdp->alarm.hour > 23 ) || ( ncdp->alarm.minute > 59 ) ) {
-		OS_TPrintf("NCD: invalid alarm time          : %02d:%02d\n", ncdp->alarm.hour, ncdp->alarm.minute );
-		return FALSE;
-	}
-	
-	//ncdp->tp;
-	// TPキャリブレーション値は、TP_CalcCalibrateParamで値のチェックをしているので、チェックしない。
-	
-	OS_TPrintf( "NCD: correct data.\n" );
 	return TRUE;
 }
 
 
 //----------------------------------------------------------------------
-// NVRAMへのアクセスルーチン本体 ( nv_state <- COMM_RD or COMM_WE )
+// ミラーリングされているNTR設定データのどちらが有効かを判定
 //----------------------------------------------------------------------
-static BOOL NVRAMm_ExecuteCommand( int nv_state, u32 addr, u16 size, u8 *srcp )
+
+static BOOL NSDi_CheckCorrectNSD( NSDStoreEx (*pNSDStoreExArray)[2], u8 region )
 {
+	NSDStoreEx *pNSDStoreEx = (NSDStoreEx *)pNSDStoreExArray;
+	u16 i;
+	u16 nsd_valid = 0;
+	
+	// 各ミラーデータのCRC & saveCount正当性チェック
+	for( i = 0; i < 2; i++ ) {
+		u16  crc;
+		BOOL isInvalid = FALSE;
+		
+		// NSD のCRCチェックを行う。
+		crc = SVC_GetCRC16( 0xffff, (const void *)&pNSDStoreEx[i].nsd, sizeof(NTRSettingsData) );
+		
+		if(    ( pNSDStoreEx[ i ].crc16       != crc )				// CRCが正しく、saveCount値が0x80以下で、かつバージョンが一致するデータを正当と判断。
+			|| ( pNSDStoreEx[ i ].nsd.version != NTR_SETTINGS_DATA_VERSION )
+			|| ( pNSDStoreEx[ i ].saveCount   >= SAVE_COUNT_MAX ) ) {
+			OS_TPrintf("NSD   crc error.\n");
+			isInvalid = TRUE;
+		}
+		
+		// NSDEx のCRCチェックを行う。
+		crc = SVC_GetCRC16( 0xffff, (const void *)&pNSDStoreEx[i].nsd_ex, sizeof(NTRSettingsDataEx) );
+		
+		if(   ( pNSDStoreEx[ i ].crc16_ex       != crc )
+		   || ( pNSDStoreEx[ i ].nsd_ex.version != NTR_SETTINGS_DATA_EX_VERSION ) ) {
+			OS_TPrintf("NSDEx crc error.\n");
+			isInvalid = TRUE;
+		}
+		
+		// NSD, NSDExのCRCが正しいなら、データの中身をチェック。
+		if( !isInvalid ) {
+			if( NSDi_CheckDataValue( &pNSDStoreEx[ i ], region ) ) {	// データがおかしい値でないかもチェック。
+				nsd_valid  |= 0x01 << i;								// "有効"フラグをセット
+				s_indexNSD = i;										// NCDのインデックスも切り替え。
+			}else {
+				isInvalid = TRUE;
+			}
+		}
+		
+		if( nsd_valid & ( 0x01 << i ) ) {
+			OS_TPrintf("NSD[%d] valid : saveCount = %d\n", i, pNSDStoreEx[i].saveCount);
+		}else {
+			OS_TPrintf("NSD[%d] invalid.\n", i);
+		}
+	}
+	
+	
+	if( nsd_valid == 0 ) {
+		s_indexNSD = 1;			// 最初のWrite時に"0"になるように"1"にしておく
+		return FALSE;
+	}else if( nsd_valid == 0x03 ) {									
+		// ミラーリングされたNSDが両方ともに正当な場合、セーブカウント値が大きい方を有効とする。
+		u16 saveCount = (u8)( ( pNSDStoreEx[ 0 ].saveCount + 1 ) & SAVE_COUNT_MASK );
+		s_indexNSD = ( saveCount == pNSDStoreEx[ 1 ].saveCount ) ? (u16)1 : (u16)0;
+	}
+	return TRUE;
+}
+
+
+// NTR設定データの値が正しい値かチェック。	// FALSE:正しくない。TRUE：正しい。
+static BOOL NSDi_CheckDataValue( NSDStoreEx *pNSDStoreEx, u8 region )
+{
+	NTRSettingsData   *pNSD   = &pNSDStoreEx->nsd;
+	NTRSettingsDataEx *pNSDEx = &pNSDStoreEx->nsd_ex;
+	u16 validLangBitmap = s_validLangBitmapList[ region & 0x03 ];		// ※WW,中,韓の３つのみにとりあえず対応
+	
+	//pNSD->option;
+	// NSDのlanguageチェック（ NSD側のlanguageは、日・英・独・仏・伊・西の６言語のうちの、対応言語のみの値となる。）
+	if( ~( NTR_LANG_BITMAP_WW & validLangBitmap ) & ( 0x0001 << pNSD->option.language ) ) {
+		OS_TPrintf("NSD: invalid language        : org:%02d ex:%02d bitmap:%04x\n",
+				   pNSD->option.language, pNSDEx->language, pNSDEx->valid_language_bitmap );
+		return FALSE;
+	}
+	
+	// NSDExのlanguageチェック（こちらには、中・韓も入る）
+	if( ( ~validLangBitmap & ( 0x0001 << pNSDEx->language ) ) ||
+		( pNSDEx->valid_language_bitmap != validLangBitmap ) ) {
+		OS_TPrintf("NSDEx: invalid language    : org:%02d ex:%02d bitmap:%04x\n",
+				   pNSD->option.language, pNSDEx->language, pNSDEx->valid_language_bitmap );
+		return FALSE;
+	}
+	
+	//pNSD->owner;
+	// favoriteColorは4bitなので範囲外はない。
+	
+	// birthday
+	if( pNSD->option.isSetBirthday ) {
+		if( ( pNSD->owner.birthday.month > 12 ) || ( pNSD->owner.birthday.day > 31 ) ) {
+			OS_TPrintf("NSD: invalid birthday        : %02d/%02d\n", pNSD->owner.birthday.month, pNSD->owner.birthday.day );
+			return FALSE;
+		}
+	}
+	
+	// nickname
+	if( pNSD->option.isSetNickname ) {
+		if( pNSD->owner.nickname.length > NTR_NICKNAME_LENGTH ) {
+			OS_TPrintf("NSD: invalid nickname length : %02d\n", pNSD->owner.nickname.length );
+			return FALSE;
+		}
+	}
+	
+	// comment
+	if( pNSD->owner.comment.length  > NTR_COMMENT_LENGTH ) {
+		OS_TPrintf("NSD: invalid comment  length     : %02d\n", pNSD->owner.comment.length );
+		return FALSE;
+	}
+	
+	//pNSD->alarm;
+	if( ( pNSD->alarm.hour > 23 ) || ( pNSD->alarm.minute > 59 ) ) {
+		OS_TPrintf("NSD: invalid alarm time          : %02d:%02d\n", pNSD->alarm.hour, pNSD->alarm.minute );
+		return FALSE;
+	}
+	
+	//pNSD->tp;
+	// TPキャリブレーション値は、TP_CalcCalibrateParamで値のチェックをしているので、チェックしない。
+	
+//	OS_TPrintf( "NSD: correct data.\n" );
+	return TRUE;
+}
+
+
+// NTR設定データのクリア
+void NSD_ClearSettings( void )
+{
+	NSDStoreEx *pNSDStoreEx = &s_NSDStoreEx;
+	
+	s_indexNSD = 1;							// ライト前に反転されるので、"0"側が選択されるように"1"にしておく
+	
+	MI_CpuClear16( pNSDStoreEx, sizeof(NSDStoreEx) );
+	// 初期値が0以外のもの
+	pNSDStoreEx->nsd.version    = NTR_SETTINGS_DATA_VERSION;
+	pNSDStoreEx->nsd_ex.version = NTR_SETTINGS_DATA_EX_VERSION;
+	pNSDStoreEx->nsd.owner.birthday.month = 1;
+	pNSDStoreEx->nsd.owner.birthday.day   = 1;
+	OS_TPrintf( "NSDStoreEx cleared.\n" );
+}
+
+
+// NTR設定データのニックネーム・色・誕生日の初期化。
+void NSD_ClearOwnerInfo( void )
+{
+	MI_CpuClear16( &GetNSD()->owner, sizeof(NTROwnerInfo) );
+	GetNSD()->owner.birthday.month	= 1;
+	GetNSD()->owner.birthday.day	= 1;
+	GetNSD()->option.isSetBirthday	= 0;
+	GetNSD()->option.isSetUserColor	= 0;
+	GetNSD()->option.isSetNickname	= 0;
+}
+
+
+//----------------------------------------------------------------------
+// NVRAMへのアクセスルーチン本体 ( nvState <- COMM_RD or COMM_WE )
+//----------------------------------------------------------------------
+static BOOL NVRAMm_ExecuteCommand( int nvState, u32 addr, u16 size, u8 *pSrc )
+{
+	static u8 sr_buf[ 32 ] ATTRIBUTE_ALIGN(32);
     OSTick	start;
-	BOOL	nv_sending	 = FALSE;
-	u8		*nvram_srp	 = (u8 *)&ncds[1];
+	BOOL	isSending = FALSE;
+	u8		*pSR = (u8 *)sr_buf;
 	
 	PXI_SetFifoRecvCallback( PXI_FIFO_TAG_NVRAM , Callback_NVRAM );
 	
@@ -364,75 +396,75 @@ static BOOL NVRAMm_ExecuteCommand( int nv_state, u32 addr, u16 size, u8 *srcp )
 		//---------------------------------------
 		// NVRAMコマンドを発行する
 		//---------------------------------------
-		if( !nv_sending ) {
+		if( !isSending ) {
 			
-			nv_cb_occurred	= FALSE;
+			s_nvCbOccurred	= FALSE;
 			
-			switch( nv_state ) {
+			switch( nvState ) {
 			  case COMM_RD:
-				nv_sending	= SPI_NvramReadDataBytes( addr, size, srcp );
+				isSending	= SPI_NvramReadDataBytes( addr, size, pSrc );
 				break;
 				
 			  case COMM_WE:
-				nv_sending	= SPI_NvramWriteEnable();
+				isSending	= SPI_NvramWriteEnable();
 				break;
 				
 			  case COMM_WR:
-				nv_sending	= SPI_NvramPageWrite( addr, size , srcp );
+				isSending	= SPI_NvramPageWrite( addr, size , pSrc );
 				start		= OS_GetTick();
 				break;
 				
 			  case COMM_RDSR_WE:
 			  case COMM_RDSR_WR:
-				nv_sending	= SPI_NvramReadStatusRegister( nvram_srp );
+				isSending	= SPI_NvramReadStatusRegister( pSR );
 				break;
 				
 			  case COMM_SRST:
-				nv_sending	= SPI_NvramSoftwareReset();
+				isSending	= SPI_NvramSoftwareReset();
 				break;
 			}
 		//---------------------------------------
 		// コマンド実行結果（コールバック発生）を待って結果を処理する
 		//---------------------------------------
-		}else { // nv_sending == TRUE
-			if( nv_cb_occurred == TRUE ) {							// コールバック発生を待つ。
+		}else { // isSending == TRUE
+			if( s_nvCbOccurred == TRUE ) {							// コールバック発生を待つ。
 				
-				nv_sending = FALSE;
+				isSending = FALSE;
 				
-				if( nv_result == SPI_PXI_RESULT_SUCCESS ) {
-					switch( nv_state ) {
+				if( s_nvResult == SPI_PXI_RESULT_SUCCESS ) {
+					switch( nvState ) {
 					  case COMM_RD:
 						return TRUE;
 						
 					  case COMM_WE:
-						nv_state = COMM_RDSR_WE;
+						nvState = COMM_RDSR_WE;
 						break;
 						
 					  case COMM_WR:
-						nv_state = COMM_RDSR_WR;
+						nvState = COMM_RDSR_WR;
 						break;
 						
 					  case COMM_RDSR_WE:
 					  case COMM_RDSR_WR:
 						
-						DC_InvalidateRange( nvram_srp, 1 );
+						DC_InvalidateRange( pSR, 1 );
 						
-						if( nv_state == COMM_RDSR_WE ) {				// ライトイネーブル確認ステートなら
-							if( ( *nvram_srp & SR_WEN ) ) {
-								nv_state = COMM_WR;
+						if( nvState == COMM_RDSR_WE ) {				// ライトイネーブル確認ステートなら
+							if( ( *pSR & SR_WEN ) ) {
+								nvState = COMM_WR;
 							}else {
 								OS_TPrintf("NVRAM ERR: Write Enable Invalid.\n");
 								return FALSE;
 							}
 						}else {
-							if( ( *nvram_srp & SR_WIP ) == 0 ) {		// ライト／イレース終了
+							if( ( *pSR & SR_WIP ) == 0 ) {		// ライト／イレース終了
 								return TRUE;
 							}else {
-								if(	  ( *nvram_srp & SR_EER )			// SR_EERが立っていたらエラー
+								if(	  ( *pSR & SR_EER )			// SR_EERが立っていたらエラー
 								   || ( OS_TicksToMilliSeconds( OS_GetTick() - start ) > 4000 ) ) {
 																		// コマンド発行から4秒経過したらエラー（※保険）
-									OS_TPrintf( "NVRAM SR : %02x\n", *nvram_srp );
-									nv_state = COMM_SRST;
+									DEBUG_Printf( "NVRAM SR : %02x\n", *pSR );
+									nvState = COMM_SRST;
 								}else {
 									SVC_WaitByLoop( 0x4000 );
 								}
@@ -444,7 +476,7 @@ static BOOL NVRAMm_ExecuteCommand( int nv_state, u32 addr, u16 size, u8 *srcp )
 						OS_TPrintf("NVRAM ERR: PageErase Timeout and SoftReset.\n");
 						return FALSE;
 					}
-				}else {  // nv_result != SPI_PXI_RESULT_SUCCESS
+				}else {  // s_nvResult != SPI_PXI_RESULT_SUCCESS
 					OS_TPrintf("NVRAM ERR: NVRAM PXI command failed.\n");
 					return FALSE;
 				}
@@ -463,43 +495,43 @@ static void Callback_NVRAM( PXIFifoTag tag, u32 data, BOOL err )
 	
 	u16 command		= (u16)( ( ( data & SPI_PXI_DATA_MASK ) & 0x7f00 ) >> 8 );
 	
-	nv_result		= (u16)( data & 0x00ff );
-	nv_cb_occurred	= TRUE;											// コールバック発生フラグTRUE
+	s_nvResult		= (u16)( data & 0x00ff );
+	s_nvCbOccurred	= TRUE;											// コールバック発生フラグTRUE
 	
 	if( err ) {
 		OS_TPrintf("NVRAM-ARM9: Received PXI data is error.\n");
-		nv_result = 0x00ff;
+		s_nvResult = 0x00ff;
 	}
 	
 	switch(command){												// コマンド名表示
 	  case SPI_PXI_COMMAND_NVRAM_READ:
-		OS_TPrintf("NVRAM-ARM9:ReadDataBytes");
+		DEBUG_Printf("NVRAM-ARM9:ReadDataBytes");
 		break;
 	  case SPI_PXI_COMMAND_NVRAM_WREN:
-		OS_TPrintf("NVRAM-ARM9:WriteEnable");
+		DEBUG_Printf("NVRAM-ARM9:WriteEnable");
 		break;
 	  case SPI_PXI_COMMAND_NVRAM_PW:
-		OS_TPrintf("NVRAM-ARM9:PageWrite");
+		DEBUG_Printf("NVRAM-ARM9:PageWrite");
 		break;
 	  case SPI_PXI_COMMAND_NVRAM_RDSR:
-		OS_TPrintf("NVRAM-ARM9:ReadStatusRegister");
+		DEBUG_Printf("NVRAM-ARM9:ReadStatusRegister");
 		break;
 	  case SPI_PXI_COMMAND_NVRAM_WRDI:
-		OS_TPrintf("NVRAM-ARM9:WriteDisable");
+		DEBUG_Printf("NVRAM-ARM9:WriteDisable");
 		break;
 	  case SPI_PXI_COMMAND_NVRAM_PE:
-		OS_TPrintf("NVRAM-ARM9:PageErase");
+		DEBUG_Printf("NVRAM-ARM9:PageErase");
 		break;
 	  case SPI_PXI_COMMAND_NVRAM_SR:
-		OS_TPrintf("NVRAM-ARM9:SoftwareReset");
+		DEBUG_Printf("NVRAM-ARM9:SoftwareReset");
 		break;
 	  default:
-		OS_TPrintf("NVRAM-ARM9:?????");
+		DEBUG_Printf("NVRAM-ARM9:?????");
 		break;
 	}
-	if( nv_result != SPI_PXI_RESULT_SUCCESS ) {
-		OS_TPrintf(" Error! ->%x", nv_result );
+	if( s_nvResult != SPI_PXI_RESULT_SUCCESS ) {
+		OS_TPrintf(" Error! ->%x", s_nvResult );
 	}
-	OS_TPrintf("\n");
+	DEBUG_Printf("\n");
 }
 

@@ -55,7 +55,7 @@ static const u16 *s_pStrSetting[ SETTING_MENU_ELEMENT_NUM ];			// メインメニュー
 //===============================================
 // mainMenu.c
 //===============================================
-static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ LANG_CODE_MAX ] = {
+static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ TWL_LANG_CODE_MAX ] = {
 	{
 		(const u16 *)L"言語",
 		(const u16 *)L"LANGUAGE",
@@ -126,13 +126,10 @@ void MachineSettingInit( void )
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
 	
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"MACHINE SETTINGS" );
-#ifdef __NCD_CLEAR_ENABLE
-	(void)PutStringUTF16( 18 * 8, 21 * 8, TXT_COLOR_BLACK, (const u16 *)L"[START]:NCD clear.");
-#endif	/* __NCD_CLEAR_ENABLE */
 	
 	// NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
 	for( i = 0; i < SETTING_MENU_ELEMENT_NUM; i++ ) {
-		s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ GetNCDWork()->option.language ];
+		s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ TSD_GetLanguage() ];
 	}
 	
 	DrawMenu( s_csr, &s_settingParam );
@@ -194,22 +191,6 @@ int MachineSettingMain( void )
 		}
 	}
 	
-#ifdef __NCD_CLEAR_ENABLE
-	if( pad.trg & PAD_BUTTON_START ) {
-		SVC_CpuClearFast( 0x0000, GetNCDWork(), sizeof(NitroConfigData) );
-		(void)SPI_NvramWriteEnable();
-		SVC_WaitVBlankIntr();
-		(void)SPI_NvramPageErase( 0x3fe00 );
-		SVC_WaitVBlankIntr();
-		(void)SPI_NvramWriteEnable();
-		SVC_WaitVBlankIntr();
-		(void)SPI_NvramPageErase( 0x3ff00 );
-		SVC_WaitVBlankIntr();
-		(void)SPI_NvramWriteDisable();
-		OS_TPrintf("NitroConfigData zero clear!!\n");
-	}
-#endif	/* __NCD_CLEAR_ENABLE */
-	
 	return 0;
 }
 
@@ -242,27 +223,27 @@ void CheckOKCancelButton(BOOL *tp_ok, BOOL *tp_cancel)
 static BOOL InitialSetting( void )
 {
 #if 0
-	if(GetNCDWork()->option.input_language == 0) {			// 言語設定がまだ。
+	if( !TSD_GetFlagLanguage() ) {			// 言語設定がまだ。
 		g_initialSet = TRUE;
 		s_csr = 2;
 		SelectLangageInit();
 		g_pNowProcess	= SelectLanguageMain;
 		return TRUE;
-	}else if(GetNCDWork()->option.input_tp == 0) {			// TPキャリブレーションがまだ。
+	}else if( !TSD_GetFlagTP() ) {			// TPキャリブレーションがまだ。
 		g_initialSet = TRUE;
 		s_csr = 3;
 		TP_CalibrationInit();
 		g_pNowProcess	= TP_CalibrationMain;
 		return TRUE;
-	}else if(GetNCDWork()->option.input_rtc == 0) {			// RTC設定がまだ。
+	}else if( !TSD_GetFlagDateTime() ) {			// RTC設定がまだ。
 		ClearRTC();
 		g_initialSet = TRUE;
 		s_csr = 1;
 		SetRTCInit();
 		g_pNowProcess	= SetRTCMain;
 		return TRUE;
-	}else if( (GetNCDWork()->option.input_nickname == 0)	// ニックネームまたは好きな色入力がまだ。
-		  ||  (GetNCDWork()->option.input_favoriteColor == 0) ) {
+	}else if( !TSD_GetFlagNickname() ||			// ニックネームまたは好きな色入力がまだ。
+			  !TSD_GetFlagUserColor() ) {
 /*		g_initialSet = TRUE;
 		s_csr = 0;
 		SetOwnerInfoInit();

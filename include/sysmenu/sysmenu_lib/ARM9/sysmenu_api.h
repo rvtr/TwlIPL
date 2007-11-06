@@ -22,6 +22,7 @@
 #include <sysmenu/rom_header.h>
 #include <sysmenu/banner.h>
 #include <sysmenu/sysmenu_work.h>
+#include <sysmenu/machineSettings.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,15 +57,25 @@ typedef enum AuthResult {
 
 
 // global variable------------------------------------------------------
+extern void *(*SYSM_Alloc)( u32 size );
+extern void  (*SYSM_Free)( void *ptr );
 
 // function-------------------------------------------------------------
 extern void SYSM_Init( void );
+extern void SYSM_SetAllocFunc( void *(*pAlloc)(u32), void (*pFree)(void*) );
+
 extern BOOL SYSM_IsLogoDemoSkip( void );
 extern void SYSM_CaribrateTP( void );
 extern int  SYSM_GetCardTitleList( TitleProperty *pTitleList_Card );
 extern int  SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size );
 extern AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle );
 extern void SYSM_Finalize( void );
+
+extern BOOL SYSM_ReadTWLSettingsFile( void );
+extern BOOL SYSM_WriteTWLSettingsFile( void );
+extern void SYSM_VerifyAndRecoveryNTRSettings( void );
+extern void SYSM_SetBackLightBrightness( void );
+
 
 extern void SYSM_PermitToBootSelectedTarget( void );
 extern void SYSM_LoadSYSMData( void );
@@ -85,13 +96,12 @@ extern void SYSM_ClearBootFlag( u32 value );
 
 
 extern void SYSM_GoSleepMode( void );
-extern void PMm_SetBackLightBrightness( void );
 
 
 extern void NCD_ClearOwnerInfo( void );								// ニックネーム・誕生日・好きな色のクリア
 extern BOOL SYSM_CheckRTCDate( RTCDate *datep );
 extern BOOL SYSM_CheckRTCTime( RTCTime *timep );
-extern s64  SYSM_CalcRtcOffsetAndSetDateTime( RTCDate *newDate, RTCTime *newTime );
+extern s64  SYSM_CalcRTCOffsetAndSetDateTime( RTCDate *newDate, RTCTime *newTime );
 extern u32  SYSM_GetDayNum( u32 year, u32 month );
 extern BOOL SYSM_IsLeapYear100( u32 year );
 

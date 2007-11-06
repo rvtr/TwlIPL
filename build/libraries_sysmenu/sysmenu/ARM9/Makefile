@@ -23,11 +23,11 @@ MYSUBDIRS		=	./
 #----------------------------------------------------------------------------
 TARGET_FIRM		=	SYSTEMMENU
 TARGET_PLATFORM	=	TWL
-TWL_ARCHGEN		=	LIMITED
+#TWL_ARCHGEN		=	LIMITED
 TWL_PROC	   	=	ARM9
 
 SRCS			=	sysmenu_lib.c sysmenu_card.c sysmenu_util.c gameBoot.c ninLogoFunc.c cmn.c \
-					nitroSettingsEx.c
+					nitroSettingsEx.c TWLSettings.c settingsAPI.c
 
 TARGET_LIB		=	libsysmenu$(TWL_LIBSUFFIX).a
 

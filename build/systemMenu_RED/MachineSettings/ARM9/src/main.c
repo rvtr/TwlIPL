@@ -24,12 +24,9 @@
 // define data-----------------------------------------------------------------
 
 // function's prototype-------------------------------------------------------
-static void InitAllocator( NNSFndAllocator* pAllocator );
-static void InitAllocSystem( void );
 static void INTR_VBlank( void );
 
 // global variable-------------------------------------------------------------
-NNSFndAllocator g_allocator;
 int (*g_pNowProcess)( void );
 RTCDrawProperty g_rtcDraw = {
 	TRUE, RTC_DATE_TOP_X, RTC_DATE_TOP_Y, RTC_TIME_TOP_X, RTC_TIME_TOP_Y
@@ -54,6 +51,7 @@ void TwlMain(void)
 	
     GX_Init();
 	GX_SetPower(GX_POWER_ALL);										// 各ロジック パワーON
+	FS_Init( 3 );
 	
 	// 割り込み許可----------------------------
 	(void)OS_SetIrqFunction(OS_IE_V_BLANK, INTR_VBlank);
@@ -65,12 +63,16 @@ void TwlMain(void)
 	(void)RTC_Init();
 	
 	// システムの初期化------------------
-	InitAllocator( &g_allocator );
-	CMN_InitFileSystem( &g_allocator );
+	InitAllocator();
+	SYSM_SetAllocFunc( Alloc, Free );
 	
-	// NitroConfigDataのリード
-	(void)NVRAMm_ReadNitroConfigData( GetNCDWork() );
-	SYSM_CaribrateTP();
+	// ※本来ならランチャーからのパラメータチェックを行い、
+	//   初回起動シーケンスに入るパスがある
+	
+	// TWL設定のリード
+	if( SYSM_ReadTWLSettingsFile() ) {
+		SYSM_CaribrateTP();
+	}
 	
 	InitBG();
 	GetAndDrawRTCData( &g_rtcDraw, TRUE );
@@ -85,23 +87,6 @@ void TwlMain(void)
 		
 		GetAndDrawRTCData( &g_rtcDraw, FALSE );
 	}
-}
-
-
-// アロケータの初期化
-static void InitAllocator( NNSFndAllocator* pAllocator )
-{
-    u32   arenaLow      = MATH_ROUNDUP  ( (u32)OS_GetMainArenaLo(), 16 );
-    u32   arenaHigh     = MATH_ROUNDDOWN( (u32)OS_GetMainArenaHi(), 16 );
-    u32   heapSize      = arenaHigh - arenaLow;
-    void* heapMemory    = OS_AllocFromMainArenaLo( heapSize, 16 );
-    NNSFndHeapHandle    heapHandle;
-    SDK_NULL_ASSERT( pAllocator );
-
-    heapHandle = NNS_FndCreateExpHeap( heapMemory, heapSize );
-    SDK_ASSERT( heapHandle != NNS_FND_HEAP_INVALID_HANDLE );
-
-    NNS_FndInitAllocatorForExpHeap( pAllocator, heapHandle, 4 );
 }
 
 

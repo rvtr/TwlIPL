@@ -80,7 +80,7 @@ typedef struct Nickname {
 	u8	 			change_flag;									// 変更フラグ
 	u8				length;											// 文字数
 	u8				pad;
-	u16				str[NCD_NICKNAME_LENGTH + 1];					// ニックネームコード
+	u16				str[TWL_NICKNAME_LENGTH + 1];					// ニックネームコード
 }Nickname;
 
 	// カーソルX,Y位置（キャラ単位）
@@ -189,7 +189,7 @@ static const u16 *str_button[] = {	NULL,
 void SEQ_OwnerInfo_init(void)
 {
 	u16 x,y;
-	u16 temp[NCD_NICKNAME_LENGTH + 1];
+	u16 temp[TWL_NICKNAME_LENGTH + 1];
 	
 	GXS_SetVisiblePlane(GX_PLANEMASK_NONE);
 	
@@ -202,7 +202,7 @@ void SEQ_OwnerInfo_init(void)
 	(void)DrawStringSJIS( RETURN_BUTTON_LT_X, RETURN_BUTTON_LT_Y,HIGHLIGHT_C, (const u8 *)" RETURN ");
 	
 	if(ow == NULL) {
-		ow = NNS_FndAllocFromAllocator( &g_allocator, sizeof(OwnerWork) );			// オーナー情報編集用ワークの確保
+		ow = Alloc( sizeof(OwnerWork) );			// オーナー情報編集用ワークの確保
 #ifdef __SYSM_DEBUG
 		if(ow == NULL) OS_Panic("ARM9- Fail to allocate memory...\n");
 #endif /* __SYSM_DEBUG */
@@ -214,19 +214,21 @@ void SEQ_OwnerInfo_init(void)
 	{
 		u32 dayNum;
 		
-		if(GetNCDWork()->owner.nickname.length > NCD_NICKNAME_LENGTH) {
-			GetNCDWork()->owner.nickname.length = 0;
-			SVC_CpuClear(0x0000, GetNCDWork()->owner.nickname.str, NCD_NICKNAME_LENGTH * 2, 16);
+		if( TSD_GetNickname()->length > TWL_NICKNAME_LENGTH) {
+			TSD_GetNickname()->length = 0;
+			SVC_CpuClear( 0x0000, TSD_GetNickname().buffer, TWL_NICKNAME_BUFFERSIZE, 16 );
 		}
-		if((GetNCDWork()->owner.birthday.month == 0) || (GetNCDWork()->owner.birthday.month > 12)) {
-			GetNCDWork()->owner.birthday.month = 1;
+		if( ( TSD_GetBirthday()->month == 0) ||
+			( TSD_GetBirthday()->month > 12 ) ) {
+			TSD_GetBirthday()->month = 1;
 		}
-		dayNum = SYSM_GetDayNum( 0, (u32)GetNCDWork()->owner.birthday.month );
-		if((GetNCDWork()->owner.birthday.day == 0) || (GetNCDWork()->owner.birthday.day > dayNum)) {
-			GetNCDWork()->owner.birthday.day = 1;
+		dayNum = SYSM_GetDayNum( 0, (u32)TSD_GetBirthday()->month );
+		if( ( TSD_GetBirthday()->day == 0) ||
+			( TSD_GetBirthday()->day > dayNum ) ) {
+			TSD_GetBirthday()->day = 1;
 		}
-		if( GetNCDWork()->owner.favoriteColor >= NCD_FAVORITE_COLOR_MAX_NUM ) {
-			GetNCDWork()->owner.favoriteColor = 0;
+		if( TSD_GetUserColor() >= TWL_FAVORITE_COLOR_MAX_NUM ) {
+			TSD_SetUserColor( 0 );
 		}
 	}
 	
@@ -234,16 +236,16 @@ void SEQ_OwnerInfo_init(void)
 	x = (u16)(ownerInfoSel.pos_x+13);
 	y = (u16)ownerInfoSel.pos_y;
 	SVC_CpuClear(0x0000, temp, sizeof(temp), 16);
-	ExUTF16_LEtoSJIS_BE( (u8 *)temp, GetNCDWork()->owner.nickname.str, GetNCDWork()->owner.nickname.length);
+	ExUTF16_LEtoSJIS_BE( (u8 *)temp, TSD_GetNickname()->buffer, TSD_GetNickname()->length );
 	(void)DrawStringSJIS ( x, y, LIGHTGREEN, temp);
-	DrawBirthday         ( x, (u16)(y + OWNER_INFO_CSR_NEXT_Y_NUM * 1), LIGHTGREEN, &GetNCDWork()->owner.birthday);
-	ow->favoriteColor = GetNCDWork()->owner.favoriteColor;
-	(void)DrawDecimalSJIS( x, (u16)(y + OWNER_INFO_CSR_NEXT_Y_NUM * 2), LIGHTGREEN, &ow->favoriteColor, 2, 1);
+	DrawBirthday         ( x, (u16)(y + OWNER_INFO_CSR_NEXT_Y_NUM * 1), LIGHTGREEN, TSD_GetBirthday() );
+	ow->favoriteColor = TSD_GetUserColor();
+	(void)DrawDecimalSJIS( x, (u16)(y + OWNER_INFO_CSR_NEXT_Y_NUM * 2), LIGHTGREEN, &ow->favoriteColor, 2, 1 );
 	
-	DrawMenu(ow->sel, &ownerInfoSel);
-	SVC_CpuClear(0x0000, &tpd, sizeof(TpWork), 16);
+	DrawMenu( ow->sel, &ownerInfoSel );
+	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
-	GXS_SetVisiblePlane(GX_PLANEMASK_OBJ | GX_PLANEMASK_BG1);
+	GXS_SetVisiblePlane( GX_PLANEMASK_OBJ | GX_PLANEMASK_BG1 );
 }
 
 
@@ -265,18 +267,18 @@ int SEQ_OwnerInfo(void)
 		
 		pad.trg = 0;
 		
-		if(GetNCDWork()->option.input_nickname == 0) {
+		if( !TSD_GetFlagNickname() ) {
 			ow->sel = 0;
 			pad.trg |= PAD_BUTTON_A;
-		}else if(GetNCDWork()->option.input_favoriteColor == 0) {
+		}else if( !TSD_GetFlagUserColor() ) {
 			ow->sel = 2;
 			pad.trg |= PAD_BUTTON_A;
-		}else if(GetNCDWork()->option.input_birthday == 0) {
+		}else if( !TSD_GetFlagBirthday() ) {
 			ow->sel = 1;
 			pad.trg |= PAD_BUTTON_A;
-		}else if ( GetNCDWork()->option.input_nickname
-			    || GetNCDWork()->option.input_favoriteColor
-			    || GetNCDWork()->option.input_birthday   ) {
+		}else if (	TSD_GetFlagNickname() ||
+					TSD_GetFlagUserColor() ||
+					TSD_GetFlagBirthday() ) {
 			pad.trg |= PAD_BUTTON_B;								// メニューに戻らす
 		}
 	}
@@ -313,7 +315,7 @@ int SEQ_OwnerInfo(void)
 				break;
 		}
 	}else if((pad.trg & PAD_BUTTON_B) || (tp_return)) {				// メニューに戻る
-		NNS_FndFreeToAllocator( &g_allocator, ow );					// ワークの解放
+		Free( ow );					// ワークの解放
 		ow = NULL;
 		OS_Printf("Free :OwnerWork\n");
 		SEQ_MainMenu_init();
@@ -331,10 +333,10 @@ int SEQ_OwnerInfo(void)
 static void SEQ_InputBirthday_init(void)
 {
 	// 生年月日の表示
-	DrawBirthday((u16)(ownerInfoSel.pos_x + 13), (u16)(ownerInfoSel.pos_y + OWNER_INFO_CSR_NEXT_Y_NUM * 1), WHITE, &GetNCDWork()->owner.birthday);
+	DrawBirthday((u16)(ownerInfoSel.pos_x + 13), (u16)(ownerInfoSel.pos_y + OWNER_INFO_CSR_NEXT_Y_NUM * 1), WHITE, TSD_GetBirthday() );
 	// 生年月日情報のロード
-	ow->birthday.month = (int)GetNCDWork()->owner.birthday.month;
-	ow->birthday.day   = (int)GetNCDWork()->owner.birthday.day;
+	ow->birthday.month = (int)TSD_GetBirthday()->month;
+	ow->birthday.day   = (int)TSD_GetBirthday()->day;
 	SVC_CpuClear(0x0000, &tpd, sizeof(TpWork), 16);
 	ow->seq = 0;
 }
@@ -444,18 +446,18 @@ static int SEQ_InputBirthday(void)
 		break;
 		
 	  case SEQ_END:
-		GetNCDWork()->owner.birthday.month	= (u8 )ow->birthday.month;
-		GetNCDWork()->owner.birthday.day	= (u8 )ow->birthday.day;
-		GetNCDWork()->option.input_birthday	= 1;
-		GetSYSMWork()->ncd_invalid			= 0;
+		GetSYSMWork()->ncd_invalid	= 0;
+		TSD_GetBirthday()->month	= (u8 )ow->birthday.month;
+		TSD_GetBirthday()->day		= (u8 )ow->birthday.day;
+		TSD_SetFlagBirthday( TRUE );
 		
-		if ( GetNCDWork()->option.destroyFlashFlag ) {
-			GetNCDWork()->option.destroyFlashFlag = 0;
+		if( TSD_IsInitialSequence() ) {
+			TSD_SetFlagInitialSequence( FALSE );
 		}
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		// NVRAMへの書き込み
+		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		(void)NVRAMm_WriteNitroConfigData (GetNCDWork());
+		(void)SYSM_WriteTWLSettingsFile();
 		
 		// SEQ_ENDの時はこのままリターンする。
 		
@@ -501,9 +503,9 @@ static void DrawBirthday(u16 x, u16 y, u16 color, NvDate *birthp)
 static void SEQ_InputFavoriteColor_init(void)
 {
 	// 好きな色のロード
-	ow->favoriteColor = (int)GetNCDWork()->owner.favoriteColor;
+	ow->favoriteColor = TSD_GetUserColor();
 	// 好きな色の表示
-	SVC_CpuClear(0x0000, &tpd, sizeof(TpWork), 16);
+	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	ow->seq = 0;
 	
 	if( g_initialSet ) {
@@ -558,7 +560,7 @@ static int SEQ_InputFavoriteColor(void)
 		ow->inp.pos_x		= FCOLOR_LT_X;
 		ow->inp.pos_y		= FCOLOR_LT_Y;
 		ow->inp.keta_max	= 2;
-		ow->inp.value_max	= NCD_FAVORITE_COLOR_MAX_NUM - 1;
+		ow->inp.value_max	= TWL_FAVORITE_COLOR_MAX_NUM - 1;
 		ow->inp.value_min	= 0;
 		ow->inp.y_offset	= 0;
 		ow->tgtp			= (int *)&ow->favoriteColor;
@@ -569,14 +571,14 @@ static int SEQ_InputFavoriteColor(void)
 		break;
 		
 	  case SEQ_END:
-		GetNCDWork()->option.input_favoriteColor	=  1;
-		GetNCDWork()->owner.favoriteColor			= (u8 )ow->favoriteColor;
 		GetSYSMWork()->ncd_invalid					= 0;
+		TSD_SetUserColor( (u8 )ow->favoriteColor );
+		TSD_SetFlagUserColor( TRUE );
 		
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		// NVRAMへの書き込み
+		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		(void)NVRAMm_WriteNitroConfigData (GetNCDWork());
+		(void)SYSM_WriteTWLSettingsFile();
 		
 		// SEQ_ENDの時はこのままリターンする。
 		
@@ -619,10 +621,10 @@ static void SEQ_InputNickname_init(void)
 	}
 	
 	// ニックネームをUTF16からSJISに変換してコピー
-	SVC_CpuClear(CHAR_USCORE, ow->nickname.str, NCD_NICKNAME_LENGTH * 2, 16);
+	SVC_CpuClear(CHAR_USCORE, ow->nickname.str, TWL_NICKNAME_LENGTH * 2, 16);
 	if(GetSYSMWork()->ncd_invalid == 0) {
-		ExUTF16_LEtoSJIS_BE( (u8 *)ow->nickname.str, GetNCDWork()->owner.nickname.str, GetNCDWork()->owner.nickname.length);
-		ow->nickname.length = GetNCDWork()->owner.nickname.length;
+		ExUTF16_LEtoSJIS_BE( (u8 *)ow->nickname.str, TSD_GetNickname()->buffer, TSD_GetNickname()->length );
+		ow->nickname.length = TSD_GetNickname()->length;
 		ow->nickname.input_flag = 1;
 	}
 	ow->nickname.change_flag = 0;
@@ -744,7 +746,7 @@ static int SEQ_InputNickname(void)
 		}else if(charCode == DEL_BUTTON_) { 						// １文字削除
 			DeleteName1Char();
 		}else {
-			if(ow->nickname.length < NCD_NICKNAME_LENGTH) {			// 一文字入力
+			if( ow->nickname.length < TWL_NICKNAME_LENGTH ) {			// 一文字入力
 				ow->nickname.str[ow->nickname.length] = (u16)((charCode >> 8) | (charCode << 8));
 																	// SJIS･ASCII混載文字列の際にこれらを判別できるよう、SJISをHi,Loの順で格納。
 				ow->nickname.length++;
@@ -771,18 +773,18 @@ static void ReturnMenu(int save_flag)
 	
 	if((save_flag)&&(ow->nickname.change_flag)) {
 		GetSYSMWork()->ncd_invalid = 0;
-		GetNCDWork()->option.input_nickname = 1;				// ニックネーム入力フラグを立てる。
+		TSD_SetFlagNickname( TRUE );				// ニックネーム入力フラグを立てる。
 		
-		ExSJIS_BEtoUTF16_LE( (u8 *)ow->nickname.str, GetNCDWork()->owner.nickname.str, ow->nickname.length);
+		ExSJIS_BEtoUTF16_LE( (u8 *)ow->nickname.str, TSD_GetNickname()->buffer, ow->nickname.length);
 																	// 入力されたネームをSJISからUTF16へ変換する。
-		GetNCDWork()->owner.nickname.length = ow->nickname.length;
-		for(i = ow->nickname.length; i < NCD_NICKNAME_LENGTH; i++) {// 入力された名前以降を0x0000で埋める。
-			GetNCDWork()->owner.nickname.str[i] = 0x0000;
+		TSD_GetNickname()->length = ow->nickname.length;
+		for(i = ow->nickname.length; i < TWL_NICKNAME_LENGTH; i++) {// 入力された名前以降を0x0000で埋める。
+			TSD_GetNickname()->buffer[ i ] = 0x0000;
 		}
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		// NVRAMへの書き込み
+		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		(void)NVRAMm_WriteNitroConfigData(GetNCDWork());
+		(void)SYSM_WriteTWLSettingsFile();
 	}
 	SEQ_OwnerInfo_init();
 	g_pNowProcess = SEQ_OwnerInfo;										// オーナー情報編集に戻る

@@ -121,7 +121,7 @@ void SetRTCInit( void )
 		}
 	}
 	
-	s_pWork = NNS_FndAllocFromAllocator( &g_allocator, sizeof(SetRtcWork) );	// RTC設定用ワークの確保
+	s_pWork = Alloc( sizeof(SetRtcWork) );	// RTC設定用ワークの確保
 	if( s_pWork == NULL ) {
 		OS_Panic( "ARM9- Fail to allocate memory...\n" );
 	}
@@ -176,7 +176,7 @@ int SetRTCMain( void )
 		tp_return = WithinRangeTP(	RETURN_BUTTON_TOP_X,    RETURN_BUTTON_TOP_Y,
 									RETURN_BUTTON_BOTTOM_X, RETURN_BUTTON_BOTTOM_Y, &tpd.disp );
 	}
-	if( g_initialSet && !GetNCDWork()->option.input_rtc ) {
+	if( g_initialSet && !TSD_IsSetDateTime() ) {
 		tp_set = TRUE;
 	}
 	//--------------------------------------
@@ -186,7 +186,7 @@ int SetRTCMain( void )
 		InputRtcDateTimeInit( 1 );
 		g_pNowProcess = InputRtcDateTimeMain;
 	}else if( ( pad.trg & PAD_BUTTON_B ) || tp_return ) {			// メニューに戻る
-		NNS_FndFreeToAllocator( &g_allocator, s_pWork );			// RTC設定用ワークの解放
+		Free( s_pWork );			// RTC設定用ワークの解放
 		s_pWork = NULL;
 		MachineSettingInit();
 	}
@@ -377,15 +377,15 @@ static int InputRtcDateTimeMain( void )
 			MI_CpuCopy32( &s_pWork->dtp.Date, &date, sizeof(RTCDate) );
 			date.year -= 2000;
 			(void)RTC_SetDateTime( &date, &s_pWork->dtp.Time );
-			NCD_SetRtcOffset( SYSM_CalcRtcOffsetAndSetDateTime( &date, &s_pWork->dtp.Time ) );
+			TSD_SetRTCOffset( SYSM_CalcRTCOffsetAndSetDateTime( &date, &s_pWork->dtp.Time ) );
 		}
 		
 		GetSYSMWork()->ncd_invalid = 0;
-		GetNCDWork()->option.input_rtc = 1;						// RTC入力フラグを立てる。
+		TSD_SetFlagDateTime( TRUE );						// RTC入力フラグを立てる。
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		// NVRAMへの書き込み
+		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		(void)NVRAMm_WriteNitroConfigData( GetNCDWork() );
+		(void)SYSM_WriteTWLSettingsFile();
 		
 		// 上画面の表示更新
 		GetAndDrawRTCData( &g_rtcDraw, TRUE );
@@ -542,16 +542,14 @@ void InputDecimal( int *pTgt, InputNumParam *pInp )
 // RTC設定のクリア
 void ClearRTC( void )
 {
-		SVC_CpuClear( 0x0000, &GetSYSMWork()->rtc[0].Time, sizeof(RTCTime), 16 );
-		GetSYSMWork()->rtc[0].Date.year  = 0;
-		GetSYSMWork()->rtc[0].Date.month = 1;
-		GetSYSMWork()->rtc[0].Date.day   = 1;
-		(void)RTC_SetDateTime( &GetSYSMWork()->rtc[0].Date, &GetSYSMWork()->rtc[0].Time );
-		GetNCDWork()->option.input_rtc = 0;
-		GetNCDWork()->option.rtcOffset = 0;
-		NCD_SetRtcLastSetYear( 0 );
-		// ::::::::::::::::::::::::::::::::::::::::::::::
-		// NVRAMへの書き込み
-		// ::::::::::::::::::::::::::::::::::::::::::::::
-		(void)NVRAMm_WriteNitroConfigData( GetNCDWork() );
+	RTCDate date = { 0, 1, 1, RTC_WEEK_SUNDAY };
+	RTCTime time = { 0, 0, 0 };
+	(void)RTC_SetDateTime( &date, &time );
+	TSD_SetFlagDateTime( TRUE );
+	TSD_SetRTCOffset( 0 );
+	TSD_SetRTCLastSetYear( 0 );
+	// ::::::::::::::::::::::::::::::::::::::::::::::
+	// TWL設定データファイルへの書き込み
+	// ::::::::::::::::::::::::::::::::::::::::::::::
+	(void)SYSM_WriteTWLSettingsFile();
 }
