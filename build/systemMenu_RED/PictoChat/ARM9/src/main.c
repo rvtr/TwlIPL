@@ -18,6 +18,7 @@
 #include <twl.h>
 #include "misc.h"
 #include "PictoChat.h"
+#include "nand_app_hack.h"
 
 // extern data-----------------------------------------------------------------
 
@@ -60,6 +61,11 @@ void TwlMain(void)
 	// システムの初期化------------------
 	InitAllocator();
 	CMN_InitFileSystem( &g_allocator );
+	
+	{
+		// ファイルシステム切り替え応急処置
+		FS_IdentifyTitle(0x50434854);//PCHT
+	}
 	
 	InitBG();
 	PictoChatInit();
