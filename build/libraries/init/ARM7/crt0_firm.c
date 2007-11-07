@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlIPL - libraries - init
-  File:     crt0.c
+  File:     crt0_firm.c
 
   Copyright 2007 Nintendo.  All rights reserved.
 
@@ -17,8 +17,6 @@
 #include        <nitro/code32.h>
 #include        <firm.h>
 
-//#define FIRM_ENABLE_JTAG
-
 void    _start(void);
 void    _start_AutoloadDoneCallback(void *argv[]);
 
@@ -32,10 +30,10 @@ void    _start_AutoloadDoneCallback(void *argv[]);
 #define IPL_PARAM_CARD_ROM_HEADER      0x023FE940
 #define IPL_PARAM_DOWNLOAD_PARAMETER   0x023FE904
 
+/* 外部関数参照定義 */
 extern void OS_IrqHandler(void);
 extern void _fp_init(void);
 extern void __call_static_initializers(void);
-extern void TwlMain(void);
 
 static void INITi_DoAutoload(void);
 static void INITi_ShelterLtdBinary(void);
@@ -45,20 +43,12 @@ static void INITi_ShelterStaticInitializer(u32* ptr);
 static void INITi_CallStaticInitializers(void);
 #endif
 
-// from LCF
-extern unsigned long SDK_IRQ_STACKSIZE[];
-
-extern void SDK_STATIC_BSS_START(void);         // static bss start address
-extern void SDK_STATIC_BSS_END(void);       // static bss start address
-extern void SDK_AUTOLOAD_LIST(void);        // start pointer to autoload information
-extern void SDK_AUTOLOAD_LIST_END(void);    // end pointer to autoload information
-extern void SDK_AUTOLOAD_START(void);       // autoload data will start from here
-extern void SDK_LTDAUTOLOAD_LIST(void);     // start pointer to autoload information
-extern void SDK_LTDAUTOLOAD_LIST_END(void); // end pointer to autoload information
-extern void SDK_LTDAUTOLOAD_START(void);    // autoload data will start from here
-
-//---- IRQ+SVC stack size in boot (this area is not cleared)
-#define INITi_Initial_Stack   0x100
+/* リンカスクリプトにより定義されるシンボル参照 */
+extern void SDK_AUTOLOAD_LIST(void);
+extern void SDK_AUTOLOAD_LIST_END(void);
+extern void SDK_AUTOLOAD_START(void);
+extern void SDK_STATIC_BSS_START(void);
+extern void SDK_STATIC_BSS_END(void);
 
 void   *const _start_ModuleParams[]     =
 {
@@ -72,6 +62,10 @@ void   *const _start_ModuleParams[]     =
     (void*)SDK_NITROCODE_BE,
     (void*)SDK_NITROCODE_LE,
 };
+
+extern void SDK_LTDAUTOLOAD_LIST(void);
+extern void SDK_LTDAUTOLOAD_LIST_END(void);
+extern void SDK_LTDAUTOLOAD_START(void);
 
 void* const _start_LtdModuleParams[]    =
 {
@@ -94,13 +88,6 @@ void* const _start_LtdModuleParams[]    =
  *---------------------------------------------------------------------------*/
 SDK_WEAK_SYMBOL asm void _start( void )
 {
-#ifdef FIRM_ENABLE_JTAG
-        ldr     r1, =REG_JTAG_ADDR
-        ldrh    r2, [r1]
-        orr     r2, r2, #REG_SCFG_JTAG_CPUJE_MASK | REG_SCFG_JTAG_ARM7SEL_MASK
-        strh    r2, [r1]
-#endif
-
         //---- set IME = 0
         //     ( use that LSB of HW_REG_BASE equal to 0 )
         mov             r12, #HW_REG_BASE
@@ -187,7 +174,7 @@ SDK_WEAK_SYMBOL asm void _start( void )
         bcc             @2
 
         //---- detect main memory size
-        //bl              detect_main_memory_size
+        bl              detect_main_memory_size
 
         //---- set interrupt vector
         ldr             r1, =HW_INTR_VECTOR_BUF
@@ -361,6 +348,7 @@ INITi_ShelterStaticInitializer(u32* ptr)
         ldr             r1, =HW_PRV_WRAM_IRQ_STACK_END
         ldr             r2, =SDK_IRQ_STACKSIZE
         sub             r1, r1, r2
+        add             r1, r1, #4
 
         /* 退避場所先頭から空き場所を調査 */
 @001:   ldr             r2, [r1]
@@ -394,6 +382,7 @@ INITi_CallStaticInitializers(void)
         ldr             r1, =HW_PRV_WRAM_IRQ_STACK_END
         ldr             r2, =SDK_IRQ_STACKSIZE
         sub             r1, r1, r2
+        add             r1, r1, #4
 
         /* テーブルに管理されているポインタを一つずつ呼び出し */
 @001:   ldr             r0, [r1]
@@ -438,10 +427,6 @@ _start_AutoloadDoneCallback(void* argv[])
                 value is [OS_CONSOLE_SIZE_4MB|OS_CONSOLE_SIZE_8MB|
                 OS_CONSOLE_SIZE_16MB|OS_CONSOLE_SIZE_32MB]
 
-
-
-
-
   Arguments:    None.
 
   Returns:      None.
@@ -461,8 +446,6 @@ static asm void detect_main_memory_size( void )
         strh    r1, [r2]
         ldrh    r12, [r3]
         cmp     r1, r12
-
-
         bne     @2
 
         add     r1, r1, #1
@@ -470,6 +453,11 @@ static asm void detect_main_memory_size( void )
         bne     @1
 
         //---- 4MB
+        // check SMX_CNT
+        ldr     r2, =REG_SMX_CNT_ADDR
+        ldrh    r1, [r2]
+        tst     r1, #0
+        orrne   r0, r0, #OS_CHIPTYPE_SMX_MASK
         b       @4
 
         //---- 8MB or 16MB or 32MB
@@ -483,6 +471,7 @@ static asm void detect_main_memory_size( void )
 #else
         ldr     r2, =HW_MMEMCHECKER_SUB
 #endif
+
         //---- 16MB or 32MB
         mov     r1, #0
         add     r3, r2, #OSi_IMAGE_DIFFERENCE2
@@ -505,12 +494,6 @@ static asm void detect_main_memory_size( void )
         ldr     r2, =REG_OP_ADDR
         ldrh    r0, [r2]
         and     r0, r0, #REG_SCFG_OP_OPT_MASK
-
-        // check SMX_CNT
-        ldr     r2, =REG_SMX_CNT_ADDR
-        ldrh    r1, [r2]
-        tst     r1, #0
-        orrne   r0, r0, #OS_CHIPTYPE_SMX_MASK
 
         //---- detect jtag
         ldr     r2, =REG_JTAG_ADDR
