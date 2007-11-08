@@ -19,6 +19,7 @@
 
 #include <firm.h>
 #include <firm/format/from_brom.h>
+#include <firm/format/format_rom.h>
 
 #include <nitro/hw/common/armArch.h>
 
@@ -34,12 +35,11 @@ typedef void (*OSEntryPoint) (void);
 
   Description:  boot firm
 
-  Arguments:    entry :  entry point
-                w     :    wram settings
+  Arguments:    rom_header  :  ROM header
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void OSi_Boot( void* entry, MIHeader_WramRegs* w );
+void OSi_Boot( ROM_Header* rom_header );
 
 /*---------------------------------------------------------------------------*
   Name:         OSi_Finalize

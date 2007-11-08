@@ -31,35 +31,27 @@
             なので、OSi_BootCoreは次のプログラムですぐに壊されそうなところを使う
 #endif
 
-void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w );
+void OSi_BootCore( ROM_Header* rom_header );
 
 /*---------------------------------------------------------------------------*
   Name:         OSi_Boot
 
   Description:  boot firm
 
-  Arguments:    entry :    entry point
-                w     :    wram settings
+  Arguments:    rom_header  :  ROM header
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void OSi_Boot( void* entry, MIHeader_WramRegs* w )
+void OSi_Boot( ROM_Header* rom_header )
 {
-    OSEntryPoint p = (OSEntryPoint)entry;
-    void (*OSBootCore)( OSEntryPoint p, MIHeader_WramRegs* w );
+    void (*OSBootCore)( ROM_Header* rom_header );
 
     (void)OS_DisableInterrupts();
     OSi_Finalize();
+    OSBootCore = (void*)HW_FIRM_BOOT_CORE;
+    MI_CpuCopyFast( OSi_BootCore, OSBootCore, HW_FIRM_BOOT_CORE_SIZE );
 
-#ifdef SDK_ARM9
-    OSBootCore = (void*)HW_ITCM;
-#else // SDK_ARM7
-    OSBootCore = (void*)(HW_PRV_WRAM_SVC_STACK - 0x200);
-#endif // SDK_ARM7
-
-    MI_CpuCopyFast( OSi_BootCore, OSBootCore, 0x200 );
-
-    OSBootCore(p, w);
+    OSBootCore(rom_header);
 }
 
 /*---------------------------------------------------------------------------*
@@ -103,39 +95,17 @@ void OSi_Finalize(void)
 #endif // SDK_ARM9
 }
 
-extern void SDK_STATIC_DATA_START(void); // static data start address
-extern void SDK_STATIC_BSS_END(void);  // static bss end address
+extern void SDK_STATIC_START(void); // static start address
+extern void SDK_STATIC_END(void);   // static end address
 
-/*---------------------------------------------------------------------------*
-  Name:         OSi_ClearWorkArea
+#include <twl/code32.h>
 
-  Description:  clear work area
-
-  Arguments:    None
-
-  Returns:      None
- *---------------------------------------------------------------------------*/
-#include <nitro/code32.h>
-asm void OSi_ClearWorkArea( void )
+asm void OSi_BootCore( ROM_Header* rom_header )
 {
-        mov     r11, lr
-
-        // clear stack with r4-r9
-        mov     r0, #0
-        ldr     r1, =SDK_STATIC_DATA_START
-        ldr     r2, =SDK_STATIC_BSS_END
-        sub     r2, r2, r1
-        bl      MIi_CpuClearFast
-
-        bx      r11
-}
-
-asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
-{
-        mov     r11, r0
-        mov     r10, r1
 
 #ifdef SDK_ARM9
+        add     r10, r0, #0x180     // rom_header->s.main_wram_config_data
+        ldr     r11, [r0, #0x24]    // rom_header->s.main_entry_address
 
         // wait for request of wram map
         ldr     r3, =REG_SUBPINTF_ADDR
@@ -171,6 +141,8 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
         str     r0, [r3]
 
 #else   // ARM7
+        add     r10, r0, #0x1a0     // rom_header->s.sub_wram_config_data
+        ldr     r11, [r0, #0x34]    // rom_header->s.sub_entry_address
 
         // request wram map
         ldr     r3, =REG_MAINPINTF_ADDR
@@ -188,7 +160,6 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
         str     r0, [r3]
 
         // r10- => r9-r2
-        add     r10, r10, #32
         ldr     r9, =REG_MBK6_ADDR
         add     r2, r9, #15
 @1:
@@ -199,12 +170,22 @@ asm void OSi_BootCore( OSEntryPoint p, MIHeader_WramRegs* w )
 
 #endif
 
-        // clear stack with r4-r9
+        // clear something all
         mov     r0, #0
 #if 0
+        // clear stack
         ldr     r1, =HW_FIRM_STACK
         ldr     r2, =HW_FIRM_STACK_SIZE
-        bl      MIi_CpuClearFast
+@10:    cmp     r1, r2
+        strcc   r0, [r1], #4
+        bcc     @10
+
+        // clear static text, data, and bss
+        ldr     r1, =SDK_STATIC_START
+        ldr     r2, =SDK_STATIC_END
+@20:    cmp     r1, r2
+        strcc   r0, [r1], #4
+        bcc     @20
 #endif
 
         mov     lr, r11

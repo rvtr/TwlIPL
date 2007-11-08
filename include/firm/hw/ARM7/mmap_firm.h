@@ -26,11 +26,6 @@ extern "C" {
 #define HW_FIRM_END                     (HW_FIRM + HW_FIRM_SIZE)
 #define HW_FIRM_SIZE                    (HW_WRAM_0_SIZE + HW_WRAM_1_SIZE + HW_WRAM_A_SIZE_MAX + HW_WRAM_B_SIZE_MAX)
 
-//------------------------------------- FIRM_WRAM_ABC
-#define HW_FIRM_WRAM_A_MAP_END          (HW_WRAM_AREA_END - HW_PRV_WRAM_SIZE)
-#define HW_FIRM_WRAM_B_MAP_END          HW_FIRM_WRAM_A_MAP_END
-#define HW_FIRM_WRAM_C_MAP_END          HW_FIRM_WRAM_A_MAP_END
-
 //------------------------------------- HW_FIRM_FROM_BROM_BUF
 #define HW_FIRM_FROM_BROM_BUF           (HW_FIRM_FROM_BROM_BUF_END - HW_FIRM_FROM_BROM_BUF_SIZE)
 #define HW_FIRM_FROM_BROM_BUF_END       (HW_WRAM_AREA_END - 0x1000)  // END - 4KB
@@ -42,7 +37,7 @@ extern "C" {
 #define HW_FIRM_APP_BUF_SIZE            0x00800000  // 8MB
 
 //------------------------------------- HW_FIRM_BOOT_CORE
-#define HW_FIRM_BOOT_CORE               HW_EXT_WRAM
+#define HW_FIRM_BOOT_CORE               HW_FIRM_FROM_BROM_BUF_END
 #define HW_FIRM_BOOT_CORE_END           (HW_FIRM_BOOT_CORE + HW_FIRM_BOOT_CORE_SIZE)
 #define HW_FIRM_BOOT_CORE_SIZE          0x200  // 512B
 

@@ -159,7 +159,7 @@ static BOOL CheckRomCertificate( SVCSignHeapContext* pool, const RomCertificate 
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-static BOOL MIi_LoadBuffer(u8* dest, u32 size, SVCSHA1Context *ctx)
+BOOL MI_LoadBuffer(u8* dest, u32 size, SVCSHA1Context *ctx)
 {
     u8* base = (u8*)HW_FIRM_LOAD_BUFFER_BASE;
     static int count = 0;
@@ -247,7 +247,7 @@ BOOL MI_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
         ((profile[pf_cnt++] = PROFILE_PXI_RECV | FIRM_PXI_ID_LOAD_HEADER), FALSE) ||
         ((profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick())), FALSE) ||
 #endif
-         !MIi_LoadBuffer( (u8*)rh, AUTH_SIZE, &ctx ) )
+         !MI_LoadBuffer( (u8*)rh, AUTH_SIZE, &ctx ) )
     {
         return FALSE;
     }
@@ -258,7 +258,7 @@ BOOL MI_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
     // load header (remain)
-    if ( !MIi_LoadBuffer( (u8*)rh + AUTH_SIZE, HEADER_SIZE - AUTH_SIZE, NULL ) )
+    if ( !MI_LoadBuffer( (u8*)rh + AUTH_SIZE, HEADER_SIZE - AUTH_SIZE, NULL ) )
     {
         return FALSE;
     }
@@ -347,7 +347,7 @@ static u32 MIi_GetTransferSize( u32 offset, u32 size )
 
   Description:  receive module from ARM7 and store(move) via WRAM[B]
 
-                MIi_LoadBufferの上位APIです。
+                MI_LoadBufferの上位APIです。
 
                 AES境界をまたぐ場合は、2回のLoadBufferに分割します。
 
@@ -372,7 +372,7 @@ static /*inline*/ BOOL MIi_LoadModule(void* dest, u32 offset, u32 size, const u8
     while ( size > 0 )
     {
         u32 unit = MIi_GetTransferSize( offset, size );
-        if ( !MIi_LoadBuffer( dest, unit, &ctx.sha1_ctx ) ) // UpdateはSHA1と同じ処理
+        if ( !MI_LoadBuffer( dest, unit, &ctx.sha1_ctx ) ) // UpdateはSHA1と同じ処理
         {
             return FALSE;
         }
@@ -505,5 +505,5 @@ BOOL MI_LoadStatic( void )
  *---------------------------------------------------------------------------*/
 void MI_Boot( void )
 {
-    OSi_Boot( rh->s.main_entry_address, (MIHeader_WramRegs*)rh->s.main_wram_config_data );
+    OSi_Boot( rh );
 }

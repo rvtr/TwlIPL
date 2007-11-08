@@ -100,6 +100,22 @@ BOOL FATFS_OpenSpecifiedSrl( const char* menufile )
     return TRUE;
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         FATFS_GetSrlDescriptor
+
+  Description:  open specified menu file
+
+                任意のファイルをオープンし、ファイルIDをmenu_fdにセットします。
+
+  Arguments:    None
+
+  Returns:      int
+ *---------------------------------------------------------------------------*/
+int FATFS_GetSrlDescriptor( void )
+{
+    return menu_fd;
+}
+
 #define HEADER_SIZE 0x1000
 #define AUTH_SIZE   ROM_HEADER_SIGN_TARGET_SIZE
 
@@ -136,12 +152,17 @@ BOOL FATFS_OpenSpecifiedSrl( const char* menufile )
                 destとsizeを通知するという形でOKではないか？
                 (で完了したら返事を返す)
 
+                補足２：
+                一度に複数スロットを使えそうな場合は、一気にpo_readした方が速い。
+                ARM9からデータ内容を触る予定がないなら、本APIを使わず、普通に
+                直接メインメモリに転送した方が速い。
+
   Arguments:    offset      offset of the file to load (512 bytes alignment)
                 size        size to load
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-static BOOL FATFS_LoadBuffer(u32 offset, u32 size)
+BOOL FATFS_LoadBuffer(u32 offset, u32 size)
 {
     u8* base = (u8*)HW_FIRM_LOAD_BUFFER_BASE;
     static int count = 0;
@@ -487,5 +508,5 @@ BOOL FATFS_LoadStatic( void )
  *---------------------------------------------------------------------------*/
 void FATFS_Boot( void )
 {
-    OSi_Boot( rh->s.sub_entry_address, (MIHeader_WramRegs*)rh->s.main_wram_config_data );
+    OSi_Boot( rh );
 }
