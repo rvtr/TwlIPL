@@ -25,8 +25,8 @@ SUBDIRS =	\
             tools \
             libraries \
 			nandfirm \
-			components \
 			libraries_sysmenu\
+			components \
 			systemmenu_RED
 
 #----------------------------------------------------------------------------
