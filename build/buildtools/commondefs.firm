@@ -78,27 +78,42 @@ endif
 #	one of [FIRM_DEBUG/FIRM_RELEASE/FIRM_FINALROM]
 #
 
+ifdef	TARGET_DEBUG
+FIRM_BUILD_TYPE		?= DEBUG
+FIRM_BUILD_DIR		?= Debug
+
+else
+ifdef	TARGET_FINALROM
+FIRM_BUILD_TYPE		?= FINALROM
+FIRM_BUILD_DIR		?= Rom
+
+else	
+ifdef	TARGET_RELEASE
+FIRM_BUILD_TYPE		?= RELEASE
+FIRM_BUILD_DIR		?= Release
+else
+
 ifdef	FIRM_DEBUG
-FIRM_BUILD_TYPE	?= DEBUG
+FIRM_BUILD_TYPE		?= DEBUG
 FIRM_BUILD_DIR		?= Debug
 
 else
 ifdef	FIRM_FINALROM
-FIRM_BUILD_TYPE	?= FINALROM
+FIRM_BUILD_TYPE		?= FINALROM
 FIRM_BUILD_DIR		?= Rom
 
 else #	FIRM_RELEASE (default)
-FIRM_BUILD_TYPE	?= RELEASE
+FIRM_BUILD_TYPE		?= RELEASE
 FIRM_BUILD_DIR		?= Release
-
+endif
+endif
+endif
 endif
 endif
 
 # replace TwlSDK
 TWL_BUILD_TYPE	?= $(FIRM_BUILD_TYPE)
 TWL_BUILD_DIR	?= $(FIRM_BUILD_DIR)
-
-
 
 #----------------------------------------------------------------------------
 #  TWL-FIRM path settings
