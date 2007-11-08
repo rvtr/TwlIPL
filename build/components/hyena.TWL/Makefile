@@ -42,7 +42,7 @@ include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 #MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD
 
 MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000' -DCRT0_O='$(CRT0_O)'
-MAKELCF_FLAGS	+=	-DISTD_LIBS='$(ISTD_LIBS)'
+MAKELCF_FLAGS	+=	-DISDBG_LIBS='$(ISDBG_LIBS)'
 
 #--------------------------------
 #   install target
