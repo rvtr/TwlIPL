@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
+#include <sysmenu/boot/common/boot.h>
 //#include <nitro/mb.h>
 //#include "IPL2_work.h"
 //#include "define.h"
@@ -29,7 +30,7 @@
 
 // extern data-------------------------------------------------------
 // from LCF
-extern  void    SDK_IRQ_STACKSIZE( void );
+//extern  void    SDK_IRQ_STACKSIZE( void );
 
 // function's prototype----------------------------------------------
 void BOOT_Core( void );

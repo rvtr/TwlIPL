@@ -34,6 +34,7 @@
 #include    <twl/cdc.h>
 #include    <twl/aes.h>
 #include    "nvram_sp.h"
+#include <sysmenu/boot/common/boot.h>
 
 /*---------------------------------------------------------------------------*
     íËêîíËã`
@@ -124,6 +125,8 @@ TwlSpMain(void)
 
     // SPI èâä˙âª
     SPI_Init(THREAD_PRIO_SPI);
+    
+    BOOT_Init();
 
     while (TRUE)
     {
@@ -133,6 +136,7 @@ TwlSpMain(void)
         {
             OS_ResetSystem();
         }
+        BOOT_WaitStart();
     }
 }
 

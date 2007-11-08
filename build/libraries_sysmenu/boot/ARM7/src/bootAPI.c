@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
+#include <sysmenu/boot/common/boot.h>
 //#include "loader.h"
 //#include "mb_child.h"
 
@@ -25,8 +26,6 @@
 // extern data-------------------------------------------------------
 
 // function's prototype----------------------------------------------
-void BOOT_Init( void );
-void BOOT_WaitStart( void );
 
 static void BOOTi_ClearREG_RAM( void );
 
@@ -55,7 +54,7 @@ BOOL BOOT_WaitStart( void )
 			InsertWLPatch();
 		}
 */
-		BOOi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。
+		BOOTi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。
 		reg_PXI_MAINPINTF = MAINP_SEND_IF | 0x0100;		// ARM9に対してブートするようIRQで要求＋ARM7のステートを１にする。
 		BOOT_Core();									// never return
 	}
@@ -81,5 +80,4 @@ static void BOOTi_ClearREG_RAM( void )
 	reg_PXI_MAINP_FIFO_CNT	= 0x4008;
 	// クリアしていないレジスタは、VCOUNT, JOY, PIFCNT, MC-, EXMEMCNT, IME, PAUSE, POWLCDCNT, 他セキュリティ系です。
 	(void)OS_ResetRequestIrqMask(~0);
-}
 }

@@ -68,6 +68,9 @@ void TwlMain( void )
 	
 	FS_Init( FS_DMA_NOT_USE );
     GX_Init();
+    
+    // プロテクションユニット領域変更
+    OS_SetProtectionRegion( 2, 0x02280000, 512KB );
 	
 	// 割り込み許可--------------------
 	(void)OS_SetIrqFunction(OS_IE_V_BLANK, INTR_VBlank);

@@ -26,11 +26,11 @@ TWL_PROC	   		=	ARM9
 
 #----------------------------------------------------------------------------
 
-SRCDIR				=	../common/src
+SRCDIR				=	./src
 
 INCDIR				=	../common/include
 
-SRCS				=	boot.c
+SRCS				=	boot.c bootAPI.c
 
 TARGET_LIB			=	libboot$(TWL_LIBSUFFIX).a
 

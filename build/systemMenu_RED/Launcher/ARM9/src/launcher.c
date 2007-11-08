@@ -312,7 +312,7 @@ void LauncherInit( TitleProperty *pTitleList )
 	int i;
 	GX_DispOff();
 	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_UCOLOR_GRAY );
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
 	
 	DrawBackLightSwitch();
 	
@@ -414,8 +414,8 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 		if(pTitleList[selected].titleID != 0)
 		{
 			NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
-			//return &pTitleList[selected];
-			return NULL;
+			return &pTitleList[selected];
+			//return NULL;
 		}
 	}
 	

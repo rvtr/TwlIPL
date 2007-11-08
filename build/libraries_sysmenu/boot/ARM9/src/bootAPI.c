@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
+#include <sysmenu/boot/common/boot.h>
 //#include <nitro/mb.h>
 //#include "IPL2_work.h"
 //#include "define.h"
@@ -56,7 +57,7 @@ void BOOT_Ready( void )
 	(void)GX_VBlankIntr( FALSE );
 	(void)OS_SetIrqFunction( OS_IE_SUBP, NULL );
 	(void)OS_SetIrqMask( OS_IE_SUBP );						// サブプロセッサ割り込みのみを許可。
-	reg_PXI_SUBPINTF = SUBP_RECV_IF_ENABLE | 0x0f00;		// ARM9ステートを "0x0f" に
+//	reg_PXI_SUBPINTF = SUBP_RECV_IF_ENABLE | 0x0f00;		// ARM9ステートを "0x0f" に
 															// ※もうFIFOはクリア済みなので、使わない。
 	
 	// ARM7からの通知待ち

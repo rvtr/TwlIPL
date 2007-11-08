@@ -22,6 +22,7 @@
 #include "sysmenu_card.h"
 #include "spi.h"
 #include "mb_child.h"
+#include <sysmenu/boot/common/boot.h>
 
 // define data-----------------------------------------------------------------
 
@@ -357,9 +358,11 @@ AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle )
 	// アプリロード
 	// アプリ認証
 	
-	// 実験用。実際にはこれ使えない（静的に8MBも退避メモリを確保してくれるので無理）
-	// ので、自前のロードプログラムが必要。
-	//NAM_LaunchTitle(pBootTitle->titleID);
+	// 実験用。namを改造している。ロードするだけ。
+	NAM_LaunchTitle(pBootTitle->titleID);
+	
+	// 起動。
+	BOOT_Ready();
 	
 	// パラメータチェック
 	if( !SYSMi_CheckTitlePointer( pBootTitle ) ) {

@@ -26,11 +26,11 @@ TWL_PROC	    	=	ARM7
 
 #----------------------------------------------------------------------------
 
-SRCDIR				=	../common/src
+SRCDIR				=	./src
 
 INCDIR				=	../common/include
 
-SRCS				=	boot.c
+SRCS				=	bootAPI.c boot.c
 
 TARGET_LIB			=	libboot_sp$(TWL_LIBSUFFIX).a
 
