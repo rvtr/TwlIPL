@@ -167,7 +167,8 @@ typedef struct TWLSettingsData{
 		u32		isAgreeEURA : 1;
 		// WiFi設定は別データなので、ここに設定済みフラグは用意しない。
 		u32		isGBUseTopLCD : 1;
-		u32		rsv : 22;
+		u32		isAvailableWireless : 1;    // 無線モジュールのRFユニットの有効化／無効化
+		u32		rsv : 20;
 	}flags;
 	u16					valid_language_bitmap;		// 対応言語ビットマップ（※ここじゃなく、"/sys/HWINFO.dat"内の方が良さそう）
 	u8					country;					// 国コード
