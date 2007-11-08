@@ -30,22 +30,17 @@ SUBDIRS =	\
             ARM9 \
             wram_regs \
 
-TARGET_FIRM_BIN	=	sdmc_launcher.nand sdmc_launcher.srl
+TARGET_FIRM_BIN		=	sdmc_launcher-$(FIRM_BUILD_TYPE).nand
 BINDIR			=	.
-MAKEFIRM_ARM9	=	ARM9/bin/ARM9-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/sdmc_launcher9.tef
-MAKEFIRM_ARM7	=	ARM7/bin/ARM7-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/sdmc_launcher7.tef
-MAKEFIRM_RSA_PRVKEY	= $(TWL_KEYSDIR)/rsa/private_nand.der
-LDEPENDS_BIN	+=	wram_regs/wram_regs.rbin
+MAKEFIRM_ARM9		=	ARM9/bin/ARM9-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/sdmc_launcher9.tef
+MAKEFIRM_ARM7		=	ARM7/bin/ARM7-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/sdmc_launcher7.tef
+MAKEFIRM_RSA_PRVKEY	=	$(TWL_KEYSDIR)/rsa/private_nand.der
+LDEPENDS_BIN		+=	wram_regs/wram_regs.rbin
 
-MAKEROM_ARM7_BASE       =       $(basename $(MAKEFIRM_ARM7))
-MAKEROM_FLAGS		+=	-F
-
-NITRO_MAKEROM	=	TRUE
-MAKEFIRM_FLAGS	+=	-p
+MAKEFIRM_FLAGS		+=	-p
 FIRM_SPEC		=	nandfirm.nandsf
 
 LDIRT_CLEAN		+=	$(TARGETS) \
-				$(basename $(firstword $(TARGETS))).tlf \
 				rsa_public.sbin \
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs

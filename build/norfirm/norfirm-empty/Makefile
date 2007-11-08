@@ -23,19 +23,16 @@ FIRM_TARGET    = FIRM
 
 SUBDIRS =	\
 
-TARGET_FIRM_BIN		=	norfirm_empty.nor
-BINDIR				=	.
-MAKEFIRM_RSA_PRVKEY	= $(TWL_KEYSDIR)/rsa/private_nor.der
-
+TARGET_FIRM_BIN		=	norfirm_empty-$(FIRM_BUILD_TYPE).nor
+BINDIR			=	.
 MAKEFIRM_ARM9	 	=
 MAKEFIRM_ARM7	 	=
-
-NITRO_MAKEROM	=	TRUE
-MAKEFIRM_FLAGS	+=	-p
+MAKEFIRM_RSA_PRVKEY	=	$(TWL_KEYSDIR)/rsa/private_nor.der
+MAKEFIRM_FLAGS		+=	-p
 FIRM_SPEC		=	norfirm-BB.norsf
 
-LDIRT_CLEAN		+=	$(BINDIR)/$(TARGET_BIN) \
-					rsa_public.sbin \
+LDIRT_CLEAN		+=	$(TARGETS) \
+				rsa_public.sbin \
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
