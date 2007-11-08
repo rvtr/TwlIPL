@@ -21,7 +21,7 @@
 //#include "mb_child.h"
 
 // define data-------------------------------------------------------
-#define MAINP_SEND_IF		0xff00
+#define MAINP_SEND_IF		0x2000
 
 // extern data-------------------------------------------------------
 

@@ -22,7 +22,7 @@
 //#include "define.h"
 
 // define data-------------------------------------------------------
-#define SUBP_RECV_IF_ENABLE		0x0f
+#define SUBP_RECV_IF_ENABLE		0x4000
 
 // extern data-------------------------------------------------------
 
@@ -42,6 +42,7 @@ void BOOT_Init( void )
 
 static void ie_subphandler( void )
 {
+	OS_TPrintf( "INTR SUBP!!\n" );
 	OS_SetIrqCheckFlag( OS_IE_SUBP );
 }
 
@@ -61,14 +62,14 @@ void BOOT_Ready( void )
 	BOOTi_ClearREG_RAM();									// レジスタ＆RAMクリア
 	(void)GX_VBlankIntr( FALSE );
 	(void)OS_SetIrqFunction( OS_IE_SUBP, ie_subphandler );
+	OS_EnableInterrupts();
 	(void)OS_SetIrqMask( OS_IE_SUBP );						// サブプロセッサ割り込みのみを許可。
 	reg_PXI_SUBPINTF = SUBP_RECV_IF_ENABLE | 0x0f00;		// ARM9ステートを "0x0f" に
 															// ※もうFIFOはクリア済みなので、使わない。
-															
-	OS_EnableIrq();
 	// ARM7からの通知待ち
 	OS_WaitIrq( 1, OS_IE_SUBP );
 	
+	OS_TPrintf( "INTR SUBP passed!!\n" );
 	// 割り込みをクリアして最終ブートシーケンスへ。
 	reg_PXI_SUBPINTF &= 0x0f00;								// サブプロセッサ割り込み許可フラグをクリア
 	(void)OS_DisableIrq();

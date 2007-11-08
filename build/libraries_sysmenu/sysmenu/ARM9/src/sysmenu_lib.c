@@ -349,7 +349,15 @@ static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle )
 	return TRUE;
 }
 
-
+enum
+{
+    region_header,
+    region_arm9_ntr,
+    region_arm7_ntr,
+    region_arm9_twl,
+    region_arm7_twl,
+    region_max
+};
 // 指定タイトルの認証＆ロード　※１フレームじゃ終わらん。
 AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle )
 {
@@ -359,7 +367,108 @@ AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle )
 	// アプリ認証
 	
 	// 実験用。namを改造している。ロードするだけ。
-	NAM_LaunchTitle(pBootTitle->titleID);
+	//NAM_LaunchTitle(pBootTitle->titleID);
+	
+	// ロード
+    char path[256];
+    FSFile  file[1];
+    BOOL bSuccess;
+    NAM_GetTitleBootContentPath(path, pBootTitle->titleID);
+
+    bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
+
+    if( ! bSuccess )
+    {
+OS_TPrintf("RebootSystem failed: cant open file\n");
+        return AUTH_RESULT_TITLE_POINTER_ERROR;
+    }
+
+    {
+        int     i;
+        u32     source[region_max];
+        u32     length[region_max];
+        u32     destaddr[region_max];
+        static u8   header[HW_TWL_ROM_HEADER_BUF_SIZE] ATTRIBUTE_ALIGN(32);
+        s32 readLen;
+
+        // まずROMヘッダを読み込む
+        // (本来ならここでSRLの正当性判定)
+        bSuccess = FS_SeekFile(file, 0x00000000, FS_SEEK_SET);
+
+        if( ! bSuccess )
+        {
+OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
+            FS_CloseFile(file);
+            return AUTH_RESULT_TITLE_POINTER_ERROR;
+        }
+
+        readLen = ReadFile(file, header, (s32)sizeof(header));
+
+        if( readLen != (s32)sizeof(header) )
+        {
+OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", header, 0, sizeof(header), readLen);
+            FS_CloseFile(file);
+            return AUTH_RESULT_TITLE_POINTER_ERROR;
+        }
+
+        if( header[0x15C] != 0x56 || header[0x15D] != 0xCF )
+        {
+int i, j;
+for( i = 0; i < 0x20; ++i )
+{
+for( j = 0; j < 0x10; ++j )
+{
+OS_TPrintf("%02X ", header[i * 0x10 + j]);
+}
+OS_TPrintf("\n");
+}
+OS_TPrintf("RebootSystem failed: logo CRC error\n");
+            FS_CloseFile(file);
+            return AUTH_RESULT_TITLE_POINTER_ERROR;
+        }
+
+        // 各領域を読み込む
+        source[region_header] = 0x00000000;
+        length[region_header] = HW_TWL_ROM_HEADER_BUF_SIZE;
+        destaddr[region_header] = HW_TWL_ROM_HEADER_BUF;
+        source[region_arm9_ntr] = *(const u32*)&header[0x020];
+        length[region_arm9_ntr] = *(const u32*)&header[0x02C];
+        destaddr[region_arm9_ntr] = *(const u32*)&header[0x028];
+        source[region_arm7_ntr] = *(const u32*)&header[0x030];
+        length[region_arm7_ntr] = *(const u32*)&header[0x03C];
+        destaddr[region_arm7_ntr] = *(const u32*)&header[0x038];
+        source[region_arm9_twl] = *(const u32*)&header[0x1C0];
+        length[region_arm9_twl] = *(const u32*)&header[0x1CC];
+        destaddr[region_arm9_twl] = *(const u32*)&header[0x1C8];
+        source[region_arm7_twl] = *(const u32*)&header[0x1D0];
+        length[region_arm7_twl] = *(const u32*)&header[0x1DC];
+        destaddr[region_arm7_twl] = *(const u32*)&header[0x1D8];
+
+        for (i = region_header; i < region_max; ++i)
+        {
+            u32 len = length[i];
+
+            bSuccess = FS_SeekFile(file, (s32)source[i], FS_SEEK_SET);
+
+            if( ! bSuccess )
+            {
+OS_TPrintf("RebootSystem failed: cant seek file(%d)\n", source[i]);
+                FS_CloseFile(file);
+                return AUTH_RESULT_TITLE_POINTER_ERROR;
+            }
+
+            readLen = ReadFile(file, (void *)destaddr[i], (s32)len);
+
+            if( readLen != (s32)len )
+            {
+OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
+                FS_CloseFile(file);
+                return AUTH_RESULT_TITLE_POINTER_ERROR;
+            }
+        }
+
+        (void)FS_CloseFile(file);
+    }
 	
 	// 起動。
 	BOOT_Ready();
