@@ -26,9 +26,9 @@ FIRM_TARGET    = FIRM
 #----------------------------------------------------------------------------
 
 SUBDIRS =	\
+            wram_regs \
             ARM7 \
             ARM9 \
-            wram_regs \
 
 TARGET_FIRM_BIN		=	norfirm_print-$(FIRM_BUILD_TYPE).nor
 BINDIR			=	.
