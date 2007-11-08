@@ -24,6 +24,8 @@
 #include <devices/sdmc_config.h>
 #include <twl/devices/sdmc/ARM7/sdmc.h>
 
+//#define USE_SPECULATIVE_READ
+
 extern u32 NAND_FAT_PARTITION_COUNT;
 
 #define DMA_PIPE         2
@@ -35,7 +37,9 @@ extern u32 NAND_FAT_PARTITION_COUNT;
 extern volatile SDMC_ERR_CODE   SDCARD_ErrStatus;
 extern s16  SDCARD_SDHCFlag;          /* SDHCカードフラグ */
 extern SDPortContext*   SDNandContext;  /* NAND初期化パラメータ */
-
+#ifdef USE_SPECULATIVE_READ
+static u32 currentSector;
+#endif
 /*---------------------------------------------------------------------------*
   Name:         WaitFifoFull
 
@@ -60,6 +64,80 @@ static inline void WaitFifoFull( void )
 }
 
 /*---------------------------------------------------------------------------*
+  Name:         StopToRead
+
+  Description:  stop to read from SD I/F
+
+                SDカードからの読み込みの完了処理を行います。
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+static void StopToRead( void )
+{
+#ifdef NAND_FAT_PARTITION_COUNT
+    if ( *SDIF_CNT & SDIF_CNT_USEFIFO )
+    {
+        SD_AndFPGA( SD_INFO2,(~(SD_INFO2_ERROR_SET)));              /* SD_INFO2のエラーフラグを全て落とす */
+        SD_OrFPGA( SD_INFO2_MASK, SD_INFO2_MASK_ERRSET);        /* 全てのエラー割り込みを禁止 */
+        SD_OrFPGA( SD_INFO1_MASK, SD_INFO1_MASK_ALL_END);       /* INFO1の access all end 割込み禁止 */
+        SD_TransEndFPGA();                      /* 強制的にカード転送の終了処理 */
+        SD_StopTransmission();                  /* 強制的にカード転送終了設定 */
+        // SDCARD_EndFlag
+        if ( SDCARD_ErrStatus )
+        {
+            //OS_TPrintf("R1_STATUS (1st).\n");
+            SD_SendStatus();                   /* CMD13 addressed card sends its status register 発行、レスポンス待ち */
+
+            if( !SDCARD_ErrStatus )              /* エラーステータスの確認（エラー有り？）*/
+            {
+                u16 usRSP0;
+                //OS_TPrintf("R1_STATUS (2nd).\n");
+                SD_GetFPGA( usRSP0, SD_RSP0);
+                usRSP0 = (u16)(( usRSP0 & RSP_R1_CURRENT_STATE) >> 1);               /* カレントステートを取り出す */
+                if((usRSP0 == CURRENT_STATE_DATA) || (usRSP0 == CURRENT_STATE_RCV)){ /* SDCARD Status が data rcv の時 */
+                    SD_Command(SD_CMD_CMD | STOP_TRANSMISSION);                      /* CMD12（StopTransmission）発行処理 */
+                }
+            }
+        }
+        if(!(SDCARD_ErrStatus & SDMC_ERR_R1_STATUS))       /* コマンドレスポンス(R1)のカードステータスがエラーでないか? */
+        {
+            //OS_TPrintf("R1_STATUS (3rd).\n");
+            SD_CheckStatus(TRUE);                          /* コマンドレスポンス(R1)の Card Status チェック */
+            if(!(SDCARD_ErrStatus & SDMC_ERR_R1_STATUS))   /* コマンドレスポンス(R1)のカードステータスがエラーでないか? */
+            {
+                //OS_TPrintf("R1_STATUS (4th).\n");
+                SD_SendStatus();                           /* カードステータスの取得コマンド発行 */
+                SD_CheckStatus(TRUE);                      /* コマンドレスポンス(R1)の Card Status チェック */
+            }
+        }
+        if( !SD_CheckFPGAReg( SD_STOP,SD_STOP_SEC_ENABLE ) ){
+            //OS_TPrintf("SD_StopTransmission.\n");
+            SD_StopTransmission();      /* カード転送終了をFPGAに通知（CMD12発行） */
+        }
+        SD_DisableClock();              /* クロック供給停止 */
+
+        *SDIF_CNT = (*SDIF_CNT & ~SDIF_CNT_USEFIFO) | SDIF_CNT_FCLR; /* FIFO使用フラグOFF */
+        CC_EXT_MODE = CC_EXT_MODE_PIO;  /* PIOモード(DMAモードOFF) */
+        //OS_TPrintf("DONE\n");
+    }
+#else
+    if ( *SDIF_CNT & SDIF_CNT_USEFIFO )
+    {
+        if( !SD_CheckFPGAReg( SD_STOP,SD_STOP_SEC_ENABLE ) ){
+            SD_StopTransmission();      /* カード転送終了をFPGAに通知（CMD12発行） */
+        }
+        SD_TransEndFPGA();              /* 転送終了処理(割り込みマスクを禁止に戻す) */
+        SD_DisableClock();              /* クロック供給停止 */
+
+        *SDIF_CNT = (*SDIF_CNT & ~SDIF_CNT_USEFIFO) | SDIF_CNT_FCLR; /* FIFO使用フラグOFF */
+        CC_EXT_MODE = CC_EXT_MODE_PIO;  /* PIOモード(DMAモードOFF) */
+    }
+#endif
+}
+
+/*---------------------------------------------------------------------------*
   Name:         StartToRead
 
   Description:  start to read from SD I/F
@@ -73,6 +151,15 @@ static inline void WaitFifoFull( void )
  *---------------------------------------------------------------------------*/
 static void StartToRead(u32 block, u32 count)
 {
+#ifdef USE_SPECULATIVE_READ
+    if ( currentSector == block )
+    {
+        return;
+    }
+    StopToRead();
+    currentSector = block;
+    count = 0xFFFF;
+#endif
     *SDIF_FSC = count;
     *SDIF_FDS = SECTOR_SIZE;
     *SDIF_CNT = (*SDIF_CNT & ~(SDIF_CNT_FEIE | SDIF_CNT_FFIE)) | SDIF_CNT_FCLR | SDIF_CNT_USEFIFO;
@@ -89,29 +176,6 @@ static void StartToRead(u32 block, u32 count)
     {
         SD_MultiReadBlock( block * SECTOR_SIZE );
     }
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         StopToRead
-
-  Description:  stop to read from SD I/F
-
-                SDカードからの読み込みの完了処理を行います。
-
-  Arguments:    None
-
-  Returns:      None
- *---------------------------------------------------------------------------*/
-static void StopToRead( void )
-{
-    if( !SD_CheckFPGAReg( SD_STOP,SD_STOP_SEC_ENABLE ) ){
-        SD_StopTransmission();      /* カード転送終了をFPGAに通知（CMD12発行） */
-    }
-    SD_TransEndFPGA();              /* 転送終了処理(割り込みマスクを禁止に戻す) */
-    SD_DisableClock();              /* クロック供給停止 */
-
-    *SDIF_CNT = (*SDIF_CNT & ~SDIF_CNT_USEFIFO) | SDIF_CNT_FCLR; /* FIFO使用フラグOFF */
-    CC_EXT_MODE = CC_EXT_MODE_PIO;  /* PIOモード(DMAモードOFF) */
 }
 
 /*
@@ -183,6 +247,7 @@ void FATFS_DisableAES( void )
  *---------------------------------------------------------------------------*/
 static u16 ReadNormal(u32 block, void *dest, u16 count)
 {
+#if 1   // use TIMING_SD_1 or not
     MINDmaConfig config =
     {
         MI_NDMA_NO_INTERVAL,
@@ -191,11 +256,68 @@ static u16 ReadNormal(u32 block, void *dest, u16 count)
         SECTOR_SIZE/4
     };
 //    OS_TPrintf("ReadNormal(0x%X, 0x%08X, 0x%X) is calling.\n", block, dest, count);
-    MI_NDmaRecvExAsync_Dev( DMA_PIPE, SDIF_FI, dest, (u32)(count * SECTOR_SIZE), NULL, NULL, &config, MI_NDMA_TIMING_SD_1 );
+#ifdef USE_SPECULATIVE_READ
+    if (block == currentSector)
+    {
+        //StartToRead( block, 1 );
+        WaitFifoFull();
+        MI_NDmaRecvAsync( DMA_PIPE, SDIF_FI, dest, SECTOR_SIZE, NULL, NULL );
+        block++;
+        dest = (u8*)dest + SECTOR_SIZE;
+        count--;
+        currentSector++;
+        if (count == 0)
+        {
+            MI_WaitNDma( DMA_PIPE );
+            return SDCARD_ErrStatus;
+        }
+        // ここまでで次のFIFO FULL前であると仮定しているが、問題ない？
+    }
+#endif
+    MI_NDmaRecvExAsync_Dev( DMA_RECV, SDIF_FI, dest, (u32)(count * SECTOR_SIZE), NULL, NULL, &config, MI_NDMA_TIMING_SD_1 );
     StartToRead( block, count );
-    MI_WaitNDma( DMA_PIPE );
-    StopToRead();
+    if ( SDCARD_ErrStatus != SDMC_NORMAL )
+    {
+        goto err;
+    }
+#else
+    u32 offset = 0; // in bytes
 
+//    OS_TPrintf("ReadNormal(0x%X, 0x%08X, 0x%X) is calling.\n", block, dest, count);
+    MI_NDmaRecvAsync_SetUp( DMA_RECV, (void*)SDIF_FI, dest, SECTOR_SIZE, NULL, NULL );
+    StartToRead( block, count );
+    if ( SDCARD_ErrStatus != SDMC_NORMAL )
+    {
+        goto err;
+    }
+    while ( count * SECTOR_SIZE > offset )
+    {
+        WaitFifoFull();
+        if ( SDCARD_ErrStatus != SDMC_NORMAL )
+        {
+            goto err;
+        }
+//        MI_NDMA_REG( DMA_RECV, MI_NDMA_REG_DAD_WOFFSET ) = (u32)dest + offset;
+        MIi_SetNDmaDest( DMA_RECV, (u8*)dest + offset );
+        MI_NDmaRestart( DMA_RECV );
+        offset += SECTOR_SIZE;
+    }
+#endif
+
+    MI_WaitNDma( DMA_RECV );
+#ifdef USE_SPECULATIVE_READ
+    currentSector += count;
+#else
+    StopToRead();
+#endif
+    return SDCARD_ErrStatus;
+
+err:
+    MI_StopNDma( DMA_RECV );
+#ifdef USE_SPECULATIVE_READ
+    currentSector = 0xFFFFFFFF;
+#endif
+    StopToRead();
     return SDCARD_ErrStatus;
 }
 
@@ -223,6 +345,11 @@ static u16 ReadAES(u32 block, void *dest, u16 count)
 
 //    OS_TPrintf("ReadAES(0x%X, 0x%08X, 0x%X) is calling.\n", block, dest, count);
     MI_NDmaPipeAsync_SetUp( DMA_PIPE, (void*)SDIF_FI, (void*)REG_AES_IFIFO_ADDR, PIPE_SIZE, NULL, NULL );
+    StartToRead( block, count );
+    if ( SDCARD_ErrStatus != SDMC_NORMAL )
+    {
+        goto err;
+    }
 
 /*
     AESのセットアップ＆出力DMA設定
@@ -236,11 +363,6 @@ static u16 ReadAES(u32 block, void *dest, u16 count)
     // update for next read
     AESi_AddCounter( &aesCounter, (u32)(count * SECTOR_SIZE / AES_BLOCK_SIZE) );
 
-    StartToRead( block, count );
-    if ( SDCARD_ErrStatus != SDMC_NORMAL )
-    {
-        goto err;
-    }
 
     while ( count * SECTOR_SIZE > offset )
     {
@@ -259,13 +381,20 @@ static u16 ReadAES(u32 block, void *dest, u16 count)
         offset += PIPE_SIZE;
     }
     MI_WaitNDma( DMA_PIPE );
+#ifdef USE_SPECULATIVE_READ
+    currentSector += count;
+#else
     StopToRead();
+#endif
     MI_WaitNDma( DMA_RECV );
     return SDCARD_ErrStatus;
 
 err:
     MI_StopNDma( DMA_RECV );
     MI_StopNDma( DMA_PIPE );
+#ifdef USE_SPECULATIVE_READ
+    currentSector = 0xFFFFFFFF;
+#endif
     StopToRead();
     AESi_Reset();
     return SDCARD_ErrStatus;
@@ -449,7 +578,7 @@ static BOOL sdmcRtfsAttachFirm( int driveno)
 BOOL FATFS_InitFIRM( void* nandContext )
 {
     /* RTFSライブラリを初期化 */
-    if( !FATFSi_rtfs_init() )
+    if( !rtfs_init() )
     {
         return FALSE;
     }
@@ -457,11 +586,16 @@ BOOL FATFS_InitFIRM( void* nandContext )
     /* NAND初期化パラメータの設定 */
     SDNandContext = (SDPortContext*)nandContext;
 
+#ifdef USE_SPECULATIVE_READ
+    currentSector = 0xFFFFFFFF;
+#endif
+
     /* SDドライバ初期化 */
-    if ( FATFSi_sdmcInit( SDMC_NOUSE_DMA ) != SDMC_NORMAL )
+    if ( sdmcInit( SDMC_NOUSE_DMA ) != SDMC_NORMAL )
     {
         return FALSE;
     }
+
     return TRUE;
 }
 
@@ -503,4 +637,25 @@ BOOL FATFS_MountDriveFIRM( int driveno, FATFSMediaType media, int partition_no )
         }
     }
     return TRUE;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         FATFS_UnmountDriveFIRM
+
+  Description:  unmount specified partition
+
+                特殊なドライバの終了処理をします。
+
+  Arguments:    driveno         drive number "A:" is 0
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL FATFS_UnmountDriveFIRM( int driveno )
+{
+#ifdef USE_SPECULATIVE_READ
+    StopToRead();
+    currentSector = 0xFFFFFFFF;
+#endif
+    return TRUE;
+    return rtfs_detach( driveno );
 }

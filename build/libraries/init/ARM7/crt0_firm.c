@@ -97,16 +97,16 @@ SDK_WEAK_SYMBOL asm void _start( void )
         // SVC mode
         mov             r0, #HW_PSR_SVC_MODE
         msr             cpsr_c, r0
-        ldr             sp, =HW_PRV_WRAM_SVC_STACK_END
+        ldr             sp, =HW_FIRM_SVC_STACK_END
 
         // IRQ mode
         mov             r0, #HW_PSR_IRQ_MODE
         msr             cpsr_c, r0
-        ldr             r0, =HW_PRV_WRAM_IRQ_STACK_END
+        ldr             r0, =HW_FIRM_IRQ_STACK_END
         mov             sp, r0
 
         // System mode
-        ldr             r1, =SDK_IRQ_STACKSIZE
+        ldr             r1, =HW_FIRM_IRQ_STACK_SIZE
         sub             r1, r0, r1
         mov             r0, #HW_PSR_SYS_MODE
         msr             cpsr_csfx, r0
@@ -345,8 +345,8 @@ INITi_ShelterStaticInitializer(u32* ptr)
         bxeq            lr
 
         /* 退避場所先頭アドレスを計算 */
-        ldr             r1, =HW_PRV_WRAM_IRQ_STACK_END
-        ldr             r2, =SDK_IRQ_STACKSIZE
+        ldr             r1, =HW_FIRM_IRQ_STACK_END
+        ldr             r2, =HW_FIRM_IRQ_STACK_SIZE
         sub             r1, r1, r2
         add             r1, r1, #4
 
@@ -379,8 +379,8 @@ INITi_CallStaticInitializers(void)
         stmdb           sp!, {lr}
 
         /* テーブル退避場所先頭アドレスを計算 */
-        ldr             r1, =HW_PRV_WRAM_IRQ_STACK_END
-        ldr             r2, =SDK_IRQ_STACKSIZE
+        ldr             r1, =HW_FIRM_IRQ_STACK_END
+        ldr             r2, =HW_FIRM_IRQ_STACK_SIZE
         sub             r1, r1, r2
         add             r1, r1, #4
 
