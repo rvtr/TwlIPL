@@ -82,6 +82,7 @@ TwlSpMain(void)
     PrintDebugInfo();
 
     // ヒープ領域設定
+	OS_SetSubPrivArenaHi( (void*)0x02380000 );		// メモリ配置をいじっているので、アリーナHiも変更しないとダメ！！
     heapHandle  =   InitializeAllocateSystem();
 
     // ボタン入力サーチ初期化

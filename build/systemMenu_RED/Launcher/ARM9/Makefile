@@ -43,6 +43,10 @@ LINCLUDES				=	$(SRCDIR)/$(LOGO_DIR)
 LLIBRARIES		+=	libnam$(TWL_LIBSUFFIX).a\
 				libese$(TWL_LIBSUFFIX).a
 
+
+DEFAULT_COMP_ARM7			=	hyena
+DEFAULT_MAKEROM_ARM7_BASE	=	$(TWLIPL_ROOT)/components/$(DEFAULT_COMP_ARM7)/$(TWL_BUILDTYPE_ARM7)/$(DEFAULT_COMP_ARM7)
+
 include $(TWLIPL_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------

@@ -45,6 +45,7 @@ Autoload WRAM
 				libtp_sp.TWL$(CODEGEN).a	\
 				libtpex_sp.TWL$(CODEGEN).a	\
 				libnvram_sp.TWL$(CODEGEN).a	\
+				libscfg_sp.TWL$(CODEGEN).a	\
 				$(ISTD_LIBS)
 
 	Object		* (.etable)
