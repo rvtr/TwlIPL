@@ -26,6 +26,16 @@ extern "C" {
 #define HW_FIRM_END                     (HW_FIRM + HW_FIRM_SIZE)
 #define HW_FIRM_SIZE                    (HW_WRAM_0_SIZE + HW_WRAM_1_SIZE + HW_WRAM_A_SIZE_MAX + HW_WRAM_B_SIZE_MAX)
 
+//------------------------------------- FIRM_SVC_STACK
+#define HW_FIRM_SVC_STACK               (HW_FIRM_SVC_STACK_END-HW_FIRM_SVC_STACK_SIZE)
+#define HW_FIRM_SVC_STACK_END           (HW_WRAM_AREA_END - HW_PRV_WRAM_SYSRV_SIZE)
+#define HW_FIRM_SVC_STACK_SIZE          HW_SVC_STACK_SIZE
+
+//------------------------------------- FIRM_IRQ_STACK
+#define HW_FIRM_IRQ_STACK               (HW_FIRM_IRQ_STACK_END-HW_FIRM_IRQ_STACK_SIZE)
+#define HW_FIRM_IRQ_STACK_END           HW_FIRM_SVC_STACK
+#define HW_FIRM_IRQ_STACK_SIZE          SDK_IRQ_STACKSIZE
+
 //------------------------------------- HW_FIRM_FROM_BROM_BUF
 #define HW_FIRM_FROM_BROM_BUF           (HW_FIRM_FROM_BROM_BUF_END - HW_FIRM_FROM_BROM_BUF_SIZE)
 #define HW_FIRM_FROM_BROM_BUF_END       (HW_WRAM_AREA_END - 0x1000)  // END - 4KB
