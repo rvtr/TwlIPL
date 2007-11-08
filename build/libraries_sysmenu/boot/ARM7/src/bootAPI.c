@@ -21,7 +21,7 @@
 //#include "mb_child.h"
 
 // define data-------------------------------------------------------
-#define MAINP_SEND_IF		0x0200
+#define MAINP_SEND_IF		0xff00
 
 // extern data-------------------------------------------------------
 
@@ -68,7 +68,7 @@ static void BOOTi_ClearREG_RAM( void )
 //	SVC_CpuClearFast(0x0000, IPL2_PRV_WRAM_ARENA_LO, RETURN_FROM_MAIN_ARM7_FUNCP - IPL2_PRV_WRAM_ARENA_LO );
 																	// アリーナのクリア
 	for( i = 0; i <= MI_DMA_MAX_NUM; i++ ) {						// DMAの停止
-		MI_StopDma( i );
+		MI_StopDma( (u16)i );
 	}
 	// レジスタのクリア
 	SVC_CpuClearFast( 0x0000, (void*)(HW_REG_BASE + 0x0b0), (0x13c - 0x0b0) );
@@ -79,5 +79,5 @@ static void BOOTi_ClearREG_RAM( void )
 	reg_SPI_SPICNT			= 0;
 	reg_PXI_MAINP_FIFO_CNT	= 0x4008;
 	// クリアしていないレジスタは、VCOUNT, JOY, PIFCNT, MC-, EXMEMCNT, IME, PAUSE, POWLCDCNT, 他セキュリティ系です。
-	(void)OS_ResetRequestIrqMask(~0);
+	(void)OS_ResetRequestIrqMask((u16)~0);
 }
