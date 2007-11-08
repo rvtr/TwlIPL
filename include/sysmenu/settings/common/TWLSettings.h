@@ -39,6 +39,7 @@ extern "C" {
 #define TWL_FAVORITE_COLOR_MAX_NUM		NTR_FAVORITE_COLOR_MAX_NUM	// 好きな色の最大数
 #define TSD_TEMP_BUFFER_SIZE			( sizeof(TSDStore) * 2 )	// TSD_ReadTWLSettingsで必要なTempBufferサイズ
 
+
 // 言語コード
 typedef enum TWLLangCode{
 	TWL_LANG_JAPANESE = 0,						// 日本語
@@ -47,8 +48,11 @@ typedef enum TWLLangCode{
 	TWL_LANG_GERMAN   = 3,						// ドイツ語
 	TWL_LANG_ITALIAN  = 4,						// イタリア語
 	TWL_LANG_SPANISH  = 5,						// スペイン語
-  	TWL_LANG_CHINESE  = 6,						// 中国語
+	TWL_LANG_SIMP_CHINESE = 6,					// 中国語（簡体字）
 	TWL_LANG_KOREAN   = 7,						// 韓国語
+//	TWL_LANG_DUTCH    = 8,						// オランダ語（Wiiでは存在）
+//	TWL_LANG_TRAD_CHINESE = 9,					// 台湾語（繁体字）（Wiiでは存在）
+	
 	TWL_LANG_CODE_MAX
 }TWLLangCode;
 
@@ -59,12 +63,15 @@ typedef enum TWLLangCode{
 #define TWL_LANG_BITMAP_KOREA		NTR_LANG_BITMAP_KOREA	// SystemMenu-WW版での対応言語ビットマップ
 
 
-// リージョンコード（まだ適当）
+// リージョンコード（販社別になる見込み）
 typedef enum TWLRegionCode {
-	TWL_REGION_WW = 0,
-	TWL_REGION_CHINA = 1,
-	TWL_REGION_KOREA = 2,
-	TWL_REGION_MAX = 3
+	TWL_REGION_JAPAN     = 0,   // NCL
+	TWL_REGION_AMERICA   = 1,   // NOA
+	TWL_REGION_EUROPE    = 2,   // NOE
+	TWL_REGION_AUSTRALIA = 3,   // NAL
+	TWL_REGION_CHINA     = 4,   // IQue
+	TWL_REGION_KOREA     = 5,   // NOK
+	TWL_REGION_MAX       = 5
 }TWLRegion;
 
 
@@ -105,9 +112,40 @@ typedef struct TWLOwnerInfo{
 }TWLOwnerInfo;		// 80byte
 
 
+// ペアレンタルコントロール
+#define TWL_PARENTAL_CONTROL_PASSWORD_LENGTH     4                  // 暗証番号の桁数
+#define TWL_PARENTAL_CONTROL_PASSWORD_DEFAULT    "0000"             // デフォルト暗証番号
+#define TWL_PARENTAL_CONTROL_SECRET_ANSWER_LENGTH_MIN 6             // 秘密の質問の回答、UTF-16で最小 MIN 文字
+#define TWL_PARENTAL_CONTROL_SECRET_ANSWER_LENGTH_MAX 32            // 秘密の質問の回答、UTF-16で最大 MAX 文字
+
+// 審査団体
+typedef enum TWLRatingOgn {
+	TWL_RATING_OGN_CERO          = 0,   // 日本
+	TWL_RATING_OGN_ESRB          = 1,   // アメリカ
+	TWL_RATING_OGN_USK           = 2,   // ドイツ
+	TWL_RATING_OGN_PEGI_GENERAL  = 3,   // 欧州
+	TWL_RATING_OGN_PEGI_PORTUGAL = 4,   // ポルトガル
+	TWL_RATING_OGN_PEGI_BBFC     = 5,   // イギリス
+	TWL_RATING_OGN_AGCB          = 6,   // オーストラリア
+	TWL_RATING_OGN_OFLC          = 7,   // ニュージーランド
+	TWL_RATING_OGN_GRB           = 8,   // 韓国
+	TWL_RATING_OGN_MAX           = 8
+}TWLRatingOgn;
+
 typedef struct TWLParentalControl {
-	u8		rsv[ 16 ];
+//	u8		flags;      // Wiiでは、PARENTAL_CONTROL_USEフラグのみ --> isSetParentalControl があるので現状必要なし
+	TWLRatingOgn	ogn;        // 審査団体
+	u8		rating;     // レーティング（年齢）値
+	char	password[ TWL_PARENTAL_CONTROL_PASSWORD_LENGTH ];   // 暗証番号、終端コードなし
+	u8		secretQuestion;     // 秘密の質問文 ID
+	u16		secretAnswer[ TWL_PARENTAL_CONTROL_SECRET_ANSWER_LENGTH_MAX ];  // UTF16,秘密の質問への回答、終端コードなし
+	u16		secretAnswerLength; // 秘密の質問への回答文字数（Wiiでu16,LENGTH_MAX が保持できるからu8でもいいのでは？）
+//	u8		rsv[ 16 ];  // 削除予定（16バイトのレーティング情報を持つのはアプリ側のROMヘッダ）
 }TWLParentalControl;
+
+
+// インストール・ソフト数
+#define TWL_FREE_SOFT_BOX_COUNT_MAX  35     // NANDアプリの最大空きBox数, これ - freeSoftBoxCountでインストールSoft数
 
 
 // TWL設定データ
@@ -125,6 +163,7 @@ typedef struct TWLSettingsData{
 		u32		isSetBirthday : 1;
 		u32		isSetTP : 1;
 		u32		isSetParentalControl : 1;
+//		u32		isSetBrowserRestriction : 1;    // Wiiで存在。フルブラウザを制限するかどうか。TWLでは検討中。
 		u32		isAgreeEURA : 1;
 		// WiFi設定は別データなので、ここに設定済みフラグは用意しない。
 		u32		isGBUseTopLCD : 1;
@@ -141,6 +180,7 @@ typedef struct TWLSettingsData{
 	TWLAlarm			alarm;						// アラーム
 	TWLTPCalibData		tp;							// タッチパネルキャリブレーションデータ
 	TWLParentalControl	parental;
+	u8					freeSoftBoxCount;			// インストール可能なNANDアプリ個数
 }TWLSettingsData;	// xxbyte
 
 
