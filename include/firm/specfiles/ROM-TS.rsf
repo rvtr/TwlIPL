@@ -126,7 +126,7 @@ Property
 	#  don't have to edit
 	#
 	#WramMapping		$(MAKEROM_WRAM_MAPPING)
-	WramMappingDirect 	wram_regs/wram_regs.rbin
+	WramMappingDirect 	../wram_regs/wram_regs.rbin
 
 	#
 	# Codec mode:
