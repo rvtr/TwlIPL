@@ -1,0 +1,77 @@
+#----------------------------------------------------------------------------
+# Project:  TwlSDK - components - racoon.TWL
+# File:     racoon.lsf
+#
+# Copyright 2007 Nintendo.  All rights reserved.
+#
+# These coded insructions, statements, and computer programs contain
+# proprietary information of Nintendo of America Inc. and/or Nintendo
+# Company Ltd., and are protected by Federal copyright law.  They may
+# not be disclosed to third parties or copied or duplicated in any form,
+# in whole or in part, without the prior written consent of Nintendo.
+#
+# $Date::            $
+# $Rev$
+# $Author$
+#----------------------------------------------------------------------------
+#
+#  Nitro LCF SPEC FILE
+#
+#--------
+Static $(TARGET_NAME)
+{
+	Address		0x02280000
+	Library		$(CRT0_O)
+	StackSize	1024 1024
+}
+
+#--------
+Autoload WRAM
+{
+	Address		$(ADDRESS_LTDWRAM)
+
+	Library		libsubpsyscall.a				\
+				libsyscall_sp.twl.a				\
+				$(CW_LIBS)						\
+				libos_sp.TWL$(CODEGEN).a		\
+				libmi_sp.TWL$(CODEGEN).a		\
+				libpad_sp.TWL$(CODEGEN).a		\
+				libpxi_sp.TWL$(CODEGEN).a		\
+				libstd_sp.TWL$(CODEGEN).a		\
+				libexi_sp.TWL$(CODEGEN).a		\
+				libsnd_sp.TWL$(CODEGEN).a		\
+				libspi_sp.TWL$(CODEGEN).a		\
+				libpm_sp.TWL$(CODEGEN).a		\
+				libmath_sp.TWL$(CODEGEN).a		\
+				libscfg_sp.TWL$(CODEGEN).a	\
+				libtp_sp.TWL$(CODEGEN).a		\
+				libfs_sp.TWL$(CODEGEN).a		\
+				libcard_sp.TWL$(CODEGEN).a		\
+				libi2c_sp.TWL$(CODEGEN).a		\
+				libcamera_sp.TWL$(CODEGEN).a	\
+				libcdc_sp.TWL$(CODEGEN).a		\
+				libtpex_sp.TWL$(CODEGEN).a		\
+				libnvram_sp.TWL$(CODEGEN).a		\
+				librtc_sp.TWL$(CODEGEN).a		\
+				libwvr_sp.TWL$(CODEGEN).a		\
+				libaes_sp.TWL$(CODEGEN).a		\
+				$(ISTD_LIBS)
+
+	Library		libsdio_hcd_twl.TWL$(CODEGEN).a	\
+				libsdio_busdriver.TWL$(CODEGEN).a	\
+				libsdio_lib.TWL$(CODEGEN).a	\
+
+	Object		* (.etable)
+	Object		* (.wram)
+	Object		* (.ltdwram)
+	Object		$(OBJDIR)/main.o
+}
+
+#--------
+Ltdautoload LTDMAIN
+{
+	After		$(TARGET_NAME)
+
+	Object		* (.ltdmain)
+	Library		libfatfs_sp.TWL$(CODEGEN).a
+}

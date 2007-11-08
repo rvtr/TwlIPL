@@ -19,7 +19,7 @@
 TARGET_PLATFORM     = TWL
 
 TWL_PROC            = ARM9
-#TWL_ARCHGEN         = LIMITED
+TWL_ARCHGEN         = LIMITED
 TARGET_BIN          = formatter.srl
 
 MAKEROM_ARM7_BASE   = ../ARM7/bin/$(TWL_BUILDTYPE_ARM7)/formatter_sub

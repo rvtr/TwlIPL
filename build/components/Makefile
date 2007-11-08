@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlIPL
+# Project:  TwlFirm - build
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -11,42 +11,22 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date:: 2007-09-27#$
-# $Rev: 1203 $
-# $Author: yada $
+# $Date::            $
+# $Rev:$
+# $Author:$
 #----------------------------------------------------------------------------
-
-SUBDIRS				=
-
-#----------------------------------------------------------------------------
-TARGET_FIRM			=	SYSTEMMENU
-TARGET_PLATFORM		=	TWL
-TWL_ARCHGEN			=	LIMITED
-TWL_PROC	   		=	ARM9
-
-#----------------------------------------------------------------------------
-
-SRCDIR				=	../common/src
-
-INCDIR				=	../common/include \
-						$(TWLSDK_ROOT)/build/libraries/mb/common/include
-
-SRCS				=	mb_loader.c
-
-TARGET_LIB			=	libmbloader$(TWL_LIBSUFFIX).a
-
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
-INSTALL_TARGETS		=	$(TARGETS)
-INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
 
 #----------------------------------------------------------------------------
 
-do-build:		$(TARGETS)
+SUBDIRS =	\
+			hyena.TWL
+
+#----------------------------------------------------------------------------
 
 include	$(TWLIPL_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====
-

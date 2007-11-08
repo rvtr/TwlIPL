@@ -23,7 +23,7 @@ MYSUBDIRS			=	./
 #----------------------------------------------------------------------------
 TARGET_FIRM			=	SYSTEMMENU
 TARGET_PLATFORM		=	TWL
-#TWL_ARCHGEN		=	LIMITED
+TWL_ARCHGEN			=	LIMITED
 TWL_PROC	   		=	ARM9
 
 SRCS				=	NTRSettings.c TWLSettings.c

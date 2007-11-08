@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlIPL
+# Project:  TwlSDK - components - hyena.TWL
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -12,42 +12,55 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date:: 2007-10-09#$
-# $Rev: 1486 $
-# $Author: terui $
+# $Rev: 1499 $
+# $Author: hatamoto_minoru $
 #----------------------------------------------------------------------------
 
-TARGET_PLATFORM		=	TWL
-TWL_ARCHGEN        	=	LIMITED
-TWL_PROC			=	ARM7
-TWL_NO_STD_PCHDR	=	TRUE
+TARGET_FIRM					=	SYSTEMMENU
+override TARGET_PLATFORM	=	TWL
+override TWL_PROC			=	ARM7
+override TWL_ARCHGEN		=	LIMITED
+TWL_NO_STD_PCHDR			=	True
+TWL_CODEGEN					?=	ARM
 
 #----------------------------------------------------------------------------
 
-SRCS			=	main.c		\
-					dummy.FLXMAIN.c	\
-					dummy.FLXWRAM.c	\
-					dummy.LTDMAIN.c	\
-					dummy.LTDWRAM.c
+SRCS			=	main.c
 
-TARGET_NAME		=	formatter_sub
+TARGET_NAME		=	hyena
 
 TARGET_NEF		=	$(TARGET_NAME).tef
 LCFILE_SPEC		=	$(TARGET_NAME).lsf
 LCFILE_TEMPLATE	=	$(TARGET_NAME).lcf.template
-LDRES_TEMPLATE	=	$(TARGET_NAME).response.template
+LDRES_TEMPLATE	=	$(TWLSDK_ROOT)/build/components/racoon.TWL/racoon.response.template
 
 CRT0_O			=	crt0.LTD.TWL.o
 
 #----------------------------------------------------------------------------
-include	$(TWLSDK_ROOT)/build/buildtools/commondefs
+include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
-MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD
+#MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD
 
+MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000' -DCRT0_O='$(CRT0_O)'
 MAKELCF_FLAGS	+=	-DISTD_LIBS='$(ISTD_LIBS)'
+
+#--------------------------------
+#   install target
+#--------------------------------
+INSTALL_TARGETS	=	$(BINDIR)/$(TARGET_NAME).tef				\
+					$(BINDIR)/$(TARGET_NAME).FLX.TWL.sbin		\
+					$(BINDIR)/$(TARGET_NAME)_defs.FLX.TWL.sbin	\
+					$(BINDIR)/$(TARGET_NAME).LTD.TWL.sbin		\
+					$(BINDIR)/$(TARGET_NAME)_defs.LTD.TWL.sbin
+
+INSTALL_DIR		=	$(TWL_INSTALL_COMPONENTSDIR)/$(TARGET_NAME)/$(TWL_BUILDTYPE)
+
+LINCLUDES		= $(ROOT)/build/libraries/spi/ARM7/include
+LDEPENDS_NEF	= $(TWL_LIBS) $(LLIBRARIES)
 
 do-build:	$(TARGETS)
 
 #----------------------------------------------------------------------------
-include	$(TWLSDK_ROOT)/build/buildtools/modulerules
+include	$(TWLIPL_ROOT)/build/buildtools/modulerules
 
 #===== End of Makefile =====

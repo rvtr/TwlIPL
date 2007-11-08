@@ -22,7 +22,7 @@ SUBDIRS					=	../../../libraries_sysmenu/sysmenu
 
 TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
-#TWL_ARCHGEN				=	LIMITED
+TWL_ARCHGEN				=	LIMITED
 
 TARGET_BIN				=	main.srl
 
