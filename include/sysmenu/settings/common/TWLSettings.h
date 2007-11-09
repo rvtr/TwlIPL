@@ -48,19 +48,46 @@ typedef enum TWLLangCode{
 	TWL_LANG_GERMAN   = 3,						// ドイツ語
 	TWL_LANG_ITALIAN  = 4,						// イタリア語
 	TWL_LANG_SPANISH  = 5,						// スペイン語
-	TWL_LANG_SIMP_CHINESE = 6,					// 中国語（簡体字）
-	TWL_LANG_KOREAN   = 7,						// 韓国語
-//	TWL_LANG_DUTCH    = 8,						// オランダ語（Wiiでは存在）
-//	TWL_LANG_TRAD_CHINESE = 9,					// 台湾語（繁体字）（Wiiでは存在）
+	TWL_LANG_AMERICAN_ENGLISH  = 6,				// アメリカ方言：英語
+	TWL_LANG_AMERICAN_FRENCH   = 7,				// アメリカ方言：フランス語
+	TWL_LANG_AMERICAN_SPANISH  = 8,				// アメリカ方言：スペイン語
+	TWL_LANG_SIMP_CHINESE = 9,					// 中国語（簡体字）
+	TWL_LANG_KOREAN   = 10,						// 韓国語
+//	TWL_LANG_DUTCH    = 11,						// オランダ語（Wiiでは存在）
+//	TWL_LANG_TRAD_CHINESE = 12,					// 台湾語（繁体字）（Wiiでは存在）
 	
 	TWL_LANG_CODE_MAX
 }TWLLangCode;
 
-#define TWL_LANG_CODE_MAX_WW		NTR_LANG_CODE_MAX_WW	// TWL_LANG_SPANISH + 1
+// NTR 言語との対応マップ
+const u8 LangCodeMapFromTWLtoNTR[][] = {
+	{ TWL_LANG_JAPANESE,			NTR_LANG_JAPANESE	},
+	{ TWL_LANG_ENGLISH,				NTR_LANG_ENGLISH	},
+	{ TWL_LANG_FRENCH,				NTR_LANG_FRENCH		},
+	{ TWL_LANG_GERMAN,				NTR_LANG_GERMAN		},
+	{ TWL_LANG_ITALIAN,				NTR_LANG_ITALIAN	},
+	{ TWL_LANG_SPANISH,				NTR_LANG_SPANISH	},
+	{ TWL_LANG_AMERICAN_ENGLISH,	NTR_LANG_ENGLISH	},
+	{ TWL_LANG_AMERICAN_FRENCH,		NTR_LANG_FRENCH		},
+	{ TWL_LANG_AMERICAN_SPANISH,	NTR_LANG_SPANISH	},
+	{ TWL_LANG_SIMP_CHINESE,		NTR_LANG_CHINESE	},
+	{ TWL_LANG_KOREAN,				NTR_LANG_KOREAN		},
+//	{ TWL_LANG_DUTCH,				NTR_LANG_ENGLISH	},
+//	{ TWL_LANG_TRAD_CHINESE,		NTR_LANG_CHINESE	}
+};
 
-#define TWL_LANG_BITMAP_WW			NTR_LANG_BITMAP_WW		// SystemMenu-WW版での対応言語ビットマップ
-#define TWL_LANG_BITMAP_CHINA		NTR_LANG_BITMAP_CHINA	// SystemMenu-WW版での対応言語ビットマップ
-#define TWL_LANG_BITMAP_KOREA		NTR_LANG_BITMAP_KOREA	// SystemMenu-WW版での対応言語ビットマップ
+#define TWL_LANG_BITMAP_JAPAN		( ( 0x0001 << TWL_LANG_JAPANESE ) ) 			// JPN版での対応言語ビットマップ
+#define TWL_LANG_BITMAP_AMERICA		( ( 0x0001 << TWL_LANG_AMERICAN_ENGLISH ) | \
+									  ( 0x0001 << TWL_LANG_AMERICAN_FRENCH  ) | \
+									  ( 0x0001 << TWL_LANG_AMERICAN_SPANISH  ) ) 	// AME版での対応言語ビットマップ
+#define TWL_LANG_BITMAP_EUROPE		( ( 0x0001 << TWL_LANG_ENGLISH ) | \
+									  ( 0x0001 << TWL_LANG_FRENCH  ) | \
+									  ( 0x0001 << TWL_LANG_GERMAN  ) | \
+									  ( 0x0001 << TWL_LANG_ITALIAN  ) | \
+									  ( 0x0001 << TWL_LANG_SPANISH  ) ) 			// EUR版での対応言語ビットマップ
+#define TWL_LANG_BITMAP_AUSTRALIA	( ( 0x0001 << TWL_LANG_ENGLISH  ) ) 			// AUS版での対応言語ビットマップ
+#define TWL_LANG_BITMAP_CHINA		( ( 0x0001 << TWL_LANG_SIMP_CHINESE ) ) 		// CHI版での対応言語ビットマップ
+#define TWL_LANG_BITMAP_KOREA		( ( 0x0001 << TWL_LANG_KOREAN ) ) 				// KOR版での対応言語ビットマップ
 
 
 // リージョンコード（販社別になる見込み）
@@ -167,8 +194,9 @@ typedef struct TWLSettingsData{
 		u32		isAgreeEURA : 1;
 		// WiFi設定は別データなので、ここに設定済みフラグは用意しない。
 		u32		isGBUseTopLCD : 1;
-		u32		isAvailableWireless : 1;    // 無線モジュールのRFユニットの有効化／無効化
-		u32		rsv : 20;
+		u32		isAvailableWireless : 1;            // 無線モジュールのRFユニットの有効化／無効化
+		u32		isAvailableBatteryExtension : 1;    // バッテリエクステンションモードの有効化／無効化
+		u32		rsv : 19;
 	}flags;
 	u16					valid_language_bitmap;		// 対応言語ビットマップ（※ここじゃなく、"/sys/HWINFO.dat"内の方が良さそう）
 	u8					country;					// 国コード
