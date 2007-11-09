@@ -56,13 +56,7 @@ static void	_ISDbgLib_OnLoadChildBinary(void);
 asm void BOOT_Core( void )
 {
 		//---------------------------------------
-		// データキャッシュを全て無効に。（DC_InvalidateAllを抜き出して実装）
-		//---------------------------------------
-	    mov         r0, #0
-    	mcr         p15, 0, r0, c7, c6, 0
-		
-		//---------------------------------------
-		// ARM7との同期をとる（subp_stateが2になるのを待って、mainp_stateを2にする。）
+		// ARM7との同期をとる（subp_stateが2になるのを待って、mainp_stateを2にする)
 		//---------------------------------------
 		ldr			r1, =REG_SUBPINTF_ADDR
 @0		ldrh		r0, [r1]
@@ -70,6 +64,40 @@ asm void BOOT_Core( void )
 		cmp			r0, #0x0002
 		bne			@0
 		mov			r0, #0x0200
+		strh		r0, [r1]
+		
+		//---------------------------------------
+		// データキャッシュを全て無効に。（DC_InvalidateAllを抜き出して実装）
+		//---------------------------------------
+	    mov         r0, #0
+    	mcr         p15, 0, r0, c7, c6, 0
+		
+		//---------------------------------------
+		// ARM7との同期をとる（subp_stateが3になるのを待つ)
+		//---------------------------------------
+		ldr			r1, =REG_SUBPINTF_ADDR
+@1		ldrh		r0, [r1]
+		and			r0, r0, #0x000f
+		cmp			r0, #0x0003
+		bne			@1
+		
+		//---------------------------------------
+		// ARM9 WRAMバンクの設定 MBK1-MBK8			※WRAMバンクの設定をする時には、ARM7はARM7専用WRAMのBOOT_Coreにいる必要がある。
+		//---------------------------------------
+		ldr		r0, =HW_TWL_ROM_HEADER_BUF
+        add     r0, r0, #0x180     // rom_header->s.main_wram_config_data
+        // r0- => r9-r2
+        ldr     r9, =REG_MBK1_ADDR
+        add     r2, r9, #32
+@2      ldr     r3, [r0], #4
+        str     r3, [r9], #4
+        cmp     r9, r2
+        blt     @2
+		
+		//---------------------------------------
+		// ARM7との同期をとる（mainp_stateを3にする。）
+		//---------------------------------------
+		mov			r0, #0x0300
 		strh		r0, [r1]
 		
 		//---------------------------------------
@@ -84,10 +112,10 @@ asm void BOOT_Core( void )
 		// ARM7との同期をとる（subp_stateが1になるのを待って、mainp_stateを1にする。）
 		//---------------------------------------
 		ldr			r1, =REG_SUBPINTF_ADDR
-@1		ldrh		r0, [r1]
+@3		ldrh		r0, [r1]
 		and			r0, r0, #0x000f
 		cmp			r0, #0x0001
-		bne			@1
+		bne			@3
 		mov			r0, #0x0100
 		strh		r0, [r1]
 		
@@ -115,10 +143,10 @@ asm void BOOT_Core( void )
 		// ARM7との最終同期をとる(subp_stateが0になるのを待って、mainp_stateを0にする）
 		//---------------------------------------
 		ldr			r1, =REG_SUBPINTF_ADDR
-@2		ldrh		r0, [r1]
+@4		ldrh		r0, [r1]
 		and			r0, r0, #0x000f
 		cmp			r0, #0x0001
-		beq			@2
+		beq			@4
 		mov			r0, #0
 		strh		r0, [r1]
 		

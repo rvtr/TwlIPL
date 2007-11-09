@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlSDK - components - hyena.TWL
+# Project:  TwlIPL
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -41,7 +41,10 @@ include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 #MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD
 
-MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000' -DCRT0_O='$(CRT0_O)'
+MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000' \
+					-DADDRESS_FLXMAIN='0x02280000' \
+					-DADDRESS_BOOTCORE='0x0380f100' \
+					-DCRT0_O='$(CRT0_O)'
 MAKELCF_FLAGS	+=	-DISDBG_LIBS='$(ISDBG_LIBS)'
 
 #--------------------------------

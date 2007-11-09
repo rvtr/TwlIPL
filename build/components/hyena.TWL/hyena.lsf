@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------------
-# Project:  TwlSDK - components - racoon.TWL
-# File:     racoon.lsf
+# Project:  TwlIPL
+# File:     hyena.lsf
 #
 # Copyright 2007 Nintendo.  All rights reserved.
 #
@@ -20,7 +20,7 @@
 #--------
 Static $(TARGET_NAME)
 {
-	Address		0x02280000
+	Address		$(ADDRESS_FLXMAIN)
 	Library		$(CRT0_O)
 	StackSize	1024 1024
 }
@@ -55,8 +55,7 @@ Autoload WRAM
 				librtc_sp.TWL$(CODEGEN).a		\
 				libwvr_sp.TWL$(CODEGEN).a		\
 				libaes_sp.TWL$(CODEGEN).a		\
-				libboot_sp.TWL$(CODEGEN).a		\
-				$(ISDBG_LIBS)
+				$(ISTD_LIBS)
 
 	Library		libsdio_hcd_twl.TWL$(CODEGEN).a	\
 				libsdio_busdriver.TWL$(CODEGEN).a	\
@@ -66,6 +65,13 @@ Autoload WRAM
 	Object		* (.wram)
 	Object		* (.ltdwram)
 	Object		$(OBJDIR)/main.o
+}
+
+Autoload BOOT_CORE
+{
+	Address		$(ADDRESS_BOOTCORE)
+	
+	Library		libboot_sp.TWL$(CODEGEN).a
 }
 
 #--------

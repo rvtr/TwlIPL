@@ -83,7 +83,14 @@ TwlSpMain(void)
     PrintDebugInfo();
 
     // ヒープ領域設定
-	OS_SetSubPrivArenaHi( (void*)0x02380000 );		// メモリ配置をいじっているので、アリーナHiも変更しないとダメ！！
+	{
+		void *wram = OS_GetWramSubPrivArenaHi();
+		void *mmem = OS_GetSubPrivArenaHi();
+		OS_SetSubPrivArenaHi( (void*)0x02380000 );		// メモリ配置をいじっているので、アリーナHiも変更しないとダメ！！
+		OS_SetWramSubPrivArenaHi( (void*)BOOTCORE_ARM7_ADDR );
+		OS_TPrintf( "MMEM SUBPRV ARENA HI : %08x -> %08x\n", mmem, OS_GetSubPrivArenaHi() );
+		OS_TPrintf( "WRAM SUBPRV ARENA HI : %08x -> %08x\n", wram, OS_GetWramSubPrivArenaHi() );
+	}
     heapHandle  =   InitializeAllocateSystem();
 
     // ボタン入力サーチ初期化

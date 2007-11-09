@@ -53,17 +53,20 @@ static void	_ISDbgLib_OnLoadChildBinary( void );
 static asm void ClearMemory( void )
 {
 		mov			r11, lr
-		
-//		ldr			r0, = IPL2_ADDR_TOP								// IPL2-ARM9 & ARM7プログラムのクリア
-//		ldr			r1, = MB_BSSDESC_ADDRESS
-//		bl			CpuClear32Byte
-		
-		ldr			r0, = HW_WRAM									// ARM7WRAMのクリア
-		ldr			r1, = RETURN_FROM_MAIN_ARM7_FUNCP
+#if 0
+		ldr			r0, = 0x02280000								// SYSMENU-ARM7 MMEMのクリア
+		ldr			r1, = 0x02380000
 		bl			CpuClear32Byte
 		
+//		ldr			r0, = 0x02800000								// SYSMENU-ARM9 MMEMのクリア
+//		ldr			r1, = 0x02e80000
+//		bl			CpuClear32Byte
 		
-@1		bx			r11
+		ldr			r0, = HW_WRAM_A_LTD								// ARM7-WRAMのクリア( LTDのマッピング )
+		ldr			r1, = BOOTCORE_ARM7_ADDR
+		bl			CpuClear32Byte
+#endif
+		bx			r11
 }
 
 
@@ -117,15 +120,9 @@ static asm void ClearBankREG_Stack( void )
 		add			r1, r2, #0x800
 		bl			CpuClear32Byte
 		
-#ifndef ISDBG_MB_CHILD_
-		add			r0, r2, #0xd80					// HW_BIOS_EXCP_STACK_MAIN (MAINPデバッガモニタ例外ハンドラ)
-		add			r1, r0, #0x80
-		bl			CpuClear32Byte
-#else  // ISDBG_MB_CHILD_
-		add			r0, r2, #0xda0					// HW_ARENA_INFO_BUF (アリーナ情報構造体)　※mb_childビルド時には、デバッガモニタ用ハンドラはクリアしない。
+		add			r0, r2, #0xda0					// HW_ARENA_INFO_BUF (アリーナ情報構造体)　※デバッガモニタ用ハンドラはクリアしない。
 		add			r1, r0, #0x60
 		bl			CpuClear32Byte
-#endif // ISDBG_MB_CHILD_
 		
 		add			r0, r2, #0xf80
 		add			r1, r0, #0x80
@@ -157,6 +154,30 @@ asm void BOOT_Core( void )
 		bl			ClearMemory
 		
 		//---------------------------------------
+		// ARM9との同期をとる（subp_stateを3にしてから、mainp_stateが3になるのを待つ。）
+		//---------------------------------------
+		ldr			r1, =REG_MAINPINTF_ADDR
+		mov			r0, #0x0300
+		strh		r0, [r1]						// メインプロセッサインターフェースレジスタ
+@1		ldrh		r0, [r1]
+		and			r0, r0, #0x000f
+		cmp			r0, #0x0003
+		bne			@1
+		
+		//---------------------------------------
+		// ARM7 WRAMバンク設定 MBK6-MBK9			※ARM7がMBK9でWRAMロックをする前にARM9でWRAM設定を済ませておく必要がある。
+		//---------------------------------------
+		ldr		r0, =HW_TWL_ROM_HEADER_BUF
+        add     r10, r0, #0x1a0     // rom_header->s.sub_wram_config_data
+        // r10- => r9-r2
+        ldr     r9, =REG_MBK6_ADDR
+        add     r2, r9, #15
+@2      ldr     r3, [r10], #4
+        str     r3, [r9], #4
+        cmp     r9, r2
+        blt     @2
+		
+		//---------------------------------------
 		// 無線マルチブート用ローダー起動
 		//---------------------------------------
 //		ldr			r1, =LOADER_Start
@@ -176,10 +197,10 @@ asm void BOOT_Core( void )
 		ldr			r1, =REG_MAINPINTF_ADDR
 		mov			r0, #0x0100
 		strh		r0, [r1]						// メインプロセッサインターフェースレジスタ
-@1		ldrh		r0, [r1]
+@3		ldrh		r0, [r1]
 		and			r0, r0, #0x000f
 		cmp			r0, #0x0001
-		bne			@1
+		bne			@3
 		
 		//---------------------------------------
 		// ISデバッガでのDL子機プログラムのデバッグ情報設定
@@ -201,9 +222,9 @@ asm void BOOT_Core( void )
 		ldr			r1, =REG_MAINPINTF_ADDR
 		mov			r0, #0
 		strh		r0, [r1]						// メインプロセッサインターフェースレジスタ
-@2		ldrh		r0, [r1]
+@4		ldrh		r0, [r1]
 		cmp			r0, #0x0001
-		beq			@2
+		beq			@4
 		
 		//---------------------------------------
 		// R11の値をもとにブートアドレス取得

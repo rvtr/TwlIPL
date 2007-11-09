@@ -16,7 +16,9 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
+#include <twl/os/common/format_rom.h>
 #include <sysmenu/boot/common/boot.h>
+#include <firm/format/wram_regs.h>
 //#include <nitro/mb.h>
 //#include "IPL2_work.h"
 //#include "define.h"
@@ -75,6 +77,15 @@ void BOOT_Ready( void )
 	(void)OS_DisableIrq();
 	(void)OS_SetIrqMask( 0 );
 	(void)OS_ResetRequestIrqMask( (u16)~0 );
+	
+	// WRAM‚Ì”z’u
+	{
+		ROM_Header_Short *pROMH = (ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
+		MIHeader_WramRegs *pWRAMREGS = (MIHeader_WramRegs *)pROMH->main_wram_config_data;
+		reg_GX_VRAMCNT_C    = pWRAMREGS->main_vrambnk_c;
+		reg_GX_VRAMCNT_D    = pWRAMREGS->main_vrambnk_d;
+		reg_GX_VRAMCNT_WRAM = pWRAMREGS->main_wrambnk_01;
+	}
 	
 	BOOT_Core();			// never return
 }

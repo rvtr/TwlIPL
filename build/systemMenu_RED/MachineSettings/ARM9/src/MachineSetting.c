@@ -167,6 +167,12 @@ int MachineSettingMain( void )
 	}
 	tp_select = SelectMenuByTP( &s_csr, &s_settingParam );
 	DrawMenu( s_csr, &s_settingParam );
+
+#if 0
+	if( pad.trg & PAD_BUTTON_START ) {
+		PM_ForceToResetHardware();
+	}
+#endif
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// ƒƒjƒ…[€–Ú‚Ö‚Ì•ªŠò
 		if( s_settingPos[ s_csr ].enable ) {

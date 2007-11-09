@@ -469,6 +469,9 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 
         (void)FS_CloseFile(file);
     }
+
+	// ROMヘッダバッファをコピー
+	MI_CpuCopy32( (void *)HW_TWL_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 	
 	// 起動。
 	BOOT_Ready();

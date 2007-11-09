@@ -55,6 +55,7 @@ BOOL BOOT_WaitStart( void )
 		}
 */
 		BOOTi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。
+		reg_MI_MBK9 = 0;								// 全WRAMのロック解除
 		reg_PXI_MAINPINTF = MAINP_SEND_IF | 0x0100;		// ARM9に対してブートするようIRQで要求＋ARM7のステートを１にする。
 		BOOT_Core();									// never return
 	}
@@ -78,6 +79,7 @@ static void BOOTi_ClearREG_RAM( void )
 	reg_GX_DISPSTAT			= 0;
 	reg_SPI_SPICNT			= 0;
 	reg_PXI_MAINP_FIFO_CNT	= 0x4008;
+	
 	// クリアしていないレジスタは、VCOUNT, JOY, PIFCNT, MC-, EXMEMCNT, IME, PAUSE, POWLCDCNT, 他セキュリティ系です。
 	(void)OS_ResetRequestIrqMask((u16)~0);
 }
