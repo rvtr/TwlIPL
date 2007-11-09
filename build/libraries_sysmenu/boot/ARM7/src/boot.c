@@ -229,8 +229,8 @@ asm void BOOT_Core( void )
 		//---------------------------------------
 		// R11の値をもとにブートアドレス取得
 		//---------------------------------------
-		ldr			r3, =HW_MAIN_MEM_EX_END			// ゲーム・エントリポイント 獲得
-		ldr			r12, [r3, #-(0x200 - 0x34)]		// rmhp->arm7->entryAddr
+		ldr			r3, =HW_TWL_ROM_HEADER_BUF			// ゲーム・エントリポイント 獲得
+		ldr			r12, [r3, #0x34]					// arm7->entryAddr
 		mov			lr, r12
 		
 #ifdef __IS_DEBUGGER_BUILD

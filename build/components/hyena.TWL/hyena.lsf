@@ -55,7 +55,7 @@ Autoload WRAM
 				librtc_sp.TWL$(CODEGEN).a		\
 				libwvr_sp.TWL$(CODEGEN).a		\
 				libaes_sp.TWL$(CODEGEN).a		\
-				$(ISTD_LIBS)
+				$(ISDBG_LIBS)
 
 	Library		libsdio_hcd_twl.TWL$(CODEGEN).a	\
 				libsdio_busdriver.TWL$(CODEGEN).a	\
