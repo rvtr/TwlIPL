@@ -24,22 +24,25 @@ TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
 
+TITLEID_LO				=	PCHT
+TARGET_WAD				=	$(BINDIR)/$(TITLEID_LO).wad
+
 TARGET_BIN				=	main.srl
 
-#LCFILE_SPEC			=	
 ROM_SPEC				=	main.rsf
 
 MISC_DIR				=	../../MachineSettings/ARM9/src
 
 SRCS					=	main.c PictoChat.c $(MISC_DIR)/misc.c
-#SRCS_OVERLAY			=	
 
 LINCLUDES				=	$(MISC_DIR)
-#LLIBRARY_DIRS			=	
-#LLIBRARIES				=	
-#LDEPENDS_NEF			=	
 
 include $(TWLIPL_ROOT)/build/buildtools/commondefs
+
+
+LDIRT_CLEAN				=	$(TARGET_WAD)
+INSTALL_TARGETS			=	$(TARGET_WAD)
+INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
 
