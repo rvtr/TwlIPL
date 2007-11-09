@@ -24,6 +24,9 @@ ifndef TWL_SYSMENU_MODULERULES_
 include	$(NITROSYSTEM_ROOT)/build/buildtools/modulerules
 
 
+%.wad: $(BINDIR)/$(TARGET_BIN)
+	$(MAKEWAD) $(TITLEID_LO) $< $@
+
 #----------------------------------------------------------------------------
 TWL_SYSMENU_MODULERULES_ = TRUE
 endif	# TWL_SYSMENU_MODULERULES_

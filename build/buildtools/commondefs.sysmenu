@@ -46,6 +46,10 @@ LDEPENDS_RES			+= $(SYSMENU_BUILDTOOLSDIR)/commondefs.sysmenu
 include	$(NITROSYSTEM_ROOT)/build/buildtools/commondefs
 
 
+ifneq	($(TARGET_WAD),)
+TARGETS					+=	 $(TARGET_WAD)
+endif
+
 #----------------------------------------------------------------------------
 ### SYSTEM_MENU Library settings
 
@@ -75,6 +79,8 @@ OPENSSL			:= $(SYSMENU_TOOLSDIR)/openssl/openssl.exe
 MAKESYSMENU_RSA_PRVKEY	?= $(SYSMENU_TOOLSDIR)/openssl/rsa_private.der
 MAKESYSMENU_RSA_PUBKEY	?= $(SYSMENU_TOOLSDIR)/openssl/rsa_public.der
 
+MAKEWAD			?= $(TWLSDK_ROOT)/build/tools/TwlNMenu/data/makeWad.pl
+
 #----------------------------------------------------------------------------
 
 ### Global Library resettings
@@ -92,6 +98,7 @@ SYSMENU_INSTALL_INCDIR			:= $(SYSMENU_INSTALL_ROOT)/include
 SYSMENU_INSTALL_TOOLSDIR		:= $(SYSMENU_INSTALL_ROOT)/tools
 SYSMENU_INSTALL_LIBDIR			:= $(SYSMENU_INSTALL_ROOT)/lib/$(TWL_LIBTYPE)
 SYSMENU_INSTALL_COMPONENTSDIR	:= $(SYSMENU_INSTALL_ROOT)/components
+SDK_NMENU_DATADIR				=  $(TWLSDK_ROOT)/build/tools/TwlNMenu/data
 
 #----------------------------------------------------------------------------
 endif	# TWL_SYSMENU_COMMONDEFS_
