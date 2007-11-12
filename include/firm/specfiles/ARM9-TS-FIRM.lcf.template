@@ -38,6 +38,7 @@ MEMORY
 
 	check.ITCM					(RW)  :	ORIGIN = 0x0,					LENGTH = 0x08000	>	itcm.check
 	check.DTCM					(RW)  :	ORIGIN = 0x0,					LENGTH = 0x04000	>	dtcm.check
+	check.WORKRAM				(RWX) :	ORIGIN = 0x037c0000,			LENGTH = 0x40000	>	workram.check
 
 	binary.LTDAUTOLOAD_TOP		(RW)  :	ORIGIN = 0,						LENGTH = 0x0	>	<STATIC.NAME><PROPERTY.LTDSUFFIX>
 	<FOREACH.LTDAUTOLOADS>
@@ -357,6 +358,11 @@ SECTIONS
 		<END.OVERLAYS>
 		. = . + 0x080 + SDK_IRQ_STACKSIZE + SDK_SYS_STACKSIZE * SDK_SYS_STACKSIZE_SIGN;
 	} > check.DTCM
+
+	.check.WORKRAM:
+	{
+		. = SDK_STATIC_BSS_END;
+	} > check.WORKRAM
 
 	########################### LTDAUTOLOADS ############################
 	SDK_LTDAUTOLOAD.LTDMAIN.START		= SDK_STATIC_BSS_END;

@@ -46,13 +46,13 @@ MIHeader_WramRegs wram_regs_init =
         REG_MI_MBK_C6_FIELD( 1, MI_WRAM_BC_OFFSET_192KB, MI_WRAM_ARM7 ),
         REG_MI_MBK_C7_FIELD( 1, MI_WRAM_BC_OFFSET_224KB, MI_WRAM_ARM7 ),
     },
-    REG_MI_MBK6_FIELD(  REG_WRAM_MAP_CONV_ADDR( 6, A, EADDR, HW_WRAM_AREA_HALF + 0x00040000 ),
+    REG_MI_MBK6_FIELD(  REG_WRAM_MAP_CONV_ADDR( 6, A, EADDR, HW_WRAM_AREA_HALF ),
                         MI_WRAM_IMAGE_256KB,
-                        REG_WRAM_MAP_CONV_ADDR( 6, A, SADDR, HW_WRAM_AREA_HALF )
+                        REG_WRAM_MAP_CONV_ADDR( 6, A, SADDR, HW_WRAM_AREA_HALF - HW_WRAM_A_SIZE )
                         ),
-    REG_MI_MBK7_FIELD(  REG_WRAM_MAP_CONV_ADDR( 7, B, EADDR, HW_WRAM_AREA_HALF + 0x00080000 ),
+    REG_MI_MBK7_FIELD(  REG_WRAM_MAP_CONV_ADDR( 7, B, EADDR, HW_WRAM_AREA + HW_WRAM_B_SIZE ),
                         MI_WRAM_IMAGE_256KB,
-                        REG_WRAM_MAP_CONV_ADDR( 7, B, SADDR, HW_WRAM_AREA_HALF + 0x00040000 )
+                        REG_WRAM_MAP_CONV_ADDR( 7, B, SADDR, HW_WRAM_AREA )
                         ),
     REG_MI_MBK8_FIELD(  REG_WRAM_MAP_CONV_ADDR( 8, C, EADDR, MI_WRAM_MAP_NULL ),
                         MI_WRAM_IMAGE_256KB,
@@ -64,13 +64,13 @@ MIHeader_WramRegs wram_regs_init =
                         MI_WRAM_IMAGE_256KB,
                         REG_WRAM_MAP_CONV_ADDR( 6, A, SADDR, MI_WRAM_MAP_NULL )
                         ),
-    REG_MI_MBK7_FIELD(  REG_WRAM_MAP_CONV_ADDR( 7, B, EADDR, HW_WRAM_AREA_HALF + 0x00080000 ),
+    REG_MI_MBK7_FIELD(  REG_WRAM_MAP_CONV_ADDR( 7, B, EADDR, HW_WRAM_AREA + HW_WRAM_B_SIZE ),
                         MI_WRAM_IMAGE_256KB,
-                        REG_WRAM_MAP_CONV_ADDR( 7, B, SADDR, HW_WRAM_AREA_HALF + 0x00040000 )
+                        REG_WRAM_MAP_CONV_ADDR( 7, B, SADDR, HW_WRAM_AREA )
                         ),
-    REG_MI_MBK8_FIELD(  REG_WRAM_MAP_CONV_ADDR( 8, C, EADDR, HW_WRAM_AREA_HALF + 0x00040000 ),
+    REG_MI_MBK8_FIELD(  REG_WRAM_MAP_CONV_ADDR( 8, C, EADDR, HW_WRAM_AREA_HALF - HW_WRAM_SIZE ),
                         MI_WRAM_IMAGE_256KB,
-                        REG_WRAM_MAP_CONV_ADDR( 8, C, SADDR, HW_WRAM_AREA_HALF )
+                        REG_WRAM_MAP_CONV_ADDR( 8, C, SADDR, HW_WRAM_AREA_HALF - HW_WRAM_SIZE - HW_WRAM_C_SIZE )
                         ),
 
     // WRAM Lock
