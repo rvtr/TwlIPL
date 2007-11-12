@@ -46,7 +46,7 @@ INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
 
-do-build : $(FONT_OBJS) $(TARGETS)
+do-build : $(TARGETS)
 
 
 include $(TWLIPL_ROOT)/build/buildtools/modulerules

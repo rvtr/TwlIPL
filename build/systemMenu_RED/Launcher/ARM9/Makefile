@@ -51,6 +51,8 @@ ADDRESS_DTCM			=	0x0e000000
 DEFAULT_COMP_ARM7			=	hyena
 DEFAULT_MAKEROM_ARM7_BASE	=	$(TWLIPL_ROOT)/components/$(DEFAULT_COMP_ARM7)/$(TWL_BUILDTYPE_ARM7)/$(DEFAULT_COMP_ARM7)
 
+MAKEROM_FLAGS	+= -F
+
 include $(TWLIPL_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
