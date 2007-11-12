@@ -70,8 +70,7 @@ typedef struct CalibWork {
 	u16					last_x;
 	u16					last_y;
 	TPData				sample[2];
-	TPCalibrateParam 	calibrate;
-	TWLTPCalibData		calibData;
+	TWLTPCalibData		calibTemp;
 }CalibWork;
 
 // extern data------------------------------------------
@@ -85,7 +84,7 @@ static void ReturnMenu(void);
 // global variable -------------------------------------
 
 // static variable -------------------------------------
-static CalibWork *s_pCw;
+static CalibWork *s_pTPC;
 static GXOamAttr s_oamBak[ 128 ] ATTRIBUTE_ALIGN(32);					// OAM バックアップ
 
 // const data  -----------------------------------------
@@ -191,55 +190,55 @@ static BOOL GetSamplePointNow(TPData *data)
     while (TP_RequestRawSampling( &temp )) { };
     
     if (! temp.touch ) {
-        s_pCw->touch_count = 0;
+        s_pTPC->touch_count = 0;
         return FALSE;
     }
     
     if ( temp.validity != TP_VALIDITY_VALID ) {
-        s_pCw->touch_count = 0;
+        s_pTPC->touch_count = 0;
         return FALSE;
     }
     
     OS_Printf("( %d, %d )\n", temp.x, temp.y);
     
-    s_pCw->touch_count++;
-    if ( s_pCw->touch_count == 1 ) {
-        s_pCw->last_x = temp.x;
-        s_pCw->last_y = temp.y;
+    s_pTPC->touch_count++;
+    if ( s_pTPC->touch_count == 1 ) {
+        s_pTPC->last_x = temp.x;
+        s_pTPC->last_y = temp.y;
         return FALSE;
     }
     
     // if jump point from last frame, reset count.
-    if ( (s32)(s_pCw->last_x - temp.x) < - OK_RANGE ||
-         (s32)(s_pCw->last_x - temp.x) > OK_RANGE )
+    if ( (s32)(s_pTPC->last_x - temp.x) < - OK_RANGE ||
+         (s32)(s_pTPC->last_x - temp.x) > OK_RANGE )
     {
-        s_pCw->touch_count  = 1;
-        s_pCw->last_x = temp.x;
-        s_pCw->last_y = temp.y;
+        s_pTPC->touch_count  = 1;
+        s_pTPC->last_x = temp.x;
+        s_pTPC->last_y = temp.y;
         return FALSE;
     }
     
-    if ( (s32)(s_pCw->last_y - temp.y) < - OK_RANGE ||
-         (s32)(s_pCw->last_y - temp.y) > OK_RANGE )
+    if ( (s32)(s_pTPC->last_y - temp.y) < - OK_RANGE ||
+         (s32)(s_pTPC->last_y - temp.y) > OK_RANGE )
     {
-        s_pCw->touch_count  = 1;
-        s_pCw->last_x = temp.x;
-        s_pCw->last_y = temp.y;
+        s_pTPC->touch_count  = 1;
+        s_pTPC->last_x = temp.x;
+        s_pTPC->last_y = temp.y;
         return FALSE;
     }
     
     // if the point pressed during OK_COUNT, detect finish.
-    if ( s_pCw->touch_count == OK_COUNT ) {
-        data->x        = (u16) ( (temp.x + s_pCw->last_x) / 2 );
-        data->y        = (u16) ( (temp.y + s_pCw->last_y) / 2 );
+    if ( s_pTPC->touch_count == OK_COUNT ) {
+        data->x        = (u16) ( (temp.x + s_pTPC->last_x) / 2 );
+        data->y        = (u16) ( (temp.y + s_pTPC->last_y) / 2 );
         data->touch    = TP_TOUCH_ON;
         data->validity = TP_VALIDITY_VALID;
-		s_pCw->touch_count=0;
+		s_pTPC->touch_count=0;
         return TRUE;
     }
     
-    s_pCw->last_x = temp.x;
-    s_pCw->last_y = temp.y;
+    s_pTPC->last_x = temp.x;
+    s_pTPC->last_y = temp.y;
     return FALSE;
 }
 
@@ -269,13 +268,13 @@ static BOOL WaitPanelReleaseNow( void )
 	};
     
     if ( temp.touch ) {
-        s_pCw->release_count = 0;
+        s_pTPC->release_count = 0;
         return FALSE;
     }
     
-    s_pCw->release_count++;
-    if ( s_pCw->release_count >= INTERVAL_CNT ) {
-        s_pCw->release_count = 0;
+    s_pTPC->release_count++;
+    if ( s_pTPC->release_count >= INTERVAL_CNT ) {
+        s_pTPC->release_count = 0;
         return TRUE;
     } else {
         return FALSE;
@@ -298,62 +297,64 @@ int TP_CalibrationMain( void )
 	BOOL tp_cancel = FALSE;
 	BOOL tp_retry  = FALSE;
 	
-	switch (s_pCw->seq) {
+	switch (s_pTPC->seq) {
 		case INIT:
 			NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_WHITE,
 										0 * 8 , 20 * 8, 32 * 8, 4 * 8 );
-			s_pCw->seq = INTERVAL_0;
+			s_pTPC->seq = INTERVAL_0;
 			PutStringUTF16( 2 * 8, 21 * 8, TXT_COLOR_CYAN, (const u16 *)L"[B]:CANCEL" );
 			break;
 		
 		case INTERVAL_0:
 			// wait release TouchPanel
 			if ( WaitPanelReleaseNow() ) {
-				s_pCw->seq = CALIBRATE_1;
+				s_pTPC->seq = CALIBRATE_1;
 			}
 		break;
 		
 		case CALIBRATE_1:
 			// detect first point.
 			SetPoint8x8( 32, 32 );
-			if ( GetSamplePointNow( &s_pCw->sample[ 0 ] ) ) {
-				OS_Printf( "OK! ( %d, %d )\n", s_pCw->sample[0].x, s_pCw->sample[0].y );
-				s_pCw->seq = INTERVAL_1;
+			if ( GetSamplePointNow( &s_pTPC->sample[ 0 ] ) ) {
+				OS_Printf( "OK! ( %d, %d )\n", s_pTPC->sample[0].x, s_pTPC->sample[0].y );
+				s_pTPC->seq = INTERVAL_1;
 			}
 		break;
 		
 		case INTERVAL_1:
 			// wait release TouchPanel
 			if ( WaitPanelReleaseNow() ) {
-				s_pCw->seq = CALIBRATE_2;
+				s_pTPC->seq = CALIBRATE_2;
 			}
 		break;
 		
 		case CALIBRATE_2:
 			// detect second point.
 			SetPoint8x8( DISP_X_SIZE - 32, DISP_Y_SIZE - 32 );
-			if ( GetSamplePointNow( &s_pCw->sample[ 1 ] ) ) {
-				OS_Printf( "OK! ( %d, %d )\n", s_pCw->sample[1].x, s_pCw->sample[1].y );
+			if ( GetSamplePointNow( &s_pTPC->sample[ 1 ] ) ) {
+				TPCalibrateParam calibrate;
+				
+				OS_Printf( "OK! ( %d, %d )\n", s_pTPC->sample[1].x, s_pTPC->sample[1].y );
 				// Calculate and set calibration parameter from two detected point.
 				(void)TP_CalcCalibrateParam(
-					&s_pCw->calibrate,
-					s_pCw->sample[0].x, s_pCw->sample[0].y, 32, 32,
-					s_pCw->sample[1].x, s_pCw->sample[1].y, DISP_X_SIZE - 32, DISP_Y_SIZE - 32 );
-				TP_SetCalibrateParam( &s_pCw->calibrate );
+					&calibrate,
+					s_pTPC->sample[0].x, s_pTPC->sample[0].y, 32, 32,
+					s_pTPC->sample[1].x, s_pTPC->sample[1].y, DISP_X_SIZE - 32, DISP_Y_SIZE - 32 );
+				TP_SetCalibrateParam( &calibrate );
 				
 				OS_Printf( "Calibrate param: \n" );
-				OS_Printf( "\tx = %d, xDotSize = %d\n", s_pCw->calibrate.x0, s_pCw->calibrate.xDotSize / 0x100 );
-				OS_Printf( "\ty = %d, yDotSize = %d\n", s_pCw->calibrate.y0, s_pCw->calibrate.yDotSize / 0x100 );
+				OS_Printf( "\tx = %d, xDotSize = %d\n", calibrate.x0, calibrate.xDotSize / 0x100 );
+				OS_Printf( "\ty = %d, yDotSize = %d\n", calibrate.y0, calibrate.yDotSize / 0x100 );
 				OS_Printf( "Check calibrate param\n" );
 				
-				s_pCw->seq = INTERVAL_2;
+				s_pTPC->seq = INTERVAL_2;
 			}
 		break;
 		
 		case INTERVAL_2:
 			// Wait release TouchPanel
 			if ( WaitPanelReleaseNow() ) {
-				s_pCw->seq = CHECK_PARAM;
+				s_pTPC->seq = CHECK_PARAM;
 			}
 		break;
 		
@@ -362,7 +363,7 @@ int TP_CalibrationMain( void )
 			SetPoint8x8( DISP_X_SIZE / 2, DISP_Y_SIZE / 2 );
 			if ( GetSamplePointNow( &tpd.raw ) ) {
 				TP_GetUnCalibratedPoint( &tpd.disp.x, &tpd.disp.y, DISP_X_SIZE / 2, DISP_Y_SIZE / 2 );
-				s_pCw->seq = GET_POINT;
+				s_pTPC->seq = GET_POINT;
 				
 				NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_WHITE,
 											2 * 8 , 21 * 8, 10 * 8, 2 * 8 );
@@ -409,16 +410,16 @@ int TP_CalibrationMain( void )
 			if( ( pad.trg & PAD_BUTTON_A ) || tp_ok ) {
 				GetSYSMWork()->ncd_invalid	= 0;
 				
-				s_pCw->calibData.data.raw_x1	= s_pCw->sample[0].x;
-				s_pCw->calibData.data.raw_y1	= s_pCw->sample[0].y;
-				s_pCw->calibData.data.dx1		= 32;
-				s_pCw->calibData.data.dy1		= 32;
-				s_pCw->calibData.data.raw_x2	= s_pCw->sample[1].x;
-				s_pCw->calibData.data.raw_y2	= s_pCw->sample[1].y;
-				s_pCw->calibData.data.dx2		= DISP_X_SIZE - 32;
-				s_pCw->calibData.data.dy2		= DISP_Y_SIZE - 32;
+				s_pTPC->calibTemp.data.raw_x1	= s_pTPC->sample[0].x;
+				s_pTPC->calibTemp.data.raw_y1	= s_pTPC->sample[0].y;
+				s_pTPC->calibTemp.data.dx1		= 32;
+				s_pTPC->calibTemp.data.dy1		= 32;
+				s_pTPC->calibTemp.data.raw_x2	= s_pTPC->sample[1].x;
+				s_pTPC->calibTemp.data.raw_y2	= s_pTPC->sample[1].y;
+				s_pTPC->calibTemp.data.dx2		= DISP_X_SIZE - 32;
+				s_pTPC->calibTemp.data.dy2		= DISP_Y_SIZE - 32;
 				
-				TSD_SetTPCalibration( &s_pCw->calibData );
+				TSD_SetTPCalibration( &s_pTPC->calibTemp );
 				TSD_SetFlagTP( TRUE );								// タッチパネル入力フラグを立てる。
 				// ::::::::::::::::::::::::::::::::::::::::::::::
 				// TWL設定データファイルへの書き込み
@@ -428,7 +429,7 @@ int TP_CalibrationMain( void )
 				ReturnMenu();
 				return 0;
 			}else if( ( pad.trg & PAD_BUTTON_START ) || tp_retry ) {
-				s_pCw->seq = INIT;
+				s_pTPC->seq = INIT;
 			}
 		break;
 	}
@@ -440,11 +441,16 @@ int TP_CalibrationMain( void )
 	
 	// Bボタンキャンセル
 	if( ( pad.trg & PAD_BUTTON_B ) || tp_cancel ){
-		(void)TP_CalcCalibrateParam(
-				&s_pCw->calibrate,
-				s_pCw->calibData.data.raw_x1, s_pCw->calibData.data.raw_y1, (u16)s_pCw->calibData.data.dx1, (u16)s_pCw->calibData.data.dy1,
-				s_pCw->calibData.data.raw_x2, s_pCw->calibData.data.raw_y2, (u16)s_pCw->calibData.data.dx2, (u16)s_pCw->calibData.data.dy2 );
-		TP_SetCalibrateParam( &s_pCw->calibrate );
+		// キャリブレーションを設定前の状態に戻す。
+		{
+			TPCalibrateParam calibrate;
+			MI_CpuCopy16( TSD_GetTPCalibration(), &s_pTPC->calibTemp, sizeof(TWLTPCalibData) );
+			(void)TP_CalcCalibrateParam(
+					&calibrate,
+					s_pTPC->calibTemp.data.raw_x1, s_pTPC->calibTemp.data.raw_y1, (u16)s_pTPC->calibTemp.data.dx1, (u16)s_pTPC->calibTemp.data.dy1,
+					s_pTPC->calibTemp.data.raw_x2, s_pTPC->calibTemp.data.raw_y2, (u16)s_pTPC->calibTemp.data.dx2, (u16)s_pTPC->calibTemp.data.dy2 );
+			TP_SetCalibrateParam( &calibrate );
+		}
 		ReturnMenu();
 		return 0;
 	}
@@ -456,8 +462,9 @@ int TP_CalibrationMain( void )
 // メニューに戻る
 static void ReturnMenu( void )
 {
-	Free( s_pCw );				// キャリブレーション用変数の開放
-	s_pCw = NULL;
+	// キャリブレーション用変数の開放
+	Free( s_pTPC );
+	s_pTPC = NULL;
 	OS_Printf("Free :CalibWork\n");
 	MachineSettingInit();
 }
@@ -478,11 +485,11 @@ void TP_CalibrationInit( void )
 	
 	DisplayInit();
 	
-	s_pCw = Alloc( sizeof(CalibWork) );				// キャリブレーション用変数の確保
-	if( s_pCw == NULL ) {
+	s_pTPC = Alloc( sizeof(CalibWork) );				// キャリブレーション用変数の確保
+	if( s_pTPC == NULL ) {
 		OS_Panic("ARM9- Fail to allocate memory...\n");
 	}
-	SVC_CpuClear( 0x0000, s_pCw, sizeof(CalibWork), 16 );
+	SVC_CpuClear( 0x0000, s_pTPC, sizeof(CalibWork), 16 );
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
 	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_OBJ );
@@ -490,7 +497,7 @@ void TP_CalibrationInit( void )
 	GX_DispOn();
 	GXS_DispOn();
 	
-	s_pCw->seq = INIT;
+	s_pTPC->seq = INIT;
 }
 
 
