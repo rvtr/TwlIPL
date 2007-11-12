@@ -47,6 +47,11 @@ u32 profile[PROFILE_MAX];
 u32 pf_cnt = 0;
 #endif
 
+/*
+    Production check
+*/
+#define PRODUCTION_CHECK()  do { if (reg_SCFG_OP == 0) goto end; } while (0)
+
 /***************************************************************
     PreInit
 
@@ -55,7 +60,6 @@ u32 pf_cnt = 0;
 ***************************************************************/
 static void PreInit(void)
 {
-
     /*
         FromBrom関連
     */
@@ -98,6 +102,7 @@ void TwlSpMain( void )
 #endif
 
     OS_InitFIRM();
+    PRODUCTION_CHECK();
     OS_EnableIrq(); // PMでOS_InitTick()を使っているので (他でも使ってる？)
 
 #ifndef SDK_FINALROM
@@ -131,6 +136,7 @@ void TwlSpMain( void )
     }
 
     OS_SetDebugLED(++step);
+    PRODUCTION_CHECK();
 
     if ( FATFS_InitFIRM( &nandContext ) )
     {
@@ -202,13 +208,13 @@ void TwlSpMain( void )
 #endif
                     OS_SetDebugLED(++step);
                     PM_BackLightOn( TRUE ); // last chance
-
+                    PRODUCTION_CHECK();
                     FATFS_Boot();
                 }
             }
         }
     }
-
+end:
     OS_SetDebugLED( (u8)(0xF0 | step));
 
     EraseAll();
