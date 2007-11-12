@@ -17,7 +17,7 @@
 
 #include <twl.h>
 #include <firm.h>
-#include <firm/format/format_rom.h>
+#include <twl/os/common/format_rom.h>
 
 /*
     PROFILE_ENABLE を定義するとある程度のパフォーマンスチェックができます。

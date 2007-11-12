@@ -18,7 +18,7 @@
 #include <symbols.h>
 
 #include <firm.h>
-#include <firm/format/format_rom.h>
+#include <twl/os/common/format_rom.h>
 #include <rtfs.h>
 #include <devices/sdif_reg.h>
 
