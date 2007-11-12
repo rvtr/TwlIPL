@@ -19,7 +19,7 @@
 
 #include <firm.h>
 #include <firm/format/from_brom.h>
-#include <firm/format/format_rom.h>
+#include <twl/os/common/format_rom.h>
 
 #include <nitro/hw/common/armArch.h>
 
