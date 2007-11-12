@@ -43,8 +43,7 @@ LINCLUDES				=	$(SRCDIR)/$(LOGO_DIR)
 #LDEPENDS_NEF			=	
 
 LLIBRARIES				+=	libnam$(TWL_LIBSUFFIX).a \
-							libese$(TWL_LIBSUFFIX).a \
-							libboot$(TWL_LIBSUFFIX).a
+							libese$(TWL_LIBSUFFIX).a
 
 ADDRESS_DTCM			=	0x0e000000
 
@@ -54,6 +53,8 @@ DEFAULT_MAKEROM_ARM7_BASE	=	$(TWLIPL_ROOT)/components/$(DEFAULT_COMP_ARM7)/$(TWL
 MAKEROM_FLAGS	+= -F
 
 include $(TWLIPL_ROOT)/build/buildtools/commondefs
+
+MAKELCF_FLAGS	+=	-DADDRESS_BOOTCORE='0x02e7fc00'
 
 #----------------------------------------------------------------------------
 

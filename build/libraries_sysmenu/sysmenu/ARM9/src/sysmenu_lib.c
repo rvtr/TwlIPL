@@ -100,6 +100,8 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 	ncdp  = GetTSD();
 #endif /* __SYSM_DEBUG */
 	
+	OS_SetMainArenaHi( (void *)0x02e7fc00 );
+
 	TP_Init();
 	RTC_Init();
 	

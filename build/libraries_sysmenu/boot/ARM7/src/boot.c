@@ -53,14 +53,14 @@ static void	_ISDbgLib_OnLoadChildBinary( void );
 static asm void ClearMemory( void )
 {
 		mov			r11, lr
-#if 0
+#if 1
 		ldr			r0, = 0x02280000								// SYSMENU-ARM7 MMEMのクリア
 		ldr			r1, = 0x02380000
 		bl			CpuClear32Byte
 		
-//		ldr			r0, = 0x02800000								// SYSMENU-ARM9 MMEMのクリア
-//		ldr			r1, = 0x02e80000
-//		bl			CpuClear32Byte
+		ldr			r0, = 0x02800000								// SYSMENU-ARM9 MMEMのクリア
+		ldr			r1, = 0x02e7fc00
+		bl			CpuClear32Byte
 		
 		ldr			r0, = HW_WRAM_A_LTD								// ARM7-WRAMのクリア( LTDのマッピング )
 		ldr			r1, = BOOTCORE_ARM7_ADDR
