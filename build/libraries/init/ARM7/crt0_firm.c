@@ -432,7 +432,9 @@ _start_AutoloadDoneCallback(void* argv[])
   Returns:      None.
  *---------------------------------------------------------------------------*/
 #define OSi_IMAGE_DIFFERENCE  0x400000
-#define OSi_IMAGE_DIFFERENCE2 0xb00000
+#define OSi_IMAGE_DIFFERENCE2 0xb000000
+#define OSi_DETECT_NITRO_MASK  (REG_SND_SMX_CNT_E_MASK | REG_SND_SMX_CNT_FSEL_MASK)
+#define OSi_DETECT_NITRO_VAL   (REG_SND_SMX_CNT_E_MASK)
 
 static asm void detect_main_memory_size( void )
 {
@@ -453,11 +455,12 @@ static asm void detect_main_memory_size( void )
         bne     @1
 
         //---- 4MB
-        // check SMX_CNT
-        ldr     r2, =REG_SMX_CNT_ADDR
-        ldrh    r1, [r2]
-        tst     r1, #0
-        orrne   r0, r0, #OS_CHIPTYPE_SMX_MASK
+        //---- check SMX_CNT
+        ldr     r3, =REG_SMX_CNT_ADDR
+        ldrh    r1, [r3]
+        and     r1, r1, #OSi_DETECT_NITRO_MASK
+        cmp     r1, #OSi_DETECT_NITRO_VAL
+        orreq   r0, r0, #OS_CHIPTYPE_SMX_MASK
         b       @4
 
         //---- 8MB or 16MB or 32MB
