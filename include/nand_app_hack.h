@@ -25,11 +25,13 @@ static BOOL FS_IdentifyTitle(u32 titleLo)
 //        if (OS_GetBootType() == OS_BOOTTYPE_NAND)
         {
             char    path[FS_ENTRY_LONGNAME_MAX];
-            STD_TSPrintf(path, "nand:/title_e/00010001/%02X%02X%02X%02X/content/12123434.app",
+/*            STD_TSPrintf(path, "nand:/title_e/00010001/%02X%02X%02X%02X/content/12123434.app",
                         ((titleLo / 1000) % 10) + '0',
                         ((titleLo / 100) % 10) + '0',
                         ((titleLo / 10) % 10) + '0',
                         ((titleLo / 1) % 10) + '0');
+*/
+			STD_TSPrintf(path, "nand:/title_e/00010001/%08X/content/12123434.app", titleLo );
             if (!FS_IsAvailable())
             {
                 FS_Init(FS_DMA_NOT_USE);
