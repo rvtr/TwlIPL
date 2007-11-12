@@ -171,8 +171,8 @@ static BOOL SYSMi_VerifyNTRSettings( void )
 	
 		// 値が一致する必要があるもの
 	if( ( NSD_GetRTCOffset() != TSD_GetRTCOffset() ) ||
-		( NSD_GetLanguageEx() != TSD_GetLanguage() ) ||
-		( NSD_GetLanguageBitmap() != TSD_GetLanguageBitmap() )
+		( NSD_GetLanguageEx() != TSD_GetLanguage() )
+//		|| ( NSD_GetLanguageBitmap() != TSD_GetLanguageBitmap() )
 		) {
 		isFailed = TRUE;
 	}
@@ -256,7 +256,7 @@ static void SYSMi_ConvertTWL2NTRSettings( void )
 		// 値が一致する必要があるもの
 	NSD_SetRTCOffset( TSD_GetRTCOffset() );
 	NSD_SetLanguageEx( (NTRLangCode)TSD_GetLanguage() );
-	NSD_SetLanguageBitmap( TSD_GetLanguageBitmap() );
+//	NSD_SetLanguageBitmap( TSD_GetLanguageBitmap() );
 	
 		// SystemMenuのリージョンによって、ちょっと特殊な処理が必要なもの
 	if( TSD_GetLanguage() < TWL_LANG_CODE_MAX_WW ) {

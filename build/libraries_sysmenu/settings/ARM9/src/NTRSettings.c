@@ -93,10 +93,13 @@ NTRSettingsData			*g_pNSD   = &s_NSDStoreEx.nsd;
 NTRSettingsDataEx		*g_pNSDEx = &s_NSDStoreEx.nsd_ex;
 
 // const data-----------------------------------------------------------
-static const u16 s_validLangBitmapList[] = {
-	NTR_LANG_BITMAP_WW,
-	NTR_LANG_BITMAP_CHINA,
-	NTR_LANG_BITMAP_KOREA,
+static const u16 s_validLangBitmapList[] = {				// ※TWLに合わせた方が良さそう。
+	NTR_LANG_BITMAP_WW,				// TWL_REGION_JAPAN
+	NTR_LANG_BITMAP_WW,				// TWL_REGION_AMERICA
+	NTR_LANG_BITMAP_WW,				// TWL_REGION_EUROPE
+	NTR_LANG_BITMAP_WW,				// TWL_REGION_AUSTRALIA
+	NTR_LANG_BITMAP_CHINA,			// TWL_REGION_CHINA
+	NTR_LANG_BITMAP_KOREA,			// TWL_REGION_KOREA
 };
 
 
@@ -203,7 +206,7 @@ BOOL NSD_WriteSettings( u8 region )
 	
 	// NSD_EXのCRC算出。
 	s_NSDStoreEx.nsd_ex.version = NTR_SETTINGS_DATA_EX_VERSION;	// バージョンを現在のものに設定。
-	s_NSDStoreEx.nsd_ex.valid_language_bitmap = s_validLangBitmapList[ region & 0x03 ];	// ※WW,中,韓の３つのみにとりあえず対応
+	s_NSDStoreEx.nsd_ex.valid_language_bitmap = s_validLangBitmapList[ region ];
 	s_NSDStoreEx.crc16_ex       = SVC_GetCRC16( 0xffff, (const void *)&s_NSDStoreEx.nsd_ex, sizeof(NTRSettingsDataEx) );
 	
 	// NTR設定データのライト
@@ -294,7 +297,7 @@ static BOOL NSDi_CheckDataValue( NSDStoreEx *pNSDStoreEx, u8 region )
 {
 	NTRSettingsData   *pNSD   = &pNSDStoreEx->nsd;
 	NTRSettingsDataEx *pNSDEx = &pNSDStoreEx->nsd_ex;
-	u16 validLangBitmap = s_validLangBitmapList[ region & 0x03 ];		// ※WW,中,韓の３つのみにとりあえず対応
+	u16 validLangBitmap = s_validLangBitmapList[ region ];
 	
 	//pNSD->option;
 	// NSDのlanguageチェック（ NSD側のlanguageは、日・英・独・仏・伊・西の６言語のうちの、対応言語のみの値となる。）

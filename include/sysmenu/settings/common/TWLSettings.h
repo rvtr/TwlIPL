@@ -59,8 +59,11 @@ typedef enum TWLLangCode{
 	TWL_LANG_CODE_MAX
 }TWLLangCode;
 
+#define TWL_LANG_CODE_MAX_WW		TWL_LANG_SPANISH
+
 // NTR 言語との対応マップ
-const u8 LangCodeMapFromTWLtoNTR[][] = {
+#if 0
+const u8 LangCodeMapFromTWLtoNTR[][ 2 ] = {
 	{ TWL_LANG_JAPANESE,			NTR_LANG_JAPANESE	},
 	{ TWL_LANG_ENGLISH,				NTR_LANG_ENGLISH	},
 	{ TWL_LANG_FRENCH,				NTR_LANG_FRENCH		},
@@ -75,6 +78,7 @@ const u8 LangCodeMapFromTWLtoNTR[][] = {
 //	{ TWL_LANG_DUTCH,				NTR_LANG_ENGLISH	},
 //	{ TWL_LANG_TRAD_CHINESE,		NTR_LANG_CHINESE	}
 };
+#endif
 
 #define TWL_LANG_BITMAP_JAPAN		( ( 0x0001 << TWL_LANG_JAPANESE ) ) 			// JPN版での対応言語ビットマップ
 #define TWL_LANG_BITMAP_AMERICA		( ( 0x0001 << TWL_LANG_AMERICAN_ENGLISH ) | \
@@ -160,14 +164,15 @@ typedef enum TWLRatingOgn {
 }TWLRatingOgn;
 
 typedef struct TWLParentalControl {
-//	u8		flags;      // Wiiでは、PARENTAL_CONTROL_USEフラグのみ --> isSetParentalControl があるので現状必要なし
-	TWLRatingOgn	ogn;        // 審査団体
-	u8		rating;     // レーティング（年齢）値
-	char	password[ TWL_PARENTAL_CONTROL_PASSWORD_LENGTH ];   // 暗証番号、終端コードなし
-	u8		secretQuestion;     // 秘密の質問文 ID
-	u16		secretAnswer[ TWL_PARENTAL_CONTROL_SECRET_ANSWER_LENGTH_MAX ];  // UTF16,秘密の質問への回答、終端コードなし
-	u16		secretAnswerLength; // 秘密の質問への回答文字数（Wiiでu16,LENGTH_MAX が保持できるからu8でもいいのでは？）
-//	u8		rsv[ 16 ];  // 削除予定（16バイトのレーティング情報を持つのはアプリ側のROMヘッダ）
+	TWLRatingOgn	ogn;				// 審査団体
+//	u8				flags;				// Wiiでは、PARENTAL_CONTROL_USEフラグのみ --> isSetParentalControl があるので現状必要なし
+	u8				rating;				// レーティング（年齢）値
+	char			password[ TWL_PARENTAL_CONTROL_PASSWORD_LENGTH + 1 ];   // 暗証番号、終端コードあり
+	u8				secretQuestion;     // 秘密の質問文 ID
+	u8				rsv_A;
+	u16				secretAnswer[ TWL_PARENTAL_CONTROL_SECRET_ANSWER_LENGTH_MAX + 1 ];  // UTF16,秘密の質問への回答、終端コードあり
+	u16				secretAnswerLength; // 秘密の質問への回答文字数（Wiiでu16,LENGTH_MAX が保持できるからu8でもいいのでは？）
+//	u8				rsv_B[ 16 ]; 		// 削除予定（16バイトのレーティング情報を持つのはアプリ側のROMヘッダ）
 }TWLParentalControl;
 
 
