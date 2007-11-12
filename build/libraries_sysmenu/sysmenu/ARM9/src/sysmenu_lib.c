@@ -18,18 +18,13 @@
 #include <twl.h>
 #include <twl/nam.h>
 #include <sysmenu.h>
+#include <sysmenu/boot/common/boot.h>
 #include "sysmenu_define.h"
 #include "sysmenu_card.h"
 #include "spi.h"
 #include "mb_child.h"
-#include <sysmenu/boot/common/boot.h>
 
 // define data-----------------------------------------------------------------
-
-#define SCREEN_RED						0
-#define SCREEN_YELLOW					1
-
-#define TITLE_ID_BUF_SIZE				40
 
 typedef struct BannerCheckParam {
 	u8		*srcp;
@@ -37,45 +32,15 @@ typedef struct BannerCheckParam {
 }BannerCheckParam;
 
 // extern data-----------------------------------------------------------------
-extern void ReturnFromMain( void );
-extern void	BootFuncEnd( void );
-
-FS_EXTERN_OVERLAY( ipl2_data );
-FS_EXTERN_OVERLAY( bm_mainp );
 
 // function's prototype-------------------------------------------------------
-static void SYSMi_WaitInitARM7( void );
 static BOOL SYSMi_IsDebuggerBannerViewMode( void );
-
 static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle );
-void SYSM_Finalize( void );
-void SYSM_RebootLauncher( void );
-void SYSM_RebootTitle( u64 titleID );
-
-
-
-static void INTR_SubpIRQ( void );
-
-static void LoadRomRegSizeAdjust( CARDRomRegion *romRegp, u32 load_limit_lo, u32 load_limit_hi );
-static void SYSMi_ReadyBootNitroGame( void );
-static void SYSMi_MainpRegisterAndRamClear( BOOL isPlatformTWL );
-static void ClearMemory( int addr1, int addr2 );
-
-static void SYSMi_CopyInfoFromIPL1( void );
 
 static void SYSMi_WriteAdjustRTC( void );
-static BOOL	SYSMi_SendMessageToARM7( u32 msg );
 static int  SYSMi_ExistCard( void );
-static u32  SYSMi_SelectBootType( void );
-static void SYSMi_DispInitialDebugData( void );
-static void SYSMi_DispDebugData( void );
-
-static void DispSingleColorScreen( int mode );
-
 static void SYSMi_ReadCardBannerFile( void );
-
 static BOOL SYSMi_CheckEntryAddress( void );
-static BOOL SYSMi_CheckARM7LoadNITROCard( void );
 static void SYSMi_CheckCardCloneBoot( void );
 static void SYSMi_CheckRTC( void );
 
@@ -92,7 +57,7 @@ NitroConfigData *ncdp;												// デバッガでのNCデータ　のウォッチ用
 // static variable-------------------------------------------------------------
 static BOOL			s_isBanner = FALSE;
 static BannerFile	s_bannerBuf;
-static NAMTitleId	old_titleIdArray[TITLE_ID_BUF_SIZE];
+static NAMTitleId	old_titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
 
 // const data------------------------------------------------------------------
 
@@ -102,18 +67,7 @@ static BannerCheckParam s_bannerCheckList[ BNR_VER_MAX ] = {
 	{ (u8 *)&s_bannerBuf.v3, sizeof( BannerFileV3 ) },
 };
 
-#ifdef __DEBUG_SECURITY_CODE
-static GXRgb security_detection_color[] = { GX_RGB( 31,  0,  0 ),
-											GX_RGB( 31, 31,  0 ), };
-#endif
 
-// inline functions------------------------------------------------------------
-
-static inline void DBG_SetRed(u32 y_pos)
-{
-	*(u16 *)(HW_DB_BG_VRAM + 0xf000 + 0x20*2*y_pos) = (1<<12) | 0x100;
-	MI_CpuFill16(((u8 *)HW_DB_BG_VRAM + 0x20*0x100), 0x1111, 0x20);
-}
 
 // ============================================================================
 // function's description
@@ -129,13 +83,21 @@ static void FreeForNAM(void *p)
 	OS_FreeToHeap( OS_ARENA_MAIN, OS_CURRENT_HEAP_HANDLE, p);
 }
 
+
+// システムメニューライブラリ用メモリアロケータの設定
+void SYSM_SetAllocFunc( void *(*pAlloc)(u32), void (*pFree)(void*) )
+{
+	SYSM_Alloc = pAlloc;
+	SYSM_Free  = pFree;
+}
+
+
 // SystemMenuの初期化
 void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 {
 #ifdef __SYSM_DEBUG
 	pSysm = GetSYSMWork();
 	ncdp  = GetTSD();
-//	SYSMi_DispInitialDebugData();									// 初期デバッグ情報表示
 #endif /* __SYSM_DEBUG */
 	
 	TP_Init();
@@ -149,30 +111,7 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 	
 	SVC_CpuClearFast(0x0000, (u16 *)GetSYSMWork(), sizeof(SYSM_work));	// SYSMワークのクリア
 	
-	// ※ISデバッガかどうかの判定。　BootROMからのパラメータ引渡し？
-	SYSMi_WaitInitARM7();
 	
-	//NAMの初期化
-	//NAM_Init(AllocForNAM,FreeForNAM);
-	
-	MI_CpuClearFast(old_titleIdArray, sizeof(old_titleIdArray) );
-}
-
-// システムメニューライブラリ用メモリアロケータの設定
-void SYSM_SetAllocFunc( void *(*pAlloc)(u32), void (*pFree)(void*) )
-{
-	SYSM_Alloc = pAlloc;
-	SYSM_Free  = pFree;
-}
-
-
-// ARM7側の初期化待ち
-static void SYSMi_WaitInitARM7( void )
-{
-/*	while( !( SYSM_GetBootFlag() & BFLG_ARM7_INIT_COMPLETED ) ) {
-		SVC_WaitByLoop(0x1000);										// ARM7の初期化が終了するのを待つ。
-	}
-*/
 	reg_OS_PAUSE |= REG_OS_PAUSE_CHK_MASK;							// PAUSEレジスタのチェックフラグのセット
 	
 //	SYSM_ReadHWInfo();												// NANDからHW情報をリード
@@ -185,32 +124,24 @@ static void SYSMi_WaitInitARM7( void )
 	
 	SYSM_VerifyAndRecoveryNTRSettings();							// NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
 	
-	SYSMi_CheckCardCloneBoot();										// カードがクローンブートかチェック
-	SYSMi_ReadCardBannerFile();										// カードバナーファイルの読み出し。
+//	SYSMi_CheckCardCloneBoot();										// カードがクローンブートかチェック
+//	SYSMi_ReadCardBannerFile();										// カードバナーファイルの読み出し。
 	
-	// ==============================================================
-	// デバッガ対応コード
-#ifdef __IS_DEBUGGER_BUILD
-	if( GetSYSMWork()->isOnDebugger ) {
-		if( SYSMi_ExistCard() &&
-			!SYSMi_IsDebuggerBannerViewMode() ){					// デバッガ上動作の場合は、この中でカードブートまでやってしまう。
-			SYSM_GetResetParam()->isLogoSkip  = TRUE;
-			SYSM_GetResetParam()->bootTitleID = SYSM_GetCardTitleID();
-		}
-	}else {
-		while( 1 ) {}												// ISデバッガビルドでISデバッガが検出できなかったら停止。
-	}
-#endif // __IS_DEBUGGER_BUILD
-	// ==============================================================
+	//NAMの初期化
+	//NAM_Init(AllocForNAM,FreeForNAM);
+	
+	MI_CpuClearFast(old_titleIdArray, sizeof(old_titleIdArray) );
 }
 
 
+// カードタイトルの取得
 int SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 {
 #pragma unused( pTitleList_Card )
 	return 0;
 }
 
+// 指定ファイルリード
 static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
 {
     u8* p = (u8*)buffer;
@@ -240,15 +171,16 @@ static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
 #include <twl/ese.h>
 ESTitleMeta dst[1];
 
+// NANDタイトルリストの取得
 int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size)
 {
 															// filter_flag : ALL, ALL_APP, SYS_APP, USER_APP, Data only, 等の条件を指定してタイトルリストを取得する。
 	// とりあえずALL
 	int l;
 	int gotten;
-	NAMTitleId titleIdArray[TITLE_ID_BUF_SIZE];
-	static BannerFile bannerBuf[TITLE_ID_BUF_SIZE];
-	gotten = NAM_GetTitleList(titleIdArray, TITLE_ID_BUF_SIZE);
+	NAMTitleId titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
+	static BannerFile bannerBuf[ LAUNCHER_TITLE_LIST_NUM ];
+	gotten = NAM_GetTitleList(titleIdArray, LAUNCHER_TITLE_LIST_NUM );
 	
 	// バナーの読み込み……別の関数に移すべきかも。
 	// 毎フレーム変化を見る必要がある。
@@ -316,7 +248,7 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size)
 			
 		}
 	}
-	for(l=gotten;l<TITLE_ID_BUF_SIZE;l++)
+	for(l=gotten;l<LAUNCHER_TITLE_LIST_NUM;l++)
 	{
 		// 念のため0にクリア
 		titleIdArray[l] = 0;
@@ -428,20 +360,24 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
         }
 
         // 各領域を読み込む
-        source[region_header] = 0x00000000;
-        length[region_header] = HW_TWL_ROM_HEADER_BUF_SIZE;
-        destaddr[region_header] = HW_TWL_ROM_HEADER_BUF;
-        source[region_arm9_ntr] = *(const u32*)&header[0x020];
-        length[region_arm9_ntr] = *(const u32*)&header[0x02C];
+        source  [region_header  ] = 0x00000000;
+        length  [region_header  ] = HW_TWL_ROM_HEADER_BUF_SIZE;
+        destaddr[region_header  ] = HW_TWL_ROM_HEADER_BUF;
+		
+        source  [region_arm9_ntr] = *(const u32*)&header[0x020];
+        length  [region_arm9_ntr] = *(const u32*)&header[0x02C];
         destaddr[region_arm9_ntr] = *(const u32*)&header[0x028];
-        source[region_arm7_ntr] = *(const u32*)&header[0x030];
-        length[region_arm7_ntr] = *(const u32*)&header[0x03C];
+		
+        source  [region_arm7_ntr] = *(const u32*)&header[0x030];
+        length  [region_arm7_ntr] = *(const u32*)&header[0x03C];
         destaddr[region_arm7_ntr] = *(const u32*)&header[0x038];
-        source[region_arm9_twl] = *(const u32*)&header[0x1C0];
-        length[region_arm9_twl] = *(const u32*)&header[0x1CC];
+		
+        source  [region_arm9_twl] = *(const u32*)&header[0x1C0];
+        length  [region_arm9_twl] = *(const u32*)&header[0x1CC];
         destaddr[region_arm9_twl] = *(const u32*)&header[0x1C8];
-        source[region_arm7_twl] = *(const u32*)&header[0x1D0];
-        length[region_arm7_twl] = *(const u32*)&header[0x1DC];
+		
+        source  [region_arm7_twl] = *(const u32*)&header[0x1D0];
+        length  [region_arm7_twl] = *(const u32*)&header[0x1DC];
         destaddr[region_arm7_twl] = *(const u32*)&header[0x1D8];
 
         for (i = region_header; i < region_max; ++i)
@@ -473,89 +409,23 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 	// ROMヘッダバッファをコピー
 	MI_CpuCopy32( (void *)HW_TWL_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 	
-	// 起動。
-	BOOT_Ready();
-	
 	// パラメータチェック
 	if( !SYSMi_CheckTitlePointer( pBootTitle ) ) {
 		return AUTH_RESULT_TITLE_POINTER_ERROR;
 	}
+#if 0
 	// エントリアドレスの正当性をチェック
 	if( !SYSMi_CheckEntryAddress() ) {
 		return AUTH_RESULT_ENTRY_ADDRESS_ERROR;
 	}
+#endif
+	
+	// 起動。
+	BOOT_Ready();	// never return;
 	
 	return AUTH_RESULT_SUCCEEDED;
 }
 
-
-// ブートのための終了処理
-void SYSM_Finalize( void )
-{
-	// ARM7へのブート通知
-	// レジスタ・RAMクリア
-	
-	// ※ブート時にプロテクションユニットをOFFにしなければ、不正なアドレスでの起動を防げるのでは？
-	
-	u32 i;
-	
-	// ブートの前準備
-	MI_CpuCopyFast( (void *)ReturnFromMain, (void *)RETURN_FROM_MAIN_ARM9_FUNCP, (u32)( (u32)BootFuncEnd - (u32)ReturnFromMain ) );
-	DC_StoreRange ( (void *)ReturnFromMain, 0x200 );		// ゲームブート時の最終処理をメインメモリの後ろの方にコピー（※SYSM実行時のスタック上昇で破壊されないように、このタイミングでコピーする。）
-	
-	for( i = 0; i <= MI_DMA_MAX_NUM; i++ ) {				// DMAの停止
-		MI_StopDma( i );
-	}
-	SYSM_FinalizeCardPulledOut();							// カード抜け検出終了処理
-	SYSMi_MainpRegisterAndRamClear( TRUE );					// レジスタ＆RAMクリア
-	( void )GX_VBlankIntr(FALSE);
-	( void )OS_SetIrqFunction(OS_IE_SUBP, INTR_SubpIRQ);
-	( void )OS_SetIrqMask(OS_IE_SUBP);						// サブプロセッサ割り込みのみを許可。
-	reg_PXI_SUBPINTF = SUBP_RECV_IF_ENABLE | 0x0f00;		// ARM9ステートを "0x0f" に
-	GetSYSMWork()->mainp_state = MAINP_STATE_WAIT_BOOT_REQ;
-															// ※もうFIFOはクリア済みなので、使わない。
-	// ARM7からの通知待ち
-	OS_WaitIrq(1, OS_IE_SUBP);								// SVC_WaitIntr(0,OS_IE_SUBP);から変更。
-	
-	// 割り込みをクリアして最終ブートシーケンスへ。
-	reg_PXI_SUBPINTF &= 0x0f00;								// サブプロセッサ割り込み許可フラグをクリア
-	( void )OS_DisableIrq();
-	( void )OS_SetIrqMask(0);
-	( void )OS_ResetRequestIrqMask( (u32)~0 );
-}
-
-
-// ランチャーをリブート
-void SYSM_RebootLauncher( void )
-{
-}
-
-
-// 再起動タイトルを指定してのリブート
-void SYSM_RebootTitle( u64 titleID )
-{
-#pragma unused( titleID )
-	
-}
-
-
-#if 0
-// NITRO起動をARM7に通知
-BOOL SYSM_BootCard( void )
-{																	// Nintendoロゴチェックは、このタイミングで行う。
-
-	( void )SYSMi_SendMessageToARM7(MSG_BOOT_TYPE_CARD);	// ARM7にカード起動を通知。
-
-	if( SYSM_CheckNinLogo( (u16 *)GetRomHeaderAddr()->nintendo_logo ) == FALSE
-	 || GetSYSMWork()->enableCardNormalOnly == TRUE ) {	// NORMALカード非対応化
-		SYSM_SetBootFlag( BFLG_ILLEGAL_NITRO_CARD );
-		return FALSE;
-	}else {
-		SYSM_SetBootFlag( BFLG_BOOT_DECIDED | BFLG_BOOT_NITRO );
-		return TRUE;
-	}
-}
-#endif
 
 #if 0
 // TPリード可能かどうかを調べる。
@@ -565,82 +435,6 @@ BOOL SYSM_IsTPReadable( void )
 	else											return TRUE;
 }
 #endif
-
-
-// ARM7-ARM9共有リソースのbootFlagへの値のセット
-void SYSM_SetBootFlag( u32 value )
-{
-	BOOL preIrq = OS_DisableIrq();
-	LockVariable *lockp = &GetSYSMWork()->boot_flag;
-	( void )OS_LockByWord(  BOOTFLAG_LOCK_ID, &(lockp->lock), (void (*)( void ))0x00000000);
-	lockp->value |=  value;
-	( void )OS_UnLockByWord(BOOTFLAG_LOCK_ID, &(lockp->lock), (void (*)( void ))0x00000000);
-	( void )OS_RestoreIrq( preIrq );
-}
-
-
-void SYSM_ClearBootFlag( u32 value )
-{
-	BOOL preIrq = OS_DisableIrq();
-	LockVariable *lockp = &GetSYSMWork()->boot_flag;
-	( void )OS_LockByWord(  BOOTFLAG_LOCK_ID, &(lockp->lock), (void (*)( void ))0x00000000);
-	lockp->value &= ~value;
-	( void )OS_UnLockByWord(BOOTFLAG_LOCK_ID, &(lockp->lock), (void (*)( void ))0x00000000);
-	( void )OS_RestoreIrq( preIrq );
-}
-
-
-// ============================================================================
-// 割り込み処理
-// ============================================================================
-
-// サブプロセッサ割り込み
-static void INTR_SubpIRQ( void )
-{
-	OS_SetIrqCheckFlag( OS_IE_SUBP );
-}
-
-
-// ============================================================================
-// アプリ起動処理
-// ============================================================================
-
-// SystemMenuで使用したレジスタ＆メモリのクリア
-static void SYSMi_MainpRegisterAndRamClear( BOOL isPlatformTWL )
-{
-	// 最後がサブプロセッサ割り込み待ちなので、IMEはクリアしない。
-	( void )OS_SetIrqMask(0);
-	( void )OS_ResetRequestIrqMask( (u32)~0 );
-	
-	// メモリクリア
-	GX_SetBankForLCDC(GX_VRAM_LCDC_ALL);							// VRAM     クリア
-	MI_CpuClearFast((void*)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
-	( void )GX_DisableBankForLCDC();
-//	MI_CpuClearFast((void *)HW_ITCM,		HW_ITCM_SIZE);			// ITCM     クリア  ※ITCMにはSDKのコードが入っているので、gameBoot.cでクリアする。
-//	MI_CpuClearFast((void *)HW_DTCM,		HW_DTCM_SIZE-0x800);	// DTCM     クリア	※DTCMはスタック&SDK変数入りなので、最後にgameBoot.cでクリアしている。
-	MI_CpuClearFast((void *)HW_OAM,			HW_OAM_SIZE);			// OAM      クリア
-	MI_CpuClearFast((void *)HW_PLTT,		HW_PLTT_SIZE);			// パレット クリア
-	MI_CpuClearFast((void *)HW_DB_OAM,		HW_DB_OAM_SIZE);		// OAM      クリア
-	MI_CpuClearFast((void *)HW_DB_PLTT,		HW_DB_PLTT_SIZE);		// パレット クリア
-	
-	// レジスタクリア
-	MI_CpuClearFast((void*)(HW_REG_BASE + 0x8),    0x12c);			// BG0CNT    ～ KEYCNT
-	MI_CpuClearFast((void*)(HW_REG_BASE + 0x280),  0x40);			// DIVCNT    ～ SQRTD3
-	MI_CpuClearFast((void*)(HW_REG_BASE + 0x1000), 0x6e);			// DISP1CNT1 ～ DISPBRTCNT1
-	CP_SetDiv32_32( 0, 1 );
-	reg_PXI_SUBP_FIFO_CNT	= 0x4008;
-	reg_GX_DISPCNT			= 0;
-	reg_GX_DISPSTAT			= 0;									// ※ reg_GX_VCOUNTはベタクリアできないので、この先頭部分のクリアを分離する。
-	
-	
-	// NTRの時には、バナーがある時は、MCCNTのカードイネーブルビットが"1"で、無いときには"0"になっていたが、
-	// NTR起動の時には、ここでもそれを踏襲しないとダメかも。。。
-	
-	// クリアしていないレジスタは、VCOUNT, PIFCNT, MC-, EXMEMCNT, IME, RBKCNT1, PAUSE, POWLCDCNT, 全3D系です。
-	if( isPlatformTWL ) {
-		// TWL専用レジスタのクリア
-	}
-}
 
 
 // ============================================================================
@@ -666,7 +460,6 @@ static BOOL SYSMi_IsDebuggerBannerViewMode( void )
 	return FALSE;
 #endif	// __IS_DEBUGGER_BUILD
 }
-
 
 
 // バナーファイルの読み込みの実体
@@ -755,14 +548,6 @@ static void SYSMi_WriteAdjustRTC( void )
 }
 
 
-// FIFO経由でARM7にメッセージ通知。※PXI_FIFO_TAG_USER_1を使用。
-static BOOL	SYSMi_SendMessageToARM7(u32 msg)
-{
-#pragma unused(msg)
-	return TRUE;
-}
-
-
 // NTR,TWLカード存在チェック 		「リターン　1：カード認識　0：カードなし」
 static int SYSMi_ExistCard( void )
 {
@@ -802,7 +587,7 @@ void SYSM_SetBackLightBrightness( void )
 //======================================================================
 
 // Nintendoロゴチェック			「リターン　1:Nintendoロゴ認識成功　0：失敗」
-BOOL SYSM_CheckNinLogo(u16 *logo_cardp)
+BOOL SYSM_CheckNintendoLogo(u16 *logo_cardp)
 {
 	u16 *logo_orgp	= (u16 *)SYSROM9_NINLOGO_ADR;					// ARM9のシステムROMのロゴデータとカートリッジ内のものを比較
 	u16 length		= NINTENDO_LOGO_LENGTH >> 1;
@@ -832,18 +617,6 @@ static BOOL SYSMi_CheckEntryAddress( void )
 		return FALSE;
 	}
 	OS_TPrintf("entry address valid.\n");
-	return TRUE;
-}
-
-
-// ARM7によるNITROゲームのロード完了を確認する。
-static BOOL SYSMi_CheckARM7LoadNITROCard( void )
-{
-	if( SYSMi_ExistCard()
-//		&& !( SYSM_GetBootFlag() & BFLG_LOAD_CARD_COMPLETED )
-		) {
-		return FALSE;
-	}
 	return TRUE;
 }
 
@@ -904,70 +677,3 @@ static void SYSMi_CheckRTC( void )
 //======================================================================
 //  デバッグ
 //======================================================================
-
-// 初期データのデバッグ表示
-#ifdef __SYSM_DEBUG
-static void SYSMi_DispInitialDebugData( void )
-{
-	OS_Printf("SYSM version      :20%x\n", SYSMENU_VER);
-	if( GetMovedInfoFromIPL1Addr()->isOnDebugger )	OS_Printf("Run On IS-DEBUGGER\n");
-	else 											OS_Printf("Run On IS-EMULATOR\n");
-	if(GetMovedInfoFromIPL1Addr()->rtcStatus & 0x01)	OS_Printf("RTC reset is detected!\n");
-	if(GetMovedInfoFromIPL1Addr()->rtcError)			OS_Printf("RTC error is detected!\n");
-#if 0
-	OS_Printf("NvDate       :%4d\n",sizeof(NvDate));
-	OS_Printf("NvNickname   :%4d\n",sizeof(NvNickname));
-	OS_Printf("NvComment    :%4d\n",sizeof(NvComment));
-	OS_Printf("NvOwnerInfo  :%4d\n",sizeof(NvOwnerInfo));
-	OS_Printf("NvAlarm      :%4d\n",sizeof(NvAlarm));
-	OS_Printf("NvTpCalibData:%4d\n",sizeof(NvTpCalibData));
-	OS_Printf("NvOption     :%4d\n",sizeof(NvOption));
-	OS_Printf("NCD          :%4d\n",sizeof(NitroConfigData));
-	OS_Printf("NCDStore     :%4d\n",sizeof(NCDStore));
-#endif
-#if 0
-	{	// ROM_HEADER_BUFFの内容を書き出し
-		int i,j;
-		u32 *romhp = (u32 *)GetRomHeaderAddr();
-		OS_Printf("ROM Header Buff\n  ");
-		for(i = 0; i < 6; i++) {
-			for(j = 0; j < 4; j++) OS_Printf("    0x%8x", *romhp++);
-			OS_Printf("\n  ");
-		}
-		OS_Printf("\n");
-	}
-	{	// ROM_HEADER_BUFFの内容を書き出し
-		int i,j;
-		u32 *romhp = (u32 *)MB_CARD_ROM_HEADER_ADDRESS;
-		OS_Printf("MB Card ROM Header Buff\n  ");
-		for(i = 0; i < 6; i++) {
-			for(j = 0; j < 4; j++) OS_Printf("    0x%8x", *romhp++);
-			OS_Printf("\n  ");
-		}
-		OS_Printf("\n");
-	}
-#endif  /* 0 */
-}
-#endif /* __SYSM_DEBUG */
-
-
-
-#ifdef __DEBUG_SECURITY_CODE
-// セキュリティがきちんと働いているかを確認するデバッグコード
-static void DispSingleColorScreen( int mode )
-{
-	( void )OS_DisableIrq();
-	GX_LoadBGPltt  ( &security_detection_color[ mode ], 0, sizeof(GXRgb) );
-	GXS_LoadBGPltt ( &security_detection_color[ mode ], 0, sizeof(GXRgb) );
-	GX_DispOn();
-	GXS_DispOn();
-	GX_SetGraphicsMode ( GX_DISPMODE_GRAPHICS, GX_BGMODE_0, GX_BG0_AS_2D );
-	GXS_SetGraphicsMode( GX_BGMODE_0 );
-	GX_SetMasterBrightness( 0 );
-	GXS_SetMasterBrightness( 0 );
-    GX_SetVisiblePlane ( GX_PLANEMASK_NONE );
-    GXS_SetVisiblePlane( GX_PLANEMASK_NONE );
-}
-#endif
-
-

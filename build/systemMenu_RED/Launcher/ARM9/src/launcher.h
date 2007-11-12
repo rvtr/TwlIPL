@@ -26,7 +26,6 @@ extern "C" {
 #endif
 
 // define data----------------------------------------------------------
-#define TITLE_PROPERTY_NUM 40
 
 // global variables--------------------------------------------------
 

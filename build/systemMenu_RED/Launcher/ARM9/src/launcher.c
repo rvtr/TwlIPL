@@ -41,65 +41,13 @@ static void DrawLauncher(u16 nowCsr, const MenuParam *pMenu);
 
 // static variable -------------------------------------
 static int s_csr = 0;													// メニューのカーソル位置
-static const u16 *s_pStrLauncher[ LAUNCHER_ELEMENT_NUM ];				// ロゴメニュー用文字テーブルへのポインタリスト
 
-static u64	old_titleIdArray[TITLE_PROPERTY_NUM];
+static u64	old_titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
 
 // const data  -----------------------------------------
 //===============================================
 // Launcher.c
 //===============================================
-static const u16 *const s_pStrLauncherElemTbl[ LAUNCHER_ELEMENT_NUM ][ TWL_LANG_CODE_MAX ] = {
-	{
-		(const u16 *)L"DSカード",
-		(const u16 *)L"DS Card",
-		(const u16 *)L"DS Card(F)",
-		(const u16 *)L"DS Card(G)",
-		(const u16 *)L"DS Card(I)",
-		(const u16 *)L"DS Card(S)",
-	},
-	{
-		(const u16 *)L"ピクトチャット",
-		(const u16 *)L"PictoChat",
-		(const u16 *)L"PictoChat(F)",
-		(const u16 *)L"PictoChat(G)",
-		(const u16 *)L"PictoChat(I)",
-		(const u16 *)L"PictoChat(S)",
-	},
-	{
-		(const u16 *)L"DSダウンロードプレイ",
-		(const u16 *)L"DS Download Play",
-		(const u16 *)L"DS Download Play(F)",
-		(const u16 *)L"DS Download Play(G)",
-		(const u16 *)L"DS Download Play(I)",
-		(const u16 *)L"DS Download Play(S)",
-	},
-	{
-		(const u16 *)L"本体設定",
-		(const u16 *)L"Machine Settings",
-		(const u16 *)L"Machine Settings(F)",
-		(const u16 *)L"Machine Settings(G)",
-		(const u16 *)L"Machine Settings(I)",
-		(const u16 *)L"Machine Settings(S)",
-	},
-};
-
-static MenuPos s_launcherPos[] = {
-	{ TRUE,  4 * 8,   8 * 8 },
-	{ TRUE,  4 * 8,  10 * 8 },
-	{ TRUE,  4 * 8,  12 * 8 },
-	{ TRUE,  4 * 8,  14 * 8 },
-	{ TRUE,  4 * 8,  16 * 8 },
-};
-
-static const MenuParam s_launcherParam = {
-	LAUNCHER_ELEMENT_NUM,
-	TXT_COLOR_BLACK,
-	TXT_COLOR_GREEN,
-	TXT_COLOR_RED,
-	&s_launcherPos[0],
-	(const u16 **)&s_pStrLauncher,
-};
 
 static const u16 *const str_backlight[] = {
 	(const u16 *)L"BLT:ON ",
@@ -118,10 +66,10 @@ static BannerFile *empty_banner;
 static BannerFile *nobanner_banner;
 static BannerFile *card_banner;
 static BannerFile *download_banner;
-static u8 image_index_list[TITLE_PROPERTY_NUM];
+static u8 image_index_list[ LAUNCHER_TITLE_LIST_NUM ];
 static const int MAX_SHOW_BANNER = 6;
 static GXOamAttr banner_oam_attr[MAX_SHOW_BANNER+10];// アフィンパラメータ埋める関係で少し大きめ
-static u8 *pbanner_image_list[TITLE_PROPERTY_NUM];
+static u8 *pbanner_image_list[ LAUNCHER_TITLE_LIST_NUM ];
 static int banner_count = 0;
 
 static void LoadBannerFiles()
@@ -195,7 +143,7 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	*/
     
     // TitleProperty弄り
-	for(l=0;l<TITLE_PROPERTY_NUM;l++)
+	for(l=0;l<LAUNCHER_TITLE_LIST_NUM;l++)
 	{
 		if(titleprop[l].titleID == 0) //IDがゼロの時はEmpty
 		{
@@ -208,7 +156,7 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	}
 	
     // TitlePropertyを見てVRAMにキャラクタデータをロード
-	for(l=0;l<TITLE_PROPERTY_NUM;l++)
+	for(l=0;l<LAUNCHER_TITLE_LIST_NUM;l++)
 	{
 		if(titleprop[l].titleID != old_titleIdArray[l])
 		{
@@ -217,7 +165,7 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 			break;
 		}
 	}
-	for(l=0;l<TITLE_PROPERTY_NUM;l++)
+	for(l=0;l<LAUNCHER_TITLE_LIST_NUM;l++)
 	{
 		u8 m;
 		u8 *pban=((BannerFile *)titleprop[l].pBanner)->v1.image;
@@ -229,7 +177,7 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 		}
 		if(m == banner_count)
 		{
-			if(banner_count<TITLE_PROPERTY_NUM-1){
+			if(banner_count<LAUNCHER_TITLE_LIST_NUM-1){
 				GX_LoadOBJ(pban, (u32)m*BNR_IMAGE_SIZE , BNR_IMAGE_SIZE);
 				pbanner_image_list[m] = pban;
 				banner_count++;
@@ -273,7 +221,7 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	for (l=0;l<MAX_SHOW_BANNER;l++)
 	{
 		int num = cursor/CURSOR_PER_SELECT - 2 + l;
-		if(-1 < num && num < TITLE_PROPERTY_NUM){
+		if(-1 < num && num < LAUNCHER_TITLE_LIST_NUM){
 			banner_oam_attr[l].charNo = image_index_list[num]*4;
 			
 			if(l == 2 || l == 3)
@@ -309,7 +257,6 @@ void LauncherInit( TitleProperty *pTitleList )
 {
 #pragma unused( pTitleList )
 	
-	int i;
 	GX_DispOff();
 	GXS_DispOff();
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
@@ -317,17 +264,6 @@ void LauncherInit( TitleProperty *pTitleList )
 	DrawBackLightSwitch();
 	
 	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
-	
-	// NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
-	for( i = 0; i < LAUNCHER_ELEMENT_NUM; i++ ) {
-		s_pStrLauncher[ i ] = s_pStrLauncherElemTbl[ i ][ TSD_GetLanguage() ];
-	}
-	
-	if( !SYSM_IsNITROCard() ) {
-		s_launcherPos[ 0 ].enable = FALSE;		// DSカードが無い時は、先頭要素を無効にする。
-	}
-	
-	//DrawMenu( s_csr, &s_launcherParam );
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
@@ -390,27 +326,18 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 		if(csr_v == 0) csr_v = -1;
 	}
 	s_csr += csr_v;
-	if((TITLE_PROPERTY_NUM-1)*CURSOR_PER_SELECT < s_csr) s_csr = (TITLE_PROPERTY_NUM-1)*CURSOR_PER_SELECT;
+	if((LAUNCHER_TITLE_LIST_NUM-1)*CURSOR_PER_SELECT < s_csr) s_csr = (LAUNCHER_TITLE_LIST_NUM-1)*CURSOR_PER_SELECT;
 	if( s_csr < 0 ) s_csr = 0;
 	if(s_csr%CURSOR_PER_SELECT == 0){
 		csr_v = 0;
 		selected = s_csr/CURSOR_PER_SELECT;
 	}
-	// tp_select = SelectMenuByTP( &s_csr, &s_launcherParam );
-	
-	// DrawMenu( s_csr, &s_launcherParam );
 	
 	#ifdef DBGBNR
 	BannerDraw( s_csr, selected, pTitleList );
 	#endif
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {					// メニュー項目への分岐
-	/*
-		if( s_launcherPos[ 0 ].enable ) {
-			NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
-			return NULL;
-		}
-	*/
 		if(pTitleList[selected].titleID != 0)
 		{
 			NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );

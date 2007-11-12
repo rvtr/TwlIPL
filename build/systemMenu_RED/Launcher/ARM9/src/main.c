@@ -38,14 +38,8 @@ static BannerFile banner;											// バナーデータ
 
 // const data------------------------------------------------------------------
 
-#if 1
 
-typedef struct CardStatus {
-	u16		primarySlot;		// PULLOUT, DETECT, VALID, INVALID
-	u16		secondarySlot;		// 同上。
-}CardStatus;
-
-
+// メイン
 void TwlMain( void )
 {
 	enum {
@@ -59,7 +53,7 @@ void TwlMain( void )
 	};
 	u32 state = START;
 	TitleProperty *pBootTitle = NULL;
-	TitleProperty pTitleList[TITLE_PROPERTY_NUM];
+	TitleProperty pTitleList[ LAUNCHER_TITLE_LIST_NUM ];
 	
     OS_Init();
 	
@@ -101,7 +95,7 @@ void TwlMain( void )
 //	FS_ReadSharedContentFile( ContentID );
 	
 	// NANDアプリリストの取得----------
-	(void)SYSM_GetNandTitleList( pTitleList, TITLE_PROPERTY_NUM );
+	(void)SYSM_GetNandTitleList( pTitleList, LAUNCHER_TITLE_LIST_NUM );
 	
 	while( 1 ) {
 		OS_WaitIrq(1, OS_IE_V_BLANK);							// Vブランク割り込み待ち
@@ -132,11 +126,8 @@ void TwlMain( void )
 			}
 			break;
 		case AUTHENTICATE:
-			switch ( SYSM_LoadAndAuthenticateTitle( pBootTitle ) ) {	// アプリロード＆認証
+			switch ( SYSM_LoadAndAuthenticateTitle( pBootTitle ) ) {	// アプリロード＆認証	成功時：never return
 			case AUTH_PROCESSING:
-				break;
-			case AUTH_RESULT_SUCCEEDED:
-				state = BOOT;
 				break;
 			case AUTH_RESULT_TITLE_POINTER_ERROR:
 			case AUTH_RESULT_AUTHENTICATE_FAILED:
@@ -145,170 +136,12 @@ void TwlMain( void )
 				break;
 			}
 			break;
-		case BOOT:
-			SYSM_Finalize();									// 終了処理
-			return;
 		case STOP:												// 停止
 			break;
 		}
 	}
 }
-#endif
 
-
-// ============================================================================
-// function's description
-// ============================================================================
-/*
-void TwlMain(void)
-{
-	typedef enum PrgState {
-		STATE_START = 1,
-		STATE_LOGO_DISP,
-		STATE_LOGO_MENU,
-		STATE_WAIT_BOOT
-	}PrgState;
-	
-	PrgState prg_state     = STATE_START;
-	BOOL     boot_decision = FALSE;
-	
-	// 初期化----------------------------------
-	SYSM_Init();													// システムメニュー関連データの初期化（TwlMainの先頭でコールして下さい。）
-	
-    OS_Init();
-	
-	(void)OS_EnableIrq();
-	(void)OS_EnableInterrupts();
-	
-	FS_Init( FS_DMA_NOT_USE );
-    GX_Init();
-	GX_SetPower(GX_POWER_ALL);										// 各ロジック パワーON
-	
-	// 割り込み許可----------------------------
-	(void)OS_SetIrqFunction(OS_IE_V_BLANK, INTR_VBlank);
-	(void)OS_EnableIrqMask(OS_IE_V_BLANK);
-	(void)GX_VBlankIntr(TRUE);
-	
-	// デバイス初期化-------------------------------
-#ifndef __TP_OFF
-	TP_Init();
-#endif
-	(void)RTC_Init();
-	
-	// システムの初期化------------------
-	InitAllocator( &g_allocator );
-	CMN_InitFileSystem( &g_allocator );
-
-//	InitAllocSystem();
-	
-	// ARM7初期化待ち--------------------------
-//	if( SYSM_WaitARM7Init() ) {										// ARM7側の初期化が終わるのを待ってからメインループ開始
-//		return;														// TRUEが返されたら、デバッガブートなのでリターン
-//	}
-	
-	// メインループ----------------------------
-	while(1){
-		OS_WaitIrq(1, OS_IE_V_BLANK);								// Vブランク割り込み待ち
-		ReadKeyPad();												// キー入力の取得
-		
-		if(SYSM_IsTPReadable()) {
-			ReadTpData();											// TP入力の取得
-		}
-		
-//		if(SYSM_Main()) {											// IPL2システムのメイン
-//			return;													// TRUEが帰ってきたらメインループからリターン（NITROゲーム起動等）
-//		}
-		
-		switch(prg_state) {
-		  case STATE_START:
-			boot_decision = CheckBootStatus();						// ブート状態をチェックする。（ショートカット起動やコンパイルスイッチによる強制起動）
-//			if( !SYSM_GetBannerFile( &banner ) ) {					// バナーデータのリード
-//				OS_Printf("ROM banner data read failed.\n");
-//			}
-			prg_state = STATE_LOGO_DISP;
-			break;
-			
-			//-----------------------------------
-			// NITROロゴ表示
-			//-----------------------------------
-		  case STATE_LOGO_DISP:
-			if( LogoMain() ) {										// ロゴ表示ルーチン（※BFLG_GAMEBOY_LOGO_OFFの時は即終了）
-				InitBG();										// BG初期化
-				LauncherInit();									// ブート未決定時のみロゴメニューを初期化する。
-				
-				prg_state = STATE_LOGO_MENU;
-			}
-			break;													// ※NITROカードが正当でない場合は、このまま無限ループ。
-			
-			//-----------------------------------
-			// ロゴメニューで起動モード選択
-			//-----------------------------------
-		  case STATE_LOGO_MENU:
-			{
-				IPL2BootType command = LauncherMain( boot_decision );
-				
-				switch(command) {
-				case BOOT_TYPE_UNSOLVED:
-					break;
-					
-				case BOOT_TYPE_NITRO:
-//					if( !SYSM_BootNITRO() ) {
-//						(void)DrawStringSJIS( 4,  20, RED, (const u8 *)"This NITRO card is invalid!!");
-//					}
-					break;
-					
-				case BOOT_TYPE_PICT_CHAT:
-//					(void)SYSM_BootPictChat();
-					break;
-					
-				case BOOT_TYPE_WIRELESS_BOOT:
-//					(void)SYSM_BootDSDownloadPlay();
-					break;
-					
-				case BOOT_TYPE_BMENU:
-//					(void)SYSM_BootMachineSetting();
-					break;
-					
-				default:
-					OS_Panic( "ERROR: boot code failed : %d\n", command );
-				}
-				if(command) {
-					prg_state = STATE_WAIT_BOOT;
-				}
-			}
-			break;
-		  case STATE_WAIT_BOOT:
-//			SYSM_PermitToBootSelectedTarget();
-			break;
-		}
-		
-		if ( PAD_DetectFold() == TRUE ) {							// スリープモードへの遷移
-//			SYSM_FinalizeCardPulledOut();
-			SYSM_GoSleepMode();
-//			(void)SYSM_IsCardPulledOut();							// カード抜け検出コマンド発行
-//			SYSM_FinalizeCardPulledOut();
-																	// カード抜け検出
-//			if ( SYSM_IsCardPulledOut() ) {
-			if ( 0 ) {
-				(void)PM_ForceToPowerOff();
-			}
-		}
-		
-//		if (SYSM_IsCardPulledOut()) {								// カード抜け検出
-		if ( 0 ) {
-			OS_Printf("Card is pulled out.\n");
-			OS_Terminate();
-		}
-		
-		OS_PrintServer();											// ARM7からのプリントデバッグを処理する
-		
-		//---- BG-VRAMの更新
-//		DC_FlushRange ( bgBakS,  sizeof(bgBakS) );
-//		MI_CpuCopyFast( bgBakS, (void*)(HW_DB_BG_VRAM+0xf000), sizeof(bgBakS) );
-	}
-}
-*/
-	
 
 // アロケータの初期化
 static void InitAllocator( NNSFndAllocator* pAllocator )
@@ -340,25 +173,6 @@ void Free( void *pBuffer )
 	NNS_FndFreeToAllocator( &g_allocator, pBuffer );
 }
 
-
-#if 0
-// mallocシステムの初期化
-static void InitAllocSystem(void)
-{
-	void*			tempLo;
-	OSHeapHandle	hh;
-	
-	tempLo	= OS_InitAlloc(OS_ARENA_MAIN, OS_GetMainArenaLo(), OS_GetMainArenaHi(), 16);
-	OS_SetArenaLo(OS_ARENA_MAIN, tempLo);
-	OS_TPrintf( "ArenaLo : %08x  ArenaHi : %08x\n", OS_GetMainArenaLo(), OS_GetMainArenaHi() );
-	
-	hh		= OS_CreateHeap(OS_ARENA_MAIN, OS_GetMainArenaLo(), OS_GetMainArenaHi());
-	if(hh < 0) {
-		OS_Panic("ARM9: Fail to create heap...\n");
-	}
-	hh		= OS_SetCurrentHeap(OS_ARENA_MAIN, hh);
-}
-#endif
 
 // ブート状態を確認し、ロゴ表示有無を判断する-------
 static BOOL CheckBootStatus(void)

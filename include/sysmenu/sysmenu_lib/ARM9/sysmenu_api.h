@@ -30,6 +30,8 @@ extern "C" {
 
 // define data----------------------------------------------------------
 
+#define LAUNCHER_TITLE_LIST_NUM		40			// ランチャーのタイトルリスト数
+
 // タイトル情報
 typedef struct TitleProperty {	// この情報は、ランチャー時には認証通ってないけど、起動時には認証通すので大丈夫だろう。
 	u64		titleID;			// タイトルID
@@ -88,7 +90,7 @@ extern void SYSM_BootMachineSetting( void );
 extern BOOL SYSM_ReadBannerFile( BannerFile *banner );
 extern BOOL SYSM_IsTPReadable( void );
 
-extern BOOL SYSM_CheckNinLogo( u16 *logo_cardp );
+extern BOOL SYSM_CheckNintendoLogo( u16 *logo_cardp );
 extern void SYSM_LoadNintendoLogo2D( u16 *ninLogoDatap, u16 *dstp, u16 color, u32 *tempBuffp );	// tempBuffpには0x700byte必要です。
 extern void SYSM_LoadNintendoLogo1D( u16 *ninLogoDatap, u16 *dstp, u16 color, u32 *tempBuffp ); // 同上。
 

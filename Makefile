@@ -21,7 +21,10 @@ include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS =	build
+SUBDIRS =	$(TWLSDK_ROOT)/build/libraries/ese \
+			$(TWLSDK_ROOT)/build/libraries/nam \
+			$(TWLSDK_ROOT)/build/tools/TwlNMenu \
+			build
 
 #----------------------------------------------------------------------------
 
