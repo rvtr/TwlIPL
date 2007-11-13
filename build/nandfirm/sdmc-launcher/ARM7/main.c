@@ -32,8 +32,6 @@
 
 static u8 fatfsHeap[FATFS_HEAP_SIZE] __attribute__ ((aligned (32)));
 
-static SDPortContextData nandContext;   // 一時待避用 (次に渡すならSHAREDのどこかのアドレスにする)
-
 #ifndef SDK_FINALROM
 static u8 step = 0x80;
 #endif
@@ -55,7 +53,7 @@ u32 pf_cnt = 0;
 /***************************************************************
     PreInit
 
-    FromBootの対応をまとめる＆メインメモリの初期化
+    FromBootの対応＆メインメモリの初期化
     OS_Init前なので注意 (ARM9によるメインメモリ初期化で消されないように注意)
 ***************************************************************/
 static void PreInit(void)
@@ -63,11 +61,10 @@ static void PreInit(void)
     /*
         FromBrom関連
     */
-
-    // NANDパラメータの待避
-    nandContext = OSi_GetFromBromAddr()->SDNandContext;
-
-    MIi_CpuClearFast( 0, (void*)OSi_GetFromBromAddr(), sizeof(OSFromBromBuf) );
+    if ( !OSi_FromBromToMenu() )
+    {
+        OS_Terminate();
+    }
 }
 
 /***************************************************************
@@ -138,7 +135,7 @@ void TwlSpMain( void )
     OS_SetDebugLED(++step);
     PRODUCTION_CHECK();
 
-    if ( FATFS_InitFIRM( &nandContext ) )
+    if ( FATFS_InitFIRM( NULL ) )
     {
 #ifndef SDK_FINALROM
         // 3: after FATFS

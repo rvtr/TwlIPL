@@ -41,6 +41,11 @@ extern "C" {
 #define HW_FIRM_FROM_BROM_BUF_END       (HW_WRAM_AREA_END - 0x1000)  // END - 4KB
 #define HW_FIRM_FROM_BROM_BUF_SIZE      0x3000  // 12KB
 
+//------------------------------------- HW_FIRM_FROM_FIRM_BUF
+#define HW_FIRM_FROM_FIRM_BUF           (HW_FIRM_FROM_FIRM_BUF_END - HW_FIRM_FROM_FIRM_BUF_SIZE)
+#define HW_FIRM_FROM_FIRM_BUF_END       (HW_WRAM_AREA_END - 0x1000)  // END - 4KB
+#define HW_FIRM_FROM_FIRM_BUF_SIZE      0x2C00  // 11KB
+
 //------------------------------------- HW_FIRM_APP_BUF
 #define HW_FIRM_APP_BUF                 (HW_MAIN_MEM_HI_EX_END - HW_FIRM_APP_BUF_SIZE)
 #define HW_FIRM_APP_BUF_END             (HW_FIRM_APP_BUF + HW_FIRM_APP_BUF_SIZE)

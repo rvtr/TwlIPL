@@ -198,3 +198,37 @@ asm void OSi_BootCore( ROM_Header* rom_header )
 
         bx      lr
 }
+
+#include <twl/codereset.h>
+
+/*---------------------------------------------------------------------------*
+  Name:         OSi_FromBromToMenu
+
+  Description:  convert OSFromBromBuf to OSFromFirmBuf
+
+  Arguments:    None
+
+  Returns:      FALSE if FromBrom is broken
+ *---------------------------------------------------------------------------*/
+BOOL OSi_FromBromToMenu( void )
+{
+    OSFromBromBuf* fromBromBuf = OSi_GetFromBromAddr();
+    BOOL result = TRUE;
+    int i;
+    // check offset (why not to omit by compiler?)
+    if ( OSi_GetFromFirmAddr()->rsa_pubkey != fromBromBuf->rsa_pubkey ) // same area without header
+    {
+        result = FALSE;
+    }
+    // check unused signature area
+    for (i = 0; i < sizeof(fromBromBuf->hash_table_hash); i++)  // check all values are same
+    {
+        if (fromBromBuf->hash_table_hash[i] != 0x00)
+        {
+            result = FALSE;
+        }
+    }
+    // clear out of OSFromFirmBuf area
+    MI_CpuClearFast( fromBromBuf->header.max, sizeof(fromBromBuf->header.max) );
+    return result;
+}

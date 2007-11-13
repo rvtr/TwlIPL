@@ -1,6 +1,6 @@
 #----------------------------------------------------------------------------
 # Project:  TwlFirm - include
-# File:     ARM7-TS-NORFIRM.lsf
+# File:     ARM7-TS-FIRM.lsf
 #
 # Copyright 2007 Nintendo.  All rights reserved.
 #
@@ -29,3 +29,14 @@ Static $(TARGET_NAME)
 	Object		* (.ltdmain)
 	StackSize	1024 1024
 }
+
+#Autoload WRAM
+#{
+#	Address		$(ADDRESS_LTDWRAM)
+#}
+
+#Ltdautoload LTDMAIN
+#{
+##	Address		0x02f88000
+#	Address		0x02380000
+#}

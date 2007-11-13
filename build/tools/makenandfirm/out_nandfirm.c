@@ -909,7 +909,7 @@ static BOOL InitializeAesKey(void)
 
 static BOOL InitializeNandfirmFile(void)
 {
-    memset(&signedContext.hash[FIRM_SIGNED_HASH_IDX_HASH_TABLE], 0xff, sizeof(signedContext.hash[0]));
+    memset(&signedContext.hash[FIRM_SIGNED_HASH_IDX_HASH_TABLE], 0x00, sizeof(signedContext.hash[0]));
     nandHeader.o.h.w = wram_regs_init;
     nandHeader.m.h.w = wram_regs_init;
     InitializeAesKey();

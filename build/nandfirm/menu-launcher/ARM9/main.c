@@ -44,27 +44,44 @@ u32 pf_cnt = 0;
 /***************************************************************
     PreInit
 
-    FromBootの対応をまとめる＆メインメモリの初期化
-    OS_Init前なので注意
+    FromBootの対応＆OS_Init前に必要なメインメモリの初期化
 ***************************************************************/
 static void PreInit(void)
 {
     /*
      メインメモリ関連
     */
-
-    // SHARED領域クリア (IS-TWL-DEBUGGERの更新待ち)
-#ifdef SDK_FINALROM
-    MIi_CpuClearFast( 0, (void*)HW_MAIN_MEM_SHARED, HW_MAIN_MEM_SHARED_END-HW_MAIN_MEM_SHARED );
-#endif
+    // SHARED領域クリア (ここだけでOK?)
+    MIi_CpuClearFast( 0, (void*)HW_PXI_SIGNAL_PARAM_ARM9, HW_MAIN_MEM_SHARED_END-HW_PXI_SIGNAL_PARAM_ARM9);
 
     /*
         FromBrom関連
     */
+    if ( !OSi_FromBromToMenu() )
+    {
+        OS_Terminate();
+    }
+}
 
-    /* 鍵はどこへ？ */
+/***************************************************************
+    PostInit
 
-    MIi_CpuClearFast( 0, (void*)OSi_GetFromBromAddr(), sizeof(OSFromBromBuf) );
+    MI_LoadHeader前にかなり(数100msec)時間があるので、可能なら
+    OS_Init後にいろいろ処理したい！
+    メインメモリの初期化
+***************************************************************/
+extern u32 SDK_SECTION_ARENA_DTCM_START;
+static void PostInit(void)
+{
+    /*
+     メインメモリ関連
+    */
+    // (DTCMの手前までの領域を全クリア)
+    //MI_CpuClearFast( (void*)HW_DELIVER_ARG_BUF_END, SDK_SECTION_ARENA_DTCM_START-HW_DELIVER_ARG_BUF_END );
+    // (ARM9領域を全クリア)
+    MI_CpuClearFast( (void*)HW_DELIVER_ARG_BUF_END, HW_MAIN_MEM_MAIN_END-HW_DELIVER_ARG_BUF_END );
+
+    DC_FlushAll();
 }
 
 /***************************************************************
@@ -110,6 +127,8 @@ void TwlMain( void )
 #endif
 
     SVC_InitSignHeap( &acPool, acHeap, sizeof(acHeap) );
+
+    PostInit();
 
     // load menu
     if ( MI_LoadHeader( &acPool, RSA_KEY_ADDR ) && CheckHeader() && MI_LoadStatic() )

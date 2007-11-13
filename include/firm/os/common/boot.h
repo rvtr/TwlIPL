@@ -19,6 +19,7 @@
 
 #include <firm.h>
 #include <firm/format/from_brom.h>
+#include <firm/format/from_firm.h>
 #include <twl/os/common/format_rom.h>
 
 #include <nitro/hw/common/armArch.h>
@@ -64,6 +65,17 @@ void OSi_Finalize(void);
 void OSi_ClearWorkArea( void );
 
 /*---------------------------------------------------------------------------*
+  Name:         OSi_FromBromToMenu
+
+  Description:  convert OSFromBromBuf to OSFromFirmBuf
+
+  Arguments:    None
+
+  Returns:      FALSE if FromBrom is broken
+ *---------------------------------------------------------------------------*/
+BOOL OSi_FromBromToMenu( void );
+
+/*---------------------------------------------------------------------------*
   Name:         OSi_GetFromBromAddr
 
   Description:  data address from bootrom to firm
@@ -77,6 +89,19 @@ static inline OSFromBromBuf* OSi_GetFromBromAddr( void )
     return  (OSFromBromBuf*)HW_FIRM_FROM_BROM_BUF;
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         OSi_GetFromFirmAddr
+
+  Description:  data address from firm to menu
+
+  Arguments:    None
+
+  Returns:      address
+ *---------------------------------------------------------------------------*/
+static inline OSFromFirmBuf* OSi_GetFromFirmAddr( void )
+{
+    return  (OSFromFirmBuf*)HW_FIRM_FROM_FIRM_BUF;
+}
 
 #ifdef __cplusplus
 } /* extern "C" */

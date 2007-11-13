@@ -937,7 +937,7 @@ static BOOL InitializeGcdfirmFile(void)
 {
     ReadRomHeaderFile( GetSrcPath(GetAppBaseName(), DEFAULT_ROMHEADER_TEMPLATE) );
 
-    memset(&signedContext.hash[FIRM_SIGNED_HASH_IDX_HASH_TABLE], 0xff, sizeof(signedContext.hash[0]));
+    memset(&signedContext.hash[FIRM_SIGNED_HASH_IDX_HASH_TABLE], 0x00, sizeof(signedContext.hash[0]));
     gcdHeader.h.w = wram_regs_init;
     InitializeAesKey();
     return TRUE;

@@ -38,7 +38,8 @@ CRT0_O		=	crt0_firm.o
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
-LLIBRARIES = libaes_sp$(TWL_LIBSUFFIX).a
+LLIBRARIES	=	libaes_sp$(TWL_LIBSUFFIX).a
+MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000'
 
 #----------------------------------------------------------------------------
 
