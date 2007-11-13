@@ -268,12 +268,5 @@ MACRO_FLAGS += -DFIRM_TARGET_$(FIRM_TARGET)
 
 
 #----------------------------------------------------------------------------
-#  Makelcf change for build firmware
-#
-ifneq ($(filter FIRM GCDFIRM,$(FIRM_TARGET)),)
-MAKELCF			 := $(TWLSDK_ROOT)/tools/bin/makelcf.exe
-endif
-
-#----------------------------------------------------------------------------
 endif	# TWLFIRM_COMMONDEFS_
 #----- End of commondefs -----
