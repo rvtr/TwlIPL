@@ -266,7 +266,7 @@ static void DrawCharKeys( void )
 			if( (code >= CODE_BUTTON_TOP_) && (code < CODE_BUTTON_BOTTOM_) )
 			{
 				int x = code - CODE_BUTTON_TOP_;
-				PutStringUTF16( CLIST_LT_X + 8*8*(x%2) , CLIST_LT_Y + 15*(7+x/2) , color, str_button[x] );
+				PutStringUTF16( CLIST_LT_X + 64 + 8*8*(x%2) , CLIST_LT_Y + 15*(7+x/2) , color, str_button[x] );
 			}
 			else
 			{
@@ -309,24 +309,39 @@ static int SetNicknameMain( void )
 	//  キー入力処理
 	//--------------------------------------
 	if( pad.trg & PAD_KEY_RIGHT ){									// カーソルの移動
-		if( ++s_key_csr == CHAR_LIST_CHAR_NUM ) {
-			s_key_csr=0;
+		do
+		{
+			if(s_key_csr%15 != 14) s_key_csr++;
+			else s_key_csr -= 14;
+			if( s_key_csr == CHAR_LIST_CHAR_NUM ) s_key_csr -= s_key_csr%15;
 		}
+		while(char_tbl[char_mode][s_key_csr]==EOM_);
 	}
 	if( pad.trg & PAD_KEY_LEFT ){
-		if( --s_key_csr & 0x8000 ) {
-			s_key_csr=CHAR_LIST_CHAR_NUM - 1;
+		do
+		{
+			if(s_key_csr%15 != 0) s_key_csr--;
+			else s_key_csr += 14;
+			if( s_key_csr & 0x8000 ) s_key_csr = 14;
 		}
+		while(char_tbl[char_mode][s_key_csr]==EOM_);
 	}
 	if( pad.trg & PAD_KEY_DOWN ){									// カーソルの移動
-		if( ++s_key_csr == CHAR_LIST_CHAR_NUM ) {
-			s_csr=0;
+		do
+		{
+			s_key_csr += 15;
+			if( s_key_csr >= CHAR_LIST_CHAR_NUM ) s_key_csr -= 15*(s_key_csr/15);
 		}
+		while(char_tbl[char_mode][s_key_csr]==EOM_);
 	}
 	if( pad.trg & PAD_KEY_UP ){
-		if( --s_key_csr & 0x8000 ) {
-			s_csr=CHAR_LIST_CHAR_NUM - 1;
+		do
+		{
+			if( s_key_csr < 15 ) s_key_csr += (CHAR_LIST_CHAR_NUM/15)*15;
+			else s_key_csr -= 15;
+			if( s_key_csr >= CHAR_LIST_CHAR_NUM ) s_key_csr -= 15;
 		}
+		while(char_tbl[char_mode][s_key_csr]==EOM_);
 	}
 	tp_select = SelectMenuByTP( &s_csr, &s_settingParam );
 	
@@ -640,11 +655,11 @@ static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM] = {
 		L'っ',	L'、',	L'。',	L'！',	L'？',
 		
 		L'「',	L'」',	L'～',	L'・',	L'ー',
-		VAR_BUTTON1_,	EOM_,	EOM_,	EOM_,	EOM_,
-		VAR_BUTTON2_,	EOM_,	EOM_,	EOM_,	EOM_,
-		DEL_BUTTON_,	EOM_,	EOM_,	EOM_,	EOM_,
-		CANCEL_BUTTON_,	EOM_,	EOM_,	EOM_,	EOM_,
-		OK_BUTTON_,		SPACE_BUTTON_,	EOM_,	EOM_,	EOM_,
+		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
+		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
+		DEL_BUTTON_,	SPACE_BUTTON_,	VAR_BUTTON1_,	VAR_BUTTON2_,	EOM_,
+		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
+		OK_BUTTON_,		CANCEL_BUTTON_,	EOM_,	EOM_,	EOM_,
 	},
 	
 	{	// カタカナ
@@ -670,11 +685,11 @@ static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM] = {
 		L'ッ',	L'、',	L'。',	L'！',	L'ー',
 		
 		L'「',	L'」',	L'～',	L'・',	EOM_,
-		VAR_BUTTON1_,	EOM_,	EOM_,	EOM_,	EOM_,
-		VAR_BUTTON2_,	EOM_,	EOM_,	EOM_,	EOM_,
-		DEL_BUTTON_,	EOM_,	EOM_,	EOM_,	EOM_,
-		CANCEL_BUTTON_,	EOM_,	EOM_,	EOM_,	EOM_,
-		OK_BUTTON_,		SPACE_BUTTON_,	EOM_,	EOM_,	EOM_,
+		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
+		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
+		DEL_BUTTON_,	SPACE_BUTTON_,	VAR_BUTTON1_,	VAR_BUTTON2_,	EOM_,
+		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
+		OK_BUTTON_,		CANCEL_BUTTON_,	EOM_,	EOM_,	EOM_,
 	},
 	
 	{	// 英数
@@ -700,11 +715,11 @@ static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM] = {
 		L'＠',	EOM_,	L'（',	EOM_,	L'）',
 		
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
-		VAR_BUTTON1_,	EOM_,	EOM_,	EOM_,	EOM_,
-		VAR_BUTTON2_,	EOM_,	EOM_,	EOM_,	EOM_,
-		DEL_BUTTON_,	EOM_,	EOM_,	EOM_,	EOM_,
-		CANCEL_BUTTON_,	EOM_,	EOM_,	EOM_,	EOM_,
-		OK_BUTTON_,		SPACE_BUTTON_,	EOM_,	EOM_,	EOM_,
+		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
+		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
+		DEL_BUTTON_,	SPACE_BUTTON_,	VAR_BUTTON1_,	VAR_BUTTON2_,	EOM_,
+		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
+		OK_BUTTON_,		CANCEL_BUTTON_,	EOM_,	EOM_,	EOM_,
 	},
 };
 
