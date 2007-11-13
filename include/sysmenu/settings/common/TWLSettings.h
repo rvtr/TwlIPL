@@ -200,7 +200,7 @@ typedef struct TWLSettingsData{
 		u32		rsv : 19;
 	}flags;
 	u16					valid_language_bitmap;		// 対応言語ビットマップ（※ここじゃなく、"/sys/HWINFO.dat"内の方が良さそう）
-	u8					country;					// 国コード
+	TWLCountryCode		country;					// 国コード
 	u8					region;						// リージョン（※ここじゃなく、"/sys/HWINFO.dat"内の方が良さそう）
 	u8					language;					// 言語(NTRとの違いは、データサイズ8bit)
 	u8					backLightBrightness;		// バックライト輝度(NTRとの違いは、データサイズ8bit)
