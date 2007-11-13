@@ -133,6 +133,8 @@ static const u16 *str_button_char[CHAR_LIST_MODE_NUM] = {
 									L"ABC",
 									};
 
+static u16 next_char_mode[CHAR_LIST_MODE_NUM-1];
+
 static const u16  str_button_del[] = L"DEL";
 static const u16  str_button_space[] = L"SPACE";
 static const u16  str_button_ok[] = L"OK";
@@ -159,6 +161,7 @@ static void SetSoftKeyboardButton(int mode)
 	{
 		if(l != mode){
 			str_button[2+count]=str_button_char[l];
+			next_char_mode[count] = (u16)l;
 			count++;
 		}
 	}
@@ -279,6 +282,21 @@ static void DrawCharKeys( void )
 	}
 }
 
+// キーの表示
+static void PushKeys( u16 code )
+{
+	if( (code >= CODE_BUTTON_TOP_) && (code < CODE_BUTTON_BOTTOM_) )
+	{
+		// 特殊キー
+		if(code == VAR_BUTTON1_ || code == VAR_BUTTON2_)
+			SetSoftKeyboardButton(next_char_mode[code - VAR_BUTTON1_]);
+	}
+	else
+	{
+		// 普通キー
+	}
+}
+
 // ニックネーム編集の初期化
 static void SetNicknameInit( void )
 {
@@ -344,8 +362,6 @@ static int SetNicknameMain( void )
 		while(char_tbl[char_mode][s_key_csr]==EOM_);
 	}
 	tp_select = SelectMenuByTP( &s_csr, &s_settingParam );
-	
-	DrawCharKeys();
 
 	// [CANCEL]ボタン押下チェック
 	if( tpd.disp.touch ) {
@@ -353,13 +369,20 @@ static int SetNicknameMain( void )
 							   CANCEL_BUTTON_BOTTOM_X, CANCEL_BUTTON_BOTTOM_Y, &tpd.disp );
 	}
 	
-	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// メニュー項目への分岐
-
+	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// Aキーが押された
+		PushKeys( char_tbl[char_mode][s_key_csr] );
 	}else if( ( pad.trg & PAD_BUTTON_B ) || tp_cancel ) {
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
 		return 0;
 	}
+	if(pad.trg)
+	{
+	    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
+		PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"NICKNAME" );
+		DrawCharKeys();
+	}
+	
 	return 0;
 }
 
