@@ -93,7 +93,7 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ TWL_LA
 static MenuPos s_settingPos[] = {
 	{ TRUE,  4 * 8,   8 * 8 },
 	{ TRUE,  4 * 8,  10 * 8 },
-	{ FALSE, 4 * 8,  12 * 8 },
+	{ TRUE, 4 * 8,  12 * 8 },
 	{ TRUE,  4 * 8,  14 * 8 },
 };
 
@@ -186,8 +186,8 @@ int MachineSettingMain( void )
 					g_pNowProcess = SetRTCMain;
 					break;
 				case 2:
-//					SetOwnerInfoInit();
-//					g_pNowProcess = SetOwnerInfoMain;
+					SetOwnerInfoInit();
+					g_pNowProcess = SetOwnerInfoMain;
 					break;
 				case 3:
 					TP_CalibrationInit();
