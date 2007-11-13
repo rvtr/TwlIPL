@@ -48,7 +48,8 @@ SystemMenu_RED
 
 ・NANDアプリインストール			○　（TwlSDKのNMenuを使用）
 ・NANDフォーマット					△	（TwlSDKのdemos.TWL/fatfs/formatterを使用）
-	・起動できないランチャーを書いて起動しなくなった時の復旧は、GCDファーム形式のプログラムを作らないとダメ
+	・起動できないランチャーを書いて起動しなくなった時の復旧は、GCDファームのカード起動可能ファームを書き直して、
+　　・formatterに改変を加えたformatter+NANDファーム＆システムメニューインストーラーで書き込み。
 
 ・makerom.TWL対応
 	・TitleIDを入れる？
