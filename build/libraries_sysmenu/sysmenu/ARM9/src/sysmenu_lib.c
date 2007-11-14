@@ -16,7 +16,6 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
-#include <twl/nam.h>
 #include <sysmenu.h>
 #include <sysmenu/boot/common/boot.h>
 #include "sysmenu_define.h"
@@ -32,6 +31,8 @@ typedef struct BannerCheckParam {
 }BannerCheckParam;
 
 // extern data-----------------------------------------------------------------
+extern void SYSM_SetMountInfo( NAMTitleId titleID );				// マウント情報のセット
+extern void SYSM_SetBootSRLPath( NAMTitleId titleID );				// SRL起動パスのセット
 
 // function's prototype-------------------------------------------------------
 static BOOL SYSMi_IsDebuggerBannerViewMode( void );
@@ -42,6 +43,8 @@ static void SYSMi_ReadCardBannerFile( void );
 static BOOL SYSMi_CheckEntryAddress( void );
 static void SYSMi_CheckCardCloneBoot( void );
 static void SYSMi_CheckRTC( void );
+
+static s32 ReadFile(FSFile* pf, void* buffer, s32 size);
 
 // global variable-------------------------------------------------------------
 void *(*SYSM_Alloc)( u32 size  );
@@ -65,7 +68,6 @@ static BannerCheckParam s_bannerCheckList[ NTR_BNR_VER_MAX ] = {
 	{ (u8 *)&s_bannerBuf.v2, sizeof( BannerFileV2 ) },
 	{ (u8 *)&s_bannerBuf.v3, sizeof( BannerFileV3 ) },
 };
-
 
 
 // ============================================================================
@@ -474,6 +476,10 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 		return AUTH_RESULT_ENTRY_ADDRESS_ERROR;
 	}
 #endif
+
+	// マウント情報の登録
+	SYSM_SetMountInfo  ( pBootTitle->titleID );
+	SYSM_SetBootSRLPath( pBootTitle->titleID );
 	
 	// 起動。
 	BOOT_Ready();	// never return;
@@ -599,7 +605,7 @@ static void SYSMi_ReadCardBannerFile( void )
 BOOL SYSM_IsTWLCard( void );
 BOOL SYSM_IsTWLCard( void )
 {
-	return ( SYSM_IsExistCard() && ( SYSM_GetCardRomHeader()->platform_code & PLATFORM_ID_FLAG_TWL ) );
+	return ( SYSM_IsExistCard() && ( SYSM_GetCardRomHeader()->platform_code & PLATFORM_CODE_FLAG_TWL ) );
 }
 
 

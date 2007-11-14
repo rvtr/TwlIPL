@@ -244,7 +244,7 @@ static BOOL CheckBootStatus(void)
 #ifndef __SYSM_DEBUG
 //	if( TSD_IsAutoBoot() ) {
 	if( 0 ) {
-		if ( SYSM_IsNITROCard() ) {									// NITROカードのみの時はNITRO起動
+		if ( SYSM_IsExistCard() ) {									// NITROカードのみの時はNITRO起動
 			SYSM_SetBootFlag( BFLG_BOOT_NITRO );
 			return TRUE;											// 「ブート内容決定」でリターン
 		}

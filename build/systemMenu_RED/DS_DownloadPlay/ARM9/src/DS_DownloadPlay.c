@@ -314,7 +314,7 @@ int DS_DownloadPlayMain(void)
 		}
 		
 		if (PAD_DetectFold() == TRUE) {								// スリープモードへの遷移
-			SYSM_GoSleepMode();
+//			SYSM_GoSleepMode();
 		}
 		
 		OS_PrintServer();											// ARM7からのプリントデバッグを処理する

@@ -20,6 +20,7 @@
 
 #include <twl.h>
 #include <twl/os/common/format_rom.h>
+#include <twl/nam.h>
 #include <sysmenu/banner.h>
 #include <sysmenu/sysmenu_work.h>
 #include <sysmenu/settings.h>
@@ -50,8 +51,8 @@ typedef struct TitleFlags {
 
 // タイトル情報
 typedef struct TitleProperty {	// この情報は、ランチャー時には認証通ってないけど、起動時には認証通すので大丈夫だろう。
-	u64			titleID;						// タイトルID（TitleID_Hiで起動メディアは判定できる？）
-	void	*pBanner;			// バナーへのポインタ（固定長フォーマットなら偽造されても大丈夫だろう。)
+	NAMTitleId	titleID;		// タイトルID（TitleID_Hiで起動メディアは判定できる？）
+	void		*pBanner;		// バナーへのポインタ（固定長フォーマットなら偽造されても大丈夫だろう。)
 	TitleFlags	flags;
 	u8			rsv[ 2 ];
 }TitleProperty;
@@ -59,7 +60,7 @@ typedef struct TitleProperty {	// この情報は、ランチャー時には認証通ってないけど
 
 // リセットパラメータ
 typedef struct ResetParam {
-	u64			bootTitleID;	// 起動するタイトルがあるか？あるならそのタイトルID
+	NAMTitleId	bootTitleID;	// 起動するタイトルがあるか？あるならそのタイトルID
 	u32			rsv_A;
 	TitleFlags	flags;
 	u8			rsv_B[ 2 ];
@@ -122,12 +123,6 @@ extern s64  SYSM_CalcRTCOffsetAndSetDateTime( RTCDate *pNewDate, RTCTime *pNewTi
 extern u32  SYSM_GetDayNum( u32 year, u32 month );								// 指定された年・月の日数を取得する
 extern BOOL SYSM_IsLeapYear100( u32 year );										// 指定された年がうるう年か調べる
 
-
-void SYSM_GoSleepMode( void );
-inline BOOL SYSM_IsNITROCard( void )
-{
-	return TRUE;
-}
 
 #ifdef __cplusplus
 }
