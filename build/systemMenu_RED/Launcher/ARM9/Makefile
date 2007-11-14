@@ -16,9 +16,10 @@
 # $Author:  $
 #----------------------------------------------------------------------------
 
-SUBDIRS					=	../../../libraries_sysmenu/sysmenu \
-							../../../libraries_sysmenu/boot \
-							../../../components/hyena.TWL
+SUBDIRS					=	\
+#							../../../libraries_sysmenu/sysmenu \
+#							../../../libraries_sysmenu/boot \
+#							../../../components/hyena.TWL
 
 #----------------------------------------------------------------------------
 
@@ -26,21 +27,24 @@ TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
 
+TITLEID_LO				=	LNCR
+TARGET_WAD				=	$(BINDIR)/$(TITLEID_LO).wad
+
 TARGET_BIN				=	main.srl
 
 LCFILE_SPEC				=	ARM9-TS.lsf
 ROM_SPEC				=	main.rsf
 
 LOGO_DIR				=	Logo
+MISC_DIR				=	../../misc
 
 SRCS_LOGO				=	logoDemo.c logoData.c
-SRCS					=	main.c launcher.c misc.c $(addprefix $(LOGO_DIR)/, $(SRCS_LOGO))
-#SRCS_OVERLAY			=	
+SRCS					=	main.c launcher.c \
+							$(addprefix $(LOGO_DIR)/, $(SRCS_LOGO)) \
+							$(MISC_DIR)/src/misc.c
 
-LINCLUDES				=	$(SRCDIR)/$(LOGO_DIR)
-#LLIBRARY_DIRS			=	
-#LLIBRARIES				=	
-#LDEPENDS_NEF			=	
+LINCLUDES				=	$(MISC_DIR)/include \
+							$(SRCDIR)/$(LOGO_DIR)
 
 LLIBRARIES				+=	libnam$(TWL_LIBSUFFIX).a \
 							libese$(TWL_LIBSUFFIX).a
@@ -50,11 +54,15 @@ ADDRESS_DTCM			=	0x0e000000
 DEFAULT_COMP_ARM7			=	hyena
 DEFAULT_MAKEROM_ARM7_BASE	=	$(TWLIPL_ROOT)/components/$(DEFAULT_COMP_ARM7)/$(TWL_BUILDTYPE_ARM7)/$(DEFAULT_COMP_ARM7)
 
-MAKEROM_FLAGS	+= -F
+MAKEROM_FLAGS			+=	-F
 
 include $(TWLIPL_ROOT)/build/buildtools/commondefs
 
-MAKELCF_FLAGS	+=	-DADDRESS_BOOTCORE='0x02e7fc00'
+MAKELCF_FLAGS			+=	-DADDRESS_BOOTCORE='0x02e7fc00'
+
+LDIRT_CLEAN				=	$(TARGET_WAD)
+INSTALL_TARGETS			=	$(TARGET_WAD)
+INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
 

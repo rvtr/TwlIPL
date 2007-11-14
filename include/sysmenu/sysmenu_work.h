@@ -52,6 +52,8 @@ typedef struct SYSM_work {
 	BOOL				isValidTSD;						// NITRO設定データ無効フラグ
 	BOOL				isOnDebugger;					// デバッガ動作か？
 	BOOL				isExistCard;					// 有効なNTR/TWLカードが存在するか？
+	BOOL				isHotStart;						// Hot/Coldスタート判定
+	BOOL				isARM9Start;					// ARM9スタートフラグ
 	u16					cardHeaderCrc16;				// システムメニューで計算したROMヘッダCRC16
 	int					cloneBootMode;
 	
@@ -68,7 +70,7 @@ typedef struct SYSM_work {
 #if 1
 #define SYSM_GetResetParam()		( (ResetParam *)HW_RED_RESERVED )
 
-#define SYSM_GetWork()				( (SYSM_work *)( HW_RED_RESERVED + sizeof(ResetParam) ) )
+#define SYSM_GetWork()				( (SYSM_work *)( HW_RED_RESERVED + 0x40 ) )
 #else
 // SYSMリセットパラメータの取得
 #define SYSM_GetResetParam()		( (ResetParam *)0x02000100 )

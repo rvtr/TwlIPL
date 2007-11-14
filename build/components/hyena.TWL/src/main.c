@@ -33,8 +33,9 @@
 #include    <twl/os/ARM7/codecmode.h>
 #include    <twl/cdc.h>
 #include    <twl/aes.h>
-#include    "nvram_sp.h"
+#include    <twl/mcu.h>
 #include <sysmenu/boot/common/boot.h>
+#include <sysmenu/sysmenu_work.h>
 
 /*---------------------------------------------------------------------------*
     定数定義
@@ -81,7 +82,17 @@ TwlSpMain(void)
     // OS 初期化
     OS_Init();
     PrintDebugInfo();
-
+	
+	// Cold/Hotスタート判定
+	if( *(vu32 *)HW_RESET_PARAMETER_BUF == 0 ) {	// NANDファームが毎回このバッファにマイコンフリーレジスタ値をセットしてくれる
+		u32 data = 1;
+		MCU_SetFreeRegisters( 0, (u8 *)&data, 4 );	// マイコンフリーレジスタにホットスタートフラグをセット
+		SYSM_GetWork()->isHotStart = FALSE;
+	}else {
+		SYSM_GetWork()->isHotStart = TRUE;
+	}
+	SYSM_GetWork()->isARM9Start = TRUE;				// ※HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
+	
     // ヒープ領域設定
 	{
 		void *wram = OS_GetWramSubPrivArenaHi();

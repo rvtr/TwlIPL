@@ -31,8 +31,13 @@ TARGET_BIN				=	main.srl
 
 ROM_SPEC				=	main.rsf
 
-SRCS					=	main.c misc.c \
-							MachineSetting.c setRTC.c selectLanguage.c calibrationTP.c setOwnerInfo.c
+MISC_DIR				=	../../misc
+
+SRCS					=	main.c MachineSetting.c \
+							setRTC.c selectLanguage.c calibrationTP.c setOwnerInfo.c \
+							$(MISC_DIR)/src/misc.c
+
+LINCLUDES				=	$(MISC_DIR)/include
 
 
 include $(TWLIPL_ROOT)/build/buildtools/commondefs

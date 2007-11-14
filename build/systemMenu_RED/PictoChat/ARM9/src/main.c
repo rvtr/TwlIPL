@@ -60,7 +60,6 @@ void TwlMain(void)
 	
 	// システムの初期化------------------
 	InitAllocator();
-	CMN_InitFileSystem( &g_allocator );
 	
 	{
 		// ファイルシステム切り替え応急処置

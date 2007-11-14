@@ -38,6 +38,9 @@ static void DrawBackLightSwitch(void);
 static void DrawLauncher(u16 nowCsr, const MenuParam *pMenu);
 
 // global variable -------------------------------------
+RTCDrawProperty g_rtcDraw = {
+	TRUE, RTC_DATE_TOP_X, RTC_DATE_TOP_Y, RTC_TIME_TOP_X, RTC_TIME_TOP_Y
+};
 
 // static variable -------------------------------------
 static int s_csr = 0;													// メニューのカーソル位置
@@ -267,7 +270,7 @@ void LauncherInit( TitleProperty *pTitleList )
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
-	InitGetAndDrawRtcData( RTC_DATE_TOP_X, RTC_DATE_TOP_Y, RTC_TIME_TOP_X, RTC_TIME_TOP_Y );
+	GetAndDrawRTCData( &g_rtcDraw, TRUE );
 	
 	GX_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	GX_DispOn();
@@ -295,14 +298,14 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	DrawBackLightSwitch();
 	
 	// RTC情報の取得＆表示
-	GetAndDrawRtcData();
+	GetAndDrawRTCData( &g_rtcDraw, FALSE );
 	
 	//--------------------------------------
 	//  バックライトON,OFF制御
 	//--------------------------------------
 	if(tpd.disp.touch) {
-		BOOL range = InRangeTp( B_LIGHT_BUTTON_TOP_X*8,    B_LIGHT_BUTTON_TOP_Y*8-4,
-							    B_LIGHT_BUTTON_BOTTOM_X*8, B_LIGHT_BUTTON_BOTTOM_Y*8-4, &tpd.disp );
+		BOOL range = WithinRangeTP(	B_LIGHT_BUTTON_TOP_X * 8,    B_LIGHT_BUTTON_TOP_Y * 8 - 4,
+									B_LIGHT_BUTTON_BOTTOM_X * 8, B_LIGHT_BUTTON_BOTTOM_Y * 8 - 4, &tpd.disp );
 		if( range && !touch_bl ) {
 			touch_bl	 = TRUE;
 			tp_bl_on_off = TRUE;

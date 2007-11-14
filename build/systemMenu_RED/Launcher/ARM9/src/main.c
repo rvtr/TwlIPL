@@ -25,13 +25,10 @@
 // define data-----------------------------------------------------------------
 
 // function's prototype-------------------------------------------------------
-static void InitAllocator( NNSFndAllocator* pAllocator );
-static void InitAllocSystem( void );
 static BOOL CheckBootStatus( void );
 static void INTR_VBlank( void );
 
 // global variable-------------------------------------------------------------
-NNSFndAllocator g_allocator;
 
 // static variable-------------------------------------------------------------
 
@@ -74,12 +71,10 @@ void TwlMain( void )
 	(void)GX_VBlankIntr(TRUE);
 	
 	// システムの初期化----------------
-	InitAllocator( &g_allocator );
-	CMN_InitFileSystem( &g_allocator );
+	InitAllocator();
 	
+	// 各種パラメータの取得--------
 	SYSM_ReadParameters();
-	
-	// リセットパラメータの取得--------
 	if( SYSM_GetResetParam()->flags.isLogoSkip ) {
 		if( SYSM_GetResetParam()->bootTitleID ) {							// アプリ直接起動の指定があったらロゴデモを飛ばして指定アプリ起動
 			pBootTitle = (TitleProperty *)SYSM_GetResetParam();
@@ -102,7 +97,7 @@ void TwlMain( void )
 		OS_WaitIrq(1, OS_IE_V_BLANK);							// Vブランク割り込み待ち
 		
 		ReadKeyPad();											// キー入力の取得
-		ReadTpData();											// TP入力の取得
+		ReadTP();												// TP入力の取得
 		
 		(void)SYSM_GetCardTitleList( pTitleList );				// カードアプリリストの取得（スレッドで随時カード挿抜を通知されるものをメインループで取得）
 		
@@ -141,37 +136,6 @@ void TwlMain( void )
 			break;
 		}
 	}
-}
-
-
-// アロケータの初期化
-static void InitAllocator( NNSFndAllocator* pAllocator )
-{
-    u32   arenaLow      = MATH_ROUNDUP  ((u32)OS_GetMainArenaLo(), 16);
-    u32   arenaHigh     = MATH_ROUNDDOWN((u32)OS_GetMainArenaHi(), 16);
-    u32   heapSize      = arenaHigh - arenaLow;
-    void* heapMemory    = OS_AllocFromMainArenaLo(heapSize, 16);
-    NNSFndHeapHandle    heapHandle;
-    SDK_NULL_ASSERT( pAllocator );
-
-    heapHandle = NNS_FndCreateExpHeap(heapMemory, heapSize);
-    SDK_ASSERT( heapHandle != NNS_FND_HEAP_INVALID_HANDLE );
-
-    NNS_FndInitAllocatorForExpHeap(pAllocator, heapHandle, 32);
-}
-
-
-// メモリ割り当て
-void *Alloc( u32 size )
-{
-	return NNS_FndAllocFromAllocator( &g_allocator, size );
-}
-
-
-// メモリ解放
-void Free( void *pBuffer )
-{
-	NNS_FndFreeToAllocator( &g_allocator, pBuffer );
 }
 
 

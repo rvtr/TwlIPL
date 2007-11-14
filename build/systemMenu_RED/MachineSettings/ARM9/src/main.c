@@ -65,16 +65,16 @@ void TwlMain(void)
 	
 	// システムの初期化------------------
 	InitAllocator();
-	SYSM_SetAllocFunc( Alloc, Free );
 	
 	// ※本来ならランチャーからのパラメータチェックを行い、
 	//   初回起動シーケンスに入るパスがある
 	
 	// TWL設定のリード
+	SYSM_SetAllocFunc( Alloc, Free );								// SYSM_ReadTWLSettingsFile()の実行に必要。
 	if( SYSM_ReadTWLSettingsFile() ) {
 		SYSM_CaribrateTP();
 	}
-
+	
 	{
 		// ファイルシステム切り替え応急処置
 		FS_IdentifyTitle(0x4d534554);//MSET

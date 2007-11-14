@@ -80,6 +80,8 @@ static void BOOTi_ClearREG_RAM( void )
 	reg_SPI_SPICNT			= 0;
 	reg_PXI_MAINP_FIFO_CNT	= 0x4008;
 	
+	*(vu32 *)HW_RESET_PARAMETER_BUF = 0;								// リセットバッファをクリア
+	
 	// クリアしていないレジスタは、VCOUNT, JOY, PIFCNT, MC-, EXMEMCNT, IME, PAUSE, POWLCDCNT, 他セキュリティ系です。
 	(void)OS_ResetRequestIrqMask((u16)~0);
 }

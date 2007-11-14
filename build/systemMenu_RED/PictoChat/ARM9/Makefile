@@ -31,11 +31,13 @@ TARGET_BIN				=	main.srl
 
 ROM_SPEC				=	main.rsf
 
-MISC_DIR				=	../../MachineSettings/ARM9/src
+MISC_DIR				=	../../misc
 
-SRCS					=	main.c PictoChat.c $(MISC_DIR)/misc.c
+SRCS					=	main.c PictoChat.c \
+							$(MISC_DIR)/src/misc.c
 
-LINCLUDES				=	$(MISC_DIR)
+LINCLUDES				=	$(MISC_DIR)/include
+
 
 include $(TWLIPL_ROOT)/build/buildtools/commondefs
 
