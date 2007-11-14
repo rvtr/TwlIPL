@@ -22,8 +22,10 @@
 // define data----------------------------------
 
 // ソフトウェアキーボードLCD領域
-#define CLIST_LT_X							18
-#define CLIST_LT_Y							40
+#define CLIST_LT_X							23
+#define CLIST_LT_Y							50
+
+#define CLIST_MARGIN						14
 
 #define CANCEL_BUTTON_TOP_X					( 2 * 8 )
 #define CANCEL_BUTTON_TOP_Y					( 21 * 8 )
@@ -55,6 +57,12 @@ typedef struct CsrPos {
 	u16 			y;												// y
 }CsrPos;
 
+typedef enum NameOrComment
+{
+	NOC_NAME,
+	NOC_COMMENT
+}NameOrComment;
+
 // extern data----------------------------------
 
 
@@ -74,7 +82,9 @@ static u16 s_csr = 0;
 static const u16 *s_pStrSetting[ USER_INFO_MENU_ELEMENT_NUM ];			// メインメニュー用文字テーブルへのポインタリスト
 static int char_mode = 0;
 static u16 s_key_csr = 0;
+static u8 s_color_csr = 0;
 static TWLNickname s_temp_name;
+static TWLComment s_temp_comment;
 
 // const data-----------------------------------
 static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM];
@@ -172,6 +182,28 @@ static void SetSoftKeyboardButton(int mode)
 	char_mode = mode;
 }
 
+static void DrawOwnerInfoMenuScene( void )
+{
+	u16 tempbuf[TWL_COMMENT_LENGTH+2];
+	u8 color;
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"USER INFORMATION" );
+	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_USER, (const u16 *)L"CANCEL" );
+    // メニュー項目
+	DrawMenu( s_csr, &s_settingParam );
+	// ニックネーム
+	PutStringUTF16( 128 , 8*8, TXT_COLOR_USER, TSD_GetNickname()->buffer );
+	// カラー
+	color = TSD_GetUserColor();
+	PutStringUTF16( 128 , 12*8, TXT_COLOR_USER, L"■" );
+	// コメント
+	SVC_CpuCopy( TSD_GetComment()->buffer, tempbuf, 13 * 2, 16 );
+	*(tempbuf+13)='\n';
+	SVC_CpuCopy( TSD_GetComment()->buffer+13, tempbuf+14, 13 * 2, 16 );
+	*(tempbuf+TWL_COMMENT_LENGTH+1)=0;
+	PutStringUTF16( 128-78 , 16*8 , TXT_COLOR_USER, tempbuf );
+}
+
 // オーナー情報編集の初期化
 void SetOwnerInfoInit( void )
 {
@@ -180,21 +212,16 @@ void SetOwnerInfoInit( void )
 	GX_DispOff();
 	GXS_DispOff();
 	
-	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"USER INFORMATION" );
-	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_CYAN, (const u16 *)L"CANCEL" );
-	
 	// NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
 	for( i = 0; i < USER_INFO_MENU_ELEMENT_NUM; i++ ) {
 		s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ TSD_GetLanguage() ];
 	}
 	
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
-	DrawMenu( s_csr, &s_settingParam );
-	PutStringUTF16( 128 , 8*8, TXT_COLOR_CYAN, TSD_GetNickname()->buffer );
+    DrawOwnerInfoMenuScene();
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
-	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 );
+	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	GX_DispOn();
 	GXS_DispOn();
@@ -222,9 +249,7 @@ int SetOwnerInfoMain( void )
 	}
 	tp_select = SelectMenuByTP( &s_csr, &s_settingParam );
 	
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
-	DrawMenu( s_csr, &s_settingParam );
-	PutStringUTF16( 128 , 8*8, TXT_COLOR_CYAN, TSD_GetNickname()->buffer );
+    DrawOwnerInfoMenuScene();
 
 	// [CANCEL]ボタン押下チェック
 	if( tpd.disp.touch ) {
@@ -260,6 +285,7 @@ int SetOwnerInfoMain( void )
 	return 0;
 }
 
+// バーチャルキー関係
 // キーの表示
 static void DrawCharKeys( void )
 {
@@ -276,28 +302,75 @@ static void DrawCharKeys( void )
 			if( (code >= CODE_BUTTON_TOP_) && (code < CODE_BUTTON_BOTTOM_) )
 			{
 				int x = code - CODE_BUTTON_TOP_;
-				PutStringUTF16( CLIST_LT_X + 15*(l%KEY_PER_LINE) + 7*((l%KEY_PER_LINE)/5) , CLIST_LT_Y + 15*(l/KEY_PER_LINE) , color, str_button[x] );
+				PutStringUTF16( CLIST_LT_X + CLIST_MARGIN*(l%KEY_PER_LINE) + 7*((l%KEY_PER_LINE)/5) ,
+				CLIST_LT_Y + CLIST_MARGIN*(l/KEY_PER_LINE) , color, str_button[x] );
 			}
 			else
 			{
 				u16 s[2];
 				s[0] = code;
 				s[1] = 0;
-				PutStringUTF16( CLIST_LT_X + 15*(l%KEY_PER_LINE) + 7*((l%KEY_PER_LINE)/5) , CLIST_LT_Y + 15*(l/KEY_PER_LINE) , color, s );
+				PutStringUTF16( CLIST_LT_X + CLIST_MARGIN*(l%KEY_PER_LINE) + 7*((l%KEY_PER_LINE)/5) ,
+				CLIST_LT_Y + CLIST_MARGIN*(l/KEY_PER_LINE) , color, s );
 			}
 		}
 	}
 }
 
 // 一文字削除
-static void DeleteACharacter( void )
+static void DeleteACharacter( NameOrComment noc )
 {
-	if(s_temp_name.length > 0) s_temp_name.buffer[--s_temp_name.length] = CHAR_USCORE;
+	u16 *buf;
+	u8 *length;
+	if(noc == NOC_NAME)
+	{
+		buf = s_temp_name.buffer;
+		length = &s_temp_name.length;
+	}else if(noc == NOC_COMMENT)
+	{
+		buf = s_temp_comment.buffer;
+		length = &s_temp_comment.length;
+	}else
+	{
+		//unknown
+		return;
+	}
+	
+	if(*length > 0) buf[--(*length)] = CHAR_USCORE;
 }
 
 // 選択中文字キー・特殊キーで決定した時の挙動
-static void PushKeys( u16 code )
+static void PushKeys( u16 code, NameOrComment noc )
 {
+	u16 *buf;
+	u8 *length;
+	u16 *dest;
+	u8 *destlength;
+	u16 max_length;
+	void (*setflag)(BOOL);
+	if(noc == NOC_NAME)
+	{
+		buf = s_temp_name.buffer;
+		length = &s_temp_name.length;
+		dest = TSD_GetNickname()->buffer;
+		destlength = &TSD_GetNickname()->length;
+		max_length = TWL_NICKNAME_LENGTH;
+		setflag = TSD_SetFlagNickname;
+	}else if(noc == NOC_COMMENT)
+	{
+		buf = s_temp_comment.buffer;
+		length = &s_temp_comment.length;
+		dest = TSD_GetComment()->buffer;
+		destlength = &TSD_GetComment()->length;
+		max_length = TWL_COMMENT_LENGTH;
+		// setflag = TSD_SetFlagComment;
+		setflag = NULL;
+	}else
+	{
+		//unknown
+		return;
+	}
+	
 	if( (code >= CODE_BUTTON_TOP_) && (code < CODE_BUTTON_BOTTOM_) )
 	{
 		// 特殊キー
@@ -308,16 +381,16 @@ static void PushKeys( u16 code )
 				SetSoftKeyboardButton(next_char_mode[code - VAR_BUTTON1_]);
 				break;
 			case DEL_BUTTON_:
-				DeleteACharacter();
+				DeleteACharacter(noc);
 				break;
 			case SPACE_BUTTON_:
-				if(s_temp_name.length < TWL_NICKNAME_LENGTH) s_temp_name.buffer[s_temp_name.length++] = L'　';
+				if(*length < max_length) buf[(*length)++] = L'　';
 				break;
 			case OK_BUTTON_:
-				TSD_SetFlagNickname( TRUE );// ニックネーム設定完了フラグを立てておく
-				SVC_CpuClear(0, TSD_GetNickname()->buffer, (TWL_NICKNAME_LENGTH + 1) * 2, 16);// ゼロクリア
-				TSD_GetNickname()->length = s_temp_name.length;// 長さコピー
-				SVC_CpuCopy( s_temp_name.buffer, TSD_GetNickname()->buffer, s_temp_name.length * 2, 16 );// 内容コピー
+				if(setflag) setflag(TRUE);// 設定完了フラグを立てておく
+				SVC_CpuClear(0, dest, (max_length + 1) * 2, 16);// ゼロクリア
+				*destlength = *length;// 長さコピー
+				SVC_CpuCopy( buf, dest, (*length) * 2, 16 );// 内容コピー
 				(void)SYSM_WriteTWLSettingsFile();// ファイルへ書き込み
 				// セーブ後にキャンセル処理と合流
 			case CANCEL_BUTTON_:
@@ -331,50 +404,15 @@ static void PushKeys( u16 code )
 	else
 	{
 		// 普通キー
-		if(s_temp_name.length < TWL_NICKNAME_LENGTH) s_temp_name.buffer[s_temp_name.length++] = code;
+		if(*length < max_length) buf[(*length)++] = code;
 	}
 }
 
-static void DrawSetNicknameScene( void )
+// バーチャルキー上でのキーパッド及びタッチパッド処理
+// 先にReadTPしておくこと。
+static void PadDetectOnKey( NameOrComment noc )
 {
-	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
-	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"NICKNAME" );
-	DrawCharKeys();
-	PutStringUTF16( 128-60 , 15 , TXT_COLOR_CYAN, s_temp_name.buffer );
-}
-
-// ニックネーム編集の初期化
-static void SetNicknameInit( void )
-{
-	GX_DispOff();
-	GXS_DispOff();
-	
-	SetSoftKeyboardButton(0);
-	s_key_csr = 0;
-	
-	// ニックネーム用テンポラリバッファの初期化
-	s_temp_name.length = TSD_GetNickname()->length;
-	SVC_CpuClear(CHAR_USCORE, s_temp_name.buffer, TWL_NICKNAME_LENGTH * 2, 16);
-	SVC_CpuCopy( TSD_GetNickname()->buffer, s_temp_name.buffer, s_temp_name.length * 2, 16 );
-	s_temp_name.buffer[TWL_NICKNAME_LENGTH] = 0;
-	
-	DrawSetNicknameScene();
-	
-	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
-	
-	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 );
-	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
-	GX_DispOn();
-	GXS_DispOn();
-}
-
-// ニックネーム編集メイン
-static int SetNicknameMain( void )
-{
-	BOOL tp_select,tp_cancel = FALSE;
-	
-	ReadTP();
-	
+	BOOL tp_select = FALSE;
 	//--------------------------------------
 	//  キー入力処理
 	//--------------------------------------
@@ -413,20 +451,56 @@ static int SetNicknameMain( void )
 		}
 		while(char_tbl[char_mode][s_key_csr]==EOM_);
 	}
-	tp_select = SelectMenuByTP( &s_csr, &s_settingParam );
-
-	// [CANCEL]ボタン押下チェック
-	if( tpd.disp.touch ) {
-		tp_cancel = WithinRangeTP( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y,
-							   CANCEL_BUTTON_BOTTOM_X, CANCEL_BUTTON_BOTTOM_Y, &tpd.disp );
-	}
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// Aキーが押された
-		PushKeys( char_tbl[char_mode][s_key_csr] );
+		PushKeys( char_tbl[char_mode][s_key_csr], noc );
 	}else if( pad.trg & PAD_BUTTON_B ) {
-		DeleteACharacter();
+		DeleteACharacter(noc);
 	}
-	if(pad.trg ||  tpd.disp.touch)
+}
+
+// ニックネーム編集画面の描画処理
+static void DrawSetNicknameScene( void )
+{
+	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"NICKNAME" );
+	DrawCharKeys();
+	PutStringUTF16( 128-60 , 21 , TXT_COLOR_USER, s_temp_name.buffer );
+}
+
+// ニックネーム編集の初期化
+static void SetNicknameInit( void )
+{
+	GX_DispOff();
+	GXS_DispOff();
+	
+	SetSoftKeyboardButton(0);
+	s_key_csr = 0;
+	
+	// ニックネーム用テンポラリバッファの初期化
+	s_temp_name.length = TSD_GetNickname()->length;
+	SVC_CpuClear(CHAR_USCORE, s_temp_name.buffer, TWL_NICKNAME_LENGTH * 2, 16);
+	SVC_CpuCopy( TSD_GetNickname()->buffer, s_temp_name.buffer, s_temp_name.length * 2, 16 );
+	s_temp_name.buffer[TWL_NICKNAME_LENGTH] = 0;
+	
+	DrawSetNicknameScene();
+	
+	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
+	
+	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
+	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
+	GX_DispOn();
+	GXS_DispOn();
+}
+
+// ニックネーム編集メイン
+static int SetNicknameMain( void )
+{
+	ReadTP();
+	
+	PadDetectOnKey(NOC_NAME);
+	
+	if(pad.trg || tpd.disp.touch)
 	{// 描画処理……ボタン押したorタッチ時ぐらいで十分
 		DrawSetNicknameScene();
 	}
@@ -441,10 +515,10 @@ static void SetBirthdayInit( void )
 	
 	GX_DispOff();
 	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"BIRTHDAY" );
-	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_CYAN, (const u16 *)L"CANCEL" );
+	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_USER, (const u16 *)L"CANCEL" );
 	
 	// NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
 	for( i = 0; i < USER_INFO_MENU_ELEMENT_NUM; i++ ) {
@@ -455,7 +529,7 @@ static void SetBirthdayInit( void )
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
-	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 );
+	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	GX_DispOn();
 	GXS_DispOn();
@@ -519,28 +593,33 @@ static int SetBirthdayMain( void )
 	return 0;
 }
 
+static void DrawColorSample( void )
+{
+	int l;
+	
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"USER COLOR" );
+	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_USER, (const u16 *)L"CANCEL" );
+	for(l=0;l<16;l++) //16色
+	{
+		PutStringUTF16( 88 + 24 * (l%4), 54 + 24 * (l/4), 40 + l + 8 * (l/8), (const u16 *)L"■" );
+	}
+	PutStringUTF16( 88 + 24 * (s_color_csr%4), 54 + 24 * (s_color_csr/4), TXT_COLOR_WHITE, (const u16 *)L"☆" );
+}
+
 // ユーザーカラー編集の初期化
 static void SetUserColorInit( void )
 {
-	int i;
-	
 	GX_DispOff();
 	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
 	
-	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"USER COLOR" );
-	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_CYAN, (const u16 *)L"CANCEL" );
-	
-	// NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
-	for( i = 0; i < USER_INFO_MENU_ELEMENT_NUM; i++ ) {
-		s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ TSD_GetLanguage() ];
-	}
-	
-	DrawMenu( s_csr, &s_settingParam );
+	DrawColorSample();
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
-	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 );
+	s_color_csr = TSD_GetUserColor();
+	
+	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	GX_DispOn();
 	GXS_DispOn();
@@ -549,7 +628,7 @@ static void SetUserColorInit( void )
 // ユーザーカラー編集メイン
 static int SetUserColorMain( void )
 {
-	BOOL tp_select,tp_cancel = FALSE;
+	BOOL tp_cancel = FALSE;
 	
 	ReadTP();
 	
@@ -557,17 +636,21 @@ static int SetUserColorMain( void )
 	//  キー入力処理
 	//--------------------------------------
 	if( pad.trg & PAD_KEY_DOWN ){									// カーソルの移動
-		if( ++s_csr == USER_INFO_MENU_ELEMENT_NUM ) {
-			s_csr=0;
-		}
+		s_color_csr += 4;
+		if(s_color_csr >= 16) s_color_csr -= 16;
 	}
 	if( pad.trg & PAD_KEY_UP ){
-		if( --s_csr & 0x80 ) {
-			s_csr=USER_INFO_MENU_ELEMENT_NUM - 1;
-		}
+		if(s_color_csr < 4) s_color_csr += 16;
+		s_color_csr -= 4;
 	}
-	tp_select = SelectMenuByTP( &s_csr, &s_settingParam );
-	DrawMenu( s_csr, &s_settingParam );
+	if( pad.trg & PAD_KEY_RIGHT ){
+		s_color_csr += 1;
+		if(s_color_csr%4 == 0) s_color_csr -= 4;
+	}
+	if( pad.trg & PAD_KEY_LEFT ){
+		if(s_color_csr%4 == 0) s_color_csr += 4;
+		s_color_csr -= 1;
+	}
 
 	// [CANCEL]ボタン押下チェック
 	if( tpd.disp.touch ) {
@@ -575,57 +658,65 @@ static int SetUserColorMain( void )
 							   CANCEL_BUTTON_BOTTOM_X, CANCEL_BUTTON_BOTTOM_Y, &tpd.disp );
 	}
 	
-	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// メニュー項目への分岐
-		if( s_settingPos[ s_csr ].enable ) {
-			switch( s_csr ) {
-				case 0:
-					SetNicknameInit();
-					g_pNowProcess = SetNicknameMain;
-					break;
-				case 1:
-					SetBirthdayInit();
-					g_pNowProcess = SetBirthdayMain;
-					break;
-				case 2:
-					SetUserColorInit();
-					g_pNowProcess = SetUserColorMain;
-					break;
-				case 3:
-					SetCommentInit();
-					g_pNowProcess = SetCommentMain;
-					break;
-			}
-		}
+	DrawColorSample();
+	
+	if( ( pad.trg & PAD_BUTTON_A ) ) {				// 色決定
+		TSD_SetUserColor( (u8 )s_color_csr );
+		TSD_SetFlagUserColor( TRUE );
+		(void)SYSM_WriteTWLSettingsFile();// ファイルへ書き込み
+		SetOwnerInfoInit();
+		g_pNowProcess = SetOwnerInfoMain;
+		return 0;
 	}else if( ( pad.trg & PAD_BUTTON_B ) || tp_cancel ) {
+		ChangeUserColor( TSD_GetUserColor() ); // パレット色を元にもどす
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
 		return 0;
 	}
+	
+	if(pad.trg || tpd.disp.touch)
+	{// 描画処理……ボタン押したorタッチ時ぐらいで十分
+		ChangeUserColor( s_color_csr );
+		DrawColorSample();
+	}
+	
 	return 0;
+}
+
+// コメント編集画面の描画処理
+static void DrawSetCommentScene( void )
+{
+	u16 tempbuf[TWL_COMMENT_LENGTH+2];
+	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"COMMENT" );
+	DrawCharKeys();
+	SVC_CpuCopy( s_temp_comment.buffer, tempbuf, 13 * 2, 16 );
+	*(tempbuf+13)='\n';
+	SVC_CpuCopy( s_temp_comment.buffer+13, tempbuf+14, 13 * 2, 16 );
+	*(tempbuf+TWL_COMMENT_LENGTH+1)=0;
+	PutStringUTF16( 128-78 , 15 , TXT_COLOR_USER, tempbuf );
 }
 
 // コメント編集の初期化
 static void SetCommentInit( void )
 {
-	int i;
-	
 	GX_DispOff();
 	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
 	
-	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"COMMENT" );
-	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_CYAN, (const u16 *)L"CANCEL" );
+	SetSoftKeyboardButton(0);
+	s_key_csr = 0;
 	
-	// NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
-	for( i = 0; i < USER_INFO_MENU_ELEMENT_NUM; i++ ) {
-		s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ TSD_GetLanguage() ];
-	}
+	// コメント用テンポラリバッファの初期化
+	s_temp_comment.length = TSD_GetComment()->length;
+	SVC_CpuClear(CHAR_USCORE, s_temp_comment.buffer, TWL_COMMENT_LENGTH * 2, 16);
+	SVC_CpuCopy( TSD_GetComment()->buffer, s_temp_comment.buffer, s_temp_comment.length * 2, 16 );
+	s_temp_comment.buffer[TWL_COMMENT_LENGTH] = 0;
 	
-	DrawMenu( s_csr, &s_settingParam );
+	DrawSetCommentScene();
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
-	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 );
+	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	GX_DispOn();
 	GXS_DispOn();
@@ -634,58 +725,15 @@ static void SetCommentInit( void )
 // コメント編集メイン
 static int SetCommentMain( void )
 {
-	BOOL tp_select,tp_cancel = FALSE;
-	
 	ReadTP();
 	
-	//--------------------------------------
-	//  キー入力処理
-	//--------------------------------------
-	if( pad.trg & PAD_KEY_DOWN ){									// カーソルの移動
-		if( ++s_csr == USER_INFO_MENU_ELEMENT_NUM ) {
-			s_csr=0;
-		}
-	}
-	if( pad.trg & PAD_KEY_UP ){
-		if( --s_csr & 0x80 ) {
-			s_csr=USER_INFO_MENU_ELEMENT_NUM - 1;
-		}
-	}
-	tp_select = SelectMenuByTP( &s_csr, &s_settingParam );
-	DrawMenu( s_csr, &s_settingParam );
-
-	// [CANCEL]ボタン押下チェック
-	if( tpd.disp.touch ) {
-		tp_cancel = WithinRangeTP( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y,
-							   CANCEL_BUTTON_BOTTOM_X, CANCEL_BUTTON_BOTTOM_Y, &tpd.disp );
+	PadDetectOnKey(NOC_COMMENT);
+	
+	if(pad.trg || tpd.disp.touch)
+	{// 描画処理……ボタン押したorタッチ時ぐらいで十分
+		DrawSetCommentScene();
 	}
 	
-	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// メニュー項目への分岐
-		if( s_settingPos[ s_csr ].enable ) {
-			switch( s_csr ) {
-				case 0:
-					SetNicknameInit();
-					g_pNowProcess = SetNicknameMain;
-					break;
-				case 1:
-					SetBirthdayInit();
-					g_pNowProcess = SetBirthdayMain;
-					break;
-				case 2:
-					SetUserColorInit();
-					g_pNowProcess = SetUserColorMain;
-					break;
-				case 3:
-					SetCommentInit();
-					g_pNowProcess = SetCommentMain;
-					break;
-			}
-		}
-	}else if( ( pad.trg & PAD_BUTTON_B ) || tp_cancel ) {
-		SetOwnerInfoInit();
-		g_pNowProcess = SetOwnerInfoMain;
-		return 0;
-	}
 	return 0;
 }
 

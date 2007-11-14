@@ -76,6 +76,7 @@ enum
     TXT_COLOR_4BPP_TEXT=1
 };
 
+#define TXT_COLOR_USER	17
 
 // éûåvï\é¶èÍèä
 #define RTC_DATE_TOP_X				(  9 * 8 )
@@ -163,6 +164,7 @@ void SetBannerIconOBJ( GXOamAttr *pDstOAM, BannerFileV1 *bannerp );
 BOOL GetRTCData( RTCDrawProperty *pRTCDraw, BOOL forceGetFlag );
 void DrawRTCData( RTCDrawProperty *pRTCDraw );
 void GetAndDrawRTCData( RTCDrawProperty *pRTCDraw, BOOL forceGetFlag );
+void ChangeUserColor( u8 col );
 
 #ifdef __cplusplus
 }

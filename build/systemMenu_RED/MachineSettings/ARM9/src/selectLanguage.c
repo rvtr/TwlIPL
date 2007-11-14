@@ -72,7 +72,7 @@ void SelectLanguageInit( void )
 {
 	GX_DispOff();
 	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"LANGUAGE SELECT" );
 	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_CYAN, (const u16 *)L"CANCEL" );
@@ -91,7 +91,7 @@ void SelectLanguageInit( void )
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
-	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 );
+	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	GX_DispOn();
 	GXS_DispOn();

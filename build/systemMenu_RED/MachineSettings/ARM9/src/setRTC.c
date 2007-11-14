@@ -107,7 +107,7 @@ void SetRTCInit( void )
 {
 	GX_DispOff();
 	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"DATE & TIME SET" );
 	PutStringUTF16( RETURN_BUTTON_TOP_X, RETURN_BUTTON_TOP_Y, TXT_COLOR_CYAN, (const u16 *)L" RETURN " );
@@ -139,7 +139,7 @@ void SetRTCInit( void )
 	
 	DrawDateTime( &s_pWork->dtp.Date, &s_pWork->dtp.Time, TXT_COLOR_BLACK );
 	
-	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 );
+	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	GX_DispOn();
 	GXS_DispOn();

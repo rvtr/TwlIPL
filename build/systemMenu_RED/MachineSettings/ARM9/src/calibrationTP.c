@@ -299,7 +299,7 @@ int TP_CalibrationMain( void )
 	
 	switch (s_pTPC->seq) {
 		case INIT:
-			NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_WHITE,
+			NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL,
 										0 * 8 , 20 * 8, 32 * 8, 4 * 8 );
 			s_pTPC->seq = INTERVAL_0;
 			PutStringUTF16( 2 * 8, 21 * 8, TXT_COLOR_CYAN, (const u16 *)L"[B]:CANCEL" );
@@ -365,7 +365,7 @@ int TP_CalibrationMain( void )
 				TP_GetUnCalibratedPoint( &tpd.disp.x, &tpd.disp.y, DISP_X_SIZE / 2, DISP_Y_SIZE / 2 );
 				s_pTPC->seq = GET_POINT;
 				
-				NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_WHITE,
+				NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL,
 											2 * 8 , 21 * 8, 10 * 8, 2 * 8 );
 				PutStringUTF16( OK_BUTTON_TOP_X,             OK_BUTTON_TOP_Y,             TXT_COLOR_CYAN, (const u16 *)L"   OK   ");
 				PutStringUTF16( CANCEL_BUTTON_TOP_X,         CANCEL_BUTTON_TOP_Y,         TXT_COLOR_CYAN, (const u16 *)L" CANCEL ");
@@ -475,7 +475,7 @@ void TP_CalibrationInit( void )
 {
 	GX_DispOff();
 	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"TOUCH PANEL CALIBRATION" );
 	
@@ -492,7 +492,7 @@ void TP_CalibrationInit( void )
 	SVC_CpuClear( 0x0000, s_pTPC, sizeof(CalibWork), 16 );
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
-	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_OBJ );
+	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1 | GX_PLANEMASK_OBJ );
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	GX_DispOn();
 	GXS_DispOn();

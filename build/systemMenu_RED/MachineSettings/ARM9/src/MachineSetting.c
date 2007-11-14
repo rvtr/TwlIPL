@@ -123,7 +123,7 @@ void MachineSettingInit( void )
 	
 	GX_DispOff();
 	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"MACHINE SETTINGS" );
 	
@@ -132,11 +132,12 @@ void MachineSettingInit( void )
 		s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ TSD_GetLanguage() ];
 	}
 	
+	ChangeUserColor( TSD_GetUserColor() );
 	DrawMenu( s_csr, &s_settingParam );
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
-	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 );
+	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	GX_DispOn();
 	GXS_DispOn();
