@@ -86,7 +86,6 @@ void InputDecimal(int *pTgt, InputNumParam *inpp);
 static void InputRtcDateTimeInit( int start );
 static int InputRtcDateTimeMain( void );
 
-static void TransmitRtcData(DateTimeParam *dtpp, RtcDateTime *rtcp);
 static void SelectString( int *pTgt, const u8 **const pStrp, InputNumParam *inpp);
 static void BcdToHex(int *bcdp);
 static void HexToBcd(int *hexp);
@@ -114,7 +113,7 @@ void SetRTCInit( void )
 	PutStringUTF16( RETURN_BUTTON_TOP_X, RETURN_BUTTON_TOP_Y, TXT_COLOR_CYAN, (const u16 *)L" RETURN " );
 	
 	if( g_initialSet ) {
-		if( GetSYSMWork()->rtcStatus & 0x01) {
+		if( SYSM_GetWork()->rtcStatus & 0x01) {
 			PutStringUTF16( 8 * 8, 18 * 8, TXT_COLOR_RED, (const u16 *)L"RTC reset is detected!" );
 		}else {
 			PutStringUTF16( 8 * 8, 18 * 8, TXT_COLOR_RED, (const u16 *)L"Set RTC." );
@@ -380,7 +379,7 @@ static int InputRtcDateTimeMain( void )
 			TSD_SetRTCOffset( SYSM_CalcRTCOffsetAndSetDateTime( &date, &s_pWork->dtp.Time ) );
 		}
 		
-		GetSYSMWork()->isValidTSD = 0;
+		SYSM_GetWork()->isValidTSD = 0;
 		TSD_SetFlagDateTime( TRUE );						// RTC入力フラグを立てる。
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み

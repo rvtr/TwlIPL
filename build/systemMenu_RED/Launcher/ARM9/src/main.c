@@ -55,7 +55,7 @@ void TwlMain( void )
 	TitleProperty pTitleList[ LAUNCHER_TITLE_LIST_NUM ];
 	
 	// システムメニュー初期化----------
-//	SYSM_Init( Alloc, Free );											// OS_Initの前でコール。
+	SYSM_Init( Alloc, Free );											// OS_Initの前でコール。
 	
 	// OS初期化------------------------
     OS_Init();
@@ -77,9 +77,7 @@ void TwlMain( void )
 	InitAllocator( &g_allocator );
 	CMN_InitFileSystem( &g_allocator );
 	
-	
-	SYSM_Init( Alloc, Free );											// OS_Initの前でコール。
-//	SYSM_ReadParameters();
+	SYSM_ReadParameters();
 	
 	// リセットパラメータの取得--------
 	if( SYSM_GetResetParam()->flags.isLogoSkip ) {

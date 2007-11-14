@@ -80,7 +80,7 @@ void SelectLanguageInit( void )
 		PutStringUTF16( 8 * 8, 18 * 8, TXT_COLOR_RED, (const u16 *)L"Select language." );
 	}
 	
-	if( ( GetSYSMWork()->isValidTSD ) ||
+	if( ( SYSM_GetWork()->isValidTSD ) ||
 		( TSD_GetLanguage() >= TWL_LANG_CODE_MAX ) ) {
 		s_langCode = TWL_LANG_ENGLISH;
 	}else {
@@ -128,7 +128,7 @@ int SelectLanguageMain( void )
 	}
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || tp_select ) {				// メニュー項目への分岐
-		GetSYSMWork()->isValidTSD   		= 0;
+		SYSM_GetWork()->isValidTSD   		= 0;
 		
 		TSD_SetLanguage( s_langCode );
 		TSD_SetFlagLanguage( TRUE );							// 言語入力フラグを立てる

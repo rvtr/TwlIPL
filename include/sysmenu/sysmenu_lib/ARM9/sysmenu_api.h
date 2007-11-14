@@ -96,7 +96,7 @@ extern AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle );	//
 																				// 成功時は、never return.
 // デバイス制御
 extern void SYSM_CaribrateTP( void );											// タッチパネルキャリブレーション
-extern void SYSM_SetBackLightBrightness( void );						// バックライトを制御（本体設定データへの値セーブも行う）
+extern void SYSM_SetBackLightBrightness( u8 brightness );						// バックライトを制御（本体設定データへの値セーブも行う）
 
 // 状態チェック
 extern BOOL SYSM_IsExistCard( void );											// TWL/NTRカードが差さっているか？（アプリは未認証状態）
