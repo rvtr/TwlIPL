@@ -380,7 +380,7 @@ static int InputRtcDateTimeMain( void )
 			TSD_SetRTCOffset( SYSM_CalcRTCOffsetAndSetDateTime( &date, &s_pWork->dtp.Time ) );
 		}
 		
-		GetSYSMWork()->ncd_invalid = 0;
+		GetSYSMWork()->isValidTSD = 0;
 		TSD_SetFlagDateTime( TRUE );						// RTC入力フラグを立てる。
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み

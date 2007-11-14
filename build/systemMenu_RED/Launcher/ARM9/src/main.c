@@ -54,6 +54,10 @@ void TwlMain( void )
 	TitleProperty *pBootTitle = NULL;
 	TitleProperty pTitleList[ LAUNCHER_TITLE_LIST_NUM ];
 	
+	// システムメニュー初期化----------
+//	SYSM_Init( Alloc, Free );											// OS_Initの前でコール。
+	
+	// OS初期化------------------------
     OS_Init();
 	
 	(void)OS_EnableIrq();
@@ -61,10 +65,9 @@ void TwlMain( void )
 	
 	FS_Init( FS_DMA_NOT_USE );
     GX_Init();
+	TP_Init();
+	RTC_Init();
     
-    // プロテクションユニット領域変更
-    OS_SetProtectionRegion( 2, 0x02280000, 512KB );
-	
 	// 割り込み許可--------------------
 	(void)OS_SetIrqFunction(OS_IE_V_BLANK, INTR_VBlank);
 	(void)OS_EnableIrqMask(OS_IE_V_BLANK);
@@ -74,8 +77,9 @@ void TwlMain( void )
 	InitAllocator( &g_allocator );
 	CMN_InitFileSystem( &g_allocator );
 	
-	// システムメニュー初期化----------
-	SYSM_Init( Alloc, Free );											// OS_Initの後でコール。
+	
+	SYSM_Init( Alloc, Free );											// OS_Initの前でコール。
+//	SYSM_ReadParameters();
 	
 	// リセットパラメータの取得--------
 	if( SYSM_GetResetParam()->flags.isLogoSkip ) {
@@ -176,6 +180,7 @@ void Free( void *pBuffer )
 // ブート状態を確認し、ロゴ表示有無を判断する-------
 static BOOL CheckBootStatus(void)
 {
+#if 0
 	BOOL boot_decision		= FALSE;								// 「ブート内容未定」に
 	BOOL other_shortcut_off	= FALSE;
 	
@@ -183,10 +188,6 @@ static BOOL CheckBootStatus(void)
 	// デバッグ用コンパイルスイッチによる挙動
 	//-----------------------------------------------------
 	{
-#ifdef __FORCE_BOOT_BMENU											// ※ブートメニュー強制起動スイッチがONか？
-		SYSM_SetBootFlag( BFLG_BOOT_BMENU );
-		return TRUE;												// 「ブート内容決定」でリターン
-#endif /* __FORCE_BOOT_BMENU */
 		
 #ifdef __LOGO_SKIP													// ※デバッグ用ロゴスキップ
 		SetLogoEnable( FALSE );										// ロゴ表示スキップ
@@ -251,7 +252,7 @@ static BOOL CheckBootStatus(void)
 		}
 	}
 #endif /* __SYSM_DEBUG */
-	
+#endif
 	return FALSE;													// 「ブート内容未定」でリターン
 }
 

@@ -543,7 +543,7 @@ static void SYSMi_WriteAdjustRTC( void )
 #ifndef __IS_DEBUGGER_BUILD											// デバッガ用ビルド時は補正しない。
 	RTCRawAdjust raw;
 	raw.adjust = 0;
-//	raw.adjust = GetTSD()->rtcClockAdjust;							// ncd_invalid時にはrtcClockAdjustは
+//	raw.adjust = GetTSD()->rtcClockAdjust;							// isValidTSD時にはrtcClockAdjustは
 																	// 0クリアされているため補正機能は使用されない
 	( void )RTCi_SetRegAdjust( &raw );
 #endif /* __IS_DEBUGGER_BUILD */
@@ -632,9 +632,9 @@ static void SYSMi_CheckCardCloneBoot( void )
 	
 	buffp += total_rom_size & 0x000001FF;
 	if( *buffp++ == 'a' && *buffp == 'c' ) {
-		GetSYSMWork()->clone_boot_mode = CLONE_BOOT_MODE;
+		GetSYSMWork()->CloneBootMode = cloneBootMode;
 	}else {
-		GetSYSMWork()->clone_boot_mode = OTHER_BOOT_MODE;
+		GetSYSMWork()->CloneBootMode = OTHER_BOOT_MODE;
 	}
 }
 
