@@ -70,6 +70,19 @@ BOOL FATFS_InitFIRM( void* nandContext );
  *---------------------------------------------------------------------------*/
 BOOL FATFS_MountDriveFIRM( int driveno, FATFSMediaType media, int partition_no );
 
+/*---------------------------------------------------------------------------*
+  Name:         FATFS_UnmountDriveFIRM
+
+  Description:  unmount specified partition
+
+                特殊なドライバの終了処理をします。
+
+  Arguments:    driveno         drive number "A:" is 0
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL FATFS_UnmountDriveFIRM( int driveno );
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
