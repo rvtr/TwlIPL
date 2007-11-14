@@ -22,7 +22,7 @@
 // define data----------------------------------
 
 // ソフトウェアキーボードLCD領域
-#define CLIST_LT_X							14
+#define CLIST_LT_X							18
 #define CLIST_LT_Y							40
 
 #define CANCEL_BUTTON_TOP_X					( 2 * 8 )
@@ -46,8 +46,10 @@
 #define CANCEL_BUTTON_	(u16)0xe056
 #define CODE_BUTTON_BOTTOM_	(u16)0xe057
 
+#define CHAR_USCORE		L'＿'
+#define KEY_PER_LINE	11
 
-	// カーソルX,Y位置（キャラ単位）
+// 特殊キー配置設定
 typedef struct CsrPos {
 	u16 			x;												// x
 	u16 			y;												// y
@@ -67,10 +69,12 @@ static void SetCommentInit( void );
 static int SetCommentMain( void );
 
 // static variable------------------------------
+// 太りすぎの場合は、多分優先的にワークになっていくであろう部分
 static u16 s_csr = 0;
 static const u16 *s_pStrSetting[ USER_INFO_MENU_ELEMENT_NUM ];			// メインメニュー用文字テーブルへのポインタリスト
 static int char_mode = 0;
 static u16 s_key_csr = 0;
+static TWLNickname s_temp_name;
 
 // const data-----------------------------------
 static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM];
@@ -130,7 +134,7 @@ static const MenuParam s_settingParam = {
 static const u16 *str_button_char[CHAR_LIST_MODE_NUM] = {
 									L"かな",
 									L"カナ",
-									L"ABC",
+									L"英数",
 									};
 
 static u16 next_char_mode[CHAR_LIST_MODE_NUM-1];
@@ -175,19 +179,18 @@ void SetOwnerInfoInit( void )
 	
 	GX_DispOff();
 	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
 	
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"USER INFORMATION" );
 	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_CYAN, (const u16 *)L"CANCEL" );
-	
-	SetSoftKeyboardButton(0);
 	
 	// NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
 	for( i = 0; i < USER_INFO_MENU_ELEMENT_NUM; i++ ) {
 		s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ TSD_GetLanguage() ];
 	}
 	
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
 	DrawMenu( s_csr, &s_settingParam );
+	PutStringUTF16( 128 , 8*8, TXT_COLOR_CYAN, TSD_GetNickname()->buffer );
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
@@ -218,7 +221,10 @@ int SetOwnerInfoMain( void )
 		}
 	}
 	tp_select = SelectMenuByTP( &s_csr, &s_settingParam );
+	
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
 	DrawMenu( s_csr, &s_settingParam );
+	PutStringUTF16( 128 , 8*8, TXT_COLOR_CYAN, TSD_GetNickname()->buffer );
 
 	// [CANCEL]ボタン押下チェック
 	if( tpd.disp.touch ) {
@@ -259,42 +265,82 @@ static void DrawCharKeys( void )
 {
 	int l;
 	u16 code;
+
 	for( l=0; l<CHAR_LIST_CHAR_NUM; l++ )
 	{
 		int color=TXT_COLOR_BLACK;
 		code = char_tbl[char_mode][l];
-		if (s_key_csr == l) color = TXT_COLOR_RED;
+		if (s_key_csr == l) color = TXT_COLOR_GREEN;
 		if(code != EOM_)
 		{
 			if( (code >= CODE_BUTTON_TOP_) && (code < CODE_BUTTON_BOTTOM_) )
 			{
 				int x = code - CODE_BUTTON_TOP_;
-				PutStringUTF16( CLIST_LT_X + 64 + 8*8*(x%2) , CLIST_LT_Y + 15*(7+x/2) , color, str_button[x] );
+				PutStringUTF16( CLIST_LT_X + 15*(l%KEY_PER_LINE) + 7*((l%KEY_PER_LINE)/5) , CLIST_LT_Y + 15*(l/KEY_PER_LINE) , color, str_button[x] );
 			}
 			else
 			{
 				u16 s[2];
 				s[0] = code;
 				s[1] = 0;
-				PutStringUTF16( CLIST_LT_X + 15*(l%15) + 5*((l/5)%3) , CLIST_LT_Y + 15*(l/15) , color, s );
+				PutStringUTF16( CLIST_LT_X + 15*(l%KEY_PER_LINE) + 7*((l%KEY_PER_LINE)/5) , CLIST_LT_Y + 15*(l/KEY_PER_LINE) , color, s );
 			}
 		}
 	}
 }
 
-// キーの表示
+// 一文字削除
+static void DeleteACharacter( void )
+{
+	if(s_temp_name.length > 0) s_temp_name.buffer[--s_temp_name.length] = CHAR_USCORE;
+}
+
+// 選択中文字キー・特殊キーで決定した時の挙動
 static void PushKeys( u16 code )
 {
 	if( (code >= CODE_BUTTON_TOP_) && (code < CODE_BUTTON_BOTTOM_) )
 	{
 		// 特殊キー
-		if(code == VAR_BUTTON1_ || code == VAR_BUTTON2_)
-			SetSoftKeyboardButton(next_char_mode[code - VAR_BUTTON1_]);
+		switch(code)
+		{
+			case VAR_BUTTON1_:
+			case VAR_BUTTON2_:
+				SetSoftKeyboardButton(next_char_mode[code - VAR_BUTTON1_]);
+				break;
+			case DEL_BUTTON_:
+				DeleteACharacter();
+				break;
+			case SPACE_BUTTON_:
+				if(s_temp_name.length < TWL_NICKNAME_LENGTH) s_temp_name.buffer[s_temp_name.length++] = L'　';
+				break;
+			case OK_BUTTON_:
+				TSD_SetFlagNickname( TRUE );// ニックネーム設定完了フラグを立てておく
+				SVC_CpuClear(0, TSD_GetNickname()->buffer, (TWL_NICKNAME_LENGTH + 1) * 2, 16);// ゼロクリア
+				TSD_GetNickname()->length = s_temp_name.length;// 長さコピー
+				SVC_CpuCopy( s_temp_name.buffer, TSD_GetNickname()->buffer, s_temp_name.length * 2, 16 );// 内容コピー
+				(void)SYSM_WriteTWLSettingsFile();// ファイルへ書き込み
+				// セーブ後にキャンセル処理と合流
+			case CANCEL_BUTTON_:
+				SetOwnerInfoInit();
+				g_pNowProcess = SetOwnerInfoMain;
+				break;
+			default:// unknown code
+				break;
+		}
 	}
 	else
 	{
 		// 普通キー
+		if(s_temp_name.length < TWL_NICKNAME_LENGTH) s_temp_name.buffer[s_temp_name.length++] = code;
 	}
+}
+
+static void DrawSetNicknameScene( void )
+{
+	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
+	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"NICKNAME" );
+	DrawCharKeys();
+	PutStringUTF16( 128-60 , 15 , TXT_COLOR_CYAN, s_temp_name.buffer );
 }
 
 // ニックネーム編集の初期化
@@ -302,11 +348,17 @@ static void SetNicknameInit( void )
 {
 	GX_DispOff();
 	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
 	
-	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"NICKNAME" );
+	SetSoftKeyboardButton(0);
+	s_key_csr = 0;
 	
-	DrawCharKeys();
+	// ニックネーム用テンポラリバッファの初期化
+	s_temp_name.length = TSD_GetNickname()->length;
+	SVC_CpuClear(CHAR_USCORE, s_temp_name.buffer, TWL_NICKNAME_LENGTH * 2, 16);
+	SVC_CpuCopy( TSD_GetNickname()->buffer, s_temp_name.buffer, s_temp_name.length * 2, 16 );
+	s_temp_name.buffer[TWL_NICKNAME_LENGTH] = 0;
+	
+	DrawSetNicknameScene();
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
@@ -329,35 +381,35 @@ static int SetNicknameMain( void )
 	if( pad.trg & PAD_KEY_RIGHT ){									// カーソルの移動
 		do
 		{
-			if(s_key_csr%15 != 14) s_key_csr++;
-			else s_key_csr -= 14;
-			if( s_key_csr == CHAR_LIST_CHAR_NUM ) s_key_csr -= s_key_csr%15;
+			if(s_key_csr%KEY_PER_LINE != KEY_PER_LINE-1) s_key_csr++;
+			else s_key_csr -= KEY_PER_LINE-1;
+			if( s_key_csr == CHAR_LIST_CHAR_NUM ) s_key_csr -= s_key_csr%KEY_PER_LINE;
 		}
 		while(char_tbl[char_mode][s_key_csr]==EOM_);
 	}
 	if( pad.trg & PAD_KEY_LEFT ){
 		do
 		{
-			if(s_key_csr%15 != 0) s_key_csr--;
-			else s_key_csr += 14;
-			if( s_key_csr & 0x8000 ) s_key_csr = 14;
+			if(s_key_csr%KEY_PER_LINE != 0) s_key_csr--;
+			else s_key_csr += KEY_PER_LINE-1;
+			if( s_key_csr & 0x8000 ) s_key_csr = KEY_PER_LINE-1;
 		}
 		while(char_tbl[char_mode][s_key_csr]==EOM_);
 	}
 	if( pad.trg & PAD_KEY_DOWN ){									// カーソルの移動
 		do
 		{
-			s_key_csr += 15;
-			if( s_key_csr >= CHAR_LIST_CHAR_NUM ) s_key_csr -= 15*(s_key_csr/15);
+			s_key_csr += KEY_PER_LINE;
+			if( s_key_csr >= CHAR_LIST_CHAR_NUM ) s_key_csr -= KEY_PER_LINE*(s_key_csr/KEY_PER_LINE);
 		}
 		while(char_tbl[char_mode][s_key_csr]==EOM_);
 	}
 	if( pad.trg & PAD_KEY_UP ){
 		do
 		{
-			if( s_key_csr < 15 ) s_key_csr += (CHAR_LIST_CHAR_NUM/15)*15;
-			else s_key_csr -= 15;
-			if( s_key_csr >= CHAR_LIST_CHAR_NUM ) s_key_csr -= 15;
+			if( s_key_csr < KEY_PER_LINE ) s_key_csr += (CHAR_LIST_CHAR_NUM/KEY_PER_LINE)*KEY_PER_LINE;
+			else s_key_csr -= KEY_PER_LINE;
+			if( s_key_csr >= CHAR_LIST_CHAR_NUM ) s_key_csr -= KEY_PER_LINE;
 		}
 		while(char_tbl[char_mode][s_key_csr]==EOM_);
 	}
@@ -371,16 +423,12 @@ static int SetNicknameMain( void )
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// Aキーが押された
 		PushKeys( char_tbl[char_mode][s_key_csr] );
-	}else if( ( pad.trg & PAD_BUTTON_B ) || tp_cancel ) {
-		SetOwnerInfoInit();
-		g_pNowProcess = SetOwnerInfoMain;
-		return 0;
+	}else if( pad.trg & PAD_BUTTON_B ) {
+		DeleteACharacter();
 	}
-	if(pad.trg)
-	{
-	    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
-		PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"NICKNAME" );
-		DrawCharKeys();
+	if(pad.trg ||  tpd.disp.touch)
+	{// 描画処理……ボタン押したorタッチ時ぐらいで十分
+		DrawSetNicknameScene();
 	}
 	
 	return 0;
@@ -657,92 +705,86 @@ static int SetCommentMain( void )
 static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM] = {
 	{	// ひらがな
 		L'あ',	L'い',	L'う',	L'え',	L'お',
-		L'か',	L'き',	L'く',	L'け',	L'こ',
+		L'か',	L'き',	L'く',	L'け',	L'こ',	DEL_BUTTON_,
 		L'さ',	L'し',	L'す',	L'せ',	L'そ',
-		L'た',	L'ち',	L'つ',	L'て',	L'と',
+		L'た',	L'ち',	L'つ',	L'て',	L'と',	SPACE_BUTTON_,
 		L'な',	L'に',	L'ぬ',	L'ね',	L'の',
-		L'は',	L'ひ',	L'ふ',	L'へ',	L'ほ',
+		L'は',	L'ひ',	L'ふ',	L'へ',	L'ほ',	EOM_,
 		
 		L'ま',	L'み',	L'む',	L'め',	L'も',
-		L'や',	EOM_,	L'ゆ',	EOM_,	L'よ',
+		L'や',	EOM_,	L'ゆ',	EOM_,	L'よ',	VAR_BUTTON1_,
 		L'ら',	L'り',	L'る',	L'れ',	L'ろ',
-		L'わ',	L'ゐ',	L'ゑ',	L'を',	L'ん',
+		L'わ',	L'ゐ',	L'ゑ',	L'を',	L'ん',	VAR_BUTTON2_,
 		L'ぁ',	L'ぃ',	L'ぅ',	L'ぇ',	L'ぉ',
-		L'ゃ',	EOM_,	L'ゅ',	EOM_,	L'ょ',
+		L'ゃ',	EOM_,	L'ゅ',	EOM_,	L'ょ',	EOM_,
 		
 		L'が',	L'ぎ',	L'ぐ',	L'げ',	L'ご',
-		L'ざ',	L'じ',	L'ず',	L'ぜ',	L'ぞ',
+		L'ざ',	L'じ',	L'ず',	L'ぜ',	L'ぞ',	EOM_,
 		L'だ',	L'ぢ',	L'づ',	L'で',	L'ど',
-		L'ば',	L'び',	L'ぶ',	L'べ',	L'ぼ',
+		L'ば',	L'び',	L'ぶ',	L'べ',	L'ぼ',	OK_BUTTON_,
 		L'ぱ',	L'ぴ',	L'ぷ',	L'ぺ',	L'ぽ',
-		L'っ',	L'、',	L'。',	L'！',	L'？',
+		L'っ',	L'、',	L'。',	L'！',	L'？',	EOM_,
 		
 		L'「',	L'」',	L'～',	L'・',	L'ー',
+		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,	CANCEL_BUTTON_,
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
-		DEL_BUTTON_,	SPACE_BUTTON_,	VAR_BUTTON1_,	VAR_BUTTON2_,	EOM_,
-		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
-		OK_BUTTON_,		CANCEL_BUTTON_,	EOM_,	EOM_,	EOM_,
 	},
 	
 	{	// カタカナ
 		L'ア',	L'イ',	L'ウ',	L'エ',	L'オ',
-		L'カ',	L'キ',	L'ク',	L'ケ',	L'コ',
+		L'カ',	L'キ',	L'ク',	L'ケ',	L'コ',	DEL_BUTTON_,
 		L'サ',	L'シ',	L'ス',	L'セ',	L'ソ',
-		L'タ',	L'チ',	L'ツ',	L'テ',	L'ト',
+		L'タ',	L'チ',	L'ツ',	L'テ',	L'ト',	SPACE_BUTTON_,
 		L'ナ',	L'ニ',	L'ヌ',	L'ネ',	L'ノ',
-		L'ハ',	L'ヒ',	L'フ',	L'ヘ',	L'ホ',
+		L'ハ',	L'ヒ',	L'フ',	L'ヘ',	L'ホ',	EOM_,
 		
 		L'マ',	L'ミ',	L'ム',	L'メ',	L'モ',
-		L'ヤ',	EOM_,	L'ユ',	EOM_,	L'ヨ',
+		L'ヤ',	EOM_,	L'ユ',	EOM_,	L'ヨ',	VAR_BUTTON1_,
 		L'ラ',	L'リ',	L'ル',	L'レ',	L'ロ',
-		L'ワ',	EOM_,	L'ヲ',	EOM_,	L'ン',
+		L'ワ',	EOM_,	L'ヲ',	EOM_,	L'ン',	VAR_BUTTON2_,
 		L'ァ',	L'ィ',	L'ゥ',	L'ェ',	L'ォ',
-		L'ャ',	EOM_,	L'ュ',	EOM_,	L'ョ',
+		L'ャ',	EOM_,	L'ュ',	EOM_,	L'ョ',	EOM_,
 		
 		L'ガ',	L'ギ',	L'グ',	L'ゲ',	L'ゴ',
-		L'ザ',	L'ジ',	L'ズ',	L'ゼ',	L'ゾ',
+		L'ザ',	L'ジ',	L'ズ',	L'ゼ',	L'ゾ',	EOM_,
 		L'ダ',	L'ヂ',	L'ヅ',	L'デ',	L'ド',
-		L'バ',	L'ビ',	L'ブ',	L'ベ',	L'ボ',
+		L'バ',	L'ビ',	L'ブ',	L'ベ',	L'ボ',	OK_BUTTON_,
 		L'パ',	L'ピ',	L'プ',	L'ペ',	L'ポ',
-		L'ッ',	L'、',	L'。',	L'！',	L'ー',
+		L'ッ',	L'、',	L'。',	L'！',	L'ー',	EOM_,
 		
 		L'「',	L'」',	L'～',	L'・',	EOM_,
+		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,	CANCEL_BUTTON_,
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
-		DEL_BUTTON_,	SPACE_BUTTON_,	VAR_BUTTON1_,	VAR_BUTTON2_,	EOM_,
-		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
-		OK_BUTTON_,		CANCEL_BUTTON_,	EOM_,	EOM_,	EOM_,
 	},
 	
 	{	// 英数
 		L'Ａ',	L'Ｂ',	L'Ｃ',	L'Ｄ',	L'Ｅ',
-		L'Ｆ',	L'Ｇ',	L'Ｈ',	L'Ｉ',	L'Ｊ',
+		L'Ｆ',	L'Ｇ',	L'Ｈ',	L'Ｉ',	L'Ｊ',	DEL_BUTTON_,
 		L'Ｋ',	L'Ｌ',	L'Ｍ',	L'Ｎ',	L'Ｏ',
-		L'Ｐ',	L'Ｑ',	L'Ｒ',	L'Ｓ',	L'Ｔ',
+		L'Ｐ',	L'Ｑ',	L'Ｒ',	L'Ｓ',	L'Ｔ',	SPACE_BUTTON_,
 		L'Ｕ',	L'Ｖ',	L'Ｗ',	L'Ｘ',	L'Ｙ',
-		L'Ｚ',	EOM_,	EOM_,	EOM_,	EOM_,
+		L'Ｚ',	EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
 		
 		L'ａ',	L'ｂ',	L'ｃ',	L'ｄ',	L'ｅ',
-		L'ｆ',	L'ｇ',	L'ｈ',	L'ｉ',	L'ｊ',
+		L'ｆ',	L'ｇ',	L'ｈ',	L'ｉ',	L'ｊ',	VAR_BUTTON1_,
 		L'ｋ',	L'ｌ',	L'ｍ',	L'ｎ',	L'ｏ',
-		L'ｐ',	L'ｑ',	L'ｒ',	L'ｓ',	L'ｔ',
+		L'ｐ',	L'ｑ',	L'ｒ',	L'ｓ',	L'ｔ',	VAR_BUTTON2_,
 		L'ｕ',	L'ｖ',	L'ｗ',	L'ｘ',	L'ｙ',
-		L'ｚ',	EOM_,	EOM_,	EOM_,	EOM_,
+		L'ｚ',	EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
 		
 		L'０',	L'１',	L'２',	L'３',	L'４',
-		L'５',	L'６',	L'７',	L'８',	L'９',
+		L'５',	L'６',	L'７',	L'８',	L'９',	EOM_,
 		L'！',	EOM_,	L'＆',	EOM_,	L'／',
-		L'，',	EOM_,	L'．',	EOM_,	L'－',
+		L'，',	EOM_,	L'．',	EOM_,	L'－',	OK_BUTTON_,
 		L'’',	EOM_,	L'”',	EOM_,	EOM_,
-		L'＠',	EOM_,	L'（',	EOM_,	L'）',
+		L'＠',	EOM_,	L'（',	EOM_,	L'）',	EOM_,
 		
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
+		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,	CANCEL_BUTTON_,
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
-		DEL_BUTTON_,	SPACE_BUTTON_,	VAR_BUTTON1_,	VAR_BUTTON2_,	EOM_,
-		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
-		OK_BUTTON_,		CANCEL_BUTTON_,	EOM_,	EOM_,	EOM_,
 	},
 };
 
