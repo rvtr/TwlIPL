@@ -34,7 +34,7 @@ ROM_SPEC				=	main.rsf
 MISC_DIR				=	../../misc
 
 SRCS					=	main.c PictoChat.c \
-							$(MISC_DIR)/src/misc.c
+							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
 
 LINCLUDES				=	$(MISC_DIR)/include
 

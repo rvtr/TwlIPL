@@ -18,7 +18,7 @@
 #include <twl.h>
 #include <nnsys.h>
 
-#include <sysmenu/sysmenu_lib/ARM9/cmn.h>
+#include "cmn.h"
 
 
 /*---------------------------------------------------------------------------*

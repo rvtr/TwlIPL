@@ -26,7 +26,7 @@ TARGET_PLATFORM	=	TWL
 TWL_ARCHGEN		=	LIMITED
 TWL_PROC	   	=	ARM9
 
-SRCS			=	sysmenu_lib.c sysmenu_card.c sysmenu_util.c gameBoot.c ninLogoFunc.c cmn.c \
+SRCS			=	sysmenu_lib.c sysmenu_card.c sysmenu_util.c gameBoot.c ninLogoFunc.c \
 					settingsAPI.c mountInfo.c
 
 TARGET_LIB		=	libsysmenu$(TWL_LIBSUFFIX).a

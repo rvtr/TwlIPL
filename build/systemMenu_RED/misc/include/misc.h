@@ -27,6 +27,8 @@
 #include <nnsys/g2d/g2d_CharCanvas.h>
 #include <nnsys/g2d/g2d_TextCanvas.h>
 
+#include "cmn.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -17,7 +17,7 @@
 #----------------------------------------------------------------------------
 
 SUBDIRS					=	\
-#							../../../libraries_sysmenu/sysmenu \
+							../../../libraries_sysmenu/sysmenu \
 #							../../../libraries_sysmenu/boot \
 #							../../../components/hyena.TWL
 
@@ -41,7 +41,7 @@ MISC_DIR				=	../../misc
 SRCS_LOGO				=	logoDemo.c logoData.c
 SRCS					=	main.c launcher.c \
 							$(addprefix $(LOGO_DIR)/, $(SRCS_LOGO)) \
-							$(MISC_DIR)/src/misc.c
+							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
 
 LINCLUDES				=	$(MISC_DIR)/include \
 							$(SRCDIR)/$(LOGO_DIR)

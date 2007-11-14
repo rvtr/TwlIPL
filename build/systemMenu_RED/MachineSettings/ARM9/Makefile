@@ -35,7 +35,7 @@ MISC_DIR				=	../../misc
 
 SRCS					=	main.c MachineSetting.c \
 							setRTC.c selectLanguage.c calibrationTP.c setOwnerInfo.c \
-							$(MISC_DIR)/src/misc.c
+							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
 
 LINCLUDES				=	$(MISC_DIR)/include
 
