@@ -17,7 +17,7 @@
 
 #include <twl.h>
 #include <sysmenu/boot/common/boot.h>
-#include <sysmenu/mmap.h>
+#include <sysmenu/memorymap.h>
 //#include "loader.h"
 //#include "mb_child.h"
 
@@ -111,7 +111,7 @@ static asm void ClearBankREG_Stack( void )
 		bl			CpuClear32Byte
 #endif // ISDBG_MB_CHILD_
 		
-		sub			r0, r2, #( HW_PRV_WRAM_END - RETURN_FROM_MAIN_ARM7_FUNCP )
+		sub			r0, r2, #( HW_PRV_WRAM_END - BOOTCORE_ARM7_ADDR )
 		ldr			r1, = ClearMemory
 		bl			CpuClear32Byte
 		

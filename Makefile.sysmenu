@@ -21,7 +21,10 @@ include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS =	build
+SUBDIRS =	\
+			build/libraries_sysmenu\
+			build/components \
+			build/systemmenu_RED
 
 #----------------------------------------------------------------------------
 

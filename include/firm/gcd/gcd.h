@@ -751,7 +751,7 @@ void GCDi_DecryptObjectFileDS( GCDSlot slot );
 
 void GCD_SetInterrupt( GCDSlot slot, u32 romp, void *ramp, s32 size, GCDWork *wp );
 
-void* GCDi_GetRomHeaderAddr( GCDSlot slot );
+void* GCDi_SYSM_GetCardRomHeader( GCDSlot slot );
 
 
 extern u32 GCDi_HeaderBuf[2][ GCD_ROM_HEADER_SIZE/sizeof(u32) ];

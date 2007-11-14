@@ -18,12 +18,12 @@
 #define SYSMENU_H_
 
 #include <twl.h>
+#include <twl/os/common/format_rom.h>
 
-#include <sysmenu/rom_header.h>
 #include <sysmenu/banner.h>
 #include <sysmenu/settings.h>
 #include <sysmenu/sysmenu_work.h>
-#include <sysmenu/mmap.h>
+#include <sysmenu/memorymap.h>
 
 #include <sysmenu/acsign.h>
 #include <sysmenu/mb_loader.h>

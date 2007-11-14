@@ -16,20 +16,20 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
-#include <sysmenu/rom_header.h>
 #include <sysmenu/sysmenu_lib/ARM9/sysmenu_api.h>
+#include <sysmenu/memorymap.h>
 
 // define data-----------------------------------------------------------
 
 // extern data-----------------------------------------------------------
 
 // function's prototype--------------------------------------------------
-static void UnCompNintendoLogo2(u16 *NintendoLogoDatap, u16 *dstp, u32 *temp);
-static void SVC_DiffUnFilter16_16_2(u16 *srcp,u16 *dstp);
-static s32  MEMBm_InitFunc(const u8 *devicep, void *ramp, const void *paramp);
-static s32  MEMBm_TerminateFunc(const u8 *devicep);
-static u8   MEMBm_ByteStreamFunc(const u8 *devicep);
-static u32  MEMBm_WordStreamFunc(const u8 *devicep);
+static void UnCompNintendoLogo2(u16 *pLogoData, u16 *pDst, u32 *pTemp );
+static void SVC_DiffUnFilter16_16_2( u16 *pSrc, u16 *pDst );
+static s32  MEMBm_InitFunc( const u8 *pDevice, void *pRAM, const void *pParam );
+static s32  MEMBm_TerminateFunc( const u8 *pDevice );
+static u8   MEMBm_ByteStreamFunc( const u8 *pDevice );
+static u32  MEMBm_WordStreamFunc( const u8 *pDevice );
 
 
 // global variable-------------------------------------------------------
@@ -56,26 +56,41 @@ const MIReadStreamCallbacks memb_ifp2={
 
 // function's description--------------------------------------------
 
-// Nintendoロゴデータの展開ルーチン（OBJ2Dマップモードで展開）
-// ※tempBuffpには、0x700byte必要です。
-void SYSM_LoadNintendoLogo2D( u16 *ninLogoDatap, u16 *dstp, u16 color, u32 *tempBuffp )
+// Nintendoロゴチェック			「リターン　1:Nintendoロゴ認識成功　0：失敗」
+BOOL SYSM_CheckNintendoLogo( u16 *pLogoData )
 {
-	u32 work[ 0x100 / sizeof(u32) ];
+	u16 *pLogoOrg = (u16 *)SYSROM9_NINLOGO_ADR;					// ARM9のシステムROMのロゴデータとカートリッジ内のものを比較
+	u16 length    = NINTENDO_LOGO_DATA_LENGTH >> 1;
 	
-	Nin_UnPackBitsParam2.destOffset = color - 1;
-	UnCompNintendoLogo2( ninLogoDatap, (u16 *)tempBuffp, work );
-	MI_CpuCopyFast( (u16 *)( (u32)tempBuffp + 0    ), dstp + 0x0000 / sizeof(u16), 0x1a0 );
-	MI_CpuCopyFast( (u16 *)( (u32)tempBuffp + 0x1a0), dstp + 0x0400 / sizeof(u16), 0x1a0 );
+	while( length-- ) {
+		if( *pLogoOrg++ != *pLogoData++ ) {
+			return FALSE;
+		}
+	}
+	return TRUE;
 }
 
 
-void SYSM_LoadNintendoLogo1D( u16 *ninLogoDatap, u16 *dstp, u16 color, u32 *tempBuffp )
+// Nintendoロゴデータの展開ルーチン（OBJ2Dマップモードで展開）
+// ※tempBuffpには、0x700byte必要です。
+void SYSM_LoadNintendoLogo2D( u16 *pLogoData, u16 *pDst, u16 color, u32 *pTempBuffer )
 {
 	u32 work[ 0x100 / sizeof(u32) ];
 	
 	Nin_UnPackBitsParam2.destOffset = color - 1;
-	UnCompNintendoLogo2( ninLogoDatap, (u16 *)tempBuffp, work );
-	MI_CpuCopyFast( (u16 *)tempBuffp, dstp, 0x340 );
+	UnCompNintendoLogo2( pLogoData, (u16 *)pTempBuffer, work );
+	MI_CpuCopyFast( (u16 *)( (u32)pTempBuffer + 0    ), pDst + 0x0000 / sizeof(u16), 0x1a0 );
+	MI_CpuCopyFast( (u16 *)( (u32)pTempBuffer + 0x1a0), pDst + 0x0400 / sizeof(u16), 0x1a0 );
+}
+
+
+void SYSM_LoadNintendoLogo1D( u16 *pLogoData, u16 *pDst, u16 color, u32 *pTempBuffer )
+{
+	u32 work[ 0x100 / sizeof(u32) ];
+	
+	Nin_UnPackBitsParam2.destOffset = color - 1;
+	UnCompNintendoLogo2( pLogoData, (u16 *)pTempBuffer, work );
+	MI_CpuCopyFast( (u16 *)pTempBuffer, pDst, 0x340 );
 }
 
 /*	UnCompNintendoLogo2ワーク内訳
@@ -92,7 +107,7 @@ void SYSM_LoadNintendoLogo1D( u16 *ninLogoDatap, u16 *dstp, u16 color, u32 *temp
 
 //　Nintendoロゴ展開ルーチン　(r0=ロゴ圧縮データ  r1=展開先アドレス)
 #include <twl/code16.h>
-static asm void UnCompNintendoLogo2(u16 *NintendoLogoDatap, u16 *dstp, u32 *temp)
+static asm void UnCompNintendoLogo2( u16 *pLogoData, u16 *pDst, u32 *pTemp )
 {
 		push		{r0-r2,r4, lr}
 		
@@ -105,7 +120,7 @@ static asm void UnCompNintendoLogo2(u16 *NintendoLogoDatap, u16 *dstp, u32 *temp
 		ldr			r0, [sp, #0]						// r0 <- NintendoLogoDatap
 		mov			r2, #36
 		add			r1, r4, r2							// r1 <- temp + 36
-		mov			r2, #NINTENDO_LOGO_LENGTH
+		mov			r2, #NINTENDO_LOGO_DATA_LENGTH
 		bl			MIi_CpuCopy16						// NintendoLogoDatapからNintendoロゴデータ本体をコピーしてくる
 		
 		mov			r0, r4								// r0 <- temp
@@ -133,7 +148,7 @@ static asm void UnCompNintendoLogo2(u16 *NintendoLogoDatap, u16 *dstp, u32 *temp
 
 
 //  差分フィルタ展開システムコール（16Bit→16Bit） (r0=Srcp, r1=Destp)
-static asm void SVC_DiffUnFilter16_16_2(u16 *srcp,u16 *dstp)
+static asm void SVC_DiffUnFilter16_16_2( u16 *pSrc, u16 *pDst )
 {
 		swi			24
 		bx			lr
@@ -144,25 +159,25 @@ static asm void SVC_DiffUnFilter16_16_2(u16 *srcp,u16 *dstp)
 // ============================================================================
 // バイトアクセス可能メモリ用アクセスルーチン群
 // ============================================================================
-static s32 MEMBm_InitFunc(const u8 *devicep, void *ramp, const void *paramp)
+static s32 MEMBm_InitFunc( const u8 *pDevice, void *pRAM, const void *pParam )
 {
-	#pragma unused(ramp)
-	if(paramp)	return (s32)MEMBm_WordStreamFunc(devicep);
+	#pragma unused(pRAM)
+	if(pParam)	return (s32)MEMBm_WordStreamFunc(pDevice);
 	else		return 0;
 }
 
-static s32 MEMBm_TerminateFunc(const u8 *devicep)
+static s32 MEMBm_TerminateFunc( const u8 *pDevice )
 {
-	#pragma unused(devicep)
+	#pragma unused(pDevice)
 	return 0;
 }
 
-static u8  MEMBm_ByteStreamFunc(const u8 *devicep)
+static u8  MEMBm_ByteStreamFunc( const u8 *pDevice )
 {
-	return *devicep;
+	return *pDevice;
 }
 
-static u32 MEMBm_WordStreamFunc(const u8 *devicep)
+static u32 MEMBm_WordStreamFunc( const u8 *pDevice )
 {
-	return *(u32 *)devicep;
+	return *(u32 *)pDevice;
 }

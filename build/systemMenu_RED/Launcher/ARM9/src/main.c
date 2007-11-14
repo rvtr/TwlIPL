@@ -34,7 +34,6 @@ static void INTR_VBlank( void );
 NNSFndAllocator g_allocator;
 
 // static variable-------------------------------------------------------------
-static BannerFile banner;											// バナーデータ
 
 // const data------------------------------------------------------------------
 
@@ -79,7 +78,7 @@ void TwlMain( void )
 	SYSM_Init( Alloc, Free );											// OS_Initの後でコール。
 	
 	// リセットパラメータの取得--------
-	if( SYSM_GetResetParam()->isLogoSkip ) {
+	if( SYSM_GetResetParam()->flags.isLogoSkip ) {
 		if( SYSM_GetResetParam()->bootTitleID ) {							// アプリ直接起動の指定があったらロゴデモを飛ばして指定アプリ起動
 			pBootTitle = (TitleProperty *)SYSM_GetResetParam();
 			state = AUTHENTICATE;

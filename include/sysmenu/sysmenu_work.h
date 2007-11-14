@@ -193,6 +193,13 @@ typedef struct SYSM_work{
 
 //・bootFlag値を獲得します。
 
+inline void SYSM_SetBootFlag( u32 flag )
+{
+#pragma unused( flag )
+}
+
+// カードROMヘッダワークの取得
+#define SYSM_GetCardRomHeader()		( (ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF )
 
 #ifdef __cplusplus
 }

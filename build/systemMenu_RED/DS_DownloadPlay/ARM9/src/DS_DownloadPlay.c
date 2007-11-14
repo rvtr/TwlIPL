@@ -665,7 +665,7 @@ static int SEQ_DSDL_Download(void)
 		// 親機からのブート要求受信により、起動可否チェックを行う。（Nintendoロゴ表示＆チェック）
 	  case PSEQ_BOOT_READY:
 		if( DispNintendoLogo() ) {
-			if( SYSM_CheckNinLogo( (u16 *)GetRomHeaderAddr()->nintendo_logo ) ) {
+			if( SYSM_CheckNinLogo( (u16 *)SYSM_GetCardRomHeader()->nintendo_logo ) ) {
 				prgSeq = PSEQ_BOOT_START;
 			}else {
 				SetDispMessage( RED, (const u8 *)"Illegal game data.");
@@ -1352,7 +1352,7 @@ static void InitDispNintendoLogo( void )
 #ifdef NINLOGO_LOAD_1D_CHAR
 	// 1Dマッピングでのロード＆表示
 	GX_SetOBJVRamModeChar( GX_OBJVRAMMODE_CHAR_1D_32K );
-	SYSM_LoadNintendoLogo1D( (u16 *)GetRomHeaderAddr()->nintendo_logo, (u16 *)( HW_OBJ_VRAM + 0x40 ), 1, ninLogoBuff );
+	SYSM_LoadNintendoLogo1D( (u16 *)SYSM_GetCardRomHeader()->nintendo_logo, (u16 *)( HW_OBJ_VRAM + 0x40 ), 1, ninLogoBuff );
 //	SYSM_LoadNintendoLogo1D( (u16 *)SYSROM9_NINLOGO_ADR, (u16 *)( HW_OBJ_VRAM + 0x40 ), 1, ninLogoBuff );
 	
 	for ( i = 0; i < 3; i++ ) {
@@ -1414,7 +1414,7 @@ static void InitDispNintendoLogo( void )
 #else
 	// 2Dマッピングでのロード＆表示
 	GX_SetOBJVRamModeChar( GX_OBJVRAMMODE_CHAR_2D );
-	SYSM_LoadNintendoLogo2D( (u16 *)GetRomHeaderAddr()->nintendo_logo, (u16 *)( HW_OBJ_VRAM + 0x40 ), 1, ninLogoBuff );
+	SYSM_LoadNintendoLogo2D( (u16 *)SYSM_GetCardRomHeader()->nintendo_logo, (u16 *)( HW_OBJ_VRAM + 0x40 ), 1, ninLogoBuff );
 //	SYSM_LoadNintendoLogo2D( (u16 *)SYSROM9_NINLOGO_ADR, (u16 *)( HW_OBJ_VRAM + 0x40 ), 1, ninLogoBuff );
 	
 	for ( i = 0; i < 4; i++ ) {

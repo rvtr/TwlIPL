@@ -18,6 +18,8 @@
 #if !defined(_SYSMENU_BOOT_H_)
 #define _SYSMENU_BOOT_H_
 
+#include <sysmenu/memorymap.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -25,7 +27,6 @@ extern "C" {
 /*---------------------------------------------------------------------------*
   Type definition
  *---------------------------------------------------------------------------*/
-#define BOOTCORE_ARM7_ADDR			0x0380f100
 
 /*---------------------------------------------------------------------------*
   functions

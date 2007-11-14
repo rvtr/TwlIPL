@@ -62,17 +62,17 @@ static const u16 *const str_backlight[] = {
 #define DBGBNR
 #ifdef DBGBNR
 
-static BannerFile *empty_banner;
-static BannerFile *nobanner_banner;
-static BannerFile *card_banner;
-static BannerFile *download_banner;
+static NTRBannerFile *empty_banner;
+static NTRBannerFile *nobanner_banner;
+static NTRBannerFile *card_banner;
+static NTRBannerFile *download_banner;
 static u8 image_index_list[ LAUNCHER_TITLE_LIST_NUM ];
 static const int MAX_SHOW_BANNER = 6;
 static GXOamAttr banner_oam_attr[MAX_SHOW_BANNER+10];// アフィンパラメータ埋める関係で少し大きめ
 static u8 *pbanner_image_list[ LAUNCHER_TITLE_LIST_NUM ];
 static int banner_count = 0;
 
-static void LoadBannerFiles()
+static void LoadNTRBannerFiles()
 {
 	// ファイル読み込み部分。多分emptyバナーだけ読み込む事になる。本来、アプリ系は外部から取得
 	// 最後に解放しないと駄目。だが、どこで解放すればいいのやら……
@@ -87,10 +87,10 @@ static void LoadBannerFiles()
 }
 
 // パレットの読み込みやOBJ関係の初期化
-static void BannerInit()
+static void NTRBannerInit()
 {
 	int l;
-	LoadBannerFiles();
+	LoadNTRBannerFiles();
 	
 	MI_CpuClearFast(old_titleIdArray, sizeof(old_titleIdArray) );
     MI_DmaFill32(3, banner_oam_attr, 192, sizeof(banner_oam_attr));     // let out of the screen if not display
@@ -124,7 +124,7 @@ static void BannerInit()
 }
 
 // 活線挿抜対応のため、毎回VRAMへのイメージデータロード判定をしている
-static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
+static void NTRBannerDraw(int cursor, int selected, TitleProperty *titleprop)
 {
 	static int count = 0;
 	
@@ -168,7 +168,7 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	for(l=0;l<LAUNCHER_TITLE_LIST_NUM;l++)
 	{
 		u8 m;
-		u8 *pban=((BannerFile *)titleprop[l].pBanner)->v1.image;
+		u8 *pban=((NTRBannerFile *)titleprop[l].pBanner)->v1.image;
 		for(m=0;m<banner_count;m++){
 			if(pban == pbanner_image_list[m]){
 				image_index_list[l]=m;
@@ -243,7 +243,7 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	
 	// アプリ名表示
 	{
-		NNSG2dChar *str = ((BannerFile *)titleprop[selected].pBanner)->v1.gameName[ TSD_GetLanguage() ];
+		NNSG2dChar *str = ((NTRBannerFile *)titleprop[selected].pBanner)->v1.comment[ TSD_GetLanguage() ];
 		int width = NNS_G2dTextCanvasGetStringWidth(&gTextCanvas, str, NULL);
 		PutStringUTF16( (256-width)/2, 48, TXT_COLOR_BLACK, str );
 	}
@@ -274,7 +274,7 @@ void LauncherInit( TitleProperty *pTitleList )
 	GXS_DispOn();
 	
 	#ifdef DBGBNR
-	BannerInit();
+	NTRBannerInit();
 	#endif
 }
 
@@ -334,7 +334,7 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	}
 	
 	#ifdef DBGBNR
-	BannerDraw( s_csr, selected, pTitleList );
+	NTRBannerDraw( s_csr, selected, pTitleList );
 	#endif
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {					// メニュー項目への分岐

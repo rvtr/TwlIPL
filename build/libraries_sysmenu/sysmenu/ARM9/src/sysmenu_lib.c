@@ -56,12 +56,12 @@ NitroConfigData *ncdp;												// デバッガでのNCデータ　のウォッチ用
 
 // static variable-------------------------------------------------------------
 static BOOL			s_isBanner = FALSE;
-static BannerFile	s_bannerBuf;
+static NTRBannerFile	s_bannerBuf;
 static NAMTitleId	old_titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
 
 // const data------------------------------------------------------------------
 
-static BannerCheckParam s_bannerCheckList[ BNR_VER_MAX ] = {
+static BannerCheckParam s_bannerCheckList[ NTR_BNR_VER_MAX ] = {
 	{ (u8 *)&s_bannerBuf.v1, sizeof( BannerFileV1 ) },
 	{ (u8 *)&s_bannerBuf.v2, sizeof( BannerFileV2 ) },
 	{ (u8 *)&s_bannerBuf.v3, sizeof( BannerFileV3 ) },
@@ -181,7 +181,7 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size)
 	int l;
 	int gotten;
 	NAMTitleId titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
-	static BannerFile bannerBuf[ LAUNCHER_TITLE_LIST_NUM ];
+	static TWLBannerFile bannerBuf[ LAUNCHER_TITLE_LIST_NUM ];
 	gotten = NAM_GetTitleList(titleIdArray, LAUNCHER_TITLE_LIST_NUM );
 	
 	// バナーの読み込み……別の関数に移すべきかも。
@@ -238,8 +238,8 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size)
 				FS_CloseFile(file);
 			    return -1;
 			}
-			readLen = ReadFile(file, &bannerBuf[l], (s32)sizeof(BannerFile));
-			if( readLen != (s32)sizeof(BannerFile) )
+			readLen = ReadFile(file, &bannerBuf[l], (s32)sizeof(TWLBannerFile));
+			if( readLen != (s32)sizeof(TWLBannerFile) )
 			{
 				OS_TPrintf("SYSM_GetNandTitleList failed: cant read file2\n");
 				FS_CloseFile(file);
@@ -457,7 +457,7 @@ static BOOL SYSMi_IsDebuggerBannerViewMode( void )
 #ifdef __IS_DEBUGGER_BUILD
 	return ( GetSYSMWork()->isOnDebugger &&
 			 SYSMi_ExistCard() &&
-			 GetRomHeaderAddr()->dbgRomSize == 0 ) ? TRUE : FALSE;
+			 SYSM_GetCardRomHeader()->dbgRomSize == 0 ) ? TRUE : FALSE;
 #else
 	return FALSE;
 #endif	// __IS_DEBUGGER_BUILD
@@ -468,7 +468,7 @@ static BOOL SYSMi_IsDebuggerBannerViewMode( void )
 static void SYSMi_ReadCardBannerFile( void )
 {
 	s32 lockCardID;
-	BannerFile *pBanner = &s_bannerBuf;
+	NTRBannerFile *pBanner = &s_bannerBuf;
 	
 	if( ( !SYSMi_ExistCard() ) || ( *(void** )BANNER_ROM_OFFSET == NULL ) ) {
 		s_isBanner = FALSE;
@@ -478,8 +478,8 @@ static void SYSMi_ReadCardBannerFile( void )
 	// ROMカードからのバナーデータのリード
 	if ( ( lockCardID = OS_GetLockID() ) > 0 ) {
 		( void )OS_LockCard( (u16 )lockCardID );
-		DC_FlushRange( pBanner, sizeof(BannerFile) );
-		SYSM_ReadCard(*(void** )BANNER_ROM_OFFSET, pBanner, sizeof(BannerFile) );
+		DC_FlushRange( pBanner, sizeof(NTRBannerFile) );
+		SYSM_ReadCard(*(void** )BANNER_ROM_OFFSET, pBanner, sizeof(NTRBannerFile) );
 		( void )OS_UnLockCard( (u16 )lockCardID );
 		OS_ReleaseLockID( (u16 )lockCardID );
 	}
@@ -493,7 +493,7 @@ static void SYSMi_ReadCardBannerFile( void )
 		
 		s_isBanner  = TRUE;
 		
-		for( i = 0; i < BNR_VER_MAX; i++ ) {
+		for( i = 0; i < NTR_BNR_VER_MAX; i++ ) {
 			if( i < pBanner->h.version ) {
 			    calc_crc = SVC_GetCRC16( calc_crc, chkp->srcp, chkp->size );
 				if( calc_crc != *hd_crcp++ ) {
@@ -506,7 +506,7 @@ static void SYSMi_ReadCardBannerFile( void )
 			chkp++;
 		}
 		if( !s_isBanner ) {
-			MI_CpuClear16( &s_bannerBuf, sizeof(BannerFile) );
+			MI_CpuClear16( &s_bannerBuf, sizeof(NTRBannerFile) );
 		}
 	}
 }
@@ -553,8 +553,8 @@ static void SYSMi_WriteAdjustRTC( void )
 // NTR,TWLカード存在チェック 		「リターン　1：カード認識　0：カードなし」
 static int SYSMi_ExistCard( void )
 {
-	if( ( GetRomHeaderAddr()->nintendo_logo_crc16 == 0xcf56 ) &&
-	    ( GetRomHeaderAddr()->header_crc16 == GetSYSMWork()->cardHeaderCrc16) ) {
+	if( ( SYSM_GetCardRomHeader()->nintendo_logo_crc16 == 0xcf56 ) &&
+	    ( SYSM_GetCardRomHeader()->header_crc16 == GetSYSMWork()->cardHeaderCrc16) ) {
 		return TRUE;												// NTR,TWLカードあり（NintendoロゴCRC、カードヘッダCRCが正しい場合）
 																	// ※Nintendoロゴデータのチェックは、特許の都合上、ロゴ表示ルーチン起動後に行います。
 	}else {
@@ -588,29 +588,16 @@ void SYSM_SetBackLightBrightness( void )
 //  各種チェック
 //======================================================================
 
-// Nintendoロゴチェック			「リターン　1:Nintendoロゴ認識成功　0：失敗」
-BOOL SYSM_CheckNintendoLogo(u16 *logo_cardp)
-{
-	u16 *logo_orgp	= (u16 *)SYSROM9_NINLOGO_ADR;					// ARM9のシステムROMのロゴデータとカートリッジ内のものを比較
-	u16 length		= NINTENDO_LOGO_LENGTH >> 1;
-	
-	while(length--) {
-		if(*logo_orgp++ != *logo_cardp++) return FALSE;
-	}
-	return TRUE;
-}
-
-
 // エントリアドレスの正当性チェック
 static BOOL SYSMi_CheckEntryAddress( void )
 {
 	// エントリアドレスがROM内登録エリアかAGBカートリッジエリアなら、無限ループに入る。
-	if(   !(   ( (u32)GetRomHeaderAddr()->main_entry_address >= HW_MAIN_MEM              )
-			&& ( (u32)GetRomHeaderAddr()->main_entry_address <  SYSM_ARM9_MMEM_ENTRY_ADDR_LIMIT ) )
-	   || !(    (   ( (u32)GetRomHeaderAddr()->sub_entry_address  >= HW_MAIN_MEM      )
-			     && ( (u32)GetRomHeaderAddr()->sub_entry_address  <  SYSM_ARM7_LOAD_MMEM_LAST_ADDR ) )
-			 || (   ( (u32)GetRomHeaderAddr()->sub_entry_address  >= HW_WRAM    )
-				 && ( (u32)GetRomHeaderAddr()->sub_entry_address  <  SYSM_ARM7_LOAD_WRAM_LAST_ADDR ) ) ) )
+	if(   !(   ( (u32)SYSM_GetCardRomHeader()->main_entry_address >= HW_MAIN_MEM              )
+			&& ( (u32)SYSM_GetCardRomHeader()->main_entry_address <  SYSM_ARM9_MMEM_ENTRY_ADDR_LIMIT ) )
+	   || !(    (   ( (u32)SYSM_GetCardRomHeader()->sub_entry_address  >= HW_MAIN_MEM      )
+			     && ( (u32)SYSM_GetCardRomHeader()->sub_entry_address  <  SYSM_ARM7_LOAD_MMEM_LAST_ADDR ) )
+			 || (   ( (u32)SYSM_GetCardRomHeader()->sub_entry_address  >= HW_WRAM    )
+				 && ( (u32)SYSM_GetCardRomHeader()->sub_entry_address  <  SYSM_ARM7_LOAD_WRAM_LAST_ADDR ) ) ) )
 	{
 		OS_TPrintf("entry address invalid.\n");
 #ifdef __DEBUG_SECURITY_CODE
@@ -628,7 +615,7 @@ static void SYSMi_CheckCardCloneBoot( void )
 {
 	s32	lockCardID;
 	u8 	*buffp         = (u8 *)&s_bannerBuf;		// バナー用バッファをテンポラリとして使用
-	u32 total_rom_size = GetRomHeaderAddr()->total_rom_size ? GetRomHeaderAddr()->total_rom_size : 0x01000000;
+	u32 total_rom_size = SYSM_GetCardRomHeader()->rom_valid_size ? SYSM_GetCardRomHeader()->rom_valid_size : 0x01000000;
 	u32 file_offset    = total_rom_size & 0xFFFFFE00;
 	
 	if( !SYSMi_ExistCard() ) {
