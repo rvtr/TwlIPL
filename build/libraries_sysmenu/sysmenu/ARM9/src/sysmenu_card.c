@@ -77,8 +77,8 @@ BOOL SYSM_IsCardPulledOut(void)
 		case CARD_DETECTING:
 				if (SYSMi_IsCardDataReady()) {
 					u32 cardID = *(vu32 *)REG_CARD_DATA;
-					if (cardID != GetSYSMWork()->nCardID
-					  && SYSM_IsNITROCard())
+					if ( ( cardID != GetSYSMWork()->nCardID ) &&
+						 SYSM_IsExistCard() )
 					{
 						cpw.detectPullOut = TRUE;
 					}
@@ -121,7 +121,7 @@ BOOL SYSM_IsDetectingCardPulledOut(void)
 
 BOOL SYSMi_IsDetectableCardPulledOut(void)
 {
-	return  (SYSM_GetBootFlag() & BFLG_LOAD_CARD_COMPLETED ) ? TRUE : FALSE;
+	return  SYSM_IsExistCard();
 }
 
 

@@ -662,6 +662,10 @@ static void SYSMi_CheckRTC( void )
 	}
 }
 
+BOOL SYSM_IsExistCard( void )
+{
+	return TRUE;
+}
 
 //======================================================================
 //  デバッグ

@@ -130,22 +130,13 @@ u32 SYSM_GetDayNum( u32 year, u32 month )
 	return dayNum;
 }
 
-/*
-u32 SYSM_GetDayNum( u32 year, u32 month )
-{
-	u8 date_tbl[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-	
-	if( ( month == 2 ) && SYSM_IsLeapYear100( year ) ) {
-		return 29;
-	}
-	return date_tbl[ month - 1 ];									// １月から１２月だから１引く
-}
-*/
-
 
 // 簡易うるう年の判定 (うるう年：1、通常の年：0）※RTCのとりうる範2000～2100年に限定する。
 BOOL SYSM_IsLeapYear100( u32 year )
 {
+	if( ( year < 2000 ) || ( year >= 2100 ) ) {
+		OS_Panic( "year = %d : need 2000 - 2099\n", year );
+	}
 	if( ( year & 0x03 ) || ( year == 100 ) ) {						// うるう年は、「4で割り切れ　かつ　100で割り切れない年」または「400で割り切れる年」
 		return FALSE;
 	}else {
