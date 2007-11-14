@@ -93,6 +93,7 @@ GXRgb TempPalette[16 * 16] =
 	MAKECOLOR(31,  0, 18),
 };
 
+// BGキャラクタ
 const unsigned int bg_char_data[16 * 3] = {
     0x00000000, 0x00000000, 0x00000000, 0x00000000,// 0000h
     0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -756,7 +757,7 @@ void GetAndDrawRTCData( RTCDrawProperty *pRTCDraw, BOOL forceGetFlag )
 	}
 }
 
-// ユーザーカラーの切り替え
+// ユーザーカラー領域の切り替え
 void ChangeUserColor( u8 col )
 {
 	int l;

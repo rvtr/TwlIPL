@@ -29,8 +29,8 @@
 
 #define CANCEL_BUTTON_TOP_X					( 2 * 8 )
 #define CANCEL_BUTTON_TOP_Y					( 21 * 8 )
-#define CANCEL_BUTTON_BOTTOM_X				( (CANCEL_BUTTON_TOP_X + 8 ) * 8 )
-#define CANCEL_BUTTON_BOTTOM_Y				( (CANCEL_BUTTON_TOP_Y + 2 ) * 8 )
+#define CANCEL_BUTTON_BOTTOM_X				( CANCEL_BUTTON_TOP_X + (8 * 8) )
+#define CANCEL_BUTTON_BOTTOM_Y				( CANCEL_BUTTON_TOP_Y + (2 * 8) )
 
 #define USER_INFO_MENU_ELEMENT_NUM			4						// ユーザ情報メニューの項目数
 
@@ -51,11 +51,7 @@
 #define CHAR_USCORE		L'＿'
 #define KEY_PER_LINE	11
 
-// 特殊キー配置設定
-typedef struct CsrPos {
-	u16 			x;												// x
-	u16 			y;												// y
-}CsrPos;
+#define KEY_START		109
 
 typedef enum NameOrComment
 {
@@ -77,7 +73,8 @@ static void SetCommentInit( void );
 static int SetCommentMain( void );
 
 // static variable------------------------------
-// 太りすぎの場合は、多分優先的にワークになっていくであろう部分
+// 結構適当にstaticにしているので
+// 少しでもダイエットしたい時はWork扱いにしてAlloc→Freeしましょう
 static u16 s_csr = 0;
 static const u16 *s_pStrSetting[ USER_INFO_MENU_ELEMENT_NUM ];			// メインメニュー用文字テーブルへのポインタリスト
 static int char_mode = 0;
@@ -285,7 +282,7 @@ int SetOwnerInfoMain( void )
 	return 0;
 }
 
-// バーチャルキー関係
+// ソフトウェアキー関係
 // キーの表示
 static void DrawCharKeys( void )
 {
@@ -408,7 +405,7 @@ static void PushKeys( u16 code, NameOrComment noc )
 	}
 }
 
-// バーチャルキー上でのキーパッド及びタッチパッド処理
+// ソフトウェアキー上でのキーパッド及びタッチパッド処理
 // 先にReadTPしておくこと。
 static void PadDetectOnKey( NameOrComment noc )
 {
@@ -464,8 +461,8 @@ static void DrawSetNicknameScene( void )
 {
 	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"NICKNAME" );
-	DrawCharKeys();
 	PutStringUTF16( 128-60 , 21 , TXT_COLOR_USER, s_temp_name.buffer );
+	DrawCharKeys();
 }
 
 // ニックネーム編集の初期化
@@ -475,7 +472,7 @@ static void SetNicknameInit( void )
 	GXS_DispOff();
 	
 	SetSoftKeyboardButton(0);
-	s_key_csr = 0;
+	s_key_csr = KEY_START;
 	
 	// ニックネーム用テンポラリバッファの初期化
 	s_temp_name.length = TSD_GetNickname()->length;
@@ -689,12 +686,12 @@ static void DrawSetCommentScene( void )
 	u16 tempbuf[TWL_COMMENT_LENGTH+2];
 	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"COMMENT" );
-	DrawCharKeys();
 	SVC_CpuCopy( s_temp_comment.buffer, tempbuf, 13 * 2, 16 );
 	*(tempbuf+13)='\n';
 	SVC_CpuCopy( s_temp_comment.buffer+13, tempbuf+14, 13 * 2, 16 );
 	*(tempbuf+TWL_COMMENT_LENGTH+1)=0;
 	PutStringUTF16( 128-78 , 15 , TXT_COLOR_USER, tempbuf );
+	DrawCharKeys();
 }
 
 // コメント編集の初期化
@@ -704,7 +701,7 @@ static void SetCommentInit( void )
 	GXS_DispOff();
 	
 	SetSoftKeyboardButton(0);
-	s_key_csr = 0;
+	s_key_csr = KEY_START;
 	
 	// コメント用テンポラリバッファの初期化
 	s_temp_comment.length = TSD_GetComment()->length;
@@ -740,15 +737,6 @@ static int SetCommentMain( void )
 //======================================================
 // ニックネーム入力用キャラテーブル
 //======================================================
-
-/*
-	※SJIS文字を文字定数として記述する場合、以下の２通りで上位・下位コードの格納順序が
-　　　逆になってしまうので、注意すること。
-	
-	u8 str[] = "あいうえお";	0x82,0xa0,0x82,0xa2...と上位コードが下位バイトに格納される。
-	u16 code = 'あ';			0xa0,0x82 と上位・下位コードがそのまま格納される。
-
-*/
 
 static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM] = {
 	{	// ひらがな
