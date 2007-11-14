@@ -27,8 +27,8 @@
     課題:
         OSi_BootCoreのコピー先決定
 
-        いろいろクリア (ITCM,DTCM,STACK,TEXT,RODATA,DATAなど (OSi_BootCoreは残す))
-            なので、OSi_BootCoreは次のプログラムですぐに壊されそうなところを使う
+        いろいろクリア (ITCM,DTCM,STACK,STATICなど (OSBootCore, OSFromFirmBufは残す))
+            なので、OSBootCoreはできれば次のプログラムですぐに壊されそうなところを使う
 #endif
 
 void OSi_BootCore( ROM_Header* rom_header );

@@ -55,7 +55,7 @@ static void PreInit(void)
      メインメモリ関連
     */
     // SHARED領域クリア (ここだけでOK?)
-    MIi_CpuClearFast( 0, (void*)HW_PXI_SIGNAL_PARAM_ARM9, HW_MAIN_MEM_SHARED_END-HW_PXI_SIGNAL_PARAM_ARM9);
+    MIi_CpuClearFast( 0, (void*)HW_PXI_SIGNAL_PARAM_ARM9, HW_MMEMCHECKER_MAIN-HW_PXI_SIGNAL_PARAM_ARM9);
 
     /*
         FromBrom関連
@@ -79,10 +79,15 @@ static void PostInit(void)
     /*
      メインメモリ関連
     */
-    // (DTCMの手前までの領域を全クリア)
-    //MI_CpuClearFast( (void*)HW_DELIVER_ARG_BUF_END, SDK_SECTION_ARENA_DTCM_START-HW_DELIVER_ARG_BUF_END );
-    // (ARM9領域を全クリア)
-    MI_CpuClearFast( (void*)HW_DELIVER_ARG_BUF_END, HW_MAIN_MEM_MAIN_END-HW_DELIVER_ARG_BUF_END );
+    // ARM9領域を全クリア
+    if ( OS_GetResetParameter() )
+    {
+        MI_CpuClearFast( (void*)HW_DELIVER_ARG_BUF_END, HW_MAIN_MEM_MAIN_END-HW_DELIVER_ARG_BUF_END );
+    }
+    else
+    {
+        MI_CpuClearFast( (void*)HW_MAIN_MEM_MAIN, HW_MAIN_MEM_MAIN_SIZE );
+    }
 
     DC_FlushAll();
 }
@@ -90,8 +95,7 @@ static void PostInit(void)
 /***************************************************************
     CheckHeader
 
-    ヘッダがシステムメニューとして問題ないかチェック
-    先頭32Bは固定値と思われ (リマスターバージョンは違うかな)
+    ヘッダの内容がTWLアプリとして問題ないかチェック
 ***************************************************************/
 static BOOL CheckHeader(void)
 {

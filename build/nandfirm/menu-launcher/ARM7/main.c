@@ -15,6 +15,7 @@
   $Author$
  *---------------------------------------------------------------------------*/
 #include <firm.h>
+#include <twl/mcu.h>
 #include <twl/os/ARM7/debugLED.h>
 
 #define FATFS_HEAP_SIZE     (64*1024)   // FATFS用ヒープ (サイズ調整必要)
@@ -32,11 +33,19 @@ static u8 step = 0x80;
 #endif
 
 /*
-    Profile
+    PROFILE_ENABLE を定義するとある程度のパフォーマンスチェックができます。
+    利用するためには、main.cかどこかに、u32 profile[256]; u32 pf_cnt = 0; を
+    定義する必要があります。
 */
-#ifndef SDK_FINALROM
-#define PRFILE_MAX  128
-u32 profile[PRFILE_MAX];
+#define PROFILE_ENABLE
+
+#ifdef SDK_FINALROM // FINALROMで無効化
+#undef PROFILE_ENABLE
+#endif
+
+#ifdef PROFILE_ENABLE
+#define PROFILE_MAX  128
+u32 profile[PROFILE_MAX];
 u32 pf_cnt = 0;
 #endif
 
@@ -55,6 +64,14 @@ static void PreInit(void)
     {
         OS_Terminate();
     }
+
+    /*
+        リセットパラメータを共有領域にコピー (4バイト分)
+    */
+    *(u32*)HW_RESET_PARAMETER_BUF = (u32)((MCUi_ReadRegister( MCU_REG_TEMP_ADDR + 0 ) << 0)
+                                        | (MCUi_ReadRegister( MCU_REG_TEMP_ADDR + 1 ) << 8)
+                                        | (MCUi_ReadRegister( MCU_REG_TEMP_ADDR + 2 ) << 16)
+                                        | (MCUi_ReadRegister( MCU_REG_TEMP_ADDR + 3 ) << 24));
 }
 
 /***************************************************************
@@ -71,6 +88,57 @@ static void EraseAll(void)
 #endif
 }
 
+/***************************************************************
+    Fatfs4nandInit
+
+    FATFS周りの初期化 for NAND
+***************************************************************/
+static BOOL Fatfs4nandInit(void)
+{
+    /* FATFSライブラリ用にカレントヒープに設定 */
+    /* WRAM上のfatfsHeapをメインメモリヒープとして登録している */
+    {
+        OSHeapHandle hh;
+        u8     *lo = (u8*)fatfsHeap;
+        u8     *hi = (u8*)fatfsHeap + FATFS_HEAP_SIZE;
+        lo = OS_InitAlloc(OS_ARENA_MAIN_SUBPRIV, lo, hi, 1);
+        OS_SetArenaLo(OS_ARENA_MAIN_SUBPRIV, lo);
+        hh = OS_CreateHeap(OS_ARENA_MAIN_SUBPRIV, OS_GetSubPrivArenaLo(), hi);
+        OS_SetCurrentHeap(OS_ARENA_MAIN_SUBPRIV, hh);
+    }
+
+    OS_SetDebugLED(++step);
+
+    if ( !FATFS_InitFIRM( &(OSi_GetFromFirmAddr()->SDNandContext) ) )
+    {
+        return FALSE;
+    }
+
+#ifdef PROFILE_ENABLE
+    // 3: after FATFS
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+#endif
+    OS_SetDebugLED(++step);
+
+    if ( !FATFS_MountDriveFIRM( DRIVE_NO, BOOT_DEVICE, PARTITION_NO ) )
+    {
+        return FALSE;
+    }
+
+#ifdef PROFILE_ENABLE
+    // 4: after Mount
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+#endif
+    OS_SetDebugLED(++step);
+    PM_BackLightOn( FALSE );
+
+    if ( !FATFS_OpenRecentMenu( DRIVE_NO ) )
+    {
+        return FALSE;
+    }
+    return TRUE;
+}
+
 void TwlSpMain( void )
 {
     // OS_InitDebugLED and OS_SetDebugLED are able to call after OS_Init
@@ -83,14 +151,15 @@ void TwlSpMain( void )
 
 #ifndef SDK_FINALROM
     I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, ++step);
-
+#endif
+#ifdef PROFILE_ENABLE
     // 0: before PXI
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
 
     OS_InitFIRM();
 
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
     // 1: after PXI
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
@@ -98,71 +167,53 @@ void TwlSpMain( void )
     OS_SetDebugLED(++step);
 
     PM_InitFIRM();
+    PM_BackLightOn( FALSE );
 
-#ifndef SDK_FINALROM
+#ifdef PROFILE_ENABLE
     // 2: after PM
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
 
-    OS_SetDebugLED(++step);
-
-    /* FATFSライブラリ用にカレントヒープに設定 */
+    if ( !Fatfs4nandInit() )
     {
-    {
-        OSHeapHandle hh;
-        u8     *lo = (u8*)fatfsHeap;
-        u8     *hi = (u8*)fatfsHeap + FATFS_HEAP_SIZE;
-        lo = OS_InitAlloc(OS_ARENA_MAIN_SUBPRIV, lo, hi, 1);
-        OS_SetArenaLo(OS_ARENA_MAIN_SUBPRIV, lo);
-        hh = OS_CreateHeap(OS_ARENA_MAIN_SUBPRIV, OS_GetSubPrivArenaLo(), hi);
-        OS_SetCurrentHeap(OS_ARENA_MAIN_SUBPRIV, hh);
-    }
+        goto end;
     }
 
-    OS_SetDebugLED(++step);
-
-    if ( FATFS_InitFIRM( &(OSi_GetFromFirmAddr()->SDNandContext) ) )
-    {
-#ifndef SDK_FINALROM
-        // 3: after FATFS
-        profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+#ifdef PROFILE_ENABLE
+    // 5: after Open
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
-        OS_SetDebugLED(++step);
+    OS_SetDebugLED(++step);
 
-        if ( FATFS_MountDriveFIRM( DRIVE_NO, BOOT_DEVICE, PARTITION_NO ) )
+    PM_BackLightOn( FALSE );
+
+    if ( !FATFS_LoadHeader() && !FATFS_LoadStatic() )
+    {
+        goto end;
+    }
+
+#ifdef PROFILE_ENABLE
+    // 127: before Boot
+    pf_cnt = PROFILE_MAX-1;
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+    {
+        int i;
+        PXI_RecvID();
+        OS_TPrintf("\n[ARM7] Begin\n");
+        for (i = 0; i < PROFILE_MAX; i++)
         {
-            BOOL result;
-#ifndef SDK_FINALROM
-            // 4: after Mount
-            profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-            OS_SetDebugLED(++step);
-
-            result = FATFS_OpenRecentMenu( DRIVE_NO );
-
-            if ( result )
-            {
-#ifndef SDK_FINALROM
-                // 5: after Open
-                profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-                OS_SetDebugLED(++step);
-
-                if ( FATFS_LoadHeader() && FATFS_LoadStatic() )
-                {
-#ifndef SDK_FINALROM
-                    // 127: before Boot
-                    pf_cnt = PRFILE_MAX-1;
-                    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-                    OS_SetDebugLED(++step);
-
-                    FATFS_Boot();
-                }
-            }
+            OS_TPrintf("0x%08X\n", profile[i]);
         }
+        OS_TPrintf("\n[ARM7] End\n");
     }
+#endif
+    OS_SetDebugLED(++step);
 
+    PM_BackLightOn( TRUE ); // last chance
+
+    FATFS_Boot();
+
+end:
     OS_SetDebugLED( (u8)(0xF0 | step));
 
     EraseAll();

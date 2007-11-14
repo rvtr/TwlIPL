@@ -324,8 +324,9 @@ INITi_InitCoprocessor(void)
 ; Region 0:  IO_VRAM:      Base = 0x04000000, Size = 64MB,  I:NC NB    / D:NC NB,     I:RW / D:RW
 ; Region 1:  MAIN_MEM:     Base = 0x02000000, Size = 8MB*,  I:Cach Buf / D:Cach Buf,  I:RW / D:RW
 ;            (* When hardware is not debugger, size will be reduced to 4MB in OS_InitArena() )
-; Region 2:  ARM7_RESERVE: Base = 0x027e0000, Size = 128KB, I:NC NB    / D:NC NB,     I:NA / D:NA
-;            (* When hardware is not debugger, base will be moved to 0x023e0000 in OS_InitArena() )
+;// Region 2:  ARM7_RESERVE: Base = 0x027e0000, Size = 128KB, I:NC NB    / D:NC NB,     I:NA / D:NA
+;//            (* When hardware is not debugger, base will be moved to 0x023e0000 in OS_InitArena() )
+; Region 2:  SHARED_WORK:  Base = 0x027ff000, Size = 4KB,   I:NC NB    / D:NC NB,     I:NA / D:RW
 ; Region 3:  CARTRIDGE:    Base = 0x08000000, Size = 128MB, I:NC NB    / D:NC NB,     I:NA / D:RW
 ; Region 4:  DTCM:         Base = 0x02fe0000, Size = 16KB,  I:NC NB    / D:NC NB,     I:NA / D:RW
 ; Region 5:  ITCM:         Base = 0x01000000, Size = 16MB,  I:NC NB    / D:NC NB,     I:RW / D:RW
@@ -411,8 +412,10 @@ INITi_InitRegion(void)
 
 @002:   /* ハードウェアが NITRO の場合 */
         /* (1) メインメモリ */
-        SET_PROTECTION_A(c1, HW_MAIN_MEM_MAIN, 8MB)
-        SET_PROTECTION_B(c1, HW_MAIN_MEM_MAIN, 8MB)
+        //SET_PROTECTION_A(c1, HW_MAIN_MEM_MAIN, 8MB)
+        //SET_PROTECTION_B(c1, HW_MAIN_MEM_MAIN, 8MB)
+        SET_PROTECTION_A(c1, HW_MAIN_MEM_MAIN, 32MB)
+        SET_PROTECTION_B(c1, HW_MAIN_MEM_MAIN, 32MB)
         /* Size will be arranged in OS_InitArena(). */
 
         /* (2) ARM7 専用メインメモリ空間 */
@@ -421,8 +424,10 @@ INITi_InitRegion(void)
         /* Base address will be moved in OS_InitArena(). */
 
         /* (3) カートリッジ */
-        SET_PROTECTION_A(c3, HW_CTRDG_ROM, 128MB)
-        SET_PROTECTION_B(c3, HW_CTRDG_ROM, 128MB)
+        //SET_PROTECTION_A(c3, HW_CTRDG_ROM, 128MB)
+        //SET_PROTECTION_B(c3, HW_CTRDG_ROM, 128MB)
+        SET_PROTECTION_A(c3, HW_CTRDG_ROM, 32MB)
+        SET_PROTECTION_B(c3, HW_CTRDG_ROM, 32MB)
 
         /* (7) ARM9/ARM7 共有メインメモリ空間 */
         SET_PROTECTION_A(c7, HW_MAIN_MEM_SHARED, 4KB)
@@ -433,15 +438,18 @@ INITi_InitRegion(void)
         mcr             p15, 0, r0, c2, c0, 1
 
         /* データキャッシュ許可 */
-        mov             r0, #REGION_BIT(0, 1, 0, 0, 0, 0, 1, 0)
+        //mov             r0, #REGION_BIT(0, 1, 0, 0, 0, 0, 1, 0)
+        mov             r0, #REGION_BIT(0, 1, 0, 1, 0, 0, 1, 0)
         mcr             p15, 0, r0, c2, c0, 0
 
         /* ライトバッファ許可 */
-        mov             r0, #REGION_BIT(0, 1, 0, 0, 0, 0, 0, 0)
+        //mov             r0, #REGION_BIT(0, 1, 0, 0, 0, 0, 0, 0)
+        mov             r0, #REGION_BIT(0, 1, 0, 1, 0, 0, 0, 0)
         mcr             p15, 0, r0, c3, c0, 0
 
         /* 命令アクセス許可 */
-        ldr             r0, =REGION_ACC(RW, RW, NA, NA, NA, RW, RO, NA)
+        //ldr             r0, =REGION_ACC(RW, RW, NA, NA, NA, RW, RO, NA)
+        ldr             r0, =REGION_ACC(RW, RW, NA, RW, NA, RW, RO, NA)
         mcr             p15, 0, r0, c5, c0, 3
 
         /* データアクセス許可 */
