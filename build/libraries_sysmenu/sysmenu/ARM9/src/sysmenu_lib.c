@@ -83,10 +83,10 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 #endif /* __SYSM_DEBUG */
 	
     // ARM7コンポーネント用プロテクションユニット領域変更
-    OS_SetProtectionRegion( 2, 0x02280000, 512KB );
+    OS_SetProtectionRegion( 2, SYSM_OWN_ARM7_MMEM_ADDR, 512KB );
 	
 	// ARM9用ブートコード配置のため、アリーナHi位置を下げる
-	OS_SetMainArenaHi( (void *)0x02e7fc00 );
+	OS_SetMainArenaHi( (void *)SYSM_OWN_ARM9_MMEM_ADDR_END );
 	
 	SYSM_SetAllocFunc( pAlloc, pFree );
 	
@@ -143,6 +143,7 @@ int SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 #pragma unused( pTitleList_Card )
 	return 0;
 }
+
 
 // 指定ファイルリード
 static s32 ReadFile(FSFile* pf, void* buffer, s32 size)

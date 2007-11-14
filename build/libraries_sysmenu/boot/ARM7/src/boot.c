@@ -54,16 +54,16 @@ static asm void ClearMemory( void )
 {
 		mov			r11, lr
 #if 1
-		ldr			r0, = 0x02280000								// SYSMENU-ARM7 MMEMのクリア
-		ldr			r1, = 0x02380000
+		ldr			r0, = SYSM_OWN_ARM7_MMEM_ADDR					// SYSMENU-ARM7 MMEMのクリア
+		ldr			r1, = SYSM_OWN_ARM7_MMEM_ADDR_END
 		bl			CpuClear32Byte
 		
-		ldr			r0, = 0x02800000								// SYSMENU-ARM9 MMEMのクリア
-		ldr			r1, = 0x02e7fc00
+		ldr			r0, = SYSM_OWN_ARM9_MMEM_ADDR					// SYSMENU-ARM9 MMEMのクリア
+		ldr			r1, = SYSM_OWN_ARM9_MMEM_ADDR_END
 		bl			CpuClear32Byte
 		
-		ldr			r0, = HW_WRAM_A_LTD								// ARM7-WRAMのクリア( LTDのマッピング )
-		ldr			r1, = BOOTCORE_ARM7_ADDR
+		ldr			r0, = SYSM_OWN_ARM7_WRAM_ADDR					// SYSMENU-ARM7 WRAMのクリア(WRAM-A + ARM7専用WRAM)
+		ldr			r1, = SYSM_OWN_ARM7_WRAM_ADDR_END
 		bl			CpuClear32Byte
 #endif
 		bx			r11
@@ -111,11 +111,11 @@ static asm void ClearBankREG_Stack( void )
 		bl			CpuClear32Byte
 #endif // ISDBG_MB_CHILD_
 		
-		sub			r0, r2, #( HW_PRV_WRAM_END - BOOTCORE_ARM7_ADDR )
+		sub			r0, r2, #( HW_PRV_WRAM_END - SYSM_BOOTCODE_ARM7_ADDR )
 		ldr			r1, = ClearMemory
 		bl			CpuClear32Byte
 		
-		ldr			r2, = 0x027ff000
+		ldr			r2, = 0x02fff000
 		mov			r0, r2
 		add			r1, r2, #0x800
 		bl			CpuClear32Byte
