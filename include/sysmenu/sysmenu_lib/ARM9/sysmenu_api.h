@@ -19,11 +19,11 @@
 #define	__SYSM_LIB_H__
 
 #include <twl.h>
-#include <twl/os/common/format_rom.h>
 #include <twl/nam.h>
+#include <twl/os/common/format_rom.h>
 #include <sysmenu/banner.h>
-#include <sysmenu/sysmenu_work.h>
 #include <sysmenu/settings.h>
+#include <sysmenu/sysmenu_lib/common/sysmenu_work.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,22 +31,22 @@ extern "C" {
 
 // define data----------------------------------------------------------
 
-#define CARD_SLOT_NUM				1			// ƒJ[ƒhƒXƒƒbƒg”
-#define LAUNCHER_TITLE_LIST_NUM		40			// ƒ‰ƒ“ƒ`ƒƒ[‚Ìƒ^ƒCƒgƒ‹ƒŠƒXƒg”
+#ifndef SDK_FINALROM
+//#define __SYSM_DEBUG									// ƒfƒoƒbƒOƒR[ƒh—pƒrƒ‹ƒhƒXƒCƒbƒ`
+#endif // SDK_FINALROM
+
+#define CARD_SLOT_NUM				1					// ƒJ[ƒhƒXƒƒbƒg”
+#define LAUNCHER_TITLE_LIST_NUM		40					// ƒ‰ƒ“ƒ`ƒƒ[‚Ìƒ^ƒCƒgƒ‹ƒŠƒXƒg”
+
+
+#define PAD_PRODUCTION_SKIP_INITIAL_SHORTCUT	( PAD_BUTTON_A | PAD_BUTTON_B	\
+												| PAD_BUTTON_X | PAD_BUTTON_Y | PAD_BUTTON_R )
+														// —ÊYH’ö‚Åg—p‚·‚é‰‰ñ‹N“®İ’è‚ğƒLƒƒƒ“ƒZƒ‹‚·‚éƒVƒ‡[ƒgƒJƒbƒgƒL[
 
 typedef enum PlatformCode {
 	PLATFORM_NTR = 0,
 	PLATFORM_TWL = 1
 }PlatformCode;
-
-
-// ƒ^ƒCƒgƒ‹î•ñƒtƒ‰ƒO
-typedef struct TitleFlags {
-	u16			platform : 4;
-	u16			media    : 4;
-	u16			isLogoSkip : 1;
-	u16			rsv : 7;
-}TitleFlags;
 
 
 // ƒ^ƒCƒgƒ‹î•ñ
@@ -56,16 +56,6 @@ typedef struct TitleProperty {	// ‚±‚Ìî•ñ‚ÍAƒ‰ƒ“ƒ`ƒƒ[‚É‚Í”FØ’Ê‚Á‚Ä‚È‚¢‚¯‚Ç
 	TitleFlags	flags;
 	u8			rsv[ 2 ];
 }TitleProperty;
-
-
-// ƒŠƒZƒbƒgƒpƒ‰ƒ[ƒ^
-typedef struct ResetParam {
-	NAMTitleId	bootTitleID;	// ‹N“®‚·‚éƒ^ƒCƒgƒ‹‚ª‚ ‚é‚©H‚ ‚é‚È‚ç‚»‚Ìƒ^ƒCƒgƒ‹ID
-	u32			rsv_A;
-	TitleFlags	flags;
-	u8			rsv_B[ 2 ];
-}ResetParam;
-
 
 // ƒAƒvƒŠ”FØŒ‹‰Ê
 typedef enum AuthResult {
@@ -105,6 +95,7 @@ extern BOOL SYSM_IsInspectCard( void );											// ŒŸ¸ƒJ[ƒh‚ª·‚³‚Á‚Ä‚¢‚é‚©
 extern BOOL SYSM_IsTPReadable( void );											// TPƒŠ[ƒh‰Â”\‚©H
 extern BOOL SYSM_IsLogoDemoSkip( void );										// ƒƒSƒfƒ‚”ò‚Î‚µó‘Ô‚©H
 extern void SYSM_SetLogoDemoSkip( BOOL skip );									// ƒƒSƒfƒ‚”ò‚Î‚µó‘Ô‚ğİ’è‚·‚éB
+extern const ResetParam *SYSM_GetResetParam( void );							// ƒŠƒZƒbƒgƒpƒ‰ƒ[ƒ^‚Ìæ“¾
 
 // –{‘Ìİ’èƒf[ƒ^ƒAƒNƒZƒX
 extern BOOL SYSM_ReadTWLSettingsFile( void );									// TWLİ’èƒf[ƒ^‚ÌƒŠ[ƒh

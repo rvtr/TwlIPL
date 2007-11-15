@@ -19,9 +19,7 @@
 #include <sysmenu.h>
 #include <sysmenu/boot/common/boot.h>
 #include "sysmenu_define.h"
-#include "sysmenu_card.h"
 #include "spi.h"
-#include "mb_child.h"
 
 // define data-----------------------------------------------------------------
 
@@ -51,9 +49,7 @@ void *(*SYSM_Alloc)( u32 size  );
 void  (*SYSM_Free )( void *ptr );
 
 #ifdef __SYSM_DEBUG
-SharedWork		*swp;												// デバッガでのIPL1SharedWorkのウォッチ用
 SYSM_work		*pSysm;											// デバッガでのSYSMワークのウォッチ用
-NitroConfigData *ncdp;												// デバッガでのNCデータ　のウォッチ用
 #endif
 
 // static variable-------------------------------------------------------------
@@ -80,8 +76,7 @@ static BannerCheckParam s_bannerCheckList[ NTR_BNR_VER_MAX ] = {
 void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 {
 #ifdef __SYSM_DEBUG
-	pSysm = SYSM_GetWork();
-	ncdp  = GetTSD();
+	pSysm = SYSMi_GetWork();
 #endif /* __SYSM_DEBUG */
 	
     // ARM7コンポーネント用プロテクションユニット領域変更
@@ -96,7 +91,7 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 //	MI_SetMainMemoryPriority(MI_PROCESSOR_ARM7);
 //	MI_SetWramBank(MI_WRAM_ARM7_ALL);
 	
-	SVC_CpuClearFast(0x0000, (u16 *)SYSM_GetWork(), sizeof(SYSM_work));	// SYSMワークのクリア
+	reg_OS_PAUSE |= REG_OS_PAUSE_CHK_MASK;							// PAUSEレジスタのチェックフラグのセット
 }
 
 
@@ -117,7 +112,10 @@ void SYSM_SetAllocFunc( void *(*pAlloc)(u32), void (*pFree)(void*) )
 // パラメータリード
 void SYSM_ReadParameters( void )
 {
-	reg_OS_PAUSE |= REG_OS_PAUSE_CHK_MASK;							// PAUSEレジスタのチェックフラグのセット
+	// ARM7のリセットパラメータ取得が完了するのを待つ
+	while( !SYSMi_GetWork()->isARM9Start ) {
+		SVC_WaitByLoop( 0x1000 );
+	}
 	
 	if( SYSM_ReadTWLSettingsFile() ) {								// NANDからTWL本体設定データをリード
 		SYSM_SetBackLightBrightness( (u8)TSD_GetBacklightBrightness() ); // 読み出したTWL本体設定データをもとにバックライト輝度設定
@@ -279,6 +277,12 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size)
 }
 
 
+// リセットパラメータの取得
+const ResetParam *SYSM_GetResetParam( void )
+{
+	return (const ResetParam *)&SYSMi_GetWork()->resetParam;
+}
+
 // ロゴデモスキップか？
 BOOL SYSM_IsLogoDemoSkip( void )
 {
@@ -292,7 +296,7 @@ BOOL SYSM_IsLogoDemoSkip( void )
 static BOOL SYSMi_IsDebuggerBannerViewMode( void )
 {
 #ifdef __IS_DEBUGGER_BUILD
-	return ( SYSM_GetWork()->isOnDebugger &&
+	return ( SYSMi_GetWork()->isOnDebugger &&
 			 SYSMi_IsValidCard() &&
 			 SYSM_GetCardRomHeader()->dbgRomSize == 0 ) ? TRUE : FALSE;
 #else
@@ -303,7 +307,7 @@ static BOOL SYSMi_IsDebuggerBannerViewMode( void )
 // 有効なTWL/NTRカードが差さっているか？
 BOOL SYSM_IsExistCard( void )
 {
-	return SYSM_GetWork()->isExistCard;
+	return SYSMi_GetWork()->isExistCard;
 }
 
 
@@ -493,12 +497,13 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 // デバイス制御
 //
 // ============================================================================
+#define BACKLIGHT_LEVEL_MAX		22
 
 // バックライト輝度調整
 void SYSM_SetBackLightBrightness( u8 brightness )
 {
+	( void )PMi_WriteRegister( 0x20, (u16)( 8 + brightness * 2 ) );	// 輝度調整はとりあえず適当（※ハード担当に消費電力面から適当な値を確認する）
 	TSD_SetBacklightBrightness( brightness );
-	( void )PMi_WriteRegister( 4, (u16)brightness );
 	SYSM_WriteTWLSettingsFile();
 }
 
@@ -550,7 +555,6 @@ static void SYSMi_WriteAdjustRTC( void )
 // バナーファイルの読み込みの実体
 static void SYSMi_ReadCardBannerFile( void )
 {
-	s32 lockCardID;
 	NTRBannerFile *pBanner = &s_bannerBuf;
 	
 	if( ( !SYSMi_IsValidCard() ) || ( *(void** )BANNER_ROM_OFFSET == NULL ) ) {
@@ -559,13 +563,8 @@ static void SYSMi_ReadCardBannerFile( void )
 	}
 	
 	// ROMカードからのバナーデータのリード
-	if ( ( lockCardID = OS_GetLockID() ) > 0 ) {
-		( void )OS_LockCard( (u16 )lockCardID );
-		DC_FlushRange( pBanner, sizeof(NTRBannerFile) );
-		SYSM_ReadCard(*(void** )BANNER_ROM_OFFSET, pBanner, sizeof(NTRBannerFile) );
-		( void )OS_UnLockCard( (u16 )lockCardID );
-		OS_ReleaseLockID( (u16 )lockCardID );
-	}
+	DC_FlushRange( pBanner, sizeof(NTRBannerFile) );
+	CARD_ReadRom( 4, *(void** )BANNER_ROM_OFFSET, pBanner, sizeof(NTRBannerFile) );
 	
 	// バナーデータの正誤チェック
 	{
@@ -621,7 +620,7 @@ BOOL SYSM_IsNTRCard( void )
 static int SYSMi_IsValidCard( void )
 {
 	if( ( SYSM_GetCardRomHeader()->nintendo_logo_crc16 == 0xcf56 ) &&
-	    ( SYSM_GetCardRomHeader()->header_crc16 == SYSM_GetWork()->cardHeaderCrc16 ) ) {
+	    ( SYSM_GetCardRomHeader()->header_crc16 == SYSMi_GetWork()->cardHeaderCrc16 ) ) {
 		return TRUE;												// NTR,TWLカードあり（NintendoロゴCRC、カードヘッダCRCが正しい場合）
 																	// ※Nintendoロゴデータのチェックは、特許の都合上、ロゴ表示ルーチン起動後に行います。
 	}else {
@@ -656,7 +655,6 @@ static BOOL SYSMi_CheckEntryAddress( void )
 // クローンブート判定
 static void SYSMi_CheckCardCloneBoot( void )
 {
-	s32	lockCardID;
 	u8 	*buffp         = (u8 *)&s_bannerBuf;		// バナー用バッファをテンポラリとして使用
 	u32 total_rom_size = SYSM_GetCardRomHeader()->rom_valid_size ? SYSM_GetCardRomHeader()->rom_valid_size : 0x01000000;
 	u32 file_offset    = total_rom_size & 0xFFFFFE00;
@@ -665,19 +663,14 @@ static void SYSMi_CheckCardCloneBoot( void )
 		return;
 	}
 	
-	if ( ( lockCardID = OS_GetLockID() ) > 0 ) {
-		( void )OS_LockCard( (u16 )lockCardID );
-		DC_FlushRange( buffp, BNR_IMAGE_SIZE );
-		SYSM_ReadCard( (void *)file_offset, buffp, BNR_IMAGE_SIZE );
-		( void )OS_UnLockCard( (u16 )lockCardID );
-		OS_ReleaseLockID( (u16 )lockCardID );
-	}
+	DC_FlushRange( buffp, BNR_IMAGE_SIZE );
+	CARD_ReadRom( 4, (void *)file_offset, buffp, BNR_IMAGE_SIZE );
 	
 	buffp += total_rom_size & 0x000001FF;
 	if( *buffp++ == 'a' && *buffp == 'c' ) {
-		SYSM_GetWork()->cloneBootMode = CLONE_BOOT_MODE;
+		SYSMi_GetWork()->cloneBootMode = CLONE_BOOT_MODE;
 	}else {
-		SYSM_GetWork()->cloneBootMode = OTHER_BOOT_MODE;
+		SYSMi_GetWork()->cloneBootMode = OTHER_BOOT_MODE;
 	}
 }
 
@@ -694,7 +687,7 @@ static void SYSMi_CheckRTC( void )
 	    !SYSM_CheckRTCTime( &time )
 #ifndef __IS_DEBUGGER_BUILD											// 青デバッガではRTCの電池がないので、毎回ここにひっかかって設定データが片方クリアされてしまう。これを防ぐスイッチ。
 		||
-		( SYSM_GetWork()->rtcStatus & 0x01 )
+		( SYSMi_GetWork()->rtcStatus & 0x01 )
 #endif
 		) {							// RTCの異常を検出したら、rtc入力フラグ＆rtcOffsetを0にしてNVRAMに書き込み。
 		OS_TPrintf("\"RTC reset\" or \"Illegal RTC data\" detect!\n");

@@ -77,7 +77,7 @@ BOOL SYSM_IsCardPulledOut(void)
 		case CARD_DETECTING:
 				if (SYSMi_IsCardDataReady()) {
 					u32 cardID = *(vu32 *)REG_CARD_DATA;
-					if ( ( cardID != SYSM_GetWork()->nCardID ) &&
+					if ( ( cardID != SYSMi_GetWork()->nCardID ) &&
 						 SYSM_IsExistCard() )
 					{
 						cpw.detectPullOut = TRUE;

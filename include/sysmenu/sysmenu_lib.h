@@ -22,6 +22,9 @@
 #include <sysmenu/sysmenu_lib/ARM9/sysmenu_api.h>
 #endif // SDK_ARM9
 
+#include <sysmenu/sysmenu_lib/common/sysmenu_work.h>
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif

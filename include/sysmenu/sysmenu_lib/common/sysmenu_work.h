@@ -19,28 +19,36 @@
 #define	__SYSMENU_WORK_H__
 
 #include <twl.h>
+#include <twl/nam.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 // compile switch ---------------------------------
-#ifndef SDK_FINALROM
-
-//#define __SYSM_DEBUG
-
-#endif // SDK_FINALROM
-
+//#define SYSM_RESET_PARAM_READY_
 
 // define data ------------------------------------
-#define SYSMENU_VER							0x071113				// SystemMenuバージョン
-
-#define PAD_PRODUCTION_SKIP_INITIAL_SHORTCUT	( PAD_BUTTON_A | PAD_BUTTON_B	\
-												| PAD_BUTTON_X | PAD_BUTTON_Y | PAD_BUTTON_R )
-																	// 量産工程で使用する初回起動設定をキャンセルするショートカットキー
-
 #define CLONE_BOOT_MODE						1
 #define OTHER_BOOT_MODE						2
+
+
+// タイトル情報フラグ
+typedef struct TitleFlags {
+	u16			platform : 4;
+	u16			media    : 4;
+	u16			isLogoSkip : 1;
+	u16			rsv : 7;
+}TitleFlags;
+
+
+// リセットパラメータ
+typedef struct ResetParam {
+	NAMTitleId	bootTitleID;	// 起動するタイトルがあるか？あるならそのタイトルID
+	u32			rsv_A;
+	TitleFlags	flags;
+	u8			rsv_B[ 2 ];
+}ResetParam;
 
 
 //----------------------------------------------------------------------
@@ -49,35 +57,34 @@ extern "C" {
 
 // SYSM共有ワーク構造体
 typedef struct SYSM_work {
-	BOOL				isValidTSD;						// NITRO設定データ無効フラグ
-	BOOL				isOnDebugger;					// デバッガ動作か？
-	BOOL				isExistCard;					// 有効なNTR/TWLカードが存在するか？
-	BOOL				isHotStart;						// Hot/Coldスタート判定
-	BOOL				isARM9Start;					// ARM9スタートフラグ
-	u16					cardHeaderCrc16;				// システムメニューで計算したROMヘッダCRC16
-	int					cloneBootMode;
+	volatile BOOL	isARM9Start;					// ARM9スタートフラグ
+	BOOL			isHotStart;						// Hot/Coldスタート判定
+	BOOL			isValidTSD;						// NITRO設定データ無効フラグ
+	BOOL			isOnDebugger;					// デバッガ動作か？
+	BOOL			isExistCard;					// 有効なNTR/TWLカードが存在するか？
+	u16				cardHeaderCrc16;				// システムメニューで計算したROMヘッダCRC16
+	int				cloneBootMode;
+	ResetParam		resetParam;
 	
 	// NTR-IPL2のレガシー　最終的には消すと思う
-	u32					nCardID;
-	BOOL				enableCardNormalOnly;
-	u8					rtcStatus;
+	u32				nCardID;
+	BOOL			enableCardNormalOnly;
+	u8				rtcStatus;
 }SYSM_work;
 
 
 //----------------------------------------------------------------------
 //　SYSM共有ワーク領域のアドレス獲得
 //----------------------------------------------------------------------
-#if 1
-#define SYSM_GetResetParam()		( (ResetParam *)HW_RED_RESERVED )
-
-#define SYSM_GetWork()				( (SYSM_work *)( HW_RED_RESERVED + 0x40 ) )
-#else
-// SYSMリセットパラメータの取得
-#define SYSM_GetResetParam()		( (ResetParam *)0x02000100 )
-
+#ifdef SYSM_RESET_PARAM_READY_
+// SYSMリセットパラメータの取得（※ライブラリ向け。ARM9側はSYSM_GetResetParamを使用して下さい。）
+#define SYSMi_GetResetParam()		( (ResetParam *)0x02000100 )
 // SYSM共有ワークの取得
-#define SYSM_GetWork()				( (SYSM_work *)HW_RED_RESERVED )
-#endif
+#define SYSMi_GetWork()				( (SYSM_work *)HW_RED_RESERVED )
+#else	// SYSM_RESET_PARAM_READY_
+#define SYSMi_GetResetParam()		( (ResetParam *)HW_RED_RESERVED )
+#define SYSMi_GetWork()				( (SYSM_work *)( HW_RED_RESERVED + 0x40 ) )
+#endif	// SYSM_RESET_PARAM_READY_
 
 // カードROMヘッダワークの取得
 #define SYSM_GetCardRomHeader()		( (ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF )
@@ -86,5 +93,5 @@ typedef struct SYSM_work {
 }
 #endif
 
-#endif		// __SYSMENU_WORK_H__
+#endif // __SYSMENU_WORK_H__
 

@@ -25,11 +25,12 @@
 extern "C" {
 #endif
 
-// define data----------------------------------------------------------
+// define data-------------------------------------------------------
+#define SYSMENU_VER			0x071115
 
 // global variables--------------------------------------------------
 
-// function-------------------------------------------------------------
+// function----------------------------------------------------------
 void LauncherInit( TitleProperty *pTitleList );
 TitleProperty *LauncherMain( TitleProperty *pTitleList );
 

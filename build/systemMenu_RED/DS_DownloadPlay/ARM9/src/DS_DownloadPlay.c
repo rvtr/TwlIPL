@@ -853,9 +853,9 @@ static void CallbackChild_MB( u32 status, void *arg )
 		
 	  case MB_COMM_CSTATE_BOOT_READY:								// ƒu[ƒg€”õŠ®—¹
 		OS_Printf("CB: boot ready.\n");
-//		SYSM_GetWork()->mb_flag = 1;
-//		SYSM_GetWork()->mb_ggid = *(u32 *)( MB_GetBeaconRecvStatus()->list[ pCwork->connectTargetNo ].bssDesc.gameInfo.ggid );
-//		SYSM_GetWork()->mb_ggid = MB_GetBeaconRecvStatus()->list[ pCwork->connectTargetNo ].gameInfo.ggid;
+//		SYSMi_GetWork()->mb_flag = 1;
+//		SYSMi_GetWork()->mb_ggid = *(u32 *)( MB_GetBeaconRecvStatus()->list[ pCwork->connectTargetNo ].bssDesc.gameInfo.ggid );
+//		SYSMi_GetWork()->mb_ggid = MB_GetBeaconRecvStatus()->list[ pCwork->connectTargetNo ].gameInfo.ggid;
 		(void)SetPrgNextSeqQue( PSEQ_BOOT_READY );
 		break;
 		

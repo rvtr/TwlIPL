@@ -22,12 +22,12 @@
 
 
 // define data------------------------------------------
-#define LAUNCHER_ELEMENT_NUM			4							// ロゴメニューの項目数
+#define LAUNCHER_ELEMENT_NUM				4							// ロゴメニューの項目数
 
-#define B_LIGHT_BUTTON_TOP_X				24
-#define B_LIGHT_BUTTON_TOP_Y				21
-#define B_LIGHT_BUTTON_BOTTOM_X				( B_LIGHT_BUTTON_TOP_X + 7 )
-#define B_LIGHT_BUTTON_BOTTOM_Y				( B_LIGHT_BUTTON_TOP_Y + 2 )
+#define B_LIGHT_BUTTON_TOP_X				( 0  )
+#define B_LIGHT_BUTTON_TOP_Y				( 22 * 8 )
+#define B_LIGHT_BUTTON_BOTTOM_X				( B_LIGHT_BUTTON_TOP_X + 32 )
+#define B_LIGHT_BUTTON_BOTTOM_Y				( B_LIGHT_BUTTON_TOP_Y + 16 )
 
 #define CURSOR_PER_SELECT	14
 
@@ -54,11 +54,6 @@ static u64	old_titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
 //===============================================
 // Launcher.c
 //===============================================
-
-static const u16 *const str_backlight[] = {
-	(const u16 *)L"BLT:ON ",
-	(const u16 *)L"BLT:OFF",
-};
 
 //======================================================
 // ランチャー
@@ -275,7 +270,7 @@ void LauncherInit( TitleProperty *pTitleList )
 	
 	DrawBackLightSwitch();
 	
-	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
+	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.", SYSMENU_VER );
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
@@ -294,9 +289,9 @@ void LauncherInit( TitleProperty *pTitleList )
 // ランチャーメイン
 TitleProperty *LauncherMain( TitleProperty *pTitleList )
 {
-	static BOOL touch_bl = FALSE;
-	BOOL tp_bl_on_off	 = FALSE;
-	BOOL tp_select		 = FALSE;
+	static BOOL touch_bl_bak = FALSE;
+	BOOL touch_bl_trg = FALSE;
+	BOOL tp_select = FALSE;
 	static int csr_v = 0;
 	static int selected = 0;
 	
@@ -307,19 +302,16 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	//  バックライトON,OFF制御
 	//--------------------------------------
 	if(tpd.disp.touch) {
-		BOOL range = WithinRangeTP(	B_LIGHT_BUTTON_TOP_X * 8,    B_LIGHT_BUTTON_TOP_Y * 8 - 4,
-									B_LIGHT_BUTTON_BOTTOM_X * 8, B_LIGHT_BUTTON_BOTTOM_Y * 8 - 4, &tpd.disp );
-		if( range && !touch_bl ) {
-			touch_bl	 = TRUE;
-			tp_bl_on_off = TRUE;
-		}
+		BOOL touch_bl = WithinRangeTP(	B_LIGHT_BUTTON_TOP_X,    B_LIGHT_BUTTON_TOP_Y,
+										B_LIGHT_BUTTON_BOTTOM_X, B_LIGHT_BUTTON_BOTTOM_Y, &tpd.disp );
+		touch_bl_trg = ( touch_bl && tpd.disp.touch && !touch_bl_bak ) ;
+		touch_bl_bak = tpd.disp.touch;
 	}else {
-		touch_bl = FALSE;
+		touch_bl_bak = FALSE;
 	}
 	
-	if( (pad.trg & PAD_BUTTON_R) || (tp_bl_on_off) ) {
-//		TSD_SetBacklightBrightness( TSD_GetBacklightBrightness() ^ 0x01 );
-		DrawBackLightSwitch();
+	if( (pad.trg & PAD_BUTTON_START) || touch_bl_trg ) {
+		SYSM_SetBackLightBrightness( (u8)( ( TSD_GetBacklightBrightness() + 1 ) & 0x07 ) );
 	}
 	
 	//--------------------------------------
@@ -386,16 +378,7 @@ static void DrawLauncher(u16 nowCsr, const MenuParam *pMenu)
 // バックライトスイッチの表示
 static void DrawBackLightSwitch(void)
 {
-	u16		color;
-	
-//	if( GetNCDWork()->option.backLightOffFlag ) {
-	if ( 1 ) {
-		color = TXT_COLOR_BLACK;
-	}else {
-		color = TXT_COLOR_RED;
-	}
-	
-	PutStringUTF16( B_LIGHT_BUTTON_TOP_X, B_LIGHT_BUTTON_TOP_Y, color,
-					str_backlight[ 0 ] );
+	PrintfSJIS( B_LIGHT_BUTTON_TOP_X, B_LIGHT_BUTTON_TOP_Y, TXT_COLOR_RED,
+					"BL:%d\n", TSD_GetBacklightBrightness() );
 }
 

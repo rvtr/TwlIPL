@@ -35,7 +35,7 @@
 #include    <twl/aes.h>
 #include    <twl/mcu.h>
 #include <sysmenu/boot/common/boot.h>
-#include <sysmenu/sysmenu_work.h>
+#include <sysmenu/sysmenu_lib/common/sysmenu_work.h>
 
 /*---------------------------------------------------------------------------*
     定数定義
@@ -78,20 +78,29 @@ void
 TwlSpMain(void)
 {
     OSHeapHandle    heapHandle;
-
+	
+	// SYSMワークのクリア
+	MI_CpuClear32( SYSMi_GetWork(), sizeof(SYSM_work) );
+	
     // OS 初期化
     OS_Init();
     PrintDebugInfo();
 	
 	// Cold/Hotスタート判定
-	if( *(vu32 *)HW_RESET_PARAMETER_BUF == 0 ) {	// NANDファームが毎回このバッファにマイコンフリーレジスタ値をセットしてくれる
+	if( *(vu32 *)HW_RESET_PARAMETER_BUF == 0 ) {		// NANDファームが毎回このバッファにマイコンフリーレジスタ値をセットしてくれる
 		u32 data = 1;
-		MCU_SetFreeRegisters( 0, (u8 *)&data, 4 );	// マイコンフリーレジスタにホットスタートフラグをセット
-		SYSM_GetWork()->isHotStart = FALSE;
+		MCU_SetFreeRegisters( 0, (u8 *)&data, 4 );		// マイコンフリーレジスタにホットスタートフラグをセット
+		SYSMi_GetWork()->isHotStart = FALSE;
 	}else {
-		SYSM_GetWork()->isHotStart = TRUE;
+		MI_CpuCopy32 ( SYSMi_GetResetParam(), &SYSMi_GetWork()->resetParam, sizeof(ResetParam) );
+		SYSMi_GetWork()->isHotStart = TRUE;
 	}
-	SYSM_GetWork()->isARM9Start = TRUE;				// ※HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
+#ifdef SYSM_RESET_PARAM_READY_
+	MI_CpuClear32( SYSMi_GetResetParam(), sizeof(ResetParam) );
+#else
+	MI_CpuClear32( &SYSMi_GetWork()->resetParam, sizeof(ResetParam) );
+#endif
+	SYSMi_GetWork()->isARM9Start = TRUE;					// ※HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
 	
     // ヒープ領域設定
 	{
