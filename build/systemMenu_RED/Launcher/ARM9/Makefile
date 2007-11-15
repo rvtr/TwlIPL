@@ -38,10 +38,13 @@ ROM_SPEC				=	main.rsf
 LOGO_DIR				=	Logo
 MISC_DIR				=	../../misc
 
+BG_DIR					=	../../data
+
 SRCS_LOGO				=	logoDemo.c logoData.c
 SRCS					=	main.c launcher.c \
 							$(addprefix $(LOGO_DIR)/, $(SRCS_LOGO)) \
-							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
+							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c \
+						$(BG_DIR)/BGData_Launcher.c
 
 LINCLUDES				=	$(MISC_DIR)/include \
 							$(SRCDIR)/$(LOGO_DIR)

@@ -33,6 +33,9 @@
 
 // extern data------------------------------------------
 
+extern u32 bg_char_data[16 * 3];
+extern u16 bg_scr_data[32 * 32];
+
 // function's prototype declaration---------------------
 static void DrawBackLightSwitch(void);
 static void DrawLauncher(u16 nowCsr, const MenuParam *pMenu);
@@ -99,7 +102,7 @@ static void NTRBannerInit()
     MI_DmaFill32(3, banner_oam_attr, 192, sizeof(banner_oam_attr));     // let out of the screen if not display
 	
 	// ここでやるべきじゃない気がするBGとOBJの設定
-    GX_SetVisiblePlane(GX_PLANEMASK_OBJ | GX_PLANEMASK_BG0);      // display only OBJ&BG0
+    GX_SetVisiblePlane(GX_PLANEMASK_OBJ | GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);      // display only OBJ&BG0
     GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_128K);     // 2D mapping mode
     
     // パレット読み込み
@@ -262,7 +265,13 @@ void LauncherInit( TitleProperty *pTitleList )
 	
 	GX_DispOff();
 	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
+	
+	ChangeUserColor( TSD_GetUserColor() );
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+    
+    // BGデータのロード処理
+	GX_LoadBG1Char(bg_char_data, 0, sizeof(bg_char_data));
+	GX_LoadBG1Scr(bg_scr_data, 0, sizeof(bg_scr_data));
 	
 	DrawBackLightSwitch();
 	
@@ -272,7 +281,7 @@ void LauncherInit( TitleProperty *pTitleList )
 	
 	GetAndDrawRTCData( &g_rtcDraw, TRUE );
 	
-	GX_SetVisiblePlane( GX_PLANEMASK_BG0 );
+	GX_SetVisiblePlane( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1 );
 	GX_DispOn();
 	GXS_DispOn();
 	
@@ -290,12 +299,6 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	BOOL tp_select		 = FALSE;
 	static int csr_v = 0;
 	static int selected = 0;
-	
-	// 文字描画クリア
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
-	
-	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
-	DrawBackLightSwitch();
 	
 	// RTC情報の取得＆表示
 	GetAndDrawRTCData( &g_rtcDraw, FALSE );
@@ -336,6 +339,12 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 		selected = s_csr/CURSOR_PER_SELECT;
 	}
 	
+	// 文字描画クリア
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+	
+	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
+	DrawBackLightSwitch();
+	
 	#ifdef DBGBNR
 	NTRBannerDraw( s_csr, selected, pTitleList );
 	#endif
@@ -343,7 +352,7 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {					// メニュー項目への分岐
 		if(pTitleList[selected].titleID != 0)
 		{
-			NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
+			NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 			return &pTitleList[selected];
 			//return NULL;
 		}
