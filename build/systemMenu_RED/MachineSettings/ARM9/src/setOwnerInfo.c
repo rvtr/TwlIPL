@@ -73,13 +73,15 @@ static void SetCommentInit( void );
 static int SetCommentMain( void );
 
 // static variable------------------------------
-// 結構適当にstaticにしているので
+// 一時的にしか使わない物をstaticにしているので
 // 少しでもダイエットしたい時はWork扱いにしてAlloc→Freeしましょう
 static u16 s_csr = 0;
 static const u16 *s_pStrSetting[ USER_INFO_MENU_ELEMENT_NUM ];			// メインメニュー用文字テーブルへのポインタリスト
 static int char_mode = 0;
 static u16 s_key_csr = 0;
 static u8 s_color_csr = 0;
+static BOOL s_birth_csr = FALSE;
+static TWLDate s_temp_birthday;
 static TWLNickname s_temp_name;
 static TWLComment s_temp_comment;
 
@@ -512,7 +514,11 @@ static void DrawSetBirthdayScene( void )
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"BIRTHDAY" );
 	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"CANCEL" );
-	PrintfSJIS( 128, 10*8, TXT_UCOLOR_G0, "%d／%d", TSD_GetBirthday()->month, TSD_GetBirthday()->day);
+	PutStringUTF16( 128-36+16, 12*8, TXT_COLOR_BLACK, (const u16 *)L"月　　　日" );
+	PrintfSJIS( 128-36, 12*8, (s_birth_csr ? TXT_COLOR_GREEN : TXT_COLOR_BLACK), "%d", s_temp_birthday.month / 10);
+	PrintfSJIS( 128-28, 12*8, (s_birth_csr ? TXT_COLOR_GREEN : TXT_COLOR_BLACK), "%d", s_temp_birthday.month % 10);
+	PrintfSJIS( 128+12, 12*8, (!s_birth_csr ? TXT_COLOR_GREEN : TXT_COLOR_BLACK), "%d", s_temp_birthday.day / 10);
+	PrintfSJIS( 128+20, 12*8, (!s_birth_csr ? TXT_COLOR_GREEN : TXT_COLOR_BLACK), "%d", s_temp_birthday.day % 10);
 }
 
 // 誕生日編集の初期化
@@ -522,6 +528,9 @@ static void SetBirthdayInit( void )
 	
 	GX_DispOff();
 	GXS_DispOff();
+	
+	s_temp_birthday.month = TSD_GetBirthday()->month;
+	s_temp_birthday.day = TSD_GetBirthday()->day;
 	
 	// NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
 	for( i = 0; i < USER_INFO_MENU_ELEMENT_NUM; i++ ) {
@@ -541,7 +550,8 @@ static void SetBirthdayInit( void )
 // 誕生日編集メイン
 static int SetBirthdayMain( void )
 {
-	BOOL tp_select,tp_cancel = FALSE;
+	u8 maxday;
+	BOOL tp_cancel = FALSE;
 	
 	ReadTP();
 	
@@ -549,17 +559,21 @@ static int SetBirthdayMain( void )
 	//  キー入力処理
 	//--------------------------------------
 	if( pad.trg & PAD_KEY_DOWN ){									// カーソルの移動
-		if( ++s_csr == USER_INFO_MENU_ELEMENT_NUM ) {
-			s_csr=0;
-		}
+		(*(s_birth_csr ? &s_temp_birthday.month : &s_temp_birthday.day))--;
 	}
 	if( pad.trg & PAD_KEY_UP ){
-		if( --s_csr & 0x80 ) {
-			s_csr=USER_INFO_MENU_ELEMENT_NUM - 1;
-		}
+		(*(s_birth_csr ? &s_temp_birthday.month : &s_temp_birthday.day))++;
 	}
-	tp_select = SelectMenuByTP( &s_csr, &s_settingParam );
-	DrawMenu( s_csr, &s_settingParam );
+	if( pad.trg & (PAD_KEY_RIGHT | PAD_KEY_LEFT)){
+		s_birth_csr = !s_birth_csr;
+	}
+	
+	// 日付チェック
+	if( s_temp_birthday.month == 0 ) s_temp_birthday.month = 12;
+	if( s_temp_birthday.month == 13 ) s_temp_birthday.month = 1;
+	maxday = (u8)SYSM_GetDayNum( 2000, s_temp_birthday.month );
+	if( s_temp_birthday.day == 0 ) s_temp_birthday.day = maxday;
+	if( s_temp_birthday.day > maxday ) s_temp_birthday.day = 1;
 
 	// [CANCEL]ボタン押下チェック
 	if( tpd.disp.touch ) {
@@ -569,27 +583,13 @@ static int SetBirthdayMain( void )
 	
 	DrawSetBirthdayScene();
 	
-	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// メニュー項目への分岐
-		if( s_settingPos[ s_csr ].enable ) {
-			switch( s_csr ) {
-				case 0:
-					SetNicknameInit();
-					g_pNowProcess = SetNicknameMain;
-					break;
-				case 1:
-					SetBirthdayInit();
-					g_pNowProcess = SetBirthdayMain;
-					break;
-				case 2:
-					SetUserColorInit();
-					g_pNowProcess = SetUserColorMain;
-					break;
-				case 3:
-					SetCommentInit();
-					g_pNowProcess = SetCommentMain;
-					break;
-			}
-		}
+	if( pad.trg & PAD_BUTTON_A ) {
+		TSD_SetBirthday(&s_temp_birthday);
+		TSD_SetFlagBirthday( TRUE );
+		(void)SYSM_WriteTWLSettingsFile();// ファイルへ書き込み
+		SetOwnerInfoInit();
+		g_pNowProcess = SetOwnerInfoMain;
+		return 0;
 	}else if( ( pad.trg & PAD_BUTTON_B ) || tp_cancel ) {
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
