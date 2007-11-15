@@ -133,6 +133,14 @@ Property
 	#
 	CodecMode		$(MAKEROM_CODEC_MODE)
 
+
+	TitleID_Lo				$(TITLEID_LO)
+	TitleID_Hi				0x00010001
+	PrivateSaveDataSize		16K
+#	PublicSaveDataSize		16K
+
+
+
 	###
 	#### END
 }

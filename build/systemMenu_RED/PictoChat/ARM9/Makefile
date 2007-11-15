@@ -38,6 +38,7 @@ SRCS					=	main.c PictoChat.c \
 
 LINCLUDES				=	$(MISC_DIR)/include
 
+MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
 
 include $(TWLIPL_ROOT)/build/buildtools/commondefs
 
