@@ -37,6 +37,9 @@
 
 // extern data------------------------------------------
 
+extern u32 bg_char_data[16 * 3];
+extern u16 bg_scr_data[32 * 32];
+
 // function's prototype declaration---------------------
 static BOOL InitialSetting( void );
 static void InitialSettingFinalizeInit( void );
@@ -124,6 +127,10 @@ void MachineSettingInit( void )
 	GX_DispOff();
 	GXS_DispOff();
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+    
+    // BGデータのロード処理
+	GX_LoadBG1Char(bg_char_data, 0, sizeof(bg_char_data));
+	GX_LoadBG1Scr(bg_scr_data, 0, sizeof(bg_scr_data));
 	
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"MACHINE SETTINGS" );
 	

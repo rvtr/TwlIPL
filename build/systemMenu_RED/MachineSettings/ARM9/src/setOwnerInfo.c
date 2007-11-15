@@ -185,22 +185,22 @@ static void DrawOwnerInfoMenuScene( void )
 	u8 color;
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"USER INFORMATION" );
-	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_USER, (const u16 *)L"CANCEL" );
+	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"CANCEL" );
     // メニュー項目
 	DrawMenu( s_csr, &s_settingParam );
 	// ニックネーム
-	PutStringUTF16( 128 , 8*8, TXT_COLOR_USER, TSD_GetNickname()->buffer );
+	PutStringUTF16( 128 , 8*8, TXT_UCOLOR_G0, TSD_GetNickname()->buffer );
 	// 誕生日
-	PrintfSJIS( 128, 10*8, TXT_COLOR_USER, "%d／%d", TSD_GetBirthday()->month, TSD_GetBirthday()->day);
+	PrintfSJIS( 128, 10*8, TXT_UCOLOR_G0, "%d／%d", TSD_GetBirthday()->month, TSD_GetBirthday()->day);
 	// カラー
 	color = TSD_GetUserColor();
-	PutStringUTF16( 128 , 12*8, TXT_COLOR_USER, L"■" );
+	PutStringUTF16( 128 , 12*8, TXT_UCOLOR_G0, L"■" );
 	// コメント
 	SVC_CpuCopy( TSD_GetComment()->buffer, tempbuf, 13 * 2, 16 );
 	*(tempbuf+13)='\n';
 	SVC_CpuCopy( TSD_GetComment()->buffer+13, tempbuf+14, 13 * 2, 16 );
 	*(tempbuf+TWL_COMMENT_LENGTH+1)=0;
-	PutStringUTF16( 128-78 , 16*8 , TXT_COLOR_USER, tempbuf );
+	PutStringUTF16( 128-78 , 16*8 , TXT_UCOLOR_G0, tempbuf );
 }
 
 // オーナー情報編集の初期化
@@ -463,7 +463,7 @@ static void DrawSetNicknameScene( void )
 {
 	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"NICKNAME" );
-	PutStringUTF16( 128-60 , 21 , TXT_COLOR_USER, s_temp_name.buffer );
+	PutStringUTF16( 128-60 , 21 , TXT_UCOLOR_G0, s_temp_name.buffer );
 	DrawCharKeys();
 }
 
@@ -511,8 +511,8 @@ static void DrawSetBirthdayScene( void )
 {
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"BIRTHDAY" );
-	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_USER, (const u16 *)L"CANCEL" );
-	PrintfSJIS( 128, 10*8, TXT_COLOR_USER, "%d／%d", TSD_GetBirthday()->month, TSD_GetBirthday()->day);
+	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"CANCEL" );
+	PrintfSJIS( 128, 10*8, TXT_UCOLOR_G0, "%d／%d", TSD_GetBirthday()->month, TSD_GetBirthday()->day);
 }
 
 // 誕生日編集の初期化
@@ -604,14 +604,14 @@ static void DrawColorSample( void )
 	
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"USER COLOR" );
-	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_USER, (const u16 *)L"CANCEL" );
+	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"CANCEL" );
 	for(l=0;l<16;l++) //16色
 	{
 		PutStringUTF16( 88 + 24 * (l%4), 54 + 24 * (l/4), 40 + l + 8 * (l/8), (const u16 *)L"■" );
 	}
 	for(l=0;l<4;l++)
 	{
-		PutStringUTF16( 83 + 24 * (s_color_csr%4) + 10*(l%2), 49 + 24 * (s_color_csr/4) + 10*(l/2), TXT_COLOR_USER, (const u16 *)L"■" );
+		PutStringUTF16( 83 + 24 * (s_color_csr%4) + 10*(l%2), 49 + 24 * (s_color_csr/4) + 10*(l/2), TXT_UCOLOR_G0, (const u16 *)L"■" );
 	}
 }
 
@@ -701,7 +701,7 @@ static void DrawSetCommentScene( void )
 	*(tempbuf+13)='\n';
 	SVC_CpuCopy( s_temp_comment.buffer+13, tempbuf+14, 13 * 2, 16 );
 	*(tempbuf+TWL_COMMENT_LENGTH+1)=0;
-	PutStringUTF16( 128-78 , 15 , TXT_COLOR_USER, tempbuf );
+	PutStringUTF16( 128-78 , 15 , TXT_UCOLOR_G0, tempbuf );
 	DrawCharKeys();
 }
 
