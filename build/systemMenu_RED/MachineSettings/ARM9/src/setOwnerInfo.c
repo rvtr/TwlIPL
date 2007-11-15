@@ -607,7 +607,7 @@ static void DrawColorSample( void )
 	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"CANCEL" );
 	for(l=0;l<16;l++) //16F
 	{
-		PutStringUTF16( 88 + 24 * (l%4), 54 + 24 * (l/4), 40 + l + 8 * (l/8), (const u16 *)L"¡" );
+		PutStringUTF16( 88 + 24 * (l%4), 54 + 24 * (l/4), TXT_UCOLOR_GRAY + l, (const u16 *)L"¡" );
 	}
 	for(l=0;l<4;l++)
 	{
