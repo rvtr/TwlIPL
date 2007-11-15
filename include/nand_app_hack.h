@@ -31,7 +31,7 @@ static BOOL FS_IdentifyTitle(u32 titleLo)
                         ((titleLo / 10) % 10) + '0',
                         ((titleLo / 1) % 10) + '0');
 */
-			STD_TSPrintf(path, "nand:/title_e/00010001/%08X/content/12123434.app", titleLo );
+			STD_TSPrintf(path, "nand:/title/00010001/%08X/content/12123434.app", titleLo );
             if (!FS_IsAvailable())
             {
                 FS_Init(FS_DMA_NOT_USE);
