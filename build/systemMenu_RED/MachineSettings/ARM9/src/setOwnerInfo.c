@@ -190,6 +190,8 @@ static void DrawOwnerInfoMenuScene( void )
 	DrawMenu( s_csr, &s_settingParam );
 	// ニックネーム
 	PutStringUTF16( 128 , 8*8, TXT_COLOR_USER, TSD_GetNickname()->buffer );
+	// 誕生日
+	PrintfSJIS( 128, 10*8, TXT_COLOR_USER, "%d／%d", TSD_GetBirthday()->month, TSD_GetBirthday()->day);
 	// カラー
 	color = TSD_GetUserColor();
 	PutStringUTF16( 128 , 12*8, TXT_COLOR_USER, L"■" );
@@ -505,6 +507,14 @@ static int SetNicknameMain( void )
 	return 0;
 }
 
+static void DrawSetBirthdayScene( void )
+{
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"BIRTHDAY" );
+	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_USER, (const u16 *)L"CANCEL" );
+	PrintfSJIS( 128, 10*8, TXT_COLOR_USER, "%d／%d", TSD_GetBirthday()->month, TSD_GetBirthday()->day);
+}
+
 // 誕生日編集の初期化
 static void SetBirthdayInit( void )
 {
@@ -512,17 +522,13 @@ static void SetBirthdayInit( void )
 	
 	GX_DispOff();
 	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
-	
-	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"BIRTHDAY" );
-	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_USER, (const u16 *)L"CANCEL" );
 	
 	// NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
 	for( i = 0; i < USER_INFO_MENU_ELEMENT_NUM; i++ ) {
 		s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ TSD_GetLanguage() ];
 	}
 	
-	DrawMenu( s_csr, &s_settingParam );
+	DrawSetBirthdayScene();
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
@@ -560,6 +566,8 @@ static int SetBirthdayMain( void )
 		tp_cancel = WithinRangeTP( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y,
 							   CANCEL_BUTTON_BOTTOM_X, CANCEL_BUTTON_BOTTOM_Y, &tpd.disp );
 	}
+	
+	DrawSetBirthdayScene();
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// メニュー項目への分岐
 		if( s_settingPos[ s_csr ].enable ) {
@@ -601,7 +609,10 @@ static void DrawColorSample( void )
 	{
 		PutStringUTF16( 88 + 24 * (l%4), 54 + 24 * (l/4), 40 + l + 8 * (l/8), (const u16 *)L"■" );
 	}
-	PutStringUTF16( 88 + 24 * (s_color_csr%4), 54 + 24 * (s_color_csr/4), TXT_COLOR_WHITE, (const u16 *)L"☆" );
+	for(l=0;l<4;l++)
+	{
+		PutStringUTF16( 83 + 24 * (s_color_csr%4) + 10*(l%2), 49 + 24 * (s_color_csr/4) + 10*(l/2), TXT_COLOR_USER, (const u16 *)L"■" );
+	}
 }
 
 // ユーザーカラー編集の初期化
