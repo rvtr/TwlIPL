@@ -515,6 +515,67 @@ void DrawMenu( u16 nowCsr, const MenuParam *pMenu )
 	}
 }
 
+// タッチパネルによる選択を行う関数・汎用版。
+// 主にチャタリングを吸収する程度の性能を持つ。
+// SelectSomethingFunc型の関数ポインタfuncには、次に示す条件を満たす関数を作り、リストにしてセットして使う。
+// １．要素上でタッチしていればTRUEを返し、そうでなければFALSEを返す。
+// ２．第一引数に与えたポインタの指す変数にカーソル位置を入れて返す。
+BOOL SelectSomethingByTP( u16 *nowCsr, SelectSomethingFunc func[], int funcnum )
+{
+	int i;
+	TPData *target;
+	static	u16 detach_count	= 0;
+	static 	u16 csr_old			= 0xffff;
+	static  u16 same_csr_count	= 0;
+	
+	// detach_countが始動していたら、カウント判定。
+	if( detach_count > 0 ) {
+		if( tpd.disp.touch == 0 ) {									// TPが押されていなければ、カウント進行し、TP_CSR_DETACH_COUNTカウントでメニュー選択
+			if( ++detach_count == TP_CSR_DETACH_COUNT ) {
+				detach_count = 0;
+				return TRUE;
+			}else {
+				return FALSE;
+			}
+		}
+	}
+	detach_count=0;													// detachカウント値のクリア
+	
+	// 通常は、TPデータがメニュー上にあるかどうかを判定。
+	if( tpd.disp.touch )	target = &tpd.disp;
+	else					target = &tpd.last;
+
+	for( i = 0; i < funcnum; i++ ) {
+		if( tpd.disp.touch ) {										// タッチパネルがタッチされているなら、
+			u16 csr;
+			if( func[i]( &csr, target ) ) {									// funcは要素上にタッチされていればTRUEを返し、カーソル位置も返してくれる関数
+				OS_TPrintf( "InRange\n" );
+				if( tpd.disp.validity == TP_VALIDITY_VALID ) {		// カーソルをその要素に移動
+					if( csr_old == csr ) {
+						if( same_csr_count < TP_CSR_TOUCH_COUNT ) {
+							same_csr_count++;
+						}else {
+							*nowCsr = csr;
+						}
+						return FALSE;
+					}else {
+						csr_old = csr;
+					}
+					break;
+				}
+			}else {
+				OS_TPrintf( "OutRange\n" );
+			}
+		}else {	// touch==0
+			if( same_csr_count == TP_CSR_TOUCH_COUNT ) {
+				detach_count = 1;
+				break;
+			}
+		}
+	}
+	same_csr_count = 0;
+	return FALSE;
+}
 
 // タッチパネルによるメニュー選択
 BOOL SelectMenuByTP( u16 *nowCsr, const MenuParam *pMenu )

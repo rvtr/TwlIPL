@@ -26,6 +26,8 @@
 #define CLIST_LT_Y							50
 
 #define CLIST_MARGIN						14
+#define CLIST_KEY_PER_SEGMENT				5
+#define CLIST_SEGMENT_INTERVAL				7
 
 #define CANCEL_BUTTON_TOP_X					( 2 * 8 )
 #define CANCEL_BUTTON_TOP_Y					( 21 * 8 )
@@ -303,7 +305,7 @@ static void DrawCharKeys( void )
 			if( (code >= CODE_BUTTON_TOP_) && (code < CODE_BUTTON_BOTTOM_) )
 			{
 				int x = code - CODE_BUTTON_TOP_;
-				PutStringUTF16( CLIST_LT_X + CLIST_MARGIN*(l%KEY_PER_LINE) + 7*((l%KEY_PER_LINE)/5) ,
+				PutStringUTF16( CLIST_LT_X + CLIST_MARGIN*(l%KEY_PER_LINE) + CLIST_SEGMENT_INTERVAL*((l%KEY_PER_LINE)/CLIST_KEY_PER_SEGMENT) ,
 				CLIST_LT_Y + CLIST_MARGIN*(l/KEY_PER_LINE) , color, str_button[x] );
 			}
 			else
@@ -311,7 +313,7 @@ static void DrawCharKeys( void )
 				u16 s[2];
 				s[0] = code;
 				s[1] = 0;
-				PutStringUTF16( CLIST_LT_X + CLIST_MARGIN*(l%KEY_PER_LINE) + 7*((l%KEY_PER_LINE)/5) ,
+				PutStringUTF16( CLIST_LT_X + CLIST_MARGIN*(l%KEY_PER_LINE) + CLIST_SEGMENT_INTERVAL*((l%KEY_PER_LINE)/CLIST_KEY_PER_SEGMENT) ,
 				CLIST_LT_Y + CLIST_MARGIN*(l/KEY_PER_LINE) , color, s );
 			}
 		}
@@ -409,10 +411,59 @@ static void PushKeys( u16 code, NameOrComment noc )
 	}
 }
 
+// PadDetectOnKeyのSelectSomethingByTPで使うSelectSomethingFuncの実装
+static BOOL SelectSoftwareKeyFunc( u16 *csr, TPData *tgt )
+{
+	// まずは候補となる座標（カーソル単位）を取得
+	int csrx = ((tgt->x - CLIST_LT_X) - CLIST_SEGMENT_INTERVAL*(tgt->x / (CLIST_KEY_PER_SEGMENT*CLIST_MARGIN))) / CLIST_MARGIN ;
+	int csry = (tgt->y - CLIST_LT_Y) / CLIST_MARGIN ;
+	int csrxy;
+	NNSG2dTextRect rect;
+	u16 code;
+	BOOL ret;
+	if ( csrx >= KEY_PER_LINE ) csrx = KEY_PER_LINE - 1;
+	
+	csrxy = csrx + csry * KEY_PER_LINE;
+	if ( csrxy >= CHAR_LIST_CHAR_NUM) return FALSE;// 明らかにはみ出した
+
+	// 候補座標のキーコード取得
+	code = char_tbl[char_mode][csrxy];
+	if(code == EOM_) return FALSE;
+	
+	// 候補座標の領域取得
+	if( (code >= CODE_BUTTON_TOP_) && (code < CODE_BUTTON_BOTTOM_) )
+	{
+		int x = code - CODE_BUTTON_TOP_;
+		rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, str_button[x] );
+	}
+	else
+	{
+		u16 s[2];
+		s[0] = code;
+		s[1] = 0;
+		// rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, s );
+		// 文字幅じゃ判定が厳しい
+		rect.width = CLIST_MARGIN;
+		rect.height = CLIST_MARGIN;
+	}
+	csrx = CLIST_LT_X + CLIST_MARGIN*(csrxy%KEY_PER_LINE) + CLIST_SEGMENT_INTERVAL*((csrxy%KEY_PER_LINE)/CLIST_KEY_PER_SEGMENT);
+	csry = CLIST_LT_Y + CLIST_MARGIN*(csrxy/KEY_PER_LINE);
+	
+	// 候補座標の領域にタッチ座標が含まれているかチェック
+	ret = WithinRangeTP( csrx, csry, csrx+rect.width, csry+rect.height, tgt );
+	
+	if(ret)
+	{
+		*csr = (u16)csrxy;
+	}
+	return ret;
+}
+
 // ソフトウェアキー上でのキーパッド及びタッチパッド処理
 // 先にReadTPしておくこと。
 static void PadDetectOnKey( NameOrComment noc )
 {
+	SelectSomethingFunc func[1];
 	BOOL tp_select = FALSE;
 	//--------------------------------------
 	//  キー入力処理
@@ -453,7 +504,10 @@ static void PadDetectOnKey( NameOrComment noc )
 		while(char_tbl[char_mode][s_key_csr]==EOM_);
 	}
 	
-	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// Aキーが押された
+	func[0] = (SelectSomethingFunc)SelectSoftwareKeyFunc;
+	tp_select = SelectSomethingByTP(&s_key_csr, func, 1 );
+	
+	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// キーが押された
 		PushKeys( char_tbl[char_mode][s_key_csr], noc );
 	}else if( pad.trg & PAD_BUTTON_B ) {
 		DeleteACharacter(noc);
@@ -501,10 +555,8 @@ static int SetNicknameMain( void )
 	
 	PadDetectOnKey(NOC_NAME);
 	
-	if(pad.trg || tpd.disp.touch)
-	{// 描画処理……ボタン押したorタッチ時ぐらいで十分
-		DrawSetNicknameScene();
-	}
+	// 描画処理
+	DrawSetNicknameScene();
 	
 	return 0;
 }
@@ -737,10 +789,8 @@ static int SetCommentMain( void )
 	
 	PadDetectOnKey(NOC_COMMENT);
 	
-	if(pad.trg || tpd.disp.touch)
-	{// 描画処理……ボタン押したorタッチ時ぐらいで十分
-		DrawSetCommentScene();
-	}
+	// 描画処理
+	DrawSetCommentScene();
 	
 	return 0;
 }

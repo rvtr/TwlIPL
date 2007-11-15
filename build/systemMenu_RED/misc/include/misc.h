@@ -152,6 +152,8 @@ typedef struct RTCDrawProperty {
 	RTCTime	time_old;
 }RTCDrawProperty;
 
+typedef BOOL (*SelectSomethingFunc)( u16 *csr, TPData *tgt );
+
 // global variables--------------------------------------------------
 extern TpWork			tpd;			// タッチパネルデータ
 extern KeyWork			pad;			// キーパッド入力データ
@@ -176,6 +178,7 @@ void PrintfSJISSub( int x, int y, int color, const char *fmt, ... );
 void ReadKeyPad( void );
 void ReadTP( void );
 void DrawMenu( u16 nowCsr, const MenuParam *pMenu );
+BOOL SelectSomethingByTP( u16 *nowCsr, SelectSomethingFunc func[], int funcnum );
 BOOL SelectMenuByTP( u16 *nowCsr, const MenuParam *pMenu );
 BOOL WithinRangeTP( int top_x, int top_y, int bottom_x, int bottom_y, TPData *tgt );
 void SetBannerIconOBJ( GXOamAttr *pDstOAM, BannerFileV1 *bannerp );
