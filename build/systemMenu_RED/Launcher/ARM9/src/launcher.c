@@ -66,8 +66,7 @@ static u64	old_titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
 
 static NTRBannerFile *empty_banner;
 static NTRBannerFile *nobanner_banner;
-static NTRBannerFile *card_banner;
-static NTRBannerFile *download_banner;
+static NTRBannerFile *no_card_banner;
 static u8 image_index_list[ LAUNCHER_TITLE_LIST_NUM ];
 static const int MAX_SHOW_BANNER = 6;
 static GXOamAttr banner_oam_attr[MAX_SHOW_BANNER+10];// アフィンパラメータ埋める関係で少し大きめ
@@ -82,9 +81,7 @@ static void LoadNTRBannerFiles()
 	NNS_G2D_ASSERT( size > 0 );
 	size = CMN_LoadFile( (void **)&nobanner_banner, "data/NoBanner.bnr", &g_allocator);
 	NNS_G2D_ASSERT( size > 0 );
-	size = CMN_LoadFile( (void **)&card_banner, "data/CardBanner.bnr", &g_allocator);
-	NNS_G2D_ASSERT( size > 0 );
-	size = CMN_LoadFile( (void **)&download_banner, "data/DownloadBanner.bnr", &g_allocator);
+	size = CMN_LoadFile( (void **)&no_card_banner, "data/NoCardBanner.bnr", &g_allocator);
 	NNS_G2D_ASSERT( size > 0 );
 }
 
@@ -148,7 +145,14 @@ static void NTRBannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	{
 		if(titleprop[l].titleID == 0) //IDがゼロの時はEmpty
 		{
-			titleprop[l].pBanner = empty_banner;
+			if(l != 0)
+			{
+				titleprop[l].pBanner = empty_banner;
+			}
+			else
+			{
+				titleprop[l].pBanner = no_card_banner;
+			}
 		}
 		else if(titleprop[l].pBanner == NULL) //IDがゼロじゃないのにバナーがNULLならノーバナー
 		{
