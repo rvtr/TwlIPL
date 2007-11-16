@@ -113,7 +113,8 @@ SDK_WEAK_SYMBOL asm void _start( void )
         sub             sp, r1, #4 // 4byte for stack check code
 
         //---- read reset flag from pmic
-#ifdef TWL_PLATFORM_TS
+#ifdef FIRM_DISABLE_CR_AT_WARMBOOT
+#ifdef SDK_TS
 #if 0
         mov             r0, #REG_PMIC_SW_FLAGS_ADDR
         bl              PMi_GetRegister
@@ -122,15 +123,17 @@ SDK_WEAK_SYMBOL asm void _start( void )
         mov             r0, #I2C_SLAVE_MICRO_CONTROLLER
         mov             r1, #MCU_REG_TEMP_ADDR
         bl              I2Ci_ReadRegister
-        //ands            r0, r0, #0x01   // under construction
-        cmp             r0, #0   // under construction
+        ldr             r2, =HW_RESET_PARAMETER_BUF
+        str             r0, [r2]    // store 4 bytes
+        cmp             r0, #0
 #endif
         movne           r0, #FIRM_PXI_ID_WARMBOOT
         moveq           r0, #FIRM_PXI_ID_COLDBOOT
         bl              PXI_SendByIntf
         mov             r0, #FIRM_PXI_ID_INIT_MMEM
         bl              PXI_WaitByIntf
-#endif // TWL_PLATFORM_TS
+#endif // SDK_TS
+#endif // FIRM_DISABLE_CR_AT_WARMBOOT
 
         //---- wait for main memory mode into burst mode
         ldr             r3, =REG_EXMEMCNT_L_ADDR

@@ -122,7 +122,8 @@ SDK_WEAK_SYMBOL asm void _start( void )
         sub             sp, r1, #4 // 4byte for stack check code
 
         //---- read reset flag from pmic
-#ifdef TWL_PLATFORM_TS
+#ifdef SDK_TS
+#ifdef FIRM_DISABLE_CR_AT_WARMBOOT
 @0:     bl              PXI_RecvByIntf
         cmp             r0, #FIRM_PXI_ID_COLDBOOT
         cmpne           r0, #FIRM_PXI_ID_WARMBOOT
@@ -137,12 +138,12 @@ SDK_WEAK_SYMBOL asm void _start( void )
         mov             r0, #FIRM_PXI_ID_INIT_MMEM
         bl              PXI_SendByIntf
 
-#else // TWL_PLATFORM_BB
+#else // !FIRM_DISABLE_CR_AT_WARMBOOT
         //---- initialize Main Memory
         bl              MIi_InitMainMemCR
 
-#endif // TWL_PLATFORM_BB
-
+#endif // !FIRM_DISABLE_CR_AT_WARMBOOT
+#endif // SDK_TS
         /* システム制御コプロセッサ初期化 */
         bl              INITi_InitCoprocessor
 

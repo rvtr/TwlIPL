@@ -87,10 +87,10 @@ asm void  MIi_InitMainMemCR( BOOL setCR )
         // 非同期モード（CLK固定）でコマンド発行しても大丈夫
         ldr     r3,  =HW_WRAM_AREA - 2
         bl      MIi_InitMainMemCRCore
-#ifdef TWL_PLATFORM_TS
-        ldr     r3,  =HW_MAIN_MEM_HI_EX_END - 2
+#ifdef SDK_TS
+        ldr     r3,  =HW_MAIN_MEM + HW_MAIN_MEM_EX_SIZE - 2
         bl      MIi_InitMainMemCRCore
-#endif // TWL_PLATFORM_TS
+#endif // SDK_TS
 
 @10:
         ldr     r3, =REG_EXMEMCNT_ADDR
@@ -121,7 +121,7 @@ asm void MIi_InitMainMemCRCore( void )
         strh    r0, [r3]
         strh    r1, [r3]
         ldrh    r3, [r2]
-#else // TWL_PLATFORM_TS
+#else // SDK_TS
         mov     r2, lr
         ldr     r0,  =MMEM_TCR0
         ldr     r1,  =MMEM_TCR1
@@ -133,7 +133,7 @@ asm void MIi_InitMainMemCRCore( void )
         strh    r0, [r3]
         strh    r1, [r3]
         strh    r2, [r3]
-#endif // TWL_PLATFORM_TS
+#endif // SDK_TS
 
 //        ldmfd   sp!, { lr }
         bx      lr
@@ -141,7 +141,7 @@ asm void MIi_InitMainMemCRCore( void )
 
 asm void MIi_GetMainMemCR( MIMmemCR* dest )
 {
-#ifdef TWL_PLATFORM_TS
+#ifdef SDK_TS
         ldr     r3,  =HW_WRAM_AREA - 2
         ldr     r1,  =MMEM_TCR0_R
         ldrh    r2, [r3]
@@ -154,7 +154,7 @@ asm void MIi_GetMainMemCR( MIMmemCR* dest )
         strh    r1, [r0, #2]
         ldr     r1,  =MMEM_TCR0_R
         strh    r1, [r0, #0]
-#endif // TWL_PLATFORM_TS
+#endif // SDK_TS
 
         bx      lr
 }

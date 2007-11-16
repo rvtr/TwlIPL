@@ -63,9 +63,39 @@ MIMmemCR;
 
 // for TWL-PSRAM
 
-#define MMEM_TCR0                       0xFFFF
-#define MMEM_TCR1                       0xFFDF
-#define MMEM_TCR2                       0xFFEA
+// CR0
+#define MMEM_TCR0_SET                   0x0001      // セット
+#define MMEM_TCR0_VERIFY                0x0000      // ベリファイ
+#define MMEM_TCR0_SB1                   0xfffe      // １固定
+
+#define MMEM_TCR0                       (MMEM_TCR0_SET | \
+                                         MMEM_TCR0_SB1)  // 0xFFFF
+
+#define MMEM_TCR0_R                     (MMEM_TCR0_VERIFY | \
+                                         MMEM_TCR0_SB1)  // 0xFFFE
+
+// CR1
+#define MMEM_TCR1_PARTIAL_REFRESH_8MB   0x0002      // パーシャルリフレッシュ先頭８ＭＢ
+#define MMEM_TCR1_BURST_CONTINUOUS      0x001c      // 連続バースト（２２４バイト）
+#define MMEM_TCR1_BURST_MODE            0x0000      // バーストモード
+#define MMEM_TCR1_DRV_SZ_CENTER         0x00c0      // ドライバーサイズ＝中心
+#define MMEM_TCR1_SB1                   0xff00      // １固定
+
+#define MMEM_TCR1                       (MMEM_TCR1_PARTIAL_REFRESH_8MB | \
+                                         MMEM_TCR1_BURST_CONTINUOUS | \
+                                         MMEM_TCR1_BURST_MODE | \
+                                         MMEM_TCR1_DRV_SZ_CENTER | \
+                                         MMEM_TCR1_SB1)  // 0xFFDE
+// CR2
+#define MMEM_TCR2_1ST_R4_W3             0x0002      // １ｓｔＲ／Ｗ ＝ ４／３
+#define MMEM_TCR2_REMAIN_PRV_MODE       0x0040      // 前モード保持
+#define MMEM_TCR2_WE_LEVEL              0x0080      // ＷＥレベルコントロール
+#define MMEM_TCR2_SB1                   0xff28      // １固定
+
+#define MMEM_TCR2                       (MMEM_TCR2_1ST_R4_W3 | \
+                                         MMEM_TCR2_REMAIN_PRV_MODE | \
+                                         MMEM_TCR2_WE_LEVEL | \
+                                         MMEM_TCR2_SB1)  // 0xFFEA
 
 
 /*---------------------------------------------------------------------------*
