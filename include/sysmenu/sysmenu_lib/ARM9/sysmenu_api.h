@@ -68,8 +68,8 @@ typedef enum AuthResult {
 
 
 // global variable------------------------------------------------------
-extern void *(*SYSM_Alloc)( u32 size );
-extern void  (*SYSM_Free)( void *ptr );
+extern void *(*SYSM_Alloc)( u32 size );			// ライブラリ内部使用
+extern void  (*SYSM_Free)( void *ptr );			// 同上
 
 // function-------------------------------------------------------------
 
@@ -106,8 +106,8 @@ extern void SYSM_VerifyAndRecoveryNTRSettings( void );
 
 // Nintendoロゴ制御
 extern BOOL SYSM_CheckNintendoLogo( u16 *pLogoData );							// Nintendoロゴデータのチェック
-extern void SYSM_LoadNintendoLogo2D( u16 *pLogoData, u16 *pDst, u16 color, u32 *pTempBuffer ); // NintendoロゴデータをOBJ_2D形式でロード（pTempBufferには0x700bytes必要)
-extern void SYSM_LoadNintendoLogo1D( u16 *pLogoData, u16 *pDst, u16 color, u32 *pTempBuffer ); // NintendoロゴデータをOBJ_1D形式でロード（同上）
+extern void SYSM_LoadNintendoLogo2D( u16 *pLogoData, u16 *pDst, int paletteColorIndex ); // NintendoロゴデータをOBJ_2D形式でロード（pTempBufferには0x700bytes必要)
+extern void SYSM_LoadNintendoLogo1D( u16 *pLogoData, u16 *pDst, int paletteColorIndex ); // NintendoロゴデータをOBJ_1D形式でロード（同上）
 
 // RTC制御
 extern BOOL SYSM_CheckRTCDate( RTCDate *pDate );								// 日付が正常かチェック

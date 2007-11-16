@@ -64,6 +64,7 @@ void TwlMain( void )
 	
 	FS_Init( FS_DMA_NOT_USE );
     GX_Init();
+	PM_Init();
 	TP_Init();
 	RTC_Init();
     

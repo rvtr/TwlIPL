@@ -30,7 +30,6 @@ MEMORY
 	<OVERLAY.NAME>				(RWXO):	ORIGIN = <OVERLAY.ADDRESS>,		LENGTH = 0x0	>	<OVERLAY.NAME><PROPERTY.FLXSUFFIX>
 	<END.OVERLAYS>
 
-	arena.MAIN					(RW)  :	ORIGIN = AFTER(<STATIC.NAME><FOREACH.OVERLAYS>,<OVERLAY.NAME><END.OVERLAYS>),	LENGTH = 0x0
 	check.WORKRAM				(RWX) :	ORIGIN = 0x037c0000,			LENGTH = 0x50000	>	workram.check
 
 	binary.LTDAUTOLOAD_TOP		(RW)  :	ORIGIN = 0,						LENGTH = 0x0	>	<STATIC.NAME><PROPERTY.LTDSUFFIX>
@@ -516,15 +515,6 @@ SECTIONS
 
 <END.OVERLAYS>
 
-	############################ ARENA ##################################
-	.arena.MAIN:
-	{
-		. = ALIGN(4);
-		SDK_SECTION_ARENA_START		=.;
-	
-	} > arena.MAIN
-	
-	
 	############################ OVERLAYDEFS ############################
 	.<PROPERTY.OVERLAYDEFS>F:
 	{

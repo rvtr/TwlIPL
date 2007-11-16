@@ -35,7 +35,11 @@ static u32  MEMBm_WordStreamFunc( const u8 *pDevice );
 // global variable-------------------------------------------------------
 
 // static variable-------------------------------------------------------
-static MIUnpackBitsParam Nin_UnPackBitsParam2 = { (8 * 8 / 2) * ( 7 * 2 ), 1, 4, 0, 0 };
+static MIUnpackBitsParam Nin_UnPackBitsParam2 = { (8 * 8 / 2) * ( 7 * 2 ),
+													1,
+													4,	// カラーbit数(4=4bit=16色, 8=8bit=256色)
+													0,
+													0 };
 
 // const data------------------------------------------------------------
 static const u8 Nin_Char_Diff_Huff_Table2[]={
@@ -73,24 +77,32 @@ BOOL SYSM_CheckNintendoLogo( u16 *pLogoData )
 
 // Nintendoロゴデータの展開ルーチン（OBJ2Dマップモードで展開）
 // ※tempBuffpには、0x700byte必要です。
-void SYSM_LoadNintendoLogo2D( u16 *pLogoData, u16 *pDst, u16 color, u32 *pTempBuffer )
+void SYSM_LoadNintendoLogo2D( u16 *pLogoData, u16 *pDst, int paletteColorIndex )
 {
 	u32 work[ 0x100 / sizeof(u32) ];
-	
-	Nin_UnPackBitsParam2.destOffset = color - 1;
-	UnCompNintendoLogo2( pLogoData, (u16 *)pTempBuffer, work );
-	MI_CpuCopyFast( (u16 *)( (u32)pTempBuffer + 0    ), pDst + 0x0000 / sizeof(u16), 0x1a0 );
-	MI_CpuCopyFast( (u16 *)( (u32)pTempBuffer + 0x1a0), pDst + 0x0400 / sizeof(u16), 0x1a0 );
+	u16 *pBuffer = SYSM_Alloc( 0x700 );
+	if( pBuffer == NULL ) {
+		OS_Panic( "memory allocation failed.\n" );
+	}
+	Nin_UnPackBitsParam2.destOffset = paletteColorIndex - 1;
+	UnCompNintendoLogo2( pLogoData, (u16 *)pBuffer, work );
+	MI_CpuCopy16( (u16 *)( (u32)pBuffer + 0    ), pDst + 0x0000 / sizeof(u16), 0x1a0 );
+	MI_CpuCopy16( (u16 *)( (u32)pBuffer + 0x1a0), pDst + 0x0400 / sizeof(u16), 0x1a0 );
+	SYSM_Free( pBuffer );
 }
 
 
-void SYSM_LoadNintendoLogo1D( u16 *pLogoData, u16 *pDst, u16 color, u32 *pTempBuffer )
+void SYSM_LoadNintendoLogo1D( u16 *pLogoData, u16 *pDst, int paletteColorIndex )
 {
 	u32 work[ 0x100 / sizeof(u32) ];
-	
-	Nin_UnPackBitsParam2.destOffset = color - 1;
-	UnCompNintendoLogo2( pLogoData, (u16 *)pTempBuffer, work );
-	MI_CpuCopyFast( (u16 *)pTempBuffer, pDst, 0x340 );
+	u16 *pBuffer = SYSM_Alloc( 0x700 );
+	if( pBuffer == NULL ) {
+		OS_Panic( "memory allocation failed.\n" );
+	}
+	Nin_UnPackBitsParam2.destOffset = paletteColorIndex - 1;
+	UnCompNintendoLogo2( pLogoData, (u16 *)pBuffer, work );
+	MI_CpuCopy16( (u16 *)pBuffer, pDst, 0x340 );
+	SYSM_Free( pBuffer );
 }
 
 /*	UnCompNintendoLogo2ワーク内訳
