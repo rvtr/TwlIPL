@@ -65,12 +65,12 @@ static int menu_fd = -1;
  *---------------------------------------------------------------------------*/
 BOOL FATFS_OpenRecentMenu( int driveno )
 {
-    char *menufile = (char*)L"A:\\ipl\\menu.srl";
+    char *menufile = (char*)L"A:\\title_e\\00010001\\43414d54\\content\\12123434.app";
     if (driveno < 0 || driveno >= 26)
     {
         return FALSE;
     }
-    menufile[0] += (char)driveno;
+    menufile[0] = (char)('A' + driveno);
     menu_fd = po_open((u8*)menufile, PO_BINARY, 0);
     if (menu_fd < 0)
     {
