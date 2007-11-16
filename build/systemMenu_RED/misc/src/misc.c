@@ -584,7 +584,6 @@ BOOL SelectSomethingByTP( u16 *nowCsr, SelectSomethingFunc func[], int funcnum )
 BOOL SelectMenuByTP( u16 *nowCsr, const MenuParam *pMenu )
 {
 	u16		i;
-	TPData *target;
 	static	u16 detach_count	= 0;
 	static 	u16 csr_old			= 0xff;
 	static  u16 same_csr_count	= 0;
@@ -613,7 +612,7 @@ BOOL SelectMenuByTP( u16 *nowCsr, const MenuParam *pMenu )
 			OS_TPrintf( "MENU[ %d ] : top_x = %02d  top_y = %02d  bot_x = %02d  bot_y = %02d : ",
 						i, top_x, top_y, bottom_x, bottom_y );
 			
-			if( WithinRangeTP( top_x, top_y, bottom_x, bottom_y, target ) ) {
+			if( WithinRangeTP( top_x, top_y, bottom_x, bottom_y, &tpd.disp ) ) {
 				OS_TPrintf( "InRange\n" );
 				if( tpd.disp.validity == TP_VALIDITY_VALID ) {		// カーソルをその要素に移動
 					if( csr_old == i ) {
