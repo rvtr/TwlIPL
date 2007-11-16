@@ -35,6 +35,7 @@
 
 extern u32 bg_char_data[16 * 3];
 extern u16 bg_scr_data[32 * 32];
+extern u16 bg_scr_data2[32 * 32];
 
 // function's prototype declaration---------------------
 static void DrawBackLightSwitch(void);
@@ -96,8 +97,7 @@ static void NTRBannerInit()
 	MI_CpuClearFast(old_titleIdArray, sizeof(old_titleIdArray) );
     MI_DmaFill32(3, banner_oam_attr, 192, sizeof(banner_oam_attr));     // let out of the screen if not display
 	
-	// ここでやるべきじゃない気がするBGとOBJの設定
-    GX_SetVisiblePlane(GX_PLANEMASK_OBJ | GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);      // display only OBJ&BG0
+	// ここでやるべきじゃない気がするOBJの設定
     GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_128K);     // 2D mapping mode
     
     // パレット読み込み
@@ -111,7 +111,7 @@ static void NTRBannerInit()
 		G2_SetOBJAttr(  &banner_oam_attr[l],							// OAM pointer
 						128,											// X position
 						96,												// Y position
-						0,												// Priority
+						1,												// Priority
 						GX_OAM_MODE_NORMAL,								// Bitmap mode
 						FALSE,											// mosaic off
 						GX_OAM_EFFECT_NONE,								// affine off
@@ -268,6 +268,12 @@ void LauncherInit( TitleProperty *pTitleList )
 	GX_LoadBG1Char(bg_char_data, 0, sizeof(bg_char_data));
 	GX_LoadBG1Scr(bg_scr_data, 0, sizeof(bg_scr_data));
 	
+	// フェードアウト用BGデータ作成とロード
+	SVC_CpuClear( 0x0004, &bg_scr_data2, sizeof(bg_scr_data2), 16 );
+	DC_FlushRange(&bg_scr_data2, sizeof(bg_scr_data2));
+	GX_LoadBG2Char(bg_char_data, 0, sizeof(bg_char_data));
+	GX_LoadBG2Scr(bg_scr_data2, 0, sizeof(bg_scr_data2));
+			
 	DrawBackLightSwitch();
 	
 	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.", SYSMENU_VER );
@@ -276,7 +282,10 @@ void LauncherInit( TitleProperty *pTitleList )
 	
 	GetAndDrawRTCData( &g_rtcDraw, TRUE );
 	
-	GX_SetVisiblePlane( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1 );
+	GX_SetVisiblePlane( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1 | GX_PLANEMASK_BG2 | GX_PLANEMASK_OBJ );
+	G2_SetBlendAlpha(GX_BLEND_PLANEMASK_BG2, 
+			GX_BLEND_PLANEMASK_BG0 | GX_BLEND_PLANEMASK_BG1 | GX_BLEND_PLANEMASK_OBJ, 0,31);
+
 	GX_DispOn();
 	GXS_DispOn();
 	
@@ -294,6 +303,8 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	BOOL tp_select = FALSE;
 	static int csr_v = 0;
 	static int selected = 0;
+	static int fadecount = 0;
+	TitleProperty *ret = NULL;
 	
 	// RTC情報の取得＆表示
 	GetAndDrawRTCData( &g_rtcDraw, FALSE );
@@ -317,23 +328,33 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	//--------------------------------------
 	//  キー入力処理
 	//--------------------------------------
-	if(pad.cont & PAD_KEY_RIGHT){										// バナー選択
-		if(csr_v == 0) csr_v = 1;
-	}
-	if( pad.cont & PAD_KEY_LEFT ){
-		if(csr_v == 0) csr_v = -1;
-	}
-	s_csr += csr_v;
-	if((LAUNCHER_TITLE_LIST_NUM-1)*CURSOR_PER_SELECT < s_csr) s_csr = (LAUNCHER_TITLE_LIST_NUM-1)*CURSOR_PER_SELECT;
-	if( s_csr < 0 ) s_csr = 0;
-	if(s_csr%CURSOR_PER_SELECT == 0){
-		csr_v = 0;
-		selected = s_csr/CURSOR_PER_SELECT;
+	if(fadecount == 0)
+	{
+		if(pad.cont & PAD_KEY_RIGHT){										// バナー選択
+			if(csr_v == 0) csr_v = 1;
+		}
+		if( pad.cont & PAD_KEY_LEFT ){
+			if(csr_v == 0) csr_v = -1;
+		}
+		s_csr += csr_v;
+		if((LAUNCHER_TITLE_LIST_NUM-1)*CURSOR_PER_SELECT < s_csr) s_csr = (LAUNCHER_TITLE_LIST_NUM-1)*CURSOR_PER_SELECT;
+		if( s_csr < 0 ) s_csr = 0;
+		if(s_csr%CURSOR_PER_SELECT == 0){
+			csr_v = 0;
+			selected = s_csr/CURSOR_PER_SELECT;
+		}
+		
+		if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {					// メニュー項目への分岐
+			if(pTitleList[selected].titleID != 0)
+			{
+				fadecount = 1;
+				ret = &pTitleList[selected];
+			}
+		}
 	}
 	
-	// 文字描画クリア
+	// 描画関係
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
-	
 	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
 	DrawBackLightSwitch();
 	
@@ -341,16 +362,14 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	NTRBannerDraw( s_csr, selected, pTitleList );
 	#endif
 	
-	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {					// メニュー項目への分岐
-		if(pTitleList[selected].titleID != 0)
-		{
-			NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
-			return &pTitleList[selected];
-			//return NULL;
-		}
-	}
+	if(fadecount>0)
+	{
+		// これだと93フレームでフェードアウト終わる
+		G2_ChangeBlendAlpha( fadecount/3, 31-(fadecount/3) );
+		if(fadecount < 93) fadecount++;
+	};// ロード開始＆フェードアウト用描画
 	
-	return NULL;
+	return ret;
 }
 
 #if 0

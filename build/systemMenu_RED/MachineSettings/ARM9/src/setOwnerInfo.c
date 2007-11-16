@@ -442,7 +442,7 @@ static BOOL SelectSoftwareKeyFunc( u16 *csr, TPData *tgt )
 		s[0] = code;
 		s[1] = 0;
 		// rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, s );
-		// •¶š•‚¶‚á”»’è‚ªŒµ‚µ‚¢
+		// •¶š•‚¶‚á‚©‚È‚è”»’è‚ªŒµ‚µ‚¢ccƒMƒŠƒMƒŠ‚Ü‚Å‚Æ‚Á‚Ä‚İ‚é
 		rect.width = CLIST_MARGIN;
 		rect.height = CLIST_MARGIN;
 	}

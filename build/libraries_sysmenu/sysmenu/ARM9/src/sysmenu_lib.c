@@ -342,8 +342,8 @@ BOOL SYSM_IsTPReadable( void )
 //
 // ============================================================================
 
-// 指定タイトルの認証＆ロード　※１フレームじゃ終わらん。
-AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle )
+// 指定タイトルをロードするだけ
+AuthResult SYSM_LoadTitle( TitleProperty *pBootTitle )
 {
 	enum
 	{
@@ -470,6 +470,12 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 	// ROMヘッダバッファをコピー
 	MI_CpuCopy32( (void *)HW_TWL_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 	
+	return AUTH_RESULT_SUCCEEDED;
+}
+
+// ロード済みの指定タイトルの認証とブートを行う
+AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
+{
 	// パラメータチェック
 	if( !SYSMi_CheckTitlePointer( pBootTitle ) ) {
 		return AUTH_RESULT_TITLE_POINTER_ERROR;
@@ -485,10 +491,23 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 	SYSM_SetMountInfo  ( pBootTitle->titleID );
 	SYSM_SetBootSRLPath( pBootTitle->titleID );
 	
-	// 起動。
-	BOOT_Ready();	// never return;
+	BOOT_Ready();	// never return.
 	
 	return AUTH_RESULT_SUCCEEDED;
+}
+
+// 指定タイトルの認証＆ロード　※１フレームじゃ終わらん。
+// もしかすると使わないかも
+AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle )
+{
+	AuthResult result;
+	// 指定タイトルのロード
+	result = SYSM_LoadTitle( pBootTitle );
+	
+	if (result != AUTH_RESULT_SUCCEEDED) return result;
+	
+	// 認証
+	return SYSM_AuthenticateTitle( pBootTitle );
 }
 
 

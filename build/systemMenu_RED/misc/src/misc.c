@@ -256,13 +256,20 @@ static void InitScreen( void )
 	G2_SetBG1Control(
 		GX_BG_SCRSIZE_TEXT_256x256,				// 256pix x 256pix text
 		GX_BG_COLORMODE_16,					// use 16 colors mode
-		GX_BG_SCRBASE_0xf000,					// screen base offset + 0x0000 is the address for BG #1 screen
+		GX_BG_SCRBASE_0xe800,					// screen base offset + 0x0000 is the address for BG #1 screen
 		GX_BG_CHARBASE_0x10000,					// character base offset + 0x04000 is the address for BG #0 characters
 		GX_BG_EXTPLTT_01 						// use BGExtPltt slot #0 if BGExtPltt is enabled
 	);
+	G2_SetBG2ControlText(
+		GX_BG_SCRSIZE_TEXT_256x256,				// 256pix x 256pix text
+		GX_BG_COLORMODE_16,					// use 16 colors mode
+		GX_BG_SCRBASE_0xd800,					// screen base offset + 0x0000 is the address for BG #1 screen
+		GX_BG_CHARBASE_0x14000					// character base offset + 0x04000 is the address for BG #0 characters
+	);
     GX_SetVisiblePlane( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
-    G2_SetBG0Priority(0);
-    G2_SetBG1Priority(1);
+    G2_SetBG2Priority(0);
+    G2_SetBG0Priority(1);
+    G2_SetBG1Priority(2);
     	
 	// ÉTÉuâÊñ  BG 0 Çê›íË
 	G2S_SetBG0Control(
