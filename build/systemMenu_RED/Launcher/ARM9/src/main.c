@@ -51,7 +51,6 @@ void TwlMain( void )
 	u32 state = START;
 	TitleProperty *pBootTitle = NULL;
 	TitleProperty pTitleList[ LAUNCHER_TITLE_LIST_NUM ];
-	OSThread *thread;
 	
 	// システムメニュー初期化----------
 	SYSM_Init( Alloc, Free );											// OS_Initの前でコール。
@@ -138,12 +137,12 @@ void TwlMain( void )
 			}
 			break;
 		case LOAD_START:
-			thread = SYSM_StartLoadTitle( pBootTitle );
+			SYSM_StartLoadTitle( pBootTitle );
 			state = LOADING;
 			break;
 		case LOADING:
 			LauncherLoading( pTitleList );
-			if(OS_IsThreadTerminated( thread ))
+			if( SYSM_IsLoadTitleFinished() )
 			{
 				GX_DispOff();
 				GXS_DispOff();

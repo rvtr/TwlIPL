@@ -492,14 +492,17 @@ static OSThread thread;
 static u64 stack[ STACK_SIZE / sizeof(u64) ];
 
 // 指定タイトルを別スレッドでロード開始する
-OSThread* SYSM_StartLoadTitle( TitleProperty *pBootTitle )
+void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 {
 	s_load_success = FALSE;
 	OS_InitThread();
 	OS_CreateThread( &thread, (void (*)(void *))SYSMi_LoadTitleThreadFunc, (void*)pBootTitle, stack+STACK_SIZE/sizeof(u64), STACK_SIZE,THREAD_PRIO );
 	OS_WakeupThreadDirect( &thread );
-	
-	return &thread;
+}
+
+BOOL SYSM_IsLoadTitleFinished( void )
+{
+	return OS_IsThreadTerminated( &thread );
 }
 
 // ロード済みの指定タイトルの認証とブートを行う
@@ -534,11 +537,10 @@ AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 // もしかすると使わないかも
 AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle )
 {
-	OSThread *t;
 	// 指定タイトルのロード
-	t = SYSM_StartLoadTitle( pBootTitle );
+	SYSM_StartLoadTitle( pBootTitle );
 	
-	OS_JoinThread(t);
+	OS_JoinThread(&thread);
 	
 	// 認証
 	return SYSM_AuthenticateTitle( pBootTitle );
