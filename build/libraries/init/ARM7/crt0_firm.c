@@ -122,7 +122,8 @@ SDK_WEAK_SYMBOL asm void _start( void )
         mov             r0, #I2C_SLAVE_MICRO_CONTROLLER
         mov             r1, #MCU_REG_TEMP_ADDR
         bl              I2Ci_ReadRegister
-        ands            r0, r0, #0x01   // under construction
+        //ands            r0, r0, #0x01   // under construction
+        cmp             r0, #0   // under construction
 #endif
         movne           r0, #FIRM_PXI_ID_WARMBOOT
         moveq           r0, #FIRM_PXI_ID_COLDBOOT
