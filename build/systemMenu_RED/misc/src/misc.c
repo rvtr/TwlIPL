@@ -530,7 +530,6 @@ void DrawMenu( u16 nowCsr, const MenuParam *pMenu )
 BOOL SelectSomethingByTP( u16 *nowCsr, SelectSomethingFunc func[], int funcnum )
 {
 	int i;
-	TPData *target;
 	static	u16 detach_count	= 0;
 	static 	u16 csr_old			= 0xffff;
 	static  u16 same_csr_count	= 0;
@@ -540,6 +539,7 @@ BOOL SelectSomethingByTP( u16 *nowCsr, SelectSomethingFunc func[], int funcnum )
 		if( tpd.disp.touch == 0 ) {									// TPが押されていなければ、カウント進行し、TP_CSR_DETACH_COUNTカウントでメニュー選択
 			if( ++detach_count == TP_CSR_DETACH_COUNT ) {
 				detach_count = 0;
+				same_csr_count = 0;
 				return TRUE;
 			}else {
 				return FALSE;
@@ -547,15 +547,11 @@ BOOL SelectSomethingByTP( u16 *nowCsr, SelectSomethingFunc func[], int funcnum )
 		}
 	}
 	detach_count=0;													// detachカウント値のクリア
-	
-	// 通常は、TPデータがメニュー上にあるかどうかを判定。
-	if( tpd.disp.touch )	target = &tpd.disp;
-	else					target = &tpd.last;
 
 	for( i = 0; i < funcnum; i++ ) {
 		if( tpd.disp.touch ) {										// タッチパネルがタッチされているなら、
 			u16 csr;
-			if( func[i]( &csr, target ) ) {									// funcは要素上にタッチされていればTRUEを返し、カーソル位置も返してくれる関数
+			if( func[i]( &csr, &tpd.disp ) ) {									// funcは要素上にタッチされていればTRUEを返し、カーソル位置も返してくれる関数
 				OS_TPrintf( "InRange\n" );
 				if( tpd.disp.validity == TP_VALIDITY_VALID ) {		// カーソルをその要素に移動
 					if( csr_old == csr ) {
@@ -605,10 +601,6 @@ BOOL SelectMenuByTP( u16 *nowCsr, const MenuParam *pMenu )
 		}
 	}
 	detach_count=0;													// detachカウント値のクリア
-	
-	// 通常は、TPデータがメニュー上にあるかどうかを判定。
-	if( tpd.disp.touch )	target = &tpd.disp;
-	else					target = &tpd.last;
 	
 	for( i = 0; i < pMenu->num; i++ ) {
 		if( tpd.disp.touch ) {										// タッチパネルがメニューの要素上でタッチされているなら、

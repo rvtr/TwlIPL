@@ -34,6 +34,11 @@
 #define CANCEL_BUTTON_BOTTOM_X				( CANCEL_BUTTON_TOP_X + (8 * 8) )
 #define CANCEL_BUTTON_BOTTOM_Y				( CANCEL_BUTTON_TOP_Y + (2 * 8) )
 
+#define OK_BUTTON_TOP_X					( 26 * 8 )
+#define OK_BUTTON_TOP_Y					( 21 * 8 )
+#define OK_BUTTON_BOTTOM_X				( OK_BUTTON_TOP_X + (4 * 8) )
+#define OK_BUTTON_BOTTOM_Y				( OK_BUTTON_TOP_Y + (2 * 8) )
+
 #define USER_INFO_MENU_ELEMENT_NUM			4						// ユーザ情報メニューの項目数
 
 #define CHAR_LIST_CHAR_NUM					120
@@ -53,7 +58,10 @@
 #define CHAR_USCORE		L'＿'
 #define KEY_PER_LINE	11
 
-#define KEY_START		109
+#define KEY_START		109	//ソフトウェアキーのカーソルはキャンセルキーから開始
+
+#define KEY_OK			0xffff
+#define KEY_CANCEL		0xfffe
 
 typedef enum NameOrComment
 {
@@ -86,6 +94,7 @@ static BOOL s_birth_csr = FALSE;
 static TWLDate s_temp_birthday;
 static TWLNickname s_temp_name;
 static TWLComment s_temp_comment;
+static u16 tp_csr = 0;	//タッチパッドの一時的カーソル
 
 // const data-----------------------------------
 static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM];
@@ -150,7 +159,7 @@ static const u16 *str_button_char[CHAR_LIST_MODE_NUM] = {
 
 static u16 next_char_mode[CHAR_LIST_MODE_NUM-1];
 
-static const u16  str_button_del[] = L"DEL";
+static const u16  str_button_del[] = L"DEL";
 static const u16  str_button_space[] = L"SPACE";
 static const u16  str_button_ok[] = L"OK";
 static const u16  str_button_cancel[] = L"CANCEL";
@@ -183,13 +192,33 @@ static void SetSoftKeyboardButton(int mode)
 	char_mode = mode;
 }
 
+// キャンセルボタン専用SelectSomethingFuncの実装
+static BOOL SelectCancelFunc( u16 *csr, TPData *tgt )
+{
+	BOOL ret;
+	ret = WithinRangeTP( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y,
+							   CANCEL_BUTTON_BOTTOM_X, CANCEL_BUTTON_BOTTOM_Y, tgt );
+	if(ret) *csr = KEY_CANCEL;
+	return ret;
+}
+
+// OKボタン専用SelectSomethingFuncの実装
+static BOOL SelectOKFunc( u16 *csr, TPData *tgt )
+{
+	BOOL ret;
+	ret = WithinRangeTP( OK_BUTTON_TOP_X, OK_BUTTON_TOP_Y,
+							   OK_BUTTON_BOTTOM_X, OK_BUTTON_BOTTOM_Y, tgt );
+	if(ret) *csr = KEY_OK;
+	return ret;
+}
+
 static void DrawOwnerInfoMenuScene( void )
 {
 	u16 tempbuf[TWL_COMMENT_LENGTH+2];
 	u8 color;
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"USER INFORMATION" );
-	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"CANCEL" );
+	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"RETURN" );
     // メニュー項目
 	DrawMenu( s_csr, &s_settingParam );
 	// ニックネーム
@@ -233,6 +262,8 @@ void SetOwnerInfoInit( void )
 // オーナー情報編集メニュー
 int SetOwnerInfoMain( void )
 {
+	static u16 dummy = 0;
+	SelectSomethingFunc func[1]={SelectCancelFunc};
 	BOOL tp_select,tp_cancel = FALSE;
 	
 	ReadTP();
@@ -254,11 +285,8 @@ int SetOwnerInfoMain( void )
 	
     DrawOwnerInfoMenuScene();
 
-	// [CANCEL]ボタン押下チェック
-	if( tpd.disp.touch ) {
-		tp_cancel = WithinRangeTP( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y,
-							   CANCEL_BUTTON_BOTTOM_X, CANCEL_BUTTON_BOTTOM_Y, &tpd.disp );
-	}
+	// [CANCEL]ボタンチェック
+	tp_cancel = SelectSomethingByTP(&dummy, func, 1 );
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// メニュー項目への分岐
 		if( s_settingPos[ s_csr ].enable ) {
@@ -415,16 +443,25 @@ static void PushKeys( u16 code, NameOrComment noc )
 static BOOL SelectSoftwareKeyFunc( u16 *csr, TPData *tgt )
 {
 	// まずは候補となる座標（カーソル単位）を取得
-	int csrx = ((tgt->x - CLIST_LT_X) - CLIST_SEGMENT_INTERVAL*(tgt->x / (CLIST_KEY_PER_SEGMENT*CLIST_MARGIN))) / CLIST_MARGIN ;
-	int csry = (tgt->y - CLIST_LT_Y) / CLIST_MARGIN ;
+	int csrx;
+	int csry;
 	int csrxy;
+	int a;
+	int b;
 	NNSG2dTextRect rect;
 	u16 code;
 	BOOL ret;
-	if ( csrx >= KEY_PER_LINE ) csrx = KEY_PER_LINE - 1;
 	
+	csrx = tgt->x - CLIST_LT_X;
+	csrx = csrx - (CLIST_SEGMENT_INTERVAL*(csrx/(CLIST_MARGIN*CLIST_KEY_PER_SEGMENT+CLIST_SEGMENT_INTERVAL)));
+	csrx = csrx / CLIST_MARGIN;
+	csry = (tgt->y - CLIST_LT_Y) / CLIST_MARGIN;
+	if(csrx < 0 ) return FALSE;
+
+	if ( csrx >= KEY_PER_LINE ) csrx = KEY_PER_LINE - 1;
 	csrxy = csrx + csry * KEY_PER_LINE;
-	if ( csrxy >= CHAR_LIST_CHAR_NUM) return FALSE;// 明らかにはみ出した
+
+	if ( csrxy < 0 || csrxy >= CHAR_LIST_CHAR_NUM) return FALSE;// 明らかにはみ出した
 
 	// 候補座標のキーコード取得
 	code = char_tbl[char_mode][csrxy];
@@ -446,11 +483,11 @@ static BOOL SelectSoftwareKeyFunc( u16 *csr, TPData *tgt )
 		rect.width = CLIST_MARGIN;
 		rect.height = CLIST_MARGIN;
 	}
-	csrx = CLIST_LT_X + CLIST_MARGIN*(csrxy%KEY_PER_LINE) + CLIST_SEGMENT_INTERVAL*((csrxy%KEY_PER_LINE)/CLIST_KEY_PER_SEGMENT);
-	csry = CLIST_LT_Y + CLIST_MARGIN*(csrxy/KEY_PER_LINE);
+	a = CLIST_LT_X + CLIST_MARGIN*(csrxy%KEY_PER_LINE) + CLIST_SEGMENT_INTERVAL*((csrxy%KEY_PER_LINE)/CLIST_KEY_PER_SEGMENT);
+	b = CLIST_LT_Y + CLIST_MARGIN*(csrxy/KEY_PER_LINE);
 	
 	// 候補座標の領域にタッチ座標が含まれているかチェック
-	ret = WithinRangeTP( csrx, csry, csrx+rect.width, csry+rect.height, tgt );
+	ret = WithinRangeTP( a, b, a+rect.width, b+rect.height, tgt );
 	
 	if(ret)
 	{
@@ -565,7 +602,8 @@ static void DrawSetBirthdayScene( void )
 {
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"BIRTHDAY" );
-	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"CANCEL" );
+	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"CANCEL" );
+	PutStringUTF16( OK_BUTTON_TOP_X, OK_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"OK" );
 	PutStringUTF16( 128-36+16, 12*8, TXT_COLOR_BLACK, (const u16 *)L"月　　　日" );
 	PrintfSJIS( 128-36, 12*8, (s_birth_csr ? TXT_COLOR_GREEN : TXT_COLOR_BLACK), "%d", s_temp_birthday.month / 10);
 	PrintfSJIS( 128-28, 12*8, (s_birth_csr ? TXT_COLOR_GREEN : TXT_COLOR_BLACK), "%d", s_temp_birthday.month % 10);
@@ -602,8 +640,9 @@ static void SetBirthdayInit( void )
 // 誕生日編集メイン
 static int SetBirthdayMain( void )
 {
+	SelectSomethingFunc func[2]={SelectCancelFunc, SelectOKFunc};
 	u8 maxday;
-	BOOL tp_cancel = FALSE;
+	BOOL tp_touch = FALSE;
 	
 	ReadTP();
 	
@@ -627,22 +666,22 @@ static int SetBirthdayMain( void )
 	if( s_temp_birthday.day == 0 ) s_temp_birthday.day = maxday;
 	if( s_temp_birthday.day > maxday ) s_temp_birthday.day = 1;
 
-	// [CANCEL]ボタン押下チェック
-	if( tpd.disp.touch ) {
-		tp_cancel = WithinRangeTP( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y,
-							   CANCEL_BUTTON_BOTTOM_X, CANCEL_BUTTON_BOTTOM_Y, &tpd.disp );
+	// TPチェック
+	tp_touch = SelectSomethingByTP(&tp_csr, func, 2 );
+	if (tp_touch && (tp_csr != KEY_OK && tp_csr != KEY_CANCEL)){
+		//s_birth_csr = tp_csr;
 	}
 	
 	DrawSetBirthdayScene();
 	
-	if( pad.trg & PAD_BUTTON_A ) {
+	if( pad.trg & PAD_BUTTON_A || (tp_touch && tp_csr == KEY_OK) ) {
 		TSD_SetBirthday(&s_temp_birthday);
 		TSD_SetFlagBirthday( TRUE );
 		(void)SYSM_WriteTWLSettingsFile();// ファイルへ書き込み
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
 		return 0;
-	}else if( ( pad.trg & PAD_BUTTON_B ) || tp_cancel ) {
+	}else if( ( pad.trg & PAD_BUTTON_B ) || (tp_touch && tp_csr == KEY_CANCEL) ) {
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
 		return 0;
@@ -656,7 +695,8 @@ static void DrawColorSample( void )
 	
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"USER COLOR" );
-	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"CANCEL" );
+	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"CANCEL" );
+	PutStringUTF16( OK_BUTTON_TOP_X, OK_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"OK" );
 	for(l=0;l<16;l++) //16色
 	{
 		PutStringUTF16( 88 + 24 * (l%4), 54 + 24 * (l/4), TXT_UCOLOR_GRAY + l, (const u16 *)L"■" );
@@ -688,7 +728,8 @@ static void SetUserColorInit( void )
 // ユーザーカラー編集メイン
 static int SetUserColorMain( void )
 {
-	BOOL tp_cancel = FALSE;
+	SelectSomethingFunc func[2]={SelectCancelFunc, SelectOKFunc};
+	BOOL tp_touch = FALSE;
 	
 	ReadTP();
 	
@@ -712,33 +753,28 @@ static int SetUserColorMain( void )
 		s_color_csr -= 1;
 	}
 
-	// [CANCEL]ボタン押下チェック
-	if( tpd.disp.touch ) {
-		tp_cancel = WithinRangeTP( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y,
-							   CANCEL_BUTTON_BOTTOM_X, CANCEL_BUTTON_BOTTOM_Y, &tpd.disp );
+	// TPチェック
+	tp_touch = SelectSomethingByTP(&tp_csr, func, 2 );
+	if (tp_touch && (tp_csr != KEY_OK && tp_csr != KEY_CANCEL)){
+		s_color_csr = (u8)tp_csr;
 	}
 	
-	DrawColorSample();
-	
-	if( ( pad.trg & PAD_BUTTON_A ) ) {				// 色決定
+	if( ( pad.trg & PAD_BUTTON_A ) || (tp_touch && tp_csr == KEY_OK) ) {				// 色決定
 		TSD_SetUserColor( (u8 )s_color_csr );
 		TSD_SetFlagUserColor( TRUE );
 		(void)SYSM_WriteTWLSettingsFile();// ファイルへ書き込み
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
 		return 0;
-	}else if( ( pad.trg & PAD_BUTTON_B ) || tp_cancel ) {
+	}else if( ( pad.trg & PAD_BUTTON_B ) || (tp_touch && tp_csr == KEY_CANCEL) ) {
 		ChangeUserColor( TSD_GetUserColor() ); // パレット色を元にもどす
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
 		return 0;
 	}
 	
-	if(pad.trg || tpd.disp.touch)
-	{// 描画処理……ボタン押したorタッチ時ぐらいで十分
-		ChangeUserColor( s_color_csr );
-		DrawColorSample();
-	}
+	ChangeUserColor( s_color_csr );
+	DrawColorSample();
 	
 	return 0;
 }
