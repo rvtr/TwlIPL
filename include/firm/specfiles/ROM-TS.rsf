@@ -134,6 +134,26 @@ Property
 	#
 	CodecMode		$(MAKEROM_CODEC_MODE)
 
+	#
+	# TitleID_Lo: Your TitleID_Lo in 4 ascii words for NAND application
+	#
+	#TitleID_Lo				TEST
+
+	#
+	# TitleID_Hi: Your TitleID_Hi for NAND application ( spec not fixed. )
+	#
+	#TitleID_Hi				0x00010001
+	
+	#
+	# Public save data size: [16K/32K/64K/128K/256K/512K/1M/2M/4M/8M] for NAND application
+	#
+	#PublicSaveDataSize		16K
+
+	#
+	# Private save data size: [16K/32K/64K/128K/256K/512K/1M/2M/4M/8M] for NAND application
+	#
+	#PrivateSaveDataSize	16K
+
 	###
 	#### END
 }
