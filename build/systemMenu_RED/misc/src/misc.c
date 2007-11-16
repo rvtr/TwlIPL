@@ -557,7 +557,13 @@ BOOL SelectSomethingByTP( u16 *nowCsr, SelectSomethingFunc func[], int funcnum )
 					if( csr_old == csr ) {
 						if( same_csr_count < TP_CSR_TOUCH_COUNT ) {
 							same_csr_count++;
-						}else {
+							{
+								static int a;
+								a = csr_old;
+								a++;
+							}
+						}
+						if( same_csr_count == TP_CSR_TOUCH_COUNT ) {
 							*nowCsr = csr;
 						}
 						return FALSE;
@@ -618,7 +624,8 @@ BOOL SelectMenuByTP( u16 *nowCsr, const MenuParam *pMenu )
 					if( csr_old == i ) {
 						if( same_csr_count < TP_CSR_TOUCH_COUNT ) {
 							same_csr_count++;
-						}else {
+						}
+						if( same_csr_count == TP_CSR_TOUCH_COUNT ) {
 							*nowCsr = i;
 						}
 						return FALSE;
