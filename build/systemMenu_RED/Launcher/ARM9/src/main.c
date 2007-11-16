@@ -42,10 +42,11 @@ void TwlMain( void )
 		LOGODEMO = 1,
 		LAUNCHER_INIT = 2,
 		LAUNCHER = 3,
-		LOADING = 4,
-		AUTHENTICATE = 5,
-		BOOT = 6,
-		STOP = 7
+		LOAD_START = 4,
+		LOADING = 5,
+		AUTHENTICATE = 6,
+		BOOT = 7,
+		STOP = 8
 	};
 	u32 state = START;
 	TitleProperty *pBootTitle = NULL;
@@ -74,28 +75,40 @@ void TwlMain( void )
 	(void)GX_VBlankIntr(TRUE);
 	
 	// システムの初期化----------------
-	InitAllocator();
-	
-	// 各種パラメータの取得--------
+	InitAllocator();											// ※SYSM_Init以外のSYSMライブラリ関数を呼ぶ前に
+																//   Alloc, Freeで登録したメモリアロケータを初期化してください。
+	// 各種パラメータの取得------------
 	SYSM_ReadParameters();
-	if( SYSM_GetResetParam()->flags.isLogoSkip ) {
-		if( SYSM_GetResetParam()->bootTitleID ) {							// アプリ直接起動の指定があったらロゴデモを飛ばして指定アプリ起動
-			pBootTitle = (TitleProperty *)SYSM_GetResetParam();
-			state = AUTHENTICATE;
-		}else {																// それ以外の場合は、ロゴデモを飛ばしてランチャー起動
-			state = LAUNCHER_INIT;
-		}
+	if( SYSM_GetResetParamBody()->v1.bootTitleID ) {			// アプリ直接起動の指定があったらロゴデモを飛ばして指定アプリ起動
+		pBootTitle = (TitleProperty *)&SYSM_GetResetParamBody()->v1;
 	}
 	
-	// コンテント（リソース）ファイルのリード
-//	FS_ReadContentFile( ContentID );
+	// 各種リソースのロード------------
+	if( pBootTitle == NULL ) {
+//		FS_ReadContentFile( ContentID );						// タイトル内リソースファイルのリード
+//		FS_ReadSharedContentFile( ContentID );					// 共有コンテントファイルのリード
+		
+		// NANDアプリリストの取得
+		(void)SYSM_GetNandTitleList( pTitleList, LAUNCHER_TITLE_LIST_NUM );
+	}
 	
-	// 共有コンテントファイルのリード
-//	FS_ReadSharedContentFile( ContentID );
+	// 開始ステートの判定--------------
+	if( pBootTitle ) {
+		// リセットパラメータでダイレクト起動タイトルの指定があるなら、ロゴ、ランチャーを飛ばして起動
+		if( SYSM_GetResetParamBody()->v1.flags.isAppLoadCompleted ) {
+			state = AUTHENTICATE;
+		}else {
+			state = LOAD_START;
+		}
+	}else if( SYSM_IsLogoDemoSkip() ) {
+		// リセットパラメータでロゴデモスキップが指定されていたら、ランチャー起動
+		state = LAUNCHER_INIT;
+	}else {
+		// 何もないなら、ロゴデモ起動
+		state = START;
+	}
 	
-	// NANDアプリリストの取得----------
-	(void)SYSM_GetNandTitleList( pTitleList, LAUNCHER_TITLE_LIST_NUM );
-	
+	// メインループ--------------------
 	while( 1 ) {
 		OS_WaitIrq(1, OS_IE_V_BLANK);							// Vブランク割り込み待ち
 		
@@ -121,9 +134,12 @@ void TwlMain( void )
 		case LAUNCHER:
 			pBootTitle = LauncherMain( pTitleList );
 			if( pBootTitle ) {
-				thread = SYSM_LoadTitle( pBootTitle );
-				state = LOADING;
+				state = LOAD_START;
 			}
+			break;
+		case LOAD_START:
+			thread = SYSM_StartLoadTitle( pBootTitle );
+			state = LOADING;
 			break;
 		case LOADING:
 			LauncherLoading( pTitleList );

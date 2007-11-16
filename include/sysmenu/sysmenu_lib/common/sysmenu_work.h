@@ -26,28 +26,47 @@ extern "C" {
 #endif
 
 // compile switch ---------------------------------
-//#define SYSM_RESET_PARAM_READY_
 
 // define data ------------------------------------
+#define SYSM_RESET_PARAM_MAGIC_CODE			"TRST"
+#define SYSM_RESET_PARAM_MAGIC_CODE_LEN		4
+
 #define CLONE_BOOT_MODE						1
 #define OTHER_BOOT_MODE						2
 
 
-// タイトル情報フラグ
-typedef struct TitleFlags {
-	u16			platform : 4;
-	u16			media    : 4;
-	u16			isLogoSkip : 1;
-	u16			rsv : 7;
-}TitleFlags;
+// リセットパラメータ　フラグ
+typedef struct ResetFlags {
+	u16			isLogoSkip : 1;			// ロゴデモスキップ要求
+	u16			isAppLoadCompleted : 1;	// アプリロード済みを示す
+	u16			reqAppRelocate : 1;		// アプリ再配置要求
+	u16			rsv : 13;
+}ResetFlags;
+
+
+// リセットパラメータ　ヘッダ
+typedef struct ResetParameterHeader {
+	u32			magicCode;				// SYSM_RESET_PARAM_MAGIC_CODEが入る
+	u8			type;					// タイプによってBodyを判別する。
+	u8			bodyLength;				// bodyの長さ
+	u16			crc16;					// bodyのCRC16
+}ResetParamHeader;
+
+
+// リセットパラメータ　ボディ
+typedef union ResetParamBody {
+	struct {							// ※とりあえず最初はTitlePropertyとフォーマットを合わせておく
+		NAMTitleId	bootTitleID;		// リセット後にダイレクト起動するタイトルID
+		ResetFlags	flags;				// リセット時のランチャー動作フラグ
+		u8			rsv[ 4 ];			// 予約
+	}v1;
+}ResetParamBody;
 
 
 // リセットパラメータ
 typedef struct ResetParam {
-	NAMTitleId	bootTitleID;	// 起動するタイトルがあるか？あるならそのタイトルID
-	u32			rsv_A;
-	TitleFlags	flags;
-	u8			rsv_B[ 2 ];
+	ResetParamHeader	header;
+	ResetParamBody		body;
 }ResetParam;
 
 
@@ -57,11 +76,14 @@ typedef struct ResetParam {
 
 // SYSM共有ワーク構造体
 typedef struct SYSM_work {
-	volatile BOOL	isARM9Start;					// ARM9スタートフラグ
-	BOOL			isHotStart;						// Hot/Coldスタート判定
-	BOOL			isValidTSD;						// NITRO設定データ無効フラグ
-	BOOL			isOnDebugger;					// デバッガ動作か？
-	BOOL			isExistCard;					// 有効なNTR/TWLカードが存在するか？
+	vu16			isARM9Start :1;					// ARM9スタートフラグ
+	vu16			isHotStart :1;					// Hot/Coldスタート判定
+	vu16			isValidResetParam :1;			// リセットパラメータ有効
+	vu16			isValidTSD :1;					// NITRO設定データ無効フラグ
+	vu16			isLogoSkip :1;					// ロゴデモスキップ
+	vu16			isOnDebugger :1;				// デバッガ動作か？
+	vu16			isExistCard :1;					// 有効なNTR/TWLカードが存在するか？
+	vu16			rsv :9;
 	u16				cardHeaderCrc16;				// システムメニューで計算したROMヘッダCRC16
 	int				cloneBootMode;
 	ResetParam		resetParam;
@@ -72,22 +94,40 @@ typedef struct SYSM_work {
 	u8				rtcStatus;
 }SYSM_work;
 
+// NTRにおける仕様を継承する必要のあるワーク
+typedef struct SDKBootCheckInfo{
+	u32 nCardID;					// NORMALカードID				// SDKではここだけ見ているっぽい　※最終的にはランチャーでここにカードIDをセットする
+	u32 sCardID;					// SECUREカードID
+	u16 cardHeaderCrc16;			// カードヘッダCRC16
+	u16 cardSecureCrc16;			// カードSECURE領域CRC16
+	s16 cardHeaderError;			// カードヘッダエラー
+	s16 disableEncryptedCardData;	// カードSECURE領域暗号化データ無効
+	
+	u16 sysromCrc16;				// システムROMのCRC16
+	s16 enableCardNormalOnly;		// カードNORMALモードのみ有効
+	s16 isOnDebugger;				// デバッガ上で動作中か
+	s8  rtcError;					// RTCエラー
+	u8  rtcStatus1;					// RTCステータス1
+	
+}SDKBootCheckInfo;
 
 //----------------------------------------------------------------------
 //　SYSM共有ワーク領域のアドレス獲得
 //----------------------------------------------------------------------
-#ifdef SYSM_RESET_PARAM_READY_
-// SYSMリセットパラメータの取得（※ライブラリ向け。ARM9側はSYSM_GetResetParamを使用して下さい。）
-#define SYSMi_GetResetParam()		( (ResetParam *)0x02000100 )
+// SYSMリセットパラメータアドレスの取得（※ライブラリ向け。ARM9側はSYSM_GetResetParamを使用して下さい。）
+#define SYSMi_GetResetParamAddr()			( (ResetParam *)0x02000100 )
 // SYSM共有ワークの取得
-#define SYSMi_GetWork()				( (SYSM_work *)HW_RED_RESERVED )
-#else	// SYSM_RESET_PARAM_READY_
-#define SYSMi_GetResetParam()		( (ResetParam *)HW_RED_RESERVED )
-#define SYSMi_GetWork()				( (SYSM_work *)( HW_RED_RESERVED + 0x40 ) )
-#endif	// SYSM_RESET_PARAM_READY_
+#define SYSMi_GetWork()						( (SYSM_work *)HW_RED_RESERVED )
 
 // カードROMヘッダワークの取得
-#define SYSM_GetCardRomHeader()		( (ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF )
+#define SYSM_GetCardRomHeader()				( (ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF )
+
+// SDKブートチェック（アプリ起動時にカードIDをセットする必要がある。）
+#define SYSM_GetSDKBootCheckInfo()			( (SDKBootCheckInfo *)HW_BOOT_CHECK_INFO_BUF )
+#define SYSM_GetSDKBootCheckInfoForNTR()	( (SDKBootCheckInfo *)0x027ffc00 )
+
+// NANDファームがロードしてくれているマイコンフリーレジスタ値の取得
+#define SYSM_GetMCUFreeRegisterValue()		( *(vu8 *)HW_RESET_PARAMETER_BUF )
 
 #ifdef __cplusplus
 }

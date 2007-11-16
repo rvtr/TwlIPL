@@ -53,6 +53,7 @@
 /*---------------------------------------------------------------------------*
     内部関数定義
  *---------------------------------------------------------------------------*/
+static void         ReadResetParameter( void );
 static void         PrintDebugInfo(void);
 static OSHeapHandle InitializeAllocateSystem(void);
 static void         InitializeFatfs(void);
@@ -87,20 +88,8 @@ TwlSpMain(void)
     PrintDebugInfo();
 	
 	// Cold/Hotスタート判定
-	if( *(vu32 *)HW_RESET_PARAMETER_BUF == 0 ) {		// NANDファームが毎回このバッファにマイコンフリーレジスタ値をセットしてくれる
-		u32 data = 1;
-		MCU_SetFreeRegisters( 0, (u8 *)&data, 4 );		// マイコンフリーレジスタにホットスタートフラグをセット
-		SYSMi_GetWork()->isHotStart = FALSE;
-	}else {
-		MI_CpuCopy32 ( SYSMi_GetResetParam(), &SYSMi_GetWork()->resetParam, sizeof(ResetParam) );
-		SYSMi_GetWork()->isHotStart = TRUE;
-	}
-#ifdef SYSM_RESET_PARAM_READY_
-	MI_CpuClear32( SYSMi_GetResetParam(), sizeof(ResetParam) );
-#else
-	MI_CpuClear32( &SYSMi_GetWork()->resetParam, sizeof(ResetParam) );
-#endif
-	SYSMi_GetWork()->isARM9Start = TRUE;					// ※HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
+	ReadResetParameter();
+	SYSMi_GetWork()->isARM9Start = TRUE;				// ※HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
 	
     // ヒープ領域設定
 	{
@@ -166,6 +155,39 @@ TwlSpMain(void)
         BOOT_WaitStart();
     }
 }
+
+
+// Hot/Coldスタート判定およびリセットパラメータのリード
+static void ReadResetParameter( void )
+{
+	// Hot/Coldスタート判定
+#ifdef SDK_FINALROM
+	if( SYSM_GetMCUFreeRegisterValue() == 0 ) 			// マイコンフリーレジスタ値が"0"ならColdスタート
+#else
+	if( 1 )												// ISデバッガでのデバッグ動作時に常にホットスタート判定されるのを防ぐ
+#endif
+	{
+		u8 data = 1;
+		MCU_SetFreeRegisters( 0, &data, 1 );			// マイコンフリーレジスタにホットスタートフラグをセット
+		SYSMi_GetWork()->isHotStart = FALSE;
+	}else {
+		SYSMi_GetWork()->isHotStart = TRUE;
+		// リセットパラメータ有効判定
+		if( ( STD_StrNCmp( (const char *)&SYSMi_GetResetParamAddr()->header.magicCode,
+							 SYSM_RESET_PARAM_MAGIC_CODE,
+							 SYSM_RESET_PARAM_MAGIC_CODE_LEN ) == 0 ) &&
+			  ( SYSMi_GetResetParamAddr()->header.bodyLength > 0 ) &&
+			  ( SVC_GetCRC16( 65535, &SYSMi_GetResetParamAddr()->body, SYSMi_GetResetParamAddr()->header.bodyLength ) )
+			  ) {
+			// リセットパラメータが有効なら、ワークに退避
+			MI_CpuCopy32 ( SYSMi_GetResetParamAddr(), &SYSMi_GetWork()->resetParam, sizeof(ResetParam) );
+			SYSMi_GetWork()->isValidResetParam = TRUE;
+		}
+	}
+	// メインメモリのリセットパラメータをクリアしておく
+	MI_CpuClear32( SYSMi_GetResetParamAddr(), 0x100 );
+}
+
 
 /*---------------------------------------------------------------------------*
   Name:         PrintDebugInfo

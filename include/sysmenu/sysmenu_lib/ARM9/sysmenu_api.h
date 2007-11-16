@@ -35,6 +35,7 @@ extern "C" {
 //#define __SYSM_DEBUG									// ƒfƒoƒbƒOƒR[ƒh—pƒrƒ‹ƒhƒXƒCƒbƒ`
 #endif // SDK_FINALROM
 
+#define BACKLIGHT_LEVEL_MAX			22					// ƒoƒbƒNƒ‰ƒCƒg‹P“xãŒÀiƒn[ƒh“I‚È§–ñ‚ÍãŒÀ‚Ì‚İj
 #define CARD_SLOT_NUM				1					// ƒJ[ƒhƒXƒƒbƒg”
 #define LAUNCHER_TITLE_LIST_NUM		40					// ƒ‰ƒ“ƒ`ƒƒ[‚Ìƒ^ƒCƒgƒ‹ƒŠƒXƒg”
 
@@ -52,9 +53,8 @@ typedef enum PlatformCode {
 // ƒ^ƒCƒgƒ‹î•ñ
 typedef struct TitleProperty {	// ‚±‚Ìî•ñ‚ÍAƒ‰ƒ“ƒ`ƒƒ[‚É‚Í”FØ’Ê‚Á‚Ä‚È‚¢‚¯‚ÇA‹N“®‚É‚Í”FØ’Ê‚·‚Ì‚Å‘åä•v‚¾‚ë‚¤B
 	NAMTitleId	titleID;		// ƒ^ƒCƒgƒ‹IDiTitleID_Hi‚Å‹N“®ƒƒfƒBƒA‚Í”»’è‚Å‚«‚éHj
+	u8			rsv[ 4 ];		// —\–ñ
 	void		*pBanner;		// ƒoƒi[‚Ö‚Ìƒ|ƒCƒ“ƒ^iŒÅ’è’·ƒtƒH[ƒ}ƒbƒg‚È‚ç‹U‘¢‚³‚ê‚Ä‚à‘åä•v‚¾‚ë‚¤B)
-	TitleFlags	flags;
-	u8			rsv[ 2 ];
 }TitleProperty;
 
 // ƒAƒvƒŠ”FØŒ‹‰Ê
@@ -83,7 +83,7 @@ extern int  SYSM_GetCardTitleList( TitleProperty *pTitleList_Card );			// ƒJ[ƒh
 extern int  SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size );	// NAND  ƒAƒvƒŠƒ^ƒCƒgƒ‹ƒŠƒXƒg‚Ìæ“¾
 
 // ƒAƒvƒŠ‹N“®
-extern OSThread* SYSM_LoadTitle( TitleProperty *pBootTitle );					// w’è‚µ‚½TitleProperty‚ğ•ÊƒXƒŒƒbƒh‚Åƒ[ƒh
+extern OSThread* SYSM_StartLoadTitle( TitleProperty *pBootTitle );				// w’è‚µ‚½TitleProperty‚ğ•ÊƒXƒŒƒbƒh‚Åƒ[ƒhŠJn
 extern AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle );			// w’è‚µ‚½TitleProperty‚ğ”FØ‚µ‚Äƒu[ƒg
 extern AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle );	// w’è‚µ‚½TitleProperty‚ğƒ[ƒh•”FØ‚µ‚Äƒu[ƒg
 																				// ¬Œ÷‚ÍAnever return.
@@ -97,7 +97,7 @@ extern BOOL SYSM_IsInspectCard( void );											// ŒŸ¸ƒJ[ƒh‚ª·‚³‚Á‚Ä‚¢‚é‚©
 extern BOOL SYSM_IsTPReadable( void );											// TPƒŠ[ƒh‰Â”\‚©H
 extern BOOL SYSM_IsLogoDemoSkip( void );										// ƒƒSƒfƒ‚”ò‚Î‚µó‘Ô‚©H
 extern void SYSM_SetLogoDemoSkip( BOOL skip );									// ƒƒSƒfƒ‚”ò‚Î‚µó‘Ô‚ğİ’è‚·‚éB
-extern const ResetParam *SYSM_GetResetParam( void );							// ƒŠƒZƒbƒgƒpƒ‰ƒ[ƒ^‚Ìæ“¾
+extern const ResetParamBody *SYSM_GetResetParamBody( void );					// ƒŠƒZƒbƒgƒpƒ‰ƒ[ƒ^‚Ìæ“¾
 
 // –{‘Ìİ’èƒf[ƒ^ƒAƒNƒZƒX
 extern BOOL SYSM_ReadTWLSettingsFile( void );									// TWLİ’èƒf[ƒ^‚ÌƒŠ[ƒh

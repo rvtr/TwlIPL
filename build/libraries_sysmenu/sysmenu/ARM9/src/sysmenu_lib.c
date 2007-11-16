@@ -116,6 +116,21 @@ void SYSM_ReadParameters( void )
 		SVC_WaitByLoop( 0x1000 );
 	}
 	
+	// リセットパラメータの判定
+	if( SYSM_GetResetParamBody()->v1.flags.isLogoSkip &&
+		SYSMi_IsDebuggerBannerViewMode() ) {
+		SYSM_SetLogoDemoSkip( TRUE );
+	}
+	
+#if 0
+	// アプリロード済みで再配置要求があるなら、再配置処理
+	if( SYSM_GetResetParamBody()->v1.flags.isAppLoadCompleted &&
+		SYSM_GetResetParamBody()->v1.flags.reqAppRelocate ) {
+		// 再配置処理
+	}
+#endif
+	
+	// 本体設定データのリード
 	if( SYSM_ReadTWLSettingsFile() ) {								// NANDからTWL本体設定データをリード
 		SYSM_SetBackLightBrightness( (u8)TSD_GetBacklightBrightness() ); // 読み出したTWL本体設定データをもとにバックライト輝度設定
 		SYSM_CaribrateTP();											// 読み出したTWL本体設定データをもとにTPキャリブレーション。
@@ -267,17 +282,25 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size)
 
 
 // リセットパラメータの取得
-const ResetParam *SYSM_GetResetParam( void )
+const ResetParamBody *SYSM_GetResetParamBody( void )
 {
-	return (const ResetParam *)&SYSMi_GetWork()->resetParam;
+	return (const ResetParamBody *)&SYSMi_GetWork()->resetParam.body;
 }
+
+
+// ロゴデモスキップかどうかをセット
+void SYSM_SetLogoDemoSkip( BOOL skip )
+{
+	SYSMi_GetWork()->isLogoSkip = skip;
+}
+
 
 // ロゴデモスキップか？
 BOOL SYSM_IsLogoDemoSkip( void )
 {
 	// ※システムアプリからのハードリセットによるロゴデモ飛ばしも判定に入れる。
 	
-	return SYSMi_IsDebuggerBannerViewMode();
+	return SYSMi_GetWork()->isLogoSkip;
 }
 
 
@@ -468,8 +491,8 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 static OSThread thread;
 static u64 stack[ STACK_SIZE / sizeof(u64) ];
 
-// 指定タイトルを別スレッドでロードする
-OSThread* SYSM_LoadTitle( TitleProperty *pBootTitle )
+// 指定タイトルを別スレッドでロード開始する
+OSThread* SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 {
 	s_load_success = FALSE;
 	OS_InitThread();
@@ -513,7 +536,7 @@ AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle )
 {
 	OSThread *t;
 	// 指定タイトルのロード
-	t = SYSM_LoadTitle( pBootTitle );
+	t = SYSM_StartLoadTitle( pBootTitle );
 	
 	OS_JoinThread(t);
 	
@@ -527,12 +550,14 @@ AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle )
 // デバイス制御
 //
 // ============================================================================
-#define BACKLIGHT_LEVEL_MAX		22
 
 // バックライト輝度調整
 void SYSM_SetBackLightBrightness( u8 brightness )
 {
-	( void )PMi_WriteRegister( 0x20, (u16)( 8 + brightness * 2 ) );	// 輝度調整はとりあえず適当（※ハード担当に消費電力面から適当な値を確認する）
+	if( brightness > BACKLIGHT_LEVEL_MAX ) {
+		OS_Panic( "Backlight brightness over : %d\n", brightness );
+	}
+	( void )PMi_WriteRegister( 0x20, (u16)brightness );
 	TSD_SetBacklightBrightness( brightness );
 	SYSM_WriteTWLSettingsFile();
 }
