@@ -176,11 +176,17 @@ typedef struct TWLParentalControl {
 #define TWL_FREE_SOFT_BOX_COUNT_MAX  35     // NANDƒAƒvƒŠ‚ÌÅ‘å‹ó‚«Box”, ‚±‚ê - freeSoftBoxCount‚ÅƒCƒ“ƒXƒg[ƒ‹Soft”
 
 
-// TWLİ’èƒf[ƒ^
-typedef struct TWLSettingsData{
+// TWLİ’èƒf[ƒ^ƒwƒbƒ_
+typedef struct TWLSettingsHeader{
 	u8					version;
 	u8					saveCount;
-	u8					rsv[ 2 ];
+	u16					dataLength;
+	u8					digest[ SVC_SHA1_DIGEST_SIZE ];				// SHA1ƒ_ƒCƒWƒFƒXƒg@@CRC16‚Å\•ª‚©‚à‚È‚ BBB
+}TWLSettingsHeader;
+
+
+// TWLİ’èƒf[ƒ^iŠî–{A‰ß‹verŒİŠ·‚ğl—¶‚µ‚ÄA’Ç‰Á‚µ‚©‚µ‚È‚¢•ûj‚ÅBj
+typedef struct TWLSettingsData{
 	struct flags {
 		u32		initialSequence : 1;
 		u32		isSetCountry : 1;
@@ -216,10 +222,9 @@ typedef struct TWLSettingsData{
 
 // TWLİ’èƒf[ƒ^•Û‘¶ƒtƒH[ƒ}ƒbƒg
 typedef struct TSDStore {
-	u8					digest[ SVC_SHA1_DIGEST_SIZE ];				// SHA1ƒ_ƒCƒWƒFƒXƒg
+	TWLSettingsHeader	header;
 	TWLSettingsData		tsd;
 }TSDStore;
-
 
 
 #ifdef SDK_ARM9
@@ -240,12 +245,6 @@ extern BOOL TSD_WriteSettings( void );						// æ‚ÉNSD_ReadSettings‚ğÀs‚µ‚Ä‚¨‚
 //=========================================================
 // ƒf[ƒ^æ“¾iTSD_ReadSettings‚Å“à•”ƒ[ƒN‚É“Ç‚İo‚µ‚½î•ñ‚Ìæ“¾j
 //=========================================================
-
-// ƒo[ƒWƒ‡ƒ“‚Ìæ“¾B
-static inline u8 TSD_GetVerion( void )
-{
-	return	(u8)GetTSD()->version;
-}
 
 // ƒŠ[ƒWƒ‡ƒ“‚Ìæ“¾B
 static inline u8 TSD_GetRegion( void )
@@ -389,12 +388,6 @@ static inline BOOL TSD_IsGBUseTopLCD( void )
 //=========================================================
 // ƒf[ƒ^ƒZƒbƒgiTSD_ReadSettings‚Å“à•”ƒ[ƒN‚É“Ç‚İo‚µ‚½î•ñ‚Ö‚Ì’lƒZƒbƒgj
 //=========================================================
-
-// ƒo[ƒWƒ‡ƒ“‚ÌƒZƒbƒgB
-static inline void TSD_SetVerion( u8 version )
-{
-	GetTSD()->version = version;
-}
 
 // ƒŠ[ƒWƒ‡ƒ“‚ÌƒZƒbƒgB
 static inline void TSD_SetRegion( u8 region )

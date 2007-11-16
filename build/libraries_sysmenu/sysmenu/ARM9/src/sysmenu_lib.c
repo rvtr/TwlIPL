@@ -561,6 +561,8 @@ void SYSM_SetBackLightBrightness( u8 brightness )
 	}
 	( void )PMi_WriteRegister( 0x20, (u16)brightness );
 	TSD_SetBacklightBrightness( brightness );
+	
+	// [TODO:] バックライト輝度は毎回セーブせずに、アプリ起動やリセット、電源OFF時に値が変わっていたらセーブするようにする。
 	SYSM_WriteTWLSettingsFile();
 }
 

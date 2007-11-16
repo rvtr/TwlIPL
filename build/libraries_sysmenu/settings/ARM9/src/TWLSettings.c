@@ -28,6 +28,7 @@
 #define TSD_NOT_CORRECT					0x00ff		// TSD設定データが読み出されていない or 有効なものがないことを示す。
 
 // function's prototype-------------------------------------------------
+static BOOL TSDi_CheckVersionCompatible( u8 tgtVersion );
 static BOOL TSDi_WriteSettingsDirect( TSDStore *pTSDStore );
 static int  TSDi_RecoveryTSDFile( TSDStore *pTSDStoreOrg, u8 existErrFlag, u8 lengthErrFlag, u8 dataErrFlag );
 static BOOL TSDi_CheckSettingsValue( TWLSettingsData *pTSD );
@@ -58,6 +59,19 @@ static const u16 s_validLangBitmapList[] = {
 	TWL_LANG_BITMAP_KOREA,
 };
 
+// 各バージョンにおける過去バージョン互換リスト
+static const u8 s_verCompatible_v0[] = { 0xff };
+//static const u8 s_verCompatible_v1[] = { 0, 0xff };
+//static const u8 s_verCompatible_v2[] = { 0, 1, 0xff };
+
+// 過去バージョン互換リストまとめ
+static const u8 *s_verCompatibleList[ TWL_SETTINGS_DATA_VERSION + 1 ] = {
+	s_verCompatible_v0,
+//	s_verCompatible_v1,
+//	s_verCompatible_v2,
+};
+
+
 // function's description-----------------------------------------------
 
 // TWL設定データのライト
@@ -67,6 +81,7 @@ BOOL TSD_WriteSettings( void )
 }
 
 
+// TWL設定データのダイレクトライト
 static BOOL TSDi_WriteSettingsDirect( TSDStore *pTSDStore )
 {
 	FSFile file;
@@ -76,17 +91,16 @@ static BOOL TSDi_WriteSettingsDirect( TSDStore *pTSDStore )
 		return FALSE;
 	}
 	s_indexTSD ^= 0x01;
-	pTSDStore->tsd.saveCount = (u8)( ( pTSDStore->tsd.saveCount + 1 ) & SAVE_COUNT_MASK );
+	pTSDStore->header.saveCount = (u8)( ( pTSDStore->header.saveCount + 1 ) & SAVE_COUNT_MASK );
+	pTSDStore->header.version = TWL_SETTINGS_DATA_VERSION;
+	pTSDStore->header.dataLength = sizeof(TWLSettingsData);
 	
-	// 対応言語ビットマップの設定
-	pTSDStore->tsd.valid_language_bitmap = s_validLangBitmapList[ pTSDStore->tsd.region ];
-	
-	// ダイジェスト算出
-	SVC_CalcSHA1( pTSDStore->digest, &pTSDStore->tsd, sizeof(TWLSettingsData) );
+	// ダイジェスト算出（自分のバージョンのデータサイズで算出）
+	SVC_CalcSHA1( pTSDStore->header.digest, &pTSDStore->tsd, sizeof(TWLSettingsData) );
 	
 	FS_InitFile( &file );
 	
-	OS_TPrintf( "Write TSD > %s : 0x%02x\n", s_TSDPath[ s_indexTSD ], pTSDStore->tsd.saveCount );
+	OS_TPrintf( "Write TSD > %s : 0x%02x\n", s_TSDPath[ s_indexTSD ], pTSDStore->header.saveCount );
 	// ファイルオープン
 	if( !FS_OpenFileEx( &file, s_TSDPath[ s_indexTSD ], FS_FILEMODE_R | FS_FILEMODE_W ) ) {		// R|Wモードで開くと、既存ファイルを残したまま更新。
 		OS_TPrintf( " TSD[%d] : file open error.\n" );
@@ -125,6 +139,9 @@ BOOL TSD_ReadSettings( TSDStore (*pTempBuffer)[2] )
 	u8  enableTSDFlag = 0;
 	BOOL retval = FALSE;
 	
+	// バージョン違いの場合を考慮して、先に全バッファをクリアしておく
+	MI_CpuClearFast( pTempBuffer, sizeof(TWLSettingsData) * 2 );
+	
 #ifndef SDK_FINALROM
 	s_pTSDStoreArray = pTempBuffer;
 	OS_TPrintf( "TSDStoreBuff : %08x %08x\n", &(*s_pTSDStoreArray)[ 0 ], &(*s_pTSDStoreArray)[ 1 ] );
@@ -158,9 +175,17 @@ BOOL TSD_ReadSettings( TSDStore (*pTempBuffer)[2] )
 			goto NEXT;
 		}
 		
+		// ヘッダチェック
+		if( !TSDi_CheckVersionCompatible( pTSDStore[ i ].header.version ) ||
+			( pTSDStore[ i ].header.dataLength > sizeof(TSDStore) ) ) {
+			OS_TPrintf( "TSD[%d] : file header error.\n", i );
+			dataErrFlag |= 0x01 << i;
+			goto NEXT;
+		}
+		
 		// データのダイジェストチェック
-		SVC_CalcSHA1( digest, &pTSDStore[ i ].tsd, sizeof(TWLSettingsData) );
-		if( !SVC_CompareSHA1( digest, pTSDStore[ i ].digest ) ) {
+		SVC_CalcSHA1( digest, &pTSDStore[ i ].tsd, pTSDStore[ i ].header.dataLength );
+		if( !SVC_CompareSHA1( digest, pTSDStore[ i ].header.digest ) ) {
 			OS_TPrintf( "TSD[%d] : file digest error.\n", i );
 			dataErrFlag |= 0x01 << i;
 			goto NEXT;
@@ -178,7 +203,7 @@ BOOL TSD_ReadSettings( TSDStore (*pTempBuffer)[2] )
 		// ファイルクローズ
 		FS_CloseFile( &file );
 		if( enableTSDFlag & ( 0x01 << i ) ) {
-			OS_TPrintf("TSD[%d] valid : saveCount = %d\n", i, pTSDStore[ i ].tsd.saveCount );
+			OS_TPrintf("TSD[%d] valid : saveCount = %d\n", i, pTSDStore[ i ].header.saveCount );
 		}else {
 			OS_TPrintf("TSD[%d] invalid\n", i );
 		}
@@ -188,8 +213,8 @@ BOOL TSD_ReadSettings( TSDStore (*pTempBuffer)[2] )
 	if( enableTSDFlag ) {
 		// どちらのTSDを使用するか判定
 		if( enableTSDFlag == 0x03 ) {
-			s_indexTSD = ( ( ( pTSDStore[ 0 ].tsd.saveCount + 1 ) & SAVE_COUNT_MASK ) ==
-							pTSDStore[ 1 ].tsd.saveCount ) ? 1 : 0;
+			s_indexTSD = ( ( ( pTSDStore[ 0 ].header.saveCount + 1 ) & SAVE_COUNT_MASK ) ==
+							pTSDStore[ 1 ].header.saveCount ) ? 1 : 0;
 		}
 		MI_CpuCopyFast( &pTSDStore[ s_indexTSD ], &s_TSDStore, sizeof(TSDStore) );
 		retval = TRUE;
@@ -207,9 +232,30 @@ BOOL TSD_ReadSettings( TSDStore (*pTempBuffer)[2] )
 	}
 	
 	OS_TPrintf( "Use TSD[%d]   : saveCount = %d\n",
-				s_indexTSD, pTSDStore[ s_indexTSD ].tsd.saveCount );
+				s_indexTSD, pTSDStore[ s_indexTSD ].header.saveCount );
 	
 	return retval;
+}
+
+
+// バージョン間の互換チェック
+static BOOL TSDi_CheckVersionCompatible( u8 tgtVersion )
+{
+	
+	if( TWL_SETTINGS_DATA_VERSION < tgtVersion ) {
+		return FALSE;
+	}else if( TWL_SETTINGS_DATA_VERSION == tgtVersion ) {
+		return TRUE;
+	}else {
+		// 今のバージョンがターゲットのバージョンと互換性があるかどうかをチェック
+		const u8 *pList = s_verCompatibleList[ TWL_SETTINGS_DATA_VERSION ];
+		while( *pList != 0xff ) {
+			if( *pList++ == tgtVersion ) {
+				return TRUE;
+			}
+		}
+	}
+	return FALSE;
 }
 
 
@@ -292,9 +338,10 @@ static void TSDi_ClearSettings( TWLSettingsData *pTSD )
 {
 	MI_CpuClearFast( pTSD, sizeof(TWLSettingsData) );
 	// 初期値が０以外のもの
-	pTSD->version = TWL_SETTINGS_DATA_VERSION;
-	pTSD->region  = TWL_DEFAULT_REGION;				// リージョンは本体設定からなくなる予定
+	pTSD->region  = TWL_DEFAULT_REGION;				// リージョンは本体設定データからなくなる予定
 	pTSD->owner.birthday.month = 1;
 	pTSD->owner.birthday.day   = 1;
+	pTSD->valid_language_bitmap = s_validLangBitmapList[ pTSD->region ];
+													// 対応言語ビットマップも本体設定データからなくなる予定
 }
 
