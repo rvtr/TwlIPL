@@ -26,22 +26,27 @@ extern "C" {
 #define HW_FIRM_END                     (HW_FIRM + HW_FIRM_SIZE)
 #define HW_FIRM_SIZE                    HW_WRAM_C_SIZE_MAX
 
-//------------------------------------- HW_FIRM_FROM_BROM_BUF
+//------------------------------------- FIRM_RESET_BUF
+#define HW_FIRM_RESET_BUF               HW_MAIN_MEM
+#define HW_FIRM_RESET_BUF_END           (HW_FIRM_RESET_BUF + HW_FIRM_RESET_BUF_SIZE)
+#define HW_FIRM_RESET_BUF_SIZE          0x400  // 12KB
+
+//------------------------------------- FIRM_FROM_BROM_BUF
 #define HW_FIRM_FROM_BROM_BUF           (HW_FIRM_FROM_BROM_BUF_END - HW_FIRM_FROM_BROM_BUF_SIZE)
 #define HW_FIRM_FROM_BROM_BUF_END       (HW_ITCM_END - 0x1000)  //  END - 4KB
 #define HW_FIRM_FROM_BROM_BUF_SIZE      0x3000  // 12KB
 
-//------------------------------------- HW_FIRM_FROM_FIRM_BUF
+//------------------------------------- FIRM_FROM_FIRM_BUF
 #define HW_FIRM_FROM_FIRM_BUF           (HW_FIRM_FROM_FIRM_BUF_END - HW_FIRM_FROM_FIRM_BUF_SIZE)
 #define HW_FIRM_FROM_FIRM_BUF_END       (HW_ITCM_END - 0x1000)  //  END - 4KB
 #define HW_FIRM_FROM_FIRM_BUF_SIZE      0x2C00  // 11KB
 
-//------------------------------------- HW_FIRM_APP_BUF
+//------------------------------------- FIRM_APP_BUF
 #define HW_FIRM_APP_BUF                 (HW_MAIN_MEM_HI_EX_END - HW_FIRM_APP_BUF_SIZE)
 #define HW_FIRM_APP_BUF_END             (HW_FIRM_APP_BUF + HW_FIRM_APP_BUF_SIZE)
 #define HW_FIRM_APP_BUF_SIZE            0x00800000  // 8MB
 
-//------------------------------------- HW_FIRM_BOOT_CORE
+//------------------------------------- FIRM_BOOT_CORE
 #define HW_FIRM_BOOT_CORE               HW_FIRM_FROM_BROM_BUF_END
 #define HW_FIRM_BOOT_CORE_END           (HW_FIRM_BOOT_CORE + HW_FIRM_BOOT_CORE_SIZE)
 #define HW_FIRM_BOOT_CORE_SIZE          0x200  // 512B

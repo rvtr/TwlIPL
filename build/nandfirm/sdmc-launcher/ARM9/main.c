@@ -73,7 +73,6 @@ static void PreInit(void)
     OS_Init後にいろいろ処理したい！
     メインメモリの初期化
 ***************************************************************/
-extern u32 SDK_SECTION_ARENA_DTCM_START;
 static void PostInit(void)
 {
     /*
@@ -82,7 +81,7 @@ static void PostInit(void)
     // ARM9領域を全クリア
     if ( OS_GetResetParameter() )
     {
-        MI_CpuClearFast( (void*)HW_DELIVER_ARG_BUF_END, HW_MAIN_MEM_MAIN_END-HW_DELIVER_ARG_BUF_END );
+        MI_CpuClearFast( (void*)HW_FIRM_RESET_BUF_END, HW_MAIN_MEM_MAIN_END-HW_FIRM_RESET_BUF_END );
     }
     else
     {
