@@ -55,7 +55,6 @@ SYSM_work		*pSysm;											// デバッガでのSYSMワークのウォッチ用
 // static variable-------------------------------------------------------------
 static BOOL				s_isBanner = FALSE;
 static NTRBannerFile	s_bannerBuf;
-static NAMTitleId		old_titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
 
 // const data------------------------------------------------------------------
 
@@ -132,8 +131,7 @@ void SYSM_ReadParameters( void )
 	
 	//NAMの初期化
 	//NAM_Init(AllocForNAM,FreeForNAM);
-	
-	MI_CpuClearFast(old_titleIdArray, sizeof(old_titleIdArray) );
+
 }
 
 
@@ -182,82 +180,73 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size)
 	// とりあえずALL
 	int l;
 	int gotten;
-	NAMTitleId titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
+	NAMTitleId titleIdArray[ LAUNCHER_TITLE_LIST_NUM - 1 ];
 	static TWLBannerFile bannerBuf[ LAUNCHER_TITLE_LIST_NUM ];
-	gotten = NAM_GetTitleList(titleIdArray, LAUNCHER_TITLE_LIST_NUM );
+	gotten = NAM_GetTitleList( titleIdArray, LAUNCHER_TITLE_LIST_NUM-1 );
 	
-	// バナーの読み込み……別の関数に移すべきかも。
-	// 毎フレーム変化を見る必要がある。
-	// 前のフレームのNAMTitleIdの配列を残しておき、比較。
-	// IDが変化していたら問答無用でバナーを読み込む。
 	for(l=0;l<gotten;l++)
 	{
-		if(titleIdArray[l] != old_titleIdArray[l])
-		{
-			//ヘッダからバナーを読み込む
-			FSFile  file[1];
-			BOOL bSuccess;
-			static const int PATH_LENGTH=1024;
-			char path[PATH_LENGTH];
-			static u8   header[HW_TWL_ROM_HEADER_BUF_SIZE] ATTRIBUTE_ALIGN(32);
-			s32 readLen;
-			s32 offset;
-			
-			readLen = NAM_GetTitleBootContentPath(path, titleIdArray[l]);
-			
-			if(readLen != NAM_OK){
-				OS_TPrintf("NAM_GetTitleBootContentPath failed %d,%lld,%d\n",l,titleIdArray[l],readLen);
-			}
-			
-			bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
-
-			if( ! bSuccess )
-			{
-			OS_TPrintf("SYSM_GetNandTitleList failed: cant open file %s\n",path);
-			    return -1;
-			}
-			
-			// バナーデータオフセットを読み込む
-			bSuccess = FS_SeekFile(file, 0x68, FS_SEEK_SET);
-			if( ! bSuccess )
-			{
-				OS_TPrintf("SYSM_GetNandTitleList failed: cant seek file(0)\n");
-				FS_CloseFile(file);
-			    return -1;
-			}
-			readLen = FS_ReadFile(file, &offset, sizeof(offset));
-			if( readLen != sizeof(offset) )
-			{
-				OS_TPrintf("SYSM_GetNandTitleList failed: cant read file\n");
-				FS_CloseFile(file);
-			    return -1;
-			}
-			
-			bSuccess = FS_SeekFile(file, offset, FS_SEEK_SET);
-			if( ! bSuccess )
-			{
-				OS_TPrintf("SYSM_GetNandTitleList failed: cant seek file(offset)\n");
-				FS_CloseFile(file);
-			    return -1;
-			}
-			readLen = ReadFile(file, &bannerBuf[l], (s32)sizeof(TWLBannerFile));
-			if( readLen != (s32)sizeof(TWLBannerFile) )
-			{
-				OS_TPrintf("SYSM_GetNandTitleList failed: cant read file2\n");
-				FS_CloseFile(file);
-			    return -1;
-			}
-			
-			FS_CloseFile(file);
-			
+		//ヘッダからバナーを読み込む
+		FSFile  file[1];
+		BOOL bSuccess;
+		static const int PATH_LENGTH=1024;
+		char path[PATH_LENGTH];
+		static u8   header[HW_TWL_ROM_HEADER_BUF_SIZE] ATTRIBUTE_ALIGN(32);
+		s32 readLen;
+		s32 offset;
+		
+		readLen = NAM_GetTitleBootContentPath(path, titleIdArray[l]);
+		
+		if(readLen != NAM_OK){
+			OS_TPrintf("NAM_GetTitleBootContentPath failed %d,%lld,%d\n",l,titleIdArray[l],readLen);
 		}
+		
+		bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
+
+		if( ! bSuccess )
+		{
+		OS_TPrintf("SYSM_GetNandTitleList failed: cant open file %s\n",path);
+		    return -1;
+		}
+		
+		// バナーデータオフセットを読み込む
+		bSuccess = FS_SeekFile(file, 0x68, FS_SEEK_SET);
+		if( ! bSuccess )
+		{
+			OS_TPrintf("SYSM_GetNandTitleList failed: cant seek file(0)\n");
+			FS_CloseFile(file);
+		    return -1;
+		}
+		readLen = FS_ReadFile(file, &offset, sizeof(offset));
+		if( readLen != sizeof(offset) )
+		{
+			OS_TPrintf("SYSM_GetNandTitleList failed: cant read file\n");
+			FS_CloseFile(file);
+		    return -1;
+		}
+		
+		bSuccess = FS_SeekFile(file, offset, FS_SEEK_SET);
+		if( ! bSuccess )
+		{
+			OS_TPrintf("SYSM_GetNandTitleList failed: cant seek file(offset)\n");
+			FS_CloseFile(file);
+		    return -1;
+		}
+		readLen = ReadFile(file, &bannerBuf[l], (s32)sizeof(TWLBannerFile));
+		if( readLen != (s32)sizeof(TWLBannerFile) )
+		{
+			OS_TPrintf("SYSM_GetNandTitleList failed: cant read file2\n");
+			FS_CloseFile(file);
+		    return -1;
+		}
+		
+		FS_CloseFile(file);
 	}
 	for(l=gotten;l<LAUNCHER_TITLE_LIST_NUM;l++)
 	{
 		// 念のため0にクリア
 		titleIdArray[l] = 0;
 	}
-	MI_CpuCopyFast(titleIdArray,old_titleIdArray,sizeof(old_titleIdArray));
 	
 	for(l=0;l<size;l++)
 	{
@@ -269,8 +258,8 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size)
 	
 	for(l=0;l<size;l++)
 	{
-		pTitleList_Nand[l].titleID = titleIdArray[l];
-		pTitleList_Nand[l].pBanner = &bannerBuf[l];
+		pTitleList_Nand[l+1].titleID = titleIdArray[l];
+		pTitleList_Nand[l+1].pBanner = &bannerBuf[l];
 	}
 	// return : *TitleProperty Array
 	return size;
@@ -342,10 +331,10 @@ BOOL SYSM_IsTPReadable( void )
 //
 // ============================================================================
 
-// 指定タイトルをロードするだけ
-AuthResult SYSM_LoadTitle( TitleProperty *pBootTitle )
-{
-	enum
+static BOOL s_load_success = FALSE;
+
+static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
+{	enum
 	{
 	    region_header,
 	    region_arm9_ntr,
@@ -373,7 +362,7 @@ AuthResult SYSM_LoadTitle( TitleProperty *pBootTitle )
     if( ! bSuccess )
     {
 OS_TPrintf("RebootSystem failed: cant open file\n");
-        return AUTH_RESULT_TITLE_POINTER_ERROR;
+        return;
     }
 
     {
@@ -392,7 +381,7 @@ OS_TPrintf("RebootSystem failed: cant open file\n");
         {
 OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
             FS_CloseFile(file);
-            return AUTH_RESULT_TITLE_POINTER_ERROR;
+            return;
         }
 
         readLen = ReadFile(file, header, (s32)sizeof(header));
@@ -401,7 +390,7 @@ OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
         {
 OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", header, 0, sizeof(header), readLen);
             FS_CloseFile(file);
-            return AUTH_RESULT_TITLE_POINTER_ERROR;
+            return;
         }
 
         if( header[0x15C] != 0x56 || header[0x15D] != 0xCF )
@@ -417,7 +406,7 @@ OS_TPrintf("\n");
 }
 OS_TPrintf("RebootSystem failed: logo CRC error\n");
             FS_CloseFile(file);
-            return AUTH_RESULT_TITLE_POINTER_ERROR;
+            return;
         }
 
         // 各領域を読み込む
@@ -451,7 +440,7 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
             {
 OS_TPrintf("RebootSystem failed: cant seek file(%d)\n", source[i]);
                 FS_CloseFile(file);
-                return AUTH_RESULT_TITLE_POINTER_ERROR;
+                return;
             }
 
             readLen = ReadFile(file, (void *)destaddr[i], (s32)len);
@@ -460,7 +449,7 @@ OS_TPrintf("RebootSystem failed: cant seek file(%d)\n", source[i]);
             {
 OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
                 FS_CloseFile(file);
-                return AUTH_RESULT_TITLE_POINTER_ERROR;
+                return;
             }
         }
 
@@ -470,12 +459,34 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 	// ROMヘッダバッファをコピー
 	MI_CpuCopy32( (void *)HW_TWL_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 	
-	return AUTH_RESULT_SUCCEEDED;
+	s_load_success = TRUE;
+}
+
+// スタック用
+#define THREAD_PRIO 17
+#define STACK_SIZE 5120 // 適当
+static OSThread thread;
+static u64 stack[ STACK_SIZE / sizeof(u64) ];
+
+// 指定タイトルを別スレッドでロードする
+OSThread* SYSM_LoadTitle( TitleProperty *pBootTitle )
+{
+	s_load_success = FALSE;
+	OS_InitThread();
+	OS_CreateThread( &thread, (void (*)(void *))SYSMi_LoadTitleThreadFunc, (void*)pBootTitle, stack+STACK_SIZE/sizeof(u64), STACK_SIZE,THREAD_PRIO );
+	OS_WakeupThreadDirect( &thread );
+	
+	return &thread;
 }
 
 // ロード済みの指定タイトルの認証とブートを行う
 AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 {
+	// ロード成功しているか
+	if(s_load_success == FALSE)
+	{
+		return AUTH_RESULT_TITLE_POINTER_ERROR;
+	}
 	// パラメータチェック
 	if( !SYSMi_CheckTitlePointer( pBootTitle ) ) {
 		return AUTH_RESULT_TITLE_POINTER_ERROR;
@@ -500,11 +511,11 @@ AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 // もしかすると使わないかも
 AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle )
 {
-	AuthResult result;
+	OSThread *t;
 	// 指定タイトルのロード
-	result = SYSM_LoadTitle( pBootTitle );
+	t = SYSM_LoadTitle( pBootTitle );
 	
-	if (result != AUTH_RESULT_SUCCEEDED) return result;
+	OS_JoinThread(t);
 	
 	// 認証
 	return SYSM_AuthenticateTitle( pBootTitle );

@@ -295,15 +295,37 @@ void LauncherInit( TitleProperty *pTitleList )
 }
 
 
+static int selected = 0;
+
+// ROMのローディング中
+void LauncherLoading( TitleProperty *pTitleList )
+{
+	static int fadecount = 0;
+	
+	// RTC情報の取得＆表示
+	GetAndDrawRTCData( &g_rtcDraw, FALSE );
+	
+	// 描画関係
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
+	DrawBackLightSwitch();
+	
+	#ifdef DBGBNR
+	NTRBannerDraw( s_csr, selected, pTitleList );
+	#endif
+	
+	// これだと93フレームでフェードアウト終わる
+	G2_ChangeBlendAlpha( fadecount/3, 31-(fadecount/3) );
+	if(fadecount < 93) fadecount++;
+}
+
 // ランチャーメイン
 TitleProperty *LauncherMain( TitleProperty *pTitleList )
 {
 	static BOOL touch_bl_bak = FALSE;
 	BOOL touch_bl_trg = FALSE;
-	BOOL tp_select = FALSE;
 	static int csr_v = 0;
-	static int selected = 0;
-	static int fadecount = 0;
+	BOOL tp_select = FALSE;
 	TitleProperty *ret = NULL;
 	
 	// RTC情報の取得＆表示
@@ -328,28 +350,24 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	//--------------------------------------
 	//  キー入力処理
 	//--------------------------------------
-	if(fadecount == 0)
-	{
-		if(pad.cont & PAD_KEY_RIGHT){										// バナー選択
-			if(csr_v == 0) csr_v = 1;
-		}
-		if( pad.cont & PAD_KEY_LEFT ){
-			if(csr_v == 0) csr_v = -1;
-		}
-		s_csr += csr_v;
-		if((LAUNCHER_TITLE_LIST_NUM-1)*CURSOR_PER_SELECT < s_csr) s_csr = (LAUNCHER_TITLE_LIST_NUM-1)*CURSOR_PER_SELECT;
-		if( s_csr < 0 ) s_csr = 0;
-		if(s_csr%CURSOR_PER_SELECT == 0){
-			csr_v = 0;
-			selected = s_csr/CURSOR_PER_SELECT;
-		}
-		
-		if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {					// メニュー項目への分岐
-			if(pTitleList[selected].titleID != 0)
-			{
-				fadecount = 1;
-				ret = &pTitleList[selected];
-			}
+	if(pad.cont & PAD_KEY_RIGHT){										// バナー選択
+		if(csr_v == 0) csr_v = 1;
+	}
+	if( pad.cont & PAD_KEY_LEFT ){
+		if(csr_v == 0) csr_v = -1;
+	}
+	s_csr += csr_v;
+	if((LAUNCHER_TITLE_LIST_NUM-1)*CURSOR_PER_SELECT < s_csr) s_csr = (LAUNCHER_TITLE_LIST_NUM-1)*CURSOR_PER_SELECT;
+	if( s_csr < 0 ) s_csr = 0;
+	if(s_csr%CURSOR_PER_SELECT == 0){
+		csr_v = 0;
+		selected = s_csr/CURSOR_PER_SELECT;
+	}
+	
+	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {					// メニュー項目への分岐
+		if(pTitleList[selected].titleID != 0)
+		{
+			ret = &pTitleList[selected];
 		}
 	}
 	
@@ -361,13 +379,6 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	#ifdef DBGBNR
 	NTRBannerDraw( s_csr, selected, pTitleList );
 	#endif
-	
-	if(fadecount>0)
-	{
-		// これだと93フレームでフェードアウト終わる
-		G2_ChangeBlendAlpha( fadecount/3, 31-(fadecount/3) );
-		if(fadecount < 93) fadecount++;
-	};// ロード開始＆フェードアウト用描画
 	
 	return ret;
 }

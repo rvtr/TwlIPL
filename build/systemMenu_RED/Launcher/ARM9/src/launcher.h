@@ -32,6 +32,8 @@ extern "C" {
 
 // function----------------------------------------------------------
 void LauncherInit( TitleProperty *pTitleList );
+
+void LauncherLoading( TitleProperty *pTitleList );
 TitleProperty *LauncherMain( TitleProperty *pTitleList );
 
 

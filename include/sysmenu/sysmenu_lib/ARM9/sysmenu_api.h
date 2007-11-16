@@ -83,7 +83,7 @@ extern int  SYSM_GetCardTitleList( TitleProperty *pTitleList_Card );			// カード
 extern int  SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size );	// NAND  アプリタイトルリストの取得
 
 // アプリ起動
-extern AuthResult SYSM_LoadTitle( TitleProperty *pBootTitle );						// 指定したTitlePropertyをロード
+extern OSThread* SYSM_LoadTitle( TitleProperty *pBootTitle );					// 指定したTitlePropertyを別スレッドでロード
 extern AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle );			// 指定したTitlePropertyを認証してブート
 extern AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle );	// 指定したTitlePropertyをロード＆認証してブート
 																				// 成功時は、never return.

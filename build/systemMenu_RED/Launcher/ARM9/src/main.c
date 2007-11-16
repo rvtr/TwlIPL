@@ -34,15 +34,6 @@ static void INTR_VBlank( void );
 
 // const data------------------------------------------------------------------
 
-// スタック用
-#define THREAD_PRIO 17
-#define STACK_SIZE 5120 // 適当
-static OSThread thread;
-static u64 stack[ STACK_SIZE / sizeof(u64) ];
-
-#define COUNT_JOIN_START	32 //2秒ぐらい？
-static BOOL s_loading = FALSE;
-
 // メイン
 void TwlMain( void )
 {
@@ -51,14 +42,15 @@ void TwlMain( void )
 		LOGODEMO = 1,
 		LAUNCHER_INIT = 2,
 		LAUNCHER = 3,
-		AUTHENTICATE = 4,
-		BOOT = 5,
-		STOP = 6
+		LOADING = 4,
+		AUTHENTICATE = 5,
+		BOOT = 6,
+		STOP = 7
 	};
 	u32 state = START;
 	TitleProperty *pBootTitle = NULL;
-	TitleProperty *pLoadTitle = NULL;
 	TitleProperty pTitleList[ LAUNCHER_TITLE_LIST_NUM ];
+	OSThread *thread;
 	
 	// システムメニュー初期化----------
 	SYSM_Init( Alloc, Free );											// OS_Initの前でコール。
@@ -126,24 +118,19 @@ void TwlMain( void )
 			state = LAUNCHER;
 			break;
 		case LAUNCHER:
-			pLoadTitle = LauncherMain( pTitleList );
-			if(!s_loading){
-				if( pLoadTitle ) {
-					void (*func)(void*);
-					func = (void (*)(void *))SYSM_LoadTitle;
-					OS_InitThread();
-					OS_CreateThread( &thread, func, (void*)pLoadTitle, stack+STACK_SIZE/sizeof(u64), STACK_SIZE,THREAD_PRIO );
-					OS_WakeupThreadDirect( &thread );
-					s_loading = TRUE;
-					pBootTitle = pLoadTitle;
-				}
+			pBootTitle = LauncherMain( pTitleList );
+			if( pBootTitle ) {
+				thread = SYSM_LoadTitle( pBootTitle );
+				state = LOADING;
 			}
-			else if(OS_IsThreadTerminated( &thread ))
+			break;
+		case LOADING:
+			LauncherLoading( pTitleList );
+			if(OS_IsThreadTerminated( thread ))
 			{
 				GX_DispOff();
 				GXS_DispOff();
 				state = AUTHENTICATE;
-				s_loading = FALSE;
 			}
 			break;
 		case AUTHENTICATE:
