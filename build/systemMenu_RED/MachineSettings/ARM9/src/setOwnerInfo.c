@@ -73,7 +73,7 @@ typedef enum NameOrComment
 
 // extern data----------------------------------
 
-extern u32 bg_char_data[16 * 6];
+extern u32 bg_char_data[8 * 6];
 extern u16 bg_scr_data[32 * 32];
 extern u16 bg_birth_scr_data[32 * 32];
 

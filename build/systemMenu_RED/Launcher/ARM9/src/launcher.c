@@ -37,7 +37,7 @@
 
 // extern data------------------------------------------
 
-extern u32 bg_char_data[16 * 5];
+extern u32 bg_char_data[8 * 6];
 extern u16 bg_scr_data[32 * 32];
 extern u16 bg_scr_data2[32 * 32];
 
@@ -331,6 +331,23 @@ static BOOL SelectCenterFunc( u16 *csr, TPData *tgt )
 	return FALSE;
 }
 
+static BOOL SelectFunc( u16 *csr, TPData *tgt )
+{
+	int l;
+	
+	for(l=0; l<2; l++)
+	{
+		int x = 11*8 + l*6*8;
+		int y = 19*8;
+		if(WithinRangeTP( x, y, x+32, y+16, tgt ))
+		{
+			*csr = (u16)l;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
 // ランチャーメイン
 TitleProperty *LauncherMain( TitleProperty *pTitleList )
 {
@@ -344,6 +361,7 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	TitleProperty *ret = NULL;
 	int brightness;
 	u16 dummy;
+	u16 tp_lr = 3;
 	
 	// RTC情報の取得＆表示
 	GetAndDrawRTCData( &g_rtcDraw, FALSE );
@@ -381,12 +399,18 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	}
 	
 	//--------------------------------------
-	//  キー入力処理
+	//  タッチパッド・キー入力処理
 	//--------------------------------------
-	if(pad.cont & PAD_KEY_RIGHT){										// バナー選択
+	
+	if( tpd.disp.touch )
+	{
+		(void) SelectFunc( &tp_lr, &tpd.disp );
+	}
+	
+	if(pad.cont & PAD_KEY_RIGHT || tp_lr == 1){										// バナー選択
 		if(csr_v == 0) csr_v = 1;
 	}
-	if( pad.cont & PAD_KEY_LEFT ){
+	if( pad.cont & PAD_KEY_LEFT || tp_lr == 0){
 		if(csr_v == 0) csr_v = -1;
 	}
 	s_csr += csr_v;
