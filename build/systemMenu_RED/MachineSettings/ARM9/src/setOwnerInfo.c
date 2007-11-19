@@ -29,11 +29,13 @@
 #define CLIST_KEY_PER_SEGMENT				5
 #define CLIST_SEGMENT_INTERVAL				7
 
+// キャンセルボタン領域
 #define CANCEL_BUTTON_TOP_X					( 2 * 8 )
 #define CANCEL_BUTTON_TOP_Y					( 21 * 8 )
 #define CANCEL_BUTTON_BOTTOM_X				( CANCEL_BUTTON_TOP_X + (8 * 8) )
 #define CANCEL_BUTTON_BOTTOM_Y				( CANCEL_BUTTON_TOP_Y + (2 * 8) )
 
+// OKボタン領域
 #define OK_BUTTON_TOP_X					( 26 * 8 )
 #define OK_BUTTON_TOP_Y					( 21 * 8 )
 #define OK_BUTTON_BOTTOM_X				( OK_BUTTON_TOP_X + (4 * 8) )
@@ -71,6 +73,9 @@ typedef enum NameOrComment
 
 // extern data----------------------------------
 
+extern u32 bg_char_data[16 * 3];
+extern u16 bg_scr_data[32 * 32];
+extern u16 bg_birth_scr_data[32 * 32];
 
 // function's prototype-------------------------
 static void SetNicknameInit( void );
@@ -248,6 +253,10 @@ void SetOwnerInfoInit( void )
 	for( i = 0; i < USER_INFO_MENU_ELEMENT_NUM; i++ ) {
 		s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ TSD_GetLanguage() ];
 	}
+	
+    // BGデータのロード処理
+	GX_LoadBG1Char(bg_char_data, 0, sizeof(bg_char_data));
+	GX_LoadBG1Scr(bg_scr_data, 0, sizeof(bg_scr_data));
 	
     DrawOwnerInfoMenuScene();
 	
@@ -598,17 +607,40 @@ static int SetNicknameMain( void )
 	return 0;
 }
 
+// 誕生日編集画面の表示
 static void DrawSetBirthdayScene( void )
 {
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"BIRTHDAY" );
 	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"CANCEL" );
 	PutStringUTF16( OK_BUTTON_TOP_X, OK_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"OK" );
-	PutStringUTF16( 128-36+16, 12*8, TXT_COLOR_BLACK, (const u16 *)L"月　　　日" );
-	PrintfSJIS( 128-36, 12*8, (s_birth_csr ? TXT_COLOR_GREEN : TXT_COLOR_BLACK), "%d", s_temp_birthday.month / 10);
-	PrintfSJIS( 128-28, 12*8, (s_birth_csr ? TXT_COLOR_GREEN : TXT_COLOR_BLACK), "%d", s_temp_birthday.month % 10);
-	PrintfSJIS( 128+12, 12*8, (!s_birth_csr ? TXT_COLOR_GREEN : TXT_COLOR_BLACK), "%d", s_temp_birthday.day / 10);
-	PrintfSJIS( 128+20, 12*8, (!s_birth_csr ? TXT_COLOR_GREEN : TXT_COLOR_BLACK), "%d", s_temp_birthday.day % 10);
+	PutStringUTF16( 128-36+16, 11*8, TXT_COLOR_BLACK, (const u16 *)L"月　　　日" );
+	PrintfSJIS( 128-36, 11*8, (s_birth_csr ? TXT_COLOR_GREEN : TXT_COLOR_BLACK), "%d", s_temp_birthday.month / 10);
+	PrintfSJIS( 128-28, 11*8, (s_birth_csr ? TXT_COLOR_GREEN : TXT_COLOR_BLACK), "%d", s_temp_birthday.month % 10);
+	PrintfSJIS( 128+12, 11*8, (!s_birth_csr ? TXT_COLOR_GREEN : TXT_COLOR_BLACK), "%d", s_temp_birthday.day / 10);
+	PrintfSJIS( 128+20, 11*8, (!s_birth_csr ? TXT_COLOR_GREEN : TXT_COLOR_BLACK), "%d", s_temp_birthday.day % 10);
+}
+
+// SetBirthdayMainのSelectSomethingByTPで使うSelectSomethingFuncの実装
+static BOOL SelectBirthdayFunc( u16 *csr, TPData *tgt )
+{
+	int l;
+	
+	// 単純な実装例
+	// 有効範囲全部について押されたかどうかの確認
+	// 有効範囲の区分が多い時は、タッチパッドの座標から確認範囲を絞るのが望ましい
+	for(l=0; l<4; l++)
+	{
+		int x = 12*8 + (l%2)*6*8;
+		int y = 8*8 + (l/2)*6*8;
+		if(WithinRangeTP( x, y, 16, 16, tgt ))
+		{
+			*csr = (u16)l;
+			return TRUE;
+		}
+	}
+	
+	return FALSE;
 }
 
 // 誕生日編集の初期化
@@ -627,6 +659,10 @@ static void SetBirthdayInit( void )
 		s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ TSD_GetLanguage() ];
 	}
 	
+    // BGデータのロード処理
+	GX_LoadBG1Char(bg_char_data, 0, sizeof(bg_char_data));
+	GX_LoadBG1Scr(bg_birth_scr_data, 0, sizeof(bg_birth_scr_data));
+	
 	DrawSetBirthdayScene();
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
@@ -640,7 +676,7 @@ static void SetBirthdayInit( void )
 // 誕生日編集メイン
 static int SetBirthdayMain( void )
 {
-	SelectSomethingFunc func[2]={SelectCancelFunc, SelectOKFunc};
+	SelectSomethingFunc func[3]={SelectBirthdayFunc, SelectCancelFunc, SelectOKFunc};
 	u8 maxday;
 	BOOL tp_touch = FALSE;
 	
@@ -667,9 +703,9 @@ static int SetBirthdayMain( void )
 	if( s_temp_birthday.day > maxday ) s_temp_birthday.day = 1;
 
 	// TPチェック
-	tp_touch = SelectSomethingByTP(&tp_csr, func, 2 );
+	tp_touch = SelectSomethingByTP(&tp_csr, func, 3 );
 	if (tp_touch && (tp_csr != KEY_OK && tp_csr != KEY_CANCEL)){
-		//s_birth_csr = tp_csr;
+		// 月日変更処理
 	}
 	
 	DrawSetBirthdayScene();
@@ -789,7 +825,7 @@ static int SetUserColorMain( void )
 
 	// TPチェック
 	tp_touch = SelectSomethingByTP(&tp_csr, func, 3 );
-	if (tp_csr != KEY_OK && tp_csr != KEY_CANCEL){
+	if (tp_touch && (tp_csr != KEY_OK && tp_csr != KEY_CANCEL)){
 		s_color_csr = (u8)tp_csr;
 	}
 	
@@ -866,7 +902,7 @@ static int SetCommentMain( void )
 }
 
 //======================================================
-// ニックネーム入力用キャラテーブル
+// ソフトウェアキーボード用キャラテーブル
 //======================================================
 
 static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM] = {
