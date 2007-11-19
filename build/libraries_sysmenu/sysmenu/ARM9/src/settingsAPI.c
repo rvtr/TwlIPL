@@ -42,12 +42,12 @@ static const u16 s_validLangBitmapList[] = {
 // TWL設定データファイルのリード
 BOOL SYSM_ReadTWLSettingsFile( void )
 {
-	BOOL retval;
+	BOOL retval = FALSE;;
 	{
 		TSDStore (*pTempBuffer)[2] = SYSM_Alloc( TSD_TEMP_BUFFER_SIZE );
 		if( pTempBuffer == NULL ) {
 			OS_TPrintf( "%s : malloc failed.\n", __FUNCTION__ );
-			return FALSE;
+			goto RETURN;
 		}
 		MI_CpuFill32( pTempBuffer, 0xffffffff, TSD_TEMP_BUFFER_SIZE );
 		retval = TSD_ReadSettings( pTempBuffer );
@@ -57,7 +57,7 @@ BOOL SYSM_ReadTWLSettingsFile( void )
 		NSDStoreEx (*pTempBuffer)[2] = SYSM_Alloc( NSD_TEMP_BUFFER_SIZE );
 		if( pTempBuffer == NULL ) {
 			OS_TPrintf( "%s : malloc failed.\n", __FUNCTION__ );
-			return FALSE;
+			goto RETURN;
 		}
 		MI_CpuFill32( pTempBuffer, 0xffffffff, NSD_TEMP_BUFFER_SIZE );
 		retval = NSD_ReadSettings( TSD_GetRegion(), pTempBuffer );
@@ -66,6 +66,8 @@ BOOL SYSM_ReadTWLSettingsFile( void )
 		(void)SYSMi_VerifyNTRSettings();
 #endif
 	}
+RETURN:
+	SYSM_SetValidTSD( retval );
 	return retval;
 }
 
@@ -76,6 +78,7 @@ BOOL SYSM_WriteTWLSettingsFile( void )
 	BOOL retval;
 	retval = TSD_WriteSettings();
 	if( retval ) {									// ライト成功なら、TSDをNSDに変換して、NVRAMにも書き込み
+		SYSM_SetValidTSD( TRUE );
 		SYSMi_ConvertTWL2NTRSettings();
 		NSD_WriteSettings( TSD_GetRegion() );
 #ifndef SDK_FINALROM

@@ -38,7 +38,7 @@ static s64 SYSMi_CalcRTCSecOffset( RTCDate *datep, RTCTime *timep );
 //======================================================================
 
 // RTCに新しい設定値をセットして、その値をもとにrtcOffset値を算出する。
-s64 SYSM_CalcRTCOffsetAndSetDateTime( RTCDate *newDatep, RTCTime *newTimep )
+s64 SYSM_CalcRTCOffset( RTCDate *newDatep, RTCTime *newTimep )
 {
 	RTCDate oldDate;
 	RTCTime oldTime;
@@ -48,7 +48,6 @@ s64 SYSM_CalcRTCOffsetAndSetDateTime( RTCDate *newDatep, RTCTime *newTimep )
 	
 	// RTCへの新しい値の設定
 	(void)RTC_GetDateTime( &oldDate, &oldTime );					// ライト直前に現在のRTC値を取得する。
-	(void)RTC_SetDateTime(  newDatep, newTimep );					// 新RTC設定値のセット。
 	oldTime.second = 0;
 	
 	// RTC設定時は、今回の設定でどれだけRTC値が変化したか（秒オフセット単位）を算出。
@@ -86,7 +85,7 @@ static s64 SYSMi_CalcRTCSecOffset( RTCDate *datep, RTCTime *timep )
 	
 	// 時、分、秒を　秒 or 分オフセットに
 #ifdef SECOND_OFFSET
-	offset = ( timep->hour * 60 + timep->minute ) * 60 + timep->second;
+	offset = ( timep->hour * 60 + timep->minute ) * 60 + timep->second;	// ※キャスト部分にバグあり
 #else
 	offset =   timep->hour * 60 + timep->minute;
 #endif
@@ -105,7 +104,7 @@ static s64 SYSMi_CalcRTCSecOffset( RTCDate *datep, RTCTime *timep )
 	
 	// 年・月・日を日数に換算した値を　秒 or 分オフセットに
 #ifdef SECOND_OFFSET
-	offset += (s64)( dayNum * 24 * 3600 );
+	offset += (s64)( dayNum * 24 * 3600 );	// ※キャスト部分にバグあり
 #else
 	offset += (s64)( dayNum * 24 * 60 );
 #endif
@@ -134,9 +133,6 @@ u32 SYSM_GetDayNum( u32 year, u32 month )
 // 簡易うるう年の判定 (うるう年：1、通常の年：0）※RTCのとりうる範2000～2100年に限定する。
 BOOL SYSM_IsLeapYear100( u32 year )
 {
-	if( ( year < 2000 ) || ( year >= 2100 ) ) {
-		OS_Panic( "year = %d : need 2000 - 2099\n", year );
-	}
 	if( ( year & 0x03 ) || ( year == 100 ) ) {						// うるう年は、「4で割り切れ　かつ　100で割り切れない年」または「400で割り切れる年」
 		return FALSE;
 	}else {

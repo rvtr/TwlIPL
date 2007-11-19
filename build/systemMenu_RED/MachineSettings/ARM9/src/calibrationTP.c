@@ -408,8 +408,6 @@ int TP_CalibrationMain( void )
 			}
 			
 			if( ( pad.trg & PAD_BUTTON_A ) || tp_ok ) {
-				SYSMi_GetWork()->isValidTSD	= 0;
-				
 				s_pTPC->calibTemp.data.raw_x1	= s_pTPC->sample[0].x;
 				s_pTPC->calibTemp.data.raw_y1	= s_pTPC->sample[0].y;
 				s_pTPC->calibTemp.data.dx1		= 32;

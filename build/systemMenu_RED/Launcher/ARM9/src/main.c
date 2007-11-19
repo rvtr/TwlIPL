@@ -208,6 +208,8 @@ static TitleProperty *CheckShortcutBoot( TitleProperty *pTitleList )
 		}
 		return pTgt;
 	}
+#else
+#pragma unused(pTitleList)
 #endif	// 0
 	return NULL;													// 「ブート内容未定」でリターン
 }

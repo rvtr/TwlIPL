@@ -376,10 +376,9 @@ static int InputRtcDateTimeMain( void )
 			MI_CpuCopy32( &s_pWork->dtp.Date, &date, sizeof(RTCDate) );
 			date.year -= 2000;
 			(void)RTC_SetDateTime( &date, &s_pWork->dtp.Time );
-			TSD_SetRTCOffset( SYSM_CalcRTCOffsetAndSetDateTime( &date, &s_pWork->dtp.Time ) );
+			TSD_SetRTCOffset( SYSM_CalcRTCOffset( &date, &s_pWork->dtp.Time ) );
 		}
 		
-		SYSMi_GetWork()->isValidTSD = 0;
 		TSD_SetFlagDateTime( TRUE );						// RTC入力フラグを立てる。
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み

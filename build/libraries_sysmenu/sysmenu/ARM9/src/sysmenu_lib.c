@@ -348,6 +348,19 @@ BOOL SYSM_IsTPReadable( void )
 }
 
 
+// TSD有効/無効をセット
+void SYSM_SetValidTSD( BOOL valid )
+{
+	SYSMi_GetWork()->isValidTSD = valid;
+}
+
+
+// TSD有効？
+BOOL SYSM_IsValidTSD( void )
+{
+	return SYSMi_GetWork()->isValidTSD;
+}
+
 // ============================================================================
 //
 // アプリ起動
