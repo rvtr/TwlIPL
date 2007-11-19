@@ -707,6 +707,39 @@ static void DrawColorSample( void )
 	}
 }
 
+// SetUserColorMainのSelectSomethingByTPで使うSelectSomethingFuncの実装
+static BOOL SelectColorFunc( u16 *csr, TPData *tgt )
+{
+	// まずは候補となる座標（カーソル単位）を取得
+	int csrx;
+	int csry;
+	int csrxy;
+	int a;
+	int b;
+	BOOL ret;
+	
+	csrx = (tgt->x - 88) / 24;
+	csry = (tgt->y - 54) / 24;
+	if(csrx < 0 ) return FALSE;
+
+	if ( csrx >= 4 ) csrx = 3;
+	csrxy = csrx + csry * 4;
+
+	if ( csrxy < 0 || csrxy >= 16) return FALSE;// はみ出した
+
+	a = 88 + csrx * 24;
+	b = 54 + csry * 24;
+	
+	// 候補座標の領域にタッチ座標が含まれているかチェック
+	ret = WithinRangeTP( a, b, a+11, b+11, tgt );
+	
+	if(ret)
+	{
+		*csr = (u16)csrxy;
+	}
+	return ret;
+}
+
 // ユーザーカラー編集の初期化
 static void SetUserColorInit( void )
 {
@@ -718,6 +751,7 @@ static void SetUserColorInit( void )
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
 	s_color_csr = TSD_GetUserColor();
+	tp_csr = s_color_csr;
 	
 	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
@@ -728,7 +762,7 @@ static void SetUserColorInit( void )
 // ユーザーカラー編集メイン
 static int SetUserColorMain( void )
 {
-	SelectSomethingFunc func[2]={SelectCancelFunc, SelectOKFunc};
+	SelectSomethingFunc func[3]={SelectColorFunc, SelectCancelFunc, SelectOKFunc};
 	BOOL tp_touch = FALSE;
 	
 	ReadTP();
@@ -754,8 +788,8 @@ static int SetUserColorMain( void )
 	}
 
 	// TPチェック
-	tp_touch = SelectSomethingByTP(&tp_csr, func, 2 );
-	if (tp_touch && (tp_csr != KEY_OK && tp_csr != KEY_CANCEL)){
+	tp_touch = SelectSomethingByTP(&tp_csr, func, 3 );
+	if (tp_csr != KEY_OK && tp_csr != KEY_CANCEL){
 		s_color_csr = (u8)tp_csr;
 	}
 	

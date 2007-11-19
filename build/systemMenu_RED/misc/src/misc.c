@@ -557,11 +557,6 @@ BOOL SelectSomethingByTP( u16 *nowCsr, SelectSomethingFunc func[], int funcnum )
 					if( csr_old == csr ) {
 						if( same_csr_count < TP_CSR_TOUCH_COUNT ) {
 							same_csr_count++;
-							{
-								static int a;
-								a = csr_old;
-								a++;
-							}
 						}
 						if( same_csr_count == TP_CSR_TOUCH_COUNT ) {
 							*nowCsr = csr;
