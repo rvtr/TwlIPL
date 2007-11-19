@@ -37,7 +37,7 @@
 
 // extern data------------------------------------------
 
-extern u32 bg_char_data[16 * 3];
+extern u32 bg_char_data[16 * 5];
 extern u16 bg_scr_data[32 * 32];
 extern u16 bg_scr_data2[32 * 32];
 
@@ -132,17 +132,6 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	
 	int l;
 	MtxFx22 mtx;
-	
-	/*
-	static int testcount=0;
-	testcount++;
-    if( (testcount/5)%2 ==1 ) titleprop[1].titleID = 0;//1secごとにTitlePropertyの2を変化させてみる活線挿抜擬似テスト
-    else
-    {
-		titleprop[1].titleID = 1;
-		titleprop[1].pBanner = download_banner;
-	}
-	*/
     
     // TitleProperty弄り
 	for(l=0;l<LAUNCHER_TITLE_LIST_NUM;l++)
@@ -327,9 +316,25 @@ void LauncherLoading( TitleProperty *pTitleList )
 	if(fadecount < 93) fadecount++;
 }
 
+// LauncherMainのSelectSomethingByTPで使うSelectSomethingFuncの実装
+static BOOL SelectCenterFunc( u16 *csr, TPData *tgt )
+{
+	// 単純な実装例
+	int x = 128-32-64-48+2*56;
+	int y = 96-16;
+	if(WithinRangeTP( x, y, x+64, y+64, tgt ))
+	{
+		*csr = (u16)1;
+		return TRUE;
+	}
+	
+	return FALSE;
+}
+
 // ランチャーメイン
 TitleProperty *LauncherMain( TitleProperty *pTitleList )
 {
+	SelectSomethingFunc func[1]={SelectCenterFunc};
 	static BOOL up_bl_bak = FALSE;
 	static BOOL dw_bl_bak = FALSE;
 	BOOL up_bl_trg = FALSE;
@@ -338,6 +343,7 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	BOOL tp_select = FALSE;
 	TitleProperty *ret = NULL;
 	int brightness;
+	u16 dummy;
 	
 	// RTC情報の取得＆表示
 	GetAndDrawRTCData( &g_rtcDraw, FALSE );
@@ -389,12 +395,15 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	if(s_csr%CURSOR_PER_SELECT == 0){
 		csr_v = 0;
 		selected = s_csr/CURSOR_PER_SELECT;
-	}
-	
-	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {					// メニュー項目への分岐
-		if(pTitleList[selected].titleID != 0)
-		{
-			ret = &pTitleList[selected];
+		
+		// このときだけ決定可能
+		tp_select = SelectSomethingByTP(&dummy, func, 1 );
+		
+		if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {					// メニュー項目への分岐
+			if(pTitleList[selected].titleID != 0)
+			{
+				ret = &pTitleList[selected];
+			}
 		}
 	}
 	

@@ -73,7 +73,7 @@ typedef enum NameOrComment
 
 // extern data----------------------------------
 
-extern u32 bg_char_data[16 * 3];
+extern u32 bg_char_data[16 * 6];
 extern u16 bg_scr_data[32 * 32];
 extern u16 bg_birth_scr_data[32 * 32];
 
@@ -663,7 +663,7 @@ static void CheckDate( void )
 // íaê∂ì˙ï“èWÉÅÉCÉì
 static int SetBirthdayMain( void )
 {
-	SelectSomethingFunc func[3]={SelectCancelFunc, SelectOKFunc};
+	SelectSomethingFunc func[2]={SelectCancelFunc, SelectOKFunc};
 	BOOL tp_touch = FALSE;
 	u16 temp_csr;
 	u16 temp_ok_cancel;

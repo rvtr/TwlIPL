@@ -37,7 +37,7 @@
 
 // extern data------------------------------------------
 
-extern u32 bg_char_data[16 * 3];
+extern u32 bg_char_data[16 * 6];
 extern u16 bg_scr_data[32 * 32];
 
 // function's prototype declaration---------------------
