@@ -540,6 +540,7 @@ BOOL SelectSomethingByTP( u16 *nowCsr, SelectSomethingFunc func[], int funcnum )
 			if( ++detach_count == TP_CSR_DETACH_COUNT ) {
 				detach_count = 0;
 				same_csr_count = 0;
+				*nowCsr = csr_old;
 				return TRUE;
 			}else {
 				return FALSE;

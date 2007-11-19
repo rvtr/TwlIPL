@@ -99,7 +99,6 @@ static BOOL s_birth_csr = FALSE;
 static TWLDate s_temp_birthday;
 static TWLNickname s_temp_name;
 static TWLComment s_temp_comment;
-static u16 tp_csr = 0;	//タッチパッドの一時的カーソル
 
 // const data-----------------------------------
 static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM];
@@ -246,9 +245,6 @@ void SetOwnerInfoInit( void )
 {
 	int i;
 	
-	GX_DispOff();
-	GXS_DispOff();
-	
 	// NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
 	for( i = 0; i < USER_INFO_MENU_ELEMENT_NUM; i++ ) {
 		s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ TSD_GetLanguage() ];
@@ -264,8 +260,6 @@ void SetOwnerInfoInit( void )
 	
 	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
-	GX_DispOn();
-	GXS_DispOn();
 }
 
 // オーナー情報編集メニュー
@@ -572,9 +566,6 @@ static void DrawSetNicknameScene( void )
 // ニックネーム編集の初期化
 static void SetNicknameInit( void )
 {
-	GX_DispOff();
-	GXS_DispOff();
-	
 	SetSoftKeyboardButton(0);
 	s_key_csr = KEY_START;
 	
@@ -590,8 +581,6 @@ static void SetNicknameInit( void )
 	
 	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
-	GX_DispOn();
-	GXS_DispOn();
 }
 
 // ニックネーム編集メイン
@@ -633,7 +622,7 @@ static BOOL SelectBirthdayFunc( u16 *csr, TPData *tgt )
 	{
 		int x = 12*8 + (l%2)*6*8;
 		int y = 8*8 + (l/2)*6*8;
-		if(WithinRangeTP( x, y, 16, 16, tgt ))
+		if(WithinRangeTP( x, y, x+16, y+16, tgt ))
 		{
 			*csr = (u16)l;
 			return TRUE;
@@ -646,18 +635,8 @@ static BOOL SelectBirthdayFunc( u16 *csr, TPData *tgt )
 // 誕生日編集の初期化
 static void SetBirthdayInit( void )
 {
-	int i;
-	
-	GX_DispOff();
-	GXS_DispOff();
-	
 	s_temp_birthday.month = TSD_GetBirthday()->month;
 	s_temp_birthday.day = TSD_GetBirthday()->day;
-	
-	// NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
-	for( i = 0; i < USER_INFO_MENU_ELEMENT_NUM; i++ ) {
-		s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ TSD_GetLanguage() ];
-	}
 	
     // BGデータのロード処理
 	GX_LoadBG1Char(bg_char_data, 0, sizeof(bg_char_data));
@@ -669,55 +648,107 @@ static void SetBirthdayInit( void )
 	
 	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
-	GX_DispOn();
-	GXS_DispOn();
+}
+
+static void CheckDate( void )
+{
+	u8 maxday;
+	if( s_temp_birthday.month == 0 ) s_temp_birthday.month = 12;
+	if( s_temp_birthday.month == 13 ) s_temp_birthday.month = 1;
+	maxday = (u8)SYSM_GetDayNum( 2000, s_temp_birthday.month );
+	if( s_temp_birthday.day == 0 ) s_temp_birthday.day = maxday;
+	if( s_temp_birthday.day > maxday ) s_temp_birthday.day = 1;
 }
 
 // 誕生日編集メイン
 static int SetBirthdayMain( void )
 {
-	SelectSomethingFunc func[3]={SelectBirthdayFunc, SelectCancelFunc, SelectOKFunc};
-	u8 maxday;
+	SelectSomethingFunc func[3]={SelectCancelFunc, SelectOKFunc};
 	BOOL tp_touch = FALSE;
+	u16 temp_csr;
+	u16 temp_ok_cancel;
+	static u16 first_csr = 0xffff;
+	static int same_count = 0;
 	
 	ReadTP();
 	
 	//--------------------------------------
 	//  キー入力処理
 	//--------------------------------------
-	if( pad.trg & PAD_KEY_DOWN ){									// カーソルの移動
+	if( pad.trg & PAD_KEY_DOWN ){
 		(*(s_birth_csr ? &s_temp_birthday.month : &s_temp_birthday.day))--;
 	}
 	if( pad.trg & PAD_KEY_UP ){
 		(*(s_birth_csr ? &s_temp_birthday.month : &s_temp_birthday.day))++;
 	}
-	if( pad.trg & (PAD_KEY_RIGHT | PAD_KEY_LEFT)){
+	if( pad.trg & (PAD_KEY_RIGHT | PAD_KEY_LEFT)){									// カーソルの移動
 		s_birth_csr = !s_birth_csr;
+	}
+
+	// 日付チェック
+	CheckDate();
+	
+	// TPチェック
+	tp_touch = SelectSomethingByTP(&temp_ok_cancel, func, 2 );
+
+	// 押している間数字が一定スピードで変化するような処理
+	if( tpd.disp.touch )
+	{
+		BOOL t = SelectBirthdayFunc( &temp_csr, &tpd.disp );
+		if( t )
+		{
+			if(same_count == 0) // count start
+			{
+				first_csr = temp_csr;
+				same_count = 1;
+			}else if(first_csr == temp_csr)
+			{
+				if( same_count == 1 || (same_count > 29 && same_count%10==0))
+				{
+					switch(temp_csr)
+					{
+						case 0:
+							s_birth_csr = TRUE;
+							s_temp_birthday.month++;
+							break;
+						case 1:
+							s_birth_csr = FALSE;
+							s_temp_birthday.day++;
+							break;
+						case 2:
+							s_birth_csr = TRUE;
+							s_temp_birthday.month--;
+							break;
+						case 3:
+							s_birth_csr = FALSE;
+							s_temp_birthday.day--;
+							break;
+						default:
+							break;
+					}
+				}
+				same_count++;
+			}
+		}
+	}else // touch==0
+	{
+		same_count = 0;
+		first_csr = 0xffff;
 	}
 	
 	// 日付チェック
-	if( s_temp_birthday.month == 0 ) s_temp_birthday.month = 12;
-	if( s_temp_birthday.month == 13 ) s_temp_birthday.month = 1;
-	maxday = (u8)SYSM_GetDayNum( 2000, s_temp_birthday.month );
-	if( s_temp_birthday.day == 0 ) s_temp_birthday.day = maxday;
-	if( s_temp_birthday.day > maxday ) s_temp_birthday.day = 1;
-
-	// TPチェック
-	tp_touch = SelectSomethingByTP(&tp_csr, func, 3 );
-	if (tp_touch && (tp_csr != KEY_OK && tp_csr != KEY_CANCEL)){
-		// 月日変更処理
-	}
+	CheckDate();
 	
 	DrawSetBirthdayScene();
 	
-	if( pad.trg & PAD_BUTTON_A || (tp_touch && tp_csr == KEY_OK) ) {
+	if( pad.trg & PAD_BUTTON_A || (tp_touch && temp_ok_cancel == KEY_OK) ) {
 		TSD_SetBirthday(&s_temp_birthday);
 		TSD_SetFlagBirthday( TRUE );
 		(void)SYSM_WriteTWLSettingsFile();// ファイルへ書き込み
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
 		return 0;
-	}else if( ( pad.trg & PAD_BUTTON_B ) || (tp_touch && tp_csr == KEY_CANCEL) ) {
+	}else if( ( pad.trg & PAD_BUTTON_B ) || (tp_touch && temp_ok_cancel == KEY_CANCEL) ) {
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
 		return 0;
@@ -779,20 +810,14 @@ static BOOL SelectColorFunc( u16 *csr, TPData *tgt )
 // ユーザーカラー編集の初期化
 static void SetUserColorInit( void )
 {
-	GX_DispOff();
-	GXS_DispOff();
-	
 	DrawColorSample();
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
 	s_color_csr = TSD_GetUserColor();
-	tp_csr = s_color_csr;
 	
 	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
-	GX_DispOn();
-	GXS_DispOn();
 }
 
 // ユーザーカラー編集メイン
@@ -800,6 +825,7 @@ static int SetUserColorMain( void )
 {
 	SelectSomethingFunc func[3]={SelectColorFunc, SelectCancelFunc, SelectOKFunc};
 	BOOL tp_touch = FALSE;
+	u16 temp_csr;
 	
 	ReadTP();
 	
@@ -822,21 +848,22 @@ static int SetUserColorMain( void )
 		if(s_color_csr%4 == 0) s_color_csr += 4;
 		s_color_csr -= 1;
 	}
-
+	temp_csr = s_color_csr;
+	
 	// TPチェック
-	tp_touch = SelectSomethingByTP(&tp_csr, func, 3 );
-	if (tp_touch && (tp_csr != KEY_OK && tp_csr != KEY_CANCEL)){
-		s_color_csr = (u8)tp_csr;
+	tp_touch = SelectSomethingByTP(&temp_csr, func, 3 );
+	if ((temp_csr != KEY_OK && temp_csr != KEY_CANCEL)){
+		s_color_csr = (u8)temp_csr;
 	}
 	
-	if( ( pad.trg & PAD_BUTTON_A ) || (tp_touch && tp_csr == KEY_OK) ) {				// 色決定
+	if( ( pad.trg & PAD_BUTTON_A ) || (tp_touch && temp_csr == KEY_OK) ) {				// 色決定
 		TSD_SetUserColor( (u8 )s_color_csr );
 		TSD_SetFlagUserColor( TRUE );
 		(void)SYSM_WriteTWLSettingsFile();// ファイルへ書き込み
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
 		return 0;
-	}else if( ( pad.trg & PAD_BUTTON_B ) || (tp_touch && tp_csr == KEY_CANCEL) ) {
+	}else if( ( pad.trg & PAD_BUTTON_B ) || (tp_touch && temp_csr == KEY_CANCEL) ) {
 		ChangeUserColor( TSD_GetUserColor() ); // パレット色を元にもどす
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
@@ -866,9 +893,6 @@ static void DrawSetCommentScene( void )
 // コメント編集の初期化
 static void SetCommentInit( void )
 {
-	GX_DispOff();
-	GXS_DispOff();
-	
 	SetSoftKeyboardButton(0);
 	s_key_csr = KEY_START;
 	
@@ -884,8 +908,6 @@ static void SetCommentInit( void )
 	
 	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
-	GX_DispOn();
-	GXS_DispOn();
 }
 
 // コメント編集メイン
