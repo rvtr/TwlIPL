@@ -48,7 +48,7 @@ static s32 ReadFile(FSFile* pf, void* buffer, s32 size);
 void *(*SYSM_Alloc)( u32 size  );
 void  (*SYSM_Free )( void *ptr );
 
-#ifdef __SYSM_DEBUG
+#ifdef SYSM_DEBUG_
 SYSM_work		*pSysm;											// デバッガでのSYSMワークのウォッチ用
 #endif
 
@@ -74,9 +74,9 @@ static BannerCheckParam s_bannerCheckList[ NTR_BNR_VER_MAX ] = {
 // SystemMenuの初期化
 void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 {
-#ifdef __SYSM_DEBUG
+#ifdef SYSM_DEBUG_
 	pSysm = SYSMi_GetWork();
-#endif /* __SYSM_DEBUG */
+#endif /* SYSM_DEBUG_ */
 	
     // ARM7コンポーネント用プロテクションユニット領域変更
     OS_SetProtectionRegion( 2, SYSM_OWN_ARM7_MMEM_ADDR, 512KB );

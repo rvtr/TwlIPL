@@ -162,7 +162,7 @@ static void ReadResetParameter( void )
 {
 	// Hot/Coldスタート判定
 #ifdef SDK_FINALROM
-	if( SYSM_GetMCUFreeRegisterValue() == 0 ) 			// マイコンフリーレジスタ値が"0"ならColdスタート
+	if( SYSMi_GetMCUFreeRegisterValue() == 0 ) 			// マイコンフリーレジスタ値が"0"ならColdスタート
 #else
 	if( 1 )												// ISデバッガでのデバッグ動作時に常にホットスタート判定されるのを防ぐ
 #endif

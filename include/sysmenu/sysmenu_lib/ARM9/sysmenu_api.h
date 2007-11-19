@@ -32,17 +32,19 @@ extern "C" {
 // define data----------------------------------------------------------
 
 #ifndef SDK_FINALROM
-//#define __SYSM_DEBUG									// デバッグコード用ビルドスイッチ
+//#define SYSM_DEBUG_												// デバッグコード用ビルドスイッチ
+//#define ENABLE_INITIAL_SETTINGS_
 #endif // SDK_FINALROM
 
-#define BACKLIGHT_LEVEL_MAX			22					// バックライト輝度上限（ハード的な制約は上限のみ）
-#define CARD_SLOT_NUM				1					// カードスロット数
-#define LAUNCHER_TITLE_LIST_NUM		40					// ランチャーのタイトルリスト数
+#define BACKLIGHT_LEVEL_MAX						22					// バックライト輝度上限（ハード的な制約は上限のみ）
+#define CARD_SLOT_NUM							1					// カードスロット数
+#define LAUNCHER_TITLE_LIST_NUM					40					// ランチャーのタイトルリスト数
 
+#define TITLE_ID_MACHINE_SETTINGS				0x000100014d534554	// 本体設定のタイトルID
 
-#define PAD_PRODUCTION_SKIP_INITIAL_SHORTCUT	( PAD_BUTTON_A | PAD_BUTTON_B	\
+#define PAD_PRODUCTION_SHORTCUT_CARD_BOOT		( PAD_BUTTON_A | PAD_BUTTON_B	\
 												| PAD_BUTTON_X | PAD_BUTTON_Y | PAD_BUTTON_R )
-														// 量産工程で使用する初回起動設定をキャンセルするショートカットキー
+																	// 量産工程で使用する初回起動設定をキャンセルしてカードブートするショートカットキー
 
 typedef enum PlatformCode {
 	PLATFORM_NTR = 0,
@@ -52,9 +54,9 @@ typedef enum PlatformCode {
 
 // タイトル情報
 typedef struct TitleProperty {	// この情報は、ランチャー時には認証通ってないけど、起動時には認証通すので大丈夫だろう。
-	NAMTitleId	titleID;		// タイトルID（TitleID_Hiで起動メディアは判定できる？）
-	u8			rsv[ 4 ];		// 予約
-	void		*pBanner;		// バナーへのポインタ（固定長フォーマットなら偽造されても大丈夫だろう。)
+	NAMTitleId		titleID;		// タイトルID（TitleID_Hiで起動メディアは判定できる？）
+	BootFlags		flags;			// ブート時のランチャー動作フラグ
+	TWLBannerFile	*pBanner;		// バナーへのポインタ（固定長フォーマットなら偽造されても大丈夫だろう。)
 }TitleProperty;
 
 // アプリ認証結果

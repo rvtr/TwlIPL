@@ -36,12 +36,13 @@ extern "C" {
 
 
 // リセットパラメータ　フラグ
-typedef struct ResetFlags {
-	u16			isLogoSkip : 1;			// ロゴデモスキップ要求
-	u16			isAppLoadCompleted : 1;	// アプリロード済みを示す
-	u16			reqAppRelocate : 1;		// アプリ再配置要求
-	u16			rsv : 13;
-}ResetFlags;
+typedef struct BootFlags {
+	u16			isLogoSkip : 1;				// ロゴデモスキップ要求
+	u16			isInitialShortcutSkip : 1;	// 初回起動シーケンススキップ要求
+	u16			isAppLoadCompleted : 1;		// アプリロード済みを示す
+	u16			reqAppRelocate : 1;			// アプリ再配置要求
+	u16			rsv : 12;
+}BootFlags;
 
 
 // リセットパラメータ　ヘッダ
@@ -57,7 +58,7 @@ typedef struct ResetParameterHeader {
 typedef union ResetParamBody {
 	struct {							// ※とりあえず最初はTitlePropertyとフォーマットを合わせておく
 		NAMTitleId	bootTitleID;		// リセット後にダイレクト起動するタイトルID
-		ResetFlags	flags;				// リセット時のランチャー動作フラグ
+		BootFlags	flags;				// リセット時のランチャー動作フラグ
 		u8			rsv[ 4 ];			// 予約
 	}v1;
 }ResetParamBody;
@@ -114,20 +115,26 @@ typedef struct SDKBootCheckInfo{
 //----------------------------------------------------------------------
 //　SYSM共有ワーク領域のアドレス獲得
 //----------------------------------------------------------------------
+#if 0
 // SYSMリセットパラメータアドレスの取得（※ライブラリ向け。ARM9側はSYSM_GetResetParamを使用して下さい。）
 #define SYSMi_GetResetParamAddr()			( (ResetParam *)0x02000100 )
 // SYSM共有ワークの取得
 #define SYSMi_GetWork()						( (SYSM_work *)HW_RED_RESERVED )
+#else
+#define SYSMi_GetResetParamAddr()			( (ResetParam *)( HW_RED_RESERVED + 0x50 ) )
+#define SYSMi_GetWork()						( (SYSM_work *)HW_RED_RESERVED + 0x10 )
+#endif
+
+// SDKブートチェック（アプリ起動時にカードIDをセットする必要がある。）
+#define SYSMi_GetSDKBootCheckInfo()			( (SDKBootCheckInfo *)HW_BOOT_CHECK_INFO_BUF )
+#define SYSMi_GetSDKBootCheckInfoForNTR()	( (SDKBootCheckInfo *)0x027ffc00 )
+
+// NANDファームがロードしてくれているマイコンフリーレジスタ値の取得
+#define SYSMi_GetMCUFreeRegisterValue()		( *(vu8 *)HW_RESET_PARAMETER_BUF )
 
 // カードROMヘッダワークの取得
 #define SYSM_GetCardRomHeader()				( (ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF )
 
-// SDKブートチェック（アプリ起動時にカードIDをセットする必要がある。）
-#define SYSM_GetSDKBootCheckInfo()			( (SDKBootCheckInfo *)HW_BOOT_CHECK_INFO_BUF )
-#define SYSM_GetSDKBootCheckInfoForNTR()	( (SDKBootCheckInfo *)0x027ffc00 )
-
-// NANDファームがロードしてくれているマイコンフリーレジスタ値の取得
-#define SYSM_GetMCUFreeRegisterValue()		( *(vu8 *)HW_RESET_PARAMETER_BUF )
 
 #ifdef __cplusplus
 }

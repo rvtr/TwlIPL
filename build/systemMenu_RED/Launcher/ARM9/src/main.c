@@ -25,7 +25,7 @@
 // define data-----------------------------------------------------------------
 
 // function's prototype-------------------------------------------------------
-static BOOL CheckBootStatus( void );
+static TitleProperty *CheckShortcutBoot( TitleProperty *pTitleList );
 static void INTR_VBlank( void );
 
 // global variable-------------------------------------------------------------
@@ -77,26 +77,31 @@ void TwlMain( void )
 	InitAllocator();											// ※SYSM_Init以外のSYSMライブラリ関数を呼ぶ前に
 																//   Alloc, Freeで登録したメモリアロケータを初期化してください。
 	// 各種パラメータの取得------------
-	SYSM_ReadParameters();
+	SYSM_ReadParameters();										// 本体設定データ等のリード
+	(void)SYSM_GetNandTitleList( pTitleList, LAUNCHER_TITLE_LIST_NUM );	// NANDアプリリストの取得（内蔵アプリはpTitleList[1]から格納される）
+	(void)SYSM_GetCardTitleList( pTitleList );					// カードアプリリストの取得（カードアプリはpTitleList[0]に格納される）
+	
+	// リセットパラメータ＆ショートカットチェック----------
 	if( SYSM_GetResetParamBody()->v1.bootTitleID ) {			// アプリ直接起動の指定があったらロゴデモを飛ばして指定アプリ起動
 		pBootTitle = (TitleProperty *)&SYSM_GetResetParamBody()->v1;
+	}else {
+		pBootTitle = CheckShortcutBoot( pTitleList );
 	}
 	
-	// 各種リソースのロード------------
-	if( pBootTitle == NULL ) {
+	// ダイレクトブートでロゴデモスキップでない時、各種リソースのロード------------
+	if( !( pBootTitle && !pBootTitle->flags.isLogoSkip ) ) {
 //		FS_ReadContentFile( ContentID );						// タイトル内リソースファイルのリード
 //		FS_ReadSharedContentFile( ContentID );					// 共有コンテントファイルのリード
-		
-		// NANDアプリリストの取得
-		(void)SYSM_GetNandTitleList( pTitleList, LAUNCHER_TITLE_LIST_NUM );
 	}
 	
 	// 開始ステートの判定--------------
 	if( pBootTitle ) {
-		// リセットパラメータでダイレクト起動タイトルの指定があるなら、ロゴ、ランチャーを飛ばして起動
-		if( SYSM_GetResetParamBody()->v1.flags.isAppLoadCompleted ) {
+		// ダイレクト起動タイトルの指定があるなら、ロゴ、ランチャーを飛ばして起動
+		if( pBootTitle->flags.isAppLoadCompleted ) {
+			// ロード済み状態なら、直接認証へ
 			state = AUTHENTICATE;
 		}else {
+			// さもなくば、ロード開始
 			state = LOAD_START;
 		}
 	}else if( SYSM_IsLogoDemoSkip() ) {
@@ -113,8 +118,6 @@ void TwlMain( void )
 		
 		ReadKeyPad();											// キー入力の取得
 		ReadTP();												// TP入力の取得
-		
-		(void)SYSM_GetCardTitleList( pTitleList );				// カードアプリリストの取得（スレッドで随時カード挿抜を通知されるものをメインループで取得）
 		
 		switch( state ) {
 		case START:
@@ -163,87 +166,50 @@ void TwlMain( void )
 		case STOP:												// 停止
 			break;
 		}
+		
+		// カードアプリリストの取得（スレッドで随時カード挿抜を通知されるものをメインループで取得）
+		(void)SYSM_GetCardTitleList( pTitleList );
 	}
 }
 
 
-// ブート状態を確認し、ロゴ表示有無を判断する-------
-static BOOL CheckBootStatus(void)
+// ショートカット起動のチェック
+static TitleProperty *CheckShortcutBoot( TitleProperty *pTitleList )
 {
-#if 0
-	BOOL boot_decision		= FALSE;								// 「ブート内容未定」に
-	BOOL other_shortcut_off	= FALSE;
+#if 0	// ※未実装
+	TitleProperty *pTgt;
+	
+	ReadKeyPad();													// キー入力の取得
 	
 	//-----------------------------------------------------
-	// デバッグ用コンパイルスイッチによる挙動
+	// TWL設定データ未入力時の初回起動シーケンス起動
 	//-----------------------------------------------------
-	{
-		
-#ifdef __LOGO_SKIP													// ※デバッグ用ロゴスキップ
-		SetLogoEnable( FALSE );										// ロゴ表示スキップ
-#endif /* __LOGO_SKIP */
-	}
-	
-	
-	//-----------------------------------------------------
-	// NITRO設定データ未入力時の設定メニューショートカット起動
-	//-----------------------------------------------------
-#ifdef __DIRECT_BOOT_BMENU_ENABLE									// ※NITRO設定データ未入力時のブートメニュー直接起動スイッチがONか？
+#ifdef ENABLE_INITIAL_SETTINGS_
 	if( !TSD_IsSetTP() ||
 		!TSD_IsSetLanguage() ||
 		!TSD_IsSetDateTime() ||
 		!TSD_IsSetUserColor() ||
-		!TSD_IsSetNickname() ) {									// TP,言語,RTC,ニックネームがセットされていなければ、ロゴ表示もゲームロードも行わず、ブートメニューをショートカット起動。
-		
-		if( ( pad.cont & PAD_PRODUCTION_NITRO_SHORTCUT ) == PAD_PRODUCTION_NITRO_SHORTCUT ) {
-			other_shortcut_off = TRUE;								// 量産工程用のキーショートカットが押されていたら、設定メニュー起動はなし。
-		}else if( !SYSM_IsInspectNITROCard() )  {					// 但し、量産用のキーショートカットが押されている時か、NITRO検査カードがささっている時は、ブートメニューへのショートカット起動は行わない。
-			SYSM_SetBootFlag( BFLG_BOOT_BMENU );
-			SetLogoEnable( FALSE );
-			return TRUE;											// 「ブート内容決定」でリターン
-		}
+		!TSD_IsSetNickname() ) {
+		return SYSM_GetTitleProperty( TITLE_ID_MACHINE_SETTINGS, pTitleList );	// ※未実装
 	}
-#endif /* __DIRECT_BOOT_BMENU_ENABLE */
-	
+#endif // ENABLE_INITIAL_SETTINGS_
 	
 	//-----------------------------------------------------
-	// キーショートカット起動
+	// 量産工程用ショートカットキー or
+	// 検査カード起動
 	//-----------------------------------------------------
-	if( !other_shortcut_off
-//		&& !TSD_IsAutoBoot()
-		) {
-																	// 他ショートカットONかつオート起動OFFの時
-		u32 nowBootFlag = 0;
-		
-		if(pad.cont & PAD_BUTTON_R){								// Rボタン押下起動なら、ロゴ表示なしでAGBゲームへ
-			SetLogoEnable( FALSE );
-			nowBootFlag = BFLG_BOOT_AGB;
-		}else if(pad.cont & PAD_BUTTON_L){							// Lボタン押下起動なら、ロゴ表示後にNITROゲームへ
-			nowBootFlag = BFLG_BOOT_NITRO;
-		}else if(pad.cont & PAD_BUTTON_B){							// Bボタン押下起動なら、ロゴ表示後にブートメニューへ
-			nowBootFlag = BFLG_BOOT_BMENU;
+	if( ( SYSM_IsExistCard() &&
+		  ( ( pad.cont & PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) == PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) ) ||
+		SYSM_IsInspectCard() ) {
+		pTgt = SYSM_GetTitleProperty();	// ※未実装
+		if( pTgt ) {
+			pTgt->flags.isLogoSkip = TRUE;							// ロゴデモを飛ばす
+			pTgt->flags.isInitialShortcutSkip = TRUE;				// 初回起動シーケンスを飛ばす
 		}
-		if( nowBootFlag ) {
-			SYSM_SetBootFlag( nowBootFlag );
-			return TRUE;											// 「ブート内容決定」でリターン
-		}
+		return pTgt;
 	}
-	
-	
-	//-----------------------------------------------------
-	// 自動起動オプション有効時の挙動
-	//-----------------------------------------------------
-#ifndef __SYSM_DEBUG
-//	if( TSD_IsAutoBoot() ) {
-	if( 0 ) {
-		if ( SYSM_IsExistCard() ) {									// NITROカードのみの時はNITRO起動
-			SYSM_SetBootFlag( BFLG_BOOT_NITRO );
-			return TRUE;											// 「ブート内容決定」でリターン
-		}
-	}
-#endif /* __SYSM_DEBUG */
-#endif
-	return FALSE;													// 「ブート内容未定」でリターン
+#endif	// 0
+	return NULL;													// 「ブート内容未定」でリターン
 }
 
 

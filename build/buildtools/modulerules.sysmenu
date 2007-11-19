@@ -25,7 +25,7 @@ include	$(NITROSYSTEM_ROOT)/build/buildtools/modulerules
 
 
 %.wad: $(BINDIR)/$(TARGET_BIN)
-	$(MAKEWAD) $(TITLEID_LO) $< $@
+	$(MAKEWAD) $< $@
 
 #----------------------------------------------------------------------------
 TWL_SYSMENU_MODULERULES_ = TRUE

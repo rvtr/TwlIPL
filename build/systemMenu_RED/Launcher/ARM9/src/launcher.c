@@ -68,16 +68,16 @@ static u64	old_titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
 #define DBGBNR
 #ifdef DBGBNR
 
-static NTRBannerFile *empty_banner;
-static NTRBannerFile *nobanner_banner;
-static NTRBannerFile *no_card_banner;
+static TWLBannerFile *empty_banner;
+static TWLBannerFile *nobanner_banner;
+static TWLBannerFile *no_card_banner;
 static u8 image_index_list[ LAUNCHER_TITLE_LIST_NUM ];
 static const int MAX_SHOW_BANNER = 6;
 static GXOamAttr banner_oam_attr[MAX_SHOW_BANNER+10];// アフィンパラメータ埋める関係で少し大きめ
 static u8 *pbanner_image_list[ LAUNCHER_TITLE_LIST_NUM ];
 static int banner_count = 0;
 
-static void LoadNTRBannerFiles()
+static void LoadBannerFiles()
 {
 	// ファイル読み込み部分。多分emptyバナーだけ読み込む事になる。本来、アプリ系は外部から取得
 	// 最後に解放しないと駄目。だが、どこで解放すればいいのやら……
@@ -90,10 +90,10 @@ static void LoadNTRBannerFiles()
 }
 
 // パレットの読み込みやOBJ関係の初期化
-static void NTRBannerInit()
+static void BannerInit()
 {
 	int l;
-	LoadNTRBannerFiles();
+	LoadBannerFiles();
 	
 	MI_CpuClearFast(old_titleIdArray, sizeof(old_titleIdArray) );
     MI_DmaFill32(3, banner_oam_attr, 192, sizeof(banner_oam_attr));     // let out of the screen if not display
@@ -126,7 +126,7 @@ static void NTRBannerInit()
 }
 
 // 活線挿抜対応のため、毎回VRAMへのイメージデータロード判定をしている
-static void NTRBannerDraw(int cursor, int selected, TitleProperty *titleprop)
+static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 {
 	static int count = 0;
 	
@@ -177,7 +177,7 @@ static void NTRBannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	for(l=0;l<LAUNCHER_TITLE_LIST_NUM;l++)
 	{
 		u8 m;
-		u8 *pban=((NTRBannerFile *)titleprop[l].pBanner)->v1.image;
+		u8 *pban=((TWLBannerFile *)titleprop[l].pBanner)->v1.image;
 		for(m=0;m<banner_count;m++){
 			if(pban == pbanner_image_list[m]){
 				image_index_list[l]=m;
@@ -252,7 +252,7 @@ static void NTRBannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	
 	// アプリ名表示
 	{
-		NNSG2dChar *str = ((NTRBannerFile *)titleprop[selected].pBanner)->v1.comment[ TSD_GetLanguage() ];
+		NNSG2dChar *str = ((TWLBannerFile *)titleprop[selected].pBanner)->v1.comment[ TSD_GetLanguage() ];
 		int width = NNS_G2dTextCanvasGetStringWidth(&gTextCanvas, str, NULL);
 		PutStringUTF16( (256-width)/2, 48, TXT_COLOR_BLACK, str );
 	}
@@ -298,7 +298,7 @@ void LauncherInit( TitleProperty *pTitleList )
 	GXS_DispOn();
 	
 	#ifdef DBGBNR
-	NTRBannerInit();
+	BannerInit();
 	#endif
 }
 
@@ -319,7 +319,7 @@ void LauncherLoading( TitleProperty *pTitleList )
 	DrawBackLightSwitch();
 	
 	#ifdef DBGBNR
-	NTRBannerDraw( s_csr, selected, pTitleList );
+	BannerDraw( s_csr, selected, pTitleList );
 	#endif
 	
 	// これだと93フレームでフェードアウト終わる
@@ -404,7 +404,7 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	DrawBackLightSwitch();
 	
 	#ifdef DBGBNR
-	NTRBannerDraw( s_csr, selected, pTitleList );
+	BannerDraw( s_csr, selected, pTitleList );
 	#endif
 	
 	return ret;

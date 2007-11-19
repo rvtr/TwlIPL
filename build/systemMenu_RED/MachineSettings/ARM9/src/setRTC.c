@@ -189,12 +189,12 @@ int SetRTCMain( void )
 		s_pWork = NULL;
 		MachineSettingInit();
 	}
-#ifdef __SYSM_DEBUG
+#ifdef SYSM_DEBUG_
 	else if( pad.trg & PAD_BUTTON_START ) {
 		ClearRTC();
 		OS_Printf( "RTC offset in NVRAM is ZERO clear!\n" );
 	}
-#endif /* __SYSM_DEBUG */
+#endif /* SYSM_DEBUG_ */
 	
 	return 0;
 }

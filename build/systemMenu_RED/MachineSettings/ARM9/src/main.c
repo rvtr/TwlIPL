@@ -77,7 +77,8 @@ void TwlMain(void)
 	
 	{
 		// ファイルシステム切り替え応急処置
-		FS_IdentifyTitle(0x4d534554);//MSET
+//		FS_IdentifyTitle(0x4d534554);//MSET
+		FS_IdentifyTitle(0x5445534d);//TESM ※今はmakerom.TWLのバグで逆になっている。
 	}
 	
 	InitBG();
