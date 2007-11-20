@@ -22,47 +22,34 @@
 #include <firm/format/from_firm.h>
 #include <twl/os/common/format_rom.h>
 
-#include <nitro/hw/common/armArch.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-//---- entry point type
-typedef void (*OSEntryPoint) (void);
-
 /*---------------------------------------------------------------------------*
-  Name:         OSi_Boot
+  Name:         OS_BootWithRomHeaderFromFIRM
 
-  Description:  boot firm
+  Description:  boot with ROM header
 
   Arguments:    rom_header  :  ROM header
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void OSi_Boot( ROM_Header* rom_header );
+void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header );
 
 /*---------------------------------------------------------------------------*
-  Name:         OSi_Finalize
+  Name:         OS_BootDefault
 
-  Description:  finalize
+  Description:  boot system menu using ROM_Header in HW_TWL_ROM_HEADER_BUF
 
   Arguments:    None
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void OSi_Finalize(void);
-
-/*---------------------------------------------------------------------------*
-  Name:         OSi_ClearWorkArea
-
-  Description:  clear work area
-
-  Arguments:    None
-
-  Returns:      None
- *---------------------------------------------------------------------------*/
-void OSi_ClearWorkArea( void );
+static inline void OS_BootFromFIRM( void )
+{
+    OS_BootWithRomHeaderFromFIRM( (ROM_Header*)HW_TWL_ROM_HEADER_BUF );
+}
 
 /*---------------------------------------------------------------------------*
   Name:         OSi_FromBromToMenu

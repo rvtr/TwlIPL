@@ -22,14 +22,16 @@ include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 #----------------------------------------------------------------------------
 
 SUBDIRS		= \
-			os \
-			gcd \
-			mi \
 			init \
+			os \
 			pxi \
+			mi \
 			fatfs \
 			aes \
 			pm \
+			gcd \
+			$(TWLSDK_ROOT)/build/libraries/reboot \
+
 #			syscall \
 #			nvram \
 #			acsign \

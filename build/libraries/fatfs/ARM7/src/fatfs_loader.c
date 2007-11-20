@@ -65,7 +65,7 @@ static int menu_fd = -1;
  *---------------------------------------------------------------------------*/
 BOOL FATFS_OpenRecentMenu( int driveno )
 {
-    char *menufile = (char*)L"A:\\title_e\\00010001\\43414d54\\content\\12123434.app";
+    char *menufile = (char*)L"A:\\title\\00010001\\4d454e55\\content\\12123434.app";
     if (driveno < 0 || driveno >= 26)
     {
         return FALSE;
@@ -168,7 +168,7 @@ BOOL FATFS_LoadBuffer(u32 offset, u32 size)
     static int count = 0;
 
     // seek first
-//    OS_TPrintf("po_lseek(offset=%X);\n", offset);
+    //OS_TPrintf("po_lseek(offset=0x%x);\n", offset);
     if (po_lseek(menu_fd, (s32)offset, PSEEK_SET) < 0)
     {
         return FALSE;
@@ -189,11 +189,29 @@ BOOL FATFS_LoadBuffer(u32 offset, u32 size)
         // x3...: after to wait ARM9
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
-//        OS_TPrintf("po_read(dest=%X, unit=%X);\n", dest, unit);
-        if (po_read(menu_fd, (u8*)dest, (int)unit) < 0)            // reading
+        //OS_TPrintf("po_read(dest=%p, unit=0x%x);\n", dest, unit);
+#if 0   /* 0: 2KBバグパッチ */
+        if (po_read(menu_fd, (u8*)dest, (int)unit) < 0)     // reading
         {
             return FALSE;
         }
+#else
+{
+    u32 done = 0;
+    while (done < unit)
+    {
+        u8* dest2 = dest + done;
+        u32 unit2 = (unit - done) < 2048 ? (unit - done) : 2048;
+//OS_TPrintf("    po_read(dest=%p, unit=0x%x) ... ", dest2, unit2);
+        if (po_read(menu_fd, (u8*)dest2, (int)unit2) < 0)   // reading
+        {
+            return FALSE;
+        }
+        done += unit2;
+//OS_TPrintf("done\n");
+    }
+}
+#endif
 #ifdef PROFILE_ENABLE
         // x4...: before PXI
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
@@ -508,5 +526,5 @@ BOOL FATFS_LoadStatic( void )
  *---------------------------------------------------------------------------*/
 void FATFS_Boot( void )
 {
-    OSi_Boot( rh );
+    OS_BootWithRomHeaderFromFIRM( rh );
 }

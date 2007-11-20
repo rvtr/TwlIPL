@@ -120,7 +120,7 @@ static BOOL CheckRomCertificate( SVCSignHeapContext* pool, const RomCertificate 
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         MIi_LoadBuffer
+  Name:         MI_LoadBuffer
 
   Description:  receive data from ARM7 and store(move) via WRAM[B]
 
@@ -187,8 +187,8 @@ BOOL MI_LoadBuffer(u8* dest, u32 size, SVCSHA1Context *ctx)
                 u8* s = src + done;
                 u8* d = dest + done;
                 u32 u = unit < done + HASH_UNIT ? unit - done : HASH_UNIT;
-                MI_CpuCopyFast( s, d, u );
                 SVC_SHA1Update( ctx, s, u );
+                MI_CpuCopyFast( s, d, u );
             }
         }
         else
@@ -290,6 +290,7 @@ BOOL MI_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
 #endif
     if ( result )
     {
+        DC_FlushRange( rh, HW_TWL_ROM_HEADER_BUF_SIZE );
         PXI_NotifyID( FIRM_PXI_ID_AUTH_HEADER );
         PXI_SendDataByFifo( PXI_FIFO_TAG_DATA, sd.aes_key_seed, AES_BLOCK_SIZE );
         // DS互換ヘッダコピー
@@ -505,5 +506,5 @@ BOOL MI_LoadStatic( void )
  *---------------------------------------------------------------------------*/
 void MI_Boot( void )
 {
-    OSi_Boot( rh );
+    OS_BootWithRomHeaderFromFIRM( rh );
 }
