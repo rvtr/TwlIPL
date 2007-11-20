@@ -63,7 +63,7 @@ void BOOT_Ready( void )
 	static u32 clr_list[] = 
 	{
 		HW_ITCM, HW_ITCM_SIZE,
-		HW_DTCM, HW_DTCM_SIZE,
+		//HW_DTCM, HW_DTCM_SIZE,
 		NULL
 	};
 	
