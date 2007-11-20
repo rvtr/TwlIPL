@@ -21,7 +21,7 @@ SUBDIRS				=
 #----------------------------------------------------------------------------
 
 # build ARM & THUMB libraries
-FIRM_CODEGEN_ALL 	?=	True
+TWL_CODEGEN_ALL 	?=	True
 
 
 
@@ -38,13 +38,6 @@ TARGET_LIB			=	libgcd$(FIRM_LIBSUFFIX).a
 INCDIR				=	../include
 
 #----------------------------------------------------------------------------
-
-# DEBUG版ビルドの場合、RELEASE版でビルドして
-# DEBUG版のライブラリを装います。
-
-ifdef	NITRO_DEBUG
-NITRO_BUILD_TYPE	=	RELEASE
-endif
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 

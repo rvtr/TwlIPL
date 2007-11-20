@@ -17,8 +17,6 @@
 #----------------------------------------------------------------------------
 
 
-FIRM_TARGET    = FIRM
-
 # if you have valid keys, set environment value like below
 #export TWL_KEYSDIR='$(FIRM_ROOT)/../twl_firmware/bootrom/build/keys'
 
@@ -30,10 +28,10 @@ SUBDIRS =	\
             ARM7 \
             ARM9 \
 
-TARGET_FIRM_BIN		=	sdmc_launcher-$(FIRM_BUILD_TYPE).nand
+TARGET_FIRM_BIN		=	sdmc_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nand
 BINDIR			=	.
-MAKEFIRM_ARM9		=	ARM9/bin/ARM9-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/sdmc_launcher9.tef
-MAKEFIRM_ARM7		=	ARM7/bin/ARM7-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/sdmc_launcher7.tef
+MAKEFIRM_ARM9		=	ARM9/bin/$(TWL_BUILDTYPE_ARM9)/sdmc_launcher9.tef
+MAKEFIRM_ARM7		=	ARM7/bin/$(TWL_BUILDTYPE_ARM7)/sdmc_launcher7.tef
 MAKEFIRM_RSA_PRVKEY	=	$(TWL_KEYSDIR)/rsa/private_nand.der
 LDEPENDS_BIN		+=	wram_regs/wram_regs.rbin
 

@@ -17,8 +17,6 @@
 #----------------------------------------------------------------------------
 
 
-FIRM_TARGET    = FIRM
-
 # if you have no valid key, comment out next line
 #TWL_KEYSDIR = $(FIRM_ROOT)/../twl_firmware/bootrom/build/keys
 
@@ -30,10 +28,10 @@ SUBDIRS =	\
             ARM7 \
             ARM9 \
 
-TARGET_FIRM_BIN		=	norfirm_print-$(FIRM_BUILD_TYPE).nor
+TARGET_FIRM_BIN		=	norfirm_print-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nor
 BINDIR			=	.
-MAKEFIRM_ARM9		=	ARM9/bin/ARM9-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_norfirm9_print.tef
-MAKEFIRM_ARM7		=	ARM7/bin/ARM7-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_norfirm7_print.tef
+MAKEFIRM_ARM9		=	ARM9/bin/$(TWL_BUILDTYPE_ARM9)/twl_norfirm9_print.tef
+MAKEFIRM_ARM7		=	ARM7/bin/$(TWL_BUILDTYPE_ARM7)/twl_norfirm7_print.tef
 MAKEFIRM_RSA_PRVKEY	=	$(TWL_KEYSDIR)/rsa/private_nor.der
 LDEPENDS_BIN		+=	wram_regs/wram_regs.rbin
 

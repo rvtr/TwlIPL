@@ -16,9 +16,18 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
+override TARGET_PLATFORM	:= TWL
+override TARGET_CODEGEN		:= ARM
+override TWL_ARCHGEN		:= LIMITED
+
+override TARGET_FINALROM	:= TRUE
+override TARGET_RELEASE		:=
+override TARGET_DEBUG		:=
+
 SUBDIRS		=
 
 LINCLUDES	=   ../include
+
 
 #----------------------------------------------------------------------------
 

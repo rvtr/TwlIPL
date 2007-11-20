@@ -16,8 +16,7 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
-FIRM_PROC      = ARM7
-FIRM_TARGET    = FIRM
+TWL_PROC      = ARM7
 
 SUBDIRS		=
 
@@ -37,7 +36,6 @@ SRCS		=	\
 
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
-
 
 #----------------------------------------------------------------------------
 

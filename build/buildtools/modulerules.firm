@@ -17,14 +17,6 @@
 #----------------------------------------------------------------------------
 ifndef TWLFIRM_MODULERULES_
 
-
-ifneq ($(MAKEFIRM_ARM9),)
-MAKEROM_ARM9		= $(MAKEFIRM_ARM9)
-endif
-ifneq ($(MAKEFIRM_ARM7),)
-MAKEROM_ARM7		= $(MAKEFIRM_ARM7)
-endif
-
 #----------------------------------------------------------------------------
 ### TWL-modulerules
 #
@@ -33,18 +25,22 @@ include	$(TWLSDK_ROOT)/build/buildtools/modulerules
 #----------------------------------------------------------------------------
 
 #
+# MAKEROM for IS-TWL-DEBUGGER
+#
+ifeq ($(filter $(MAKEROM_FLAGS),-F),)
+MAKEROM_FLAGS	+= -F
+endif
+
+#
 # MAKENORFIRM / MAKENANDFIRM / MAKEGCDFIRM
 #
-
-MAKEFIRM_ARM9		?= $(MAKEROM_ARM9)
-MAKEFIRM_ARM7		?= $(MAKEROM_ARM7)
 
 MAKEFIRM_DEFS	+= -DFIRM_ROOT='$(FIRM_ROOT)' \
 				-DMAKEFIRM_ARM9='$(basename $(MAKEFIRM_ARM9))' \
 				-DMAKEFIRM_ARM7='$(basename $(MAKEFIRM_ARM7))' \
 				-DMAKEFIRM_RSA_PRVKEY='$(MAKEFIRM_RSA_PRVKEY)' \
 
-SDEPENDS_BIN		+= $(MAKEFIRM_RSA_PRVKEY)
+FIRM_SDEPENDS_BIN	= $(MAKEFIRM_RSA_PRVKEY)
 
 
 .PHONY: 	firmtop firmlib
@@ -56,35 +52,20 @@ firmlib:
 	@$(MAKE) -C $(TWLIPL_ROOT)/build/libraries
 
 # .nor
-$(BINDIR)/%.nor: $(SDEPENDS_BIN) $(FIRM_SPEC) $(LDEPENDS_BIN) $(EDEPENDS_BIN) $(MAKEFILE) $(MAKENORFIRM)
+$(BINDIR)/%.nor: $(FIRM_SDEPENDS_BIN) $(FIRM_SPEC) $(LDEPENDS_BIN) $(EDEPENDS_BIN) $(MAKEFILE) $(MAKENORFIRM)
 	$(MAKENORFIRM) $(MAKEFIRM_FLAGS) $(MAKEFIRM_DEFS) $(FIRM_SPEC) $@
 
 # .nand
-$(BINDIR)/%.nand: $(SDEPENDS_BIN) $(FIRM_SPEC) $(LDEPENDS_BIN) $(EDEPENDS_BIN) $(MAKEFILE) $(MAKENANDFIRM)
+$(BINDIR)/%.nand: $(FIRM_SDEPENDS_BIN) $(FIRM_SPEC) $(LDEPENDS_BIN) $(EDEPENDS_BIN) $(MAKEFILE) $(MAKENANDFIRM)
 	$(MAKENANDFIRM) $(MAKEFIRM_FLAGS) $(MAKEFIRM_DEFS) $(FIRM_SPEC) $@
 
 # .gcd
-$(BINDIR)/%.gcd: $(SDEPENDS_BIN) $(FIRM_SPEC) $(LDEPENDS_BIN) $(EDEPENDS_BIN) $(MAKEFILE) $(MAKEGCDFIRM)
+$(BINDIR)/%.gcd: $(FIRM_SDEPENDS_BIN) $(FIRM_SPEC) $(LDEPENDS_BIN) $(EDEPENDS_BIN) $(MAKEFILE) $(MAKEGCDFIRM)
 	$(MAKEGCDFIRM) $(MAKEFIRM_FLAGS) $(MAKEFIRM_DEFS) $(FIRM_SPEC) $@
 
 # .rbin
 $(BINDIR)/$(TARGET_BIN_BASENAME).rbin: $(OBJS)
 	objcopy -I elf32-little -O binary $< $@
-
-# .axf
-#$(BINDIR)/$(TARGET_BIN_BASENAME).axf: $(OBJS) $(LCFILE) $(MAKEFILE) $(LDEPENDS_NEF) $(EDEPENDS_NEF) $(ALIBRARIES) $(LDRES_FILE) $(CW_LIBCXX)
-#ifeq ($(NITRO_CCTYPE),RVCT)
-#	$(LD) $(LDFLAGS) $(LIBRARY_DIRS) -o $@ $(GLIBRARIES) $(OBJS)
-#else
-#	$(LD) $(LDFLAGS) $(LIBRARY_DIRS) @$(LDRES_FILE) $(LCFILE) -o $@
-#ifeq	($(TWL_PLATFORM),TS)
-#	cp $(BINDIR)/$(TARGET_BIN_BASENAME).axf $(BINDIR)/$(TARGET_BIN_BASENAME).tef
-#else  # ($(TWL_PLATFORM),BB)
-#ifdef FIRM_STRIP_AXF
-#	$(OBJCOPY) $@ $(BINDIR)/$(TARGET_BIN_BASENAME).sbin
-#endif
-#endif
-#endif
 
 #----------------------------------------------------------------------------
 TWLFIRM_MODULERULES_ = TRUE

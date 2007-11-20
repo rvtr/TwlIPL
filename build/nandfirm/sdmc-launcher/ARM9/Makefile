@@ -16,8 +16,6 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
-FIRM_TARGET    = FIRM
-
 SUBDIRS		=
 
 LINCLUDES	=   ../include
@@ -30,12 +28,11 @@ SRCS		=	main.c
 
 CRT0_O		=	crt0_firm.o
 
-MAKEROM_ARM9		=	ARM9/bin/ARM9-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/sdmc_launcher9.tef
-MAKEROM_ARM7		=	../ARM7/bin/ARM7-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/sdmc_launcher7.tef
+MAKEROM_ARM7		=	../ARM7/bin/$(TWL_BUILDTYPE_ARM7)/sdmc_launcher7.tef
 MAKEROM_ARM7_BASE       =       $(basename $(MAKEROM_ARM7))
 MAKEROM_FLAGS		+=	-F
 
-#LCFILE_TEMPLATE =	$(FIRM_SPECDIR)/$(FIRM_PROC)-$(FIRM_PLATFORM)-PARTNER.lcf.template
+#LCFILE_TEMPLATE =	$(FIRM_SPECDIR)/$(TWL_PROC)-$(TWL_PLATFORM)-PARTNER.lcf.template
 
 #SRCDIR		=	# using default
 #LCFILE		=	# using default

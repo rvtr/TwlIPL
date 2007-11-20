@@ -16,8 +16,7 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
-FIRM_PROC      = ARM7
-FIRM_TARGET    = FIRM
+TWL_PROC       = ARM7
 
 SUBDIRS		=
 
@@ -31,14 +30,14 @@ SRCS		=	main.c
 
 CRT0_O		=	crt0_firm.o
 
-#LCFILE_TEMPLATE =	$(FIRM_SPECDIR)/$(FIRM_PROC)-$(FIRM_PLATFORM)-PARTNER.lcf.template
+#LCFILE_TEMPLATE =	$(FIRM_SPECDIR)/$(TWL_PROC)-$(TWL_PLATFORM)-PARTNER.lcf.template
 
 #SRCDIR		=	# using default
 #LCFILE		=	# using default
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
-LLIBRARIES	=	libaes_sp$(TWL_LIBSUFFIX).a
+LLIBRARIES	+=	libaes_sp$(TWL_LIBSUFFIX).a
 MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000'
 
 #----------------------------------------------------------------------------
@@ -47,6 +46,10 @@ do-build:		$(TARGETS)
 
 
 include	$(TWLIPL_ROOT)/build/buildtools/modulerules
+
+test:
+	@echo LLIBRARY_DIRS=$(LLIBRARY_DIRS)
+	@echo TWL_BUILDTYPE=$(TWL_BUILDTYPE)
 
 
 #===== End of Makefile =====

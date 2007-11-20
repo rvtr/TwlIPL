@@ -17,16 +17,14 @@
 #----------------------------------------------------------------------------
 
 SUBDIRS			=
-#SUBMAKES		= Makefile.CALLTRACE 	\
-#			  Makefile.FUNCTIONCOST
 
 #----------------------------------------------------------------------------
 
 # build ARM & THUMB libraries
-FIRM_CODEGEN_ALL 	?= TRUE
+TWL_CODEGEN_ALL 	?= TRUE
 
 # Codegen for sub processer
-FIRM_PROC		= ARM7
+TWL_PROC		= ARM7
 
 SRCDIR			= ../common .
 
@@ -37,13 +35,6 @@ TARGET_LIB		= libpxi_sp$(FIRM_LIBSUFFIX).a
 
 
 #----------------------------------------------------------------------------
-
-# DEBUG版ビルドの場合、RELEASE版でビルドして
-# DEBUG版のライブラリを装います。
-
-ifdef	NITRO_DEBUG
-NITRO_BUILD_TYPE	= RELEASE
-endif
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 

@@ -16,8 +16,6 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
-FIRM_TARGET    = FIRM
-
 SUBDIRS		=
 
 LINCLUDES	=   ../include
@@ -30,17 +28,14 @@ SRCS		=	main.c
 
 CRT0_O		=	crt0_firm.o
 
-MAKEROM_ARM9		=	ARM9/bin/ARM9-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_norfirm9_print.tef
-MAKEROM_ARM7		=	../ARM7/bin/ARM7-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_norfirm7_print.tef
+MAKEROM_ARM7		=	../ARM7/bin/$(TWL_BUILDTYPE_ARM7)/twl_norfirm7_print.tef
 MAKEROM_ARM7_BASE       =       $(basename $(MAKEROM_ARM7))
-MAKEROM_FLAGS		+=	-F
 
 #SRCDIR		=	# using default
 #LCFILE		=	# using default
 
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
-
 
 #----------------------------------------------------------------------------
 

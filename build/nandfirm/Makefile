@@ -26,7 +26,6 @@ SUBDIRS		= \
 			sdmc-launcher \
 			menu-launcher \
 
-
 #----------------------------------------------------------------------------
 
 include	$(TWLIPL_ROOT)/build/buildtools/modulerules

@@ -16,14 +16,19 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
+override TARGET_PLATFORM	:= TWL
+override TARGET_CODEGEN		:= ARM
+override TWL_ARCHGEN		:= LIMITED
 
-FIRM_TARGET    = FIRM
+override TARGET_FINALROM	:= TRUE
+override TARGET_RELEASE		:=
+override TARGET_DEBUG		:=
 
 #----------------------------------------------------------------------------
 
 SUBDIRS =	\
 
-TARGET_FIRM_BIN		=	norfirm_empty-$(FIRM_BUILD_TYPE).nor
+TARGET_FIRM_BIN		=	norfirm_empty.nor
 BINDIR			=	.
 MAKEFIRM_ARM9	 	=
 MAKEFIRM_ARM7	 	=

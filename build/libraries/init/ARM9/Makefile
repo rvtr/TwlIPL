@@ -16,27 +16,17 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
+override TARGET_CODEGEN		:= ARM
+
 SUBDIRS			=
-#SUBMAKES		= Makefile.CALLTRACE 	\
-#			  Makefile.FUNCTIONCOST
 
 #----------------------------------------------------------------------------
-
-# build ARM & THUMB libraries
-FIRM_CODEGEN_ALL 	?= TRUE
 
 SRCS			= crt0_firm.c \
 
 TARGET_OBJ		= crt0_firm.o
 
 #----------------------------------------------------------------------------
-
-# DEBUG版ビルドの場合、RELEASE版でビルドして
-# DEBUG版のライブラリを装います。
-
-ifdef	NITRO_DEBUG
-NITRO_BUILD_TYPE	= RELEASE
-endif
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 

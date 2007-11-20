@@ -23,7 +23,7 @@ SUBMAKES			=
 #----------------------------------------------------------------------------
 
 # build ARM & THUMB libraries
-FIRM_CODEGEN_ALL	?=	TRUE
+TWL_CODEGEN_ALL	?=	TRUE
 
 SRCDIR				=	. ../common
 
@@ -38,18 +38,6 @@ include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS		=	$(TARGETS)
 INSTALL_DIR			=	$(FIRM_INSTALL_LIBDIR)
-
-ifdef NITRO_CALLTRACE
-CCFLAGS				+=	-DOS_PROFILE_AVAILABLE -DOS_PROFILE_CALL_TRACE
-endif
-
-ifdef NITRO_FUNCTIONCOST
-CCFLAGS				+=	-DOS_PROFILE_AVAILABLE -DOS_PROFILE_FUNCTION_COST
-endif
-
-ifdef NITRO_TCM_APPLY
-CCFLAGS				+=	-DSDK_TCM_APPLY
-endif
 
 #----------------------------------------------------------------------------
 

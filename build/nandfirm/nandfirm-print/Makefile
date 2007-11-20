@@ -17,17 +17,14 @@
 #----------------------------------------------------------------------------
 
 
-FIRM_TARGET    = FIRM
-
-
 #----------------------------------------------------------------------------
 
 SUBDIRS =	../../norfirm/norfirm-print
 
-TARGET_FIRM_BIN		=	nandfirm_print-$(FIRM_BUILD_TYPE).nand
+TARGET_FIRM_BIN		=	nandfirm_print-$(TWL_BUILD_TYPE).nand
 BINDIR			=	.
-MAKEFIRM_ARM9		=	../../norfirm/norfirm-print/ARM9/bin/ARM9-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_norfirm9_print.tef
-MAKEFIRM_ARM7		=	../../norfirm/norfirm-print/ARM7/bin/ARM7-$(FIRM_PLATFORM)$(CODEGEN_ARCH)/$(FIRM_BUILD_DIR)/twl_norfirm7_print.tef
+MAKEFIRM_ARM9		=	../../norfirm/norfirm-print/ARM9/bin/$(TWL_BUILDTYPE_ARM9)/twl_norfirm9_print.tef
+MAKEFIRM_ARM7		=	../../norfirm/norfirm-print/ARM7/bin/$(TWL_BUILDTYPE_ARM7)/twl_norfirm7_print.tef
 MAKEFIRM_RSA_PRVKEY	=	$(TWL_KEYSDIR)/rsa/private_nand.der
 LDEPENDS_BIN		+=	../../norfirm/norfirm-print/wram_regs/wram_regs.rbin
 

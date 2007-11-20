@@ -18,164 +18,63 @@
 ifndef TWLFIRM_COMMONDEFS_
 TWLFIRM_COMMONDEFS_ = TRUE
 
-NITRO_NO_STD_PCHDR = TRUE # ƒvƒŠƒRƒ“ƒpƒCƒ‹ƒwƒbƒ_—}Ž~
+EMPTY	 	?=
+SPACE 		?= $(EMPTY) $(EMPTY)
 
 ifndef TWL_KEYSDIR
 DUMMY_KEYS_SUFFIX	=	.dummykey
 endif
-TWL_KEYSDIR			?=	$(FIRM_ROOT)/keys/dummy
+TWL_KEYSDIR		?=	$(FIRM_ROOT)/keys/dummy
 
-
-ifneq ($(filter FIRM GCDFIRM,$(FIRM_TARGET)),)
-TARGET_BIN			?=	$(subst .,$(DUMMY_KEYS_SUFFIX).,$(TARGET_FIRM_BIN))
-endif
-
-EMPTY	 	?=
-SPACE 		?= $(EMPTY) $(EMPTY)
+TARGET_BIN		?=	$(subst .,$(DUMMY_KEYS_SUFFIX).,$(TARGET_FIRM_BIN))
 
 #
-# CodeGen Target
+# change default variables for product
 #
-#	FIRM_PLATFORM   = [BB/EVA/TS]
-#	FIRM_MEMSIZE    = [16M/32M]
-#	FIRM_CODEGEN    = [ARM/THUMB]
-#	FIRM_PROC       = [ARM9/ARM7]
-#	FIRM_ARCHGEN    = [LIMITED/HYBRID/ALL]
-#
-#	FIRM_TARGET	= [FIRM/GCDFIRM/APP]
-#
-
-FIRM_PLATFORM		?= TS
-FIRM_MEMSIZE		?= 16M
-FIRM_CODEGEN		?= ARM
-FIRM_PROC		?= ARM9
-FIRM_ARCHGEN		?= LIMITED
-
-FIRM_TARGET		?= APP
-
-# replace TwlSDK
-TWL_PLATFORM		= $(FIRM_PLATFORM)
-TWL_MEMSIZE		= $(FIRM_MEMSIZE)
-TWL_CODEGEN		= $(FIRM_CODEGEN)
-TWL_PROC		= $(FIRM_PROC)
-TWL_ARCHGEN		= $(FIRM_ARCHGEN)
-
-# replace NitroSDK
-ifndef	CODEGEN_PROC
-CODEGEN_PROC		:= $(FIRM_PROC)
-endif
-
-ifeq	($(FIRM_CODEGEN),ALL)
-FIRM_CODEGEN_ALL	?= TRUE
-override FIRM_CODEGEN	 = ARM
-endif
-
-ifeq	($(FIRM_CODEGEN),ARM)
-FIRM_CODEGEN_ARCH		=
-else #	($(FIRM_CODEGEN),THUMB)
-FIRM_CODEGEN_ARCH		= .thumb
-endif
-
-#
-# SDK build type
-#
-#	one of [FIRM_DEBUG/FIRM_RELEASE/FIRM_FINALROM]
-#
-
-ifdef	TARGET_DEBUG
-FIRM_BUILD_TYPE		?= DEBUG
-FIRM_BUILD_DIR		?= Debug
-
-else
-ifdef	TARGET_FINALROM
-FIRM_BUILD_TYPE		?= FINALROM
-FIRM_BUILD_DIR		?= Rom
-
-else	
-ifdef	TARGET_RELEASE
-FIRM_BUILD_TYPE		?= RELEASE
-FIRM_BUILD_DIR		?= Release
-else
-
-ifdef	FIRM_DEBUG
-FIRM_BUILD_TYPE		?= DEBUG
-FIRM_BUILD_DIR		?= Debug
-
-else
-ifdef	FIRM_FINALROM
-FIRM_BUILD_TYPE		?= FINALROM
-FIRM_BUILD_DIR		?= Rom
-
-else #	FIRM_RELEASE (default)
-FIRM_BUILD_TYPE		?= RELEASE
-FIRM_BUILD_DIR		?= Release
-endif
-endif
-endif
-endif
-endif
-
-# replace TwlSDK
-TWL_BUILD_TYPE	?= $(FIRM_BUILD_TYPE)
-TWL_BUILD_DIR	?= $(FIRM_BUILD_DIR)
+override TWL_ARCHGEN	:= LIMITED
+override TWL_MEMSIZE	:= 16M
 
 #----------------------------------------------------------------------------
 #  TWL-FIRM path settings
 #
 
-FIRM_ROOT			:= $(subst $(SPACE),\ ,$(subst \,/,$(TWLIPL_ROOT)))
+FIRM_ROOT		:= $(subst $(SPACE),\ ,$(subst \,/,$(TWLIPL_ROOT)))
 FIRM_BUILDTOOLSDIR	:= $(FIRM_ROOT)/build/buildtools
 FIRM_BUILDSETUPDIR	:= $(FIRM_ROOT)/build/buildsetup
-FIRM_INCDIR			:= $(FIRM_ROOT)/include
+FIRM_INCDIR		:= $(FIRM_ROOT)/include
 FIRM_TOOLSDIR		:= $(FIRM_ROOT)/tools
 FIRM_COMPONENTSDIR	:= $(FIRM_ROOT)/components
-FIRM_ADDINS			?= $(FIRM_ROOT)/add-ins
+FIRM_ADDINS		?= $(FIRM_ROOT)/add-ins
 
 FIRM_TWLSDK_ROOT     ?=$(shell cygpath -w $(TWLSDK_ROOT))
 FIRM_NITROSDK_ROOT   ?=$(shell cygpath -w $(NITROSDK_ROOT))
 
-FIRM_BUILDARCH		?= $(CODEGEN_PROC)-$(FIRM_PLATFORM)$(FIRM_CODEGEN_ARCH)
-FIRM_BUILDARCH_ARM9	:= ARM9-$(FIRM_PLATFORM)$(FIRM_CODEGEN_ARCH)
-FIRM_BUILDARCH_ARM7	:= ARM7-$(FIRM_PLATFORM)$(FIRM_CODEGEN_ARCH)
-
-FIRM_BUILDTYPE		?= $(FIRM_BUILDARCH)/$(FIRM_BUILD_DIR)
-FIRM_BUILDTYPE_ARM9	:= $(FIRM_BUILDARCH_ARM9)/$(FIRM_BUILD_DIR)
-FIRM_BUILDTYPE_ARM7	:= $(FIRM_BUILDARCH_ARM7)/$(FIRM_BUILD_DIR)
-
-FIRM_LIBARCH		:= $(CODEGEN_PROC)-$(FIRM_PLATFORM)
-FIRM_LIBTYPE		:= $(FIRM_LIBARCH)/$(FIRM_BUILD_DIR)
-FIRM_LIBDIR		:= $(FIRM_ROOT)/lib/$(FIRM_LIBTYPE)
-FIRM_LIBSYSCALLDIR	:= $(FIRM_ROOT)/lib/$(FIRM_LIBARCH)/etc
-FIRM_LIBSUFFIX		:= .firm$(FIRM_CODEGEN_ARCH)
-
+FIRM_LIBDIR		= $(FIRM_ROOT)/lib/$(TWL_LIBTYPE)
+FIRM_LIBSUFFIX		= .firm$(ARCHGEN_TYPE)$(CODEGEN_ARCH)
 
 FIRM_SPECDIR		:= $(FIRM_INCDIR)/firm/specfiles
-FIRM_LSFARCH		:= $(FIRM_LIBARCH)
-ifneq ($(FIRM_TARGET),APP)
-FIRM_LSFARCH		:= $(addsuffix -$(FIRM_TARGET),$(FIRM_LSFARCH))
-endif # FIRM_TARGET!=APP
-FIRM_LCFARCH		:= $(FIRM_LSFARCH)
-DEFAULT_FIRM_LCFILE		:= $(FIRM_SPECDIR)/$(FIRM_LCFARCH).lcf
-DEFAULT_FIRM_LCFILE_TEMPLATE	:= $(FIRM_SPECDIR)/$(FIRM_LCFARCH)$(LCF_SUFFIX_).lcf.template
-DEFAULT_FIRM_LCFILE_SPEC	:= $(FIRM_SPECDIR)/$(FIRM_LSFARCH).lsf
-DEFAULT_FIRM_ROM_SPEC	:= $(FIRM_SPECDIR)/ROM-$(FIRM_PLATFORM).rsf
-
-# replace TwlSDK
-TWL_BUILDARCH		?= $(FIRM_BUILDARCH)
-
+FIRM_LSFARCH		= $(TWL_LIBARCH)-FIRM
+FIRM_LCFARCH		= $(FIRM_LSFARCH)
+DEFAULT_FIRM_LCFILE		= $(FIRM_SPECDIR)/$(FIRM_LCFARCH).lcf
+DEFAULT_FIRM_LCFILE_TEMPLATE	= $(FIRM_SPECDIR)/$(FIRM_LCFARCH).lcf.template
+DEFAULT_FIRM_LCFILE_SPEC	= $(FIRM_SPECDIR)/$(FIRM_LSFARCH).lsf
+DEFAULT_FIRM_ROM_SPEC	= $(FIRM_SPECDIR)/ROM-$(TWL_PLATFORM).rsf
 
 ### Compiler & Linker settings
 
 # replace NitroSDK
-ifneq ($(FIRM_TARGET),APP)
 LCFILE_TEMPLATE		?= $(DEFAULT_FIRM_LCFILE_TEMPLATE)
 LCFILE_SPEC		?= $(DEFAULT_FIRM_LCFILE_SPEC)
 ROM_SPEC		?= $(DEFAULT_FIRM_ROM_SPEC)
-endif # FIRM_TARGET!=APP
 
 LDEPENDS_LCF	+= $(FIRM_BUILDTOOLSDIR)/commondefs
 LDEPENDS_RES	+= $(FIRM_BUILDTOOLSDIR)/commondefs
 
+#----------------------------------------------------------------------------
+### TWL-commondefs
+#
+include	$(TWLSDK_ROOT)/build/buildtools/commondefs
+include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 
 ### SDK Library settings
 
@@ -187,8 +86,6 @@ FIRM_LIBS_BASE	?= \
 			   libpxi \
 #			   libgcd \
 #			   libacsign \
-
-FIRM_TWL_LIBS_BASE	?= \
 
 else #	($(CODEGEN_PROC),ARM7)
 
@@ -203,18 +100,9 @@ FIRM_LIBS_BASE	?= \
 #			   libacsign_sp \
 #			   libfirmsd_sp \
 
-FIRM_TWL_LIBS_BASE	?= \
-
 endif
 
 FIRM_LIBS ?= $(addsuffix $(FIRM_LIBSUFFIX).a,$(FIRM_LIBS_BASE))
-FIRM_LIBS += $(addsuffix $(TWL_LIBSUFFIX).a,$(FIRM_TWL_LIBS_BASE))
-
-#----------------------------------------------------------------------------
-### TWL-commondefs
-#
-include	$(TWLSDK_ROOT)/build/buildtools/commondefs
-
 
 #----------------------------------------------------------------------------
 #  MY BUILD TOOLS
@@ -229,16 +117,12 @@ MAKEFIRM_RSA_PUBKEY	?= $(FIRM_TOOLSDIR)/openssl/rsa_public.der
 
 MAKEFIRM_FLAGS	?=
 
-ifneq ($(filter FIRM GCDFIRM,$(FIRM_TARGET)),)
-FIRM_STRIP_AXF	:= TRUE
-endif
-
 #----------------------------------------------------------------------------
 
 ### Global Library resettings
 
 GINCLUDES		:= $(FIRM_INCDIR) $(GINCLUDES)
-GLIBRARY_DIRS	:= $(FIRM_LIBDIR) $(GLIBRARY_DIRS)
+GLIBRARY_DIRS		:= $(FIRM_LIBDIR) $(GLIBRARY_DIRS)
 GLIBRARIES		:= $(FIRM_LIBS)   $(GLIBRARIES)
 
 
@@ -255,17 +139,10 @@ endif
 FIRM_INSTALL_ROOT	:= $(subst $(SPACE),\ ,$(subst \,/,$(TWLFIRM_INSTALL_ROOT_)))
 FIRM_INSTALL_INCDIR	:= $(FIRM_INSTALL_ROOT)/include
 FIRM_INSTALL_TOOLSDIR	:= $(FIRM_INSTALL_ROOT)/tools
-FIRM_INSTALL_LIBDIR	:= $(FIRM_INSTALL_ROOT)/lib/$(FIRM_LIBTYPE)
+FIRM_INSTALL_LIBDIR	= $(FIRM_INSTALL_ROOT)/lib/$(TWL_LIBTYPE)
 FIRM_INSTALL_PROMDIR	:= $(FIRM_INSTALL_TOOLSDIR)/prom
 FIRM_INSTALL_COMPONENTSDIR	:= $(FIRM_INSTALL_ROOT)/components
 FIRM_INSTALL_ADDINS	:= $(FIRM_INSTALL_ROOT)/add-ins
-
-
-#----------------------------------------------------------------------------
-#  Compiler flags
-#
-MACRO_FLAGS += -DFIRM_TARGET_$(FIRM_TARGET)
-
 
 #----------------------------------------------------------------------------
 endif	# TWLFIRM_COMMONDEFS_
