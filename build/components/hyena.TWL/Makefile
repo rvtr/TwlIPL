@@ -38,6 +38,7 @@ CRT0_O			=	crt0.LTD.TWL.o
 
 #----------------------------------------------------------------------------
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
+include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 
 #MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD
 

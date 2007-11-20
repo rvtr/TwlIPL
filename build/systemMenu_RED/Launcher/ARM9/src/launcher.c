@@ -311,9 +311,26 @@ void LauncherLoading( TitleProperty *pTitleList )
 	BannerDraw( s_csr, selected, pTitleList );
 	#endif
 	
-	// これだと93フレームでフェードアウト終わる
-	G2_ChangeBlendAlpha( fadecount/3, 31-(fadecount/3) );
-	if(fadecount < 93) fadecount++;
+	// 描画少し上書き追加
+	{
+		MtxFx22 mtx;
+		static double wa;
+		double s = cos(wa);
+		if( s!=0 ) mtx._00 = (double)FX32_HALF/s;
+		else mtx._00 = 0x8fff;
+		mtx._01 = 0;
+		mtx._10 = 0;
+		mtx._11 = FX32_HALF;
+		G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[0]), &mtx);
+		wa += 0.1;
+	}
+	
+	DC_FlushRange(&banner_oam_attr, sizeof(banner_oam_attr));
+	GX_LoadOAM(&banner_oam_attr, 0, sizeof(banner_oam_attr));
+	
+	// これだと124フレームでフェードアウト終わる
+	G2_ChangeBlendAlpha( fadecount/4, 31-(fadecount/4) );
+	if(fadecount < 124) fadecount++;
 }
 
 // LauncherMainのSelectSomethingByTPで使うSelectSomethingFuncの実装

@@ -19,18 +19,26 @@
 #include <twl/os/common/format_rom.h>
 #include <sysmenu/boot/common/boot.h>
 #include <firm/format/wram_regs.h>
+#include "reboot.h"
 //#include <nitro/mb.h>
 //#include "IPL2_work.h"
 //#include "define.h"
 
+
 // define data-------------------------------------------------------
 #define SUBP_RECV_IF_ENABLE		0x4000
+
+#define C1_DTCM_ENABLE          0x00010000		// データＴＣＭ イネーブル
+#define C1_EXCEPT_VEC_UPPER     0x00002000		// 例外ベクタ 上位アドレス（こちらに設定して下さい）
+#define C1_SB1_BITSET           0x00000078		// レジスタ１用１固定ビット列（後期アボートモデル、DATA32構成シグナル制御、PROG32構成シグナル制御、ライトバッファイネーブル）
 
 // extern data-------------------------------------------------------
 
 // function's prototype----------------------------------------------
 static void BOOTi_ClearREG_RAM( void );
 static void BOOTi_StartBOOT( void );
+
+static void ResetCP15( void );
 
 // global variables--------------------------------------------------
 
@@ -51,6 +59,17 @@ static void ie_subphandler( void )
 // ブート準備をして、ARM7からの通知を待つ。
 void BOOT_Ready( void )
 {
+	// メモリクリアリストの設定
+	static u32 clr_list[] = 
+	{
+		HW_ITCM, HW_ITCM_SIZE,
+		HW_OAM, HW_OAM_SIZE,
+		HW_PLTT, HW_PLTT_SIZE,
+		HW_DB_OAM, HW_DB_OAM_SIZE,
+		HW_DB_PLTT, HW_DB_PLTT_SIZE,
+		NULL
+	};
+	
 	int i;
 	
 	// エントリアドレスの正当性をチェックし、無効な場合は無限ループに入る。
@@ -61,7 +80,7 @@ void BOOT_Ready( void )
 	}
 	
 //	FinalizeCardPulledOut();								// カード抜け検出終了処理
-	BOOTi_ClearREG_RAM();									// レジスタ＆RAMクリア
+	// BOOTi_ClearREG_RAM();									// レジスタ＆RAMクリア
 	(void)GX_VBlankIntr( FALSE );
 	(void)OS_SetIrqFunction( OS_IE_SUBP, ie_subphandler );
 	OS_EnableInterrupts();
@@ -87,7 +106,13 @@ void BOOT_Ready( void )
 		reg_GX_VRAMCNT_WRAM = pWRAMREGS->main_wrambnk_01;
 	}
 	
-	BOOT_Core();			// never return
+	//BOOT_Core();			// never return
+
+	// プロテクションユニットの初期化
+	ResetCP15();
+	
+	// SDK共通リブート
+	OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x24), clr_list );
 }
 
 
@@ -121,3 +146,30 @@ static void BOOTi_ClearREG_RAM( void )
 	// クリアしていないレジスタは、VCOUNT, PIFCNT, MC-, EXMEMCNT, IME, RBKCNT1, PAUSE, POWLCDCNT, 全3D系。
 }
 
+//-----------------------------------------------------------------------
+// システム制御コプロセッサ リセット
+//-----------------------------------------------------------------------
+asm static void ResetCP15( void )
+{
+		// プロテクションユニット＆キャッシュ＆ITCM無効。DTCMは有効（スタックをクリアするため）
+		ldr     	r0, = C1_DTCM_ENABLE  | C1_EXCEPT_VEC_UPPER | C1_SB1_BITSET
+		mcr     	p15, 0, r0, c1, c0, 0
+		
+		// ITCMの割り当てを解除
+		mov			r0, #0
+		mcr			p15, 0, r0, c6, c5, 0
+		
+		// DTCMの割り当てを解除
+//		mov			r0,#0
+//		mcr			p15, 0, r0, c9, c1, 0
+		
+		// キャッシュ無効化
+		mov     	r0, #0
+		mcr     	p15, 0, r0, c7, c5, 0       	// 命令キャッシュ
+		mcr     	p15, 0, r0, c7, c6, 0       	// データキャッシュ
+		
+		// ライトバッファ エンプティ待ち
+		mcr			p15, 0, r0, c7, c10, 4
+		
+		bx			lr
+}

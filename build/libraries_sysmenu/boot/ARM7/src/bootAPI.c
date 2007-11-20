@@ -17,6 +17,7 @@
 
 #include <twl.h>
 #include <sysmenu/boot/common/boot.h>
+#include "reboot.h"
 //#include "loader.h"
 //#include "mb_child.h"
 
@@ -44,6 +45,12 @@ void BOOT_Init( void )
 BOOL BOOT_WaitStart( void )
 {
 	if( (reg_PXI_MAINPINTF & 0x000f ) == 0x000f ) {
+		// メモリクリアリストの設定
+		static u32 clr_list[] = 
+		{
+			NULL
+		};
+
 		(void)OS_DisableIrq();							// ここで割り込み禁止にしないとダメ。
 		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
 /*
@@ -54,10 +61,13 @@ BOOL BOOT_WaitStart( void )
 			InsertWLPatch();
 		}
 */
-		BOOTi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。
+		// BOOTi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。
 		reg_MI_MBK9 = 0;								// 全WRAMのロック解除
 		reg_PXI_MAINPINTF = MAINP_SEND_IF | 0x0100;		// ARM9に対してブートするようIRQで要求＋ARM7のステートを１にする。
-		BOOT_Core();									// never return
+		// BOOT_Core();									// never return
+
+		// SDK共通リブート
+		OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x34), clr_list );
 	}
 	return FALSE;
 }

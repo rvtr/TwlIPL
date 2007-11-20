@@ -36,6 +36,7 @@ TARGET_LIB			=	libboot$(TWL_LIBSUFFIX).a
 
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
+include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 
 INSTALL_TARGETS		=	$(TARGETS)
 INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)

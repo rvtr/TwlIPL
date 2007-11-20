@@ -60,6 +60,7 @@ DEFAULT_MAKEROM_ARM7_BASE	=	$(TWLIPL_ROOT)/components/$(DEFAULT_COMP_ARM7)/$(TWL
 MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
 
 include $(TWLIPL_ROOT)/build/buildtools/commondefs
+include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 
 MAKELCF_FLAGS			+=	-DADDRESS_BOOTCORE='0x02e7fc00'
 

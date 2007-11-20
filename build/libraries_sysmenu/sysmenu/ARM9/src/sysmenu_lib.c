@@ -384,8 +384,6 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
 	// アプリロード
 	// アプリ認証
 	
-	// 実験用。namを改造している。ロードするだけ。
-	//NAM_LaunchTitle(pBootTitle->titleID);
 	
 	// ロード
     char path[256];
