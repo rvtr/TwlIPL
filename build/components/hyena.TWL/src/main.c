@@ -34,8 +34,11 @@
 #include    <twl/cdc.h>
 #include    <twl/aes.h>
 #include    <twl/mcu.h>
-#include <sysmenu/boot/common/boot.h>
-#include <sysmenu/sysmenu_lib/common/sysmenu_work.h>
+#include 	<sysmenu/boot/common/boot.h>
+#include 	<sysmenu/sysmenu_lib/common/sysmenu_work.h>
+
+#include 	<sysmenu/card/common/blowfish.h>
+#include 	<sysmenu/card/common/Card.h>
 
 /*---------------------------------------------------------------------------*
     定数定義
@@ -143,6 +146,12 @@ TwlSpMain(void)
     SPI_Init(THREAD_PRIO_SPI);
     
     BOOT_Init();
+
+    // 活栓挿抜機能初期化
+	Cardm_Init();
+
+    // カードがささっていたらブート開始
+    Card_Boot();
 
     while (TRUE)
     {
