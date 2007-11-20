@@ -56,7 +56,8 @@ Autoload WRAM
 				libwvr_sp.TWL$(CODEGEN).a		\
 				libaes_sp.TWL$(CODEGEN).a		\
 				libboot_sp.TWL$(CODEGEN).a		\
-				libreboot_sp.TWL$(CODEGEN).a		\
+				libreboot_sp.TWL$(CODEGEN).a	\
+				libcardboot_sp.TWL$(CODEGEN).a	\
 				$(USE_CRYPTO_LIBS)				\
 				$(ISDBG_LIBS)
 
