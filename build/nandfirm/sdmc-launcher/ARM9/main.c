@@ -55,7 +55,7 @@ static void PreInit(void)
      メインメモリ関連
     */
     // SHARED領域クリア (ここだけでOK?)
-    MIi_CpuClearFast( 0, (void*)HW_PXI_SIGNAL_PARAM_ARM9, HW_MMEMCHECKER_MAIN-HW_PXI_SIGNAL_PARAM_ARM9);
+    MIi_CpuClearFast( 0, (void*)HW_PXI_SIGNAL_PARAM_ARM9, HW_MMEMCHECKER_MAIN-HW_PXI_SIGNAL_PARAM_ARM9 );
 
     /*
         FromBrom関連
@@ -81,7 +81,7 @@ static void PostInit(void)
     // ARM9領域を全クリア
     if ( OS_GetResetParameter() )
     {
-        MI_CpuClearFast( (void*)HW_FIRM_RESET_BUF_END, HW_MAIN_MEM_MAIN_END-HW_FIRM_RESET_BUF_END );
+        MI_CpuClearFast( (void*)HW_FIRM_RESET_BUF_END, HW_TWL_MAIN_MEM_MAIN_END-HW_FIRM_RESET_BUF_END );
     }
     else
     {
@@ -160,7 +160,7 @@ void TwlMain( void )
         }
 #endif
 
-        MI_Boot();
+        OS_BootFromFIRM();
     }
 
     EraseAll();

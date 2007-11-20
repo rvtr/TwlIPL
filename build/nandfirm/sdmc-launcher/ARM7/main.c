@@ -67,12 +67,9 @@ static void PreInit(void)
         OS_Terminate();
     }
     /*
-        リセットパラメータを共有領域にコピー (4バイト分)
+        リセットパラメータ(1バイト)を共有領域(4バイト)にコピー
     */
-    *(u32*)HW_RESET_PARAMETER_BUF = (u32)((MCUi_ReadRegister( MCU_REG_TEMP_ADDR + 0 ) << 0)
-                                        | (MCUi_ReadRegister( MCU_REG_TEMP_ADDR + 1 ) << 8)
-                                        | (MCUi_ReadRegister( MCU_REG_TEMP_ADDR + 2 ) << 16)
-                                        | (MCUi_ReadRegister( MCU_REG_TEMP_ADDR + 3 ) << 24));
+    *(u32*)HW_RESET_PARAMETER_BUF = (u32)MCUi_ReadRegister( MCU_REG_TEMP_ADDR );
 }
 
 /***************************************************************
@@ -238,7 +235,7 @@ void TwlSpMain( void )
 
     PM_BackLightOn( TRUE ); // last chance
 
-    FATFS_Boot();
+    OS_BootFromFIRM();
 
 end:
     OS_SetDebugLED( (u8)(0xF0 | step));

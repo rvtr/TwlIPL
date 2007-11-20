@@ -44,7 +44,7 @@ static u8 step = 0x80;
 #endif
 
 #ifdef PROFILE_ENABLE
-#define PROFILE_MAX  128
+#define PROFILE_MAX  256
 u32 profile[PROFILE_MAX];
 u32 pf_cnt = 0;
 #endif
@@ -64,14 +64,10 @@ static void PreInit(void)
     {
         OS_Terminate();
     }
-
     /*
-        リセットパラメータを共有領域にコピー (4バイト分)
+        リセットパラメータ(1バイト)を共有領域(4バイト)にコピー
     */
-    *(u32*)HW_RESET_PARAMETER_BUF = (u32)((MCUi_ReadRegister( MCU_REG_TEMP_ADDR + 0 ) << 0)
-                                        | (MCUi_ReadRegister( MCU_REG_TEMP_ADDR + 1 ) << 8)
-                                        | (MCUi_ReadRegister( MCU_REG_TEMP_ADDR + 2 ) << 16)
-                                        | (MCUi_ReadRegister( MCU_REG_TEMP_ADDR + 3 ) << 24));
+    *(u32*)HW_RESET_PARAMETER_BUF = (u32)MCUi_ReadRegister( MCU_REG_TEMP_ADDR );
 }
 
 /***************************************************************
@@ -93,6 +89,32 @@ static void EraseAll(void)
 
     FATFS周りの初期化 for NAND
 ***************************************************************/
+#if 1   /* 0: FATFS正規品利用版 */
+#else
+extern void*   SDNandContext;  /* NAND初期化パラメータ */
+extern BOOL FATFSi_rtfs_init( void );
+extern int  FATFSi_sdmcInit( int dmaNo );
+extern int  FATFSi_nandRtfsAttach( int driveno, int partition );
+static void IdleThreadFunc(void* arg)
+{
+    OSThread* pThread = arg;
+    OS_EnableInterrupts();
+    while (1)
+    {
+        OS_CheckStack(pThread);
+        OS_Halt();
+    }
+}
+static void CreateIdleThread(void)
+{
+    static u32 stack[32];
+    static OSThread idle;
+    OS_EnableIrq();
+    OS_EnableInterrupts();
+    OS_CreateThread(&idle, IdleThreadFunc, &idle, stack + 32, sizeof(stack), 31);
+    OS_WakeupThreadDirect(&idle);
+}
+#endif
 static BOOL Fatfs4nandInit(void)
 {
     /* FATFSライブラリ用にカレントヒープに設定 */
@@ -109,7 +131,15 @@ static BOOL Fatfs4nandInit(void)
 
     OS_SetDebugLED(++step);
 
+#if 1   /* 0: FATFS正規品利用版 */
     if ( !FATFS_InitFIRM( &(OSi_GetFromFirmAddr()->SDNandContext) ) )
+#else
+    SDNandContext = &OSi_GetFromFirmAddr()->SDNandContext;
+    CreateIdleThread();
+    /* RTFSライブラリを初期化 */
+    /* SDドライバ初期化 */
+    if( !FATFSi_rtfs_init() || FATFSi_sdmcInit(1) != 0)
+#endif
     {
         return FALSE;
     }
@@ -119,12 +149,14 @@ static BOOL Fatfs4nandInit(void)
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
     OS_SetDebugLED(++step);
-
+#if 1   /* 0: FATFS正規品利用版 */
     if ( !FATFS_MountDriveFIRM( DRIVE_NO, BOOT_DEVICE, PARTITION_NO ) )
+#else
+    if ( !FATFSi_nandRtfsAttach( DRIVE_NO, PARTITION_NO ) )
+#endif
     {
         return FALSE;
     }
-
 #ifdef PROFILE_ENABLE
     // 4: after Mount
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
@@ -187,7 +219,7 @@ void TwlSpMain( void )
 
     PM_BackLightOn( FALSE );
 
-    if ( !FATFS_LoadHeader() && !FATFS_LoadStatic() )
+    if ( !FATFS_LoadHeader() || !FATFS_LoadStatic() )
     {
         goto end;
     }
@@ -211,7 +243,7 @@ void TwlSpMain( void )
 
     PM_BackLightOn( TRUE ); // last chance
 
-    FATFS_Boot();
+    OS_BootFromFIRM();
 
 end:
     OS_SetDebugLED( (u8)(0xF0 | step));
