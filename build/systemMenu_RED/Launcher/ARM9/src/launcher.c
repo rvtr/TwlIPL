@@ -255,6 +255,8 @@ void LauncherInit( TitleProperty *pTitleList )
 {
 #pragma unused( pTitleList )
 	
+	InitBG();										// BG初期化
+	
 	GX_DispOff();
 	GXS_DispOff();
 	
@@ -294,8 +296,8 @@ void LauncherInit( TitleProperty *pTitleList )
 
 static int selected = 0;
 
-// ROMのローディング中
-void LauncherLoading( TitleProperty *pTitleList )
+// ROMのローディング中のランチャーフェードアウト
+BOOL LauncherFadeout( TitleProperty *pTitleList )
 {
 	static int fadecount = 0;
 	
@@ -330,7 +332,12 @@ void LauncherLoading( TitleProperty *pTitleList )
 	
 	// これだと124フレームでフェードアウト終わる
 	G2_ChangeBlendAlpha( fadecount/4, 31-(fadecount/4) );
-	if(fadecount < 124) fadecount++;
+	if(fadecount < 124) {
+		fadecount++;
+		return FALSE;
+	}else {
+		return TRUE;
+	}
 }
 
 // LauncherMainのSelectSomethingByTPで使うSelectSomethingFuncの実装

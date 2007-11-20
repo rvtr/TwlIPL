@@ -39,7 +39,7 @@ extern "C" {
 #define TWL_COMMENT_BUFFERSIZE			( ( TWL_COMMENT_LENGTH + 1 ) * 2 )	// コメントバッファサイズ
 #define TWL_FAVORITE_COLOR_MAX_NUM		NTR_FAVORITE_COLOR_MAX_NUM	// 好きな色の最大数
 #define TSD_TEMP_BUFFER_SIZE			( sizeof(TSDStore) * 2 )	// TSD_ReadTWLSettingsで必要なTempBufferサイズ
-
+#define TWL_BACKLIGHT_LEVEL_MAX			22							// バックライト輝度上限（ハード的な制約は上限のみ）
 
 // 言語コード
 // 欧州と北米の表示テキストの違いは、リージョンと言語コードを併せて判断

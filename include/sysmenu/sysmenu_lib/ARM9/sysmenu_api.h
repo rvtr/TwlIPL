@@ -36,11 +36,10 @@ extern "C" {
 //#define ENABLE_INITIAL_SETTINGS_
 #endif // SDK_FINALROM
 
-#define BACKLIGHT_LEVEL_MAX						22					// バックライト輝度上限（ハード的な制約は上限のみ）
 #define CARD_SLOT_NUM							1					// カードスロット数
 #define LAUNCHER_TITLE_LIST_NUM					40					// ランチャーのタイトルリスト数
 
-#define TITLE_ID_MACHINE_SETTINGS				0x000100014d534554	// 本体設定のタイトルID
+#define TITLE_ID_MACHINE_SETTINGS				0x000100015445534d	// 本体設定のタイトルID
 
 #define PAD_PRODUCTION_SHORTCUT_CARD_BOOT		( PAD_BUTTON_A | PAD_BUTTON_B	\
 												| PAD_BUTTON_X | PAD_BUTTON_Y | PAD_BUTTON_R )
@@ -61,11 +60,12 @@ typedef struct TitleProperty {	// この情報は、ランチャー時には認証通ってないけど
 
 // アプリ認証結果
 typedef enum AuthResult {
-	AUTH_PROCESSING = 0,
-	AUTH_RESULT_SUCCEEDED = 1,
-	AUTH_RESULT_TITLE_POINTER_ERROR = 2,
-	AUTH_RESULT_AUTHENTICATE_FAILED = 3,
-	AUTH_RESULT_ENTRY_ADDRESS_ERROR = 4
+	AUTH_RESULT_SUCCEEDED = 0,
+	AUTH_RESULT_PROCESSING = 1,
+	AUTH_RESULT_TITLE_LOAD_FAILED = 2,
+	AUTH_RESULT_TITLE_POINTER_ERROR = 3,
+	AUTH_RESULT_AUTHENTICATE_FAILED = 4,
+	AUTH_RESULT_ENTRY_ADDRESS_ERROR = 5
 }AuthResult;
 
 
@@ -78,7 +78,7 @@ extern void  (*SYSM_Free)( void *ptr );			// 同上
 // 初期化
 extern void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) );			// 初期化。OS_Initの前のへんでコールしてください。
 extern void SYSM_SetAllocFunc( void *(*pAlloc)(u32), void (*pFree)(void*) );	// SYSM_initで設定した場合は必要なし。
-extern void SYSM_ReadParameters( void );										// 本体設定データ、リセットパラメータなどを取得
+extern TitleProperty *SYSM_ReadParameters( void );								// 本体設定データ、リセットパラメータなどを取得
 
 // アプリ情報取得
 extern int  SYSM_GetCardTitleList( TitleProperty *pTitleList_Card );			// カードアプリタイトルリストの取得
@@ -88,7 +88,6 @@ extern int  SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size );	/
 extern void SYSM_StartLoadTitle( TitleProperty *pBootTitle );					// 指定したTitlePropertyを別スレッドでロード開始
 extern BOOL SYSM_IsLoadTitleFinished( void );									// SYSM_StartLoadTitleで起動したスレッドが終了したかどうかを確認
 extern AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle );			// 指定したTitlePropertyを認証してブート
-extern AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle );	// 指定したTitlePropertyをロード＆認証してブート
 																				// 成功時は、never return.
 // デバイス制御
 extern void SYSM_CaribrateTP( void );											// タッチパネルキャリブレーション

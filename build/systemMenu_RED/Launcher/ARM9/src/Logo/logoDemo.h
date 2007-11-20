@@ -24,6 +24,7 @@
 extern "C" {
 #endif
 
+extern void LogoInit( void );
 extern int	LogoMain( void );
 extern void SetLogoEnable( BOOL enable );
 extern BOOL IsLogoEnable( void );

@@ -339,6 +339,7 @@ static void TSDi_ClearSettings( TWLSettingsData *pTSD )
 	MI_CpuClearFast( pTSD, sizeof(TWLSettingsData) );
 	// 初期値が０以外のもの
 	pTSD->region  = TWL_DEFAULT_REGION;				// リージョンは本体設定データからなくなる予定
+	pTSD->backLightBrightness  = TWL_BACKLIGHT_LEVEL_MAX;
 	pTSD->owner.birthday.month = 1;
 	pTSD->owner.birthday.day   = 1;
 	pTSD->valid_language_bitmap = s_validLangBitmapList[ pTSD->region ];

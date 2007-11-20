@@ -25,7 +25,6 @@
 // ロゴ表示ステータス構造体
 typedef struct LogoStatus {
 	s32		state;
-	BOOL	enable;
 	s32		value_A;
 	s32		value_B;
 	s32		mainCounter;
@@ -37,12 +36,16 @@ extern void LoadLogoData( void );
 // function's prototype-----------------------------------------------
 
 // static variables---------------------------------------------------
-static LogoStatus s_logo = { 0, TRUE, 0, 0, 0 };
+static LogoStatus s_logo = { 0, 0, 0, 0 };
 
 // const data---------------------------------------------------------
 
-static void LogoInit( void )
+void LogoInit( void )
 {
+	if( SYSM_IsLogoDemoSkip() ) {
+		return;
+	}
+	
 	// 画面OFF
 	GX_DispOff();
 	GXS_DispOff();
@@ -62,6 +65,8 @@ static void LogoInit( void )
 	// ロゴデータロード
 	LoadLogoData();
 	
+	s_logo.state = 1;
+	s_logo.mainCounter = 0;
 	s_logo.value_A = 0;
 	s_logo.value_B = 16;
 	G2_ChangeBlendAlpha( s_logo.value_A, s_logo.value_B );
@@ -74,18 +79,11 @@ static void LogoInit( void )
 // ロゴメイン
 int LogoMain()
 {
-	if( !IsLogoEnable() ) {
+	if( SYSM_IsLogoDemoSkip() ) {
 		return 1;
 	}
 	
 	switch( s_logo.state ) {
-	  case 0:	// 初期設定
-		LogoInit();
-		
-		s_logo.mainCounter = 0;
-		s_logo.state++;
-		break;
-		
 	  case 1:	// Nintendoロゴフェードイン
 		if( s_logo.mainCounter++ < 16 ){											// Nintendoﾛｺﾞ 表示
 			G2_ChangeBlendAlpha( ++s_logo.value_A, --s_logo.value_B );
@@ -118,15 +116,3 @@ int LogoMain()
 	return 0;
 }
 
-
-// ロゴ表示をOFFにする。
-void SetLogoEnable( BOOL enable )
-{
-	s_logo.enable = enable;
-}
-
-// ロゴ表示状態取得
-BOOL IsLogoEnable(void)
-{
-	return s_logo.enable;
-}

@@ -33,6 +33,7 @@ extern void SYSM_SetMountInfo( NAMTitleId titleID );				// マウント情報のセット
 extern void SYSM_SetBootSRLPath( NAMTitleId titleID );				// SRL起動パスのセット
 
 // function's prototype-------------------------------------------------------
+static TitleProperty *SYSMi_CheckShortcutBoot( void );
 static BOOL SYSMi_IsDebuggerBannerViewMode( void );
 static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle );
 static void SYSMi_WriteAdjustRTC( void );
@@ -53,6 +54,8 @@ SYSM_work		*pSysm;											// デバッガでのSYSMワークのウォッチ用
 #endif
 
 // static variable-------------------------------------------------------------
+static OSThread			thread;
+
 static BOOL				s_isBanner = FALSE;
 static NTRBannerFile	s_bannerBuf;
 
@@ -109,32 +112,45 @@ void SYSM_SetAllocFunc( void *(*pAlloc)(u32), void (*pFree)(void*) )
 // ============================================================================
 
 // パラメータリード
-void SYSM_ReadParameters( void )
+TitleProperty *SYSM_ReadParameters( void )
 {
+	TitleProperty *pBootTitle = NULL;
+	
 	// ARM7のリセットパラメータ取得が完了するのを待つ
 	while( !SYSMi_GetWork()->isARM9Start ) {
 		SVC_WaitByLoop( 0x1000 );
 	}
 	
-	// リセットパラメータの判定
-	if( SYSM_GetResetParamBody()->v1.flags.isLogoSkip &&
-		SYSMi_IsDebuggerBannerViewMode() ) {
-		SYSM_SetLogoDemoSkip( TRUE );
+	//-----------------------------------------------------
+	// リセットパラメータの判定（リセットパラメータが有効かどうかは、ARM7でやってくれている）
+	//-----------------------------------------------------
+	{
+		if( SYSM_GetResetParamBody()->v1.flags.isLogoSkip ||		// ロゴデモスキップ？
+			SYSMi_IsDebuggerBannerViewMode() ) {
+			SYSM_SetLogoDemoSkip( TRUE );
+		}
+		
+		if( SYSM_GetResetParamBody()->v1.bootTitleID ) {			// アプリ直接起動の指定があったらロゴデモを飛ばして指定アプリ起動
+			pBootTitle = (TitleProperty *)&SYSM_GetResetParamBody()->v1;
+		}
 	}
 	
-#if 0
-	// アプリロード済みで再配置要求があるなら、再配置処理
-	if( SYSM_GetResetParamBody()->v1.flags.isAppLoadCompleted &&
-		SYSM_GetResetParamBody()->v1.flags.reqAppRelocate ) {
-		// 再配置処理
+	//-----------------------------------------------------
+	// 量産工程用ショートカットキー or
+	// 検査カード起動
+	//-----------------------------------------------------
+	if( pBootTitle == NULL ) {
+		pBootTitle = SYSMi_CheckShortcutBoot();
 	}
-#endif
 	
+	//-----------------------------------------------------
 	// 本体設定データのリード
+	//-----------------------------------------------------
 	if( SYSM_ReadTWLSettingsFile() ) {								// NANDからTWL本体設定データをリード
 		SYSM_SetBackLightBrightness( (u8)TSD_GetBacklightBrightness() ); // 読み出したTWL本体設定データをもとにバックライト輝度設定
 		SYSM_CaribrateTP();											// 読み出したTWL本体設定データをもとにTPキャリブレーション。
 	}
+	
 //	SYSM_ReadHWInfo();												// NANDからHW情報をリード
 	SYSMi_WriteAdjustRTC();											// RTCクロック補正値をセット。
 	SYSMi_CheckRTC();
@@ -146,7 +162,52 @@ void SYSM_ReadParameters( void )
 	
 	//NAMの初期化
 	//NAM_Init(AllocForNAM,FreeForNAM);
+	
+	return pBootTitle;
+}
 
+
+// ショートカット起動のチェック
+static TitleProperty *SYSMi_CheckShortcutBoot( void )
+{
+#if 0	// ※未実装
+	static TitleProperty s_bootTitle;
+	
+	MI_CpuClear8( &s_bootTitle, sizoef(TitleProperty) );
+	
+	//-----------------------------------------------------
+	// 量産工程用ショートカットキー or
+	// 検査カード起動
+	//-----------------------------------------------------
+	if( SYSM_IsInspectCard() ||
+		( SYSM_IsExistCard() &&
+		  ( ( PAD_Read() & PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) ==
+			PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) )
+	) {
+		if( SYSM_GetCardTitleProperty( &s_bootTitle ) ) {			// ※未実装
+			s_bootTitle.flags.isInitialShortcutSkip = TRUE;			// 初回起動シーケンスを飛ばす
+			s_bootTitle.flags.isLogoSkip = TRUE;					// ロゴデモを飛ばす
+			SYSM_SetLogoDemoSkip( TRUE );
+			return &s_bootTitle;
+		}
+	}
+	
+	//-----------------------------------------------------
+	// TWL設定データ未入力時の初回起動シーケンス起動
+	//-----------------------------------------------------
+#ifdef ENABLE_INITIAL_SETTINGS_
+	if( !TSD_IsSetTP() ||
+		!TSD_IsSetLanguage() ||
+		!TSD_IsSetDateTime() ||
+		!TSD_IsSetUserColor() ||
+		!TSD_IsSetNickname() ) {
+		s_bootTitle.titleID = TITLE_ID_MACHINE_SETTINGS;
+		return &s_bootTitle;
+	}
+#endif // ENABLE_INITIAL_SETTINGS_
+	
+#endif	// 0
+	return NULL;													// 「ブート内容未定」でリターン
 }
 
 
@@ -298,8 +359,6 @@ void SYSM_SetLogoDemoSkip( BOOL skip )
 // ロゴデモスキップか？
 BOOL SYSM_IsLogoDemoSkip( void )
 {
-	// ※システムアプリからのハードリセットによるロゴデモ飛ばしも判定に入れる。
-	
 	return SYSMi_GetWork()->isLogoSkip;
 }
 
@@ -366,8 +425,6 @@ BOOL SYSM_IsValidTSD( void )
 // アプリ起動
 //
 // ============================================================================
-
-static BOOL s_load_success = FALSE;
 
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
 {	enum
@@ -493,36 +550,53 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 	// ROMヘッダバッファをコピー
 	MI_CpuCopy32( (void *)HW_TWL_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 	
-	s_load_success = TRUE;
+	SYSMi_GetWork()->isLoadSucceeded = TRUE;
 }
 
-// スタック用
-#define THREAD_PRIO 17
-#define STACK_SIZE 5120 // 適当
-static OSThread thread;
-static u64 stack[ STACK_SIZE / sizeof(u64) ];
 
 // 指定タイトルを別スレッドでロード開始する
 void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 {
-	s_load_success = FALSE;
-	OS_InitThread();
-	OS_CreateThread( &thread, (void (*)(void *))SYSMi_LoadTitleThreadFunc, (void*)pBootTitle, stack+STACK_SIZE/sizeof(u64), STACK_SIZE,THREAD_PRIO );
-	OS_WakeupThreadDirect( &thread );
+#define THREAD_PRIO 17
+#define STACK_SIZE 5120 // 適当
+	static u64 stack[ STACK_SIZE / sizeof(u64) ];
+	
+	// アプリ未ロード状態なら、ロード開始
+	if( !pBootTitle->flags.isAppLoadCompleted ) {
+		SYSMi_GetWork()->isLoadSucceeded = FALSE;
+		OS_InitThread();
+		OS_CreateThread( &thread, (void (*)(void *))SYSMi_LoadTitleThreadFunc, (void*)pBootTitle, stack+STACK_SIZE/sizeof(u64), STACK_SIZE,THREAD_PRIO );
+		OS_WakeupThreadDirect( &thread );
+	}else if( pBootTitle->flags.isAppRelocate ) {
+	// アプリロード済みで、再配置要求ありなら、再配置
+		// ※再配置処理
+		// SYSMi_Relocate();
+		SYSMi_GetWork()->isLoadSucceeded = TRUE;
+	}
 }
 
+
+// アプリロード済み？
 BOOL SYSM_IsLoadTitleFinished( void )
 {
+	if( SYSM_GetResetParamBody()->v1.flags.isAppLoadCompleted ) {
+		return TRUE;
+	}
 	return OS_IsThreadTerminated( &thread );
 }
+
 
 // ロード済みの指定タイトルの認証とブートを行う
 AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 {
-	// ロード成功しているか
-	if(s_load_success == FALSE)
+	// ロード中
+	if( !SYSM_IsLoadTitleFinished() ) {
+		return AUTH_RESULT_PROCESSING;
+	}
+	// ロード成功？
+	if( SYSMi_GetWork()->isLoadSucceeded == FALSE )
 	{
-		return AUTH_RESULT_TITLE_POINTER_ERROR;
+		return AUTH_RESULT_TITLE_LOAD_FAILED;
 	}
 	// パラメータチェック
 	if( !SYSMi_CheckTitlePointer( pBootTitle ) ) {
@@ -534,7 +608,11 @@ AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 		return AUTH_RESULT_ENTRY_ADDRESS_ERROR;
 	}
 #endif
-
+	
+	
+	// ※ROMヘッダ認証
+	
+	
 	// マウント情報の登録
 	SYSM_SetMountInfo  ( pBootTitle->titleID );
 	SYSM_SetBootSRLPath( pBootTitle->titleID );
@@ -544,18 +622,18 @@ AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 	return AUTH_RESULT_SUCCEEDED;
 }
 
+#if 0
 // 指定タイトルの認証＆ロード　※１フレームじゃ終わらん。
 // もしかすると使わないかも
-AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle )
+void SYSM_LoadAndAuthenticateTitleThread( TitleProperty *pBootTitle )
 {
-	// 指定タイトルのロード
-	SYSM_StartLoadTitle( pBootTitle );
-	
+	SYSMi_LoadTitleThreadFunc( pBootTitle );
 	OS_JoinThread(&thread);
 	
 	// 認証
 	return SYSM_AuthenticateTitle( pBootTitle );
 }
+#endif
 
 
 // ============================================================================
@@ -567,7 +645,7 @@ AuthResult SYSM_LoadAndAuthenticateTitle( TitleProperty *pBootTitle )
 // バックライト輝度調整
 void SYSM_SetBackLightBrightness( u8 brightness )
 {
-	if( brightness > BACKLIGHT_LEVEL_MAX ) {
+	if( brightness > TWL_BACKLIGHT_LEVEL_MAX ) {
 		OS_Panic( "Backlight brightness over : %d\n", brightness );
 	}
 	( void )PMi_WriteRegister( 0x20, (u16)brightness );

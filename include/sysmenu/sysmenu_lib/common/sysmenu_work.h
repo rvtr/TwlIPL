@@ -34,13 +34,18 @@ extern "C" {
 #define CLONE_BOOT_MODE						1
 #define OTHER_BOOT_MODE						2
 
+// NAMTitleIDをHiLoに分割してアクセスする場合に使用
+typedef struct TitleID_HiLo {
+	u8			Lo[ 4 ];
+	u32			Hi;
+}TitleID_HiLo;
 
 // リセットパラメータ　フラグ
 typedef struct BootFlags {
 	u16			isLogoSkip : 1;				// ロゴデモスキップ要求
 	u16			isInitialShortcutSkip : 1;	// 初回起動シーケンススキップ要求
 	u16			isAppLoadCompleted : 1;		// アプリロード済みを示す
-	u16			reqAppRelocate : 1;			// アプリ再配置要求
+	u16			isAppRelocate : 1;			// アプリ再配置要求
 	u16			rsv : 12;
 }BootFlags;
 
@@ -84,7 +89,8 @@ typedef struct SYSM_work {
 	vu16			isLogoSkip :1;					// ロゴデモスキップ
 	vu16			isOnDebugger :1;				// デバッガ動作か？
 	vu16			isExistCard :1;					// 有効なNTR/TWLカードが存在するか？
-	vu16			rsv :9;
+	vu16			isLoadSucceeded :1;
+	vu16			rsv :8;
 	u16				cardHeaderCrc16;				// システムメニューで計算したROMヘッダCRC16
 	int				cloneBootMode;
 	ResetParam		resetParam;
