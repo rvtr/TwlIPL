@@ -11,18 +11,19 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date:: 2007-10-03#$
-# $Rev: 1319 $
-# $Author: kitase_hirotake $
+# $Date:: #$
+# $Rev: $
+# $Author: $
 #----------------------------------------------------------------------------
 
 TARGET_FIRM			=	SYSTEMMENU
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
+
 #----------------------------------------------------------------------------
 
-SUBDIRS				=	sysmenu settings mb_loader acsign boot card
+SUBDIRS				=	ARM7
 
 #----------------------------------------------------------------------------
 
