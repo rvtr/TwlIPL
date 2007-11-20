@@ -16,12 +16,9 @@
 # $Author: kitase_hirotake $
 #----------------------------------------------------------------------------
 
-include $(TWLSDK_ROOT)/build/buildtools/commondefs
+include $(TWLIPL_ROOT)/build/buildtools/commondefs
 
 ICON_DIR			= ./icon
-TOOLS_DIR			= $(TWLIPL_ROOT)/tools/bin
-NTEXCONV			= $(TOOLS_DIR)/ntexconv.exe
-MAKEBANNER			= $(TOOLS_DIR)/makebanner.exe
 
 BANNER_ICON			= $(ICON_DIR)/gameIcon.bmp
 BANNER_SPEC			= banner_v3.bsf
@@ -38,7 +35,7 @@ LDIRT_CLEAN			= $(TARGETS) \
 					  $(BANNER_ICON_NAME).nbfp \
 					  $(TARGETS:.bnr=.srl)
 
-include $(TWLSDK_ROOT)/build/buildtools/modulerules
+include $(TWLIPL_ROOT)/build/buildtools/modulerules
 
 #----------------------------------------------------------------------------
 #  build

@@ -75,6 +75,8 @@ endif
 #  MY BUILD TOOLS
 #
 OPENSSL			:= $(SYSMENU_TOOLSDIR)/openssl/openssl.exe
+NTEXCONV		:= $(SYSMENU_TOOLSDIR)/bin/ntexconv.exe
+MAKEBANNER		:= $(SYSMENU_TOOLSDIR)/bin/makebanner.exe
 
 MAKESYSMENU_RSA_PRVKEY	?= $(SYSMENU_TOOLSDIR)/openssl/rsa_private.der
 MAKESYSMENU_RSA_PUBKEY	?= $(SYSMENU_TOOLSDIR)/openssl/rsa_public.der
