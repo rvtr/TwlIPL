@@ -50,7 +50,8 @@ LINCLUDES				=	$(MISC_DIR)/include \
 							$(SRCDIR)/$(LOGO_DIR)
 
 LLIBRARIES				+=	libnam$(TWL_LIBSUFFIX).a \
-							libese$(TWL_LIBSUFFIX).a
+							libese$(TWL_LIBSUFFIX).a \
+						libboot$(TWL_LIBSUFFIX).a
 
 ADDRESS_DTCM			=	0x0e000000
 
@@ -61,8 +62,6 @@ MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
 
 include $(TWLIPL_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
-
-MAKELCF_FLAGS			+=	-DADDRESS_BOOTCORE='0x02e7fc00'
 
 LDIRT_CLEAN				=	$(TARGET_WAD)
 INSTALL_TARGETS			=	$(TARGET_WAD)

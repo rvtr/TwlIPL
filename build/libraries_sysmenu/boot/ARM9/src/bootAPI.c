@@ -63,10 +63,7 @@ void BOOT_Ready( void )
 	static u32 clr_list[] = 
 	{
 		HW_ITCM, HW_ITCM_SIZE,
-		HW_OAM, HW_OAM_SIZE,
-		HW_PLTT, HW_PLTT_SIZE,
-		HW_DB_OAM, HW_DB_OAM_SIZE,
-		HW_DB_PLTT, HW_DB_PLTT_SIZE,
+		HW_DTCM, HW_DTCM_SIZE,
 		NULL
 	};
 	
@@ -80,7 +77,7 @@ void BOOT_Ready( void )
 	}
 	
 //	FinalizeCardPulledOut();								// カード抜け検出終了処理
-	// BOOTi_ClearREG_RAM();									// レジスタ＆RAMクリア
+	BOOTi_ClearREG_RAM();									// レジスタ＆RAMクリア
 	(void)GX_VBlankIntr( FALSE );
 	(void)OS_SetIrqFunction( OS_IE_SUBP, ie_subphandler );
 	OS_EnableInterrupts();

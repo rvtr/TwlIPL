@@ -44,13 +44,6 @@ Autoload DTCM
 	Object		$(OBJS_AUTOLOAD) (.sbss)
 }
 
-Autoload BOOT_CORE
-{
-	Address		$(ADDRESS_BOOTCORE)
-	
-	Library		libboot.TWL$(CODEGEN).a
-}
-
 Ltdautoload LTDMAIN
 {
 	# NITRO/TWL 共有のオーバーレイが在る場合は、さらにその後ろに配置する必要があります。

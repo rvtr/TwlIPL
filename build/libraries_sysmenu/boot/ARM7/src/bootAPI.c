@@ -40,14 +40,27 @@ void BOOT_Init( void )
 {
 	reg_PXI_MAINPINTF = 0x0000;
 }
-
-
+		
 BOOL BOOT_WaitStart( void )
 {
 	if( (reg_PXI_MAINPINTF & 0x000f ) == 0x000f ) {
 		// メモリクリアリストの設定
 		static u32 clr_list[] = 
 		{
+			//SYSM_OWN_ARM7_MMEM_ADDR, SYSM_OWN_ARM7_MMEM_ADDR_END - SYSM_OWN_ARM7_MMEM_ADDR,
+			//SYSM_OWN_ARM9_MMEM_ADDR, SYSM_OWN_ARM9_MMEM_ADDR_END - SYSM_OWN_ARM9_MMEM_ADDR,
+			//SYSM_OWN_ARM7_WRAM_ADDR, SYSM_OWN_ARM7_WRAM_ADDR_END - SYSM_OWN_ARM7_WRAM_ADDR,
+
+//			HW_PRV_WRAM_END - 0x600, 0x600,
+#ifdef	ISDBG_MB_CHILD_
+			//HW_PRV_WRAM_END - 0x600, (HW_PRV_WRAM_END - HW_PRV_WRAM_SYSRV_SIZE) - (HW_PRV_WRAM_END - 0x600),
+			//HW_PRV_WRAM_END - 0x600 + 0x20, HW_PRV_WRAM_END - (HW_PRV_WRAM_END - 0x600 + 0x20),
+#endif
+			//SYSM_BOOTCODE_ARM7_ADDR, ClearMemory - SYSM_BOOTCODE_ARM7_ADDR,
+//			0x02fff000, 0x800,
+//			0xda0, 0x60,
+//			0xf80, 0x80,
+			
 			NULL
 		};
 
@@ -61,7 +74,7 @@ BOOL BOOT_WaitStart( void )
 			InsertWLPatch();
 		}
 */
-		// BOOTi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。
+		BOOTi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。
 		reg_MI_MBK9 = 0;								// 全WRAMのロック解除
 		reg_PXI_MAINPINTF = MAINP_SEND_IF | 0x0100;		// ARM9に対してブートするようIRQで要求＋ARM7のステートを１にする。
 		// BOOT_Core();									// never return
