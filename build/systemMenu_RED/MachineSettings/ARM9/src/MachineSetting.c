@@ -33,7 +33,7 @@
 #define OK_BUTTON_BOTTOM_Y					( OK_BUTTON_TOP_Y + 2 * 8 )
 
 
-#define SETTING_MENU_ELEMENT_NUM			4						// メインメニューの項目数
+#define SETTING_MENU_ELEMENT_NUM			5						// メインメニューの項目数
 
 // extern data------------------------------------------
 
@@ -66,6 +66,8 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ TWL_LA
 		(const u16 *)L"LANGUAGE(G)",
 		(const u16 *)L"LANGUAGE(I)",
 		(const u16 *)L"LANGUAGE(S)",
+		(const u16 *)L"LANGUAGE(C)",
+		(const u16 *)L"LANGUAGE(K)",
 	},
 	{
 		(const u16 *)L"日付 & 時刻",
@@ -74,6 +76,8 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ TWL_LA
 		(const u16 *)L"DATE & TIME(G)",
 		(const u16 *)L"DATE & TIME(I)",
 		(const u16 *)L"DATE & TIME(S)",
+		(const u16 *)L"DATE & TIME(C)",
+		(const u16 *)L"DATE & TIME(K)",
 	},
 	{
 		(const u16 *)L"ユーザー情報",
@@ -82,6 +86,8 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ TWL_LA
 		(const u16 *)L"USER INFORMATION(G)",
 		(const u16 *)L"USER INFORMATION(I)",
 		(const u16 *)L"USER INFORMATION(S)",
+		(const u16 *)L"USER INFORMATION(C)",
+		(const u16 *)L"USER INFORMATION(K)",
 	},
 	{
 		(const u16 *)L"タッチパネル補正",
@@ -90,6 +96,18 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ TWL_LA
 		(const u16 *)L"TOUCH PANEL(G)",
 		(const u16 *)L"TOUCH PANEL(I)",
 		(const u16 *)L"TOUCH PANEL(S)",
+		(const u16 *)L"TOUCH PANEL(C)",
+		(const u16 *)L"TOUCH PANEL(K)",
+	},
+	{
+		(const u16 *)L"リージョン設定",
+		(const u16 *)L"REGION",
+		(const u16 *)L"REGION(F)",
+		(const u16 *)L"REGION(G)",
+		(const u16 *)L"REGION(I)",
+		(const u16 *)L"REGION(S)",
+		(const u16 *)L"REGION(C)",
+		(const u16 *)L"REGION(K)",
 	},
 };
 
@@ -98,6 +116,7 @@ static MenuPos s_settingPos[] = {
 	{ TRUE,  4 * 8,  10 * 8 },
 	{ TRUE, 4 * 8,  12 * 8 },
 	{ TRUE,  4 * 8,  14 * 8 },
+	{ TRUE,  4 * 8,  16 * 8 },
 };
 
 
@@ -201,6 +220,9 @@ int MachineSettingMain( void )
 					TP_CalibrationInit();
 					g_pNowProcess = TP_CalibrationMain;
 					break;
+				case 4:
+					SelectRegionInit();
+					g_pNowProcess = SelectRegionMain;
 			}
 		}
 	}

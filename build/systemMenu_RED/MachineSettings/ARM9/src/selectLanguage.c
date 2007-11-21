@@ -32,29 +32,47 @@
 // global variable -------------------------------------
 
 // static variable -------------------------------------
-static TWLLangCode s_langCode;											// 言語コード
+static int s_lang;											// 言語選択肢の何番目を選択しているか
+static TWLRegion s_regionCode;											// リージョンコード
+
+static const u16* s_pStrLanguage[TWL_LANG_CODE_MAX];
+static TWLLangCode s_langCodeList[TWL_LANG_CODE_MAX];
 
 // const data  -----------------------------------------
-static const u16 *const s_pStrLanguage[] = {
+static const u16 region_lang_Mapping[TWL_REGION_MAX] =
+{
+	TWL_LANG_BITMAP_JAPAN,
+	TWL_LANG_BITMAP_AMERICA,
+	TWL_LANG_BITMAP_EUROPE,
+	TWL_LANG_BITMAP_AUSTRALIA,
+	TWL_LANG_BITMAP_CHINA,
+	TWL_LANG_BITMAP_KOREA
+};
+
+static const u16 *const s_pStrLanguageData[TWL_LANG_CODE_MAX] = {
 	(const u16 *)L"日本語",
 	(const u16 *)L"English ",
 	(const u16 *)L"Francais",
 	(const u16 *)L"Deutsch ",
 	(const u16 *)L"Italiano",
 	(const u16 *)L"Espanol ",
+	(const u16 *)L"中国語（仮）",
+	(const u16 *)L"韓国語（仮）"
 };
 
-static MenuPos s_languagePos[] = {
+static MenuPos s_languagePos[TWL_LANG_CODE_MAX] = {
 	{ TRUE,  4 * 8,   6 * 8 },
 	{ TRUE,  4 * 8,   8 * 8 },
 	{ TRUE,  4 * 8,  10 * 8 },
 	{ TRUE,  4 * 8,  12 * 8 },
 	{ TRUE,  4 * 8,  14 * 8 },
 	{ TRUE,  4 * 8,  16 * 8 },
+	{ TRUE,  4 * 8,  18 * 8 },
+	{ TRUE,  4 * 8,  20 * 8 }
 };
 
-static const MenuParam langSel = {
-	6,
+static MenuParam langSel = {
+	TWL_LANG_CODE_MAX,
 	TXT_COLOR_BLACK,
 	TXT_COLOR_GREEN,
 	TXT_COLOR_RED,
@@ -70,6 +88,11 @@ static const MenuParam langSel = {
 // 言語設定の初期化
 void SelectLanguageInit( void )
 {
+    int l;
+    u16 temp_langCode = 0;
+    BOOL in_list_flag = FALSE;
+	int lang_count = 0;
+	
 	GX_DispOff();
 	GXS_DispOff();
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
@@ -80,14 +103,38 @@ void SelectLanguageInit( void )
 		PutStringUTF16( 8 * 8, 18 * 8, TXT_COLOR_RED, (const u16 *)L"Select language." );
 	}
 	
-	if( SYSM_IsValidTSD() ||
-		( TSD_GetLanguage() >= TWL_LANG_CODE_MAX ) ) {
-		s_langCode = TWL_LANG_ENGLISH;
+	if( !SYSM_IsValidTSD() ||
+		( TSD_GetRegion() >= TWL_REGION_MAX ) ) {
+		s_regionCode = (TWLRegion)TWL_DEFAULT_REGION;
 	}else {
-		s_langCode = TSD_GetLanguage();
+		s_regionCode = (TWLRegion)TSD_GetRegion();
 	}
 	
-	DrawMenu( (u16)s_langCode, &langSel );
+	if( !SYSM_IsValidTSD() ||
+		( TSD_GetLanguage() >= TWL_LANG_CODE_MAX ) ) {
+		temp_langCode = TWL_LANG_ENGLISH;
+	}else {
+		temp_langCode = TSD_GetLanguage();
+	}
+	
+	s_lang = 0;
+	for(l=0; l<TWL_LANG_CODE_MAX; l++)
+	{
+		if( ( 0x0001 << l ) & region_lang_Mapping[s_regionCode] )
+		{
+			s_pStrLanguage[lang_count] = s_pStrLanguageData[l];
+			s_langCodeList[lang_count] = (TWLLangCode)l;
+			if(temp_langCode == l)
+			{
+				s_lang = lang_count;
+			}
+			lang_count++;
+		}
+	}
+	
+	langSel.num = lang_count;
+	
+	DrawMenu( (u16)s_lang, &langSel );
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
@@ -109,17 +156,17 @@ int SelectLanguageMain( void )
 	//  キー入力処理
 	//--------------------------------------
 	if( pad.trg & PAD_KEY_DOWN ) {								// カーソルの移動
-		if( ++s_langCode == TWL_LANG_CODE_MAX ) {
-			s_langCode = (TWLLangCode)0;
+		if( ++s_lang == langSel.num ) {
+			s_lang = (TWLLangCode)0;
 		}
 	}
 	if( pad.trg & PAD_KEY_UP ) {
-		if( --s_langCode < 0 ) {
-			s_langCode = (TWLLangCode)( TWL_LANG_CODE_MAX - 1 );
+		if( --s_lang < 0 ) {
+			s_lang = (TWLLangCode)( langSel.num - 1 );
 		}
 	}
-	tp_select = SelectMenuByTP( (u16 *)&s_langCode, &langSel );
-	DrawMenu( (u16)s_langCode, &langSel );
+	tp_select = SelectMenuByTP( (u16 *)&s_lang, &langSel );
+	DrawMenu( (u16)s_lang, &langSel );
 	
 	// [CANCEL]ボタン押下チェック
 	if( tpd.disp.touch ) {
@@ -128,7 +175,7 @@ int SelectLanguageMain( void )
 	}
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || tp_select ) {				// メニュー項目への分岐
-		TSD_SetLanguage( s_langCode );
+		TSD_SetLanguage( s_langCodeList[s_lang] );
 		TSD_SetFlagLanguage( TRUE );							// 言語入力フラグを立てる
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
