@@ -112,11 +112,11 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ TWL_LA
 };
 
 static MenuPos s_settingPos[] = {
+	{ TRUE,  4 * 8,   6 * 8 },
 	{ TRUE,  4 * 8,   8 * 8 },
 	{ TRUE,  4 * 8,  10 * 8 },
 	{ TRUE, 4 * 8,  12 * 8 },
 	{ TRUE,  4 * 8,  14 * 8 },
-	{ TRUE,  4 * 8,  16 * 8 },
 };
 
 
