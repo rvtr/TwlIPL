@@ -591,7 +591,7 @@ BOOL FATFS_InitFIRM( void* nandContext )
 #endif
 
     /* SDÉhÉâÉCÉoèâä˙âª */
-    if ( sdmcInit( SDMC_NOUSE_DMA ) != SDMC_NORMAL )
+    if ( sdmcInit( SDMC_NOUSE_DMA, SDMC_NOUSE_DMA ) != SDMC_NORMAL )
     {
         return FALSE;
     }
