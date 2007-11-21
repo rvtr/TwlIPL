@@ -30,15 +30,15 @@
 #include    <twl/rtc.h>
 #include    <nitro/hw/common/lcd.h>
 #include    <nitro/gx.h>
-#include    <twl/os/ARM7/codecmode.h>
+#include    <twl/os/common/codecmode.h>
 #include    <twl/cdc.h>
 #include    <twl/aes.h>
 #include    <twl/mcu.h>
-#include 	<sysmenu/boot/common/boot.h>
-#include 	<sysmenu/sysmenu_lib/common/sysmenu_work.h>
+#include    <sysmenu/boot/common/boot.h>
+#include    <sysmenu/sysmenu_lib/common/sysmenu_work.h>
 
-#include 	<sysmenu/card/common/blowfish.h>
-#include 	<sysmenu/card/common/Card.h>
+#include    <sysmenu/card/common/blowfish.h>
+#include    <sysmenu/card/common/Card.h>
 
 /*---------------------------------------------------------------------------*
     定数定義
@@ -82,27 +82,27 @@ void
 TwlSpMain(void)
 {
     OSHeapHandle    heapHandle;
-	
-	// SYSMワークのクリア
-	MI_CpuClear32( SYSMi_GetWork(), sizeof(SYSM_work) );
-	
+
+    // SYSMワークのクリア
+    MI_CpuClear32( SYSMi_GetWork(), sizeof(SYSM_work) );
+
     // OS 初期化
     OS_Init();
     PrintDebugInfo();
-	
-	// Cold/Hotスタート判定
-	ReadResetParameter();
-	SYSMi_GetWork()->isARM9Start = TRUE;				// ※HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
-	
+
+    // Cold/Hotスタート判定
+    ReadResetParameter();
+    SYSMi_GetWork()->isARM9Start = TRUE;                // ※HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
+
     // ヒープ領域設定
-	{
-		void *wram = OS_GetWramSubPrivArenaHi();
-		void *mmem = OS_GetSubPrivArenaHi();
-		OS_SetSubPrivArenaHi( (void*)SYSM_OWN_ARM7_MMEM_ADDR_END );		// メモリ配置をいじっているので、アリーナHiも変更しないとダメ！！
-		OS_SetWramSubPrivArenaHi( (void*)SYSM_OWN_ARM7_WRAM_ADDR_END );
-		OS_TPrintf( "MMEM SUBPRV ARENA HI : %08x -> %08x\n", mmem, OS_GetSubPrivArenaHi() );
-		OS_TPrintf( "WRAM SUBPRV ARENA HI : %08x -> %08x\n", wram, OS_GetWramSubPrivArenaHi() );
-	}
+    {
+        void *wram = OS_GetWramSubPrivArenaHi();
+        void *mmem = OS_GetSubPrivArenaHi();
+        OS_SetSubPrivArenaHi( (void*)SYSM_OWN_ARM7_MMEM_ADDR_END );     // メモリ配置をいじっているので、アリーナHiも変更しないとダメ！！
+        OS_SetWramSubPrivArenaHi( (void*)SYSM_OWN_ARM7_WRAM_ADDR_END );
+        OS_TPrintf( "MMEM SUBPRV ARENA HI : %08x -> %08x\n", mmem, OS_GetSubPrivArenaHi() );
+        OS_TPrintf( "WRAM SUBPRV ARENA HI : %08x -> %08x\n", wram, OS_GetWramSubPrivArenaHi() );
+    }
     heapHandle  =   InitializeAllocateSystem();
 
     // ボタン入力サーチ初期化
@@ -125,7 +125,7 @@ TwlSpMain(void)
         AES_Init();           // AES 初期化
     }
 
-    if (OS_IsCodecTwlMode() == TRUE)
+    if (OSi_IsCodecTwlMode() == TRUE)
     {
         // CODEC 初期化
         InitializeCdc();
@@ -144,11 +144,11 @@ TwlSpMain(void)
 
     // SPI 初期化
     SPI_Init(THREAD_PRIO_SPI);
-    
+
     BOOT_Init();
 
     // 活栓挿抜機能初期化
-	Cardm_Init();
+    Cardm_Init();
 
     // カードがささっていたらブート開始
     Card_Boot();
@@ -169,32 +169,32 @@ TwlSpMain(void)
 // Hot/Coldスタート判定およびリセットパラメータのリード
 static void ReadResetParameter( void )
 {
-	// Hot/Coldスタート判定
+    // Hot/Coldスタート判定
 #ifdef SDK_FINALROM
-	if( SYSMi_GetMCUFreeRegisterValue() == 0 ) 			// マイコンフリーレジスタ値が"0"ならColdスタート
+    if( SYSMi_GetMCUFreeRegisterValue() == 0 )          // マイコンフリーレジスタ値が"0"ならColdスタート
 #else
-	if( 1 )												// ISデバッガでのデバッグ動作時に常にホットスタート判定されるのを防ぐ
+    if( 1 )                                             // ISデバッガでのデバッグ動作時に常にホットスタート判定されるのを防ぐ
 #endif
-	{
-		u8 data = 1;
-		MCU_SetFreeRegisters( 0, &data, 1 );			// マイコンフリーレジスタにホットスタートフラグをセット
-		SYSMi_GetWork()->isHotStart = FALSE;
-	}else {
-		SYSMi_GetWork()->isHotStart = TRUE;
-		// リセットパラメータ有効判定
-		if( ( STD_StrNCmp( (const char *)&SYSMi_GetResetParamAddr()->header.magicCode,
-							 SYSM_RESET_PARAM_MAGIC_CODE,
-							 SYSM_RESET_PARAM_MAGIC_CODE_LEN ) == 0 ) &&
-			  ( SYSMi_GetResetParamAddr()->header.bodyLength > 0 ) &&
-			  ( SVC_GetCRC16( 65535, &SYSMi_GetResetParamAddr()->body, SYSMi_GetResetParamAddr()->header.bodyLength ) )
-			  ) {
-			// リセットパラメータが有効なら、ワークに退避
-			MI_CpuCopy32 ( SYSMi_GetResetParamAddr(), &SYSMi_GetWork()->resetParam, sizeof(ResetParam) );
-			SYSMi_GetWork()->isValidResetParam = TRUE;
-		}
-	}
-	// メインメモリのリセットパラメータをクリアしておく
-	MI_CpuClear32( SYSMi_GetResetParamAddr(), 0x100 );
+    {
+        u8 data = 1;
+        MCU_SetFreeRegisters( 0, &data, 1 );            // マイコンフリーレジスタにホットスタートフラグをセット
+        SYSMi_GetWork()->isHotStart = FALSE;
+    }else {
+        SYSMi_GetWork()->isHotStart = TRUE;
+        // リセットパラメータ有効判定
+        if( ( STD_StrNCmp( (const char *)&SYSMi_GetResetParamAddr()->header.magicCode,
+                             SYSM_RESET_PARAM_MAGIC_CODE,
+                             SYSM_RESET_PARAM_MAGIC_CODE_LEN ) == 0 ) &&
+              ( SYSMi_GetResetParamAddr()->header.bodyLength > 0 ) &&
+              ( SVC_GetCRC16( 65535, &SYSMi_GetResetParamAddr()->body, SYSMi_GetResetParamAddr()->header.bodyLength ) )
+              ) {
+            // リセットパラメータが有効なら、ワークに退避
+            MI_CpuCopy32 ( SYSMi_GetResetParamAddr(), &SYSMi_GetWork()->resetParam, sizeof(ResetParam) );
+            SYSMi_GetWork()->isValidResetParam = TRUE;
+        }
+    }
+    // メインメモリのリセットパラメータをクリアしておく
+    MI_CpuClear32( SYSMi_GetResetParamAddr(), 0x100 );
 }
 
 
@@ -305,7 +305,7 @@ InitializeAllocateSystem(void)
         void*   basicHi =   (void*)OS_GetSubPrivArenaHi();
         void*   extraLo =   (void*)MATH_ROUNDUP((u32)SDK_LTDAUTOLOAD_LTDMAIN_BSS_END, 32);
         void*   extraHi =   (void*)MATH_ROUNDDOWN(HW_MAIN_MEM_SUB, 32);
-    
+
 #if SDK_DEBUG
         // debug information
         OS_TPrintf("ARM7: MAIN arena basicLo = %p\n", basicLo);
@@ -313,11 +313,11 @@ InitializeAllocateSystem(void)
         OS_TPrintf("ARM7: MAIN arena extraLo = %p\n", extraLo);
         OS_TPrintf("ARM7: MAIN arena extraHi = %p\n", extraHi);
 #endif
-    
+
         // アリーナを 0 クリア
         MI_CpuClear8(basicLo, (u32)basicHi - (u32)basicLo);
         MI_CpuClear8(extraLo, (u32)extraHi - (u32)extraLo);
-    
+
         // メモリ割り当て初期化
         if ((u32)basicLo < (u32)extraLo)
         {
@@ -329,15 +329,15 @@ InitializeAllocateSystem(void)
         {
             extraLo =   OS_InitAlloc(OS_ARENA_MAIN_SUBPRIV, extraLo, basicHi, 1);
         }
-    
+
         // ヒープ作成
         hh  =   OS_CreateHeap(OS_ARENA_MAIN_SUBPRIV, basicLo, basicHi);
-    
+
         if (hh < 0)
         {
             OS_Panic("ARM7: Failed to create MAIN heap.\n");
         }
-    
+
         // ヒープに拡張ブロックを追加
         OS_AddToHeap(OS_ARENA_MAIN_SUBPRIV, hh, extraLo, extraHi);
     }
@@ -346,18 +346,18 @@ InitializeAllocateSystem(void)
     {
         void*   lo  =   (void*)OS_GetSubPrivArenaLo();
         void*   hi  =   (void*)OS_GetSubPrivArenaHi();
-    
+
         // アリーナを 0 クリア
         MI_CpuClear8(lo, (u32)hi - (u32)lo);
-    
+
         // メモリ割り当て初期化
         lo  =   OS_InitAlloc(OS_ARENA_MAIN_SUBPRIV, lo, hi, 1);
         // アリーナ下位アドレスを設定
         OS_SetArenaLo(OS_ARENA_MAIN_SUBPRIV, lo);
-    
+
         // ヒープ作成
         hh  =   OS_CreateHeap(OS_ARENA_MAIN_SUBPRIV, lo, hi);
-    
+
         if (hh < 0)
         {
             OS_Panic("ARM7: Failed to MAIN create heap.\n");
@@ -368,7 +368,7 @@ InitializeAllocateSystem(void)
     // ヒープサイズの確認
     {
         u32     heapSize;
-    
+
         heapSize    =   (u32)OS_CheckHeap(OS_ARENA_MAIN_SUBPRIV, hh);
         OS_TPrintf("ARM7: MAIN heap size is %d\n", heapSize);
     }
@@ -379,7 +379,7 @@ InitializeAllocateSystem(void)
         void*   basicHi =   (void*)OS_GetWramSubPrivArenaHi();
         void*   extraLo =   (void*)MATH_ROUNDUP((u32)SDK_LTDAUTOLOAD_LTDWRAM_BSS_END, 32);
         void*   extraHi =   (void*)MATH_ROUNDDOWN(HW_WRAM_A_HYB_END, 32);
-    
+
 #if SDK_DEBUG
         // debug information
         OS_TPrintf("ARM7: WRAM arena basicLo = %p\n", basicLo);
@@ -387,11 +387,11 @@ InitializeAllocateSystem(void)
         OS_TPrintf("ARM7: WRAM arena extraLo = %p\n", extraLo);
         OS_TPrintf("ARM7: WRAM arena extraHi = %p\n", extraHi);
 #endif
-    
+
         // アリーナを 0 クリア
         MI_CpuClear8(basicLo, (u32)basicHi - (u32)basicLo);
         MI_CpuClear8(extraLo, (u32)extraHi - (u32)extraLo);
-    
+
         // メモリ割り当て初期化
         if ((u32)basicLo < (u32)extraLo)
         {
@@ -403,15 +403,15 @@ InitializeAllocateSystem(void)
         {
             extraLo =   OS_InitAlloc(OS_ARENA_WRAM_SUBPRIV, extraLo, basicHi, 1);
         }
-    
+
         // ヒープ作成
         hh  =   OS_CreateHeap(OS_ARENA_WRAM_SUBPRIV, basicLo, basicHi);
-    
+
         if (hh < 0)
         {
             OS_Panic("ARM7: Failed to WRAM create heap.\n");
         }
-    
+
         // ヒープに拡張ブロックを追加
         OS_AddToHeap(OS_ARENA_WRAM_SUBPRIV, hh, extraLo, extraHi);
     }
@@ -420,18 +420,18 @@ InitializeAllocateSystem(void)
     {
         void*   lo  =   (void*)OS_GetWramSubPrivArenaLo();
         void*   hi  =   (void*)OS_GetWramSubPrivArenaHi();
-    
+
         // アリーナを 0 クリア
         MI_CpuClear8(lo, (u32)hi - (u32)lo);
-    
+
         // メモリ割り当て初期化
         lo  =   OS_InitAlloc(OS_ARENA_WRAM_SUBPRIV, lo, hi, 1);
         // アリーナ下位アドレスを設定
         OS_SetArenaLo(OS_ARENA_WRAM_SUBPRIV, lo);
-    
+
         // ヒープ作成
         hh  =   OS_CreateHeap(OS_ARENA_WRAM_SUBPRIV, lo, hi);
-    
+
         if (hh < 0)
         {
             OS_Panic("ARM7: Failed to WRAM create heap.\n");

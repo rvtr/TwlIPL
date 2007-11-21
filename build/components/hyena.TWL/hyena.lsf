@@ -45,12 +45,14 @@ Autoload WRAM
 				libmath_sp.TWL$(CODEGEN).a		\
 				libscfg_sp.TWL$(CODEGEN).a	\
 				libtp_sp.TWL$(CODEGEN).a		\
+				libmic_sp.TWL$(CODEGEN).a		\
 				libfs_sp.TWL$(CODEGEN).a		\
 				libcard_sp.TWL$(CODEGEN).a		\
 				libi2c_sp.TWL$(CODEGEN).a		\
 				libcamera_sp.TWL$(CODEGEN).a	\
 				libcdc_sp.TWL$(CODEGEN).a		\
 				libtpex_sp.TWL$(CODEGEN).a		\
+				libmicex_sp.TWL$(CODEGEN).a		\
 				libnvram_sp.TWL$(CODEGEN).a		\
 				librtc_sp.TWL$(CODEGEN).a		\
 				libwvr_sp.TWL$(CODEGEN).a		\
