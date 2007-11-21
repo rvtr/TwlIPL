@@ -59,18 +59,6 @@ static const u16 s_validLangBitmapList[] = {
 	TWL_LANG_BITMAP_KOREA,
 };
 
-// 各バージョンにおける過去バージョン互換リスト
-static const u8 s_verCompatible_v0[] = { 0xff };
-//static const u8 s_verCompatible_v1[] = { 0, 0xff };
-//static const u8 s_verCompatible_v2[] = { 0, 1, 0xff };
-
-// 過去バージョン互換リストまとめ
-static const u8 *s_verCompatibleList[ TWL_SETTINGS_DATA_VERSION + 1 ] = {
-	s_verCompatible_v0,
-//	s_verCompatible_v1,
-//	s_verCompatible_v2,
-};
-
 
 // function's description-----------------------------------------------
 
@@ -241,6 +229,14 @@ BOOL TSD_ReadSettings( TSDStore (*pTempBuffer)[2] )
 // バージョン間の互換チェック
 static BOOL TSDi_CheckVersionCompatible( u8 tgtVersion )
 {
+	// 各バージョンにおける過去バージョン互換リスト
+	static const u8 s_verCompatible_v0[] = { 0xff };
+	static const u8 s_verCompatible_v1[] = { 0, 0xff };
+	// 過去バージョン互換リストまとめ
+	static const u8 *s_verCompatibleList[ TWL_SETTINGS_DATA_VERSION + 1 ] = {
+		s_verCompatible_v0,
+		s_verCompatible_v1,
+	};
 	
 	if( TWL_SETTINGS_DATA_VERSION < tgtVersion ) {
 		return FALSE;
@@ -338,11 +334,12 @@ static void TSDi_ClearSettings( TWLSettingsData *pTSD )
 {
 	MI_CpuClearFast( pTSD, sizeof(TWLSettingsData) );
 	// 初期値が０以外のもの
-	pTSD->region  = TWL_DEFAULT_REGION;				// リージョンは本体設定データからなくなる予定
-	pTSD->backLightBrightness  = TWL_BACKLIGHT_LEVEL_MAX;
-	pTSD->owner.birthday.month = 1;
-	pTSD->owner.birthday.day   = 1;
+	pTSD->backLightBrightness   = TWL_BACKLIGHT_LEVEL_MAX;
+	pTSD->owner.birthday.month  = 1;
+	pTSD->owner.birthday.day    = 1;
+	pTSD->language              = TWL_LANG_ENGLISH;
+	pTSD->region                = TWL_DEFAULT_REGION;	// リージョンは本体設定データからなくなる予定
 	pTSD->valid_language_bitmap = s_validLangBitmapList[ pTSD->region ];
-													// 対応言語ビットマップも本体設定データからなくなる予定
+														// 対応言語ビットマップも本体設定データからなくなる予定
 }
 

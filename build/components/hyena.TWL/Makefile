@@ -63,10 +63,10 @@ MAKELCF_FLAGS	+=	-DISDBG_LIBS_TWL='$(if $(ISDBG_LIBS_TWL),$(ISDBG_LIBS_TWL),libs
 #   install target
 #--------------------------------
 INSTALL_TARGETS	=	$(BINDIR)/$(TARGET_NAME).tef				\
-					$(BINDIR)/$(TARGET_NAME).FLX.TWL.sbin		\
-					$(BINDIR)/$(TARGET_NAME)_defs.FLX.TWL.sbin	\
-					$(BINDIR)/$(TARGET_NAME).LTD.TWL.sbin		\
-					$(BINDIR)/$(TARGET_NAME)_defs.LTD.TWL.sbin
+					$(BINDIR)/$(TARGET_NAME).TWL.FLX.sbin		\
+					$(BINDIR)/$(TARGET_NAME)_defs.TWL.FLX.sbin	\
+					$(BINDIR)/$(TARGET_NAME).TWL.LTD.sbin		\
+					$(BINDIR)/$(TARGET_NAME)_defs.TWL.LTD.sbin
 
 INSTALL_DIR		=	$(TWL_INSTALL_COMPONENTSDIR)/$(TARGET_NAME)/$(TWL_BUILDTYPE)
 

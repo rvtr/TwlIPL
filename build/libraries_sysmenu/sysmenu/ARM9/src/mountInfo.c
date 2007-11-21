@@ -108,26 +108,33 @@ void SYSM_SetMountInfo( NAMTitleId titleID )
 static void SYSMi_ModifySaveDataMount( NAMTitleId titleID )
 {
 	int i;
-	char saveFilePath[ 2 ][ FS_FILE_NAME_MAX ];
 	OSMountInfo *pMountTgt = &s_defaultMountList[ PRV_SAVE_DATA_MOUNT_INDEX ];
 	
-	// セーブデータのファイルパスを取得
-	NAM_GetTitleSaveFilePath( saveFilePath[ 1 ], saveFilePath[ 0 ], titleID );
-	
-	// 結果を元にマウント情報を編集。
-	for( i = 0; i < 2; i++ ) {
-		FSFile  file[1];
-		FS_InitFile( file );
-		// ※現在は、セーブファイルを開けるかどうかでセーブファイル有無を確認。
-		//   最終的にはTMDの情報を参照する形になる？
-		if( FS_OpenFileEx( file, saveFilePath[ i ], FS_FILEMODE_R) ) {
-			FS_CloseFile( file );
-			STD_CopyLStringZeroFill( pMountTgt->path,
-									 saveFilePath[ i ],
-									 OS_MOUNT_PATH_LEN );
-		}else {
+	if( titleID ) {
+		// タイトルIDが指定されているNANDアプリの場合は、セーブデータ有無を判定して、パスをセット
+		char saveFilePath[ 2 ][ FS_FILE_NAME_MAX ];
+		
+		// セーブデータのファイルパスを取得
+		NAM_GetTitleSaveFilePath( saveFilePath[ 1 ], saveFilePath[ 0 ], titleID );
+		
+		// 結果を元にマウント情報を編集。
+		for( i = 0; i < 2; i++ ) {
+			FSFile  file[1];
+			FS_InitFile( file );
+			// ※現在は、セーブファイルを開けるかどうかでセーブファイル有無を確認。
+			//   最終的にはTMDもしくはROMヘッダの値を参照。ROMヘッダの方が簡単で速いか？
+			if( FS_OpenFileEx( file, saveFilePath[ i ], FS_FILEMODE_R) ) {
+				FS_CloseFile( file );
+				STD_CopyLStringZeroFill( pMountTgt->path, saveFilePath[ i ], OS_MOUNT_PATH_LEN );
+			}else {
+				pMountTgt->drive[ 0 ] = 0;
+			}
+			pMountTgt++;
+		}
+	}else {
+		// タイトルID指定なしのカードアプリの場合は、セーブデータ無効
+		for( i = 0; i < 2; i++ ) {
 			pMountTgt->drive[ 0 ] = 0;
 		}
-		pMountTgt++;
 	}
 }
