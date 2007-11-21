@@ -30,8 +30,6 @@ SUBDIRS		= \
 			aes \
 			pm \
 			gcd \
-			$(TWLSDK_ROOT)/build/libraries/aes \
-			$(TWLSDK_ROOT)/build/libraries/reboot \
 
 #			syscall \
 #			nvram \
