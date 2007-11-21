@@ -409,7 +409,7 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	
 	if( (pad.trg & PAD_BUTTON_START) || up_bl_trg ) {
 		brightness = TSD_GetBacklightBrightness() + 1;
-		if( brightness > BACKLIGHT_LEVEL_MAX ) {
+		if( brightness > TWL_BACKLIGHT_LEVEL_MAX ) {
 			brightness = 0;
 		}
 		SYSM_SetBackLightBrightness( (u8)brightness );
@@ -417,7 +417,7 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	if( ( pad.trg & PAD_BUTTON_SELECT) || dw_bl_trg ) {
 		brightness = TSD_GetBacklightBrightness() - 1;
 		if( brightness < 0 ) {
-			brightness = BACKLIGHT_LEVEL_MAX;
+			brightness = TWL_BACKLIGHT_LEVEL_MAX;
 		}
 		SYSM_SetBackLightBrightness( (u8)brightness );
 	}

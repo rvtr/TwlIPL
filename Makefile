@@ -22,11 +22,13 @@ include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 #----------------------------------------------------------------------------
 export TWL_ARCHGEN = ALL
 
-SUBDIRS =	$(TWLSDK_ROOT)/add-ins/NitroWireless \
+SUBDIRS =	\
+			$(TWLSDK_ROOT)/add-ins/NitroWireless \
 			$(TWLSDK_ROOT)/build/libraries/ese \
 			$(TWLSDK_ROOT)/build/libraries/nam \
 			$(TWLSDK_ROOT)/build/libraries/reboot \
 			$(TWLSDK_ROOT)/build/libraries/aes \
+			$(TWLSDK_ROOT)/build/libraries/spi \
 			$(TWLSDK_ROOT)/build/components/racoon.TWL \
 			$(TWLSYSTEM_ROOT) \
 			build

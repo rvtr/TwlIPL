@@ -53,24 +53,76 @@ Autoload WRAM
 				libcdc_sp.TWL$(CODEGEN).a		\
 				libtpex_sp.TWL$(CODEGEN).a		\
 				libmicex_sp.TWL$(CODEGEN).a		\
-				libnvram_sp.TWL$(CODEGEN).a		\
-				librtc_sp.TWL$(CODEGEN).a		\
-				libwvr_sp.TWL$(CODEGEN).a		\
-				libaes_sp.TWL$(CODEGEN).a		\
-				libboot_sp.TWL$(CODEGEN).a		\
-				libreboot_sp.TWL$(CODEGEN).a	\
-				libcardboot_sp.TWL$(CODEGEN).a	\
-				$(USE_CRYPTO_LIBS)				\
-				$(ISDBG_LIBS)
 
 	Library		libsdio_hcd_twl.TWL$(CODEGEN).a	\
 				libsdio_busdriver.TWL$(CODEGEN).a	\
 				libsdio_lib.TWL$(CODEGEN).a	\
+				libARM7athdrv.TWL$(CODEGEN).a
 
 	Object		* (.etable)
 	Object		* (.wram)
 	Object		* (.ltdwram)
 	Object		$(OBJDIR)/main.o
+
+	#####
+	# Sub-routines in WL library , that should be on WRAM.
+	# in TaskMan.o
+	Object		OBJECT( MainTaskRoutine 		, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( AddTask 				, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( DeleteTask 				, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( LowestIdleTask 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( ExecuteMessage 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	# in BufMan.o
+	Object		OBJECT( NewHeapBuf 				, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( DeleteHeapBuf 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( AllocateHeapBuf 		, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( ReleaseHeapBuf 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( MoveHeapBuf 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( AddHeapBuf 				, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( GetHeapBufNextAdrs 		, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	# in WlCmdIf.o
+	Object		OBJECT( RequestCmdTask 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( SendMessageToWmDirect 	, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	# in WlNic.o
+	Object		OBJECT( WStart 					, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WStop 					, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WSetStaState 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	# in WlIntr.o
+	Object		OBJECT( WlIntr 					, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WlIntrPreTbtt 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WlIntrTbtt 				, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WlIntrActEnd 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+#	Object		OBJECT( WlIntrAckCntOvf 		, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WlIntrCntOvf 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WlIntrTxErr 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WlIntrRxCntup 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WlIntrTxEnd 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WlIntrRxEnd 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WlIntrMpEnd 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WlIntrStartTx 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WlIntrStartRx 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( SetParentTbttTxq 		, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( MacBugTxMp 				, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( AdjustRingPointer 		, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( CheckKeyTxEnd 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	# in WlIntrTask.o
+	Object		OBJECT( WlIntrTxBeaconTask 		, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WlIntrTxEndTask 		, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WlIntrRxEndTask 		, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WlIntrMpEndTask 		, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( SetParentTbttTxqTask 	, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( TakeoutRxFrame 			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	# in TxCtrl.o
+	Object		OBJECT( InitTxCtrl 				, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	# in RxCtrl.o
+	Object		OBJECT( InitRxCtrl 				, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	# in WaitLoop.o
+	Object		OBJECT( WaitLoop_Rxpe			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WaitLoop_Waitus			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WaitLoop_ClrAid			, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WaitLoop_BbpAccess		, libwl_sp.TWL$(CODEGEN).a )	(.text)
+	Object		OBJECT( WaitLoop_RfAccess		, libwl_sp.TWL$(CODEGEN).a )	(.text)
+
 }
 
 #--------
@@ -79,6 +131,19 @@ Ltdautoload LTDMAIN
 	After		$(TARGET_NAME)
 
 	Object		* (.ltdmain)
-	Library		libfatfs_sp.TWL$(CODEGEN).a
-	Library		librompatch_sp.TWL$(CODEGEN).a
+	Library		libnvram_sp.TWL$(CODEGEN).a
+	Library		librtc_sp.TWL$(CODEGEN).a
+	Library		librompatch_sp.TWL$(CODEGEN).a	\
+                libwm_sp.TWL$(CODEGEN).a	\
+				libnwm_sp.TWL$(CODEGEN).a	\
+				libwvr_sp.TWL$(CODEGEN).a	\
+				libwl_sp.TWL$(CODEGEN).a \
+				libboot_sp.TWL$(CODEGEN).a		\
+				libreboot_sp.TWL$(CODEGEN).a	\
+				libcardboot_sp.TWL$(CODEGEN).a	\
+				
+	Library		libfatfs_sp.TWL$(CODEGEN).a	\
+				$(USE_CRYPTO_LIBS)
+	Library		$(ISDBG_LIBS_TWL)
+	Library		$(ISDBG_LIBS_NITRO)
 }

@@ -38,6 +38,7 @@ extern "C" {
 #define TWL_COMMENT_LENGTH				NTR_COMMENT_LENGTH			// コメント長
 #define TWL_COMMENT_BUFFERSIZE			( ( TWL_COMMENT_LENGTH + 1 ) * 2 )	// コメントバッファサイズ
 #define TWL_FAVORITE_COLOR_MAX_NUM		NTR_FAVORITE_COLOR_MAX_NUM	// 好きな色の最大数
+#define TWL_BACKLIGHT_LEVEL_MAX			22							// TWLバックライト最大輝度レベル
 #define TSD_TEMP_BUFFER_SIZE			( sizeof(TSDStore) * 2 )	// TSD_ReadTWLSettingsで必要なTempBufferサイズ
 
 

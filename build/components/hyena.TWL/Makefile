@@ -40,13 +40,24 @@ CRT0_O			=	crt0.LTD.TWL.o
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 
+ifdef TWLSDK_NOCRYPTO
+CCFLAGS			+=	-DSDK_NOCRYPTO
+endif
+
+ifndef TWLSDK_NOCRYPTO
+MAKELCF_FLAGS	+=	-DUSE_CRYPTO_LIBS='libaes_sp.TWL$(CODEGEN).a'
+endif
+
 #MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD
 
 MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000' \
 					-DADDRESS_FLXMAIN='0x02280000' \
 					-DADDRESS_BOOTCORE='0x0380f000' \
 					-DCRT0_O='$(CRT0_O)'
-MAKELCF_FLAGS	+=	-DISDBG_LIBS='$(ISDBG_LIBS)'
+
+MAKELCF_FLAGS	+=	-DISDBG_LIBS_TWL='$(if $(ISDBG_LIBS_TWL),$(ISDBG_LIBS_TWL),libstubsistd_sp$(TWL_LIBSUFFIX).a)'	\
+					-DISDBG_LIBS_NITRO='libstubsisd_sp$(TWL_LIBSUFFIX).a'
+
 
 #--------------------------------
 #   install target
@@ -60,6 +71,7 @@ INSTALL_TARGETS	=	$(BINDIR)/$(TARGET_NAME).tef				\
 INSTALL_DIR		=	$(TWL_INSTALL_COMPONENTSDIR)/$(TARGET_NAME)/$(TWL_BUILDTYPE)
 
 LINCLUDES		= $(ROOT)/build/libraries/spi/ARM7/include
+LLIBRARIES		+= libwl_sp.TWL.LTD.a
 LDEPENDS_NEF	= $(TWL_LIBS) $(LLIBRARIES)
 
 do-build:	$(TARGETS)

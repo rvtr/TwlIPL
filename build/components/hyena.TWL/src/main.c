@@ -39,10 +39,13 @@
 
 #include    <sysmenu/card/common/blowfish.h>
 #include    <sysmenu/card/common/Card.h>
+#include    "nvram_sp.h"
 
 /*---------------------------------------------------------------------------*
     定数定義
  *---------------------------------------------------------------------------*/
+/* [TODO] Work around. Should be defined in wm_sp.h */
+#define WM_WL_HEAP_SIZE     0x2100
 
 /* Priorities of each threads */
 #define THREAD_PRIO_SPI     2
@@ -52,6 +55,16 @@
 #define THREAD_PRIO_FS      15
 /* OS_THREAD_LAUNCHER_PRIORITY 16 */
 
+/* [TODO] 以下は New WM 側に移行するほうが好ましい? */
+#define NWM_DMANO                   3
+#define THREAD_PRIO_NWM_COMMMAND    6
+#define THREAD_PRIO_NWM_EVENT       4
+#define THREAD_PRIO_NWM_SDIO        5
+#define THREAD_PRIO_NWM_WPA         7
+
+// ROM 内登録エリアの拡張言語コード
+#define ROMHEADER_FOR_CHINA_BIT        0x80
+#define ROMHEADER_FOR_KOREA_BIT        0x40
 
 /*---------------------------------------------------------------------------*
     内部関数定義
@@ -60,8 +73,10 @@ static void         ReadResetParameter( void );
 static void         PrintDebugInfo(void);
 static OSHeapHandle InitializeAllocateSystem(void);
 static void         InitializeFatfs(void);
+static void         InitializeNwm(void);
 static void         InitializeCdc(void);
 static void         DummyThread(void* arg);
+static void         ReadUserInfo(void);
 static void         VBlankIntr(void);
 
 /*---------------------------------------------------------------------------*
@@ -89,11 +104,14 @@ TwlSpMain(void)
     // OS 初期化
     OS_Init();
     PrintDebugInfo();
-
+	
+    // NVRAM からユーザー情報読み出し
+    ReadUserInfo();
+    
     // Cold/Hotスタート判定
-    ReadResetParameter();
-    SYSMi_GetWork()->isARM9Start = TRUE;                // ※HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
-
+	ReadResetParameter();
+	SYSMi_GetWork()->isARM9Start = TRUE;				// ※HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
+	
     // ヒープ領域設定
     {
         void *wram = OS_GetWramSubPrivArenaHi();
@@ -122,7 +140,10 @@ TwlSpMain(void)
     if (OS_IsRunOnTwl() == TRUE)
     {
         InitializeFatfs();    // FATFS 初期化
+        InitializeNwm();      // NWM 初期化
+#ifndef SDK_NOCRYPTO
         AES_Init();           // AES 初期化
+#endif
     }
 
     if (OSi_IsCodecTwlMode() == TRUE)
@@ -141,6 +162,9 @@ TwlSpMain(void)
 
     // RTC 初期化
     RTC_Init(THREAD_PRIO_RTC);
+
+    // 旧無線初期化
+    WVR_Begin(heapHandle);
 
     // SPI 初期化
     SPI_Init(THREAD_PRIO_SPI);
@@ -246,6 +270,41 @@ InitializeFatfs(void)
 
 #include    <twl/ltdwram_begin.h>
 /*---------------------------------------------------------------------------*
+  Name:         InitializeNwm
+  Description:  NWMライブラリを初期化する。
+  Arguments:    None.
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static void
+InitializeNwm(void)
+{
+    NwmspInit nwmInit;
+
+    OSHeapHandle heapHandle;
+    void*   Lo =   (void*)OS_GetSubPrivArenaLo();
+    void*   Hi =   (void*)OS_GetSubPrivArenaHi();
+    heapHandle  =   OS_CreateHeap(OS_ARENA_MAIN_SUBPRIV, Lo, Hi);
+
+    /* [TODO] 確保したヒープ領域が新無線一式が必要としているメモリ量以上かのチェックが必要 */
+
+    nwmInit.dmaNo = NWM_DMANO;
+    nwmInit.cmdPrio = THREAD_PRIO_NWM_COMMMAND;
+    nwmInit.evtPrio = THREAD_PRIO_NWM_EVENT;
+    nwmInit.sdioPrio = THREAD_PRIO_NWM_SDIO;
+	nwmInit.drvHeap.id = OS_ARENA_MAIN_SUBPRIV; /* [TODO] */
+	nwmInit.drvHeap.handle = heapHandle;
+#ifdef WPA_BUILT_IN /* WPA が組み込まれる場合、以下のメンバが追加される */
+    nwmInit.wpaPrio = THREAD_PRIO_NWM_WPA;
+	nwmInit.wpaHeap.id = OS_ARENA_MAIN_SUBPRIV; /* [TODO] */
+	nwmInit.wpaHeap.handle = heapHandle;
+#endif
+    NWMSP_Init(&nwmInit);
+
+}
+#include    <twl/ltdwram_end.h>
+
+#include    <twl/ltdwram_begin.h>
+/*---------------------------------------------------------------------------*
   Name:         InitializeCdc
   Description:  CDCライブラリを初期化する。CDC初期化関数内でスレッド休止する
                 為、休止中動作するダミーのスレッドを立てる。
@@ -265,6 +324,7 @@ InitializeCdc(void)
 
     // CODEC 初期化
     CDC_Init();
+    CDC_InitMic();
 //    CDCi_DumpRegisters();
 
     // ダミースレッド破棄
@@ -441,7 +501,67 @@ InitializeAllocateSystem(void)
     // カレントヒープに設定
     (void)OS_SetCurrentHeap(OS_ARENA_WRAM_SUBPRIV, hh);
 
+    // ヒープサイズの確認
+    {
+        u32     heapSize;
+    
+        heapSize    =   (u32)OS_CheckHeap(OS_ARENA_WRAM_SUBPRIV, hh);
+        if (WM_WL_HEAP_SIZE > heapSize)
+        {
+            OS_Panic("Insufficient heap size. (0x%x < 0x%x)\n", heapSize, WM_WL_HEAP_SIZE);
+        }
+        OS_TPrintf("ARM7: WRAM heap size is %d\n", heapSize);
+    }
+
     return hh;
+}
+
+#ifdef  WM_PRECALC_ALLOWEDCHANNEL
+extern u16 WMSP_GetAllowedChannel(u16 bitField);
+#endif
+/*---------------------------------------------------------------------------*
+  Name:         ReadUserInfo
+
+  Description:  NVRAMからユーザー情報を読み出し、共有領域に展開する。
+                ミラーリングされているバッファが両方壊れている場合は、
+                共有領域のユーザー情報格納場所をクリアする。
+
+  Arguments:    None.
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static void ReadUserInfo(void)
+{
+	u8 *p;
+	
+    // 無線MACアドレスをユーザー情報の後ろに展開
+    {
+        u8      wMac[6];
+
+        // NVRAMからMACアドレスを読み出し
+        NVRAM_ReadDataBytes(NVRAM_CONFIG_MACADDRESS_ADDRESS, 6, wMac);
+        // 展開先アドレスを計算
+        p = (u8 *)((u32)p + ((sizeof(NVRAMConfig) + 3) & ~0x00000003));
+        // 共有領域に展開
+        MI_CpuCopy8(wMac, p, 6);
+    }
+
+#ifdef  WM_PRECALC_ALLOWEDCHANNEL
+    // 使用可能チャンネルから使用許可チャンネルを計算
+    {
+        u16     enableChannel;
+        u16     allowedChannel;
+
+        // 使用可能チャンネルを読み出し
+        NVRAM_ReadDataBytes(NVRAM_CONFIG_ENABLECHANNEL_ADDRESS, 2, (u8 *)(&enableChannel));
+        // 使用許可チャンネルを計算
+        allowedChannel = WMSP_GetAllowedChannel((u16)(enableChannel >> 1));
+        // 展開先アドレスを計算(MACアドレスの後ろの2バイト)
+        p = (u8 *)((u32)p + 6);
+        // 共有領域に展開
+        *((u16 *)p) = allowedChannel;
+    }
+#endif
 }
 
 
