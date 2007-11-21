@@ -54,14 +54,29 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     /* ITCM全クリア */
     clr_list[i++] = (u32)HW_ITCM;
     clr_list[i++] = (u32)HW_ITCM_SIZE;
-#else
-    /* CODEとSTACKの隙間をクリア */
+    /* FS Parameters領域のクリア (暫定) */
+//    clr_list[i++] = (u32)HW_TWL_FS_MOUNT_INFO_BUF;  // 0x02ffdc00 - 0x02ffddff
+//    clr_list[i++] = (u32)HW_TWL_ROM_HEADER_BUF - (u32)HW_TWL_FS_MOUNT_INFO_BUF;
+    /* PSEG1/RED Reserved領域のクリア (暫定) */
+    clr_list[i++] = (u32)HW_MAIN_MEM_SHARED;        // 0x02fff000 - 0x02fffa7f
+    clr_list[i++] = (u32)HW_PSEG1_RESERVED_1_END - (u32)HW_MAIN_MEM_SHARED;
+    /* System Shared領域のクリア (暫定) */
+    clr_list[i++] = (u32)HW_BOOT_CHECK_INFO_BUF;    // 0x02fffc00 - 0x02fffc1f
+    clr_list[i++] = (u32)HW_BOOT_CHECK_INFO_BUF_END - (u32)HW_BOOT_CHECK_INFO_BUF;
+    clr_list[i++] = (u32)HW_BOOT_SHAKEHAND_9;       // 0x02fffc24 - 0x02fffd7f
+    clr_list[i++] = (u32)HW_NVRAM_USER_INFO_END - (u32)HW_BOOT_SHAKEHAND_9;
+    clr_list[i++] = (u32)HW_ARENA_INFO_BUF;         // 0x02fffda0 - 0x02fffdff
+    clr_list[i++] = (u32)HW_ROM_HEADER_BUF - (u32)HW_ARENA_INFO_BUF;
+    clr_list[i++] = (u32)HW_PXI_SIGNAL_PARAM_ARM9;  // 0x02ffff80 - 0x02fffffd
+    clr_list[i++] = (u32)HW_CMD_AREA - (u32)HW_PXI_SIGNAL_PARAM_ARM9;
+#else   // SDK_ARM7
+    /* REBOOT_ExecuteのCODEとSTACKの隙間をクリア */
     if ((u32)stack_top > (u32)OS_BOOT_CODE_BUF - OS_BOOT_CODE_SIZE - OS_BOOT_STACK_SIZE_MIN - sizeof(clr_list))
     {
-        clr_list[i++] = (u32)OS_BOOT_CODE_BUF + (u32)OS_BOOT_CODE_SIZE;
-        clr_list[i++] = (u32)stack_top - (u32)OS_BOOT_CODE_BUF - OS_BOOT_CODE_SIZE - OS_BOOT_STACK_SIZE_MIN - sizeof(clr_list);
+        clr_list[i++] = (u32)OS_BOOT_CODE_BUF + OS_BOOT_CODE_SIZE;
+        clr_list[i++] = (u32)stack_top - OS_BOOT_STACK_SIZE_MIN - sizeof(clr_list) - (u32)OS_BOOT_CODE_BUF - OS_BOOT_CODE_SIZE;
     }
-#endif
+#endif  // SDK_ARM7
     clr_list[i++] = NULL;
     REBOOT_Execute(entry, wram_reg, clr_list, code_buf, stack_top, scfg, jtag);
     OS_Terminate();

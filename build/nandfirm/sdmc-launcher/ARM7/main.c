@@ -136,19 +136,19 @@ static BOOL Fatfs4sdmcInit(void)
     switch ( PAD_Read() & PAD_KEYPORT_MASK )
     {
     case 0:
-        result = FATFS_OpenSpecifiedSrl( MENU_FILE );
+        result = FATFS_OpenSpecifiedSrl( MENU_FILE ) && FATFS_SaveSrlFilename( BOOT_DEVICE, MENU_FILE );
         break;
     case PAD_BUTTON_A:
-        result = FATFS_OpenSpecifiedSrl( MENU_FILE_A );
+        result = FATFS_OpenSpecifiedSrl( MENU_FILE_A ) && FATFS_SaveSrlFilename( BOOT_DEVICE, MENU_FILE_A );
         break;
     case PAD_BUTTON_B:
-        result = FATFS_OpenSpecifiedSrl( MENU_FILE_B );
+        result = FATFS_OpenSpecifiedSrl( MENU_FILE_B ) && FATFS_SaveSrlFilename( BOOT_DEVICE, MENU_FILE_B );
         break;
     case PAD_BUTTON_L:
-        result = FATFS_OpenSpecifiedSrl( MENU_FILE_L );
+        result = FATFS_OpenSpecifiedSrl( MENU_FILE_L ) && FATFS_SaveSrlFilename( BOOT_DEVICE, MENU_FILE_L );
         break;
     case PAD_BUTTON_R:
-        result = FATFS_OpenSpecifiedSrl( MENU_FILE_R );
+        result = FATFS_OpenSpecifiedSrl( MENU_FILE_R ) && FATFS_SaveSrlFilename( BOOT_DEVICE, MENU_FILE_R );
         break;
     default:
         OS_SetDebugLED( (u8)(PAD_Read() & PAD_KEYPORT_MASK) );

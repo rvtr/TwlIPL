@@ -65,7 +65,7 @@ static int menu_fd = -1;
  *---------------------------------------------------------------------------*/
 BOOL FATFS_OpenRecentMenu( int driveno )
 {
-    char *menufile = (char*)L"A:\\title\\00010001\\4d454e55\\content\\12123434.app";
+    char *menufile = (char*)L"A:\\title\\00010001\\52434e4c\\content\\12123434.app";
     if (driveno < 0 || driveno >= 26)
     {
         return FALSE;
@@ -76,6 +76,7 @@ BOOL FATFS_OpenRecentMenu( int driveno )
     {
         return FALSE;
     }
+    FATFS_SaveSrlFilename(FATFS_MEDIA_TYPE_NAND, menufile);
     return TRUE;
 }
 
@@ -97,6 +98,71 @@ BOOL FATFS_OpenSpecifiedSrl( const char* menufile )
     {
         return FALSE;
     }
+    return TRUE;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         FATFS_SaveSrlFilename
+
+  Description:  store filename to HW_TWL_FS_BOOT_SRL_PATH_BUF
+
+                ファイル名をHW_TWL_FS_BOOT_SRL_PATH_BUFに書き込みます。
+
+  Arguments:    media       media type
+                filename    target filename
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL FATFS_SaveSrlFilename( FATFSMediaType media, const char* filename )
+{
+    char* dest = (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF;
+    const char nandStr[] = "nand:/";
+    const char sdmcStr[] = "sdmc:/";
+
+    if ( filename[2] == ':' )   // ドライブレターは削除
+    {
+        filename += 4;
+    }
+    if ( filename[0] == '\\' )  // 先頭のパス記号は削除
+    {
+        filename += 2;
+    }
+    switch( media )
+    {
+    case FATFS_MEDIA_TYPE_NAND:
+        MI_CpuCopy8(nandStr, dest, sizeof(nandStr)-1);
+        dest += sizeof(nandStr)-1;
+        break;
+    case FATFS_MEDIA_TYPE_SD:
+        MI_CpuCopy8(sdmcStr, dest, sizeof(sdmcStr)-1);
+        dest += sizeof(sdmcStr)-1;
+        break;
+    default:
+        return FALSE;
+    }
+    // unicode詰め (ASCII only)
+    while ( dest < (char*)HW_TWL_ROM_HEADER_BUF )
+    {
+        if ( *filename == '\\' )    // パス記号変換
+        {
+            *dest++ = '/';
+            filename++;
+        }
+        else if ( *filename != 0 )  // 通常コピー
+        {
+            *dest++ = *filename++;
+        }
+        else if ( *(filename + 1) != 0 )    // \0が連続していないならunicodeの詰めるべき隙間
+        {
+            filename++; // omit
+        }
+        else    // \0が連続しているなら終端
+        {
+            MI_CpuClear8( dest, HW_TWL_ROM_HEADER_BUF - (u32)dest );    // 残りバッファのクリア
+            break;
+        }
+    }
+    OS_TPrintf("Stored: %s\n", (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF);
     return TRUE;
 }
 

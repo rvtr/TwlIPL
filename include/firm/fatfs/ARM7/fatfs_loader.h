@@ -19,6 +19,7 @@
 #define FIRM_FATFS_FATFS_LOADER_H_
 
 #include <twl/types.h>
+#include <twl/fatfs.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,6 +46,20 @@ BOOL FATFS_OpenRecentMenu( int driveno );
   Returns:      None
  *---------------------------------------------------------------------------*/
 BOOL FATFS_OpenSpecifiedSrl( const char* menufile );
+
+/*---------------------------------------------------------------------------*
+  Name:         FATFS_SaveSrlFilename
+
+  Description:  store filename to HW_TWL_FS_BOOT_SRL_PATH_BUF
+
+                ファイル名をHW_TWL_FS_BOOT_SRL_PATH_BUFに書き込みます。
+
+  Arguments:    media       media type
+                filename    target filename
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL FATFS_SaveSrlFilename( FATFSMediaType media, const char* filename );
 
 /*---------------------------------------------------------------------------*
   Name:         FATFS_GetSrlDescriptor
