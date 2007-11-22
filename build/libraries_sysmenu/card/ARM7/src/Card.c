@@ -20,7 +20,7 @@
 #include 	<sysmenu/card/common/Card.h>
 #include	<sysmenu/card/common/dsCardType1.h>
 #include	<sysmenu/card/common/dsCardType2.h>
-
+#include	<sysmenu/memorymap.h>
 // define -------------------------------------------------------------------
 #define		STACK_SIZE							1024		// ƒXƒ^ƒbƒNƒTƒCƒY
 #define		MC_THREAD_PRIO						11			// ƒJ[ƒh“dŒ¹ON ¨ ƒQ[ƒ€ƒ‚[ƒh‚ÌƒXƒŒƒbƒh—Dæ“x
@@ -65,9 +65,6 @@ static BootSegmentData		*s_pBootSegBuffer;		// ƒJ[ƒh”²‚¯‚Ä‚àƒoƒbƒtƒ@‚ÌêŠŠo‚¦‚
 
 static CardBootData			s_cbData;
 
-// temp value --------------------------------------------------------
-static BootSegmentData 		s_bootData ATTRIBUTE_ALIGN(32);
-static u32					s_SecureData[SECURE_SEGMENT_SIZE / sizeof(u32)] ATTRIBUTE_ALIGN(32);
 // -------------------------------------------------------------------
 
 static CardBootFunction  	s_funcTable[] = {
@@ -123,10 +120,10 @@ void Cardm_Init(void)
     OS_WakeupThreadDirect(&s_MCThread);
 
     // Boot Segment ƒoƒbƒtƒ@‚Ìİ’è
-	Card_SetBootSegmentBuffer((void *)&s_bootData, sizeof(BootSegmentData));
+	Card_SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BUFFER, 0x1000 );
 
     // Secure Segment ƒoƒbƒtƒ@‚Ìİ’è
-    Card_SetSecureSegmentBuffer((void *)s_SecureData, sizeof(s_SecureData));
+    Card_SetSecureSegmentBuffer((void *)SYSM_CARD_NTR_SECURE_BUFFER, SECURE_AREA_SIZE );
 
 	// ƒ‚ƒWƒ…[ƒ‹ƒ[ƒh—pƒXƒŒƒbƒh‚Ì¶¬
 /*	OS_CreateThread(&s_MLThread,
@@ -208,7 +205,6 @@ BOOL Card_Boot(void)
 			OS_TPrintf("TWL Card.\n");
             s_cbData.twlFlg = TRUE;
         }
-
     	// Key Table‰Šú‰»
     	GCDm_MakeBlowfishTableDS(&s_cbData.keyTable, &s_pBootSegBuffer->rh.s, s_cbData.keyBuf, 8);
 
@@ -230,10 +226,9 @@ BOOL Card_Boot(void)
 
 		// Arm9‚Ìí’“ƒ‚ƒWƒ…[ƒ‹‚ğw’èæ‚É“]‘—
 		LoadStaticModule_Secure();
-
     	// ƒQ[ƒ€ƒ‚[ƒh‚ÉˆÚs
 		s_funcTable[s_cbData.cardType].ChangeMode_S(&s_cbData);
-    
+
     	// ---------------------- Game Mode ----------------------
     	// ID“Ç‚İ‚İ
 		s_funcTable[s_cbData.cardType].ReadID_G(&s_cbData);

@@ -111,7 +111,7 @@ static asm void ClearBankREG_Stack( void )
 		bl			CpuClear32Byte
 #endif // ISDBG_MB_CHILD_
 		
-		sub			r0, r2, #( HW_PRV_WRAM_END - SYSM_BOOTCODE_ARM7_ADDR )
+		sub			r0, r2, #( HW_PRV_WRAM_END - SYSM_OWN_ARM7_WRAM_ADDR_END )
 		ldr			r1, = ClearMemory
 		bl			CpuClear32Byte
 		

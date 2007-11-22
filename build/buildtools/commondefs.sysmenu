@@ -61,12 +61,14 @@ SYSMENU_LIBS	?=	\
 					libsysmenu$(TWL_LIBSUFFIX).a \
 					libsettings$(TWL_LIBSUFFIX).a \
 					libmbloader$(TWL_LIBSUFFIX).a \
-					libacsign$(TWL_LIBSUFFIX).a
+					libacsign$(TWL_LIBSUFFIX).a \
+#					libcardboot$(TWL_LIBSUFFIX).a
 
 else #	($(CODEGEN_PROC),ARM7)
 
 SYSMENU_LIBS	?=	\
-					libmbloader_sp$(TWL_LIBSUFFIX).a
+					libmbloader_sp$(TWL_LIBSUFFIX).a \
+					libcardboot_sp$(TWL_LIBSUFFIX).a
 
 endif
 

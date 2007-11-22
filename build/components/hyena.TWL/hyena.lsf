@@ -55,6 +55,7 @@ Autoload WRAM
 				libmicex_sp.TWL$(CODEGEN).a		\
 				libboot_sp.TWL$(CODEGEN).a		\
 				libreboot_sp.TWL$(CODEGEN).a	\
+				libcardboot_sp.TWL$(CODEGEN).a	\
 
 	Library		libsdio_hcd_twl.TWL$(CODEGEN).a	\
 				libsdio_busdriver.TWL$(CODEGEN).a	\
@@ -140,7 +141,6 @@ Ltdautoload LTDMAIN
 				libnwm_sp.TWL$(CODEGEN).a	\
 				libwvr_sp.TWL$(CODEGEN).a	\
 				libwl_sp.TWL$(CODEGEN).a \
-				libcardboot_sp.TWL$(CODEGEN).a	\
 				
 	Library		libfatfs_sp.TWL$(CODEGEN).a	\
 				$(USE_CRYPTO_LIBS)
