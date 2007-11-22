@@ -22,8 +22,8 @@
 
 
 // define data------------------------------------------
-#define LAUNCHER_ELEMENT_NUM				4							// ロゴメニューの項目数
 
+// バックライトボタン関係
 #define B_LIGHT_DW_BUTTON_TOP_X				( 0  )
 #define B_LIGHT_DW_BUTTON_TOP_Y				( 22 * 8 )
 #define B_LIGHT_DW_BUTTON_BOTTOM_X			( B_LIGHT_DW_BUTTON_TOP_X + 11 )
@@ -33,7 +33,24 @@
 #define B_LIGHT_UP_BUTTON_BOTTOM_X			( B_LIGHT_UP_BUTTON_TOP_X + 22 )
 #define B_LIGHT_UP_BUTTON_BOTTOM_Y			( B_LIGHT_UP_BUTTON_TOP_Y + 16 )
 
-#define CURSOR_PER_SELECT	14
+// バナー表示関係
+#define DOT_PER_FRAME			((BANNER_WIDTH + BANNER_INTERVAL) / FRAME_PER_SELECT)		// 割り切れないと動きがカクカクするはず
+#define FRAME_PER_SELECT		14															// バナーからバナーへの移動にかかるフレーム数
+#define BANNER_FAR_LEFT_POS		(WINDOW_WIDTH/2 - BANNER_WIDTH*5/2 - BANNER_INTERVAL * 2)
+#define BANNER_TOP				(WINDOW_HEIGHT/2)
+#define WINDOW_WIDTH			256
+#define WINDOW_HEIGHT			192
+#define BANNER_WIDTH			32
+#define BANNER_HEIGHT			32
+#define BANNER_INTERVAL			24
+#define TITLE_V_CENTER			56
+
+#define MAX_SHOW_BANNER			6
+
+// フェードアウト関係
+#define FADE_COUNT_PER_ALPHA	(FADE_COUNT_MAX / ALPHA_MAX)
+#define FADE_COUNT_MAX			124
+#define ALPHA_MAX				31
 
 // extern data------------------------------------------
 
@@ -42,8 +59,17 @@ extern u16 bg_scr_data[32 * 32];
 extern u16 bg_scr_data2[32 * 32];
 
 // function's prototype declaration---------------------
+static void LoadBannerFiles( void );
+static void BannerInit( void );
+static void SetDefaultBanner( TitleProperty *titleprop );
+static void LoadBannerToVRAM( TitleProperty *titleprop );
+static void SetAffineAnimation( int cursor );
+static void BannerDraw(int cursor, int selected, TitleProperty *titleprop);
+static BOOL SelectCenterFunc( u16 *csr, TPData *tgt );
+static BOOL SelectFunc( u16 *csr, TPData *tgt );
+static void ProcessBackLightPads( void );
+static TitleProperty *ProcessPads( TitleProperty *pTitleList );
 static void DrawBackLightSwitch(void);
-static void DrawLauncher(u16 nowCsr, const MenuParam *pMenu);
 
 // global variable -------------------------------------
 RTCDrawProperty g_rtcDraw = {
@@ -51,11 +77,22 @@ RTCDrawProperty g_rtcDraw = {
 };
 
 // static variable -------------------------------------
-static int s_csr = 0;													// メニューのカーソル位置
+static int s_csr = 0;										// 画面中央座標と、リストの一番最初にあるバナーの中央座標との距離を
+															// 移動するのに必要なフレーム数で表すための変数
 
 static u64	old_titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
 
+static TWLBannerFile *empty_banner;
+static TWLBannerFile *nobanner_banner;
+static TWLBannerFile *no_card_banner;
+static u8 image_index_list[ LAUNCHER_TITLE_LIST_NUM ];
+static GXOamAttr banner_oam_attr[MAX_SHOW_BANNER+10];// アフィンパラメータ埋める関係で少し大きめ
+static u8 *pbanner_image_list[ LAUNCHER_TITLE_LIST_NUM ];
+static int banner_count = 0;
+static int selected = 0;
+
 // const data  -----------------------------------------
+
 //===============================================
 // Launcher.c
 //===============================================
@@ -68,19 +105,10 @@ static u64	old_titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
 #define DBGBNR
 #ifdef DBGBNR
 
-static TWLBannerFile *empty_banner;
-static TWLBannerFile *nobanner_banner;
-static TWLBannerFile *no_card_banner;
-static u8 image_index_list[ LAUNCHER_TITLE_LIST_NUM ];
-static const int MAX_SHOW_BANNER = 6;
-static GXOamAttr banner_oam_attr[MAX_SHOW_BANNER+10];// アフィンパラメータ埋める関係で少し大きめ
-static u8 *pbanner_image_list[ LAUNCHER_TITLE_LIST_NUM ];
-static int banner_count = 0;
 
-static void LoadBannerFiles()
+static void LoadBannerFiles( void )
 {
-	// ファイル読み込み部分。多分emptyバナーだけ読み込む事になる。本来、アプリ系は外部から取得
-	// 最後に解放しないと駄目。だが、どこで解放すればいいのやら……
+	// デフォルトバナーファイルの読み込み。最終的にリブートしてしまうので、解放処理は無し
 	u32 size = CMN_LoadFile( (void **)&empty_banner, "data/EmptyBanner.bnr", &g_allocator);
 	NNS_G2D_ASSERT( size > 0 );
 	size = CMN_LoadFile( (void **)&nobanner_banner, "data/NoBanner.bnr", &g_allocator);
@@ -90,7 +118,7 @@ static void LoadBannerFiles()
 }
 
 // パレットの読み込みやOBJ関係の初期化
-static void BannerInit()
+static void BannerInit( void )
 {
 	int l;
 	LoadBannerFiles();
@@ -98,20 +126,19 @@ static void BannerInit()
 	MI_CpuClearFast(old_titleIdArray, sizeof(old_titleIdArray) );
     MI_DmaFill32(3, banner_oam_attr, 192, sizeof(banner_oam_attr));     // let out of the screen if not display
 	
-	// ここでやるべきじゃない気がするOBJの設定
+	// OBJModeの設定
     GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_128K);     // 2D mapping mode
     
-    // パレット読み込み
-    // 本来は、読み込んだバナーによってパレットも変更する必要があるのかもしれないが、どの道最大256色
-    // 17個以上のバナーをそれぞれ違うパレットで同時に表示はできないはず。
+    // パレットのロード
+    // どのバナーもdata/EmptyBanner.bnrのパレットと同じものを使う事前提
 	GX_LoadOBJPltt( empty_banner->v1.pltt, 0, BNR_PLTT_SIZE );
 	
-	//OBJATTRの初期化……後で値を弄って場所やらキャラクターを変えたりする
+	//OBJATTRの初期化……表示前には値を弄る
 	for(l=0;l<MAX_SHOW_BANNER;l++)
 	{
 		G2_SetOBJAttr(  &banner_oam_attr[l],							// OAM pointer
-						128,											// X position
-						96,												// Y position
+						0,												// X position
+						BANNER_TOP,										// Y position
 						1,												// Priority
 						GX_OAM_MODE_NORMAL,								// Bitmap mode
 						FALSE,											// mosaic off
@@ -125,15 +152,12 @@ static void BannerInit()
 	DC_FlushRange(&banner_oam_attr, sizeof(banner_oam_attr));
 }
 
-// 活線挿抜対応のため、毎回VRAMへのイメージデータロード判定をしている
-static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
+// TitlePropertyのIDとpBannerをチェックし、
+// 特定の条件でpBannerにデフォルトバナーを指定する
+static void SetDefaultBanner( TitleProperty *titleprop )
 {
-	static int count = 0;
-	
 	int l;
-	MtxFx22 mtx;
     
-    // TitleProperty弄り
 	for(l=0;l<LAUNCHER_TITLE_LIST_NUM;l++)
 	{
 		if(titleprop[l].titleID == 0) //IDがゼロの時はEmpty
@@ -152,6 +176,15 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 			titleprop[l].pBanner = nobanner_banner;
 		}
 	}
+}
+
+// VRAMへのバナーイメージデータロード
+static void LoadBannerToVRAM( TitleProperty *titleprop )
+{
+	int l;
+    
+    // デフォルトバナーをTitlePropertyに埋め込み
+    SetDefaultBanner( titleprop );
 	
     // TitlePropertyを見てVRAMにキャラクタデータをロード
 	for(l=0;l<LAUNCHER_TITLE_LIST_NUM;l++)
@@ -191,44 +224,58 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 		
 		old_titleIdArray[l] = titleprop[l].titleID;// 後の参照用
 	}
+}
 
-	count++;
-	
-	
-	// アフィンパラメータだけ設定しておく
-	{
-		static double wav;
-		if(cursor%CURSOR_PER_SELECT == 0){
-			double s = sin(wav);
-			mtx._00 = 0x880 - (long)(0x80*s);
-			wav += 0.1;
-		}else{
-			mtx._00 = FX32_HALF + FX32_HALF*(cursor%CURSOR_PER_SELECT)/CURSOR_PER_SELECT;
-			wav = 0;
-		}
+// アフィンパラメータの設定
+static void SetAffineAnimation( int cursor )
+{
+	MtxFx22 mtx;
+	static double wav;
+	if(cursor%FRAME_PER_SELECT == 0){			// 適当に波打たせてみる
+		double s = sin(wav);
+		mtx._00 = FX32_HALF - (long)( 0x80 * ( s - 1 ) );
+		wav += 0.1;
+	}else{										// 適当に大きさを変えてみる
+		mtx._00 = FX32_HALF + FX32_HALF*(cursor%FRAME_PER_SELECT)/FRAME_PER_SELECT;
+		wav = 0;
 	}
 	mtx._01 = 0;
 	mtx._10 = 0;
 	mtx._11 = mtx._00;
 	G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[0]), &mtx);
-	mtx._00 = FX32_ONE - FX32_HALF*(cursor%CURSOR_PER_SELECT)/CURSOR_PER_SELECT;
+	mtx._00 = FX32_ONE - FX32_HALF*(cursor%FRAME_PER_SELECT)/FRAME_PER_SELECT;
 	mtx._11 = mtx._00;
 	G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[4]), &mtx);
+}
+
+// バナー関係の描画
+// 活線挿抜対応のため、毎回VRAMへのイメージデータロード判定をしている
+static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
+{
+	int l;
 	
+	LoadBannerToVRAM( titleprop );
+
+	// アフィンパラメータだけ先に設定しておく
+	SetAffineAnimation( cursor );
+
 	// OAMデータを弄って位置など変更
 	for (l=0;l<MAX_SHOW_BANNER;l++)
 	{
-		int num = cursor/CURSOR_PER_SELECT - 2 + l;
+		int num = cursor/FRAME_PER_SELECT - 2 + l;
 		if(-1 < num && num < LAUNCHER_TITLE_LIST_NUM){
 			banner_oam_attr[l].charNo = image_index_list[num]*4;
 			
-			if(l == 2 || l == 3)
+			if(l == 2 || l == 3)	// 中央付近で大きくなったり小さくなったりする二つのバナー
 			{
 				G2_SetOBJEffect(&banner_oam_attr[l], GX_OAM_EFFECT_AFFINE_DOUBLE, l-2);
-				G2_SetOBJPosition(&banner_oam_attr[l], 128-32-64-48+l*56-(cursor%CURSOR_PER_SELECT)*4, 96-16);
-			}else
+				G2_SetOBJPosition(&banner_oam_attr[l],
+									BANNER_FAR_LEFT_POS - BANNER_WIDTH/2 + l*(BANNER_WIDTH + BANNER_INTERVAL) - (cursor%FRAME_PER_SELECT)*DOT_PER_FRAME,
+									BANNER_TOP - BANNER_HEIGHT/2 );
+			}
+			else					// その他のバナー
 			{
-				banner_oam_attr[l].x = 128-16-64-48+l*56-(cursor%CURSOR_PER_SELECT)*4;
+				banner_oam_attr[l].x = BANNER_FAR_LEFT_POS + l*(BANNER_WIDTH + BANNER_INTERVAL) - (cursor%FRAME_PER_SELECT)*DOT_PER_FRAME;
 				G2_SetOBJEffect(&banner_oam_attr[l],GX_OAM_EFFECT_NONE,0);
 			}
 		}else
@@ -242,8 +289,8 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	// アプリ名表示
 	{
 		NNSG2dChar *str = ((TWLBannerFile *)titleprop[selected].pBanner)->v1.comment[ TSD_GetLanguage() ];
-		int width = NNS_G2dTextCanvasGetStringWidth(&gTextCanvas, str, NULL);
-		PutStringUTF16( (256-width)/2, 48, TXT_COLOR_BLACK, str );
+		NNSG2dTextRect rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, str );
+		PutStringUTF16( (WINDOW_WIDTH-rect.width)/2, TITLE_V_CENTER - rect.height/2, TXT_COLOR_BLACK, str );
 	}
 }
 
@@ -293,9 +340,6 @@ void LauncherInit( TitleProperty *pTitleList )
 	#endif
 }
 
-
-static int selected = 0;
-
 // ROMのローディング中のランチャーフェードアウト
 BOOL LauncherFadeout( TitleProperty *pTitleList )
 {
@@ -313,12 +357,12 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
 	BannerDraw( s_csr, selected, pTitleList );
 	#endif
 	
-	// 描画少し上書き追加
+	// 描画少し追加
 	{
 		MtxFx22 mtx;
 		static double wa;
 		double s = cos(wa);
-		if( s!=0 ) mtx._00 = (double)FX32_HALF/s;
+		if( s!=0 ) mtx._00 = (fx32)(FX32_HALF/s);
 		else mtx._00 = 0x8fff;
 		mtx._01 = 0;
 		mtx._10 = 0;
@@ -329,13 +373,16 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
 	
 	DC_FlushRange(&banner_oam_attr, sizeof(banner_oam_attr));
 	GX_LoadOAM(&banner_oam_attr, 0, sizeof(banner_oam_attr));
-	
-	// これだと124フレームでフェードアウト終わる
-	G2_ChangeBlendAlpha( fadecount/4, 31-(fadecount/4) );
-	if(fadecount < 124) {
+
+	// フェードアウトのカウント処理
+	G2_ChangeBlendAlpha( fadecount/FADE_COUNT_PER_ALPHA, ALPHA_MAX-(fadecount/FADE_COUNT_PER_ALPHA) );
+	if(fadecount < FADE_COUNT_MAX) {
 		fadecount++;
 		return FALSE;
 	}else {
+		// ディスプレイOFFにしないと起動時にノイズが表示される
+		GX_DispOff();
+		GXS_DispOff();
 		return TRUE;
 	}
 }
@@ -344,9 +391,9 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
 static BOOL SelectCenterFunc( u16 *csr, TPData *tgt )
 {
 	// 単純な実装例
-	int x = 128-32-64-48+2*56;
-	int y = 96-16;
-	if(WithinRangeTP( x, y, x+64, y+64, tgt ))
+	int x = WINDOW_WIDTH/2 - BANNER_WIDTH;
+	int y = BANNER_TOP - BANNER_HEIGHT/2;
+	if(WithinRangeTP( x, y, x+BANNER_WIDTH*2, y+BANNER_HEIGHT*2, tgt ))
 	{
 		*csr = (u16)1;
 		return TRUE;
@@ -372,27 +419,14 @@ static BOOL SelectFunc( u16 *csr, TPData *tgt )
 	return FALSE;
 }
 
-// ランチャーメイン
-TitleProperty *LauncherMain( TitleProperty *pTitleList )
+static void ProcessBackLightPads( void )
 {
-	SelectSomethingFunc func[1]={SelectCenterFunc};
 	static BOOL up_bl_bak = FALSE;
 	static BOOL dw_bl_bak = FALSE;
 	BOOL up_bl_trg = FALSE;
 	BOOL dw_bl_trg = FALSE;
-	static int csr_v = 0;
-	BOOL tp_select = FALSE;
-	TitleProperty *ret = NULL;
 	int brightness;
-	u16 dummy;
-	u16 tp_lr = 3;
 	
-	// RTC情報の取得＆表示
-	GetAndDrawRTCData( &g_rtcDraw, FALSE );
-	
-	//--------------------------------------
-	//  バックライトON,OFF制御
-	//--------------------------------------
 	if(tpd.disp.touch) {
 		BOOL up_bl = WithinRangeTP(	B_LIGHT_UP_BUTTON_TOP_X,    B_LIGHT_UP_BUTTON_TOP_Y,
 									B_LIGHT_UP_BUTTON_BOTTOM_X, B_LIGHT_UP_BUTTON_BOTTOM_Y, &tpd.disp );
@@ -421,11 +455,21 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 		}
 		SYSM_SetBackLightBrightness( (u8)brightness );
 	}
+}
+
+static TitleProperty *ProcessPads( TitleProperty *pTitleList )
+{
+	SelectSomethingFunc func[1]={SelectCenterFunc};
+	static int csr_v = 0;
+	BOOL tp_select = FALSE;
+	u16 dummy;
+	u16 tp_lr = 3;
+	TitleProperty *ret = NULL;
 	
-	//--------------------------------------
-	//  タッチパッド・キー入力処理
-	//--------------------------------------
+	// バックライト関係のキー処理
+	ProcessBackLightPads();
 	
+	// その他のキー処理
 	if( tpd.disp.touch )
 	{
 		(void) SelectFunc( &tp_lr, &tpd.disp );
@@ -438,13 +482,13 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 		if(csr_v == 0) csr_v = -1;
 	}
 	s_csr += csr_v;
-	if((LAUNCHER_TITLE_LIST_NUM-1)*CURSOR_PER_SELECT < s_csr) s_csr = (LAUNCHER_TITLE_LIST_NUM-1)*CURSOR_PER_SELECT;
+	if((LAUNCHER_TITLE_LIST_NUM-1)*FRAME_PER_SELECT < s_csr) s_csr = (LAUNCHER_TITLE_LIST_NUM-1)*FRAME_PER_SELECT;
 	if( s_csr < 0 ) s_csr = 0;
-	if(s_csr%CURSOR_PER_SELECT == 0){
+	if(s_csr%FRAME_PER_SELECT == 0){
 		csr_v = 0;
-		selected = s_csr/CURSOR_PER_SELECT;
+		selected = s_csr/FRAME_PER_SELECT;
 		
-		// このときだけ決定可能
+		// バナーが中央にあるときだけ決定可能
 		tp_select = SelectSomethingByTP(&dummy, func, 1 );
 		
 		if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {					// メニュー項目への分岐
@@ -454,6 +498,20 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 			}
 		}
 	}
+	
+	return ret;
+}
+
+// ランチャーメイン
+TitleProperty *LauncherMain( TitleProperty *pTitleList )
+{
+	TitleProperty *ret = NULL;
+	
+	// RTC情報の取得＆表示
+	GetAndDrawRTCData( &g_rtcDraw, FALSE );
+	
+	// キー及びタッチ制御
+	ret = ProcessPads( pTitleList );
 	
 	// 描画関係
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
@@ -466,28 +524,6 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	
 	return ret;
 }
-
-#if 0
-// ランチャー描画
-static void DrawLauncher(u16 nowCsr, const MenuParam *pMenu)
-{
-	int i;
-	int color;
-	
-	for( i = 0; i < pMenu->num; i++ ) {
-		if(i == nowCsr)	{
-			if( !pMenu->pos[ i ].enable ) {
-				color = pMenu->disable_color;
-			}else {
-				color = pMenu->select_color;
-			}
-		}else {
-			color = pMenu->normal_color;
-		}
-		PutStringUTF16( pMenu->pos[ i ].x, pMenu->pos[ i ].y, color, (pMenu->str_elem)[ i ] );
-	}
-}
-#endif
 
 // バックライトスイッチの表示
 static void DrawBackLightSwitch(void)
