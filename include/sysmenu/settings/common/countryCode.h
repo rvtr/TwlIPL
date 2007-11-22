@@ -175,10 +175,19 @@ typedef enum TWLCountryCode{
     TWL_COUNTRY_JORDAN,                 // ヨルダン
 
     TWL_COUNTRY_OTHERS      = 254,
-    TWL_COUNTRY_UNKNOWN     = 255
+    TWL_COUNTRY_UNKNOWN     = 255,
+    
+    TWL_COUNTRY_MAX
     
 }TWLCountryCode;
 
+// 対応カントリーコード。開始位置を16ビット左シフトしたものと終了位置をorでまとめたもの
+#define TWL_COUNTRY_MAPPING_JAPAN		(u32)( TWL_COUNTRY_JAPAN << 16| TWL_COUNTRY_JAPAN )	// JPN版での対応カントリーコード
+#define TWL_COUNTRY_MAPPING_AMERICA		(u32)( TWL_COUNTRY_Anguilla << 16| TWL_COUNTRY_VENEZUELA )	// AME版での対応カントリーコード
+#define TWL_COUNTRY_MAPPING_EUROPE		(u32)( TWL_COUNTRY_ALBANIA << 16| TWL_COUNTRY_ZIMBABWE )	// EUR版での対応カントリーコード
+#define TWL_COUNTRY_MAPPING_AUSTRALIA	(u32)( TWL_COUNTRY_ALBANIA << 16| TWL_COUNTRY_ZIMBABWE )	// AUS版での対応カントリーコード
+#define TWL_COUNTRY_MAPPING_CHINA		(u32)( TWL_COUNTRY_CHINA << 16| TWL_COUNTRY_CHINA )	// CHI版での対応カントリーコード
+#define TWL_COUNTRY_MAPPING_KOREA		(u32)( TWL_COUNTRY_SOUTH_KOREA << 16| TWL_COUNTRY_SOUTH_KOREA )	// KOR版での対応カントリーコード
 
 
 #ifdef __cplusplus

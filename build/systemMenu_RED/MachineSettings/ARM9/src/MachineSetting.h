@@ -65,6 +65,8 @@ extern void TP_CalibrationInit( void );
 extern int  TP_CalibrationMain( void );
 extern void SelectRegionInit( void );
 extern int  SelectRegionMain( void );
+extern void SelectCountryInit( void );
+extern int  SelectCountryMain( void );
 
 extern void DrawOKCancelButton( void );
 extern void CheckOKCancelButton(BOOL *tp_ok, BOOL *tp_cancel);

@@ -72,6 +72,16 @@ TWLLangCode default_lang_list[TWL_REGION_MAX] =
 	TWL_LANG_KOREAN
 };
 
+TWLCountryCode default_country_list[TWL_REGION_MAX] = 
+{
+	TWL_COUNTRY_JAPAN,
+	TWL_COUNTRY_Anguilla,
+	TWL_COUNTRY_ALBANIA,
+	TWL_COUNTRY_ALBANIA,
+	TWL_COUNTRY_CHINA,
+	TWL_COUNTRY_SOUTH_KOREA
+};
+
 //======================================================
 // function's description
 //======================================================
@@ -107,7 +117,7 @@ void SelectRegionInit( void )
 }
 
 
-// 言語選択
+// リージョン選択
 int SelectRegionMain( void )
 {
 	BOOL tp_select,tp_cancel = FALSE;
@@ -140,7 +150,9 @@ int SelectRegionMain( void )
 		TSD_SetRegion( s_regionCode );
 		// TSD_SetFlagRegion( TRUE );							// Region入力フラグを立てる
 		TSD_SetLanguage( default_lang_list[s_regionCode] );		// デフォルト言語に強制設定
+		TSD_SetCountry( default_country_list[s_regionCode] );	// デフォルト国に強制設定
 		TSD_SetFlagLanguage( TRUE );							// Language入力フラグを立てる
+		//TSD_SetFlagCountry( TRUE );							// Country入力フラグを立てる
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::

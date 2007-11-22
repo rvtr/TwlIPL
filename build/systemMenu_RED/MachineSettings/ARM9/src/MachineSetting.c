@@ -33,7 +33,7 @@
 #define OK_BUTTON_BOTTOM_Y					( OK_BUTTON_TOP_Y + 2 * 8 )
 
 
-#define SETTING_MENU_ELEMENT_NUM			5						// メインメニューの項目数
+#define SETTING_MENU_ELEMENT_NUM			6						// メインメニューの項目数
 
 // extern data------------------------------------------
 
@@ -109,6 +109,16 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ TWL_LA
 		(const u16 *)L"REGION(C)",
 		(const u16 *)L"REGION(K)",
 	},
+	{
+		(const u16 *)L"国設定",
+		(const u16 *)L"COUNTRY",
+		(const u16 *)L"COUNTRY(F)",
+		(const u16 *)L"COUNTRY(G)",
+		(const u16 *)L"COUNTRY(I)",
+		(const u16 *)L"COUNTRY(S)",
+		(const u16 *)L"COUNTRY(C)",
+		(const u16 *)L"COUNTRY(K)",
+	},
 };
 
 static MenuPos s_settingPos[] = {
@@ -117,6 +127,7 @@ static MenuPos s_settingPos[] = {
 	{ TRUE,  4 * 8,  10 * 8 },
 	{ TRUE, 4 * 8,  12 * 8 },
 	{ TRUE,  4 * 8,  14 * 8 },
+	{ TRUE,  4 * 8,  16 * 8 },
 };
 
 
@@ -223,6 +234,11 @@ int MachineSettingMain( void )
 				case 4:
 					SelectRegionInit();
 					g_pNowProcess = SelectRegionMain;
+					break;
+				case 5:
+					SelectCountryInit();
+					g_pNowProcess = SelectCountryMain;
+					break;
 			}
 		}
 	}

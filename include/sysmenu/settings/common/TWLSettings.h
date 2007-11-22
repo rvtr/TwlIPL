@@ -247,6 +247,12 @@ extern BOOL TSD_WriteSettings( void );						// æ‚ÉNSD_ReadSettings‚ğÀs‚µ‚Ä‚¨‚
 // ƒf[ƒ^æ“¾iTSD_ReadSettings‚Å“à•”ƒ[ƒN‚É“Ç‚İo‚µ‚½î•ñ‚Ìæ“¾j
 //=========================================================
 
+// ‘ƒR[ƒh‚Ìæ“¾B
+static inline TWLCountryCode TSD_GetCountry( void )
+{
+	return	GetTSD()->country;
+}
+
 // ƒŠ[ƒWƒ‡ƒ“‚Ìæ“¾B
 static inline u8 TSD_GetRegion( void )
 {
@@ -389,6 +395,12 @@ static inline BOOL TSD_IsGBUseTopLCD( void )
 //=========================================================
 // ƒf[ƒ^ƒZƒbƒgiTSD_ReadSettings‚Å“à•”ƒ[ƒN‚É“Ç‚İo‚µ‚½î•ñ‚Ö‚Ì’lƒZƒbƒgj
 //=========================================================
+
+// ‘ƒR[ƒh‚ÌƒZƒbƒgB
+static inline void TSD_SetCountry( TWLCountryCode country )
+{
+	GetTSD()->country = country;
+}
 
 // ƒŠ[ƒWƒ‡ƒ“‚ÌƒZƒbƒgB
 static inline void TSD_SetRegion( u8 region )
