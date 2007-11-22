@@ -24,7 +24,7 @@
 // define data-----------------------------------------------------------------
 
 typedef struct BannerCheckParam {
-	u8		*srcp;
+	u8		*pSrc;
 	u32		size;
 }BannerCheckParam;
 
@@ -38,12 +38,16 @@ static BOOL SYSMi_IsDebuggerBannerViewMode( void );
 static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle );
 static void SYSMi_WriteAdjustRTC( void );
 static int  SYSMi_IsValidCard( void );
-static void SYSMi_ReadCardBannerFile( void );
 static BOOL SYSMi_CheckEntryAddress( void );
 static void SYSMi_CheckCardCloneBoot( void );
 static void SYSMi_CheckRTC( void );
 
 static s32 ReadFile(FSFile* pf, void* buffer, s32 size);
+
+static void SYSMi_Relocate( void );
+static BOOL SYSMi_ReadCardBannerFile( u32 bannerOffset, TWLBannerFile *pBanner );
+static BOOL SYSMi_CheckBannerFile( NTRBannerFile *pBanner );
+
 
 // global variable-------------------------------------------------------------
 void *(*SYSM_Alloc)( u32 size  );
@@ -55,17 +59,10 @@ SYSM_work		*pSysm;											// デバッガでのSYSMワークのウォッチ用
 
 // static variable-------------------------------------------------------------
 static OSThread			thread;
+static TWLBannerFile	s_bannerBuf[ LAUNCHER_TITLE_LIST_NUM ] ATTRIBUTE_ALIGN(32);
 
-static BOOL				s_isBanner = FALSE;
-static NTRBannerFile	s_bannerBuf;
 
 // const data------------------------------------------------------------------
-
-static BannerCheckParam s_bannerCheckList[ NTR_BNR_VER_MAX ] = {
-	{ (u8 *)&s_bannerBuf.v1, sizeof( BannerFileV1 ) },
-	{ (u8 *)&s_bannerBuf.v2, sizeof( BannerFileV2 ) },
-	{ (u8 *)&s_bannerBuf.v3, sizeof( BannerFileV3 ) },
-};
 
 
 // ============================================================================
@@ -120,6 +117,11 @@ TitleProperty *SYSM_ReadParameters( void )
 	while( !SYSMi_GetWork()->isARM9Start ) {
 		SVC_WaitByLoop( 0x1000 );
 	}
+#ifdef DEBUG_USED_CARD_SLOT_B_
+	while( !SYSMi_GetWork()->is1stCardChecked ) {
+		SVC_WaitByLoop( 0x1000 );
+	}
+#endif
 	
 	//-----------------------------------------------------
 	// リセットパラメータの判定（リセットパラメータが有効かどうかは、ARM7でやってくれている）
@@ -158,7 +160,6 @@ TitleProperty *SYSM_ReadParameters( void )
 	SYSM_VerifyAndRecoveryNTRSettings();							// NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
 	
 //	SYSMi_CheckCardCloneBoot();										// カードがクローンブートかチェック
-//	SYSMi_ReadCardBannerFile();										// カードバナーファイルの読み出し。
 	
 	//NAMの初期化
 	//NAM_Init(AllocForNAM,FreeForNAM);
@@ -187,6 +188,9 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 		if( SYSM_GetCardTitleProperty( &s_bootTitle ) ) {			// ※未実装
 			s_bootTitle.flags.isInitialShortcutSkip = TRUE;			// 初回起動シーケンスを飛ばす
 			s_bootTitle.flags.isLogoSkip = TRUE;					// ロゴデモを飛ばす
+			s_bootTitle.flags.media = TITLE_MEDIA_CARD;
+			s_bootTitle.flags.isValid = TRUE;
+			// titleIDは"0"（カード）
 			SYSM_SetLogoDemoSkip( TRUE );
 			return &s_bootTitle;
 		}
@@ -202,6 +206,8 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 		!TSD_IsSetUserColor() ||
 		!TSD_IsSetNickname() ) {
 		s_bootTitle.titleID = TITLE_ID_MACHINE_SETTINGS;
+		s_bootTitle.flags.media = TITLE_MEDIA_NAND;
+		s_bootTitle.flags.isValid = TRUE;
 		return &s_bootTitle;
 	}
 #endif // ENABLE_INITIAL_SETTINGS_
@@ -212,10 +218,47 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 
 
 // カードタイトルの取得
-int SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
+BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 {
-#pragma unused( pTitleList_Card )
-	return 0;
+	BOOL retval = FALSE;
+	
+	if( SYSMi_GetWork()->isCardStateChanged ) {
+		
+		MI_CpuClear32( pTitleList_Card, sizeof(TitleProperty) );
+		
+		// ROMヘッダバッファのコピー
+		if( SYSM_IsExistCard() ) {
+			u16 id = (u16)OS_GetLockID();
+			(void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );		// ARM7と排他制御する
+			DC_InvalidateRange( (void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );	// キャッシュケア
+			MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BAK, (void *)SYSM_CARD_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );	// ROMヘッダコピー
+			SYSMi_GetWork()->cardHeaderCrc16 = SYSMi_GetWork()->cardHeaderCrc16;	// ROMヘッダCRCコピー
+			SYSMi_GetWork()->isCardStateChanged = FALSE;							// カード情報更新フラグを落とす
+			(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );	// ARM7と排他制御する
+			OS_ReleaseLockID( id );
+			
+			pTitleList_Card->flags.isValid = TRUE;
+			pTitleList_Card->flags.isAppLoadCompleted = TRUE;
+			pTitleList_Card->flags.isAppRelocate = TRUE;
+			pTitleList_Card->pBanner = NULL;
+			
+			// バナーデータのリード
+			if( SYSM_GetCardRomHeader()->banner_offset &&
+				SYSMi_ReadCardBannerFile( SYSM_GetCardRomHeader()->banner_offset, &s_bannerBuf[ 0 ] ) ) {
+				pTitleList_Card->pBanner = &s_bannerBuf[ 0 ];
+			}else {
+				MI_CpuClearFast( &s_bannerBuf[ 0 ], sizeof(TWLBannerFile) );
+			}
+		}
+		
+		retval = TRUE;
+	}
+	
+	// タイトル情報フラグのセット
+	pTitleList_Card->flags.media = TITLE_MEDIA_CARD;
+	pTitleList_Card->titleID = 0;
+	
+	return retval;
 }
 
 
@@ -250,17 +293,16 @@ static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
 ESTitleMeta dst[1];
 
 // NANDタイトルリストの取得
-int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size)
+int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 {
 															// filter_flag : ALL, ALL_APP, SYS_APP, USER_APP, Data only, 等の条件を指定してタイトルリストを取得する。
 	// とりあえずALL
 	int l;
 	int gotten;
-	NAMTitleId titleIdArray[ LAUNCHER_TITLE_LIST_NUM - 1 ];
-	static TWLBannerFile bannerBuf[ LAUNCHER_TITLE_LIST_NUM ];
-	gotten = NAM_GetTitleList( titleIdArray, LAUNCHER_TITLE_LIST_NUM-1 );
+	NAMTitleId titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
+	gotten = NAM_GetTitleList( &titleIdArray[ 1 ], LAUNCHER_TITLE_LIST_NUM - 1 );
 	
-	for(l=0;l<gotten;l++)
+	for(l=1;l<gotten;l++)
 	{
 		//ヘッダからバナーを読み込む
 		FSFile  file[1];
@@ -308,7 +350,7 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size)
 			FS_CloseFile(file);
 		    return -1;
 		}
-		readLen = ReadFile(file, &bannerBuf[l], (s32)sizeof(TWLBannerFile));
+		readLen = ReadFile(file, &s_bannerBuf[l], (s32)sizeof(TWLBannerFile));
 		if( readLen != (s32)sizeof(TWLBannerFile) )
 		{
 			OS_TPrintf("SYSM_GetNandTitleList failed: cant read file2\n");
@@ -323,22 +365,31 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size)
 		// 念のため0にクリア
 		titleIdArray[l] = 0;
 	}
-	
-	for(l=0;l<size;l++)
+
+#if 0
+	for(l=1;l<listNum;l++)
 	{
 		pTitleList_Nand[l].titleID = 0;
 		pTitleList_Nand[l].pBanner = 0;
 	}
-
-	size = (gotten<size) ? gotten : size;
+#else
+	// カードアプリ部分を除いたリストクリア
+	MI_CpuClearFast( &pTitleList_Nand[ 1 ], sizeof(TitleProperty) * ( listNum - 1 ) );
+#endif
 	
-	for(l=0;l<size;l++)
+	listNum = (gotten<listNum) ? gotten : listNum;
+	
+	for(l=1;l<listNum;l++)
 	{
-		pTitleList_Nand[l+1].titleID = titleIdArray[l];
-		pTitleList_Nand[l+1].pBanner = &bannerBuf[l];
+		pTitleList_Nand[l].titleID = titleIdArray[l];
+		pTitleList_Nand[l].pBanner = &s_bannerBuf[l];
+		if( titleIdArray[l] ) {
+			pTitleList_Nand[l].flags.isValid = TRUE;
+			pTitleList_Nand[l].flags.media = TITLE_MEDIA_NAND;
+		}
 	}
 	// return : *TitleProperty Array
-	return size;
+	return listNum;
 }
 
 
@@ -374,21 +425,6 @@ static BOOL SYSMi_IsDebuggerBannerViewMode( void )
 	return FALSE;
 #endif	// __IS_DEBUGGER_BUILD
 }
-
-// 有効なTWL/NTRカードが差さっているか？
-BOOL SYSM_IsExistCard( void )
-{
-	return SYSMi_GetWork()->isExistCard;
-}
-
-
-// 検査用カードが差さっているか？
-BOOL SYSM_IsInspectCard( void )
-{
-	return ( SYSM_IsExistCard() && SYSM_GetCardRomHeader()->inspect_card );
-}
-
-
 
 
 // 指定タイトルがブート可能なポインタかチェック
@@ -569,17 +605,43 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 		OS_WakeupThreadDirect( &thread );
 	}else if( pBootTitle->flags.isAppRelocate ) {
 	// アプリロード済みで、再配置要求ありなら、再配置
-		// ※再配置処理
-		// SYSMi_Relocate();
+		SYSMi_Relocate();
 		SYSMi_GetWork()->isLoadSucceeded = TRUE;
 	}
 }
 
 
-// アプリロード済み？
-BOOL SYSM_IsLoadTitleFinished( void )
+// カードアプリケーションの再配置
+static void SYSMi_Relocate( void )
 {
-	if( SYSM_GetResetParamBody()->v1.flags.isAppLoadCompleted ) {
+	u32 size;
+	// NTRセキュア領域の再配置
+	DC_InvalidateRange( (void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );	// キャッシュケア
+	size = ( SYSM_GetCardRomHeader()->main_size < SECURE_AREA_SIZE ) ?
+			 SYSM_GetCardRomHeader()->main_size : SECURE_AREA_SIZE;
+	MI_CpuCopyFast( (void *)SYSM_CARD_NTR_SECURE_BUF, SYSM_GetCardRomHeader()->main_ram_address, size );
+	
+	if( SYSM_GetCardRomHeader()->platform_code & PLATFORM_CODE_FLAG_TWL ) {
+		// TWLセキュア領域の再配置
+		DC_InvalidateRange( (void *)SYSM_CARD_TWL_SECURE_BUF, SECURE_AREA_SIZE );	// キャッシュケア
+		size = ( SYSM_GetCardRomHeader()->main_ltd_size < SECURE_AREA_SIZE ) ?
+				 SYSM_GetCardRomHeader()->main_ltd_size : SECURE_AREA_SIZE;
+		MI_CpuCopyFast( (void *)SYSM_CARD_TWL_SECURE_BUF, SYSM_GetCardRomHeader()->main_ltd_ram_address, size );
+		// TWL-ROMヘッダ情報の再配置
+		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_TWL_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );
+		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
+	}else {
+		// NTR-ROMヘッダ情報の再配置
+		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)0x027ffe00, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );	// 8Mのケツへ（TWLデバッガでのNTRモードデバッグ用）
+		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)0x023ffe00, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );	// 4Mのケツへ
+	}
+}
+
+
+// アプリロード済み？
+BOOL SYSM_IsLoadTitleFinished( TitleProperty *pBootTitle )
+{
+	if( pBootTitle->flags.isAppLoadCompleted ) {
 		return TRUE;
 	}
 	return OS_IsThreadTerminated( &thread );
@@ -590,7 +652,7 @@ BOOL SYSM_IsLoadTitleFinished( void )
 AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 {
 	// ロード中
-	if( !SYSM_IsLoadTitleFinished() ) {
+	if( !SYSM_IsLoadTitleFinished( pBootTitle ) ) {
 		return AUTH_RESULT_PROCESSING;
 	}
 	// ロード成功？
@@ -701,44 +763,68 @@ static void SYSMi_WriteAdjustRTC( void )
 // ============================================================================
 
 // バナーファイルの読み込みの実体
-static void SYSMi_ReadCardBannerFile( void )
+static BOOL SYSMi_ReadCardBannerFile( u32 bannerOffset, TWLBannerFile *pBanner )
 {
-	NTRBannerFile *pBanner = &s_bannerBuf;
-	
-	if( ( !SYSMi_IsValidCard() ) || ( *(void** )BANNER_ROM_OFFSET == NULL ) ) {
-		s_isBanner = FALSE;
-		return;
-	}
+#ifndef DEBUG_USED_CARD_SLOT_B_
+	// ※スロットAからのリードなら問題ないが、スロットBからは直接読めないので
+	BOOL isRead;
+	u16 id = (u16)OS_GetLockID();
 	
 	// ROMカードからのバナーデータのリード
-	DC_FlushRange( pBanner, sizeof(NTRBannerFile) );
-	CARD_ReadRom( 4, *(void** )BANNER_ROM_OFFSET, pBanner, sizeof(NTRBannerFile) );
+	DC_FlushRange( pBanner, sizeof(TWLBannerFile) );
+	CARD_LockRom( id );
+	CARD_ReadRom( 4, (void *)bannerOffset, pBanner, sizeof(TWLBannerFile) );
+	CARD_UnlockRom( id );
+	OS_ReleaseLockID( id );
 	
-	// バナーデータの正誤チェック
-	{
-		int i;
-		u16 calc_crc = 0xffff;
-		u16 *hd_crcp = (u16 *)&pBanner->h.crc16_v1;
-		BannerCheckParam *chkp = &s_bannerCheckList[ 0 ];
-		
-		s_isBanner  = TRUE;
-		
-		for( i = 0; i < NTR_BNR_VER_MAX; i++ ) {
-			if( i < pBanner->h.version ) {
-			    calc_crc = SVC_GetCRC16( calc_crc, chkp->srcp, chkp->size );
-				if( calc_crc != *hd_crcp++ ) {
-					s_isBanner =  FALSE;
-					break;
-				}
-			}else {
-				MI_CpuClear16( chkp->srcp, chkp->size );
-			}
-			chkp++;
-		}
-		if( !s_isBanner ) {
-			MI_CpuClear16( &s_bannerBuf, sizeof(NTRBannerFile) );
-		}
+	isRead = SYSMi_CheckBannerFile( (NTRBannerFile *)pBanner );
+	
+	if( !isRead ) {
+		MI_CpuClearFast( pBanner, sizeof(TWLBannerFile) );
 	}
+	return isRead;
+#else
+#pragma unused(bannerOffset)
+	if( SYSMi_GetWork()->isValidCardBanner ) {
+		DC_InvalidateRange( (void *)SYSM_CARD_BANNER_BUF, 0x3000 );
+		MI_CpuCopyFast( (void *)SYSM_CARD_BANNER_BUF, pBanner, sizeof(TWLBannerFile) );
+	}
+	return SYSMi_GetWork()->isValidCardBanner;
+#endif
+}
+
+
+	// バナーデータの正誤チェック
+static BOOL SYSMi_CheckBannerFile( NTRBannerFile *pBanner )
+{
+	int i;
+	BOOL retval = TRUE;
+	u16 calc_crc = 0xffff;
+	u16 *pHeaderCRC = (u16 *)&pBanner->h.crc16_v1;
+	BannerCheckParam bannerCheckList[ NTR_BNR_VER_MAX ];
+	BannerCheckParam *pChk = &bannerCheckList[ 0 ];
+	
+	bannerCheckList[ 0 ].pSrc = (u8 *)&( pBanner->v1 );
+	bannerCheckList[ 0 ].size = sizeof( BannerFileV1 );
+	bannerCheckList[ 1 ].pSrc = (u8 *)&( pBanner->v2 );
+	bannerCheckList[ 1 ].size = sizeof( BannerFileV2 );
+	bannerCheckList[ 2 ].pSrc = (u8 *)&( pBanner->v3 );
+	bannerCheckList[ 2 ].size = sizeof( BannerFileV3 );
+	
+	for( i = 0; i < NTR_BNR_VER_MAX; i++ ) {
+		if( i < pBanner->h.version ) {
+			calc_crc = SVC_GetCRC16( calc_crc, pChk->pSrc, pChk->size );
+			if( calc_crc != *pHeaderCRC++ ) {
+				retval = FALSE;
+				break;
+			}
+		}else {
+			MI_CpuClear16( pChk->pSrc, pChk->size );
+		}
+		pChk++;
+	}
+	
+	return retval;
 }
 
 
@@ -747,6 +833,20 @@ static void SYSMi_ReadCardBannerFile( void )
 //  各種チェック
 //
 //======================================================================
+
+// 有効なTWL/NTRカードが差さっているか？
+BOOL SYSM_IsExistCard( void )
+{
+	return SYSMi_GetWork()->isExistCard;
+}
+
+
+// 検査用カードが差さっているか？
+BOOL SYSM_IsInspectCard( void )
+{
+	return ( SYSM_IsExistCard() && SYSM_GetCardRomHeader()->inspect_card );
+}
+
 
 // 有効なTWLカードが差さっているか？
 BOOL SYSM_IsTWLCard( void );
@@ -800,10 +900,12 @@ static BOOL SYSMi_CheckEntryAddress( void )
 }
 
 
+
 // クローンブート判定
 static void SYSMi_CheckCardCloneBoot( void )
 {
-	u8 	*buffp         = (u8 *)&s_bannerBuf;		// バナー用バッファをテンポラリとして使用
+#if 0
+	u8 	*buffp         = (u8 *)&pTempBuffer;
 	u32 total_rom_size = SYSM_GetCardRomHeader()->rom_valid_size ? SYSM_GetCardRomHeader()->rom_valid_size : 0x01000000;
 	u32 file_offset    = total_rom_size & 0xFFFFFE00;
 	
@@ -820,6 +922,7 @@ static void SYSMi_CheckCardCloneBoot( void )
 	}else {
 		SYSMi_GetWork()->cloneBootMode = OTHER_BOOT_MODE;
 	}
+#endif
 }
 
 

@@ -17,6 +17,12 @@
 #ifndef SYSMENU_H_
 #define SYSMENU_H_
 
+// Compile switch----------------------
+#define DEBUG_USED_CARD_SLOT_B_							// デバッグ用でカードスロットBを使用する場合に有効にする。
+
+//-------------------------------------
+
+
 #include <twl.h>
 #include <twl/os/common/format_rom.h>
 
@@ -24,7 +30,7 @@
 #include <sysmenu/banner.h>
 #include <sysmenu/settings.h>
 #include <sysmenu/memorymap.h>
-
+#include <sysmenu/card.h>
 #include <sysmenu/acsign.h>
 #include <sysmenu/mb_loader.h>
 

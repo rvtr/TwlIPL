@@ -86,7 +86,7 @@ extern int  SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size );	/
 
 // アプリ起動
 extern void SYSM_StartLoadTitle( TitleProperty *pBootTitle );					// 指定したTitlePropertyを別スレッドでロード開始
-extern BOOL SYSM_IsLoadTitleFinished( void );									// SYSM_StartLoadTitleで起動したスレッドが終了したかどうかを確認
+extern BOOL SYSM_IsLoadTitleFinished( TitleProperty *pBootTitle );				// SYSM_StartLoadTitleで起動したスレッドが終了したかどうかを確認
 extern AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle );			// 指定したTitlePropertyを認証してブート
 																				// 成功時は、never return.
 // デバイス制御

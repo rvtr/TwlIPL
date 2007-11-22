@@ -103,6 +103,7 @@ TwlSpMain(void)
 
     // OS 初期化
     OS_Init();
+	OS_InitTick();
     PrintDebugInfo();
 	
     // NVRAM からユーザー情報読み出し
@@ -110,6 +111,9 @@ TwlSpMain(void)
     
     // Cold/Hotスタート判定
 	ReadResetParameter();
+	
+	// ※カード電源ONして、ROMヘッダのみリード＆チェックくらいはやっておきたい
+	
 	SYSMi_GetWork()->isARM9Start = TRUE;				// ※HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
 	
     // ヒープ領域設定
@@ -173,10 +177,9 @@ TwlSpMain(void)
 
     // 活栓挿抜機能初期化
     Cardm_Init();
-
     // カードがささっていたらブート開始
-    Card_Boot();
-
+    (void)Card_Boot();
+	
     while (TRUE)
     {
         OS_Halt();

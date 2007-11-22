@@ -30,6 +30,7 @@ static void INTR_VBlank( void );
 // global variable-------------------------------------------------------------
 
 // static variable-------------------------------------------------------------
+static TitleProperty s_titleList[ LAUNCHER_TITLE_LIST_NUM ];
 
 // const data------------------------------------------------------------------
 
@@ -49,7 +50,6 @@ void TwlMain( void )
 	};
 	u32 state = LOGODEMO_INIT;
 	TitleProperty *pBootTitle = NULL;
-	TitleProperty pTitleList[ LAUNCHER_TITLE_LIST_NUM ];
 	OSTick start, end = 0;
 	
 	// システムメニュー初期化----------
@@ -84,8 +84,8 @@ void TwlMain( void )
 	
 	// 「ダイレクトブートでない」なら、NAND & カードアプリリスト取得
 	if( !pBootTitle ) {
-		(void)SYSM_GetNandTitleList( pTitleList, LAUNCHER_TITLE_LIST_NUM );	// NANDアプリリストの取得（内蔵アプリはpTitleList[1]から格納される）
-		(void)SYSM_GetCardTitleList( pTitleList );				// カードアプリリストの取得（カードアプリはpTitleList[0]に格納される）
+		(void)SYSM_GetNandTitleList( s_titleList, LAUNCHER_TITLE_LIST_NUM );	// NANDアプリリストの取得（内蔵アプリはs_titleList[1]から格納される）
+		(void)SYSM_GetCardTitleList( s_titleList );				// カードアプリリストの取得（カードアプリはs_titleList[0]に格納される）
 	}
 	
 	// 「ダイレクトブートでない」もしくは
@@ -127,11 +127,11 @@ void TwlMain( void )
 			}
 			break;
 		case LAUNCHER_INIT:
-			LauncherInit( pTitleList );
+			LauncherInit( s_titleList );
 			state = LAUNCHER;
 			break;
 		case LAUNCHER:
-			pBootTitle = LauncherMain( pTitleList );
+			pBootTitle = LauncherMain( s_titleList );
 			if( pBootTitle ) {
 				state = LOAD_START;
 			}
@@ -144,13 +144,13 @@ void TwlMain( void )
 			
 			break;
 		case LOADING:
-			if( LauncherFadeout( pTitleList ) &&
-				SYSM_IsLoadTitleFinished() ) {
+			if( LauncherFadeout( s_titleList ) &&
+				SYSM_IsLoadTitleFinished( pBootTitle ) ) {
 				state = AUTHENTICATE;
 			}
 			
 			if( ( end == 0 ) &&
-				SYSM_IsLoadTitleFinished() ) {
+				SYSM_IsLoadTitleFinished( pBootTitle ) ) {
 				end = OS_GetTick();
 				OS_TPrintf( "Load Time : %dms\n", OS_TicksToMilliSeconds( end - start ) );
 			}
@@ -170,7 +170,7 @@ void TwlMain( void )
 		}
 		
 		// カードアプリリストの取得（スレッドで随時カード挿抜を通知されるものをメインループで取得）
-		(void)SYSM_GetCardTitleList( pTitleList );
+		(void)SYSM_GetCardTitleList( s_titleList );
 	}
 }
 

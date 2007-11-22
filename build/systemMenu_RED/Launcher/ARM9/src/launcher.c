@@ -160,7 +160,7 @@ static void SetDefaultBanner( TitleProperty *titleprop )
     
 	for(l=0;l<LAUNCHER_TITLE_LIST_NUM;l++)
 	{
-		if(titleprop[l].titleID == 0) //IDがゼロの時はEmpty
+		if( !titleprop[l].flags.isValid ) //isValidフラグがFALSEの時はEmpty
 		{
 			if(l != 0)
 			{
@@ -492,7 +492,7 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 		tp_select = SelectSomethingByTP(&dummy, func, 1 );
 		
 		if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {					// メニュー項目への分岐
-			if(pTitleList[selected].titleID != 0)
+			if( pTitleList[selected].flags.isValid )
 			{
 				ret = &pTitleList[selected];
 			}

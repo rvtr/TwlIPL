@@ -21,11 +21,11 @@
 #include <twl.h>
 #include <twl/nam.h>
 
+#include <sysmenu/memorymap.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-// compile switch ---------------------------------
 
 // define data ------------------------------------
 #define SYSM_RESET_PARAM_MAGIC_CODE			"TRST"
@@ -34,19 +34,31 @@ extern "C" {
 #define CLONE_BOOT_MODE						1
 #define OTHER_BOOT_MODE						2
 
+
 // NAMTitleIDをHiLoに分割してアクセスする場合に使用
 typedef struct TitleID_HiLo {
 	u8			Lo[ 4 ];
 	u32			Hi;
 }TitleID_HiLo;
 
-// リセットパラメータ　フラグ
+
+// BootFlagsで使用するmedia情報
+typedef enum TitleMedia {
+	TITLE_MEDIA_NAND = 0,
+	TITLE_MEDIA_CARD = 1,
+	TITLE_MEDIA_MAX  = 2
+}TitleMedia;
+
+
+// タイトル＆リセットパラメータ　フラグ
 typedef struct BootFlags {
+	u16			isValid : 1;				// TRUE:valid, FALSE:invalid
+	u16			media : 3;					// 0:nand, 1:card, 2-7:rsv;
 	u16			isLogoSkip : 1;				// ロゴデモスキップ要求
 	u16			isInitialShortcutSkip : 1;	// 初回起動シーケンススキップ要求
 	u16			isAppLoadCompleted : 1;		// アプリロード済みを示す
 	u16			isAppRelocate : 1;			// アプリ再配置要求
-	u16			rsv : 12;
+	u16			rsv : 9;
 }BootFlags;
 
 
@@ -89,10 +101,21 @@ typedef struct SYSM_work {
 	vu16			isLogoSkip :1;					// ロゴデモスキップ
 	vu16			isOnDebugger :1;				// デバッガ動作か？
 	vu16			isExistCard :1;					// 有効なNTR/TWLカードが存在するか？
+	vu16			isCardStateChanged :1;			// カード状態更新フラグ
 	vu16			isLoadSucceeded :1;
-	vu16			rsv :8;
-	u16				cardHeaderCrc16;				// システムメニューで計算したROMヘッダCRC16
+#ifdef DEBUG_USED_CARD_SLOT_B_
+	vu16			isValidCardBanner :1;
+	vu16			is1stCardChecked :1;
+	vu16			rsv :5;
+#else
+	vu16			rsv :7;
+#endif
+	
+	u16				cardHeaderCrc16;				// カード検出時に算出したROMヘッダCRC16（ARM9側でコピーして使用する側）
+	u16				cardHeaderCrc16_bak;			// カード検出時に算出したROMヘッダCRC16（ARM7側ライブラリでダイレクトに書き換わる側）
+	OSLockWord		lockCardRsc;					// カードリソース排他制御用
 	int				cloneBootMode;
+	
 	ResetParam		resetParam;
 	
 	// NTR-IPL2のレガシー　最終的には消すと思う
@@ -121,14 +144,14 @@ typedef struct SDKBootCheckInfo{
 //----------------------------------------------------------------------
 //　SYSM共有ワーク領域のアドレス獲得
 //----------------------------------------------------------------------
-#if 0
 // SYSMリセットパラメータアドレスの取得（※ライブラリ向け。ARM9側はSYSM_GetResetParamを使用して下さい。）
 #define SYSMi_GetResetParamAddr()			( (ResetParam *)0x02000100 )
+
+#if 0
 // SYSM共有ワークの取得
 #define SYSMi_GetWork()						( (SYSM_work *)HW_RED_RESERVED )
 #else
-#define SYSMi_GetResetParamAddr()			( (ResetParam *)( HW_RED_RESERVED + 0x50 ) )
-#define SYSMi_GetWork()						( (SYSM_work *)HW_RED_RESERVED + 0x10 )
+#define SYSMi_GetWork()						( (SYSM_work *)( HW_RED_RESERVED + 0x10 ) )
 #endif
 
 // SDKブートチェック（アプリ起動時にカードIDをセットする必要がある。）
@@ -139,7 +162,7 @@ typedef struct SDKBootCheckInfo{
 #define SYSMi_GetMCUFreeRegisterValue()		( *(vu8 *)HW_RESET_PARAMETER_BUF )
 
 // カードROMヘッダワークの取得
-#define SYSM_GetCardRomHeader()				( (ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF )
+#define SYSM_GetCardRomHeader()				( (ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BUF )
 
 
 #ifdef __cplusplus

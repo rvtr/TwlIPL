@@ -16,11 +16,8 @@
 //#include 	<istdbglib.h>
 
 #include	<nitro/card/types.h>
-#include 	<sysmenu/card/common/blowfish.h>
-#include 	<sysmenu/card/common/Card.h>
-#include	<sysmenu/card/common/dsCardType1.h>
-#include	<sysmenu/card/common/dsCardType2.h>
-#include	<sysmenu/memorymap.h>
+#include	<sysmenu.h>
+
 // define -------------------------------------------------------------------
 #define		STACK_SIZE							1024		// スタックサイズ
 #define		MC_THREAD_PRIO						11			// カード電源ON → ゲームモードのスレッド優先度
@@ -120,10 +117,10 @@ void Cardm_Init(void)
     OS_WakeupThreadDirect(&s_MCThread);
 
     // Boot Segment バッファの設定
-	Card_SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BUFFER, 0x1000 );
+	Card_SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );
 
     // Secure Segment バッファの設定
-    Card_SetSecureSegmentBuffer((void *)SYSM_CARD_NTR_SECURE_BUFFER, SECURE_AREA_SIZE );
+    Card_SetSecureSegmentBuffer((void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
 
 	// モジュールロード用スレッドの生成
 /*	OS_CreateThread(&s_MLThread,
@@ -155,7 +152,8 @@ BOOL Card_Boot(void)
 {
 	s32 tempLockID;
 	BOOL retval = TRUE;
-    
+    OSTick start = OS_GetTick();
+	
 	OS_TPrintf("---------------- Card Boot Start ---------------\n");
 	// カード電源ON
 	McPowerOn();
@@ -196,58 +194,92 @@ BOOL Card_Boot(void)
 			s_cbData.cardType = DS_CARD_TYPE_1;
             OS_TPrintf("Card Type1\n");
         }
+		
+		{
+			// ※最低限ARM9と排他制御しないといけない範囲はこれだけ
+			u16 id = (u16)OS_GetLockID();
+			(void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );			// ARM9と排他制御する
+			
+	    	// Boot Segment読み込み
+	    	s_funcTable[s_cbData.cardType].ReadBootSegment_N(&s_cbData);
+			
+			// ROMヘッダCRCを算出してチェック。NintendoロゴCRCも確認。
+			SYSMi_GetWork()->cardHeaderCrc16_bak = SVC_GetCRC16( 65535, s_cbData.pBootSegBuf, 0x015e );
+			OS_TPrintf( "RomHeaderCRC16 : calc = %04x  romh = %04x\n",
+						SYSMi_GetWork()->cardHeaderCrc16_bak, s_cbData.pBootSegBuf->rh.s.header_crc16 );
+			
+			if( ( SYSMi_GetWork()->cardHeaderCrc16_bak != s_cbData.pBootSegBuf->rh.s.header_crc16 ) ||
+				( 0xcf56 != s_cbData.pBootSegBuf->rh.s.nintendo_logo_crc16 ) ){
+				retval = FALSE;
+			}
+			
+			SYSMi_GetWork()->isExistCard = retval;
+			SYSMi_GetWork()->isCardStateChanged = TRUE;	// 本当は挿抜単位でここを立てる。
+			
+			(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );		// ARM9と排他制御する
+			OS_ReleaseLockID( id );
+		}
+		
+		if( retval ) {
+	        // NTRカードかTWLカードか
+	        if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
+				OS_TPrintf("TWL Card.\n");
+	            s_cbData.twlFlg = TRUE;
+	        }
+	    	// Key Table初期化
+	    	GCDm_MakeBlowfishTableDS(&s_cbData.keyTable, &s_pBootSegBuffer->rh.s, s_cbData.keyBuf, 8);
+	
+	    	// セキュアモードに移行
+	    	s_funcTable[s_cbData.cardType].ChangeMode_N(&s_cbData);
+	
+	    	// ---------------------- Secure Mode ----------------------
+			// PNG設定
+			s_funcTable[s_cbData.cardType].SetPNG_S(&s_cbData);
+	
+	        // DS側符号生成回路初期値設定 (レジスタ設定)
+			SetMCSCR();
+	
+			// ID読み込み
+	    	s_funcTable[s_cbData.cardType].ReadID_S(&s_cbData);
+	
+	    	// Secure領域のSegment読み込み
+	    	s_funcTable[s_cbData.cardType].ReadSegment_S(&s_cbData);
+	
+			// Arm9の常駐モジュールを指定先に転送
+			LoadStaticModule_Secure();
+	    	// ゲームモードに移行
+			s_funcTable[s_cbData.cardType].ChangeMode_S(&s_cbData);
+	
+	    	// ---------------------- Game Mode ----------------------
+	    	// ID読み込み
+			s_funcTable[s_cbData.cardType].ReadID_G(&s_cbData);
+			// 常駐モジュール残りを指定先に転送
+			Card_LoadStaticModule();
+	
+			// デバッグ出力
+			ShowRomHeaderData();
+		}
 
-    	// Boot Segment読み込み
-    	s_funcTable[s_cbData.cardType].ReadBootSegment_N(&s_cbData);
-
-        // NTRカードかTWLカードか
-        if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
-			OS_TPrintf("TWL Card.\n");
-            s_cbData.twlFlg = TRUE;
-        }
-    	// Key Table初期化
-    	GCDm_MakeBlowfishTableDS(&s_cbData.keyTable, &s_pBootSegBuffer->rh.s, s_cbData.keyBuf, 8);
-
-    	// セキュアモードに移行
-    	s_funcTable[s_cbData.cardType].ChangeMode_N(&s_cbData);
-
-    	// ---------------------- Secure Mode ----------------------
-		// PNG設定
-		s_funcTable[s_cbData.cardType].SetPNG_S(&s_cbData);
-
-        // DS側符号生成回路初期値設定 (レジスタ設定)
-		SetMCSCR();
-
-		// ID読み込み
-    	s_funcTable[s_cbData.cardType].ReadID_S(&s_cbData);
-
-    	// Secure領域のSegment読み込み
-    	s_funcTable[s_cbData.cardType].ReadSegment_S(&s_cbData);
-
-		// Arm9の常駐モジュールを指定先に転送
-		LoadStaticModule_Secure();
-    	// ゲームモードに移行
-		s_funcTable[s_cbData.cardType].ChangeMode_S(&s_cbData);
-
-    	// ---------------------- Game Mode ----------------------
-    	// ID読み込み
-		s_funcTable[s_cbData.cardType].ReadID_G(&s_cbData);
-
-		// 常駐モジュール残りを指定先に転送
-		Card_LoadStaticModule();
-
-		// デバッグ出力
-		ShowRomHeaderData();
+		// ※最終的にはカードIDをHW_BOOT_CHECK_INFO_BUFに入れないと、アプリ起動後のカード抜け処理が上手く動作しないので注意。
+		//   今はスロットBを使用しているので、ノーケアでOK.
+//		*(u32 *)HW_BOOT_CHECK_INFO_BUF = s_cbData.id_gam;
 
         OS_TPrintf("-----------------------------------------------\n\n");
     }
     else{
 		OS_TPrintf("Card Not Found\n");
+		retval = FALSE;
     }
 
     // カードロックIDの開放
 	OS_ReleaseLockID( s_cbData.lockID );
-    
+
+	OS_TPrintf( "Load Card Time : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+	
+#ifdef DEBUG_USED_CARD_SLOT_B_
+	SYSMi_GetWork()->is1stCardChecked  = TRUE;
+#endif
+	
     return retval;
 }
 
@@ -260,6 +292,18 @@ BOOL Card_Boot(void)
  * ----------------------------------------------------------------- */
 void Card_LoadStaticModule(void)
 {
+#ifdef DEBUG_USED_CARD_SLOT_B_
+	// バナーリード
+	if( s_cbData.pBootSegBuf->rh.s.banner_offset ) {
+	    OS_TPrintf("  - Banner Loading...\n");
+	    s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.banner_offset,
+												  (u32 *)SYSM_CARD_BANNER_BUF,
+	                                              sizeof(TWLBannerFile) );
+		SYSMi_GetWork()->isValidCardBanner = TRUE;
+		SYSMi_GetWork()->is1stCardChecked  = TRUE;
+	}
+#endif
+	
     OS_TPrintf("  - Arm9 Static Module Loading...\n");
     // Arm9の常駐モジュール残りを指定先に転送
     s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.main_rom_offset  + SECURE_SEGMENT_SIZE,
@@ -271,7 +315,31 @@ void Card_LoadStaticModule(void)
     s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.sub_rom_offset,
                                  (u32 *)((u32)s_cbData.pBootSegBuf->rh.s.sub_ram_address),
                                               s_cbData.pBootSegBuf->rh.s.sub_size);
+
+	// TWLでのみロード
+	if( s_cbData.pBootSegBuf->rh.s.platform_code & PLATFORM_CODE_FLAG_TWL ) {
+		u32 size = ( s_cbData.pBootSegBuf->rh.s.main_ltd_size < SECURE_SEGMENT_SIZE ) ?
+					 s_cbData.pBootSegBuf->rh.s.main_ltd_size : SECURE_SEGMENT_SIZE;
+	    OS_TPrintf("  - Arm9 Ltd. Static Module Loading...\n");
+	    // Arm9の常駐モジュールを指定先に転送（※TWLカード対応していないので、注意！！）
+		
+		s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset,
+                                 (u32 *)SYSM_CARD_TWL_SECURE_BUF,
+	                                          size);
+		if( s_cbData.pBootSegBuf->rh.s.main_ltd_size > SECURE_SEGMENT_SIZE ) {
+		    s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset  + SECURE_SEGMENT_SIZE,
+	                             (u32 *)((u32)s_cbData.pBootSegBuf->rh.s.main_ltd_ram_address + SECURE_SEGMENT_SIZE),
+	                                          s_cbData.pBootSegBuf->rh.s.main_ltd_size        - SECURE_SEGMENT_SIZE);
+		}
+
+	    OS_TPrintf("  - Arm7 Ltd. Static Module Loading...\n");
+	    // Arm7の常駐モジュールを指定先に転送
+	    s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset,
+	                             (u32 *)((u32)s_cbData.pBootSegBuf->rh.s.sub_ltd_ram_address),
+	                                          s_cbData.pBootSegBuf->rh.s.sub_ltd_size);
+	}
 }
+
 
 /* -----------------------------------------------------------------
  * Card_SetBootSegmentBuffer関数
