@@ -352,7 +352,7 @@ static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
     return size;
 }
 
-#include <twl/ese.h>
+#include <es.h>
 ESTitleMeta dst[1];
 
 // NANDタイトルリストの取得
