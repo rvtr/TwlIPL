@@ -348,7 +348,8 @@ void ReadPageGame_DSType1(u32 start_addr, void* buf, u32 size)
     page = (u32)(start_addr / PAGE_SIZE);
 	loop = (u32)(size / PAGE_SIZE);
     loop = (size % PAGE_SIZE) ? loop + 1 : loop;
-    
+
+    OS_TPrintf("Src Addr : 0x%08x  Dst Addr : 0x%08x\n", start_addr, buf);
     OS_TPrintf("Read Game Segment  Page Count : %d   size : %x\n", loop, size);
     
     for(i=0; i<loop; i++){

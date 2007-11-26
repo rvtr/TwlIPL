@@ -42,6 +42,7 @@ static void LoadStaticModule_Secure(void);
 static void McPowerOn(void);
 static void SetMCSCR(void);
 
+static void LoadTable(void);
 static void ReadIDNormal(void);
 static void MIm_CardDmaCopy32(u32 dmaNo, const void *src, void *dest);
 
@@ -181,6 +182,9 @@ BOOL Card_Boot(void)
 
     // ブート処理開始
 	if(IsCardExist() && retval){
+		// カード側でKey Tableをロードする
+        LoadTable();
+        
     	// ---------------------- Normal Mode ----------------------
     	// カードID読み込み
 		ReadIDNormal();
@@ -324,19 +328,19 @@ void Card_LoadStaticModule(void)
 	    // Arm9の常駐モジュールを指定先に転送（※TWLカード対応していないので、注意！！）
 		
 		s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset,
-                                 (u32 *)SYSM_CARD_TWL_SECURE_BUF,
-	                                          size);
+                                 		   (u32 *)SYSM_CARD_TWL_SECURE_BUF,
+	                                          	  size);
 		if( s_cbData.pBootSegBuf->rh.s.main_ltd_size > SECURE_SEGMENT_SIZE ) {
-		    s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset  + SECURE_SEGMENT_SIZE,
-	                             (u32 *)((u32)s_cbData.pBootSegBuf->rh.s.main_ltd_ram_address + SECURE_SEGMENT_SIZE),
-	                                          s_cbData.pBootSegBuf->rh.s.main_ltd_size        - SECURE_SEGMENT_SIZE);
+		    s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset,
+	                             		 (u32 *)((u32)s_cbData.pBootSegBuf->rh.s.main_ltd_ram_address),
+	                                          		  s_cbData.pBootSegBuf->rh.s.main_ltd_size);
 		}
 
 	    OS_TPrintf("  - Arm7 Ltd. Static Module Loading...\n");
 	    // Arm7の常駐モジュールを指定先に転送
 	    s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset,
-	                             (u32 *)((u32)s_cbData.pBootSegBuf->rh.s.sub_ltd_ram_address),
-	                                          s_cbData.pBootSegBuf->rh.s.sub_ltd_size);
+	                             	 (u32 *)((u32)s_cbData.pBootSegBuf->rh.s.sub_ltd_ram_address),
+	                                          	  s_cbData.pBootSegBuf->rh.s.sub_ltd_size);
 	}
 }
 
@@ -383,6 +387,38 @@ void Card_SetSecureSegmentBuffer(void* buf, u32 size)
     MI_CpuClear8(s_pSecureSegBuffer, size);
 
     OS_TPrintf("*** Scr Seg Buf Address : 0x%08x\n", s_pSecureSegBuffer);
+}
+
+/* -----------------------------------------------------------------
+ * LoadTable関数
+ *
+ * カード側の Key Table をロードする関数。
+ *
+ * ※この関数は開発カード用に発行しないといけない。
+ *   製品版カードの場合、このコマンドは無視される設計
+ * ----------------------------------------------------------------- */
+static void LoadTable(void)
+{
+	u32 temp;
+    
+	// MCCMD レジスタ設定
+	reg_MCCMD0 = 0x0000009f;
+	reg_MCCMD1 = 0x00000000;
+
+	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
+	reg_MCCNT0 = (u16)((reg_MCCNT0 & 0x0fff) | 0xc000);
+
+	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 101(16ページ) latency1 = 0(必要ないけど) に)
+	reg_MCCNT1 = (u32)((reg_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,  0)) |
+        		             		 CNT1_FLD(1,0,0,0,  0,5,  0,0,  0,  0,0,0,  0));
+    
+	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
+	while(reg_MCCNT1 & START_FLG_MASK){
+		while(!(reg_MCCNT1 & READY_FLG_MASK)){}
+        temp = reg_MCD1;
+	}
+
+    OS_TPrintf("Load Table...\n");
 }
 
 /* -----------------------------------------------------------------
