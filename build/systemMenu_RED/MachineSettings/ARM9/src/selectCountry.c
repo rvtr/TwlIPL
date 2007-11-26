@@ -232,12 +232,12 @@ static void MoveCursorByScrollBar( void )
 	
 	// 簡易スクロールバーによるスクロール
 	{
-		static BOOL hogehoge=FALSE;
+		static BOOL holding = FALSE;
 		static int dy;
 		int bar_top = (int)(BAR_ZERO_Y+dots_per_item * (s_menu_display_start - s_list_start));
 		if(tpd.disp.touch)
 		{
-			if(hogehoge)
+			if(holding)
 			{
 				if ( tpd.disp.y - dy < bar_top - BAR_LOOSENESS)
 				{
@@ -251,13 +251,13 @@ static void MoveCursorByScrollBar( void )
 			}
 			else if(WithinRangeTP(BAR_ZERO_X, bar_top+BAR_OFFSET,BAR_ZERO_X + BAR_WIDTH,bar_top+BAR_OFFSET+bar_height,&tpd.disp))
 			{
-				hogehoge = TRUE;
+				holding = TRUE;
 				dy = tpd.disp.y - bar_top;
 			}
 		}
 		else
 		{
-			hogehoge = FALSE;
+			holding = FALSE;
 		}
 	}
 	

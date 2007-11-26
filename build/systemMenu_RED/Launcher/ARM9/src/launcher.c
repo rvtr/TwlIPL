@@ -34,13 +34,14 @@
 #define B_LIGHT_UP_BUTTON_BOTTOM_Y			( B_LIGHT_UP_BUTTON_TOP_Y + 16 )
 
 // スクロールバー関係
-#define BAR_ZERO_X							0
-#define BAR_ZERO_Y							24
-#define BAR_HEIGHT							12
-#define BAR_WIDTH							(DOT_INTERVAL * 4 + DOT_SIZE + 2)
-#define BAR_LOOSENESS						2
-#define ITEMDOT_PER_BANNERDOT				((double)(ITEM_SIZE + ITEM_INTERVAL) / (double)(BANNER_INTERVAL + BANNER_WIDTH))
-#define ITEM_OFFSET							2				// 要素表示に"・"テキストを使っているので、座標を補正する目的のOFFSET
+#define BAR_ZERO_X							( (WINDOW_WIDTH - ((ITEM_SIZE + ITEM_INTERVAL) * (LAUNCHER_TITLE_LIST_NUM - 1) + ITEM_SIZE)) / 2)
+#define BAR_ZERO_Y							WINDOW_HEIGHT - 32
+#define BAR_HEIGHT							14
+#define BAR_WIDTH							32 //((ITEM_SIZE + ITEM_INTERVAL) * 4 + ITEM_SIZE + 2)
+#define BAR_LOOSENESS						0
+#define ITEMDOT_PER_FRAME					((double)(ITEM_SIZE + ITEM_INTERVAL) / (double)FRAME_PER_SELECT)
+#define FRAME_PER_ITEMDOT					((double)FRAME_PER_SELECT / (double)(ITEM_SIZE + ITEM_INTERVAL))
+#define BAR_OFFSET							0				// 表示に"■"テキストを使っているので、タッチ座標を補正する目的のOFFSET
 #define ITEM_SIZE							2
 #define ITEM_INTERVAL						3
 
@@ -48,13 +49,13 @@
 #define DOT_PER_FRAME			((BANNER_WIDTH + BANNER_INTERVAL) / FRAME_PER_SELECT)		// 割り切れないと動きがカクカクするはず
 #define FRAME_PER_SELECT		14															// バナーからバナーへの移動にかかるフレーム数
 #define BANNER_FAR_LEFT_POS		(WINDOW_WIDTH/2 - BANNER_WIDTH*5/2 - BANNER_INTERVAL * 2)
-#define BANNER_TOP				(WINDOW_HEIGHT/2)
+#define BANNER_TOP				(WINDOW_HEIGHT/2 - 16)
 #define WINDOW_WIDTH			256
 #define WINDOW_HEIGHT			192
 #define BANNER_WIDTH			32
 #define BANNER_HEIGHT			32
 #define BANNER_INTERVAL			24
-#define TITLE_V_CENTER			56
+#define TITLE_V_CENTER			39
 
 #define MAX_SHOW_BANNER			6
 
@@ -80,6 +81,7 @@ static BOOL SelectCenterFunc( u16 *csr, TPData *tgt );
 static BOOL SelectFunc( u16 *csr, TPData *tgt );
 static void ProcessBackLightPads( void );
 static TitleProperty *ProcessPads( TitleProperty *pTitleList );
+static void MoveByScrollBar();
 static void DrawScrollBar();
 static void DrawBackLightSwitch(void);
 
@@ -91,6 +93,7 @@ RTCDrawProperty g_rtcDraw = {
 // static variable -------------------------------------
 static int s_csr = 0;										// 画面中央座標と、リストの一番最初にあるバナーの中央座標との距離を
 															// 移動するのに必要なフレーム数で表すための変数
+static int csr_v = 0;										// s_csrの速度的変数
 
 static u64	old_titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
 
@@ -302,7 +305,7 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	{
 		NNSG2dChar *str = ((TWLBannerFile *)titleprop[selected].pBanner)->v1.comment[ TSD_GetLanguage() ];
 		NNSG2dTextRect rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, str );
-		PutStringUTF16( (WINDOW_WIDTH-rect.width)/2, TITLE_V_CENTER - rect.height/2, TXT_COLOR_BLACK, str );
+		PutStringUTF16( (WINDOW_WIDTH-rect.width)>>1, TITLE_V_CENTER - (rect.height>>1), TXT_COLOR_BLACK, str );
 	}
 }
 
@@ -364,6 +367,7 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
 	DrawBackLightSwitch();
+	DrawScrollBar( pTitleList );
 	
 	#ifdef DBGBNR
 	BannerDraw( s_csr, selected, pTitleList );
@@ -421,7 +425,7 @@ static BOOL SelectFunc( u16 *csr, TPData *tgt )
 	for(l=0; l<2; l++)
 	{
 		int x = 11*8 + l*6*8;
-		int y = 19*8;
+		int y = 17*8;
 		if(WithinRangeTP( x, y, x+32, y+16, tgt ))
 		{
 			*csr = (u16)l;
@@ -472,7 +476,6 @@ static void ProcessBackLightPads( void )
 static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 {
 	SelectSomethingFunc func[1]={SelectCenterFunc};
-	static int csr_v = 0;
 	BOOL tp_select = FALSE;
 	u16 dummy;
 	u16 tp_lr = 3;
@@ -514,9 +517,63 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 	return ret;
 }
 
-static void DrawScrollBar()
+// スクロールバーによるスクロール
+// 結構適当な実装。
+// 本来、バーのホールド中はバー座標を中心に動かすべき。
+static void MoveByScrollBar( void )
 {
-	PutStringUTF16( (int)(BAR_ZERO_X + (ITEMDOT_PER_BANNERDOT * s_csr * DOT_PER_FRAME)), BAR_ZERO_Y, TXT_UCOLOR_G2, (const u16 *)L"■" );
+	// スクロールバーによるスクロール
+	{
+		static BOOL holding = FALSE;
+		static int dx;
+		int bar_left = (int)(BAR_ZERO_X + (ITEMDOT_PER_FRAME * s_csr));
+		if(tpd.disp.touch)
+		{
+			if(holding)
+			{
+				if ( tpd.disp.x - dx < bar_left - BAR_LOOSENESS)
+				{
+					bar_left = tpd.disp.x - dx + BAR_LOOSENESS;
+				}
+				else if ( tpd.disp.x - dx > bar_left + BAR_LOOSENESS)
+				{
+					bar_left = tpd.disp.x - dx - BAR_LOOSENESS;
+				}
+				s_csr = (u16)((bar_left - BAR_ZERO_X) * FRAME_PER_ITEMDOT);
+			}
+			else if(WithinRangeTP(bar_left+5-BAR_WIDTH/2, BAR_ZERO_Y+BAR_OFFSET,bar_left+5+BAR_WIDTH/2,BAR_ZERO_Y+BAR_OFFSET+BAR_HEIGHT,&tpd.disp))
+			{
+				holding = TRUE;
+				dx = tpd.disp.x - bar_left;
+			}
+		}
+		else
+		{
+			if(holding)
+			{
+				int det = s_csr % FRAME_PER_SELECT;
+				holding = FALSE;
+				csr_v = (det < FRAME_PER_SELECT/2) ? (det == 0 ? 0 : -1) : 1;
+			}
+		}
+	}
+	
+	// タッチパッドによるスクロール後の調整
+	if((LAUNCHER_TITLE_LIST_NUM-1)*FRAME_PER_SELECT < s_csr) s_csr = (LAUNCHER_TITLE_LIST_NUM-1)*FRAME_PER_SELECT;
+	if( s_csr < 0 ) s_csr = 0;
+}
+
+static void DrawScrollBar( TitleProperty *pTitleList )
+{
+	int l;
+	for(l=0; l<LAUNCHER_TITLE_LIST_NUM; l++)
+	{
+		PutStringUTF16( (int)(BAR_ZERO_X + l * (ITEM_SIZE + ITEM_INTERVAL)), BAR_ZERO_Y, (pTitleList[l].flags.isValid ? TXT_UCOLOR_G1 : TXT_COLOR_BLACK), (const u16 *)L"・" );
+	}
+	for(l=0; l<4; l++)
+	{
+		PutStringUTF16( (int)(BAR_ZERO_X + (ITEMDOT_PER_FRAME * s_csr) - l%2), BAR_ZERO_Y - l/2, TXT_UCOLOR_G1, (const u16 *)L"□" );
+	}
 }
 
 // ランチャーメイン
@@ -529,13 +586,14 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	
 	// キー及びタッチ制御
 	ret = ProcessPads( pTitleList );
+	MoveByScrollBar();
 	
 	// 描画関係
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
 	DrawBackLightSwitch();
 	
-	DrawScrollBar();
+	DrawScrollBar( pTitleList );
 	
 	#ifdef DBGBNR
 	BannerDraw( s_csr, selected, pTitleList );
