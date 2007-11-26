@@ -264,6 +264,8 @@ static void SetAffineAnimation( int cursor )
 static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 {
 	int l;
+	int div1 = cursor / FRAME_PER_SELECT;
+	int div2 = cursor % FRAME_PER_SELECT;
 	
 	LoadBannerToVRAM( titleprop );
 
@@ -273,7 +275,7 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	// OAMデータを弄って位置など変更
 	for (l=0;l<MAX_SHOW_BANNER;l++)
 	{
-		int num = cursor/FRAME_PER_SELECT - 2 + l;
+		int num = div1 - 2 + l;
 		if(-1 < num && num < LAUNCHER_TITLE_LIST_NUM){
 			banner_oam_attr[l].charNo = image_index_list[num]*4;
 		    // パレットのロード
@@ -285,12 +287,12 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 			{
 				G2_SetOBJEffect(&banner_oam_attr[l], GX_OAM_EFFECT_AFFINE_DOUBLE, l-2);
 				G2_SetOBJPosition(&banner_oam_attr[l],
-									BANNER_FAR_LEFT_POS - BANNER_WIDTH/2 + l*(BANNER_WIDTH + BANNER_INTERVAL) - (cursor%FRAME_PER_SELECT)*DOT_PER_FRAME,
+									BANNER_FAR_LEFT_POS - BANNER_WIDTH/2 + l*(BANNER_WIDTH + BANNER_INTERVAL) - div2 * DOT_PER_FRAME,
 									BANNER_TOP - BANNER_HEIGHT/2 );
 			}
 			else					// その他のバナー
 			{
-				banner_oam_attr[l].x = BANNER_FAR_LEFT_POS + l*(BANNER_WIDTH + BANNER_INTERVAL) - (cursor%FRAME_PER_SELECT)*DOT_PER_FRAME;
+				banner_oam_attr[l].x = BANNER_FAR_LEFT_POS + l*(BANNER_WIDTH + BANNER_INTERVAL) - div2 * DOT_PER_FRAME;
 				G2_SetOBJEffect(&banner_oam_attr[l],GX_OAM_EFFECT_NONE,0);
 			}
 		}else
@@ -360,9 +362,6 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
 {
 	static int fadecount = 0;
 	
-	// RTC情報の取得＆表示
-	GetAndDrawRTCData( &g_rtcDraw, FALSE );
-	
 	// 描画関係
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
@@ -390,6 +389,9 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
 	DC_FlushRange(&banner_oam_attr, sizeof(banner_oam_attr));
 	GX_LoadOAM(&banner_oam_attr, 0, sizeof(banner_oam_attr));
 
+	// RTC情報の取得＆表示
+	GetAndDrawRTCData( &g_rtcDraw, FALSE );
+	
 	// フェードアウトのカウント処理
 	G2_ChangeBlendAlpha( fadecount/FADE_COUNT_PER_ALPHA, ALPHA_MAX-(fadecount/FADE_COUNT_PER_ALPHA) );
 	if(fadecount < FADE_COUNT_MAX) {
@@ -581,9 +583,6 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 {
 	TitleProperty *ret = NULL;
 	
-	// RTC情報の取得＆表示
-	GetAndDrawRTCData( &g_rtcDraw, FALSE );
-	
 	// キー及びタッチ制御
 	ret = ProcessPads( pTitleList );
 	MoveByScrollBar();
@@ -598,6 +597,9 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	#ifdef DBGBNR
 	BannerDraw( s_csr, selected, pTitleList );
 	#endif
+	
+	// RTC情報の取得＆表示
+	GetAndDrawRTCData( &g_rtcDraw, FALSE );
 	
 	return ret;
 }
