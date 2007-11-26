@@ -60,7 +60,7 @@
 #define CHAR_USCORE		L'＿'
 #define KEY_PER_LINE	11
 
-#define KEY_START		109	//ソフトウェアキーのカーソルはキャンセルキーから開始
+#define KEY_START		109	//ソフトウェアキーのカーソルデフォルト位置はキャンセルキー
 
 #define KEY_OK			0xffff
 #define KEY_CANCEL		0xfffe
@@ -92,7 +92,7 @@ static int SetCommentMain( void );
 // 少しでもダイエットしたい時はWork扱いにしてAlloc→Freeしましょう
 static u16 s_csr = 0;
 static const u16 *s_pStrSetting[ USER_INFO_MENU_ELEMENT_NUM ];			// メインメニュー用文字テーブルへのポインタリスト
-static int char_mode = 0;
+static int s_char_mode = 0;
 static u16 s_key_csr = 0;
 static u8 s_color_csr = 0;
 static BOOL s_birth_csr = FALSE;
@@ -193,7 +193,7 @@ static void SetSoftKeyboardButton(int mode)
 			count++;
 		}
 	}
-	char_mode = mode;
+	s_char_mode = mode;
 }
 
 // キャンセルボタン専用SelectSomethingFuncの実装
@@ -225,6 +225,9 @@ static void DrawOwnerInfoMenuScene( void )
 	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"RETURN" );
     // メニュー項目
 	DrawMenu( s_csr, &s_settingParam );
+	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+	// あらかじめTWL設定データファイルから読み込み済みの設定を取得して表示
+	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// ニックネーム
 	PutStringUTF16( 128 , 8*8, TXT_UCOLOR_G0, TSD_GetNickname()->buffer );
 	// 誕生日
@@ -329,7 +332,7 @@ static void DrawCharKeys( void )
 	for( l=0; l<CHAR_LIST_CHAR_NUM; l++ )
 	{
 		int color=TXT_COLOR_BLACK;
-		code = char_tbl[char_mode][l];
+		code = char_tbl[s_char_mode][l];
 		if (s_key_csr == l) color = TXT_COLOR_GREEN;
 		if(code != EOM_)
 		{
@@ -425,6 +428,9 @@ static void PushKeys( u16 code, NameOrComment noc )
 				SVC_CpuClear(0, dest, (max_length + 1) * 2, 16);// ゼロクリア
 				*destlength = *length;// 長さコピー
 				SVC_CpuCopy( buf, dest, (*length) * 2, 16 );// 内容コピー
+				// ::::::::::::::::::::::::::::::::::::::::::::::
+				// TWL設定データファイルへの書き込み
+				// ::::::::::::::::::::::::::::::::::::::::::::::
 				(void)SYSM_WriteTWLSettingsFile();// ファイルへ書き込み
 				// セーブ後にキャンセル処理と合流
 			case CANCEL_BUTTON_:
@@ -467,7 +473,7 @@ static BOOL SelectSoftwareKeyFunc( u16 *csr, TPData *tgt )
 	if ( csrxy < 0 || csrxy >= CHAR_LIST_CHAR_NUM) return FALSE;// 明らかにはみ出した
 
 	// 候補座標のキーコード取得
-	code = char_tbl[char_mode][csrxy];
+	code = char_tbl[s_char_mode][csrxy];
 	if(code == EOM_) return FALSE;
 	
 	// 候補座標の領域取得
@@ -515,7 +521,7 @@ static void PadDetectOnKey( NameOrComment noc )
 			else s_key_csr -= KEY_PER_LINE-1;
 			if( s_key_csr == CHAR_LIST_CHAR_NUM ) s_key_csr -= s_key_csr%KEY_PER_LINE;
 		}
-		while(char_tbl[char_mode][s_key_csr]==EOM_);
+		while(char_tbl[s_char_mode][s_key_csr]==EOM_);
 	}
 	if( pad.trg & PAD_KEY_LEFT ){
 		do
@@ -524,7 +530,7 @@ static void PadDetectOnKey( NameOrComment noc )
 			else s_key_csr += KEY_PER_LINE-1;
 			if( s_key_csr & 0x8000 ) s_key_csr = KEY_PER_LINE-1;
 		}
-		while(char_tbl[char_mode][s_key_csr]==EOM_);
+		while(char_tbl[s_char_mode][s_key_csr]==EOM_);
 	}
 	if( pad.trg & PAD_KEY_DOWN ){									// カーソルの移動
 		do
@@ -532,7 +538,7 @@ static void PadDetectOnKey( NameOrComment noc )
 			s_key_csr += KEY_PER_LINE;
 			if( s_key_csr >= CHAR_LIST_CHAR_NUM ) s_key_csr -= KEY_PER_LINE*(s_key_csr/KEY_PER_LINE);
 		}
-		while(char_tbl[char_mode][s_key_csr]==EOM_);
+		while(char_tbl[s_char_mode][s_key_csr]==EOM_);
 	}
 	if( pad.trg & PAD_KEY_UP ){
 		do
@@ -541,14 +547,14 @@ static void PadDetectOnKey( NameOrComment noc )
 			else s_key_csr -= KEY_PER_LINE;
 			if( s_key_csr >= CHAR_LIST_CHAR_NUM ) s_key_csr -= KEY_PER_LINE;
 		}
-		while(char_tbl[char_mode][s_key_csr]==EOM_);
+		while(char_tbl[s_char_mode][s_key_csr]==EOM_);
 	}
 	
 	func[0] = (SelectSomethingFunc)SelectSoftwareKeyFunc;
 	tp_select = SelectSomethingByTP(&s_key_csr, func, 1 );
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// キーが押された
-		PushKeys( char_tbl[char_mode][s_key_csr], noc );
+		PushKeys( char_tbl[s_char_mode][s_key_csr], noc );
 	}else if( pad.trg & PAD_BUTTON_B ) {
 		DeleteACharacter(noc);
 	}
@@ -569,6 +575,9 @@ static void SetNicknameInit( void )
 	SetSoftKeyboardButton(0);
 	s_key_csr = KEY_START;
 	
+	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
+	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// ニックネーム用テンポラリバッファの初期化
 	s_temp_name.length = TSD_GetNickname()->length;
 	SVC_CpuClear(CHAR_USCORE, s_temp_name.buffer, TWL_NICKNAME_LENGTH * 2, 16);
@@ -635,6 +644,10 @@ static BOOL SelectBirthdayFunc( u16 *csr, TPData *tgt )
 // 誕生日編集の初期化
 static void SetBirthdayInit( void )
 {
+	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
+	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+	// 誕生日
 	s_temp_birthday.month = TSD_GetBirthday()->month;
 	s_temp_birthday.day = TSD_GetBirthday()->day;
 	
@@ -660,38 +673,13 @@ static void CheckDate( void )
 	if( s_temp_birthday.day > maxday ) s_temp_birthday.day = 1;
 }
 
-// 誕生日編集メイン
-static int SetBirthdayMain( void )
+// 押している間数字が一定スピードで変化するような処理
+static void Birthday_AutoNumScrollByTP( void )
 {
-	SelectSomethingFunc func[2]={SelectCancelFunc, SelectOKFunc};
-	BOOL tp_touch = FALSE;
-	u16 temp_csr;
-	u16 temp_ok_cancel;
 	static u16 first_csr = 0xffff;
+	u16 temp_csr;
 	static int same_count = 0;
 	
-	ReadTP();
-	
-	//--------------------------------------
-	//  キー入力処理
-	//--------------------------------------
-	if( pad.trg & PAD_KEY_DOWN ){
-		(*(s_birth_csr ? &s_temp_birthday.month : &s_temp_birthday.day))--;
-	}
-	if( pad.trg & PAD_KEY_UP ){
-		(*(s_birth_csr ? &s_temp_birthday.month : &s_temp_birthday.day))++;
-	}
-	if( pad.trg & (PAD_KEY_RIGHT | PAD_KEY_LEFT)){									// カーソルの移動
-		s_birth_csr = !s_birth_csr;
-	}
-
-	// 日付チェック
-	CheckDate();
-	
-	// TPチェック
-	tp_touch = SelectSomethingByTP(&temp_ok_cancel, func, 2 );
-
-	// 押している間数字が一定スピードで変化するような処理
 	if( tpd.disp.touch )
 	{
 		BOOL t = SelectBirthdayFunc( &temp_csr, &tpd.disp );
@@ -735,6 +723,37 @@ static int SetBirthdayMain( void )
 		same_count = 0;
 		first_csr = 0xffff;
 	}
+}
+
+// 誕生日編集メイン
+static int SetBirthdayMain( void )
+{
+	SelectSomethingFunc func[2]={SelectCancelFunc, SelectOKFunc};
+	BOOL tp_touch = FALSE;
+	u16 temp_ok_cancel;
+	
+	ReadTP();
+	
+	//--------------------------------------
+	//  キー入力処理
+	//--------------------------------------
+	if( pad.trg & PAD_KEY_DOWN ){
+		(*(s_birth_csr ? &s_temp_birthday.month : &s_temp_birthday.day))--;
+	}
+	if( pad.trg & PAD_KEY_UP ){
+		(*(s_birth_csr ? &s_temp_birthday.month : &s_temp_birthday.day))++;
+	}
+	if( pad.trg & (PAD_KEY_RIGHT | PAD_KEY_LEFT)){									// カーソルの移動
+		s_birth_csr = !s_birth_csr;
+	}
+
+	// 日付チェック
+	CheckDate();
+	
+	// TPチェック
+	tp_touch = SelectSomethingByTP(&temp_ok_cancel, func, 2 );
+	// TPでボタンを押している間数字が一定スピードで変化するような処理
+	Birthday_AutoNumScrollByTP();
 	
 	// 日付チェック
 	CheckDate();
@@ -744,6 +763,9 @@ static int SetBirthdayMain( void )
 	if( pad.trg & PAD_BUTTON_A || (tp_touch && temp_ok_cancel == KEY_OK) ) {
 		TSD_SetBirthday(&s_temp_birthday);
 		TSD_SetFlagBirthday( TRUE );
+		// ::::::::::::::::::::::::::::::::::::::::::::::
+		// TWL設定データファイルへの書き込み
+		// ::::::::::::::::::::::::::::::::::::::::::::::
 		(void)SYSM_WriteTWLSettingsFile();// ファイルへ書き込み
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
@@ -814,6 +836,10 @@ static void SetUserColorInit( void )
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
+	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
+	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+	// ユーザーカラー
 	s_color_csr = TSD_GetUserColor();
 	
 	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
@@ -858,7 +884,9 @@ static int SetUserColorMain( void )
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || (tp_touch && temp_csr == KEY_OK) ) {				// 色決定
 		TSD_SetUserColor( (u8 )s_color_csr );
-		TSD_SetFlagUserColor( TRUE );
+		// ::::::::::::::::::::::::::::::::::::::::::::::
+		// TWL設定データファイルへの書き込み
+		// ::::::::::::::::::::::::::::::::::::::::::::::
 		(void)SYSM_WriteTWLSettingsFile();// ファイルへ書き込み
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
@@ -896,6 +924,9 @@ static void SetCommentInit( void )
 	SetSoftKeyboardButton(0);
 	s_key_csr = KEY_START;
 	
+	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
+	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// コメント用テンポラリバッファの初期化
 	s_temp_comment.length = TSD_GetComment()->length;
 	SVC_CpuClear(CHAR_USCORE, s_temp_comment.buffer, TWL_COMMENT_LENGTH * 2, 16);

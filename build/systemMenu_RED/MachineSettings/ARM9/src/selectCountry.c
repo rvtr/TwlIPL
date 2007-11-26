@@ -58,9 +58,9 @@ static u16 s_menu_display_start;
 
 static const u16 *s_pStrCountry[MENU_DISPLAY_SIZE];
 
-static int list_size;
-static int bar_height;
-static double dots_per_item;
+static int s_list_size;
+static int s_bar_height;
+static double s_dots_per_item;
 
 // const data  -----------------------------------------
 extern const u16 *const s_pStrCountryName[];
@@ -98,10 +98,10 @@ static void InitScrollMenuList( void )
 	s_list_end = (u16)(region_country_mapping[s_regionCode]);
 	if(s_list_start > s_list_end) OS_Panic("selectCountry.c:s_list_start>s_list_end!");
 	
-	list_size = s_list_end - s_list_start + 1;
+	s_list_size = s_list_end - s_list_start + 1;
 	
 	// 画面に表示する最大項目数よりも、国名リストが小さいか？
-	countrySel.num = (MENU_DISPLAY_SIZE < list_size) ? MENU_DISPLAY_SIZE : list_size ;
+	countrySel.num = (MENU_DISPLAY_SIZE < s_list_size) ? MENU_DISPLAY_SIZE : s_list_size ;
 	
 	// 設定されていた国名コードがリスト範囲に入っていなければデフォルト値にする
 	if(s_countryCode < s_list_start || s_list_end < s_countryCode)
@@ -123,11 +123,11 @@ static void InitScrollMenuList( void )
 	}
 	
 	// スクロールバー
-	bar_height = BAR_HEIGHT_MAX - (list_size - countrySel.num);
-	dots_per_item = 1;
-	if(bar_height < BAR_HEIGHT_MIN){
-		bar_height = BAR_HEIGHT_MIN;
-		dots_per_item = (double)(BAR_HEIGHT_MAX-BAR_HEIGHT_MIN)/(list_size - countrySel.num);
+	s_bar_height = BAR_HEIGHT_MAX - (s_list_size - countrySel.num);
+	s_dots_per_item = 1;
+	if(s_bar_height < BAR_HEIGHT_MIN){
+		s_bar_height = BAR_HEIGHT_MIN;
+		s_dots_per_item = (double)(BAR_HEIGHT_MAX-BAR_HEIGHT_MIN)/(s_list_size - countrySel.num);
 	}
 }
 
@@ -144,9 +144,9 @@ void SelectCountryInit( void )
 		PutStringUTF16( 8 * 8, 18 * 8, TXT_COLOR_RED, (const u16 *)L"Select country." );
 	}
 	
-	// ::::::::::::::::::::::::::::::::::::::::::::::
-	// TWL設定データの読み込み
-	// ::::::::::::::::::::::::::::::::::::::::::::::
+	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
+	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// 設定済みリージョンと国名コードの取得
 	if( !SYSM_IsValidTSD() ||
 		( TSD_GetRegion() >= TWL_REGION_MAX ) ) {
@@ -234,7 +234,7 @@ static void MoveCursorByScrollBar( void )
 	{
 		static BOOL holding = FALSE;
 		static int dy;
-		int bar_top = (int)(BAR_ZERO_Y+dots_per_item * (s_menu_display_start - s_list_start));
+		int bar_top = (int)(BAR_ZERO_Y+s_dots_per_item * (s_menu_display_start - s_list_start));
 		if(tpd.disp.touch)
 		{
 			if(holding)
@@ -247,9 +247,9 @@ static void MoveCursorByScrollBar( void )
 				{
 					bar_top = tpd.disp.y - dy - BAR_LOOSENESS;
 				}
-				s_menu_display_start = (u16)(((bar_top - BAR_ZERO_Y)/dots_per_item) + s_list_start);
+				s_menu_display_start = (u16)(((bar_top - BAR_ZERO_Y)/s_dots_per_item) + s_list_start);
 			}
-			else if(WithinRangeTP(BAR_ZERO_X, bar_top+BAR_OFFSET,BAR_ZERO_X + BAR_WIDTH,bar_top+BAR_OFFSET+bar_height,&tpd.disp))
+			else if(WithinRangeTP(BAR_ZERO_X, bar_top+BAR_OFFSET,BAR_ZERO_X + BAR_WIDTH,bar_top+BAR_OFFSET+s_bar_height,&tpd.disp))
 			{
 				holding = TRUE;
 				dy = tpd.disp.y - bar_top;
@@ -282,11 +282,11 @@ static void DrawCountryMain( void )
 	// 簡易スクロールバー表示
 	{
 		PutStringUTF16( BAR_ZERO_X, BAR_ZERO_Y-BAR_BUTTON_HEIGHT, TXT_UCOLOR_G0, (const u16 *)L"□" );
-		for(l=0; l<bar_height-SQUARE_SIZE; l+=SQUARE_SIZE)
+		for(l=0; l<s_bar_height-SQUARE_SIZE; l+=SQUARE_SIZE)
 		{
-			PutStringUTF16( BAR_ZERO_X, (int)(l+BAR_ZERO_Y+dots_per_item * (s_menu_display_start - s_list_start)), TXT_UCOLOR_G2, (const u16 *)L"■" );
+			PutStringUTF16( BAR_ZERO_X, (int)(l+BAR_ZERO_Y+s_dots_per_item * (s_menu_display_start - s_list_start)), TXT_UCOLOR_G2, (const u16 *)L"■" );
 		}
-		PutStringUTF16( BAR_ZERO_X, (int)(BAR_ZERO_Y+bar_height-SQUARE_SIZE+dots_per_item * (s_menu_display_start - s_list_start)), TXT_UCOLOR_G2, (const u16 *)L"■" );
+		PutStringUTF16( BAR_ZERO_X, (int)(BAR_ZERO_Y+s_bar_height-SQUARE_SIZE+s_dots_per_item * (s_menu_display_start - s_list_start)), TXT_UCOLOR_G2, (const u16 *)L"■" );
 		PutStringUTF16( BAR_ZERO_X, BAR_ZERO_Y+BAR_HEIGHT_MAX, TXT_UCOLOR_G0, (const u16 *)L"□" );
 	}
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"COUNTRY SELECT" );

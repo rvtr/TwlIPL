@@ -103,6 +103,10 @@ void SelectLanguageInit( void )
 		PutStringUTF16( 8 * 8, 18 * 8, TXT_COLOR_RED, (const u16 *)L"Select language." );
 	}
 	
+	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
+	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+	// リージョンの取得
 	if( !SYSM_IsValidTSD() ||
 		( TSD_GetRegion() >= TWL_REGION_MAX ) ) {
 		s_regionCode = (TWLRegion)TWL_DEFAULT_REGION;
@@ -110,6 +114,7 @@ void SelectLanguageInit( void )
 		s_regionCode = (TWLRegion)TSD_GetRegion();
 	}
 	
+	// 言語の取得
 	if( !SYSM_IsValidTSD() ||
 		( TSD_GetLanguage() >= TWL_LANG_CODE_MAX ) ) {
 		temp_langCode = TWL_LANG_ENGLISH;
@@ -117,6 +122,7 @@ void SelectLanguageInit( void )
 		temp_langCode = TSD_GetLanguage();
 	}
 	
+	// リージョン-言語マッピング情報から、現在のリージョンで選択できる言語をリストアップ
 	s_lang = 0;
 	for(l=0; l<TWL_LANG_CODE_MAX; l++)
 	{

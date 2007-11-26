@@ -71,6 +71,10 @@ void TwlMain(void)
 	
 	// TWL設定のリード
 	SYSM_SetAllocFunc( Alloc, Free );								// SYSM_ReadTWLSettingsFile()の実行に必要。
+	
+	// ::::::::::::::::::::::::::::::::::::::::::::::
+	// TWL設定データファイルの読み込み
+	// ::::::::::::::::::::::::::::::::::::::::::::::
 	if( SYSM_ReadTWLSettingsFile() ) {
 		SYSM_CaribrateTP();
 	}

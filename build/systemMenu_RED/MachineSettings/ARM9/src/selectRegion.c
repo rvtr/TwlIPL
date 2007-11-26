@@ -99,6 +99,10 @@ void SelectRegionInit( void )
 		PutStringUTF16( 8 * 8, 18 * 8, TXT_COLOR_RED, (const u16 *)L"Select region." );
 	}
 	
+	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
+	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+	// リージョンの取得
 	if( !SYSM_IsValidTSD() ||
 		( TSD_GetRegion() >= TWL_REGION_MAX ) ) {
 		s_regionCode = (TWLRegion)TWL_DEFAULT_REGION;
