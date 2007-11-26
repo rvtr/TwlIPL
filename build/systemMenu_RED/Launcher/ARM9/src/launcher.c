@@ -33,6 +33,17 @@
 #define B_LIGHT_UP_BUTTON_BOTTOM_X			( B_LIGHT_UP_BUTTON_TOP_X + 22 )
 #define B_LIGHT_UP_BUTTON_BOTTOM_Y			( B_LIGHT_UP_BUTTON_TOP_Y + 16 )
 
+// スクロールバー関係
+#define BAR_ZERO_X							0
+#define BAR_ZERO_Y							24
+#define BAR_HEIGHT							12
+#define BAR_WIDTH							(DOT_INTERVAL * 4 + DOT_SIZE + 2)
+#define BAR_LOOSENESS						2
+#define ITEMDOT_PER_BANNERDOT				((double)(ITEM_SIZE + ITEM_INTERVAL) / (double)(BANNER_INTERVAL + BANNER_WIDTH))
+#define ITEM_OFFSET							2				// 要素表示に"・"テキストを使っているので、座標を補正する目的のOFFSET
+#define ITEM_SIZE							2
+#define ITEM_INTERVAL						3
+
 // バナー表示関係
 #define DOT_PER_FRAME			((BANNER_WIDTH + BANNER_INTERVAL) / FRAME_PER_SELECT)		// 割り切れないと動きがカクカクするはず
 #define FRAME_PER_SELECT		14															// バナーからバナーへの移動にかかるフレーム数
@@ -69,6 +80,7 @@ static BOOL SelectCenterFunc( u16 *csr, TPData *tgt );
 static BOOL SelectFunc( u16 *csr, TPData *tgt );
 static void ProcessBackLightPads( void );
 static TitleProperty *ProcessPads( TitleProperty *pTitleList );
+static void DrawScrollBar();
 static void DrawBackLightSwitch(void);
 
 // global variable -------------------------------------
@@ -263,8 +275,8 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 			banner_oam_attr[l].charNo = image_index_list[num]*4;
 		    // パレットのロード
 		    // 必要なパレットが変わるので、毎度毎度入れ替え
-			GX_LoadOBJPltt( titleprop[num].pBanner->v1.pltt, (u16)(num * BNR_PLTT_SIZE), BNR_PLTT_SIZE );
-			G2_SetOBJMode(&banner_oam_attr[l], GX_OAM_MODE_NORMAL, num);
+			GX_LoadOBJPltt( titleprop[num].pBanner->v1.pltt, (u16)(l * BNR_PLTT_SIZE), BNR_PLTT_SIZE );
+			G2_SetOBJMode(&banner_oam_attr[l], GX_OAM_MODE_NORMAL, l);
 			
 			if(l == 2 || l == 3)	// 中央付近で大きくなったり小さくなったりする二つのバナー
 			{
@@ -502,6 +514,11 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 	return ret;
 }
 
+static void DrawScrollBar()
+{
+	PutStringUTF16( (int)(BAR_ZERO_X + (ITEMDOT_PER_BANNERDOT * s_csr * DOT_PER_FRAME)), BAR_ZERO_Y, TXT_UCOLOR_G2, (const u16 *)L"■" );
+}
+
 // ランチャーメイン
 TitleProperty *LauncherMain( TitleProperty *pTitleList )
 {
@@ -517,6 +534,8 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
 	DrawBackLightSwitch();
+	
+	DrawScrollBar();
 	
 	#ifdef DBGBNR
 	BannerDraw( s_csr, selected, pTitleList );
