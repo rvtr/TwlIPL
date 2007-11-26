@@ -16,13 +16,13 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
-#include <sysmenu/boot/common/boot.h>
+#include <sysmenu.h>
 #include "reboot.h"
-//#include "loader.h"
-//#include "mb_child.h"
+
 
 // define data-------------------------------------------------------
 #define MAINP_SEND_IF		0x2000
+#define reg_MI_MC_SWP		(*(REGType8v *) ( REG_MC1_ADDR + 1 ) )
 
 // extern data-------------------------------------------------------
 
@@ -50,20 +50,17 @@ BOOL BOOT_WaitStart( void )
 			SYSM_OWN_ARM7_MMEM_ADDR, SYSM_OWN_ARM7_MMEM_ADDR_END - SYSM_OWN_ARM7_MMEM_ADDR,
 			SYSM_OWN_ARM9_MMEM_ADDR, SYSM_OWN_ARM9_MMEM_ADDR_END - SYSM_OWN_ARM9_MMEM_ADDR,
 			SYSM_OWN_ARM7_WRAM_ADDR, SYSM_OWN_ARM7_WRAM_ADDR_END - SYSM_OWN_ARM7_WRAM_ADDR,
-
-//			HW_PRV_WRAM_END - 0x600, 0x600,
+			SYSM_OWN_ARM7_WRAM_ADDR, SYSM_OWN_ARM7_WRAM_ADDR_END - SYSM_OWN_ARM7_WRAM_ADDR,
 #ifdef	ISDBG_MB_CHILD_
 			HW_PRV_WRAM_END - 0x600, (HW_PRV_WRAM_END - HW_PRV_WRAM_SYSRV_SIZE) - (HW_PRV_WRAM_END - 0x600),
 			HW_PRV_WRAM_END - 0x600 + 0x20, HW_PRV_WRAM_END - (HW_PRV_WRAM_END - 0x600 + 0x20),
 #endif
-			//SYSM_BOOTCODE_ARM7_ADDR, ClearMemory - SYSM_BOOTCODE_ARM7_ADDR,
-//			0x02fff000, 0x800,
-//			0xda0, 0x60,
-//			0xf80, 0x80,
-			
+			HW_MAIN_MEM_SHARED, HW_RED_RESERVED - HW_MAIN_MEM_SHARED,
+			HW_ARENA_INFO_BUF, HW_ROM_HEADER_BUF - HW_ARENA_INFO_BUF,
+			HW_PXI_SIGNAL_PARAM_ARM9, HW_MAIN_MEM_SYSTEM_END - HW_PXI_SIGNAL_PARAM_ARM9,
 			NULL
 		};
-
+		
 		(void)OS_DisableIrq();							// ここで割り込み禁止にしないとダメ。
 		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
 /*
@@ -74,11 +71,11 @@ BOOL BOOT_WaitStart( void )
 			InsertWLPatch();
 		}
 */
+		
 		BOOTi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。
 		reg_MI_MBK9 = 0;								// 全WRAMのロック解除
 		reg_PXI_MAINPINTF = MAINP_SEND_IF | 0x0100;		// ARM9に対してブートするようIRQで要求＋ARM7のステートを１にする。
-		// BOOT_Core();									// never return
-
+		
 		// SDK共通リブート
 		OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x34), clr_list );
 	}
@@ -89,11 +86,16 @@ static void BOOTi_ClearREG_RAM( void )
 {
 	int i ;
 	
-//	SVC_CpuClearFast(0x0000, IPL2_PRV_WRAM_ARENA_LO, RETURN_FROM_MAIN_ARM7_FUNCP - IPL2_PRV_WRAM_ARENA_LO );
-																	// アリーナのクリア
 	for( i = 0; i <= MI_DMA_MAX_NUM; i++ ) {						// DMAの停止
 		MI_StopDma( (u16)i );
 	}
+	
+#ifdef DEBUG_USED_CARD_SLOT_B_
+	reg_MI_MC_SWP = 0x80;											// カードスロットのスワップ
+#endif
+	*(u32 *)HW_BOOT_CHECK_INFO_BUF = SYSMi_GetWork()->nCardID;		// カード抜けチェックバッファにカードIDをセット
+	*(u32 *)HW_RED_RESERVED = SYSMi_GetWork()->nCardID;
+	
 	// レジスタのクリア
 	SVC_CpuClearFast( 0x0000, (void*)(HW_REG_BASE + 0x0b0), (0x13c - 0x0b0) );
 																		// DMA0SAD  ～ RCNT1

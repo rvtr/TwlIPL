@@ -28,6 +28,7 @@
 
 #include <sysmenu/sysmenu_lib.h>
 #include <sysmenu/banner.h>
+#include <sysmenu/boot.h>
 #include <sysmenu/settings.h>
 #include <sysmenu/memorymap.h>
 #include <sysmenu/card.h>

@@ -16,8 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
-#include <sysmenu/boot/common/boot.h>
-#include <sysmenu/memorymap.h>
+#include <sysmenu.h>
 //#include "loader.h"
 //#include "mb_child.h"
 

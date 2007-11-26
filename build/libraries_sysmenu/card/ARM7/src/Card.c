@@ -267,7 +267,9 @@ BOOL Card_Boot(void)
 		// ※最終的にはカードIDをHW_BOOT_CHECK_INFO_BUFに入れないと、アプリ起動後のカード抜け処理が上手く動作しないので注意。
 		//   今はスロットBを使用しているので、ノーケアでOK.
 //		*(u32 *)HW_BOOT_CHECK_INFO_BUF = s_cbData.id_gam;
-
+//		*(u32 *)HW_RED_RESERVED = s_cbData.id_gam;
+		SYSMi_GetWork()->nCardID = s_cbData.id_gam;
+		
         OS_TPrintf("-----------------------------------------------\n\n");
     }
     else{

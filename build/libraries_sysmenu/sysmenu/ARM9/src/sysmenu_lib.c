@@ -17,7 +17,6 @@
 
 #include <twl.h>
 #include <sysmenu.h>
-#include <sysmenu/boot/common/boot.h>
 #include "sysmenu_define.h"
 #include "spi.h"
 
@@ -63,7 +62,71 @@ static TWLBannerFile	s_bannerBuf[ LAUNCHER_TITLE_LIST_NUM ] ATTRIBUTE_ALIGN(32);
 
 
 // const data------------------------------------------------------------------
+#if 0
+typedef enum RomSegmentName {
+	ROM_HEADER = 0,
+	ARM9_STATIC,
+	ARM7_STATIC,
+	ARM9_LTD_STATIC,
+	ARM7_LTD_STATIC
+}RomSegmentName;
 
+typedef struct RomSegmentRange {
+	u32		start;
+	u32		end;
+}RomSegmentRange;
+
+typedef struct RomReloadInfo {
+	void	*pSrc;
+	void	*pDst;
+	u32		length;
+	BOOL	revCopy;
+}RomReloadInfo;
+
+static RomSegmentRange romSegmentRange[] = {
+	{ HW_TWL_ROM_HEADER_BUF,       HW_TWL_ROM_HEADER_BUF_END },
+	{ SYSM_NTR_ARM9_LOAD_MMEM,     SYSM_NTR_ARM9_LOAD_MMEM_END },
+	{ SYSM_NTR_ARM7_LOAD_MMEM,     SYSM_NTR_ARM7_LOAD_MMEM_END },
+	{ SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_TWL_ARM9_LTD_LOAD_MMEM_END },
+	{ SYSM_TWL_ARM7_LTD_LOAD_MMEM, SYSM_TWL_ARM7_LTD_LOAD_MMEM_END },
+};
+
+
+static RomReloadInfo romReloadInfo[] = {
+	
+};
+
+static BOOL SYSMi_OutOfRangeRomSegment( u32 start, u32 length, RomSegmentRange *pRange, ReloadInfo *pReload )
+{
+	BOOL isReload = FALSE;
+	u32  end = (u32)start + length;
+	
+	if( start < pRange->start ) {
+		if( end <= pRange->start ) {
+			isReload = TRUE;
+			pReload->revCopy = FALSE;
+		}else {
+			isReload = TRUE;
+			pReload->revCopy = TRUE;
+		}
+	}else if( start <= pRange->end ) {
+		if( end <= pRange->end ) {
+			if(u32)( pRange->start + length ) )
+		}else if( end > pRange->end ) {
+			isReload = TRUE;
+			pReload->revCopy = FALSE;
+		}
+	}else if( start > pRange->end ) {
+		isReload = TRUE;
+	}
+
+	if( isReload ) {
+		pReload->pDst    = (void *)start;
+		pReload->pSrc    = (void *)pRange->start;
+		pReload->length  = length;
+	}
+}
+#endif
 
 // ============================================================================
 //

@@ -45,18 +45,17 @@ SRCS_LOGO				=	logoDemo.c logoData.c
 SRCS					=	main.c launcher.c \
 							$(addprefix $(LOGO_DIR)/, $(SRCS_LOGO)) \
 							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c \
-						$(BG_DIR)/BGData_Launcher.c
+							$(BG_DIR)/BGData_Launcher.c
 
 LINCLUDES				=	$(MISC_DIR)/include \
 							$(SRCDIR)/$(LOGO_DIR)
 
 LLIBRARIES				+=	libnam$(TWL_LIBSUFFIX).a \
-							libese$(TWL_LIBSUFFIX).a \
-						libboot$(TWL_LIBSUFFIX).a
+							libese$(TWL_LIBSUFFIX).a
 
 ADDRESS_DTCM			=	0x0e000000
 
-DEFAULT_COMP_ARM7			=	hyena
+DEFAULT_COMP_ARM7		=	hyena
 
 MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
 
@@ -69,7 +68,7 @@ INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
 
-do-build : $(FONT_OBJS) $(TARGETS)
+do-build : $(TARGETS)
 
 
 include $(TWLIPL_ROOT)/build/buildtools/modulerules

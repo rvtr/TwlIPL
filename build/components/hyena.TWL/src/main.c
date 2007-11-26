@@ -34,11 +34,7 @@
 #include    <twl/cdc.h>
 #include    <twl/aes.h>
 #include    <twl/mcu.h>
-#include    <sysmenu/boot/common/boot.h>
-#include    <sysmenu/sysmenu_lib/common/sysmenu_work.h>
-
-#include    <sysmenu/card/common/blowfish.h>
-#include    <sysmenu/card/common/Card.h>
+#include    <sysmenu.h>
 #include    "nvram_sp.h"
 
 /*---------------------------------------------------------------------------*

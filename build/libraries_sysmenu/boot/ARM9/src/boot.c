@@ -16,7 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
-#include <sysmenu/boot/common/boot.h>
+#include <sysmenu.h>
 //#include <nitro/mb.h>
 //#include "IPL2_work.h"
 //#include "define.h"

@@ -115,11 +115,11 @@ typedef struct SYSM_work {
 	u16				cardHeaderCrc16_bak;			// カード検出時に算出したROMヘッダCRC16（ARM7側ライブラリでダイレクトに書き換わる側）
 	OSLockWord		lockCardRsc;					// カードリソース排他制御用
 	int				cloneBootMode;
+	u32				nCardID;						// カードID
 	
 	ResetParam		resetParam;
 	
 	// NTR-IPL2のレガシー　最終的には消すと思う
-	u32				nCardID;
 	BOOL			enableCardNormalOnly;
 	u8				rtcStatus;
 }SYSM_work;

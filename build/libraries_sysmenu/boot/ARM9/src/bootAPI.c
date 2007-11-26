@@ -17,12 +17,9 @@
 
 #include <twl.h>
 #include <twl/os/common/format_rom.h>
-#include <sysmenu/boot/common/boot.h>
+#include <sysmenu.h>
 #include <firm/format/wram_regs.h>
 #include "reboot.h"
-//#include <nitro/mb.h>
-//#include "IPL2_work.h"
-//#include "define.h"
 
 
 // define data-------------------------------------------------------
@@ -37,8 +34,6 @@
 // function's prototype----------------------------------------------
 static void BOOTi_ClearREG_RAM( void );
 static void BOOTi_StartBOOT( void );
-
-static void ResetCP15( void );
 
 // global variables--------------------------------------------------
 
@@ -102,12 +97,7 @@ void BOOT_Ready( void )
         reg_GX_VRAMCNT_D    = pWRAMREGS->main_vrambnk_d;
         reg_GX_VRAMCNT_WRAM = pWRAMREGS->main_wrambnk_01;
     }
-
-    //BOOT_Core();          // never return
-
-    // プロテクションユニットの初期化
-    ResetCP15();
-
+	
     // SDK共通リブート
     OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x24), clr_list );
 }
@@ -143,32 +133,3 @@ static void BOOTi_ClearREG_RAM( void )
     // クリアしていないレジスタは、VCOUNT, PIFCNT, MC-, EXMEMCNT, IME, RBKCNT1, PAUSE, POWLCDCNT, 全3D系。
 }
 
-//-----------------------------------------------------------------------
-// システム制御コプロセッサ リセット
-//-----------------------------------------------------------------------
-#include <twl/code32.h>
-asm static void ResetCP15( void )
-{
-        // プロテクションユニット＆キャッシュ＆ITCM無効。DTCMは有効（スタックをクリアするため）
-        ldr         r0, = C1_DTCM_ENABLE  | C1_EXCEPT_VEC_UPPER | C1_SB1_BITSET
-        mcr         p15, 0, r0, c1, c0, 0
-
-        // ITCMの割り当てを解除
-        mov         r0, #0
-        mcr         p15, 0, r0, c6, c5, 0
-
-        // DTCMの割り当てを解除
-//      mov         r0,#0
-//      mcr         p15, 0, r0, c9, c1, 0
-
-        // キャッシュ無効化
-        mov         r0, #0
-        mcr         p15, 0, r0, c7, c5, 0           // 命令キャッシュ
-        mcr         p15, 0, r0, c7, c6, 0           // データキャッシュ
-
-        // ライトバッファ エンプティ待ち
-        mcr         p15, 0, r0, c7, c10, 4
-
-        bx          lr
-}
-#include <twl/codereset.h>

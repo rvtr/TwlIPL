@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlIPL
-  File:     boot.h
+  File:     boot_api.h
 
   Copyright 2007 Nintendo.  All rights reserved.
 
@@ -16,7 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #if !defined(_SYSMENU_BOOT_H_)
-#define _SYSMENU_BOOT_H_
+#define _SYSMENU_BOOT_API_H_
 
 #include <sysmenu/memorymap.h>
 
@@ -80,4 +80,4 @@ void BOOT_Ready( void );
 }
 #endif
 
-#endif /*	_SYSMENU_BOOT_H_	*/
+#endif /*	_SYSMENU_BOOT_API_H_	*/
