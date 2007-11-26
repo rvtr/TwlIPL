@@ -25,7 +25,23 @@
 #define CANCEL_BUTTON_BOTTOM_X				( (CANCEL_BUTTON_TOP_X + 8 ) * 8 )
 #define CANCEL_BUTTON_BOTTOM_Y				( (CANCEL_BUTTON_TOP_Y + 2 ) * 8 )
 
-#define MENU_DISPLAY_SIZE 7
+#define MENU_DISPLAY_SIZE					7
+
+// スクロールバー関係
+#define BAR_ZERO_X							230
+#define BAR_ZERO_Y							48
+#define BAR_HEIGHT_MAX						107
+#define BAR_HEIGHT_MIN						SQUARE_SIZE
+#define BAR_WIDTH							SQUARE_SIZE
+#define BAR_BUTTON_HEIGHT					SQUARE_SIZE
+#define BAR_BUTTON_WIDTH					SQUARE_SIZE
+#define SQUARE_SIZE							11
+#define BAR_LOOSENESS						2
+#define BAR_OFFSET							2				// 表示に"■"テキストを使っているので、タッチ座標を補正する目的のOFFSET
+
+// ボタン長押しでのカーソル自動移動関係
+#define START_AUTOMOVE_COUNT				30
+#define AUTOMOVE_INTERVAL					5
 
 // extern data------------------------------------------
 
@@ -73,37 +89,10 @@ static MenuParam countrySel = {
 // function's description
 //======================================================
 
-// 国名設定の初期化
-void SelectCountryInit( void )
+// スクロールメニューの初期化
+static void InitScrollMenuList( void )
 {
-    int l;
-    BOOL in_list_flag = FALSE;
-	
-	GX_DispOff();
-	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
-
-	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"COUNTRY SELECT" );
-	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_CYAN, (const u16 *)L"CANCEL" );
-	if( g_initialSet ) {
-		PutStringUTF16( 8 * 8, 18 * 8, TXT_COLOR_RED, (const u16 *)L"Select country." );
-	}
-	
-	// 設定済みリージョンと国名コードの取得
-	if( !SYSM_IsValidTSD() ||
-		( TSD_GetRegion() >= TWL_REGION_MAX ) ) {
-		s_regionCode = (TWLRegion)TWL_DEFAULT_REGION;
-	}else {
-		s_regionCode = (TWLRegion)TSD_GetRegion();
-	}
-	
-	if( !SYSM_IsValidTSD() ||
-		( TSD_GetCountry() >= TWL_COUNTRY_MAX ) ) {
-		s_countryCode = (TWLCountryCode)0;
-	}else {
-		s_countryCode = TSD_GetCountry();
-	}
-
+	int l;
 	// メニューに表示する国名リスト全体の最初と最後をマッピングデータから取得
 	s_list_start = (u16)(region_country_mapping[s_regionCode] >> 16);
 	s_list_end = (u16)(region_country_mapping[s_regionCode]);
@@ -133,14 +122,50 @@ void SelectCountryInit( void )
 		s_pStrCountry[l] = s_pStrCountryName[s_menu_display_start + l];
 	}
 	
-	DrawMenu( (u16)(s_countryCode - s_menu_display_start), &countrySel );
-	
-	bar_height = 107 - (list_size - countrySel.num);
+	// スクロールバー
+	bar_height = BAR_HEIGHT_MAX - (list_size - countrySel.num);
 	dots_per_item = 1;
-	if(bar_height<11){
-		bar_height = 11;
-		dots_per_item = (double)(107-11)/(list_size - countrySel.num);
+	if(bar_height < BAR_HEIGHT_MIN){
+		bar_height = BAR_HEIGHT_MIN;
+		dots_per_item = (double)(BAR_HEIGHT_MAX-BAR_HEIGHT_MIN)/(list_size - countrySel.num);
 	}
+}
+
+// 国名設定の初期化
+void SelectCountryInit( void )
+{
+	GX_DispOff();
+	GXS_DispOff();
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+
+	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"COUNTRY SELECT" );
+	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_CYAN, (const u16 *)L"CANCEL" );
+	if( g_initialSet ) {
+		PutStringUTF16( 8 * 8, 18 * 8, TXT_COLOR_RED, (const u16 *)L"Select country." );
+	}
+	
+	// ::::::::::::::::::::::::::::::::::::::::::::::
+	// TWL設定データの読み込み
+	// ::::::::::::::::::::::::::::::::::::::::::::::
+	// 設定済みリージョンと国名コードの取得
+	if( !SYSM_IsValidTSD() ||
+		( TSD_GetRegion() >= TWL_REGION_MAX ) ) {
+		s_regionCode = (TWLRegion)TWL_DEFAULT_REGION;
+	}else {
+		s_regionCode = (TWLRegion)TSD_GetRegion();
+	}
+	
+	if( !SYSM_IsValidTSD() ||
+		( TSD_GetCountry() >= TWL_COUNTRY_MAX ) ) {
+		s_countryCode = (TWLCountryCode)0;
+	}else {
+		s_countryCode = TSD_GetCountry();
+	}
+	
+	// スクロールメニューの初期化
+	InitScrollMenuList();
+	
+	DrawMenu( (u16)(s_countryCode - s_menu_display_start), &countrySel );
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
@@ -157,12 +182,12 @@ static void MoveCursorByKey( void )
 	static int pad_count = 0;
 	
 	if( pad.cont & PAD_KEY_DOWN ) {								// カーソルの移動
-		if(pad_count == 0 || (pad_count>29 && pad_count%5==0))
+		if(pad_count == 0 || (pad_count>=START_AUTOMOVE_COUNT && pad_count%AUTOMOVE_INTERVAL==0))
 			if( s_countryCode < s_list_end ) s_countryCode++;
 		pad_cont = TRUE;
 	}
 	if( pad.cont & PAD_KEY_UP ) {
-		if(pad_count == 0 || (pad_count>29 && pad_count%5==0))
+		if(pad_count == 0 || (pad_count>=START_AUTOMOVE_COUNT && pad_count%AUTOMOVE_INTERVAL==0))
 			if( s_countryCode > s_list_start ) s_countryCode--;
 		pad_cont = TRUE;
 	}
@@ -175,6 +200,7 @@ static void MoveCursorByKey( void )
 	else if( s_menu_display_start + countrySel.num - 1 < s_countryCode ) s_menu_display_start = (u16)(s_countryCode - countrySel.num + 1);
 }
 
+// 簡易スクロールバーのボタンによるスクロール
 static void MoveCursorByScrollBarButton( void )
 {
 	static int tpd_count = 0;
@@ -182,13 +208,13 @@ static void MoveCursorByScrollBarButton( void )
 	
 	if(tpd.disp.touch)
 	{
-		if( WithinRangeTP(230,48+107+2,241,48+107+2+11,&tpd.disp) ) {//down
-			if(tpd_count == 0 || (tpd_count>29 && tpd_count%5==0))
+		if( WithinRangeTP(BAR_ZERO_X,BAR_ZERO_Y+BAR_HEIGHT_MAX+BAR_OFFSET,BAR_ZERO_X+BAR_BUTTON_WIDTH,BAR_ZERO_Y+BAR_HEIGHT_MAX+BAR_OFFSET+BAR_BUTTON_HEIGHT,&tpd.disp) ) {//down
+			if(tpd_count == 0 || (tpd_count>=START_AUTOMOVE_COUNT && tpd_count%AUTOMOVE_INTERVAL==0))
 				if( s_countryCode < s_list_end ) s_menu_display_start++;
 			tpd_cont = TRUE;
 		}
-		if( WithinRangeTP(230,48-11+2,241,48-11+2+11,&tpd.disp) ) {//up
-			if(tpd_count == 0 || (tpd_count>29 && tpd_count%5==0))
+		if( WithinRangeTP(BAR_ZERO_X,BAR_ZERO_Y-BAR_BUTTON_HEIGHT+BAR_OFFSET,BAR_ZERO_X+BAR_BUTTON_WIDTH,BAR_ZERO_Y+BAR_OFFSET,&tpd.disp) ) {//up
+			if(tpd_count == 0 || (tpd_count>=START_AUTOMOVE_COUNT && tpd_count%AUTOMOVE_INTERVAL==0))
 				if( s_countryCode > s_list_start ) s_menu_display_start--;
 			tpd_cont = TRUE;
 		}
@@ -208,22 +234,22 @@ static void MoveCursorByScrollBar( void )
 	{
 		static BOOL hogehoge=FALSE;
 		static int dy;
-		int bar_top = (int)(48+dots_per_item * (s_menu_display_start - s_list_start));
+		int bar_top = (int)(BAR_ZERO_Y+dots_per_item * (s_menu_display_start - s_list_start));
 		if(tpd.disp.touch)
 		{
 			if(hogehoge)
 			{
-				if ( tpd.disp.y - dy < bar_top - 2)//2はあそび
+				if ( tpd.disp.y - dy < bar_top - BAR_LOOSENESS)
 				{
-					bar_top = tpd.disp.y - dy + 2;
+					bar_top = tpd.disp.y - dy + BAR_LOOSENESS;
 				}
-				else if ( tpd.disp.y - dy > bar_top + 2)
+				else if ( tpd.disp.y - dy > bar_top + BAR_LOOSENESS)
 				{
-					bar_top = tpd.disp.y - dy - 2;
+					bar_top = tpd.disp.y - dy - BAR_LOOSENESS;
 				}
-				s_menu_display_start = (u16)(((bar_top - 48)/dots_per_item) + s_list_start);
+				s_menu_display_start = (u16)(((bar_top - BAR_ZERO_Y)/dots_per_item) + s_list_start);
 			}
-			else if(WithinRangeTP(230, bar_top+2,241,bar_top+2+bar_height,&tpd.disp))
+			else if(WithinRangeTP(BAR_ZERO_X, bar_top+BAR_OFFSET,BAR_ZERO_X + BAR_WIDTH,bar_top+BAR_OFFSET+bar_height,&tpd.disp))
 			{
 				hogehoge = TRUE;
 				dy = tpd.disp.y - bar_top;
@@ -242,6 +268,7 @@ static void MoveCursorByScrollBar( void )
 	else if( s_menu_display_start + countrySel.num - 1 < s_countryCode ) s_countryCode = (TWLCountryCode)(s_menu_display_start + countrySel.num - 1);
 }
 
+// 国選択画面の描画処理
 static void DrawCountryMain( void )
 {
 	int l;
@@ -254,13 +281,13 @@ static void DrawCountryMain( void )
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	// 簡易スクロールバー表示
 	{
-		PutStringUTF16( 230, 48-11, TXT_UCOLOR_G0, (const u16 *)L"□" );
-		for(l=0; l<bar_height-11;l+=11)
+		PutStringUTF16( BAR_ZERO_X, BAR_ZERO_Y-BAR_BUTTON_HEIGHT, TXT_UCOLOR_G0, (const u16 *)L"□" );
+		for(l=0; l<bar_height-SQUARE_SIZE; l+=SQUARE_SIZE)
 		{
-			PutStringUTF16( 230, (int)(l+48+dots_per_item * (s_menu_display_start - s_list_start)), TXT_UCOLOR_G2, (const u16 *)L"■" );
+			PutStringUTF16( BAR_ZERO_X, (int)(l+BAR_ZERO_Y+dots_per_item * (s_menu_display_start - s_list_start)), TXT_UCOLOR_G2, (const u16 *)L"■" );
 		}
-		PutStringUTF16( 230, (int)(bar_height-11+48+dots_per_item * (s_menu_display_start - s_list_start)), TXT_UCOLOR_G2, (const u16 *)L"■" );
-		PutStringUTF16( 230, 48+107, TXT_UCOLOR_G0, (const u16 *)L"□" );
+		PutStringUTF16( BAR_ZERO_X, (int)(BAR_ZERO_Y+bar_height-SQUARE_SIZE+dots_per_item * (s_menu_display_start - s_list_start)), TXT_UCOLOR_G2, (const u16 *)L"■" );
+		PutStringUTF16( BAR_ZERO_X, BAR_ZERO_Y+BAR_HEIGHT_MAX, TXT_UCOLOR_G0, (const u16 *)L"□" );
 	}
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"COUNTRY SELECT" );
 	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_CYAN, (const u16 *)L"CANCEL" );
@@ -296,8 +323,8 @@ int SelectCountryMain( void )
 	}
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || tp_select ) {				// メニュー項目への分岐
-		TSD_SetCountry( s_countryCode );
-		//TSD_SetFlagCountry( TRUE );							// 国名入力フラグを立てる
+		TSD_SetCountry( s_countryCode );						// 国コード設定
+		//TSD_SetFlagCountry( TRUE );							// 国コード入力フラグを立てる
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::

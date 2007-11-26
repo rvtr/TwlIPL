@@ -128,10 +128,6 @@ static void BannerInit( void )
 	
 	// OBJModeの設定
     GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_128K);     // 2D mapping mode
-    
-    // パレットのロード
-    // どのバナーもdata/EmptyBanner.bnrのパレットと同じものを使う事前提
-	GX_LoadOBJPltt( empty_banner->v1.pltt, 0, BNR_PLTT_SIZE );
 	
 	//OBJATTRの初期化……表示前には値を弄る
 	for(l=0;l<MAX_SHOW_BANNER;l++)
@@ -265,6 +261,10 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 		int num = cursor/FRAME_PER_SELECT - 2 + l;
 		if(-1 < num && num < LAUNCHER_TITLE_LIST_NUM){
 			banner_oam_attr[l].charNo = image_index_list[num]*4;
+		    // パレットのロード
+		    // 必要なパレットが変わるので、毎度毎度入れ替え
+			GX_LoadOBJPltt( titleprop[num].pBanner->v1.pltt, (u16)(num * BNR_PLTT_SIZE), BNR_PLTT_SIZE );
+			G2_SetOBJMode(&banner_oam_attr[l], GX_OAM_MODE_NORMAL, num);
 			
 			if(l == 2 || l == 3)	// 中央付近で大きくなったり小さくなったりする二つのバナー
 			{
@@ -330,7 +330,7 @@ void LauncherInit( TitleProperty *pTitleList )
 	
 	GX_SetVisiblePlane( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1 | GX_PLANEMASK_BG2 | GX_PLANEMASK_OBJ );
 	G2_SetBlendAlpha(GX_BLEND_PLANEMASK_BG2, 
-			GX_BLEND_PLANEMASK_BG0 | GX_BLEND_PLANEMASK_BG1 | GX_BLEND_PLANEMASK_OBJ, 0,31);
+			GX_BLEND_PLANEMASK_BG0 | GX_BLEND_PLANEMASK_BG1 | GX_BLEND_PLANEMASK_OBJ, 0,ALPHA_MAX);
 
 	GX_DispOn();
 	GXS_DispOn();
@@ -387,7 +387,7 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
 	}
 }
 
-// LauncherMainのSelectSomethingByTPで使うSelectSomethingFuncの実装
+// ProcessPadsのSelectSomethingByTPで使うSelectSomethingFuncの実装
 static BOOL SelectCenterFunc( u16 *csr, TPData *tgt )
 {
 	// 単純な実装例
