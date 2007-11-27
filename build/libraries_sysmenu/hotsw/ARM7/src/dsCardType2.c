@@ -4,7 +4,8 @@
  *---------------------------------------------------------------------------*/
 
 #include 	<twl.h>
-#include 	<sysmenu.h>
+#include	<blowfish.h>
+#include 	<dsCardType2.h>
 
 // Define Data --------------------------------------------------------------
 #define		SECURE_SEGMENT_NUM					4

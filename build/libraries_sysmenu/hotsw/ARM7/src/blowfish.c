@@ -11,7 +11,7 @@
   in whole or in part, without the prior written consent of Nintendo.
  *---------------------------------------------------------------------------*/
 #include <twl.h>
-#include <sysmenu.h>
+#include <blowfish.h>
 
 #define MAXKEYBYTES			56          /* 448 bits */
 #define	N					16

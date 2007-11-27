@@ -17,6 +17,9 @@
 
 #include	<nitro/card/types.h>
 #include	<sysmenu.h>
+#include	<blowfish.h>
+#include	<dsCardType1.h>
+#include	<dsCardType2.h>
 
 // define -------------------------------------------------------------------
 #define		STACK_SIZE							1024		// スタックサイズ

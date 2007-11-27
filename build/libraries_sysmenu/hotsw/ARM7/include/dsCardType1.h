@@ -11,7 +11,7 @@ extern "C" {
 
 
 #include 	<twl.h>
-#include 	"hotsw.h"
+#include 	<sysmenu/hotsw.h>
 
 // ===========================================================================
 // 	Function Describe

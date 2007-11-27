@@ -18,10 +18,7 @@
 #ifndef SYSM_HOTSW_H_
 #define SYSM_HOTSW_H_
 
-#include <sysmenu/hotsw/common/blowfish.h>
 #include <sysmenu/hotsw/common/hotsw.h>
-#include <sysmenu/hotsw/common/dsCardType1.h>
-#include <sysmenu/hotsw/common/dsCardType2.h>
 
 #ifdef __cplusplus
 extern "C" {

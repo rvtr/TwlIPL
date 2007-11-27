@@ -4,7 +4,8 @@
  *---------------------------------------------------------------------------*/
 
 #include 	<twl.h>
-#include 	<sysmenu.h>
+#include	<blowfish.h>
+#include 	<dsCardType1.h>
 
 // Define data --------------------------------------------------------------
 #define 	PAGE_SIZE								512
