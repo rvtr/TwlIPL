@@ -257,19 +257,19 @@ CardBootFunction;
 
 // Function prototype -------------------------------------------------------
 // 活栓挿抜処理の初期化
-void Cardm_Init(void);
+void HOTSW_Init(void);
 
 // カード起動。Normalモード→Secureモード→Gameモードを行う
-BOOL Card_Boot(void);
+BOOL HOTSW_Boot(void);
 
 // ARM7,9の常駐モジュールを展開する関数
-void Card_LoadStaticModule(void);
+void HOTSW_LoadStaticModule(void);
 
 // Boot Segment バッファの指定
-void Card_SetBootSegmentBuffer(void* buf, u32 size);
+void HOTSW_SetBootSegmentBuffer(void* buf, u32 size);
 
 // Secure Segment バッファの指定
-void Card_SetSecureSegmentBuffer(void* buf, u32 size);
+void HOTSW_SetSecureSegmentBuffer(void* buf, u32 size);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -11,7 +11,7 @@ extern "C" {
 
 
 #include 	<twl.h>
-#include 	"Card.h"
+#include 	"hotsw.h"
 
 // ===========================================================================
 // 	Function Describe

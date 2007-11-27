@@ -31,7 +31,7 @@
 #include <sysmenu/boot.h>
 #include <sysmenu/settings.h>
 #include <sysmenu/memorymap.h>
-#include <sysmenu/card.h>
+#include <sysmenu/hotsw.h>
 #include <sysmenu/acsign.h>
 #include <sysmenu/mb_loader.h>
 

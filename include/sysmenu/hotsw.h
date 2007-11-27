@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlIPL
-  File:     card.h
+  File:     hotsw.h
 
   Copyright 2007 Nintendo.  All rights reserved.
 
@@ -15,13 +15,13 @@
   $Author:  $
  *---------------------------------------------------------------------------*/
 
-#ifndef SYSM_CARD_H_
-#define SYSM_CARD_H_
+#ifndef SYSM_HOTSW_H_
+#define SYSM_HOTSW_H_
 
-#include <sysmenu/card/common/blowfish.h>
-#include <sysmenu/card/common/Card.h>
-#include <sysmenu/card/common/dsCardType1.h>
-#include <sysmenu/card/common/dsCardType2.h>
+#include <sysmenu/hotsw/common/blowfish.h>
+#include <sysmenu/hotsw/common/hotsw.h>
+#include <sysmenu/hotsw/common/dsCardType1.h>
+#include <sysmenu/hotsw/common/dsCardType2.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,5 +31,5 @@ extern "C" {
 } /* extern "C" */
 #endif
 
-/* SYSM_CARD_H_ */
+/* SYSM_HOTSW_H_ */
 #endif

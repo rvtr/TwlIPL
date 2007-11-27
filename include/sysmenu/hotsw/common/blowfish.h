@@ -15,7 +15,7 @@
 
 
 #include <twl/types.h>
-#include "Card.h"
+#include "hotsw.h"
 
 #ifdef __cplusplus
 extern "C" {
