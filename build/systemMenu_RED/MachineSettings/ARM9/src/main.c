@@ -18,7 +18,6 @@
 #include <twl.h>
 #include "misc.h"
 #include "MachineSetting.h"
-#include "nand_app_hack.h"
 
 // extern data-----------------------------------------------------------------
 
@@ -77,12 +76,6 @@ void TwlMain(void)
 	// ::::::::::::::::::::::::::::::::::::::::::::::
 	if( SYSM_ReadTWLSettingsFile() ) {
 		SYSM_CaribrateTP();
-	}
-	
-	{
-		// ファイルシステム切り替え応急処置
-//		FS_IdentifyTitle(0x4d534554);//MSET
-		FS_IdentifyTitle(0x5445534d);//TESM ※今はmakerom.TWLのバグで逆になっている。
 	}
 	
 	InitBG();

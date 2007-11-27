@@ -54,14 +54,6 @@ static void ie_subphandler( void )
 // ブート準備をして、ARM7からの通知を待つ。
 void BOOT_Ready( void )
 {
-    // メモリクリアリストの設定
-    static u32 clr_list[] =
-    {
-        HW_ITCM, HW_ITCM_SIZE,
-        //HW_DTCM, HW_DTCM_SIZE,
-        NULL
-    };
-
     int i;
 
     // エントリアドレスの正当性をチェックし、無効な場合は無限ループに入る。
@@ -98,8 +90,20 @@ void BOOT_Ready( void )
         reg_GX_VRAMCNT_WRAM = pWRAMREGS->main_wrambnk_01;
     }
 	
+	// ROMヘッダバッファをコピー
+	MI_CpuCopy32( (void *)HW_TWL_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
+	
     // SDK共通リブート
-    OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x24), clr_list );
+	{
+	    // メモリクリアリストの設定
+	    static u32 clr_list[] =
+	    {
+	        HW_ITCM, HW_ITCM_SIZE,
+	        //HW_DTCM, HW_DTCM_SIZE,
+	        NULL
+	    };
+	    OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x24), clr_list );
+	}
 }
 
 

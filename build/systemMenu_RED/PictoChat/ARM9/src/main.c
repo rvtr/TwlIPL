@@ -18,7 +18,6 @@
 #include <twl.h>
 #include "misc.h"
 #include "PictoChat.h"
-#include "nand_app_hack.h"
 
 // extern data-----------------------------------------------------------------
 
@@ -60,12 +59,6 @@ void TwlMain(void)
 	
 	// システムの初期化------------------
 	InitAllocator();
-	
-	{
-		// ファイルシステム切り替え応急処置
-//		FS_IdentifyTitle(0x50434854);//PCHT
-		FS_IdentifyTitle(0x54484350);//THCP ※今はmakerom.TWLのバグで逆になっている。
-	}
 	
 	InitBG();
 	PictoChatInit();

@@ -102,13 +102,14 @@ typedef struct SYSM_work {
 	vu16			isOnDebugger :1;				// デバッガ動作か？
 	vu16			isExistCard :1;					// 有効なNTR/TWLカードが存在するか？
 	vu16			isCardStateChanged :1;			// カード状態更新フラグ
-	vu16			isLoadSucceeded :1;
+	vu16			isLoadSucceeded :1;				// アプリロード完了？
+	vu16			isCardBoot :1;					// カードブートか？
 #ifdef DEBUG_USED_CARD_SLOT_B_
 	vu16			isValidCardBanner :1;
 	vu16			is1stCardChecked :1;
-	vu16			rsv :5;
+	vu16			rsv :4;
 #else
-	vu16			rsv :7;
+	vu16			rsv :6;
 #endif
 	
 	u16				cardHeaderCrc16;				// カード検出時に算出したROMヘッダCRC16（ARM9側でコピーして使用する側）

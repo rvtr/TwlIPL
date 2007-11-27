@@ -21,6 +21,7 @@
 #include "spi.h"
 
 // define data-----------------------------------------------------------------
+#define CARD_BANNER_INDEX			( LAUNCHER_TITLE_LIST_NUM - 1 )
 
 typedef struct BannerCheckParam {
 	u8		*pSrc;
@@ -28,8 +29,8 @@ typedef struct BannerCheckParam {
 }BannerCheckParam;
 
 // extern data-----------------------------------------------------------------
-extern void SYSM_SetMountInfo( NAMTitleId titleID );				// マウント情報のセット
-extern void SYSM_SetBootSRLPath( NAMTitleId titleID );				// SRL起動パスのセット
+extern void SYSMi_SetLauncherMountInfo( void );
+extern void SYSM_SetBootAppMountInfo( NAMTitleId titleID );		// マウント情報のセット
 
 // function's prototype-------------------------------------------------------
 static TitleProperty *SYSMi_CheckShortcutBoot( void );
@@ -140,6 +141,9 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 #ifdef SYSM_DEBUG_
 	pSysm = SYSMi_GetWork();
 #endif /* SYSM_DEBUG_ */
+	
+	// ランチャーのマウント情報セット
+	SYSMi_SetLauncherMountInfo();
 	
     // ARM7コンポーネント用プロテクションユニット領域変更
     OS_SetProtectionRegion( 2, SYSM_OWN_ARM7_MMEM_ADDR, 512KB );
@@ -307,10 +311,10 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 			
 			// バナーデータのリード
 			if( SYSM_GetCardRomHeader()->banner_offset &&
-				SYSMi_ReadCardBannerFile( SYSM_GetCardRomHeader()->banner_offset, &s_bannerBuf[ 0 ] ) ) {
-				pTitleList_Card->pBanner = &s_bannerBuf[ 0 ];
+				SYSMi_ReadCardBannerFile( SYSM_GetCardRomHeader()->banner_offset, &s_bannerBuf[ CARD_BANNER_INDEX ] ) ) {
+				pTitleList_Card->pBanner = &s_bannerBuf[ CARD_BANNER_INDEX ];
 			}else {
-				MI_CpuClearFast( &s_bannerBuf[ 0 ], sizeof(TWLBannerFile) );
+				MI_CpuClearFast( &s_bannerBuf[ CARD_BANNER_INDEX ], sizeof(TWLBannerFile) );
 			}
 		}
 		
@@ -363,9 +367,13 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 	int l;
 	int gotten;
 	NAMTitleId titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
-	gotten = NAM_GetTitleList( &titleIdArray[ 1 ], LAUNCHER_TITLE_LIST_NUM - 1 ) + 1;
 	
-	for(l=1;l<gotten;l++)
+	if( listNum > LAUNCHER_TITLE_LIST_NUM ) {
+		OS_TPrintf( "Warning: TitleList_Nand num over LAUNCHER_TITLE_LIST_NUM(%d)\n", LAUNCHER_TITLE_LIST_NUM );
+	}
+	gotten = NAM_GetTitleList( &titleIdArray[ 0 ], LAUNCHER_TITLE_LIST_NUM - 1 );
+	
+	for(l=0;l<gotten;l++)
 	{
 		//ヘッダからバナーを読み込む
 		FSFile  file[1];
@@ -429,26 +437,18 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 		titleIdArray[l] = 0;
 	}
 
-#if 0
-	for(l=1;l<listNum;l++)
-	{
-		pTitleList_Nand[l].titleID = 0;
-		pTitleList_Nand[l].pBanner = 0;
-	}
-#else
 	// カードアプリ部分を除いたリストクリア
 	MI_CpuClearFast( &pTitleList_Nand[ 1 ], sizeof(TitleProperty) * ( listNum - 1 ) );
-#endif
 	
 	listNum = (gotten<listNum) ? gotten : listNum;
 	
-	for(l=1;l<listNum;l++)
+	for(l=0;l<listNum;l++)
 	{
-		pTitleList_Nand[l].titleID = titleIdArray[l];
-		pTitleList_Nand[l].pBanner = &s_bannerBuf[l];
+		pTitleList_Nand[l+1].titleID = titleIdArray[l];
+		pTitleList_Nand[l+1].pBanner = &s_bannerBuf[l];
 		if( titleIdArray[l] ) {
-			pTitleList_Nand[l].flags.isValid = TRUE;
-			pTitleList_Nand[l].flags.media = TITLE_MEDIA_NAND;
+			pTitleList_Nand[l+1].flags.isValid = TRUE;
+			pTitleList_Nand[l+1].flags.media = TITLE_MEDIA_NAND;
 		}
 	}
 	// return : *TitleProperty Array
@@ -657,7 +657,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 {
 #define THREAD_PRIO 17
-#define STACK_SIZE 5120 // 適当
+#define STACK_SIZE 0xc00
 	static u64 stack[ STACK_SIZE / sizeof(u64) ];
 	
 	// アプリ未ロード状態なら、ロード開始
@@ -670,6 +670,10 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 	// アプリロード済みで、再配置要求ありなら、再配置
 		SYSMi_Relocate();
 		SYSMi_GetWork()->isLoadSucceeded = TRUE;
+	}
+	
+	if( pBootTitle->flags.media == TITLE_MEDIA_CARD ) {
+		SYSMi_GetWork()->isCardBoot = TRUE;
 	}
 }
 
@@ -739,8 +743,7 @@ AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 	
 	
 	// マウント情報の登録
-	SYSM_SetMountInfo  ( pBootTitle->titleID );
-	SYSM_SetBootSRLPath( pBootTitle->titleID );
+	SYSM_SetBootAppMountInfo  ( pBootTitle->titleID );
 	
 	BOOT_Ready();	// never return.
 	
