@@ -21,6 +21,7 @@ TARGET_FIRM			=	SYSTEMMENU
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 
+
 #----------------------------------------------------------------------------
 
 SUBDIRS				=	ARM7
