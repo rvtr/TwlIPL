@@ -26,10 +26,7 @@
 #include <firm/pm.h>
 #include <firm/aes.h>
 #include <firm/fatfs.h>
-/*
-#include <firm/nvram.h>
-#include <firm/gcd.h>
-*/
+#include <firm/fs.h>
 
 /* FIRM_H_ */
 #endif

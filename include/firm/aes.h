@@ -17,12 +17,17 @@
 #ifndef FIRM_AES_H_
 #define FIRM_AES_H_
 
-#ifdef SDK_ARM7
+#define PXI_FIFO_TAG_DATA   PXI_FIFO_TAG_USER_0
+
 #include <twl/aes/common/type.h>
+
+#ifdef SDK_ARM7
 #include <firm/aes/ARM7/aes_init.h>
 #include <firm/aes/ARM7/aes_util.h>
 #include <firm/aes/ARM7/aes_ids.h>
-#endif // SDK_ARM7
+#else // !SDK_ARM7
+#include <firm/aes/ARM9/aes_init.h>
+#endif // !SDK_ARM7
 
 /* FIRM_AES_H_ */
 #endif

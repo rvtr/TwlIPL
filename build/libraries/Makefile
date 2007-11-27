@@ -25,17 +25,12 @@ SUBDIRS		= \
 			init \
 			os \
 			pxi \
+			fs \
 			mi \
 			fatfs \
 			aes \
 			pm \
 			gcd \
-
-#			syscall \
-#			nvram \
-#			acsign \
-#			acsign_ecc \
-#			devices \
 
 #----------------------------------------------------------------------------
 

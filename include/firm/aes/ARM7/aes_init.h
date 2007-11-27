@@ -25,7 +25,28 @@ extern "C" {
 /*---------------------------------------------------------------------------*
     ä÷êîíËã`
  *---------------------------------------------------------------------------*/
-void AESi_InitGameKeys( u8 game_code[4] );
+/*---------------------------------------------------------------------------*
+  Name:         AESi_InitKeysForApp
+
+  Description:  set IDs depending on the application.
+                you SHOULD NOT touch any ID registers after this call.
+
+  Arguments:    game_code   game code
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void AESi_InitKeysForApp( u8 game_code[4] );
+
+/*---------------------------------------------------------------------------*
+  Name:         AESi_RecvSeed
+
+  Description:  set SEED/KEY from ARM9 via PXI.
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void AESi_RecvSeed( void );
 
 #ifdef __cplusplus
 } /* extern "C" */

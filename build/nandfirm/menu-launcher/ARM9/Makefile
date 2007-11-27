@@ -40,6 +40,7 @@ MAKEROM_FLAGS		+=	-F
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
+LLIBRARIES	+=	libese$(TWL_LIBSUFFIX).a
 
 #----------------------------------------------------------------------------
 

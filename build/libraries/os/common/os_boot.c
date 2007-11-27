@@ -44,6 +44,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     void *wram_reg = rom_header->s.main_wram_config_data;
     BOOL scfg = TRUE;   // no touch
     BOOL jtag = FALSE;  // no touch
+    BOOL ds = FALSE;    // TWL mode
     static u32  clr_list[32];
     int i = 0;
 
@@ -54,12 +55,11 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     /* ITCM全クリア */
     clr_list[i++] = (u32)HW_ITCM;
     clr_list[i++] = (u32)HW_ITCM_SIZE;
-    /* FS Parameters領域のクリア (暫定) */
-//    clr_list[i++] = (u32)HW_TWL_FS_MOUNT_INFO_BUF;  // 0x02ffdc00 - 0x02ffddff
-//    clr_list[i++] = (u32)HW_TWL_ROM_HEADER_BUF - (u32)HW_TWL_FS_MOUNT_INFO_BUF;
-    /* PSEG1/RED Reserved領域のクリア (暫定) */
-    clr_list[i++] = (u32)HW_MAIN_MEM_SHARED;        // 0x02fff000 - 0x02fffa7f
-    clr_list[i++] = (u32)HW_PSEG1_RESERVED_1_END - (u32)HW_MAIN_MEM_SHARED;
+    /* PSEG1 Reserved領域のクリア (暫定) */
+    clr_list[i++] = (u32)HW_MAIN_MEM_SHARED;        // 0x02fff000 - 0x02fff7ff
+    clr_list[i++] = (u32)HW_PSEG1_RESERVED_0_END - (u32)HW_MAIN_MEM_SHARED;
+    clr_list[i++] = (u32)HW_PSEG1_RESERVED_1;        // 0x02fffa00 - 0x02fffa7f
+    clr_list[i++] = (u32)HW_PSEG1_RESERVED_1_END - (u32)HW_PSEG1_RESERVED_1;
     /* System Shared領域のクリア (暫定) */
     clr_list[i++] = (u32)HW_BOOT_CHECK_INFO_BUF;    // 0x02fffc00 - 0x02fffc1f
     clr_list[i++] = (u32)HW_BOOT_CHECK_INFO_BUF_END - (u32)HW_BOOT_CHECK_INFO_BUF;
@@ -78,7 +78,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     }
 #endif  // SDK_ARM7
     clr_list[i++] = NULL;
-    REBOOT_Execute(entry, wram_reg, clr_list, code_buf, stack_top, scfg, jtag);
+    REBOOT_Execute(entry, wram_reg, clr_list, code_buf, stack_top, scfg, jtag, ds);
     OS_Terminate();
 }
 

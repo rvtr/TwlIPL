@@ -82,23 +82,19 @@ ifeq	($(CODEGEN_PROC),ARM9)
 
 FIRM_LIBS_BASE	?= \
 			   libos \
-			   libmi \
 			   libpxi \
-#			   libgcd \
-#			   libacsign \
+			   libfs \
+			   libmi \
 
 else #	($(CODEGEN_PROC),ARM7)
 
 FIRM_LIBS_BASE	?= \
 			   libos_sp \
-			   libfatfs_sp \
 			   libpxi_sp \
+			   libfs_sp \
 			   libaes_sp \
 			   libpm_sp \
-#			   libnvram_sp \
-#			   libgcd_sp \
-#			   libacsign_sp \
-#			   libfirmsd_sp \
+			   libfatfs_sp \
 
 endif
 
@@ -126,7 +122,6 @@ MAKEFIRM_FLAGS	?=
 GINCLUDES		:= $(FIRM_INCDIR) $(GINCLUDES)
 GLIBRARY_DIRS		:= $(FIRM_LIBDIR) $(GLIBRARY_DIRS)
 GLIBRARIES		:= $(FIRM_LIBS)   $(GLIBRARIES)
-
 
 #----------------------------------------------------------------------------
 #  TWLFIRM_INSTALL_ROOT

@@ -28,20 +28,27 @@ extern "C" {
 typedef enum
 {
     // from ARM7
-    FIRM_PXI_ID_COLDBOOT = 1,
-    FIRM_PXI_ID_WARMBOOT = 2,
+    FIRM_PXI_ID_COLDBOOT = 1,   // _start
+    FIRM_PXI_ID_WARMBOOT = 2,   // _start
 
-    FIRM_PXI_ID_INIT_ARM7 = 7,
-    FIRM_PXI_ID_LOAD_HEADER = 6,
-    FIRM_PXI_ID_LOAD_STATIC = 5,
+    FIRM_PXI_ID_INIT_ARM7 = 7,  // PXI_InitFifoFIRM
 
-    // *_Loaderóp (ARM7Å®ARM9)
-    FIRM_PXI_ID_LOAD_PIRIOD = 1,
+    FIRM_PXI_ID_LOAD_HEADER = 6,    // FATFS_LoadHeader
+    FIRM_PXI_ID_LOAD_STATIC = 5,    // FATFS_LoadStatic
+
+    FIRM_PXI_ID_LOAD_PIRIOD = 1,    // *_LoadBuffer
 
     // from ARM9
-    FIRM_PXI_ID_INIT_ARM9 = 9,
-    FIRM_PXI_ID_AUTH_HEADER = 10,
-    FIRM_PXI_ID_AUTH_STATIC = 11,
+    FIRM_PXI_ID_INIT_MMEM = 3,  // _start
+
+    FIRM_PXI_ID_INIT_ARM9 = 9,  // PXI_InitFifoFIRM
+
+    FIRM_PXI_ID_AUTH_HEADER = 10,   // MI_LoadHeader
+    FIRM_PXI_ID_AUTH_STATIC = 11,   // MI_LoadStatic
+
+    FIRM_PXI_ID_SET_PATH = 4,       // main (nandfirm)
+    FIRM_PXI_ID_DONE_HEADER = 5,    // main (nandfirm)
+    FIRM_PXI_ID_DONE_STATIC = 6,    // main (nandfirm)
 
     // from both of ARM9 and ARM7
     FIRM_PXI_ID_NULL = 0,

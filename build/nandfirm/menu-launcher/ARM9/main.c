@@ -40,6 +40,8 @@ static const u8 rsa_key[128] =
 static u8 acHeap[RSA_HEAP_SIZE] __attribute__ ((aligned (32)));
 static SVCSignHeapContext acPool;
 
+#define MENU_TITLE_ID 0x0001000152434e4cULL
+
 /*
     PROFILE_ENABLE を定義するとある程度のパフォーマンスチェックができます。
     利用するためには、main.cかどこかに、u32 profile[256]; u32 pf_cnt = 0; を
@@ -52,7 +54,7 @@ static SVCSignHeapContext acPool;
 #endif
 
 #ifdef PROFILE_ENABLE
-#define PROFILE_MAX  256
+#define PROFILE_MAX  16
 u32 profile[PROFILE_MAX];
 u32 pf_cnt = 0;
 #endif
@@ -64,11 +66,18 @@ u32 pf_cnt = 0;
 ***************************************************************/
 static void PreInit(void)
 {
+    static const OSMountInfo    firmSettings[] =
+    {
+        { 'A', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand",    "/" },
+        { 0 }
+    };
     /*
      メインメモリ関連
     */
     // SHARED領域クリア (ここだけでOK?)
     MIi_CpuClearFast( 0, (void*)HW_PXI_SIGNAL_PARAM_ARM9, HW_MMEMCHECKER_MAIN-HW_PXI_SIGNAL_PARAM_ARM9 );
+    // FS_MOUNT領域の初期化
+    MI_CpuCopy8(firmSettings, (char*)HW_TWL_FS_MOUNT_INFO_BUF, sizeof(firmSettings));
 
     /*
         FromBrom関連
@@ -82,7 +91,7 @@ static void PreInit(void)
 /***************************************************************
     PostInit
 
-    MI_LoadHeader前にかなり(数100msec)時間があるので、可能なら
+    FS_LoadHeader前にかなり(数100msec)時間があるので、可能なら
     OS_Init後にいろいろ処理したい！
     メインメモリの初期化
 ***************************************************************/
@@ -140,14 +149,14 @@ void TwlMain( void )
 #endif
 
     OS_InitFIRM();
-#ifdef PROFILE_ENABLE
     OS_EnableIrq();
+    OS_EnableInterrupts();
+
+#ifdef PROFILE_ENABLE
     OS_InitTick();
     // 1: after PXI
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
-
-    SVC_InitSignHeap( &acPool, acHeap, sizeof(acHeap) );
 
     PostInit();
 
@@ -156,34 +165,94 @@ void TwlMain( void )
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
 
-    // load menu
-    if ( MI_LoadHeader( &acPool, RSA_KEY_ADDR ) && CheckHeader() && MI_LoadStatic() )
-    {
+    // RSA用ヒープ設定
+    SVC_InitSignHeap( &acPool, acHeap, sizeof(acHeap) );
+    // HMAC用鍵準備
+    FS_SetDigestKey( NULL );
+
 #ifdef PROFILE_ENABLE
-        // 127: before Boot
-        pf_cnt = PROFILE_MAX-1;
-        profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-        {
-            int i;
-            OS_TPrintf("\n[ARM9] Begin\n");
-            for (i = 0; i < PROFILE_MAX; i++)
-            {
-                OS_TPrintf("0x%08X\n", profile[i]);
-            }
-            OS_TPrintf("\n[ARM9] End\n");
-            PXI_NotifyID( FIRM_PXI_ID_NULL );
-        }
+    // 3: after SVC_InitSignHeap
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
 
-        OS_BootFromFIRM();
+    FS_Init(FS_DMA_NOT_USE);
+
+#ifdef PROFILE_ENABLE
+    // 4: after FS_Init
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+#endif
+
+    if ( !FS_ResolveSrl( MENU_TITLE_ID ) )
+    {
+        goto end;
     }
 
+#ifdef PROFILE_ENABLE
+    // 5: after FS_ResolveSrl
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+#endif
+
+    PXI_NotifyID( FIRM_PXI_ID_SET_PATH );
+
+#ifdef PROFILE_ENABLE
+    // 6: after PXI
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+#endif
+
+    if ( !FS_LoadHeader(&acPool, RSA_KEY_ADDR ) && CheckHeader() )
+    {
+        goto end;
+    }
+
+#ifdef PROFILE_ENABLE
+    // 7: after FS_LoadHeader
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+#endif
+
+    PXI_NotifyID( FIRM_PXI_ID_DONE_HEADER );
+
+#ifdef PROFILE_ENABLE
+    // 8: after PXI
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+#endif
+
+    if ( !FS_LoadStatic() )
+    {
+        goto end;
+    }
+
+#ifdef PROFILE_ENABLE
+    // 9: after FS_LoadStatic
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+#endif
+
+    PXI_NotifyID( FIRM_PXI_ID_DONE_STATIC );
+
+#ifdef PROFILE_ENABLE
+    // 15: after PXI
+    pf_cnt = PROFILE_MAX-1;
+    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+    {
+        int i;
+        OS_TPrintf("\n[ARM9] Begin\n");
+        for (i = 0; i < PROFILE_MAX; i++)
+        {
+            OS_TPrintf("0x%08X\n", profile[i]);
+        }
+        OS_TPrintf("\n[ARM9] End\n");
+        PXI_NotifyID( FIRM_PXI_ID_NULL );
+    }
+#endif
+
+    OS_BootFromFIRM();
+
+end:
     EraseAll();
 
     // failed
     while (1)
     {
-        PXI_NotifyID( FIRM_PXI_ID_NULL );
+        PXI_NotifyID( FIRM_PXI_ID_ERR );
     }
 }
 

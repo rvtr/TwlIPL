@@ -75,6 +75,19 @@ BOOL FATFS_SaveSrlFilename( FATFSMediaType media, const char* filename );
 int FATFS_GetSrlDescriptor( void );
 
 /*---------------------------------------------------------------------------*
+  Name:         FATFS_SetSrlDescriptor
+
+  Description:  set current file descriptor that was opened outside
+
+                オープン済みのファイルIDをmenu_fdにセットします。
+
+  Arguments:    None
+
+  Returns:      int
+ *---------------------------------------------------------------------------*/
+void FATFS_SetSrlDescriptor( int fd );
+
+/*---------------------------------------------------------------------------*
   Name:         FATFS_LoadBuffer
 
   Description:  load data and pass to ARM9 via WRAM[B]

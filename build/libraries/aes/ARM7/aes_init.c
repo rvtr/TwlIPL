@@ -16,22 +16,23 @@
  *---------------------------------------------------------------------------*/
 
 #include <firm/aes.h>
+#include <firm/pxi.h>
+
+#include <twl/aes/ARM7/lo.h>
 
 /*---------------------------------------------------------------------------*
-  Name:         AESi_InitGameKeys
+  Name:         AESi_InitKeysForApp
 
   Description:  set IDs depending on the application.
                 you SHOULD NOT touch any ID registers after this call.
 
-  Arguments:    u8[4]   game code
+  Arguments:    game_code   game code
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void AESi_InitGameKeys( u8 game_code[4] )
+void AESi_InitKeysForApp( u8 game_code[4] )
 {
-    while (reg_AES_AES_CNT & REG_AES_AES_CNT_E_MASK)
-    {
-    }
+    AESi_WaitKey();
 
     reg_AES_AES_ID_B2 = AES_IDS_ID0_C(game_code);
     reg_AES_AES_ID_B3 = AES_IDS_ID0_D(game_code);
@@ -69,4 +70,29 @@ void AESi_InitGameKeys( u8 game_code[4] )
     reg_AES_AES_KEY_D1 = 11;
     reg_AES_AES_KEY_D2 = 12;
     reg_AES_AES_KEY_D3 = 12;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         AESi_RecvSeed
+
+  Description:  set SEED/KEY from ARM9 via PXI.
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void AESi_RecvSeed( void )
+{
+    AESKey seed;
+    PXI_RecvDataByFifo( PXI_FIFO_TAG_DATA, &seed, AES_BLOCK_SIZE );
+    AESi_WaitKey();
+    AESi_SetKeySeedA((AESKeySeed*)&seed);    // APP
+    //AESi_WaitKey();
+    //AESi_SetKeySeedB((AESKeySeed*)&seed);    // APP & HARD
+    //AESi_WaitKey();
+    //AESi_SetKeySeedC((AESKeySeed*)&seed);    //
+    //AESi_WaitKey();
+    //AESi_SetKeySeedD((AESKeySeed*)&seed);    // HARD
+    AESi_WaitKey();
+    AESi_SetKeyC(&seed);        // Direct
 }

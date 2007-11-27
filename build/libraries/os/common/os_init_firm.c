@@ -89,7 +89,7 @@ void OS_InitFIRM(void)
 
     //---- Init Card
 #ifndef SDK_SMALL_BUILD
-//    CARD_Init();
+    CARD_Init();
 #endif
 
     //---- Init Power Manager

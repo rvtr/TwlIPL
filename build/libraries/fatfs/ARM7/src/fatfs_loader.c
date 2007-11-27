@@ -19,6 +19,7 @@
 
 #include <firm.h>
 #include <twl/os/common/format_rom.h>
+#include <twl/aes/ARM7/lo.h>
 #include <rtfs.h>
 #include <devices/sdif_reg.h>
 
@@ -101,6 +102,22 @@ BOOL FATFS_OpenSpecifiedSrl( const char* menufile )
     return TRUE;
 }
 
+static void OverrideDefaultMountInfo( void )
+{
+    static const OSMountInfo    DefaultSettings[] =
+    {
+        { 'A', OS_MOUNT_DEVICE_SD,   OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "sdmc",    "/" },
+        { 'B', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_WRAM, 0,                               0, 0, "nand",    "/" },   // ユーザーはこのアーカイブを使えない(RW不可)
+        { 'C', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 1, OS_MOUNT_RSC_WRAM, 0,                               0, 0, "nand2",   "/" },   // ユーザーはこのアーカイブを使えない(RW不可)
+        { 'D', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "shared2", "nand2:/shared2" },
+        { 'E', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "photo",   "nand2:/photo" },
+        { 'F', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPrv", NULL },
+        { 'G', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPub", NULL },
+        { 0, },
+    };
+    MI_CpuCopy8(DefaultSettings, (char*)HW_TWL_FS_MOUNT_INFO_BUF, sizeof(DefaultSettings));
+}
+
 /*---------------------------------------------------------------------------*
   Name:         FATFS_SaveSrlFilename
 
@@ -159,6 +176,7 @@ BOOL FATFS_SaveSrlFilename( FATFSMediaType media, const char* filename )
         else    // \0が連続しているなら終端
         {
             MI_CpuClear8( dest, HW_TWL_ROM_HEADER_BUF - (u32)dest );    // 残りバッファのクリア
+            OverrideDefaultMountInfo(); // デフォルトマウント情報を書いておく
             break;
         }
     }
@@ -169,9 +187,9 @@ BOOL FATFS_SaveSrlFilename( FATFSMediaType media, const char* filename )
 /*---------------------------------------------------------------------------*
   Name:         FATFS_GetSrlDescriptor
 
-  Description:  open specified menu file
+  Description:  retrieve current file descriptor
 
-                任意のファイルをオープンし、ファイルIDをmenu_fdにセットします。
+                menu_fdを返します。
 
   Arguments:    None
 
@@ -180,6 +198,22 @@ BOOL FATFS_SaveSrlFilename( FATFSMediaType media, const char* filename )
 int FATFS_GetSrlDescriptor( void )
 {
     return menu_fd;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         FATFS_SetSrlDescriptor
+
+  Description:  set current file descriptor that was opened outside
+
+                オープン済みのファイルIDをmenu_fdにセットします。
+
+  Arguments:    None
+
+  Returns:      int
+ *---------------------------------------------------------------------------*/
+void FATFS_SetSrlDescriptor( int fd )
+{
+    menu_fd = fd;
 }
 
 #define HEADER_SIZE 0x1000
@@ -346,21 +380,8 @@ BOOL FATFS_LoadHeader( void )
 #endif
 
     // set id depends on game_code and seed to use (or all?)
-    {
-        AESKeySeed seed;
-        AESi_InitGameKeys((u8*)rh->s.game_code);
-        PXI_RecvDataByFifo( PXI_FIFO_TAG_DATA, &seed, AES_BLOCK_SIZE );
-        AESi_WaitKey();
-        AESi_SetKeySeedA(&seed);    // APP
-        //AESi_WaitKey();
-        //AESi_SetKeySeedB(&seed);    // APP & HARD
-        //AESi_WaitKey();
-        //AESi_SetKeySeedC(&seed);    //
-        //AESi_WaitKey();
-        //AESi_SetKeySeedD(&seed);    // HARD
-        AESi_WaitKey();
-        AESi_SetKeyC(&seed);        // Direct
-    }
+    AESi_InitKeysForApp((u8*)rh->s.game_code);
+    AESi_RecvSeed();
 
     return TRUE;
 }

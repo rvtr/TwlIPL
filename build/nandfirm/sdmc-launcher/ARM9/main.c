@@ -56,6 +56,7 @@ static void PreInit(void)
     */
     // SHARED—ÌˆæƒNƒŠƒA (‚±‚±‚¾‚¯‚ÅOK?)
     MIi_CpuClearFast( 0, (void*)HW_PXI_SIGNAL_PARAM_ARM9, HW_MMEMCHECKER_MAIN-HW_PXI_SIGNAL_PARAM_ARM9 );
+    MIi_CpuClearFast( 0, (void*)HW_TWL_FS_MOUNT_INFO_BUF, HW_TWL_ROM_HEADER_BUF-HW_TWL_FS_MOUNT_INFO_BUF );
 
     /*
         FromBromŠÖ˜A

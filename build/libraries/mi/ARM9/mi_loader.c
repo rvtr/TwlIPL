@@ -292,7 +292,7 @@ BOOL MI_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
     {
         DC_StoreRange( rh, HW_TWL_ROM_HEADER_BUF_SIZE );
         PXI_NotifyID( FIRM_PXI_ID_AUTH_HEADER );
-        PXI_SendDataByFifo( PXI_FIFO_TAG_DATA, sd.aes_key_seed, AES_BLOCK_SIZE );
+        AESi_SendSeed( (AESKey*)sd.aes_key_seed );
         // DS互換ヘッダコピー
         MI_CpuCopyFast( rh, (void*)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END-HW_ROM_HEADER_BUF );
     }
