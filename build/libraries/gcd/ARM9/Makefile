@@ -32,7 +32,6 @@ SRCS				=	\
 						blowfish.c \
 						ds_blowfish.c \
 						ds_blowfish_table.c \
-						gcdfirm_blowfish_table.c \
 
 TARGET_LIB			=	libgcd$(FIRM_LIBSUFFIX).a
 INCDIR				=	../include

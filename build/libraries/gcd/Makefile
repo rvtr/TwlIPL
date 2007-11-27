@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - libraries - init
+# Project:  TwlFirm - libraries - gcd
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
