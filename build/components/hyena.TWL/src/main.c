@@ -172,9 +172,10 @@ TwlSpMain(void)
     BOOT_Init();
 
     // 活栓挿抜機能初期化
-    Cardm_Init();
+    HOTSW_Init();
+    
     // カードがささっていたらブート開始
-    (void)Card_Boot();
+    (void)HOTSW_Boot();
 	
     while (TRUE)
     {

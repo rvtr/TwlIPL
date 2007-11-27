@@ -10,7 +10,7 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
  *---------------------------------------------------------------------------*/
-#include <sysmenu/card/common/blowfish.h>
+#include <sysmenu.h>
 
 
 const BLOWFISH_CTX GCDi_BlowfishInitTableDS = {

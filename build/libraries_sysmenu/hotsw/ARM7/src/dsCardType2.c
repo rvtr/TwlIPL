@@ -4,10 +4,7 @@
  *---------------------------------------------------------------------------*/
 
 #include 	<twl.h>
-
-#include 	<sysmenu/card/common/blowfish.h>
-#include 	<sysmenu/card/common/Card.h>
-#include	<sysmenu/card/common/dsCardType2.h>
+#include 	<sysmenu.h>
 
 // Define Data --------------------------------------------------------------
 #define		SECURE_SEGMENT_NUM					4

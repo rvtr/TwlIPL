@@ -81,11 +81,11 @@ static CardBootFunction  	s_funcTable[] = {
 // 	Function Describe
 // ===========================================================================
 /*---------------------------------------------------------------------------*
-  Name:         Card_Init
+  Name:         HOTSW_Init
   Arguments:    None.
   Returns:      None.
  *---------------------------------------------------------------------------*/
-void Cardm_Init(void)
+void HOTSW_Init(void)
 {
 	OS_InitTick();
     OS_InitThread();
@@ -118,10 +118,10 @@ void Cardm_Init(void)
     OS_WakeupThreadDirect(&s_MCThread);
 
     // Boot Segment バッファの設定
-	Card_SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );
+	HOTSW_SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );
 
     // Secure Segment バッファの設定
-    Card_SetSecureSegmentBuffer((void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
+    HOTSW_SetSecureSegmentBuffer((void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
 
 	// モジュールロード用スレッドの生成
 /*	OS_CreateThread(&s_MLThread,
@@ -142,14 +142,14 @@ void Cardm_Init(void)
 }
 
 /* -----------------------------------------------------------------
- * Card_Boot関数
+ * HOTSW_Boot関数
  *
  * カード起動をスタート
  *
  * ※BootSegmentBuffer SecureSegmentBufferの設定を行ってから
  *   この関数を呼んでください。
  * ----------------------------------------------------------------- */
-BOOL Card_Boot(void)
+BOOL HOTSW_Boot(void)
 {
 	s32 tempLockID;
 	BOOL retval = TRUE;
@@ -258,7 +258,7 @@ BOOL Card_Boot(void)
 	    	// ID読み込み
 			s_funcTable[s_cbData.cardType].ReadID_G(&s_cbData);
 			// 常駐モジュール残りを指定先に転送
-			Card_LoadStaticModule();
+			HOTSW_LoadStaticModule();
 	
 			// デバッグ出力
 			ShowRomHeaderData();
@@ -290,13 +290,13 @@ BOOL Card_Boot(void)
 }
 
 /* -----------------------------------------------------------------
- * Card_LoadStaticModuler関数
+ * HOTSW_LoadStaticModule関数
  *
  * ARM7,9の常駐モジュールを展開する関数
  * 
  * 注：一度カードブートしてゲームモードになってから呼び出してください
  * ----------------------------------------------------------------- */
-void Card_LoadStaticModule(void)
+void HOTSW_LoadStaticModule(void)
 {
 #ifdef DEBUG_USED_CARD_SLOT_B_
 	// バナーリード
@@ -348,13 +348,13 @@ void Card_LoadStaticModule(void)
 
 
 /* -----------------------------------------------------------------
- * Card_SetBootSegmentBuffer関数
+ * HOTSW_SetBootSegmentBuffer関数
  *
  * Boot Segment バッファの指定
  *
  * 注：カードブート処理中は呼び出さないようにする
  * ----------------------------------------------------------------- */
-void Card_SetBootSegmentBuffer(void* buf, u32 size)
+void HOTSW_SetBootSegmentBuffer(void* buf, u32 size)
 {
 	SDK_ASSERT(size > BOOT_SEGMENT_SIZE);
 
@@ -370,13 +370,13 @@ void Card_SetBootSegmentBuffer(void* buf, u32 size)
 }
 
 /* -----------------------------------------------------------------
- * Card_SetSecureSegmentBuffer関数
+ * HOTSW_SetSecureSegmentBuffer関数
  *
  * Secure Segment バッファの指定
  * 
  * 注：カードブート処理中は呼び出さないようにする
  * ----------------------------------------------------------------- */
-void Card_SetSecureSegmentBuffer(void* buf, u32 size)
+void HOTSW_SetSecureSegmentBuffer(void* buf, u32 size)
 {
     SDK_ASSERT(size > SECURE_SEGMENT_SIZE);
     
@@ -480,7 +480,7 @@ static void McThread(void *arg)
 		OS_SleepThread(NULL);
 
         // カードブート
-        Card_Boot();
+        HOTSW_Boot();
     }
 }
 

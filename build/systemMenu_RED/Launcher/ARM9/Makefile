@@ -19,7 +19,7 @@
 SUBDIRS					=	\
 							../../../libraries_sysmenu/sysmenu \
 							../../../libraries_sysmenu/boot \
-							../../../libraries_sysmenu/card \
+							../../../libraries_sysmenu/hotsw \
 							../../../components/hyena.TWL
 
 #----------------------------------------------------------------------------
