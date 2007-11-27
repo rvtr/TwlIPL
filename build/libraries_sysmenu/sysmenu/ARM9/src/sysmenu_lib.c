@@ -363,7 +363,7 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 	int l;
 	int gotten;
 	NAMTitleId titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
-	gotten = NAM_GetTitleList( &titleIdArray[ 1 ], LAUNCHER_TITLE_LIST_NUM - 1 );
+	gotten = NAM_GetTitleList( &titleIdArray[ 1 ], LAUNCHER_TITLE_LIST_NUM - 1 ) + 1;
 	
 	for(l=1;l<gotten;l++)
 	{
