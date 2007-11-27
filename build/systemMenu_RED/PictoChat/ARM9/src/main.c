@@ -63,8 +63,8 @@ void TwlMain(void)
 	
 	{
 		// ファイルシステム切り替え応急処置
-		FS_IdentifyTitle(0x50434854);//PCHT
-//		FS_IdentifyTitle(0x54484350);//THCP ※今はmakerom.TWLのバグで逆になっている。
+//		FS_IdentifyTitle(0x50434854);//PCHT
+		FS_IdentifyTitle(0x54484350);//THCP ※今はmakerom.TWLのバグで逆になっている。
 	}
 	
 	InitBG();
