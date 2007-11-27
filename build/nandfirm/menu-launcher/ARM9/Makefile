@@ -40,7 +40,10 @@ MAKEROM_FLAGS		+=	-F
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
-LLIBRARIES	+=	libese$(TWL_LIBSUFFIX).a
+# no thumb version
+
+#LLIBRARIES	+=	libese$(TWL_LIBSUFFIX).a
+LLIBRARIES	+=	libese.TWL$(ARCHGEN_TYPE).a
 
 #----------------------------------------------------------------------------
 
