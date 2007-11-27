@@ -51,6 +51,7 @@ void TwlMain( void )
 	u32 state = LOGODEMO_INIT;
 	TitleProperty *pBootTitle = NULL;
 	OSTick start, end = 0;
+	BOOL direct_boot = FALSE;
 	
 	// システムメニュー初期化----------
 	SYSM_Init( Alloc, Free );											// OS_Initの前でコール。
@@ -101,6 +102,7 @@ void TwlMain( void )
 	if( pBootTitle ) {
 		// ダイレクトブートなら、ロゴ、ランチャーを飛ばしてロード開始
 		state = LOAD_START;
+		direct_boot = TRUE;
 	}else if( SYSM_IsLogoDemoSkip() ) {
 		// ロゴデモスキップが指定されていたら、ランチャー起動
 		state = LAUNCHER_INIT;
@@ -144,7 +146,7 @@ void TwlMain( void )
 			
 			break;
 		case LOADING:
-			if( LauncherFadeout( s_titleList ) &&
+			if( ( direct_boot || ( !direct_boot && LauncherFadeout( s_titleList ) ) ) &&
 				SYSM_IsLoadTitleFinished( pBootTitle ) ) {
 				state = AUTHENTICATE;
 			}
