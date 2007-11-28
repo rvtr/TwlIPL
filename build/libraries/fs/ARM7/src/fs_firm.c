@@ -19,7 +19,7 @@
 #include <firm.h>
 #include <rtfs.h>
 
-#define WORKAROUND_NAND_2KB_BUG
+//#define WORKAROUND_NAND_2KB_BUG
 
 #define FS_HEADER_AUTH_SIZE 0xe00
 
@@ -186,7 +186,7 @@ BOOL FS_LoadBuffer( int fd, u32 offset, u32 size )
         return FALSE;
     }
     // seek
-    if ( FATFSi_rtfs_po_lseek(fd, (s32)offset, PSEEK_SET) < 0 )
+    if ( FATFSi_rtfs_po_lseek(fd, (long)offset, PSEEK_SET) != (long)offset )
     {
         return FALSE;
     }
@@ -204,14 +204,14 @@ BOOL FS_LoadBuffer( int fd, u32 offset, u32 size )
             {
                 u8* d = dest + done;
                 u32 u = unit - done < 2048 ? unit - done : 2048;
-                if ( FATFSi_rtfs_po_read(fd, (u8*)d, (int)u) < 0 )
+                if ( FATFSi_rtfs_po_read(fd, (u8*)d, (int)u) != (int)u )
                 {
                     return FALSE;
                 }
             }
         }
 #else
-        if ( FATFSi_rtfs_po_read(fd, (u8*)dest, (int)unit) < 0 )
+        if ( FATFSi_rtfs_po_read(fd, (u8*)dest, (int)unit) != (int)unit )
         {
             return FALSE;
         }

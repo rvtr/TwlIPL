@@ -290,7 +290,7 @@ BOOL FATFS_LoadBuffer(u32 offset, u32 size)
         profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
         //OS_TPrintf("po_read(dest=%p, unit=0x%x);\n", dest, unit);
-#if 0   /* 0: 2KBバグパッチ */
+#if 1   /* 0: 2KBバグパッチ */
         if (po_read(menu_fd, (u8*)dest, (int)unit) < 0)     // reading
         {
             return FALSE;
