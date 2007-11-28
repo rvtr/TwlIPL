@@ -42,9 +42,9 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     void *stack_top = (void*)(HW_WRAM_AREA_END - HW_PRV_WRAM_SYSRV_SIZE - HW_SVC_STACK_SIZE - (u32)SDK_IRQ_STACKSIZE);
 #endif
     void *wram_reg = rom_header->s.main_wram_config_data;
+    REBOOTTarget target = REBOOT_TARGET_NAND_MENU;
     BOOL scfg = TRUE;   // no touch
     BOOL jtag = FALSE;  // no touch
-    BOOL ds = FALSE;    // TWL mode
     static u32  clr_list[32];
     int i = 0;
 
@@ -78,7 +78,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     }
 #endif  // SDK_ARM7
     clr_list[i++] = NULL;
-    REBOOT_Execute(entry, wram_reg, clr_list, code_buf, stack_top, scfg, jtag, ds);
+    REBOOT_Execute(entry, wram_reg, clr_list, code_buf, stack_top, target, scfg, jtag);
     OS_Terminate();
 }
 
