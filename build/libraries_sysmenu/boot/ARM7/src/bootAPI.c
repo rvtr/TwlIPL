@@ -77,7 +77,8 @@ BOOL BOOT_WaitStart( void )
 				HW_PXI_SIGNAL_PARAM_ARM9, HW_MAIN_MEM_SYSTEM_END - HW_PXI_SIGNAL_PARAM_ARM9,
 				NULL
 			};
-			OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x34), clr_list );
+			// [TODO]起動するターゲットの種類を指定する必要あり
+			OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x34), clr_list, REBOOT_TARGET_NAND_APP);
 		}
 	}
 	return FALSE;

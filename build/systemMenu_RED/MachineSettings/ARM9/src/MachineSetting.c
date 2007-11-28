@@ -182,6 +182,19 @@ void MachineSettingInit( void )
 	g_pNowProcess = MachineSettingMain;
 }
 
+static void ResetHardware( NAMTitleId id, BootFlags *flag)
+{
+	// リセットパラメータの設定
+	SYSMi_GetResetParamAddr()->body.v1.bootTitleID = id;
+	//SYSMi_GetResetParamAddr()->body.v1.flags = *flag;
+	SYSMi_GetResetParamAddr()->body.v1.flags = (BootFlags){TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
+	MI_CpuCopyFast( SYSM_RESET_PARAM_MAGIC_CODE, (char *)&SYSMi_GetResetParamAddr()->header.magicCode, SYSM_RESET_PARAM_MAGIC_CODE_LEN);
+	SYSMi_GetResetParamAddr()->header.bodyLength = sizeof(ResetParamBody);
+	SYSMi_GetResetParamAddr()->header.crc16 = SVC_GetCRC16( 65535, &SYSMi_GetResetParamAddr()->body, SYSMi_GetResetParamAddr()->header.bodyLength );
+	
+	// リセット命令発行
+	PM_ForceToResetHardware();
+}
 
 // メインメニュー
 int MachineSettingMain( void )
@@ -206,11 +219,10 @@ int MachineSettingMain( void )
 	tp_select = SelectMenuByTP( &s_csr, &s_settingParam );
 	DrawMenu( s_csr, &s_settingParam );
 
-#if 0
 	if( pad.trg & PAD_BUTTON_START ) {
-		PM_ForceToResetHardware();
+		BootFlags tempflag = {TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
+		ResetHardware(NULL, &tempflag);
 	}
-#endif
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// メニュー項目への分岐
 		if( s_settingPos[ s_csr ].enable ) {
