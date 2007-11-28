@@ -68,7 +68,7 @@ static void PreInit(void)
 {
     static const OSMountInfo    firmSettings[] =
     {
-        { 'A', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand",    "/" },
+        { 'F', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand",    "/" },
         { 0 }
     };
     /*
@@ -135,7 +135,8 @@ static BOOL CheckHeader(void)
 static void EraseAll(void)
 {
 #ifdef SDK_FINALROM
-    // TODO
+    MI_CpuClearFast( (void*)HW_TWL_ROM_HEADER_BUF, HW_TWL_ROM_HEADER_BUF_SIZE );
+    OS_BootFromFIRM();
 #endif
 }
 
@@ -184,6 +185,7 @@ void TwlMain( void )
 
     if ( !FS_ResolveSrl( MENU_TITLE_ID ) )
     {
+        OS_TPrintf("Failed to call FS_ResolveSrl( 0x%llx ).\n", MENU_TITLE_ID);
         goto end;
     }
 
@@ -201,6 +203,7 @@ void TwlMain( void )
 
     if ( !FS_LoadHeader(&acPool, RSA_KEY_ADDR ) && CheckHeader() )
     {
+        OS_TPrintf("Failed to call FS_LoadHeader() and/or CheckHeader().\n");
         goto end;
     }
 
@@ -218,6 +221,7 @@ void TwlMain( void )
 
     if ( !FS_LoadStatic() )
     {
+        OS_TPrintf("Failed to call FS_LoadStatic().\n");
         goto end;
     }
 

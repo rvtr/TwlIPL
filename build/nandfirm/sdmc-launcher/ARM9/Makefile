@@ -30,7 +30,6 @@ CRT0_O		=	crt0_firm.o
 
 MAKEROM_ARM7		=	../ARM7/bin/$(TWL_BUILDTYPE_ARM7)/sdmc_launcher7.tef
 MAKEROM_ARM7_BASE       =       $(basename $(MAKEROM_ARM7))
-MAKEROM_FLAGS		+=	-F
 
 #LCFILE_TEMPLATE =	$(FIRM_SPECDIR)/$(TWL_PROC)-$(TWL_PLATFORM)-PARTNER.lcf.template
 

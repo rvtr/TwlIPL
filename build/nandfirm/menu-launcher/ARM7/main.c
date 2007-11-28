@@ -65,7 +65,8 @@ static void PreInit(void)
     /*
         リセットパラメータ(1バイト)を共有領域(4バイト)にコピー
     */
-    *(u32*)HW_RESET_PARAMETER_BUF = (u32)MCUi_ReadRegister( MCU_REG_TEMP_ADDR );
+#define FIRM_AVAILABLE_BIT  0x80000000UL
+    *(u32*)HW_RESET_PARAMETER_BUF = (u32)MCUi_ReadRegister( MCU_REG_TEMP_ADDR ) | FIRM_AVAILABLE_BIT;
     /*
         バッテリー残量チェック
     */
@@ -83,7 +84,8 @@ static void PreInit(void)
 static void EraseAll(void)
 {
 #ifdef SDK_FINALROM
-    // TODO
+    MI_CpuClearFast( (void*)HW_TWL_ROM_HEADER_BUF, HW_TWL_ROM_HEADER_BUF_SIZE );
+    OS_BootFromFIRM();
 #endif
 }
 
@@ -116,8 +118,8 @@ static BOOL FsInit(void)
 
     SDNandContext = &OSi_GetFromFirmAddr()->SDNandContext;
 
-    FS_Init( FS_DMA_NO );
-    FS_CreateReadServerThread( THREAD_PRIO_FS );
+    //FS_Init( FS_DMA_NO ); // just CARD_Init
+    //FS_CreateReadServerThread( THREAD_PRIO_FS );  // just CARD_SetThreadPriority
 
     if ( !FATFS_Init( FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS ) )
     {
@@ -168,6 +170,7 @@ void TwlSpMain( void )
 
     if ( !FsInit() )
     {
+        OS_TPrintf("Failed to call FsInit().\n");
         goto end;
     }
 
@@ -180,6 +183,7 @@ void TwlSpMain( void )
 
     if ( PXI_RecvID() != FIRM_PXI_ID_SET_PATH )
     {
+        OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_SET_PATH).\n");
         goto end;
     }
 
@@ -192,6 +196,7 @@ void TwlSpMain( void )
 
     if ( (fd = FS_OpenSrl()) < 0 )
     {
+        OS_TPrintf("Failed to call FS_OpenSrl().\n");
         goto end;
     }
 
@@ -204,6 +209,7 @@ void TwlSpMain( void )
 
     if ( !FS_LoadHeader( fd ) )
     {
+        OS_TPrintf("Failed to call FS_LoadHeader().\n");
         goto end;
     }
 
@@ -216,6 +222,7 @@ void TwlSpMain( void )
 
     if ( PXI_RecvID() != FIRM_PXI_ID_DONE_HEADER )
     {
+        OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_DONE_HEADER).\n");
         goto end;
     }
 
@@ -228,6 +235,7 @@ void TwlSpMain( void )
 
     if ( !FS_LoadStatic( fd ) )
     {
+        OS_TPrintf("Failed to call FS_LoadStatic().\n");
         goto end;
     }
 
@@ -240,6 +248,7 @@ void TwlSpMain( void )
 
     if ( PXI_RecvID() != FIRM_PXI_ID_DONE_STATIC )
     {
+        OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_DONE_STATIC).\n");
         goto end;
     }
 
@@ -258,7 +267,7 @@ void TwlSpMain( void )
         OS_TPrintf("\n[ARM7] End\n");
     }
 #endif
-    OS_SetDebugLED(++step); // 0x8c
+    OS_SetDebugLED( 0 );
     PM_BackLightOn( TRUE ); // last chance
 
     OS_BootFromFIRM();
