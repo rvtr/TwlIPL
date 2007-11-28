@@ -35,11 +35,11 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
 #ifdef SDK_ARM9
     void *entry = rom_header->s.main_entry_address;
     void *code_buf = (void*)OS_BOOT_CODE_BUF;   // 0x023fee00
-    void *stack_top = (void*)(HW_DTCM_END - HW_DTCM_SYSRV_SIZE - HW_SVC_STACK_SIZE - (u32)SDK_IRQ_STACKSIZE);
+    void *stack_top = (void*)OS_BOOT_STACK_TOP; // (HW_DTCM_END - HW_DTCM_SYSRV_SIZE - HW_SVC_STACK_SIZE)
 #else
     void *entry = rom_header->s.sub_entry_address;
     void *code_buf = (void*)OS_BOOT_CODE_BUF;   // 0x03fff600
-    void *stack_top = (void*)(HW_WRAM_AREA_END - HW_PRV_WRAM_SYSRV_SIZE - HW_SVC_STACK_SIZE - (u32)SDK_IRQ_STACKSIZE);
+    void *stack_top = (void*)OS_BOOT_STACK_TOP; // (HW_WRAM_AREA_END - HW_PRV_WRAM_SYSRV_SIZE - HW_SVC_STACK_SIZE)
 #endif
     void *wram_reg = rom_header->s.main_wram_config_data;
     REBOOTTarget target = REBOOT_TARGET_NAND_MENU;
@@ -70,11 +70,12 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     clr_list[i++] = (u32)HW_PXI_SIGNAL_PARAM_ARM9;  // 0x02ffff80 - 0x02fffffd
     clr_list[i++] = (u32)HW_CMD_AREA - (u32)HW_PXI_SIGNAL_PARAM_ARM9;
 #else   // SDK_ARM7
-    /* REBOOT_ExecuteのCODEとSTACKの隙間をクリア */
-    if ((u32)stack_top > (u32)OS_BOOT_CODE_BUF - OS_BOOT_CODE_SIZE - OS_BOOT_STACK_SIZE_MIN - sizeof(clr_list))
-    {
-        clr_list[i++] = (u32)OS_BOOT_CODE_BUF + OS_BOOT_CODE_SIZE;
-        clr_list[i++] = (u32)stack_top - OS_BOOT_STACK_SIZE_MIN - sizeof(clr_list) - (u32)OS_BOOT_CODE_BUF - OS_BOOT_CODE_SIZE;
+    {   /* REBOOT_ExecuteのCODEとSTACKの隙間をクリア */
+        u32 stack_bottom = (u32)stack_top - OS_BOOT_STACK_SIZE_MIN - sizeof(clr_list);
+        u32 code_buf_end = OS_BOOT_CODE_BUF + OS_BOOT_CODE_SIZE;
+        SDK_ASSERT( stack_bottom > code_buf_end );
+        clr_list[i++] = code_buf_end;
+        clr_list[i++] = stack_bottom - code_buf_end;
     }
 #endif  // SDK_ARM7
     clr_list[i++] = NULL;
