@@ -93,6 +93,12 @@ void
 TwlSpMain(void)
 {
     OSHeapHandle    heapHandle;
+    
+    {
+		SCFG_SetJtagControl(TRUE,TRUE,FALSE);//JTAG Enable
+		//*((u32 *)0x04000300) = 2;
+		while(1){}
+	}
 
     // SYSMワークのクリア
     MI_CpuClear32( SYSMi_GetWork(), sizeof(SYSM_work) );
@@ -231,7 +237,7 @@ static void ReadResetParameter( void )
         }
     }
     // メインメモリのリセットパラメータをクリアしておく
-    MI_CpuClear32( SYSMi_GetResetParamAddr(), 0x100 );
+    // MI_CpuClear32( SYSMi_GetResetParamAddr(), 0x100 );
 }
 
 
