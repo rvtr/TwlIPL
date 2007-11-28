@@ -5,13 +5,12 @@
 #ifndef __DSCARD_TYPE2_H__
 #define __DSCARD_TYPE2_H__
 
+#include 	<twl.h>
+#include 	<hotswTypes.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-#include 	<twl.h>
-#include 	<sysmenu/hotsw.h>
 
 // ===========================================================================
 // 	Function Describe
@@ -20,6 +19,10 @@ extern "C" {
 // ■       ノーマルモードのコマンド       ■
 //	DSカードType2のノーマルモードのBoot Segment(4Kbyte)読み込み
 void ReadBootSegNormal_DSType2(CardBootData *cbd);
+
+//	DSカードType2のノーマルモードのモード変更 (Type1と同じ処理)
+#define ChangeModeNormal_DSType2	ChangeModeNormal_DSType1
+
 
 // ■       セキュアモードのコマンド       ■
 //	DSカードType2のセキュアモードのID読み込み
@@ -37,8 +40,13 @@ void SwitchOFFPNGSecure_DSType2(CardBootData *cbd);
 //	DSカードType2のセキュアモードのモード変更
 void ChangeModeSecure_DSType2(CardBootData *cbd);
 
+
 // ■       ゲームモードのコマンド       ■
-// Type1と同じコマンドを使う
+//	DSカードType2のゲームモードのID読み込み (Type1と同じ処理)
+#define ReadIDGame_DSType2			ReadIDGame_DSType1
+
+//  DSカードType2のゲームモードの指定ページ読み込み (Type1と同じ処理)
+#define ReadPageGame_DSType2		ReadPageGame_DSType1
 
 #ifdef __cplusplus
 } /* extern "C" */

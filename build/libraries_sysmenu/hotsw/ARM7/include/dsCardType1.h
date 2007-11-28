@@ -5,22 +5,18 @@
 #ifndef __DSCARD_TYPE1_H__
 #define __DSCARD_TYPE1_H__
 
+#include 	<twl.h>
+#include 	<hotswTypes.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-#include 	<twl.h>
-#include 	<sysmenu/hotsw.h>
 
 // ===========================================================================
 // 	Function Describe
 // ===========================================================================
 
 // ■       ノーマルモードのコマンド       ■
-//	DSカードType1のノーマルモードのID読み込み
-void ReadIDNormal_DSType1(CardBootData *cbd);
-
 //	DSカードType1のノーマルモードのBoot Segment(4Kbyte)読み込み
 void ReadBootSegNormal_DSType1(CardBootData *cbd);
 

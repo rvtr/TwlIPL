@@ -41,20 +41,20 @@ void ReadBootSegNormal_DSType1(CardBootData *cbd)
 	u32 i = 0;
 
 	// MCCMD レジスタ設定
-	reg_MCCMD0 = 0x00000000;
-	reg_MCCMD1 = 0x00000000;
+	reg_HOTSW_MCCMD0 = 0x00000000;
+	reg_HOTSW_MCCMD1 = 0x00000000;
 
 	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-	reg_MCCNT0 = (u16)((reg_MCCNT0 & 0x0fff) | 0xc000);
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
 
 	// MCCNT1 レジスタ設定 (START = 1  W/R = 0  PC = 100 (8ページリード) に)
-	reg_MCCNT1 = (u32)((reg_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,   0)) |
-        		             		 CNT1_FLD(1,0,0,0,  0,4,  0,0,  0,  0,0,0,  20));
+	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,   0)) |
+        		             		 			 CNT1_FLD(1,0,0,0,  0,4,  0,0,  0,  0,0,0,  20));
     
 	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-	while(reg_MCCNT1 & START_FLG_MASK){
-		while(!(reg_MCCNT1 & READY_FLG_MASK)){}
-        *(cbd->pBootSegBuf->word + i++) = reg_MCD1;
+	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
+        *(cbd->pBootSegBuf->word + i++) = reg_HOTSW_MCD1;
 	}
 }
 
@@ -87,16 +87,16 @@ void ChangeModeNormal_DSType1(CardBootData *cbd)
 	cnd.b[7] = tempCnd.b[0];
     
 	// MCCMD レジスタ設定
-    reg_MCCMD0 = *(u32 *)cnd.b;
-	reg_MCCMD1 = *(u32 *)&cnd.b[4];
+    reg_HOTSW_MCCMD0 = *(u32 *)cnd.b;
+	reg_HOTSW_MCCMD1 = *(u32 *)&cnd.b[4];
 
 	// MCCNT1 レジスタ設定 (START = 1  W/R = 1  PC = 000 に)
-	reg_MCCNT1 = (u32)((reg_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,  0)) |
-        		             		 CNT1_FLD(1,1,0,0,  0,0,  0,0,  0,  0,0,0,  0));
+	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,  0)) |
+        		             		 			 CNT1_FLD(1,1,0,0,  0,0,  0,0,  0,  0,0,0,  0));
     
 	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-	while(reg_MCCNT1 & START_FLG_MASK){
-		while(!(reg_MCCNT1 & READY_FLG_MASK)){}
+	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
 	}
 }
 
@@ -154,8 +154,8 @@ static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
     cndBE.b[0] = cndLE.b[7];
 
     // MCCMD レジスタ設定
-	reg_MCCMD0 = *(u32*)cndBE.b;
-	reg_MCCMD1 = *(u32*)&cndBE.b[4];
+	reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
+	reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
 }
 
 
@@ -171,13 +171,13 @@ void ReadIDSecure_DSType1(CardBootData *cbd)
 
 	// MCCNT1 レジスタ設定
     // (START = 1 W/R = 0 TRM = 1 PC = 111(ステータスリード) CS = 1 SE = 1 DS = 1 Latency1 = 2320(0x910)に)
-	reg_MCCNT1 = (u32)((reg_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,1,  1,  0,0,0,     0)) |
-        		             		 CNT1_FLD(1,0,0,1,  1,7,  0,0,  0,  0,1,1,  2320));
+	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,1,  1,  0,0,0,     0)) |
+        		             		 			 CNT1_FLD(1,0,0,1,  1,7,  0,0,  0,  0,1,1,  2320));
     
 	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-	while(reg_MCCNT1 & START_FLG_MASK){
-		while(!(reg_MCCNT1 & READY_FLG_MASK)){}
-		cbd->id_scr = reg_MCD1;
+	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
+		cbd->id_scr = reg_HOTSW_MCD1;
 	}
 
     // コマンドカウンタインクリメント
@@ -218,18 +218,18 @@ void ReadSegSecure_DSType1(CardBootData *cbd)
     	cndBE.b[0] = cndLE.b[7];
 
     	// MCCMD レジスタ設定
-		reg_MCCMD0 = *(u32*)cndBE.b;
-		reg_MCCMD1 = *(u32*)&cndBE.b[4];
+		reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
+		reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
 
 		// MCCNT1 レジスタ設定
     	// (START = 1 W/R = 0 TRM = 1 PC = 100(8ページリード) CS = 1 Latency2 = 24(0x18) SE = 1 DS = 1 Latency1 = 2296(0x8f8)に)
-		reg_MCCNT1 = (u32)((reg_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,1,   0,  0,0,0,     0)) |
-        			             		 CNT1_FLD(1,0,0,1,  1,4,  0,0,  24,  0,1,1,  2296));
+		reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,1,   0,  0,0,0,     0)) |
+        			             		 			 CNT1_FLD(1,0,0,1,  1,4,  0,0,  24,  0,1,1,  2296));
     
 		// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-    	while(reg_MCCNT1 & START_FLG_MASK){
-			while(!(reg_MCCNT1 & READY_FLG_MASK)){}
-        	*(cbd->pSecureSegBuf + j++) = reg_MCD1;
+    	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+			while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
+        	*(cbd->pSecureSegBuf + j++) = reg_HOTSW_MCD1;
 		}
         
         // 読み込みセグメント番号インクリメント
@@ -251,11 +251,11 @@ void SwitchONPNGSecure_DSType1(CardBootData *cbd)
 	SetSecureCommand(S_PNG_ON, cbd);
 
 	// MCCNT1 レジスタ設定 (START = 1 W/R = 1 TRM = 1 PC = 000 Latency1 = 2320(0x910) に)
-    reg_MCCNT1 = (u32)((reg_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  1,0,0,     0)) |
-        		             		 CNT1_FLD(1,1,0,1,  0,0,  0,0,  0,  0,1,1,  2320));
+    reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  1,0,0,     0)) |
+        		             		 			 CNT1_FLD(1,1,0,1,  0,0,  0,0,  0,  0,1,1,  2320));
     
-	while(reg_MCCNT1 & START_FLG_MASK){
-		while(!(reg_MCCNT1 & READY_FLG_MASK)){}
+	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
 	}
 
     // コマンドカウンタインクリメント
@@ -273,11 +273,11 @@ void SwitchOFFPNGSecure_DSType1(CardBootData *cbd)
 	SetSecureCommand(S_PNG_OFF, cbd);
 
 	// MCCNT1 レジスタ設定 (START = 1 W/R = 1 TRM = 1 PC = 000 Latency1 = 2320(0x910) に)
-    reg_MCCNT1 = (u32)((reg_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  1,0,0,     0)) |
-        		             		 CNT1_FLD(1,1,0,1,  0,0,  0,0,  0,  0,1,1,  2320));
+    reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  1,0,0,     0)) |
+        		             		 			 CNT1_FLD(1,1,0,1,  0,0,  0,0,  0,  0,1,1,  2320));
     
-	while(reg_MCCNT1 & START_FLG_MASK){
-		while(!(reg_MCCNT1 & READY_FLG_MASK)){}
+	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
 	}
 
     // コマンドカウンタインクリメント
@@ -295,11 +295,11 @@ void ChangeModeSecure_DSType1(CardBootData *cbd)
 	SetSecureCommand(S_CHG_MODE, cbd);
 
 	// MCCNT1 レジスタ設定 (START = 1 W/R = 1 TRM = 1 PC = 000 Latency1 = 2320(0x910) に)
-    reg_MCCNT1 = (u32)((reg_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  1,0,0,     0)) |
-        		             		 CNT1_FLD(1,1,0,1,  0,0,  0,0,  0,  0,1,1,  2320));
+    reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  1,0,0,     0)) |
+        		             		 			 CNT1_FLD(1,1,0,1,  0,0,  0,0,  0,  0,1,1,  2320));
     
-	while(reg_MCCNT1 & START_FLG_MASK){
-		while(!(reg_MCCNT1 & READY_FLG_MASK)){}
+	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
 	}
 
     // コマンドカウンタインクリメント
@@ -318,17 +318,17 @@ void ChangeModeSecure_DSType1(CardBootData *cbd)
 void ReadIDGame_DSType1(CardBootData *cbd)
 {
 	// MCCMD レジスタ設定
-	reg_MCCMD0 = 0x000000B8;
-	reg_MCCMD1 = 0x00000000;
+	reg_HOTSW_MCCMD0 = 0x000000B8;
+	reg_HOTSW_MCCMD1 = 0x00000000;
 
 	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 111(ステータスリード) CS = 1 SE = 1 DS = 1 latency1 = 2320(必要ないけど) に)
-	reg_MCCNT1 = (u32)((reg_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,  0)) |
-        		             		 CNT1_FLD(1,0,0,0,  0,7,  0,1,  0,  0,1,1,  1));
+	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,  0)) |
+        		             		 			 CNT1_FLD(1,0,0,0,  0,7,  0,1,  0,  0,1,1,  1));
     
 	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-	while(reg_MCCNT1 & START_FLG_MASK){
-		while(!(reg_MCCNT1 & READY_FLG_MASK)){}
-		cbd->id_gam = reg_MCD1;
+	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
+		cbd->id_gam = reg_HOTSW_MCD1;
 	}
 }
 
@@ -369,17 +369,17 @@ void ReadPageGame_DSType1(u32 start_addr, void* buf, u32 size)
 	    cndBE.b[0] = cndLE.b[7];
 
     	// MCCMD レジスタ設定
-		reg_MCCMD0 = *(u32*)cndBE.b;
-		reg_MCCMD1 = *(u32*)&cndBE.b[4];
+		reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
+		reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
         
    		 // MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 001(1ページリード) CS = 1 SE = 1 DS = 1 latency1 = 20 に)
-		reg_MCCNT1 = (u32)((reg_MCCNT1 & CNT1_MSK(0,0,1,0,  1,0,  1,0,  0,  0,0,0,   0)) |
-    				             		 CNT1_FLD(1,0,0,0,  0,1,  0,1,  0,  0,1,1,  20));
+		reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  1,0,  1,0,  0,  0,0,0,   0)) |
+    				             		 			 CNT1_FLD(1,0,0,0,  0,1,  0,1,  0,  0,1,1,  20));
 
 		// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-		while(reg_MCCNT1 & START_FLG_MASK){
-			while(!(reg_MCCNT1 & READY_FLG_MASK)){}
-            *((u32 *)buf + counter++) = reg_MCD1;
+		while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+			while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
+            *((u32 *)buf + counter++) = reg_HOTSW_MCD1;
 		}
     }
 }

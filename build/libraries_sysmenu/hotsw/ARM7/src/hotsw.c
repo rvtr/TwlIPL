@@ -17,6 +17,7 @@
 
 #include	<nitro/card/types.h>
 #include	<sysmenu.h>
+#include 	<hotswTypes.h>
 #include	<blowfish.h>
 #include	<dsCardType1.h>
 #include	<dsCardType2.h>
@@ -70,13 +71,13 @@ static CardBootData			s_cbData;
 
 static CardBootFunction  	s_funcTable[] = {
 	// DS Card Type 1
-    {					   ReadBootSegNormal_DSType1, ChangeModeNormal_DSType1,
-     ReadIDSecure_DSType1, ReadSegSecure_DSType1, 	  SwitchONPNGSecure_DSType1, ChangeModeSecure_DSType1,
-     ReadIDGame_DSType1,   ReadPageGame_DSType1},
+    {					   ReadBootSegNormal_DSType1, ChangeModeNormal_DSType1,								// Normalモード関数
+     ReadIDSecure_DSType1, ReadSegSecure_DSType1, 	  SwitchONPNGSecure_DSType1, ChangeModeSecure_DSType1,	// Secureモード関数
+     ReadIDGame_DSType1,   ReadPageGame_DSType1},															// Game  モード関数
 	// DS Card Type 2
-    {					   ReadBootSegNormal_DSType2, ChangeModeNormal_DSType1,
-     ReadIDSecure_DSType2, ReadSegSecure_DSType2, 	  SwitchONPNGSecure_DSType2, ChangeModeSecure_DSType2,
-     ReadIDGame_DSType1,   ReadPageGame_DSType1}
+    {					   ReadBootSegNormal_DSType2, ChangeModeNormal_DSType2,								// Normalモード関数
+     ReadIDSecure_DSType2, ReadSegSecure_DSType2, 	  SwitchONPNGSecure_DSType2, ChangeModeSecure_DSType2,	// Secureモード関数
+     ReadIDGame_DSType2,   ReadPageGame_DSType2}															// Game  モード関数
 };
 
 
@@ -407,20 +408,20 @@ static void LoadTable(void)
 	u32 temp;
     
 	// MCCMD レジスタ設定
-	reg_MCCMD0 = 0x0000009f;
-	reg_MCCMD1 = 0x00000000;
+	reg_HOTSW_MCCMD0 = 0x0000009f;
+	reg_HOTSW_MCCMD1 = 0x00000000;
 
 	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-	reg_MCCNT0 = (u16)((reg_MCCNT0 & 0x0fff) | 0xc000);
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
 
 	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 101(16ページ) latency1 = 0(必要ないけど) に)
-	reg_MCCNT1 = (u32)((reg_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,  0)) |
+	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,  0)) |
         		             		 CNT1_FLD(1,0,0,0,  0,5,  0,0,  0,  0,0,0,  0));
     
 	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-	while(reg_MCCNT1 & START_FLG_MASK){
-		while(!(reg_MCCNT1 & READY_FLG_MASK)){}
-        temp = reg_MCD1;
+	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
+        temp = reg_HOTSW_MCD1;
 	}
 
     OS_TPrintf("Load Table...\n");
@@ -434,20 +435,20 @@ static void LoadTable(void)
 static void ReadIDNormal(void)
 {
 	// MCCMD レジスタ設定
-	reg_MCCMD0 = 0x00000090;
-	reg_MCCMD1 = 0x00000000;
+	reg_HOTSW_MCCMD0 = 0x00000090;
+	reg_HOTSW_MCCMD1 = 0x00000000;
 
 	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-	reg_MCCNT0 = (u16)((reg_MCCNT0 & 0x0fff) | 0xc000);
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
 
 	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 111(ステータスリード) latency1 = 2320(必要ないけど) に)
-	reg_MCCNT1 = (u32)((reg_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,     0)) |
+	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,     0)) |
         		             		 CNT1_FLD(1,0,0,0,  0,7,  0,0,  0,  0,0,0,  2320));
     
 	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-	while(reg_MCCNT1 & START_FLG_MASK){
-		while(!(reg_MCCNT1 & READY_FLG_MASK)){}
-		s_cbData.id_nml = reg_MCD1;
+	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
+		s_cbData.id_nml = reg_HOTSW_MCD1;
 	}
 }
 
@@ -547,7 +548,7 @@ static void McPowerOn(void)
 
     
     // リセットをhighに (RESB = 1にする)
-	reg_MCCNT1 = (u32)((reg_MCCNT1 & CNT1_MSK(1,1,0,1,1,1,1,1,1,1,1,1,1)) |
+	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(1,1,0,1,1,1,1,1,1,1,1,1,1)) |
                              		 CNT1_FLD(0,0,1,0,0,0,0,0,0,0,0,0,0));
 	// 10ms待ち
     start = OS_GetTick();
@@ -570,17 +571,17 @@ static void SetMCSCR(void)
     u32 pna_h = (u32)(s_cbData.vd >> 17);
     
     // SCR A
-	reg_MCSCR0 = pna_l;
+	reg_HOTSW_MCSCR0 = pna_l;
 
     // SCR B
-	reg_MCSCR1 = PNB_L_VALUE;
+	reg_HOTSW_MCSCR1 = PNB_L_VALUE;
 
     // [d0 -d6 ] -> SCR A
     // [d16-d22] -> SCR B
-    reg_MCSCR2 = (u32)(pna_h | PNB_H_VALUE << 16);
+    reg_HOTSW_MCSCR2 = (u32)(pna_h | PNB_H_VALUE << 16);
 
 	// MCCNT1 レジスタ設定 (SCR = 1に)
-    reg_MCCNT1 = (u32)((reg_MCCNT1 & CNT1_MSK(1,1,1,1,  1,1,  1,1,  1,  0,1,1,  1)) |
+    reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(1,1,1,1,  1,1,  1,1,  1,  0,1,1,  1)) |
            		             		 CNT1_FLD(0,0,0,0,  0,0,  0,0,  0,  1,0,0,  0));
 }
 
@@ -664,7 +665,7 @@ static void InterruptCallbackCard(void)
     MI_CpuClear8(s_pSecureSegBuffer, s_SecureSegBufSize);
 
     // MC_CNT1を初期化
-    reg_MCCNT1 = 0x0;
+    reg_HOTSW_MCCNT1 = 0x0;
 
     // カードロックIDの開放
 	OS_ReleaseLockID( s_cbData.lockID );
@@ -781,7 +782,7 @@ static void ShowRegisterData(void)
     OS_TPrintf("拡張機能制御レジスタ		 (MC_B(d24))   : %08x\n", reg_SCFG_EXT);
     OS_TPrintf("MC I/F制御レジスタ１		 (slot status) : %08x\n", reg_MI_MC1);
     OS_TPrintf("MC I/F制御レジスタ２		 (Counter-A)   : %04x\n", reg_MI_MC2);
-    OS_TPrintf("MC コントロールレジスタ0	 (SEL etc)     : %04x\n", reg_MCCNT0);
-    OS_TPrintf("MC コントロールレジスタ1	 (START etc)   : %08x\n", reg_MCCNT1);
+    OS_TPrintf("MC コントロールレジスタ0	 (SEL etc)     : %04x\n", reg_HOTSW_MCCNT0);
+    OS_TPrintf("MC コントロールレジスタ1	 (START etc)   : %08x\n", reg_HOTSW_MCCNT1);
     OS_TPrintf("----------------------------------------------------------\n");
 }

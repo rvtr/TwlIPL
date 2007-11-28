@@ -15,7 +15,7 @@
 
 
 #include <twl/types.h>
-#include <sysmenu/hotsw.h>
+#include <hotswTypes.h>
 
 #ifdef __cplusplus
 extern "C" {
