@@ -95,9 +95,8 @@ TwlSpMain(void)
     OSHeapHandle    heapHandle;
     
     {
-		SCFG_SetJtagControl(TRUE,TRUE,FALSE);//JTAG Enable
-		//*((u32 *)0x04000300) = 2;
-		while(1){}
+		*((u16 *)0x04004006) = *((u16 *)0x04004006) || 0x0102;
+		//SCFG_SetJtagControl(TRUE,TRUE,FALSE);//JTAG Enable
 	}
 
     // SYSMワークのクリア

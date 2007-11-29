@@ -66,16 +66,8 @@ void TwlMain( void )
 	
 	// デバグ用
 	ResetParam debugresetparam;
-	ResetParam debugresetparam2;
+
 	MI_CpuCopy32 ( SYSMi_GetResetParamAddr(), &debugresetparam, sizeof(ResetParam) );
-	
-	/*
-	SYSMi_GetResetParamAddr()->body.v1.bootTitleID = 0x000100015445534d;
-	MI_CpuCopyFast( SYSM_RESET_PARAM_MAGIC_CODE, (char *)&SYSMi_GetResetParamAddr()->header.magicCode, SYSM_RESET_PARAM_MAGIC_CODE_LEN);
-	DC_FlushAll();
-	DC_WaitWriteBufferEmpty( );
-	MI_CpuCopy32 ( SYSMi_GetResetParamAddr(), &debugresetparam2, sizeof(ResetParam) );
-	*/
 	
 	// システムメニュー初期化----------
 	SYSM_Init( Alloc, Free );											// OS_Initの前でコール。
@@ -168,14 +160,6 @@ void TwlMain( void )
 			PrintfSJIS( 30, 134, TXT_COLOR_RED, "bootTitleID:0x%llx", debugresetparam.body.v1.bootTitleID );
 			break;
 		case LOAD_START:
-		
-	SYSMi_GetResetParamAddr()->body.v1.bootTitleID = 0x000100015445534d;
-	MI_CpuCopyFast( SYSM_RESET_PARAM_MAGIC_CODE, (char *)&SYSMi_GetResetParamAddr()->header.magicCode, SYSM_RESET_PARAM_MAGIC_CODE_LEN);
-	DC_FlushAll();
-	DC_WaitWriteBufferEmpty();
-			// デバグ用 never return.
-			ResetHardware();
-			
 			SYSM_StartLoadTitle( pBootTitle );
 			state = LOADING;
 			

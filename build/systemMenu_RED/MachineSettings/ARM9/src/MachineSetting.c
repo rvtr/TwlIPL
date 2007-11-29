@@ -186,17 +186,16 @@ void MachineSettingInit( void )
 #include <twl/itcm_begin.h>
 static void ResetHardware( NAMTitleId id, BootFlags *flag)
 {
-	/*
 	// リセットパラメータの設定
-	SYSMi_GetResetParamAddr()->body.v1.bootTitleID = 0x1234567887654321;
+	SYSMi_GetResetParamAddr()->body.v1.bootTitleID = 0x0;
 	//SYSMi_GetResetParamAddr()->body.v1.flags = *flag;
 	SYSMi_GetResetParamAddr()->body.v1.flags = (BootFlags){TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
 	MI_CpuCopyFast( SYSM_RESET_PARAM_MAGIC_CODE, (char *)&SYSMi_GetResetParamAddr()->header.magicCode, SYSM_RESET_PARAM_MAGIC_CODE_LEN);
 	SYSMi_GetResetParamAddr()->header.bodyLength = sizeof(ResetParamBody);
 	SYSMi_GetResetParamAddr()->header.crc16 = SVC_GetCRC16( 65535, &SYSMi_GetResetParamAddr()->body, SYSMi_GetResetParamAddr()->header.bodyLength );
-	
 	DC_FlushAll();
-	*/
+	DC_WaitWriteBufferEmpty();
+	
 	// リセット命令発行
 	PM_ForceToResetHardware();
 	OS_Terminate();
