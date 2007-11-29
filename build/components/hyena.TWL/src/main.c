@@ -195,16 +195,6 @@ static void ReadResetParameter( void )
 {
 	MCU_GetFreeRegisters( 0, (u8 *)HW_RESET_PARAMETER_BUF, 1 );
 	
-	/*
-	// ダイレクトブート用設定のテストコード
-	SYSMi_GetMCUFreeRegisterValue() = 1;            // マイコンフリーレジスタ取得場所にホットスタートフラグをセット
-	SYSMi_GetResetParamAddr()->body.v1.bootTitleID = 0x000100015445534d;
-	SYSMi_GetResetParamAddr()->body.v1.flags = (BootFlags){TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
-	MI_CpuCopyFast( SYSM_RESET_PARAM_MAGIC_CODE, (char *)&SYSMi_GetResetParamAddr()->header.magicCode, SYSM_RESET_PARAM_MAGIC_CODE_LEN);
-	SYSMi_GetResetParamAddr()->header.bodyLength = sizeof(ResetParamBody);
-	SYSMi_GetResetParamAddr()->header.crc16 = SVC_GetCRC16( 65535, &SYSMi_GetResetParamAddr()->body, SYSMi_GetResetParamAddr()->header.bodyLength );
-	*/
-	
     // Hot/Coldスタート判定
 #ifdef SDK_FINALROM
     if( SYSMi_GetMCUFreeRegisterValue() == 0 )          // マイコンフリーレジスタ値が"0"ならColdスタート

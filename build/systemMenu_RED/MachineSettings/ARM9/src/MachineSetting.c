@@ -18,7 +18,6 @@
 #include <twl.h>
 #include "misc.h"
 #include "MachineSetting.h"
-#include "spi.h"
 
 // define data------------------------------------------
 	// キャンセルボタンLCD領域
@@ -193,23 +192,6 @@ void MachineSettingInit( void )
 	g_pNowProcess = MachineSettingMain;
 }
 
-static void ResetHardware( NAMTitleId id, BootFlags *flag)
-{
-	// リセットパラメータの設定
-	SYSMi_GetResetParamAddr()->body.v1.bootTitleID = id;
-	SYSMi_GetResetParamAddr()->body.v1.flags = *flag;
-	MI_CpuCopyFast( SYSM_RESET_PARAM_MAGIC_CODE, (char *)&SYSMi_GetResetParamAddr()->header.magicCode, SYSM_RESET_PARAM_MAGIC_CODE_LEN);
-	SYSMi_GetResetParamAddr()->header.bodyLength = sizeof(ResetParamBody);
-	SYSMi_GetResetParamAddr()->header.crc16 = SVC_GetCRC16( 65535, &SYSMi_GetResetParamAddr()->body, SYSMi_GetResetParamAddr()->header.bodyLength );
-	
-	DC_FlushRange(SYSMi_GetResetParamAddr(), sizeof(ResetParam) );
-	DC_WaitWriteBufferEmpty();
-	
-	// リセット命令発行
-	PM_ForceToResetHardware();
-	OS_Terminate();
-}
-
 // メインメニュー
 int MachineSettingMain( void )
 {
@@ -236,7 +218,7 @@ int MachineSettingMain( void )
 	DrawMenu( s_csr, &s_settingParam );
 
 	if( pad.trg & PAD_BUTTON_START ) {
-		ResetHardware(NULL, &tempflag);
+		RP_Reset( 0, NULL, &tempflag );
 	}
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// メニュー項目への分岐
@@ -268,7 +250,7 @@ int MachineSettingMain( void )
 					break;
 				case 6:
 					//pictochat起動テスト
-					ResetHardware(0x0001000154484350, &tempflag);
+					RP_Reset( 0, 0x0001000154484350, &tempflag );
 			}
 		}
 	}

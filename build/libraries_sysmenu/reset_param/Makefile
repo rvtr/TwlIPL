@@ -11,22 +11,20 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date:: 2007-10-03#$
-# $Rev: 1319 $
-# $Author: kitase_hirotake $
+# $Date:: 2007-09-27#$
+# $Rev: 1203 $
+# $Author: yada $
 #----------------------------------------------------------------------------
 
 TARGET_FIRM			=	SYSTEMMENU
+SUBDIRS				=	ARM9
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS				=	sysmenu settings mb_loader acsign boot hotsw reset_param
-
-#----------------------------------------------------------------------------
+do-build:		$(TARGETS)
 
 include	$(TWLIPL_ROOT)/build/buildtools/modulerules
-
 
 #===== End of Makefile =====

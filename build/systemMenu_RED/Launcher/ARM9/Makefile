@@ -20,6 +20,7 @@ SUBDIRS					=	\
 							../../../libraries_sysmenu/sysmenu \
 							../../../libraries_sysmenu/boot \
 							../../../libraries_sysmenu/hotsw \
+							../../../libraries_sysmenu/reset_param \
 							../../../components/hyena.TWL
 
 #----------------------------------------------------------------------------
