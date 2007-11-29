@@ -34,9 +34,6 @@ SRCS		=	\
 #SRCDIR		=	# using default
 #LCFILE		=	# using default
 
-LLIBRARIES	+=	$(if $(ISDBG_LIBS_TWL),$(ISDBG_LIBS_TWL),libstubsistd_sp$(TWL_LIBSUFFIX).a) \
-			$(if $(ISDBG_LIBS_NITRO),$(ISDBG_LIBS_NITRO),libstubsisd_sp$(TWL_LIBSUFFIX).a) \
-
 MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000'
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
