@@ -14,8 +14,9 @@
   $Rev$
   $Author$
  *---------------------------------------------------------------------------*/
-#include        <nitro/code32.h>
-#include        <firm.h>
+#include    <twl/code32.h>
+#include    <firm.h>
+#include    <twl/hw/ARM7/mmap_wramEnv.h>
 
 void    _start(void);
 void    _start_AutoloadDoneCallback(void *argv[]);
@@ -442,6 +443,40 @@ _start_AutoloadDoneCallback(void* argv[])
 
 static asm void detect_main_memory_size( void )
 {
+//################ this process is required before IPL
+#if 0
+        // SCFG enable?
+        ldr     r2, =REG_EXT_ADDR
+        ldr     r0, [r2]
+        tst     r0, #0x80000000
+        beq     @9
+#endif
+        ldr     r2, =HW_PRV_WRAM_SYSRV
+        //OPT(bonding option)
+        ldr     r3, =REG_OP_ADDR
+        ldrh    r0, [r3]
+        strh    r0, [r2, #8]
+        //OPT(JTAG info)
+        ldr     r3, =REG_JTAG_ADDR
+        ldrb    r0, [r3]
+        //CLK(only wram clock)
+        ldr     r3, =REG_CLK_ADDR
+        ldrh    r1, [r3]
+        and     r1, r1, #0x80
+        orr     r0, r0, r1, LSR 1
+        strb    r0, [r2, #9]
+@9:
+//################
+
+        //---- copy scfg setting
+        ldr     r2, =HW_PRV_WRAM_SYSRV
+        ldr     r3, =HW_SYS_CONF_BUF
+        ldr     r0, [r2, #HWi_WSYS04_WRAMOFFSET]
+        str     r0, [r3, #HWi_WSYS04_OFFSET]
+        ldrh    r0, [r2, #HWi_WSYS08_WRAMOFFSET]
+        strh    r0, [r3, #HWi_WSYS08_OFFSET]
+
+        //---- detect memory size
 #if 0   // NITRO hardware is not supported
         mov     r0, #OS_CONSOLE_SIZE_4MB
         mov     r1, #0
@@ -459,20 +494,14 @@ static asm void detect_main_memory_size( void )
         bne     @1
 
         //---- 4MB
-        //---- check SMX_CNT
-        ldr     r3, =REG_SMX_CNT_ADDR
-        ldrh    r1, [r3]
-        and     r1, r1, #OSi_DETECT_NITRO_MASK
-        cmp     r1, #OSi_DETECT_NITRO_VAL
-        orreq   r0, r0, #OS_CHIPTYPE_SMX_MASK
         b       @4
 
         //---- 8MB or 16MB or 32MB
 @2:
         // check if running on twl/nitro
-        ldr     r1, =REG_CLK_ADDR
-        ldrh    r12, [r1]
-        tst     r12, #REG_SCFG_CLK_WRAMHCLK_MASK
+        ldr     r1, =HW_SYS_CONF_BUF
+        ldrb    r12, [r1,#HWi_WSYS09_OFFSET]
+        tst     r12, #HWi_WSYS09_CLK_WRAMHCLK_MASK
         moveq   r0, #OS_CONSOLE_SIZE_8MB
         beq     @4
 #else
@@ -495,20 +524,14 @@ static asm void detect_main_memory_size( void )
         bne     @3
         mov     r0, #OS_CONSOLE_SIZE_16MB
 @4:
-        strh    r0, [r2]
 
-        //---- detect chiptype
-        ldr     r2, =REG_OP_ADDR
-        ldrh    r0, [r2]
-        and     r0, r0, #REG_SCFG_OP_OPT_MASK
+        //---- check SMX_CNT
+        ldr     r3, =REG_SMX_CNT_ADDR
+        ldrh    r1, [r3]
+        and     r1, r1, #OSi_DETECT_NITRO_MASK
+        cmp     r1, #OSi_DETECT_NITRO_VAL
+        orreq   r0, r0, #OS_CHIPTYPE_SMX_MASK
 
-        //---- detect jtag
-        ldr     r2, =REG_JTAG_ADDR
-        ldrh    r1, [r2]
-        and     r1, r1, #REG_SCFG_JTAG_CPUJE_MASK
-        orr     r0, r0, r1, LSL #1
-
-        ldr     r2, =HW_CHIPTYPE_FLAG
         strb    r0, [r2]
 
         bx      lr
