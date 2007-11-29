@@ -54,9 +54,13 @@ static void PreInit(void)
     /*
      メインメモリ関連
     */
-    // SHARED領域クリア (ここだけでOK?)
-    MIi_CpuClearFast( 0, (void*)HW_PXI_SIGNAL_PARAM_ARM9, HW_MMEMCHECKER_MAIN-HW_PXI_SIGNAL_PARAM_ARM9 );
-    MIi_CpuClearFast( 0, (void*)HW_TWL_FS_MOUNT_INFO_BUF, HW_TWL_ROM_HEADER_BUF-HW_TWL_FS_MOUNT_INFO_BUF );
+    // SHARED領域クリア
+    MI_CpuClearFast((void *)HW_WRAM_EX_LOCK_BUF,        (HW_WRAM_EX_LOCK_BUF_END - HW_WRAM_EX_LOCK_BUF));
+    MI_CpuClearFast((void *)HW_BIOS_EXCP_STACK_MAIN,    (HW_REAL_TIME_CLOCK_BUF - HW_BIOS_EXCP_STACK_MAIN));
+    MI_CpuClearFast((void *)HW_PXI_SIGNAL_PARAM_ARM9,   (HW_MMEMCHECKER_MAIN - HW_PXI_SIGNAL_PARAM_ARM9));
+
+    // FS_MOUNT領域クリア
+    MI_CpuClearFast((void*)HW_TWL_FS_MOUNT_INFO_BUF,    (HW_TWL_ROM_HEADER_BUF-HW_TWL_FS_MOUNT_INFO_BUF));
 
     /*
         FromBrom関連
