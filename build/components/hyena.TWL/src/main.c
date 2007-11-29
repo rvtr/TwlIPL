@@ -197,8 +197,7 @@ static void ReadResetParameter( void )
 	
 	/*
 	// ダイレクトブート用設定のテストコード
-    u8 data = 1;
-	SYSMi_GetMCUFreeRegisterValue() = data;            // マイコンフリーレジスタ取得場所にホットスタートフラグをセット
+	SYSMi_GetMCUFreeRegisterValue() = 1;            // マイコンフリーレジスタ取得場所にホットスタートフラグをセット
 	SYSMi_GetResetParamAddr()->body.v1.bootTitleID = 0x000100015445534d;
 	SYSMi_GetResetParamAddr()->body.v1.flags = (BootFlags){TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
 	MI_CpuCopyFast( SYSM_RESET_PARAM_MAGIC_CODE, (char *)&SYSMi_GetResetParamAddr()->header.magicCode, SYSM_RESET_PARAM_MAGIC_CODE_LEN);

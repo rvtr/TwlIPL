@@ -33,7 +33,7 @@
 #define OK_BUTTON_BOTTOM_Y					( OK_BUTTON_TOP_Y + 2 * 8 )
 
 
-#define SETTING_MENU_ELEMENT_NUM			6						// メインメニューの項目数
+#define SETTING_MENU_ELEMENT_NUM			7						// メインメニューの項目数
 
 // extern data------------------------------------------
 
@@ -119,6 +119,16 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ TWL_LA
 		(const u16 *)L"COUNTRY(C)",
 		(const u16 *)L"COUNTRY(K)",
 	},
+	{
+		(const u16 *)L"ピクトチャット起動テスト",
+		(const u16 *)L"PICTOCHAT",
+		(const u16 *)L"PICTOCHAT(F)",
+		(const u16 *)L"PICTOCHAT(G)",
+		(const u16 *)L"PICTOCHAT(I)",
+		(const u16 *)L"PICTOCHAT(S)",
+		(const u16 *)L"PICTOCHAT(C)",
+		(const u16 *)L"PICTOCHAT(K)",
+	},
 };
 
 static MenuPos s_settingPos[] = {
@@ -128,6 +138,7 @@ static MenuPos s_settingPos[] = {
 	{ TRUE, 4 * 8,  12 * 8 },
 	{ TRUE,  4 * 8,  14 * 8 },
 	{ TRUE,  4 * 8,  16 * 8 },
+	{ TRUE,  4 * 8,  18 * 8 },
 };
 
 
@@ -186,20 +197,25 @@ static void ResetHardware( NAMTitleId id, BootFlags *flag)
 {
 	// リセットパラメータの設定
 	SYSMi_GetResetParamAddr()->body.v1.bootTitleID = id;
-	//SYSMi_GetResetParamAddr()->body.v1.flags = *flag;
-	SYSMi_GetResetParamAddr()->body.v1.flags = (BootFlags){TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
+	SYSMi_GetResetParamAddr()->body.v1.flags = *flag;
 	MI_CpuCopyFast( SYSM_RESET_PARAM_MAGIC_CODE, (char *)&SYSMi_GetResetParamAddr()->header.magicCode, SYSM_RESET_PARAM_MAGIC_CODE_LEN);
 	SYSMi_GetResetParamAddr()->header.bodyLength = sizeof(ResetParamBody);
 	SYSMi_GetResetParamAddr()->header.crc16 = SVC_GetCRC16( 65535, &SYSMi_GetResetParamAddr()->body, SYSMi_GetResetParamAddr()->header.bodyLength );
 	
+	DC_FlushRange(SYSMi_GetResetParamAddr(), sizeof(ResetParam) );
+	DC_WaitWriteBufferEmpty();
+	
 	// リセット命令発行
 	PM_ForceToResetHardware();
+	OS_Terminate();
 }
 
 // メインメニュー
 int MachineSettingMain( void )
 {
 	BOOL tp_select;
+
+	BootFlags tempflag = {TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
 	
 	ReadTP();
 	
@@ -220,7 +236,6 @@ int MachineSettingMain( void )
 	DrawMenu( s_csr, &s_settingParam );
 
 	if( pad.trg & PAD_BUTTON_START ) {
-		BootFlags tempflag = {TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
 		ResetHardware(NULL, &tempflag);
 	}
 	
@@ -251,6 +266,9 @@ int MachineSettingMain( void )
 					SelectCountryInit();
 					g_pNowProcess = SelectCountryMain;
 					break;
+				case 6:
+					//pictochat起動テスト
+					ResetHardware(0x0001000154484350, &tempflag);
 			}
 		}
 	}
