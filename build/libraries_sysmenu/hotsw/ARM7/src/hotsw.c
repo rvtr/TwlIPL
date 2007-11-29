@@ -46,6 +46,7 @@ static void LoadStaticModule_Secure(void);
 static void McPowerOn(void);
 static void SetMCSCR(void);
 
+static void GenVA_VB_VD(void);
 static void LoadTable(void);
 static void ReadIDNormal(void);
 static void MIm_CardDmaCopy32(u32 dmaNo, const void *src, void *dest);
@@ -141,7 +142,7 @@ void HOTSW_Init(void)
     
 	// カードブート用構造体の初期化
 	MI_CpuClear32(&s_cbData, sizeof(CardBootData));
-
+    
 	OS_TPrintf("*** sizeof(ROM_Header) : 0x%08x\n", sizeof(ROM_Header));
 }
 
@@ -162,11 +163,6 @@ BOOL HOTSW_Boot(void)
 	OS_TPrintf("---------------- Card Boot Start ---------------\n");
 	// カード電源ON
 	McPowerOn();
-    
-	// VAE・VBI・VD値の設定
-    s_cbData.vae = VAE_VALUE;
-    s_cbData.vbi = VBI_VALUE;
-	s_cbData.vd  = VD_VALUE;
 
 	// セキュア領域の読み込みセグメント先頭番号(Segment4 ～ Segment7)
     s_cbData.secureSegNum = 4;
@@ -236,7 +232,10 @@ BOOL HOTSW_Boot(void)
 	        }
 	    	// Key Table初期化
 	    	GCDm_MakeBlowfishTableDS(&s_cbData.keyTable, &s_pBootSegBuffer->rh.s, s_cbData.keyBuf, 8);
-	
+
+			// コマンド認証値・コマンドカウンタ初期値・PNジェネレータ初期値の生成
+            GenVA_VB_VD();
+            
 	    	// セキュアモードに移行
 	    	s_funcTable[s_cbData.cardType].ChangeMode_N(&s_cbData);
 	
@@ -393,6 +392,33 @@ void HOTSW_SetSecureSegmentBuffer(void* buf, u32 size)
     MI_CpuClear8(s_pSecureSegBuffer, size);
 
     OS_TPrintf("*** Scr Seg Buf Address : 0x%08x\n", s_pSecureSegBuffer);
+}
+
+
+/* -----------------------------------------------------------------
+ * GenVA_VB_VD関数
+ *
+ * コマンド認証値・コマンドカウンタ・PNジェネレータ初期値の生成
+ * ----------------------------------------------------------------- */
+static void GenVA_VB_VD(void)
+{
+    u32 dummy = 0;
+	MATHRandContext32	rnd;					
+    
+	// 乱数を初期化 VBlankカウンタ値を種とする。
+    MATH_InitRand32(&rnd, (u64)OS_GetVBlankCount());
+    
+    s_cbData.vae = MATH_Rand32(&rnd, 0);
+    s_cbData.vbi = MATH_Rand32(&rnd, 0);
+    s_cbData.vd  = MATH_Rand32(&rnd, 0);
+    dummy        = MATH_Rand32(&rnd, 0);
+
+    EncryptByBlowfish(&s_cbData.keyTable, &s_cbData.vae, &s_cbData.vbi);
+    EncryptByBlowfish(&s_cbData.keyTable, &s_cbData.vd , &dummy);
+
+	s_cbData.vae &= 0xffffff;
+	s_cbData.vbi &= 0xfffff;
+	s_cbData.vd  &= 0xffffff;
 }
 
 /* -----------------------------------------------------------------
