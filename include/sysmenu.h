@@ -25,6 +25,7 @@
 
 #include <twl.h>
 #include <twl/os/common/format_rom.h>
+#include <twl/hw/common/mmap_parameter.h>
 
 #include <sysmenu/sysmenu_lib.h>
 #include <sysmenu/banner.h>

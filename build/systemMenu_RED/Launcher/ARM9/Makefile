@@ -30,7 +30,7 @@ TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
 
 TITLEID_LO				=	LNCR
-TARGET_WAD				=	$(BINDIR)/$(TITLEID_LO).wad
+TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).tad
 
 TARGET_BIN				=	main.srl
 
@@ -60,11 +60,12 @@ DEFAULT_COMP_ARM7		=	hyena
 
 MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
 
+include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
 include $(TWLIPL_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 
-LDIRT_CLEAN				=	$(TARGET_WAD)
-INSTALL_TARGETS			=	$(TARGET_WAD)
+LDIRT_CLEAN				=	$(TARGET_TAD)
+INSTALL_TARGETS			=	$(TARGET_TAD)
 INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------

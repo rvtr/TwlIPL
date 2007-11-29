@@ -273,7 +273,7 @@ static int TSDi_RecoveryTSDFile( TSDStore *pTSDStoreOrg, u8 existErrFlag, u8 len
 		// ファイル生成
 		if( existErrFlag & ( 0x01 << i ) ) {
 			if( !FS_CreateFile( s_TSDPath[ i ], FS_PERMIT_R | FS_PERMIT_W ) ) {
-				OS_TPrintf( " TSD[%d] : create file error.\n" );
+				OS_TPrintf( " TSD[%d] : create file error.\n", i );
 				continue;
 			}
 			existErrFlag ^= 0x01 << i;
@@ -281,14 +281,14 @@ static int TSDi_RecoveryTSDFile( TSDStore *pTSDStoreOrg, u8 existErrFlag, u8 len
 		
 		// ファイルオープン
 		if( !FS_OpenFileEx( &file, s_TSDPath[ i ], FS_FILEMODE_R | FS_FILEMODE_W ) ) {
-			OS_TPrintf( " TSD[%d] : file open error.\n" );
+			OS_TPrintf( " TSD[%d] : file open error.\n", i );
 			continue;
 		}
 		
 		// ファイル長変更
 		if( lengthErrFlag & ( 0x01 << i ) ) {
 			if( FS_SetFileLength( &file, DEFAULT_TSD_FILE_LENGTH ) != FS_RESULT_SUCCESS ) {
-				OS_TPrintf( " TSD[%d] : set file length error.\n" );
+				OS_TPrintf( " TSD[%d] : set file length error.\n", i );
 				goto NEXT;
 			}
 			lengthErrFlag ^= 0x01 << i;
@@ -298,7 +298,7 @@ static int TSDi_RecoveryTSDFile( TSDStore *pTSDStoreOrg, u8 existErrFlag, u8 len
 		if( dataErrFlag & ( 0x01 << i ) ) {
 			if( pTSDStoreOrg ) {
 				if( FS_WriteFile( &file, pTSDStoreOrg, sizeof(TSDStore) ) != sizeof(TSDStore) ) {
-					OS_TPrintf( " TSD[%d] : write file length error.\n" );
+					OS_TPrintf( " TSD[%d] : write file length error.\n", i );
 					goto NEXT;
 				}
 			}else {

@@ -43,12 +43,11 @@ LDEPENDS_RES			+= $(SYSMENU_BUILDTOOLSDIR)/commondefs.sysmenu
 ### TWL-commondefs
 #
 #include $(TWLSDK_ROOT)/build/buildtools/commondefs
-include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
 include	$(NITROSYSTEM_ROOT)/build/buildtools/commondefs
 
 
-ifneq	($(TARGET_WAD),)
-TARGETS					+=	 $(TARGET_WAD)
+ifneq	($(TARGET_TAD),)
+TARGETS					+=	 $(TARGET_TAD)
 endif
 
 #----------------------------------------------------------------------------
@@ -86,7 +85,7 @@ MAKEBANNER		:= $(SYSMENU_TOOLSDIR)/bin/makebanner.exe
 MAKESYSMENU_RSA_PRVKEY	?= $(SYSMENU_TOOLSDIR)/openssl/rsa_private.der
 MAKESYSMENU_RSA_PUBKEY	?= $(SYSMENU_TOOLSDIR)/openssl/rsa_public.der
 
-MAKEWAD			?= $(TWLSDK_ROOT)/build/tools/TwlNMenu/data/makeWad.pl
+MAKETAD			?= $(TWLSDK_ROOT)/tools/bin/makeTad.pl
 
 #----------------------------------------------------------------------------
 

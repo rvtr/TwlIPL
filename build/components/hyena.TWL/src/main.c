@@ -34,6 +34,7 @@
 #include    <twl/cdc.h>
 #include    <twl/aes.h>
 #include    <twl/mcu.h>
+#include	<twl/hw/ARM7/mmap_wramEnv.h>
 #include    <sysmenu.h>
 #include    "nvram_sp.h"
 
@@ -65,6 +66,7 @@
 /*---------------------------------------------------------------------------*
     内部関数定義
  *---------------------------------------------------------------------------*/
+static void         SetSCFGWork( void );
 static void         ReadResetParameter( void );
 static void         PrintDebugInfo(void);
 static OSHeapHandle InitializeAllocateSystem(void);
@@ -83,6 +85,7 @@ extern void         SDK_LTDAUTOLOAD_LTDWRAM_BSS_END(void);
 extern void         SDK_LTDAUTOLOAD_LTDMAIN_BSS_END(void);
 #endif
 
+
 /*---------------------------------------------------------------------------*
   Name:         TwlSpMain
   Description:  起動ベクタ。
@@ -97,6 +100,12 @@ TwlSpMain(void)
     // SYSMワークのクリア
     MI_CpuClear32( SYSMi_GetWork(), sizeof(SYSM_work) );
 
+	// MMEMサイズチェックは、ARM7の_start内でやっているので、ノーケアでOK.
+	// SCFGレジスタ→HWi_WSYS04 etc.→system shared領域への値セットは、ランチャー起動時点では行われていないので、
+	// ランチャー自身がこれらの値を使うには、自身でこれらの値をセットしてやる必要がある。
+	// ランチャーからアプリを起動する際には、reboot.cが
+	SetSCFGWork();
+	
     // OS 初期化
     OS_Init();
 	OS_InitTick();
@@ -108,9 +117,9 @@ TwlSpMain(void)
     // Cold/Hotスタート判定
 	ReadResetParameter();
 	
-	// ※カード電源ONして、ROMヘッダのみリード＆チェックくらいはやっておきたい
+	// [TODO:] カード電源ONして、ROMヘッダのみリード＆チェックくらいはやっておきたい
 	
-	SYSMi_GetWork()->isARM9Start = TRUE;				// ※HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
+	SYSMi_GetWork()->isARM9Start = TRUE;				// [TODO:] HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
 	
     // ヒープ領域設定
     {
@@ -190,20 +199,58 @@ TwlSpMain(void)
 }
 
 
-// Hot/Coldスタート判定およびリセットパラメータのリード
-static void ReadResetParameter( void )
+// システム領域(WRAM & MMEM)にSCFG情報をセット
+static void SetSCFGWork( void )
 {
-	MCU_GetFreeRegisters( 0, (u8 *)HW_RESET_PARAMETER_BUF, 1 );
+	// SCFGレジスタが有効な場合のみセット
+	if( reg_SCFG_EXT & REG_SCFG_EXT_CFG_MASK ) {
+		// WRAMのシステム領域にセット
+		u32 *wsys4 = (void*)HWi_WSYS04_ADDR;
+		u8  *wsys8 = (void*)HWi_WSYS08_ADDR;
+		u8  *wsys9 = (void*)HWi_WSYS09_ADDR;
+		// copy scfg registers
+		*wsys4 = reg_SCFG_EXT;
+		*wsys8 = (u8)(((reg_SCFG_OP & REG_SCFG_OP_OPT_MASK)) |
+						((reg_SCFG_A9ROM & (REG_SCFG_A9ROM_RSEL_MASK | REG_SCFG_A9ROM_SEC_MASK)) << (HWi_WSYS08_ROM_ARM9SEC_SHIFT - REG_SCFG_A9ROM_SEC_SHIFT)) |
+						((reg_SCFG_A7ROM & (REG_SCFG_A7ROM_RSEL_MASK | REG_SCFG_A7ROM_SEC_MASK | REG_SCFG_A7ROM_FUSE_MASK)) << (HWi_WSYS08_ROM_ARM7SEC_SHIFT - REG_SCFG_A7ROM_SEC_SHIFT)) |
+						((reg_SCFG_WL & REG_SCFG_WL_OFFB_MASK) << (HWi_WSYS08_WL_OFFB_SHIFT - REG_SCFG_WL_OFFB_SHIFT))
+						);
+		*wsys9 = (u8)((*wsys9 & (HWi_WSYS09_JTAG_DSPJE_MASK | HWi_WSYS09_JTAG_CPUJE_MASK | HWi_WSYS09_JTAG_ARM7SEL_MASK)) |
+						((reg_SCFG_JTAG & (REG_SCFG_JTAG_CPUJE_MASK | REG_SCFG_JTAG_ARM7SEL_MASK))) |
+						((reg_SCFG_JTAG & REG_SCFG_JTAG_DSPJE_MASK) >> (REG_SCFG_JTAG_DSPJE_SHIFT - HWi_WSYS09_JTAG_DSPJE_SHIFT)) | 
+						((reg_SCFG_CLK & (REG_SCFG_CLK_AESHCLK_MASK | REG_SCFG_CLK_SD2HCLK_MASK | REG_SCFG_CLK_SD1HCLK_MASK)) << (HWi_WSYS09_CLK_SD1HCLK_SHIFT - REG_SCFG_CLK_SD1HCLK_SHIFT)) | 
+						((reg_SCFG_CLK & (REG_SCFG_CLK_SNDMCLK_MASK | REG_SCFG_CLK_WRAMHCLK_MASK)) >> (REG_SCFG_CLK_WRAMHCLK_SHIFT - HWi_WSYS09_CLK_WRAMHCLK_SHIFT))
+						);
+		
+		// MMEMのシステム領域にコピー
+		MI_CpuCopy8( (void*)HWi_WSYS04_ADDR, (void *)HW_SYS_CONF_BUF, 6 );
+    }
+}
+
+static BOOL IsEnableJTAG( void )
+{
+	// SCFGレジスタが無効になっていたら、SCFGレジスタの値は"0"になるので、WRAMに退避している値をチェックする。
+	u8 value = ( reg_SCFG_EXT & REG_SCFG_EXT_CFG_MASK ) ?
+				 (u8)( reg_SCFG_JTAG & REG_SCFG_JTAG_CPUJE_MASK ) :
+				 (u8)( *(u8 *)HWi_WSYS09_ADDR & HWi_WSYS09_JTAG_CPUJE_MASK );
+	return value ? TRUE : FALSE;
+}
+
+// Hot/Coldスタート判定およびリセットパラメータのリード
+#define MCU_RESET_VALUE_BUF_ENABLE_MASK		0x80000000
+#define MCU_RESET_VALUE_OFS					0
+#define MCU_RESET_VALUE_LEN					1
+void ReadResetParameter( void )
+{
+	if( ( *(u32 *)HW_RESET_PARAMETER_BUF & MCU_RESET_VALUE_BUF_ENABLE_MASK ) == 0 ) {
+		(void)MCU_GetFreeRegisters( MCU_RESET_VALUE_OFS, (u8 *)HW_RESET_PARAMETER_BUF, MCU_RESET_VALUE_LEN );
+	}
 	
-    // Hot/Coldスタート判定
-#ifdef SDK_FINALROM
-    if( SYSMi_GetMCUFreeRegisterValue() == 0 )          // マイコンフリーレジスタ値が"0"ならColdスタート
-#else
-    if( 1 )                                             // ISデバッガでのデバッグ動作時に常にホットスタート判定されるのを防ぐ
-#endif
-    {
+	// Hot/Coldスタート判定
+	if( IsEnableJTAG() ||  								// ISデバッガでのデバッグ動作時に常にホットスタート判定されるのを防ぐ
+		( SYSMi_GetMCUFreeRegisterValue() == 0 ) ) {    // "JTAG有効"か"マイコンフリーレジスタ値=0"ならColdスタート
         u8 data = 1;
-		MCU_SetFreeRegisters( 0, &data, 1 );
+        MCU_SetFreeRegisters( MCU_RESET_VALUE_OFS, &data, MCU_RESET_VALUE_LEN );  // マイコンフリーレジスタにホットスタートフラグをセット
         SYSMi_GetWork()->isHotStart = FALSE;
     }else {
         SYSMi_GetWork()->isHotStart = TRUE;

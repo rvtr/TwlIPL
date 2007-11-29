@@ -42,7 +42,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     void *stack_top = (void*)OS_BOOT_STACK_TOP; // (HW_WRAM_AREA_END - HW_PRV_WRAM_SYSRV_SIZE - HW_SVC_STACK_SIZE)
 #endif
     void *wram_reg = rom_header->s.main_wram_config_data;
-    REBOOTTarget target = REBOOT_TARGET_NAND_MENU;
+    REBOOTTarget target = REBOOT_TARGET_TWL_SYSTEM;
     BOOL scfg = TRUE;   // no touch
     BOOL jtag = FALSE;  // no touch
     static u32  clr_list[32];

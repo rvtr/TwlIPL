@@ -100,14 +100,10 @@ typedef struct SDKBootCheckInfo{
 //　SYSM共有ワーク領域のアドレス獲得
 //----------------------------------------------------------------------
 // SYSMリセットパラメータアドレスの取得（※ライブラリ向け。ARM9側はSYSM_GetResetParamを使用して下さい。）
-#define SYSMi_GetResetParamAddr()			( (ResetParam *)0x02000100 )
+#define SYSMi_GetResetParamAddr()			( (ResetParam *)HW_PARAM_LAUNCH_PARAM )
 
-#if 0
 // SYSM共有ワークの取得
 #define SYSMi_GetWork()						( (SYSM_work *)HW_RED_RESERVED )
-#else
-#define SYSMi_GetWork()						( (SYSM_work *)( HW_RED_RESERVED + 0x10 ) )
-#endif
 
 // SDKブートチェック（アプリ起動時にカードIDをセットする必要がある。）
 #define SYSMi_GetSDKBootCheckInfo()			( (SDKBootCheckInfo *)HW_BOOT_CHECK_INFO_BUF )

@@ -103,7 +103,7 @@ void BOOT_Ready( void )
 	        NULL
 	    };
 		// [TODO]起動するターゲットの種類を指定する必要あり
-	    OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x24), clr_list, REBOOT_TARGET_NAND_APP );
+	    OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x24), clr_list, REBOOT_TARGET_TWL_SYSTEM );
 	}
 }
 

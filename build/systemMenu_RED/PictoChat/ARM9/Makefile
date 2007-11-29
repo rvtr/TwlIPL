@@ -25,7 +25,7 @@ TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
 
 TITLEID_LO				=	PCHT
-TARGET_WAD				=	$(BINDIR)/$(TITLEID_LO).wad
+TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).tad
 
 TARGET_BIN				=	main.srl
 
@@ -43,8 +43,8 @@ MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
 include $(TWLIPL_ROOT)/build/buildtools/commondefs
 
 
-LDIRT_CLEAN				=	$(TARGET_WAD)
-INSTALL_TARGETS			=	$(TARGET_WAD)
+LDIRT_CLEAN				=	$(TARGET_TAD)
+INSTALL_TARGETS			=	$(TARGET_TAD)
 INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
