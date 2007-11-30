@@ -577,9 +577,30 @@ static void MoveByScrollBar( void )
 static void DrawScrollBar( TitleProperty *pTitleList )
 {
 	int l;
+	static int col_count = 0;
+	static int col_count_d = 1;
+	static const int COL_FLAME_MAX = 30;
+	static const int COL_NUM = 15;
+	static const int COL_DIV = COL_FLAME_MAX / COL_NUM;
+	
+	col_count += col_count_d;
+	if(col_count < 0)
+	{
+		col_count = 0;
+		col_count_d = 1;
+	}
+	if(COL_FLAME_MAX <= col_count)
+	{
+		col_count = COL_FLAME_MAX - 1;
+		col_count_d = -1;
+	}
+	
 	for(l=0; l<LAUNCHER_TITLE_LIST_NUM; l++)
 	{
-		PutStringUTF16( (int)(BAR_ZERO_X + l * (ITEM_SIZE + ITEM_INTERVAL)), BAR_ZERO_Y, (pTitleList[l].flags.isValid ? TXT_UCOLOR_G1 : TXT_COLOR_BLACK), (const u16 *)L"E" );
+		PutStringUTF16( (int)(BAR_ZERO_X + l * (ITEM_SIZE + ITEM_INTERVAL)),
+						BAR_ZERO_Y,
+						(pTitleList[l].flags.isValid ? (TXT_UCOLOR_G0 + col_count/COL_DIV) : TXT_COLOR_BLACK),
+						(const u16 *)L"E" );
 	}
 	for(l=0; l<4; l++)
 	{

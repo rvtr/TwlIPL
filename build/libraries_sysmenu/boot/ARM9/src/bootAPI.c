@@ -102,7 +102,14 @@ void BOOT_Ready( void )
 	        //HW_DTCM, HW_DTCM_SIZE,
 	        NULL
 	    };
-		// [TODO]起動するターゲットの種類を指定する必要あり
+	    
+	    // [TODO]再配置リストの作成と設定（ほぼARM7側でやるのでこちらは空）
+	    static u32 relocate_list[] =
+	    {
+			NULL
+		};
+	    
+		// 起動するターゲットの種類を指定する必要あり
 	    OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x24), clr_list, REBOOT_TARGET_TWL_SYSTEM );
 	}
 }

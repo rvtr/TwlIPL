@@ -69,7 +69,7 @@ extern "C" {
 #define SYSM_NTR_ARM7_LOAD_WRAM				0x037f8000					// ロード可能なARM7 static WRAM アドレス
 #define SYSM_NTR_ARM7_LOAD_WRAM_END			0x0380f000					// ロード可能なARM7 static WRAM 最終アドレス
 
-#define SYSM_TWL_ARM9_LOAD_MMEM				SYSM_NTR_ARM9_LOAD_MMEM		// ロード可能なARM9 static MMEM アドレス
+#define SYSM_TWL_ARM9_LOAD_MMEM				0x02000400					// ロード可能なARM9 static MMEM アドレス
 #define SYSM_TWL_ARM9_LOAD_MMEM_END			SYSM_NTR_ARM9_LOAD_MMEM_END	// ロード可能なARM9 static MMEM 最終アドレス
 #define SYSM_TWL_ARM7_LOAD_MMEM				SYSM_NTR_ARM7_LOAD_MMEM		// ロード可能なARM7 static MMEM アドレス
 #define SYSM_TWL_ARM7_LOAD_MMEM_END			SYSM_NTR_ARM7_LOAD_MMEM_END	// ロード可能なARM7 static MMEM 最終アドレス
