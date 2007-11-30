@@ -38,7 +38,7 @@
 #define BAR_ZERO_Y							WINDOW_HEIGHT - 32
 #define BAR_HEIGHT							14
 #define BAR_WIDTH							32 //((ITEM_SIZE + ITEM_INTERVAL) * 4 + ITEM_SIZE + 2)
-#define BAR_LOOSENESS						0
+#define BAR_LOOSENESS						2
 #define ITEMDOT_PER_FRAME					((double)(ITEM_SIZE + ITEM_INTERVAL) / (double)FRAME_PER_SELECT)
 #define FRAME_PER_ITEMDOT					((double)FRAME_PER_SELECT / (double)(ITEM_SIZE + ITEM_INTERVAL))
 #define BAR_OFFSET							0				// 表示に"■"テキストを使っているので、タッチ座標を補正する目的のOFFSET
@@ -105,6 +105,7 @@ static GXOamAttr banner_oam_attr[MAX_SHOW_BANNER+10];// アフィンパラメータ埋める
 static u8 *pbanner_image_list[ LAUNCHER_TITLE_LIST_NUM ];
 static int banner_count = 0;
 static int selected = 0;
+static int bar_left = BAR_ZERO_X;
 
 // const data  -----------------------------------------
 
@@ -528,7 +529,6 @@ static void MoveByScrollBar( void )
 	{
 		static BOOL holding = FALSE;
 		static int dx;
-		int bar_left = (int)(BAR_ZERO_X + (ITEMDOT_PER_FRAME * s_csr));
 		if(tpd.disp.touch)
 		{
 			if(holding)
@@ -557,10 +557,14 @@ static void MoveByScrollBar( void )
 				holding = FALSE;
 				csr_v = (det < FRAME_PER_SELECT/2) ? (det == 0 ? 0 : -1) : 1;
 			}
+			bar_left = (int)(BAR_ZERO_X + (ITEMDOT_PER_FRAME * s_csr));
 		}
 	}
 	
 	// タッチパッドによるスクロール後の調整
+	if( BAR_ZERO_X + (ITEM_SIZE + ITEM_INTERVAL) * (LAUNCHER_TITLE_LIST_NUM - 1) < bar_left )
+		bar_left = BAR_ZERO_X + (ITEM_SIZE + ITEM_INTERVAL) * (LAUNCHER_TITLE_LIST_NUM - 1);
+	if( bar_left < BAR_ZERO_X ) bar_left = BAR_ZERO_X;
 	if((LAUNCHER_TITLE_LIST_NUM-1)*FRAME_PER_SELECT < s_csr) s_csr = (LAUNCHER_TITLE_LIST_NUM-1)*FRAME_PER_SELECT;
 	if( s_csr < 0 ) s_csr = 0;
 }
@@ -574,7 +578,7 @@ static void DrawScrollBar( TitleProperty *pTitleList )
 	}
 	for(l=0; l<4; l++)
 	{
-		PutStringUTF16( (int)(BAR_ZERO_X + (ITEMDOT_PER_FRAME * s_csr) - l%2), BAR_ZERO_Y - l/2, TXT_UCOLOR_G1, (const u16 *)L"□" );
+		PutStringUTF16( (int)(bar_left - l%2), BAR_ZERO_Y - l/2, TXT_UCOLOR_G1, (const u16 *)L"□" );
 	}
 }
 
