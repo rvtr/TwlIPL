@@ -95,12 +95,19 @@ void BOOT_Ready( void )
 	
     // SDK共通リブート
 	{
-	    // メモリクリアリストの設定
-	    static u32 clr_list[] =
+	    // メモリリストの設定
+	    static u32 mem_list[] =
 	    {
+            // pre clear
 	        HW_ITCM, HW_ITCM_SIZE,
 	        //HW_DTCM, HW_DTCM_SIZE,
-	        NULL
+	        NULL,
+            // copy forward
+	        NULL,
+            // copy backward
+	        NULL,
+            // post clear
+	        NULL,
 	    };
 	    
 	    // [TODO]再配置リストの作成と設定（ほぼARM7側でやるのでこちらは空）
@@ -110,7 +117,7 @@ void BOOT_Ready( void )
 		};
 	    
 		// 起動するターゲットの種類を指定する必要あり
-	    OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x24), clr_list, REBOOT_TARGET_TWL_SYSTEM );
+	    OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x24), mem_list, REBOOT_TARGET_TWL_SYSTEM );
 	}
 }
 

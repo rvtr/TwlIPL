@@ -61,9 +61,10 @@ BOOL BOOT_WaitStart( void )
 		
 		// SDK共通リブート
 		{
-			// メモリクリアリストの設定
-			static u32 clr_list[] = 
+			// メモリリストの設定
+			static u32 mem_list[] = 
 			{
+                // pre clear
 				SYSM_OWN_ARM7_MMEM_ADDR, SYSM_OWN_ARM7_MMEM_ADDR_END - SYSM_OWN_ARM7_MMEM_ADDR,
 				SYSM_OWN_ARM9_MMEM_ADDR, SYSM_OWN_ARM9_MMEM_ADDR_END - SYSM_OWN_ARM9_MMEM_ADDR,
 				SYSM_OWN_ARM7_WRAM_ADDR, SYSM_OWN_ARM7_WRAM_ADDR_END - SYSM_OWN_ARM7_WRAM_ADDR,
@@ -75,7 +76,13 @@ BOOL BOOT_WaitStart( void )
 				HW_MAIN_MEM_SHARED, HW_RED_RESERVED - HW_MAIN_MEM_SHARED,
 				HW_ARENA_INFO_BUF, HW_ROM_HEADER_BUF - HW_ARENA_INFO_BUF,
 				HW_PXI_SIGNAL_PARAM_ARM9, HW_MAIN_MEM_SYSTEM_END - HW_PXI_SIGNAL_PARAM_ARM9,
-				NULL
+				NULL,
+                // copy forward
+				NULL,
+                // copy backward
+				NULL,
+                // post clear
+				NULL,
 			};
 
 /*
@@ -138,7 +145,7 @@ BOOL BOOT_WaitStart( void )
 			}
 
 			// [TODO]起動するターゲットの種類を指定する必要あり
-			OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x34), clr_list, REBOOT_TARGET_TWL_SYSTEM );
+			OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x34), mem_list, REBOOT_TARGET_TWL_SYSTEM );
 		}
 	}
 	return FALSE;
