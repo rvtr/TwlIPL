@@ -529,6 +529,12 @@ static void MoveByScrollBar( void )
 	{
 		static BOOL holding = FALSE;
 		static int dx;
+		
+		if(!holding)
+		{
+			bar_left = (int)(BAR_ZERO_X + (ITEMDOT_PER_FRAME * s_csr));
+		}
+		
 		if(tpd.disp.touch)
 		{
 			if(holding)
@@ -557,7 +563,6 @@ static void MoveByScrollBar( void )
 				holding = FALSE;
 				csr_v = (det < FRAME_PER_SELECT/2) ? (det == 0 ? 0 : -1) : 1;
 			}
-			bar_left = (int)(BAR_ZERO_X + (ITEMDOT_PER_FRAME * s_csr));
 		}
 	}
 	
