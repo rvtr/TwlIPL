@@ -104,7 +104,7 @@ static void PostInit(void)
      メインメモリ関連
     */
     // ARM9領域を全クリア
-    if ( OS_GetResetParameter() )
+    if ( (u8)OS_GetResetParameter() )
     {
         MI_CpuClearFast( (void*)HW_FIRM_RESET_BUF_END, HW_TWL_MAIN_MEM_MAIN_END-HW_FIRM_RESET_BUF_END );
     }
@@ -179,6 +179,7 @@ void TwlMain( void )
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
 
+    FATFS_InitFIRM();
     FS_Init(FS_DMA_NOT_USE);
 
 #ifdef PROFILE_ENABLE
