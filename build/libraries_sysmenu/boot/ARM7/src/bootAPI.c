@@ -70,7 +70,7 @@ BOOL BOOT_WaitStart( void )
 		
 		// SDK共通リブート
 		{
-			int list_count = 0;
+			int list_count = PRE_CLEAR_NUM_MAX + 1;
 			int l;
 			// メモリリストの設定
 			static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + 2 + POST_CLEAR_NUM_MAX] = 
@@ -101,27 +101,27 @@ BOOL BOOT_WaitStart( void )
 			{
 				if( SYSMi_GetWork()->romRelocateInfo[l].src != NULL && !SYSMi_GetWork()->romRelocateInfo[l].rev )
 				{
-					mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count++)] = SYSMi_GetWork()->romRelocateInfo[l].src;
-					mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count++)] = SYSMi_GetWork()->romRelocateInfo[l].dest;
-					mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count++)] = SYSMi_GetWork()->romRelocateInfo[l].length;
+					mem_list[list_count++] = SYSMi_GetWork()->romRelocateInfo[l].src;
+					mem_list[list_count++] = SYSMi_GetWork()->romRelocateInfo[l].dest;
+					mem_list[list_count++] = SYSMi_GetWork()->romRelocateInfo[l].length;
 				}
 			}
-			mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count++)] = NULL;
+			mem_list[list_count++] = NULL;
 			
 			// copy backwardリスト設定
 			for( l=0; l<RELOCATE_INFO_NUM ; l++ )
 			{
 				if( SYSMi_GetWork()->romRelocateInfo[l].src != NULL && SYSMi_GetWork()->romRelocateInfo[l].rev )
 				{
-					mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count++)] = SYSMi_GetWork()->romRelocateInfo[l].src;
-					mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count++)] = SYSMi_GetWork()->romRelocateInfo[l].dest;
-					mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count++)] = SYSMi_GetWork()->romRelocateInfo[l].length;
+					mem_list[list_count++] = SYSMi_GetWork()->romRelocateInfo[l].src;
+					mem_list[list_count++] = SYSMi_GetWork()->romRelocateInfo[l].dest;
+					mem_list[list_count++] = SYSMi_GetWork()->romRelocateInfo[l].length;
 				}
 			}
-			mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count++)] = NULL;
+			mem_list[list_count++] = NULL;
 			
 			// [TODO]post clearリスト設定
-			mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count)] = NULL;
+			mem_list[list_count] = NULL;
 
 			// リブート
 			OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x34), mem_list, REBOOT_TARGET_TWL_SYSTEM );
