@@ -28,7 +28,7 @@ TWL_CODEGEN_ALL 	?= TRUE
 # Codegen for sub processer
 TWL_PROC		= ARM7
 
-SRCDIR			= .
+SRCDIR			= . ../common
 
 SRCS			= \
 				aes_init.c \

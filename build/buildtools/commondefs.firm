@@ -84,6 +84,8 @@ FIRM_LIBS_BASE	?= \
 			   libos \
 			   libpxi \
 			   libfs \
+			   libfatfs \
+			   libaes \
 			   libmi \
 
 else #	($(CODEGEN_PROC),ARM7)

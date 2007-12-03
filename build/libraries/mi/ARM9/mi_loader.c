@@ -89,8 +89,8 @@ static const u8 s_digestDefaultKey[ SVC_SHA1_BLOCK_SIZE ] = {
  *---------------------------------------------------------------------------*/
 static BOOL CheckRomCertificate( SVCSignHeapContext* pool, const RomCertificate *pCert, const void* pCAPubKey, u32 gameCode )
 {
-    u8 digest[DIGEST_SIZE_SHA1];
-    u8 md[DIGEST_SIZE_SHA1];
+    u8 digest[SVC_SHA1_DIGEST_SIZE];
+    u8 md[SVC_SHA1_DIGEST_SIZE];
     int i;
     BOOL result = TRUE;
 
@@ -108,7 +108,7 @@ static BOOL CheckRomCertificate( SVCSignHeapContext* pool, const RomCertificate 
     SVC_CalcSHA1( md, pCert, ROM_CERT_SIGN_OFFSET );
 
     // 比較
-    for (i = 0; i < DIGEST_SIZE_SHA1; i++)
+    for (i = 0; i < SVC_SHA1_DIGEST_SIZE; i++)
     {
         if ( md[i] != digest[i] )
         {
@@ -230,7 +230,7 @@ BOOL MI_LoadBuffer(u8* dest, u32 size, SVCSHA1Context *ctx)
 BOOL MI_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
 {
     SVCSHA1Context ctx;
-    u8 md[DIGEST_SIZE_SHA1];
+    u8 md[SVC_SHA1_DIGEST_SIZE];
     SignatureData sd;
     int i;
     BOOL result = TRUE;
@@ -275,7 +275,7 @@ BOOL MI_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
 
     // ヘッダ署名チェック
     SVC_DecryptSign( pool, &sd, rh->signature, rsa_key );
-    for (i = 0; i < DIGEST_SIZE_SHA1; i++)
+    for (i = 0; i < SVC_SHA1_DIGEST_SIZE; i++)
     {
         if ( md[i] != sd.digest[i] )
         {
@@ -362,10 +362,10 @@ static u32 MIi_GetTransferSize( u32 offset, u32 size )
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-static /*inline*/ BOOL MIi_LoadModule(void* dest, u32 offset, u32 size, const u8 digest[DIGEST_SIZE_SHA1])
+static /*inline*/ BOOL MIi_LoadModule(void* dest, u32 offset, u32 size, const u8 digest[SVC_SHA1_DIGEST_SIZE])
 {
     SVCHMACSHA1Context ctx;
-    u8 md[DIGEST_SIZE_SHA1];
+    u8 md[SVC_SHA1_DIGEST_SIZE];
     int i;
     BOOL result = TRUE;
 
@@ -387,14 +387,14 @@ static /*inline*/ BOOL MIi_LoadModule(void* dest, u32 offset, u32 size, const u8
     profile[pf_cnt++] = PROFILE_SHA1;  // checkpoint
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
 #endif
-    for (i = 0; i < DIGEST_SIZE_SHA1; i++)
+    for (i = 0; i < SVC_SHA1_DIGEST_SIZE; i++)
     {
         if (md[i] != digest[i])
         {
             result = FALSE;
         }
     }
-    MI_CpuClear8(md, DIGEST_SIZE_SHA1);
+    MI_CpuClear8(md, SVC_SHA1_DIGEST_SIZE);
     return result;
 }
 

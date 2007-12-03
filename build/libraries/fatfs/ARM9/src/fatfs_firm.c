@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlFirm - include - AES
-  File:     aes.h
+  Project:  TwlIPL - libraries - fatfs
+  File:     fatfs_firm.c
 
   Copyright 2007 Nintendo.  All rights reserved.
 
@@ -10,24 +10,22 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Date:: 2007-09-06$
+  $Date::            $
   $Rev$
   $Author$
  *---------------------------------------------------------------------------*/
-#ifndef FIRM_AES_H_
-#define FIRM_AES_H_
 
-#define PXI_FIFO_TAG_DATA   PXI_FIFO_TAG_USER_0
+#include <firm.h>
+#include <twl/types.h>
 
-#include <twl/aes/common/type.h>
-#include <firm/aes/common/aes_util.h>
+void FATFS_InitFIRM( void )
+{
+    FATFSiCommandBuffer = (void*)FIRM_FATFS_COMMAND_BUFFER;
+    FATFS_Init();
+}
 
-#ifdef SDK_ARM7
-#include <firm/aes/ARM7/aes_init.h>
-#include <firm/aes/ARM7/aes_ids.h>
-#else // !SDK_ARM7
-#include <firm/aes/ARM9/aes_init.h>
-#endif // !SDK_ARM7
-
-/* FIRM_AES_H_ */
-#endif
+void FATFSi_GetUnicodeConversionTable(const u8 **u2s, const u16 **s2u)
+{
+    *u2s = NULL;
+    *s2u = NULL;
+}

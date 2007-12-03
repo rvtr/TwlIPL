@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlIPL - libraries - fatfs
+# Project:  TwlFirm - libraries - fatfs
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -12,20 +12,31 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
+#----------------------------------------------------------------------------
+
+SUBDIRS		=
+SUBMAKES	=
+
+
+#----------------------------------------------------------------------------
+
+SRCS			= fatfs_firm.c
+
+TARGET_LIB		= libfatfs$(FIRM_LIBSUFFIX).a
+
 #----------------------------------------------------------------------------
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
+INSTALL_TARGETS		= $(TARGETS)
+INSTALL_DIR		= $(FIRM_INSTALL_LIBDIR)
 
 #----------------------------------------------------------------------------
 
-SUBDIRS =	ARM9 ARM7
-
-#----------------------------------------------------------------------------
+do-build:		$(TARGETS)
 
 include	$(TWLIPL_ROOT)/build/buildtools/modulerules
-
 
 #===== End of Makefile =====

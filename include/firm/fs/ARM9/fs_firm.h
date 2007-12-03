@@ -104,6 +104,60 @@ BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key );
 BOOL FS_LoadStatic( void );
 
 
+/*---------------------------------------------------------------------------*
+  Name:         FS_LoadSrlModule
+
+  Description:  receive data from ARM7 via WRAM-B and store in destination address
+                in view of AES settings in the ROM header at HW_TWL_ROM_HEADER_BUF,
+                then verify the digest
+
+  Arguments:    pFile           pointer to FSFile streucture
+                dest            destination address to read
+                offset          file offset to start to read in bytes
+                size            total length to read in bytes
+                digest          digest to verify
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
+BOOL FS_LoadSrlModule( FSFile *pFile, u8* dest, u32 offset, u32 size, const u8 digest[SVC_SHA1_BLOCK_SIZE] );
+
+/*---------------------------------------------------------------------------*
+  Name:         FS_OpenSrl
+
+  Description:  open srl file named at HW_TWL_FS_BOOT_SRL_PATH_BUF
+
+  Arguments:    pFile   pointer to FSFile streucture
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
+BOOL FS_OpenSrl( FSFile *pFile );
+
+/*---------------------------------------------------------------------------*
+  Name:         FS_LoadSrlHeader
+
+  Description:  load ROM header to HW_TWL_ROM_HEADER_BUF using normal FS,
+                and verify signature
+
+  Arguments:    pFile           pointer to FSFile streucture
+                pool            heap context to call SVC_DecryptSign
+                rsa_key         public key to verify the signature
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
+BOOL FS_LoadSrlHeader( FSFile *pFile, SVCSignHeapContext* pool, const void* rsa_key );
+
+/*---------------------------------------------------------------------------*
+  Name:         FS_LoadSrlStatic
+
+  Description:  receive static regions from ARM6 via WRAM-B and store them
+                specified by ROM header at HW_TWL_ROM_HEADER_BUF
+
+  Arguments:    pFile           pointer to FSFile streucture
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
+BOOL FS_LoadSrlStatic( FSFile *pFile );
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

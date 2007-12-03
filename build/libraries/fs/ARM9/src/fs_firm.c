@@ -21,6 +21,10 @@
 
 #define FS_HEADER_AUTH_SIZE 0xe00
 
+#define MODULE_ALIGNMENT    0x10    // 16バイト単位で読み込む
+//#define MODULE_ALIGNMENT  0x200   // 512バイト単位で読み込む
+#define RoundUpModuleSize(value)    (((value) + MODULE_ALIGNMENT - 1) & -MODULE_ALIGNMENT)
+
 #define CONTENT_INDEX_SRL           0
 #define HASH_UNIT                   0x1000
 
@@ -97,15 +101,15 @@ static inline BOOL CheckDigest( u8* a, u8* b, BOOL aClr, BOOL bClr )
 {
     BOOL result = TRUE;
     int i;
-    for ( i = 0; i < SVC_SHA1_BLOCK_SIZE; i++ )
+    for ( i = 0; i < SVC_SHA1_DIGEST_SIZE; i++ )
     {
         if ( a[i] != b[i] )
         {
             result = FALSE;
         }
     }
-    if ( aClr ) MI_CpuClear8(a, SVC_SHA1_BLOCK_SIZE);
-    if ( bClr ) MI_CpuClear8(b, SVC_SHA1_BLOCK_SIZE);
+    if ( aClr ) MI_CpuClear8(a, SVC_SHA1_DIGEST_SIZE);
+    if ( bClr ) MI_CpuClear8(b, SVC_SHA1_DIGEST_SIZE);
     return result;
 }
 
@@ -126,8 +130,8 @@ static inline BOOL CheckDigest( u8* a, u8* b, BOOL aClr, BOOL bClr )
  *---------------------------------------------------------------------------*/
 static BOOL CheckRomCertificate( SVCSignHeapContext* pool, const RomCertificate *pCert, const void* pCAPubKey, u32 gameCode )
 {
-    u8 digest[SVC_SHA1_BLOCK_SIZE];
-    u8 md[SVC_SHA1_BLOCK_SIZE];
+    u8 digest[SVC_SHA1_DIGEST_SIZE];
+    u8 md[SVC_SHA1_DIGEST_SIZE];
 
     // 証明書ヘッダのマジックナンバーチェック
     if( pCert->header.magicNumber != TWL_ROM_CERT_MAGIC_NUMBER ||
@@ -197,6 +201,7 @@ BOOL FS_LoadBuffer( u8* dest, u32 size, SVCSHA1Context *ctx )
     }
     return TRUE;
 }
+
 /*---------------------------------------------------------------------------*
   Name:         GetTransferSize
 
@@ -252,10 +257,10 @@ static u32 GetTransferSize( u32 offset, u32 size )
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS_LoadModule( u8* dest, u32 offset, u32 size, const u8 digest[SVC_SHA1_BLOCK_SIZE] )
+BOOL FS_LoadModule( u8* dest, u32 offset, u32 size, const u8 digest[SVC_SHA1_DIGEST_SIZE] )
 {
     SVCHMACSHA1Context ctx;
-    u8 md[SVC_SHA1_BLOCK_SIZE];
+    u8 md[SVC_SHA1_DIGEST_SIZE];
 
     SVC_HMACSHA1Init(&ctx, currentKey, SVC_SHA1_BLOCK_SIZE );
     while ( size > 0 )
@@ -287,8 +292,8 @@ BOOL FS_LoadModule( u8* dest, u32 offset, u32 size, const u8 digest[SVC_SHA1_BLO
 BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
 {
     SVCSHA1Context ctx;
-    u8 md[SVC_SHA1_BLOCK_SIZE];
-    u8 digest[SVC_SHA1_BLOCK_SIZE];
+    u8 md[SVC_SHA1_DIGEST_SIZE];
+    u8 digest[SVC_SHA1_DIGEST_SIZE];
     SignatureData sd;
 
     SVC_SHA1Init( &ctx );
@@ -314,7 +319,10 @@ BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
 
     // ヘッダ署名チェック
     SVC_DecryptSign( pool, &sd, rh->signature, rsa_key );
-    MI_CpuCopy8( sd.digest, digest, SVC_SHA1_BLOCK_SIZE ); // ダイジェストの取り出し
+    MI_CpuCopy8( sd.digest, digest, SVC_SHA1_DIGEST_SIZE ); // ダイジェストの取り出し
+
+    // ダイジェスト以外のデータのチェックが必要！！
+
     MI_CpuClear8( &sd, sizeof(sd) );    // 残り削除 (他に必要なものはない？)
     return CheckDigest( md, digest, TRUE, TRUE );
 }
@@ -355,6 +363,228 @@ BOOL FS_LoadStatic( void )
     if ( rh->s.sub_ltd_size > 0 )
     {
         if ( !FS_LoadModule( rh->s.sub_ltd_ram_address, rh->s.sub_ltd_rom_offset, rh->s.sub_ltd_size, rh->s.sub_ltd_static_digest ) )
+        {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+/*
+    以下、LoadBufferを使わない版 (通常FS APIを使用する)
+*/
+
+static void EnableAes( AESCounter* pCounter )   // ドライバAPIと置き換える
+{
+    (void)pCounter;
+}
+static void DisableAes( void )  // ドライバAPIと置き換える
+{
+}
+
+static void GetAesCounter( AESCounter* pCounter, u32 offset )
+{
+    MI_CpuCopy32( rh->s.main_static_digest, pCounter, AES_BLOCK_SIZE );
+    AESi_AddCounter( pCounter, offset - rh->s.aes_target_rom_offset );
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         GetSrlTransferSize
+
+  Description:  get size to transfer once
+
+                一度に受信するサイズを返します。
+                AESのセットアップもすべきです。
+
+                転送範囲がAES領域をまたぐ場合は、境界までのサイズ (引数より
+                小さなサイズ) を返します。
+                makerom.TWLまたはIPLの使用に依存します。
+
+  Arguments:    offset  offset of region from head of ROM_Header
+                size    size of region
+
+  Returns:      size to transfer once
+ *---------------------------------------------------------------------------*/
+static u32 GetSrlTransferSize( u32 offset, u32 size )
+{
+    u32 aes_offset = rh->s.aes_target_rom_offset;
+    u32 aes_end = aes_offset + RoundUpModuleSize(rh->s.aes_target_size);
+    u32 end = offset + RoundUpModuleSize(size);
+    if ( rh->s.enable_aes )
+    {
+        if ( offset >= aes_offset && offset < aes_end )
+        {
+            AESCounter counter;
+            if ( end > aes_end )
+            {
+                size = aes_end - offset;
+            }
+            AESi_WaitKey();
+            if ( rh->s.developer_encrypt )
+            {
+                AESi_LoadKey( AES_KEY_SLOT_C );
+            }
+            else
+            {
+                AESi_LoadKey( AES_KEY_SLOT_A );
+            }
+            GetAesCounter( &counter, offset );
+            EnableAes( &counter );
+        }
+        else
+        {
+            if ( offset < aes_offset && offset + size > aes_offset )
+            {
+                size = aes_offset - offset;
+            }
+            DisableAes();
+        }
+    }
+    else
+    {
+        DisableAes();
+    }
+    return size;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         FS_LoadSrlModule
+
+  Description:  receive data from ARM7 via WRAM-B and store in destination address
+                in view of AES settings in the ROM header at HW_TWL_ROM_HEADER_BUF,
+                then verify the digest
+
+  Arguments:    pFile           pointer to FSFile streucture
+                dest            destination address to read
+                offset          file offset to start to read in bytes
+                size            total length to read in bytes
+                digest          digest to verify
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
+BOOL FS_LoadSrlModule( FSFile *pFile, u8* dest, u32 offset, u32 size, const u8 digest[SVC_SHA1_DIGEST_SIZE] )
+{
+    u8 md[SVC_SHA1_DIGEST_SIZE];
+    u8* hmacDest = dest;
+    u32 hmacSize = size;
+
+    if ( !FS_SeekFile( pFile, (s32)offset, FS_SEEK_SET ) )
+    {
+        return FALSE;
+    }
+    while ( size > 0 )
+    {
+        u32 unit = GetSrlTransferSize( offset, size );
+        if ( !FS_ReadFile( pFile, dest, (s32)unit ) )
+        {
+            return FALSE;
+        }
+        dest += unit;
+        offset += unit;
+        size -= unit;
+    }
+    SVC_CalcHMACSHA1( md, hmacDest, hmacSize, currentKey, SVC_SHA1_BLOCK_SIZE );
+    return CheckDigest(md, (u8*)digest, TRUE, FALSE);
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         FS_OpenSrl
+
+  Description:  open srl file named at HW_TWL_FS_BOOT_SRL_PATH_BUF
+
+  Arguments:    pFile   pointer to FSFile streucture
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
+BOOL FS_OpenSrl( FSFile *pFile )
+{
+    return FS_OpenFileEx( pFile, (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, FS_FILEMODE_R );
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         FS_LoadSrlHeader
+
+  Description:  load ROM header to HW_TWL_ROM_HEADER_BUF using normal FS,
+                and verify signature
+
+  Arguments:    pFile           pointer to FSFile streucture
+                pool            heap context to call SVC_DecryptSign
+                rsa_key         public key to verify the signature
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
+BOOL FS_LoadSrlHeader( FSFile *pFile, SVCSignHeapContext* pool, const void* rsa_key )
+{
+    u8 md[SVC_SHA1_DIGEST_SIZE];
+    u8 digest[SVC_SHA1_DIGEST_SIZE];
+    SignatureData sd;
+
+    if ( !FS_SeekFile( pFile, 0, FS_SEEK_SET ) )
+    {
+        return FALSE;
+    }
+    if ( !FS_ReadFile( pFile, rh, HW_TWL_ROM_HEADER_BUF_SIZE ) )
+    {
+        return FALSE;
+    }
+    SVC_CalcSHA1( md, rh, FS_HEADER_AUTH_SIZE );
+
+    // コンテンツ証明書
+    if ( CheckRomCertificate( pool, &rh->certificate, rsa_key, *(u32*)rh->s.game_code ) )
+    {
+        rsa_key = rh->certificate.pubKeyMod;   // ヘッダ用の鍵の取り出し
+    }
+    else
+    {
+        // とりあえずコンテンツ証明書用の鍵がそのまま使えると仮定
+    }
+
+    // ヘッダ署名チェック
+    SVC_DecryptSign( pool, &sd, rh->signature, rsa_key );
+    MI_CpuCopy8( sd.digest, digest, SVC_SHA1_DIGEST_SIZE ); // ダイジェストの取り出し
+
+    // ダイジェスト以外のデータのチェックが必要！！
+
+    MI_CpuClear8( &sd, sizeof(sd) );    // 残り削除 (他に必要なものはない？)
+    return CheckDigest( md, digest, TRUE, TRUE );
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         FS_LoadSrlStatic
+
+  Description:  receive static regions from ARM6 via WRAM-B and store them
+                specified by ROM header at HW_TWL_ROM_HEADER_BUF
+
+  Arguments:    pFile           pointer to FSFile streucture
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
+BOOL FS_LoadSrlStatic( FSFile *pFile )
+{
+    if ( rh->s.main_size > 0 )
+    {
+        if ( !FS_LoadSrlModule( pFile, rh->s.main_ram_address, rh->s.main_rom_offset, rh->s.main_size, rh->s.main_static_digest ) )
+        {
+            return FALSE;
+        }
+    }
+    if ( rh->s.sub_size > 0 )
+    {
+        if ( !FS_LoadSrlModule( pFile, rh->s.sub_ram_address, rh->s.sub_rom_offset, rh->s.sub_size, rh->s.sub_static_digest ) )
+        {
+            return FALSE;
+        }
+    }
+    if ( rh->s.main_ltd_size > 0 )
+    {
+        if ( !FS_LoadSrlModule( pFile, rh->s.main_ltd_ram_address, rh->s.main_ltd_rom_offset, rh->s.main_ltd_size, rh->s.main_ltd_static_digest ) )
+        {
+            return FALSE;
+        }
+    }
+    if ( rh->s.sub_ltd_size > 0 )
+    {
+        if ( !FS_LoadSrlModule( pFile, rh->s.sub_ltd_ram_address, rh->s.sub_ltd_rom_offset, rh->s.sub_ltd_size, rh->s.sub_ltd_static_digest ) )
         {
             return FALSE;
         }

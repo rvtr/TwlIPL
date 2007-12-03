@@ -12,8 +12,8 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
 include	$(TWLIPL_ROOT)/build/buildtools/commondefs
@@ -21,7 +21,7 @@ include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS =	ARM7 ARM9
+SUBDIRS =	ARM9 ARM7
 
 #----------------------------------------------------------------------------
 

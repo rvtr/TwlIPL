@@ -21,6 +21,8 @@
 #ifdef SDK_ARM7
 #include <firm/fatfs/ARM7/fatfs_loader.h>
 #include <firm/fatfs/ARM7/fatfs_firm.h>
+#else
+#include <firm/fatfs/ARM9/fatfs_firm.h>
 #endif // SDK_ARM7
 
 
