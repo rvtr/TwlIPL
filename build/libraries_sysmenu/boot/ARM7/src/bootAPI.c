@@ -24,6 +24,15 @@
 #define MAINP_SEND_IF		0x2000
 #define reg_MI_MC_SWP		(*(REGType8v *) ( REG_MC1_ADDR + 1 ) )
 
+#ifdef	ISDBG_MB_CHILD_
+#define PRE_CLEAR_NUM_MAX		18
+#else
+#define PRE_CLEAR_NUM_MAX		14
+#endif
+
+#define COPY_NUM_MAX			12
+#define POST_CLEAR_NUM_MAX		8
+
 // extern data-------------------------------------------------------
 
 // function's prototype----------------------------------------------
@@ -61,8 +70,10 @@ BOOL BOOT_WaitStart( void )
 		
 		// SDK共通リブート
 		{
+			int list_count = 0;
+			int l;
 			// メモリリストの設定
-			static u32 mem_list[] = 
+			static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + 2 + POST_CLEAR_NUM_MAX] = 
 			{
                 // pre clear
 				SYSM_OWN_ARM7_MMEM_ADDR, SYSM_OWN_ARM7_MMEM_ADDR_END - SYSM_OWN_ARM7_MMEM_ADDR,
@@ -84,67 +95,35 @@ BOOL BOOT_WaitStart( void )
                 // post clear
 				NULL,
 			};
-
-/*
-#define SYSM_TWL_ARM9_LOAD_MMEM				0x02000400					// ロード可能なARM9 static MMEM アドレス
-#define SYSM_TWL_ARM9_LOAD_MMEM_END			SYSM_NTR_ARM9_LOAD_MMEM_END	// ロード可能なARM9 static MMEM 最終アドレス
-#define SYSM_TWL_ARM7_LOAD_MMEM				SYSM_NTR_ARM7_LOAD_MMEM		// ロード可能なARM7 static MMEM アドレス
-#define SYSM_TWL_ARM7_LOAD_MMEM_END			SYSM_NTR_ARM7_LOAD_MMEM_END	// ロード可能なARM7 static MMEM 最終アドレス
-
-#define SYSM_TWL_ARM9_LTD_LOAD_MMEM			0x02400000					// ロード可能なARM9 LTD static MMEM アドレス
-#define SYSM_TWL_ARM9_LTD_LOAD_MMEM_END		0x02800000					// ロード可能なARM9 LTD static MMEM 最終アドレス
-#define SYSM_TWL_ARM7_LTD_LOAD_MMEM			0x02e80000					// ロード可能なARM7 LTD static MMEM アドレス
-#define SYSM_TWL_ARM7_LTD_LOAD_MMEM_END		0x02f88000					// ロード可能なARM7 LTD static MMEM 最終アドレス
-*/
-
-		    // [TODO]再配置リストの作成と設定
-		    // 自分以外のデフォルトロード領域に被る場合は即NG
-		    static u32 relocate_list[13] =
-		    {
-				NULL
-			};
-			u32 revCopy = 0;
 			
-		    ROM_Header *pHeader = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;
-		    u32 arm9ltd_dest = (u32)pHeader->s.main_ltd_ram_address;
-		    u32 arm9ltd_size = (u32)pHeader->s.main_ltd_size;
-		    u32 arm9flx_dest = (u32)pHeader->s.main_ram_address;
-		    u32 arm9flx_size = (u32)pHeader->s.main_size;
-		    u32 arm7ltd_dest = (u32)pHeader->s.sub_ltd_ram_address;
-		    u32 arm7ltd_size = (u32)pHeader->s.sub_ltd_size;
-		    u32 arm7flx_dest = (u32)pHeader->s.sub_ram_address;
-		    u32 arm7flx_size = (u32)pHeader->s.sub_size;
-		    
-		    {
-		    	// チェックコード例
-		    	// とりあえずarm9ltdのみ。同じような処理は関数化しないとぐちゃぐちゃ。NTRの場合は領域が若干違うので注意。
-				if( SYSM_TWL_ARM9_LTD_LOAD_MMEM <= arm9ltd_dest && arm9ltd_dest + arm9ltd_size < SYSM_TWL_ARM9_LTD_LOAD_MMEM_END)
+			// copy forwardリスト設定
+			for( l=0; l<RELOCATE_INFO_NUM ; l++ )
+			{
+				if( SYSMi_GetWork()->romRelocateInfo[l].src != NULL && !SYSMi_GetWork()->romRelocateInfo[l].rev )
 				{
-					// リロケート必要なし
-				}else
-				{
-					// リロケート必要あり
-					if( SYSM_TWL_ARM7_LTD_LOAD_MMEM <= arm9ltd_dest && arm9ltd_dest < SYSM_TWL_ARM7_LTD_LOAD_MMEM_END ) return FALSE;//NG
-					if( SYSM_TWL_ARM7_LTD_LOAD_MMEM <= arm9ltd_dest + arm9ltd_size && arm9ltd_dest + arm9ltd_size < SYSM_TWL_ARM7_LTD_LOAD_MMEM_END ) return FALSE;//NG
-					if( SYSM_TWL_ARM9_LOAD_MMEM <= arm9ltd_dest && arm9ltd_dest < SYSM_TWL_ARM9_LOAD_MMEM_END ) return FALSE;//NG
-					if( SYSM_TWL_ARM9_LOAD_MMEM <= arm9ltd_dest + arm9ltd_size && arm9ltd_dest + arm9ltd_size < SYSM_TWL_ARM9_LOAD_MMEM_END ) return FALSE;//NG
-					if( SYSM_TWL_ARM7_LOAD_MMEM <= arm9ltd_dest && arm9ltd_dest < SYSM_TWL_ARM7_LOAD_MMEM_END ) return FALSE;//NG
-					if( SYSM_TWL_ARM7_LOAD_MMEM <= arm9ltd_dest + arm9ltd_size && arm9ltd_dest + arm9ltd_size < SYSM_TWL_ARM7_LOAD_MMEM_END ) return FALSE;//NG
-					
-					// リロケート可能
-					if( SYSM_TWL_ARM9_LTD_LOAD_MMEM <= arm9ltd_dest && SYSM_TWL_ARM9_LTD_LOAD_MMEM_END <= arm9ltd_dest + arm9ltd_size )
-					{
-						revCopy = 1; // 後方からコピーするフラグON
-					}
-					
-					relocate_list[0] = SYSM_TWL_ARM9_LTD_LOAD_MMEM;
-					relocate_list[1] = arm9ltd_dest;
-					relocate_list[2] = arm9ltd_size;
-					relocate_list[3] = revCopy;
+					mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count++)] = SYSMi_GetWork()->romRelocateInfo[l].src;
+					mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count++)] = SYSMi_GetWork()->romRelocateInfo[l].dest;
+					mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count++)] = SYSMi_GetWork()->romRelocateInfo[l].length;
 				}
 			}
+			mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count++)] = NULL;
+			
+			// copy backwardリスト設定
+			for( l=0; l<RELOCATE_INFO_NUM ; l++ )
+			{
+				if( SYSMi_GetWork()->romRelocateInfo[l].src != NULL && SYSMi_GetWork()->romRelocateInfo[l].rev )
+				{
+					mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count++)] = SYSMi_GetWork()->romRelocateInfo[l].src;
+					mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count++)] = SYSMi_GetWork()->romRelocateInfo[l].dest;
+					mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count++)] = SYSMi_GetWork()->romRelocateInfo[l].length;
+				}
+			}
+			mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count++)] = NULL;
+			
+			// [TODO]post clearリスト設定
+			mem_list[PRE_CLEAR_NUM_MAX + 1 + (list_count)] = NULL;
 
-			// [TODO]起動するターゲットの種類を指定する必要あり
+			// リブート
 			OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x34), mem_list, REBOOT_TARGET_TWL_SYSTEM );
 		}
 	}

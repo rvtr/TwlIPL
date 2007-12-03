@@ -18,7 +18,8 @@
 #include <twl.h>
 #include <sysmenu.h>
 #include "sysmenu_define.h"
-#include "spi.h"
+#include <spi.h>
+#include <es.h>
 
 // define data-----------------------------------------------------------------
 #define CARD_BANNER_INDEX			( LAUNCHER_TITLE_LIST_NUM - 1 )
@@ -63,9 +64,7 @@ static TWLBannerFile	s_bannerBuf[ LAUNCHER_TITLE_LIST_NUM ] ATTRIBUTE_ALIGN(32);
 
 
 // const data------------------------------------------------------------------
-#if 0
 typedef enum RomSegmentName {
-	ROM_HEADER = 0,
 	ARM9_STATIC,
 	ARM7_STATIC,
 	ARM9_LTD_STATIC,
@@ -77,21 +76,41 @@ typedef struct RomSegmentRange {
 	u32		end;
 }RomSegmentRange;
 
+static RomSegmentRange romSegmentRange[RELOCATE_INFO_NUM] = {
+	{ SYSM_TWL_ARM9_LOAD_MMEM,     SYSM_TWL_ARM9_LOAD_MMEM_END },
+	{ SYSM_TWL_ARM7_LOAD_MMEM,     SYSM_TWL_ARM7_LOAD_MMEM_END },
+	{ SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_TWL_ARM9_LTD_LOAD_MMEM_END },
+	{ SYSM_TWL_ARM7_LTD_LOAD_MMEM, SYSM_TWL_ARM7_LTD_LOAD_MMEM_END },
+};
+
+static u32 load_region_check_list[RELOCATE_INFO_NUM][RELOCATE_INFO_NUM * 2 - 1] = 
+{
+	{SYSM_NTR_ARM7_LOAD_MMEM, SYSM_NTR_ARM7_LOAD_MMEM_END, 
+	SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_TWL_ARM9_LTD_LOAD_MMEM_END, 
+	SYSM_TWL_ARM7_LTD_LOAD_MMEM, SYSM_TWL_ARM7_LTD_LOAD_MMEM_END, 
+	NULL }, 
+	{SYSM_NTR_ARM9_LOAD_MMEM, SYSM_NTR_ARM9_LOAD_MMEM_END, 
+	SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_TWL_ARM9_LTD_LOAD_MMEM_END, 
+	SYSM_TWL_ARM7_LTD_LOAD_MMEM, SYSM_TWL_ARM7_LTD_LOAD_MMEM_END, 
+	NULL }, 
+	{SYSM_NTR_ARM9_LOAD_MMEM, SYSM_NTR_ARM9_LOAD_MMEM_END, 
+	SYSM_NTR_ARM7_LOAD_MMEM, SYSM_NTR_ARM7_LOAD_MMEM_END, 
+	SYSM_TWL_ARM7_LTD_LOAD_MMEM, SYSM_TWL_ARM7_LTD_LOAD_MMEM_END, 
+	NULL }, 
+	{SYSM_NTR_ARM9_LOAD_MMEM, SYSM_NTR_ARM9_LOAD_MMEM_END, 
+	SYSM_NTR_ARM7_LOAD_MMEM, SYSM_NTR_ARM7_LOAD_MMEM_END, 
+	SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_TWL_ARM9_LTD_LOAD_MMEM_END, 
+	NULL }, 
+};
+
+#if 0
+
 typedef struct RomReloadInfo {
 	void	*pSrc;
 	void	*pDst;
 	u32		length;
 	BOOL	revCopy;
 }RomReloadInfo;
-
-static RomSegmentRange romSegmentRange[] = {
-	{ HW_TWL_ROM_HEADER_BUF,       HW_TWL_ROM_HEADER_BUF_END },
-	{ SYSM_NTR_ARM9_LOAD_MMEM,     SYSM_NTR_ARM9_LOAD_MMEM_END },
-	{ SYSM_NTR_ARM7_LOAD_MMEM,     SYSM_NTR_ARM7_LOAD_MMEM_END },
-	{ SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_TWL_ARM9_LTD_LOAD_MMEM_END },
-	{ SYSM_TWL_ARM7_LTD_LOAD_MMEM, SYSM_TWL_ARM7_LTD_LOAD_MMEM_END },
-};
-
 
 static RomReloadInfo romReloadInfo[] = {
 	
@@ -356,8 +375,6 @@ static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
     return size;
 }
 
-#include <es.h>
-ESTitleMeta dst[1];
 
 // NANDタイトルリストの取得
 int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
@@ -525,6 +542,49 @@ BOOL SYSM_IsValidTSD( void )
 //
 // ============================================================================
 
+// ROMのロード先領域をチェックし、再配置の必要があればロード先アドレスを変更し、再配置情報を*infoにセットする。
+// ロード先領域が被ってはいけない領域のリストcheck_destは{開始, 終了, 開始２, 終了２, ……, NULL}の形式。
+// 再配置の有り無しに関わらずロード可能ならばTRUE、ロード不可能ならばFALSEを返す
+// 再配置が必要ない場合、再配置情報のsrc,dest,lengthにはそれぞれNULLが代入される。
+static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfoEx
+( u32 *dest, u32 length, RomSegmentRange default_region, u32 *check_dest, Relocate_Info *info )
+{
+	if( default_region.end - default_region.start - 1 < length ) return FALSE;// サイズオーバー
+	if( !( default_region.start <= *dest && *dest + length < default_region.end ) )
+	{
+		// 再配置の必要あり
+		while( *check_dest != NULL )
+		{
+			if( check_dest[0] <= *dest + length && *dest < check_dest[1] ) return FALSE;// チェック領域に被ったらNG
+			check_dest += 2;
+		}
+		
+		// ここまで来ていれば再配置可能
+		if( default_region.start <= *dest && default_region.end <= *dest + length )
+		{
+			// デフォルト配置領域の後部に、再配置先の先頭部が被っているので、後方コピーフラグON
+			info->rev = TRUE;
+		}
+		info->src = default_region.start;
+		info->dest = *dest;
+		info->length = length;
+		*dest = default_region.start;
+	}else
+	{
+		// 再配置の必要なし
+		info->src = NULL;
+		info->dest = NULL;
+		info->length = NULL;
+	}
+	return TRUE;
+}
+
+// SYSMi_CheckLoadRegionAndSetRelocateInfoExのラッパー関数
+static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfo( RomSegmentName seg, u32 *dest, u32 length, Relocate_Info *info )
+{
+	return SYSMi_CheckLoadRegionAndSetRelocateInfoEx(dest, length, romSegmentRange[seg], load_region_check_list[seg], info);
+}
+
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
 {	enum
 	{
@@ -619,6 +679,17 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
         source  [region_arm7_twl] = *(const u32*)&header[0x1D0];
         length  [region_arm7_twl] = *(const u32*)&header[0x1DC];
         destaddr[region_arm7_twl] = *(const u32*)&header[0x1D8];
+        
+        // 領域読み込み先のチェック及び再配置情報データの作成
+		for( i=0; i<RELOCATE_INFO_NUM; i++ )
+		{
+			if ( !SYSMi_CheckLoadRegionAndSetRelocateInfo( (RomSegmentName)i, &(destaddr[i+1]), length[i+1], &(SYSMi_GetWork()->romRelocateInfo[i]) ) )
+			{
+	OS_TPrintf("RebootSystem failed: ROM Load Region error\n");
+	            FS_CloseFile(file);
+				return;
+			}
+		}
 
         for (i = region_header; i < region_max; ++i)
         {

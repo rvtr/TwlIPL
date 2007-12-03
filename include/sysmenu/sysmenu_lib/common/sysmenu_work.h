@@ -35,6 +35,8 @@ extern "C" {
 #define CLONE_BOOT_MODE						1
 #define OTHER_BOOT_MODE						2
 
+#define RELOCATE_INFO_NUM					4 // ROM再配置情報の数（今のところarm9,arm7それぞれltdとflxで最大4つ）
+
 
 // NAMTitleIDをHiLoに分割してアクセスする場合に使用
 typedef struct TitleID_HiLo {
@@ -46,8 +48,18 @@ typedef struct TitleID_HiLo {
 //　データ型定義
 //----------------------------------------------------------------------
 
+// 再配置情報データ構造体
+typedef struct Relocate_Info
+{
+	u32				src;
+	u32				dest;
+	u32				length;
+	BOOL			rev;
+}Relocate_Info;
+
 // SYSM共有ワーク構造体
 typedef struct SYSM_work {
+	Relocate_Info	romRelocateInfo[RELOCATE_INFO_NUM];	// ROM再配置情報（arm9,arm7それぞれltdとflxで最大4つ）
 	vu16			isARM9Start :1;					// ARM9スタートフラグ
 	vu16			isHotStart :1;					// Hot/Coldスタート判定
 	vu16			isValidResetParam :1;			// リセットパラメータ有効
