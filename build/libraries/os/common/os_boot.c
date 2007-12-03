@@ -48,8 +48,8 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     static u32  mem_list[32];
     int i = 0;
 
-    /* 自身の static & bss のクリア */
     // pre clear
+    /* 自身の static & bss のクリア */
     mem_list[i++] = (u32)SDK_STATIC_START;
     mem_list[i++] = (u32)SDK_STATIC_BSS_END-(u32)SDK_STATIC_START;
 #ifdef SDK_ARM9
@@ -70,6 +70,9 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     mem_list[i++] = (u32)HW_ROM_HEADER_BUF - (u32)HW_ARENA_INFO_BUF;
     mem_list[i++] = (u32)HW_PXI_SIGNAL_PARAM_ARM9;  // 0x02ffff80 - 0x02fffffd
     mem_list[i++] = (u32)HW_CMD_AREA - (u32)HW_PXI_SIGNAL_PARAM_ARM9;
+    /* FATFSバッファ */
+    mem_list[i++] = (u32)FIRM_FATFS_COMMAND_BUFFER;  // 0x02ffc000 - 0x02ffc7ff
+    mem_list[i++] = (u32)FIRM_FATFS_COMMAND_BUFFER_SIZE;
 #else   // SDK_ARM7
     {   /* REBOOT_ExecuteのCODEとSTACKの隙間をクリア */
         u32 stack_bottom = (u32)stack_top - OS_BOOT_STACK_SIZE_MIN - sizeof(mem_list);
@@ -86,6 +89,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     mem_list[i++] = NULL;
     // post clear
     mem_list[i++] = NULL;
+    SDK_ASSERT(i <= sizeof(mem_list)/sizeof(mem_list[0]));
     REBOOT_Execute(entry, wram_reg, mem_list, code_buf, stack_top, target, scfg, jtag);
     OS_Terminate();
 }
