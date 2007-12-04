@@ -142,26 +142,6 @@ static void BOOTi_ClearREG_RAM( void )
     (void)OS_SetIrqMask( 0 );
     (void)OS_ResetRequestIrqMask( (u16)~0 );
 
-    // メモリクリア
-    GX_SetBankForLCDC( GX_VRAM_LCDC_ALL );                          // VRAM     クリア
-    MI_CpuClearFast( (void*)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE );
-    (void)GX_DisableBankForLCDC();
-//  MI_CpuClearFast( (void *)HW_ITCM,   HW_ITCM_SIZE );         // ITCM     クリア  ※ITCMにはSDKのコードが入っているので、BOOT_Coreでクリアする。
-//  MI_CpuClearFast( (void *)HW_DTCM,   HW_DTCM_SIZE - 0x800 ); // DTCM     クリア  ※DTCMはスタック&SDK変数入りなので、最後にBOOT_Coreでクリアする。
-    MI_CpuClearFast( (void *)HW_OAM,    HW_OAM_SIZE );          // OAM      クリア
-    MI_CpuClearFast( (void *)HW_PLTT,   HW_PLTT_SIZE );         // パレット クリア
-    MI_CpuClearFast( (void *)HW_DB_OAM, HW_DB_OAM_SIZE );       // OAM      クリア
-    MI_CpuClearFast( (void *)HW_DB_PLTT,HW_DB_PLTT_SIZE );      // パレット クリア
-
-    // レジスタクリア
-    MI_CpuClearFast( (void*)( HW_REG_BASE + 0x8 ),    0x12c );  // BG0CNT    ～ KEYCNT
-    MI_CpuClearFast( (void*)( HW_REG_BASE + 0x280 ),  0x40 );   // DIVCNT    ～ SQRTD3
-    MI_CpuClearFast( (void*)( HW_REG_BASE + 0x1000 ), 0x6e );   // DISP1CNT1 ～ DISPBRTCNT1
-    CP_SetDiv32_32( 0, 1 );
-    reg_PXI_SUBP_FIFO_CNT = 0x4008;
-    reg_GX_DISPCNT  = 0;
-    reg_GX_DISPSTAT = 0;                                        // ※ reg_GX_VCOUNTはベタクリアできないので、この先頭部分のクリアを分離する。
-
-    // クリアしていないレジスタは、VCOUNT, PIFCNT, MC-, EXMEMCNT, IME, RBKCNT1, PAUSE, POWLCDCNT, 全3D系。
+	// レジスタクリアは基本的に OS_Boot で行う
 }
 

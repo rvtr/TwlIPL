@@ -25,9 +25,9 @@
 #define reg_MI_MC_SWP		(*(REGType8v *) ( REG_MC1_ADDR + 1 ) )
 
 #ifdef	ISDBG_MB_CHILD_
-#define PRE_CLEAR_NUM_MAX		18
-#else
 #define PRE_CLEAR_NUM_MAX		14
+#else
+#define PRE_CLEAR_NUM_MAX		10
 #endif
 
 #define COPY_NUM_MAX			12
@@ -88,8 +88,6 @@ BOOL BOOT_WaitStart( void )
 				HW_PRV_WRAM_END - 0x600 + 0x20, HW_PRV_WRAM_END - (HW_PRV_WRAM_END - 0x600 + 0x20),
 #endif
 				HW_MAIN_MEM_SHARED, HW_RED_RESERVED - HW_MAIN_MEM_SHARED,
-				HW_ARENA_INFO_BUF, HW_ROM_HEADER_BUF - HW_ARENA_INFO_BUF,
-				HW_PXI_SIGNAL_PARAM_ARM9, HW_MAIN_MEM_SYSTEM_END - HW_PXI_SIGNAL_PARAM_ARM9,
 				NULL,
                 // copy forward
 				NULL,
@@ -153,12 +151,6 @@ BOOL BOOT_WaitStart( void )
 
 static void BOOTi_ClearREG_RAM( void )
 {
-	int i ;
-	
-	for( i = 0; i <= MI_DMA_MAX_NUM; i++ ) {						// DMAの停止
-		MI_StopDma( (u16)i );
-	}
-	
 	if( SYSMi_GetWork()->isCardBoot ) {
 #ifdef DEBUG_USED_CARD_SLOT_B_
 		reg_MI_MC_SWP = 0x80;											// カードスロットのスワップ
@@ -167,16 +159,9 @@ static void BOOTi_ClearREG_RAM( void )
 		*(u32 *)HW_RED_RESERVED = SYSMi_GetWork()->nCardID;
 	}
 	
-	// レジスタのクリア
-	SVC_CpuClearFast( 0x0000, (void*)(HW_REG_BASE + 0x0b0), (0x13c - 0x0b0) );
-																		// DMA0SAD  ～ RCNT1
-	SVC_CpuClearFast( 0x0000, (void*)(HW_REG_BASE + 0x400), 0x104 );	// SG0CNT_L ～ SGMCNT
-	SVC_CpuClearFast( 0x0000, (void*)(HW_REG_BASE + 0x508), 0x14 );		// SGRVCNT  ～ SGRV1CLEN
-	reg_GX_DISPSTAT			= 0;
-	reg_SPI_SPICNT			= 0;
-	reg_PXI_MAINP_FIFO_CNT	= 0x4008;
-	
 	*(vu32 *)HW_RESET_PARAMETER_BUF = 0;								// リセットバッファをクリア
+	
+	// レジスタクリアは基本的に OS_Boot で行う
 	
 	// クリアしていないレジスタは、VCOUNT, JOY, PIFCNT, MC-, EXMEMCNT, IME, PAUSE, POWLCDCNT, 他セキュリティ系です。
 	(void)OS_ResetRequestIrqMask((u16)~0);
