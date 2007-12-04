@@ -132,7 +132,7 @@ BOOL BOOT_WaitStart( void )
 			mem_list[list_count] = NULL;
 
 			// ÉäÉuÅ[Ég
-			OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x34), mem_list, REBOOT_TARGET_TWL_SYSTEM );
+			OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x34), mem_list, REBOOT_TARGET_TWL_SECURE_SYSTEM );
 		}
 	}
 	return FALSE;

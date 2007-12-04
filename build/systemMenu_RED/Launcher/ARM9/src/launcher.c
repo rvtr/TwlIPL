@@ -60,9 +60,10 @@
 #define MAX_SHOW_BANNER			6
 
 // フェードアウト関係
-#define FADE_COUNT_PER_ALPHA	(FADE_COUNT_MAX / ALPHA_MAX)
+#define FADE_COUNT_PER_ALPHA	((FADE_COUNT_MAX - FADE_START) / ALPHA_MAX)
 #define FADE_COUNT_MAX			124
 #define ALPHA_MAX				31
+#define FADE_START				62
 
 // extern data------------------------------------------
 
@@ -106,6 +107,7 @@ static u8 *pbanner_image_list[ LAUNCHER_TITLE_LIST_NUM ];
 static int banner_count = 0;
 static int selected = 0;
 static int bar_left = BAR_ZERO_X;
+static fx32 s_selected_banner_size;
 
 // const data  -----------------------------------------
 
@@ -245,7 +247,8 @@ static void SetAffineAnimation( int cursor )
 	static double wav;
 	if(cursor%FRAME_PER_SELECT == 0){			// 適当に波打たせてみる
 		double s = sin(wav);
-		mtx._00 = FX32_HALF - (long)( 0x80 * ( s - 1 ) );
+		s_selected_banner_size = FX32_HALF - (long)( 0x80 * ( s - 1 ) );
+		mtx._00 = s_selected_banner_size;
 		wav += 0.1;
 	}else{										// 適当に大きさを変えてみる
 		mtx._00 = FX32_HALF + FX32_HALF*(cursor%FRAME_PER_SELECT)/FRAME_PER_SELECT;
@@ -378,11 +381,11 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
 		MtxFx22 mtx;
 		static double wa;
 		double s = cos(wa);
-		if( s!=0 ) mtx._00 = (fx32)(FX32_HALF/s);
+		if( s!=0 ) mtx._00 = (fx32)((s_selected_banner_size/s) * (1.0 + wa/3));
 		else mtx._00 = 0x8fff;
 		mtx._01 = 0;
 		mtx._10 = 0;
-		mtx._11 = FX32_HALF;
+		mtx._11 = (fx32)(s_selected_banner_size * (1.0 + wa/3));
 		G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[0]), &mtx);
 		wa += 0.1;
 	}
@@ -394,7 +397,10 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
 	GetAndDrawRTCData( &g_rtcDraw, FALSE );
 	
 	// フェードアウトのカウント処理
-	G2_ChangeBlendAlpha( fadecount/FADE_COUNT_PER_ALPHA, ALPHA_MAX-(fadecount/FADE_COUNT_PER_ALPHA) );
+	if(fadecount >= FADE_START)
+	{
+		G2_ChangeBlendAlpha( (fadecount-FADE_START)/FADE_COUNT_PER_ALPHA, ALPHA_MAX-((fadecount-FADE_START)/FADE_COUNT_PER_ALPHA) );
+	}
 	if(fadecount < FADE_COUNT_MAX) {
 		fadecount++;
 		return FALSE;

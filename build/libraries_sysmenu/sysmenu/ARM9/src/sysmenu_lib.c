@@ -607,6 +607,7 @@ static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfoEx
 // SYSMi_CheckLoadRegionAndSetRelocateInfoExのラッパー関数
 static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfo( RomSegmentName seg, u32 *dest, u32 length, Relocate_Info *info )
 {
+	// TWLにしか対応していないので注意。ヘッダを見てNTRならデフォルト配置領域を変更してやる必要あり。
 	return SYSMi_CheckLoadRegionAndSetRelocateInfoEx(dest, length, romSegmentRange[seg], load_region_check_list[seg], info);
 }
 
@@ -704,6 +705,13 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
         source  [region_arm7_twl] = *(const u32*)&header[0x1D0];
         length  [region_arm7_twl] = *(const u32*)&header[0x1DC];
         destaddr[region_arm7_twl] = *(const u32*)&header[0x1D8];
+        
+        if( header[0x12] && 0x03 == 0 )
+        {
+			//NTR専用ROM
+		}
+		
+		MI_CpuClearFast( (void *)SYSMi_GetWork()->romRelocateInfo, RELOCATE_INFO_NUM * sizeof(Relocate_Info) );
         
         // 領域読み込み先のチェック及び再配置情報データの作成
 		for( i=0; i<RELOCATE_INFO_NUM; i++ )

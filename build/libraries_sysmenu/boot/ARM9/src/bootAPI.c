@@ -117,7 +117,7 @@ void BOOT_Ready( void )
 		};
 	    
 		// 起動するターゲットの種類を指定する必要あり
-	    OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x24), mem_list, REBOOT_TARGET_TWL_SYSTEM );
+	    OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x24), mem_list, REBOOT_TARGET_TWL_SECURE_SYSTEM );
 	}
 }
 
