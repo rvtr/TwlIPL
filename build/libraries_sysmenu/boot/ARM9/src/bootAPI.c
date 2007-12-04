@@ -116,8 +116,21 @@ void BOOT_Ready( void )
 			NULL
 		};
 	    
+		REBOOTTarget target = REBOOT_TARGET_TWL_SECURE_SYSTEM;
+		ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
+		
+		// アプリケーション選択
+		if ( dh->s.platform_code )
+		{
+//			target = REBOOT_TARGET_TWL_APP;
+		}
+		else
+		{
+			target = REBOOT_TARGET_DS_APP;
+		}
+		
 		// 起動するターゲットの種類を指定する必要あり
-	    OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x24), mem_list, REBOOT_TARGET_TWL_SECURE_SYSTEM );
+		OS_Boot( dh->s.main_entry_address, mem_list, target );
 	}
 }
 

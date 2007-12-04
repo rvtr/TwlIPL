@@ -70,6 +70,9 @@ BOOL BOOT_WaitStart( void )
 		
 		// SDK共通リブート
 		{
+			REBOOTTarget target = REBOOT_TARGET_TWL_SECURE_SYSTEM;
+			ROM_Header *th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ（DSアプリには無い）
+			ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 			int list_count = PRE_CLEAR_NUM_MAX + 1;
 			int l;
 			// メモリリストの設定
@@ -130,9 +133,19 @@ BOOL BOOT_WaitStart( void )
 				}
 			}
 			mem_list[list_count] = NULL;
-
+			
+			// アプリケーション選択
+			if ( dh->s.platform_code )
+			{
+//				target = REBOOT_TARGET_TWL_APP;
+			}
+			else
+			{
+				target = REBOOT_TARGET_DS_APP;
+			}
+			
 			// リブート
-			OS_Boot( (void *)*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x34), mem_list, REBOOT_TARGET_TWL_SECURE_SYSTEM );
+			OS_Boot( dh->s.sub_entry_address, mem_list, target );
 		}
 	}
 	return FALSE;
