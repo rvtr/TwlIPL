@@ -549,21 +549,44 @@ BOOL SYSM_IsValidTSD( void )
 static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfoEx
 ( u32 *dest, u32 length, RomSegmentRange default_region, u32 *check_dest, Relocate_Info *info )
 {
-	if( default_region.end - default_region.start - 1 < length ) return FALSE;// サイズオーバー
-	if( !( default_region.start <= *dest && *dest + length < default_region.end ) )
+	if( default_region.end - default_region.start < length ) return FALSE;// サイズオーバー
+	if( !( default_region.start <= *dest && *dest + length <= default_region.end ) )
 	{
 		// 再配置の必要あり
 		while( *check_dest != NULL )
 		{
-			if( check_dest[0] <= *dest + length && *dest < check_dest[1] ) return FALSE;// チェック領域に被ったらNG
+			if( check_dest[0] < *dest + length && *dest < check_dest[1] ) return FALSE;// チェック領域に被ったらNG
 			check_dest += 2;
 		}
 		
 		// ここまで来ていれば再配置可能
-		if( default_region.start <= *dest && *dest < default_region.end )
+		// 後方コピーフラグOFF
+		info->rev = FALSE;
+		if( default_region.start < *dest + length && *dest + length <= default_region.end )
 		{
-			// デフォルト配置領域の後部に、再配置先の先頭部が被っているので、後方コピーフラグON
-			info->rev = TRUE;
+			// デフォルト配置領域の先頭部に、再配置先の後部が被っている
+			// ポストクリア情報
+			info->post_clear_addr = *dest + length;
+			info->post_clear_length = default_region.end - (*dest + length);
+		}
+		else if( default_region.start <= *dest && *dest < default_region.end )
+		{
+			// デフォルト配置領域の後部に、再配置先の先頭部が被っている
+			// ポストクリア情報
+			info->post_clear_addr = default_region.start;
+			info->post_clear_length = *dest - default_region.start;
+			if( *dest < default_region.start + length )
+			{
+				// 更に、デフォルト配置領域にロードしたデータの最後尾と再配置先の先頭部が被っている
+				// 後方コピーフラグON
+				info->rev = TRUE;
+			}
+		}else
+		{
+			// まったく被っていない
+			// ポストクリア情報
+			info->post_clear_addr = default_region.start;
+			info->post_clear_length = default_region.end - default_region.start;
 		}
 		info->src = default_region.start;
 		info->dest = *dest;
@@ -575,6 +598,8 @@ static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfoEx
 		info->src = NULL;
 		info->dest = NULL;
 		info->length = NULL;
+		info->post_clear_addr = NULL;
+		info->post_clear_length = NULL;
 	}
 	return TRUE;
 }

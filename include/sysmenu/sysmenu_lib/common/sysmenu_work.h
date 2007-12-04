@@ -54,6 +54,8 @@ typedef struct Relocate_Info
 	u32				src;
 	u32				dest;
 	u32				length;
+	u32				post_clear_addr;
+	u32				post_clear_length;
 	BOOL			rev;
 }Relocate_Info;
 

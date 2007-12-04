@@ -120,7 +120,15 @@ BOOL BOOT_WaitStart( void )
 			}
 			mem_list[list_count++] = NULL;
 			
-			// [TODO]post clearリスト設定
+			// post clearリスト設定
+			for( l=0; l<RELOCATE_INFO_NUM ; l++ )
+			{
+				if( SYSMi_GetWork()->romRelocateInfo[l].post_clear_addr != NULL )
+				{
+					mem_list[list_count++] = SYSMi_GetWork()->romRelocateInfo[l].post_clear_addr;
+					mem_list[list_count++] = SYSMi_GetWork()->romRelocateInfo[l].post_clear_length;
+				}
+			}
 			mem_list[list_count] = NULL;
 
 			// リブート
