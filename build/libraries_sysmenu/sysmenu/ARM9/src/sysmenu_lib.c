@@ -802,6 +802,9 @@ static void SYSMi_Relocate( void )
 		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_TWL_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );
 		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 	}else {
+		// TWL-ROMヘッダ情報の再配置
+		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_TWL_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
+		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 		// NTR-ROMヘッダ情報の再配置
 		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)0x027ffe00, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );	// 8Mのケツへ（TWLデバッガでのNTRモードデバッグ用）
 		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)0x023ffe00, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );	// 4Mのケツへ
