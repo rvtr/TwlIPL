@@ -73,7 +73,7 @@ BOOL BOOT_WaitStart( void )
 			int list_count = PRE_CLEAR_NUM_MAX + 1;
 			int l;
 			// ÉÅÉÇÉäÉäÉXÉgÇÃê›íË
-			static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + 2 + POST_CLEAR_NUM_MAX] = 
+			static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + 2 + POST_CLEAR_NUM_MAX + 1] = 
 			{
                 // pre clear
 				SYSM_OWN_ARM7_MMEM_ADDR, SYSM_OWN_ARM7_MMEM_ADDR_END - SYSM_OWN_ARM7_MMEM_ADDR,

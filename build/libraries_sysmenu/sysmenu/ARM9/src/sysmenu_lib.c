@@ -560,7 +560,7 @@ static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfoEx
 		}
 		
 		// ここまで来ていれば再配置可能
-		if( default_region.start <= *dest && default_region.end <= *dest + length )
+		if( default_region.start <= *dest && *dest < default_region.end )
 		{
 			// デフォルト配置領域の後部に、再配置先の先頭部が被っているので、後方コピーフラグON
 			info->rev = TRUE;
@@ -588,7 +588,7 @@ static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfo( RomSegmentName seg, u32 *de
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
 {	enum
 	{
-	    region_header,
+	    region_header = 0,
 	    region_arm9_ntr,
 	    region_arm7_ntr,
 	    region_arm9_twl,
@@ -683,7 +683,7 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
         // 領域読み込み先のチェック及び再配置情報データの作成
 		for( i=0; i<RELOCATE_INFO_NUM; i++ )
 		{
-			if ( !SYSMi_CheckLoadRegionAndSetRelocateInfo( (RomSegmentName)i, &(destaddr[i+1]), length[i+1], &(SYSMi_GetWork()->romRelocateInfo[i]) ) )
+			if ( !SYSMi_CheckLoadRegionAndSetRelocateInfo( (RomSegmentName)i, &(destaddr[i+region_arm9_ntr]), length[i+region_arm9_ntr], &(SYSMi_GetWork()->romRelocateInfo[i]) ) )
 			{
 	OS_TPrintf("RebootSystem failed: ROM Load Region error\n");
 	            FS_CloseFile(file);
