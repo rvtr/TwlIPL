@@ -77,31 +77,6 @@ const u8 LangCodeMapFromTWLtoNTR[][ 2 ] = {
 };
 #endif
 
-#define TWL_LANG_BITMAP_JAPAN		( ( 0x0001 << TWL_LANG_JAPANESE ) ) 	// JPN版での対応言語ビットマップ
-#define TWL_LANG_BITMAP_AMERICA		( ( 0x0001 << TWL_LANG_ENGLISH ) | \
-									  ( 0x0001 << TWL_LANG_FRENCH  ) | \
-									  ( 0x0001 << TWL_LANG_SPANISH  ) ) 	// AME版での対応言語ビットマップ
-#define TWL_LANG_BITMAP_EUROPE		( ( 0x0001 << TWL_LANG_ENGLISH ) | \
-									  ( 0x0001 << TWL_LANG_FRENCH  ) | \
-									  ( 0x0001 << TWL_LANG_GERMAN  ) | \
-									  ( 0x0001 << TWL_LANG_ITALIAN  ) | \
-									  ( 0x0001 << TWL_LANG_SPANISH  ) ) 	// EUR版での対応言語ビットマップ
-#define TWL_LANG_BITMAP_AUSTRALIA	( ( 0x0001 << TWL_LANG_ENGLISH  ) ) 	// AUS版での対応言語ビットマップ
-#define TWL_LANG_BITMAP_CHINA		( ( 0x0001 << TWL_LANG_SIMP_CHINESE ) ) // CHI版での対応言語ビットマップ
-#define TWL_LANG_BITMAP_KOREA		( ( 0x0001 << TWL_LANG_KOREAN ) ) 		// KOR版での対応言語ビットマップ
-
-
-// リージョンコード（販社別になる見込み）
-typedef enum TWLRegionCode {
-	TWL_REGION_JAPAN     = 0,   // NCL
-	TWL_REGION_AMERICA   = 1,   // NOA
-	TWL_REGION_EUROPE    = 2,   // NOE
-	TWL_REGION_AUSTRALIA = 3,   // NAL
-	TWL_REGION_CHINA     = 4,   // IQue
-	TWL_REGION_KOREA     = 5,   // NOK
-	TWL_REGION_MAX
-}TWLRegion;
-
 
 // 日付
 #define TWLDate						NTRDate
@@ -111,21 +86,21 @@ typedef enum TWLRegionCode {
 
 // TPキャリブレーション（NTRとの違いは、予約領域あり）
 typedef struct TWLTPCalibData {
-	NTRTPCalibData	data;
+	NTRTPCalibData	data;						// TPキャリブレーションデータ
 	u8				rsv[ 8 ];
 }TWLTPCalibData;
 
 // ニックネーム（NTRとの違いは、文字列に終端あり）
 typedef struct TWLNickname{
 	u16				buffer[ TWL_NICKNAME_LENGTH + 1 ];	// ニックネーム（Unicode(UTF16)で最大10文字、終端コードあり）
-	u8				length;							// 文字数
+	u8				length;						// 文字数
 	u8				rsv;
 }TWLNickname;		// 24byte
 
 // コメント（NTRとの違いは、文字列に終端あり）
 typedef struct TWLComment{
 	u16				buffer[ TWL_COMMENT_LENGTH + 1 ];	//コメント（Unicode(UTF16)で最大26文字、終端コードあり）
-	u8				length;							// 文字数
+	u8				length;						// 文字数
 	u8				rsv;
 }TWLComment;		// 54byte
 
@@ -179,36 +154,34 @@ typedef struct TWLParentalControl {
 
 // TWL設定データヘッダ
 typedef struct TWLSettingsHeader{
-	u8					version;
-	u8					saveCount;
-	u16					dataLength;
-	u8					digest[ SVC_SHA1_DIGEST_SIZE ];				// SHA1ダイジェスト　　CRC16で十分かもなあ。。。
+	u8					version;					// データver.
+	u8					saveCount;					// セーブカウント数
+	u16					dataLength;					// データ長
 }TWLSettingsHeader;
 
 
 // TWL設定データ（基本、過去ver互換を考慮して、追加しかしない方針で。）
 typedef struct TWLSettingsData{
 	struct flags {
-		u32		initialSequence : 1;
-		u32		isSetCountry : 1;
-		u32		isSetLanguage : 1;
-		u32		isSetDateTime : 1;
-		u32		isSetNickname : 1;
-		u32		isSetUserColor : 1;
-		u32		isSetBirthday : 1;
-		u32		isSetTP : 1;
-		u32		isSetParentalControl : 1;
-//		u32		isSetBrowserRestriction : 1;    // Wiiで存在。フルブラウザを制限するかどうか。TWLでは検討中。
-		u32		isAgreeEURA : 1;
+		u32		initialSequence : 1;				// 初回起動シーケンス中？
+		u32		isSetCountry : 1;					// 国コード設定済み？
+		u32		isSetLanguage : 1;					// 言語設定済み？
+		u32		isSetDateTime : 1;					// 日付・時刻設定済み？
+		u32		isSetNickname : 1;					// ニックネーム設定済み？
+		u32		isSetUserColor : 1;					// ユーザーカラー設定済み？
+		u32		isSetBirthday : 1;					// 誕生日設定済み？
+		u32		isSetTP : 1;						// TP設定済み？
+		u32		isSetParentalControl : 1;			// パレンタルコントロール設定済み？
+//		u32		isSetBrowserRestriction : 1;		// Wiiで存在。フルブラウザを制限するかどうか。TWLでは検討中。
+		u32		isAgreeEURA : 1;					// EURA同意済み？
 		// WiFi設定は別データなので、ここに設定済みフラグは用意しない。
-		u32		isGBUseTopLCD : 1;
+		u32		isGBUseTopLCD : 1;					// １画面のGBゲーム時に上画面を使う？
 		u32		isAvailableWireless : 1;            // 無線モジュールのRFユニットの有効化／無効化
 		u32		isAvailableBatteryExtension : 1;    // バッテリエクステンションモードの有効化／無効化
 		u32		rsv : 19;
 	}flags;
-	u16					valid_language_bitmap;		// 対応言語ビットマップ（※ここじゃなく、"/sys/HWINFO.dat"内の方が良さそう）
+	u8					region;
 	TWLCountryCode		country;					// 国コード
-	u8					region;						// リージョン（※ここじゃなく、"/sys/HWINFO.dat"内の方が良さそう）
 	u8					language;					// 言語(NTRとの違いは、データサイズ8bit)
 	u8					backLightBrightness;		// バックライト輝度(NTRとの違いは、データサイズ8bit)
 	u8					rtcLastSetYear;				// RTCの前回設定年
@@ -223,6 +196,7 @@ typedef struct TWLSettingsData{
 
 // TWL設定データ保存フォーマット
 typedef struct TSDStore {
+	u8					digest[ SVC_SHA1_DIGEST_SIZE ];				// SHA1ダイジェスト
 	TWLSettingsHeader	header;
 	TWLSettingsData		tsd;
 }TSDStore;
@@ -305,12 +279,6 @@ static inline TWLTPCalibData *TSD_GetTPCalibration( void )
 static inline TWLLangCode TSD_GetLanguage( void )
 {
   	return	(TWLLangCode)GetTSD()->language;
-}
-
-// 対応言語ビットマップの取得
-static inline u16 TSD_GetLanguageBitmap( void )
-{
-  	return	GetTSD()->valid_language_bitmap;
 }
 
 // RTCオフセット値の取得
@@ -455,12 +423,6 @@ static inline void TSD_SetTPCalibration( TWLTPCalibData *pTPCalib )
 static inline void TSD_SetLanguage( TWLLangCode language )
 {
 	GetTSD()->language = language;
-}
-
-// 対応言語ビットマップのセット
-static inline void TSD_SetLanguageBitmap( u16 valid_language_bitmap )
-{
-	GetTSD()->valid_language_bitmap = valid_language_bitmap;
 }
 
 // RTCオフセット値のセット

@@ -291,7 +291,7 @@ int     ACSign_Decrypto(
     if ( !key_ptr ) return 0;
 
     //
-    ACMemory_Clear( );
+//    ACMemory_Clear( );
 
     //
     exp_ptr = &nDummyExp;

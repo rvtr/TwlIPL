@@ -35,6 +35,14 @@ int     ACSign_Decrypto(
                     void*   key_ptr     //  キーへのポインタ
                     );
 
+//
+BOOL	ACSign_Encrypto(
+					void *sign,			// 署名出力バッファへのポインタ
+					const void *key,	// DERフォーマット秘密鍵へのポインタ
+					const void *data,	// 署名対象データへのポインタ
+					int length			// 署名対象データ長
+					);
+
 // 
 int      ACSign_Digest(
                     void*   buffer,     //  出力領域
@@ -51,6 +59,8 @@ int     ACSign_Compare(
                     void* dercypto,     //  ACSign_Decryptoの出力
                     void* digest        //  ACSign_Digestの出力
                       );
+
+void ACSign_SetAllocFunc( void *(*pAlloc)( u32 ), void (*pFree)( void * ) );
 
 #ifdef __cplusplus
 }

@@ -103,8 +103,8 @@ TwlSpMain(void)
 	// MMEMサイズチェックは、ARM7の_start内でやっているので、ノーケアでOK.
 	// SCFGレジスタ→HWi_WSYS04 etc.→system shared領域への値セットは、ランチャー起動時点では行われていないので、
 	// ランチャー自身がこれらの値を使うには、自身でこれらの値をセットしてやる必要がある。
-	// ランチャーからアプリを起動する際には、reboot.cが
-	SetSCFGWork();
+	// ランチャーからアプリを起動する際には、reboot.cが値を再セットしてくれる。
+//	SetSCFGWork();	// [TODO]未デバッグ
 	
     // OS 初期化
     OS_Init();

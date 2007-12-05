@@ -11,41 +11,20 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date:: 2007-10-03#$
-# $Rev: 1319 $
-# $Author: kitase_hirotake $
+# $Date::            $
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
-SUBDIRS				=	
-
-MYSUBDIRS			=	./
-
-#----------------------------------------------------------------------------
-TARGET_FIRM			=	SYSTEMMENU
-TARGET_PLATFORM		=	TWL
-TWL_ARCHGEN			=	LIMITED
-TWL_PROC	   		=	ARM9
-
-SRCS				=	NTRSettings.c TWLSettings.c \
-						TWLHWInfo.c TWLStoreFile.c
-
-TARGET_LIB			=	libsettings$(TWL_LIBSUFFIX).a
-
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs
-
-INSTALL_TARGETS		=	$(TARGETS)
-INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
-
-LINCLUDES			=	$(TWLSDK_ROOT)/build/libraries/spi/ARM9/include		\
+include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-do-build: $(MYSUBDIRS) $(TARGETS)
+SUBDIRS		=	banner ARM9
 
-include	$(TWLIPL_ROOT)/build/buildtools/modulerules
+#----------------------------------------------------------------------------
 
+include	$(TWLSDK_ROOT)/build/buildtools/modulerules
 
-$(MYSUBDIRS)::
-#	$(MAKE) -C $@ -f MakeCrt0
 
 #===== End of Makefile =====

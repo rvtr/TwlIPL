@@ -50,15 +50,6 @@ static const char *s_TSDPath[ TSD_FILE_MIRROR_NUM ] = {
 	(const char *)"nand:/shared1/TWLCFG1.dat",
 };
 
-static const u16 s_validLangBitmapList[] = {
-	TWL_LANG_BITMAP_JAPAN,
-	TWL_LANG_BITMAP_AMERICA,
-	TWL_LANG_BITMAP_EUROPE,
-	TWL_LANG_BITMAP_AUSTRALIA,
-	TWL_LANG_BITMAP_CHINA,
-	TWL_LANG_BITMAP_KOREA,
-};
-
 
 // function's description-----------------------------------------------
 
@@ -84,7 +75,7 @@ static BOOL TSDi_WriteSettingsDirect( TSDStore *pTSDStore )
 	pTSDStore->header.dataLength = sizeof(TWLSettingsData);
 	
 	// ダイジェスト算出（自分のバージョンのデータサイズで算出）
-	SVC_CalcSHA1( pTSDStore->header.digest, &pTSDStore->tsd, sizeof(TWLSettingsData) );
+	SVC_CalcSHA1( pTSDStore->digest, &pTSDStore->tsd, sizeof(TWLSettingsData) );
 	
 	FS_InitFile( &file );
 	
@@ -171,9 +162,9 @@ BOOL TSD_ReadSettings( TSDStore (*pTempBuffer)[2] )
 			goto NEXT;
 		}
 		
-		// データのダイジェストチェック
+		// データのダイジェストチェック（SHA1とCRC16の時間を計測したが、数十us差しかなかったので、SHA1のままでいく。）
 		SVC_CalcSHA1( digest, &pTSDStore[ i ].tsd, pTSDStore[ i ].header.dataLength );
-		if( !SVC_CompareSHA1( digest, pTSDStore[ i ].header.digest ) ) {
+		if( !SVC_CompareSHA1( digest, pTSDStore[ i ].digest ) ) {
 			OS_TPrintf( "TSD[%d] : file digest error.\n", i );
 			dataErrFlag |= 0x01 << i;
 			goto NEXT;
@@ -339,7 +330,5 @@ static void TSDi_ClearSettings( TWLSettingsData *pTSD )
 	pTSD->owner.birthday.day    = 1;
 	pTSD->language              = TWL_LANG_ENGLISH;
 	pTSD->region                = TWL_DEFAULT_REGION;	// リージョンは本体設定データからなくなる予定
-	pTSD->valid_language_bitmap = s_validLangBitmapList[ pTSD->region ];
-														// 対応言語ビットマップも本体設定データからなくなる予定
 }
 

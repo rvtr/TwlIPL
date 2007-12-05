@@ -58,6 +58,18 @@ unsigned long   aACMemoryPoolB[ 16 ];
 #define     nACMemory_TailBlock( _tail )            (((volatile unsigned long*)(_tail))[-1])
 #define     nACMemory_TailCheck( _tail )            (((volatile unsigned long*)(_tail))[-2])
 
+
+static void *(*s_acsignAlloc)( u32 length );
+static void  (*s_acsignFree)( void *ptr );
+
+void ACSign_SetAllocFunc( void *(*pAlloc)( u32 ), void (*pFree)( void * ) );
+void ACSign_SetAllocFunc( void *(*pAlloc)( u32 ), void (*pFree)( void * ) )
+{
+	s_acsignAlloc = pAlloc;
+	s_acsignFree  = pFree;
+}
+
+
 //#define       USE_OSALLOC
 //#define       USE_ACMEMORY_DEBUGDUMP
 //#define       USE_ACMEMORY_DEBUGFILL
@@ -142,6 +154,12 @@ void    ACMemory_Clear( )
 //
 void*   ACMemory_Alloc( u32 size )
 {
+	if( s_acsignAlloc ) {
+		return s_acsignAlloc( size );
+	}
+	return NULL;
+	
+	/*
   #if       defined( USE_OSALLOC )
     OSIntrMode  nOSIntrMode;
     void*       alloc = NULL;
@@ -220,11 +238,16 @@ void*   ACMemory_Alloc( u32 size )
 
     return (void*)pACMemory_FromHeadToBody( head );
   #endif
+		*/
 }
 
 //
 void    ACMemory_Free( void* adrs )
 {
+	if( s_acsignFree ) {
+		s_acsignFree( adrs );
+	}
+	/*
   #if       defined( USE_OSALLOC )
     OSIntrMode  nOSIntrMode;
 
@@ -284,6 +307,7 @@ void    ACMemory_Free( void* adrs )
     ACMemory_DebugDump( );
 
   #endif
+		*/
 }
 
 
@@ -304,3 +328,8 @@ void*   ACMemory_Memcpy( void* dst, void* src, u32 cnt )
 }
 
 
+void*	ACMemory_Realloc( void *adrs, u32 nowsize, u32 newsize )
+{
+#pragma unused( adrs, nowsize, newsize )
+	return NULL;
+}

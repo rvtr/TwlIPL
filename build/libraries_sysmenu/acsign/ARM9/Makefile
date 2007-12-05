@@ -30,7 +30,9 @@ TWL_PROC	    	=	ARM9
 INCDIR				= 	include \
 						$(TWLSDK_ROOT)/build/libraries/mb/common/include
 
-SRCS				=	acsign.c acmemory.c acsign_util.c
+SRCS				=	acsign.c acmemory.c acsign_util.c \
+						acsign_encrypt.c \
+						ber_lib.c ber_isk.c ber_par.c
 
 TARGET_LIB			=	libacsign$(TWL_LIBSUFFIX).a
 

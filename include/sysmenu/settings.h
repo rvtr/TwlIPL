@@ -18,6 +18,8 @@
 #ifndef SYSM_MACHINE_SETTINGS_H_
 #define SYSM_MACHINE_SETTINGS_H_
 
+#include <sysmenu/settings/common/TWLStoreFile.h>
+#include <sysmenu/settings/common/TWLHWInfo.h>
 #include <sysmenu/settings/common/NTRSettings.h>
 #include <sysmenu/settings/common/TWLSettings.h>
 

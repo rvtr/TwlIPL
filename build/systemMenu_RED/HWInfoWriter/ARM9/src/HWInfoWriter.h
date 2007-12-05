@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlIPL
-  File:     acmemory.h
+  File:     DS_Chat.h
 
   Copyright 2007 Nintendo.  All rights reserved.
 
@@ -15,23 +15,23 @@
   $Author$
  *---------------------------------------------------------------------------*/
 
-#ifndef _ACMEMORY_H_
-#define _ACMEMORY_H_
+#ifndef	__DS_CHAT_H__
+#define	__DS_CHAT_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-//
-void    ACMemory_Clear( );
-void*   ACMemory_Alloc( u32 size );
-void*	ACMemory_Realloc( void *adrs, u32 nowsize, u32 newsize );
-void    ACMemory_Free( void* adrs );
-void*   ACMemory_Memset( void* adrs, u32 val, u32 cnt );
-void*   ACMemory_Memcpy( void* dst, void* src, u32 cnt );
+
+#include <twl.h>
+
+// define data----------------------------------------------------------
+
+void HWInfoWriterInit( void );
+void HWInfoWriterMain( void );
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //_ACMEMORY_H_
+#endif  // __DS_CHAT_H__
