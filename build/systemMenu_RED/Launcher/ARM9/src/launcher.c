@@ -185,7 +185,7 @@ static void SetDefaultBanner( TitleProperty *titleprop )
 				titleprop[l].pBanner = no_card_banner;
 			}
 		}
-		else if(titleprop[l].pBanner == NULL) //IDがゼロじゃないのにバナーがNULLならノーバナー
+		else if(titleprop[l].pBanner == NULL) //isValidフラグがTRUEでバナーがNULLならノーバナー
 		{
 			titleprop[l].pBanner = nobanner_banner;
 		}
@@ -587,7 +587,8 @@ static void DrawScrollBar( TitleProperty *pTitleList )
 	static int col_count_d = 1;
 	static const int COL_FLAME_MAX = 30;
 	static const int COL_NUM = 15;
-	static const int COL_DIV = COL_FLAME_MAX / COL_NUM;
+	static const int COL_DIV = (COL_FLAME_MAX / COL_NUM);
+	int colc_cold;
 	
 	col_count += col_count_d;
 	if(col_count < 0)
@@ -601,11 +602,12 @@ static void DrawScrollBar( TitleProperty *pTitleList )
 		col_count_d = -1;
 	}
 	
+	colc_cold = col_count/COL_DIV;
 	for(l=0; l<LAUNCHER_TITLE_LIST_NUM; l++)
 	{
 		PutStringUTF16( (int)(BAR_ZERO_X + l * (ITEM_SIZE + ITEM_INTERVAL)),
 						BAR_ZERO_Y,
-						(pTitleList[l].flags.isValid ? (TXT_UCOLOR_G0 + col_count/COL_DIV) : TXT_COLOR_BLACK),
+						(pTitleList[l].flags.isValid ? (TXT_UCOLOR_G0 + colc_cold) : TXT_COLOR_BLACK),
 						(const u16 *)L"・" );
 	}
 	for(l=0; l<4; l++)

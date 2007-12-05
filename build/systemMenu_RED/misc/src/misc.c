@@ -162,6 +162,8 @@ void InitAllocator( void )
     void* heapMemory    = OS_AllocFromMainArenaLo( heapSize, 16 );
     NNSFndHeapHandle    heapHandle;
     SDK_NULL_ASSERT( pAllocator );
+    
+    MI_CpuClear16( (void *)arenaLow, heapSize);
 
     heapHandle = NNS_FndCreateExpHeap( heapMemory, heapSize );
     SDK_ASSERT( heapHandle != NNS_FND_HEAP_INVALID_HANDLE );
