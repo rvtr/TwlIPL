@@ -29,6 +29,9 @@
 
 #define		DEBUG_CARD_TYPE						1			// DS Card Type1 = 0  DS Card Type2 = 1
 
+#define 	UNDEF_CODE							0xe7ffdeff	// 未定義コード
+#define 	ENCRYPT_DEF_SIZE					0x800		// 2KB  ※ ARM9常駐モジュール先頭2KB
+
 // Function prototype -------------------------------------------------------
 static BOOL IsCardExist(void);
 
@@ -49,17 +52,18 @@ static void SetMCSCR(void);
 static void GenVA_VB_VD(void);
 static void LoadTable(void);
 static void ReadIDNormal(void);
+static void DecryptObjectFile(void);
+
 static void MIm_CardDmaCopy32(u32 dmaNo, const void *src, void *dest);
 
 static void ShowRegisterData(void);
 static void ShowRomHeaderData(void);
 
 // Static Values ------------------------------------------------------------
-static u64  				s_MCStack[STACK_SIZE / sizeof(u64)];
-static u64  				s_MLStack[STACK_SIZE / sizeof(u64)];
+static char 				*encrypt_object_key ATTRIBUTE_ALIGN(4) = "encryObj";
 
+static u64  				s_MCStack[STACK_SIZE / sizeof(u64)];
 static OSThread 			s_MCThread;
-static OSThread 			s_MLThread;
 
 static u32					s_SecureSegBufSize, s_BootSegBufSize;
 
@@ -128,18 +132,6 @@ void HOTSW_Init(void)
     // Secure Segment バッファの設定
     HOTSW_SetSecureSegmentBuffer((void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
 
-	// モジュールロード用スレッドの生成
-/*	OS_CreateThread(&s_MLThread,
-                    StaticModuleLoadThread,
-                    NULL,
-                    s_MLStack + STACK_SIZE / sizeof(u64),
-                    STACK_SIZE,
-                    ML_THREAD_PRIO
-                    );
-
-    // モジュールロード用スレッド起動
-    OS_WakeupThreadDirect(&s_MLThread);*/
-    
 	// カードブート用構造体の初期化
 	MI_CpuClear32(&s_cbData, sizeof(CardBootData));
     
@@ -158,6 +150,7 @@ BOOL HOTSW_Boot(void)
 {
 	s32 tempLockID;
 	BOOL retval = TRUE;
+
     OSTick start = OS_GetTick();
 	
 	OS_TPrintf("---------------- Card Boot Start ---------------\n");
@@ -254,12 +247,17 @@ BOOL HOTSW_Boot(void)
 	
 			// Arm9の常駐モジュールを指定先に転送
 			LoadStaticModule_Secure();
+            
 	    	// ゲームモードに移行
 			s_funcTable[s_cbData.cardType].ChangeMode_S(&s_cbData);
 	
 	    	// ---------------------- Game Mode ----------------------
 	    	// ID読み込み
 			s_funcTable[s_cbData.cardType].ReadID_G(&s_cbData);
+
+            // ARM9常駐モジュールの先頭2KBの暗号化領域を複合化
+			DecryptObjectFile();
+            
 			// 常駐モジュール残りを指定先に転送
 			HOTSW_LoadStaticModule();
 	
@@ -288,7 +286,7 @@ BOOL HOTSW_Boot(void)
 #ifdef DEBUG_USED_CARD_SLOT_B_
 	SYSMi_GetWork()->is1stCardChecked  = TRUE;
 #endif
-	
+  
     return retval;
 }
 
@@ -442,15 +440,13 @@ static void LoadTable(void)
 
 	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 101(16ページ) latency1 = 0(必要ないけど) に)
 	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,  0)) |
-        		             		 CNT1_FLD(1,0,0,0,  0,5,  0,0,  0,  0,0,0,  0));
+        		             		 		     CNT1_FLD(1,0,0,0,  0,5,  0,0,  0,  0,0,0,  0));
     
 	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
 	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
 		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
         temp = reg_HOTSW_MCD1;
 	}
-
-    OS_TPrintf("Load Table...\n");
 }
 
 /* -----------------------------------------------------------------
@@ -469,14 +465,82 @@ static void ReadIDNormal(void)
 
 	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 111(ステータスリード) latency1 = 2320(必要ないけど) に)
 	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,     0)) |
-        		             		 CNT1_FLD(1,0,0,0,  0,7,  0,0,  0,  0,0,0,  2320));
+        		             		 			 CNT1_FLD(1,0,0,0,  0,7,  0,0,  0,  0,0,0,  2320));
     
 	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
 	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
 		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
 		s_cbData.id_nml = reg_HOTSW_MCD1;
 	}
+
 }
+
+/* -----------------------------------------------------------------
+ * DecryptObjectFile関数
+ *
+ * セキュア領域先頭2KBの暗号化領域を復号化
+ *
+ * 注：セキュアモード中、またはセキュアモード前にこの関数を呼ぶと、
+ * 　　正常にコマンドの暗号化が行えなくなります。
+ * ----------------------------------------------------------------- */
+static u32 encDestBuf[ENCRYPT_DEF_SIZE/sizeof(u32)];
+
+static void DecryptObjectFile(void)
+{
+    u8  i;
+  	s32 restSize;
+  	s32 size 				= (s32)s_cbData.pBootSegBuf->rh.s.main_size;
+	u32 *pEncBuf			= encDestBuf;
+    u32 *pEncDes 			= s_cbData.pSecureSegBuf;
+    BLOWFISH_CTX *tableBufp = &s_cbData.keyTable;
+  	BOOL exist 				= TRUE;
+
+  	if (size > ENCRYPT_DEF_SIZE) {
+    	size = ENCRYPT_DEF_SIZE;
+  	}
+  	restSize = size;
+
+    // 読み込んだセキュア領域をバッファから一時バッファにコピー
+   	MI_CpuCopy32(s_cbData.pSecureSegBuf, pEncBuf, (u32)size);
+    
+    // セキュア領域先頭8バイトをBlowfishで複合化
+   	DecryptByBlowfish(&s_cbData.keyTable, &(pEncBuf)[1], &(pEncBuf)[0]);
+
+    // Key Tableを変換
+	s_cbData.keyBuf[1] = (s_cbData.keyBuf[1] << 1);
+	s_cbData.keyBuf[2] = (s_cbData.keyBuf[2] >> 1);
+    InitBlowfishKeyAndTableDS(&s_cbData.keyTable, s_cbData.keyBuf, 8);
+
+    // もう一度セキュア領域先頭8バイトをBlowfishで複合化
+	DecryptByBlowfish(&s_cbData.keyTable, &(pEncBuf)[1], &(pEncBuf)[0]);
+   	for ( i=0; i<8; i++ ){
+        // 先頭8バイトが複合化の結果 "encryObj" となっていたら複合化成功
+		if ( encrypt_object_key[i] != ((char*)pEncBuf)[i] ){
+       		exist = FALSE;
+           	break;
+       	}
+	}
+
+   	// 暗号化オブジェクト有効時
+	if ( exist ){
+		u32 *bufp  = pEncBuf;
+
+		OS_PutString("★ DecryptObjectFile : Success!\n");
+            
+   		bufp[0] = UNDEF_CODE;
+   		bufp[1] = UNDEF_CODE;
+   		while ((restSize -= 8) > 0) {
+			bufp += 2;	// 復号処理
+			DecryptByBlowfish(tableBufp, &(bufp)[1], &(bufp)[0]);
+   		}
+   	} 
+   	else{
+		OS_PutString("▼ DecryptObjectFile : Error...\n");
+		// CpuClearFast32(UNDEF_CODE, pEncBuf, size); // 未定義コードでクリア
+   	}
+   	MI_CpuCopy32(pEncBuf, pEncDes, (u32)size);
+}
+
 
 /* -----------------------------------------------------------------
  * IsCardExist関数
