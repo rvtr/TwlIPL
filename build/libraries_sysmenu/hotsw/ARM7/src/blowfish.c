@@ -18,7 +18,7 @@
 
 // Function Prototype -------------------------------------------------------
 static u32 F(const BLOWFISH_CTX *ctx, u32 x);
-static void GCDi_InitBlowfishKeyAndTableDS(BLOWFISH_CTX *ctx, u32 *keyBufp, s32 keyLen);
+//static void GCDi_InitBlowfishKeyAndTableDS(BLOWFISH_CTX *ctx, u32 *keyBufp, s32 keyLen);
 
 //*****************************************
 //
@@ -36,7 +36,7 @@ void GCDm_MakeBlowfishTableDS(BLOWFISH_CTX *tableBufp, ROM_Header_Short *rhs, u3
   keyBufp[1] = *(u32 *)rhs->game_code >> 1;
   keyBufp[2] = *(u32 *)rhs->game_code << 1;
 
-  GCDi_InitBlowfishKeyAndTableDS(tableBufp, keyBufp, keyLen);
+  InitBlowfishKeyAndTableDS(tableBufp, keyBufp, keyLen);
 
   blowfishedKey[0] = (u32)rhs->ctrl_reserved_B[0];
   blowfishedKey[1] = *(u32 *)&rhs->ctrl_reserved_B[4];
@@ -45,15 +45,15 @@ void GCDm_MakeBlowfishTableDS(BLOWFISH_CTX *tableBufp, ROM_Header_Short *rhs, u3
     
   DecryptByBlowfish(tableBufp, &(blowfishedKey)[1], &(blowfishedKey)[0]);
 
-  GCDi_InitBlowfishKeyAndTableDS(tableBufp, keyBufp, keyLen);
+  InitBlowfishKeyAndTableDS(tableBufp, keyBufp, keyLen);
 }
 
 //*****************************************
 //
-// 	GCDi_InitBlowfishKeyAndTableDSä÷êî
+// 	InitBlowfishKeyAndTableDSä÷êî
 //
 //*****************************************
-static void GCDi_InitBlowfishKeyAndTableDS(BLOWFISH_CTX *ctx, u32 *keyBufp, s32 keyLen)
+void InitBlowfishKeyAndTableDS(BLOWFISH_CTX *ctx, u32 *keyBufp, s32 keyLen)
 {
   EncryptByBlowfish(ctx, &(keyBufp)[2], &(keyBufp)[1]);
   EncryptByBlowfish(ctx, &(keyBufp)[1], &(keyBufp)[0]);
