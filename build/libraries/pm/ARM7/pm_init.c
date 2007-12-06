@@ -54,8 +54,10 @@ void PM_InitFIRM( void )
     PMi_SetFlags( REG_PMIC_CTL2_ADDR, PMIC_CTL2_VDD50 );
 
     // back light
-    PMi_SetParams( REG_PMIC_BL_BRT_A_ADDR, PMIC_BACKLIGHT_BRIGHT_MAX, PMIC_BL_BRT_A_MASK ); // TODO: less brightness
-    PMi_SetParams( REG_PMIC_BL_BRT_B_ADDR, PMIC_BACKLIGHT_BRIGHT_MAX, PMIC_BL_BRT_B_MASK ); // TODO: less brightness
+    //PMi_SetParams( REG_PMIC_BL_BRT_A_ADDR, PMIC_BACKLIGHT_BRIGHT_MAX, PMIC_BL_BRT_A_MASK ); // TODO: less brightness
+    //PMi_SetParams( REG_PMIC_BL_BRT_B_ADDR, PMIC_BACKLIGHT_BRIGHT_MAX, PMIC_BL_BRT_B_MASK ); // TODO: less brightness
+    PMi_SetParams( REG_PMIC_BL_BRT_A_ADDR, 0, PMIC_BL_BRT_A_MASK );
+    PMi_SetParams( REG_PMIC_BL_BRT_B_ADDR, 0, PMIC_BL_BRT_B_MASK );
 }
 
 /*---------------------------------------------------------------------------*
