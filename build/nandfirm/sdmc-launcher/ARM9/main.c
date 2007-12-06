@@ -51,6 +51,11 @@ u32 pf_cnt = 0;
 ***************************************************************/
 static void PreInit(void)
 {
+    static const OSMountInfo    firmSettings[] =
+    {
+        { 'A', OS_MOUNT_DEVICE_SD, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "sdmc",    "/" },
+        { 0 }
+    };
     /*
      メインメモリ関連
     */
@@ -58,9 +63,10 @@ static void PreInit(void)
     MI_CpuClearFast((void *)HW_WRAM_EX_LOCK_BUF,        (HW_WRAM_EX_LOCK_BUF_END - HW_WRAM_EX_LOCK_BUF));
     MI_CpuClearFast((void *)HW_BIOS_EXCP_STACK_MAIN,    (HW_REAL_TIME_CLOCK_BUF - HW_BIOS_EXCP_STACK_MAIN));
     MI_CpuClearFast((void *)HW_PXI_SIGNAL_PARAM_ARM9,   (HW_MMEMCHECKER_MAIN - HW_PXI_SIGNAL_PARAM_ARM9));
+    MI_CpuClearFast((void*)HW_ROM_HEADER_BUF,           (HW_ROM_HEADER_BUF_END-HW_ROM_HEADER_BUF));
 
-    // FS_MOUNT領域クリア
-    MI_CpuClearFast((void*)HW_TWL_FS_MOUNT_INFO_BUF,    (HW_TWL_ROM_HEADER_BUF-HW_TWL_FS_MOUNT_INFO_BUF));
+    // FS_MOUNT領域の初期化
+    MI_CpuCopy8(firmSettings, (char*)HW_TWL_FS_MOUNT_INFO_BUF, sizeof(firmSettings));
 
     /*
         FromBrom関連
@@ -106,7 +112,7 @@ static BOOL CheckHeader(void)
     static ROM_Header_Short* const rhs = (ROM_Header_Short*)HW_TWL_ROM_HEADER_BUF;
     // TODO
     // イニシャルコード
-    OS_TPrintf("Initial Code        : %08X\n", rhs->game_code);
+    OS_TPrintf("Initial Code        : %08X\n", *(u32*)rhs->game_code);
     // エントリポイント
     OS_TPrintf("ARM9 Entry point    : %08X\n", rhs->main_entry_address);
     OS_TPrintf("ARM7 Entry point    : %08X\n", rhs->sub_entry_address);
@@ -136,7 +142,8 @@ static BOOL CheckHeader(void)
 static void EraseAll(void)
 {
 #ifdef SDK_FINALROM
-    // TODO
+    MI_CpuClearFast( (void*)HW_TWL_ROM_HEADER_BUF, HW_TWL_ROM_HEADER_BUF_SIZE );
+    OS_BootFromFIRM();
 #endif
 }
 
@@ -150,8 +157,8 @@ void TwlMain( void )
 #endif
 
     OS_InitFIRM();
-#ifndef SDK_FINALROM
     OS_EnableIrq();
+#ifndef SDK_FINALROM
     OS_InitTick();
     // 1: after PXI
     profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());

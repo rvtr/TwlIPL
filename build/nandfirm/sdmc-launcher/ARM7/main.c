@@ -70,7 +70,8 @@ static void PreInit(void)
     /*
         リセットパラメータ(1バイト)を共有領域(4バイト)にコピー
     */
-    *(u32*)HW_RESET_PARAMETER_BUF = (u32)MCUi_ReadRegister( MCU_REG_TEMP_ADDR );
+#define FIRM_AVAILABLE_BIT  0x80000000UL
+    *(u32*)HW_RESET_PARAMETER_BUF = (u32)MCUi_ReadRegister( MCU_REG_TEMP_ADDR ) | FIRM_AVAILABLE_BIT;
 }
 
 /***************************************************************
@@ -83,7 +84,8 @@ static void PreInit(void)
 static void EraseAll(void)
 {
 #ifdef SDK_FINALROM
-    // TODO
+    MI_CpuClearFast( (void*)HW_TWL_ROM_HEADER_BUF, HW_TWL_ROM_HEADER_BUF_SIZE );
+    OS_BootFromFIRM();
 #endif
 }
 
@@ -231,10 +233,12 @@ void TwlSpMain( void )
         OS_TPrintf("\n[ARM7] End\n");
     }
 #endif
-    OS_SetDebugLED(++step);
+    OS_SetDebugLED(0);
     PRODUCTION_CHECK();
 
     PM_BackLightOn( TRUE ); // last chance
+    PMi_SetParams( REG_PMIC_BL_BRT_A_ADDR, 22, PMIC_BL_BRT_A_MASK );    // brighter
+    PMi_SetParams( REG_PMIC_BL_BRT_B_ADDR, 22, PMIC_BL_BRT_B_MASK );    // brighter
 
     OS_BootFromFIRM();
 
