@@ -121,7 +121,7 @@ static BOOL CheckHeader(void)
     static ROM_Header_Short* const rhs = (ROM_Header_Short*)HW_TWL_ROM_HEADER_BUF;
     // TODO
     // イニシャルコード
-    OS_TPrintf("Initial Code        : %08X\n", rhs->game_code);
+    OS_TPrintf("Initial Code        : %08X\n", *(u32*)rhs->game_code);
     // エントリポイント
     OS_TPrintf("ARM9 Entry point    : %08X\n", rhs->main_entry_address);
     OS_TPrintf("ARM7 Entry point    : %08X\n", rhs->sub_entry_address);
