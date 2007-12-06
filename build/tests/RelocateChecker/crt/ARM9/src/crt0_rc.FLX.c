@@ -163,40 +163,11 @@ static const u32    microcode_SwitchCpuClock[13]    =
 SDK_WEAK_SYMBOL asm void
 _start(void)
 {
-
-        /* ハンドシェイク用マイクロコードを ITCM にコピー */
-        ldr             r1, =microcode_ShakeHand
-        ldr             r2, =HW_ITCM
-        add             r3, r2, #40
-@001:   ldr             r0, [r1], #4
-        str             r0, [r2], #4
-        cmp             r2, r3
-        blt             @001
         
 @000:
         /* 割り込み禁止 */
         mov             r12, #HW_REG_BASE
         str             r12, [r12, #REG_IME_OFFSET]     // Use that LSB of HW_REG_BASE is 0b0
-        
-        /* ITCM 上のコードで ARM7 とハンドシェイク1 */
-        ldr             r0, =HW_BOOT_SYNC_PHASE
-        mov             r1, #BOOT_SYNC_PHASE_1
-        strh            r1, [r0]
-        ldr             r0, =HW_BOOT_SHAKEHAND_9
-        ldr             r1, =HW_BOOT_SHAKEHAND_7
-        ldr             r2, =HW_ITCM
-        blx             r2
-        
-        // arm7のダイジェスト計算待ち
-        
-        /* ITCM 上のコードで ARM7 とハンドシェイク2 */
-        ldr             r0, =HW_BOOT_SYNC_PHASE
-        mov             r1, #BOOT_SYNC_PHASE_1
-        strh            r1, [r0]
-        ldr             r0, =HW_BOOT_SHAKEHAND_9
-        ldr             r1, =HW_BOOT_SHAKEHAND_7
-        ldr             r2, =HW_ITCM
-        blx             r2
         
         /* システム制御コプロセッサ初期化 */
         bl              INITi_InitCoprocessor
@@ -214,7 +185,16 @@ _start(void)
         ldr             r2, =(HW_MAIN_MEM_SYSTEM+HW_MAIN_MEM_SYSTEM_SIZE-HW_PXI_SIGNAL_PARAM_ARM9)
         bl              INITi_CpuClear32
 
-        /* ITCM 上のコードで ARM7 とハンドシェイク3 */
+        /* ハンドシェイク用マイクロコードを ITCM にコピー */
+        ldr             r1, =microcode_ShakeHand
+        ldr             r2, =HW_ITCM
+        add             r3, r2, #40
+@001:   ldr             r0, [r1], #4
+        str             r0, [r2], #4
+        cmp             r2, r3
+        blt             @001
+        
+        /* ITCM 上のコードで ARM7 とハンドシェイク1 */
         ldr             r0, =HW_BOOT_SYNC_PHASE
         mov             r1, #BOOT_SYNC_PHASE_1
         strh            r1, [r0]

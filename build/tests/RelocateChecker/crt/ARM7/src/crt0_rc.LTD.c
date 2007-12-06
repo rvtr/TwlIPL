@@ -211,25 +211,6 @@ _start(void)
         ldr             r2, =HW_PRV_WRAM
         mov             lr, pc
         bx              r2
-        
-		// ロードされたアプリのダイジェストを計算してアプリ間パラメータに格納
-        bl              INITi_SetHMACSHA1ToAppParam
-        
-        /* 専用 WRAM 上のコードで ARM9 とハンドシェイク2 */
-        ldr             r0, =HW_BOOT_SHAKEHAND_9
-        ldr             r1, =HW_BOOT_SHAKEHAND_7
-        ldr             r2, =HW_PRV_WRAM
-        mov             lr, pc
-        bx              r2
-        
-        // arm9待ち
-        
-        /* 専用 WRAM 上のコードで ARM9 とハンドシェイク3 */
-        ldr             r0, =HW_BOOT_SHAKEHAND_9
-        ldr             r1, =HW_BOOT_SHAKEHAND_7
-        ldr             r2, =HW_PRV_WRAM
-        mov             lr, pc
-        bx              r2
 
 @010:
         /* スタックポインタ設定 */
@@ -255,6 +236,9 @@ _start(void)
         strlt           r0, [r1], #4
         blt             @011
 
+		// ロードされたアプリのダイジェストを計算してアプリ間パラメータに格納
+        bl              INITi_SetHMACSHA1ToAppParam
+        
         /* TWL ハードウェア上で動作しているかどうかを調査 */
         ldr             r1, =REG_CLK_ADDR
         ldrh            r0, [r1]
@@ -332,6 +316,7 @@ _start(void)
 
 #include <nitro/mi/stream.h>
 #include <twl/os/common/systemCall.h>
+#include <nitro/math/dgt.h>
 /*---------------------------------------------------------------------------*
   Name:         INITi_SetHMACSHA1ToAppParam
   Description:  ROMがロードされた各アプリ領域のHMACSHA1を計算し、アプリ間パラ
@@ -339,8 +324,10 @@ _start(void)
   Arguments:    なし。
   Returns:      なし。
  *---------------------------------------------------------------------------*/
+
 static void INITi_SetHMACSHA1ToAppParam(void)
 {
+/*
 	SVCHMACSHA1Context con;
 	// arm9_flx
 	SVC_HMACSHA1Init(&con, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1);
@@ -358,17 +345,51 @@ static void INITi_SetHMACSHA1ToAppParam(void)
 	SVC_HMACSHA1Init(&con, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1);
 	SVC_HMACSHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1d8)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1dc)));
 	SVC_HMACSHA1GetHash(&con, (void *)(HW_MAIN_MEM + 3 * SVC_SHA1_DIGEST_SIZE));
-	/*
-	SVC_CalcHMACSHA1( (void *)HW_MAIN_MEM, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x028)),
-					*((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x02c)), (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );// arm9_flx
-	SVC_CalcHMACSHA1( (void *)(HW_MAIN_MEM + SVC_SHA1_DIGEST_SIZE), (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x038)),
-					*((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x03c)), (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );// arm7_flx
-	SVC_CalcHMACSHA1( (void *)(HW_MAIN_MEM + 2 * SVC_SHA1_DIGEST_SIZE), (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1c8)),
-					*((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1cc)), (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );// arm9_ltd
-	SVC_CalcHMACSHA1( (void *)(HW_MAIN_MEM + 3 * SVC_SHA1_DIGEST_SIZE), (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1d8)),
-					*((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1dc)), (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );// arm7_ltd
-	*/
+*/
+
+	SVCSHA1Context con;
+	// arm9_flx
+	SVC_SHA1Init(&con);
+	SVC_SHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x038)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x03c)));
+	SVC_SHA1GetHash(&con, (void *)HW_MAIN_MEM);
+	// arm7_flx
+	SVC_SHA1Init(&con);
+	SVC_SHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x028)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x02c)));
+	SVC_SHA1GetHash(&con, (void *)(HW_MAIN_MEM + SVC_SHA1_DIGEST_SIZE));
+	// arm9_ltd
+	SVC_SHA1Init(&con);
+	SVC_SHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1c8)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1cc)));
+	SVC_SHA1GetHash(&con, (void *)(HW_MAIN_MEM + 2 * SVC_SHA1_DIGEST_SIZE));
+	// arm7_ltd
+	SVC_SHA1Init(&con);
+	SVC_SHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1d8)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1dc)));
+	SVC_SHA1GetHash(&con, (void *)(HW_MAIN_MEM + 3 * SVC_SHA1_DIGEST_SIZE));
+	
 }
+/*
+static asm void INITi_SetHMACSHA1ToAppParam(void)
+{
+        mov             r0, #HW_MAIN_MEM
+        add             r0, r0, #SVC_SHA1_DIGEST_SIZE
+        add             r0, r0, #SVC_SHA1_DIGEST_SIZE
+        add             r0, r0, #SVC_SHA1_DIGEST_SIZE
+        add             r0, r0, #SVC_SHA1_DIGEST_SIZE
+        ldr				r1, =s_digestDefaultKey
+        mov				r2, #(DIGEST_HASH_BLOCK_SIZE_SHA1)
+        bl				SVC_HMACSHA1Init
+        
+        mov             r1, #HW_WRAM_AREA
+        sub             r3, r1, 0x2000
+        ldr				r1, [r3, 0x028]
+        ldr				r2, [r3, 0x02c]
+        bl				SVC_HMACSHA1Update
+        
+        mov             r1, #HW_MAIN_MEM
+        bl				SVC_HMACSHA1GetHash
+        
+        bx				lr
+}
+*/
 
 
 /*---------------------------------------------------------------------------*

@@ -21,7 +21,8 @@
 Static $(TARGET_NAME)
 {
 	Address		$(ADDRESS_FLXMAIN)
-	Library		$(CRT0_O)
+	Library		$(CRT0_O) \
+			libsyscall_sp.twl.a
 	StackSize	1024 1024
 }
 
@@ -31,7 +32,6 @@ Autoload WRAM
 	Address		$(ADDRESS_LTDWRAM)
 
 	Library		libsubpsyscall.a				\
-				libsyscall_sp.twl.a				\
 				$(CW_LIBS)						\
 				libos_sp$(LIBSUFFIX).a		\
 				libmi_sp$(LIBSUFFIX).a		\
