@@ -28,6 +28,8 @@ SRCS		=	main.c
 
 CRT0_O		=	crt0_firm.o
 
+ADDRESS_STATIC	=	0x037c0000
+
 MAKEROM_ARM7		=	../ARM7/bin/$(TWL_BUILDTYPE_ARM7)/menu_launcher7.tef
 MAKEROM_ARM7_BASE       =       $(basename $(MAKEROM_ARM7))
 

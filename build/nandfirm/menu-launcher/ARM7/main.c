@@ -33,18 +33,32 @@ static u8 fatfsHeap[FATFS_HEAP_SIZE] __attribute__ ((aligned (32)));
 */
 #define PROFILE_ENABLE
 
-#ifdef SDK_FINALROM // FINALROMで無効化
-#undef PROFILE_ENABLE
-#endif
+/*
+    デバッグLEDをFINALROMとは別にOn/Offできます。
+*/
+#define USE_DEBUG_LED
+
+//#ifdef SDK_FINALROM // FINALROMで無効化
+//#undef PROFILE_ENABLE
+//#undef USE_DEBUG_LED
+//#endif
 
 #ifdef PROFILE_ENABLE
 #define PROFILE_MAX  16
 u32 profile[PROFILE_MAX];
 u32 pf_cnt = 0;
+#define PUSH_PROFILE()  (profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick()))
+#else
+#define PUSH_PROFILE()  ((void)0)
 #endif
 
-#ifndef SDK_FINALROM
+#ifdef USE_DEBUG_LED
 static u8 step = 0x80;
+#define InitDebugLED()          I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x03, 0x00)
+#define SetDebugLED(pattern)    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, (pattern));
+#else
+#define InitDebugLED()          ((void)0)
+#define SetDebugLED(pattern)    ((void)0)
 #endif
 
 /***************************************************************
@@ -110,11 +124,9 @@ static BOOL FsInit(void)
         OS_SetCurrentHeap(OS_ARENA_MAIN_SUBPRIV, hh);
     }
 
-#ifdef PROFILE_ENABLE
     // 3: after OS_CreateHeap
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-    OS_SetDebugLED(++step); // 0x85
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x85
 
     SDNandContext = &OSi_GetFromFirmAddr()->SDNandContext;
 
@@ -129,43 +141,57 @@ static BOOL FsInit(void)
     return TRUE;
 }
 
+static u32 systemId;
+static void PxiSystemCallback( PXIFifoTag tag, u32 data, BOOL err )
+{
+    (void)tag;
+    (void)err;
+    systemId = data;
+}
+
+static void IdleThread(void* arg)
+{
+    OS_EnableInterrupts();
+    while ( 1 )
+    {
+        OS_Halt();
+    }
+}
+static OSThread idle;
+static u32 idleStack[16] ATTRIBUTE_ALIGN(32);
+static void CreateIdleThread( void )
+{
+    OS_CreateThread( &idle, IdleThread, NULL, &idleStack[16], sizeof(idleStack), OS_THREAD_PRIORITY_MAX );
+    OS_WakeupThreadDirect( &idle );
+}
+
 void TwlSpMain( void )
 {
     int fd; // menu file descriptor
 
-    // OS_InitDebugLED and OS_SetDebugLED are able to call after OS_Init
-#ifndef SDK_FINALROM
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x03, 0x00);
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, ++step);  // 0x81
-#endif
+    InitDebugLED();
+    SetDebugLED(++step);  // 0x81
 
     PreInit();
 
-#ifndef SDK_FINALROM
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, ++step);  // 0x82
-#endif
-#ifdef PROFILE_ENABLE
     // 0: before PXI
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
+    PUSH_PROFILE();
+    SetDebugLED(++step);  // 0x82
 
     OS_InitFIRM();
     OS_EnableIrq();
     OS_EnableInterrupts();
 
-#ifdef PROFILE_ENABLE
     // 1: after PXI
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-    OS_SetDebugLED(++step); // 0x83
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x83
 
     PM_InitFIRM();
 
-#ifdef PROFILE_ENABLE
     // 2: after PM_InitFIRM
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-    OS_SetDebugLED(++step); // 0x84
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x84
+
     PM_BackLightOn( FALSE );
 
     if ( !FsInit() )
@@ -174,12 +200,21 @@ void TwlSpMain( void )
         goto end;
     }
 
-#ifdef PROFILE_ENABLE
     // 4: after FS_Init
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-    OS_SetDebugLED(++step); // 0x86
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x86
+
     PM_BackLightOn( FALSE );
+
+PXI_RecvID();
+SetDebugLED(0x01);
+PXI_RecvID();
+SetDebugLED(0x02);
+PXI_RecvID();
+SetDebugLED(0x03);
+PXI_RecvID();
+SetDebugLED(0x04);
+
 
     if ( PXI_RecvID() != FIRM_PXI_ID_SET_PATH )
     {
@@ -187,11 +222,12 @@ void TwlSpMain( void )
         goto end;
     }
 
-#ifdef PROFILE_ENABLE
+    CreateIdleThread();
+
     // 5: after PXI
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-    OS_SetDebugLED(++step); // 0x87
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x87
+
     PM_BackLightOn( FALSE );
 
     if ( (fd = FS_OpenSrl()) < 0 )
@@ -200,11 +236,10 @@ void TwlSpMain( void )
         goto end;
     }
 
-#ifdef PROFILE_ENABLE
     // 6: after FS_OpenSrl
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-    OS_SetDebugLED(++step); // 0x88
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x88
+
     PM_BackLightOn( FALSE );
 
     if ( !FS_LoadHeader( fd ) )
@@ -213,11 +248,10 @@ void TwlSpMain( void )
         goto end;
     }
 
-#ifdef PROFILE_ENABLE
     // 7: after FS_LoadHeader
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-    OS_SetDebugLED(++step); // 0x89
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x89
+
     PM_BackLightOn( FALSE );
 
     if ( PXI_RecvID() != FIRM_PXI_ID_DONE_HEADER )
@@ -226,11 +260,10 @@ void TwlSpMain( void )
         goto end;
     }
 
-#ifdef PROFILE_ENABLE
     // 8: after PXI
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-    OS_SetDebugLED(++step); // 0x8a
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x8a
+
     PM_BackLightOn( FALSE );
 
     if ( !FS_LoadStatic( fd ) )
@@ -239,11 +272,10 @@ void TwlSpMain( void )
         goto end;
     }
 
-#ifdef PROFILE_ENABLE
     // 9: after FS_LoadStatic
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-    OS_SetDebugLED(++step); // 0x8b
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x8b
+
     PM_BackLightOn( FALSE );
 
     if ( PXI_RecvID() != FIRM_PXI_ID_DONE_STATIC )
@@ -252,35 +284,46 @@ void TwlSpMain( void )
         goto end;
     }
 
+    // 10: after PXI
+    PUSH_PROFILE();
 #ifdef PROFILE_ENABLE
-    // 15: after PXI
-    pf_cnt = PROFILE_MAX-1;
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
     {
         int i;
+        MI_CpuCopy8( profile, (void*)0x02000080, sizeof(profile) );
         PXI_RecvID();
         OS_TPrintf("\n[ARM7] Begin\n");
         for (i = 0; i < PROFILE_MAX; i++)
         {
-            OS_TPrintf("0x%08X\n", profile[i]);
+//            OS_TPrintf("0x%08X\n", profile[i]);
+            if ( !profile[i] ) break;
+            OS_TPrintf("%2d: %7d usec", i, profile[i]);
+            if (i)
+            {
+                OS_TPrintf(" ( %7d usec )\n", profile[i]-profile[i-1]);
+            }
+            else
+            {
+                OS_TPrintf("\n");
+            }
         }
         OS_TPrintf("\n[ARM7] End\n");
     }
 #endif
-    OS_SetDebugLED( 0 );
+    SetDebugLED( 0 );
     PM_BackLightOn( TRUE ); // last chance
 
     OS_BootFromFIRM();
 
 end:
-    OS_SetDebugLED( (u8)(0xF0 | step));
+    SetDebugLED( (u8)(0xF0 | step));
 
     EraseAll();
 
     // failed
-    while (1)
+//    while (1)
     {
         PXI_NotifyID( FIRM_PXI_ID_ERR );
     }
+    OS_Terminate();
 }
 

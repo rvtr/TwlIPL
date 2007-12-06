@@ -30,6 +30,8 @@ SRCS		=	main.c
 
 CRT0_O		=	crt0_firm.o
 
+ADDRESS_STATIC	=	0x037b8000
+
 #LCFILE_TEMPLATE =	$(FIRM_SPECDIR)/$(TWL_PROC)-$(TWL_PLATFORM)-PARTNER.lcf.template
 
 #SRCDIR		=	# using default

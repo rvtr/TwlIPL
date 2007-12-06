@@ -49,14 +49,17 @@ static SVCSignHeapContext acPool;
 */
 #define PROFILE_ENABLE
 
-#ifdef SDK_FINALROM // FINALROMで無効化
-#undef PROFILE_ENABLE
-#endif
+//#ifdef SDK_FINALROM // FINALROMで無効化
+//#undef PROFILE_ENABLE
+//#endif
 
 #ifdef PROFILE_ENABLE
 #define PROFILE_MAX  16
 u32 profile[PROFILE_MAX];
 u32 pf_cnt = 0;
+#define PUSH_PROFILE()  (profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick()))
+#else
+#define PUSH_PROFILE()  ((void)0)
 #endif
 
 /***************************************************************
@@ -78,6 +81,7 @@ static void PreInit(void)
     MI_CpuClearFast((void *)HW_WRAM_EX_LOCK_BUF,        (HW_WRAM_EX_LOCK_BUF_END - HW_WRAM_EX_LOCK_BUF));
     MI_CpuClearFast((void *)HW_BIOS_EXCP_STACK_MAIN,    (HW_REAL_TIME_CLOCK_BUF - HW_BIOS_EXCP_STACK_MAIN));
     MI_CpuClearFast((void *)HW_PXI_SIGNAL_PARAM_ARM9,   (HW_MMEMCHECKER_MAIN - HW_PXI_SIGNAL_PARAM_ARM9));
+    MI_CpuClearFast((void*)HW_ROM_HEADER_BUF,           (HW_ROM_HEADER_BUF_END-HW_ROM_HEADER_BUF));
 
     // FS_MOUNT領域の初期化
     MI_CpuCopy8(firmSettings, (char*)HW_TWL_FS_MOUNT_INFO_BUF, sizeof(firmSettings));
@@ -124,7 +128,26 @@ static void PostInit(void)
 ***************************************************************/
 static BOOL CheckHeader(void)
 {
+    static ROM_Header_Short* const rhs = (ROM_Header_Short*)HW_TWL_ROM_HEADER_BUF;
     // TODO
+    // イニシャルコード
+    OS_TPrintf("Initial Code        : %08X\n", rhs->game_code);
+    // エントリポイント
+    OS_TPrintf("ARM9 Entry point    : %08X\n", rhs->main_entry_address);
+    OS_TPrintf("ARM7 Entry point    : %08X\n", rhs->sub_entry_address);
+    // ロード範囲
+    OS_TPrintf("ARM9 ROM address    : %08X\n", rhs->main_rom_offset);
+    OS_TPrintf("ARM9 RAM address    : %08X\n", rhs->main_ram_address);
+    OS_TPrintf("ARM9 size           : %08X\n", rhs->main_size);
+    OS_TPrintf("ARM7 ROM address    : %08X\n", rhs->sub_rom_offset);
+    OS_TPrintf("ARM7 RAM address    : %08X\n", rhs->sub_ram_address);
+    OS_TPrintf("ARM7 size           : %08X\n", rhs->sub_size);
+    OS_TPrintf("ARM9 LTD ROM address: %08X\n", rhs->main_ltd_rom_offset);
+    OS_TPrintf("ARM9 LTD RAM address: %08X\n", rhs->main_ltd_ram_address);
+    OS_TPrintf("ARM9 LTD size       : %08X\n", rhs->main_ltd_size);
+    OS_TPrintf("ARM7 LTD ROM address: %08X\n", rhs->sub_ltd_rom_offset);
+    OS_TPrintf("ARM7 LTD RAM address: %08X\n", rhs->sub_ltd_ram_address);
+    OS_TPrintf("ARM7 LTD size       : %08X\n", rhs->sub_ltd_size);
     return TRUE;
 }
 
@@ -147,10 +170,8 @@ void TwlMain( void )
 {
     PreInit();
 
-#ifdef PROFILE_ENABLE
     // 0: before PXI
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
+    PUSH_PROFILE();
 
     OS_InitFIRM();
     OS_EnableIrq();
@@ -158,34 +179,30 @@ void TwlMain( void )
 
 #ifdef PROFILE_ENABLE
     OS_InitTick();
+#endif
     // 1: after PXI
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
+    PUSH_PROFILE();
+PXI_NotifyID( FIRM_PXI_ID_NULL );
+    //PostInit();
 
-    PostInit();
-
-#ifdef PROFILE_ENABLE
     // 2: after PostInit
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
+    PUSH_PROFILE();
+PXI_NotifyID( FIRM_PXI_ID_NULL );
 
     // RSA用ヒープ設定
     SVC_InitSignHeap( &acPool, acHeap, sizeof(acHeap) );
     // HMAC用鍵準備
     FS_SetDigestKey( NULL );
 
-#ifdef PROFILE_ENABLE
     // 3: after SVC_InitSignHeap
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
+    PUSH_PROFILE();
+PXI_NotifyID( FIRM_PXI_ID_NULL );
 
-    FATFS_InitFIRM();
-    FS_Init(FS_DMA_NOT_USE);
+    FS_InitFIRM();
 
-#ifdef PROFILE_ENABLE
     // 4: after FS_Init
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
+    PUSH_PROFILE();
+PXI_NotifyID( FIRM_PXI_ID_NULL );
 
     if ( !FS_ResolveSrl( MENU_TITLE_ID ) )
     {
@@ -193,35 +210,27 @@ void TwlMain( void )
         goto end;
     }
 
-#ifdef PROFILE_ENABLE
     // 5: after FS_ResolveSrl
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
+    PUSH_PROFILE();
 
     PXI_NotifyID( FIRM_PXI_ID_SET_PATH );
 
-#ifdef PROFILE_ENABLE
     // 6: after PXI
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
+    PUSH_PROFILE();
 
-    if ( !FS_LoadHeader(&acPool, RSA_KEY_ADDR ) && CheckHeader() )
+    if ( !FS_LoadHeader(&acPool, RSA_KEY_ADDR ) || !CheckHeader() )
     {
         OS_TPrintf("Failed to call FS_LoadHeader() and/or CheckHeader().\n");
         goto end;
     }
 
-#ifdef PROFILE_ENABLE
     // 7: after FS_LoadHeader
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
+    PUSH_PROFILE();
 
     PXI_NotifyID( FIRM_PXI_ID_DONE_HEADER );
 
-#ifdef PROFILE_ENABLE
     // 8: after PXI
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
+    PUSH_PROFILE();
 
     if ( !FS_LoadStatic() )
     {
@@ -229,25 +238,33 @@ void TwlMain( void )
         goto end;
     }
 
-#ifdef PROFILE_ENABLE
     // 9: after FS_LoadStatic
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
+    PUSH_PROFILE();
 
     PXI_NotifyID( FIRM_PXI_ID_DONE_STATIC );
 
+    // 10: after PXI
+    PUSH_PROFILE();
 #ifdef PROFILE_ENABLE
-    // 15: after PXI
-    pf_cnt = PROFILE_MAX-1;
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
     {
         int i;
         OS_TPrintf("\n[ARM9] Begin\n");
         for (i = 0; i < PROFILE_MAX; i++)
         {
-            OS_TPrintf("0x%08X\n", profile[i]);
+//            OS_TPrintf("0x%08X\n", profile[i]);
+            if ( !profile[i] ) break;
+            OS_TPrintf("%2d: %7d usec", i, profile[i]);
+            if (i)
+            {
+                OS_TPrintf(" ( %7d usec )\n", profile[i]-profile[i-1]);
+            }
+            else
+            {
+                OS_TPrintf("\n");
+            }
         }
         OS_TPrintf("\n[ARM9] End\n");
+        MI_CpuCopy8( profile, (void*)0x02000000, sizeof(profile) );
         PXI_NotifyID( FIRM_PXI_ID_NULL );
     }
 #endif
@@ -258,9 +275,10 @@ end:
     EraseAll();
 
     // failed
-    while (1)
+//    while (1)
     {
         PXI_NotifyID( FIRM_PXI_ID_ERR );
     }
+    OS_Terminate();
 }
 
