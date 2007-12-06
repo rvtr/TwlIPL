@@ -37,7 +37,7 @@ MAKEROM_ARM7_BASE       =       $(basename $(MAKEROM_ARM7))
 #LCFILE		=	# using default
 
 
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 
 #----------------------------------------------------------------------------
@@ -45,7 +45,7 @@ include	$(TWLIPL_ROOT)/build/buildtools/commondefs
 do-build:		$(TARGETS)
 
 
-include	$(TWLIPL_ROOT)/build/buildtools/modulerules
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====

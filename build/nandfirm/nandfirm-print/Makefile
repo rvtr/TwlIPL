@@ -34,13 +34,13 @@ FIRM_SPEC		=	nandfirm-BB.nandsf
 LDIRT_CLEAN		+=	$(TARGETS) \
 				rsa_public.sbin \
 
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
 do-build:	$(TARGET_BIN)
 
-include	$(TWLIPL_ROOT)/build/buildtools/modulerules
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====

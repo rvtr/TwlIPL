@@ -38,14 +38,14 @@ LLIBRARY_DIRS			=
 LLIBRARIES				=
 LDEPENDS_NEF			=
 
-include $(TWLIPL_ROOT)/build/buildtools/commondefs
+include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
 do-build : $(TARGETS)
 
 
-include $(TWLIPL_ROOT)/build/buildtools/modulerules
+include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 #----------------------------------------------------------------------------
 

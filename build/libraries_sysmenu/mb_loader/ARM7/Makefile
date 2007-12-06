@@ -37,7 +37,7 @@ SRCS				=	mb_loader.c
 TARGET_LIB			=	libmbloader_sp$(TWL_LIBSUFFIX).a
 
 
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS		=	$(TARGETS)
 INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
@@ -46,7 +46,7 @@ INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
 
 do-build:		$(TARGETS)
 
-include	$(TWLIPL_ROOT)/build/buildtools/modulerules
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====

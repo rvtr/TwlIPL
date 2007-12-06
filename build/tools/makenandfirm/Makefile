@@ -53,7 +53,7 @@ SRCDIR				+=	../acsign $(ECC_SRCDIR)
 INCDIR				+=	../acsign/include $(ECC_INCDIR) $(ECC_SRCDIR)
 
 
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 TARGETS				=	makenandfirm.exe
 

@@ -36,14 +36,14 @@ SRCS		=	\
 
 MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000'
 
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
 do-build:		$(TARGETS)
 
 
-include	$(TWLIPL_ROOT)/build/buildtools/modulerules
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====

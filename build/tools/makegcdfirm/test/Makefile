@@ -18,7 +18,7 @@
 
 SUBDIRS =	wram_rbin \
 
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 MAKEGCDFIRM		=	../makegcdfirm.exe
 

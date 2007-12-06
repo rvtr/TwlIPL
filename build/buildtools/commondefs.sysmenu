@@ -27,7 +27,7 @@ SPACE 		?= $(EMPTY) $(EMPTY)
 #  TWL-SYSTEM-MENU path settings
 #
 
-SYSMENU_ROOT			:= $(subst $(SPACE),\ ,$(subst \,/,$(TWLIPL_ROOT)))
+SYSMENU_ROOT			:= $(subst $(SPACE),\ ,$(subst \,/,$(TWL_IPL_RED_ROOT)))
 SYSMENU_BUILDTOOLSDIR	:= $(SYSMENU_ROOT)/build/buildtools
 SYSMENU_INCDIR			:= $(SYSMENU_ROOT)/include \
                            $(TWLSDK_ROOT)/build/libraries/spi/arm9/include \

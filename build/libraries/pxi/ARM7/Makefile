@@ -36,7 +36,7 @@ TARGET_LIB		= libpxi_sp$(FIRM_LIBSUFFIX).a
 
 #----------------------------------------------------------------------------
 
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS		= $(TARGETS)
 INSTALL_DIR		= $(FIRM_INSTALL_LIBDIR)
@@ -46,7 +46,7 @@ INSTALL_DIR		= $(FIRM_INSTALL_LIBDIR)
 
 do-build:		$(TARGETS)
 
-include	$(TWLIPL_ROOT)/build/buildtools/modulerules
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====

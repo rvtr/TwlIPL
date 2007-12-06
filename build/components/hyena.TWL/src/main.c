@@ -148,7 +148,9 @@ TwlSpMain(void)
 
     if (OS_IsRunOnTwl() == TRUE)
     {
+		OSTick start = OS_GetTick();
         InitializeFatfs();    // FATFS èâä˙âª
+		OS_TPrintf( "FATFS init time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
         InitializeNwm();      // NWM èâä˙âª
 #ifndef SDK_NOCRYPTO
         AES_Init();           // AES èâä˙âª
@@ -288,15 +290,7 @@ PrintDebugInfo(void)
     {
         OS_TPrintf("ARM7: This component is running on NITRO.\n");
     }
-#ifdef  SDK_TWLLTD
-    OS_TPrintf("ARM7: This component is \"racoon.TWL\"\n");
-#else   /* SDK_TWLHYB */
-#ifdef  SDK_WIRELESS_IN_VRAM
-    OS_TPrintf("ARM7: This component is \"ichneumon.TWL\"\n");
-#else
-    OS_TPrintf("ARM7: This component is \"mongoose.TWL\"\n");
-#endif
-#endif
+    OS_TPrintf("ARM7: This component is \"hyena.TWL\"\n");
 }
 
 #include    <twl/ltdwram_begin.h>

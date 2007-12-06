@@ -37,7 +37,7 @@ LDRES_TEMPLATE	=	$(TWLSDK_ROOT)/build/components/racoon.TWL/racoon.response.temp
 CRT0_O			=	crt0.LTD.TWL.o
 
 #----------------------------------------------------------------------------
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 
 ifdef TWLSDK_NOCRYPTO
@@ -77,6 +77,6 @@ LDEPENDS_NEF	= $(TWL_LIBS) $(LLIBRARIES)
 do-build:	$(TARGETS)
 
 #----------------------------------------------------------------------------
-include	$(TWLIPL_ROOT)/build/buildtools/modulerules
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 #===== End of Makefile =====

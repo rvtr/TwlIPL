@@ -38,7 +38,7 @@ override TWL_MEMSIZE	:= 16M
 #  TWL-FIRM path settings
 #
 
-FIRM_ROOT		:= $(subst $(SPACE),\ ,$(subst \,/,$(TWLIPL_ROOT)))
+FIRM_ROOT		:= $(subst $(SPACE),\ ,$(subst \,/,$(TWL_IPL_RED_ROOT)))
 FIRM_BUILDTOOLSDIR	:= $(FIRM_ROOT)/build/buildtools
 FIRM_BUILDSETUPDIR	:= $(FIRM_ROOT)/build/buildsetup
 FIRM_INCDIR		:= $(FIRM_ROOT)/include
@@ -132,7 +132,7 @@ GLIBRARIES		:= $(FIRM_LIBS)   $(GLIBRARIES)
 ifdef	TWLFIRM_INSTALL_ROOT
 TWLFIRM_INSTALL_ROOT_ 	:= $(TWLFIRM_INSTALL_ROOT)
 else
-TWLFIRM_INSTALL_ROOT_ 	:= $(TWLIPL_ROOT)
+TWLFIRM_INSTALL_ROOT_ 	:= $(TWL_IPL_RED_ROOT)
 endif
 
 FIRM_INSTALL_ROOT	:= $(subst $(SPACE),\ ,$(subst \,/,$(TWLFIRM_INSTALL_ROOT_)))

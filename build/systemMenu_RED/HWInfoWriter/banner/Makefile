@@ -16,7 +16,7 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-include $(TWLIPL_ROOT)/build/buildtools/commondefs
+include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 ICON_DIR			= ./icon
 
@@ -35,7 +35,7 @@ LDIRT_CLEAN			= $(TARGETS) \
 					  $(BANNER_ICON_NAME).nbfp \
 					  $(TARGETS:.bnr=.srl)
 
-include $(TWLIPL_ROOT)/build/buildtools/modulerules
+include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 #----------------------------------------------------------------------------
 #  build

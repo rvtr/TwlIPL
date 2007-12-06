@@ -47,7 +47,7 @@ MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
 
 LLIBRARIES				+=	libreset_param$(TWL_LIBSUFFIX).a
 
-include $(TWLIPL_ROOT)/build/buildtools/commondefs
+include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 
 LDIRT_CLEAN				=	$(TARGET_TAD)
@@ -58,7 +58,7 @@ INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 do-build : $(TARGETS)
 
-include $(TWLIPL_ROOT)/build/buildtools/modulerules
+include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 
 #----------------------------------------------------------------------------

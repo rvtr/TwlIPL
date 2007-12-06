@@ -32,7 +32,7 @@ SRCS			=	sysmenu_lib.c sysmenu_card.c sysmenu_util.c ninLogoFunc.c \
 TARGET_LIB		=	libsysmenu$(TWL_LIBSUFFIX).a
 
 include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS		=	$(TARGETS)
 INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
@@ -45,7 +45,7 @@ LINCLUDES		=	$(TWLSDK_ROOT)/build/libraries/mb/common/include	\
 
 do-build: $(MYSUBDIRS) $(TARGETS)
 
-include	$(TWLIPL_ROOT)/build/buildtools/modulerules
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 
 $(MYSUBDIRS)::

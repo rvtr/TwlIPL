@@ -16,7 +16,7 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 
 #----------------------------------------------------------------------------
@@ -31,7 +31,7 @@ SUBDIRS =	\
 
 #----------------------------------------------------------------------------
 
-include	$(TWLIPL_ROOT)/build/buildtools/modulerules
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====

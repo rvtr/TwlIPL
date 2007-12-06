@@ -35,7 +35,7 @@ CRT0_O		=	crt0_firm.o
 #SRCDIR		=	# using default
 #LCFILE		=	# using default
 
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 LLIBRARIES	+=	libaes_sp$(TWL_LIBSUFFIX).a
 
@@ -46,6 +46,6 @@ MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000'
 do-build:		$(TARGETS)
 
 
-include	$(TWLIPL_ROOT)/build/buildtools/modulerules
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 #===== End of Makefile =====

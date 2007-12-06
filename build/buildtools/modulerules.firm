@@ -46,10 +46,10 @@ FIRM_SDEPENDS_BIN	= $(MAKEFIRM_RSA_PRVKEY) $(MAKEFIRM_ARM9) $(MAKEFIRM_ARM7)
 .PHONY: 	firmtop firmlib
 
 firmtop:
-	@$(MAKE) -C $(TWLIPL_ROOT)/build
+	@$(MAKE) -C $(TWL_IPL_RED_ROOT)/build
 
 firmlib:
-	@$(MAKE) -C $(TWLIPL_ROOT)/build/libraries
+	@$(MAKE) -C $(TWL_IPL_RED_ROOT)/build/libraries
 
 # .nor
 $(BINDIR)/%.nor: $(FIRM_SDEPENDS_BIN) $(FIRM_SPEC) $(LDEPENDS_BIN) $(EDEPENDS_BIN) $(MAKEFILE) $(MAKENORFIRM)

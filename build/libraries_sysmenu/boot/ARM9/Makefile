@@ -35,7 +35,7 @@ SRCS				=	boot.c bootAPI.c
 TARGET_LIB			=	libboot$(TWL_LIBSUFFIX).a
 
 
-include	$(TWLIPL_ROOT)/build/buildtools/commondefs
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 
 INSTALL_TARGETS		=	$(TARGETS)
@@ -45,7 +45,7 @@ INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
 
 do-build:		$(TARGETS)
 
-include	$(TWLIPL_ROOT)/build/buildtools/modulerules
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====
