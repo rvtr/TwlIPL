@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - build
+# Project:  TwlSDK
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -11,28 +11,22 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date::            $
-# $Rev:$
-# $Author:$
+# $Date:: 2007-09-18#$
+# $Rev: 947 $
+# $Author: hatamoto_minoru $
 #----------------------------------------------------------------------------
 
-include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+SUBDIRS			=
+SUBMAKES		=	Makefile.FLX
 
-
-#----------------------------------------------------------------------------
-
-SUBDIRS =	\
-            tools \
-            libraries \
-			nandfirm \
-			libraries_sysmenu\
-			components \
-			systemmenu_RED \
-			tests
+override TARGET_PLATFORM = TWL
 
 #----------------------------------------------------------------------------
+include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
-include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+#----------------------------------------------------------------------------
+do-build:		$(TARGETS)
 
+include	$(TWLSDK_ROOT)/build/buildtools/modulerules
 
 #===== End of Makefile =====

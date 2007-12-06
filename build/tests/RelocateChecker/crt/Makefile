@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - build
+# Project:  TwlSDK - libraries - init
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -11,28 +11,21 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date::            $
-# $Rev:$
-# $Author:$
+# $Date:: 2007-11-13#$
+# $Rev: 2282 $
+# $Author: adachi_hiroaki $
 #----------------------------------------------------------------------------
 
-include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+TARGET_PLATFORM     :=  TWL NITRO
 
-
-#----------------------------------------------------------------------------
-
-SUBDIRS =	\
-            tools \
-            libraries \
-			nandfirm \
-			libraries_sysmenu\
-			components \
-			systemmenu_RED \
-			tests
+include $(TWLSDK_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+SUBDIRS     =   ARM9 ARM7
 
+#----------------------------------------------------------------------------
+
+include $(TWLSDK_ROOT)/build/buildtools/modulerules
 
 #===== End of Makefile =====
