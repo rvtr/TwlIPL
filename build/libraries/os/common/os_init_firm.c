@@ -44,7 +44,8 @@ void OS_InitFIRM(void)
     //  Sync with ARM7 to enable OS_GetConsoleType()
     //  PXI_Init() must be called before OS_InitArenaEx()
     //PXI_Init();
-    PXI_InitFifoFIRM();
+    //PXI_InitFifoFIRM();
+    PXI_InitFIRM();
 
     //---- Init Arena (arenas except SUBPRIV-WRAM)
     OS_InitArena();
@@ -106,7 +107,8 @@ void OS_InitFIRM(void)
 
     //---- Init interProcessor I/F
     //PXI_Init();
-    PXI_InitFifoFIRM();
+    //PXI_InitFifoFIRM();
+    PXI_InitFIRM();
 
     //---- Init Arena (SUBPRIV-WRAM arena)
     OS_InitArena();

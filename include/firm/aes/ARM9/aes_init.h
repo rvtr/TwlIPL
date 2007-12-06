@@ -39,7 +39,8 @@ extern "C" {
  *---------------------------------------------------------------------------*/
 static inline void AESi_SendSeed( AESKey *pSeed )
 {
-    PXI_SendDataByFifo( PXI_FIFO_TAG_DATA, pSeed, AES_BLOCK_SIZE );
+//    PXI_SendDataByFifo( PXI_FIFO_TAG_DATA, pSeed, AES_BLOCK_SIZE );
+    PXI_SendStream( pSeed, AES_BLOCK_SIZE );
 }
 
 #ifdef __cplusplus

@@ -71,7 +71,7 @@ BOOL OSi_FromBromToMenu( void );
 
   Returns:      address
  *---------------------------------------------------------------------------*/
-static inline OSFromBromBuf* OSi_GetFromBromAddr( void )
+static inline OSFromBromBuf* const OSi_GetFromBromAddr( void )
 {
     return  (OSFromBromBuf*)HW_FIRM_FROM_BROM_BUF;
 }
@@ -85,7 +85,7 @@ static inline OSFromBromBuf* OSi_GetFromBromAddr( void )
 
   Returns:      address
  *---------------------------------------------------------------------------*/
-static inline OSFromFirmBuf* OSi_GetFromFirmAddr( void )
+static inline OSFromFirmBuf* const OSi_GetFromFirmAddr( void )
 {
     return  (OSFromFirmBuf*)HW_FIRM_FROM_FIRM_BUF;
 }

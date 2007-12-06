@@ -28,7 +28,8 @@ TWL_CODEGEN_ALL 	?= TRUE
 SRCDIR		= ../common .
 
 SRCS			= \
-				pxi_misc.c \
+				pxi_firm.c
+#				pxi_misc.c \
 
 TARGET_LIB		= libpxi$(FIRM_LIBSUFFIX).a
 

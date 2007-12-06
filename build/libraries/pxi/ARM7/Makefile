@@ -29,7 +29,8 @@ TWL_PROC		= ARM7
 SRCDIR			= ../common .
 
 SRCS			= \
-				pxi_misc.c \
+				pxi_firm.c
+#				pxi_misc.c \
 
 TARGET_LIB		= libpxi_sp$(FIRM_LIBSUFFIX).a
 

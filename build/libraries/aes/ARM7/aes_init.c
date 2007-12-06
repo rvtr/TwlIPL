@@ -84,7 +84,8 @@ void AESi_InitKeysForApp( u8 game_code[4] )
 void AESi_RecvSeed( void )
 {
     AESKey seed;
-    PXI_RecvDataByFifo( PXI_FIFO_TAG_DATA, &seed, AES_BLOCK_SIZE );
+//    PXI_RecvDataByFifo( PXI_FIFO_TAG_DATA, &seed, AES_BLOCK_SIZE );
+    PXI_RecvStream( &seed, AES_BLOCK_SIZE );
     AESi_WaitKey();
     AESi_SetKeySeedA((AESKeySeed*)&seed);    // APP
     //AESi_WaitKey();

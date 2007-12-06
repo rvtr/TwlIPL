@@ -17,6 +17,9 @@
 #ifndef FIRM_HW_COMMON_MMAP_FIRM_H_
 #define FIRM_HW_COMMON_MMAP_FIRM_H_
 
+#include <nitro/fs/api.h>
+#include <twl/fatfs/common/api.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -28,6 +31,14 @@ extern "C" {
 #define HW_FIRM_LOAD_BUFFER_SIZE        (HW_FIRM_LOAD_BUFFER_UNIT_SIZE * HW_FIRM_LOAD_BUFFER_UNIT_NUMS)
 #define HW_FIRM_LOAD_BUFFER_END         (HW_FIRM_LOAD_BUFFER_BASE + HW_FIRM_LOAD_BUFFER_SIZE)
 
+//------------------------------------- FS/FATFS
+#define HW_FIRM_FATFS_COMMAND_BUFFER        (HW_FIRM_FATFS_COMMAND_BUFFER_END - HW_FIRM_FATFS_COMMAND_BUFFER_SIZE)
+#define HW_FIRM_FATFS_COMMAND_BUFFER_SIZE   FATFS_COMMAND_BUFFER_MAX    // 0x800
+#define HW_FIRM_FATFS_COMMAND_BUFFER_END    HW_FIRM_FS_TWMP_BUFFER      // 0x02ff8000
+
+#define HW_FIRM_FS_TWMP_BUFFER              (HW_FIRM_FS_TWMP_BUFFER_END - HW_FIRM_FS_TWMP_BUFFER_SIZE)
+#define HW_FIRM_FS_TWMP_BUFFER_SIZE         FS_TEMPORARY_BUFFER_MAX // 0x4000
+#define HW_FIRM_FS_TWMP_BUFFER_END          HW_TWL_MAIN_MEM_SHARED  // 0x02ffc000
 
 #ifdef __cplusplus
 } /* extern "C" */

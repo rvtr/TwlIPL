@@ -21,8 +21,7 @@
 #include <nitro/pxi.h>
 
 #include <firm/pxi/common/regname_ex.h>
-#include <firm/pxi/common/misc.h>
-
+#include <firm/pxi/common/pxi_firm.h>
 
 /* FIRM_PXI_H_ */
 #endif
