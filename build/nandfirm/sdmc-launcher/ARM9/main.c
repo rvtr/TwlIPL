@@ -103,6 +103,26 @@ static void PostInit(void)
 ***************************************************************/
 static BOOL CheckHeader(void)
 {
+    static ROM_Header_Short* const rhs = (ROM_Header_Short*)HW_TWL_ROM_HEADER_BUF;
+    // TODO
+    // イニシャルコード
+    OS_TPrintf("Initial Code        : %08X\n", rhs->game_code);
+    // エントリポイント
+    OS_TPrintf("ARM9 Entry point    : %08X\n", rhs->main_entry_address);
+    OS_TPrintf("ARM7 Entry point    : %08X\n", rhs->sub_entry_address);
+    // ロード範囲
+    OS_TPrintf("ARM9 ROM address    : %08X\n", rhs->main_rom_offset);
+    OS_TPrintf("ARM9 RAM address    : %08X\n", rhs->main_ram_address);
+    OS_TPrintf("ARM9 size           : %08X\n", rhs->main_size);
+    OS_TPrintf("ARM7 ROM address    : %08X\n", rhs->sub_rom_offset);
+    OS_TPrintf("ARM7 RAM address    : %08X\n", rhs->sub_ram_address);
+    OS_TPrintf("ARM7 size           : %08X\n", rhs->sub_size);
+    OS_TPrintf("ARM9 LTD ROM address: %08X\n", rhs->main_ltd_rom_offset);
+    OS_TPrintf("ARM9 LTD RAM address: %08X\n", rhs->main_ltd_ram_address);
+    OS_TPrintf("ARM9 LTD size       : %08X\n", rhs->main_ltd_size);
+    OS_TPrintf("ARM7 LTD ROM address: %08X\n", rhs->sub_ltd_rom_offset);
+    OS_TPrintf("ARM7 LTD RAM address: %08X\n", rhs->sub_ltd_ram_address);
+    OS_TPrintf("ARM7 LTD size       : %08X\n", rhs->sub_ltd_size);
     return TRUE;
 }
 

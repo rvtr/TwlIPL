@@ -49,7 +49,8 @@ u32 pf_cnt = 0;
 /*
     Production check
 */
-#define PRODUCTION_CHECK()  do { if (reg_SCFG_OP == 0) goto end; } while (0)
+//#define PRODUCTION_CHECK()  do { if (reg_SCFG_OP == 0) goto end; } while (0)
+#define PRODUCTION_CHECK()  ((void)0)
 
 /***************************************************************
     PreInit
