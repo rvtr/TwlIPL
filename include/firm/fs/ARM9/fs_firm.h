@@ -19,11 +19,21 @@
 #define FIRM_FS_FS_FIRM_H_
 
 #include <twl/types.h>
-#include <twl/aes/ARM7/lo.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*---------------------------------------------------------------------------*
+  Name:         FS_InitFIRM
+
+  Description:  initialize FS/FATFS for firm
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void FS_InitFIRM( void );
 
 /*---------------------------------------------------------------------------*
   Name:         FS_ResolveSrl

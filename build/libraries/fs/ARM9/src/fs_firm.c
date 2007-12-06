@@ -56,6 +56,23 @@ static const u8 defaultKey[ SVC_SHA1_BLOCK_SIZE ] =
 };
 
 /*---------------------------------------------------------------------------*
+  Name:         FS_InitFIRM
+
+  Description:  initialize FS/FATFS for firm
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void FS_InitFIRM( void )
+{
+    MI_CpuClearFast( (void*)HW_FIRM_FS_TWMP_BUFFER, HW_FIRM_FS_TWMP_BUFFER_SIZE );
+    FSiTemporaryBuffer = (void*)HW_FIRM_FS_TWMP_BUFFER;
+    FATFS_InitFIRM();
+    FS_Init( FS_DMA_NOT_USE );
+}
+
+/*---------------------------------------------------------------------------*
   Name:         FS_ResolveSrl
 
   Description:  resolve srl filename and store to HW_TWL_FS_BOOT_SRL_PATH_BUF
@@ -174,7 +191,7 @@ BOOL FS_LoadBuffer( u8* dest, u32 size, SVCSHA1Context *ctx )
         {
             return FALSE;
         }
-        MIi_SetWramBankMaster_B(count, MI_WRAM_ARM9);
+        MIi_SetWramBankMaster_B( count, MI_WRAM_ARM9 );
         if (ctx)
         {
             int done;
@@ -185,19 +202,19 @@ BOOL FS_LoadBuffer( u8* dest, u32 size, SVCSHA1Context *ctx )
                 u32 u = unit - done < HASH_UNIT ? unit - done : HASH_UNIT;
                 SVC_SHA1Update( ctx, s, u );
                 MI_CpuCopyFast( s, d, u );
-                MI_CpuClearFast( s, u );
+                MI_CpuClearFast( s, u );    // OS_Bootでのクリアと比較する
             }
         }
         else
         {
             MI_CpuCopyFast( src, dest, unit );
-            MI_CpuClearFast( src, unit );
+            MI_CpuClearFast( src, unit );   // OS_Bootでのクリアと比較する
         }
         DC_FlushRange( src, unit );
-        MIi_SetWramBankMaster_B(count, MI_WRAM_ARM7);
-        count = (count + 1) % HW_FIRM_LOAD_BUFFER_UNIT_NUMS;
         size -= unit;
         dest += unit;
+        MIi_SetWramBankMaster_B( count, MI_WRAM_ARM7 );
+        count = ( count + 1 ) % HW_FIRM_LOAD_BUFFER_UNIT_NUMS;
     }
     return TRUE;
 }
@@ -293,7 +310,6 @@ BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
 {
     SVCSHA1Context ctx;
     u8 md[SVC_SHA1_DIGEST_SIZE];
-    u8 digest[SVC_SHA1_DIGEST_SIZE];
     SignatureData sd;
 
     SVC_SHA1Init( &ctx );
@@ -319,12 +335,20 @@ BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
 
     // ヘッダ署名チェック
     SVC_DecryptSign( pool, &sd, rh->signature, rsa_key );
-    MI_CpuCopy8( sd.digest, digest, SVC_SHA1_DIGEST_SIZE ); // ダイジェストの取り出し
+
+    if ( !CheckDigest( md, sd.digest, TRUE, FALSE ) )
+    {
+        MI_CpuClear8( &sd, sizeof(sd) );    // 残り削除 (他に必要なものはない？)
+        return FALSE;
+    }
 
     // ダイジェスト以外のデータのチェックが必要！！
 
     MI_CpuClear8( &sd, sizeof(sd) );    // 残り削除 (他に必要なものはない？)
-    return CheckDigest( md, digest, TRUE, TRUE );
+
+    // ROMヘッダのコピー
+    MI_CpuCopyFast( rh, (void*)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END-HW_ROM_HEADER_BUF );
+    return TRUE;
 }
 
 /*---------------------------------------------------------------------------*
@@ -419,14 +443,14 @@ static u32 GetSrlTransferSize( u32 offset, u32 size )
             {
                 size = aes_end - offset;
             }
-            AESi_WaitKey();
+            //AESi_WaitKey();   // ドライバAPI経由？
             if ( rh->s.developer_encrypt )
             {
-                AESi_LoadKey( AES_KEY_SLOT_C );
+                //AESi_LoadKey( AES_KEY_SLOT_C );   // ドライバAPI経由？
             }
             else
             {
-                AESi_LoadKey( AES_KEY_SLOT_A );
+                //AESi_LoadKey( AES_KEY_SLOT_A );   // ドライバAPI経由？
             }
             GetAesCounter( &counter, offset );
             EnableAes( &counter );

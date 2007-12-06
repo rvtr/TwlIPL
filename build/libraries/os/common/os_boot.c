@@ -70,9 +70,9 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     mem_list[i++] = (u32)HW_ROM_HEADER_BUF - (u32)HW_ARENA_INFO_BUF;
     mem_list[i++] = (u32)HW_PXI_SIGNAL_PARAM_ARM9;  // 0x02ffff80 - 0x02fffffd
     mem_list[i++] = (u32)HW_CMD_AREA - (u32)HW_PXI_SIGNAL_PARAM_ARM9;
-    /* FATFSバッファ */
-    mem_list[i++] = (u32)FIRM_FATFS_COMMAND_BUFFER;  // 0x02ffc000 - 0x02ffc7ff
-    mem_list[i++] = (u32)FIRM_FATFS_COMMAND_BUFFER_SIZE;
+    /* FS/FATFSバッファ */
+    mem_list[i++] = (u32)HW_FIRM_FATFS_COMMAND_BUFFER;  // 0x02ff7800 - 0x02ffbfff
+    mem_list[i++] = (u32)HW_FIRM_FS_TWMP_BUFFER_END - (u32)HW_FIRM_FATFS_COMMAND_BUFFER;
 #else   // SDK_ARM7
     {   /* REBOOT_ExecuteのCODEとSTACKの隙間をクリア */
         u32 stack_bottom = (u32)stack_top - OS_BOOT_STACK_SIZE_MIN - sizeof(mem_list);
@@ -105,7 +105,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
  *---------------------------------------------------------------------------*/
 BOOL OSi_FromBromToMenu( void )
 {
-    OSFromBromBuf* fromBromBuf = OSi_GetFromBromAddr();
+    OSFromBromBuf* const fromBromBuf = OSi_GetFromBromAddr();
     BOOL result = TRUE;
     int i;
     // check offset (why not to omit by compiler?)

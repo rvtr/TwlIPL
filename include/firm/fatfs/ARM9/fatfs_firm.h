@@ -19,15 +19,10 @@
 #define FIRM_FATFS_FATFS_FIRM_H_
 
 #include <twl/types.h>
-#include <twl/fatfs/common/api.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define FIRM_FATFS_COMMAND_BUFFER       (HW_MAIN_MEM + 0x00ffc000)
-#define FIRM_FATFS_COMMAND_BUFFER_SIZE  FATFS_COMMAND_BUFFER_MAX
-#define FIRM_FATFS_COMMAND_BUFFER_END   (FIRM_FATFS_COMMAND_BUFFER + FIRM_FATFS_COMMAND_BUFFER_SIZE)
 
 /*---------------------------------------------------------------------------*
   Name:         FATFS_InitFIRM

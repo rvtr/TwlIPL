@@ -20,7 +20,8 @@
 
 void FATFS_InitFIRM( void )
 {
-    FATFSiCommandBuffer = (void*)FIRM_FATFS_COMMAND_BUFFER;
+    MI_CpuClearFast( (void*)HW_FIRM_FATFS_COMMAND_BUFFER, HW_FIRM_FATFS_COMMAND_BUFFER_SIZE );
+    FATFSiCommandBuffer = (void*)HW_FIRM_FATFS_COMMAND_BUFFER;
     FATFS_Init();
 }
 

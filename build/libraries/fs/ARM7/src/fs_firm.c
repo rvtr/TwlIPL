@@ -40,7 +40,8 @@ static void ConvertPath( u16* dest, const char* src, u32 max)
         {
             if (len >= max) // Ç‡Ç¡Ç∆éËëOÇ≈é~ÇﬂÇƒÇ‡ó«Ç¢ÅH
             {
-                OS_TPanic("%s: Cannot detect ':' in %d charactors.\n", __func__, len);
+                OS_TPrintf("%s: Cannot detect ':' in %d charactors.\n", __func__, len);
+                return;
             }
         }
 
@@ -74,7 +75,8 @@ static void ConvertPath( u16* dest, const char* src, u32 max)
 #ifndef SDK_FINALROM
             else if (src[len] & 0x80)
             {
-                OS_TPanic("%s: Multi-byte charactor was detected (0x%02X).\n", __func__, src[len]);
+                OS_TPrintf("%s: Multi-byte charactor was detected (0x%02X).\n", __func__, src[len]);
+                dest[len] = (u16)src[len];  // ignore but maybe broken
             }
 #endif
             else
@@ -181,20 +183,21 @@ BOOL FS_LoadBuffer( int fd, u32 offset, u32 size )
 {
     static int count = 0;
 
-    if (fd < 0)
+    if ( fd < 0 )
     {
         return FALSE;
     }
     // seek
-    if ( FATFSi_rtfs_po_lseek(fd, (long)offset, PSEEK_SET) != (long)offset )
+    if ( FATFSi_rtfs_po_lseek( fd, (long)offset, PSEEK_SET ) != (long)offset )
     {
+            OS_TPrintf("Failed to seek file. (offset=0x%X)\n", offset);
         return FALSE;
     }
     while ( size > 0 )
     {
         u8* dest = (u8*)HW_FIRM_LOAD_BUFFER_BASE + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
         u32 unit = size < HW_FIRM_LOAD_BUFFER_UNIT_SIZE ? size : HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
-        while ( MI_GetWramBankMaster_B(count) != MI_WRAM_ARM7 ) // wait to be ready
+        while ( MI_GetWramBankMaster_B( count ) != MI_WRAM_ARM7 ) // wait to be ready
         {
         }
 #ifdef WORKAROUND_NAND_2KB_BUG
@@ -204,20 +207,22 @@ BOOL FS_LoadBuffer( int fd, u32 offset, u32 size )
             {
                 u8* d = dest + done;
                 u32 u = unit - done < 2048 ? unit - done : 2048;
-                if ( FATFSi_rtfs_po_read(fd, (u8*)d, (int)u) != (int)u )
+                if ( FATFSi_rtfs_po_read( fd, (u8*)d, (int)u ) != (int)u )
                 {
+                    OS_TPrintf("Failed to read file. (dest=%p, size=0x%X)\n", d, u);
                     return FALSE;
                 }
             }
         }
 #else
-        if ( FATFSi_rtfs_po_read(fd, (u8*)dest, (int)unit) != (int)unit )
+        if ( FATFSi_rtfs_po_read( fd, (u8*)dest, (int)unit ) != (int)unit )
         {
+            OS_TPrintf("Failed to read file. (dest=%p, size=0x%X)\n", dest, unit);
             return FALSE;
         }
 #endif
         PXI_NotifyID( FIRM_PXI_ID_LOAD_PIRIOD );
-        count = (count + 1) % HW_FIRM_LOAD_BUFFER_UNIT_NUMS;
+        count = ( count + 1 ) % HW_FIRM_LOAD_BUFFER_UNIT_NUMS;
         size -= unit;
     }
     return TRUE;
