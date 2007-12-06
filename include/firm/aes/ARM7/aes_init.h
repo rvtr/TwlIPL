@@ -18,6 +18,8 @@
 #ifndef TWL_AES_AES_INIT_H_
 #define TWL_AES_AES_INIT_H_
 
+#include <twl/os/common/format_rom.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -36,6 +38,21 @@ extern "C" {
   Returns:      None
  *---------------------------------------------------------------------------*/
 void AESi_InitKeysForApp( u8 game_code[4] );
+
+/*---------------------------------------------------------------------------*
+  Name:         AESi_InitKeysFIRM
+
+  Description:  set IDs depending on the application.
+                you SHOULD NOT touch any ID registers after this call.
+
+  Arguments:    game_code   game code
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+static inline void AESi_InitKeysFIRM( void )
+{
+    AESi_InitKeysForApp( (u8*)((ROM_Header_Short*)HW_TWL_ROM_HEADER_BUF)->game_code );
+}
 
 /*---------------------------------------------------------------------------*
   Name:         AESi_RecvSeed

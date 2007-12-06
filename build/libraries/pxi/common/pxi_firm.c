@@ -177,10 +177,12 @@ void PXI_NotifyID( FIRMPxiID id )
     while ( 0 > PXI_SendWordByFifo( PXI_FIFO_TAG_USER_1, id, 0 ) )
     {
     }
+#if 0
 #ifdef SDK_ARM9
         OS_TPrintf("[ARM9] Notify: %d\n", (u8)id);
 #else
         OS_TPrintf("[ARM7] Notify: %d\n", (u8)id);
+#endif
 #endif
 }
 
@@ -204,10 +206,12 @@ FIRMPxiID PXI_RecvID( void )
             work.rp = ( work.rp + 1 ) % PXI_FIRM_ID_MAX;
             id = (FIRMPxiID)work.id[work.rp];
             OS_RestoreInterrupts( enabled );
+#if 0
 #ifdef SDK_ARM9
         OS_TPrintf("[ARM9] Received: %d\n", id);
 #else
         OS_TPrintf("[ARM7] Received: %d\n", id);
+#endif
 #endif
             return id;
         }

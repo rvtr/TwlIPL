@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlFirm - nandfirm - menu-launcher
+  Project:  TwlFirm - nandfirm - menu-launcher2
   File:     main.c
 
   Copyright 2007 Nintendo.  All rights reserved.
@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 #include <firm.h>
 #include <twl/mcu.h>
+#include <twl/aes.h>
 
 #define FATFS_HEAP_SIZE     (1024)   // FATFS用ヒープ (サイズ調整必要)
 
@@ -39,7 +40,6 @@ static u8 fatfsHeap[FATFS_HEAP_SIZE] __attribute__ ((aligned (32)));
 
 //#ifdef SDK_FINALROM // FINALROMで無効化
 //#undef PROFILE_ENABLE
-//#undef USE_DEBUG_LED
 //#endif
 
 #ifdef PROFILE_ENABLE
@@ -116,7 +116,6 @@ static BOOL FsInit(void)
         OSHeapHandle hh;
         u8     *lo = (u8*)fatfsHeap;
         u8     *hi = (u8*)fatfsHeap + FATFS_HEAP_SIZE;
-//MI_CpuFillFast(fatfsHeap, 0xcccccccc, FATFS_HEAP_SIZE);
         lo = OS_InitAlloc(OS_ARENA_MAIN_SUBPRIV, lo, hi, 1);
         OS_SetArenaLo(OS_ARENA_MAIN_SUBPRIV, lo);
         hh = OS_CreateHeap(OS_ARENA_MAIN_SUBPRIV, OS_GetSubPrivArenaLo(), hi);
@@ -140,26 +139,8 @@ static BOOL FsInit(void)
     return TRUE;
 }
 
-static void IdleThread(void* arg)
-{
-    OS_EnableInterrupts();
-    while ( 1 )
-    {
-        OS_Halt();
-    }
-}
-static OSThread idle;
-static u32 idleStack[16] ATTRIBUTE_ALIGN(32);
-static void CreateIdleThread( void )
-{
-    OS_CreateThread( &idle, IdleThread, NULL, &idleStack[16], sizeof(idleStack), OS_THREAD_PRIORITY_MAX );
-    OS_WakeupThreadDirect( &idle );
-}
-
 void TwlSpMain( void )
 {
-    int fd; // menu file descriptor
-
     InitDebugLED();
     SetDebugLED(++step);  // 0x81
 
@@ -178,6 +159,7 @@ void TwlSpMain( void )
     SetDebugLED(++step); // 0x83
 
     PM_InitFIRM();
+    AES_Init();
 
     // 2: after PM_InitFIRM
     PUSH_PROFILE();
@@ -202,43 +184,23 @@ SetDebugLED(0x01);
 PXI_RecvID();
 SetDebugLED(0x02);
 
-    if ( PXI_RecvID() != FIRM_PXI_ID_SET_PATH )
-    {
-        OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_SET_PATH).\n");
-        goto end;
-    }
-
-    CreateIdleThread();
-
-    // 5: after PXI
+    // 5:
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x87
 
-    PM_BackLightOn( FALSE );
+    //PM_BackLightOn( FALSE );
 
-    if ( (fd = FS_OpenSrl()) < 0 )
-    {
-        OS_TPrintf("Failed to call FS_OpenSrl().\n");
-        goto end;
-    }
-
-    // 6: after FS_OpenSrl
+    // 6:
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x88
 
-    PM_BackLightOn( FALSE );
+    //PM_BackLightOn( FALSE );
 
-    if ( !FS_LoadHeader( fd ) )
-    {
-        OS_TPrintf("Failed to call FS_LoadHeader().\n");
-        goto end;
-    }
-
-    // 7: after FS_LoadHeader
+    // 7:
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x89
 
-    PM_BackLightOn( FALSE );
+    //PM_BackLightOn( FALSE );
 
     if ( PXI_RecvID() != FIRM_PXI_ID_DONE_HEADER )
     {
@@ -261,17 +223,11 @@ SetDebugLED(0x02);
 
     PM_BackLightOn( FALSE );
 
-    if ( !FS_LoadStatic( fd ) )
-    {
-        OS_TPrintf("Failed to call FS_LoadStatic().\n");
-        goto end;
-    }
-
-    // 10: after FS_LoadStatic
+    // 10:
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8c
 
-    PM_BackLightOn( FALSE );
+    //PM_BackLightOn( FALSE );
 
     if ( PXI_RecvID() != FIRM_PXI_ID_DONE_STATIC )
     {

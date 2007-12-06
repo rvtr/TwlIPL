@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlFirm - nandfirm - menu-launcher
+  Project:  TwlFirm - nandfirm - menu-launcher2
   File:     main.c
 
   Copyright 2007 Nintendo.  All rights reserved.
@@ -15,6 +15,7 @@
   $Author$
  *---------------------------------------------------------------------------*/
 #include <firm.h>
+#include <twl/aes.h>
 
 /* 鍵はどこへ？ */
 #if 0
@@ -102,6 +103,7 @@ static void PreInit(void)
 ***************************************************************/
 static void PostInit(void)
 {
+    AES_Init();
     // RSA用ヒープ設定
     SVC_InitSignHeap( &acPool, acHeap, sizeof(acHeap) );
     // HMAC用鍵準備
@@ -158,6 +160,8 @@ static void EraseAll(void)
 
 void TwlMain( void )
 {
+    FSFile file;
+
     PreInit();
 
     // 0: before PXI
@@ -189,18 +193,22 @@ PXI_NotifyID( FIRM_PXI_ID_NULL );
     // 3: after FS_ResolveSrl
     PUSH_PROFILE();
 
-    PXI_NotifyID( FIRM_PXI_ID_SET_PATH );
-
-    // 4: after PXI
-    PUSH_PROFILE();
-
-    if ( !FS_LoadHeader(&acPool, RSA_KEY_ADDR ) || !CheckHeader() )
+    if ( !FS_OpenSrl( &file ) )
     {
-        OS_TPrintf("Failed to call FS_LoadHeader() and/or CheckHeader().\n");
+        OS_TPrintf("Failed to call FS_OpenSrl().\n");
         goto end;
     }
 
-    // 5: after FS_LoadHeader
+    // 4: after FS_OpenSrl
+    PUSH_PROFILE();
+
+    if ( !FS_LoadSrlHeader( &file, &acPool, RSA_KEY_ADDR ) || !CheckHeader() )
+    {
+        OS_TPrintf("Failed to call FS_LoadSrlHeader() and/or CheckHeader().\n");
+        goto end;
+    }
+
+    // 5: after FS_LoadSrlHeader
     PUSH_PROFILE();
 
     PXI_NotifyID( FIRM_PXI_ID_DONE_HEADER );
@@ -209,18 +217,17 @@ PXI_NotifyID( FIRM_PXI_ID_NULL );
     PUSH_PROFILE();
 
     AESi_SendSeed( FS_GetAesKeySeed() );
-    FS_DeleteAesKeySeed();
 
     // 7: after AESi_SendSeed
     PUSH_PROFILE();
 
-    if ( !FS_LoadStatic() )
+    if ( !FS_LoadSrlStatic( &file ) )
     {
-        OS_TPrintf("Failed to call FS_LoadStatic().\n");
+        OS_TPrintf("Failed to call FS_LoadSrlStatic().\n");
         goto end;
     }
 
-    // 8: after FS_LoadStatic
+    // 8: after FS_LoadSrlStatic
     PUSH_PROFILE();
 
     PXI_NotifyID( FIRM_PXI_ID_DONE_STATIC );

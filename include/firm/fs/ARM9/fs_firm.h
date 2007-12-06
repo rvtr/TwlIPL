@@ -36,6 +36,28 @@ extern "C" {
 void FS_InitFIRM( void );
 
 /*---------------------------------------------------------------------------*
+  Name:         FS_GetAesKeySeed
+
+  Description:  retreive aes key seed in the signature
+
+  Arguments:    None
+
+  Returns:      pointer to seed
+ *---------------------------------------------------------------------------*/
+AESKey* const FS_GetAesKeySeed( void );
+
+/*---------------------------------------------------------------------------*
+  Name:         FS_DeleteAesKeySeed
+
+  Description:  delete aes key seed in the signature
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void FS_DeleteAesKeySeed( void );
+
+/*---------------------------------------------------------------------------*
   Name:         FS_ResolveSrl
 
   Description:  resolve srl filename and store to HW_TWL_FS_BOOT_SRL_PATH_BUF

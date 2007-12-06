@@ -18,6 +18,7 @@
 #include <symbols.h>
 #include <firm.h>
 #include <rtfs.h>
+#include <twl/aes/common/aes.h>
 
 //#define WORKAROUND_NAND_2KB_BUG
 
@@ -28,6 +29,10 @@
 #define RoundUpModuleSize(value)    (((value) + MODULE_ALIGNMENT - 1) & -MODULE_ALIGNMENT)
 
 static ROM_Header* const rh= (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
+
+static BOOL         aesFlag;
+static AESCounter   aesCounter;
+static u8           aesBuffer[HW_FIRM_LOAD_BUFFER_UNIT_SIZE] ATTRIBUTE_ALIGN(32);
 
 static void ConvertPath( u16* dest, const char* src, u32 max)
 {
@@ -112,18 +117,29 @@ int FS_OpenSrl( void )
     return FATFSi_rtfs_po_open((u8*)fatpath, 0, 0);
 }
 
-static void EnableAes( AESCounter* pCounter )   // ドライバAPIと置き換える
+#define DMA_SEND         2
+#define DMA_RECV         3
+static void CopyWithAes( const void* src, void* dest, u32 size )
 {
-    (void)pCounter;
-}
-static void DisableAes( void )  // ドライバAPIと置き換える
-{
+    AESi_Reset();
+    AESi_Reset();
+    AESi_DmaSend( DMA_SEND, src,  size, NULL, NULL );
+    AESi_DmaRecv( DMA_RECV, dest, size, NULL, NULL );
+    AESi_SetCounter( &aesCounter );
+    AESi_Run( AES_MODE_CTR, 0, size / AES_BLOCK_SIZE, NULL, NULL );
+    AES_AddToCounter( &aesCounter, size / AES_BLOCK_SIZE );
+    MI_WaitNDma( DMA_RECV );
 }
 
-static void GetAesCounter( AESCounter* pCounter, u32 offset )
+static void EnableAes( u32 offset )
 {
-    MI_CpuCopy32( rh->s.main_static_digest, pCounter, AES_BLOCK_SIZE );
-    AESi_AddCounter( pCounter, offset - rh->s.aes_target_rom_offset );
+    aesFlag = TRUE;
+    MI_CpuCopy8( rh->s.main_static_digest, &aesCounter, AES_BLOCK_SIZE );
+    AES_AddToCounter( &aesCounter, (offset - rh->s.aes_target_rom_offset) / AES_BLOCK_SIZE );
+}
+static void DisableAes( void )
+{
+    aesFlag = FALSE;
 }
 
 static u32 GetTransferSize( u32 offset, u32 size )
@@ -135,12 +151,10 @@ static u32 GetTransferSize( u32 offset, u32 size )
     {
         if ( offset >= aes_offset && offset < aes_end )
         {
-            AESCounter counter;
             if ( end > aes_end )
             {
                 size = aes_end - offset;
             }
-            AESi_WaitKey();
             if (rh->s.developer_encrypt)
             {
                 AESi_LoadKey( AES_KEY_SLOT_C );
@@ -149,8 +163,7 @@ static u32 GetTransferSize( u32 offset, u32 size )
             {
                 AESi_LoadKey( AES_KEY_SLOT_A );
             }
-            GetAesCounter( &counter, offset );
-            EnableAes( &counter );
+            EnableAes( offset );
         }
         else
         {
@@ -195,7 +208,8 @@ BOOL FS_LoadBuffer( int fd, u32 offset, u32 size )
     }
     while ( size > 0 )
     {
-        u8* dest = (u8*)HW_FIRM_LOAD_BUFFER_BASE + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
+        u8* dest = aesFlag ? aesBuffer :
+                    (u8*)HW_FIRM_LOAD_BUFFER_BASE + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
         u32 unit = size < HW_FIRM_LOAD_BUFFER_UNIT_SIZE ? size : HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
         while ( MI_GetWramBankMaster_B( count ) != MI_WRAM_ARM7 ) // wait to be ready
         {
@@ -221,6 +235,10 @@ BOOL FS_LoadBuffer( int fd, u32 offset, u32 size )
             return FALSE;
         }
 #endif
+        if ( aesFlag )
+        {
+            CopyWithAes( dest, (u8*)HW_FIRM_LOAD_BUFFER_BASE + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE, unit );
+        }
         PXI_NotifyID( FIRM_PXI_ID_LOAD_PIRIOD );
         count = ( count + 1 ) % HW_FIRM_LOAD_BUFFER_UNIT_NUMS;
         size -= unit;
@@ -277,6 +295,7 @@ BOOL FS_LoadHeader( int fd )
     {
         return FALSE;
     }
+
     return TRUE;
 }
 

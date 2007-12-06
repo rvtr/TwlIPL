@@ -55,6 +55,8 @@ static const u8 defaultKey[ SVC_SHA1_BLOCK_SIZE ] =
     0x87, 0x46, 0x58, 0x24,
 };
 
+static AESKey FSiAesKeySeed;
+
 /*---------------------------------------------------------------------------*
   Name:         FS_InitFIRM
 
@@ -70,6 +72,34 @@ void FS_InitFIRM( void )
     FSiTemporaryBuffer = (void*)HW_FIRM_FS_TWMP_BUFFER;
     FATFS_InitFIRM();
     FS_Init( FS_DMA_NOT_USE );
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         FS_GetAesKeySeed
+
+  Description:  retreive aes key seed in the signature
+
+  Arguments:    None
+
+  Returns:      pointer to seed
+ *---------------------------------------------------------------------------*/
+AESKey* const FS_GetAesKeySeed( void )
+{
+    return &FSiAesKeySeed;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         FS_DeleteAesKeySeed
+
+  Description:  delete aes key seed in the signature
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void FS_DeleteAesKeySeed( void )
+{
+    MI_CpuClear8( &FSiAesKeySeed, sizeof(FSiAesKeySeed) );
 }
 
 /*---------------------------------------------------------------------------*
@@ -344,6 +374,9 @@ BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
 
     // ダイジェスト以外のデータのチェックが必要！！
 
+    // 鍵の保存
+    MI_CpuCopy8( (AESKey*)sd.aes_key_seed, &FSiAesKeySeed, sizeof(FSiAesKeySeed) );
+
     MI_CpuClear8( &sd, sizeof(sd) );    // 残り削除 (他に必要なものはない？)
 
     // ROMヘッダのコピー
@@ -397,19 +430,44 @@ BOOL FS_LoadStatic( void )
 /*
     以下、LoadBufferを使わない版 (通常FS APIを使用する)
 */
+#include <twl/aes.h>
 
-static void EnableAes( AESCounter* pCounter )   // ドライバAPIと置き換える
+static BOOL         aesFlag;
+static AESCounter   aesCounter;
+static u8* const    aesBuffer = (u8*)HW_FIRM_FS_AES_BUFFER; // 0x2ff0000
+
+static void AesCallback( AESResult result, void* arg )
 {
-    (void)pCounter;
-}
-static void DisableAes( void )  // ドライバAPIと置き換える
-{
+    BOOL* pFlag = (BOOL*)arg;
+    *pFlag = TRUE;
+    if (result != AES_RESULT_SUCCESS)
+    {
+        OS_TPrintf("Failed to decrypt by AES (%d)\n", result);
+    }
 }
 
-static void GetAesCounter( AESCounter* pCounter, u32 offset )
+static void CopyWithAes( const void* src, void* dest, u32 size )
 {
-    MI_CpuCopy32( rh->s.main_static_digest, pCounter, AES_BLOCK_SIZE );
-    AESi_AddCounter( pCounter, offset - rh->s.aes_target_rom_offset );
+    volatile BOOL aesBusy = TRUE;
+    if ( AES_RESULT_SUCCESS == AES_CtrDecrypt( rh->s.developer_encrypt ? AES_KEY_TYPE_RAW : AES_KEY_TYPE_APP,
+                                        &aesCounter, src, size, dest, AesCallback, (void*)&aesBusy) )
+    {
+        while (aesBusy)
+        {
+        }
+    }
+    AES_AddToCounter( &aesCounter, size / AES_BLOCK_SIZE );
+}
+
+static void EnableAes( u32 offset )
+{
+    aesFlag = TRUE;
+    MI_CpuCopy8( rh->s.main_static_digest, &aesCounter, AES_BLOCK_SIZE );
+    AES_AddToCounter( &aesCounter, (offset - rh->s.aes_target_rom_offset) / AES_BLOCK_SIZE );
+}
+static void DisableAes( void )
+{
+    aesFlag = FALSE;
 }
 
 /*---------------------------------------------------------------------------*
@@ -438,22 +496,23 @@ static u32 GetSrlTransferSize( u32 offset, u32 size )
     {
         if ( offset >= aes_offset && offset < aes_end )
         {
-            AESCounter counter;
             if ( end > aes_end )
             {
                 size = aes_end - offset;
             }
-            //AESi_WaitKey();   // ドライバAPI経由？
+            if ( size >= HW_FIRM_FS_AES_BUFFER_SIZE )
+            {
+                size = HW_FIRM_FS_AES_BUFFER_SIZE;
+            }
             if ( rh->s.developer_encrypt )
             {
-                //AESi_LoadKey( AES_KEY_SLOT_C );   // ドライバAPI経由？
+                AES_SetKey( AES_KEY_TYPE_RAW, FS_GetAesKeySeed() );
             }
             else
             {
-                //AESi_LoadKey( AES_KEY_SLOT_A );   // ドライバAPI経由？
+                AES_SetKey( AES_KEY_TYPE_APP, FS_GetAesKeySeed() );
             }
-            GetAesCounter( &counter, offset );
-            EnableAes( &counter );
+            EnableAes( offset );
         }
         else
         {
@@ -499,9 +558,21 @@ BOOL FS_LoadSrlModule( FSFile *pFile, u8* dest, u32 offset, u32 size, const u8 d
     while ( size > 0 )
     {
         u32 unit = GetSrlTransferSize( offset, size );
-        if ( !FS_ReadFile( pFile, dest, (s32)unit ) )
+        if (aesFlag)
         {
-            return FALSE;
+            if ( !FS_ReadFile( pFile, aesBuffer, (s32)unit ) )
+            {
+                return FALSE;
+            }
+            DC_FlushRange( aesBuffer, unit );
+            CopyWithAes( aesBuffer, dest, unit );
+        }
+        else
+        {
+            if ( !FS_ReadFile( pFile, dest, (s32)unit ) )
+            {
+                return FALSE;
+            }
         }
         dest += unit;
         offset += unit;
@@ -568,6 +639,9 @@ BOOL FS_LoadSrlHeader( FSFile *pFile, SVCSignHeapContext* pool, const void* rsa_
     MI_CpuCopy8( sd.digest, digest, SVC_SHA1_DIGEST_SIZE ); // ダイジェストの取り出し
 
     // ダイジェスト以外のデータのチェックが必要！！
+
+    // 鍵の保存
+    MI_CpuCopy8( (AESKey*)sd.aes_key_seed, &FSiAesKeySeed, sizeof(FSiAesKeySeed) );
 
     MI_CpuClear8( &sd, sizeof(sd) );    // 残り削除 (他に必要なものはない？)
     return CheckDigest( md, digest, TRUE, TRUE );

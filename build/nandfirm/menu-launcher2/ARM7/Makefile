@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - firmware
+# Project:  TwlFirm - tools - menu-launcher2
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -16,20 +16,36 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
+TWL_PROC       = ARM7
+
+SUBDIRS		=
+
+LINCLUDES	=   ../include
+
+#----------------------------------------------------------------------------
+
+TARGET_BIN	=	menu_launcher2_7.tef
+
+SRCS		=	main.c
+
+CRT0_O		=	crt0_firm.o
+
+#LCFILE_TEMPLATE =	$(FIRM_SPECDIR)/$(TWL_PROC)-$(TWL_PLATFORM)-PARTNER.lcf.template
+
+#SRCDIR		=	# using default
+#LCFILE		=	# using default
+
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
+LLIBRARIES	+=	libaes_sp$(TWL_LIBSUFFIX).a
+
+MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000'
 
 #----------------------------------------------------------------------------
 
-SUBDIRS		= \
-			nandfirm-print \
-			sdmc-launcher \
-			menu-launcher \
-			menu-launcher2 \
+do-build:		$(TARGETS)
 
-#----------------------------------------------------------------------------
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
-
 
 #===== End of Makefile =====

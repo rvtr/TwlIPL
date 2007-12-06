@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - firmware
+# Project:  TwlFirm - nandfirm - menu-launcher2
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -16,20 +16,37 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
+
+# if you have valid keys, set environment value like below
+#export TWL_KEYSDIR='$(FIRM_ROOT)/../twl_firmware/bootrom/build/keys'
+
+
+#----------------------------------------------------------------------------
+
+SUBDIRS =	\
+            wram_regs \
+            ARM7 \
+            ARM9 \
+
+TARGET_FIRM_BIN		=	menu_launcher2-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nand
+BINDIR			=	.
+MAKEFIRM_ARM9		=	ARM9/bin/$(TWL_BUILDTYPE_ARM9)/menu_launcher2_9.tef
+MAKEFIRM_ARM7		=	ARM7/bin/$(TWL_BUILDTYPE_ARM7)/menu_launcher2_7.tef
+MAKEFIRM_RSA_PRVKEY	=	$(TWL_KEYSDIR)/rsa/private_nand.der
+LDEPENDS_BIN		+=	wram_regs/wram_regs.rbin
+
+MAKEFIRM_FLAGS		+=	-p
+FIRM_SPEC		=	nandfirm.nandsf
+
+LDIRT_CLEAN		+=	$(TARGETS) \
+				rsa_public.sbin \
+
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-
 #----------------------------------------------------------------------------
 
-SUBDIRS		= \
-			nandfirm-print \
-			sdmc-launcher \
-			menu-launcher \
-			menu-launcher2 \
-
-#----------------------------------------------------------------------------
+do-build:	$(TARGET_BIN)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
-
 
 #===== End of Makefile =====
