@@ -37,6 +37,13 @@ static u8 fatfsHeap[FATFS_HEAP_SIZE] __attribute__ ((aligned (32)));
 */
 #define USE_DEBUG_LED
 
+/*
+    デバッグでアイドルスレッドが必要なときに定義します。
+    (最終的にいらないはず)
+*/
+//#define USE_IDLE_THREAD
+
+
 //#ifdef SDK_FINALROM // FINALROMで無効化
 //#undef PROFILE_ENABLE
 //#undef USE_DEBUG_LED
@@ -140,8 +147,10 @@ static BOOL FsInit(void)
     return TRUE;
 }
 
+#ifdef USE_IDLE_THREAD
 static void IdleThread(void* arg)
 {
+    (void)arg;
     OS_EnableInterrupts();
     while ( 1 )
     {
@@ -155,6 +164,7 @@ static void CreateIdleThread( void )
     OS_CreateThread( &idle, IdleThread, NULL, &idleStack[16], sizeof(idleStack), OS_THREAD_PRIORITY_MAX );
     OS_WakeupThreadDirect( &idle );
 }
+#endif
 
 void TwlSpMain( void )
 {
@@ -208,7 +218,9 @@ SetDebugLED(0x02);
         goto end;
     }
 
+#ifdef USE_IDLE_THREAD
     CreateIdleThread();
+#endif
 
     // 5: after PXI
     PUSH_PROFILE();
