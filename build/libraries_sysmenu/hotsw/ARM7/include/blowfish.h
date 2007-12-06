@@ -30,6 +30,9 @@ extern const BLOWFISH_CTX  GCDi_BlowfishInitTableDS;
 // Blowfish ‰Šú‰»
 void InitBlowfish(BLOWFISH_CTX *ctx, const unsigned char *key, int keyLen);
 
+// Blowfish Key‚ÆTable‚Ì‰Šú‰»
+void InitBlowfishKeyAndTableDS(BLOWFISH_CTX *ctx, u32 *keyBufp, s32 keyLen);
+
 // Blowfish •œ†‰»
 void EncryptByBlowfish(const BLOWFISH_CTX *ctx, u32 *xl, u32 *xr);
 
