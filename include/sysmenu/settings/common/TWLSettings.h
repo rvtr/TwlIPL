@@ -77,6 +77,18 @@ const u8 LangCodeMapFromTWLtoNTR[][ 2 ] = {
 };
 #endif
 
+#define TWL_LANG_BITMAP_JAPAN		( ( 0x0001 << TWL_LANG_JAPANESE ) ) 	// JPN版での対応言語ビットマップ
+#define TWL_LANG_BITMAP_AMERICA		( ( 0x0001 << TWL_LANG_ENGLISH ) | \
+									  ( 0x0001 << TWL_LANG_FRENCH  ) | \
+									  ( 0x0001 << TWL_LANG_SPANISH  ) ) 	// AME版での対応言語ビットマップ
+#define TWL_LANG_BITMAP_EUROPE		( ( 0x0001 << TWL_LANG_ENGLISH ) | \
+									  ( 0x0001 << TWL_LANG_FRENCH  ) | \
+									  ( 0x0001 << TWL_LANG_GERMAN  ) | \
+									  ( 0x0001 << TWL_LANG_ITALIAN  ) | \
+									  ( 0x0001 << TWL_LANG_SPANISH  ) ) 	// EUR版での対応言語ビットマップ
+#define TWL_LANG_BITMAP_AUSTRALIA	( ( 0x0001 << TWL_LANG_ENGLISH  ) ) 	// AUS版での対応言語ビットマップ
+#define TWL_LANG_BITMAP_CHINA		( ( 0x0001 << TWL_LANG_SIMP_CHINESE ) ) // CHI版での対応言語ビットマップ
+#define TWL_LANG_BITMAP_KOREA		( ( 0x0001 << TWL_LANG_KOREAN ) ) 		// KOR版での対応言語ビットマップ
 
 // 日付
 #define TWLDate						NTRDate
