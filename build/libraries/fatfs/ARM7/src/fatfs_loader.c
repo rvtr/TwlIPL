@@ -45,9 +45,6 @@ extern u32 profile[];
 extern u32 pf_cnt;
 #endif
 
-
-#define PXI_FIFO_TAG_DATA   PXI_FIFO_TAG_USER_0
-
 static ROM_Header* const rh= (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
 static int menu_fd = -1;
 
@@ -99,6 +96,7 @@ BOOL FATFS_OpenSpecifiedSrl( const char* menufile )
     {
         return FALSE;
     }
+    FATFS_SaveSrlFilename(FATFS_MEDIA_TYPE_SD, menufile);
     return TRUE;
 }
 

@@ -39,9 +39,6 @@ extern u32 profile[];
 extern u32 pf_cnt;
 #endif
 
-
-#define PXI_FIFO_TAG_DATA   PXI_FIFO_TAG_USER_0
-
 static ROM_Header* const rh = (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
 
 #define HEADER_SIZE 0x1000
