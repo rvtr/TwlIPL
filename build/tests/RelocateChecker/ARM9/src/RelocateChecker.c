@@ -36,6 +36,7 @@ RTCDrawProperty g_rtcDraw = {
 };
 
 // static variable -------------------------------------
+static BOOL s_switch = FALSE;
 
 // const data  -----------------------------------------
 
@@ -43,32 +44,66 @@ RTCDrawProperty g_rtcDraw = {
 // 再配置チェッカー（多分ここからやる事は表示のみ）
 //======================================================
 
+static void draw_sub1(u8 *ram_addr, u8 *header_addr, int y)
+{
+	int l;
+	PrintfSJIS(8,y,TXT_UCOLOR_DARKGREEN,  "ARM9FLX ( VERIFY %s ) :",( (*(BOOL *)0x02000280) ? "OK" : "NG" ));
+
+	for (l=0; l<20; l++)
+	{
+		PrintfSJIS(24+(l%10)*19, y+12+12*(l/10), TXT_COLOR_BLACK, "%.2x", *(ram_addr+l));
+		if(s_switch)
+		{
+			PrintfSJIS(24+(l%10)*19, y+12+12*(l/10), (*(ram_addr+l) != *(header_addr+l)) ? TXT_COLOR_RED : TXT_COLOR_BLUE, "%.2x", *(header_addr+l));
+		}
+	}
+}
+
+static void draw_sub2(u8 *ram_addr, u8 *header_addr, int y, const u16 *str)
+{
+	int l;
+	PutStringUTF16(8,y,TXT_UCOLOR_DARKGREEN, str);
+	for (l=0; l<20; l++)
+	{
+		PrintfSJIS(24+(l%10)*19, y+12+12*(l/10), TXT_COLOR_BLACK, "%.2x", *(ram_addr+l));
+		if(s_switch )
+		{
+			PrintfSJIS(24+(l%10)*19, y+12+12*(l/10), (*(ram_addr+l) != *(header_addr+l)) ? TXT_COLOR_RED : TXT_COLOR_BLUE, "%.2x", *(header_addr+l));
+		}
+	}
+}
+
+static void encryObjdraw(void)
+{
+	int l;
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
+	for (l=0; l<0x200; l++)
+	{
+		PrintfSJIS(24+(l%3)*66, 12*2+4+12+12*(l/3), TXT_COLOR_BLACK, "%.8x", *(((u32 *)0x02000280)+l) );
+	}
+}
+
+static void draw()
+{
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
+
+	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"RelocateChecker");
+	PutStringUTF16( 3 * 8, 1 * 12, TXT_COLOR_BLACK,  (const u16 *)L"Press A to Check Digest....");
+	
+	draw_sub1((u8 *)0x02000200, (u8 *)(HW_TWL_ROM_HEADER_BUF + 0x300), 12*2+4 );
+
+	draw_sub2((u8 *)0x02000220, (u8 *)(HW_TWL_ROM_HEADER_BUF + 0x314), 12*5+8, (const u16 *)L"ARM7FLX :" );
+	draw_sub2((u8 *)0x02000240, (u8 *)(HW_TWL_ROM_HEADER_BUF + 0x350), 12*8+12, (const u16 *)L"ARM9LTD :" );
+	draw_sub2((u8 *)0x02000260, (u8 *)(HW_TWL_ROM_HEADER_BUF + 0x364), 12*11+16, (const u16 *)L"ARM7LTD :" );
+}
+
 // 初期化
 void RelocateCheckerInit( void )
 {
-	u32 *test;
 	GX_DispOff();
  	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
-	
-	//PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"RelocateChecker");
-	//PutStringUTF16( 4 * 8, 8 * 8, TXT_COLOR_BLACK, (const u16 *)L"Under Construction...");
-	
-	test = (u32 *)0x02000400;
-	PrintfSJIS(0,0*8,TXT_COLOR_BLUE,  "%8x %8x %8x",*(test+0),*(test+1),*(test+2));
-	PrintfSJIS(0,2*8,TXT_COLOR_BLUE,  "%8x %8x:arm9",*(test+3),*(test+4));
-	
-	test = (u32 *)0x02000420;
-	PrintfSJIS(0,6*8,TXT_COLOR_BLUE,  "%8x %8x %8x",*(test+0),*(test+1),*(test+2));
-	PrintfSJIS(0,8*8,TXT_COLOR_BLUE,  "%8x %8x:arm7",*(test+3),*(test+4));
-	
-	test = (u32 *)0x02000440;
-	PrintfSJIS(0,12*8,TXT_COLOR_BLUE,  "%8x %8x %8x",*(test+0),*(test+1),*(test+2));
-	PrintfSJIS(0,14*8,TXT_COLOR_BLUE,  "%8x %8x:arm9ltd",*(test+3),*(test+4));
 
-	test = (u32 *)0x02000460;
-	PrintfSJIS(0,18*8,TXT_COLOR_BLUE,  "%8x %8x %8x",*(test+0),*(test+1),*(test+2));
-	PrintfSJIS(0,20*8,TXT_COLOR_BLUE,  "%8x %8x:arm7ltd",*(test+3),*(test+4));
+	draw();
 
 	GetAndDrawRTCData( &g_rtcDraw, TRUE );
 	
@@ -89,6 +124,15 @@ void RelocateCheckerMain(void)
 	if(tpd.disp.touch) {
 		tp_cancel = WithinRangeTP(  RETURN_BUTTON_TOP_X * 8,    RETURN_BUTTON_TOP_Y * 8 - 4,
 									RETURN_BUTTON_BOTTOM_X * 8, RETURN_BUTTON_BOTTOM_Y * 8 - 4, &tpd.disp );
+	}
+	
+	if( ( pad.trg & PAD_BUTTON_A )) {
+		s_switch = !s_switch;
+		draw();
+	}
+	
+	if( ( pad.trg & PAD_BUTTON_X )) {
+		encryObjdraw();
 	}
 	
 	if( ( pad.trg & PAD_BUTTON_B ) || tp_cancel ) {

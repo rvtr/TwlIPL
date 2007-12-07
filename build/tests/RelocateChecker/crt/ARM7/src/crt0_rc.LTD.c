@@ -212,6 +212,9 @@ _start(void)
         mov             lr, pc
         bx              r2
 
+		// ロードされたアプリのダイジェストを計算してアプリ間パラメータに格納
+        bl              INITi_SetHMACSHA1ToAppParam
+        
 @010:
         /* スタックポインタ設定 */
         mov             r0, #HW_PSR_SVC_MODE        // SuperVisor mode
@@ -235,9 +238,6 @@ _start(void)
 @011:   cmp             r1, r2
         strlt           r0, [r1], #4
         blt             @011
-
-		// ロードされたアプリのダイジェストを計算してアプリ間パラメータに格納
-        bl              INITi_SetHMACSHA1ToAppParam
         
         /* TWL ハードウェア上で動作しているかどうかを調査 */
         ldr             r1, =REG_CLK_ADDR
@@ -268,6 +268,10 @@ _start(void)
         str             r0, [r1]
         /* [TODO] ARM7 側でしか設定できない追加 I/O レジスタの初期設定を行う */
         
+
+        /* Autoload を実施 */
+        bl              INITi_DoAutoload
+        
 @020:
         /* STATIC ブロックの .bss セクションを 0 クリア */
         ldr             r0, =_start_ModuleParams
@@ -277,9 +281,6 @@ _start(void)
 @021:   cmp             r1, r2
         strlt           r0, [r1], #4
         blt             @021
-
-        /* Autoload を実施 */
-        bl              INITi_DoAutoload
 
         //---- detect main memory size
         bl              detect_main_memory_size
@@ -316,38 +317,56 @@ _start(void)
 
 #include <nitro/mi/stream.h>
 #include <twl/os/common/systemCall.h>
-#include <nitro/math/dgt.h>
+#include <nitro/mi.h>
 /*---------------------------------------------------------------------------*
   Name:         INITi_SetHMACSHA1ToAppParam
-  Description:  ROMがロードされた各アプリ領域のHMACSHA1を計算し、アプリ間パラ
-                メタとして保存（暫定的）
+  Description:  ROMがロードされた各アプリ領域のHMACSHA1を計算し、特定のアドレ
+                スに保存
   Arguments:    なし。
   Returns:      なし。
  *---------------------------------------------------------------------------*/
+#define UNDEF_CODE			0xe7ffdeff
+#define ENCRYPT_DEF_SIZE	0x800
+#define DGT_TGT_ADDR		( HW_MAIN_MEM + 0x0200 )
 
 static void INITi_SetHMACSHA1ToAppParam(void)
 {
-#define DGT_TGT_ADDR		( HW_MAIN_MEM + 0x0400 )
-/*
-	SVCHMACSHA1Context con;
+	u32 *arm9_flx_addr = (u32 *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x028));
+	u32 *p_arm9encryObjVerify = (u32 *)(DGT_TGT_ADDR + 4 * 32);
+	int l;
+	SVCHMACSHA1Context *pCon = ( SVCHMACSHA1Context * ) 0x037c0000;
+	
 	// arm9_flx
-	SVC_HMACSHA1Init(&con, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1);
-	SVC_HMACSHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x028)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x02c)));
-	SVC_HMACSHA1GetHash(&con, (void *)DGT_TGT_ADDR);
+	*p_arm9encryObjVerify = TRUE;
+	for( l=0; l<ENCRYPT_DEF_SIZE/4; l++ )
+	{
+		if(arm9_flx_addr[l] != UNDEF_CODE)
+		{
+			if((u32)p_arm9encryObjVerify < 0x2000400)
+			{
+				*p_arm9encryObjVerify = arm9_flx_addr[l];
+				p_arm9encryObjVerify++;
+			}
+		}
+	}
+	MI_CpuClear8( (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x028)), ENCRYPT_DEF_SIZE);// 折角MI使えるので、4バイト境界で困らないように8で
+	SVC_HMACSHA1Init(pCon, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1);
+	SVC_HMACSHA1Update(pCon, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x028)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x02c)));
+	SVC_HMACSHA1GetHash(pCon, (void *)DGT_TGT_ADDR);
 	// arm7_flx
-	SVC_HMACSHA1Init(&con, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1);
-	SVC_HMACSHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x038)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x03c)));
-	SVC_HMACSHA1GetHash(&con, (void *)(DGT_TGT_ADDR + SVC_SHA1_DIGEST_SIZE));
+	SVC_HMACSHA1Init(pCon, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1);
+	SVC_HMACSHA1Update(pCon, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x038)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x03c)));
+	SVC_HMACSHA1GetHash(pCon, (void *)(DGT_TGT_ADDR + 32));
 	// arm9_ltd
-	SVC_HMACSHA1Init(&con, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1);
-	SVC_HMACSHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1c8)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1cc)));
-	SVC_HMACSHA1GetHash(&con, (void *)(DGT_TGT_ADDR + 2 * SVC_SHA1_DIGEST_SIZE));
+	SVC_HMACSHA1Init(pCon, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1);
+	SVC_HMACSHA1Update(pCon, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1c8)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1cc)));
+	SVC_HMACSHA1GetHash(pCon, (void *)(DGT_TGT_ADDR + 2 * 32));
 	// arm7_ltd
-	SVC_HMACSHA1Init(&con, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1);
-	SVC_HMACSHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1d8)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1dc)));
-	SVC_HMACSHA1GetHash(&con, (void *)(DGT_TGT_ADDR + 3 * SVC_SHA1_DIGEST_SIZE));
-*/
+	SVC_HMACSHA1Init(pCon, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1);
+	SVC_HMACSHA1Update(pCon, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1d8)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1dc)));
+	SVC_HMACSHA1GetHash(pCon, (void *)(DGT_TGT_ADDR + 3 * 32));
 
+/*
 	SVCSHA1Context *pCon = ( SVCSHA1Context * ) 0x037c0000;
 	// arm9_flx
 	SVC_SHA1Init(pCon);
@@ -365,7 +384,7 @@ static void INITi_SetHMACSHA1ToAppParam(void)
 	SVC_SHA1Init(pCon);
 	SVC_SHA1Update(pCon, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1d8)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1dc)));
 	SVC_SHA1GetHash(pCon, (void *)(DGT_TGT_ADDR + 96));
-	
+*/
 }
 /*
 static asm void INITi_SetHMACSHA1ToAppParam(void)

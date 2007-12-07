@@ -20,7 +20,7 @@
 
 Static $(TARGET_NAME)
 {
-	Address		0x02900000
+	Address		0x02800000
 	Object		$(OBJS_STATIC)
 	Library		$(LLIBS) $(GLIBS) $(CW_LIBS)
 }
