@@ -327,43 +327,44 @@ _start(void)
 
 static void INITi_SetHMACSHA1ToAppParam(void)
 {
+#define DGT_TGT_ADDR		( HW_MAIN_MEM + 0x0400 )
 /*
 	SVCHMACSHA1Context con;
 	// arm9_flx
 	SVC_HMACSHA1Init(&con, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1);
 	SVC_HMACSHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x028)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x02c)));
-	SVC_HMACSHA1GetHash(&con, (void *)HW_MAIN_MEM);
+	SVC_HMACSHA1GetHash(&con, (void *)DGT_TGT_ADDR);
 	// arm7_flx
 	SVC_HMACSHA1Init(&con, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1);
 	SVC_HMACSHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x038)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x03c)));
-	SVC_HMACSHA1GetHash(&con, (void *)(HW_MAIN_MEM + SVC_SHA1_DIGEST_SIZE));
+	SVC_HMACSHA1GetHash(&con, (void *)(DGT_TGT_ADDR + SVC_SHA1_DIGEST_SIZE));
 	// arm9_ltd
 	SVC_HMACSHA1Init(&con, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1);
 	SVC_HMACSHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1c8)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1cc)));
-	SVC_HMACSHA1GetHash(&con, (void *)(HW_MAIN_MEM + 2 * SVC_SHA1_DIGEST_SIZE));
+	SVC_HMACSHA1GetHash(&con, (void *)(DGT_TGT_ADDR + 2 * SVC_SHA1_DIGEST_SIZE));
 	// arm7_ltd
 	SVC_HMACSHA1Init(&con, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1);
 	SVC_HMACSHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1d8)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1dc)));
-	SVC_HMACSHA1GetHash(&con, (void *)(HW_MAIN_MEM + 3 * SVC_SHA1_DIGEST_SIZE));
+	SVC_HMACSHA1GetHash(&con, (void *)(DGT_TGT_ADDR + 3 * SVC_SHA1_DIGEST_SIZE));
 */
 
-	SVCSHA1Context con;
+	SVCSHA1Context *pCon = ( SVCSHA1Context * ) 0x037c0000;
 	// arm9_flx
-	SVC_SHA1Init(&con);
-	SVC_SHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x038)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x03c)));
-	SVC_SHA1GetHash(&con, (void *)HW_MAIN_MEM);
+	SVC_SHA1Init(pCon);
+	SVC_SHA1Update(pCon, (void *)( (*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x028)) + 0x800 ), ( *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x02c)) - 0x800 ) );
+	SVC_SHA1GetHash(pCon, (void *)DGT_TGT_ADDR);
 	// arm7_flx
-	SVC_SHA1Init(&con);
-	SVC_SHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x028)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x02c)));
-	SVC_SHA1GetHash(&con, (void *)(HW_MAIN_MEM + SVC_SHA1_DIGEST_SIZE));
+	SVC_SHA1Init(pCon);
+	SVC_SHA1Update(pCon, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x038)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x03c)));
+	SVC_SHA1GetHash(pCon, (void *)(DGT_TGT_ADDR + 32));
 	// arm9_ltd
-	SVC_SHA1Init(&con);
-	SVC_SHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1c8)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1cc)));
-	SVC_SHA1GetHash(&con, (void *)(HW_MAIN_MEM + 2 * SVC_SHA1_DIGEST_SIZE));
+	SVC_SHA1Init(pCon);
+	SVC_SHA1Update(pCon, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1c8)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1cc)));
+	SVC_SHA1GetHash(pCon, (void *)(DGT_TGT_ADDR + 64));
 	// arm7_ltd
-	SVC_SHA1Init(&con);
-	SVC_SHA1Update(&con, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1d8)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1dc)));
-	SVC_SHA1GetHash(&con, (void *)(HW_MAIN_MEM + 3 * SVC_SHA1_DIGEST_SIZE));
+	SVC_SHA1Init(pCon);
+	SVC_SHA1Update(pCon, (void *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1d8)), *((u32 *)(HW_TWL_ROM_HEADER_BUF + 0x1dc)));
+	SVC_SHA1GetHash(pCon, (void *)(DGT_TGT_ADDR + 96));
 	
 }
 /*

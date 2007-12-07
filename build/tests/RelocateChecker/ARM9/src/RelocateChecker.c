@@ -54,18 +54,22 @@ void RelocateCheckerInit( void )
 	//PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"RelocateChecker");
 	//PutStringUTF16( 4 * 8, 8 * 8, TXT_COLOR_BLACK, (const u16 *)L"Under Construction...");
 	
-	test = (u32 *)0x02000000;
-	PrintfSJIS(0,0,TXT_COLOR_BLUE,  "%8x %8x %8x",*(test+5),*(test+6),*(test+7));
-	PrintfSJIS(0,2*8,TXT_COLOR_BLUE,  "%8x %8x:arm9",*(test+8),*(test+9));
+	test = (u32 *)0x02000400;
+	PrintfSJIS(0,0*8,TXT_COLOR_BLUE,  "%8x %8x %8x",*(test+0),*(test+1),*(test+2));
+	PrintfSJIS(0,2*8,TXT_COLOR_BLUE,  "%8x %8x:arm9",*(test+3),*(test+4));
 	
-	PrintfSJIS(0,4*8,TXT_COLOR_BLUE,  "%8x %8x %8x",*(test+0),*(test+1),*(test+2));
-	PrintfSJIS(0,6*8,TXT_COLOR_BLUE,  "%8x %8x:arm7",*(test+3),*(test+4));
+	test = (u32 *)0x02000420;
+	PrintfSJIS(0,6*8,TXT_COLOR_BLUE,  "%8x %8x %8x",*(test+0),*(test+1),*(test+2));
+	PrintfSJIS(0,8*8,TXT_COLOR_BLUE,  "%8x %8x:arm7",*(test+3),*(test+4));
 	
-	PrintfSJIS(0,8*8,TXT_COLOR_BLUE,  "%8x %8x %8x",*(test+10),*(test+11),*(test+12));
-	PrintfSJIS(0,10*8,TXT_COLOR_BLUE,  "%8x %8x:arm9ltd",*(test+13),*(test+14));
-	
-	PrintfSJIS(0,12*8,TXT_COLOR_BLUE,  "%8x %8x %8x",*(test+15),*(test+16),*(test+17));
-	PrintfSJIS(0,14*8,TXT_COLOR_BLUE,  "%8x %8x:arm7ltd",*(test+18),*(test+19));
+	test = (u32 *)0x02000440;
+	PrintfSJIS(0,12*8,TXT_COLOR_BLUE,  "%8x %8x %8x",*(test+0),*(test+1),*(test+2));
+	PrintfSJIS(0,14*8,TXT_COLOR_BLUE,  "%8x %8x:arm9ltd",*(test+3),*(test+4));
+
+	test = (u32 *)0x02000460;
+	PrintfSJIS(0,18*8,TXT_COLOR_BLUE,  "%8x %8x %8x",*(test+0),*(test+1),*(test+2));
+	PrintfSJIS(0,20*8,TXT_COLOR_BLUE,  "%8x %8x:arm7ltd",*(test+3),*(test+4));
+
 	GetAndDrawRTCData( &g_rtcDraw, TRUE );
 	
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
