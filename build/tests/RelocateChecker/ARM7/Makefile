@@ -38,8 +38,13 @@ LLIBRARY_DIRS				+=	../crt/ARM7/obj/ARM7-TS.LTD/$(TWL_BUILD_DIR)
 
 CRT0_O			=	crt0_rc.LTD.TWL.o
 
+TARGET_FOB				+=	ARM7FLX.fob
+FBDSIZE_ARM7FLX			=	52144
+TARGET_FOB				+=	ARM7LTD.fob
+FBDSIZE_ARM7LTD			=	40000
+
 #----------------------------------------------------------------------------
-include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 
 ifdef TWLSDK_NOCRYPTO
@@ -53,7 +58,7 @@ endif
 #MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD
 
 MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000' \
-					-DADDRESS_FLXMAIN='0x02280000' \
+					-DADDRESS_FLXMAIN='0x02300000' \
 					-DADDRESS_BOOTCORE='0x0380f000' \
 					-DCRT0_O='$(CRT0_O)'
 
@@ -68,6 +73,7 @@ LDEPENDS_NEF	= $(TWL_LIBS) $(LLIBRARIES)
 do-build:	$(TARGETS)
 
 #----------------------------------------------------------------------------
-include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/modulerules
+#include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 #===== End of Makefile =====

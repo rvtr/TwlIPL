@@ -80,12 +80,15 @@ static void         VBlankIntr(void);
 /*---------------------------------------------------------------------------*
     外部シンボル参照
  *---------------------------------------------------------------------------*/
+extern u32 *begin_data_ARM7FLX;
+extern u32 *begin_data_ARM7LTD;
+
 #ifdef  SDK_TWLHYB
 extern void         SDK_LTDAUTOLOAD_LTDWRAM_BSS_END(void);
 extern void         SDK_LTDAUTOLOAD_LTDMAIN_BSS_END(void);
 #endif
 
-
+static u32 c;
 /*---------------------------------------------------------------------------*
   Name:         TwlSpMain
   Description:  起動ベクタ。
@@ -96,6 +99,9 @@ void
 TwlSpMain(void)
 {
     OSHeapHandle    heapHandle;
+	u32 a = (u32)begin_data_ARM7FLX;
+	u32 b = (u32)begin_data_ARM7LTD;
+	c = a+b;
 
     // SYSMワークのクリア
     MI_CpuClear32( SYSMi_GetWork(), sizeof(SYSM_work) );

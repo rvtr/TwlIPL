@@ -27,6 +27,8 @@
 #define RETURN_BUTTON_BOTTOM_Y				( RETURN_BUTTON_TOP_Y + 2 )
 
 // extern data------------------------------------------
+extern u32 *begin_data_ARM9FLX;
+extern u32 *begin_data_ARM9LTD;
 
 // function's prototype declaration---------------------
 
@@ -37,6 +39,8 @@ RTCDrawProperty g_rtcDraw = {
 
 // static variable -------------------------------------
 static BOOL s_switch = FALSE;
+
+//static u32 dummy[1024*1024/2]={1,2,3,};//2MB
 
 // const data  -----------------------------------------
 
@@ -112,11 +116,14 @@ void RelocateCheckerInit( void )
 	GXS_DispOn();
 }
 
-
+static u32 c;
 // メインループ
 void RelocateCheckerMain(void)
 {
 	BOOL tp_cancel = FALSE;
+	u32 a = (u32)begin_data_ARM9FLX;
+	u32 b = (u32)begin_data_ARM9LTD;
+	c = a+b;
 	
 	ReadTP();													// タッチパネル入力の取得
 	

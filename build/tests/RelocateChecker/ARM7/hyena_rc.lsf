@@ -21,6 +21,7 @@
 Static $(TARGET_NAME)
 {
 	Address		$(ADDRESS_FLXMAIN)
+	Object		../flabObj/ARM7FLX.fob
 	Library		$(CRT0_O) \
 				libmi_sp$(LIBSUFFIX).a		\
 			libsyscall_sp.twl.a
@@ -134,6 +135,7 @@ Ltdautoload LTDMAIN
 	After		$(TARGET_NAME)
 
 	Object		* (.ltdmain)
+	Object		../flabObj/ARM7LTD.fob
 	Library		libnvram_sp$(LIBSUFFIX).a
 	Library		librtc_sp$(LIBSUFFIX).a
 	Library		librompatch_sp$(LIBSUFFIX).a	\

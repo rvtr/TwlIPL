@@ -24,6 +24,11 @@ TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
 
+TARGET_FOB				=	ARM9FLX.fob
+FBDSIZE_ARM9FLX			=	2097152
+TARGET_FOB				+=	ARM9LTD.fob
+FBDSIZE_ARM9LTD			=	3145728
+
 TITLEID_LO				=	RLCK
 TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).tad
 
@@ -46,7 +51,7 @@ CRT0_O		=	crt0_rc.FLX.TWL.o
 //MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
 MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
 
-include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/commondefs
 
 DEFAULT_COMP_ARM7		= hyena_rc
 DEFAULT_MAKEROM_ARM7_BASE	= ../ARM7/bin/$(TWL_BUILDTYPE_ARM7)/$(DEFAULT_COMP_ARM7)
@@ -60,8 +65,7 @@ INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 do-build : $(TARGETS)
 
-
-include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/modulerules
 
 #----------------------------------------------------------------------------
 
