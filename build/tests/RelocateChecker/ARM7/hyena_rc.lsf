@@ -132,7 +132,8 @@ Autoload WRAM
 #--------
 Ltdautoload LTDMAIN
 {
-	After		$(TARGET_NAME)
+#	After		$(TARGET_NAME)
+	Address		0x02d00000
 
 	Object		* (.ltdmain)
 	Object		../flabObj/ARM7LTD.fob

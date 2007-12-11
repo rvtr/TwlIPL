@@ -58,6 +58,7 @@ void TwlMain(void)
 	(void)RTC_Init();
 	
 	// ƒVƒXƒeƒ€‚Ì‰Šú‰»------------------
+	OS_SetArenaHi(OS_ARENA_MAIN, (void *)0x02d00000);// arm9MMEMheap
 	InitAllocator();
 	
 	InitBG();

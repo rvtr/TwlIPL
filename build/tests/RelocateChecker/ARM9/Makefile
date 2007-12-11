@@ -17,49 +17,9 @@
 #----------------------------------------------------------------------------
 
 SUBDIRS					=	
-
-#----------------------------------------------------------------------------
-
-TARGET_FIRM				=	SYSTEMMENU
-TARGET_PLATFORM			=	TWL
-TWL_ARCHGEN				=	LIMITED
-
-TARGET_FOB				=	ARM9FLX.fob
-FBDSIZE_ARM9FLX			=	2097152
-TARGET_FOB				+=	ARM9LTD.fob
-FBDSIZE_ARM9LTD			=	3145728
-
-TITLEID_LO				=	RLCK
-TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).tad
-
-TARGET_BIN				=	main.srl
-
-LCFILE_SPEC				=	ARM9-TS.lsf
-ROM_SPEC				=	main.rsf
-LCFILE_TEMPLATE				=	rc.lcf.template
-
-MISC_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/misc
-
-SRCS					=	main.c RelocateChecker.c \
-							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
-
-LINCLUDES				=	$(MISC_DIR)/include
-LLIBRARY_DIRS				+=	../crt/ARM9/obj/ARM9-TS.HYB/$(TWL_BUILD_DIR)
-
-CRT0_O		=	crt0_rc.FLX.TWL.o
-
-//MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
-MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
+SUBMAKES		=	Makefile.0 Makefile.1 Makefile.2 Makefile.3 Makefile.4 Makefile.5 Makefile.6
 
 include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/commondefs
-
-DEFAULT_COMP_ARM7		= hyena_rc
-DEFAULT_MAKEROM_ARM7_BASE	= ../ARM7/bin/$(TWL_BUILDTYPE_ARM7)/$(DEFAULT_COMP_ARM7)
-DEFAULT_MAKEROM_ARM7		= $(DEFAULT_MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
-
-LDIRT_CLEAN				=	$(TARGET_TAD)
-INSTALL_TARGETS			=	$(TARGET_TAD)
-INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
 

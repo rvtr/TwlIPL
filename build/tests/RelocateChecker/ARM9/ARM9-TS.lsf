@@ -20,7 +20,7 @@
 
 Static $(TARGET_NAME)
 {
-	Address		0x02800000
+	Address		0x02000400
 	Object		$(OBJS_STATIC) ../flabObj/ARM9FLX.fob
 	Library		$(LLIBS) $(GLIBS) $(CW_LIBS)
 }
@@ -47,7 +47,8 @@ Autoload DTCM
 Ltdautoload LTDMAIN
 {
 	# NITRO/TWL 共有のオーバーレイが在る場合は、さらにその後ろに配置する必要があります。
-	After		$(TARGET_NAME)
+#	After		$(TARGET_NAME)
+	Address		0x02900000
 	Object		* (.ltdmain)
 	Object		$(OBJS_LTDAUTOLOAD) ../flabObj/ARM9LTD.fob
 	Library		$(LLIBS_EX) $(GLIBS_EX)
