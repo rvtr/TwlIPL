@@ -14,9 +14,10 @@
   $Rev$
   $Author$
  *---------------------------------------------------------------------------*/
-#include    <twl/code32.h>
 #include    <firm.h>
-#include    <twl/hw/ARM7/mmap_wramEnv.h>
+#include    <twl/hw/common/mmap_wramEnv.h>
+
+#include    <twl/code32.h>
 
 void    _start(void);
 void    _start_AutoloadDoneCallback(void *argv[]);
@@ -27,10 +28,6 @@ void    _start_AutoloadDoneCallback(void *argv[]);
 #define     SDK_TWLCODE_LE      0x6314c0de
 #define     SDK_TWLCODE_BE      0xdec01463
 
-// volatile parameters in IPL's work memory
-#define IPL_PARAM_CARD_ROM_HEADER      0x023FE940
-#define IPL_PARAM_DOWNLOAD_PARAMETER   0x023FE904
-
 /* 外部関数参照定義 */
 extern void OS_IrqHandler(void);
 extern void _fp_init(void);
@@ -38,6 +35,7 @@ extern void __call_static_initializers(void);
 
 static void INITi_DoAutoload(void);
 static void INITi_ShelterLtdBinary(void);
+static void INITi_CopySysConfig( void );
 static void detect_main_memory_size(void);
 #ifndef SDK_NOINIT
 static void INITi_ShelterStaticInitializer(u32* ptr);
@@ -113,8 +111,8 @@ SDK_WEAK_SYMBOL asm void _start( void )
         msr             cpsr_csfx, r0
         sub             sp, r1, #4 // 4byte for stack check code
 
-        //---- read reset flag from pmic
 #ifdef FIRM_DISABLE_CR_AT_WARMBOOT
+        //---- read reset flag from mcu
 #ifdef SDK_TS
 #if 0
         mov             r0, #REG_PMIC_SW_FLAGS_ADDR
@@ -144,32 +142,13 @@ SDK_WEAK_SYMBOL asm void _start( void )
         tst             r2, r1
         beq             @1
 
-#if 0
-        // move parameters from IPL's work memory to shared area
-        ldr             r0, =IPL_PARAM_CARD_ROM_HEADER
-        ldr             r1, =HW_CARD_ROM_HEADER
-        add             r2, r1, #HW_CARD_ROM_HEADER_SIZE
-@1_1:
-        ldr             r3, [r0], #4
-        str             r3, [r1], #4
-        cmp             r1, r2
-        bmi             @1_1
-        ldr             r0, =IPL_PARAM_DOWNLOAD_PARAMETER
-        add             r2, r1, #HW_DOWNLOAD_PARAMETER_SIZE
-@1_2:
-        ldr             r3, [r0], #4
-        str             r3, [r1], #4
-        cmp             r1, r2
-        bmi             @1_2
-#endif
-
         //---- load autoload block and initialize bss
         //bl              INITi_DoAutoload
 #ifndef SDK_FINALROM    // for IS-TWL-DEBUGGER
         bl          _start_AutoloadDoneCallback
 #endif
 
-        //---- fill static static bss with 0
+        //---- fill static bss with 0
         ldr             r0, =_start_ModuleParams
         ldr             r1,  [r0, #12]   // BSS segment start
         ldr             r2,  [r0, #16]   // BSS segment end
@@ -177,6 +156,9 @@ SDK_WEAK_SYMBOL asm void _start( void )
 @2:     cmp             r1, r2
         strcc           r0, [r1], #4
         bcc             @2
+
+        /* SCFG を HW_SYS_CONF_BUF へコピー */
+        bl              INITi_CopySysConfig
 
         //---- detect main memory size
         bl              detect_main_memory_size
@@ -425,6 +407,75 @@ _start_AutoloadDoneCallback(void* argv[])
 }
 
 /*---------------------------------------------------------------------------*
+  Name:         INITi_CopySysConfig
+
+  Description:  copy SCFG registers to HW_SYS_CONF_BUF and HW_PRV_WRAM_SYSRV
+
+  Arguments:    None.
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static asm void INITi_CopySysConfig( void )
+{
+//################ temp: this process will be done in IPL
+        // SCFG enable?
+        ldr     r2, =REG_EXT_ADDR
+        ldr     r0, [r2]
+        tst     r0, #0x80000000
+        beq     @9
+
+        ldr     r2, =HW_PRV_WRAM_SYSRV
+        //EXT(extentions)
+        ldr     r3, =REG_EXT_ADDR
+        ldr     r0, [r3]
+        str     r0, [r2, #HWi_WSYS04_WRAMOFFSET]
+        //OPT(bonding option)
+        ldr     r3, =REG_OP_ADDR
+        ldrb    r0, [r3]
+        //A9ROM(ARM9 ROM)
+        ldr     r3, =REG_A9ROM_ADDR
+        ldrb    r1, [r3]
+        and     r12,r1, #(REG_SCFG_A9ROM_RSEL_MASK | REG_SCFG_A9ROM_SEC_MASK)
+        orr     r0, r0, r12, LSL #(HWi_WSYS08_ROM_ARM9SEC_SHIFT - REG_SCFG_A9ROM_SEC_SHIFT)
+        //A7ROM(ARM7 ROM)
+        ldr     r3, =REG_A7ROM_ADDR
+        ldrb    r1, [r3]
+        and     r12,r1, #(REG_SCFG_A7ROM_RSEL_MASK | REG_SCFG_A7ROM_SEC_MASK | REG_SCFG_A7ROM_FUSE_MASK)
+        orr     r0, r0, r12, LSL #(HWi_WSYS08_ROM_ARM7SEC_SHIFT - REG_SCFG_A7ROM_SEC_SHIFT)
+        //DS-WL(DS wireless)
+        ldr     r3, =REG_A7ROM_ADDR
+        ldrb    r1, [r3]
+        and     r12,r1, #REG_SCFG_WL_OFFB_MASK
+        orr     r0, r0, r12, LSL #(HWi_WSYS08_WL_OFFB_SHIFT - REG_SCFG_WL_OFFB_SHIFT)
+        strb    r0, [r2, #HWi_WSYS08_WRAMOFFSET]
+        //OPT(JTAG info)
+        ldr     r3, =REG_JTAG_ADDR
+        ldrh    r0, [r3]
+        and     r12,r0, #REG_SCFG_JTAG_DSPJE_MASK
+        orr     r0, r0, r12, LSR #(REG_SCFG_JTAG_DSPJE_SHIFT - HWi_WSYS09_JTAG_DSPJE_SHIFT)
+        //CLK(only wram clock)
+        ldr     r3, =REG_CLK_ADDR
+        ldrh    r1, [r3]
+        and     r12,r1, #(REG_SCFG_CLK_AESHCLK_MASK | REG_SCFG_CLK_SD2HCLK_MASK | REG_SCFG_CLK_SD1HCLK_MASK)
+        orr     r0, r0, r12, LSL #(HWi_WSYS09_CLK_SD1HCLK_SHIFT - REG_SCFG_CLK_SD1HCLK_SHIFT)
+        and     r12,r1, #(REG_SCFG_CLK_SNDMCLK_MASK | REG_SCFG_CLK_WRAMHCLK_MASK)
+        orr     r0, r0, r12, LSR #(REG_SCFG_CLK_WRAMHCLK_SHIFT - HWi_WSYS09_CLK_WRAMHCLK_SHIFT)
+        strb    r0, [r2, #HWi_WSYS09_WRAMOFFSET]
+@9:
+//################
+
+        //---- copy scfg setting
+        ldr     r2, =HW_PRV_WRAM_SYSRV
+        ldr     r3, =HW_SYS_CONF_BUF
+        ldr     r0, [r2, #HWi_WSYS04_WRAMOFFSET]
+        str     r0, [r3, #HWi_WSYS04_OFFSET]
+        ldrh    r0, [r2, #HWi_WSYS08_WRAMOFFSET]
+        strh    r0, [r3, #HWi_WSYS08_OFFSET]
+
+        bx      lr
+}
+
+/*---------------------------------------------------------------------------*
   Name:         detect_main_memory_size
 
   Description:  detect main memory size.
@@ -443,42 +494,11 @@ _start_AutoloadDoneCallback(void* argv[])
 
 static asm void detect_main_memory_size( void )
 {
-//################ this process is required before IPL
-#if 0
-        // SCFG enable?
-        ldr     r2, =REG_EXT_ADDR
-        ldr     r0, [r2]
-        tst     r0, #0x80000000
-        beq     @9
-#endif
-        ldr     r2, =HW_PRV_WRAM_SYSRV
-        //OPT(bonding option)
-        ldr     r3, =REG_OP_ADDR
-        ldrh    r0, [r3]
-        strh    r0, [r2, #8]
-        //OPT(JTAG info)
-        ldr     r3, =REG_JTAG_ADDR
-        ldrb    r0, [r3]
-        //CLK(only wram clock)
-        ldr     r3, =REG_CLK_ADDR
-        ldrh    r1, [r3]
-        and     r1, r1, #0x80
-        orr     r0, r0, r1, LSR 1
-        strb    r0, [r2, #9]
-@9:
-//################
-
-        //---- copy scfg setting
-        ldr     r2, =HW_PRV_WRAM_SYSRV
-        ldr     r3, =HW_SYS_CONF_BUF
-        ldr     r0, [r2, #HWi_WSYS04_WRAMOFFSET]
-        str     r0, [r3, #HWi_WSYS04_OFFSET]
-        ldrh    r0, [r2, #HWi_WSYS08_WRAMOFFSET]
-        strh    r0, [r3, #HWi_WSYS08_OFFSET]
+        stmfd   sp!, {r4,lr}
 
         //---- detect memory size
-#if 0   // NITRO hardware is not supported
-        mov     r0, #OS_CONSOLE_SIZE_4MB
+#if 0
+        mov     r4, #OS_CONSOLE_SIZE_4MB
         mov     r1, #0
 
         ldr     r2, =HW_MMEMCHECKER_SUB
@@ -499,15 +519,13 @@ static asm void detect_main_memory_size( void )
         //---- 8MB or 16MB or 32MB
 @2:
         // check if running on twl/nitro
-        ldr     r1, =HW_SYS_CONF_BUF
-        ldrb    r12, [r1,#HWi_WSYS09_OFFSET]
-        tst     r12, #HWi_WSYS09_CLK_WRAMHCLK_MASK
-        moveq   r0, #OS_CONSOLE_SIZE_8MB
+        bl      INITi_IsRunOnTwl
+        cmp     r0, #FALSE
+        moveq   r4, #OS_CONSOLE_SIZE_8MB
         beq     @4
 #else
         ldr     r2, =HW_MMEMCHECKER_SUB
 #endif
-
         //---- 16MB or 32MB
         mov     r1, #0
         add     r3, r2, #OSi_IMAGE_DIFFERENCE2
@@ -516,24 +534,24 @@ static asm void detect_main_memory_size( void )
         ldrh    r12, [r3]
         cmp     r1, r12
 
-        movne   r0, #OS_CONSOLE_SIZE_32MB
+        movne   r4, #OS_CONSOLE_SIZE_32MB
         bne     @4
 
         add     r1, r1, #1
         cmp     r1, #2 // check 2 loop
         bne     @3
-        mov     r0, #OS_CONSOLE_SIZE_16MB
+        mov     r4, #OS_CONSOLE_SIZE_16MB
 @4:
-
         //---- check SMX_CNT
         ldr     r3, =REG_SMX_CNT_ADDR
         ldrh    r1, [r3]
         and     r1, r1, #OSi_DETECT_NITRO_MASK
         cmp     r1, #OSi_DETECT_NITRO_VAL
-        orreq   r0, r0, #OS_CHIPTYPE_SMX_MASK
+        orreq   r4, r4, #OS_CHIPTYPE_SMX_MASK
 
-        strb    r0, [r2]
+        strb    r4, [r2]
 
+        ldmfd   sp!, {r4,lr}
         bx      lr
 }
 
@@ -549,3 +567,5 @@ static asm void detect_main_memory_size( void )
 SDK_WEAK_SYMBOL void TwlSpStartUp(void)
 {
 }
+
+#include    <twl/codereset.h>

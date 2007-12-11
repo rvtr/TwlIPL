@@ -14,8 +14,9 @@
   $Rev$
   $Author$
  *---------------------------------------------------------------------------*/
-#include        <twl/code32.h>
 #include        <firm.h>
+
+#include        <twl/code32.h>
 
 void    _start(void);
 void    _start_AutoloadDoneCallback(void *argv[]);
@@ -338,6 +339,8 @@ INITi_InitCoprocessor(void)
 static asm void
 INITi_InitRegion(void)
 {
+        mov             r12, lr
+
 #define SET_PROTECTION_A(id, adr, siz)      ldr r0, =(adr|HW_C6_PR_##siz|HW_C6_PR_ENABLE)
 #define SET_PROTECTION_B(id, adr, siz)      mcr p15, 0, r0, c6, id, 0
 #define REGION_BIT(a, b, c, d, e, f, g, h)  (((a) << 0) | ((b) << 1) | ((c) << 2) | ((d) << 3) | ((e) << 4) | ((f) << 5) | ((g) << 6) | ((h) << 7))
@@ -364,10 +367,11 @@ INITi_InitRegion(void)
         SET_PROTECTION_B(c6, HW_BIOS, 32KB)
 
         /* TWL ハードウェア上で動作しているかどうかを調査 */
-        ldr             r1, =REG_CLK_ADDR
-        ldrh            r0, [r1]
-        tst             r0, #REG_SCFG_CLK_WRAMHCLK_MASK
+#if 0
+        bl              INITi_IsRunOnTwl
+        cmp             r0, #FALSE
         beq             @002
+#endif
 
 @001:   /* ハードウェアが TWL の場合 */
         /* (1) メインメモリ及び WRAM */
@@ -408,7 +412,7 @@ INITi_InitRegion(void)
 //        ldr             r0, =REGION_ACC(RW, RW, NA, RW, RW, RW, RO, RW)
         ldr             r0, =REGION_ACC(RW, RW, RW, RW, RW, RW, RO, RW)
         mcr             p15, 0, r0, c5, c0, 2
-
+#if 0
         b               @003
 
 @002:   /* ハードウェアが NITRO の場合 */
@@ -433,7 +437,7 @@ INITi_InitRegion(void)
         /* (7) ARM9/ARM7 共有メインメモリ空間 */
         SET_PROTECTION_A(c7, HW_MAIN_MEM_SHARED, 4KB)
         SET_PROTECTION_B(c7, HW_MAIN_MEM_SHARED, 4KB)
-#if 0
+
         /* 命令キャッシュ許可 */
         mov             r0, #REGION_BIT(0, 1, 0, 0, 0, 0, 1, 0)
         mcr             p15, 0, r0, c2, c0, 1
@@ -456,14 +460,6 @@ INITi_InitRegion(void)
         /* データアクセス許可 */
         ldr             r0, =REGION_ACC(RW, RW, NA, RW, RW, RW, RO, RW)
         mcr             p15, 0, r0, c5, c0, 2
-#else   // NITRO全不許可
-        mov             r0, #REGION_BIT(0, 0, 0, 0, 0, 0, 0, 0)
-        mcr             p15, 0, r0, c2, c0, 1
-        mcr             p15, 0, r0, c2, c0, 0
-        mcr             p15, 0, r0, c3, c0, 0
-        ldr             r0, =REGION_ACC(NA, NA, NA, NA, NA, NA, NA, NA)
-        mcr             p15, 0, r0, c5, c0, 3
-        mcr             p15, 0, r0, c5, c0, 2
 #endif
 @003:   /* プロテクションユニット及びキャッシュ使用許可設定 */
         mrc             p15, 0, r0, c1, c0, 0
@@ -479,7 +475,7 @@ INITi_InitRegion(void)
         mcr             p15, 0, r1, c7, c6, 0
         mcr             p15, 0, r1, c7, c5, 0
 
-        bx              lr
+        bx              r12
 }
 
 /*---------------------------------------------------------------------------*
@@ -554,7 +550,7 @@ INITi_DoAutoload(void)
         ldmia           sp!, {r2}           // r2 = start address of destination range
         mov             r0, #HW_ITCM_IMAGE
         cmp             r2, r0
-        addge           r0, r0, #HW_ITCM_SIZE
+        movge           r0, #HW_ITCM_END
         cmpge           r0, r2
         bgt             @015                // If I-TCM autoload block, skip cache control logic.
         ldr             r0, =SDK_AUTOLOAD_DTCM_START
@@ -574,10 +570,11 @@ INITi_DoAutoload(void)
 
 @020:
         /* TWL ハードウェア上で動作しているかどうかを調査 */
-        ldr             r1, =REG_CLK_ADDR
-        ldrh            r0, [r1]
-        tst             r0, #REG_SCFG_CLK_WRAMHCLK_MASK
+#if 0
+        bl              INITi_IsRunOnTwl
+        cmp             r0, #FALSE
         beq             @030
+#endif
 
         /* TWL 専用ブロックの存在を確認 */
         ldr             r1, =HW_TWL_ROM_HEADER_BUF + 0x1cc  /* ARM9 用拡張常駐モジュール ROM サイズ */
@@ -628,7 +625,7 @@ INITi_DoAutoload(void)
         ldmia           sp!, {r2}           // r2 = start address of destination range
         mov             r0, #HW_ITCM_IMAGE
         cmp             r2, r0
-        addge           r0, r0, #HW_ITCM_SIZE
+        movge           r0, #HW_ITCM_END
         cmpge           r0, r2
         bgt             @025                // If I-TCM autoload block, skip cache control logic.
         ldr             r0, =SDK_AUTOLOAD_DTCM_START
@@ -915,3 +912,5 @@ void OSi_ReferSymbol(void *symbol)
 {
 #pragma unused(symbol)
 }
+
+#include    <twl/codereset.h>

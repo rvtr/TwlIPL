@@ -16,15 +16,21 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
-override TARGET_CODEGEN		:= ARM
-
 SUBDIRS			=
 
 #----------------------------------------------------------------------------
 
-SRCS			= crt0_firm.c \
+# Avoid to use pre-compile-header of "nitro.h"
+TWL_NO_STD_PCHDR        =	True
 
-TARGET_OBJ		= crt0_firm.o
+# Avoid to build THUMB version object
+override TWL_CODEGEN	= 	ARM
+
+SRCS			= 	crt0_firm.c
+
+TARGET_OBJ		= 	crt0_firm.o
+
+MACRO_FLAGS		+=	-DSDK_NOINIT
 
 #----------------------------------------------------------------------------
 
