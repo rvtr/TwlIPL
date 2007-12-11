@@ -40,6 +40,29 @@ extern "C" {
 void AESi_InitKeysForApp( u8 game_code[4] );
 
 /*---------------------------------------------------------------------------*
+  Name:         AESi_InitKeysForHard
+
+  Description:  set IDs depending on the system hardware.
+                you SHOULD NOT use this for standard applications.
+
+  Arguments:    fuse    camouflaged fuse id
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void AESi_InitKeysForHard( u8 fuse[8] );
+
+/*---------------------------------------------------------------------------*
+  Name:         AESi_ResetAesKey
+
+  Description:  set SEED/KEYs by dummy data without seed[3]
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void AESi_ResetAesKey( void );
+
+/*---------------------------------------------------------------------------*
   Name:         AESi_InitKeysFIRM
 
   Description:  set IDs depending on the application.
@@ -52,6 +75,7 @@ void AESi_InitKeysForApp( u8 game_code[4] );
 static inline void AESi_InitKeysFIRM( void )
 {
     AESi_InitKeysForApp( (u8*)((ROM_Header_Short*)HW_TWL_ROM_HEADER_BUF)->game_code );
+    AESi_ResetAesKey();
 }
 
 /*---------------------------------------------------------------------------*
