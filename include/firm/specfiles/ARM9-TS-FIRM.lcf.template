@@ -154,6 +154,12 @@ SECTIONS
 		. = ALIGN(32);	# Fit to cache line
 		SDK_STATIC_DATA_START		=.;
 				#:::::::::: data
+				<FOREACH.STATIC.OBJECTS=.ltdmain>
+				<STATIC.OBJECT=.ltdmain:t>
+				<END.STATIC.OBJECTS>
+				<FOREACH.STATIC.LIBRARIES=.ltdmain>
+				<STATIC.LIBRARY=.ltdmain:t>
+				<END.STATIC.LIBRARIES>
 				<FOREACH.STATIC.OBJECTS=.sdata>
 				<STATIC.OBJECT=.sdata:t>
 				<END.STATIC.OBJECTS>
@@ -199,6 +205,12 @@ SECTIONS
 		#
 		SDK_STATIC_BSS_START	=.;
 				#:::::::::: bss
+				<FOREACH.STATIC.OBJECTS=.ltdmain>
+				<STATIC.OBJECT=.ltdmain.bss:t>
+				<END.STATIC.OBJECTS>
+				<FOREACH.STATIC.LIBRARIES=.ltdmain>
+				<STATIC.LIBRARY=.ltdmain.bss:t>
+				<END.STATIC.LIBRARIES>
 				<FOREACH.STATIC.OBJECTS=.sbss>
 				<STATIC.OBJECT=.sbss:t>
 				<END.STATIC.OBJECTS>
