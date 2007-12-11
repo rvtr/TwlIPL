@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
+#include <twl/cdc.h>
 #include <sysmenu.h>
 #include "reboot.h"
 
@@ -78,7 +79,7 @@ BOOL BOOT_WaitStart( void )
 			// メモリリストの設定
 			static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + 2 + POST_CLEAR_NUM_MAX + 1] = 
 			{
-                // pre clear
+				// pre clear
 				SYSM_OWN_ARM7_MMEM_ADDR, SYSM_OWN_ARM7_MMEM_ADDR_END - SYSM_OWN_ARM7_MMEM_ADDR,
 				SYSM_OWN_ARM9_MMEM_ADDR, SYSM_OWN_ARM9_MMEM_ADDR_END - SYSM_OWN_ARM9_MMEM_ADDR,
 				SYSM_OWN_ARM7_WRAM_ADDR, SYSM_OWN_ARM7_WRAM_ADDR_END - SYSM_OWN_ARM7_WRAM_ADDR,
@@ -89,11 +90,11 @@ BOOL BOOT_WaitStart( void )
 #endif
 				HW_MAIN_MEM_SHARED, HW_RED_RESERVED - HW_MAIN_MEM_SHARED,
 				NULL,
-                // copy forward
+				// copy forward
 				NULL,
-                // copy backward
+				// copy backward
 				NULL,
-                // post clear
+				// post clear
 				NULL,
 			};
 			
@@ -140,6 +141,11 @@ BOOL BOOT_WaitStart( void )
 			else
 			{
 				target = REBOOT_TARGET_DS_APP;
+				CDC_GoDsMode();
+				// DSサウンド：DSP = 8:0
+				// 32KHz
+				reg_SND_SMX_CNT = REG_SND_SMX_CNT_MIX_RATE_MASK |
+								  REG_SND_SMX_CNT_E_MASK;
 			}
 			
 			// リブート
