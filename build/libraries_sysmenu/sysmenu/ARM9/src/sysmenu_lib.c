@@ -164,6 +164,8 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 	// ランチャーのマウント情報セット
 	SYSMi_SetLauncherMountInfo();
 	
+	OS_Init();
+	
     // ARM7コンポーネント用プロテクションユニット領域変更
     OS_SetProtectionRegion( 2, SYSM_OWN_ARM7_MMEM_ADDR, 512KB );
 	
@@ -198,12 +200,14 @@ void SYSM_SetAllocFunc( void *(*pAlloc)(u32), void (*pFree)(void*) )
 TitleProperty *SYSM_ReadParameters( void )
 {
 	TitleProperty *pBootTitle = NULL;
+	u8 brightness = TWL_BACKLIGHT_LEVEL_MAX;
 	
 	// ARM7のリセットパラメータ取得が完了するのを待つ
 	while( !SYSMi_GetWork()->isARM9Start ) {
 		SVC_WaitByLoop( 0x1000 );
 	}
 #ifdef DEBUG_USED_CARD_SLOT_B_
+	// ARM7のカードチェック完了を待つ
 	while( !SYSMi_GetWork()->is1stCardChecked ) {
 		SVC_WaitByLoop( 0x1000 );
 	}
@@ -232,20 +236,38 @@ TitleProperty *SYSM_ReadParameters( void )
 	}
 	
 	//-----------------------------------------------------
+	// HW情報のリード
+	//-----------------------------------------------------
+	// ノーマル情報リード
+	if( THW_ReadNormalInfo() != TSF_READ_RESULT_SUCCEEDED ) {
+		OS_TPrintf( "HW Normal Info Broken!\n" );
+		SYSMi_GetWork()->isBrokenHWNormalInfo = TRUE;
+	}
+	// セキュア情報リード
+	if( THW_ReadSecureInfo() != TSF_READ_RESULT_SUCCEEDED ) {
+		OS_TPrintf( "HW Secure Info Broken!\n" );
+		SYSMi_GetWork()->isBrokenHWSecureInfo = TRUE;
+	}
+	
+	//-----------------------------------------------------
 	// 本体設定データのリード
 	//-----------------------------------------------------
 	if( SYSM_ReadTWLSettingsFile() ) {								// NANDからTWL本体設定データをリード
-		SYSM_SetBackLightBrightness( (u8)TSD_GetBacklightBrightness() ); // 読み出したTWL本体設定データをもとにバックライト輝度設定
 		SYSM_CaribrateTP();											// 読み出したTWL本体設定データをもとにTPキャリブレーション。
+		brightness = (u8)TSD_GetBacklightBrightness();
 	}
 	
-//	SYSM_ReadHWInfo();												// NANDからHW情報をリード
-	SYSMi_WriteAdjustRTC();											// RTCクロック補正値をセット。
+	//-----------------------------------------------------
+	// 各種デバイス設定
+	//-----------------------------------------------------
+	// バックライト輝度設定
+	SYSM_SetBackLightBrightness( brightness );
+	// RTC補正
+	SYSMi_WriteAdjustRTC();
+	// RTC値のチェック
 	SYSMi_CheckRTC();
 	
 	SYSM_VerifyAndRecoveryNTRSettings();							// NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
-	
-//	SYSMi_CheckCardCloneBoot();										// カードがクローンブートかチェック
 	
 	//NAMの初期化
 	//NAM_Init(AllocForNAM,FreeForNAM);
@@ -490,7 +512,7 @@ void SYSM_SetLogoDemoSkip( BOOL skip )
 // ロゴデモスキップか？
 BOOL SYSM_IsLogoDemoSkip( void )
 {
-	return SYSMi_GetWork()->isLogoSkip;
+	return (BOOL)SYSMi_GetWork()->isLogoSkip;
 }
 
 
@@ -533,7 +555,7 @@ void SYSM_SetValidTSD( BOOL valid )
 // TSD有効？
 BOOL SYSM_IsValidTSD( void )
 {
-	return SYSMi_GetWork()->isValidTSD;
+	return (BOOL)SYSMi_GetWork()->isValidTSD;
 }
 
 // ============================================================================
@@ -894,38 +916,29 @@ void SYSM_SetBackLightBrightness( u8 brightness )
 // タッチパネルキャリブレーション
 void SYSM_CaribrateTP( void )
 {
-#ifndef __TP_OFF
-	TPCalibrateParam calibrate;
+	TWLTPCalibData store;
+	TPCalibrateParam calibParam;
 	
-	( void )TP_CalcCalibrateParam( &calibrate,							// タッチパネル初期化
-			GetTSD()->tp.data.raw_x1, GetTSD()->tp.data.raw_y1, (u16)GetTSD()->tp.data.dx1, (u16)GetTSD()->tp.data.dy1,
-			GetTSD()->tp.data.raw_x2, GetTSD()->tp.data.raw_y2, (u16)GetTSD()->tp.data.dx2, (u16)GetTSD()->tp.data.dy2 );
-	TP_SetCalibrateParam( &calibrate );
+	// 本体設定データからキャリブレーション情報を取得
+	TSD_GetTPCalibration( &store );
+	
+	// TPキャリブレーション
+	( void )TP_CalcCalibrateParam( &calibParam,							// タッチパネル初期化
+			store.data.raw_x1, store.data.raw_y1, (u16)store.data.dx1, (u16)store.data.dy1,
+			store.data.raw_x2, store.data.raw_y2, (u16)store.data.dx2, (u16)store.data.dy2 );
+	TP_SetCalibrateParam( &calibParam );
 	OS_Printf("TP_calib: %4d %4d %4d %4d %4d %4d\n",
-			GetTSD()->tp.data.raw_x1, GetTSD()->tp.data.raw_y1, (u16)GetTSD()->tp.data.dx1, (u16)GetTSD()->tp.data.dy1,
-			GetTSD()->tp.data.raw_x2, GetTSD()->tp.data.raw_y2, (u16)GetTSD()->tp.data.dx2, (u16)GetTSD()->tp.data.dy2 );
-#endif
+			store.data.raw_x1, store.data.raw_y1, (u16)store.data.dx1, (u16)store.data.dy1,
+			store.data.raw_x2, store.data.raw_y2, (u16)store.data.dx2, (u16)store.data.dy2 );
 }
 
 
 // RTCクロック補正値をセット
 static void SYSMi_WriteAdjustRTC( void )
 {
-	// ※TWLの時は、NANDの"/sys/HWINFO.dat"ファイルから該当する情報を取得する。
-#if 0
-	FS_OpenFile( "/sys/HWINFO.dat" );
-	FS_ReadFile( xxxx );
-	raw = xxxx.rtcRaw;
-	( void )RTCi_SetRegAdjust( &raw );
-#endif
-	
-#ifndef __IS_DEBUGGER_BUILD											// デバッガ用ビルド時は補正しない。
 	RTCRawAdjust raw;
-	raw.adjust = 0;
-//	raw.adjust = GetTSD()->rtcClockAdjust;							// isValidTSD時にはrtcClockAdjustは
-																	// 0クリアされているため補正機能は使用されない
+	raw.adjust = THW_GetRTCAdjust();
 	( void )RTCi_SetRegAdjust( &raw );
-#endif /* __IS_DEBUGGER_BUILD */
 }
 
 
@@ -962,7 +975,7 @@ static BOOL SYSMi_ReadCardBannerFile( u32 bannerOffset, TWLBannerFile *pBanner )
 		DC_InvalidateRange( (void *)SYSM_CARD_BANNER_BUF, 0x3000 );
 		MI_CpuCopyFast( (void *)SYSM_CARD_BANNER_BUF, pBanner, sizeof(TWLBannerFile) );
 	}
-	return SYSMi_GetWork()->isValidCardBanner;
+	return (BOOL)SYSMi_GetWork()->isValidCardBanner;
 #endif
 }
 
@@ -1010,7 +1023,7 @@ static BOOL SYSMi_CheckBannerFile( NTRBannerFile *pBanner )
 // 有効なTWL/NTRカードが差さっているか？
 BOOL SYSM_IsExistCard( void )
 {
-	return SYSMi_GetWork()->isExistCard;
+	return (BOOL)SYSMi_GetWork()->isExistCard;
 }
 
 
@@ -1111,14 +1124,13 @@ static void SYSMi_CheckRTC( void )
 	    !SYSM_CheckRTCTime( &time )
 #ifndef __IS_DEBUGGER_BUILD											// 青デバッガではRTCの電池がないので、毎回ここにひっかかって設定データが片方クリアされてしまう。これを防ぐスイッチ。
 		||
-		( SYSMi_GetWork()->rtcStatus & 0x01 )
+		SYSMi_GetWork()->isResetRTC
 #endif
 		) {							// RTCの異常を検出したら、rtc入力フラグ＆rtcOffsetを0にしてNVRAMに書き込み。
 		OS_TPrintf("\"RTC reset\" or \"Illegal RTC data\" detect!\n");
-		GetTSD()->flags.isSetDateTime	= 0;
-		GetTSD()->rtcOffset				= 0;
-		GetTSD()->rtcLastSetYear		= 0;
-		// ※※ライトする？
+		TSD_SetFlagDateTime( FALSE );
+		TSD_SetRTCOffset( 0 );
+		TSD_SetRTCLastSetYear( 0 );
 		SYSM_WriteTWLSettingsFile();
 	}
 }

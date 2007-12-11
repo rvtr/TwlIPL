@@ -16,25 +16,26 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
+#include <sysmenu/settings/common/TWLSettings.h>
 #include <sysmenu/settings/common/TWLHWInfo.h>
 
 // define data----------------------------------------------------------
 //#define USE_SHA1_SIGNATURE				// 署名内のハッシュにSHA1を使用（未定義ならHMAC-SHA1を使用）
 
 // function's prototype-------------------------------------------------
-static BOOL THWIi_CheckDigest( void *pTgt, u32 length, u8 *pDigest );
-static BOOL THWIi_CheckNormalValue( const TWLHWNormalInfo *pSrcInfo );
-static BOOL THWIi_CheckSignature( void *pTgt, u32 length, u8 *pSignature );
-static BOOL THWIi_CheckSecureValue( const TWLHWSecureInfo *pSecure );
+static BOOL THWi_CheckDigest( void *pTgt, u32 length, u8 *pDigest );
+static BOOL THWi_CheckNormalInfoValue( const TWLHWNormalInfo *pSrcInfo );
+static BOOL THWi_CheckSignature( void *pTgt, u32 length, u8 *pSignature );
+static BOOL THWi_CheckSecureInfoValue( const TWLHWSecureInfo *pSecure );
 static void DEBUG_PrintDigest( u8 *pDigest );
 static void DEBUG_Dump( u8 *pSrc, u32 len );
-static void HMACSHA1( u8 *pDigest, u8 *pSrc, u32 len, u8 *pKey, u32 keyLen );
 
 // static variables-----------------------------------------------------
 TWLHWNormalInfo s_hwInfoN ATTRIBUTE_ALIGN(32);
 TWLHWSecureInfo s_hwInfoS ATTRIBUTE_ALIGN(32);
 static BOOL s_isReadNormal;
 static BOOL s_isReadSecure;
+static BOOL s_isSignCheck;
 
 // global variables-----------------------------------------------------
 
@@ -43,7 +44,7 @@ static BOOL s_isReadSecure;
 // ノーマル情報　デフォルト値
 static TWLHWNormalInfo s_normalDefault = {
 	0x5a,
-	{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f },
+	{ 0x00 },
 };
 
 
@@ -56,16 +57,17 @@ static const TSFParam s_normalParam = {
 	sizeof(TWLHWNormalInfo),
 	TWL_HWINFO_FILE_LENGTH,
 	s_normalVersionList,
-	&s_normalDefault,
-	THWIi_CheckDigest,
-	(int (*)(void *))THWIi_CheckNormalValue,
+	(void (*)(void *))THW_ClearNormalInfoDirect,
+	THWi_CheckDigest,
+	(int (*)(void *))THWi_CheckNormalInfoValue,
 };
 
 
 // セキュア情報　デフォルト値
 static TWLHWSecureInfo s_secureDefault = {
+	TWL_LANG_BITMAP_AMERICA,
 	TWL_REGION_AMERICA,
-	{ TWL_HWINFO_SERIALNO_LEN_AMERICA, "0123456789A" },
+	{ "0123456789A\0\0\0\0" },
 };
 
 
@@ -78,9 +80,9 @@ static const TSFParam s_secureParam = {
 	sizeof(TWLHWSecureInfo),
 	TWL_HWINFO_FILE_LENGTH,
 	s_secureVersionList,
-	&s_secureDefault,
-	THWIi_CheckSignature,
-	(int (*)(void *))THWIi_CheckSecureValue,
+	(void (*)(void *))THW_ClearSecureInfoDirect,
+	THWi_CheckSignature,
+	(int (*)(void *))THWi_CheckSecureInfoValue,
 };
 
 
@@ -105,7 +107,7 @@ static const u8 s_publicKey[ RSA_KEY_LENGTH ] = {
 TSFReadResult THW_ReadNormalInfo( void )
 {
 	s_isReadNormal = TRUE;
-	return TSF_ReadFile( (char *)TWL_HWINFO_NORMAL_PATH, &s_hwInfoN, &s_normalParam, NULL );
+	return TSF_ReadFile( (char *)TWL_HWINFO_NORMAL_PATH, GetHWN(), &s_normalParam, NULL );
 }
 
 
@@ -115,7 +117,7 @@ BOOL THW_WriteNormalInfo( void )
 	if( !s_isReadNormal ) {
 		return FALSE;
 	}
-	return THW_WriteNormalInfoDirect( &s_hwInfoN );
+	return THW_WriteNormalInfoDirect( GetHWN() );
 }
 
 
@@ -132,13 +134,13 @@ BOOL THW_WriteNormalInfoDirect( const TWLHWNormalInfo *pSrcInfo )
 	if( !TSF_WriteFile( (char *)TWL_HWINFO_NORMAL_PATH,
 						&header,
 						(const void *)pSrcInfo,
-						DISABLE_SAVE_COUNT ) ) {
+						NULL ) ) {
 		return FALSE;
 	}
 	// 未リード時、staticバッファへのコピーを行う
 	if( !s_isReadNormal ) {
 		s_isReadNormal = TRUE;
-		MI_CpuCopy8( pSrcInfo, &s_hwInfoN, sizeof(TWLHWNormalInfo) );
+		MI_CpuCopy8( pSrcInfo, GetHWN(), sizeof(TWLHWNormalInfo) );
 	}
 	return TRUE;
 }
@@ -153,7 +155,7 @@ BOOL THW_RecoveryNormalInfo( TSFReadResult err )
 
 
 // ダイジェストチェック
-static BOOL THWIi_CheckDigest( void *pTgt, u32 length, u8 *pDigest )
+static BOOL THWi_CheckDigest( void *pTgt, u32 length, u8 *pDigest )
 {
 	u8 digest[ SVC_SHA1_DIGEST_SIZE ];
 	
@@ -163,7 +165,7 @@ static BOOL THWIi_CheckDigest( void *pTgt, u32 length, u8 *pDigest )
 
 
 // 値チェック
-static BOOL THWIi_CheckNormalValue( const TWLHWNormalInfo *pSrcInfo )
+static BOOL THWi_CheckNormalInfoValue( const TWLHWNormalInfo *pSrcInfo )
 {
 #pragma unused(pSrcInfo)
 	return TRUE;
@@ -171,9 +173,30 @@ static BOOL THWIi_CheckNormalValue( const TWLHWNormalInfo *pSrcInfo )
 
 
 // 新しいデフォルト値のセット
-void TWH_SetNormalDefaultValue( const TWLHWNormalInfo *pSrcInfo )
+void THW_SetDefaultNormalInfo( const TWLHWNormalInfo *pSrcInfo )
 {
 	MI_CpuCopy8( pSrcInfo, &s_normalDefault, sizeof(TWLHWNormalInfo) );
+}
+
+
+// 値のクリア
+void THW_ClearNormalInfoDirect( TWLHWNormalInfo *pDstInfo )
+{
+	MI_CpuCopy8( &s_normalDefault, pDstInfo, sizeof(TWLHWNormalInfo) );
+}
+
+
+// デフォルト値の取得
+const TWLHWNormalInfo *THW_GetDefaultNormalInfo( void )
+{
+	return &s_normalDefault;
+}
+
+
+// 現在値の取得
+const TWLHWNormalInfo *THW_GetNormalInfo( void )
+{
+	return GetHWN();
 }
 
 
@@ -185,10 +208,19 @@ void TWH_SetNormalDefaultValue( const TWLHWNormalInfo *pSrcInfo )
 TSFReadResult THW_ReadSecureInfo( void )
 {
 	s_isReadSecure = TRUE;
-	return TSF_ReadFile( (char *)TWL_HWINFO_SECURE_PATH, &s_hwInfoS, &s_secureParam, NULL );
+	s_isSignCheck = TRUE;
+	return TSF_ReadFile( (char *)TWL_HWINFO_SECURE_PATH, GetHWS(), &s_secureParam, NULL );
 }
 
-#ifdef HW_SECURE_INFO_WRITE_ENABLE_
+
+// 署名ノーチェックリード
+TSFReadResult THW_ReadSecureInfo_NoCheck( void )
+{
+	s_isReadSecure = TRUE;
+	s_isSignCheck = FALSE;
+	return TSF_ReadFile( (char *)TWL_HWINFO_SECURE_PATH, GetHWS(), &s_secureParam, NULL );
+}
+
 
 // ライト
 BOOL THW_WriteSecureInfo( const u8 *pPrivKeyDER )
@@ -196,7 +228,7 @@ BOOL THW_WriteSecureInfo( const u8 *pPrivKeyDER )
 	if( !s_isReadSecure ) {
 		return FALSE;
 	}
-	return THW_WriteSecureInfoDirect( &s_hwInfoS, pPrivKeyDER );
+	return THW_WriteSecureInfoDirect( GetHWS(), pPrivKeyDER );
 }
 
 
@@ -207,33 +239,43 @@ BOOL THW_WriteSecureInfoDirect( const TWLHWSecureInfo *pSrcInfo, const u8 *pPriv
 	TSFHeader header;
 	u8	digest[ SVC_SHA1_DIGEST_SIZE ];
 	u64	id = SCFG_ReadFuseData();
+	OSTick start = OS_GetTick();
+	
 	MI_CpuClear8( &header, sizeof(TSFHeader) );
 	header.version = TWL_HWINFO_SECURE_VERSION;
 	header.bodyLength  = sizeof( TWLHWSecureInfo );
 	
+#ifdef HW_SIGNATURE_ENABLE_
+	// 秘密鍵が指定されている場合のみ、署名作成
+	if( pPrivKeyDER ) {
 #ifdef USE_SHA1_SIGNATURE
-	SVC_CalcSHA1( digest, pSrcInfo, sizeof(TWLHWSecureInfo) );
+		SVC_CalcSHA1( digest, pSrcInfo, sizeof(TWLHWSecureInfo) );
 #else
-//	SVC_CalcHMACSHA1( digest, pSrcInfo, sizeof(TWLHWSecureInfo), &id, sizeof(u64) );
-	HMACSHA1( digest, (unsigned char *)pSrcInfo, sizeof(TWLHWSecureInfo), (u8 *)&id, sizeof(u64) );
+		SVC_CalcHMACSHA1( digest, pSrcInfo, sizeof(TWLHWSecureInfo), &id, sizeof(u64) );
 #endif
-	if( !ACSign_Encrypto( header.digest.rsa,
-						  pPrivKeyDER,
-						  digest,
-						  SVC_SHA1_DIGEST_SIZE ) ) {
-		return FALSE;
+		if( !ACSign_Encrypto( header.digest.rsa,
+							  pPrivKeyDER,
+							  digest,
+							  SVC_SHA1_DIGEST_SIZE ) ) {
+			return FALSE;
+		}
 	}
+#endif // HW_SIGNATURE_ENABLE_
+	
 	// ライト
 	if( !TSF_WriteFile( (char *)TWL_HWINFO_SECURE_PATH,
 						&header,
 						(const void *)pSrcInfo,
-						DISABLE_SAVE_COUNT ) ) {
+						NULL ) ) {
 		return FALSE;
 	}
+	
+	OS_TPrintf( "RSA sign encrypt time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+	
 	// 未リード時、staticバッファへのコピーを行う
 	if( !s_isReadSecure ) {
 		s_isReadSecure = TRUE;
-		MI_CpuCopy8( pSrcInfo, &s_hwInfoS, sizeof(TWLHWSecureInfo) );
+		MI_CpuCopy8( pSrcInfo, GetHWS(), sizeof(TWLHWSecureInfo) );
 	}
 	return TRUE;
 }
@@ -245,37 +287,43 @@ BOOL THW_RecoverySecureInfo( TSFReadResult err )
 	return TSF_RecoveryFile( err, (char *)TWL_HWINFO_SECURE_PATH, TWL_HWINFO_FILE_LENGTH );
 }
 
-#endif // HW_SECURE_INFO_WRITE_ENABLE_
-
 
 // 署名チェック
-static BOOL THWIi_CheckSignature( void *pTgt, u32 length, u8 *pSignature )
+static BOOL THWi_CheckSignature( void *pTgt, u32 length, u8 *pSignature )
 {
 	static u32 heap[ 4096 / sizeof(u32) ];
 	SVCSignHeapContext acmemoryPool;
 	u8 digest_sign[ SVC_SHA1_DIGEST_SIZE ];
 	u8 digest_calc[ SVC_SHA1_DIGEST_SIZE ];
 	u64	id = SCFG_ReadFuseData();
-
+	OSTick start = OS_GetTick();
+	
 #ifdef USE_SHA1_SIGNATURE
 	SVC_CalcSHA1( digest_calc, pTgt, length );
 #else
-//	SVC_CalcHMACSHA1( digest_calc, pTgt, length, (u8 *)&id, sizeof(u64) );
-	HMACSHA1( digest_calc, pTgt, length, (u8 *)&id, sizeof(u64) );
+	SVC_CalcHMACSHA1( digest_calc, pTgt, length, (u8 *)&id, sizeof(u64) );
 #endif
 	SVC_InitSignHeap( &acmemoryPool, heap, 4096 );
 	SVC_DecryptSign( &acmemoryPool, digest_sign, pSignature, s_publicKey );
-	return SVC_CompareSHA1( digest_sign, digest_calc );
+	
+	OS_TPrintf( "RSA sign decrypt time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+	
+	// ダイジェストチェック有効かどうかで返り値を変える。
+	{
+		BOOL retval = SVC_CompareSHA1( digest_sign, digest_calc );
+		return ( s_isSignCheck ) ? retval : TRUE;
+	}
 }
 
 
 // HW Secure情報 値チェック
-static BOOL THWIi_CheckSecureValue( const TWLHWSecureInfo *pSrcInfo )
+static BOOL THWi_CheckSecureInfoValue( const TWLHWSecureInfo *pSrcInfo )
 {
+	int serialNoLen = STD_StrLen( (const char *)pSrcInfo->serialNo );
 	if(
 		( pSrcInfo->region >= TWL_REGION_MAX ) ||
-		( ( pSrcInfo->serialNo.length != TWL_HWINFO_SERIALNO_LEN_AMERICA ) &&
-		  ( pSrcInfo->serialNo.length != TWL_HWINFO_SERIALNO_LEN_OTHERS ) )
+		( serialNoLen < TWL_HWINFO_SERIALNO_LEN_AMERICA ) ||
+		( serialNoLen > TWL_HWINFO_SERIALNO_LEN_OTHERS )
 		) {
 		return FALSE;
 	}
@@ -285,35 +333,35 @@ static BOOL THWIi_CheckSecureValue( const TWLHWSecureInfo *pSrcInfo )
 
 
 // 新しいデフォルト値のセット
-void TWH_SetSecureDefaultValue( const TWLHWSecureInfo *pSrcInfo )
+void THW_SetDefaultSecureInfo( const TWLHWSecureInfo *pSrcInfo )
 {
 	MI_CpuCopy8( pSrcInfo, &s_secureDefault, sizeof(TWLHWSecureInfo) );
 }
 
-const TWLHWNormalInfo *THW_GetDefaultNormalInfo( void );
-const TWLHWSecureInfo *THW_GetDefaultSecureInfo( void );
-const TWLHWNormalInfo *THW_GetNormalInfo( void );
-const TWLHWSecureInfo *THW_GetSecureInfo( void );
 
-const TWLHWNormalInfo *THW_GetDefaultNormalInfo( void )
+// 値のクリア
+void THW_ClearSecureInfoDirect( TWLHWSecureInfo *pDstInfo )
 {
-	return &s_normalDefault;
+	MI_CpuCopy8( &s_secureDefault, pDstInfo, sizeof(TWLHWSecureInfo) );
 }
 
+
+// デフォルト値の取得
 const TWLHWSecureInfo *THW_GetDefaultSecureInfo( void )
 {
 	return &s_secureDefault;
 }
 
-const TWLHWNormalInfo *THW_GetNormalInfo( void )
-{
-	return &s_hwInfoN;
-}
-
+// 現在値の取得
 const TWLHWSecureInfo *THW_GetSecureInfo( void )
 {
-	return &s_hwInfoS;
+	return GetHWS();
 }
+
+
+// ---------------------------------------------------------------------
+// デバッグ
+// ---------------------------------------------------------------------
 
 static void DEBUG_PrintDigest( u8 *pDigest )
 {
@@ -334,15 +382,5 @@ static void DEBUG_Dump( u8 *pSrc, u32 len )
 		OS_TPrintf( "%02x ", *pSrc++ );
 	}
 	OS_TPrintf( "\n" );
-}
-
-
-// HMAC SHA-1算出（現SDKではSVC_CalcHMACSHA1にバグがあるので、これを使用）
-static void HMACSHA1( u8 *pDigest, u8 *pSrc, u32 len, u8 *pKey, u32 keyLen )
-{
-	static SVCHMACSHA1Context s_hmac;
-	SVC_HMACSHA1Init( &s_hmac, pKey, keyLen );
-	SVC_HMACSHA1Update( &s_hmac, pSrc, len );
-	SVC_HMACSHA1GetHash( &s_hmac, pDigest );
 }
 

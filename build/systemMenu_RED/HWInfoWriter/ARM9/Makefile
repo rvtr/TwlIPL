@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlSDK - demos - simpleShoot-1
+# Project:  TwlIPL - SystemMenuRED - HWInfoWriter
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -16,8 +16,9 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-SUBDIRS					=	../../../libraries_sysmenu/acsign \
-							../../../libraries_sysmenu/settings
+SUBDIRS					=	\
+#							../../../libraries_sysmenu/sysmenu \
+#							../../../libraries_sysmenu/settings
 
 #----------------------------------------------------------------------------
 

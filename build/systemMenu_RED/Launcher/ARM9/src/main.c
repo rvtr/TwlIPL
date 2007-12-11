@@ -54,10 +54,9 @@ void TwlMain( void )
 	BOOL direct_boot = FALSE;
 	
 	// システムメニュー初期化----------
-	SYSM_Init( Alloc, Free );											// OS_Initの前でコール。
+	SYSM_Init( Alloc, Free );									// OS_Initは、本関数内でコールしているので、コールする必要なし。
 	
 	// OS初期化------------------------
-    OS_Init();
 	OS_InitTick();
     PM_Init();
 	

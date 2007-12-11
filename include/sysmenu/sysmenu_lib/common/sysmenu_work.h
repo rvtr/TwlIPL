@@ -62,22 +62,25 @@ typedef struct Relocate_Info
 // SYSM共有ワーク構造体
 typedef struct SYSM_work {
 	Relocate_Info	romRelocateInfo[RELOCATE_INFO_NUM];	// ROM再配置情報（arm9,arm7それぞれltdとflxで最大4つ）
-	vu16			isARM9Start :1;					// ARM9スタートフラグ
-	vu16			isHotStart :1;					// Hot/Coldスタート判定
-	vu16			isValidResetParam :1;			// リセットパラメータ有効
-	vu16			isValidTSD :1;					// NITRO設定データ無効フラグ
-	vu16			isLogoSkip :1;					// ロゴデモスキップ
-	vu16			isOnDebugger :1;				// デバッガ動作か？
-	vu16			isExistCard :1;					// 有効なNTR/TWLカードが存在するか？
-	vu16			isCardStateChanged :1;			// カード状態更新フラグ
-	vu16			isLoadSucceeded :1;				// アプリロード完了？
-	vu16			isCardBoot :1;					// カードブートか？
+	vu32			isARM9Start :1;					// ARM9スタートフラグ
+	vu32			isHotStart :1;					// Hot/Coldスタート判定
+	vu32			isValidResetParam :1;			// リセットパラメータ有効
+	vu32			isValidTSD :1;					// NITRO設定データ無効フラグ
+	vu32			isLogoSkip :1;					// ロゴデモスキップ
+	vu32			isOnDebugger :1;				// デバッガ動作か？
+	vu32			isExistCard :1;					// 有効なNTR/TWLカードが存在するか？
+	vu32			isCardStateChanged :1;			// カード状態更新フラグ
+	vu32			isLoadSucceeded :1;				// アプリロード完了？
+	vu32			isCardBoot :1;					// カードブートか？
+	vu32			isBrokenHWNormalInfo :1;		// HWノーマル情報が破損している。
+	vu32			isBrokenHWSecureInfo :1;		// HWセキュア情報が破損している。
+	vu32			isResetRTC :1;					// RTCリセット発生
 #ifdef DEBUG_USED_CARD_SLOT_B_
-	vu16			isValidCardBanner :1;
-	vu16			is1stCardChecked :1;
-	vu16			rsv :4;
+	vu32			isValidCardBanner :1;
+	vu32			is1stCardChecked :1;
+	vu32			rsv :18;
 #else
-	vu16			rsv :6;
+	vu32			rsv :20;
 #endif
 	
 	u16				cardHeaderCrc16;				// カード検出時に算出したROMヘッダCRC16（ARM9側でコピーして使用する側）

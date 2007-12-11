@@ -442,7 +442,7 @@ int TP_CalibrationMain( void )
 		// キャリブレーションを設定前の状態に戻す。
 		{
 			TPCalibrateParam calibrate;
-			MI_CpuCopy16( TSD_GetTPCalibration(), &s_pTPC->calibTemp, sizeof(TWLTPCalibData) );
+			TSD_GetTPCalibration( &s_pTPC->calibTemp );
 			(void)TP_CalcCalibrateParam(
 					&calibrate,
 					s_pTPC->calibTemp.data.raw_x1, s_pTPC->calibTemp.data.raw_y1, (u16)s_pTPC->calibTemp.data.dx1, (u16)s_pTPC->calibTemp.data.dy1,

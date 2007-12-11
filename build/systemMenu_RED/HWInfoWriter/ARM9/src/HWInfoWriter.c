@@ -32,6 +32,8 @@ const TWLHWNormalInfo *THW_GetNormalInfo( void );
 const TWLHWSecureInfo *THW_GetSecureInfo( void );
 
 // function's prototype declaration---------------------
+static void ReadTWLSettings( void );
+static void ModifyLanguage( u8 region );
 static void ReadPrivateKey( void );
 static void ReadHWInfoFile( void );
 static void WriteHWInfoFile( u8 region );
@@ -50,6 +52,8 @@ RTCDrawProperty g_rtcDraw = {
 // static variable -------------------------------------
 static u16 s_csr;
 static u8 *s_pPrivKeyBuffer = NULL;
+static TSFReadResult (*s_pReadSecureInfoFunc)( void );
+static BOOL s_isReadTSD;
 
 // const data  -----------------------------------------
 static const u16 *const s_pStrWriter[ WRITER_ELEMENT_NUM ] = {
@@ -82,6 +86,27 @@ static const MenuParam s_writerParam = {
 	(const u16 **)&s_pStrWriter,
 };
 
+static const u32 s_langBitmapList[ TWL_REGION_MAX ] = {
+	TWL_LANG_BITMAP_JAPAN,
+	TWL_LANG_BITMAP_AMERICA,
+	TWL_LANG_BITMAP_EUROPE,
+	TWL_LANG_BITMAP_AUSTRALIA,
+	TWL_LANG_BITMAP_CHINA,
+	TWL_LANG_BITMAP_KOREA,
+};
+
+static char *strLanguage[] = {
+	(char *)"LANG_JAPANESE",
+	(char *)"LANG_ENGLISH",
+	(char *)"LANG_FRENCH",
+	(char *)"LANG_GERMAN",
+	(char *)"LANG_ITALIAN",
+	(char *)"LANG_SPANISH",
+	(char *)"LANG_CHINESE",
+	(char *)"LANG_KOREAN",
+};
+
+
 //======================================================
 // HW情報ライター
 //======================================================
@@ -100,6 +125,7 @@ void HWInfoWriterInit( void )
 	GetAndDrawRTCData( &g_rtcDraw, TRUE );
 	
 	ACSign_SetAllocFunc( Alloc, Free );
+	ReadTWLSettings();
 	ReadPrivateKey();
 	ReadHWInfoFile();
 //	VerifyHWInfo();
@@ -145,12 +171,55 @@ void HWInfoWriterMain( void )
 }
 
 
+// TWL設定データのリード
+static void ReadTWLSettings( void )
+{
+	s_isReadTSD = TSD_ReadSettings();
+	if( s_isReadTSD ) {
+		OS_TPrintf( "TSD read succeeded.\n" );
+	}else {
+		OS_TPrintf( "TSD read failed.\n" );
+	}
+}
+
+
+// 言語コードをリージョン値に合わせて修正する。
+static void ModifyLanguage( u8 region )
+{
+	u32 langBitmap = s_langBitmapList[ region ];
+	u8  nowLanguage = TSD_GetLanguage();
+	
+	// TSDが読み込めていないなら、何もせずリターン
+	if( !s_isReadTSD ) {
+		return;
+	}
+	
+	if( langBitmap & ( 0x0001 << nowLanguage ) ) {
+		OS_TPrintf( "Language no change.\n" );
+	}else {
+		int i;
+		for( i = 0; i < TWL_LANG_CODE_MAX; i++ ) {
+			if( langBitmap & ( 0x0001 << i ) ) {
+				break;
+			}
+		}
+		TSD_SetLanguage( (TWLLangCode)i );
+		TSD_SetFlagCountry( FALSE );				// ※ついでに国コードもクリアしておく。
+		TSD_SetCountry( TWL_COUNTRY_UNDEFINED );
+		TSD_WriteSettings();
+		OS_TPrintf( "Language Change \"%s\" -> \"%s\"\n",
+					strLanguage[ nowLanguage ], strLanguage[ TSD_GetLanguage() ] );
+	}
+}
+
+
 // 秘密鍵のリード
 static void ReadPrivateKey( void )
 {
 	BOOL result = FALSE;
 	u32 keyLength;
 	FSFile file;
+	OSTick start = OS_GetTick();
 	
 	FS_InitFile( &file );
 	if( !FS_OpenFileEx( &file, "rom:key/privKeyHWInfo.der", FS_FILEMODE_R ) ) {
@@ -168,9 +237,20 @@ static void ReadPrivateKey( void )
 		}
 		FS_CloseFile( &file );
 	}
+	
 	if( !result && s_pPrivKeyBuffer ) {
 		Free( s_pPrivKeyBuffer );
 		s_pPrivKeyBuffer = NULL;
+	}
+	OS_TPrintf( "PrivKey read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+	
+	if( s_pPrivKeyBuffer ) {
+		// 秘密鍵が有効なら、署名ありのアクセス
+		s_pReadSecureInfoFunc = THW_ReadSecureInfo;
+	}else {
+		// 秘密鍵が無効なら、署名なしのアクセス
+		s_pReadSecureInfoFunc = THW_ReadSecureInfo_NoCheck;
+		PutStringUTF16( 14 * 8, 0 * 8, TXT_COLOR_RED, (const u16 *)L"[No Signature MODE]" );
 	}
 }
 
@@ -179,20 +259,25 @@ static void ReadPrivateKey( void )
 static void ReadHWInfoFile( void )
 {
 	TSFReadResult retval;
+	OSTick start = OS_GetTick();
 	
 	retval = THW_ReadNormalInfo();
 	if( retval == TSF_READ_RESULT_SUCCEEDED ) {
-		OS_TPrintf( "HW Normal Info Read succeeded.\n" );
+		OS_TPrintf( "HW Normal Info read succeeded.\n" );
 	}else {
-		OS_TPrintf( "HW Normal Info Read failed.\n" );
+		OS_TPrintf( "HW Normal Info read failed.\n" );
 	}
 	
-	retval = THW_ReadSecureInfo();
+	OS_TPrintf( "HW Normal Info read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+	
+	start = OS_GetTick();
+	retval = s_pReadSecureInfoFunc();
 	if( retval == TSF_READ_RESULT_SUCCEEDED ) {
-		OS_TPrintf( "HW Secure Info Read succeeded.\n" );
+		OS_TPrintf( "HW Secure Info read succeeded.\n" );
 	}else {
-		OS_TPrintf( "HW Secure Info Read failed.\n" );
+		OS_TPrintf( "HW Secure Info read failed.\n" );
 	}
+	OS_TPrintf( "HW Secure Info read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 }
 
 
@@ -221,6 +306,8 @@ static void WriteHWInfoFile( u8 region )
 	}else {
 		(void)PutStringUTF16( ( MSG_X + 18 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_RED, pMsgFailed );
 	}
+	
+	ModifyLanguage( region );
 	
 	// メッセージを一定時間表示して消去
 	DispMessage( 0, 0, TXT_COLOR_NULL, NULL );
@@ -257,14 +344,8 @@ static BOOL WriteHWSecureInfoFile( u8 region )
 	BOOL isWrite = TRUE;
 	TSFReadResult result;
 	
-	// 秘密鍵が読み込めていないなら、エラー
-	if( s_pPrivKeyBuffer == NULL ) {
-		OS_TPrintf( "Private key not read.\n" );
-		return FALSE;
-	}
-	
 	// ファイルのリード
-	result = THW_ReadSecureInfo();
+	result = s_pReadSecureInfoFunc();
 	
 	// リードに失敗したらリカバリ
 	if( result != TSF_READ_RESULT_SUCCEEDED ) {
@@ -277,6 +358,10 @@ static BOOL WriteHWSecureInfoFile( u8 region )
 	// リージョンのセット
 	THW_SetRegion( region );
 	
+	// 対応言語ビットマップのセット
+	THW_SetValidLanguageBitmap( s_langBitmapList[ region ] );
+	
+	// ライト
 	if( isWrite &&
 		!THW_WriteSecureInfo( s_pPrivKeyBuffer ) ) {
 		isWrite = FALSE;

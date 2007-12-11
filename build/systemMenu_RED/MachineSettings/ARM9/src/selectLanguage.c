@@ -107,15 +107,10 @@ void SelectLanguageInit( void )
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// リージョンの取得
-	if( !SYSM_IsValidTSD() ||
-		( TSD_GetRegion() >= TWL_REGION_MAX ) ) {
-		s_regionCode = (TWLRegion)TWL_DEFAULT_REGION;
-	}else {
-		s_regionCode = (TWLRegion)TSD_GetRegion();
-	}
+	s_regionCode = (TWLRegion)THW_GetRegion();
 	
 	// 言語の取得
-	if( !SYSM_IsValidTSD() ||
+	if( !g_isValidTSD ||
 		( TSD_GetLanguage() >= TWL_LANG_CODE_MAX ) ) {
 		temp_langCode = TWL_LANG_ENGLISH;
 	}else {

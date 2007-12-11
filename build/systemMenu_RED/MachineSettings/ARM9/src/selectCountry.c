@@ -148,14 +148,9 @@ void SelectCountryInit( void )
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// 設定済みリージョンと国名コードの取得
-	if( !SYSM_IsValidTSD() ||
-		( TSD_GetRegion() >= TWL_REGION_MAX ) ) {
-		s_regionCode = (TWLRegion)TWL_DEFAULT_REGION;
-	}else {
-		s_regionCode = (TWLRegion)TSD_GetRegion();
-	}
+	s_regionCode = (TWLRegion)THW_GetRegion();
 	
-	if( !SYSM_IsValidTSD() ||
+	if( !g_isValidTSD ||
 		( TSD_GetCountry() >= TWL_COUNTRY_MAX ) ) {
 		s_countryCode = (TWLCountryCode)0;
 	}else {

@@ -31,15 +31,24 @@ extern "C" {
 
 
 // define data ------------------------------------
-#define TWL_DEFAULT_REGION				0							// ƒfƒtƒHƒ‹ƒg‚ÌƒŠ[ƒWƒ‡ƒ“@‚¢‚éHH
-#define TWL_SETTINGS_DATA_VERSION		1							// TWLÝ’èƒf[ƒ^ƒtƒH[ƒ}ƒbƒgƒo[ƒWƒ‡ƒ“(ŠJŽnNo.:1)
-#define TWL_NICKNAME_LENGTH				NTR_NICKNAME_LENGTH			// ƒjƒbƒNƒl[ƒ€’·
-#define TWL_NICKNAME_BUFFERSIZE			( ( TWL_NICKNAME_LENGTH + 1 ) * 2 )	// ƒjƒbƒNƒl[ƒ€ƒoƒbƒtƒ@ƒTƒCƒY
-#define TWL_COMMENT_LENGTH				NTR_COMMENT_LENGTH			// ƒRƒƒ“ƒg’·
-#define TWL_COMMENT_BUFFERSIZE			( ( TWL_COMMENT_LENGTH + 1 ) * 2 )	// ƒRƒƒ“ƒgƒoƒbƒtƒ@ƒTƒCƒY
-#define TWL_FAVORITE_COLOR_MAX_NUM		NTR_FAVORITE_COLOR_MAX_NUM	// D‚«‚ÈF‚ÌÅ‘å”
-#define TWL_BACKLIGHT_LEVEL_MAX			22							// TWLƒoƒbƒNƒ‰ƒCƒgÅ‘å‹P“xƒŒƒxƒ‹
-#define TSD_TEMP_BUFFER_SIZE			( sizeof(TSDStore) * 2 )	// TSD_ReadTWLSettings‚Å•K—v‚ÈTempBufferƒTƒCƒY
+#define TWL_SETTINGS_FILE_LENGTH				( 16 * 1024 )
+#define TWL_SETTINGS_DATA_VERSION				1							// TWLÝ’èƒf[ƒ^ƒtƒH[ƒ}ƒbƒgƒo[ƒWƒ‡ƒ“(ŠJŽnNo.:1)
+// ƒI[ƒi[î•ñ
+#define TWL_NICKNAME_LENGTH						NTR_NICKNAME_LENGTH			// ƒjƒbƒNƒl[ƒ€’·
+#define TWL_NICKNAME_BUFFERSIZE					( ( TWL_NICKNAME_LENGTH + 1 ) * 2 )	// ƒjƒbƒNƒl[ƒ€ƒoƒbƒtƒ@ƒTƒCƒY
+#define TWL_COMMENT_LENGTH						NTR_COMMENT_LENGTH			// ƒRƒƒ“ƒg’·
+#define TWL_COMMENT_BUFFERSIZE					( ( TWL_COMMENT_LENGTH + 1 ) * 2 )	// ƒRƒƒ“ƒgƒoƒbƒtƒ@ƒTƒCƒY
+#define TWL_FAVORITE_COLOR_MAX_NUM				NTR_FAVORITE_COLOR_MAX_NUM	// D‚«‚ÈF‚ÌÅ‘å”
+// ƒoƒbƒNƒ‰ƒCƒg‹P“x
+#define TWL_BACKLIGHT_LEVEL_MAX					22							// TWLƒoƒbƒNƒ‰ƒCƒgÅ‘å‹P“xƒŒƒxƒ‹
+// ƒyƒAƒŒƒ“ƒ^ƒ‹ƒRƒ“ƒgƒ[ƒ‹
+#define TWL_PARENTAL_CONTROL_RATING_AGE_MAX		31
+#define TWL_PARENTAL_CONTROL_PASSWORD_LENGTH	4               			// ˆÃØ”Ô†‚ÌŒ…”
+#define TWL_PARENTAL_CONTROL_PASSWORD_DEFAULT	"0000"          			// ƒfƒtƒHƒ‹ƒgˆÃØ”Ô†
+#define TWL_PARENTAL_CONTROL_SECRET_ANSWER_LENGTH_MIN		6   			// ”é–§‚ÌŽ¿–â‚Ì‰ñ“šAUTF-16‚ÅÅ¬ MIN •¶Žš
+#define TWL_PARENTAL_CONTROL_SECRET_ANSWER_LENGTH_MAX		32     			// ”é–§‚ÌŽ¿–â‚Ì‰ñ“šAUTF-16‚ÅÅ‘å MAX •¶Žš
+// ƒCƒ“ƒXƒg[ƒ‹Eƒ\ƒtƒg”
+#define TWL_FREE_SOFT_BOX_COUNT_MAX				35   						// NANDƒAƒvƒŠ‚ÌÅ‘å‹ó‚«Box”, ‚±‚ê - freeSoftBoxCount‚ÅƒCƒ“ƒXƒg[ƒ‹Soft”
 
 
 // Œ¾ŒêƒR[ƒh
@@ -59,42 +68,12 @@ typedef enum TWLLangCode{
 	TWL_LANG_CODE_MAX
 }TWLLangCode;
 
-#define TWL_LANG_CODE_MAX_WW		TWL_LANG_SPANISH
-
-// NTR Œ¾Œê‚Æ‚Ì‘Î‰žƒ}ƒbƒv
-#if 0
-const u8 LangCodeMapFromTWLtoNTR[][ 2 ] = {
-	{ TWL_LANG_JAPANESE,			NTR_LANG_JAPANESE	},
-	{ TWL_LANG_ENGLISH,				NTR_LANG_ENGLISH	},
-	{ TWL_LANG_FRENCH,				NTR_LANG_FRENCH		},
-	{ TWL_LANG_GERMAN,				NTR_LANG_GERMAN		},
-	{ TWL_LANG_ITALIAN,				NTR_LANG_ITALIAN	},
-	{ TWL_LANG_SPANISH,				NTR_LANG_SPANISH	},
-	{ TWL_LANG_SIMP_CHINESE,		NTR_LANG_CHINESE	},
-	{ TWL_LANG_KOREAN,				NTR_LANG_KOREAN		},
-//	{ TWL_LANG_DUTCH,				NTR_LANG_ENGLISH	},
-//	{ TWL_LANG_TRAD_CHINESE,		NTR_LANG_CHINESE	}
-};
-#endif
-
-#define TWL_LANG_BITMAP_JAPAN		( ( 0x0001 << TWL_LANG_JAPANESE ) ) 	// JPN”Å‚Å‚Ì‘Î‰žŒ¾Œêƒrƒbƒgƒ}ƒbƒv
-#define TWL_LANG_BITMAP_AMERICA		( ( 0x0001 << TWL_LANG_ENGLISH ) | \
-									  ( 0x0001 << TWL_LANG_FRENCH  ) | \
-									  ( 0x0001 << TWL_LANG_SPANISH  ) ) 	// AME”Å‚Å‚Ì‘Î‰žŒ¾Œêƒrƒbƒgƒ}ƒbƒv
-#define TWL_LANG_BITMAP_EUROPE		( ( 0x0001 << TWL_LANG_ENGLISH ) | \
-									  ( 0x0001 << TWL_LANG_FRENCH  ) | \
-									  ( 0x0001 << TWL_LANG_GERMAN  ) | \
-									  ( 0x0001 << TWL_LANG_ITALIAN  ) | \
-									  ( 0x0001 << TWL_LANG_SPANISH  ) ) 	// EUR”Å‚Å‚Ì‘Î‰žŒ¾Œêƒrƒbƒgƒ}ƒbƒv
-#define TWL_LANG_BITMAP_AUSTRALIA	( ( 0x0001 << TWL_LANG_ENGLISH  ) ) 	// AUS”Å‚Å‚Ì‘Î‰žŒ¾Œêƒrƒbƒgƒ}ƒbƒv
-#define TWL_LANG_BITMAP_CHINA		( ( 0x0001 << TWL_LANG_SIMP_CHINESE ) ) // CHI”Å‚Å‚Ì‘Î‰žŒ¾Œêƒrƒbƒgƒ}ƒbƒv
-#define TWL_LANG_BITMAP_KOREA		( ( 0x0001 << TWL_LANG_KOREAN ) ) 		// KOR”Å‚Å‚Ì‘Î‰žŒ¾Œêƒrƒbƒgƒ}ƒbƒv
-
 // “ú•t
 #define TWLDate						NTRDate
 
 // ƒAƒ‰[ƒ€
 #define TWLAlarm					NTRAlarm
+
 
 // TPƒLƒƒƒŠƒuƒŒ[ƒVƒ‡ƒ“iNTR‚Æ‚Ìˆá‚¢‚ÍA—\–ñ—Ìˆæ‚ ‚èj
 typedef struct TWLTPCalibData {
@@ -102,37 +81,19 @@ typedef struct TWLTPCalibData {
 	u8				rsv[ 8 ];
 }TWLTPCalibData;
 
-// ƒjƒbƒNƒl[ƒ€iNTR‚Æ‚Ìˆá‚¢‚ÍA•¶Žš—ñ‚ÉI’[‚ ‚èj
-typedef struct TWLNickname{
-	u16				buffer[ TWL_NICKNAME_LENGTH + 1 ];	// ƒjƒbƒNƒl[ƒ€iUnicode(UTF16)‚ÅÅ‘å10•¶ŽšAI’[ƒR[ƒh‚ ‚èj
-	u8				length;						// •¶Žš”
-	u8				rsv;
-}TWLNickname;		// 24byte
-
-// ƒRƒƒ“ƒgiNTR‚Æ‚Ìˆá‚¢‚ÍA•¶Žš—ñ‚ÉI’[‚ ‚èj
-typedef struct TWLComment{
-	u16				buffer[ TWL_COMMENT_LENGTH + 1 ];	//ƒRƒƒ“ƒgiUnicode(UTF16)‚ÅÅ‘å26•¶ŽšAI’[ƒR[ƒh‚ ‚èj
-	u8				length;						// •¶Žš”
-	u8				rsv;
-}TWLComment;		// 54byte
 
 // ƒI[ƒi[î•ñ
 typedef struct TWLOwnerInfo{
 	u8				userColor : 4;				// D‚«‚ÈF
 	u8				rsv : 4;					// —\–ñB
+	u8				pad;						// ƒpƒfƒBƒ“ƒO
 	TWLDate			birthday;					// ¶”NŒŽ“ú
-	u8				pad;
-	TWLNickname		nickname;					// ƒjƒbƒNƒl[ƒ€
-	TWLComment		comment;					// ƒRƒƒ“ƒg
+	u16				nickname[ TWL_NICKNAME_LENGTH + 1 ];	// ƒjƒbƒNƒl[ƒ€iI’[‚ ‚èj
+	u16				comment[ TWL_COMMENT_LENGTH + 1 ];		// ƒRƒƒ“ƒgiI’[‚ ‚èj
 }TWLOwnerInfo;		// 80byte
 
 
 // ƒyƒAƒŒƒ“ƒ^ƒ‹ƒRƒ“ƒgƒ[ƒ‹
-#define TWL_PARENTAL_CONTROL_PASSWORD_LENGTH     4                  // ˆÃØ”Ô†‚ÌŒ…”
-#define TWL_PARENTAL_CONTROL_PASSWORD_DEFAULT    "0000"             // ƒfƒtƒHƒ‹ƒgˆÃØ”Ô†
-#define TWL_PARENTAL_CONTROL_SECRET_ANSWER_LENGTH_MIN 6             // ”é–§‚ÌŽ¿–â‚Ì‰ñ“šAUTF-16‚ÅÅ¬ MIN •¶Žš
-#define TWL_PARENTAL_CONTROL_SECRET_ANSWER_LENGTH_MAX 32            // ”é–§‚ÌŽ¿–â‚Ì‰ñ“šAUTF-16‚ÅÅ‘å MAX •¶Žš
-
 // R¸’c‘Ì
 typedef enum TWLRatingOgn {
 	TWL_RATING_OGN_CERO          = 0,   // “ú–{
@@ -147,10 +108,11 @@ typedef enum TWLRatingOgn {
 	TWL_RATING_OGN_MAX           = 8
 }TWLRatingOgn;
 
+// ƒf[ƒ^
 typedef struct TWLParentalControl {
 	TWLRatingOgn	ogn;				// R¸’c‘Ì
 //	u8				flags;				// Wii‚Å‚ÍAPARENTAL_CONTROL_USEƒtƒ‰ƒO‚Ì‚Ý --> isSetParentalControl ‚ª‚ ‚é‚Ì‚ÅŒ»ó•K—v‚È‚µ
-	u8				rating;				// ƒŒ[ƒeƒBƒ“ƒOi”N—îj’l
+	u8				ratingAge;			// ƒŒ[ƒeƒBƒ“ƒOi”N—îj’l
 	char			password[ TWL_PARENTAL_CONTROL_PASSWORD_LENGTH + 1 ];   // ˆÃØ”Ô†AI’[ƒR[ƒh‚ ‚è
 	u8				secretQuestion;     // ”é–§‚ÌŽ¿–â•¶ ID
 	u8				rsv_A;
@@ -158,18 +120,6 @@ typedef struct TWLParentalControl {
 	u16				secretAnswerLength; // ”é–§‚ÌŽ¿–â‚Ö‚Ì‰ñ“š•¶Žš”iWii‚Åu16,LENGTH_MAX ‚ª•ÛŽ‚Å‚«‚é‚©‚çu8‚Å‚à‚¢‚¢‚Ì‚Å‚ÍHj
 //	u8				rsv_B[ 16 ]; 		// íœ—\’èi16ƒoƒCƒg‚ÌƒŒ[ƒeƒBƒ“ƒOî•ñ‚ðŽ‚Â‚Ì‚ÍƒAƒvƒŠ‘¤‚ÌROMƒwƒbƒ_j
 }TWLParentalControl;
-
-
-// ƒCƒ“ƒXƒg[ƒ‹Eƒ\ƒtƒg”
-#define TWL_FREE_SOFT_BOX_COUNT_MAX  35     // NANDƒAƒvƒŠ‚ÌÅ‘å‹ó‚«Box”, ‚±‚ê - freeSoftBoxCount‚ÅƒCƒ“ƒXƒg[ƒ‹Soft”
-
-
-// TWLÝ’èƒf[ƒ^ƒwƒbƒ_
-typedef struct TWLSettingsHeader{
-	u8					version;					// ƒf[ƒ^ver.
-	u8					saveCount;					// ƒZ[ƒuƒJƒEƒ“ƒg”
-	u16					dataLength;					// ƒf[ƒ^’·
-}TWLSettingsHeader;
 
 
 // TWLÝ’èƒf[ƒ^iŠî–{A‰ß‹ŽverŒÝŠ·‚ðl—¶‚µ‚ÄA’Ç‰Á‚µ‚©‚µ‚È‚¢•ûj‚ÅBj
@@ -192,26 +142,18 @@ typedef struct TWLSettingsData{
 		u32		isAvailableBatteryExtension : 1;    // ƒoƒbƒeƒŠƒGƒNƒXƒeƒ“ƒVƒ‡ƒ“ƒ‚[ƒh‚Ì—LŒø‰»^–³Œø‰»
 		u32		rsv : 19;
 	}flags;
-	u8					region;
-	TWLCountryCode		country;					// ‘ƒR[ƒh
+	u8					rsv2[ 3 ];					// —\–ñ
+	u8					country;					// ‘ƒR[ƒh
 	u8					language;					// Œ¾Œê(NTR‚Æ‚Ìˆá‚¢‚ÍAƒf[ƒ^ƒTƒCƒY8bit)
 	u8					backLightBrightness;		// ƒoƒbƒNƒ‰ƒCƒg‹P“x(NTR‚Æ‚Ìˆá‚¢‚ÍAƒf[ƒ^ƒTƒCƒY8bit)
+	u8					freeSoftBoxCount;			// ƒCƒ“ƒXƒg[ƒ‹‰Â”\‚ÈNANDƒAƒvƒŠŒÂ”
 	u8					rtcLastSetYear;				// RTC‚Ì‘O‰ñÝ’è”N
 	s64					rtcOffset;					// RTCÝ’èŽž‚ÌƒIƒtƒZƒbƒg’liƒ†[ƒU[‚ªRTCÝ’è‚ð•ÏX‚·‚é“x‚É‚»‚Ì’l‚É‰ž‚¶‚Ä‘Œ¸‚µ‚Ü‚·Bj
 	TWLOwnerInfo		owner;						// ƒI[ƒi[î•ñ
 	TWLAlarm			alarm;						// ƒAƒ‰[ƒ€
 	TWLTPCalibData		tp;							// ƒ^ƒbƒ`ƒpƒlƒ‹ƒLƒƒƒŠƒuƒŒ[ƒVƒ‡ƒ“ƒf[ƒ^
 	TWLParentalControl	parental;
-	u8					freeSoftBoxCount;			// ƒCƒ“ƒXƒg[ƒ‹‰Â”\‚ÈNANDƒAƒvƒŠŒÂ”
 }TWLSettingsData;	// xxbyte
-
-
-// TWLÝ’èƒf[ƒ^•Û‘¶ƒtƒH[ƒ}ƒbƒg
-typedef struct TSDStore {
-	u8					digest[ SVC_SHA1_DIGEST_SIZE ];				// SHA1ƒ_ƒCƒWƒFƒXƒg
-	TWLSettingsHeader	header;
-	TWLSettingsData		tsd;
-}TSDStore;
 
 
 #ifdef SDK_ARM9
@@ -219,15 +161,21 @@ typedef struct TSDStore {
 //=========================================================
 // ƒOƒ[ƒoƒ‹•Ï”
 //=========================================================
-extern TWLSettingsData   *g_pTSD;
-#define GetTSD()		( g_pTSD )
+extern TWLSettingsData s_settings;
+#define GetTSD()		( &s_settings )
 
 //=========================================================
 // NANDƒtƒ@ƒCƒ‹‚Ö‚ÌƒŠ[ƒhƒ‰ƒCƒgŠÖ”
 //=========================================================
-extern BOOL TSD_IsReadSettings( void );
-extern BOOL TSD_ReadSettings( TSDStore (*pTempBuffer)[2] );	// TSD_TEMP_BUFFER_SIZE‚ÌpTempBuffer‚ª•K—vB
-extern BOOL TSD_WriteSettings( void );						// æ‚ÉNSD_ReadSettings‚ðŽÀs‚µ‚Ä‚¨‚­•K—v‚ª‚ ‚éB
+	// “à•”•Ï”‚Ö‚ÌƒŠ[ƒh
+extern BOOL TSD_ReadSettings( void );
+	// “à•”•Ï”‚Ì’l‚Ìƒ‰ƒCƒgiæ‚ÉƒŠ[ƒh‚µ‚Ä‚¨‚­•K—v‚ª‚ ‚éj
+extern BOOL TSD_WriteSettings( void );
+	// ’¼Ú’l‚ðŽw’è‚µ‚Ä‚Ìƒ‰ƒCƒgiŠJ”­—pj
+extern BOOL TSD_WriteSettingsDirect( const TWLSettingsData *pSrc );
+	// “à•”•Ï”‚Ì’l‚ÌƒNƒŠƒA
+extern void TSD_ClearSettings( void );
+
 
 //=========================================================
 // ƒf[ƒ^Žæ“¾iTSD_ReadSettings‚Å“à•”ƒ[ƒN‚É“Ç‚Ýo‚µ‚½î•ñ‚ÌŽæ“¾j
@@ -236,19 +184,49 @@ extern BOOL TSD_WriteSettings( void );						// æ‚ÉNSD_ReadSettings‚ðŽÀs‚µ‚Ä‚¨‚
 // ‘ƒR[ƒh‚ÌŽæ“¾B
 static inline TWLCountryCode TSD_GetCountry( void )
 {
-	return	GetTSD()->country;
+	return	(TWLCountryCode)GetTSD()->country;
 }
 
-// ƒŠ[ƒWƒ‡ƒ“‚ÌŽæ“¾B
-static inline u8 TSD_GetRegion( void )
+// Œ¾ŒêƒR[ƒh‚ÌŽæ“¾
+static inline TWLLangCode TSD_GetLanguage( void )
 {
-	return	(u8)GetTSD()->region;
+  	return	(TWLLangCode)GetTSD()->language;
+}
+
+// ƒoƒbƒNƒ‰ƒCƒg‹P“xŽæ“¾
+static inline int TSD_GetBacklightBrightness( void )
+{
+	return	(int)GetTSD()->backLightBrightness;
+}
+
+// ƒtƒŠ[ƒ\ƒtƒgBOX”‚ÌŽæ“¾
+static inline u8 TSD_GetFreeSoftBoxCount( void )
+{
+  	return	GetTSD()->freeSoftBoxCount;
+}
+
+// RTC‚Ì‘O‰ñƒZƒbƒg‚µ‚½”N‚ÌŽæ“¾
+static inline u8 TSD_GetRTCLastSetYear( void )
+{
+	return	GetTSD()->rtcLastSetYear;
+}
+
+// RTCƒIƒtƒZƒbƒg’l‚ÌŽæ“¾
+static inline s64 TSD_GetRTCOffset( void )
+{
+	return	GetTSD()->rtcOffset;
 }
 
 // ƒI[ƒi[î•ñ‘S‘Ì‚ÌŽæ“¾B
-static inline TWLOwnerInfo *TSD_GetOwnerInfo( void )
+static inline void TSD_GetOwnerInfo( TWLOwnerInfo *pDst )
 {
-	return	&GetTSD()->owner;
+	MI_CpuCopy8( &GetTSD()->owner, pDst, sizeof(TWLOwnerInfo) );
+}
+
+// ƒI[ƒi[î•ñ‘S‘Ì‚Ö‚Ìƒ|ƒCƒ“ƒ^‚ÌŽæ“¾B
+static inline const TWLOwnerInfo *TSD_GetOwnerInfoPtr( void )
+{
+	return	(const TWLOwnerInfo *)&GetTSD()->owner;
 }
 
 // D‚«‚ÈF‚ÌŽæ“¾B
@@ -258,57 +236,63 @@ static inline u8 TSD_GetUserColor( void )
 }
 
 // ’a¶“ú‚ÌŽæ“¾B
-static inline TWLDate *TSD_GetBirthday( void )
+static inline void TSD_GetBirthday( TWLDate *pDst )
 {
-	return	&GetTSD()->owner.birthday;
+	MI_CpuCopy8( &GetTSD()->owner.birthday, pDst, sizeof(TWLDate) );
+}
+
+// ’a¶“ú‚Ö‚Ìƒ|ƒCƒ“ƒ^‚ÌŽæ“¾B
+static inline const TWLDate *TSD_GetBirthdayPtr( void )
+{
+	return	(const TWLDate *)&GetTSD()->owner.birthday;
 }
 
 // ƒjƒbƒNƒl[ƒ€‚ÌŽæ“¾B
-static inline TWLNickname *TSD_GetNickname( void )
+static inline void TSD_GetNickname( u16 *pDst )
 {
-	return	&GetTSD()->owner.nickname;
+	MI_CpuCopy16( GetTSD()->owner.nickname, pDst, TWL_NICKNAME_BUFFERSIZE );
+}
+
+// ƒjƒbƒNƒl[ƒ€‚Ö‚Ìƒ|ƒCƒ“ƒ^‚ÌŽæ“¾B
+static inline const u16 *TSD_GetNicknamePtr( void )
+{
+	return	(const u16 *)&GetTSD()->owner.nickname;
 }
 
 // ƒRƒƒ“ƒg‚ÌŽæ“¾B
-static inline TWLComment *TSD_GetComment( void )
+static inline void TSD_GetComment( u16 *pDst )
 {
-	return	&GetTSD()->owner.comment;
+	MI_CpuCopy16( GetTSD()->owner.comment, pDst, TWL_COMMENT_BUFFERSIZE );
+}
+
+// ƒRƒƒ“ƒg‚Ö‚Ìƒ|ƒCƒ“ƒ^‚ÌŽæ“¾B
+static inline const u16 *TSD_GetCommentPtr( void )
+{
+	return	(const u16 *)&GetTSD()->owner.comment;
 }
 
 // ƒAƒ‰[ƒ€î•ñ‚ÌŽæ“¾B
-static inline TWLAlarm *TSD_GetAlarmData( void )
+static inline void TSD_GetAlarmData( TWLAlarm *pAlarm )
 {
-	return	&GetTSD()->alarm;
+	MI_CpuCopy8( &GetTSD()->alarm, pAlarm, sizeof(TWLAlarm) );
+}
+
+// ƒAƒ‰[ƒ€î•ñ‚Ö‚Ìƒ|ƒCƒ“ƒ^‚ÌŽæ“¾B
+static inline const TWLAlarm *TSD_GetAlarmDataPtr( void )
+{
+	return	(const TWLAlarm *)&GetTSD()->alarm;
 }
 
 // ƒ^ƒbƒ`ƒpƒlƒ‹ƒLƒƒƒŠƒuƒŒ[ƒVƒ‡ƒ“ƒf[ƒ^‚ÌŽæ“¾B
-static inline TWLTPCalibData *TSD_GetTPCalibration( void )
+static inline void TSD_GetTPCalibration( TWLTPCalibData *pDst )
 {
-	return	&GetTSD()->tp;
+	MI_CpuCopy8( &GetTSD()->tp, pDst, sizeof(TWLTPCalibData) );
 }
 
-// Œ¾ŒêƒR[ƒh‚ÌŽæ“¾
-static inline TWLLangCode TSD_GetLanguage( void )
+// ƒ^ƒbƒ`ƒpƒlƒ‹ƒLƒƒƒŠƒuƒŒ[ƒVƒ‡ƒ“ƒf[ƒ^‚Ö‚Ìƒ|ƒCƒ“ƒ^‚ÌŽæ“¾B
+static inline const TWLTPCalibData *TSD_GetTPCalibrationPtr( void )
 {
-  	return	(TWLLangCode)GetTSD()->language;
-}
-
-// RTCƒIƒtƒZƒbƒg’l‚ÌŽæ“¾
-static inline s64 TSD_GetRTCOffset( void )
-{
-	return	GetTSD()->rtcOffset;
-}
-
-// RTC‚Ì‘O‰ñƒZƒbƒg‚µ‚½”N‚ÌŽæ“¾
-static inline u8 TSD_GetRTCLastSetYear( void )
-{
-	return	GetTSD()->rtcLastSetYear;
-}
-
-// ƒoƒbƒNƒ‰ƒCƒg‹P“xŽæ“¾
-static inline int TSD_GetBacklightBrightness( void )
-{
-	return	(int)GetTSD()->backLightBrightness;
+	return	(const TWLTPCalibData *)&GetTSD()->tp;
 }
 
 // ‰‰ñ‹N“®ƒV[ƒPƒ“ƒX’†H
@@ -317,22 +301,10 @@ static inline BOOL TSD_IsInitialSequence( void )
 	return	(BOOL)GetTSD()->flags.initialSequence;
 }
 
-// ’a¶“ú“ü—ÍÏ‚ÝH
-static inline BOOL TSD_IsSetBirthday( void )
+// ‘ƒR[ƒh“ü—ÍÏ‚ÝH
+static inline BOOL TSD_IsSetCountry( void )
 {
-	return	(BOOL)GetTSD()->flags.isSetBirthday;
-}
-
-// ƒ†[ƒU[ƒJƒ‰[“ü—ÍÏ‚ÝH
-static inline BOOL TSD_IsSetUserColor( void )
-{
-	return	(BOOL)GetTSD()->flags.isSetUserColor;
-}
-
-// TPƒLƒƒƒŠƒuƒŒ[ƒVƒ‡ƒ“ƒf[ƒ^“ü—ÍÏ‚ÝH
-static inline BOOL TSD_IsSetTP( void )
-{
-	return	(BOOL)GetTSD()->flags.isSetTP;
+	return	(BOOL)GetTSD()->flags.isSetCountry;
 }
 
 // Œ¾ŒêƒR[ƒh“ü—ÍÏ‚ÝH
@@ -353,6 +325,24 @@ static inline BOOL TSD_IsSetNickname( void )
 	return	(BOOL)GetTSD()->flags.isSetNickname;
 }
 
+// ƒ†[ƒU[ƒJƒ‰[“ü—ÍÏ‚ÝH
+static inline BOOL TSD_IsSetUserColor( void )
+{
+	return	(BOOL)GetTSD()->flags.isSetUserColor;
+}
+
+// ’a¶“ú“ü—ÍÏ‚ÝH
+static inline BOOL TSD_IsSetBirthday( void )
+{
+	return	(BOOL)GetTSD()->flags.isSetBirthday;
+}
+
+// TPƒLƒƒƒŠƒuƒŒ[ƒVƒ‡ƒ“ƒf[ƒ^“ü—ÍÏ‚ÝH
+static inline BOOL TSD_IsSetTP( void )
+{
+	return	(BOOL)GetTSD()->flags.isSetTP;
+}
+
 // ƒpƒŒƒ“ƒ^ƒ‹ƒRƒ“ƒgƒ[ƒ‹“ü—ÍÏ‚ÝH
 static inline BOOL TSD_IsSetParentalControl( void )
 {
@@ -371,6 +361,18 @@ static inline BOOL TSD_IsGBUseTopLCD( void )
 	return	(BOOL)GetTSD()->flags.isGBUseTopLCD;
 }
 
+// –³üŽg—p‰Â”\H
+static inline BOOL TSD_IsAvailableWireless( void )
+{
+	return	(BOOL)GetTSD()->flags.isAvailableWireless;
+}
+
+// ƒoƒbƒeƒŠƒGƒNƒXƒeƒ“ƒVƒ‡ƒ“ƒ‚[ƒh—LŒøH
+static inline BOOL TSD_IsAvailableBatteryExtension( void )
+{
+	return	(BOOL)GetTSD()->flags.isAvailableBatteryExtension;
+}
+
 
 //=========================================================
 // ƒf[ƒ^ƒZƒbƒgiTSD_ReadSettings‚Å“à•”ƒ[ƒN‚É“Ç‚Ýo‚µ‚½î•ñ‚Ö‚Ì’lƒZƒbƒgj
@@ -379,17 +381,41 @@ static inline BOOL TSD_IsGBUseTopLCD( void )
 // ‘ƒR[ƒh‚ÌƒZƒbƒgB
 static inline void TSD_SetCountry( TWLCountryCode country )
 {
-	GetTSD()->country = country;
+	GetTSD()->country = (u8)country;
 }
 
-// ƒŠ[ƒWƒ‡ƒ“‚ÌƒZƒbƒgB
-static inline void TSD_SetRegion( u8 region )
+// Œ¾ŒêƒR[ƒh‚ÌƒZƒbƒg
+static inline void TSD_SetLanguage( TWLLangCode language )
 {
-	GetTSD()->region = region;
+	GetTSD()->language = language;
+}
+
+// ƒoƒbƒNƒ‰ƒCƒg‹P“xî•ñ‚ðƒZƒbƒgB
+static inline void TSD_SetBacklightBrightness( u8 backLightBrightness )
+{
+	GetTSD()->backLightBrightness = backLightBrightness;
+}
+
+// ƒtƒŠ[ƒ\ƒtƒgBOX”‚ÌƒZƒbƒg
+static inline void TSD_SetFreeSoftBoxCount( u8 count )
+{
+	GetTSD()->freeSoftBoxCount = count;
+}
+
+// RTC‚ÌLastSetYear‚Ö‚ÌƒZƒbƒg
+static inline void TSD_SetRTCLastSetYear( u8 rtcLastSetYear )
+{
+	GetTSD()->rtcLastSetYear = rtcLastSetYear;
+}
+
+// RTCƒIƒtƒZƒbƒg’l‚ÌƒZƒbƒg
+static inline void TSD_SetRTCOffset( s64 rtcOffset )
+{
+	GetTSD()->rtcOffset = rtcOffset;
 }
 
 // ƒI[ƒi[î•ñ‘S‘Ì‚ÌƒZƒbƒgB
-static inline void TSD_SetOwnerInfo( TWLOwnerInfo *pOwner )
+static inline void TSD_SetOwnerInfo( const TWLOwnerInfo *pOwner )
 {
 	MI_CpuCopy16( pOwner, &GetTSD()->owner, sizeof(TWLOwnerInfo) );
 }
@@ -401,82 +427,45 @@ static inline void TSD_SetUserColor( u8 userColor )
 }
 
 // ’a¶“ú‚ÌƒZƒbƒgB
-static inline void TSD_SetBirthday( TWLDate *pBirth )
+static inline void TSD_SetBirthday( const TWLDate *pSrc )
 {
-	GetTSD()->owner.birthday.month	= pBirth->month;
-	GetTSD()->owner.birthday.day	= pBirth->day;
+	MI_CpuCopy8( pSrc, &GetTSD()->owner.birthday, sizeof(TWLDate) );
 }
 
 // ƒjƒbƒNƒl[ƒ€‚ÌƒZƒbƒgB
-static inline void TSD_SetNickname( TWLNickname *pNickname )
+static inline void TSD_SetNickname( const u16 *pSrc )
 {
-	MI_CpuCopy16( pNickname, &GetTSD()->owner.nickname, sizeof(TWLNickname) );
+	MI_CpuCopy16( pSrc, GetTSD()->owner.nickname, TWL_NICKNAME_BUFFERSIZE );
 }
 
 // ƒRƒƒ“ƒg‚ÌƒZƒbƒgB
-static inline void TSD_SetComment( TWLComment *pComment )
+static inline void TSD_SetComment( const u16 *pSrc )
 {
-	MI_CpuCopy16( pComment, &GetTSD()->owner.comment, sizeof(TWLComment) );
+	MI_CpuCopy16( pSrc, GetTSD()->owner.comment, TWL_COMMENT_BUFFERSIZE );
 }
 
 // ƒAƒ‰[ƒ€î•ñ‚ÌƒZƒbƒgB
-static inline void TSD_SetAlarmData( TWLAlarm *pAlarm )
+static inline void TSD_SetAlarmData( const TWLAlarm *pAlarm )
 {
 	MI_CpuCopy16( pAlarm, &GetTSD()->alarm, sizeof(TWLAlarm) );
 }
 
 // ƒ^ƒbƒ`ƒpƒlƒ‹ƒLƒƒƒŠƒuƒŒ[ƒVƒ‡ƒ“ƒf[ƒ^‚ÌƒZƒbƒgB
-static inline void TSD_SetTPCalibration( TWLTPCalibData *pTPCalib )
+static inline void TSD_SetTPCalibration( const TWLTPCalibData *pTPCalib )
 {
 	MI_CpuCopy16( pTPCalib, &GetTSD()->tp, sizeof(TWLTPCalibData) );
 }
 
-// Œ¾ŒêƒR[ƒh‚ÌƒZƒbƒg
-static inline void TSD_SetLanguage( TWLLangCode language )
-{
-	GetTSD()->language = language;
-}
-
-// RTCƒIƒtƒZƒbƒg’l‚ÌƒZƒbƒg
-static inline void TSD_SetRTCOffset( s64 rtcOffset )
-{
-	GetTSD()->rtcOffset = rtcOffset;
-}
-
-// RTC‚ÌLastSetYear‚Ö‚ÌƒZƒbƒg
-static inline void TSD_SetRTCLastSetYear( u8 rtcLastSetYear )
-{
-	GetTSD()->rtcLastSetYear = rtcLastSetYear;
-}
-
-// ƒoƒbƒNƒ‰ƒCƒg‹P“xî•ñ‚ðƒZƒbƒgB
-static inline void TSD_SetBacklightBrightness( u8 backLightBrightness )
-{
-	GetTSD()->backLightBrightness = backLightBrightness;
-}
-
-// ƒtƒ‰ƒbƒVƒ…‰ó‚êƒV[ƒPƒ“ƒX’†‚©‚Ç‚¤‚©‚Ìƒtƒ‰ƒOƒZƒbƒgB
+// ‰‰ñ‹N“®ƒV[ƒPƒ“ƒX’†‚©‚Ç‚¤‚©‚Ìƒtƒ‰ƒOƒZƒbƒgB
 static inline void TSD_SetFlagInitialSequence( BOOL initialSequence )
 {
 	GetTSD()->flags.initialSequence = (u32)initialSequence;
 }
 
-// ’a¶“úƒf[ƒ^‚Ì“ü—ÍÏ‚Ýƒtƒ‰ƒOƒZƒbƒgB
-static inline void TSD_SetFlagBirthday( BOOL set )
+// ‘ƒR[ƒh‚Ì“ü—ÍÏ‚Ýƒtƒ‰ƒOƒZƒbƒgB
+static inline void TSD_SetFlagCountry( BOOL set )
 {
-	GetTSD()->flags.isSetBirthday = (u32)set;
-}
-
-// ƒ†[ƒU[ƒJƒ‰[‚Ì“ü—ÍÏ‚Ýƒtƒ‰ƒOƒZƒbƒgB
-static inline void TSD_SetFlagUserColor( BOOL set )
-{
-	GetTSD()->flags.isSetUserColor = (u32)set;
-}
-
-// TPƒLƒƒƒŠƒuƒŒ[ƒVƒ‡ƒ“‚Ì“ü—ÍÏ‚Ýƒtƒ‰ƒOƒZƒbƒgB
-static inline void TSD_SetFlagTP( BOOL set )
-{
-	GetTSD()->flags.isSetTP = (u32)set;
+	GetTSD()->flags.isSetCountry = (u32)set;
 }
 
 // Œ¾ŒêƒR[ƒh‚Ì“ü—ÍÏ‚Ýƒtƒ‰ƒOƒZƒbƒgB
@@ -497,6 +486,24 @@ static inline void TSD_SetFlagNickname( BOOL set )
 	GetTSD()->flags.isSetNickname = (u32)set;
 }
 
+// ƒ†[ƒU[ƒJƒ‰[‚Ì“ü—ÍÏ‚Ýƒtƒ‰ƒOƒZƒbƒgB
+static inline void TSD_SetFlagUserColor( BOOL set )
+{
+	GetTSD()->flags.isSetUserColor = (u32)set;
+}
+
+// ’a¶“úƒf[ƒ^‚Ì“ü—ÍÏ‚Ýƒtƒ‰ƒOƒZƒbƒgB
+static inline void TSD_SetFlagBirthday( BOOL set )
+{
+	GetTSD()->flags.isSetBirthday = (u32)set;
+}
+
+// TPƒLƒƒƒŠƒuƒŒ[ƒVƒ‡ƒ“‚Ì“ü—ÍÏ‚Ýƒtƒ‰ƒOƒZƒbƒgB
+static inline void TSD_SetFlagTP( BOOL set )
+{
+	GetTSD()->flags.isSetTP = (u32)set;
+}
+
 // ƒpƒŒƒ“ƒ^ƒ‹ƒRƒ“ƒgƒ[ƒ‹‚Ì“ü—ÍÏ‚Ýƒtƒ‰ƒOƒZƒbƒgB
 static inline void TSD_SetFlagParentalControl( BOOL set )
 {
@@ -513,6 +520,18 @@ static inline void TSD_SetFlagAgreeEURA( BOOL set )
 static inline void TSD_SetFlagGBUseTopLCD( BOOL set )
 {
 	GetTSD()->flags.isGBUseTopLCD = (u32)set;
+}
+
+// –³üŽg—p‰Â”Ûƒtƒ‰ƒO‚ðƒZƒbƒg
+static inline void TSD_SetFlagAvailableWireless( BOOL set )
+{
+	GetTSD()->flags.isAvailableWireless = set;
+}
+
+// ƒoƒbƒeƒŠƒGƒNƒXƒeƒ“ƒVƒ‡ƒ“ƒ‚[ƒh—LŒø^–³Œøƒtƒ‰ƒO‚ðƒZƒbƒg
+static inline void TSD_SetFlagAvailableBatteryExtension( BOOL set )
+{
+	GetTSD()->flags.isAvailableBatteryExtension = set;
 }
 
 

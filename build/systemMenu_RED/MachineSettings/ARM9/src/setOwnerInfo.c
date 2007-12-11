@@ -86,6 +86,7 @@ static void SetUserColorInit( void );
 static int SetUserColorMain( void );
 static void SetCommentInit( void );
 static int SetCommentMain( void );
+static u8 MY_StrLen( const u16 *pStr );
 
 // static variable------------------------------
 // 一時的にしか使わない物をstaticにしているので
@@ -97,8 +98,10 @@ static u16 s_key_csr = 0;
 static u8 s_color_csr = 0;
 static BOOL s_birth_csr = FALSE;
 static TWLDate s_temp_birthday;
-static TWLNickname s_temp_name;
-static TWLComment s_temp_comment;
+static u16 s_temp_name[ TWL_NICKNAME_LENGTH + 1 ];
+static u16 s_temp_comment[ TWL_NICKNAME_LENGTH + 1 ];
+static u8  s_temp_name_length;
+static u8  s_temp_comment_length;
 
 // const data-----------------------------------
 static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM];
@@ -229,16 +232,16 @@ static void DrawOwnerInfoMenuScene( void )
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得して表示
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// ニックネーム
-	PutStringUTF16( 128 , 8*8, TXT_UCOLOR_G0, TSD_GetNickname()->buffer );
+	PutStringUTF16( 128 , 8*8, TXT_UCOLOR_G0, TSD_GetNicknamePtr() );
 	// 誕生日
-	PrintfSJIS( 128, 10*8, TXT_UCOLOR_G0, "%d／%d", TSD_GetBirthday()->month, TSD_GetBirthday()->day);
+	PrintfSJIS( 128, 10*8, TXT_UCOLOR_G0, "%d／%d", TSD_GetBirthdayPtr()->month, TSD_GetBirthdayPtr()->day);
 	// カラー
 	color = TSD_GetUserColor();
 	PutStringUTF16( 128 , 12*8, TXT_UCOLOR_G0, L"■" );
 	// コメント
-	SVC_CpuCopy( TSD_GetComment()->buffer, tempbuf, 13 * 2, 16 );
+	SVC_CpuCopy( TSD_GetCommentPtr(), tempbuf, 13 * 2, 16 );
 	*(tempbuf+13)='\n';
-	SVC_CpuCopy( TSD_GetComment()->buffer+13, tempbuf+14, 13 * 2, 16 );
+	SVC_CpuCopy( TSD_GetCommentPtr()+13, tempbuf+14, 13 * 2, 16 );
 	*(tempbuf+TWL_COMMENT_LENGTH+1)=0;
 	PutStringUTF16( 128-78 , 16*8 , TXT_UCOLOR_G0, tempbuf );
 }
@@ -361,12 +364,12 @@ static void DeleteACharacter( NameOrComment noc )
 	u8 *length;
 	if(noc == NOC_NAME)
 	{
-		buf = s_temp_name.buffer;
-		length = &s_temp_name.length;
+		buf = s_temp_name;
+		length = &s_temp_name_length;
 	}else if(noc == NOC_COMMENT)
 	{
-		buf = s_temp_comment.buffer;
-		length = &s_temp_comment.length;
+		buf = s_temp_comment;
+		length = &s_temp_comment_length;
 	}else
 	{
 		//unknown
@@ -376,29 +379,24 @@ static void DeleteACharacter( NameOrComment noc )
 	if(*length > 0) buf[--(*length)] = CHAR_USCORE;
 }
 
+
 // 選択中文字キー・特殊キーで決定した時の挙動
 static void PushKeys( u16 code, NameOrComment noc )
 {
 	u16 *buf;
 	u8 *length;
-	u16 *dest;
-	u8 *destlength;
 	u16 max_length;
-	void (*setflag)(BOOL);
+	void (*setflag)(BOOL) = NULL;
 	if(noc == NOC_NAME)
 	{
-		buf = s_temp_name.buffer;
-		length = &s_temp_name.length;
-		dest = TSD_GetNickname()->buffer;
-		destlength = &TSD_GetNickname()->length;
+		buf = s_temp_name;
+		length = &s_temp_name_length;
 		max_length = TWL_NICKNAME_LENGTH;
 		setflag = TSD_SetFlagNickname;
 	}else if(noc == NOC_COMMENT)
 	{
-		buf = s_temp_comment.buffer;
-		length = &s_temp_comment.length;
-		dest = TSD_GetComment()->buffer;
-		destlength = &TSD_GetComment()->length;
+		buf = s_temp_comment;
+		length = &s_temp_comment_length;
 		max_length = TWL_COMMENT_LENGTH;
 		// setflag = TSD_SetFlagComment;
 		setflag = NULL;
@@ -425,9 +423,12 @@ static void PushKeys( u16 code, NameOrComment noc )
 				break;
 			case OK_BUTTON_:
 				if(setflag) setflag(TRUE);// 設定完了フラグを立てておく
-				SVC_CpuClear(0, dest, (max_length + 1) * 2, 16);// ゼロクリア
-				*destlength = *length;// 長さコピー
-				SVC_CpuCopy( buf, dest, (*length) * 2, 16 );// 内容コピー
+				SVC_CpuClear(0, buf + *length, (max_length - *length) * 2, 16);// ゼロクリア
+				if(noc == NOC_NAME) {
+					TSD_SetNickname( buf );
+				}else if(noc == NOC_COMMENT) {
+					TSD_SetComment( buf );
+				}
 				// ::::::::::::::::::::::::::::::::::::::::::::::
 				// TWL設定データファイルへの書き込み
 				// ::::::::::::::::::::::::::::::::::::::::::::::
@@ -565,7 +566,7 @@ static void DrawSetNicknameScene( void )
 {
 	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"NICKNAME" );
-	PutStringUTF16( 128-60 , 21 , TXT_UCOLOR_G0, s_temp_name.buffer );
+	PutStringUTF16( 128-60 , 21 , TXT_UCOLOR_G0, s_temp_name );
 	DrawCharKeys();
 }
 
@@ -579,10 +580,12 @@ static void SetNicknameInit( void )
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// ニックネーム用テンポラリバッファの初期化
-	s_temp_name.length = TSD_GetNickname()->length;
-	SVC_CpuClear(CHAR_USCORE, s_temp_name.buffer, TWL_NICKNAME_LENGTH * 2, 16);
-	SVC_CpuCopy( TSD_GetNickname()->buffer, s_temp_name.buffer, s_temp_name.length * 2, 16 );
-	s_temp_name.buffer[TWL_NICKNAME_LENGTH] = 0;
+	TSD_GetNickname( s_temp_name );
+	s_temp_name_length = MY_StrLen( s_temp_name );
+	if( s_temp_name_length < TWL_NICKNAME_LENGTH ) {
+		SVC_CpuClear(CHAR_USCORE, &s_temp_name[ s_temp_name_length ],
+					 ( TWL_NICKNAME_LENGTH - s_temp_name_length ) * 2, 16);
+	}
 	
 	DrawSetNicknameScene();
 	
@@ -648,8 +651,7 @@ static void SetBirthdayInit( void )
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// 誕生日
-	s_temp_birthday.month = TSD_GetBirthday()->month;
-	s_temp_birthday.day = TSD_GetBirthday()->day;
+	TSD_GetBirthday( &s_temp_birthday );
 	
     // BGデータのロード処理
 	GX_LoadBG1Char(bg_char_data, 0, sizeof(bg_char_data));
@@ -910,9 +912,9 @@ static void DrawSetCommentScene( void )
 	u16 tempbuf[TWL_COMMENT_LENGTH+2];
 	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"COMMENT" );
-	SVC_CpuCopy( s_temp_comment.buffer, tempbuf, 13 * 2, 16 );
+	SVC_CpuCopy( s_temp_comment, tempbuf, 13 * 2, 16 );
 	*(tempbuf+13)='\n';
-	SVC_CpuCopy( s_temp_comment.buffer+13, tempbuf+14, 13 * 2, 16 );
+	SVC_CpuCopy( s_temp_comment+13, tempbuf+14, 13 * 2, 16 );
 	*(tempbuf+TWL_COMMENT_LENGTH+1)=0;
 	PutStringUTF16( 128-78 , 15 , TXT_UCOLOR_G0, tempbuf );
 	DrawCharKeys();
@@ -928,10 +930,12 @@ static void SetCommentInit( void )
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// コメント用テンポラリバッファの初期化
-	s_temp_comment.length = TSD_GetComment()->length;
-	SVC_CpuClear(CHAR_USCORE, s_temp_comment.buffer, TWL_COMMENT_LENGTH * 2, 16);
-	SVC_CpuCopy( TSD_GetComment()->buffer, s_temp_comment.buffer, s_temp_comment.length * 2, 16 );
-	s_temp_comment.buffer[TWL_COMMENT_LENGTH] = 0;
+	TSD_GetComment( s_temp_comment );
+	s_temp_comment_length = MY_StrLen( s_temp_comment );
+	if( s_temp_comment_length < TWL_COMMENT_LENGTH ) {
+		SVC_CpuClear(CHAR_USCORE, &s_temp_comment[ s_temp_comment_length ],
+					 ( TWL_COMMENT_LENGTH - s_temp_comment_length ) * 2, 16);
+	}
 	
 	DrawSetCommentScene();
 	
@@ -952,6 +956,20 @@ static int SetCommentMain( void )
 	DrawSetCommentScene();
 	
 	return 0;
+}
+
+
+// UTF16の文字列長算出
+static u8 MY_StrLen( const u16 *pStr )
+{
+	u8 len = 0;
+	while( *pStr++ ) {
+		++len;
+		if( len == 255 ) {
+			break;
+		}
+	}
+	return len;
 }
 
 //======================================================
@@ -1043,4 +1061,5 @@ static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM] = {
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
 	},
 };
+
 

@@ -21,46 +21,48 @@
 // define data----------------------------------------------------------
 
 // function's prototype-------------------------------------------------
-static BOOL SYSMi_VerifyNTRSettings( void );
-static BOOL VerifyData( void *pTgt1, void *pTgt2, u32 size );
-static void SYSMi_ConvertTWL2NTRSettings( void );
+BOOL SYSMi_VerifyNTRSettings( void );
+static BOOL VerifyData( const void *pTgt1, const void *pTgt2, u32 size );
+void SYSMi_ConvertTWL2NTRSettings( void );
+static u8 MY_StrLen( const u16 *pStr );
 
 // global variables-----------------------------------------------------
 
 // static variables-----------------------------------------------------
 
 // const data-----------------------------------------------------------
-
-static const u16 s_validLangBitmapList[] = {
-	NTR_LANG_BITMAP_WW,
-	NTR_LANG_BITMAP_CHINA,
-	NTR_LANG_BITMAP_KOREA,
+#if 0
+// TWL言語->NTR 言語への対応マップ
+const u8 s_langCodeMapFromTWLtoNTR[ TWL_LANG_CODE_MAX ] = {
+	NTR_LANG_JAPANESE		// TWL_LANG_JAPANESE
+	NTR_LANG_ENGLISH		// TWL_LANG_ENGLISH
+	NTR_LANG_FRENCH			// TWL_LANG_FRENCH
+	NTR_LANG_GERMAN			// TWL_LANG_GERMAN
+	NTR_LANG_ITALIAN		// TWL_LANG_ITALIAN
+	NTR_LANG_SPANISH		// TWL_LANG_SPANISH
+	NTR_LANG_CHINESE		// TWL_LANG_SIMP_CHINESE
+	NTR_LANG_KOREAN			// TWL_LANG_KOREAN
+//	NTR_LANG_ENGLISH		// TWL_LANG_DUTCH
+//	NTR_LANG_CHINESE		// TWL_LANG_TRAD_CHINESE
 };
+#endif
 
 // function's description-----------------------------------------------
 
 // TWL設定データファイルのリード
 BOOL SYSM_ReadTWLSettingsFile( void )
 {
-	BOOL retval = FALSE;;
-	{
-		TSDStore (*pTempBuffer)[2] = SYSM_Alloc( TSD_TEMP_BUFFER_SIZE );
-		if( pTempBuffer == NULL ) {
-			OS_TPrintf( "%s : malloc failed.\n", __FUNCTION__ );
-			goto RETURN;
-		}
-		MI_CpuFill32( pTempBuffer, 0xffffffff, TSD_TEMP_BUFFER_SIZE );
-		retval = TSD_ReadSettings( pTempBuffer );
-		SYSM_Free( pTempBuffer );
-	}
+	BOOL retval;
+	// TWL設定データのリード
+	retval = TSD_ReadSettings();
+	// NTR設定データのリード
 	if( !NSD_IsReadSettings() ) {
 		NSDStoreEx (*pTempBuffer)[2] = SYSM_Alloc( NSD_TEMP_BUFFER_SIZE );
 		if( pTempBuffer == NULL ) {
 			OS_TPrintf( "%s : malloc failed.\n", __FUNCTION__ );
 			goto RETURN;
 		}
-		MI_CpuFill32( pTempBuffer, 0xffffffff, NSD_TEMP_BUFFER_SIZE );
-		retval = NSD_ReadSettings( TSD_GetRegion(), pTempBuffer );
+		(void)NSD_ReadSettings( THW_GetRegion(), pTempBuffer );
 		SYSM_Free( pTempBuffer );
 #ifndef SDK_FINALROM
 		(void)SYSMi_VerifyNTRSettings();
@@ -76,11 +78,13 @@ RETURN:
 BOOL SYSM_WriteTWLSettingsFile( void )
 {
 	BOOL retval;
+	// TWL設定データのライト
 	retval = TSD_WriteSettings();
-	if( retval ) {									// ライト成功なら、TSDをNSDに変換して、NVRAMにも書き込み
+	// ライト成功なら、NVRAMのNTR設定データに値を反映
+	if( retval ) {
 		SYSM_SetValidTSD( TRUE );
 		SYSMi_ConvertTWL2NTRSettings();
-		NSD_WriteSettings( TSD_GetRegion() );
+		NSD_WriteSettings( THW_GetRegion() );
 #ifndef SDK_FINALROM
 		(void)SYSM_VerifyAndRecoveryNTRSettings();	// ※デバッグ用　ベリファイして、NGならリカバリ
 #endif
@@ -99,19 +103,19 @@ void SYSM_VerifyAndRecoveryNTRSettings( void )
 	if( pTempBuffer == NULL ) {
 		OS_Panic( "%s : malloc error.\n", __FUNCTION__ );
 	}
-	if( !NSD_ReadSettings( TSD_GetRegion(), pTempBuffer ) ||
+	if( !NSD_ReadSettings( THW_GetRegion(), pTempBuffer ) ||
 		!SYSMi_VerifyNTRSettings()
 		) {
 		// ロード or ベリファイ失敗なら、TWL設定データからNTR設定データを生成して、書き込み
 		SYSMi_ConvertTWL2NTRSettings();
-		NSD_WriteSettings( TSD_GetRegion() );
+		NSD_WriteSettings( THW_GetRegion() );
 	}
 	SYSM_Free( pTempBuffer );
 }
 
 
 // NTR設定とTWL設定をベリファイ
-static BOOL SYSMi_VerifyNTRSettings( void )
+BOOL SYSMi_VerifyNTRSettings( void )
 {
 	BOOL isFailed = FALSE;
 //	NTRAlarm zeroAlarm;				// TWLでアラームをなくす場合は、ゼロ値アラームと比較させる。
@@ -123,27 +127,27 @@ static BOOL SYSMi_VerifyNTRSettings( void )
 		( NSD_GetExVersion() != NTR_SETTINGS_DATA_EX_VERSION ) ||
 		// オーナー情報
 		( NSD_GetUserColor() != TSD_GetUserColor() ) ||
-		!VerifyData( NSD_GetBirthday(), TSD_GetBirthday(), sizeof(NTRDate) ) ||
-		!VerifyData( NSD_GetNickname()->buffer, TSD_GetNickname()->buffer, NTR_NICKNAME_LENGTH ) ||
-		( NSD_GetNickname()->length != TSD_GetNickname()->length ) ||
-		!VerifyData( NSD_GetComment()->buffer,  TSD_GetComment()->buffer,  NTR_COMMENT_LENGTH ) ||
-		( NSD_GetComment()->length != TSD_GetComment()->length ) ||
+		!VerifyData( NSD_GetBirthdayPtr(), TSD_GetBirthdayPtr(), sizeof(NTRDate) ) ||
+		!VerifyData( NSD_GetNicknamePtr()->buffer, TSD_GetNicknamePtr(), NTR_NICKNAME_LENGTH ) ||
+		( NSD_GetNicknamePtr()->length != MY_StrLen( TSD_GetNicknamePtr() ) ) ||
+		!VerifyData( NSD_GetCommentPtr()->buffer,  TSD_GetCommentPtr(),  NTR_COMMENT_LENGTH ) ||
+		( NSD_GetCommentPtr()->length != MY_StrLen( TSD_GetCommentPtr() ) ) ||
 		// アラーム
-		!VerifyData( NSD_GetAlarmData(), TSD_GetAlarmData(), sizeof(NTRAlarm) ) ||
+		!VerifyData( NSD_GetAlarmDataPtr(), TSD_GetAlarmDataPtr(), sizeof(NTRAlarm) ) ||
 		// TP情報
-		!VerifyData( NSD_GetTPCalibration(), &TSD_GetTPCalibration()->data, sizeof(NTRTPCalibData) )
+		!VerifyData( NSD_GetTPCalibrationPtr(), TSD_GetTPCalibrationPtr(), sizeof(NTRTPCalibData) )
 		) {
 		
 		OS_TPrintf( "VERSION   : %d\n", ( NSD_GetVersion()   != NTR_SETTINGS_DATA_VERSION ) );
 		OS_TPrintf( "VERSION EX: %d\n", ( NSD_GetExVersion() != NTR_SETTINGS_DATA_EX_VERSION ) );
 		OS_TPrintf( "UserColor : %d\n", ( NSD_GetUserColor() != TSD_GetUserColor() ) );
-		OS_TPrintf( "Birthday  : %d\n", !VerifyData( NSD_GetBirthday(), TSD_GetBirthday(), sizeof(NTRDate) ) );
-		OS_TPrintf( "Nickname  : %d\n", !VerifyData( NSD_GetNickname()->buffer, TSD_GetNickname()->buffer, NTR_NICKNAME_LENGTH ) );
-		OS_TPrintf( "  length  : %d\n", ( NSD_GetNickname()->length != TSD_GetNickname()->length ) );
-		OS_TPrintf( "Comment   : %d\n", !VerifyData( NSD_GetComment()->buffer,  TSD_GetComment()->buffer,  NTR_COMMENT_LENGTH ) );
-		OS_TPrintf( "  length  : %d\n", ( NSD_GetComment()->length != TSD_GetComment()->length ) );
-		OS_TPrintf( "Alarm     : %d\n", !VerifyData( NSD_GetAlarmData(), TSD_GetAlarmData(), sizeof(NTRAlarm) ) );
-		OS_TPrintf( "TP        : %d\n", !VerifyData( NSD_GetTPCalibration(), &TSD_GetTPCalibration()->data, sizeof(NTRTPCalibData) ) );
+		OS_TPrintf( "Birthday  : %d\n", !VerifyData( NSD_GetBirthdayPtr(), TSD_GetBirthdayPtr(), sizeof(NTRDate) ) );
+		OS_TPrintf( "Nickname  : %d\n", !VerifyData( NSD_GetNicknamePtr()->buffer, TSD_GetNicknamePtr(), NTR_NICKNAME_LENGTH ) );
+		OS_TPrintf( "  length  : %d\n", ( NSD_GetNicknamePtr()->length != MY_StrLen( TSD_GetNicknamePtr() ) ) );
+		OS_TPrintf( "Comment   : %d\n", !VerifyData( NSD_GetCommentPtr()->buffer,  TSD_GetCommentPtr(),  NTR_COMMENT_LENGTH ) );
+		OS_TPrintf( "  length  : %d\n", ( NSD_GetCommentPtr()->length != MY_StrLen( TSD_GetCommentPtr() ) ) );
+		OS_TPrintf( "Alarm     : %d\n", !VerifyData( NSD_GetAlarmDataPtr(), TSD_GetAlarmDataPtr(), sizeof(NTRAlarm) ) );
+		OS_TPrintf( "TP        : %d\n", !VerifyData( NSD_GetTPCalibrationPtr(), TSD_GetTPCalibrationPtr(), sizeof(NTRTPCalibData) ) );
 		
 		isFailed = TRUE;
 	}
@@ -181,16 +185,18 @@ static BOOL SYSMi_VerifyNTRSettings( void )
 	}
 	
 		// SystemMenuのリージョンによって、ちょっと特殊な処理が必要なもの
-	if( TSD_GetLanguage() < TWL_LANG_CODE_MAX_WW ) {
-		// TSD側が標準６言語の時、NSD側は、各リージョンの対応言語ビットマップのうち、標準６言語のものしか取りえない。
-		u16 defaultLangBitmap = (u16)( s_validLangBitmapList[ TSD_GetRegion() & 0x03 ] & NTR_LANG_BITMAP_WW );
-		if( ( defaultLangBitmap & ( 0x0001 << NSD_GetLanguage() ) ) == 0 ) {
+	{
+		NTRLangCode language = ( TSD_GetLanguage() < NTR_LANG_CODE_MAX_WW ) ?
+								NSD_GetLanguage() : NSD_GetLanguageEx();
+		// NSD側は、各リージョンの対応言語ビットマップのものしか取りえない。
+		if( ( THW_GetValidLanguageBitmap() & ( 0x0001 << language ) ) == 0 ) {
 			isFailed = TRUE;
 		}
-	}else {
-		// TSD側が標準６言語以外の時、NSD側のlanguageは強制ENGLISH（NCDEx側にちゃんとした値が入る）
-		if( NSD_GetLanguage() != NTR_LANG_ENGLISH ) {
-			isFailed = TRUE;
+		if( TSD_GetLanguage() >= NTR_LANG_CODE_MAX_WW ) {
+			// TSD側がNTR標準６言語以外の時、NSD側のlanguageは強制ENGLISH（NCDEx側にちゃんとした値が入る）
+			if( NSD_GetLanguage() != NTR_LANG_ENGLISH ) {
+				isFailed = TRUE;
+			}
 		}
 	}
 	
@@ -204,7 +210,7 @@ static BOOL SYSMi_VerifyNTRSettings( void )
 
 
 // 指定サイズのベリファイ
-static BOOL VerifyData( void *pTgt1, void *pTgt2, u32 size )
+static BOOL VerifyData( const void *pTgt1, const void *pTgt2, u32 size )
 {
 	u8 *p1 = (u8 *)pTgt1;
 	u8 *p2 = (u8 *)pTgt2;
@@ -219,7 +225,7 @@ static BOOL VerifyData( void *pTgt1, void *pTgt2, u32 size )
 
 
 // TWL設定データ -> NTR設定データのコンバート
-static void SYSMi_ConvertTWL2NTRSettings( void )
+void SYSMi_ConvertTWL2NTRSettings( void )
 {
 	SVC_CpuClearFast( 0x0000, GetNSD(),   sizeof(NTRSettingsData) );
 	SVC_CpuClearFast( 0x0000, GetNSDEx(), sizeof(NTRSettingsDataEx) );
@@ -229,15 +235,15 @@ static void SYSMi_ConvertTWL2NTRSettings( void )
 	NSD_SetExVersion( NTR_SETTINGS_DATA_EX_VERSION );
 	// オーナー情報
 	NSD_SetUserColor( TSD_GetUserColor() );
-	MI_CpuCopy8 ( TSD_GetBirthday(), NSD_GetBirthday(), sizeof(NTRDate) );
-	MI_CpuCopy16( TSD_GetNickname()->buffer, NSD_GetNickname()->buffer, NTR_NICKNAME_BUFFERSIZE );
-	NSD_GetNickname()->length = TSD_GetNickname()->length;
-	MI_CpuCopy16( TSD_GetComment()->buffer, NSD_GetComment()->buffer, NTR_COMMENT_BUFFERSIZE );
-	NSD_GetNickname()->length  = TSD_GetNickname()->length;
+	NSD_SetBirthday( TSD_GetBirthdayPtr() );
+	MI_CpuCopy16( TSD_GetNicknamePtr(), NSD_GetNicknamePtr()->buffer, NTR_NICKNAME_BUFFERSIZE );
+	NSD_GetNicknamePtr()->length = MY_StrLen( TSD_GetNicknamePtr() );
+	MI_CpuCopy16( TSD_GetCommentPtr(), NSD_GetCommentPtr()->buffer, NTR_COMMENT_BUFFERSIZE );
+	NSD_GetCommentPtr()->length  = MY_StrLen( TSD_GetCommentPtr() );
 	// アラーム
-	MI_CpuCopy16( TSD_GetAlarmData(), NSD_GetAlarmData(), sizeof(NTRAlarm) );
+	NSD_SetAlarmData( TSD_GetAlarmDataPtr() );
 	// TPキャリブレーション
-	MI_CpuCopy16( &TSD_GetTPCalibration()->data, NSD_GetTPCalibration(), sizeof(NTRTPCalibData) );
+	NSD_SetTPCalibration( &TSD_GetTPCalibrationPtr()->data );
 	
 	// オプション
 		// "0"であるべきもの
@@ -262,11 +268,11 @@ static void SYSMi_ConvertTWL2NTRSettings( void )
 //	NSD_SetLanguageBitmap( TSD_GetLanguageBitmap() );
 	
 		// SystemMenuのリージョンによって、ちょっと特殊な処理が必要なもの
-	if( TSD_GetLanguage() < TWL_LANG_CODE_MAX_WW ) {
-		// TSD側が標準６言語の時、TSD側 == NSD側
+	if( TSD_GetLanguage() < NTR_LANG_CODE_MAX_WW ) {
+		// TSD側がNTR標準６言語の時、TSD側 == NSD側
 		NSD_SetLanguage( (NTRLangCode)TSD_GetLanguage() );
 	}else {
-		// TSD側が標準６言語以外の時、NSD側のlanguageは強制ENGLISH（NCDEx側にちゃんとした値が入る）
+		// TSD側がNTR標準６言語以外の時、NSD側のlanguageは強制ENGLISH（NCDEx側にちゃんとした値が入る）
 		NSD_SetLanguage( NTR_LANG_ENGLISH );
 	}
 	
@@ -275,3 +281,16 @@ static void SYSMi_ConvertTWL2NTRSettings( void )
 	NSD_SetBacklightBrightness( TSD_GetBacklightBrightness() );
 }
 
+
+// UTF16の文字列長のチェック
+static u8 MY_StrLen( const u16 *pStr )
+{
+	u8 len = 0;
+	while( *pStr++ ) {
+		++len;
+		if( len == 255 ) {
+			break;
+		}
+	}
+	return len;
+}

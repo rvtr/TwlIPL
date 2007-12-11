@@ -223,10 +223,16 @@ static inline u8 NSD_GetExVersion( void )
 	return	(u8)GetNSDEx()->version;
 }
 
-// オーナー情報全体の取得。
-static inline NTROwnerInfo *NSD_GetOwnerInfo( void )
+// オーナー情報全体へのポインタの取得。
+static inline NTROwnerInfo *NSD_GetOwnerInfoPtr( void )
 {
 	return	&GetNSD()->owner;
+}
+
+// オーナー情報全体の取得。
+static inline void NSD_GetOwnerInfo( NTROwnerInfo *pDst )
+{
+	MI_CpuCopy8( &GetNSD()->owner, pDst, sizeof(NTROwnerInfo) );
 }
 
 // ユーザーカラーの取得。
@@ -235,34 +241,64 @@ static inline u8 NSD_GetUserColor( void )
 	return	(u8)GetNSD()->owner.userColor;
 }
 
-// 誕生日の取得。
-static inline NTRDate *NSD_GetBirthday( void )
+// 誕生日へのポインタの取得。
+static inline NTRDate *NSD_GetBirthdayPtr( void )
 {
 	return	&GetNSD()->owner.birthday;
 }
 
-// ニックネームの取得。
-static inline NTRNickname *NSD_GetNickname( void )
+// 誕生日の取得。
+static inline void NSD_GetBirthday( NTRDate *pDst )
+{
+	MI_CpuCopy8( &GetNSD()->owner.birthday, pDst, sizeof(NTRDate) );
+}
+
+// ニックネームへのポインタの取得。
+static inline NTRNickname *NSD_GetNicknamePtr( void )
 {
 	return	&GetNSD()->owner.nickname;
 }
 
-// コメントの取得。
-static inline NTRComment *NSD_GetComment( void )
+// ニックネームの取得。
+static inline void NSD_GetNickname( NTRNickname *pDst )
+{
+	MI_CpuCopy8( &GetNSD()->owner.nickname, pDst, sizeof(NTRNickname) );
+}
+
+// コメントへのポインタの取得。
+static inline NTRComment *NSD_GetCommentPtr( void )
 {
 	return	&GetNSD()->owner.comment;
 }
 
-// アラーム情報の取得。
-static inline NTRAlarm *NSD_GetAlarmData( void )
+// コメントの取得。
+static inline void NSD_GetComment( NTRComment *pDst )
+{
+	MI_CpuCopy8( &GetNSD()->owner.comment, pDst, sizeof(NTRComment) );
+}
+
+// アラーム情報へのポインタの取得。
+static inline NTRAlarm *NSD_GetAlarmDataPtr( void )
 {
 	return	&GetNSD()->alarm;
 }
 
-// タッチパネルキャリブレーションデータの取得。
-static inline NTRTPCalibData *NSD_GetTPCalibration( void )
+// アラーム情報の取得。
+static inline void NSD_GetAlarmData( NTRAlarm *pDst )
+{
+	MI_CpuCopy8( &GetNSD()->alarm, pDst, sizeof(NTRAlarm) );
+}
+
+// タッチパネルキャリブレーションデータへのポインタの取得。
+static inline NTRTPCalibData *NSD_GetTPCalibrationPtr( void )
 {
 	return	&GetNSD()->tp;
+}
+
+// タッチパネルキャリブレーションデータの取得。
+static inline void NSD_GetTPCalibration( NTRTPCalibData *pDst )
+{
+	MI_CpuCopy8( &GetNSD()->tp, pDst, sizeof(NTRTPCalibData) );
 }
 
 // 言語コードの取得
@@ -386,7 +422,7 @@ static inline void NSD_SetExVersion( u8 version )
 extern void NSD_ClearOwnerInfo( void );
 
 // オーナー情報全体のセット。
-static inline void NSD_SetOwnerInfo( NTROwnerInfo *pOwner )
+static inline void NSD_SetOwnerInfo( const NTROwnerInfo *pOwner )
 {
 	MI_CpuCopy16( pOwner, &GetNSD()->owner, sizeof(NTROwnerInfo) );
 }
@@ -398,32 +434,32 @@ static inline void NSD_SetUserColor( u8 userColor )
 }
 
 // 誕生日のセット。
-static inline void NSD_SetBirthday( NTRDate *pBirthday )
+static inline void NSD_SetBirthday( const NTRDate *pBirthday )
 {
 	GetNSD()->owner.birthday.month	= pBirthday->month;
 	GetNSD()->owner.birthday.day	= pBirthday->day;
 }
 
 // ニックネームのセット。
-static inline void NSD_SetNickname( NTRNickname *pName )
+static inline void NSD_SetNickname( const NTRNickname *pName )
 {
 	MI_CpuCopy16( pName, &GetNSD()->owner.nickname, sizeof(NTRNickname) );
 }
 
 // コメントのセット。
-static inline void NSD_SetComment( NTRComment *pComment )
+static inline void NSD_SetComment( const NTRComment *pComment )
 {
 	MI_CpuCopy16( pComment, &GetNSD()->owner.comment, sizeof(NTRComment) );
 }
 
 // アラーム情報のセット。
-static inline void NSD_SetAlarmData( NTRAlarm *pAlarm )
+static inline void NSD_SetAlarmData( const NTRAlarm *pAlarm )
 {
 	MI_CpuCopy16( pAlarm, &GetNSD()->alarm, sizeof(NTRAlarm) );
 }
 
 // タッチパネルキャリブレーションデータのセット。
-static inline void NSD_SetTPCalibration( NTRTPCalibData *pTPCalib )
+static inline void NSD_SetTPCalibration( const NTRTPCalibData *pTPCalib )
 {
 	MI_CpuCopy16( pTPCalib, &GetNSD()->tp, sizeof(NTRTPCalibData) );
 }

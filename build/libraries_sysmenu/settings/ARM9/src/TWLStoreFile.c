@@ -27,7 +27,7 @@
 // function's description-----------------------------------------------
 
 // TSFファイルの読み出し
-TSFReadResult TSF_ReadFile( char *pPath, void *pDstBody, const TSFParam *pParam, u8 *pDstSaveCount )
+TSFReadResult TSF_ReadFile( char *pPath, void *pDstBody, const TSFParam *pParam, u8 *pSaveCount )
 {
 	TSFHeader header;
 	TSFReadResult retval;
@@ -38,9 +38,9 @@ TSFReadResult TSF_ReadFile( char *pPath, void *pDstBody, const TSFParam *pParam,
 	MI_CpuClear8( &header, sizeof(TSFHeader) );
 	
 	// ボディ用バッファのクリア
-	if( pParam->pDefaultValue ) {
-		// デフォルト指定ありの時は、バージョン下位互換の場合を考慮して、デフォルト値をコピーしておく
-		MI_CpuCopy8( pParam->pDefaultValue, pDstBody, pParam->dataLength );
+	if( pParam->pClearFunc ) {
+		// クリア用関数ありの時は、バージョン下位互換の場合を考慮して、デフォルト値をセットしておく
+		pParam->pClearFunc( pDstBody );
 	}else {
 		// そうでない場合は、リードバッファをクリア
 		MI_CpuClear8( pDstBody, pParam->dataLength );
@@ -111,8 +111,8 @@ TSFReadResult TSF_ReadFile( char *pPath, void *pDstBody, const TSFParam *pParam,
 		}
 	}
 	
-	if( pDstSaveCount ) {
-		*pDstSaveCount = header.saveCount;
+	if( pSaveCount ) {
+		*pSaveCount = header.saveCount;
 	}
 	retval = TSF_READ_RESULT_SUCCEEDED;
 END:
@@ -122,9 +122,9 @@ END2:
 	
 	if( retval != TSF_READ_RESULT_SUCCEEDED ) {
 		// ボディ用バッファのクリア
-		if( pParam->pDefaultValue ) {
-			// バージョン下位互換の場合を考慮して、デフォルト値をコピーしておく
-			MI_CpuCopy8( pParam->pDefaultValue, pDstBody, pParam->dataLength );
+		if( pParam->pClearFunc ) {
+			// クリア用関数ありの時は、バージョン下位互換の場合を考慮して、デフォルト値をセットしておく
+			pParam->pClearFunc( pDstBody );
 		}else {
 			// そうでない場合は、リードバッファをクリア
 			MI_CpuClear8( pDstBody, pParam->dataLength );
@@ -136,14 +136,15 @@ END2:
 
 
 // TWLファイルのライト
-BOOL TSF_WriteFile( char *pPath, TSFHeader *pHeader, const void *pSrcBody, u8 saveCount )
+BOOL TSF_WriteFile( char *pPath, TSFHeader *pHeader, const void *pSrcBody, u8 *pSaveCount )
 {
 	BOOL retval = FALSE;
 	FSFile file;
 	FS_InitFile( &file );
-
-	if( saveCount != DISABLE_SAVE_COUNT ) {
-		pHeader->saveCount = (u8)( ( saveCount + 1 ) & SAVE_COUNT_MASK );
+	
+	if( pSaveCount ) {
+		*pSaveCount = (u8)( ( *pSaveCount + 1 ) & SAVE_COUNT_MASK );
+		pHeader->saveCount = *pSaveCount;
 	}else {
 		pHeader->saveCount = 0;
 	}
@@ -183,6 +184,7 @@ BOOL TSF_RecoveryFile( TSFReadResult err, char *pPath, u32 fileLength )
 	u32	buffer[ READ_SIZE / sizeof(u32) ];
 	u32 length;
 	BOOL retval = FALSE;
+	BOOL isWrite = FALSE;
 	FSFile file;
 	FS_InitFile( &file );
 	
@@ -213,20 +215,8 @@ BOOL TSF_RecoveryFile( TSFReadResult err, char *pPath, u32 fileLength )
 		}
 	}
 	
-	// ファイル内データ初期化（0xff埋め）
+	// データベリファイ
 	MI_CpuFillFast( buffer, INITIAL_DATA_PATTERN, sizeof(buffer) );
-	length = fileLength;
-	while( length ) {
-		u32 wrSize = ( length > READ_SIZE ) ? READ_SIZE : length;
-		if( FS_WriteFile( &file, buffer, (s32)wrSize ) < wrSize ) {
-			OS_TPrintf( "Recovery : write error. %s\n", pPath );
-			goto END;
-		}
-		length -= wrSize;
-	}
-	
-	// ベリファイ
-	FS_SeekFile( &file, 0, FS_SEEK_SET );
 	length = fileLength;
 	while( length ) {
 		int i;
@@ -234,11 +224,26 @@ BOOL TSF_RecoveryFile( TSFReadResult err, char *pPath, u32 fileLength )
 		FS_ReadFile( &file, buffer, (s32)rdSize );
 		for( i = 0; i < rdSize / sizeof(u32); i++  ) {
 			if( buffer[ i ] != INITIAL_DATA_PATTERN ) {
-				OS_TPrintf( "Recovery : verify error. %s\n", pPath );
-				goto END;
+				isWrite = TRUE;
+				goto NEXT;
 			}
 		}
 		length -= rdSize;
+	}
+
+NEXT:
+	// ベリファイエラーの場合は、ファイル内データ初期化（0xff埋め）
+	if( isWrite ) {
+		FS_SeekFile( &file, 0, FS_SEEK_SET );
+		length = fileLength;
+		while( length ) {
+			u32 wrSize = ( length > READ_SIZE ) ? READ_SIZE : length;
+			if( FS_WriteFile( &file, buffer, (s32)wrSize ) < wrSize ) {
+				OS_TPrintf( "Recovery : write error. %s\n", pPath );
+				goto END;
+			}
+			length -= wrSize;
+		}
 	}
 	
 	retval = TRUE;

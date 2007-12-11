@@ -33,7 +33,6 @@ extern "C" {
 #define TSF_VERSION_TERMINATOR			0xff		// version終端
 #define SAVE_COUNT_MAX					0x80		// saveCountの最大値
 #define SAVE_COUNT_MASK					0x7f		// saveCountの値の範囲をマスクする。(0x00-0x7f）
-#define DISABLE_SAVE_COUNT				0xff		// saveCount無効
 
 // TSFリード結果
 typedef enum TSFReadResult {
@@ -49,7 +48,7 @@ typedef struct TSFParam {	// TSF ( TWL Store File )
 	u32			dataLength;								// 保存するデータ長
 	u32			fileLength;								// 保存するファイル長
 	const u8	*conpatibleVerList;						// 過去ver.の互換ver.リスト。TSF_VERSION_TERMINATORで終端。
-	const void	*pDefaultValue;							// 保存するデータのデフォルト値
+	void		(*pClearFunc)( void *pDst );			// 保存するデータの値クリア関数
 	BOOL		(*pCheckDigestFunc)( void *pTgt, u32 len, u8 *pDigest );	// ダイジェストチェック関数へのポインタ
 	BOOL		(*pCheckValueFunc)( void *pTgt );		// 値チェック関数へのポインタ
 }TSFParam;
@@ -77,9 +76,9 @@ typedef struct TSFHeader{
 //=========================================================
 
 // TSFフォーマットのファイルのリード
-extern TSFReadResult TSF_ReadFile ( char *pPath, void *pDstBody, const TSFParam *pParam, u8 *pDstSaveCount );
-// TSFフォーマットのファイルのライト（saveCountにDISABLE_SAVE_COUNTを与えた場合は、saveCountを"0"固定にします。）
-extern BOOL          TSF_WriteFile( char *pPath, TSFHeader *pHeader, const void *pSrcBody, u8 saveCount );
+extern TSFReadResult TSF_ReadFile ( char *pPath, void *pDstBody, const TSFParam *pParam, u8 *pSaveCount );
+// TSFフォーマットのファイルのライト（pSaveCountにNULLを与えた場合は、saveCountを"0"固定にします。）
+extern BOOL          TSF_WriteFile( char *pPath, TSFHeader *pHeader, const void *pSrcBody, u8 *pSaveCount );
 // TSFフォーマットのファイルのリカバリ
 extern BOOL          TSF_RecoveryFile( TSFReadResult err, char *pPath, u32 fileLength );
 

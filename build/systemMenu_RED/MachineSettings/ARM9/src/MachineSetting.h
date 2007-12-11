@@ -51,6 +51,7 @@ typedef struct InputNumParam {
 extern NNSFndAllocator g_allocator;
 extern BOOL g_initialSet;
 extern int (*g_pNowProcess)( void );
+extern BOOL g_isValidTSD;
 
 // function-------------------------------------------------------------
 extern void MachineSettingInit( void );

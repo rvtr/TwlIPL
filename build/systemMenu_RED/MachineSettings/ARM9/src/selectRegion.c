@@ -103,12 +103,7 @@ void SelectRegionInit( void )
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// リージョンの取得
-	if( !SYSM_IsValidTSD() ||
-		( TSD_GetRegion() >= TWL_REGION_MAX ) ) {
-		s_regionCode = (TWLRegion)TWL_DEFAULT_REGION;
-	}else {
-		s_regionCode = (TWLRegion)TSD_GetRegion();
-	}
+	s_regionCode = (TWLRegion)THW_GetRegion();
 	
 	DrawMenu( (u16)s_regionCode, &regionSel );
 	
@@ -151,17 +146,21 @@ int SelectRegionMain( void )
 	}
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || tp_select ) {				// メニュー項目への分岐
-		TSD_SetRegion( s_regionCode );
-		// TSD_SetFlagRegion( TRUE );							// Region入力フラグを立てる
+		// ::::::::::::::::::::::::::::::::::::::::::::::
+		// HWセキュア情報ファイルへの書き込み（暗号化なし）
+		// ::::::::::::::::::::::::::::::::::::::::::::::
+		THW_SetRegion( s_regionCode );
+		(void)THW_WriteSecureInfo( NULL );
+		
+		// ::::::::::::::::::::::::::::::::::::::::::::::
+		// TWL設定データファイルへの書き込み
+		// ::::::::::::::::::::::::::::::::::::::::::::::
 		TSD_SetLanguage( default_lang_list[s_regionCode] );		// デフォルト言語に強制設定
 		TSD_SetCountry( default_country_list[s_regionCode] );	// デフォルト国に強制設定
 		TSD_SetFlagLanguage( TRUE );							// Language入力フラグを立てる
 		//TSD_SetFlagCountry( TRUE );							// Country入力フラグを立てる
-		// ::::::::::::::::::::::::::::::::::::::::::::::
-		// TWL設定データファイルへの書き込み
-		// ::::::::::::::::::::::::::::::::::::::::::::::
 		(void)SYSM_WriteTWLSettingsFile();
-		
+
 		MachineSettingInit();
 		return 0;
 	}else if( ( pad.trg & PAD_BUTTON_B ) || tp_cancel ) {

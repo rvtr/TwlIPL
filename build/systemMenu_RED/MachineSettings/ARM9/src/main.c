@@ -28,6 +28,7 @@ static void INTR_VBlank( void );
 
 // global variable-------------------------------------------------------------
 int (*g_pNowProcess)( void );
+BOOL g_isValidTSD;
 RTCDrawProperty g_rtcDraw = {
 	TRUE, RTC_DATE_TOP_X, RTC_DATE_TOP_Y, RTC_TIME_TOP_X, RTC_TIME_TOP_Y
 };
@@ -45,6 +46,7 @@ void TwlMain(void)
 	
 	// 初期化----------------------------------
     OS_Init();
+	OS_InitTick();
 	
 	(void)OS_EnableIrq();
 	(void)OS_EnableInterrupts();
@@ -74,7 +76,9 @@ void TwlMain(void)
 	// ::::::::::::::::::::::::::::::::::::::::::::::
 	// TWL設定データファイルの読み込み
 	// ::::::::::::::::::::::::::::::::::::::::::::::
-	if( SYSM_ReadTWLSettingsFile() ) {
+	(void)THW_ReadSecureInfo();
+	g_isValidTSD = SYSM_ReadTWLSettingsFile();
+	if( g_isValidTSD ) {
 		SYSM_CaribrateTP();
 	}
 	
