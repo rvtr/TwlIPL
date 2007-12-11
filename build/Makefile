@@ -27,8 +27,10 @@ SUBDIRS =	\
 			nandfirm \
 			libraries_sysmenu\
 			components \
-			systemmenu_RED \
-			tests
+			systemmenu_RED
+ifdef TWL_IPL_WITH_TESTS
+SUBDIRS +=	tests
+endif
 
 #----------------------------------------------------------------------------
 

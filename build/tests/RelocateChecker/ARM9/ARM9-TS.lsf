@@ -20,7 +20,7 @@
 
 Static $(TARGET_NAME)
 {
-	Address		0x02000400
+	Address		$(ADDRESS_FLXMAIN)
 	Object		$(OBJS_STATIC) ../flabObj/ARM9FLX.fob
 	Library		$(LLIBS) $(GLIBS) $(CW_LIBS)
 }

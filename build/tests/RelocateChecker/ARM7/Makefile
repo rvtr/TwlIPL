@@ -17,7 +17,7 @@
 #----------------------------------------------------------------------------
 
 SUBDIRS					=	
-SUBMAKES		=	Makefile.0 Makefile.1 Makefile.2 Makefile.3 Makefile.4 Makefile.5 Makefile.6
+SUBMAKES		=	Makefile.0 Makefile.1 Makefile.2 Makefile.3 Makefile.4
 
 include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/commondefs
 
