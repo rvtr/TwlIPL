@@ -67,6 +67,7 @@
     内部関数定義
  *---------------------------------------------------------------------------*/
 static void         SetSCFGWork( void );
+static void			ResetRTC( void );
 static void         ReadResetParameter( void );
 static void         PrintDebugInfo(void);
 static OSHeapHandle InitializeAllocateSystem(void);
@@ -96,27 +97,30 @@ void
 TwlSpMain(void)
 {
     OSHeapHandle    heapHandle;
-
+	
     // SYSMワークのクリア
     MI_CpuClear32( SYSMi_GetWork(), sizeof(SYSM_work) );
-
+	
 	// MMEMサイズチェックは、ARM7の_start内でやっているので、ノーケアでOK.
 	// SCFGレジスタ→HWi_WSYS04 etc.→system shared領域への値セットは、ランチャー起動時点では行われていないので、
 	// ランチャー自身がこれらの値を使うには、自身でこれらの値をセットしてやる必要がある。
 	// ランチャーからアプリを起動する際には、reboot.cが値を再セットしてくれる。
-//	SetSCFGWork();	// [TODO]未デバッグ
+	SetSCFGWork();	// [TODO]未デバッグ
 	
     // OS 初期化
     OS_Init();
 	OS_InitTick();
     PrintDebugInfo();
 	
-    // NVRAM からユーザー情報読み出し
-    ReadUserInfo();
-    
     // Cold/Hotスタート判定
 	ReadResetParameter();
 	
+	// RTCリセット
+	ResetRTC();		// 330usくらい
+	
+    // NVRAM からユーザー情報読み出し
+    ReadUserInfo();
+    
 	// [TODO:] カード電源ONして、ROMヘッダのみリード＆チェックくらいはやっておきたい
 	
 	SYSMi_GetWork()->isARM9Start = TRUE;				// [TODO:] HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
@@ -201,7 +205,7 @@ TwlSpMain(void)
 }
 
 
-// システム領域(WRAM & MMEM)にSCFG情報をセット
+// システム領域(WRAM & MMEM)にSCFG情報をセット [TODO:]最終的にNANDファームからブートされたらいらないかも
 static void SetSCFGWork( void )
 {
 	// SCFGレジスタが有効な場合のみセット
@@ -228,6 +232,26 @@ static void SetSCFGWork( void )
 		MI_CpuCopy8( (void*)HWi_WSYS04_ADDR, (void *)HW_SYS_CONF_BUF, 6 );
     }
 }
+
+
+// RTCのリセットチェック
+static void ResetRTC( void )
+{
+	// ランチャーでリセットを検出するためにこの処理をしているが、RTC_Init内でも同じことをしているので、ちょっと無駄。
+	RTCRawStatus1 stat1;
+	RTCRawStatus2 stat2;
+	RTC_ReadStatus1( &stat1 );
+	RTC_ReadStatus2( &stat2 );
+	// リセット、電源投入、電源電圧低下、ICテストの各フラグを確認
+	if ( stat1.reset || stat1.poc || stat1.bld || stat2.test )
+	{
+		// リセット実行
+		stat1.reset = 1;
+		RTC_WriteStatus1( &stat1 );
+		SYSMi_GetWork()->isResetRTC = TRUE;
+	}
+}
+
 
 static BOOL IsEnableJTAG( void )
 {
