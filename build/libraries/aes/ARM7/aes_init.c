@@ -34,11 +34,44 @@ void AESi_InitKeysForApp( u8 game_code[4] )
 {
     AESi_WaitKey();
 
-    reg_AES_AES_ID_B2 = AES_IDS_ID0_C(game_code);
-    reg_AES_AES_ID_B3 = AES_IDS_ID0_D(game_code);
+    reg_AES_AES_ID_A2 = AES_IDS_ID0_C(game_code);
+    reg_AES_AES_ID_A3 = AES_IDS_ID0_D(game_code);
+    reg_AES_AES_ID_B0 = AES_IDS_ID1_A(game_code);
+    reg_AES_AES_ID_B1 = AES_IDS_ID1_B(game_code);
+}
 
-    reg_AES_AES_ID_C0 = AES_IDS_ID1_A(game_code);
-    reg_AES_AES_ID_C1 = AES_IDS_ID1_B(game_code);
+/*---------------------------------------------------------------------------*
+  Name:         AESi_InitKeysForHard
+
+  Description:  set IDs depending on the system hardware.
+                you SHOULD NOT use this for standard applications.
+
+  Arguments:    fuse    camouflaged fuse id
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void AESi_InitKeysForHard( u8 fuse[8] )
+{
+    AESi_WaitKey();
+
+    reg_AES_AES_ID_B2 = *(u32*)&fuse[4];
+    reg_AES_AES_ID_B3 = *(u32*)&fuse[0];
+    reg_AES_AES_ID_D0 = *(u32*)&fuse[0];
+    reg_AES_AES_ID_D3 = *(u32*)&fuse[4];
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         AESi_ResetAesKey
+
+  Description:  set SEED/KEYs filler data without seed[3]
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void AESi_ResetAesKey( void )
+{
+    AESi_WaitKey();
 
     // set dummy without seed[3]
     reg_AES_AES_SEED_A0 = 1;
