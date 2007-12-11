@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
+#include <twl/mcu.h>
 #include <twl/cdc.h>
 #include <sysmenu.h>
 #include "reboot.h"
@@ -141,6 +142,7 @@ BOOL BOOT_WaitStart( void )
 			else
 			{
 				target = REBOOT_TARGET_DS_APP;
+				MCU_GoDsMode();
 				CDC_GoDsMode();
 				// DSサウンド：DSP = 8:0
 				// 32KHz
