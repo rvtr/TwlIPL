@@ -50,6 +50,9 @@ void PM_InitFIRM( void )
                    PMIC_LVL1_BRT_LED_1_MASK | PMIC_LVL1_BRT_LED_2_MASK
                  );
 
+    // correct battery LED curve
+    PMi_SetFlags( REG_PMIC_VLBAT_CTL_ADDR, PMIC_VLBAT_CTL_VLBAT_2_ACTIVE | PMIC_VLBAT_CTL_VLBAT_3_ACTIVE );
+
     // LCD ON
     PMi_SetFlags( REG_PMIC_CTL2_ADDR, PMIC_CTL2_VDD50 );
 
