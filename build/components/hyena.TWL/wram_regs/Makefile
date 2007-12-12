@@ -1,7 +1,7 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlIPL - modulerules - common rules for build system
-# File:     modulerules
+# Project:  TwlFirm - tools - nandfirm-ds-launcher
+# File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
 #
@@ -11,27 +11,39 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date:: 2007-09-06$
-# $Rev$
-# $Author$
+# $Log: $
+# $NoKeywords: $
 #----------------------------------------------------------------------------
-ifndef TWL_SYSMENU_MODULERULES_
 
-#----------------------------------------------------------------------------
-### TWL-modulerules
-#
-#include $(TWLSDK_ROOT)/build/buildtools/modulerules
-include	$(NITROSYSTEM_ROOT)/build/buildtools/modulerules
+TWL_PROC      = ARM7
 
+SUBDIRS		=
 
-%.tad: $(BINDIR)/$(TARGET_BIN)
-	$(MAKETAD) $< $@
-
-# .rbin
-$(BINDIR)/$(TARGET_BIN_BASENAME).rbin: $(OBJS)
-	objcopy -I elf32-little -O binary $< $@
+LINCLUDES	=   ../include
 
 #----------------------------------------------------------------------------
-TWL_SYSMENU_MODULERULES_ = TRUE
-endif	# TWL_SYSMENU_MODULERULES_
-#----- End of modulerules -----
+
+TARGET_BIN	=	wram_regs.rbin
+
+SRCS		=	\
+                wram_regs.c \
+
+#SRCDIR		=	# using default
+#LCFILE		=	# using default
+
+
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+
+INSTALL_DIR	= .
+INSTALL_TARGETS	= $(BINDIR)/$(TARGET_BIN)
+
+
+#----------------------------------------------------------------------------
+
+do-build:		$(TARGETS)
+
+
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+
+
+#===== End of Makefile =====

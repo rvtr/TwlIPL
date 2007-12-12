@@ -25,6 +25,8 @@ TWL_CODEGEN					?=	ARM
 
 #----------------------------------------------------------------------------
 
+SUBDIRS			=	wram_regs
+
 SRCS			=	main.c
 
 TARGET_NAME		=	hyena
@@ -50,7 +52,7 @@ endif
 
 #MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD
 
-MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000' \
+MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037b8000' \
 					-DADDRESS_FLXMAIN='0x02280000' \
 					-DADDRESS_BOOTCORE='0x0380f000' \
 					-DCRT0_O='$(CRT0_O)'
