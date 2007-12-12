@@ -22,7 +22,7 @@
 #include <twl/nam.h>
 
 #include <sysmenu/memorymap.h>
-#include <sysmenu/reset_param/ARM9/reset_param.h>
+//#include <sysmenu/reset_param/ARM9/reset_param.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -253,45 +253,12 @@ static void ResetRTC( void )
 }
 
 
-static BOOL IsEnableJTAG( void )
-{
-	// SCFGレジスタが無効になっていたら、SCFGレジスタの値は"0"になるので、WRAMに退避している値をチェックする。
-	u8 value = ( reg_SCFG_EXT & REG_SCFG_EXT_CFG_MASK ) ?
-				 (u8)( reg_SCFG_JTAG & REG_SCFG_JTAG_CPUJE_MASK ) :
-				 (u8)( *(u8 *)HWi_WSYS09_ADDR & HWi_WSYS09_JTAG_CPUJE_MASK );
-	return value ? TRUE : FALSE;
-}
-
 // Hot/Coldスタート判定およびリセットパラメータのリード
-#define MCU_RESET_VALUE_BUF_ENABLE_MASK		0x80000000
-#define MCU_RESET_VALUE_OFS					0
-#define MCU_RESET_VALUE_LEN					1
 void ReadResetParameter( void )
 {
-	if( ( *(u32 *)HW_RESET_PARAMETER_BUF & MCU_RESET_VALUE_BUF_ENABLE_MASK ) == 0 ) {
-		(void)MCU_GetFreeRegisters( MCU_RESET_VALUE_OFS, (u8 *)HW_RESET_PARAMETER_BUF, MCU_RESET_VALUE_LEN );
-	}
-	
-	// Hot/Coldスタート判定
-	if( IsEnableJTAG() ||  								// ISデバッガでのデバッグ動作時に常にホットスタート判定されるのを防ぐ
-		( SYSMi_GetMCUFreeRegisterValue() == 0 ) ) {    // "JTAG有効"か"マイコンフリーレジスタ値=0"ならColdスタート
-        u8 data = 1;
-        MCU_SetFreeRegisters( MCU_RESET_VALUE_OFS, &data, MCU_RESET_VALUE_LEN );  // マイコンフリーレジスタにホットスタートフラグをセット
-        SYSMi_GetWork()->isHotStart = FALSE;
-    }else {
-        SYSMi_GetWork()->isHotStart = TRUE;
-        // リセットパラメータ有効判定
-        if( ( STD_StrNCmp( (const char *)&SYSMi_GetResetParamAddr()->header.magicCode,
-                             SYSM_RESET_PARAM_MAGIC_CODE,
-                             SYSM_RESET_PARAM_MAGIC_CODE_LEN ) == 0 ) &&
-              ( SYSMi_GetResetParamAddr()->header.bodyLength > 0 ) &&
-              ( SYSMi_GetResetParamAddr()->header.crc16 == SVC_GetCRC16( 65535, &SYSMi_GetResetParamAddr()->body, SYSMi_GetResetParamAddr()->header.bodyLength ) )
-              ) {
-            // リセットパラメータが有効なら、ワークに退避
-            MI_CpuCopy32 ( SYSMi_GetResetParamAddr(), &SYSMi_GetWork()->resetParam, sizeof(ResetParam) );
-            SYSMi_GetWork()->isValidResetParam = TRUE;
-        }
-    }
+	BOOL hot;
+    SYSMi_GetWork()->isValidResetParam = OS_ReadResetParameter( (ResetParam *)&(SYSMi_GetWork()->resetParam), &hot );
+    SYSMi_GetWork()->isHotStart = hot;
     // メインメモリのリセットパラメータをクリアしておく
     MI_CpuClear32( SYSMi_GetResetParamAddr(), 0x100 );
 }

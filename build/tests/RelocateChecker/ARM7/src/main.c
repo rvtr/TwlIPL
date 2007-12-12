@@ -32,7 +32,7 @@
 #include    <twl/cdc.h>
 #include    <twl/aes.h>
 #include    <twl/mcu.h>
-#include	<twl/hw/ARM7/mmap_wramEnv.h>
+#include    <twl/hw/common/mmap_wramEnv.h>
 #include    <sysmenu.h>
 #include    "nvram_sp.h"
 

@@ -20,7 +20,7 @@
 #include	<nitro/os/common/emulator.h>
 #include    <twl/init/crt0.h>
 #include    <twl/memorymap_sp.h>
-#include    <twl/hw/ARM7/mmap_wramEnv.h>
+#include    <twl/hw/common/mmap_wramEnv.h>
 #include    "boot_sync.h"
 
 /*---------------------------------------------------------------------------*/

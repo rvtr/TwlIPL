@@ -47,7 +47,7 @@ LINCLUDES				=	$(MISC_DIR)/include
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
 
-LLIBRARIES				+=	libreset_param$(TWL_LIBSUFFIX).a
+#LLIBRARIES				+=	libreset_param$(TWL_LIBSUFFIX).a
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
