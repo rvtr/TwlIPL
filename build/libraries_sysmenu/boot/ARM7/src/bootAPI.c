@@ -27,13 +27,13 @@
 #define reg_MI_MC_SWP		(*(REGType8v *) ( REG_MC1_ADDR + 1 ) )
 
 #ifdef	ISDBG_MB_CHILD_
-#define PRE_CLEAR_NUM_MAX		14
+#define PRE_CLEAR_NUM_MAX		(6*2)
 #else
-#define PRE_CLEAR_NUM_MAX		10
+#define PRE_CLEAR_NUM_MAX		(4*2)
 #endif
 
-#define COPY_NUM_MAX			12
-#define POST_CLEAR_NUM_MAX		8
+#define COPY_NUM_MAX			(4*3)
+#define POST_CLEAR_NUM_MAX		(4*2)
 
 // extern data-------------------------------------------------------
 
@@ -81,10 +81,9 @@ BOOL BOOT_WaitStart( void )
 			static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + 2 + POST_CLEAR_NUM_MAX + 1] = 
 			{
 				// pre clear
+				SYSM_OWN_ARM7_WRAM_ADDR, NULL, // SYSM_OWN_ARM7_WRAM_ADDR（SDK_AUTOLOAD_WRAM_START）はリンカから与えられる
 				SYSM_OWN_ARM7_MMEM_ADDR, SYSM_OWN_ARM7_MMEM_ADDR_END - SYSM_OWN_ARM7_MMEM_ADDR,
 				SYSM_OWN_ARM9_MMEM_ADDR, SYSM_OWN_ARM9_MMEM_ADDR_END - SYSM_OWN_ARM9_MMEM_ADDR,
-				SYSM_OWN_ARM7_WRAM_ADDR, SYSM_OWN_ARM7_WRAM_ADDR_END - SYSM_OWN_ARM7_WRAM_ADDR,
-				SYSM_OWN_ARM7_WRAM_ADDR, SYSM_OWN_ARM7_WRAM_ADDR_END - SYSM_OWN_ARM7_WRAM_ADDR,
 #ifdef	ISDBG_MB_CHILD_
 				HW_PRV_WRAM_END - 0x600, (HW_PRV_WRAM_END - HW_PRV_WRAM_SYSRV_SIZE) - (HW_PRV_WRAM_END - 0x600),
 				HW_PRV_WRAM_END - 0x600 + 0x20, HW_PRV_WRAM_END - (HW_PRV_WRAM_END - 0x600 + 0x20),
@@ -98,6 +97,7 @@ BOOL BOOT_WaitStart( void )
 				// post clear
 				NULL,
 			};
+			mem_list[1] = SYSM_OWN_ARM7_WRAM_ADDR_END - SYSM_OWN_ARM7_WRAM_ADDR;
 			
 			// copy forwardリスト設定
 			for( l=0; l<RELOCATE_INFO_NUM ; l++ )

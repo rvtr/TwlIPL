@@ -15,6 +15,7 @@
   $Author$
  *---------------------------------------------------------------------------*/
 
+#define SDK_ASM
 #include <twl.h>
 #include <sysmenu.h>
 //#include "loader.h"

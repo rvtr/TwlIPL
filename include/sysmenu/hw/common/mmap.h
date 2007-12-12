@@ -18,7 +18,9 @@
 #ifndef	_SYSMENU_MMAP_H_
 #define	_SYSMENU_MMAP_H_
 
+#ifndef SDK_ASM
 #include <twl.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,7 +37,12 @@ extern "C" {
 #endif
 #define SYSM_OWN_ARM7_MMEM_ADDR				0x02280000
 #define SYSM_OWN_ARM7_MMEM_ADDR_END			0x02380000
-#define SYSM_OWN_ARM7_WRAM_ADDR				0x037c0000
+extern  u32 SDK_AUTOLOAD_WRAM_START[];
+#ifndef SDK_ASM
+#define SYSM_OWN_ARM7_WRAM_ADDR				((u32)SDK_AUTOLOAD_WRAM_START)
+#else
+#define SYSM_OWN_ARM7_WRAM_ADDR				SDK_AUTOLOAD_WRAM_START
+#endif
 #define SYSM_OWN_ARM7_WRAM_ADDR_END			0x0380f000
 
 #define SYSM_BOOTCODE_ARM9_ADDR				0x027ffc00					// ARM9最終ブートコードアドレス
