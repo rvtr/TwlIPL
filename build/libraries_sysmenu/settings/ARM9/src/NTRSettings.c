@@ -66,42 +66,49 @@ typedef struct IPL2HeaderPart {
 } IPL2HeaderPart;	// 0x20bytes
 
 
+// NTR各種設定データのNVRAM保存時フォーマット
+typedef struct NSDStore{
+	NTRSettingsData nsd;				// NTR各種設定データ
+	u16				saveCount;			// 0x00-0x7fをループしてカウントし、カウント値が新しいデータが有効。
+	u16				crc16;				// NTR各種設定データの16bitCRC
+	u8				pad[ 128 - sizeof(NTRSettingsData) - 4];
+}NSDStore;			// 128byte			// ※本来なら、saveCountとcrc16は256byteの最後に付加して、間にパディングを埋める方がいい。
+
+
+// NTR各種設定データEXのNVRAM保存時フォーマット（上記NCDStoreと互換をとるための無理やり拡張）
+typedef struct NSDStoreEx{
+	NTRSettingsData	nsd;				// NTR各種設定データ
+	u16					saveCount;		// 0x00-0x7fをループしてカウントし、カウント値が新しいデータが有効。
+	u16					crc16;			// NTR各種設定データの16bitCRC
+	NTRSettingsDataEx	nsd_ex;
+	u16					crc16_ex;
+}NSDStoreEx;		// 256byte			// ※本来なら、saveCountとcrc16は256byteの最後に付加して、間にパディングを埋める方がいい。
+
+
 // function's prototype-------------------------------------------------
 u32  NSD_GetNSDRomAddr( void );			// NTRSettingデータのNVRAM格納アドレスを取得
 u8   NSD_GetIPL2Type( void );			// NTR-IPL2タイプを取得
 const u8 *NSD_GetIPL2Timestamp( void );	// NTR-IPL2のタイムスタンプを取得
 
 static void NSDi_ReadIPL2Header( void );
-static BOOL NSDi_CheckCorrectNSD( NSDStoreEx (*pNSDStoreExArray)[2], u8 region );
-static BOOL NSDi_CheckDataValue( NSDStoreEx *pNSDStore, u8 region );
+static BOOL NSDi_CheckCorrectNSD( NSDStoreEx (*pNSDStoreExArray)[2], u32 validLangBitmap );
+static BOOL NSDi_CheckDataValue( NSDStoreEx *pNSDStore, u32 validLangBitmap );
 static BOOL NVRAMm_ExecuteCommand( int nvState, u32 addr, u16 size, u8 *pSrc );
 static void Callback_NVRAM( PXIFifoTag tag, u32 data, BOOL err );
 
 // static variables-----------------------------------------------------
-static NSDStoreEx		s_NSDStoreEx ATTRIBUTE_ALIGN(32);
+static NSDStoreEx		s_NSDStoreEx[ 2 ] ATTRIBUTE_ALIGN(32);
 static IPL2HeaderPart	s_IPL2Header ATTRIBUTE_ALIGN(32);
 static BOOL				s_isReadIPL2H = FALSE;
 static volatile BOOL	s_nvCbOccurred;
 static volatile u16		s_nvResult;
 static int 				s_indexNSD = NSD_NOT_CORRECT;
 
-#ifndef SDK_FINALROM
-static NSDStoreEx (*s_pNSDStoreExArray)[2];
-#endif
 // global variables-----------------------------------------------------
-NTRSettingsData			*g_pNSD   = &s_NSDStoreEx.nsd;
-NTRSettingsDataEx		*g_pNSDEx = &s_NSDStoreEx.nsd_ex;
+NTRSettingsData			*g_pNSD   = &s_NSDStoreEx[ 0 ].nsd;
+NTRSettingsDataEx		*g_pNSDEx = &s_NSDStoreEx[ 0 ].nsd_ex;
 
 // const data-----------------------------------------------------------
-static const u16 s_validLangBitmapList[] = {				// ※TWLに合わせた方が良さそう。
-	NTR_LANG_BITMAP_WW,				// TWL_REGION_JAPAN
-	NTR_LANG_BITMAP_WW,				// TWL_REGION_AMERICA
-	NTR_LANG_BITMAP_WW,				// TWL_REGION_EUROPE
-	NTR_LANG_BITMAP_WW,				// TWL_REGION_AUSTRALIA
-	NTR_LANG_BITMAP_CHINA,			// TWL_REGION_CHINA
-	NTR_LANG_BITMAP_KOREA,			// TWL_REGION_KOREA
-};
-
 
 // function's description-----------------------------------------------
 
@@ -153,25 +160,21 @@ BOOL NSD_IsReadSettings( void )
 }
 
 
-BOOL NSD_ReadSettings( u8 region, NSDStoreEx (*pTempBuffer)[2] )
+BOOL NSD_ReadSettings( u32 validLangBitmap )
 {
-	NSDStoreEx *pNSDStoreEx = (NSDStoreEx *)pTempBuffer;
-#ifndef SDK_FINALROM
-	s_pNSDStoreExArray = pTempBuffer;
-	OS_TPrintf( "NSDStoreBuff : %08x %08x\n", &(*s_pNSDStoreExArray)[ 0 ], &(*s_pNSDStoreExArray)[ 1 ] );
-#endif
-	
-	DC_InvalidateRange( pNSDStoreEx, sizeof(NSDStoreEx) * 2 );
+	DC_InvalidateRange( s_NSDStoreEx, sizeof(NSDStoreEx) * 2 );
 	
 	// フラッシュからニ重化されているNTR設定データを読み出す。
-	while( !NVRAMm_ExecuteCommand( COMM_RD, NSD_GetNSDRomAddr(),                       sizeof(NSDStoreEx), (u8 *)&pNSDStoreEx[ 0 ] ) ) {}
-	while( !NVRAMm_ExecuteCommand( COMM_RD, NSD_GetNSDRomAddr() + SPI_NVRAM_PAGE_SIZE, sizeof(NSDStoreEx), (u8 *)&pNSDStoreEx[ 1 ] ) ) {}
+	while( !NVRAMm_ExecuteCommand( COMM_RD, NSD_GetNSDRomAddr(),                       sizeof(NSDStoreEx), (u8 *)&s_NSDStoreEx[ 0 ] ) ) {}
+	while( !NVRAMm_ExecuteCommand( COMM_RD, NSD_GetNSDRomAddr() + SPI_NVRAM_PAGE_SIZE, sizeof(NSDStoreEx), (u8 *)&s_NSDStoreEx[ 1 ] ) ) {}
 	OS_TPrintf("NSD read addr=%08x\n", NSD_GetNSDRomAddr() );
 	
 	// 読み出したデータのどちらが有効かを判定する。
-	if( NSDi_CheckCorrectNSD( pTempBuffer, region ) ) {
-		// 有効なNTR設定データを静的バッファに転送
-		MI_CpuCopyFast( (void *)&pNSDStoreEx[ s_indexNSD ], (void *)&s_NSDStoreEx, sizeof(NSDStoreEx) );
+	if( NSDi_CheckCorrectNSD( &s_NSDStoreEx, validLangBitmap ) ) {
+		// 有効なNTR設定データを先頭要素にコピー
+		if( s_indexNSD == 1 ) {
+			MI_CpuCopyFast( (void *)&s_NSDStoreEx[ s_indexNSD ], (void *)&s_NSDStoreEx[ 0 ], sizeof(NSDStoreEx) );
+		}
 	}else {
 		// 有効なデータがないなら、バッファをクリアする
 		OS_TPrintf( "NSD clear.\n" );
@@ -179,7 +182,7 @@ BOOL NSD_ReadSettings( u8 region, NSDStoreEx (*pTempBuffer)[2] )
 		return FALSE;
 	}
 	
-	OS_TPrintf("Use NSD[%d]   : saveCount = %d\n", s_indexNSD, s_NSDStoreEx.saveCount);
+	OS_TPrintf("Use NSD[%d]   : saveCount = %d\n", s_indexNSD, s_NSDStoreEx[ 0 ].saveCount );
 	
 	return TRUE;
 }
@@ -188,10 +191,11 @@ BOOL NSD_ReadSettings( u8 region, NSDStoreEx (*pTempBuffer)[2] )
 //----------------------------------------------------------------------
 // NTR設定データのライト
 //----------------------------------------------------------------------
-BOOL NSD_WriteSettings( u8 region )
+BOOL NSD_WriteSettings( void )
 {
 	int retry;
 	u32 nvramAddr;
+	NSDStoreEx *pNSDStoreEx = &s_NSDStoreEx[ 0 ];
 	
 	// まだNTR設定データがリードされていなければ、リードを行って必要な情報を取得する。
 	if( !NSD_IsReadSettings() ) {
@@ -200,24 +204,25 @@ BOOL NSD_WriteSettings( u8 region )
 	}
 	
 	// NSD   のCRC、セーブカウント値、ライトアドレスの算出。
-	s_NSDStoreEx.nsd.version    = NTR_SETTINGS_DATA_VERSION;	// バージョンを現在のものに設定。
-	s_NSDStoreEx.crc16          = SVC_GetCRC16( 0xffff, (const void *)&s_NSDStoreEx.nsd, sizeof(NTRSettingsData) );
-	s_NSDStoreEx.saveCount      = (u8)( ( s_NSDStoreEx.saveCount + 1 ) & SAVE_COUNT_MASK );
+	pNSDStoreEx->nsd.version    = NTR_SETTINGS_DATA_VERSION;	// バージョンを現在のものに設定。
+	pNSDStoreEx->crc16          = SVC_GetCRC16( 0xffff, (const void *)&pNSDStoreEx->nsd, sizeof(NTRSettingsData) );
+	pNSDStoreEx->saveCount      = (u8)( ( pNSDStoreEx->saveCount + 1 ) & SAVE_COUNT_MASK );
 	
 	// NSD_EXのCRC算出。
-	s_NSDStoreEx.nsd_ex.version = NTR_SETTINGS_DATA_EX_VERSION;	// バージョンを現在のものに設定。
-	s_NSDStoreEx.nsd_ex.valid_language_bitmap = s_validLangBitmapList[ region ];
-	s_NSDStoreEx.crc16_ex       = SVC_GetCRC16( 0xffff, (const void *)&s_NSDStoreEx.nsd_ex, sizeof(NTRSettingsDataEx) );
+	pNSDStoreEx->nsd_ex.version = NTR_SETTINGS_DATA_EX_VERSION;	// バージョンを現在のものに設定。
+	pNSDStoreEx->nsd_ex.valid_language_bitmap &= NTR_LANG_BITMAP_ALL;				// NTR側は日英仏独伊西中韓のみ
+	pNSDStoreEx->nsd_ex.valid_language_bitmap |= ( 0x0001 << NTR_LANG_ENGLISH  );	// 英語は強制ON(旧NTRアプリ対策）
+	pNSDStoreEx->crc16_ex       = SVC_GetCRC16( 0xffff, (const void *)&pNSDStoreEx->nsd_ex, sizeof(NTRSettingsDataEx) );
 	
 	// NTR設定データのライト
-	DC_FlushRange( &s_NSDStoreEx, sizeof(NSDStoreEx) );
+	DC_FlushRange( pNSDStoreEx, sizeof(NSDStoreEx) );
 	retry = NVRAM_RETRY_NUM;
 	while( retry-- ) {
 		s_indexNSD ^= 0x01;									// リトライの度に書き込みアドレスを切り替える。
 		nvramAddr = NSD_GetNSDRomAddr() + s_indexNSD * SPI_NVRAM_PAGE_SIZE;
 		OS_TPrintf("NSD write addr=%08x\n", nvramAddr );
 		
-		if( NVRAMm_ExecuteCommand( COMM_WE, nvramAddr, sizeof(NSDStoreEx), (u8 *)&s_NSDStoreEx ) ) {
+		if( NVRAMm_ExecuteCommand( COMM_WE, nvramAddr, sizeof(NSDStoreEx), (u8 *)pNSDStoreEx ) ) {
 			OS_TPrintf("NVRAM Write succeeded.\n");
 			break;
 		}
@@ -232,7 +237,7 @@ BOOL NSD_WriteSettings( u8 region )
 // ミラーリングされているNTR設定データのどちらが有効かを判定
 //----------------------------------------------------------------------
 
-static BOOL NSDi_CheckCorrectNSD( NSDStoreEx (*pNSDStoreExArray)[2], u8 region )
+static BOOL NSDi_CheckCorrectNSD( NSDStoreEx (*pNSDStoreExArray)[2], u32 validLangBitmap )
 {
 	NSDStoreEx *pNSDStoreEx = (NSDStoreEx *)pNSDStoreExArray;
 	u16 i;
@@ -264,7 +269,7 @@ static BOOL NSDi_CheckCorrectNSD( NSDStoreEx (*pNSDStoreExArray)[2], u8 region )
 		
 		// NSD, NSDExのCRCが正しいなら、データの中身をチェック。
 		if( !isInvalid ) {
-			if( NSDi_CheckDataValue( &pNSDStoreEx[ i ], region ) ) {	// データがおかしい値でないかもチェック。
+			if( NSDi_CheckDataValue( &pNSDStoreEx[ i ], validLangBitmap ) ) {	// データがおかしい値でないかもチェック。
 				nsd_valid  |= 0x01 << i;								// "有効"フラグをセット
 				s_indexNSD = i;										// NCDのインデックスも切り替え。
 			}else {
@@ -293,29 +298,29 @@ static BOOL NSDi_CheckCorrectNSD( NSDStoreEx (*pNSDStoreExArray)[2], u8 region )
 
 
 // NTR設定データの値が正しい値かチェック。	// FALSE:正しくない。TRUE：正しい。
-static BOOL NSDi_CheckDataValue( NSDStoreEx *pNSDStoreEx, u8 region )
+static BOOL NSDi_CheckDataValue( NSDStoreEx *pNSDStoreEx, u32 validLangBitmap )
 {
 	NTRSettingsData   *pNSD   = &pNSDStoreEx->nsd;
 	NTRSettingsDataEx *pNSDEx = &pNSDStoreEx->nsd_ex;
-	u16 validLangBitmap = s_validLangBitmapList[ region ];
+	
+	// NTR標準6言語以外の言語に対応している場合は、対応言語に英語を追加する。(旧NTRアプリ対策）
+	if( validLangBitmap & ~NTR_LANG_BITMAP_WW ) {
+		validLangBitmap |= ( 0x0001 << NTR_LANG_ENGLISH  );
+	}
 	
 	//pNSD->option;
-	// NSDのlanguageチェック（ NSD側のlanguageは、日・英・独・仏・伊・西の６言語のうちの、対応言語のみの値となる。）
-	if( ~( NTR_LANG_BITMAP_WW & validLangBitmap ) & ( 0x0001 << pNSD->option.language ) ) {
+	
+	// NSDおよびNSDExのlanguageチェック
+	if( ( ~validLangBitmap & ( 0x0001 << pNSD->option.language ) ) ||
+		( ~validLangBitmap & ( 0x0001 << pNSDEx->language ) )
+		) {
 		OS_TPrintf("NSD: invalid language        : org:%02d ex:%02d bitmap:%04x\n",
 				   pNSD->option.language, pNSDEx->language, pNSDEx->valid_language_bitmap );
 		return FALSE;
 	}
 	
-	// NSDExのlanguageチェック（こちらには、中・韓も入る）
-	if( ( ~validLangBitmap & ( 0x0001 << pNSDEx->language ) ) ||
-		( pNSDEx->valid_language_bitmap != validLangBitmap ) ) {
-		OS_TPrintf("NSDEx: invalid language    : org:%02d ex:%02d bitmap:%04x\n",
-				   pNSD->option.language, pNSDEx->language, pNSDEx->valid_language_bitmap );
-		return FALSE;
-	}
-	
 	//pNSD->owner;
+	
 	// favoriteColorは4bitなので範囲外はない。
 	
 	// birthday
@@ -357,7 +362,7 @@ static BOOL NSDi_CheckDataValue( NSDStoreEx *pNSDStoreEx, u8 region )
 // NTR設定データのクリア
 void NSD_ClearSettings( void )
 {
-	NSDStoreEx *pNSDStoreEx = &s_NSDStoreEx;
+	NSDStoreEx *pNSDStoreEx = &s_NSDStoreEx[ 0 ];
 	
 	s_indexNSD = 1;							// ライト前に反転されるので、"0"側が選択されるように"1"にしておく
 	

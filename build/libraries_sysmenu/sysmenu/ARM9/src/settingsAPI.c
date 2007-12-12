@@ -31,21 +31,6 @@ static u8 MY_StrLen( const u16 *pStr );
 // static variables-----------------------------------------------------
 
 // const data-----------------------------------------------------------
-#if 0
-// TWL言語->NTR 言語への対応マップ
-const u8 s_langCodeMapFromTWLtoNTR[ TWL_LANG_CODE_MAX ] = {
-	NTR_LANG_JAPANESE		// TWL_LANG_JAPANESE
-	NTR_LANG_ENGLISH		// TWL_LANG_ENGLISH
-	NTR_LANG_FRENCH			// TWL_LANG_FRENCH
-	NTR_LANG_GERMAN			// TWL_LANG_GERMAN
-	NTR_LANG_ITALIAN		// TWL_LANG_ITALIAN
-	NTR_LANG_SPANISH		// TWL_LANG_SPANISH
-	NTR_LANG_CHINESE		// TWL_LANG_SIMP_CHINESE
-	NTR_LANG_KOREAN			// TWL_LANG_KOREAN
-//	NTR_LANG_ENGLISH		// TWL_LANG_DUTCH
-//	NTR_LANG_CHINESE		// TWL_LANG_TRAD_CHINESE
-};
-#endif
 
 // function's description-----------------------------------------------
 
@@ -57,18 +42,11 @@ BOOL SYSM_ReadTWLSettingsFile( void )
 	retval = TSD_ReadSettings();
 	// NTR設定データのリード
 	if( !NSD_IsReadSettings() ) {
-		NSDStoreEx (*pTempBuffer)[2] = SYSM_Alloc( NSD_TEMP_BUFFER_SIZE );
-		if( pTempBuffer == NULL ) {
-			OS_TPrintf( "%s : malloc failed.\n", __FUNCTION__ );
-			goto RETURN;
-		}
-		(void)NSD_ReadSettings( THW_GetRegion(), pTempBuffer );
-		SYSM_Free( pTempBuffer );
+		(void)NSD_ReadSettings( THW_GetValidLanguageBitmap() );
 #ifndef SDK_FINALROM
-		(void)SYSMi_VerifyNTRSettings();
+		(void)SYSMi_VerifyNTRSettings();		// デバッグ用ベリファイ
 #endif
 	}
-RETURN:
 	SYSM_SetValidTSD( retval );
 	return retval;
 }
@@ -84,9 +62,9 @@ BOOL SYSM_WriteTWLSettingsFile( void )
 	if( retval ) {
 		SYSM_SetValidTSD( TRUE );
 		SYSMi_ConvertTWL2NTRSettings();
-		NSD_WriteSettings( THW_GetRegion() );
+		(void)NSD_WriteSettings();
 #ifndef SDK_FINALROM
-		(void)SYSM_VerifyAndRecoveryNTRSettings();	// ※デバッグ用　ベリファイして、NGならリカバリ
+		(void)SYSMi_VerifyNTRSettings();		// デバッグ用ベリファイ
 #endif
 	}
 	return retval;
@@ -97,20 +75,15 @@ BOOL SYSM_WriteTWLSettingsFile( void )
 void SYSM_VerifyAndRecoveryNTRSettings( void )
 {
 	BOOL isRecovery = FALSE;
-	NSDStoreEx (*pTempBuffer)[2] = SYSM_Alloc( NSD_TEMP_BUFFER_SIZE );
 	
 	// NVRAMからNTR設定データをロードして、TWL設定データとベリファイ
-	if( pTempBuffer == NULL ) {
-		OS_Panic( "%s : malloc error.\n", __FUNCTION__ );
-	}
-	if( !NSD_ReadSettings( THW_GetRegion(), pTempBuffer ) ||
+	if( !NSD_ReadSettings( THW_GetValidLanguageBitmap() ) ||
 		!SYSMi_VerifyNTRSettings()
 		) {
 		// ロード or ベリファイ失敗なら、TWL設定データからNTR設定データを生成して、書き込み
 		SYSMi_ConvertTWL2NTRSettings();
-		NSD_WriteSettings( THW_GetRegion() );
+		NSD_WriteSettings();
 	}
-	SYSM_Free( pTempBuffer );
 }
 
 
@@ -118,8 +91,7 @@ void SYSM_VerifyAndRecoveryNTRSettings( void )
 BOOL SYSMi_VerifyNTRSettings( void )
 {
 	BOOL isFailed = FALSE;
-//	NTRAlarm zeroAlarm;				// TWLでアラームをなくす場合は、ゼロ値アラームと比較させる。
-//	MI_CpuClear( &zeroAlarm, sizeof(NTRAlarm) );
+	u32 twlValidLangBitmap;
 	
 	// 値が一致する必要があるもの
 	if(	// NTR設定データバージョン
@@ -177,26 +149,32 @@ BOOL SYSMi_VerifyNTRSettings( void )
 	}
 	
 		// 値が一致する必要があるもの
-	if( ( NSD_GetRTCOffset() != TSD_GetRTCOffset() ) ||
-		( NSD_GetLanguageEx() != TSD_GetLanguage() )
-//		|| ( NSD_GetLanguageBitmap() != TSD_GetLanguageBitmap() )
-		) {
+	if( NSD_GetRTCOffset() != TSD_GetRTCOffset() ) {
 		isFailed = TRUE;
 	}
-	
 		// SystemMenuのリージョンによって、ちょっと特殊な処理が必要なもの
-	{
-		NTRLangCode language = ( TSD_GetLanguage() < NTR_LANG_CODE_MAX_WW ) ?
-								NSD_GetLanguage() : NSD_GetLanguageEx();
-		// NSD側は、各リージョンの対応言語ビットマップのものしか取りえない。
-		if( ( THW_GetValidLanguageBitmap() & ( 0x0001 << language ) ) == 0 ) {
+	twlValidLangBitmap = ( THW_GetValidLanguageBitmap() & NTR_LANG_BITMAP_ALL ) | ( 0x0001 << NTR_LANG_ENGLISH );
+	OS_TPrintf( "%08x %08x\n", twlValidLangBitmap, NSD_GetValidLanguageBitmap() );
+	if( twlValidLangBitmap != NSD_GetValidLanguageBitmap() ) {
+		// 対応言語ビットマップ不一致
+		isFailed = TRUE;
+	}else if( !( twlValidLangBitmap & ( 0x0001 << NSD_GetLanguage() ) & ( 0x0001 << NSD_GetLanguageEx() ) ) ) {
+		// NSD側が対応言語ビットマップ外の値になっている
+		isFailed = TRUE;
+	}else if( TSD_GetLanguage() < NTR_LANG_CODE_MAX_WW ) {
+		if( ( NSD_GetLanguage()   >= NTR_LANG_CODE_MAX_WW ) ||
+			( NSD_GetLanguageEx() >= NTR_LANG_CODE_MAX_WW ) ) {
 			isFailed = TRUE;
 		}
-		if( TSD_GetLanguage() >= NTR_LANG_CODE_MAX_WW ) {
-			// TSD側がNTR標準６言語以外の時、NSD側のlanguageは強制ENGLISH（NCDEx側にちゃんとした値が入る）
-			if( NSD_GetLanguage() != NTR_LANG_ENGLISH ) {
-				isFailed = TRUE;
-			}
+	}else if( TSD_GetLanguage() <= NTR_LANG_KOREAN ) {
+		if( ( NSD_GetLanguage()   != NTR_LANG_ENGLISH ) ||
+			( NSD_GetLanguageEx() >  NTR_LANG_KOREAN ) ) {
+			isFailed = TRUE;
+		}
+	}else {
+		if( ( NSD_GetLanguage()   != NTR_LANG_ENGLISH ) ||
+			( NSD_GetLanguageEx() != NTR_LANG_ENGLISH ) ) {
+			isFailed = TRUE;
 		}
 	}
 	
@@ -264,21 +242,30 @@ void SYSMi_ConvertTWL2NTRSettings( void )
 	
 		// 値が一致する必要があるもの
 	NSD_SetRTCOffset( TSD_GetRTCOffset() );
-	NSD_SetLanguageEx( (NTRLangCode)TSD_GetLanguage() );
-//	NSD_SetLanguageBitmap( TSD_GetLanguageBitmap() );
 	
 		// SystemMenuのリージョンによって、ちょっと特殊な処理が必要なもの
 	if( TSD_GetLanguage() < NTR_LANG_CODE_MAX_WW ) {
 		// TSD側がNTR標準６言語の時、TSD側 == NSD側
-		NSD_SetLanguage( (NTRLangCode)TSD_GetLanguage() );
-	}else {
+		NSD_SetLanguage  ( (NTRLangCode)TSD_GetLanguage() );
+		NSD_SetLanguageEx( (NTRLangCode)TSD_GetLanguage() );
+	}else if( TSD_GetLanguage() <= TWL_LANG_KOREAN ) {
 		// TSD側がNTR標準６言語以外の時、NSD側のlanguageは強制ENGLISH（NCDEx側にちゃんとした値が入る）
-		NSD_SetLanguage( NTR_LANG_ENGLISH );
+		NSD_SetLanguage  ( NTR_LANG_ENGLISH );
+		NSD_SetLanguageEx( (NTRLangCode)TSD_GetLanguage() );
+	}else {
+		// それ以外の時は強制ENGLISH
+		NSD_SetLanguage  ( NTR_LANG_ENGLISH );
+		NSD_SetLanguageEx( NTR_LANG_ENGLISH );
+	}
+	// 言語ビットマップ
+	{
+		u16 validLangBitmap = (u16)( ( THW_GetValidLanguageBitmap() & NTR_LANG_BITMAP_ALL ) | ( 0x0001 << NTR_LANG_ENGLISH ) );
+		NSD_SetValidLanguageBitmap( validLangBitmap );	// ライト関数内部でもマスクされるが、ここでもしておく。
 	}
 	
 	// 値が何でも問題ないもの
-	// ※※※※ TWL側のバックライト輝度レベルが４段階でない時は、変換が必要。※※※※
-	NSD_SetBacklightBrightness( TSD_GetBacklightBrightness() );
+	NSD_SetBacklightBrightness( TSD_GetBacklightBrightness() & 0x03 );
+	// [TODO:] TWL側のバックライト輝度レベルが４段階でない時は、変換が必要。
 }
 
 

@@ -36,7 +36,6 @@ extern "C" {
 #define NTR_COMMENT_LENGTH				26							// コメント長
 #define NTR_COMMENT_BUFFERSIZE			( NTR_COMMENT_LENGTH * 2 )
 #define NTR_USER_COLOR_MAX_NUM			16							// ユーザーカラーの最大数
-#define NSD_TEMP_BUFFER_SIZE			( sizeof(NSDStoreEx) * 2 )	// NSD_ReadSettingsで必要なTempBufferサイズ
 
 // 言語設定コード
 typedef enum NTRLangCode{
@@ -58,7 +57,7 @@ typedef enum NTRLangCode{
 									  ( 0x0001 << NTR_LANG_FRENCH   ) | \
 									  ( 0x0001 << NTR_LANG_GERMAN   ) | \
 									  ( 0x0001 << NTR_LANG_ITALIAN  ) | \
-									  ( 0x0001 << NTR_LANG_SPANISH  ) ) 	// SystemMenu-WW版での対応言語ビットマップ
+									  ( 0x0001 << NTR_LANG_SPANISH  ) ) 	// NTR-IPL2-WW版での対応言語ビットマップ
 
 
 #define NTR_LANG_BITMAP_CHINA		( ( 0x0001 << NTR_LANG_CHINESE ) | \
@@ -66,7 +65,7 @@ typedef enum NTRLangCode{
 									  ( 0x0001 << NTR_LANG_FRENCH   ) | \
 									  ( 0x0001 << NTR_LANG_GERMAN   ) | \
 									  ( 0x0001 << NTR_LANG_ITALIAN  ) | \
-									  ( 0x0001 << NTR_LANG_SPANISH  ) ) 	// SystemMenu-CN版での対応言語ビットマップ
+									  ( 0x0001 << NTR_LANG_SPANISH  ) ) 	// NTR-IPL2-CN版での対応言語ビットマップ
 
 
 #define NTR_LANG_BITMAP_KOREA		( ( 0x0001 << NTR_LANG_KOREAN  ) | \
@@ -74,8 +73,16 @@ typedef enum NTRLangCode{
 									  ( 0x0001 << NTR_LANG_ENGLISH  ) | \
 									  ( 0x0001 << NTR_LANG_FRENCH   ) | \
 									  ( 0x0001 << NTR_LANG_GERMAN   ) | \
-									  ( 0x0001 << NTR_LANG_SPANISH  ) ) 	// SystemMenu-KR版での対応言語ビットマップ
+									  ( 0x0001 << NTR_LANG_SPANISH  ) ) 	// NTR-IPL2-KR版での対応言語ビットマップ
 
+#define NTR_LANG_BITMAP_ALL			( ( 0x0001 << NTR_LANG_JAPANESE ) | \
+									  ( 0x0001 << NTR_LANG_ENGLISH  ) | \
+									  ( 0x0001 << NTR_LANG_FRENCH   ) | \
+									  ( 0x0001 << NTR_LANG_GERMAN   ) | \
+									  ( 0x0001 << NTR_LANG_ITALIAN  ) | \
+									  ( 0x0001 << NTR_LANG_SPANISH  ) | \
+									  ( 0x0001 << NTR_LANG_CHINESE  ) | \
+									  ( 0x0001 << NTR_LANG_KOREAN   ) )		// NTR-IPL2全体での対応言語ビットマップ
 
 // 日付データ
 typedef struct NTRDate{
@@ -170,42 +177,23 @@ typedef struct NTRSettingsDataEx{
 }NTRSettingsDataEx;	// 138bytes
 
 
-// NTR各種設定データのNVRAM保存時フォーマット
-typedef struct NSDStore{
-	NTRSettingsData nsd;				// NTR各種設定データ
-	u16				saveCount;			// 0x00-0x7fをループしてカウントし、カウント値が新しいデータが有効。
-	u16				crc16;				// NTR各種設定データの16bitCRC
-	u8				pad[ 128 - sizeof(NTRSettingsData) - 4];
-}NSDStore;			// 128byte			// ※本来なら、saveCountとcrc16は256byteの最後に付加して、間にパディングを埋める方がいい。
-
-
-// NTR各種設定データEXのNVRAM保存時フォーマット（上記NCDStoreと互換をとるための無理やり拡張）
-typedef struct NSDStoreEx{
-	NTRSettingsData	nsd;				// NTR各種設定データ
-	u16					saveCount;		// 0x00-0x7fをループしてカウントし、カウント値が新しいデータが有効。
-	u16					crc16;			// NTR各種設定データの16bitCRC
-	NTRSettingsDataEx	nsd_ex;
-	u16					crc16_ex;
-}NSDStoreEx;		// 256byte			// ※本来なら、saveCountとcrc16は256byteの最後に付加して、間にパディングを埋める方がいい。
-
-
 #ifdef SDK_ARM9
-
-//=========================================================
-// グローバル変数
-//=========================================================
-extern NTRSettingsData   *g_pNSD;
-extern NTRSettingsDataEx *g_pNSDEx;
-#define GetNSD()		( g_pNSD )
-#define GetNSDEx()		( g_pNSDEx )
 
 //=========================================================
 // NVRAMへのリードライト関数
 //=========================================================
 extern void NSD_ClearSettings( void );
 extern BOOL NSD_IsReadSettings( void );
-extern BOOL NSD_ReadSettings( u8 region, NSDStoreEx (*pTempBuffer)[2] );	// NSD_TEMP_BUFFER_SIZEのpTempBufferが必要。
-extern BOOL NSD_WriteSettings( u8 region );									// 先にNSD_ReadSettingsを実行しておく必要がある。
+extern BOOL NSD_ReadSettings( u32 validLangBitmap );
+extern BOOL NSD_WriteSettings( void );					// 先にNSD_ReadSettingsを実行しておく必要がある。
+
+//=========================================================
+// グローバル変数
+//=========================================================
+extern NTRSettingsData		*g_pNSD;
+extern NTRSettingsDataEx	*g_pNSDEx;
+#define GetNSD()			( g_pNSD )
+#define GetNSDEx()			( g_pNSDEx )
 
 //=========================================================
 // データ取得（NSD_ReadSettingsで内部ワークに読み出した情報の取得）
@@ -313,7 +301,7 @@ static inline NTRLangCode NSD_GetLanguageEx( void )
 }
 
 // 対応言語ビットマップの取得
-static inline u16 NSD_GetLanguageBitmap( void )
+static inline u16 NSD_GetValidLanguageBitmap( void )
 {
   	return	GetNSDEx()->valid_language_bitmap;
 }
@@ -488,7 +476,7 @@ static inline void NSD_SetLanguageEx( NTRLangCode language )
 #endif
 
 // 対応言語ビットマップのセット
-static inline void NSD_SetLanguageBitmap( u16 valid_language_bitmap )
+static inline void NSD_SetValidLanguageBitmap( u16 valid_language_bitmap )
 {
 	GetNSDEx()->valid_language_bitmap = valid_language_bitmap;
 }

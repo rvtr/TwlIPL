@@ -103,50 +103,6 @@ static u32 load_region_check_list[RELOCATE_INFO_NUM][RELOCATE_INFO_NUM * 2 - 1] 
 	NULL }, 
 };
 
-#if 0
-
-typedef struct RomReloadInfo {
-	void	*pSrc;
-	void	*pDst;
-	u32		length;
-	BOOL	revCopy;
-}RomReloadInfo;
-
-static RomReloadInfo romReloadInfo[] = {
-	
-};
-
-static BOOL SYSMi_OutOfRangeRomSegment( u32 start, u32 length, RomSegmentRange *pRange, ReloadInfo *pReload )
-{
-	BOOL isReload = FALSE;
-	u32  end = (u32)start + length;
-	
-	if( start < pRange->start ) {
-		if( end <= pRange->start ) {
-			isReload = TRUE;
-			pReload->revCopy = FALSE;
-		}else {
-			isReload = TRUE;
-			pReload->revCopy = TRUE;
-		}
-	}else if( start <= pRange->end ) {
-		if( end <= pRange->end ) {
-			if(u32)( pRange->start + length ) )
-		}else if( end > pRange->end ) {
-			isReload = TRUE;
-			pReload->revCopy = FALSE;
-		}
-	}else if( start > pRange->end ) {
-		isReload = TRUE;
-	}
-
-	if( isReload ) {
-		pReload->pDst    = (void *)start;
-		pReload->pSrc    = (void *)pRange->start;
-		pReload->length  = length;
-	}
-}
-#endif
 
 // ============================================================================
 //
@@ -173,10 +129,6 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 	OS_SetMainArenaHi( (void *)SYSM_OWN_ARM9_MMEM_ADDR_END );
 	
 	SYSM_SetAllocFunc( pAlloc, pFree );
-	
-	// WRAM設定はいる？
-//	MI_SetMainMemoryPriority(MI_PROCESSOR_ARM7);
-//	MI_SetWramBank(MI_WRAM_ARM7_ALL);
 	
 	reg_OS_PAUSE |= REG_OS_PAUSE_CHK_MASK;							// PAUSEレジスタのチェックフラグのセット
 }

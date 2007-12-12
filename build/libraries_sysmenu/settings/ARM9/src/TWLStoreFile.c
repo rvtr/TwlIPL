@@ -149,7 +149,7 @@ BOOL TSF_WriteFile( char *pPath, TSFHeader *pHeader, const void *pSrcBody, u8 *p
 		pHeader->saveCount = 0;
 	}
 	
-	OS_TPrintf( "Write > %s : 0x%02x\n", pPath, pHeader->saveCount );
+	OS_TPrintf( "Write > %s : %d\n", pPath, pHeader->saveCount );
 	
 	// ファイルオープン
 	if( !FS_OpenFileEx( &file, pPath, FS_FILEMODE_R | FS_FILEMODE_W ) ) {		// R|Wモードで開くと、既存ファイルを残したまま更新。
