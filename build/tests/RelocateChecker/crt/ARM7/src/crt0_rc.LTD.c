@@ -334,7 +334,8 @@ static void INITi_SetHMACSHA1ToAppParam(void)
 	u32 *arm9_flx_addr = (u32 *)(*(u32 *)(HW_TWL_ROM_HEADER_BUF + 0x028));
 	u32 *p_arm9encryObjVerify = (u32 *)(DGT_TGT_ADDR + 4 * 32);
 	int l;
-	SVCHMACSHA1Context *pCon = ( SVCHMACSHA1Context * ) 0x037c0000;
+	SVCHMACSHA1Context *pCon = ( SVCHMACSHA1Context * ) (0x2000400 - sizeof(SVCHMACSHA1Context));
+	//SVCHMACSHA1Context *pCon = &Con;
 	
 	// arm9_flx
 	*p_arm9encryObjVerify = TRUE;
@@ -342,7 +343,7 @@ static void INITi_SetHMACSHA1ToAppParam(void)
 	{
 		if(arm9_flx_addr[l] != UNDEF_CODE)
 		{
-			if((u32)p_arm9encryObjVerify < 0x2000400)
+			if((u32)p_arm9encryObjVerify < (u32)pCon)
 			{
 				*p_arm9encryObjVerify = arm9_flx_addr[l];
 				p_arm9encryObjVerify++;
@@ -474,7 +475,7 @@ INITi_DoAutoload(void)
         beq             @020
 
         /* 再読み出し不可部分を退避 */
-        bl              INITi_ShelterLtdBinary
+        //bl              INITi_ShelterLtdBinary
 
         /* メインメモリ用ブロックをオートロード */
         ldr             r1, =_start_LtdModuleParams

@@ -25,8 +25,6 @@
 #include    <nitro/std.h>
 #include    <nitro/snd.h>
 #include    <nitro/wvr.h>
-#include    <twl/nwm.h>
-#include    <twl/camera.h>
 #include    <twl/rtc.h>
 #include    <nitro/hw/common/lcd.h>
 #include    <nitro/gx.h>
@@ -155,7 +153,6 @@ TwlSpMain(void)
     if (OS_IsRunOnTwl() == TRUE)
     {
         InitializeFatfs();    // FATFS 初期化
-        InitializeNwm();      // NWM 初期化
 #ifndef SDK_NOCRYPTO
         AES_Init();           // AES 初期化
 #endif
@@ -165,21 +162,10 @@ TwlSpMain(void)
     {
         // CODEC 初期化
         InitializeCdc();
-        // カメラ初期化
-        CAMERA_Init();
-        /* CODEC が TWL モードでないとシャッター音を強制的に鳴らす
-           機能が使用できません。この為、CODEC が TWL モードの場合
-           にのみカメラライブラリを使用可能な状態にします。 */
     }
-
-    // サウンド初期化
-    SND_Init(THREAD_PRIO_SND);
 
     // RTC 初期化
     RTC_Init(THREAD_PRIO_RTC);
-
-    // 旧無線初期化
-    WVR_Begin(heapHandle);
 
     // SPI 初期化
     SPI_Init(THREAD_PRIO_SPI);

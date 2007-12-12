@@ -108,6 +108,7 @@ static int banner_count = 0;
 static int selected = 0;
 static int bar_left = BAR_ZERO_X;
 static fx32 s_selected_banner_size;
+static BOOL s_wavstop = FALSE;
 
 // const data  -----------------------------------------
 
@@ -249,7 +250,7 @@ static void SetAffineAnimation( int cursor )
 		double s = sin(wav);
 		s_selected_banner_size = FX32_HALF - (long)( 0x80 * ( s - 1 ) );
 		mtx._00 = s_selected_banner_size;
-		wav += 0.1;
+		if(!s_wavstop) wav += 0.1;
 	}else{										// “K“–‚É‘å‚«‚³‚ð•Ï‚¦‚Ä‚Ý‚é
 		mtx._00 = FX32_HALF + FX32_HALF*(cursor%FRAME_PER_SELECT)/FRAME_PER_SELECT;
 		wav = 0;
@@ -270,6 +271,7 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	int l;
 	int div1 = cursor / FRAME_PER_SELECT;
 	int div2 = cursor % FRAME_PER_SELECT;
+	static int fadecount = 0;
 	
 	LoadBannerToVRAM( titleprop );
 
@@ -313,6 +315,11 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 		NNSG2dTextRect rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, str );
 		PutStringUTF16( (WINDOW_WIDTH-rect.width)>>1, TITLE_V_CENTER - (rect.height>>1), TXT_COLOR_BLACK, str );
 	}
+	
+	if(fadecount < (FADE_COUNT_MAX - FADE_START)) {
+		fadecount += 2;
+		G2_ChangeBlendAlpha( ALPHA_MAX-((fadecount)/FADE_COUNT_PER_ALPHA), (fadecount)/FADE_COUNT_PER_ALPHA );
+	}
 }
 
 #endif //DBGBNR
@@ -351,7 +358,7 @@ void LauncherInit( TitleProperty *pTitleList )
 	
 	GX_SetVisiblePlane( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1 | GX_PLANEMASK_BG2 | GX_PLANEMASK_OBJ );
 	G2_SetBlendAlpha(GX_BLEND_PLANEMASK_BG2, 
-			GX_BLEND_PLANEMASK_BG0 | GX_BLEND_PLANEMASK_BG1 | GX_BLEND_PLANEMASK_OBJ, 0,ALPHA_MAX);
+			GX_BLEND_PLANEMASK_BG0 | GX_BLEND_PLANEMASK_BG1 | GX_BLEND_PLANEMASK_OBJ, ALPHA_MAX,0);
 
 	GX_DispOn();
 	GXS_DispOn();
@@ -496,6 +503,15 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 	// ‚»‚Ì‘¼‚ÌƒL[ˆ—
 	if( tpd.disp.touch )
 	{
+		int x = WINDOW_WIDTH/2 - BANNER_WIDTH;
+		int y = BANNER_TOP - BANNER_HEIGHT/2;
+		if(WithinRangeTP( x, y, x+BANNER_WIDTH*2, y+BANNER_HEIGHT*2, &tpd.disp ))
+		{
+			s_wavstop = TRUE;
+		}else
+		{
+			s_wavstop = FALSE;
+		}
 		(void) SelectFunc( &tp_lr, &tpd.disp );
 	}
 	
