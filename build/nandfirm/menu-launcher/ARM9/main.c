@@ -40,7 +40,7 @@ static const u8 rsa_key[128] =
 static u8 acHeap[RSA_HEAP_SIZE] __attribute__ ((aligned (32)));
 static SVCSignHeapContext acPool;
 
-#define MENU_TITLE_ID 0x0001000152434e4cULL
+#define MENU_TITLE_ID 0x000100014c4e4352ULL
 
 /*
     PROFILE_ENABLE を定義するとある程度のパフォーマンスチェックができます。
@@ -48,6 +48,12 @@ static SVCSignHeapContext acPool;
     定義する必要があります。
 */
 #define PROFILE_ENABLE
+
+/*
+    PRINT_MEMORY_ADDR を定義すると、そのアドレスからSPrintfを行います(このファイルのみ)
+    FINALROM版でもコードが残るので注意してください。
+*/
+#define PRINT_MEMORY_ADDR       0x02000000
 
 //#ifdef SDK_FINALROM // FINALROMで無効化
 //#undef PROFILE_ENABLE
@@ -62,6 +68,13 @@ u32 pf_cnt = 0;
 #define PUSH_PROFILE()  ((void)0)
 #endif
 
+#ifdef PRINT_MEMORY_ADDR
+static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
+#undef OS_TPrintf
+#define OS_TPrintf(...) (debugPtr = (char*)((u32)(debugPtr + STD_TSPrintf(debugPtr, __VA_ARGS__) + 0xf) & ~0xf))
+#undef OS_Panic
+#define OS_Panic(...)   (OS_TPrintf(__VA_ARGS__), OS_Terminate())
+#endif
 /***************************************************************
     PreInit
 
@@ -246,7 +259,6 @@ PXI_NotifyID( FIRM_PXI_ID_NULL );
             }
         }
         OS_TPrintf("\n[ARM9] End\n");
-        MI_CpuCopy8( profile, (void*)0x02000000, sizeof(profile) );
         PXI_NotifyID( FIRM_PXI_ID_NULL );
     }
 #endif
@@ -257,10 +269,10 @@ end:
     EraseAll();
 
     // failed
-//    while (1)
-    {
-        PXI_NotifyID( FIRM_PXI_ID_ERR );
-    }
+    PXI_NotifyID( FIRM_PXI_ID_ERR );
+    PXI_NotifyID( FIRM_PXI_ID_ERR );
+    PXI_NotifyID( FIRM_PXI_ID_ERR );
+    PXI_NotifyID( FIRM_PXI_ID_ERR );
     OS_Terminate();
 }
 

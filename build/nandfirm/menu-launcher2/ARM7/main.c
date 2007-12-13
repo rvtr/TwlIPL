@@ -18,14 +18,6 @@
 #include <twl/mcu.h>
 #include <twl/aes.h>
 
-#define FATFS_HEAP_SIZE     (1024)   // FATFS用ヒープ (サイズ調整必要)
-
-#define THREAD_PRIO_FS      15
-#define THREAD_PRIO_FATFS   8
-#define FS_DMA_NO           3
-
-static u8 fatfsHeap[FATFS_HEAP_SIZE] __attribute__ ((aligned (32)));
-
 /*
     PROFILE_ENABLE を定義するとある程度のパフォーマンスチェックができます。
     利用するためには、main.cかどこかに、u32 profile[256]; u32 pf_cnt = 0; を
@@ -38,9 +30,12 @@ static u8 fatfsHeap[FATFS_HEAP_SIZE] __attribute__ ((aligned (32)));
 */
 #define USE_DEBUG_LED
 
-//#ifdef SDK_FINALROM // FINALROMで無効化
-//#undef PROFILE_ENABLE
-//#endif
+/*
+    PRINT_MEMORY_ADDR を定義すると、そのアドレスからSPrintfを行います(このファイルのみ)
+    FINALROM版でもコードが残るので注意してください。
+*/
+#define PRINT_MEMORY_ADDR       0x02000400
+
 
 #ifdef PROFILE_ENABLE
 #define PROFILE_MAX  16
@@ -59,6 +54,19 @@ static u8 step = 0x80;
 #define InitDebugLED()          ((void)0)
 #define SetDebugLED(pattern)    ((void)0)
 #endif
+
+#ifdef PRINT_MEMORY_ADDR
+static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
+#undef OS_TPrintf
+#define OS_TPrintf(...) (debugPtr = (char*)((u32)(debugPtr + STD_TSPrintf(debugPtr, __VA_ARGS__) + 0xf) & ~0xf))
+#undef OS_Panic
+#define OS_Panic(...)   (OS_TPrintf(__VA_ARGS__), OS_Terminate())
+#endif
+
+#define THREAD_PRIO_FATFS   8
+#define DMA_NO_FATFS        3
+
+extern void*   SDNandContext;  /* NAND初期化パラメータ */
 
 /***************************************************************
     PreInit
@@ -85,6 +93,13 @@ static void PreInit(void)
     */
     //if ( MCUi_ReadRegister( MCU_REG_BATTELY ) < 0x02 )
     //if ( MCUi_ReadRegister( MCU_REG_IRQ ) & MCU_IRQ_NO_BATTELY )
+/*
+  ちゃんとTWLと識別できているかチェック
+#ifdef USE_DEBUG_LED
+    SetDebugLED(OS_IsRunOnTwl() ? 0xC3 : 0xff);
+    OS_SpinWaitCpuCycles(0x1000000);
+#endif
+*/
 }
 
 /***************************************************************
@@ -100,43 +115,6 @@ static void EraseAll(void)
     MI_CpuClearFast( (void*)HW_TWL_ROM_HEADER_BUF, HW_TWL_ROM_HEADER_BUF_SIZE );
     OS_BootFromFIRM();
 #endif
-}
-
-/***************************************************************
-    FsInit
-
-    FS周りの初期化
-***************************************************************/
-extern void*   SDNandContext;  /* NAND初期化パラメータ */
-static BOOL FsInit(void)
-{
-    /* FATFSライブラリ用にカレントヒープに設定 */
-    /* WRAM上のfatfsHeapをメインメモリヒープとして登録している */
-    {
-        OSHeapHandle hh;
-        u8     *lo = (u8*)fatfsHeap;
-        u8     *hi = (u8*)fatfsHeap + FATFS_HEAP_SIZE;
-        lo = OS_InitAlloc(OS_ARENA_MAIN_SUBPRIV, lo, hi, 1);
-        OS_SetArenaLo(OS_ARENA_MAIN_SUBPRIV, lo);
-        hh = OS_CreateHeap(OS_ARENA_MAIN_SUBPRIV, OS_GetSubPrivArenaLo(), hi);
-        OS_SetCurrentHeap(OS_ARENA_MAIN_SUBPRIV, hh);
-    }
-
-    // 3: after OS_CreateHeap
-    PUSH_PROFILE();
-    SetDebugLED(++step); // 0x85
-
-    SDNandContext = &OSi_GetFromFirmAddr()->SDNandContext;
-
-    //FS_Init( FS_DMA_NO ); // just CARD_Init
-    //FS_CreateReadServerThread( THREAD_PRIO_FS );  // just CARD_SetThreadPriority
-
-    if ( !FATFS_Init( FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS ) )
-    {
-        return FALSE;
-    }
-
-    return TRUE;
 }
 
 void TwlSpMain( void )
@@ -167,15 +145,16 @@ void TwlSpMain( void )
 
     PM_BackLightOn( FALSE );
 
-    if ( !FsInit() )
+    SDNandContext = &OSi_GetFromFirmAddr()->SDNandContext;
+    if ( !FATFS_Init( DMA_NO_FATFS, THREAD_PRIO_FATFS ) )
     {
-        OS_TPrintf("Failed to call FsInit().\n");
+        OS_TPrintf("Failed to call FATFS_Init().\n");
         goto end;
     }
 
-    // 4: after FS_Init
+    // 3: after FS_Init
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x86
+    SetDebugLED(++step); // 0x85
 
     PM_BackLightOn( FALSE );
 
@@ -183,6 +162,12 @@ PXI_RecvID();
 SetDebugLED(0x01);
 PXI_RecvID();
 SetDebugLED(0x02);
+
+    // 4:
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x86
+
+    //PM_BackLightOn( FALSE );
 
     // 5:
     PUSH_PROFILE();
@@ -196,36 +181,30 @@ SetDebugLED(0x02);
 
     //PM_BackLightOn( FALSE );
 
-    // 7:
-    PUSH_PROFILE();
-    SetDebugLED(++step); // 0x89
-
-    //PM_BackLightOn( FALSE );
-
     if ( PXI_RecvID() != FIRM_PXI_ID_DONE_HEADER )
     {
         OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_DONE_HEADER).\n");
         goto end;
     }
 
-    // 8: after PXI
+    // 7: after PXI
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x8a
+    SetDebugLED(++step); // 0x89
 
     PM_BackLightOn( FALSE );
 
     AESi_InitKeysFIRM();
     AESi_RecvSeed();
 
-    // 9: after AESi_RecvSeed
+    // 8: after AESi_RecvSeed
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x8b
+    SetDebugLED(++step); // 0x8a
 
     PM_BackLightOn( FALSE );
 
-    // 10:
+    // 9:
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x8c
+    SetDebugLED(++step); // 0x8b
 
     //PM_BackLightOn( FALSE );
 
@@ -235,12 +214,11 @@ SetDebugLED(0x02);
         goto end;
     }
 
-    // 11: after PXI
+    // 10: after PXI
     PUSH_PROFILE();
 #ifdef PROFILE_ENABLE
     {
         int i;
-        MI_CpuCopy8( profile, (void*)0x02000080, sizeof(profile) );
         PXI_RecvID();
         OS_TPrintf("\n[ARM7] Begin\n");
         for (i = 0; i < PROFILE_MAX; i++)
@@ -261,6 +239,7 @@ SetDebugLED(0x02);
     }
 #endif
     SetDebugLED( 0 );
+
     PM_BackLightOn( TRUE ); // last chance
 
     OS_BootFromFIRM();
@@ -271,10 +250,10 @@ end:
     EraseAll();
 
     // failed
-//    while (1)
-    {
-        PXI_NotifyID( FIRM_PXI_ID_ERR );
-    }
+    PXI_NotifyID( FIRM_PXI_ID_ERR );
+    PXI_NotifyID( FIRM_PXI_ID_ERR );
+    PXI_NotifyID( FIRM_PXI_ID_ERR );
+    PXI_NotifyID( FIRM_PXI_ID_ERR );
     OS_Terminate();
 }
 
