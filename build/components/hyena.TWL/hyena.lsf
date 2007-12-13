@@ -60,12 +60,16 @@ Autoload WRAM
 	Library		libsdio_hcd_twl$(LIBSUFFIX).a	\
 				libsdio_busdriver$(LIBSUFFIX).a	\
 				libsdio_lib$(LIBSUFFIX).a	\
-				libARM7athdrv$(LIBSUFFIX).a
 
 	Object		* (.etable)
 	Object		* (.wram)
 	Object		* (.ltdwram)
 	Object		$(OBJDIR)/main.o
+
+	# caches in fatfs library, that should be on WRAM.
+	# 2007/12/11 OBJECT() による .bss シンボルのリンクがうまくいかないので、
+	# 変数定義箇所に pragma で .ltdwram セクションに含まれるように暫定対策しました。
+#	Object		OBJECT( FATFSi___mem_drives_structures	, libfatfs_sp$(LIBSUFFIX).a)	(.bss)
 
 	#####
 	# Sub-routines in WL library , that should be on WRAM.
@@ -139,9 +143,9 @@ Ltdautoload LTDMAIN
 	Library		librompatch_sp$(LIBSUFFIX).a	\
                 libwm_sp$(LIBSUFFIX).a	\
 				libnwm_sp$(LIBSUFFIX).a	\
+				libARM7athdrv$(LIBSUFFIX).a	\
 				libwvr_sp$(LIBSUFFIX).a	\
-				libwl_sp$(LIBSUFFIX).a \
-				
+				libwl_sp$(LIBSUFFIX).a
 	Library		libfatfs_sp$(LIBSUFFIX).a	\
 				$(USE_CRYPTO_LIBS)
 	Library		$(ISDBG_LIBS_TWL)

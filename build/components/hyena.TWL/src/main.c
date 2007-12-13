@@ -54,10 +54,10 @@
 
 /* [TODO] 以下は New WM 側に移行するほうが好ましい? */
 #define NWM_DMANO                   3
-#define THREAD_PRIO_NWM_COMMMAND    6
-#define THREAD_PRIO_NWM_EVENT       4
-#define THREAD_PRIO_NWM_SDIO        5
-#define THREAD_PRIO_NWM_WPA         7
+#define THREAD_PRIO_NWM_COMMMAND    9
+#define THREAD_PRIO_NWM_EVENT       7
+#define THREAD_PRIO_NWM_SDIO        8
+#define THREAD_PRIO_NWM_WPA         10
 
 // ROM 内登録エリアの拡張言語コード
 #define ROMHEADER_FOR_CHINA_BIT        0x80
@@ -85,7 +85,6 @@ static void         VBlankIntr(void);
 extern void         SDK_LTDAUTOLOAD_LTDWRAM_BSS_END(void);
 extern void         SDK_LTDAUTOLOAD_LTDMAIN_BSS_END(void);
 #endif
-
 
 /*---------------------------------------------------------------------------*
   Name:         TwlSpMain
@@ -191,6 +190,7 @@ TwlSpMain(void)
     
     // カードがささっていたらブート開始
     (void)HOTSW_Boot();
+//		SYSMi_GetWork()->is1stCardChecked  = TRUE;
 	
     while (TRUE)
     {
@@ -356,10 +356,18 @@ InitializeCdc(void)
         (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
     OS_WakeupThreadDirect(&thread);
 
+#if 1
     // CODEC 初期化
     CDC_Init();
     CDC_InitMic();
 //    CDCi_DumpRegisters();
+#else
+    /* [Debug] CODEC を DS モードで初期化 */
+    *((u8*)(HW_TWL_ROM_HEADER_BUF + 0x01bf))    &=  ~(0x01);
+    CDC_Init();
+    CDC_GoDsMode();
+    OS_TPrintf("Codec mode changed to DS mode for debug.\n");
+#endif
 
     // ダミースレッド破棄
     OS_KillThread(&thread, NULL);
@@ -432,6 +440,14 @@ InitializeAllocateSystem(void)
             OS_Panic("ARM7: Failed to create MAIN heap.\n");
         }
 
+    // ヒープサイズの確認
+    {
+        u32     heapSize;
+    
+        heapSize    =   (u32)OS_CheckHeap(OS_ARENA_MAIN_SUBPRIV, hh);
+        OS_TPrintf("ARM7: MAIN heap size is %d (before AddToHead)\n", heapSize);
+    }
+    
         // ヒープに拡張ブロックを追加
         OS_AddToHeap(OS_ARENA_MAIN_SUBPRIV, hh, extraLo, extraHi);
     }
@@ -506,6 +522,18 @@ InitializeAllocateSystem(void)
             OS_Panic("ARM7: Failed to WRAM create heap.\n");
         }
 
+    // ヒープサイズの確認
+    {
+        u32     heapSize;
+    
+        heapSize    =   (u32)OS_CheckHeap(OS_ARENA_WRAM_SUBPRIV, hh);
+        if (WM_WL_HEAP_SIZE > heapSize)
+        {
+            OS_Panic("Insufficient heap size. (0x%x < 0x%x)\n", heapSize, WM_WL_HEAP_SIZE);
+        }
+        OS_TPrintf("ARM7: WRAM heap size is %d (before AddToHeap)\n", heapSize);
+    }
+    
         // ヒープに拡張ブロックを追加
         OS_AddToHeap(OS_ARENA_WRAM_SUBPRIV, hh, extraLo, extraHi);
     }
