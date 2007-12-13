@@ -272,6 +272,7 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	int div1 = cursor / FRAME_PER_SELECT;
 	int div2 = cursor % FRAME_PER_SELECT;
 	static int fadecount = 0;
+	static int old_selected = -1;
 	
 	LoadBannerToVRAM( titleprop );
 
@@ -310,9 +311,11 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	GX_LoadOAM(&banner_oam_attr, 0, sizeof(banner_oam_attr));
 	
 	// ƒAƒvƒŠ–¼•\Ž¦
+	if(selected != old_selected)
 	{
 		NNSG2dChar *str = ((TWLBannerFile *)titleprop[selected].pBanner)->v1.comment[ TSD_GetLanguage() ];
 		NNSG2dTextRect rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, str );
+		NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL, 0, 24, WINDOW_WIDTH, 32 );
 		PutStringUTF16( (WINDOW_WIDTH-rect.width)>>1, TITLE_V_CENTER - (rect.height>>1), TXT_COLOR_BLACK, str );
 	}
 	
@@ -349,7 +352,6 @@ void LauncherInit( TitleProperty *pTitleList )
 	GX_LoadBG2Scr(bg_scr_data2, 0, sizeof(bg_scr_data2));
 			
 	DrawBackLightSwitch();
-	
 	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.", SYSMENU_VER );
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
@@ -374,9 +376,9 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
 	static int fadecount = 0;
 	
 	// •`‰æŠÖŒW
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
-	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
-	DrawBackLightSwitch();
+    //NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+	//PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
+	//DrawBackLightSwitch();
 	DrawScrollBar( pTitleList );
 	
 	#ifdef DBGBNR
@@ -605,6 +607,7 @@ static void DrawScrollBar( TitleProperty *pTitleList )
 	static const int COL_NUM = 15;
 	static const int COL_DIV = (COL_FLAME_MAX / COL_NUM);
 	int colc_cold;
+	static int oldx;
 	
 	col_count += col_count_d;
 	if(col_count < 0)
@@ -619,6 +622,8 @@ static void DrawScrollBar( TitleProperty *pTitleList )
 	}
 	
 	colc_cold = col_count/COL_DIV;
+	
+	NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL, oldx, BAR_ZERO_Y, 12, 13 );
 	for(l=0; l<LAUNCHER_TITLE_LIST_NUM; l++)
 	{
 		PutStringUTF16( (int)(BAR_ZERO_X + l * (ITEM_SIZE + ITEM_INTERVAL)),
@@ -628,7 +633,8 @@ static void DrawScrollBar( TitleProperty *pTitleList )
 	}
 	for(l=0; l<4; l++)
 	{
-		PutStringUTF16( (int)(bar_left - l%2), BAR_ZERO_Y - l/2, TXT_UCOLOR_G1, (const u16 *)L" " );
+		oldx = (int)(bar_left - l%2);
+		PutStringUTF16( oldx, BAR_ZERO_Y - l/2, TXT_UCOLOR_G1, (const u16 *)L" " );
 	}
 }
 
@@ -642,9 +648,9 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	MoveByScrollBar();
 	
 	// •`‰æŠÖŒW
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
-	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
-	DrawBackLightSwitch();
+    //NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+	//PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
+	//DrawBackLightSwitch();
 	
 	DrawScrollBar( pTitleList );
 	
