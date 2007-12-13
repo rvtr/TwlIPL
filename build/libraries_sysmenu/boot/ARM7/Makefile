@@ -28,7 +28,9 @@ TWL_PROC	    	=	ARM7
 
 SRCDIR				=	./src
 
-INCDIR				=	../common/include
+INCDIR				=	../common/include \
+						$(TWLSDK_ROOT)/build/libraries/fatfs/ARM7.TWL/include \
+						$(TWLSDK_ROOT)/build/libraries/fatfs/ARM7.TWL/include/twl/fatfs/ARM7 \
 
 SRCS				=	bootAPI.c boot.c
 
