@@ -49,9 +49,10 @@ static void PxiFirmStreamCallback( PXIFifoTag tag, u32 data, BOOL err )
     else if ( work.current < work.length )  // stream is cotinuous
     {
         int i;
+        u8* ptr = (u8*)&data;
         for ( i = 0; i < 3 && work.current < work.length; i++ )
         {
-            work.data[ work.current++ ] = (u8)( (data >> 16) & 0xFF );
+            work.data[ work.current++ ] = *ptr++;
         }
     }
     else
@@ -121,7 +122,7 @@ void PXI_SendStream( const void* buf, int size )
     }
     while ( size > 0 )
     {
-        u32 data = (u32)(ptr[0] << 16 | ptr[1] << 8 | ptr[2] << 0);
+        u32 data = (u32)(ptr[0] << 0 | ptr[1] << 8 | ptr[2] << 16);
         while ( 0 > PXI_SendWordByFifo( PXI_FIFO_TAG_USER_0, data, 0 ) )
         {
         }

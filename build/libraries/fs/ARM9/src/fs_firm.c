@@ -68,8 +68,8 @@ static AESKey FSiAesKeySeed;
  *---------------------------------------------------------------------------*/
 void FS_InitFIRM( void )
 {
-    MI_CpuClearFast( (void*)HW_FIRM_FS_TWMP_BUFFER, HW_FIRM_FS_TWMP_BUFFER_SIZE );
-    FSiTemporaryBuffer = (void*)HW_FIRM_FS_TWMP_BUFFER;
+    MI_CpuClearFast( (void*)HW_FIRM_FS_TEMP_BUFFER, HW_FIRM_FS_TEMP_BUFFER_SIZE );
+    FSiTemporaryBuffer = (void*)HW_FIRM_FS_TEMP_BUFFER;
     FATFS_InitFIRM();
     FS_Init( FS_DMA_NOT_USE );
 }
@@ -429,6 +429,7 @@ BOOL FS_LoadStatic( void )
 
 /*
     以下、LoadBufferを使わない版 (通常FS APIを使用する)
+    ！！！！ AESの通信バッファをメインメモリにおかないといけない！ (pending)
 */
 #include <twl/aes.h>
 
@@ -438,8 +439,8 @@ static u8* const    aesBuffer = (u8*)HW_FIRM_FS_AES_BUFFER; // 0x2ff0000
 
 static void AesCallback( AESResult result, void* arg )
 {
-    BOOL* pFlag = (BOOL*)arg;
-    *pFlag = TRUE;
+    BOOL* pBusyFlag = (BOOL*)arg;
+    *pBusyFlag = FALSE;
     if (result != AES_RESULT_SUCCESS)
     {
         OS_TPrintf("Failed to decrypt by AES (%d)\n", result);
@@ -611,7 +612,6 @@ BOOL FS_OpenSrl( FSFile *pFile )
 BOOL FS_LoadSrlHeader( FSFile *pFile, SVCSignHeapContext* pool, const void* rsa_key )
 {
     u8 md[SVC_SHA1_DIGEST_SIZE];
-    u8 digest[SVC_SHA1_DIGEST_SIZE];
     SignatureData sd;
 
     if ( !FS_SeekFile( pFile, 0, FS_SEEK_SET ) )
@@ -636,7 +636,12 @@ BOOL FS_LoadSrlHeader( FSFile *pFile, SVCSignHeapContext* pool, const void* rsa_
 
     // ヘッダ署名チェック
     SVC_DecryptSign( pool, &sd, rh->signature, rsa_key );
-    MI_CpuCopy8( sd.digest, digest, SVC_SHA1_DIGEST_SIZE ); // ダイジェストの取り出し
+
+    if ( !CheckDigest( md, sd.digest, TRUE, FALSE ) )
+    {
+        MI_CpuClear8( &sd, sizeof(sd) );    // 残り削除 (他に必要なものはない？)
+        return FALSE;
+    }
 
     // ダイジェスト以外のデータのチェックが必要！！
 
@@ -644,7 +649,10 @@ BOOL FS_LoadSrlHeader( FSFile *pFile, SVCSignHeapContext* pool, const void* rsa_
     MI_CpuCopy8( (AESKey*)sd.aes_key_seed, &FSiAesKeySeed, sizeof(FSiAesKeySeed) );
 
     MI_CpuClear8( &sd, sizeof(sd) );    // 残り削除 (他に必要なものはない？)
-    return CheckDigest( md, digest, TRUE, TRUE );
+
+    // ROMヘッダのコピー
+    MI_CpuCopyFast( rh, (void*)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END-HW_ROM_HEADER_BUF );
+    return TRUE;
 }
 
 /*---------------------------------------------------------------------------*
