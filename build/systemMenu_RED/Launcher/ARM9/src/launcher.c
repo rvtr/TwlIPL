@@ -352,7 +352,7 @@ void LauncherInit( TitleProperty *pTitleList )
 	GX_LoadBG2Scr(bg_scr_data2, 0, sizeof(bg_scr_data2));
 			
 	DrawBackLightSwitch();
-	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.", SYSMENU_VER );
+	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
@@ -481,6 +481,7 @@ static void ProcessBackLightPads( void )
 			brightness = 0;
 		}
 		SYSM_SetBackLightBrightness( (u8)brightness );
+		DrawBackLightSwitch();
 	}
 	if( ( pad.trg & PAD_BUTTON_SELECT) || dw_bl_trg ) {
 		brightness = TSD_GetBacklightBrightness() - 1;
@@ -488,6 +489,7 @@ static void ProcessBackLightPads( void )
 			brightness = TWL_BACKLIGHT_LEVEL_MAX;
 		}
 		SYSM_SetBackLightBrightness( (u8)brightness );
+		DrawBackLightSwitch();
 	}
 }
 
@@ -515,6 +517,9 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 			s_wavstop = FALSE;
 		}
 		(void) SelectFunc( &tp_lr, &tpd.disp );
+	}else
+	{
+		s_wavstop = FALSE;
 	}
 	
 	if(pad.cont & PAD_KEY_RIGHT || tp_lr == 1){										// バナー選択
@@ -526,9 +531,10 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 	s_csr += csr_v;
 	if((LAUNCHER_TITLE_LIST_NUM-1)*FRAME_PER_SELECT < s_csr) s_csr = (LAUNCHER_TITLE_LIST_NUM-1)*FRAME_PER_SELECT;
 	if( s_csr < 0 ) s_csr = 0;
+
+	selected = (s_csr + FRAME_PER_SELECT/2)/FRAME_PER_SELECT;
 	if(s_csr%FRAME_PER_SELECT == 0){
 		csr_v = 0;
-		selected = s_csr/FRAME_PER_SELECT;
 		
 		// バナーが中央にあるときだけ決定可能
 		tp_select = SelectSomethingByTP(&dummy, func, 1 );
@@ -667,6 +673,7 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 // バックライトスイッチの表示
 static void DrawBackLightSwitch(void)
 {
+	NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL, B_LIGHT_DW_BUTTON_TOP_X + 24, B_LIGHT_DW_BUTTON_TOP_Y, 40, 13 );
 	PutStringUTF16( B_LIGHT_DW_BUTTON_TOP_X, B_LIGHT_DW_BUTTON_TOP_Y, TXT_COLOR_RED,
 					L"\xE01c\xE01b" );
 	PrintfSJIS( B_LIGHT_DW_BUTTON_TOP_X + 24, B_LIGHT_DW_BUTTON_TOP_Y, TXT_COLOR_RED,
