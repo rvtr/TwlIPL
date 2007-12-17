@@ -363,10 +363,12 @@ static BOOL VERSION_Command(char * line, int num)
         ver8[2] = ConvToBCD8(t_st->tm_mday);
         ver8[3] = ConvToBCD8(t_st->tm_mon+1);
         ver8[4] = ConvToBCD8(t_st->tm_year);
-        ver8[5] = 0xff;
+        ver8[5] = 0x57;
         ver8[6] = 0xff;
         ver8[7] = 0xff;
     }
+
+    nandHeader.g.d.card_key = version;
 
     debug_printf2("version = %08llx\n", version);
 
