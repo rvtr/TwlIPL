@@ -10,7 +10,9 @@
 // Define Data --------------------------------------------------------------
 #define		SECURE_SEGMENT_NUM					4
 #define		ONE_SEGMENT_PAGE_NUM				8
-#define		COMMAND_DECRYPTION_WAIT				25 // 25ms
+#define		COMMAND_DECRYPTION_WAIT				25 		// 25ms
+#define		ROM_EMULATION_START_OFS				0x160
+#define		ROM_EMULATION_END_OFS				0x180
 
 
 // Function prototype -------------------------------------------------------
@@ -25,6 +27,38 @@ static void SetMCSCR(void);
 // ■--------------------------------------■
 // ■       ノーマルモードのコマンド       ■
 // ■--------------------------------------■
+/*---------------------------------------------------------------------------*
+  Name:         ReadRomEmulationData_DSType2
+  
+  Description:  DSカードType2のRomエミュレーションデータの読み込み
+ *---------------------------------------------------------------------------*/
+void ReadRomEmulationData_DSType2(CardBootData *cbd)
+{
+	u32 count=0;
+    u32 temp;
+    u32 *buf = cbd->romEmuBuf;
+    
+	// MCCMD レジスタ設定
+	reg_HOTSW_MCCMD0 = 0x3e000000;
+	reg_HOTSW_MCCMD1 = 0x0;
+
+	// MCCNT1 レジスタ設定 (START = 1  W/R = 0  PC = 001 (1ページリード) に)
+	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,     0)) |
+    			             		 			 CNT1_FLD(1,0,0,0,  0,1,  0,0,  0,  0,0,0,  1540));
+
+	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
+	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
+        if(count >= ROM_EMULATION_START_OFS && count < ROM_EMULATION_END_OFS){
+        	*buf++ = reg_HOTSW_MCD1;
+        }
+        else{
+			temp = reg_HOTSW_MCD1;
+        }
+        count+=4;
+	}
+}
+
 /*---------------------------------------------------------------------------*
   Name:         ReadIDNormal_DSType2
   

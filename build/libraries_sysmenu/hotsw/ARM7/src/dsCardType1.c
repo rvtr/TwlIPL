@@ -7,9 +7,6 @@
 #include	<blowfish.h>
 #include 	<dsCardType1.h>
 
-// Define data --------------------------------------------------------------
-#define 	PAGE_SIZE								512
-
 // Function prototype -------------------------------------------------------
 static void SetSecureCommand(SecureCommandType type, CardBootData *cbd);
 static void SetMCSCR(void);

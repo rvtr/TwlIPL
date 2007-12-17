@@ -27,6 +27,9 @@ void HOTSW_SetBootSegmentBuffer(void* buf, u32 size);
 // Secure Segment バッファの指定
 void HOTSW_SetSecureSegmentBuffer(void* buf, u32 size);
 
+// Romエミュレーション情報を格納しているバッファのポインタを返す
+void* HOTSW_GetRomEmulationBuffer(void);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

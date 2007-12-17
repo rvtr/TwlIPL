@@ -23,13 +23,18 @@ extern "C" {
 
 // Define -------------------------------------------------------------------
 #define KEY_BUF_SIZE						3			// Blowfishキーのバッファサイズ
-#define DMA_NO						   		2			// 
+#define HOTSW_DMA_NO						2			// 
 #define BOOT_SEGMENT_SIZE 					0x1000		// Boot Segment領域のサイズ
+
+#define PAGE_SIZE							0x200		// 1ページのサイズ(バイト単位)
+#define	PAGE_WORD_SIZE						0x80		// 1ページのサイズ(ワード単位)
+
+#define ONE_SEGMENT_SIZE					0x1000		// 1 Segmentのサイズ(バイト単位)
+#define ONE_SEGMENT_WORD_SIZE				0x400		// 1 Segmentのサイズ(ワード単位)
+
 #define SECURE_SEGMENT_SIZE					0x4000		// Secure領域のサイズ
 
-#define VAE_VALUE							0xaaaaaa	// VAE (コマンド認証値(期待値))
-#define VBI_VALUE							0x00000		// VBI (コマンドカウンタ 初期値)
-#define VD_VALUE							0xdddddd	// VD  (PNジェネレータ   初期値)
+#define ROM_EMULATION_DATA_SIZE				0x20		// ROMエミュレーションデータサイズ
 
 #define PNA_BASE_VALUE						0x60e8		// 
 #define PNB_L_VALUE							0x879b9b05	// 
@@ -117,6 +122,7 @@ extern "C" {
 #ifdef USE_SLOT_A
 // Slot A
 #define		SLOT_STATUS_MODE_SELECT_MSK			0x0c
+#define		SLOT_STATUS_CDET_MSK				0x01
 #define		SLOT_STATUS_MODE_00					0x00
 #define 	SLOT_STATUS_MODE_01					0x04
 #define 	SLOT_STATUS_MODE_10					0x08
@@ -128,15 +134,19 @@ extern "C" {
 #define		reg_HOTSW_MCCNT0					reg_MI_MCCNT0_A
 #define		reg_HOTSW_MCCNT1					reg_MI_MCCNT1_A
 
+#define		HOTSW_MCD1							REG_MCD1_A_ADDR
 #define		reg_HOTSW_MCD1						reg_MI_MCD1_A
 
 #define		reg_HOTSW_MCSCR0					reg_MI_MCSCR0_A
 #define		reg_HOTSW_MCSCR1					reg_MI_MCSCR1_A
 #define		reg_HOTSW_MCSCR2					reg_MI_MCSCR2_A
 
+#define		HOTSW_IF_CARD_DET					OS_IE_CARD_A_DET
+
 #else
 // Slot B
 #define		SLOT_STATUS_MODE_SELECT_MSK			0xc0
+#define		SLOT_STATUS_CDET_MSK				0x10
 #define		SLOT_STATUS_MODE_00					0x00
 #define 	SLOT_STATUS_MODE_01					0x40
 #define 	SLOT_STATUS_MODE_10					0x80
@@ -148,11 +158,14 @@ extern "C" {
 #define		reg_HOTSW_MCCNT0					reg_MI_MCCNT0_B
 #define		reg_HOTSW_MCCNT1					reg_MI_MCCNT1_B
 
+#define		HOTSW_MCD1							REG_MCD1_B_ADDR
 #define		reg_HOTSW_MCD1						reg_MI_MCD1_B
 
 #define		reg_HOTSW_MCSCR0					reg_MI_MCSCR0_B
 #define		reg_HOTSW_MCSCR1					reg_MI_MCSCR1_B
 #define		reg_HOTSW_MCSCR2					reg_MI_MCSCR2_B
+
+#define		HOTSW_IF_CARD_DET					OS_IE_CARD_B_DET
 
 #endif
 
@@ -229,9 +242,10 @@ typedef struct CardBootData{
     u32					arm7LtdSize;			
     
 	BOOL			   	twlFlg;					
-    
-    u32					keyBuf[KEY_BUF_SIZE];	
 
+    u32					romEmuBuf[ROM_EMULATION_DATA_SIZE/sizeof(u32)];
+    u32					keyBuf[KEY_BUF_SIZE];	
+    
 	u64					secureSegNum;			
 
 	CardTypeEx			cardType;

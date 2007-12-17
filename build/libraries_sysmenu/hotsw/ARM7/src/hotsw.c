@@ -53,6 +53,7 @@ static void GenVA_VB_VD(void);
 static void LoadTable(void);
 static void ReadIDNormal(void);
 static void DecryptObjectFile(void);
+static void ReadPageNormalFromDebugger(u32 page, void* buf);
 
 static void MIm_CardDmaCopy32(u32 dmaNo, const void *src, void *dest);
 
@@ -182,6 +183,8 @@ BOOL HOTSW_Boot(void)
     	// カードID読み込み
 		ReadIDNormal();
 
+		ShowRomHeaderData();
+        
 		// カードタイプを判別をして、使う関数を切替える IDの最上位ビットが1なら3DM
         if(s_cbData.id_nml & 0x80000000){
 			s_cbData.cardType = DS_CARD_TYPE_2;
@@ -200,6 +203,16 @@ BOOL HOTSW_Boot(void)
 	    	// Boot Segment読み込み
 	    	s_funcTable[s_cbData.cardType].ReadBootSegment_N(&s_cbData);
 			
+            // Romエミュレーションデータを取得
+            if(s_cbData.cardType == DS_CARD_TYPE_1){
+				// Type1の場合
+                MI_CpuCopy8(s_cbData.pBootSegBuf->rh.s.reserved_C, s_cbData.romEmuBuf, ROM_EMULATION_DATA_SIZE);
+            }
+            else if(s_cbData.cardType == DS_CARD_TYPE_2){
+				// Type2の場合
+                ReadRomEmulationData_DSType2(&s_cbData);
+            }
+
 			// ROMヘッダCRCを算出してチェック。NintendoロゴCRCも確認。
 			SYSMi_GetWork()->cardHeaderCrc16_bak = SVC_GetCRC16( 65535, s_cbData.pBootSegBuf, 0x015e );
 			OS_TPrintf( "RomHeaderCRC16 : calc = %04x  romh = %04x\n",
@@ -288,6 +301,16 @@ BOOL HOTSW_Boot(void)
 #endif
   
     return retval;
+}
+
+/* -----------------------------------------------------------------
+ * HOTSW_GetRomEmulationBuffer関数
+ *
+ * Romエミュレーション情報を格納しているバッファへのポインタを返す
+ * ----------------------------------------------------------------- */
+void* HOTSW_GetRomEmulationBuffer(void)
+{
+	return s_cbData.romEmuBuf;
 }
 
 /* -----------------------------------------------------------------
@@ -474,6 +497,50 @@ static void ReadIDNormal(void)
 	}
 
 }
+
+
+/* -----------------------------------------------------------------
+ * ReadPageNormalFromDebugger関数
+ *
+ * Romエミュレーション情報を読む
+ * ----------------------------------------------------------------- */
+void ReadPageNormalFromDebugger(u32 page, void* buf)
+{
+    GCDCmd64 le , be;
+    u64 page_data = page;
+//    u32 i=0;
+
+	// ゼロクリア
+	MI_CpuClear8(&le, sizeof(GCDCmd64));
+    
+   	// コマンド作成
+	le.dw = (page_data << 33);
+    
+    // ビッグエンディアンに直す
+	be.b[7] = le.b[0];
+	be.b[6] = le.b[1];
+	be.b[5] = le.b[2];
+	be.b[4] = le.b[3];
+	be.b[3] = le.b[4];
+	be.b[2] = le.b[5];
+	be.b[1] = le.b[6];
+    be.b[0] = le.b[7];
+
+	// MCCMD レジスタ設定
+	reg_MI_MCCMD0_B = *(u32*)be.b;
+	reg_MI_MCCMD1_B = *(u32*)&be.b[4];
+
+	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 001(1ページリード) CS = 1 SE = 1 DS = 1 latency1 = 20 に)
+	reg_MI_MCCNT1_B = (u32)((reg_MI_MCCNT1_B & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,   0)) |
+       			           		 			   CNT1_FLD(1,0,0,0,  0,1,  0,0,  0,  0,0,0,  20));
+    
+	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
+	while(reg_MI_MCCNT1_B & START_FLG_MASK){
+		while(!(reg_MI_MCCNT1_B & READY_FLG_MASK)){}
+        *( ((u32 *)buf)++ ) = reg_MI_MCD1_B;
+	}
+}
+
 
 /* -----------------------------------------------------------------
  * DecryptObjectFile関数
@@ -674,65 +741,6 @@ static void SetMCSCR(void)
     reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(1,1,1,1,  1,1,  1,1,  1,  0,1,1,  1)) |
            		             		 CNT1_FLD(0,0,0,0,  0,0,  0,0,  0,  1,0,0,  0));
 }
-
-
-//--------------------------------------------------------------------
-//		改造DMA用
-//--------------------------------------------------------------------
-/* ---------------------------------------------------------------------------------------------------------------------------------------- */
-// DMAイネーブル・DSカード起動モード・転送ビット幅 32ビット・繰り返しモード・ソースアドレス固定・デスティネーションアドレス固定・ワードカウント=1
-#define MI_CNT_CARDWRITE32    ( MI_DMA_ENABLE | MI_DMA_TIMING_CARD | MI_DMA_32BIT_BUS | MI_DMA_CONTINUOUS_ON | MI_DMA_SRC_FIX | MI_DMA_DEST_FIX | 1 )
-
-/* ---------------------------------------------------------------------------------------------------------------------------------------- */
-// NitroSDK/build/libraries/mi/common/include/mi_dma.hより抜粋
-#define MIi_Wait_BeforeDMA( dmaCntp, dmaNo )                  \
-    do {                                                      \
-      dmaCntp = &((vu32*)REG_DMA0SAD_ADDR)[dmaNo * 3 + 2];    \
-      while ( *dmaCntp & REG_MI_DMA0CNT_E_MASK ) {}           \
-    }while(0)
-
-#define MIi_Wait_AfterDMA( dmaCntp )                          \
-    do {                                                      \
-      while ( *dmaCntp & REG_MI_DMA0CNT_E_MASK ) {}           \
-    }while(0)
-
-inline void MIi_DmaSetParams_wait(u32 dmaNo, u32 src, u32 dest, u32 ctrl)
-{
-    OSIntrMode enabled = OS_DisableInterrupts();
-    vu32   *p = (vu32 *)((u32)REG_DMA0SAD_ADDR + dmaNo * 12);
-    *p = (vu32)src;
-    *(p + 1) = (vu32)dest;
-    *(p + 2) = (vu32)ctrl;
-
-    // ARM7 must wait 2 cycle (load is 3 cycle)
-    {
-        u32     dummy = reg_MI_DMA0SAD;
-    }
-
-    (void)OS_RestoreInterrupts(enabled);
-}
-
-//------------------------------------------------------------------------------
-//
-// NitroSDK　DMA転送関数　改造版
-//
-//------------------------------------------------------------------------------
-// NitroSDK/build/libraries/mi/common/src/mi_dma_card.cより抜粋
-static void MIm_CardDmaCopy32(u32 dmaNo, const void *src, void *dest)
-{
-    vu32   *dmaCntp;
-
-    MIi_Wait_BeforeDMA(dmaCntp, dmaNo);
-    MIi_DmaSetParams_wait(dmaNo, (u32)src, (u32)dest,(u32)MI_CNT_CARDWRITE32);
-    /*
-     * ここでは自動起動が ON になっただけ.
-     * CARD レジスタへコマンドを設定して初めて起動する.
-     */
-}
-
-
-
-
 
 /*---------------------------------------------------------------------------*
   Name:         InterruptCallbackCard
