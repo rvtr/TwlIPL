@@ -82,8 +82,13 @@ void TwlMain( void )
 																// 初回起動シーケンス判定、
 																// 検査用オート起動カード判定、量産ライン用キーショートカット起動判定等のリード
 	
-	// 「ダイレクトブートでない」なら、NAND & カードアプリリスト取得
+	// 「ダイレクトブートでない」なら
 	if( !pBootTitle ) {
+		// アプリ間パラメータの呼び出し元アプリ情報をクリア
+		OSDeliverArgInfo *arginfo = (OSDeliverArgInfo *)HW_PARAM_DELIVER_ARG;
+		arginfo->gameCode = NULL;
+		
+		// NAND & カードアプリリスト取得
 		(void)SYSM_GetNandTitleList( s_titleList, LAUNCHER_TITLE_LIST_NUM );	// NANDアプリリストの取得（内蔵アプリはs_titleList[1]から格納される）
 		(void)SYSM_GetCardTitleList( s_titleList );				// カードアプリリストの取得（カードアプリはs_titleList[0]に格納される）
 	}

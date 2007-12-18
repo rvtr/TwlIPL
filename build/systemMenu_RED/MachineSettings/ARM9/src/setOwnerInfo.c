@@ -99,7 +99,7 @@ static u8 s_color_csr = 0;
 static BOOL s_birth_csr = FALSE;
 static TWLDate s_temp_birthday;
 static u16 s_temp_name[ TWL_NICKNAME_LENGTH + 1 ];
-static u16 s_temp_comment[ TWL_NICKNAME_LENGTH + 1 ];
+static u16 s_temp_comment[ TWL_COMMENT_LENGTH + 1 ];
 static u8  s_temp_name_length;
 static u8  s_temp_comment_length;
 
