@@ -369,8 +369,7 @@ INITi_InitRegion(void)
         /* TWL ハードウェア上で動作しているかどうかを調査 */
 #if 0
         bl              INITi_IsRunOnTwl
-        cmp             r0, #FALSE
-        beq             @002
+        bne             @002
 #endif
 
 @001:   /* ハードウェアが TWL の場合 */
@@ -572,8 +571,7 @@ INITi_DoAutoload(void)
         /* TWL ハードウェア上で動作しているかどうかを調査 */
 #if 0
         bl              INITi_IsRunOnTwl
-        cmp             r0, #FALSE
-        beq             @030
+        bne             @030
 #endif
 
         /* TWL 専用ブロックの存在を確認 */

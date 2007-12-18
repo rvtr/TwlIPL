@@ -36,7 +36,7 @@ extern void __call_static_initializers(void);
 static void INITi_DoAutoload(void);
 static void INITi_ShelterLtdBinary(void);
 static void INITi_CopySysConfig( void );
-static void detect_main_memory_size(void);
+static void INITi_DetectMainMemorySize(void);
 #ifndef SDK_NOINIT
 static void INITi_ShelterStaticInitializer(u32* ptr);
 static void INITi_CallStaticInitializers(void);
@@ -142,6 +142,9 @@ SDK_WEAK_SYMBOL asm void _start( void )
         tst             r2, r1
         beq             @1
 
+        /* SCFG を HW_SYS_CONF_BUF へコピー */
+        bl              INITi_CopySysConfig
+
         //---- load autoload block and initialize bss
         //bl              INITi_DoAutoload
 #ifndef SDK_FINALROM    // for IS-TWL-DEBUGGER
@@ -157,11 +160,19 @@ SDK_WEAK_SYMBOL asm void _start( void )
         strcc           r0, [r1], #4
         bcc             @2
 
-        /* SCFG を HW_SYS_CONF_BUF へコピー */
-        bl              INITi_CopySysConfig
-
         //---- detect main memory size
-        bl              detect_main_memory_size
+        bl              INITi_DetectMainMemorySize
+
+#ifndef SDK_FINALROM
+        //---- set debug print window
+        ldr     r1, =HW_PRINT_OUTPUT_ARM9
+        mov     r0, #OS_PRINT_OUTPUT_DEFAULT_ARM9
+        orr     r0, r0, #(OS_PRINT_OUTPUT_DEFAULT_ARM7<<8)
+        strh    r0, [r1]
+        mov     r0, #OS_PRINT_OUTPUT_DEFAULT_ARM9ERR
+        orr     r0, r0, #(OS_PRINT_OUTPUT_DEFAULT_ARM7ERR<<8)
+        strh    r0, [r1, #2]
+#endif
 
         //---- set interrupt vector
         ldr             r1, =HW_INTR_VECTOR_BUF
@@ -436,12 +447,12 @@ static asm void INITi_CopySysConfig( void )
         ldr     r3, =REG_A9ROM_ADDR
         ldrb    r1, [r3]
         and     r12,r1, #(REG_SCFG_A9ROM_RSEL_MASK | REG_SCFG_A9ROM_SEC_MASK)
-        orr     r0, r0, r12, LSL #(HWi_WSYS08_ROM_ARM9SEC_SHIFT - REG_SCFG_A9ROM_SEC_SHIFT)
+        orr     r0, r0, r12, LSL #(HWi_WSYS08_ROM_ARM9RSEL_SHIFT - REG_SCFG_A9ROM_RSEL_SHIFT)
         //A7ROM(ARM7 ROM)
         ldr     r3, =REG_A7ROM_ADDR
         ldrb    r1, [r3]
-        and     r12,r1, #(REG_SCFG_A7ROM_RSEL_MASK | REG_SCFG_A7ROM_SEC_MASK | REG_SCFG_A7ROM_FUSE_MASK)
-        orr     r0, r0, r12, LSL #(HWi_WSYS08_ROM_ARM7SEC_SHIFT - REG_SCFG_A7ROM_SEC_SHIFT)
+        and     r12,r1, #(REG_SCFG_A7ROM_RSEL_MASK | REG_SCFG_A7ROM_FUSE_MASK)
+        orr     r0, r0, r12, LSL #(HWi_WSYS08_ROM_ARM7RSEL_SHIFT - REG_SCFG_A7ROM_RSEL_SHIFT)
         //DS-WL(DS wireless)
         ldr     r3, =REG_A7ROM_ADDR
         ldrb    r1, [r3]
@@ -476,7 +487,7 @@ static asm void INITi_CopySysConfig( void )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         detect_main_memory_size
+  Name:         INITi_DetectMainMemorySize
 
   Description:  detect main memory size.
                 result is written into (u32*)HW_MMEMCHECKER_SUB.
@@ -492,7 +503,7 @@ static asm void INITi_CopySysConfig( void )
 #define OSi_DETECT_NITRO_MASK  (REG_SND_SMX_CNT_E_MASK | REG_SND_SMX_CNT_FSEL_MASK)
 #define OSi_DETECT_NITRO_VAL   (REG_SND_SMX_CNT_E_MASK)
 
-static asm void detect_main_memory_size( void )
+static asm void INITi_DetectMainMemorySize( void )
 {
         stmfd   sp!, {r4,lr}
 
@@ -520,9 +531,8 @@ static asm void detect_main_memory_size( void )
 @2:
         // check if running on twl/nitro
         bl      INITi_IsRunOnTwl
-        cmp     r0, #FALSE
-        moveq   r4, #OS_CONSOLE_SIZE_8MB
-        beq     @4
+        movne   r4, #OS_CONSOLE_SIZE_8MB
+        bne     @4
 #else
         ldr     r2, =HW_MMEMCHECKER_SUB
 #endif
