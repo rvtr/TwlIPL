@@ -68,6 +68,7 @@ BOOL BOOT_WaitStart( void )
 		
 		(void)OS_DisableIrq();							// ここで割り込み禁止にしないとダメ。
 		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
+		(void)OS_SetIrqMaskEx(0);
 /*
 #ifdef ISDBG_MB_CHILD_
 		if( ( GetIpl2WorkAddr()->ipl2_type != 0xff ) && ( GetIpl2WorkAddr()->ipl2_type & 0x28 ) )
@@ -183,5 +184,6 @@ static void BOOTi_ClearREG_RAM( void )
 	// レジスタクリアは基本的に OS_Boot で行う
 	
 	// クリアしていないレジスタは、VCOUNT, JOY, PIFCNT, MC-, EXMEMCNT, IME, PAUSE, POWLCDCNT, 他セキュリティ系です。
-	(void)OS_ResetRequestIrqMask((u16)~0);
+	(void)OS_ResetRequestIrqMask((u32)~0);
+	(void)OS_ResetRequestIrqMaskEx((u32)~0);
 }

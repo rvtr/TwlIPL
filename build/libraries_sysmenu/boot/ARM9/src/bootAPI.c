@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
+#include <twl/camera.h>
 #include <twl/os/common/format_rom.h>
 #include <sysmenu.h>
 #include <firm/format/wram_regs.h>
@@ -59,13 +60,17 @@ void BOOT_Ready( void )
     // エントリアドレスの正当性をチェックし、無効な場合は無限ループに入る。
 //  SYSMi_CheckEntryAddress();
 
-    for( i = 0; i <= MI_DMA_MAX_NUM; i++ ) {                // DMAの停止
-        MI_StopDma( (u16)i );
-    }
+    CAMERA_PowerOffCore();
 
 //  FinalizeCardPulledOut();                                // カード抜け検出終了処理
     BOOTi_ClearREG_RAM();                                   // レジスタ＆RAMクリア
     (void)GX_VBlankIntr( FALSE );
+
+    for( i = 0; i <= MI_DMA_MAX_NUM; i++ ) {                // 割り込み禁止状態でDMA停止
+        MI_StopDma( (u16)i );
+        MI_StopNDma( (u16)i );
+    }
+
     (void)OS_SetIrqFunction( OS_IE_SUBP, ie_subphandler );
     OS_EnableInterrupts();
     (void)OS_SetIrqMask( OS_IE_SUBP );                      // サブプロセッサ割り込みのみを許可。
@@ -79,7 +84,7 @@ void BOOT_Ready( void )
     reg_PXI_SUBPINTF &= 0x0f00;                             // サブプロセッサ割り込み許可フラグをクリア
     (void)OS_DisableIrq();
     (void)OS_SetIrqMask( 0 );
-    (void)OS_ResetRequestIrqMask( (u16)~0 );
+    (void)OS_ResetRequestIrqMask( (u32)~0 );
 
     // WRAMの配置
     {
@@ -140,7 +145,7 @@ static void BOOTi_ClearREG_RAM( void )
 {
     // 最後がサブプロセッサ割り込み待ちなので、IMEはクリアしない。
     (void)OS_SetIrqMask( 0 );
-    (void)OS_ResetRequestIrqMask( (u16)~0 );
+    (void)OS_ResetRequestIrqMask( (u32)~0 );
 
 	// レジスタクリアは基本的に OS_Boot で行う
 }
