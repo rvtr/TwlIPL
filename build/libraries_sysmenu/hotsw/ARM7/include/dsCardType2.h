@@ -15,10 +15,10 @@ extern "C" {
 // ===========================================================================
 // 	Function Describe
 // ===========================================================================
-
+// ■       ノーマルモードのコマンド       ■
+//  DSカードType2のRomエミュレーションデータの読み込み
 void ReadRomEmulationData_DSType2(CardBootData *cbd);
 
-// ■       ノーマルモードのコマンド       ■
 //	DSカードType2のノーマルモードのBoot Segment(4Kbyte)読み込み
 void ReadBootSegNormal_DSType2(CardBootData *cbd);
 

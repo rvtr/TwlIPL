@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK
-  File:     Card.c
+  File:     hotsw.c
 
   Copyright 2007 Nintendo.  All rights reserved.
 
@@ -13,22 +13,17 @@
 
 #include 	<twl.h>
 #include 	<twl/os/common/format_rom.h>
-//#include 	<istdbglib.h>
-
 #include	<nitro/card/types.h>
 #include	<sysmenu.h>
 #include 	<hotswTypes.h>
 #include	<blowfish.h>
 #include	<dsCardType1.h>
 #include	<dsCardType2.h>
+#include	<customNDma.h>
 
 // define -------------------------------------------------------------------
 #define		STACK_SIZE							1024		// スタックサイズ
 #define		MC_THREAD_PRIO						11			// カード電源ON → ゲームモードのスレッド優先度
-#define		ML_THREAD_PRIO						12			// Boot Segment読み込み終わったら起動する。カードブートスレッドより優先度低。
-
-#define		DEBUG_CARD_TYPE						1			// DS Card Type1 = 0  DS Card Type2 = 1
-
 #define 	UNDEF_CODE							0xe7ffdeff	// 未定義コード
 #define 	ENCRYPT_DEF_SIZE					0x800		// 2KB  ※ ARM9常駐モジュール先頭2KB
 
@@ -44,8 +39,6 @@ static void InterruptCallbackCardDet(void);
 static void InterruptCallbackCardData(void);
 
 static void McThread(void *arg);
-static void StaticModuleLoadThread(void *arg);
-static void LoadStaticModule_Secure(void);
 static void McPowerOn(void);
 static void SetMCSCR(void);
 
@@ -53,9 +46,6 @@ static void GenVA_VB_VD(void);
 static void LoadTable(void);
 static void ReadIDNormal(void);
 static void DecryptObjectFile(void);
-static void ReadPageNormalFromDebugger(u32 page, void* buf);
-
-static void MIm_CardDmaCopy32(u32 dmaNo, const void *src, void *dest);
 
 static void ShowRegisterData(void);
 static void ShowRomHeaderData(void);
@@ -192,8 +182,6 @@ BOOL HOTSW_Boot(void)
     	// ---------------------- Normal Mode ----------------------
     	// カードID読み込み
 		ReadIDNormal();
-
-		ShowRomHeaderData();
         
 		// カードタイプを判別をして、使う関数を切替える IDの最上位ビットが1なら3DM
         if(s_cbData.id_nml & 0x80000000){
@@ -267,9 +255,6 @@ BOOL HOTSW_Boot(void)
 	
 	    	// Secure領域のSegment読み込み
 	    	s_funcTable[s_cbData.cardType].ReadSegment_S(&s_cbData);
-	
-			// Arm9の常駐モジュールを指定先に転送
-			LoadStaticModule_Secure();
             
 	    	// ゲームモードに移行
 			s_funcTable[s_cbData.cardType].ChangeMode_S(&s_cbData);
@@ -487,70 +472,25 @@ static void LoadTable(void)
  *
  * ノーマルモード時のカードIDを読み込む関数
  * ----------------------------------------------------------------- */
-static void ReadIDNormal(void)
+void ReadIDNormal(void)
 {
-	// MCCMD レジスタ設定
+	// カード割り込みによるDMAコピー
+	HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &s_cbData.id_nml, sizeof(s_cbData.id_nml) );
+    
+    // MCCMD レジスタ設定
 	reg_HOTSW_MCCMD0 = 0x00000090;
 	reg_HOTSW_MCCMD1 = 0x00000000;
 
 	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
 	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
 
-	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 111(ステータスリード) latency1 = 2320(必要ないけど) に)
-	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,     0)) |
-        		             		 			 CNT1_FLD(1,0,0,0,  0,7,  0,0,  0,  0,0,0,  2320));
-    
-	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-		s_cbData.id_nml = reg_HOTSW_MCD1;
-	}
+	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 111(ステータスリード) latency1 = 1 に)
+	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,  0)) |
+        		             		 			 CNT1_FLD(1,0,0,0,  0,7,  0,0,  0,  0,0,0,  0));
 
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
 }
-
-
-/* -----------------------------------------------------------------
- * ReadPageNormalFromDebugger関数
- *
- * Romエミュレーション情報を読む
- * ----------------------------------------------------------------- */
-void ReadPageNormalFromDebugger(u32 page, void* buf)
-{
-    GCDCmd64 le , be;
-    u64 page_data = page;
-//    u32 i=0;
-
-	// ゼロクリア
-	MI_CpuClear8(&le, sizeof(GCDCmd64));
-    
-   	// コマンド作成
-	le.dw = (page_data << 33);
-    
-    // ビッグエンディアンに直す
-	be.b[7] = le.b[0];
-	be.b[6] = le.b[1];
-	be.b[5] = le.b[2];
-	be.b[4] = le.b[3];
-	be.b[3] = le.b[4];
-	be.b[2] = le.b[5];
-	be.b[1] = le.b[6];
-    be.b[0] = le.b[7];
-
-	// MCCMD レジスタ設定
-	reg_MI_MCCMD0_B = *(u32*)be.b;
-	reg_MI_MCCMD1_B = *(u32*)&be.b[4];
-
-	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 001(1ページリード) CS = 1 SE = 1 DS = 1 latency1 = 20 に)
-	reg_MI_MCCNT1_B = (u32)((reg_MI_MCCNT1_B & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,   0)) |
-       			           		 			   CNT1_FLD(1,0,0,0,  0,1,  0,0,  0,  0,0,0,  20));
-    
-	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-	while(reg_MI_MCCNT1_B & START_FLG_MASK){
-		while(!(reg_MI_MCCNT1_B & READY_FLG_MASK)){}
-        *( ((u32 *)buf)++ ) = reg_MI_MCD1_B;
-	}
-}
-
 
 /* -----------------------------------------------------------------
  * DecryptObjectFile関数
@@ -613,7 +553,8 @@ static void DecryptObjectFile(void)
    	} 
    	else{
 		OS_PutString("▼ DecryptObjectFile : Error...\n");
-		// CpuClearFast32(UNDEF_CODE, pEncBuf, size); // 未定義コードでクリア
+
+        MI_NDmaFill( HOTSW_DMA_NO, pEncBuf, UNDEF_CODE, (u32)size ); // 未定義コードでクリア
    	}
    	MI_CpuCopy32(pEncBuf, pEncDes, (u32)size);
 }
@@ -624,15 +565,11 @@ static void DecryptObjectFile(void)
  *
  * カードの存在判定
  *
- * ※SCFG_MC1のSlot モード選択フラグを見ている
- *
- * モード選択フラグが 10 (全ての端子から有効出力) の時ささっていると判定
-   		Slot A の場合 if((reg_MI_MC1 & 0x0c) == 0x08)
-		Slot B の場合 if((reg_MI_MC1 & 0xc0) == 0x80)
+ * ※SCFG_MC1のCDETフラグを見ている
  * ----------------------------------------------------------------- */
 static BOOL IsCardExist(void)
 {
-    if((reg_MI_MC1 & SLOT_STATUS_MODE_SELECT_MSK) == SLOT_STATUS_MODE_10){
+    if(!(reg_MI_MC1 & SLOT_STATUS_CDET_MSK)){
 		return TRUE;
     }
     else{
@@ -656,70 +593,35 @@ static void McThread(void *arg)
 }
 
 /* -----------------------------------------------------------------
- * StaticModuleLoadThread 関数
- * ----------------------------------------------------------------- */
-static void StaticModuleLoadThread(void *arg)
-{
-	#pragma unused( arg )
-    
-    while(1){
-		OS_SleepThread(NULL);
-
-
-    }
-}
-
-static void LoadStaticModule_Secure(void)
-{
-    if(s_cbData.pBootSegBuf->rh.s.main_size >= SECURE_SEGMENT_SIZE){
-		MI_DmaCopy32(1, s_cbData.pSecureSegBuf, s_cbData.pBootSegBuf->rh.s.main_ram_address, SECURE_SEGMENT_SIZE);
-    }
-    else{
-		MI_DmaCopy32(1, s_cbData.pSecureSegBuf, s_cbData.pBootSegBuf->rh.s.main_ram_address, s_cbData.pBootSegBuf->rh.s.main_size);
-    }
-}
-
-/* -----------------------------------------------------------------
  * McPowerOn関数
  * ----------------------------------------------------------------- */
 static void McPowerOn(void)
 {
-	OSTick start;
-
     // SCFG_MC1 の Slot Status の M1,M0 を 11 にする
     reg_MI_MC1  = (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | 0xc0);
 	// 10ms待ち
-    start = OS_GetTick();
-    while(OS_TicksToMilliSeconds(OS_GetTick()-start) < 10){}
+	OS_Sleep(10);
 
-    
     // SCFG_MC1 の Slot Status の M1,M0 を 00 にする
     reg_MI_MC1  = (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | 0x00);
 	// 10ms待ち
-    start = OS_GetTick();
-    while(OS_TicksToMilliSeconds(OS_GetTick()-start) < 10){}
+	OS_Sleep(10);
 
-    
     // SCFG_MC1 の Slot Status の M1,M0 を 01 にする
     reg_MI_MC1  = (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | SLOT_STATUS_MODE_01);
 	// 10ms待ち
-    start = OS_GetTick();
-    while(OS_TicksToMilliSeconds(OS_GetTick()-start) < 10){}
+	OS_Sleep(10);
 
-    
     // SCFG_MC1 の Slot Status の M1,M0 を 10 にする
 	reg_MI_MC1 	= (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | SLOT_STATUS_MODE_10);
 	// 10ms待ち
-    start = OS_GetTick();
-    while(OS_TicksToMilliSeconds(OS_GetTick()-start) < 10){}
+	OS_Sleep(10);
 
-    
     // リセットをhighに (RESB = 1にする)
 	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(1,1,0,1,1,1,1,1,1,1,1,1,1)) |
-                             		 CNT1_FLD(0,0,1,0,0,0,0,0,0,0,0,0,0));
+                             		 			 CNT1_FLD(0,0,1,0,0,0,0,0,0,0,0,0,0));
 	// 10ms待ち
-    start = OS_GetTick();
-    while(OS_TicksToMilliSeconds(OS_GetTick()-start) < 10){}
+	OS_Sleep(10);
 
     OS_TPrintf("MC Power ON\n");
 }
@@ -801,8 +703,11 @@ static void InterruptCallbackCardDet(void)
 // カードB データ転送終了
 static void InterruptCallbackCardData(void)
 {
+	// データ転送終了待ちまで寝ていたのを起こす
+    OS_WakeupThreadDirect(&s_MCThread);
+    
 #ifdef USE_SLOT_A
-    OS_SetIrqCheckFlagEx(OS_IE_CARD_A_DATA);
+	OS_SetIrqCheckFlagEx(OS_IE_CARD_A_DATA);
 #else
     OS_SetIrqCheckFlagEx(OS_IE_CARD_B_DATA);
 #endif
@@ -858,7 +763,7 @@ static void SetInterrupt(void)
  *---------------------------------------------------------------------------*/
 static void ShowRomHeaderData(void)
 {
-	OS_TPrintf("Debug Data -------------------------------\n");
+	OS_TPrintf("\nDebug Data -------------------------------\n");
     OS_TPrintf("1. Normal Mode ID  : 0x%08x\n"  , s_cbData.id_nml);
     OS_TPrintf("2. Secure Mode ID  : 0x%08x\n"  , s_cbData.id_scr);
     OS_TPrintf("3. Game   Mode ID  : 0x%08x\n"  , s_cbData.id_gam);
@@ -877,6 +782,7 @@ static void ShowRomHeaderData(void)
     OS_TPrintf("sub  entry addr    : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.sub_entry_address);
     OS_TPrintf("sub  ram   addr    : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.sub_ram_address);
     OS_TPrintf("sub  size          : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.sub_size);
+    OS_TPrintf("------------------------------------------\n\n");
 }
 
 /*---------------------------------------------------------------------------*

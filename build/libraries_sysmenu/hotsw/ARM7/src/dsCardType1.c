@@ -1,11 +1,12 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK
-  File:     
+  File:     dsCardType1.c
  *---------------------------------------------------------------------------*/
 
 #include 	<twl.h>
 #include	<blowfish.h>
 #include 	<dsCardType1.h>
+#include	<customNDma.h>
 
 // Function prototype -------------------------------------------------------
 static void SetSecureCommand(SecureCommandType type, CardBootData *cbd);
@@ -33,10 +34,9 @@ static void SetMCSCR(void);
  *---------------------------------------------------------------------------*/
 void ReadBootSegNormal_DSType1(CardBootData *cbd)
 {
-	#pragma unused( cbd )
+	// NewDMA転送の準備
+    HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->pBootSegBuf->word, BOOT_SEGMENT_SIZE );
     
-	u32 i = 0;
-
 	// MCCMD レジスタ設定
 	reg_HOTSW_MCCMD0 = 0x00000000;
 	reg_HOTSW_MCCMD1 = 0x00000000;
@@ -47,12 +47,9 @@ void ReadBootSegNormal_DSType1(CardBootData *cbd)
 	// MCCNT1 レジスタ設定 (START = 1  W/R = 0  PC = 100 (8ページリード) に)
 	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,   0)) |
         		             		 			 CNT1_FLD(1,0,0,0,  0,4,  0,0,  0,  0,0,0,  20));
-    
-	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-        *(cbd->pBootSegBuf->word + i++) = reg_HOTSW_MCD1;
-	}
+
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
 }
 
 /*---------------------------------------------------------------------------*
@@ -90,11 +87,9 @@ void ChangeModeNormal_DSType1(CardBootData *cbd)
 	// MCCNT1 レジスタ設定 (START = 1  W/R = 1  PC = 000 に)
 	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,  0)) |
         		             		 			 CNT1_FLD(1,1,0,0,  0,0,  0,0,  0,  0,0,0,  0));
-    
-	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-	}
+
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
 }
 
 
@@ -137,7 +132,7 @@ static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
         break;
     }
 
-        // コマンドの暗号化
+    // コマンドの暗号化
 	EncryptByBlowfish( &cbd->keyTable, (u32*)&cndLE.b[4], (u32*)cndLE.b );
 
     // ビッグエンディアンに直す(暗号化後)
@@ -163,6 +158,9 @@ static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
  *---------------------------------------------------------------------------*/
 void ReadIDSecure_DSType1(CardBootData *cbd)
 {
+	// NewDMA転送の準備
+    HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_scr, sizeof(cbd->id_scr) );
+    
     // コマンド作成・設定
 	SetSecureCommand(S_RD_ID, cbd);
 
@@ -170,12 +168,9 @@ void ReadIDSecure_DSType1(CardBootData *cbd)
     // (START = 1 W/R = 0 TRM = 1 PC = 111(ステータスリード) CS = 1 SE = 1 DS = 1 Latency1 = 2320(0x910)に)
 	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,1,  1,  0,0,0,     0)) |
         		             		 			 CNT1_FLD(1,0,0,1,  1,7,  0,0,  0,  0,1,1,  2320));
-    
-	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-		cbd->id_scr = reg_HOTSW_MCD1;
-	}
+
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
 
     // コマンドカウンタインクリメント
 	cbd->vbi++;
@@ -194,6 +189,9 @@ void ReadSegSecure_DSType1(CardBootData *cbd)
     GCDCmd64 	cndLE, cndBE;
 
     for(i=0; i<4; i++){
+		// NewDMA転送の準備
+	    HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, (cbd->pSecureSegBuf + ONE_SEGMENT_WORD_SIZE*i), ONE_SEGMENT_SIZE );
+        
 		MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
         
 	    cndLE.dw  = cbd->vbi;
@@ -223,11 +221,8 @@ void ReadSegSecure_DSType1(CardBootData *cbd)
 		reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,1,   0,  0,0,0,     0)) |
         			             		 			 CNT1_FLD(1,0,0,1,  1,4,  0,0,  24,  0,1,1,  2296));
     
-		// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-    	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-			while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-        	*(cbd->pSecureSegBuf + j++) = reg_HOTSW_MCD1;
-		}
+    	// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    	OS_SleepThread(NULL);
         
         // 読み込みセグメント番号インクリメント
 		segNum++;
@@ -251,9 +246,8 @@ void SwitchONPNGSecure_DSType1(CardBootData *cbd)
     reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  1,0,0,     0)) |
         		             		 			 CNT1_FLD(1,1,0,1,  0,0,  0,0,  0,  0,1,1,  2320));
     
-	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-	}
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
 
     // コマンドカウンタインクリメント
 	cbd->vbi++;
@@ -273,9 +267,8 @@ void SwitchOFFPNGSecure_DSType1(CardBootData *cbd)
     reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  1,0,0,     0)) |
         		             		 			 CNT1_FLD(1,1,0,1,  0,0,  0,0,  0,  0,1,1,  2320));
     
-	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-	}
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
 
     // コマンドカウンタインクリメント
 	cbd->vbi++;
@@ -295,9 +288,8 @@ void ChangeModeSecure_DSType1(CardBootData *cbd)
     reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  1,0,0,     0)) |
         		             		 			 CNT1_FLD(1,1,0,1,  0,0,  0,0,  0,  0,1,1,  2320));
     
-	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-	}
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
 
     // コマンドカウンタインクリメント
 	cbd->vbi++;
@@ -314,6 +306,9 @@ void ChangeModeSecure_DSType1(CardBootData *cbd)
  *---------------------------------------------------------------------------*/
 void ReadIDGame_DSType1(CardBootData *cbd)
 {
+	// NewDMA転送の準備
+    HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_gam, sizeof(cbd->id_gam) );
+
 	// MCCMD レジスタ設定
 	reg_HOTSW_MCCMD0 = 0x000000B8;
 	reg_HOTSW_MCCMD1 = 0x00000000;
@@ -321,12 +316,9 @@ void ReadIDGame_DSType1(CardBootData *cbd)
 	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 111(ステータスリード) CS = 1 SE = 1 DS = 1 latency1 = 2320(必要ないけど) に)
 	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,  0)) |
         		             		 			 CNT1_FLD(1,0,0,0,  0,7,  0,1,  0,  0,1,1,  1));
-    
-	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-		cbd->id_gam = reg_HOTSW_MCD1;
-	}
+
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
 }
 
 /*---------------------------------------------------------------------------*
@@ -348,6 +340,9 @@ void ReadPageGame_DSType1(u32 start_addr, void* buf, u32 size)
     OS_TPrintf("Read Game Segment  Page Count : %d   size : %x\n", loop, size);
     
     for(i=0; i<loop; i++){
+		// NewDMA転送の準備
+		HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, (u32 *)buf + (u32)(PAGE_WORD_SIZE*i), PAGE_SIZE );
+
 		// ゼロクリア
 		MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
 
@@ -373,10 +368,7 @@ void ReadPageGame_DSType1(u32 start_addr, void* buf, u32 size)
 		reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  1,0,  1,0,  0,  0,0,0,   0)) |
     				             		 			 CNT1_FLD(1,0,0,0,  0,1,  0,1,  0,  0,1,1,  20));
 
-		// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-		while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-			while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-            *((u32 *)buf + counter++) = reg_HOTSW_MCD1;
-		}
+		// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+		OS_SleepThread(NULL);
     }
 }
