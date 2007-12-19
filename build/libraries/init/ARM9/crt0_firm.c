@@ -121,6 +121,8 @@ SDK_WEAK_SYMBOL asm void _start( void )
         mov             r0, #HW_PSR_SYS_MODE
         msr             cpsr_csfx, r0
         sub             sp, r1, #4 // 4byte for stack check code
+        tst             sp, #4
+        subeq           sp, sp, #4 // for 8byte-alignment
 
         //---- read reset flag from pmic
 #ifdef SDK_TS
@@ -216,9 +218,6 @@ SDK_WEAK_SYMBOL asm void _start( void )
         //---- start (to 16bit code)
         ldr             r1, =TwlMain
         ldr             lr, =HW_RESET_VECTOR
-
-        tst             sp, #4
-        subne           sp, sp, #4 // for 8byte-alignment
         bx              r1
 }
 
