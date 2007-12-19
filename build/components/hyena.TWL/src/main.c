@@ -187,10 +187,6 @@ TwlSpMain(void)
 
     // 活栓挿抜機能初期化
     HOTSW_Init();
-    
-    // カードがささっていたらブート開始
-    (void)HOTSW_Boot();
-//		SYSMi_GetWork()->is1stCardChecked  = TRUE;
 	
     while (TRUE)
     {

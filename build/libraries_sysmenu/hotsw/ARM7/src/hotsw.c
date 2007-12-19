@@ -115,6 +115,9 @@ void HOTSW_Init(void)
     reg_MI_MC2 = 0xc8;
 #endif
 
+	// カードブート用構造体の初期化
+	MI_CpuClear32(&s_cbData, sizeof(CardBootData));
+    
 	// カードブート用スレッドの生成
 	OS_CreateThread(&s_MCThread,
                     McThread,
@@ -132,11 +135,18 @@ void HOTSW_Init(void)
 
     // Secure Segment バッファの設定
     HOTSW_SetSecureSegmentBuffer((void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
-
-	// カードブート用構造体の初期化
-	MI_CpuClear32(&s_cbData, sizeof(CardBootData));
     
-	OS_TPrintf("*** sizeof(ROM_Header) : 0x%08x\n", sizeof(ROM_Header));
+    // CDETフラグがおちていたらカードブートスレッドを起動する
+	if(!(reg_MI_MC1 & SLOT_STATUS_CDET_MSK)){
+        OS_PutString("Card Boot Start\n");
+		OS_WakeupThreadDirect(&s_MCThread);
+	}
+    else{
+		OS_PutString("No Card...\n");
+#ifdef DEBUG_USED_CARD_SLOT_B_
+		SYSMi_GetWork()->is1stCardChecked  = TRUE;
+#endif
+    }
 }
 
 /* -----------------------------------------------------------------
