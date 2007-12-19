@@ -19,6 +19,7 @@
 #include "launcher.h"
 #include "misc.h"
 #include "logoDemo.h"
+#include "sound.h"
 
 // extern data-----------------------------------------------------------------
 
@@ -32,7 +33,14 @@ static void INTR_VBlank( void );
 // static variable-------------------------------------------------------------
 static TitleProperty s_titleList[ LAUNCHER_TITLE_LIST_NUM ];
 
+static u64 strmThreadStack[THREAD_STACK_SIZE / sizeof(u64)];
+static OSThread strmThread;
+
+static StreamInfo strm; // stream info
+
 // const data------------------------------------------------------------------
+
+const char filename[] = "data/fanfare.32.wav";
 
 // メイン
 void TwlMain( void )
@@ -68,6 +76,8 @@ void TwlMain( void )
 	PM_Init();
 	TP_Init();
 	RTC_Init();
+    SND_Init();// sound init
+
     
 	// 割り込み許可--------------------
 	(void)OS_SetIrqFunction(OS_IE_V_BLANK, INTR_VBlank);
@@ -115,16 +125,37 @@ void TwlMain( void )
 		state = LOGODEMO_INIT;
 	}
 	
+    // チャンネルをロックする
+    SND_LockChannel((1 << L_CHANNEL) | (1 << R_CHANNEL), 0);
+
+    /* ストリームスレッドの起動 */
+    OS_CreateThread(&strmThread,
+                    StrmThread,
+                    NULL,
+                    strmThreadStack + THREAD_STACK_SIZE / sizeof(u64),
+                    THREAD_STACK_SIZE, STREAM_THREAD_PRIO);
+    OS_WakeupThreadDirect(&strmThread);
+	
 	// メインループ--------------------
 	while( 1 ) {
 		OS_WaitIrq(1, OS_IE_V_BLANK);							// Vブランク割り込み待ち
 		
+        // ＡＲＭ７コマンド応答受信
+        while (SND_RecvCommandReply(SND_COMMAND_NOBLOCK) != NULL)
+        {
+        }
+        
 		ReadKeyPad();											// キー入力の取得
 		ReadTP();												// TP入力の取得
 		
 		switch( state ) {
 		case LOGODEMO_INIT:
 			LogoInit();
+			// 音鳴らすテスト
+			FS_InitFile(&strm.file);
+			strm.isPlay = FALSE;
+			PlayStream(&strm, filename);
+
 			state = LOGODEMO;
 			break;
 		case LOGODEMO:
@@ -177,6 +208,9 @@ void TwlMain( void )
 		
 		// カードアプリリストの取得（スレッドで随時カード挿抜を通知されるものをメインループで取得）
 		(void)SYSM_GetCardTitleList( s_titleList );
+		
+        // コマンドフラッシュ
+        (void)SND_FlushCommand(SND_COMMAND_NOBLOCK);
 	}
 }
 

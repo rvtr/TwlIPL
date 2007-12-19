@@ -18,6 +18,7 @@
 #include <twl.h>
 #include "misc.h"
 #include "launcher.h"
+#include "sound.h"
 #include <math.h>
 
 
@@ -110,7 +111,10 @@ static int bar_left = BAR_ZERO_X;
 static fx32 s_selected_banner_size;
 static BOOL s_wavstop = FALSE;
 
+//static StreamInfo strm; // stream info
+
 // const data  -----------------------------------------
+//const char filename[] = "data/fanfare.32.wav";
 
 //===============================================
 // Launcher.c
@@ -365,6 +369,10 @@ void LauncherInit( TitleProperty *pTitleList )
 	GX_DispOn();
 	GXS_DispOn();
 	
+	// streamInfo‰Šú‰»
+	//FS_InitFile(&strm.file);
+	//strm.isPlay = FALSE;
+	
 	#ifdef DBGBNR
 	BannerInit();
 	#endif
@@ -542,6 +550,7 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 		if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {					// ƒƒjƒ…[€–Ú‚Ö‚Ì•ªŠò
 			if( pTitleList[selected].flags.isValid )
 			{
+				//PlayStream(&strm, filename);
 				ret = &pTitleList[selected];
 			}
 		}
