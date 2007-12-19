@@ -326,7 +326,7 @@ void HOTSW_LoadStaticModule(void)
 	// バナーリード
 	if( s_cbData.pBootSegBuf->rh.s.banner_offset ) {
 	    OS_TPrintf("  - Banner Loading...\n");
-	    s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.banner_offset,
+        s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.banner_offset,
 												  (u32 *)SYSM_CARD_BANNER_BUF,
 	                                              sizeof(TWLBannerFile) );
 		SYSMi_GetWork()->isValidCardBanner = TRUE;

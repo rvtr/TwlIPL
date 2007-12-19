@@ -36,7 +36,7 @@ void ReadRomEmulationData_DSType2(CardBootData *cbd)
 {
 	u32 count=0;
     u32 temp;
-    u32 *buf = cbd->romEmuBuf;
+    u32 *dst = cbd->romEmuBuf;
     
 	// MCCMD レジスタ設定
 	reg_HOTSW_MCCMD0 = 0x3e000000;
@@ -50,7 +50,7 @@ void ReadRomEmulationData_DSType2(CardBootData *cbd)
 	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
 		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
         if(count >= ROM_EMULATION_START_OFS && count < ROM_EMULATION_END_OFS){
-        	*buf++ = reg_HOTSW_MCD1;
+        	*dst++ = reg_HOTSW_MCD1;
         }
         else{
 			temp = reg_HOTSW_MCD1;
@@ -75,32 +75,32 @@ void ReadBootSegNormal_DSType2(CardBootData *cbd)
 {
 	#pragma unused( cbd )
     
-	u32 i = 0, j = 0;
-	GCDCmd64 tempCnd, cnd;
-    u64 page = 0;
+	u32 		i = 0;
+    u32 		*dst = cbd->pBootSegBuf->word;
+    u64 		page = 0;
+    GCDCmd64 	cndLE, cndBE;
 
     for(i=0; i<ONE_SEGMENT_PAGE_NUM; i++){
         // ゼロクリア
-		MI_CpuClear8(&tempCnd, sizeof(GCDCmd64));
+		MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
         
     	// リトルエンディアンで作って
-		tempCnd.dw  = 0x0  << 24;
-		tempCnd.dw |= page << 33;
-//    	tempCnd.dw |= 0x0  << 56;
+		cndLE.dw  = 0x0  << 24;
+		cndLE.dw |= page << 33;
 
     	// ビックエンディアンにする
-		cnd.b[0] = tempCnd.b[7];
-		cnd.b[1] = tempCnd.b[6];
-		cnd.b[2] = tempCnd.b[5];
-		cnd.b[3] = tempCnd.b[4];
-		cnd.b[4] = tempCnd.b[3];
-		cnd.b[5] = tempCnd.b[2];
-		cnd.b[6] = tempCnd.b[1];
-		cnd.b[7] = tempCnd.b[0];
+		cndBE.b[0] = cndLE.b[7];
+		cndBE.b[1] = cndLE.b[6];
+		cndBE.b[2] = cndLE.b[5];
+		cndBE.b[3] = cndLE.b[4];
+		cndBE.b[4] = cndLE.b[3];
+		cndBE.b[5] = cndLE.b[2];
+		cndBE.b[6] = cndLE.b[1];
+		cndBE.b[7] = cndLE.b[0];
     
 		// MCCMD レジスタ設定
-    	reg_HOTSW_MCCMD0 = *(u32 *)cnd.b;
-		reg_HOTSW_MCCMD1 = *(u32 *)&cnd.b[4];
+    	reg_HOTSW_MCCMD0 = *(u32 *)cndBE.b;
+		reg_HOTSW_MCCMD1 = *(u32 *)&cndBE.b[4];
 
 		// MCCNT1 レジスタ設定 (START = 1  W/R = 0  PC = 001 (1ページリード) に)
 		reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,     0)) |
@@ -109,7 +109,7 @@ void ReadBootSegNormal_DSType2(CardBootData *cbd)
 		// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
 		while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
 			while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-        	*(cbd->pBootSegBuf->word + j++) = reg_HOTSW_MCD1;
+            *dst++ = reg_HOTSW_MCD1;
 		}
 
         page++;
@@ -229,7 +229,8 @@ void ReadIDSecure_DSType2(CardBootData *cbd)
  *---------------------------------------------------------------------------*/
 void ReadSegSecure_DSType2(CardBootData *cbd)
 {
-    u32			i,j=0,k;
+    u32			i,j;
+    u32			*dst = cbd->pSecureSegBuf ;
 	u64			segNum = 4;
     u64			vae	= cbd->vae;
     GCDCmd64 	cndLE, cndBE;
@@ -273,7 +274,7 @@ void ReadSegSecure_DSType2(CardBootData *cbd)
     	start = OS_GetTick();
     	while(OS_TicksToMilliSeconds(OS_GetTick()-start) < COMMAND_DECRYPTION_WAIT){}
         
-		for(k=0; k<ONE_SEGMENT_PAGE_NUM; k++){
+		for(j=0; j<ONE_SEGMENT_PAGE_NUM; j++){
     		// MCCMD レジスタ設定
 			reg_HOTSW_MCCMD0 = 0x0;
 			reg_HOTSW_MCCMD1 = 0x0;
@@ -286,7 +287,7 @@ void ReadSegSecure_DSType2(CardBootData *cbd)
 			// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
     		while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
 				while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-                *(cbd->pSecureSegBuf + j++) = reg_HOTSW_MCD1;
+                *dst++ = reg_HOTSW_MCD1;
 			}
 		}
     
@@ -419,3 +420,57 @@ void ChangeModeSecure_DSType2(CardBootData *cbd)
   Description:  ゲームモードでIDを読み込む
  *---------------------------------------------------------------------------*/
 // Type1と同じ
+
+
+/*---------------------------------------------------------------------------*
+  Name:         ReadPageGame_DSType1
+  
+  Description:  ゲームモードで、指定されたページを指定バッファに指定サイズ分を読み込む
+ *---------------------------------------------------------------------------*/
+void ReadPageGame_DSType2(u32 start_addr, void* buf, u32 size)
+{
+    u32 		loop;
+    u32			*b = (u32 *)buf;
+	u64			i, page;
+    GCDCmd64 	cndLE, cndBE;
+
+    page = (u32)(start_addr / PAGE_SIZE);
+	loop = (u32)(size / PAGE_SIZE);
+    loop = (size % PAGE_SIZE) ? loop + 1 : loop;
+
+    OS_TPrintf("Src Addr : 0x%08x  Dst Addr : 0x%08x\n", start_addr, buf);
+    OS_TPrintf("Read Game Segment  Page Count : %d   size : %x\n", loop, size);
+    
+    for(i=0; i<loop; i++){
+		// ゼロクリア
+		MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
+
+        // コマンド作成
+		cndLE.dw  = (page + i) << 33;
+		cndLE.dw |= 0xB700000000000000;
+        
+        // ビッグエンディアンに直す(暗号化後)
+		cndBE.b[7] = cndLE.b[0];
+		cndBE.b[6] = cndLE.b[1];
+    	cndBE.b[5] = cndLE.b[2];
+    	cndBE.b[4] = cndLE.b[3];
+    	cndBE.b[3] = cndLE.b[4];
+   		cndBE.b[2] = cndLE.b[5];
+    	cndBE.b[1] = cndLE.b[6];
+	    cndBE.b[0] = cndLE.b[7];
+
+    	// MCCMD レジスタ設定
+		reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
+		reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
+        
+   		 // MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 001(1ページリード) CS = 1 SE = 1 DS = 1 latency1 = 1 に)
+		reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  1,0,  1,0,  0,  0,0,0,     0)) |
+    				             		 			 CNT1_FLD(1,0,0,0,  0,1,  0,1,  0,  0,1,1,  1540));
+
+		// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
+		while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+			while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
+            *b++ = reg_HOTSW_MCD1;
+		}
+    }
+}
