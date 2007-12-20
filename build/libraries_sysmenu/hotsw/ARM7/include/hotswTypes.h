@@ -15,6 +15,7 @@
 
 #include <twl.h>
 #include <twl/os/common/format_rom.h>
+#include <sysmenu.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -227,7 +228,7 @@ typedef struct BLOWFISH_CTX{
 // カードブート時に必要な変数一式をまとめた構造体
 typedef struct CardBootData{
 	u16 				lockID;					
-    
+
 	u32					vae;					
     u32 				vbi;					
     u32					vd;						
@@ -236,11 +237,16 @@ typedef struct CardBootData{
     u32					id_scr;					
     u32					id_gam;					
 
-	u32					arm9StaticSize;			
-	u32					arm7StaticSize;			
+	u32					arm9StcSize;			
+	u32					arm7StcSize;			
 	u32					arm9LtdSize;			
     u32					arm7LtdSize;			
-    
+
+	u32					*arm9Stc;				
+    u32					*arm7Stc;				
+    u32					*arm9Ltd;				
+    u32					*arm7Ltd;				
+
 	BOOL			   	twlFlg;					
 
     u32					romEmuBuf[ROM_EMULATION_DATA_SIZE/sizeof(u32)];
@@ -252,8 +258,8 @@ typedef struct CardBootData{
     
     BootSegmentData 	*pBootSegBuf;			
     u32 				*pSecureSegBuf;			
-
-    BLOWFISH_CTX		keyTable;				
+    
+    BLOWFISH_CTX		keyTable;
 }
 CardBootData;
 
