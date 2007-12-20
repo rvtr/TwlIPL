@@ -257,7 +257,7 @@ void ReadSegSecure_DSType2(CardBootData *cbd)
 		reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
 
 		// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-		reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
+//		reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
 
     	// MCCNT1 レジスタ設定
     	// (START = 1 W/R = 0 TRM = 0 PC = 000(0ページ) CS = 1 Latency2 =0 SE = 1 DS = 1 Latency1 = 0に)
@@ -306,7 +306,7 @@ void SwitchONPNGSecure_DSType2(CardBootData *cbd)
 	SetSecureCommand(S_PNG_ON, cbd);
     
 	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
+//	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
 
 	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 TRM = 0 PC = 000 SE = 1 DS = 1 Latency1 = 0 に)
     reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  1,0,0,  0)) |
@@ -341,7 +341,7 @@ void SwitchOFFPNGSecure_DSType2(CardBootData *cbd)
 	SetSecureCommand(S_PNG_OFF, cbd);
     
 	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
+//	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
 
 	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 TRM = 0 PC = 000 SE = 1 DS = 1 Latency1 = 0 に)
     reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  1,0,0,  0)) |
@@ -376,7 +376,7 @@ void ChangeModeSecure_DSType2(CardBootData *cbd)
 	SetSecureCommand(S_CHG_MODE, cbd);
     
 	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
+//	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
 
 	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 TRM = 0 PC = 000 SE = 1 DS = 1 Latency1 = 0 に)
     reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  1,0,0,  0)) |

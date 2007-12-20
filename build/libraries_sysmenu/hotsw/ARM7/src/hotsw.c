@@ -27,6 +27,8 @@
 #define 	UNDEF_CODE							0xe7ffdeff	// –¢’è‹`ƒR[ƒh
 #define 	ENCRYPT_DEF_SIZE					0x800		// 2KB  ¦ ARM9í’“ƒ‚ƒWƒ…[ƒ‹æ“ª2KB
 
+#define		DIGEST_HASH_BLOCK_SIZE_SHA1			(512/8)
+
 // Function prototype -------------------------------------------------------
 static BOOL IsCardExist(void);
 
@@ -47,6 +49,11 @@ static void LoadTable(void);
 static void ReadIDNormal(void);
 static void DecryptObjectFile(void);
 
+static BOOL CheckArm7HashValue(void);
+static BOOL CheckArm9HashValue(void);
+static BOOL CheckExtArm7HashValue(void);
+static BOOL CheckExtArm9HashValue(void);
+
 static void ShowRegisterData(void);
 static void ShowRomHeaderData(void);
 
@@ -63,7 +70,28 @@ static BootSegmentData		*s_pBootSegBuffer;		// ƒJ[ƒh”²‚¯‚Ä‚àƒoƒbƒtƒ@‚ÌêŠŠo‚¦‚
 
 static CardBootData			s_cbData;
 
-// -------------------------------------------------------------------
+// HMACSHA1‚ÌŒ®
+static u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = {
+    0x21, 0x06, 0xc0, 0xde,
+	0xba, 0x98, 0xce, 0x3f,
+	0xa6, 0x92, 0xe3, 0x9d,
+	0x46, 0xf2, 0xed, 0x01,
+
+	0x76, 0xe3, 0xcc, 0x08,
+	0x56, 0x23, 0x63, 0xfa,
+	0xca, 0xd4, 0xec, 0xdf,
+	0x9a, 0x62, 0x78, 0x34,
+
+	0x8f, 0x6d, 0x63, 0x3c,
+	0xfe, 0x22, 0xca, 0x92,
+	0x20, 0x88, 0x97, 0x23,
+	0xd2, 0xcf, 0xae, 0xc2,
+
+	0x32, 0x67, 0x8d, 0xfe,
+	0xca, 0x83, 0x64, 0x98,
+	0xac, 0xfd, 0x3e, 0x37,
+	0x87, 0x46, 0x58, 0x24
+};
 
 static CardBootFunction  	s_funcTable[] = {
 	// DS Card Type 1
@@ -272,12 +300,12 @@ BOOL HOTSW_Boot(void)
 	    	// ---------------------- Game Mode ----------------------
 	    	// ID“Ç‚İ‚İ
 			s_funcTable[s_cbData.cardType].ReadID_G(&s_cbData);
-
-            // ARM9í’“ƒ‚ƒWƒ…[ƒ‹‚Ìæ“ª2KB‚ÌˆÃ†‰»—Ìˆæ‚ğ•¡‡‰»
-			DecryptObjectFile();
             
 			// í’“ƒ‚ƒWƒ…[ƒ‹c‚è‚ğw’èæ‚É“]‘—
 			HOTSW_LoadStaticModule();
+
+            // ARM9í’“ƒ‚ƒWƒ…[ƒ‹‚Ìæ“ª2KB‚ÌˆÃ†‰»—Ìˆæ‚ğ•¡‡‰»
+			DecryptObjectFile();
             
 			// ƒfƒoƒbƒOo—Í
 			ShowRomHeaderData();
@@ -339,29 +367,45 @@ void HOTSW_LoadStaticModule(void)
 	}
 #endif
     
-	
     OS_TPrintf("  - Arm9 Static Module Loading...\n");
 	s_cbData.arm9Stc = (u32)s_cbData.pBootSegBuf->rh.s.main_ram_address;
-    
+    OS_TPrintf("Before Relocate Address : 0x%08x\n", s_cbData.arm9Stc);
 	// ”z’uæ‚ÆÄ”z’uî•ñ‚ğæ“¾
-	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_STATIC, &s_cbData.arm9Stc, s_cbData.pBootSegBuf->rh.s.main_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC] , FALSE);
+	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_STATIC, &s_cbData.arm9Stc, s_cbData.pBootSegBuf->rh.s.main_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC] , s_cbData.twlFlg);
     
     // Arm9‚Ìí’“ƒ‚ƒWƒ…[ƒ‹c‚è‚ğw’èæ‚É“]‘—
     s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.main_rom_offset  + SECURE_SEGMENT_SIZE,
                                  	  (u32 *)(s_cbData.arm9Stc 							  + SECURE_SEGMENT_SIZE),
                                               s_cbData.pBootSegBuf->rh.s.main_size        - SECURE_SEGMENT_SIZE);
 
+    // Hash’l‚Ìƒ`ƒFƒbƒN
+    if(CheckArm9HashValue()){
+		OS_PutString("Arm9 Static Module Hash Check OK!\n");
+    }
+    else{
+		OS_PutString("~Arm9 Static Module Hash Check Error...\n");
+    }
+
+    
     OS_TPrintf("  - Arm7 Static Module Loading...\n");
 	s_cbData.arm7Stc = (u32)s_cbData.pBootSegBuf->rh.s.sub_ram_address;
-    
+    OS_TPrintf("Before Relocate Address : 0x%08x\n", s_cbData.arm7Stc);
     // ”z’uæ‚ÆÄ”z’uî•ñ‚ğæ“¾
-	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_STATIC, &s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC] , FALSE);
+	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_STATIC, &s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC] , s_cbData.twlFlg);
     
     // Arm7‚Ìí’“ƒ‚ƒWƒ…[ƒ‹‚ğw’èæ‚É“]‘—
     s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.sub_rom_offset,
                                  	   (u32 *)s_cbData.arm7Stc,
                                               s_cbData.pBootSegBuf->rh.s.sub_size);
-
+    
+    // Hash’l‚Ìƒ`ƒFƒbƒN
+    if(CheckArm7HashValue()){
+		OS_PutString("Arm7 Static Module Hash Check OK!\n");
+    }
+    else{
+		OS_PutString("~Arm7 Static Module Hash Check Error...\n");
+    }
+    
 	// TWL‚Å‚Ì‚İƒ[ƒh
 	if( s_cbData.pBootSegBuf->rh.s.platform_code & PLATFORM_CODE_FLAG_TWL ) {
 		u32 size = ( s_cbData.pBootSegBuf->rh.s.main_ltd_size < SECURE_SEGMENT_SIZE ) ?
@@ -382,6 +426,14 @@ void HOTSW_LoadStaticModule(void)
 	                                          		  s_cbData.pBootSegBuf->rh.s.main_ltd_size 		 - size);
 		}
 
+		// Hash’l‚Ìƒ`ƒFƒbƒN
+        if(CheckExtArm9HashValue()){
+			OS_PutString("Arm9 Ltd Static Module Hash Check OK!\n");
+    	}
+    	else{
+			OS_PutString("~Arm9 Ltd Static Module Hash Check Error...\n");
+    	}
+
 	    OS_TPrintf("  - Arm7 Ltd. Static Module Loading...\n");
 		s_cbData.arm7Ltd = (u32)s_cbData.pBootSegBuf->rh.s.sub_ltd_ram_address;
         
@@ -392,6 +444,14 @@ void HOTSW_LoadStaticModule(void)
 	    s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset,
 	                             	 	   (u32 *)s_cbData.arm7Ltd,
 	                                          	  s_cbData.pBootSegBuf->rh.s.sub_ltd_size);
+
+        // Hash’l‚Ìƒ`ƒFƒbƒN
+    	if(CheckExtArm7HashValue()){
+			OS_PutString("Arm7 Ltd Static Module Hash Check OK!\n");
+    	}
+    	else{
+			OS_PutString("~Arm7 Ltd Static Module Hash Check Error...\n");
+    	}
 	}
 }
 
@@ -591,6 +651,142 @@ static void DecryptObjectFile(void)
 
 
 /* -----------------------------------------------------------------
+ * CheckHashValueŠÖ”
+ *
+ * í’“ƒ‚ƒWƒ…[ƒ‹EŠg’£í’“ƒ‚ƒWƒ…[ƒ‹‚ÌƒnƒbƒVƒ…‚ğŒvZ‚µ‚ÄA
+ * ƒJ[ƒh“à‚ÌƒnƒbƒVƒ…’l‚Æ”ä‚×‚éB
+ * ----------------------------------------------------------------- */
+#include <twl/os/common/systemCall.h>
+
+// ----------------------------------------------------------------------
+// 		Arm7í’“ƒ‚ƒWƒ…[ƒ‹‚ÌƒnƒbƒVƒ…ƒ`ƒFƒbƒN
+// ----------------------------------------------------------------------
+static BOOL CheckArm7HashValue(void)
+{
+	u8		sha1data[DIGEST_SIZE_SHA1];
+	u32 	i;
+	BOOL	retval = TRUE;
+
+    // ƒNƒŠƒA
+	MI_CpuClear8(sha1data, sizeof(sha1data));
+
+	// ARM7í’“ƒ‚ƒWƒ…[ƒ‹‚ÌHash’lÆ‡
+	SVC_CalcHMACSHA1( sha1data,
+                      (u32 *)(s_cbData.arm7Stc),
+                      s_cbData.pBootSegBuf->rh.s.sub_size,
+                      s_digestDefaultKey,
+                      sizeof(s_digestDefaultKey) );
+
+    // ƒnƒbƒVƒ…’l‚ÌÆ‡
+    for(i=0; i<DIGEST_SIZE_SHA1; i++){
+        if(sha1data[i] != s_cbData.pBootSegBuf->rh.s.sub_static_digest[i]){
+			retval = FALSE;
+            break;
+        }
+    }
+
+    return retval;
+}
+
+// ----------------------------------------------------------------------
+// 		Arm9í’“ƒ‚ƒWƒ…[ƒ‹‚ÌƒnƒbƒVƒ…ƒ`ƒFƒbƒN
+//
+//		¦ æ“ª2K‚Ì•œ†‰»‚ªs‚í‚ê‚é‘O‚Ìƒf[ƒ^‚ÌƒnƒbƒVƒ…‚ğ”ä‚×‚é
+// ----------------------------------------------------------------------
+static BOOL CheckArm9HashValue(void)
+{
+	u8		sha1data[DIGEST_SIZE_SHA1];
+	u32 	i;
+	BOOL	retval = TRUE;
+    SVCHMACSHA1Context hash;
+
+    // ƒNƒŠƒA
+	MI_CpuClear8(sha1data, sizeof(sha1data));
+    
+    // ƒnƒbƒVƒ…‰Šú‰»
+	SVC_HMACSHA1Init( &hash, s_digestDefaultKey, sizeof(s_digestDefaultKey) );
+
+    // ƒZƒLƒ…ƒA—Ìˆæ•ªUpDate
+	SVC_HMACSHA1Update( &hash, s_cbData.pSecureSegBuf, SECURE_SEGMENT_SIZE );
+
+    // ƒQ[ƒ€—Ìˆæ•ªUpDate
+	SVC_HMACSHA1Update( &hash, (u32 *)(s_cbData.arm9Stc + SECURE_SEGMENT_SIZE), s_cbData.pBootSegBuf->rh.s.main_size - SECURE_SEGMENT_SIZE );
+    
+    // Hash’læ“¾
+    SVC_HMACSHA1GetHash( &hash, sha1data );
+
+    // ƒnƒbƒVƒ…’l‚ÌÆ‡
+    for(i=0; i<DIGEST_SIZE_SHA1; i++){
+        if(sha1data[i] != s_cbData.pBootSegBuf->rh.s.main_static_digest[i]){
+			retval = FALSE;
+            break;
+        }
+    }
+
+    return retval;
+}
+
+// ----------------------------------------------------------------------
+// 		Arm7Šg’£í’“ƒ‚ƒWƒ…[ƒ‹‚ÌƒnƒbƒVƒ…ƒ`ƒFƒbƒN
+// ----------------------------------------------------------------------
+static BOOL CheckExtArm7HashValue(void)
+{
+	u8		sha1data[DIGEST_SIZE_SHA1];
+	u32 	i;
+	BOOL	retval = TRUE;
+
+    // ƒNƒŠƒA
+	MI_CpuClear8(sha1data, sizeof(sha1data));
+
+	// ARM7í’“ƒ‚ƒWƒ…[ƒ‹‚ÌHash’lÆ‡
+	SVC_CalcHMACSHA1( sha1data,
+                      (u32 *)s_cbData.arm7Ltd,
+                      s_cbData.pBootSegBuf->rh.s.sub_ltd_size,
+                      s_digestDefaultKey,
+                      sizeof(s_digestDefaultKey) );
+
+    // ƒnƒbƒVƒ…’l‚ÌÆ‡
+    for(i=0; i<DIGEST_SIZE_SHA1; i++){
+        if(sha1data[i] != s_cbData.pBootSegBuf->rh.s.sub_ltd_static_digest[i]){
+			retval = FALSE;
+            break;
+        }
+    }
+
+    return retval;
+}
+
+// ----------------------------------------------------------------------
+// 		Arm9Šg’£í’“ƒ‚ƒWƒ…[ƒ‹‚ÌƒnƒbƒVƒ…ƒ`ƒFƒbƒN
+// ----------------------------------------------------------------------
+static BOOL CheckExtArm9HashValue(void)
+{
+	u8		sha1data[DIGEST_SIZE_SHA1];
+	u32 	i;
+	BOOL	retval = TRUE;
+
+    // ƒNƒŠƒA
+	MI_CpuClear8(sha1data, sizeof(sha1data));
+
+	// ARM7í’“ƒ‚ƒWƒ…[ƒ‹‚ÌHash’lÆ‡
+	SVC_CalcHMACSHA1( sha1data,
+                      (u32 *)s_cbData.arm9Ltd,
+                      s_cbData.pBootSegBuf->rh.s.main_ltd_size,
+                      s_digestDefaultKey,
+                      sizeof(s_digestDefaultKey) );
+
+    // ƒnƒbƒVƒ…’l‚ÌÆ‡
+    for(i=0; i<DIGEST_SIZE_SHA1; i++){
+        if(sha1data[i] != s_cbData.pBootSegBuf->rh.s.main_ltd_static_digest[i]){
+			retval = FALSE;
+            break;
+        }
+    }
+
+    return retval;
+}
+
+/* -----------------------------------------------------------------
  * IsCardExistŠÖ”
  *
  * ƒJ[ƒh‚Ì‘¶İ”»’è
@@ -735,7 +931,7 @@ static void InterruptCallbackCardData(void)
 {
 	// ƒf[ƒ^“]‘—I—¹‘Ò‚¿‚Ü‚ÅQ‚Ä‚¢‚½‚Ì‚ğ‹N‚±‚·
     OS_WakeupThreadDirect(&s_MCThread);
-    
+
 #ifdef USE_SLOT_A
 	OS_SetIrqCheckFlagEx(OS_IE_CARD_A_DATA);
 #else
@@ -812,6 +1008,17 @@ static void ShowRomHeaderData(void)
     OS_TPrintf("sub  entry addr    : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.sub_entry_address);
     OS_TPrintf("sub  ram   addr    : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.sub_ram_address);
     OS_TPrintf("sub  size          : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.sub_size);
+
+    if(s_cbData.twlFlg){
+    OS_TPrintf("\nLtd main rom offset: 0x%08x\n"  , s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset);
+    OS_TPrintf("Ltd main ram   addr: 0x%08x\n"  , s_cbData.pBootSegBuf->rh.s.main_ltd_ram_address);
+    OS_TPrintf("Ltd main size      : 0x%08x\n\n", s_cbData.pBootSegBuf->rh.s.main_ltd_size);
+
+    OS_TPrintf("Ltd Sub rom offset : 0x%08x\n"  , s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset);
+    OS_TPrintf("Ltd Sub ram   addr : 0x%08x\n"  , s_cbData.pBootSegBuf->rh.s.sub_ltd_ram_address);
+    OS_TPrintf("Ltd Sub size       : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.sub_ltd_size);
+    }
+    
     OS_TPrintf("------------------------------------------\n\n");
 }
 
