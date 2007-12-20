@@ -64,12 +64,6 @@ static TWLBannerFile	s_bannerBuf[ LAUNCHER_TITLE_LIST_NUM ] ATTRIBUTE_ALIGN(32);
 
 
 // const data------------------------------------------------------------------
-typedef enum RomSegmentName {
-	ARM9_STATIC,
-	ARM7_STATIC,
-	ARM9_LTD_STATIC,
-	ARM7_LTD_STATIC
-}RomSegmentName;
 
 typedef struct RomSegmentRange {
 	u32		start;
@@ -79,6 +73,13 @@ typedef struct RomSegmentRange {
 static RomSegmentRange romSegmentRange[RELOCATE_INFO_NUM] = {
 	{ SYSM_TWL_ARM9_LOAD_MMEM,     SYSM_TWL_ARM9_LOAD_MMEM_END },
 	{ SYSM_TWL_ARM7_LOAD_MMEM,     SYSM_TWL_ARM7_LOAD_MMEM_END },
+	{ SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_TWL_ARM9_LTD_LOAD_MMEM_END },
+	{ SYSM_TWL_ARM7_LTD_LOAD_MMEM, SYSM_TWL_ARM7_LTD_LOAD_MMEM_END },
+};
+
+static RomSegmentRange romSegmentRangeNitro[RELOCATE_INFO_NUM] = {
+	{ SYSM_NTR_ARM9_LOAD_MMEM,     SYSM_NTR_ARM9_LOAD_MMEM_END },
+	{ SYSM_NTR_ARM7_LOAD_MMEM,     SYSM_NTR_ARM7_LOAD_MMEM_END },
 	{ SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_TWL_ARM9_LTD_LOAD_MMEM_END },
 	{ SYSM_TWL_ARM7_LTD_LOAD_MMEM, SYSM_TWL_ARM7_LTD_LOAD_MMEM_END },
 };
@@ -579,14 +580,24 @@ static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfoEx
 }
 
 // SYSMi_CheckLoadRegionAndSetRelocateInfoExのラッパー関数
-static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfo( RomSegmentName seg, u32 *dest, u32 length, Relocate_Info *info )
+BOOL SYSM_CheckLoadRegionAndSetRelocateInfo( RomSegmentName seg, u32 *dest, u32 length, Relocate_Info *info, BOOL isTwlApp)
 {
-	// TWLにしか対応していないので注意。ヘッダを見てNTRならデフォルト配置領域を変更してやる必要あり。
-	return SYSMi_CheckLoadRegionAndSetRelocateInfoEx(dest, length, romSegmentRange[seg], load_region_check_list[seg], info);
+	RomSegmentRange *rsr;
+    if( isTwlApp )
+    {
+		rsr = romSegmentRange;
+	}else
+	{
+		//NTR専用
+		rsr = romSegmentRangeNitro;
+	}
+	return SYSMi_CheckLoadRegionAndSetRelocateInfoEx(dest, length, rsr[seg], load_region_check_list[seg], info);
 }
 
+// TWLアプリのみ対応、NTRはまだ
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
-{	enum
+{
+	enum
 	{
 	    region_header = 0,
 	    region_arm9_ntr,
@@ -658,7 +669,12 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
             FS_CloseFile(file);
             return;
         }
-
+        
+        if( header[0x12] && 0x03 == 0 )
+        {
+			//NTR専用ROM
+		}
+		
         // 各領域を読み込む
         source  [region_header  ] = 0x00000000;
         length  [region_header  ] = HW_TWL_ROM_HEADER_BUF_SIZE;
@@ -679,18 +695,14 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
         source  [region_arm7_twl] = *(const u32*)&header[0x1D0];
         length  [region_arm7_twl] = *(const u32*)&header[0x1DC];
         destaddr[region_arm7_twl] = *(const u32*)&header[0x1D8];
-        
-        if( header[0x12] && 0x03 == 0 )
-        {
-			//NTR専用ROM
-		}
 		
 		MI_CpuClearFast( (void *)SYSMi_GetWork()->romRelocateInfo, RELOCATE_INFO_NUM * sizeof(Relocate_Info) );
         
         // 領域読み込み先のチェック及び再配置情報データの作成
 		for( i=0; i<RELOCATE_INFO_NUM; i++ )
 		{
-			if ( !SYSMi_CheckLoadRegionAndSetRelocateInfo( (RomSegmentName)i, &(destaddr[i+region_arm9_ntr]), length[i+region_arm9_ntr], &(SYSMi_GetWork()->romRelocateInfo[i]) ) )
+			if ( !SYSM_CheckLoadRegionAndSetRelocateInfo( (RomSegmentName)i, &(destaddr[i+region_arm9_ntr]), length[i+region_arm9_ntr],
+				 &(SYSMi_GetWork()->romRelocateInfo[i]), TRUE ) )
 			{
 	OS_TPrintf("RebootSystem failed: ROM Load Region error\n");
 	            FS_CloseFile(file);
