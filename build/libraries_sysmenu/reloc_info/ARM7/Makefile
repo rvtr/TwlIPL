@@ -11,22 +11,39 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date:: 2007-10-03#$
-# $Rev: 1319 $
-# $Author: kitase_hirotake $
+# $Date:: 2007-09-27#$
+# $Rev: 1203 $
+# $Author: yada $
 #----------------------------------------------------------------------------
 
+SUBDIRS				=
+
+#----------------------------------------------------------------------------
 TARGET_FIRM			=	SYSTEMMENU
+TARGET_PLATFORM		=	TWL
+TWL_ARCHGEN			=	LIMITED
+TWL_PROC	    	=	ARM7
+
+#----------------------------------------------------------------------------
+
+SRCDIR				=	../common/src
+
+SRCS				=	reloc_info.c
+
+TARGET_LIB			=	libreloc_info_sp$(TWL_LIBSUFFIX).a
+
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
+INSTALL_TARGETS		=	$(TARGETS)
+INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
+
 #----------------------------------------------------------------------------
 
-SUBDIRS				=	reloc_info sysmenu settings mb_loader acsign boot hotsw
-
-#----------------------------------------------------------------------------
+do-build:		$(TARGETS)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====
+

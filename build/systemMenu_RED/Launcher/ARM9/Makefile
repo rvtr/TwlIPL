@@ -17,6 +17,7 @@
 #----------------------------------------------------------------------------
 
 SUBDIRS					=	\
+							../../../libraries_sysmenu/reloc_info \
 							../../../libraries_sysmenu/sysmenu \
 							../../../libraries_sysmenu/settings \
 							../../../libraries_sysmenu/boot \
@@ -52,7 +53,8 @@ LINCLUDES				=	$(MISC_DIR)/include \
 							$(SRCDIR)/$(LOGO_DIR)
 
 LLIBRARIES				+=	libnam$(TWL_LIBSUFFIX).a \
-							libese$(TWL_LIBSUFFIX).a
+							libese$(TWL_LIBSUFFIX).a \
+							libreloc_info$(TWL_LIBSUFFIX).a
 
 ADDRESS_DTCM			=	0x0e000000
 

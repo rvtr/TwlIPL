@@ -22,6 +22,7 @@
 #include <twl/nam.h>
 
 #include <sysmenu/memorymap.h>
+#include <sysmenu/reloc_info/common/reloc_info.h>
 //#include <sysmenu/reset_param/ARM9/reset_param.h>
 
 #ifdef __cplusplus
@@ -47,17 +48,6 @@ typedef struct TitleID_HiLo {
 //----------------------------------------------------------------------
 //　データ型定義
 //----------------------------------------------------------------------
-
-// 再配置情報データ構造体
-typedef struct Relocate_Info
-{
-	u32				src;
-	u32				dest;
-	u32				length;
-	u32				post_clear_addr;
-	u32				post_clear_length;
-	BOOL			rev;
-}Relocate_Info;
 
 // SYSM共有ワーク構造体
 typedef struct SYSM_work {

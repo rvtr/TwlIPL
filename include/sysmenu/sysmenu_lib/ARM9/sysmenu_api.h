@@ -24,6 +24,7 @@
 #include <sysmenu/banner.h>
 #include <sysmenu/settings.h>
 #include <sysmenu/sysmenu_lib/common/sysmenu_work.h>
+#include <sysmenu/reloc_info/common/reloc_info.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,14 +69,6 @@ typedef enum AuthResult {
 	AUTH_RESULT_ENTRY_ADDRESS_ERROR = 5
 }AuthResult;
 
-// ROMセグメント名
-typedef enum RomSegmentName {
-	ARM9_STATIC = 0,
-	ARM7_STATIC = 1,
-	ARM9_LTD_STATIC = 2,
-	ARM7_LTD_STATIC = 3
-}RomSegmentName;
-
 
 // global variable------------------------------------------------------
 extern void *(*SYSM_Alloc)( u32 size );			// ライブラリ内部使用
@@ -93,7 +86,6 @@ extern int  SYSM_GetCardTitleList( TitleProperty *pTitleList_Card );			// カード
 extern int  SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size );	// NAND  アプリタイトルリストの取得
 
 // アプリ起動
-BOOL SYSM_CheckLoadRegionAndSetRelocateInfo( RomSegmentName seg, u32 *dest, u32 length, Relocate_Info *info, BOOL isTwlApp );	//
 extern void SYSM_StartLoadTitle( TitleProperty *pBootTitle );					// 指定したTitlePropertyを別スレッドでロード開始
 extern BOOL SYSM_IsLoadTitleFinished( TitleProperty *pBootTitle );				// SYSM_StartLoadTitleで起動したスレッドが終了したかどうかを確認
 extern AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle );			// 指定したTitlePropertyを認証してブート
