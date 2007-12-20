@@ -176,7 +176,6 @@ static void BOOTi_ClearREG_RAM( void )
 		reg_MI_MC_SWP = 0x80;											// カードスロットのスワップ
 #endif
 		*(u32 *)HW_BOOT_CHECK_INFO_BUF = SYSMi_GetWork()->nCardID;		// カード抜けチェックバッファにカードIDをセット
-		*(u32 *)HW_RED_RESERVED = SYSMi_GetWork()->nCardID;
 	}
 	
 	*(vu32 *)HW_RESET_PARAMETER_BUF = 0;								// リセットバッファをクリア
