@@ -103,6 +103,9 @@ void HOTSW_Init(void)
 
 	// Counter-Aの値を設定
     reg_MI_MC2 = 0xc8;
+#else
+    // PXI経由でARM7にチャッタリングカウンタ・カウンタAの値を設定してもらう。設定されるまで待つ。
+
 #endif
 
 	// カードブート用構造体の初期化
@@ -155,9 +158,14 @@ BOOL HOTSW_Boot(void)
     OSTick start = OS_GetTick();
 	
 	OS_TPrintf("---------------- Card Boot Start ---------------\n");
+#ifdef SDK_ARM7
 	// カード電源ON
 	McPowerOn();
-
+#else // SDK_ARM9
+	// ARM7にPXI経由でカード電源ONをお願い。ONになるまで待つ。
+    
+#endif
+    
 	// セキュア領域の読み込みセグメント先頭番号(Segment4 ～ Segment7)
     s_cbData.secureSegNum = 4;
 
@@ -234,6 +242,7 @@ BOOL HOTSW_Boot(void)
 				OS_TPrintf("TWL Card.\n");
 	            s_cbData.twlFlg = TRUE;
 	        }
+            
 	    	// Key Table初期化
 	    	GCDm_MakeBlowfishTableDS(&s_cbData.keyTable, &s_pBootSegBuffer->rh.s, s_cbData.keyBuf, 8);
 
@@ -268,7 +277,7 @@ BOOL HOTSW_Boot(void)
             
 			// 常駐モジュール残りを指定先に転送
 			HOTSW_LoadStaticModule();
-	
+            
 			// デバッグ出力
 			ShowRomHeaderData();
 		}
@@ -328,17 +337,27 @@ void HOTSW_LoadStaticModule(void)
 		SYSMi_GetWork()->is1stCardChecked  = TRUE;
 	}
 #endif
+    
 	
     OS_TPrintf("  - Arm9 Static Module Loading...\n");
+	// 配置先と再配置情報を取得
+	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_STATIC, s_cbData.arm9Stc, s_cbData.pBootSegBuf->rh.s.main_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC] , FALSE);
+    
     // Arm9の常駐モジュール残りを指定先に転送
     s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.main_rom_offset  + SECURE_SEGMENT_SIZE,
-                                 (u32 *)((u32)s_cbData.pBootSegBuf->rh.s.main_ram_address + SECURE_SEGMENT_SIZE),
+                                 			  s_cbData.arm9Stc + SECURE_SEGMENT_SIZE,
                                               s_cbData.pBootSegBuf->rh.s.main_size        - SECURE_SEGMENT_SIZE);
+/*    s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.main_rom_offset  + SECURE_SEGMENT_SIZE,
+                                 (u32 *)((u32)s_cbData.pBootSegBuf->rh.s.main_ram_address + SECURE_SEGMENT_SIZE),
+                                              s_cbData.pBootSegBuf->rh.s.main_size        - SECURE_SEGMENT_SIZE);*/
 
     OS_TPrintf("  - Arm7 Static Module Loading...\n");
+    // 配置先と再配置情報を取得
+	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_STATIC, s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC] , FALSE);
+    
     // Arm7の常駐モジュールを指定先に転送
     s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.sub_rom_offset,
-                                 (u32 *)((u32)s_cbData.pBootSegBuf->rh.s.sub_ram_address),
+                                 			  s_cbData.arm7Stc,
                                               s_cbData.pBootSegBuf->rh.s.sub_size);
 
 	// TWLでのみロード
@@ -346,21 +365,26 @@ void HOTSW_LoadStaticModule(void)
 		u32 size = ( s_cbData.pBootSegBuf->rh.s.main_ltd_size < SECURE_SEGMENT_SIZE ) ?
 					 s_cbData.pBootSegBuf->rh.s.main_ltd_size : SECURE_SEGMENT_SIZE;
 	    OS_TPrintf("  - Arm9 Ltd. Static Module Loading...\n");
+		// 配置先と再配置情報を取得
+		SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_LTD_STATIC, s_cbData.arm9Ltd, s_cbData.pBootSegBuf->rh.s.main_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_LTD_STATIC] , TRUE);
+        
 	    // Arm9の常駐モジュールを指定先に転送（※TWLカード対応していないので、注意！！）
-		
 		s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset,
                                  		   (u32 *)SYSM_CARD_TWL_SECURE_BUF,
 	                                          	  size);
 		if( s_cbData.pBootSegBuf->rh.s.main_ltd_size > SECURE_SEGMENT_SIZE ) {
 		    s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset,
-	                             		 (u32 *)((u32)s_cbData.pBootSegBuf->rh.s.main_ltd_ram_address),
+	                             		 			  s_cbData.arm9Ltd,
 	                                          		  s_cbData.pBootSegBuf->rh.s.main_ltd_size);
 		}
 
 	    OS_TPrintf("  - Arm7 Ltd. Static Module Loading...\n");
+        // 配置先と再配置情報を取得
+		SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_LTD_STATIC, s_cbData.arm7Ltd, s_cbData.pBootSegBuf->rh.s.sub_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_LTD_STATIC], TRUE);
+        
 	    // Arm7の常駐モジュールを指定先に転送
 	    s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset,
-	                             	 (u32 *)((u32)s_cbData.pBootSegBuf->rh.s.sub_ltd_ram_address),
+	                             	 			  s_cbData.arm7Ltd,
 	                                          	  s_cbData.pBootSegBuf->rh.s.sub_ltd_size);
 	}
 }
