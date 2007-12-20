@@ -242,10 +242,10 @@ typedef struct CardBootData{
 	u32					arm9LtdSize;			
     u32					arm7LtdSize;			
 
-	u32					*arm9Stc;				
-    u32					*arm7Stc;				
-    u32					*arm9Ltd;				
-    u32					*arm7Ltd;				
+	u32					arm9Stc;				
+    u32					arm7Stc;				
+    u32					arm9Ltd;				
+    u32					arm7Ltd;				
 
 	BOOL			   	twlFlg;					
 
