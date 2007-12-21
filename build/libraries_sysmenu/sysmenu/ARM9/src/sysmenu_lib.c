@@ -693,18 +693,30 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 static void SYSMi_Relocate( void )
 {
 	u32 size;
+	u32 *dest = SYSM_GetCardRomHeader()->main_ram_address;
 	// NTRセキュア領域の再配置
 	DC_InvalidateRange( (void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );	// キャッシュケア
 	size = ( SYSM_GetCardRomHeader()->main_size < SECURE_AREA_SIZE ) ?
 			 SYSM_GetCardRomHeader()->main_size : SECURE_AREA_SIZE;
-	MI_CpuCopyFast( (void *)SYSM_CARD_NTR_SECURE_BUF, SYSM_GetCardRomHeader()->main_ram_address, size );
+	// romの再配置情報を参照して、セキュア領域の再配置先を変更する必要が無いか調べる
+	if( SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC].src != NULL )
+	{
+		dest = (u32 *)SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC].src;
+	}
+	MI_CpuCopyFast( (void *)SYSM_CARD_NTR_SECURE_BUF, dest, size );
 	
 	if( SYSM_GetCardRomHeader()->platform_code & PLATFORM_CODE_FLAG_TWL ) {
 		// TWLセキュア領域の再配置
+		dest = SYSM_GetCardRomHeader()->main_ltd_ram_address;
 		DC_InvalidateRange( (void *)SYSM_CARD_TWL_SECURE_BUF, SECURE_AREA_SIZE );	// キャッシュケア
 		size = ( SYSM_GetCardRomHeader()->main_ltd_size < SECURE_AREA_SIZE ) ?
 				 SYSM_GetCardRomHeader()->main_ltd_size : SECURE_AREA_SIZE;
-		MI_CpuCopyFast( (void *)SYSM_CARD_TWL_SECURE_BUF, SYSM_GetCardRomHeader()->main_ltd_ram_address, size );
+		// romの再配置情報を参照して、セキュア領域の再配置先を変更する必要が無いか調べる
+		if( SYSMi_GetWork()->romRelocateInfo[ARM9_LTD_STATIC].src != NULL )
+		{
+			dest = (u32 *)SYSMi_GetWork()->romRelocateInfo[ARM9_LTD_STATIC].src;
+		}
+		MI_CpuCopyFast( (void *)SYSM_CARD_TWL_SECURE_BUF, dest, size );
 		// TWL-ROMヘッダ情報の再配置
 		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_TWL_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );
 		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
