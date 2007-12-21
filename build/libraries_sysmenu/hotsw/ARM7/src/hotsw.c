@@ -236,7 +236,11 @@ BOOL HOTSW_Boot(void)
 			
 	    	// Boot Segment読み込み
 	    	s_funcTable[s_cbData.cardType].ReadBootSegment_N(&s_cbData);
-			
+
+			OS_TPrintf(" | Game Command Param     : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.game_cmd_param);
+            OS_TPrintf(" | Secure Command Param   : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.secure_cmd_param);
+            OS_TPrintf(" | Secure Command Latency : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.secure_cmd_latency);
+            
             // Romエミュレーションデータを取得
             if(s_cbData.cardType == DS_CARD_TYPE_1){
 				// Type1の場合
@@ -418,7 +422,7 @@ void HOTSW_LoadStaticModule(void)
         
 	    // Arm9の常駐モジュールを指定先に転送（※TWLカード対応していないので、注意！！）
 		s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset,
-                                 		   (u32 *)s_cbData.arm9Ltd,
+                                 		   (u32 *)SYSM_CARD_TWL_SECURE_BUF,
 	                                          	  size);
 		if( s_cbData.pBootSegBuf->rh.s.main_ltd_size > SECURE_SEGMENT_SIZE ) {
 		    s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset + SECURE_SEGMENT_SIZE,
@@ -664,7 +668,6 @@ static void DecryptObjectFile(void)
 static BOOL CheckArm7HashValue(void)
 {
 	u8		sha1data[DIGEST_SIZE_SHA1];
-	u32 	i;
 	BOOL	retval = TRUE;
 
     // クリア
@@ -677,15 +680,7 @@ static BOOL CheckArm7HashValue(void)
                       s_digestDefaultKey,
                       sizeof(s_digestDefaultKey) );
 
-    // ハッシュ値の照合
-    for(i=0; i<DIGEST_SIZE_SHA1; i++){
-        if(sha1data[i] != s_cbData.pBootSegBuf->rh.s.sub_static_digest[i]){
-			retval = FALSE;
-            break;
-        }
-    }
-
-    return retval;
+	return SVC_CompareSHA1( sha1data, s_cbData.pBootSegBuf->rh.s.sub_static_digest );
 }
 
 // ----------------------------------------------------------------------
@@ -696,7 +691,6 @@ static BOOL CheckArm7HashValue(void)
 static BOOL CheckArm9HashValue(void)
 {
 	u8		sha1data[DIGEST_SIZE_SHA1];
-	u32 	i;
 	BOOL	retval = TRUE;
     SVCHMACSHA1Context hash;
 
@@ -715,15 +709,7 @@ static BOOL CheckArm9HashValue(void)
     // Hash値取得
     SVC_HMACSHA1GetHash( &hash, sha1data );
 
-    // ハッシュ値の照合
-    for(i=0; i<DIGEST_SIZE_SHA1; i++){
-        if(sha1data[i] != s_cbData.pBootSegBuf->rh.s.main_static_digest[i]){
-			retval = FALSE;
-            break;
-        }
-    }
-
-    return retval;
+	return SVC_CompareSHA1( sha1data, s_cbData.pBootSegBuf->rh.s.sub_static_digest );
 }
 
 // ----------------------------------------------------------------------
@@ -732,7 +718,6 @@ static BOOL CheckArm9HashValue(void)
 static BOOL CheckExtArm7HashValue(void)
 {
 	u8		sha1data[DIGEST_SIZE_SHA1];
-	u32 	i;
 	BOOL	retval = TRUE;
 
     // クリア
@@ -745,15 +730,7 @@ static BOOL CheckExtArm7HashValue(void)
                       s_digestDefaultKey,
                       sizeof(s_digestDefaultKey) );
 
-    // ハッシュ値の照合
-    for(i=0; i<DIGEST_SIZE_SHA1; i++){
-        if(sha1data[i] != s_cbData.pBootSegBuf->rh.s.sub_ltd_static_digest[i]){
-			retval = FALSE;
-            break;
-        }
-    }
-
-    return retval;
+	return SVC_CompareSHA1( sha1data, s_cbData.pBootSegBuf->rh.s.sub_ltd_static_digest );
 }
 
 // ----------------------------------------------------------------------
@@ -762,7 +739,6 @@ static BOOL CheckExtArm7HashValue(void)
 static BOOL CheckExtArm9HashValue(void)
 {
 	u8		sha1data[DIGEST_SIZE_SHA1];
-	u32 	i;
 	BOOL	retval = TRUE;
 
     // クリア
@@ -775,15 +751,7 @@ static BOOL CheckExtArm9HashValue(void)
                       s_digestDefaultKey,
                       sizeof(s_digestDefaultKey) );
 
-    // ハッシュ値の照合
-    for(i=0; i<DIGEST_SIZE_SHA1; i++){
-        if(sha1data[i] != s_cbData.pBootSegBuf->rh.s.main_ltd_static_digest[i]){
-			retval = FALSE;
-            break;
-        }
-    }
-
-    return retval;
+	return SVC_CompareSHA1( sha1data, s_cbData.pBootSegBuf->rh.s.main_ltd_static_digest );
 }
 
 /* -----------------------------------------------------------------
