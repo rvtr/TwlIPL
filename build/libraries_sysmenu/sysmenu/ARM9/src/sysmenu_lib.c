@@ -517,7 +517,6 @@ BOOL SYSM_IsValidTSD( void )
 //
 // ============================================================================
 
-// TWLアプリのみ対応、NTRはまだ
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
 {
 	enum
@@ -539,6 +538,7 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
     char path[256];
     FSFile  file[1];
     BOOL bSuccess;
+    BOOL isTwlApp = TRUE;
     NAM_GetTitleBootContentPath(path, pBootTitle->titleID);
 
     bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
@@ -596,6 +596,7 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
         if( header[0x12] && 0x03 == 0 )
         {
 			//NTR専用ROM
+			isTwlApp = FALSE;
 		}
 		
         // 各領域を読み込む
@@ -611,19 +612,23 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
         length  [region_arm7_ntr] = *(const u32*)&header[0x03C];
         destaddr[region_arm7_ntr] = *(const u32*)&header[0x038];
 		
-        source  [region_arm9_twl] = *(const u32*)&header[0x1C0];
-        length  [region_arm9_twl] = *(const u32*)&header[0x1CC];
-        destaddr[region_arm9_twl] = *(const u32*)&header[0x1C8];
-		
-        source  [region_arm7_twl] = *(const u32*)&header[0x1D0];
-        length  [region_arm7_twl] = *(const u32*)&header[0x1DC];
-        destaddr[region_arm7_twl] = *(const u32*)&header[0x1D8];
+		if( isTwlApp )
+		{
+	        source  [region_arm9_twl] = *(const u32*)&header[0x1C0];
+	        length  [region_arm9_twl] = *(const u32*)&header[0x1CC];
+	        destaddr[region_arm9_twl] = *(const u32*)&header[0x1C8];
+			
+	        source  [region_arm7_twl] = *(const u32*)&header[0x1D0];
+	        length  [region_arm7_twl] = *(const u32*)&header[0x1DC];
+	        destaddr[region_arm7_twl] = *(const u32*)&header[0x1D8];
+        }
         
         // 領域読み込み先のチェック及び再配置情報データの作成
 		for( i=0; i<RELOCATE_INFO_NUM; i++ )
 		{
+			if ( !isTwlApp && i >= ARM9_LTD_STATIC ) continue;// nitroでは読み込まない領域
 			if ( !SYSM_CheckLoadRegionAndSetRelocateInfo( (RomSegmentName)i, &(destaddr[i+region_arm9_ntr]), length[i+region_arm9_ntr],
-				 &(SYSMi_GetWork()->romRelocateInfo[i]), TRUE ) )
+				 &(SYSMi_GetWork()->romRelocateInfo[i]), isTwlApp ) )
 			{
 	OS_TPrintf("RebootSystem failed: ROM Load Region error\n");
 	            FS_CloseFile(file);
@@ -634,6 +639,8 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
         for (i = region_header; i < region_max; ++i)
         {
             u32 len = length[i];
+            
+            if ( !isTwlApp && i >= region_arm9_twl ) continue;// nitroでは読み込まない領域
 
             bSuccess = FS_SeekFile(file, (s32)source[i], FS_SEEK_SET);
 
