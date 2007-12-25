@@ -68,7 +68,7 @@
  *---------------------------------------------------------------------------*/
 static void         SetSCFGWork( void );
 static void			ResetRTC( void );
-static void         ReadResetParameter( void );
+static void         ReadLauncherParameter( void );
 static void         PrintDebugInfo(void);
 static OSHeapHandle InitializeAllocateSystem(void);
 static void         InitializeFatfs(void);
@@ -111,8 +111,8 @@ TwlSpMain(void)
 	OS_InitTick();
     PrintDebugInfo();
 	
-    // Cold/Hotスタート判定
-	ReadResetParameter();
+    // ランチャーパラメター取得（Cold/Hotスタート判定含む）
+	ReadLauncherParameter();
 	
 	// RTCリセット
 	ResetRTC();		// 330usくらい
@@ -249,14 +249,14 @@ static void ResetRTC( void )
 }
 
 
-// Hot/Coldスタート判定およびリセットパラメータのリード
-void ReadResetParameter( void )
+// ランチャーパラメータのリードおよびHot/Coldスタート判定
+void ReadLauncherParameter( void )
 {
 	BOOL hot;
-    SYSMi_GetWork()->isValidResetParam = OS_ReadResetParameter( (ResetParam *)&(SYSMi_GetWork()->resetParam), &hot );
+    SYSMi_GetWork()->isValidLauncherParam = OS_ReadLauncherParameter( (LauncherParam *)&(SYSMi_GetWork()->launcherParam), &hot );
     SYSMi_GetWork()->isHotStart = hot;
     // メインメモリのリセットパラメータをクリアしておく
-    MI_CpuClear32( SYSMi_GetResetParamAddr(), 0x100 );
+    MI_CpuClear32( SYSMi_GetLauncherParamAddr(), 0x100 );
 }
 
 

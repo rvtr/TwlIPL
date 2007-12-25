@@ -197,7 +197,7 @@ int MachineSettingMain( void )
 {
 	BOOL tp_select;
 
-	BootFlags tempflag = {TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
+	LauncherBootFlags tempflag = {TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
 	
 	ReadTP();
 	
@@ -218,7 +218,7 @@ int MachineSettingMain( void )
 	DrawMenu( s_csr, &s_settingParam );
 
 	if( pad.trg & PAD_BUTTON_START ) {
-		OS_SetResetParamAndResetHardware( 0, NULL, &tempflag );
+		OS_SetLauncherParamAndResetHardware( 0, NULL, &tempflag );
 	}
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// メニュー項目への分岐
@@ -250,7 +250,7 @@ int MachineSettingMain( void )
 					break;
 				case 6:
 					//pictochat起動テスト
-					OS_SetResetParamAndResetHardware( 0, 0x0001000150434854, &tempflag );
+					OS_SetLauncherParamAndResetHardware( 0, 0x0001000150434854, &tempflag );
 			}
 		}
 	}

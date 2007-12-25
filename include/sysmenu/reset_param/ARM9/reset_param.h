@@ -50,29 +50,29 @@ typedef struct BootFlags {
 
 
 // リセットパラメータ　ヘッダ
-typedef struct ResetParameterHeader {
+typedef struct LauncherParameterHeader {
 	u32			magicCode;				// SYSM_RESET_PARAM_MAGIC_CODEが入る
 	u8			type;					// タイプによってBodyを判別する。
 	u8			bodyLength;				// bodyの長さ
 	u16			crc16;					// bodyのCRC16
-}ResetParamHeader;
+}LauncherParamHeader;
 
 
 // リセットパラメータ　ボディ
-typedef union ResetParamBody {
+typedef union LauncherParamBody {
 	struct {							// ※とりあえず最初はTitlePropertyとフォーマットを合わせておく
 		NAMTitleId	bootTitleID;		// リセット後にダイレクト起動するタイトルID
 		BootFlags	flags;				// リセット時のランチャー動作フラグ
 		u8			rsv[ 4 ];			// 予約
 	}v1;
-}ResetParamBody;
+}LauncherParamBody;
 
 
 // リセットパラメータ
-typedef struct ResetParam {
-	ResetParamHeader	header;
-	ResetParamBody		body;
-}ResetParam;
+typedef struct LauncherParam {
+	LauncherParamHeader	header;
+	LauncherParamBody		body;
+}LauncherParam;
 
 // function's prototype------------------------------------
 

@@ -170,13 +170,13 @@ TitleProperty *SYSM_ReadParameters( void )
 	// リセットパラメータの判定（リセットパラメータが有効かどうかは、ARM7でやってくれている）
 	//-----------------------------------------------------
 	{
-		if( SYSM_GetResetParamBody()->v1.flags.isLogoSkip ||		// ロゴデモスキップ？
+		if( SYSM_GetLauncherParamBody()->v1.flags.isLogoSkip ||		// ロゴデモスキップ？
 			SYSMi_IsDebuggerBannerViewMode() ) {
 			SYSM_SetLogoDemoSkip( TRUE );
 		}
 		
-		if( SYSM_GetResetParamBody()->v1.bootTitleID ) {			// アプリ直接起動の指定があったらロゴデモを飛ばして指定アプリ起動
-			pBootTitle = (TitleProperty *)&SYSM_GetResetParamBody()->v1;
+		if( SYSM_GetLauncherParamBody()->v1.bootTitleID ) {			// アプリ直接起動の指定があったらロゴデモを飛ばして指定アプリ起動
+			pBootTitle = (TitleProperty *)&SYSM_GetLauncherParamBody()->v1;
 		}
 	}
 	
@@ -448,10 +448,10 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 }
 
 
-// リセットパラメータの取得
-const ResetParamBody *SYSM_GetResetParamBody( void )
+// ランチャーパラメータの取得
+const LauncherParamBody *SYSM_GetLauncherParamBody( void )
 {
-	return (const ResetParamBody *)&SYSMi_GetWork()->resetParam.body;
+	return (const LauncherParamBody *)&SYSMi_GetWork()->launcherParam.body;
 }
 
 

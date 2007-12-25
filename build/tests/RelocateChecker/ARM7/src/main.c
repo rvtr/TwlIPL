@@ -65,7 +65,7 @@
     内部関数定義
  *---------------------------------------------------------------------------*/
 static void         SetSCFGWork( void );
-static void         ReadResetParameter( void );
+static void         ReadLauncherParameter( void );
 static void         PrintDebugInfo(void);
 static OSHeapHandle InitializeAllocateSystem(void);
 static void         InitializeFatfs(void);
@@ -119,7 +119,7 @@ TwlSpMain(void)
     ReadUserInfo();
     
     // Cold/Hotスタート判定
-	ReadResetParameter();
+	ReadLauncherParameter();
 	
 	// [TODO:] カード電源ONして、ROMヘッダのみリード＆チェックくらいはやっておきたい
 	
@@ -222,11 +222,11 @@ static BOOL IsEnableJTAG( void )
 	return value ? TRUE : FALSE;
 }
 
-// Hot/Coldスタート判定およびリセットパラメータのリード
+// ランチャーパラメータのリードおよびHot/Coldスタート判定
 #define MCU_RESET_VALUE_BUF_ENABLE_MASK		0x80000000
 #define MCU_RESET_VALUE_OFS					0
 #define MCU_RESET_VALUE_LEN					1
-void ReadResetParameter( void )
+void ReadLauncherParameter( void )
 {
 	if( ( *(u32 *)HW_RESET_PARAMETER_BUF & MCU_RESET_VALUE_BUF_ENABLE_MASK ) == 0 ) {
 		(void)MCU_GetFreeRegisters( MCU_RESET_VALUE_OFS, (u8 *)HW_RESET_PARAMETER_BUF, MCU_RESET_VALUE_LEN );
@@ -240,20 +240,20 @@ void ReadResetParameter( void )
         SYSMi_GetWork()->isHotStart = FALSE;
     }else {
         SYSMi_GetWork()->isHotStart = TRUE;
-        // リセットパラメータ有効判定
-        if( ( STD_StrNCmp( (const char *)&SYSMi_GetResetParamAddr()->header.magicCode,
-                             SYSM_RESET_PARAM_MAGIC_CODE,
-                             SYSM_RESET_PARAM_MAGIC_CODE_LEN ) == 0 ) &&
-              ( SYSMi_GetResetParamAddr()->header.bodyLength > 0 ) &&
-              ( SYSMi_GetResetParamAddr()->header.crc16 == SVC_GetCRC16( 65535, &SYSMi_GetResetParamAddr()->body, SYSMi_GetResetParamAddr()->header.bodyLength ) )
+        // ランチャーパラメータ有効判定
+        if( ( STD_StrNCmp( (const char *)&SYSMi_GetLauncherParamAddr()->header.magicCode,
+                             SYSM_LAUNCHER_PARAM_MAGIC_CODE,
+                             SYSM_LAUNCHER_PARAM_MAGIC_CODE_LEN ) == 0 ) &&
+              ( SYSMi_GetLauncherParamAddr()->header.bodyLength > 0 ) &&
+              ( SYSMi_GetLauncherParamAddr()->header.crc16 == SVC_GetCRC16( 65535, &SYSMi_GetLauncherParamAddr()->body, SYSMi_GetLauncherParamAddr()->header.bodyLength ) )
               ) {
-            // リセットパラメータが有効なら、ワークに退避
-            MI_CpuCopy32 ( SYSMi_GetResetParamAddr(), &SYSMi_GetWork()->resetParam, sizeof(ResetParam) );
-            SYSMi_GetWork()->isValidResetParam = TRUE;
+            // ランチャーパラメータが有効なら、ワークに退避
+            MI_CpuCopy32 ( SYSMi_GetLauncherParamAddr(), &SYSMi_GetWork()->launcherParam, sizeof(LauncherParam) );
+            SYSMi_GetWork()->isValidLauncherParam = TRUE;
         }
     }
-    // メインメモリのリセットパラメータをクリアしておく
-    MI_CpuClear32( SYSMi_GetResetParamAddr(), 0x100 );
+    // メインメモリのランチャーパラメータをクリアしておく
+    MI_CpuClear32( SYSMi_GetLauncherParamAddr(), HW_PARAM_LAUNCH_PARAM_SIZE );
 }
 
 

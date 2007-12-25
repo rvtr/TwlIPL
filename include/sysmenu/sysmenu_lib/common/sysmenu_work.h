@@ -54,7 +54,7 @@ typedef struct SYSM_work {
 	Relocate_Info	romRelocateInfo[RELOCATE_INFO_NUM];	// ROM再配置情報（arm9,arm7それぞれltdとflxで最大4つ）
 	vu32			isARM9Start :1;					// ARM9スタートフラグ
 	vu32			isHotStart :1;					// Hot/Coldスタート判定
-	vu32			isValidResetParam :1;			// リセットパラメータ有効
+	vu32			isValidLauncherParam :1;			// リセットパラメータ有効
 	vu32			isValidTSD :1;					// NITRO設定データ無効フラグ
 	vu32			isLogoSkip :1;					// ロゴデモスキップ
 	vu32			isOnDebugger :1;				// デバッガ動作か？
@@ -79,7 +79,7 @@ typedef struct SYSM_work {
 	int				cloneBootMode;
 	u32				nCardID;						// カードID
 	
-	ResetParam		resetParam;
+	LauncherParam	launcherParam;
 	
 	// NTR-IPL2のレガシー　最終的には消すと思う
 	BOOL			enableCardNormalOnly;
@@ -106,8 +106,8 @@ typedef struct SDKBootCheckInfo{
 //----------------------------------------------------------------------
 //　SYSM共有ワーク領域のアドレス獲得
 //----------------------------------------------------------------------
-// SYSMリセットパラメータアドレスの取得（※ライブラリ向け。ARM9側はSYSM_GetResetParamを使用して下さい。）
-#define SYSMi_GetResetParamAddr()			( (ResetParam *)HW_PARAM_LAUNCH_PARAM )
+// SYSMリセットパラメータアドレスの取得（※ライブラリ向け。ARM9側はSYSM_GetLauncherParamを使用して下さい。）
+#define SYSMi_GetLauncherParamAddr()			( (LauncherParam *)HW_PARAM_LAUNCH_PARAM )
 
 // SYSM共有ワークの取得
 #define SYSMi_GetWork()						( (SYSM_work *)HW_RED_RESERVED )

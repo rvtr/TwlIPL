@@ -157,12 +157,12 @@ static void MenuScene(void)
 						// アプリ専用部分のセット
 						MI_CpuCopy8("-r", arginfo->buf, 3);
 						//呼び出し元アプリ起動
-						OS_SetResetParamAndResetHardware( 0, (u64)0x0001000100000000 + invGameCode, &tempflag );
-						//OS_SetResetParamAndResetHardware( 0, (u64)0x00010001434f5041, &tempflag );
+						OS_SetLauncherParamAndResetHardware( 0, (u64)0x0001000100000000 + invGameCode, &tempflag );
+						//OS_SetLauncherParamAndResetHardware( 0, (u64)0x00010001434f5041, &tempflag );
 					}
 					break;
 				case 1:
-					OS_SetResetParamAndResetHardware( 0, NULL, &tempflag );
+					OS_SetLauncherParamAndResetHardware( 0, NULL, &tempflag );
 					//再起動
 					break;
 			}

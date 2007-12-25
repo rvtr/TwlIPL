@@ -53,10 +53,10 @@ typedef enum PlatformCode {
 
 
 // タイトル情報
-typedef struct TitleProperty {	// この情報は、ランチャー時には認証通ってないけど、起動時には認証通すので大丈夫だろう。
-	NAMTitleId		titleID;		// タイトルID（TitleID_Hiで起動メディアは判定できる？）
-	BootFlags		flags;			// ブート時のランチャー動作フラグ
-	TWLBannerFile	*pBanner;		// バナーへのポインタ（固定長フォーマットなら偽造されても大丈夫だろう。)
+typedef struct TitleProperty {			// この情報は、ランチャー時には認証通ってないけど、起動時には認証通すので大丈夫だろう。
+	NAMTitleId			titleID;		// タイトルID（TitleID_Hiで起動メディアは判定できる？）
+	LauncherBootFlags	flags;			// ブート時のランチャー動作フラグ
+	TWLBannerFile		*pBanner;		// バナーへのポインタ（固定長フォーマットなら偽造されても大丈夫だろう。)
 }TitleProperty;
 
 // アプリ認証結果
@@ -102,7 +102,7 @@ extern BOOL SYSM_IsLogoDemoSkip( void );										// ロゴデモ飛ばし状態か？
 extern void SYSM_SetLogoDemoSkip( BOOL skip );									// ロゴデモ飛ばし状態フラグを設定する。
 extern BOOL SYSM_IsValidTSD( void );											// TWL設定データは有効か？
 extern void SYSM_SetValidTSD( BOOL valid );										// TWL設定データの有効／無効フラグを設定する。
-extern const ResetParamBody *SYSM_GetResetParamBody( void );					// リセットパラメータの取得
+extern const LauncherParamBody *SYSM_GetLauncherParamBody( void );					// リセットパラメータの取得
 
 // 本体設定データアクセス
 extern BOOL SYSM_ReadTWLSettingsFile( void );									// TWL設定データのリード

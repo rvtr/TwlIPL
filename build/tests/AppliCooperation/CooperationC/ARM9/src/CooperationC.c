@@ -499,10 +499,10 @@ static void MenuScene(void)
 						MI_CpuCopy8(s_work.parameter, arginfo->buf, 2*(PARAM_LENGTH+1));
 					}
 					//B‹N“®
-					OS_SetResetParamAndResetHardware( 0, 0x00010001434f5042, &tempflag );
+					OS_SetLauncherParamAndResetHardware( 0, 0x00010001434f5042, &tempflag );
 					break;
 				case 2:
-					OS_SetResetParamAndResetHardware( 0, NULL, &tempflag );
+					OS_SetLauncherParamAndResetHardware( 0, NULL, &tempflag );
 					//Ä‹N“®
 					break;
 			}
