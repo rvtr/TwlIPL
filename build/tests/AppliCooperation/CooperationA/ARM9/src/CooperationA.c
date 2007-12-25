@@ -439,7 +439,7 @@ static void MenuScene(void)
 {
 	BOOL tp_select = FALSE;
 	static TPData tgt = (TPData){0,0,0,0};
-	BootFlags tempflag = {TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
+	LauncherBootFlags tempflag = {TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
 	
 	ReadTP();
 	
@@ -487,16 +487,18 @@ static void MenuScene(void)
 					}
 					// アプリ間パラメータをセット
 					{
-						OSDeliverArgInfo *arginfo = (OSDeliverArgInfo *)HW_PARAM_DELIVER_ARG;
-						// メーカーコードとゲームコードのセット(Launcher側でやるべき？)
 						u16 *maker_code_src_addr = (u16 *)(HW_TWL_ROM_HEADER_BUF + 0x10);
 						u32 *game_code_src_addr = (u32 *)(HW_TWL_ROM_HEADER_BUF + 0xc);
-						arginfo->makerCode = *maker_code_src_addr;
-						// まだゲームコードは証明書の関係でNTRJしか入ってない……ので強制的に値代入
-						//arginfo->gameCode = *game_code_src_addr;
-						arginfo->gameCode = 0x41504f43; // 下位から'C','O','P','A'
-						// アプリ専用部分のセット
-						MI_CpuCopy8(s_work.parameter, arginfo->buf, 2*(PARAM_LENGTH+1));
+						// アプリ間パラメータの初期化
+						OS_InitArgBufferForDelivery( OS_DELIVER_ARG_BUFFER_SIZE );
+						// validフラグを立てる
+						OS_SetValidDeliveryArgumentInfo( TRUE );
+						// メーカーコードとゲームコードのセット(Launcher側でやるべき？)
+						OS_SetMakerCodeToDeliveryArgumentInfo( *maker_code_src_addr );
+						OS_SetGameCodeToDeliveryArgumentInfo( *game_code_src_addr );
+						OS_SetTitleIdToDeliveryArgumentInfo( 0x00010001434f5041 );
+						// アプリ専用引数のセット
+						OS_SetDeliveryArgments( (const char *)s_work.parameter );
 					}
 					//B起動
 					OS_SetLauncherParamAndResetHardware( 0, 0x00010001434f5042, &tempflag );
@@ -518,10 +520,10 @@ void CooperationAInit( void )
 	MenuInit();
 
 	{
-		OSDeliverArgInfo *arginfo = (OSDeliverArgInfo *)HW_PARAM_DELIVER_ARG;
-		if(arginfo->gameCode != NULL)
+		if( OS_IsValidDeliveryArgumentInfo() )
 		{
-			if(STD_CompareNString((const char *)arginfo->buf, "-r", 3) == 0)
+			OS_DecodeDeliveryBuffer();
+			if(STD_CompareNString((const char *)OS_GetArgv(1), "-r", 3) == 0)
 			{
 				// セーブしたデータから復帰
 				FSFile f;

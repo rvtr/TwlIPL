@@ -321,6 +321,7 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 		NNSG2dTextRect rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, str );
 		NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL, 0, 24, WINDOW_WIDTH, 32 );
 		PutStringUTF16( (WINDOW_WIDTH-rect.width)>>1, TITLE_V_CENTER - (rect.height>>1), TXT_COLOR_BLACK, str );
+		old_selected = selected;
 	}
 	
 	if(fadecount < (FADE_COUNT_MAX - FADE_START)) {

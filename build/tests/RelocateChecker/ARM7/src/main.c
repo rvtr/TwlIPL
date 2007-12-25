@@ -188,6 +188,7 @@ TwlSpMain(void)
 // システム領域(WRAM & MMEM)にSCFG情報をセット
 static void SetSCFGWork( void )
 {
+	/*
 	// SCFGレジスタが有効な場合のみセット
 	if( reg_SCFG_EXT & REG_SCFG_EXT_CFG_MASK ) {
 		// WRAMのシステム領域にセット
@@ -211,6 +212,7 @@ static void SetSCFGWork( void )
 		// MMEMのシステム領域にコピー
 		MI_CpuCopy8( (void*)HWi_WSYS04_ADDR, (void *)HW_SYS_CONF_BUF, 6 );
     }
+    */
 }
 
 static BOOL IsEnableJTAG( void )
@@ -228,6 +230,7 @@ static BOOL IsEnableJTAG( void )
 #define MCU_RESET_VALUE_LEN					1
 void ReadLauncherParameter( void )
 {
+	/*
 	if( ( *(u32 *)HW_RESET_PARAMETER_BUF & MCU_RESET_VALUE_BUF_ENABLE_MASK ) == 0 ) {
 		(void)MCU_GetFreeRegisters( MCU_RESET_VALUE_OFS, (u8 *)HW_RESET_PARAMETER_BUF, MCU_RESET_VALUE_LEN );
 	}
@@ -254,6 +257,7 @@ void ReadLauncherParameter( void )
     }
     // メインメモリのランチャーパラメータをクリアしておく
     MI_CpuClear32( SYSMi_GetLauncherParamAddr(), HW_PARAM_LAUNCH_PARAM_SIZE );
+    */
 }
 
 

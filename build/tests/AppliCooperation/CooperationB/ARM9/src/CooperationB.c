@@ -44,8 +44,6 @@ static u16 s_csr = 0;
 static u16 s_parameter[ PARAM_LENGTH + 1 ];
 static void(*s_pNowProcess)(void);
 
-static u32 invGameCode;
-
 // const data  -----------------------------------------
 static const u16 *s_pStrMenu[ COPB_MENU_ELEMENT_NUM ] = 
 {
@@ -77,7 +75,8 @@ static void DrawMenuScene( void )
 	PutStringUTF16( 1*8, 18*8, TXT_COLOR_BLACK,  (const u16 *)L"受け取ったパラメータ：");
 	PutStringUTF16( 3 * 8 , 20*8, TXT_UCOLOR_G0, s_parameter );
 	PutStringUTF16( 1*8, 14*8, TXT_COLOR_BLACK,  (const u16 *)L"呼び出し元アプリ：");
-	PrintfSJIS(3*8, 16*8, TXT_COLOR_BLACK, "0x%llx",(u64)0x0001000100000000 + invGameCode);
+	
+	PrintfSJIS(3*8, 16*8, TXT_COLOR_BLACK, "0x%llx",OS_IsValidDeliveryArgumentInfo() ? OS_GetTitleIdFromDeliveryArgumentInfo() : 0x0);
 	GetAndDrawRTCData( &g_rtcDraw, TRUE );
     // メニュー項目
 	DrawMenu( s_csr, &s_menuParam );
@@ -101,13 +100,18 @@ static void MenuInit( void )
 	MI_CpuClear8(s_parameter, 2*(PARAM_LENGTH+1));
 	
 	{
-		OSDeliverArgInfo *arginfo = (OSDeliverArgInfo *)HW_PARAM_DELIVER_ARG;
-		u8 *gc = (u8 *)&arginfo->gameCode;
-		invGameCode = (u32)(gc[0]<<24) + (u32)(gc[1]<<16) + (u32)(gc[2]<<8) + (u32)gc[3];
-		if(invGameCode != NULL)
+		if( OS_IsValidDeliveryArgumentInfo() )
 		{
 			s_menuPos[ 0 ].enable = TRUE;
-			MI_CpuCopy8(arginfo->buf, s_parameter, 2*(PARAM_LENGTH+1));
+			OS_DecodeDeliveryBuffer();
+			if(OS_GetArgv(1) != NULL)
+			{
+				MI_CpuCopy8(OS_GetArgv(1), s_parameter, 2*(PARAM_LENGTH+1));
+			}
+			else
+			{
+				s_parameter[0] = '\0';
+			}
 		}
 	}
 	
@@ -120,7 +124,7 @@ static void MenuInit( void )
 static void MenuScene(void)
 {
 	BOOL tp_select = FALSE;
-	BootFlags tempflag = {TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
+	LauncherBootFlags tempflag = {TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
 	
 	ReadTP();
 	
@@ -145,20 +149,24 @@ static void MenuScene(void)
 		if( s_menuPos[ s_csr ].enable ) {
 			switch( s_csr ) {
 				case 0:
-					if(invGameCode != NULL)
+					if(OS_IsValidDeliveryArgumentInfo())
 					{
-						// アプリ間パラメータをセット
-						OSDeliverArgInfo *arginfo = (OSDeliverArgInfo *)HW_PARAM_DELIVER_ARG;
-						// メーカーコードとゲームコードのセット(Launcher側でやるべき？)
 						u16 *maker_code_src_addr = (u16 *)(HW_TWL_ROM_HEADER_BUF + 0x10);
 						u32 *game_code_src_addr = (u32 *)(HW_TWL_ROM_HEADER_BUF + 0xc);
-						arginfo->makerCode = *maker_code_src_addr;
-						arginfo->gameCode = *game_code_src_addr;
-						// アプリ専用部分のセット
-						MI_CpuCopy8("-r", arginfo->buf, 3);
+						u64 targetApp = OS_GetTitleIdFromDeliveryArgumentInfo();
+						// アプリ間パラメータの初期化
+						OS_InitArgBufferForDelivery( OS_DELIVER_ARG_BUFFER_SIZE );
+						// validフラグを立てる
+						OS_SetValidDeliveryArgumentInfo( TRUE );
+						// メーカーコードとゲームコードのセット(Launcher側でやるべき？)
+						OS_SetMakerCodeToDeliveryArgumentInfo( *maker_code_src_addr );
+						OS_SetGameCodeToDeliveryArgumentInfo( *game_code_src_addr );
+						OS_SetTitleIdToDeliveryArgumentInfo( 0x00010001434f5042 );
+						// アプリ専用引数のセット
+						OS_SetDeliveryArgments( "-r" );
+						
 						//呼び出し元アプリ起動
-						OS_SetLauncherParamAndResetHardware( 0, (u64)0x0001000100000000 + invGameCode, &tempflag );
-						//OS_SetLauncherParamAndResetHardware( 0, (u64)0x00010001434f5041, &tempflag );
+						OS_SetLauncherParamAndResetHardware( 0, targetApp, &tempflag );
 					}
 					break;
 				case 1:

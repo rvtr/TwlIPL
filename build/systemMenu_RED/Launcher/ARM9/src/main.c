@@ -94,9 +94,8 @@ void TwlMain( void )
 	
 	// 「ダイレクトブートでない」なら
 	if( !pBootTitle ) {
-		// アプリ間パラメータの呼び出し元アプリ情報をクリア
-		OSDeliverArgInfo *arginfo = (OSDeliverArgInfo *)HW_PARAM_DELIVER_ARG;
-		arginfo->gameCode = NULL;
+		// アプリ間パラメタのvalidフラグを落とす
+		OS_SetValidDeliveryArgumentInfo( FALSE );
 		
 		// NAND & カードアプリリスト取得
 		(void)SYSM_GetNandTitleList( s_titleList, LAUNCHER_TITLE_LIST_NUM );	// NANDアプリリストの取得（内蔵アプリはs_titleList[1]から格納される）
