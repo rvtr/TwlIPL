@@ -42,12 +42,11 @@ void ReadBootSegNormal_DSType1(CardBootData *cbd)
 	reg_HOTSW_MCCMD1 = 0x00000000;
 
 	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-//	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
 
-	// MCCNT1 レジスタ設定 (START = 1  W/R = 0  PC = 100 (8ページリード) に)
-	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,   0)) |
-        		             		 			 CNT1_FLD(1,0,0,0,  0,4,  0,0,  0,  0,0,0,  20));
-
+	// MCCNT1 レジスタ設定 (START = 1  PC = 100(8ページリード)に latency1 = 0x14)
+	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x4 << PC_SHIFT) | (0x14 & LATENCY1_MASK);
+    
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
 }
@@ -84,10 +83,9 @@ void ChangeModeNormal_DSType1(CardBootData *cbd)
     reg_HOTSW_MCCMD0 = *(u32 *)cnd.b;
 	reg_HOTSW_MCCMD1 = *(u32 *)&cnd.b[4];
 
-	// MCCNT1 レジスタ設定 (START = 1  W/R = 1  PC = 000 に)
-	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,  0)) |
-        		             		 			 CNT1_FLD(1,1,0,0,  0,0,  0,0,  0,  0,0,0,  0));
-
+	// MCCNT1 レジスタ設定 (START = 1 に)
+	reg_HOTSW_MCCNT1 = START_MASK;
+    
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
 }
@@ -165,10 +163,10 @@ void ReadIDSecure_DSType1(CardBootData *cbd)
 	SetSecureCommand(S_RD_ID, cbd);
 
 	// MCCNT1 レジスタ設定
-    // (START = 1 W/R = 0 TRM = 1 PC = 111(ステータスリード) CS = 1 SE = 1 DS = 1 Latency1 = 2320(0x910)に)
-	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,1,  1,  0,0,0,     0)) |
-        		             		 			 CNT1_FLD(1,0,0,1,  1,7,  0,0,  0,  0,1,1,  2320));
-
+    // (START = 1 TRM = 1 PC = 111(ステータスリード) 後はRomヘッダ情報にお任せ)
+	reg_HOTSW_MCCNT1 = cbd->pBootSegBuf->rh.s.secure_cmd_param
+        				| START_MASK | TRM_MASK | PC_MASK & (0x7 << PC_SHIFT) | SE_MASK | DS_MASK ;
+    
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
 
@@ -217,10 +215,10 @@ void ReadSegSecure_DSType1(CardBootData *cbd)
 		reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
 
 		// MCCNT1 レジスタ設定
-    	// (START = 1 W/R = 0 TRM = 1 PC = 100(8ページリード) CS = 1 Latency2 = 24(0x18) SE = 1 DS = 1 Latency1 = 2296(0x8f8)に)
-		reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,1,   0,  0,0,0,     0)) |
-        			             		 			 CNT1_FLD(1,0,0,1,  1,4,  0,0,  24,  0,1,1,  2296));
-    
+    	// (START = 1 TRM = 1 PC = 100(8ページリード) 後はRomヘッダ情報にお任せ)
+		reg_HOTSW_MCCNT1 = cbd->pBootSegBuf->rh.s.secure_cmd_param
+        					| START_MASK | TRM_MASK | PC_MASK & (0x4 << PC_SHIFT) | SE_MASK | DS_MASK;
+        
     	// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     	OS_SleepThread(NULL);
         
@@ -242,10 +240,10 @@ void SwitchONPNGSecure_DSType1(CardBootData *cbd)
     // コマンド作成・設定
 	SetSecureCommand(S_PNG_ON, cbd);
 
-	// MCCNT1 レジスタ設定 (START = 1 W/R = 1 TRM = 1 PC = 000 Latency1 = 2320(0x910) に)
-    reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  1,0,0,     0)) |
-        		             		 			 CNT1_FLD(1,1,0,1,  0,0,  0,0,  0,  0,1,1,  2320));
-    
+    // MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = (cbd->pBootSegBuf->rh.s.secure_cmd_param & CT_MASK) |
+        				START_MASK | TRM_MASK | SE_MASK | DS_MASK | (cbd->secureLatency & LATENCY1_MASK);
+
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
 
@@ -263,9 +261,9 @@ void SwitchOFFPNGSecure_DSType1(CardBootData *cbd)
     // コマンド作成・設定
 	SetSecureCommand(S_PNG_OFF, cbd);
 
-	// MCCNT1 レジスタ設定 (START = 1 W/R = 1 TRM = 1 PC = 000 Latency1 = 2320(0x910) に)
-    reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  1,0,0,     0)) |
-        		             		 			 CNT1_FLD(1,1,0,1,  0,0,  0,0,  0,  0,1,1,  2320));
+    // MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = (cbd->pBootSegBuf->rh.s.secure_cmd_param & CT_MASK) |
+        				START_MASK | TRM_MASK | SE_MASK | DS_MASK | (cbd->secureLatency & LATENCY1_MASK);
     
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
@@ -284,10 +282,10 @@ void ChangeModeSecure_DSType1(CardBootData *cbd)
     // コマンド作成・設定
 	SetSecureCommand(S_CHG_MODE, cbd);
 
-	// MCCNT1 レジスタ設定 (START = 1 W/R = 1 TRM = 1 PC = 000 Latency1 = 2320(0x910) に)
-    reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  1,0,0,     0)) |
-        		             		 			 CNT1_FLD(1,1,0,1,  0,0,  0,0,  0,  0,1,1,  2320));
-    
+    // MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = (cbd->pBootSegBuf->rh.s.secure_cmd_param & CT_MASK) |
+        				START_MASK | TRM_MASK | SE_MASK | DS_MASK | (cbd->secureLatency & LATENCY1_MASK);
+
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
 
@@ -313,10 +311,10 @@ void ReadIDGame_DSType1(CardBootData *cbd)
 	reg_HOTSW_MCCMD0 = 0x000000B8;
 	reg_HOTSW_MCCMD1 = 0x00000000;
 
-	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 111(ステータスリード) CS = 1 SE = 1 DS = 1 latency1 = 2320(必要ないけど) に)
-	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,  0)) |
-        		             		 			 CNT1_FLD(1,0,0,0,  0,7,  0,1,  0,  0,1,1,  1));
-
+   	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 111(ステータスリード) その他Romヘッダの情報におまかせ)
+	reg_HOTSW_MCCNT1 = cbd->pBootSegBuf->rh.s.game_cmd_param |
+        				START_MASK | (PC_MASK & (0x7 << PC_SHIFT));
+    
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
 }
@@ -326,7 +324,7 @@ void ReadIDGame_DSType1(CardBootData *cbd)
   
   Description:  ゲームモードで、指定されたページを指定バッファに指定サイズ分を読み込む
  *---------------------------------------------------------------------------*/
-void ReadPageGame_DSType1(u32 start_addr, void* buf, u32 size)
+void ReadPageGame_DSType1(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
 {
     u32 		loop, counter=0;
 	u64			i, page;
@@ -361,10 +359,10 @@ void ReadPageGame_DSType1(u32 start_addr, void* buf, u32 size)
 		reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
 		reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
         
-   		 // MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 001(1ページリード) CS = 1 SE = 1 DS = 1 latency1 = 20 に)
-		reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  1,0,  1,0,  0,  0,0,0,   0)) |
-    				             		 			 CNT1_FLD(1,0,0,0,  0,1,  0,1,  0,  0,1,1,  20));
-
+   		// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 001(1ページリード) その他Romヘッダの情報におまかせ)
+		reg_HOTSW_MCCNT1 = cbd->pBootSegBuf->rh.s.game_cmd_param |
+            				START_MASK | (PC_MASK & (0x1 << PC_SHIFT));
+        
 		// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
 		while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
 			while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}

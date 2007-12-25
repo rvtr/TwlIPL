@@ -46,7 +46,7 @@ void ChangeModeSecure_DSType1(CardBootData *cbd);
 void ReadIDGame_DSType1(CardBootData *cbd);
 
 //  DSカードType1のゲームモードの指定ページ読み込み
-void ReadPageGame_DSType1(u32 start_addr, void* buf, u32 size);
+void ReadPageGame_DSType1(CardBootData *cbd, u32 start_addr, void* buf, u32 size);
 
 #ifdef __cplusplus
 } /* extern "C" */

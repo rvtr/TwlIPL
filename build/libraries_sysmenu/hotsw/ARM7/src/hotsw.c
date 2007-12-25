@@ -275,6 +275,9 @@ BOOL HOTSW_Boot(void)
 				OS_TPrintf("TWL Card.\n");
 	            s_cbData.twlFlg = TRUE;
 	        }
+
+            // SecureコマンドのPNG_ONコマンドetc用のレイテンシを求める(Latency1とLatency2を足す)
+			s_cbData.secureLatency = AddLatency2ToLatency1(s_cbData.pBootSegBuf->rh.s.secure_cmd_param);
             
 	    	// Key Table初期化
 	    	GCDm_MakeBlowfishTableDS(&s_cbData.keyTable, &s_pBootSegBuffer->rh.s, s_cbData.keyBuf, 8);
@@ -363,7 +366,8 @@ void HOTSW_LoadStaticModule(void)
 	// バナーリード
 	if( s_cbData.pBootSegBuf->rh.s.banner_offset ) {
 	    OS_TPrintf("  - Banner Loading...\n");
-        s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.banner_offset,
+        s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
+            									  s_cbData.pBootSegBuf->rh.s.banner_offset,
 												  (u32 *)SYSM_CARD_BANNER_BUF,
 	                                              sizeof(TWLBannerFile) );
 		SYSMi_GetWork()->isValidCardBanner = TRUE;
@@ -378,18 +382,10 @@ void HOTSW_LoadStaticModule(void)
 	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_STATIC, &s_cbData.arm9Stc, s_cbData.pBootSegBuf->rh.s.main_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC] , s_cbData.twlFlg);
     
     // Arm9の常駐モジュール残りを指定先に転送
-    s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.main_rom_offset  + SECURE_SEGMENT_SIZE,
+    s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
+        									  s_cbData.pBootSegBuf->rh.s.main_rom_offset  + SECURE_SEGMENT_SIZE,
                                  	  (u32 *)(s_cbData.arm9Stc 							  + SECURE_SEGMENT_SIZE),
                                               s_cbData.pBootSegBuf->rh.s.main_size        - SECURE_SEGMENT_SIZE);
-
-    // Hash値のチェック
-    if(CheckArm9HashValue()){
-		OS_PutString("◎Arm9 Static Module Hash Check OK!\n");
-    }
-    else{
-		OS_PutString("×Arm9 Static Module Hash Check Error...\n");
-    }
-
     
     OS_TPrintf("  - Arm7 Static Module Loading...\n");
 	s_cbData.arm7Stc = (u32)s_cbData.pBootSegBuf->rh.s.sub_ram_address;
@@ -398,17 +394,10 @@ void HOTSW_LoadStaticModule(void)
 	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_STATIC, &s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC] , s_cbData.twlFlg);
     
     // Arm7の常駐モジュールを指定先に転送
-    s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.sub_rom_offset,
+    s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
+                                              s_cbData.pBootSegBuf->rh.s.sub_rom_offset,
                                  	   (u32 *)s_cbData.arm7Stc,
                                               s_cbData.pBootSegBuf->rh.s.sub_size);
-    
-    // Hash値のチェック
-    if(CheckArm7HashValue()){
-		OS_PutString("◎Arm7 Static Module Hash Check OK!\n");
-    }
-    else{
-		OS_PutString("×Arm7 Static Module Hash Check Error...\n");
-    }
     
 	// TWLでのみロード
 	if( s_cbData.pBootSegBuf->rh.s.platform_code & PLATFORM_CODE_FLAG_TWL ) {
@@ -421,22 +410,16 @@ void HOTSW_LoadStaticModule(void)
 		SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_LTD_STATIC, &s_cbData.arm9Ltd, s_cbData.pBootSegBuf->rh.s.main_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_LTD_STATIC] , TRUE);
         
 	    // Arm9の常駐モジュールを指定先に転送（※TWLカード対応していないので、注意！！）
-		s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset,
+		s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
+                                                  s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset,
                                  		   (u32 *)SYSM_CARD_TWL_SECURE_BUF,
 	                                          	  size);
 		if( s_cbData.pBootSegBuf->rh.s.main_ltd_size > SECURE_SEGMENT_SIZE ) {
-		    s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset + SECURE_SEGMENT_SIZE,
+		    s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
+                                                      s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset + SECURE_SEGMENT_SIZE,
 	                             		 	  (u32 *)(s_cbData.arm9Ltd 								 + SECURE_SEGMENT_SIZE),
 	                                          		  s_cbData.pBootSegBuf->rh.s.main_ltd_size 		 - size);
 		}
-
-		// Hash値のチェック
-        if(CheckExtArm9HashValue()){
-			OS_PutString("◎Arm9 Ltd Static Module Hash Check OK!\n");
-    	}
-    	else{
-			OS_PutString("×Arm9 Ltd Static Module Hash Check Error...\n");
-    	}
 
 	    OS_TPrintf("  - Arm7 Ltd. Static Module Loading...\n");
 		s_cbData.arm7Ltd = (u32)s_cbData.pBootSegBuf->rh.s.sub_ltd_ram_address;
@@ -445,11 +428,36 @@ void HOTSW_LoadStaticModule(void)
 		SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_LTD_STATIC, &s_cbData.arm7Ltd, s_cbData.pBootSegBuf->rh.s.sub_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_LTD_STATIC], TRUE);
         
 	    // Arm7の常駐モジュールを指定先に転送
-	    s_funcTable[s_cbData.cardType].ReadPage_G(s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset,
+	    s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
+                                                  s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset,
 	                             	 	   (u32 *)s_cbData.arm7Ltd,
 	                                          	  s_cbData.pBootSegBuf->rh.s.sub_ltd_size);
 
-        // Hash値のチェック
+        // Arm9常駐モジュール Hash値のチェック
+    	if(CheckArm9HashValue()){
+			OS_PutString("◎Arm9 Static Module Hash Check OK!\n");
+    	}
+    	else{
+			OS_PutString("×Arm9 Static Module Hash Check Error...\n");
+    	}
+    	
+    	// Arm7常駐モジュール Hash値のチェック
+    	if(CheckArm7HashValue()){
+			OS_PutString("◎Arm7 Static Module Hash Check OK!\n");
+    	}
+    	else{
+			OS_PutString("×Arm7 Static Module Hash Check Error...\n");
+    	}
+        
+		// Arm9拡張常駐モジュール Hash値のチェック
+        if(CheckExtArm9HashValue()){
+			OS_PutString("◎Arm9 Ltd Static Module Hash Check OK!\n");
+    	}
+    	else{
+			OS_PutString("×Arm9 Ltd Static Module Hash Check Error...\n");
+    	}
+        
+        // Arm7拡張常駐モジュール Hash値のチェック
     	if(CheckExtArm7HashValue()){
 			OS_PutString("◎Arm7 Ltd Static Module Hash Check OK!\n");
     	}
@@ -550,9 +558,12 @@ static void LoadTable(void)
 	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
 	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
 
-	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 101(16ページ) latency1 = 0(必要ないけど) に)
+/*	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 101(16ページ) latency1 = 0(必要ないけど) に)
 	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,  0)) |
-        		             		 		     CNT1_FLD(1,0,0,0,  0,5,  0,0,  0,  0,0,0,  0));
+        		             		 		     CNT1_FLD(1,0,0,0,  0,5,  0,0,  0,  0,0,0,  0));*/
+
+    // MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 101(16ページ) latency1 = 0(必要ないけど) に)
+	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x5 << PC_SHIFT);
     
 	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
 	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
@@ -578,9 +589,9 @@ void ReadIDNormal(void)
 	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
 	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
 
-	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 111(ステータスリード) latency1 = 1 に)
-	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,  0)) |
-        		             		 			 CNT1_FLD(1,0,0,0,  0,7,  0,0,  0,  0,0,0,  0));
+	// MCCNT1 レジスタ設定 (START = 1 PC = 111(ステータスリード) latency1 = 1 に)
+	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x7 << PC_SHIFT) | (0x1 & LATENCY1_MASK);
+    
 
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
@@ -709,7 +720,7 @@ static BOOL CheckArm9HashValue(void)
     // Hash値取得
     SVC_HMACSHA1GetHash( &hash, sha1data );
 
-	return SVC_CompareSHA1( sha1data, s_cbData.pBootSegBuf->rh.s.sub_static_digest );
+	return SVC_CompareSHA1( sha1data, s_cbData.pBootSegBuf->rh.s.main_static_digest );
 }
 
 // ----------------------------------------------------------------------
@@ -739,17 +750,30 @@ static BOOL CheckExtArm7HashValue(void)
 static BOOL CheckExtArm9HashValue(void)
 {
 	u8		sha1data[DIGEST_SIZE_SHA1];
+    u32 	size;
 	BOOL	retval = TRUE;
+    SVCHMACSHA1Context hash;
 
+    // Arm9拡張常駐モジュールのセキュア領域分のサイズを取得
+	size = ( s_cbData.pBootSegBuf->rh.s.main_ltd_size < SECURE_SEGMENT_SIZE ) ?
+			 s_cbData.pBootSegBuf->rh.s.main_ltd_size : SECURE_SEGMENT_SIZE;
+    
     // クリア
 	MI_CpuClear8(sha1data, sizeof(sha1data));
 
-	// ARM7常駐モジュールのHash値照合
-	SVC_CalcHMACSHA1( sha1data,
-                      (u32 *)s_cbData.arm9Ltd,
-                      s_cbData.pBootSegBuf->rh.s.main_ltd_size,
-                      s_digestDefaultKey,
-                      sizeof(s_digestDefaultKey) );
+    // ハッシュ初期化
+	SVC_HMACSHA1Init( &hash, s_digestDefaultKey, sizeof(s_digestDefaultKey) );
+
+    // セキュア領域分UpDate
+	SVC_HMACSHA1Update( &hash, (u32 *)SYSM_CARD_TWL_SECURE_BUF, size );
+
+    // ゲーム領域分UpDate (Arm9拡張常駐モジュールがSecure領域で収まってたらここは飛ばす)
+    if( s_cbData.pBootSegBuf->rh.s.main_ltd_size > SECURE_SEGMENT_SIZE ){
+		SVC_HMACSHA1Update( &hash, (u32 *)(s_cbData.arm9Ltd + SECURE_SEGMENT_SIZE), s_cbData.pBootSegBuf->rh.s.main_ltd_size - size );
+    }
+    
+    // Hash値取得
+    SVC_HMACSHA1GetHash( &hash, sha1data );
 
 	return SVC_CompareSHA1( sha1data, s_cbData.pBootSegBuf->rh.s.main_ltd_static_digest );
 }
@@ -811,9 +835,9 @@ static void McPowerOn(void)
 	// 10ms待ち
 	OS_Sleep(10);
 
-    // リセットをhighに (RESB = 1にする)
-	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(1,1,0,1,1,1,1,1,1,1,1,1,1)) |
-                             		 			 CNT1_FLD(0,0,1,0,0,0,0,0,0,0,0,0,0));
+	// リセットをhighに (RESB = 1にする)
+	reg_HOTSW_MCCNT1 = RESB_MASK;
+    
 	// 10ms待ち
 	OS_Sleep(10);
 
@@ -844,8 +868,7 @@ static void SetMCSCR(void)
     reg_HOTSW_MCSCR2 = (u32)(pna_h | PNB_H_VALUE << 16);
 
 	// MCCNT1 レジスタ設定 (SCR = 1に)
-    reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(1,1,1,1,  1,1,  1,1,  1,  0,1,1,  1)) |
-           		             		 CNT1_FLD(0,0,0,0,  0,0,  0,0,  0,  1,0,0,  0));
+    reg_HOTSW_MCCNT1 = SCR_MASK;
 }
 
 /*---------------------------------------------------------------------------*

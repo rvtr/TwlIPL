@@ -84,39 +84,11 @@ extern "C" {
 #define START_SHIFT							31
 #define START_MASK							0x80000000
 
-#define CNT1_FLD( start, wr, resb, rtm, ct, pc, rdy, cs, l2, scr, se, ds, l1 ) \
-    (u32)( \
-    	((u32)(start)<< START_SHIFT) 	| \
-    	((u32)(wr) 	 << WR_SHIFT) 		| \
-    	((u32)(resb) << RESB_SHIFT) 	| \
-    	((u32)(rtm)	 << TRM_SHIFT) 		| \
-    	((u32)(ct) 	 << CT_SHIFT) 		| \
-    	((u32)(pc) 	 << PC_SHIFT) 		| \
-    	((u32)(rdy)  << RDY_SHIFT) 		| \
-        ((u32)(cs) 	 << CS_SHIFT) 		| \
-    	((u32)(l2) 	 << LATENCY2_SHIFT) | \
-    	((u32)(scr)  << SCR_SHIFT) 		| \
-    	((u32)(se) 	 << SE_SHIFT) 		| \
-    	((u32)(ds) 	 << DS_SHIFT) 		| \
-    	((u32)(l1) 	 << LATENCY1_SHIFT) \
+#define AddLatency2ToLatency1(param)\
+    ( (((param) &  LATENCY2_MASK)	\
+                >> LATENCY2_SHIFT)  \
+    +  ((param) &  LATENCY1_MASK)   \
     )
-
-#define CNT1_MSK( start, wr, resb, rtm, ct, pc, rdy, cs, l2, scr, se, ds, l1 ) \
-    (u32)( ((start) ? START_MASK : 0) 	| \
-           ((wr) 	? WR_MASK : 0) 	 	| \
-           ((resb) 	? RESB_MASK : 0)  	| \
-           ((rtm) 	? TRM_MASK : 0)   	| \
-           ((ct) 	? CT_MASK : 0)    	| \
-           ((pc) 	? PC_MASK : 0) 	  	| \
-           ((rdy) 	? RDY_MASK : 0)   	| \
-           ((cs) 	? CS_MASK : 0) 	  	| \
-           ((l2) 	? LATENCY2_MASK : 0)| \
-           ((scr) 	? SCR_MASK : 0) 	| \
-           ((se) 	? SE_MASK : 0) 	  	| \
-           ((ds) 	? DS_MASK : 0) 	  	| \
-           ((l1) 	? LATENCY1_MASK : 0))
-
-
 
 //#define USE_SLOT_A
 
@@ -169,7 +141,6 @@ extern "C" {
 #define		HOTSW_IF_CARD_DET					OS_IE_CARD_B_DET
 
 #endif
-
 
 // Enum ---------------------------------------------------------------------
 typedef enum CardTypeEx{
@@ -247,6 +218,8 @@ typedef struct CardBootData{
     u32					arm9Ltd;				
     u32					arm7Ltd;				
 
+	u32					secureLatency;			
+    
 	BOOL			   	twlFlg;					
 
     u32					romEmuBuf[ROM_EMULATION_DATA_SIZE/sizeof(u32)];
@@ -274,7 +247,7 @@ typedef struct CardBootFunction {
 	void (*ChangeMode_S)(CardBootData *cbd);
 
 	void (*ReadID_G)(CardBootData *cbd);
-    void (*ReadPage_G)(u32 addr, void* buf, u32 size);
+    void (*ReadPage_G)(CardBootData *cbd, u32 addr, void* buf, u32 size);
 }
 CardBootFunction;
 
