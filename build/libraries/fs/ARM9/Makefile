@@ -22,7 +22,7 @@ SUBMAKES	=
 
 #----------------------------------------------------------------------------
 
-LINCLUDES		= $(ES_ROOT)/include
+LINCLUDES		= $(ES_ROOT)/twl/include
 
 SRCS			= fs_firm.c
 
