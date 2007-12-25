@@ -150,5 +150,5 @@ RomSpec
 	File		NTR_IPL_font_m.NFTR
 	HostRoot	../../../../keys/HWInfo
 	Root		/key
-	File		privKeyHWInfo.der
+#	File		privKeyHWInfo.der
 }

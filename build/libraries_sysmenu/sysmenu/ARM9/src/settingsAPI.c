@@ -131,7 +131,6 @@ BOOL SYSMi_VerifyNTRSettings( void )
 		NSD_IsAutoBoot() |
 		NSD_IsBacklightOff() |
 		NSD_IsInitialSequence() |
-		NSD_GetRTCLastSetYear() |
 		NSD_GetRTCClockAdjust()
 		) != 0 ) {
 		isFailed = TRUE;
@@ -149,7 +148,9 @@ BOOL SYSMi_VerifyNTRSettings( void )
 	}
 	
 		// 値が一致する必要があるもの
-	if( NSD_GetRTCOffset() != TSD_GetRTCOffset() ) {
+	if( ( NSD_GetRTCLastSetYear() != TSD_GetRTCLastSetYear() ) ||
+		( NSD_GetRTCOffset() != TSD_GetRTCOffset() )
+		) {
 		isFailed = TRUE;
 	}
 		// SystemMenuのリージョンによって、ちょっと特殊な処理が必要なもの
@@ -229,7 +230,6 @@ void SYSMi_ConvertTWL2NTRSettings( void )
 	NSD_SetFlagAutoBoot( FALSE );
 	NSD_SetFlagBacklightOff( FALSE );
 	NSD_SetFlagInitialSequence( FALSE );
-	NSD_SetRTCLastSetYear( 0 );
 	NSD_SetRTCClockAdjust( 0 );
 	
 		// "1"であるべきもの
@@ -241,6 +241,7 @@ void SYSMi_ConvertTWL2NTRSettings( void )
 	NSD_SetFlagNickname( TRUE );
 	
 		// 値が一致する必要があるもの
+	NSD_SetRTCLastSetYear( TSD_GetRTCLastSetYear() );
 	NSD_SetRTCOffset( TSD_GetRTCOffset() );
 	
 		// SystemMenuのリージョンによって、ちょっと特殊な処理が必要なもの
@@ -249,7 +250,7 @@ void SYSMi_ConvertTWL2NTRSettings( void )
 		NSD_SetLanguage  ( (NTRLangCode)TSD_GetLanguage() );
 		NSD_SetLanguageEx( (NTRLangCode)TSD_GetLanguage() );
 	}else if( TSD_GetLanguage() <= TWL_LANG_KOREAN ) {
-		// TSD側がNTR標準６言語以外の時、NSD側のlanguageは強制ENGLISH（NCDEx側にちゃんとした値が入る）
+		// TSD側がNTR標準６言語以外の中国・韓国語の時、NSD側のlanguageは強制ENGLISH（NCDEx側にちゃんとした値が入る）
 		NSD_SetLanguage  ( NTR_LANG_ENGLISH );
 		NSD_SetLanguageEx( (NTRLangCode)TSD_GetLanguage() );
 	}else {

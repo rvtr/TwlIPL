@@ -361,6 +361,19 @@ static BOOL WriteHWSecureInfoFile( u8 region )
 	// 対応言語ビットマップのセット
 	THW_SetValidLanguageBitmap( s_langBitmapList[ region ] );
 	
+	// [TODO:]量産工程でないとシリアルNo.は用意できないので、ここではMACアドレスをもとに適当な値をセットする。
+	// シリアルNo.のセット
+	{
+		u8 buffer[ 12 ] = "SERIAL";		// 適当な文字列をMACアドレスと結合してSHA1を取り、仮SerialNoとする。
+		u8 serialNo[ SVC_SHA1_DIGEST_SIZE ];
+		int len = ( THW_GetRegion() == TWL_REGION_AMERICA ) ?
+					TWL_HWINFO_SERIALNO_LEN_AMERICA : TWL_HWINFO_SERIALNO_LEN_OTHERS;
+		OS_GetMacAddress( buffer + 6 );
+		SVC_CalcSHA1( serialNo, buffer, sizeof(buffer) );
+		MI_CpuClear8( &serialNo[ len ], sizeof(serialNo) - len );
+		THW_SetSerialNo( serialNo );
+	}
+	
 	// ライト
 	if( isWrite &&
 		!THW_WriteSecureInfo( s_pPrivKeyBuffer ) ) {

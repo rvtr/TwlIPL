@@ -23,12 +23,18 @@
 //#define USE_SHA1_SIGNATURE				// 署名内のハッシュにSHA1を使用（未定義ならHMAC-SHA1を使用）
 
 // function's prototype-------------------------------------------------
+static BOOL THWi_CalcSignature( void *pDstSign, const void *pSrc, u32 len, const u8 *pPrivKeyDER );
 static BOOL THWi_CheckDigest( void *pTgt, u32 length, u8 *pDigest );
 static BOOL THWi_CheckNormalInfoValue( const TWLHWNormalInfo *pSrcInfo );
 static BOOL THWi_CheckSignature( void *pTgt, u32 length, u8 *pSignature );
 static BOOL THWi_CheckSecureInfoValue( const TWLHWSecureInfo *pSecure );
 static void DEBUG_PrintDigest( u8 *pDigest );
 static void DEBUG_Dump( u8 *pSrc, u32 len );
+
+static inline u16 SCFG_GetBondingOption(void)
+{
+	return (u16)(*(u8*)(HW_SYS_CONF_BUF+HWi_WSYS08_OFFSET) & HWi_WSYS08_OP_OPT_MASK);
+}
 
 // static variables-----------------------------------------------------
 TWLHWNormalInfo s_hwInfoN ATTRIBUTE_ALIGN(32);
@@ -237,30 +243,17 @@ BOOL THW_WriteSecureInfoDirect( const TWLHWSecureInfo *pSrcInfo, const u8 *pPriv
 {
 	// ヘッダの作成
 	TSFHeader header;
-	u8	digest[ SVC_SHA1_DIGEST_SIZE ];
-	u64	id = SCFG_ReadFuseData();
 	OSTick start = OS_GetTick();
-	
 	MI_CpuClear8( &header, sizeof(TSFHeader) );
 	header.version = TWL_HWINFO_SECURE_VERSION;
 	header.bodyLength  = sizeof( TWLHWSecureInfo );
 	
-#ifdef HW_SIGNATURE_ENABLE_
-	// 秘密鍵が指定されている場合のみ、署名作成
-	if( pPrivKeyDER ) {
-#ifdef USE_SHA1_SIGNATURE
-		SVC_CalcSHA1( digest, pSrcInfo, sizeof(TWLHWSecureInfo) );
-#else
-		SVC_CalcHMACSHA1( digest, pSrcInfo, sizeof(TWLHWSecureInfo), &id, sizeof(u64) );
-#endif
-		if( !ACSign_Encrypto( header.digest.rsa,
-							  pPrivKeyDER,
-							  digest,
-							  SVC_SHA1_DIGEST_SIZE ) ) {
-			return FALSE;
-		}
+	if( !THWi_CalcSignature( (void *)header.digest.rsa,
+							 (const void *)pSrcInfo,
+							 sizeof(TWLHWSecureInfo),
+							 pPrivKeyDER ) ) {
+		return FALSE;
 	}
-#endif // HW_SIGNATURE_ENABLE_
 	
 	// ライト
 	if( !TSF_WriteFile( (char *)TWL_HWINFO_SECURE_PATH,
@@ -281,6 +274,36 @@ BOOL THW_WriteSecureInfoDirect( const TWLHWSecureInfo *pSrcInfo, const u8 *pPriv
 }
 
 
+// 署名の算出
+static BOOL THWi_CalcSignature( void *pDstSign, const void *pSrc, u32 len, const u8 *pPrivKeyDER )
+{
+#ifdef HW_SIGNATURE_ENABLE_
+	u8	digest[ SVC_SHA1_DIGEST_SIZE ];
+	u8  key[ SVC_SHA1_DIGEST_SIZE ];
+	u64	id = SCFG_ReadFuseData();
+	
+	// 秘密鍵が指定されていない場合は署名なし。
+	if( !pPrivKeyDER ) {
+		return TRUE;
+	}
+	
+	// 秘密鍵が指定された場合は、ボンディングオプションに関係なく署名付加を行う。
+#ifdef USE_SHA1_SIGNATURE
+	SVC_CalcSHA1( digest, pSrc, len );
+#else
+	SVC_CalcSHA1( key, &id, sizeof(u64) );		// idのSHA1ハッシュ値をキーとして使用
+	SVC_CalcHMACSHA1( digest, pSrc, len, key, SVC_SHA1_DIGEST_SIZE );
+#endif
+	return ACSign_Encrypto( pDstSign,
+						 	pPrivKeyDER,
+							digest,
+							SVC_SHA1_DIGEST_SIZE );
+#else  // HW_SIGNATURE_ENABLE_
+	return TRUE;
+#endif // HW_SIGNATURE_ENABLE_
+}
+
+
 // ファイルのリカバリ
 BOOL THW_RecoverySecureInfo( TSFReadResult err )
 {
@@ -295,23 +318,32 @@ static BOOL THWi_CheckSignature( void *pTgt, u32 length, u8 *pSignature )
 	SVCSignHeapContext acmemoryPool;
 	u8 digest_sign[ SVC_SHA1_DIGEST_SIZE ];
 	u8 digest_calc[ SVC_SHA1_DIGEST_SIZE ];
+	u8  key[ SVC_SHA1_DIGEST_SIZE ];
 	u64	id = SCFG_ReadFuseData();
 	OSTick start = OS_GetTick();
 	
 #ifdef USE_SHA1_SIGNATURE
 	SVC_CalcSHA1( digest_calc, pTgt, length );
 #else
-	SVC_CalcHMACSHA1( digest_calc, pTgt, length, (u8 *)&id, sizeof(u64) );
+	SVC_CalcSHA1( key, &id, sizeof(u64) );		// idのSHA1ハッシュ値をキーとして使用
+	SVC_CalcHMACSHA1( digest_calc, pTgt, length, key, SVC_SHA1_DIGEST_SIZE );
 #endif
 	SVC_InitSignHeap( &acmemoryPool, heap, 4096 );
 	SVC_DecryptSign( &acmemoryPool, digest_sign, pSignature, s_publicKey );
 	
 	OS_TPrintf( "RSA sign decrypt time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 	
-	// ダイジェストチェック有効かどうかで返り値を変える。
+	// 署名チェック
 	{
 		BOOL retval = SVC_CompareSHA1( digest_sign, digest_calc );
-		return ( s_isSignCheck ) ? retval : TRUE;
+		
+		// ボンディングオプションが「製品版」の時のみ署名チェック結果を返す。
+		if( SCFG_GetBondingOption() == 0 ) {
+			return ( s_isSignCheck ) ? retval : TRUE;
+		}else {
+			OS_TPrintf( "Development Machine : signature check trough.\n" );
+			return TRUE;
+		}
 	}
 }
 
