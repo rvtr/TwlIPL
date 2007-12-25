@@ -155,14 +155,7 @@ static u32 GetTransferSize( u32 offset, u32 size )
             {
                 size = aes_end - offset;
             }
-            if (rh->s.developer_encrypt)
-            {
-                AESi_LoadKey( AES_KEY_SLOT_C );
-            }
-            else
-            {
-                AESi_LoadKey( AES_KEY_SLOT_A );
-            }
+            AESi_LoadKey( AES_KEY_SLOT_A );
             EnableAes( offset );
         }
         else

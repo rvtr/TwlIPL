@@ -33,7 +33,7 @@
     PRINT_MEMORY_ADDR を定義すると、そのアドレスからSPrintfを行います(このファイルのみ)
     FINALROM版でもコードが残るので注意してください。
 */
-#define PRINT_MEMORY_ADDR       0x02000400
+#define PRINT_MEMORY_ADDR       0x02000600
 
 
 #ifdef PROFILE_ENABLE
@@ -57,15 +57,16 @@ static u8 step = 0x80;
 #ifdef PRINT_MEMORY_ADDR
 static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
 #undef OS_TPrintf
-#define OS_TPrintf(...) (debugPtr = (char*)((u32)(debugPtr + STD_TSPrintf(debugPtr, __VA_ARGS__) + 0xf) & ~0xf))
-#undef OS_Panic
-#define OS_Panic(...)   (OS_TPrintf(__VA_ARGS__), OS_Terminate())
+//#define OS_TPrintf(...) (debugPtr = (char*)((u32)(debugPtr + STD_TSPrintf(debugPtr, __VA_ARGS__) + 0xf) & ~0xf))
+#define OS_TPrintf(...) (debugPtr += STD_TSPrintf(debugPtr, __VA_ARGS__))
 #endif
 
 #define THREAD_PRIO_FATFS   8
 #define DMA_NO_FATFS        3
 
 extern void*   SDNandContext;  /* NAND初期化パラメータ */
+
+static ROM_Header* const rh= (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
 
 /***************************************************************
     PreInit
@@ -216,7 +217,7 @@ SetDebugLED(0x02);
     PM_BackLightOn( FALSE );
 
     AESi_InitKeysFIRM();
-    AESi_RecvSeed();
+    AESi_RecvSeed( rh->s.developer_encrypt );
 
     // 8: after AESi_RecvSeed
     PUSH_PROFILE();

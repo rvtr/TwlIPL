@@ -83,11 +83,11 @@ static inline void AESi_InitKeysFIRM( void )
 
   Description:  set SEED/KEY from ARM9 via PXI.
 
-  Arguments:    None
+  Arguments:    developer_encrypt   set TRUE if received key is using as direct key
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void AESi_RecvSeed( void );
+void AESi_RecvSeed( BOOL developer_encrypt );
 
 #ifdef __cplusplus
 } /* extern "C" */

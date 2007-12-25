@@ -379,7 +379,7 @@ BOOL FATFS_LoadHeader( void )
 
     // set id depends on game_code and seed to use (or all?)
     AESi_InitKeysForApp((u8*)rh->s.game_code);
-    AESi_RecvSeed();
+    AESi_RecvSeed( rh->s.developer_encrypt );
 
     return TRUE;
 }
@@ -443,14 +443,7 @@ static u32 FATFSi_SetupAES( u32 offset, u32 size )
                 size = aes_end - offset;
             }
             AESi_WaitKey();
-            if (rh->s.developer_encrypt)
-            {
-                AESi_LoadKey( AES_KEY_SLOT_C );
-            }
-            else
-            {
-                AESi_LoadKey( AES_KEY_SLOT_A );
-            }
+            AESi_LoadKey( AES_KEY_SLOT_A );
             FATFS_EnableAES( FATFSi_GetCounter( offset ) );
         }
         else

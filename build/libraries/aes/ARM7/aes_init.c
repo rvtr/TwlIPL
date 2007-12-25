@@ -114,19 +114,18 @@ void AESi_ResetAesKey( void )
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void AESi_RecvSeed( void )
+void AESi_RecvSeed( BOOL developer_encrypt )
 {
     AESKey seed;
 //    PXI_RecvDataByFifo( PXI_FIFO_TAG_DATA, &seed, AES_BLOCK_SIZE );
     PXI_RecvStream( &seed, AES_BLOCK_SIZE );
     AESi_WaitKey();
-    AESi_SetKeySeedA((AESKeySeed*)&seed);    // APP
-    //AESi_WaitKey();
-    //AESi_SetKeySeedB((AESKeySeed*)&seed);    // APP & HARD
-    //AESi_WaitKey();
-    //AESi_SetKeySeedC((AESKeySeed*)&seed);    //
-    //AESi_WaitKey();
-    //AESi_SetKeySeedD((AESKeySeed*)&seed);    // HARD
-    AESi_WaitKey();
-    AESi_SetKeyC(&seed);        // Direct
+    if ( developer_encrypt )
+    {
+        AESi_SetKeyA(&seed);                    // Direct
+    }
+    else
+    {
+        AESi_SetKeySeedA((AESKeySeed*)&seed);   // APP
+    }
 }

@@ -53,7 +53,7 @@ static SVCSignHeapContext acPool;
     PRINT_MEMORY_ADDR を定義すると、そのアドレスからSPrintfを行います(このファイルのみ)
     FINALROM版でもコードが残るので注意してください。
 */
-#define PRINT_MEMORY_ADDR       0x02000000
+#define PRINT_MEMORY_ADDR       0x02000200
 
 //#ifdef SDK_FINALROM // FINALROMで無効化
 //#undef PROFILE_ENABLE
@@ -71,10 +71,10 @@ u32 pf_cnt = 0;
 #ifdef PRINT_MEMORY_ADDR
 static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
 #undef OS_TPrintf
-#define OS_TPrintf(...) (debugPtr = (char*)((u32)(debugPtr + STD_TSPrintf(debugPtr, __VA_ARGS__) + 0xf) & ~0xf))
-#undef OS_Panic
-#define OS_Panic(...)   (OS_TPrintf(__VA_ARGS__), OS_Terminate())
+//#define OS_TPrintf(...) (debugPtr = (char*)((u32)(debugPtr + STD_TSPrintf(debugPtr, __VA_ARGS__) + 0xf) & ~0xf))
+#define OS_TPrintf(...) (debugPtr += STD_TSPrintf(debugPtr, __VA_ARGS__))
 #endif
+
 /***************************************************************
     PreInit
 
