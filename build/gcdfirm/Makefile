@@ -22,9 +22,8 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 #----------------------------------------------------------------------------
 
 SUBDIRS		= \
-			firm-dev \
-			norfirm-print \
-			norfirm-empty \
+			gcdfirm-disp \
+			gcdfirm-print \
 
 
 #----------------------------------------------------------------------------

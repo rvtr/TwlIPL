@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - firmware
+# Project:  TwlFirm - build
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -16,18 +16,36 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
+
+# if you have no valid key, comment out next line
+#TWL_KEYSDIR = $(FIRM_ROOT)/../twl_firmware/bootrom/build/keys
+
+
+#----------------------------------------------------------------------------
+
+SUBDIRS =	\
+            wram_regs \
+            ARM7 \
+            ARM9 \
+
+TARGET_FIRM_BIN		=	firm_dev-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nor
+BINDIR			=	.
+MAKEFIRM_ARM9		=	ARM9/bin/$(TWL_BUILDTYPE_ARM9)/firm_dev9.tef
+MAKEFIRM_ARM7		=	ARM7/bin/$(TWL_BUILDTYPE_ARM7)/firm_dev7.tef
+MAKEFIRM_RSA_PRVKEY	=	$(TWL_KEYSDIR)/rsa/private_nor.der
+LDEPENDS_BIN		+=	wram_regs/wram_regs.rbin
+
+MAKEFIRM_FLAGS		+=	-p
+FIRM_SPEC		=	norfirm.norsf
+
+LDIRT_CLEAN		+=	$(TARGETS) \
+				rsa_public.sbin \
+
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-
 #----------------------------------------------------------------------------
 
-SUBDIRS		= \
-			firm-dev \
-			norfirm-print \
-			norfirm-empty \
-
-
-#----------------------------------------------------------------------------
+do-build:	$(TARGET_BIN)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 

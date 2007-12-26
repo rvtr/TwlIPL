@@ -114,6 +114,39 @@ void PXI_NotifyID( FIRMPxiID id );
  *---------------------------------------------------------------------------*/
 FIRMPxiID PXI_RecvID( void );
 
+/*---------------------------------------------------------------------------*
+  Name:         PXIi_SendIDByIntf
+
+  Description:  send 4bit id to other processor
+
+  Arguments:    id          notifying id
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void PXIi_SendIDByIntf( u32 id );
+
+/*---------------------------------------------------------------------------*
+  Name:         PXIi_RecvIDByIntf
+
+  Description:  receive 4bit id from the other processor
+
+  Arguments:    None
+
+  Returns:      received id
+ *---------------------------------------------------------------------------*/
+u32 PXIi_RecvIDByIntf( void );
+
+/*---------------------------------------------------------------------------*
+  Name:         PXIi_WaitIDByIntf
+
+  Description:  Wait 4bit id from the other processor
+
+  Arguments:    id          waiting id
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void PXIi_WaitIDByIntf( u32 id );
+
 
 #ifdef __cplusplus
 } /* extern "C" */

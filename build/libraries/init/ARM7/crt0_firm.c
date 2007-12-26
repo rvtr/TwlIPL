@@ -33,6 +33,8 @@ extern void OS_IrqHandler(void);
 extern void _fp_init(void);
 extern void __call_static_initializers(void);
 
+static void INITi_CpuClear32(register u32 data, register void *destp, register u32 size);
+static void INITi_CpuClearFast(register u32 data, register void* destp, register u32 size);
 static void INITi_DoAutoload(void);
 static void INITi_ShelterLtdBinary(void);
 static void INITi_CopySysConfig( void );
@@ -128,9 +130,7 @@ SDK_WEAK_SYMBOL asm void _start( void )
 #endif
         movne           r0, #FIRM_PXI_ID_WARMBOOT
         moveq           r0, #FIRM_PXI_ID_COLDBOOT
-        bl              PXI_SendByIntf
-        mov             r0, #FIRM_PXI_ID_INIT_MMEM
-        bl              PXI_WaitByIntf
+        bl              PXIi_SendByIntf
 #endif // SDK_TS
 #endif // FIRM_DISABLE_CR_AT_WARMBOOT
 
@@ -141,6 +141,19 @@ SDK_WEAK_SYMBOL asm void _start( void )
         ldrh            r2, [r3]
         tst             r2, r1
         beq             @1
+
+        mov             r0, #FIRM_PXI_ID_INIT_MMEM
+        bl              PXIi_WaitIDByIntf
+
+        //---- clear HW_MAIN_MEM_SHARED
+        mov             r0, #0
+        ldr             r1, =HW_TWL_ROM_HEADER_BUF
+        mov             r2, #HW_MAIN_MEM_SYSTEM_END - HW_TWL_ROM_HEADER_BUF // include HW_MAIN_MEM_SHARED
+        bl              INITi_CpuClearFast
+
+        //---- notify to clear HW_MAIN_MEM_SHARED
+        mov             r0, #FIRM_PXI_ID_INIT_MMEM
+        bl              PXIi_SendIDByIntf
 
         /* SCFG を HW_SYS_CONF_BUF へコピー */
         bl              INITi_CopySysConfig
@@ -193,6 +206,63 @@ SDK_WEAK_SYMBOL asm void _start( void )
 
         bx              r1
 }
+
+/*---------------------------------------------------------------------------*
+  Name:         INITi_CpuClearFast
+  Description:  32 Byte 単位でバッファのクリアを行う。
+  Arguments:    r0  -   クリアする値。
+                r1  -   クリア先へのポインタ。
+                r2  -   連続してクリアするバッファ長。
+  Returns:      なし。
+ *---------------------------------------------------------------------------*/
+static asm void
+INITi_CpuClearFast(register u32 data, register void* destp, register u32 size)
+{
+        stmfd   sp!, {r4-r9}
+
+        add     r9, r1, r2              // r9:  destEndp = destp + size
+        mov     r12, r2, lsr #5         // r12: destBlockEndp = destp + size/32*32
+        add     r12, r1, r12, lsl #5
+
+        mov     r2, r0
+        mov     r3, r2
+        mov     r4, r2
+        mov     r5, r2
+        mov     r6, r2
+        mov     r7, r2
+        mov     r8, r2
+
+@40:
+        cmp     r1, r12                 // while (destp < destBlockEndp)
+        stmltia r1!, {r0, r2-r8}        // *((vu32 *)(destp++)) = data
+        blt     @40
+@41:
+        cmp     r1, r9                  // while (destp < destEndp)
+        stmltia r1!, {r0}               // *((vu32 *)(destp++)) = data
+        blt     @41
+
+        ldmfd   sp!, {r4-r9}
+        bx      lr
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         INITi_CpuClear32
+  Description:  32 bit 単位でバッファのクリアを行う。
+  Arguments:    r0  -   クリアする値。
+                r1  -   クリア先へのポインタ。
+                r2  -   連続してクリアするバッファ長。
+  Returns:      なし。
+ *---------------------------------------------------------------------------*/
+static asm void
+INITi_CpuClear32(register u32 data, register void* destp, register u32 size)
+{
+        add             r12, r1, r2
+@001:   cmp             r1, r12
+        strlt           r0, [r1], #4
+        blt             @001
+        bx              lr
+}
+
 /*---------------------------------------------------------------------------*
   Name:         INITi_DoAutoload
   Description:  リンク情報に沿って、各オートロードブロックの固定データ部の展開

@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - firmware
+# Project:  TwlFirm - build
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -16,18 +16,29 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
+
+#----------------------------------------------------------------------------
+
+SUBDIRS =	../../norfirm/norfirm-print
+
+TARGET_FIRM_BIN		=	gcdfirm_print-$(TWL_BUILD_TYPE).gcd
+BINDIR			=	.
+MAKEFIRM_ARM9		=	../../norfirm/norfirm-print/ARM9/bin/$(TWL_BUILDTYPE_ARM9)/twl_norfirm9_print.tef
+MAKEFIRM_ARM7		=	../../norfirm/norfirm-print/ARM7/bin/$(TWL_BUILDTYPE_ARM7)/twl_norfirm7_print.tef
+MAKEFIRM_RSA_PRVKEY	=	$(TWL_KEYSDIR)/rsa/private_gcd.der
+LDEPENDS_BIN		+=	../../norfirm/norfirm-print/wram_regs/wram_regs.rbin
+
+MAKEFIRM_FLAGS		+=	-p
+FIRM_SPEC		=	gcdfirm.gcdsf
+
+LDIRT_CLEAN		+=	$(TARGETS) \
+				rsa_public.sbin \
+
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-
 #----------------------------------------------------------------------------
 
-SUBDIRS		= \
-			firm-dev \
-			norfirm-print \
-			norfirm-empty \
-
-
-#----------------------------------------------------------------------------
+do-build:	$(TARGET_BIN)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 

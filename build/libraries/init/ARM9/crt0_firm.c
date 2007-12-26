@@ -34,6 +34,7 @@ extern void __call_static_initializers(void);
 
 /* 内部関数プロトタイプ定義 */
 static void INITi_CpuClear32(register u32 data, register void *destp, register u32 size);
+static void INITi_CpuClearFast(register u32 data, register void* destp, register u32 size);
 static void INITi_InitCoprocessor(void);
 static void INITi_InitRegion(void);
 static void INITi_DoAutoload(void);
@@ -127,7 +128,7 @@ SDK_WEAK_SYMBOL asm void _start( void )
         //---- read reset flag from pmic
 #ifdef SDK_TS
 #ifdef FIRM_DISABLE_CR_AT_WARMBOOT
-@0:     bl              PXI_RecvByIntf
+@0:     bl              PXIi_RecvIDByIntf
         cmp             r0, #FIRM_PXI_ID_COLDBOOT
         cmpne           r0, #FIRM_PXI_ID_WARMBOOT
         bne             @0
@@ -138,15 +139,21 @@ SDK_WEAK_SYMBOL asm void _start( void )
         movne           r0, #FALSE
         bl              MIi_InitMainMemCR
 
-        mov             r0, #FIRM_PXI_ID_INIT_MMEM
-        bl              PXI_SendByIntf
-
 #else // !FIRM_DISABLE_CR_AT_WARMBOOT
         //---- initialize Main Memory
         bl              MIi_InitMainMemCR
 
 #endif // !FIRM_DISABLE_CR_AT_WARMBOOT
 #endif // SDK_TS
+
+        //---- notify main memory mode into burst mode
+        mov             r0, #FIRM_PXI_ID_INIT_MMEM
+        bl              PXIi_SendIDByIntf
+
+        //---- wait to clear HW_MAIN_MEM_SHARED
+        mov             r0, #FIRM_PXI_ID_INIT_MMEM
+        bl              PXIi_WaitIDByIntf
+
         /* システム制御コプロセッサ初期化 */
         bl              INITi_InitCoprocessor
 
@@ -160,6 +167,7 @@ SDK_WEAK_SYMBOL asm void _start( void )
         mov             r2, #HW_DTCM_SIZE
         bl              INITi_CpuClear32
 
+#if 0
         // BG/OBJ palette (1KB)
         mov             r0, #0
         ldr             r1, =HW_PLTT
@@ -171,6 +179,7 @@ SDK_WEAK_SYMBOL asm void _start( void )
         ldr             r1, =HW_OAM
         mov             r2, #HW_OAM_SIZE
         bl              INITi_CpuClear32
+#endif
 
         //---- load autoload block and initialize bss
 //        bl              INITi_DoAutoload
@@ -184,7 +193,7 @@ SDK_WEAK_SYMBOL asm void _start( void )
         ldr             r1, [r3, #12]       // SDK_STATIC_BSS_START
         ldr             r2, [r3, #16]       // SDK_STATIC_BSS_END
         sub             r2, r2, r1
-        bl              INITi_CpuClear32
+        bl              INITi_CpuClearFast
 
         //---- flush static bss region
         //     (r0 == #0, r3 == _start_ModuleParams::BSS_segment_start)
@@ -219,6 +228,44 @@ SDK_WEAK_SYMBOL asm void _start( void )
         ldr             r1, =TwlMain
         ldr             lr, =HW_RESET_VECTOR
         bx              r1
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         INITi_CpuClearFast
+  Description:  32 Byte 単位でバッファのクリアを行う。
+  Arguments:    r0  -   クリアする値。
+                r1  -   クリア先へのポインタ。
+                r2  -   連続してクリアするバッファ長。
+  Returns:      なし。
+ *---------------------------------------------------------------------------*/
+static asm void
+INITi_CpuClearFast(register u32 data, register void* destp, register u32 size)
+{
+        stmfd   sp!, {r4-r9}
+
+        add     r9, r1, r2              // r9:  destEndp = destp + size
+        mov     r12, r2, lsr #5         // r12: destBlockEndp = destp + size/32*32
+        add     r12, r1, r12, lsl #5
+
+        mov     r2, r0
+        mov     r3, r2
+        mov     r4, r2
+        mov     r5, r2
+        mov     r6, r2
+        mov     r7, r2
+        mov     r8, r2
+
+@40:
+        cmp     r1, r12                 // while (destp < destBlockEndp)
+        stmltia r1!, {r0, r2-r8}        // *((vu32 *)(destp++)) = data
+        blt     @40
+@41:
+        cmp     r1, r9                  // while (destp < destEndp)
+        stmltia r1!, {r0}               // *((vu32 *)(destp++)) = data
+        blt     @41
+
+        ldmfd   sp!, {r4-r9}
+        bx      lr
 }
 
 /*---------------------------------------------------------------------------*

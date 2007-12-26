@@ -94,7 +94,16 @@ asm void  MIi_InitMainMemCR( BOOL setCR )
 
 @10:
         ldr     r3, =REG_EXMEMCNT_ADDR
-        mov     r1, #REG_MI_EXMEMCNT_IFM_MASK | REG_MI_EXMEMCNT_CE2_MASK
+        ldr     r1, = (1 << REG_MI_EXMEMCNT_IFM_SHIFT) | \
+                      (1 << REG_MI_EXMEMCNT_CE2_SHIFT) | \
+                      (MI_PROCESSOR_ARM7 << REG_MI_EXMEMCNT_EP_SHIFT) | \
+                      (MI_PROCESSOR_ARM7 << REG_MI_EXMEMCNT_MPA_SHIFT) | \
+                      (MI_PROCESSOR_ARM7 << REG_MI_EXMEMCNT_MPB_SHIFT) | \
+                      (MI_PROCESSOR_ARM7 << REG_MI_EXMEMCNT_CP_SHIFT) | \
+                      (MIi_PHI_CLOCK_LOW << REG_MI_EXMEMCNT_PHI_SHIFT) | \
+                      (MI_CTRDG_ROMCYCLE1_18 << REG_MI_EXMEMCNT_ROM1st_SHIFT) | \
+                      (MI_CTRDG_ROMCYCLE2_6  << REG_MI_EXMEMCNT_ROM2nd_SHIFT) | \
+                      (MI_CTRDG_RAMCYCLE_10  << REG_MI_EXMEMCNT_RAM_SHIFT)
         strh    r1, [r3]
 
         bx      r12

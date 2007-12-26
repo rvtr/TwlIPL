@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - firmware
+# Project:  TwlFirm - tools - firm-dev
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -16,18 +16,31 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
+SUBDIRS		=
+
+LINCLUDES	=   ../include
+
+#----------------------------------------------------------------------------
+
+TARGET_BIN	=	firm_dev9.srl
+
+SRCS		=	main.c
+
+CRT0_O		=	crt0_firm.o
+
+MAKEROM_ARM7		=	../ARM7/bin/$(TWL_BUILDTYPE_ARM7)/firm_dev7.tef
+MAKEROM_ARM7_BASE       =       $(basename $(MAKEROM_ARM7))
+
+#SRCDIR		=	# using default
+#LCFILE		=	# using default
+
+
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-
 #----------------------------------------------------------------------------
 
-SUBDIRS		= \
-			firm-dev \
-			norfirm-print \
-			norfirm-empty \
+do-build:		$(TARGETS)
 
-
-#----------------------------------------------------------------------------
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 

@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - firmware
+# Project:  TwlFirm - nandfirm - menu-launcher
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -16,18 +16,42 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
+SUBDIRS		=
+
+#LINCLUDES	=   ../include
+
+#----------------------------------------------------------------------------
+
+TARGET_BIN	=	gcdfirm_disp9.srl
+
+SRCS		=	main.c \
+                screen.c \
+                font.c \
+
+CRT0_O		=	crt0_firm.o
+
+ADDRESS_STATIC	=	0x037c0000
+
+MAKEROM_ARM7		=	../ARM7/bin/$(TWL_BUILDTYPE_ARM7)/gcdfirm_disp7.tef
+MAKEROM_ARM7_BASE       =       $(basename $(MAKEROM_ARM7))
+
+#LCFILE_TEMPLATE =	$(FIRM_SPECDIR)/$(TWL_PROC)-$(TWL_PLATFORM)-PARTNER.lcf.template
+
+#SRCDIR		=	# using default
+#LCFILE		=	# using default
+
+
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
+# no thumb version
+
+#LLIBRARIES	+=	libese$(TWL_LIBSUFFIX).a
+LLIBRARIES	+=	libese.TWL$(ARCHGEN_TYPE).a
 
 #----------------------------------------------------------------------------
 
-SUBDIRS		= \
-			firm-dev \
-			norfirm-print \
-			norfirm-empty \
+do-build:		$(TARGETS)
 
-
-#----------------------------------------------------------------------------
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 

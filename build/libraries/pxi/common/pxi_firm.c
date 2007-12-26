@@ -219,3 +219,48 @@ FIRMPxiID PXI_RecvID( void )
         OS_RestoreInterrupts( enabled );
     }
 }
+
+/*---------------------------------------------------------------------------*
+  Name:         PXIi_SendIDByIntf
+
+  Description:  Send 4bit id to the other processor
+
+  Arguments:    id          sending id
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void PXIi_SendIDByIntf( u32 id )
+{
+	reg_PXI_INTF = (u16)(id << REG_PXI_INTF_SEND_SHIFT);
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         PXIi_RecvIDByIntf
+
+  Description:  Receive 4bit id from the other processor
+
+  Arguments:    None
+
+  Returns:      received id
+ *---------------------------------------------------------------------------*/
+u32 PXIi_RecvIDByIntf( void )
+{
+	return (u32)((reg_PXI_INTF & REG_PXI_INTF_RECV_MASK) >> REG_PXI_INTF_RECV_SHIFT);
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         PXIi_WaitIDByIntf
+
+  Description:  Wait 4bit id from the other processor
+
+  Arguments:    id          waiting id
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void PXIi_WaitIDByIntf( u32 id )
+{
+    while (PXIi_RecvIDByIntf() != id)
+    {
+    }
+}
+
