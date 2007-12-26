@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - firmware
+# Project:  TwlFirm - nandfirm - sdmc-launcher
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -16,17 +16,34 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
+SUBDIRS		=
+
+LINCLUDES	=   ../include
+
+#----------------------------------------------------------------------------
+
+TARGET_BIN	=	sdmc_launcher9.srl
+
+SRCS		=	main.c
+
+CRT0_O		=	crt0_firm.o
+
+MAKEROM_ARM7		=	../ARM7/bin/$(TWL_BUILDTYPE_ARM7)/sdmc_launcher7.tef
+MAKEROM_ARM7_BASE       =       $(basename $(MAKEROM_ARM7))
+
+#LCFILE_TEMPLATE =	$(FIRM_SPECDIR)/$(TWL_PROC)-$(TWL_PLATFORM)-PARTNER.lcf.template
+
+#SRCDIR		=	# using default
+#LCFILE		=	# using default
+
+
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 
 #----------------------------------------------------------------------------
 
-SUBDIRS		= \
-			gcdfirm-disp \
-			gcdfirm-print \
-			sdmc-launcher \
+do-build:		$(TARGETS)
 
-#----------------------------------------------------------------------------
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 

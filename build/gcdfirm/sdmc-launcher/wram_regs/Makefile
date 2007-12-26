@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - firmware
+# Project:  TwlFirm - nandfirm - menu-launcher
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -16,17 +16,40 @@
 # $Author:$
 #----------------------------------------------------------------------------
 
+override TARGET_PLATFORM	:= TWL
+override TARGET_CODEGEN		:= ARM
+override TWL_ARCHGEN		:= LIMITED
+
+override TARGET_FINALROM	:= TRUE
+override TARGET_RELEASE		:=
+override TARGET_DEBUG		:=
+
+SUBDIRS		=
+
+LINCLUDES	=   ../include
+
+
+#----------------------------------------------------------------------------
+
+TARGET_BIN	=	wram_regs.rbin
+
+SRCS		=	\
+                wram_regs.c \
+
+#SRCDIR		=	# using default
+#LCFILE		=	# using default
+
+
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
+INSTALL_DIR	= .
+INSTALL_TARGETS	= $(BINDIR)/$(TARGET_BIN)
+
 
 #----------------------------------------------------------------------------
 
-SUBDIRS		= \
-			gcdfirm-disp \
-			gcdfirm-print \
-			sdmc-launcher \
+do-build:		$(TARGETS)
 
-#----------------------------------------------------------------------------
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
