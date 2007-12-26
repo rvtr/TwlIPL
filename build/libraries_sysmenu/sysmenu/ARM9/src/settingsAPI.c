@@ -58,14 +58,16 @@ BOOL SYSM_WriteTWLSettingsFile( void )
 	BOOL retval;
 	// TWL設定データのライト
 	retval = TSD_WriteSettings();
-	// ライト成功なら、NVRAMのNTR設定データに値を反映
+	
 	if( retval ) {
+		// ライトに成功したら、TWL設定データを有効にする。
 		SYSM_SetValidTSD( TRUE );
-		SYSMi_ConvertTWL2NTRSettings();
-		(void)NSD_WriteSettings();
-#ifndef SDK_FINALROM
-		(void)SYSMi_VerifyNTRSettings();		// デバッグ用ベリファイ
-#endif
+		
+		// NTR設定データに反映する値が変化していたら、NTR設定データを書き込み。
+		if( !SYSMi_VerifyNTRSettings() ) {
+			SYSMi_ConvertTWL2NTRSettings();
+			(void)NSD_WriteSettings();
+		}
 	}
 	return retval;
 }

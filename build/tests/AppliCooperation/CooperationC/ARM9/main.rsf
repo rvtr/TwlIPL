@@ -135,14 +135,48 @@ Property
 	#
 	CodecMode		$(MAKEROM_CODEC_MODE)
 
-	TitleID_Lo				$(TITLEID_LO)
-	TitleID_Hi				0x00010001
-	PrivateSaveDataSize		16K
-#	PublicSaveDataSize		16K
-
 	###
 	#### END
 }
+
+
+AppendProperty
+{
+	#
+	# Publisher : "Nintendo"
+	#  don't have to edit
+	Publisher				Nintendo
+
+	#
+	# Application type : [USER/SYSTEM]
+	#  don't have to edit
+	AppType					User
+
+	#
+	# launch title on the launcher : [TRUE/FALSE]
+	#  don't have to edit
+	Launch					TRUE
+
+	#
+	# GameCode for TitleID : Your GameCode in 4 ascii words
+	#
+	GameCode				$(TITLEID_LO)
+
+	#
+	# Public save data size: [16K/32K/64K/128K/256K/512K/1M/2M/4M/8M]
+	#
+	#PublicSaveDataSize		32K
+
+	#
+	# Private save data size: [16K/32K/64K/128K/256K/512K/1M/2M/4M/8M]
+	#
+	PrivateSaveDataSize		16K
+
+	#
+	# Enable SaveBannerFile
+	SaveBannerFile			FALSE
+}
+
 
 RomSpec
 {

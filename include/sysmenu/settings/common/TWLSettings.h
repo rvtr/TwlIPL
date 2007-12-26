@@ -142,10 +142,11 @@ typedef struct TWLSettingsData{
 		u32		isAvailableBatteryExtension : 1;    // バッテリエクステンションモードの有効化／無効化
 		u32		rsv : 19;
 	}flags;
-	u8					rsv2[ 3 ];					// 予約
+	u8					rsv2[ 2 ];					// 予約
 	u8					country;					// 国コード
 	u8					language;					// 言語(NTRとの違いは、データサイズ8bit)
 	u8					backLightBrightness;		// バックライト輝度(NTRとの違いは、データサイズ8bit)
+	u8					lastTimeBootSoftIndex;		// 前回起動したソフトのインデックス番号
 	u8					freeSoftBoxCount;			// インストール可能なNANDアプリ個数
 	u8					rtcLastSetYear;				// RTCの前回設定年
 	s64					rtcOffset;					// RTC設定時のオフセット値（ユーザーがRTC設定を変更する度にその値に応じて増減します。）
@@ -197,6 +198,12 @@ static inline TWLLangCode TSD_GetLanguage( void )
 static inline int TSD_GetBacklightBrightness( void )
 {
 	return	(int)GetTSD()->backLightBrightness;
+}
+
+// 前回起動したソフトのインデックスの取得
+static inline u8 TSD_GetLastTimeBootSoftIndex( void )
+{
+  	return	GetTSD()->lastTimeBootSoftIndex;
 }
 
 // フリーソフトBOX数の取得
@@ -394,6 +401,12 @@ static inline void TSD_SetLanguage( TWLLangCode language )
 static inline void TSD_SetBacklightBrightness( u8 backLightBrightness )
 {
 	GetTSD()->backLightBrightness = backLightBrightness;
+}
+
+// 前回起動したソフトのインデックスをセット
+static inline void TSD_SetLastTimeBootSoftIndex( u8 index )
+{
+  	GetTSD()->lastTimeBootSoftIndex = index;
 }
 
 // フリーソフトBOX数のセット
