@@ -167,20 +167,6 @@ SDK_WEAK_SYMBOL asm void _start( void )
         mov             r2, #HW_DTCM_SIZE
         bl              INITi_CpuClear32
 
-#if 0
-        // BG/OBJ palette (1KB)
-        mov             r0, #0
-        ldr             r1, =HW_PLTT
-        mov             r2, #HW_PLTT_SIZE
-        bl              INITi_CpuClear32
-
-        // OAM (1KB)
-        mov             r0, #0x0200
-        ldr             r1, =HW_OAM
-        mov             r2, #HW_OAM_SIZE
-        bl              INITi_CpuClear32
-#endif
-
         //---- load autoload block and initialize bss
 //        bl              INITi_DoAutoload
 #ifndef SDK_FINALROM    // for IS-TWL-DEBUGGER

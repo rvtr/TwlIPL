@@ -83,7 +83,7 @@ static BOOL NandFirm_Command(char * line, int num);
 static BOOL ERROR_Command(char * line, int num);
 
 static BOOL InitializeAesKey(void);
-static BOOL InitializeGcdfirmFile(void);
+static BOOL InitializeGcdfirmFile(const char *rhFile);
 static BOOL FinalizeGcdfirmFile(const char *gcdFile);
 
 static s32 Offset;                     // Current offset
@@ -101,7 +101,7 @@ tErrorFlags errFlags;
 //  Output - gcdfirm File
 //---------------------------------------------------------------------------
 
-BOOL OutputGcdfirmFile(const char *specFile, const char *gcdFile)
+BOOL OutputGcdfirmFile(const char *specFile, const char *gcdFile, const char *rhFile)
 {
     char   *buffer;
     BOOL    state;
@@ -118,7 +118,7 @@ BOOL OutputGcdfirmFile(const char *specFile, const char *gcdFile)
 
     specFileName = specFile;
 
-    state = InitializeGcdfirmFile() && ConstructGcdfirmFile(buffer) &&
+    state = InitializeGcdfirmFile( rhFile ) && ConstructGcdfirmFile(buffer) &&
             FinalizeGcdfirmFile(gcdFile) && CloseFile();
 
     if (!state)
@@ -933,9 +933,14 @@ static BOOL InitializeAesKey(void)
 //  Output - Initialize Gcdfirm File
 //---------------------------------------------------------------------------
 
-static BOOL InitializeGcdfirmFile(void)
+static BOOL InitializeGcdfirmFile(const char *rhFile)
 {
-    ReadRomHeaderFile( GetSrcPath(GetAppBaseName(), DEFAULT_ROMHEADER_TEMPLATE) );
+    if ( !rhFile )
+    {
+        rhFile = GetSrcPath(GetAppBaseName(), DEFAULT_ROMHEADER_TEMPLATE);
+    }
+
+    ReadRomHeaderFile( rhFile );
 
     memset(&signedContext.hash[FIRM_SIGNED_HASH_IDX_HASH_TABLE], 0x00, sizeof(signedContext.hash[0]));
     gcdHeader.h.w = wram_regs_init;

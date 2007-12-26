@@ -24,7 +24,7 @@
 #include	"defval.h"
 #include	"version.h"
 
-static int makegcdfirm(const char *specFile, const char *norFile);
+static int makegcdfirm(const char *specFile, const char *norFile, const char *rhFile);
 
 //---------------------------------------------------------------------------
 //  Main
@@ -35,10 +35,11 @@ int main(int argc, char *argv[])
     int     n;
     int     narg;
     char   *gcdfirmFile;
+    char   *rhFile = NULL;
 
     InitAppName(argv[0]);
 
-    while ((n = getopt(argc, argv, "D:hvpd")) != -1)
+    while ((n = getopt(argc, argv, "D:hvt:pd")) != -1)
     {
         switch (n)
         {
@@ -48,6 +49,10 @@ int main(int argc, char *argv[])
 
         case 'D':
             AddDefVal(optarg);
+            break;
+
+        case 't':
+            rhFile = optarg;
             break;
 
         case 'p':
@@ -70,7 +75,7 @@ int main(int argc, char *argv[])
         gcdfirmFile =
             strdup(narg >
                    1 ? argv[optind + 1] : ChangeSuffix(argv[optind], DEFAULT_NORFIRM_SUFFIX));
-        return makegcdfirm(argv[optind], gcdfirmFile);
+        return makegcdfirm(argv[optind], gcdfirmFile, rhFile);
     }
 
   usage:
@@ -80,7 +85,7 @@ int main(int argc, char *argv[])
         fprintf(stderr,
                 "NITRO-SDK Development Tool - %s - Make gcdfirm file \n"
                 "Build %lu\n\n"
-                "Usage:  %s [-phv] [-DNAME=VALUE ...] SPECFILE [NORFIRMFILE]\n\n",
+                "Usage:  %s [-phv] [-tROMHEADERFILE] [-DNAME=VALUE ...] SPECFILE [NORFIRMFILE]\n\n",
                 makegcdfirm, SDK_DATE_OF_LATEST_FILE, makegcdfirm);
     }
     return 1;
@@ -91,7 +96,7 @@ int main(int argc, char *argv[])
 //  makegcdfirm
 //---------------------------------------------------------------------------
 
-static int makegcdfirm(const char *specFile, const char *norFile)
+static int makegcdfirm(const char *specFile, const char *norFile, const char *rhFile)
 {
     debug_printf("makegcdfirm(): '%s' -> '%s'\n", specFile, norFile);
 
@@ -102,5 +107,5 @@ static int makegcdfirm(const char *specFile, const char *norFile)
         return 1;
     }
 
-    return OutputGcdfirmFile(specFile, norFile) ? 0 : 1;
+    return OutputGcdfirmFile(specFile, norFile, rhFile) ? 0 : 1;
 }

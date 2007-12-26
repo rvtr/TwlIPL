@@ -19,6 +19,6 @@
 
 #include "misc.h"
 
-BOOL    OutputGcdfirmFile(const char *specFile, const char *gcdFile);
+BOOL OutputGcdfirmFile(const char *specFile, const char *gcdFile, const char *rhFile);
 
 #endif //MAKEGCDFIRM_H_

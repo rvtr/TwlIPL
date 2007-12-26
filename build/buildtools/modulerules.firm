@@ -40,6 +40,12 @@ MAKEFIRM_DEFS	+= -DFIRM_ROOT='$(FIRM_ROOT)' \
 				-DMAKEFIRM_ARM7='$(basename $(MAKEFIRM_ARM7))' \
 				-DMAKEFIRM_RSA_PRVKEY='$(MAKEFIRM_RSA_PRVKEY)' \
 
+ifdef TWL_KEYSDIR
+MAKEFIRM_FLAGS	+= -t'$(TWL_KEYSDIR)/blowfish/gcdfirm_header_twlj.template.sbin'
+else
+MAKEFIRM_FLAGS	+= -t'$(FIRM_ROOT)/build/tools/makegcdfirm/gcdfirm_header_twlj.template.sbin'
+endif
+
 FIRM_SDEPENDS_BIN	= $(MAKEFIRM_RSA_PRVKEY) $(MAKEFIRM_ARM9) $(MAKEFIRM_ARM7)
 
 
