@@ -43,8 +43,7 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 # no thumb version
 
-#LLIBRARIES	+=	libese$(TWL_LIBSUFFIX).a
-LLIBRARIES	+=	libese.TWL$(ARCHGEN_TYPE).a
+LLIBRARIES	+=	libes.TWL$(ARCHGEN_TYPE).a libboc.TWL$(ARCHGEN_TYPE).a
 
 #----------------------------------------------------------------------------
 
