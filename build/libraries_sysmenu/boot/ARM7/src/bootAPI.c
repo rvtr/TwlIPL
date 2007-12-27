@@ -56,15 +56,7 @@ void BOOT_Init( void )
 		
 BOOL BOOT_WaitStart( void )
 {
-	char drv;
-
 	if( (reg_PXI_MAINPINTF & 0x000f ) == 0x000f ) {
-		
-		// unmount drives
-		for ( drv = 'A'; drv <= 'Z'; drv++ )
-		{
-			rtfs_detach( drv );
-		}
 		
 		(void)OS_DisableIrq();							// ここで割り込み禁止にしないとダメ。
 		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
