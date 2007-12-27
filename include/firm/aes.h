@@ -19,10 +19,11 @@
 
 #define PXI_FIFO_TAG_DATA   PXI_FIFO_TAG_USER_0
 
-#include <twl/aes/common/type.h>
-#include <firm/aes/common/aes_util.h>
+#include <twl/aes/common/types.h>
 
 #ifdef SDK_ARM7
+#include <twl/aes/ARM7/hi.h>
+#include <twl/aes/ARM7/lo.h>
 #include <firm/aes/ARM7/aes_init.h>
 #include <firm/aes/ARM7/aes_ids.h>
 #else // !SDK_ARM7

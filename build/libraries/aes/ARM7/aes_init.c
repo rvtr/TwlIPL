@@ -18,8 +18,6 @@
 #include <firm/aes.h>
 #include <firm/pxi.h>
 
-#include <twl/aes/ARM7/lo.h>
-
 /*---------------------------------------------------------------------------*
   Name:         AESi_InitKeysForApp
 
@@ -32,7 +30,7 @@
  *---------------------------------------------------------------------------*/
 void AESi_InitKeysForApp( u8 game_code[4] )
 {
-    AESi_WaitKey();
+    AES_WaitKey();
 
     reg_AES_AES_ID_A2 = AES_IDS_ID0_C(game_code);
     reg_AES_AES_ID_A3 = AES_IDS_ID0_D(game_code);
@@ -52,7 +50,7 @@ void AESi_InitKeysForApp( u8 game_code[4] )
  *---------------------------------------------------------------------------*/
 void AESi_InitKeysForHard( u8 fuse[8] )
 {
-    AESi_WaitKey();
+    AES_WaitKey();
 
     reg_AES_AES_ID_B2 = *(u32*)&fuse[4];
     reg_AES_AES_ID_B3 = *(u32*)&fuse[0];
@@ -71,7 +69,7 @@ void AESi_InitKeysForHard( u8 fuse[8] )
  *---------------------------------------------------------------------------*/
 void AESi_ResetAesKey( void )
 {
-    AESi_WaitKey();
+    AES_WaitKey();
 
     // set dummy without seed[3]
     reg_AES_AES_SEED_A0 = 1;
@@ -119,13 +117,13 @@ void AESi_RecvSeed( BOOL developer_encrypt )
     AESKey seed;
 //    PXI_RecvDataByFifo( PXI_FIFO_TAG_DATA, &seed, AES_BLOCK_SIZE );
     PXI_RecvStream( &seed, AES_BLOCK_SIZE );
-    AESi_WaitKey();
+    AES_WaitKey();
     if ( developer_encrypt )
     {
-        AESi_SetKeyA(&seed);                    // Direct
+        AES_SetKeyA(&seed);                    // Direct
     }
     else
     {
-        AESi_SetKeySeedA((AESKeySeed*)&seed);   // APP
+        AES_SetKeySeedA((AESKeySeed*)&seed);   // APP
     }
 }

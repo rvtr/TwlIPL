@@ -354,14 +354,14 @@ static u16 ReadAES(u32 block, void *dest, u16 count)
 /*
     AESのセットアップ＆出力DMA設定
 */
-    AESi_Reset();
-    AESi_Reset();
-    AESi_DmaRecv( DMA_RECV, dest, (u32)(count * SECTOR_SIZE), NULL, NULL );
-    AESi_SetCounter( &aesCounter );
-    AESi_Run( AES_MODE_CTR, 0, (u32)(count * SECTOR_SIZE / AES_BLOCK_SIZE), NULL, NULL );
+    AES_Reset();
+    AES_Reset();
+    AES_DmaRecv( DMA_RECV, dest, (u32)(count * SECTOR_SIZE), NULL, NULL );
+    AES_SetCounter( &aesCounter );
+    AES_Run( AES_MODE_CTR, 0, (u32)(count * (SECTOR_SIZE/AES_BLOCK_SIZE)), NULL, NULL );
 
     // update for next read
-    AESi_AddCounter( &aesCounter, (u32)(count * SECTOR_SIZE / AES_BLOCK_SIZE) );
+    AES_AddToCounter( &aesCounter, (u32)(count * (SECTOR_SIZE/AES_BLOCK_SIZE)) );
 
 
     while ( count * SECTOR_SIZE > offset )
@@ -396,7 +396,7 @@ err:
     currentSector = 0xFFFFFFFF;
 #endif
     StopToRead();
-    AESi_Reset();
+    AES_Reset();
     return SDCARD_ErrStatus;
 }
 

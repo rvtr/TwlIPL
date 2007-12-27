@@ -429,107 +429,8 @@ BOOL FS_LoadStatic( void )
 
 /*
     以下、LoadBufferを使わない版 (通常FS APIを使用する)
-    ！！！！ AESの通信バッファをメインメモリにおかないといけない！ (pending)
+    AES非対応！！
 */
-#include <twl/aes.h>
-
-static BOOL         aesFlag;
-static AESCounter   aesCounter;
-static u8* const    aesBuffer = (u8*)HW_FIRM_FS_AES_BUFFER; // 0x2ff0000
-
-static void AesCallback( AESResult result, void* arg )
-{
-    BOOL* pBusyFlag = (BOOL*)arg;
-    *pBusyFlag = FALSE;
-    if (result != AES_RESULT_SUCCESS)
-    {
-        OS_TPrintf("Failed to decrypt by AES (%d)\n", result);
-    }
-}
-
-static void CopyWithAes( const void* src, void* dest, u32 size )
-{
-    volatile BOOL aesBusy = TRUE;
-    if ( AES_RESULT_SUCCESS == AES_CtrDecrypt( rh->s.developer_encrypt ? AES_KEY_TYPE_RAW : AES_KEY_TYPE_APP,
-                                        &aesCounter, src, size, dest, AesCallback, (void*)&aesBusy) )
-    {
-        while (aesBusy)
-        {
-        }
-    }
-    AES_AddToCounter( &aesCounter, size / AES_BLOCK_SIZE );
-}
-
-static void EnableAes( u32 offset )
-{
-    aesFlag = TRUE;
-    MI_CpuCopy8( rh->s.main_static_digest, &aesCounter, AES_BLOCK_SIZE );
-    AES_AddToCounter( &aesCounter, (offset - rh->s.aes_target_rom_offset) / AES_BLOCK_SIZE );
-}
-static void DisableAes( void )
-{
-    aesFlag = FALSE;
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         GetSrlTransferSize
-
-  Description:  get size to transfer once
-
-                一度に受信するサイズを返します。
-                AESのセットアップもすべきです。
-
-                転送範囲がAES領域をまたぐ場合は、境界までのサイズ (引数より
-                小さなサイズ) を返します。
-                makerom.TWLまたはIPLの使用に依存します。
-
-  Arguments:    offset  offset of region from head of ROM_Header
-                size    size of region
-
-  Returns:      size to transfer once
- *---------------------------------------------------------------------------*/
-static u32 GetSrlTransferSize( u32 offset, u32 size )
-{
-    u32 aes_offset = rh->s.aes_target_rom_offset;
-    u32 aes_end = aes_offset + RoundUpModuleSize(rh->s.aes_target_size);
-    u32 end = offset + RoundUpModuleSize(size);
-    if ( rh->s.enable_aes )
-    {
-        if ( offset >= aes_offset && offset < aes_end )
-        {
-            if ( end > aes_end )
-            {
-                size = aes_end - offset;
-            }
-            if ( size >= HW_FIRM_FS_AES_BUFFER_SIZE )
-            {
-                size = HW_FIRM_FS_AES_BUFFER_SIZE;
-            }
-            if ( rh->s.developer_encrypt )
-            {
-                AES_SetKey( AES_KEY_TYPE_RAW, FS_GetAesKeySeed() );
-            }
-            else
-            {
-                AES_SetKey( AES_KEY_TYPE_APP, FS_GetAesKeySeed() );
-            }
-            EnableAes( offset );
-        }
-        else
-        {
-            if ( offset < aes_offset && offset + size > aes_offset )
-            {
-                size = aes_offset - offset;
-            }
-            DisableAes();
-        }
-    }
-    else
-    {
-        DisableAes();
-    }
-    return size;
-}
 
 /*---------------------------------------------------------------------------*
   Name:         FS_LoadSrlModule
@@ -558,22 +459,10 @@ BOOL FS_LoadSrlModule( FSFile *pFile, u8* dest, u32 offset, u32 size, const u8 d
     }
     while ( size > 0 )
     {
-        u32 unit = GetSrlTransferSize( offset, size );
-        if (aesFlag)
+        u32 unit = GetTransferSize( offset, size ); // AES対象ならうまく動かない
+        if ( !FS_ReadFile( pFile, dest, (s32)unit ) )
         {
-            if ( !FS_ReadFile( pFile, aesBuffer, (s32)unit ) )
-            {
-                return FALSE;
-            }
-            DC_FlushRange( aesBuffer, unit );
-            CopyWithAes( aesBuffer, dest, unit );
-        }
-        else
-        {
-            if ( !FS_ReadFile( pFile, dest, (s32)unit ) )
-            {
-                return FALSE;
-            }
+            return FALSE;
         }
         dest += unit;
         offset += unit;

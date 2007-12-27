@@ -28,11 +28,10 @@ TWL_CODEGEN_ALL 	?= TRUE
 # Codegen for sub processer
 TWL_PROC		= ARM7
 
-SRCDIR			= . ../common
+SRCDIR			= .
 
 SRCS			= \
 				aes_init.c \
-				aes_util.c \
 
 TARGET_LIB		= libaes_sp$(FIRM_LIBSUFFIX).a
 

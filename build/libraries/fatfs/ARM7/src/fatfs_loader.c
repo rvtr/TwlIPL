@@ -19,7 +19,6 @@
 
 #include <firm.h>
 #include <twl/os/common/format_rom.h>
-#include <twl/aes/ARM7/lo.h>
 #include <rtfs.h>
 #include <devices/sdif_reg.h>
 
@@ -401,7 +400,7 @@ static AESCounter* FATFSi_GetCounter( u32 offset )
     static AESCounter counter;
 
     MI_CpuCopy8( rh->s.main_static_digest, &counter, 16 );
-    AESi_AddCounter( &counter, offset - rh->s.aes_target_rom_offset );
+    AES_AddToCounter( &counter, (offset - rh->s.aes_target_rom_offset) / AES_BLOCK_SIZE );
     return &counter;
 }
 
@@ -442,8 +441,8 @@ static u32 FATFSi_SetupAES( u32 offset, u32 size )
             {
                 size = aes_end - offset;
             }
-            AESi_WaitKey();
-            AESi_LoadKey( AES_KEY_SLOT_A );
+            AES_WaitKey();
+            AES_LoadKey( AES_KEY_SLOT_A );
             FATFS_EnableAES( FATFSi_GetCounter( offset ) );
         }
         else

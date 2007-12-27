@@ -18,7 +18,6 @@
 #include <symbols.h>
 #include <firm.h>
 #include <rtfs.h>
-#include <twl/aes/common/aes.h>
 
 //#define WORKAROUND_NAND_2KB_BUG
 
@@ -121,12 +120,12 @@ int FS_OpenSrl( void )
 #define DMA_RECV         3
 static void CopyWithAes( const void* src, void* dest, u32 size )
 {
-    AESi_Reset();
-    AESi_Reset();
-    AESi_DmaSend( DMA_SEND, src,  size, NULL, NULL );
-    AESi_DmaRecv( DMA_RECV, dest, size, NULL, NULL );
-    AESi_SetCounter( &aesCounter );
-    AESi_Run( AES_MODE_CTR, 0, size / AES_BLOCK_SIZE, NULL, NULL );
+    AES_Reset();
+    AES_Reset();
+    AES_DmaSend( DMA_SEND, src,  size, NULL, NULL );
+    AES_DmaRecv( DMA_RECV, dest, size, NULL, NULL );
+    AES_SetCounter( &aesCounter );
+    AES_Run( AES_MODE_CTR, 0, size / AES_BLOCK_SIZE, NULL, NULL );
     AES_AddToCounter( &aesCounter, size / AES_BLOCK_SIZE );
     MI_WaitNDma( DMA_RECV );
 }
@@ -155,7 +154,7 @@ static u32 GetTransferSize( u32 offset, u32 size )
             {
                 size = aes_end - offset;
             }
-            AESi_LoadKey( AES_KEY_SLOT_A );
+            AES_LoadKey( AES_KEY_SLOT_A );
             EnableAes( offset );
         }
         else
