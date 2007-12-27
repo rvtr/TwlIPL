@@ -134,6 +134,14 @@ void BOOT_Ready( void )
 			target = REBOOT_TARGET_DS_APP;
 		}
 		
+#ifdef FIRM_USE_TWLSDK_KEYS
+        // TwlSDK内の鍵を使っている時は量産用CPUではブートしない
+        if ( ! ((*(u8*)OS_CHIPTYPE_DEBUGGER_ADDR & OS_CHIPTYPE_DEBUGGER_MASK)) )
+        {
+            OS_Terminate();
+        }
+#endif // FIRM_USE_SDK_KEYS
+		
 		// 起動するターゲットの種類を指定する必要あり
 		OS_Boot( dh->s.main_entry_address, mem_list, target );
 	}

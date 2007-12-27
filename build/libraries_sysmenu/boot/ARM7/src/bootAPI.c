@@ -162,6 +162,14 @@ BOOL BOOT_WaitStart( void )
 								  REG_SND_SMX_CNT_E_MASK;
 			}
 			
+#ifdef FIRM_USE_TWLSDK_KEYS
+            // TwlSDK内の鍵を使っている時は量産用CPUではブートしない
+            if ( ! ((*(u8*)HWi_WSYS08_ADDR & HWi_WSYS08_OP_OPT_MASK)) )
+            {
+                OS_Terminate();
+            }
+#endif // FIRM_USE_SDK_KEYS
+			
 			// リブート
 			OS_Boot( dh->s.sub_entry_address, mem_list, target );
 		}
