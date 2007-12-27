@@ -169,9 +169,8 @@ SDK_WEAK_SYMBOL asm void _start( void )
         ldr             r1,  [r0, #12]   // BSS segment start
         ldr             r2,  [r0, #16]   // BSS segment end
         mov             r0, #0
-@2:     cmp             r1, r2
-        strcc           r0, [r1], #4
-        bcc             @2
+        sub             r2, r2, r1
+        bl              INITi_CpuClearFast
 
         //---- detect main memory size
         bl              INITi_DetectMainMemorySize
