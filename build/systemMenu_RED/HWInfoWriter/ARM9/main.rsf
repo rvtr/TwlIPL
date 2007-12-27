@@ -105,12 +105,6 @@ Property
 	BannerTWLFile	$(TWLSDK_ROOT)/include/twl/specfiles/default.bnr
 
 	#
-	# Boot allowed Media: [GameCard/NAND/SDCard/DownloadPlay]
-	#  possible to choose one or more.
-	#
-	BootMedia		GameCard NAND SDCard DownloadPlay
-
-	#
 	# Certification FILE:
 	#
 	Certificate		$(TWLSDK_ROOT)/include/twl/specfiles/default_sgn.sbin
@@ -147,12 +141,17 @@ AppendProperty
 	#
 	# Application type : [USER/SYSTEM]
 	#  don't have to edit
-	AppType					User
+	AppType					System
 
 	#
 	# launch title on the launcher : [TRUE/FALSE]
 	#  don't have to edit
 	Launch					TRUE
+
+	#
+	# Boot allowed Media: [GameCard/NAND]
+	#
+	Media					GameCard
 
 	#
 	# GameCode for TitleID : Your GameCode in 4 ascii words

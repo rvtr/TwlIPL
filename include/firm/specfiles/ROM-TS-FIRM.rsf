@@ -106,12 +106,6 @@ Property
 	BannerTWLFile	$(TWLSDK_ROOT)/include/twl/specfiles/default.bnr
 
 	#
-	# Boot allowed Media: [GameCard/NAND/SDCard/DownloadPlay]
-	#  possible to choose one or more.
-	#
-	BootMedia		GameCard NAND SDCard DownloadPlay
-
-	#
 	# Certification FILE:
 	#
 	Certificate		$(TWLSDK_ROOT)/include/twl/specfiles/default_sgn.sbin
@@ -134,28 +128,50 @@ Property
 	#
 	CodecMode		$(MAKEROM_CODEC_MODE)
 
+	###
+	#### END
+}
+
+AppendProperty
+{
 	#
-	# TitleID_Lo: Your TitleID_Lo in 4 ascii words for NAND application
-	#
-	#TitleID_Lo				TEST
+	# Publisher : "Nintendo"
+	#  don't have to edit
+	Publisher				Nintendo
 
 	#
-	# TitleID_Hi: Your TitleID_Hi for NAND application ( spec not fixed. )
-	#
-	#TitleID_Hi				0x00010001
-	
-	#
-	# Public save data size: [16K/32K/64K/128K/256K/512K/1M/2M/4M/8M] for NAND application
-	#
-	#PublicSaveDataSize		16K
+	# Application type : [USER/SYSTEM]
+	#  don't have to edit
+	AppType					System
 
 	#
-	# Private save data size: [16K/32K/64K/128K/256K/512K/1M/2M/4M/8M] for NAND application
+	# launch title on the launcher : [TRUE/FALSE]
+	#  don't have to edit
+	Launch					TRUE
+
+	#
+	# Boot allowed Media: [GameCard/NAND]
+	#
+	Media					NAND
+
+	#
+	# GameCode for TitleID : Your GameCode in 4 ascii words
+	#
+	#GameCode				$(TITLEID_LO)
+
+	#
+	# Public save data size: [16K/32K/64K/128K/256K/512K/1M/2M/4M/8M]
+	#
+	#PublicSaveDataSize		32K
+
+	#
+	# Private save data size: [16K/32K/64K/128K/256K/512K/1M/2M/4M/8M]
 	#
 	#PrivateSaveDataSize	16K
 
-	###
-	#### END
+	#
+	# Enable SaveBannerFile
+	#SaveBannerFile	TRUE
 }
 
 RomSpec

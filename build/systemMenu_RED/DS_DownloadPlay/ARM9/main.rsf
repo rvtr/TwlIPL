@@ -105,12 +105,6 @@ Property
 	BannerTWLFile	$(TWLSDK_ROOT)/include/twl/specfiles/default.bnr
 
 	#
-	# Boot allowed Media: [GameCard/NAND/SDCard/DownloadPlay]
-	#  possible to choose one or more.
-	#
-	BootMedia		GameCard NAND SDCard DownloadPlay
-
-	#
 	# Certification FILE:
 	#
 	Certificate		$(TWLSDK_ROOT)/include/twl/specfiles/default_sgn.sbin
