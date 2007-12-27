@@ -18,11 +18,16 @@
 ifndef TWL_IPL_COMMONDEFS_
 TWL_IPL_COMMONDEFS_ = TRUE
 
+FIRM_USE_TWLSDK_KEYS = TRUE
 
 ifeq	($(TARGET_FIRM),SYSTEMMENU)
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs.sysmenu
 else
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs.firm
+endif
+
+ifdef FIRM_USE_TWLSDK_KEYS
+MACRO_FLAGS	+= -DFIRM_USE_TWLSDK_KEYS=$(FIRM_USE_TWLSDK_KEYS)
 endif
 
 #----------------------------------------------------------------------------
