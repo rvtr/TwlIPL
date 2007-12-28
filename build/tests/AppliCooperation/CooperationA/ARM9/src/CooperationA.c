@@ -496,12 +496,12 @@ static void MenuScene(void)
 						// メーカーコードとゲームコードのセット(Launcher側でやるべき？)
 						OS_SetMakerCodeToDeliveryArgumentInfo( *maker_code_src_addr );
 						OS_SetGameCodeToDeliveryArgumentInfo( *game_code_src_addr );
-						OS_SetTitleIdToDeliveryArgumentInfo( 0x00010001434f5041 );
+						OS_SetTitleIdToDeliveryArgumentInfo( 0x00030004434f5041 );
 						// アプリ専用引数のセット
 						OS_SetDeliveryArgments( (const char *)s_work.parameter );
 					}
 					//B起動
-					OS_SetLauncherParamAndResetHardware( 0, 0x00010001434f5042, &tempflag );
+					OS_SetLauncherParamAndResetHardware( 0, 0x00030004434f5042, &tempflag );
 					break;
 				case 2:
 					OS_SetLauncherParamAndResetHardware( 0, NULL, &tempflag );

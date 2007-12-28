@@ -250,7 +250,7 @@ int MachineSettingMain( void )
 					break;
 				case 6:
 					//pictochat起動テスト
-					OS_SetLauncherParamAndResetHardware( 0, 0x0001000150434854, &tempflag );
+					OS_SetLauncherParamAndResetHardware( 0, 0x0003000550434854, &tempflag );
 			}
 		}
 	}

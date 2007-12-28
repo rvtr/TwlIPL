@@ -135,27 +135,27 @@ static void MenuScene(void)
 			switch( s_csr ) {
 				case 0:
 					//アプリ起動
-					OS_SetLauncherParamAndResetHardware( 0, 0x0001000152434b30, &tempflag ); // RCK0
+					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b30, &tempflag ); // RCK0
 					break;
 				case 1:
 					//アプリ起動
-					OS_SetLauncherParamAndResetHardware( 0, 0x0001000152434b31, &tempflag ); // RCK1
+					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b31, &tempflag ); // RCK1
 					break;
 				case 2:
 					//アプリ起動
-					OS_SetLauncherParamAndResetHardware( 0, 0x0001000152434b32, &tempflag ); // RCK2
+					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b32, &tempflag ); // RCK2
 					break;
 				case 3:
 					//アプリ起動
-					OS_SetLauncherParamAndResetHardware( 0, 0x0001000152434b33, &tempflag ); // RCK3
+					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b33, &tempflag ); // RCK3
 					break;
 				case 4:
 					//アプリ起動
-					OS_SetLauncherParamAndResetHardware( 0, 0x0001000152434b34, &tempflag ); // RCK4
+					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b34, &tempflag ); // RCK4
 					break;
 				case 5:
 					//アプリ起動
-					OS_SetLauncherParamAndResetHardware( 0, 0x0001000152434b35, &tempflag ); // RCK5
+					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b35, &tempflag ); // RCK5
 					break;
 				case 6:
 					OS_SetLauncherParamAndResetHardware( 0, NULL, &tempflag );

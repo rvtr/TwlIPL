@@ -161,7 +161,7 @@ static void MenuScene(void)
 						// メーカーコードとゲームコードのセット(Launcher側でやるべき？)
 						OS_SetMakerCodeToDeliveryArgumentInfo( *maker_code_src_addr );
 						OS_SetGameCodeToDeliveryArgumentInfo( *game_code_src_addr );
-						OS_SetTitleIdToDeliveryArgumentInfo( 0x00010001434f5042 );
+						OS_SetTitleIdToDeliveryArgumentInfo( 0x00030004434f5042 );
 						// アプリ専用引数のセット
 						OS_SetDeliveryArgments( "-r" );
 						

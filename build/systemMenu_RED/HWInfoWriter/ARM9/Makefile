@@ -41,6 +41,7 @@ SRCS					=	main.c HWInfoWriter.c \
 LINCLUDES				=	$(MISC_DIR)/include
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
+MAKETAD_FLAGS			+= -s
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
