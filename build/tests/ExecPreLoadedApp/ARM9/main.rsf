@@ -10,9 +10,9 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date::            $
-# $Rev$
-# $Author$
+# $Date:: 2007-12-19#$
+# $Rev: 378 $
+# $Author: yoshida_teruhisa $
 #----------------------------------------------------------------------------
 #
 #  TWL ROM SPEC FILE
@@ -142,12 +142,12 @@ AppendProperty
 	#
 	# Application type : [USER/SYSTEM]
 	#  don't have to edit
-	AppType					System
+	AppType					User
 
 	#
 	# launch title on the launcher : [TRUE/FALSE]
 	#  don't have to edit
-	Launch					FALSE
+	Launch					TRUE
 
 	#
 	# Boot allowed Media: [GameCard/NAND]
@@ -167,19 +167,18 @@ AppendProperty
 	#
 	# Private save data size: [16K/32K/64K/128K/256K/512K/1M/2M/4M/8M]
 	#
-	PrivateSaveDataSize		16K
+	#PrivateSaveDataSize	16K
 
 	#
 	# Enable SaveBannerFile
-	SaveBannerFile			FALSE
+	#SaveBannerFile	TRUE
 }
-
 
 RomSpec
 {
 	Offset		0x00000000
 	Segment		ALL
-	HostRoot	../../data
+	HostRoot	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/data
 	Root		/data
-	File		NTR_IPL_font_m.NFTR NoCardBanner.bnr EmptyBanner.bnr NoBanner.bnr fanfare.32.wav
+	File		NTR_IPL_font_m.NFTR
 }

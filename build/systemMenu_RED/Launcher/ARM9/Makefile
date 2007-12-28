@@ -61,6 +61,7 @@ ADDRESS_DTCM			=	0x0e000000
 DEFAULT_COMP_ARM7		=	hyena
 
 MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
+MAKETAD_FLAGS			+= -s
 
 include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs

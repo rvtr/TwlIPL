@@ -46,6 +46,7 @@ SRCS					=	main.c MachineSetting.c \
 LINCLUDES				=	$(MISC_DIR)/include
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
+MAKETAD_FLAGS			+= -s
 
 #LLIBRARIES				+=	libreset_param$(TWL_LIBSUFFIX).a
 

@@ -16,54 +16,39 @@
 # $Author:  $
 #----------------------------------------------------------------------------
 
-SUBDIRS					=	
-
 #----------------------------------------------------------------------------
 
 TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
 
-#ARM9_FLX_addr
-MAKELCF_FLAGS			+=	-DADDRESS_FLXMAIN='0x02000400'
+TITLEID_LO				=	MLEP
+TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR).tad
 
-TARGET_FOB				=	ARM9FLX.fob
-#ARM9_FLX_addsize
-FBDSIZE_ARM9FLX			=	4
-TARGET_FOB				+=	ARM9LTD.fob
-#ARM9_LTD_addsize
-FBDSIZE_ARM9LTD			=	4
-
-TARGET_NUMBER	= 0
-TARGET_NAME		= RelocateChecker$(TARGET_NUMBER)
-BINDIR			= ./bin/$(TWL_BUILDTYPE)/$(TARGET_NAME)
-TARGET_BIN				=	$(TARGET_NAME).srl
-
-TITLEID_LO				=	RCK$(TARGET_NUMBER)
-TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
+TARGET_BIN				=	main.srl
 
 LCFILE_SPEC				=	ARM9-TS.lsf
 ROM_SPEC				=	main.rsf
-LCFILE_TEMPLATE				=	rc$(TARGET_NUMBER).lcf.template
 
 MISC_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/misc
 
-SRCS					=	main.c RelocateChecker.c \
+SRCS					=	main.c ExecPreLoadedApp.c \
 							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
 
 LINCLUDES				=	$(MISC_DIR)/include
-LLIBRARY_DIRS				+=	../crt/ARM9/obj/ARM9-TS.HYB/$(TWL_BUILD_DIR)
 
-CRT0_O		=	crt0_rc.FLX.TWL.o
+LLIBRARIES				+=	libnam$(TWL_LIBSUFFIX).a \
+							libese$(TWL_LIBSUFFIX).a \
+							libreloc_info$(TWL_LIBSUFFIX).a
 
-//MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
+ADDRESS_DTCM			=	0x0e000000
+
+DEFAULT_COMP_ARM7		=	hyena
+
 MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
 
-include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/commondefs
-
-DEFAULT_COMP_ARM7		= hyena_rc$(TARGET_NUMBER)
-DEFAULT_MAKEROM_ARM7_BASE	= ../ARM7/bin/$(TWL_BUILDTYPE_ARM7)/$(DEFAULT_COMP_ARM7)/$(DEFAULT_COMP_ARM7)
-DEFAULT_MAKEROM_ARM7		= $(DEFAULT_MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
+include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
+include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 LDIRT_CLEAN				=	$(TARGET_TAD)
 INSTALL_TARGETS			=	$(TARGET_TAD)
@@ -73,7 +58,8 @@ INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 do-build : $(TARGETS)
 
-include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/modulerules
+
+include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 #----------------------------------------------------------------------------
 

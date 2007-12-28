@@ -25,7 +25,7 @@ include	$(NITROSYSTEM_ROOT)/build/buildtools/modulerules
 
 
 %.tad: $(BINDIR)/$(TARGET_BIN)
-	$(MAKETAD) $< -o $@
+	$(MAKETAD) $< $(MAKETAD_FLAGS) -o $@
 
 # .rbin
 $(BINDIR)/$(TARGET_BIN_BASENAME).rbin: $(OBJS)

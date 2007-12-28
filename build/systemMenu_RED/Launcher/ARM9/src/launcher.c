@@ -509,6 +509,7 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 	u16 dummy;
 	u16 tp_lr = 3;
 	TitleProperty *ret = NULL;
+	LauncherBootFlags tempflag = {TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
 	
 	// バックライト関係のキー処理
 	ProcessBackLightPads();
@@ -529,6 +530,10 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 	}else
 	{
 		s_wavstop = FALSE;
+	}
+
+	if( pad.trg & PAD_BUTTON_B ) {
+		OS_SetLauncherParamAndResetHardware( 0, NULL, &tempflag );
 	}
 	
 	if(pad.cont & PAD_KEY_RIGHT || tp_lr == 1){										// バナー選択
