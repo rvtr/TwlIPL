@@ -27,6 +27,9 @@ TWL_CODEGEN_ALL 	?= TRUE
 TWL_PROC		= ARM7
 
 SRCDIR			= ../common .
+INCDIR              = ./include ../common/include \
+                      $(TWLSDK_ROOT)/build/libraries/fatfs/ARM7.TWL/include \
+                      $(TWLSDK_ROOT)/build/libraries/fatfs/ARM7.TWL/include/twl/fatfs/ARM7 \
 
 SRCS			= \
 				os_init_firm.c \
