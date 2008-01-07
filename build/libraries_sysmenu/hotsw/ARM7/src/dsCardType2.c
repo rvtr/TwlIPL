@@ -12,10 +12,6 @@
 #define		SECURE_SEGMENT_NUM					4
 #define		ONE_SEGMENT_PAGE_NUM				8
 #define		COMMAND_DECRYPTION_WAIT				25 		// 25ms
-#define		ROM_EMULATION_START_OFS				0x160
-#define		ROM_EMULATION_END_OFS				0x180
-
-
 
 // Function prototype -------------------------------------------------------
 static void SetSecureCommand(SecureCommandType type, CardBootData *cbd);

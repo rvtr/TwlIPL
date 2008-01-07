@@ -29,6 +29,9 @@
 
 #define		DIGEST_HASH_BLOCK_SIZE_SHA1			(512/8)
 
+#define		ROM_EMULATION_START_OFS				0x160
+#define		ROM_EMULATION_END_OFS				0x180
+
 // Function prototype -------------------------------------------------------
 static BOOL IsCardExist(void);
 
@@ -575,7 +578,7 @@ static void ReadRomEmulationData(void)
 {
 	u32 count=0;
     u32 temp;
-    u32 *dst = &s_cbData.romEmuBuf;
+    u32 *dst = s_cbData.romEmuBuf;
     
 	// MCCMD ÉåÉWÉXÉ^ê›íË
 	reg_HOTSW_MCCMD0 = 0x3e000000;
