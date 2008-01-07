@@ -17,9 +17,8 @@
 #include <firm.h>
 #include <twl/aes.h>
 
-/* 鍵はどこへ？ */
-#if 0
-#define RSA_KEY_ADDR    OSi_GetFromFirmAddr()->rsa_pubkey[7]
+#ifndef FIRM_USE_TWLSDK_KEYS
+#define RSA_KEY_ADDR    OSi_GetFromFirmAddr()->rsa_pubkey[0]    // 鍵管理.xls参照
 #else
 #define RSA_KEY_ADDR    rsa_key
 static const u8 rsa_key[128] =
@@ -41,7 +40,7 @@ static const u8 rsa_key[128] =
 static u8 acHeap[RSA_HEAP_SIZE] __attribute__ ((aligned (32)));
 static SVCSignHeapContext acPool;
 
-#define MENU_TITLE_ID 0x000100014c4e4352ULL
+#define MENU_TITLE_ID 0x000300074c4e4352ULL
 
 /*
     PROFILE_ENABLE を定義するとある程度のパフォーマンスチェックができます。

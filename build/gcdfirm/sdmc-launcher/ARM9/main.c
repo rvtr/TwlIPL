@@ -16,6 +16,9 @@
  *---------------------------------------------------------------------------*/
 #include <firm.h>
 
+#ifndef FIRM_USE_TWLSDK_KEYS
+#define RSA_KEY_ADDR    OSi_GetFromFirmAddr()->rsa_pubkey[2]    // 鍵管理.xls参照
+#else
 #define RSA_KEY_ADDR    rsa_key
 static const u8 rsa_key[128] =
 {
@@ -29,6 +32,7 @@ static const u8 rsa_key[128] =
     0xe0, 0x6d, 0x21, 0x00, 0xcd, 0x42, 0xd8, 0x84, 0x85, 0xe3, 0xb2, 0x02, 0x1a, 0xa5, 0x89, 0x02,
     0xa1, 0x96, 0xc6, 0xf7, 0x61, 0x68, 0x66, 0xe6, 0x65, 0x12, 0xb7, 0xf1, 0x49
 };
+#endif
 
 #define RSA_HEAP_SIZE   (4*1024)    // RSA用ヒープサイズ (サイズ調整必要)
 
