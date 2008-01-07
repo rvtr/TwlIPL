@@ -696,6 +696,10 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 	
 	if( pBootTitle->flags.media == TITLE_MEDIA_CARD ) {
 		SYSMi_GetWork()->isCardBoot = TRUE;
+	}else if(pBootTitle->flags.isAppLoadCompleted)
+	{
+		// カードブートでなく、ロード済みの場合、再配置情報をランチャーパラメタから読み込み
+		MI_CpuCopy8( SYSM_GetLauncherParamBody()->v1.relocInfoBuf, SYSMi_GetWork()->romRelocateInfo, sizeof(Relocate_Info)*RELOCATE_INFO_NUM );
 	}
 }
 

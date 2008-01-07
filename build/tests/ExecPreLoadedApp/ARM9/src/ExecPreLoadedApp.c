@@ -106,10 +106,193 @@ static void MenuInit( void )
 	GXS_DispOn();
 }
 
+// 指定ファイルリード
+static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
+{
+    u8* p = (u8*)buffer;
+    s32 remain = size;
+
+    while( remain > 0 )
+    {
+        const s32 len = MATH_IMin(1024, remain);
+        const s32 readLen = FS_ReadFile(pf, p, len);
+
+        if( readLen < 0 )
+        {
+            return readLen;
+        }
+        if( readLen != len )
+        {
+            return size - remain + readLen;
+        }
+
+        remain -= readLen;
+        p      += readLen;
+    }
+
+    return size;
+}
+
+#define EPLAi_GetLauncherParamAddr()				( (LauncherParam *)HW_PARAM_LAUNCH_PARAM )
+
+static void LoadTitle( NAMTitleId bootTitleID )
+{
+	enum
+	{
+	    region_header = 0,
+	    region_arm9_ntr,
+	    region_arm7_ntr,
+	    region_arm9_twl,
+	    region_arm7_twl,
+	    region_max
+	};
+	// メインメモリのクリア
+	// DSダウンロードプレイの時は、ROMヘッダを退避する
+	// アプリロード
+	// アプリ認証
+	
+	
+	// ロード
+    char path[256];
+    FSFile  file[1];
+    BOOL bSuccess;
+    BOOL isTwlApp = TRUE;
+    NAM_GetTitleBootContentPath(path, bootTitleID);
+
+    bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
+
+    if( ! bSuccess )
+    {
+OS_TPrintf("RebootSystem failed: cant open file\n");
+        return;
+    }
+
+    {
+        int     i;
+        u32     source[region_max];
+        u32     length[region_max];
+        u32     destaddr[region_max];
+        static u8   header[HW_TWL_ROM_HEADER_BUF_SIZE] ATTRIBUTE_ALIGN(32);
+        s32 readLen;
+
+        // まずROMヘッダを読み込む
+        // (本来ならここでSRLの正当性判定)
+        bSuccess = FS_SeekFile(file, 0x00000000, FS_SEEK_SET);
+
+        if( ! bSuccess )
+        {
+OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
+            FS_CloseFile(file);
+            return;
+        }
+
+        readLen = ReadFile(file, header, (s32)sizeof(header));
+
+        if( readLen != (s32)sizeof(header) )
+        {
+OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", header, 0, sizeof(header), readLen);
+            FS_CloseFile(file);
+            return;
+        }
+
+        if( header[0x15C] != 0x56 || header[0x15D] != 0xCF )
+        {
+int i, j;
+for( i = 0; i < 0x20; ++i )
+{
+for( j = 0; j < 0x10; ++j )
+{
+OS_TPrintf("%02X ", header[i * 0x10 + j]);
+}
+OS_TPrintf("\n");
+}
+OS_TPrintf("RebootSystem failed: logo CRC error\n");
+            FS_CloseFile(file);
+            return;
+        }
+        
+        if( header[0x12] && 0x03 == 0 )
+        {
+			//NTR専用ROM
+			isTwlApp = FALSE;
+		}
+		
+        // 各領域を読み込む
+        source  [region_header  ] = 0x00000000;
+        length  [region_header  ] = HW_TWL_ROM_HEADER_BUF_SIZE;
+        destaddr[region_header  ] = HW_TWL_ROM_HEADER_BUF;
+		
+        source  [region_arm9_ntr] = *(const u32*)&header[0x020];
+        length  [region_arm9_ntr] = *(const u32*)&header[0x02C];
+        destaddr[region_arm9_ntr] = *(const u32*)&header[0x028];
+		
+        source  [region_arm7_ntr] = *(const u32*)&header[0x030];
+        length  [region_arm7_ntr] = *(const u32*)&header[0x03C];
+        destaddr[region_arm7_ntr] = *(const u32*)&header[0x038];
+		
+		if( isTwlApp )
+		{
+	        source  [region_arm9_twl] = *(const u32*)&header[0x1C0];
+	        length  [region_arm9_twl] = *(const u32*)&header[0x1CC];
+	        destaddr[region_arm9_twl] = *(const u32*)&header[0x1C8];
+			
+	        source  [region_arm7_twl] = *(const u32*)&header[0x1D0];
+	        length  [region_arm7_twl] = *(const u32*)&header[0x1DC];
+	        destaddr[region_arm7_twl] = *(const u32*)&header[0x1D8];
+        }
+        
+        // 領域読み込み先のチェック及び再配置情報データの作成
+		for( i=0; i<RELOCATE_INFO_NUM; i++ )
+		{
+			if ( !isTwlApp && i >= ARM9_LTD_STATIC ) continue;// nitroでは読み込まない領域
+			// 再配置情報のランチャーパラメタへの受け渡し処理。暫定的な実装。SDKに機能として組み込んでしまうか検討中。
+			if ( !SYSM_CheckLoadRegionAndSetRelocateInfo( (RomSegmentName)i, &(destaddr[i+region_arm9_ntr]), length[i+region_arm9_ntr],
+				 (Relocate_Info *)&(EPLAi_GetLauncherParamAddr()->body.v1.relocInfoBuf[24 * i]), isTwlApp ) )
+			{
+	OS_TPrintf("RebootSystem failed: ROM Load Region error\n");
+	            FS_CloseFile(file);
+				return;
+			}
+		}
+
+        for (i = region_header; i < region_max; ++i)
+        {
+            u32 len = length[i];
+            
+            if ( !isTwlApp && i >= region_arm9_twl ) continue;// nitroでは読み込まない領域
+
+            bSuccess = FS_SeekFile(file, (s32)source[i], FS_SEEK_SET);
+
+            if( ! bSuccess )
+            {
+OS_TPrintf("RebootSystem failed: cant seek file(%d)\n", source[i]);
+                FS_CloseFile(file);
+                return;
+            }
+
+            readLen = ReadFile(file, (void *)destaddr[i], (s32)len);
+
+            if( readLen != (s32)len )
+            {
+OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
+                FS_CloseFile(file);
+                return;
+            }
+        }
+
+        (void)FS_CloseFile(file);
+    }
+
+	// ROMヘッダバッファをコピー
+	MI_CpuCopy32( (void *)HW_TWL_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
+	
+	SYSMi_GetWork()->isLoadSucceeded = TRUE;
+}
+
 static void MenuScene(void)
 {
 	BOOL tp_select = FALSE;
-	LauncherBootFlags tempflag = {TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
+	LauncherBootFlags tempflag = {TRUE, 0, TRUE, FALSE, TRUE, FALSE, 0};
 	
 	ReadTP();
 	
@@ -135,26 +318,32 @@ static void MenuScene(void)
 			switch( s_csr ) {
 				case 0:
 					//アプリ起動
+					LoadTitle(0x0003000452434b30);
 					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b30, &tempflag ); // RCK0
 					break;
 				case 1:
 					//アプリ起動
+					LoadTitle(0x0003000452434b31);
 					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b31, &tempflag ); // RCK1
 					break;
 				case 2:
 					//アプリ起動
+					LoadTitle(0x0003000452434b32);
 					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b32, &tempflag ); // RCK2
 					break;
 				case 3:
 					//アプリ起動
+					LoadTitle(0x0003000452434b33);
 					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b33, &tempflag ); // RCK3
 					break;
 				case 4:
 					//アプリ起動
+					LoadTitle(0x0003000452434b34);
 					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b34, &tempflag ); // RCK4
 					break;
 				case 5:
 					//アプリ起動
+					LoadTitle(0x0003000452434b35);
 					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b35, &tempflag ); // RCK5
 					break;
 				case 6:
