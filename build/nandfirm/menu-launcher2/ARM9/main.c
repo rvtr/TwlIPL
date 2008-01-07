@@ -127,14 +127,20 @@ static void PostInit(void)
     CheckHeader
 
     ヘッダがシステムメニューとして問題ないかチェック
-    先頭32Bは固定値と思われ (リマスターバージョンは違うかな)
 ***************************************************************/
 static BOOL CheckHeader(void)
 {
     static ROM_Header_Short* const rhs = (ROM_Header_Short*)HW_TWL_ROM_HEADER_BUF;
-    // TODO
-    // イニシャルコード
+    // イニシャルコードなど
     OS_TPrintf("Initial Code        : %08X\n", *(u32*)rhs->game_code);
+    OS_TPrintf("Platform Code       : %02X\n", rhs->platform_code);
+    OS_TPrintf("Codec Mode          : %s\n", rhs->codec_mode ? "TWL" : "NITRO");
+    OS_TPrintf("Sigunature          : %s\n", rhs->enable_signature ? "AVAILABLE" : "NOT AVAILABLE");
+    OS_TPrintf("AES Encryption      : %s\n", rhs->enable_aes ? "AVAILABLE" : "NOT AVAILABLE");
+    if ( rhs->enable_aes )
+    {
+        OS_TPrintf("AES Key Type        : %s\n", rhs->developer_encrypt ? "FOR DEVELOPMENT" : "FOR PRODUCT");
+    }
     // エントリポイント
     OS_TPrintf("ARM9 Entry point    : %08X\n", rhs->main_entry_address);
     OS_TPrintf("ARM7 Entry point    : %08X\n", rhs->sub_entry_address);
@@ -151,6 +157,32 @@ static BOOL CheckHeader(void)
     OS_TPrintf("ARM7 LTD ROM address: %08X\n", rhs->sub_ltd_rom_offset);
     OS_TPrintf("ARM7 LTD RAM address: %08X\n", rhs->sub_ltd_ram_address);
     OS_TPrintf("ARM7 LTD size       : %08X\n", rhs->sub_ltd_size);
+    // 順序ほぼ最適化済み
+    if ( rhs->platform_code != PLATFORM_CODE_TWL_LIMITED ||     // TWL Limited only
+         !rhs->codec_mode ||                                    // TWL mode only
+         !rhs->enable_signature ||                              // Should be use ROM header signature
+         (rhs->titleID_Hi & 0x0005) != 0x0005 ||                // check only NAND/SYSTEM bits (need?)
+        // should be in main memory
+         HW_TWL_MAIN_MEM > (u32)rhs->main_ram_address ||
+         HW_TWL_MAIN_MEM > (u32)rhs->sub_ram_address ||
+         HW_TWL_MAIN_MEM > (u32)rhs->main_ltd_ram_address ||
+         HW_TWL_MAIN_MEM > (u32)rhs->sub_ltd_ram_address ||
+        // should be in static area without Limited region
+         (u32)rhs->main_ram_address > (u32)rhs->main_entry_address ||
+         (u32)rhs->sub_ram_address > (u32)rhs->sub_entry_address ||
+        // should be in main memory (end address)
+         HW_TWL_MAIN_MEM_END <= (u32)rhs->main_ram_address + rhs->main_size ||
+         HW_TWL_MAIN_MEM_END <= (u32)rhs->sub_ram_address + rhs->sub_size ||
+         HW_TWL_MAIN_MEM_END <= (u32)rhs->main_ltd_ram_address + rhs->main_ltd_size ||
+         HW_TWL_MAIN_MEM_END <= (u32)rhs->sub_ltd_ram_address + rhs->sub_ltd_size ||
+        // should be in static area without Limited region (end address)
+         (u32)rhs->main_ram_address + rhs->main_size <= (u32)rhs->main_entry_address ||
+         (u32)rhs->sub_ram_address + rhs->sub_size <= (u32)rhs->sub_entry_address ||
+         0 )
+    {
+        OS_TPrintf("Invalid ROM header for MENU Launcher!\n");
+        return FALSE;
+    }
     return TRUE;
 }
 
@@ -163,8 +195,10 @@ static BOOL CheckHeader(void)
 ***************************************************************/
 static void EraseAll(void)
 {
+    MI_CpuClearFast( OSi_GetFromFirmAddr(), sizeof(OSFromFirmBuf) );
 #ifdef SDK_FINALROM
     MI_CpuClearFast( (void*)HW_TWL_ROM_HEADER_BUF, HW_TWL_ROM_HEADER_BUF_SIZE );
+    MI_CpuClearFast( (void*)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END-HW_ROM_HEADER_BUF );
     OS_BootFromFIRM();
 #endif
 }

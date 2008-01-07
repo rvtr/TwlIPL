@@ -111,6 +111,7 @@ static void PreInit(void)
 ***************************************************************/
 static void EraseAll(void)
 {
+    MI_CpuClearFast( OSi_GetFromFirmAddr(), sizeof(OSFromFirmBuf) );
 #ifdef SDK_FINALROM
     MI_CpuClearFast( (void*)HW_TWL_ROM_HEADER_BUF, HW_TWL_ROM_HEADER_BUF_SIZE );
     OS_BootFromFIRM();
