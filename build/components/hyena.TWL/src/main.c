@@ -186,6 +186,7 @@ TwlSpMain(void)
     BOOT_Init();
 
     // 活栓挿抜機能初期化
+    // 【TODO:直接起動且つロード済みの場合、カードを読み込まないようにする事】
     HOTSW_Init();
 	
     while (TRUE)

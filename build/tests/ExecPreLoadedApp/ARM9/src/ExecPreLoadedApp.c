@@ -47,7 +47,7 @@ static void(*s_pNowProcess)(void);
 static const u16 *s_pStrMenu[ MLEP_MENU_ELEMENT_NUM ] = 
 {
 	L"再配置チェッカ0（再配置無し）",
-	L"再配置チェッカ1（逆順コピー）",
+	L"再配置チェッカ1（エラー）",
 	L"再配置チェッカ2（正順コピー1）",
 	L"再配置チェッカ3（正順コピー2）",
 	L"再配置チェッカ4（エラー）",
@@ -77,6 +77,142 @@ static const MenuParam s_menuParam = {
 //======================================================
 // テストプログラム
 //======================================================
+
+typedef struct RomSegmentRange {
+	u32		start;
+	u32		end;
+}RomSegmentRange;
+
+#define EPLA_TWL_HEADER_LOAD_MMEM			(SYSM_TWL_ARM9_LTD_LOAD_MMEM_END - 0x4000)
+#define EPLA_TWL_HEADER_LOAD_MMEM_END		SYSM_TWL_ARM9_LTD_LOAD_MMEM_END
+#define EPLA_TWL_ARM7_LTD_LOAD_MMEM			(EPLA_TWL_HEADER_LOAD_MMEM - 0x108000)
+#define EPLA_TWL_ARM7_LTD_LOAD_MMEM_END		EPLA_TWL_HEADER_LOAD_MMEM
+#define EPLA_TWL_ARM9_LTD_LOAD_MMEM_END		EPLA_TWL_ARM7_LTD_LOAD_MMEM
+
+static RomSegmentRange romSegmentRange[RELOCATE_INFO_NUM] = {
+	{ SYSM_TWL_ARM9_LOAD_MMEM,     SYSM_TWL_ARM9_LOAD_MMEM_END },
+	{ SYSM_TWL_ARM7_LOAD_MMEM,     SYSM_TWL_ARM7_LOAD_MMEM_END },
+	{ SYSM_TWL_ARM9_LTD_LOAD_MMEM, EPLA_TWL_ARM9_LTD_LOAD_MMEM_END },
+	{ EPLA_TWL_ARM7_LTD_LOAD_MMEM, EPLA_TWL_ARM7_LTD_LOAD_MMEM_END },
+};
+
+static RomSegmentRange romSegmentRangeNitro[RELOCATE_INFO_NUM] = {
+	{ SYSM_NTR_ARM9_LOAD_MMEM,     SYSM_NTR_ARM9_LOAD_MMEM_END },
+	{ SYSM_NTR_ARM7_LOAD_MMEM,     SYSM_NTR_ARM7_LOAD_MMEM_END },
+	{ SYSM_TWL_ARM9_LTD_LOAD_MMEM, EPLA_TWL_ARM9_LTD_LOAD_MMEM_END },
+	{ EPLA_TWL_ARM7_LTD_LOAD_MMEM, EPLA_TWL_ARM7_LTD_LOAD_MMEM_END },
+};
+
+static u32 load_region_check_list[RELOCATE_INFO_NUM][(RELOCATE_INFO_NUM+1) * 2 - 1] = 
+{
+	{SYSM_NTR_ARM7_LOAD_MMEM, SYSM_NTR_ARM7_LOAD_MMEM_END, 
+	SYSM_TWL_ARM9_LTD_LOAD_MMEM, EPLA_TWL_ARM9_LTD_LOAD_MMEM_END, 
+	EPLA_TWL_ARM7_LTD_LOAD_MMEM, EPLA_TWL_ARM7_LTD_LOAD_MMEM_END, 
+	EPLA_TWL_HEADER_LOAD_MMEM, EPLA_TWL_HEADER_LOAD_MMEM_END, 
+	NULL }, 
+	{SYSM_NTR_ARM9_LOAD_MMEM, SYSM_NTR_ARM9_LOAD_MMEM_END, 
+	SYSM_TWL_ARM9_LTD_LOAD_MMEM, EPLA_TWL_ARM9_LTD_LOAD_MMEM_END, 
+	EPLA_TWL_ARM7_LTD_LOAD_MMEM, EPLA_TWL_ARM7_LTD_LOAD_MMEM_END, 
+	EPLA_TWL_HEADER_LOAD_MMEM, EPLA_TWL_HEADER_LOAD_MMEM_END, 
+	NULL }, 
+	{SYSM_NTR_ARM9_LOAD_MMEM, SYSM_NTR_ARM9_LOAD_MMEM_END, 
+	SYSM_NTR_ARM7_LOAD_MMEM, SYSM_NTR_ARM7_LOAD_MMEM_END, 
+	EPLA_TWL_ARM7_LTD_LOAD_MMEM, EPLA_TWL_ARM7_LTD_LOAD_MMEM_END, 
+	EPLA_TWL_HEADER_LOAD_MMEM, EPLA_TWL_HEADER_LOAD_MMEM_END, 
+	NULL }, 
+	{SYSM_NTR_ARM9_LOAD_MMEM, SYSM_NTR_ARM9_LOAD_MMEM_END, 
+	SYSM_NTR_ARM7_LOAD_MMEM, SYSM_NTR_ARM7_LOAD_MMEM_END, 
+	SYSM_TWL_ARM9_LTD_LOAD_MMEM, EPLA_TWL_ARM9_LTD_LOAD_MMEM_END, 
+	EPLA_TWL_HEADER_LOAD_MMEM, EPLA_TWL_HEADER_LOAD_MMEM_END, 
+	NULL }, 
+};
+
+// ============================================================================
+//
+// アプリ起動
+//
+// ============================================================================
+
+// ROMのロード先領域をチェックし、再配置の必要があればロード先アドレスを変更し、再配置情報を*infoにセットする。
+// ロード先領域が被ってはいけない領域のリストcheck_destは{開始, 終了, 開始２, 終了２, ……, NULL}の形式。
+// 再配置の有り無しに関わらずロード可能ならばTRUE、ロード不可能ならばFALSEを返す
+// 再配置が必要ない場合、再配置情報のsrc,dest,lengthにはそれぞれNULLが代入される。
+static BOOL EPLAi_CheckLoadRegionAndSetRelocateInfoEx
+( u32 *dest, u32 length, RomSegmentRange default_region, u32 *check_dest, Relocate_Info *info )
+{
+	// 再配置情報が残っている可能性大なのでクリアしておく
+	MI_CpuClearFast( info, sizeof(Relocate_Info) );
+	
+	if( default_region.end - default_region.start < length ) return FALSE;// サイズオーバー
+	if( !( default_region.start <= *dest && *dest + length <= default_region.end ) )
+	{
+		// 再配置の必要あり
+		while( *check_dest != NULL )
+		{
+			if( check_dest[0] < *dest + length && *dest < check_dest[1] ) return FALSE;// チェック領域に被ったらNG
+			check_dest += 2;
+		}
+		
+		// ここまで来ていれば再配置可能
+		// 後方コピーフラグOFF
+		info->rev = FALSE;
+		if( default_region.start < *dest + length && *dest + length <= default_region.end )
+		{
+			// デフォルト配置領域の先頭部に、再配置先の後部が被っている
+			// ポストクリア情報
+			info->post_clear_addr = *dest + length;
+			info->post_clear_length = default_region.end - (*dest + length);
+		}
+		else if( default_region.start <= *dest && *dest < default_region.end )
+		{
+			// デフォルト配置領域の後部に、再配置先の先頭部が被っている
+			// ポストクリア情報
+			info->post_clear_addr = default_region.start;
+			info->post_clear_length = *dest - default_region.start;
+			if( *dest < default_region.start + length )
+			{
+				// 更に、デフォルト配置領域にロードしたデータの最後尾と再配置先の先頭部が被っている
+				// 後方コピーフラグON
+				info->rev = TRUE;
+			}
+		}else
+		{
+			// まったく被っていない
+			// ポストクリア情報
+			info->post_clear_addr = default_region.start;
+			info->post_clear_length = default_region.end - default_region.start;
+		}
+		info->src = default_region.start;
+		info->dest = *dest;
+		info->length = length;
+		*dest = default_region.start;
+	}else
+	{
+		// 再配置の必要なし
+		info->src = NULL;
+		info->dest = NULL;
+		info->length = NULL;
+		info->post_clear_addr = NULL;
+		info->post_clear_length = NULL;
+	}
+	return TRUE;
+}
+
+// EPLAi_CheckLoadRegionAndSetRelocateInfoExのラッパー関数
+static BOOL EPLAi_CheckLoadRegionAndSetRelocateInfo( RomSegmentName seg, u32 *dest, u32 length, Relocate_Info *info, BOOL isTwlApp)
+{
+	RomSegmentRange *rsr;
+    if( isTwlApp )
+    {
+		rsr = romSegmentRange;
+	}else
+	{
+		//NTR専用
+		rsr = romSegmentRangeNitro;
+	}
+	return EPLAi_CheckLoadRegionAndSetRelocateInfoEx(dest, length, rsr[seg], load_region_check_list[seg], info);
+}
+
 
 static void DrawMenuScene( void )
 {
@@ -135,7 +271,7 @@ static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
 
 #define EPLAi_GetLauncherParamAddr()				( (LauncherParam *)HW_PARAM_LAUNCH_PARAM )
 
-static void LoadTitle( NAMTitleId bootTitleID )
+static BOOL LoadTitle( NAMTitleId bootTitleID )
 {
 	enum
 	{
@@ -164,7 +300,7 @@ static void LoadTitle( NAMTitleId bootTitleID )
     if( ! bSuccess )
     {
 OS_TPrintf("RebootSystem failed: cant open file\n");
-        return;
+        return FALSE;
     }
 
     {
@@ -183,7 +319,7 @@ OS_TPrintf("RebootSystem failed: cant open file\n");
         {
 OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
             FS_CloseFile(file);
-            return;
+            return FALSE;
         }
 
         readLen = ReadFile(file, header, (s32)sizeof(header));
@@ -192,7 +328,7 @@ OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
         {
 OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", header, 0, sizeof(header), readLen);
             FS_CloseFile(file);
-            return;
+            return FALSE;
         }
 
         if( header[0x15C] != 0x56 || header[0x15D] != 0xCF )
@@ -208,7 +344,7 @@ OS_TPrintf("\n");
 }
 OS_TPrintf("RebootSystem failed: logo CRC error\n");
             FS_CloseFile(file);
-            return;
+            return FALSE;
         }
         
         if( header[0x12] && 0x03 == 0 )
@@ -246,12 +382,12 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
 		{
 			if ( !isTwlApp && i >= ARM9_LTD_STATIC ) continue;// nitroでは読み込まない領域
 			// 再配置情報のランチャーパラメタへの受け渡し処理。暫定的な実装。SDKに機能として組み込んでしまうか検討中。
-			if ( !SYSM_CheckLoadRegionAndSetRelocateInfo( (RomSegmentName)i, &(destaddr[i+region_arm9_ntr]), length[i+region_arm9_ntr],
+			if ( !EPLAi_CheckLoadRegionAndSetRelocateInfo( (RomSegmentName)i, &(destaddr[i+region_arm9_ntr]), length[i+region_arm9_ntr],
 				 (Relocate_Info *)&(EPLAi_GetLauncherParamAddr()->body.v1.relocInfoBuf[24 * i]), isTwlApp ) )
 			{
 	OS_TPrintf("RebootSystem failed: ROM Load Region error\n");
 	            FS_CloseFile(file);
-				return;
+				return FALSE;
 			}
 		}
 
@@ -267,7 +403,7 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
             {
 OS_TPrintf("RebootSystem failed: cant seek file(%d)\n", source[i]);
                 FS_CloseFile(file);
-                return;
+                return FALSE;
             }
 
             readLen = ReadFile(file, (void *)destaddr[i], (s32)len);
@@ -276,7 +412,7 @@ OS_TPrintf("RebootSystem failed: cant seek file(%d)\n", source[i]);
             {
 OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
                 FS_CloseFile(file);
-                return;
+                return FALSE;
             }
         }
 
@@ -284,9 +420,10 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
     }
 
 	// ROMヘッダバッファをコピー
-	MI_CpuCopy32( (void *)HW_TWL_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
+	MI_CpuCopy32( (void *)HW_TWL_ROM_HEADER_BUF, (void *)EPLA_TWL_HEADER_LOAD_MMEM, EPLA_TWL_HEADER_LOAD_MMEM_END - EPLA_TWL_HEADER_LOAD_MMEM );
 	
 	SYSMi_GetWork()->isLoadSucceeded = TRUE;
+    return TRUE;
 }
 
 static void MenuScene(void)
@@ -318,33 +455,33 @@ static void MenuScene(void)
 			switch( s_csr ) {
 				case 0:
 					//アプリ起動
-					LoadTitle(0x0003000452434b30);
-					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b30, &tempflag ); // RCK0
+					if(LoadTitle(0x0003000452434b30))
+						OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b30, &tempflag ); // RCK0
 					break;
 				case 1:
 					//アプリ起動
-					LoadTitle(0x0003000452434b31);
-					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b31, &tempflag ); // RCK1
+					if(LoadTitle(0x0003000452434b31))
+						OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b31, &tempflag ); // RCK1
 					break;
 				case 2:
 					//アプリ起動
-					LoadTitle(0x0003000452434b32);
-					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b32, &tempflag ); // RCK2
+					if(LoadTitle(0x0003000452434b32))
+						OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b32, &tempflag ); // RCK2
 					break;
 				case 3:
 					//アプリ起動
-					LoadTitle(0x0003000452434b33);
-					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b33, &tempflag ); // RCK3
+					if(LoadTitle(0x0003000452434b33))
+						OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b33, &tempflag ); // RCK3
 					break;
 				case 4:
 					//アプリ起動
-					LoadTitle(0x0003000452434b34);
-					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b34, &tempflag ); // RCK4
+					if(LoadTitle(0x0003000452434b34))
+						OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b34, &tempflag ); // RCK4
 					break;
 				case 5:
 					//アプリ起動
-					LoadTitle(0x0003000452434b35);
-					OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b35, &tempflag ); // RCK5
+					if(LoadTitle(0x0003000452434b35))
+						OS_SetLauncherParamAndResetHardware( 0, 0x0003000452434b35, &tempflag ); // RCK5
 					break;
 				case 6:
 					OS_SetLauncherParamAndResetHardware( 0, NULL, &tempflag );
