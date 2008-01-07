@@ -105,11 +105,6 @@ Property
 	BannerTWLFile	$(TWLSDK_ROOT)/include/twl/specfiles/default.bnr
 
 	#
-	# Certification FILE:
-	#
-	Certificate		$(TWLSDK_ROOT)/include/twl/specfiles/default_sgn.sbin
-
-	#
 	# Digest parameters:
 	#
 	DigestParam		1024 32

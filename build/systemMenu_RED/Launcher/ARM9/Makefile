@@ -26,6 +26,8 @@ SUBDIRS					=	\
 
 #----------------------------------------------------------------------------
 
+#FIRM_BUILD				=	TRUE
+
 TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
@@ -61,6 +63,12 @@ ADDRESS_DTCM			=	0x0e000000
 DEFAULT_COMP_ARM7		=	hyena
 
 MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
+ifdef FIRM_BUILD
+MAKEROM_FLAGS			+=	-f \
+							-DFIRM_PRIV_KEY=$(TWL_KEYSDIR)/rsa/private9_0.der \
+							-DFIRM_PUB_KEY=$(TWL_KEYSDIR)/rsa/public9_0.der
+endif
+
 MAKETAD_FLAGS			+= -s
 
 include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
