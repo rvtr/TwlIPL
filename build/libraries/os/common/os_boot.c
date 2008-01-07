@@ -59,6 +59,11 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     /* FS/FATFSバッファのクリア */
     mem_list[i++] = (u32)HW_FIRM_FATFS_COMMAND_BUFFER;  // 0x02ff7800 - 0x02ffbfff
     mem_list[i++] = (u32)HW_FIRM_FS_TEMP_BUFFER_END - (u32)HW_FIRM_FATFS_COMMAND_BUFFER;
+    /* 一部鍵バッファのクリア (鍵管理.xls参照) */
+    mem_list[i++] = (u32)OSi_GetFromFirmAddr()->rsa_pubkey[0];
+    mem_list[i++] = ACS_PUBKEY_LEN;
+    mem_list[i++] = (u32)OSi_GetFromFirmAddr()->rsa_pubkey[2];
+    mem_list[i++] = ACS_PUBKEY_LEN;
 #else   // SDK_ARM7
     {   /* REBOOT_ExecuteのCODEとSTACKの隙間をクリア */
         u32 stack_bottom = (u32)stack_top - OS_BOOT_STACK_SIZE_MIN - sizeof(mem_list);
@@ -67,6 +72,8 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
         mem_list[i++] = code_buf_end;
         mem_list[i++] = stack_bottom - code_buf_end;
     }
+    /* 一部鍵バッファのクリア (鍵管理.xls参照) */
+    // 該当無し
 #endif  // SDK_ARM7
     mem_list[i++] = NULL;
     // copy forward
