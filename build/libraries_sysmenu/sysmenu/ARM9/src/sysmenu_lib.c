@@ -688,6 +688,10 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 	// アプリロード済みで、再配置要求ありなら、再配置
 		SYSMi_Relocate();
 		SYSMi_GetWork()->isLoadSucceeded = TRUE;
+	}else
+	{
+		// アプリロード済みで、再配置要求なし
+		SYSMi_GetWork()->isLoadSucceeded = TRUE;
 	}
 	
 	if( pBootTitle->flags.media == TITLE_MEDIA_CARD ) {
