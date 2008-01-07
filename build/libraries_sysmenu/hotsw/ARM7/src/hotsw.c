@@ -46,6 +46,7 @@ static void SetMCSCR(void);
 
 static void GenVA_VB_VD(void);
 static void LoadTable(void);
+static void ReadRomEmulationData(void);
 static void ReadIDNormal(void);
 static void DecryptObjectFile(void);
 
@@ -242,14 +243,7 @@ BOOL HOTSW_Boot(void)
             OS_TPrintf(" | Secure Command Latency : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.secure_cmd_latency);
             
             // Romエミュレーションデータを取得
-            if(s_cbData.cardType == DS_CARD_TYPE_1){
-				// Type1の場合
-                MI_CpuCopy8(s_cbData.pBootSegBuf->rh.s.reserved_C, s_cbData.romEmuBuf, ROM_EMULATION_DATA_SIZE);
-            }
-            else if(s_cbData.cardType == DS_CARD_TYPE_2){
-				// Type2の場合
-                ReadRomEmulationData_DSType2(&s_cbData);
-            }
+			ReadRomEmulationData();
             OS_TPrintf("Rom Emulation Data : 0x%08x\n",s_cbData.romEmuBuf[0]);
 
 			// ROMヘッダCRCを算出してチェック。NintendoロゴCRCも確認。
@@ -569,6 +563,37 @@ static void LoadTable(void)
 	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
 		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
         temp = reg_HOTSW_MCD1;
+	}
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         ReadRomEmulationData
+  
+  Description:  Romエミュレーションデータの読み込み
+ *---------------------------------------------------------------------------*/
+static void ReadRomEmulationData(void)
+{
+	u32 count=0;
+    u32 temp;
+    u32 *dst = &s_cbData.romEmuBuf;
+    
+	// MCCMD レジスタ設定
+	reg_HOTSW_MCCMD0 = 0x3e000000;
+	reg_HOTSW_MCCMD1 = 0x0;
+
+	// MCCNT1 レジスタ設定 (START = 1  PC = 001(1ページリード)に latency1 = 0x5fe)
+	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x1 << PC_SHIFT) | (0x5fe & LATENCY1_MASK);
+    
+	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
+	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
+        if(count >= ROM_EMULATION_START_OFS && count < ROM_EMULATION_END_OFS){
+        	*dst++ = reg_HOTSW_MCD1;
+        }
+        else{
+			temp = reg_HOTSW_MCD1;
+        }
+        count+=4;
 	}
 }
 

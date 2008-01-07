@@ -30,37 +30,6 @@ static void SetMCSCR(void);
 // ■       ノーマルモードのコマンド       ■
 // ■--------------------------------------■
 /*---------------------------------------------------------------------------*
-  Name:         ReadRomEmulationData_DSType2
-  
-  Description:  DSカードType2のRomエミュレーションデータの読み込み
- *---------------------------------------------------------------------------*/
-void ReadRomEmulationData_DSType2(CardBootData *cbd)
-{
-	u32 count=0;
-    u32 temp;
-    u32 *dst = cbd->romEmuBuf;
-    
-	// MCCMD レジスタ設定
-	reg_HOTSW_MCCMD0 = 0x3e000000;
-	reg_HOTSW_MCCMD1 = 0x0;
-
-	// MCCNT1 レジスタ設定 (START = 1  PC = 001(1ページリード)に latency1 = 0x5fe)
-	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x1 << PC_SHIFT) | (0x5fe & LATENCY1_MASK);
-    
-	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-        if(count >= ROM_EMULATION_START_OFS && count < ROM_EMULATION_END_OFS){
-        	*dst++ = reg_HOTSW_MCD1;
-        }
-        else{
-			temp = reg_HOTSW_MCD1;
-        }
-        count+=4;
-	}
-}
-
-/*---------------------------------------------------------------------------*
   Name:         ReadIDNormal_DSType2
   
   Description:  DSカードType1のノーマルモードのID読み込み
