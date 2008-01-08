@@ -146,7 +146,6 @@ BOOL BOOT_WaitStart( void )
 			else
 			{
 				target = REBOOT_TARGET_DS_APP;
-				MCU_GoDsMode();
 				CDC_GoDsMode();
 				// DSサウンド：DSP = 8:0
 				// 32KHz
