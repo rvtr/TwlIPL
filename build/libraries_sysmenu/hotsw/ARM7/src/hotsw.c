@@ -579,7 +579,13 @@ static void ReadRomEmulationData(void)
 	u32 count=0;
     u32 temp;
     u32 *dst = s_cbData.romEmuBuf;
-    
+
+    // 量産用CPUでは平文アクセス防止のためリードしない
+    if ( ! (*(u8*)(OS_CHIPTYPE_DEBUGGER_ADDR) & OS_CHIPTYPE_DEBUGGER_MASK) )
+    {
+        return;
+    }
+
 	// MCCMD レジスタ設定
 	reg_HOTSW_MCCMD0 = 0x3e000000;
 	reg_HOTSW_MCCMD1 = 0x0;
