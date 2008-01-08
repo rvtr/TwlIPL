@@ -11,5 +11,5 @@
 　TWLIPL_ROOT
 	ex.) TWLIPL_ROOT=c:/TwlIPL
   TWL_KEYSDIR（ブートROMから起動可能なファームを作成する場合、鍵はtwl_firmwareリポジトリ内）
-	ex.) TWL_KEYSDIR=c:/twl_firmware
+	ex.) TWL_KEYSDIR=c:/twl_firmware/bootrom/build/keys
 
