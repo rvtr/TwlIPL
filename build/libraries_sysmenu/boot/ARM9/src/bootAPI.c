@@ -60,8 +60,6 @@ void BOOT_Ready( void )
     // エントリアドレスの正当性をチェックし、無効な場合は無限ループに入る。
 //  SYSMi_CheckEntryAddress();
 
-    CAMERA_PowerOffCore();
-
 //  FinalizeCardPulledOut();                                // カード抜け検出終了処理
     BOOTi_ClearREG_RAM();                                   // レジスタ＆RAMクリア
     (void)GX_VBlankIntr( FALSE );
