@@ -11,6 +11,10 @@
 extern "C" {
 #endif
 
+#ifdef SDK_ARM7
+#define SYSM_HOTSW_ENABLE_ROMEMU
+#endif // SDK_ARM7
+
 // Function prototype -------------------------------------------------------
 // Šˆğ‘}”²ˆ—‚Ì‰Šú‰»
 void HOTSW_Init(void);
