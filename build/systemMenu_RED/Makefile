@@ -20,7 +20,7 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS		=	launcher MachineSettings PictoChat \
+SUBDIRS		=	launcher MachineSettings PictoChat HWInfoWriter \
 				#DS_DownloadPlay
 
 #----------------------------------------------------------------------------
