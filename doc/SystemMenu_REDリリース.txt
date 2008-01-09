@@ -29,8 +29,8 @@ SystemMenu_RED
 	・NTR側(NVRAM)への保存					○
 
 ・WiFi設定									×
-	・設定データフォーマットFIX				×
-	・仕様FIX								×
+	・設定データフォーマットFIX				○
+	・仕様FIX								○
 
 ・DSダウンロードプレイ
 	・仕様FIX								○	（DSダウンロードプレイと同一仕様）

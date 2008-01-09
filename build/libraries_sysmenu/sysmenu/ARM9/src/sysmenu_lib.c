@@ -31,7 +31,7 @@ typedef struct BannerCheckParam {
 
 // extern data-----------------------------------------------------------------
 extern void SYSMi_SetLauncherMountInfo( void );
-extern void SYSM_SetBootAppMountInfo( NAMTitleId titleID );		// マウント情報のセット
+extern void SYSM_SetBootAppMountInfo( TitleProperty *pBootTitle );		// マウント情報のセット
 
 // function's prototype-------------------------------------------------------
 static TitleProperty *SYSMi_CheckShortcutBoot( void );
@@ -251,7 +251,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 			s_bootTitle.flags.isLogoSkip = TRUE;					// ロゴデモを飛ばす
 			s_bootTitle.flags.media = TITLE_MEDIA_CARD;
 			s_bootTitle.flags.isValid = TRUE;
-			// titleIDは"0"（カード）
+			s_bootTitle.titleID = xxxx;
 			SYSM_SetLogoDemoSkip( TRUE );
 			return &s_bootTitle;
 		}
@@ -317,7 +317,7 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 	
 	// タイトル情報フラグのセット
 	pTitleList_Card->flags.media = TITLE_MEDIA_CARD;
-	pTitleList_Card->titleID = 0;
+	pTitleList_Card->titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
 	
 	return retval;
 }
@@ -364,6 +364,7 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 		OS_TPrintf( "Warning: TitleList_Nand num over LAUNCHER_TITLE_LIST_NUM(%d)\n", LAUNCHER_TITLE_LIST_NUM );
 	}
 	gotten = NAM_GetTitleList( &titleIdArray[ 0 ], LAUNCHER_TITLE_LIST_NUM - 1 );
+	gotten = NAM_GetNumTitles();	// [TODO:]本来だったら必要ないが、現在はNAM_GetTitleListがアプリ個数をちゃんと返してくれないので。
 	
 	for(l=0;l<gotten;l++)
 	{
@@ -797,7 +798,7 @@ AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 	
 	
 	// マウント情報の登録
-	SYSM_SetBootAppMountInfo  ( pBootTitle->titleID );
+	SYSM_SetBootAppMountInfo( pBootTitle );
 	
 	BOOT_Ready();	// never return.
 	

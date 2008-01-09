@@ -40,7 +40,7 @@ extern "C" {
 #define CARD_SLOT_NUM							1					// カードスロット数
 #define LAUNCHER_TITLE_LIST_NUM					40					// ランチャーのタイトルリスト数
 
-#define TITLE_ID_MACHINE_SETTINGS				0x000100015445534d	// 本体設定のタイトルID
+#define TITLE_ID_MACHINE_SETTINGS				0x000300055445534d	// 本体設定のタイトルID
 
 #define PAD_PRODUCTION_SHORTCUT_CARD_BOOT		( PAD_BUTTON_A | PAD_BUTTON_B	\
 												| PAD_BUTTON_X | PAD_BUTTON_Y | PAD_BUTTON_R )

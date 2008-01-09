@@ -17,8 +17,8 @@
 #----------------------------------------------------------------------------
 
 SUBDIRS					=	\
+							../../../libraries_sysmenu/sysmenu \
 #							../../../libraries_sysmenu/reloc_info \
-#							../../../libraries_sysmenu/sysmenu \
 #							../../../libraries_sysmenu/settings \
 #							../../../libraries_sysmenu/boot \
 #							../../../libraries_sysmenu/hotsw \
@@ -38,6 +38,7 @@ TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
 TARGET_BIN				=	main.srl
 
 LCFILE_SPEC				=	ARM9-TS.lsf
+#LCFILE_TEMPLATE			=	ARM9-TS.lcf.template
 ROM_SPEC				=	main.rsf
 
 LOGO_DIR				=	Logo
@@ -54,8 +55,9 @@ SRCS					=	main.c launcher.c sound.c\
 LINCLUDES				=	$(MISC_DIR)/include \
 							$(SRCDIR)/$(LOGO_DIR)
 
-LLIBRARIES				+=	libnam$(TWL_LIBSUFFIX).a \
-							libese$(TWL_LIBSUFFIX).a \
+LLIBRARIES				+=	libes$(TWL_LIBSUFFIX).a		\
+							libboc$(TWL_LIBSUFFIX).a	\
+							libnam$(TWL_LIBSUFFIX).a	\
 							libreloc_info$(TWL_LIBSUFFIX).a
 
 ADDRESS_DTCM			=	0x0e000000

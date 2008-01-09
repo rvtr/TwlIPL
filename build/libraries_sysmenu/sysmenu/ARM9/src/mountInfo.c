@@ -20,60 +20,45 @@
 #include <sysmenu.h>
 
 // define data-----------------------------------------------------------------
-#define DEFAULT_MOUNT_LIST_NUM			7
-#define PRV_SAVE_DATA_MOUNT_INDEX		5			// プライベートセーブデータの s_defaultMountInfo リストインデックス
-#define PUB_SAVE_DATA_MOUNT_INDEX		6			// パブリック　セーブデータの s_defaultMountInfo リストインデックス
+#define DEFAULT_MOUNT_LIST_NUM				7
+#define PRV_SAVE_DATA_MOUNT_INDEX			5			// プライベートセーブデータの s_defaultMountInfo リストインデックス
+#define PUB_SAVE_DATA_MOUNT_INDEX			6			// パブリック　セーブデータの s_defaultMountInfo リストインデックス
+
+#define TITLEID_HI_APP_SYS_FLAG_SHIFT		0
+#define TITLEID_HI_NOT_LAUNCH_FLAG_SHIFT	1
+#define TITLEID_HI_MEDIA_NAND_FLAG_SHIFT	2
+#define TITLEID_HI_APP_SYS_FLAG				( 1 << TITLEID_HI_APP_SYS_FLAG_SHIFT )
+#define TITLEID_HI_NOT_LAUNCH_FLAG			( 1 << TITLEID_HI_NOT_LAUNCH_FLAG_SHIFT )
+#define TITLEID_HI_MEDIA_NAND_FLAG			( 1 << TITLEID_HI_MEDIA_NAND_FLAG_SHIFT )
+
 
 // extern data-----------------------------------------------------------------
 
 // function's prototype--------------------------------------------------------
 void SYSMi_SetLauncherMountInfo( void );
-void SYSM_SetBootAppMountInfo( NAMTitleId titleID );
+void SYSM_SetBootAppMountInfo( TitleProperty *pBootTitle );
 
-static void SYSMi_ModifySaveDataMount( NAMTitleId titleID );
+static void SYSMi_SetBootSRLPath( NAMTitleId titleID, TitleMedia bootMedia );
+static void SYSMi_SetMountInfoCore( const OSMountInfo *pSrc );
+static void SYSMi_ModifySaveDataMount( NAMTitleId titleID, OSMountInfo *pMountTgt );
 
 // global variable-------------------------------------------------------------
 
 // static variable-------------------------------------------------------------
-static void SYSMi_SetBootSRLPath( NAMTitleId titleID );
-static void SYSMi_SetMountInfoCore( const OSMountInfo *pSrc );
 
 // const data------------------------------------------------------------------
-
-/*
-
-	※現在、SDKのFATFSバグ回避のため、突貫で"nand:"を"F:"ドライブにしている。
-	（NAND2KBリード問題対策が、"F"ドライブのみでの対応になっているため。）
-
-*/
-
 
 // デフォルトマウント情報リスト
 OSMountInfo s_defaultMountList[ DEFAULT_MOUNT_LIST_NUM ] ATTRIBUTE_ALIGN(4) = {
 //  drive  device                target  pertitionIdx  resource           userPermission                rsvA  B  archive    path
 	{ 'A', OS_MOUNT_DEVICE_SD,   OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "sdmc",    "/" },
-//	{ 'B', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R),                0, 0, "nand",    "/" },	// ユーザーはこのアーカイブではWrite不可
-//	{ 'C', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 1, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R),                0, 0, "nand2",   "/" },	// ユーザーはこのアーカイブではWrite不可
-	{ 'F', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand",    "/" },	// ユーザーはこのアーカイブではWrite不可
-	{ 'C', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 1, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand2",   "/" },	// ユーザーはこのアーカイブではWrite不可
+	{ 'B', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand",    "/" },	// ユーザーアプリはこのアーカイブではWrite不可
+	{ 'C', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 1, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand2",   "/" },	// ユーザーアプリはこのアーカイブではWrite不可
 	{ 'D', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "shared2", "nand2:/shared2" },
 	{ 'E', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "photo",   "nand2:/photo" },
-	{ 'G', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPrv", NULL },
-	{ 'H', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPub", NULL },
+	{ 'F', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPrv", NULL },	// NANDにセーブデータがないアプリの場合は、マウントされない。
+	{ 'G', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPub", NULL },	// NANDにセーブデータがないアプリの場合は、マウントされない。
 };
-
-// ランチャーマウント情報
-const OSMountInfo s_launcherMountList[ DEFAULT_MOUNT_LIST_NUM ] ATTRIBUTE_ALIGN(4) = {
-//  drive  device                target  pertitionIdx  resource           userPermission                rsvA  B  archive    path
-	{ 'A', OS_MOUNT_DEVICE_SD,   OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "sdmc",    "/" },
-	{ 'F', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand",    "/" },	// ランチャーはここもアクセス可
-	{ 'C', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 1, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand2",   "/" },	// 同上
-	{ 'D', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "shared2", "nand2:/shared2" },
-	{ 'E', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "photo",   "nand2:/photo" },
-	{   0, OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPrv", NULL },
-	{   0, OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPub", NULL },
-};
-
 
 
 // ============================================================================
@@ -82,20 +67,37 @@ const OSMountInfo s_launcherMountList[ DEFAULT_MOUNT_LIST_NUM ] ATTRIBUTE_ALIGN(
 //
 // ============================================================================
 
+/*
+	要確認
+	カードブート時のBootSRLPathは、"rom:"ではなく、""なのか？
+	"nand:" と "nand1:"のuserPermissionは"OS_MOUNT_USR_R"で良いのか？
+*/
+
 // ランチャーのマウント情報セット
 void SYSMi_SetLauncherMountInfo( void )
 {
 	// ※とりあえず自身はROMブートで。（後で修正）
-//	SYSMi_SetBootSRLPath( 0 );						// ※SDK2623では、BootSRLPathを"rom:"としたらFSi_InitRomArchiveでNANDアプリ扱いされてアクセス例外で落ちる。
-	SYSMi_SetMountInfoCore( &s_launcherMountList[0] );
+//	SYSMi_SetBootSRLPath(  );						// ※SDK2623では、BootSRLPathを"rom:"としたらFSi_InitRomArchiveでNANDアプリ扱いされてアクセス例外で落ちる。
+	SYSMi_SetMountInfoCore( &s_defaultMountList[0] );
 }
 
 
 // システム領域に、ブートするアプリのマウント情報を登録する
-void SYSM_SetBootAppMountInfo( NAMTitleId titleID )
+void SYSM_SetBootAppMountInfo( TitleProperty *pBootTitle )
 {
-	SYSMi_SetBootSRLPath( titleID );				// 起動アプリのSRLパスをセット
-	SYSMi_ModifySaveDataMount( titleID );			// セーブデータ有無によるマウント情報の編集
+	u32 titleID_Hi = (u32)( pBootTitle->titleID >> 32 );		// u64で論理演算はできない？
+	// 起動アプリのSRLパスをセット
+	SYSMi_SetBootSRLPath( pBootTitle->titleID, (TitleMedia)pBootTitle->flags.media );
+	
+	// ユーザーアプリの場合、"nand:", "nand2:"アーカイブをReadOnlyに変更。
+	if( ( titleID_Hi & TITLEID_HI_APP_SYS_FLAG ) == 0 ) {
+		s_defaultMountList[ 1 ].userPermission = OS_MOUNT_USR_R;	// "nand:"  アーカイブをReadOnlyに
+		s_defaultMountList[ 2 ].userPermission = OS_MOUNT_USR_R;	// "nand2:" アーカイブをReadOnlyに
+	}
+	
+	// セーブデータ有無によるマウント情報の編集
+	SYSMi_ModifySaveDataMount( pBootTitle->titleID, &s_defaultMountList[ PRV_SAVE_DATA_MOUNT_INDEX ] );
+	
 	/*
 		※※　注意　※※
 		MountInfoは、FSで直接参照してアクセス許可状態を判定しているため、ここにアプリ用のデータをセットすると、
@@ -105,16 +107,13 @@ void SYSM_SetBootAppMountInfo( NAMTitleId titleID )
 	SYSMi_SetMountInfoCore( (const OSMountInfo *)&s_defaultMountList[0] );	// マウント情報のセット
 }
 
-
 // 起動SRLパスをシステム領域にセット
-static void SYSMi_SetBootSRLPath( NAMTitleId titleID )
+static void SYSMi_SetBootSRLPath( NAMTitleId titleID, TitleMedia bootMedia )
 {
-	static char path[ FS_FILE_NAME_MAX ];
+	static char path[ FS_ENTRY_LONGNAME_MAX ];
+	MI_CpuClear8( path, FS_ENTRY_LONGNAME_MAX );
 	
-	MI_CpuClear8( path, FS_FILE_NAME_MAX );
-	
-	// タイトルIDが"0"の時は、ROMと判断する（DSダウンロードプレイの時の挙動は未実装。。。）
-	if( titleID ) {
+	if( bootMedia == TITLE_MEDIA_NAND ) {
 		if( NAM_GetTitleBootContentPath( path, titleID ) != NAM_OK ) {
 			OS_TPrintf( "ERROR: BootContentPath Get failed.\n" );
 		}
@@ -153,25 +152,29 @@ static void SYSMi_SetMountInfoCore( const OSMountInfo *pSrc )
 
 
 // タイトルIDをもとにセーブデータ有無を判定して、マウント情報を編集する。
-static void SYSMi_ModifySaveDataMount( NAMTitleId titleID )
+static void SYSMi_ModifySaveDataMount( NAMTitleId titleID, OSMountInfo *pMountTgt )
 {
 	int i;
-	OSMountInfo *pMountTgt = &s_defaultMountList[ PRV_SAVE_DATA_MOUNT_INDEX ];
+	u32 titleID_Hi = (u32)( titleID >> 32 );		// u64で論理演算はできない？
 	
-	if( titleID ) {
-		// タイトルIDが指定されているNANDアプリの場合は、セーブデータ有無を判定して、パスをセット
-		char saveFilePath[ 2 ][ FS_FILE_NAME_MAX ];
+	// ※カードからブートされた場合でも、titleIDが"NANDアプリ"の場合は、セーブデータをマウントするようにしている。
+	
+	// タイトルIDが"NANDアプリ"の場合は、セーブデータ有無を判定して、パスをセット
+	if( titleID_Hi & TITLEID_HI_MEDIA_NAND_FLAG ) {
+		char saveFilePath[ 2 ][ FS_ENTRY_LONGNAME_MAX ];
+		u32 saveDataSize[ 2 ];
+		saveDataSize[ 0 ] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->private_save_data_size;
+		saveDataSize[ 1 ] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->public_save_data_size;
 		
 		// セーブデータのファイルパスを取得
 		NAM_GetTitleSaveFilePath( saveFilePath[ 1 ], saveFilePath[ 0 ], titleID );
-		// 結果を元にマウント情報を編集。
+		
+		// "ROMヘッダのNANDセーブファイルサイズ > 0" かつ そのファイルを開ける場合のみマウント情報を登録
 		for( i = 0; i < 2; i++ ) {
 			FSFile  file[1];
 			FS_InitFile( file );
-			// ※現在は、セーブファイルを開けるかどうかでセーブファイル有無を確認。
-			//   最終的にはTMDもしくはROMヘッダの値を参照。ROMヘッダの方が簡単で速いか？
-			
-			if( FS_OpenFileEx( file, saveFilePath[ i ], FS_FILEMODE_R) ) {
+			if( saveDataSize[ i ] &&
+				FS_OpenFileEx( file, saveFilePath[ i ], FS_FILEMODE_R) ) {
 				FS_CloseFile( file );
 				STD_CopyLStringZeroFill( pMountTgt->path, saveFilePath[ i ], OS_MOUNT_PATH_LEN );
 			}else {
@@ -187,55 +190,3 @@ static void SYSMi_ModifySaveDataMount( NAMTitleId titleID )
 	}
 }
 
-
-/*
-static void SYSMi_ModifySaveDataMount2( NAMTitleId titleID, ROM_Header_Short *pROMH )
-{
-	int i;
-	OSMountInfo *pMountTgt = &s_defaultMountList[ PRV_SAVE_DATA_MOUNT_INDEX ];
-	u32 *pROMHSaveDataSize = &pROMH->public_save_data_size;
-	
-	if( titleID ) {
-		// タイトルIDが指定されているNANDアプリの場合は、セーブデータ有無を判定して、パスをセット
-		char saveFilePath[ 2 ][ FS_FILE_NAME_MAX ];
-		
-		// セーブデータのファイルパスを取得
-		NAM_GetTitleSaveFilePath( saveFilePath[ 1 ], saveFilePath[ 0 ], titleID );
-		
-		// 結果を元にマウント情報を編集。
-		for( i = 0; i < 2; i++ ) {
-			BOOL isFind = FALSE;
-			// ROMヘッダにセーブデータサイズの記載があるなら
-			if( *pROMHSaveDataSize++ ) {
-				FSFile  file[1];
-				FS_InitFile( file );
-				// セーブファイルを開けるならOK。
-				if( FS_OpenFileEx( file, saveFilePath[ i ], FS_FILEMODE_R) ) {
-					FS_CloseFile( file );
-					isFind = TRUE;
-				}
-				// ※ランチャーでセーブデータファイルのリカバリまでやる？
-#if 0
-				else if( FS_CreateFile( saveFilePath[ i ], FS_PERMIT_R | FS_PERMIT_W ) &&
-						 FS_SetFileLength( file, *pROMHSaveDataSize )  ) {
-					FS_CloseFile( file );
-					isFind = TRUE;
-				}
-#endif
-			}
-			
-			if( isFind ) {
-				STD_CopyLStringZeroFill( pMountTgt->path, saveFilePath[ i ], OS_MOUNT_PATH_LEN );
-			}else {
-				pMountTgt->drive[ 0 ] = 0;
-			}
-			pMountTgt++;
-		}
-	}else {
-		// タイトルID指定なしのカードアプリの場合は、セーブデータ無効
-		for( i = 0; i < 2; i++ ) {
-			pMountTgt->drive[ 0 ] = 0;
-		}
-	}
-}
-*/
