@@ -31,8 +31,9 @@ TARGET_BIN		?=	$(subst .,$(DUMMY_KEYS_SUFFIX).,$(TARGET_FIRM_BIN))
 #
 # change default variables for product
 #
-override TWL_ARCHGEN	:= LIMITED
-override TWL_MEMSIZE	:= 16M
+override TARGET_PLATFORM	:= TWL
+override TWL_ARCHGEN		:= LIMITED
+override TWL_MEMSIZE		:= 16M
 
 #----------------------------------------------------------------------------
 #  TWL-FIRM path settings
