@@ -136,7 +136,7 @@ SDK_WEAK_SYMBOL asm void _start( void )
 
         //---- wait for main memory mode into burst mode
         ldr             r3, =REG_EXMEMCNT_L_ADDR
-        mov             r1, #REG_MI_EXMEMCNT_L_ECE2_MASK
+        mov             r1, #REG_MI_EXMEMCNT_L_EMODE_MASK
 @1:
         ldrh            r2, [r3]
         tst             r2, r1
