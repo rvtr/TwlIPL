@@ -40,7 +40,7 @@ extern "C" {
 #define TWL_COMMENT_BUFFERSIZE					( ( TWL_COMMENT_LENGTH + 1 ) * 2 )	// コメントバッファサイズ
 #define TWL_FAVORITE_COLOR_MAX_NUM				NTR_FAVORITE_COLOR_MAX_NUM	// 好きな色の最大数
 // バックライト輝度
-#define TWL_BACKLIGHT_LEVEL_MAX					22							// TWLバックライト最大輝度レベル
+#define TWL_BACKLIGHT_LEVEL_MAX					31							// TWLバックライト最大輝度レベル
 // ペアレンタルコントロール
 #define TWL_PARENTAL_CONTROL_RATING_AGE_MAX		31
 #define TWL_PARENTAL_CONTROL_PASSWORD_LENGTH	4               			// 暗証番号の桁数
