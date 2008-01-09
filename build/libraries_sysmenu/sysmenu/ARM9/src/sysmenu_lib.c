@@ -699,7 +699,7 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 	}else if(pBootTitle->flags.isAppLoadCompleted)
 	{
 		// カードブートでなく、ロード済みの場合、再配置情報をランチャーパラメタから読み込み
-		MI_CpuCopy8( SYSM_GetLauncherParamBody()->v1.relocInfoBuf, SYSMi_GetWork()->romRelocateInfo, sizeof(Relocate_Info)*RELOCATE_INFO_NUM );
+		MI_CpuCopy8( SYSM_GetLauncherParamBody()->v1.relocInfo, SYSMi_GetWork()->romRelocateInfo, sizeof(Relocate_Info)*RELOCATE_INFO_NUM );
 		// 更にヘッダを再配置
 		if( ((ROM_Header_Short *)(0x27e0000 - 0x4000))->platform_code & PLATFORM_CODE_FLAG_TWL ) {
 			// TWL-ROMヘッダ情報の再配置

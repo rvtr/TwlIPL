@@ -36,8 +36,6 @@ extern "C" {
 #define CLONE_BOOT_MODE						1
 #define OTHER_BOOT_MODE						2
 
-#define RELOCATE_INFO_NUM					4 // ROM再配置情報の数（今のところarm9,arm7それぞれltdとflxで最大4つ）
-
 
 // NAMTitleIDをHiLoに分割してアクセスする場合に使用
 typedef struct TitleID_HiLo {

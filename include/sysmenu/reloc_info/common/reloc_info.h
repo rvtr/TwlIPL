@@ -26,17 +26,6 @@ extern "C" {
 //　データ型定義
 //----------------------------------------------------------------------
 
-// 再配置情報データ構造体
-typedef struct Relocate_Info
-{
-	u32				src;
-	u32				dest;
-	u32				length;
-	u32				post_clear_addr;
-	u32				post_clear_length;
-	BOOL			rev;
-}Relocate_Info;
-
 // ROMセグメント名
 typedef enum RomSegmentName {
 	ARM9_STATIC = 0,

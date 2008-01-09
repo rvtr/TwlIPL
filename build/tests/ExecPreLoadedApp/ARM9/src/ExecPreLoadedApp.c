@@ -387,7 +387,7 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
 			if ( !isTwlApp && i >= ARM9_LTD_STATIC ) continue;// nitroでは読み込まない領域
 			// 再配置情報のランチャーパラメタへの受け渡し処理。暫定的な実装。SDKに機能として組み込んでしまうか検討中。
 			if ( !EPLAi_CheckLoadRegionAndSetRelocateInfo( (RomSegmentName)i, &(destaddr[i+region_arm9_ntr]), length[i+region_arm9_ntr],
-				 (Relocate_Info *)&(EPLAi_GetLauncherParamAddr()->body.v1.relocInfoBuf[24 * i]), isTwlApp ) )
+				 &EPLAi_GetLauncherParamAddr()->body.v1.relocInfo[i], isTwlApp ) )
 			{
 	OS_TPrintf("RebootSystem failed: ROM Load Region error\n");
 	            FS_CloseFile(file);
