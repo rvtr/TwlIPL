@@ -60,7 +60,7 @@ static u32 load_region_check_list[RELOCATE_INFO_NUM][RELOCATE_INFO_NUM * 2 - 1] 
 
 // ============================================================================
 //
-// アプリ起動
+// 再配置情報生成
 //
 // ============================================================================
 
@@ -71,9 +71,7 @@ static u32 load_region_check_list[RELOCATE_INFO_NUM][RELOCATE_INFO_NUM * 2 - 1] 
 static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfoEx
 ( u32 *dest, u32 length, RomSegmentRange default_region, u32 *check_dest, Relocate_Info *info )
 {
-	// 再配置情報が残っている可能性大なのでクリアしておく
 	MI_CpuClearFast( info, sizeof(Relocate_Info) );
-	
 	if( default_region.end - default_region.start < length ) return FALSE;// サイズオーバー
 	if( !( default_region.start <= *dest && *dest + length <= default_region.end ) )
 	{
@@ -84,7 +82,7 @@ static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfoEx
 			check_dest += 2;
 		}
 		
-		// ここまで来ていれば再配置可能
+		// ここまで来ていれば再配置可
 		// 後方コピーフラグOFF
 		info->rev = FALSE;
 		if( default_region.start < *dest + length && *dest + length <= default_region.end )
@@ -120,11 +118,6 @@ static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfoEx
 	}else
 	{
 		// 再配置の必要なし
-		info->src = NULL;
-		info->dest = NULL;
-		info->length = NULL;
-		info->post_clear_addr = NULL;
-		info->post_clear_length = NULL;
 	}
 	return TRUE;
 }

@@ -37,8 +37,9 @@ SRCS					=	main.c ExecPreLoadedApp.c \
 
 LINCLUDES				=	$(MISC_DIR)/include
 
-LLIBRARIES				+=	libnam$(TWL_LIBSUFFIX).a \
-							libese$(TWL_LIBSUFFIX).a \
+LLIBRARIES				+=	libboc$(TWL_LIBSUFFIX).a \
+							libes$(TWL_LIBSUFFIX).a \
+							libnam$(TWL_LIBSUFFIX).a \
 							libreloc_info$(TWL_LIBSUFFIX).a
 
 ADDRESS_DTCM			=	0x0e000000

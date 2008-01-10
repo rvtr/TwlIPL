@@ -625,6 +625,8 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
         }
         
         // 領域読み込み先のチェック及び再配置情報データの作成
+        // ゲームカードの再配置情報が書き込まれているので、nandアプリロード前に一旦クリア
+        MI_CpuClearFast(SYSMi_GetWork()->romRelocateInfo, sizeof(Relocate_Info) * RELOCATE_INFO_NUM);
 		for( i=0; i<RELOCATE_INFO_NUM; i++ )
 		{
 			if ( !isTwlApp && i >= ARM9_LTD_STATIC ) continue;// nitroでは読み込まない領域
@@ -702,17 +704,17 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 		// カードブートでなく、ロード済みの場合、再配置情報をランチャーパラメタから読み込み
 		MI_CpuCopy8( SYSM_GetLauncherParamBody()->v1.relocInfo, SYSMi_GetWork()->romRelocateInfo, sizeof(Relocate_Info)*RELOCATE_INFO_NUM );
 		// 更にヘッダを再配置
-		if( ((ROM_Header_Short *)(0x27e0000 - 0x4000))->platform_code & PLATFORM_CODE_FLAG_TWL ) {
+		if( ((ROM_Header_Short *)(OS_TWL_HEADER_PRELOAD_MMEM))->platform_code & PLATFORM_CODE_FLAG_TWL ) {
 			// TWL-ROMヘッダ情報の再配置
-			MI_CpuCopyFast( (void *)(0x27e0000 - 0x4000), (void *)HW_TWL_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );
-			MI_CpuCopyFast( (void *)(0x27e0000 - 0x4000), (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
+			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)HW_TWL_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );
+			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 		}else {
 			// TWL-ROMヘッダ情報の再配置
-			MI_CpuCopyFast( (void *)(0x27e0000 - 0x4000), (void *)HW_TWL_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
-			MI_CpuCopyFast( (void *)(0x27e0000 - 0x4000), (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
+			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)HW_TWL_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
+			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 			// NTR-ROMヘッダ情報の再配置
-			MI_CpuCopyFast( (void *)(0x27e0000 - 0x4000), (void *)0x027ffe00, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );	// 8Mのケツへ（TWLデバッガでのNTRモードデバッグ用）
-			MI_CpuCopyFast( (void *)(0x27e0000 - 0x4000), (void *)0x023ffe00, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );	// 4Mのケツへ
+			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)0x027ffe00, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );	// 8Mのケツへ（TWLデバッガでのNTRモードデバッグ用）
+			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)0x023ffe00, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );	// 4Mのケツへ
 		}
 	}
 }
