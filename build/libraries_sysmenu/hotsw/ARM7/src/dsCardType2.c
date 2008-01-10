@@ -126,8 +126,10 @@ static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
         break;
     }
 
-    // コマンドの暗号化
-	EncryptByBlowfish( &cbd->keyTable, (u32*)&cndLE.b[4], (u32*)cndLE.b );
+    if(!cbd->debuggerFlg){
+    	// コマンドの暗号化
+		EncryptByBlowfish( &cbd->keyTable, (u32*)&cndLE.b[4], (u32*)cndLE.b );
+    }
 
     // ビッグエンディアンに直す(暗号化後)
 	cndBE.b[7] = cndLE.b[0];
@@ -148,10 +150,12 @@ static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
 /*---------------------------------------------------------------------------*
   Name:         ReadIDSecure_DSType2
   
-  Description:  
+  Description:  SCRAMBLE_MASK -> CS SE DS をマスクできる
  *---------------------------------------------------------------------------*/
 void ReadIDSecure_DSType2(CardBootData *cbd)
 {
+	u32 scrambleMask;
+    
 	// NewDMA転送の準備
 	HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_scr, sizeof(cbd->id_scr) );
     
@@ -169,9 +173,12 @@ void ReadIDSecure_DSType2(CardBootData *cbd)
 	reg_HOTSW_MCCMD0 = 0x0;
 	reg_HOTSW_MCCMD1 = 0x0;
 
+    // スクランブルの設定
+    scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
+    
 	// MCCNT1 レジスタ設定
 	reg_HOTSW_MCCNT1 = cbd->pBootSegBuf->rh.s.secure_cmd_param |
-        				START_MASK | PC_MASK & (0x7 << PC_SHIFT) | SE_MASK | DS_MASK;
+        				START_MASK | PC_MASK & (0x7 << PC_SHIFT) | scrambleMask;
     
 	// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
 	OS_SleepThread(NULL);

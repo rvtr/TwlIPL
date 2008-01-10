@@ -84,6 +84,8 @@ extern "C" {
 #define START_SHIFT							31
 #define START_MASK							0x80000000
 
+#define SCRAMBLE_MASK						0x00406000
+
 #define AddLatency2ToLatency1(param)\
     ( (((param) &  LATENCY2_MASK)	\
                 >> LATENCY2_SHIFT)  \
@@ -146,7 +148,8 @@ extern "C" {
 typedef enum CardTypeEx{
 	DS_CARD_TYPE_1 = 0,
     DS_CARD_TYPE_2,
-    TWL_CARD
+    TWL_CARD,
+    ROM_EMULATION
 }CardTypeEx;
 
 typedef enum NormalCommandType{
@@ -221,7 +224,8 @@ typedef struct CardBootData{
 	u32					secureLatency;			
     
 	BOOL			   	twlFlg;					
-
+	BOOL				debuggerFlg;			
+    
     u32					romEmuBuf[ROM_EMULATION_DATA_SIZE/sizeof(u32)];
     u32					keyBuf[KEY_BUF_SIZE];	
     

@@ -19,6 +19,7 @@
 #include	<blowfish.h>
 #include	<dsCardType1.h>
 #include	<dsCardType2.h>
+#include	<romEmulation.h>
 #include	<customNDma.h>
 
 // define -------------------------------------------------------------------
@@ -63,6 +64,7 @@ static void ShowRomHeaderData(void);
 
 // Static Values ------------------------------------------------------------
 static char 				*encrypt_object_key ATTRIBUTE_ALIGN(4) = "encryObj";
+static char					*rom_emu_info ATTRIBUTE_ALIGN(4) = "TWLD";
 
 static u64  				s_MCStack[STACK_SIZE / sizeof(u64)];
 static OSThread 			s_MCThread;
@@ -105,7 +107,15 @@ static CardBootFunction  	s_funcTable[] = {
 	// DS Card Type 2
     {					   ReadBootSegNormal_DSType2, ChangeModeNormal_DSType2,								// Normalモード関数
      ReadIDSecure_DSType2, ReadSegSecure_DSType2, 	  SwitchONPNGSecure_DSType2, ChangeModeSecure_DSType2,	// Secureモード関数
-     ReadIDGame_DSType2,   ReadPageGame_DSType2}															// Game  モード関数
+     ReadIDGame_DSType2,   ReadPageGame_DSType2},															// Game  モード関数
+	// TWL Card Type 1
+    {					   ReadBootSegNormal_DSType2, ChangeModeNormal_DSType2,								// Normalモード関数
+     ReadIDSecure_DSType2, ReadSegSecure_DSType2, 	  SwitchONPNGSecure_DSType2, ChangeModeSecure_DSType2,	// Secureモード関数
+     ReadIDGame_DSType2,   ReadPageGame_DSType2},															// Game  モード関数
+	// RomEmulation
+    {					   ReadBootSegNormal_ROMEMU,  ChangeModeNormal_ROMEMU,								// Normalモード関数
+     ReadIDSecure_ROMEMU,  ReadSegSecure_ROMEMU, 	  SwitchONPNGSecure_ROMEMU,  ChangeModeSecure_ROMEMU,	// Secureモード関数
+     ReadIDGame_ROMEMU,    ReadPageGame_ROMEMU}																// Game  モード関数
 };
 
 
@@ -234,6 +244,9 @@ BOOL HOTSW_Boot(void)
         }
 		
 		{
+			u8 i;
+            u8 *romEmuInf = (u8 *)s_cbData.romEmuBuf;
+            
 			// ※最低限ARM9と排他制御しないといけない範囲はこれだけ
 			u16 id = (u16)OS_GetLockID();
 			(void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );			// ARM9と排他制御する
@@ -245,10 +258,23 @@ BOOL HOTSW_Boot(void)
             OS_TPrintf(" | Secure Command Param   : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.secure_cmd_param);
             OS_TPrintf(" | Secure Command Latency : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.secure_cmd_latency);
             
-            // Romエミュレーションデータを取得
+            // Romエミュレーション情報を取得
 			ReadRomEmulationData();
-            OS_TPrintf("Rom Emulation Data : 0x%08x\n",s_cbData.romEmuBuf[0]);
 
+            // 取得したRomエミュレーション情報を比較
+            s_cbData.debuggerFlg = TRUE;
+            for(i=0; i<4; i++){
+                if ( rom_emu_info[i] != romEmuInf[i] ){
+					s_cbData.debuggerFlg = FALSE;
+                    OS_PutString("Rom Emulation Info Doesn't Match...\n");
+                    break;
+                }
+            }
+            OS_TPrintf("Rom Emulation Data : 0x%04x\n",s_cbData.romEmuBuf[0]);
+            if(s_cbData.debuggerFlg){
+				s_cbData.cardType = ROM_EMULATION;
+            }
+            
 			// ROMヘッダCRCを算出してチェック。NintendoロゴCRCも確認。
 			SYSMi_GetWork()->cardHeaderCrc16_bak = SVC_GetCRC16( 65535, s_cbData.pBootSegBuf, 0x015e );
 			OS_TPrintf( "RomHeaderCRC16 : calc = %04x  romh = %04x\n",
@@ -284,7 +310,7 @@ BOOL HOTSW_Boot(void)
             
 	    	// セキュアモードに移行
 	    	s_funcTable[s_cbData.cardType].ChangeMode_N(&s_cbData);
-	
+
 	    	// ---------------------- Secure Mode ----------------------
 			// PNG設定
 			s_funcTable[s_cbData.cardType].SetPNG_S(&s_cbData);
@@ -294,17 +320,17 @@ BOOL HOTSW_Boot(void)
 	
 			// ID読み込み
 	    	s_funcTable[s_cbData.cardType].ReadID_S(&s_cbData);
-	
+
 	    	// Secure領域のSegment読み込み
 	    	s_funcTable[s_cbData.cardType].ReadSegment_S(&s_cbData);
-            
+
 	    	// ゲームモードに移行
 			s_funcTable[s_cbData.cardType].ChangeMode_S(&s_cbData);
-	
+
 	    	// ---------------------- Game Mode ----------------------
 	    	// ID読み込み
 			s_funcTable[s_cbData.cardType].ReadID_G(&s_cbData);
-            
+
 			// 常駐モジュール残りを指定先に転送
 			HOTSW_LoadStaticModule();
 
@@ -377,7 +403,7 @@ void HOTSW_LoadStaticModule(void)
     OS_TPrintf("Before Relocate Address : 0x%08x\n", s_cbData.arm9Stc);
 	// 配置先と再配置情報を取得
 	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_STATIC, &s_cbData.arm9Stc, s_cbData.pBootSegBuf->rh.s.main_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC] , s_cbData.twlFlg);
-    
+    OS_TPrintf("After  Relocate Address : 0x%08x\n", s_cbData.arm9Stc);
     // Arm9の常駐モジュール残りを指定先に転送
     s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
         									  s_cbData.pBootSegBuf->rh.s.main_rom_offset  + SECURE_SEGMENT_SIZE,
@@ -389,7 +415,7 @@ void HOTSW_LoadStaticModule(void)
     OS_TPrintf("Before Relocate Address : 0x%08x\n", s_cbData.arm7Stc);
     // 配置先と再配置情報を取得
 	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_STATIC, &s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC] , s_cbData.twlFlg);
-    
+	OS_TPrintf("After  Relocate Address : 0x%08x\n", s_cbData.arm7Stc);
     // Arm7の常駐モジュールを指定先に転送
     s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
                                               s_cbData.pBootSegBuf->rh.s.sub_rom_offset,
@@ -402,10 +428,10 @@ void HOTSW_LoadStaticModule(void)
 					 s_cbData.pBootSegBuf->rh.s.main_ltd_size : SECURE_SEGMENT_SIZE;
 	    OS_TPrintf("  - Arm9 Ltd. Static Module Loading...\n");
         s_cbData.arm9Ltd = (u32)s_cbData.pBootSegBuf->rh.s.main_ltd_ram_address;
-            
+        OS_TPrintf("Before Relocate Address : 0x%08x\n", s_cbData.arm9Ltd);
 		// 配置先と再配置情報を取得
 		SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_LTD_STATIC, &s_cbData.arm9Ltd, s_cbData.pBootSegBuf->rh.s.main_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_LTD_STATIC] , TRUE);
-        
+		OS_TPrintf("After  Relocate Address : 0x%08x\n", s_cbData.arm9Ltd);
 	    // Arm9の常駐モジュールを指定先に転送（※TWLカード対応していないので、注意！！）
 		s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
                                                   s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset,
@@ -420,10 +446,10 @@ void HOTSW_LoadStaticModule(void)
 
 	    OS_TPrintf("  - Arm7 Ltd. Static Module Loading...\n");
 		s_cbData.arm7Ltd = (u32)s_cbData.pBootSegBuf->rh.s.sub_ltd_ram_address;
-        
+        OS_TPrintf("Before Relocate Address : 0x%08x\n", s_cbData.arm7Ltd);
         // 配置先と再配置情報を取得
 		SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_LTD_STATIC, &s_cbData.arm7Ltd, s_cbData.pBootSegBuf->rh.s.sub_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_LTD_STATIC], TRUE);
-        
+		OS_TPrintf("After  Relocate Address : 0x%08x\n", s_cbData.arm7Ltd);
 	    // Arm7の常駐モジュールを指定先に転送
 	    s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
                                                   s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset,
@@ -625,7 +651,6 @@ void ReadIDNormal(void)
 
 	// MCCNT1 レジスタ設定 (START = 1 PC = 111(ステータスリード) latency1 = 1 に)
 	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x7 << PC_SHIFT) | (0x1 & LATENCY1_MASK);
-    
 
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);

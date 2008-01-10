@@ -130,9 +130,11 @@ static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
         break;
     }
 
-    // コマンドの暗号化
-	EncryptByBlowfish( &cbd->keyTable, (u32*)&cndLE.b[4], (u32*)cndLE.b );
-
+    if(!cbd->debuggerFlg){
+    	// コマンドの暗号化
+		EncryptByBlowfish( &cbd->keyTable, (u32*)&cndLE.b[4], (u32*)cndLE.b );
+    }
+    
     // ビッグエンディアンに直す(暗号化後)
 	cndBE.b[7] = cndLE.b[0];
 	cndBE.b[6] = cndLE.b[1];
