@@ -77,6 +77,7 @@ BOOL BOOT_WaitStart( void )
 		// SDK共通リブート
 		{
 			REBOOTTarget target = REBOOT_TARGET_TWL_SECURE_SYSTEM;
+            BOOL ds = FALSE;
 			ROM_Header *th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ（DSアプリには無い）
 			ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 			int list_count = PRE_CLEAR_NUM_MAX + 1;
@@ -153,9 +154,14 @@ BOOL BOOT_WaitStart( void )
 								  REG_SND_SMX_CNT_E_MASK;
 			}
 			
+            if ( target == REBOOT_TARGET_DS_APP || target == REBOOT_TARGET_DS_WIFI )
+            {
+                ds = TRUE;
+            }
+
 #ifdef FIRM_USE_TWLSDK_KEYS
-            // TwlSDK内の鍵を使っている時は量産用CPUではブートしない
-            if ( ! ((*(u8*)HWi_WSYS08_ADDR & HWi_WSYS08_OP_OPT_MASK)) )
+            // TwlSDK内の鍵を使っている時は製品用CPUではTWLアプリはブートしない
+            if ( ! (*(u8*)HWi_WSYS08_ADDR & HWi_WSYS08_OP_OPT_MASK) && !ds )
             {
                 OS_Terminate();
             }

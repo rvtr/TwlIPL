@@ -120,6 +120,7 @@ void BOOT_Ready( void )
 		};
 	    
 		REBOOTTarget target = REBOOT_TARGET_TWL_SECURE_SYSTEM;
+        BOOL ds = FALSE;
 		ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 		
 		// アプリケーション選択
@@ -132,9 +133,14 @@ void BOOT_Ready( void )
 			target = REBOOT_TARGET_DS_APP;
 		}
 		
+        if ( target == REBOOT_TARGET_DS_APP || target == REBOOT_TARGET_DS_WIFI )
+        {
+            ds = TRUE;
+        }
+
 #ifdef FIRM_USE_TWLSDK_KEYS
-        // TwlSDK内の鍵を使っている時は量産用CPUではブートしない
-        if ( ! ((*(u8*)OS_CHIPTYPE_DEBUGGER_ADDR & OS_CHIPTYPE_DEBUGGER_MASK)) )
+        // TwlSDK内の鍵を使っている時は製品用CPUではTWLアプリはブートしない
+        if ( ! (*(u8*)OS_CHIPTYPE_DEBUGGER_ADDR & OS_CHIPTYPE_DEBUGGER_MASK) && !ds )
         {
             OS_Terminate();
         }
