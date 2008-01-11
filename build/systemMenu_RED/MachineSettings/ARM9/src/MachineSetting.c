@@ -32,7 +32,7 @@
 #define OK_BUTTON_BOTTOM_Y					( OK_BUTTON_TOP_Y + 2 * 8 )
 
 
-#define SETTING_MENU_ELEMENT_NUM			7						// メインメニューの項目数
+#define SETTING_MENU_ELEMENT_NUM			5						// メインメニューの項目数（※ピクトチャット起動テストは除いておく）
 
 // extern data------------------------------------------
 
@@ -99,16 +99,6 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ TWL_LA
 		(const u16 *)L"TOUCH PANEL(K)",
 	},
 	{
-		(const u16 *)L"リージョン設定",
-		(const u16 *)L"REGION",
-		(const u16 *)L"REGION(F)",
-		(const u16 *)L"REGION(G)",
-		(const u16 *)L"REGION(I)",
-		(const u16 *)L"REGION(S)",
-		(const u16 *)L"REGION(C)",
-		(const u16 *)L"REGION(K)",
-	},
-	{
 		(const u16 *)L"国設定",
 		(const u16 *)L"COUNTRY",
 		(const u16 *)L"COUNTRY(F)",
@@ -118,6 +108,7 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ TWL_LA
 		(const u16 *)L"COUNTRY(C)",
 		(const u16 *)L"COUNTRY(K)",
 	},
+#if 0
 	{
 		(const u16 *)L"ピクトチャット起動テスト",
 		(const u16 *)L"PICTOCHAT",
@@ -128,6 +119,7 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ TWL_LA
 		(const u16 *)L"PICTOCHAT(C)",
 		(const u16 *)L"PICTOCHAT(K)",
 	},
+#endif
 };
 
 static MenuPos s_settingPos[] = {
@@ -137,7 +129,6 @@ static MenuPos s_settingPos[] = {
 	{ TRUE, 4 * 8,  12 * 8 },
 	{ TRUE,  4 * 8,  14 * 8 },
 	{ TRUE,  4 * 8,  16 * 8 },
-	{ TRUE,  4 * 8,  18 * 8 },
 };
 
 
@@ -241,14 +232,10 @@ int MachineSettingMain( void )
 					g_pNowProcess = TP_CalibrationMain;
 					break;
 				case 4:
-					SelectRegionInit();
-					g_pNowProcess = SelectRegionMain;
-					break;
-				case 5:
 					SelectCountryInit();
 					g_pNowProcess = SelectCountryMain;
 					break;
-				case 6:
+				case 5:
 					//pictochat起動テスト
 					OS_SetLauncherParamAndResetHardware( 0, 0x0003000550434854, &tempflag );
 			}

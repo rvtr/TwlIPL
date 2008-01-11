@@ -108,7 +108,7 @@ MAKENORFIRM		:= $(FIRM_TOOLSDIR)/bin/makenorfirm.exe
 MAKENANDFIRM		:= $(FIRM_TOOLSDIR)/bin/makenandfirm.exe
 MAKEGCDFIRM		:= $(FIRM_TOOLSDIR)/bin/makegcdfirm.exe
 OPENSSL			:= $(FIRM_TOOLSDIR)/openssl/openssl.exe
-NTEXCONV		:= $(FIRM_TOOLSDIR)/bin/ntexconv.exe
+NTEXCONV		:= $(ROOT)/tools/bin/ntexconv.exe
 MAKEBANNER		:= $(FIRM_TOOLSDIR)/bin/makebanner.exe
 
 MAKEFIRM_RSA_PRVKEY	?= $(FIRM_TOOLSDIR)/openssl/rsa_private.der

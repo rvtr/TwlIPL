@@ -834,6 +834,35 @@ void SYSM_LoadAndAuthenticateTitleThread( TitleProperty *pBootTitle )
 // デバイス制御
 //
 // ============================================================================
+#ifdef SDK_FINALROM
+u32 PM_SendUtilityCommandAsync(u32 number, u16 parameter, u16* retValue, PMCallback callback, void *arg);
+u32 PM_SendUtilityCommand(u32 number, u16 parameter, u16* retValue);
+u32 PMi_WriteRegister(u16 registerAddr, u16 data);
+u32 PMi_WriteRegisterAsync(u16 registerAddr, u16 data, PMCallback callback, void *arg);
+/*---------------------------------------------------------------------------*
+  Name:         PMi_WriteRegisterAsync
+
+  Description:  send write register command to ARM7
+
+  Arguments:    registerAddr : PMIC register number (0-3)
+                data         : data written to PMIC register
+                callback     : callback function
+                arg          : callback argument
+
+  Returns:      result of issueing command
+                PM_RESULT_BUSY    : busy
+                PM_RESULT_SUCCESS : success
+ *---------------------------------------------------------------------------*/
+u32 PMi_WriteRegisterAsync(u16 registerAddr, u16 data, PMCallback callback, void *arg)
+{
+	return PM_SendUtilityCommandAsync(PMi_UTIL_WRITEREG, (u16)((registerAddr<<16) | (data&0xff)), NULL, callback, arg);
+}
+
+u32 PMi_WriteRegister(u16 registerAddr, u16 data)
+{
+	return PM_SendUtilityCommand(PMi_UTIL_WRITEREG, (u16)((registerAddr<<16) | (data&0xff)), NULL);
+}
+#endif
 
 // バックライト輝度調整
 void SYSM_SetBackLightBrightness( u8 brightness )

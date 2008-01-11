@@ -38,7 +38,7 @@ MISC_DIR				=	../../misc
 BG_DIR					=	../../data
 
 SRCS					=	main.c MachineSetting.c \
-							setRTC.c selectLanguage.c calibrationTP.c setOwnerInfo.c selectRegion.c selectCountry.c \
+							setRTC.c selectLanguage.c calibrationTP.c setOwnerInfo.c selectCountry.c \
 						CountryNameMappingData.c \
 							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c \
 						$(BG_DIR)/BGData_MachineSettings.c

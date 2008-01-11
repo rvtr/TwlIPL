@@ -219,7 +219,7 @@ static void TSDi_ClearSettingsDirect( TWLSettingsData *pTSD )
 static BOOL TSDi_CheckValue( const TWLSettingsData *pSrc )
 {
 	// 国コード
-	if( TSD_IsSetCountry() ) {
+	if( pSrc->flags.isSetCountry ) {
 		u32 countryStart = (u32)( s_regionCountryList[ THW_GetRegion() ] >> 16 );
 		u32 countryEnd   = (u32)( s_regionCountryList[ THW_GetRegion() ] & 0x0000ffff );
 		if( ( pSrc->country < countryStart ) ||
@@ -231,8 +231,8 @@ static BOOL TSDi_CheckValue( const TWLSettingsData *pSrc )
 	}
 	
 	// 言語コード
-	if(	TSD_IsSetLanguage() &&
-		( THW_GetValidLanguageBitmap() & ( 0x0001 << pSrc->language ) )
+	if(	pSrc->flags.isSetLanguage &&
+		!( THW_GetValidLanguageBitmap() & ( 0x0001 << pSrc->language ) )
 		) {
 		return FALSE;
 	}

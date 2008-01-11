@@ -319,7 +319,7 @@ int SelectCountryMain( void )
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || tp_select ) {				// メニュー項目への分岐
 		TSD_SetCountry( s_countryCode );						// 国コード設定
-		//TSD_SetFlagCountry( TRUE );							// 国コード入力フラグを立てる
+		TSD_SetFlagCountry( TRUE );								// 国コード入力フラグを立てる
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
