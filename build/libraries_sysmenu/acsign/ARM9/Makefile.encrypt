@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - libraries_sp - os
+# Project:  TwlIPL
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -12,43 +12,44 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
-SUBDIRS			=
-
 #----------------------------------------------------------------------------
 
-# build ARM & THUMB libraries
-TWL_CODEGEN_ALL 	?= TRUE
-
-# Codegen for sub processer
-TWL_PROC		= ARM7
-
-SRCDIR			= ../common .
-INCDIR              = ./include ../common/include \
-                      $(ROOT)/build/libraries/fatfs/ARM7.TWL/include \
-                      $(ROOT)/build/libraries/fatfs/ARM7.TWL/include/twl/fatfs/ARM7 \
-
-SRCS			= \
-				os_init_firm.c \
-				os_boot.c \
-
-TARGET_LIB		= libos_sp$(FIRM_LIBSUFFIX).a
+SUBDIRS		=
 
 
 #----------------------------------------------------------------------------
+TARGET_FIRM			=	SYSTEMMENU
+TARGET_PLATFORM		=	TWL
+TWL_ARCHGEN			=	LIMITED
+TWL_PROC	    	=	ARM9
+
+INCDIR				= 	include
+
+SRCS				=	acsign_encrypt.c \
+						ber_lib.c ber_isk.c ber_par.c
+
+TARGET_LIB			=	libacsign_enc$(TWL_LIBSUFFIX).a
+
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-INSTALL_TARGETS		= $(TARGETS)
-INSTALL_DIR		= $(FIRM_INSTALL_LIBDIR)
+INSTALL_TARGETS		=	$(TARGETS)
+INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
 
+CCFLAGS				+=	-DSMALL_CODE_SIZE	\
+						-DSTANDALONE		\
+						-DOPT_32_BIT		\
+						-DNO_SPLIT			\
+						-DNO_FP_API			\
+						-DNO_R_DIAG			\
+						-DNO_STDIO_H		\
+						-DNO_STDLIB_H
 
-#----------------------------------------------------------------------------
-
-do-build:		$(TARGETS)
+do-build:	$(TARGETS)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 

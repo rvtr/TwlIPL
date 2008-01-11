@@ -29,7 +29,7 @@ SUBDIRS		=
 #----------------------------------------------------------------------------
 
 SRCDIR		= 	./src
-INCDIR		= 	./include $(TWLSDK_ROOT)/build/libraries/mb/include
+INCDIR		= 	./include $(ROOT)/build/libraries/mb/include
 
 
 SRCS		=	acsign.c acmemory.c acsign_util.c

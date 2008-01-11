@@ -34,7 +34,7 @@ TARGET_NAME		=	hyena
 TARGET_NEF		=	$(TARGET_NAME).tef
 LCFILE_SPEC		=	$(TARGET_NAME).lsf
 LCFILE_TEMPLATE	=	$(TARGET_NAME).lcf.template
-LDRES_TEMPLATE	=	$(TWLSDK_ROOT)/build/components/racoon.TWL/racoon.response.template
+LDRES_TEMPLATE	=	$(ROOT)/build/components/racoon.TWL/racoon.response.template
 
 CRT0_O			=	crt0.LTD.TWL.o
 

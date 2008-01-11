@@ -31,8 +31,8 @@ ROM_SPEC				=	main.rsf
 
 SRCS					=	main.c mainFunc.c DS_DownloadPlay.c
 
-LINCLUDES				=	$(TWLSDK_ROOT)/build/libraries/spi/arm9/include		\
-							$(TWLSDK_ROOT)/build/libraries/mb/common/include	\
+LINCLUDES				=	$(ROOT)/build/libraries/spi/arm9/include		\
+							$(ROOT)/build/libraries/mb/common/include	\
 
 LLIBRARY_DIRS			=
 LLIBRARIES				=

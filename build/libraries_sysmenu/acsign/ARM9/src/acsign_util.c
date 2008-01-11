@@ -16,7 +16,8 @@
  *---------------------------------------------------------------------------*/
 
 #include <nitro.h>
-#include <sysmenu/acsign.h>
+#include <sysmenu/acsign/ARM9/acsign.h>
+#include <sysmenu/acsign/ARM9/acsign_util.h>
 #include <string.h>
 
 #define AUTH_KEY_BUFFER_LEN 128

@@ -356,6 +356,7 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 {
 															// filter_flag : ALL, ALL_APP, SYS_APP, USER_APP, Data only, 等の条件を指定してタイトルリストを取得する。
 	// とりあえずALL
+	OSTick start;
 	int l;
 	int gotten;
 	NAMTitleId titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
@@ -363,8 +364,13 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 	if( listNum > LAUNCHER_TITLE_LIST_NUM ) {
 		OS_TPrintf( "Warning: TitleList_Nand num over LAUNCHER_TITLE_LIST_NUM(%d)\n", LAUNCHER_TITLE_LIST_NUM );
 	}
+
+	start = OS_GetTick();
 	gotten = NAM_GetTitleList( &titleIdArray[ 0 ], LAUNCHER_TITLE_LIST_NUM - 1 );
+	OS_TPrintf( "NAM_GetTitleList : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+	start = OS_GetTick();
 	gotten = NAM_GetNumTitles();	// [TODO:]本来だったら必要ないが、現在はNAM_GetTitleListがアプリ個数をちゃんと返してくれないので。
+	OS_TPrintf( "NAM_GetNumTitles : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
 	
 	for(l=0;l<gotten;l++)
 	{
@@ -377,7 +383,9 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 		s32 readLen;
 		s32 offset;
 		
+		start = OS_GetTick();
 		readLen = NAM_GetTitleBootContentPath(path, titleIdArray[l]);
+		OS_TPrintf( "NAM_GetTitleBootContentPath : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
 		
 		if(readLen != NAM_OK){
 			OS_TPrintf("NAM_GetTitleBootContentPath failed %d,%lld,%d\n",l,titleIdArray[l],readLen);

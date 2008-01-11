@@ -29,8 +29,8 @@ TWL_CODEGEN_ALL 	?= TRUE
 TWL_PROC		= ARM7
 
 LINCLUDES		= \
-			  $(TWLSDK_ROOT)/build/libraries/fatfs/ARM7.TWL/include \
-			  $(TWLSDK_ROOT)/build/libraries/fatfs/ARM7.TWL/include/twl/fatfs/ARM7
+			  $(ROOT)/build/libraries/fatfs/ARM7.TWL/include \
+			  $(ROOT)/build/libraries/fatfs/ARM7.TWL/include/twl/fatfs/ARM7
 
 SRCS			= fs_firm.c
 

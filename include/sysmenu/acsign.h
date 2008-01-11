@@ -21,7 +21,7 @@
 
 #ifdef SDK_ARM9
 #include <sysmenu/acsign/ARM9/acsign.h>
-#include <sysmenu/acsign/ARM9/acsign_util.h>
+//#include <sysmenu/acsign/ARM9/acsign_util.h>
 #endif // SDK_ARM9
 
 #ifdef __cplusplus

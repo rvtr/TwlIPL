@@ -82,12 +82,16 @@ typedef struct TWLHWNormalInfo{
 
 // TWL_HWセキュア情報設定データ（署名で改ざん保護する必要があるもの）
 // ※基本、過去ver互換を考慮して、追加しかしない方針で。
-// ※SystemShared領域にリードしているので、サイズが変わった時は注意する。
+// ※SystemShared領域にロードしているので、サイズが変わった時は注意する。
 typedef struct TWLHWSecureInfo{
 	u32				validLanguageBitmap;						// 本体で有効な言語コードをビット列で表現
 	u8				region;										// リージョン
 	u8				serialNo[ TWL_HWINFO_SERIALNO_LEN_MAX ];	// シリアルNo.（終端付きASCII文字列）
-}TWLHWSecureInfo;	// 20bytes
+//-------------------------------------------------------------
+//	[TODO:]ここまでの20bytesをランチャーでSystemSharedにロードする。
+//-------------------------------------------------------------
+	u8				launcherTitleID_Lo[ 4 ];
+}TWLHWSecureInfo;	// 24bytes
 
 
 #ifdef SDK_ARM9

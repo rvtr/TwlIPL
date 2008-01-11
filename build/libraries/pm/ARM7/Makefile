@@ -28,7 +28,7 @@ TWL_CODEGEN_ALL 	?= TRUE
 # Codegen for sub processer
 TWL_PROC		= ARM7
 
-INCDIR			= $(TWLSDK_ROOT)/build/libraries/spi/ARM7/pm/include \
+INCDIR			= $(ROOT)/build/libraries/spi/ARM7/pm/include \
 
 SRCDIR			= .
 

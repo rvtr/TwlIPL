@@ -29,7 +29,7 @@ TWL_PROC	    	=	ARM7
 SRCDIR				=	../common/src
 
 INCDIR				=	../common/include \
-						$(TWLSDK_ROOT)/build/libraries/mb/common/include
+						$(ROOT)/build/libraries/mb/common/include
 
 
 SRCS				=	mb_loader.c

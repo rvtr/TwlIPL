@@ -23,7 +23,7 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 export TWL_ARCHGEN = ALL
 
 SUBDIRS =	\
-			$(TWLSDK_ROOT)/build/libraries/reboot \
+			$(ROOT)/build/libraries/reboot \
 			$(TWLSYSTEM_ROOT) \
 			build
 

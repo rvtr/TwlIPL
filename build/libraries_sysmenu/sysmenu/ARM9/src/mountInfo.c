@@ -69,7 +69,7 @@ OSMountInfo s_defaultMountList[ DEFAULT_MOUNT_LIST_NUM ] ATTRIBUTE_ALIGN(4) = {
 
 /*
 	要確認
-	カードブート時のBootSRLPathは、"rom:"ではなく、""なのか？
+	カードブート時のBootSRLPathは、"rom:"ではなく、""でいく。
 	"nand:" と "nand1:"のuserPermissionは"OS_MOUNT_USR_R"で良いのか？
 */
 
@@ -89,10 +89,10 @@ void SYSM_SetBootAppMountInfo( TitleProperty *pBootTitle )
 	// 起動アプリのSRLパスをセット
 	SYSMi_SetBootSRLPath( pBootTitle->titleID, (TitleMedia)pBootTitle->flags.media );
 	
-	// ユーザーアプリの場合、"nand:", "nand2:"アーカイブをReadOnlyに変更。
+	// ユーザーアプリの場合、"nand:", "nand2:"アーカイブを変更。
 	if( ( titleID_Hi & TITLEID_HI_APP_SYS_FLAG ) == 0 ) {
-		s_defaultMountList[ 1 ].userPermission = OS_MOUNT_USR_R;	// "nand:"  アーカイブをReadOnlyに
-		s_defaultMountList[ 2 ].userPermission = OS_MOUNT_USR_R;	// "nand2:" アーカイブをReadOnlyに
+		s_defaultMountList[ 1 ].userPermission = 0;	// "nand:"
+		s_defaultMountList[ 2 ].userPermission = 0;	// "nand2:"
 	}
 	
 	// セーブデータ有無によるマウント情報の編集

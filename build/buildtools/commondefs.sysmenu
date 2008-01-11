@@ -32,8 +32,8 @@ TWL_KEYSDIR		?=	$(SYSMENU_ROOT)/keys/rsa/dummy
 SYSMENU_ROOT			:= $(subst $(SPACE),\ ,$(subst \,/,$(TWL_IPL_RED_ROOT)))
 SYSMENU_BUILDTOOLSDIR	:= $(SYSMENU_ROOT)/build/buildtools
 SYSMENU_INCDIR			:= $(SYSMENU_ROOT)/include \
-                           $(TWLSDK_ROOT)/build/libraries/spi/arm9/include \
-                           $(TWLSDK_ROOT)/build/libraries/mb/common/include
+                           $(ROOT)/build/libraries/spi/arm9/include \
+                           $(ROOT)/build/libraries/mb/common/include
 SYSMENU_TOOLSDIR		:= $(SYSMENU_ROOT)/tools
 SYSMENU_COMPONENTSDIR	:= $(SYSMENU_ROOT)/components
 
@@ -87,7 +87,7 @@ MAKEBANNER		:= $(SYSMENU_TOOLSDIR)/bin/makebanner.exe
 MAKESYSMENU_RSA_PRVKEY	?= $(SYSMENU_TOOLSDIR)/openssl/rsa_private.der
 MAKESYSMENU_RSA_PUBKEY	?= $(SYSMENU_TOOLSDIR)/openssl/rsa_public.der
 
-MAKETAD			?= $(TWLSDK_ROOT)/tools/bin/makeTad.pl
+MAKETAD			?= $(ROOT)/tools/bin/makeTad.pl
 
 #----------------------------------------------------------------------------
 
@@ -105,7 +105,7 @@ SYSMENU_INSTALL_INCDIR			:= $(SYSMENU_INSTALL_ROOT)/include
 SYSMENU_INSTALL_TOOLSDIR		:= $(SYSMENU_INSTALL_ROOT)/tools
 SYSMENU_INSTALL_LIBDIR			:= $(SYSMENU_INSTALL_ROOT)/lib/$(TWL_LIBTYPE)
 SYSMENU_INSTALL_COMPONENTSDIR	:= $(SYSMENU_INSTALL_ROOT)/components
-SDK_NMENU_DATADIR				=  $(TWLSDK_ROOT)/build/tools/TwlNMenu/data
+SDK_NMENU_DATADIR				=  $(ROOT)/build/tools/TwlNMenu/data
 
 #----------------------------------------------------------------------------
 endif	# TWL_SYSMENU_COMMONDEFS_

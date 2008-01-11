@@ -36,7 +36,7 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 INSTALL_TARGETS		=	$(TARGETS)
 INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
 
-LINCLUDES			=	$(TWLSDK_ROOT)/build/libraries/spi/ARM9/include		\
+LINCLUDES			=	$(ROOT)/build/libraries/spi/ARM9/include		\
 
 #----------------------------------------------------------------------------
 

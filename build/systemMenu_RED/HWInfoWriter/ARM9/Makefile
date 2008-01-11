@@ -39,6 +39,7 @@ SRCS					=	main.c HWInfoWriter.c \
 							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
 
 LINCLUDES				=	$(MISC_DIR)/include
+LLIBRARIES				=	libacsign_enc$(TWL_LIBSUFFIX).a
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
 MAKETAD_FLAGS			+= -s
