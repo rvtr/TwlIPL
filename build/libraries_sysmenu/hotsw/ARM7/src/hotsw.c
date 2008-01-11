@@ -198,7 +198,13 @@ BOOL HOTSW_Boot(void)
 	BOOL retval = TRUE;
 
     OSTick start = OS_GetTick();
-	
+
+    // スロットがスワップされてたら元に戻す。
+    if(reg_MI_MC1 & 0x8000){
+		reg_MI_MC1 = reg_MI_MC1 & 0xff;
+        OS_TPrintf("Slot Swap\n");
+    }
+    
 	OS_TPrintf("---------------- Card Boot Start ---------------\n");
 #ifdef SDK_ARM7
 	// カード電源ON
@@ -346,7 +352,7 @@ BOOL HOTSW_Boot(void)
 //		*(u32 *)HW_BOOT_CHECK_INFO_BUF = s_cbData.id_gam;
 //		*(u32 *)HW_RED_RESERVED = s_cbData.id_gam;
 		SYSMi_GetWork()->nCardID = s_cbData.id_gam;
-		
+
         OS_TPrintf("-----------------------------------------------\n\n");
     }
     else{
@@ -580,10 +586,6 @@ static void LoadTable(void)
 
 	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
 	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
-
-/*	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 101(16ページ) latency1 = 0(必要ないけど) に)
-	reg_HOTSW_MCCNT1 = (u32)((reg_HOTSW_MCCNT1 & CNT1_MSK(0,0,1,0,  0,0,  1,0,  0,  0,0,0,  0)) |
-        		             		 		     CNT1_FLD(1,0,0,0,  0,5,  0,0,  0,  0,0,0,  0));*/
 
     // MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 101(16ページ) latency1 = 0(必要ないけど) に)
 	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x5 << PC_SHIFT);
@@ -874,6 +876,8 @@ static void McThread(void *arg)
  * ----------------------------------------------------------------- */
 static void McPowerOn(void)
 {
+	OS_TPrintf("Slot State : %08x\n", reg_MI_MC1);
+    
     // SCFG_MC1 の Slot Status の M1,M0 を 11 にする
     reg_MI_MC1  = (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | 0xc0);
 	// 10ms待ち
@@ -900,7 +904,7 @@ static void McPowerOn(void)
 	// 10ms待ち
 	OS_Sleep(10);
 
-    OS_TPrintf("MC Power ON\n");
+    OS_TPrintf("Slot Power ON\n");
 }
 
 /*---------------------------------------------------------------------------*

@@ -75,24 +75,6 @@ void ReadBootSegNormal_ROMEMU(CardBootData *cbd)
 
         page++;
     }
-
-/*
-	// NewDMA転送の準備
-    HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->pBootSegBuf->word, BOOT_SEGMENT_SIZE );
-    
-	// MCCMD レジスタ設定
-	reg_HOTSW_MCCMD0 = 0x00000000;
-	reg_HOTSW_MCCMD1 = 0x00000000;
-
-	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
-
-	// MCCNT1 レジスタ設定 (START = 1 PC_MASK PC = 100(8ページリード)に latency1 = 0xd)
-	reg_HOTSW_MCCNT1 = START_MASK | CT_MASK | PC_MASK & (0x4 << PC_SHIFT) | (0xd & LATENCY1_MASK);
-    
-    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
-    OS_SleepThread(NULL);
-*/
 }
 
 /*---------------------------------------------------------------------------*
@@ -204,51 +186,9 @@ void ReadSegSecure_ROMEMU(CardBootData *cbd)
 		while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
 			while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
         	*(cbd->pSecureSegBuf + j++) = reg_HOTSW_MCD1;
-//			OS_TPrintf("Secure Data Address : %08x\n", (cbd->pSecureSegBuf + j));
-/*			OS_TPrintf("%02x ",reg_HOTSW_MCD1);
-            if(!(n++ % 0xf)){
-				OS_PutString("\n");
-            }*/
 		}
         page++;
     }
-
-/*	u64			segNum = 4;
-    u64			vae	= cbd->vae;
-    GCDCmd64 	cndLE, cndBE;
-
-    // NewDMA転送の準備
-    HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, cbd->pSecureSegBuf, SECURE_SEGMENT_SIZE );
-
-    // コマンド構造体初期化
-	MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
-
-    // コマンド作成
-	cndLE.dw = 0x20 << 33;
-
-    // ビッグエンディアンに直す(暗号化後)
-	cndBE.b[7] = cndLE.b[0];
-	cndBE.b[6] = cndLE.b[1];
-    cndBE.b[5] = cndLE.b[2];
-    cndBE.b[4] = cndLE.b[3];
-    cndBE.b[3] = cndLE.b[4];
-    cndBE.b[2] = cndLE.b[5];
-    cndBE.b[1] = cndLE.b[6];
-    cndBE.b[0] = cndLE.b[7];
-
-    // MCCMD レジスタ設定
-	reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
-	reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
-
-	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
-
-	// MCCNT1 レジスタ設定 (START = 1 PC_MASK PC = 110(32ページリード)に latency1 = 0xd)
-	reg_HOTSW_MCCNT1 = START_MASK | CT_MASK | PC_MASK & (0x6 << PC_SHIFT) | (0xd & LATENCY1_MASK);
-    
-    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
-    OS_SleepThread(NULL);
-*/
 }
 
 /*---------------------------------------------------------------------------*
