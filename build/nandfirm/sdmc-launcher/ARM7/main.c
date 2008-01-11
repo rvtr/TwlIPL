@@ -16,41 +16,57 @@
  *---------------------------------------------------------------------------*/
 #include <firm.h>
 #include <twl/mcu.h>
-#include <twl/os/ARM7/debugLED.h>
-
-#define FATFS_HEAP_SIZE     (64*1024)   // FATFS用ヒープ (サイズ調整必要)
-
-#define BOOT_DEVICE     FATFS_MEDIA_TYPE_SD
-#define PARTITION_NO    0                       // 0固定
-#define MENU_FILE       (char*)L"A:\\menu.srl"          // 対象ファイル(DRIVE_LETTERと合わせること)
-#define MENU_FILE_A     (char*)L"A:\\menu_a.srl"        // 対象ファイル(DRIVE_LETTERと合わせること)
-#define MENU_FILE_B     (char*)L"A:\\menu_b.srl"        // 対象ファイル(DRIVE_LETTERと合わせること)
-#define MENU_FILE_L     (char*)L"A:\\menu_l.srl"        // 対象ファイル(DRIVE_LETTERと合わせること)
-#define MENU_FILE_R     (char*)L"A:\\menu_r.srl"        // 対象ファイル(DRIVE_LETTERと合わせること)
-
-#define DRIVE_LETTER    'A'                     // マウント先ドライブ名
-#define DRIVE_NO        (DRIVE_LETTER - 'A')    // マウント先ドライブ番号
-
-static u8 fatfsHeap[FATFS_HEAP_SIZE] __attribute__ ((aligned (32)));
-
-#ifndef SDK_FINALROM
-static u8 step = 0x80;
-#endif
 
 /*
-    Profile
+    PROFILE_ENABLE を定義するとある程度のパフォーマンスチェックができます。
+    利用するためには、main.cかどこかに、u32 profile[256]; u32 pf_cnt = 0; を
+    定義する必要があります。
 */
-#ifndef SDK_FINALROM
-#define PROFILE_MAX  0x100
+#define PROFILE_ENABLE
+
+/*
+    デバッグLEDをFINALROMとは別にOn/Offできます。
+*/
+#define USE_DEBUG_LED
+
+/*
+    PRINT_MEMORY_ADDR を定義すると、そのアドレスからSPrintfを行います(このファイルのみ)
+    FINALROM版でもコードが残るので注意してください。
+*/
+#define PRINT_MEMORY_ADDR       0x02000600
+
+
+#ifdef PROFILE_ENABLE
+#define PROFILE_MAX  16
 u32 profile[PROFILE_MAX];
 u32 pf_cnt = 0;
+#define PUSH_PROFILE()  (profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick()))
+#else
+#define PUSH_PROFILE()  ((void)0)
 #endif
 
-/*
-    Production check
-*/
-//#define PRODUCTION_CHECK()  do { if (reg_SCFG_OP == 0) goto end; } while (0)
-#define PRODUCTION_CHECK()  ((void)0)
+#ifdef USE_DEBUG_LED
+static u8 step = 0x80;
+#define InitDebugLED()          I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x03, 0x00)
+#define SetDebugLED(pattern)    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, (pattern));
+#else
+#define InitDebugLED()          ((void)0)
+#define SetDebugLED(pattern)    ((void)0)
+#endif
+
+#ifdef PRINT_MEMORY_ADDR
+static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
+#undef OS_TPrintf
+//#define OS_TPrintf(...) (debugPtr = (char*)((u32)(debugPtr + STD_TSPrintf(debugPtr, __VA_ARGS__) + 0xf) & ~0xf))
+#define OS_TPrintf(...) (debugPtr += STD_TSPrintf(debugPtr, __VA_ARGS__))
+#endif
+
+#define THREAD_PRIO_FATFS   8
+#define DMA_NO_FATFS        3
+
+extern void*   SDNandContext;  /* NAND初期化パラメータ */
+
+static ROM_Header* const rh= (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
 
 /***************************************************************
     PreInit
@@ -72,6 +88,18 @@ static void PreInit(void)
     */
 #define FIRM_AVAILABLE_BIT  0x80000000UL
     *(u32*)HW_RESET_PARAMETER_BUF = (u32)MCUi_ReadRegister( MCU_REG_TEMP_ADDR ) | FIRM_AVAILABLE_BIT;
+    /*
+        バッテリー残量チェック
+    */
+    //if ( MCUi_ReadRegister( MCU_REG_BATTELY ) < 0x02 )
+    //if ( MCUi_ReadRegister( MCU_REG_IRQ ) & MCU_IRQ_NO_BATTELY )
+/*
+  ちゃんとTWLと識別できているかチェック
+#ifdef USE_DEBUG_LED
+    SetDebugLED(OS_IsRunOnTwl() ? 0xC3 : 0xff);
+    OS_SpinWaitCpuCycles(0x1000000);
+#endif
+*/
 }
 
 /***************************************************************
@@ -90,168 +118,172 @@ static void EraseAll(void)
 #endif
 }
 
-/***************************************************************
-    Fatfs4sdmcInit
-
-    FATFS周りの初期化 for SDカード
-***************************************************************/
-static BOOL Fatfs4sdmcInit(void)
-{
-    BOOL result;
-
-    /* FATFSライブラリ用にカレントヒープを設定 */
-    /* WRAM上のfatfsHeapをメインメモリヒープとして登録している */
-    OSHeapHandle hh;
-    u8     *lo = (u8*)fatfsHeap;
-    u8     *hi = (u8*)fatfsHeap + FATFS_HEAP_SIZE;
-    lo = OS_InitAlloc(OS_ARENA_MAIN_SUBPRIV, lo, hi, 1);
-    OS_SetArenaLo(OS_ARENA_MAIN_SUBPRIV, lo);
-    hh = OS_CreateHeap(OS_ARENA_MAIN_SUBPRIV, OS_GetSubPrivArenaLo(), hi);
-    OS_SetCurrentHeap(OS_ARENA_MAIN_SUBPRIV, hh);
-
-    OS_SetDebugLED(++step);
-
-    if ( !FATFS_InitFIRM( NULL ) )
-    {
-        return FALSE;
-    }
-
-#ifndef SDK_FINALROM
-    // 3: after FATFS
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-    OS_SetDebugLED(++step);
-
-    PM_BackLightOn( FALSE );
-
-    if ( !FATFS_MountDriveFIRM( DRIVE_NO, BOOT_DEVICE, PARTITION_NO ) )
-    {
-        return FALSE;
-    }
-
-#ifndef SDK_FINALROM
-    // 4: after Mount
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-    OS_SetDebugLED(++step);
-
-    PM_BackLightOn( FALSE );
-
-    switch ( PAD_Read() & PAD_KEYPORT_MASK )
-    {
-    case 0:
-        result = FATFS_OpenSpecifiedSrl( MENU_FILE ) && FATFS_SaveSrlFilename( BOOT_DEVICE, MENU_FILE );
-        break;
-    case PAD_BUTTON_A:
-        result = FATFS_OpenSpecifiedSrl( MENU_FILE_A ) && FATFS_SaveSrlFilename( BOOT_DEVICE, MENU_FILE_A );
-        break;
-    case PAD_BUTTON_B:
-        result = FATFS_OpenSpecifiedSrl( MENU_FILE_B ) && FATFS_SaveSrlFilename( BOOT_DEVICE, MENU_FILE_B );
-        break;
-    case PAD_BUTTON_L:
-        result = FATFS_OpenSpecifiedSrl( MENU_FILE_L ) && FATFS_SaveSrlFilename( BOOT_DEVICE, MENU_FILE_L );
-        break;
-    case PAD_BUTTON_R:
-        result = FATFS_OpenSpecifiedSrl( MENU_FILE_R ) && FATFS_SaveSrlFilename( BOOT_DEVICE, MENU_FILE_R );
-        break;
-    default:
-        OS_SetDebugLED( (u8)(PAD_Read() & PAD_KEYPORT_MASK) );
-        result = FALSE;
-        break;
-    }
-    return result;
-}
-
 void TwlSpMain( void )
 {
-    // OS_InitDebugLED and OS_SetDebugLED are able to call after OS_Init
-#ifndef SDK_FINALROM
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x03, 0x00);
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, ++step);
-#endif
+    int fd; // menu file descriptor
+
+    InitDebugLED();
+    SetDebugLED(++step);  // 0x81
 
     PreInit();
 
-#ifndef SDK_FINALROM
-    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, ++step);
-
     // 0: before PXI
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSecondsBROM(OS_GetTick());
-#endif
+    PUSH_PROFILE();
+    SetDebugLED(++step);  // 0x82
 
     OS_InitFIRM();
-    PRODUCTION_CHECK();
     OS_EnableIrq();
+    OS_EnableInterrupts();
 
-#ifndef SDK_FINALROM
-    //OS_EnableIrq();
     // 1: after PXI
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-
-    OS_SetDebugLED(++step);
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x83
 
     PM_InitFIRM();
-    PM_BackLightOn( FALSE );
 
-#ifndef SDK_FINALROM
-    // 2: after PM
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-    OS_SetDebugLED(++step);
-    PRODUCTION_CHECK();
-
-    if ( !Fatfs4sdmcInit() )
-    {
-        goto end;
-    }
-
-#ifndef SDK_FINALROM
-    // 5: after Open
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
-    OS_SetDebugLED(++step);
+    // 2: after PM_InitFIRM
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x84
 
     PM_BackLightOn( FALSE );
 
-    if ( !FATFS_LoadHeader() || !FATFS_LoadStatic() )
+    SDNandContext = &OSi_GetFromFirmAddr()->SDNandContext;
+    if ( !FATFS_Init( DMA_NO_FATFS, THREAD_PRIO_FATFS ) )
     {
+        OS_TPrintf("Failed to call FATFS_Init().\n");
         goto end;
     }
 
-#ifndef SDK_FINALROM
-    // 127: before Boot
-    pf_cnt = PROFILE_MAX-1;
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
+    // 3: after FS_Init
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x85
+
+    PM_BackLightOn( FALSE );
+
+PXI_RecvID();
+SetDebugLED(0x01);
+PXI_RecvID();
+SetDebugLED(0x02);
+
+    if ( PXI_RecvID() != FIRM_PXI_ID_SET_PATH )
+    {
+        OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_SET_PATH).\n");
+        goto end;
+    }
+
+#ifdef USE_IDLE_THREAD
+    CreateIdleThread();
+#endif
+
+    // 4: after PXI
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x86
+
+    PM_BackLightOn( FALSE );
+
+    if ( (fd = FS_OpenSrl()) < 0 )
+    {
+        OS_TPrintf("Failed to call FS_OpenSrl().\n");
+        goto end;
+    }
+
+    // 5: after FS_OpenSrl
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x87
+
+    PM_BackLightOn( FALSE );
+
+    if ( !FS_LoadHeader( fd ) )
+    {
+        OS_TPrintf("Failed to call FS_LoadHeader().\n");
+        goto end;
+    }
+
+    // 6: after FS_LoadHeader
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x88
+
+    PM_BackLightOn( FALSE );
+
+    if ( PXI_RecvID() != FIRM_PXI_ID_DONE_HEADER )
+    {
+        OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_DONE_HEADER).\n");
+        goto end;
+    }
+
+    // 7: after PXI
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x89
+
+    PM_BackLightOn( FALSE );
+
+    AESi_InitKeysFIRM();
+    AESi_RecvSeed( rh->s.developer_encrypt );
+
+    // 8: after AESi_RecvSeed
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x8a
+
+    PM_BackLightOn( FALSE );
+
+    if ( !FS_LoadStatic( fd ) )
+    {
+        OS_TPrintf("Failed to call FS_LoadStatic().\n");
+        goto end;
+    }
+
+    // 9: after FS_LoadStatic
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x8b
+
+    PM_BackLightOn( FALSE );
+
+    if ( PXI_RecvID() != FIRM_PXI_ID_DONE_STATIC )
+    {
+        OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_DONE_STATIC).\n");
+        goto end;
+    }
+
+    // 10: after PXI
+    PUSH_PROFILE();
+#ifdef PROFILE_ENABLE
     {
         int i;
         PXI_RecvID();
         OS_TPrintf("\n[ARM7] Begin\n");
         for (i = 0; i < PROFILE_MAX; i++)
         {
-            OS_TPrintf("0x%08X\n", profile[i]);
+//            OS_TPrintf("0x%08X\n", profile[i]);
+            if ( !profile[i] ) break;
+            OS_TPrintf("%2d: %7d usec", i, profile[i]);
+            if (i)
+            {
+                OS_TPrintf(" ( %7d usec )\n", profile[i]-profile[i-1]);
+            }
+            else
+            {
+                OS_TPrintf("\n");
+            }
         }
         OS_TPrintf("\n[ARM7] End\n");
     }
 #endif
-    OS_SetDebugLED(0);
-    PRODUCTION_CHECK();
+    SetDebugLED( 0 );
 
     PM_BackLightOn( TRUE ); // last chance
-    PMi_SetParams( REG_PMIC_BL_BRT_A_ADDR, 22, PMIC_BL_BRT_A_MASK );    // brighter
-    PMi_SetParams( REG_PMIC_BL_BRT_B_ADDR, 22, PMIC_BL_BRT_B_MASK );    // brighter
 
     OS_BootFromFIRM();
 
 end:
-    OS_SetDebugLED( (u8)(0xF0 | step));
+    SetDebugLED( (u8)(0xF0 | step));
 
     EraseAll();
 
     // failed
-    while (1)
-    {
-        PXI_NotifyID( FIRM_PXI_ID_NULL );
-    }
+    PXI_NotifyID( FIRM_PXI_ID_ERR );
+    PXI_NotifyID( FIRM_PXI_ID_ERR );
+    PXI_NotifyID( FIRM_PXI_ID_ERR );
+    PXI_NotifyID( FIRM_PXI_ID_ERR );
+    OS_Terminate();
 }
 

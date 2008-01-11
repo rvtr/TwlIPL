@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlFirm - nandfirm - sdmc-launcher
+  Project:  TwlFirm - gcdfirm - sdmc-launcher
   File:     main.c
 
   Copyright 2007 Nintendo.  All rights reserved.
@@ -22,15 +22,15 @@
 #define RSA_KEY_ADDR    rsa_key
 static const u8 rsa_key[128] =
 {
-    0xdf, 0x56, 0x30,
-    0xc9, 0xae, 0x05, 0x55, 0xe8, 0xdf, 0xbe, 0xe6, 0xb9, 0x30, 0xb9, 0x76, 0x93, 0xb4, 0xc2, 0x20,
-    0xe7, 0xae, 0x4c, 0x3e, 0xc3, 0xed, 0x27, 0xcf, 0x5d, 0x4f, 0xb5, 0x7d, 0xde, 0x38, 0xbc, 0xfe,
-    0x25, 0x32, 0xd8, 0x23, 0x98, 0x52, 0xb5, 0xda, 0xf7, 0x39, 0xdc, 0xb3, 0x0a, 0x94, 0x7a, 0x2b,
-    0x79, 0xe6, 0xe0, 0x4c, 0xbc, 0x21, 0xbd, 0x59, 0xb2, 0xc7, 0xf1, 0xc0, 0xf1, 0xfb, 0x29, 0x75,
-    0xa1, 0x21, 0x93, 0x01, 0x29, 0x1c, 0x9a, 0xe1, 0x2d, 0x55, 0xfc, 0x7b, 0xb8, 0xcb, 0x07, 0x33,
-    0xc5, 0x91, 0x0d, 0xc8, 0x45, 0x59, 0xef, 0xbe, 0x58, 0xc7, 0xc1, 0x1d, 0xd5, 0xf2, 0xcf, 0x1f,
-    0xe0, 0x6d, 0x21, 0x00, 0xcd, 0x42, 0xd8, 0x84, 0x85, 0xe3, 0xb2, 0x02, 0x1a, 0xa5, 0x89, 0x02,
-    0xa1, 0x96, 0xc6, 0xf7, 0x61, 0x68, 0x66, 0xe6, 0x65, 0x12, 0xb7, 0xf1, 0x49
+    0xAC, 0x93, 0xBB,
+    0x3C, 0x15, 0x5C, 0x5F, 0x25, 0xB0, 0x4C, 0x37, 0xA4, 0x2D, 0x85, 0x29, 0x1D, 0x7A, 0x9D, 0x2D,
+    0xD5, 0x79, 0xB5, 0x5D, 0xB1, 0x08, 0x20, 0x9C, 0xF0, 0x4C, 0x56, 0x27, 0x97, 0xF8, 0x7E, 0x3E,
+    0xCB, 0x94, 0x06, 0x05, 0x94, 0x00, 0x92, 0x9B, 0xB0, 0x5B, 0x06, 0xF6, 0xAF, 0xAA, 0x9C, 0xA5,
+    0xF0, 0x11, 0xA7, 0x8A, 0xCB, 0x0C, 0x11, 0xD6, 0x0C, 0x3D, 0x30, 0xAC, 0x51, 0x79, 0x5A, 0xB5,
+    0x7F, 0x11, 0x92, 0x74, 0x48, 0x82, 0x81, 0xBF, 0x3B, 0xFA, 0x93, 0xBF, 0x6B, 0x5B, 0x3F, 0x86,
+    0x96, 0x4F, 0xCC, 0x90, 0x12, 0xB2, 0x39, 0x8D, 0x68, 0x16, 0x7B, 0xC6, 0x87, 0xF1, 0xF5, 0x60,
+    0x62, 0x39, 0xFB, 0x10, 0x7E, 0x48, 0x7F, 0xDD, 0x82, 0x38, 0x38, 0x76, 0xB5, 0xCE, 0x21, 0x4B,
+    0xC9, 0x6F, 0x31, 0x8D, 0x23, 0x57, 0x3D, 0xB6, 0x6C, 0xEE, 0xC2, 0x0D, 0x11
 };
 #endif
 
@@ -39,13 +39,39 @@ static const u8 rsa_key[128] =
 static u8 acHeap[RSA_HEAP_SIZE] __attribute__ ((aligned (32)));
 static SVCSignHeapContext acPool;
 
+#define MENU_FILE       "sdmc:/menu.srl"
+
 /*
-    Profile
+    PROFILE_ENABLE を定義するとある程度のパフォーマンスチェックができます。
+    利用するためには、main.cかどこかに、u32 profile[256]; u32 pf_cnt = 0; を
+    定義する必要があります。
 */
-#ifndef SDK_FINALROM
-#define PROFILE_MAX  0x100
+#define PROFILE_ENABLE
+
+/*
+    PRINT_MEMORY_ADDR を定義すると、そのアドレスからSPrintfを行います(このファイルのみ)
+    FINALROM版でもコードが残るので注意してください。
+*/
+#define PRINT_MEMORY_ADDR       0x02000200
+
+//#ifdef SDK_FINALROM // FINALROMで無効化
+//#undef PROFILE_ENABLE
+//#endif
+
+#ifdef PROFILE_ENABLE
+#define PROFILE_MAX  16
 u32 profile[PROFILE_MAX];
 u32 pf_cnt = 0;
+#define PUSH_PROFILE()  (profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick()))
+#else
+#define PUSH_PROFILE()  ((void)0)
+#endif
+
+#ifdef PRINT_MEMORY_ADDR
+static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
+#undef OS_TPrintf
+//#define OS_TPrintf(...) (debugPtr = (char*)((u32)(debugPtr + STD_TSPrintf(debugPtr, __VA_ARGS__) + 0xf) & ~0xf))
+#define OS_TPrintf(...) (debugPtr += STD_TSPrintf(debugPtr, __VA_ARGS__))
 #endif
 
 /***************************************************************
@@ -57,7 +83,7 @@ static void PreInit(void)
 {
     static const OSMountInfo    firmSettings[] =
     {
-        { 'A', OS_MOUNT_DEVICE_SD, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "sdmc",    "/" },
+        { 'A', OS_MOUNT_DEVICE_SD, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "sdmc",    "/" },
         { 0 }
     };
     /*
@@ -84,26 +110,16 @@ static void PreInit(void)
 /***************************************************************
     PostInit
 
-    MI_LoadHeader前にかなり(数100msec)時間があるので、可能なら
-    OS_Init後にいろいろ処理したい！
-    メインメモリの初期化
+    各種初期化
 ***************************************************************/
 static void PostInit(void)
 {
-    /*
-     メインメモリ関連
-    */
-    // ARM9領域を全クリア
-    if ( OS_GetResetParameter() )
-    {
-        MI_CpuClearFast( (void*)HW_FIRM_RESET_BUF_END, HW_TWL_MAIN_MEM_MAIN_END-HW_FIRM_RESET_BUF_END );
-    }
-    else
-    {
-        MI_CpuClearFast( (void*)HW_MAIN_MEM_MAIN, HW_MAIN_MEM_MAIN_SIZE );
-    }
-
-    DC_FlushAll();
+    // RSA用ヒープ設定
+    SVC_InitSignHeap( &acPool, acHeap, sizeof(acHeap) );
+    // HMAC用鍵準備
+    FS_SetDigestKey( NULL );
+    // FS/FATFS初期化
+    FS_InitFIRM();
 }
 
 /***************************************************************
@@ -143,11 +159,11 @@ static BOOL CheckHeader(void)
     // 順序ほぼ最適化済み
 #ifndef FIRM_USE_TWLSDK_KEYS
     if ( rhs->platform_code != PLATFORM_CODE_TWL_LIMITED ||     // TWL Limited only
-         !rhs->codec_mode ||                                    // TWL mode only
          !rhs->enable_signature ||                              // Should be use ROM header signature
 #else
-    if (    // no check
+    if ( // no check
 #endif
+         !rhs->codec_mode ||                                    // TWL mode only
         // should be in main memory
          HW_TWL_MAIN_MEM > (u32)rhs->main_ram_address ||
          HW_TWL_MAIN_MEM > (u32)rhs->sub_ram_address ||
@@ -166,7 +182,7 @@ static BOOL CheckHeader(void)
          (u32)rhs->sub_ram_address + rhs->sub_size <= (u32)rhs->sub_entry_address ||
          0 )
     {
-        OS_TPrintf("Invalid ROM header for MENU Launcher!\n");
+        OS_TPrintf("Invalid ROM header for SDMC Launcher!\n");
         return FALSE;
     }
     return TRUE;
@@ -193,50 +209,95 @@ void TwlMain( void )
 {
     PreInit();
 
-#ifndef SDK_FINALROM
     // 0: before PXI
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSecondsBROM(OS_GetTick());
-#endif
+    PUSH_PROFILE();
 
     OS_InitFIRM();
     OS_EnableIrq();
-#ifndef SDK_FINALROM
-    OS_InitTick();
-    // 1: after PXI
-    profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
+    OS_EnableInterrupts();
 
-    SVC_InitSignHeap( &acPool, acHeap, sizeof(acHeap) );
+#ifdef PROFILE_ENABLE
+    OS_InitTick();
+#endif
+    // 1: after PXI
+    PUSH_PROFILE();
+PXI_NotifyID( FIRM_PXI_ID_NULL );
 
     PostInit();
 
-#ifndef SDK_FINALROM
-        // 2: after PostInit
-        profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-#endif
+    // 2: after PostInit
+    PUSH_PROFILE();
+PXI_NotifyID( FIRM_PXI_ID_NULL );
 
-    // load menu
-    if ( MI_LoadHeader( &acPool, RSA_KEY_ADDR ) && CheckHeader() && MI_LoadStatic() )
+    STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE);
+
+    // 3: after FS_ResolveSrl
+    PUSH_PROFILE();
+
+    PXI_NotifyID( FIRM_PXI_ID_SET_PATH );
+
+    // 4: after PXI
+    PUSH_PROFILE();
+
+    if ( !FS_LoadHeader(&acPool, RSA_KEY_ADDR ) || !CheckHeader() )
     {
-#ifndef SDK_FINALROM
-        // 127: before Boot
-        pf_cnt = PROFILE_MAX-1;
-        profile[pf_cnt++] = (u32)OS_TicksToMicroSeconds(OS_GetTick());
-        {
-            int i;
-            OS_TPrintf("\n[ARM9] Begin\n");
-            for (i = 0; i < PROFILE_MAX; i++)
-            {
-                OS_TPrintf("0x%08X\n", profile[i]);
-            }
-            OS_TPrintf("\n[ARM9] End\n");
-            PXI_NotifyID( FIRM_PXI_ID_NULL );
-        }
-#endif
-
-        OS_BootFromFIRM();
+        OS_TPrintf("Failed to call FS_LoadHeader() and/or CheckHeader().\n");
+        goto end;
     }
 
+    // 5: after FS_LoadHeader
+    PUSH_PROFILE();
+
+    PXI_NotifyID( FIRM_PXI_ID_DONE_HEADER );
+
+    // 6: after PXI
+    PUSH_PROFILE();
+
+    AESi_SendSeed( FS_GetAesKeySeed() );
+    FS_DeleteAesKeySeed();
+
+    // 7: after AESi_SendSeed
+    PUSH_PROFILE();
+
+    if ( !FS_LoadStatic() )
+    {
+        OS_TPrintf("Failed to call FS_LoadStatic().\n");
+        goto end;
+    }
+
+    // 8: after FS_LoadStatic
+    PUSH_PROFILE();
+
+    PXI_NotifyID( FIRM_PXI_ID_DONE_STATIC );
+
+    // 9: after PXI
+    PUSH_PROFILE();
+#ifdef PROFILE_ENABLE
+    {
+        int i;
+        OS_TPrintf("\n[ARM9] Begin\n");
+        for (i = 0; i < PROFILE_MAX; i++)
+        {
+//            OS_TPrintf("0x%08X\n", profile[i]);
+            if ( !profile[i] ) break;
+            OS_TPrintf("%2d: %7d usec", i, profile[i]);
+            if (i)
+            {
+                OS_TPrintf(" ( %7d usec )\n", profile[i]-profile[i-1]);
+            }
+            else
+            {
+                OS_TPrintf("\n");
+            }
+        }
+        OS_TPrintf("\n[ARM9] End\n");
+        PXI_NotifyID( FIRM_PXI_ID_NULL );
+    }
+#endif
+
+    OS_BootFromFIRM();
+
+end:
     EraseAll();
 
     // failed
