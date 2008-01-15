@@ -54,6 +54,7 @@ static u16 s_csr;
 static u8 *s_pPrivKeyBuffer = NULL;
 static TSFReadResult (*s_pReadSecureInfoFunc)( void );
 static BOOL s_isReadTSD;
+static u8 s_region_old;
 
 // const data  -----------------------------------------
 static const u16 *const s_pStrWriter[ WRITER_ELEMENT_NUM ] = {
@@ -106,6 +107,14 @@ static char *strLanguage[] = {
 	(char *)"LANG_KOREAN",
 };
 
+static const char *strRegion[] = {
+	"JAPAN",
+	"AMERICA",
+	"EUROPE",
+	"AUSTRALIA",
+	"CHINA",
+	"KOREA",
+};
 
 //======================================================
 // HWèÓïÒÉâÉCÉ^Å[
@@ -130,7 +139,9 @@ void HWInfoWriterInit( void )
 	ReadHWInfoFile();
 //	VerifyHWInfo();
 	OS_TPrintf( "region = %d\n", THW_GetRegion() );
-	
+	PrintfSJISSub( 2 * 8, 18 * 8, TXT_COLOR_BLACK, "Region   = %s", strRegion[ THW_GetRegion() ] );
+	PrintfSJISSub( 2 * 8, 20 * 8, TXT_COLOR_BLACK, "SerialNo = %s", THW_GetSerialNoPtr() );
+	s_region_old = THW_GetRegion();
 	s_csr = 0;
 	DrawMenu( s_csr, &s_writerParam );
 	
@@ -313,6 +324,10 @@ static void WriteHWInfoFile( u8 region )
 	DispMessage( 0, 0, TXT_COLOR_NULL, NULL );
 	NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_WHITE,
 								MSG_X * 8 , MSG_Y * 8, ( 32 - MSG_X ) * 8, ( MSG_Y + 4 ) * 8 );
+	
+	PrintfSJISSub( 2 * 8, 18 * 8, TXT_COLOR_WHITE, "Region   = %s", strRegion[ s_region_old ] );
+	PrintfSJISSub( 2 * 8, 18 * 8, TXT_COLOR_BLACK, "Region   = %s", strRegion[ THW_GetRegion() ] );
+	s_region_old = THW_GetRegion();
 }
 
 
