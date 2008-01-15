@@ -366,11 +366,17 @@ static BOOL WriteHWSecureInfoFile( u8 region )
 	{
 		u8 buffer[ 12 ] = "SERIAL";		// 適当な文字列をMACアドレスと結合してSHA1を取り、仮SerialNoとする。
 		u8 serialNo[ SVC_SHA1_DIGEST_SIZE ];
+		int i;
 		int len = ( THW_GetRegion() == TWL_REGION_AMERICA ) ?
 					TWL_HWINFO_SERIALNO_LEN_AMERICA : TWL_HWINFO_SERIALNO_LEN_OTHERS;
 		OS_GetMacAddress( buffer + 6 );
 		SVC_CalcSHA1( serialNo, buffer, sizeof(buffer) );
+		for( i = 3; i < SVC_SHA1_DIGEST_SIZE; i++ ) {
+			serialNo[ i ] = (u8)( ( serialNo[ i ] % 10 ) + 0x30 );
+		}
+		MI_CpuCopy8( "SRN", serialNo, 3 );
 		MI_CpuClear8( &serialNo[ len ], sizeof(serialNo) - len );
+		OS_TPrintf( "serialNo : %s\n", serialNo );
 		THW_SetSerialNo( serialNo );
 	}
 	
