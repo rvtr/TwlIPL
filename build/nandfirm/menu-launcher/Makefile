@@ -18,7 +18,7 @@
 
 
 # if you have valid keys, set environment value like below
-#export TWL_KEYSDIR='$(FIRM_ROOT)/../twl_firmware/bootrom/build/keys'
+#export TWL_KEYSDIR='$(TWL_IPL_RED_ROOT)/../twl_firmware/bootrom/build/keys'
 
 
 #----------------------------------------------------------------------------
