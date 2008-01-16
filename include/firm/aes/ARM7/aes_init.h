@@ -75,7 +75,7 @@ void AESi_ResetAesKey( void );
 static inline void AESi_InitKeysFIRM( void )
 {
     AESi_InitKeysForApp( (u8*)((ROM_Header_Short*)HW_TWL_ROM_HEADER_BUF)->game_code );
-    AESi_ResetAesKey();
+//    AESi_ResetAesKey();
 }
 
 /*---------------------------------------------------------------------------*
