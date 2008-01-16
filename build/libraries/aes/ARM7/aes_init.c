@@ -30,12 +30,14 @@
  *---------------------------------------------------------------------------*/
 void AESi_InitKeysForApp( u8 game_code[4] )
 {
+    AES_Lock();
     AES_WaitKey();
 
     reg_AES_AES_ID_A2 = AES_IDS_ID0_C(game_code);
     reg_AES_AES_ID_A3 = AES_IDS_ID0_D(game_code);
     reg_AES_AES_ID_B0 = AES_IDS_ID1_A(game_code);
     reg_AES_AES_ID_B1 = AES_IDS_ID1_B(game_code);
+    AES_Unlock();
 }
 
 /*---------------------------------------------------------------------------*
@@ -50,12 +52,14 @@ void AESi_InitKeysForApp( u8 game_code[4] )
  *---------------------------------------------------------------------------*/
 void AESi_InitKeysForHard( u8 fuse[8] )
 {
+    AES_Lock();
     AES_WaitKey();
 
     reg_AES_AES_ID_B2 = *(u32*)&fuse[4];
     reg_AES_AES_ID_B3 = *(u32*)&fuse[0];
     reg_AES_AES_ID_D0 = *(u32*)&fuse[0];
     reg_AES_AES_ID_D3 = *(u32*)&fuse[4];
+    AES_Unlock();
 }
 
 /*---------------------------------------------------------------------------*
@@ -69,6 +73,7 @@ void AESi_InitKeysForHard( u8 fuse[8] )
  *---------------------------------------------------------------------------*/
 void AESi_ResetAesKey( void )
 {
+    AES_Lock();
     AES_WaitKey();
 
     // set dummy without seed[3]
@@ -101,6 +106,7 @@ void AESi_ResetAesKey( void )
     reg_AES_AES_KEY_D1 = 11;
     reg_AES_AES_KEY_D2 = 12;
     reg_AES_AES_KEY_D3 = 12;
+    AES_Unlock();
 }
 
 /*---------------------------------------------------------------------------*
@@ -117,6 +123,7 @@ void AESi_RecvSeed( BOOL developer_encrypt )
     AESKey seed;
 //    PXI_RecvDataByFifo( PXI_FIFO_TAG_DATA, &seed, AES_BLOCK_SIZE );
     PXI_RecvStream( &seed, AES_BLOCK_SIZE );
+    AES_Lock();
     AES_WaitKey();
     if ( developer_encrypt )
     {
@@ -126,4 +133,5 @@ void AESi_RecvSeed( BOOL developer_encrypt )
     {
         AES_SetKeySeedA((AESKeySeed*)&seed);   // APP
     }
+    AES_Unlock();
 }
