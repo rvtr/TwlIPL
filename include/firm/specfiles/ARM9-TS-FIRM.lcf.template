@@ -154,6 +154,18 @@ SECTIONS
 		. = ALIGN(32);	# Fit to cache line
 		SDK_STATIC_DATA_START		=.;
 				#:::::::::: data
+				<FOREACH.STATIC.OBJECTS=.itcm>
+				<STATIC.OBJECT=.itcm:t>
+				<END.STATIC.OBJECTS>
+				<FOREACH.STATIC.LIBRARIES=.itcm>
+				<STATIC.LIBRARY=.itcm:t>
+				<END.STATIC.LIBRARIES>
+				<FOREACH.STATIC.OBJECTS=.dtcm>
+				<STATIC.OBJECT=.dtcm:t>
+				<END.STATIC.OBJECTS>
+				<FOREACH.STATIC.LIBRARIES=.dtcm>
+				<STATIC.LIBRARY=.dtcm:t>
+				<END.STATIC.LIBRARIES>
 				<FOREACH.STATIC.OBJECTS=.ltdmain>
 				<STATIC.OBJECT=.ltdmain:t>
 				<END.STATIC.OBJECTS>
