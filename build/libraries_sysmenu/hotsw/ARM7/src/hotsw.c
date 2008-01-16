@@ -404,7 +404,6 @@ void HOTSW_LoadStaticModule(void)
 												  (u32 *)SYSM_CARD_BANNER_BUF,
 	                                              sizeof(TWLBannerFile) );
 		SYSMi_GetWork()->isValidCardBanner = TRUE;
-		SYSMi_GetWork()->is1stCardChecked  = TRUE;
 	}
 #endif
     
