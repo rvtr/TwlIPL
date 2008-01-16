@@ -217,6 +217,18 @@ SECTIONS
 		#
 		SDK_STATIC_BSS_START	=.;
 				#:::::::::: bss
+				<FOREACH.STATIC.OBJECTS=.itcm>
+				<STATIC.OBJECT=.itcm.bss:t>
+				<END.STATIC.OBJECTS>
+				<FOREACH.STATIC.LIBRARIES=.itcm>
+				<STATIC.LIBRARY=.itcm.bss:t>
+				<END.STATIC.LIBRARIES>
+				<FOREACH.STATIC.OBJECTS=.dtcm>
+				<STATIC.OBJECT=.dtcm.bss:t>
+				<END.STATIC.OBJECTS>
+				<FOREACH.STATIC.LIBRARIES=.dtcm>
+				<STATIC.LIBRARY=.dtcm.bss:t>
+				<END.STATIC.LIBRARIES>
 				<FOREACH.STATIC.OBJECTS=.ltdmain>
 				<STATIC.OBJECT=.ltdmain.bss:t>
 				<END.STATIC.OBJECTS>
