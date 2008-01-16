@@ -34,7 +34,7 @@
 #include    <twl/cdc.h>
 #include    <twl/aes.h>
 #include    <twl/mcu.h>
-#include	<twl/hw/common/mmap_wramEnv.h>
+#include    <twl/hw/common/mmap_wramEnv.h>
 #include    <sysmenu.h>
 #include    "nvram_sp.h"
 
@@ -67,7 +67,7 @@
     内部関数定義
  *---------------------------------------------------------------------------*/
 static void         SetSCFGWork( void );
-static void			ResetRTC( void );
+static void         ResetRTC( void );
 static void         ReadLauncherParameter( void );
 static void         PrintDebugInfo(void);
 static OSHeapHandle InitializeAllocateSystem(void);
@@ -96,34 +96,34 @@ void
 TwlSpMain(void)
 {
     OSHeapHandle    heapHandle;
-	
+
     // SYSMワークのクリア
     MI_CpuClear32( SYSMi_GetWork(), sizeof(SYSM_work) );
-	
-	// MMEMサイズチェックは、ARM7の_start内でやっているので、ノーケアでOK.
-	// SCFGレジスタ→HWi_WSYS04 etc.→system shared領域への値セットは、ランチャー起動時点では行われていないので、
-	// ランチャー自身がこれらの値を使うには、自身でこれらの値をセットしてやる必要がある。
-	// ランチャーからアプリを起動する際には、reboot.cが値を再セットしてくれる。
-	SetSCFGWork();	// [TODO]未デバッグ
-	
+
+    // MMEMサイズチェックは、ARM7の_start内でやっているので、ノーケアでOK.
+    // SCFGレジスタ→HWi_WSYS04 etc.→system shared領域への値セットは、ランチャー起動時点では行われていないので、
+    // ランチャー自身がこれらの値を使うには、自身でこれらの値をセットしてやる必要がある。
+    // ランチャーからアプリを起動する際には、reboot.cが値を再セットしてくれる。
+    SetSCFGWork();  // [TODO]未デバッグ
+
     // OS 初期化
     OS_Init();
-	OS_InitTick();
+    OS_InitTick();
     PrintDebugInfo();
-	
+
     // ランチャーパラメター取得（Cold/Hotスタート判定含む）
-	ReadLauncherParameter();
-	
-	// RTCリセット
-	ResetRTC();		// 330usくらい
-	
+    ReadLauncherParameter();
+
+    // RTCリセット
+    ResetRTC();     // 330usくらい
+
     // NVRAM からユーザー情報読み出し
     ReadUserInfo();
-    
-	// [TODO:] カード電源ONして、ROMヘッダのみリード＆チェックくらいはやっておきたい
-	
-	SYSMi_GetWork()->isARM9Start = TRUE;				// [TODO:] HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
-	
+
+    // [TODO:] カード電源ONして、ROMヘッダのみリード＆チェックくらいはやっておきたい
+
+    SYSMi_GetWork()->isARM9Start = TRUE;                // [TODO:] HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
+
     // ヒープ領域設定
     {
         void *wram = OS_GetWramSubPrivArenaHi();
@@ -151,9 +151,9 @@ TwlSpMain(void)
 
     if (OS_IsRunOnTwl() == TRUE)
     {
-		OSTick start = OS_GetTick();
+        OSTick start = OS_GetTick();
         InitializeFatfs();    // FATFS 初期化
-		OS_TPrintf( "FATFS init time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+        OS_TPrintf( "FATFS init time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
         InitializeNwm();      // NWM 初期化
 #ifndef SDK_NOCRYPTO
         AES_Init();           // AES 初期化
@@ -188,7 +188,7 @@ TwlSpMain(void)
     // 活栓挿抜機能初期化
     // 【TODO:直接起動且つロード済みの場合、カードを読み込まないようにする事】
     HOTSW_Init();
-	
+
     while (TRUE)
     {
         OS_Halt();
@@ -205,28 +205,28 @@ TwlSpMain(void)
 // システム領域(WRAM & MMEM)にSCFG情報をセット [TODO:]最終的にNANDファームからブートされたらいらないかも
 static void SetSCFGWork( void )
 {
-	// SCFGレジスタが有効な場合のみセット
-	if( reg_SCFG_EXT & REG_SCFG_EXT_CFG_MASK ) {
-		// WRAMのシステム領域にセット
-		u32 *wsys4 = (void*)HWi_WSYS04_ADDR;
-		u8  *wsys8 = (void*)HWi_WSYS08_ADDR;
-		u8  *wsys9 = (void*)HWi_WSYS09_ADDR;
-		// copy scfg registers
-		*wsys4 = reg_SCFG_EXT;
-		*wsys8 = (u8)(((reg_SCFG_OP & REG_SCFG_OP_OPT_MASK)) |
-						((reg_SCFG_A9ROM & (REG_SCFG_A9ROM_RSEL_MASK | REG_SCFG_A9ROM_SEC_MASK)) << (HWi_WSYS08_ROM_ARM9RSEL_SHIFT - REG_SCFG_A9ROM_RSEL_SHIFT)) |
-						((reg_SCFG_A7ROM & (REG_SCFG_A7ROM_RSEL_MASK | REG_SCFG_A7ROM_FUSE_MASK)) << (HWi_WSYS08_ROM_ARM7RSEL_SHIFT - REG_SCFG_A7ROM_RSEL_SHIFT)) |
-						((reg_SCFG_WL & REG_SCFG_WL_OFFB_MASK) << (HWi_WSYS08_WL_OFFB_SHIFT - REG_SCFG_WL_OFFB_SHIFT))
-						);
-		*wsys9 = (u8)((*wsys9 & (HWi_WSYS09_JTAG_DSPJE_MASK | HWi_WSYS09_JTAG_CPUJE_MASK | HWi_WSYS09_JTAG_ARM7SEL_MASK)) |
-						((reg_SCFG_JTAG & (REG_SCFG_JTAG_CPUJE_MASK | REG_SCFG_JTAG_ARM7SEL_MASK))) |
-						((reg_SCFG_JTAG & REG_SCFG_JTAG_DSPJE_MASK) >> (REG_SCFG_JTAG_DSPJE_SHIFT - HWi_WSYS09_JTAG_DSPJE_SHIFT)) | 
-						((reg_SCFG_CLK & (REG_SCFG_CLK_AESHCLK_MASK | REG_SCFG_CLK_SD2HCLK_MASK | REG_SCFG_CLK_SD1HCLK_MASK)) << (HWi_WSYS09_CLK_SD1HCLK_SHIFT - REG_SCFG_CLK_SD1HCLK_SHIFT)) | 
-						((reg_SCFG_CLK & (REG_SCFG_CLK_SNDMCLK_MASK | REG_SCFG_CLK_WRAMHCLK_MASK)) >> (REG_SCFG_CLK_WRAMHCLK_SHIFT - HWi_WSYS09_CLK_WRAMHCLK_SHIFT))
-						);
-		
-		// MMEMのシステム領域にコピー
-		MI_CpuCopy8( (void*)HWi_WSYS04_ADDR, (void *)HW_SYS_CONF_BUF, 6 );
+    // SCFGレジスタが有効な場合のみセット
+    if( reg_SCFG_EXT & REG_SCFG_EXT_CFG_MASK ) {
+        // WRAMのシステム領域にセット
+        u32 *wsys4 = (void*)HWi_WSYS04_ADDR;
+        u8  *wsys8 = (void*)HWi_WSYS08_ADDR;
+        u8  *wsys9 = (void*)HWi_WSYS09_ADDR;
+        // copy scfg registers
+        *wsys4 = reg_SCFG_EXT;
+        *wsys8 = (u8)(((reg_SCFG_OP & REG_SCFG_OP_OPT_MASK)) |
+                        ((reg_SCFG_A9ROM & (REG_SCFG_A9ROM_RSEL_MASK | REG_SCFG_A9ROM_SEC_MASK)) << (HWi_WSYS08_ROM_ARM9RSEL_SHIFT - REG_SCFG_A9ROM_RSEL_SHIFT)) |
+                        ((reg_SCFG_A7ROM & (REG_SCFG_A7ROM_RSEL_MASK | REG_SCFG_A7ROM_FUSE_MASK)) << (HWi_WSYS08_ROM_ARM7RSEL_SHIFT - REG_SCFG_A7ROM_RSEL_SHIFT)) |
+                        ((reg_SCFG_WL & REG_SCFG_WL_OFFB_MASK) << (HWi_WSYS08_WL_OFFB_SHIFT - REG_SCFG_WL_OFFB_SHIFT))
+                        );
+        *wsys9 = (u8)((*wsys9 & (HWi_WSYS09_JTAG_DSPJE_MASK | HWi_WSYS09_JTAG_CPUJE_MASK | HWi_WSYS09_JTAG_ARM7SEL_MASK)) |
+                        ((reg_SCFG_JTAG & (REG_SCFG_JTAG_CPUJE_MASK | REG_SCFG_JTAG_ARM7SEL_MASK))) |
+                        ((reg_SCFG_JTAG & REG_SCFG_JTAG_DSPJE_MASK) >> (REG_SCFG_JTAG_DSPJE_SHIFT - HWi_WSYS09_JTAG_DSPJE_SHIFT)) |
+                        ((reg_SCFG_CLK & (REG_SCFG_CLK_AESHCLK_MASK | REG_SCFG_CLK_SD2HCLK_MASK | REG_SCFG_CLK_SD1HCLK_MASK)) << (HWi_WSYS09_CLK_SD1HCLK_SHIFT - REG_SCFG_CLK_SD1HCLK_SHIFT)) |
+                        ((reg_SCFG_CLK & (REG_SCFG_CLK_SNDMCLK_MASK | REG_SCFG_CLK_WRAMHCLK_MASK)) >> (REG_SCFG_CLK_WRAMHCLK_SHIFT - HWi_WSYS09_CLK_WRAMHCLK_SHIFT))
+                        );
+
+        // MMEMのシステム領域にコピー
+        MI_CpuCopy8( (void*)HWi_WSYS04_ADDR, (void *)HW_SYS_CONF_BUF, 6 );
     }
 }
 
@@ -234,26 +234,26 @@ static void SetSCFGWork( void )
 // RTCのリセットチェック
 static void ResetRTC( void )
 {
-	// ランチャーでリセットを検出するためにこの処理をしているが、RTC_Init内でも同じことをしているので、ちょっと無駄。
-	RTCRawStatus1 stat1;
-	RTCRawStatus2 stat2;
-	RTC_ReadStatus1( &stat1 );
-	RTC_ReadStatus2( &stat2 );
-	// リセット、電源投入、電源電圧低下、ICテストの各フラグを確認
-	if ( stat1.reset || stat1.poc || stat1.bld || stat2.test )
-	{
-		// リセット実行
-		stat1.reset = 1;
-		RTC_WriteStatus1( &stat1 );
-		SYSMi_GetWork()->isResetRTC = TRUE;
-	}
+    // ランチャーでリセットを検出するためにこの処理をしているが、RTC_Init内でも同じことをしているので、ちょっと無駄。
+    RTCRawStatus1 stat1;
+    RTCRawStatus2 stat2;
+    RTC_ReadStatus1( &stat1 );
+    RTC_ReadStatus2( &stat2 );
+    // リセット、電源投入、電源電圧低下、ICテストの各フラグを確認
+    if ( stat1.reset || stat1.poc || stat1.bld || stat2.test )
+    {
+        // リセット実行
+        stat1.reset = 1;
+        RTC_WriteStatus1( &stat1 );
+        SYSMi_GetWork()->isResetRTC = TRUE;
+    }
 }
 
 
 // ランチャーパラメータのリードおよびHot/Coldスタート判定
 void ReadLauncherParameter( void )
 {
-	BOOL hot;
+    BOOL hot;
     SYSMi_GetWork()->isValidLauncherParam = OS_ReadLauncherParameter( (LauncherParam *)&(SYSMi_GetWork()->launcherParam), &hot );
     SYSMi_GetWork()->isHotStart = hot;
     // メインメモリのリセットパラメータをクリアしておく
@@ -292,7 +292,15 @@ static void
 InitializeFatfs(void)
 {
     // FATFSライブラリの初期化
+#ifndef SDK_NOCRYPTO
+#ifdef FATFS_AES_MOUNT_FOR_NAND
+    if(!FATFS_Init( FATFS_DMA_4, THREAD_PRIO_FATFS))
+#else
     if (FATFS_Init(FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
+#endif
+#else
+    if (FATFS_Init(FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
+#endif
     {
         // do nothing
     }
@@ -322,12 +330,12 @@ InitializeNwm(void)
     nwmInit.cmdPrio = THREAD_PRIO_NWM_COMMMAND;
     nwmInit.evtPrio = THREAD_PRIO_NWM_EVENT;
     nwmInit.sdioPrio = THREAD_PRIO_NWM_SDIO;
-	nwmInit.drvHeap.id = OS_ARENA_MAIN_SUBPRIV; /* [TODO] */
-	nwmInit.drvHeap.handle = heapHandle;
+    nwmInit.drvHeap.id = OS_ARENA_MAIN_SUBPRIV; /* [TODO] */
+    nwmInit.drvHeap.handle = heapHandle;
 #ifdef WPA_BUILT_IN /* WPA が組み込まれる場合、以下のメンバが追加される */
     nwmInit.wpaPrio = THREAD_PRIO_NWM_WPA;
-	nwmInit.wpaHeap.id = OS_ARENA_MAIN_SUBPRIV; /* [TODO] */
-	nwmInit.wpaHeap.handle = heapHandle;
+    nwmInit.wpaHeap.id = OS_ARENA_MAIN_SUBPRIV; /* [TODO] */
+    nwmInit.wpaHeap.handle = heapHandle;
 #endif
     NWMSP_Init(&nwmInit);
 
@@ -440,11 +448,11 @@ InitializeAllocateSystem(void)
     // ヒープサイズの確認
     {
         u32     heapSize;
-    
+
         heapSize    =   (u32)OS_CheckHeap(OS_ARENA_MAIN_SUBPRIV, hh);
         OS_TPrintf("ARM7: MAIN heap size is %d (before AddToHead)\n", heapSize);
     }
-    
+
         // ヒープに拡張ブロックを追加
         OS_AddToHeap(OS_ARENA_MAIN_SUBPRIV, hh, extraLo, extraHi);
     }
@@ -522,7 +530,7 @@ InitializeAllocateSystem(void)
     // ヒープサイズの確認
     {
         u32     heapSize;
-    
+
         heapSize    =   (u32)OS_CheckHeap(OS_ARENA_WRAM_SUBPRIV, hh);
         if (WM_WL_HEAP_SIZE > heapSize)
         {
@@ -530,7 +538,7 @@ InitializeAllocateSystem(void)
         }
         OS_TPrintf("ARM7: WRAM heap size is %d (before AddToHeap)\n", heapSize);
     }
-    
+
         // ヒープに拡張ブロックを追加
         OS_AddToHeap(OS_ARENA_WRAM_SUBPRIV, hh, extraLo, extraHi);
     }
@@ -563,7 +571,7 @@ InitializeAllocateSystem(void)
     // ヒープサイズの確認
     {
         u32     heapSize;
-    
+
         heapSize    =   (u32)OS_CheckHeap(OS_ARENA_WRAM_SUBPRIV, hh);
         if (WM_WL_HEAP_SIZE > heapSize)
         {
@@ -591,8 +599,8 @@ extern u16 WMSP_GetAllowedChannel(u16 bitField);
  *---------------------------------------------------------------------------*/
 static void ReadUserInfo(void)
 {
-	u8 *p;
-	
+    u8 *p;
+
     // 無線MACアドレスをユーザー情報の後ろに展開
     {
         u8      wMac[6];
