@@ -22,6 +22,7 @@
 #include <firm/fs/ARM7/fs_firm.h>
 #else
 #include <firm/fs/ARM9/fs_firm.h>
+#include <firm/fs/ARM9/fs_es.h>
 #endif // SDK_ARM7
 
 

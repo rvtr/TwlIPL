@@ -114,7 +114,7 @@ void FS_DeleteAesKeySeed( void )
 BOOL FS_ResolveSrl( u64 titleId )
 {
     if ( ES_ERR_OK != ES_InitLib() ||
-         ES_ERR_OK != ES_GetContentPath(titleId, CONTENT_INDEX_SRL, (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF) ||
+         !FS_GetTitleBootContentPathFast((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, titleId) ||
          ES_ERR_OK != ES_CloseLib() )
     {
         return FALSE;
