@@ -221,13 +221,11 @@ void TwlMain( void )
 #endif
     // 1: after PXI
     PUSH_PROFILE();
-PXI_NotifyID( FIRM_PXI_ID_NULL );
 
     PostInit();
 
     // 2: after PostInit
     PUSH_PROFILE();
-PXI_NotifyID( FIRM_PXI_ID_NULL );
 
     STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE);
 

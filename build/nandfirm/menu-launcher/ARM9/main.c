@@ -218,13 +218,11 @@ void TwlMain( void )
 #endif
     // 1: after PXI
     PUSH_PROFILE();
-PXI_NotifyID( FIRM_PXI_ID_NULL );
 
     PostInit();
 
     // 2: after PostInit
     PUSH_PROFILE();
-PXI_NotifyID( FIRM_PXI_ID_NULL );
 
     if ( !FS_ResolveSrl( MENU_TITLE_ID ) )
     {

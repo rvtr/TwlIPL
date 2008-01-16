@@ -36,6 +36,11 @@
 */
 #define PRINT_MEMORY_ADDR       0x02000600
 
+/*
+    定義するとアイドルスレッドを作成します。
+*/
+//#define USE_IDLE_THREAD
+
 
 #ifdef PROFILE_ENABLE
 #define PROFILE_MAX  16
@@ -67,6 +72,25 @@ static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
 extern void*   SDNandContext;  /* NAND初期化パラメータ */
 
 static ROM_Header* const rh= (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
+
+#ifdef USE_IDLE_THREAD
+static OSThread idleThread;
+static u64 idleStack[32];
+static void IdleThread(void* arg)
+{
+#pragma unused(arg)
+    OS_EnableInterrupts();
+    while (1)
+    {
+        OS_Halt();
+    }
+}
+static void CreateIdleThread(void)
+{
+    OS_CreateThread(&idleThread, IdleThread, NULL, &idleStack[32], sizeof(idleStack), OS_THREAD_PRIORITY_MAX);
+    OS_WakeupThreadDirect(&idleThread);
+}
+#endif
 
 /***************************************************************
     PreInit
@@ -100,6 +124,23 @@ static void PreInit(void)
     OS_SpinWaitCpuCycles(0x1000000);
 #endif
 */
+}
+
+/***************************************************************
+    PostInit
+
+    各種初期化
+***************************************************************/
+static void PostInit(void)
+{
+    // PMICの設定 for old version
+    PM_InitFIRM();
+    // AESの初期化
+    AES_Init(); // for encrypted NAND
+#ifdef USE_IDLE_THREAD
+    // アイドルスレッドの作成
+    CreateIdleThread();
+#endif
 }
 
 /***************************************************************
@@ -137,8 +178,7 @@ void TwlSpMain( void )
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x83
 
-    PM_InitFIRM();
-    AES_Init();
+    PostInit();
 
     // 2: after PM_InitFIRM
     PUSH_PROFILE();
@@ -158,11 +198,6 @@ void TwlSpMain( void )
     SetDebugLED(++step); // 0x85
 
     PM_BackLightOn( FALSE );
-
-PXI_RecvID();
-SetDebugLED(0x01);
-PXI_RecvID();
-SetDebugLED(0x02);
 
     // 4:
     PUSH_PROFILE();
