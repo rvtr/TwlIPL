@@ -35,17 +35,39 @@
 #endif
 
 #define COPY_NUM_MAX			(4*3)
-#define POST_CLEAR_NUM_MAX		(4*2)
+#define POST_CLEAR_NUM_MAX		(12 + 4*2)
 
 // extern data-------------------------------------------------------
 
 // function's prototype----------------------------------------------
 
 static void BOOTi_ClearREG_RAM( void );
+static void BOOTi_CutAwayRegionList( u32 *regionlist, u32 start, u32 end );
 
 // global variables--------------------------------------------------
 
 // static variables--------------------------------------------------
+
+//TODO 定数への置き換え
+static u32 twl_post_clear_list[POST_CLEAR_NUM_MAX + 1] = 
+{
+	0x2000400, 0x2280000,
+	0x2380000, 0x23fee00,
+	0x23ff000, 0x2800000,
+	0x2e73000, 0x2ffc000,
+	NULL,
+};
+
+static u32 nitro_post_clear_list[POST_CLEAR_NUM_MAX + 1] = 
+{
+	0x2000000, 0x2000100,
+	0x2000400, 0x2280000,
+	0x2380000, 0x23fee00,
+	0x23ff000, 0x23ffe00,
+	0x2400000, 0x27ffe00,
+	0x2e73000, 0x2ffc000,
+	NULL,
+};
 
 // const data--------------------------------------------------------
 
@@ -82,6 +104,7 @@ BOOL BOOT_WaitStart( void )
 			ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 			int list_count = PRE_CLEAR_NUM_MAX + 1;
 			int l;
+			u32 *post_clear_list;
 			// メモリリストの設定
 			static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + 2 + POST_CLEAR_NUM_MAX + 1] = 
 			{
@@ -129,13 +152,21 @@ BOOL BOOT_WaitStart( void )
 			mem_list[list_count++] = NULL;
 			
 			// post clearリスト設定
-			for( l=0; l<RELOCATE_INFO_NUM ; l++ )
+			if ( dh->s.platform_code )
 			{
-				if( SYSMi_GetWork()->romRelocateInfo[l].post_clear_addr != NULL )
-				{
-					mem_list[list_count++] = SYSMi_GetWork()->romRelocateInfo[l].post_clear_addr;
-					mem_list[list_count++] = SYSMi_GetWork()->romRelocateInfo[l].post_clear_length;
-				}
+				post_clear_list = twl_post_clear_list;
+				BOOTi_CutAwayRegionList( post_clear_list, (u32)th->s.main_ltd_ram_address, (u32)th->s.main_ltd_ram_address + th->s.main_ltd_size);
+				BOOTi_CutAwayRegionList( post_clear_list, (u32)th->s.sub_ltd_ram_address, (u32)th->s.sub_ltd_ram_address + th->s.sub_ltd_size);
+			}else
+			{
+				post_clear_list = nitro_post_clear_list;
+			}
+			BOOTi_CutAwayRegionList( post_clear_list, (u32)dh->s.main_ram_address, (u32)dh->s.main_ram_address + dh->s.main_size);
+			BOOTi_CutAwayRegionList( post_clear_list, (u32)dh->s.sub_ram_address, (u32)dh->s.sub_ram_address + dh->s.sub_size);
+			for( l=0; post_clear_list[l]!=NULL ; l+=2 )
+			{
+				mem_list[list_count++] = post_clear_list[l];
+				mem_list[list_count++] = post_clear_list[l+1] - post_clear_list[l];
 			}
 			mem_list[list_count] = NULL;
 			
@@ -190,4 +221,75 @@ static void BOOTi_ClearREG_RAM( void )
 	// クリアしていないレジスタは、VCOUNT, JOY, PIFCNT, MC-, EXMEMCNT, IME, PAUSE, POWLCDCNT, 他セキュリティ系です。
 	(void)OS_ResetRequestIrqMask((u32)~0);
 	(void)OS_ResetRequestIrqMaskEx((u32)~0);
+}
+
+// 単純リスト要素削除
+static void BOOTi_DeliteElementFromList( u32 *list, u32 index )
+{
+	int l;
+	for( l=(int)index; list[l]!=NULL; l++ )
+	{
+		list[l] = list[l+1];
+	}
+}
+
+// 単純リスト要素追加
+static void BOOTi_InsertElementToList( u32 *list, u32 index, u32 value )
+{
+	int l = (int)index;
+	while(list[l]!=NULL)
+	{
+		l++;
+	}
+	list[l+1] = NULL;
+	for( ; index<l; l-- )
+	{
+		list[l] = list[l-1];
+	}
+	list[l] = value;
+}
+
+// {first1, last1, first2, last2, ... , NULL}という形式の領域リストから
+// {start, end}の領域を切り取ったリストを返す関数
+// 引数に与えるリストは要素が最大2追加されるため、十分な大きさが必要
+// また、領域リストの要素は、最後尾のNULL以外昇順に並んでいる必要がある。
+static void BOOTi_CutAwayRegionList( u32 *regionlist, u32 start, u32 end )
+{
+	int l, m, n;
+	if( end <= start ) return;
+	for( l=0; regionlist[l]!=NULL; l++ )
+	{
+		if( regionlist[l] >= start )
+		{
+			break;
+		}
+	}
+	for( m=l; regionlist[m]!=NULL; m++ )
+	{
+		if( regionlist[m] > end )
+		{
+			break;
+		}
+	}
+	// この時点でregionlist[l]およびregionlist[m]は、start <= regionlist[l], end < regionlist[m]で、且つ最も小さな値
+	
+	if( m % 2 == 1 )
+	{
+		BOOTi_InsertElementToList( regionlist, (u32)m, end );
+		// endをリストに追加した場合、mは追加した要素を指すように
+	}
+	if( l % 2 == 1 )
+	{
+		BOOTi_InsertElementToList( regionlist, (u32)l, start );
+		m++;
+		// startをリストに追加した場合、mは1増える
+		l++;
+		// startをリストに追加した場合、lは追加した要素の次の要素を指すように
+	}
+	
+	// regionlist[l]からregionlist[m-1]までの要素を消す
+	for( n=l; l<m; l++ )
+	{
+		BOOTi_DeliteElementFromList( regionlist, (u32)n );
+	}
 }
