@@ -36,19 +36,22 @@ override TWL_ARCHGEN		:= LIMITED
 override TWL_MEMSIZE		:= 16M
 
 #----------------------------------------------------------------------------
+### TWL-commondefs
+#
+include	$(TWLSDK_ROOT)/build/buildtools/commondefs
+include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
+
+#----------------------------------------------------------------------------
 #  TWL-FIRM path settings
 #
 
-FIRM_ROOT		:= $(subst $(SPACE),\ ,$(subst \,/,$(TWL_IPL_RED_ROOT)))
+FIRM_ROOT		:= $(call eupath,$(TWL_IPL_RED_ROOT))
 FIRM_BUILDTOOLSDIR	:= $(FIRM_ROOT)/build/buildtools
 FIRM_BUILDSETUPDIR	:= $(FIRM_ROOT)/build/buildsetup
 FIRM_INCDIR		:= $(FIRM_ROOT)/include
 FIRM_TOOLSDIR		:= $(FIRM_ROOT)/tools
 FIRM_COMPONENTSDIR	:= $(FIRM_ROOT)/components
 FIRM_ADDINS		?= $(FIRM_ROOT)/add-ins
-
-FIRM_TWLSDK_ROOT     ?=$(shell cygpath -w $(TWLSDK_ROOT))
-FIRM_NITROSDK_ROOT   ?=$(shell cygpath -w $(NITROSDK_ROOT))
 
 FIRM_LIBDIR		= $(FIRM_ROOT)/lib/$(TWL_LIBTYPE)
 FIRM_LIBSUFFIX		= .firm$(ARCHGEN_TYPE)$(CODEGEN_ARCH)
@@ -64,18 +67,12 @@ DEFAULT_FIRM_ROM_SPEC	= $(FIRM_SPECDIR)/ROM-$(TWL_PLATFORM)-FIRM.rsf
 ### Compiler & Linker settings
 
 # replace NitroSDK
-LCFILE_TEMPLATE		?= $(DEFAULT_FIRM_LCFILE_TEMPLATE)
-LCFILE_SPEC		?= $(DEFAULT_FIRM_LCFILE_SPEC)
-ROM_SPEC		?= $(DEFAULT_FIRM_ROM_SPEC)
+DEFAULT_LCFILE_TEMPLATE		= $(DEFAULT_FIRM_LCFILE_TEMPLATE)
+DEFAULT_LCFILE_SPEC		= $(DEFAULT_FIRM_LCFILE_SPEC)
+DEFAULT_ROM_SPEC		= $(DEFAULT_FIRM_ROM_SPEC)
 
 LDEPENDS_LCF	+= $(FIRM_BUILDTOOLSDIR)/commondefs
 LDEPENDS_RES	+= $(FIRM_BUILDTOOLSDIR)/commondefs
-
-#----------------------------------------------------------------------------
-### TWL-commondefs
-#
-include	$(TWLSDK_ROOT)/build/buildtools/commondefs
-include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 
 ### SDK Library settings
 
