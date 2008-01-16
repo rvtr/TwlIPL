@@ -272,6 +272,7 @@ SetDebugLED(0x02);
 
     PM_BackLightOn( TRUE ); // last chance
 
+    PMi_SetParams( REG_PMIC_BL_BRT_B_ADDR, 22, PMIC_BL_BRT_B_MASK );
     OS_BootFromFIRM();
 
 end:
