@@ -38,7 +38,7 @@
 // WRAM-0           Master:ARM9,               (16Kbytes),  Address(7):0x03040000-0x03043fff, Address(9):0x03040000-0x03043fff
 // WRAM-1           Master:ARM9,               (16Kbytes),  Address(7):0x03044000-0x03047fff, Address(9):0x03044000-0x03047fff
 
-u32 REBOOTi_WramRegDS[0x30/sizeof(u32)] =
+u32 HYENA_WramReg[0x30/sizeof(u32)] =
 {
     // ARM9
 

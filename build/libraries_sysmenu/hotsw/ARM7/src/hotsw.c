@@ -632,6 +632,8 @@ static void ReadRomEmulationData(void)
         }
         count+=4;
 	}
+
+   	MI_CpuCopyFast(s_cbData.romEmuBuf, (void*)HW_ISD_RESERVED, 32);
 }
 
 /* -----------------------------------------------------------------
