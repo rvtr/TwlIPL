@@ -46,6 +46,29 @@ typedef struct TitleID_HiLo {
 //----------------------------------------------------------------------
 //　データ型定義
 //----------------------------------------------------------------------
+#define ISD_ROM_EMULATION_INFO_SIZE			0x20		// ROMエミュレーションデータサイズ
+#define ISD_ROM_EMULATION_INFO_MAGIC_CODE	0x444c5754
+
+// ISデバッガROMエミュレーション情報
+typedef struct ISD_RomEmuInfo {
+	// マジックコード（ISD_ROM_EMULATION_INFO_MAGIC_CODEの固定値）
+	u32			magic_code;
+	// フラグ類
+	u32			isEnableSlot1 : 1;
+	u32			isEnableSlot2 : 1;
+	u32			bootSlotNo : 2;
+	u32			isEnableExMainMemory : 1;
+	u32			isBootMachineSettings : 1;
+	u32			isBootSpecifiedNANDApp : 1;
+	u32			isForceNTRMode : 1;
+	u32			isForceBannerViewMode : 1;
+	u32			rsv_flags : 23;
+	// isBootSpecifiedNANDAppで起動するアプリのTitleID
+	u64			titleID;
+	// 予約
+	u8			rsv[ 0x10 ];
+}ISD_RomEmuInfo;
+
 
 // SYSM共有ワーク構造体
 typedef struct SYSM_work {
@@ -78,6 +101,7 @@ typedef struct SYSM_work {
 	u32				nCardID;						// カードID
 	
 	LauncherParam	launcherParam;
+	ISD_RomEmuInfo	romEmuInfo;
 	
 	// NTR-IPL2のレガシー　最終的には消すと思う
 	BOOL			enableCardNormalOnly;
@@ -119,7 +143,6 @@ typedef struct SDKBootCheckInfo{
 
 // カードROMヘッダワークの取得
 #define SYSM_GetCardRomHeader()				( (ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BUF )
-
 
 #ifdef __cplusplus
 }

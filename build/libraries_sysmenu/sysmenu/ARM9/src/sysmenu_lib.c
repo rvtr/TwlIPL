@@ -165,7 +165,7 @@ TitleProperty *SYSM_ReadParameters( void )
 		SVC_WaitByLoop( 0x1000 );
 	}
 #endif
-	
+
 	//-----------------------------------------------------
 	// リセットパラメータの判定（リセットパラメータが有効かどうかは、ARM7でやってくれている）
 	//-----------------------------------------------------
@@ -232,26 +232,29 @@ TitleProperty *SYSM_ReadParameters( void )
 // ショートカット起動のチェック
 static TitleProperty *SYSMi_CheckShortcutBoot( void )
 {
-#if 0	// ※未実装
 	static TitleProperty s_bootTitle;
 	
-	MI_CpuClear8( &s_bootTitle, sizoef(TitleProperty) );
+	MI_CpuClear8( &s_bootTitle, sizeof(TitleProperty) );
 	
 	//-----------------------------------------------------
+	// ISデバッガ起動 or
 	// 量産工程用ショートカットキー or
 	// 検査カード起動
 	//-----------------------------------------------------
-	if( SYSM_IsInspectCard() ||
-		( SYSM_IsExistCard() &&
-		  ( ( PAD_Read() & PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) ==
-			PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) )
-	) {
-		if( SYSM_GetCardTitleProperty( &s_bootTitle ) ) {			// ※未実装
+	if( SYSM_IsExistCard() ) {
+		if( ( SYSMi_GetWork()->isOnDebugger &&		// ISデバッガが有効かつJTAGがまだ有効でない時
+			  !( *(u8 *)( HW_SYS_CONF_BUF + HWi_WSYS09_OFFSET ) & HWi_WSYS09_JTAG_CPUJE_MASK ) ) ||
+			SYSM_IsInspectCard() ||
+			( ( PAD_Read() & PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) ==
+			  PAD_PRODUCTION_SHORTCUT_CARD_BOOT )
+			) {
+			s_bootTitle.flags.isAppRelocate = TRUE;
+			s_bootTitle.flags.isAppLoadCompleted = TRUE;
 			s_bootTitle.flags.isInitialShortcutSkip = TRUE;			// 初回起動シーケンスを飛ばす
 			s_bootTitle.flags.isLogoSkip = TRUE;					// ロゴデモを飛ばす
 			s_bootTitle.flags.media = TITLE_MEDIA_CARD;
 			s_bootTitle.flags.isValid = TRUE;
-			s_bootTitle.titleID = xxxx;
+			s_bootTitle.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
 			SYSM_SetLogoDemoSkip( TRUE );
 			return &s_bootTitle;
 		}
@@ -260,6 +263,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 	//-----------------------------------------------------
 	// TWL設定データ未入力時の初回起動シーケンス起動
 	//-----------------------------------------------------
+#if 0
 #ifdef ENABLE_INITIAL_SETTINGS_
 	if( !TSD_IsSetTP() ||
 		!TSD_IsSetLanguage() ||
@@ -272,8 +276,8 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 		return &s_bootTitle;
 	}
 #endif // ENABLE_INITIAL_SETTINGS_
+#endif
 	
-#endif	// 0
 	return NULL;													// 「ブート内容未定」でリターン
 }
 

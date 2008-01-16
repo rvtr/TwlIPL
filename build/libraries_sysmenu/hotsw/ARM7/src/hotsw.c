@@ -364,6 +364,10 @@ BOOL HOTSW_Boot(void)
 	OS_ReleaseLockID( s_cbData.lockID );
 
 	OS_TPrintf( "Load Card Time : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+
+	// [TODO:]Žb’èˆ’uB‚¿‚á‚ñ‚Æ‚µ‚½—¬‚ê‚ÅLauncher‘¤‚É“n‚·‚æ‚¤‚É‚·‚éB
+	MI_CpuCopy8( HOTSW_GetRomEmulationBuffer(), &SYSMi_GetWork()->romEmuInfo, ROM_EMULATION_DATA_SIZE );
+	SYSMi_GetWork()->isOnDebugger = s_cbData.debuggerFlg;
 	
 #ifdef DEBUG_USED_CARD_SLOT_B_
 	SYSMi_GetWork()->is1stCardChecked  = TRUE;

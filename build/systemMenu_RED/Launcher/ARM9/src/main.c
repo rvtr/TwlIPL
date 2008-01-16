@@ -77,8 +77,9 @@ void TwlMain( void )
 	TP_Init();
 	RTC_Init();
     SND_Init();// sound init
-
-    
+	
+	OS_TPrintf( "SYSM_work size = 0x%x\n", sizeof(SYSM_work) );
+	
 	// äÑÇËçûÇ›ãñâ¬--------------------
 	(void)OS_SetIrqFunction(OS_IE_V_BLANK, INTR_VBlank);
 	(void)OS_EnableIrqMask(OS_IE_V_BLANK);
