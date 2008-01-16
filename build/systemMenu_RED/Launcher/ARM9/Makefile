@@ -17,12 +17,12 @@
 #----------------------------------------------------------------------------
 
 SUBDIRS					=	\
+							../../../libraries_sysmenu/hotsw \
 							../../../libraries_sysmenu/sysmenu \
 							../../../components/hyena.TWL
 #							../../../libraries_sysmenu/reloc_info \
 #							../../../libraries_sysmenu/settings \
 #							../../../libraries_sysmenu/boot \
-#							../../../libraries_sysmenu/hotsw \
 
 #----------------------------------------------------------------------------
 

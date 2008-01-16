@@ -117,7 +117,11 @@ void TwlMain( void )
 	
 	if( pBootTitle ) {
 		// ダイレクトブートなら、ロゴ、ランチャーを飛ばしてロード開始
-		state = LOAD_START;
+		if( pBootTitle->flags.isLogoSkip ) {
+			state = LOAD_START;
+		}else {
+			state = LOGODEMO_INIT;
+		}
 		direct_boot = TRUE;
 	}else if( SYSM_IsLogoDemoSkip() ) {
 		// ロゴデモスキップが指定されていたら、ランチャー起動
@@ -162,7 +166,11 @@ void TwlMain( void )
 			break;
 		case LOGODEMO:
 			if( LogoMain() ) {
-				state = LAUNCHER_INIT;
+				if( !direct_boot ) {
+					state = LAUNCHER_INIT;
+				}else {
+					state = LOAD_START;
+				}
 			}
 			break;
 		case LAUNCHER_INIT:
