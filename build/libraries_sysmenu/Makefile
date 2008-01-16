@@ -22,7 +22,7 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS				=	reloc_info sysmenu settings mb_loader acsign boot hotsw
+SUBDIRS_P			=	reloc_info sysmenu settings mb_loader acsign boot hotsw
 
 #----------------------------------------------------------------------------
 
