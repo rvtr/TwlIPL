@@ -99,7 +99,7 @@ BOOL BOOT_WaitStart( void )
 		
 		// SDK共通リブート
 		{
-			REBOOTTarget target = REBOOT_TARGET_TWL_SECURE_SYSTEM;
+			REBOOTTarget target = REBOOT_TARGET_TWL_SYSTEM;
             BOOL ds = FALSE;
 			ROM_Header *th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ（DSアプリには無い）
 			ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ

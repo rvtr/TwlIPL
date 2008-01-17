@@ -119,7 +119,7 @@ void BOOT_Ready( void )
 			NULL
 		};
 	    
-		REBOOTTarget target = REBOOT_TARGET_TWL_SECURE_SYSTEM;
+		REBOOTTarget target = REBOOT_TARGET_TWL_SYSTEM;
         BOOL ds = FALSE;
 		ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DSŒÝŠ·ROMƒwƒbƒ_
 		
