@@ -66,6 +66,9 @@ extern  u32 SDK_AUTOLOAD_WRAM_START[];
 #define	SYSM_CARD_TWL_SECURE_BUF			( SYSM_CARD_NTR_SECURE_BUF_END )
 #define	SYSM_CARD_TWL_SECURE_BUF_END		( SYSM_CARD_TWL_SECURE_BUF + SECURE_AREA_SIZE )
 
+#define SYSM_NTR_ROM_HEADER_BUF				0x023ffe00
+#define SYSM_DBG_NTR_ROM_HEADER_BUF			0x027ffe00
+
 // ※アプリをWRAMに直接配置してブートしようとすると、SystemMenuのコードとぶつかっていろいろややこしい状態になるので、検討が必要
 
 // アプリロード可能領域のマップ情報定義

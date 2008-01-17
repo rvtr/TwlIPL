@@ -37,6 +37,8 @@
 #define COPY_NUM_MAX			(4*3)
 #define POST_CLEAR_NUM_MAX		(12 + 4*2)
 
+#define SYSMi_ARM9_BOOT_CODE_BUF	0x023fee00
+
 // extern data-------------------------------------------------------
 
 // function's prototype----------------------------------------------
@@ -48,24 +50,23 @@ static void BOOTi_CutAwayRegionList( u32 *regionlist, u32 start, u32 end );
 
 // static variables--------------------------------------------------
 
-//TODO íËêîÇ÷ÇÃíuÇ´ä∑Ç¶
 static u32 twl_post_clear_list[POST_CLEAR_NUM_MAX + 1] = 
 {
-	0x2000400, 0x2280000,
-	0x2380000, 0x23fee00,
-	0x23ff000, 0x2800000,
-	0x2e73000, 0x2ffc000,
+	HW_PARAM_RESERVED_END, SYSM_OWN_ARM7_MMEM_ADDR,
+	SYSM_OWN_ARM7_MMEM_ADDR_END, SYSMi_ARM9_BOOT_CODE_BUF,
+	SYSMi_ARM9_BOOT_CODE_BUF + OS_BOOT_CODE_SIZE, SYSM_OWN_ARM9_MMEM_ADDR,
+	SYSM_OWN_ARM9_MMEM_ADDR_END, HW_TWL_MAIN_MEM_SHARED,
 	NULL,
 };
 
 static u32 nitro_post_clear_list[POST_CLEAR_NUM_MAX + 1] = 
 {
-	0x2000000, 0x2000100,
-	0x2000400, 0x2280000,
-	0x2380000, 0x23fee00,
-	0x23ff000, 0x23ffe00,
-	0x2400000, 0x27ffe00,
-	0x2e73000, 0x2ffc000,
+	HW_PARAM_DELIVER_ARG, HW_PARAM_DELIVER_ARG_END,
+	HW_PARAM_RESERVED_END, SYSM_OWN_ARM7_MMEM_ADDR,
+	SYSM_OWN_ARM7_MMEM_ADDR_END, SYSMi_ARM9_BOOT_CODE_BUF,
+	SYSMi_ARM9_BOOT_CODE_BUF + OS_BOOT_CODE_SIZE, SYSM_NTR_ROM_HEADER_BUF,
+	SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_DBG_NTR_ROM_HEADER_BUF,
+	SYSM_OWN_ARM9_MMEM_ADDR_END, HW_TWL_MAIN_MEM_SHARED,
 	NULL,
 };
 
