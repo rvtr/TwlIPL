@@ -51,10 +51,7 @@ Static $(TARGET_NAME)
 				libreboot_sp$(LIBSUFFIX).a	\
 				libcardboot_sp$(LIBSUFFIX).a	\
 
-	Library		libsdio_hcd_twl$(LIBSUFFIX).a	\
-				libsdio_busdriver$(LIBSUFFIX).a	\
-				libsdio_lib$(LIBSUFFIX).a	\
-				libARM7athdrv$(LIBSUFFIX).a
+	Library		libsdio_sp$(LIBSUFFIX).a
 
 	#####
 	# Sub-routines in WL library , that should be on WRAM.
@@ -139,8 +136,7 @@ Ltdautoload LTDMAIN
 	Object		../flabObj/ARM7LTD.fob
 	Library		libnvram_sp$(LIBSUFFIX).a
 	Library		librtc_sp$(LIBSUFFIX).a
-	Library		librompatch_sp$(LIBSUFFIX).a	\
-                libwm_sp$(LIBSUFFIX).a	\
+	Library		libwm_sp$(LIBSUFFIX).a	\
 				libnwm_sp$(LIBSUFFIX).a	\
 				libwvr_sp$(LIBSUFFIX).a	\
 				libwl_sp$(LIBSUFFIX).a \

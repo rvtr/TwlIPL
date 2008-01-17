@@ -65,45 +65,6 @@ static TWLBannerFile	s_bannerBuf[ LAUNCHER_TITLE_LIST_NUM ] ATTRIBUTE_ALIGN(32);
 
 // const data------------------------------------------------------------------
 
-typedef struct RomSegmentRange {
-	u32		start;
-	u32		end;
-}RomSegmentRange;
-
-static RomSegmentRange romSegmentRange[RELOCATE_INFO_NUM] = {
-	{ SYSM_TWL_ARM9_LOAD_MMEM,     SYSM_TWL_ARM9_LOAD_MMEM_END },
-	{ SYSM_TWL_ARM7_LOAD_MMEM,     SYSM_TWL_ARM7_LOAD_MMEM_END },
-	{ SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_TWL_ARM9_LTD_LOAD_MMEM_END },
-	{ SYSM_TWL_ARM7_LTD_LOAD_MMEM, SYSM_TWL_ARM7_LTD_LOAD_MMEM_END },
-};
-
-static RomSegmentRange romSegmentRangeNitro[RELOCATE_INFO_NUM] = {
-	{ SYSM_NTR_ARM9_LOAD_MMEM,     SYSM_NTR_ARM9_LOAD_MMEM_END },
-	{ SYSM_NTR_ARM7_LOAD_MMEM,     SYSM_NTR_ARM7_LOAD_MMEM_END },
-	{ SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_TWL_ARM9_LTD_LOAD_MMEM_END },
-	{ SYSM_TWL_ARM7_LTD_LOAD_MMEM, SYSM_TWL_ARM7_LTD_LOAD_MMEM_END },
-};
-
-static u32 load_region_check_list[RELOCATE_INFO_NUM][RELOCATE_INFO_NUM * 2 - 1] = 
-{
-	{SYSM_NTR_ARM7_LOAD_MMEM, SYSM_NTR_ARM7_LOAD_MMEM_END, 
-	SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_TWL_ARM9_LTD_LOAD_MMEM_END, 
-	SYSM_TWL_ARM7_LTD_LOAD_MMEM, SYSM_TWL_ARM7_LTD_LOAD_MMEM_END, 
-	NULL }, 
-	{SYSM_NTR_ARM9_LOAD_MMEM, SYSM_NTR_ARM9_LOAD_MMEM_END, 
-	SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_TWL_ARM9_LTD_LOAD_MMEM_END, 
-	SYSM_TWL_ARM7_LTD_LOAD_MMEM, SYSM_TWL_ARM7_LTD_LOAD_MMEM_END, 
-	NULL }, 
-	{SYSM_NTR_ARM9_LOAD_MMEM, SYSM_NTR_ARM9_LOAD_MMEM_END, 
-	SYSM_NTR_ARM7_LOAD_MMEM, SYSM_NTR_ARM7_LOAD_MMEM_END, 
-	SYSM_TWL_ARM7_LTD_LOAD_MMEM, SYSM_TWL_ARM7_LTD_LOAD_MMEM_END, 
-	NULL }, 
-	{SYSM_NTR_ARM9_LOAD_MMEM, SYSM_NTR_ARM9_LOAD_MMEM_END, 
-	SYSM_NTR_ARM7_LOAD_MMEM, SYSM_NTR_ARM7_LOAD_MMEM_END, 
-	SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_TWL_ARM9_LTD_LOAD_MMEM_END, 
-	NULL }, 
-};
-
 
 // ============================================================================
 //
@@ -551,7 +512,25 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
     FSFile  file[1];
     BOOL bSuccess;
     BOOL isTwlApp = TRUE;
-    NAM_GetTitleBootContentPathFast(path, pBootTitle->titleID);
+    if(pBootTitle->flags.bootType == OS_BOOTTYPE_NAND)
+    {
+		// NAND
+    	NAM_GetTitleBootContentPathFast(path, pBootTitle->titleID);
+	}
+	else if(pBootTitle->flags.bootType == OS_BOOTTYPE_ROM)
+	{
+		// TODO:CARD–¢“Ç‚Ìê‡‚Ìˆ—
+	}
+	else if(pBootTitle->flags.bootType == OS_BOOTTYPE_TEMP)
+	{
+		// tmpƒtƒHƒ‹ƒ_
+		STD_TSNPrintf( path, 31, "nand:/tmp/%.16llx.srl", pBootTitle->titleID );
+	}
+	else
+	{
+		// unknown
+		return;
+	}
 
     bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
 

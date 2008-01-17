@@ -188,7 +188,7 @@ int MachineSettingMain( void )
 {
 	BOOL tp_select;
 
-	LauncherBootFlags tempflag = {TRUE, 0, TRUE, FALSE, FALSE, FALSE, 0};
+	LauncherBootFlags tempflag = {TRUE, OS_BOOTTYPE_NAND, TRUE, FALSE, FALSE, FALSE, 0};
 	
 	ReadTP();
 	
