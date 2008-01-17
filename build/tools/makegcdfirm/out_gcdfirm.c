@@ -602,6 +602,11 @@ static BOOL NandFirm_Command(char * line, int num)
 
     debug_printf2("nandfirm = %s\n", line);
 
+    if ( ! line )
+    {
+        return TRUE;
+    }
+
     // Set NANDFIRM ROM Offset
     if (!Offset)
     {
@@ -631,6 +636,11 @@ static BOOL NorFirm_Command(char * line, int num)
     }
 
     debug_printf2("norfirm = %s\n", line);
+
+    if ( ! line )
+    {
+        return TRUE;
+    }
 
     // Set NORFIRM ROM Offset
     if (!Offset)
