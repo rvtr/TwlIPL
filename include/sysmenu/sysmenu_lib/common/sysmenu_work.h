@@ -23,16 +23,12 @@
 
 #include <sysmenu/memorymap.h>
 #include <sysmenu/reloc_info/common/reloc_info.h>
-//#include <sysmenu/reset_param/ARM9/reset_param.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 // define data ------------------------------------
-#define SYSM_RESET_PARAM_MAGIC_CODE			"TRST"
-#define SYSM_RESET_PARAM_MAGIC_CODE_LEN		4
-
 #define CLONE_BOOT_MODE						1
 #define OTHER_BOOT_MODE						2
 

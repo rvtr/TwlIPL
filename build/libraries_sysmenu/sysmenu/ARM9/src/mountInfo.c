@@ -38,7 +38,7 @@
 void SYSMi_SetLauncherMountInfo( void );
 void SYSM_SetBootAppMountInfo( TitleProperty *pBootTitle );
 
-static void SYSMi_SetBootSRLPath( NAMTitleId titleID, TitleMedia bootMedia );
+static void SYSMi_SetBootSRLPath( NAMTitleId titleID, OSBootType bootType );
 static void SYSMi_SetMountInfoCore( const OSMountInfo *pSrc );
 static void SYSMi_ModifySaveDataMount( NAMTitleId titleID, OSMountInfo *pMountTgt );
 
@@ -87,7 +87,7 @@ void SYSM_SetBootAppMountInfo( TitleProperty *pBootTitle )
 {
 	u32 titleID_Hi = (u32)( pBootTitle->titleID >> 32 );		// u64で論理演算はできない？
 	// 起動アプリのSRLパスをセット
-	SYSMi_SetBootSRLPath( pBootTitle->titleID, (TitleMedia)pBootTitle->flags.media );
+	SYSMi_SetBootSRLPath( pBootTitle->titleID, (OSBootType)pBootTitle->flags.bootType );
 	
 	// ユーザーアプリの場合、"nand:", "nand2:"アーカイブを変更。
 	if( ( titleID_Hi & TITLEID_HI_APP_SYS_FLAG ) == 0 ) {
@@ -108,12 +108,12 @@ void SYSM_SetBootAppMountInfo( TitleProperty *pBootTitle )
 }
 
 // 起動SRLパスをシステム領域にセット
-static void SYSMi_SetBootSRLPath( NAMTitleId titleID, TitleMedia bootMedia )
+static void SYSMi_SetBootSRLPath( NAMTitleId titleID, OSBootType bootType )
 {
 	static char path[ FS_ENTRY_LONGNAME_MAX ];
 	MI_CpuClear8( path, FS_ENTRY_LONGNAME_MAX );
 	
-	if( bootMedia == TITLE_MEDIA_NAND ) {
+	if( bootType == OS_BOOTTYPE_NAND ) {
 		if( NAM_GetTitleBootContentPath( path, titleID ) != NAM_OK ) {
 			OS_TPrintf( "ERROR: BootContentPath Get failed.\n" );
 		}

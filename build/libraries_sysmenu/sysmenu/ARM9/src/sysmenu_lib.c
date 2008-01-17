@@ -251,10 +251,10 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 			s_bootTitle.flags.isAppLoadCompleted = TRUE;
 			s_bootTitle.flags.isInitialShortcutSkip = TRUE;			// 初回起動シーケンスを飛ばす
 			s_bootTitle.flags.isLogoSkip = TRUE;					// ロゴデモを飛ばす
-			s_bootTitle.flags.media = TITLE_MEDIA_CARD;
+			s_bootTitle.flags.bootType = OS_BOOTTYPE_ROM;
 			s_bootTitle.flags.isValid = TRUE;
 			s_bootTitle.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
-			SYSM_SetLogoDemoSkip( TRUE );
+			SYSM_SetLogoDemoSkip( s_bootTitle.flags.isLogoSkip );
 			return &s_bootTitle;
 		}
 	}
@@ -270,7 +270,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 		!TSD_IsSetUserColor() ||
 		!TSD_IsSetNickname() ) {
 		s_bootTitle.titleID = TITLE_ID_MACHINE_SETTINGS;
-		s_bootTitle.flags.media = TITLE_MEDIA_NAND;
+		s_bootTitle.flags.bootType = OS_BOOTTYPE_NAND;
 		s_bootTitle.flags.isValid = TRUE;
 		return &s_bootTitle;
 	}
@@ -319,7 +319,7 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 	}
 	
 	// タイトル情報フラグのセット
-	pTitleList_Card->flags.media = TITLE_MEDIA_CARD;
+	pTitleList_Card->flags.bootType = OS_BOOTTYPE_ROM;
 	pTitleList_Card->titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
 	
 	return retval;
@@ -452,7 +452,7 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 		pTitleList_Nand[l+1].pBanner = &s_bannerBuf[l];
 		if( titleIdArray[l] ) {
 			pTitleList_Nand[l+1].flags.isValid = TRUE;
-			pTitleList_Nand[l+1].flags.media = TITLE_MEDIA_NAND;
+			pTitleList_Nand[l+1].flags.bootType = OS_BOOTTYPE_NAND;
 		}
 	}
 	// return : *TitleProperty Array
@@ -708,7 +708,7 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 		SYSMi_GetWork()->isLoadSucceeded = TRUE;
 	}
 	
-	if( pBootTitle->flags.media == TITLE_MEDIA_CARD ) {
+	if( pBootTitle->flags.bootType == OS_BOOTTYPE_ROM ) {
 		SYSMi_GetWork()->isCardBoot = TRUE;
 	}else if(pBootTitle->flags.isAppLoadCompleted)
 	{
@@ -812,6 +812,12 @@ AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 	
 	// マウント情報の登録
 	SYSM_SetBootAppMountInfo( pBootTitle );
+	
+	// HW_WM_BOOT_BUFへのブート情報セット
+	{
+		OSBootInfo *pBootInfo = (OSBootInfo *)OS_GetBootInfo();
+		pBootInfo->boot_type = (OSBootType)pBootTitle->flags.bootType;
+	}
 	
 	BOOT_Ready();	// never return.
 	

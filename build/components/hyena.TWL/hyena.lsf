@@ -58,9 +58,12 @@ Autoload WRAM
 				libcardboot_sp$(LIBSUFFIX).a	\
 				libreloc_info_sp$(LIBSUFFIX).a
 
-	Library		libsdio_hcd_twl$(LIBSUFFIX).a	\
-				libsdio_busdriver$(LIBSUFFIX).a	\
-				libsdio_lib$(LIBSUFFIX).a	\
+
+	Library		libsdio_sp$(LIBSUFFIX).a
+
+	Library		libnvram_sp$(LIBSUFFIX).a
+	Library		librtc_sp$(LIBSUFFIX).a
+
 
 	Object		* (.etable)
 	Object		* (.wram)
@@ -139,14 +142,13 @@ Ltdautoload LTDMAIN
 	After		$(TARGET_NAME)
 
 	Object		* (.ltdmain)
-	Library		libnvram_sp$(LIBSUFFIX).a
-	Library		librtc_sp$(LIBSUFFIX).a
-	Library		librompatch_sp$(LIBSUFFIX).a	\
-                libwm_sp$(LIBSUFFIX).a	\
+	Library		libwm_sp$(LIBSUFFIX).a	\
 				libnwm_sp$(LIBSUFFIX).a	\
-				libARM7athdrv$(LIBSUFFIX).a	\
 				libwvr_sp$(LIBSUFFIX).a	\
 				libwl_sp$(LIBSUFFIX).a
+
+	Library		libathdrv_sp$(LIBSUFFIX).a
+
 	Library		libfatfs_sp$(LIBSUFFIX).a	\
 				$(USE_CRYPTO_LIBS)
 	Library		$(ISDBG_LIBS_TWL)
