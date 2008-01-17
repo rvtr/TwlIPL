@@ -114,7 +114,7 @@ static void SYSMi_SetBootSRLPath( NAMTitleId titleID, OSBootType bootType )
 	MI_CpuClear8( path, FS_ENTRY_LONGNAME_MAX );
 	
 	if( bootType == OS_BOOTTYPE_NAND ) {
-		if( NAM_GetTitleBootContentPath( path, titleID ) != NAM_OK ) {
+		if( NAM_GetTitleBootContentPathFast( path, titleID ) != NAM_OK ) {
 			OS_TPrintf( "ERROR: BootContentPath Get failed.\n" );
 		}
 	}else {

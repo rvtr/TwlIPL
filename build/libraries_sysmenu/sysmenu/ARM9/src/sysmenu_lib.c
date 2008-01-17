@@ -223,7 +223,7 @@ TitleProperty *SYSM_ReadParameters( void )
 	SYSM_VerifyAndRecoveryNTRSettings();							// NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
 	
 	//NAMの初期化
-	//NAM_Init(AllocForNAM,FreeForNAM);
+	NAM_Init( SYSM_Alloc, SYSM_Free );
 	
 	return pBootTitle;
 }
@@ -387,7 +387,7 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 		s32 offset;
 		
 		start = OS_GetTick();
-		readLen = NAM_GetTitleBootContentPath(path, titleIdArray[l]);
+		readLen = NAM_GetTitleBootContentPathFast(path, titleIdArray[l]);
 		OS_TPrintf( "NAM_GetTitleBootContentPath : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
 		
 		if(readLen != NAM_OK){
@@ -551,7 +551,7 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
     FSFile  file[1];
     BOOL bSuccess;
     BOOL isTwlApp = TRUE;
-    NAM_GetTitleBootContentPath(path, pBootTitle->titleID);
+    NAM_GetTitleBootContentPathFast(path, pBootTitle->titleID);
 
     bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
 
