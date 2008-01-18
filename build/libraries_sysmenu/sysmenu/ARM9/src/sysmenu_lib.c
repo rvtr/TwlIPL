@@ -655,6 +655,13 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
         }
 
         (void)FS_CloseFile(file);
+
+		if(pBootTitle->flags.bootType == OS_BOOTTYPE_TEMP)
+		{
+			// tmpアプリの場合はファイル削除
+			// TODO:その他読み込み等の失敗時にもDeleteする必要あり？
+			(void)FS_DeleteFile(path);
+		}
     }
 
 	// ROMヘッダバッファをコピー

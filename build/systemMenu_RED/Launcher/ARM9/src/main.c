@@ -42,6 +42,18 @@ static StreamInfo strm; // stream info
 
 const char filename[] = "data/fanfare.32.wav";
 
+// デバグ用。SDに0x02ffc000から0x02ffe000までdump.datというダンプを吐く
+static void debugWriteToSD( void )
+{
+	FSFile dest;
+	FS_InitFile( &dest );
+	(void)FS_CreateFile("sdmc:/dump.dat", FS_PERMIT_W | FS_PERMIT_R);
+	if ( !FS_OpenFileEx( &dest, "sdmc:/dump.dat", FS_FILEMODE_W ) ) return;
+	FS_WriteFile( &dest, (void *)0x02ffc000, 0x2000 );
+	if ( !FS_CloseFile( &dest ) ) return;
+	OS_TPrintf( "debugWriteToSD:ok\n");
+}
+
 // メイン
 void TwlMain( void )
 {
@@ -72,6 +84,10 @@ void TwlMain( void )
 	(void)OS_EnableInterrupts();
 	
 	FS_Init( FS_DMA_NOT_USE );
+	
+	// debug
+	debugWriteToSD();
+	
     GX_Init();
 	PM_Init();
 	TP_Init();
