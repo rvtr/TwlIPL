@@ -25,6 +25,8 @@ SUBDIRS		= \
 		  makenorfirm \
 		  makegcdfirm \
 		  makenandfirm \
+          makerom.TWL.sys \
+          makerom.TWL.shop
 
 
 #----------------------------------------------------------------------------
