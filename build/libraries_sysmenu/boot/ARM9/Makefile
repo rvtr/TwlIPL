@@ -30,7 +30,7 @@ SRCDIR				=	./src
 
 INCDIR				=	../common/include
 
-SRCS				=	boot.c bootAPI.c
+SRCS				=	bootAPI.c
 
 TARGET_LIB			=	libboot$(TWL_LIBSUFFIX).a
 

@@ -32,7 +32,7 @@ INCDIR				=	../common/include \
 						$(ROOT)/build/libraries/fatfs/ARM7.TWL/include \
 						$(ROOT)/build/libraries/fatfs/ARM7.TWL/include/twl/fatfs/ARM7 \
 
-SRCS				=	bootAPI.c boot.c
+SRCS				=	bootAPI.c
 
 TARGET_LIB			=	libboot_sp$(TWL_LIBSUFFIX).a
 
