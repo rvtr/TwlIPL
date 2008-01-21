@@ -51,10 +51,9 @@ static void SYSMi_Relocate( void );
 static BOOL SYSMi_ReadCardBannerFile( u32 bannerOffset, TWLBannerFile *pBanner );
 static BOOL SYSMi_CheckBannerFile( NTRBannerFile *pBanner );
 
-
 // global variable-------------------------------------------------------------
-void *(*SYSM_Alloc)( u32 size  );
-void  (*SYSM_Free )( void *ptr );
+void *(*SYSMi_Alloc)( u32 size  );
+void  (*SYSMi_Free )( void *ptr );
 
 #ifdef SYSM_DEBUG_
 SYSM_work		*pSysm;											// デバッガでのSYSMワークのウォッチ用
@@ -84,13 +83,8 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 	// ランチャーのマウント情報セット
 	SYSMi_SetLauncherMountInfo();
 	
-	OS_Init();
-	
     // ARM7コンポーネント用プロテクションユニット領域変更
     OS_SetProtectionRegion( 2, SYSM_OWN_ARM7_MMEM_ADDR, 512KB );
-	
-	// ARM9用ブートコード配置のため、アリーナHi位置を下げる
-	OS_SetMainArenaHi( (void *)SYSM_OWN_ARM9_MMEM_ADDR_END );
 	
 	SYSM_SetAllocFunc( pAlloc, pFree );
 	
@@ -98,13 +92,32 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 }
 
 
+void SYSM_SetArena( void )
+{
+	// ARM9用ブートコード配置のため、アリーナHi位置を下げる
+	OS_SetMainArenaHi( (void *)SYSM_OWN_ARM9_MMEM_ADDR_END );
+}
+
 // システムメニューライブラリ用メモリアロケータの設定
 void SYSM_SetAllocFunc( void *(*pAlloc)(u32), void (*pFree)(void*) )
 {
-	SYSM_Alloc = pAlloc;
-	SYSM_Free  = pFree;
+	SYSMi_Alloc = pAlloc;
+	SYSMi_Free  = pFree;
 }
 
+
+void *SYSM_Alloc( u32 size )
+{
+	void *p = SYSMi_Alloc( size );
+	OS_TPrintf( "SYSM_Alloc : %08x  %xbytes\n", p, size );
+	return p;
+}
+
+void SYSM_Free( void *ptr )
+{
+	OS_TPrintf( "SYSM_Free  : %08x\n", ptr );
+	SYSMi_Free( ptr );
+}
 
 // ============================================================================
 //
@@ -155,12 +168,12 @@ TitleProperty *SYSM_ReadParameters( void )
 	// HW情報のリード
 	//-----------------------------------------------------
 	// ノーマル情報リード
-	if( LCFG_ReadHWNormalInfo() != LCFG_TSF_READ_RESULT_SUCCEEDED ) {
+	if( !LCFG_ReadHWNormalInfo() ) {
 		OS_TPrintf( "HW Normal Info Broken!\n" );
 		SYSMi_GetWork()->isBrokenHWNormalInfo = TRUE;
 	}
 	// セキュア情報リード
-	if( LCFG_ReadHWSecureInfo() != LCFG_TSF_READ_RESULT_SUCCEEDED ) {
+	if( !LCFG_ReadHWSecureInfo() ) {
 		OS_TPrintf( "HW Secure Info Broken!\n" );
 		SYSMi_GetWork()->isBrokenHWSecureInfo = TRUE;
 	}
@@ -168,7 +181,7 @@ TitleProperty *SYSM_ReadParameters( void )
 	//-----------------------------------------------------
 	// 本体設定データのリード
 	//-----------------------------------------------------
-	if( LCFG_ReadTWLSettingsFile() ) {								// NANDからTWL本体設定データをリード
+	if( LCFG_ReadTWLSettings() ) {									// NANDからTWL本体設定データをリード
 		SYSM_CaribrateTP();											// 読み出したTWL本体設定データをもとにTPキャリブレーション。
 		brightness = (u8)LCFG_TSD_GetBacklightBrightness();
 	}
@@ -871,7 +884,7 @@ void SYSM_SetBackLightBrightness( u8 brightness )
 	LCFG_TSD_SetBacklightBrightness( brightness );
 	
 	// [TODO:] バックライト輝度は毎回セーブせずに、アプリ起動やリセット、電源OFF時に値が変わっていたらセーブするようにする。
-	LCFG_WriteTWLSettingsFile();
+	LCFG_WriteTWLSettings();
 }
 
 
@@ -1091,9 +1104,9 @@ static void SYSMi_CheckRTC( void )
 		) {							// RTCの異常を検出したら、rtc入力フラグ＆rtcOffsetを0にしてNVRAMに書き込み。
 		OS_TPrintf("\"RTC reset\" or \"Illegal RTC data\" detect!\n");
 		LCFG_TSD_SetFlagDateTime( FALSE );
-		TSD_SetRTCOffset( 0 );	// [TODO:]本来は、LCFG_TSD_SetRTCOffset( 0 );  SDK_5_00pr2では間違っている。
+		LCFG_TSD_SetRTCOffset( 0 );
 		LCFG_TSD_SetRTCLastSetYear( 0 );
-		LCFG_WriteTWLSettingsFile();
+		LCFG_WriteTWLSettings();
 	}
 }
 

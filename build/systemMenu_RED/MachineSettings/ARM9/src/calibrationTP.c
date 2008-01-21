@@ -422,7 +422,7 @@ int TP_CalibrationMain( void )
 				// ::::::::::::::::::::::::::::::::::::::::::::::
 				// TWL設定データファイルへの書き込み
 				// ::::::::::::::::::::::::::::::::::::::::::::::
-				(void)LCFG_WriteTWLSettingsFile();
+				(void)LCFG_WriteTWLSettings();
 				
 				ReturnMenu();
 				return 0;

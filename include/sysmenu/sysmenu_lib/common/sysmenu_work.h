@@ -29,6 +29,7 @@ extern "C" {
 #endif
 
 // define data ------------------------------------
+#define TITLE_ID_LAUNCHER					( 0x0003000752434e4cLLU )
 #define CLONE_BOOT_MODE						1
 #define OTHER_BOOT_MODE						2
 

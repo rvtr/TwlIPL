@@ -20,7 +20,6 @@
 #include "HWInfoWriter.h"
 
 // extern data-----------------------------------------------------------------
-extern void SYSMi_SetLauncherMountInfo( void );
 
 // define data-----------------------------------------------------------------
 
@@ -39,8 +38,6 @@ static void INTR_VBlank( void );
 // ============================================================================
 void TwlMain(void)
 {
-	SYSMi_SetLauncherMountInfo();
-	
 	// èâä˙âª----------------------------------
     OS_Init();
 	OS_InitTick();

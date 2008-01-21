@@ -376,14 +376,14 @@ static int InputRtcDateTimeMain( void )
 			MI_CpuCopy32( &s_pWork->dtp.Date, &date, sizeof(RTCDate) );
 			date.year -= 2000;
 			(void)RTC_SetDateTime( &date, &s_pWork->dtp.Time );
-			TSD_SetRTCOffset( SYSM_CalcRTCOffset( &date, &s_pWork->dtp.Time ) );
+			LCFG_TSD_SetRTCOffset( SYSM_CalcRTCOffset( &date, &s_pWork->dtp.Time ) );
 		}
 		
 		LCFG_TSD_SetFlagDateTime( TRUE );						// RTC入力フラグを立てる。
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		(void)LCFG_WriteTWLSettingsFile();
+		(void)LCFG_WriteTWLSettings();
 		
 		// 上画面の表示更新
 		GetAndDrawRTCData( &g_rtcDraw, TRUE );
@@ -544,10 +544,10 @@ void ClearRTC( void )
 	RTCTime time = { 0, 0, 0 };
 	(void)RTC_SetDateTime( &date, &time );
 	LCFG_TSD_SetFlagDateTime( TRUE );
-	TSD_SetRTCOffset( 0 );		// [TODO:]SDKの関数名が間違っている
+	LCFG_TSD_SetRTCOffset( 0 );
 	LCFG_TSD_SetRTCLastSetYear( 0 );
 	// ::::::::::::::::::::::::::::::::::::::::::::::
 	// TWL設定データファイルへの書き込み
 	// ::::::::::::::::::::::::::::::::::::::::::::::
-	(void)LCFG_WriteTWLSettingsFile();
+	(void)LCFG_WriteTWLSettings();
 }

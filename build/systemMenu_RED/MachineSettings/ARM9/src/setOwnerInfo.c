@@ -432,7 +432,7 @@ static void PushKeys( u16 code, NameOrComment noc )
 				// ::::::::::::::::::::::::::::::::::::::::::::::
 				// TWL設定データファイルへの書き込み
 				// ::::::::::::::::::::::::::::::::::::::::::::::
-				(void)LCFG_WriteTWLSettingsFile();// ファイルへ書き込み
+				(void)LCFG_WriteTWLSettings();// ファイルへ書き込み
 				// セーブ後にキャンセル処理と合流
 			case CANCEL_BUTTON_:
 				SetOwnerInfoInit();
@@ -768,7 +768,7 @@ static int SetBirthdayMain( void )
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		(void)LCFG_WriteTWLSettingsFile();// ファイルへ書き込み
+		(void)LCFG_WriteTWLSettings();// ファイルへ書き込み
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
 		return 0;
@@ -889,7 +889,7 @@ static int SetUserColorMain( void )
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		(void)LCFG_WriteTWLSettingsFile();// ファイルへ書き込み
+		(void)LCFG_WriteTWLSettings();// ファイルへ書き込み
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
 		return 0;

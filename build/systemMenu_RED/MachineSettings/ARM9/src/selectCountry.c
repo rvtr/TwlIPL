@@ -323,7 +323,7 @@ int SelectCountryMain( void )
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		(void)LCFG_WriteTWLSettingsFile();
+		(void)LCFG_WriteTWLSettings();
 		
 		MachineSettingInit();
 		return 0;

@@ -38,9 +38,9 @@
 void SYSMi_SetLauncherMountInfo( void );
 void SYSM_SetBootAppMountInfo( TitleProperty *pBootTitle );
 
-static void SYSMi_SetBootSRLPath( NAMTitleId titleID, OSBootType bootType );
-static void SYSMi_SetMountInfoCore( const OSMountInfo *pSrc );
-static void SYSMi_ModifySaveDataMount( NAMTitleId titleID, OSMountInfo *pMountTgt );
+static void SYSMi_SetBootSRLPath( OSBootType bootType, NAMTitleId titleID );
+static void SYSMi_SetMountInfoCore( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pSrc );
+static void SYSMi_ModifySaveDataMount( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt );
 
 // global variable-------------------------------------------------------------
 
@@ -72,31 +72,52 @@ OSMountInfo s_defaultMountList[ DEFAULT_MOUNT_LIST_NUM ] ATTRIBUTE_ALIGN(4) = {
 	カードブート時のBootSRLPathは、"rom:"ではなく、""でいく。
 	"nand:" と "nand1:"のuserPermissionは"OS_MOUNT_USR_R"で良いのか？
 */
-
 // ランチャーのマウント情報セット
 void SYSMi_SetLauncherMountInfo( void )
 {
-	// ※とりあえず自身はROMブートで。（後で修正）
-//	SYSMi_SetBootSRLPath(  );						// ※SDK2623では、BootSRLPathを"rom:"としたらFSi_InitRomArchiveでNANDアプリ扱いされてアクセス例外で落ちる。
-	SYSMi_SetMountInfoCore( &s_defaultMountList[0] );
+	NAMTitleId titleID = TITLE_ID_LAUNCHER;
+	
+	// マウント情報のクリア
+	MI_CpuClearFast( (void *)HW_TWL_FS_MOUNT_INFO_BUF, HW_TWL_ROM_HEADER_BUF - HW_TWL_FS_MOUNT_INFO_BUF );
+	
+	// ※とりあえず自身はROMブートで。[TODO:]後で修正
+//	SYSMi_SetBootSRLPath( OS_BOOTTYPE_NAND, titleID );		// ※SDK2623では、BootSRLPathを"rom:"としたらFSi_InitRomArchiveでNANDアプリ扱いされてアクセス例外で落ちる。
+	
+	// セーブデータ有無によるマウント情報の編集
+	SYSMi_ModifySaveDataMount( OS_BOOTTYPE_NAND,
+							   titleID,
+							   &s_defaultMountList[ PRV_SAVE_DATA_MOUNT_INDEX ] );
+	
+	// マウント情報のセット
+	SYSMi_SetMountInfoCore( OS_BOOTTYPE_NAND,
+							titleID,
+							&s_defaultMountList[0] );
 }
 
 
 // システム領域に、ブートするアプリのマウント情報を登録する
 void SYSM_SetBootAppMountInfo( TitleProperty *pBootTitle )
 {
-	u32 titleID_Hi = (u32)( pBootTitle->titleID >> 32 );		// u64で論理演算はできない？
-	// 起動アプリのSRLパスをセット
-	SYSMi_SetBootSRLPath( pBootTitle->titleID, (OSBootType)pBootTitle->flags.bootType );
+	// マウント情報のクリア
+	MI_CpuClearFast( (void *)HW_TWL_FS_MOUNT_INFO_BUF, HW_TWL_ROM_HEADER_BUF - HW_TWL_FS_MOUNT_INFO_BUF );
 	
-	// ユーザーアプリの場合、"nand:", "nand2:"アーカイブを変更。
-	if( ( titleID_Hi & TITLEID_HI_APP_SYS_FLAG ) == 0 ) {
-		s_defaultMountList[ 1 ].userPermission = 0;	// "nand:"
-		s_defaultMountList[ 2 ].userPermission = 0;	// "nand2:"
+	// アプリがTWL対応でない場合は、何もセットせずにリターン
+	if( ( (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->platform_code ) == 0 ) {
+		return;
 	}
 	
+	// 起動アプリのSRLパスをセット
+	SYSMi_SetBootSRLPath( (OSBootType)pBootTitle->flags.bootType,
+						  pBootTitle->titleID );
+	
 	// セーブデータ有無によるマウント情報の編集
-	SYSMi_ModifySaveDataMount( pBootTitle->titleID, &s_defaultMountList[ PRV_SAVE_DATA_MOUNT_INDEX ] );
+	SYSMi_ModifySaveDataMount( (OSBootType)pBootTitle->flags.bootType,
+							   pBootTitle->titleID,
+							   &s_defaultMountList[ PRV_SAVE_DATA_MOUNT_INDEX ] );
+	// マウント情報のセット
+	SYSMi_SetMountInfoCore( (OSBootType)pBootTitle->flags.bootType,
+							pBootTitle->titleID,
+							&s_defaultMountList[0] );
 	
 	/*
 		※※　注意　※※
@@ -104,36 +125,53 @@ void SYSM_SetBootAppMountInfo( TitleProperty *pBootTitle )
 		その後はパーミッションの都合上FSライブラリおよびFSを使用したESやNAMライブラリが全く使用できなくなる。（今後パーミッション仕様については変更される可能性あり）
 		よって、内部でFSライブラリを使用する処理は、本処理の前に完了しておく必要がある。
 	*/
-	SYSMi_SetMountInfoCore( (const OSMountInfo *)&s_defaultMountList[0] );	// マウント情報のセット
 }
 
+
 // 起動SRLパスをシステム領域にセット
-static void SYSMi_SetBootSRLPath( NAMTitleId titleID, OSBootType bootType )
+static void SYSMi_SetBootSRLPath( OSBootType bootType, NAMTitleId titleID  )
 {
 	static char path[ FS_ENTRY_LONGNAME_MAX ];
-	MI_CpuClear8( path, FS_ENTRY_LONGNAME_MAX );
 	
-	if( bootType == OS_BOOTTYPE_NAND ) {
+	switch( bootType )
+	{
+	case OS_BOOTTYPE_NAND:
 		if( NAM_GetTitleBootContentPathFast( path, titleID ) != NAM_OK ) {
 			OS_TPrintf( "ERROR: BootContentPath Get failed.\n" );
 		}
-	}else {
+		break;
+	case OS_BOOTTYPE_TEMP:
+		STD_TSNPrintf( path, 31, "nand:/tmp/%.16llx.srl", titleID );
+		break;
+	default:
+		path[ 0 ] = 0;
 //		STD_StrCpy( path, (const char*)"rom:" );		// ※SDK2623では、BootSRLPathを"rom:"としたらFSi_InitRomArchiveでNANDアプリ扱いされてアクセス例外で落ちる。
+		break;
 	}
 	
-	STD_CopyLStringZeroFill( (char *)HW_TWL_FS_BOOT_SRL_PATH_BUF, path, OS_MOUNT_PATH_LEN );
+	if( path[ 0 ] ) {
+		STD_CopyLStringZeroFill( (char *)HW_TWL_FS_BOOT_SRL_PATH_BUF, path, OS_MOUNT_PATH_LEN );
+	}
 //	OS_TPrintf( "boot path : %s\n", (char *)HW_TWL_FS_BOOT_SRL_PATH_BUF );	// ※今はOS_Init前で呼ばれるので、Printfできない。
 }
 
 
 // マウント情報をシステム領域に書き込み
-static void SYSMi_SetMountInfoCore( const OSMountInfo *pSrc )
+static void SYSMi_SetMountInfoCore( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pSrc )
 {
-	OSMountInfo *pDst   = (OSMountInfo *)HW_TWL_FS_MOUNT_INFO_BUF;
+#pragma unused(bootType)
+	
 	int i;
+	u32 titleID_Hi = (u32)( titleID >> 32 );		// u64で論理演算はできない？
+	OSMountInfo *pDst   = (OSMountInfo *)HW_TWL_FS_MOUNT_INFO_BUF;
 	
-	MI_CpuClearFast( (void *)HW_TWL_FS_MOUNT_INFO_BUF, HW_TWL_FS_BOOT_SRL_PATH_BUF - HW_TWL_FS_MOUNT_INFO_BUF );
+	// ユーザーアプリの場合、"nand:", "nand2:"アーカイブを変更。
+	if( ( titleID_Hi & TITLEID_HI_APP_SYS_FLAG ) == 0 ) {
+		pSrc[ 1 ].userPermission = 0;	// "nand:"
+		pSrc[ 2 ].userPermission = 0;	// "nand2:"
+	}
 	
+	// セット
 	for( i = 0; i < DEFAULT_MOUNT_LIST_NUM; i++ ) {
 		if( pSrc->drive[ 0 ] ) {
 			MI_CpuCopyFast( pSrc, pDst, sizeof(OSMountInfo) );
@@ -152,15 +190,20 @@ static void SYSMi_SetMountInfoCore( const OSMountInfo *pSrc )
 
 
 // タイトルIDをもとにセーブデータ有無を判定して、マウント情報を編集する。
-static void SYSMi_ModifySaveDataMount( NAMTitleId titleID, OSMountInfo *pMountTgt )
+static void SYSMi_ModifySaveDataMount( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt )
 {
 	int i;
 	u32 titleID_Hi = (u32)( titleID >> 32 );		// u64で論理演算はできない？
 	
 	// ※カードからブートされた場合でも、titleIDが"NANDアプリ"の場合は、セーブデータをマウントするようにしている。
 	
-	// タイトルIDが"NANDアプリ"の場合は、セーブデータ有無を判定して、パスをセット
-	if( titleID_Hi & TITLEID_HI_MEDIA_NAND_FLAG ) {
+	// セーブデータ有無を判定して、パスをセット
+	if( ( ( bootType == OS_BOOTTYPE_NAND ) &&				// NANDアプリがNANDからブートされた時
+		  ( titleID_Hi & TITLEID_HI_MEDIA_NAND_FLAG ) ) ||
+		( ( bootType == OS_BOOTTYPE_ROM ) &&				// ISデバッガ上で、NANDアプリがROM からブートされた時
+		  ( titleID_Hi & TITLEID_HI_MEDIA_NAND_FLAG ) &&
+		  ( SYSMi_GetWork()->isOnDebugger ) )
+		) {
 		char saveFilePath[ 2 ][ FS_ENTRY_LONGNAME_MAX ];
 		u32 saveDataSize[ 2 ];
 		saveDataSize[ 0 ] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->private_save_data_size;

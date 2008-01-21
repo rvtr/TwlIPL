@@ -74,8 +74,10 @@ void TwlMain( void )
 	TitleProperty *pBootTitle = NULL;
 	OSTick start, end = 0;
 	BOOL direct_boot = FALSE;
-	
+
+	OS_Init();
 	// システムメニュー初期化----------
+	SYSM_SetArena();
 	SYSM_Init( Alloc, Free );									// OS_Initは、本関数内でコールしているので、コールする必要なし。
 	
 	// OS初期化------------------------
