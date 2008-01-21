@@ -175,7 +175,7 @@ int SetRTCMain( void )
 		tp_return = WithinRangeTP(	RETURN_BUTTON_TOP_X,    RETURN_BUTTON_TOP_Y,
 									RETURN_BUTTON_BOTTOM_X, RETURN_BUTTON_BOTTOM_Y, &tpd.disp );
 	}
-	if( g_initialSet && !TSD_IsSetDateTime() ) {
+	if( g_initialSet && !LCFG_TSD_IsSetDateTime() ) {
 		tp_set = TRUE;
 	}
 	//--------------------------------------
@@ -379,11 +379,11 @@ static int InputRtcDateTimeMain( void )
 			TSD_SetRTCOffset( SYSM_CalcRTCOffset( &date, &s_pWork->dtp.Time ) );
 		}
 		
-		TSD_SetFlagDateTime( TRUE );						// RTC入力フラグを立てる。
+		LCFG_TSD_SetFlagDateTime( TRUE );						// RTC入力フラグを立てる。
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		(void)SYSM_WriteTWLSettingsFile();
+		(void)LCFG_WriteTWLSettingsFile();
 		
 		// 上画面の表示更新
 		GetAndDrawRTCData( &g_rtcDraw, TRUE );
@@ -543,11 +543,11 @@ void ClearRTC( void )
 	RTCDate date = { 0, 1, 1, RTC_WEEK_SUNDAY };
 	RTCTime time = { 0, 0, 0 };
 	(void)RTC_SetDateTime( &date, &time );
-	TSD_SetFlagDateTime( TRUE );
-	TSD_SetRTCOffset( 0 );
-	TSD_SetRTCLastSetYear( 0 );
+	LCFG_TSD_SetFlagDateTime( TRUE );
+	TSD_SetRTCOffset( 0 );		// [TODO:]SDKの関数名が間違っている
+	LCFG_TSD_SetRTCLastSetYear( 0 );
 	// ::::::::::::::::::::::::::::::::::::::::::::::
 	// TWL設定データファイルへの書き込み
 	// ::::::::::::::::::::::::::::::::::::::::::::::
-	(void)SYSM_WriteTWLSettingsFile();
+	(void)LCFG_WriteTWLSettingsFile();
 }

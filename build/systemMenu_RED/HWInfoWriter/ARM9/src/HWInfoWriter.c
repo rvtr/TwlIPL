@@ -17,6 +17,8 @@
 
 #include <twl.h>
 #include <sysmenu.h>
+#include "TWLHWInfo_api.h"
+#include "TWLSettings_api.h"
 #include "misc.h"
 #include "HWInfoWriter.h"
 
@@ -26,10 +28,10 @@
 #define MSG_Y								19
 
 // extern data------------------------------------------
-const TWLHWNormalInfo *THW_GetDefaultNormalInfo( void );
-const TWLHWSecureInfo *THW_GetDefaultSecureInfo( void );
-const TWLHWNormalInfo *THW_GetNormalInfo( void );
-const TWLHWSecureInfo *THW_GetSecureInfo( void );
+const LCFGTWLHWNormalInfo *LCFG_THW_GetDefaultNormalInfo( void );
+const LCFGTWLHWSecureInfo *LCFG_THW_GetDefaultSecureInfo( void );
+const LCFGTWLHWNormalInfo *LCFG_THW_GetNormalInfo( void );
+const LCFGTWLHWSecureInfo *LCFG_THW_GetSecureInfo( void );
 
 // function's prototype declaration---------------------
 static void ReadTWLSettings( void );
@@ -52,7 +54,7 @@ RTCDrawProperty g_rtcDraw = {
 // static variable -------------------------------------
 static u16 s_csr;
 static u8 *s_pPrivKeyBuffer = NULL;
-static TSFReadResult (*s_pReadSecureInfoFunc)( void );
+static LCFGReadResult (*s_pReadSecureInfoFunc)( void );
 static BOOL s_isReadTSD;
 static u8 s_region_old;
 
@@ -87,13 +89,13 @@ static const MenuParam s_writerParam = {
 	(const u16 **)&s_pStrWriter,
 };
 
-static const u32 s_langBitmapList[ TWL_REGION_MAX ] = {
-	TWL_LANG_BITMAP_JAPAN,
-	TWL_LANG_BITMAP_AMERICA,
-	TWL_LANG_BITMAP_EUROPE,
-	TWL_LANG_BITMAP_AUSTRALIA,
-	TWL_LANG_BITMAP_CHINA,
-	TWL_LANG_BITMAP_KOREA,
+static const u32 s_langBitmapList[ LCFG_TWL_REGION_MAX ] = {
+	LCFG_TWL_LANG_BITMAP_JAPAN,
+	LCFG_TWL_LANG_BITMAP_AMERICA,
+	LCFG_TWL_LANG_BITMAP_EUROPE,
+	LCFG_TWL_LANG_BITMAP_AUSTRALIA,
+	LCFG_TWL_LANG_BITMAP_CHINA,
+	LCFG_TWL_LANG_BITMAP_KOREA,
 };
 
 static char *strLanguage[] = {
@@ -138,10 +140,10 @@ void HWInfoWriterInit( void )
 	ReadPrivateKey();
 	ReadHWInfoFile();
 //	VerifyHWInfo();
-	OS_TPrintf( "region = %d\n", THW_GetRegion() );
-	PrintfSJISSub( 2 * 8, 18 * 8, TXT_COLOR_BLACK, "Region   = %s", strRegion[ THW_GetRegion() ] );
-	PrintfSJISSub( 2 * 8, 20 * 8, TXT_COLOR_BLACK, "SerialNo = %s", THW_GetSerialNoPtr() );
-	s_region_old = THW_GetRegion();
+	OS_TPrintf( "region = %d\n", LCFG_THW_GetRegion() );
+	PrintfSJISSub( 2 * 8, 18 * 8, TXT_COLOR_BLACK, "Region   = %s", strRegion[ LCFG_THW_GetRegion() ] );
+	PrintfSJISSub( 2 * 8, 20 * 8, TXT_COLOR_BLACK, "SerialNo = %s", LCFG_THW_GetSerialNoPtr() );
+	s_region_old = LCFG_THW_GetRegion();
 	s_csr = 0;
 	DrawMenu( s_csr, &s_writerParam );
 	
@@ -185,7 +187,7 @@ void HWInfoWriterMain( void )
 // TWL設定データのリード
 static void ReadTWLSettings( void )
 {
-	s_isReadTSD = TSD_ReadSettings();
+	s_isReadTSD = LCFGi_TSD_ReadSettings();
 	if( s_isReadTSD ) {
 		OS_TPrintf( "TSD read succeeded.\n" );
 	}else {
@@ -198,7 +200,7 @@ static void ReadTWLSettings( void )
 static void ModifyLanguage( u8 region )
 {
 	u32 langBitmap = s_langBitmapList[ region ];
-	u8  nowLanguage = TSD_GetLanguage();
+	u8  nowLanguage = LCFG_TSD_GetLanguage();
 	
 	// TSDが読み込めていないなら、何もせずリターン
 	if( !s_isReadTSD ) {
@@ -209,17 +211,17 @@ static void ModifyLanguage( u8 region )
 		OS_TPrintf( "Language no change.\n" );
 	}else {
 		int i;
-		for( i = 0; i < TWL_LANG_CODE_MAX; i++ ) {
+		for( i = 0; i < LCFG_TWL_LANG_CODE_MAX; i++ ) {
 			if( langBitmap & ( 0x0001 << i ) ) {
 				break;
 			}
 		}
-		TSD_SetLanguage( (TWLLangCode)i );
-		TSD_SetFlagCountry( FALSE );				// ※ついでに国コードもクリアしておく。
-		TSD_SetCountry( TWL_COUNTRY_UNDEFINED );
-		TSD_WriteSettings();
+		LCFG_TSD_SetLanguage( (LCFGTWLLangCode)i );
+		LCFG_TSD_SetFlagCountry( FALSE );				// ※ついでに国コードもクリアしておく。
+		LCFG_TSD_SetCountry( LCFG_TWL_COUNTRY_UNDEFINED );
+		LCFGi_TSD_WriteSettings();
 		OS_TPrintf( "Language Change \"%s\" -> \"%s\"\n",
-					strLanguage[ nowLanguage ], strLanguage[ TSD_GetLanguage() ] );
+					strLanguage[ nowLanguage ], strLanguage[ LCFG_TSD_GetLanguage() ] );
 	}
 }
 
@@ -257,10 +259,10 @@ static void ReadPrivateKey( void )
 	
 	if( s_pPrivKeyBuffer ) {
 		// 秘密鍵が有効なら、署名ありのアクセス
-		s_pReadSecureInfoFunc = THW_ReadSecureInfo;
+		s_pReadSecureInfoFunc = LCFGi_THW_ReadSecureInfo;
 	}else {
 		// 秘密鍵が無効なら、署名なしのアクセス
-		s_pReadSecureInfoFunc = THW_ReadSecureInfo_NoCheck;
+		s_pReadSecureInfoFunc = LCFGi_THW_ReadSecureInfo_NoCheck;
 		PutStringUTF16( 14 * 8, 0 * 8, TXT_COLOR_RED, (const u16 *)L"[No Signature MODE]" );
 	}
 }
@@ -269,11 +271,11 @@ static void ReadPrivateKey( void )
 // HW情報全体のリード
 static void ReadHWInfoFile( void )
 {
-	TSFReadResult retval;
+	LCFGReadResult retval;
 	OSTick start = OS_GetTick();
 	
-	retval = THW_ReadNormalInfo();
-	if( retval == TSF_READ_RESULT_SUCCEEDED ) {
+	retval = LCFGi_THW_ReadNormalInfo();
+	if( retval == LCFG_TSF_READ_RESULT_SUCCEEDED ) {
 		OS_TPrintf( "HW Normal Info read succeeded.\n" );
 	}else {
 		OS_TPrintf( "HW Normal Info read failed.\n" );
@@ -283,7 +285,7 @@ static void ReadHWInfoFile( void )
 	
 	start = OS_GetTick();
 	retval = s_pReadSecureInfoFunc();
-	if( retval == TSF_READ_RESULT_SUCCEEDED ) {
+	if( retval == LCFG_TSF_READ_RESULT_SUCCEEDED ) {
 		OS_TPrintf( "HW Secure Info read succeeded.\n" );
 	}else {
 		OS_TPrintf( "HW Secure Info read failed.\n" );
@@ -326,8 +328,8 @@ static void WriteHWInfoFile( u8 region )
 								MSG_X * 8 , MSG_Y * 8, ( 32 - MSG_X ) * 8, ( MSG_Y + 4 ) * 8 );
 	
 	PrintfSJISSub( 2 * 8, 18 * 8, TXT_COLOR_WHITE, "Region   = %s", strRegion[ s_region_old ] );
-	PrintfSJISSub( 2 * 8, 18 * 8, TXT_COLOR_BLACK, "Region   = %s", strRegion[ THW_GetRegion() ] );
-	s_region_old = THW_GetRegion();
+	PrintfSJISSub( 2 * 8, 18 * 8, TXT_COLOR_BLACK, "Region   = %s", strRegion[ LCFG_THW_GetRegion() ] );
+	s_region_old = LCFG_THW_GetRegion();
 }
 
 
@@ -335,17 +337,17 @@ static void WriteHWInfoFile( u8 region )
 static BOOL WriteHWNormalInfoFile( void )
 {
 	BOOL isWrite = TRUE;
-	TSFReadResult result;
+	LCFGReadResult result;
 	
-	result = THW_ReadNormalInfo();
-	if( result != TSF_READ_RESULT_SUCCEEDED ) {
-		if( !THW_RecoveryNormalInfo( result ) ) {
+	result = LCFGi_THW_ReadNormalInfo();
+	if( result != LCFG_TSF_READ_RESULT_SUCCEEDED ) {
+		if( !LCFGi_THW_RecoveryNormalInfo( result ) ) {
 			OS_TPrintf( "HW Normal Info Recovery failed.\n" );
 			isWrite = FALSE;
 		}
 	}
 	if( isWrite &&
-		!THW_WriteNormalInfo() ) {
+		!LCFGi_THW_WriteNormalInfo() ) {
 		OS_TPrintf( "HW Normal Info Write failed.\n" );
 	}
 	
@@ -357,24 +359,24 @@ static BOOL WriteHWNormalInfoFile( void )
 static BOOL WriteHWSecureInfoFile( u8 region )
 {
 	BOOL isWrite = TRUE;
-	TSFReadResult result;
+	LCFGReadResult result;
 	
 	// ファイルのリード
 	result = s_pReadSecureInfoFunc();
 	
 	// リードに失敗したらリカバリ
-	if( result != TSF_READ_RESULT_SUCCEEDED ) {
-		if( !THW_RecoverySecureInfo( result ) ) {
+	if( result != LCFG_TSF_READ_RESULT_SUCCEEDED ) {
+		if( !LCFGi_THW_RecoverySecureInfo( result ) ) {
 			OS_TPrintf( "HW Secure Info Recovery failed.\n" );
 			isWrite = FALSE;
 		}
 	}
 	
 	// リージョンのセット
-	THW_SetRegion( region );
+	LCFG_THW_SetRegion( region );
 	
 	// 対応言語ビットマップのセット
-	THW_SetValidLanguageBitmap( s_langBitmapList[ region ] );
+	LCFG_THW_SetValidLanguageBitmap( s_langBitmapList[ region ] );
 	
 	// [TODO:]量産工程でないとシリアルNo.は用意できないので、ここではMACアドレスをもとに適当な値をセットする。
 	// シリアルNo.のセット
@@ -382,8 +384,8 @@ static BOOL WriteHWSecureInfoFile( u8 region )
 		u8 buffer[ 12 ] = "SERIAL";		// 適当な文字列をMACアドレスと結合してSHA1を取り、仮SerialNoとする。
 		u8 serialNo[ SVC_SHA1_DIGEST_SIZE ];
 		int i;
-		int len = ( THW_GetRegion() == TWL_REGION_AMERICA ) ?
-					TWL_HWINFO_SERIALNO_LEN_AMERICA : TWL_HWINFO_SERIALNO_LEN_OTHERS;
+		int len = ( LCFG_THW_GetRegion() == LCFG_TWL_REGION_AMERICA ) ?
+					LCFG_TWL_HWINFO_SERIALNO_LEN_AMERICA : LCFG_TWL_HWINFO_SERIALNO_LEN_OTHERS;
 		OS_GetMacAddress( buffer + 6 );
 		SVC_CalcSHA1( serialNo, buffer, sizeof(buffer) );
 		for( i = 3; i < SVC_SHA1_DIGEST_SIZE; i++ ) {
@@ -392,12 +394,12 @@ static BOOL WriteHWSecureInfoFile( u8 region )
 		MI_CpuCopy8( "SRN", serialNo, 3 );
 		MI_CpuClear8( &serialNo[ len ], sizeof(serialNo) - len );
 		OS_TPrintf( "serialNo : %s\n", serialNo );
-		THW_SetSerialNo( serialNo );
+		LCFG_THW_SetSerialNo( serialNo );
 	}
 	
 	// ライト
 	if( isWrite &&
-		!THW_WriteSecureInfo( s_pPrivKeyBuffer ) ) {
+		!LCFGi_THW_WriteSecureInfo( s_pPrivKeyBuffer ) ) {
 		isWrite = FALSE;
 		OS_TPrintf( "HW Secure Info Write failed.\n" );
 	}
@@ -416,21 +418,21 @@ static void DeleteHWInfoFile( void )
 	
 	// ノーマルファイル
 	(void)PutStringUTF16( MSG_X * 8, MSG_Y * 8, TXT_COLOR_BLACK, pMsgNormalDeleting );
-	if( FS_DeleteFile( (char *)TWL_HWINFO_NORMAL_PATH ) ) {
-		OS_TPrintf( "%s delete succeeded.\n", (char *)TWL_HWINFO_NORMAL_PATH );
+	if( FS_DeleteFile( (char *)LCFG_TWL_HWINFO_NORMAL_PATH ) ) {
+		OS_TPrintf( "%s delete succeeded.\n", (char *)LCFG_TWL_HWINFO_NORMAL_PATH );
 		(void)PutStringUTF16( ( MSG_X + 19 ) * 8, MSG_Y * 8, TXT_COLOR_BLUE, pMsgSucceeded );
 	}else {
-		OS_TPrintf( "%s delete failed.\n", (char *)TWL_HWINFO_NORMAL_PATH );
+		OS_TPrintf( "%s delete failed.\n", (char *)LCFG_TWL_HWINFO_NORMAL_PATH );
 		(void)PutStringUTF16( ( MSG_X + 19 ) * 8, MSG_Y * 8, TXT_COLOR_RED, pMsgFailed );
 	}
 	
 	// セキュアファイル
 	(void)PutStringUTF16( MSG_X * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_BLACK, pMsgSecureDeleting );
-	if( FS_DeleteFile( (char *)TWL_HWINFO_SECURE_PATH ) ) {
-		OS_TPrintf( "%s delete succeeded.\n", (char *)TWL_HWINFO_SECURE_PATH );
+	if( FS_DeleteFile( (char *)LCFG_TWL_HWINFO_SECURE_PATH ) ) {
+		OS_TPrintf( "%s delete succeeded.\n", (char *)LCFG_TWL_HWINFO_SECURE_PATH );
 		(void)PutStringUTF16( ( MSG_X + 19 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_BLUE, pMsgSucceeded );
 	}else {
-		OS_TPrintf( "%s delete failed.\n", (char *)TWL_HWINFO_SECURE_PATH );
+		OS_TPrintf( "%s delete failed.\n", (char *)LCFG_TWL_HWINFO_SECURE_PATH );
 		(void)PutStringUTF16( ( MSG_X + 19 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_RED, pMsgFailed );
 	}
 	DispMessage( 0, 0, TXT_COLOR_NULL, NULL );
@@ -442,12 +444,12 @@ static void DeleteHWInfoFile( void )
 // HWInfoファイルのベリファイ
 static void VerifyHWInfo( void )
 {
-	if( VerifyData(	(const u8 *)THW_GetNormalInfo(), (const u8 *)THW_GetDefaultNormalInfo(), sizeof(TWLHWNormalInfo) ) ) {
+	if( VerifyData(	(const u8 *)LCFG_THW_GetNormalInfo(), (const u8 *)LCFG_THW_GetDefaultNormalInfo(), sizeof(LCFGTWLHWNormalInfo) ) ) {
 		OS_TPrintf( "HW normal Info verify succeeded.\n" );
 	}else {
 		OS_TPrintf( "HW normal Info verify failed.\n" );
 	}
-	if( VerifyData(	(const u8 *)THW_GetSecureInfo(), (const u8 *)THW_GetDefaultSecureInfo(), sizeof(TWLHWSecureInfo) ) ) {
+	if( VerifyData(	(const u8 *)LCFG_THW_GetSecureInfo(), (const u8 *)LCFG_THW_GetDefaultSecureInfo(), sizeof(LCFGTWLHWSecureInfo) ) ) {
 		OS_TPrintf( "HW secure Info verify succeeded.\n" );
 	}else {
 		OS_TPrintf( "HW secure Info verify failed.\n" );

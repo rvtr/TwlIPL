@@ -30,6 +30,8 @@ typedef struct BannerCheckParam {
 }BannerCheckParam;
 
 // extern data-----------------------------------------------------------------
+extern void LCFG_VerifyAndRecoveryNTRSettings( void );
+
 extern void SYSMi_SetLauncherMountInfo( void );
 extern void SYSM_SetBootAppMountInfo( TitleProperty *pBootTitle );		// マウント情報のセット
 
@@ -114,7 +116,7 @@ void SYSM_SetAllocFunc( void *(*pAlloc)(u32), void (*pFree)(void*) )
 TitleProperty *SYSM_ReadParameters( void )
 {
 	TitleProperty *pBootTitle = NULL;
-	u8 brightness = TWL_BACKLIGHT_LEVEL_MAX;
+	u8 brightness = LCFG_TWL_BACKLIGHT_LEVEL_MAX;
 	
 	// ARM7のリセットパラメータ取得が完了するのを待つ
 	while( !SYSMi_GetWork()->isARM9Start ) {
@@ -153,12 +155,12 @@ TitleProperty *SYSM_ReadParameters( void )
 	// HW情報のリード
 	//-----------------------------------------------------
 	// ノーマル情報リード
-	if( THW_ReadNormalInfo() != TSF_READ_RESULT_SUCCEEDED ) {
+	if( LCFG_ReadHWNormalInfo() != LCFG_TSF_READ_RESULT_SUCCEEDED ) {
 		OS_TPrintf( "HW Normal Info Broken!\n" );
 		SYSMi_GetWork()->isBrokenHWNormalInfo = TRUE;
 	}
 	// セキュア情報リード
-	if( THW_ReadSecureInfo() != TSF_READ_RESULT_SUCCEEDED ) {
+	if( LCFG_ReadHWSecureInfo() != LCFG_TSF_READ_RESULT_SUCCEEDED ) {
 		OS_TPrintf( "HW Secure Info Broken!\n" );
 		SYSMi_GetWork()->isBrokenHWSecureInfo = TRUE;
 	}
@@ -166,9 +168,9 @@ TitleProperty *SYSM_ReadParameters( void )
 	//-----------------------------------------------------
 	// 本体設定データのリード
 	//-----------------------------------------------------
-	if( SYSM_ReadTWLSettingsFile() ) {								// NANDからTWL本体設定データをリード
+	if( LCFG_ReadTWLSettingsFile() ) {								// NANDからTWL本体設定データをリード
 		SYSM_CaribrateTP();											// 読み出したTWL本体設定データをもとにTPキャリブレーション。
-		brightness = (u8)TSD_GetBacklightBrightness();
+		brightness = (u8)LCFG_TSD_GetBacklightBrightness();
 	}
 	
 	//-----------------------------------------------------
@@ -181,7 +183,7 @@ TitleProperty *SYSM_ReadParameters( void )
 	// RTC値のチェック
 	SYSMi_CheckRTC();
 	
-	SYSM_VerifyAndRecoveryNTRSettings();							// NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
+	LCFG_VerifyAndRecoveryNTRSettings();							// NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
 	
 	//NAMの初期化
 	NAM_Init( SYSM_Alloc, SYSM_Free );
@@ -225,11 +227,11 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 	//-----------------------------------------------------
 #if 0
 #ifdef ENABLE_INITIAL_SETTINGS_
-	if( !TSD_IsSetTP() ||
-		!TSD_IsSetLanguage() ||
-		!TSD_IsSetDateTime() ||
-		!TSD_IsSetUserColor() ||
-		!TSD_IsSetNickname() ) {
+	if( !LCFG_TSD_IsSetTP() ||
+		!LCFG_TSD_IsSetLanguage() ||
+		!LCFG_TSD_IsSetDateTime() ||
+		!LCFG_TSD_IsSetUserColor() ||
+		!LCFG_TSD_IsSetNickname() ) {
 		s_bootTitle.titleID = TITLE_ID_MACHINE_SETTINGS;
 		s_bootTitle.flags.bootType = OS_BOOTTYPE_NAND;
 		s_bootTitle.flags.isValid = TRUE;
@@ -862,25 +864,25 @@ u32 PMi_WriteRegister(u16 registerAddr, u16 data)
 // バックライト輝度調整
 void SYSM_SetBackLightBrightness( u8 brightness )
 {
-	if( brightness > TWL_BACKLIGHT_LEVEL_MAX ) {
+	if( brightness > LCFG_TWL_BACKLIGHT_LEVEL_MAX ) {
 		OS_Panic( "Backlight brightness over : %d\n", brightness );
 	}
 	( void )PMi_WriteRegister( 0x20, (u16)brightness );
-	TSD_SetBacklightBrightness( brightness );
+	LCFG_TSD_SetBacklightBrightness( brightness );
 	
 	// [TODO:] バックライト輝度は毎回セーブせずに、アプリ起動やリセット、電源OFF時に値が変わっていたらセーブするようにする。
-	SYSM_WriteTWLSettingsFile();
+	LCFG_WriteTWLSettingsFile();
 }
 
 
 // タッチパネルキャリブレーション
 void SYSM_CaribrateTP( void )
 {
-	TWLTPCalibData store;
+	LCFGTWLTPCalibData store;
 	TPCalibrateParam calibParam;
 	
 	// 本体設定データからキャリブレーション情報を取得
-	TSD_GetTPCalibration( &store );
+	LCFG_TSD_GetTPCalibration( &store );
 	
 	// TPキャリブレーション
 	( void )TP_CalcCalibrateParam( &calibParam,							// タッチパネル初期化
@@ -897,7 +899,7 @@ void SYSM_CaribrateTP( void )
 static void SYSMi_WriteAdjustRTC( void )
 {
 	RTCRawAdjust raw;
-	raw.adjust = THW_GetRTCAdjust();
+	raw.adjust = LCFG_THW_GetRTCAdjust();
 	( void )RTCi_SetRegAdjust( &raw );
 }
 
@@ -1088,10 +1090,10 @@ static void SYSMi_CheckRTC( void )
 #endif
 		) {							// RTCの異常を検出したら、rtc入力フラグ＆rtcOffsetを0にしてNVRAMに書き込み。
 		OS_TPrintf("\"RTC reset\" or \"Illegal RTC data\" detect!\n");
-		TSD_SetFlagDateTime( FALSE );
-		TSD_SetRTCOffset( 0 );
-		TSD_SetRTCLastSetYear( 0 );
-		SYSM_WriteTWLSettingsFile();
+		LCFG_TSD_SetFlagDateTime( FALSE );
+		TSD_SetRTCOffset( 0 );	// [TODO:]本来は、LCFG_TSD_SetRTCOffset( 0 );  SDK_5_00pr2では間違っている。
+		LCFG_TSD_SetRTCLastSetYear( 0 );
+		LCFG_WriteTWLSettingsFile();
 	}
 }
 

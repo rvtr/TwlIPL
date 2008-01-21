@@ -70,7 +70,7 @@ typedef struct CalibWork {
 	u16					last_x;
 	u16					last_y;
 	TPData				sample[2];
-	TWLTPCalibData		calibTemp;
+	LCFGTWLTPCalibData	calibTemp;
 }CalibWork;
 
 // extern data------------------------------------------
@@ -417,12 +417,12 @@ int TP_CalibrationMain( void )
 				s_pTPC->calibTemp.data.dx2		= DISP_X_SIZE - 32;
 				s_pTPC->calibTemp.data.dy2		= DISP_Y_SIZE - 32;
 				
-				TSD_SetTPCalibration( &s_pTPC->calibTemp );
-				TSD_SetFlagTP( TRUE );								// タッチパネル入力フラグを立てる。
+				LCFG_TSD_SetTPCalibration( &s_pTPC->calibTemp );
+				LCFG_TSD_SetFlagTP( TRUE );								// タッチパネル入力フラグを立てる。
 				// ::::::::::::::::::::::::::::::::::::::::::::::
 				// TWL設定データファイルへの書き込み
 				// ::::::::::::::::::::::::::::::::::::::::::::::
-				(void)SYSM_WriteTWLSettingsFile();
+				(void)LCFG_WriteTWLSettingsFile();
 				
 				ReturnMenu();
 				return 0;
@@ -442,7 +442,7 @@ int TP_CalibrationMain( void )
 		// キャリブレーションを設定前の状態に戻す。
 		{
 			TPCalibrateParam calibrate;
-			TSD_GetTPCalibration( &s_pTPC->calibTemp );
+			LCFG_TSD_GetTPCalibration( &s_pTPC->calibTemp );
 			(void)TP_CalcCalibrateParam(
 					&calibrate,
 					s_pTPC->calibTemp.data.raw_x1, s_pTPC->calibTemp.data.raw_y1, (u16)s_pTPC->calibTemp.data.dx1, (u16)s_pTPC->calibTemp.data.dy1,

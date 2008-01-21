@@ -17,8 +17,7 @@
 #----------------------------------------------------------------------------
 
 SUBDIRS					=	\
-#							../../../libraries_sysmenu/sysmenu \
-#							../../../libraries_sysmenu/settings
+#							../../../libraries_sysmenu/sysmenu
 
 #----------------------------------------------------------------------------
 
@@ -38,7 +37,8 @@ MISC_DIR				=	../../misc
 SRCS					=	main.c HWInfoWriter.c \
 							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
 
-LINCLUDES				=	$(MISC_DIR)/include
+LINCLUDES				=	$(MISC_DIR)/include \
+							$(ROOT)/build/libraries/lcfg/ARM9.TWL/include
 LLIBRARIES				=	libacsign_enc$(TWL_LIBSUFFIX).a
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'

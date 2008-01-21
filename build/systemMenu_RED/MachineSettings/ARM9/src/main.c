@@ -76,8 +76,8 @@ void TwlMain(void)
 	// ::::::::::::::::::::::::::::::::::::::::::::::
 	// TWL設定データファイルの読み込み
 	// ::::::::::::::::::::::::::::::::::::::::::::::
-	(void)THW_ReadSecureInfo();
-	g_isValidTSD = SYSM_ReadTWLSettingsFile();
+	(void)LCFG_ReadHWSecureInfo();
+	g_isValidTSD = LCFG_ReadTWLSettingsFile();
 	if( g_isValidTSD ) {
 		SYSM_CaribrateTP();
 	}

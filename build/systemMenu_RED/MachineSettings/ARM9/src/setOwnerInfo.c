@@ -97,16 +97,16 @@ static int s_char_mode = 0;
 static u16 s_key_csr = 0;
 static u8 s_color_csr = 0;
 static BOOL s_birth_csr = FALSE;
-static TWLDate s_temp_birthday;
-static u16 s_temp_name[ TWL_NICKNAME_LENGTH + 1 ];
-static u16 s_temp_comment[ TWL_COMMENT_LENGTH + 1 ];
+static LCFGTWLDate s_temp_birthday;
+static u16 s_temp_name[ LCFG_TWL_NICKNAME_LENGTH + 1 ];
+static u16 s_temp_comment[ LCFG_TWL_COMMENT_LENGTH + 1 ];
 static u8  s_temp_name_length;
 static u8  s_temp_comment_length;
 
 // const data-----------------------------------
 static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM];
 
-static const u16 *const s_pStrSettingElemTbl[ USER_INFO_MENU_ELEMENT_NUM ][ TWL_LANG_CODE_MAX ] = {
+static const u16 *const s_pStrSettingElemTbl[ USER_INFO_MENU_ELEMENT_NUM ][ LCFG_TWL_LANG_CODE_MAX ] = {
 	{
 		(const u16 *)L"ユーザーネーム",
 		(const u16 *)L"NICKNAME",
@@ -221,7 +221,7 @@ static BOOL SelectOKFunc( u16 *csr, TPData *tgt )
 
 static void DrawOwnerInfoMenuScene( void )
 {
-	u16 tempbuf[TWL_COMMENT_LENGTH+2];
+	u16 tempbuf[LCFG_TWL_COMMENT_LENGTH+2];
 	u8 color;
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"USER INFORMATION" );
@@ -232,17 +232,17 @@ static void DrawOwnerInfoMenuScene( void )
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得して表示
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// ニックネーム
-	PutStringUTF16( 128 , 8*8, TXT_UCOLOR_G0, TSD_GetNicknamePtr() );
+	PutStringUTF16( 128 , 8*8, TXT_UCOLOR_G0, LCFG_TSD_GetNicknamePtr() );
 	// 誕生日
-	PrintfSJIS( 128, 10*8, TXT_UCOLOR_G0, "%d／%d", TSD_GetBirthdayPtr()->month, TSD_GetBirthdayPtr()->day);
+	PrintfSJIS( 128, 10*8, TXT_UCOLOR_G0, "%d／%d", LCFG_TSD_GetBirthdayPtr()->month, LCFG_TSD_GetBirthdayPtr()->day);
 	// カラー
-	color = TSD_GetUserColor();
+	color = LCFG_TSD_GetUserColor();
 	PutStringUTF16( 128 , 12*8, TXT_UCOLOR_G0, L"■" );
 	// コメント
-	SVC_CpuCopy( TSD_GetCommentPtr(), tempbuf, 13 * 2, 16 );
+	SVC_CpuCopy( LCFG_TSD_GetCommentPtr(), tempbuf, 13 * 2, 16 );
 	*(tempbuf+13)='\n';
-	SVC_CpuCopy( TSD_GetCommentPtr()+13, tempbuf+14, 13 * 2, 16 );
-	*(tempbuf+TWL_COMMENT_LENGTH+1)=0;
+	SVC_CpuCopy( LCFG_TSD_GetCommentPtr()+13, tempbuf+14, 13 * 2, 16 );
+	*(tempbuf+LCFG_TWL_COMMENT_LENGTH+1)=0;
 	PutStringUTF16( 128-78 , 16*8 , TXT_UCOLOR_G0, tempbuf );
 }
 
@@ -253,7 +253,7 @@ void SetOwnerInfoInit( void )
 	
 	// NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
 	for( i = 0; i < USER_INFO_MENU_ELEMENT_NUM; i++ ) {
-		s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ TSD_GetLanguage() ];
+		s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ LCFG_TSD_GetLanguage() ];
 	}
 	
     // BGデータのロード処理
@@ -391,13 +391,13 @@ static void PushKeys( u16 code, NameOrComment noc )
 	{
 		buf = s_temp_name;
 		length = &s_temp_name_length;
-		max_length = TWL_NICKNAME_LENGTH;
-		setflag = TSD_SetFlagNickname;
+		max_length = LCFG_TWL_NICKNAME_LENGTH;
+		setflag = LCFG_TSD_SetFlagNickname;
 	}else if(noc == NOC_COMMENT)
 	{
 		buf = s_temp_comment;
 		length = &s_temp_comment_length;
-		max_length = TWL_COMMENT_LENGTH;
+		max_length = LCFG_TWL_COMMENT_LENGTH;
 		// setflag = TSD_SetFlagComment;
 		setflag = NULL;
 	}else
@@ -425,14 +425,14 @@ static void PushKeys( u16 code, NameOrComment noc )
 				if(setflag) setflag(TRUE);// 設定完了フラグを立てておく
 				SVC_CpuClear(0, buf + *length, (max_length - *length) * 2, 16);// ゼロクリア
 				if(noc == NOC_NAME) {
-					TSD_SetNickname( buf );
+					LCFG_TSD_SetNickname( buf );
 				}else if(noc == NOC_COMMENT) {
-					TSD_SetComment( buf );
+					LCFG_TSD_SetComment( buf );
 				}
 				// ::::::::::::::::::::::::::::::::::::::::::::::
 				// TWL設定データファイルへの書き込み
 				// ::::::::::::::::::::::::::::::::::::::::::::::
-				(void)SYSM_WriteTWLSettingsFile();// ファイルへ書き込み
+				(void)LCFG_WriteTWLSettingsFile();// ファイルへ書き込み
 				// セーブ後にキャンセル処理と合流
 			case CANCEL_BUTTON_:
 				SetOwnerInfoInit();
@@ -580,11 +580,11 @@ static void SetNicknameInit( void )
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// ニックネーム用テンポラリバッファの初期化
-	TSD_GetNickname( s_temp_name );
+	LCFG_TSD_GetNickname( s_temp_name );
 	s_temp_name_length = MY_StrLen( s_temp_name );
-	if( s_temp_name_length < TWL_NICKNAME_LENGTH ) {
+	if( s_temp_name_length < LCFG_TWL_NICKNAME_LENGTH ) {
 		SVC_CpuClear(CHAR_USCORE, &s_temp_name[ s_temp_name_length ],
-					 ( TWL_NICKNAME_LENGTH - s_temp_name_length ) * 2, 16);
+					 ( LCFG_TWL_NICKNAME_LENGTH - s_temp_name_length ) * 2, 16);
 	}
 	
 	DrawSetNicknameScene();
@@ -651,7 +651,7 @@ static void SetBirthdayInit( void )
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// 誕生日
-	TSD_GetBirthday( &s_temp_birthday );
+	LCFG_TSD_GetBirthday( &s_temp_birthday );
 	
     // BGデータのロード処理
 	GX_LoadBG1Char(bg_char_data, 0, sizeof(bg_char_data));
@@ -763,12 +763,12 @@ static int SetBirthdayMain( void )
 	DrawSetBirthdayScene();
 	
 	if( pad.trg & PAD_BUTTON_A || (tp_touch && temp_ok_cancel == KEY_OK) ) {
-		TSD_SetBirthday(&s_temp_birthday);
-		TSD_SetFlagBirthday( TRUE );
+		LCFG_TSD_SetBirthday(&s_temp_birthday);
+		LCFG_TSD_SetFlagBirthday( TRUE );
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		(void)SYSM_WriteTWLSettingsFile();// ファイルへ書き込み
+		(void)LCFG_WriteTWLSettingsFile();// ファイルへ書き込み
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
 		return 0;
@@ -842,7 +842,7 @@ static void SetUserColorInit( void )
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// ユーザーカラー
-	s_color_csr = TSD_GetUserColor();
+	s_color_csr = LCFG_TSD_GetUserColor();
 	
 	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
@@ -885,16 +885,16 @@ static int SetUserColorMain( void )
 	}
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || (tp_touch && temp_csr == KEY_OK) ) {				// 色決定
-		TSD_SetUserColor( (u8 )s_color_csr );
+		LCFG_TSD_SetUserColor( (u8 )s_color_csr );
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		(void)SYSM_WriteTWLSettingsFile();// ファイルへ書き込み
+		(void)LCFG_WriteTWLSettingsFile();// ファイルへ書き込み
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
 		return 0;
 	}else if( ( pad.trg & PAD_BUTTON_B ) || (tp_touch && temp_csr == KEY_CANCEL) ) {
-		ChangeUserColor( TSD_GetUserColor() ); // パレット色を元にもどす
+		ChangeUserColor( LCFG_TSD_GetUserColor() ); // パレット色を元にもどす
 		SetOwnerInfoInit();
 		g_pNowProcess = SetOwnerInfoMain;
 		return 0;
@@ -909,13 +909,13 @@ static int SetUserColorMain( void )
 // コメント編集画面の描画処理
 static void DrawSetCommentScene( void )
 {
-	u16 tempbuf[TWL_COMMENT_LENGTH+2];
+	u16 tempbuf[LCFG_TWL_COMMENT_LENGTH+2];
 	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"COMMENT" );
 	SVC_CpuCopy( s_temp_comment, tempbuf, 13 * 2, 16 );
 	*(tempbuf+13)='\n';
 	SVC_CpuCopy( s_temp_comment+13, tempbuf+14, 13 * 2, 16 );
-	*(tempbuf+TWL_COMMENT_LENGTH+1)=0;
+	*(tempbuf+LCFG_TWL_COMMENT_LENGTH+1)=0;
 	PutStringUTF16( 128-78 , 15 , TXT_UCOLOR_G0, tempbuf );
 	DrawCharKeys();
 }
@@ -930,11 +930,11 @@ static void SetCommentInit( void )
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// コメント用テンポラリバッファの初期化
-	TSD_GetComment( s_temp_comment );
+	LCFG_TSD_GetComment( s_temp_comment );
 	s_temp_comment_length = MY_StrLen( s_temp_comment );
-	if( s_temp_comment_length < TWL_COMMENT_LENGTH ) {
+	if( s_temp_comment_length < LCFG_TWL_COMMENT_LENGTH ) {
 		SVC_CpuClear(CHAR_USCORE, &s_temp_comment[ s_temp_comment_length ],
-					 ( TWL_COMMENT_LENGTH - s_temp_comment_length ) * 2, 16);
+					 ( LCFG_TWL_COMMENT_LENGTH - s_temp_comment_length ) * 2, 16);
 	}
 	
 	DrawSetCommentScene();

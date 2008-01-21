@@ -22,7 +22,6 @@
 #include <twl/nam.h>
 #include <twl/os/common/format_rom.h>
 #include <sysmenu/banner.h>
-#include <sysmenu/settings.h>
 #include <sysmenu/sysmenu_lib/common/sysmenu_work.h>
 #include <sysmenu/reloc_info/common/reloc_info.h>
 
@@ -103,11 +102,6 @@ extern void SYSM_SetLogoDemoSkip( BOOL skip );									// ロゴデモ飛ばし状態フラ
 extern BOOL SYSM_IsValidTSD( void );											// TWL設定データは有効か？
 extern void SYSM_SetValidTSD( BOOL valid );										// TWL設定データの有効／無効フラグを設定する。
 extern const LauncherParamBody *SYSM_GetLauncherParamBody( void );					// リセットパラメータの取得
-
-// 本体設定データアクセス
-extern BOOL SYSM_ReadTWLSettingsFile( void );									// TWL設定データのリード
-extern BOOL SYSM_WriteTWLSettingsFile( void );									// TWL設定データのライト
-extern void SYSM_VerifyAndRecoveryNTRSettings( void );
 
 // Nintendoロゴ制御
 extern BOOL SYSM_CheckNintendoLogo( u16 *pLogoData );							// Nintendoロゴデータのチェック

@@ -51,14 +51,14 @@ s64 SYSM_CalcRTCOffset( RTCDate *newDatep, RTCTime *newTimep )
 	oldTime.second = 0;
 	
 	// RTC設定時は、今回の設定でどれだけRTC値が変化したか（秒オフセット単位）を算出。
-	if( ( oldDate.year < TSD_GetRTCLastSetYear() ) && ( TSD_IsSetDateTime() ) ) {
+	if( ( oldDate.year < LCFG_TSD_GetRTCLastSetYear() ) && ( LCFG_TSD_IsSetDateTime() ) ) {
 		oldDate.year += 100;										// 前回の設定～今回の設定の間にRTCが一周してしまったら、yearは100を加算してoffsetを計算する。
 	}
-	TSD_SetRTCLastSetYear( (u8)newDatep->year );
+	LCFG_TSD_SetRTCLastSetYear( (u8)newDatep->year );
 	
 	offset0	= SYSMi_CalcRTCSecOffset( &oldDate, &oldTime );			// 設定直前のRTC値のオフセットを算出
 	offset1	= SYSMi_CalcRTCSecOffset(  newDatep, newTimep );		// 新しくセットされたRTC値のオフセットを算出
-	offset	= TSD_GetRTCOffset() + offset1 - offset0;				// 新RTC_ofs と 現在のRTC_ofs の差分の値を加算してリターン。
+	offset	= LCFG_TSD_GetRTCOffset() + offset1 - offset0;			// 新RTC_ofs と 現在のRTC_ofs の差分の値を加算してリターン。
 	
 	OS_Printf ("Now    Date = year:%3d month:%3d date:%3d  hour:%3d minute:%3d second:%3d\n",
 			   oldDate.year, oldDate.month,  oldDate.day,

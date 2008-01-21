@@ -317,7 +317,7 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	// アプリ名表示
 	if(selected != old_selected)
 	{
-		NNSG2dChar *str = ((TWLBannerFile *)titleprop[selected].pBanner)->v1.comment[ TSD_GetLanguage() ];
+		NNSG2dChar *str = ((TWLBannerFile *)titleprop[selected].pBanner)->v1.comment[ LCFG_TSD_GetLanguage() ];
 		NNSG2dTextRect rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, str );
 		NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL, 0, 24, WINDOW_WIDTH, 32 );
 		PutStringUTF16( (WINDOW_WIDTH-rect.width)>>1, TITLE_V_CENTER - (rect.height>>1), TXT_COLOR_BLACK, str );
@@ -343,7 +343,7 @@ void LauncherInit( TitleProperty *pTitleList )
 	GX_DispOff();
 	GXS_DispOff();
 	
-	ChangeUserColor( TSD_GetUserColor() );
+	ChangeUserColor( LCFG_TSD_GetUserColor() );
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
     
     // BGデータのロード処理
@@ -485,17 +485,17 @@ static void ProcessBackLightPads( void )
 	}
 	
 	if( (pad.trg & PAD_BUTTON_START) || up_bl_trg ) {
-		brightness = TSD_GetBacklightBrightness() + 1;
-		if( brightness > TWL_BACKLIGHT_LEVEL_MAX ) {
+		brightness = LCFG_TSD_GetBacklightBrightness() + 1;
+		if( brightness > LCFG_TWL_BACKLIGHT_LEVEL_MAX ) {
 			brightness = 0;
 		}
 		SYSM_SetBackLightBrightness( (u8)brightness );
 		DrawBackLightSwitch();
 	}
 	if( ( pad.trg & PAD_BUTTON_SELECT) || dw_bl_trg ) {
-		brightness = TSD_GetBacklightBrightness() - 1;
+		brightness = LCFG_TSD_GetBacklightBrightness() - 1;
 		if( brightness < 0 ) {
-			brightness = TWL_BACKLIGHT_LEVEL_MAX;
+			brightness = LCFG_TWL_BACKLIGHT_LEVEL_MAX;
 		}
 		SYSM_SetBackLightBrightness( (u8)brightness );
 		DrawBackLightSwitch();
@@ -692,5 +692,5 @@ static void DrawBackLightSwitch(void)
 	PutStringUTF16( B_LIGHT_DW_BUTTON_TOP_X, B_LIGHT_DW_BUTTON_TOP_Y, TXT_COLOR_RED,
 					L"\xE01c\xE01b" );
 	PrintfSJIS( B_LIGHT_DW_BUTTON_TOP_X + 24, B_LIGHT_DW_BUTTON_TOP_Y, TXT_COLOR_RED,
-					"BL:%d\n", TSD_GetBacklightBrightness() );
+					"BL:%d\n", LCFG_TSD_GetBacklightBrightness() );
 }

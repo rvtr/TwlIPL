@@ -57,7 +57,7 @@ static const u16 *s_pStrSetting[ SETTING_MENU_ELEMENT_NUM ];			// メインメニュー
 //===============================================
 // mainMenu.c
 //===============================================
-static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ TWL_LANG_CODE_MAX ] = {
+static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ LCFG_TWL_LANG_CODE_MAX ] = {
 	{
 		(const u16 *)L"言語",
 		(const u16 *)L"LANGUAGE",
@@ -167,10 +167,10 @@ void MachineSettingInit( void )
 	
 	// NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
 	for( i = 0; i < SETTING_MENU_ELEMENT_NUM; i++ ) {
-		s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ TSD_GetLanguage() ];
+		s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ LCFG_TSD_GetLanguage() ];
 	}
 	
-	ChangeUserColor( TSD_GetUserColor() );
+	ChangeUserColor( LCFG_TSD_GetUserColor() );
 	DrawMenu( s_csr, &s_settingParam );
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );

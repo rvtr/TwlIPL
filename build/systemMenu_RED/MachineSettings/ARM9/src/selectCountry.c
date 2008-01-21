@@ -50,8 +50,8 @@
 // global variable -------------------------------------
 
 // static variable -------------------------------------
-static TWLCountryCode s_countryCode;										// 国コード
-static TWLRegion s_regionCode;											// リージョン
+static LCFGTWLCountryCode s_countryCode;									// 国コード
+static LCFGTWLRegion s_regionCode;											// リージョン
 
 static u16 s_list_start, s_list_end;
 static u16 s_menu_display_start;
@@ -64,7 +64,7 @@ static double s_dots_per_item;
 
 // const data  -----------------------------------------
 extern const u16 *const s_pStrCountryName[];
-extern const u32 region_country_mapping[TWL_REGION_MAX];
+extern const u32 region_country_mapping[LCFG_TWL_REGION_MAX];
 
 static MenuPos s_countryPos[MENU_DISPLAY_SIZE] = {
 	{ TRUE,  4 * 8,   6 * 8 },
@@ -106,7 +106,7 @@ static void InitScrollMenuList( void )
 	// 設定されていた国名コードがリスト範囲に入っていなければデフォルト値にする
 	if(s_countryCode < s_list_start || s_list_end < s_countryCode)
 	{
-		s_countryCode = (TWLCountryCode)s_list_start;
+		s_countryCode = (LCFGTWLCountryCode)s_list_start;
 	}
 	
 	// 実際に表示する範囲の調整
@@ -148,13 +148,13 @@ void SelectCountryInit( void )
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// 設定済みリージョンと国名コードの取得
-	s_regionCode = (TWLRegion)THW_GetRegion();
+	s_regionCode = (LCFGTWLRegion)LCFG_THW_GetRegion();
 	
 	if( !g_isValidTSD ||
-		( TSD_GetCountry() >= TWL_COUNTRY_MAX ) ) {
-		s_countryCode = (TWLCountryCode)0;
+		( LCFG_TSD_GetCountry() >= LCFG_TWL_COUNTRY_MAX ) ) {
+		s_countryCode = (LCFGTWLCountryCode)0;
 	}else {
-		s_countryCode = TSD_GetCountry();
+		s_countryCode = LCFG_TSD_GetCountry();
 	}
 	
 	// スクロールメニューの初期化
@@ -259,8 +259,8 @@ static void MoveCursorByScrollBar( void )
 	// タッチパッドによるスクロール後、表示される項目の調整
 	if( s_menu_display_start + countrySel.num - 1 > s_list_end ) s_menu_display_start = (u16)(s_list_end - countrySel.num + 1);
 	if( s_menu_display_start < s_list_start ) s_menu_display_start = s_list_start;
-	if( s_countryCode < s_menu_display_start ) s_countryCode = (TWLCountryCode)s_menu_display_start;
-	else if( s_menu_display_start + countrySel.num - 1 < s_countryCode ) s_countryCode = (TWLCountryCode)(s_menu_display_start + countrySel.num - 1);
+	if( s_countryCode < s_menu_display_start ) s_countryCode = (LCFGTWLCountryCode)s_menu_display_start;
+	else if( s_menu_display_start + countrySel.num - 1 < s_countryCode ) s_countryCode = (LCFGTWLCountryCode)(s_menu_display_start + countrySel.num - 1);
 }
 
 // 国選択画面の描画処理
@@ -306,7 +306,7 @@ int SelectCountryMain( void )
 	// タッチパッドによるメニュー項目の選択
 	selecteditem = (u16)(s_countryCode - s_menu_display_start);
 	tp_select = SelectMenuByTP( (u16 *)&selecteditem, &countrySel );
-	s_countryCode = (TWLCountryCode)(s_menu_display_start + selecteditem);
+	s_countryCode = (LCFGTWLCountryCode)(s_menu_display_start + selecteditem);
 	
 	// 描画
 	DrawCountryMain();
@@ -318,12 +318,12 @@ int SelectCountryMain( void )
 	}
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || tp_select ) {				// メニュー項目への分岐
-		TSD_SetCountry( s_countryCode );						// 国コード設定
-		TSD_SetFlagCountry( TRUE );								// 国コード入力フラグを立てる
+		LCFG_TSD_SetCountry( s_countryCode );					// 国コード設定
+		LCFG_TSD_SetFlagCountry( TRUE );						// 国コード入力フラグを立てる
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		(void)SYSM_WriteTWLSettingsFile();
+		(void)LCFG_WriteTWLSettingsFile();
 		
 		MachineSettingInit();
 		return 0;
