@@ -176,7 +176,8 @@ RomSpec
 	HostRoot	../../data
 	Root		/data
 	File		NTR_IPL_font_m.NFTR
-	HostRoot	../../../../keys/HWInfo
+	HostRoot	$(PRIVKEY_PATH)
 	Root		/key
-#	File		privKeyHWInfo.der
+	File		$(HWINFO_PRIVKEY)
+
 }

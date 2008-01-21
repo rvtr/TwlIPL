@@ -118,6 +118,15 @@ static const char *strRegion[] = {
 	"KOREA",
 };
 
+static const char *strLauncherGameCode[] = {
+	"LNCJ",
+	"LNCE",
+	"LNCP",
+	"LNCO",
+	"LNCC",
+	"LNCK",
+};
+
 //======================================================
 // HW情報ライター
 //======================================================
@@ -125,6 +134,8 @@ static const char *strRegion[] = {
 // HW情報ライターの初期化
 void HWInfoWriterInit( void )
 {
+	u8 gameCode[ 5 ] = { 0, 0, 0, 0, 0 };
+	
 	GX_DispOff();
  	GXS_DispOff();
 	
@@ -141,8 +152,10 @@ void HWInfoWriterInit( void )
 	ReadHWInfoFile();
 //	VerifyHWInfo();
 	OS_TPrintf( "region = %d\n", LCFG_THW_GetRegion() );
-	PrintfSJISSub( 2 * 8, 18 * 8, TXT_COLOR_BLACK, "Region   = %s", strRegion[ LCFG_THW_GetRegion() ] );
-	PrintfSJISSub( 2 * 8, 20 * 8, TXT_COLOR_BLACK, "SerialNo = %s", LCFG_THW_GetSerialNoPtr() );
+	PrintfSJISSub( 2 * 8, 16 * 8, TXT_COLOR_BLACK, "Region   = %s", strRegion[ LCFG_THW_GetRegion() ] );
+	PrintfSJISSub( 2 * 8, 18 * 8, TXT_COLOR_BLACK, "SerialNo = %s", LCFG_THW_GetSerialNoPtr() );
+//	LCFG_THW_GetLauncherGameCode( gameCode );
+//	PrintfSJISSub( 2 * 8, 20 * 8, TXT_COLOR_BLACK, "LauncherGameCode = %s", gameCode );
 	s_region_old = LCFG_THW_GetRegion();
 	s_csr = 0;
 	DrawMenu( s_csr, &s_writerParam );
@@ -235,7 +248,7 @@ static void ReadPrivateKey( void )
 	OSTick start = OS_GetTick();
 	
 	FS_InitFile( &file );
-	if( !FS_OpenFileEx( &file, "rom:key/privKeyHWInfo.der", FS_FILEMODE_R ) ) {
+	if( !FS_OpenFileEx( &file, "rom:key/private_HWInfo.der", FS_FILEMODE_R ) ) {
 		OS_TPrintf( "PrivateKey read failed.\n" );
 	}else {
 		keyLength = FS_GetFileLength( &file );
@@ -257,14 +270,14 @@ static void ReadPrivateKey( void )
 	}
 	OS_TPrintf( "PrivKey read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 	
-	if( s_pPrivKeyBuffer ) {
-		// 秘密鍵が有効なら、署名ありのアクセス
-		s_pReadSecureInfoFunc = LCFGi_THW_ReadSecureInfo;
-	}else {
-		// 秘密鍵が無効なら、署名なしのアクセス
-		s_pReadSecureInfoFunc = LCFGi_THW_ReadSecureInfo_NoCheck;
-		PutStringUTF16( 14 * 8, 0 * 8, TXT_COLOR_RED, (const u16 *)L"[No Signature MODE]" );
-	}
+#ifdef USE_PRODUCT_KEY
+	// 製品用秘密鍵が有効なら、署名ありのアクセス
+	s_pReadSecureInfoFunc = LCFGi_THW_ReadSecureInfo;
+#else
+	// そうでないなら、署名なしのアクセス
+	s_pReadSecureInfoFunc = LCFGi_THW_ReadSecureInfo_NoCheck;
+	PutStringUTF16( 14 * 8, 0 * 8, TXT_COLOR_RED, (const u16 *)L"[No Signature MODE]" );
+#endif
 }
 
 
@@ -327,8 +340,8 @@ static void WriteHWInfoFile( u8 region )
 	NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_WHITE,
 								MSG_X * 8 , MSG_Y * 8, ( 32 - MSG_X ) * 8, ( MSG_Y + 4 ) * 8 );
 	
-	PrintfSJISSub( 2 * 8, 18 * 8, TXT_COLOR_WHITE, "Region   = %s", strRegion[ s_region_old ] );
-	PrintfSJISSub( 2 * 8, 18 * 8, TXT_COLOR_BLACK, "Region   = %s", strRegion[ LCFG_THW_GetRegion() ] );
+	PrintfSJISSub( 2 * 8, 16 * 8, TXT_COLOR_WHITE, "Region   = %s", strRegion[ s_region_old ] );
+	PrintfSJISSub( 2 * 8, 16 * 8, TXT_COLOR_BLACK, "Region   = %s", strRegion[ LCFG_THW_GetRegion() ] );
 	s_region_old = LCFG_THW_GetRegion();
 }
 
@@ -396,6 +409,9 @@ static BOOL WriteHWSecureInfoFile( u8 region )
 		OS_TPrintf( "serialNo : %s\n", serialNo );
 		LCFG_THW_SetSerialNo( serialNo );
 	}
+	
+	// ランチャーゲームコード
+	LCFG_THW_SetLauncherGameCode( (const u8 *)strLauncherGameCode[ region ] );
 	
 	// ライト
 	if( isWrite &&

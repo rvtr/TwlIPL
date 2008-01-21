@@ -17,9 +17,10 @@
 #----------------------------------------------------------------------------
 
 SUBDIRS					=	\
-#							../../../libraries_sysmenu/sysmenu
 
 #----------------------------------------------------------------------------
+
+USE_PRODUCT_KEY		=	TRUE
 
 TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
@@ -41,8 +42,16 @@ LINCLUDES				=	$(MISC_DIR)/include \
 							$(ROOT)/build/libraries/lcfg/ARM9.TWL/include
 LLIBRARIES				=	libacsign_enc$(TWL_LIBSUFFIX).a
 
-MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
-MAKETAD_FLAGS			+= -s
+MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
+							-DHWINFO_PRIVKEY='private_HWInfo.der'
+MAKETAD_FLAGS			+=	-s
+
+ifdef USE_PRODUCT_KEY
+MAKEROM_FLAGS			+=	-DPRIVKEY_PATH='$(TWL_KEYSDIR)/rsa'
+MACRO_FLAGS				+=	-DUSE_PRODUCT_KEY
+else
+MAKEROM_FLAGS			+=	-DPRIVKEY_PATH='../../../../keys/dummy/rsa'
+endif
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 

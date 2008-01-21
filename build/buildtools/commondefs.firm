@@ -24,7 +24,7 @@ SPACE 		?= $(EMPTY) $(EMPTY)
 ifndef TWL_KEYSDIR
 DUMMY_KEYS_SUFFIX	=	.dummykey
 endif
-TWL_KEYSDIR		?=	$(FIRM_ROOT)/keys/rsa/dummy
+TWL_KEYSDIR		?=	$(FIRM_ROOT)/keys/dummy
 
 TARGET_BIN		?=	$(subst .,$(DUMMY_KEYS_SUFFIX).,$(TARGET_FIRM_BIN))
 
