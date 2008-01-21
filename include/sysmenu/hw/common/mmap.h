@@ -68,6 +68,7 @@ extern  u32 SDK_AUTOLOAD_WRAM_START[];
 
 #define SYSM_NTR_ROM_HEADER_BUF				0x023ffe00
 #define SYSM_DBG_NTR_ROM_HEADER_BUF			0x027ffe00
+#define SYSM_DBG_NTR_SYSTEM_BUF				0x027ff000
 
 // ※アプリをWRAMに直接配置してブートしようとすると、SystemMenuのコードとぶつかっていろいろややこしい状態になるので、検討が必要
 
