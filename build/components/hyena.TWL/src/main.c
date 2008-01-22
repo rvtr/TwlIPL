@@ -284,13 +284,22 @@ PrintDebugInfo(void)
 #include    <twl/ltdwram_begin.h>
 /*---------------------------------------------------------------------------*
   Name:         InitializeFatfs
-  Description:  FATFSライブラリを初期化する。
+  Description:  FATFSライブラリを初期化する。FATFS初期化関数内でスレッド休止
+                する為、休止中動作するダミーのスレッドを立てる。
   Arguments:    None.
   Returns:      None.
  *---------------------------------------------------------------------------*/
 static void
 InitializeFatfs(void)
 {
+    OSThread    thread;
+    u32         stack[18];
+
+    // ダミースレッド作成
+    OS_CreateThread(&thread, DummyThread, NULL,
+        (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
+    OS_WakeupThreadDirect(&thread);
+
     // FATFSライブラリの初期化
 #ifndef SDK_NOCRYPTO
 #ifdef FATFS_AES_MOUNT_FOR_NAND
@@ -304,6 +313,9 @@ InitializeFatfs(void)
     {
         // do nothing
     }
+
+    // ダミースレッド破棄
+    OS_KillThread(&thread, NULL);
 }
 #include    <twl/ltdwram_end.h>
 
@@ -380,7 +392,8 @@ InitializeCdc(void)
 
 /*---------------------------------------------------------------------------*
   Name:         DummyThread
-  Description:  CDCライブラリを初期化する際に立てるダミーのスレッド。
+  Description:  FATFSライブラリ、CDCライブラリを初期化する際に立てるダミーの
+                スレッド。
   Arguments:    arg -   使用しない。
   Returns:      None.
  *---------------------------------------------------------------------------*/
