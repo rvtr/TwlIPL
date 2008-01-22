@@ -724,9 +724,6 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 			// TWL-ROMヘッダ情報の再配置
 			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)HW_TWL_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
-			// NTR-ROMヘッダ情報の再配置
-			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)SYSM_DBG_NTR_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );	// 8Mのケツへ（TWLデバッガでのNTRモードデバッグ用）
-			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)SYSM_NTR_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );	// 4Mのケツへ
 		}
 	}
 }
@@ -767,9 +764,6 @@ static void SYSMi_Relocate( void )
 		// TWL-ROMヘッダ情報の再配置
 		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_TWL_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
-		// NTR-ROMヘッダ情報の再配置
-		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)SYSM_DBG_NTR_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );	// 8Mのケツへ（TWLデバッガでのNTRモードデバッグ用）
-		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)SYSM_NTR_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );	// 4Mのケツへ
 	}
 }
 
