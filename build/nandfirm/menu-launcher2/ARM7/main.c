@@ -34,7 +34,7 @@
     PRINT_MEMORY_ADDR を定義すると、そのアドレスからSPrintfを行います(このファイルのみ)
     FINALROM版でもコードが残るので注意してください。
 */
-#define PRINT_MEMORY_ADDR       0x02000600
+#define PRINT_MEMORY_ADDR       0x02FFC800
 
 /*
     定義するとアイドルスレッドを作成します。
@@ -110,8 +110,7 @@ static void PreInit(void)
     /*
         リセットパラメータ(1バイト)を共有領域(4バイト)にコピー
     */
-#define FIRM_AVAILABLE_BIT  0x80000000UL
-    *(u32*)HW_RESET_PARAMETER_BUF = (u32)MCUi_ReadRegister( MCU_REG_TEMP_ADDR ) | FIRM_AVAILABLE_BIT;
+    *(u32*)HW_RESET_PARAMETER_BUF = (u32)(MCU_GetFreeRegister( OS_MCU_RESET_VALUE_OFS ) | OS_MCU_RESET_VALUE_BUF_ENABLE_MASK);
     /*
         バッテリー残量チェック
     */
@@ -161,12 +160,17 @@ static void EraseAll(void)
 
 void TwlSpMain( void )
 {
+#ifdef PROFILE_ENABLE
+    // 0: bootrom
+    profile[pf_cnt++] = OS_TicksToMicroSecondsBROM32(OS_GetTick());
+#endif
+
     InitDebugLED();
     SetDebugLED(++step);  // 0x81
 
     PreInit();
 
-    // 0: before PXI
+    // 1: before PXI
     PUSH_PROFILE();
     SetDebugLED(++step);  // 0x82
 
@@ -174,13 +178,13 @@ void TwlSpMain( void )
     OS_EnableIrq();
     OS_EnableInterrupts();
 
-    // 1: after PXI
+    // 2: after PXI
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x83
 
     PostInit();
 
-    // 2: after PM_InitFIRM
+    // 3: after PM_InitFIRM
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x84
 
@@ -193,25 +197,25 @@ void TwlSpMain( void )
         goto end;
     }
 
-    // 3: after FS_Init
+    // 4: after FS_Init
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x85
 
     PM_BackLightOn( FALSE );
 
-    // 4:
+    // 5:
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x86
 
     //PM_BackLightOn( FALSE );
 
-    // 5:
+    // 6:
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x87
 
     //PM_BackLightOn( FALSE );
 
-    // 6:
+    // 7:
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x88
 
@@ -223,7 +227,7 @@ void TwlSpMain( void )
         goto end;
     }
 
-    // 7: after PXI
+    // 8: after PXI
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x89
 
@@ -232,13 +236,13 @@ void TwlSpMain( void )
     AESi_InitKeysFIRM();
     AESi_RecvSeed( rh->s.developer_encrypt );
 
-    // 8: after AESi_RecvSeed
+    // 9: after AESi_RecvSeed
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8a
 
     PM_BackLightOn( FALSE );
 
-    // 9:
+    // 10:
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8b
 
@@ -250,7 +254,7 @@ void TwlSpMain( void )
         goto end;
     }
 
-    // 10: after PXI
+    // 11: after PXI
     PUSH_PROFILE();
 #ifdef PROFILE_ENABLE
     {

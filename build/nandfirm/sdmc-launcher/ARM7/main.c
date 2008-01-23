@@ -110,8 +110,7 @@ static void PreInit(void)
     /*
         リセットパラメータ(1バイト)を共有領域(4バイト)にコピー
     */
-#define FIRM_AVAILABLE_BIT  0x80000000UL
-    *(u32*)HW_RESET_PARAMETER_BUF = (u32)MCUi_ReadRegister( MCU_REG_TEMP_ADDR ) | FIRM_AVAILABLE_BIT;
+    *(u32*)HW_RESET_PARAMETER_BUF = (u32)(MCU_GetFreeRegister( OS_MCU_RESET_VALUE_OFS ) | OS_MCU_RESET_VALUE_BUF_ENABLE_MASK);
     /*
         バッテリー残量チェック
     */

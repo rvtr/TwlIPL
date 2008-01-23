@@ -53,7 +53,7 @@ static SVCSignHeapContext acPool;
     PRINT_MEMORY_ADDR を定義すると、そのアドレスからSPrintfを行います(このファイルのみ)
     FINALROM版でもコードが残るので注意してください。
 */
-#define PRINT_MEMORY_ADDR       0x02000200
+#define PRINT_MEMORY_ADDR       0x02FFC000
 
 //#ifdef SDK_FINALROM // FINALROMで無効化
 //#undef PROFILE_ENABLE
@@ -207,9 +207,13 @@ void TwlMain( void )
 {
     FSFile file;
 
+#ifdef PROFILE_ENABLE
+    // 0: bootrom
+    profile[pf_cnt++] = OS_TicksToMicroSecondsBROM32(OS_GetTick());
+#endif
     PreInit();
 
-    // 0: before PXI
+    // 1: before PXI
     PUSH_PROFILE();
 
     OS_InitFIRM();
@@ -219,12 +223,12 @@ void TwlMain( void )
 #ifdef PROFILE_ENABLE
     OS_InitTick();
 #endif
-    // 1: after PXI
+    // 2: after PXI
     PUSH_PROFILE();
 
     PostInit();
 
-    // 2: after PostInit
+    // 3: after PostInit
     PUSH_PROFILE();
 
     if ( !FS_ResolveSrl( MENU_TITLE_ID ) )
@@ -233,7 +237,7 @@ void TwlMain( void )
         goto end;
     }
 
-    // 3: after FS_ResolveSrl
+    // 4: after FS_ResolveSrl
     PUSH_PROFILE();
 
     if ( !FS_OpenSrl( &file ) )
@@ -242,7 +246,7 @@ void TwlMain( void )
         goto end;
     }
 
-    // 4: after FS_OpenSrl
+    // 5: after FS_OpenSrl
     PUSH_PROFILE();
 
     if ( !FS_LoadSrlHeader( &file, &acPool, RSA_KEY_ADDR ) || !CheckHeader() )
@@ -251,17 +255,17 @@ void TwlMain( void )
         goto end;
     }
 
-    // 5: after FS_LoadSrlHeader
+    // 6: after FS_LoadSrlHeader
     PUSH_PROFILE();
 
     PXI_NotifyID( FIRM_PXI_ID_DONE_HEADER );
 
-    // 6: after PXI
+    // 7: after PXI
     PUSH_PROFILE();
 
     AESi_SendSeed( FS_GetAesKeySeed() );
 
-    // 7: after AESi_SendSeed
+    // 8: after AESi_SendSeed
     PUSH_PROFILE();
 
     if ( !FS_LoadSrlStatic( &file ) )
@@ -270,12 +274,12 @@ void TwlMain( void )
         goto end;
     }
 
-    // 8: after FS_LoadSrlStatic
+    // 9: after FS_LoadSrlStatic
     PUSH_PROFILE();
 
     PXI_NotifyID( FIRM_PXI_ID_DONE_STATIC );
 
-    // 9: after PXI
+    // 10: after PXI
     PUSH_PROFILE();
 #ifdef PROFILE_ENABLE
     {
