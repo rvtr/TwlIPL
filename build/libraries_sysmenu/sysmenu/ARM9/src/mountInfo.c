@@ -18,6 +18,7 @@
 #include <twl.h>
 #include <twl/nam.h>
 #include <sysmenu.h>
+#include "internal_api.h"
 
 // define data-----------------------------------------------------------------
 #define DEFAULT_MOUNT_LIST_NUM				7
@@ -33,20 +34,14 @@
 
 
 // extern data-----------------------------------------------------------------
-
 // function's prototype--------------------------------------------------------
-void SYSMi_SetLauncherMountInfo( void );
-void SYSM_SetBootAppMountInfo( TitleProperty *pBootTitle );
-
 static void SYSMi_SetBootSRLPath( OSBootType bootType, NAMTitleId titleID );
 static void SYSMi_SetMountInfoCore( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pSrc );
 static void SYSMi_ModifySaveDataMount( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt );
 static void SYSMi_ModifySaveDataMountForLauncher( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt );
 
 // global variable-------------------------------------------------------------
-
 // static variable-------------------------------------------------------------
-
 // const data------------------------------------------------------------------
 
 // デフォルトマウント情報リスト
@@ -98,7 +93,7 @@ void SYSMi_SetLauncherMountInfo( void )
 
 
 // システム領域に、ブートするアプリのマウント情報を登録する
-void SYSM_SetBootAppMountInfo( TitleProperty *pBootTitle )
+void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle )
 {
 	// マウント情報のクリア
 	MI_CpuClearFast( (void *)HW_TWL_FS_MOUNT_INFO_BUF, HW_TWL_ROM_HEADER_BUF - HW_TWL_FS_MOUNT_INFO_BUF );
