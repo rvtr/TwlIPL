@@ -75,10 +75,10 @@ void TwlMain( void )
 	OSTick start, end = 0;
 	BOOL direct_boot = FALSE;
 
-	OS_Init();
 	// システムメニュー初期化----------
-	SYSM_SetArena();
-	SYSM_Init( Alloc, Free );									// OS_Initは、本関数内でコールしているので、コールする必要なし。
+	SYSM_Init( Alloc, Free );						// OS_Initの前でコールする必要あり。
+	OS_Init();
+	SYSM_SetArena();								// OS_Initの後でコールする必要あり。
 	
 	// OS初期化------------------------
 	OS_InitTick();

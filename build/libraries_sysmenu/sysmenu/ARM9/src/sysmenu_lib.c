@@ -218,7 +218,8 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 	// 検査カード起動
 	//-----------------------------------------------------
 	if( SYSM_IsExistCard() ) {
-		if( SYSMi_GetWork()->isOnDebugger ||
+		if( ( SYSMi_GetWork()->isOnDebugger &&		// ISデバッガが有効かつJTAGがまだ有効でない時
+			  !( *(u8 *)( HW_SYS_CONF_BUF + HWi_WSYS09_OFFSET ) & HWi_WSYS09_JTAG_CPUJE_MASK ) ) ||
 			SYSM_IsInspectCard() ||
 			( ( PAD_Read() & PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) ==
 			  PAD_PRODUCTION_SHORTCUT_CARD_BOOT )
@@ -724,6 +725,7 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 			// TWL-ROMヘッダ情報の再配置
 			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)HW_TWL_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
+			// NTR-ROMヘッダ情報の再配置は、rebootライブラリで行う。
 		}
 	}
 }

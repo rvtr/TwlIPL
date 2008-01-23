@@ -41,6 +41,7 @@ void SYSM_SetBootAppMountInfo( TitleProperty *pBootTitle );
 static void SYSMi_SetBootSRLPath( OSBootType bootType, NAMTitleId titleID );
 static void SYSMi_SetMountInfoCore( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pSrc );
 static void SYSMi_ModifySaveDataMount( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt );
+static void SYSMi_ModifySaveDataMountForLauncher( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt );
 
 // global variable-------------------------------------------------------------
 
@@ -84,9 +85,10 @@ void SYSMi_SetLauncherMountInfo( void )
 //	SYSMi_SetBootSRLPath( OS_BOOTTYPE_NAND, titleID );		// ※SDK2623では、BootSRLPathを"rom:"としたらFSi_InitRomArchiveでNANDアプリ扱いされてアクセス例外で落ちる。
 	
 	// セーブデータ有無によるマウント情報の編集
-	SYSMi_ModifySaveDataMount( OS_BOOTTYPE_NAND,
-							   titleID,
-							   &s_defaultMountList[ PRV_SAVE_DATA_MOUNT_INDEX ] );
+	// ※このタイミングではFSは動かせないので、FSを使わない特別版で対応。
+	SYSMi_ModifySaveDataMountForLauncher( OS_BOOTTYPE_NAND,
+										  titleID,
+										  &s_defaultMountList[ PRV_SAVE_DATA_MOUNT_INDEX ] );
 	
 	// マウント情報のセット
 	SYSMi_SetMountInfoCore( OS_BOOTTYPE_NAND,
@@ -219,6 +221,50 @@ static void SYSMi_ModifySaveDataMount( OSBootType bootType, NAMTitleId titleID, 
 			if( saveDataSize[ i ] &&
 				FS_OpenFileEx( file, saveFilePath[ i ], FS_FILEMODE_R) ) {
 				FS_CloseFile( file );
+				STD_CopyLStringZeroFill( pMountTgt->path, saveFilePath[ i ], OS_MOUNT_PATH_LEN );
+			}else {
+				pMountTgt->drive[ 0 ] = 0;
+			}
+			pMountTgt++;
+		}
+	}else {
+		// タイトルID指定なしのカードアプリの場合は、セーブデータ無効
+		for( i = 0; i < 2; i++ ) {
+			pMountTgt->drive[ 0 ] = 0;
+		}
+	}
+}
+
+
+// タイトルIDをもとにセーブデータ有無を判定して、マウント情報を編集する。
+static void SYSMi_ModifySaveDataMountForLauncher( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt )
+{
+	int i;
+	u32 titleID_Hi = (u32)( titleID >> 32 );		// u64で論理演算はできない？
+	
+	// ※カードからブートされた場合でも、titleIDが"NANDアプリ"の場合は、セーブデータをマウントするようにしている。
+	
+	// セーブデータ有無を判定して、パスをセット
+	if( ( ( bootType == OS_BOOTTYPE_NAND ) &&				// NANDアプリがNANDからブートされた時
+		  ( titleID_Hi & TITLEID_HI_MEDIA_NAND_FLAG ) ) ||
+		( ( bootType == OS_BOOTTYPE_ROM ) &&				// ISデバッガ上で、NANDアプリがROM からブートされた時
+		  ( titleID_Hi & TITLEID_HI_MEDIA_NAND_FLAG ) &&
+		  ( SYSMi_GetWork()->isOnDebugger ) )
+		) {
+		char saveFilePath[ 2 ][ FS_ENTRY_LONGNAME_MAX ];
+		u32 saveDataSize[ 2 ];
+		saveDataSize[ 0 ] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->private_save_data_size;
+		saveDataSize[ 1 ] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->public_save_data_size;
+		
+		// セーブデータのファイルパスを取得
+		STD_TSNPrintf( saveFilePath[ 0 ], FS_ENTRY_LONGNAME_MAX,
+					   "nand:/title/%08x/%08x/data/private.sav", (u32)( titleID >> 32 ), titleID );
+		STD_TSNPrintf( saveFilePath[ 1 ], FS_ENTRY_LONGNAME_MAX,
+					   "nand:/title/%08x/%08x/data/public.sav", (u32)( titleID >> 32 ), titleID );
+		
+		// "ROMヘッダのNANDセーブファイルサイズ > 0" かつ そのファイルを開ける場合のみマウント情報を登録
+		for( i = 0; i < 2; i++ ) {
+			if( saveDataSize[ i ] ) {
 				STD_CopyLStringZeroFill( pMountTgt->path, saveFilePath[ i ], OS_MOUNT_PATH_LEN );
 			}else {
 				pMountTgt->drive[ 0 ] = 0;
