@@ -23,6 +23,14 @@ extern "C" {
 
 
 // Define -------------------------------------------------------------------
+//#define HOTSW_NO_MESSAGE
+
+#ifdef	HOTSW_NO_MESSAGE
+#define OS_TPrintf( ... )					((void)0)
+#define OS_PutString( ... )					((void)0)
+#endif
+
+
 #define KEY_BUF_SIZE						3			// Blowfishキーのバッファサイズ
 #define HOTSW_DMA_NO						2			// 
 #define BOOT_SEGMENT_SIZE 					0x1000		// Boot Segment領域のサイズ
