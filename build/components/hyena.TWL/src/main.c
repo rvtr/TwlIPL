@@ -46,6 +46,7 @@
 
 /* Priorities of each threads */
 #define THREAD_PRIO_SPI     2
+#define THREAD_PRIO_MCU     4 // ébíË
 #define THREAD_PRIO_SND     6
 #define THREAD_PRIO_FATFS   8
 #define THREAD_PRIO_RTC     12
@@ -158,6 +159,7 @@ TwlSpMain(void)
 #ifndef SDK_NOCRYPTO
         AES_Init();           // AES èâä˙âª
 #endif
+        MCU_InitIrq(THREAD_PRIO_MCU);  // MCU èâä˙âª
     }
 
     if (OSi_IsCodecTwlMode() == TRUE)
