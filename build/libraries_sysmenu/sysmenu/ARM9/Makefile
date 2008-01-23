@@ -27,7 +27,7 @@ TWL_ARCHGEN		=	LIMITED
 TWL_PROC	   	=	ARM9
 
 SRCS			=	sysmenu_lib.c \
-					sysmenu_util.c \
+					util.c \
 					ninLogoFunc.c \
 					mountInfo.c \
 					device.c \
