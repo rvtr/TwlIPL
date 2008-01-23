@@ -68,7 +68,7 @@ void SYSM_CaribrateTP( void )
 			store.data.raw_x1, store.data.raw_y1, (u16)store.data.dx1, (u16)store.data.dy1,
 			store.data.raw_x2, store.data.raw_y2, (u16)store.data.dx2, (u16)store.data.dy2 );
 	TP_SetCalibrateParam( &calibParam );
-	OS_Printf("TP_calib: %4d %4d %4d %4d %4d %4d\n",
+	OS_TPrintf("TP_calib: %4d %4d %4d %4d %4d %4d\n",
 			store.data.raw_x1, store.data.raw_y1, (u16)store.data.dx1, (u16)store.data.dy1,
 			store.data.raw_x2, store.data.raw_y2, (u16)store.data.dx2, (u16)store.data.dy2 );
 }

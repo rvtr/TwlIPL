@@ -23,7 +23,7 @@ extern "C" {
 
 
 // Define -------------------------------------------------------------------
-//#define HOTSW_NO_MESSAGE
+#define HOTSW_NO_MESSAGE					// Printf抑制スイッチ
 
 #ifdef	HOTSW_NO_MESSAGE
 #define OS_TPrintf( ... )					((void)0)

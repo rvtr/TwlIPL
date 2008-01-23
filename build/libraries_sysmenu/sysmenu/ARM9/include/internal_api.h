@@ -24,6 +24,13 @@
 extern "C" {
 #endif
 
+//#define SYSM_LIB_NO_MESSAGE					// Printf抑制スイッチ
+
+#ifdef	SYSM_LIB_NO_MESSAGE
+#define OS_Printf( ... )					((void)0)
+#define OS_TPrintf( ... )					((void)0)
+#define OS_PutString( ... )					((void)0)
+#endif
 
 
 //-------------------------------------------------------
