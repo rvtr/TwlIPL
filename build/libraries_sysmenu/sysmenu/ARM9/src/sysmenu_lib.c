@@ -157,6 +157,7 @@ TitleProperty *SYSM_ReadParameters( void )
 	if( !LCFG_ReadHWSecureInfo() ) {
 		OS_TPrintf( "HW Secure Info Broken!\n" );
 		SYSMi_GetWork()->isBrokenHWSecureInfo = TRUE;
+		SYSMi_GetWork()->isFatalError = TRUE;
 	}
 	
 	//-----------------------------------------------------
@@ -209,7 +210,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 			s_bootTitle.flags.isAppLoadCompleted = TRUE;
 			s_bootTitle.flags.isInitialShortcutSkip = TRUE;			// 初回起動シーケンスを飛ばす
 			s_bootTitle.flags.isLogoSkip = TRUE;					// ロゴデモを飛ばす
-			s_bootTitle.flags.bootType = OS_BOOTTYPE_ROM;
+			s_bootTitle.flags.bootType = LAUNCHER_BOOTTYPE_ROM;
 			s_bootTitle.flags.isValid = TRUE;
 			s_bootTitle.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
 			SYSM_SetLogoDemoSkip( s_bootTitle.flags.isLogoSkip );
@@ -228,7 +229,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 		!LCFG_TSD_IsSetUserColor() ||
 		!LCFG_TSD_IsSetNickname() ) {
 		s_bootTitle.titleID = TITLE_ID_MACHINE_SETTINGS;
-		s_bootTitle.flags.bootType = OS_BOOTTYPE_NAND;
+		s_bootTitle.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
 		s_bootTitle.flags.isValid = TRUE;
 		return &s_bootTitle;
 	}

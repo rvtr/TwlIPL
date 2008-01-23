@@ -70,6 +70,7 @@ typedef struct ISD_RomEmuInfo {
 // SYSM共有ワーク構造体
 typedef struct SYSM_work {
 	Relocate_Info	romRelocateInfo[RELOCATE_INFO_NUM];	// ROM再配置情報（arm9,arm7それぞれltdとflxで最大4つ）
+	vu32			isFatalError :1;				// FATALエラー
 	vu32			isARM9Start :1;					// ARM9スタートフラグ
 	vu32			isHotStart :1;					// Hot/Coldスタート判定
 	vu32			isValidLauncherParam :1;			// リセットパラメータ有効
@@ -86,9 +87,9 @@ typedef struct SYSM_work {
 #ifdef DEBUG_USED_CARD_SLOT_B_
 	vu32			isValidCardBanner :1;
 	vu32			is1stCardChecked :1;
-	vu32			rsv :18;
+	vu32			rsv :17;
 #else
-	vu32			rsv :20;
+	vu32			rsv :19;
 #endif
 	
 	u16				cardHeaderCrc16;				// カード検出時に算出したROMヘッダCRC16（ARM9側でコピーして使用する側）

@@ -509,7 +509,7 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 	u16 dummy;
 	u16 tp_lr = 3;
 	TitleProperty *ret = NULL;
-	LauncherBootFlags tempflag = {TRUE, OS_BOOTTYPE_NAND, TRUE, FALSE, FALSE, FALSE, 0};
+	LauncherBootFlags tempflag = {TRUE, LAUNCHER_BOOTTYPE_NAND, TRUE, FALSE, FALSE, FALSE, 0};
 	
 	// バックライト関係のキー処理
 	ProcessBackLightPads();

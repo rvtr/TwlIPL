@@ -124,7 +124,7 @@ static void MenuInit( void )
 static void MenuScene(void)
 {
 	BOOL tp_select = FALSE;
-	LauncherBootFlags tempflag = {TRUE, OS_BOOTTYPE_NAND, TRUE, FALSE, FALSE, FALSE, 0};
+	LauncherBootFlags tempflag = {TRUE, LAUNCHER_BOOTTYPE_NAND, TRUE, FALSE, FALSE, FALSE, 0};
 	
 	ReadTP();
 	

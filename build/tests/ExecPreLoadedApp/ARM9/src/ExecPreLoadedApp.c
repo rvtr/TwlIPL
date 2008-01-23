@@ -134,7 +134,7 @@ static BOOL LoadTitle( NAMTitleId bootTitleID )
 static void MenuScene(void)
 {
 	BOOL tp_select = FALSE;
-	LauncherBootFlags tempflag = {TRUE, OS_BOOTTYPE_NAND, TRUE, FALSE, TRUE, FALSE, 0};
+	LauncherBootFlags tempflag = {TRUE, LAUNCHER_BOOTTYPE_NAND, TRUE, FALSE, TRUE, FALSE, 0};
 	
 	ReadTP();
 	

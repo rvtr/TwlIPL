@@ -35,10 +35,10 @@
 
 // extern data-----------------------------------------------------------------
 // function's prototype--------------------------------------------------------
-static void SYSMi_SetBootSRLPath( OSBootType bootType, NAMTitleId titleID );
-static void SYSMi_SetMountInfoCore( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pSrc );
-static void SYSMi_ModifySaveDataMount( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt );
-static void SYSMi_ModifySaveDataMountForLauncher( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt );
+static void SYSMi_SetBootSRLPath( LauncherBootType bootType, NAMTitleId titleID );
+static void SYSMi_SetMountInfoCore( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pSrc );
+static void SYSMi_ModifySaveDataMount( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt );
+static void SYSMi_ModifySaveDataMountForLauncher( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt );
 
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
@@ -74,16 +74,16 @@ void SYSMi_SetLauncherMountInfo( void )
 	NAMTitleId titleID = TITLE_ID_LAUNCHER;
 	
 	// ※とりあえず自身はROMブートで。[TODO:]後で修正
-//	SYSMi_SetBootSRLPath( OS_BOOTTYPE_NAND, titleID );		// ※SDK2623では、BootSRLPathを"rom:"としたらFSi_InitRomArchiveでNANDアプリ扱いされてアクセス例外で落ちる。
+//	SYSMi_SetBootSRLPath( LAUNCHER_BOOTTYPE_NAND, titleID );		// ※SDK2623では、BootSRLPathを"rom:"としたらFSi_InitRomArchiveでNANDアプリ扱いされてアクセス例外で落ちる。
 	
 	// セーブデータ有無によるマウント情報の編集
 	// ※このタイミングではFSは動かせないので、FSを使わない特別版で対応。
-	SYSMi_ModifySaveDataMountForLauncher( OS_BOOTTYPE_NAND,
+	SYSMi_ModifySaveDataMountForLauncher( LAUNCHER_BOOTTYPE_NAND,
 										  titleID,
 										  &s_defaultMountList[ PRV_SAVE_DATA_MOUNT_INDEX ] );
 	
 	// マウント情報のセット
-	SYSMi_SetMountInfoCore( OS_BOOTTYPE_NAND,
+	SYSMi_SetMountInfoCore( LAUNCHER_BOOTTYPE_NAND,
 							titleID,
 							&s_defaultMountList[0] );
 }
@@ -98,16 +98,16 @@ void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle )
 	}
 	
 	// 起動アプリのSRLパスをセット
-	SYSMi_SetBootSRLPath( (OSBootType)pBootTitle->flags.bootType,
+	SYSMi_SetBootSRLPath( (LauncherBootType)pBootTitle->flags.bootType,
 						  pBootTitle->titleID );
 	
 	// セーブデータ有無によるマウント情報の編集
-	SYSMi_ModifySaveDataMount( (OSBootType)pBootTitle->flags.bootType,
+	SYSMi_ModifySaveDataMount( (LauncherBootType)pBootTitle->flags.bootType,
 							   pBootTitle->titleID,
 							   &s_defaultMountList[ PRV_SAVE_DATA_MOUNT_INDEX ] );
 	
 	// マウント情報のセット
-	SYSMi_SetMountInfoCore( (OSBootType)pBootTitle->flags.bootType,
+	SYSMi_SetMountInfoCore( (LauncherBootType)pBootTitle->flags.bootType,
 							pBootTitle->titleID,
 							&s_defaultMountList[0] );
 	
@@ -121,18 +121,18 @@ void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle )
 
 
 // 起動SRLパスをシステム領域にセット
-static void SYSMi_SetBootSRLPath( OSBootType bootType, NAMTitleId titleID  )
+static void SYSMi_SetBootSRLPath( LauncherBootType bootType, NAMTitleId titleID  )
 {
 	static char path[ FS_ENTRY_LONGNAME_MAX ];
 	
 	switch( bootType )
 	{
-	case OS_BOOTTYPE_NAND:
+	case LAUNCHER_BOOTTYPE_NAND:
 		if( NAM_GetTitleBootContentPathFast( path, titleID ) != NAM_OK ) {
 			OS_TPrintf( "ERROR: BootContentPath Get failed.\n" );
 		}
 		break;
-	case OS_BOOTTYPE_TEMP:
+	case LAUNCHER_BOOTTYPE_TEMP:
 		STD_TSNPrintf( path, 31, "nand:/tmp/%.16llx.srl", titleID );
 		break;
 	default:
@@ -151,7 +151,7 @@ static void SYSMi_SetBootSRLPath( OSBootType bootType, NAMTitleId titleID  )
 
 
 // マウント情報をシステム領域に書き込み
-static void SYSMi_SetMountInfoCore( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pSrc )
+static void SYSMi_SetMountInfoCore( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pSrc )
 {
 #pragma unused(bootType)
 	
@@ -185,16 +185,16 @@ static void SYSMi_SetMountInfoCore( OSBootType bootType, NAMTitleId titleID, OSM
 
 
 // タイトルIDをもとにセーブデータ有無を判定して、マウント情報を編集する。
-static void SYSMi_ModifySaveDataMount( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt )
+static void SYSMi_ModifySaveDataMount( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt )
 {
 	int i;
 	
 	// ※カードからブートされた場合でも、titleIDが"NANDアプリ"の場合は、セーブデータをマウントするようにしている。
 	
 	// セーブデータ有無を判定して、パスをセット
-	if( ( ( bootType == OS_BOOTTYPE_NAND ) &&				// NANDアプリがNANDからブートされた時
+	if( ( ( bootType == LAUNCHER_BOOTTYPE_NAND ) &&				// NANDアプリがNANDからブートされた時
 		  ( titleID & TITLEID_MEDIA_NAND_FLAG ) ) ||
-		( ( bootType == OS_BOOTTYPE_ROM ) &&				// ISデバッガ上で、NANDアプリがROM からブートされた時
+		( ( bootType == LAUNCHER_BOOTTYPE_ROM ) &&				// ISデバッガ上で、NANDアプリがROM からブートされた時
 		  ( titleID & TITLEID_MEDIA_NAND_FLAG ) &&
 		  ( SYSMi_GetWork()->isOnDebugger ) )
 		) {
@@ -229,16 +229,16 @@ static void SYSMi_ModifySaveDataMount( OSBootType bootType, NAMTitleId titleID, 
 
 
 // タイトルIDをもとにセーブデータ有無を判定して、マウント情報を編集する。
-static void SYSMi_ModifySaveDataMountForLauncher( OSBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt )
+static void SYSMi_ModifySaveDataMountForLauncher( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt )
 {
 	int i;
 	
 	// ※カードからブートされた場合でも、titleIDが"NANDアプリ"の場合は、セーブデータをマウントするようにしている。
 	
 	// セーブデータ有無を判定して、パスをセット
-	if( ( ( bootType == OS_BOOTTYPE_NAND ) &&				// NANDアプリがNANDからブートされた時
+	if( ( ( bootType == LAUNCHER_BOOTTYPE_NAND ) &&			// NANDアプリがNANDからブートされた時
 		  ( titleID & TITLEID_MEDIA_NAND_FLAG ) ) ||
-		( ( bootType == OS_BOOTTYPE_ROM ) &&				// ISデバッガ上で、NANDアプリがROM からブートされた時
+		( ( bootType == LAUNCHER_BOOTTYPE_ROM ) &&			// ISデバッガ上で、NANDアプリがROM からブートされた時
 		  ( titleID & TITLEID_MEDIA_NAND_FLAG ) &&
 		  ( SYSMi_GetWork()->isOnDebugger ) )
 		) {

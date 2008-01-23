@@ -36,6 +36,13 @@ static OSThread			s_thread;
 static TWLBannerFile	s_bannerBuf[ LAUNCHER_TITLE_LIST_NUM ] ATTRIBUTE_ALIGN(32);
 
 // const data------------------------------------------------------------------
+static const OSBootType s_launcherToOSBootType[ LAUNCHER_BOOTTYPE_MAX ] = {
+    OS_BOOTTYPE_ILLEGAL,	// ILLEGAL
+    OS_BOOTTYPE_ROM,		// ROM
+    OS_BOOTTYPE_NAND,		// TEMP
+    OS_BOOTTYPE_NAND,		// NAND
+    OS_BOOTTYPE_MEMORY,		// MEMORY
+};
 
 // ============================================================================
 //
@@ -81,38 +88,10 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 	}
 	
 	// タイトル情報フラグのセット
-	pTitleList_Card->flags.bootType = OS_BOOTTYPE_ROM;
+	pTitleList_Card->flags.bootType = LAUNCHER_BOOTTYPE_ROM;
 	pTitleList_Card->titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
 	
 	return retval;
-}
-
-
-// 指定ファイルリード
-static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
-{
-    u8* p = (u8*)buffer;
-    s32 remain = size;
-
-    while( remain > 0 )
-    {
-        const s32 len = MATH_IMin(1024, remain);
-        const s32 readLen = FS_ReadFile(pf, p, len);
-
-        if( readLen < 0 )
-        {
-            return readLen;
-        }
-        if( readLen != len )
-        {
-            return size - remain + readLen;
-        }
-
-        remain -= readLen;
-        p      += readLen;
-    }
-
-    return size;
 }
 
 
@@ -214,11 +193,39 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 		pTitleList_Nand[l+1].pBanner = &s_bannerBuf[l];
 		if( titleIdArray[l] ) {
 			pTitleList_Nand[l+1].flags.isValid = TRUE;
-			pTitleList_Nand[l+1].flags.bootType = OS_BOOTTYPE_NAND;
+			pTitleList_Nand[l+1].flags.bootType = LAUNCHER_BOOTTYPE_NAND;
 		}
 	}
 	// return : *TitleProperty Array
 	return listNum;
+}
+
+
+// 指定ファイルリード
+static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
+{
+    u8* p = (u8*)buffer;
+    s32 remain = size;
+
+    while( remain > 0 )
+    {
+        const s32 len = MATH_IMin(1024, remain);
+        const s32 readLen = FS_ReadFile(pf, p, len);
+
+        if( readLen < 0 )
+        {
+            return readLen;
+        }
+        if( readLen != len )
+        {
+            return size - remain + readLen;
+        }
+
+        remain -= readLen;
+        p      += readLen;
+    }
+
+    return size;
 }
 
 
@@ -250,22 +257,21 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
     FSFile  file[1];
     BOOL bSuccess;
     BOOL isTwlApp = TRUE;
-    if(pBootTitle->flags.bootType == OS_BOOTTYPE_NAND)
-    {
+	
+	switch( pBootTitle->flags.bootType )
+	{
+	case LAUNCHER_BOOTTYPE_NAND:
 		// NAND
     	NAM_GetTitleBootContentPathFast(path, pBootTitle->titleID);
-	}
-	else if(pBootTitle->flags.bootType == OS_BOOTTYPE_ROM)
-	{
+		break;
+	case LAUNCHER_BOOTTYPE_ROM:
 		// TODO:CARD未読の場合の処理
-	}
-	else if(pBootTitle->flags.bootType == OS_BOOTTYPE_TEMP)
-	{
+		break;
+	case LAUNCHER_BOOTTYPE_TEMP:
 		// tmpフォルダ
 		STD_TSNPrintf( path, 31, "nand:/tmp/%.16llx.srl", pBootTitle->titleID );
-	}
-	else
-	{
+		break;
+	default:
 		// unknown
 		return;
 	}
@@ -394,7 +400,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 
         (void)FS_CloseFile(file);
 
-		if(pBootTitle->flags.bootType == OS_BOOTTYPE_TEMP)
+		if(pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_TEMP)
 		{
 			// tmpアプリの場合はファイル削除
 			// TODO:その他読み込み等の失敗時にもDeleteする必要あり？
@@ -432,7 +438,7 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 		SYSMi_GetWork()->isLoadSucceeded = TRUE;
 	}
 	
-	if( pBootTitle->flags.bootType == OS_BOOTTYPE_ROM ) {
+	if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM ) {
 		SYSMi_GetWork()->isCardBoot = TRUE;
 	}else if(pBootTitle->flags.isAppLoadCompleted)
 	{
@@ -525,6 +531,14 @@ AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 	}
 #endif
 	
+	// BOOTTYPE_MEMORYでNTRモードのFSありでブートすると、旧NitroSDKでビルドされたアプリの場合、
+	// ROMアーカイブにカードが割り当てられて、FSで関係ないカードにアクセスにいってしまうので、それを防止する。
+	if( ( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_MEMORY ) &&
+		( ( (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->platform_code ) == 0 ) &&
+		( ( (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->fat_size ) > 0 )
+		) {
+		return AUTH_RESULT_TITLE_BOOTTYPE_ERROR;
+	}
 	
 	// ※ROMヘッダ認証
 	
@@ -533,15 +547,13 @@ AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 	SYSMi_SetBootAppMountInfo( pBootTitle );
 	
 	// HW_WM_BOOT_BUFへのブート情報セット
-	{
-		OSBootInfo *pBootInfo = (OSBootInfo *)OS_GetBootInfo();
-		pBootInfo->boot_type = (OSBootType)pBootTitle->flags.bootType;
-	}
+	( (OSBootInfo *)OS_GetBootInfo() )->boot_type = s_launcherToOSBootType[ pBootTitle->flags.bootType ];
 	
 	BOOT_Ready();	// never return.
 	
 	return AUTH_RESULT_SUCCEEDED;
 }
+
 
 #if 0
 // 指定タイトルの認証＆ロード　※１フレームじゃ終わらん。
