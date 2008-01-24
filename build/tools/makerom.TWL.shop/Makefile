@@ -98,7 +98,7 @@ include	$(TWLSDK_ROOT)/build/buildtools/twl/modulerules.x86
 #----------------------------------------------------------------------------
 #  build
 #----------------------------------------------------------------------------
-do-build:		depend $(TARGETS)
+do-build:		$(TARGETS)
 
 $(TARGETS):		version.h $(OBJECTS) $(LIBACSIGN) $(LIBAES) $(LIBDIGEST)
 			$(CC_X86) $+ -o $@
@@ -141,9 +141,7 @@ endif
 %.tab.h:	%.tab.c;
 
 
-.PHONY: depend
-
-depend: version.h $(DEPEND_TARGETS)
+depend.inc: version.h $(DEPEND_TARGETS)
 	-@ $(RM) depend.inc
 	-@ for i in $(DEPEND_TARGETS); do\
 		$(CC_X86) $(MACROS) -MM -w -DSDK_WIN32 $(WARNING) -I. -c -I$(TWL_INCDIR) $$i >> depend.inc;\
