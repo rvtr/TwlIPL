@@ -26,26 +26,27 @@ SPACE 		?= $(EMPTY) $(EMPTY)
 TWL_KEYSDIR		?=	$(SYSMENU_ROOT)/keys/dummy
 
 #----------------------------------------------------------------------------
+### TWL-commondefs
+#
+#include $(TWLSDK_ROOT)/build/buildtools/commondefs
+include	$(NITROSYSTEM_ROOT)/build/buildtools/commondefs
+
+#----------------------------------------------------------------------------
 #  TWL-SYSTEM-MENU path settings
 #
 
-SYSMENU_ROOT			:= $(subst $(SPACE),\ ,$(subst \,/,$(TWL_IPL_RED_ROOT)))
+#SYSMENU_ROOT			:= $(subst $(SPACE),\ ,$(subst \,/,$(TWL_IPL_RED_ROOT)))
+SYSMENU_ROOT		:= $(call eupath,$(TWL_IPL_RED_ROOT))
+
 SYSMENU_BUILDTOOLSDIR	:= $(SYSMENU_ROOT)/build/buildtools
 SYSMENU_INCDIR			:= $(SYSMENU_ROOT)/include \
-                           $(ROOT)/build/libraries/spi/arm9/include \
+                           $(ROOT)/build/libraries/spi/ARM9/include \
                            $(ROOT)/build/libraries/mb/common/include
 SYSMENU_TOOLSDIR		:= $(SYSMENU_ROOT)/tools
 SYSMENU_COMPONENTSDIR	:= $(SYSMENU_ROOT)/components
 
 LDEPENDS_LCF			+= $(SYSMENU_BUILDTOOLSDIR)/commondefs.sysmenu
 LDEPENDS_RES			+= $(SYSMENU_BUILDTOOLSDIR)/commondefs.sysmenu
-
-
-#----------------------------------------------------------------------------
-### TWL-commondefs
-#
-#include $(TWLSDK_ROOT)/build/buildtools/commondefs
-include	$(NITROSYSTEM_ROOT)/build/buildtools/commondefs
 
 
 ifneq	($(TARGET_TAD),)
@@ -93,14 +94,17 @@ MAKETAD			?= $(ROOT)/tools/bin/makeTad.pl
 
 ### Global Library resettings
 
-GINCLUDES		:= $(SYSMENU_INCDIR) $(GINCLUDES) $(ES_ROOT)/twl/include
+GINCLUDES		:= $(SYSMENU_INCDIR) $(GINCLUDES)
+ifneq ($(ES_ROOT),)
+GINCLUDES		+= $(ES_ROOT)/twl/include
+endif
 GLIBRARY_DIRS	:= $(SYSMENU_LIBDIR) $(GLIBRARY_DIRS)
 GLIBRARIES		:= $(SYSMENU_LIBS)   $(GLIBRARIES)
 
 #----------------------------------------------------------------------------
 #  TWLSYSMENU_INSTALL_ROOT
 #
-SYSMENU_INSTALL_ROOT			:= $(SYSMENU_ROOT)
+SYSMENU_INSTALL_ROOT			:= $(subst $(SPACE),\ ,$(subst \,/,$(TWL_IPL_RED_ROOT)))
 SYSMENU_INSTALL_INCDIR			:= $(SYSMENU_INSTALL_ROOT)/include
 SYSMENU_INSTALL_TOOLSDIR		:= $(SYSMENU_INSTALL_ROOT)/tools
 SYSMENU_INSTALL_LIBDIR			:= $(SYSMENU_INSTALL_ROOT)/lib/$(TWL_LIBTYPE)

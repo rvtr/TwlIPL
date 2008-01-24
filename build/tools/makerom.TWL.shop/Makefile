@@ -83,7 +83,7 @@ MACROS				=	-I$(ROOT)/build/tools/makerom.TWL	\
 
 #INSTALL_DIR	= $(TWL_INSTALL_TOOLSDIR)/bin
 #INSTALL_TARGETS	= $(TARGETS) rom_header.template.sbin
-INSTALL_DIR	= $(TWL_IPL_RED_ROOT)/tools/bin
+INSTALL_DIR	= $(SYSMENU_INSTALL_TOOLSDIR)/bin
 INSTALL_TARGETS	= $(TARGETS)
 
 LDIRT_CLEAN	= $(OBJECTS) $(TARGETS) version.h \

@@ -54,6 +54,7 @@ Autoload WRAM
 				libcdc_sp$(LIBSUFFIX).a		\
 				libtpex_sp$(LIBSUFFIX).a		\
 				libmicex_sp$(LIBSUFFIX).a		\
+				libmcu_sp$(LIBSUFFIX).a		\
 				libboot_sp$(LIBSUFFIX).a		\
 				libreboot_sp$(LIBSUFFIX).a	\
 				libcardboot_sp$(LIBSUFFIX).a	\

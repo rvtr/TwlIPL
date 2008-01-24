@@ -12,8 +12,8 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
 
@@ -38,7 +38,7 @@ LDEPENDS_BIN		+=	wram_regs/wram_regs.rbin
 MAKEFIRM_FLAGS		+=	-p
 FIRM_SPEC		=	gcdfirm.gcdsf
 
-LDIRT_CLEAN		+=	$(TARGETS) \
+LDIRT_CLEAN		+=	$(wildcard *.gcd) \
 				rsa_public.sbin \
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs

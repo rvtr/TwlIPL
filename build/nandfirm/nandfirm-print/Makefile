@@ -31,7 +31,7 @@ LDEPENDS_BIN		+=	../../norfirm/norfirm-print/wram_regs/wram_regs.rbin
 MAKEFIRM_FLAGS		+=	-p
 FIRM_SPEC		=	nandfirm-BB.nandsf
 
-LDIRT_CLEAN		+=	$(TARGETS) \
+LDIRT_CLEAN		+=	$(wildcard *.nand) \
 				rsa_public.sbin \
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
