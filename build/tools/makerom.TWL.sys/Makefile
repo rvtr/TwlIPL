@@ -17,8 +17,9 @@
 #---------------------------------------------------------------------------
 TARGET_PLATFORM		= TWL
 
+TARGET_FIRM	= SYSTEMMENU
 
-include	$(TWLSDK_ROOT)/build/buildtools/commondefs
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 SRCDIR		= $(ROOT)/build/tools/makerom.TWL
 INCDIR		= $(SRCDIR)
@@ -52,7 +53,7 @@ SOURCES_C	= makerom.c		\
           get_moduleParam.c
 
 SOURCES		= $(addprefix $(SRCDIR)/,$(SOURCES_C) spec.l spec.y ) ca_keys_sys_dev.c
-DEPEND_TARGETS	= $(addprefix $(SRCDIR)/,$(SOURCES_C)) ca_keys_sys_dev.c
+DEPEND_TARGETS  = $(addprefix $(SRCDIR)/,$(SOURCES_C)) ca_keys_sys_dev.c
 OBJECTS		= $(SOURCES_C:.c=.o) spec.tab.o spec.yy.patched.o ca_keys_sys_dev.o
 
 HEADERS_H	= container.h		\
@@ -88,7 +89,8 @@ INSTALL_TARGETS	= $(TARGETS)
 
 LDIRT_CLEAN	= $(OBJECTS) $(TARGETS) version.h \
 		  spec.tab.c spec.tab.h spec.yy.c \
-		  spec.yy.patched.c
+		  spec.yy.patched.c \
+		  depend.inc
 
 include	$(TWLSDK_ROOT)/build/buildtools/twl/modulerules.x86
 
@@ -96,19 +98,10 @@ include	$(TWLSDK_ROOT)/build/buildtools/twl/modulerules.x86
 #----------------------------------------------------------------------------
 #  build
 #----------------------------------------------------------------------------
-do-build:		$(TARGETS)
+do-build:		depend $(TARGETS)
 
 $(TARGETS):		version.h $(OBJECTS) $(LIBACSIGN) $(LIBAES) $(LIBDIGEST)
 			$(CC_X86) $+ -o $@
-
-# ˆË‘¶ŠÖŒW‚ÌXV
-renew-depend:
-	$(foreach target,$(DEPEND_TARGETS),$(CC_X86) $(MACROS) -MM -w -MF $(notdir $(target:.c=.dep)) -DSDK_WIN32 $(WARNING) -c $(target); )
-	find -name '*.dep' | xargs cat > all.depend
-	rm -f *.dep
-
-
-include ./all.depend
 
 spec.yy.c			:	$(SRCDIR)/spec.l
 spec.tab.c			:	$(SRCDIR)/spec.y
@@ -124,7 +117,6 @@ version.h:		$(SOURCES) $(HEADERS) $(MAKEFILE)
 			do								\
 				date -r $$i +'#define SDK_DATE_OF_LATEST_FILE %Y%m%dUL';	\
 			done | sort | tail -1 > $@
-
 
 
 %.o:		$(SRCDIR)/%.c
@@ -146,3 +138,15 @@ endif
 	$(YACC) -d -p $(notdir $(basename $<))_yy -b $(notdir $(basename $<)) $<
 
 %.tab.h:	%.tab.c;
+
+
+.PHONY: depend
+
+depend: version.h $(DEPEND_TARGETS)
+	-@ $(RM) depend.inc
+	-@ for i in $(DEPEND_TARGETS); do\
+		$(CC_X86) $(MACROS) -MM -w -DSDK_WIN32 $(WARNING) -I. -c -I$(TWL_INCDIR) $$i >> depend.inc;\
+	done
+
+-include depend.inc
+
