@@ -117,6 +117,9 @@ void TwlMain( void )
 	
 	(void)SYSM_GetCardTitleList( s_titleList );					// カードアプリリストの取得（カードアプリはs_titleList[0]に格納される）
 	
+	// TODO:bootTypeがLAUNCHER_BOOTTYPE_TEMPでない場合、tmpフォルダ内のデータを消す
+	
+	
 	// 「ダイレクトブートでない」なら
 	if( !pBootTitle ) {
 		// アプリ間パラメタをクリア
