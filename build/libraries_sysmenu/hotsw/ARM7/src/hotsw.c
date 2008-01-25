@@ -46,6 +46,7 @@ static void InterruptCallbackCardData(void);
 
 static void McThread(void *arg);
 static void McPowerOn(void);
+static void McPowerOff(void);
 static void SetMCSCR(void);
 
 static void GenVA_VB_VD(void);
@@ -207,7 +208,8 @@ BOOL HOTSW_Boot(void)
     
 	OS_TPrintf("---------------- Card Boot Start ---------------\n");
 #ifdef SDK_ARM7
-	// カード電源ON
+	// カード電源リセット
+    McPowerOff();
 	McPowerOn();
 #else // SDK_ARM9
 	// ARM7にPXI経由でカード電源ONをお願い。ONになるまで待つ。
@@ -883,33 +885,42 @@ static void McPowerOn(void)
 {
 	OS_TPrintf("Slot State : %08x\n", reg_MI_MC1);
     
-    // SCFG_MC1 の Slot Status の M1,M0 を 11 にする
-    reg_MI_MC1  = (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | 0xc0);
-	// 10ms待ち
-	OS_Sleep(10);
+    if((reg_MI_MC1 & SLOT_STATUS_MODE_SELECT_MSK) == SLOT_STATUS_MODE_00){
+    	// SCFG_MC1 の Slot Status の M1,M0 を 01 にする
+    	reg_MI_MC1  = (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | SLOT_STATUS_MODE_01);
+		// 1ms待ち
+		OS_Sleep(1);
 
-    // SCFG_MC1 の Slot Status の M1,M0 を 00 にする
-    reg_MI_MC1  = (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | 0x00);
-	// 10ms待ち
-	OS_Sleep(10);
+    	// SCFG_MC1 の Slot Status の M1,M0 を 10 にする
+		reg_MI_MC1 	= (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | SLOT_STATUS_MODE_10);
+		// 1ms待ち
+		OS_Sleep(1);
 
-    // SCFG_MC1 の Slot Status の M1,M0 を 01 にする
-    reg_MI_MC1  = (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | SLOT_STATUS_MODE_01);
-	// 10ms待ち
-	OS_Sleep(10);
-
-    // SCFG_MC1 の Slot Status の M1,M0 を 10 にする
-	reg_MI_MC1 	= (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | SLOT_STATUS_MODE_10);
-	// 10ms待ち
-	OS_Sleep(10);
-
-	// リセットをhighに (RESB = 1にする)
-	reg_HOTSW_MCCNT1 = RESB_MASK;
+		// リセットをhighに (RESB = 1にする)
+		reg_HOTSW_MCCNT1 = RESB_MASK;
     
-	// 10ms待ち
-	OS_Sleep(10);
+		// 27ms待ち
+		OS_Sleep(27);
 
-    OS_TPrintf("Slot Power ON\n");
+//		OS_TPrintf("MC Power ON\n");
+    }
+}
+
+/* -----------------------------------------------------------------
+ * McPowerOff関数
+ * ----------------------------------------------------------------- */
+static void McPowerOff(void)
+{
+    if((reg_MI_MC1 & SLOT_STATUS_MODE_SELECT_MSK) == SLOT_STATUS_MODE_10){
+    	// SCFG_MC1 の Slot Status の M1,M0 を 11 にする
+    	reg_MI_MC1  = (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | SLOT_STATUS_MODE_11);
+
+        // SCFG_MC1 の Slot Status の M1,M0 が 00 になるまでポーリング
+        while((reg_MI_MC1 & SLOT_STATUS_MODE_SELECT_MSK) != SLOT_STATUS_MODE_00){}
+
+        // この時点で MCCNT1の RESB は 0 になっている。
+//		OS_TPrintf("MC Power Off\n");
+    }
 }
 
 /*---------------------------------------------------------------------------*
