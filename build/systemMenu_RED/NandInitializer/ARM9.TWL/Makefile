@@ -58,7 +58,8 @@ SRCS		=	main.c \
 LINCLUDES	=	../common/include \
 				$(ROOT)/build/libraries/lcfg/ARM9.TWL/include
 
-SRCDIR		=	src ../../../../demos.TWL/camera/saveShoot-1/src
+SRCDIR		=	src \
+				$(ROOT)/build/demos.TWL/camera/saveShoot-1/src
 #LCFILE		=	# using default
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
@@ -80,7 +81,7 @@ LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\
 
 #include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
-include	$(TWLSDK_ROOT)/build/buildtools/twl/commondefs.gx.demolib
+include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
 
 
 #----------------------------------------------------------------------------

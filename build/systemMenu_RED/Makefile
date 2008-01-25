@@ -21,6 +21,7 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 #----------------------------------------------------------------------------
 
 SUBDIRS_P	=	launcher MachineSettings PictoChat HWInfoWriter \
+				NandInitializer
 				#DS_DownloadPlay
 
 #----------------------------------------------------------------------------
