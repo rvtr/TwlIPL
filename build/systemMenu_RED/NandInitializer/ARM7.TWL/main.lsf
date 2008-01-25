@@ -1,0 +1,157 @@
+#----------------------------------------------------------------------------
+# Project:  TwlSDK - components - racoon.TWL
+# File:     racoon.lsf
+#
+# Copyright 2007 Nintendo.  All rights reserved.
+#
+# These coded insructions, statements, and computer programs contain
+# proprietary information of Nintendo of America Inc. and/or Nintendo
+# Company Ltd., and are protected by Federal copyright law.  They may
+# not be disclosed to third parties or copied or duplicated in any form,
+# in whole or in part, without the prior written consent of Nintendo.
+#
+# $Date:: 2007-12-11#$
+# $Rev: 2989 $
+# $Author: terui $
+#----------------------------------------------------------------------------
+#
+#  Nitro LCF SPEC FILE
+#
+#--------
+Static $(TARGET_NAME)
+{
+	Address		0x02380000
+	Library		crt0.LTD.TWL.o
+	StackSize	1024 1024
+}
+
+#--------
+Autoload WRAM
+{
+	Address		0x037c0000
+
+	Library		libsubpsyscall.a				\
+				libsyscall_sp.twl.a				\
+				$(CW_LIBS)						\
+				libos_sp$(LIBSUFFIX).a		\
+				libmi_sp$(LIBSUFFIX).a		\
+				libpad_sp$(LIBSUFFIX).a		\
+				libpxi_sp$(LIBSUFFIX).a		\
+				libstd_sp$(LIBSUFFIX).a		\
+				libexi_sp$(LIBSUFFIX).a		\
+				libsnd_sp$(LIBSUFFIX).a		\
+				libspi_sp$(LIBSUFFIX).a		\
+				libpm_sp$(LIBSUFFIX).a		\
+				libmath_sp$(LIBSUFFIX).a		\
+				libscfg_sp$(LIBSUFFIX).a		\
+				libtp_sp$(LIBSUFFIX).a		\
+				libmic_sp$(LIBSUFFIX).a		\
+				libfs_sp$(LIBSUFFIX).a		\
+				libcard_sp$(LIBSUFFIX).a		\
+				libi2c_sp$(LIBSUFFIX).a		\
+				libcamera_sp$(LIBSUFFIX).a	\
+				libcdc_sp$(LIBSUFFIX).a		\
+				libtpex_sp$(LIBSUFFIX).a		\
+				libmicex_sp$(LIBSUFFIX).a		\
+
+	Library		libsdio_hcd_twl$(LIBSUFFIX).a	\
+				libsdio_busdriver$(LIBSUFFIX).a	\
+				libsdio_lib$(LIBSUFFIX).a	\
+
+	Object		* (.etable)
+	Object		* (.wram)
+	Object		* (.ltdwram)
+	Object		$(OBJDIR)/main.o
+	Object		$(OBJDIR)/kami_pxi.o
+	Object		$(OBJDIR)/formatter.o
+	Object		$(OBJDIR)/nvram_misc.o
+
+	# caches in fatfs library, that should be on WRAM.
+	# 2007/12/11 OBJECT() による .bss シンボルのリンクがうまくいかないので、
+	# 変数定義箇所に pragma で .ltdwram セクションに含まれるように暫定対策しました。
+	#Object		OBJECT( FATFSi___mem_drives_structures	, libfatfs_sp$(LIBSUFFIX).a)	(.bss)
+
+	#####
+	# Sub-routines in WL library , that should be on WRAM.
+	# in TaskMan.o
+	Object		OBJECT( MainTaskRoutine 		, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( AddTask 				, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( DeleteTask 				, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( LowestIdleTask 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ExecuteMessage 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	# in BufMan.o
+	Object		OBJECT( NewHeapBuf 				, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( DeleteHeapBuf 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( AllocateHeapBuf 		, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ReleaseHeapBuf 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( MoveHeapBuf 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( AddHeapBuf 				, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( GetHeapBufNextAdrs 		, libwl_sp$(LIBSUFFIX).a )	(.text)
+	# in WlCmdIf.o
+	Object		OBJECT( RequestCmdTask 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( SendMessageToWmDirect 	, libwl_sp$(LIBSUFFIX).a )	(.text)
+	# in WlNic.o
+	Object		OBJECT( WStart 					, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WStop 					, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WSetStaState 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	# in WlIntr.o
+	Object		OBJECT( WlIntr 					, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WlIntrPreTbtt 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WlIntrTbtt 				, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WlIntrActEnd 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+#	Object		OBJECT( WlIntrAckCntOvf 		, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WlIntrCntOvf 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WlIntrTxErr 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WlIntrRxCntup 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WlIntrTxEnd 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WlIntrRxEnd 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WlIntrMpEnd 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WlIntrStartTx 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WlIntrStartRx 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( SetParentTbttTxq 		, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( MacBugTxMp 				, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( AdjustRingPointer 		, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( CheckKeyTxEnd 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	# in WlIntrTask.o
+	Object		OBJECT( WlIntrTxBeaconTask 		, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WlIntrTxEndTask 		, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WlIntrRxEndTask 		, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WlIntrMpEndTask 		, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( SetParentTbttTxqTask 	, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( TakeoutRxFrame 			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	# in TxCtrl.o
+	Object		OBJECT( InitTxCtrl 				, libwl_sp$(LIBSUFFIX).a )	(.text)
+	# in RxCtrl.o
+	Object		OBJECT( InitRxCtrl 				, libwl_sp$(LIBSUFFIX).a )	(.text)
+	# in WaitLoop.o
+	Object		OBJECT( WaitLoop_Rxpe			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WaitLoop_Waitus			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WaitLoop_ClrAid			, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WaitLoop_BbpAccess		, libwl_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( WaitLoop_RfAccess		, libwl_sp$(LIBSUFFIX).a )	(.text)
+
+}
+
+
+
+#--------
+Ltdautoload LTDMAIN
+{
+	Address		0x02f88000
+
+	Object		* (.ltdmain)
+	Library		libnvram_sp$(LIBSUFFIX).a
+	Library		librtc_sp$(LIBSUFFIX).a
+	Library		librompatch_sp$(LIBSUFFIX).a	\
+                libwm_sp$(LIBSUFFIX).a	\
+				libnwm_sp$(LIBSUFFIX).a	\
+				libARM7athdrv$(LIBSUFFIX).a	\
+				libwvr_sp$(LIBSUFFIX).a	\
+				libwl_sp$(LIBSUFFIX).a
+	Library		libfatfs_sp$(LIBSUFFIX).a	\
+				$(USE_CRYPTO_LIBS)
+	Library		$(ISDBG_LIBS_TWL)
+	Library		$(ISDBG_LIBS_NITRO)
+	Library		libstubsistd_sp.TWL.LTD.a \
+				libstubsisd_sp.TWL.LTD.a
+}
