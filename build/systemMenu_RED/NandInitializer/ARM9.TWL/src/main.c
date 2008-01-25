@@ -117,12 +117,6 @@ TwlMain()
     {
 		kamiPadRead();
 
-		// 蓋閉じ検出
-		if (PAD_DetectFold() == TRUE)
-		{
-			PM_GoSleepMode_Twl(PM_TRIGGER_COVER_OPEN, 0, 0);
-		}
-
         // コマンドフラッシュ
         (void)SND_FlushCommand(SND_COMMAND_NOBLOCK);
 
