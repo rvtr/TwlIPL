@@ -93,6 +93,14 @@ void OS_InitFIRM(void)
 //    CARD_Init();
 #endif
 
+    //---- init System config
+#ifdef SDK_TWL
+//  if (OS_IsRunOnTwl() == TRUE)
+//  {
+        SCFG_Init();
+//  }
+#endif
+
     //---- Init Power Manager
 #ifndef SDK_TEG
 //    PM_Init();
@@ -142,6 +150,14 @@ void OS_InitFIRM(void)
     //---- Init Cartridge
 #ifndef SDK_TEG
 //    CTRDG_Init();
+#endif
+
+    //---- init System config
+#ifdef SDK_TWL
+//  if (OS_IsRunOnTwl() == TRUE)
+//  {
+        SCFG_Init();
+//  }
 #endif
 
 #endif // SDK_ARM9

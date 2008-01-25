@@ -15,6 +15,7 @@
   $Author$
  *---------------------------------------------------------------------------*/
 #include <firm.h>
+#include <twl/lcfg.h>
 
 #ifndef FIRM_USE_TWLSDK_KEYS
 #define RSA_KEY_ADDR    OSi_GetFromFirmAddr()->rsa_pubkey[0]    // 鍵管理.xls参照
@@ -39,7 +40,9 @@ static const u8 rsa_key[128] =
 static u8 acHeap[RSA_HEAP_SIZE] __attribute__ ((aligned (32)));
 static SVCSignHeapContext acPool;
 
-#define MENU_TITLE_ID 0x000300074c4e4352ULL
+#define MENU_TITLE_ID_HI    0x00030007ULL
+#define MENU_TITLE_ID_LO    0x4c4e4352ULL
+#define MENU_TITLE_ID       (MENU_TITLE_ID_HI << 32 | MENU_TITLE_ID_LO)
 
 /*
     PROFILE_ENABLE を定義するとある程度のパフォーマンスチェックができます。
@@ -120,6 +123,48 @@ static void PostInit(void)
     FS_SetDigestKey( NULL );
     // FS/FATFS初期化
     FS_InitFIRM();
+}
+
+/***************************************************************
+    TryResolveSrl
+
+    NANDに格納された情報からランチャーSRLを解決する
+***************************************************************/
+static BOOL TryResolveSrl(void)
+{
+    u64 titleId = MENU_TITLE_ID_HI << 32;
+    if ( !LCFG_ReadHWSecureInfo() )
+    {
+        OS_TPrintf("Failed to load HWSecureInfo.\n");
+        return FALSE;
+    }
+    LCFG_THW_GetLauncherGameCode( (u8*)&titleId );
+
+    // 4: after LCFG_ReadHWSecureInfo
+    PUSH_PROFILE();
+
+    if ( !FS_ResolveSrl( titleId ) )
+    {
+        OS_TPrintf("Failed to call FS_ResolveSrl( 0x%016llx ).\n", titleId);
+        return FALSE;
+    }
+    OS_TPrintf("Launcher Title ID: 0x%016llx\n", titleId);
+    return TRUE;
+}
+/***************************************************************
+    RetryResolveSrl
+
+    デフォルト設定からランチャーSRLを解決する
+***************************************************************/
+static BOOL RetryResolveSrl(void)
+{
+    if ( !FS_ResolveSrl( MENU_TITLE_ID ) )
+    {
+        OS_TPrintf("Failed to call FS_ResolveSrl( 0x%016llx ).\n", MENU_TITLE_ID);
+        return FALSE;
+    }
+    OS_TPrintf("Launcher Title ID: 0x%016llx\n", MENU_TITLE_ID);
+    return TRUE;
 }
 
 /***************************************************************
@@ -208,11 +253,12 @@ void TwlMain( void )
     // 0: bootrom
     profile[pf_cnt++] = OS_TicksToMicroSecondsBROM32(OS_GetTick());
 #endif
+
     PreInit();
-
-    // 1: before PXI
-    PUSH_PROFILE();
-
+#ifdef PROFILE_ENABLE
+    // 1: before OS_InitFIRM
+    profile[pf_cnt++] = OS_TicksToMicroSecondsBROM32(OS_GetTick());
+#endif
     OS_InitFIRM();
     OS_EnableIrq();
     OS_EnableInterrupts();
@@ -224,22 +270,18 @@ void TwlMain( void )
     PUSH_PROFILE();
 
     PostInit();
-
     // 3: after PostInit
     PUSH_PROFILE();
 
-    if ( !FS_ResolveSrl( MENU_TITLE_ID ) )
+    if ( !TryResolveSrl() && !RetryResolveSrl() )
     {
-        OS_TPrintf("Failed to call FS_ResolveSrl( 0x%016llx ).\n", MENU_TITLE_ID);
         goto end;
     }
-
-    // 4: after FS_ResolveSrl
+    // 5: after FS_ResolveSrl
     PUSH_PROFILE();
 
     PXI_NotifyID( FIRM_PXI_ID_SET_PATH );
-
-    // 5: after PXI
+    // 6: after PXI
     PUSH_PROFILE();
 
     if ( !FS_LoadHeader(&acPool, RSA_KEY_ADDR ) || !CheckHeader() )
@@ -247,19 +289,16 @@ void TwlMain( void )
         OS_TPrintf("Failed to call FS_LoadHeader() and/or CheckHeader().\n");
         goto end;
     }
-
-    // 6: after FS_LoadHeader
+    // 7: after FS_LoadHeader
     PUSH_PROFILE();
 
     PXI_NotifyID( FIRM_PXI_ID_DONE_HEADER );
-
-    // 7: after PXI
+    // 8: after PXI
     PUSH_PROFILE();
 
     AESi_SendSeed( FS_GetAesKeySeed() );
     FS_DeleteAesKeySeed();
-
-    // 8: after AESi_SendSeed
+    // 9: after AESi_SendSeed
     PUSH_PROFILE();
 
     if ( !FS_LoadStatic() )
@@ -267,14 +306,13 @@ void TwlMain( void )
         OS_TPrintf("Failed to call FS_LoadStatic().\n");
         goto end;
     }
-
-    // 9: after FS_LoadStatic
+    // 10: after FS_LoadStatic
     PUSH_PROFILE();
 
     PXI_NotifyID( FIRM_PXI_ID_DONE_STATIC );
-
-    // 10: after PXI
+    // 11: after PXI
     PUSH_PROFILE();
+
 #ifdef PROFILE_ENABLE
     {
         int i;

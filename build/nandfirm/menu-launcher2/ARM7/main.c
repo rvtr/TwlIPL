@@ -160,22 +160,19 @@ void TwlSpMain( void )
     SetDebugLED(++step);  // 0x81
 
     PreInit();
-
-    // 1: before PXI
+    // 1: after PreInit
     PUSH_PROFILE();
     SetDebugLED(++step);  // 0x82
 
     OS_InitFIRM();
     OS_EnableIrq();
     OS_EnableInterrupts();
-
     // 2: after PXI
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x83
 
     PostInit();
-
-    // 3: after PM_InitFIRM
+    // 3: after PostInit
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x84
 
@@ -187,25 +184,21 @@ void TwlSpMain( void )
         OS_TPrintf("Failed to call FATFS_Init().\n");
         goto end;
     }
-
-    // 4: after FS_Init
+    // 4: after FATFS_Init
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x85
 
     PM_BackLightOn( FALSE );
-
     // 5:
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x86
 
     //PM_BackLightOn( FALSE );
-
     // 6:
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x87
 
     //PM_BackLightOn( FALSE );
-
     // 7:
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x88
@@ -217,7 +210,6 @@ void TwlSpMain( void )
         OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_DONE_HEADER).\n");
         goto end;
     }
-
     // 8: after PXI
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x89
@@ -226,13 +218,11 @@ void TwlSpMain( void )
 
     AESi_InitKeysFIRM();
     AESi_RecvSeed( rh->s.developer_encrypt );
-
     // 9: after AESi_RecvSeed
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8a
 
     PM_BackLightOn( FALSE );
-
     // 10:
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8b
@@ -244,9 +234,9 @@ void TwlSpMain( void )
         OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_DONE_STATIC).\n");
         goto end;
     }
-
     // 11: after PXI
     PUSH_PROFILE();
+
 #ifdef PROFILE_ENABLE
     {
         int i;

@@ -153,26 +153,28 @@ void TwlSpMain( void )
 {
     int fd; // menu file descriptor
 
+#ifdef PROFILE_ENABLE
+    // 0: bootrom
+    profile[pf_cnt++] = OS_TicksToMicroSecondsBROM32(OS_GetTick());
+#endif
+
     InitDebugLED();
     SetDebugLED(++step);  // 0x81
 
     PreInit();
-
-    // 0: before PXI
+    // 1: after PreInit
     PUSH_PROFILE();
     SetDebugLED(++step);  // 0x82
 
     OS_InitFIRM();
     OS_EnableIrq();
     OS_EnableInterrupts();
-
-    // 1: after PXI
+    // 2: after OS_InitFIRM
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x83
 
     PostInit();
-
-    // 2: after PM_InitFIRM
+    // 3: after PostInit
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x84
 
@@ -184,8 +186,7 @@ void TwlSpMain( void )
         OS_TPrintf("Failed to call FATFS_Init().\n");
         goto end;
     }
-
-    // 3: after FS_Init
+    // 4: after FATFS_Init
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x85
 
@@ -196,8 +197,7 @@ void TwlSpMain( void )
         OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_SET_PATH).\n");
         goto end;
     }
-
-    // 4: after PXI
+    // 5: after PXI
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x86
 
@@ -208,8 +208,7 @@ void TwlSpMain( void )
         OS_TPrintf("Failed to call FS_OpenSrl().\n");
         goto end;
     }
-
-    // 5: after FS_OpenSrl
+    // 6: after FS_OpenSrl
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x87
 
@@ -220,8 +219,7 @@ void TwlSpMain( void )
         OS_TPrintf("Failed to call FS_LoadHeader().\n");
         goto end;
     }
-
-    // 6: after FS_LoadHeader
+    // 7: after FS_LoadHeader
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x88
 
@@ -232,8 +230,7 @@ void TwlSpMain( void )
         OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_DONE_HEADER).\n");
         goto end;
     }
-
-    // 7: after PXI
+    // 8: after PXI
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x89
 
@@ -241,8 +238,7 @@ void TwlSpMain( void )
 
     AESi_InitKeysFIRM();
     AESi_RecvSeed( rh->s.developer_encrypt );
-
-    // 8: after AESi_RecvSeed
+    // 9: after AESi_RecvSeed
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8a
 
@@ -253,8 +249,7 @@ void TwlSpMain( void )
         OS_TPrintf("Failed to call FS_LoadStatic().\n");
         goto end;
     }
-
-    // 9: after FS_LoadStatic
+    // 10: after FS_LoadStatic
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8b
 
@@ -265,9 +260,9 @@ void TwlSpMain( void )
         OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_DONE_STATIC).\n");
         goto end;
     }
-
-    // 10: after PXI
+    // 11: after PXI
     PUSH_PROFILE();
+
 #ifdef PROFILE_ENABLE
     {
         int i;
