@@ -747,12 +747,6 @@ static void DumpTadInfo(void)
 
 			// Game Version
 			kamiFontPrintfConsole(CONSOLE_ORANGE, "GameVersion   = %d\n", info.titleInfo.version);
-		
-			// name
-			kamiFontPrintfConsole(CONSOLE_ORANGE, "name = %s\n", info.name);
-
-			// user
-			kamiFontPrintfConsole(CONSOLE_ORANGE, "user = %s\n",info.user);
 
 			kamiFontPrintfConsole(CONSOLE_ORANGE, "--------------------------\n");
 		}
