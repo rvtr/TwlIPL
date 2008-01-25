@@ -344,6 +344,9 @@ BOOL HOTSW_Boot(void)
 
             // ARM9常駐モジュールの先頭2KBの暗号化領域を複合化
 			DecryptObjectFile();
+
+			// SDKでのカード抜けフラグをリセット＋活線挿抜カウントをインクリメント
+            CARDi_ResetSlotStatus();
             
 			// デバッグ出力
 			ShowRomHeaderData();
