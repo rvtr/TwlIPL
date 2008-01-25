@@ -62,7 +62,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     /* 一部鍵バッファのクリア (鍵管理.xls参照) */
     mem_list[i++] = (u32)OSi_GetFromFirmAddr()->rsa_pubkey[0];
     mem_list[i++] = ACS_PUBKEY_LEN;
-    mem_list[i++] = (u32)OSi_GetFromFirmAddr()->rsa_pubkey[2];
+    mem_list[i++] = (u32)OSi_GetFromFirmAddr()->rsa_pubkey[4];
     mem_list[i++] = ACS_PUBKEY_LEN;
 #else   // SDK_ARM7
     {   /* REBOOT_ExecuteのCODEとSTACKの隙間をクリア */
@@ -83,7 +83,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     // post clear
     mem_list[i++] = NULL;
     SDK_ASSERT(i <= sizeof(mem_list)/sizeof(mem_list[0]));
-
+#if 0
 #ifdef FIRM_USE_TWLSDK_KEYS
     // TwlSDK内の鍵を使っている時は量産用CPUではブートしない
 #ifdef SDK_ARM9
@@ -95,7 +95,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
         OS_Terminate();
     }
 #endif // FIRM_USE_SDK_KEYS
-
+#endif
     REBOOT_Execute(entry, wram_reg, mem_list, code_buf, stack_top, target, scfg, jtag);
     OS_Terminate();
 }

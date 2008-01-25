@@ -35,11 +35,6 @@
 */
 #define PRINT_MEMORY_ADDR       0x02FFC800
 
-/*
-    定義するとアイドルスレッドを作成します。
-*/
-//#define USE_IDLE_THREAD
-
 
 #ifdef PROFILE_ENABLE
 #define PROFILE_MAX  16
@@ -73,7 +68,6 @@ extern void*   SDNandContext;  /* NAND初期化パラメータ */
 
 static ROM_Header* const rh= (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
 
-#ifdef USE_IDLE_THREAD
 static OSThread idleThread;
 static u64 idleStack[32];
 static void IdleThread(void* arg)
@@ -90,7 +84,6 @@ static void CreateIdleThread(void)
     OS_CreateThread(&idleThread, IdleThread, NULL, &idleStack[32], sizeof(idleStack), OS_THREAD_PRIORITY_MAX);
     OS_WakeupThreadDirect(&idleThread);
 }
-#endif
 
 /***************************************************************
     PreInit
@@ -136,10 +129,8 @@ static void PostInit(void)
     PM_InitFIRM();
     // AESの初期化
     AES_Init(); // for encrypted NAND
-#ifdef USE_IDLE_THREAD
     // アイドルスレッドの作成
     CreateIdleThread();
-#endif
 }
 
 /***************************************************************

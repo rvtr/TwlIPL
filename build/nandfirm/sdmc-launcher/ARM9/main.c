@@ -17,7 +17,7 @@
 #include <firm.h>
 
 #ifndef FIRM_USE_TWLSDK_KEYS
-#define RSA_KEY_ADDR    OSi_GetFromFirmAddr()->rsa_pubkey[2]    // Œ®ŠÇ—.xlsQÆ
+#define RSA_KEY_ADDR    OSi_GetFromFirmAddr()->rsa_pubkey[4]    // Œ®ŠÇ—.xlsQÆ
 #else
 #define RSA_KEY_ADDR    rsa_key
 static const u8 rsa_key[128] =
