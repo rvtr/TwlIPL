@@ -30,7 +30,7 @@ TARGET_BIN				=	simple.srl
 
 ROM_SPEC				=	main.rsf
 
-MISC_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/misc
+MISC_DIR				=	$(SYSMENU_ROOT)/build/systemMenu_RED/misc
 
 SRCS					=	main.c SimpleApp.c \
 							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c

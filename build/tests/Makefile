@@ -20,7 +20,7 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS		=	RelocateChecker AppliCooperation ExecPreLoadedApp
+SUBDIRS		=	RelocateChecker AppliCooperation ExecPreLoadedApp ExecTmpApp
 
 #----------------------------------------------------------------------------
 
