@@ -62,7 +62,8 @@ static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
 #endif
 
 #define THREAD_PRIO_FATFS   8
-#define DMA_NO_FATFS        3
+#define DMA_FATFS_1         3
+#define DMA_FATFS_2         2
 
 extern void*   SDNandContext;  /* NAND初期化パラメータ */
 
@@ -94,6 +95,14 @@ static void CreateIdleThread(void)
 static void PreInit(void)
 {
     /*
+        バッテリー残量チェック
+    */
+    if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
+    {
+        OS_TPrintf("Battery is empty.\n");
+        OS_Terminate();
+    }
+    /*
         FromBrom関連
     */
     if ( !OSi_FromBromToMenu() )
@@ -107,15 +116,11 @@ static void PreInit(void)
     /*
         バッテリー残量チェック
     */
-    //if ( MCUi_ReadRegister( MCU_REG_BATTELY ) < 0x02 )
-    //if ( MCUi_ReadRegister( MCU_REG_IRQ ) & MCU_IRQ_NO_BATTELY )
-/*
-  ちゃんとTWLと識別できているかチェック
-#ifdef USE_DEBUG_LED
-    SetDebugLED(OS_IsRunOnTwl() ? 0xC3 : 0xff);
-    OS_SpinWaitCpuCycles(0x1000000);
-#endif
-*/
+    if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
+    {
+        OS_TPrintf("Battery is empty.\n");
+        OS_Terminate();
+    }
 }
 
 /***************************************************************
@@ -131,6 +136,14 @@ static void PostInit(void)
     AES_Init(); // for encrypted NAND
     // アイドルスレッドの作成
     CreateIdleThread();
+    /*
+        バッテリー残量チェック
+    */
+    if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
+    {
+        OS_TPrintf("Battery is empty.\n");
+        OS_Terminate();
+    }
 }
 
 /***************************************************************
@@ -157,13 +170,14 @@ void TwlSpMain( void )
     // 0: bootrom
     profile[pf_cnt++] = OS_TicksToMicroSecondsBROM32(OS_GetTick());
 #endif
-
     InitDebugLED();
     SetDebugLED(++step);  // 0x81
 
     PreInit();
+#ifdef PROFILE_ENABLE
     // 1: after PreInit
-    PUSH_PROFILE();
+    profile[pf_cnt++] = OS_TicksToMicroSecondsBROM32(OS_GetTick());
+#endif
     SetDebugLED(++step);  // 0x82
 
     OS_InitFIRM();
@@ -181,7 +195,7 @@ void TwlSpMain( void )
     PM_BackLightOn( FALSE );
 
     SDNandContext = &OSi_GetFromFirmAddr()->SDNandContext;
-    if ( !FATFS_Init( DMA_NO_FATFS, THREAD_PRIO_FATFS ) )
+    if ( !FATFS_Init( DMA_FATFS_1, DMA_FATFS_2, THREAD_PRIO_FATFS ) )
     {
         OS_TPrintf("Failed to call FATFS_Init().\n");
         goto end;
