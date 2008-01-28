@@ -25,7 +25,9 @@
 //#define MODULE_ALIGNMENT  0x200   // 512バイト単位で読み込む
 #define RoundUpModuleSize(value)    (((value) + MODULE_ALIGNMENT - 1) & -MODULE_ALIGNMENT)
 
-#define CONTENT_INDEX_SRL           0
+// bootContent を表す特殊な contentIndex
+#define CONTENT_INDEX_BOOT          0xFFFF
+
 #define HASH_UNIT                   0x1000
 
 static ROM_Header* const rh = (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
@@ -114,8 +116,27 @@ void FS_DeleteAesKeySeed( void )
 BOOL FS_ResolveSrl( u64 titleId )
 {
     if ( ES_ERR_OK != ES_InitLib() ||
-         !FS_GetTitleBootContentPathFast((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, titleId) ||
+         ES_ERR_OK != ES_GetContentPath(titleId, CONTENT_INDEX_BOOT, (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF) ||
          ES_ERR_OK != ES_CloseLib() )
+    {
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         FS_ResolveSrlUnsecured
+
+  Description:  resolve srl filename and store to HW_TWL_FS_BOOT_SRL_PATH_BUF
+                without almost security check
+
+  Arguments:    titleId         title id for srl file
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
+BOOL FS_ResolveSrlUnsecured( u64 titleId )
+{
+    if ( !FS_GetTitleBootContentPathFast((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, titleId) )
     {
         return FALSE;
     }

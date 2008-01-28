@@ -69,6 +69,18 @@ void FS_DeleteAesKeySeed( void );
 BOOL FS_ResolveSrl( u64 titleId );
 
 /*---------------------------------------------------------------------------*
+  Name:         FS_ResolveSrlUnsecured
+
+  Description:  resolve srl filename and store to HW_TWL_FS_BOOT_SRL_PATH_BUF
+                without almost security check
+
+  Arguments:    titleId         title id for srl file
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
+BOOL FS_ResolveSrlUnsecured( u64 titleId );
+
+/*---------------------------------------------------------------------------*
   Name:         FS_SetDigestKey
 
   Description:  set specified key or default key for HMAC-SHA-1
