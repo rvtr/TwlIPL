@@ -158,18 +158,30 @@ void TwlSpMain(void)
 static void
 InitializeFatfs(void)
 {
+    OSThread    thread;
+    u32         stack[18];
+
+    // ダミースレッド作成
+    OS_CreateThread(&thread, DummyThread, NULL,
+        (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
+    OS_WakeupThreadDirect(&thread);
+
+    // FATFSライブラリの初期化
 #ifndef SDK_NOCRYPTO
 #ifdef FATFS_AES_MOUNT_FOR_NAND
-    if(!FATFS_Init( FATFS_DMA_4, 8))
+    if(!FATFS_Init( FATFS_DMA_4, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
 #else
-    if(!FATFS_Init(FATFS_DMA_NOT_USE, 8))
+    if (FATFS_Init(FATFS_DMA_NOT_USE, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
 #endif
 #else
-      if(!FATFS_Init(FATFS_DMA_NOT_USE, 8))
+    if (FATFS_Init(FATFS_DMA_NOT_USE, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
 #endif
     {
-        OS_TPanic("FATFS_Init() failed.\n");
+        // do nothing
     }
+
+    // ダミースレッド破棄
+    OS_KillThread(&thread, NULL);
 }
 #include    <twl/ltdwram_end.h>
 
