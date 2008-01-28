@@ -328,11 +328,23 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
             return;
         }
         
+        
         if( header[0x12] && 0x03 == 0 )
         {
 			//NTR専用ROM
 			isTwlApp = FALSE;
 		}
+		/*
+		else if( pBootTitle->titleID != *((NAMTitleId *)(&header[0x230])) )
+		{
+			//TWL対応ROMで、ヘッダのtitleIDが起動指定されたIDと違う
+OS_TPrintf("RebootSystem failed: header TitleID error\n");
+OS_TPrintf("RebootSystem failed: selectedTitleID=%.16llx\n",pBootTitle->titleID);
+OS_TPrintf("RebootSystem failed: headerTitleID=%.16llx\n",*((NAMTitleId *)(&header[0x230])));
+            FS_CloseFile(file);
+            return;
+		}
+		*/
 		
         // 各領域を読み込む
         source  [region_header  ] = 0x00000000;

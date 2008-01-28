@@ -129,8 +129,12 @@ static void MenuScene(void)
 			BOOL success = TRUE;
 			FSFile src,dest;
 			void *buf;
+			ROM_FAT *fat;
+			void *nstart, *nend;
+			u32 st,ed;
 			switch( s_csr ) {
 				case 0:
+					
 					STD_TSNPrintf( destfilename, 31, "nand:/tmp/%.16llx.srl", targetApp );
 					// tmpに保存
 					FS_DeleteFile(destfilename);
@@ -138,12 +142,42 @@ static void MenuScene(void)
 					FS_InitFile( &src );
 					FS_InitFile( &dest );
 					if ( !FS_OpenFileEx( &src, "rom:/data/simple.srl", FS_FILEMODE_R ) ) success = FALSE;
+					//if ( !FS_OpenFileEx( &src, "rom:/data/NTR_IPL_font_m.NFTR", FS_FILEMODE_R ) ) success = FALSE;
 					len = (int)FS_GetFileLength( &src );
 
-					buf = (void *)0x02400000;// 適当にあいてるところ
-					llen = FS_ReadFile( &src, buf, len );
+					nstart = OS_InitAlloc( OS_ARENA_MAIN, (void *)0x2800000, (void *)0x2b00000, 1 );
+					// アリーナの下位境界アドレス
+					OS_SetMainArenaLo( nstart );
+					// fat関係調査
+					nend = (void *)((int)nstart+FS_GetTableSize()+10000);
+					fat = OS_AllocFixed( OS_ARENA_MAIN, &nstart, &nend );
+					FS_UnloadTable();
+					FS_LoadTable( fat, FS_GetTableSize() );
+					//FS_ConvertPathToFileID( &fid, "rom:/data/simple.srl" );
+					st = fat[1].top.offset;
+					ed = fat[1].bottom.offset;
+					
+					buf = (void *)0x2400000;
+	PrintfSJIS( 1 * 8, 2 * 8, TXT_COLOR_RED, "fat:%x,%x,%x,%x",fat[0].top.offset,fat[0].bottom.offset,st,ed);
+	PrintfSJIS( 11 * 8, 0 * 8, TXT_COLOR_RED, "読み込み開始 %x",(int)len);
+					for(llen = 0; llen < len; )
+					{
+						int rd;
+						rd = FS_ReadFile( &src, buf, len );
+						if(rd == -1)
+						{
+							success = FALSE;
+							break;
+						}
+	PrintfSJIS( 1 * 8, 4 * 8, TXT_COLOR_WHITE, "読み込み中... %xBYTES",(int)llen);
+						buf = (void *)((u32)buf + rd);
+						llen += rd;
+	PrintfSJIS( 1 * 8, 4 * 8, TXT_COLOR_RED, "読み込み中... %xBYTES",(int)llen);
+					}
+					buf = (void *)0x2400000;
 					if ( !FS_CloseFile( &src ) ) success = FALSE;
 					if (len != llen) success = FALSE;
+	PrintfSJIS( 1 * 8, 6 * 8, TXT_COLOR_RED, "読み込み完了 %x",(int)llen);
 
 					if ( !FS_OpenFileEx( &dest, destfilename, FS_FILEMODE_W ) ) success = FALSE;
 					llen = FS_WriteFile( &dest, buf, len );
@@ -151,6 +185,7 @@ static void MenuScene(void)
 					if (len != llen) success = FALSE;
 
 					if( !success ) break;
+					
 					//アプリ起動
 					OS_SetLauncherParamAndResetHardware( 0, targetApp, &tempflag );
 					break;

@@ -27,6 +27,7 @@
 
 // function's prototype-------------------------------------------------------
 static void INTR_VBlank( void );
+static void deleteTmp();
 
 // global variable-------------------------------------------------------------
 
@@ -117,8 +118,11 @@ void TwlMain( void )
 	
 	(void)SYSM_GetCardTitleList( s_titleList );					// カードアプリリストの取得（カードアプリはs_titleList[0]に格納される）
 	
-	// TODO:bootTypeがLAUNCHER_BOOTTYPE_TEMPでない場合、tmpフォルダ内のデータを消す
-	
+	// bootTypeがLAUNCHER_BOOTTYPE_TEMPでない場合、tmpフォルダ内のデータを消す
+	if( !pBootTitle || pBootTitle->flags.bootType != LAUNCHER_BOOTTYPE_TEMP )
+	{
+		deleteTmp();
+	}
 	
 	// 「ダイレクトブートでない」なら
 	if( !pBootTitle ) {
@@ -260,3 +264,41 @@ static void INTR_VBlank(void)
 	OS_SetIrqCheckFlag(OS_IE_V_BLANK);								// Vブランク割込チェックのセット
 }
 
+// ============================================================================
+// ディレクトリ操作
+// ============================================================================
+
+// nandのtmpディレクトリの中身を消す
+static void deleteTmp()
+{
+	FSFile dir;
+	FSDirectoryEntryInfo info;
+	FS_InitFile(&dir);
+	if(!FS_OpenDirectory(&dir, "nand:/tmp", FS_FILEMODE_R | FS_FILEMODE_W))
+	{
+		OS_TPrintf( "ERROR deleteTmp: open nand:/tmp failed!\n" );
+		return;
+	}
+	while(FS_ReadDirectory(&dir, &info))
+	{
+		if(info.attributes & FS_ATTRIBUTE_IS_DIRECTORY)
+		{
+			//ディレクトリは今のところ削除しない
+		}else
+		{
+			//ファイルは今のところsrlのみ削除
+			char buf[512];
+			u32 end = info.longname_length;
+			if( (info.longname[end-1]=='l' || info.longname[end-1]=='L') &&
+				(info.longname[end-2]=='r' || info.longname[end-2]=='R') &&
+				(info.longname[end-3]=='s' || info.longname[end-3]=='S') &&
+				(info.longname[end-4]=='.') )
+			{
+				STD_TSNPrintf( buf, 512, "nand:/tmp/%s",info.longname);
+				FS_DeleteFile( buf );
+				OS_TPrintf( "deleteTmp: deleted File '%s' \n", buf );
+			}
+		}
+	}
+	FS_CloseDirectory(&dir);
+}
