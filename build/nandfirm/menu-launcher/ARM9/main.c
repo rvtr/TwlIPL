@@ -333,9 +333,11 @@ void TwlMain( void )
         }
         OS_TPrintf("\n[ARM9] End\n");
         PXI_NotifyID( FIRM_PXI_ID_NULL );
+        OS_SetTick(0);
     }
 #endif
 
+    ( (OSBootInfo *)OS_GetBootInfo() )->boot_type = OS_BOOTTYPE_NAND;
     OS_BootFromFIRM();
 
 end:

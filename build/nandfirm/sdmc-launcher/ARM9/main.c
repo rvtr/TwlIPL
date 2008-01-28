@@ -316,6 +316,7 @@ void TwlMain( void )
     }
 #endif
 
+    ( (OSBootInfo *)OS_GetBootInfo() )->boot_type = OS_BOOTTYPE_NAND;
     OS_BootFromFIRM();
 
 end:
