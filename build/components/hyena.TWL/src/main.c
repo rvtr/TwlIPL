@@ -305,12 +305,12 @@ InitializeFatfs(void)
     // FATFSƒ‰ƒCƒuƒ‰ƒŠ‚Ì‰Šú‰»
 #ifndef SDK_NOCRYPTO
 #ifdef FATFS_AES_MOUNT_FOR_NAND
-    if(!FATFS_Init( FATFS_DMA_4, THREAD_PRIO_FATFS))
+    if(!FATFS_Init( FATFS_DMA_4, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
 #else
-    if (FATFS_Init(FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
+    if (FATFS_Init(FATFS_DMA_NOT_USE, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
 #endif
 #else
-    if (FATFS_Init(FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
+    if (FATFS_Init(FATFS_DMA_NOT_USE, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
 #endif
     {
         // do nothing
@@ -465,6 +465,10 @@ InitializeAllocateSystem(void)
         u32     heapSize;
 
         heapSize    =   (u32)OS_CheckHeap(OS_ARENA_MAIN_SUBPRIV, hh);
+        if (ATH_DRV_HEAP_SIZE > heapSize)
+        {
+            OS_Panic("Insufficient heap size. (0x%x < 0x%x)\n", heapSize, ATH_DRV_HEAP_SIZE);
+        }
         OS_TPrintf("ARM7: MAIN heap size is %d (before AddToHead)\n", heapSize);
     }
 
