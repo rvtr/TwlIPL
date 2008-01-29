@@ -310,6 +310,10 @@ BOOL HOTSW_Boot(void)
 				OS_TPrintf("TWL Card.\n");
 	            s_cbData.twlFlg = TRUE;
 	        }
+            else{
+                // NTRカードの場合はRomHeaderバッファの1ページ目以降をクリアしておく。
+                MI_CpuClearFast((void *)(SYSM_CARD_ROM_HEADER_BAK + PAGE_SIZE), SYSM_CARD_ROM_HEADER_SIZE - PAGE_SIZE);
+            }
 
             // SecureコマンドのPNG_ONコマンドetc用のレイテンシを求める(Latency1とLatency2を足す)
 			s_cbData.secureLatency = AddLatency2ToLatency1(s_cbData.pBootSegBuf->rh.s.secure_cmd_param);

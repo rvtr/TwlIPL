@@ -33,9 +33,11 @@ static void SetMCSCR(void);
 // 共通
 
 /*---------------------------------------------------------------------------*
-  Name:         ReadBootSegNormal_DSType2
-  
-  Description:  DSカードType1のノーマルモードのBoot Segment読み込み (Page0 ～ 7)
+ * Name:         ReadBootSegNormal_DSType2
+ * 
+ * Description:  DSカードType2のノーマルモードのBoot Segment読み込み (Page0 ～ 7)
+ *
+ * CT=240ns  Latency1=0x1fff  Latency2=0x3f  Pagecount=1page
  *---------------------------------------------------------------------------*/
 void ReadBootSegNormal_DSType2(CardBootData *cbd)
 {
@@ -69,8 +71,8 @@ void ReadBootSegNormal_DSType2(CardBootData *cbd)
     	reg_HOTSW_MCCMD0 = *(u32 *)cndBE.b;
 		reg_HOTSW_MCCMD1 = *(u32 *)&cndBE.b[4];
 
-		// MCCNT1 レジスタ設定 (START = 1  PC = 001(1ページリード)に latency1 = 0x5fe)
-		reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x1 << PC_SHIFT) | (0x5fe & LATENCY1_MASK);
+		// MCCNT1 レジスタ設定
+		reg_HOTSW_MCCNT1 = START_MASK | CT_MASK | PC_MASK & (0x1 << PC_SHIFT) | LATENCY2_MASK | LATENCY1_MASK;
 
 		// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
 		OS_SleepThread(NULL);
