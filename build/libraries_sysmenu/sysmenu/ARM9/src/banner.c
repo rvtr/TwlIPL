@@ -63,11 +63,11 @@ BOOL SYSMi_ReadCardBannerFile( u32 bannerOffset, TWLBannerFile *pBanner )
 	return isRead;
 #else
 #pragma unused(bannerOffset)
-	if( SYSMi_GetWork()->isValidCardBanner ) {
+	if( SYSMi_GetWork()->flags.common.isValidCardBanner ) {
 		DC_InvalidateRange( (void *)SYSM_CARD_BANNER_BUF, 0x3000 );
 		MI_CpuCopyFast( (void *)SYSM_CARD_BANNER_BUF, pBanner, sizeof(TWLBannerFile) );
 	}
-	return (BOOL)SYSMi_GetWork()->isValidCardBanner;
+	return (BOOL)SYSMi_GetWork()->flags.common.isValidCardBanner;
 #endif
 }
 

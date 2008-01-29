@@ -32,7 +32,7 @@ extern "C" {
 #define OS_PutString( ... )					((void)0)
 #endif
 
-
+#ifdef SDK_ARM9
 //-------------------------------------------------------
 // マウント情報セット
 //-------------------------------------------------------
@@ -61,6 +61,16 @@ void SYSMi_CheckRTC( void );
 
 // カードバナーリード（※NTR-IPL2仕様）
 BOOL SYSMi_ReadCardBannerFile( u32 bannerOffset, TWLBannerFile *pBanner );
+
+#endif // SDK_ARM9
+
+
+//-------------------------------------------------------
+// PXI
+//-------------------------------------------------------
+
+extern void SYSMi_SendPXICommand( SYSMPXICommand command );
+extern void SYSMi_PXIFifoCallback( PXIFifoTag tag, u32 data, BOOL err );
 
 
 #ifdef __cplusplus

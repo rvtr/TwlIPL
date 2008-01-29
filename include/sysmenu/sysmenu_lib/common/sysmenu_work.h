@@ -29,7 +29,7 @@ extern "C" {
 #endif
 
 // define data ------------------------------------
-#define TITLE_ID_LAUNCHER					( 0x0003000752434e4cLLU )
+#define TITLE_ID_LAUNCHER					( 0x000300074c4e4352LLU )
 #define CLONE_BOOT_MODE						1
 #define OTHER_BOOT_MODE						2
 
@@ -40,11 +40,21 @@ typedef struct TitleID_HiLo {
 	u32			Hi;
 }TitleID_HiLo;
 
+
 //----------------------------------------------------------------------
-//　データ型定義
+//　PXIコマンド
+//----------------------------------------------------------------------
+#define SYSMENU_PXI_FIFO_TAG				PXI_FIFO_TAG_USER_0
+
+typedef enum SYSMPXICommand {
+	SYSM_PXI_COMM_DISABLE_HOTSW = 1
+}SYSMPXICommand;
+
+//----------------------------------------------------------------------
+//　ROMエミュレーション情報
 //----------------------------------------------------------------------
 #define ISD_ROM_EMULATION_INFO_SIZE			0x20		// ROMエミュレーションデータサイズ
-#define ISD_ROM_EMULATION_INFO_MAGIC_CODE	0x444c5754
+#define ISD_ROM_EMULATION_INFO_MAGIC_CODE	0x444c5754  // "TWLD"の文字列
 
 // ISデバッガROMエミュレーション情報
 typedef struct ISD_RomEmuInfo {
@@ -67,30 +77,47 @@ typedef struct ISD_RomEmuInfo {
 }ISD_RomEmuInfo;
 
 
+//----------------------------------------------------------------------
+//　SYSMワーク
+//----------------------------------------------------------------------
 // SYSM共有ワーク構造体
 typedef struct SYSM_work {
 	Relocate_Info	romRelocateInfo[RELOCATE_INFO_NUM];	// ROM再配置情報（arm9,arm7それぞれltdとflxで最大4つ）
-	vu32			isFatalError :1;				// FATALエラー
-	vu32			isARM9Start :1;					// ARM9スタートフラグ
-	vu32			isHotStart :1;					// Hot/Coldスタート判定
-	vu32			isValidLauncherParam :1;			// リセットパラメータ有効
-	vu32			isValidTSD :1;					// NITRO設定データ無効フラグ
-	vu32			isLogoSkip :1;					// ロゴデモスキップ
-	vu32			isOnDebugger :1;				// デバッガ動作か？
-	vu32			isExistCard :1;					// 有効なNTR/TWLカードが存在するか？
-	vu32			isCardStateChanged :1;			// カード状態更新フラグ
-	vu32			isLoadSucceeded :1;				// アプリロード完了？
-	vu32			isCardBoot :1;					// カードブートか？
-	vu32			isBrokenHWNormalInfo :1;		// HWノーマル情報が破損している。
-	vu32			isBrokenHWSecureInfo :1;		// HWセキュア情報が破損している。
-	vu32			isResetRTC :1;					// RTCリセット発生
+	struct {
+		struct {
+			vu32			isFatalError :1;				// FATALエラー
+			vu32			isARM9Start :1;					// ARM9スタートフラグ
+			vu32			isHotStart :1;					// Hot/Coldスタート判定
+			vu32			isValidLauncherParam :1;			// リセットパラメータ有効
+			vu32			isValidTSD :1;					// NITRO設定データ無効フラグ
+			vu32			isLogoSkip :1;					// ロゴデモスキップ
+			vu32			isOnDebugger :1;				// デバッガ動作か？
+			vu32			isExistCard :1;					// 有効なNTR/TWLカードが存在するか？
+			vu32			isCardStateChanged :1;			// カード状態更新フラグ
+			vu32			isLoadSucceeded :1;				// アプリロード完了？
+			vu32			isCardBoot :1;					// カードブートか？
+			vu32			isBrokenHWNormalInfo :1;		// HWノーマル情報が破損している。
+			vu32			isBrokenHWSecureInfo :1;		// HWセキュア情報が破損している。
+			vu32			isResetRTC :1;					// RTCリセット発生
 #ifdef DEBUG_USED_CARD_SLOT_B_
-	vu32			isValidCardBanner :1;
-	vu32			is1stCardChecked :1;
-	vu32			rsv :17;
+			vu32			isValidCardBanner :1;
+			vu32			is1stCardChecked :1;
+			vu32			rsv :17;
 #else
-	vu32			rsv :19;
+			vu32			rsv :19;
 #endif
+		}common;
+		struct {
+			vu16	isEnableHotSW :1;
+			vu16	rsv:15;
+		}arm9;
+		struct {
+			vu16	isEnableHotSW :1;
+			vu16	isBusyHotSW :1;
+			vu16	disableHotSW_REQ :1;
+			vu16	rsv:13;
+		}arm7;
+	}flags;
 	
 	u16				cardHeaderCrc16;				// カード検出時に算出したROMヘッダCRC16（ARM9側でコピーして使用する側）
 	u16				cardHeaderCrc16_bak;			// カード検出時に算出したROMヘッダCRC16（ARM7側ライブラリでダイレクトに書き換わる側）
@@ -123,6 +150,7 @@ typedef struct SDKBootCheckInfo{
 	u8  rtcStatus1;					// RTCステータス1
 	
 }SDKBootCheckInfo;
+
 
 //----------------------------------------------------------------------
 //　SYSM共有ワーク領域のアドレス獲得

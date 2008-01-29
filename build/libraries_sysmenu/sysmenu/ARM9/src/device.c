@@ -95,7 +95,7 @@ void SYSMi_CheckRTC( void )
 	    !SYSM_CheckRTCTime( &time )
 #ifndef __IS_DEBUGGER_BUILD											// 青デバッガではRTCの電池がないので、毎回ここにひっかかって設定データが片方クリアされてしまう。これを防ぐスイッチ。
 		||
-		SYSMi_GetWork()->isResetRTC
+		SYSMi_GetWork()->flags.common.isResetRTC
 #endif
 		) {							// RTCの異常を検出したら、rtc入力フラグ＆rtcOffsetを0にしてNVRAMに書き込み。
 		OS_TPrintf("\"RTC reset\" or \"Illegal RTC data\" detect!\n");

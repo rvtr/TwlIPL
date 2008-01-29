@@ -34,10 +34,11 @@ static void SYSMi_CheckCardCloneBoot( void );
 void *(*SYSMi_Alloc)( u32 size  );
 void  (*SYSMi_Free )( void *ptr );
 
+#define SYSM_DEBUG_
 #ifdef SYSM_DEBUG_
 SYSM_work		*pSysm;											// デバッガでのSYSMワークのウォッチ用
+ROM_Header_Short *pRomHeader;
 #endif
-
 // static variable-------------------------------------------------------------
 
 // const data------------------------------------------------------------------
@@ -53,6 +54,7 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 {
 #ifdef SYSM_DEBUG_
 	pSysm = SYSMi_GetWork();
+	pRomHeader = (ROM_Header_Short *)0x027fc000;
 #endif /* SYSM_DEBUG_ */
 	
 	// ランチャーのマウント情報セット
@@ -62,6 +64,7 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
     OS_SetProtectionRegion( 2, SYSM_OWN_ARM7_MMEM_ADDR, 512KB );
 	
 	SYSM_SetAllocFunc( pAlloc, pFree );
+	PXI_SetFifoRecvCallback( SYSMENU_PXI_FIFO_TAG, SYSMi_PXIFifoRecvCallback );
 	
 	reg_OS_PAUSE |= REG_OS_PAUSE_CHK_MASK;							// PAUSEレジスタのチェックフラグのセット
 }
@@ -113,12 +116,12 @@ TitleProperty *SYSM_ReadParameters( void )
 	u8 brightness = LCFG_TWL_BACKLIGHT_LEVEL_MAX;
 	
 	// ARM7のリセットパラメータ取得が完了するのを待つ
-	while( !SYSMi_GetWork()->isARM9Start ) {
+	while( !SYSMi_GetWork()->flags.common.isARM9Start ) {
 		SVC_WaitByLoop( 0x1000 );
 	}
 #ifdef DEBUG_USED_CARD_SLOT_B_
 	// ARM7のカードチェック完了を待つ
-	while( !SYSMi_GetWork()->is1stCardChecked ) {
+	while( !SYSMi_GetWork()->flags.common.is1stCardChecked ) {
 		SVC_WaitByLoop( 0x1000 );
 	}
 #endif
@@ -151,13 +154,13 @@ TitleProperty *SYSM_ReadParameters( void )
 	// ノーマル情報リード
 	if( !LCFG_ReadHWNormalInfo() ) {
 		OS_TPrintf( "HW Normal Info Broken!\n" );
-		SYSMi_GetWork()->isBrokenHWNormalInfo = TRUE;
+		SYSMi_GetWork()->flags.common.isBrokenHWNormalInfo = TRUE;
 	}
 	// セキュア情報リード
 	if( !LCFG_ReadHWSecureInfo() ) {
 		OS_TPrintf( "HW Secure Info Broken!\n" );
-		SYSMi_GetWork()->isBrokenHWSecureInfo = TRUE;
-		SYSMi_GetWork()->isFatalError = TRUE;
+		SYSMi_GetWork()->flags.common.isBrokenHWSecureInfo = TRUE;
+		SYSMi_GetWork()->flags.common.isFatalError = TRUE;
 	}
 	
 	//-----------------------------------------------------
@@ -200,7 +203,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 	// 検査カード起動
 	//-----------------------------------------------------
 	if( SYSM_IsExistCard() ) {
-		if( ( SYSMi_GetWork()->isOnDebugger &&		// ISデバッガが有効かつJTAGがまだ有効でない時
+		if( ( SYSMi_GetWork()->flags.common.isOnDebugger &&		// ISデバッガが有効かつJTAGがまだ有効でない時
 			  !( *(u8 *)( HW_SYS_CONF_BUF + HWi_WSYS09_OFFSET ) & HWi_WSYS09_JTAG_CPUJE_MASK ) ) ||
 			SYSM_IsInspectCard() ||
 			( ( PAD_Read() & PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) ==
@@ -250,14 +253,14 @@ const LauncherParamBody *SYSM_GetLauncherParamBody( void )
 // ロゴデモスキップかどうかをセット
 void SYSM_SetLogoDemoSkip( BOOL skip )
 {
-	SYSMi_GetWork()->isLogoSkip = skip;
+	SYSMi_GetWork()->flags.common.isLogoSkip = skip;
 }
 
 
 // ロゴデモスキップか？
 BOOL SYSM_IsLogoDemoSkip( void )
 {
-	return (BOOL)SYSMi_GetWork()->isLogoSkip;
+	return (BOOL)SYSMi_GetWork()->flags.common.isLogoSkip;
 }
 
 
@@ -265,7 +268,7 @@ BOOL SYSM_IsLogoDemoSkip( void )
 static BOOL SYSMi_IsDebuggerBannerViewMode( void )
 {
 #ifdef __IS_DEBUGGER_BUILD
-	return ( SYSMi_GetWork()->isOnDebugger &&
+	return ( SYSMi_GetWork()->flags.common.isOnDebugger &&
 			 SYSMi_IsValidCard() &&
 			 SYSM_GetCardRomHeader()->dbgRomSize == 0 ) ? TRUE : FALSE;
 #else
@@ -284,14 +287,14 @@ BOOL SYSM_IsTPReadable( void )
 // TSD有効/無効をセット
 void SYSM_SetValidTSD( BOOL valid )
 {
-	SYSMi_GetWork()->isValidTSD = valid;
+	SYSMi_GetWork()->flags.common.isValidTSD = valid;
 }
 
 
 // TSD有効？
 BOOL SYSM_IsValidTSD( void )
 {
-	return (BOOL)SYSMi_GetWork()->isValidTSD;
+	return (BOOL)SYSMi_GetWork()->flags.common.isValidTSD;
 }
 
 
@@ -304,7 +307,7 @@ BOOL SYSM_IsValidTSD( void )
 // 有効なTWL/NTRカードが差さっているか？
 BOOL SYSM_IsExistCard( void )
 {
-	return (BOOL)SYSMi_GetWork()->isExistCard;
+	return (BOOL)SYSMi_GetWork()->flags.common.isExistCard;
 }
 
 
@@ -385,9 +388,9 @@ static void SYSMi_CheckCardCloneBoot( void )
 	
 	buffp += total_rom_size & 0x000001FF;
 	if( *buffp++ == 'a' && *buffp == 'c' ) {
-		SYSMi_GetWork()->cloneBootMode = CLONE_BOOT_MODE;
+		SYSMi_GetWork()->flags.common.cloneBootMode = CLONE_BOOT_MODE;
 	}else {
-		SYSMi_GetWork()->cloneBootMode = OTHER_BOOT_MODE;
+		SYSMi_GetWork()->flags.common.cloneBootMode = OTHER_BOOT_MODE;
 	}
 #endif
 }

@@ -24,6 +24,7 @@ export TWL_ARCHGEN = ALL
 
 SUBDIRS =	\
 			$(ROOT)/build/libraries/reboot \
+			$(ROOT)/build/demos/gx/UnitTours/DEMOLib \
 			$(TWLSYSTEM_ROOT) \
 			build
 

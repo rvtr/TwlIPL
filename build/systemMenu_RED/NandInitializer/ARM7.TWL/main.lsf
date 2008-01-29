@@ -55,9 +55,7 @@ Autoload WRAM
 				libmicex_sp$(LIBSUFFIX).a		\
 				libmcu_sp$(LIBSUFFIX).a		\
 
-	Library		libsdio_hcd_twl$(LIBSUFFIX).a	\
-				libsdio_busdriver$(LIBSUFFIX).a	\
-				libsdio_lib$(LIBSUFFIX).a	\
+	Library		libsdio_sp$(LIBSUFFIX).a
 
 	Object		* (.etable)
 	Object		* (.wram)
@@ -143,10 +141,9 @@ Ltdautoload LTDMAIN
 	Object		* (.ltdmain)
 	Library		libnvram_sp$(LIBSUFFIX).a
 	Library		librtc_sp$(LIBSUFFIX).a
-	Library		librompatch_sp$(LIBSUFFIX).a	\
-                libwm_sp$(LIBSUFFIX).a	\
+	Library		libwm_sp$(LIBSUFFIX).a	\
 				libnwm_sp$(LIBSUFFIX).a	\
-				libARM7athdrv$(LIBSUFFIX).a	\
+				libathdrv_sp$(LIBSUFFIX).a \
 				libwvr_sp$(LIBSUFFIX).a	\
 				libwl_sp$(LIBSUFFIX).a
 	Library		libfatfs_sp$(LIBSUFFIX).a	\

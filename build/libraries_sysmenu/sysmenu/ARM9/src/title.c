@@ -26,6 +26,7 @@
 
 // extern data-----------------------------------------------------------------
 // function's prototype-------------------------------------------------------
+static BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, u8 *pDst );
 static s32  ReadFile( FSFile* pf, void* buffer, s32 size );
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle );
 static void SYSMi_Relocate( void );
@@ -56,19 +57,19 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 {
 	BOOL retval = FALSE;
 	
-	if( SYSMi_GetWork()->isCardStateChanged ) {
+	if( SYSMi_GetWork()->flags.common.isCardStateChanged ) {
 		
 		MI_CpuClear32( pTitleList_Card, sizeof(TitleProperty) );
 		
 		// ROMヘッダバッファのコピー
 		if( SYSM_IsExistCard() ) {
 			u16 id = (u16)OS_GetLockID();
-			(void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );		// ARM7と排他制御する
+			(void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );						// ARM7と排他制御する
 			DC_InvalidateRange( (void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );	// キャッシュケア
 			MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BAK, (void *)SYSM_CARD_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );	// ROMヘッダコピー
-			SYSMi_GetWork()->cardHeaderCrc16 = SYSMi_GetWork()->cardHeaderCrc16;	// ROMヘッダCRCコピー
-			SYSMi_GetWork()->isCardStateChanged = FALSE;							// カード情報更新フラグを落とす
-			(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );	// ARM7と排他制御する
+			SYSMi_GetWork()->cardHeaderCrc16 = SYSMi_GetWork()->cardHeaderCrc16;				// ROMヘッダCRCコピー
+			SYSMi_GetWork()->flags.common.isCardStateChanged = FALSE;							// カード情報更新フラグを落とす
+			(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );					// ARM7と排他制御する
 			OS_ReleaseLockID( id );
 			
 			pTitleList_Card->flags.isValid = TRUE;
@@ -103,102 +104,129 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 	// とりあえずALL
 	OSTick start;
 	int l;
-	int gotten;
-	NAMTitleId titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
+	int getNum;
+	int validNum = 0;
+	NAMTitleId titleIDArray[ LAUNCHER_TITLE_LIST_NUM ];
+	NAMTitleId *pTitleIDList = NULL;
+	
 	
 	if( listNum > LAUNCHER_TITLE_LIST_NUM ) {
 		OS_TPrintf( "Warning: TitleList_Nand num over LAUNCHER_TITLE_LIST_NUM(%d)\n", LAUNCHER_TITLE_LIST_NUM );
 	}
-
-	start = OS_GetTick();
-	gotten = NAM_GetTitleList( &titleIdArray[ 0 ], LAUNCHER_TITLE_LIST_NUM - 1 );
-	OS_TPrintf( "NAM_GetTitleList : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
-	start = OS_GetTick();
-	gotten = NAM_GetNumTitles();	// [TODO:]本来だったら必要ないが、現在はNAM_GetTitleListがアプリ個数をちゃんと返してくれないので。
-	OS_TPrintf( "NAM_GetNumTitles : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
 	
-	for(l=0;l<gotten;l++)
-	{
-		//ヘッダからバナーを読み込む
-		FSFile  file[1];
-		BOOL bSuccess;
-		static const int PATH_LENGTH=1024;
-		char path[PATH_LENGTH];
-		static u8   header[HW_TWL_ROM_HEADER_BUF_SIZE] ATTRIBUTE_ALIGN(32);
-		s32 readLen;
-		s32 offset;
-		
-		start = OS_GetTick();
-		readLen = NAM_GetTitleBootContentPathFast(path, titleIdArray[l]);
-		OS_TPrintf( "NAM_GetTitleBootContentPath : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
-		
-		if(readLen != NAM_OK){
-			OS_TPrintf("NAM_GetTitleBootContentPath failed %d,%lld,%d\n",l,titleIdArray[l],readLen);
-		}
-		
-		bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
-
-		if( ! bSuccess )
-		{
-		OS_TPrintf("SYSM_GetNandTitleList failed: cant open file %s\n",path);
-		    return -1;
-		}
-		
-		// バナーデータオフセットを読み込む
-		bSuccess = FS_SeekFile(file, 0x68, FS_SEEK_SET);
-		if( ! bSuccess )
-		{
-			OS_TPrintf("SYSM_GetNandTitleList failed: cant seek file(0)\n");
-			FS_CloseFile(file);
-		    return -1;
-		}
-		readLen = FS_ReadFile(file, &offset, sizeof(offset));
-		if( readLen != sizeof(offset) )
-		{
-			OS_TPrintf("SYSM_GetNandTitleList failed: cant read file\n");
-			FS_CloseFile(file);
-		    return -1;
-		}
-		
-		bSuccess = FS_SeekFile(file, offset, FS_SEEK_SET);
-		if( ! bSuccess )
-		{
-			OS_TPrintf("SYSM_GetNandTitleList failed: cant seek file(offset)\n");
-			FS_CloseFile(file);
-		    return -1;
-		}
-		readLen = ReadFile(file, &s_bannerBuf[l], (s32)sizeof(TWLBannerFile));
-		if( readLen != (s32)sizeof(TWLBannerFile) )
-		{
-			OS_TPrintf("SYSM_GetNandTitleList failed: cant read file2\n");
-			FS_CloseFile(file);
-		    return -1;
-		}
-		
-		FS_CloseFile(file);
+	// インストールされているタイトルの取得
+	start = OS_GetTick();
+	getNum = NAM_GetNumTitles();
+	OS_TPrintf( "NAM_GetNumTitles : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+	pTitleIDList = SYSM_Alloc( sizeof(NAMTitleId) * getNum );
+	if( pTitleIDList == NULL ) {
+		OS_TPrintf( "%s: alloc error.\n", __FUNCTION__ );
+		return 0;
 	}
-	for(l=gotten;l<LAUNCHER_TITLE_LIST_NUM;l++)
-	{
-		// 念のため0にクリア
-		titleIdArray[l] = 0;
+	start = OS_GetTick();
+	(void)NAM_GetTitleList( pTitleIDList, (u32)getNum );
+	OS_TPrintf( "NAM_GetTitleList : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+	
+	// 取得したタイトルがローンチ対象かどうかをチェック
+	for( l = 0; l < getNum; l++ ) {
+		// "Not Launch"でない　かつ　"Data Only"でない　なら有効なタイトルとしてリストに追加
+		if( ( pTitleIDList[ l ] & ( TITLE_ID_NOT_LAUNCH_FLAG_MASK | TITLE_ID_DATA_ONLY_FLAG_MASK ) ) == 0 ) {
+			titleIDArray[ validNum ] = pTitleIDList[ l ];
+			SYSMi_ReadBanner_NAND( pTitleIDList[ l ], (u8 *)&s_bannerBuf[ validNum ] );
+			validNum++;
+		}
 	}
-
-	// カードアプリ部分を除いたリストクリア
+	SYSM_Free( pTitleIDList );
+	
+	// 念のため残り領域を0クリア
+	for( l = validNum; l < LAUNCHER_TITLE_LIST_NUM; l++ ) {
+		titleIDArray[ l ] = 0;
+	}
+	
+	// 最終リストに対して、カードアプリ部分を除いた部分をクリア
 	MI_CpuClearFast( &pTitleList_Nand[ 1 ], sizeof(TitleProperty) * ( listNum - 1 ) );
 	
-	listNum = (gotten<listNum) ? gotten : listNum;
+	listNum = ( validNum < listNum ) ? validNum : listNum;
 	
 	for(l=0;l<listNum;l++)
 	{
-		pTitleList_Nand[l+1].titleID = titleIdArray[l];
+		pTitleList_Nand[l+1].titleID = titleIDArray[l];
 		pTitleList_Nand[l+1].pBanner = &s_bannerBuf[l];
-		if( titleIdArray[l] ) {
+		if( titleIDArray[l] ) {
 			pTitleList_Nand[l+1].flags.isValid = TRUE;
 			pTitleList_Nand[l+1].flags.bootType = LAUNCHER_BOOTTYPE_NAND;
 		}
 	}
 	// return : *TitleProperty Array
 	return listNum;
+}
+
+static BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, u8 *pDst )
+{
+#define PATH_LENGTH		1024
+	OSTick start;
+	FSFile  file[1];
+	BOOL bSuccess;
+	char path[PATH_LENGTH];
+	s32 readLen;
+	s32 offset;
+	
+	start = OS_GetTick();
+	readLen = NAM_GetTitleBootContentPathFast( path, titleID );
+	OS_TPrintf( "NAM_GetTitleBootContentPath : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+	
+	// ファイルパスを取得
+	if(readLen != NAM_OK){
+		OS_TPrintf("NAM_GetTitleBootContentPath failed %lld,%d\n", titleID, readLen );
+	}
+	
+	// ファイルオープン
+	bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
+	if( ! bSuccess )
+	{
+		OS_TPrintf("SYSM_GetNandTitleList failed: cant open file %s\n",path);
+		return FALSE;
+	}
+	
+	// ROMヘッダのバナーデータオフセットを読み込む
+	bSuccess = FS_SeekFile(file, 0x68, FS_SEEK_SET);
+	if( ! bSuccess )
+	{
+		OS_TPrintf("SYSM_GetNandTitleList failed: cant seek file(0)\n");
+		FS_CloseFile(file);
+		return FALSE;
+	}
+	readLen = FS_ReadFile(file, &offset, sizeof(offset));
+	if( readLen != sizeof(offset) )
+	{
+		OS_TPrintf("SYSM_GetNandTitleList failed: cant read file\n");
+		FS_CloseFile(file);
+		return FALSE;
+	}
+	
+	// バナーが存在する場合のみリード
+	if( offset ) {
+		bSuccess = FS_SeekFile(file, offset, FS_SEEK_SET);
+		if( ! bSuccess )
+		{
+			OS_TPrintf("SYSM_GetNandTitleList failed: cant seek file(offset)\n");
+			FS_CloseFile(file);
+			return FALSE;
+		}
+		readLen = ReadFile( file, pDst, (s32)sizeof(TWLBannerFile) );
+		if( readLen != (s32)sizeof(TWLBannerFile) )
+		{
+			OS_TPrintf("SYSM_GetNandTitleList failed: cant read file2\n");
+			FS_CloseFile(file);
+			return FALSE;
+		}
+	}else {
+		// バナーが存在しない場合はバッファクリア
+		MI_CpuClearFast( pDst, sizeof(TWLBannerFile) );
+	}
+	
+	FS_CloseFile(file);
+	return TRUE;
 }
 
 
@@ -418,9 +446,18 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 	// ROMヘッダバッファをコピー
 	MI_CpuCopy32( (void *)HW_TWL_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 	
-	SYSMi_GetWork()->isLoadSucceeded = TRUE;
+	SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
 }
 
+
+static void SYSMi_DisableHotSW( void )
+{
+	if( SYSMi_GetWork()->flags.arm7.isEnableHotSW &&
+		SYSMi_GetWork()->flags.arm9.isEnableHotSW ) {
+		return;
+	}
+	SYSMi_SendPXICommand( SYSM_PXI_COMM_DISABLE_HOTSW );
+}
 
 // 指定タイトルを別スレッドでロード開始する
 void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
@@ -429,24 +466,26 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 #define STACK_SIZE 0xc00
 	static u64 stack[ STACK_SIZE / sizeof(u64) ];
 	
+	SYSMi_DisableHotSW();
+	
 	// アプリ未ロード状態なら、ロード開始
 	if( !pBootTitle->flags.isAppLoadCompleted ) {
-		SYSMi_GetWork()->isLoadSucceeded = FALSE;
+		SYSMi_GetWork()->flags.common.isLoadSucceeded = FALSE;
 		OS_InitThread();
 		OS_CreateThread( &s_thread, (void (*)(void *))SYSMi_LoadTitleThreadFunc, (void*)pBootTitle, stack+STACK_SIZE/sizeof(u64), STACK_SIZE,THREAD_PRIO );
 		OS_WakeupThreadDirect( &s_thread );
 	}else if( pBootTitle->flags.isAppRelocate ) {
 	// アプリロード済みで、再配置要求ありなら、再配置（カードのみ対応）
 		SYSMi_Relocate();
-		SYSMi_GetWork()->isLoadSucceeded = TRUE;
+		SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
 	}else
 	{
 		// アプリロード済みで、再配置要求なし
-		SYSMi_GetWork()->isLoadSucceeded = TRUE;
+		SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
 	}
 	
 	if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM ) {
-		SYSMi_GetWork()->isCardBoot = TRUE;
+		SYSMi_GetWork()->flags.common.isCardBoot = TRUE;
 	}else if(pBootTitle->flags.isAppLoadCompleted)
 	{
 		// カードブートでなく、ロード済みの場合、再配置情報をランチャーパラメタから読み込み
@@ -533,7 +572,7 @@ AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 		return AUTH_RESULT_PROCESSING;
 	}
 	// ロード成功？
-	if( SYSMi_GetWork()->isLoadSucceeded == FALSE )
+	if( SYSMi_GetWork()->flags.common.isLoadSucceeded == FALSE )
 	{
 		return AUTH_RESULT_TITLE_LOAD_FAILED;
 	}
@@ -594,4 +633,15 @@ static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle )
 	return TRUE;
 }
 
-
+#if 0
+void CheckDigest( void )
+{
+	int i;
+	for( i = 0; i < 4; i++ ) {
+		if( SYSMi_GetWork()->reloc_info[ i ].src ) {
+			
+		}else {
+		}
+	}
+}
+#endif

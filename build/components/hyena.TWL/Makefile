@@ -72,7 +72,8 @@ INSTALL_TARGETS	=	$(BINDIR)/$(TARGET_NAME).tef				\
 
 INSTALL_DIR		=	$(TWL_INSTALL_COMPONENTSDIR)/$(TARGET_NAME)/$(TWL_BUILDTYPE)
 
-LINCLUDES		= $(ROOT)/build/libraries/spi/ARM7/include
+LINCLUDES		= 	$(ROOT)/build/libraries/spi/ARM7/include \
+					$(SYSMENU_ROOT)/build/libraries_sysmenu/sysmenu/common/include
 LLIBRARIES		+= libwl_sp.TWL.LTD.a
 LDEPENDS_NEF	= $(TWL_LIBS) $(LLIBRARIES)
 

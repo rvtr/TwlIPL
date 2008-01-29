@@ -123,7 +123,7 @@ TwlSpMain(void)
 	
 	// [TODO:] カード電源ONして、ROMヘッダのみリード＆チェックくらいはやっておきたい
 	
-	SYSMi_GetWork()->isARM9Start = TRUE;				// [TODO:] HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
+	SYSMi_GetWork()->flags.common.isARM9Start = TRUE;				// [TODO:] HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
 	
     // ヒープ領域設定
     {
@@ -240,9 +240,9 @@ void ReadLauncherParameter( void )
 		( SYSMi_GetMCUFreeRegisterValue() == 0 ) ) {    // "JTAG有効"か"マイコンフリーレジスタ値=0"ならColdスタート
         u8 data = 1;
         MCU_SetFreeRegisters( MCU_RESET_VALUE_OFS, &data, MCU_RESET_VALUE_LEN );  // マイコンフリーレジスタにホットスタートフラグをセット
-        SYSMi_GetWork()->isHotStart = FALSE;
+        SYSMi_GetWork()->flags.common.isHotStart = FALSE;
     }else {
-        SYSMi_GetWork()->isHotStart = TRUE;
+        SYSMi_GetWork()->flags.common.isHotStart = TRUE;
         // ランチャーパラメータ有効判定
         if( ( STD_StrNCmp( (const char *)&SYSMi_GetLauncherParamAddr()->header.magicCode,
                              SYSM_LAUNCHER_PARAM_MAGIC_CODE,
@@ -252,7 +252,7 @@ void ReadLauncherParameter( void )
               ) {
             // ランチャーパラメータが有効なら、ワークに退避
             MI_CpuCopy32 ( SYSMi_GetLauncherParamAddr(), &SYSMi_GetWork()->launcherParam, sizeof(LauncherParam) );
-            SYSMi_GetWork()->isValidLauncherParam = TRUE;
+            SYSMi_GetWork()->flags.common.isValidLauncherParam = TRUE;
         }
     }
     // メインメモリのランチャーパラメータをクリアしておく

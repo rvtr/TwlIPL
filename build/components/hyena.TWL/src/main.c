@@ -37,6 +37,7 @@
 #include    <twl/hw/common/mmap_wramEnv.h>
 #include    <sysmenu.h>
 #include    "nvram_sp.h"
+#include    "internal_api.h"
 
 /*---------------------------------------------------------------------------*
     定数定義
@@ -112,6 +113,9 @@ TwlSpMain(void)
     OS_InitTick();
     PrintDebugInfo();
 
+	// PXIコールバックの設定
+	PXI_SetFifoRecvCallback( SYSMENU_PXI_FIFO_TAG, SYSMi_PXIFifoRecvCallback );
+
     // ランチャーパラメター取得（Cold/Hotスタート判定含む）
     ReadLauncherParameter();
 
@@ -123,7 +127,7 @@ TwlSpMain(void)
 
     // [TODO:] カード電源ONして、ROMヘッダのみリード＆チェックくらいはやっておきたい
 
-    SYSMi_GetWork()->isARM9Start = TRUE;                // [TODO:] HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
+    SYSMi_GetWork()->flags.common.isARM9Start = TRUE;                // [TODO:] HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
 
     // ヒープ領域設定
     {
@@ -247,7 +251,7 @@ static void ResetRTC( void )
         // リセット実行
         stat1.reset = 1;
         RTC_WriteStatus1( &stat1 );
-        SYSMi_GetWork()->isResetRTC = TRUE;
+        SYSMi_GetWork()->flags.common.isResetRTC = TRUE;
     }
 }
 
@@ -256,8 +260,8 @@ static void ResetRTC( void )
 void ReadLauncherParameter( void )
 {
     BOOL hot;
-    SYSMi_GetWork()->isValidLauncherParam = OS_ReadLauncherParameter( (LauncherParam *)&(SYSMi_GetWork()->launcherParam), &hot );
-    SYSMi_GetWork()->isHotStart = hot;
+    SYSMi_GetWork()->flags.common.isValidLauncherParam = OS_ReadLauncherParameter( (LauncherParam *)&(SYSMi_GetWork()->launcherParam), &hot );
+    SYSMi_GetWork()->flags.common.isHotStart = hot;
     // メインメモリのリセットパラメータをクリアしておく
     MI_CpuClear32( SYSMi_GetLauncherParamAddr(), 0x100 );
 }
@@ -618,7 +622,7 @@ extern u16 WMSP_GetAllowedChannel(u16 bitField);
  *---------------------------------------------------------------------------*/
 static void ReadUserInfo(void)
 {
-    u8 *p;
+    u8     *p = OS_GetSystemWork()->nvramUserInfo;
 
     // 無線MACアドレスをユーザー情報の後ろに展開
     {
@@ -668,3 +672,4 @@ VBlankIntr(void)
         PM_SelfBlinkProc();
     }
 }
+

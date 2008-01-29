@@ -127,7 +127,7 @@ static BOOL LoadTitle( NAMTitleId bootTitleID )
 		return FALSE;
 	}
 	
-	SYSMi_GetWork()->isLoadSucceeded = TRUE;
+	SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
     return TRUE;
 }
 
@@ -200,7 +200,7 @@ static void MenuScene(void)
 // èâä˙âª
 void ExecPreLoadedAppInit( void )
 {
-	ChangeUserColor( TSD_GetUserColor() );
+	ChangeUserColor( LCFG_TSD_GetUserColor() );
 	MenuInit();
 }
 

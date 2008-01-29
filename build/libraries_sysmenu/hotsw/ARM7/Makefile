@@ -31,7 +31,7 @@ INCDIR				=	./include
 
 SRCS				=	blowfish.c hotsw.c ds_blowfish_table.c dsCardType1.c dsCardType2.c romEmulation.c customNDma.c
 
-TARGET_LIB			=	libcardboot_sp$(TWL_LIBSUFFIX).a
+TARGET_LIB			=	libhotsw_sp$(TWL_LIBSUFFIX).a
 
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs

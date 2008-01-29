@@ -138,7 +138,7 @@ static BOOL TryResolveSrl(void)
         OS_TPrintf("Failed to load HWSecureInfo.\n");
         return FALSE;
     }
-    LCFG_THW_GetLauncherGameCode( (u8*)&titleId );
+    LCFG_THW_GetLauncherTitleID_Lo( (u8*)&titleId );
 
     // 4: after LCFG_ReadHWSecureInfo
     PUSH_PROFILE();

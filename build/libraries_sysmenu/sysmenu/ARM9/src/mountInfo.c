@@ -196,7 +196,7 @@ static void SYSMi_ModifySaveDataMount( LauncherBootType bootType, NAMTitleId tit
 		  ( titleID & TITLEID_MEDIA_NAND_FLAG ) ) ||
 		( ( bootType == LAUNCHER_BOOTTYPE_ROM ) &&				// ISデバッガ上で、NANDアプリがROM からブートされた時
 		  ( titleID & TITLEID_MEDIA_NAND_FLAG ) &&
-		  ( SYSMi_GetWork()->isOnDebugger ) )
+		  ( SYSMi_GetWork()->flags.common.isOnDebugger ) )
 		) {
 		char saveFilePath[ 2 ][ FS_ENTRY_LONGNAME_MAX ];
 		u32 saveDataSize[ 2 ];
@@ -240,7 +240,7 @@ static void SYSMi_ModifySaveDataMountForLauncher( LauncherBootType bootType, NAM
 		  ( titleID & TITLEID_MEDIA_NAND_FLAG ) ) ||
 		( ( bootType == LAUNCHER_BOOTTYPE_ROM ) &&			// ISデバッガ上で、NANDアプリがROM からブートされた時
 		  ( titleID & TITLEID_MEDIA_NAND_FLAG ) &&
-		  ( SYSMi_GetWork()->isOnDebugger ) )
+		  ( SYSMi_GetWork()->flags.common.isOnDebugger ) )
 		) {
 		char saveFilePath[ 2 ][ FS_ENTRY_LONGNAME_MAX ];
 		u32 saveDataSize[ 2 ];

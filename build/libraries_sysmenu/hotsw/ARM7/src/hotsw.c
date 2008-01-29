@@ -180,7 +180,7 @@ void HOTSW_Init(void)
     else{
 		OS_PutString("No Card...\n");
 #ifdef DEBUG_USED_CARD_SLOT_B_
-		SYSMi_GetWork()->is1stCardChecked  = TRUE;
+		SYSMi_GetWork()->flags.common.is1stCardChecked  = TRUE;
 #endif
     }
 }
@@ -297,8 +297,8 @@ BOOL HOTSW_Boot(void)
 				retval = FALSE;
 			}
 			
-			SYSMi_GetWork()->isExistCard = retval;
-			SYSMi_GetWork()->isCardStateChanged = TRUE;	// –{“–‚Í‘}”²’PˆÊ‚Å‚±‚±‚ð—§‚Ä‚éB
+			SYSMi_GetWork()->flags.common.isExistCard = retval;
+			SYSMi_GetWork()->flags.common.isCardStateChanged = TRUE;	// –{“–‚Í‘}”²’PˆÊ‚Å‚±‚±‚ð—§‚Ä‚éB
 			
 			(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );		// ARM9‚Æ”r‘¼§Œä‚·‚é
 			OS_ReleaseLockID( id );
@@ -376,10 +376,10 @@ BOOL HOTSW_Boot(void)
 
 	// [TODO:]Žb’èˆ’uB‚¿‚á‚ñ‚Æ‚µ‚½—¬‚ê‚ÅLauncher‘¤‚É“n‚·‚æ‚¤‚É‚·‚éB
 	MI_CpuCopy8( HOTSW_GetRomEmulationBuffer(), &SYSMi_GetWork()->romEmuInfo, ROM_EMULATION_DATA_SIZE );
-	SYSMi_GetWork()->isOnDebugger = s_cbData.debuggerFlg;
+	SYSMi_GetWork()->flags.common.isOnDebugger = s_cbData.debuggerFlg;
 	
 #ifdef DEBUG_USED_CARD_SLOT_B_
-	SYSMi_GetWork()->is1stCardChecked  = TRUE;
+	SYSMi_GetWork()->flags.common.is1stCardChecked  = TRUE;
 #endif
   
     return retval;
@@ -412,7 +412,7 @@ void HOTSW_LoadStaticModule(void)
             									  s_cbData.pBootSegBuf->rh.s.banner_offset,
 												  (u32 *)SYSM_CARD_BANNER_BUF,
 	                                              sizeof(TWLBannerFile) );
-		SYSMi_GetWork()->isValidCardBanner = TRUE;
+		SYSMi_GetWork()->flags.common.isValidCardBanner = TRUE;
 	}
 #endif
     

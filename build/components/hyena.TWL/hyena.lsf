@@ -56,9 +56,9 @@ Autoload WRAM
 				libmcu_sp$(LIBSUFFIX).a		\
 				libboot_sp$(LIBSUFFIX).a		\
 				libreboot_sp$(LIBSUFFIX).a	\
-				libcardboot_sp$(LIBSUFFIX).a	\
-				libreloc_info_sp$(LIBSUFFIX).a
-
+				libhotsw_sp$(LIBSUFFIX).a	\
+				libreloc_info_sp$(LIBSUFFIX).a \
+				libsysmenu_sp$(LIBSUFFIX).a
 
 	Library		libsdio_sp$(LIBSUFFIX).a
 

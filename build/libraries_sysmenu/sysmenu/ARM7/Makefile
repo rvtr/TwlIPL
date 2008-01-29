@@ -11,51 +11,35 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date:: 2007-10-03#$
-# $Rev: 1319 $
-# $Author: kitase_hirotake $
+# $Date::            $
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
 SUBDIRS			=	
 
-MYSUBDIRS		=	./
-
 #----------------------------------------------------------------------------
-TARGET_FIRM		=	SYSTEMMENU
-TARGET_PLATFORM	=	TWL
-TWL_ARCHGEN		=	LIMITED
-TWL_PROC	   	=	ARM9
+TARGET_FIRM			=	SYSTEMMENU
+TARGET_PLATFORM		=	TWL
+TWL_ARCHGEN			=	LIMITED
+TWL_PROC	   		=	ARM7
 
-SRCS			=	sysmenu_lib.c \
-					util.c \
-					ninLogoFunc.c \
-					mountInfo.c \
-					device.c \
-					title.c \
-					banner.c \
-					../common/src/pxi.c
+SRCS				=	../common/src/pxi.c
 
+TARGET_LIB			=	libsysmenu_sp$(TWL_LIBSUFFIX).a
 
-TARGET_LIB		=	libsysmenu$(TWL_LIBSUFFIX).a
-
-include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS		=	$(TARGETS)
 INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
 
-LINCLUDES		=	$(ROOT)/build/libraries/mb/common/include	\
-					$(ROOT)/build/libraries/spi/ARM9/include	\
-					$(SYSMENU_ROOT)/build/libraries_sysmenu/sysmenu/common/include
+LINCLUDES			=	$(SYSMENU_ROOT)/build/libraries_sysmenu/sysmenu/common/include
+
 
 #----------------------------------------------------------------------------
 
-do-build: $(MYSUBDIRS) $(TARGETS)
+do-build: $(TARGETS)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
-
-
-$(MYSUBDIRS)::
-#	$(MAKE) -C $@ -f MakeCrt0
 
 #===== End of Makefile =====

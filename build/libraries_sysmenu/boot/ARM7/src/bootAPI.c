@@ -213,7 +213,7 @@ BOOL BOOT_WaitStart( void )
 
 static void BOOTi_ClearREG_RAM( void )
 {
-	if( SYSMi_GetWork()->isCardBoot ) {
+	if( SYSMi_GetWork()->flags.common.isCardBoot ) {
 #ifdef DEBUG_USED_CARD_SLOT_B_
 		reg_MI_MC_SWP = 0x80;											// カードスロットのスワップ
 #endif

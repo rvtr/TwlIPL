@@ -605,7 +605,7 @@ static BOOL WriteHWSecureInfoFile( u8 region )
 	}
 	
 	// ランチャーゲームコード
-	LCFG_THW_SetLauncherGameCode( (const u8 *)strLauncherGameCode[ region ] );
+	LCFG_THW_SetLauncherTitleID_Lo( (const u8 *)strLauncherGameCode[ region ] );
 
 	// ライト
 	if( isWrite &&

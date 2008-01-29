@@ -181,7 +181,7 @@ static void MenuScene(void)
 // ‰Šú‰»
 void CooperationBInit( void )
 {
-	ChangeUserColor( TSD_GetUserColor() );
+	ChangeUserColor( LCFG_TSD_GetUserColor() );
 	s_parameter[0] = 0;
 	MenuInit();
 }
