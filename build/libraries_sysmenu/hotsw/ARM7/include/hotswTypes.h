@@ -23,7 +23,7 @@ extern "C" {
 
 
 // Define -------------------------------------------------------------------
-#define HOTSW_NO_MESSAGE                    // Printf抑制スイッチ
+//#define HOTSW_NO_MESSAGE                    // Printf抑制スイッチ
 
 #ifdef  HOTSW_NO_MESSAGE
 #ifndef SDK_FINALROM
@@ -94,7 +94,7 @@ extern "C" {
 #define START_SHIFT                         31
 #define START_MASK                          0x80000000
 
-#define SCRAMBLE_MASK                       0x00406000
+#define SCRAMBLE_MASK                       0x1840e000
 
 #define AddLatency2ToLatency1(param)\
     ( (((param) &  LATENCY2_MASK)   \

@@ -22,6 +22,7 @@
 
 // define data-----------------------------------------------------------------
 #define CARD_BANNER_INDEX			( LAUNCHER_TITLE_LIST_NUM - 1 )
+#define GAME_COMMAND_PARAM_INDEX	0x60
 
 // extern data-----------------------------------------------------------------
 // function's prototype-------------------------------------------------------
@@ -509,6 +510,8 @@ static void SYSMi_Relocate( void )
 		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_TWL_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 	}
+    // NTR-ROMヘッダバッファのゲームコマンドパラメータを上書きする
+    *(vu32 *)(HW_ROM_HEADER_BUF + GAME_COMMAND_PARAM_INDEX) = SYSMi_GetWork()->gameCommondParam;
 }
 
 

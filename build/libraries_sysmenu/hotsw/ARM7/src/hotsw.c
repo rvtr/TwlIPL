@@ -281,6 +281,10 @@ BOOL HOTSW_Boot(void)
             OS_TPrintf("Rom Emulation Data : 0x%04x\n",s_cbData.romEmuBuf[0]);
             if(s_cbData.debuggerFlg){
 				s_cbData.cardType = ROM_EMULATION;
+                SYSMi_GetWork()->gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
+            }
+            else{
+				SYSMi_GetWork()->gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param;
             }
             
 			// ROMヘッダCRCを算出してチェック。NintendoロゴCRCも確認。

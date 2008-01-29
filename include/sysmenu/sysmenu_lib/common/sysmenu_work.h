@@ -97,7 +97,8 @@ typedef struct SYSM_work {
 	OSLockWord		lockCardRsc;					// カードリソース排他制御用
 	int				cloneBootMode;
 	u32				nCardID;						// カードID
-	
+	u32				gameCommondParam;				// NTRのゲームコマンドパラメータ(NTRのROMヘッダのゲームコマンドパラメータに上書きする)
+    
 	LauncherParam	launcherParam;
 	ISD_RomEmuInfo	romEmuInfo;
 	
