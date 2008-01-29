@@ -300,7 +300,7 @@ static void
 InitializeFatfs(void)
 {
     // FATFSƒ‰ƒCƒuƒ‰ƒŠ‚Ì‰Šú‰»
-    if (FATFS_Init(FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
+    if (FATFS_Init(FATFS_DMA_NOT_USE, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
     {
         // do nothing
     }
