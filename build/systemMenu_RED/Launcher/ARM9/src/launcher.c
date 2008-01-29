@@ -60,6 +60,8 @@
 
 #define MAX_SHOW_BANNER			6
 
+#define MAX_LOAD_IMAGES			128
+
 // フェードアウト関係
 #define FADE_COUNT_PER_ALPHA	((FADE_COUNT_MAX - FADE_START) / ALPHA_MAX)
 #define FADE_COUNT_MAX			124
@@ -76,7 +78,6 @@ extern u16 bg_scr_data2[32 * 32];
 static void LoadBannerFiles( void );
 static void BannerInit( void );
 static void SetDefaultBanner( TitleProperty *titleprop );
-static void LoadBannerToVRAM( TitleProperty *titleprop );
 static void SetAffineAnimation( int cursor );
 static void BannerDraw(int cursor, int selected, TitleProperty *titleprop);
 static BOOL SelectCenterFunc( u16 *csr, TPData *tgt );
@@ -102,10 +103,7 @@ static u64	old_titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
 static TWLBannerFile *empty_banner;
 static TWLBannerFile *nobanner_banner;
 static TWLBannerFile *no_card_banner;
-static u8 image_index_list[ LAUNCHER_TITLE_LIST_NUM ];
 static GXOamAttr banner_oam_attr[MAX_SHOW_BANNER+10];// アフィンパラメータ埋める関係で少し大きめ
-static u8 *pbanner_image_list[ LAUNCHER_TITLE_LIST_NUM ];
-static int banner_count = 0;
 static int selected = 0;
 static int bar_left = BAR_ZERO_X;
 static fx32 s_selected_banner_size;
@@ -197,54 +195,6 @@ static void SetDefaultBanner( TitleProperty *titleprop )
 	}
 }
 
-// VRAMへのバナーイメージデータロード
-static void LoadBannerToVRAM( TitleProperty *titleprop )
-{
-	int l;
-    
-    // デフォルトバナーをTitlePropertyに埋め込み
-    SetDefaultBanner( titleprop );
-	
-    // TitlePropertyを見てVRAMにキャラクタデータをロード
-	for(l=0;l<LAUNCHER_TITLE_LIST_NUM;l++)
-	{
-		if(titleprop[l].titleID != old_titleIdArray[l])
-		{
-			// titleID変更されていたら、一からVRAMへのバナー画像ロードしなおし
-			banner_count = 0;
-			break;
-		}
-	}
-	for(l=0;l<LAUNCHER_TITLE_LIST_NUM;l++)
-	{
-		u8 m;
-		u8 *pban=((TWLBannerFile *)titleprop[l].pBanner)->v1.image;
-		for(m=0;m<banner_count;m++){
-			if(pban == pbanner_image_list[m]){
-				image_index_list[l]=m;
-				break;
-			}
-		}
-		if(m == banner_count)
-		{
-			if(banner_count<LAUNCHER_TITLE_LIST_NUM-1){
-				GX_LoadOBJ(pban, (u32)m*BNR_IMAGE_SIZE , BNR_IMAGE_SIZE);
-				pbanner_image_list[m] = pban;
-				banner_count++;
-				image_index_list[l]=m;
-			}
-			else
-			{	// バナー画像リストオーバー時は、titleIDが更新されずにバナーのみ入れ替わっている（アニメーション？）
-				// 下の実装では少し不安。一から全部ロードしなおすほうが安心。
-				GX_LoadOBJ(pban, (u32)image_index_list[l]*BNR_IMAGE_SIZE , BNR_IMAGE_SIZE);
-				pbanner_image_list[image_index_list[l]] = pban;
-			}
-		}
-		
-		old_titleIdArray[l] = titleprop[l].titleID;// 後の参照用
-	}
-}
-
 // アフィンパラメータの設定
 static void SetAffineAnimation( int cursor )
 {
@@ -269,7 +219,8 @@ static void SetAffineAnimation( int cursor )
 }
 
 // バナー関係の描画
-// 活線挿抜対応のため、毎回VRAMへのイメージデータロード判定をしている
+// 思ったよりVRAMへのロードが高速だったので、
+// 特に難しいことを考えず表示するイメージデータだけ毎フレームVRAMにロード
 static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 {
 	int l;
@@ -278,22 +229,29 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	static int fadecount = 0;
 	static int old_selected = -1;
 	
-	LoadBannerToVRAM( titleprop );
+	// デフォルトバナーをTitlePropertyに埋め込み
+    SetDefaultBanner( titleprop );
 
 	// アフィンパラメータだけ先に設定しておく
 	SetAffineAnimation( cursor );
 
-	// OAMデータを弄って位置など変更
+	// OAMデータ設定
 	for (l=0;l<MAX_SHOW_BANNER;l++)
 	{
 		int num = div1 - 2 + l;
 		if(-1 < num && num < LAUNCHER_TITLE_LIST_NUM){
-			banner_oam_attr[l].charNo = image_index_list[num]*4;
+			
 		    // パレットのロード
-		    // 必要なパレットが変わるので、毎度毎度入れ替え
 			GX_LoadOBJPltt( titleprop[num].pBanner->v1.pltt, (u16)(l * BNR_PLTT_SIZE), BNR_PLTT_SIZE );
 			G2_SetOBJMode(&banner_oam_attr[l], GX_OAM_MODE_NORMAL, l);
 			
+			// バナー画像のロード
+			GX_LoadOBJ(((TWLBannerFile *)titleprop[num].pBanner)->v1.image, (u32)l*BNR_IMAGE_SIZE , BNR_IMAGE_SIZE);
+
+			// 表示画像の設定、キャラクタネーム境界128バイトである事に注意
+			banner_oam_attr[l].charNo = l*4;
+			
+			// 位置およびエフェクトの設定
 			if(l == 2 || l == 3)	// 中央付近で大きくなったり小さくなったりする二つのバナー
 			{
 				G2_SetOBJEffect(&banner_oam_attr[l], GX_OAM_EFFECT_AFFINE_DOUBLE, l-2);
