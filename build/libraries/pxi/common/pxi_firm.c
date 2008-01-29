@@ -17,8 +17,8 @@
 #include  <twl/memorymap.h>
 #include  <firm/pxi.h>
 
-#define PXI_FIRM_ID_MAX     32
-#define PXI_FIRM_STREAM_MAX 32
+#define PXI_FIRM_ID_MAX     8
+#define PXI_FIRM_STREAM_MAX 16
 
 typedef struct
 {
@@ -39,9 +39,9 @@ static void PxiFirmStreamCallback( PXIFifoTag tag, u32 data, BOOL err )
     (void)err;
     if ( !work.length ) // stream is starting
     {
-        if ( work.length >= PXI_FIRM_STREAM_MAX )
+        if ( data > PXI_FIRM_STREAM_MAX )
         {
-            OS_TPrintf("Receiving stream has too large size (%d >= %d).\n", work.length, PXI_FIRM_STREAM_MAX);
+            OS_TPrintf("Receiving stream has too large size (%d > %d).\n", data, PXI_FIRM_STREAM_MAX);
         }
         work.length = data;
         work.current = 0;
@@ -231,7 +231,7 @@ FIRMPxiID PXI_RecvID( void )
  *---------------------------------------------------------------------------*/
 void PXIi_SendIDByIntf( u32 id )
 {
-	reg_PXI_INTF = (u16)(id << REG_PXI_INTF_SEND_SHIFT);
+    reg_PXI_INTF = (u16)(id << REG_PXI_INTF_SEND_SHIFT);
 }
 
 /*---------------------------------------------------------------------------*
@@ -245,7 +245,7 @@ void PXIi_SendIDByIntf( u32 id )
  *---------------------------------------------------------------------------*/
 u32 PXIi_RecvIDByIntf( void )
 {
-	return (u32)((reg_PXI_INTF & REG_PXI_INTF_RECV_MASK) >> REG_PXI_INTF_RECV_SHIFT);
+    return (u32)((reg_PXI_INTF & REG_PXI_INTF_RECV_MASK) >> REG_PXI_INTF_RECV_SHIFT);
 }
 
 /*---------------------------------------------------------------------------*
