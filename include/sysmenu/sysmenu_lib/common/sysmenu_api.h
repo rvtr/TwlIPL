@@ -71,12 +71,16 @@ typedef enum AuthResult {
 
 
 // global variable------------------------------------------------------
+#ifdef SDK_ARM9
 extern void *SYSM_Alloc( u32 size );
 extern void SYSM_Free( void *ptr );
 //extern void *(*SYSM_Alloc)( u32 size );			// ライブラリ内部使用
 //extern void  (*SYSM_Free)( void *ptr );			// 同上
+#endif
 
 // function-------------------------------------------------------------
+
+#ifdef SDK_ARM9
 
 // 初期化
 extern void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) );			// 初期化。
@@ -97,16 +101,6 @@ extern AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle );			// 指定
 extern void SYSM_CaribrateTP( void );											// タッチパネルキャリブレーション
 extern void SYSM_SetBackLightBrightness( u8 brightness );						// バックライトを制御（本体設定データへの値セーブも行う）
 
-// 状態チェック
-extern BOOL SYSM_IsExistCard( void );											// TWL/NTRカードが差さっているか？（アプリは未認証状態）
-extern BOOL SYSM_IsInspectCard( void );											// 検査カードが差さっているか？
-extern BOOL SYSM_IsTPReadable( void );											// TPリード可能か？
-extern BOOL SYSM_IsLogoDemoSkip( void );										// ロゴデモ飛ばし状態か？
-extern void SYSM_SetLogoDemoSkip( BOOL skip );									// ロゴデモ飛ばし状態フラグを設定する。
-extern BOOL SYSM_IsValidTSD( void );											// TWL設定データは有効か？
-extern void SYSM_SetValidTSD( BOOL valid );										// TWL設定データの有効／無効フラグを設定する。
-extern const LauncherParamBody *SYSM_GetLauncherParamBody( void );					// リセットパラメータの取得
-
 // Nintendoロゴ制御
 extern BOOL SYSM_CheckNintendoLogo( u16 *pLogoData );							// Nintendoロゴデータのチェック
 extern void SYSM_LoadNintendoLogo2D( u16 *pLogoData, u16 *pDst, int paletteColorIndex ); // NintendoロゴデータをOBJ_2D形式でロード（pTempBufferには0x700bytes必要)
@@ -118,6 +112,18 @@ extern BOOL SYSM_CheckRTCTime( RTCTime *pTime );								// 時刻が正常かチェック
 extern s64  SYSM_CalcRTCOffset( RTCDate *pNewDate, RTCTime *pNewTime );			// RTCオフセット計算とRTCへの日付時刻チェックを行う
 extern u32  SYSM_GetDayNum( u32 year, u32 month );								// 指定された年・月の日数を取得する
 extern BOOL SYSM_IsLeapYear100( u32 year );										// 指定された年がうるう年か調べる
+
+#endif
+
+// 状態チェック
+extern BOOL SYSM_IsExistCard( void );											// TWL/NTRカードが差さっているか？（アプリは未認証状態）
+extern BOOL SYSM_IsInspectCard( void );											// 検査カードが差さっているか？
+extern BOOL SYSM_IsTPReadable( void );											// TPリード可能か？
+extern BOOL SYSM_IsLogoDemoSkip( void );										// ロゴデモ飛ばし状態か？
+extern void SYSM_SetLogoDemoSkip( BOOL skip );									// ロゴデモ飛ばし状態フラグを設定する。
+extern BOOL SYSM_IsValidTSD( void );											// TWL設定データは有効か？
+extern void SYSM_SetValidTSD( BOOL valid );										// TWL設定データの有効／無効フラグを設定する。
+extern const LauncherParamBody *SYSM_GetLauncherParamBody( void );					// リセットパラメータの取得
 
 
 #ifdef __cplusplus

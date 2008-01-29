@@ -18,10 +18,7 @@
 #ifndef SYSM_SYSMENU_LIB_H_
 #define SYSM_SYSMENU_LIB_H_
 
-#ifdef SDK_ARM9
-#include <sysmenu/sysmenu_lib/ARM9/sysmenu_api.h>
-#endif // SDK_ARM9
-
+#include <sysmenu/sysmenu_lib/common/sysmenu_api.h>
 #include <sysmenu/sysmenu_lib/common/sysmenu_work.h>
 
 

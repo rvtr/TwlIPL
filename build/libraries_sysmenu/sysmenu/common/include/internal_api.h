@@ -62,8 +62,22 @@ void SYSMi_CheckRTC( void );
 // カードバナーリード（※NTR-IPL2仕様）
 BOOL SYSMi_ReadCardBannerFile( u32 bannerOffset, TWLBannerFile *pBanner );
 
+//-------------------------------------------------------
+// 活線挿抜
+//-------------------------------------------------------
+void SYSMi_EnableHotSW( BOOL enable );
+
+
 #endif
 
+
+//=======================================================
+//
+// ARM9/ARM7共通API
+//
+//=======================================================
+BOOL SYSMi_IsDebuggerBannerViewMode( void );
+BOOL SYSMi_CheckEntryAddress( void );
 BOOL SYSMi_SendPXICommand( SYSMPXICommand command );
 void SYSMi_PXIFifoRecvCallback( PXIFifoTag tag, u32 data, BOOL err );
 

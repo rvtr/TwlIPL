@@ -195,10 +195,27 @@ void HOTSW_Init(void)
  * ----------------------------------------------------------------- */
 BOOL HOTSW_Boot(void)
 {
+	OSTick start;
 	s32 tempLockID;
 	BOOL retval = TRUE;
 
-    OSTick start = OS_GetTick();
+	if( !SYSMi_GetWork()->flags.common.isEnableHotSW ) {
+		// [TODO:]ここのフラグセットは適当にしたので、あとでちゃんと流れを確認する。
+#ifdef DEBUG_USED_CARD_SLOT_B_
+	SYSMi_GetWork()->flags.common.is1stCardChecked  = TRUE;
+#endif
+		return TRUE;
+	}
+	
+	{
+		u16 id = (u16)OS_GetLockID();
+		(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
+		SYSMi_GetWork()->flags.common.isBusyHotSW = 1;
+		(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
+		OS_ReleaseLockID( id );
+	}
+	
+    start = OS_GetTick();
 
     // スロットがスワップされてたら元に戻す。
     if(reg_MI_MC1 & 0x8000){
@@ -385,7 +402,21 @@ BOOL HOTSW_Boot(void)
 #ifdef DEBUG_USED_CARD_SLOT_B_
 	SYSMi_GetWork()->flags.common.is1stCardChecked  = TRUE;
 #endif
-  
+
+	{
+		u16 id = (u16)OS_GetLockID();
+		(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
+		SYSMi_GetWork()->flags.common.isBusyHotSW = 0;
+		if( SYSMi_GetWork()->flags.arm9.reqChangeHotSW ) {
+			SYSMi_GetWork()->flags.common.isEnableHotSW = SYSMi_GetWork()->flags.arm9.nextHotSWStatus;
+			SYSMi_GetWork()->flags.arm9.reqChangeHotSW  = 0;
+			SYSMi_GetWork()->flags.arm9.nextHotSWStatus = 0;
+//			HOTSW_Finalize();
+		}
+		(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
+		OS_ReleaseLockID( id );
+	}
+
     return retval;
 }
 
@@ -972,6 +1003,7 @@ static void SetMCSCR(void)
 static void InterruptCallbackCard(void)
 {
     // Mを 10 から 11 に遷移
+	// [TODO:]削除予定
 	reg_MI_MC1 = (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | SLOT_STATUS_MODE_11);
     
     // カードブート用構造体の初期化

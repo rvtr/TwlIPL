@@ -25,9 +25,6 @@ extern void LCFG_VerifyAndRecoveryNTRSettings( void );
 
 // function's prototype-------------------------------------------------------
 static TitleProperty *SYSMi_CheckShortcutBoot( void );
-static BOOL SYSMi_IsDebuggerBannerViewMode( void );
-static int  SYSMi_IsValidCard( void );
-static BOOL SYSMi_CheckEntryAddress( void );
 static void SYSMi_CheckCardCloneBoot( void );
 
 // global variable-------------------------------------------------------------
@@ -64,7 +61,8 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
     OS_SetProtectionRegion( 2, SYSM_OWN_ARM7_MMEM_ADDR, 512KB );
 	
 	SYSM_SetAllocFunc( pAlloc, pFree );
-	PXI_SetFifoRecvCallback( SYSMENU_PXI_FIFO_TAG, SYSMi_PXIFifoRecvCallback );
+	
+	//	PXI_SetFifoRecvCallback( SYSMENU_PXI_FIFO_TAG, SYSMi_PXIFifoRecvCallback );
 	
 	reg_OS_PAUSE |= REG_OS_PAUSE_CHK_MASK;							// PAUSEレジスタのチェックフラグのセット
 }
@@ -243,134 +241,6 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 }
 
 
-// ランチャーパラメータの取得
-const LauncherParamBody *SYSM_GetLauncherParamBody( void )
-{
-	return (const LauncherParamBody *)&SYSMi_GetWork()->launcherParam.body;
-}
-
-
-// ロゴデモスキップかどうかをセット
-void SYSM_SetLogoDemoSkip( BOOL skip )
-{
-	SYSMi_GetWork()->flags.common.isLogoSkip = skip;
-}
-
-
-// ロゴデモスキップか？
-BOOL SYSM_IsLogoDemoSkip( void )
-{
-	return (BOOL)SYSMi_GetWork()->flags.common.isLogoSkip;
-}
-
-
-// ISデバッガのバナービューモード起動かどうか？
-static BOOL SYSMi_IsDebuggerBannerViewMode( void )
-{
-#ifdef __IS_DEBUGGER_BUILD
-	return ( SYSMi_GetWork()->flags.common.isOnDebugger &&
-			 SYSMi_IsValidCard() &&
-			 SYSM_GetCardRomHeader()->dbgRomSize == 0 ) ? TRUE : FALSE;
-#else
-	return FALSE;
-#endif	// __IS_DEBUGGER_BUILD
-}
-
-
-// TPリード可能状態か？
-BOOL SYSM_IsTPReadable( void )
-{
-	return TRUE;
-}
-
-
-// TSD有効/無効をセット
-void SYSM_SetValidTSD( BOOL valid )
-{
-	SYSMi_GetWork()->flags.common.isValidTSD = valid;
-}
-
-
-// TSD有効？
-BOOL SYSM_IsValidTSD( void )
-{
-	return (BOOL)SYSMi_GetWork()->flags.common.isValidTSD;
-}
-
-
-//======================================================================
-//
-//  各種チェック
-//
-//======================================================================
-
-// 有効なTWL/NTRカードが差さっているか？
-BOOL SYSM_IsExistCard( void )
-{
-	return (BOOL)SYSMi_GetWork()->flags.common.isExistCard;
-}
-
-
-// 検査用カードが差さっているか？
-BOOL SYSM_IsInspectCard( void )
-{
-	return ( SYSM_IsExistCard() && SYSM_GetCardRomHeader()->inspect_card );
-}
-
-
-// 有効なTWLカードが差さっているか？
-BOOL SYSM_IsTWLCard( void );
-BOOL SYSM_IsTWLCard( void )
-{
-	return ( SYSM_IsExistCard() && ( SYSM_GetCardRomHeader()->platform_code & PLATFORM_CODE_FLAG_TWL ) );
-}
-
-
-// 有効なNTRカードが差さっているか？
-BOOL SYSM_IsNTRCard( void );
-BOOL SYSM_IsNTRCard( void )
-{
-	return ( SYSM_IsExistCard() && ( SYSM_GetCardRomHeader()->platform_code == PLATFORM_CODE_NTR ) );
-}
-
-
-// NTR,TWLカード存在チェック 		「リターン　1：カード認識　0：カードなし」
-static int SYSMi_IsValidCard( void )
-{
-	if( ( SYSM_GetCardRomHeader()->nintendo_logo_crc16 == 0xcf56 ) &&
-	    ( SYSM_GetCardRomHeader()->header_crc16 == SYSMi_GetWork()->cardHeaderCrc16 ) ) {
-		return TRUE;												// NTR,TWLカードあり（NintendoロゴCRC、カードヘッダCRCが正しい場合）
-																	// ※Nintendoロゴデータのチェックは、特許の都合上、ロゴ表示ルーチン起動後に行います。
-	}else {
-		return FALSE;												// NTR,TWLカードなし
-	}
-}
-
-// エントリアドレスの正当性チェック
-static BOOL SYSMi_CheckEntryAddress( void )
-{
-	// エントリアドレスがROM内登録エリアかAGBカートリッジエリアなら、無限ループに入る。
-	if( !( ( (u32)SYSM_GetCardRomHeader()->main_entry_address >= HW_MAIN_MEM ) &&
-		   ( (u32)SYSM_GetCardRomHeader()->main_entry_address <  SYSM_ARM9_MMEM_ENTRY_ADDR_LIMIT )
-		 ) ||
-		!( ( ( (u32)SYSM_GetCardRomHeader()->sub_entry_address  >= HW_MAIN_MEM ) &&
-			 ( (u32)SYSM_GetCardRomHeader()->sub_entry_address  <  SYSM_ARM7_LOAD_MMEM_LAST_ADDR ) ) ||
-		   ( ( (u32)SYSM_GetCardRomHeader()->sub_entry_address  >= HW_WRAM    ) &&
-			 ( (u32)SYSM_GetCardRomHeader()->sub_entry_address  <  SYSM_ARM7_LOAD_WRAM_LAST_ADDR ) )
-		 )
-	 ) {
-		OS_TPrintf("entry address invalid.\n");
-#ifdef __DEBUG_SECURITY_CODE
-		DispSingleColorScreen( SCREEN_YELLOW );
-#endif
-		return FALSE;
-	}
-	OS_TPrintf("entry address valid.\n");
-	return TRUE;
-}
-
-
-
 // クローンブート判定
 static void SYSMi_CheckCardCloneBoot( void )
 {
@@ -378,10 +248,6 @@ static void SYSMi_CheckCardCloneBoot( void )
 	u8 	*buffp         = (u8 *)&pTempBuffer;
 	u32 total_rom_size = SYSM_GetCardRomHeader()->rom_valid_size ? SYSM_GetCardRomHeader()->rom_valid_size : 0x01000000;
 	u32 file_offset    = total_rom_size & 0xFFFFFE00;
-	
-	if( !SYSMi_IsValidCard() ) {
-		return;
-	}
 	
 	DC_FlushRange( buffp, BNR_IMAGE_SIZE );
 	CARD_ReadRom( 4, (void *)file_offset, buffp, BNR_IMAGE_SIZE );

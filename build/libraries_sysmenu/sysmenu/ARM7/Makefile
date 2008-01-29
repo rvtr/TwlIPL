@@ -24,7 +24,9 @@ TARGET_PLATFORM		=	TWL
 TWL_ARCHGEN			=	LIMITED
 TWL_PROC	   		=	ARM7
 
-SRCS				=	../common/src/pxi.c
+SRCDIR				=	../common/src
+SRCS				=	status.c \
+						pxi.c
 
 TARGET_LIB			=	libsysmenu_sp$(TWL_LIBSUFFIX).a
 

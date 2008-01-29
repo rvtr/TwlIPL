@@ -33,6 +33,7 @@ SRCS			=	sysmenu_lib.c \
 					device.c \
 					title.c \
 					banner.c \
+					../common/src/status.c \
 					../common/src/pxi.c
 
 

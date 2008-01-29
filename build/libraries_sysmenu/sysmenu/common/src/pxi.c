@@ -71,6 +71,7 @@ void SYSMi_PXIFifoRecvCallback( PXIFifoTag tag, u32 data, BOOL err )
 #pragma unused( tag, err )
 	SYSMPXIPacket packet;
 	packet.raw = data;
+#if 0
 	
 #ifdef SDK_ARM9
 	
@@ -112,5 +113,6 @@ void SYSMi_PXIFifoRecvCallback( PXIFifoTag tag, u32 data, BOOL err )
 		}
 	}
 #endif // SDK_ARM9
+#endif
 }
 

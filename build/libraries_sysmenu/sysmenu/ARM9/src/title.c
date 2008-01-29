@@ -28,6 +28,7 @@
 // function's prototype-------------------------------------------------------
 static BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, u8 *pDst );
 static s32  ReadFile( FSFile* pf, void* buffer, s32 size );
+static void SYSMi_EnableHotSW( BOOL enable );
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle );
 static void SYSMi_Relocate( void );
 static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle );
@@ -450,15 +451,6 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 }
 
 
-static void SYSMi_DisableHotSW( void )
-{
-	if( SYSMi_GetWork()->flags.arm7.isEnableHotSW &&
-		SYSMi_GetWork()->flags.arm9.isEnableHotSW ) {
-		return;
-	}
-	SYSMi_SendPXICommand( SYSM_PXI_COMM_DISABLE_HOTSW );
-}
-
 // 指定タイトルを別スレッドでロード開始する
 void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 {
@@ -466,7 +458,7 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 #define STACK_SIZE 0xc00
 	static u64 stack[ STACK_SIZE / sizeof(u64) ];
 	
-	SYSMi_DisableHotSW();
+	SYSMi_EnableHotSW( FALSE );
 	
 	// アプリ未ロード状態なら、ロード開始
 	if( !pBootTitle->flags.isAppLoadCompleted ) {
@@ -645,3 +637,35 @@ void CheckDigest( void )
 	}
 }
 #endif
+
+
+// 活線挿抜有効／無効をセット
+void SYSMi_EnableHotSW( BOOL enable )
+{
+	enable = enable ? 1 : 0;
+	
+	// 現在の値と同じなら何もせずリターン
+	if( SYSMi_GetWork()->flags.common.isEnableHotSW == enable ) {
+		return;
+	}
+	
+	{
+		u16 id = (u16)OS_GetLockID();
+		(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
+		if( !SYSMi_GetWork()->flags.common.isBusyHotSW ) {
+			// ARM7側がビジーでなければ、直接書き換え
+			SYSMi_GetWork()->flags.common.isEnableHotSW = enable;
+		}else {
+			// ARM7側がビジーなら、変更要求をしてARM7が値を書き換えてくれるのを待つ。
+			SYSMi_GetWork()->flags.arm9.reqChangeHotSW = 1;
+			SYSMi_GetWork()->flags.arm9.nextHotSWStatus = enable;
+		}
+		(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
+		OS_ReleaseLockID( id );
+	}
+	
+	// 値が変化するまでスリープして待つ。
+	while( SYSMi_GetWork()->flags.common.isEnableHotSW != enable ) {
+		OS_Sleep( 2 );
+	}
+}

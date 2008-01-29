@@ -114,7 +114,7 @@ TwlSpMain(void)
     PrintDebugInfo();
 
 	// PXIコールバックの設定
-	PXI_SetFifoRecvCallback( SYSMENU_PXI_FIFO_TAG, SYSMi_PXIFifoRecvCallback );
+//	PXI_SetFifoRecvCallback( SYSMENU_PXI_FIFO_TAG, SYSMi_PXIFifoRecvCallback );
 
     // ランチャーパラメター取得（Cold/Hotスタート判定含む）
     ReadLauncherParameter();
@@ -192,7 +192,17 @@ TwlSpMain(void)
     BOOT_Init();
 
     // 活栓挿抜機能初期化
-    // 【TODO:直接起動且つロード済みの場合、カードを読み込まないようにする事】
+	if( ( SYSM_GetLauncherParamBody()->v1.flags.isValid ) &&
+		( SYSM_GetLauncherParamBody()->v1.flags.bootType != LAUNCHER_BOOTTYPE_ROM ) &&
+		( SYSM_GetLauncherParamBody()->v1.bootTitleID )
+		) {
+		// ランチャーパラメータでダイレクトカードブート以外の指定がある時は、活線挿抜をOFFにする。
+		SYSMi_GetWork()->flags.common.isEnableHotSW = 0;
+	}else {
+		// それ以外の時は活線挿抜ON
+		SYSMi_GetWork()->flags.common.isEnableHotSW = 1;
+	}
+	
     HOTSW_Init();
 
     while (TRUE)
