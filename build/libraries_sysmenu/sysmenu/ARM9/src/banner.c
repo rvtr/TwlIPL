@@ -79,7 +79,7 @@ static BOOL SYSMi_CheckBannerFile( NTRBannerFile *pBanner )
 	BOOL retval = TRUE;
 	u16 calc_crc = 0xffff;
 	u16 *pHeaderCRC = (u16 *)&pBanner->h.crc16_v1;
-	BannerCheckParam bannerCheckList[ NTR_BNR_VER_MAX ];
+	BannerCheckParam bannerCheckList[ BANNER_VER_NTR_MAX ];
 	BannerCheckParam *pChk = &bannerCheckList[ 0 ];
 	
 	bannerCheckList[ 0 ].pSrc = (u8 *)&( pBanner->v1 );
@@ -89,7 +89,7 @@ static BOOL SYSMi_CheckBannerFile( NTRBannerFile *pBanner )
 	bannerCheckList[ 2 ].pSrc = (u8 *)&( pBanner->v3 );
 	bannerCheckList[ 2 ].size = sizeof( BannerFileV3 );
 	
-	for( i = 0; i < NTR_BNR_VER_MAX; i++ ) {
+	for( i = 0; i < BANNER_VER_NTR_MAX; i++ ) {
 		if( i < pBanner->h.version ) {
 			calc_crc = SVC_GetCRC16( calc_crc, pChk->pSrc, pChk->size );
 			if( calc_crc != *pHeaderCRC++ ) {

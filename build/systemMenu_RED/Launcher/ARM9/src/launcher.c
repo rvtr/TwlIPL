@@ -18,6 +18,7 @@
 #include <twl.h>
 #include "misc.h"
 #include "launcher.h"
+#include "bannerCounter.h"
 #include "sound.h"
 #include <math.h>
 
@@ -98,8 +99,6 @@ static int s_csr = 0;										// 画面中央座標と、リストの一番最初にあるバナーの
 															// 移動するのに必要なフレーム数で表すための変数
 static int csr_v = 0;										// s_csrの速度的変数
 
-static u64	old_titleIdArray[ LAUNCHER_TITLE_LIST_NUM ];
-
 static TWLBannerFile *empty_banner;
 static TWLBannerFile *nobanner_banner;
 static TWLBannerFile *no_card_banner;
@@ -108,6 +107,7 @@ static int selected = 0;
 static int bar_left = BAR_ZERO_X;
 static fx32 s_selected_banner_size;
 static BOOL s_wavstop = FALSE;
+static BannerCounter banner_counter[LAUNCHER_TITLE_LIST_NUM];
 
 //static StreamInfo strm; // stream info
 
@@ -144,11 +144,16 @@ static void BannerInit( void )
 	int l;
 	LoadBannerFiles();
 	
-	MI_CpuClearFast(old_titleIdArray, sizeof(old_titleIdArray) );
     MI_DmaFill32(3, banner_oam_attr, 192, sizeof(banner_oam_attr));     // let out of the screen if not display
 	
 	// OBJModeの設定
     GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_128K);     // 2D mapping mode
+    
+    // BannerCounterの初期化
+    for( l=0; l<LAUNCHER_TITLE_LIST_NUM; l++ )
+    {
+		BNC_initCounter( &banner_counter[l], empty_banner);
+	}
 	
 	//OBJATTRの初期化……表示前には値を弄る
 	for(l=0;l<MAX_SHOW_BANNER;l++)
@@ -218,6 +223,24 @@ static void SetAffineAnimation( int cursor )
 	G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[4]), &mtx);
 }
 
+static void SetBannerCounter( TitleProperty *titleprop )
+{
+	int l;
+	for( l=0; l<LAUNCHER_TITLE_LIST_NUM; l++ )
+	{
+		// nandも一応毎回セット
+		BNC_setBanner( &banner_counter[l], titleprop[l].pBanner);
+		if( l==0 )
+		{
+			// カードの場合、バナーヘッダのv1のCRCが違ったらカウントをリセット
+			if ( BNC_getBanner( &banner_counter[l] )->h.crc16_v1 != titleprop[l].pBanner->h.crc16_v1)
+			{
+				BNC_resetCount( &banner_counter[l] );
+			}
+		}
+	}
+}
+
 // バナー関係の描画
 // 思ったよりVRAMへのロードが高速だったので、
 // 特に難しいことを考えず表示するイメージデータだけ毎フレームVRAMにロード
@@ -234,19 +257,24 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 
 	// アフィンパラメータだけ先に設定しておく
 	SetAffineAnimation( cursor );
+	
+	// バナーカウンタのバナーセット
+	SetBannerCounter( titleprop );
 
 	// OAMデータ設定
 	for (l=0;l<MAX_SHOW_BANNER;l++)
 	{
 		int num = div1 - 2 + l;
 		if(-1 < num && num < LAUNCHER_TITLE_LIST_NUM){
+			// バナーカウンタからフレームデータを取得し、カウンタをインクリメント
+			FrameAnimeData fad = BNC_getFADAndIncCount( &banner_counter[num] );
 			
 		    // パレットのロード
-			GX_LoadOBJPltt( titleprop[num].pBanner->v1.pltt, (u16)(l * BNR_PLTT_SIZE), BNR_PLTT_SIZE );
+			GX_LoadOBJPltt( fad.pltt, (u16)(l * BANNER_PLTT_SIZE), BANNER_PLTT_SIZE );
 			G2_SetOBJMode(&banner_oam_attr[l], GX_OAM_MODE_NORMAL, l);
 			
 			// バナー画像のロード
-			GX_LoadOBJ(((TWLBannerFile *)titleprop[num].pBanner)->v1.image, (u32)l*BNR_IMAGE_SIZE , BNR_IMAGE_SIZE);
+			GX_LoadOBJ( fad.image, (u32)l*BANNER_IMAGE_SIZE , BANNER_IMAGE_SIZE);
 
 			// 表示画像の設定、キャラクタネーム境界128バイトである事に注意
 			banner_oam_attr[l].charNo = l*4;
@@ -275,7 +303,7 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 	// アプリ名表示
 	if(selected != old_selected)
 	{
-		NNSG2dChar *str = ((TWLBannerFile *)titleprop[selected].pBanner)->v1.comment[ LCFG_TSD_GetLanguage() ];
+		NNSG2dChar *str = ((TWLBannerFile *)titleprop[selected].pBanner)->v1.gameName[ LCFG_TSD_GetLanguage() ];
 		NNSG2dTextRect rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, str );
 		NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL, 0, 24, WINDOW_WIDTH, 32 );
 		PutStringUTF16( (WINDOW_WIDTH-rect.width)>>1, TITLE_V_CENTER - (rect.height>>1), TXT_COLOR_BLACK, str );

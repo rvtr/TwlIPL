@@ -664,8 +664,8 @@ BOOL WithinRangeTP( int top_x, int top_y, int bottom_x, int bottom_y, TPData *tg
 // バナーアイコンOBJのロード
 void SetBannerIconOBJ( GXOamAttr *pDstOAM, BannerFileV1 *bannerp )
 {
-	GXS_LoadOBJPltt( bannerp->pltt, 15, BNR_PLTT_SIZE );
-	MI_CpuCopyFast(  bannerp->image, (void *)(HW_DB_OBJ_VRAM + 0x20), BNR_IMAGE_SIZE );
+	GXS_LoadOBJPltt( bannerp->pltt, 15, BANNER_PLTT_SIZE );
+	MI_CpuCopyFast(  bannerp->image, (void *)(HW_DB_OBJ_VRAM + 0x20), BANNER_IMAGE_SIZE );
 	G2_SetOBJAttr(  pDstOAM,										// OAM pointer
 					32,												// X position
 					32,												// Y position

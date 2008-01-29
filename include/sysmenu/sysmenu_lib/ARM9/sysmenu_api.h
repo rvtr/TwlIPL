@@ -21,7 +21,7 @@
 #include <twl.h>
 #include <twl/nam.h>
 #include <twl/os/common/format_rom.h>
-#include <sysmenu/banner.h>
+#include <twl/os/common/banner.h>
 #include <sysmenu/sysmenu_lib/common/sysmenu_work.h>
 #include <sysmenu/reloc_info/common/reloc_info.h>
 

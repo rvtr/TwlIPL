@@ -26,9 +26,9 @@
 #include <twl.h>
 #include <twl/os/common/format_rom.h>
 #include <twl/hw/common/mmap_parameter.h>
+#include <twl/os/common/banner.h>
 #include <twl/lcfg.h>
 #include <sysmenu/sysmenu_lib.h>
-#include <sysmenu/banner.h>
 #include <sysmenu/boot.h>
 #include <sysmenu/memorymap.h>
 #include <sysmenu/hotsw.h>
