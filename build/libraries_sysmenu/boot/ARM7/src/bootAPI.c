@@ -178,16 +178,22 @@ BOOL BOOT_WaitStart( void )
 			else
 			{
 				target = REBOOT_TARGET_DS_APP;
-				CDC_GoDsMode();
-				// DSサウンド：DSP = 8:0
-				// 32KHz
-				reg_SND_SMX_CNT = REG_SND_SMX_CNT_MIX_RATE_MASK |
-								  REG_SND_SMX_CNT_E_MASK;
 			}
 			
             if ( target == REBOOT_TARGET_DS_APP || target == REBOOT_TARGET_DS_WIFI )
             {
                 ds = TRUE;
+            }
+
+            if ( ds || th->s.codec_mode == OS_CODECMODE_NITRO )
+            {
+				// I2S停止（MCLKは動作継続）
+				reg_SND_SMX_CNT &= ~REG_SND_SMX_CNT_E_MASK;
+				CDC_GoDsMode();
+				// DSサウンド：DSP = 8:0
+				// 32KHz
+				reg_SND_SMX_CNT = REG_SND_SMX_CNT_MIX_RATE_MASK |
+								  REG_SND_SMX_CNT_E_MASK;
             }
 
 #ifdef FIRM_USE_TWLSDK_KEYS
