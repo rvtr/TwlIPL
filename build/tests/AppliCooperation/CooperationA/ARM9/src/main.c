@@ -70,7 +70,7 @@ void TwlMain(void)
 	//   初回起動シーケンスに入るパスがある
 	
 	// TWL設定のリード
-	SYSM_SetAllocFunc( Alloc, Free );								// SYSM_ReadTWLSettingsFile()の実行に必要。
+	SYSM_SetAllocFunc( Alloc, Free );								// LCFG_ReadTWLSettings()の実行に必要。
 	
 	// ::::::::::::::::::::::::::::::::::::::::::::::
 	// TWL設定データファイルの読み込み
