@@ -212,6 +212,7 @@ void InitBG(void)
 		
 		MI_CpuClearFast( (void *)HW_BG_VRAM,   0x20000 );			// BG -VRAM クリア
 		MI_CpuClearFast( (void *)HW_OBJ_VRAM,  0x20000 );			// OBJ-VRAM クリア
+		MI_DmaFill32( 3, (void *)HW_OAM, 192, HW_OAM_SIZE );		// OAM      クリア
 		
 		// カラーパレットを設定
 	    GX_LoadBGPltt( TXTColorPalette, 0, sizeof(TXTColorPalette) );
