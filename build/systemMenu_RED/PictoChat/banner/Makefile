@@ -20,8 +20,9 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 ICON_DIR			= ./icon
 
-BANNER_ICON			= $(ICON_DIR)/gameIcon.bmp
-BANNER_SPEC			= banner_v3.bsf
+BANNER_SPEC			= test-utf16_v3.TWL.bsf
+
+MAKEBANNER	=	$(TWL_TOOLSDIR)/bin/makebanner.TWL.exe
 
 TARGETS				= banner.bnr
 INSTALL_DIR			= ./
@@ -30,9 +31,6 @@ INSTALL_TARGETS		= $(TARGETS)
 BANNER_ICON_NAME	= $(basename $(BANNER_ICON))
 
 LDIRT_CLEAN			= $(TARGETS) \
-					  $(BANNER_ICON_NAME).nbfs \
-					  $(BANNER_ICON_NAME).nbfc \
-					  $(BANNER_ICON_NAME).nbfp \
 					  $(TARGETS:.bnr=.srl)
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
@@ -42,8 +40,7 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 #----------------------------------------------------------------------------
 do-build:		$(TARGETS)
 
-$(TARGETS):		$(BANNER_SPEC) $(BANNER_ICON)
-				$(NTEXCONV) -no -bg -bgb -bgnc $(BANNER_ICON) >/dev/null && \
-				$(MAKEBANNER) -d -N $(BANNER_ICON_NAME) $(BANNER_SPEC) $(TARGETS)
+$(TARGETS):		$(BANNER_SPEC)
+				$(MAKEBANNER) -d -p TWL $(BANNER_SPEC) $(TARGETS)
 
 #

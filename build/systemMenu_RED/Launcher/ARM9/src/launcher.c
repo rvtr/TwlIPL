@@ -79,8 +79,10 @@ extern u16 bg_scr_data2[32 * 32];
 static void LoadBannerFiles( void );
 static void BannerInit( void );
 static void SetDefaultBanner( TitleProperty *titleprop );
-static void SetAffineAnimation( int cursor );
-static void BannerDraw(int cursor, int selected, TitleProperty *titleprop);
+static void SetAffineAnimation( BOOL (*flipparam)[4] );
+static void SetBannerCounter( TitleProperty *titleprop );
+static void SetOAMAttr( void );
+static void BannerDraw( int selected, TitleProperty *titleprop);
 static BOOL SelectCenterFunc( u16 *csr, TPData *tgt );
 static BOOL SelectFunc( u16 *csr, TPData *tgt );
 static void ProcessBackLightPads( void );
@@ -200,27 +202,33 @@ static void SetDefaultBanner( TitleProperty *titleprop )
 	}
 }
 
-// アフィンパラメータの設定
-static void SetAffineAnimation( int cursor )
+// 中央2枚(banner_oam_attr[2],banner_oam_attr[3])のバナーのアフィンパラメータの設定
+// flipparamは左h,左v,右h,右vの順序
+static void SetAffineAnimation( BOOL (*flipparam)[4] )
 {
 	MtxFx22 mtx;
 	static double wav;
-	if(cursor%FRAME_PER_SELECT == 0){			// 適当に波打たせてみる
+	fx32 param;
+	
+	if(s_csr%FRAME_PER_SELECT == 0){			// 適当に波打たせてみる
 		double s = sin(wav);
 		s_selected_banner_size = FX32_HALF - (long)( 0x80 * ( s - 1 ) );
-		mtx._00 = s_selected_banner_size;
+		param = s_selected_banner_size;
 		if(!s_wavstop) wav += 0.1;
 	}else{										// 適当に大きさを変えてみる
-		mtx._00 = FX32_HALF + FX32_HALF*(cursor%FRAME_PER_SELECT)/FRAME_PER_SELECT;
+		param = FX32_HALF + FX32_HALF*(s_csr%FRAME_PER_SELECT)/FRAME_PER_SELECT;
 		wav = 0;
 	}
+	
+	mtx._00 = param * ( (*flipparam)[0] ? -1 : 1 );
 	mtx._01 = 0;
 	mtx._10 = 0;
-	mtx._11 = mtx._00;
-	G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[0]), &mtx);
-	mtx._00 = FX32_ONE - FX32_HALF*(cursor%FRAME_PER_SELECT)/FRAME_PER_SELECT;
-	mtx._11 = mtx._00;
-	G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[4]), &mtx);
+	mtx._11 = param * ( (*flipparam)[1] ? -1 : 1 );
+	G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[0]), &mtx);// 中央左のバナー
+	param = FX32_ONE - FX32_HALF*(s_csr%FRAME_PER_SELECT)/FRAME_PER_SELECT;
+	mtx._00 = param * ( (*flipparam)[2] ? -1 : 1 );
+	mtx._11 = param * ( (*flipparam)[3] ? -1 : 1 );
+	G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[4]), &mtx);// 中央右のバナー
 }
 
 static void SetBannerCounter( TitleProperty *titleprop )
@@ -241,27 +249,14 @@ static void SetBannerCounter( TitleProperty *titleprop )
 	}
 }
 
-// バナー関係の描画
-// 思ったよりVRAMへのロードが高速だったので、
-// 特に難しいことを考えず表示するイメージデータだけ毎フレームVRAMにロード
-static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
+// OAMデータの設定
+static void SetOAMAttr( void )
 {
 	int l;
-	int div1 = cursor / FRAME_PER_SELECT;
-	int div2 = cursor % FRAME_PER_SELECT;
-	static int fadecount = 0;
-	static int old_selected = -1;
-	
-	// デフォルトバナーをTitlePropertyに埋め込み
-    SetDefaultBanner( titleprop );
+	int div1 = s_csr / FRAME_PER_SELECT;
+	int div2 = s_csr % FRAME_PER_SELECT;
+	BOOL flipparam[4];
 
-	// アフィンパラメータだけ先に設定しておく
-	SetAffineAnimation( cursor );
-	
-	// バナーカウンタのバナーセット
-	SetBannerCounter( titleprop );
-
-	// OAMデータ設定
 	for (l=0;l<MAX_SHOW_BANNER;l++)
 	{
 		int num = div1 - 2 + l;
@@ -280,23 +275,68 @@ static void BannerDraw(int cursor, int selected, TitleProperty *titleprop)
 			banner_oam_attr[l].charNo = l*4;
 			
 			// 位置およびエフェクトの設定
-			if(l == 2 || l == 3)	// 中央付近で大きくなったり小さくなったりする二つのバナー
+			if(l == 2 || l == 3)
 			{
+				// 中央付近で大きくなったり小さくなったりする二つのバナー
 				G2_SetOBJEffect(&banner_oam_attr[l], GX_OAM_EFFECT_AFFINE_DOUBLE, l-2);
 				G2_SetOBJPosition(&banner_oam_attr[l],
 									BANNER_FAR_LEFT_POS - BANNER_WIDTH/2 + l*(BANNER_WIDTH + BANNER_INTERVAL) - div2 * DOT_PER_FRAME,
 									BANNER_TOP - BANNER_HEIGHT/2 );
+				flipparam[(l-2)*2] = fad.hflip;// フリップ情報は一旦保存
+				flipparam[(l-2)*2+1] = fad.vflip;
 			}
-			else					// その他のバナー
+			else
 			{
+				// その他のバナー
+				GXOamEffect effect = GX_OAM_EFFECT_NONE;
+				if( fad.vflip )
+				{
+					if( fad.hflip )
+					{
+						effect = GX_OAM_EFFECT_FLIP_HV;
+					}
+					else
+					{
+						effect = GX_OAM_EFFECT_FLIP_V;
+					}
+				}
+				else if( fad.hflip )
+				{
+					effect = GX_OAM_EFFECT_FLIP_H;
+				}
 				banner_oam_attr[l].x = BANNER_FAR_LEFT_POS + l*(BANNER_WIDTH + BANNER_INTERVAL) - div2 * DOT_PER_FRAME;
-				G2_SetOBJEffect(&banner_oam_attr[l],GX_OAM_EFFECT_NONE,0);
+				
+				G2_SetOBJEffect(&banner_oam_attr[l],effect,0);
 			}
 		}else
 		{
+			// そのoamが担当する場所にはバナーがない
 			G2_SetOBJEffect(&banner_oam_attr[l],GX_OAM_EFFECT_NODISPLAY,0);
 		}
 	}
+	
+	// アフィンパラメータの設定
+	SetAffineAnimation( &flipparam );
+}
+
+// バナー関係の描画
+// 思ったよりVRAMへのロードが高速だったので、
+// 特に難しいことを考えず表示するイメージデータだけ毎フレームVRAMにロード
+static void BannerDraw(int selected, TitleProperty *titleprop)
+{
+	static int fadecount = 0;
+	static int old_selected = -1;
+	
+	// デフォルトバナーをTitlePropertyに埋め込み
+    SetDefaultBanner( titleprop );
+	
+	// バナーカウンタのバナーセット
+	SetBannerCounter( titleprop );
+	
+	// OAMデータの設定
+	SetOAMAttr();
+	
+	// OAMをVRAMへロード
 	DC_FlushRange(&banner_oam_attr, sizeof(banner_oam_attr));
 	GX_LoadOAM(&banner_oam_attr, 0, sizeof(banner_oam_attr));
 	
@@ -377,7 +417,7 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
 	DrawScrollBar( pTitleList );
 	
 	#ifdef DBGBNR
-	BannerDraw( s_csr, selected, pTitleList );
+	BannerDraw( selected, pTitleList );
 	#endif
 	
 	// 描画少し追加
@@ -662,7 +702,7 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	DrawScrollBar( pTitleList );
 	
 	#ifdef DBGBNR
-	BannerDraw( s_csr, selected, pTitleList );
+	BannerDraw( selected, pTitleList );
 	#endif
 	
 	// RTC情報の取得＆表示

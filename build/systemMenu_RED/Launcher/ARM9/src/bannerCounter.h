@@ -29,7 +29,8 @@ extern "C" {
 
 typedef struct BannerCounter
 {
-	u32 count;
+	u32 control;
+	u8 count;
 	TWLBannerFile *banner;
 }
 BannerCounter;
@@ -49,12 +50,7 @@ FrameAnimeData;
 static inline void BNC_resetCount( BannerCounter *c )
 {
 	c->count = 0;
-}
-
-static inline void BNC_initCounter( BannerCounter *c, TWLBannerFile *b)
-{
-	c->banner = b;
-	c->count = 0;
+	c->control = 0;
 }
 
 static inline void BNC_setBanner( BannerCounter *c, TWLBannerFile *b)
@@ -62,16 +58,18 @@ static inline void BNC_setBanner( BannerCounter *c, TWLBannerFile *b)
 	c->banner = b;
 }
 
+static inline void BNC_initCounter( BannerCounter *c, TWLBannerFile *b)
+{
+	BNC_setBanner( c, b );
+	BNC_resetCount( c );
+}
+
 static inline TWLBannerFile* BNC_getBanner( BannerCounter *c )
 {
 	return c->banner;
 }
 
-static inline void BNC_incrementCount( BannerCounter *c )
-{
-	c->count++;
-}
-
+void BNC_incrementCount( BannerCounter *c );
 FrameAnimeData BNC_getFAD( BannerCounter *c );
 FrameAnimeData BNC_getFADAndIncCount( BannerCounter *c );
 
