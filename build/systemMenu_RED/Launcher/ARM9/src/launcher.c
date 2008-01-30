@@ -209,6 +209,7 @@ static void SetAffineAnimation( BOOL (*flipparam)[4] )
 	MtxFx22 mtx;
 	static double wav;
 	fx32 param;
+	u32 x,y;
 	
 	if(s_csr%FRAME_PER_SELECT == 0){			// 適当に波打たせてみる
 		double s = sin(wav);
@@ -220,15 +221,24 @@ static void SetAffineAnimation( BOOL (*flipparam)[4] )
 		wav = 0;
 	}
 	
+	// 中央左のバナー
 	mtx._00 = param * ( (*flipparam)[0] ? -1 : 1 );
 	mtx._01 = 0;
 	mtx._10 = 0;
 	mtx._11 = param * ( (*flipparam)[1] ? -1 : 1 );
-	G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[0]), &mtx);// 中央左のバナー
+	G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[0]), &mtx);
+	// アフィンでの反転時はアルゴリズムの関係で位置補正が必要……
+	G2_GetOBJPosition(&banner_oam_attr[2], &x, &y);
+	G2_SetOBJPosition(&banner_oam_attr[2], (int)x-( mtx._00==-FX32_ONE ? 1 : 0 ), (int)y-( mtx._11==-FX32_ONE ? 1 : 0 ));
+
+	// 中央右のバナー
 	param = FX32_ONE - FX32_HALF*(s_csr%FRAME_PER_SELECT)/FRAME_PER_SELECT;
 	mtx._00 = param * ( (*flipparam)[2] ? -1 : 1 );
 	mtx._11 = param * ( (*flipparam)[3] ? -1 : 1 );
-	G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[4]), &mtx);// 中央右のバナー
+	G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[4]), &mtx);
+	// アフィンでの反転時はアルゴリズムの関係で位置補正が必要……
+	G2_GetOBJPosition(&banner_oam_attr[3], &x, &y);
+	G2_SetOBJPosition(&banner_oam_attr[3], (int)x-( mtx._00==-FX32_ONE ? 1 : 0 ), (int)y-( mtx._11==-FX32_ONE ? 1 : 0 ));
 }
 
 static void SetBannerCounter( TitleProperty *titleprop )
