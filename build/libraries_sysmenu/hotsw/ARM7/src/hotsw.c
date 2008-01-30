@@ -233,9 +233,6 @@ BOOL HOTSW_Boot(void)
     
 #endif
     
-	// セキュア領域の読み込みセグメント先頭番号(Segment4 ～ Segment7)
-    s_cbData.secureSegNum = 4;
-
 	// バッファを設定
     s_cbData.pBootSegBuf   = s_pBootSegBuffer;
     s_cbData.pSecureSegBuf = s_pSecureSegBuffer;

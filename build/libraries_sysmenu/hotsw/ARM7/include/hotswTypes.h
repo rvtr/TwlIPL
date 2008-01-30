@@ -239,8 +239,6 @@ typedef struct CardBootData{
     u32                 romEmuBuf[ROM_EMULATION_DATA_SIZE/sizeof(u32)];
     u32                 keyBuf[KEY_BUF_SIZE];
 
-    u64                 secureSegNum;
-
     CardTypeEx          cardType;
 
     BootSegmentData     *pBootSegBuf;
