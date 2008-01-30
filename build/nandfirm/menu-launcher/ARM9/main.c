@@ -108,6 +108,9 @@ static void PreInit(void)
     {
         OS_Terminate();
     }
+
+    // ブートタイプの変更
+    ( (OSBootInfo *)OS_GetBootInfo() )->boot_type = OS_BOOTTYPE_NAND;
 }
 
 /***************************************************************
@@ -139,7 +142,6 @@ static BOOL TryResolveSrl(void)
         return FALSE;
     }
     LCFG_THW_GetLauncherTitleID_Lo( (u8*)&titleId );
-
     // 4: after LCFG_ReadHWSecureInfo
     PUSH_PROFILE();
 
@@ -176,7 +178,7 @@ static BOOL CheckHeader(void)
 {
     static ROM_Header_Short* const rhs = (ROM_Header_Short*)HW_TWL_ROM_HEADER_BUF;
     // イニシャルコードなど
-    OS_TPrintf("Initial Code        : %08X\n", *(u32*)rhs->game_code);
+    OS_TPrintf("Initial Code        : %08X (%.4s)\n", *(u32*)rhs->game_code, rhs->game_code);
     OS_TPrintf("Platform Code       : %02X\n", rhs->platform_code);
     OS_TPrintf("Codec Mode          : %s\n", rhs->codec_mode ? "TWL" : "NITRO");
     OS_TPrintf("Sigunature          : %s\n", rhs->enable_signature ? "AVAILABLE" : "NOT AVAILABLE");
@@ -262,12 +264,12 @@ void TwlMain( void )
     OS_InitFIRM();
     OS_EnableIrq();
     OS_EnableInterrupts();
-
 #ifdef PROFILE_ENABLE
+    // 2: before OS_InitTick
+    profile[pf_cnt++] = OS_TicksToMicroSecondsBROM32(OS_GetTick());
+
     OS_InitTick();
 #endif
-    // 2: after PXI
-    PUSH_PROFILE();
 
     PostInit();
     // 3: after PostInit
@@ -337,7 +339,6 @@ void TwlMain( void )
     }
 #endif
 
-    ( (OSBootInfo *)OS_GetBootInfo() )->boot_type = OS_BOOTTYPE_NAND;
     OS_BootFromFIRM();
 
 end:

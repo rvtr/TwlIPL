@@ -45,7 +45,8 @@ LLIBRARIES	+=	libes.TWL$(ARCHGEN_TYPE).a libboc.TWL$(ARCHGEN_TYPE).a
 else
 LLIBRARIES	+=	../Release/libes.TWL$(ARCHGEN_TYPE).a ../Release/libboc.TWL$(ARCHGEN_TYPE).a
 endif
-LLIBRARIES	+=	liblcfg$(TWL_LIBSUFFIX).a
+LLIBRARIES	+=	liblcfg$(TWL_LIBSUFFIX).a \
+			libaes_private$(TWL_LIBSUFFIX).a
 
 #----------------------------------------------------------------------------
 

@@ -74,7 +74,8 @@ u32 pf_cnt = 0;
 #ifdef PRINT_MEMORY_ADDR
 static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
 #undef OS_TPrintf
-#define OS_TPrintf(...) (debugPtr = (char*)((u32)(debugPtr + STD_TSPrintf(debugPtr, __VA_ARGS__) + 0xf) & ~0xf))
+//#define OS_TPrintf(...) (debugPtr = (char*)((u32)(debugPtr + STD_TSPrintf(debugPtr, __VA_ARGS__) + 0xf) & ~0xf))
+#define OS_TPrintf(...) (debugPtr += STD_TSPrintf(debugPtr, __VA_ARGS__))
 #endif
 
 /***************************************************************
@@ -108,6 +109,9 @@ static void PreInit(void)
     {
         OS_Terminate();
     }
+
+    // ブートタイプの変更
+    ( (OSBootInfo *)OS_GetBootInfo() )->boot_type = OS_BOOTTYPE_NAND;
 }
 
 /***************************************************************
@@ -121,7 +125,7 @@ static void PostInit(void)
     // RSA用ヒープ設定
     SVC_InitSignHeap( &acPool, acHeap, sizeof(acHeap) );
     // HMAC用鍵準備
-    FS_SetDigestKey( NULL );
+    FS2_SetDigestKey( NULL );
     // FS/FATFS初期化
     FS_InitFIRM();
 }
@@ -176,7 +180,7 @@ static BOOL CheckHeader(void)
 {
     static ROM_Header_Short* const rhs = (ROM_Header_Short*)HW_TWL_ROM_HEADER_BUF;
     // イニシャルコードなど
-    OS_TPrintf("Initial Code        : %08X\n", *(u32*)rhs->game_code);
+    OS_TPrintf("Initial Code        : %08X (%.4s)\n", *(u32*)rhs->game_code, rhs->game_code);
     OS_TPrintf("Platform Code       : %02X\n", rhs->platform_code);
     OS_TPrintf("Codec Mode          : %s\n", rhs->codec_mode ? "TWL" : "NITRO");
     OS_TPrintf("Sigunature          : %s\n", rhs->enable_signature ? "AVAILABLE" : "NOT AVAILABLE");
@@ -265,12 +269,12 @@ void TwlMain( void )
     OS_InitFIRM();
     OS_EnableIrq();
     OS_EnableInterrupts();
-
 #ifdef PROFILE_ENABLE
+    // 2: before OS_InitTick
+    profile[pf_cnt++] = OS_TicksToMicroSecondsBROM32(OS_GetTick());
+
     OS_InitTick();
 #endif
-    // 2: after OS_InitTick
-    PUSH_PROFILE();
 
     PostInit();
     // 3: after PostInit
@@ -283,7 +287,7 @@ void TwlMain( void )
     // 5: after FS_ResolveSrl
     PUSH_PROFILE();
 
-    if ( !FS_OpenSrl( &file ) )
+    if ( !FS2_OpenSrl( &file ) )
     {
         OS_TPrintf("Failed to call FS_OpenSrl().\n");
         goto end;
@@ -291,28 +295,28 @@ void TwlMain( void )
     // 6: after FS_OpenSrl
     PUSH_PROFILE();
 
-    if ( !FS_LoadSrlHeader( &file, &acPool, RSA_KEY_ADDR ) || !CheckHeader() )
+    if ( !FS2_LoadHeader( &file, &acPool, RSA_KEY_ADDR ) || !CheckHeader() )
     {
-        OS_TPrintf("Failed to call FS_LoadSrlHeader() and/or CheckHeader().\n");
+        OS_TPrintf("Failed to call FS2_LoadHeader() and/or CheckHeader().\n");
         goto end;
     }
-    // 7: after FS_LoadSrlHeader
+    // 7: after FS2_LoadHeader
     PUSH_PROFILE();
 
     PXI_NotifyID( FIRM_PXI_ID_DONE_HEADER );
     // 8: after PXI
     PUSH_PROFILE();
 
-    AESi_SendSeed( FS_GetAesKeySeed() );
+    AESi_SendSeed( FS2_GetAesKeySeed() );
     // 9: after AESi_SendSeed
     PUSH_PROFILE();
 
-    if ( !FS_LoadSrlStatic( &file ) )
+    if ( !FS2_LoadStatic( &file ) )
     {
-        OS_TPrintf("Failed to call FS_LoadSrlStatic().\n");
+        OS_TPrintf("Failed to call FS2_LoadStatic().\n");
         goto end;
     }
-    // 10: after FS_LoadSrlStatic
+    // 10: after FS2_LoadStatic
     PUSH_PROFILE();
 
     PXI_NotifyID( FIRM_PXI_ID_DONE_STATIC );
@@ -339,10 +343,10 @@ void TwlMain( void )
         }
         OS_TPrintf("\n[ARM9] End\n");
         PXI_NotifyID( FIRM_PXI_ID_NULL );
+        OS_SetTick(0);
     }
 #endif
 
-    ( (OSBootInfo *)OS_GetBootInfo() )->boot_type = OS_BOOTTYPE_NAND;
     OS_BootFromFIRM();
 
 end:

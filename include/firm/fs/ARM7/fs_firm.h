@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlIPL - include - fs
-  File:     fs.h
+  File:     fs_firm.h
 
   Copyright 2007 Nintendo.  All rights reserved.
 
@@ -18,9 +18,6 @@
 #ifndef FIRM_FS_FS_FIRM_H_
 #define FIRM_FS_FS_FIRM_H_
 
-#include <twl/types.h>
-#include <twl/aes/ARM7/lo.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -35,56 +32,6 @@ extern "C" {
   Returns:      file discriptor
  *---------------------------------------------------------------------------*/
 int FS_OpenSrl( void );
-
-/*---------------------------------------------------------------------------*
-  Name:         FS_LoadBuffer
-
-  Description:  load data in file and pass to ARM9 via WRAM-B
-
-  Arguments:    fd              file discriptor to read
-                offset          offset to start to read in bytes
-                size            total length to read in bytes
-
-  Returns:      TRUE if success
- *---------------------------------------------------------------------------*/
-BOOL FS_LoadBuffer( int fd, u32 offset, u32 size );
-
-/*---------------------------------------------------------------------------*
-  Name:         FS_LoadModule
-
-  Description:  load data in file and pass to ARM9 via WRAM-B in view of AES
-                settings in the ROM header at HW_TWL_ROM_HEADER_BUF
-
-  Arguments:    fd              file discriptor to read
-                offset          offset to start to read in bytes
-                size            total length to read in bytes
-
-  Returns:      TRUE if success
- *---------------------------------------------------------------------------*/
-BOOL FS_LoadModule( int fd, u32 offset, u32 size );
-
-/*---------------------------------------------------------------------------*
-  Name:         FS_LoadHeader
-
-  Description:  load ROM header in the head of file and pass to ARM9 via WRAM-B
-
-  Arguments:    fd              file discriptor to read
-
-  Returns:      TRUE if success
- *---------------------------------------------------------------------------*/
-BOOL FS_LoadHeader( int fd );
-
-/*---------------------------------------------------------------------------*
-  Name:         FS_LoadStatic
-
-  Description:  load static regions in file and pass to ARM9 via WRAM-B
-                specified by ROM header at HW_TWL_ROM_HEADER_BUF
-
-  Arguments:    fd              file discriptor to read
-
-  Returns:      TRUE if success
- *---------------------------------------------------------------------------*/
-BOOL FS_LoadStatic( int fd );
 
 
 #ifdef __cplusplus

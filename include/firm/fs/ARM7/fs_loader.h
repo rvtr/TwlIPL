@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlIPL - include - fs
-  File:     fs_firm.h
+  File:     fs.h
 
   Copyright 2007 Nintendo.  All rights reserved.
 
@@ -15,69 +15,71 @@
   $Author$
  *---------------------------------------------------------------------------*/
 
-#ifndef FIRM_FS_FS_FIRM_H_
-#define FIRM_FS_FS_FIRM_H_
+#ifndef FIRM_FS_FS_LOADER_H_
+#define FIRM_FS_FS_LOADER_H_
 
 #include <twl/types.h>
+#include <twl/aes/ARM7/lo.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /*---------------------------------------------------------------------------*
-  Name:         FS_InitFIRM
+  Name:         FS_LoadBuffer
 
-  Description:  initialize FS/FATFS for firm
+  Description:  load data in file and pass to ARM9 via WRAM-B
 
-  Arguments:    None
-
-  Returns:      None
- *---------------------------------------------------------------------------*/
-void FS_InitFIRM( void );
-
-/*---------------------------------------------------------------------------*
-  Name:         FS_GetTitleBootContentPathFast
-
-  Description:  NAND にインストールされているアプリの実行ファイルのパスを
-                取得します。
-                取得する情報の正当性を検証しないため高速ですが、
-                情報が改竄されている可能性があることに注意しなければなりません。
-
-  Arguments:    buf:        パスを格納するバッファへのポインタ。
-                            FS_ENTRY_LONGNAME_MAX 以上のサイズが必要です。
-                titleId:    パスを取得するアプリの Title ID。
-
-  Returns:      正常に処理が行われたなら TRUE を返します。
- *---------------------------------------------------------------------------*/
-BOOL FS_GetTitleBootContentPathFast(char* buf, u64 titleId);
-
-/*---------------------------------------------------------------------------*
-  Name:         FS_ResolveSrl
-
-  Description:  resolve srl filename and store to HW_TWL_FS_BOOT_SRL_PATH_BUF
-
-  Arguments:    titleId         title id for srl file
+  Arguments:    fd              file discriptor to read
+                offset          offset to start to read in bytes
+                size            total length to read in bytes
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS_ResolveSrl( u64 titleId );
+BOOL FS_LoadBuffer( int fd, u32 offset, u32 size );
 
 /*---------------------------------------------------------------------------*
-  Name:         FS_ResolveSrlUnsecured
+  Name:         FS_LoadModule
 
-  Description:  resolve srl filename and store to HW_TWL_FS_BOOT_SRL_PATH_BUF
-                without almost security check
+  Description:  load data in file and pass to ARM9 via WRAM-B in view of AES
+                settings in the ROM header at HW_TWL_ROM_HEADER_BUF
 
-  Arguments:    titleId         title id for srl file
+  Arguments:    fd              file discriptor to read
+                offset          offset to start to read in bytes
+                size            total length to read in bytes
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS_ResolveSrlUnsecured( u64 titleId );
+BOOL FS_LoadModule( int fd, u32 offset, u32 size );
+
+/*---------------------------------------------------------------------------*
+  Name:         FS_LoadHeader
+
+  Description:  load ROM header in the head of file and pass to ARM9 via WRAM-B
+
+  Arguments:    fd              file discriptor to read
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
+BOOL FS_LoadHeader( int fd );
+
+/*---------------------------------------------------------------------------*
+  Name:         FS_LoadStatic
+
+  Description:  load static regions in file and pass to ARM9 via WRAM-B
+                specified by ROM header at HW_TWL_ROM_HEADER_BUF
+
+  Arguments:    fd              file discriptor to read
+
+  Returns:      TRUE if success
+ *---------------------------------------------------------------------------*/
+BOOL FS_LoadStatic( int fd );
+
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
 
-/* FIRM_FS_FS_FIRM_H_ */
+/* FIRM_FS_FS_LOADER_H_ */
 #endif

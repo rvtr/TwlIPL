@@ -20,9 +20,11 @@
 
 #ifdef SDK_ARM7
 #include <firm/fs/ARM7/fs_firm.h>
+#include <firm/fs/ARM7/fs_loader.h>
 #else
 #include <firm/fs/ARM9/fs_firm.h>
-#include <firm/fs/ARM9/fs_es.h>
+#include <firm/fs/ARM9/fs_loader.h>
+#include <firm/fs/ARM9/fs_loader2.h>
 #endif // SDK_ARM7
 
 
