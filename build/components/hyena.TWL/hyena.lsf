@@ -135,6 +135,39 @@ Autoload WRAM
 	Object		OBJECT( WaitLoop_BbpAccess		, libwl_sp$(LIBSUFFIX).a )	(.text)
 	Object		OBJECT( WaitLoop_RfAccess		, libwl_sp$(LIBSUFFIX).a )	(.text)
 
+#	Object		OBJECT( s_ar_cookie_mem 		, libathdrv_sp$(LIBSUFFIX).a )	(.bss)
+#	Object		OBJECT( nin_ar           		, libathdrv_sp$(LIBSUFFIX).a )	(.bss)
+
+	Object		OBJECT( a_netbuf_alloc_rx  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( a_netbuf_register_rx_callback	, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( nin_driver_tx  		    , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( nin_tx_queue_full  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( nin_tx_complete  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( nin_rx  		        , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ar6000_bitrate_rx  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ar6000_channelList_rx  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ar6000_txPwr_rx  		    , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ar6000_gpio_intr_rx  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ar6000_gpio_data_rx  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ar6000_gpio_ack_rx  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( nin_drv_BmiWriteSocReg  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ar6000_control_tx  		    , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( nin_drv_BmiReadMemory  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( nin_drv_BmiWriteMemory  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( BMI_read_reg  		    , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( BMI_write_reg  	           	, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( BMI_read_mem  	        	, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( BMI_write_mem  	        	, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( wmi_dix_2_dot3 	        	, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( wmi_control_rx_xtnd 		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( wmi_control_rx 	    	, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( wmi_cmd_send 	    	, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( wmi_cmd_send_xtnd 		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( HIFReadWrite 	    	, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ath_ioctl 		        , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+
+	Object		OBJECT( wpa_sm_rx_eapol		        , libwpa_sp$(LIBSUFFIX).a )	(.text)
+
 }
 
 #--------
@@ -148,6 +181,7 @@ Ltdautoload LTDMAIN
 				libwvr_sp$(LIBSUFFIX).a	\
 				libwl_sp$(LIBSUFFIX).a
 
+    Library     libwpa_sp$(LIBSUFFIX).a
 	Library		libathdrv_sp$(LIBSUFFIX).a
 
 	Library		libfatfs_sp$(LIBSUFFIX).a	\
