@@ -58,7 +58,8 @@ static u8 step = 0x80;
 #ifdef PRINT_MEMORY_ADDR
 static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
 #undef OS_TPrintf
-#define OS_TPrintf(...) (debugPtr = (char*)((u32)(debugPtr + STD_TSPrintf(debugPtr, __VA_ARGS__) + 0xf) & ~0xf))
+//#define OS_TPrintf(...) (debugPtr = (char*)((u32)(debugPtr + STD_TSPrintf(debugPtr, __VA_ARGS__) + 0xf) & ~0xf))
+#define OS_TPrintf(...) (debugPtr += STD_TSPrintf(debugPtr, __VA_ARGS__))
 #endif
 
 #define THREAD_PRIO_FATFS   8
