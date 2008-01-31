@@ -491,8 +491,6 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 		}else {
 			// NTRモード
 			// TWL-ROMヘッダ情報の再配置
-			//   ランチャーのROMヘッダが残っている非コピー領域もクリア
-			MI_CpuClearFast( (void *)HW_TWL_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );
 			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)HW_TWL_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 			// NTR-ROMヘッダ情報の再配置は、rebootライブラリで行う。
@@ -536,8 +534,6 @@ static void SYSMi_Relocate( void )
 	}else {
 		// NTRモード
 		// TWL-ROMヘッダ情報の再配置
-		//   ランチャーのROMヘッダが残っている非コピー領域もクリア
-		MI_CpuClearFast( (void *)HW_TWL_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );
 		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_TWL_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 	}
