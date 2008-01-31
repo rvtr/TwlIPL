@@ -65,6 +65,9 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     mem_list[i++] = (u32)OSi_GetFromFirmAddr()->rsa_pubkey[4];
     mem_list[i++] = ACS_PUBKEY_LEN;
 #else   // SDK_ARM7
+    /* FS_Loader用バッファのクリア */
+    mem_list[i++] = HW_FIRM_LOAD_BUFFER_BASE;
+    mem_list[i++] = HW_FIRM_LOAD_BUFFER_UNIT_SIZE * HW_FIRM_LOAD_BUFFER_UNIT_NUMS;
     {   /* REBOOT_ExecuteのCODEとSTACKの隙間をクリア */
         u32 stack_bottom = (u32)stack_top - OS_BOOT_STACK_SIZE_MIN - sizeof(mem_list);
         u32 code_buf_end = OS_BOOT_CODE_BUF + OS_BOOT_CODE_SIZE;

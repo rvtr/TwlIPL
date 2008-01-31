@@ -194,13 +194,11 @@ BOOL FS_LoadBuffer( u8* dest, u32 size, SVCSHA1Context *ctx )
                 u32 u = unit - done < HASH_UNIT ? unit - done : HASH_UNIT;
                 SVC_SHA1Update( ctx, s, u );
                 MI_CpuCopyFast( s, d, u );
-                MI_CpuClearFast( s, u );    // OS_Boot‚Å‚ÌƒNƒŠƒA‚Æ”äŠr‚·‚é
             }
         }
         else
         {
             MI_CpuCopyFast( src, dest, unit );
-            MI_CpuClearFast( src, unit );   // OS_Boot‚Å‚ÌƒNƒŠƒA‚Æ”äŠr‚·‚é
         }
         DC_FlushRange( src, unit );
         size -= unit;
