@@ -110,10 +110,10 @@ static void PreInit(void)
         OS_Terminate();
     }
     /*
-        リセットパラメータ(1バイト)を共有領域(4バイト)にコピー
+        リセットパラメータ(1バイト)を共有領域(1バイト)にコピー
     */
-#define FIRM_AVAILABLE_BIT  0x80000000UL
-    *(u32*)HW_RESET_PARAMETER_BUF = (u32)MCUi_ReadRegister( MCU_REG_TEMP_ADDR ) | FIRM_AVAILABLE_BIT;
+#define HOTSTART_FLAG_ENABLE    0x80
+    *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCU_GetFreeRegister( OS_MCU_RESET_VALUE_OFS ) | HOTSTART_FLAG_ENABLE);
 }
 
 /***************************************************************
