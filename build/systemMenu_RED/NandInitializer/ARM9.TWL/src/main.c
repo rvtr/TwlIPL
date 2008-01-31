@@ -87,6 +87,12 @@ TwlMain()
     /* initialize file-system */
 	FS_Init(FS_DMA_NOT_USE);
 
+	// SD起動などあらゆるマウント状態に対応する
+	FATFS_UnmountDrive("F:");
+	FATFS_UnmountDrive("G:");
+	FATFS_MountDrive("F", FATFS_MEDIA_TYPE_NAND, 0);
+	FATFS_MountDrive("G", FATFS_MEDIA_TYPE_SD, 0);
+
 	// NAMライブラリ初期化
 	NAM_Init( OS_AllocFromMain, OS_FreeToMain);
 
