@@ -29,8 +29,8 @@ TWL_ARCHGEN    		= LIMITED
 
 #TWL_CODEGEN   =       THUMB
 
-TITLEID_LO				=	NNNN
-
+TITLEID_LO				=	NINI
+TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
 
 TARGET_BIN	= main.srl
 LCFILE_SPEC				=	ARM9-TS.lsf
@@ -83,6 +83,9 @@ LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
 
+LDIRT_CLEAN				=	$(TARGET_TAD)
+INSTALL_TARGETS			=	$(TARGET_TAD)
+INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
 
