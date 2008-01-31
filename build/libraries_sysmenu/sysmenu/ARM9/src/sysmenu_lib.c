@@ -38,6 +38,8 @@ ROM_Header_Short *pRomHeader;
 #endif
 // static variable-------------------------------------------------------------
 
+static TitleProperty s_bootTitleBuf;
+
 // const data------------------------------------------------------------------
 
 // ============================================================================
@@ -134,7 +136,10 @@ TitleProperty *SYSM_ReadParameters( void )
 		}
 		
 		if( SYSM_GetLauncherParamBody()->v1.bootTitleID ) {			// アプリ直接起動の指定があったらロゴデモを飛ばして指定アプリ起動
-			pBootTitle = (TitleProperty *)&SYSM_GetLauncherParamBody()->v1;
+			s_bootTitleBuf.titleID = SYSM_GetLauncherParamBody()->v1.bootTitleID;
+			s_bootTitleBuf.flags = SYSM_GetLauncherParamBody()->v1.flags;
+			s_bootTitleBuf.pBanner = (TWLBannerFile *)(*(TWLBannerFile **)(SYSM_GetLauncherParamBody()->v1.rsv));
+			pBootTitle = &s_bootTitleBuf;
 		}
 	}
 	
