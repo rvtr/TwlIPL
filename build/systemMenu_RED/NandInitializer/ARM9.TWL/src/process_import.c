@@ -79,6 +79,8 @@ static void* spStack;
 
 static u32  sCurrentProgress;
 
+static vu8 sNowImport = FALSE;
+
 /*---------------------------------------------------------------------------*
     内部関数宣言
  *---------------------------------------------------------------------------*/
@@ -584,6 +586,7 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 	char full_path[FS_ENTRY_LONGNAME_MAX+6];
 	OSThread thread;
 	BOOL ret = FALSE;
+	s32  nam_result;
 
 	// フルパスを作成
 	MakeFullPathForSD(file_name, full_path);
@@ -632,6 +635,9 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 		}
 	}
 
+	// インポート開始フラグを立てる
+	sNowImport = TRUE;
+
     // 進捗スレッド作成
 	spStack = OS_Alloc(THREAD_STACK_SIZE);
 	MI_CpuClear8(spStack, THREAD_STACK_SIZE);
@@ -645,10 +651,15 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 	OS_Printf( "Import %s Start.\n", full_path );
 	kamiFontPrintfConsole(CONSOLE_ORANGE, "Import %s Start.\n", file_name );
 
-	if ( NAM_ImportTad( full_path ) == NAM_OK )
+	nam_result = NAM_ImportTad( full_path );
+
+	// 進捗スレッドの自力終了を待つ
+	while (sNowImport){ OS_Sleep(1); };
+
+	if ( nam_result == NAM_OK )
 	{
-		ret = TRUE;
 		kamiFontPrintfConsole(CONSOLE_ORANGE, "Import %s Sucess.\n", file_name );
+		ret = TRUE;
 	}
 	else
 	{
@@ -676,25 +687,31 @@ static void Destructor(void* /*arg*/)
 
 static void ProgressThread(void* /*arg*/)
 {
-    u32 currentSize;
-    u32 totalSize;
+    u32  currentSize;
+    u32  totalSize   = 0;
+	u32  totalSizeBk = 0;
 
 	ProgressInit();
 
     while (TRUE)
     {
         NAM_GetProgress(&currentSize, &totalSize);
-		if (totalSize != 0)
+
+		if ((totalSize > 0 && totalSize == currentSize) || totalSizeBk > totalSize)
+		{
+			// 既にインポートが終了
+			ProgressDraw((f32)1.0);
+			break;	
+		}
+		else if (totalSize > 0)
 		{
 			ProgressDraw((f32)currentSize/totalSize);
-
-			// 100%なら終了
-			if (currentSize == totalSize)
-			{
-				break;
-			}
 		}
+
+		totalSizeBk = totalSize;
     }
+
+	sNowImport = FALSE;
 }
 
 /*---------------------------------------------------------------------------*

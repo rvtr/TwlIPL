@@ -323,7 +323,7 @@ void HWInfoWriterInit( void )
 	ReadPrivateKey();
 	ReadHWInfoFile();
 //	VerifyHWInfo();
-	OS_TPrintf( "region = %d\n", LCFG_THW_GetRegion() );
+	OS_Printf("region = %d\n", LCFG_THW_GetRegion() );
 	
 //	s_csr = 0;
 //	DrawMenu( s_csr, &s_writerParam );
@@ -410,7 +410,7 @@ static void ReadPrivateKey( void )
 	
 	FS_InitFile( &file );
 	if( !FS_OpenFileEx( &file, "rom:key/private_HWInfo.der", FS_FILEMODE_R ) ) {
-		OS_TPrintf( "PrivateKey read failed.\n" );
+		kamiFontPrintfConsoleEx(CONSOLE_RED, "PrivateKey read failed.\n" );
 	}else {
 		keyLength = FS_GetFileLength( &file );
 		if( keyLength > 0 ) {
@@ -419,7 +419,7 @@ static void ReadPrivateKey( void )
 				OS_TPrintf( "PrivateKey read succeeded.\n" );
 				result = TRUE;
 			}else {
-				OS_TPrintf( "PrivateKey read failed.\n" );
+				kamiFontPrintfConsoleEx(CONSOLE_RED, "PrivateKey read failed.\n" );
 			}
 		}
 		FS_CloseFile( &file );
@@ -458,9 +458,9 @@ static void ReadHWInfoFile( void )
 	
 	retval = LCFGi_THW_ReadNormalInfo();
 	if( retval == LCFG_TSF_READ_RESULT_SUCCEEDED ) {
-		OS_TPrintf( "HW Normal Info read succeeded.\n" );
+		OS_Printf("HW Normal Info read succeeded.\n" );
 	}else {
-		OS_TPrintf( "HW Normal Info read failed.\n" );
+		kamiFontPrintfConsoleEx(0, "HW Normal Info read failed.\n" );
 	}
 	
 	OS_TPrintf( "HW Normal Info read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
@@ -468,9 +468,9 @@ static void ReadHWInfoFile( void )
 	start = OS_GetTick();
 	retval = s_pReadSecureInfoFunc();
 	if( retval == LCFG_TSF_READ_RESULT_SUCCEEDED ) {
-		OS_TPrintf( "HW Secure Info read succeeded.\n" );
+		OS_Printf("HW Secure Info read succeeded.\n" );
 	}else {
-		OS_TPrintf( "HW Secure Info read failed.\n" );
+		kamiFontPrintfConsoleEx(0, "HW Secure Info read failed.\n" );
 	}
 	OS_TPrintf( "HW Secure Info read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 }
@@ -541,13 +541,13 @@ static BOOL WriteHWNormalInfoFile( void )
 	result = LCFGi_THW_ReadNormalInfo();
 	if( result != LCFG_TSF_READ_RESULT_SUCCEEDED ) {
 		if( !LCFGi_THW_RecoveryNormalInfo( result ) ) {
-			OS_TPrintf( "HW Normal Info Recovery failed.\n" );
+			kamiFontPrintfConsoleEx(CONSOLE_RED, "HW Normal Info Recovery failed.\n" );
 			isWrite = FALSE;
 		}
 	}
 	if( isWrite &&
 		!LCFGi_THW_WriteNormalInfo() ) {
-		OS_TPrintf( "HW Normal Info Write failed.\n" );
+		kamiFontPrintfConsoleEx(CONSOLE_RED, "HW Normal Info Write failed.\n" );
 	}
 	
 	return isWrite;
@@ -574,7 +574,7 @@ static BOOL WriteHWSecureInfoFile( u8 region )
 	// リードに失敗したらリカバリ
 	if( result != LCFG_TSF_READ_RESULT_SUCCEEDED ) {
 		if( !LCFGi_THW_RecoverySecureInfo( result ) ) {
-			OS_TPrintf( "HW Secure Info Recovery failed.\n" );
+			kamiFontPrintfConsoleEx(CONSOLE_RED, "HW Secure Info Recovery failed.\n" );
 			isWrite = FALSE;
 		}
 	}
@@ -611,7 +611,7 @@ static BOOL WriteHWSecureInfoFile( u8 region )
 	if( isWrite &&
 		!LCFGi_THW_WriteSecureInfo( s_pPrivKeyBuffer ) ) {
 		isWrite = FALSE;
-		OS_TPrintf( "HW Secure Info Write failed.\n" );
+		kamiFontPrintfConsoleEx(CONSOLE_RED, "HW Secure Info Write failed.\n" );
 	}
 	
 	return isWrite;
