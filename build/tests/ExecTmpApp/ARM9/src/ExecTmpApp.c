@@ -16,15 +16,10 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
-#include <sysmenu.h>
-#include "misc.h"
+#include "misc_simple.h"
 #include "ExecTmpApp.h"
 
 // define data------------------------------------------
-#define RETURN_BUTTON_TOP_X					2
-#define RETURN_BUTTON_TOP_Y					21
-#define RETURN_BUTTON_BOTTOM_X				( RETURN_BUTTON_TOP_X + 8 )
-#define RETURN_BUTTON_BOTTOM_Y				( RETURN_BUTTON_TOP_Y + 2 )
 
 #define COPB_MENU_ELEMENT_NUM			2						// メニューの項目数
 
@@ -35,22 +30,21 @@
 static void MenuScene( void );
 
 // global variable -------------------------------------
-extern RTCDrawProperty g_rtcDraw;
 
 // static variable -------------------------------------
 static u16 s_csr = 0;
 static void(*s_pNowProcess)(void);
 
 // const data  -----------------------------------------
-static const u16 *s_pStrMenu[ COPB_MENU_ELEMENT_NUM ] = 
+static const char *s_pStrMenu[ COPB_MENU_ELEMENT_NUM ] = 
 {
-	L"tmpフォルダにアプリを保存し起動",
-	L"ランチャーに戻る",
+	"save app to tmp and restart",
+	"return to launcher",
 };
 
 static MenuPos s_menuPos[] = {
-	{ TRUE,  4 * 8,   8 * 8 },
-	{ TRUE,  4 * 8,  10 * 8 },
+	{ TRUE,  3,   6 },
+	{ TRUE,  3,   8 },
 };
 
 static const MenuParam s_menuParam = {
@@ -59,7 +53,7 @@ static const MenuParam s_menuParam = {
 	TXT_COLOR_GREEN,
 	TXT_COLOR_RED,
 	&s_menuPos[ 0 ],
-	(const u16 **)&s_pStrMenu,
+	(const char **)&s_pStrMenu,
 };
 									
 //======================================================
@@ -68,25 +62,18 @@ static const MenuParam s_menuParam = {
 
 static void DrawMenuScene( void )
 {
-	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"ExecTmpApp");
-	
-	GetAndDrawRTCData( &g_rtcDraw, TRUE );
+	myDp_Printf( 1, 0, TXT_COLOR_BLUE, MAIN_SCREEN, "ExecTmpApp");
     // メニュー項目
-	DrawMenu( s_csr, &s_menuParam );
+	myDp_DrawMenu( s_csr, MAIN_SCREEN, &s_menuParam );
 }
 
 static void MenuInit( void )
 {
+	FS_Init(3);
 	GX_DispOff();
  	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
 	
-	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"ExecTmpApp");
-	GetAndDrawRTCData( &g_rtcDraw, TRUE );
-	
-	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
-	
-	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
+	myDp_Printf( 1, 0, TXT_COLOR_BLUE, MAIN_SCREEN, "ExecTmpApp");
 	
 	s_pNowProcess = MenuScene;
 
@@ -98,29 +85,25 @@ static void MenuInit( void )
 
 static void MenuScene(void)
 {
-	BOOL tp_select = FALSE;
 	LauncherBootFlags tempflag = {TRUE, LAUNCHER_BOOTTYPE_TEMP, TRUE, FALSE, FALSE, FALSE, 0};
-	
-	ReadTP();
 	
 	//--------------------------------------
 	//  キー入力処理
 	//--------------------------------------
-	if( pad.trg & PAD_KEY_DOWN ){									// カーソルの移動
+	if( MYPAD_IS_TRIG(PAD_KEY_DOWN) ){									// カーソルの移動
 		if( ++s_csr == COPB_MENU_ELEMENT_NUM ) {
 			s_csr=0;
 		}
 	}
-	if( pad.trg & PAD_KEY_UP ){
+	if( MYPAD_IS_TRIG(PAD_KEY_UP) ){
 		if( --s_csr & 0x80 ) {
 			s_csr=COPB_MENU_ELEMENT_NUM - 1;
 		}
 	}
-	tp_select = SelectMenuByTP( &s_csr, &s_menuParam );
 	
    	DrawMenuScene();
 	
-	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// メニュー項目への分岐
+	if( MYPAD_IS_TRIG(PAD_BUTTON_A) ) {				// メニュー項目への分岐
 		if( s_menuPos[ s_csr ].enable ) {
 			u64 targetApp = 0x00030004534d504c;// SMPL
 			static char destfilename[256];
@@ -129,9 +112,6 @@ static void MenuScene(void)
 			BOOL success = TRUE;
 			FSFile src,dest;
 			void *buf;
-			ROM_FAT *fat;
-			void *nstart, *nend;
-			u32 st,ed;
 			switch( s_csr ) {
 				case 0:
 					
@@ -141,25 +121,10 @@ static void MenuScene(void)
 					FS_CreateFile(destfilename, FS_PERMIT_R | FS_PERMIT_W);
 					FS_InitFile( &src );
 					FS_InitFile( &dest );
-					if ( !FS_OpenFileEx( &src, "rom:/data/simple.srl", FS_FILEMODE_R ) ) success = FALSE;
-					//if ( !FS_OpenFileEx( &src, "rom:/data/NTR_IPL_font_m.NFTR", FS_FILEMODE_R ) ) success = FALSE;
+					if ( !FS_OpenFileEx( &src, "rom:/data/simpleapp.srl", FS_FILEMODE_R ) ) success = FALSE;
 					len = (int)FS_GetFileLength( &src );
-
-					nstart = OS_InitAlloc( OS_ARENA_MAIN, (void *)0x2800000, (void *)0x2b00000, 1 );
-					// アリーナの下位境界アドレス
-					OS_SetMainArenaLo( nstart );
-					// fat関係調査
-					nend = (void *)((int)nstart+FS_GetTableSize()+10000);
-					fat = OS_AllocFixed( OS_ARENA_MAIN, &nstart, &nend );
-					FS_UnloadTable();
-					FS_LoadTable( fat, FS_GetTableSize() );
-					//FS_ConvertPathToFileID( &fid, "rom:/data/simple.srl" );
-					st = fat[1].top.offset;
-					ed = fat[1].bottom.offset;
 					
 					buf = (void *)0x2400000;
-	PrintfSJIS( 1 * 8, 2 * 8, TXT_COLOR_RED, "fat:%x,%x,%x,%x",fat[0].top.offset,fat[0].bottom.offset,st,ed);
-	PrintfSJIS( 11 * 8, 0 * 8, TXT_COLOR_RED, "読み込み開始 %x",(int)len);
 					for(llen = 0; llen < len; )
 					{
 						int rd;
@@ -169,15 +134,12 @@ static void MenuScene(void)
 							success = FALSE;
 							break;
 						}
-	PrintfSJIS( 1 * 8, 4 * 8, TXT_COLOR_WHITE, "読み込み中... %xBYTES",(int)llen);
 						buf = (void *)((u32)buf + rd);
 						llen += rd;
-	PrintfSJIS( 1 * 8, 4 * 8, TXT_COLOR_RED, "読み込み中... %xBYTES",(int)llen);
 					}
 					buf = (void *)0x2400000;
 					if ( !FS_CloseFile( &src ) ) success = FALSE;
 					if (len != llen) success = FALSE;
-	PrintfSJIS( 1 * 8, 6 * 8, TXT_COLOR_RED, "読み込み完了 %x",(int)llen);
 
 					if ( !FS_OpenFileEx( &dest, destfilename, FS_FILEMODE_W ) ) success = FALSE;
 					llen = FS_WriteFile( &dest, buf, len );
@@ -201,7 +163,6 @@ static void MenuScene(void)
 // 初期化
 void ExecTmpAppInit( void )
 {
-	ChangeUserColor( LCFG_TSD_GetUserColor() );
 	MenuInit();
 }
 

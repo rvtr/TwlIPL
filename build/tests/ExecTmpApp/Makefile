@@ -20,7 +20,7 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS		=	SimpleApp banner ARM9
+SUBDIRS		=	banner ARM9
 
 #----------------------------------------------------------------------------
 

@@ -10,9 +10,9 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date:: 2007-11-21#$
-# $Rev: 240 $
-# $Author: yosiokat $
+# $Date:: 2007-12-19#$
+# $Rev: 378 $
+# $Author: yoshida_teruhisa $
 #----------------------------------------------------------------------------
 #
 #  TWL ROM SPEC FILE
@@ -59,8 +59,6 @@ Property
 	#
 	#TitleName		"YourAppName"
 
-	#_GameCode				$(TITLEID_LO)
-
 	#
 	# MAKER CODE: Your company ID# in 2 ascii words
 	#             issued by NINTENDO
@@ -96,6 +94,7 @@ Property
 	#
 	# BANNER FILE: generated from Banner Spec File
 	#
+	#BannerFile		./etc/myGameBanner.bnr
 	BannerFile		../banner/banner.bnr
 
 	###
@@ -115,7 +114,8 @@ Property
 	# WRAM mapping: [MAP_BB_HYB/MAP_BB_LTD/MAP_TS_HYB/MAP_TS_LTD]
 	#  don't have to edit
 	#
-	WramMapping		$(MAKEROM_WRAM_MAPPING)
+#	WramMapping		$(MAKEROM_WRAM_MAPPING)
+	WramMappingDirect	$(TWL_IPL_RED_ROOT)/build/components/hyena.TWL/wram_regs/wram_regs.rbin
 
 	#
 	# Codec mode:
@@ -126,7 +126,6 @@ Property
 	###
 	#### END
 }
-
 
 AppendProperty
 {
@@ -167,15 +166,14 @@ AppendProperty
 
 	#
 	# Enable SaveBannerFile
-	SaveBannerFile			FALSE
+	#SaveBannerFile	TRUE
 }
-
 
 RomSpec
 {
 	Offset		0x00000000
 	Segment		ALL
-	HostRoot	../data
+	HostRoot	data
 	Root		/data
-	File		NTR_IPL_font_m.NFTR simple.srl
+	File		simpleapp.srl
 }

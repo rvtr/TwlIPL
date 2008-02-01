@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlSDK - demos - simpleShoot-1
+# Project:  TwlSDK - demos.TWL - nandApp - ExecPreLoadedApp
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -18,41 +18,40 @@
 
 #----------------------------------------------------------------------------
 
-TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
 
 TITLEID_LO				=	MLEP
-TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR).tad
 
-TARGET_BIN				=	main.srl
+TARGET_BIN				=	ExecPreLoadedApp.tad
 
 LCFILE_SPEC				=	ARM9-TS.lsf
 ROM_SPEC				=	main.rsf
 
-MISC_DIR				=	$(SYSMENU_ROOT)/build/systemMenu_RED/misc
+SRCS					=	main.c ExecPreLoadedApp.c misc_simple.c data.c
 
-SRCS					=	main.c ExecPreLoadedApp.c \
-							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
+LINCLUDES	=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/include
 
-LINCLUDES				=	$(MISC_DIR)/include
+LLIBRARY_DIRS	+=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/lib/$(TWL_BUILDTYPE)
 
 LLIBRARIES				+=	libboc$(TWL_LIBSUFFIX).a \
 							libes$(TWL_LIBSUFFIX).a \
 							libnam$(TWL_LIBSUFFIX).a \
-							libreloc_info$(TWL_LIBSUFFIX).a
+							libDEMO$(TWL_LIBSUFFIX).a
 
 ADDRESS_DTCM			=	0x0e000000
-
-DEFAULT_COMP_ARM7		=	hyena
 
 MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
 
 include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
-include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+include $(TWLSDK_ROOT)/build/buildtools/commondefs
 
-LDIRT_CLEAN				=	$(TARGET_TAD)
-INSTALL_TARGETS			=	$(TARGET_TAD)
+DEFAULT_COMP_ARM7		= my_racoon
+DEFAULT_MAKEROM_ARM7_BASE	= ../ARM7/bin/$(TWL_BUILDTYPE_ARM7)/$(DEFAULT_COMP_ARM7)
+DEFAULT_MAKEROM_ARM7		= $(DEFAULT_MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
+
+SDK_NMENU_DATADIR				=  $(ROOT)/build/tools/TwlNMenu/data
+INSTALL_TARGETS			=	$(BINDIR)/$(TARGET_BIN)
 INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
@@ -60,7 +59,7 @@ INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 do-build : $(TARGETS)
 
 
-include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+include $(TWLSDK_ROOT)/build/buildtools/modulerules
 
 #----------------------------------------------------------------------------
 

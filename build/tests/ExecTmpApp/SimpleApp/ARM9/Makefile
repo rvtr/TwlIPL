@@ -20,37 +20,39 @@ SUBDIRS					=
 
 #----------------------------------------------------------------------------
 
-TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
 
 TITLEID_LO				=	SMPL
 
-TARGET_BIN				=	simple.srl
+TARGET_BIN				=	simpleapp.srl
 
 ROM_SPEC				=	main.rsf
 
-MISC_DIR				=	$(SYSMENU_ROOT)/build/systemMenu_RED/misc
+SRCS					=	main.c SimpleApp.c misc_simple.c data.c
 
-SRCS					=	main.c SimpleApp.c \
-							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
+LINCLUDES	=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/include
 
-LINCLUDES				=	$(MISC_DIR)/include
+LLIBRARY_DIRS	+=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/lib/$(TWL_BUILDTYPE)
 
-MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
+LLIBRARIES				+=	libboc$(TWL_LIBSUFFIX).a \
+							libes$(TWL_LIBSUFFIX).a \
+							libnam$(TWL_LIBSUFFIX).a \
+							libDEMO$(TWL_LIBSUFFIX).a
 
-include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
 
+include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
+include $(TWLSDK_ROOT)/build/buildtools/commondefs
 
-INSTALL_TARGETS			=	$(BINDIR)/$(TARGET_BIN)
-INSTALL_DIR				=	../../data
 #----------------------------------------------------------------------------
 
 do-build : $(TARGETS)
 
 
-include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+include $(TWLSDK_ROOT)/build/buildtools/modulerules
 
 #----------------------------------------------------------------------------
 
 #===== End of Makefile =====
+

@@ -16,15 +16,10 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
-#include <sysmenu.h>
-#include "misc.h"
+#include "misc_simple.h"
 #include "SimpleApp.h"
 
 // define data------------------------------------------
-#define RETURN_BUTTON_TOP_X					2
-#define RETURN_BUTTON_TOP_Y					21
-#define RETURN_BUTTON_BOTTOM_X				( RETURN_BUTTON_TOP_X + 8 )
-#define RETURN_BUTTON_BOTTOM_Y				( RETURN_BUTTON_TOP_Y + 2 )
 
 #define COPB_MENU_ELEMENT_NUM			1						// メニューの項目数
 
@@ -35,20 +30,19 @@
 static void MenuScene( void );
 
 // global variable -------------------------------------
-extern RTCDrawProperty g_rtcDraw;
 
 // static variable -------------------------------------
 static u16 s_csr = 0;
 static void(*s_pNowProcess)(void);
 
 // const data  -----------------------------------------
-static const u16 *s_pStrMenu[ COPB_MENU_ELEMENT_NUM ] = 
+static const char *s_pStrMenu[ COPB_MENU_ELEMENT_NUM ] = 
 {
-	L"ランチャーに戻る",
+	"return to launcher",
 };
 
 static MenuPos s_menuPos[] = {
-	{ TRUE,  4 * 8,   8 * 8 },
+	{ TRUE,  3,   8 },
 };
 
 static const MenuParam s_menuParam = {
@@ -57,7 +51,7 @@ static const MenuParam s_menuParam = {
 	TXT_COLOR_GREEN,
 	TXT_COLOR_RED,
 	&s_menuPos[ 0 ],
-	(const u16 **)&s_pStrMenu,
+	(const char **)&s_pStrMenu,
 };
 									
 //======================================================
@@ -66,28 +60,20 @@ static const MenuParam s_menuParam = {
 
 static void DrawMenuScene( void )
 {
-	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleApp");
-	PutStringUTF16( 1*8, 18*8, TXT_COLOR_BLACK,  (const u16 *)L"単純アプリ...");
-	GetAndDrawRTCData( &g_rtcDraw, TRUE );
+	myDp_Printf( 1, 0, TXT_COLOR_BLUE, MAIN_SCREEN, "SimpleApp");
     // メニュー項目
-	DrawMenu( s_csr, &s_menuParam );
+	myDp_DrawMenu( s_csr, MAIN_SCREEN, &s_menuParam );
 }
 
 static void MenuInit( void )
 {
 	GX_DispOff();
  	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
 	
-	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleApp");
-	GetAndDrawRTCData( &g_rtcDraw, TRUE );
-	
-	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
-	
-	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
+	myDp_Printf( 1, 0, TXT_COLOR_BLUE, MAIN_SCREEN, "SimpleApp");
 	
 	s_pNowProcess = MenuScene;
-	
+
 	DrawMenuScene();
 	
 	GX_DispOn();
@@ -96,29 +82,25 @@ static void MenuInit( void )
 
 static void MenuScene(void)
 {
-	BOOL tp_select = FALSE;
 	LauncherBootFlags tempflag = {TRUE, OS_BOOTTYPE_NAND, TRUE, FALSE, FALSE, FALSE, 0};
-	
-	ReadTP();
 	
 	//--------------------------------------
 	//  キー入力処理
 	//--------------------------------------
-	if( pad.trg & PAD_KEY_DOWN ){									// カーソルの移動
+	if( MYPAD_IS_TRIG(PAD_KEY_DOWN) ){									// カーソルの移動
 		if( ++s_csr == COPB_MENU_ELEMENT_NUM ) {
 			s_csr=0;
 		}
 	}
-	if( pad.trg & PAD_KEY_UP ){
+	if( MYPAD_IS_TRIG(PAD_KEY_UP) ){
 		if( --s_csr & 0x80 ) {
 			s_csr=COPB_MENU_ELEMENT_NUM - 1;
 		}
 	}
-	tp_select = SelectMenuByTP( &s_csr, &s_menuParam );
 	
    	DrawMenuScene();
 	
-	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// メニュー項目への分岐
+	if( MYPAD_IS_TRIG(PAD_BUTTON_A) ) {				// メニュー項目への分岐
 		if( s_menuPos[ s_csr ].enable ) {
 			switch( s_csr ) {
 				case 0:
@@ -133,7 +115,6 @@ static void MenuScene(void)
 // 初期化
 void SimpleAppInit( void )
 {
-	ChangeUserColor( LCFG_TSD_GetUserColor() );
 	MenuInit();
 }
 
