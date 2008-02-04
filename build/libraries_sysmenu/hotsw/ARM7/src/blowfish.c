@@ -41,7 +41,7 @@ void GCDm_MakeBlowfishTableDS(BLOWFISH_CTX *tableBufp, ROM_Header_Short *rhs, u3
   blowfishedKey[0] = (u32)rhs->ctrl_reserved_B[0];
   blowfishedKey[1] = *(u32 *)&rhs->ctrl_reserved_B[4];
 
-  OS_TPrintf("Blowfish - key[0]:%d  key[1]:%d\n",blowfishedKey[0],blowfishedKey[1]);
+//  OS_TPrintf("Blowfish - key[0]:%d  key[1]:%d\n",blowfishedKey[0],blowfishedKey[1]);
     
   DecryptByBlowfish(tableBufp, &(blowfishedKey)[1], &(blowfishedKey)[0]);
 

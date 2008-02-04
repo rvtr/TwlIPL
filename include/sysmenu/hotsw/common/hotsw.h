@@ -17,8 +17,8 @@ extern "C" {
 // 活栓挿抜処理の初期化
 void HOTSW_Init(void);
 
-// カード起動。Normalモード→Secureモード→Gameモードを行う
-BOOL HOTSW_Boot(void);
+// カードからデータをロードする。Normalモード→Secureモード→Gameモードを行う
+BOOL HOTSW_LoadCardData(void);
 
 // ARM7,9の常駐モジュールを展開する関数
 void HOTSW_LoadStaticModule(void);
