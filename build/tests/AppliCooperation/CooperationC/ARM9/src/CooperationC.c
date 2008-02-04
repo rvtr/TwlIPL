@@ -16,8 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
-#include <sysmenu.h>
-#include "misc.h"
+#include "misc_simple.h"
 #include "CooperationC.h"
 
 // define data------------------------------------------
@@ -27,34 +26,31 @@
 #define RETURN_BUTTON_BOTTOM_Y				( RETURN_BUTTON_TOP_Y + 2 )
 
 // ソフトウェアキーボードLCD領域
-#define CLIST_LT_X							23
-#define CLIST_LT_Y							50
+#define CLIST_LT_X							2
+#define CLIST_LT_Y							6
 
-#define CLIST_MARGIN						14
+#define CLIST_MARGIN						2
 #define CLIST_KEY_PER_SEGMENT				5
-#define CLIST_SEGMENT_INTERVAL				7
+#define CLIST_SEGMENT_INTERVAL				1
 
 #define COPA_MENU_ELEMENT_NUM			3						// メニューの項目数
 #define CHAR_LIST_CHAR_NUM					120
-#define CHAR_LIST_MODE_NUM					3
+#define CHAR_LIST_MODE_NUM					1
 // 特殊キーコード
-#define EOM_			(u16)0xe050
-#define CODE_BUTTON_TOP_	(u16)0xe051
-#define DEL_BUTTON_		(u16)0xe051
-#define SPACE_BUTTON_	(u16)0xe052
-#define VAR_BUTTON1_	(u16)0xe053
-#define VAR_BUTTON2_	(u16)0xe054
-#define OK_BUTTON_		(u16)0xe055
-#define CANCEL_BUTTON_	(u16)0xe056
-#define CODE_BUTTON_BOTTOM_	(u16)0xe057
+#define EOM_			(char)0xf8
+#define CODE_BUTTON_TOP_	(char)0xf9
+#define DEL_BUTTON_		(char)0xf9
+#define SPACE_BUTTON_	(char)0xfa
+#define VAR_BUTTON1_	(char)0xfb
+#define VAR_BUTTON2_	(char)0xfc
+#define OK_BUTTON_		(char)0xfd
+#define CANCEL_BUTTON_	(char)0xfe
+#define CODE_BUTTON_BOTTOM_	(char)0xff
 
-#define CHAR_USCORE		L'＿'
+#define CHAR_USCORE		'_'
 #define KEY_PER_LINE	11
 
-#define KEY_START		109	//ソフトウェアキーのカーソルデフォルト位置はキャンセルキー
-
-#define KEY_OK			0xffff
-#define KEY_CANCEL		0xfffe
+#define KEY_START		98	//ソフトウェアキーのカーソルデフォルト位置はキャンセルキー
 
 #define PARAM_LENGTH	10
 
@@ -63,8 +59,8 @@ typedef struct CopA_Work
 	u16 csr;
 	int char_mode;
 	u16 key_csr;
-	u16 parameter[ PARAM_LENGTH + 1 ];
-	u16 temp_parameter[ PARAM_LENGTH + 1 ];
+	char parameter[ PARAM_LENGTH + 1 ];
+	char temp_parameter[ PARAM_LENGTH + 1 ];
 	u8  temp_parameter_length;
 	void(*pNowProcess)(void);
 	int starx,stary;
@@ -77,27 +73,26 @@ typedef struct CopA_Work
 static void MenuScene( void );
 
 // global variable -------------------------------------
-extern RTCDrawProperty g_rtcDraw;
 
 // static variable -------------------------------------
 
-static CopA_Work s_work = (CopA_Work){0,0,0,L"",L"",0,0,0};
+static CopA_Work s_work = (CopA_Work){0,0,0,"","",0,0,0};
 
 // const data  -----------------------------------------
-static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM];
+static const char char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM];
 
-static const u16 *s_pStrMenu[ COPA_MENU_ELEMENT_NUM ] = 
+static const char *s_pStrMenu[ COPA_MENU_ELEMENT_NUM ] = 
 {
-	L"パラメータ設定",
-	L"Bを起動",
-	L"ランチャーに戻る",
+	"Set Parameter",
+	"Launch CooperationB",
+	"Return to Launcher",
 };
 
 static MenuPos s_menuPos[] = {
-	{ TRUE,  4 * 8,   8 * 8 },
-	{ TRUE,  4 * 8,  10 * 8 },
-	{ TRUE, 4 * 8,  12 * 8 },
-	{ TRUE,  4 * 8,  14 * 8 },
+	{ TRUE,  3,   6 },
+	{ TRUE,  3,   8 },
+	{ TRUE,  3,  10 },
+	{ TRUE, 3,  12 },
 };
 
 static const MenuParam s_menuParam = {
@@ -106,50 +101,36 @@ static const MenuParam s_menuParam = {
 	TXT_COLOR_GREEN,
 	TXT_COLOR_RED,
 	&s_menuPos[ 0 ],
-	(const u16 **)&s_pStrMenu,
+	(const char **)&s_pStrMenu,
 };
 
-static const u16 *str_button_char[CHAR_LIST_MODE_NUM] = {
-									L"かな",
-									L"カナ",
-									L"英数",
+static const char *str_button_char[CHAR_LIST_MODE_NUM] = {
+									"eisuu",
 									};
 
-static u16 next_char_mode[CHAR_LIST_MODE_NUM-1];
+//static u16 next_char_mode[CHAR_LIST_MODE_NUM-1];
 
-static const u16  str_button_del[] = L"DEL";
-static const u16  str_button_space[] = L"SPACE";
-static const u16  str_button_ok[] = L"OK";
-static const u16  str_button_cancel[] = L"CANCEL";
+static const char  str_button_del[] = "DEL";
+static const char  str_button_space[] = "SPACE";
+static const char  str_button_ok[] = "OK";
+static const char  str_button_cancel[] = "CANCEL";
 
-static const u16 *str_button[] = {
-									(const u16 *)str_button_del,
-									(const u16 *)str_button_space,
+static const char *str_button[] = {
+									(const char *)str_button_del,
+									(const char *)str_button_space,
 									NULL,
 									NULL,
-									(const u16 *)str_button_ok,
-									(const u16 *)str_button_cancel,
+									(const char *)str_button_ok,
+									(const char *)str_button_cancel,
 									};
 									
 //======================================================
 // アプリ連携テストプログラムA
 //======================================================
 
-// UTF16の文字列長算出
-static u8 MY_StrLen( const u16 *pStr )
-{
-	u8 len = 0;
-	while( *pStr++ ) {
-		++len;
-		if( len == 255 ) {
-			break;
-		}
-	}
-	return len;
-}
-
 static void SetSoftKeyboardButton(int mode)
 {
+/*
 	int l;
 	int count = 0;
 	for(l=0; l<CHAR_LIST_MODE_NUM ;l++)
@@ -160,6 +141,7 @@ static void SetSoftKeyboardButton(int mode)
 			count++;
 		}
 	}
+*/
 	s_work.char_mode = mode;
 }
 
@@ -169,11 +151,11 @@ static void SetSoftKeyboardButton(int mode)
 static void DrawCharKeys( void )
 {
 	int l;
-	u16 code;
+	char code;
 
 	for( l=0; l<CHAR_LIST_CHAR_NUM; l++ )
 	{
-		int color=TXT_COLOR_BLACK;
+		u8 color=TXT_COLOR_BLACK;
 		code = char_tbl[s_work.char_mode][l];
 		if (s_work.key_csr == l) color = TXT_COLOR_GREEN;
 		if(code != EOM_)
@@ -181,16 +163,16 @@ static void DrawCharKeys( void )
 			if( (code >= CODE_BUTTON_TOP_) && (code < CODE_BUTTON_BOTTOM_) )
 			{
 				int x = code - CODE_BUTTON_TOP_;
-				PutStringUTF16( CLIST_LT_X + CLIST_MARGIN*(l%KEY_PER_LINE) + CLIST_SEGMENT_INTERVAL*((l%KEY_PER_LINE)/CLIST_KEY_PER_SEGMENT) ,
-				CLIST_LT_Y + CLIST_MARGIN*(l/KEY_PER_LINE) , color, str_button[x] );
+				myDp_Printf( CLIST_LT_X + CLIST_MARGIN*(l%KEY_PER_LINE) + CLIST_SEGMENT_INTERVAL*((l%KEY_PER_LINE)/CLIST_KEY_PER_SEGMENT) ,
+				CLIST_LT_Y + CLIST_MARGIN*(l/KEY_PER_LINE) , color, MAIN_SCREEN, str_button[x] );
 			}
 			else
 			{
-				u16 s[2];
+				char s[2];
 				s[0] = code;
 				s[1] = 0;
-				PutStringUTF16( CLIST_LT_X + CLIST_MARGIN*(l%KEY_PER_LINE) + CLIST_SEGMENT_INTERVAL*((l%KEY_PER_LINE)/CLIST_KEY_PER_SEGMENT) ,
-				CLIST_LT_Y + CLIST_MARGIN*(l/KEY_PER_LINE) , color, s );
+				myDp_Printf( CLIST_LT_X + CLIST_MARGIN*(l%KEY_PER_LINE) + CLIST_SEGMENT_INTERVAL*((l%KEY_PER_LINE)/CLIST_KEY_PER_SEGMENT) ,
+				CLIST_LT_Y + CLIST_MARGIN*(l/KEY_PER_LINE) , color, MAIN_SCREEN, s );
 			}
 		}
 	}
@@ -199,7 +181,7 @@ static void DrawCharKeys( void )
 // 一文字削除
 static void DeleteACharacter( void )
 {
-	u16 *buf;
+	char *buf;
 	u8 *length;
 		buf = s_work.temp_parameter;
 		length = &s_work.temp_parameter_length;
@@ -211,12 +193,8 @@ static void MenuInit( void )
 {
 	GX_DispOff();
  	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
 	
-	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"CooperationC");
-	GetAndDrawRTCData( &g_rtcDraw, TRUE );
-	
-	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
+	myDp_Printf( 1, 0, TXT_COLOR_BLUE, MAIN_SCREEN, "CooperationC");
 	
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	
@@ -227,9 +205,9 @@ static void MenuInit( void )
 }
 
 // 選択中文字キー・特殊キーで決定した時の挙動
-static void PushKeys( u16 code )
+static void PushKeys( char code )
 {
-	u16 *buf;
+	char *buf;
 	u8 *length;
 	u16 max_length;
 		buf = s_work.temp_parameter;
@@ -243,17 +221,17 @@ static void PushKeys( u16 code )
 		{
 			case VAR_BUTTON1_:
 			case VAR_BUTTON2_:
-				SetSoftKeyboardButton(next_char_mode[code - VAR_BUTTON1_]);
+//				SetSoftKeyboardButton(next_char_mode[code - VAR_BUTTON1_]);
 				break;
 			case DEL_BUTTON_:
 				DeleteACharacter();
 				break;
 			case SPACE_BUTTON_:
-				if(*length < max_length) buf[(*length)++] = L'　';
+				if(*length < max_length) buf[(*length)++] = ' ';
 				break;
 			case OK_BUTTON_:
-				SVC_CpuClear(0, buf + *length, (max_length - *length) * 2, 16);// ゼロクリア
-				MI_CpuCopy8(buf, s_work.parameter, 2*(PARAM_LENGTH+1));
+				MI_CpuClear8(buf + *length, (u32)(max_length - *length));// ゼロクリア
+				MI_CpuCopy8(buf, s_work.parameter, (PARAM_LENGTH+1));
 				// セーブ後にキャンセル処理と合流
 			case CANCEL_BUTTON_:
 				MenuInit();
@@ -269,73 +247,14 @@ static void PushKeys( u16 code )
 	}
 }
 
-// PadDetectOnKeyのSelectSomethingByTPで使うSelectSomethingFuncの実装
-static BOOL SelectSoftwareKeyFunc( u16 *csr, TPData *tgt )
-{
-	// まずは候補となる座標（カーソル単位）を取得
-	int csrx;
-	int csry;
-	int csrxy;
-	int a;
-	int b;
-	NNSG2dTextRect rect;
-	u16 code;
-	BOOL ret;
-	
-	csrx = tgt->x - CLIST_LT_X;
-	csrx = csrx - (CLIST_SEGMENT_INTERVAL*(csrx/(CLIST_MARGIN*CLIST_KEY_PER_SEGMENT+CLIST_SEGMENT_INTERVAL)));
-	csrx = csrx / CLIST_MARGIN;
-	csry = (tgt->y - CLIST_LT_Y) / CLIST_MARGIN;
-	if(csrx < 0 ) return FALSE;
-
-	if ( csrx >= KEY_PER_LINE ) csrx = KEY_PER_LINE - 1;
-	csrxy = csrx + csry * KEY_PER_LINE;
-
-	if ( csrxy < 0 || csrxy >= CHAR_LIST_CHAR_NUM) return FALSE;// 明らかにはみ出した
-
-	// 候補座標のキーコード取得
-	code = char_tbl[s_work.char_mode][csrxy];
-	if(code == EOM_) return FALSE;
-	
-	// 候補座標の領域取得
-	if( (code >= CODE_BUTTON_TOP_) && (code < CODE_BUTTON_BOTTOM_) )
-	{
-		int x = code - CODE_BUTTON_TOP_;
-		rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, str_button[x] );
-	}
-	else
-	{
-		u16 s[2];
-		s[0] = code;
-		s[1] = 0;
-		// rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, s );
-		// 文字幅じゃかなり判定が厳しい……ギリギリまでとってみる
-		rect.width = CLIST_MARGIN;
-		rect.height = CLIST_MARGIN;
-	}
-	a = CLIST_LT_X + CLIST_MARGIN*(csrxy%KEY_PER_LINE) + CLIST_SEGMENT_INTERVAL*((csrxy%KEY_PER_LINE)/CLIST_KEY_PER_SEGMENT);
-	b = CLIST_LT_Y + CLIST_MARGIN*(csrxy/KEY_PER_LINE);
-	
-	// 候補座標の領域にタッチ座標が含まれているかチェック
-	ret = WithinRangeTP( a, b, a+rect.width, b+rect.height, tgt );
-	
-	if(ret)
-	{
-		*csr = (u16)csrxy;
-	}
-	return ret;
-}
-
 // ソフトウェアキー上でのキーパッド及びタッチパッド処理
 // 先にReadTPしておくこと。
 static void PadDetectOnKey( void )
 {
-	SelectSomethingFunc func[1];
-	BOOL tp_select = FALSE;
 	//--------------------------------------
 	//  キー入力処理
 	//--------------------------------------
-	if( pad.trg & PAD_KEY_RIGHT ){									// カーソルの移動
+	if( MYPAD_IS_TRIG(PAD_KEY_RIGHT) ){									// カーソルの移動
 		do
 		{
 			if(s_work.key_csr%KEY_PER_LINE != KEY_PER_LINE-1) s_work.key_csr++;
@@ -344,7 +263,7 @@ static void PadDetectOnKey( void )
 		}
 		while(char_tbl[s_work.char_mode][s_work.key_csr]==EOM_);
 	}
-	if( pad.trg & PAD_KEY_LEFT ){
+	if( MYPAD_IS_TRIG(PAD_KEY_LEFT) ){
 		do
 		{
 			if(s_work.key_csr%KEY_PER_LINE != 0) s_work.key_csr--;
@@ -353,7 +272,7 @@ static void PadDetectOnKey( void )
 		}
 		while(char_tbl[s_work.char_mode][s_work.key_csr]==EOM_);
 	}
-	if( pad.trg & PAD_KEY_DOWN ){									// カーソルの移動
+	if( MYPAD_IS_TRIG(PAD_KEY_DOWN) ){									// カーソルの移動
 		do
 		{
 			s_work.key_csr += KEY_PER_LINE;
@@ -361,7 +280,7 @@ static void PadDetectOnKey( void )
 		}
 		while(char_tbl[s_work.char_mode][s_work.key_csr]==EOM_);
 	}
-	if( pad.trg & PAD_KEY_UP ){
+	if( MYPAD_IS_TRIG(PAD_KEY_UP) ){
 		do
 		{
 			if( s_work.key_csr < KEY_PER_LINE ) s_work.key_csr += (CHAR_LIST_CHAR_NUM/KEY_PER_LINE)*KEY_PER_LINE;
@@ -371,12 +290,10 @@ static void PadDetectOnKey( void )
 		while(char_tbl[s_work.char_mode][s_work.key_csr]==EOM_);
 	}
 	
-	func[0] = (SelectSomethingFunc)SelectSoftwareKeyFunc;
-	tp_select = SelectSomethingByTP(&s_work.key_csr, func, 1 );
 	
-	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// キーが押された
+	if( MYPAD_IS_TRIG(PAD_BUTTON_A)  ) {				// キーが押された
 		PushKeys( char_tbl[s_work.char_mode][s_work.key_csr] );
-	}else if( pad.trg & PAD_BUTTON_B ) {
+	}else if( MYPAD_IS_TRIG(PAD_BUTTON_B) ) {
 		DeleteACharacter();
 	}
 }
@@ -384,9 +301,8 @@ static void PadDetectOnKey( void )
 // パラメータ編集画面の描画処理
 static void DrawSetParameterScene( void )
 {
-	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
-	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"PARAMETER" );
-	PutStringUTF16( 128-60 , 21 , TXT_UCOLOR_G0, s_work.temp_parameter );
+	myDp_Printf( 1, 0, TXT_COLOR_BLUE, MAIN_SCREEN, "PARAMETER" );
+	myDp_Printf( 11, 3, TXT_COLOR_BLACK, MAIN_SCREEN, s_work.temp_parameter );
 	DrawCharKeys();
 }
 
@@ -397,16 +313,13 @@ static void SetParameterInit( void )
 	s_work.key_csr = KEY_START;
 	
 	// パラメータ用テンポラリバッファの初期化
-	MI_CpuCopy8(s_work.parameter, s_work.temp_parameter, 2*(PARAM_LENGTH+1));
-	s_work.temp_parameter_length = MY_StrLen( s_work.temp_parameter );
+	MI_CpuCopy8(s_work.parameter, s_work.temp_parameter, (PARAM_LENGTH+1));
+	s_work.temp_parameter_length = (u8)STD_GetStringLength( s_work.temp_parameter );
 	if( s_work.temp_parameter_length < PARAM_LENGTH ) {
-		SVC_CpuClear(CHAR_USCORE, &s_work.temp_parameter[ s_work.temp_parameter_length ],
-					 ( PARAM_LENGTH - s_work.temp_parameter_length ) * 2, 16);
+		MI_CpuFill8( &s_work.temp_parameter[ s_work.temp_parameter_length ], CHAR_USCORE, (u32)(PARAM_LENGTH - s_work.temp_parameter_length) );
 	}
 	
 	DrawSetParameterScene();
-	
-	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
 	GX_SetVisiblePlane ( GX_PLANEMASK_BG0 );
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
@@ -415,8 +328,6 @@ static void SetParameterInit( void )
 // パラメータ編集メイン
 static void SetParameterMain( void )
 {
-	ReadTP();
-	
 	PadDetectOnKey();
 	
 	// 描画処理
@@ -425,49 +336,55 @@ static void SetParameterMain( void )
 
 static void DrawMenuScene( void )
 {
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
-	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"CooperationC");
-	PutStringUTF16( s_work.starx-6, s_work.stary-6, TXT_UCOLOR_G0, (const u16 *)L"");
-	PutStringUTF16( 128 , 8*8, TXT_UCOLOR_G0, s_work.parameter );
-	GetAndDrawRTCData( &g_rtcDraw, TRUE );
+	myDp_Printf( 1, 0, TXT_COLOR_BLUE, MAIN_SCREEN, "CooperationC");
+	myDp_Printf( 19 , 6, TXT_COLOR_DARKLIGHTBLUE, MAIN_SCREEN, s_work.parameter );
     // メニュー項目
-	DrawMenu( s_work.csr, &s_menuParam );
-	PrintfSJIS( 1*8, 20*8, TXT_COLOR_BLACK, "の位置：(%d,%d)",s_work.starx, s_work.stary);
+	myDp_DrawMenu( s_work.csr, MAIN_SCREEN, &s_menuParam );
+	myDp_Printf( 1, 20, TXT_COLOR_BLACK, MAIN_SCREEN, "'$' pos = (%d,%d)", s_work.starx, s_work.stary);
+	myDp_Printf( s_work.starx, s_work.stary, TXT_COLOR_RED, MAIN_SCREEN, "$");
 }
 
 static void MenuScene(void)
 {
-	BOOL tp_select = FALSE;
-	static TPData tgt = (TPData){0,0,0,0};
 	LauncherBootFlags tempflag = {TRUE, LAUNCHER_BOOTTYPE_NAND, TRUE, FALSE, FALSE, FALSE, 0};
-	
-	ReadTP();
-	
+
 	//--------------------------------------
 	//  キー入力処理
 	//--------------------------------------
-	if( pad.trg & PAD_KEY_DOWN ){									// カーソルの移動
+	if( MYPAD_IS_TRIG(PAD_KEY_DOWN) ){									// カーソルの移動
 		if( ++s_work.csr == COPA_MENU_ELEMENT_NUM ) {
 			s_work.csr=0;
 		}
+		if( ++s_work.stary == 24)
+		{
+			s_work.stary = 0;
+		}
 	}
-	if( pad.trg & PAD_KEY_UP ){
+	if( MYPAD_IS_TRIG(PAD_KEY_UP) ){
 		if( --s_work.csr & 0x80 ) {
 			s_work.csr=COPA_MENU_ELEMENT_NUM - 1;
 		}
+		if( --s_work.stary == -1)
+		{
+			s_work.stary = 23;
+		}
 	}
-	tp_select = SelectMenuByTP( &s_work.csr, &s_menuParam );
-	
-	if(tpd.disp.touch)
-	{
-		tgt = tpd.disp;
-		if(s_work.starx != tgt.x) s_work.starx += (((tgt.x - s_work.starx)>>3) + ((tgt.x > s_work.starx) ? 1 : -1) );
-		if(s_work.stary != tgt.y) s_work.stary += (((tgt.y - s_work.stary)>>3) + ((tgt.y > s_work.stary) ? 1 : -1) );
+	if( MYPAD_IS_TRIG(PAD_KEY_LEFT) ){									// カーソルの移動
+		if( --s_work.starx == -1)
+		{
+			s_work.starx = 31;
+		}
+	}
+	if( MYPAD_IS_TRIG(PAD_KEY_RIGHT) ){
+		if( ++s_work.starx == 32)
+		{
+			s_work.starx = 0;
+		}
 	}
 	
     DrawMenuScene();
 	
-	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// メニュー項目への分岐
+	if( MYPAD_IS_TRIG(PAD_BUTTON_A)) {				// メニュー項目への分岐
 		if( s_menuPos[ s_work.csr ].enable ) {
 			switch( s_work.csr ) {
 				case 0:
@@ -479,11 +396,11 @@ static void MenuScene(void)
 					{
 						FSFile f;
 						FS_InitFile(&f);
-						if(!FS_SetCurrentDirectory("dataPrv:/")) {MI_CpuCopy8(L"ライトエラー１",s_work.parameter,14); break;}
+						if(!FS_SetCurrentDirectory("dataPrv:/")) {MI_CpuCopy8("W Error 1",s_work.parameter,10); break;}
 						FS_CreateFile("test.dat", FS_PERMIT_R | FS_PERMIT_W );
-						if(!FS_OpenFileEx(&f, "test.dat", FS_FILEMODE_W)) {MI_CpuCopy8(L"ライトエラー２",s_work.parameter,14); break;}
-						if(-1 == FS_WriteFile(&f, &s_work, sizeof(s_work))) {MI_CpuCopy8(L"ライトエラー３",s_work.parameter,14); break;}
-						if(!FS_CloseFile( &f )) {MI_CpuCopy8(L"ライトエラー４",s_work.parameter,14); break;}
+						if(!FS_OpenFileEx(&f, "test.dat", FS_FILEMODE_W)) {MI_CpuCopy8("W Error 2",s_work.parameter,10); break;}
+						if(-1 == FS_WriteFile(&f, &s_work, sizeof(s_work))) {MI_CpuCopy8("W Error 3",s_work.parameter,10); break;}
+						if(!FS_CloseFile( &f )) {MI_CpuCopy8("W Error 4",s_work.parameter,10); break;}
 					}
 					// アプリ間パラメータをセット
 					{
@@ -493,7 +410,7 @@ static void MenuScene(void)
 						OS_InitArgBufferForDelivery( OS_DELIVER_ARG_BUFFER_SIZE );
 						// validフラグを立てる
 						OS_SetValidDeliveryArgumentInfo( TRUE );
-						// メーカーコードとゲームコードのセット(Launcher側でやるべき？)
+						// メーカーコードとゲームコードのセット
 						OS_SetMakerCodeToDeliveryArgumentInfo( *maker_code_src_addr );
 						OS_SetGameCodeToDeliveryArgumentInfo( *game_code_src_addr );
 						OS_SetTitleIdToDeliveryArgumentInfo( 0x00030004434f5043 );
@@ -515,12 +432,12 @@ static void MenuScene(void)
 // 初期化
 void CooperationCInit( void )
 {
-	ChangeUserColor( LCFG_TSD_GetUserColor() );
 	s_work.parameter[0] = 0;
 	MenuInit();
+	FS_Init(3);
 
 	{
-		if(OS_IsValidDeliveryArgumentInfo())
+		if( OS_IsValidDeliveryArgumentInfo() )
 		{
 			OS_DecodeDeliveryBuffer();
 			if(STD_CompareNString((const char *)OS_GetArgv(1), "-r", 3) == 0)
@@ -528,10 +445,10 @@ void CooperationCInit( void )
 				// セーブしたデータから復帰
 				FSFile f;
 				FS_InitFile(&f);
-				if(!FS_SetCurrentDirectory("dataPrv:/")) {MI_CpuCopy8(L"リードエラー１",s_work.parameter,14); return;}
+				if(!FS_SetCurrentDirectory("dataPrv:/")) {MI_CpuCopy8("R Error 1",s_work.parameter,10); return;}
 				if(!FS_OpenFileEx(&f, "test.dat", FS_FILEMODE_R)) {return;}
-				if(-1 == FS_ReadFile(&f, &s_work, sizeof(s_work))) {MI_CpuCopy8(L"リードエラー２",s_work.parameter,14); return;}
-				if(!FS_CloseFile( &f )) {MI_CpuCopy8(L"リードエラー３",s_work.parameter,14); return;}
+				if(-1 == FS_ReadFile(&f, &s_work, sizeof(s_work))) {MI_CpuCopy8("R Error 2",s_work.parameter,10); return;}
+				if(!FS_CloseFile( &f )) {MI_CpuCopy8("R Error 3",s_work.parameter,10); return;}
 			}
 		}
 	}
@@ -548,87 +465,31 @@ void CooperationCMain(void)
 // ソフトウェアキーボード用キャラテーブル
 //======================================================
 
-static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM] = {
-	{	// ひらがな
-		L'あ',	L'い',	L'う',	L'え',	L'お',
-		L'か',	L'き',	L'く',	L'け',	L'こ',	DEL_BUTTON_,
-		L'さ',	L'し',	L'す',	L'せ',	L'そ',
-		L'た',	L'ち',	L'つ',	L'て',	L'と',	SPACE_BUTTON_,
-		L'な',	L'に',	L'ぬ',	L'ね',	L'の',
-		L'は',	L'ひ',	L'ふ',	L'へ',	L'ほ',	EOM_,
-		
-		L'ま',	L'み',	L'む',	L'め',	L'も',
-		L'や',	EOM_,	L'ゆ',	EOM_,	L'よ',	VAR_BUTTON1_,
-		L'ら',	L'り',	L'る',	L'れ',	L'ろ',
-		L'わ',	L'ゐ',	L'ゑ',	L'を',	L'ん',	VAR_BUTTON2_,
-		L'ぁ',	L'ぃ',	L'ぅ',	L'ぇ',	L'ぉ',
-		L'ゃ',	EOM_,	L'ゅ',	EOM_,	L'ょ',	EOM_,
-		
-		L'が',	L'ぎ',	L'ぐ',	L'げ',	L'ご',
-		L'ざ',	L'じ',	L'ず',	L'ぜ',	L'ぞ',	EOM_,
-		L'だ',	L'ぢ',	L'づ',	L'で',	L'ど',
-		L'ば',	L'び',	L'ぶ',	L'べ',	L'ぼ',	OK_BUTTON_,
-		L'ぱ',	L'ぴ',	L'ぷ',	L'ぺ',	L'ぽ',
-		L'っ',	L'、',	L'。',	L'！',	L'？',	EOM_,
-		
-		L'「',	L'」',	L'～',	L'・',	L'ー',
-		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,	CANCEL_BUTTON_,
-		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
-		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
-	},
-	
-	{	// カタカナ
-		L'ア',	L'イ',	L'ウ',	L'エ',	L'オ',
-		L'カ',	L'キ',	L'ク',	L'ケ',	L'コ',	DEL_BUTTON_,
-		L'サ',	L'シ',	L'ス',	L'セ',	L'ソ',
-		L'タ',	L'チ',	L'ツ',	L'テ',	L'ト',	SPACE_BUTTON_,
-		L'ナ',	L'ニ',	L'ヌ',	L'ネ',	L'ノ',
-		L'ハ',	L'ヒ',	L'フ',	L'ヘ',	L'ホ',	EOM_,
-		
-		L'マ',	L'ミ',	L'ム',	L'メ',	L'モ',
-		L'ヤ',	EOM_,	L'ユ',	EOM_,	L'ヨ',	VAR_BUTTON1_,
-		L'ラ',	L'リ',	L'ル',	L'レ',	L'ロ',
-		L'ワ',	EOM_,	L'ヲ',	EOM_,	L'ン',	VAR_BUTTON2_,
-		L'ァ',	L'ィ',	L'ゥ',	L'ェ',	L'ォ',
-		L'ャ',	EOM_,	L'ュ',	EOM_,	L'ョ',	EOM_,
-		
-		L'ガ',	L'ギ',	L'グ',	L'ゲ',	L'ゴ',
-		L'ザ',	L'ジ',	L'ズ',	L'ゼ',	L'ゾ',	EOM_,
-		L'ダ',	L'ヂ',	L'ヅ',	L'デ',	L'ド',
-		L'バ',	L'ビ',	L'ブ',	L'ベ',	L'ボ',	OK_BUTTON_,
-		L'パ',	L'ピ',	L'プ',	L'ペ',	L'ポ',
-		L'ッ',	L'、',	L'。',	L'！',	L'ー',	EOM_,
-		
-		L'「',	L'」',	L'～',	L'・',	EOM_,
-		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,	CANCEL_BUTTON_,
-		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
-		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
-	},
-	
+static const char char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM] = {
 	{	// 英数
-		L'Ａ',	L'Ｂ',	L'Ｃ',	L'Ｄ',	L'Ｅ',
-		L'Ｆ',	L'Ｇ',	L'Ｈ',	L'Ｉ',	L'Ｊ',	DEL_BUTTON_,
-		L'Ｋ',	L'Ｌ',	L'Ｍ',	L'Ｎ',	L'Ｏ',
-		L'Ｐ',	L'Ｑ',	L'Ｒ',	L'Ｓ',	L'Ｔ',	SPACE_BUTTON_,
-		L'Ｕ',	L'Ｖ',	L'Ｗ',	L'Ｘ',	L'Ｙ',
-		L'Ｚ',	EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
+		'A',	'B',	'C',	'D',	'E',
+		'F',	'G',	'H',	'I',	'J',	DEL_BUTTON_,
+		'K',	'L',	'M',	'N',	'O',
+		'P',	'Q',	'R',	'S',	'T',	SPACE_BUTTON_,
+		'U',	'V',	'W',	'X',	'Y',
+		'Z',	EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
 		
-		L'ａ',	L'ｂ',	L'ｃ',	L'ｄ',	L'ｅ',
-		L'ｆ',	L'ｇ',	L'ｈ',	L'ｉ',	L'ｊ',	VAR_BUTTON1_,
-		L'ｋ',	L'ｌ',	L'ｍ',	L'ｎ',	L'ｏ',
-		L'ｐ',	L'ｑ',	L'ｒ',	L'ｓ',	L'ｔ',	VAR_BUTTON2_,
-		L'ｕ',	L'ｖ',	L'ｗ',	L'ｘ',	L'ｙ',
-		L'ｚ',	EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
+		'a',	'b',	'c',	'd',	'e',
+		'f',	'g',	'h',	'i',	'j',	EOM_,
+		'k',	'l',	'm',	'n',	'o',
+		'p',	'q',	'r',	's',	't',	EOM_,
+		'u',	'v',	'w',	'x',	'y',
+		'z',	EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
 		
-		L'０',	L'１',	L'２',	L'３',	L'４',
-		L'５',	L'６',	L'７',	L'８',	L'９',	EOM_,
-		L'！',	EOM_,	L'＆',	EOM_,	L'／',
-		L'，',	EOM_,	L'．',	EOM_,	L'－',	OK_BUTTON_,
-		L'’',	EOM_,	L'”',	EOM_,	EOM_,
-		L'＠',	EOM_,	L'（',	EOM_,	L'）',	EOM_,
+		'0',	'1',	'2',	'3',	'4',
+		'5',	'6',	'7',	'8',	'9',	EOM_,
+		'!',	EOM_,	'&',	EOM_,	'/',
+		',',	EOM_,	'.',	EOM_,	'-',	OK_BUTTON_,
+		'\'',	EOM_,	'"',	EOM_,	EOM_,
+		'@',	EOM_,	'(',	EOM_,	')',	CANCEL_BUTTON_,
 		
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
-		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,	CANCEL_BUTTON_,
+		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
 	},

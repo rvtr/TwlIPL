@@ -35,14 +35,10 @@ LINCLUDES	=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/include
 
 LLIBRARY_DIRS	+=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/lib/$(TWL_BUILDTYPE)
 
-LLIBRARIES				+=	libboc$(TWL_LIBSUFFIX).a \
-							libes$(TWL_LIBSUFFIX).a \
-							libnam$(TWL_LIBSUFFIX).a \
-							libDEMO$(TWL_LIBSUFFIX).a
+LLIBRARIES				+=	libDEMO$(TWL_LIBSUFFIX).a
 
 MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
 
-include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
 include $(TWLSDK_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------

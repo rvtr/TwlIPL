@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlSDK - demos - simpleShoot-1
+# Project:  TwlSDK - demos.TWL - nandApp - AppliCooperation - CooperationC
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -16,35 +16,31 @@
 # $Author:  $
 #----------------------------------------------------------------------------
 
-SUBDIRS					=	
-
 #----------------------------------------------------------------------------
 
-TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
 
 TITLEID_LO				=	COPC
-TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
 
-TARGET_BIN				=	main.srl
+TARGET_BIN				=	CooperationC.tad
 
 ROM_SPEC				=	main.rsf
 
-MISC_DIR				=	$(SYSMENU_ROOT)/build/systemMenu_RED/misc
+SRCS					=	main.c CooperationC.c misc_simple.c data.c
 
-SRCS					=	main.c CooperationC.c \
-							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
+LINCLUDES	=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/include
 
-LINCLUDES				=	$(MISC_DIR)/include
+LLIBRARY_DIRS	+=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/lib/$(TWL_BUILDTYPE)
 
-MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
+LLIBRARIES				+=	libDEMO$(TWL_LIBSUFFIX).a
 
-include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
 
+include $(TWLSDK_ROOT)/build/buildtools/commondefs
 
-LDIRT_CLEAN				=	$(TARGET_TAD)
-INSTALL_TARGETS			=	$(TARGET_TAD)
+SDK_NMENU_DATADIR				=  $(ROOT)/build/tools/TwlNMenu/data
+INSTALL_TARGETS			=	$(BINDIR)/$(TARGET_BIN)
 INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
@@ -52,7 +48,7 @@ INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 do-build : $(TARGETS)
 
 
-include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+include $(TWLSDK_ROOT)/build/buildtools/modulerules
 
 #----------------------------------------------------------------------------
 
