@@ -15,8 +15,8 @@
   $Author: yosiokat $
  *---------------------------------------------------------------------------*/
 
-#ifndef	__COOPERATION_B_H__
-#define	__COOPERATION_B_H__
+#ifndef	__SIMPLEAPP_H__
+#define	__SIMPLEAPP_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,4 +34,4 @@ void SimpleAppMain( void );
 }
 #endif
 
-#endif  // __COOPERATION_B_H__
+#endif  // __SIMPLEAPP_H__

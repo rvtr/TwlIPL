@@ -27,9 +27,18 @@ TARGET_BIN				=	CooperationC.tad
 
 ROM_SPEC				=	main.rsf
 
-SRCS					=	main.c CooperationC.c misc_simple.c data.c
+A_SRC_DIR				=	../../CooperationA/ARM9/src
+MISC_DIR				=	../../../misc
+DATA_DIR				=	../../../data
 
-LINCLUDES	=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/include
+SRCS					=	$(A_SRC_DIR)/main.c $(A_SRC_DIR)/CooperationA.c \
+							$(MISC_DIR)/misc_simple.c \
+							$(DATA_DIR)/data.c
+
+LINCLUDES	=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/include \
+				$(A_SRC_DIR) \
+				$(MISC_DIR) \
+				$(DATA_DIR)
 
 LLIBRARY_DIRS	+=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/lib/$(TWL_BUILDTYPE)
 

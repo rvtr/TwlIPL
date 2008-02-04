@@ -16,8 +16,6 @@
 # $Author:  $
 #----------------------------------------------------------------------------
 
-SUBDIRS					=	
-
 #----------------------------------------------------------------------------
 
 TARGET_PLATFORM			=	TWL
@@ -29,9 +27,16 @@ TARGET_BIN				=	simpleapp.srl
 
 ROM_SPEC				=	main.rsf
 
-SRCS					=	main.c SimpleApp.c misc_simple.c data.c
+MISC_DIR				=	../../misc
+DATA_DIR				=	../../data
 
-LINCLUDES	=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/include
+SRCS					=	main.c SimpleApp.c \
+							$(MISC_DIR)/misc_simple.c \
+							$(DATA_DIR)/data.c
+
+LINCLUDES	=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/include \
+				$(MISC_DIR) \
+				$(DATA_DIR)
 
 LLIBRARY_DIRS	+=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/lib/$(TWL_BUILDTYPE)
 
@@ -40,6 +45,9 @@ LLIBRARIES				+=	libDEMO$(TWL_LIBSUFFIX).a
 MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
 
 include $(TWLSDK_ROOT)/build/buildtools/commondefs
+
+INSTALL_TARGETS			=	$(BINDIR)/$(TARGET_BIN)
+INSTALL_DIR				=	$(DATA_DIR)
 
 #----------------------------------------------------------------------------
 
@@ -51,4 +59,3 @@ include $(TWLSDK_ROOT)/build/buildtools/modulerules
 #----------------------------------------------------------------------------
 
 #===== End of Makefile =====
-

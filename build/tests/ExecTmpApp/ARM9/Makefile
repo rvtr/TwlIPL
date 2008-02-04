@@ -27,9 +27,16 @@ TARGET_BIN				=	ExecTmpApp.tad
 
 ROM_SPEC				=	main.rsf
 
-SRCS					=	main.c ExecTmpApp.c misc_simple.c data.c
+MISC_DIR				=	../../misc
+DATA_DIR				=	../../data
 
-LINCLUDES	=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/include
+SRCS					=	main.c ExecTmpApp.c \
+							$(MISC_DIR)/misc_simple.c \
+							$(DATA_DIR)/data.c
+
+LINCLUDES	=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/include \
+				$(MISC_DIR) \
+				$(DATA_DIR)
 
 LLIBRARY_DIRS	+=	$(TWLSDK_ROOT)/build/demos/gx/UnitTours/DEMOLib/lib/$(TWL_BUILDTYPE)
 

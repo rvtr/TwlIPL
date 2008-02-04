@@ -52,6 +52,7 @@ Autoload WRAM
 				libi2c_sp$(LIBSUFFIX).a		\
 				libcamera_sp$(LIBSUFFIX).a	\
 				libcdc_sp$(LIBSUFFIX).a		\
+				libsndex_sp$(LIBSUFFIX).a		\
 				libtpex_sp$(LIBSUFFIX).a		\
 				libmicex_sp$(LIBSUFFIX).a		\
 				libmcu_sp$(LIBSUFFIX).a		\
