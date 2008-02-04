@@ -98,6 +98,7 @@ static void PreInit(void)
     /*
         バッテリー残量チェック
     */
+    if ( MCUi_ReadRegister( MCU_REG_VER_INFO_ADDR ) >= 0x20 )   // MCU旧バージョン対策
     if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
     {
         OS_TPrintf("Battery is empty.\n");
@@ -133,6 +134,7 @@ static void PostInit(void)
     /*
         バッテリー残量チェック
     */
+    if ( MCUi_ReadRegister( MCU_REG_VER_INFO_ADDR ) >= 0x20 )   // MCU旧バージョン対策
     if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
     {
         OS_TPrintf("Battery is empty.\n");
@@ -184,7 +186,7 @@ void TwlSpMain( void )
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x84
 
-    PM_BackLightOn( FALSE );
+//    PM_BackLightOn( FALSE );
 
     SDNandContext = &OSi_GetFromFirmAddr()->SDNandContext;
     if ( !FATFS_Init( DMA_FATFS_1, DMA_FATFS_2, THREAD_PRIO_FATFS ) )
@@ -196,7 +198,7 @@ void TwlSpMain( void )
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x85
 
-    PM_BackLightOn( FALSE );
+//    PM_BackLightOn( FALSE );
     // 5:
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x86
@@ -222,7 +224,7 @@ void TwlSpMain( void )
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x89
 
-    PM_BackLightOn( FALSE );
+//    PM_BackLightOn( FALSE );
 
     AESi_InitKeysFIRM();
     AESi_RecvSeed( rh->s.developer_encrypt );
@@ -230,7 +232,7 @@ void TwlSpMain( void )
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8a
 
-    PM_BackLightOn( FALSE );
+//    PM_BackLightOn( FALSE );
     // 10:
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8b
@@ -269,7 +271,7 @@ void TwlSpMain( void )
 #endif
     SetDebugLED( 0 );
 
-    PM_BackLightOn( TRUE ); // last chance
+//    PM_BackLightOn( TRUE ); // last chance
 
     OS_BootFromFIRM();
 
