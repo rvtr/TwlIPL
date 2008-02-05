@@ -124,8 +124,10 @@ BOOL FS_LoadBuffer( int fd, u32 offset, u32 size )
         u8* dest = aesFlag ? aesBuffer :
                     (u8*)HW_FIRM_LOAD_BUFFER_BASE + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
         u32 unit = size < HW_FIRM_LOAD_BUFFER_UNIT_SIZE ? size : HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
-        while ( MI_GetWramBankMaster_B( count ) != MI_WRAM_ARM7 ) // wait to be ready
+        PXI_AcquireLoadBufferSemaphore(); // wait to be ready
+        if ( MI_GetWramBankMaster_B( count ) != MI_WRAM_ARM7 )
         {
+            OS_TPanic("PROGRAM ERROR!");
         }
 #ifdef WORKAROUND_NAND_2KB_BUG
         {
@@ -152,7 +154,7 @@ BOOL FS_LoadBuffer( int fd, u32 offset, u32 size )
         {
             CopyWithAes( dest, (u8*)HW_FIRM_LOAD_BUFFER_BASE + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE, unit );
         }
-        PXI_NotifyID( FIRM_PXI_ID_LOAD_PIRIOD );
+        PXI_ReleaseLoadBufferSemaphore();
         count = ( count + 1 ) % HW_FIRM_LOAD_BUFFER_UNIT_NUMS;
         size -= unit;
     }

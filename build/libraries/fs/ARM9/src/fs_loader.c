@@ -179,10 +179,7 @@ BOOL FS_LoadBuffer( u8* dest, u32 size, SVCSHA1Context *ctx )
     {
         u8* src = (u8*)HW_FIRM_LOAD_BUFFER_BASE + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
         u32 unit = size < HW_FIRM_LOAD_BUFFER_UNIT_SIZE ? size : HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
-        if ( PXI_RecvID() != FIRM_PXI_ID_LOAD_PIRIOD )
-        {
-            return FALSE;
-        }
+        PXI_AcquireLoadBufferSemaphore(); // wait to be ready
         MIi_SetWramBankMaster_B( count, MI_WRAM_ARM9 );
         if (ctx)
         {
@@ -204,6 +201,7 @@ BOOL FS_LoadBuffer( u8* dest, u32 size, SVCSHA1Context *ctx )
         size -= unit;
         dest += unit;
         MIi_SetWramBankMaster_B( count, MI_WRAM_ARM7 );
+        PXI_ReleaseLoadBufferSemaphore();
         count = ( count + 1 ) % HW_FIRM_LOAD_BUFFER_UNIT_NUMS;
     }
     return TRUE;

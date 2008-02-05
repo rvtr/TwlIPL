@@ -24,7 +24,10 @@ typedef struct
 {
     u32 wp;
     u32 rp;
+
     u8 id[PXI_FIRM_ID_MAX];
+
+    u32 semaphore;  // for fs_loader.c
 
     u32 length;
     u32 current;
@@ -66,6 +69,18 @@ static void PxiFirmIDCallback( PXIFifoTag tag, u32 data, BOOL err )
     u32 next_wp = ( work.wp + 1 ) % PXI_FIRM_ID_MAX;
     (void)tag;
     (void)err;
+
+    // special ID
+    if ( data == FIRM_PXI_ID_LOAD_BUFFER_SEMAPHORE )
+    {
+        work.semaphore++;
+        if ( work.semaphore > HW_FIRM_LOAD_BUFFER_UNIT_NUMS )
+        {
+            OS_TPanic("PROGRAM ERROR: Semaphore counter was overlow.");
+        }
+        return;
+    }
+
     if ( next_wp != work.rp )
     {
         work.wp = next_wp;
@@ -93,6 +108,7 @@ void PXI_InitFIRM(void)
     while (!PXI_IsCallbackReady(PXI_FIFO_TAG_USER_0, PXI_PROC_ARM7))
     {
     }
+    work.semaphore = 0;
 #endif
     work.rp = work.wp = work.length = 0;
     PXI_SetFifoRecvCallback( PXI_FIFO_TAG_USER_0, PxiFirmStreamCallback );
@@ -101,6 +117,7 @@ void PXI_InitFIRM(void)
     while (!PXI_IsCallbackReady(PXI_FIFO_TAG_USER_1, PXI_PROC_ARM9))
     {
     }
+    work.semaphore = HW_FIRM_LOAD_BUFFER_UNIT_NUMS;
 #endif
 }
 
@@ -215,6 +232,44 @@ FIRMPxiID PXI_RecvID( void )
 #endif
 #endif
             return id;
+        }
+        OS_RestoreInterrupts( enabled );
+    }
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         PXI_ReleaseLoadBufferSemaphore
+
+  Description:  Release semaphore for *_LoadBuffer
+
+  Arguments:    None.
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+void PXI_ReleaseLoadBufferSemaphore( void )
+{
+    PXI_NotifyID( FIRM_PXI_ID_LOAD_BUFFER_SEMAPHORE );
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         PXI_AcquireLoadBufferSemaphore
+
+  Description:  Acquire semaphore for *_LoadBuffer
+
+  Arguments:    None.
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+void PXI_AcquireLoadBufferSemaphore( void )
+{
+    while ( 1 )
+    {
+        OSIntrMode enabled = OS_DisableInterrupts();
+        if ( work.semaphore > 0 )
+        {
+            work.semaphore--;
+            OS_RestoreInterrupts( enabled );
+            return;
         }
         OS_RestoreInterrupts( enabled );
     }

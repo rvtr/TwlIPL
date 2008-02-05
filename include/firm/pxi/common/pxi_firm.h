@@ -36,7 +36,7 @@ typedef enum
     FIRM_PXI_ID_LOAD_HEADER = 6,    // FATFS_LoadHeader
     FIRM_PXI_ID_LOAD_STATIC = 5,    // FATFS_LoadStatic
 
-    FIRM_PXI_ID_LOAD_PIRIOD = 1,    // *_LoadBuffer
+    FIRM_PXI_ID_LOAD_BUFFER_SEMAPHORE = 1,    // *_LoadBuffer
 
     // from ARM9
     FIRM_PXI_ID_INIT_MMEM = 3,  // _start
@@ -113,6 +113,28 @@ void PXI_NotifyID( FIRMPxiID id );
   Returns:      Received ID
  *---------------------------------------------------------------------------*/
 FIRMPxiID PXI_RecvID( void );
+
+/*---------------------------------------------------------------------------*
+  Name:         PXI_ReleaseLoadBufferSemaphore
+
+  Description:  Release semaphore for *_LoadBuffer
+
+  Arguments:    None.
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+void PXI_ReleaseLoadBufferSemaphore( void );
+
+/*---------------------------------------------------------------------------*
+  Name:         PXI_AcquireLoadBufferSemaphore
+
+  Description:  Acquire semaphore for *_LoadBuffer
+
+  Arguments:    None.
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+void PXI_AcquireLoadBufferSemaphore( void );
 
 /*---------------------------------------------------------------------------*
   Name:         PXIi_SendIDByIntf
