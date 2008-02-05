@@ -53,16 +53,16 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     mem_list[i++] = (u32)SDK_STATIC_START;
     mem_list[i++] = (u32)SDK_STATIC_BSS_END-(u32)SDK_STATIC_START;
 #ifdef SDK_ARM9
-    /* ITCM全クリア */
-    mem_list[i++] = (u32)HW_ITCM;
-    mem_list[i++] = (u32)HW_ITCM_SIZE;
+    /* ITCM全クリア (FromFrimを除く) */
+    mem_list[i++] = HW_ITCM;
+    mem_list[i++] = HW_FIRM_FROM_FIRM_BUF - HW_ITCM;
+    mem_list[i++] = HW_FIRM_FROM_FIRM_BUF_END;
+    mem_list[i++] = HW_ITCM_END - HW_FIRM_FROM_FIRM_BUF_END;
     /* FS/FATFSバッファのクリア */
     mem_list[i++] = (u32)HW_FIRM_FATFS_COMMAND_BUFFER;  // 0x02ff7800 - 0x02ffbfff
     mem_list[i++] = (u32)HW_FIRM_FS_TEMP_BUFFER_END - (u32)HW_FIRM_FATFS_COMMAND_BUFFER;
     /* 一部鍵バッファのクリア (鍵管理.xls参照) */
     mem_list[i++] = (u32)OSi_GetFromFirmAddr()->rsa_pubkey[0];
-    mem_list[i++] = ACS_PUBKEY_LEN;
-    mem_list[i++] = (u32)OSi_GetFromFirmAddr()->rsa_pubkey[4];
     mem_list[i++] = ACS_PUBKEY_LEN;
 #else   // SDK_ARM7
     /* FS_Loader用バッファのクリア */
@@ -86,6 +86,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     // post clear
     mem_list[i++] = NULL;
     SDK_ASSERT(i <= sizeof(mem_list)/sizeof(mem_list[0]));
+#if 0
 #ifdef FIRM_USE_TWLSDK_KEYS
     // TwlSDK内の鍵を使っている時は量産用CPUではブートしない
 #ifdef SDK_ARM9
@@ -97,6 +98,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
         OS_Terminate();
     }
 #endif // FIRM_USE_SDK_KEYS
+#endif
     REBOOT_Execute(entry, wram_reg, mem_list, code_buf, stack_top, target, scfg, jtag);
     OS_Terminate();
 }
