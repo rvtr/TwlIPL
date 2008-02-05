@@ -127,6 +127,9 @@ void BOOT_Ready( void )
 		if ( dh->s.platform_code )
 		{
 //			target = REBOOT_TARGET_TWL_APP;
+#ifdef SYSMENU_DISABLE_TWL_BOOT
+            OS_Terminate();
+#endif // SYSMENU_DISABLE_TWL_BOOT
 		}
 		else
 		{
@@ -138,13 +141,13 @@ void BOOT_Ready( void )
             ds = TRUE;
         }
 
-#ifdef FIRM_USE_TWLSDK_KEYS
+#if defined(FIRM_USE_TWLSDK_KEYS) || defined(SYSMENU_DISABLE_RETAIL_BOOT)
         // TwlSDK内の鍵を使っている時は製品用CPUではTWLアプリはブートしない
         if ( ! (*(u8*)OS_CHIPTYPE_DEBUGGER_ADDR & OS_CHIPTYPE_DEBUGGER_MASK) && !ds )
         {
             OS_Terminate();
         }
-#endif // FIRM_USE_SDK_KEYS
+#endif // FIRM_USE_SDK_KEYS || SYSMENU_DISABLE_RETAIL_BOOT
 		
 		// 起動するターゲットの種類を指定する必要あり
 		OS_Boot( dh->s.main_entry_address, mem_list, target );

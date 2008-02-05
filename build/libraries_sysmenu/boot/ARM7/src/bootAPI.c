@@ -177,6 +177,11 @@ BOOL BOOT_WaitStart( void )
 			if ( dh->s.platform_code )
 			{
 //				target = REBOOT_TARGET_TWL_APP;
+#ifdef SYSMENU_DISABLE_TWL_BOOT
+                while (1)
+                {
+                }
+#endif // SYSMENU_DISABLE_TWL_BOOT
 			}
 			else
 			{
@@ -199,13 +204,13 @@ BOOL BOOT_WaitStart( void )
 								  REG_SND_SMX_CNT_E_MASK;
             }
 
-#ifdef FIRM_USE_TWLSDK_KEYS
+#if defined(FIRM_USE_TWLSDK_KEYS) || defined(SYSMENU_DISABLE_RETAIL_BOOT)
             // TwlSDK内の鍵を使っている時は製品用CPUではTWLアプリはブートしない
             if ( ! (*(u8*)HWi_WSYS08_ADDR & HWi_WSYS08_OP_OPT_MASK) && !ds )
             {
                 OS_Terminate();
             }
-#endif // FIRM_USE_SDK_KEYS
+#endif // FIRM_USE_SDK_KEYS || SYSMENU_DISABLE_RETAIL_BOOT
 			
 			// リブート
 			OS_Boot( dh->s.sub_entry_address, mem_list, target );
