@@ -37,6 +37,7 @@
 #include    <twl/hw/common/mmap_wramEnv.h>
 #include    <sysmenu.h>
 #include    "nvram_sp.h"
+#include    "pm_pmic.h"
 #include    "internal_api.h"
 
 /*---------------------------------------------------------------------------*
@@ -107,6 +108,12 @@ TwlSpMain(void)
     // ランチャー自身がこれらの値を使うには、自身でこれらの値をセットしてやる必要がある。
     // ランチャーからアプリを起動する際には、reboot.cが値を再セットしてくれる。
     SetSCFGWork();  // [TODO]未デバッグ
+
+    // バックライトON
+    while ( (reg_GX_DISPSTAT & REG_GX_DISPSTAT_INI_MASK) == FALSE )
+    {
+    }
+    PMi_SetControl( PMIC_CTL_BKLT1 | PMIC_CTL_BKLT2 );
 
     // OS 初期化
     OS_Init();
