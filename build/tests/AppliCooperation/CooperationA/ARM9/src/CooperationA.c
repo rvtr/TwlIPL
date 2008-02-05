@@ -78,6 +78,8 @@ static void MenuScene( void );
 
 static CopA_Work s_work = (CopA_Work){0,0,0,"","",0,0,0};
 
+static char a_or_c = 'A';
+
 // const data  -----------------------------------------
 static const char char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM];
 
@@ -123,7 +125,7 @@ static const char *str_button[] = {
 									(const char *)str_button_ok,
 									(const char *)str_button_cancel,
 									};
-									
+
 //======================================================
 // アプリ連携テストプログラムA
 //======================================================
@@ -194,7 +196,7 @@ static void MenuInit( void )
 	GX_DispOff();
  	GXS_DispOff();
 	
-	myDp_Printf( 1, 0, TXT_COLOR_BLUE, MAIN_SCREEN, "CooperationA");
+	myDp_Printf( 1, 0, TXT_COLOR_BLUE, MAIN_SCREEN, "Cooperation%c", a_or_c);
 	
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	
@@ -336,12 +338,12 @@ static void SetParameterMain( void )
 
 static void DrawMenuScene( void )
 {
-	myDp_Printf( 1, 0, TXT_COLOR_BLUE, MAIN_SCREEN, "CooperationA");
+	myDp_Printf( 1, 0, TXT_COLOR_BLUE, MAIN_SCREEN, "Cooperation%c", a_or_c);
 	myDp_Printf( 19 , 6, TXT_COLOR_DARKLIGHTBLUE, MAIN_SCREEN, s_work.parameter );
     // メニュー項目
 	myDp_DrawMenu( s_work.csr, MAIN_SCREEN, &s_menuParam );
-	myDp_Printf( 1, 20, TXT_COLOR_BLACK, MAIN_SCREEN, "'*' pos = (%d,%d)", s_work.starx, s_work.stary);
-	myDp_Printf( s_work.starx, s_work.stary, TXT_COLOR_RED, MAIN_SCREEN, "*");
+	myDp_Printf( 1, 20, TXT_COLOR_BLACK, MAIN_SCREEN, "'%c' pos = (%d,%d)", (a_or_c=='A' ? '*' : '$'), s_work.starx, s_work.stary);
+	myDp_Printf( s_work.starx, s_work.stary, TXT_COLOR_RED, MAIN_SCREEN, (a_or_c=='A' ? "*" : "$"));
 }
 
 static void MenuScene(void)
@@ -406,6 +408,7 @@ static void MenuScene(void)
 					{
 						u16 *maker_code_src_addr = (u16 *)(HW_TWL_ROM_HEADER_BUF + 0x10);
 						u32 *game_code_src_addr = (u32 *)(HW_TWL_ROM_HEADER_BUF + 0xc);
+						u64 *title_id_src_addr = (u64 *)(HW_TWL_ROM_HEADER_BUF + 0x230);
 						// アプリ間パラメータの初期化
 						OS_InitArgBufferForDelivery( OS_DELIVER_ARG_BUFFER_SIZE );
 						// validフラグを立てる
@@ -413,7 +416,7 @@ static void MenuScene(void)
 						// メーカーコードとゲームコードのセット
 						OS_SetMakerCodeToDeliveryArgumentInfo( *maker_code_src_addr );
 						OS_SetGameCodeToDeliveryArgumentInfo( *game_code_src_addr );
-						OS_SetTitleIdToDeliveryArgumentInfo( 0x00030004434f5041 );
+						OS_SetTitleIdToDeliveryArgumentInfo( *title_id_src_addr );
 						// アプリ専用引数のセット
 						OS_SetDeliveryArgments( (const char *)s_work.parameter );
 					}
@@ -433,6 +436,9 @@ static void MenuScene(void)
 void CooperationAInit( void )
 {
 	s_work.parameter[0] = 0;
+	
+	a_or_c = *((char *)(HW_TWL_ROM_HEADER_BUF + 0x230));// title_IDの最下位を格納
+	
 	MenuInit();
 	FS_Init(3);
 
