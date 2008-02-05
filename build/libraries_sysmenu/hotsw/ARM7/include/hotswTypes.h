@@ -40,8 +40,8 @@ extern "C" {
 #define PAGE_SIZE                           0x200       // 1ページのサイズ(バイト単位)
 #define PAGE_WORD_SIZE                      0x80        // 1ページのサイズ(ワード単位)
 
-#define ONE_SEGMENT_SIZE                    0x1000      // 1 Segmentのサイズ(バイト単位)
-#define ONE_SEGMENT_WORD_SIZE               0x400       // 1 Segmentのサイズ(ワード単位)
+#define ONE_SEGMENT_SIZE                    0x1000      // 1Segmentのサイズ(バイト単位)
+#define ONE_SEGMENT_WORD_SIZE               0x400       // 1Segmentのサイズ(ワード単位)
 
 #define SECURE_SEGMENT_SIZE                 0x4000      // Secure領域のサイズ
 
@@ -94,7 +94,7 @@ extern "C" {
 #define START_SHIFT                         31
 #define START_MASK                          0x80000000
 
-#define SCRAMBLE_MASK                       0x1840e000
+#define SCRAMBLE_MASK                       0x406000 // CS SE DSのマスク
 
 #define AddLatency2ToLatency1(param)\
     ( (((param) &  LATENCY2_MASK)   \

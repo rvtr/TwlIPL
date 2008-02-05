@@ -54,9 +54,11 @@ void ReadBootSegNormal_DSType1(CardBootData *cbd)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ChangeModeNormal_DSType1
-  
-  Description:  DSカードType1のノーマルモードのモード変更
+ * Name:         ChangeModeNormal_DSType1
+ * 
+ * Description:  DSカードType1のノーマルモードのモード変更
+ * 
+ * CT=240ns  Latency1=0x18  Latency2=0  Pagecount=0page
  *---------------------------------------------------------------------------*/
 void ChangeModeNormal_DSType1(CardBootData *cbd)
 {
@@ -85,8 +87,8 @@ void ChangeModeNormal_DSType1(CardBootData *cbd)
     reg_HOTSW_MCCMD0 = *(u32 *)cnd.b;
 	reg_HOTSW_MCCMD1 = *(u32 *)&cnd.b[4];
 
-	// MCCNT1 レジスタ設定 (START = 1 に)
-	reg_HOTSW_MCCNT1 = START_MASK;
+	// MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = START_MASK | CT_MASK | LATENCY2_MASK & (0x18 << LATENCY2_SHIFT);
     
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
@@ -154,9 +156,11 @@ static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
 
 
 /*---------------------------------------------------------------------------*
-  Name:         ReadIDSecure_DSType1
-  
-  Description:  
+ * Name:         ReadIDSecure_DSType1
+ * 
+ * Description:
+ *
+ * CT=240ns  Latency1=0x8f8+0x18  Latency2=0  Pagecount=Status
  *---------------------------------------------------------------------------*/
 void ReadIDSecure_DSType1(CardBootData *cbd)
 {
@@ -179,9 +183,9 @@ void ReadIDSecure_DSType1(CardBootData *cbd)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ReadSegSecure_DSType1
-  
-  Description:  
+ * Name:         ReadSegSecure_DSType1
+ * 
+ * Description:
  *---------------------------------------------------------------------------*/
 void ReadSegSecure_DSType1(CardBootData *cbd)
 {
@@ -235,9 +239,9 @@ void ReadSegSecure_DSType1(CardBootData *cbd)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         SwitchONPNGSecure_DSType1
-  
-  Description:  
+ * Name:         SwitchONPNGSecure_DSType1
+ * 
+ * Description:
  *---------------------------------------------------------------------------*/
 void SwitchONPNGSecure_DSType1(CardBootData *cbd)
 {
@@ -256,9 +260,9 @@ void SwitchONPNGSecure_DSType1(CardBootData *cbd)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         SwitchOFFPNGSecure_DSType1
-  
-  Description:  
+ * Name:         SwitchOFFPNGSecure_DSType1
+ * 
+ * Description:
  *---------------------------------------------------------------------------*/
 void SwitchOFFPNGSecure_DSType1(CardBootData *cbd)
 {
@@ -277,9 +281,11 @@ void SwitchOFFPNGSecure_DSType1(CardBootData *cbd)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ChangeModeSecure_DSType1
-  
-  Description:  
+ * Name:         ChangeModeSecure_DSType1
+ * 
+ * Description:
+ *
+ * CT=240ns  Latency1=0x8f8+0x18  Latency2=0  Pagecount=0page
  *---------------------------------------------------------------------------*/
 void ChangeModeSecure_DSType1(CardBootData *cbd)
 {
@@ -302,9 +308,9 @@ void ChangeModeSecure_DSType1(CardBootData *cbd)
 // ■       ゲームモードのコマンド       ■
 // ■------------------------------------■
 /*---------------------------------------------------------------------------*
-  Name:         ReadIDGame_DSType1
-  
-  Description:  ゲームモードでIDを読み込む
+ * Name:         ReadIDGame_DSType1
+ * 
+ * Description:  ゲームモードでIDを読み込む
  *---------------------------------------------------------------------------*/
 void ReadIDGame_DSType1(CardBootData *cbd)
 {

@@ -170,10 +170,10 @@ void HOTSW_Init(void)
 
 #ifdef SDK_ARM7
 	// チャッタリングカウンタの値を設定
-	reg_MI_MC1 = (u32)((reg_MI_MC1 & 0xffff) | 0xc80000);
+	reg_MI_MC1 = (u32)((reg_MI_MC1 & 0xffff) | 0xe00000);
 
 	// Counter-Aの値を設定
-    reg_MI_MC2 = 0xc8;
+    reg_MI_MC2 = 0xe0;
 #else
     // PXI経由でARM7にチャッタリングカウンタ・カウンタAの値を設定してもらう。設定されるまで待つ。
 
@@ -398,13 +398,6 @@ BOOL HOTSW_LoadCardData(void)
 			// デバッグ出力
 //			ShowRomHeaderData();
 		}
-
-		// ※最終的にはカードIDをHW_BOOT_CHECK_INFO_BUFに入れないと、アプリ起動後のカード抜け処理が上手く動作しないので注意。
-		//   今はスロットBを使用しているので、ノーケアでOK.
-//		*(u32 *)HW_BOOT_CHECK_INFO_BUF = s_cbData.id_gam;
-//		*(u32 *)HW_RED_RESERVED = s_cbData.id_gam;
-//		SYSMi_GetWork()->nCardID = s_cbData.id_gam;
-
         OS_TPrintf("-----------------------------------------------\n\n");
     }
     else{
@@ -417,28 +410,6 @@ BOOL HOTSW_LoadCardData(void)
 
 	OS_TPrintf( "Load Card Time : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 
-	// [TODO:]暫定処置。ちゃんとした流れでLauncher側に渡すようにする。
-//	MI_CpuCopy8( HOTSW_GetRomEmulationBuffer(), &SYSMi_GetWork()->romEmuInfo, ROM_EMULATION_DATA_SIZE );
-//	SYSMi_GetWork()->flags.common.isOnDebugger = s_cbData.debuggerFlg;
-	
-//#ifdef DEBUG_USED_CARD_SLOT_B_
-//	SYSMi_GetWork()->flags.common.is1stCardChecked  = TRUE;
-//#endif
-/*
-	{
-		u16 id = (u16)OS_GetLockID();
-		(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-		SYSMi_GetWork()->flags.common.isBusyHotSW = 0;
-		if( SYSMi_GetWork()->flags.arm9.reqChangeHotSW ) {
-			SYSMi_GetWork()->flags.common.isEnableHotSW = SYSMi_GetWork()->flags.arm9.nextHotSWStatus;
-			SYSMi_GetWork()->flags.arm9.reqChangeHotSW  = 0;
-			SYSMi_GetWork()->flags.arm9.nextHotSWStatus = 0;
-//			HOTSW_Finalize();
-		}
-		(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-		OS_ReleaseLockID( id );
-	}
-*/
     return retval;
 }
 
@@ -797,8 +768,6 @@ static BOOL IsCardExist(void)
  *---------------------------------------------------------------------------*/
 static void McPowerOn(void)
 {
-//	OS_TPrintf("Slot State : %08x\n", reg_MI_MC1);
-    
     if((reg_MI_MC1 & SLOT_STATUS_MODE_SELECT_MSK) == SLOT_STATUS_MODE_00){
     	// SCFG_MC1 の Slot Status の M1,M0 を 01 にする
     	reg_MI_MC1  = (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | SLOT_STATUS_MODE_01);
@@ -815,8 +784,6 @@ static void McPowerOn(void)
     
 		// 27ms待ち
 		OS_Sleep(27);
-
-//		OS_TPrintf("MC Power ON\n");
     }
 }
 
@@ -833,6 +800,9 @@ static void McPowerOff(void)
 
         // SCFG_MC1 の Slot Status の M1,M0 が 00 になるまでポーリング
         while((reg_MI_MC1 & SLOT_STATUS_MODE_SELECT_MSK) != SLOT_STATUS_MODE_00){}
+
+		// 100ms待ち [TODO:]待ち時間は暫定値。金子さんに数値を測定してもらう。
+		OS_Sleep(100);
     }
 }
 

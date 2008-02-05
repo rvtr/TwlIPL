@@ -35,9 +35,9 @@ static void SetMCSCR(void);
 /*---------------------------------------------------------------------------*
  * Name:         ReadBootSegNormal_DSType2
  * 
- * Description:  DSカードType2のノーマルモードのBoot Segment読み込み (Page0 ～ 7)
- *
- * CT=240ns  Latency1=0x1fff  Latency2=0x3f  Pagecount=1page
+ * Description:  DSカードType2のノーマルモードのBoot Segment読み込み
+ * 
+ * CT=240ns  Latency1=0x1fff  Latency2=0x3f  Pagecount=8page
  *---------------------------------------------------------------------------*/
 void ReadBootSegNormal_DSType2(CardBootData *cbd)
 {
@@ -82,9 +82,11 @@ void ReadBootSegNormal_DSType2(CardBootData *cbd)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ChangeModeNormal_DSType2
-  
-  Description:  DSカードType1のノーマルモードのモード変更
+ * Name:         ChangeModeNormal_DSType2
+ * 
+ * Description:  DSカードType2のノーマルモードのモード変更
+ * 
+ * CT=240ns  Latency1=0x18  Latency2=0  Pagecount=0page
  *---------------------------------------------------------------------------*/
 // Type1と同じ
 
@@ -150,13 +152,16 @@ static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
 
 
 /*---------------------------------------------------------------------------*
-  Name:         ReadIDSecure_DSType2
-  
-  Description:  SCRAMBLE_MASK -> CS SE DS をマスクできる
+ * Name:         ReadIDSecure_DSType2
+ * 
+ * Description:  デバッガを読み込んだ場合はSCRAMBLE_MASK -> CS SE DS をマスク
+ *
+ * CT=240ns  Latency1=0x8f8+0x18  Latency2=0  Pagecount=Status
  *---------------------------------------------------------------------------*/
 void ReadIDSecure_DSType2(CardBootData *cbd)
 {
-	u32 scrambleMask;
+    // スクランブルの設定
+    u32 scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
     
 	// NewDMA転送の準備
 	HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_scr, sizeof(cbd->id_scr) );
@@ -165,8 +170,7 @@ void ReadIDSecure_DSType2(CardBootData *cbd)
 	SetSecureCommand(S_RD_ID, cbd);
     
 	// MCCNT1 レジスタ設定
-	reg_HOTSW_MCCNT1 = cbd->pBootSegBuf->rh.s.secure_cmd_param |
-        				START_MASK | SE_MASK | DS_MASK;
+	reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
     
 	// 25ms待ち
     OS_Sleep(COMMAND_DECRYPTION_WAIT);
@@ -174,13 +178,9 @@ void ReadIDSecure_DSType2(CardBootData *cbd)
     // MCCMD レジスタ設定
 	reg_HOTSW_MCCMD0 = 0x0;
 	reg_HOTSW_MCCMD1 = 0x0;
-
-    // スクランブルの設定
-    scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
     
 	// MCCNT1 レジスタ設定
-	reg_HOTSW_MCCNT1 = cbd->pBootSegBuf->rh.s.secure_cmd_param |
-        				START_MASK | PC_MASK & (0x7 << PC_SHIFT) | scrambleMask;
+	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x7 << PC_SHIFT) | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
     
 	// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
 	OS_SleepThread(NULL);
@@ -190,12 +190,11 @@ void ReadIDSecure_DSType2(CardBootData *cbd)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ReadSegSecure_DSType2
-  
-  Description:  Secure領域を読み込む関数
-
-  ※ 本来なら、指定したセグメントを読むコマンドだけど、それを4回連続して
-     呼び出して、Secure領域全部を読み込んでいる
+ * Name:         ReadSegSecure_DSType2
+ * 
+ * Description:  Secure領域を読み込む関数
+ *
+ * CT=240ns  Latency1=0x8f8+0x18  Latency2=0  Pagecount=1page
  *---------------------------------------------------------------------------*/
 void ReadSegSecure_DSType2(CardBootData *cbd)
 {
@@ -204,6 +203,9 @@ void ReadSegSecure_DSType2(CardBootData *cbd)
     u64			vae	= cbd->vae;
     GCDCmd64 	cndLE, cndBE;
 
+    // スクランブルの設定
+    u32 scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
+    
     for(i=0; i<SECURE_SEGMENT_NUM; i++){
 		// ゼロクリア
 		MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
@@ -231,8 +233,7 @@ void ReadSegSecure_DSType2(CardBootData *cbd)
 		reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
 
 		// MCCNT1 レジスタ設定
-		reg_HOTSW_MCCNT1 = cbd->pBootSegBuf->rh.s.secure_cmd_param |
-        					START_MASK | SE_MASK | DS_MASK;
+		reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
         
 	    // 25ms待ち
     	OS_Sleep(COMMAND_DECRYPTION_WAIT);
@@ -246,8 +247,7 @@ void ReadSegSecure_DSType2(CardBootData *cbd)
 			reg_HOTSW_MCCMD1 = 0x0;
     		
 			// MCCNT1 レジスタ設定
-			reg_HOTSW_MCCNT1 = cbd->pBootSegBuf->rh.s.secure_cmd_param |
-        						START_MASK | PC_MASK & (0x1 << PC_SHIFT) | SE_MASK | DS_MASK;
+			reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x1 << PC_SHIFT) | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
             
 			// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
 			OS_SleepThread(NULL);
@@ -265,18 +265,22 @@ void ReadSegSecure_DSType2(CardBootData *cbd)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         SwitchONPNGSecure_DSType2
-  
-  Description:  
+ * Name:         SwitchONPNGSecure_DSType2
+ * 
+ * Description:  PNジェネレータをONにする
+ * 
+ * CT=240ns  Latency1=0x8f8+0x18  Latency2=0  Pagecount=0page
  *---------------------------------------------------------------------------*/
 void SwitchONPNGSecure_DSType2(CardBootData *cbd)
 {
+    // スクランブルの設定
+    u32 scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
+    
     // コマンド作成・設定
 	SetSecureCommand(S_PNG_ON, cbd);
     
 	// MCCNT1 レジスタ設定 (START = 1 SE = 1 DS = 1 Latency1 = 0 に)
-	reg_HOTSW_MCCNT1 = (cbd->pBootSegBuf->rh.s.secure_cmd_param & CT_MASK) |
-        				START_MASK | SE_MASK | DS_MASK;
+	reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
     
     // 25ms待ち
 	OS_Sleep(COMMAND_DECRYPTION_WAIT);
@@ -286,9 +290,8 @@ void SwitchONPNGSecure_DSType2(CardBootData *cbd)
 	reg_HOTSW_MCCMD1 = 0x0;
 
 	// MCCNT1 レジスタ設定 (START = 1 SE = 1 DS = 1 Latency1 = 0 に)
-	reg_HOTSW_MCCNT1 = (cbd->pBootSegBuf->rh.s.secure_cmd_param & CT_MASK) |
-        				START_MASK | SE_MASK | DS_MASK;
-    
+	reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
+
 	// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
 	OS_SleepThread(NULL);
 
@@ -297,18 +300,22 @@ void SwitchONPNGSecure_DSType2(CardBootData *cbd)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         SwitchOFFPNGSecure_DSType2
-  
-  Description:  
+ * Name:         SwitchOFFPNGSecure_DSType2
+ * 
+ * Description:  PNジェネレータをOFFする
+ * 
+ * CT=240ns  Latency1=0x8f8+0x18  Latency2=0  Pagecount=0page
  *---------------------------------------------------------------------------*/
 void SwitchOFFPNGSecure_DSType2(CardBootData *cbd)
 {
+    // スクランブルの設定
+    u32 scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
+    
     // コマンド作成・設定
 	SetSecureCommand(S_PNG_OFF, cbd);
     
-	// MCCNT1 レジスタ設定 (START = 1 SE = 1 DS = 1 Latency1 = 0 に)
-	reg_HOTSW_MCCNT1 = (cbd->pBootSegBuf->rh.s.secure_cmd_param & CT_MASK) |
-        				START_MASK | SE_MASK | DS_MASK;
+	// MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
 
     // 25ms待ち
 	OS_Sleep(COMMAND_DECRYPTION_WAIT);
@@ -317,9 +324,8 @@ void SwitchOFFPNGSecure_DSType2(CardBootData *cbd)
 	reg_HOTSW_MCCMD0 = 0x0;
 	reg_HOTSW_MCCMD1 = 0x0;
     
-	// MCCNT1 レジスタ設定 (START = 1 SE = 1 DS = 1 Latency1 = 0 に)
-	reg_HOTSW_MCCNT1 = (cbd->pBootSegBuf->rh.s.secure_cmd_param & CT_MASK) |
-        				START_MASK | SE_MASK | DS_MASK;
+	// MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
 
 	// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
 	OS_SleepThread(NULL);
@@ -329,18 +335,22 @@ void SwitchOFFPNGSecure_DSType2(CardBootData *cbd)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ChangeModeSecure_DSType2
-  
-  Description:  
+ * Name:         ChangeModeSecure_DSType2
+ * 
+ * Description:  Gameモードに移行する
+ *
+ * CT=240ns  Latency1=0x8f8+0x18  Latency2=0  Pagecount=0page
  *---------------------------------------------------------------------------*/
 void ChangeModeSecure_DSType2(CardBootData *cbd)
 {
+    // スクランブルの設定
+    u32 scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
+    
     // コマンド作成・設定
 	SetSecureCommand(S_CHG_MODE, cbd);
     
 	// MCCNT1 レジスタ設定 (START = 1 SE = 1 DS = 1 Latency1 = 0 に)
-	reg_HOTSW_MCCNT1 = (cbd->pBootSegBuf->rh.s.secure_cmd_param & CT_MASK) |
-        				START_MASK | SE_MASK | DS_MASK;
+	reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
     
     // 25ms待ち
 	OS_Sleep(COMMAND_DECRYPTION_WAIT);
@@ -350,8 +360,7 @@ void ChangeModeSecure_DSType2(CardBootData *cbd)
 	reg_HOTSW_MCCMD1 = 0x0;
     
 	// MCCNT1 レジスタ設定 (START = 1 SE = 1 DS = 1 Latency1 = 0 に)
-	reg_HOTSW_MCCNT1 = (cbd->pBootSegBuf->rh.s.secure_cmd_param & CT_MASK) |
-        				START_MASK | SE_MASK | DS_MASK;
+	reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
     
 	// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
 	OS_SleepThread(NULL);
@@ -373,9 +382,11 @@ void ChangeModeSecure_DSType2(CardBootData *cbd)
 
 
 /*---------------------------------------------------------------------------*
-  Name:         ReadPageGame_DSType1
-  
-  Description:  ゲームモードで、指定されたページを指定バッファに指定サイズ分を読み込む
+ * Name:         ReadPageGame_DSType1
+ * 
+ * Description:  ゲームモードで、指定されたページを指定バッファに指定サイズ分を読み込む
+ *
+ * CT=150ns  Latency1=0x657  Latency2=0x1  Pagecount=1page
  *---------------------------------------------------------------------------*/
 void ReadPageGame_DSType2(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
 {
