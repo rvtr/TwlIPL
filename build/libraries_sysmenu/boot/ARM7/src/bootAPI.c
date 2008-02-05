@@ -170,6 +170,9 @@ BOOL BOOT_WaitStart( void )
 			}
 			mem_list[list_count] = NULL;
 			
+			// サウンド停止
+			SND_Disable();
+			
 			// アプリケーション選択
 			if ( dh->s.platform_code )
 			{
