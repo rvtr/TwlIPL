@@ -890,6 +890,9 @@ static void McThread(void *arg)
 				insert = TRUE;
                 
 				if( !SYSMi_GetWork()->flags.common.isEnableHotSW ) {
+#ifdef DEBUG_USED_CARD_SLOT_B_
+					SYSMi_GetWork()->flags.common.is1stCardChecked  = TRUE;
+#endif
 					continue;
 				}
                 // HotSw‚ğbusyó‘Ô‚É‚·‚é 
