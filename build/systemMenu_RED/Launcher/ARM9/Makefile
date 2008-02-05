@@ -28,7 +28,8 @@ SUBDIRS					=	\
 #FIRM_BUILD				=	TRUE
 
 TARGET_FIRM				=	SYSTEMMENU
-TARGET_PLATFORM			=	TWL
+TARGET_PLATFORM				=	TWL
+TWL_CODEGEN				=	ARM
 TWL_ARCHGEN				=	LIMITED
 
 TITLEID_LO				=	LNCJ
@@ -65,9 +66,9 @@ DEFAULT_COMP_ARM7		=	hyena
 
 MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
 ifdef FIRM_BUILD
-MAKEROM_FLAGS			+=	-f \
-							-DFIRM_PRIV_KEY=$(TWL_KEYSDIR)/rsa/private9_0.der \
-							-DFIRM_PUB_KEY=$(TWL_KEYSDIR)/rsa/public9_0.der
+MAKEROM_FLAGS			+=	-s \
+							-DSYS_PRIV_KEY=$(TWL_KEYSDIR)/rsa/private9_0.der \
+							-DSYS_PUB_KEY=$(TWL_KEYSDIR)/rsa/public9_0.der
 endif
 
 MAKETAD_FLAGS			+= -s
