@@ -166,58 +166,6 @@ static BOOL CheckRomCertificate( SVCSignHeapContext* pool, const RomCertificate 
     return CheckDigest(md, digest, TRUE, TRUE);
 }
 
-/*---------------------------------------------------------------------------*
-  Name:         FS2_LoadBuffer
-
-  Description:  receive data from ARM7 via WRAM-B and store in destination address,
-                calculate SHA1 in parallel if ctx is specified
-
-  Arguments:    dest            destination address to read
-                size            total length to read in bytes
-                ctx             pointer to SHA1 context or NULL
-
-  Returns:      TRUE if success
- *---------------------------------------------------------------------------*/
-BOOL FS2_LoadBuffer( u8* dest, u32 size, SVCSHA1Context *ctx )
-{
-    static int count = 0;
-
-    while ( size > 0 )
-    {
-        u8* src = (u8*)HW_FIRM_LOAD_BUFFER_BASE + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
-        u32 unit = size < HW_FIRM_LOAD_BUFFER_UNIT_SIZE ? size : HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
-        if ( PXI_RecvID() != FIRM_PXI_ID_LOAD_PIRIOD )
-        {
-            return FALSE;
-        }
-        MIi_SetWramBankMaster_B( count, MI_WRAM_ARM9 );
-        if (ctx)
-        {
-            int done;
-            for ( done = 0; done < unit; done += HASH_UNIT )
-            {
-                u8* s = src + done;
-                u8* d = dest + done;
-                u32 u = unit - done < HASH_UNIT ? unit - done : HASH_UNIT;
-                SVC_SHA1Update( ctx, s, u );
-                MI_CpuCopyFast( s, d, u );
-                MI_CpuClearFast( s, u );    // OS_Boot‚Å‚ÌƒNƒŠƒA‚Æ”äŠr‚·‚é
-            }
-        }
-        else
-        {
-            MI_CpuCopyFast( src, dest, unit );
-            MI_CpuClearFast( src, unit );   // OS_Boot‚Å‚ÌƒNƒŠƒA‚Æ”äŠr‚·‚é
-        }
-        DC_FlushRange( src, unit );
-        size -= unit;
-        dest += unit;
-        MIi_SetWramBankMaster_B( count, MI_WRAM_ARM7 );
-        count = ( count + 1 ) % HW_FIRM_LOAD_BUFFER_UNIT_NUMS;
-    }
-    return TRUE;
-}
-
 static void AesCallback(AESResult result, void* arg)
 {
     volatile BOOL *pBusy = (BOOL*)arg;

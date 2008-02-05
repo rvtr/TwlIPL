@@ -61,20 +61,6 @@ void FS2_DeleteAesKeySeed( void );
 void FS2_SetDigestKey( const u8* digestKey );
 
 /*---------------------------------------------------------------------------*
-  Name:         FS2_LoadBuffer
-
-  Description:  receive data from ARM7 via WRAM-B and store in destination address,
-                calculate SHA1 in parallel if ctx is specified
-
-  Arguments:    dest            destination address to read
-                size            total length to read in bytes
-                ctx             pointer to SHA1 context or NULL
-
-  Returns:      TRUE if success
- *---------------------------------------------------------------------------*/
-BOOL FS2_LoadBuffer( u8* dest, u32 size, SVCSHA1Context *ctx );
-
-/*---------------------------------------------------------------------------*
   Name:         FS2_LoadModule
 
   Description:  receive data from ARM7 via WRAM-B and store in destination address
