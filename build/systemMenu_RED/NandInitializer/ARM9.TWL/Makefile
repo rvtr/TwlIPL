@@ -22,6 +22,7 @@ SUBDIRS		=
 #----------------------------------------------------------------------------
 
 USE_PRODUCT_KEY		=	TRUE
+KEYS_DIR				=	$(shell $(CYGPATH) -m $(TWL_KEYSDIR))
 
 TARGET_FIRM			= SYSTEMMENU
 TARGET_PLATFORM		= TWL
@@ -67,7 +68,7 @@ MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
 MAKETAD_FLAGS			+=	-s
 
 ifdef USE_PRODUCT_KEY
-MAKEROM_FLAGS			+=	-DPRIVKEY_PATH='$(TWL_KEYSDIR)/rsa'
+MAKEROM_FLAGS			+=	-DPRIVKEY_PATH='$(KEYS_DIR)/rsa'
 MACRO_FLAGS				+=	-DUSE_PRODUCT_KEY
 else
 MAKEROM_FLAGS			+=	-DPRIVKEY_PATH='../../../../keys/dummy/rsa'
