@@ -22,6 +22,7 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 #----------------------------------------------------------------------------
 
 SUBDIRS =	\
+            banner \
             ARM7.TWL \
             ARM9.TWL \
 
