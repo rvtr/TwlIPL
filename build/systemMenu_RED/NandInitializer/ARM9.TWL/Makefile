@@ -22,6 +22,10 @@ SUBDIRS		=
 #----------------------------------------------------------------------------
 
 USE_PRODUCT_KEY		=	TRUE
+
+# if USE_PRODUCT_KEY is set, set USE_SDBOOT_KEY to boot from SDMC, otherwise to boot from CARD/NAND
+#USE_SDBOOT_KEY		=	TRUE
+
 KEYS_DIR				=	$(shell $(CYGPATH) -m $(TWL_KEYSDIR))
 
 TARGET_FIRM			= SYSTEMMENU
@@ -70,6 +74,11 @@ MAKETAD_FLAGS			+=	-s
 ifdef USE_PRODUCT_KEY
 MAKEROM_FLAGS			+=	-DPRIVKEY_PATH='$(KEYS_DIR)/rsa'
 MACRO_FLAGS				+=	-DUSE_PRODUCT_KEY
+ifdef USE_SDBOOT_KEY
+MAKEROM_FLAGS			+=	-s -DSYS_PRIV_KEY='$(KEYS_DIR)/rsa/private_sdboot.der' \
+					-DSYS_PUB_KEY='$(KEYS_DIR)/rsa/pubkey_sdboot.der'
+TARGET_TAD=
+endif
 else
 MAKEROM_FLAGS			+=	-DPRIVKEY_PATH='../../../../keys/dummy/rsa'
 endif
