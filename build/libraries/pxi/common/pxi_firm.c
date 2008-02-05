@@ -103,21 +103,25 @@ static void PxiFirmIDCallback( PXIFifoTag tag, u32 data, BOOL err )
  *---------------------------------------------------------------------------*/
 void PXI_InitFIRM(void)
 {
+#ifdef SDK_ARM9
+    work.semaphore = 0;
+#else
+    work.semaphore = HW_FIRM_LOAD_BUFFER_UNIT_NUMS;
+#endif
+    work.rp = work.wp = work.length = 0;
+
     PXI_Init();
 #ifdef SDK_ARM9
     while (!PXI_IsCallbackReady(PXI_FIFO_TAG_USER_0, PXI_PROC_ARM7))
     {
     }
-    work.semaphore = 0;
 #endif
-    work.rp = work.wp = work.length = 0;
     PXI_SetFifoRecvCallback( PXI_FIFO_TAG_USER_0, PxiFirmStreamCallback );
     PXI_SetFifoRecvCallback( PXI_FIFO_TAG_USER_1, PxiFirmIDCallback );
 #ifdef SDK_ARM7
     while (!PXI_IsCallbackReady(PXI_FIFO_TAG_USER_1, PXI_PROC_ARM9))
     {
     }
-    work.semaphore = HW_FIRM_LOAD_BUFFER_UNIT_NUMS;
 #endif
 }
 
