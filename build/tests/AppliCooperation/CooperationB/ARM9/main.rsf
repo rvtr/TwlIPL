@@ -175,7 +175,4 @@ RomSpec
 {
 	Offset		0x00000000
 	Segment		ALL
-	HostRoot	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/data
-	Root		/data
-	File		NTR_IPL_font_m.NFTR
 }

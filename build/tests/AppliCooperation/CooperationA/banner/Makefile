@@ -16,7 +16,8 @@
 # $Author: kitase_hirotake $
 #----------------------------------------------------------------------------
 
-include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+include $(TWLSDK_ROOT)/build/buildtools/commondefs
+MAKEBANNER		 = $(TWL_TOOLSDIR)/bin/makebanner.TWL.exe
 
 ICON_DIR			= ./icon
 
@@ -35,7 +36,7 @@ LDIRT_CLEAN			= $(TARGETS) \
 					  $(BANNER_ICON_NAME).nbfp \
 					  $(TARGETS:.bnr=.srl)
 
-include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+include $(TWLSDK_ROOT)/build/buildtools/modulerules
 
 #----------------------------------------------------------------------------
 #  build
