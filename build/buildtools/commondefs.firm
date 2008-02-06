@@ -1,0 +1,144 @@
+#! make -f
+#----------------------------------------------------------------------------
+# Project:  TwlFirm - commondefs - common definitions for build system
+# File:     commondefs
+#
+#  Copyright 2007 Nintendo.  All rights reserved.
+#
+# These coded instructions, statements, and computer programs contain
+# proprietary information of Nintendo of America Inc. and/or Nintendo
+# Company Ltd., and are protected by Federal copyright law.  They may
+# not be disclosed to third parties or copied or duplicated in any form,
+# in whole or in part, without the prior written consent of Nintendo.
+#
+# $Date:: 2007-09-06$
+# $Rev$
+# $Author$
+#----------------------------------------------------------------------------
+ifndef TWLFIRM_COMMONDEFS_
+TWLFIRM_COMMONDEFS_ = TRUE
+
+EMPTY	 	?=
+SPACE 		?= $(EMPTY) $(EMPTY)
+
+ifndef TWL_KEYSDIR
+DUMMY_KEYS_SUFFIX	=	.dummykey
+endif
+TWL_KEYSDIR		?=	$(FIRM_ROOT)/keys/dummy
+
+TARGET_BIN		?=	$(subst .,$(DUMMY_KEYS_SUFFIX).,$(TARGET_FIRM_BIN))
+
+#
+# change default variables for product
+#
+override TARGET_PLATFORM	:= TWL
+override TWL_ARCHGEN		:= LIMITED
+override TWL_MEMSIZE		:= 16M
+
+#----------------------------------------------------------------------------
+### TWL-commondefs
+#
+include	$(TWLSDK_ROOT)/build/buildtools/commondefs
+include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
+
+#----------------------------------------------------------------------------
+#  TWL-FIRM path settings
+#
+
+FIRM_ROOT		:= $(call eupath,$(TWL_IPL_RED_ROOT))
+FIRM_BUILDTOOLSDIR	:= $(FIRM_ROOT)/build/buildtools
+FIRM_BUILDSETUPDIR	:= $(FIRM_ROOT)/build/buildsetup
+FIRM_INCDIR		:= $(FIRM_ROOT)/include
+FIRM_TOOLSDIR		:= $(FIRM_ROOT)/tools
+FIRM_COMPONENTSDIR	:= $(FIRM_ROOT)/components
+FIRM_ADDINS		?= $(FIRM_ROOT)/add-ins
+
+FIRM_LIBDIR		= $(FIRM_ROOT)/lib/$(TWL_LIBTYPE)
+FIRM_LIBSUFFIX		= .firm$(ARCHGEN_TYPE)$(CODEGEN_ARCH)
+
+FIRM_SPECDIR		:= $(FIRM_INCDIR)/firm/specfiles
+FIRM_LSFARCH		= $(TWL_LIBARCH)-FIRM
+FIRM_LCFARCH		= $(FIRM_LSFARCH)
+DEFAULT_FIRM_LCFILE		= $(FIRM_SPECDIR)/$(FIRM_LCFARCH).lcf
+DEFAULT_FIRM_LCFILE_TEMPLATE	= $(FIRM_SPECDIR)/$(FIRM_LCFARCH).lcf.template
+DEFAULT_FIRM_LCFILE_SPEC	= $(FIRM_SPECDIR)/$(FIRM_LSFARCH).lsf
+DEFAULT_FIRM_ROM_SPEC	= $(FIRM_SPECDIR)/ROM-$(TWL_PLATFORM)-FIRM.rsf
+
+### Compiler & Linker settings
+
+# replace NitroSDK
+DEFAULT_LCFILE_TEMPLATE		= $(DEFAULT_FIRM_LCFILE_TEMPLATE)
+DEFAULT_LCFILE_SPEC		= $(DEFAULT_FIRM_LCFILE_SPEC)
+DEFAULT_ROM_SPEC		= $(DEFAULT_FIRM_ROM_SPEC)
+
+LDEPENDS_LCF	+= $(FIRM_BUILDTOOLSDIR)/commondefs
+LDEPENDS_RES	+= $(FIRM_BUILDTOOLSDIR)/commondefs
+
+### SDK Library settings
+
+ifeq	($(CODEGEN_PROC),ARM9)
+
+FIRM_LIBS_BASE	?= \
+			   libos \
+			   libpxi \
+			   libfs \
+			   libfatfs \
+			   libmi \
+
+else #	($(CODEGEN_PROC),ARM7)
+
+FIRM_LIBS_BASE	?= \
+			   libos_sp \
+			   libpxi_sp \
+			   libfs_sp \
+			   libaes_sp \
+			   libpm_sp \
+
+endif
+
+FIRM_LIBS ?= $(addsuffix $(FIRM_LIBSUFFIX).a,$(FIRM_LIBS_BASE))
+
+#----------------------------------------------------------------------------
+#  MY BUILD TOOLS
+#
+MAKENORFIRM		:= $(FIRM_TOOLSDIR)/bin/makenorfirm.exe
+MAKENANDFIRM		:= $(FIRM_TOOLSDIR)/bin/makenandfirm.exe
+MAKEGCDFIRM		:= $(FIRM_TOOLSDIR)/bin/makegcdfirm.exe
+OPENSSL			:= $(FIRM_TOOLSDIR)/openssl/openssl.exe
+NTEXCONV		:= $(ROOT)/tools/bin/ntexconv.exe
+MAKEBANNER		:= $(FIRM_TOOLSDIR)/bin/makebanner.exe
+
+MAKEFIRM_RSA_PRVKEY	?= $(FIRM_TOOLSDIR)/openssl/rsa_private.der
+MAKEFIRM_RSA_PUBKEY	?= $(FIRM_TOOLSDIR)/openssl/rsa_public.der
+
+MAKEFIRM_FLAGS	?=
+
+#----------------------------------------------------------------------------
+
+### Global Library resettings
+
+GINCLUDES		:= $(FIRM_INCDIR) $(GINCLUDES)
+GLIBRARY_DIRS		:= $(FIRM_LIBDIR) $(GLIBRARY_DIRS)
+GLIBRARIES		:= $(FIRM_LIBS)   $(GLIBRARIES)
+
+#----------------------------------------------------------------------------
+#  TWLFIRM_INSTALL_ROOT
+#
+
+ifdef	TWLFIRM_INSTALL_ROOT
+TWLFIRM_INSTALL_ROOT_ 	:= $(TWLFIRM_INSTALL_ROOT)
+else
+TWLFIRM_INSTALL_ROOT_ 	:= $(TWL_IPL_RED_ROOT)
+endif
+
+FIRM_INSTALL_ROOT	:= $(subst $(SPACE),\ ,$(subst \,/,$(TWLFIRM_INSTALL_ROOT_)))
+FIRM_INSTALL_INCDIR	:= $(FIRM_INSTALL_ROOT)/include
+FIRM_INSTALL_TOOLSDIR	:= $(FIRM_INSTALL_ROOT)/tools
+FIRM_INSTALL_LIBDIR	= $(FIRM_INSTALL_ROOT)/lib/$(TWL_LIBTYPE)
+FIRM_INSTALL_PROMDIR	:= $(FIRM_INSTALL_TOOLSDIR)/prom
+FIRM_INSTALL_COMPONENTSDIR	:= $(FIRM_INSTALL_ROOT)/components
+FIRM_INSTALL_ADDINS	:= $(FIRM_INSTALL_ROOT)/add-ins
+
+#----------------------------------------------------------------------------
+endif	# TWLFIRM_COMMONDEFS_
+#----- End of commondefs -----

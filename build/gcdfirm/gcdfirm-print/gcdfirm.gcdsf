@@ -1,0 +1,22 @@
+#GCDSF ---  Gcdfirm Spec File
+
+VERSION :		GENERATE
+
+RSA_KEY :		$(MAKEFIRM_RSA_PRVKEY)
+OUT_KEY :		rsa_public.sbin
+
+WRAM_RBIN:		../../norfirm/norfirm-print/wram_regs/wram_regs.rbin
+
+DECOMP_PROC :	ARM9  # ARM9 or ARM7
+
+ARM9_COMP :		FALSE  # TRUE or FALSE, should be before ARM9_SBIN
+ARM9_SBIN :		$(MAKEFIRM_ARM9).TWL.FLX.sbin
+ARM9_ELF :		$(MAKEFIRM_ARM9).tef
+
+ARM7_COMP :		FALSE  # TRUE or FALSE, should be before ARM7_SBIN
+ARM7_SBIN :		$(MAKEFIRM_ARM7).TWL.FLX.sbin
+ARM7_ELF :		$(MAKEFIRM_ARM7).tef
+
+ARM9_X2 :		TRUE  # TRUE or FALSE
+
+NCD_ROMOFS :	0x07fe00
