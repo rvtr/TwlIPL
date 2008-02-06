@@ -339,7 +339,9 @@ void TwlMain( void )
         }
         OS_TPrintf("\n[ARM9] End\n");
         PXI_NotifyID( FIRM_PXI_ID_NULL );
-        OS_SetTick(0);
+        reg_OS_TM3CNT_H = 0;
+        reg_OS_TM3CNT_L = 0;
+        reg_OS_TM3CNT_H = (u16)(REG_OS_TM0CNT_H_E_MASK | OS_TIMER_PRESCALER_1024);
     }
 #endif
 

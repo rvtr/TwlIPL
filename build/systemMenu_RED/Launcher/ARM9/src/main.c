@@ -79,7 +79,7 @@ void TwlMain( void )
 
 #ifdef DEBUG_LAUNCHER_DUMP
     // you should comment out to clear GX/G2/DMA/TM/PAD register in reboot.c to retreive valid boot time
-    STD_TSPrintf((char*)0x02FFCFD0, "\nLauncher Boot Time: %lld usec\n", OS_TicksToMicroSeconds(OS_GetTick()));
+    STD_TSPrintf((char*)0x02FFCFC0, "\nLauncher Boot Time: %lld usec\n", OS_TicksToMicroSeconds(reg_OS_TM3CNT_L * (1024/64)));
     STD_TSPrintf((char*)0x02FFCFF0, "HOTSTART(0x%08x): %02x\n", HW_NAND_FIRM_HOTSTART_FLAG, *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG);
 #endif
     // システムメニュー初期化----------
