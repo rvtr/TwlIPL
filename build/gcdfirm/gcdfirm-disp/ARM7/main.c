@@ -41,8 +41,12 @@ void TwlSpMain( void )
     OS_EnableIrq();
 
     PM_InitFIRM();
+#ifndef PMIC_FINAL
     PMi_SetParams( REG_PMIC_BL_BRT_A_ADDR, PMIC_BACKLIGHT_BRIGHT_DEFAULT, PMIC_BL_BRT_A_MASK );
     PMi_SetParams( REG_PMIC_BL_BRT_B_ADDR, PMIC_BACKLIGHT_BRIGHT_DEFAULT, PMIC_BL_BRT_B_MASK );
+#else
+    MCUi_WriteRegister( MCU_REG_BL_ADDR, MCU_REG_BL_BRIGHTNESS_MASK );
+#endif
     PM_BackLightOn( TRUE );
 
     // ƒ{ƒ^ƒ“‚ª‰Ÿ‚³‚ê‚é‚Ü‚Å‘Ò‚Â
