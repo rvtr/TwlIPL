@@ -26,14 +26,14 @@
 // define data------------------------------------------
 
 // バックライトボタン関係
-#define B_LIGHT_DW_BUTTON_TOP_X				( 0  )
-#define B_LIGHT_DW_BUTTON_TOP_Y				( 22 * 8 )
+#define B_LIGHT_DW_BUTTON_TOP_X				( 191  )
+#define B_LIGHT_DW_BUTTON_TOP_Y				( 0 )
 #define B_LIGHT_DW_BUTTON_BOTTOM_X			( B_LIGHT_DW_BUTTON_TOP_X + 11 )
-#define B_LIGHT_DW_BUTTON_BOTTOM_Y			( B_LIGHT_DW_BUTTON_TOP_Y + 16 )
-#define B_LIGHT_UP_BUTTON_TOP_X				( 11  )
-#define B_LIGHT_UP_BUTTON_TOP_Y				( 22 * 8 )
-#define B_LIGHT_UP_BUTTON_BOTTOM_X			( B_LIGHT_UP_BUTTON_TOP_X + 22 )
-#define B_LIGHT_UP_BUTTON_BOTTOM_Y			( B_LIGHT_UP_BUTTON_TOP_Y + 16 )
+#define B_LIGHT_DW_BUTTON_BOTTOM_Y			( B_LIGHT_DW_BUTTON_TOP_Y + 13 )
+#define B_LIGHT_UP_BUTTON_TOP_X				( 235  )
+#define B_LIGHT_UP_BUTTON_TOP_Y				( 0 )
+#define B_LIGHT_UP_BUTTON_BOTTOM_X			( B_LIGHT_UP_BUTTON_TOP_X + 11 )
+#define B_LIGHT_UP_BUTTON_BOTTOM_Y			( B_LIGHT_UP_BUTTON_TOP_Y + 13 )
 
 // スクロールバー関係
 #define BAR_ZERO_X							( (WINDOW_WIDTH - ((ITEM_SIZE + ITEM_INTERVAL) * (LAUNCHER_TITLE_LIST_NUM - 1) + ITEM_SIZE)) / 2)
@@ -523,7 +523,7 @@ static void ProcessBackLightPads( void )
 	if( (pad.trg & PAD_BUTTON_START) || up_bl_trg ) {
 		brightness = LCFG_TSD_GetBacklightBrightness() + 1;
 		if( brightness > LCFG_TWL_BACKLIGHT_LEVEL_MAX ) {
-			brightness = 0;
+			brightness = LCFG_TWL_BACKLIGHT_LEVEL_MAX;
 		}
 		SYSM_SetBackLightBrightness( (u8)brightness );
 		DrawBackLightSwitch();
@@ -531,7 +531,7 @@ static void ProcessBackLightPads( void )
 	if( ( pad.trg & PAD_BUTTON_SELECT) || dw_bl_trg ) {
 		brightness = LCFG_TSD_GetBacklightBrightness() - 1;
 		if( brightness < 0 ) {
-			brightness = LCFG_TWL_BACKLIGHT_LEVEL_MAX;
+			brightness = 0;
 		}
 		SYSM_SetBackLightBrightness( (u8)brightness );
 		DrawBackLightSwitch();
@@ -726,7 +726,7 @@ static void DrawBackLightSwitch(void)
 {
 	NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL, B_LIGHT_DW_BUTTON_TOP_X + 24, B_LIGHT_DW_BUTTON_TOP_Y, 40, 13 );
 	PutStringUTF16( B_LIGHT_DW_BUTTON_TOP_X, B_LIGHT_DW_BUTTON_TOP_Y, TXT_COLOR_RED,
-					L"\xE01c\xE01b" );
-	PrintfSJIS( B_LIGHT_DW_BUTTON_TOP_X + 24, B_LIGHT_DW_BUTTON_TOP_Y, TXT_COLOR_RED,
-					"BL:%d\n", LCFG_TSD_GetBacklightBrightness() );
+					L"\xE01c　　　\xE01b" );
+	PrintfSJIS( B_LIGHT_DW_BUTTON_TOP_X + 11, B_LIGHT_DW_BUTTON_TOP_Y, TXT_COLOR_RED,
+					"BL:%2d\n", LCFG_TSD_GetBacklightBrightness() );
 }
