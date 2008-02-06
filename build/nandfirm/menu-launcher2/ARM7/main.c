@@ -115,7 +115,7 @@ static void PreInit(void)
         リセットパラメータ(1バイト)を共有領域(1バイト)にコピー
     */
 #define HOTSTART_FLAG_ENABLE    0x80
-    *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCU_GetFreeRegister( OS_MCU_RESET_VALUE_OFS ) | HOTSTART_FLAG_ENABLE);
+    *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
 }
 
 /***************************************************************

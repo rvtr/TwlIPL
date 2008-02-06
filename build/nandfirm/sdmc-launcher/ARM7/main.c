@@ -113,7 +113,7 @@ static void PreInit(void)
         リセットパラメータ(1バイト)を共有領域(1バイト)にコピー
     */
 #define HOTSTART_FLAG_ENABLE    0x80
-    *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCU_GetFreeRegister( OS_MCU_RESET_VALUE_OFS ) | HOTSTART_FLAG_ENABLE);
+    *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
 }
 
 /***************************************************************
@@ -185,8 +185,6 @@ void TwlSpMain( void )
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x84
 
-    PM_BackLightOn( FALSE );
-
     SDNandContext = &OSi_GetFromFirmAddr()->SDNandContext;
     if ( !FATFS_Init( DMA_FATFS_1, DMA_FATFS_2, THREAD_PRIO_FATFS ) )
     {
@@ -197,8 +195,6 @@ void TwlSpMain( void )
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x85
 
-    PM_BackLightOn( FALSE );
-
     if ( PXI_RecvID() != FIRM_PXI_ID_SET_PATH )
     {
         OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_SET_PATH).\n");
@@ -207,8 +203,6 @@ void TwlSpMain( void )
     // 5: after PXI
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x86
-
-    PM_BackLightOn( FALSE );
 
     if ( (fd = FS_OpenSrl()) < 0 )
     {
@@ -219,8 +213,6 @@ void TwlSpMain( void )
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x87
 
-    PM_BackLightOn( FALSE );
-
     if ( !FS_LoadHeader( fd ) )
     {
         OS_TPrintf("Failed to call FS_LoadHeader().\n");
@@ -229,8 +221,6 @@ void TwlSpMain( void )
     // 7: after FS_LoadHeader
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x88
-
-    PM_BackLightOn( FALSE );
 
     if ( PXI_RecvID() != FIRM_PXI_ID_DONE_HEADER )
     {
@@ -241,15 +231,11 @@ void TwlSpMain( void )
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x89
 
-    PM_BackLightOn( FALSE );
-
     AESi_InitKeysFIRM();
     AESi_RecvSeed( rh->s.developer_encrypt );
     // 9: after AESi_RecvSeed
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8a
-
-    PM_BackLightOn( FALSE );
 
     if ( !FS_LoadStatic( fd ) )
     {
@@ -259,8 +245,6 @@ void TwlSpMain( void )
     // 10: after FS_LoadStatic
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8b
-
-    PM_BackLightOn( FALSE );
 
     if ( PXI_RecvID() != FIRM_PXI_ID_DONE_STATIC )
     {
@@ -294,9 +278,13 @@ void TwlSpMain( void )
 #endif
     SetDebugLED( 0 );
 
-    PM_BackLightOn( TRUE ); // last chance
-
+#ifndef PMIC_FINAL
     PMi_SetParams( REG_PMIC_BL_BRT_B_ADDR, 22, PMIC_BL_BRT_B_MASK );
+#else
+    MCUi_WriteRegister( MCU_REG_BL_ADDR, MCU_REG_BL_BRIGHTNESS_MASK );
+#endif
+    PM_BackLightOn( TRUE );
+
     OS_BootFromFIRM();
 
 end:
