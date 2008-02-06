@@ -209,7 +209,7 @@ int MachineSettingMain( void )
 	DrawMenu( s_csr, &s_settingParam );
 
 	if( pad.trg & PAD_BUTTON_START ) {
-		OS_SetLauncherParamAndResetHardware( 0, NULL, &tempflag );
+		OS_SetLauncherParamAndResetHardware( NULL, &tempflag );
 	}
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// メニュー項目への分岐
@@ -237,7 +237,7 @@ int MachineSettingMain( void )
 					break;
 				case 5:
 					//pictochat起動テスト
-					OS_SetLauncherParamAndResetHardware( 0, 0x0003000550434854, &tempflag );
+					OS_SetLauncherParamAndResetHardware( 0x0003000550434854, &tempflag );
 			}
 		}
 	}

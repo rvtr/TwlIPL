@@ -569,7 +569,7 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 	}
 
 	if( pad.trg & PAD_BUTTON_B ) {
-		OS_SetLauncherParamAndResetHardware( 0, NULL, &tempflag );
+		OS_SetLauncherParamAndResetHardware( NULL, &tempflag );
 	}
 	
 	if(pad.cont & PAD_KEY_RIGHT || tp_lr == 1){										// バナー選択
