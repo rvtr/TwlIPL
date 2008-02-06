@@ -440,11 +440,15 @@ void HOTSW_LoadStaticModule(void)
             									  s_cbData.pBootSegBuf->rh.s.banner_offset,
 												  (u32 *)SYSM_CARD_BANNER_BUF,
 	                                              sizeof(TWLBannerFile) );
-
+	}
+	
+	if(IsCardExist())
+	{
         SYSMi_GetWork()->flags.common.isValidCardBanner  = TRUE;
         SYSMi_GetWork()->flags.common.isCardStateChanged = TRUE;
         SYSMi_GetWork()->flags.common.isExistCard 		 = TRUE;
 	}
+	
 #endif
     
 //	OS_TPrintf("  - Arm9 Static Module Loading...\n");
