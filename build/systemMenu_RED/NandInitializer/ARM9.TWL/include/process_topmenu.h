@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #ifndef PROCESS_TOPMENU_H_
@@ -41,6 +41,7 @@ void* TopmenuProcess1(void);
 void* TopmenuProcess2(void);
 void* TopmenuProcess3(void);
 void* TopmenuProcess4(void);
+void* TopmenuProcess5(void);
 
 /*===========================================================================*/
 
