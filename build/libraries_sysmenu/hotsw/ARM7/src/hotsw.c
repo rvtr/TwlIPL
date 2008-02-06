@@ -34,6 +34,8 @@
 #define		HOTSW_THREAD_STACK_SIZE				1024		// スタックサイズ
 #define		HOTSW_THREAD_PRIO					11			// カード電源ON → ゲームモードのスレッド優先度
 #define 	HOTSW_MSG_BUFFER_NUM				32			// 受信バッファの数
+#define		HOTSW_INSERT_MSG_NUM				16			// 挿し割り込み送信メッセージの数
+#define		HOTSW_PULLED_MSG_NUM				16			// 抜け割り込み送信メッセージの数
 
 #define 	SLOT_B_LOCK_BUF						HW_CTRDG_LOCK_BUF
 
@@ -66,9 +68,11 @@ typedef struct CardThreadData{
     u64  				stack[HOTSW_THREAD_STACK_SIZE / sizeof(u64)];
 	OSThread 			thread;
 
-    // [TODO:] 受信バッファ分のメッセージを用意する。u32 index_Insert, index_pulled とかも必要?
-    HotSwMessage		hotswInsertMsg;
-    HotSwMessage		hotswPulledOutMsg;
+	u32 				idx_insert;
+    u32					idx_pulledOut;
+	
+    HotSwMessage		hotswInsertMsg[HOTSW_INSERT_MSG_NUM];
+    HotSwMessage		hotswPulledOutMsg[HOTSW_PULLED_MSG_NUM];
     OSMessageQueue   	hotswQueue;
 	OSMessage			hotswMsgBuffer[HOTSW_MSG_BUFFER_NUM];
 }
@@ -226,13 +230,15 @@ void HOTSW_Init(void)
 	if(IsCardExist()){
         OS_PutString("Card Boot Start\n");
 
-        // 送信メッセージを作成 (活線挿抜回数を取得・カード挿し)
-        // [TODO:] メッセージを配列で用意する
-		s_ctData.hotswInsertMsg.hotswCount = CARDi_GetSlotResetCount();
-        s_ctData.hotswInsertMsg.type	   = HOTSW_INSERT;
-
+      	// 送信メッセージを作成 (活線挿抜回数を取得・カード挿し)
+		s_ctData.hotswInsertMsg[s_ctData.idx_insert].hotswCount = CARDi_GetSlotResetCount();
+        s_ctData.hotswInsertMsg[s_ctData.idx_insert].type	   	= HOTSW_INSERT;
+        
 		// メッセージ送信
-    	OS_SendMessage(&s_ctData.hotswQueue, (OSMessage)&s_ctData.hotswInsertMsg, OS_MESSAGE_NOBLOCK);
+    	OS_SendMessage(&s_ctData.hotswQueue, (OSMessage)&s_ctData.hotswInsertMsg[s_ctData.idx_insert], OS_MESSAGE_NOBLOCK);
+
+        // メッセージインデックスをインクリメント
+        s_ctData.idx_insert = (s_ctData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
 	}
     else{
 		OS_PutString("No Card...\n");
@@ -258,11 +264,6 @@ BOOL HOTSW_LoadCardData(void)
 
     start = OS_GetTick();
 
-    // スロットがスワップされてたら元に戻す。
-    if(reg_MI_MC1 & 0x8000){
-		reg_MI_MC1 = reg_MI_MC1 & 0xff;
-    }
-    
 	OS_TPrintf("---------------- Card Boot Start ---------------\n");
 #ifdef SDK_ARM7
 	// カード電源リセット
@@ -294,7 +295,6 @@ BOOL HOTSW_LoadCardData(void)
 #else
         OS_LockCard(s_cbData.lockID);
 #endif
-		OS_PutString("!! Card Lock\n");
         
 		// カード側でKey Tableをロードする
         LoadTable();
@@ -424,7 +424,6 @@ BOOL HOTSW_LoadCardData(void)
 #else
         OS_UnlockCard(s_cbData.lockID);
 #endif
-        OS_PutString("!! Card Unlock\n");
         OS_TPrintf("-----------------------------------------------\n");
     }
     else{
@@ -467,11 +466,15 @@ void HOTSW_LoadStaticModule(void)
             									  s_cbData.pBootSegBuf->rh.s.banner_offset,
 												  (u32 *)SYSM_CARD_BANNER_BUF,
 	                                              sizeof(TWLBannerFile) );
-
+	}
+	
+	if(IsCardExist())
+	{
         SYSMi_GetWork()->flags.common.isValidCardBanner  = TRUE;
         SYSMi_GetWork()->flags.common.isCardStateChanged = TRUE;
         SYSMi_GetWork()->flags.common.isExistCard 		 = TRUE;
 	}
+	
 #endif
     
 //	OS_TPrintf("  - Arm9 Static Module Loading...\n");
@@ -864,31 +867,22 @@ static void SetMCSCR(void)
   Name:		   McThread
 
   Description: カード抜け・挿し処理スレッド
-
-  [TODO:]フラグ処理・条件分岐の見直し
  *---------------------------------------------------------------------------*/
 static void McThread(void *arg)
 {
 	#pragma unused( arg )
 
-    static BOOL insert = FALSE;
-        
 	BOOL retval;
     HotSwMessage *msg;
 
     while(1){
 		OS_ReceiveMessage(&s_ctData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
 
-		OS_TPrintf("Before proc is insert? --> %d\n", insert);
-        
         // 活線挿抜回数を比較
         if(CARDi_IsPulledOutEx(msg->hotswCount)){
         	// カード挿し割り込みによるスレッド起動 かつ 前回のスレッド起動が抜け処理だった
-        	if(msg->type == HOTSW_INSERT && !insert){
+        	if(msg->type == HOTSW_INSERT){
 				OS_PutString("*** Insert\n");
-
-				// 挿し処理フラグを立てる
-				insert = TRUE;
 
 				// 活線挿抜抑制フラグが立っていたら処理しない
 				if( !SYSMi_GetWork()->flags.common.isEnableHotSW ) {
@@ -923,9 +917,8 @@ static void McThread(void *arg)
 #else
         				OS_UnlockCard(s_cbData.lockID);
 #endif
-						OS_PutString("!! Card Unlock\n");
-                    
-						// カードロックIDの開放
+
+                        // カードロックIDの開放
 						OS_ReleaseLockID( s_cbData.lockID );
                     
                     	OS_PutString("### Card Read Error\n");
@@ -956,12 +949,9 @@ static void McThread(void *arg)
 #endif
         	}
             
-        	// カード抜き割り込みによるスレッド起動 かつ 前回のスレッド起動が挿し処理だった
-    	    else if(msg->type == HOTSW_PULLEDOUT && insert){
-				OS_PutString("*** Init\n");
-
-                // 挿し処理フラグを下ろす。
-				insert = FALSE;
+        	// カード抜き割り込みによるスレッド起動
+    	    else if(msg->type == HOTSW_PULLEDOUT){
+				OS_PutString("*** Init\n\n");
 
                 // HOTSW抑制フラグが立ってたら、処理しない
 				if( !SYSMi_GetWork()->flags.common.isEnableHotSW ) {
@@ -1000,16 +990,20 @@ static void McThread(void *arg)
  *---------------------------------------------------------------------------*/
 static void InterruptCallbackCard(void)
 {
-	OS_TPrintf("★ Pulled Out Interrupt\n");
+//	OS_TPrintf("★ Pulled Out Interrupt");
     
     // 送信メッセージを作成 (活線挿抜回数を取得・カード挿し)
-    // [TODO:] メッセージを配列で用意する
-	s_ctData.hotswPulledOutMsg.hotswCount = CARDi_GetSlotResetCount();
-    s_ctData.hotswPulledOutMsg.type	      = HOTSW_PULLEDOUT;
+	s_ctData.hotswPulledOutMsg[s_ctData.idx_pulledOut].hotswCount = CARDi_GetSlotResetCount();
+    s_ctData.hotswPulledOutMsg[s_ctData.idx_pulledOut].type	   = HOTSW_PULLEDOUT;
     
 	// メッセージ送信
-    OS_SendMessage(&s_ctData.hotswQueue, (OSMessage *)&s_ctData.hotswPulledOutMsg, OS_MESSAGE_NOBLOCK);
-	
+    OS_SendMessage(&s_ctData.hotswQueue, (OSMessage *)&s_ctData.hotswPulledOutMsg[s_ctData.idx_pulledOut], OS_MESSAGE_NOBLOCK);
+
+    // メッセージインデックスをインクリメント
+    s_ctData.idx_pulledOut = (s_ctData.idx_pulledOut+1) % HOTSW_PULLED_MSG_NUM;
+
+//	OS_TPrintf(" - idx_pulledOut : %d\n", s_ctData.idx_pulledOut);
+    
 #ifdef USE_SLOT_A
 	OS_SetIrqCheckFlagEx(OS_IE_CARD_A_IREQ);
 #else
@@ -1024,19 +1018,23 @@ static void InterruptCallbackCard(void)
  *---------------------------------------------------------------------------*/
 static void InterruptCallbackCardDet(void)
 {
-	OS_TPrintf("★ Insert Interrupt\n");
+//	OS_TPrintf("★ Insert Interrupt");
     
     // SDKのカード状態をリセットする
 	CARDi_ResetSlotStatus();
 
     // 送信メッセージを作成 (活線挿抜回数を取得・カード挿し)
-    // [TODO:] メッセージを配列で用意する
-	s_ctData.hotswInsertMsg.hotswCount = CARDi_GetSlotResetCount();
-    s_ctData.hotswInsertMsg.type	   = HOTSW_INSERT;
+	s_ctData.hotswInsertMsg[s_ctData.idx_insert].hotswCount = CARDi_GetSlotResetCount();
+    s_ctData.hotswInsertMsg[s_ctData.idx_insert].type	    = HOTSW_INSERT;
     
 	// メッセージ送信
-    OS_SendMessage(&s_ctData.hotswQueue, (OSMessage *)&s_ctData.hotswInsertMsg, OS_MESSAGE_NOBLOCK);
+    OS_SendMessage(&s_ctData.hotswQueue, (OSMessage *)&s_ctData.hotswInsertMsg[s_ctData.idx_insert], OS_MESSAGE_NOBLOCK);
 
+	// メッセージインデックスをインクリメント
+    s_ctData.idx_insert = (s_ctData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
+
+//	OS_TPrintf(" - idx_insert : %d\n", s_ctData.idx_insert);
+    
 #ifdef USE_SLOT_A
     OS_SetIrqCheckFlagEx(OS_IE_CARD_A_DET);
 #else
@@ -1162,9 +1160,9 @@ static void SetInterrupt(void)
   	SetInterruptCallback( OS_IE_CARD_A_DET  , InterruptCallbackCardDet );
   	SetInterruptCallback( OS_IE_CARD_A_DATA , InterruptCallbackCardData );
 #else
-  	SetInterruptCallback( OS_IE_CARD_B_IREQ , InterruptCallbackCard );
-  	SetInterruptCallback( OS_IE_CARD_B_DET  , InterruptCallbackCardDet );
-  	SetInterruptCallback( OS_IE_CARD_B_DATA , InterruptCallbackCardData );
+	SetInterruptCallback( OS_IE_CARD_B_IREQ , InterruptCallbackCard );
+	SetInterruptCallback( OS_IE_CARD_B_DET  , InterruptCallbackCardDet );
+	SetInterruptCallback( OS_IE_CARD_B_DATA , InterruptCallbackCardData );
 #endif
 }
 
