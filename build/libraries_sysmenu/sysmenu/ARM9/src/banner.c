@@ -27,7 +27,7 @@ typedef struct BannerCheckParam {
 
 // extern data-----------------------------------------------------------------
 // function's prototype-------------------------------------------------------
-static BOOL SYSMi_CheckBannerFile( NTRBannerFile *pBanner );
+static BOOL SYSMi_CheckBannerFile( TWLBannerFile *pBanner );
 
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
@@ -43,8 +43,20 @@ static BOOL SYSMi_CheckBannerFile( NTRBannerFile *pBanner );
 // カードバナーリード（※NTR-IPL2仕様）
 BOOL SYSMi_ReadCardBannerFile( u32 bannerOffset, TWLBannerFile *pBanner )
 {
-#ifndef DEBUG_USED_CARD_SLOT_B_
-	// ※スロットAからのリードなら問題ないが、スロットBからは直接読めないので
+#pragma unused(bannerOffset)
+	BOOL isRead;
+	if( SYSMi_GetWork()->flags.common.isValidCardBanner ) {
+		DC_InvalidateRange( (void *)SYSM_CARD_BANNER_BUF, 0x3000 );
+		MI_CpuCopyFast( (void *)SYSM_CARD_BANNER_BUF, pBanner, sizeof(TWLBannerFile) );
+	}
+	isRead = SYSMi_CheckBannerFile( pBanner );
+	
+	if( !isRead ) {
+		MI_CpuClearFast( pBanner, sizeof(TWLBannerFile) );
+	}
+	return isRead;
+/*
+	// ※カードライブラリでは、スロットAからのリードなら問題ないが、スロットBからは読めないのでとりあえず使わない
 	BOOL isRead;
 	u16 id = (u16)OS_GetLockID();
 	
@@ -55,25 +67,18 @@ BOOL SYSMi_ReadCardBannerFile( u32 bannerOffset, TWLBannerFile *pBanner )
 	CARD_UnlockRom( id );
 	OS_ReleaseLockID( id );
 	
-	isRead = SYSMi_CheckBannerFile( (NTRBannerFile *)pBanner );
+	isRead = SYSMi_CheckBannerFile( (TWLBannerFile *)pBanner );
 	
 	if( !isRead ) {
 		MI_CpuClearFast( pBanner, sizeof(TWLBannerFile) );
 	}
 	return isRead;
-#else
-#pragma unused(bannerOffset)
-	if( SYSMi_GetWork()->flags.common.isValidCardBanner ) {
-		DC_InvalidateRange( (void *)SYSM_CARD_BANNER_BUF, 0x3000 );
-		MI_CpuCopyFast( (void *)SYSM_CARD_BANNER_BUF, pBanner, sizeof(TWLBannerFile) );
-	}
-	return (BOOL)SYSMi_GetWork()->flags.common.isValidCardBanner;
-#endif
+*/
 }
 
 
 	// バナーデータの正誤チェック
-static BOOL SYSMi_CheckBannerFile( NTRBannerFile *pBanner )
+static BOOL SYSMi_CheckBannerFile( TWLBannerFile *pBanner )
 {
 	int i;
 	BOOL retval = TRUE;
@@ -82,6 +87,7 @@ static BOOL SYSMi_CheckBannerFile( NTRBannerFile *pBanner )
 	BannerCheckParam bannerCheckList[ BANNER_VER_NTR_MAX ];
 	BannerCheckParam *pChk = &bannerCheckList[ 0 ];
 	
+	// NTR互換部分は標準でチェック
 	bannerCheckList[ 0 ].pSrc = (u8 *)&( pBanner->v1 );
 	bannerCheckList[ 0 ].size = sizeof( BannerFileV1 );
 	bannerCheckList[ 1 ].pSrc = (u8 *)&( pBanner->v2 );
@@ -102,6 +108,12 @@ static BOOL SYSMi_CheckBannerFile( NTRBannerFile *pBanner )
 		pChk++;
 	}
 	
+	// TWLバナーなら、バナーアニメ部もチェック
+	if( pBanner->h.platform == BANNER_PLATFORM_TWL ) {
+		if( pBanner->h.crc16_anime != SVC_GetCRC16( 0xffff, &pBanner->anime, sizeof(BannerAnime) ) ) {
+			retval = FALSE;
+		}
+	}
 	return retval;
 }
 

@@ -58,6 +58,10 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 {
 	BOOL retval = FALSE;
 	
+	// [TODO:] ROMヘッダの platform_code がNTR,TWL-HYB,TWL-LTD以外のもの
+	//                     region_codeが本体情報と違うもの
+	//         の場合は、正常に認識できないタイトルであることを示す。
+	
 	if( SYSMi_GetWork()->flags.common.isCardStateChanged ) {
 		
 		MI_CpuClear32( pTitleList_Card, sizeof(TitleProperty) );
@@ -66,9 +70,16 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 		if( SYSM_IsExistCard() ) {
 			u16 id = (u16)OS_GetLockID();
 			(void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );						// ARM7と排他制御する
+			
+			// ROMヘッダのリード
 			DC_InvalidateRange( (void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );	// キャッシュケア
 			MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BAK, (void *)SYSM_CARD_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );	// ROMヘッダコピー
 			SYSMi_GetWork()->cardHeaderCrc16 = SYSMi_GetWork()->cardHeaderCrc16;				// ROMヘッダCRCコピー
+			
+			// バナーデータのリード
+			SYSMi_ReadCardBannerFile( SYSM_GetCardRomHeader()->banner_offset, &s_bannerBuf[ CARD_BANNER_INDEX ] );
+			pTitleList_Card->pBanner = &s_bannerBuf[ CARD_BANNER_INDEX ];
+			
 			SYSMi_GetWork()->flags.common.isCardStateChanged = FALSE;							// カード情報更新フラグを落とす
 			(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );					// ARM7と排他制御する
 			OS_ReleaseLockID( id );
@@ -77,14 +88,6 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 			pTitleList_Card->flags.isAppLoadCompleted = TRUE;
 			pTitleList_Card->flags.isAppRelocate = TRUE;
 			pTitleList_Card->pBanner = NULL;
-			
-			// バナーデータのリード
-			if( SYSM_GetCardRomHeader()->banner_offset &&
-				SYSMi_ReadCardBannerFile( SYSM_GetCardRomHeader()->banner_offset, &s_bannerBuf[ CARD_BANNER_INDEX ] ) ) {
-				pTitleList_Card->pBanner = &s_bannerBuf[ CARD_BANNER_INDEX ];
-			}else {
-				MI_CpuClearFast( &s_bannerBuf[ CARD_BANNER_INDEX ], sizeof(TWLBannerFile) );
-			}
 		}
 		
 		retval = TRUE;
@@ -179,6 +182,7 @@ static BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, u8 *pDst )
 	// ファイルパスを取得
 	if(readLen != NAM_OK){
 		OS_TPrintf("NAM_GetTitleBootContentPath failed %lld,%d\n", titleID, readLen );
+		return FALSE;
 	}
 	
 	// ファイルオープン
@@ -589,7 +593,7 @@ AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 	}
 	
 	// ※ROMヘッダ認証
-	
+	// [TODO:] NANDアプリの場合、pBootTitle->titleIDとROMヘッダのtitleIDの一致確認を必ずする。
 	
 	// マウント情報の登録
 	SYSMi_SetBootAppMountInfo( pBootTitle );
