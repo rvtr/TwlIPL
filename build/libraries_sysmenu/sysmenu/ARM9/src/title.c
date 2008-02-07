@@ -593,7 +593,11 @@ AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 	}
 	
 	// ※ROMヘッダ認証
+	// [TODO:] NANDアプリの場合、NAM_CheckLaunchRights()を呼んで
 	// [TODO:] NANDアプリの場合、pBootTitle->titleIDとROMヘッダのtitleIDの一致確認を必ずする。
+	
+	// [TODO:] 署名チェック
+	// [TODO:] ハッシュチェック
 	
 	// マウント情報の登録
 	SYSMi_SetBootAppMountInfo( pBootTitle );
