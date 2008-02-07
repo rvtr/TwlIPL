@@ -88,7 +88,7 @@ asm void  MIi_InitMainMemCR( BOOL setCR )
         ldr     r3,  =HW_WRAM_AREA - 2
         bl      MIi_InitMainMemCRCore
 #ifdef SDK_TS
-        ldr     r3,  =HW_MAIN_MEM + HW_MAIN_MEM_EX_SIZE - 2
+        ldr     r3,  =HW_TWL_MAIN_MEM_EX_END - 2
         bl      MIi_InitMainMemCRCore
 #endif // SDK_TS
 
