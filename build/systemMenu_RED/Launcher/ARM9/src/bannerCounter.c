@@ -10,9 +10,9 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Date:: 2008-01-29#$
-  $Rev: 533 $
-  $Author: yoshida_teruhisa $
+  $Date::            $
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include "bannerCounter.h"

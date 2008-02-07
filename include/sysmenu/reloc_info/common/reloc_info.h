@@ -10,9 +10,9 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Date:: 2007-12-12#$
-  $Rev: 352 $
-  $Author: yoshida_teruhisa $
+  $Date::            $
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #ifndef	__SYSMENU_RELOC_INFO_H__

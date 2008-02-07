@@ -12,8 +12,8 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
 override TARGET_PLATFORM	:= TWL
@@ -26,7 +26,7 @@ override TARGET_DEBUG		:=
 
 SUBDIRS		=
 
-LINCLUDES	=   ../include
+LINCLUDES	=
 
 
 #----------------------------------------------------------------------------

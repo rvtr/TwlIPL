@@ -26,7 +26,7 @@ override TARGET_DEBUG		:=
 
 SUBDIRS		=
 
-LINCLUDES	=   ../include
+LINCLUDES	=
 
 
 #----------------------------------------------------------------------------

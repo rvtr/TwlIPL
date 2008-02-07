@@ -11,9 +11,9 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date:: 2007-09-18#$
-# $Rev: 947 $
-# $Author: hatamoto_minoru $
+# $Date::            $
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
 SUBDIRS			=

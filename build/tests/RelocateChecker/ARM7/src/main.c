@@ -10,9 +10,9 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Date:: 2007-12-05#$
-  $Rev: 312 $
-  $Author: yosiokat $
+  $Date::            $
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include    <nitro/types.h>

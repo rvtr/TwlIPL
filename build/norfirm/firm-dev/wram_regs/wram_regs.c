@@ -10,9 +10,9 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Date:: 2007-11-12#$
-  $Rev: 149 $
-  $Author: yutaka $
+  $Date::            $
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 #include <twl/mi.h>
 #include <firm/format/wram_regs.h>

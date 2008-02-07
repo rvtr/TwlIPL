@@ -12,13 +12,13 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
 SUBDIRS		=
 
-LINCLUDES	=   ../include
+LINCLUDES	=
 
 #----------------------------------------------------------------------------
 

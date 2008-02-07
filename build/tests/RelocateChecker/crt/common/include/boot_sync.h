@@ -10,9 +10,9 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Date:: 2007-09-25#$
-  $Rev: 1102 $
-  $Author: terui $
+  $Date::            $
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 #ifndef TWL_LIBRARIES_INIT_COMMON_BOOT_SYNC_H_
 #define TWL_LIBRARIES_INIT_COMMON_BOOT_SYNC_H_

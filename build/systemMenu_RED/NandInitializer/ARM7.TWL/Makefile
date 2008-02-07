@@ -11,9 +11,9 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date:: 2007-12-18#$
-# $Rev: 3150 $
-# $Author: yutaka $
+# $Date::            $
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
 SUBDIRS		=
