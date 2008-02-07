@@ -18,6 +18,7 @@
 #include <twl.h>
 #include <nitro/snd.h>
 #include <twl/fatfs.h>
+#include <twl/lcfg.h>
 #include <nitro/card.h>
 #include "kami_font.h"
 #include "kami_pxi.h"
@@ -35,7 +36,6 @@
 #include "TWLHWInfo_api.h"
 #include "TWLSettings_api.h"
 //
-
 /*---------------------------------------------------------------------------*
     型定義
  *---------------------------------------------------------------------------*/
@@ -604,8 +604,13 @@ static BOOL WriteHWSecureInfoFile( u8 region )
 		LCFG_THW_SetSerialNo( serialNo );
 	}
 	
-	// ランチャーゲームコード
-	LCFG_THW_SetLauncherTitleID_Lo( (const u8 *)strLauncherGameCode[ region ] );
+	// ランチャーTitleID_Loのセット
+	{
+		int i;
+		u8 titleID_Lo[4];
+		for( i = 0; i < 4; i++ ) titleID_Lo[ i ] = (u8)strLauncherGameCode[ region ][ 4 - i - 1 ];
+		LCFG_THW_SetLauncherTitleID_Lo( (const u8 *)titleID_Lo );
+	}
 
 	// ライト
 	if( isWrite &&
