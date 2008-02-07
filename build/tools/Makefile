@@ -12,8 +12,8 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs
@@ -26,7 +26,8 @@ SUBDIRS		= \
 		  makegcdfirm \
 		  makenandfirm \
           makerom.TWL.sys \
-          makerom.TWL.shop
+          makerom.TWL.shop \
+		  attach_dummyromheader \
 
 
 #----------------------------------------------------------------------------
