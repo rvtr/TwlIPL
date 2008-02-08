@@ -1,9 +1,9 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlIPL
+# Project:  TwlIPL - NAMUT
 # File:     Makefile
 #
-# Copyright 2007 Nintendo.  All rights reserved.
+# Copyright 2008 Nintendo.  All rights reserved.
 #
 # These coded instructions, statements, and computer programs contain
 # proprietary information of Nintendo of America Inc. and/or Nintendo
@@ -12,19 +12,41 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev$
-# $Author$
+# $Rev:$
+# $Author:$
+#----------------------------------------------------------------------------
 #----------------------------------------------------------------------------
 
+SUBDIRS				=
+
+#----------------------------------------------------------------------------
 TARGET_FIRM			=	SYSTEMMENU
+TARGET_PLATFORM		=	TWL
+TWL_ARCHGEN			=	LIMITED
+TWL_PROC	    	=	ARM9
+
+INCDIR				= 	include
+
+SRCS				=	namut.c
+
+TARGET_LIB			=	libnamut$(TWL_LIBSUFFIX).a
+
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-#----------------------------------------------------------------------------
+INSTALL_TARGETS		=	$(TARGETS)
+INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
 
-SUBDIRS_P			=	reloc_info sysmenu mb_loader acsign boot hotsw namut
+CCFLAGS				+=	-DSMALL_CODE_SIZE	\
+						-DSTANDALONE		\
+						-DOPT_32_BIT		\
+						-DNO_SPLIT			\
+						-DNO_FP_API			\
+						-DNO_R_DIAG			\
+						-DNO_STDIO_H		\
+						-DNO_STDLIB_H
 
-#----------------------------------------------------------------------------
+do-build:	$(TARGETS)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
