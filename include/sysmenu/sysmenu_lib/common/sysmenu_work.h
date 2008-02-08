@@ -101,6 +101,7 @@ typedef struct SYSM_work {
 			vu32		isResetRTC :1;					// RTCリセット発生
 			vu16		isEnableHotSW :1;				// 活線挿抜有効？
 			vu16		isBusyHotSW :1;					// 活線挿抜処理中？
+            vu16		isCardLoadCompleted :1;			// カードからデータロード完了？
 #ifdef DEBUG_USED_CARD_SLOT_B_
 			vu32		isValidCardBanner :1;
 			vu32		is1stCardChecked :1;
