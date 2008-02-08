@@ -83,7 +83,11 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 			SYSMi_GetWork()->flags.common.isCardStateChanged = FALSE;							// カード情報更新フラグを落とす
 			(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );					// ARM7と排他制御する
 			OS_ReleaseLockID( id );
-			
+
+		    // NTR-ROMヘッダバッファのゲームコマンドパラメータを上書きする
+            // [TODO:] この位置で問題ないか要確認
+    		*(vu32 *)(HW_ROM_HEADER_BUF + GAME_COMMAND_PARAM_INDEX) = SYSMi_GetWork()->gameCommondParam;
+            
 			pTitleList_Card->flags.isValid = TRUE;
 			pTitleList_Card->flags.isAppLoadCompleted = TRUE;
 			pTitleList_Card->flags.isAppRelocate = TRUE;
@@ -545,8 +549,6 @@ static void SYSMi_Relocate( void )
 		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_TWL_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 	}
-    // NTR-ROMヘッダバッファのゲームコマンドパラメータを上書きする
-    *(vu32 *)(HW_ROM_HEADER_BUF + GAME_COMMAND_PARAM_INDEX) = SYSMi_GetWork()->gameCommondParam;
 }
 
 
