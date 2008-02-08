@@ -161,7 +161,7 @@ static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
 void ReadIDSecure_DSType2(CardBootData *cbd)
 {
     // スクランブルの設定
-    u32 scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
+    u32 scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
     
 	// NewDMA転送の準備
 	HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_scr, sizeof(cbd->id_scr) );
@@ -204,7 +204,7 @@ void ReadSegSecure_DSType2(CardBootData *cbd)
     GCDCmd64 	cndLE, cndBE;
 
     // スクランブルの設定
-    u32 scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
+    u32 scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
     
     for(i=0; i<SECURE_SEGMENT_NUM; i++){
 		// ゼロクリア
@@ -274,7 +274,7 @@ void ReadSegSecure_DSType2(CardBootData *cbd)
 void SwitchONPNGSecure_DSType2(CardBootData *cbd)
 {
     // スクランブルの設定
-    u32 scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
+    u32 scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
     
     // コマンド作成・設定
 	SetSecureCommand(S_PNG_ON, cbd);
@@ -309,7 +309,7 @@ void SwitchONPNGSecure_DSType2(CardBootData *cbd)
 void SwitchOFFPNGSecure_DSType2(CardBootData *cbd)
 {
     // スクランブルの設定
-    u32 scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
+    u32 scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
     
     // コマンド作成・設定
 	SetSecureCommand(S_PNG_OFF, cbd);
@@ -344,7 +344,7 @@ void SwitchOFFPNGSecure_DSType2(CardBootData *cbd)
 void ChangeModeSecure_DSType2(CardBootData *cbd)
 {
     // スクランブルの設定
-    u32 scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
+    u32 scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
     
     // コマンド作成・設定
 	SetSecureCommand(S_CHG_MODE, cbd);
