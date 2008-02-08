@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK - NandInitializer
-  File:     process_eticket.h
+  File:     sd_event.h
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -11,12 +11,12 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev$
-  $Author$
+  $Rev:$
+  $Author:$
  *---------------------------------------------------------------------------*/
 
-#ifndef PROCESS_ETICKET_H_
-#define PROCESS_ETICKET_H_
+#ifndef SD_EVENT_H_
+#define SD_EVENT_H_
 
 #ifdef	__cplusplus
 extern "C" {
@@ -27,20 +27,10 @@ extern "C" {
 #include <nitro.h>
 
 /*---------------------------------------------------------------------------*
-    íËêîíËã`
- *---------------------------------------------------------------------------*/
-#define E_TICKET_FILE_PATH_IN_ROM    "rom:/data/cert.sys"
-#define E_TICKET_FILE_PATH_IN_NAND   "nand:sys/cert.sys"
-
-/*---------------------------------------------------------------------------*
     ä÷êîíËã`
  *---------------------------------------------------------------------------*/
 
-void* eTicketProcess0(void);
-void* eTicketProcess1(void);
-void* eTicketProcess2(void);
-void* eTicketProcess3(void);
-void* eTicketProcess4(void);
+void SDEvents(void *userdata, FSEvent event, void *arg);
 
 /*===========================================================================*/
 
@@ -48,7 +38,7 @@ void* eTicketProcess4(void);
 }          /* extern "C" */
 #endif
 
-#endif /* PROCESS_ETICKET_H_ */
+#endif /* SD_EVENT_H_ */
 
 /*---------------------------------------------------------------------------*
   End of file

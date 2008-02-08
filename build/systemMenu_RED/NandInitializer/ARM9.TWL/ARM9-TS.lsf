@@ -23,7 +23,7 @@ Static $(TARGET_NAME)
 	Address		$(ADDRESS_STATIC)
 	Object		$(OBJS_STATIC)
 	Library		$(LLIBS) $(GLIBS) $(CW_LIBS)
-	StackSize	2048 2048
+	StackSize	4096 4096
 }
 
 Autoload ITCM

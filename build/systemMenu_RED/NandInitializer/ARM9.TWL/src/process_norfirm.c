@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
@@ -26,6 +26,7 @@
 #include "process_topmenu.h"
 #include "process_import.h"
 #include "process_norfirm.h"
+#include "process_fade.h"
 #include "cursor.h"
 #include "keypad.h"
 
@@ -175,7 +176,10 @@ void* NorfirmProcess0(void)
 	// 最後にリターンを追加
 	kamiFontPrintf((s16)3, (s16)(5+CHAR_OF_MENU_SPACE*sFileNum), FONT_COLOR_BLACK, "l   RETURN           l    l");
 
-	return NorfirmProcess1;
+	// カーソル消去
+	SetCursorPos((u16)200, (u16)200);
+
+	FADE_IN_RETURN( NorfirmProcess1 );
 }
 
 /*---------------------------------------------------------------------------*
@@ -211,7 +215,7 @@ void* NorfirmProcess1(void)
 	// トップメニューへ戻る
     else if (kamiPadIsTrigger(PAD_BUTTON_B))
 	{
-		return TopmenuProcess0;
+		FADE_OUT_RETURN( TopmenuProcess0 );
 	}
 
 	return NorfirmProcess1;
@@ -238,7 +242,7 @@ void* NorfirmProcess2(void)
 	else
 	{
 		// リターン
-		return TopmenuProcess0;
+		FADE_OUT_RETURN( TopmenuProcess0 );
 	}
 
 	// 今回の結果を表示

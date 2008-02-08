@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
@@ -25,6 +25,7 @@
 #include "process_nandfirm.h"
 #include "process_norfirm.h"
 #include "process_auto.h"
+#include "process_fade.h"
 #include "cursor.h"
 #include "keypad.h"
 
@@ -183,10 +184,13 @@ void* AutoProcess2(void)
 	kamiFontFillChar(18, bg_color, bg_color );
 	kamiFontFillChar(19, bg_color, BG_COLOR_TRANS );
 
+	// カーソル消去
+	SetCursorPos((u16)200, (u16)200);
+
 	// オートフラグクリア
 	gAutoFlag = FALSE;
 
-	return AutoProcess3;
+	FADE_IN_RETURN( AutoProcess3 );
 }
 
 /*---------------------------------------------------------------------------*
@@ -203,7 +207,7 @@ void* AutoProcess3(void)
 {
     if (kamiPadIsTrigger(PAD_BUTTON_B))
 	{
-		return TopmenuProcess0;
+		FADE_OUT_RETURN( TopmenuProcess0 );
 	}
 
 	return AutoProcess3;

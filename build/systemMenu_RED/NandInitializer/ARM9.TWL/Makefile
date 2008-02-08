@@ -58,7 +58,9 @@ SRCS		=	main.c \
 				process_import.c \
 				process_nandfirm.c \
 				process_norfirm.c \
-				process_auto.c
+				process_auto.c \
+				process_fade.c \
+				sd_event.c
 
 LINCLUDES	=	../common/include \
 				$(ROOT)/build/libraries/lcfg/ARM9.TWL/include
@@ -86,7 +88,8 @@ endif
 LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\
 					libboc$(TWL_LIBSUFFIX).a			\
 					libnam$(TWL_LIBSUFFIX).a			\
-					libacsign_enc$(TWL_LIBSUFFIX).a
+					libacsign_enc$(TWL_LIBSUFFIX).a     \
+					libnamut$(TWL_LIBSUFFIX).a
 
 
 #include	$(TWLSDK_ROOT)/build/buildtools/commondefs

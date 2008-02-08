@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
@@ -25,6 +25,7 @@
 #include "process_topmenu.h"
 #include "process_hw_info.h"
 #include "process_auto.h"
+#include "process_fade.h"
 #include "cursor.h"
 #include "keypad.h"
 
@@ -173,10 +174,13 @@ void* HWInfoProcess0(void)
 	kamiFontFillChar( 1, BG_COLOR_PURPLE, BG_COLOR_PURPLE );
 	kamiFontFillChar( 2, BG_COLOR_PURPLE, BG_COLOR_TRANS );
 
+	// カーソル除外
+	SetCursorPos((u16)200, (u16)200);
+
 	// 前準備
 	HWInfoWriterInit();
 
-	return HWInfoProcess1;
+	FADE_IN_RETURN( HWInfoProcess1 );
 }
 
 /*---------------------------------------------------------------------------*
@@ -219,7 +223,7 @@ void* HWInfoProcess1(void)
 	// トップメニューへ戻る
     else if (kamiPadIsTrigger(PAD_BUTTON_B))
 	{
-		return TopmenuProcess0;
+		FADE_OUT_RETURN( TopmenuProcess0 );
 	}
 
 	return HWInfoProcess1;
@@ -256,7 +260,7 @@ void* HWInfoProcess2(void)
 		result = DeleteHWInfoFile();
 		break;
 	case 7:
-		return TopmenuProcess0;
+		FADE_OUT_RETURN( TopmenuProcess0 );
 	}
 
 	// 全結果をクリア
@@ -277,26 +281,11 @@ void* HWInfoProcess2(void)
 	// Auto用
 	if (gAutoFlag)
 	{
-		if (result) return AutoProcess1;
-		else return AutoProcess2;
+		if (result) { FADE_OUT_RETURN( AutoProcess1 ); }
+		else { FADE_OUT_RETURN( AutoProcess2 ); }
 	}
 
 	return HWInfoProcess1;
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         HWInfo プロセス３
-
-  Description:  
-
-  Arguments:    None.
-
-  Returns:      next sequence
- *---------------------------------------------------------------------------*/
-
-void* HWInfoProcess3(void)
-{
-	return HWInfoProcess3;
 }
 
 /*---------------------------------------------------------------------------*

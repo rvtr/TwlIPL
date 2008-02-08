@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
@@ -26,6 +26,7 @@
 #include "process_import.h"
 #include "process_eticket.h"
 #include "process_auto.h"
+#include "process_fade.h"
 #include "cursor.h"
 #include "keypad.h"
 
@@ -229,7 +230,10 @@ void* ImportProcess0(void)
 //		DumpTadInfo();
     }
 
-	return ImportProcess1;
+	// カーソル消去
+	SetCursorPos((u16)200, (u16)200);
+
+	FADE_IN_RETURN( ImportProcess1 );
 }
 
 /*---------------------------------------------------------------------------*
@@ -272,7 +276,7 @@ void* ImportProcess1(void)
 	// トップメニューへ戻る
     else if (kamiPadIsTrigger(PAD_BUTTON_B))
 	{
-		return TopmenuProcess0;
+		FADE_OUT_RETURN( TopmenuProcess0 );
 	}
 
 	return ImportProcess1;
@@ -299,9 +303,9 @@ void* ImportProcess2(void)
 		return ImportAllNonexistentProcess0;
 		break;
 	case 2:
-		return ImportIndividuallyProcess0;
+		FADE_OUT_RETURN( ImportIndividuallyProcess0 );
 	case 3:
-		return TopmenuProcess0;
+		FADE_OUT_RETURN( TopmenuProcess0 );
 	}
 
 	return ImportProcess1;
@@ -355,7 +359,7 @@ void* ImportProcessReturn(void)
     	if (kamiPadIsTrigger(PAD_BUTTON_B)) { break; }
 	}
 
-	return TopmenuProcess0;
+	FADE_OUT_RETURN( TopmenuProcess0 );
 }
 
 /*---------------------------------------------------------------------------*
@@ -394,15 +398,15 @@ static void* ImportAllOverwriteProcess0(void)
 	// Auto用
 	if (gAutoFlag)
 	{
-		if (result && sFileNum > 0) return AutoProcess1;
-		else return AutoProcess2;
+		if (result && sFileNum > 0) { FADE_OUT_RETURN( AutoProcess1 ); }
+		else { FADE_OUT_RETURN( AutoProcess2 ); }
 	}
 
 	return ImportProcess1;
 }
 
 /*---------------------------------------------------------------------------*
-     全ファイルインポートプロセス（既存ファイルは上書きしない）
+    上書きインポートプロセス（既存ファイルは上書きしない）
  *---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*
@@ -482,7 +486,10 @@ static void* ImportIndividuallyProcess0(void)
 
 	DumpTadInfo();
 
-	return ImportIndividuallyProcess1;
+	// カーソル消去
+	SetCursorPos((u16)200, (u16)200);
+
+	FADE_IN_RETURN( ImportIndividuallyProcess1 );
 }
 
 /*---------------------------------------------------------------------------*
@@ -520,7 +527,7 @@ void* ImportIndividuallyProcess1(void)
 	// ひとつ前のメニューへ戻る
     else if (kamiPadIsTrigger(PAD_BUTTON_B))
 	{
-		return ImportProcess0;
+		FADE_IN_RETURN( ImportProcess0 );
 	}
 
 	return ImportIndividuallyProcess1;

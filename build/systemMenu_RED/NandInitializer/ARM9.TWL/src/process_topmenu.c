@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
@@ -25,6 +25,7 @@
 #include "process_nandfirm.h"
 #include "process_norfirm.h"
 #include "process_auto.h"
+#include "process_fade.h"
 #include "cursor.h"
 #include "keypad.h"
 
@@ -114,10 +115,10 @@ void* TopmenuProcess0(void)
 	kamiFontFillChar(17, BG_COLOR_VIOLET, BG_COLOR_VIOLET );
 	kamiFontFillChar(18, BG_COLOR_VIOLET, BG_COLOR_TRANS );
 
-	// カーソル配置
-	SetCursorPos((u16)CURSOR_ORIGIN_X, (u16)(CURSOR_ORIGIN_Y + sMenuSelectNo * DOT_OF_MENU_SPACE));
+	// カーソル消去
+	SetCursorPos((u16)200, (u16)200);
 
-	return TopmenuProcess1;
+	FADE_IN_RETURN(TopmenuProcess1);
 }
 
 /*---------------------------------------------------------------------------*
@@ -154,7 +155,7 @@ void* TopmenuProcess1(void)
 	// L&R同時押しでオート実行！
     if (kamiPadIsPress(PAD_BUTTON_L) && kamiPadIsPress(PAD_BUTTON_R))
 	{
-		return AutoProcess0;
+		FADE_OUT_RETURN( AutoProcess0 );
 	}
 
 	return TopmenuProcess1;
@@ -175,40 +176,20 @@ void* TopmenuProcess2(void)
 	switch ( sMenuSelectNo )
 	{
 	case 0:
-		return FormatProcess0;
+		FADE_OUT_RETURN( FormatProcess0 );
 	case 1:
-		return HWInfoProcess0;
-		break;
+		FADE_OUT_RETURN( HWInfoProcess0 );
 	case 2:
-		return eTicketProcess0;
-		break;
+		FADE_OUT_RETURN( eTicketProcess0 );
 	case 3:
-		return ImportProcess0;
-		break;
+		FADE_OUT_RETURN( ImportProcess0 );
 	case 4:
-		return NandfirmProcess0;
-		break;
+		FADE_OUT_RETURN( NandfirmProcess0 );
 	case 5:
-		return NorfirmProcess0;
-		break;
+		FADE_OUT_RETURN( NorfirmProcess0 );
 	}
 
 	return TopmenuProcess1;
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         Top Menu プロセス３
-
-  Description:  
-
-  Arguments:    None.
-
-  Returns:      next sequence
- *---------------------------------------------------------------------------*/
-
-void* TopmenuProcess3(void)
-{
-	return TopmenuProcess3;
 }
 
 /*---------------------------------------------------------------------------*

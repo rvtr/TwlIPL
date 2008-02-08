@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK - NandInitializer
-  File:     process_eticket.h
+  File:     process_fade.h
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -11,12 +11,12 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev$
-  $Author$
+  $Rev:$
+  $Author:$
  *---------------------------------------------------------------------------*/
 
-#ifndef PROCESS_ETICKET_H_
-#define PROCESS_ETICKET_H_
+#ifndef PROCESS_FADE_H_
+#define PROCESS_FADE_H_
 
 #ifdef	__cplusplus
 extern "C" {
@@ -24,23 +24,27 @@ extern "C" {
 
 /*===========================================================================*/
 
-#include <nitro.h>
+#include <twl.h>
 
 /*---------------------------------------------------------------------------*
-    定数定義
+    型定義
  *---------------------------------------------------------------------------*/
-#define E_TICKET_FILE_PATH_IN_ROM    "rom:/data/cert.sys"
-#define E_TICKET_FILE_PATH_IN_NAND   "nand:sys/cert.sys"
+typedef void*  (*Process)(void);
+
+/*---------------------------------------------------------------------------*
+    マクロ定義
+ *---------------------------------------------------------------------------*/
+
+#define FADE_IN_RETURN(P)  SetNextProcess(P);return fadeInProcess;
+#define FADE_OUT_RETURN(P) SetNextProcess(P);return fadeOutProcess;
 
 /*---------------------------------------------------------------------------*
     関数定義
  *---------------------------------------------------------------------------*/
 
-void* eTicketProcess0(void);
-void* eTicketProcess1(void);
-void* eTicketProcess2(void);
-void* eTicketProcess3(void);
-void* eTicketProcess4(void);
+void* fadeInProcess(void);
+void* fadeOutProcess(void);
+void SetNextProcess(Process process);
 
 /*===========================================================================*/
 
@@ -48,7 +52,7 @@ void* eTicketProcess4(void);
 }          /* extern "C" */
 #endif
 
-#endif /* PROCESS_ETICKET_H_ */
+#endif /* PROCESS_FADE_H_ */
 
 /*---------------------------------------------------------------------------*
   End of file

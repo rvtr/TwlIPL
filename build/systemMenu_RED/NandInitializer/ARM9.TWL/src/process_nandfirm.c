@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
@@ -26,6 +26,7 @@
 #include "process_nandfirm.h"
 #include "process_import.h"
 #include "process_auto.h"
+#include "process_fade.h"
 #include "cursor.h"
 #include "keypad.h"
 
@@ -176,7 +177,10 @@ void* NandfirmProcess0(void)
 	// 最後にリターンを追加
 	kamiFontPrintf((s16)3,  (s16)(5+CHAR_OF_MENU_SPACE*sFileNum), FONT_COLOR_BLACK, "l   RETURN           l    l");
 
-	return NandfirmProcess1;
+	// カーソル消去
+	SetCursorPos((u16)200, (u16)200);
+
+	FADE_IN_RETURN( NandfirmProcess1 );
 }
 
 /*---------------------------------------------------------------------------*
@@ -219,7 +223,7 @@ void* NandfirmProcess1(void)
 	// トップメニューへ戻る
     else if (kamiPadIsTrigger(PAD_BUTTON_B))
 	{
-		return TopmenuProcess0;
+		FADE_OUT_RETURN( TopmenuProcess0 );
 	}
 
 	return NandfirmProcess1;
@@ -245,8 +249,8 @@ void* NandfirmProcess2(void)
 	}
 	else
 	{
-		if (gAutoFlag)	{ return AutoProcess2; 		}
-		else 			{ return TopmenuProcess0;	}
+		if (gAutoFlag)	{ FADE_OUT_RETURN( AutoProcess2 ); 		}
+		else 			{ FADE_OUT_RETURN( TopmenuProcess0 );	}
 	}
 
 	// 今回の結果を表示
@@ -262,8 +266,8 @@ void* NandfirmProcess2(void)
 	// Auto用
 	if (gAutoFlag)
 	{
-		if (ret) return AutoProcess1;
-		else return AutoProcess2;
+		if (ret) { FADE_OUT_RETURN( AutoProcess1 ); }
+		else { FADE_OUT_RETURN( AutoProcess2 ); }
 	}
 
 	return NandfirmProcess1;

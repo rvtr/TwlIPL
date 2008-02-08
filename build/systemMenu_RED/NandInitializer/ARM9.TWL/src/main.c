@@ -11,31 +11,31 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
 #include <nitro/snd.h>
+#include <twl/fatfs.h>
+#include <nitro/card.h>
+#include <twl/nam.h>
 #include "kami_font.h"
 #include "process_format.h"
 #include "process_topmenu.h"
 #include "graphics.h"
 #include "keypad.h"
 #include "kami_pxi.h"
-#include <twl/fatfs.h>
-#include <nitro/card.h>
-#include <twl/nam.h>
-
+#include "sd_event.h"
+#include "process_fade.h"
 extern void HWInfoWriterInit( void );
-
-typedef void*  (*Process)(void);
 
 /*---------------------------------------------------------------------------*
     内部変数定義
  *---------------------------------------------------------------------------*/
 
 static Process sProcess;
+static FSEventHook  sSDHook;
 
 /*---------------------------------------------------------------------------*
     内部関数定義
@@ -84,8 +84,10 @@ TwlMain()
     (void)OS_EnableIrq();
     (void)GX_VBlankIntr(TRUE);
 
-    /* initialize file-system */
+    // initialize file-system
 	FS_Init(FS_DMA_NOT_USE);
+	// SDカードの挿抜イベント監視コールバック設定
+    FS_RegisterEventHook("sdmc", &sSDHook, SDEvents, NULL);
 
 	// SD起動などあらゆるマウント状態に対応する
 	FATFS_UnmountDrive("F:");

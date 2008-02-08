@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
@@ -24,8 +24,11 @@
 #include "process_topmenu.h"
 #include "process_format.h"
 #include "process_auto.h"
+#include "process_fade.h"
 #include "cursor.h"
 #include "keypad.h"
+
+#include <sysmenu/namut.h>
 
 /*---------------------------------------------------------------------------*
     型定義
@@ -35,10 +38,11 @@
     定数定義
  *---------------------------------------------------------------------------*/
 
-#define NUM_OF_MENU_SELECT    4
+#define NUM_OF_MENU_SELECT    5
 #define DOT_OF_MENU_SPACE    16
 #define CURSOR_ORIGIN_X      32
 #define CURSOR_ORIGIN_Y      56
+#define CHAR_OF_MENU_SPACE    2
 
 /*---------------------------------------------------------------------------*
     内部変数定義
@@ -81,14 +85,16 @@ void* FormatProcess0(void)
 
 	// メニュー一覧
 	kamiFontPrintf(3,  6, FONT_COLOR_BLACK, "+-------------------+-----+");
-	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "l   QUICK FORMAT    l     l");
+	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "l  FORMAT <Easy>    l     l");
 	kamiFontPrintf(3,  8, FONT_COLOR_BLACK, "+-------------------+-----+");
-	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "l   FULL FORMAT     l     l");
+	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "l  FORMAT <Normal>  l     l");
 	kamiFontPrintf(3, 10, FONT_COLOR_BLACK, "+-------------------+-----+");
-	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "l   CHECK DISK      l     l");
+	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "l  FORMAT <Fill ff> l     l");
 	kamiFontPrintf(3, 12, FONT_COLOR_BLACK, "+-------------------+-----+");
-	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "l   RETURN          l     l");
+	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "l  CHECK DISK       l     l");
 	kamiFontPrintf(3, 14, FONT_COLOR_BLACK, "+-------------------+-----+");
+	kamiFontPrintf(3, 15, FONT_COLOR_BLACK, "l  RETURN           l     l");
+	kamiFontPrintf(3, 16, FONT_COLOR_BLACK, "+-------------------+-----+");
 
 	// 背景全クリア
 	for (i=0;i<24;i++)
@@ -101,7 +107,10 @@ void* FormatProcess0(void)
 	kamiFontFillChar( 1, BG_COLOR_BLUE, BG_COLOR_BLUE );
 	kamiFontFillChar( 2, BG_COLOR_BLUE, BG_COLOR_TRANS );
 
-	return FormatProcess1;
+	// カーソル除外
+	SetCursorPos((u16)200, (u16)200);
+
+	FADE_IN_RETURN( FormatProcess1 );
 }
 
 /*---------------------------------------------------------------------------*
@@ -119,7 +128,7 @@ void* FormatProcess1(void)
 	// オート実行用
 	if (gAutoFlag)
 	{
-		sMenuSelectNo = 0;
+		sMenuSelectNo = 1;
 		return FormatProcess2;
 	}
 
@@ -144,7 +153,7 @@ void* FormatProcess1(void)
 	// トップメニューへ戻る
     else if (kamiPadIsTrigger(PAD_BUTTON_B))
 	{
-		return TopmenuProcess0;
+		FADE_OUT_RETURN( TopmenuProcess0 );
 	}
 
 	return FormatProcess1;
@@ -164,24 +173,38 @@ void* FormatProcess2(void)
 {
 	if (sLock == FALSE)
 	{
+		s16 y_pos = (s16)(7 + sMenuSelectNo * CHAR_OF_MENU_SPACE);
+
 		switch( sMenuSelectNo )
 		{
 		case 0:
-			sLock = TRUE;
-			ExeFormatAsync(FORMAT_MODE_QUICK, FormatCallback);
-			kamiFontPrintf(24,  7, FONT_COLOR_BLACK, "     ");
-			return FormatProcess3;
+//			NAMUT_DrawNandTree();
+			if (NAMUT_Format())
+			{
+				kamiFontPrintf(24, y_pos, FONT_COLOR_GREEN, " OK  ");
+			}
+			else
+			{
+				kamiFontPrintf(24, y_pos, FONT_COLOR_RED, " NG  ");
+			}
+//			NAMUT_DrawNandTree();
+			return FormatProcess1;
 		case 1:
 			sLock = TRUE;
-			ExeFormatAsync(FORMAT_MODE_FULL, FormatCallback);
-			kamiFontPrintf(24,  9, FONT_COLOR_BLACK, "     ");
+			ExeFormatAsync(FORMAT_MODE_QUICK, FormatCallback);
+			kamiFontPrintf(24,  y_pos, FONT_COLOR_BLACK, "     ");
 			return FormatProcess3;
 		case 2:
+			sLock = TRUE;
+			ExeFormatAsync(FORMAT_MODE_FULL, FormatCallback);
+			kamiFontPrintf(24,  y_pos, FONT_COLOR_BLACK, "     ");
+			return FormatProcess3;
+		case 3:
 			{
 				FATFSDiskInfo info;
 				BOOL result = FALSE;
 
-				kamiFontPrintf(24,  11, FONT_COLOR_BLACK, "     ");
+				kamiFontPrintf(24,  y_pos, FONT_COLOR_BLACK, "     ");
 				kamiFontLoadScreenData();
 
 				FATFS_UnmountDrive("F:");
@@ -208,13 +231,13 @@ void* FormatProcess2(void)
 				FATFS_UnmountDrive("G:");
 				FATFS_MountDrive("G", FATFS_MEDIA_TYPE_SD, 0);
 
-				if (result == TRUE) { kamiFontPrintf(24,  11, FONT_COLOR_GREEN, " OK  "); }
-				else                { kamiFontPrintf(24,  11, FONT_COLOR_RED,   " NG  "); }
+				if (result == TRUE) { kamiFontPrintf(24,  y_pos, FONT_COLOR_GREEN, " OK  "); }
+				else                { kamiFontPrintf(24,  y_pos, FONT_COLOR_RED,   " NG  "); }
 
 				return FormatProcess1;
 			}
-		case 3:
-			return TopmenuProcess0;
+		case 4:
+			FADE_OUT_RETURN( TopmenuProcess0 );
 		}
 	}
 
@@ -223,10 +246,7 @@ void* FormatProcess2(void)
 
 static void FormatCallback(KAMIResult result, void* /*arg*/)
 {
-	s16 y_pos;
-
-	if ( sMenuSelectNo == 0 ) y_pos = 7;
-	else y_pos = 9;
+	s16 y_pos = (s16)(7 + sMenuSelectNo * CHAR_OF_MENU_SPACE);
 
 	if ( result == KAMI_RESULT_SUCCESS_TRUE )
 	{
@@ -266,8 +286,8 @@ void* FormatProcess3(void)
 		// Auto用
 		if (gAutoFlag)
 		{
-			if (sFormatResult == TRUE) return AutoProcess1;
-			else return AutoProcess2;
+			if (sFormatResult == TRUE) { FADE_OUT_RETURN( AutoProcess1 ); }
+			else { FADE_OUT_RETURN( AutoProcess2 ); }
 		}
 
 		return FormatProcess1;
@@ -287,8 +307,3 @@ void* FormatProcess3(void)
 
 	return FormatProcess3;
 }
-
-/*---------------------------------------------------------------------------*
-    処理関数定義
- *---------------------------------------------------------------------------*/
-
