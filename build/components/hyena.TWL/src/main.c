@@ -36,7 +36,7 @@
 #include    <twl/mcu.h>
 #include    <twl/hw/common/mmap_wramEnv.h>
 #include    <sysmenu.h>
-#include    <firm/hw/ARM7/mmap_firm.h>
+#include    <firm/memorymap.h>
 #include    "nvram_sp.h"
 #include    "pm_pmic.h"
 #include    "internal_api.h"
