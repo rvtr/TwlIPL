@@ -36,6 +36,7 @@
 #include    <twl/mcu.h>
 #include    <twl/hw/common/mmap_wramEnv.h>
 #include    <sysmenu.h>
+#include    <firm/hw/ARM7/mmap_firm.h>
 #include    "nvram_sp.h"
 #include    "pm_pmic.h"
 #include    "internal_api.h"
@@ -120,8 +121,8 @@ TwlSpMain(void)
     OS_InitTick();
     PrintDebugInfo();
 
-	// PXIコールバックの設定
-//	PXI_SetFifoRecvCallback( SYSMENU_PXI_FIFO_TAG, SYSMi_PXIFifoRecvCallback );
+    // PXIコールバックの設定
+//  PXI_SetFifoRecvCallback( SYSMENU_PXI_FIFO_TAG, SYSMi_PXIFifoRecvCallback );
 
     // ランチャーパラメター取得（Cold/Hotスタート判定含む）
     ReadLauncherParameter();
@@ -199,17 +200,17 @@ TwlSpMain(void)
     BOOT_Init();
 
     // 活栓挿抜機能初期化
-	if( ( SYSM_GetLauncherParamBody()->v1.flags.isValid ) &&
-		( SYSM_GetLauncherParamBody()->v1.flags.bootType != LAUNCHER_BOOTTYPE_ROM ) &&
-		( SYSM_GetLauncherParamBody()->v1.bootTitleID )
-		) {
-		// ランチャーパラメータでダイレクトカードブート以外の指定がある時は、活線挿抜をOFFにする。
-		SYSMi_GetWork()->flags.common.isEnableHotSW = 0;
-	}else {
-		// それ以外の時は活線挿抜ON
-		SYSMi_GetWork()->flags.common.isEnableHotSW = 1;
-	}
-	
+    if( ( SYSM_GetLauncherParamBody()->v1.flags.isValid ) &&
+        ( SYSM_GetLauncherParamBody()->v1.flags.bootType != LAUNCHER_BOOTTYPE_ROM ) &&
+        ( SYSM_GetLauncherParamBody()->v1.bootTitleID )
+        ) {
+        // ランチャーパラメータでダイレクトカードブート以外の指定がある時は、活線挿抜をOFFにする。
+        SYSMi_GetWork()->flags.common.isEnableHotSW = 0;
+    }else {
+        // それ以外の時は活線挿抜ON
+        SYSMi_GetWork()->flags.common.isEnableHotSW = 1;
+    }
+
     HOTSW_Init();
 
     while (TRUE)
