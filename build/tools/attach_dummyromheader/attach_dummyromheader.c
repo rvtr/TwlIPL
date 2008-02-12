@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
   strncpy((void *)&rom_header.s.game_code, g_code ,GAME_CODE_MAX);   // Game code
 
   rom_header.s.maker_code[0] = 0;    // Maker code
-  rom_header.s.maker_code[1] = 0;    // Maker code
+  rom_header.s.maker_code[1] = 3;    // Maker code
   rom_header.s.platform_code = 0x03; /* Platform code bit0: not support NTR,  bit1: support TWL
 				     ( NTR_only=0x00, NTR/TWL=0x03, TWL_only=0x02 ) */
 
@@ -153,6 +153,7 @@ int main(int argc, char *argv[])
 
   rom_header.s.titleID_Hi =  ( 3 /* Nintendo */ << 16) | 4 | (isLaunch? 2:0) | (isSystem? 1:0);
 
+  printf("titleID = 0x%08X%08x\n", (unsigned int)rom_header.s.titleID_Hi, (unsigned int)*((u32 *)&(rom_header.s.titleID_Lo[0])));
 
   // 0x02f0 - 0x0300 Parental Controls Rating Info
   // u8		ParentalControlsRatingInfo[ 0x10 ];
