@@ -223,7 +223,7 @@ static void BOOTi_ClearREG_RAM( void )
 {
 	if( SYSMi_GetWork()->flags.common.isCardBoot ) {
 #ifdef DEBUG_USED_CARD_SLOT_B_
-		reg_MI_MC_SWP = 0x80;											// カードスロットのスワップ
+		reg_MI_MC_SWP ^= 0x80;											// カードスロットのスワップ
 #endif
 		*(u32 *)HW_BOOT_CHECK_INFO_BUF = SYSMi_GetWork()->nCardID;		// カード抜けチェックバッファにカードIDをセット
 	}
