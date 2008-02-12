@@ -16,6 +16,8 @@
 # $Author$
 #----------------------------------------------------------------------------
 
+TARGET_FIRM = SYSTEMMENU
+
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 
