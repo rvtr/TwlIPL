@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 // Nand Application Management UTility ライブラリ、略してNAMUTライブラリです。
@@ -156,14 +156,14 @@ static BOOL NAMUTi_DeleteNandDirectory(const char *path)
 	// 引数で指定されたディレクトリを開く
 	if (!FS_OpenDirectory(&dir, path, FS_FILEMODE_R))
 	{
-		SDK_ASSERTMSG(0, "Fail! FS_OpenDirectory(%s) in %s\n", path, __FUNC__);
+		SDK_ASSERTMSG(0, "Fail! FS_OpenDirectory(%s) in %s\n", path, __func__);
 		return FALSE;
 	}
 
 	// カレントディレクトリを設定する
 	if (!FS_SetCurrentDirectory(path))
 	{
-		SDK_ASSERTMSG(0, "Fail! FS_SetCurrentDirectory(%s) in %s\n", path, __FUNC__);
+		SDK_ASSERTMSG(0, "Fail! FS_SetCurrentDirectory(%s) in %s\n", path, __func__);
 		FS_CloseDirectory(&dir);
 		return FALSE;
 	}
@@ -181,19 +181,19 @@ static BOOL NAMUTi_DeleteNandDirectory(const char *path)
 		if (entryInfo.attributes & FS_ATTRIBUTE_IS_DIRECTORY)
 		{
 			ret &= FS_DeleteDirectoryAuto(entryInfo.longname);
-			SDK_ASSERTMSG(ret, "Fail! FS_DeleteDirectoryAuto(%s) in %s\n", entryInfo.longname, __FUNC__);
+			SDK_ASSERTMSG(ret, "Fail! FS_DeleteDirectoryAuto(%s) in %s\n", entryInfo.longname, __func__);
 		}
 		// ファイル
 		else
 		{
 			ret &= FS_DeleteFileAuto(entryInfo.longname);
-			SDK_ASSERTMSG(ret, "Fail! FS_DeleteFileAuto(%s) in %s\n", entryInfo.longname, __FUNC__);
+			SDK_ASSERTMSG(ret, "Fail! FS_DeleteFileAuto(%s) in %s\n", entryInfo.longname, __func__);
 		}
 	}
 
 	// カレントディレクトリを元に戻します
 	ret &= FS_SetCurrentDirectory("..");
-	SDK_ASSERTMSG(ret, "Fail! FS_SetCurrentDirectory(..) in %s\n", __FUNC__);
+	SDK_ASSERTMSG(ret, "Fail! FS_SetCurrentDirectory(..) in %s\n", __func__);
 
 	// ディレクトリを閉じる
 	FS_CloseDirectory(&dir);
@@ -241,14 +241,14 @@ static BOOL NAMUTi_DeleteNonprotectedTitleEntity(const char* path)
 	// 引数で指定されたディレクトリを開く
 	if (!FS_OpenDirectory(&dir, path, FS_FILEMODE_R))
 	{
-		SDK_ASSERTMSG(0, "Fail! FS_OpenDirectory(%s) in %s\n", path, __FUNC__);
+		SDK_ASSERTMSG(0, "Fail! FS_OpenDirectory(%s) in %s\n", path, __func__);
 		return FALSE;
 	}
 
 	// カレントディレクトリを設定する
 	if (!FS_SetCurrentDirectory(path))
 	{
-		SDK_ASSERTMSG(0, "Fail! FS_SetCurrentDirectory(%s) in %s\n", path, __FUNC__);
+		SDK_ASSERTMSG(0, "Fail! FS_SetCurrentDirectory(%s) in %s\n", path, __func__);
 		FS_CloseDirectory(&dir);
 		return FALSE;
 	}
@@ -271,18 +271,18 @@ static BOOL NAMUTi_DeleteNonprotectedTitleEntity(const char* path)
 			if (!(titlePropety & PROTECT_TITLE_PROPERTY))
 			{
 				ret &= FS_DeleteDirectoryAuto(entryInfo.longname);
-				SDK_ASSERTMSG(ret, "Fail! FS_DeleteDirectoryAuto(%s) in %s\n", entryInfo.longname, __FUNC__);
+				SDK_ASSERTMSG(ret, "Fail! FS_DeleteDirectoryAuto(%s) in %s\n", entryInfo.longname, __func__);
 			}
 		}
 	}
 
 	// カレントディレクトリを元に戻します
 	ret &= FS_SetCurrentDirectory("..");
-	SDK_ASSERTMSG(ret, "Fail! FS_SetCurrentDirectory(..) in %s\n", __FUNC__);
+	SDK_ASSERTMSG(ret, "Fail! FS_SetCurrentDirectory(..) in %s\n", __func__);
 
 	// ディレクトリを閉じる
 	ret &= FS_CloseDirectory(&dir);
-	SDK_ASSERTMSG(ret, "Fail! FS_CloseDirectory() in %s\n", __FUNC__);
+	SDK_ASSERTMSG(ret, "Fail! FS_CloseDirectory() in %s\n", __func__);
 
 	return ret;
 }
