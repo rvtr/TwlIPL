@@ -22,6 +22,8 @@
 #include	<romEmulation.h>
 #include	<customNDma.h>
 
+//#define HOTSW_FORCE_CARD_B
+
 // define -------------------------------------------------------------------
 #define 	UNDEF_CODE							0xe7ffdeff	// 未定義コード
 #define 	ENCRYPT_DEF_SIZE					0x800		// 2KB  ※ ARM9常駐モジュール先頭2KB
@@ -79,7 +81,11 @@ typedef struct CardThreadData{
 CardThreadData;
 
 // Function prototype -------------------------------------------------------
+static BOOL IsSwap(void);
 static BOOL IsCardExist(void);
+static u32 GetMcSlotShift(void);
+static void SetMcSlotMode(u32 mode);
+static BOOL CmpMcSlotMode(u32 mode);
 
 static void SetInterruptCallback( OSIrqMask intr_bit, OSIrqFunction func );
 static void SetInterruptCallbackEx( OSIrqMask intr_bit, void *func );
@@ -190,7 +196,8 @@ void HOTSW_Init(void)
 
 #ifdef SDK_ARM7
 	// チャッタリングカウンタの値を設定
-	reg_MI_MC1 = (u32)((reg_MI_MC1 & 0xfff) | 0x1000000);
+    reg_MI_MC1 = (u32)((reg_MI_MC1 & ~REG_MI_MC1_CC_MASK) |
+                            (0x100 << REG_MI_MC1_CC_SHIFT));
 
 	// Counter-Aの値を設定
     reg_MI_MC2 = 0x100;
@@ -265,9 +272,11 @@ BOOL HOTSW_LoadCardData(void)
     start = OS_GetTick();
 
     // スロットがスワップされてたら元に戻す。
+#ifdef HOTSW_FORCE_CARD_B
     if(reg_MI_MC1 & 0x8000){
 		reg_MI_MC1 = reg_MI_MC1 & 0xff;
     }
+#endif //  HOTSW_FORCE_CARD_B
     
 //	OS_TPrintf("---------------- Card Boot Start ---------------\n");
 #ifdef SDK_ARM7
@@ -782,6 +791,23 @@ static void DecryptObjectFile(void)
 }
 
 /* -----------------------------------------------------------------
+ * IsSwap関数
+ *
+ * カードのスワップ判定
+ *
+ * ※SCFG_MC1のSWPフラグを見ている
+ * ----------------------------------------------------------------- */
+static BOOL IsSwap(void)
+{
+    if( reg_MI_MC1 & REG_MI_MC1_SWP_MASK ){
+        return TRUE;
+    }
+    else{
+        return FALSE;
+    }
+}
+
+/* -----------------------------------------------------------------
  * IsCardExist関数
  *
  * カードの存在判定
@@ -790,7 +816,48 @@ static void DecryptObjectFile(void)
  * ----------------------------------------------------------------- */
 static BOOL IsCardExist(void)
 {
-    if(!(reg_MI_MC1 & SLOT_STATUS_CDET_MSK)){
+    u32 mask = (u32)(REG_MI_MC_SL2_CDET_MASK >> GetMcSlotShift());
+
+    if( !(reg_MI_MC1 & mask) ){
+        return TRUE;
+    }
+    else{
+        return FALSE;
+    }
+}
+
+/* -----------------------------------------------------------------
+ * GetMcSlotShift関数
+ *
+ * カードスロットのシフトビット数の取得
+ * ----------------------------------------------------------------- */
+static u32 GetMcSlotShift(void)
+{
+    return (u32)(IsSwap() * REG_MI_MC_SL2_CDET_SHIFT);
+}
+
+/* -----------------------------------------------------------------
+ * SetMcSlotMode関数
+ *
+ * カードスロットのモード設定
+ * ----------------------------------------------------------------- */
+static void SetMcSlotMode(u32 mode)
+{
+    u32 mask = (u32)(REG_MI_MC_SL2_MODE_MASK >> GetMcSlotShift());
+
+    reg_MI_MC1 = (u32)((reg_MI_MC1 & ~mask) | (mode >> GetMcSlotShift()));
+}
+
+/* -----------------------------------------------------------------
+ * CmpMcSlotMode関数
+ *
+ * カードスロットのモード比較
+ * ----------------------------------------------------------------- */
+static BOOL CmpMcSlotMode(u32 mode)
+{
+    u32 mask = (u32)(REG_MI_MC_SL2_MODE_MASK >> GetMcSlotShift());
+
+    if((reg_MI_MC1 & mask) == (mode >> GetMcSlotShift())){
 		return TRUE;
     }
     else{
@@ -805,22 +872,22 @@ static BOOL IsCardExist(void)
  *---------------------------------------------------------------------------*/
 static void McPowerOn(void)
 {
-    if((reg_MI_MC1 & SLOT_STATUS_MODE_SELECT_MSK) == SLOT_STATUS_MODE_00){
+    if(CmpMcSlotMode(SLOT_STATUS_MODE_00) == TRUE){
     	// SCFG_MC1 の Slot Status の M1,M0 を 01 にする
-    	reg_MI_MC1  = (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | SLOT_STATUS_MODE_01);
+    	SetMcSlotMode(SLOT_STATUS_MODE_01);
 		// 1ms待ち
 		OS_Sleep(1);
 
     	// SCFG_MC1 の Slot Status の M1,M0 を 10 にする
-		reg_MI_MC1 	= (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | SLOT_STATUS_MODE_10);
+    	SetMcSlotMode(SLOT_STATUS_MODE_10);
 		// 1ms待ち
 		OS_Sleep(1);
 
 		// リセットをhighに (RESB = 1にする)
 		reg_HOTSW_MCCNT1 = RESB_MASK;
     
-		// 27ms待ち
-		OS_Sleep(27);
+		// 100ms待ち
+		OS_Sleep(100);
     }
 }
 
@@ -831,12 +898,12 @@ static void McPowerOn(void)
  *---------------------------------------------------------------------------*/
 static void McPowerOff(void)
 {
-    if((reg_MI_MC1 & SLOT_STATUS_MODE_SELECT_MSK) == SLOT_STATUS_MODE_10){
+    if(CmpMcSlotMode(SLOT_STATUS_MODE_10) == TRUE){
     	// SCFG_MC1 の Slot Status の M1,M0 を 11 にする
-    	reg_MI_MC1  = (u32)((reg_MI_MC1 & (~SLOT_STATUS_MODE_SELECT_MSK)) | SLOT_STATUS_MODE_11);
+    	SetMcSlotMode(SLOT_STATUS_MODE_11);
 
         // SCFG_MC1 の Slot Status の M1,M0 が 00 になるまでポーリング
-        while((reg_MI_MC1 & SLOT_STATUS_MODE_SELECT_MSK) != SLOT_STATUS_MODE_00){}
+        while(CmpMcSlotMode(SLOT_STATUS_MODE_00) == FALSE){}
 
 		// 100ms待ち [TODO:]待ち時間は暫定値。金子さんに数値を測定してもらう。
 		OS_Sleep(100);
