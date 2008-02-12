@@ -92,10 +92,7 @@ void BOOT_Ready( void )
         reg_GX_VRAMCNT_D    = pWRAMREGS->main_vrambnk_d;
         reg_GX_VRAMCNT_WRAM = pWRAMREGS->main_wrambnk_01;
     }
-	
-	// ROMヘッダバッファをコピー
-	MI_CpuCopy32( (void *)HW_TWL_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
-	
+
     // SDK共通リブート
 	{
 	    // メモリリストの設定
@@ -148,7 +145,11 @@ void BOOT_Ready( void )
             OS_Terminate();
         }
 #endif // FIRM_USE_SDK_KEYS || SYSMENU_DISABLE_RETAIL_BOOT
-		
+
+        // デバッガによるROMエミュレーション時はNTR-ROMヘッダバッファの
+        // ゲームコマンドパラメータをスクランブルOFF設定に書き換える
+        dh->s.game_cmd_param = SYSMi_GetWork()->gameCommondParam;
+
 		// 起動するターゲットの種類を指定する必要あり
 		OS_Boot( dh->s.main_entry_address, mem_list, target );
 	}

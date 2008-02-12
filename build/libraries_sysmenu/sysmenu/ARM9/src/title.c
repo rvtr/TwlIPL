@@ -22,7 +22,6 @@
 
 // define data-----------------------------------------------------------------
 #define CARD_BANNER_INDEX			( LAUNCHER_TITLE_LIST_NUM - 1 )
-#define GAME_COMMAND_PARAM_INDEX	0x60
 
 // extern data-----------------------------------------------------------------
 // function's prototype-------------------------------------------------------
@@ -84,10 +83,6 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 			(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );					// ARM7と排他制御する
 			OS_ReleaseLockID( id );
 
-		    // NTR-ROMヘッダバッファのゲームコマンドパラメータを上書きする
-            // [TODO:] この位置で問題ないか要確認
-    		*(vu32 *)(HW_ROM_HEADER_BUF + GAME_COMMAND_PARAM_INDEX) = SYSMi_GetWork()->gameCommondParam;
-            
 			pTitleList_Card->flags.isValid = TRUE;
 			pTitleList_Card->flags.isAppLoadCompleted = TRUE;
 			pTitleList_Card->flags.isAppRelocate = TRUE;

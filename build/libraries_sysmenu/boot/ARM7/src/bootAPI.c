@@ -211,7 +211,7 @@ BOOL BOOT_WaitStart( void )
                 OS_Terminate();
             }
 #endif // FIRM_USE_SDK_KEYS || SYSMENU_DISABLE_RETAIL_BOOT
-			
+
 			// ƒŠƒu[ƒg
 			OS_Boot( dh->s.sub_entry_address, mem_list, target );
 		}
