@@ -47,7 +47,7 @@ MISC_DIR				=	../../misc
 BG_DIR					=	../../data
 
 SRCS_LOGO				=	logoDemo.c logoData.c
-SRCS					=	main.c launcher.c sound.c bannerCounter.c \
+SRCS					=	main.c launcher.c sound.c bannerCounter.c loadWlanFirm.c \
 							$(addprefix $(LOGO_DIR)/, $(SRCS_LOGO)) \
 							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c \
 							$(BG_DIR)/BGData_Launcher.c

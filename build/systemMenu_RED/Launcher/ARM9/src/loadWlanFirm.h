@@ -1,0 +1,2 @@
+
+BOOL WirelessFirmwareDownloadStart(void);

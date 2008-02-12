@@ -24,6 +24,11 @@
 // extern data-----------------------------------------------------------------
 
 // define data-----------------------------------------------------------------
+#define WIRELESS_FIRM_LOADING 1
+
+#if( WIRELESS_FIRM_LOADING == 1 )
+#include "loadWlanFirm.h"
+#endif
 
 // function's prototype-------------------------------------------------------
 static void INTR_VBlank( void );
@@ -117,6 +122,8 @@ void TwlMain( void )
     // システムの初期化----------------
     InitAllocator();                                            // ※SYSM_Init以外のSYSMライブラリ関数を呼ぶ前に
                                                                 //   Alloc, Freeで登録したメモリアロケータを初期化してください。
+
+
     // 各種パラメータの取得------------
     pBootTitle = SYSM_ReadParameters();                         // 本体設定データ、リセットパラメータ、
                                                                 // 初回起動シーケンス判定、
@@ -176,6 +183,15 @@ void TwlMain( void )
                     strmThreadStack + THREAD_STACK_SIZE / sizeof(u64),
                     THREAD_STACK_SIZE, STREAM_THREAD_PRIO);
     OS_WakeupThreadDirect(&strmThread);
+
+
+    // 無線ファームウェアを無線モジュールにダウンロードする。
+#if( WIRELESS_FIRM_LOADING == 1 )
+    if( FALSE == WirelessFirmwareDownloadStart() ) {
+      OS_TPrintf( "ERROR: Wireless firmware download failed!\n" );
+    }
+#endif
+
 
     // メインループ--------------------
     while( 1 ) {
