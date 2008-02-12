@@ -43,7 +43,7 @@ static void nwmcallback(void* arg)
     case NWM_APIID_UNLOAD_DEVICE:
 	OS_TPrintf("Wlan firm:Unload Device success!\n");
       break;
-    defalut:
+    default:
 	OS_TPrintf("Wlan firm:Error(apiid=default)!\n");
       break;
     }
