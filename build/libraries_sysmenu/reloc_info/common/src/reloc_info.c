@@ -15,7 +15,7 @@
   $Author$
  *---------------------------------------------------------------------------*/
 
-#include <sysmenu/sysmenu_lib/common/sysmenu_work.h>
+#include <sysmenu/sysmenu_lib.h>
 
 // const data------------------------------------------------------------------
 

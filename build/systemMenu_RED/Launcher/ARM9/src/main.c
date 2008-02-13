@@ -242,25 +242,32 @@ void TwlMain( void )
 
             break;
         case LOADING:
-            if( ( direct_boot || ( !direct_boot && LauncherFadeout( s_titleList ) ) ) &&
-                SYSM_IsLoadTitleFinished( pBootTitle ) ) {
+            if( SYSM_IsLoadTitleFinished() ) {
+				SYSM_StartAuthenticateTitle( pBootTitle );
                 state = AUTHENTICATE;
             }
-
+			if( !direct_boot )
+			{
+				(void)LauncherFadeout( s_titleList ); // ダイレクトブートでないときはフェードアウトも行う
+			}
             if( ( end == 0 ) &&
-                SYSM_IsLoadTitleFinished( pBootTitle ) ) {
+                SYSM_IsLoadTitleFinished() ) {
                 end = OS_GetTick();
                 OS_TPrintf( "Load Time : %dms\n", OS_TicksToMilliSeconds( end - start ) );
             }
             break;
         case AUTHENTICATE:
-            switch ( SYSM_AuthenticateTitle( pBootTitle ) ) {   // アプリ認証＆ブート   成功時：never return
-            case AUTH_RESULT_TITLE_LOAD_FAILED:
-            case AUTH_RESULT_TITLE_POINTER_ERROR:
-            case AUTH_RESULT_AUTHENTICATE_FAILED:
-            case AUTH_RESULT_ENTRY_ADDRESS_ERROR:
-                state = STOP;
-                break;
+            if( ( direct_boot || ( !direct_boot && LauncherFadeout( s_titleList ) ) ) &&
+                SYSM_IsAuthenticateTitleFinished() )
+            {
+	            switch ( SYSM_TryToBootTitle( pBootTitle ) ) {   // アプリ認証結果取得orブート   成功時：never return
+	            case AUTH_RESULT_TITLE_LOAD_FAILED:
+	            case AUTH_RESULT_TITLE_POINTER_ERROR:
+	            case AUTH_RESULT_AUTHENTICATE_FAILED:
+	            case AUTH_RESULT_ENTRY_ADDRESS_ERROR:
+	                state = STOP;
+	                break;
+	            }
             }
             break;
         case STOP:                                              // 停止

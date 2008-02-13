@@ -47,7 +47,9 @@ static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle );
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
 static OSThread			s_thread;
+static OSThread			s_auth_thread;
 static TWLBannerFile	s_bannerBuf[ LAUNCHER_TITLE_LIST_NUM ] ATTRIBUTE_ALIGN(32);
+static AuthResult		s_authResult = AUTH_RESULT_PROCESSING;	// ROM検証結果
 
 // const data------------------------------------------------------------------
 static const OSBootType s_launcherToOSBootType[ LAUNCHER_BOOTTYPE_MAX ] = {
@@ -516,6 +518,8 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 	
 	SYSMi_EnableHotSW( FALSE );
 	
+	// 一応、アプリロード開始前に検証結果をPROCESSINGにセット
+	s_authResult = AUTH_RESULT_PROCESSING;
 	// アプリ未ロード状態なら、ロード開始
 	if( !pBootTitle->flags.isAppLoadCompleted ) {
 		SYSMi_GetWork()->flags.common.isLoadSucceeded = FALSE;
@@ -599,15 +603,15 @@ static void SYSMi_Relocate( void )
 	}
 }
 
-
 // アプリロード済み？
-BOOL SYSM_IsLoadTitleFinished( TitleProperty *pBootTitle )
+BOOL SYSM_IsLoadTitleFinished( void )
 {
-	if( pBootTitle->flags.isAppLoadCompleted ) {
+	if( SYSMi_GetWork()->flags.common.isLoadSucceeded ) {
 		return TRUE;
 	}
 	return OS_IsThreadTerminated( &s_thread );
 }
+
 
 static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 {
@@ -707,28 +711,29 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 	return AUTH_RESULT_SUCCEEDED;
 }
 
-// ロード済みの指定タイトルの認証とブートを行う
-AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
+static void SYSMi_AuthenticateTitleThreadFunc( TitleProperty *pBootTitle )
 {
-	AuthResult res;
-	
 	// ロード中
-	if( !SYSM_IsLoadTitleFinished( pBootTitle ) ) {
-		return AUTH_RESULT_PROCESSING;
+	if( !SYSM_IsLoadTitleFinished() ) {
+		s_authResult = AUTH_RESULT_PROCESSING;
+		return;
 	}
 	// ロード成功？
 	if( SYSMi_GetWork()->flags.common.isLoadSucceeded == FALSE )
 	{
-		return AUTH_RESULT_TITLE_LOAD_FAILED;
+		s_authResult = AUTH_RESULT_TITLE_LOAD_FAILED;
+		return;
 	}
 	// パラメータチェック
 	if( !SYSMi_CheckTitlePointer( pBootTitle ) ) {
-		return AUTH_RESULT_TITLE_POINTER_ERROR;
+		s_authResult = AUTH_RESULT_TITLE_POINTER_ERROR;
+		return;
 	}
 #if 0
 	// エントリアドレスの正当性をチェック
 	if( !SYSMi_CheckEntryAddress() ) {
-		return AUTH_RESULT_ENTRY_ADDRESS_ERROR;
+		s_authResult = AUTH_RESULT_ENTRY_ADDRESS_ERROR;
+		return;
 	}
 #endif
 	
@@ -738,14 +743,41 @@ AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 		( ( (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->platform_code ) == 0 ) &&
 		( ( (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->fat_size ) > 0 )
 		) {
-		return AUTH_RESULT_TITLE_BOOTTYPE_ERROR;
+		s_authResult = AUTH_RESULT_TITLE_BOOTTYPE_ERROR;
+		return;
 	}
 	
 	// ※ROMヘッダ認証
-	res = SYSMi_AuthenticateTWLHeader( pBootTitle );
-	if( res != AUTH_RESULT_SUCCEEDED )
+	s_authResult = SYSMi_AuthenticateTWLHeader( pBootTitle );
+}
+
+
+// ロード済みの指定タイトルを別スレッドで検証開始する
+void SYSM_StartAuthenticateTitle( TitleProperty *pBootTitle )
+{
+	static u64 stack[ STACK_SIZE / sizeof(u64) ];
+	s_authResult = AUTH_RESULT_PROCESSING;
+	OS_InitThread();
+	OS_CreateThread( &s_auth_thread, (void (*)(void *))SYSMi_AuthenticateTitleThreadFunc, (void*)pBootTitle, stack+STACK_SIZE/sizeof(u64), STACK_SIZE,THREAD_PRIO );
+	OS_WakeupThreadDirect( &s_auth_thread );
+}
+
+// 検証済み？
+BOOL SYSM_IsAuthenticateTitleFinished( void )
+{
+	if(s_authResult == AUTH_RESULT_SUCCEEDED)
 	{
-		return res;
+		return TRUE;
+	}
+	return OS_IsThreadTerminated( &s_auth_thread );
+}
+
+// ロード済みの指定タイトルの認証とブートを行う
+AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle )
+{
+	if(s_authResult != AUTH_RESULT_SUCCEEDED)
+	{
+		return s_authResult;
 	}
 	
 	// マウント情報の登録

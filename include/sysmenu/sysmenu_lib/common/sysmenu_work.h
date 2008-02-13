@@ -82,7 +82,7 @@ typedef struct ISD_RomEmuInfo {
 //----------------------------------------------------------------------
 // SYSM共有ワーク構造体
 typedef struct SYSM_work {
-	Relocate_Info	romRelocateInfo[RELOCATE_INFO_NUM];	// ROM再配置情報（arm9,arm7それぞれltdとflxで最大4つ）
+	Relocate_Info		romRelocateInfo[RELOCATE_INFO_NUM];	// ROM再配置情報（arm9,arm7それぞれltdとflxで最大4つ）
 	struct {
 		struct {
 			vu32		isFatalError :1;				// FATALエラー
