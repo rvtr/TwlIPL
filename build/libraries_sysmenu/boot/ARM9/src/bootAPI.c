@@ -96,6 +96,7 @@ void BOOT_Ready( void )
     // SDK共通リブート
 	{
 	    // メモリリストの設定
+		// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域(ITCMにある)を消さないように注意
 	    static u32 mem_list[] =
 	    {
             // pre clear
@@ -110,7 +111,7 @@ void BOOT_Ready( void )
 	        NULL,
 	    };
 	    
-	    // [TODO]再配置リストの作成と設定（ほぼARM7側でやるのでこちらは空）
+	    // 再配置リストの作成と設定（ほぼARM7側でやるのでこちらは空）
 	    static u32 relocate_list[] =
 	    {
 			NULL
