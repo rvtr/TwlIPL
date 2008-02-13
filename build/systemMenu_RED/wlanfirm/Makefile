@@ -19,9 +19,10 @@
 
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
-
+MY_FIRM_ROOT	=	$(TWLWIRELESS_ROOT)/binfile
+MY_FIRM_ROOT_CYG =	$(call eupath,$(MY_FIRM_ROOT))
 MY_TITLE		=	WFW0
-MY_FIRM			=	$(TWLWIRELESS_ROOT)/binfile/nwm_firm.bin
+MY_FIRM			=	$(MY_FIRM_ROOT_CYG)/nwm_firm.bin
 #----------------------------------------------------------------------------
 MY_SRL			=	$(MY_TITLE).srl
 MY_TAD			=	$(MY_TITLE).tad
@@ -39,7 +40,7 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 do-build : $(MY_TAD)
 
 $(MY_SRL): $(MY_FIRM)
-	$(ATTACH_HEADER_COMMAND) -s -l -i $< -c $(MY_TITLE) -o $@
+	$(ATTACH_HEADER_COMMAND) -s -l -i $(MY_FIRM_ROOT)/nwm_firm.bin -c $(MY_TITLE) -o $@
 
 $(MY_TAD): $(MY_SRL)
 	$(MAKETAD) -s $< $(MAKETAD_FLAGS) -o $@
