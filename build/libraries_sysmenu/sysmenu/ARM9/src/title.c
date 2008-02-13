@@ -18,12 +18,25 @@
 #include <twl.h>
 #include <sysmenu.h>
 #include <es.h>
+#include <firm/format/from_firm.h>
+#include <firm/hw/ARM9/mmap_firm.h>
 #include "internal_api.h"
 
 // define data-----------------------------------------------------------------
 #define CARD_BANNER_INDEX			( LAUNCHER_TITLE_LIST_NUM - 1 )
 
+#define SYSTEM_APP_KEY_OFFSET		1 // ファームから送られてくるキーのためのオフセット
+#define ROM_HEADER_HASH_OFFSET		(0x10) // 署名からROMヘッダハッシュを取り出すためのオフセット
+
+#define SIGN_HEAP_ADDR	0x023c0000	// 署名計算のためのヒープ領域開始アドレス
+#define SIGN_HEAP_SIZE	0x1000		// 署名計算のためのヒープサイズ
+
+#define	DIGEST_HASH_BLOCK_SIZE_SHA1					(512/8)
+#define ROM_HEADER_HASH_CALC_DATA_LEN	0xe00 // ROMヘッダのハッシュ計算する部分の長さ
+
 // extern data-----------------------------------------------------------------
+extern const u8 g_devPubKey[ 3 ][ 0x80 ];
+
 // function's prototype-------------------------------------------------------
 static BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, u8 *pDst );
 static s32  ReadFile( FSFile* pf, void* buffer, s32 size );
@@ -45,6 +58,47 @@ static const OSBootType s_launcherToOSBootType[ LAUNCHER_BOOTTYPE_MAX ] = {
     OS_BOOTTYPE_NAND,		// NAND
     OS_BOOTTYPE_MEMORY,		// MEMORY
 };
+
+static const u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = 
+{
+    0x21, 0x06, 0xc0, 0xde,
+    0xba, 0x98, 0xce, 0x3f,
+    0xa6, 0x92, 0xe3, 0x9d,
+    0x46, 0xf2, 0xed, 0x01,
+
+    0x76, 0xe3, 0xcc, 0x08,
+    0x56, 0x23, 0x63, 0xfa,
+    0xca, 0xd4, 0xec, 0xdf,
+    0x9a, 0x62, 0x78, 0x34,
+
+    0x8f, 0x6d, 0x63, 0x3c,
+    0xfe, 0x22, 0xca, 0x92,
+    0x20, 0x88, 0x97, 0x23,
+    0xd2, 0xcf, 0xae, 0xc2,
+
+    0x32, 0x67, 0x8d, 0xfe,
+    0xca, 0x83, 0x64, 0x98,
+    0xac, 0xfd, 0x3e, 0x37,
+    0x87, 0x46, 0x58, 0x24,
+};
+
+//================================================================================
+// for register SCFG_OP
+//================================================================================
+/*---------------------------------------------------------------------------*
+  Name:         SCFG_GetBondingOption
+
+  Description:  Get bonding option data
+
+  Arguments:    None
+
+  Returns:      option data
+ *---------------------------------------------------------------------------*/
+// SharedArea Access ver.
+static inline u16 SCFG_GetBondingOption(void)
+{
+	return (u16)(*(u8*)(HW_SYS_CONF_BUF+HWi_WSYS08_OFFSET) & HWi_WSYS08_OP_OPT_MASK);
+}
 
 // ============================================================================
 //
@@ -556,10 +610,103 @@ BOOL SYSM_IsLoadTitleFinished( TitleProperty *pBootTitle )
 	return OS_IsThreadTerminated( &s_thread );
 }
 
+static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
+{
+	// [TODO:] NANDアプリの場合、NAM_CheckTitleLaunchRights()を呼んでチェック
+	// [TODO:] TWLアプリの場合、pBootTitle->titleIDとROMヘッダのtitleIDの一致確認を必ずする。
+	
+	// TWLアプリの場合、署名チェック、鍵の場合わけと署名の解読、ハッシュ値をヘッダに格納されているものと比較
+    // titleIDからアプリ種別を読み取る
+    if( ( (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->platform_code ) != 0 )
+    {
+		const u8 *key;
+		u16 prop;
+		u8 keynum;
+		u8 buf[0x80];
+		u8 calculated_hash[SVC_SHA1_DIGEST_SIZE];
+		SVCSignHeapContext con;
+		int l;
+		u32 *module_addr[RELOCATE_INFO_NUM];
+		u32 module_size[RELOCATE_INFO_NUM];
+		u8 *hash_addr[RELOCATE_INFO_NUM];
+		
+	    prop = ((u16 *)&(pBootTitle->titleID))[2];
+	    prop = (u16)(prop & 0x1); // prop = 0:UserApp 1:SystemApp 2:ShopApp?
+	    keynum = (u8)( prop == 0 ? 2 : (prop == 1 ? 0 : 1) );// keynum = 0:SystemApp 1:ShopApp 2:UserApp
+		// アプリ種別とボンディングオプションによって使う鍵を分ける
+	    if( SCFG_GetBondingOption() == 0 ) {
+			// 製品版鍵取得
+			key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[SYSTEM_APP_KEY_OFFSET + keynum];
+	    }else {
+			// 開発版
+			key = g_devPubKey[keynum];
+	    }
+	    // 署名を鍵で復号
+	    MI_CpuClear8( buf, 0x80 );
+	    SVC_InitSignHeap( &con, (void *)SIGN_HEAP_ADDR, SIGN_HEAP_SIZE );// ヒープの初期化
+	    if( !SVC_DecryptSign( &con, buf, (( ROM_Header *)HW_TWL_ROM_HEADER_BUF)->signature, key ))
+	    {
+			OS_TPrintf("Authenticate failed: Sign decryption failed.\n");
+			return AUTH_RESULT_AUTHENTICATE_FAILED;
+		}
+		// ヘッダのハッシュ(SHA1)計算
+		SVC_CalcSHA1( &calculated_hash, (const void*)HW_TWL_ROM_HEADER_BUF, ROM_HEADER_HASH_CALC_DATA_LEN );
+	    // 署名のハッシュ値とヘッダのハッシュ値を比較
+	    if(!SVC_CompareSHA1((const void *)(&buf[ROM_HEADER_HASH_OFFSET]), (const void *)&calculated_hash))
+	    {
+			OS_TPrintf("Authenticate failed: Sign check failed.\n");
+			return AUTH_RESULT_AUTHENTICATE_FAILED;
+		}else
+		{
+			OS_TPrintf("Authenticate : Sign check succeed.\n");
+		}
+	    
+		// それぞれARM9,7のFLXおよびLTDについてハッシュを計算してヘッダに格納されているハッシュと比較
+		module_addr[ARM9_STATIC] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->main_ram_address;
+		module_addr[ARM7_STATIC] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->sub_ram_address;
+		module_addr[ARM9_LTD_STATIC] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->main_ltd_ram_address;
+		module_addr[ARM7_LTD_STATIC] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->sub_ltd_ram_address;
+		
+		module_size[ARM9_STATIC] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->main_size;
+		module_size[ARM7_STATIC] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->sub_size;
+		module_size[ARM9_LTD_STATIC] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->main_ltd_size;
+		module_size[ARM7_LTD_STATIC] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->sub_ltd_size;
+		
+		hash_addr[ARM9_STATIC] = &((( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->main_static_digest[0]);
+		hash_addr[ARM7_STATIC] = &((( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->sub_static_digest[0]);
+		hash_addr[ARM9_LTD_STATIC] = &((( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->main_ltd_static_digest[0]);
+		hash_addr[ARM7_LTD_STATIC] = &((( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->sub_ltd_static_digest[0]);
+		
+		for( l=0; l<RELOCATE_INFO_NUM ; l++ )
+		{
+			static const char *str[4]={"ARM9_STATIC","ARM7_STATIC","ARM9_LTD_STATIC","ARM7_LTD_STATIC"};
+			// 一時的に格納位置をずらしている場合は、再配置情報からモジュール格納アドレスを取得
+			if( SYSMi_GetWork()->romRelocateInfo[l].src != NULL )
+			{
+				module_addr[l] = (u32 *)SYSMi_GetWork()->romRelocateInfo[l].src;
+			}
+			// ハッシュ計算
+			SVC_CalcHMACSHA1( &calculated_hash, (const void*)module_addr[l], module_size[l],
+							 (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
+			// 比較
+		    if(!SVC_CompareSHA1((const void *)hash_addr[l], (const void *)&calculated_hash))
+		    {
+				OS_TPrintf("Authenticate failed: rom header hash check failed.\n");
+				return AUTH_RESULT_AUTHENTICATE_FAILED;
+			}else
+			{
+				OS_TPrintf("Authenticate : %s module hash check succeed.\n", str[l]);
+			}
+		}
+	}
+	return AUTH_RESULT_SUCCEEDED;
+}
 
 // ロード済みの指定タイトルの認証とブートを行う
 AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 {
+	AuthResult res;
+	
 	// ロード中
 	if( !SYSM_IsLoadTitleFinished( pBootTitle ) ) {
 		return AUTH_RESULT_PROCESSING;
@@ -590,11 +737,11 @@ AuthResult SYSM_AuthenticateTitle( TitleProperty *pBootTitle )
 	}
 	
 	// ※ROMヘッダ認証
-	// [TODO:] NANDアプリの場合、NAM_CheckLaunchRights()を呼んで
-	// [TODO:] NANDアプリの場合、pBootTitle->titleIDとROMヘッダのtitleIDの一致確認を必ずする。
-	
-	// [TODO:] 署名チェック
-	// [TODO:] ハッシュチェック
+	res = SYSMi_AuthenticateTWLHeader( pBootTitle );
+	if( res != AUTH_RESULT_SUCCEEDED )
+	{
+		return res;
+	}
 	
 	// マウント情報の登録
 	SYSMi_SetBootAppMountInfo( pBootTitle );

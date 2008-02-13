@@ -31,6 +31,7 @@ SRCS			=	sysmenu_lib.c \
 					ninLogoFunc.c \
 					mountInfo.c \
 					device.c \
+					keys.c \
 					title.c \
 					banner.c \
 					../common/src/status.c \

@@ -77,6 +77,8 @@ include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 
+MAKEROM			 = $(TWL_IPL_RED_ROOT)/tools/bin/makerom.TWL.sys.exe
+
 LDIRT_CLEAN				=	$(TARGET_TAD)
 INSTALL_TARGETS			=	$(TARGET_TAD)
 INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
