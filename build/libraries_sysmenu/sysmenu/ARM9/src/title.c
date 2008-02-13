@@ -17,7 +17,6 @@
 
 #include <twl.h>
 #include <sysmenu.h>
-#include <es.h>
 #include <firm/format/from_firm.h>
 #include <firm/hw/ARM9/mmap_firm.h>
 #include "internal_api.h"
@@ -629,6 +628,9 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		u32 *module_addr[RELOCATE_INFO_NUM];
 		u32 module_size[RELOCATE_INFO_NUM];
 		u8 *hash_addr[RELOCATE_INFO_NUM];
+		OSTick tick;
+
+		tick = OS_GetTick();
 		
 	    prop = ((u16 *)&(pBootTitle->titleID))[2];
 	    prop = (u16)(prop & 0x1); // prop = 0:UserApp 1:SystemApp 2:ShopApp?
@@ -698,6 +700,9 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 				OS_TPrintf("Authenticate : %s module hash check succeed.\n", str[l]);
 			}
 		}
+		
+		tick = OS_GetTick() - tick;
+		OS_TPrintf("Authenticate : total %d msecs.\n", OS_TicksToMilliSeconds(tick) );
 	}
 	return AUTH_RESULT_SUCCEEDED;
 }

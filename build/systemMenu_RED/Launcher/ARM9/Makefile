@@ -73,7 +73,6 @@ endif
 
 MAKETAD_FLAGS			+= -s
 
-include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 

@@ -40,7 +40,6 @@ SRCS			=	sysmenu_lib.c \
 
 TARGET_LIB		=	libsysmenu$(TWL_LIBSUFFIX).a
 
-include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS		=	$(TARGETS)
