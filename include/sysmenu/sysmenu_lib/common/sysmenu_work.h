@@ -42,15 +42,6 @@ typedef struct TitleID_HiLo {
 
 
 //----------------------------------------------------------------------
-//　PXIコマンド
-//----------------------------------------------------------------------
-#define SYSMENU_PXI_FIFO_TAG				PXI_FIFO_TAG_USER_0
-
-typedef enum SYSMPXICommand {
-	SYSM_PXI_COMM_DISABLE_HOTSW = 1
-}SYSMPXICommand;
-
-//----------------------------------------------------------------------
 //　ROMエミュレーション情報
 //----------------------------------------------------------------------
 #define ISD_ROM_EMULATION_INFO_SIZE			0x20		// ROMエミュレーションデータサイズ

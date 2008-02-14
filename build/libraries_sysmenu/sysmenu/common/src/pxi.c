@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
+#include <twl/mcu.h>
 #include <sysmenu.h>
 #include "internal_api.h"
 
@@ -27,8 +28,8 @@
 typedef union SYSMPXIPacket {
 	struct {
 		u16 data;
-		u16 command : 14;
-		u16 stat : 2;
+		u8  cmd;  // PXI_FIFOMESSAGE_BITSZ_DATA = 26
+		u8  stat : 2;
 	};
 	u32 raw;
 }SYSMPXIPacket;
@@ -38,31 +39,73 @@ typedef union SYSMPXIPacket {
 // function's prototype-------------------------------------------------------
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
-static volatile BOOL s_sending = FALSE;
+static volatile BOOL s_sending[SYSM_PXI_COMM_NUM];
 // const data------------------------------------------------------------------
 
+// PXI初期化
+void SYSM_InitPXI( void )
+{
+    static BOOL isInitialized;
+    int i;
+
+    if (isInitialized)
+    {
+        return;
+    }
+    isInitialized = TRUE;
+
+    for (i=0; i<SYSM_PXI_COMM_NUM; i++)
+    {
+        s_sending[i] = FALSE;
+    }
+
+    //---- setting PXI
+    PXI_Init();
+#ifdef SDK_ARM9
+    while (!PXI_IsCallbackReady(SYSMENU_PXI_FIFO_TAG, PXI_PROC_ARM7))
+    {
+    }
+#endif // SDK_ARM9
+    PXI_SetFifoRecvCallback(SYSMENU_PXI_FIFO_TAG, SYSMi_PXIFifoRecvCallback);
+}
+
 // PXIコマンド送信
-BOOL SYSMi_SendPXICommand( SYSMPXICommand command )
+BOOL SYSMi_TrySendPXICommand( SYSMPXICommand cmd, u16 data )
 {
 	SYSMPXIPacket packet;
 	
 	OSIntrMode saved = OS_DisableInterrupts();
-	if( s_sending ) {
+	if( s_sending[cmd] )
+	{
 		OS_RestoreInterrupts( saved );
 		return FALSE;
 	}
-	s_sending      = TRUE;
+	s_sending[cmd] = TRUE;
 	OS_RestoreInterrupts( saved );
 	
-	packet.stat    = SYSM_PXI_COMM_STAT_REQ;
-	packet.command = (u16)command;
-	packet.data    = 0;
+	packet.stat = SYSM_PXI_COMM_STAT_REQ;
+	packet.cmd  = cmd;
+	packet.data = data;
 	
-	while( PXI_SendWordByFifo( SYSMENU_PXI_FIFO_TAG, packet.raw, 0 ) < 0 ) {}
+	while( PXI_SendWordByFifo( SYSMENU_PXI_FIFO_TAG, packet.raw, FALSE) != PXI_FIFO_SUCCESS )
+	{
+		SVC_WaitByLoop(1);
+	}
 	
-	while( s_sending ) {
+	return TRUE;
+}
+
+BOOL SYSMi_SendPXICommand( SYSMPXICommand cmd, u16 data )
+{
+	while( ! SYSMi_TrySendPXICommand( cmd, data ) )
+	{
 		OS_WaitAnyIrq();
 	}
+	while( s_sending[cmd] )
+	{
+		OS_WaitAnyIrq();
+	}
+	
 	return TRUE;
 }
 
@@ -70,12 +113,47 @@ void SYSMi_PXIFifoRecvCallback( PXIFifoTag tag, u32 data, BOOL err )
 {
 #pragma unused( tag, err )
 	SYSMPXIPacket packet;
+	u8 cmd;
 	packet.raw = data;
+	cmd = packet.cmd;
+
+	if( packet.stat == SYSM_PXI_COMM_STAT_ACK )
+	{
+		s_sending[cmd]  = FALSE;
+	}
+	if( packet.stat == SYSM_PXI_COMM_STAT_REQ )
+	{
+		packet.stat = SYSM_PXI_COMM_STAT_ACK;
+	}
+
+#ifdef SDK_ARM7
+
+	switch( cmd )
+	{
+		case SYSM_PXI_COMM_BL_BRIGHT:
+#ifdef PMIC_FINAL
+			MCU_WriteRegister(MCU_REG_BL_ADDR, (u8)packet.data );
+#else // PMIC_FINAL
+			PMi_SetRegister( REG_PMIC_BL_BRT_B_ADDR, (u8)packet.data );
+#endif // PMIC_FINAL
+			break;
+		default:
+#ifndef SDK_FINALROM
+            OS_Panic("illegal SYSM pxi command.");
+#else
+            OS_Panic("");
+#endif
+			break;
+	}
+
+	// PXI応答返信
+	PXI_SendWordByFifo( SYSMENU_PXI_FIFO_TAG, packet.raw, FALSE );
+
+#endif // SDK_ARM7
+
 #if 0
 	
 #ifdef SDK_ARM9
-	
-	s_sending  = FALSE;
 	
 	if( packet.stat == SYSM_PXI_COMM_STAT_ACK ) {
 		switch( data ) {

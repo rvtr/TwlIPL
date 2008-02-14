@@ -46,7 +46,8 @@ void SYSM_SetBackLightBrightness( u8 brightness )
 	if( brightness > LCFG_TWL_BACKLIGHT_LEVEL_MAX ) {
 		OS_Panic( "Backlight brightness over : %d\n", brightness );
 	}
-	( void )PMi_WriteRegister( 0x20, (u16)brightness );
+	( void )SYSMi_SendPXICommand( SYSM_PXI_COMM_BL_BRIGHT, brightness );
+	
 	LCFG_TSD_SetBacklightBrightness( brightness );
 	
 	// [TODO:] バックライト輝度は毎回セーブせずに、アプリ起動やリセット、電源OFF時に値が変わっていたらセーブするようにする。

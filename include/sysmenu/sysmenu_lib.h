@@ -20,6 +20,7 @@
 
 #include <sysmenu/sysmenu_lib/common/sysmenu_api.h>
 #include <sysmenu/sysmenu_lib/common/sysmenu_work.h>
+#include <sysmenu/sysmenu_lib/common/pxi.h>
 
 
 #ifdef __cplusplus

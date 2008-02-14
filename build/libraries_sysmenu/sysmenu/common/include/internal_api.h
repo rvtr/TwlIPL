@@ -2,7 +2,7 @@
   Project:  TwlIPL
   File:     internal_api.h
 
-  Copyright 2007 Nintendo.  All rights reserved.
+  Copyright 2007-2008 Nintendo.  All rights reserved.
 
   These coded instructions, statements, and computer programs contain
   proprietary information of Nintendo of America Inc. and/or Nintendo
@@ -19,6 +19,7 @@
 #define SYSM_INTERNAL_API_H_
 
 #include <twl.h>
+#include <sysmenu/sysmenu_lib/common/pxi.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,8 +79,6 @@ void SYSMi_EnableHotSW( BOOL enable );
 //=======================================================
 BOOL SYSMi_IsDebuggerBannerViewMode( void );
 BOOL SYSMi_CheckEntryAddress( void );
-BOOL SYSMi_SendPXICommand( SYSMPXICommand command );
-void SYSMi_PXIFifoRecvCallback( PXIFifoTag tag, u32 data, BOOL err );
 
 
 #ifdef __cplusplus

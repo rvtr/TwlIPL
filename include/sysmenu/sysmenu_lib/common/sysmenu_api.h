@@ -83,6 +83,7 @@ extern void SYSM_Free( void *ptr );
 
 // 初期化
 extern void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) );			// 初期化。
+extern void SYSM_InitPXI( void );												// PXI初期化
 extern void SYSM_SetArena( void );												// システムメニューのアリーナ初期化。OS_Initの後で呼んでください。
 extern void SYSM_SetAllocFunc( void *(*pAlloc)(u32), void (*pFree)(void*) );	// SYSM_initで設定した場合は必要なし。
 extern TitleProperty *SYSM_ReadParameters( void );								// 本体設定データ、リセットパラメータなどを取得

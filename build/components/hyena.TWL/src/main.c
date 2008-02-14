@@ -122,7 +122,7 @@ TwlSpMain(void)
     PrintDebugInfo();
 
     // PXIコールバックの設定
-//  PXI_SetFifoRecvCallback( SYSMENU_PXI_FIFO_TAG, SYSMi_PXIFifoRecvCallback );
+    SYSM_InitPXI();
 
     // ランチャーパラメター取得（Cold/Hotスタート判定含む）
     ReadLauncherParameter();
