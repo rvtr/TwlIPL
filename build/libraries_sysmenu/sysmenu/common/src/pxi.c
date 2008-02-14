@@ -44,6 +44,7 @@ typedef union SYSMPXIPacket {
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
 static volatile BOOL s_sending[SYSM_PXI_COMM_NUM];
+static u8 mcu_ver;
 // const data------------------------------------------------------------------
 
 // PXI初期化
@@ -63,14 +64,18 @@ void SYSM_InitPXI( void )
         s_sending[i] = FALSE;
     }
 
+#if defined(SDK_ARM7) && defined(SDK_SUPPORT_PMIC_2)
+    mcu_ver = (u8)(MCU_ReadRegister( MCU_REG_VER_INFO_ADDR ) >> MCU_REG_VER_INFO_VERSION_SHIFT);
+#endif // SDK_ARM7 && SDK_SUPPORT_PMIC_2
+
     //---- setting PXI
     PXI_Init();
 #ifdef SDK_ARM9
-    while (!PXI_IsCallbackReady(SYSMENU_PXI_FIFO_TAG, PXI_PROC_ARM7))
+    while ( ! PXI_IsCallbackReady( SYSMENU_PXI_FIFO_TAG, PXI_PROC_ARM7 ) )
     {
     }
 #endif // SDK_ARM9
-    PXI_SetFifoRecvCallback(SYSMENU_PXI_FIFO_TAG, SYSMi_PXIFifoRecvCallback);
+    PXI_SetFifoRecvCallback( SYSMENU_PXI_FIFO_TAG, SYSMi_PXIFifoRecvCallback );
 }
 
 // PXIコマンド送信
@@ -135,15 +140,20 @@ void SYSMi_PXIFifoRecvCallback( PXIFifoTag tag, u32 data, BOOL err )
 	switch( cmd )
 	{
 		case SYSM_PXI_COMM_BL_BRIGHT:
-#ifdef PMIC_FINAL
-			MCU_WriteRegister(MCU_REG_BL_ADDR, (u8)packet.data );
-#else // PMIC_FINAL
-			PMi_SetRegister( REG_PMIC_BL_BRT_B_ADDR, (u8)packet.data );
-#endif // PMIC_FINAL
+#ifdef SDK_SUPPORT_PMIC_2
+			if ( mcu_ver <= 1 )
+			{
+				PMi_SetRegister( REG_PMIC_BL_BRT_B_ADDR, (u8)packet.data );
+			}
+			else
+#endif // SDK_SUPPORT_PMIC_2
+			{
+				MCU_WriteRegister( MCU_REG_BL_ADDR, (u8)packet.data );
+			}
 			break;
 		default:
 #ifndef SDK_FINALROM
-            OS_Panic("illegal SYSM pxi command.");
+            OS_Panic( "illegal SYSM pxi command." );
 #else
             OS_Panic("");
 #endif
