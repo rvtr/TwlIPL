@@ -23,9 +23,6 @@ SUBDIRS		=
 
 USE_PRODUCT_KEY		=	TRUE
 
-# if USE_PRODUCT_KEY is set, set USE_SDBOOT_KEY to boot from SDMC, otherwise to boot from CARD/NAND
-#USE_SDBOOT_KEY		=	TRUE
-
 KEYS_DIR				=	$(shell $(CYGPATH) -m $(TWL_KEYSDIR))
 
 TARGET_FIRM			= SYSTEMMENU
@@ -60,13 +57,16 @@ SRCS		=	main.c \
 				process_norfirm.c \
 				process_auto.c \
 				process_fade.c \
-				sd_event.c
+				sd_event.c \
+				hwi.c
 
 LINCLUDES	=	../common/include \
 				$(ROOT)/build/libraries/lcfg/ARM9.TWL/include
 
 SRCDIR		=	src \
-				$(ROOT)/build/demos.TWL/camera/saveShoot-1/src
+				$(ROOT)/build/demos.TWL/camera/saveShoot-1/src \
+				../../HWInfoWriter/ARM9/src
+
 #LCFILE		=	# using default
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
@@ -76,11 +76,6 @@ MAKETAD_FLAGS			+=	-s
 ifdef USE_PRODUCT_KEY
 MAKEROM_FLAGS			+=	-DPRIVKEY_PATH='$(KEYS_DIR)/rsa'
 MACRO_FLAGS				+=	-DUSE_PRODUCT_KEY
-ifdef USE_SDBOOT_KEY
-MAKEROM_FLAGS			+=	-s -DSYS_PRIV_KEY='$(KEYS_DIR)/rsa/private_sdboot.der' \
-					-DSYS_PUB_KEY='$(KEYS_DIR)/rsa/pubkey_sdboot.der'
-TARGET_TAD=
-endif
 else
 MAKEROM_FLAGS			+=	-DPRIVKEY_PATH='../../../../keys/dummy/rsa'
 endif
@@ -91,8 +86,6 @@ LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\
 					libacsign_enc$(TWL_LIBSUFFIX).a     \
 					libnamut$(TWL_LIBSUFFIX).a
 
-
-#include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
 

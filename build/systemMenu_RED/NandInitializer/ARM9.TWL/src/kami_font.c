@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
@@ -303,7 +303,7 @@ kamiFontFillChar(int lineNo, u8 color1, u8 color2)
   Returns:      None.
  *---------------------------------------------------------------------------*/
 void 
-kamiFontPrintfConsole(u8 color, char *text, ...)
+kamiFontPrintfConsole(u8 color, const char *text, ...)
 {
     va_list vlist;
     char    temp[256 + 2];
@@ -351,7 +351,7 @@ kamiFontPrintfConsole(u8 color, char *text, ...)
   Returns:      None.
  *---------------------------------------------------------------------------*/
 void 
-kamiFontPrintfConsoleEx(u8 color, char *text, ...)
+kamiFontPrintfConsoleEx(u8 color, const char *text, ...)
 {
     va_list vlist;
     char    temp[256 + 2];

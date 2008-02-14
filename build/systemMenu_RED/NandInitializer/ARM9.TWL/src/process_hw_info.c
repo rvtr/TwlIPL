@@ -28,10 +28,7 @@
 #include "process_fade.h"
 #include "cursor.h"
 #include "keypad.h"
-
-#include <sysmenu/acsign.h>
-//#include <sysmenu/settings/common/TWLHWInfo.h>
-//#include <sysmenu/settings/common/TWLSettings.h>
+#include "hwi.h"
 
 //
 #include "TWLHWInfo_api.h"
@@ -135,6 +132,7 @@ const LCFGTWLHWSecureInfo *LCFG_THW_GetSecureInfo( void );
 
 void* HWInfoProcess0(void)
 {
+	HwiInitResult initResult;
 	int i;
 
 	// 文字列全クリア
@@ -178,7 +176,19 @@ void* HWInfoProcess0(void)
 	SetCursorPos((u16)200, (u16)200);
 
 	// 前準備
-	HWInfoWriterInit();
+	initResult = HWI_Init( OS_AllocFromMain, OS_FreeToMain );
+	switch (initResult)
+	{
+	case HWI_INIT_FAILURE:
+		kamiFontPrintfConsoleEx(CONSOLE_RED, "HWI_INIT() Failure!\n" );
+		break;
+	case HWI_INIT_SUCCESS_SIGNATURE_MODE:
+		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, "[Signature MODE]\n" );
+		break;
+	case HWI_INIT_SUCCESS_NO_SIGNATRUE_MODE:
+		kamiFontPrintfConsoleEx(CONSOLE_RED, "[No Signature MODE]\n" );
+		break;
+	}
 
 	FADE_IN_RETURN( HWInfoProcess1 );
 }
@@ -293,178 +303,6 @@ void* HWInfoProcess2(void)
  *---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*
-  Name:         HW情報ライターの初期化
-
-  Description:  
-
-  Arguments:    None.
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-
-void HWInfoWriterInit( void )
-{
-//	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"HW Info Writer");
-//	GetAndDrawRTCData( &g_rtcDraw, TRUE );
-	
-	ACSign_SetAllocFunc( OS_AllocFromMain, OS_FreeToMain );
-	ReadTWLSettings();
-	ReadPrivateKey();
-	ReadHWInfoFile();
-//	VerifyHWInfo();
-	OS_Printf("region = %d\n", LCFG_THW_GetRegion() );
-	
-//	s_csr = 0;
-//	DrawMenu( s_csr, &s_writerParam );
-	
-//	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
-//	GX_DispOn();
-//	GXS_DispOn();
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         TWL設定データのリード
-
-  Description:  
-
-  Arguments:    None.
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-
-static void ReadTWLSettings( void )
-{
-	s_isReadTSD = LCFGi_TSD_ReadSettings();
-	if( s_isReadTSD ) {
-		OS_TPrintf( "TSD read succeeded.\n" );
-	}else {
-		OS_TPrintf( "TSD read failed.\n" );
-	}
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         言語コードをリージョン値に合わせて修正する。
-
-  Description:  
-
-  Arguments:    None.
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-
-static void ModifyLanguage( u8 region )
-{
-	u32 langBitmap = s_langBitmapList[ region ];
-	u8  nowLanguage = LCFG_TSD_GetLanguage();
-	
-	// TSDが読み込めていないなら、何もせずリターン
-	if( !s_isReadTSD ) {
-		return;
-	}
-	
-	if( langBitmap & ( 0x0001 << nowLanguage ) ) {
-		OS_TPrintf( "Language no change.\n" );
-	}else {
-		int i;
-		for( i = 0; i < LCFG_TWL_LANG_CODE_MAX; i++ ) {
-			if( langBitmap & ( 0x0001 << i ) ) {
-				break;
-			}
-		}
-		LCFG_TSD_SetLanguage( (LCFGTWLLangCode)i );
-		LCFG_TSD_SetFlagCountry( FALSE );				// ※ついでに国コードもクリアしておく。
-		LCFG_TSD_SetCountry( LCFG_TWL_COUNTRY_UNDEFINED );
-		LCFGi_TSD_WriteSettings();
-		OS_TPrintf( "Language Change \"%s\" -> \"%s\"\n",
-					strLanguage[ nowLanguage ], strLanguage[ LCFG_TSD_GetLanguage() ] );
-	}
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         秘密鍵のリード
-
-  Description:  
-
-  Arguments:    None.
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-
-static void ReadPrivateKey( void )
-{
-	BOOL result = FALSE;
-	u32 keyLength;
-	FSFile file;
-	OSTick start = OS_GetTick();
-	
-	FS_InitFile( &file );
-	if( !FS_OpenFileEx( &file, "rom:key/private_HWInfo.der", FS_FILEMODE_R ) ) {
-		kamiFontPrintfConsoleEx(CONSOLE_RED, "PrivateKey read failed.\n" );
-	}else {
-		keyLength = FS_GetFileLength( &file );
-		if( keyLength > 0 ) {
-			s_pPrivKeyBuffer = OS_Alloc( keyLength );
-			if( FS_ReadFile( &file, s_pPrivKeyBuffer, (s32)keyLength ) == keyLength ) {
-				OS_TPrintf( "PrivateKey read succeeded.\n" );
-				result = TRUE;
-			}else {
-				kamiFontPrintfConsoleEx(CONSOLE_RED, "PrivateKey read failed.\n" );
-			}
-		}
-		FS_CloseFile( &file );
-	}
-	
-	if( !result && s_pPrivKeyBuffer ) {
-		OS_Free( s_pPrivKeyBuffer );
-		s_pPrivKeyBuffer = NULL;
-	}
-	OS_TPrintf( "PrivKey read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
-
-#ifdef USE_PRODUCT_KEY
-	// 製品用秘密鍵が有効なら、署名ありのアクセス
-	s_pReadSecureInfoFunc = LCFGi_THW_ReadSecureInfo;
-#else
-	// そうでないなら、署名なしのアクセス
-	s_pReadSecureInfoFunc = LCFGi_THW_ReadSecureInfo_NoCheck;
-//	PutStringUTF16( 14 * 8, 0 * 8, TXT_COLOR_RED, (const u16 *)L"[No Signature MODE]" );
-#endif
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         HW情報全体のリード
-
-  Description:  
-
-  Arguments:    None.
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-
-static void ReadHWInfoFile( void )
-{
-	LCFGReadResult retval;
-	OSTick start = OS_GetTick();
-	
-	retval = LCFGi_THW_ReadNormalInfo();
-	if( retval == LCFG_TSF_READ_RESULT_SUCCEEDED ) {
-		OS_Printf("HW Normal Info read succeeded.\n" );
-	}else {
-		kamiFontPrintfConsoleEx(0, "HW Normal Info read failed.\n" );
-	}
-	
-	OS_TPrintf( "HW Normal Info read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
-	
-	start = OS_GetTick();
-	retval = s_pReadSecureInfoFunc();
-	if( retval == LCFG_TSF_READ_RESULT_SUCCEEDED ) {
-		OS_Printf("HW Secure Info read succeeded.\n" );
-	}else {
-		kamiFontPrintfConsoleEx(0, "HW Secure Info read failed.\n" );
-	}
-	OS_TPrintf( "HW Secure Info read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
-}
-
-/*---------------------------------------------------------------------------*
   Name:         HW情報全体のライト
 
   Description:  
@@ -476,139 +314,35 @@ static void ReadHWInfoFile( void )
 
 static BOOL WriteHWInfoFile( u8 region )
 {
-	static const u16 *pMsgNormalWriting  = (const u16 *)L"Writing Normal File...";
-	static const u16 *pMsgSecureWriting  = (const u16 *)L"Writing Secure File...";
-	static const u16 *pMsgSucceeded = (const u16 *)L"Succeeded!";
-	static const u16 *pMsgFailed = (const u16 *)L"Failed!";
+	static const char *pMsgNormalWriting  	= "Writing Normal File...";
+	static const char *pMsgSecureWriting  	= "Writing Secure File...";
+	static const char *pMsgSucceeded 		= "Succeeded!";
+	static const char *pMsgFailed 			= "Failed!";
 	BOOL result = TRUE;
 
 	// ノーマルファイルのライト
-//	(void)PutStringUTF16( MSG_X * 8, MSG_Y * 8, TXT_COLOR_BLACK, pMsgNormalWriting );
+	kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgNormalWriting );
 	
-	if( WriteHWNormalInfoFile() ) {
-//		(void)PutStringUTF16( ( MSG_X + 18 ) * 8, MSG_Y * 8, TXT_COLOR_BLUE, pMsgSucceeded );
+	if( HWI_WriteHWNormalInfoFile() ) {
+		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSucceeded );
 	}else {
-//		(void)PutStringUTF16( ( MSG_X + 18 ) * 8, MSG_Y * 8, TXT_COLOR_RED, pMsgFailed );
+		kamiFontPrintfConsoleEx(CONSOLE_RED, pMsgFailed );
 		result = FALSE;
 	}
 	
 	// セキュアファイルのライト
-//	(void)PutStringUTF16( MSG_X * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_BLACK, pMsgSecureWriting );
+	kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSecureWriting );
 	
-	if( WriteHWSecureInfoFile( region ) ) {
-//		(void)PutStringUTF16( ( MSG_X + 18 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_BLUE, pMsgSucceeded );
+	if( HWI_WriteHWSecureInfoFile( region ) ) {
+		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSucceeded );
 	}else {
-//		(void)PutStringUTF16( ( MSG_X + 18 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_RED, pMsgFailed );
+		kamiFontPrintfConsoleEx(CONSOLE_RED, pMsgFailed );
 		result = FALSE;
 	}
 	
-	ModifyLanguage( region );
+	HWI_ModifyLanguage( region );
 	
-	// メッセージを一定時間表示して消去
-//	DispMessage( 0, 0, TXT_COLOR_NULL, NULL );
-//	NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_WHITE,
-//								MSG_X * 8 , MSG_Y * 8, ( 32 - MSG_X ) * 8, ( MSG_Y + 4 ) * 8 );
-
 	return result;
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         HWノーマルInfoファイルのライト
-
-  Description:  
-
-  Arguments:    None.
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-
-static BOOL WriteHWNormalInfoFile( void )
-{
-	BOOL isWrite = TRUE;
-	LCFGReadResult result;
-	
-	result = LCFGi_THW_ReadNormalInfo();
-	if( result != LCFG_TSF_READ_RESULT_SUCCEEDED ) {
-		if( !LCFGi_THW_RecoveryNormalInfo( result ) ) {
-			kamiFontPrintfConsoleEx(CONSOLE_RED, "HW Normal Info Recovery failed.\n" );
-			isWrite = FALSE;
-		}
-	}
-	if( isWrite &&
-		!LCFGi_THW_WriteNormalInfo() ) {
-		kamiFontPrintfConsoleEx(CONSOLE_RED, "HW Normal Info Write failed.\n" );
-	}
-	
-	return isWrite;
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         HWセキュアInfoファイルのライト
-
-  Description:  
-
-  Arguments:    None.
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-
-static BOOL WriteHWSecureInfoFile( u8 region )
-{
-	BOOL isWrite = TRUE;
-	LCFGReadResult result;
-	
-	// ファイルのリード
-	result = s_pReadSecureInfoFunc();
-	
-	// リードに失敗したらリカバリ
-	if( result != LCFG_TSF_READ_RESULT_SUCCEEDED ) {
-		if( !LCFGi_THW_RecoverySecureInfo( result ) ) {
-			kamiFontPrintfConsoleEx(CONSOLE_RED, "HW Secure Info Recovery failed.\n" );
-			isWrite = FALSE;
-		}
-	}
-	
-	// リージョンのセット
-	LCFG_THW_SetRegion( region );
-	
-	// 対応言語ビットマップのセット
-	LCFG_THW_SetValidLanguageBitmap( s_langBitmapList[ region ] );
-	
-	// [TODO:]量産工程でないとシリアルNo.は用意できないので、ここではMACアドレスをもとに適当な値をセットする。
-	// シリアルNo.のセット
-	{
-		u8 buffer[ 12 ] = "SERIAL";		// 適当な文字列をMACアドレスと結合してSHA1を取り、仮SerialNoとする。
-		u8 serialNo[ SVC_SHA1_DIGEST_SIZE ];
-		int i;
-		int len = ( LCFG_THW_GetRegion() == LCFG_TWL_REGION_AMERICA ) ?
-					LCFG_TWL_HWINFO_SERIALNO_LEN_AMERICA : LCFG_TWL_HWINFO_SERIALNO_LEN_OTHERS;
-		OS_GetMacAddress( buffer + 6 );
-		SVC_CalcSHA1( serialNo, buffer, sizeof(buffer) );
-		for( i = 3; i < SVC_SHA1_DIGEST_SIZE; i++ ) {
-			serialNo[ i ] = (u8)( ( serialNo[ i ] % 10 ) + 0x30 );
-		}
-		MI_CpuCopy8( "SRN", serialNo, 3 );
-		MI_CpuClear8( &serialNo[ len ], sizeof(serialNo) - len );
-		OS_TPrintf( "serialNo : %s\n", serialNo );
-		LCFG_THW_SetSerialNo( serialNo );
-	}
-	
-	// ランチャーTitleID_Loのセット
-	{
-		int i;
-		u8 titleID_Lo[4];
-		for( i = 0; i < 4; i++ ) titleID_Lo[ i ] = (u8)strLauncherGameCode[ region ][ 4 - i - 1 ];
-		LCFG_THW_SetLauncherTitleID_Lo( (const u8 *)titleID_Lo );
-	}
-
-	// ライト
-	if( isWrite &&
-		!LCFGi_THW_WriteSecureInfo( s_pPrivKeyBuffer ) ) {
-		isWrite = FALSE;
-		kamiFontPrintfConsoleEx(CONSOLE_RED, "HW Secure Info Write failed.\n" );
-	}
-	
-	return isWrite;
 }
 
 /*---------------------------------------------------------------------------*
@@ -623,36 +357,33 @@ static BOOL WriteHWSecureInfoFile( u8 region )
 
 static BOOL DeleteHWInfoFile( void )
 {
-	static const u16 *pMsgNormalDeleting  = (const u16 *)L"Deleting Normal File...";
-	static const u16 *pMsgSecureDeleting  = (const u16 *)L"Deteting Secure File...";
-	static const u16 *pMsgSucceeded = (const u16 *)L"Succeeded!";
-	static const u16 *pMsgFailed = (const u16 *)L"Failed!";
+	static const char *pMsgNormalDeleting  	= "Deleting Normal File...";
+	static const char *pMsgSecureDeleting  	= "Deteting Secure File...";
+	static const char *pMsgSucceeded 		= "Succeeded!";
+	static const char *pMsgFailed 			= "Failed!";
 	BOOL result = TRUE;
 
 	// ノーマルファイル
-//	(void)PutStringUTF16( MSG_X * 8, MSG_Y * 8, TXT_COLOR_BLACK, pMsgNormalDeleting );
-	if( FS_DeleteFile( (char *)LCFG_TWL_HWINFO_NORMAL_PATH ) ) {
+		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgNormalDeleting );
+	if( HWI_DeleteHWNormalInfoFile() ) {
 		OS_TPrintf( "%s delete succeeded.\n", (char *)LCFG_TWL_HWINFO_NORMAL_PATH );
-//		(void)PutStringUTF16( ( MSG_X + 19 ) * 8, MSG_Y * 8, TXT_COLOR_BLUE, pMsgSucceeded );
+		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSucceeded );
 	}else {
 		OS_TPrintf( "%s delete failed.\n", (char *)LCFG_TWL_HWINFO_NORMAL_PATH );
-//		(void)PutStringUTF16( ( MSG_X + 19 ) * 8, MSG_Y * 8, TXT_COLOR_RED, pMsgFailed );
+		kamiFontPrintfConsoleEx(CONSOLE_RED, pMsgFailed );
 		result = FALSE;
 	}
 	
 	// セキュアファイル
-//	(void)PutStringUTF16( MSG_X * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_BLACK, pMsgSecureDeleting );
-	if( FS_DeleteFile( (char *)LCFG_TWL_HWINFO_SECURE_PATH ) ) {
+	kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSecureDeleting );
+	if( HWI_DeleteHWSecureInfoFile() ) {
 		OS_TPrintf( "%s delete succeeded.\n", (char *)LCFG_TWL_HWINFO_SECURE_PATH );
-//		(void)PutStringUTF16( ( MSG_X + 19 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_BLUE, pMsgSucceeded );
+		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSucceeded );
 	}else {
 		OS_TPrintf( "%s delete failed.\n", (char *)LCFG_TWL_HWINFO_SECURE_PATH );
-//		(void)PutStringUTF16( ( MSG_X + 19 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_RED, pMsgFailed );
+		kamiFontPrintfConsoleEx(CONSOLE_RED, pMsgFailed );
 		result = FALSE;
 	}
-//	DispMessage( 0, 0, TXT_COLOR_NULL, NULL );
-//	NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_WHITE,
-//								MSG_X * 8 , MSG_Y * 8, ( 32 - MSG_X ) * 8, ( MSG_Y + 4 ) * 8 );
 
 	return result;
 }

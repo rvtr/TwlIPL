@@ -15,8 +15,8 @@
   $Author$
  *---------------------------------------------------------------------------*/
 
-#ifndef	__HW_INFO_WRITER__
-#define	__HW_INFO_WRITER__
+#ifndef	__HWI_LIB__
+#define	__HWI_LIB__
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,11 +27,23 @@ extern "C" {
 
 // define data----------------------------------------------------------
 
-void HWInfoWriterInit( void );
-void HWInfoWriterMain( void );
+typedef enum 
+{
+	HWI_INIT_FAILURE,
+	HWI_INIT_SUCCESS_SIGNATURE_MODE,
+	HWI_INIT_SUCCESS_NO_SIGNATRUE_MODE
+} 
+HwiInitResult;
+
+HwiInitResult HWI_Init( void *(*pAlloc)( u32 ), void (*pFree)( void * ) );
+void HWI_ModifyLanguage( u8 region );
+BOOL HWI_WriteHWNormalInfoFile( void );
+BOOL HWI_WriteHWSecureInfoFile( u8 region );
+BOOL HWI_DeleteHWNormalInfoFile( void );
+BOOL HWI_DeleteHWSecureInfoFile( void );
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // __HW_INFO_WRITER__
+#endif  // __HWI_LIB__

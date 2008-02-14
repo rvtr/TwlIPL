@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #ifndef KAMI_FONT_H_
@@ -48,8 +48,8 @@ void kamiFontPrintfMain(s16 x, s16 y, u8 color, char *text, ...);
 void kamiFontFill(s16 x, s16 y, u8 color, s16 value, s32 length);
 void kamiFontFillChar(int lineNo, u8 color1, u8 color2);
 void kamiFontLoadScreenData(void);
-void kamiFontPrintfConsole(u8 color, char *text, ...);
-void kamiFontPrintfConsoleEx(u8 color, char *text, ...);
+void kamiFontPrintfConsole(u8 color, const char *text, ...);
+void kamiFontPrintfConsoleEx(u8 color, const char *text, ...);
 
 // 上画面コンソール文字列用パレット
 #define CONSOLE_ORANGE	0
