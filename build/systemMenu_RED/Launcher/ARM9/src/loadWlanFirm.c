@@ -168,6 +168,8 @@ BOOL StartupWireless(void)
 
     if (boot_policy == COLD_START)
     {
+        /* [TODO:] fwBuffer should be allocated from heap. */
+        
         flen = readFirmwareBinary((u8*)fwBuffer, sizeof(fwBuffer));
         
         if ( 0 > flen )
@@ -200,6 +202,9 @@ BOOL StartupWireless(void)
     err = NWM_LoadDevice(nwmcallback);
 
     /* osRecvMessage */
+    /*
+        [TODO:] 無線ロード処理の完了をメインルーチンへ通知するための仕組みを考える必要あり。
+     */
 
     return TRUE;
 }
@@ -207,4 +212,5 @@ BOOL StartupWireless(void)
 BOOL CleanupWireless(void)
 {
     /* [TBD]*/
+    return TRUE;
 }
