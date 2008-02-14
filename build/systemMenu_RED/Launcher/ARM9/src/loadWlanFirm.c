@@ -17,7 +17,12 @@
 #include <twl.h>
 #include <twl/nam.h>
 #include <twl/os/common/format_rom.h>
+#include <twl/lcfg.h>
+
 #include "loadWlanFirm.h"
+
+/* LCFGの無線ファームバージョンをタイトルＩＤとしてそのまま使う場合 */
+#define USE_LCFG_STRING 0
 
 
 static int   isNwmActive;
@@ -56,21 +61,42 @@ BOOL WirelessFirmwareDownloadStart(void)
   char path[256];
   FSFile  file[1];
 
-  char *title = "WFW0";
+  u8 title[4];
 
+#if( USE_LCFG_STRING == 0 )
+  char *title0 = "WFW0";
+  char *title1 = "WFW1";
+#endif
   u32 titleID_hi;
   u32 titleID_lo;
-
   u64 titleID = 0;
   s32 flen = 0;
   NWMRetCode err;
+  int i;
+
+
+  LCFG_THW_GetWirelessFirmTitleID_Lo( title );
+
+#if( USE_LCFG_STRING == 0 )
+  if( title[0] == 0 ) {
+    for( i = 0 ; i < 4 ; i++ ) {
+      title[i] = (u8)*title0++;
+    }
+  }
+  else {
+    for( i = 0 ; i < 4 ; i++ ) {
+      title[i] = (u8)*title1++;
+    }
+  }
+#endif
+
 
   titleID_hi = (( 3 /* Nintendo */ << 16) | 4 /* */ | 1 /* */);
 
-  titleID_lo =  ((u32)( *title++ ) & 0xff) << 24;
-  titleID_lo |= ((u32)( *title++ )& 0xff) << 16;
-  titleID_lo |= ((u32)( *title++ )& 0xff) << 8;
-  titleID_lo |= (u32)( *title++ ) & 0xff;
+  titleID_lo =  ((u32)( title[0] ) & 0xff) << 24;
+  titleID_lo |= ((u32)( title[1] )& 0xff) << 16;
+  titleID_lo |= ((u32)( title[2] )& 0xff) << 8;
+  titleID_lo |= (u32)( title[3] ) & 0xff;
 
   titleID = ((u64)(titleID_hi) << 32)  | (u64)titleID_lo;
   
