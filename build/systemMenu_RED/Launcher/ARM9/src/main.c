@@ -188,7 +188,7 @@ void TwlMain( void )
 
     // 無線ファームウェアを無線モジュールにダウンロードする。
 #if( WIRELESS_FIRM_LOADING == 1 )
-    if( FALSE == WirelessFirmwareDownloadStart() ) {
+    if( FALSE == StartupWireless() ) {
       OS_TPrintf( "ERROR: Wireless firmware download failed!\n" );
     }
 #endif
