@@ -422,17 +422,6 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
 			//NTR専用ROM
 			isTwlApp = FALSE;
 		}
-		/*
-		else if( pBootTitle->titleID != *((NAMTitleId *)(&header[0x230])) )
-		{
-			//TWL対応ROMで、ヘッダのtitleIDが起動指定されたIDと違う
-OS_TPrintf("RebootSystem failed: header TitleID error\n");
-OS_TPrintf("RebootSystem failed: selectedTitleID=%.16llx\n",pBootTitle->titleID);
-OS_TPrintf("RebootSystem failed: headerTitleID=%.16llx\n",*((NAMTitleId *)(&header[0x230])));
-            FS_CloseFile(file);
-            return;
-		}
-		*/
 		
         // 各領域を読み込む
         source  [region_header  ] = 0x00000000;
@@ -613,13 +602,24 @@ BOOL SYSM_IsLoadTitleFinished( void )
 }
 
 
-static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
+static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle )
 {
-	// [TODO:] NANDアプリの場合、NAM_CheckTitleLaunchRights()を呼んでチェック
-	// [TODO:] TWLアプリの場合、pBootTitle->titleIDとROMヘッダのtitleIDの一致確認を必ずする。
-	
-	// TWLアプリの場合、署名チェック、鍵の場合わけと署名の解読、ハッシュ値をヘッダに格納されているものと比較
-    // titleIDからアプリ種別を読み取る
+	OSTick start,prev;
+	start = OS_GetTick();
+	// NANDアプリの場合、NAM_CheckTitleLaunchRights()を呼んでチェック
+	if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_NAND )
+	{
+		if( NAM_OK != NAM_CheckTitleLaunchRights( pBootTitle->titleID ))
+		{
+			OS_TPrintf("Authenticate failed: NAM_CheckTitleLaunchRights failed.\n");
+			return AUTH_RESULT_AUTHENTICATE_FAILED;
+		}else
+		{
+			OS_TPrintf("Authenticate : NAM_CheckTitleLaunchRights succeed. %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
+		}
+	}
+
+	// TWLアプリの場合に行うヘッダ検証
     if( ( (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->platform_code ) != 0 )
     {
 		const u8 *key;
@@ -632,10 +632,21 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		u32 *module_addr[RELOCATE_INFO_NUM];
 		u32 module_size[RELOCATE_INFO_NUM];
 		u8 *hash_addr[RELOCATE_INFO_NUM];
-		OSTick tick;
-
-		tick = OS_GetTick();
 		
+		// TWLアプリの場合、pBootTitle->titleIDとROMヘッダのtitleIDの一致確認をする。
+		if( pBootTitle->titleID != (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->titleID )
+		{
+			//TWL対応ROMで、ヘッダのtitleIDが起動指定されたIDと違う
+			OS_TPrintf( "Authenticate failed: header TitleID error\n" );
+			OS_TPrintf( "Authenticate failed: selectedTitleID=%.16llx\n", pBootTitle->titleID );
+			OS_TPrintf( "Authenticate failed: headerTitleID=%.16llx\n", (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->titleID );
+			return AUTH_RESULT_AUTHENTICATE_FAILED;
+		}else
+		{
+			OS_TPrintf( "Authenticate : header TitleID check succeed.\n" );
+		}
+		
+		prev = OS_GetTick();
 	    prop = ((u16 *)&(pBootTitle->titleID))[2];
 	    prop = (u16)(prop & 0x1); // prop = 0:UserApp 1:SystemApp 2:ShopApp?
 	    keynum = (u8)( prop == 0 ? 2 : (prop == 1 ? 0 : 1) );// keynum = 0:SystemApp 1:ShopApp 2:UserApp
@@ -664,7 +675,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 			return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}else
 		{
-			OS_TPrintf("Authenticate : Sign check succeed.\n");
+			OS_TPrintf("Authenticate : Sign check succeed. %dms.\n", OS_TicksToMilliSeconds(OS_GetTick() - prev));
 		}
 	    
 		// それぞれARM9,7のFLXおよびLTDについてハッシュを計算してヘッダに格納されているハッシュと比較
@@ -686,6 +697,9 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		for( l=0; l<RELOCATE_INFO_NUM ; l++ )
 		{
 			static const char *str[4]={"ARM9_STATIC","ARM7_STATIC","ARM9_LTD_STATIC","ARM7_LTD_STATIC"};
+			// [TODO:]カードの場合先頭に暗号化オブジェクト処理後のデータが残っているのでARM9_STATICハッシュチェック失敗する
+			if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM && l == 0) continue;
+			prev = OS_GetTick();
 			// 一時的に格納位置をずらしている場合は、再配置情報からモジュール格納アドレスを取得
 			if( SYSMi_GetWork()->romRelocateInfo[l].src != NULL )
 			{
@@ -697,17 +711,15 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 			// 比較
 		    if(!SVC_CompareSHA1((const void *)hash_addr[l], (const void *)&calculated_hash))
 		    {
-				OS_TPrintf("Authenticate failed: rom header hash check failed.\n");
+				OS_TPrintf("Authenticate failed: %s module hash check failed.\n", str[l]);
 				return AUTH_RESULT_AUTHENTICATE_FAILED;
 			}else
 			{
-				OS_TPrintf("Authenticate : %s module hash check succeed.\n", str[l]);
+				OS_TPrintf("Authenticate : %s module hash check succeed. %dms.\n", str[l], OS_TicksToMilliSeconds(OS_GetTick() - prev));
 			}
 		}
-		
-		tick = OS_GetTick() - tick;
-		OS_TPrintf("Authenticate : total %d msecs.\n", OS_TicksToMilliSeconds(tick) );
 	}
+	OS_TPrintf("Authenticate : total %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
 	return AUTH_RESULT_SUCCEEDED;
 }
 
@@ -748,7 +760,7 @@ static void SYSMi_AuthenticateTitleThreadFunc( TitleProperty *pBootTitle )
 	}
 	
 	// ※ROMヘッダ認証
-	s_authResult = SYSMi_AuthenticateTWLHeader( pBootTitle );
+	s_authResult = SYSMi_AuthenticateHeader( pBootTitle );
 }
 
 
