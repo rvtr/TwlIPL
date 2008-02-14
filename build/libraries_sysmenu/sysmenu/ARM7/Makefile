@@ -35,8 +35,8 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 INSTALL_TARGETS		=	$(TARGETS)
 INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
 
-LINCLUDES			=	$(SYSMENU_ROOT)/build/libraries_sysmenu/sysmenu/common/include
-
+LINCLUDES			=	$(SYSMENU_ROOT)/build/libraries_sysmenu/sysmenu/common/include \
+						$(ROOT)/build/libraries/spi/ARM7/pm/include \
 
 #----------------------------------------------------------------------------
 

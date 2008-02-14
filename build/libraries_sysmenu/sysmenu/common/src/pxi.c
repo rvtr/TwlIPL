@@ -19,6 +19,10 @@
 #include <twl/mcu.h>
 #include <sysmenu.h>
 #include "internal_api.h"
+#ifdef SDK_ARM7
+#include <pm_pmic.h>
+#endif // SDK_ARM7
+
 
 // define data-----------------------------------------------------------------
 #define	SYSM_PXI_COMM_STAT_REQ		0
