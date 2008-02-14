@@ -16,13 +16,37 @@
 # $Author: 
 #----------------------------------------------------------------------------
 
-SUBMAKES	= Makefile0 Makefile1	
+
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+MY_FIRM_ROOT	=	$(TWLWIRELESS_ROOT)/binfile
+
+MY_FIRM_ROOT_CYG =	$(call eupath,$(MY_FIRM_ROOT))
+
+
+MY_TITLE		=	WFW0
+MY_FIRM			=	$(MY_FIRM_ROOT_CYG)/nwm_firm.bin
+
+#----------------------------------------------------------------------------
+MY_SRL			=	$(MY_TITLE).srl
+MY_TAD			=	$(MY_TITLE).tad
+ATTACH_HEADER_COMMAND	=	$(TWL_IPL_RED_ROOT)/tools/bin/attach_dummyromheader.exe
+
+INSTALL_TARGETS		=	$(MY_TAD)
+INSTALL_DIR		=	$(TWLSDK_ROOT)/build/tools/TwlNMenu/data
+
+LDIRT_CLEAN		=	$(MY_SRL) $(MY_TAD)
 
 #----------------------------------------------------------------------------
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
+do-build : $(MY_TAD)
+
+$(MY_SRL): $(MY_FIRM)
+	$(ATTACH_HEADER_COMMAND) -s -l -i $(call empath,$<) -c $(MY_TITLE) -o $@
+
+$(MY_TAD): $(MY_SRL)
+	$(MAKETAD) -s $< $(MAKETAD_FLAGS) -o $@
 
 #===== End of Makefile =====
