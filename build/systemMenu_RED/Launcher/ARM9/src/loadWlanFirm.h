@@ -10,9 +10,9 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Date:: $
-  $Rev: $
-  $Author: $
+  $Date:: 2008-02-15#$
+  $Rev: 677 $
+  $Author: sato_masaki $
  *---------------------------------------------------------------------------*/
 
 #ifndef	__LAUNCHER_WIRELESS_H__

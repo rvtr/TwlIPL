@@ -10,9 +10,9 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Date:: $
-  $Rev: $
-  $Author: $
+  $Date:: 2008-02-15#$
+  $Rev: 677 $
+  $Author: sato_masaki $
  *---------------------------------------------------------------------------*/
 #include <twl.h>
 #include <twl/nam.h>
@@ -33,9 +33,11 @@
 #define USE_ACSIGN                   0 /* for experimental purpose */
 #define SIGN_LENGTH                  128
 
+#define FWBUFFER_SIZE                0x40000
+#define SIGNHEAP_SIZE                0x01000
+
 static u32   nwmBuf[NWM_SYSTEM_BUF_SIZE/sizeof(u32)] ATTRIBUTE_ALIGN(32);
-static u32   fwBuffer[256*1024/sizeof(u32)]  ATTRIBUTE_ALIGN(32);
-static u8    signHeap[0x1000];
+static u8*   fwBuffer = 0;
 #if (MEASURE_WIRELESS_INITTIME == 1)
 static OSTick startTick;
 #endif
@@ -56,6 +58,7 @@ static void nwmcallback(void* arg)
             err = NWM_UnloadDevice(nwmcallback);
         } else {
             OS_TPrintf("Wlan firm:Load Device Timeout Error!\n");
+            SYSM_Free( fwBuffer );
         }
         break;
     case NWM_APIID_UNLOAD_DEVICE:
@@ -64,10 +67,12 @@ static void nwmcallback(void* arg)
         OS_TPrintf("Wlan firm:LoadTime=%dmsec\n", OS_TicksToMilliSeconds(OS_GetTick() - startTick));
 #endif
         OS_TPrintf("Wlan firm:Wlan firmware has been installed successfully!\n");
+        SYSM_Free( fwBuffer );
         /* [TODO:] osSendMessage */
         break;
     default:
         OS_TWarning("Wlan firm:Error(invalid apiid=0x%04X)!\n", cb->apiid);
+        SYSM_Free( fwBuffer );
         break;
     }
 
@@ -159,6 +164,7 @@ BOOL verifyWlanfirmSignature(u8* buffer, u32 length)
     SVCSHA1Context sctx;
     SVCSignHeapContext rctx;
     int i;
+    u8*   signHeap;
 #if (MEASURE_VERIFY_SIGN_TIME == 1)
     OSTick vstart = OS_GetTick();
 #endif
@@ -190,7 +196,8 @@ BOOL verifyWlanfirmSignature(u8* buffer, u32 length)
 #if ( USE_ACSIGN == 1)
     ACSign_SetAllocFunc( SYSM_Alloc, SYSM_Free );
 #else
-    SVC_InitSignHeap( &rctx, signHeap, sizeof(signHeap));
+    signHeap = SYSM_Alloc( SIGNHEAP_SIZE );
+    SVC_InitSignHeap( &rctx, signHeap, SIGNHEAP_SIZE);
 #endif
     
     MI_CpuClear8( signDigest, 0x80 );
@@ -200,9 +207,12 @@ BOOL verifyWlanfirmSignature(u8* buffer, u32 length)
 #else
     if (FALSE == SVC_DecryptSign( &rctx, signDigest, (const void*)pSign, (const void*)pPubkey ))
     {
+        SYSM_Free(signHeap);
         return FALSE;
     }
 #endif
+
+    SYSM_Free(signHeap);
 
     OS_TPrintf("Decrypted digest: ");
     for (i = 0; i < SVC_SHA1_DIGEST_SIZE; i++ )
@@ -237,22 +247,25 @@ BOOL InstallWirelessFirmware(void)
         return FALSE;
     }
 
-    /* [TODO:] fwBuffer should be allocated from heap. */
+    /* fwBuffer should be allocated from heap. */
+    fwBuffer = SYSM_Alloc( FWBUFFER_SIZE );
 
-    flen = readFirmwareBinary((u8*)fwBuffer, sizeof(fwBuffer));
+    flen = readFirmwareBinary(fwBuffer, FWBUFFER_SIZE);
 
     if ( 0 > flen )
     {
         OS_TWarning("Couldn't read wlan firmware.\n");
+        SYSM_Free( fwBuffer );
         return FALSE;
     }
 
     /*
             [TODO:] check signature data
      */
-    if (FALSE == verifyWlanfirmSignature((u8*)fwBuffer, (u32)flen))
+    if (FALSE == verifyWlanfirmSignature(fwBuffer, (u32)flen))
     {
         OS_TWarning("Illegal Wlan Firmware has been loaded!\n");
+        SYSM_Free( fwBuffer );
         return FALSE;
     }
 
