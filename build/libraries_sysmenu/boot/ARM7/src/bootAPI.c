@@ -18,8 +18,6 @@
 #include <twl.h>
 #include <twl/mcu.h>
 #include <twl/cdc.h>
-#include <symbols.h>
-#include <twl/rtfs.h>
 #include <sysmenu.h>
 #include "reboot.h"
 
