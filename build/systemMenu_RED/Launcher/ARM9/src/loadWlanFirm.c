@@ -25,19 +25,23 @@
 
 /* LCFGの無線ファームバージョンをタイトルＩＤとしてそのまま使う場合 */
 #define USE_LCFG_STRING              0
+/* 無線FWダウンロード処理にかかる時間を計測する。 */
+#define MEASURE_WIRELESS_INITTIME    1
+#define MEASURE_VERIFY_SIGN_TIME     1
 
 #define WLANFIRM_PUBKEY_INDEX        1
-
-#define MEASURE_WIRELESS_INITTIME    1
+#define USE_ACSIGN                   0 /* for experimental purpose */
+#define SIGN_LENGTH                  128
 
 static u32   nwmBuf[NWM_SYSTEM_BUF_SIZE/sizeof(u32)] ATTRIBUTE_ALIGN(32);
 static u32   fwBuffer[256*1024/sizeof(u32)]  ATTRIBUTE_ALIGN(32);
+static u8    signHeap[0x1000];
 #if (MEASURE_WIRELESS_INITTIME == 1)
 static OSTick startTick;
 #endif
 
 static s32   readFirmwareBinary(u8 *buffer, s32 bufSize);
-static BOOL  verifyWlanfirmSignature(u8* buffer);
+static BOOL  verifyWlanfirmSignature(u8* buffer, u32 length);
 
 
 static void nwmcallback(void* arg)
@@ -143,20 +147,80 @@ s32 readFirmwareBinary(u8 *buffer, s32 bufSize)
     return flen;
 }
 
-BOOL verifyWlanfirmSignature(u8* buffer)
+BOOL verifyWlanfirmSignature(u8* buffer, u32 length)
 {
     NWMFirmHeader *hdr = (NWMFirmHeader*)buffer;
     u8 *pPubkey;
-
+    u8 *pSign;
+    u8 *txtVector[2];
+    u32 txtlenVector[2];
+    u8 txtDigest[SVC_SHA1_DIGEST_SIZE];
+    u8 signDigest[0x80];
+    SVCSHA1Context sctx;
+    SVCSignHeapContext rctx;
+    int i;
+#if (MEASURE_VERIFY_SIGN_TIME == 1)
+    OSTick vstart = OS_GetTick();
+#endif
+    
     pPubkey = OSi_GetFromFirmAddr()->rsa_pubkey[WLANFIRM_PUBKEY_INDEX];
-//    OS_TWarning("Pubkey addr %x\n", pPubkey);
+    pSign = (u8*)((u32)buffer + (u32)hdr->rsv);
+
+    txtVector[0] = buffer;
+    txtlenVector[0] = (u32)hdr->rsv; /* 署名の直前までのLength */
+    txtVector[1] = (u8*)(txtVector[0] + txtlenVector[0] + (u32)SIGN_LENGTH);
+    txtlenVector[1] = length - txtlenVector[0] - (u32)SIGN_LENGTH;
 
     /* calculate SHA-1 digest */
+    SVC_SHA1Init( &sctx );
+    for (i = 0; i < 2; i++ )
+    {
+        SVC_SHA1Update( &sctx, (const void*)txtVector[i],txtlenVector[i]);
+    }
+    SVC_SHA1GetHash( &sctx, txtDigest );
+
+    OS_TPrintf("Wlan Firm digest: ");
+    for (i = 0; i < SVC_SHA1_DIGEST_SIZE; i++ )
+    {
+        OS_TPrintf("%02X ", txtDigest[i]);
+    }
+    OS_TPrintf("\n");
 
     /* decrypt according to RSA security */
+#if ( USE_ACSIGN == 1)
+    ACSign_SetAllocFunc( SYSM_Alloc, SYSM_Free );
+#else
+    SVC_InitSignHeap( &rctx, signHeap, sizeof(signHeap));
+#endif
+    
+    MI_CpuClear8( signDigest, 0x80 );
+
+#if ( USE_ACSIGN == 1)
+    ACSign_Decrypto(signDigest, (void*)pSign, (void*)pPubkey);
+#else
+    if (FALSE == SVC_DecryptSign( &rctx, signDigest, (const void*)pSign, (const void*)pPubkey ))
+    {
+        return FALSE;
+    }
+#endif
+
+    OS_TPrintf("Decrypted digest: ");
+    for (i = 0; i < SVC_SHA1_DIGEST_SIZE; i++ )
+    {
+        OS_TPrintf("%02X ", signDigest[i]);
+    }
+    OS_TPrintf("\n");
 
     /* verify digest */
+    if (FALSE == SVC_CompareSHA1( (const void*)txtDigest, (const void*)signDigest ))
+    {
+        return FALSE;
+    }
 
+#if (MEASURE_VERIFY_SIGN_TIME == 1)
+    OS_TPrintf("Wlan firm:Verify signature Time=%dmsec\n", OS_TicksToMilliSeconds(OS_GetTick() - vstart));
+#endif
+    
     return TRUE;
 
 }
@@ -186,6 +250,11 @@ BOOL InstallWirelessFirmware(void)
     /*
             [TODO:] check signature data
      */
+    if (FALSE == verifyWlanfirmSignature((u8*)fwBuffer, (u32)flen))
+    {
+        OS_TWarning("Illegal Wlan Firmware has been loaded!\n");
+        return FALSE;
+    }
 
     /*************************************************************/
 
