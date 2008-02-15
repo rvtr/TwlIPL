@@ -539,6 +539,25 @@ void HOTSW_LoadStaticModule(void)
 	                             	 	   (u32 *)s_cbData.arm7Ltd,
 	                                          	  s_cbData.pBootSegBuf->rh.s.sub_ltd_size);
 
+
+		// セキュア領域先頭2K分のハッシュ値を求めて、Work領域にコピー
+        {
+			u8		sha1data[DIGEST_SIZE_SHA1];
+		    SVCHMACSHA1Context hash;
+
+    		// クリア
+			MI_CpuClear8(sha1data, sizeof(sha1data));
+    
+    		// ハッシュ初期化
+			SVC_HMACSHA1Init( &hash, s_digestDefaultKey, sizeof(s_digestDefaultKey) );
+
+    		// セキュア領域先頭2kb分UpDate
+			SVC_HMACSHA1Update( &hash, s_cbData.pSecureSegBuf, ENCRYPT_DEF_SIZE );
+
+			// ハッシュコンテキストをWork領域にコピー
+		    MI_CpuCopy8( &hash, &SYSMi_GetWork2()->hmac_sha1_context, sizeof(SVCHMACSHA1Context) );
+        }
+        
         // Arm9常駐モジュール Hash値のチェック
         if(!CheckArm9HashValue()){
 			OS_PutString("×Arm9 Static Module Hash Check Error...\n");
