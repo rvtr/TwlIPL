@@ -20,47 +20,51 @@
 #include <twl/lcfg.h>
 
 #include <firm.h>
-
+#include <sysmenu.h>
 #include "loadWlanFirm.h"
 
 /* LCFGの無線ファームバージョンをタイトルＩＤとしてそのまま使う場合 */
-#define USE_LCFG_STRING          0
+#define USE_LCFG_STRING              0
 
-#define WLANFIRM_PUBKEY_INDEX    1
+#define WLANFIRM_PUBKEY_INDEX        1
 
-static int   isNwmActive;
+#define MEASURE_WIRELESS_INITTIME    1
+
 static u32   nwmBuf[NWM_SYSTEM_BUF_SIZE/sizeof(u32)] ATTRIBUTE_ALIGN(32);
 static u32   fwBuffer[256*1024/sizeof(u32)]  ATTRIBUTE_ALIGN(32);
+#if (MEASURE_WIRELESS_INITTIME == 1)
+static OSTick startTick;
+#endif
 
 static s32   readFirmwareBinary(u8 *buffer, s32 bufSize);
 static BOOL  verifyWlanfirmSignature(u8* buffer);
 
-/* [TODO:] HotStart/ColdStartを判別するためのもの。ランチャーでの定義ができたら削除？ */
-typedef enum {
-    COLD_START,
-    HOT_START
-} BOOT_POLICY;
 
 static void nwmcallback(void* arg)
 {
-  NWMCallback *cb = (NWMCallback*)arg;
-  switch (cb->apiid)
+    NWMCallback *cb = (NWMCallback*)arg;
+    switch (cb->apiid)
     {
     case NWM_APIID_LOAD_DEVICE:
-      if (cb->retcode == NWM_RETCODE_SUCCESS) {
-	isNwmActive = 1;
-	/* osSendMessage */
-	OS_TPrintf("Wlan firm:Load Device success!\n");
-      } else {
-	OS_TPrintf("Wlan firm:Load Device Timeout Error!\n");
-      }
-      break;
+        if (cb->retcode == NWM_RETCODE_SUCCESS) {
+            NWMRetCode err;
+            OS_TPrintf("Wlan firm:Load Device success!\n");
+            err = NWM_UnloadDevice(nwmcallback);
+        } else {
+            OS_TPrintf("Wlan firm:Load Device Timeout Error!\n");
+        }
+        break;
     case NWM_APIID_UNLOAD_DEVICE:
-	OS_TPrintf("Wlan firm:Unload Device success!\n");
-      break;
+        OS_TPrintf("Wlan firm:Unload Device success!\n");
+#if (MEASURE_WIRELESS_INITTIME == 1)
+        OS_TPrintf("Wlan firm:LoadTime=%dmsec\n", OS_TicksToMilliSeconds(OS_GetTick() - startTick));
+#endif
+        OS_TPrintf("Wlan firm:Wlan firmware has been installed successfully!\n");
+        /* [TODO:] osSendMessage */
+        break;
     default:
-	OS_TPrintf("Wlan firm:Error(apiid=default)!\n");
-      break;
+        OS_TWarning("Wlan firm:Error(invalid apiid=0x%04X)!\n", cb->apiid);
+        break;
     }
 
 }
@@ -157,48 +161,45 @@ BOOL verifyWlanfirmSignature(u8* buffer)
 
 }
 
-BOOL StartupWireless(void)
+BOOL InstallWirelessFirmware(void)
 {
     s32 flen = 0;
     NWMRetCode err;
-    u8 boot_policy = COLD_START;
 
-    /* [TODO:] HotStart/ColdStartのチェック */
-    
-
-    if (boot_policy == COLD_START)
+    /* ColdStartのチェック(HotStartでは呼ばれない筈だが) */
+    if (TRUE == SYSMi_GetWork()->flags.common.isHotStart)
     {
-        /* [TODO:] fwBuffer should be allocated from heap. */
-        
-        flen = readFirmwareBinary((u8*)fwBuffer, sizeof(fwBuffer));
-        
-        if ( 0 > flen )
-        {
-            OS_TWarning("Couldn't read wlan firmware.\n");
-            return FALSE;
-        }
-
-        /*
-            [TODO:] check signature data
-         */
-
+        OS_TWarning("It isn't Cold start.\n");
+        return FALSE;
     }
 
-    isNwmActive  = 0;
-    
+    /* [TODO:] fwBuffer should be allocated from heap. */
+
+    flen = readFirmwareBinary((u8*)fwBuffer, sizeof(fwBuffer));
+
+    if ( 0 > flen )
+    {
+        OS_TWarning("Couldn't read wlan firmware.\n");
+        return FALSE;
+    }
+
+    /*
+            [TODO:] check signature data
+     */
+
     /*************************************************************/
 
     NWM_Init(nwmBuf, sizeof(nwmBuf), 3); /* 3 -> DMA no. */
 
     /* In the case of cold start, should register appropriate firmware. */
-    if (boot_policy == COLD_START)
+    if ( 0 < flen )
     {
-        if ( 0 < flen )
-        {
-            (void)NWMi_InstallFirmware(fwBuffer, (u32)flen);
-        }
+        (void)NWMi_InstallFirmware(fwBuffer, (u32)flen);
     }
 
+#if (MEASURE_WIRELESS_INITTIME == 1)
+    startTick = OS_GetTick();
+#endif
     err = NWM_LoadDevice(nwmcallback);
 
     /* osRecvMessage */
@@ -209,8 +210,3 @@ BOOL StartupWireless(void)
     return TRUE;
 }
 
-BOOL CleanupWireless(void)
-{
-    /* [TBD]*/
-    return TRUE;
-}

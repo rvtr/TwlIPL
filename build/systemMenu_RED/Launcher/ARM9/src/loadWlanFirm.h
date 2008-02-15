@@ -24,8 +24,7 @@
 extern "C" {
 #endif
 
-BOOL StartupWireless(void);
-BOOL CleanupWireless(void);
+BOOL InstallWirelessFirmware(void);
 
 #ifdef __cplusplus
 }
