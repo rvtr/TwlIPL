@@ -152,7 +152,7 @@ typedef struct SDKBootCheckInfo{
 #define SYSMi_GetLauncherParamAddr()			( (LauncherParam *)HW_PARAM_LAUNCH_PARAM )
 
 // SYSM共有ワークの取得
-#define SYSMi_GetWork()						( (SYSM_work *)HW_RED_RESERVED )
+#define SYSMi_GetWork()						( (SYSM_work *)HW_TWL_MAIN_MEM_SHARED )
 
 // SDKブートチェック（アプリ起動時にカードIDをセットする必要がある。）
 #define SYSMi_GetSDKBootCheckInfo()			( (SDKBootCheckInfo *)HW_BOOT_CHECK_INFO_BUF )
