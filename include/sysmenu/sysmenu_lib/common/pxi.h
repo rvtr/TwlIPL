@@ -27,7 +27,8 @@ extern "C" {
 //----------------------------------------------------------------------
 //　PXIコマンド
 //----------------------------------------------------------------------
-#define SYSMENU_PXI_FIFO_TAG				PXI_FIFO_TAG_USER_1
+#define SYSMENU_PXI_FIFO_TAG				(PXI_MAX_FIFO_TAG - 1)
+#define PXI_FIFO_TAG_MCUTEST				(PXI_MAX_FIFO_TAG - 2)
 
 typedef enum SYSMPXICommand {
 	SYSM_PXI_COMM_BL_BRIGHT = 0,
@@ -41,7 +42,11 @@ typedef enum SYSMPXICommand {
  *---------------------------------------------------------------------------*/
 
 // PXI初期化
+#ifdef SDK_ARM9
 void SYSM_InitPXI( void );
+#else // SDK_ARM7
+void SYSM_InitPXI( u32 mcu_prio );
+#endif // SDK_ARM7
 
 // PXIコマンド送信
 BOOL SYSMi_TrySendPXICommand( SYSMPXICommand cmd, u16 data );
@@ -49,7 +54,6 @@ BOOL SYSMi_SendPXICommand( SYSMPXICommand command, u16 data );
 
 // PXIコマンド受信
 void SYSMi_PXIFifoRecvCallback( PXIFifoTag tag, u32 data, BOOL err );
-
 
 #ifdef __cplusplus
 }

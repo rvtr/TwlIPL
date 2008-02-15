@@ -17,6 +17,7 @@
 
 #include <twl.h>
 #include <sysmenu.h>
+#include <sysmenu/mcu.h>
 #include <spi.h>
 #include "internal_api.h"
 
@@ -46,7 +47,17 @@ void SYSM_SetBackLightBrightness( u8 brightness )
 	if( brightness > LCFG_TWL_BACKLIGHT_LEVEL_MAX ) {
 		OS_Panic( "Backlight brightness over : %d\n", brightness );
 	}
-	( void )SYSMi_SendPXICommand( SYSM_PXI_COMM_BL_BRIGHT, brightness );
+#ifdef SDK_SUPPORT_PMIC_2
+	if ( SYSMi_GetMcuVersion() <= 1 )
+	{
+		( void )PMi_WriteRegister( REG_PMIC_BL_BRT_B_ADDR, brightness );
+	}
+	else
+#endif // SDK_SUPPORT_PMIC_2
+	{
+		( void )SYSM_WriteMcuRegisterAsync( MCU_REG_BL_ADDR, brightness, NULL, NULL );
+	}
+//	( void )SYSMi_SendPXICommand( SYSM_PXI_COMM_BL_BRIGHT, brightness );
 	
 	LCFG_TSD_SetBacklightBrightness( brightness );
 	

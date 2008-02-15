@@ -66,6 +66,7 @@ ifeq	($(CODEGEN_PROC),ARM9)
 SYSMENU_LIBS	?=	\
 					liblcfg$(TWL_LIBSUFFIX).a \
 					libsysmenu$(TWL_LIBSUFFIX).a \
+					libsysmmcu$(TWL_LIBSUFFIX).a \
 					libmbloader$(TWL_LIBSUFFIX).a \
 					libacsign$(TWL_LIBSUFFIX).a \
 					libboot$(TWL_LIBSUFFIX).a \
@@ -74,9 +75,10 @@ else #	($(CODEGEN_PROC),ARM7)
 
 SYSMENU_LIBS	?=	\
 					libsysmenu_sp$(TWL_LIBSUFFIX).a \
+					libsysmmcu_sp$(TWL_LIBSUFFIX).a \
 					libmbloader_sp$(TWL_LIBSUFFIX).a \
 					libboot_sp$(TWL_LIBSUFFIX).a \
-					libhotsw_sp$(TWL_LIBSUFFIX).a
+					libhotsw_sp$(TWL_LIBSUFFIX).a \
 
 endif
 

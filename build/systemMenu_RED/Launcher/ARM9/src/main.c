@@ -91,7 +91,6 @@ void TwlMain( void )
     SYSM_Init( Alloc, Free );                       // OS_Initの前でコールする必要あり。
     OS_Init();
     SYSM_SetArena();                                // OS_Initの後でコールする必要あり。
-    SYSM_InitPXI();                                 // OS_Initの後でコールする必要あり。
 
     // OS初期化------------------------
     OS_InitTick();
@@ -99,6 +98,8 @@ void TwlMain( void )
 
     (void)OS_EnableIrq();
     (void)OS_EnableInterrupts();
+
+    SYSM_InitPXI();                                 // 割り込み許可後にコールする必要あり。
 
     FS_Init( FS_DMA_NOT_USE );
 

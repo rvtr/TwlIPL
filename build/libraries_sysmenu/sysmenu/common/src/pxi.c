@@ -18,6 +18,7 @@
 #include <twl.h>
 #include <twl/mcu.h>
 #include <sysmenu.h>
+#include <sysmenu/mcu.h>
 #include "internal_api.h"
 #ifdef SDK_ARM7
 #include <pm_pmic.h>
@@ -44,11 +45,14 @@ typedef union SYSMPXIPacket {
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
 static volatile BOOL s_sending[SYSM_PXI_COMM_NUM];
-static u8 mcu_ver;
 // const data------------------------------------------------------------------
 
 // PXI初期化
+#ifdef SDK_ARM9
 void SYSM_InitPXI( void )
+#else // SDK_ARM7
+void SYSM_InitPXI( u32 mcu_prio )
+#endif // SDK_ARM7
 {
     static BOOL isInitialized;
     int i;
@@ -59,14 +63,17 @@ void SYSM_InitPXI( void )
     }
     isInitialized = TRUE;
 
+    // マイコンPXI初期化とマイコンバージョン取得
+#ifdef SDK_ARM9
+    SYSM_InitMcuPxi();
+#else // SDK_ARM7
+    SYSM_InitMcuPxi( mcu_prio );
+#endif // SDK_ARM7
+
     for (i=0; i<SYSM_PXI_COMM_NUM; i++)
     {
         s_sending[i] = FALSE;
     }
-
-#if defined(SDK_ARM7) && defined(SDK_SUPPORT_PMIC_2)
-    mcu_ver = (u8)(MCU_ReadRegister( MCU_REG_VER_INFO_ADDR ) >> MCU_REG_VER_INFO_VERSION_SHIFT);
-#endif // SDK_ARM7 && SDK_SUPPORT_PMIC_2
 
     //---- setting PXI
     PXI_Init();
@@ -141,7 +148,7 @@ void SYSMi_PXIFifoRecvCallback( PXIFifoTag tag, u32 data, BOOL err )
 	{
 		case SYSM_PXI_COMM_BL_BRIGHT:
 #ifdef SDK_SUPPORT_PMIC_2
-			if ( mcu_ver <= 1 )
+			if ( SYSMi_GetMcuVersion() <= 1 )
 			{
 				PMi_SetRegister( REG_PMIC_BL_BRT_B_ADDR, (u8)packet.data );
 			}

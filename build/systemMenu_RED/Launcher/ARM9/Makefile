@@ -22,6 +22,8 @@ SUBDIRS					=	\
 							../../../components/hyena.TWL
 #							../../../libraries_sysmenu/reloc_info \
 #							../../../libraries_sysmenu/boot \
+#							../../../libraries_sysmenu/mcu \
+#							$(TWLSDK_ROOT)/build/libraries/reboot \
 
 #----------------------------------------------------------------------------
 

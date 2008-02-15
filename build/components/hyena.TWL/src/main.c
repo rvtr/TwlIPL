@@ -36,6 +36,7 @@
 #include    <twl/mcu.h>
 #include    <twl/hw/common/mmap_wramEnv.h>
 #include    <sysmenu.h>
+#include    <sysmenu/mcu.h>
 #include    <firm/memorymap.h>
 #include    "nvram_sp.h"
 #include    "pm_pmic.h"
@@ -50,6 +51,7 @@
 /* Priorities of each threads */
 #define THREAD_PRIO_SPI     2
 #define THREAD_PRIO_MCU     4 // 暫定
+#define THREAD_PRIO_SYSMMCU 6
 #define THREAD_PRIO_SND     6
 #define THREAD_PRIO_FATFS   8
 #define THREAD_PRIO_RTC     12
@@ -121,9 +123,6 @@ TwlSpMain(void)
     OS_InitTick();
     PrintDebugInfo();
 
-    // PXIコールバックの設定
-    SYSM_InitPXI();
-
     // ランチャーパラメター取得（Cold/Hotスタート判定含む）
     ReadLauncherParameter();
 
@@ -157,6 +156,9 @@ TwlSpMain(void)
     (void)GX_VBlankIntr(TRUE);
     (void)OS_EnableIrq();
     (void)OS_EnableInterrupts();
+
+    // PXIコールバックの設定
+    SYSM_InitPXI(THREAD_PRIO_SYSMMCU);
 
     // ファイルシステム初期化
     FS_Init(FS_DMA_NOT_USE);
