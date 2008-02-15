@@ -29,6 +29,7 @@
 
 #define SIGN_HEAP_ADDR	0x023c0000	// 署名計算のためのヒープ領域開始アドレス
 #define SIGN_HEAP_SIZE	0x1000		// 署名計算のためのヒープサイズ
+#define ARM9_ENCRYPT_DEF_SIZE	0x800	// ARM9FLXの先頭暗号化部分のサイズ
 
 #define	DIGEST_HASH_BLOCK_SIZE_SHA1					(512/8)
 #define ROM_HEADER_HASH_CALC_DATA_LEN	0xe00 // ROMヘッダのハッシュ計算する部分の長さ
@@ -696,8 +697,6 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle )
 		for( l=0; l<RELOCATE_INFO_NUM ; l++ )
 		{
 			static const char *str[4]={"ARM9_STATIC","ARM7_STATIC","ARM9_LTD_STATIC","ARM7_LTD_STATIC"};
-			// [TODO:]カードの場合先頭に暗号化オブジェクト処理後のデータが残っているのでARM9_STATICハッシュチェック失敗する
-			if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM && l == 0) continue;
 			prev = OS_GetTick();
 			// 一時的に格納位置をずらしている場合は、再配置情報からモジュール格納アドレスを取得
 			if( SYSMi_GetWork()->romRelocateInfo[l].src != NULL )
@@ -705,8 +704,21 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle )
 				module_addr[l] = (u32 *)SYSMi_GetWork()->romRelocateInfo[l].src;
 			}
 			// ハッシュ計算
-			SVC_CalcHMACSHA1( &calculated_hash, (const void*)module_addr[l], module_size[l],
-							 (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
+			if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM && l == 0)
+			{
+				// [TODO:]カードの場合のARM9_STATICハッシュチェック
+				// カード読み込み時、work2に暗号化オブジェクト部分のハッシュ計算済みのコンテキストが保存されるので
+				// それを用いてARM9_STATIC残りの部分を計算
+				continue;
+				SVC_HMACSHA1Update( &(SYSMi_GetWork2()->hmac_sha1_context),
+									(const void*)(module_addr[l] + ARM9_ENCRYPT_DEF_SIZE),
+									(module_size[l] - ARM9_ENCRYPT_DEF_SIZE) );
+				SVC_HMACSHA1GetHash( &(SYSMi_GetWork2()->hmac_sha1_context), &calculated_hash );
+			}else
+			{
+				SVC_CalcHMACSHA1( &calculated_hash, (const void*)module_addr[l], module_size[l],
+								 (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
+			}
 			// 比較
 		    if(!SVC_CompareSHA1((const void *)hash_addr[l], (const void *)&calculated_hash))
 		    {

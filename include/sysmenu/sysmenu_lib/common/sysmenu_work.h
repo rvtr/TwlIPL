@@ -127,6 +127,10 @@ typedef struct SYSM_work {
 	u8					rtcStatus;
 }SYSM_work;
 
+typedef struct SYSM_work2 {
+	SVCHMACSHA1Context hmac_sha1_context;
+}SYSM_work2;
+
 // NTRにおける仕様を継承する必要のあるワーク
 typedef struct SDKBootCheckInfo{
 	u32 nCardID;					// NORMALカードID				// SDKではここだけ見ているっぽい　※最終的にはランチャーでここにカードIDをセットする
@@ -153,6 +157,7 @@ typedef struct SDKBootCheckInfo{
 
 // SYSM共有ワークの取得
 #define SYSMi_GetWork()						( (SYSM_work *)HW_TWL_MAIN_MEM_SHARED )
+#define SYSMi_GetWork2()					( (SYSM_work2 *)HW_MAIN_MEM_SHARED )
 
 // SDKブートチェック（アプリ起動時にカードIDをセットする必要がある。）
 #define SYSMi_GetSDKBootCheckInfo()			( (SDKBootCheckInfo *)HW_BOOT_CHECK_INFO_BUF )
