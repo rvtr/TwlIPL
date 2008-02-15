@@ -30,6 +30,7 @@
 /* –³üFW”FØˆ—‚É‚©‚©‚éŠÔ‚ğŒv‘ª‚·‚éB */
 #define MEASURE_VERIFY_SIGN_TIME     1
 
+/* Index of public key for WLAN firm */
 #define WLANFIRM_PUBKEY_INDEX        1
 #define USE_ACSIGN                   0 /* for experimental purpose */
 #define SIGN_LENGTH                  128
