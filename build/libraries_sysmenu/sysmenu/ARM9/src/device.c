@@ -45,12 +45,13 @@ u32 PMi_WriteRegisterAsync(u16 registerAddr, u16 data, PMCallback callback, void
 void SYSM_SetBackLightBrightness( u8 brightness )
 {
 	if( brightness > LCFG_TWL_BACKLIGHT_LEVEL_MAX ) {
-		OS_Panic( "Backlight brightness over : %d\n", brightness );
+		OS_TPrintf( "Backlight brightness over! Change brightenss forcibly : %d -> %d\n", brightness, LCFG_TWL_BACKLIGHT_LEVEL_MAX );
+		brightness = LCFG_TWL_BACKLIGHT_LEVEL_MAX;
 	}
 #ifdef SDK_SUPPORT_PMIC_2
 	if ( SYSMi_GetMcuVersion() <= 1 )
 	{
-		( void )PMi_WriteRegister( REG_PMIC_BL_BRT_B_ADDR, brightness );
+		( void )PMi_WriteRegister( REG_PMIC_BL_BRT_B_ADDR, (u8)(brightness * 2) );
 	}
 	else
 #endif // SDK_SUPPORT_PMIC_2
