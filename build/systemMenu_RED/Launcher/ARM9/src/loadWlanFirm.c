@@ -260,7 +260,7 @@ BOOL InstallWirelessFirmware(void)
     }
 
     /*
-            [TODO:] check signature data
+            check signature data
      */
     if (FALSE == verifyWlanfirmSignature(fwBuffer, (u32)flen))
     {
@@ -273,7 +273,6 @@ BOOL InstallWirelessFirmware(void)
 
     NWM_Init(nwmBuf, sizeof(nwmBuf), 3); /* 3 -> DMA no. */
 
-    /* In the case of cold start, should register appropriate firmware. */
     if ( 0 < flen )
     {
         (void)NWMi_InstallFirmware(fwBuffer, (u32)flen);
