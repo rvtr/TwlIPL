@@ -27,6 +27,7 @@
 #define USE_LCFG_STRING              0
 /* 無線FWダウンロード処理にかかる時間を計測する。 */
 #define MEASURE_WIRELESS_INITTIME    1
+/* 無線FW認証処理にかかる時間を計測する。 */
 #define MEASURE_VERIFY_SIGN_TIME     1
 
 #define WLANFIRM_PUBKEY_INDEX        1
@@ -42,11 +43,12 @@ static u8*   fwBuffer = 0;
 static OSTick startTick;
 #endif
 
+static void  nwmCallback(void* arg);
 static s32   readFirmwareBinary(u8 *buffer, s32 bufSize);
 static BOOL  verifyWlanfirmSignature(u8* buffer, u32 length);
 
 
-static void nwmcallback(void* arg)
+void nwmCallback(void* arg)
 {
     NWMCallback *cb = (NWMCallback*)arg;
     switch (cb->apiid)
@@ -55,7 +57,7 @@ static void nwmcallback(void* arg)
         if (cb->retcode == NWM_RETCODE_SUCCESS) {
             NWMRetCode err;
             OS_TPrintf("Wlan firm:Load Device success!\n");
-            err = NWM_UnloadDevice(nwmcallback);
+            err = NWM_UnloadDevice(nwmCallback);
         } else {
             OS_TPrintf("Wlan firm:Load Device Timeout Error!\n");
             SYSM_Free( fwBuffer );
@@ -243,7 +245,7 @@ BOOL InstallWirelessFirmware(void)
     /* ColdStartのチェック(HotStartでは呼ばれない筈だが) */
     if (TRUE == SYSMi_GetWork()->flags.common.isHotStart)
     {
-        OS_TWarning("It isn't Cold start.\n");
+        OS_TPrintf("Error: It isn't Cold start.\n");
         return FALSE;
     }
 
@@ -254,7 +256,7 @@ BOOL InstallWirelessFirmware(void)
 
     if ( 0 > flen )
     {
-        OS_TWarning("Couldn't read wlan firmware.\n");
+        OS_TPrintf("Error: Couldn't read wlan firmware.\n");
         SYSM_Free( fwBuffer );
         return FALSE;
     }
@@ -264,7 +266,8 @@ BOOL InstallWirelessFirmware(void)
      */
     if (FALSE == verifyWlanfirmSignature(fwBuffer, (u32)flen))
     {
-        OS_TWarning("Illegal Wlan Firmware has been loaded!\n");
+        OS_TPrintf("Error: This Wlan Firmware is quite illegal!\n");
+        OS_TPrintf("       It has never been installed.\n");
         SYSM_Free( fwBuffer );
         return FALSE;
     }
@@ -281,7 +284,7 @@ BOOL InstallWirelessFirmware(void)
 #if (MEASURE_WIRELESS_INITTIME == 1)
     startTick = OS_GetTick();
 #endif
-    err = NWM_LoadDevice(nwmcallback);
+    err = NWM_LoadDevice(nwmCallback);
 
     /* osRecvMessage */
     /*
