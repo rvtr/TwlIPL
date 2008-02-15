@@ -141,7 +141,6 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 			pTitleList_Card->flags.isValid = TRUE;
 			pTitleList_Card->flags.isAppLoadCompleted = TRUE;
 			pTitleList_Card->flags.isAppRelocate = TRUE;
-			pTitleList_Card->pBanner = NULL;
 		}
 		
 		retval = TRUE;
