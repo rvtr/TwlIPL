@@ -706,12 +706,14 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle )
 			// ハッシュ計算
 			if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM && l == 0)
 			{
-				// [TODO:]カードの場合のARM9_STATICハッシュチェック
+				// カードの場合のARM9_STATICハッシュチェック
 				// カード読み込み時、work2に暗号化オブジェクト部分のハッシュ計算済みのコンテキストが保存されるので
 				// それを用いてARM9_STATIC残りの部分を計算
-				continue;
+				SVCHMACSHA1Context tempcon;
+				SVC_HMACSHA1Init( &tempcon, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
+				SYSMi_GetWork2()->hmac_sha1_context.sha1_ctx.sha_block = tempcon.sha1_ctx.sha_block;// この関数ポインタだけARM7とARM9で変えないとダメ
 				SVC_HMACSHA1Update( &(SYSMi_GetWork2()->hmac_sha1_context),
-									(const void*)(module_addr[l] + ARM9_ENCRYPT_DEF_SIZE),
+									(const void*)((u32)module_addr[l] + ARM9_ENCRYPT_DEF_SIZE),
 									(module_size[l] - ARM9_ENCRYPT_DEF_SIZE) );
 				SVC_HMACSHA1GetHash( &(SYSMi_GetWork2()->hmac_sha1_context), &calculated_hash );
 			}else
