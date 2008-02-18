@@ -90,26 +90,26 @@ typedef struct SYSM_work {
 			vu32		isBrokenHWNormalInfo :1;		// HWノーマル情報が破損している。
 			vu32		isBrokenHWSecureInfo :1;		// HWセキュア情報が破損している。
 			vu32		isResetRTC :1;					// RTCリセット発生
-			vu16		isEnableHotSW :1;				// 活線挿抜有効？
-			vu16		isBusyHotSW :1;					// 活線挿抜処理中？
-            vu16		isCardLoadCompleted :1;			// カードからデータロード完了？
+			vu32		:0;
+
+			vu32		isEnableHotSW :1;				// 活線挿抜有効？
+			vu32		isBusyHotSW :1;					// 活線挿抜処理中？
+			vu32		isCardLoadCompleted :1;			// カードからデータロード完了？
 #ifdef DEBUG_USED_CARD_SLOT_B_
 			vu32		isValidCardBanner :1;
 			vu32		is1stCardChecked :1;
-			vu32		rsv :14;
-#else
-			vu32		rsv :16;
 #endif
+			vu32		:0;
 		}common;
 		struct {
 			vu16		reqChangeHotSW :1;
 			vu16		nextHotSWStatus :1;
-			vu16		rsv:15;
+			vu16		:0;
 		}arm9;
 		struct {
 			vu16		rsv:16;
 		}arm7;
-	}flags;
+	}flags; // 12B
 	
 	u16					cardHeaderCrc16;				// カード検出時に算出したROMヘッダCRC16（ARM9側でコピーして使用する側）
 	u16					cardHeaderCrc16_bak;			// カード検出時に算出したROMヘッダCRC16（ARM7側ライブラリでダイレクトに書き換わる側）
