@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
   int     n;
   int read_size;
   BOOL isSystem = FALSE;
-  BOOL isLaunch = TRUE;
+  BOOL isLaunch = FALSE;
   unsigned char file_read_buffer[FILE_READ_BUFFER_LENGTH];
 
   while ((n = getopt(argc, argv, "hiocsl")) != -1) {
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
       printf("system file\n");
       break;
     case 'l':
-      isLaunch = FALSE;
+      isLaunch = TRUE;
       printf("Not Launch file\n");
       break;
     default:
