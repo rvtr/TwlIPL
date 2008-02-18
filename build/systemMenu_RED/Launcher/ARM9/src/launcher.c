@@ -21,6 +21,7 @@
 #include "bannerCounter.h"
 #include "sound.h"
 #include <math.h>
+#include <sysmenu/mcu.h>
 
 
 // define data------------------------------------------
@@ -421,9 +422,25 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
 	static int fadecount = 0;
 	
 	// 描画関係
-    //NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
-	//PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
-	//DrawBackLightSwitch();
+
+	// 輝度表示
+	// X3基盤から、Select+音量で輝度変更できるようになったので、毎フレーム輝度表示を変更する必要あり
+/*
+#ifdef SDK_SUPPORT_PMIC_2
+	if ( SYSMi_GetMcuVersion() <= 1 )
+	{
+		// 何もしない
+	}
+	else
+#endif // SDK_SUPPORT_PMIC_2
+	{
+		u8 brightness;
+		( void )SYSM_ReadMcuRegisterAsync( MCU_REG_BL_ADDR, &brightness, NULL, NULL );
+		SYSM_SetBackLightBrightness( brightness );
+		DrawBackLightSwitch();
+	}
+*/
+	
 	DrawScrollBar( pTitleList );
 	
 	#ifdef DBGBNR
@@ -705,9 +722,24 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	MoveByScrollBar();
 	
 	// 描画関係
-    //NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
-	//PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
-	//DrawBackLightSwitch();
+
+	// 輝度表示
+	// X3基盤から、Select+音量で輝度変更できるようになったので、毎フレーム輝度表示を変更する必要あり
+/*
+#ifdef SDK_SUPPORT_PMIC_2
+	if ( SYSMi_GetMcuVersion() <= 1 )
+	{
+		// 何もしない
+	}
+	else
+#endif // SDK_SUPPORT_PMIC_2
+	{
+		u8 brightness;
+		( void )SYSM_ReadMcuRegisterAsync( MCU_REG_BL_ADDR, &brightness, NULL, NULL );
+		SYSM_SetBackLightBrightness( brightness );
+		DrawBackLightSwitch();
+	}
+*/
 	
 	DrawScrollBar( pTitleList );
 	

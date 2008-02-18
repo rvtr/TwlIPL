@@ -115,7 +115,7 @@ s32 readFirmwareBinary(u8 *buffer, s32 bufSize)
 #endif
 
 
-    titleID_hi = (( 3 /* Nintendo */ << 16) | 4 /* */ | 1 /* */);
+    titleID_hi = (( 3 /* Nintendo */ << 16) | 4 /* */ | 2 /* */ | 1 /* */);
 
     titleID_lo =  ((u32)( title[0] ) & 0xff) << 24;
     titleID_lo |= ((u32)( title[1] )& 0xff) << 16;
