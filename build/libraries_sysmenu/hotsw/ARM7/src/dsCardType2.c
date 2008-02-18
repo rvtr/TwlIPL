@@ -28,24 +28,25 @@ static void SetMCSCR(void);
 /*---------------------------------------------------------------------------*
   Name:         ReadIDNormal_DSType2
   
-  Description:  DSカードType1のノーマルモードのID読み込み
+  Description:  Type2のノーマルモードのID読み込み
  *---------------------------------------------------------------------------*/
 // 共通
 
 /*---------------------------------------------------------------------------*
  * Name:         ReadBootSegNormal_DSType2
  * 
- * Description:  DSカードType2のノーマルモードのBoot Segment読み込み
+ * Description:  Type2のノーマルモードのBoot Segment読み込み
  * 
  * CT=240ns  Latency1=0x1fff  Latency2=0x3f  Pagecount=8page
  *---------------------------------------------------------------------------*/
 void ReadBootSegNormal_DSType2(CardBootData *cbd)
 {
 	u32 		i = 0;
+    u32			loop = ONE_SEGMENT_PAGE_NUM;
     u32 		*dst = cbd->pBootSegBuf->word;
     u64 		page = 0;
     GCDCmd64 	cndLE, cndBE;
-
+    
     for(i=0; i<ONE_SEGMENT_PAGE_NUM; i++){
 		// NewDMA転送の準備
         HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, cbd->pBootSegBuf->word + (u32)(PAGE_WORD_SIZE*i), PAGE_SIZE );
@@ -76,7 +77,7 @@ void ReadBootSegNormal_DSType2(CardBootData *cbd)
 
 		// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
 		OS_SleepThread(NULL);
-        
+
         page++;
     }
 }
@@ -84,7 +85,7 @@ void ReadBootSegNormal_DSType2(CardBootData *cbd)
 /*---------------------------------------------------------------------------*
  * Name:         ChangeModeNormal_DSType2
  * 
- * Description:  DSカードType2のノーマルモードのモード変更
+ * Description:  Type2のノーマルモードのモード変更
  * 
  * CT=240ns  Latency1=0x18  Latency2=0  Pagecount=0page
  *---------------------------------------------------------------------------*/

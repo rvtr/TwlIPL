@@ -10,7 +10,6 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
  *---------------------------------------------------------------------------*/
-
 #include 	<twl.h>
 #include 	<twl/os/common/format_rom.h>
 #include	<nitro/card/types.h>
@@ -25,6 +24,9 @@
 //#define HOTSW_FORCE_CARD_B
 
 // define -------------------------------------------------------------------
+#define		CHATTERING_COUNTER					0x100
+#define		COUNTER_A							0x100
+
 #define 	UNDEF_CODE							0xe7ffdeff	// 未定義コード
 #define 	ENCRYPT_DEF_SIZE					0x800		// 2KB  ※ ARM9常駐モジュール先頭2KB
 
@@ -197,10 +199,10 @@ void HOTSW_Init(void)
 #ifdef SDK_ARM7
 	// チャッタリングカウンタの値を設定
     reg_MI_MC1 = (u32)((reg_MI_MC1 & ~REG_MI_MC1_CC_MASK) |
-                            (0x100 << REG_MI_MC1_CC_SHIFT));
+                       (CHATTERING_COUNTER << REG_MI_MC1_CC_SHIFT));
 
 	// Counter-Aの値を設定
-    reg_MI_MC2 = 0x100;
+    reg_MI_MC2 = COUNTER_A;
 #else
     // PXI経由でARM7にチャッタリングカウンタ・カウンタAの値を設定してもらう。設定されるまで待つ。
 
@@ -320,7 +322,6 @@ BOOL HOTSW_LoadCardData(void)
     	// ---------------------- Normal Mode ----------------------
     	// カードID読み込み
 		ReadIDNormal();
-        s_funcTable[0].ReadID_G(&s_cbData);
         
 		// カードタイプを判別をして、使う関数を切替える IDの最上位ビットが1なら3DM
         if(s_cbData.id_nml & 0x80000000){
@@ -960,121 +961,130 @@ static void SetMCSCR(void)
   Name:		   McThread
 
   Description: カード抜け・挿し処理スレッド
+
+  [TODO:]挿抜のフロー・フラグケアetcの確認(今の所、抜き挿ししてもタイトルが更新されない)
  *---------------------------------------------------------------------------*/
 static void McThread(void *arg)
 {
 	#pragma unused( arg )
 
-	BOOL 	retval;
-    HotSwMessage *msg;
+    u32				currentId_g = UNDEF_CODE;
+    BOOL 			isPulledOut = TRUE;
+    BOOL 			retval;
+    HotSwMessage 	*msg;
     
     while(1){
-		OS_ReceiveMessage(&s_ctData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
+        OS_ReceiveMessage(&s_ctData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
 
         // カードデータロード完了フラグを下ろす
 		SYSMi_GetWork()->flags.common.isCardLoadCompleted = FALSE;
         
-       	// カード挿し割り込みによるスレッド起動
-       	if(msg->type == HOTSW_INSERT){
-			OS_PutString("-> Insert\n");
-
+        while(1){
 			// 活線挿抜抑制フラグが立っていたら処理しない
 			if( !SYSMi_GetWork()->flags.common.isEnableHotSW ) {
 #ifdef DEBUG_USED_CARD_SLOT_B_
 				SYSMi_GetWork()->flags.common.is1stCardChecked  = TRUE;
 #endif
-				continue;
+				break;
 			}
-                
-            // カードが挿してある
+            
+            // カードが挿さってたら
             if(IsCardExist()){
-            	// HotSwをbusy状態にする 
+                // 前の状態が挿し
+                if(!isPulledOut){
+                    (void)s_funcTable[s_cbData.cardType].ReadID_G(&s_cbData);
+                    if(currentId_g == s_cbData.id_gam){
+
+						u16 id = (u16)OS_GetLockID();
+						(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
+						if( SYSMi_GetWork()->flags.arm9.reqChangeHotSW ) {
+							SYSMi_GetWork()->flags.common.isEnableHotSW  = SYSMi_GetWork()->flags.arm9.nextHotSWStatus;
+							SYSMi_GetWork()->flags.arm9.reqChangeHotSW   = 0;
+							SYSMi_GetWork()->flags.arm9.nextHotSWStatus  = 0;
+//							HOTSW_Finalize();
+						}
+						(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
+						OS_ReleaseLockID( id );
+
+	               		// フラグケア
+    	           		{
+        	       			u16 id = (u16)OS_GetLockID();
+							(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
+							SYSMi_GetWork()->flags.common.isExistCard 		  = TRUE;
+                			SYSMi_GetWork()->flags.common.isCardStateChanged  = TRUE;
+							(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
+							OS_ReleaseLockID( id );
+						}
+                        
+                    	// 新しいカードのIDを入れる
+                    	SYSMi_GetWork()->nCardID = s_cbData.id_gam;
+
+                    	// デバッガ情報
+						MI_CpuCopy8( HOTSW_GetRomEmulationBuffer(), &SYSMi_GetWork()->romEmuInfo, ROM_EMULATION_DATA_SIZE );
+						SYSMi_GetWork()->flags.common.isOnDebugger = s_cbData.debuggerFlg;
+
+            			// カードデータロード完了フラグ
+            			SYSMi_GetWork()->flags.common.isCardLoadCompleted = TRUE;
+
+						break;
+                    }
+                }
+
+                // HotSwをbusy状態にする 
 				SetHotSwState(TRUE);
-                
-            	// カード読み込み開始
+                    
+                // カード読み込み開始
        			retval = HOTSW_LoadCardData();
 
-                // HotSwをfree状態にする
-            	SetHotSwState(FALSE);
-            
-            	// カード読み込みに失敗してた場合 or 挿抜回数不一致 or カード抜かれてた
-            	if(!retval || !CARDi_IsPulledOutEx(msg->hotswCount) || !IsCardExist()){
-					OS_TPrintf("Load Card Data Retval : %x  HotSwCount : %d(msg : %d)  IsCardExist : %d\n",
-                    	       retval, CARDi_GetSlotResetCount(),msg->hotswCount,IsCardExist());
+				// HotSwをfree状態にする
+                SetHotSwState(FALSE);
+
+                // GameモードでのIDを登録する
+				currentId_g = s_cbData.id_gam;
+
+				// 状態フラグを更新
+                isPulledOut = !retval;
                 
-                	// フラグ処理
-			    	SYSMi_GetWork()->flags.common.isValidCardBanner  = FALSE;
-        			SYSMi_GetWork()->flags.common.isCardStateChanged = FALSE;
-					SYSMi_GetWork()->flags.common.isExistCard 		 = FALSE;
-                
+                // カード読み込み失敗してたら、後処理する
+                if(!retval){
 					// カードロックの開放
 #ifdef DEBUG_USED_CARD_SLOT_B_
         			UnlockExCard(s_cbData.lockID);
 #else
         			OS_UnlockCard(s_cbData.lockID);
 #endif
-
                     // カードロックIDの開放
 					OS_ReleaseLockID( s_cbData.lockID );
-                    
-                    OS_PutString("### Card Read Error\n");
-				}
-                // カード読み込み・状態に問題がない場合
-                else{
-					u16 id = (u16)OS_GetLockID();
-					(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-					if( SYSMi_GetWork()->flags.arm9.reqChangeHotSW ) {
-						SYSMi_GetWork()->flags.common.isEnableHotSW  = SYSMi_GetWork()->flags.arm9.nextHotSWStatus;
-						SYSMi_GetWork()->flags.arm9.reqChangeHotSW   = 0;
-						SYSMi_GetWork()->flags.arm9.nextHotSWStatus  = 0;
-					}
-					(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-					OS_ReleaseLockID( id );
-
-                	// 新しいカードのIDを入れる
-                	SYSMi_GetWork()->nCardID = s_cbData.id_gam;
-
-                	// デバッガ情報
-					MI_CpuCopy8( HOTSW_GetRomEmulationBuffer(), &SYSMi_GetWork()->romEmuInfo, ROM_EMULATION_DATA_SIZE );
-					SYSMi_GetWork()->flags.common.isOnDebugger = s_cbData.debuggerFlg;
-
-            		// カードデータロード完了フラグ
-            		SYSMi_GetWork()->flags.common.isCardLoadCompleted = TRUE;
                 }
-			} // end [if(IsCardExist())]
+            }
             
+            // カードが抜けてたら
+            else{
+                if(isPulledOut){
+               		// フラグケア
+               		{
+               			u16 id = (u16)OS_GetLockID();
+						(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
+						SYSMi_GetWork()->flags.common.isExistCard 		  = FALSE;
+                		SYSMi_GetWork()->flags.common.isValidCardBanner   = FALSE;
+                		SYSMi_GetWork()->flags.common.isCardStateChanged  = TRUE;
+						(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
+						OS_ReleaseLockID( id );
+					}
+
+                	// カードブート用構造体の初期化
+					MI_CpuClear32(&s_cbData, sizeof(CardBootData));
+
+					break;
+                }
+
+                isPulledOut = TRUE;
+            }
+        }
 #ifdef DEBUG_USED_CARD_SLOT_B_
-			SYSMi_GetWork()->flags.common.is1stCardChecked  = TRUE;
+		SYSMi_GetWork()->flags.common.is1stCardChecked  = TRUE;
 #endif
-        }
-            
-        // カード抜き割り込みによるスレッド起動
-    	else if(msg->type == HOTSW_PULLEDOUT){
-			OS_PutString("-> Init\n\n");
-
-            // HOTSW抑制フラグが立ってたら、処理しない
-			if( !SYSMi_GetWork()->flags.common.isEnableHotSW ) {
-				continue;
-			}
-            
-            // カードが抜かれている
-            if(!IsCardExist()){
-            	// フラグケア
-            	{
-            		u16 id = (u16)OS_GetLockID();
-					(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-					SYSMi_GetWork()->flags.common.isExistCard 		  = FALSE;
-            		SYSMi_GetWork()->flags.common.isValidCardBanner   = FALSE;
-            		SYSMi_GetWork()->flags.common.isCardStateChanged  = TRUE;
-					(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-					OS_ReleaseLockID( id );
-            	}
-
-            	// カードブート用構造体の初期化
-				MI_CpuClear32(&s_cbData, sizeof(CardBootData));
-	    	}
-        }
-    } // while loop
+    }
 }
 
 /*---------------------------------------------------------------------------*
@@ -1084,8 +1094,6 @@ static void McThread(void *arg)
  *---------------------------------------------------------------------------*/
 static void InterruptCallbackCard(void)
 {
-	OS_TPrintf("*** Pulled Out Interrupt\n");
-    
     // 送信メッセージを作成 (活線挿抜回数を取得・カード挿し)
 	s_ctData.hotswPulledOutMsg[s_ctData.idx_pulledOut].hotswCount = CARDi_GetSlotResetCount();
     s_ctData.hotswPulledOutMsg[s_ctData.idx_pulledOut].type	   = HOTSW_PULLEDOUT;
@@ -1096,7 +1104,7 @@ static void InterruptCallbackCard(void)
     // メッセージインデックスをインクリメント
     s_ctData.idx_pulledOut = (s_ctData.idx_pulledOut+1) % HOTSW_PULLED_MSG_NUM;
 
-//	OS_TPrintf(" - idx_pulledOut : %d\n", s_ctData.idx_pulledOut);
+	OS_TPrintf("○ - idx_pulledOut : %d\n", s_ctData.idx_pulledOut);
     
 #ifdef USE_SLOT_A
 	OS_SetIrqCheckFlagEx(OS_IE_CARD_A_IREQ);
@@ -1112,8 +1120,6 @@ static void InterruptCallbackCard(void)
  *---------------------------------------------------------------------------*/
 static void InterruptCallbackCardDet(void)
 {
-	OS_TPrintf("*** Insert Interrupt\n");
-    
     // SDKのカード状態をリセットする
 	CARDi_ResetSlotStatus();
 
@@ -1127,7 +1133,7 @@ static void InterruptCallbackCardDet(void)
 	// メッセージインデックスをインクリメント
     s_ctData.idx_insert = (s_ctData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
 
-//	OS_TPrintf(" - idx_insert : %d\n", s_ctData.idx_insert);
+	OS_TPrintf("● - idx_insert : %d\n", s_ctData.idx_insert);
     
 #ifdef USE_SLOT_A
     OS_SetIrqCheckFlagEx(OS_IE_CARD_A_DET);

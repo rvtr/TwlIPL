@@ -23,15 +23,15 @@ static void SetMCSCR(void);
 /*---------------------------------------------------------------------------*
   Name:         ReadIDNormal_DSType1
   
-  Description:  DSカードType1のノーマルモードのID読み込み
+  Description:  Type1のノーマルモードのID読み込み
  *---------------------------------------------------------------------------*/
 // 共通
 
 /*---------------------------------------------------------------------------*
  * Name:         ReadBootSegNormal_DSType1
  * 
- * Description:  DSカードType1のノーマルモードのBoot Segment読み込み
- * 
+ * Description:  Type1のノーマルモードのBoot Segment読み込み
+ *
  * CT=240ns  Latency1=0x1fff  Latency2=0x3f  Pagecount=8page
  *---------------------------------------------------------------------------*/
 void ReadBootSegNormal_DSType1(CardBootData *cbd)
@@ -56,7 +56,7 @@ void ReadBootSegNormal_DSType1(CardBootData *cbd)
 /*---------------------------------------------------------------------------*
  * Name:         ChangeModeNormal_DSType1
  * 
- * Description:  DSカードType1のノーマルモードのモード変更
+ * Description:  Type1のノーマルモードのモード変更
  * 
  * CT=240ns  Latency1=0x18  Latency2=0  Pagecount=0page
  *---------------------------------------------------------------------------*/
