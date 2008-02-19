@@ -58,6 +58,12 @@ static void EnableAes( u32 offset )
     MI_CpuCopy8( rh->s.main_static_digest, &aesCounter, AES_BLOCK_SIZE );
     AES_AddToCounter( &aesCounter, (offset - rh->s.aes_target_rom_offset) / AES_BLOCK_SIZE );
 }
+static void EnableAes2( u32 offset )
+{
+    aesFlag = TRUE;
+    MI_CpuCopy8( rh->s.sub_static_digest, &aesCounter, AES_BLOCK_SIZE );
+    AES_AddToCounter( &aesCounter, (offset - rh->s.aes_target2_rom_offset) / AES_BLOCK_SIZE );
+}
 static void DisableAes( void )
 {
     aesFlag = FALSE;
@@ -65,11 +71,14 @@ static void DisableAes( void )
 
 static u32 GetTransferSize( u32 offset, u32 size )
 {
-    u32 aes_offset = rh->s.aes_target_rom_offset;
-    u32 aes_end = aes_offset + RoundUpModuleSize(rh->s.aes_target_size);
-    u32 end = offset + RoundUpModuleSize(size);
     if ( rh->s.enable_aes )
     {
+        u32 end = offset + RoundUpModuleSize(size);
+        u32 aes_offset = rh->s.aes_target_rom_offset;
+        u32 aes_end = aes_offset + RoundUpModuleSize(rh->s.aes_target_size);
+        u32 aes_offset2 = rh->s.aes_target2_rom_offset;
+        u32 aes_end2 = aes_offset2 + RoundUpModuleSize(rh->s.aes_target2_size);
+
         if ( offset >= aes_offset && offset < aes_end )
         {
             if ( end > aes_end )
@@ -77,6 +86,14 @@ static u32 GetTransferSize( u32 offset, u32 size )
                 size = aes_end - offset;
             }
             EnableAes( offset );
+        }
+        else if ( offset >= aes_offset2 && offset < aes_end2 )
+        {
+            if ( end > aes_end2 )
+            {
+                size = aes_end2 - offset;
+            }
+            EnableAes2( offset );
         }
         else
         {

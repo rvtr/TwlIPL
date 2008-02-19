@@ -38,7 +38,7 @@ extern "C" {
 void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header );
 
 /*---------------------------------------------------------------------------*
-  Name:         OS_BootDefault
+  Name:         OS_BootFromFIRM
 
   Description:  boot system menu using ROM_Header in HW_TWL_ROM_HEADER_BUF
 

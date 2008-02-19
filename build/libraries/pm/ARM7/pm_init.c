@@ -89,3 +89,17 @@ void PM_BackLightOn( BOOL force )
         doneBackLight = TRUE;
     }
 }
+
+/*---------------------------------------------------------------------------*
+  Name:         PM_Shutdown
+
+  Description:  shutdown
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void PM_Shutdown( void )
+{
+    PMi_SetFlags( REG_PMIC_CTL_ADDR, PMIC_CTL_PWR_OFF );
+}

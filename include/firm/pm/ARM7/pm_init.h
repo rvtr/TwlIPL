@@ -34,17 +34,6 @@ extern "C" {
 void PM_InitFIRM( void );
 
 /*---------------------------------------------------------------------------*
-  Name:         PM_CheckINIFlag
-
-  Description:  Check INI in GX_DISPSTAT (able to call before PM_InitFIRM)
-
-  Arguments:    None
-
-  Returns:      None
- *---------------------------------------------------------------------------*/
-void PM_CheckINIFlag(void);
-
-/*---------------------------------------------------------------------------*
   Name:         PM_BackLightOn
 
   Description:  power B/L on if not set yet
@@ -55,6 +44,17 @@ void PM_CheckINIFlag(void);
   Returns:      None
  *---------------------------------------------------------------------------*/
 void PM_BackLightOn( BOOL force );
+
+/*---------------------------------------------------------------------------*
+  Name:         PM_Shutdown
+
+  Description:  shutdown
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void PM_Shutdown( void );
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -56,40 +56,10 @@ static const u8 defaultKey[ SVC_SHA1_BLOCK_SIZE ] =
     0x87, 0x46, 0x58, 0x24,
 };
 
-static AESKey FSiAesKeySeed;
-
 static BOOL         aesFlag;
 static AESCounter   aesCounter;
 static u8* const    aesBuffer = (u8*)HW_FIRM_FS_AES_BUFFER; // 0x2ff3800
 
-
-/*---------------------------------------------------------------------------*
-  Name:         FS2_GetAesKeySeed
-
-  Description:  retreive aes key seed in the signature
-
-  Arguments:    None
-
-  Returns:      pointer to seed
- *---------------------------------------------------------------------------*/
-AESKey* const FS2_GetAesKeySeed( void )
-{
-    return &FSiAesKeySeed;
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         FS2_DeleteAesKeySeed
-
-  Description:  delete aes key seed in the signature
-
-  Arguments:    None
-
-  Returns:      None
- *---------------------------------------------------------------------------*/
-void FS2_DeleteAesKeySeed( void )
-{
-    MI_CpuClear8( &FSiAesKeySeed, sizeof(FSiAesKeySeed) );
-}
 
 /*---------------------------------------------------------------------------*
   Name:         FS2_SetDigestKey
@@ -220,16 +190,30 @@ static void DisableAes( void )
  *---------------------------------------------------------------------------*/
 static u32 GetTransferSize( u32 offset, u32 size )
 {
-    u32 aes_offset = rh->s.aes_target_rom_offset;
-    u32 aes_end = aes_offset + RoundUpModuleSize(rh->s.aes_target_size);
-    u32 end = offset + RoundUpModuleSize(size);
     if ( rh->s.enable_aes )
     {
+        u32 end = offset + RoundUpModuleSize(size);
+        u32 aes_offset = rh->s.aes_target_rom_offset;
+        u32 aes_end = aes_offset + RoundUpModuleSize(rh->s.aes_target_size);
+        u32 aes_offset2 = rh->s.aes_target2_rom_offset;
+        u32 aes_end2 = aes_offset2 + RoundUpModuleSize(rh->s.aes_target2_size);
         if ( offset >= aes_offset && offset < aes_end )
         {
             if ( end > aes_end )
             {
                 size = aes_end - offset;
+            }
+            if ( size > HW_FIRM_FS_AES_BUFFER_SIZE )
+            {
+                size = HW_FIRM_FS_AES_BUFFER_SIZE;
+            }
+            EnableAes( offset );
+        }
+        else if ( offset >= aes_offset2 && offset < aes_end2 )
+        {
+            if ( end > aes_end2 )
+            {
+                size = aes_end2 - offset;
             }
             if ( size > HW_FIRM_FS_AES_BUFFER_SIZE )
             {
@@ -367,9 +351,6 @@ BOOL FS2_LoadHeader( FSFile *pFile, SVCSignHeapContext* pool, const void* rsa_ke
     }
 
     // ダイジェスト以外のデータのチェックが必要！！
-
-    // 鍵の保存
-    MI_CpuCopy8( (AESKey*)sd.aes_key_seed, &FSiAesKeySeed, sizeof(FSiAesKeySeed) );
 
     MI_CpuClear8( &sd, sizeof(sd) );    // 残り削除 (他に必要なものはない？)
 

@@ -303,20 +303,16 @@ void TwlMain( void )
     // 8: after PXI
     PUSH_PROFILE();
 
-    AESi_SendSeed( FS2_GetAesKeySeed() );
-    // 9: after AESi_SendSeed
-    PUSH_PROFILE();
-
     if ( !FS2_LoadStatic( &file ) )
     {
         OS_TPrintf("Failed to call FS2_LoadStatic().\n");
         goto end;
     }
-    // 10: after FS2_LoadStatic
+    // 9: after FS2_LoadStatic
     PUSH_PROFILE();
 
     PXI_NotifyID( FIRM_PXI_ID_DONE_STATIC );
-    // 11: after PXI
+    // 10: after PXI
     PUSH_PROFILE();
 
 #ifdef PROFILE_ENABLE

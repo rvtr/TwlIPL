@@ -27,28 +27,6 @@ extern "C" {
 #endif
 
 /*---------------------------------------------------------------------------*
-  Name:         FS_GetAesKeySeed
-
-  Description:  retreive aes key seed in the signature
-
-  Arguments:    None
-
-  Returns:      pointer to seed
- *---------------------------------------------------------------------------*/
-AESKey* const FS_GetAesKeySeed( void );
-
-/*---------------------------------------------------------------------------*
-  Name:         FS_DeleteAesKeySeed
-
-  Description:  delete aes key seed in the signature
-
-  Arguments:    None
-
-  Returns:      None
- *---------------------------------------------------------------------------*/
-void FS_DeleteAesKeySeed( void );
-
-/*---------------------------------------------------------------------------*
   Name:         FS_SetDigestKey
 
   Description:  set specified key or default key for HMAC-SHA-1

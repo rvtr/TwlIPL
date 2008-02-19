@@ -79,15 +79,28 @@ static inline void AESi_InitKeysFIRM( void )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         AESi_RecvSeed
+  Name:         AESi_InitSeedWithRomHeader
 
-  Description:  set SEED/KEY from ARM9 via PXI.
+  Description:  set SEED/KEY from ROM header
 
-  Arguments:    developer_encrypt   set TRUE if received key is using as direct key
+  Arguments:    rom_header      ROM header
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void AESi_RecvSeed( BOOL developer_encrypt );
+void AESi_InitSeedWithRomHeader( ROM_Header* rom_header );
+
+/*---------------------------------------------------------------------------*
+  Name:         AESi_InitSeedWithRomHeader
+
+  Description:  set SEED/KEY from ROM header in HW_TWL_ROM_HEADER_BUF
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+static inline void AESi_InitSeed( void )
+{
+}
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -110,28 +110,29 @@ void AESi_ResetAesKey( void )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         AESi_RecvSeed
+  Name:         AESi_InitSeedWithRomHeader
 
-  Description:  set SEED/KEY from ARM9 via PXI.
+  Description:  set SEED/KEY from ROM header
 
-  Arguments:    None
+  Arguments:    rom_header      ROM header
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void AESi_RecvSeed( BOOL developer_encrypt )
+void AESi_InitSeedWithRomHeader( ROM_Header* rom_header )
 {
-    AESKey seed;
-//    PXI_RecvDataByFifo( PXI_FIFO_TAG_DATA, &seed, AES_BLOCK_SIZE );
-    PXI_RecvStream( &seed, AES_BLOCK_SIZE );
     AES_Lock();
     AES_WaitKey();
-    if ( developer_encrypt )
+    if ( !rom_header )
     {
-        AES_SetKeyA(&seed);                    // Direct
+        return;
+    }
+    if ( rom_header->s.developer_encrypt )
+    {
+        AES_SetKeyA( (AESKey*)rom_header->s.title_name );
     }
     else
     {
-        AES_SetKeySeedA((AESKeySeed*)&seed);   // APP
+        AES_SetKeySeedA( (AESKeySeed*)rom_header->s.main_ltd_static_digest );
     }
     AES_Unlock();
 }

@@ -62,8 +62,8 @@ static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
 #endif
 
 #define THREAD_PRIO_FATFS   8
-#define DMA_FATFS_1         3
-#define DMA_FATFS_2         2
+#define DMA_FATFS_1         0
+#define DMA_FATFS_2         1
 
 extern void*   SDNandContext;  /* NAND初期化パラメータ */
 
@@ -100,8 +100,11 @@ static void PreInit(void)
     if ( MCUi_ReadRegister( MCU_REG_VER_INFO_ADDR ) >= 0x20 )   // MCU旧バージョン対策
     if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
     {
-        OS_TPrintf("Battery is empty.\n");
-        OS_Terminate();
+#ifndef SDK_FINALROM
+        OS_TPanic("Battery is empty.\n");
+#else
+        PM_Shutdown();
+#endif
     }
     /*
         FromBrom関連
@@ -136,8 +139,11 @@ static void PostInit(void)
     if ( MCUi_ReadRegister( MCU_REG_VER_INFO_ADDR ) >= 0x20 )   // MCU旧バージョン対策
     if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
     {
-        OS_TPrintf("Battery is empty.\n");
-        OS_Terminate();
+#ifndef SDK_FINALROM
+        OS_TPanic("Battery is empty.\n");
+#else
+        PM_Shutdown();
+#endif
     }
 }
 
@@ -246,8 +252,8 @@ void TwlSpMain( void )
 //    PM_BackLightOn( FALSE );
 
     AESi_InitKeysFIRM();
-    AESi_RecvSeed( rh->s.developer_encrypt );
-    // 9: after AESi_RecvSeed
+    AESi_InitSeed();
+    // 9: after AESi_InitSeed
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8a
 

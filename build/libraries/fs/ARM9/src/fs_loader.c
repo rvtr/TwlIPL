@@ -54,35 +54,6 @@ static const u8 defaultKey[ SVC_SHA1_BLOCK_SIZE ] =
     0x87, 0x46, 0x58, 0x24,
 };
 
-static AESKey FSiAesKeySeed;
-
-/*---------------------------------------------------------------------------*
-  Name:         FS_GetAesKeySeed
-
-  Description:  retreive aes key seed in the signature
-
-  Arguments:    None
-
-  Returns:      pointer to seed
- *---------------------------------------------------------------------------*/
-AESKey* const FS_GetAesKeySeed( void )
-{
-    return &FSiAesKeySeed;
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         FS_DeleteAesKeySeed
-
-  Description:  delete aes key seed in the signature
-
-  Arguments:    None
-
-  Returns:      None
- *---------------------------------------------------------------------------*/
-void FS_DeleteAesKeySeed( void )
-{
-    MI_CpuClear8( &FSiAesKeySeed, sizeof(FSiAesKeySeed) );
-}
 
 /*---------------------------------------------------------------------------*
   Name:         FS_SetDigestKey
@@ -197,7 +168,7 @@ BOOL FS_LoadBuffer( u8* dest, u32 size, SVCSHA1Context *ctx )
         {
             MI_CpuCopyFast( src, dest, unit );
         }
-        DC_FlushRange( src, unit );
+        DC_InvalidateRange( src, unit );
         size -= unit;
         dest += unit;
         MIi_SetWramBankMaster_B( count, MI_WRAM_ARM7 );
@@ -225,16 +196,26 @@ BOOL FS_LoadBuffer( u8* dest, u32 size, SVCSHA1Context *ctx )
  *---------------------------------------------------------------------------*/
 static u32 GetTransferSize( u32 offset, u32 size )
 {
-    u32 aes_offset = rh->s.aes_target_rom_offset;
-    u32 aes_end = aes_offset + rh->s.aes_target_size;
-    u32 end = offset + size;
     if ( rh->s.enable_aes )
     {
+        u32 end = offset + RoundUpModuleSize(size);
+        u32 aes_offset = rh->s.aes_target_rom_offset;
+        u32 aes_end = aes_offset + RoundUpModuleSize(rh->s.aes_target_size);
+        u32 aes_offset2 = rh->s.aes_target2_rom_offset;
+        u32 aes_end2 = aes_offset2 + RoundUpModuleSize(rh->s.aes_target2_size);
+
         if ( offset >= aes_offset && offset < aes_end )
         {
             if ( end > aes_end )
             {
                 size = aes_end - offset;
+            }
+        }
+        else if ( offset >= aes_offset2 && offset < aes_end2 )
+        {
+            if ( end > aes_end2 )
+            {
+                size = aes_end2 - offset;
             }
         }
         else
@@ -264,6 +245,7 @@ static u32 GetTransferSize( u32 offset, u32 size )
  *---------------------------------------------------------------------------*/
 BOOL FS_LoadModule( u8* dest, u32 offset, u32 size, const u8 digest[SVC_SHA1_DIGEST_SIZE] )
 {
+#ifndef NO_SECURITY_CHECK
     SVCHMACSHA1Context ctx;
     u8 md[SVC_SHA1_DIGEST_SIZE];
 
@@ -281,6 +263,21 @@ BOOL FS_LoadModule( u8* dest, u32 offset, u32 size, const u8 digest[SVC_SHA1_DIG
     }
     SVC_HMACSHA1GetHash(&ctx, md);
     return CheckDigest(md, (u8*)digest, TRUE, FALSE);
+#else
+    (void)digest;
+    while ( size > 0 )
+    {
+        u32 unit = GetTransferSize( offset, size );
+        if ( !FS_LoadBuffer( dest, unit, NULL ) )
+        {
+            return FALSE;
+        }
+        dest += unit;
+        offset += unit;
+        size -= unit;
+    }
+    return TRUE;
+#endif
 }
 
 /*---------------------------------------------------------------------------*
@@ -296,6 +293,7 @@ BOOL FS_LoadModule( u8* dest, u32 offset, u32 size, const u8 digest[SVC_SHA1_DIG
  *---------------------------------------------------------------------------*/
 BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
 {
+#ifndef NO_SECURITY_CHECK
     SVCSHA1Context ctx;
     u8 md[SVC_SHA1_DIGEST_SIZE];
     SignatureData sd;
@@ -332,11 +330,13 @@ BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
 
     // ダイジェスト以外のデータのチェックが必要！！
 
-    // 鍵の保存
-    MI_CpuCopy8( (AESKey*)sd.aes_key_seed, &FSiAesKeySeed, sizeof(FSiAesKeySeed) );
-
     MI_CpuClear8( &sd, sizeof(sd) );    // 残り削除 (他に必要なものはない？)
-
+#else
+    (void)pool;
+    (void)rsa_key;
+    FS_LoadBuffer( (u8*)rh, FS_HEADER_AUTH_SIZE, NULL );
+    FS_LoadBuffer( (u8*)rh + FS_HEADER_AUTH_SIZE, HW_TWL_ROM_HEADER_BUF_SIZE - FS_HEADER_AUTH_SIZE, NULL );
+#endif
     // ROMヘッダのコピー
     MI_CpuCopyFast( rh, (void*)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END-HW_ROM_HEADER_BUF );
     return TRUE;
