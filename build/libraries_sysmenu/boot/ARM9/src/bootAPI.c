@@ -19,6 +19,7 @@
 #include <twl/camera.h>
 #include <twl/os/common/format_rom.h>
 #include <sysmenu.h>
+#include <sysmenu/ds.h>
 #include <firm/format/wram_regs.h>
 #include "reboot.h"
 
@@ -146,6 +147,13 @@ void BOOT_Ready( void )
             OS_Terminate();
         }
 #endif // FIRM_USE_SDK_KEYS || SYSMENU_DISABLE_RETAIL_BOOT
+
+        // USG以前のDSアプリには無線パッチを適用
+        // （キャッシュ領域の排他制御簡略化のためARM9で行う）
+        if ( ds )
+        {
+            DS_InsertWLPatch();
+        }
 
         // デバッガによるROMエミュレーション時はNTR-ROMヘッダバッファの
         // ゲームコマンドパラメータをスクランブルOFF設定に書き換える

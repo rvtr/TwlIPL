@@ -19,6 +19,7 @@
 #include <twl/mcu.h>
 #include <twl/cdc.h>
 #include <sysmenu.h>
+#include <sysmenu/ds.h>
 #include "reboot.h"
 
 
@@ -35,8 +36,6 @@
 #define COPY_NUM_MAX			(4*3)
 #define POST_CLEAR_NUM_MAX		(12 + 4*2)
 
-#define SYSMi_ARM9_BOOT_CODE_BUF	0x023fee00
-
 // extern data-------------------------------------------------------
 
 // function's prototype----------------------------------------------
@@ -51,8 +50,8 @@ static void BOOTi_CutAwayRegionList( u32 *regionlist, u32 start, u32 end );
 static u32 twl_post_clear_list[POST_CLEAR_NUM_MAX + 1] = 
 {
 	HW_PARAM_RESERVED_END, SYSM_OWN_ARM7_MMEM_ADDR,
-	SYSM_OWN_ARM7_MMEM_ADDR_END, SYSMi_ARM9_BOOT_CODE_BUF,
-	SYSMi_ARM9_BOOT_CODE_BUF + OS_BOOT_CODE_SIZE, SYSM_OWN_ARM9_MMEM_ADDR,
+	SYSM_OWN_ARM7_MMEM_ADDR_END, OS_BOOT_A9CODE_BUF,
+	OS_BOOT_A9CODE_BUF + OS_BOOT_CODE_SIZE, SYSM_OWN_ARM9_MMEM_ADDR,
 	SYSM_OWN_ARM9_MMEM_ADDR_END, HW_TWL_MAIN_MEM_SHARED,
 	NULL,
 };
@@ -61,7 +60,7 @@ static u32 nitro_post_clear_list[POST_CLEAR_NUM_MAX + 1] =
 {
 	HW_PARAM_DELIVER_ARG, HW_PARAM_DELIVER_ARG_END,
 	HW_PARAM_RESERVED_END, SYSM_OWN_ARM7_MMEM_ADDR,
-	SYSM_OWN_ARM7_MMEM_ADDR_END, SYSMi_ARM9_BOOT_CODE_BUF,
+	SYSM_OWN_ARM7_MMEM_ADDR_END, OS_BOOT_A9CODE_BUF,
 	SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_DBG_NTR_SYSTEM_BUF,
 	SYSM_OWN_ARM9_MMEM_ADDR_END, HW_TWL_MAIN_MEM_SHARED,
 	NULL,
@@ -81,14 +80,6 @@ BOOL BOOT_WaitStart( void )
 		(void)OS_DisableIrq();							// ここで割り込み禁止にしないとダメ。
 		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
 		(void)OS_SetIrqMaskEx(0);
-/*
-#ifdef ISDBG_MB_CHILD_
-		if( ( GetIpl2WorkAddr()->ipl2_type != 0xff ) && ( GetIpl2WorkAddr()->ipl2_type & 0x28 ) )
-#endif // ISDBG_MB_CHILD_								// 	USG or NATなら無線パッチを当てる
-		{
-			InsertWLPatch();
-		}
-*/
 		
 		BOOTi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。
 		reg_MI_MBK9 = 0;								// 全WRAMのロック解除

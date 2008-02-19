@@ -23,6 +23,7 @@ SUBDIRS					=	\
 #							../../../libraries_sysmenu/reloc_info \
 #							../../../libraries_sysmenu/boot \
 #							../../../libraries_sysmenu/mcu \
+#							../../../libraries_sysmenu/ds \
 #							$(TWLSDK_ROOT)/build/libraries/reboot \
 
 #----------------------------------------------------------------------------

@@ -115,9 +115,9 @@ typedef struct SYSM_work {
 	u16					cardHeaderCrc16_bak;			// カード検出時に算出したROMヘッダCRC16（ARM7側ライブラリでダイレクトに書き換わる側）
 	OSLockWord			lockCardRsc;					// カードリソース排他制御用
 	OSLockWord			lockHotSW;						// カードリソース排他制御用
-	int					cloneBootMode;
 	u32					nCardID;						// カードID
 	u32					gameCommondParam;				// NTRのゲームコマンドパラメータ(NTRのROMヘッダのゲームコマンドパラメータに上書きする)
+	u8					cloneBootMode;
     
 	LauncherParam		launcherParam;
 	ISD_RomEmuInfo		romEmuInfo;

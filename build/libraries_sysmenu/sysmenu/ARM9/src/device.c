@@ -58,7 +58,6 @@ void SYSM_SetBackLightBrightness( u8 brightness )
 	{
 		( void )SYSM_WriteMcuRegisterAsync( MCU_REG_BL_ADDR, brightness, NULL, NULL );
 	}
-//	( void )SYSMi_SendPXICommand( SYSM_PXI_COMM_BL_BRIGHT, brightness );
 	
 	LCFG_TSD_SetBacklightBrightness( brightness );
 	
