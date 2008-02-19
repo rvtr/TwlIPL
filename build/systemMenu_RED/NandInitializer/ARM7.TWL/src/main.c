@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include    <twl_sp.h>
@@ -32,6 +32,7 @@
 #define THREAD_PRIO_SND     6
 #define THREAD_PRIO_FATFS   8
 #define THREAD_PRIO_RTC     12
+#define THREAD_PRIO_SNDEX   14
 #define THREAD_PRIO_FS      15
 /* OS_THREAD_LAUNCHER_PRIORITY 16 */
 
@@ -120,6 +121,10 @@ void TwlSpMain(void)
 
     // サウンド初期化
     SND_Init(THREAD_PRIO_SND);
+    if (OS_IsRunOnTwl() == TRUE)
+    {
+        SNDEX_Init(THREAD_PRIO_SNDEX);
+    }
 
     // RTC 初期化
     RTC_Init(THREAD_PRIO_RTC);
@@ -168,11 +173,7 @@ InitializeFatfs(void)
 
     // FATFSライブラリの初期化
 #ifndef SDK_NOCRYPTO
-#ifdef FATFS_AES_MOUNT_FOR_NAND
     if(!FATFS_Init( FATFS_DMA_4, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
-#else
-    if (FATFS_Init(FATFS_DMA_NOT_USE, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
-#endif
 #else
     if (FATFS_Init(FATFS_DMA_NOT_USE, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
 #endif
