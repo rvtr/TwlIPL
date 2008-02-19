@@ -21,32 +21,23 @@
 #include "mb_fileinfo.h"
 
 // define data----------------------------------------------------------
-#define _PATCH3_SHORT_										// パッチ３のサーチパターン削減スイッチ
-
 #define SWI_NO_CPU_SET_FAST     			( 12 << 16 )	// SVC_CpuSetFast()
-#define WL_PATCH_SIZE						20
-#define RED_RSV_PATCH_FUNC_ADDR				( HW_RED_RESERVED + 0x1c )
 
 #define SDK_VER_30							0x03000000
 #define SDK_VER_22_RELEASE_PLUS_3			0x02027533
 #define SDK_VER_30_RC3						0x03004f4c
 
-#define SDKVER_OFFSET_IN_PATTERN			-4
+#define SDKVER_OFFSET_IN_PATTERN			(-4)
 #define PATCH1_OFFSET_IN_PATTERN			0x18
-#ifdef  _PATCH3_SHORT_
 #define PATCH3_OFFSET_IN_PATTERN			0x04
-#else
-#define PATCH3_OFFSET_IN_PATTERN			0x40
-#endif
 
 // function's prototype-------------------------------------------------
-void DS_InsertWLPatch( void );
 static int  DSi_ExistNitroCard(void);
 static void* DSi_GetPatchBaseAddr( void );
 static BOOL DSi_IsPatchedSDKVersion( void );
 static u32  DSi_SearchBinaryCore( const u32 *patp, int pat_word_size, int patch_offset );
 static void DSi_SetPatchCodeToREDRsvArea( u32 patch_addr, const u32 *patchp );
-void DSi_WLPatchCore( void );
+void DSi_CopyWLPatch( void );
 
 // extern data----------------------------------------------------------
 
@@ -68,25 +59,11 @@ static const u32 patch1_org[] = {
 
 // パッチ３対象コード
 static const u32 patch3_org[] = {
-#ifndef _PATCH3_SHORT_
-	0xE92D4000, 0xE24DD004, 0xE3A02000, 0xE59F10A8, 
-	0xE5910000, 0xE2800C03, 0xE1C0FFFF, 0xE5910000, 
-	0xE2800B01, 0xE1C0FFFF, 0xE59F1090, 0xE59F2090, 
-	0xE1D200B0, 0xE2100001,	0x1AFFFFFC,
-#endif
 										0xE1D100B0,
 	0xE3500006, 0x0AFFFFF9,	0xE1D100B0, 0xE3500005, 	// patch target( top 20bytes )
 	0x0AFFFFF6,	0xE3A01000,	0xE59F0068,	0xE1C010B0,
 	0xE59F0064, 0xE1C010B0, 0xE59F004C, 0xE5900000, 
 	0xE2800C03,
-#ifndef _PATCH3_SHORT_
-				0xE1D0FFFF, 0xE3500000, 0x0A00000B, 
-	0xEB00FFFF, 0xE59F0030, 0xE5900000, 0xE2800C03, 
-	0xE1D0FFFF, 0xE3A01020, 0xEB00FFFF, 0xE3A01000, 
-	0xE59F0014, 0xE5900000, 0xE2800C03, 0xE1C0FFFF, 
-	0xE28DD004, 0xE8BD4000, 0xE12FFF1E, 0x0380FFF4, 
-	0x04808214, 0x0480819C, 0x04808028, 0x0480802A,
-#endif
 };
 
 // パッチ１コード
@@ -136,15 +113,15 @@ void DS_InsertWLPatch( void )
 		// パッチ対象コードが見つかったら、パッチコードをセット。
 		if( patch_addr ) {
 			ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
-			if( SYSMi_GetWork()->cloneBootMode == IPL2_CLONE_BOOT_MODE ) {	// ※クローンブートかどうかは、ARM9側で事前に調査。
+			if( SYSMi_GetWork()->cloneBootMode == SYSM_CLONE_BOOT_MODE ) {	// ※クローンブートかどうかはDS_CheckROMCloneBoot()で事前に調査。
 				// クローンブートならば、直パッチ
-				SVC_CpuCopyFast( patchp, patch_addr, WL_PATCH_SIZE );
+				SVC_CpuCopyFast( patchp, patch_addr, DS_WLPATCH_SIZE );
 			}else {
 				// それ以外ならば、RED_RSVにパッチコードを挿入。
 				// ※パッチアドレスをIPL2の一時格納バッファアドレスから実際のARM7ロードアドレスに変換。
 				patch_addr = patch_addr + ((u32)dh->s.sub_entry_address - (u32)DSi_GetPatchBaseAddr());
 				DSi_SetPatchCodeToREDRsvArea( patch_addr, patchp );
-				dh->s.sub_entry_address = (void *)RED_RSV_PATCH_FUNC_ADDR;
+				dh->s.sub_entry_address = (void *)DS_REDRSV_PATCH_FUNC_ADDR;
 			}
 		}
 	}
@@ -157,10 +134,11 @@ static void* DSi_GetPatchBaseAddr( void )
 	ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 	void* p = (void*)SYSMi_GetWork()->romRelocateInfo[1].src;
 
+    // 再配置しない場合は
 	if ( ! p )
 	{
 		void* h = dh->s.sub_ram_address;
-		if ( h >= (void*)SYSM_NTR_ARM7_LOAD_MMEM && h < (void*)(SYSM_NTR_ARM7_LOAD_MMEM_END - WL_PATCH_SIZE) )
+		if ( h >= (void*)SYSM_NTR_ARM7_LOAD_MMEM && h < (void*)(SYSM_NTR_ARM7_LOAD_MMEM_END - DS_WLPATCH_SIZE) )
 		{
 			p = h;
 		}
@@ -223,11 +201,6 @@ static u32 DSi_SearchBinaryCore( const u32 *patp, int pat_word_size, int patch_o
 			}
 			
 			while( i-- ) {
-#ifndef _PATCH3_SHORT_
-				if( ( *srcp & 0x0000ffff ) == 0x0000ffff ) {
-					*checkp |= 0x0000ffff;
-				}
-#endif
 				if( *srcp++ != *checkp++ ) break;
 			}
 			
@@ -249,21 +222,18 @@ static u32 DSi_SearchBinaryCore( const u32 *patp, int pat_word_size, int patch_o
 // パッチコードをシステムのRED予約領域にセット
 static void DSi_SetPatchCodeToREDRsvArea( u32 patch_addr, const u32 *patchp )
 {
-#define PATCH_WORD_NUM					5
-#define WL_PATCH_CORE_WORD_NUM			10
-	
 	ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 	u32 *dstp = (u32 *)HW_RED_RESERVED;
-	u32 *srcp = (u32 *)&DSi_WLPatchCore;
+	u32 *srcp = (u32 *)&DSi_CopyWLPatch;
 	int i;
 	
-	for( i = 0; i < PATCH_WORD_NUM; i++ ) {
+	for( i = 0; i < DS_WLPATCH_SIZE/sizeof(u32); i++ ) {
 		*dstp++ = *patchp++;
 	}
 	*dstp++ = patch_addr;
 	*dstp++ = (u32)dh->s.sub_entry_address;
 	
-	for( i = 0; i < WL_PATCH_CORE_WORD_NUM; i++ ) {
+	for( i = 0; i < DS_WLPATCH_COPYCODE_SIZE/sizeof(u32); i++ ) {
 		*dstp++ = *srcp++;
 	}
 }
@@ -289,7 +259,7 @@ asm void WLPatch_Dummy( void )
 
 
 // WLへパッチを当てるコード実体
-asm void DSi_WLPatchCore( void )
+asm void DSi_CopyWLPatch( void )
 {
 	add			r0, pc, #-0x24			// R0 <- patch1 code addr
 	ldr			r1, [ pc, #-0x14 ]		// R1 <- target addr
@@ -337,9 +307,9 @@ void DS_CheckROMCloneBoot( void )
 	
 	buffp += auth_offset & 0x000001FF;
 	if( *buffp++ == 'a' && *buffp == 'c' ) {
-		SYSMi_GetWork()->cloneBootMode = CLONE_BOOT_MODE;
+		SYSMi_GetWork()->cloneBootMode = SYSM_CLONE_BOOT_MODE;
 	}else {
-		SYSMi_GetWork()->cloneBootMode = OTHER_BOOT_MODE;
+		SYSMi_GetWork()->cloneBootMode = SYSM_OTHER_BOOT_MODE;
 	}
 }
 

@@ -30,9 +30,12 @@ extern "C" {
 
 // define data ------------------------------------
 #define TITLE_ID_LAUNCHER					( 0x000300074c4e4352LLU )
-#define CLONE_BOOT_MODE						1
-#define OTHER_BOOT_MODE						2
 
+typedef enum SYSMCloneBootMode {
+    SYSM_CLONE_BOOT_MODE = 1,
+    SYSM_OTHER_BOOT_MODE = 2
+}
+SYSMCloneBootMode;
 
 // NAMTitleIDをHiLoに分割してアクセスする場合に使用
 typedef struct TitleID_HiLo {
@@ -44,11 +47,11 @@ typedef struct TitleID_HiLo {
 //----------------------------------------------------------------------
 //　ROMエミュレーション情報
 //----------------------------------------------------------------------
-#define ISD_ROM_EMULATION_INFO_SIZE			0x20		// ROMエミュレーションデータサイズ
-#define ISD_ROM_EMULATION_INFO_MAGIC_CODE	0x444c5754  // "TWLD"の文字列
+#define SYSM_ROMEMU_INFO_SIZE			0x20		// ROMエミュレーションデータサイズ
+#define SYSM_ROMEMU_INFO_MAGIC_CODE		0x444c5754  // "TWLD"の文字列
 
 // ISデバッガROMエミュレーション情報
-typedef struct ISD_RomEmuInfo {
+typedef struct SYSMRomEmuInfo {
 	// マジックコード（ISD_ROM_EMULATION_INFO_MAGIC_CODEの固定値）
 	u32			magic_code;
 	// フラグ類
@@ -65,7 +68,8 @@ typedef struct ISD_RomEmuInfo {
 	u64			titleID;
 	// 予約
 	u8			rsv[ 0x10 ];
-}ISD_RomEmuInfo;
+}
+SYSMRomEmuInfo;
 
 
 //----------------------------------------------------------------------
@@ -120,7 +124,7 @@ typedef struct SYSM_work {
 	u8					cloneBootMode;
     
 	LauncherParam		launcherParam;
-	ISD_RomEmuInfo		romEmuInfo;
+	SYSMRomEmuInfo		romEmuInfo;
 	
 	// NTR-IPL2のレガシー　最終的には消すと思う
 	BOOL				enableCardNormalOnly;
