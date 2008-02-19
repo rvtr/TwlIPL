@@ -55,6 +55,7 @@
 #define THREAD_PRIO_SND     6
 #define THREAD_PRIO_FATFS   8
 #define THREAD_PRIO_RTC     12
+#define THREAD_PRIO_SNDEX   14
 #define THREAD_PRIO_FS      15
 /* OS_THREAD_LAUNCHER_PRIORITY 16 */
 
@@ -189,6 +190,10 @@ TwlSpMain(void)
 
     // サウンド初期化
     SND_Init(THREAD_PRIO_SND);
+    if (OS_IsRunOnTwl() == TRUE)
+    {
+        SNDEX_Init(THREAD_PRIO_SNDEX);
+    }
 
     // RTC 初期化
     RTC_Init(THREAD_PRIO_RTC);
@@ -328,11 +333,7 @@ InitializeFatfs(void)
 
     // FATFSライブラリの初期化
 #ifndef SDK_NOCRYPTO
-#ifdef FATFS_AES_MOUNT_FOR_NAND
     if(!FATFS_Init( FATFS_DMA_4, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
-#else
-    if (FATFS_Init(FATFS_DMA_NOT_USE, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
-#endif
 #else
     if (FATFS_Init(FATFS_DMA_NOT_USE, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
 #endif
@@ -489,9 +490,9 @@ InitializeAllocateSystem(void)
         u32     heapSize;
 
         heapSize    =   (u32)OS_CheckHeap(OS_ARENA_MAIN_SUBPRIV, hh);
-        if (ATH_DRV_HEAP_SIZE > heapSize)
+        if ((ATH_DRV_HEAP_SIZE + WPA_HEAP_SIZE) > heapSize)
         {
-            OS_Panic("Insufficient heap size. (0x%x < 0x%x)\n", heapSize, ATH_DRV_HEAP_SIZE);
+            OS_Panic("Insufficient heap size. (0x%x < 0x%x)\n", heapSize, ATH_DRV_HEAP_SIZE + WPA_HEAP_SIZE);
         }
         OS_TPrintf("ARM7: MAIN heap size is %d (before AddToHead)\n", heapSize);
     }
