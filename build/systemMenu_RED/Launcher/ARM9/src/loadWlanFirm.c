@@ -32,7 +32,6 @@
 
 /* Index of public key for WLAN firm */
 #define WLANFIRM_PUBKEY_INDEX        1
-#define USE_ACSIGN                   0 /* for experimental purpose */
 #define SIGN_LENGTH                  128
 
 #define FWBUFFER_SIZE                0x40000
@@ -47,6 +46,11 @@ static OSTick startTick;
 static void  nwmCallback(void* arg);
 static s32   readFirmwareBinary(u8 *buffer, s32 bufSize);
 static BOOL  verifyWlanfirmSignature(u8* buffer, u32 length);
+
+static inline u16 SCFG_GetBondingOption(void)
+{
+	return (u16)(*(u8*)(HW_SYS_CONF_BUF+HWi_WSYS08_OFFSET) & HWi_WSYS08_OP_OPT_MASK);
+}
 
 
 void nwmCallback(void* arg)
@@ -196,24 +200,23 @@ BOOL verifyWlanfirmSignature(u8* buffer, u32 length)
     OS_TPrintf("\n");
 
     /* decrypt according to RSA security */
-#if ( USE_ACSIGN == 1)
-    ACSign_SetAllocFunc( SYSM_Alloc, SYSM_Free );
-#else
     signHeap = SYSM_Alloc( SIGNHEAP_SIZE );
     SVC_InitSignHeap( &rctx, signHeap, SIGNHEAP_SIZE);
-#endif
     
     MI_CpuClear8( signDigest, 0x80 );
 
-#if ( USE_ACSIGN == 1)
-    ACSign_Decrypto(signDigest, (void*)pSign, (void*)pPubkey);
-#else
     if (FALSE == SVC_DecryptSign( &rctx, signDigest, (const void*)pSign, (const void*)pPubkey ))
     {
-        SYSM_Free(signHeap);
-        return FALSE;
+        OS_TPrintf("Wlan Firmware authentication has failed.\n");
+        /* continue verifying process even though decryption fails
+           in the case of bonding option = 0x01 (support ARM9/ARM7) */
+        if (!( HWi_WSYS08_OP_OP0_MASK == SCFG_GetBondingOption() ))
+        {
+            SYSM_Free(signHeap);
+            return FALSE;
+        }
+        OS_TPrintf("But installation continues.\n");
     }
-#endif
 
     SYSM_Free(signHeap);
 
@@ -224,10 +227,17 @@ BOOL verifyWlanfirmSignature(u8* buffer, u32 length)
     }
     OS_TPrintf("\n");
 
-    /* verify digest */
-    if (FALSE == SVC_CompareSHA1( (const void*)txtDigest, (const void*)signDigest ))
+    /*
+      skip comparing SHA1 digests in the case of bonding option = 0x01 (support ARM9/ARM7)
+      this restriction is for debugging TWL wireless firmware.
+     */
+    if (!( HWi_WSYS08_OP_OP0_MASK == SCFG_GetBondingOption() ))
     {
-        return FALSE;
+        /* verify digest */
+        if (FALSE == SVC_CompareSHA1( (const void*)txtDigest, (const void*)signDigest ))
+        {
+            return FALSE;
+        }
     }
 
 #if (MEASURE_VERIFY_SIGN_TIME == 1)
