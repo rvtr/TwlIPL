@@ -34,8 +34,12 @@ static void SetMCSCR(void);
  *
  * CT=240ns  Latency1=0x1fff  Latency2=0x3f  Pagecount=8page
  *---------------------------------------------------------------------------*/
-void ReadBootSegNormal_DSType1(CardBootData *cbd)
+HotSwState ReadBootSegNormal_DSType1(CardBootData *cbd)
 {
+    if(!HOTSW_IsCardExist()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+    
 	// NewDMA転送の準備
     HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->pBootSegBuf->word, BOOT_SEGMENT_SIZE );
     
@@ -51,6 +55,8 @@ void ReadBootSegNormal_DSType1(CardBootData *cbd)
     
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
+
+    return HOTSW_SUCCESS;
 }
 
 /*---------------------------------------------------------------------------*
@@ -60,11 +66,15 @@ void ReadBootSegNormal_DSType1(CardBootData *cbd)
  * 
  * CT=240ns  Latency1=0x18  Latency2=0  Pagecount=0page
  *---------------------------------------------------------------------------*/
-void ChangeModeNormal_DSType1(CardBootData *cbd)
+HotSwState ChangeModeNormal_DSType1(CardBootData *cbd)
 {
 	GCDCmd64 tempCnd, cnd;
     u64 vae64 = cbd->vae;
 
+    if(!HOTSW_IsCardExist()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+    
     // ゼロクリア
 	MI_CpuClear8(&tempCnd, sizeof(GCDCmd64));
     
@@ -92,6 +102,8 @@ void ChangeModeNormal_DSType1(CardBootData *cbd)
     
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
+
+    return HOTSW_SUCCESS;
 }
 
 
@@ -162,8 +174,12 @@ static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
  *
  * CT=240ns  Latency1=0x8f8+0x18  Latency2=0  Pagecount=Status
  *---------------------------------------------------------------------------*/
-void ReadIDSecure_DSType1(CardBootData *cbd)
+HotSwState ReadIDSecure_DSType1(CardBootData *cbd)
 {
+    if(!HOTSW_IsCardExist()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+    
 	// NewDMA転送の準備
     HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_scr, sizeof(cbd->id_scr) );
     
@@ -180,6 +196,8 @@ void ReadIDSecure_DSType1(CardBootData *cbd)
 
     // コマンドカウンタインクリメント
 	cbd->vbi++;
+
+    return HOTSW_SUCCESS;
 }
 
 /*---------------------------------------------------------------------------*
@@ -187,7 +205,7 @@ void ReadIDSecure_DSType1(CardBootData *cbd)
  * 
  * Description:
  *---------------------------------------------------------------------------*/
-void ReadSegSecure_DSType1(CardBootData *cbd)
+HotSwState ReadSegSecure_DSType1(CardBootData *cbd)
 {
     u32			i,j=0;
 	u64			segNum = 4;
@@ -195,6 +213,10 @@ void ReadSegSecure_DSType1(CardBootData *cbd)
     GCDCmd64 	cndLE, cndBE;
 
     for(i=0; i<4; i++){
+		if(!HOTSW_IsCardExist()){
+			return HOTSW_PULLED_OUT_ERROR;
+    	}
+        
 		// NewDMA転送の準備
 	    HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, (cbd->pSecureSegBuf + ONE_SEGMENT_WORD_SIZE*i), ONE_SEGMENT_SIZE );
         
@@ -236,6 +258,8 @@ void ReadSegSecure_DSType1(CardBootData *cbd)
     	// コマンドカウンタインクリメント
 		cbd->vbi++;
     }
+
+    return HOTSW_SUCCESS;
 }
 
 /*---------------------------------------------------------------------------*
@@ -243,8 +267,12 @@ void ReadSegSecure_DSType1(CardBootData *cbd)
  * 
  * Description:
  *---------------------------------------------------------------------------*/
-void SwitchONPNGSecure_DSType1(CardBootData *cbd)
+HotSwState SwitchONPNGSecure_DSType1(CardBootData *cbd)
 {
+    if(!HOTSW_IsCardExist()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+    
     // コマンド作成・設定
 	SetSecureCommand(S_PNG_ON, cbd);
 
@@ -257,6 +285,8 @@ void SwitchONPNGSecure_DSType1(CardBootData *cbd)
 
     // コマンドカウンタインクリメント
 	cbd->vbi++;
+
+    return HOTSW_SUCCESS;
 }
 
 /*---------------------------------------------------------------------------*
@@ -264,8 +294,12 @@ void SwitchONPNGSecure_DSType1(CardBootData *cbd)
  * 
  * Description:
  *---------------------------------------------------------------------------*/
-void SwitchOFFPNGSecure_DSType1(CardBootData *cbd)
+HotSwState SwitchOFFPNGSecure_DSType1(CardBootData *cbd)
 {
+    if(!HOTSW_IsCardExist()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+    
     // コマンド作成・設定
 	SetSecureCommand(S_PNG_OFF, cbd);
 
@@ -278,6 +312,8 @@ void SwitchOFFPNGSecure_DSType1(CardBootData *cbd)
 
     // コマンドカウンタインクリメント
 	cbd->vbi++;
+
+    return HOTSW_SUCCESS;
 }
 
 /*---------------------------------------------------------------------------*
@@ -287,8 +323,12 @@ void SwitchOFFPNGSecure_DSType1(CardBootData *cbd)
  *
  * CT=240ns  Latency1=0x8f8+0x18  Latency2=0  Pagecount=0page
  *---------------------------------------------------------------------------*/
-void ChangeModeSecure_DSType1(CardBootData *cbd)
+HotSwState ChangeModeSecure_DSType1(CardBootData *cbd)
 {
+    if(!HOTSW_IsCardExist()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+    
     // コマンド作成・設定
 	SetSecureCommand(S_CHG_MODE, cbd);
 
@@ -301,6 +341,8 @@ void ChangeModeSecure_DSType1(CardBootData *cbd)
 
     // コマンドカウンタインクリメント
 	cbd->vbi++;
+
+    return HOTSW_SUCCESS;
 }
 
 
@@ -312,8 +354,12 @@ void ChangeModeSecure_DSType1(CardBootData *cbd)
  * 
  * Description:  ゲームモードでIDを読み込む
  *---------------------------------------------------------------------------*/
-void ReadIDGame_DSType1(CardBootData *cbd)
+HotSwState ReadIDGame_DSType1(CardBootData *cbd)
 {
+    if(!HOTSW_IsCardExist()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+    
 	// NewDMA転送の準備
     HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_gam, sizeof(cbd->id_gam) );
 
@@ -327,6 +373,8 @@ void ReadIDGame_DSType1(CardBootData *cbd)
     
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
+
+    return HOTSW_SUCCESS;
 }
 
 /*---------------------------------------------------------------------------*
@@ -334,7 +382,7 @@ void ReadIDGame_DSType1(CardBootData *cbd)
   
   Description:  ゲームモードで、指定されたページを指定バッファに指定サイズ分を読み込む
  *---------------------------------------------------------------------------*/
-void ReadPageGame_DSType1(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
+HotSwState ReadPageGame_DSType1(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
 {
     u32 		loop, counter=0;
 	u64			i, page;
@@ -348,6 +396,10 @@ void ReadPageGame_DSType1(CardBootData *cbd, u32 start_addr, void* buf, u32 size
 //	OS_TPrintf("Read Game Segment  Page Count : %d   size : %x\n", loop, size);
     
     for(i=0; i<loop; i++){
+	    if(!HOTSW_IsCardExist()){
+			return HOTSW_PULLED_OUT_ERROR;
+    	}
+        
 		// ゼロクリア
 		MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
 
@@ -379,4 +431,6 @@ void ReadPageGame_DSType1(CardBootData *cbd, u32 start_addr, void* buf, u32 size
             *((u32 *)buf + counter++) = reg_HOTSW_MCD1;
 		}
     }
+
+    return HOTSW_SUCCESS;
 }

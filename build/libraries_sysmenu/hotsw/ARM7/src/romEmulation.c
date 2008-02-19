@@ -33,7 +33,7 @@
   
   Description:  DSカードType1のノーマルモードのBoot Segment読み込み
  *---------------------------------------------------------------------------*/
-void ReadBootSegNormal_ROMEMU(CardBootData *cbd)
+HotSwState ReadBootSegNormal_ROMEMU(CardBootData *cbd)
 {
 	u32 i,j=0;
     u64 page = 0;
@@ -41,6 +41,10 @@ void ReadBootSegNormal_ROMEMU(CardBootData *cbd)
 //	u32 n = 0;
     
     for(i=0; i<BOOT_PAGE_NUM; i++){
+    	if(!HOTSW_IsCardExist()){
+			return HOTSW_PULLED_OUT_ERROR;
+    	}
+        
     	// ゼロクリア
 		MI_CpuClear8(&tempCnd, sizeof(GCDCmd64));
     
@@ -75,6 +79,8 @@ void ReadBootSegNormal_ROMEMU(CardBootData *cbd)
 
         page++;
     }
+
+    return HOTSW_SUCCESS;
 }
 
 /*---------------------------------------------------------------------------*
@@ -82,12 +88,16 @@ void ReadBootSegNormal_ROMEMU(CardBootData *cbd)
   
   Description:  DSカードType1のノーマルモードのモード変更
  *---------------------------------------------------------------------------*/
-void ChangeModeNormal_ROMEMU(CardBootData *cbd)
+HotSwState ChangeModeNormal_ROMEMU(CardBootData *cbd)
 {
 	#pragma unused( cbd )
     
 	GCDCmd64 tempCnd, cnd;
 
+    if(!HOTSW_IsCardExist()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+    
     // ゼロクリア
 	MI_CpuClear8(&tempCnd, sizeof(GCDCmd64));
     
@@ -113,6 +123,8 @@ void ChangeModeNormal_ROMEMU(CardBootData *cbd)
     
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
+
+    return HOTSW_SUCCESS;
 }
 
 
@@ -124,8 +136,12 @@ void ChangeModeNormal_ROMEMU(CardBootData *cbd)
   
   Description:  
  *---------------------------------------------------------------------------*/
-void ReadIDSecure_ROMEMU(CardBootData *cbd)
+HotSwState ReadIDSecure_ROMEMU(CardBootData *cbd)
 {
+    if(!HOTSW_IsCardExist()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+    
 	// カード割り込みによるDMAコピー
 	HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_scr, sizeof(cbd->id_scr) );
     
@@ -141,6 +157,8 @@ void ReadIDSecure_ROMEMU(CardBootData *cbd)
 
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
+
+    return HOTSW_SUCCESS;
 }
 
 /*---------------------------------------------------------------------------*
@@ -148,7 +166,7 @@ void ReadIDSecure_ROMEMU(CardBootData *cbd)
   
   Description:  
  *---------------------------------------------------------------------------*/
-void ReadSegSecure_ROMEMU(CardBootData *cbd)
+HotSwState ReadSegSecure_ROMEMU(CardBootData *cbd)
 {
 	u32 i,j=0;
     u64 page = 0x20;
@@ -156,6 +174,10 @@ void ReadSegSecure_ROMEMU(CardBootData *cbd)
 	u32 n = 0;
     
     for(i=0; i<SECURE_PAGE_NUM; i++){
+	    if(!HOTSW_IsCardExist()){
+			return HOTSW_PULLED_OUT_ERROR;
+    	}
+        
     	// ゼロクリア
 		MI_CpuClear8(&tempCnd, sizeof(GCDCmd64));
     
@@ -189,6 +211,8 @@ void ReadSegSecure_ROMEMU(CardBootData *cbd)
 		}
         page++;
     }
+
+    return HOTSW_SUCCESS;
 }
 
 /*---------------------------------------------------------------------------*
@@ -196,9 +220,11 @@ void ReadSegSecure_ROMEMU(CardBootData *cbd)
   
   Description:  
  *---------------------------------------------------------------------------*/
-void SwitchONPNGSecure_ROMEMU(CardBootData *cbd)
+HotSwState SwitchONPNGSecure_ROMEMU(CardBootData *cbd)
 {
 	#pragma unused( cbd )
+
+    return HOTSW_SUCCESS;
 }
 
 /*---------------------------------------------------------------------------*
@@ -206,9 +232,11 @@ void SwitchONPNGSecure_ROMEMU(CardBootData *cbd)
   
   Description:  
  *---------------------------------------------------------------------------*/
-void SwitchOFFPNGSecure_ROMEMU(CardBootData *cbd)
+HotSwState SwitchOFFPNGSecure_ROMEMU(CardBootData *cbd)
 {
 	#pragma unused( cbd )
+
+    return HOTSW_SUCCESS;
 }
 
 /*---------------------------------------------------------------------------*
@@ -216,12 +244,16 @@ void SwitchOFFPNGSecure_ROMEMU(CardBootData *cbd)
   
   Description:  
  *---------------------------------------------------------------------------*/
-void ChangeModeSecure_ROMEMU(CardBootData *cbd)
+HotSwState ChangeModeSecure_ROMEMU(CardBootData *cbd)
 {
 	#pragma unused( cbd )
     
 	GCDCmd64 tempCnd, cnd;
 
+    if(!HOTSW_IsCardExist()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+    
     // ゼロクリア
 	MI_CpuClear8(&tempCnd, sizeof(GCDCmd64));
     
@@ -247,6 +279,8 @@ void ChangeModeSecure_ROMEMU(CardBootData *cbd)
     
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
+
+    return HOTSW_SUCCESS;
 }
 
 
@@ -258,10 +292,14 @@ void ChangeModeSecure_ROMEMU(CardBootData *cbd)
   
   Description:  ゲームモードでIDを読み込む
  *---------------------------------------------------------------------------*/
-void ReadIDGame_ROMEMU(CardBootData *cbd)
+HotSwState ReadIDGame_ROMEMU(CardBootData *cbd)
 {
 	#pragma unused( cbd )
-    
+
+    if(!HOTSW_IsCardExist()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+
 	// カード割り込みによるDMAコピー
 	HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_gam, sizeof(cbd->id_gam) );
     
@@ -277,6 +315,8 @@ void ReadIDGame_ROMEMU(CardBootData *cbd)
 
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
+
+    return HOTSW_SUCCESS;
 }
 
 /*---------------------------------------------------------------------------*
@@ -284,7 +324,7 @@ void ReadIDGame_ROMEMU(CardBootData *cbd)
   
   Description:  ゲームモードで、指定されたページを指定バッファに指定サイズ分を読み込む
  *---------------------------------------------------------------------------*/
-void ReadPageGame_ROMEMU(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
+HotSwState ReadPageGame_ROMEMU(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
 {
 	#pragma unused( cbd )
     
@@ -300,6 +340,10 @@ void ReadPageGame_ROMEMU(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
     OS_TPrintf("Read Game Segment  Page Count : %d   size : %x\n", loop, size);
 
     for(i=0; i<loop; i++){
+	    if(!HOTSW_IsCardExist()){
+			return HOTSW_PULLED_OUT_ERROR;
+    	}
+        
 		// ゼロクリア
 		MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
 
@@ -330,4 +374,6 @@ void ReadPageGame_ROMEMU(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
             *((u32 *)buf + counter++) = reg_HOTSW_MCD1;
 		}
     }
+
+    return HOTSW_SUCCESS;
 }

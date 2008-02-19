@@ -161,13 +161,13 @@ typedef enum CardTypeEx{
     DS_CARD_TYPE_2,
     TWL_CARD,
     ROM_EMULATION
-}CardTypeEx;
+} CardTypeEx;
 
 typedef enum NormalCommandType{
     RD_ID = 0,
     RD_BSEG,
     CHG_MODE
-}NormalCommandType;
+} NormalCommandType;
 
 typedef enum SecureCommandType{
     S_RD_ID = 0,
@@ -175,34 +175,44 @@ typedef enum SecureCommandType{
     S_PNG_ON,
     S_PNG_OFF,
     S_CHG_MODE
-}SecureCommandType;
+} SecureCommandType;
 
 typedef enum GameCommandType{
     G_RD_ID = 0,
     G_RD_PAGE
-}GameCommandType;
+} GameCommandType;
 
 typedef enum CardType{
     CARD_DS_TYPE1 = 0,
     CARD_DS_TYPE2,
     CARD_TWL
-}CardType;
+} CardType;
+
+typedef enum HotSwState{
+	HOTSW_SUCCESS = 0,
+    HOTSW_TIME_OUT,
+    HOTSW_CARD_LOCK_ERROR,
+    HOTSW_CRC_CHECK_ERROR,
+    HOTSW_HASH_CHECK_ERROR,
+    HOTSW_ID_CHECK_ERROR,
+    HOTSW_PULLED_OUT_ERROR,
+    HOTSW_INSERT_COUNT_ERROR,
+    HOTSW_UNEXPECTED_ERROR
+} HotSwState;
 
 // union ---------------------------------------------------------------------
 typedef union
 {
     u64             dw;
     u8              b[8];
-}
-GCDCmd64;
+} GCDCmd64;
 
 // ブートセグメントデータ
 typedef union BootSegmentData
 {
     ROM_Header          rh;
     u32                 word[BOOT_SEGMENT_SIZE / sizeof(u32)];
-}
-BootSegmentData;
+} BootSegmentData;
 
 // struct -------------------------------------------------------------------
 typedef struct BLOWFISH_CTX{
@@ -246,23 +256,21 @@ typedef struct CardBootData{
     u32                 *pSecureSegBuf;
 
     BLOWFISH_CTX        keyTable;
-}
-CardBootData;
+} CardBootData;
 
 // カード起動用関数
 typedef struct CardBootFunction {
-    void (*ReadBootSegment_N)(CardBootData *cbd);
-    void (*ChangeMode_N)(CardBootData *cbd);
+    HotSwState (*ReadBootSegment_N)(CardBootData *cbd);
+    HotSwState (*ChangeMode_N)(CardBootData *cbd);
 
-    void (*ReadID_S)(CardBootData *cbd);
-    void (*ReadSegment_S)(CardBootData *cbd);
-    void (*SetPNG_S)(CardBootData *cbd);
-    void (*ChangeMode_S)(CardBootData *cbd);
+    HotSwState (*ReadID_S)(CardBootData *cbd);
+    HotSwState (*ReadSegment_S)(CardBootData *cbd);
+    HotSwState (*SetPNG_S)(CardBootData *cbd);
+    HotSwState (*ChangeMode_S)(CardBootData *cbd);
 
-    void (*ReadID_G)(CardBootData *cbd);
-    void (*ReadPage_G)(CardBootData *cbd, u32 addr, void* buf, u32 size);
-}
-CardBootFunction;
+    HotSwState (*ReadID_G)(CardBootData *cbd);
+    HotSwState (*ReadPage_G)(CardBootData *cbd, u32 addr, void* buf, u32 size);
+} CardBootFunction;
 
 
 

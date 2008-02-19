@@ -18,35 +18,35 @@ extern "C" {
 
 // ■       ノーマルモードのコマンド       ■
 //	DSカードType1のノーマルモードのBoot Segment(4Kbyte)読み込み
-void ReadBootSegNormal_DSType1(CardBootData *cbd);
+HotSwState ReadBootSegNormal_DSType1(CardBootData *cbd);
 
 //	DSカードType1のノーマルモードのモード変更
-void ChangeModeNormal_DSType1(CardBootData *cbd);
+HotSwState ChangeModeNormal_DSType1(CardBootData *cbd);
 
 
 // ■       セキュアモードのコマンド       ■
 //	DSカードType1のセキュアモードのID読み込み
-void ReadIDSecure_DSType1(CardBootData *cbd);
+HotSwState ReadIDSecure_DSType1(CardBootData *cbd);
 
 //	DSカードType1のセキュアモードのSecure Segment(16Kbyte)読み込み
-void ReadSegSecure_DSType1(CardBootData *cbd);
+HotSwState ReadSegSecure_DSType1(CardBootData *cbd);
 
 //	DSカードType1のセキュアモードのPNジェネレータON
-void SwitchONPNGSecure_DSType1(CardBootData *cbd);
+HotSwState SwitchONPNGSecure_DSType1(CardBootData *cbd);
 
 //	DSカードType1のセキュアモードのPNジェネレータOFF
-void SwitchOFFPNGSecure_DSType1(CardBootData *cbd);
+HotSwState SwitchOFFPNGSecure_DSType1(CardBootData *cbd);
 
 //	DSカードType1のセキュアモードのモード変更
-void ChangeModeSecure_DSType1(CardBootData *cbd);
+HotSwState ChangeModeSecure_DSType1(CardBootData *cbd);
 
 
 // ■       ゲームモードのコマンド       ■
 //	DSカードType1のゲームモードのID読み込み
-void ReadIDGame_DSType1(CardBootData *cbd);
+HotSwState ReadIDGame_DSType1(CardBootData *cbd);
 
 //  DSカードType1のゲームモードの指定ページ読み込み
-void ReadPageGame_DSType1(CardBootData *cbd, u32 start_addr, void* buf, u32 size);
+HotSwState ReadPageGame_DSType1(CardBootData *cbd, u32 start_addr, void* buf, u32 size);
 
 #ifdef __cplusplus
 } /* extern "C" */

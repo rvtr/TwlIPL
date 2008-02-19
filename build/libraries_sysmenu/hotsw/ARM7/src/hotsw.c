@@ -53,20 +53,7 @@
 #define		HOTSW_EXMEMCNT_SELB_SHIFT 			10								 
 #endif
 
-// enum ---------------------------------------------------------------------
-typedef enum IntrType{
-	HOTSW_INSERT 	= 0,
-    HOTSW_PULLEDOUT = 1
-}
-IntrType;
     
-// struct -------------------------------------------------------------------
-typedef struct HotSwMessage{
-	IntrType 	type;
-	u32			hotswCount; 
-}
-HotSwMessage;
-
 // スレッド・メッセージ関係をまとめた構造体
 typedef struct CardThreadData{
     u64  				stack[HOTSW_THREAD_STACK_SIZE / sizeof(u64)];
@@ -75,8 +62,8 @@ typedef struct CardThreadData{
 	u32 				idx_insert;
     u32					idx_pulledOut;
 	
-    HotSwMessage		hotswInsertMsg[HOTSW_INSERT_MSG_NUM];
-    HotSwMessage		hotswPulledOutMsg[HOTSW_PULLED_MSG_NUM];
+    OSMessage			hotswInsertMsg[HOTSW_INSERT_MSG_NUM];
+    OSMessage			hotswPulledOutMsg[HOTSW_PULLED_MSG_NUM];
     OSMessageQueue   	hotswQueue;
 	OSMessage			hotswMsgBuffer[HOTSW_MSG_BUFFER_NUM];
 }
@@ -84,7 +71,6 @@ CardThreadData;
 
 // Function prototype -------------------------------------------------------
 static BOOL IsSwap(void);
-static BOOL IsCardExist(void);
 static u32 GetMcSlotShift(void);
 static void SetMcSlotMode(u32 mode);
 static BOOL CmpMcSlotMode(u32 mode);
@@ -103,10 +89,12 @@ static void McPowerOff(void);
 static void SetMCSCR(void);
 
 static void GenVA_VB_VD(void);
-static void LoadTable(void);
-static void ReadRomEmulationData(void);
-static void ReadIDNormal(void);
 static void DecryptObjectFile(void);
+static HotSwState LoadTable(void);
+static HotSwState ReadRomEmulationData(void);
+static HotSwState ReadIDNormal(void);
+static HotSwState LoadStaticModule(void);
+static HotSwState LoadCardData(void);
 
 static void SetHotSwState(BOOL busy);
 
@@ -236,13 +224,9 @@ void HOTSW_Init(void)
     HOTSW_SetSecureSegmentBuffer((void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
     
     // カードが挿さってあったらスレッドを起動する
-	if(IsCardExist()){
+	if(HOTSW_IsCardExist()){
 //		OS_PutString("Card Boot Start\n");
 
-      	// 送信メッセージを作成 (活線挿抜回数を取得・カード挿し)
-		s_ctData.hotswInsertMsg[s_ctData.idx_insert].hotswCount = CARDi_GetSlotResetCount();
-        s_ctData.hotswInsertMsg[s_ctData.idx_insert].type	   	= HOTSW_INSERT;
-        
 		// メッセージ送信
     	OS_SendMessage(&s_ctData.hotswQueue, (OSMessage)&s_ctData.hotswInsertMsg[s_ctData.idx_insert], OS_MESSAGE_NOBLOCK);
 
@@ -258,29 +242,21 @@ void HOTSW_Init(void)
 }
 
 /* -----------------------------------------------------------------
- * HOTSW_LoadCardData関数
+ * LoadCardData関数
  *
  * カードからデータをロードする
  *
  * ※BootSegmentBuffer SecureSegmentBufferの設定を行ってから
  *   この関数を呼んでください。
  * ----------------------------------------------------------------- */
-BOOL HOTSW_LoadCardData(void)
+static HotSwState LoadCardData(void)
 {
 	OSTick start;
 	s32 tempLockID;
-	BOOL retval = TRUE;
+	HotSwState retval = HOTSW_SUCCESS;
 
     start = OS_GetTick();
 
-    // スロットがスワップされてたら元に戻す。
-#ifdef HOTSW_FORCE_CARD_B
-    if(reg_MI_MC1 & 0x8000){
-		reg_MI_MC1 = reg_MI_MC1 & 0xff;
-    }
-#endif //  HOTSW_FORCE_CARD_B
-    
-//	OS_TPrintf("---------------- Card Boot Start ---------------\n");
 #ifdef SDK_ARM7
 	// カード電源リセット
 	McPowerOff();
@@ -301,14 +277,14 @@ BOOL HOTSW_LoadCardData(void)
 	// カードのロックIDを取得
 	tempLockID = OS_GetLockID();
     if(tempLockID == OS_LOCK_ID_ERROR){
-		retval = FALSE;
+		return HOTSW_CARD_LOCK_ERROR;
     }
     else{
     	s_cbData.lockID = (u16)tempLockID;
     }
 
     // ブート処理開始
-	if(IsCardExist() && retval){
+	if(HOTSW_IsCardExist()){
 		// カードのロック
 #ifdef DEBUG_USED_CARD_SLOT_B_
         LockExCard(s_cbData.lockID);
@@ -317,11 +293,11 @@ BOOL HOTSW_LoadCardData(void)
 #endif
         
 		// カード側でKey Tableをロードする
-        LoadTable();
+        retval = LoadTable();
         
     	// ---------------------- Normal Mode ----------------------
     	// カードID読み込み
-		ReadIDNormal();
+		retval = ReadIDNormal();
         
 		// カードタイプを判別をして、使う関数を切替える IDの最上位ビットが1なら3DM
         if(s_cbData.id_nml & 0x80000000){
@@ -342,10 +318,10 @@ BOOL HOTSW_LoadCardData(void)
 			(void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );			// ARM9と排他制御する
 			
 	    	// Boot Segment読み込み
-	    	s_funcTable[s_cbData.cardType].ReadBootSegment_N(&s_cbData);
+	    	retval = s_funcTable[s_cbData.cardType].ReadBootSegment_N(&s_cbData);
 
             // Romエミュレーション情報を取得
-			ReadRomEmulationData();
+			retval = ReadRomEmulationData();
 
             // 取得したRomエミュレーション情報を比較
             s_cbData.debuggerFlg = TRUE;
@@ -372,14 +348,14 @@ BOOL HOTSW_LoadCardData(void)
 			
 			if( ( SYSMi_GetWork()->cardHeaderCrc16_bak != s_cbData.pBootSegBuf->rh.s.header_crc16 ) ||
 				( 0xcf56 != s_cbData.pBootSegBuf->rh.s.nintendo_logo_crc16 ) ){
-				retval = FALSE;
+				retval = HOTSW_CRC_CHECK_ERROR;
 			}
 			
 			(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );		// ARM9と排他制御する
 			OS_ReleaseLockID( id );
 		}
 		
-		if( retval ) {
+		if( retval == HOTSW_SUCCESS ) {
 	        // NTRカードかTWLカードか
 	        if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
 //				OS_TPrintf("TWL Card.\n");
@@ -400,41 +376,49 @@ BOOL HOTSW_LoadCardData(void)
             GenVA_VB_VD();
             
 	    	// セキュアモードに移行
-	    	s_funcTable[s_cbData.cardType].ChangeMode_N(&s_cbData);
+	    	retval = s_funcTable[s_cbData.cardType].ChangeMode_N(&s_cbData);
 
+            if(retval != HOTSW_SUCCESS){
+				return retval;
+            }
+            
 	    	// ---------------------- Secure Mode ----------------------
 			// PNG設定
-			s_funcTable[s_cbData.cardType].SetPNG_S(&s_cbData);
+			retval = s_funcTable[s_cbData.cardType].SetPNG_S(&s_cbData);
 	
 	        // DS側符号生成回路初期値設定 (レジスタ設定)
 			SetMCSCR();
 	
 			// ID読み込み
-	    	s_funcTable[s_cbData.cardType].ReadID_S(&s_cbData);
+	    	retval = s_funcTable[s_cbData.cardType].ReadID_S(&s_cbData);
 
             // カードIDの比較をして、一致しなければFALSEを返す
             if(s_cbData.id_nml != s_cbData.id_scr){
-				return FALSE;
+				return HOTSW_ID_CHECK_ERROR;
             }
             
 	    	// Secure領域のSegment読み込み
-	    	s_funcTable[s_cbData.cardType].ReadSegment_S(&s_cbData);
+	    	retval = s_funcTable[s_cbData.cardType].ReadSegment_S(&s_cbData);
 
 	    	// ゲームモードに移行
-			s_funcTable[s_cbData.cardType].ChangeMode_S(&s_cbData);
+			retval = s_funcTable[s_cbData.cardType].ChangeMode_S(&s_cbData);
 
+            if(retval != HOTSW_SUCCESS){
+				return retval;
+            }
+            
 	    	// ---------------------- Game Mode ----------------------
 	    	// ID読み込み
-			s_funcTable[s_cbData.cardType].ReadID_G(&s_cbData);
+			retval = s_funcTable[s_cbData.cardType].ReadID_G(&s_cbData);
 
             // カードIDの比較をして、一致しなければFALSEを返す
             if(s_cbData.id_scr != s_cbData.id_gam){
-				return FALSE;
+				return HOTSW_ID_CHECK_ERROR;
             }
             
 			// 常駐モジュール残りを指定先に転送
-			HOTSW_LoadStaticModule();
-
+			retval = LoadStaticModule();
+            
             // ARM9常駐モジュールの先頭2KBの暗号化領域を複合化
 			DecryptObjectFile();
 		}
@@ -445,11 +429,9 @@ BOOL HOTSW_LoadCardData(void)
 #else
         OS_UnlockCard(s_cbData.lockID);
 #endif
-//		OS_TPrintf("-----------------------------------------------\n");
     }
     else{
-//		OS_TPrintf("Card Not Found\n");
-		retval = FALSE;
+		retval = HOTSW_PULLED_OUT_ERROR;
     }
 
     // カードロックIDの開放
@@ -471,25 +453,32 @@ void* HOTSW_GetRomEmulationBuffer(void)
 }
 
 /* -----------------------------------------------------------------
- * HOTSW_LoadStaticModule関数
+ * LoadStaticModule関数
  *
  * ARM7,9の常駐モジュールを展開する関数
  * 
  * 注：一度カードブートしてゲームモードになってから呼び出してください
  * ----------------------------------------------------------------- */
-void HOTSW_LoadStaticModule(void)
+static HotSwState LoadStaticModule(void)
 {
+	HotSwState retval = HOTSW_SUCCESS;
+    
 #ifdef DEBUG_USED_CARD_SLOT_B_
 	// バナーリード
 	if( s_cbData.pBootSegBuf->rh.s.banner_offset ) {
 //		OS_TPrintf("  - Banner Loading...\n");
-        s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
+        retval = s_funcTable[s_cbData.cardType].ReadPage_G(
+            									 &s_cbData,
             									  s_cbData.pBootSegBuf->rh.s.banner_offset,
 												  (u32 *)SYSM_CARD_BANNER_BUF,
 	                                              sizeof(TWLBannerFile) );
 	}
-	
-	if(IsCardExist())
+
+    if(retval != HOTSW_SUCCESS){
+		return retval;
+    }
+    
+	if(HOTSW_IsCardExist())
 	{
         SYSMi_GetWork()->flags.common.isValidCardBanner  = TRUE;
         SYSMi_GetWork()->flags.common.isCardStateChanged = TRUE;
@@ -501,18 +490,26 @@ void HOTSW_LoadStaticModule(void)
 	s_cbData.arm9Stc = (u32)s_cbData.pBootSegBuf->rh.s.main_ram_address;
 	// 配置先と再配置情報を取得 & Arm9の常駐モジュール残りを指定先に転送
 	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_STATIC, &s_cbData.arm9Stc, s_cbData.pBootSegBuf->rh.s.main_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC] , s_cbData.twlFlg);
-    s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
-        									  s_cbData.pBootSegBuf->rh.s.main_rom_offset  + SECURE_SEGMENT_SIZE,
-                                 	  (u32 *)(s_cbData.arm9Stc 							  + SECURE_SEGMENT_SIZE),
-                                              s_cbData.pBootSegBuf->rh.s.main_size        - SECURE_SEGMENT_SIZE);
+    retval = s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
+    													s_cbData.pBootSegBuf->rh.s.main_rom_offset + SECURE_SEGMENT_SIZE,
+                                 	  			(u32 *)(s_cbData.arm9Stc 						   + SECURE_SEGMENT_SIZE),
+                                              			s_cbData.pBootSegBuf->rh.s.main_size       - SECURE_SEGMENT_SIZE);
+
+    if(retval != HOTSW_SUCCESS){
+		return retval;
+    }
     
 	s_cbData.arm7Stc = (u32)s_cbData.pBootSegBuf->rh.s.sub_ram_address;
     // 配置先と再配置情報を取得 & Arm7の常駐モジュールを指定先に転送
 	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_STATIC, &s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC] , s_cbData.twlFlg);
-    s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
-                                              s_cbData.pBootSegBuf->rh.s.sub_rom_offset,
-                                 	   (u32 *)s_cbData.arm7Stc,
-                                              s_cbData.pBootSegBuf->rh.s.sub_size);
+    retval = s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
+                                              			s_cbData.pBootSegBuf->rh.s.sub_rom_offset,
+                                 	   			 (u32 *)s_cbData.arm7Stc,
+                                              			s_cbData.pBootSegBuf->rh.s.sub_size);
+
+    if(retval != HOTSW_SUCCESS){
+		return retval;
+    }
     
 	// TWLでのみロード
 	if( s_cbData.pBootSegBuf->rh.s.platform_code & PLATFORM_CODE_FLAG_TWL ) {
@@ -521,26 +518,33 @@ void HOTSW_LoadStaticModule(void)
         s_cbData.arm9Ltd = (u32)s_cbData.pBootSegBuf->rh.s.main_ltd_ram_address;
 		// 配置先と再配置情報を取得 & Arm9の常駐モジュールを指定先に転送（※TWLカード対応していないので、注意！！）
 		SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_LTD_STATIC, &s_cbData.arm9Ltd, s_cbData.pBootSegBuf->rh.s.main_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_LTD_STATIC] , TRUE);
-	    s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
-                                                  s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset,
-                                 		   (u32 *)SYSM_CARD_TWL_SECURE_BUF,
-	                                          	  size);
+	    retval = s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
+                                                  			s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset,
+                                 		   			 (u32 *)SYSM_CARD_TWL_SECURE_BUF,
+	                                          	  			size);
 		if( s_cbData.pBootSegBuf->rh.s.main_ltd_size > SECURE_SEGMENT_SIZE ) {
-		    s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
-                                                      s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset + SECURE_SEGMENT_SIZE,
-	                             		 	  (u32 *)(s_cbData.arm9Ltd 								 + SECURE_SEGMENT_SIZE),
-	                                          		  s_cbData.pBootSegBuf->rh.s.main_ltd_size 		 - size);
+		    retval = s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
+                                                      			s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset + SECURE_SEGMENT_SIZE,
+	                             		 	  			(u32 *)(s_cbData.arm9Ltd 							   + SECURE_SEGMENT_SIZE),
+	                                          		  			s_cbData.pBootSegBuf->rh.s.main_ltd_size 	   - size);
 		}
 
+		if(retval != HOTSW_SUCCESS){
+			return retval;
+    	}
+        
 		s_cbData.arm7Ltd = (u32)s_cbData.pBootSegBuf->rh.s.sub_ltd_ram_address;
         // 配置先と再配置情報を取得 & Arm7の常駐モジュールを指定先に転送
 		SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_LTD_STATIC, &s_cbData.arm7Ltd, s_cbData.pBootSegBuf->rh.s.sub_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_LTD_STATIC], TRUE);
-	    s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
-                                                  s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset,
-	                             	 	   (u32 *)s_cbData.arm7Ltd,
-	                                          	  s_cbData.pBootSegBuf->rh.s.sub_ltd_size);
+	    retval = s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
+        													s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset,
+	                             	 	   			 (u32 *)s_cbData.arm7Ltd,
+	                                          	  			s_cbData.pBootSegBuf->rh.s.sub_ltd_size);
 
-
+	    if(retval != HOTSW_SUCCESS){
+			return retval;
+    	}
+        
 		// セキュア領域先頭2K分のハッシュ値を求めて、Work領域にコピー
         {
 			u8		sha1data[DIGEST_SIZE_SHA1];
@@ -561,24 +565,30 @@ void HOTSW_LoadStaticModule(void)
         
         // Arm9常駐モジュール Hash値のチェック
         if(!CheckArm9HashValue()){
+            retval = HOTSW_HASH_CHECK_ERROR;
 			OS_PutString("×Arm9 Static Module Hash Check Error...\n");
     	}
     	
     	// Arm7常駐モジュール Hash値のチェック
     	if(!CheckArm7HashValue()){
+            retval = HOTSW_HASH_CHECK_ERROR;
 			OS_PutString("×Arm7 Static Module Hash Check Error...\n");
     	}
         
 		// Arm9拡張常駐モジュール Hash値のチェック
         if(!CheckExtArm9HashValue()){
+            retval = HOTSW_HASH_CHECK_ERROR;
 			OS_PutString("×Arm9 Ltd Static Module Hash Check Error...\n");
     	}
         
         // Arm7拡張常駐モジュール Hash値のチェック
     	if(!CheckExtArm7HashValue()){
+            retval = HOTSW_HASH_CHECK_ERROR;
 			OS_PutString("×Arm7 Ltd Static Module Hash Check Error...\n");
     	}
 	}
+
+    return retval;
 }
 
 
@@ -661,7 +671,7 @@ static void GenVA_VB_VD(void)
  * ※この関数は開発カード用に発行しないといけない。
  *   製品版カードの場合、このコマンドは無視される設計
  * ----------------------------------------------------------------- */
-static void LoadTable(void)
+static HotSwState LoadTable(void)
 {
 	u32 temp;
     
@@ -680,6 +690,8 @@ static void LoadTable(void)
 		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
         temp = reg_HOTSW_MCD1;
 	}
+
+    return HOTSW_SUCCESS;
 }
 
 /*---------------------------------------------------------------------------*
@@ -687,7 +699,7 @@ static void LoadTable(void)
   
   Description:  Romエミュレーションデータの読み込み
  *---------------------------------------------------------------------------*/
-static void ReadRomEmulationData(void)
+static HotSwState ReadRomEmulationData(void)
 {
 	u32 count=0;
     u32 temp;
@@ -696,7 +708,7 @@ static void ReadRomEmulationData(void)
     // 量産用CPUでは平文アクセス防止のためリードしない
     if ( ! (*(u8*)(OS_CHIPTYPE_DEBUGGER_ADDR) & OS_CHIPTYPE_DEBUGGER_MASK) )
     {
-        return;
+        return HOTSW_SUCCESS;
     }
 
 	// MCCMD レジスタ設定
@@ -719,6 +731,8 @@ static void ReadRomEmulationData(void)
 	}
 
    	MI_CpuCopyFast(s_cbData.romEmuBuf, (void*)HW_ISD_RESERVED, 32);
+
+    return HOTSW_SUCCESS;
 }
 
 /* -----------------------------------------------------------------
@@ -726,7 +740,7 @@ static void ReadRomEmulationData(void)
  *
  * ノーマルモード時のカードIDを読み込む関数
  * ----------------------------------------------------------------- */
-void ReadIDNormal(void)
+HotSwState ReadIDNormal(void)
 {
 	// カード割り込みによるDMAコピー
 	HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &s_cbData.id_nml, sizeof(s_cbData.id_nml) );
@@ -743,6 +757,8 @@ void ReadIDNormal(void)
 
     // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
     OS_SleepThread(NULL);
+
+    return HOTSW_SUCCESS;
 }
 
 /* -----------------------------------------------------------------
@@ -811,6 +827,25 @@ static void DecryptObjectFile(void)
 }
 
 /* -----------------------------------------------------------------
+ * HOTSW_IsCardExist関数
+ *
+ * カードの存在判定
+ *
+ * ※SCFG_MC1のCDETフラグを見ている
+ * ----------------------------------------------------------------- */
+ BOOL HOTSW_IsCardExist(void)
+{
+    u32 mask = (u32)(REG_MI_MC_SL2_CDET_MASK >> GetMcSlotShift());
+
+    if( !(reg_MI_MC1 & mask) ){
+        return TRUE;
+    }
+    else{
+        return FALSE;
+    }
+}
+
+/* -----------------------------------------------------------------
  * IsSwap関数
  *
  * カードのスワップ判定
@@ -828,32 +863,13 @@ static BOOL IsSwap(void)
 }
 
 /* -----------------------------------------------------------------
- * IsCardExist関数
- *
- * カードの存在判定
- *
- * ※SCFG_MC1のCDETフラグを見ている
- * ----------------------------------------------------------------- */
-static BOOL IsCardExist(void)
-{
-    u32 mask = (u32)(REG_MI_MC_SL2_CDET_MASK >> GetMcSlotShift());
-
-    if( !(reg_MI_MC1 & mask) ){
-        return TRUE;
-    }
-    else{
-        return FALSE;
-    }
-}
-
-/* -----------------------------------------------------------------
  * GetMcSlotShift関数
  *
  * カードスロットのシフトビット数の取得
  * ----------------------------------------------------------------- */
 static u32 GetMcSlotShift(void)
 {
-    return (u32)(IsSwap() * REG_MI_MC_SL2_CDET_SHIFT);
+	return (u32)(IsSwap() * REG_MI_MC_SL2_CDET_SHIFT);
 }
 
 /* -----------------------------------------------------------------
@@ -968,10 +984,10 @@ static void McThread(void *arg)
 {
 	#pragma unused( arg )
 
-    u32				currentId_g = UNDEF_CODE;
-    BOOL 			isPulledOut = TRUE;
-    BOOL 			retval;
-    HotSwMessage 	*msg;
+    u32			hotswCount  = UNDEF_CODE;
+    BOOL 		isPulledOut = TRUE;
+    HotSwState 	retval;
+    OSMessage 	*msg;
     
     while(1){
         OS_ReceiveMessage(&s_ctData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
@@ -989,12 +1005,11 @@ static void McThread(void *arg)
 			}
             
             // カードが挿さってたら
-            if(IsCardExist()){
+            if(HOTSW_IsCardExist()){
                 // 前の状態が挿し
                 if(!isPulledOut){
-                    (void)s_funcTable[s_cbData.cardType].ReadID_G(&s_cbData);
-                    if(currentId_g == s_cbData.id_gam){
-
+                    // 抜き差しがなかったか判定
+                    if(CARDi_IsPulledOutEx(hotswCount)){
 						u16 id = (u16)OS_GetLockID();
 						(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
 						if( SYSMi_GetWork()->flags.arm9.reqChangeHotSW ) {
@@ -1026,27 +1041,30 @@ static void McThread(void *arg)
             			// カードデータロード完了フラグ
             			SYSMi_GetWork()->flags.common.isCardLoadCompleted = TRUE;
 
+                        OS_PutString("ok!\n");
+
 						break;
                     }
                 }
 
+                // 挿し回数を取得
+				hotswCount = CARDi_GetSlotResetCount();
+
                 // HotSwをbusy状態にする 
 				SetHotSwState(TRUE);
-                    
+
                 // カード読み込み開始
-       			retval = HOTSW_LoadCardData();
+       			retval = LoadCardData();
 
 				// HotSwをfree状態にする
                 SetHotSwState(FALSE);
 
-                // GameモードでのIDを登録する
-				currentId_g = s_cbData.id_gam;
-
 				// 状態フラグを更新
-                isPulledOut = !retval;
-                
+                isPulledOut = (retval == HOTSW_SUCCESS) ? FALSE : TRUE;
+
                 // カード読み込み失敗してたら、後処理する
-                if(!retval){
+                if(retval != HOTSW_SUCCESS){
+                    OS_TPrintf("ng... retval : %d\n", retval);
 					// カードロックの開放
 #ifdef DEBUG_USED_CARD_SLOT_B_
         			UnlockExCard(s_cbData.lockID);
@@ -1094,10 +1112,6 @@ static void McThread(void *arg)
  *---------------------------------------------------------------------------*/
 static void InterruptCallbackCard(void)
 {
-    // 送信メッセージを作成 (活線挿抜回数を取得・カード挿し)
-	s_ctData.hotswPulledOutMsg[s_ctData.idx_pulledOut].hotswCount = CARDi_GetSlotResetCount();
-    s_ctData.hotswPulledOutMsg[s_ctData.idx_pulledOut].type	   = HOTSW_PULLEDOUT;
-    
 	// メッセージ送信
     OS_SendMessage(&s_ctData.hotswQueue, (OSMessage *)&s_ctData.hotswPulledOutMsg[s_ctData.idx_pulledOut], OS_MESSAGE_NOBLOCK);
 
@@ -1122,10 +1136,6 @@ static void InterruptCallbackCardDet(void)
 {
     // SDKのカード状態をリセットする
 	CARDi_ResetSlotStatus();
-
-    // 送信メッセージを作成 (活線挿抜回数を取得・カード挿し)
-	s_ctData.hotswInsertMsg[s_ctData.idx_insert].hotswCount = CARDi_GetSlotResetCount();
-    s_ctData.hotswInsertMsg[s_ctData.idx_insert].type	    = HOTSW_INSERT;
     
 	// メッセージ送信
     OS_SendMessage(&s_ctData.hotswQueue, (OSMessage *)&s_ctData.hotswInsertMsg[s_ctData.idx_insert], OS_MESSAGE_NOBLOCK);
