@@ -40,7 +40,7 @@ extern "C" {
 
 #define TITLE_ID_MACHINE_SETTINGS				0x000300055445534d	// 本体設定のタイトルID
 
-#define PAD_PRODUCTION_SHORTCUT_CARD_BOOT		( PAD_BUTTON_A | PAD_BUTTON_B	\
+#define SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT	( PAD_BUTTON_A | PAD_BUTTON_B	\
 												| PAD_BUTTON_X | PAD_BUTTON_Y | PAD_BUTTON_R )
 																	// 量産工程で使用する初回起動設定をキャンセルしてカードブートするショートカットキー
 

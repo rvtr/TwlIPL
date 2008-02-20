@@ -3,6 +3,7 @@
   File:     
  *---------------------------------------------------------------------------*/
 #include 	<twl.h>
+#include	<sysmenu.h>
 #include	<customNDma.h>
 
 
@@ -40,7 +41,11 @@ void HOTSW_NDmaCopy_Card(u32 ndmaNo, const void *src, void *dest, u32 size)
 	//---- decide control register
 	contData  = NDMA_BLOCK_WORD_COUNT_1 | MI_NDMA_ENABLE;
 	contData |= (MI_NDMA_SRC_FIX | MI_NDMA_DEST_INC | MI_NDMA_DEST_RELOAD_DISABLE);
+#ifndef DEBUG_USED_CARD_SLOT_B_
+	contData |= MI_NDMA_TIMING_CARD_A;
+#else
 	contData |= MI_NDMA_TIMING_CARD_B;
+#endif
 
 	//---- set interrupt enable 
 	contData |= MI_NDMA_IF_ENABLE;

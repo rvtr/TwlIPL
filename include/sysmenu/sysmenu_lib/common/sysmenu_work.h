@@ -52,7 +52,7 @@ typedef struct TitleID_HiLo {
 
 // ISデバッガROMエミュレーション情報
 typedef struct SYSMRomEmuInfo {
-	// マジックコード（ISD_ROM_EMULATION_INFO_MAGIC_CODEの固定値）
+	// マジックコード（SYSM_ROMEMU_INFO_MAGIC_CODEの固定値）
 	u32			magic_code;
 	// フラグ類
 	u32			isEnableSlot1 : 1;
@@ -99,10 +99,10 @@ typedef struct SYSM_work {
 			vu32		isEnableHotSW :1;				// 活線挿抜有効？
 			vu32		isBusyHotSW :1;					// 活線挿抜処理中？
 			vu32		isCardLoadCompleted :1;			// カードからデータロード完了？
-#ifdef DEBUG_USED_CARD_SLOT_B_
+//#ifdef DEBUG_USED_CARD_SLOT_B_
 			vu32		isValidCardBanner :1;
 			vu32		is1stCardChecked :1;
-#endif
+//#endif
 			vu32		:0;
 		}common;
 		struct {

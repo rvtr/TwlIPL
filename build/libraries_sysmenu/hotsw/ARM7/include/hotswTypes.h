@@ -103,9 +103,7 @@ extern "C" {
     +  ((param) &  LATENCY1_MASK)   \
     )
 
-//#define USE_SLOT_A
-
-#ifdef USE_SLOT_A
+#ifndef DEBUG_USED_CARD_SLOT_B_
 // Slot A
 #define     SLOT_STATUS_MODE_SELECT_MSK         0x0c
 #define     SLOT_STATUS_CDET_MSK                0x01

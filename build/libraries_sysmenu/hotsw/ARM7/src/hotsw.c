@@ -73,6 +73,7 @@ CardThreadData;
 // Function prototype -------------------------------------------------------
 static BOOL IsSwap(void);
 static u32 GetMcSlotShift(void);
+static u32 GetMcSlotMask(void);
 static void SetMcSlotMode(u32 mode);
 static BOOL CmpMcSlotMode(u32 mode);
 
@@ -237,9 +238,9 @@ void HOTSW_Init(void)
 	}
     else{
 //		OS_PutString("No Card...\n");
-#ifdef DEBUG_USED_CARD_SLOT_B_
+//#ifdef DEBUG_USED_CARD_SLOT_B_
 		SYSMi_GetWork()->flags.common.is1stCardChecked  = TRUE;
-#endif
+//#endif
     }
 }
 
@@ -271,10 +272,10 @@ static HotSwState LoadCardData(void)
     }
 
 	// カードのロック
-#ifdef DEBUG_USED_CARD_SLOT_B_
-	LockExCard(s_cbData.lockID);
+#ifndef DEBUG_USED_CARD_SLOT_B_
+	CARD_LockRom(s_cbData.lockID);
 #else
-	OS_LockCard(s_cbData.lockID);
+	LockExCard(s_cbData.lockID);
 #endif
 
     // カード電源リセット
@@ -436,10 +437,10 @@ static HotSwState LoadCardData(void)
     }
 
 	// カードのロック開放
-#ifdef DEBUG_USED_CARD_SLOT_B_
-	UnlockExCard(s_cbData.lockID);
+#ifndef DEBUG_USED_CARD_SLOT_B_
+	CARD_UnlockRom(s_cbData.lockID);
 #else
-	OS_UnlockCard(s_cbData.lockID);
+	UnlockExCard(s_cbData.lockID);
 #endif
     
     // カードロックIDの開放
@@ -471,7 +472,7 @@ static HotSwState LoadStaticModule(void)
 {
 	HotSwState retval = HOTSW_SUCCESS;
     
-#ifdef DEBUG_USED_CARD_SLOT_B_
+//#ifdef DEBUG_USED_CARD_SLOT_B_
 	// バナーリード
 	if( s_cbData.pBootSegBuf->rh.s.banner_offset ) {
 //		OS_TPrintf("  - Banner Loading...\n");
@@ -493,7 +494,7 @@ static HotSwState LoadStaticModule(void)
         SYSMi_GetWork()->flags.common.isExistCard 		 = TRUE;
 	}
 	
-#endif
+//#endif
     
 	s_cbData.arm9Stc = (u32)s_cbData.pBootSegBuf->rh.s.main_ram_address;
 	// 配置先と再配置情報を取得 & Arm9の常駐モジュール残りを指定先に転送
@@ -781,7 +782,7 @@ static HotSwState ReadRomEmulationData(void)
  *
  * ノーマルモード時のカードIDを読み込む関数
  * ----------------------------------------------------------------- */
-HotSwState ReadIDNormal(void)
+static HotSwState ReadIDNormal(void)
 {
 	// カード割り込みによるDMAコピー
 	HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &s_cbData.id_nml, sizeof(s_cbData.id_nml) );
@@ -876,7 +877,11 @@ static void DecryptObjectFile(void)
  * ----------------------------------------------------------------- */
  BOOL HOTSW_IsCardExist(void)
 {
+#ifndef DEBUG_USED_CARD_SLOT_B_
+    u32 mask = (u32)(REG_MI_MC_SL1_CDET_MASK << GetMcSlotShift());
+#else
     u32 mask = (u32)(REG_MI_MC_SL2_CDET_MASK >> GetMcSlotShift());
+#endif
 
     if( !(reg_MI_MC1 & mask) ){
         return TRUE;
@@ -912,6 +917,19 @@ static u32 GetMcSlotShift(void)
 {
 	return (u32)(IsSwap() * REG_MI_MC_SL2_CDET_SHIFT);
 }
+/* -----------------------------------------------------------------
+ * GetMcSlotMask関数
+ *
+ * カードスロットのシフトビット数の取得
+ * ----------------------------------------------------------------- */
+static u32 GetMcSlotMask(void)
+{
+#ifndef DEBUG_USED_CARD_SLOT_B_
+    return (u32)(REG_MI_MC_SL1_MODE_MASK << GetMcSlotShift());
+#else
+    return (u32)(REG_MI_MC_SL2_MODE_MASK >> GetMcSlotShift());
+#endif
+}
 
 /* -----------------------------------------------------------------
  * SetMcSlotMode関数
@@ -920,9 +938,11 @@ static u32 GetMcSlotShift(void)
  * ----------------------------------------------------------------- */
 static void SetMcSlotMode(u32 mode)
 {
-    u32 mask = (u32)(REG_MI_MC_SL2_MODE_MASK >> GetMcSlotShift());
-
-    reg_MI_MC1 = (u32)((reg_MI_MC1 & ~mask) | (mode >> GetMcSlotShift()));
+#ifndef DEBUG_USED_CARD_SLOT_B_
+    reg_MI_MC1 = (u32)((reg_MI_MC1 & ~GetMcSlotMask()) | (mode << GetMcSlotShift()));
+#else
+    reg_MI_MC1 = (u32)((reg_MI_MC1 & ~GetMcSlotMask()) | (mode >> GetMcSlotShift()));
+#endif
 }
 
 /* -----------------------------------------------------------------
@@ -932,9 +952,11 @@ static void SetMcSlotMode(u32 mode)
  * ----------------------------------------------------------------- */
 static BOOL CmpMcSlotMode(u32 mode)
 {
-    u32 mask = (u32)(REG_MI_MC_SL2_MODE_MASK >> GetMcSlotShift());
-
-    if((reg_MI_MC1 & mask) == (mode >> GetMcSlotShift())){
+#ifndef DEBUG_USED_CARD_SLOT_B_
+    if((reg_MI_MC1 & GetMcSlotMask()) == (mode << GetMcSlotShift())){
+#else
+    if((reg_MI_MC1 & GetMcSlotMask()) == (mode >> GetMcSlotShift())){
+#endif
 		return TRUE;
     }
     else{
@@ -1039,9 +1061,9 @@ static void McThread(void *arg)
         while(1){
 			// 活線挿抜抑制フラグが立っていたら処理しない
 			if( !SYSMi_GetWork()->flags.common.isEnableHotSW ) {
-#ifdef DEBUG_USED_CARD_SLOT_B_
+//#ifdef DEBUG_USED_CARD_SLOT_B_
 				SYSMi_GetWork()->flags.common.is1stCardChecked  = TRUE;
-#endif
+//#endif
 				break;
 			}
             
@@ -1107,10 +1129,10 @@ static void McThread(void *arg)
                 if(retval != HOTSW_SUCCESS){
                     OS_TPrintf("ng... retval : %d\n", retval);
 					// カードロックの開放
-#ifdef DEBUG_USED_CARD_SLOT_B_
-        			UnlockExCard(s_cbData.lockID);
+#ifndef DEBUG_USED_CARD_SLOT_B_
+        			CARD_UnlockRom(s_cbData.lockID);
 #else
-        			OS_UnlockCard(s_cbData.lockID);
+        			UnlockExCard(s_cbData.lockID);
 #endif
                     // カードロックIDの開放
 					OS_ReleaseLockID( s_cbData.lockID );
@@ -1140,9 +1162,9 @@ static void McThread(void *arg)
                 isPulledOut = TRUE;
             }
         }
-#ifdef DEBUG_USED_CARD_SLOT_B_
+//#ifdef DEBUG_USED_CARD_SLOT_B_
 		SYSMi_GetWork()->flags.common.is1stCardChecked  = TRUE;
-#endif
+//#endif
     }
 }
 
@@ -1161,7 +1183,7 @@ static void InterruptCallbackCard(void)
 
 	OS_TPrintf("○ - idx_pulledOut : %d\n", s_ctData.idx_pulledOut);
     
-#ifdef USE_SLOT_A
+#ifndef DEBUG_USED_CARD_SLOT_B_
 	OS_SetIrqCheckFlagEx(OS_IE_CARD_A_IREQ);
 #else
     OS_SetIrqCheckFlagEx(OS_IE_CARD_B_IREQ);
@@ -1186,7 +1208,7 @@ static void InterruptCallbackCardDet(void)
 
 	OS_TPrintf("● - idx_insert : %d\n", s_ctData.idx_insert);
     
-#ifdef USE_SLOT_A
+#ifndef DEBUG_USED_CARD_SLOT_B_
     OS_SetIrqCheckFlagEx(OS_IE_CARD_A_DET);
 #else
     OS_SetIrqCheckFlagEx(OS_IE_CARD_B_DET);
@@ -1203,7 +1225,7 @@ static void InterruptCallbackCardData(void)
 	// データ転送終了待ちまで寝ていたのを起こす
     OS_WakeupThreadDirect(&s_ctData.thread);
 
-#ifdef USE_SLOT_A
+#ifndef DEBUG_USED_CARD_SLOT_B_
 	OS_SetIrqCheckFlagEx(OS_IE_CARD_A_DATA);
 #else
     OS_SetIrqCheckFlagEx(OS_IE_CARD_B_DATA);
@@ -1306,7 +1328,7 @@ static void SetInterruptCallbackEx( OSIrqMask intr_bit, void *func )
  *---------------------------------------------------------------------------*/
 static void SetInterrupt(void)
 {
-#ifdef USE_SLOT_A
+#ifndef DEBUG_USED_CARD_SLOT_B_
   	SetInterruptCallback( OS_IE_CARD_A_IREQ , InterruptCallbackCard );
   	SetInterruptCallback( OS_IE_CARD_A_DET  , InterruptCallbackCardDet );
   	SetInterruptCallback( OS_IE_CARD_A_DATA , InterruptCallbackCardData );

@@ -119,12 +119,12 @@ TitleProperty *SYSM_ReadParameters( void )
 	while( !SYSMi_GetWork()->flags.common.isARM9Start ) {
 		SVC_WaitByLoop( 0x1000 );
 	}
-#ifdef DEBUG_USED_CARD_SLOT_B_
+//#ifdef DEBUG_USED_CARD_SLOT_B_
 	// ARM7のカードチェック完了を待つ
 	while( !SYSMi_GetWork()->flags.common.is1stCardChecked ) {
 		SVC_WaitByLoop( 0x1000 );
 	}
-#endif
+//#endif
 
 	//-----------------------------------------------------
 	// リセットパラメータの判定（リセットパラメータが有効かどうかは、ARM7でやってくれている）
@@ -209,8 +209,8 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 		if( ( SYSMi_GetWork()->flags.common.isOnDebugger &&		// ISデバッガが有効かつJTAGがまだ有効でない時
 			  !( *(u8 *)( HW_SYS_CONF_BUF + HWi_WSYS09_OFFSET ) & HWi_WSYS09_JTAG_CPUJE_MASK ) ) ||
 			SYSM_IsInspectCard() ||
-			( ( PAD_Read() & PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) ==
-			  PAD_PRODUCTION_SHORTCUT_CARD_BOOT )
+			( ( PAD_Read() & SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) ==
+			  SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT )
 			) {
 			s_bootTitle.flags.isAppRelocate = TRUE;
 			s_bootTitle.flags.isAppLoadCompleted = TRUE;

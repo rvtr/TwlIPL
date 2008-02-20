@@ -1,9 +1,21 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlSDK
-  File:     Card.h
+  Project:  TwlIPL
+  File:     hotsw.h
+
+  Copyright 2008 Nintendo.  All rights reserved.
+
+  These coded instructions, statements, and computer programs contain
+  proprietary information of Nintendo of America Inc. and/or Nintendo
+  Company Ltd., and are protected by Federal copyright law.  They may
+  not be disclosed to third parties or copied or duplicated in any form,
+  in whole or in part, without the prior written consent of Nintendo.
+
+  $Date:: #$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
-#ifndef __MY_CARD_H__
-#define __MY_CARD_H__
+#ifndef __SYSMENU_HOTSW_COMMON_HOTSW_H__
+#define __SYSMENU_HOTSW_COMMON_HOTSW_H__
 
 #include 	<twl.h>
 
@@ -40,4 +52,4 @@ SDK_INLINE void* HOTSW_GetRomEmulationBuffer(void)
 } /* extern "C" */
 #endif
 
-#endif  // __MY_CARD_H__
+#endif  // __SYSMENU_HOTSW_COMMON_HOTSW_H__
