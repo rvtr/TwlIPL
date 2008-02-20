@@ -624,10 +624,10 @@ static HotSwState CheckCardAuthCode(void)
     p += auth_offset & 0x000001FF;
 	if( *p++ == 'a' && *p == 'c' ) {
         OS_PutString("  ™ Clone Boot Mode\n");
-		SYSMi_GetWork()->cloneBootMode = CLONE_BOOT_MODE;
+		SYSMi_GetWork()->cloneBootMode = SYSM_CLONE_BOOT_MODE;
 	}else {
         OS_PutString("    Other Boot Mode\n");
-		SYSMi_GetWork()->cloneBootMode = OTHER_BOOT_MODE;
+		SYSMi_GetWork()->cloneBootMode = SYSM_OTHER_BOOT_MODE;
 	}
 
     return retval;
