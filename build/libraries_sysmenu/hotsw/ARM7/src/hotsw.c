@@ -20,6 +20,7 @@
 #include	<dsCardType2.h>
 #include	<romEmulation.h>
 #include	<customNDma.h>
+#include 	<../build/libraries/mb/common/include/mb_fileinfo.h> // MB_AUTHCODE_SIZE
 
 //#define HOTSW_FORCE_CARD_B
 
@@ -95,6 +96,7 @@ static HotSwState ReadRomEmulationData(void);
 static HotSwState ReadIDNormal(void);
 static HotSwState LoadStaticModule(void);
 static HotSwState LoadCardData(void);
+static HotSwState CheckCardAuthCode(void);
 
 static void SetHotSwState(BOOL busy);
 
@@ -222,7 +224,7 @@ void HOTSW_Init(void)
 
     // Secure Segment バッファの設定
     HOTSW_SetSecureSegmentBuffer((void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
-    
+
     // カードが挿さってあったらスレッドを起動する
 	if(HOTSW_IsCardExist()){
 //		OS_PutString("Card Boot Start\n");
@@ -248,6 +250,8 @@ void HOTSW_Init(void)
  *
  * ※BootSegmentBuffer SecureSegmentBufferの設定を行ってから
  *   この関数を呼んでください。
+ *
+ * [TODO:]カードのロックを見直し。InitでロックIDをがめておいて使うのでもOK
  * ----------------------------------------------------------------- */
 static HotSwState LoadCardData(void)
 {
@@ -257,8 +261,25 @@ static HotSwState LoadCardData(void)
 
     start = OS_GetTick();
 
+	// カードのロックIDを取得
+	tempLockID = OS_GetLockID();
+    if(tempLockID == OS_LOCK_ID_ERROR){
+		return HOTSW_CARD_LOCK_ERROR;
+    }
+    else{
+    	s_cbData.lockID = (u16)tempLockID;
+    }
+
+	// カードのロック
+#ifdef DEBUG_USED_CARD_SLOT_B_
+	LockExCard(s_cbData.lockID);
+#else
+	OS_LockCard(s_cbData.lockID);
+#endif
+
+    // カード電源リセット
 #ifdef SDK_ARM7
-	// カード電源リセット
+    // [TODO:] リセットしている間はカードをロックする
 	McPowerOff();
 	McPowerOn();
 #else // SDK_ARM9
@@ -273,25 +294,9 @@ static HotSwState LoadCardData(void)
 	// バッファのクリア
     MI_CpuClearFast(s_pBootSegBuffer, s_BootSegBufSize);
 	MI_CpuClearFast(s_pSecureSegBuffer, s_SecureSegBufSize);
-    
-	// カードのロックIDを取得
-	tempLockID = OS_GetLockID();
-    if(tempLockID == OS_LOCK_ID_ERROR){
-		return HOTSW_CARD_LOCK_ERROR;
-    }
-    else{
-    	s_cbData.lockID = (u16)tempLockID;
-    }
 
     // ブート処理開始
 	if(HOTSW_IsCardExist()){
-		// カードのロック
-#ifdef DEBUG_USED_CARD_SLOT_B_
-        LockExCard(s_cbData.lockID);
-#else
-        OS_LockCard(s_cbData.lockID);
-#endif
-        
 		// カード側でKey Tableをロードする
         retval = LoadTable();
         
@@ -415,25 +420,28 @@ static HotSwState LoadCardData(void)
             if(s_cbData.id_scr != s_cbData.id_gam){
 				return HOTSW_ID_CHECK_ERROR;
             }
-            
+
 			// 常駐モジュール残りを指定先に転送
 			retval = LoadStaticModule();
             
             // ARM9常駐モジュールの先頭2KBの暗号化領域を複合化
 			DecryptObjectFile();
-		}
 
-        // カードのロック開放
-#ifdef DEBUG_USED_CARD_SLOT_B_
-        UnlockExCard(s_cbData.lockID);
-#else
-        OS_UnlockCard(s_cbData.lockID);
-#endif
+			// 認証コード読み込み＆ワーク領域にコピー
+			retval = CheckCardAuthCode();
+		}
     }
     else{
 		retval = HOTSW_PULLED_OUT_ERROR;
     }
 
+	// カードのロック開放
+#ifdef DEBUG_USED_CARD_SLOT_B_
+	UnlockExCard(s_cbData.lockID);
+#else
+	OS_UnlockCard(s_cbData.lockID);
+#endif
+    
     // カードロックIDの開放
 	OS_ReleaseLockID( s_cbData.lockID );
 
@@ -591,6 +599,39 @@ static HotSwState LoadStaticModule(void)
     return retval;
 }
 
+/* -----------------------------------------------------------------
+ * CheckCardAuthCode関数
+ *
+ * Rom Headerの認証コードアドレスを読んで、クローンブート対応か判定する
+ *
+ * 注：カードブート処理中は呼び出さないようにする
+ * ----------------------------------------------------------------- */
+static HotSwState CheckCardAuthCode(void)
+{
+	u32 authBuf[PAGE_SIZE/sizeof(u32)];
+	u32 auth_offset   = s_cbData.pBootSegBuf->rh.s.rom_valid_size ? s_cbData.pBootSegBuf->rh.s.rom_valid_size : 0x01000000;
+	u32 page_offset   = auth_offset & 0xFFFFFE00;
+	HotSwState retval = HOTSW_SUCCESS;
+
+    u8	*p = (u8 *)authBuf;
+    
+    if(!HOTSW_IsCardExist()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+    
+    retval = s_funcTable[s_cbData.cardType].ReadPage_G( &s_cbData, page_offset, authBuf, MB_AUTHCODE_SIZE );
+
+    p += auth_offset & 0x000001FF;
+	if( *p++ == 'a' && *p == 'c' ) {
+        OS_PutString("  ☆ Clone Boot Mode\n");
+		SYSMi_GetWork()->cloneBootMode = CLONE_BOOT_MODE;
+	}else {
+        OS_PutString("  □ Other Boot Mode\n");
+		SYSMi_GetWork()->cloneBootMode = OTHER_BOOT_MODE;
+	}
+
+    return retval;
+}
 
 /* -----------------------------------------------------------------
  * HOTSW_SetBootSegmentBuffer関数
