@@ -334,11 +334,9 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
 	    region_arm7_twl,
 	    region_max
 	};
-	// メインメモリのクリア
-	// DSダウンロードプレイの時は、ROMヘッダを退避する
-	// アプリロード
-	// アプリ認証
-	
+	// [TODO:]DSダウンロードプレイおよびpictochat等のNTR拡張NANDアプリの時は、ROMヘッダを退避する
+	// が、どうもNTR-ROMヘッダ情報の再配置は、rebootライブラリで行う。らしい。
+	// とりあえず現状のままにしておき、動かなければ考える。
 	
 	// ロード
     char path[256];
@@ -601,11 +599,15 @@ BOOL SYSM_IsLoadTitleFinished( void )
 	return OS_IsThreadTerminated( &s_thread );
 }
 
-
-static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle )
+// TWLアプリおよびNTR拡張NANDアプリ共通のヘッダ認証処理
+static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 {
+	ROM_Header *head;
 	OSTick start,prev;
 	start = OS_GetTick();
+	
+	head = ( ROM_Header *)HW_TWL_ROM_HEADER_BUF;
+	
 	// NANDアプリの場合、NAM_CheckTitleLaunchRights()を呼んでチェック
 	if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_NAND )
 	{
@@ -619,8 +621,7 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle )
 		}
 	}
 
-	// TWLアプリの場合に行うヘッダ検証
-    if( ( (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->platform_code ) != 0 )
+	// 署名処理
     {
 		const u8 *key;
 		u16 prop;
@@ -632,14 +633,15 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle )
 		u32 *module_addr[RELOCATE_INFO_NUM];
 		u32 module_size[RELOCATE_INFO_NUM];
 		u8 *hash_addr[RELOCATE_INFO_NUM];
+		int module_num;
 		
-		// TWLアプリの場合、pBootTitle->titleIDとROMヘッダのtitleIDの一致確認をする。
-		if( pBootTitle->titleID != (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->titleID )
+		// pBootTitle->titleIDとROMヘッダのtitleIDの一致確認をする。
+		if( pBootTitle->titleID != head->s.titleID )
 		{
 			//TWL対応ROMで、ヘッダのtitleIDが起動指定されたIDと違う
 			OS_TPrintf( "Authenticate failed: header TitleID error\n" );
 			OS_TPrintf( "Authenticate failed: selectedTitleID=%.16llx\n", pBootTitle->titleID );
-			OS_TPrintf( "Authenticate failed: headerTitleID=%.16llx\n", (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->titleID );
+			OS_TPrintf( "Authenticate failed: headerTitleID=%.16llx\n", head->s.titleID );
 			return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}else
 		{
@@ -661,15 +663,15 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle )
 	    // 署名を鍵で復号
 	    MI_CpuClear8( buf, 0x80 );
 	    SVC_InitSignHeap( &con, (void *)SIGN_HEAP_ADDR, SIGN_HEAP_SIZE );// ヒープの初期化
-	    if( !SVC_DecryptSign( &con, buf, (( ROM_Header *)HW_TWL_ROM_HEADER_BUF)->signature, key ))
+	    if( !SVC_DecryptSign( &con, buf, head->signature, key ))
 	    {
 			OS_TPrintf("Authenticate failed: Sign decryption failed.\n");
 			return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}
 		// ヘッダのハッシュ(SHA1)計算
-		SVC_CalcSHA1( &calculated_hash, (const void*)HW_TWL_ROM_HEADER_BUF, ROM_HEADER_HASH_CALC_DATA_LEN );
+		SVC_CalcSHA1( calculated_hash, (const void*)head, ROM_HEADER_HASH_CALC_DATA_LEN );
 	    // 署名のハッシュ値とヘッダのハッシュ値を比較
-	    if(!SVC_CompareSHA1((const void *)(&buf[ROM_HEADER_HASH_OFFSET]), (const void *)&calculated_hash))
+	    if(!SVC_CompareSHA1((const void *)(&buf[ROM_HEADER_HASH_OFFSET]), (const void *)calculated_hash))
 	    {
 			OS_TPrintf("Authenticate failed: Sign check failed.\n");
 			return AUTH_RESULT_AUTHENTICATE_FAILED;
@@ -679,22 +681,27 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle )
 		}
 	    
 		// それぞれARM9,7のFLXおよびLTDについてハッシュを計算してヘッダに格納されているハッシュと比較
-		module_addr[ARM9_STATIC] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->main_ram_address;
-		module_addr[ARM7_STATIC] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->sub_ram_address;
-		module_addr[ARM9_LTD_STATIC] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->main_ltd_ram_address;
-		module_addr[ARM7_LTD_STATIC] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->sub_ltd_ram_address;
+		module_addr[ARM9_STATIC] = head->s.main_ram_address;
+		module_addr[ARM7_STATIC] = head->s.sub_ram_address;
+		module_size[ARM9_STATIC] = head->s.main_size;
+		module_size[ARM7_STATIC] = head->s.sub_size;
+		hash_addr[ARM9_STATIC] = &(head->s.main_static_digest[0]);
+		hash_addr[ARM7_STATIC] = &(head->s.sub_static_digest[0]);
+		module_num = 2;
 		
-		module_size[ARM9_STATIC] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->main_size;
-		module_size[ARM7_STATIC] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->sub_size;
-		module_size[ARM9_LTD_STATIC] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->main_ltd_size;
-		module_size[ARM7_LTD_STATIC] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->sub_ltd_size;
+		// NITROアプリの拡張では使わない領域
+		if( head->s.platform_code != 0 )
+		{
+			module_addr[ARM9_LTD_STATIC] = head->s.main_ltd_ram_address;
+			module_addr[ARM7_LTD_STATIC] = head->s.sub_ltd_ram_address;
+			module_size[ARM9_LTD_STATIC] = head->s.main_ltd_size;
+			module_size[ARM7_LTD_STATIC] = head->s.sub_ltd_size;
+			hash_addr[ARM9_LTD_STATIC] = &(head->s.main_ltd_static_digest[0]);
+			hash_addr[ARM7_LTD_STATIC] = &(head->s.sub_ltd_static_digest[0]);
+			module_num = RELOCATE_INFO_NUM;
+		}
 		
-		hash_addr[ARM9_STATIC] = &((( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->main_static_digest[0]);
-		hash_addr[ARM7_STATIC] = &((( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->sub_static_digest[0]);
-		hash_addr[ARM9_LTD_STATIC] = &((( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->main_ltd_static_digest[0]);
-		hash_addr[ARM7_LTD_STATIC] = &((( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->sub_ltd_static_digest[0]);
-		
-		for( l=0; l<RELOCATE_INFO_NUM ; l++ )
+		for( l=0; l<module_num ; l++ )
 		{
 			static const char *str[4]={"ARM9_STATIC","ARM7_STATIC","ARM9_LTD_STATIC","ARM7_LTD_STATIC"};
 			prev = OS_GetTick();
@@ -715,14 +722,14 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle )
 				SVC_HMACSHA1Update( &(SYSMi_GetWork2()->hmac_sha1_context),
 									(const void*)((u32)module_addr[l] + ARM9_ENCRYPT_DEF_SIZE),
 									(module_size[l] - ARM9_ENCRYPT_DEF_SIZE) );
-				SVC_HMACSHA1GetHash( &(SYSMi_GetWork2()->hmac_sha1_context), &calculated_hash );
+				SVC_HMACSHA1GetHash( &(SYSMi_GetWork2()->hmac_sha1_context), calculated_hash );
 			}else
 			{
-				SVC_CalcHMACSHA1( &calculated_hash, (const void*)module_addr[l], module_size[l],
+				SVC_CalcHMACSHA1( calculated_hash, (const void*)module_addr[l], module_size[l],
 								 (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
 			}
 			// 比較
-		    if(!SVC_CompareSHA1((const void *)hash_addr[l], (const void *)&calculated_hash))
+		    if(!SVC_CompareSHA1((const void *)hash_addr[l], (const void *)calculated_hash))
 		    {
 				OS_TPrintf("Authenticate failed: %s module hash check failed.\n", str[l]);
 				return AUTH_RESULT_AUTHENTICATE_FAILED;
@@ -736,6 +743,104 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle )
 	return AUTH_RESULT_SUCCEEDED;
 }
 
+// NTR版特殊NANDアプリ（pictochat等）のヘッダ認証処理
+static AuthResult SYSMi_AuthenticateNTRNandAppHeader( TitleProperty *pBootTitle)
+{
+	return SYSMi_AuthenticateTWLHeader( pBootTitle );
+}
+
+// NTR版ダウンロードアプリ（TMPアプリ）のヘッダ認証処理
+static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTitle)
+{
+
+	ROM_Header *head;
+	OSTick start;
+	start = OS_GetTick();
+	
+	head = ( ROM_Header *)HW_TWL_ROM_HEADER_BUF;
+
+	// 署名処理
+    {
+		u8 calculated_hash[SVC_SHA1_DIGEST_SIZE * 3];
+		u8 final_hash[SVC_SHA1_DIGEST_SIZE];
+		int l;
+		u32 *module_addr[RELOCATE_INFO_NUM];
+		u32 module_size[RELOCATE_INFO_NUM];
+		u8 *hash_addr[RELOCATE_INFO_NUM];
+		int module_num;
+		
+		// [TODO:]pBootTitle->titleIDと、NTRヘッダのなんらかのデータとの一致確認をする。
+		// [TODO:]NTRダウンロードアプリ署名（DERフォーマット）の計算、ハッシュの取得。
+
+		// それぞれARM9,7のFLXについてハッシュを計算して、それら3つを並べたものに対してまたハッシュをとる
+		module_addr[ARM9_STATIC] = head->s.main_ram_address;
+		module_addr[ARM7_STATIC] = head->s.sub_ram_address;
+		module_size[ARM9_STATIC] = head->s.main_size;
+		module_size[ARM7_STATIC] = head->s.sub_size;
+		hash_addr[ARM9_STATIC] = &(head->s.main_static_digest[0]);
+		hash_addr[ARM7_STATIC] = &(head->s.sub_static_digest[0]);
+		module_num = 2;
+		
+		// ヘッダ
+		SVC_CalcSHA1( calculated_hash, (const void*)head, ROM_HEADER_HASH_CALC_DATA_LEN );
+		// モジュール
+		for( l=0; l<module_num ; l++ )
+		{
+			// 一時的に格納位置をずらしている場合は、再配置情報からモジュール格納アドレスを取得
+			if( SYSMi_GetWork()->romRelocateInfo[l].src != NULL )
+			{
+				module_addr[l] = (u32 *)SYSMi_GetWork()->romRelocateInfo[l].src;
+			}
+			// ハッシュ計算
+			{
+				SVC_CalcSHA1( &calculated_hash[SVC_SHA1_DIGEST_SIZE * (l+1)], (const void*)module_addr[l], module_size[l]);
+			}
+		}
+		// 最終ハッシュ計算
+		SVC_CalcSHA1( &final_hash, calculated_hash, SVC_SHA1_DIGEST_SIZE * 3);
+		
+		// [TODO:]計算した最終ハッシュと、署名から得たハッシュとを比較
+	}
+	OS_TPrintf("Authenticate : total %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
+	
+	return AUTH_RESULT_AUTHENTICATE_FAILED;
+}
+
+// ヘッダ認証
+static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
+{
+	if( ( (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->platform_code ) != 0 )
+	{
+		// TWLアプリ
+		switch( pBootTitle->flags.bootType )
+		{
+			case LAUNCHER_BOOTTYPE_NAND:
+			case LAUNCHER_BOOTTYPE_ROM:
+			case LAUNCHER_BOOTTYPE_TEMP:
+				return SYSMi_AuthenticateTWLHeader( pBootTitle );
+			default:
+				return AUTH_RESULT_AUTHENTICATE_FAILED;
+		}
+	}
+	else
+	{
+		// NTRアプリ
+		switch( pBootTitle->flags.bootType )
+		{
+			case LAUNCHER_BOOTTYPE_NAND:
+				return SYSMi_AuthenticateNTRNandAppHeader( pBootTitle );
+			case LAUNCHER_BOOTTYPE_TEMP:
+				return SYSMi_AuthenticateNTRDownloadAppHeader( pBootTitle );
+			case LAUNCHER_BOOTTYPE_ROM:
+				// NTRカードは今のところ認証予定無し
+				return AUTH_RESULT_SUCCEEDED;
+			default:
+				return AUTH_RESULT_AUTHENTICATE_FAILED;
+		}
+	}
+}
+
+// 認証処理のスレッド
 static void SYSMi_AuthenticateTitleThreadFunc( TitleProperty *pBootTitle )
 {
 	// ロード中
