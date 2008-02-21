@@ -280,7 +280,6 @@ static HotSwState LoadCardData(void)
 
     // カード電源リセット
 #ifdef SDK_ARM7
-    // [TODO:] リセットしている間はカードをロックする
 	McPowerOff();
 	McPowerOn();
 #else // SDK_ARM9
@@ -385,7 +384,7 @@ static HotSwState LoadCardData(void)
 	    	retval = s_funcTable[s_cbData.cardType].ChangeMode_N(&s_cbData);
 
             if(retval != HOTSW_SUCCESS){
-				return retval;
+				goto error;
             }
             
 	    	// ---------------------- Secure Mode ----------------------
@@ -400,7 +399,8 @@ static HotSwState LoadCardData(void)
 
             // カードIDの比較をして、一致しなければFALSEを返す
             if(s_cbData.id_nml != s_cbData.id_scr){
-				return HOTSW_ID_CHECK_ERROR;
+				retval = HOTSW_ID_CHECK_ERROR;
+				goto error;
             }
             
 	    	// Secure領域のSegment読み込み
@@ -410,7 +410,7 @@ static HotSwState LoadCardData(void)
 			retval = s_funcTable[s_cbData.cardType].ChangeMode_S(&s_cbData);
 
             if(retval != HOTSW_SUCCESS){
-				return retval;
+				goto error;
             }
             
 	    	// ---------------------- Game Mode ----------------------
@@ -419,7 +419,8 @@ static HotSwState LoadCardData(void)
 
             // カードIDの比較をして、一致しなければFALSEを返す
             if(s_cbData.id_scr != s_cbData.id_gam){
-				return HOTSW_ID_CHECK_ERROR;
+				retval = HOTSW_ID_CHECK_ERROR;
+				goto error;
             }
 
 			// 常駐モジュール残りを指定先に転送
@@ -436,6 +437,10 @@ static HotSwState LoadCardData(void)
 		retval = HOTSW_PULLED_OUT_ERROR;
     }
 
+	goto end;
+error:
+		OS_TPrintf("ng... retval : %d\n", retval);
+end:
 	// カードのロック開放
 #ifndef DEBUG_USED_CARD_SLOT_B_
 	CARD_UnlockRom(s_cbData.lockID);
@@ -1124,19 +1129,6 @@ static void McThread(void *arg)
 
 				// 状態フラグを更新
                 isPulledOut = (retval == HOTSW_SUCCESS) ? FALSE : TRUE;
-
-                // カード読み込み失敗してたら、後処理する
-                if(retval != HOTSW_SUCCESS){
-                    OS_TPrintf("ng... retval : %d\n", retval);
-					// カードロックの開放
-#ifndef DEBUG_USED_CARD_SLOT_B_
-        			CARD_UnlockRom(s_cbData.lockID);
-#else
-        			UnlockExCard(s_cbData.lockID);
-#endif
-                    // カードロックIDの開放
-					OS_ReleaseLockID( s_cbData.lockID );
-                }
             }
             
             // カードが抜けてたら
