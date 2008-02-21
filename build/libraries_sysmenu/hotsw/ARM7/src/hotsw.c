@@ -1182,12 +1182,6 @@ static void InterruptCallbackCard(void)
     s_ctData.idx_pulledOut = (s_ctData.idx_pulledOut+1) % HOTSW_PULLED_MSG_NUM;
 
 	OS_TPrintf("○ - idx_pulledOut : %d\n", s_ctData.idx_pulledOut);
-    
-#ifndef DEBUG_USED_CARD_SLOT_B_
-	OS_SetIrqCheckFlagEx(OS_IE_CARD_A_IREQ);
-#else
-    OS_SetIrqCheckFlagEx(OS_IE_CARD_B_IREQ);
-#endif
 }
 
 /*---------------------------------------------------------------------------*
@@ -1207,12 +1201,6 @@ static void InterruptCallbackCardDet(void)
     s_ctData.idx_insert = (s_ctData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
 
 	OS_TPrintf("● - idx_insert : %d\n", s_ctData.idx_insert);
-    
-#ifndef DEBUG_USED_CARD_SLOT_B_
-    OS_SetIrqCheckFlagEx(OS_IE_CARD_A_DET);
-#else
-    OS_SetIrqCheckFlagEx(OS_IE_CARD_B_DET);
-#endif
 }
 
 /*---------------------------------------------------------------------------*
@@ -1224,12 +1212,6 @@ static void InterruptCallbackCardData(void)
 {
 	// データ転送終了待ちまで寝ていたのを起こす
     OS_WakeupThreadDirect(&s_ctData.thread);
-
-#ifndef DEBUG_USED_CARD_SLOT_B_
-	OS_SetIrqCheckFlagEx(OS_IE_CARD_A_DATA);
-#else
-    OS_SetIrqCheckFlagEx(OS_IE_CARD_B_DATA);
-#endif
 }
 
 /*---------------------------------------------------------------------------*
@@ -1253,11 +1235,13 @@ static void SetHotSwState(BOOL busy)
 
   Description:  アクセス権を設定する
  *---------------------------------------------------------------------------*/
+#ifdef  SDK_ARM9
 static inline void SetExCardProcessor(MIProcessor proc)
 {
     reg_HOTSW_EXMEMCNT =
         (u16)((reg_HOTSW_EXMEMCNT & ~HOTSW_EXMEMCNT_SELB_MASK) | (proc << HOTSW_EXMEMCNT_SELB_SHIFT));
 }
+#endif
 
 /*---------------------------------------------------------------------------*
   Name:			AllocateExCardBus
@@ -1267,9 +1251,12 @@ static inline void SetExCardProcessor(MIProcessor proc)
 static void AllocateExCardBus(void)
 {
 #ifdef  SDK_ARM9
+    // preset reset flag with status of disable interrupts in OSi_DoTryLockByWord
+    if ( ! ( reg_MI_MC & REG_MI_MC_SL2_CDET_MASK ) )
+    {
+        reg_MI_MCCNT1 |= REG_MI_MCCNT2_RESB_MASK;
+    }
     SetExCardProcessor(MI_PROCESSOR_ARM9);    // Arm9側で動作している場合
-#else
-    SetExCardProcessor(MI_PROCESSOR_ARM7);	  // Arm7側で動作している場合
 #endif
 }
 
@@ -1280,7 +1267,9 @@ static void AllocateExCardBus(void)
  *---------------------------------------------------------------------------*/
 static void FreeExCardBus(void)
 {
+#ifdef  SDK_ARM9
     SetExCardProcessor(MI_PROCESSOR_ARM7);    // Card for SUB
+#endif
 }
 
 /*---------------------------------------------------------------------------*
