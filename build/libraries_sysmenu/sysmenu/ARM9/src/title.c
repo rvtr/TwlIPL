@@ -389,7 +389,7 @@ OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
             return;
         }
 
-        readLen = FS_ReadFile(file, header, (s32)sizeof(header));
+        readLen = ReadFile(file, header, (s32)sizeof(header));
 
         if( readLen != (s32)sizeof(header) )
         {
@@ -634,6 +634,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		u32 module_size[RELOCATE_INFO_NUM];
 		u8 *hash_addr[RELOCATE_INFO_NUM];
 		int module_num;
+		BOOL b_dev = FALSE;
 		
 		// pBootTitle->titleIDとROMヘッダのtitleIDの一致確認をする。
 		if( pBootTitle->titleID != head->s.titleID )
@@ -659,6 +660,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 	    }else {
 			// 開発版
 			key = g_devPubKey[keynum];
+			b_dev = TRUE;
 	    }
 	    // 署名を鍵で復号
 	    MI_CpuClear8( buf, 0x80 );
@@ -666,7 +668,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 	    if( !SVC_DecryptSign( &con, buf, head->signature, key ))
 	    {
 			OS_TPrintf("Authenticate failed: Sign decryption failed.\n");
-			return AUTH_RESULT_AUTHENTICATE_FAILED;
+			if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}
 		// ヘッダのハッシュ(SHA1)計算
 		SVC_CalcSHA1( calculated_hash, (const void*)head, ROM_HEADER_HASH_CALC_DATA_LEN );
@@ -674,7 +676,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 	    if(!SVC_CompareSHA1((const void *)(&buf[ROM_HEADER_HASH_OFFSET]), (const void *)calculated_hash))
 	    {
 			OS_TPrintf("Authenticate failed: Sign check failed.\n");
-			return AUTH_RESULT_AUTHENTICATE_FAILED;
+			if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}else
 		{
 			OS_TPrintf("Authenticate : Sign check succeed. %dms.\n", OS_TicksToMilliSeconds(OS_GetTick() - prev));
@@ -732,7 +734,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		    if(!SVC_CompareSHA1((const void *)hash_addr[l], (const void *)calculated_hash))
 		    {
 				OS_TPrintf("Authenticate failed: %s module hash check failed.\n", str[l]);
-				return AUTH_RESULT_AUTHENTICATE_FAILED;
+				if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
 			}else
 			{
 				OS_TPrintf("Authenticate : %s module hash check succeed. %dms.\n", str[l], OS_TicksToMilliSeconds(OS_GetTick() - prev));
@@ -761,6 +763,8 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 
 	// 署名処理
     {
+		u8 buf[0x80];
+		SVCSignHeapContext con;
 		u8 calculated_hash[SVC_SHA1_DIGEST_SIZE * 3];
 		u8 final_hash[SVC_SHA1_DIGEST_SIZE];
 		int l;
@@ -771,7 +775,16 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 		
 		// [TODO:]pBootTitle->titleIDと、NTRヘッダのなんらかのデータとの一致確認をする。
 		// [TODO:]NTRダウンロードアプリ署名（DERフォーマット）の計算、ハッシュの取得。
-
+	    MI_CpuClear8( buf, 0x80 );
+	    SVC_InitSignHeap( &con, (void *)SIGN_HEAP_ADDR, SIGN_HEAP_SIZE );// ヒープの初期化
+	    /*
+	    if( !SVC_DecryptSign( &con, buf, head->signature, key ))
+	    {
+			OS_TPrintf("Authenticate failed: Sign decryption failed.\n");
+			return AUTH_RESULT_AUTHENTICATE_FAILED;
+		}
+		*/
+		
 		// それぞれARM9,7のFLXについてハッシュを計算して、それら3つを並べたものに対してまたハッシュをとる
 		module_addr[ARM9_STATIC] = head->s.main_ram_address;
 		module_addr[ARM7_STATIC] = head->s.sub_ram_address;
@@ -809,6 +822,7 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 // ヘッダ認証
 static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 {
+	// [TODO:]認証結果はどこかワークに保存しておく
 	if( ( (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->platform_code ) != 0 )
 	{
 		// TWLアプリ
