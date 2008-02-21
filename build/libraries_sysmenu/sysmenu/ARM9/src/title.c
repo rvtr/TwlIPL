@@ -389,7 +389,7 @@ OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
             return;
         }
 
-        readLen = ReadFile(file, header, (s32)sizeof(header));
+        readLen = FS_ReadFile(file, header, (s32)sizeof(header));
 
         if( readLen != (s32)sizeof(header) )
         {
@@ -475,7 +475,7 @@ OS_TPrintf("RebootSystem failed: cant seek file(%d)\n", source[i]);
                 return;
             }
 
-            readLen = ReadFile(file, (void *)destaddr[i], (s32)len);
+            readLen = FS_ReadFile(file, (void *)destaddr[i], (s32)len);
 
             if( readLen != (s32)len )
             {
@@ -803,7 +803,7 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 	}
 	OS_TPrintf("Authenticate : total %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
 	
-	return AUTH_RESULT_AUTHENTICATE_FAILED;
+	return AUTH_RESULT_SUCCEEDED;
 }
 
 // ÉwÉbÉ_îFèÿ
