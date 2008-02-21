@@ -383,10 +383,6 @@ static HotSwState LoadCardData(void)
 	    	// セキュアモードに移行
 	    	retval = s_funcTable[s_cbData.cardType].ChangeMode_N(&s_cbData);
 
-            if(retval != HOTSW_SUCCESS){
-				goto error;
-            }
-            
 	    	// ---------------------- Secure Mode ----------------------
 			// PNG設定
 			retval = s_funcTable[s_cbData.cardType].SetPNG_S(&s_cbData);
