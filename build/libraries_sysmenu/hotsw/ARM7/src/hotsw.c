@@ -400,11 +400,12 @@ static HotSwState LoadCardData(void)
             // カードIDの比較をして、一致しなければFALSEを返す
             if(s_cbData.id_nml != s_cbData.id_scr){
 				retval = HOTSW_ID_CHECK_ERROR;
-				goto error;
             }
-            
-	    	// Secure領域のSegment読み込み
-	    	retval = s_funcTable[s_cbData.cardType].ReadSegment_S(&s_cbData);
+
+            if(retval == HOTSW_SUCCESS){
+		    	// Secure領域のSegment読み込み
+		    	retval = s_funcTable[s_cbData.cardType].ReadSegment_S(&s_cbData);
+            }
 
 	    	// ゲームモードに移行
 			retval = s_funcTable[s_cbData.cardType].ChangeMode_S(&s_cbData);
