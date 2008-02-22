@@ -151,6 +151,4 @@ Ltdautoload LTDMAIN
 				$(USE_CRYPTO_LIBS)
 	Library		$(ISDBG_LIBS_TWL)
 	Library		$(ISDBG_LIBS_NITRO)
-	Library		libstubsistd_sp.TWL.LTD.a \
-				libstubsisd_sp.TWL.LTD.a
 }

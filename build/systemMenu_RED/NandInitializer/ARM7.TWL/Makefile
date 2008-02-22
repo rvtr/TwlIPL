@@ -20,12 +20,16 @@ SUBDIRS		=
 
 
 #----------------------------------------------------------------------------
-TARGET_PLATFORM		:= TWL
+override TARGET_PLATFORM	= TWL
+override TWL_PROC           = ARM7
+TWL_ARCHGEN                 = LIMITED
+TWL_NO_STD_PCHDR			= True
 #TWL_CODEGEN   =       THUMB
-TWL_PROC      =       ARM7
-TWL_ARCHGEN    =	   LIMITED
 
-TARGET_TEF = main.tef
+TARGET_TEF      =   main.tef
+LCFILE_SPEC     = 	main.lsf
+LCFILE_TEMPLATE	=	racoon.lcf.template
+LDRES_TEMPLATE	=	racoon.response.template
 
 SRCS		=	main.c kami_pxi.c formatter.c nvram_misc.c
 
@@ -35,9 +39,6 @@ LINCLUDES	=	../common/include $(TWLSDK_ROOT)/build/libraries/spi/ARM7/include
 #SRCDIR		=	# using default
 #LCFILE		=	# using default
 
-LCFILE_SPEC     = 	main.lsf
-LCFILE_TEMPLATE	 =	racoon.lcf.template
-LDRES_TEMPLATE	 =	racoon.response.template
 
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
@@ -49,6 +50,14 @@ ifndef TWLSDK_NOCRYPTO
 MAKELCF_FLAGS	+=	-DUSE_CRYPTO_LIBS='libaes_sp$(TWL_LIBSUFFIX).a'
 endif
 
+ifeq ($(TWL_PLATFORM),BB)
+MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037e0000'
+else
+MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000'
+endif
+
+MAKELCF_FLAGS	+=	-DISDBG_LIBS_TWL='$(if $(ISDBG_LIBS_TWL),$(ISDBG_LIBS_TWL),libstubsistd_sp$(TWL_LIBSUFFIX).a)'	\
+					-DISDBG_LIBS_NITRO='libstubsisd_sp$(TWL_LIBSUFFIX).a'
 
 TWL_LIBS_EX		= 	libcamera_sp$(TWL_LIBSUFFIX).a	\
 					libfatfs_sp$(TWL_LIBSUFFIX).a   \
