@@ -32,7 +32,19 @@
 #define ARM9_ENCRYPT_DEF_SIZE	0x800	// ARM9FLXの先頭暗号化部分のサイズ
 
 #define	DIGEST_HASH_BLOCK_SIZE_SHA1					(512/8)
-#define ROM_HEADER_HASH_CALC_DATA_LEN	0xe00 // ROMヘッダのハッシュ計算する部分の長さ
+#define TWL_ROM_HEADER_HASH_CALC_DATA_LEN	0xe00 // ROMヘッダのハッシュ計算する部分の長さTWL版
+#define NTR_ROM_HEADER_HASH_CALC_DATA_LEN	0x160 // ROMヘッダのハッシュ計算する部分の長さDS版
+
+#define AUTH_KEY_BUFFER_LEN 128
+#define MB_AUTH_SIGN_SIZE				(128)	/* digital sign size */
+
+typedef	struct	MbAuthCode
+{
+	char		magic_code[2];			// マジックナンバー
+	u16		version;			// バージョン
+	u8		sign[MB_AUTH_SIGN_SIZE];	// 署名
+	u32		serial_number;			// シリアル番号
+} MbAuthCode;	// 16byte
 
 // extern data-----------------------------------------------------------------
 extern const u8 g_devPubKey[ 3 ][ 0x80 ];
@@ -52,6 +64,8 @@ static OSThread			s_auth_thread;
 static TWLBannerFile	s_bannerBuf[ LAUNCHER_TITLE_LIST_NUM ] ATTRIBUTE_ALIGN(32);
 static AuthResult		s_authResult = AUTH_RESULT_PROCESSING;	// ROM検証結果
 
+static MbAuthCode s_authcode;
+
 // const data------------------------------------------------------------------
 static const OSBootType s_launcherToOSBootType[ LAUNCHER_BOOTTYPE_MAX ] = {
     OS_BOOTTYPE_ILLEGAL,	// ILLEGAL
@@ -61,6 +75,7 @@ static const OSBootType s_launcherToOSBootType[ LAUNCHER_BOOTTYPE_MAX ] = {
     OS_BOOTTYPE_MEMORY,		// MEMORY
 };
 
+// HMAC_SHA1用鍵
 static const u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = 
 {
     0x21, 0x06, 0xc0, 0xde,
@@ -82,6 +97,18 @@ static const u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] =
     0xca, 0x83, 0x64, 0x98,
     0xac, 0xfd, 0x3e, 0x37,
     0x87, 0x46, 0x58, 0x24,
+};
+
+// ダウンロードアプリ署名用公開鍵
+static const u8 nitro_dl_sign_key[AUTH_KEY_BUFFER_LEN] = {
+  0x9E,0xC1,0xCC,0xC0,0x4A,0x6B,0xD0,0xA0,0x6D,0x62,0xED,0x5F,0x15,0x67,0x87,0x12,
+  0xE6,0xF4,0x77,0x1F,0xD8,0x5C,0x81,0xCE,0x0C,0xD0,0x22,0x31,0xF5,0x89,0x08,0xF5,
+  0xBE,0x04,0xCB,0xC1,0x4F,0x63,0xD9,0x5A,0x98,0xFF,0xEB,0x36,0x0F,0x9C,0x5D,0xAD,
+  0x15,0xB9,0x99,0xFB,0xC6,0x86,0x2C,0x0A,0x0C,0xFC,0xE6,0x86,0x03,0x60,0xD4,0x87,
+  0x28,0xD5,0x66,0x42,0x9C,0xF7,0x04,0x14,0x4E,0x6F,0x73,0x20,0xC3,0x3E,0x3F,0xF5,
+  0x82,0x2E,0x78,0x18,0xD6,0xCD,0xD5,0xC2,0xDC,0xAA,0x1D,0x34,0x91,0xEC,0x99,0xC9,
+  0xF7,0xBF,0xBF,0xA0,0x0E,0x1E,0xF0,0x25,0xF8,0x66,0x17,0x54,0x34,0x28,0x2D,0x28,
+  0xA3,0xAE,0xF0,0xA9,0xFA,0x3A,0x70,0x56,0xD2,0x34,0xA9,0xC5,0x9E,0x5D,0xF5,0xE1
 };
 
 //================================================================================
@@ -377,6 +404,7 @@ OS_TPrintf("RebootSystem failed: cant open file\n");
         u32     destaddr[region_max];
         static u8   header[HW_TWL_ROM_HEADER_BUF_SIZE] ATTRIBUTE_ALIGN(32);
         s32 readLen;
+        ROM_Header *head = (ROM_Header *)header;
 
         // まずROMヘッダを読み込む
         // (本来ならここでSRLの正当性判定)
@@ -389,7 +417,7 @@ OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
             return;
         }
 
-        readLen = ReadFile(file, header, (s32)sizeof(header));
+        readLen = FS_ReadFile(file, header, (s32)sizeof(header));
 
         if( readLen != (s32)sizeof(header) )
         {
@@ -415,10 +443,30 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
         }
         
         
-        if( header[0x12] && 0x03 == 0 )
+        if( !(header[0x12] & 0x03) )
         {
 			//NTR専用ROM
 			isTwlApp = FALSE;
+			if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_TEMP)
+			{
+				// NTR-DLアプリの場合はDLアプリ署名データを取得しておく
+				u32 valid_size = ( head->s.rom_valid_size ? head->s.rom_valid_size : 0x01000000 );
+
+		        bSuccess = FS_SeekFile(file, (s32)valid_size, FS_SEEK_SET);
+		        if( ! bSuccess )
+		        {
+OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
+		            FS_CloseFile(file);
+		            return;
+		        }
+		        readLen = FS_ReadFile(file, &s_authcode, (s32)sizeof(s_authcode));
+		        if( readLen != (s32)sizeof(s_authcode) )
+		        {
+OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode, 0, sizeof(s_authcode), readLen);
+		            FS_CloseFile(file);
+		            return;
+		        }
+			}
 		}
 		
         // 各領域を読み込む
@@ -671,7 +719,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 			if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}
 		// ヘッダのハッシュ(SHA1)計算
-		SVC_CalcSHA1( calculated_hash, (const void*)head, ROM_HEADER_HASH_CALC_DATA_LEN );
+		SVC_CalcSHA1( calculated_hash, (const void*)head, TWL_ROM_HEADER_HASH_CALC_DATA_LEN );
 	    // 署名のハッシュ値とヘッダのハッシュ値を比較
 	    if(!SVC_CompareSHA1((const void *)(&buf[ROM_HEADER_HASH_OFFSET]), (const void *)calculated_hash))
 	    {
@@ -772,18 +820,23 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 		u32 module_size[RELOCATE_INFO_NUM];
 		u8 *hash_addr[RELOCATE_INFO_NUM];
 		int module_num;
-		
-		// [TODO:]pBootTitle->titleIDと、NTRヘッダのなんらかのデータとの一致確認をする。
-		// [TODO:]NTRダウンロードアプリ署名（DERフォーマット）の計算、ハッシュの取得。
+
+		// [TODO:]pBootTitle->titleIDと、それにこじつけたNTRヘッダのなんらかのデータとの一致確認をする。
+
+		// NTRダウンロードアプリ署名のマジックコードチェック
+		if( s_authcode.magic_code[0] != 'a' || s_authcode.magic_code[1] != 'c' ) {
+			OS_TPrintf("Authenticate failed: Invalid AuthCode.\n");
+			return AUTH_RESULT_AUTHENTICATE_FAILED;
+		}
+
+		// NTRダウンロードアプリ署名（DERフォーマット）の計算、ハッシュの取得。
 	    MI_CpuClear8( buf, 0x80 );
 	    SVC_InitSignHeap( &con, (void *)SIGN_HEAP_ADDR, SIGN_HEAP_SIZE );// ヒープの初期化
-	    /*
-	    if( !SVC_DecryptSign( &con, buf, head->signature, key ))
+	    if( !SVC_DecryptSignDER( &con, buf, s_authcode.sign, nitro_dl_sign_key ))
 	    {
 			OS_TPrintf("Authenticate failed: Sign decryption failed.\n");
 			return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}
-		*/
 		
 		// それぞれARM9,7のFLXについてハッシュを計算して、それら3つを並べたものに対してまたハッシュをとる
 		module_addr[ARM9_STATIC] = head->s.main_ram_address;
@@ -795,7 +848,7 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 		module_num = 2;
 		
 		// ヘッダ
-		SVC_CalcSHA1( calculated_hash, (const void*)head, ROM_HEADER_HASH_CALC_DATA_LEN );
+		SVC_CalcSHA1( calculated_hash, (const void*)head, NTR_ROM_HEADER_HASH_CALC_DATA_LEN );
 		// モジュール
 		for( l=0; l<module_num ; l++ )
 		{
@@ -812,7 +865,15 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 		// 最終ハッシュ計算
 		SVC_CalcSHA1( &final_hash, calculated_hash, SVC_SHA1_DIGEST_SIZE * 3);
 		
-		// [TODO:]計算した最終ハッシュと、署名から得たハッシュとを比較
+		// 計算した最終ハッシュと、署名から得たハッシュとを比較
+	    if(!SVC_CompareSHA1((const void *)buf, (const void *)final_hash))
+	    {
+			OS_TPrintf("Authenticate failed: hash check failed.\n");
+			return AUTH_RESULT_AUTHENTICATE_FAILED;
+		}else
+		{
+			OS_TPrintf("Authenticate : hash check succeed.\n");
+		}
 	}
 	OS_TPrintf("Authenticate : total %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
 	
@@ -829,8 +890,13 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 		switch( pBootTitle->flags.bootType )
 		{
 			case LAUNCHER_BOOTTYPE_NAND:
+				OS_TPrintf( "Authenticate :TWL_NAND start.\n" );
+				return SYSMi_AuthenticateTWLHeader( pBootTitle );
 			case LAUNCHER_BOOTTYPE_ROM:
+				OS_TPrintf( "Authenticate :TWL_ROM start.\n" );
+				return SYSMi_AuthenticateTWLHeader( pBootTitle );
 			case LAUNCHER_BOOTTYPE_TEMP:
+				OS_TPrintf( "Authenticate :TWL_TEMP start.\n" );
 				return SYSMi_AuthenticateTWLHeader( pBootTitle );
 			default:
 				return AUTH_RESULT_AUTHENTICATE_FAILED;
@@ -842,10 +908,13 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 		switch( pBootTitle->flags.bootType )
 		{
 			case LAUNCHER_BOOTTYPE_NAND:
+				OS_TPrintf( "Authenticate :NTR_NAND start.\n" );
 				return SYSMi_AuthenticateNTRNandAppHeader( pBootTitle );
 			case LAUNCHER_BOOTTYPE_TEMP:
+				OS_TPrintf( "Authenticate :NTR_TEMP start.\n" );
 				return SYSMi_AuthenticateNTRDownloadAppHeader( pBootTitle );
 			case LAUNCHER_BOOTTYPE_ROM:
+				OS_TPrintf( "Authenticate :NTR_ROM start.\n" );
 				// NTRカードは今のところ認証予定無し
 				return AUTH_RESULT_SUCCEEDED;
 			default:

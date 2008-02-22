@@ -336,7 +336,8 @@ static void SetOAMAttr( void )
 static void BannerDraw(int selected, TitleProperty *titleprop)
 {
 	static int fadecount = 0;
-	static int old_selected = -1;
+	static u16 old_gameName[BANNER_LANG_LENGTH];
+	NNSG2dChar *str;
 	
 	// デフォルトバナーをTitlePropertyに埋め込み
     SetDefaultBanner( titleprop );
@@ -352,13 +353,14 @@ static void BannerDraw(int selected, TitleProperty *titleprop)
 	GX_LoadOAM(&banner_oam_attr, 0, sizeof(banner_oam_attr));
 	
 	// アプリ名表示
-	if(selected != old_selected)
+	str = ((TWLBannerFile *)titleprop[selected].pBanner)->v1.gameName[ LCFG_TSD_GetLanguage() ];
+	if( STD_CompareNString( (const char *)old_gameName, (const char *)str, BANNER_LANG_LENGTH * 2 ) != 0 )
 	{
 		NNSG2dChar *str = ((TWLBannerFile *)titleprop[selected].pBanner)->v1.gameName[ LCFG_TSD_GetLanguage() ];
 		NNSG2dTextRect rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, str );
 		NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL, 0, 24, WINDOW_WIDTH, 32 );
 		PutStringUTF16( (WINDOW_WIDTH-rect.width)>>1, TITLE_V_CENTER - (rect.height>>1), TXT_COLOR_BLACK, str );
-		old_selected = selected;
+		MI_CpuCopy8( str, old_gameName, BANNER_LANG_LENGTH * 2 );
 	}
 	
 	if(fadecount < (FADE_COUNT_MAX - FADE_START)) {
@@ -416,6 +418,47 @@ void LauncherInit( TitleProperty *pTitleList )
 	#endif
 }
 
+// 輝度表示ポーリングで呼んだSYSM_ReadMcuRegisterAsyncのコールバック
+static OSThreadQueue s_callback_queue;
+static SYSMMcuResult s_callback_result;
+static void PollBackLightBlightnessCallBack( SYSMMcuResult result, void *arg )
+{
+	s_callback_result = result;
+	OS_WakeupThread( &s_callback_queue );
+}
+
+// 輝度表示ポーリング
+// X3基盤から、Select+音量で輝度変更できるようになったため、輝度スイッチ表示切り替えタイミングを変更
+// 変化があれば輝度スイッチ表示を切り替えるように
+static void PollBackLightBrightness( void )
+{
+	static int old_brightness = -1;
+#ifdef SDK_SUPPORT_PMIC_2
+	if ( SYSMi_GetMcuVersion() <= 1 )
+	{
+	}
+	else
+#endif // SDK_SUPPORT_PMIC_2
+	{
+		u8 brightness;
+		( void )SYSM_ReadMcuRegisterAsync( MCU_REG_BL_ADDR, &brightness, PollBackLightBlightnessCallBack, NULL );
+		OS_SleepThread( &s_callback_queue ); // 値が返ってくるまでスリープ
+		if( s_callback_result==MCU_RESULT_SUCCESS && LCFG_TSD_GetBacklightBrightness() != brightness )
+		{
+			// マイコンから取ってきた輝度とLCFGの設定値がズレていたらLCFGの値を設定しなおし
+			LCFG_TSD_SetBacklightBrightness( brightness );
+			LCFG_WriteTWLSettings();
+		}
+	}
+	
+	// 1フレーム前の古い値とLCFGの値が違っていたら描画しなおし
+	if( old_brightness != LCFG_TSD_GetBacklightBrightness() )
+	{
+		old_brightness = LCFG_TSD_GetBacklightBrightness();
+		DrawBackLightSwitch();
+	}
+}
+
 // ROMのローディング中のランチャーフェードアウト
 BOOL LauncherFadeout( TitleProperty *pTitleList )
 {
@@ -424,22 +467,8 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
 	// 描画関係
 
 	// 輝度表示
-	// X3基盤から、Select+音量で輝度変更できるようになったので、毎フレーム輝度表示を変更する必要あり
-/*
-#ifdef SDK_SUPPORT_PMIC_2
-	if ( SYSMi_GetMcuVersion() <= 1 )
-	{
-		// 何もしない
-	}
-	else
-#endif // SDK_SUPPORT_PMIC_2
-	{
-		u8 brightness;
-		( void )SYSM_ReadMcuRegisterAsync( MCU_REG_BL_ADDR, &brightness, NULL, NULL );
-		SYSM_SetBackLightBrightness( brightness );
-		DrawBackLightSwitch();
-	}
-*/
+
+	PollBackLightBrightness();
 	
 	DrawScrollBar( pTitleList );
 	
@@ -451,14 +480,14 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
 	{
 		MtxFx22 mtx;
 		static double wa;
-		double s = cos(wa);
-		if( s!=0 ) mtx._00 = (fx32)((s_selected_banner_size/s) * (1.0 + wa/3));
+		double s = cos(wa*3);
+		if( s!=0 ) mtx._00 = (fx32)((s_selected_banner_size/s) * (1.0 + wa));
 		else mtx._00 = 0x8fff;
 		mtx._01 = 0;
 		mtx._10 = 0;
-		mtx._11 = (fx32)(s_selected_banner_size * (1.0 + wa/3));
+		mtx._11 = (fx32)(s_selected_banner_size * (1.0 + wa));
 		G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[0]), &mtx);
-		wa += 0.1;
+		wa += 0.0333333333333;
 	}
 	
 	DC_FlushRange(&banner_oam_attr, sizeof(banner_oam_attr));
@@ -537,21 +566,19 @@ static void ProcessBackLightPads( void )
 		dw_bl_bak = FALSE;
 	}
 	
-	if( (pad.trg & PAD_BUTTON_START) || up_bl_trg ) {
+	if( (pad.trg & PAD_KEY_UP) || up_bl_trg ) {
 		brightness = LCFG_TSD_GetBacklightBrightness() + 1;
 		if( brightness > LCFG_TWL_BACKLIGHT_LEVEL_MAX ) {
 			brightness = LCFG_TWL_BACKLIGHT_LEVEL_MAX;
 		}
 		SYSM_SetBackLightBrightness( (u8)brightness );
-		DrawBackLightSwitch();
 	}
-	if( ( pad.trg & PAD_BUTTON_SELECT) || dw_bl_trg ) {
+	if( ( pad.trg & PAD_KEY_DOWN) || dw_bl_trg ) {
 		brightness = LCFG_TSD_GetBacklightBrightness() - 1;
 		if( brightness < 0 ) {
 			brightness = 0;
 		}
 		SYSM_SetBackLightBrightness( (u8)brightness );
-		DrawBackLightSwitch();
 	}
 }
 
@@ -619,8 +646,6 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 }
 
 // スクロールバーによるスクロール
-// 結構適当な実装。
-// 本来、バーのホールド中はバー座標を中心に動かすべき。
 static void MoveByScrollBar( void )
 {
 	// スクロールバーによるスクロール
@@ -722,24 +747,8 @@ TitleProperty *LauncherMain( TitleProperty *pTitleList )
 	MoveByScrollBar();
 	
 	// 描画関係
-
-	// 輝度表示
-	// X3基盤から、Select+音量で輝度変更できるようになったので、毎フレーム輝度表示を変更する必要あり
-/*
-#ifdef SDK_SUPPORT_PMIC_2
-	if ( SYSMi_GetMcuVersion() <= 1 )
-	{
-		// 何もしない
-	}
-	else
-#endif // SDK_SUPPORT_PMIC_2
-	{
-		u8 brightness;
-		( void )SYSM_ReadMcuRegisterAsync( MCU_REG_BL_ADDR, &brightness, NULL, NULL );
-		SYSM_SetBackLightBrightness( brightness );
-		DrawBackLightSwitch();
-	}
-*/
+	
+	PollBackLightBrightness();
 	
 	DrawScrollBar( pTitleList );
 	

@@ -455,7 +455,7 @@ void ReadTP(void)
 		SVC_CpuClear(0x0000, &tpd.disp, sizeof(tpd.disp), 16);		// SPI-busyでデータ取得に失敗した時は”データなし”でリターン。
 		return;
 	}
-#if 1
+#if 0
 	if(tpd.disp.touch) {											// 現在のTPデータを表示
 		switch ( tpd.disp.validity ) {
 			case TP_VALIDITY_VALID:
@@ -554,7 +554,6 @@ BOOL SelectSomethingByTP( u16 *nowCsr, SelectSomethingFunc func[], int funcnum )
 		if( tpd.disp.touch ) {										// タッチパネルがタッチされているなら、
 			u16 csr;
 			if( func[i]( &csr, &tpd.disp ) ) {									// funcは要素上にタッチされていればTRUEを返し、カーソル位置も返してくれる関数
-				OS_TPrintf( "InRange\n" );
 				if( tpd.disp.validity == TP_VALIDITY_VALID ) {		// カーソルをその要素に移動
 					if( csr_old == csr ) {
 						if( same_csr_count < TP_CSR_TOUCH_COUNT ) {
@@ -570,7 +569,6 @@ BOOL SelectSomethingByTP( u16 *nowCsr, SelectSomethingFunc func[], int funcnum )
 					break;
 				}
 			}else {
-				OS_TPrintf( "OutRange\n" );
 			}
 		}else {	// touch==0
 			if( same_csr_count == TP_CSR_TOUCH_COUNT ) {
@@ -612,11 +610,8 @@ BOOL SelectMenuByTP( u16 *nowCsr, const MenuParam *pMenu )
 			u16 bottom_x = (u16)( top_x + rect.width );
 			u16 bottom_y = (u16)( top_y + rect.height );
 			
-			OS_TPrintf( "MENU[ %d ] : top_x = %02d  top_y = %02d  bot_x = %02d  bot_y = %02d : ",
-						i, top_x, top_y, bottom_x, bottom_y );
 			
 			if( WithinRangeTP( top_x, top_y, bottom_x, bottom_y, &tpd.disp ) ) {
-				OS_TPrintf( "InRange\n" );
 				if( tpd.disp.validity == TP_VALIDITY_VALID ) {		// カーソルをその要素に移動
 					if( csr_old == i ) {
 						if( same_csr_count < TP_CSR_TOUCH_COUNT ) {
@@ -632,7 +627,6 @@ BOOL SelectMenuByTP( u16 *nowCsr, const MenuParam *pMenu )
 					break;
 				}
 			}else {
-				OS_TPrintf( "OutRange\n" );
 			}
 		}else {	// touch==0
 			if( same_csr_count == TP_CSR_TOUCH_COUNT ) {
@@ -653,8 +647,6 @@ BOOL WithinRangeTP( int top_x, int top_y, int bottom_x, int bottom_y, TPData *tg
 		( tgt->x <= bottom_x ) &&
 		( tgt->y >= top_y    ) &&
 		( tgt->y <= bottom_y ) ) {
-		OS_TPrintf( "\nRANGE : tx=%3d ty=%3d bx=%3d by=%3d : x=%3d y=%3d\n",
-					top_x, top_y, bottom_x, bottom_y, tgt->x, tgt->y );
 		return TRUE;
 	}else {
 		return FALSE;
