@@ -27,18 +27,6 @@ extern "C" {
 #endif
 
 /*---------------------------------------------------------------------------*
-  Name:         FS_SetDigestKey
-
-  Description:  set specified key or default key for HMAC-SHA-1
-
-  Arguments:    digestKey       pointer to key
-                                if NULL, use default key
-
-  Returns:      TRUE if success
- *---------------------------------------------------------------------------*/
-void FS_SetDigestKey( const u8* digestKey );
-
-/*---------------------------------------------------------------------------*
   Name:         FS_LoadBuffer
 
   Description:  receive data from ARM7 via WRAM-B and store in destination address,
@@ -75,11 +63,13 @@ BOOL FS_LoadModule( u8* dest, u32 offset, u32 size, const u8 digest[SVC_SHA1_BLO
                 and verify signature
 
   Arguments:    pool            heap context to call SVC_DecryptSign
-                rsa_key         public key to verify the signature
+                rsa_key1        public key to verify the signature
+                rsa_key2        public key to verify the signature
+                                for system applications
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key );
+BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key1, const void* rsa_key2 );
 
 /*---------------------------------------------------------------------------*
   Name:         FS_LoadStatic
@@ -87,11 +77,12 @@ BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key );
   Description:  receive static regions from ARM6 via WRAM-B and store them
                 specified by ROM header at HW_TWL_ROM_HEADER_BUF
 
-  Arguments:    None
+  Arguments:    digestKey       pointer to key for HMAC-SHA1
+                                if NULL, use default key
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS_LoadStatic( void );
+BOOL FS_LoadStatic( const u8* digestKey );
 
 
 #ifdef __cplusplus

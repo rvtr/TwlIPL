@@ -27,18 +27,6 @@ extern "C" {
 #endif
 
 /*---------------------------------------------------------------------------*
-  Name:         FS2_SetDigestKey
-
-  Description:  set specified key or default key for HMAC-SHA-1
-
-  Arguments:    digestKey       pointer to key
-                                if NULL, use default key
-
-  Returns:      TRUE if success
- *---------------------------------------------------------------------------*/
-void FS2_SetDigestKey( const u8* digestKey );
-
-/*---------------------------------------------------------------------------*
   Name:         FS2_LoadModule
 
   Description:  receive data from ARM7 via WRAM-B and store in destination address
@@ -74,11 +62,13 @@ BOOL FS2_OpenSrl( FSFile *pFile );
 
   Arguments:    pFile           pointer to FSFile streucture
                 pool            heap context to call SVC_DecryptSign
-                rsa_key         public key to verify the signature
+                rsa_key1        public key to verify the signature
+                rsa_key2        public key to verify the signature
+                                for system applications
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS2_LoadHeader( FSFile *pFile, SVCSignHeapContext* pool, const void* rsa_key );
+BOOL FS2_LoadHeader( FSFile *pFile, SVCSignHeapContext* pool, const void* rsa_key1, const void* rsa_key2 );
 
 /*---------------------------------------------------------------------------*
   Name:         FS2_LoadStatic
@@ -87,10 +77,12 @@ BOOL FS2_LoadHeader( FSFile *pFile, SVCSignHeapContext* pool, const void* rsa_ke
                 specified by ROM header at HW_TWL_ROM_HEADER_BUF
 
   Arguments:    pFile           pointer to FSFile streucture
+                digestKey       pointer to key for HMAC-SHA1
+                                if NULL, use default key
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS2_LoadStatic( FSFile *pFile );
+BOOL FS2_LoadStatic( FSFile *pFile, const u8* digestKey );
 
 
 #ifdef __cplusplus

@@ -65,7 +65,7 @@ static const u8 defaultKey[ SVC_SHA1_BLOCK_SIZE ] =
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-void FS_SetDigestKey( const u8* digestKey )
+static inline void FS_SetDigestKey( const u8* digestKey )
 {
     if ( digestKey )
     {
@@ -287,13 +287,16 @@ BOOL FS_LoadModule( u8* dest, u32 offset, u32 size, const u8 digest[SVC_SHA1_DIG
                 and verify signature
 
   Arguments:    pool            heap context to call SVC_DecryptSign
-                rsa_key         public key to verify the signature
+                rsa_key1        public key to verify the signature
+                rsa_key2        public key to verify the signature
+                                for system applications
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
+BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key1, const void* rsa_key2 )
 {
 #ifndef NO_SECURITY_CHECK
+    const void* rsa_key;
     SVCSHA1Context ctx;
     u8 md[SVC_SHA1_DIGEST_SIZE];
     SignatureData sd;
@@ -308,6 +311,9 @@ BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
     {
         return FALSE;
     }
+
+    // 鍵の確定
+    rsa_key = (rh->s.titleID_Hi & 0x1) ? rsa_key2 : rsa_key1;
 
     // コンテンツ証明書
     if ( CheckRomCertificate( pool, &rh->certificate, rsa_key, *(u32*)rh->s.game_code ) )
@@ -348,12 +354,14 @@ BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key )
   Description:  receive static regions from ARM6 via WRAM-B and store them
                 specified by ROM header at HW_TWL_ROM_HEADER_BUF
 
-  Arguments:    None
+  Arguments:    digestKey       pointer to key for HMAC-SHA1
+                                if NULL, use default key
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS_LoadStatic( void )
+BOOL FS_LoadStatic( const u8* digestKey )
 {
+    FS_SetDigestKey( digestKey );
     if ( rh->s.main_size > 0 )
     {
         if ( !FS_LoadModule( rh->s.main_ram_address, rh->s.main_rom_offset, rh->s.main_size, rh->s.main_static_digest ) )

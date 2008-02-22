@@ -71,7 +71,7 @@ static u8* const    aesBuffer = (u8*)HW_FIRM_FS_AES_BUFFER; // 0x2ff3800
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-void FS2_SetDigestKey( const u8* digestKey )
+static inline void FS2_SetDigestKey( const u8* digestKey )
 {
     if ( digestKey )
     {
@@ -312,12 +312,15 @@ BOOL FS2_OpenSrl( FSFile *pFile )
 
   Arguments:    pFile           pointer to FSFile streucture
                 pool            heap context to call SVC_DecryptSign
-                rsa_key         public key to verify the signature
+                rsa_key1        public key to verify the signature
+                rsa_key2        public key to verify the signature
+                                for system applications
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS2_LoadHeader( FSFile *pFile, SVCSignHeapContext* pool, const void* rsa_key )
+BOOL FS2_LoadHeader( FSFile *pFile, SVCSignHeapContext* pool, const void* rsa_key1, const void* rsa_key2 )
 {
+    const void* rsa_key;
     u8 md[SVC_SHA1_DIGEST_SIZE];
     SignatureData sd;
 
@@ -330,6 +333,9 @@ BOOL FS2_LoadHeader( FSFile *pFile, SVCSignHeapContext* pool, const void* rsa_ke
         return FALSE;
     }
     SVC_CalcSHA1( md, rh, FS_HEADER_AUTH_SIZE );
+
+    // 鍵の確定
+    rsa_key = (rh->s.titleID_Hi & 0x1) ? rsa_key2 : rsa_key1;
 
     // コンテンツ証明書
     if ( CheckRomCertificate( pool, &rh->certificate, rsa_key, *(u32*)rh->s.game_code ) )
@@ -366,11 +372,14 @@ BOOL FS2_LoadHeader( FSFile *pFile, SVCSignHeapContext* pool, const void* rsa_ke
                 specified by ROM header at HW_TWL_ROM_HEADER_BUF
 
   Arguments:    pFile           pointer to FSFile streucture
+                digestKey       pointer to key for HMAC-SHA1
+                                if NULL, use default key
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS2_LoadStatic( FSFile *pFile )
+BOOL FS2_LoadStatic( FSFile *pFile, const u8* digestKey )
 {
+    FS2_SetDigestKey( digestKey );
     if ( rh->s.main_size > 0 )
     {
         if ( !FS2_LoadModule( pFile, rh->s.main_ram_address, rh->s.main_rom_offset, rh->s.main_size, rh->s.main_static_digest ) )
