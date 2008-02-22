@@ -94,7 +94,8 @@ static void MakeFullPathForSD(char* file_name, char* full_path);
 static void ShowTitleinfoDifference( NAMTitleInfo* titleInfoNand, NAMTitleInfo* titleInfoSd);
 void ProgessInit(void);
 void ProgressDraw(f32 ratio);
-static void* ImportProcessReturn(void);
+static void* ImportProcessReturn0(void);
+static void* ImportProcessReturn1(void);
 
 static void* ImportIndividuallyProcess0(void);
 static void* ImportIndividuallyProcess1(void);
@@ -136,7 +137,7 @@ void* ImportProcess0(void)
     if (!fat_handle)
     {
 		FATFS_CloseFile(fat_handle);
-		return ImportProcessReturn;
+		return ImportProcessReturn0;
     }
 	FATFS_CloseFile(fat_handle);
 
@@ -312,7 +313,7 @@ void* ImportProcess2(void)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         Import プロセス３
+  Name:         ImportProcessReturn0
 
   Description:  
 
@@ -321,16 +322,16 @@ void* ImportProcess2(void)
   Returns:      next sequence
  *---------------------------------------------------------------------------*/
 
-void* ImportProcessReturn(void)
+void* ImportProcessReturn0(void)
 {
 	int i;
 
 	// 文字列全クリア
 	kamiFontClear();
-	kamiFontPrintf(4,  10, FONT_COLOR_RED, "%s is not exist", E_TICKET_FILE_PATH_IN_NAND);
-	kamiFontPrintf(4,  11, FONT_COLOR_RED, "You should write e-ticket", E_TICKET_FILE_PATH_IN_NAND);
-	kamiFontPrintf(4,  12, FONT_COLOR_RED, "beforehand.", E_TICKET_FILE_PATH_IN_NAND);
-	kamiFontPrintf(4,  22, FONT_COLOR_BLACK, "B Button : return to menu");
+	kamiFontPrintf(2,  10, FONT_COLOR_RED, "%s is not exist", E_TICKET_FILE_PATH_IN_NAND);
+	kamiFontPrintf(2,  11, FONT_COLOR_RED, "You should write e-ticket", E_TICKET_FILE_PATH_IN_NAND);
+	kamiFontPrintf(2,  12, FONT_COLOR_RED, "beforehand.", E_TICKET_FILE_PATH_IN_NAND);
+	kamiFontPrintf(2,  22, FONT_COLOR_BLACK, "B Button : return to menu");
 
 	// バージョン表示
 	kamiFontPrintf(2, 1, FONT_COLOR_BLACK, "Import TAD from SD");
@@ -353,6 +354,21 @@ void* ImportProcessReturn(void)
 	// フォントスクリーンデータロード
 	kamiFontLoadScreenData();
 
+	FADE_IN_RETURN( ImportProcessReturn1 );
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         ImportProcessReturn1
+
+  Description:  
+
+  Arguments:    None.
+
+  Returns:      next sequence
+ *---------------------------------------------------------------------------*/
+
+void* ImportProcessReturn1(void)
+{
 	while(1)
 	{
 		kamiPadRead();
@@ -527,7 +543,7 @@ void* ImportIndividuallyProcess1(void)
 	// ひとつ前のメニューへ戻る
     else if (kamiPadIsTrigger(PAD_BUTTON_B))
 	{
-		FADE_IN_RETURN( ImportProcess0 );
+		FADE_OUT_RETURN( ImportProcess0 );
 	}
 
 	return ImportIndividuallyProcess1;
