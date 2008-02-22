@@ -813,7 +813,7 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
     {
 		u8 buf[0x80];
 		SVCSignHeapContext con;
-		u8 calculated_hash[SVC_SHA1_DIGEST_SIZE * 3];
+		u8 calculated_hash[SVC_SHA1_DIGEST_SIZE * 3 + sizeof(u32)];
 		u8 final_hash[SVC_SHA1_DIGEST_SIZE];
 		int l;
 		u32 *module_addr[RELOCATE_INFO_NUM];
@@ -862,8 +862,10 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 				SVC_CalcSHA1( &calculated_hash[SVC_SHA1_DIGEST_SIZE * (l+1)], (const void*)module_addr[l], module_size[l]);
 			}
 		}
+		// シリアルナンバー付加
+		*(u32 *)(&(calculated_hash[SVC_SHA1_DIGEST_SIZE * 3])) = s_authcode.serial_number;
 		// 最終ハッシュ計算
-		SVC_CalcSHA1( &final_hash, calculated_hash, SVC_SHA1_DIGEST_SIZE * 3);
+		SVC_CalcSHA1( final_hash, calculated_hash, SVC_SHA1_DIGEST_SIZE * 3 + sizeof(u32));
 		
 		// 計算した最終ハッシュと、署名から得たハッシュとを比較
 	    if(!SVC_CompareSHA1((const void *)buf, (const void *)final_hash))
