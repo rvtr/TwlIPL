@@ -969,11 +969,19 @@ static BOOL CmpMcSlotMode(u32 mode)
 /*---------------------------------------------------------------------------*
   Name:		   McPowerOn
 
-  Description: スロットB 電源ON関数
+  Description: スロット電源ON関数
  *---------------------------------------------------------------------------*/
 static void McPowerOn(void)
 {
+    // Counter-Aカウンタ設定値到達まで待つ
+	while(CmpMcSlotMode(SLOT_STATUS_MODE_11) == TRUE){
+		OS_Sleep(1);
+    }
+
     if(CmpMcSlotMode(SLOT_STATUS_MODE_00) == TRUE){
+		// 100ms待ち [TODO:]待ち時間は暫定値。金子さんに数値を測定してもらう。
+        OS_Sleep(100);
+        
     	// SCFG_MC1 の Slot Status の M1,M0 を 01 にする
     	SetMcSlotMode(SLOT_STATUS_MODE_01);
 		// 1ms待ち
@@ -987,7 +995,7 @@ static void McPowerOn(void)
 		// リセットをhighに (RESB = 1にする)
 		reg_HOTSW_MCCNT1 = RESB_MASK;
     
-		// 100ms待ち
+		// [TODO:]待ち時間は暫定値。金子さんに数値を測定してもらう。
 		OS_Sleep(100);
     }
 }
@@ -995,19 +1003,23 @@ static void McPowerOn(void)
 /*---------------------------------------------------------------------------*
   Name:		   McPowerOff
 
-  Description: スロットB 電源OFF関数
+  Description: スロット電源OFF関数
  *---------------------------------------------------------------------------*/
 static void McPowerOff(void)
 {
+    // Counter-Aカウンタ設定値到達まで待つ
+	while(CmpMcSlotMode(SLOT_STATUS_MODE_11) == TRUE){
+		OS_Sleep(1);
+    }
+    
     if(CmpMcSlotMode(SLOT_STATUS_MODE_10) == TRUE){
     	// SCFG_MC1 の Slot Status の M1,M0 を 11 にする
     	SetMcSlotMode(SLOT_STATUS_MODE_11);
 
         // SCFG_MC1 の Slot Status の M1,M0 が 00 になるまでポーリング
-        while(CmpMcSlotMode(SLOT_STATUS_MODE_00) == FALSE){}
-
-		// 100ms待ち [TODO:]待ち時間は暫定値。金子さんに数値を測定してもらう。
-		OS_Sleep(100);
+        while(CmpMcSlotMode(SLOT_STATUS_MODE_00) == FALSE){
+			OS_Sleep(1);
+        }
     }
 }
 
