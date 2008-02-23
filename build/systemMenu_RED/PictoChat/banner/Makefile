@@ -41,6 +41,6 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 do-build:		$(TARGETS)
 
 $(TARGETS):		$(BANNER_SPEC)
-				$(MAKEBANNER) -d -p TWL $(BANNER_SPEC) $(TARGETS)
+				$(MAKEBANNER) -p TWL $(BANNER_SPEC) $(TARGETS)
 
 #

@@ -24,7 +24,7 @@ SUBDIRS					=	\
 #							../../../libraries_sysmenu/boot \
 #							../../../libraries_sysmenu/mcu \
 #							../../../libraries_sysmenu/ds \
-#							$(TWLSDK_ROOT)/build/libraries/reboot \
+#							$(ROOT)/build/libraries/reboot \
 
 #----------------------------------------------------------------------------
 
@@ -79,7 +79,7 @@ MAKETAD_FLAGS			+= -s
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 
-MAKEROM			 = $(TWL_IPL_RED_ROOT)/tools/bin/makerom.TWL.sys.exe
+MAKEROM			 = $(SYSMENU_TOOLSDIR)/bin/makerom.TWL.sys.exe
 
 LDIRT_CLEAN				=	$(TARGET_TAD)
 INSTALL_TARGETS			=	$(TARGET_TAD)

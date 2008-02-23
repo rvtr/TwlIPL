@@ -36,7 +36,7 @@ OBJECTS			= $(SOURCES:.c=.o)
 
 LDIRT_CLEAN		= $(OBJECTS) $(TARGETS)
 INSTALL_TARGETS		= $(TARGETS)
-INSTALL_DIR		= $(TWL_IPL_RED_ROOT)/tools/bin
+INSTALL_DIR		= $(SYSMENU_TOOLSDIR)/bin
 
 
 include $(TWLSDK_ROOT)/build/buildtools/twl/modulerules.x86

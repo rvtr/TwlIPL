@@ -30,10 +30,10 @@ MY_FIRM			=	$(MY_FIRM_ROOT_CYG)/nwm_firm.bin
 #----------------------------------------------------------------------------
 MY_SRL			=	$(MY_TITLE).srl
 MY_TAD			=	$(MY_TITLE).tad
-ATTACH_HEADER_COMMAND	=	$(TWL_IPL_RED_ROOT)/tools/bin/attach_dummyromheader.exe
+ATTACH_HEADER_COMMAND	=	$(SYSMENU_TOOLSDIR)/bin/attach_dummyromheader.exe
 
 INSTALL_TARGETS		=	$(MY_TAD)
-INSTALL_DIR		=	$(TWLSDK_ROOT)/build/tools/TwlNMenu/data
+INSTALL_DIR		=	$(ROOT)/build/tools/TwlNMenu/data
 
 LDIRT_CLEAN		=	$(MY_SRL) $(MY_TAD)
 

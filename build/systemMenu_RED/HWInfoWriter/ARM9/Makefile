@@ -56,7 +56,7 @@ endif
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-MAKEROM			 = $(TWL_IPL_RED_ROOT)/tools/bin/makerom.TWL.sys.exe
+MAKEROM			 = $(SYSMENU_TOOLSDIR)/bin/makerom.TWL.sys.exe
 
 LDIRT_CLEAN				=	$(TARGET_TAD)
 INSTALL_TARGETS			=	$(TARGET_TAD)

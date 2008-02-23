@@ -44,6 +44,6 @@ do-build:		$(TARGETS)
 
 $(TARGETS):		$(BANNER_SPEC) $(BANNER_ICON)
 				$(NTEXCONV) -no -bg -bgb -bgnc $(BANNER_ICON) >/dev/null && \
-				$(MAKEBANNER) -d -N $(BANNER_ICON_NAME) $(BANNER_SPEC) $(TARGETS)
+				$(MAKEBANNER) -N $(BANNER_ICON_NAME) $(BANNER_SPEC) $(TARGETS)
 
 #

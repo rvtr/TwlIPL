@@ -33,7 +33,7 @@ LDRES_TEMPLATE	=	racoon.response.template
 
 SRCS		=	main.c kami_pxi.c formatter.c nvram_misc.c
 
-LINCLUDES	=	../common/include $(TWLSDK_ROOT)/build/libraries/spi/ARM7/include
+LINCLUDES	=	../common/include $(ROOT)/build/libraries/spi/ARM7/include
 
 
 #SRCDIR		=	# using default

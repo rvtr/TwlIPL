@@ -89,7 +89,7 @@ LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
 
-MAKEROM			 = $(TWL_IPL_RED_ROOT)/tools/bin/makerom.TWL.sys.exe
+MAKEROM			 = $(SYSMENU_TOOLSDIR)/bin/makerom.TWL.sys.exe
 
 LDIRT_CLEAN				=	$(TARGET_TAD)
 INSTALL_TARGETS			=	$(TARGET_TAD)
