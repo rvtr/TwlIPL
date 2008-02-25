@@ -21,12 +21,7 @@ TWLFIRM_COMMONDEFS_ = TRUE
 EMPTY	 	?=
 SPACE 		?= $(EMPTY) $(EMPTY)
 
-ifndef TWL_KEYSDIR
-DUMMY_KEYS_SUFFIX	=	.dummykey
-endif
-TWL_KEYSDIR		?=	$(FIRM_ROOT)/keys/dummy
-
-TARGET_BIN		?=	$(subst .,$(DUMMY_KEYS_SUFFIX).,$(TARGET_FIRM_BIN))
+TARGET_BIN		?=	$(TARGET_FIRM_BIN)
 
 #
 # change default variables for product

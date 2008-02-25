@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlSDK - tests - camera-test
+# Project:  TwlIPL - systemMenu_RED - NandInitializer
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -20,10 +20,6 @@ SUBDIRS		=
 
 
 #----------------------------------------------------------------------------
-
-USE_PRODUCT_KEY		=	TRUE
-
-KEYS_DIR				=	$(shell $(CYGPATH) -m $(TWL_KEYSDIR))
 
 TARGET_FIRM			= SYSTEMMENU
 TARGET_PLATFORM		= TWL
@@ -73,11 +69,9 @@ MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
 							-DHWINFO_PRIVKEY='private_HWInfo.der'
 MAKETAD_FLAGS			+=	-s
 
-ifdef USE_PRODUCT_KEY
-MAKEROM_FLAGS			+=	-DPRIVKEY_PATH='$(KEYS_DIR)/rsa'
+TWL_KEYSDIR			+=	-DPRIVKEY_PATH='$(TWL_KEYSDIR)/rsa'
+ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
 MACRO_FLAGS				+=	-DUSE_PRODUCT_KEY
-else
-MAKEROM_FLAGS			+=	-DPRIVKEY_PATH='../../../../keys/dummy/rsa'
 endif
 
 LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\

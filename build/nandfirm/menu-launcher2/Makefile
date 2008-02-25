@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - nandfirm - menu-launcher2
+# Project:  TwlIPL - nandfirm - menu-launcher2
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -15,10 +15,6 @@
 # $Rev$
 # $Author$
 #----------------------------------------------------------------------------
-
-
-# if you have valid keys, set environment value like below
-#export TWL_KEYSDIR='$(TWL_IPL_RED_ROOT)/../twl_firmware/bootrom/build/keys'
 
 
 #----------------------------------------------------------------------------

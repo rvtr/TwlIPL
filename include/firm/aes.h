@@ -25,7 +25,6 @@
 #include <twl/aes/ARM7/hi.h>
 #include <twl/aes/ARM7/lo.h>
 #include <firm/aes/ARM7/aes_init.h>
-#include <firm/aes/ARM7/aes_ids.h>
 #endif // !SDK_ARM7
 
 /* FIRM_AES_H_ */

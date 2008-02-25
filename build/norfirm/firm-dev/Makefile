@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - build
+# Project:  TwlIPL - norfirm - firm-dev
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -12,13 +12,9 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
-
-
-# if you have no valid key, comment out next line
-#TWL_KEYSDIR = $(FIRM_ROOT)/../twl_firmware/bootrom/build/keys
 
 
 #----------------------------------------------------------------------------

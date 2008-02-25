@@ -20,9 +20,6 @@ SUBDIRS					=	\
 
 #----------------------------------------------------------------------------
 
-USE_PRODUCT_KEY		=	TRUE
-
-KEYS_DIR				=	$(shell $(CYGPATH) -m $(TWL_KEYSDIR))
 TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
@@ -47,11 +44,9 @@ MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
 							-DHWINFO_PRIVKEY='private_HWInfo.der'
 MAKETAD_FLAGS			+=	-s
 
-ifdef USE_PRODUCT_KEY
-MAKEROM_FLAGS			+=	-DPRIVKEY_PATH='$(KEYS_DIR)/rsa'
+TWL_KEYSDIR			+=	-DPRIVKEY_PATH='$(TWL_KEYSDIR)/rsa'
+ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
 MACRO_FLAGS				+=	-DUSE_PRODUCT_KEY
-else
-MAKEROM_FLAGS			+=	-DPRIVKEY_PATH='../../../../keys/dummy/rsa'
 endif
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs

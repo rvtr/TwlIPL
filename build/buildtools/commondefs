@@ -30,6 +30,12 @@ ifdef FIRM_USE_TWLSDK_KEYS
 MACRO_FLAGS	+= -DFIRM_USE_TWLSDK_KEYS=$(FIRM_USE_TWLSDK_KEYS)
 endif
 
+ifeq ($(TWL_IPL_RED_PRIVATE_ROOT),)
+TWL_KEYSDIR	:= $(TWL_IPL_RED_ROOT)/keys/dummy
+else
+TWL_KEYSDIR	:= $(TWL_IPL_RED_PRIVATE_ROOT)/keys
+endif
+
 #----------------------------------------------------------------------------
 endif	# TWL_IPL_COMMONDEFS_
 #----- End of commondefs -----

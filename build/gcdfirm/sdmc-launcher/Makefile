@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - nandfirm - gcdfirm-disp
+# Project:  TwlIPL - gcdfirm - sdmc-launcher
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -15,10 +15,6 @@
 # $Rev$
 # $Author$
 #----------------------------------------------------------------------------
-
-
-# if you have valid keys, set environment value like below
-#export TWL_KEYSDIR='$(TWL_IPL_RED_ROOT)/../twl_firmware/bootrom/build/keys'
 
 
 #----------------------------------------------------------------------------
