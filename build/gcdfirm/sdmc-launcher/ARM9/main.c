@@ -203,10 +203,10 @@ static BOOL CheckHeader(void)
          (u32)rhs->main_ram_address > (u32)rhs->main_entry_address ||
          (u32)rhs->sub_ram_address > (u32)rhs->sub_entry_address ||
         // should be in main memory (end address)
-         HW_TWL_MAIN_MEM_END <= (u32)rhs->main_ram_address + rhs->main_size ||
-         HW_TWL_MAIN_MEM_END <= (u32)rhs->sub_ram_address + rhs->sub_size ||
-         HW_TWL_MAIN_MEM_END <= (u32)rhs->main_ltd_ram_address + rhs->main_ltd_size ||
-         HW_TWL_MAIN_MEM_END <= (u32)rhs->sub_ltd_ram_address + rhs->sub_ltd_size ||
+         HW_FIRM_FATFS_COMMAND_BUFFER <= (u32)rhs->main_ram_address + rhs->main_size ||
+         HW_FIRM_FATFS_COMMAND_BUFFER <= (u32)rhs->sub_ram_address + rhs->sub_size ||
+         HW_FIRM_FATFS_COMMAND_BUFFER <= (u32)rhs->main_ltd_ram_address + rhs->main_ltd_size ||
+         HW_FIRM_FATFS_COMMAND_BUFFER <= (u32)rhs->sub_ltd_ram_address + rhs->sub_ltd_size ||
         // should be in static area without Limited region (end address)
          (u32)rhs->main_ram_address + rhs->main_size <= (u32)rhs->main_entry_address ||
          (u32)rhs->sub_ram_address + rhs->sub_size <= (u32)rhs->sub_entry_address ||
