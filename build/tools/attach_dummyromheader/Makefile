@@ -21,8 +21,9 @@
 
 #----------------------------------------------------------------------------
 
+TARGET_FIRM			=	SYSTEMMENU
 
-include	$(TWLSDK_ROOT)/build/buildtools/commondefs
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
