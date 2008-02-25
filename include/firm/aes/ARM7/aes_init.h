@@ -52,6 +52,25 @@ void AESi_InitKeysForApp( u8 game_code[4] );
 void AESi_InitKeysForHard( u8 fuse[8] );
 
 /*---------------------------------------------------------------------------*
+  Name:         AESi_ResetAesKeyB
+
+  Description:  set SEED/ID/KEYs filler data without slot-D
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+static inline void AESi_ResetAesKeyB( void )
+{
+    AES_Lock();
+    AES_WaitKey();
+
+    MI_CpuCopy32( (u32*)AESi_ResetAesKeyB, (u32*)REG_AES_KEY_B0_ADDR+1, 40 );
+
+    AES_Unlock();
+}
+
+/*---------------------------------------------------------------------------*
   Name:         AESi_ResetAesKey
 
   Description:  set SEED/ID/KEYs filler data without slot-D
@@ -85,6 +104,7 @@ static inline void AESi_ResetAesKey( void )
 static inline void AESi_InitKeysFIRM( void )
 {
     AESi_InitKeysForApp( (u8*)((ROM_Header_Short*)HW_TWL_ROM_HEADER_BUF)->game_code );
+    AESi_ResetAesKeyB();
 //    AESi_ResetAesKey();
 }
 
