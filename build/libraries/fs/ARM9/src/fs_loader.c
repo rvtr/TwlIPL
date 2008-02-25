@@ -92,7 +92,7 @@ static inline BOOL CheckDigest( u8* a, u8* b, BOOL aClr, BOOL bClr )
     if ( bClr ) MI_CpuClear8(b, SVC_SHA1_DIGEST_SIZE);
     return result;
 }
-
+#ifdef SUPPORT_CERTIFICATION
 /*---------------------------------------------------------------------------*
   Name:         CheckRomCertificate
 
@@ -129,7 +129,7 @@ static BOOL CheckRomCertificate( SVCSignHeapContext* pool, const RomCertificate 
     // 比較
     return CheckDigest(md, digest, TRUE, TRUE);
 }
-
+#endif
 /*---------------------------------------------------------------------------*
   Name:         FS_LoadBuffer
 
@@ -314,7 +314,7 @@ BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key1, const void* 
 
     // 鍵の確定
     rsa_key = (rh->s.titleID_Hi & 0x1) ? rsa_key2 : rsa_key1;
-
+#ifdef SUPPORT_CERTIFICATION
     // コンテンツ証明書
     if ( CheckRomCertificate( pool, &rh->certificate, rsa_key, *(u32*)rh->s.game_code ) )
     {
@@ -324,7 +324,7 @@ BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key1, const void* 
     {
         // とりあえずコンテンツ証明書用の鍵がそのまま使えると仮定
     }
-
+#endif
     // ヘッダ署名チェック
     SVC_DecryptSign( pool, &sd, rh->signature, rsa_key );
 
