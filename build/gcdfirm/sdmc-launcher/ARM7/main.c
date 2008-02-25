@@ -116,7 +116,10 @@ static void PreInit(void)
         リセットパラメータ(1バイト)を共有領域(1バイト)にコピー
     */
 #define HOTSTART_FLAG_ENABLE    0x80
+    if ( MCUi_ReadRegister( MCU_REG_VER_INFO_ADDR ) >= 0x20 )   // MCU旧バージョン対策
     *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
+    else
+    *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_OLD_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
 }
 
 /***************************************************************
@@ -154,6 +157,7 @@ static void PostInit(void)
 ***************************************************************/
 static void EraseAll(void)
 {
+    AESi_ResetAesKey();
     MI_CpuClearFast( OSi_GetFromFirmAddr(), sizeof(OSFromFirmBuf) );
 #ifdef SDK_FINALROM
     MI_CpuClearFast( (void*)HW_TWL_ROM_HEADER_BUF, HW_TWL_ROM_HEADER_BUF_SIZE );
@@ -291,6 +295,8 @@ void TwlSpMain( void )
 #endif
     PM_BackLightOn( TRUE );
 
+    AESi_ResetAesKey();
+    MI_CpuClearFast( OSi_GetFromFirmAddr(), sizeof(OSFromFirmBuf) );
     OS_BootFromFIRM();
 
 end:
