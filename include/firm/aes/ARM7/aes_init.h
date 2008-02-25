@@ -54,13 +54,23 @@ void AESi_InitKeysForHard( u8 fuse[8] );
 /*---------------------------------------------------------------------------*
   Name:         AESi_ResetAesKey
 
-  Description:  set SEED/KEYs by dummy data without seed[3]
+  Description:  set SEED/ID/KEYs filler data without slot-D
 
   Arguments:    None
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void AESi_ResetAesKey( void );
+static inline void AESi_ResetAesKey( void )
+{
+    AES_Lock();
+    AES_WaitKey();
+
+    MI_CpuCopy32( (u32*)AESi_ResetAesKey,    (u32*)REG_AES_KEY_A0_ADDR+1, 40 );
+    MI_CpuCopy32( (u32*)AESi_ResetAesKey+10, (u32*)REG_AES_KEY_B0_ADDR+1, 40 );
+    MI_CpuCopy32( (u32*)AESi_ResetAesKey+20, (u32*)REG_AES_KEY_C0_ADDR+1, 40 );
+
+    AES_Unlock();
+}
 
 /*---------------------------------------------------------------------------*
   Name:         AESi_InitKeysFIRM

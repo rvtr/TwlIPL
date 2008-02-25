@@ -20,9 +20,9 @@
 
 #define AES_IDS_ID0_C(c)    (((unsigned long)c[0] << 0) | ((unsigned long)c[1] << 8) | ((unsigned long)c[2] << 16) | ((unsigned long)c[3] << 24))
 #define AES_IDS_ID0_D(c)    (((unsigned long)c[3] << 0) | ((unsigned long)c[2] << 8) | ((unsigned long)c[1] << 16) | ((unsigned long)c[0] << 24))
-
+#if 0 // not specialized for application
 #define AES_IDS_ID1_A(c)    (((unsigned long)c[3] << 0) | ((unsigned long)c[1] << 8) | ((unsigned long)c[2] << 16) | ((unsigned long)c[0] << 24))
 #define AES_IDS_ID1_B(c)    (((unsigned long)c[0] << 0) | ((unsigned long)c[2] << 8) | ((unsigned long)c[1] << 16) | ((unsigned long)c[3] << 24))
-
+#endif
 /* TWL_AES_AES_IDS_H_ */
 #endif
