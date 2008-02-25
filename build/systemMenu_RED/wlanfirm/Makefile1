@@ -16,7 +16,7 @@
 # $Author: 
 #----------------------------------------------------------------------------
 
-
+TARGET_FIRM			=	SYSTEMMENU
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 MY_FIRM_ROOT	=	$(TWLWIRELESS_ROOT)/binfile
