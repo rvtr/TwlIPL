@@ -18,6 +18,10 @@
 
 TARGET_FIRM			=	SYSTEMMENU
 
+override TARGET_PLATFORM	:= TWL
+override TARGET_CODEGEN		:= ARM
+override TWL_ARCHGEN		:= LIMITED
+
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 MY_FIRM_ROOT	=	$(TWLWIRELESS_ROOT)/binfile
 MY_FIRM_ROOT_CYG =	$(call eupath,$(MY_FIRM_ROOT))
