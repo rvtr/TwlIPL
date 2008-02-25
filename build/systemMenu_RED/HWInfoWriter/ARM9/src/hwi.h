@@ -30,7 +30,8 @@ extern "C" {
 typedef enum 
 {
 	HWI_INIT_FAILURE,
-	HWI_INIT_SUCCESS_SIGNATURE_MODE,
+	HWI_INIT_SUCCESS_PRO_SIGNATURE_MODE,
+	HWI_INIT_SUCCESS_DEV_SIGNATURE_MODE,
 	HWI_INIT_SUCCESS_NO_SIGNATRUE_MODE
 } 
 HwiInitResult;
@@ -38,9 +39,11 @@ HwiInitResult;
 HwiInitResult HWI_Init( void *(*pAlloc)( u32 ), void (*pFree)( void * ) );
 void HWI_ModifyLanguage( u8 region );
 BOOL HWI_WriteHWNormalInfoFile( void );
-BOOL HWI_WriteHWSecureInfoFile( u8 region );
+BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo );
+BOOL HWI_WriteHWIDSignFile( void );
 BOOL HWI_DeleteHWNormalInfoFile( void );
 BOOL HWI_DeleteHWSecureInfoFile( void );
+BOOL HWI_DeleteHWIDSignFile( void );
 
 #ifdef __cplusplus
 }

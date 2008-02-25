@@ -21,6 +21,11 @@ SUBDIRS		=
 
 #----------------------------------------------------------------------------
 
+#============================================================================
+#現時点で製品鍵を使った書き込みが行えてはダメなので、デフォルトOFFにしておいてください。
+#USE_PRODUCT_KEY			=	TRUE
+#============================================================================
+
 TARGET_FIRM			= SYSTEMMENU
 TARGET_PLATFORM		= TWL
 TWL_ARCHGEN    		= LIMITED
@@ -65,14 +70,18 @@ SRCDIR		=	src \
 
 #LCFILE		=	# using default
 
-MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
-							-DHWINFO_PRIVKEY='private_HWInfo.der'
-MAKETAD_FLAGS			+=	-s
-
-MAKEROM_FLAGS			+=	-DPRIVKEY_PATH='$(TWL_KEYSDIR)/rsa'
 ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
+ifdef USE_PRODUCT_KEY
 MACRO_FLAGS				+=	-DUSE_PRODUCT_KEY
+MAKEROM_FLAGS			+=	-DHWINFO_PRIVKEY='private_HWInfo.der'
+else
+MAKEROM_FLAGS			+=	-DHWINFO_PRIVKEY='private_HWInfo_dev.der'
 endif
+endif
+
+MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
+							-DPRIVKEY_PATH='$(TWL_KEYSDIR)/rsa'
+MAKETAD_FLAGS			+=	-s
 
 LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\
 					libboc$(TWL_LIBSUFFIX).a			\

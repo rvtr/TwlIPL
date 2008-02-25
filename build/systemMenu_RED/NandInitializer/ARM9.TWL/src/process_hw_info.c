@@ -182,8 +182,11 @@ void* HWInfoProcess0(void)
 	case HWI_INIT_FAILURE:
 		kamiFontPrintfConsoleEx(CONSOLE_RED, "HWI_INIT() Failure!\n" );
 		break;
-	case HWI_INIT_SUCCESS_SIGNATURE_MODE:
-		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, "[Signature MODE]\n" );
+	case HWI_INIT_SUCCESS_PRO_SIGNATURE_MODE:
+		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, "[PRO Signature MODE]\n" );
+		break;
+	case HWI_INIT_SUCCESS_DEV_SIGNATURE_MODE:
+		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, "[DEV Signature MODE]\n" );
 		break;
 	case HWI_INIT_SUCCESS_NO_SIGNATRUE_MODE:
 		kamiFontPrintfConsoleEx(CONSOLE_RED, "[No Signature MODE]\n" );
@@ -316,6 +319,7 @@ static BOOL WriteHWInfoFile( u8 region )
 {
 	static const char *pMsgNormalWriting  	= "Writing Normal File...";
 	static const char *pMsgSecureWriting  	= "Writing Secure File...";
+	static const char *pMsgSignWriting  	= "Writing Sign   File...";
 	static const char *pMsgSucceeded 		= "Succeeded!";
 	static const char *pMsgFailed 			= "Failed!";
 	BOOL result = TRUE;
@@ -333,7 +337,17 @@ static BOOL WriteHWInfoFile( u8 region )
 	// セキュアファイルのライト
 	kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSecureWriting );
 	
-	if( HWI_WriteHWSecureInfoFile( region ) ) {
+	if( HWI_WriteHWSecureInfoFile( region, NULL ) ) {
+		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSucceeded );
+	}else {
+		kamiFontPrintfConsoleEx(CONSOLE_RED, pMsgFailed );
+		result = FALSE;
+	}
+	
+	// HWID署名ファイルのライト
+	kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSignWriting );
+	
+	if( HWI_WriteHWIDSignFile() ) {
 		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSucceeded );
 	}else {
 		kamiFontPrintfConsoleEx(CONSOLE_RED, pMsgFailed );

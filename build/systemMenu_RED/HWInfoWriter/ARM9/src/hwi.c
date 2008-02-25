@@ -22,6 +22,11 @@
 #include "hwi.h"
 
 // define data------------------------------------------
+#ifdef USE_PRODUCT_KEY														// 鍵選択スイッチ
+#define HWINFO_PRIVKEY_PATH		"rom:key/private_HWInfo.der"				// 製品用秘密鍵
+#else
+#define HWINFO_PRIVKEY_PATH		"rom:key/private_HWInfo_dev.der"			// 開発用秘密鍵
+#endif
 
 // extern data------------------------------------------
 const LCFGTWLHWNormalInfo *LCFG_THW_GetDefaultNormalInfo( void );
@@ -40,7 +45,6 @@ static BOOL VerifyData( const u8 *pTgt, const u8 *pOrg, u32 len );
 
 // static variable -------------------------------------
 static u8 *s_pPrivKeyBuffer = NULL;
-static LCFGReadResult (*s_pReadSecureInfoFunc)( void );
 static BOOL s_isReadTSD;
 static void *(*spAlloc)( u32 length );
 static void  (*spFree)( void *ptr );
@@ -101,7 +105,17 @@ HwiInitResult HWI_Init( void *(*pAlloc)( u32 ), void (*pFree)( void * ) )
 	result = ReadPrivateKey();
 	ReadHWInfoFile();
 //	VerifyHWInfo();
-
+	if( 1 ) {
+		u8 sign[ RSA_KEY_LENGTH ];
+		if( !LCFG_ReadHWID_Signature( sign ) ||
+			!LCFG_CheckHWID_Signature( sign )
+			) {
+			OS_TPrintf( "HWID Signature check failed.\n" );
+		}else {
+			OS_TPrintf( "HWID Signature check succeeded.\n" );
+		}
+	}
+	
 	return result;
 }
 
@@ -117,7 +131,6 @@ static void ReadTWLSettings( void )
 	}
 }
 
-
 // 秘密鍵のリード
 HwiInitResult ReadPrivateKey( void )
 {
@@ -127,7 +140,7 @@ HwiInitResult ReadPrivateKey( void )
 	OSTick start = OS_GetTick();
 	
 	FS_InitFile( &file );
-	if( !FS_OpenFileEx( &file, "rom:key/private_HWInfo.der", FS_FILEMODE_R ) ) 
+	if( !FS_OpenFileEx( &file, HWINFO_PRIVKEY_PATH, FS_FILEMODE_R ) ) 
 	{
 		OS_TPrintf( "PrivateKey read failed.\n" );
 	}
@@ -152,17 +165,15 @@ HwiInitResult ReadPrivateKey( void )
 	}
 	OS_TPrintf( "PrivKey read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 	
+	if (result) {
 #ifdef USE_PRODUCT_KEY
-	// 製品用秘密鍵が有効なら、署名ありのアクセス
-	s_pReadSecureInfoFunc = LCFGi_THW_ReadSecureInfo;
-	if (result) { return HWI_INIT_SUCCESS_SIGNATURE_MODE; }
-	else		{ return HWI_INIT_FAILURE; }
+		return HWI_INIT_SUCCESS_PRO_SIGNATURE_MODE;
 #else
-	// そうでないなら、署名なしのアクセス
-	s_pReadSecureInfoFunc = LCFGi_THW_ReadSecureInfo_NoCheck;
-	if (result) { return HWI_INIT_SUCCESS_NO_SIGNATRUE_MODE; }
-	else		{ return HWI_INIT_FAILURE; }
+		return HWI_INIT_SUCCESS_DEV_SIGNATURE_MODE;
 #endif
+	}else {
+		return HWI_INIT_SUCCESS_NO_SIGNATRUE_MODE;
+	}
 }
 
 // HW情報全体のリード
@@ -181,7 +192,7 @@ static void ReadHWInfoFile( void )
 	OS_TPrintf( "HW Normal Info read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 	
 	start = OS_GetTick();
-	retval = s_pReadSecureInfoFunc();
+	retval = LCFGi_THW_ReadSecureInfo();
 	if( retval == LCFG_TSF_READ_RESULT_SUCCEEDED ) {
 		OS_TPrintf( "HW Secure Info read succeeded.\n" );
 	}else {
@@ -292,13 +303,13 @@ BOOL HWI_WriteHWNormalInfoFile( void )
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
-BOOL HWI_WriteHWSecureInfoFile( u8 region )
+BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo )
 {
 	BOOL isWrite = TRUE;
 	LCFGReadResult result;
 	
 	// ファイルのリード
-	result = s_pReadSecureInfoFunc();
+	result = LCFGi_THW_ReadSecureInfo();
 	
 	// リードに失敗したらリカバリ
 	if( result != LCFG_TSF_READ_RESULT_SUCCEEDED ) {
@@ -314,9 +325,9 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region )
 	// 対応言語ビットマップのセット
 	LCFG_THW_SetValidLanguageBitmap( s_langBitmapList[ region ] );
 	
-	// [TODO:]量産工程でないとシリアルNo.は用意できないので、ここではMACアドレスをもとに適当な値をセットする。
 	// シリアルNo.のセット
-	{
+	if( pSerialNo == NULL ) {
+		// 量産工程でないとシリアルNo.は用意できないので、ここではMACアドレスをもとに適当な値をセットする。
 		u8 buffer[ 12 ] = "SERIAL";		// 適当な文字列をMACアドレスと結合してSHA1を取り、仮SerialNoとする。
 		u8 serialNo[ SVC_SHA1_DIGEST_SIZE ];
 		int i;
@@ -331,6 +342,8 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region )
 		MI_CpuClear8( &serialNo[ len ], sizeof(serialNo) - len );
 		OS_TPrintf( "serialNo : %s\n", serialNo );
 		LCFG_THW_SetSerialNo( serialNo );
+	}else {
+		LCFG_THW_SetSerialNo( pSerialNo );
 	}
 	
 	// ランチャーTitleID_Loのセット
@@ -349,6 +362,31 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region )
 	}
 	
 	return isWrite;
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         HWI_WriteHWIDSignFile
+
+  Description:  HWID署名ファイルのライト
+
+  Arguments:    
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+BOOL HWI_WriteHWIDSignFile( void )
+{
+	BOOL retval;
+	
+	(void)FS_DeleteFile( (char *)LCFG_TWL_HWID_SIGN_PATH );
+	if( !FS_CreateFile( LCFG_TWL_HWID_SIGN_PATH, FS_PERMIT_R | FS_PERMIT_W ) ) {
+		OS_TPrintf( "file create error. %s\n", LCFG_TWL_HWID_SIGN_PATH );
+	}
+	retval = LCFG_WriteHWID_Signature( s_pPrivKeyBuffer );
+	if( !retval ) {
+		OS_TPrintf( "HWID Signature Write failed.\n" );
+	}
+	return retval;
 }
 
 /*---------------------------------------------------------------------------*
@@ -397,3 +435,25 @@ BOOL HWI_DeleteHWSecureInfoFile( void )
 	}
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         HWI_DeleteHWIDSignFile
+
+  Description:  HWID署名ファイルの消去
+
+  Arguments:    None
+
+  Returns:      BOOL
+ *---------------------------------------------------------------------------*/
+BOOL HWI_DeleteHWIDSignFile( void )
+{
+	if (FS_DeleteFile( (char *)LCFG_TWL_HWID_SIGN_PATH ))
+	{
+		OS_TPrintf( "%s delete succeeded.\n", (char *)LCFG_TWL_HWID_SIGN_PATH );
+		return TRUE;
+	}
+	else
+	{
+		OS_TPrintf( "%s delete failed.\n", (char *)LCFG_TWL_HWID_SIGN_PATH );
+		return FALSE;
+	}
+}

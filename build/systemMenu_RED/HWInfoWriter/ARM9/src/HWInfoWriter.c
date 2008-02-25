@@ -26,7 +26,7 @@
 // define data------------------------------------------
 #define WRITER_ELEMENT_NUM					7
 #define MSG_X								3
-#define MSG_Y								19
+#define MSG_Y								18
 
 // extern data------------------------------------------
 
@@ -59,13 +59,13 @@ static const u16 *const s_pStrWriter[ WRITER_ELEMENT_NUM ] = {
 };
 
 static MenuPos s_writerPos[] = {
-	{ TRUE,  3 * 8,   4 * 8 },
-	{ TRUE,  3 * 8,   6 * 8 },
-	{ TRUE,  3 * 8,   8 * 8 },
-	{ TRUE,  3 * 8,  10 * 8 },
-	{ TRUE,  3 * 8,  12 * 8 },
-	{ TRUE,  3 * 8,  14 * 8 },
-	{ TRUE,  3 * 8,  16 * 8 },
+	{ TRUE,  3 * 8,   3 * 8 },
+	{ TRUE,  3 * 8,   5 * 8 },
+	{ TRUE,  3 * 8,   7 * 8 },
+	{ TRUE,  3 * 8,   9 * 8 },
+	{ TRUE,  3 * 8,  11 * 8 },
+	{ TRUE,  3 * 8,  13 * 8 },
+	{ TRUE,  3 * 8,  15 * 8 },
 };
 
 
@@ -106,9 +106,20 @@ void HWInfoWriterInit( void )
 	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"HW Info Writer");
 	GetAndDrawRTCData( &g_rtcDraw, TRUE );
 
-	if (HWI_Init( Alloc, Free ) == HWI_INIT_SUCCESS_NO_SIGNATRUE_MODE)
 	{
-		PutStringUTF16( 14 * 8, 0 * 8, TXT_COLOR_RED, (const u16 *)L"[No Signature MODE]" );
+		char *pMode = NULL;
+		switch ( HWI_Init( Alloc, Free ) ) {
+		case HWI_INIT_SUCCESS_NO_SIGNATRUE_MODE:
+			pMode = "No";
+			break;
+		case HWI_INIT_SUCCESS_PRO_SIGNATURE_MODE:
+			pMode = "Pro";
+			break;
+		case HWI_INIT_SUCCESS_DEV_SIGNATURE_MODE:
+			pMode = "Dev";
+			break;
+		}
+		PrintfSJIS( 14 * 8, 0 * 8, TXT_COLOR_RED, "[%s Signature MODE]", pMode );
 	}
 
 	OS_TPrintf( "region = %d\n", LCFG_THW_GetRegion() );
@@ -169,25 +180,41 @@ static void WriteHWInfoFile( u8 region )
 {
 	static const u16 *pMsgNormalWriting  = (const u16 *)L"Writing Normal File...";
 	static const u16 *pMsgSecureWriting  = (const u16 *)L"Writing Secure File...";
+	static const u16 *pMsgHWIDSignWriting = (const u16 *)L"Writing HWID Sign File...";
 	static const u16 *pMsgSucceeded = (const u16 *)L"Succeeded!";
 	static const u16 *pMsgFailed = (const u16 *)L"Failed!";
 	
+	// -------------------------------------
 	// ノーマルファイルのライト
+	// -------------------------------------
 	(void)PutStringUTF16( MSG_X * 8, MSG_Y * 8, TXT_COLOR_BLACK, pMsgNormalWriting );
 	
 	if( HWI_WriteHWNormalInfoFile() ) {
-		(void)PutStringUTF16( ( MSG_X + 18 ) * 8, MSG_Y * 8, TXT_COLOR_BLUE, pMsgSucceeded );
+		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, MSG_Y * 8, TXT_COLOR_BLUE, pMsgSucceeded );
 	}else {
-		(void)PutStringUTF16( ( MSG_X + 18 ) * 8, MSG_Y * 8, TXT_COLOR_RED, pMsgFailed );
+		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, MSG_Y * 8, TXT_COLOR_RED, pMsgFailed );
 	}
 	
+	// -------------------------------------
 	// セキュアファイルのライト
+	// -------------------------------------
 	(void)PutStringUTF16( MSG_X * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_BLACK, pMsgSecureWriting );
 	
-	if( HWI_WriteHWSecureInfoFile( region ) ) {
-		(void)PutStringUTF16( ( MSG_X + 18 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_BLUE, pMsgSucceeded );
+	if( HWI_WriteHWSecureInfoFile( region, NULL ) ) {
+		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_BLUE, pMsgSucceeded );
 	}else {
-		(void)PutStringUTF16( ( MSG_X + 18 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_RED, pMsgFailed );
+		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_RED, pMsgFailed );
+	}
+	
+	// -------------------------------------
+	// HWID署名ファイルのライト
+	// -------------------------------------
+	(void)PutStringUTF16( MSG_X * 8, ( MSG_Y + 4 ) * 8, TXT_COLOR_BLACK, pMsgHWIDSignWriting );
+	
+	if( HWI_WriteHWIDSignFile() ) {
+		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, ( MSG_Y + 4 ) * 8, TXT_COLOR_BLUE, pMsgSucceeded );
+	}else {
+		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, ( MSG_Y + 4 ) * 8, TXT_COLOR_RED, pMsgFailed );
 	}
 	
 	HWI_ModifyLanguage( region );
@@ -207,24 +234,40 @@ static void DeleteHWInfoFile( void )
 {
 	static const u16 *pMsgNormalDeleting  = (const u16 *)L"Deleting Normal File...";
 	static const u16 *pMsgSecureDeleting  = (const u16 *)L"Deteting Secure File...";
+	static const u16 *pMsgHWIDSignDeleting = (const u16 *)L"Deteting HWID Sign File.";
 	static const u16 *pMsgSucceeded = (const u16 *)L"Succeeded!";
 	static const u16 *pMsgFailed = (const u16 *)L"Failed!";
 	
-	// ノーマルファイル
+	// -------------------------------------
+	// ノーマルファイルの削除
+	// -------------------------------------
 	(void)PutStringUTF16( MSG_X * 8, MSG_Y * 8, TXT_COLOR_BLACK, pMsgNormalDeleting );
 	if( HWI_DeleteHWNormalInfoFile() ) {
-		(void)PutStringUTF16( ( MSG_X + 19 ) * 8, MSG_Y * 8, TXT_COLOR_BLUE, pMsgSucceeded );
+		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, MSG_Y * 8, TXT_COLOR_BLUE, pMsgSucceeded );
 	}else {
-		(void)PutStringUTF16( ( MSG_X + 19 ) * 8, MSG_Y * 8, TXT_COLOR_RED, pMsgFailed );
+		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, MSG_Y * 8, TXT_COLOR_RED, pMsgFailed );
 	}
 	
-	// セキュアファイル
+	// -------------------------------------
+	// セキュアファイルの削除
+	// -------------------------------------
 	(void)PutStringUTF16( MSG_X * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_BLACK, pMsgSecureDeleting );
 	if( HWI_DeleteHWSecureInfoFile() ) {
-		(void)PutStringUTF16( ( MSG_X + 19 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_BLUE, pMsgSucceeded );
+		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_BLUE, pMsgSucceeded );
 	}else {
-		(void)PutStringUTF16( ( MSG_X + 19 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_RED, pMsgFailed );
+		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_RED, pMsgFailed );
 	}
+	
+	// -------------------------------------
+	// HWID署名ファイルの削除
+	// -------------------------------------
+	(void)PutStringUTF16( MSG_X * 8, ( MSG_Y + 4 ) * 8, TXT_COLOR_BLACK, pMsgHWIDSignDeleting );
+	if( HWI_DeleteHWIDSignFile() ) {
+		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, ( MSG_Y + 4 ) * 8, TXT_COLOR_BLUE, pMsgSucceeded );
+	}else {
+		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, ( MSG_Y + 4 ) * 8, TXT_COLOR_RED, pMsgFailed );
+	}
+	
 	DispMessage( 0, 0, TXT_COLOR_NULL, NULL );
 	NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_WHITE,
 								MSG_X * 8 , MSG_Y * 8, ( 32 - MSG_X ) * 8, ( MSG_Y + 4 ) * 8 );
