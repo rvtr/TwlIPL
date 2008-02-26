@@ -14,8 +14,8 @@
   $Rev$
   $Author$
  *---------------------------------------------------------------------------*/
-#ifndef	FORMAT_SIGN_H_
-#define	FORMAT_SIGN_H_
+#ifndef FORMAT_SIGN_H_
+#define FORMAT_SIGN_H_
 
 
 #ifdef __cplusplus
@@ -60,7 +60,7 @@ FIRMSignedHashIndex;
 #define ACS_RSA_PUBMOD_OFFSET    0x1D
 #define ACS_RSA_PUBEXP_OFFSET    0x93
 #define ACS_RSA_PUBMOD_LEN       128
-#define ACS_RSA_PUBEXP_LEN       ACS_RSA_EXP_LEN
+//#define ACS_RSA_PUBEXP_LEN       ACS_RSA_EXP_LEN
 
 #define FIRM_HEADER_2ND_HASH_AREA_LEN   (sizeof(FIRMSignedContext) - ACS_HASH_LEN)
 
