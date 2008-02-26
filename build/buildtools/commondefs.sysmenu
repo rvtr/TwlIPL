@@ -90,7 +90,7 @@ endif
 #
 OPENSSL			:= $(SYSMENU_TOOLSDIR)/openssl/openssl.exe
 NTEXCONV		:= $(ROOT)/tools/bin/ntexconv.exe
-MAKEBANNER		:= $(SYSMENU_TOOLSDIR)/bin/makebanner.exe
+MAKEBANNER		:= $(TWL_TOOLSDIR)/bin/makebanner.TWL.exe
 
 MAKESYSMENU_RSA_PRVKEY	?= $(SYSMENU_TOOLSDIR)/openssl/rsa_private.der
 MAKESYSMENU_RSA_PUBKEY	?= $(SYSMENU_TOOLSDIR)/openssl/rsa_public.der
