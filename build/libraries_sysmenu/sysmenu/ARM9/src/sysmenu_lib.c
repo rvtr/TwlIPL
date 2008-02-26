@@ -121,7 +121,7 @@ TitleProperty *SYSM_ReadParameters( void )
 	}
 //#ifdef DEBUG_USED_CARD_SLOT_B_
 	// ARM7のカードチェック完了を待つ
-	while( !SYSMi_GetWork()->flags.common.is1stCardChecked ) {
+	while( !SYSMi_GetWork()->flags.hotsw.is1stCardChecked ) {
 		SVC_WaitByLoop( 0x1000 );
 	}
 //#endif

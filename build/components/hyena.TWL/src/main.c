@@ -212,10 +212,10 @@ TwlSpMain(void)
         ( SYSM_GetLauncherParamBody()->v1.bootTitleID )
         ) {
         // ランチャーパラメータでダイレクトカードブート以外の指定がある時は、活線挿抜をOFFにする。
-        SYSMi_GetWork()->flags.common.isEnableHotSW = 0;
+        SYSMi_GetWork()->flags.hotsw.isEnableHotSW = 0;
     }else {
         // それ以外の時は活線挿抜ON
-        SYSMi_GetWork()->flags.common.isEnableHotSW = 1;
+        SYSMi_GetWork()->flags.hotsw.isEnableHotSW = 1;
     }
 
     HOTSW_Init();

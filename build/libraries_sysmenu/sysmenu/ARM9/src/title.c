@@ -144,7 +144,7 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 	//                     region_codeが本体情報と違うもの
 	//         の場合は、正常に認識できないタイトルであることを示す。
 	
-	if( SYSMi_GetWork()->flags.common.isCardStateChanged ) {
+	if( SYSMi_GetWork()->flags.hotsw.isCardStateChanged ) {
 		
 		MI_CpuClear32( pTitleList_Card, sizeof(TitleProperty) );
 		
@@ -162,7 +162,7 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 			SYSMi_ReadCardBannerFile( SYSM_GetCardRomHeader()->banner_offset, &s_bannerBuf[ CARD_BANNER_INDEX ] );
 			pTitleList_Card->pBanner = &s_bannerBuf[ CARD_BANNER_INDEX ];
 			
-			SYSMi_GetWork()->flags.common.isCardStateChanged = FALSE;							// カード情報更新フラグを落とす
+			SYSMi_GetWork()->flags.hotsw.isCardStateChanged = FALSE;							// カード情報更新フラグを落とす
 			(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );					// ARM7と排他制御する
 			OS_ReleaseLockID( id );
 
@@ -1049,27 +1049,27 @@ void SYSMi_EnableHotSW( BOOL enable )
 	enable = enable ? 1 : 0;
 	
 	// 現在の値と同じなら何もせずリターン
-	if( SYSMi_GetWork()->flags.common.isEnableHotSW == enable ) {
+	if( SYSMi_GetWork()->flags.hotsw.isEnableHotSW == enable ) {
 		return;
 	}
 	
 	{
 		u16 id = (u16)OS_GetLockID();
 		(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-		if( !SYSMi_GetWork()->flags.common.isBusyHotSW ) {
+		if( !SYSMi_GetWork()->flags.hotsw.isBusyHotSW ) {
 			// ARM7側がビジーでなければ、直接書き換え
-			SYSMi_GetWork()->flags.common.isEnableHotSW = enable;
+			SYSMi_GetWork()->flags.hotsw.isEnableHotSW = enable;
 		}else {
 			// ARM7側がビジーなら、変更要求をしてARM7が値を書き換えてくれるのを待つ。
-			SYSMi_GetWork()->flags.arm9.reqChangeHotSW = 1;
-			SYSMi_GetWork()->flags.arm9.nextHotSWStatus = enable;
+			SYSMi_GetWork()->flags.hotsw.reqChangeHotSW = 1;
+			SYSMi_GetWork()->flags.hotsw.nextHotSWStatus = enable;
 		}
 		(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
 		OS_ReleaseLockID( id );
 	}
 	
 	// 値が変化するまでスリープして待つ。
-	while( SYSMi_GetWork()->flags.common.isEnableHotSW != enable ) {
+	while( SYSMi_GetWork()->flags.hotsw.isEnableHotSW != enable ) {
 		OS_Sleep( 2 );
 	}
 }

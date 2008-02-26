@@ -251,7 +251,7 @@ void HOTSW_Init(void)
 
     
     // カードが挿さってあったらスレッドを起動する
-	if(HOTSW_IsCardExist()){
+	if(HOTSW_IsCardAccessible()){
 		// メッセージ送信
     	OS_SendMessage(&s_ctData.hotswQueue, (OSMessage)&s_ctData.hotswInsertMsg[s_ctData.idx_insert], OS_MESSAGE_NOBLOCK);
 
@@ -259,7 +259,7 @@ void HOTSW_Init(void)
         s_ctData.idx_insert = (s_ctData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
 	}
     else{
-		SYSMi_GetWork()->flags.common.is1stCardChecked  = TRUE;
+		SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
     }
 }
 
@@ -306,7 +306,7 @@ static HotSwState LoadCardData(void)
 	MI_CpuClearFast(s_pSecureSegBuffer, s_SecureSegBufSize);
 
     // ブート処理開始
-	if(HOTSW_IsCardExist()){
+	if(HOTSW_IsCardAccessible()){
         // Arm9との排他制御用ロックIDを取得する
 		u16 id = (u16)OS_GetLockID();
         
@@ -516,18 +516,18 @@ static HotSwState LoadBannerData(void)
 	}
     else{
         // バナーデータが登録されていない場合 (この関数の外で排他制御されているからここでは排他制御しないでOK)
-        SYSMi_GetWork()->flags.common.isValidCardBanner  = FALSE;
-        SYSMi_GetWork()->flags.common.isCardStateChanged = TRUE;
-        SYSMi_GetWork()->flags.common.isExistCard 		 = TRUE;
+        SYSMi_GetWork()->flags.hotsw.isValidCardBanner  = FALSE;
+        SYSMi_GetWork()->flags.hotsw.isCardStateChanged = TRUE;
+        SYSMi_GetWork()->flags.hotsw.isExistCard 		 = TRUE;
 
         return retval;
     }
 
     // バナーリードが成功していたら各種フラグTRUE その他の場合はFALSE (この関数の外で排他制御されているからここでは排他制御しないでOK)
     state = (retval == HOTSW_SUCCESS) ? TRUE : FALSE;
-    SYSMi_GetWork()->flags.common.isValidCardBanner  = state;
-	SYSMi_GetWork()->flags.common.isCardStateChanged = state;
-	SYSMi_GetWork()->flags.common.isExistCard 		 = state;
+    SYSMi_GetWork()->flags.hotsw.isValidCardBanner  = state;
+	SYSMi_GetWork()->flags.hotsw.isCardStateChanged = state;
+	SYSMi_GetWork()->flags.hotsw.isExistCard 		 = state;
 
 	return retval;
 }
@@ -668,7 +668,7 @@ static HotSwState CheckCardAuthCode(void)
 
     u8	*p = (u8 *)authBuf;
     
-    if(!HOTSW_IsCardExist()){
+    if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
@@ -963,6 +963,29 @@ static void UnlockHotSwRsc(OSLockWord* word)
 }
 
 /* -----------------------------------------------------------------
+ * HOTSW_IsCardAccessible関数
+ *
+ * カードスロットにアクセスできる状態か判定する
+ *
+ * ※SCFG_MC1のCDETフラグとM(モード)を見ている
+ * ----------------------------------------------------------------- */
+BOOL HOTSW_IsCardAccessible(void)
+{
+#ifndef DEBUG_USED_CARD_SLOT_B_
+    u32 mask = (u32)(REG_MI_MC_SL1_CDET_MASK << GetMcSlotShift());
+#else
+    u32 mask = (u32)(REG_MI_MC_SL2_CDET_MASK >> GetMcSlotShift());
+#endif
+
+    if( !(reg_MI_MC1 & mask) && CmpMcSlotMode(SLOT_STATUS_MODE_10) == TRUE){
+        return TRUE;
+    }
+    else{
+        return FALSE;
+    }
+}
+
+/* -----------------------------------------------------------------
  * IsSwap関数
  *
  * カードのスワップ判定
@@ -1143,13 +1166,13 @@ static void McThread(void *arg)
         OS_ReceiveMessage(&s_ctData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
 
         // カードデータロード完了フラグを下ろす
-		SYSMi_GetWork()->flags.common.isCardLoadCompleted = FALSE;
+		SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = FALSE;
         
         while(1){
 			// 活線挿抜抑制フラグが立っていたら処理しない
-			if( !SYSMi_GetWork()->flags.common.isEnableHotSW ) {
+			if( !SYSMi_GetWork()->flags.hotsw.isEnableHotSW ) {
 //#ifdef DEBUG_USED_CARD_SLOT_B_
-				SYSMi_GetWork()->flags.common.is1stCardChecked  = TRUE;
+				SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
 //#endif
 				break;
 			}
@@ -1162,10 +1185,10 @@ static void McThread(void *arg)
                     if(CARDi_IsPulledOutEx(hotswCount)){
 						u16 id = (u16)OS_GetLockID();
 						(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-						if( SYSMi_GetWork()->flags.arm9.reqChangeHotSW ) {
-							SYSMi_GetWork()->flags.common.isEnableHotSW  = SYSMi_GetWork()->flags.arm9.nextHotSWStatus;
-							SYSMi_GetWork()->flags.arm9.reqChangeHotSW   = 0;
-							SYSMi_GetWork()->flags.arm9.nextHotSWStatus  = 0;
+						if( SYSMi_GetWork()->flags.hotsw.reqChangeHotSW ) {
+							SYSMi_GetWork()->flags.hotsw.isEnableHotSW  = SYSMi_GetWork()->flags.hotsw.nextHotSWStatus;
+							SYSMi_GetWork()->flags.hotsw.reqChangeHotSW   = 0;
+							SYSMi_GetWork()->flags.hotsw.nextHotSWStatus  = 0;
 //							HOTSW_Finalize();
 						}
 						(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
@@ -1175,8 +1198,8 @@ static void McThread(void *arg)
     	           		{
         	       			u16 id = (u16)OS_GetLockID();
 							(void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );
-							SYSMi_GetWork()->flags.common.isExistCard 		  = TRUE;
-                			SYSMi_GetWork()->flags.common.isCardStateChanged  = TRUE;
+							SYSMi_GetWork()->flags.hotsw.isExistCard 		  = TRUE;
+                			SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
 							(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );
 							OS_ReleaseLockID( id );
 						}
@@ -1189,7 +1212,7 @@ static void McThread(void *arg)
 						SYSMi_GetWork()->flags.common.isOnDebugger = s_cbData.debuggerFlg;
 
             			// カードデータロード完了フラグ
-            			SYSMi_GetWork()->flags.common.isCardLoadCompleted = TRUE;
+            			SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = TRUE;
 
                         OS_PutString("ok!\n");
 
@@ -1220,9 +1243,9 @@ static void McThread(void *arg)
                		{
                			u16 id = (u16)OS_GetLockID();
 						(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-						SYSMi_GetWork()->flags.common.isExistCard 		  = FALSE;
-                		SYSMi_GetWork()->flags.common.isValidCardBanner   = FALSE;
-                		SYSMi_GetWork()->flags.common.isCardStateChanged  = TRUE;
+						SYSMi_GetWork()->flags.hotsw.isExistCard 		  = FALSE;
+                		SYSMi_GetWork()->flags.hotsw.isValidCardBanner   = FALSE;
+                		SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
 						(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
 						OS_ReleaseLockID( id );
 					}
@@ -1237,7 +1260,7 @@ static void McThread(void *arg)
             }
         }
 //#ifdef DEBUG_USED_CARD_SLOT_B_
-		SYSMi_GetWork()->flags.common.is1stCardChecked  = TRUE;
+		SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
 //#endif
     }
 }
@@ -1297,7 +1320,7 @@ static void SetHotSwState(BOOL busy)
 {
     LockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
 
-    SYSMi_GetWork()->flags.common.isBusyHotSW = busy ? 1 : 0;
+    SYSMi_GetWork()->flags.hotsw.isBusyHotSW = busy ? 1 : 0;
 
 	UnlockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
 }

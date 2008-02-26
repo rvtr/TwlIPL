@@ -87,37 +87,31 @@ typedef struct SYSM_work {
 			vu32		isValidTSD :1;					// NITRO設定データ無効フラグ
 			vu32		isLogoSkip :1;					// ロゴデモスキップ
 			vu32		isOnDebugger :1;				// デバッガ動作か？
-			vu32		isExistCard :1;					// 有効なNTR/TWLカードが存在するか？
-			vu32		isCardStateChanged :1;			// カード状態更新フラグ
 			vu32		isLoadSucceeded :1;				// アプリロード完了？
 			vu32		isCardBoot :1;					// カードブートか？
 			vu32		isBrokenHWNormalInfo :1;		// HWノーマル情報が破損している。
 			vu32		isBrokenHWSecureInfo :1;		// HWセキュア情報が破損している。
 			vu32		isResetRTC :1;					// RTCリセット発生
 			vu32		:0;
-
-			vu32		isEnableHotSW :1;				// 活線挿抜有効？
-			vu32		isBusyHotSW :1;					// 活線挿抜処理中？
-			vu32		isCardLoadCompleted :1;			// カードからデータロード完了？
-//#ifdef DEBUG_USED_CARD_SLOT_B_
-			vu32		isValidCardBanner :1;
-			vu32		is1stCardChecked :1;
-//#endif
-			vu32		:0;
 		}common;
-		struct {
-			vu16		reqChangeHotSW :1;
-			vu16		nextHotSWStatus :1;
-			vu16		:0;
-		}arm9;
-		struct {
-			vu16		rsv:16;
-		}arm7;
-	}flags; // 12B
-	
+        struct {
+            vu16		isExistCard :1;					// 有効なNTR/TWLカードが存在するか？
+			vu16		isEnableHotSW :1;				// 活線挿抜有効？
+			vu16		isBusyHotSW :1;					// 活線挿抜処理中？
+			vu16		isCardLoadCompleted :1;			// カードからデータロード完了？
+   			vu16		isValidCardBanner :1;
+			vu16		is1stCardChecked :1;
+			vu16		reqChangeHotSW :1;				// 削除予定
+			vu16		nextHotSWStatus :1;				// 削除予定
+            vu16		:8;
+            vu8			isCardStateChanged;				// カード状態更新フラグ
+        }hotsw;
+	}flags; // 7B
+
 	u16					cardHeaderCrc16;				// カード検出時に算出したROMヘッダCRC16（ARM9側でコピーして使用する側）
 	u16					cardHeaderCrc16_bak;			// カード検出時に算出したROMヘッダCRC16（ARM7側ライブラリでダイレクトに書き換わる側）
-	OSLockWord			lockCardRsc;					// カードリソース排他制御用
+	
+    OSLockWord			lockCardRsc ATTRIBUTE_ALIGN(8);	// カードリソース排他制御用
 	OSLockWord			lockHotSW;						// カードリソース排他制御用
 	u32					nCardID;						// カードID
 	u32					gameCommondParam;				// NTRのゲームコマンドパラメータ(NTRのROMヘッダのゲームコマンドパラメータに上書きする)

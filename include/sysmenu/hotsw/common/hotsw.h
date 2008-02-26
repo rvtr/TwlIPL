@@ -30,7 +30,10 @@ extern "C" {
 void HOTSW_Init(void);
 
 // カードの存在判定
- BOOL HOTSW_IsCardExist(void);
+BOOL HOTSW_IsCardExist(void);
+
+// カードにアクセスできる状態か判定
+BOOL HOTSW_IsCardAccessible(void);
 
 // Boot Segment バッファの指定
 void HOTSW_SetBootSegmentBuffer(void* buf, u32 size);

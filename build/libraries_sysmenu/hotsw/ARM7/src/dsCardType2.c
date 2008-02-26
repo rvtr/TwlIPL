@@ -48,7 +48,7 @@ HotSwState ReadBootSegNormal_DSType2(CardBootData *cbd)
     GCDCmd64 	cndLE, cndBE;
     
     for(i=0; i<ONE_SEGMENT_PAGE_NUM; i++){
-    	if(!HOTSW_IsCardExist()){
+    	if(!HOTSW_IsCardAccessible()){
 			return HOTSW_PULLED_OUT_ERROR;
     	}
         
@@ -169,7 +169,7 @@ HotSwState ReadIDSecure_DSType2(CardBootData *cbd)
 {
 	u32 scrambleMask;
 
-    if(!HOTSW_IsCardExist()){
+    if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
@@ -222,7 +222,7 @@ HotSwState ReadSegSecure_DSType2(CardBootData *cbd)
     u32 scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
     
     for(i=0; i<SECURE_SEGMENT_NUM; i++){
-	    if(!HOTSW_IsCardExist()){
+	    if(!HOTSW_IsCardAccessible()){
 			return HOTSW_PULLED_OUT_ERROR;
     	}
         
@@ -296,7 +296,7 @@ HotSwState SwitchONPNGSecure_DSType2(CardBootData *cbd)
 {
 	u32 scrambleMask;
 
-    if(!HOTSW_IsCardExist()){
+    if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
@@ -339,7 +339,7 @@ HotSwState SwitchOFFPNGSecure_DSType2(CardBootData *cbd)
 {
 	u32 scrambleMask;
 
-    if(!HOTSW_IsCardExist()){
+    if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
@@ -382,7 +382,7 @@ HotSwState ChangeModeSecure_DSType2(CardBootData *cbd)
 {
 	u32 scrambleMask;
 
-    if(!HOTSW_IsCardExist()){
+    if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
@@ -447,7 +447,7 @@ HotSwState ReadPageGame_DSType2(CardBootData *cbd, u32 start_addr, void* buf, u3
 //	OS_TPrintf("Read Game Segment  Page Count : %d   size : %x\n", loop, size);
     
     for(i=0; i<loop; i++){
-	    if(!HOTSW_IsCardExist()){
+	    if(!HOTSW_IsCardAccessible()){
 			return HOTSW_PULLED_OUT_ERROR;
     	}
         

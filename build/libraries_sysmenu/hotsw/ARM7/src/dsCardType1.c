@@ -36,7 +36,7 @@ static void SetMCSCR(void);
  *---------------------------------------------------------------------------*/
 HotSwState ReadBootSegNormal_DSType1(CardBootData *cbd)
 {
-    if(!HOTSW_IsCardExist()){
+    if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
@@ -71,7 +71,7 @@ HotSwState ChangeModeNormal_DSType1(CardBootData *cbd)
 	GCDCmd64 tempCnd, cnd;
     u64 vae64 = cbd->vae;
 
-    if(!HOTSW_IsCardExist()){
+    if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
@@ -176,7 +176,7 @@ static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
  *---------------------------------------------------------------------------*/
 HotSwState ReadIDSecure_DSType1(CardBootData *cbd)
 {
-    if(!HOTSW_IsCardExist()){
+    if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
@@ -213,7 +213,7 @@ HotSwState ReadSegSecure_DSType1(CardBootData *cbd)
     GCDCmd64 	cndLE, cndBE;
 
     for(i=0; i<4; i++){
-		if(!HOTSW_IsCardExist()){
+		if(!HOTSW_IsCardAccessible()){
 			return HOTSW_PULLED_OUT_ERROR;
     	}
         
@@ -269,7 +269,7 @@ HotSwState ReadSegSecure_DSType1(CardBootData *cbd)
  *---------------------------------------------------------------------------*/
 HotSwState SwitchONPNGSecure_DSType1(CardBootData *cbd)
 {
-    if(!HOTSW_IsCardExist()){
+    if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
@@ -296,7 +296,7 @@ HotSwState SwitchONPNGSecure_DSType1(CardBootData *cbd)
  *---------------------------------------------------------------------------*/
 HotSwState SwitchOFFPNGSecure_DSType1(CardBootData *cbd)
 {
-    if(!HOTSW_IsCardExist()){
+    if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
@@ -325,7 +325,7 @@ HotSwState SwitchOFFPNGSecure_DSType1(CardBootData *cbd)
  *---------------------------------------------------------------------------*/
 HotSwState ChangeModeSecure_DSType1(CardBootData *cbd)
 {
-    if(!HOTSW_IsCardExist()){
+    if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
@@ -356,7 +356,7 @@ HotSwState ChangeModeSecure_DSType1(CardBootData *cbd)
  *---------------------------------------------------------------------------*/
 HotSwState ReadIDGame_DSType1(CardBootData *cbd)
 {
-    if(!HOTSW_IsCardExist()){
+    if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
@@ -396,7 +396,7 @@ HotSwState ReadPageGame_DSType1(CardBootData *cbd, u32 start_addr, void* buf, u3
 //	OS_TPrintf("Read Game Segment  Page Count : %d   size : %x\n", loop, size);
     
     for(i=0; i<loop; i++){
-	    if(!HOTSW_IsCardExist()){
+	    if(!HOTSW_IsCardAccessible()){
 			return HOTSW_PULLED_OUT_ERROR;
     	}
         

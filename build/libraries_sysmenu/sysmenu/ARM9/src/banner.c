@@ -45,7 +45,7 @@ BOOL SYSMi_ReadCardBannerFile( u32 bannerOffset, TWLBannerFile *pBanner )
 {
 #pragma unused(bannerOffset)
 	BOOL isRead;
-	if( SYSMi_GetWork()->flags.common.isValidCardBanner ) {
+	if( SYSMi_GetWork()->flags.hotsw.isValidCardBanner ) {
 		DC_InvalidateRange( (void *)SYSM_CARD_BANNER_BUF, 0x3000 );
 		MI_CpuCopyFast( (void *)SYSM_CARD_BANNER_BUF, pBanner, sizeof(TWLBannerFile) );
 	}

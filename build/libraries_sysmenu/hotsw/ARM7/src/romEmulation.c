@@ -41,7 +41,7 @@ HotSwState ReadBootSegNormal_ROMEMU(CardBootData *cbd)
 //	u32 n = 0;
     
     for(i=0; i<BOOT_PAGE_NUM; i++){
-    	if(!HOTSW_IsCardExist()){
+    	if(!HOTSW_IsCardAccessible()){
 			return HOTSW_PULLED_OUT_ERROR;
     	}
         
@@ -94,7 +94,7 @@ HotSwState ChangeModeNormal_ROMEMU(CardBootData *cbd)
     
 	GCDCmd64 tempCnd, cnd;
 
-    if(!HOTSW_IsCardExist()){
+    if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
@@ -138,7 +138,7 @@ HotSwState ChangeModeNormal_ROMEMU(CardBootData *cbd)
  *---------------------------------------------------------------------------*/
 HotSwState ReadIDSecure_ROMEMU(CardBootData *cbd)
 {
-    if(!HOTSW_IsCardExist()){
+    if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
@@ -174,7 +174,7 @@ HotSwState ReadSegSecure_ROMEMU(CardBootData *cbd)
 	u32 n = 0;
     
     for(i=0; i<SECURE_PAGE_NUM; i++){
-	    if(!HOTSW_IsCardExist()){
+	    if(!HOTSW_IsCardAccessible()){
 			return HOTSW_PULLED_OUT_ERROR;
     	}
         
@@ -250,7 +250,7 @@ HotSwState ChangeModeSecure_ROMEMU(CardBootData *cbd)
     
 	GCDCmd64 tempCnd, cnd;
 
-    if(!HOTSW_IsCardExist()){
+    if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
@@ -296,7 +296,7 @@ HotSwState ReadIDGame_ROMEMU(CardBootData *cbd)
 {
 	#pragma unused( cbd )
 
-    if(!HOTSW_IsCardExist()){
+    if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
 
@@ -340,7 +340,7 @@ HotSwState ReadPageGame_ROMEMU(CardBootData *cbd, u32 start_addr, void* buf, u32
     OS_TPrintf("Read Game Segment  Page Count : %d   size : %x\n", loop, size);
 
     for(i=0; i<loop; i++){
-	    if(!HOTSW_IsCardExist()){
+	    if(!HOTSW_IsCardAccessible()){
 			return HOTSW_PULLED_OUT_ERROR;
     	}
         
