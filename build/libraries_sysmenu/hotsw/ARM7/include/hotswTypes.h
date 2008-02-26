@@ -126,6 +126,7 @@ extern "C" {
 #define     reg_HOTSW_MCSCR2                    reg_MI_MCSCR2_A
 
 #define     HOTSW_IF_CARD_DET                   OS_IE_CARD_A_DET
+#define     HOTSW_IF_CARD_IREQ                  OS_IE_CARD_A_IREQ
 
 #else
 // Slot B
@@ -150,6 +151,7 @@ extern "C" {
 #define     reg_HOTSW_MCSCR2                    reg_MI_MCSCR2_B
 
 #define     HOTSW_IF_CARD_DET                   OS_IE_CARD_B_DET
+#define     HOTSW_IF_CARD_IREQ                  OS_IE_CARD_B_IREQ
 
 #endif
 

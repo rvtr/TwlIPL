@@ -36,7 +36,7 @@
 #define		ROM_EMULATION_START_OFS				0x160
 #define		ROM_EMULATION_END_OFS				0x180
 
-#define		HOTSW_THREAD_STACK_SIZE				1024		// スタックサイズ
+#define		HOTSW_THREAD_STACK_SIZE				(1024 + PAGE_SIZE)	// スタックサイズ
 #define		HOTSW_THREAD_PRIO					11			// カード電源ON → ゲームモードのスレッド優先度
 #define 	HOTSW_MSG_BUFFER_NUM				32			// 受信バッファの数
 #define		HOTSW_INSERT_MSG_NUM				16			// 挿し割り込み送信メッセージの数
@@ -307,9 +307,6 @@ static HotSwState LoadCardData(void)
 
     // ブート処理開始
 	if(HOTSW_IsCardAccessible()){
-        // Arm9との排他制御用ロックIDを取得する
-		u16 id = (u16)OS_GetLockID();
-        
 		// カード側でKey Tableをロードする
         state  = LoadTable();
         retval = (retval == HOTSW_SUCCESS) ? state : retval;
@@ -526,7 +523,7 @@ static HotSwState LoadBannerData(void)
     // バナーリードが成功していたら各種フラグTRUE その他の場合はFALSE (この関数の外で排他制御されているからここでは排他制御しないでOK)
     state = (retval == HOTSW_SUCCESS) ? TRUE : FALSE;
     SYSMi_GetWork()->flags.hotsw.isValidCardBanner  = state;
-	SYSMi_GetWork()->flags.hotsw.isCardStateChanged = state;
+	SYSMi_GetWork()->flags.hotsw.isCardStateChanged = (u8)state;
 	SYSMi_GetWork()->flags.hotsw.isExistCard 		 = state;
 
 	return retval;
@@ -620,7 +617,7 @@ static HotSwState LoadStaticModule(void)
             // ハッシュコンテキスト計算終了を通知
             
         }
-#define MY_DEBUG
+//#define MY_DEBUG
 #ifdef  MY_DEBUG
         // Arm9常駐モジュール Hash値のチェック
         if(!CheckArm9HashValue()){
