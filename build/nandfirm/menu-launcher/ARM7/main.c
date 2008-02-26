@@ -86,6 +86,15 @@ static void CreateIdleThread(void)
     OS_WakeupThreadDirect(&idleThread);
 }
 
+// MCU旧バージョン対策
+#if SDK_TS_VERSION <= 200
+static u8 version = 0;
+#define IS_OLD_MCU  (version ? (version < 0x20) : ((version=MCUi_ReadRegister( MCU_REG_VER_INFO_ADDR )) < 0x20))
+#else
+#define IS_OLD_MCU  FALSE
+#define MCU_OLD_REG_TEMP_ADDR   MCU_REG_TEMP_ADDR   // avoid compiler error
+#endif
+
 /***************************************************************
     PreInit
 
@@ -97,14 +106,16 @@ static void PreInit(void)
     /*
         バッテリー残量チェック
     */
-    if ( MCUi_ReadRegister( MCU_REG_VER_INFO_ADDR ) >= 0x20 )   // MCU旧バージョン対策
-    if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
+    if ( !IS_OLD_MCU )   // MCU旧バージョン対策
     {
+        if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
+        {
 #ifndef SDK_FINALROM
-        OS_TPanic("Battery is empty.\n");
+            OS_TPanic("Battery is empty.\n");
 #else
-        PM_Shutdown();
+            PM_Shutdown();
 #endif
+        }
     }
     /*
         FromBrom関連
@@ -117,10 +128,14 @@ static void PreInit(void)
         リセットパラメータ(1バイト)を共有領域(1バイト)にコピー
     */
 #define HOTSTART_FLAG_ENABLE    0x80
-    if ( MCUi_ReadRegister( MCU_REG_VER_INFO_ADDR ) >= 0x20 )   // MCU旧バージョン対策
-    *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
+    if ( IS_OLD_MCU )   // MCU旧バージョン対策
+    {
+        *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_OLD_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
+    }
     else
-    *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_OLD_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
+    {
+        *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
+    }
 }
 
 /***************************************************************
@@ -139,14 +154,16 @@ static void PostInit(void)
     /*
         バッテリー残量チェック
     */
-    if ( MCUi_ReadRegister( MCU_REG_VER_INFO_ADDR ) >= 0x20 )   // MCU旧バージョン対策
-    if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
+    if ( !IS_OLD_MCU )   // MCU旧バージョン対策
     {
+        if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
+        {
 #ifndef SDK_FINALROM
-        OS_TPanic("Battery is empty.\n");
+            OS_TPanic("Battery is empty.\n");
 #else
-        PM_Shutdown();
+            PM_Shutdown();
 #endif
+        }
     }
 }
 
