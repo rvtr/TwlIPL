@@ -41,7 +41,7 @@ void BNC_incrementCount( BannerCounter *c )
 		if( c->banner->anime.control[0].frameCount == 0 )
 		{
 			// アニメに終端しか存在しない
-			OS_TPrintf( "BNC_incrementCount:Only a Terminator!\n" );
+			//OS_TPrintf( "BNC_incrementCount:Only a Terminator!\n" );
 			return;
 		}
 		
@@ -91,7 +91,7 @@ FrameAnimeData BNC_getFAD( BannerCounter *c )
 		if( c->banner->anime.control[0].frameCount == 0 )
 		{
 			// アニメに終端しか存在しない
-			OS_TPrintf( "BNC_getFAD:Only a Terminator!\n" );
+			//OS_TPrintf( "BNC_getFAD:Only a Terminator!\n" );
 			ret.image = c->banner->v1.image;
 			ret.pltt = c->banner->v1.pltt;
 			ret.hflip = FALSE;
