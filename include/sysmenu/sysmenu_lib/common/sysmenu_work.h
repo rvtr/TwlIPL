@@ -29,8 +29,6 @@ extern "C" {
 #endif
 
 // define data ------------------------------------
-#define TITLE_ID_LAUNCHER					( 0x000300074c4e4352LLU )
-
 typedef enum SYSMCloneBootMode {
     SYSM_CLONE_BOOT_MODE = 1,
     SYSM_OTHER_BOOT_MODE = 2
