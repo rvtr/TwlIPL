@@ -968,13 +968,7 @@ static void UnlockHotSwRsc(OSLockWord* word)
  * ----------------------------------------------------------------- */
 BOOL HOTSW_IsCardAccessible(void)
 {
-#ifndef DEBUG_USED_CARD_SLOT_B_
-    u32 mask = (u32)(REG_MI_MC_SL1_CDET_MASK << GetMcSlotShift());
-#else
-    u32 mask = (u32)(REG_MI_MC_SL2_CDET_MASK >> GetMcSlotShift());
-#endif
-
-    if( !(reg_MI_MC1 & mask) && CmpMcSlotMode(SLOT_STATUS_MODE_10) == TRUE){
+    if( HOTSW_IsCardExist() && CmpMcSlotMode(SLOT_STATUS_MODE_10) == TRUE){
         return TRUE;
     }
     else{

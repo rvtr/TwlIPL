@@ -766,13 +766,16 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 				// カードの場合のARM9_STATICハッシュチェック
 				// カード読み込み時、work2に暗号化オブジェクト部分のハッシュ計算済みのコンテキストが保存されるので
 				// それを用いてARM9_STATIC残りの部分を計算
-				SVCHMACSHA1Context tempcon;
-				SVC_HMACSHA1Init( &tempcon, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
-				SYSMi_GetWork2()->hmac_sha1_context.sha1_ctx.sha_block = tempcon.sha1_ctx.sha_block;// この関数ポインタだけARM7とARM9で変えないとダメ
-				SVC_HMACSHA1Update( &(SYSMi_GetWork2()->hmac_sha1_context),
+				SVCHMACSHA1Context ctx;
+				SVC_HMACSHA1Init( &ctx, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
+				// [TODO] ARM7とのhmac_sha1_contextの排他制御開始
+				SYSMi_GetWork2()->hmac_sha1_context.sha1_ctx.sha_block = ctx.sha1_ctx.sha_block;// この関数ポインタだけARM7とARM9で変えないとダメ
+				ctx = SYSMi_GetWork2()->hmac_sha1_context;										// SYSMi_GetWork2は非キャッシュなのでスタック（DTCMまたはキャッシュ領域）へコピー
+				// [TODO] ARM7とのhmac_sha1_contextの排他制御終了
+				SVC_HMACSHA1Update( &ctx,
 									(const void*)((u32)module_addr[l] + ARM9_ENCRYPT_DEF_SIZE),
 									(module_size[l] - ARM9_ENCRYPT_DEF_SIZE) );
-				SVC_HMACSHA1GetHash( &(SYSMi_GetWork2()->hmac_sha1_context), calculated_hash );
+				SVC_HMACSHA1GetHash( &ctx, calculated_hash );
 			}else
 			{
 				SVC_CalcHMACSHA1( calculated_hash, (const void*)module_addr[l], module_size[l],
