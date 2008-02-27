@@ -272,8 +272,6 @@ typedef struct CardBootFunction {
     HotSwState (*ReadPage_G)(CardBootData *cbd, u32 addr, void* buf, u32 size);
 } CardBootFunction;
 
-
-
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

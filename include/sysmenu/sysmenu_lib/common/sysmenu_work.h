@@ -99,11 +99,9 @@ typedef struct SYSM_work {
 			vu16		isEnableHotSW :1;				// 活線挿抜有効？
 			vu16		isBusyHotSW :1;					// 活線挿抜処理中？
 			vu16		isCardLoadCompleted :1;			// カードからデータロード完了？
-   			vu16		isValidCardBanner :1;
-			vu16		is1stCardChecked :1;
-			vu16		reqChangeHotSW :1;				// 削除予定
-			vu16		nextHotSWStatus :1;				// 削除予定
-            vu16		:8;
+   			vu16		isValidCardBanner :1;			// バナーデータ更新？
+			vu16		is1stCardChecked :1;			// カードデータの1stチェック完了？
+            vu16		:10;
             vu8			isCardStateChanged;				// カード状態更新フラグ
         }hotsw;
 	}flags; // 7B

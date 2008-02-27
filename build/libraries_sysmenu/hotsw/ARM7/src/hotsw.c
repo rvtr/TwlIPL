@@ -23,6 +23,7 @@
 #include 	<../build/libraries/mb/common/include/mb_fileinfo.h>
 
 //#define HOTSW_FORCE_CARD_B
+#define DEBUG_MODE
 
 // define -------------------------------------------------------------------
 #define		CHATTERING_COUNTER					0x100
@@ -38,9 +39,10 @@
 
 #define		HOTSW_THREAD_STACK_SIZE				(1024 + PAGE_SIZE)	// スタックサイズ
 #define		HOTSW_THREAD_PRIO					11			// カード電源ON → ゲームモードのスレッド優先度
-#define 	HOTSW_MSG_BUFFER_NUM				32			// 受信バッファの数
+#define 	HOTSW_MSG_BUFFER_NUM				40			// 受信バッファの数
 #define		HOTSW_INSERT_MSG_NUM				16			// 挿し割り込み送信メッセージの数
 #define		HOTSW_PULLED_MSG_NUM				16			// 抜け割り込み送信メッセージの数
+#define		HOTSW_CTRL_MSG_NUM					8			// PXI割り込み送信メッセージの数
 
 #define 	SLOT_B_LOCK_BUF						HW_CTRDG_LOCK_BUF
 
@@ -62,9 +64,11 @@ typedef struct CardThreadData{
 
 	u32 				idx_insert;
     u32					idx_pulledOut;
+    u32					idx_ctrl;
 	
-    OSMessage			hotswInsertMsg[HOTSW_INSERT_MSG_NUM];
-    OSMessage			hotswPulledOutMsg[HOTSW_PULLED_MSG_NUM];
+    HotSwMessage		hotswInsertMsg[HOTSW_INSERT_MSG_NUM];
+    HotSwMessage		hotswPulledOutMsg[HOTSW_PULLED_MSG_NUM];
+	HotSwMessage		hotswPxiMsg[HOTSW_CTRL_MSG_NUM];
     OSMessageQueue   	hotswQueue;
 	OSMessage			hotswMsgBuffer[HOTSW_MSG_BUFFER_NUM];
 }
@@ -84,6 +88,7 @@ static void SetInterrupt(void);
 static void InterruptCallbackCard(void);
 static void InterruptCallbackCardDet(void);
 static void InterruptCallbackCardData(void);
+static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err);
 
 static void LockHotSwRsc(OSLockWord* word);
 static void UnlockHotSwRsc(OSLockWord* word);
@@ -186,6 +191,10 @@ void HOTSW_Init(void)
 {
 	OS_InitTick();
     OS_InitThread();
+
+    // PXI初期化
+	PXI_Init();
+	PXI_SetFifoRecvCallback(PXI_FIFO_TAG_HOTSW, InterruptCallbackPxi);
     
 	// 割り込みマスクの設定
 	SetInterrupt();
@@ -251,7 +260,7 @@ void HOTSW_Init(void)
 
     
     // カードが挿さってあったらスレッドを起動する
-	if(HOTSW_IsCardAccessible()){
+	if(HOTSW_IsCardExist()){
 		// メッセージ送信
     	OS_SendMessage(&s_ctData.hotswQueue, (OSMessage)&s_ctData.hotswInsertMsg[s_ctData.idx_insert], OS_MESSAGE_NOBLOCK);
 
@@ -301,10 +310,6 @@ static HotSwState LoadCardData(void)
     s_cbData.pBootSegBuf   = s_pBootSegBuffer;
     s_cbData.pSecureSegBuf = s_pSecureSegBuffer;
 
-	// バッファのクリア
-    MI_CpuClearFast(s_pBootSegBuffer, s_BootSegBufSize);
-	MI_CpuClearFast(s_pSecureSegBuffer, s_SecureSegBufSize);
-
     // ブート処理開始
 	if(HOTSW_IsCardAccessible()){
 		// カード側でKey Tableをロードする
@@ -317,12 +322,7 @@ static HotSwState LoadCardData(void)
 		retval = (retval == HOTSW_SUCCESS) ? state : retval;
         
 		// カードタイプを判別をして、使う関数を切替える IDの最上位ビットが1なら3DM
-        if(s_cbData.id_nml & 0x80000000){
-			s_cbData.cardType = DS_CARD_TYPE_2;
-        }
-        else{
-			s_cbData.cardType = DS_CARD_TYPE_1;
-        }
+        s_cbData.cardType = (s_cbData.id_nml & 0x80000000) ? DS_CARD_TYPE_2 : DS_CARD_TYPE_1;
 		
 		{
 			u8 i;
@@ -370,7 +370,6 @@ static HotSwState LoadCardData(void)
 		
 		if( retval == HOTSW_SUCCESS ) {
 	        // NTRカードかTWLカードか
-#define DEBUG_MODE
 #ifdef DEBUG_MODE
             if(s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset && s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset)
 #else
@@ -514,8 +513,8 @@ static HotSwState LoadBannerData(void)
     else{
         // バナーデータが登録されていない場合 (この関数の外で排他制御されているからここでは排他制御しないでOK)
         SYSMi_GetWork()->flags.hotsw.isValidCardBanner  = FALSE;
+        SYSMi_GetWork()->flags.hotsw.isExistCard 		= TRUE;
         SYSMi_GetWork()->flags.hotsw.isCardStateChanged = TRUE;
-        SYSMi_GetWork()->flags.hotsw.isExistCard 		 = TRUE;
 
         return retval;
     }
@@ -600,8 +599,6 @@ static HotSwState LoadStaticModule(void)
 			u8		sha1data[DIGEST_SIZE_SHA1];
 		    SVCHMACSHA1Context hash;
 
-            // ハッシュコンテキスト計算開始を通知
-
     		// クリア
 			MI_CpuClear8(sha1data, sizeof(sha1data));
  
@@ -611,12 +608,16 @@ static HotSwState LoadStaticModule(void)
     		// セキュア領域先頭2kb分UpDate
 			SVC_HMACSHA1Update( &hash, s_cbData.pSecureSegBuf, ENCRYPT_DEF_SIZE );
 
+			// Arm9と排他制御する
+			LockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
+            
 			// ハッシュコンテキストをWork領域にコピー
 		    MI_CpuCopy8( &hash, &SYSMi_GetWork2()->hmac_sha1_context, sizeof(SVCHMACSHA1Context) );
 
-            // ハッシュコンテキスト計算終了を通知
-            
+			// Arm9との排他制御、ここまで
+			UnlockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
         }
+
 //#define MY_DEBUG
 #ifdef  MY_DEBUG
         // Arm9常駐モジュール Hash値のチェック
@@ -1148,23 +1149,29 @@ static void McThread(void *arg)
 {
 	#pragma unused( arg )
 
-    u32			hotswCount  = UNDEF_CODE;
-    BOOL 		isPulledOut = TRUE;
-    HotSwState 	retval;
-    OSMessage 	*msg;
+    u32				hotswCount  = UNDEF_CODE;
+    BOOL 			isPulledOut = TRUE;
+    HotSwState 		retval;
+    HotSwMessage 	*msg;
     
     while(1){
         OS_ReceiveMessage(&s_ctData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
 
+//		OS_TPrintf("msg -> value : %x  msg -> ctrl : %x  msg -> type : %x\n", msg->value, msg->ctrl, msg->type);
+        
         // カードデータロード完了フラグを下ろす
 		SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = FALSE;
+
+        if( msg->ctrl == TRUE ) {
+			SYSMi_GetWork()->flags.hotsw.isEnableHotSW = msg->value;
+//			HOTSW_Finalize();
+        }
         
         while(1){
 			// 活線挿抜抑制フラグが立っていたら処理しない
 			if( !SYSMi_GetWork()->flags.hotsw.isEnableHotSW ) {
-//#ifdef DEBUG_USED_CARD_SLOT_B_
 				SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
-//#endif
+                OS_PutString("### HotSw is restrained...\n");
 				break;
 			}
             
@@ -1174,27 +1181,12 @@ static void McThread(void *arg)
                 if(!isPulledOut){
                     // 抜き差しがなかったか判定
                     if(CARDi_IsPulledOutEx(hotswCount)){
-						u16 id = (u16)OS_GetLockID();
-						(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-						if( SYSMi_GetWork()->flags.hotsw.reqChangeHotSW ) {
-							SYSMi_GetWork()->flags.hotsw.isEnableHotSW  = SYSMi_GetWork()->flags.hotsw.nextHotSWStatus;
-							SYSMi_GetWork()->flags.hotsw.reqChangeHotSW   = 0;
-							SYSMi_GetWork()->flags.hotsw.nextHotSWStatus  = 0;
-//							HOTSW_Finalize();
-						}
-						(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-						OS_ReleaseLockID( id );
-
 	               		// フラグケア
-    	           		{
-        	       			u16 id = (u16)OS_GetLockID();
-							(void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );
-							SYSMi_GetWork()->flags.hotsw.isExistCard 		  = TRUE;
-                			SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
-							(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );
-							OS_ReleaseLockID( id );
-						}
-                        
+                        LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+						SYSMi_GetWork()->flags.hotsw.isExistCard 		  = TRUE;
+                		SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
+                        UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+
                     	// 新しいカードのIDを入れる
                     	SYSMi_GetWork()->nCardID = s_cbData.id_gam;
 
@@ -1232,28 +1224,28 @@ static void McThread(void *arg)
                 if(isPulledOut){
                		// フラグケア
                		{
-               			u16 id = (u16)OS_GetLockID();
-						(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-						SYSMi_GetWork()->flags.hotsw.isExistCard 		  = FALSE;
+                        LockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
+						SYSMi_GetWork()->flags.hotsw.isExistCard 		 = FALSE;
                 		SYSMi_GetWork()->flags.hotsw.isValidCardBanner   = FALSE;
                 		SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
-						(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-						OS_ReleaseLockID( id );
+                        UnlockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
 					}
-
+                    
                 	// カードブート用構造体の初期化
 					MI_CpuClear32(&s_cbData, sizeof(CardBootData));
 
+					// バッファのクリア
+				    MI_CpuClearFast(s_pBootSegBuffer, s_BootSegBufSize);
+					MI_CpuClearFast(s_pSecureSegBuffer, s_SecureSegBufSize);
+                    
 					break;
                 }
 
                 isPulledOut = TRUE;
             }
         }
-//#ifdef DEBUG_USED_CARD_SLOT_B_
 		SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
-//#endif
-    }
+    } // while loop
 }
 
 /*---------------------------------------------------------------------------*
@@ -1263,6 +1255,10 @@ static void McThread(void *arg)
  *---------------------------------------------------------------------------*/
 static void InterruptCallbackCard(void)
 {
+	s_ctData.hotswPulledOutMsg[s_ctData.idx_pulledOut].ctrl  = FALSE;
+    s_ctData.hotswPulledOutMsg[s_ctData.idx_pulledOut].value = 0;
+    s_ctData.hotswPulledOutMsg[s_ctData.idx_pulledOut].type  = HOTSW_PULLOUT;
+    
 	// メッセージ送信
     OS_SendMessage(&s_ctData.hotswQueue, (OSMessage *)&s_ctData.hotswPulledOutMsg[s_ctData.idx_pulledOut], OS_MESSAGE_NOBLOCK);
 
@@ -1281,6 +1277,10 @@ static void InterruptCallbackCardDet(void)
 {
     // SDKのカード状態をリセットする
 	CARDi_ResetSlotStatus();
+
+	s_ctData.hotswInsertMsg[s_ctData.idx_insert].ctrl  = FALSE;
+    s_ctData.hotswInsertMsg[s_ctData.idx_insert].value = 0;
+    s_ctData.hotswInsertMsg[s_ctData.idx_insert].type  = HOTSW_INSERT;
     
 	// メッセージ送信
     OS_SendMessage(&s_ctData.hotswQueue, (OSMessage *)&s_ctData.hotswInsertMsg[s_ctData.idx_insert], OS_MESSAGE_NOBLOCK);
@@ -1300,6 +1300,30 @@ static void InterruptCallbackCardData(void)
 {
 	// データ転送終了待ちまで寝ていたのを起こす
     OS_WakeupThreadDirect(&s_ctData.thread);
+}
+
+/*---------------------------------------------------------------------------*
+  Name:			InterruptCallbackPxi
+
+  Description:  PXI割り込みハンドラ
+ *---------------------------------------------------------------------------*/
+static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err)
+{
+#pragma unused(tag)
+#pragma unused(err)
+	HotSwPxiMessage d;
+
+	d.data = data;
+    
+    s_ctData.hotswPxiMsg[s_ctData.idx_ctrl].ctrl  = (d.msg.ctrl) ? TRUE : FALSE;
+    s_ctData.hotswPxiMsg[s_ctData.idx_ctrl].value = d.msg.value;
+	s_ctData.hotswPxiMsg[s_ctData.idx_ctrl].type  = HOTSW_CONTROL;
+
+	// メッセージ送信
+    OS_SendMessage(&s_ctData.hotswQueue, (OSMessage *)&s_ctData.hotswPxiMsg[s_ctData.idx_ctrl], OS_MESSAGE_NOBLOCK);
+
+	// メッセージインデックスをインクリメント
+    s_ctData.idx_ctrl = (s_ctData.idx_ctrl+1) % HOTSW_CTRL_MSG_NUM;
 }
 
 /*---------------------------------------------------------------------------*

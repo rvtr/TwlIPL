@@ -100,7 +100,10 @@ void TwlMain( void )
     (void)OS_EnableInterrupts();
 
     SYSM_InitPXI();                                 // 割り込み許可後にコールする必要あり。
-
+	while ( ! PXI_IsCallbackReady( PXI_FIFO_TAG_HOTSW, PXI_PROC_ARM7 ) )
+    {
+    }
+    
     FS_Init( FS_DMA_NOT_USE );
 
 #ifdef DEBUG_LAUNCHER_DUMP

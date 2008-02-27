@@ -25,6 +25,34 @@ extern "C" {
 
 #define SYSM_HOTSW_ENABLE_ROMEMU
 
+// enum   -------------------------------------------------------------------
+// スレッドに送るメッセージのステート
+typedef enum HotSwMessageType{
+	HOTSW_INSERT = 0,
+    HOTSW_PULLOUT,
+    HOTSW_CONTROL
+} HotSwMessageType;
+
+// union  -------------------------------------------------------------------
+// PXI用メッセージ
+typedef union HotSwPxiMessage{
+    struct {
+    	u32		value	:1;
+    	u32		ctrl	:1;
+    	u32		:30;
+    } msg;
+    u32 data;
+} HotSwPxiMessage;
+
+// struct -------------------------------------------------------------------
+// スレッド用メッセージ
+typedef struct HotSwMessage{
+    u32				 value;
+    BOOL			 ctrl;
+	HotSwMessageType type;
+} HotSwMessage;
+
+
 // Function prototype -------------------------------------------------------
 // 活栓挿抜処理の初期化
 void HOTSW_Init(void);

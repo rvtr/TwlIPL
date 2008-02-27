@@ -767,11 +767,21 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 				// カード読み込み時、work2に暗号化オブジェクト部分のハッシュ計算済みのコンテキストが保存されるので
 				// それを用いてARM9_STATIC残りの部分を計算
 				SVCHMACSHA1Context ctx;
+				u16 id;
+                
 				SVC_HMACSHA1Init( &ctx, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
-				// [TODO] ARM7とのhmac_sha1_contextの排他制御開始
+                
+				// ARM7とのhmac_sha1_contextの排他制御開始
+                id = (u16)OS_GetLockID();
+				(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
+                
 				SYSMi_GetWork2()->hmac_sha1_context.sha1_ctx.sha_block = ctx.sha1_ctx.sha_block;// この関数ポインタだけARM7とARM9で変えないとダメ
 				ctx = SYSMi_GetWork2()->hmac_sha1_context;										// SYSMi_GetWork2は非キャッシュなのでスタック（DTCMまたはキャッシュ領域）へコピー
-				// [TODO] ARM7とのhmac_sha1_contextの排他制御終了
+
+                // ARM7とのhmac_sha1_contextの排他制御終了
+				(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
+				OS_ReleaseLockID( id );
+                
 				SVC_HMACSHA1Update( &ctx,
 									(const void*)((u32)module_addr[l] + ARM9_ENCRYPT_DEF_SIZE),
 									(module_size[l] - ARM9_ENCRYPT_DEF_SIZE) );
@@ -1057,18 +1067,16 @@ void SYSMi_EnableHotSW( BOOL enable )
 	}
 	
 	{
-		u16 id = (u16)OS_GetLockID();
-		(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-		if( !SYSMi_GetWork()->flags.hotsw.isBusyHotSW ) {
-			// ARM7側がビジーでなければ、直接書き換え
-			SYSMi_GetWork()->flags.hotsw.isEnableHotSW = enable;
-		}else {
-			// ARM7側がビジーなら、変更要求をしてARM7が値を書き換えてくれるのを待つ。
-			SYSMi_GetWork()->flags.hotsw.reqChangeHotSW = 1;
-			SYSMi_GetWork()->flags.hotsw.nextHotSWStatus = enable;
-		}
-		(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-		OS_ReleaseLockID( id );
+		HotSwPxiMessage msg;
+
+        msg.msg.value = enable;
+        msg.msg.ctrl  = TRUE;
+
+	    while (PXI_SendWordByFifo(PXI_FIFO_TAG_HOTSW, msg.data, FALSE) != PXI_FIFO_SUCCESS)
+    	{
+        	// do nothing
+    	}
+        
 	}
 	
 	// 値が変化するまでスリープして待つ。
