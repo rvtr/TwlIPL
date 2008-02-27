@@ -427,61 +427,8 @@ HotSwState ChangeModeSecure_DSType2(CardBootData *cbd)
 
 
 /*---------------------------------------------------------------------------*
- * Name:         ReadPageGame_DSType1
+ * Name:         ReadPageGame_DSType2
  * 
  * Description:  ゲームモードで、指定されたページを指定バッファに指定サイズ分を読み込む
- *
- * CT=150ns  Latency1=0x657  Latency2=0x1  Pagecount=1page
  *---------------------------------------------------------------------------*/
-HotSwState ReadPageGame_DSType2(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
-{
-    u32 		loop, counter=0;
-	u64			i, page;
-    GCDCmd64 	cndLE, cndBE;
-
-    page = (u32)(start_addr / PAGE_SIZE);
-	loop = (u32)(size / PAGE_SIZE);
-    loop = (size % PAGE_SIZE) ? loop + 1 : loop;
-
-//	OS_TPrintf("Src Addr : 0x%08x  Dst Addr : 0x%08x\n", start_addr, buf);
-//	OS_TPrintf("Read Game Segment  Page Count : %d   size : %x\n", loop, size);
-    
-    for(i=0; i<loop; i++){
-	    if(!HOTSW_IsCardAccessible()){
-			return HOTSW_PULLED_OUT_ERROR;
-    	}
-        
-		// NewDMA転送の準備
-		HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, (u32 *)buf + (u32)(PAGE_WORD_SIZE*i), PAGE_SIZE );
-
-		// ゼロクリア
-		MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
-
-        // コマンド作成
-		cndLE.dw  = (page + i) << 33;
-		cndLE.dw |= 0xB700000000000000;
-        
-        // ビッグエンディアンに直す(暗号化後)
-		cndBE.b[7] = cndLE.b[0];
-		cndBE.b[6] = cndLE.b[1];
-    	cndBE.b[5] = cndLE.b[2];
-    	cndBE.b[4] = cndLE.b[3];
-    	cndBE.b[3] = cndLE.b[4];
-   		cndBE.b[2] = cndLE.b[5];
-    	cndBE.b[1] = cndLE.b[6];
-	    cndBE.b[0] = cndLE.b[7];
-
-    	// MCCMD レジスタ設定
-		reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
-		reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
-        
-   		// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 001(1ページリード) その他Romヘッダの情報におまかせ)
-		reg_HOTSW_MCCNT1 = cbd->pBootSegBuf->rh.s.game_cmd_param |
-            				START_MASK | (PC_MASK & (0x1 << PC_SHIFT));
-        
-		// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
-		OS_SleepThread(NULL);
-    }
-
-    return HOTSW_SUCCESS;
-}
+// Type1と同じ

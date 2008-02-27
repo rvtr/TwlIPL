@@ -378,9 +378,11 @@ HotSwState ReadIDGame_DSType1(CardBootData *cbd)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ReadPageGame_DSType1
-  
-  Description:  ゲームモードで、指定されたページを指定バッファに指定サイズ分を読み込む
+ * Name:         ReadPageGame_DSType1
+ * 
+ * Description:  ゲームモードで、指定されたページを指定バッファに指定サイズ分を読み込む
+ *
+ * CT=150ns  Pagecount=1page  Latency=RomHeaderで指定の値
  *---------------------------------------------------------------------------*/
 HotSwState ReadPageGame_DSType1(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
 {
@@ -400,6 +402,9 @@ HotSwState ReadPageGame_DSType1(CardBootData *cbd, u32 start_addr, void* buf, u3
 			return HOTSW_PULLED_OUT_ERROR;
     	}
         
+		// NewDMA転送の準備
+		HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, (u32 *)buf + (u32)(PAGE_WORD_SIZE*i), PAGE_SIZE );
+
 		// ゼロクリア
 		MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
 
@@ -425,11 +430,8 @@ HotSwState ReadPageGame_DSType1(CardBootData *cbd, u32 start_addr, void* buf, u3
 		reg_HOTSW_MCCNT1 = cbd->pBootSegBuf->rh.s.game_cmd_param |
             				START_MASK | (PC_MASK & (0x1 << PC_SHIFT));
         
-		// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-		while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-			while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-            *((u32 *)buf + counter++) = reg_HOTSW_MCD1;
-		}
+		// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+		OS_SleepThread(NULL);
     }
 
     return HOTSW_SUCCESS;
