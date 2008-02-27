@@ -99,10 +99,6 @@ Property
 	###
 	### Setting for TWL
 	###
-	#
-	# BANNER FILE:
-	#
-	BannerTWLFile	$(TWLSDK_ROOT)/include/twl/specfiles/default.bnr
 
 	#
 	# Digest parameters:
@@ -164,8 +160,8 @@ AppendProperty
 	#PrivateSaveDataSize	16K
 
 	#
-	# Enable SaveBannerFile
-	SaveBannerFile			FALSE
+	# Enable SubBannerFile
+	SubBannerFile			FALSE
 }
 
 

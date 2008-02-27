@@ -126,11 +126,11 @@ int main(int argc, char *argv[])
   // 0x1BF - TWL expansion flags
   // u8		codec_mode:1;					// 0:NTR mode, 1:TWL mode		// undeveloped
   // u8		otherParentalControls:1;		// 1: Enable OtherParentalControls
-  // u8		saveBannerFile:1;				// 1: Enable SaveBannerFile
+  // u8		subBannerFile:1;				// 1: Enable SubBannerFile
   // u8		wifiConnection:1;				// 1: Use WiFiConnection
   rom_header.s.codec_mode = 1;			// 0:NTR mode, 1:TWL mode		// undeveloped
   rom_header.s.otherParentalControls = 0;	// 1: Enable OtherParentalControls
-  rom_header.s.saveBannerFile = 0;		// 1: Enable SaveBannerFile
+  rom_header.s.subBannerFile = 0;		// 1: Enable SubBannerFile
   rom_header.s.wifiConnection = 1;		// 1: Use WiFiConnection  
 
 
