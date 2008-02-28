@@ -18,6 +18,7 @@
 #include "reboot.h"
 
 //#define PRINT_DEBUG
+//#define FIRM_ENABLE_BACKLIGHT
 
 #ifndef PRINT_DEBUG
 #undef  OS_TPrintf
@@ -28,8 +29,10 @@ void TwlSpMain( void )
 {
     OS_TPrintf( "\nNOR Boot time is %d msec.\n", OS_TicksToMilliSecondsBROM32(OS_GetTick()));
 
-//    MIi_CpuClearFast( 0, (void*)HW_TWL_ROM_HEADER_BUF, HW_MAIN_MEM_SYSTEM_END - HW_TWL_ROM_HEADER_BUF );  // include HW_MAIN_MEM_SHARED
     MIi_CpuClearFast( 0, (void*)OSi_GetFromBromAddr(), sizeof(OSFromBromBuf) );
+
+#ifdef FIRM_ENABLE_BACKLIGHT
+//    MIi_CpuClearFast( 0, (void*)HW_TWL_ROM_HEADER_BUF, HW_MAIN_MEM_SYSTEM_END - HW_TWL_ROM_HEADER_BUF );  // include HW_MAIN_MEM_SHARED
 
     OS_InitFIRM();
 
@@ -44,6 +47,7 @@ void TwlSpMain( void )
     PM_BackLightOn( TRUE );
 
     OS_TPrintf( "\nARM7 ends.\n" );
+#endif // FIRM_ENABLE_BACKLIGHT
 
     REBOOT_DisableInterruptsAndProtectionUnit();
     reg_SCFG_JTAG = REG_SCFG_JTAG_CPUJE_MASK | REG_SCFG_JTAG_ARM7SEL_MASK | REG_SCFG_JTAG_DSPJE_MASK;

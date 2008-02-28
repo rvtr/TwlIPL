@@ -18,6 +18,7 @@
 #include "reboot.h"
 
 //#define PRINT_DEBUG
+//#define FIRM_ENABLE_BACKLIGHT
 
 #ifndef PRINT_DEBUG
 #undef  OS_TPrintf
@@ -30,12 +31,16 @@ void TwlMain( void )
 
     MIi_CpuClearFast( 0, (void*)OSi_GetFromBromAddr(), sizeof(OSFromBromBuf) );
 
+#ifdef FIRM_ENABLE_BACKLIGHT
     OS_InitFIRM();
 
     OS_TPrintf( "\nARM9 starts.\n" );
     OS_TPrintf( "\nARM9 ends.\n" );
+#endif // FIRM_ENABLE_BACKLIGHT
 
     REBOOT_DisableInterruptsAndProtectionUnit();
-    OS_Terminate();
+    while (1)
+    {
+    }
 }
 
