@@ -26,7 +26,7 @@
 
 #define SYSTEM_APP_KEY_OFFSET		1 // ファームから送られてくるSYSTEMアプリキーのためのオフセット
 #define LAUNCHER_KEY_OFFSET			0 // ファームから送られてくるLauncherキーのためのオフセット
-#define ROM_HEADER_HASH_OFFSET		(0x10) // 署名からROMヘッダハッシュを取り出すためのオフセット
+#define ROM_HEADER_HASH_OFFSET		(0x0) // 署名からROMヘッダハッシュを取り出すためのオフセット
 
 #define SIGN_HEAP_ADDR	0x023c0000	// 署名計算のためのヒープ領域開始アドレス
 #define SIGN_HEAP_SIZE	0x1000		// 署名計算のためのヒープサイズ
@@ -675,7 +675,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		const u8 *key;
 		u32 hi;
 		u8 keynum;
-		u8 buf[0x80];
+		SignatureData sigbuf;
 		u8 calculated_hash[SVC_SHA1_DIGEST_SIZE];
 		SVCSignHeapContext con;
 		int l;
@@ -733,9 +733,9 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 	    }
 #endif
 	    // 署名を鍵で復号
-	    MI_CpuClear8( buf, 0x80 );
+	    MI_CpuClear8( &sigbuf, sizeof(sigbuf) );
 	    SVC_InitSignHeap( &con, (void *)SIGN_HEAP_ADDR, SIGN_HEAP_SIZE );// ヒープの初期化
-	    if( !SVC_DecryptSign( &con, buf, head->signature, key ))
+	    if( !SVC_DecryptSign( &con, sigbuf.digest, head->signature, key ))
 	    {
 			OS_TPrintf("Authenticate failed: Sign decryption failed.\n");
 			if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
@@ -743,7 +743,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		// ヘッダのハッシュ(SHA1)計算
 		SVC_CalcSHA1( calculated_hash, (const void*)head, TWL_ROM_HEADER_HASH_CALC_DATA_LEN );
 	    // 署名のハッシュ値とヘッダのハッシュ値を比較
-	    if(!SVC_CompareSHA1((const void *)(&buf[ROM_HEADER_HASH_OFFSET]), (const void *)calculated_hash))
+	    if(!SVC_CompareSHA1(sigbuf.digest, (const void *)calculated_hash))
 	    {
 			OS_TPrintf("Authenticate failed: Sign check failed.\n");
 			if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
