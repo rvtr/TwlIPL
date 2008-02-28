@@ -47,6 +47,8 @@ static void  nwmCallback(void* arg);
 static s32   readFirmwareBinary(u8 *buffer, s32 bufSize);
 static BOOL  verifyWlanfirmSignature(u8* buffer, u32 length);
 
+extern NWMRetCode NWMi_InstallFirmware(NWMCallbackFunc callback, void* addr, u32 size);
+
 static inline u16 SCFG_GetBondingOption(void)
 {
 	return (u16)(*(u8*)(HW_SYS_CONF_BUF+HWi_WSYS08_OFFSET) & HWi_WSYS08_OP_OPT_MASK);
@@ -58,24 +60,19 @@ void nwmCallback(void* arg)
     NWMCallback *cb = (NWMCallback*)arg;
     switch (cb->apiid)
     {
-    case NWM_APIID_LOAD_DEVICE:
+    case NWM_APIID_INSTALL_FIRMWARE:
         if (cb->retcode == NWM_RETCODE_SUCCESS) {
-            NWMRetCode err;
-            OS_TPrintf("Wlan firm:Load Device success!\n");
-            err = NWM_UnloadDevice(nwmCallback);
+            OS_TPrintf("Wlan firm:FW download success!\n");
+#if (MEASURE_WIRELESS_INITTIME == 1)
+            OS_TPrintf("Wlan firm:LoadTime=%dmsec\n", OS_TicksToMilliSeconds(OS_GetTick() - startTick));
+#endif
+            OS_TPrintf("Wlan firm:Wlan firmware has been installed successfully!\n");
+            SYSM_Free( fwBuffer );
+            /* [TODO:] osSendMessage */
         } else {
-            OS_TPrintf("Wlan firm:Load Device Timeout Error!\n");
+            OS_TPrintf("Wlan firm:FW download Timeout Error!\n");
             SYSM_Free( fwBuffer );
         }
-        break;
-    case NWM_APIID_UNLOAD_DEVICE:
-        OS_TPrintf("Wlan firm:Unload Device success!\n");
-#if (MEASURE_WIRELESS_INITTIME == 1)
-        OS_TPrintf("Wlan firm:LoadTime=%dmsec\n", OS_TicksToMilliSeconds(OS_GetTick() - startTick));
-#endif
-        OS_TPrintf("Wlan firm:Wlan firmware has been installed successfully!\n");
-        SYSM_Free( fwBuffer );
-        /* [TODO:] osSendMessage */
         break;
     default:
         OS_TWarning("Wlan firm:Error(invalid apiid=0x%04X)!\n", cb->apiid);
@@ -177,10 +174,10 @@ BOOL verifyWlanfirmSignature(u8* buffer, u32 length)
 #endif
     
     pPubkey = OSi_GetFromFirmAddr()->rsa_pubkey[WLANFIRM_PUBKEY_INDEX];
-    pSign = (u8*)((u32)buffer + (u32)hdr->rsv);
+    pSign = (u8*)((u32)buffer + (u32)hdr->sofs);
 
     txtVector[0] = buffer;
-    txtlenVector[0] = (u32)hdr->rsv; /* 署名の直前までのLength */
+    txtlenVector[0] = (u32)hdr->sofs; /* 署名の直前までのLength */
     txtVector[1] = (u8*)(txtVector[0] + txtlenVector[0] + (u32)SIGN_LENGTH);
     txtlenVector[1] = length - txtlenVector[0] - (u32)SIGN_LENGTH;
 
@@ -287,16 +284,17 @@ BOOL InstallWirelessFirmware(void)
 
     NWM_Init(nwmBuf, sizeof(nwmBuf), 3); /* 3 -> DMA no. */
 
-    if ( 0 < flen )
-    {
-        (void)NWMi_InstallFirmware(fwBuffer, (u32)flen);
-    }
-
 #if (MEASURE_WIRELESS_INITTIME == 1)
     startTick = OS_GetTick();
 #endif
-    err = NWM_LoadDevice(nwmCallback);
-
+    
+    if ( 0 < flen )
+    {
+        err = NWMi_InstallFirmware(nwmCallback, fwBuffer, (u32)flen);
+    } else if (flen <= 0) {
+        err = NWMi_InstallFirmware(nwmCallback, NULL, (u32)flen);
+    }
+    
     /* osRecvMessage */
     /*
         [TODO:] 無線ロード処理の完了をメインルーチンへ通知するための仕組みを考える必要あり。
