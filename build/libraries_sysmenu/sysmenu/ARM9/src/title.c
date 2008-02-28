@@ -428,7 +428,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", header, 0, s
             return;
         }
 
-        if( header[0x15C] != 0x56 || header[0x15D] != 0xCF )
+        if( head->s.nintendo_logo_crc16 != 0xCF56 )
         {
 int i, j;
 for( i = 0; i < 0x20; ++i )
@@ -444,10 +444,9 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
             return;
         }
         
-        
-        if( !(header[0x12] & 0x03) )
+        if( !(head->s.platform_code & PLATFORM_CODE_FLAG_TWL) )
         {
-			//NTR専用ROM
+			//NTR専用ROM or NTR TWL両方非対応のアプリ
 			isTwlApp = FALSE;
 			if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_TEMP)
 			{
@@ -476,23 +475,23 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
         length  [region_header  ] = HW_TWL_ROM_HEADER_BUF_SIZE;
         destaddr[region_header  ] = HW_TWL_ROM_HEADER_BUF;
 		
-        source  [region_arm9_ntr] = *(const u32*)&header[0x020];
-        length  [region_arm9_ntr] = *(const u32*)&header[0x02C];
-        destaddr[region_arm9_ntr] = *(const u32*)&header[0x028];
+        source  [region_arm9_ntr] = head->s.main_rom_offset;
+        length  [region_arm9_ntr] = head->s.main_size;
+        destaddr[region_arm9_ntr] = (u32)head->s.main_ram_address;
 		
-        source  [region_arm7_ntr] = *(const u32*)&header[0x030];
-        length  [region_arm7_ntr] = *(const u32*)&header[0x03C];
-        destaddr[region_arm7_ntr] = *(const u32*)&header[0x038];
+        source  [region_arm7_ntr] = head->s.sub_rom_offset;
+        length  [region_arm7_ntr] = head->s.sub_size;
+        destaddr[region_arm7_ntr] = (u32)head->s.sub_ram_address;
 		
 		if( isTwlApp )
 		{
-	        source  [region_arm9_twl] = *(const u32*)&header[0x1C0];
-	        length  [region_arm9_twl] = *(const u32*)&header[0x1CC];
-	        destaddr[region_arm9_twl] = *(const u32*)&header[0x1C8];
+	        source  [region_arm9_twl] = head->s.main_ltd_rom_offset;
+	        length  [region_arm9_twl] = head->s.main_ltd_size;
+	        destaddr[region_arm9_twl] = (u32)head->s.main_ltd_ram_address;
 			
-	        source  [region_arm7_twl] = *(const u32*)&header[0x1D0];
-	        length  [region_arm7_twl] = *(const u32*)&header[0x1DC];
-	        destaddr[region_arm7_twl] = *(const u32*)&header[0x1D8];
+	        source  [region_arm7_twl] = head->s.sub_ltd_rom_offset;
+	        length  [region_arm7_twl] = head->s.sub_ltd_size;
+	        destaddr[region_arm7_twl] = (u32)head->s.sub_ltd_ram_address;
         }
         
         // 領域読み込み先のチェック及び再配置情報データの作成
@@ -674,7 +673,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 	// 署名処理
     {
 		const u8 *key;
-		u16 prop;
+		u32 hi;
 		u8 keynum;
 		u8 buf[0x80];
 		u8 calculated_hash[SVC_SHA1_DIGEST_SIZE];
@@ -700,9 +699,8 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		}
 		
 		prev = OS_GetTick();
-	    prop = ((u16 *)&(pBootTitle->titleID))[2];
-	    prop = (u16)(prop & 0x3); // prop = 0:UserApp 1:SystemApp 2:ShopApp?
-	    keynum = (u8)( prop == 0 ? 2 : (prop == 1 ? 0 : 1) );// keynum = 0:SystemApp 1:ShopApp 2:UserApp
+		hi = head->s.titleID_Hi;
+		keynum = (u8)( (hi & TITLE_ID_SECURE_FLAG_MASK) ? 1 : ( (hi & TITLE_ID_HI_APP_TYPE_MASK) ? 0 : 2 ) ); // keynum = 0:SystemApp 1:SecureApp 2:UserApp
 		// アプリ種別とボンディングオプションによって使う鍵を分ける
 // #define LNC_PDTKEY_DBG
 #ifdef LNC_PDTKEY_DBG
@@ -922,8 +920,9 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 // ヘッダ認証
 static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 {
+	ROM_Header_Short *hs = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
 	// [TODO:]認証結果はどこかワークに保存しておく
-	if( ( (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->platform_code ) != 0 )
+	if( hs->platform_code & PLATFORM_CODE_FLAG_TWL )
 	{
 		// TWLアプリ
 		switch( pBootTitle->flags.bootType )
@@ -936,6 +935,11 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 				return SYSMi_AuthenticateTWLHeader( pBootTitle );
 			case LAUNCHER_BOOTTYPE_TEMP:
 				OS_TPrintf( "Authenticate :TWL_TEMP start.\n" );
+				if (!hs->permit_tmp_jump)
+				{
+					OS_TPrintf("Authenticate failed: TMP flag error.\n");
+					return AUTH_RESULT_AUTHENTICATE_FAILED;
+				}
 				return SYSMi_AuthenticateTWLHeader( pBootTitle );
 			default:
 				return AUTH_RESULT_AUTHENTICATE_FAILED;
@@ -943,6 +947,12 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 	}
 	else
 	{
+		if( hs->platform_code & PLATFORM_CODE_FLAG_NOT_NTR )
+		{
+			// TWLでもNTRでもない不正なアプリ
+			OS_TPrintf( "Authenticate :NOT NTR NOT TWL.\n" );
+			return AUTH_RESULT_AUTHENTICATE_FAILED;
+		}
 		// NTRアプリ
 		switch( pBootTitle->flags.bootType )
 		{
@@ -951,6 +961,11 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 				return SYSMi_AuthenticateNTRNandAppHeader( pBootTitle );
 			case LAUNCHER_BOOTTYPE_TEMP:
 				OS_TPrintf( "Authenticate :NTR_TEMP start.\n" );
+				if (!hs->permit_tmp_jump)
+				{
+					OS_TPrintf("Authenticate failed: TMP flag error.\n");
+					return AUTH_RESULT_AUTHENTICATE_FAILED;
+				}
 				return SYSMi_AuthenticateNTRDownloadAppHeader( pBootTitle );
 			case LAUNCHER_BOOTTYPE_ROM:
 				OS_TPrintf( "Authenticate :NTR_ROM start.\n" );

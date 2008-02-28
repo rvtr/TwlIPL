@@ -274,6 +274,7 @@ void TwlMain( void )
 	            case AUTH_RESULT_AUTHENTICATE_FAILED:
 	            case AUTH_RESULT_ENTRY_ADDRESS_ERROR:
 	                state = STOP;
+	                // [TODO:]クリアしたほうが良いデータ（鍵など）があれば消す
 	                break;
 	            }
             }
