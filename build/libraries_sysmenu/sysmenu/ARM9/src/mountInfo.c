@@ -133,7 +133,7 @@ static void SYSMi_SetBootSRLPath( LauncherBootType bootType, NAMTitleId titleID 
 		}
 		break;
 	case LAUNCHER_BOOTTYPE_TEMP:
-		STD_TSNPrintf( path, 31, "nand:/tmp/%.16llx.srl", titleID );
+		STD_TSNPrintf( path, FS_ENTRY_LONGNAME_MAX, OS_TMP_APP_PATH, titleID );
 		break;
 	default:
 		path[ 0 ] = 0;

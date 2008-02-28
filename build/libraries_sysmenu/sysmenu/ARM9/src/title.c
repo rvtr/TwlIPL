@@ -24,7 +24,8 @@
 // define data-----------------------------------------------------------------
 #define CARD_BANNER_INDEX			( LAUNCHER_TITLE_LIST_NUM - 1 )
 
-#define SYSTEM_APP_KEY_OFFSET		1 // ファームから送られてくるキーのためのオフセット
+#define SYSTEM_APP_KEY_OFFSET		1 // ファームから送られてくるSYSTEMアプリキーのためのオフセット
+#define LAUNCHER_KEY_OFFSET			0 // ファームから送られてくるLauncherキーのためのオフセット
 #define ROM_HEADER_HASH_OFFSET		(0x10) // 署名からROMヘッダハッシュを取り出すためのオフセット
 
 #define SIGN_HEAP_ADDR	0x023c0000	// 署名計算のためのヒープ領域開始アドレス
@@ -382,13 +383,14 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
 		break;
 	case LAUNCHER_BOOTTYPE_TEMP:
 		// tmpフォルダ
-		STD_TSNPrintf( path, 31, "nand:/tmp/%.16llx.srl", pBootTitle->titleID );
+		STD_TSNPrintf( path, 256, OS_TMP_APP_PATH, pBootTitle->titleID );
 		break;
 	default:
 		// unknown
 		return;
 	}
 
+	FS_InitFile( file );
     bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
 
     if( ! bSuccess )
@@ -699,17 +701,39 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		
 		prev = OS_GetTick();
 	    prop = ((u16 *)&(pBootTitle->titleID))[2];
-	    prop = (u16)(prop & 0x1); // prop = 0:UserApp 1:SystemApp 2:ShopApp?
+	    prop = (u16)(prop & 0x3); // prop = 0:UserApp 1:SystemApp 2:ShopApp?
 	    keynum = (u8)( prop == 0 ? 2 : (prop == 1 ? 0 : 1) );// keynum = 0:SystemApp 1:ShopApp 2:UserApp
 		// アプリ種別とボンディングオプションによって使う鍵を分ける
-	    if( SCFG_GetBondingOption() == 0 ) {
+// #define LNC_PDTKEY_DBG
+#ifdef LNC_PDTKEY_DBG
+		{
+			// 製品版鍵デバグ用コード
+			u8 *gamecode = (u8 *)&(pBootTitle->titleID);
 			// 製品版鍵取得
 			key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[SYSTEM_APP_KEY_OFFSET + keynum];
+			b_dev = TRUE; // 開発版のスルーフラグ
+			// 製品版のLauncherは専用の鍵を使う。開発版は今のところSystemAppの鍵で代用
+			if( gamecode[3] == 'L' && gamecode[2] == 'N' && gamecode[1] == 'C' )
+			{
+				key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[LAUNCHER_KEY_OFFSET];
+			}
+		}
+#else
+	    if( SCFG_GetBondingOption() == 0 ) {
+			u8 *gamecode = (u8 *)&(pBootTitle->titleID);
+			// 製品版鍵取得
+			key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[SYSTEM_APP_KEY_OFFSET + keynum];
+			// 製品版のLauncherは専用の鍵を使う。開発版は今のところSystemAppの鍵で代用
+			if( gamecode[3] == 'L' && gamecode[2] == 'N' && gamecode[1] == 'C' )
+			{
+				key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[LAUNCHER_KEY_OFFSET];
+			}
 	    }else {
 			// 開発版
 			key = g_devPubKey[keynum];
 			b_dev = TRUE;
 	    }
+#endif
 	    // 署名を鍵で復号
 	    MI_CpuClear8( buf, 0x80 );
 	    SVC_InitSignHeap( &con, (void *)SIGN_HEAP_ADDR, SIGN_HEAP_SIZE );// ヒープの初期化

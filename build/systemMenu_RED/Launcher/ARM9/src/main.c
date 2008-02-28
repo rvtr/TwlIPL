@@ -308,34 +308,18 @@ static void INTR_VBlank(void)
 // nandのtmpディレクトリの中身を消す
 static void deleteTmp()
 {
-    FSFile dir;
-    FSDirectoryEntryInfo info;
-    FS_InitFile(&dir);
-    if(!FS_OpenDirectory(&dir, "nand:/tmp", FS_FILEMODE_R | FS_FILEMODE_W))
-    {
-        OS_TPrintf( "ERROR deleteTmp: open nand:/tmp failed!\n" );
-        return;
-    }
-    while(FS_ReadDirectory(&dir, &info))
-    {
-        if(info.attributes & FS_ATTRIBUTE_IS_DIRECTORY)
-        {
-            //ディレクトリは今のところ削除しない
-        }else
-        {
-            //ファイルは今のところsrlのみ削除
-            char buf[512];
-            u32 end = info.longname_length;
-            if( (info.longname[end-1]=='l' || info.longname[end-1]=='L') &&
-                (info.longname[end-2]=='r' || info.longname[end-2]=='R') &&
-                (info.longname[end-3]=='s' || info.longname[end-3]=='S') &&
-                (info.longname[end-4]=='.') )
-            {
-                STD_TSNPrintf( buf, 512, "nand:/tmp/%s",info.longname);
-                FS_DeleteFile( buf );
-                OS_TPrintf( "deleteTmp: deleted File '%s' \n", buf );
-            }
-        }
-    }
-    FS_CloseDirectory(&dir);
+	if( FS_DeleteFile( OS_TMP_APP_PATH ) )
+	{
+		OS_TPrintf( "deleteTmp: deleted File '%s' \n", OS_TMP_APP_PATH );
+	}else
+	{
+		FSResult res = FS_GetArchiveResultCode("nand");
+		if( FS_RESULT_SUCCESS == res )
+		{
+			OS_TPrintf( "deleteTmp: File '%s' not exists.\n", OS_TMP_APP_PATH );
+		}else
+		{
+			OS_TPrintf( "deleteTmp: delete File '%s' failed. Error code = %d.\n", OS_TMP_APP_PATH, res );
+		}
+	}
 }
