@@ -26,7 +26,7 @@
 #define DEBUG_MODE
 
 // define -------------------------------------------------------------------
-#define		CHATTERING_COUNTER					0x100
+#define		CHATTERING_COUNTER					0x600
 #define		COUNTER_A							0x100
 
 #define 	UNDEF_CODE							0xe7ffdeff	// 未定義コード
@@ -38,11 +38,11 @@
 #define		ROM_EMULATION_END_OFS				0x180
 
 #define		HOTSW_THREAD_STACK_SIZE				(1024 + PAGE_SIZE)	// スタックサイズ
-#define		HOTSW_THREAD_PRIO					11			// カード電源ON → ゲームモードのスレッド優先度
-#define 	HOTSW_MSG_BUFFER_NUM				40			// 受信バッファの数
-#define		HOTSW_INSERT_MSG_NUM				16			// 挿し割り込み送信メッセージの数
-#define		HOTSW_PULLED_MSG_NUM				16			// 抜け割り込み送信メッセージの数
-#define		HOTSW_CTRL_MSG_NUM					8			// PXI割り込み送信メッセージの数
+#define		HOTSW_THREAD_PRIO					11					// カード電源ON → ゲームモードのスレッド優先度
+#define		HOTSW_INSERT_MSG_NUM				16					// 挿し割り込み送信メッセージの数
+#define		HOTSW_PULLED_MSG_NUM				16					// 抜け割り込み送信メッセージの数
+#define		HOTSW_CTRL_MSG_NUM					8					// PXI割り込み送信メッセージの数
+#define 	HOTSW_MSG_BUFFER_NUM				(HOTSW_INSERT_MSG_NUM + HOTSW_PULLED_MSG_NUM + HOTSW_CTRL_MSG_NUM) // 受信バッファの数
 
 #define 	SLOT_B_LOCK_BUF						HW_CTRDG_LOCK_BUF
 
@@ -99,7 +99,7 @@ static void McPowerOff(void);
 static void SetMCSCR(void);
 
 static void GenVA_VB_VD(void);
-static void DecryptObjectFile(void);
+static HotSwState DecryptObjectFile(void);
 static HotSwState LoadTable(void);
 static HotSwState ReadRomEmulationData(void);
 static HotSwState ReadIDNormal(void);
@@ -120,6 +120,7 @@ static BOOL CheckExtArm9HashValue(void);
 
 static void ShowRegisterData(void);
 static void ShowRomHeaderData(void);
+static void DebugPrintErrorMessage(HotSwState state);
 
 // Static Values ------------------------------------------------------------
 static char 				*encrypt_object_key ATTRIBUTE_ALIGN(4) = "encryObj";
@@ -258,7 +259,6 @@ void HOTSW_Init(void)
     // Secure Segment バッファの設定
     HOTSW_SetSecureSegmentBuffer((void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
 
-    
     // カードが挿さってあったらスレッドを起動する
 	if(HOTSW_IsCardExist()){
 		// メッセージ送信
@@ -439,7 +439,7 @@ static HotSwState LoadCardData(void)
             // カードIDの比較をして、一致しなければFALSEを返す
             if(s_cbData.id_scr != s_cbData.id_gam){
                 retval = (retval == HOTSW_SUCCESS) ? HOTSW_ID_CHECK_ERROR : retval;
-				goto error;
+				goto end;
             }
 
 			// 常駐モジュール残りを指定先に転送
@@ -447,7 +447,8 @@ static HotSwState LoadCardData(void)
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
             
             // ARM9常駐モジュールの先頭2KBの暗号化領域を複合化
-			DecryptObjectFile();
+			state  = DecryptObjectFile();
+            retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
 			// 認証コード読み込み＆ワーク領域にコピー
 			state  = CheckCardAuthCode();
@@ -464,11 +465,7 @@ static HotSwState LoadCardData(void)
         retval = (retval == HOTSW_SUCCESS) ? HOTSW_PULLED_OUT_ERROR : retval;
     }
 
-	goto end;
-error:
-    OS_TPrintf("ng... retval : %d\n", retval);
 end:
-    
 	// カードのロック開放(※ロックIDは開放せずに持ち続ける)
 #ifndef DEBUG_USED_CARD_SLOT_B_
 	CARD_UnlockRom(s_CardLockID);
@@ -756,7 +753,7 @@ static void GenVA_VB_VD(void)
  * カード側の Key Table をロードする関数。
  *
  * ※この関数は開発カード用に発行しないといけない。
- *   製品版カードの場合、このコマンドは無視される設計
+ *   製品版カードの場合、このコマンドは無視される
  * ----------------------------------------------------------------- */
 static HotSwState LoadTable(void)
 {
@@ -858,7 +855,7 @@ static HotSwState ReadIDNormal(void)
  * ----------------------------------------------------------------- */
 static u32 encDestBuf[ENCRYPT_DEF_SIZE/sizeof(u32)];
 
-static void DecryptObjectFile(void)
+static HotSwState DecryptObjectFile(void)
 {
     u8  i;
   	s32 restSize;
@@ -867,6 +864,7 @@ static void DecryptObjectFile(void)
     u32 *pEncDes 			= s_cbData.pSecureSegBuf;
     BLOWFISH_CTX *tableBufp = &s_cbData.keyTable;
   	BOOL exist 				= TRUE;
+    HotSwState retval		= HOTSW_SUCCESS;
 
   	if (size > ENCRYPT_DEF_SIZE) {
     	size = ENCRYPT_DEF_SIZE;
@@ -906,11 +904,13 @@ static void DecryptObjectFile(void)
    		}
    	} 
    	else{
-		OS_PutString("▼ DecryptObjectFile : Error...\n");
+		retval = HOTSW_DATA_DECRYPT_ERROR;
 
         MI_NDmaFill( HOTSW_DMA_NO, pEncBuf, UNDEF_CODE, (u32)size ); // 未定義コードでクリア
    	}
    	MI_CpuCopy32(pEncBuf, pEncDes, (u32)size);
+
+    return retval;
 }
 
 /* -----------------------------------------------------------------
@@ -1149,7 +1149,6 @@ static void McThread(void *arg)
 {
 	#pragma unused( arg )
 
-    u32				hotswCount  = UNDEF_CODE;
     BOOL 			isPulledOut = TRUE;
     HotSwState 		retval;
     HotSwMessage 	*msg;
@@ -1157,8 +1156,6 @@ static void McThread(void *arg)
     while(1){
         OS_ReceiveMessage(&s_ctData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
 
-//		OS_TPrintf("msg -> value : %x  msg -> ctrl : %x  msg -> type : %x\n", msg->value, msg->ctrl, msg->type);
-        
         // カードデータロード完了フラグを下ろす
 		SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = FALSE;
 
@@ -1179,8 +1176,8 @@ static void McThread(void *arg)
             if(HOTSW_IsCardExist()){
                 // 前の状態が挿し
                 if(!isPulledOut){
-                    // 抜き差しがなかったか判定
-                    if(CARDi_IsPulledOutEx(hotswCount)){
+                    // 抜きがなかったか判定
+                    if(CmpMcSlotMode(SLOT_STATUS_MODE_10) == TRUE){
 	               		// フラグケア
                         LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 						SYSMi_GetWork()->flags.hotsw.isExistCard 		  = TRUE;
@@ -1203,9 +1200,6 @@ static void McThread(void *arg)
                     }
                 }
 
-                // 挿し回数を取得
-				hotswCount = CARDi_GetSlotResetCount();
-
                 // HotSwをbusy状態にする 
 				SetHotSwState(TRUE);
 
@@ -1215,33 +1209,51 @@ static void McThread(void *arg)
 				// HotSwをfree状態にする
                 SetHotSwState(FALSE);
 
-				// 状態フラグを更新
-                isPulledOut = (retval == HOTSW_SUCCESS) ? FALSE : TRUE;
-            }
-            
-            // カードが抜けてたら
-            else{
-                if(isPulledOut){
-               		// フラグケア
-               		{
-                        LockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
-						SYSMi_GetWork()->flags.hotsw.isExistCard 		 = FALSE;
-                		SYSMi_GetWork()->flags.hotsw.isValidCardBanner   = FALSE;
-                		SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
-                        UnlockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
-					}
-                    
+				// Debug表示
+                DebugPrintErrorMessage(retval);
+                
+                // カード読みが失敗していたらカードがないことにする
+                if(retval != HOTSW_SUCCESS){
+                	LockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
+					SYSMi_GetWork()->flags.hotsw.isExistCard 		 = FALSE;
+                	SYSMi_GetWork()->flags.hotsw.isValidCardBanner   = FALSE;
+                	SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
+                	UnlockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
+                
                 	// カードブート用構造体の初期化
 					MI_CpuClear32(&s_cbData, sizeof(CardBootData));
 
 					// バッファのクリア
-				    MI_CpuClearFast(s_pBootSegBuffer, s_BootSegBufSize);
+					MI_CpuClearFast(s_pBootSegBuffer, s_BootSegBufSize);
 					MI_CpuClearFast(s_pSecureSegBuffer, s_SecureSegBufSize);
-                    
+                    MI_CpuClearFast((u32 *)SYSM_CARD_BANNER_BUF, sizeof(TWLBannerFile));
+                
 					break;
                 }
+                
+				// 状態フラグを更新
+                isPulledOut = FALSE;
+            }
+            
+            // カードが抜けてたら
+            else{
+                LockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
+				SYSMi_GetWork()->flags.hotsw.isExistCard 		 = FALSE;
+                SYSMi_GetWork()->flags.hotsw.isValidCardBanner   = FALSE;
+                SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
+                UnlockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
+                
+                // カードブート用構造体の初期化
+				MI_CpuClear32(&s_cbData, sizeof(CardBootData));
 
+				// バッファのクリア
+				MI_CpuClearFast(s_pBootSegBuffer, s_BootSegBufSize);
+				MI_CpuClearFast(s_pSecureSegBuffer, s_SecureSegBufSize);
+                MI_CpuClearFast((u32 *)SYSM_CARD_BANNER_BUF, sizeof(TWLBannerFile));
+                
                 isPulledOut = TRUE;
+
+				break;
             }
         }
 		SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
@@ -1265,7 +1277,7 @@ static void InterruptCallbackCard(void)
     // メッセージインデックスをインクリメント
     s_ctData.idx_pulledOut = (s_ctData.idx_pulledOut+1) % HOTSW_PULLED_MSG_NUM;
 
-	OS_TPrintf("○ - idx_pullout : %d  Slot B state  : 0x%08x\n", s_ctData.idx_pulledOut, reg_MI_MC1);
+	OS_PutString("○\n");
 }
 
 /*---------------------------------------------------------------------------*
@@ -1275,9 +1287,6 @@ static void InterruptCallbackCard(void)
  *---------------------------------------------------------------------------*/
 static void InterruptCallbackCardDet(void)
 {
-    // SDKのカード状態をリセットする
-	CARDi_ResetSlotStatus();
-
 	s_ctData.hotswInsertMsg[s_ctData.idx_insert].ctrl  = FALSE;
     s_ctData.hotswInsertMsg[s_ctData.idx_insert].value = 0;
     s_ctData.hotswInsertMsg[s_ctData.idx_insert].type  = HOTSW_INSERT;
@@ -1288,7 +1297,7 @@ static void InterruptCallbackCardDet(void)
 	// メッセージインデックスをインクリメント
     s_ctData.idx_insert = (s_ctData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
 
-	OS_TPrintf("● - idx_insert  : %d  Slot B state  : 0x%08x\n", s_ctData.idx_insert, reg_MI_MC1);
+	OS_PutString("●\n");
 }
 
 /*---------------------------------------------------------------------------*
@@ -1610,4 +1619,54 @@ static void ShowRegisterData(void)
     OS_TPrintf("MC コントロールレジスタ0	 (SEL etc)     : %04x\n", reg_HOTSW_MCCNT0);
     OS_TPrintf("MC コントロールレジスタ1	 (START etc)   : %08x\n", reg_HOTSW_MCCNT1);
     OS_TPrintf("----------------------------------------------------------\n");
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         DebugPrintErrorMessage
+
+  Description:  
+ *---------------------------------------------------------------------------*/
+static void DebugPrintErrorMessage(HotSwState state)
+{
+    switch(state){
+      case HOTSW_SUCCESS:
+        OS_PutString("   - Success\n");
+        break;
+
+      case HOTSW_TIME_OUT:
+        OS_PutString("   - Error 1 : TimeOut\n");
+        break;
+
+      case HOTSW_CARD_LOCK_ERROR:
+        OS_PutString("   - Error 2 : Slot Lock\n");
+        break;
+
+      case HOTSW_CRC_CHECK_ERROR:
+        OS_PutString("   - Error 3 : CRC Check\n");
+        break;
+
+      case HOTSW_HASH_CHECK_ERROR:
+        OS_PutString("   - Error 4 : Hash Check\n");
+        break;
+
+      case HOTSW_ID_CHECK_ERROR:
+        OS_PutString("   - Error 5 : ID Check\n");
+        break;
+
+      case HOTSW_PULLED_OUT_ERROR:
+        OS_PutString("   - Error 6 : Pulled Out\n");
+        break;
+
+      case HOTSW_DATA_DECRYPT_ERROR:
+        OS_PutString("   - Error 7 : Data Decrypt\n");
+        break;
+        
+      case HOTSW_UNEXPECTED_ERROR:
+        OS_PutString("   - Error 8 : Unexpected\n");
+        break;
+
+      default :
+        OS_PutString("   - illigal Error\n");
+        break;
+    }
 }
