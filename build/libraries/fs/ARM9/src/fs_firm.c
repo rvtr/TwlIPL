@@ -47,12 +47,13 @@ void FS_InitFIRM( void )
                 処理が正常に行われた場合に得られるバッファへのポインタは
                 不要になったら NAMi_Free で解放する必要があります。
 
-  Arguments:    titleId:    対象のタイトルの TitleID。
+  Arguments:    pTmd:       タイトルメタデータの読み込み先
+                titleId:    対象のタイトルの TitleID。
 
   Returns:      処理が正常に行われたなら TRUEを返します。
                 そうでなければ FALSE を返します。
  *---------------------------------------------------------------------------*/
-static BOOL LoadTMD(ESTitleMeta* pTmd, u64 titleId)
+static BOOL LoadTMD(ESTitleMeta* pTmd, OSTitleId titleId)
 {
     char path[64];
     FSFile f;
@@ -128,7 +129,7 @@ static BOOL LoadTMD(ESTitleMeta* pTmd, u64 titleId)
 
   Returns:      正常に処理が行われたなら TRUE を返します。
  *---------------------------------------------------------------------------*/
-BOOL FS_GetTitleBootContentPathFast(char* buf, u64 titleId)
+BOOL FS_GetTitleBootContentPathFast(char* buf, OSTitleId titleId)
 {
     ESTitleMeta tmd;
     u32 bootContentId;
@@ -181,7 +182,7 @@ BOOL FS_GetTitleBootContentPathFast(char* buf, u64 titleId)
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS_ResolveSrl( u64 titleId )
+BOOL FS_ResolveSrl( OSTitleId titleId )
 {
     if ( ES_ERR_OK != ES_InitLib() ||
          ES_ERR_OK != ES_GetContentPath(titleId, CONTENT_INDEX_BOOT, (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF) ||
@@ -202,7 +203,7 @@ BOOL FS_ResolveSrl( u64 titleId )
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS_ResolveSrlUnsecured( u64 titleId )
+BOOL FS_ResolveSrlUnsecured( OSTitleId titleId )
 {
     if ( !FS_GetTitleBootContentPathFast((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, titleId) )
     {

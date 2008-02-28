@@ -128,7 +128,7 @@ static void PostInit(void)
 ***************************************************************/
 static BOOL TryResolveSrl(void)
 {
-    u64 titleId = MENU_TITLE_ID_HI << 32;
+    OSTitleId titleId = MENU_TITLE_ID_HI << 32;
     if ( !LCFG_ReadHWSecureInfo() )
     {
         OS_TPrintf("Failed to load HWSecureInfo.\n");

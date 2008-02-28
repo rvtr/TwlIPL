@@ -49,7 +49,7 @@ void FS_InitFIRM( void );
 
   Returns:      ê≥èÌÇ…èàóùÇ™çsÇÌÇÍÇΩÇ»ÇÁ TRUE Çï‘ÇµÇ‹Ç∑ÅB
  *---------------------------------------------------------------------------*/
-BOOL FS_GetTitleBootContentPathFast(char* buf, u64 titleId);
+BOOL FS_GetTitleBootContentPathFast(char* buf, OSTitleId titleId);
 
 /*---------------------------------------------------------------------------*
   Name:         FS_ResolveSrl
@@ -60,7 +60,7 @@ BOOL FS_GetTitleBootContentPathFast(char* buf, u64 titleId);
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS_ResolveSrl( u64 titleId );
+BOOL FS_ResolveSrl( OSTitleId titleId );
 
 /*---------------------------------------------------------------------------*
   Name:         FS_ResolveSrlUnsecured
@@ -72,7 +72,7 @@ BOOL FS_ResolveSrl( u64 titleId );
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS_ResolveSrlUnsecured( u64 titleId );
+BOOL FS_ResolveSrlUnsecured( OSTitleId titleId );
 
 #ifdef __cplusplus
 } /* extern "C" */
