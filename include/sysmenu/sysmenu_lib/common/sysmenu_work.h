@@ -84,7 +84,6 @@ typedef struct SYSM_work {
 			vu32		isValidLauncherParam :1;			// リセットパラメータ有効
 			vu32		isValidTSD :1;					// NITRO設定データ無効フラグ
 			vu32		isLogoSkip :1;					// ロゴデモスキップ
-			vu32		isOnDebugger :1;				// デバッガ動作か？
 			vu32		isLoadSucceeded :1;				// アプリロード完了？
 			vu32		isCardBoot :1;					// カードブートか？
 			vu32		isBrokenHWNormalInfo :1;		// HWノーマル情報が破損している。
@@ -94,12 +93,13 @@ typedef struct SYSM_work {
 		}common;
         struct {
             vu16		isExistCard :1;					// 有効なNTR/TWLカードが存在するか？
+			vu32		isOnDebugger :1;				// デバッガ動作か？
 			vu16		isEnableHotSW :1;				// 活線挿抜有効？
 			vu16		isBusyHotSW :1;					// 活線挿抜処理中？
 			vu16		isCardLoadCompleted :1;			// カードからデータロード完了？
    			vu16		isValidCardBanner :1;			// バナーデータ更新？
 			vu16		is1stCardChecked :1;			// カードデータの1stチェック完了？
-            vu16		:10;
+            vu16		:0;
             vu8			isCardStateChanged;				// カード状態更新フラグ
         }hotsw;
 	}flags; // 7B

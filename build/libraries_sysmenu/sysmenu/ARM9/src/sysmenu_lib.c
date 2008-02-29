@@ -206,7 +206,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 	// 検査カード起動
 	//-----------------------------------------------------
 	if( SYSM_IsExistCard() ) {
-		if( ( SYSMi_GetWork()->flags.common.isOnDebugger &&		// ISデバッガが有効かつJTAGがまだ有効でない時
+		if( ( SYSMi_GetWork()->flags.hotsw.isOnDebugger &&		// ISデバッガが有効かつJTAGがまだ有効でない時
 			  !( *(u8 *)( HW_SYS_CONF_BUF + HWi_WSYS09_OFFSET ) & HWi_WSYS09_JTAG_CPUJE_MASK ) ) ||
 			SYSM_IsInspectCard() ||
 			( ( PAD_Read() & SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) ==

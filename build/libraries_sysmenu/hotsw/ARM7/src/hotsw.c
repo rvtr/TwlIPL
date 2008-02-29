@@ -1190,7 +1190,7 @@ static void McThread(void *arg)
 
                     	// デバッガ情報
 						MI_CpuCopy8( HOTSW_GetRomEmulationBuffer(), &SYSMi_GetWork()->romEmuInfo, ROM_EMULATION_DATA_SIZE );
-						SYSMi_GetWork()->flags.common.isOnDebugger = s_cbData.debuggerFlg;
+						SYSMi_GetWork()->flags.hotsw.isOnDebugger = s_cbData.debuggerFlg;
 
             			// カードデータロード完了フラグ
             			SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = TRUE;

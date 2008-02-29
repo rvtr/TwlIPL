@@ -53,7 +53,7 @@ BOOL SYSM_IsLogoDemoSkip( void )
 BOOL SYSMi_IsDebuggerBannerViewMode( void )
 {
 #ifdef __IS_DEBUGGER_BUILD
-	return ( SYSMi_GetWork()->flags.common.isOnDebugger &&
+	return ( SYSMi_GetWork()->flags.hotsw.isOnDebugger &&
 			 SYSMi_IsValidCard() &&
 			 SYSM_GetCardRomHeader()->dbgRomSize == 0 ) ? TRUE : FALSE;
 #else
