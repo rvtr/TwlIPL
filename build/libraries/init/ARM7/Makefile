@@ -12,8 +12,8 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
 SUBDIRS			=
@@ -29,9 +29,12 @@ TWL_NO_STD_PCHDR        = 	True
 # Avoid to build THUMB version object
 override TWL_CODEGEN	= 	ARM
 
-SRCS			= 	crt0_firm.c
+SRCDIR			=	. ../common
+SRCS			= 	crt0_firm.c \
+					crt0_jtag.c \
 
-TARGET_OBJ		= 	crt0_firm.o
+TARGET_OBJ		= 	crt0_firm.o \
+					crt0_jtag.o \
 
 MACRO_FLAGS		+=	-DSDK_NOINIT
 

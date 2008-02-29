@@ -12,9 +12,11 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
+
+FIRM_ONLY_JTAG = TRUE
 
 SUBDIRS		=
 
@@ -27,6 +29,9 @@ TARGET_BIN	=	firm_dev9.srl
 SRCS		=	main.c
 
 CRT0_O		=	crt0_firm.o
+ifdef FIRM_ONLY_JTAG
+CRT0_O		+=	crt0_jtag.o
+endif
 
 MAKEROM_ARM7		=	../ARM7/bin/$(TWL_BUILDTYPE_ARM7)/firm_dev7.tef
 MAKEROM_ARM7_BASE       =       $(basename $(MAKEROM_ARM7))

@@ -12,9 +12,11 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
+
+FIRM_ONLY_JTAG = TRUE
 
 TWL_PROC      = ARM7
 
@@ -26,10 +28,13 @@ LINCLUDES	=   ../include
 
 TARGET_BIN	=	firm_dev7.tef
 
-CRT0_O		=	crt0_firm.o
-
 SRCS		=	\
                 main.c \
+
+CRT0_O		=	crt0_firm.o
+ifdef FIRM_ONLY_JTAG
+CRT0_O		+=	crt0_jtag.o
+endif
 
 #SRCDIR		=	# using default
 #LCFILE		=	# using default
