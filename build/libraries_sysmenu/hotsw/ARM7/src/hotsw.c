@@ -447,8 +447,7 @@ static HotSwState LoadCardData(void)
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
             
             // ARM9常駐モジュールの先頭2KBの暗号化領域を複合化
-			state  = DecryptObjectFile();
-            retval = (retval == HOTSW_SUCCESS) ? state : retval;
+			(void)DecryptObjectFile();
 
 			// 認証コード読み込み＆ワーク領域にコピー
 			state  = CheckCardAuthCode();
@@ -512,6 +511,7 @@ static HotSwState LoadBannerData(void)
         SYSMi_GetWork()->flags.hotsw.isValidCardBanner  = FALSE;
         SYSMi_GetWork()->flags.hotsw.isExistCard 		= TRUE;
         SYSMi_GetWork()->flags.hotsw.isCardStateChanged = TRUE;
+        SYSMi_GetWork()->flags.hotsw.is1stCardChecked   = TRUE;
 
         return retval;
     }
@@ -519,8 +519,9 @@ static HotSwState LoadBannerData(void)
     // バナーリードが成功していたら各種フラグTRUE その他の場合はFALSE (この関数の外で排他制御されているからここでは排他制御しないでOK)
     state = (retval == HOTSW_SUCCESS) ? TRUE : FALSE;
     SYSMi_GetWork()->flags.hotsw.isValidCardBanner  = state;
-	SYSMi_GetWork()->flags.hotsw.isCardStateChanged = (u8)state;
-	SYSMi_GetWork()->flags.hotsw.isExistCard 		 = state;
+    SYSMi_GetWork()->flags.hotsw.isCardStateChanged = (u8)state;
+    SYSMi_GetWork()->flags.hotsw.isExistCard 		 = state;
+    SYSMi_GetWork()->flags.hotsw.is1stCardChecked   = TRUE;
 
 	return retval;
 }
