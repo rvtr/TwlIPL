@@ -93,7 +93,7 @@ typedef struct SYSM_work {
 		}common;
         struct {
             vu16		isExistCard :1;					// 有効なNTR/TWLカードが存在するか？
-			vu32		isOnDebugger :1;				// デバッガ動作か？
+			vu16		isOnDebugger :1;				// デバッガ動作か？
 			vu16		isEnableHotSW :1;				// 活線挿抜有効？
 			vu16		isBusyHotSW :1;					// 活線挿抜処理中？
 			vu16		isCardLoadCompleted :1;			// カードからデータロード完了？
