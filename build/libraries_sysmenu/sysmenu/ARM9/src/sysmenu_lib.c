@@ -218,6 +218,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 			s_bootTitle.flags.isLogoSkip = TRUE;					// ロゴデモを飛ばす
 			s_bootTitle.flags.bootType = LAUNCHER_BOOTTYPE_ROM;
 			s_bootTitle.flags.isValid = TRUE;
+			// [TODO] 現状ではROMヘッダがまだコピーされていない
 			s_bootTitle.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
 			SYSM_SetLogoDemoSkip( s_bootTitle.flags.isLogoSkip );
 			return &s_bootTitle;

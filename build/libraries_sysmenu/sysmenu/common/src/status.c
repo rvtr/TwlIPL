@@ -93,7 +93,7 @@ BOOL SYSM_IsExistCard( void )
 // 検査用カードが差さっているか？
 BOOL SYSM_IsInspectCard( void )
 {
-	return ( SYSM_IsExistCard() && SYSM_GetCardRomHeader()->inspect_card );
+	return ( SYSM_IsExistCard() && SYSMi_GetWork()->flags.hotsw.isInspectCard );
 }
 
 

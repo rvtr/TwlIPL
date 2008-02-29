@@ -498,30 +498,37 @@ static HotSwState LoadBannerData(void)
 {
     BOOL state;
 	HotSwState retval = HOTSW_SUCCESS;
-	
+
 	// バナーリード
 	if( s_cbData.pBootSegBuf->rh.s.banner_offset ) {
         retval  = s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
             									  			s_cbData.pBootSegBuf->rh.s.banner_offset,
 												  	 (u32 *)SYSM_CARD_BANNER_BUF,
 	                                              	 		sizeof(TWLBannerFile) );
+
+        // バナーリードが成功していたら各種フラグTRUE その他の場合はFALSE (この関数の外で排他制御されているからここでは排他制御しないでOK)
+        state = (retval == HOTSW_SUCCESS) ? TRUE : FALSE;
+        SYSMi_GetWork()->flags.hotsw.isValidCardBanner  = state;
+        SYSMi_GetWork()->flags.hotsw.isCardStateChanged = (u8)state;
+        SYSMi_GetWork()->flags.hotsw.isExistCard 		 = state;
 	}
     else{
         // バナーデータが登録されていない場合 (この関数の外で排他制御されているからここでは排他制御しないでOK)
         SYSMi_GetWork()->flags.hotsw.isValidCardBanner  = FALSE;
         SYSMi_GetWork()->flags.hotsw.isExistCard 		= TRUE;
         SYSMi_GetWork()->flags.hotsw.isCardStateChanged = TRUE;
-        SYSMi_GetWork()->flags.hotsw.is1stCardChecked   = TRUE;
-
-        return retval;
     }
 
-    // バナーリードが成功していたら各種フラグTRUE その他の場合はFALSE (この関数の外で排他制御されているからここでは排他制御しないでOK)
-    state = (retval == HOTSW_SUCCESS) ? TRUE : FALSE;
-    SYSMi_GetWork()->flags.hotsw.isValidCardBanner  = state;
-    SYSMi_GetWork()->flags.hotsw.isCardStateChanged = (u8)state;
-    SYSMi_GetWork()->flags.hotsw.isExistCard 		 = state;
-    SYSMi_GetWork()->flags.hotsw.is1stCardChecked   = TRUE;
+    if ( SYSMi_GetWork()->flags.hotsw.isExistCard )
+    {
+        SYSMi_GetWork()->flags.hotsw.isInspectCard = ((ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BAK)->inspect_card;
+    }
+    else
+    {
+        SYSMi_GetWork()->flags.hotsw.isInspectCard = FALSE;
+    }
+
+//    SYSMi_GetWork()->flags.hotsw.is1stCardChecked   = TRUE;
 
 	return retval;
 }
