@@ -76,6 +76,82 @@ BOOL SYSMi_ReadCardBannerFile( u32 bannerOffset, TWLBannerFile *pBanner )
 */
 }
 
+// NANDアプリバナーリード
+BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, TWLBannerFile *pDst )
+{
+#define PATH_LENGTH		1024
+	OSTick start;
+	FSFile  file[1];
+	BOOL bSuccess;
+	char path[PATH_LENGTH];
+	s32 readLen;
+	s32 offset;
+	
+	//[TODO:]サブバナーが保存されている場合、そちらを使う
+	
+	start = OS_GetTick();
+	readLen = NAM_GetTitleBootContentPathFast( path, titleID );
+	OS_TPrintf( "NAM_GetTitleBootContentPath : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+	
+	// ファイルパスを取得
+	if(readLen != NAM_OK){
+		OS_TPrintf("NAM_GetTitleBootContentPath failed %lld,%d\n", titleID, readLen );
+		return FALSE;
+	}
+	
+	// ファイルオープン
+	bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
+	if( ! bSuccess )
+	{
+		OS_TPrintf("SYSM_GetNandTitleList failed: cant open file %s\n",path);
+		return FALSE;
+	}
+	
+	// ROMヘッダのバナーデータオフセットを読み込む
+	bSuccess = FS_SeekFile(file, 0x68, FS_SEEK_SET);
+	if( ! bSuccess )
+	{
+		OS_TPrintf("SYSM_GetNandTitleList failed: cant seek file(0)\n");
+		FS_CloseFile(file);
+		return FALSE;
+	}
+	readLen = FS_ReadFile(file, &offset, sizeof(offset));
+	if( readLen != sizeof(offset) )
+	{
+		OS_TPrintf("SYSM_GetNandTitleList failed: cant read file\n");
+		FS_CloseFile(file);
+		return FALSE;
+	}
+	
+	// バナーが存在する場合のみリード
+	if( offset ) {
+		bSuccess = FS_SeekFile(file, offset, FS_SEEK_SET);
+		if( ! bSuccess )
+		{
+			OS_TPrintf("SYSM_GetNandTitleList failed: cant seek file(offset)\n");
+			FS_CloseFile(file);
+			return FALSE;
+		}
+		readLen = FS_ReadFile( file, pDst, (s32)sizeof(TWLBannerFile) );
+		if( readLen != (s32)sizeof(TWLBannerFile) )
+		{
+			OS_TPrintf("SYSM_GetNandTitleList failed: cant read file2\n");
+			FS_CloseFile(file);
+			return FALSE;
+		}
+		if( !SYSMi_CheckBannerFile( pDst ) )
+		{
+			// 正当性チェック失敗の場合はバッファクリア
+			MI_CpuClearFast( pDst, sizeof(TWLBannerFile) );
+		}
+	}else {
+		// バナーが存在しない場合はバッファクリア
+		MI_CpuClearFast( pDst, sizeof(TWLBannerFile) );
+	}
+	
+	FS_CloseFile(file);
+	return TRUE;
+}
 
 	// バナーデータの正誤チェック
 static BOOL SYSMi_CheckBannerFile( TWLBannerFile *pBanner )

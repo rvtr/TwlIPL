@@ -63,6 +63,9 @@ void SYSMi_CheckRTC( void );
 // カードバナーリード（※NTR-IPL2仕様）
 BOOL SYSMi_ReadCardBannerFile( u32 bannerOffset, TWLBannerFile *pBanner );
 
+// NANDアプリバナーリード
+BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, TWLBannerFile *pDst );
+
 //-------------------------------------------------------
 // 活線挿抜
 //-------------------------------------------------------

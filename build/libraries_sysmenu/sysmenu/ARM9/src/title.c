@@ -51,7 +51,6 @@ typedef	struct	MbAuthCode
 extern const u8 g_devPubKey[ 3 ][ 0x80 ];
 
 // function's prototype-------------------------------------------------------
-static BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, u8 *pDst );
 static s32  ReadFile( FSFile* pf, void* buffer, s32 size );
 static void SYSMi_EnableHotSW( BOOL enable );
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle );
@@ -218,7 +217,7 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 		// "Not Launch"でない　かつ　"Data Only"でない　なら有効なタイトルとしてリストに追加
 		if( ( pTitleIDList[ l ] & ( TITLE_ID_NOT_LAUNCH_FLAG_MASK | TITLE_ID_DATA_ONLY_FLAG_MASK ) ) == 0 ) {
 			titleIDArray[ validNum ] = pTitleIDList[ l ];
-			SYSMi_ReadBanner_NAND( pTitleIDList[ l ], (u8 *)&s_bannerBuf[ validNum ] );
+			SYSMi_ReadBanner_NAND( pTitleIDList[ l ], &s_bannerBuf[ validNum ] );
 			validNum++;
 		}
 	}
@@ -246,76 +245,6 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 	// return : *TitleProperty Array
 	return listNum;
 }
-
-static BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, u8 *pDst )
-{
-#define PATH_LENGTH		1024
-	OSTick start;
-	FSFile  file[1];
-	BOOL bSuccess;
-	char path[PATH_LENGTH];
-	s32 readLen;
-	s32 offset;
-	
-	start = OS_GetTick();
-	readLen = NAM_GetTitleBootContentPathFast( path, titleID );
-	OS_TPrintf( "NAM_GetTitleBootContentPath : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
-	
-	// ファイルパスを取得
-	if(readLen != NAM_OK){
-		OS_TPrintf("NAM_GetTitleBootContentPath failed %lld,%d\n", titleID, readLen );
-		return FALSE;
-	}
-	
-	// ファイルオープン
-	bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
-	if( ! bSuccess )
-	{
-		OS_TPrintf("SYSM_GetNandTitleList failed: cant open file %s\n",path);
-		return FALSE;
-	}
-	
-	// ROMヘッダのバナーデータオフセットを読み込む
-	bSuccess = FS_SeekFile(file, 0x68, FS_SEEK_SET);
-	if( ! bSuccess )
-	{
-		OS_TPrintf("SYSM_GetNandTitleList failed: cant seek file(0)\n");
-		FS_CloseFile(file);
-		return FALSE;
-	}
-	readLen = FS_ReadFile(file, &offset, sizeof(offset));
-	if( readLen != sizeof(offset) )
-	{
-		OS_TPrintf("SYSM_GetNandTitleList failed: cant read file\n");
-		FS_CloseFile(file);
-		return FALSE;
-	}
-	
-	// バナーが存在する場合のみリード
-	if( offset ) {
-		bSuccess = FS_SeekFile(file, offset, FS_SEEK_SET);
-		if( ! bSuccess )
-		{
-			OS_TPrintf("SYSM_GetNandTitleList failed: cant seek file(offset)\n");
-			FS_CloseFile(file);
-			return FALSE;
-		}
-		readLen = ReadFile( file, pDst, (s32)sizeof(TWLBannerFile) );
-		if( readLen != (s32)sizeof(TWLBannerFile) )
-		{
-			OS_TPrintf("SYSM_GetNandTitleList failed: cant read file2\n");
-			FS_CloseFile(file);
-			return FALSE;
-		}
-	}else {
-		// バナーが存在しない場合はバッファクリア
-		MI_CpuClearFast( pDst, sizeof(TWLBannerFile) );
-	}
-	
-	FS_CloseFile(file);
-	return TRUE;
-}
-
 
 // 指定ファイルリード
 static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
