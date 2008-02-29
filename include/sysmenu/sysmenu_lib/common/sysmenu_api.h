@@ -72,6 +72,8 @@ typedef enum AuthResult {
 
 // global variable------------------------------------------------------
 #ifdef SDK_ARM9
+extern const char *g_strIPLSvnRevision;
+extern const char *g_strSDKSvnRevision;
 extern void *SYSM_Alloc( u32 size );
 extern void SYSM_Free( void *ptr );
 //extern void *(*SYSM_Alloc)( u32 size );			// ライブラリ内部使用

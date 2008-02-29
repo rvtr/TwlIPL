@@ -396,7 +396,9 @@ void LauncherInit( TitleProperty *pTitleList )
 	GX_LoadBG2Scr(bg_scr_data2, 0, sizeof(bg_scr_data2));
 			
 	DrawBackLightSwitch();
-	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "TWL-SYSTEM MENU ver.%06x", SYSMENU_VER );
+	PutStringUTF16(   0,  0, TXT_COLOR_BLUE, L"TWL-SYSTEM MENU" );
+	PrintfSJIS( 128,  0, TXT_COLOR_BLUE, "IPL:%s", g_strIPLSvnRevision );
+	PrintfSJIS( 128, 12, TXT_COLOR_BLUE, "SDK:%s", g_strSDKSvnRevision );
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	

@@ -163,7 +163,7 @@ void MachineSettingInit( void )
 	GX_LoadBG1Char(bg_char_data, 0, sizeof(bg_char_data));
 	GX_LoadBG1Scr(bg_scr_data, 0, sizeof(bg_scr_data));
 	
-	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"MACHINE SETTINGS" );
+	PrintfSJIS( 0, 0, TXT_COLOR_BLUE, "MACHINE SETTINGS  IPL:%s SDK:%s", g_strIPLSvnRevision, g_strSDKSvnRevision );
 	
 	// NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
 	for( i = 0; i < SETTING_MENU_ELEMENT_NUM; i++ ) {

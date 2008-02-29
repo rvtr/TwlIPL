@@ -26,6 +26,8 @@ TARGET_PLATFORM	=	TWL
 TWL_ARCHGEN		=	LIMITED
 TWL_PROC	   	=	ARM9
 
+REVISION_SRC	=	src/revision.c
+
 SRCS			=	sysmenu_lib.c \
 					util.c \
 					ninLogoFunc.c \
@@ -35,7 +37,8 @@ SRCS			=	sysmenu_lib.c \
 					title.c \
 					banner.c \
 					../common/src/status.c \
-					../common/src/pxi.c
+					../common/src/pxi.c \
+					$(REVISION_SRC)
 
 
 TARGET_LIB		=	libsysmenu$(TWL_LIBSUFFIX).a
@@ -49,11 +52,27 @@ LINCLUDES		=	$(ROOT)/build/libraries/mb/common/include	\
 					$(ROOT)/build/libraries/spi/ARM9/include	\
 					$(SYSMENU_ROOT)/build/libraries_sysmenu/sysmenu/common/include
 
+LDIRT_CLEAN		=	$(REVISION_SRC)
+
 #----------------------------------------------------------------------------
 
-do-build: $(MYSUBDIRS) $(TARGETS)
+do-build: $(REVISION_SRC) $(MYSUBDIRS) $(TARGETS)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+
+
+#SVNƒŠƒrƒWƒ‡ƒ“–„‚ßž‚Ý
+$(REVISION_SRC) ::
+	@if test -e $(SYSMENU_ROOT)/.svn; then \
+		svn info $(SYSMENU_ROOT) | grep 'Revision' | sed "s|Revision: \(.*\)|const char *g_strIPLSvnRevision = \"\1\";|" > $(REVISION_SRC); \
+	else \
+		echo "const char *g_strIPLSvnRevision = \"-\"" > $(REVISION_SRC); \
+	fi
+	@if test -e $(ROOT)/.svn; then \
+		svn info $(ROOT) | grep 'Revision' | sed "s|Revision: \(.*\)|const char *g_strSDKSvnRevision = \"\1\";|" >> $(REVISION_SRC); \
+	else \
+		echo "const char *g_strSDKSvnRevision = \"-\"" >> $(REVISION_SRC); \
+	fi
 
 
 $(MYSUBDIRS)::
