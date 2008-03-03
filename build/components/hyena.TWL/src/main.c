@@ -41,6 +41,9 @@
 #include    "nvram_sp.h"
 #include    "pm_pmic.h"
 #include    "internal_api.h"
+#ifdef SDK_SEA
+#include    <twl/sea.h>
+#endif  // ifdef SDK_SEA
 
 /*---------------------------------------------------------------------------*
     ’è”’è‹`
@@ -173,6 +176,9 @@ TwlSpMain(void)
         InitializeNwm();      // NWM ‰Šú‰»
 #ifndef SDK_NOCRYPTO
         AES_Init();           // AES ‰Šú‰»
+#ifdef SDK_SEA
+        SEA_Init();
+#endif  // ifdef SDK_SEA
 #endif
         MCU_InitIrq(THREAD_PRIO_MCU);  // MCU ‰Šú‰»
     }
