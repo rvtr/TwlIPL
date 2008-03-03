@@ -26,6 +26,9 @@
 #include    <twl/aes.h>
 #include    "kami_pxi.h"
 #include    "formatter.h"
+#ifdef SDK_SEA
+#include    <twl/sea.h>
+#endif  // ifdef SDK_SEA
 
 /* Priorities of each threads */
 #define THREAD_PRIO_SPI     2
@@ -105,6 +108,9 @@ void TwlSpMain(void)
         //InitializeNwm();      // NWM èâä˙âª
 #ifndef SDK_NOCRYPTO
         AES_Init();           // AES èâä˙âª
+#ifdef SDK_SEA
+        SEA_Init();
+#endif  // ifdef SDK_SEA
 #endif
     }
 
