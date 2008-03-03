@@ -33,6 +33,11 @@ typedef enum HotSwMessageType{
     HOTSW_CONTROL
 } HotSwMessageType;
 
+typedef enum ModeType{
+	HOTSW_MODE1,
+    HOTSW_MODE2
+} ModeType;
+
 // union  -------------------------------------------------------------------
 // PXI用メッセージ
 typedef union HotSwPxiMessage{
@@ -67,7 +72,7 @@ BOOL HOTSW_IsCardAccessible(void);
 void HOTSW_SetBootSegmentBuffer(void* buf, u32 size);
 
 // Secure Segment バッファの指定
-void HOTSW_SetSecureSegmentBuffer(void* buf, u32 size);
+void HOTSW_SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size);
 
 // Romエミュレーション情報を格納しているバッファのポインタを返す
 #ifdef SDK_ARM7

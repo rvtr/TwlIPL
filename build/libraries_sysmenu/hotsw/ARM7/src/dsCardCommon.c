@@ -9,6 +9,10 @@
 #include	<customNDma.h>
 
 // define -------------------------------------------------------------------
+#define		SECURE_SEGMENT_NUM					4
+#define		ONE_SEGMENT_PAGE_NUM				8
+#define		COMMAND_DECRYPTION_WAIT				25 		// 25ms
+
 #define		ROM_EMULATION_START_OFS				0x160
 #define		ROM_EMULATION_END_OFS				0x180
 
@@ -47,6 +51,91 @@ HotSwState ReadIDNormal(CardBootData *cbd)
 
     return HOTSW_SUCCESS;
 }
+
+
+/*---------------------------------------------------------------------------*
+ * Name:         ReadBootSegNormal
+ * 
+ * Description:  Type1のノーマルモードのBoot Segment読み込み
+ *
+ * CT=240ns  Latency1=0x1fff  Latency2=0x3f  Pagecount=8page
+ *---------------------------------------------------------------------------*/
+HotSwState ReadBootSegNormal(CardBootData *cbd)
+{
+	u32 		i, loop, pc, size;
+    u32 		*dst = cbd->pBootSegBuf->word;
+    u32			temp;
+    u64 		page = 0;
+    GCDCmd64 	cndLE, cndBE;
+
+    if(cbd->cardType == DS_CARD_TYPE_1){
+    	loop = 0x1UL;
+    	pc   = 0x4UL;
+    	size = BOOT_SEGMENT_SIZE;
+    }
+    else{
+    	loop = ONE_SEGMENT_PAGE_NUM;
+    	pc   = 0x1UL;
+    	size = PAGE_SIZE;
+    }
+
+    // secure2モード移行の為、Boot Segmentを1ページ分読み込む。データは捨てバッファに格納
+    if(cbd->modeType == HOTSW_MODE2){
+    	loop = 0x1UL;
+    	pc   = 0x1UL;
+    	size = PAGE_SIZE;
+    }
+    
+    for(i=0; i<loop; i++){
+    	if(!HOTSW_IsCardAccessible()){
+			return HOTSW_PULLED_OUT_ERROR;
+    	}
+        
+        // ゼロクリア
+		MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
+        
+    	// リトルエンディアンで作って
+		cndLE.dw  = 0x0  << 24;
+		cndLE.dw |= page << 33;
+
+    	// ビックエンディアンにする
+		cndBE.b[0] = cndLE.b[7];
+		cndBE.b[1] = cndLE.b[6];
+		cndBE.b[2] = cndLE.b[5];
+		cndBE.b[3] = cndLE.b[4];
+		cndBE.b[4] = cndLE.b[3];
+		cndBE.b[5] = cndLE.b[2];
+		cndBE.b[6] = cndLE.b[1];
+		cndBE.b[7] = cndLE.b[0];
+    
+		// MCCMD レジスタ設定
+    	reg_HOTSW_MCCMD0 = *(u32 *)cndBE.b;
+		reg_HOTSW_MCCMD1 = *(u32 *)&cndBE.b[4];
+
+        if(cbd->modeType == HOTSW_MODE1){
+			// NewDMA転送の準備
+        	HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, dst + (u32)(PAGE_WORD_SIZE*i), size );
+        
+			// MCCNT1 レジスタ設定
+			reg_HOTSW_MCCNT1 = START_MASK | CT_MASK | PC_MASK & (pc << PC_SHIFT) | LATENCY2_MASK | LATENCY1_MASK;
+
+			// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+			OS_SleepThread(NULL);
+        }
+        else{
+			// Mode2のときは、データを捨てる。
+			while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+				while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
+            	temp = reg_HOTSW_MCD1;
+			}
+        }
+
+        page++;
+    }
+
+    return HOTSW_SUCCESS;
+}
+
 
 /*---------------------------------------------------------------------------*
  * Name:         ChangeModeNormal
@@ -167,6 +256,343 @@ HotSwState ReadRomEmulationData(CardBootData *cbd)
 
     return HOTSW_SUCCESS;
 }
+
+
+// ■--------------------------------------■
+// ■       セキュアモードのコマンド       ■
+// ■--------------------------------------■
+/*---------------------------------------------------------------------------*
+  Name:         SetSecureCommand
+  
+  Description:  
+ *---------------------------------------------------------------------------*/
+static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
+{
+	GCDCmd64 cndLE, cndBE;
+    u64 data;
+
+    // ゼロクリア
+	MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
+	data = (type == S_PNG_ON) ? (u64)cbd->vd : (u64)cbd->vae;
+    
+    cndLE.dw  = cbd->vbi;
+    cndLE.dw |= data << 20;
+    
+    // comannd0部分
+	switch(type){
+      case S_RD_ID:
+        cndLE.dw |= 0x1000000000000000;
+        break;
+        
+      case S_PNG_ON:
+        cndLE.dw |= 0x4000000000000000;
+        break;
+
+      case S_PNG_OFF:
+        cndLE.dw |= 0x6000000000000000;
+        break;
+
+      case S_CHG_MODE:
+        cndLE.dw |= 0xa000000000000000;
+        break;
+    }
+
+    if(!cbd->debuggerFlg){
+    	// コマンドの暗号化
+		EncryptByBlowfish( &cbd->keyTable, (u32*)&cndLE.b[4], (u32*)cndLE.b );
+    }
+    
+    // ビッグエンディアンに直す(暗号化後)
+	cndBE.b[7] = cndLE.b[0];
+	cndBE.b[6] = cndLE.b[1];
+    cndBE.b[5] = cndLE.b[2];
+    cndBE.b[4] = cndLE.b[3];
+    cndBE.b[3] = cndLE.b[4];
+    cndBE.b[2] = cndLE.b[5];
+    cndBE.b[1] = cndLE.b[6];
+    cndBE.b[0] = cndLE.b[7];
+
+    // MCCMD レジスタ設定
+	reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
+	reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
+}
+
+
+/*---------------------------------------------------------------------------*
+ * Name:         ReadIDSecure
+ * 
+ * Description:
+ *
+ * CT=240ns  Latency1=0x8f8+0x18  Latency2=0  Pagecount=Status
+ *---------------------------------------------------------------------------*/
+HotSwState ReadIDSecure(CardBootData *cbd)
+{
+	u32 scrambleMask;
+    
+    if(!HOTSW_IsCardAccessible()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+
+    // スクランブルの設定
+    scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
+    
+    // コマンド作成・設定
+	SetSecureCommand(S_RD_ID, cbd);
+
+    // ★ 3DM対応
+    if(cbd->cardType == DS_CARD_TYPE_2){
+		// MCCNT1 レジスタ設定
+		reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
+
+		// 25ms待ち
+    	OS_Sleep(COMMAND_DECRYPTION_WAIT);
+    }
+    // ★ MROM対応
+    else{
+		scrambleMask |= TRM_MASK;
+    }
+    
+	// NewDMA転送の準備
+    HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_scr, sizeof(cbd->id_scr) );
+    
+	// MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x7 << PC_SHIFT) | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
+
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
+
+    // コマンドカウンタインクリメント
+	cbd->vbi++;
+
+    return HOTSW_SUCCESS;
+}
+
+/*---------------------------------------------------------------------------*
+ * Name:         ReadSegSecure
+ * 
+ * Description:
+ *---------------------------------------------------------------------------*/
+HotSwState ReadSegSecure(CardBootData *cbd)
+{
+    u32 		scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
+	u32			*buf = (cbd->modeType == HOTSW_MODE1) ? cbd->pSecureSegBuf : cbd->pSecure2SegBuf;
+    u32			loop, pc, size, interval, i, j=0, k;
+	u64			segNum = 4;
+    u64			vae	= cbd->vae;
+    GCDCmd64 	cndLE, cndBE;
+
+    if(cbd->cardType == DS_CARD_TYPE_1){
+    	loop	 = 0x1UL;
+    	pc   	 = 0x4UL;
+    	size 	 = ONE_SEGMENT_SIZE;
+        interval = ONE_SEGMENT_WORD_SIZE;
+    }
+    else{
+    	loop 	 = ONE_SEGMENT_PAGE_NUM;
+    	pc   	 = 0x1UL;
+    	size 	 = PAGE_SIZE;
+        interval = PAGE_WORD_SIZE;
+    }
+    
+    for(i=0; i<SECURE_SEGMENT_NUM; i++){
+		if(!HOTSW_IsCardAccessible()){
+			return HOTSW_PULLED_OUT_ERROR;
+    	}
+        
+		MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
+        
+	    cndLE.dw  = cbd->vbi;
+	    cndLE.dw |= vae << 20;
+		cndLE.dw |= segNum << 44;
+	    cndLE.dw |= 0x2000000000000000;
+        
+	    // コマンドの暗号化
+		EncryptByBlowfish( &cbd->keyTable, (u32*)&cndLE.b[4], (u32*)cndLE.b );
+
+	    // ビッグエンディアンに直す(暗号化後)
+		cndBE.b[7] = cndLE.b[0];
+		cndBE.b[6] = cndLE.b[1];
+    	cndBE.b[5] = cndLE.b[2];
+    	cndBE.b[4] = cndLE.b[3];
+    	cndBE.b[3] = cndLE.b[4];
+   		cndBE.b[2] = cndLE.b[5];
+    	cndBE.b[1] = cndLE.b[6];
+    	cndBE.b[0] = cndLE.b[7];
+
+    	// MCCMD レジスタ設定
+		reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
+		reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
+
+        if(cbd->cardType == DS_CARD_TYPE_2){
+			// MCCNT1 レジスタ設定
+			reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
+        
+	    	// 25ms待ち
+    		OS_Sleep(COMMAND_DECRYPTION_WAIT);
+        }
+		else{
+			// MROM対応
+			scrambleMask |= TRM_MASK;
+		}
+
+        for(k=0; k<loop; k++){
+			// NewDMA転送の準備
+		    HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, buf + (interval*j), size );
+
+			// MCCNT1 レジスタ設定
+			reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (pc << PC_SHIFT) | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
+
+    		// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    		OS_SleepThread(NULL);
+
+            // 転送済みページ数
+            j++;
+        }
+        
+        // 読み込みセグメント番号インクリメント
+		segNum++;
+        
+    	// コマンドカウンタインクリメント
+		cbd->vbi++;
+    }
+
+    return HOTSW_SUCCESS;
+}
+
+/*---------------------------------------------------------------------------*
+ * Name:         SwitchONPNGSecure
+ * 
+ * Description:
+ *---------------------------------------------------------------------------*/
+HotSwState SwitchONPNGSecure(CardBootData *cbd)
+{
+	u32 scrambleMask;
+    
+    if(!HOTSW_IsCardExist()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+
+    // スクランブルの設定
+    scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
+    
+    // コマンド作成・設定
+	SetSecureCommand(S_PNG_ON, cbd);
+
+    // ★ 3DM対応
+    if(cbd->cardType == DS_CARD_TYPE_2){
+		// MCCNT1 レジスタ設定
+		reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
+
+		// 25ms待ち
+    	OS_Sleep(COMMAND_DECRYPTION_WAIT);
+    }
+    // ★ MROM対応
+    else{
+		scrambleMask |= TRM_MASK;
+    }
+
+	// MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param | (cbd->secureLatency & LATENCY1_MASK);
+    
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
+
+    // コマンドカウンタインクリメント
+	cbd->vbi++;
+
+    return HOTSW_SUCCESS;
+}
+
+/*---------------------------------------------------------------------------*
+ * Name:         SwitchOFFPNGSecure
+ * 
+ * Description:
+ *---------------------------------------------------------------------------*/
+HotSwState SwitchOFFPNGSecure(CardBootData *cbd)
+{
+	u32 scrambleMask;
+    
+    if(!HOTSW_IsCardExist()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+
+    // スクランブルの設定
+    scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
+    
+    // コマンド作成・設定
+	SetSecureCommand(S_PNG_OFF, cbd);
+
+    // ★ 3DM対応
+    if(cbd->cardType == DS_CARD_TYPE_2){
+		// MCCNT1 レジスタ設定
+		reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
+
+		// 25ms待ち
+    	OS_Sleep(COMMAND_DECRYPTION_WAIT);
+    }
+    // ★ MROM対応
+    else{
+		scrambleMask |= TRM_MASK;
+    }
+
+	// MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param | (cbd->secureLatency & LATENCY1_MASK);
+    
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
+
+    // コマンドカウンタインクリメント
+	cbd->vbi++;
+
+    return HOTSW_SUCCESS;
+}
+
+/*---------------------------------------------------------------------------*
+ * Name:         ChangeModeSecure
+ * 
+ * Description:
+ *
+ * CT=240ns  Latency1=0x8f8+0x18  Latency2=0  Pagecount=0page
+ *---------------------------------------------------------------------------*/
+HotSwState ChangeModeSecure(CardBootData *cbd)
+{
+	u32 scrambleMask;
+    
+    if(!HOTSW_IsCardAccessible()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+
+    // スクランブルの設定
+    scrambleMask = cbd->debuggerFlg ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
+    
+    // コマンド作成・設定
+	SetSecureCommand(S_CHG_MODE, cbd);
+
+    // ★ 3DM対応
+    if(cbd->cardType == DS_CARD_TYPE_2){
+			// MCCNT1 レジスタ設定
+		reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
+    	
+    	// 25ms待ち
+		OS_Sleep(COMMAND_DECRYPTION_WAIT);
+    }
+    // ★ MROM対応
+    else{
+		scrambleMask |= TRM_MASK;
+    }
+
+	// MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param | (cbd->secureLatency & LATENCY1_MASK);
+    
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
+
+    // コマンドカウンタインクリメント
+	cbd->vbi++;
+
+    return HOTSW_SUCCESS;
+}
+
 
 // ■------------------------------------■
 // ■       ゲームモードのコマンド       ■

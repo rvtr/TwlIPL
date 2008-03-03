@@ -230,6 +230,7 @@ typedef struct CardBootData{
 
     u32                 id_nml;
     u32                 id_scr;
+    u32                 id_scr2;
     u32                 id_gam;
 
     u32                 arm9StcSize;
@@ -249,12 +250,14 @@ typedef struct CardBootData{
     u32                 keyBuf[KEY_BUF_SIZE];
 
     CardTypeEx          cardType;
+   	ModeType			modeType;
     u32                 secureLatency;
     u32                 gameCommondParam;
 
     BootSegmentData     *pBootSegBuf;
     u32                 *pSecureSegBuf;
-
+	u32                 *pSecure2SegBuf;
+    
     BLOWFISH_CTX        keyTable;
 } CardBootData;
 

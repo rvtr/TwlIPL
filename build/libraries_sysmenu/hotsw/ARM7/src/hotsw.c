@@ -17,8 +17,6 @@
 #include 	<hotswTypes.h>
 #include	<blowfish.h>
 #include	<dsCardCommon.h>
-#include	<dsCardType1.h>
-#include	<dsCardType2.h>
 #include	<romEmulation.h>
 #include	<customNDma.h>
 #include 	<../build/libraries/mb/common/include/mb_fileinfo.h>
@@ -117,16 +115,17 @@ static void ShowRomHeaderData(void);
 static void DebugPrintErrorMessage(HotSwState state);
 
 // Static Values ------------------------------------------------------------
-static char 				*encrypt_object_key ATTRIBUTE_ALIGN(4) = "encryObj";
-static char					*rom_emu_info ATTRIBUTE_ALIGN(4)	   = "TWLD";
+static char 				encrypt_object_key[] ATTRIBUTE_ALIGN(4) = "encryObj";
+static char					rom_emu_info[] ATTRIBUTE_ALIGN(4)	    = "TWLD";
 
 static u16					s_RscLockID;
 static u16					s_CardLockID;
 
-static u32					s_SecureSegBufSize, s_BootSegBufSize;
+static u32					s_BootSegBufSize, s_SecureSegBufSize, s_Secure2SegBufSize;
 
-static u32					*s_pSecureSegBuffer;	// カード抜けてもバッファの場所覚えとく
 static BootSegmentData		*s_pBootSegBuffer;		// カード抜けてもバッファの場所覚えとく
+static u32					*s_pSecureSegBuffer;	// カード抜けてもバッファの場所覚えとく
+static u32					*s_pSecure2SegBuffer;	// カード抜けてもバッファの場所覚えとく
 
 static CardBootData			s_cbData;
 static CardThreadData		s_ctData;
@@ -156,19 +155,19 @@ static u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = {
 
 static CardBootFunction  	s_funcTable[] = {
 	// DS Card Type 1
-    {					   ReadBootSegNormal_DSType1, ChangeModeNormal,										// Normalモード関数
-     ReadIDSecure_DSType1, ReadSegSecure_DSType1, 	  SwitchONPNGSecure_DSType1, ChangeModeSecure_DSType1,	// Secureモード関数
-     ReadIDGame,           ReadPageGame},																	// Game  モード関数
+    {				ReadBootSegNormal, 	ChangeModeNormal,						// Normalモード関数
+     ReadIDSecure, 	ReadSegSecure, 	  	SwitchONPNGSecure, ChangeModeSecure,	// Secureモード関数
+     ReadIDGame,    ReadPageGame},												// Game  モード関数
 	// DS Card Type 2
-    {					   ReadBootSegNormal_DSType2, ChangeModeNormal,										// Normalモード関数
-     ReadIDSecure_DSType2, ReadSegSecure_DSType2, 	  SwitchONPNGSecure_DSType2, ChangeModeSecure_DSType2,	// Secureモード関数
-     ReadIDGame,           ReadPageGame},																	// Game  モード関数
+    {				ReadBootSegNormal, 	ChangeModeNormal,						// Normalモード関数
+     ReadIDSecure, 	ReadSegSecure, 	  	SwitchONPNGSecure, ChangeModeSecure,	// Secureモード関数
+     ReadIDGame,    ReadPageGame},												// Game  モード関数
 	// TWL Card Type 1
-    {					   ReadBootSegNormal_DSType2, ChangeModeNormal,										// Normalモード関数
-     ReadIDSecure_DSType2, ReadSegSecure_DSType2, 	  SwitchONPNGSecure_DSType2, ChangeModeSecure_DSType2,	// Secureモード関数
-     ReadIDGame,           ReadPageGame},																	// Game  モード関数
+    {				ReadBootSegNormal, 	ChangeModeNormal,						// Normalモード関数
+     ReadIDSecure, 	ReadSegSecure, 	  	SwitchONPNGSecure, ChangeModeSecure,	// Secureモード関数
+     ReadIDGame,    ReadPageGame},												// Game  モード関数
 	// RomEmulation
-    {					   ReadBootSegNormal_DSType2, ChangeModeNormal,										// Normalモード関数
+    {					   ReadBootSegNormal, 		  ChangeModeNormal,										// Normalモード関数
      ReadIDSecure_ROMEMU,  ReadSegSecure_ROMEMU, 	  SwitchONPNGSecure_ROMEMU,  ChangeModeSecure_ROMEMU,	// Secureモード関数
      ReadIDGame,           ReadPageGame},																	// Game  モード関数
 };
@@ -250,9 +249,12 @@ void HOTSW_Init(void)
     // Boot Segment バッファの設定
 	HOTSW_SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );
 
-    // Secure Segment バッファの設定
-    HOTSW_SetSecureSegmentBuffer((void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
+    // Secure1 Segment バッファの設定
+    HOTSW_SetSecureSegmentBuffer(HOTSW_MODE1, (void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
 
+    // Secure2 Segment バッファの設定
+    HOTSW_SetSecureSegmentBuffer(HOTSW_MODE2, (void *)SYSM_CARD_TWL_SECURE_BUF, SECURE_AREA_SIZE );
+    
     // カードが挿さってあったらスレッドを起動する
 	if(HOTSW_IsCardExist()){
 		// メッセージ送信
@@ -273,8 +275,6 @@ void HOTSW_Init(void)
  *
  * ※BootSegmentBuffer SecureSegmentBufferの設定を行ってから
  *   この関数を呼んでください。
- *
- * [TODO:]カードのロックを見直し。InitでロックIDをがめておいて使うのでもOK
  * ----------------------------------------------------------------- */
 static HotSwState LoadCardData(void)
 {
@@ -305,7 +305,7 @@ static HotSwState LoadCardData(void)
     s_cbData.pSecureSegBuf = s_pSecureSegBuffer;
 
     // ブート処理開始
-	if(HOTSW_IsCardAccessible()){
+	if(HOTSW_IsCardExist()){
 		// カード側でKey Tableをロードする
         state  = LoadTable();
         retval = (retval == HOTSW_SUCCESS) ? state : retval;
@@ -708,17 +708,28 @@ void HOTSW_SetBootSegmentBuffer(void* buf, u32 size)
  * 
  * 注：カードブート処理中は呼び出さないようにする
  * ----------------------------------------------------------------- */
-void HOTSW_SetSecureSegmentBuffer(void* buf, u32 size)
+void HOTSW_SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size)
 {
     SDK_ASSERT(size > SECURE_SEGMENT_SIZE);
-    
-	s_pSecureSegBuffer = (u32 *)buf;
-	s_SecureSegBufSize = size;
 
-	s_cbData.pSecureSegBuf = s_pSecureSegBuffer;
+    if(type == HOTSW_MODE1){
+		s_pSecureSegBuffer = (u32 *)buf;
+		s_SecureSegBufSize = size;
+
+		s_cbData.pSecureSegBuf = s_pSecureSegBuffer;
     
-    // バッファの初期化
-    MI_CpuClear8(s_pSecureSegBuffer, size);
+    	// バッファの初期化
+    	MI_CpuClear8(s_pSecureSegBuffer, size);
+    }
+    else{
+		s_pSecure2SegBuffer = (u32 *)buf;
+		s_Secure2SegBufSize = size;
+
+		s_cbData.pSecure2SegBuf = s_pSecure2SegBuffer;
+    
+    	// バッファの初期化
+    	MI_CpuClear8(s_pSecure2SegBuffer, size);
+    }
 }
 
 /* -----------------------------------------------------------------

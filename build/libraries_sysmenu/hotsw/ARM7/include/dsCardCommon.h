@@ -19,6 +19,9 @@ extern "C" {
 //	DSカードのノーマルモードのID読み込み
 HotSwState ReadIDNormal(CardBootData *cbd);
 
+//	DSカードのノーマルモードのBoot Segment(4Kbyte)読み込み
+HotSwState ReadBootSegNormal(CardBootData *cbd);
+
 //	DSカードType1のノーマルモードのモード変更
 HotSwState ChangeModeNormal(CardBootData *cbd);
 
@@ -27,6 +30,23 @@ HotSwState LoadTable(void);
 
 // デバッガのROMエミュレーション情報読み込み
 HotSwState ReadRomEmulationData(CardBootData *cbd);
+
+
+// ■       セキュアモードのコマンド       ■
+//	DSカードのセキュアモードのID読み込み
+HotSwState ReadIDSecure(CardBootData *cbd);
+
+//	DSカードのセキュアモードのSecure Segment(16Kbyte)読み込み
+HotSwState ReadSegSecure(CardBootData *cbd);
+
+//	DSカードのセキュアモードのPNジェネレータON
+HotSwState SwitchONPNGSecure(CardBootData *cbd);
+
+//	DSカードのセキュアモードのPNジェネレータOFF
+HotSwState SwitchOFFPNGSecure(CardBootData *cbd);
+
+//	DSカードのセキュアモードのモード変更
+HotSwState ChangeModeSecure(CardBootData *cbd);
 
 
 // ■       ゲームモードのコマンド       ■
