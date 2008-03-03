@@ -304,8 +304,8 @@ static HotSwState LoadCardData(void)
     s_cbData.pBootSegBuf   = s_pBootSegBuffer;
     s_cbData.pSecureSegBuf = s_pSecureSegBuffer;
 
-    // ブート処理開始
-	if(HOTSW_IsCardExist()){
+    // ロード処理開始
+	if(HOTSW_IsCardAccessible()){
 		// カード側でKey Tableをロードする
         state  = LoadTable();
         retval = (retval == HOTSW_SUCCESS) ? state : retval;
