@@ -29,7 +29,14 @@ TWL_PROC	    	=	ARM7
 SRCDIR				=	./src
 INCDIR				=	./include
 
-SRCS				=	blowfish.c hotsw.c ds_blowfish_table.c dsCardType1.c dsCardType2.c romEmulation.c customNDma.c
+SRCS				=	blowfish.c \
+						hotsw.c \
+						ds_blowfish_table.c \
+						dsCardCommon.c \
+						dsCardType1.c \
+						dsCardType2.c \
+						romEmulation.c \
+						customNDma.c \
 
 TARGET_LIB			=	libhotsw_sp$(TWL_LIBSUFFIX).a
 

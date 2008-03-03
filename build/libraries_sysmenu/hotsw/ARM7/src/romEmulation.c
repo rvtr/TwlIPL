@@ -287,6 +287,8 @@ HotSwState ChangeModeSecure_ROMEMU(CardBootData *cbd)
 // ■------------------------------------■
 // ■       ゲームモードのコマンド       ■
 // ■------------------------------------■
+#if 0
+
 /*---------------------------------------------------------------------------*
   Name:         ReadIDGame_ROMEMU
   
@@ -377,3 +379,5 @@ HotSwState ReadPageGame_ROMEMU(CardBootData *cbd, u32 start_addr, void* buf, u32
 
     return HOTSW_SUCCESS;
 }
+
+#endif

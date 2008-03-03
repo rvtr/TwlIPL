@@ -242,8 +242,6 @@ typedef struct CardBootData{
     u32                 arm9Ltd;
     u32                 arm7Ltd;
 
-    u32                 secureLatency;
-
     BOOL                twlFlg;
     BOOL                debuggerFlg;
 
@@ -251,6 +249,8 @@ typedef struct CardBootData{
     u32                 keyBuf[KEY_BUF_SIZE];
 
     CardTypeEx          cardType;
+    u32                 secureLatency;
+    u32                 gameCommondParam;
 
     BootSegmentData     *pBootSegBuf;
     u32                 *pSecureSegBuf;

@@ -1,5 +1,5 @@
-#ifndef __CUSTOM_NDMA_H__
-#define __CUSTOM_NDMA_H__
+#ifndef __HOTSW_CUSTOM_NDMA_H__
+#define __HOTSW_CUSTOM_NDMA_H__
 
 #include 	<twl.h>
 
@@ -17,4 +17,4 @@ void HOTSW_NDmaCopy_Card(u32 ndmaNo, const void *src, void *dest, u32 size);
 } /* extern "C" */
 #endif
 
-#endif  // __CUSTOM_NDMA_H__
+#endif  // __HOTSW_CUSTOM_NDMA_H__

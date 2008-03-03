@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlFirm - GCD - include
+  Project:  TwlIPL - HOTSW - include
   File:     blowfish.h
 
-  Copyright 2007 Nintendo.  All rights reserved.
+  Copyright 2007-2008 Nintendo.  All rights reserved.
 
   These coded instructions, statements, and computer programs contain
   proprietary information of Nintendo of America Inc. and/or Nintendo
@@ -10,8 +10,8 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
  *---------------------------------------------------------------------------*/
-#ifndef FIRM_GCD_BLOWFISH_H
-#define FIRM_GCD_BLOWFISH_H
+#ifndef HOTSW_GCD_BLOWFISH_H
+#define HOTSW_GCD_BLOWFISH_H
 
 
 #include <twl/types.h>
@@ -47,4 +47,4 @@ void GCDm_MakeBlowfishTableDS(BLOWFISH_CTX *tableBufp, ROM_Header_Short *rhs, u3
 } /* extern "C" */
 #endif
 
-#endif  // FIRM_GCD_BLOWFISH_H
+#endif  // HOTSW_GCD_BLOWFISH_H

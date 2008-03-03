@@ -2,8 +2,8 @@
   Project:  TwlSDK
   File:     
  *---------------------------------------------------------------------------*/
-#ifndef __DSCARD_TYPE1_H__
-#define __DSCARD_TYPE1_H__
+#ifndef __HOTSW_DSCARD_TYPE1_H__
+#define __HOTSW_DSCARD_TYPE1_H__
 
 #include 	<twl.h>
 #include 	<hotswTypes.h>
@@ -41,15 +41,8 @@ HotSwState SwitchOFFPNGSecure_DSType1(CardBootData *cbd);
 HotSwState ChangeModeSecure_DSType1(CardBootData *cbd);
 
 
-// ■       ゲームモードのコマンド       ■
-//	DSカードType1のゲームモードのID読み込み
-HotSwState ReadIDGame_DSType1(CardBootData *cbd);
-
-//  DSカードType1のゲームモードの指定ページ読み込み
-HotSwState ReadPageGame_DSType1(CardBootData *cbd, u32 start_addr, void* buf, u32 size);
-
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-#endif  // __DSCARD_TYPE1_H__
+#endif  // __HOTSW_DSCARD_TYPE1_H__

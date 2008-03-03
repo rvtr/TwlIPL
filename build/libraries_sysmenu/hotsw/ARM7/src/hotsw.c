@@ -16,6 +16,7 @@
 #include	<sysmenu.h>
 #include 	<hotswTypes.h>
 #include	<blowfish.h>
+#include	<dsCardCommon.h>
 #include	<dsCardType1.h>
 #include	<dsCardType2.h>
 #include	<romEmulation.h>
@@ -33,9 +34,6 @@
 #define 	ENCRYPT_DEF_SIZE					0x800		// 2KB  ※ ARM9常駐モジュール先頭2KB
 
 #define		DIGEST_HASH_BLOCK_SIZE_SHA1			(512/8)
-
-#define		ROM_EMULATION_START_OFS				0x160
-#define		ROM_EMULATION_END_OFS				0x180
 
 #define		HOTSW_THREAD_STACK_SIZE				(1024 + PAGE_SIZE)	// スタックサイズ
 #define		HOTSW_THREAD_PRIO					11					// カード電源ON → ゲームモードのスレッド優先度
@@ -100,9 +98,6 @@ static void SetMCSCR(void);
 
 static void GenVA_VB_VD(void);
 static HotSwState DecryptObjectFile(void);
-static HotSwState LoadTable(void);
-static HotSwState ReadRomEmulationData(void);
-static HotSwState ReadIDNormal(void);
 static HotSwState LoadBannerData(void);
 static HotSwState LoadStaticModule(void);
 static HotSwState LoadCardData(void);
@@ -164,19 +159,19 @@ static CardBootFunction  	s_funcTable[] = {
 	// DS Card Type 1
     {					   ReadBootSegNormal_DSType1, ChangeModeNormal_DSType1,								// Normalモード関数
      ReadIDSecure_DSType1, ReadSegSecure_DSType1, 	  SwitchONPNGSecure_DSType1, ChangeModeSecure_DSType1,	// Secureモード関数
-     ReadIDGame_DSType1,   ReadPageGame_DSType1},															// Game  モード関数
+     ReadIDGame,           ReadPageGame},																	// Game  モード関数
 	// DS Card Type 2
     {					   ReadBootSegNormal_DSType2, ChangeModeNormal_DSType2,								// Normalモード関数
      ReadIDSecure_DSType2, ReadSegSecure_DSType2, 	  SwitchONPNGSecure_DSType2, ChangeModeSecure_DSType2,	// Secureモード関数
-     ReadIDGame_DSType2,   ReadPageGame_DSType2},															// Game  モード関数
+     ReadIDGame,           ReadPageGame},																	// Game  モード関数
 	// TWL Card Type 1
     {					   ReadBootSegNormal_DSType2, ChangeModeNormal_DSType2,								// Normalモード関数
      ReadIDSecure_DSType2, ReadSegSecure_DSType2, 	  SwitchONPNGSecure_DSType2, ChangeModeSecure_DSType2,	// Secureモード関数
-     ReadIDGame_DSType2,   ReadPageGame_DSType2},															// Game  モード関数
+     ReadIDGame,           ReadPageGame},																	// Game  モード関数
 	// RomEmulation
     {					   ReadBootSegNormal_ROMEMU,  ChangeModeNormal_ROMEMU,								// Normalモード関数
      ReadIDSecure_ROMEMU,  ReadSegSecure_ROMEMU, 	  SwitchONPNGSecure_ROMEMU,  ChangeModeSecure_ROMEMU,	// Secureモード関数
-     ReadIDGame_ROMEMU,    ReadPageGame_ROMEMU}																// Game  モード関数
+     ReadIDGame,           ReadPageGame},																	// Game  モード関数
 };
 
 
@@ -318,7 +313,7 @@ static HotSwState LoadCardData(void)
         
     	// ---------------------- Normal Mode ----------------------
     	// カードID読み込み
-		state  = ReadIDNormal();
+		state  = ReadIDNormal(&s_cbData);
 		retval = (retval == HOTSW_SUCCESS) ? state : retval;
         
 		// カードタイプを判別をして、使う関数を切替える IDの最上位ビットが1なら3DM
@@ -336,7 +331,7 @@ static HotSwState LoadCardData(void)
 			retval = (retval == HOTSW_SUCCESS) ? state : retval;
             
             // Romエミュレーション情報を取得
-			state  = ReadRomEmulationData();
+			state  = ReadRomEmulationData(&s_cbData);
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
             // 取得したRomエミュレーション情報を比較
@@ -350,12 +345,13 @@ static HotSwState LoadCardData(void)
             if(s_cbData.debuggerFlg){
 				OS_PutString("Read Debugger\n");
 				s_cbData.cardType = ROM_EMULATION;
-                SYSMi_GetWork()->gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
-                OS_TPrintf("SYSMi_GetWork()->gameCommondParam : 0x%08x\n",SYSMi_GetWork()->gameCommondParam);
+                s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
+                OS_TPrintf("SYSMi_GetWork()->gameCommondParam : 0x%08x\n", s_cbData.gameCommondParam);
             }
             else{
-				SYSMi_GetWork()->gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param;
+				s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param;
             }
+			SYSMi_GetWork()->gameCommondParam = s_cbData.gameCommondParam;
             
 			// ROMヘッダCRCを算出してチェック。NintendoロゴCRCも確認。
 			SYSMi_GetWork()->cardHeaderCrc16_bak = SVC_GetCRC16( 65535, s_cbData.pBootSegBuf, 0x015e );
@@ -753,104 +749,6 @@ static void GenVA_VB_VD(void)
 	s_cbData.vae &= 0xffffff;
 	s_cbData.vbi &= 0xfffff;
 	s_cbData.vd  &= 0xffffff;
-}
-
-/* -----------------------------------------------------------------
- * LoadTable関数
- *
- * カード側の Key Table をロードする関数。
- *
- * ※この関数は開発カード用に発行しないといけない。
- *   製品版カードの場合、このコマンドは無視される
- * ----------------------------------------------------------------- */
-static HotSwState LoadTable(void)
-{
-	u32 temp;
-    
-	// MCCMD レジスタ設定
-	reg_HOTSW_MCCMD0 = 0x0000009f;
-	reg_HOTSW_MCCMD1 = 0x00000000;
-
-	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
-
-    // MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 101(16ページ) latency1 = 0(必要ないけど) に)
-	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x5 << PC_SHIFT);
-    
-	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-        temp = reg_HOTSW_MCD1;
-	}
-
-    return HOTSW_SUCCESS;
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         ReadRomEmulationData
-  
-  Description:  Romエミュレーションデータの読み込み
- *---------------------------------------------------------------------------*/
-static HotSwState ReadRomEmulationData(void)
-{
-	u32 count=0;
-    u32 temp;
-    u32 *dst = s_cbData.romEmuBuf;
-
-    // 量産用CPUでは平文アクセス防止のためリードしない
-    if ( ! (*(u8*)(OS_CHIPTYPE_DEBUGGER_ADDR) & OS_CHIPTYPE_DEBUGGER_MASK) )
-    {
-        return HOTSW_SUCCESS;
-    }
-
-	// MCCMD レジスタ設定
-	reg_HOTSW_MCCMD0 = 0x3e000000;
-	reg_HOTSW_MCCMD1 = 0x0;
-
-	// MCCNT1 レジスタ設定 (START = 1  PC = 001(1ページリード)に latency1 = 0x5fe)
-	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x1 << PC_SHIFT) | (0x5fe & LATENCY1_MASK);
-    
-	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-        if(count >= ROM_EMULATION_START_OFS && count < ROM_EMULATION_END_OFS){
-        	*dst++ = reg_HOTSW_MCD1;
-        }
-        else{
-			temp = reg_HOTSW_MCD1;
-        }
-        count+=4;
-	}
-
-   	MI_CpuCopyFast(s_cbData.romEmuBuf, (void*)HW_ISD_RESERVED, 32);
-
-    return HOTSW_SUCCESS;
-}
-
-/* -----------------------------------------------------------------
- * ReadIDNormal関数
- *
- * ノーマルモード時のカードIDを読み込む関数
- * ----------------------------------------------------------------- */
-static HotSwState ReadIDNormal(void)
-{
-	// カード割り込みによるDMAコピー
-	HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &s_cbData.id_nml, sizeof(s_cbData.id_nml) );
-    
-    // MCCMD レジスタ設定
-	reg_HOTSW_MCCMD0 = 0x00000090;
-	reg_HOTSW_MCCMD1 = 0x00000000;
-
-	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
-
-	// MCCNT1 レジスタ設定 (START = 1 PC = 111(ステータスリード) latency1 = 1 に)
-	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x7 << PC_SHIFT) | (0x1 & LATENCY1_MASK);
-
-    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
-    OS_SleepThread(NULL);
-
-    return HOTSW_SUCCESS;
 }
 
 /* -----------------------------------------------------------------

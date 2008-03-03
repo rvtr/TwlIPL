@@ -2,8 +2,8 @@
   Project:  TwlSDK
   File:     romEmulation.h
  *---------------------------------------------------------------------------*/
-#ifndef __ROM_EMULATION_H__
-#define __ROM_EMULATION_H__
+#ifndef __HOTSW_ROM_EMULATION_H__
+#define __HOTSW_ROM_EMULATION_H__
 
 #include 	<twl.h>
 #include 	<hotswTypes.h>
@@ -52,4 +52,4 @@ HotSwState ReadPageGame_ROMEMU(CardBootData *cbd, u32 start_addr, void* buf, u32
 } /* extern "C" */
 #endif
 
-#endif  // __ROM_EMULATION_H__
+#endif  // __HOTSW_ROM_EMULATION_H__
