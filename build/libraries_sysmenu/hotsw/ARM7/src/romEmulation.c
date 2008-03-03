@@ -287,97 +287,16 @@ HotSwState ChangeModeSecure_ROMEMU(CardBootData *cbd)
 // ■------------------------------------■
 // ■       ゲームモードのコマンド       ■
 // ■------------------------------------■
-#if 0
-
 /*---------------------------------------------------------------------------*
   Name:         ReadIDGame_ROMEMU
   
   Description:  ゲームモードでIDを読み込む
  *---------------------------------------------------------------------------*/
-HotSwState ReadIDGame_ROMEMU(CardBootData *cbd)
-{
-	#pragma unused( cbd )
-
-    if(!HOTSW_IsCardAccessible()){
-		return HOTSW_PULLED_OUT_ERROR;
-    }
-
-	// カード割り込みによるDMAコピー
-	HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_gam, sizeof(cbd->id_gam) );
-    
-	// MCCMD レジスタ設定
-	reg_HOTSW_MCCMD0 = 0x000000B8;
-	reg_HOTSW_MCCMD1 = 0x00000000;
-
-	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
-
-	// MCCNT1 レジスタ設定 (START = 1 PC = 111(ステータスリード) latency1 = 1 に)
-	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x7 << PC_SHIFT) | (0x1 & LATENCY1_MASK);
-
-    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
-    OS_SleepThread(NULL);
-
-    return HOTSW_SUCCESS;
-}
+// 共通
 
 /*---------------------------------------------------------------------------*
   Name:         ReadPageGame_ROMEMU
   
   Description:  ゲームモードで、指定されたページを指定バッファに指定サイズ分を読み込む
  *---------------------------------------------------------------------------*/
-HotSwState ReadPageGame_ROMEMU(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
-{
-	#pragma unused( cbd )
-    
-    u32 		loop, counter=0;
-	u64			i, page;
-    GCDCmd64 	cndLE, cndBE;
-
-    page = (u32)(start_addr / PAGE_SIZE);
-	loop = (u32)(size / PAGE_SIZE);
-    loop = (size % PAGE_SIZE) ? loop + 1 : loop;
-
-    OS_TPrintf("Src Addr : 0x%08x  Dst Addr : 0x%08x\n", start_addr, buf);
-    OS_TPrintf("Read Game Segment  Page Count : %d   size : %x\n", loop, size);
-
-    for(i=0; i<loop; i++){
-	    if(!HOTSW_IsCardAccessible()){
-			return HOTSW_PULLED_OUT_ERROR;
-    	}
-        
-		// ゼロクリア
-		MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
-
-        // コマンド作成
-		cndLE.dw  = (page + i) << 33;
-		cndLE.dw |= 0xB700000000000000;
-        
-        // ビッグエンディアンに直す(暗号化後)
-		cndBE.b[7] = cndLE.b[0];
-		cndBE.b[6] = cndLE.b[1];
-    	cndBE.b[5] = cndLE.b[2];
-    	cndBE.b[4] = cndLE.b[3];
-    	cndBE.b[3] = cndLE.b[4];
-   		cndBE.b[2] = cndLE.b[5];
-    	cndBE.b[1] = cndLE.b[6];
-	    cndBE.b[0] = cndLE.b[7];
-
-    	// MCCMD レジスタ設定
-		reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
-		reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
-        
-		// MCCNT1 レジスタ設定 (START = 1 PC = 111(ステータスリード) latency1 = d に)
-		reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x1 << PC_SHIFT) | (0xd & LATENCY1_MASK);
-        
-		// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-		while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-			while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-            *((u32 *)buf + counter++) = reg_HOTSW_MCD1;
-		}
-    }
-
-    return HOTSW_SUCCESS;
-}
-
-#endif
+// 共通

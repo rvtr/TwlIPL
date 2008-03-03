@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlSDK
+  Project:  TwlIPL
   File:     hotsw.c
 
-  Copyright 2007 Nintendo.  All rights reserved.
+  Copyright 2007-2008 Nintendo.  All rights reserved.
 
   These coded instructions, statements, and computer programs contain
   proprietary information of Nintendo of America Inc. and/or Nintendo
@@ -422,7 +422,7 @@ static HotSwState LoadCardData(void)
 
 	    	// ---------------------- Game Mode ----------------------
 	    	// ID読み込み
-			state  = s_funcTable[s_cbData.cardType].ReadID_G(&s_cbData);
+			state  = ReadIDGame(&s_cbData);
 			retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
 			// バナーファイルの読み込み
@@ -497,8 +497,7 @@ static HotSwState LoadBannerData(void)
 
 	// バナーリード
 	if( s_cbData.pBootSegBuf->rh.s.banner_offset ) {
-        retval  = s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
-            									  			s_cbData.pBootSegBuf->rh.s.banner_offset,
+        retval  = ReadPageGame(&s_cbData,  			s_cbData.pBootSegBuf->rh.s.banner_offset,
 												  	 (u32 *)SYSM_CARD_BANNER_BUF,
 	                                              	 		sizeof(TWLBannerFile) );
 
@@ -544,10 +543,9 @@ static HotSwState LoadStaticModule(void)
 	s_cbData.arm9Stc = (u32)s_cbData.pBootSegBuf->rh.s.main_ram_address;
 	// 配置先と再配置情報を取得 & Arm9の常駐モジュール残りを指定先に転送
 	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_STATIC, &s_cbData.arm9Stc, s_cbData.pBootSegBuf->rh.s.main_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC] , s_cbData.twlFlg);
-    retval = s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
-    												    s_cbData.pBootSegBuf->rh.s.main_rom_offset + SECURE_SEGMENT_SIZE,
-                                 	  		    (u32 *)(s_cbData.arm9Stc 						   + SECURE_SEGMENT_SIZE),
-                                              		    s_cbData.pBootSegBuf->rh.s.main_size       - SECURE_SEGMENT_SIZE);
+    retval = ReadPageGame(&s_cbData,		s_cbData.pBootSegBuf->rh.s.main_rom_offset + SECURE_SEGMENT_SIZE,
+                                  	(u32 *)(s_cbData.arm9Stc 						   + SECURE_SEGMENT_SIZE),
+                                	    	s_cbData.pBootSegBuf->rh.s.main_size       - SECURE_SEGMENT_SIZE);
 
     if(retval != HOTSW_SUCCESS){
 		return retval;
@@ -556,7 +554,7 @@ static HotSwState LoadStaticModule(void)
 	s_cbData.arm7Stc = (u32)s_cbData.pBootSegBuf->rh.s.sub_ram_address;
     // 配置先と再配置情報を取得 & Arm7の常駐モジュールを指定先に転送
 	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_STATIC, &s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC] , s_cbData.twlFlg);
-    state  = s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData, s_cbData.pBootSegBuf->rh.s.sub_rom_offset, (u32 *)s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size);
+    state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.sub_rom_offset, (u32 *)s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size);
     retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
     if(retval != HOTSW_SUCCESS){
@@ -570,14 +568,13 @@ static HotSwState LoadStaticModule(void)
         s_cbData.arm9Ltd = (u32)s_cbData.pBootSegBuf->rh.s.main_ltd_ram_address;
 		// 配置先と再配置情報を取得 & Arm9の常駐モジュールを指定先に転送（※TWLカード対応していないので、注意！！）
 		SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_LTD_STATIC, &s_cbData.arm9Ltd, s_cbData.pBootSegBuf->rh.s.main_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_LTD_STATIC] , TRUE);
-	    state  = s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData, s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset, (u32 *)SYSM_CARD_TWL_SECURE_BUF, size);
+	    state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset, (u32 *)SYSM_CARD_TWL_SECURE_BUF, size);
 		retval = (retval == HOTSW_SUCCESS) ? state : retval;
         
 		if( s_cbData.pBootSegBuf->rh.s.main_ltd_size > SECURE_SEGMENT_SIZE ) {
-		    state  = s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData,
-                                                      			s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset + SECURE_SEGMENT_SIZE,
-	                             		 	  			(u32 *)(s_cbData.arm9Ltd 							   + SECURE_SEGMENT_SIZE),
-	                                          		  			s_cbData.pBootSegBuf->rh.s.main_ltd_size 	   - size);
+		    state  = ReadPageGame(&s_cbData,		s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset + SECURE_SEGMENT_SIZE,
+	                             		 	(u32 *)(s_cbData.arm9Ltd 							   + SECURE_SEGMENT_SIZE),
+	                                        		s_cbData.pBootSegBuf->rh.s.main_ltd_size 	   - size);
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
 		}
 
@@ -588,7 +585,7 @@ static HotSwState LoadStaticModule(void)
 		s_cbData.arm7Ltd = (u32)s_cbData.pBootSegBuf->rh.s.sub_ltd_ram_address;
         // 配置先と再配置情報を取得 & Arm7の常駐モジュールを指定先に転送
 		SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_LTD_STATIC, &s_cbData.arm7Ltd, s_cbData.pBootSegBuf->rh.s.sub_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_LTD_STATIC], TRUE);
-	    state  = s_funcTable[s_cbData.cardType].ReadPage_G(&s_cbData, s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset, (u32 *)s_cbData.arm7Ltd, s_cbData.pBootSegBuf->rh.s.sub_ltd_size);
+	    state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset, (u32 *)s_cbData.arm7Ltd, s_cbData.pBootSegBuf->rh.s.sub_ltd_size);
         retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
 	    if(retval != HOTSW_SUCCESS){
@@ -671,7 +668,7 @@ static HotSwState CheckCardAuthCode(void)
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
-    retval = s_funcTable[s_cbData.cardType].ReadPage_G( &s_cbData, page_offset, authBuf, MB_AUTHCODE_SIZE );
+    retval = ReadPageGame( &s_cbData, page_offset, authBuf, MB_AUTHCODE_SIZE );
 
     p += auth_offset & 0x000001FF;
 	if( *p++ == 'a' && *p == 'c' ) {
