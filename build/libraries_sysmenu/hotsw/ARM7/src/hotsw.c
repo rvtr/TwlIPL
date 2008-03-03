@@ -23,7 +23,6 @@
 #include	<customNDma.h>
 #include 	<../build/libraries/mb/common/include/mb_fileinfo.h>
 
-//#define HOTSW_FORCE_CARD_B
 #define DEBUG_MODE
 
 // define -------------------------------------------------------------------
@@ -157,19 +156,19 @@ static u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = {
 
 static CardBootFunction  	s_funcTable[] = {
 	// DS Card Type 1
-    {					   ReadBootSegNormal_DSType1, ChangeModeNormal_DSType1,								// Normalモード関数
+    {					   ReadBootSegNormal_DSType1, ChangeModeNormal,										// Normalモード関数
      ReadIDSecure_DSType1, ReadSegSecure_DSType1, 	  SwitchONPNGSecure_DSType1, ChangeModeSecure_DSType1,	// Secureモード関数
      ReadIDGame,           ReadPageGame},																	// Game  モード関数
 	// DS Card Type 2
-    {					   ReadBootSegNormal_DSType2, ChangeModeNormal_DSType2,								// Normalモード関数
+    {					   ReadBootSegNormal_DSType2, ChangeModeNormal,										// Normalモード関数
      ReadIDSecure_DSType2, ReadSegSecure_DSType2, 	  SwitchONPNGSecure_DSType2, ChangeModeSecure_DSType2,	// Secureモード関数
      ReadIDGame,           ReadPageGame},																	// Game  モード関数
 	// TWL Card Type 1
-    {					   ReadBootSegNormal_DSType2, ChangeModeNormal_DSType2,								// Normalモード関数
+    {					   ReadBootSegNormal_DSType2, ChangeModeNormal,										// Normalモード関数
      ReadIDSecure_DSType2, ReadSegSecure_DSType2, 	  SwitchONPNGSecure_DSType2, ChangeModeSecure_DSType2,	// Secureモード関数
      ReadIDGame,           ReadPageGame},																	// Game  モード関数
 	// RomEmulation
-    {					   ReadBootSegNormal_ROMEMU,  ChangeModeNormal_ROMEMU,								// Normalモード関数
+    {					   ReadBootSegNormal_DSType2, ChangeModeNormal,										// Normalモード関数
      ReadIDSecure_ROMEMU,  ReadSegSecure_ROMEMU, 	  SwitchONPNGSecure_ROMEMU,  ChangeModeSecure_ROMEMU,	// Secureモード関数
      ReadIDGame,           ReadPageGame},																	// Game  モード関数
 };
@@ -390,7 +389,7 @@ static HotSwState LoadCardData(void)
             GenVA_VB_VD();
 
 	    	// セキュアモードに移行
-	    	state  = s_funcTable[s_cbData.cardType].ChangeMode_N(&s_cbData);
+	    	state  = ChangeModeNormal(&s_cbData);
 			retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
 	    	// ---------------------- Secure Mode ----------------------

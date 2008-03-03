@@ -19,9 +19,6 @@ extern "C" {
 //	DSカードType2のノーマルモードのBoot Segment(4Kbyte)読み込み
 HotSwState ReadBootSegNormal_DSType2(CardBootData *cbd);
 
-//	DSカードType2のノーマルモードのモード変更 (Type1と同じ処理)
-#define ChangeModeNormal_DSType2	ChangeModeNormal_DSType1
-
 
 // ■       セキュアモードのコマンド       ■
 //	DSカードType2のセキュアモードのID読み込み

@@ -59,54 +59,6 @@ HotSwState ReadBootSegNormal_DSType1(CardBootData *cbd)
     return HOTSW_SUCCESS;
 }
 
-/*---------------------------------------------------------------------------*
- * Name:         ChangeModeNormal_DSType1
- * 
- * Description:  Type1のノーマルモードのモード変更
- * 
- * CT=240ns  Latency1=0x18  Latency2=0  Pagecount=0page
- *---------------------------------------------------------------------------*/
-HotSwState ChangeModeNormal_DSType1(CardBootData *cbd)
-{
-	GCDCmd64 tempCnd, cnd;
-    u64 vae64 = cbd->vae;
-
-    if(!HOTSW_IsCardAccessible()){
-		return HOTSW_PULLED_OUT_ERROR;
-    }
-    
-    // ゼロクリア
-	MI_CpuClear8(&tempCnd, sizeof(GCDCmd64));
-    
-    // リトルエンディアンで作って
-	tempCnd.dw  = cbd->vbi << 8;
-	tempCnd.dw |= vae64 << 32;
-    tempCnd.dw |= 0x3c00000000000000;
-
-    // ビックエンディアンにする
-	cnd.b[0] = tempCnd.b[7];
-	cnd.b[1] = tempCnd.b[6];
-	cnd.b[2] = tempCnd.b[5];
-	cnd.b[3] = tempCnd.b[4];
-	cnd.b[4] = tempCnd.b[3];
-	cnd.b[5] = tempCnd.b[2];
-	cnd.b[6] = tempCnd.b[1];
-	cnd.b[7] = tempCnd.b[0];
-    
-	// MCCMD レジスタ設定
-    reg_HOTSW_MCCMD0 = *(u32 *)cnd.b;
-	reg_HOTSW_MCCMD1 = *(u32 *)&cnd.b[4];
-
-	// MCCNT1 レジスタ設定
-	reg_HOTSW_MCCNT1 = START_MASK | CT_MASK | LATENCY2_MASK & (0x18 << LATENCY2_SHIFT);
-    
-    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
-    OS_SleepThread(NULL);
-
-    return HOTSW_SUCCESS;
-}
-
-
 // ■--------------------------------------■
 // ■       セキュアモードのコマンド       ■
 // ■--------------------------------------■

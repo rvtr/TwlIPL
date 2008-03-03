@@ -95,7 +95,7 @@ HotSwState ReadBootSegNormal_DSType2(CardBootData *cbd)
  * 
  * CT=240ns  Latency1=0x18  Latency2=0  Pagecount=0page
  *---------------------------------------------------------------------------*/
-// Type1Ç∆ìØÇ∂
+// ã§í 
 
 
 // Å°--------------------------------------Å°

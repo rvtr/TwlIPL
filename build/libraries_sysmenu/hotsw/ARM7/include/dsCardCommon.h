@@ -19,11 +19,15 @@ extern "C" {
 //	DSカードのノーマルモードのID読み込み
 HotSwState ReadIDNormal(CardBootData *cbd);
 
+//	DSカードType1のノーマルモードのモード変更
+HotSwState ChangeModeNormal(CardBootData *cbd);
+
 // カード側のKeyTableをロード
 HotSwState LoadTable(void);
 
 // デバッガのROMエミュレーション情報読み込み
 HotSwState ReadRomEmulationData(CardBootData *cbd);
+
 
 // ■       ゲームモードのコマンド       ■
 //	DSカードのゲームモードのID読み込み

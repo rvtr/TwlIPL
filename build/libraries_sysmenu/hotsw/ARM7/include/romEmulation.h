@@ -20,9 +20,6 @@ extern "C" {
 //	Rom EmulationのノーマルモードのBoot Segment(4Kbyte)読み込み
 HotSwState ReadBootSegNormal_ROMEMU(CardBootData *cbd);
 
-//	Rom Emulationのノーマルモードのモード変更
-HotSwState ChangeModeNormal_ROMEMU(CardBootData *cbd);
-
 
 // ■       セキュアモードのコマンド       ■
 //	Rom EmulationのセキュアモードのID読み込み
