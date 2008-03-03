@@ -61,6 +61,7 @@ LINCLUDES				=	$(MISC_DIR)/include \
 LLIBRARIES				+=	libes$(TWL_LIBSUFFIX).a		\
 							libboc$(TWL_LIBSUFFIX).a	\
 							libnam$(TWL_LIBSUFFIX).a	\
+							libsea$(TWL_LIBSUFFIX).a	\
 							libreloc_info$(TWL_LIBSUFFIX).a
 
 ADDRESS_DTCM			=	0x0e000000
