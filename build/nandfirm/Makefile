@@ -12,8 +12,8 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
@@ -25,7 +25,6 @@ SUBDIRS_P	= \
 			nandfirm-print \
 			sdmc-launcher \
 			menu-launcher \
-			menu-launcher2 \
 
 #----------------------------------------------------------------------------
 
