@@ -154,18 +154,16 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 			(void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );						// ARM7と排他制御する
 			
 			// ROMヘッダのリード
-			DC_InvalidateRange( (void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );	// キャッシュケア
-			MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BAK, (void *)SYSM_CARD_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );	// ROMヘッダコピー
-			SYSMi_GetWork()->cardHeaderCrc16 = SYSMi_GetWork()->cardHeaderCrc16_bak;			// ROMヘッダCRCコピー
+			(void)SYSMi_CopyCardRomHeader();
 			
 			// バナーデータのリード
-			SYSMi_ReadCardBannerFile( SYSM_GetCardRomHeader()->banner_offset, &s_bannerBuf[ CARD_BANNER_INDEX ] );
-			pTitleList_Card->pBanner = &s_bannerBuf[ CARD_BANNER_INDEX ];
+			(void)SYSMi_CopyCardBanner();
 			
 			SYSMi_GetWork()->flags.hotsw.isCardStateChanged = FALSE;							// カード情報更新フラグを落とす
 			(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );					// ARM7と排他制御する
 			OS_ReleaseLockID( id );
 
+			pTitleList_Card->pBanner = &s_bannerBuf[ CARD_BANNER_INDEX ];
 			pTitleList_Card->flags.isValid = TRUE;
 			pTitleList_Card->flags.isAppLoadCompleted = TRUE;
 			pTitleList_Card->flags.isAppRelocate = TRUE;
@@ -181,6 +179,37 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 	return retval;
 }
 
+// カードROMヘッダのARM7バッファからARM9バッファへのコピー
+BOOL SYSMi_CopyCardRomHeader( void )
+{
+	BOOL retval = FALSE;
+
+	if( SYSM_IsExistCard() ) {
+		// ROMヘッダのリード
+		DC_InvalidateRange( (void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );	// キャッシュケア
+		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BAK, (void *)SYSM_CARD_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );	// ROMヘッダコピー
+		SYSMi_GetWork()->cardHeaderCrc16 = SYSMi_GetWork()->cardHeaderCrc16_bak;			// ROMヘッダCRCコピー
+
+		retval = TRUE;
+	}
+
+	return retval;
+}
+
+// カードバナーのARM7バッファからARM9バッファへのコピー
+BOOL SYSMi_CopyCardBanner( void )
+{
+	BOOL retval = FALSE;
+
+	if( SYSM_IsExistCard() ) {
+		// バナーデータのリード
+		SYSMi_ReadCardBannerFile( SYSM_GetCardRomHeader()->banner_offset, &s_bannerBuf[ CARD_BANNER_INDEX ] );
+
+		retval = TRUE;
+	}
+
+	return retval;
+}
 
 // NANDタイトルリストの取得
 int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )

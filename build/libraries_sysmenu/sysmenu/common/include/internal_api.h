@@ -82,6 +82,8 @@ void SYSMi_EnableHotSW( BOOL enable );
 //=======================================================
 BOOL SYSMi_IsDebuggerBannerViewMode( void );
 BOOL SYSMi_CheckEntryAddress( void );
+BOOL SYSMi_CopyCardRomHeader( void );
+BOOL SYSMi_CopyCardBanner( void );
 
 
 #ifdef __cplusplus
