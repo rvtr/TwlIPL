@@ -37,17 +37,19 @@
 #define FWBUFFER_SIZE                0x40000
 #define SIGNHEAP_SIZE                0x01000
 
-static u32   nwmBuf[NWM_SYSTEM_BUF_SIZE/sizeof(u32)] ATTRIBUTE_ALIGN(32);
-static u8*   fwBuffer = 0;
+static u32              nwmBuf[NWM_SYSTEM_BUF_SIZE/sizeof(u32)] ATTRIBUTE_ALIGN(32);
+static u8*              fwBuffer = 0;
 #if (MEASURE_WIRELESS_INITTIME == 1)
-static OSTick startTick;
+static OSTick           startTick;
 #endif
+static OSMessageQueue   mesq;
+static OSMessage        mesAry[1];
 
 static void  nwmCallback(void* arg);
 static s32   readFirmwareBinary(u8 *buffer, s32 bufSize);
 static BOOL  verifyWlanfirmSignature(u8* buffer, u32 length);
 
-extern NWMRetCode NWMi_InstallFirmware(NWMCallbackFunc callback, void* addr, u32 size);
+extern NWMRetCode NWMi_InstallFirmware(NWMCallbackFunc callback, void* addr, u32 size, BOOL isColdstart);
 
 static inline u16 SCFG_GetBondingOption(void)
 {
@@ -67,16 +69,25 @@ void nwmCallback(void* arg)
             OS_TPrintf("Wlan firm:LoadTime=%dmsec\n", OS_TicksToMilliSeconds(OS_GetTick() - startTick));
 #endif
             OS_TPrintf("Wlan firm:Wlan firmware has been installed successfully!\n");
-            SYSM_Free( fwBuffer );
-            /* [TODO:] osSendMessage */
+            if (fwBuffer) {
+                SYSM_Free( fwBuffer );
+                fwBuffer = 0;
+            }
+            OS_SendMessage(&mesq, (OSMessage)1, OS_MESSAGE_BLOCK);
         } else {
             OS_TPrintf("Wlan firm:FW download Timeout Error!\n");
-            SYSM_Free( fwBuffer );
+            if (fwBuffer) {
+                SYSM_Free( fwBuffer );
+                fwBuffer = 0;
+            }
         }
         break;
     default:
         OS_TWarning("Wlan firm:Error(invalid apiid=0x%04X)!\n", cb->apiid);
-        SYSM_Free( fwBuffer );
+        if (fwBuffer) {
+            SYSM_Free( fwBuffer );
+            fwBuffer = 0;
+        }
         break;
     }
 
@@ -245,57 +256,66 @@ BOOL verifyWlanfirmSignature(u8* buffer, u32 length)
 
 }
 
-BOOL InstallWirelessFirmware(void)
+BOOL InstallWlanFirmware(void)
 {
-    s32 flen = 0;
     NWMRetCode err;
 
-    /* ColdStartのチェック(HotStartでは呼ばれない筈だが) */
+    fwBuffer = 0;
+
+    OS_InitMessageQueue(&mesq, mesAry, sizeof(mesAry)/sizeof(mesAry[0]));
+    
+    /* HotStart/ColdStartのチェック */
     if (TRUE == SYSMi_GetWork()->flags.common.isHotStart)
     {
-        OS_TPrintf("Error: It isn't Cold start.\n");
-        return FALSE;
-    }
+        // HotStart
+        NWM_Init(nwmBuf, sizeof(nwmBuf), 3); /* 3 -> DMA no. */
+        err = NWMi_InstallFirmware(nwmCallback, NULL, 0, FALSE);
+    } else {
+        s32 flen = 0;
 
-    /* fwBuffer should be allocated from heap. */
-    fwBuffer = SYSM_Alloc( FWBUFFER_SIZE );
+        // ColdStart
 
-    flen = readFirmwareBinary(fwBuffer, FWBUFFER_SIZE);
+        /* fwBuffer should be allocated from heap. */
+        fwBuffer = SYSM_Alloc( FWBUFFER_SIZE );
+        if (!fwBuffer) {
+            OS_TWarning("Error: Couldn't allocate memory for WlanFirmware.\n");
+            return FALSE;
+        }
 
-    if ( 0 > flen )
-    {
-        OS_TPrintf("Error: Couldn't read wlan firmware.\n");
-        SYSM_Free( fwBuffer );
-        return FALSE;
-    }
+        flen = readFirmwareBinary(fwBuffer, FWBUFFER_SIZE);
 
-    /*
+        if ( 0 > flen )
+        {
+            OS_TPrintf("Error: Couldn't read wlan firmware.\n");
+            SYSM_Free( fwBuffer );
+            return FALSE;
+        }
+
+        /*
             check signature data
-     */
-    if (FALSE == verifyWlanfirmSignature(fwBuffer, (u32)flen))
-    {
-        OS_TPrintf("Error: This Wlan Firmware is quite illegal!\n");
-        OS_TPrintf("       It has never been installed.\n");
-        SYSM_Free( fwBuffer );
-        return FALSE;
-    }
+         */
+        if (FALSE == verifyWlanfirmSignature(fwBuffer, (u32)flen))
+        {
+            OS_TPrintf("Error: This Wlan Firmware is quite illegal!\n");
+            OS_TPrintf("       It has never been installed.\n");
+            SYSM_Free( fwBuffer );
+            return FALSE;
+        }
 
-    /*************************************************************/
+        /*************************************************************/
 
-    NWM_Init(nwmBuf, sizeof(nwmBuf), 3); /* 3 -> DMA no. */
+        NWM_Init(nwmBuf, sizeof(nwmBuf), 3); /* 3 -> DMA no. */
 
 #if (MEASURE_WIRELESS_INITTIME == 1)
-    startTick = OS_GetTick();
+        startTick = OS_GetTick();
 #endif
-    
-    if ( 0 < flen )
-    {
-        err = NWMi_InstallFirmware(nwmCallback, fwBuffer, (u32)flen);
-    } else if (flen <= 0) {
-        err = NWMi_InstallFirmware(nwmCallback, NULL, (u32)flen);
+
+        if ( 0 < flen )
+        {
+            err = NWMi_InstallFirmware(nwmCallback, fwBuffer, (u32)flen, TRUE);
+        }
     }
     
-    /* osRecvMessage */
     /*
         [TODO:] 無線ロード処理の完了をメインルーチンへ通知するための仕組みを考える必要あり。
      */
@@ -303,3 +323,10 @@ BOOL InstallWirelessFirmware(void)
     return TRUE;
 }
 
+
+BOOL IsWlanFirmwareInstalled(void)
+{
+    OSMessage msg;
+
+    return OS_ReadMessage(&mesq, &msg, OS_MESSAGE_NOBLOCK);
+}

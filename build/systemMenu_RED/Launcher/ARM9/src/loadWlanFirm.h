@@ -24,7 +24,8 @@
 extern "C" {
 #endif
 
-BOOL InstallWirelessFirmware(void);
+BOOL InstallWlanFirmware(void);
+BOOL IsWlanFirmwareInstalled(void);
 
 #ifdef __cplusplus
 }
