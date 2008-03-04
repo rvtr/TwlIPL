@@ -348,7 +348,7 @@ instfirm_error:
 }
 
 
-BOOL IsWlanFirmwareInstalled(WLANFirmResult *pResult)
+BOOL GetWlanFirmwareInstallResult(WLANFirmResult *pResult)
 {
     OSMessage msg;
     BOOL retval;

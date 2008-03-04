@@ -30,6 +30,7 @@ typedef enum {
 } WLANFirmResult;
 
 /*
+
   InstallWlanFirmware
 
   引数　：なし
@@ -40,13 +41,15 @@ typedef enum {
 BOOL InstallWlanFirmware(void);
 
 /*
-  IsWlanFirmwareInstalled
 
-  引数　：result 無線ファームウェアインストール結果コード(WLANFirmResult)
-  返り値：無線ファームウェアインストールの結果が存在
+  GetWlanFirmwareInstallResult
+
+  引数　：pResult 無線ファームウェアインストール結果コード(WLANFirmResult)
+  返り値：TRUE  … 無線ファームウェアインストール処理が完了
+          FALSE … 無線ファームウェアインストール処理が未完了
  */
 
-BOOL IsWlanFirmwareInstalled(WLANFirmResult *pResult);
+BOOL GetWlanFirmwareInstallResult(WLANFirmResult *pResult);
 
 #ifdef __cplusplus
 }
