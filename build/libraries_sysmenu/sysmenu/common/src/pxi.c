@@ -81,6 +81,10 @@ void SYSM_InitPXI( u32 mcu_prio )
     while ( ! PXI_IsCallbackReady( SYSMENU_PXI_FIFO_TAG, PXI_PROC_ARM7 ) )
     {
     }
+
+	while ( ! PXI_IsCallbackReady( PXI_FIFO_TAG_HOTSW, PXI_PROC_ARM7 ) )
+    {
+    }
 #endif // SDK_ARM9
     PXI_SetFifoRecvCallback( SYSMENU_PXI_FIFO_TAG, SYSMi_PXIFifoRecvCallback );
 }

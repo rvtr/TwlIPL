@@ -397,8 +397,8 @@ void LauncherInit( TitleProperty *pTitleList )
 			
 	DrawBackLightSwitch();
 	PutStringUTF16(   0,  0, TXT_COLOR_BLUE, L"TWL-SYSTEM MENU" );
-	PrintfSJIS( 128,  0, TXT_COLOR_BLUE, "IPL:%s", g_strIPLSvnRevision );
-	PrintfSJIS( 128, 12, TXT_COLOR_BLUE, "SDK:%s", g_strSDKSvnRevision );
+//	PrintfSJIS( 128,  0, TXT_COLOR_BLUE, "IPL:%s", g_strIPLSvnRevision );
+//	PrintfSJIS( 128, 12, TXT_COLOR_BLUE, "SDK:%s", g_strSDKSvnRevision );
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
