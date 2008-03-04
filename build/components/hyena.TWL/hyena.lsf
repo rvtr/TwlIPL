@@ -22,6 +22,7 @@ Static $(TARGET_NAME)
 {
 	Address		$(ADDRESS_FLXMAIN)
 	Library		$(CRT0_O)
+	Object		$(OBJDIR)/initScfg.o
 	StackSize	1024 1024
 }
 

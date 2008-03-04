@@ -27,7 +27,8 @@ TWL_CODEGEN					?=	ARM
 
 SUBDIRS			=	wram_regs
 
-SRCS			=	main.c
+SRCS			=	main.c \
+					initScfg.c \
 
 TARGET_NAME		=	hyena
 
