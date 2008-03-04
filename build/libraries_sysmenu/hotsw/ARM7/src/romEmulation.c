@@ -33,55 +33,7 @@
   
   Description:  DSカードType1のノーマルモードのBoot Segment読み込み
  *---------------------------------------------------------------------------*/
-HotSwState ReadBootSegNormal_ROMEMU(CardBootData *cbd)
-{
-	u32 i,j=0;
-    u64 page = 0;
-	GCDCmd64 tempCnd, cnd;
-//	u32 n = 0;
-    
-    for(i=0; i<BOOT_PAGE_NUM; i++){
-    	if(!HOTSW_IsCardAccessible()){
-			return HOTSW_PULLED_OUT_ERROR;
-    	}
-        
-    	// ゼロクリア
-		MI_CpuClear8(&tempCnd, sizeof(GCDCmd64));
-    
-    	// リトルエンディアンで作って
-    	tempCnd.dw = page << 33;
-
-    	// ビックエンディアンにする
-		cnd.b[0] = tempCnd.b[7];
-		cnd.b[1] = tempCnd.b[6];
-		cnd.b[2] = tempCnd.b[5];
-		cnd.b[3] = tempCnd.b[4];
-		cnd.b[4] = tempCnd.b[3];
-		cnd.b[5] = tempCnd.b[2];
-		cnd.b[6] = tempCnd.b[1];
-		cnd.b[7] = tempCnd.b[0];
-    
-		// MCCMD レジスタ設定
-	    reg_HOTSW_MCCMD0 = *(u32 *)cnd.b;
-		reg_HOTSW_MCCMD1 = *(u32 *)&cnd.b[4];
-
-		// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-		reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
-
-		// MCCNT1 レジスタ設定 (START = 1 PC_MASK PC = 001(1ページリード)に latency1 = 0xd)
-		reg_HOTSW_MCCNT1 = START_MASK | CT_MASK | PC_MASK & (0x1 << PC_SHIFT) | (0xd & LATENCY1_MASK);
-    
-		// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-		while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-			while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-        	*(cbd->pBootSegBuf->word + j++) = reg_HOTSW_MCD1;
-		}
-
-        page++;
-    }
-
-    return HOTSW_SUCCESS;
-}
+// 共通
 
 /*---------------------------------------------------------------------------*
   Name:         ChangeModeNormal_ROMEMU
@@ -245,7 +197,6 @@ HotSwState ChangeModeSecure_ROMEMU(CardBootData *cbd)
 
     return HOTSW_SUCCESS;
 }
-
 
 // ■------------------------------------■
 // ■       ゲームモードのコマンド       ■

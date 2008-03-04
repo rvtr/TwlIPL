@@ -167,9 +167,9 @@ static CardBootFunction  	s_funcTable[] = {
      ReadIDSecure, 	ReadSegSecure, 	  	SwitchONPNGSecure, ChangeModeSecure,	// Secureモード関数
      ReadIDGame,    ReadPageGame},												// Game  モード関数
 	// RomEmulation
-    {					   ReadBootSegNormal, 		  ChangeModeNormal,										// Normalモード関数
-     ReadIDSecure_ROMEMU,  ReadSegSecure_ROMEMU, 	  SwitchONPNGSecure_ROMEMU,  ChangeModeSecure_ROMEMU,	// Secureモード関数
-     ReadIDGame,           ReadPageGame},																	// Game  モード関数
+    {				ReadBootSegNormal, 	ChangeModeNormal,											// Normalモード関数
+     ReadIDSecure_ROMEMU, ReadSegSecure_ROMEMU, SwitchONPNGSecure_ROMEMU, ChangeModeSecure_ROMEMU,	// Secureモード関数
+     ReadIDGame,    ReadPageGame},																	// Game  モード関数
 };
 
 
