@@ -63,12 +63,12 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 #SVNƒŠƒrƒWƒ‡ƒ“–„‚ßž‚Ý
 $(REVISION_SRC) ::
-	if test -e $(SYSMENU_ROOT)/.svn; then \
+	@if test -e $(SYSMENU_ROOT)/.svn; then \
 		LANG=C svn info $(call empath,$(SYSMENU_ROOT)) | grep 'Revision' | sed "s|Revision: \(.*\)|const char *g_strIPLSvnRevision = \"\1\";|" > $(REVISION_SRC); \
 	else \
 		echo "const char *g_strIPLSvnRevision = \"-\"" > $(REVISION_SRC); \
 	fi
-	if test -e $(ROOT)/.svn; then \
+	@if test -e $(ROOT)/.svn; then \
 		LANG=C svn info $(call empath,$(ROOT)) | grep 'Revision' | sed "s|Revision: \(.*\)|const char *g_strSDKSvnRevision = \"\1\";|" >> $(REVISION_SRC); \
 	else \
 		echo "const char *g_strSDKSvnRevision = \"-\"" >> $(REVISION_SRC); \
