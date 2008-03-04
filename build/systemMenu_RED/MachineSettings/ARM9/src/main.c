@@ -70,6 +70,12 @@ void TwlMain(void)
 	// ※本来ならランチャーからのパラメータチェックを行い、
 	//   初回起動シーケンスに入るパスがある
 	
+	{
+		OS_TPrintf( "LCFGTWLOwnerInfo       : 0x%04x\n", sizeof(LCFGTWLOwnerInfo) );
+		OS_TPrintf( "LCFGTWLParentalControl : 0x%04x\n", sizeof(LCFGTWLParentalControl) );
+		OS_TPrintf( "LCFGTWLSettingsData    : 0x%04x\n", sizeof(LCFGTWLSettingsData) );
+	}
+	
 	// TWL設定のリード
 	SYSM_SetAllocFunc( Alloc, Free );								// SYSM_ReadTWLSettingsFile()の実行に必要。
 	
@@ -77,7 +83,14 @@ void TwlMain(void)
 	// TWL設定データファイルの読み込み
 	// ::::::::::::::::::::::::::::::::::::::::::::::
 	(void)LCFG_ReadHWSecureInfo();
-	g_isValidTSD = LCFG_ReadTWLSettings();
+	{
+		u8 *pBuffer = SYSM_Alloc( LCFG_READ_TEMP );
+		g_isValidTSD = FALSE;
+		if( pBuffer) {
+			g_isValidTSD = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ] )pBuffer );
+			SYSM_Free( pBuffer );
+		}
+	}
 	if( g_isValidTSD ) {
 		SYSM_CaribrateTP();
 	}

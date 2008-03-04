@@ -1155,7 +1155,7 @@ static void PushKeys( u16 code, eUseSoftKey noc )
                     // ::::::::::::::::::::::::::::::::::::::::::::::
                     // TWL設定データファイルへの書き込み
                     // ::::::::::::::::::::::::::::::::::::::::::::::
-                    if( !LCFG_WriteTWLSettings() )
+                    if( !MY_WriteTWLSettings() )
                     {
                         OS_TPrintf( "TWL settings write failed.\n" );
                     }
@@ -1448,7 +1448,7 @@ static int SetRatingOgnMain( void )
         // ::::::::::::::::::::::::::::::::::::::::::::::
         // TWL設定データファイルへの書き込み
         // ::::::::::::::::::::::::::::::::::::::::::::::
-        if( !LCFG_WriteTWLSettings() )
+        if( !MY_WriteTWLSettings() )
         {
             OS_TPrintf( "TWL settings write failed.\n" );
         }
@@ -1543,7 +1543,7 @@ static int SetRatingLockMain( void )
         // ::::::::::::::::::::::::::::::::::::::::::::::
         // TWL設定データファイルへの書き込み
         // ::::::::::::::::::::::::::::::::::::::::::::::
-        if( !LCFG_WriteTWLSettings() )
+        if( !MY_WriteTWLSettings() )
         {
             OS_TPrintf( "TWL settings write failed.\n" );
         }
@@ -1643,7 +1643,7 @@ static int SetRatingAgeMain( void )
         // ::::::::::::::::::::::::::::::::::::::::::::::
         // TWL設定データファイルへの書き込み
         // ::::::::::::::::::::::::::::::::::::::::::::::
-        if( !LCFG_WriteTWLSettings() )
+        if( !MY_WriteTWLSettings() )
         {
             OS_TPrintf( "TWL settings write failed.\n" );
         }
@@ -1745,7 +1745,7 @@ static int SetSecretQuestionIDMain( void )
         // ::::::::::::::::::::::::::::::::::::::::::::::
         // TWL設定データファイルへの書き込み
         // ::::::::::::::::::::::::::::::::::::::::::::::
-        if( !LCFG_WriteTWLSettings() )
+        if( !MY_WriteTWLSettings() )
         {
             OS_TPrintf( "TWL settings write failed.\n" );
         }
@@ -2066,7 +2066,7 @@ static int SetPasswordMain( void )
         // ::::::::::::::::::::::::::::::::::::::::::::::
         // TWL設定データファイルへの書き込み
         // ::::::::::::::::::::::::::::::::::::::::::::::
-        if( !LCFG_WriteTWLSettings() )
+        if( !MY_WriteTWLSettings() )
         {
             OS_TPrintf( "TWL settings write failed.\n" );
         }

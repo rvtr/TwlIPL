@@ -383,7 +383,7 @@ static int InputRtcDateTimeMain( void )
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		if( !LCFG_WriteTWLSettings() ) {
+		if( !MY_WriteTWLSettings() ) {
 			OS_TPrintf( "TWL settings write failed.\n" );
 		}
 		
@@ -551,7 +551,7 @@ void ClearRTC( void )
 	// ::::::::::::::::::::::::::::::::::::::::::::::
 	// TWL設定データファイルへの書き込み
 	// ::::::::::::::::::::::::::::::::::::::::::::::
-	if( !LCFG_WriteTWLSettings() ) {
+	if( !MY_WriteTWLSettings() ) {
 		OS_TPrintf( "TWL settings write failed.\n" );
 	}
 }

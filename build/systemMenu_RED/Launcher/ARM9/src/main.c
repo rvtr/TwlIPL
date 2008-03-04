@@ -130,9 +130,14 @@ void TwlMain( void )
 
 
     // 各種パラメータの取得------------
-    pBootTitle = SYSM_ReadParameters();                         // 本体設定データ、リセットパラメータ、
-                                                                // 初回起動シーケンス判定、
-                                                                // 検査用オート起動カード判定、量産ライン用キーショートカット起動判定等のリード
+	pBootTitle = SYSM_ReadParameters();   		               // 本体設定データ、リセットパラメータのリード、検査用オート起動カード判定、量産ライン用キーショートカット起動判定等のリード
+	
+	if( SYSMi_GetWork()->flags.common.isFatalError ) {
+		// FATALエラー処理
+	}
+	if( SYSMi_GetWork()->flags.common.isInitialSettings ) {
+		// 初回起動シーケンス判定
+	}
 
     (void)SYSM_GetCardTitleList( s_titleList );                 // カードアプリリストの取得（カードアプリはs_titleList[0]に格納される）
 

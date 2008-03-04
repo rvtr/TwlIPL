@@ -86,6 +86,7 @@ typedef struct SYSM_work {
 			vu32		isLogoSkip :1;					// ロゴデモスキップ
 			vu32		isLoadSucceeded :1;				// アプリロード完了？
 			vu32		isCardBoot :1;					// カードブートか？
+			vu32		isInitialSettings :1;			// 初回起動シーケンスか？
 			vu32		isBrokenHWNormalInfo :1;		// HWノーマル情報が破損している。
 			vu32		isBrokenHWSecureInfo :1;		// HWセキュア情報が破損している。
 			vu32		isResetRTC :1;					// RTCリセット発生

@@ -76,6 +76,7 @@ extern void CheckOKCancelButton(BOOL *tp_ok, BOOL *tp_cancel);
 extern void InputDecimal(int *tgtp, InputNumParam *inpp);
 
 extern void ClearRTC( void );
+extern BOOL MY_WriteTWLSettings( void );
 
 #ifdef __cplusplus
 }

@@ -158,6 +158,7 @@ TitleProperty *SYSM_ReadParameters( void )
 	if( !LCFG_ReadHWNormalInfo() ) {
 		OS_TPrintf( "HW Normal Info Broken!\n" );
 		SYSMi_GetWork()->flags.common.isBrokenHWNormalInfo = TRUE;
+		SYSMi_GetWork()->flags.common.isFatalError = TRUE;
 	}
 	// セキュア情報リード
 	if( !LCFG_ReadHWSecureInfo() ) {
@@ -169,9 +170,19 @@ TitleProperty *SYSM_ReadParameters( void )
 	//-----------------------------------------------------
 	// 本体設定データのリード
 	//-----------------------------------------------------
-	if( LCFG_ReadTWLSettings() ) {									// NANDからTWL本体設定データをリード
-		SYSM_CaribrateTP();											// 読み出したTWL本体設定データをもとにTPキャリブレーション。
-		brightness = (u8)LCFG_TSD_GetBacklightBrightness();
+	{
+		u8 *pBuffer = SYSM_Alloc( LCFG_READ_TEMP );
+		if( pBuffer == NULL ) {
+			SYSMi_GetWork()->flags.common.isFatalError = TRUE;
+		}else if( LCFG_ReadTWLSettings( (u8 (*)[LCFG_READ_TEMP])pBuffer ) ) {	// NANDからTWL本体設定データをリード
+			SYSM_CaribrateTP();											// 読み出したTWL本体設定データをもとにTPキャリブレーション。
+			brightness = (u8)LCFG_TSD_GetBacklightBrightness();
+		}else {
+			SYSMi_GetWork()->flags.common.isInitialSettings = TRUE;		// リード失敗なら初回起動シーケンスへ
+		}
+		if( pBuffer ) {
+			SYSM_Free( pBuffer );
+		}
 	}
 	
 	//-----------------------------------------------------

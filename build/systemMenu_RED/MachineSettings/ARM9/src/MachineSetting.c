@@ -340,3 +340,15 @@ static int InitialSettingFinalizeMain( void )
 	return 0;
 }
 
+
+// 本体設定データのライト
+BOOL MY_WriteTWLSettings( void )
+{
+	BOOL retval = FALSE;
+	u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
+	if( pBuffer != NULL ) {
+		retval = LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+		SYSM_Free( pBuffer );
+	}
+	return retval;
+}

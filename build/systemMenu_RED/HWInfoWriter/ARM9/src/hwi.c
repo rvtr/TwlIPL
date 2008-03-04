@@ -123,7 +123,12 @@ HwiInitResult HWI_Init( void *(*pAlloc)( u32 ), void (*pFree)( void * ) )
 // TWL設定データのリード
 static void ReadTWLSettings( void )
 {
-	s_isReadTSD = LCFGi_TSD_ReadSettings();
+	u8 *pBuffer = spAlloc( sizeof(LCFGTWLSettingsData) * 2 );
+	s_isReadTSD = FALSE;
+	if( pBuffer ) {
+		s_isReadTSD = LCFGi_TSD_ReadSettings( (u8 (*)[ sizeof(LCFGTWLSettingsData) * 2 ] )pBuffer );
+		spFree( pBuffer );
+	}
 	if( s_isReadTSD ) {
 		OS_TPrintf( "TSD read succeeded.\n" );
 	}else {
@@ -260,6 +265,7 @@ void HWI_ModifyLanguage( u8 region )
 		LCFG_TSD_SetFlagCountry( FALSE );				// ※ついでに国コードもクリアしておく。
 		LCFG_TSD_SetCountry( LCFG_TWL_COUNTRY_UNDEFINED );
 		LCFGi_TSD_WriteSettings();
+		
 		OS_TPrintf( "Language Change \"%s\" -> \"%s\"\n",
 					strLanguage[ nowLanguage ], strLanguage[ LCFG_TSD_GetLanguage() ] );
 	}

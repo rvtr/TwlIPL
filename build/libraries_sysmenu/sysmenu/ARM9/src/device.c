@@ -62,7 +62,13 @@ void SYSM_SetBackLightBrightness( u8 brightness )
 	LCFG_TSD_SetBacklightBrightness( brightness );
 	
 	// [TODO:] バックライト輝度は毎回セーブせずに、アプリ起動やリセット、電源OFF時に値が変わっていたらセーブするようにする。
-	LCFG_WriteTWLSettings();
+	{
+		u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
+		if( pBuffer != NULL ) {
+			LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+			SYSM_Free( pBuffer );
+		}
+	}
 }
 
 
@@ -114,7 +120,13 @@ void SYSMi_CheckRTC( void )
 		LCFG_TSD_SetFlagDateTime( FALSE );
 		LCFG_TSD_SetRTCOffset( 0 );
 		LCFG_TSD_SetRTCLastSetYear( 0 );
-		LCFG_WriteTWLSettings();
+		{
+			u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
+			if( pBuffer != NULL ) {
+				LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+				SYSM_Free( pBuffer );
+			}
+		}
 	}
 }
 

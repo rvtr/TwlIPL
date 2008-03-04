@@ -449,7 +449,13 @@ static void PollBackLightBrightness( void )
 		{
 			// マイコンから取ってきた輝度とLCFGの設定値がズレていたらLCFGの値を設定しなおし
 			LCFG_TSD_SetBacklightBrightness( brightness );
-			LCFG_WriteTWLSettings();
+			{
+				u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
+				if( pBuffer != NULL ) {
+					LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+					SYSM_Free( pBuffer );
+				}
+			}
 		}
 	}
 	

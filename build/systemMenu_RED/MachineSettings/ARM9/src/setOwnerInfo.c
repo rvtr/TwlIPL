@@ -432,7 +432,7 @@ static void PushKeys( u16 code, NameOrComment noc )
 				// ::::::::::::::::::::::::::::::::::::::::::::::
 				// TWL設定データファイルへの書き込み
 				// ::::::::::::::::::::::::::::::::::::::::::::::
-				if( !LCFG_WriteTWLSettings() ) {
+				if( !MY_WriteTWLSettings() ) {
 					OS_TPrintf( "TWL settings write failed.\n" );
 				}
 				// セーブ後にキャンセル処理と合流
@@ -770,7 +770,7 @@ static int SetBirthdayMain( void )
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		if( !LCFG_WriteTWLSettings() ) {
+		if( !MY_WriteTWLSettings() ) {
 			OS_TPrintf( "TWL settings write failed.\n" );
 		}
 		SetOwnerInfoInit();
@@ -893,7 +893,7 @@ static int SetUserColorMain( void )
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
-		if( !LCFG_WriteTWLSettings() ) {
+		if( !MY_WriteTWLSettings() ) {
 			OS_TPrintf( "TWL settings write failed.\n" );
 		}
 		SetOwnerInfoInit();
