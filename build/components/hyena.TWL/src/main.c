@@ -76,7 +76,6 @@
 /*---------------------------------------------------------------------------*
     内部関数定義
  *---------------------------------------------------------------------------*/
-static void         SetSCFGWork( void );
 static void         ResetRTC( void );
 static void         ReadLauncherParameter( void );
 static void         PrintDebugInfo(void);
@@ -109,12 +108,6 @@ TwlSpMain(void)
 
     // SYSMワークのクリア
     MI_CpuClear32( SYSMi_GetWork(), sizeof(SYSM_work) );
-
-    // MMEMサイズチェックは、ARM7の_start内でやっているので、ノーケアでOK.
-    // SCFGレジスタ→HWi_WSYS04 etc.→system shared領域への値セットは、ランチャー起動時点では行われていないので、
-    // ランチャー自身がこれらの値を使うには、自身でこれらの値をセットしてやる必要がある。
-    // ランチャーからアプリを起動する際には、reboot.cが値を再セットしてくれる。
-    SetSCFGWork();  // [TODO]未デバッグ
 
     // バックライトON
     while ( (reg_GX_DISPSTAT & REG_GX_DISPSTAT_INI_MASK) == FALSE )
@@ -235,35 +228,6 @@ TwlSpMain(void)
             OS_ResetSystem();
         }
         BOOT_WaitStart();
-    }
-}
-
-
-// システム領域(WRAM & MMEM)にSCFG情報をセット [TODO:]最終的にNANDファームからブートされたらいらないかも
-static void SetSCFGWork( void )
-{
-    // SCFGレジスタが有効な場合のみセット
-    if( reg_SCFG_EXT & REG_SCFG_EXT_CFG_MASK ) {
-        // WRAMのシステム領域にセット
-        u32 *wsys4 = (void*)HWi_WSYS04_ADDR;
-        u8  *wsys8 = (void*)HWi_WSYS08_ADDR;
-        u8  *wsys9 = (void*)HWi_WSYS09_ADDR;
-        // copy scfg registers
-        *wsys4 = reg_SCFG_EXT;
-        *wsys8 = (u8)(((reg_SCFG_OP & REG_SCFG_OP_OPT_MASK)) |
-                        ((reg_SCFG_A9ROM & (REG_SCFG_A9ROM_RSEL_MASK | REG_SCFG_A9ROM_SEC_MASK)) << (HWi_WSYS08_ROM_ARM9RSEL_SHIFT - REG_SCFG_A9ROM_RSEL_SHIFT)) |
-                        ((reg_SCFG_A7ROM & (REG_SCFG_A7ROM_RSEL_MASK | REG_SCFG_A7ROM_FUSE_MASK)) << (HWi_WSYS08_ROM_ARM7RSEL_SHIFT - REG_SCFG_A7ROM_RSEL_SHIFT)) |
-                        ((reg_SCFG_WL & REG_SCFG_WL_OFFB_MASK) << (HWi_WSYS08_WL_OFFB_SHIFT - REG_SCFG_WL_OFFB_SHIFT))
-                        );
-        *wsys9 = (u8)((*wsys9 & (HWi_WSYS09_JTAG_DSPJE_MASK | HWi_WSYS09_JTAG_CPUJE_MASK | HWi_WSYS09_JTAG_ARM7SEL_MASK)) |
-                        ((reg_SCFG_JTAG & (REG_SCFG_JTAG_CPUJE_MASK | REG_SCFG_JTAG_ARM7SEL_MASK))) |
-                        ((reg_SCFG_JTAG & REG_SCFG_JTAG_DSPJE_MASK) >> (REG_SCFG_JTAG_DSPJE_SHIFT - HWi_WSYS09_JTAG_DSPJE_SHIFT)) |
-                        ((reg_SCFG_CLK & (REG_SCFG_CLK_AESHCLK_MASK | REG_SCFG_CLK_SD2HCLK_MASK | REG_SCFG_CLK_SD1HCLK_MASK)) << (HWi_WSYS09_CLK_SD1HCLK_SHIFT - REG_SCFG_CLK_SD1HCLK_SHIFT)) |
-                        ((reg_SCFG_CLK & (REG_SCFG_CLK_SNDMCLK_MASK | REG_SCFG_CLK_WRAMHCLK_MASK)) >> (REG_SCFG_CLK_WRAMHCLK_SHIFT - HWi_WSYS09_CLK_WRAMHCLK_SHIFT))
-                        );
-
-        // MMEMのシステム領域にコピー
-        MI_CpuCopy8( (void*)HWi_WSYS04_ADDR, (void *)HW_SYS_CONF_BUF, 6 );
     }
 }
 
