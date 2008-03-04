@@ -32,7 +32,7 @@
 #define OK_BUTTON_BOTTOM_Y					( OK_BUTTON_TOP_Y + 2 * 8 )
 
 
-#define SETTING_MENU_ELEMENT_NUM			5						// メインメニューの項目数（※ピクトチャット起動テストは除いておく）
+#define SETTING_MENU_ELEMENT_NUM			6						// メインメニューの項目数（※ピクトチャット起動テストは除いておく）
 
 // extern data------------------------------------------
 
@@ -108,6 +108,16 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ LCFG_T
 		(const u16 *)L"COUNTRY(C)",
 		(const u16 *)L"COUNTRY(K)",
 	},
+	{
+		(const u16 *)L"ペアレンタルコントロール",
+		(const u16 *)L"PARENTAL CONTROL",
+		(const u16 *)L"PARENTAL CONTROL(F)",
+		(const u16 *)L"PARENTAL CONTROL(G)",
+		(const u16 *)L"PARENTAL CONTROL(I)",
+		(const u16 *)L"PARENTAL CONTROL(S)",
+		(const u16 *)L"PARENTAL CONTROL(C)",
+		(const u16 *)L"PARENTAL CONTROL(K)",
+	},
 #if 0
 	{
 		(const u16 *)L"ピクトチャット起動テスト",
@@ -129,6 +139,7 @@ static MenuPos s_settingPos[] = {
 	{ TRUE, 4 * 8,  12 * 8 },
 	{ TRUE,  4 * 8,  14 * 8 },
 	{ TRUE,  4 * 8,  16 * 8 },
+	{ TRUE,  4 * 8,  18 * 8 },
 };
 
 
@@ -235,7 +246,11 @@ int MachineSettingMain( void )
 					SelectCountryInit();
 					g_pNowProcess = SelectCountryMain;
 					break;
-				case 5:
+                case 5:
+                    SetParentalControlInit();
+                    g_pNowProcess = SetParentalControlMain;
+                    break;
+				case 6:
 					//pictochat起動テスト
 					OS_SetLauncherParamAndResetHardware( 0x0003000550434854, &tempflag );
 			}

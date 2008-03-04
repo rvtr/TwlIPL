@@ -68,6 +68,8 @@ extern void SelectRegionInit( void );
 extern int  SelectRegionMain( void );
 extern void SelectCountryInit( void );
 extern int  SelectCountryMain( void );
+extern void SetParentalControlInit( void );
+extern int  SetParentalControlMain( void );
 
 extern void DrawOKCancelButton( void );
 extern void CheckOKCancelButton(BOOL *tp_ok, BOOL *tp_cancel);
