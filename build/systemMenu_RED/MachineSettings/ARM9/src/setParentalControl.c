@@ -10,7 +10,7 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Date:: #$
+  $Date::            $
   $Rev$
   $Author$
  *---------------------------------------------------------------------------*/

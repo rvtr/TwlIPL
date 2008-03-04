@@ -994,7 +994,7 @@ static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM] = {
 		L'Ç‹',	L'Ç›',	L'Çﬁ',	L'Çﬂ',	L'Ç‡',
 		L'Ç‚',	EOM_,	L'Ç‰',	EOM_,	L'ÇÊ',	VAR_BUTTON1_,
 		L'ÇÁ',	L'ÇË',	L'ÇÈ',	L'ÇÍ',	L'ÇÎ',
-		L'ÇÌ',	L'ÇÓ',	L'ÇÔ',	L'Ç',	L'ÇÒ',	VAR_BUTTON2_,
+		L'ÇÌ',	EOM_,	EOM_,	L'Ç',	L'ÇÒ',	VAR_BUTTON2_,
 		L'Çü',	L'Ç°',	L'Ç£',	L'Ç•',	L'Çß',
 		L'Ç·',	EOM_,	L'Ç„',	EOM_,	L'ÇÂ',	EOM_,
 		
@@ -1005,7 +1005,7 @@ static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM] = {
 		L'Çœ',	L'Ç“',	L'Ç’',	L'Çÿ',	L'Ç€',
 		L'Ç¡',	L'ÅA',	L'ÅB',	L'ÅI',	L'ÅH',	EOM_,
 		
-		L'Åu',	L'Åv',	L'Å`',	L'ÅE',	L'Å[',
+		L'Åu',	L'Åv',	L'Å`',	EOM_,	L'Å[',
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,	CANCEL_BUTTON_,
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
@@ -1033,33 +1033,39 @@ static const u16 char_tbl[CHAR_LIST_MODE_NUM][CHAR_LIST_CHAR_NUM] = {
 		L'Ép',	L'És',	L'Év',	L'Éy',	L'É|',
 		L'Éb',	L'ÅA',	L'ÅB',	L'ÅI',	L'Å[',	EOM_,
 		
-		L'Åu',	L'Åv',	L'Å`',	L'ÅE',	EOM_,
+		L'Åu',	L'Åv',	L'Å`',	EOM_,	EOM_,
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,	CANCEL_BUTTON_,
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
 	},
 	
 	{	// âpêî
-		L'Ç`',	L'Ça',	L'Çb',	L'Çc',	L'Çd',
-		L'Çe',	L'Çf',	L'Çg',	L'Çh',	L'Çi',	DEL_BUTTON_,
-		L'Çj',	L'Çk',	L'Çl',	L'Çm',	L'Çn',
-		L'Ço',	L'Çp',	L'Çq',	L'Çr',	L'Çs',	SPACE_BUTTON_,
-		L'Çt',	L'Çu',	L'Çv',	L'Çw',	L'Çx',
-		L'Çy',	EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
-		
-		L'ÇÅ',	L'ÇÇ',	L'ÇÉ',	L'ÇÑ',	L'ÇÖ',
-		L'ÇÜ',	L'Çá',	L'Çà',	L'Çâ',	L'Çä',	VAR_BUTTON1_,
-		L'Çã',	L'Çå',	L'Çç',	L'Çé',	L'Çè',
-		L'Çê',	L'Çë',	L'Çí',	L'Çì',	L'Çî',	VAR_BUTTON2_,
-		L'Çï',	L'Çñ',	L'Çó',	L'Çò',	L'Çô',
-		L'Çö',	EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
-		
-		L'ÇO',	L'ÇP',	L'ÇQ',	L'ÇR',	L'ÇS',
-		L'ÇT',	L'ÇU',	L'ÇV',	L'ÇW',	L'ÇX',	EOM_,
-		L'ÅI',	EOM_,	L'Åï',	EOM_,	L'Å^',
-		L'ÅC',	EOM_,	L'ÅD',	EOM_,	L'Å|',	OK_BUTTON_,
-		L'Åf',	EOM_,	L'Åh',	EOM_,	EOM_,
-		L'Åó',	EOM_,	L'Åi',	EOM_,	L'Åj',	EOM_,
+        // 'A'Ç©ÇÁèáÇ…UTF-16ï∂éöÉRÅ[Éh(ÉäÉgÉãÉGÉìÉfÉBÉAÉì)Ç≈ë„ì¸ÇµÇƒÇ¢Ç≠
+		0x0041,	0x0042,	0x0043,	0x0044,	0x0045,
+		0x0046,	0x0047,	0x0048,	0x0049,	0x004a,	DEL_BUTTON_,
+		0x004b,	0x004c,	0x004d,	0x004e,	0x004f,
+		0x0050,	0x0051,	0x0052,	0x0053,	0x0054,	SPACE_BUTTON_,
+		0x0055,	0x0056,	0x0057,	0x0058,	0x0059,
+		0x005a,	EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
+		// 'a'Ç©ÇÁèá
+		0x0061,	0x0062,	0x0063,	0x0064,	0x0065,
+		0x0066,	0x0067,	0x0068,	0x0069,	0x006a,	VAR_BUTTON1_,
+		0x006b,	0x006c,	0x006d,	0x006e,	0x006f,
+		0x0070,	0x0071,	0x0072,	0x0073,	0x0074,	VAR_BUTTON2_,
+		0x0075,	0x0076,	0x0077,	0x0078,	0x0079,
+		0x007a,	EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
+		// '0'Ç©ÇÁèá
+		0x0030,	0x0031,	0x0032,	0x0033,	0x0034,
+		0x0035,	0x0036,	0x0037,	0x0038,	0x0039,	EOM_,
+        // ì¡éÍï∂éö
+        // '!'           '&'             '/'
+		0x0021,	EOM_,	0x0026,	EOM_,	0x002f,
+        // ','           '.'             '-'
+		0x002c,	EOM_,	0x002e,	EOM_,	0x002d,	OK_BUTTON_,
+        // '''           '"'
+		0x0027,	EOM_,	0x2033,	EOM_,	EOM_,
+        // '@'           '('             ')'
+		0x0040,	EOM_,	0x0028,	EOM_,	0x0029,	EOM_,
 		
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,
 		EOM_,	EOM_,	EOM_,	EOM_,	EOM_,	CANCEL_BUTTON_,
