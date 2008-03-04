@@ -503,8 +503,8 @@ static HotSwState LoadBannerData(void)
         // バナーリードが成功していたら各種フラグTRUE その他の場合はFALSE (この関数の外で排他制御されているからここでは排他制御しないでOK)
         state = (retval == HOTSW_SUCCESS) ? TRUE : FALSE;
         SYSMi_GetWork()->flags.hotsw.isValidCardBanner  = state;
-        SYSMi_GetWork()->flags.hotsw.isCardStateChanged = (u8)state;
-        SYSMi_GetWork()->flags.hotsw.isExistCard 		 = state;
+        SYSMi_GetWork()->flags.hotsw.isExistCard 		= state;
+        SYSMi_GetWork()->flags.hotsw.isCardStateChanged = TRUE;
 	}
     else{
         // バナーデータが登録されていない場合 (この関数の外で排他制御されているからここでは排他制御しないでOK)
@@ -522,7 +522,7 @@ static HotSwState LoadBannerData(void)
         SYSMi_GetWork()->flags.hotsw.isInspectCard = FALSE;
     }
 
-//    SYSMi_GetWork()->flags.hotsw.is1stCardChecked   = TRUE;
+    SYSMi_GetWork()->flags.hotsw.is1stCardChecked   = TRUE;
 
 	return retval;
 }
@@ -1069,11 +1069,14 @@ static void McThread(void *arg)
     while(1){
         OS_ReceiveMessage(&s_ctData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
 
-        // カードデータロード完了フラグを下ろす
-		SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = FALSE;
-
         if( msg->ctrl == TRUE ) {
+            // [TODO]とりあえず、ここでHOTSWを抑制した時点でisExistCardがFALSEなら、HOTSWのFinalizeをするようにする。
 			SYSMi_GetWork()->flags.hotsw.isEnableHotSW = msg->value;
+            // [TODO]カードがあるときとないときで場合分けしてFinalize処理を実装
+            //		 PXIメッセージを「抑制」と「Finalize」で分けて処理
+            //			→ １．全てのレジスタをクリアする			(カードがささっていない時)
+            //			   ２．一度電源を落としてNomalモードにする	(NANDアプリ等を起動する場合)
+            //			   ３．必要なレジスタを残して、後はクリア	(ささっているカードを起動する場合)
 //			HOTSW_Finalize();
         }
         
@@ -1093,10 +1096,10 @@ static void McThread(void *arg)
                     if(CmpMcSlotMode(SLOT_STATUS_MODE_10) == TRUE){
 	               		// フラグケア
                         LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
-						SYSMi_GetWork()->flags.hotsw.isExistCard 		  = TRUE;
+                        
+						SYSMi_GetWork()->flags.hotsw.isExistCard 		 = TRUE;
                 		SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
-                        UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
-
+                        
                     	// 新しいカードのIDを入れる
                     	SYSMi_GetWork()->nCardID = s_cbData.id_gam;
 
@@ -1107,20 +1110,16 @@ static void McThread(void *arg)
             			// カードデータロード完了フラグ
             			SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = TRUE;
 
+                        UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+                        
                         OS_PutString("ok!\n");
 
 						break;
                     }
                 }
 
-                // HotSwをbusy状態にする 
-				SetHotSwState(TRUE);
-
                 // カード読み込み開始
        			retval = LoadCardData();
-
-				// HotSwをfree状態にする
-                SetHotSwState(FALSE);
 
 				// Debug表示
                 DebugPrintErrorMessage(retval);
@@ -1154,6 +1153,7 @@ static void McThread(void *arg)
 				SYSMi_GetWork()->flags.hotsw.isExistCard 		 = FALSE;
                 SYSMi_GetWork()->flags.hotsw.isValidCardBanner   = FALSE;
                 SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
+                SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = FALSE;
                 UnlockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
                 
                 // カードブート用構造体の初期化
@@ -1352,11 +1352,11 @@ static void SetInterrupt(void)
 #ifndef DEBUG_USED_CARD_SLOT_B_
   	SetInterruptCallback( OS_IE_CARD_A_IREQ , InterruptCallbackCard );
   	SetInterruptCallback( OS_IE_CARD_A_DET  , InterruptCallbackCardDet );
-  	SetInterruptCallback( OS_IE_CARD_A_DATA , InterruptCallbackCardData );
+  	SetInterruptCallback( OS_IE_CARD_A_DATA , InterruptCallbackCardData ); // DMA転送終了割り込み使う
 #else
 	SetInterruptCallback( OS_IE_CARD_B_IREQ , InterruptCallbackCard );
 	SetInterruptCallback( OS_IE_CARD_B_DET  , InterruptCallbackCardDet );
-	SetInterruptCallback( OS_IE_CARD_B_DATA , InterruptCallbackCardData );
+	SetInterruptCallback( OS_IE_CARD_B_DATA , InterruptCallbackCardData ); // DMA転送終了割り込み使う
 #endif
 }
 
