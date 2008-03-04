@@ -17,11 +17,32 @@
 #define		ROM_EMULATION_END_OFS				0x180
 
 // Function prototype -------------------------------------------------------
+static HotSwState HOTSWi_ChangeModeNormal(CardBootData *cbd, u64 cmd);
 
 
 // ===========================================================================
 // 	Function Describe
 // ===========================================================================
+
+void HOTSWi_SetCommand(GCDCmd64 *cndLE)
+{
+	GCDCmd64 cndBE;
+
+    // ビッグエンディアンに直す
+	cndBE.b[7] = cndLE->b[0];
+	cndBE.b[6] = cndLE->b[1];
+    cndBE.b[5] = cndLE->b[2];
+    cndBE.b[4] = cndLE->b[3];
+    cndBE.b[3] = cndLE->b[4];
+    cndBE.b[2] = cndLE->b[5];
+    cndBE.b[1] = cndLE->b[6];
+    cndBE.b[0] = cndLE->b[7];
+
+    // MCCMD レジスタ設定
+	reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
+	reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
+}
+
 
 // ■------------------------------------■
 // ■       ノーマルモードのコマンド     ■
@@ -33,7 +54,7 @@
  * ----------------------------------------------------------------- */
 HotSwState ReadIDNormal(CardBootData *cbd)
 {
-    GCDCmd64 	cndLE, cndBE;
+	GCDCmd64 cndLE;
 
 	// カード割り込みによるDMAコピー
     HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_nml, sizeof(cbd->id_nml) );
@@ -41,19 +62,8 @@ HotSwState ReadIDNormal(CardBootData *cbd)
    	// リトルエンディアンで作って
 	cndLE.dw  = HSWOP_N_OP_RD_ID;
 
-   	// ビックエンディアンにする
-	cndBE.b[0] = cndLE.b[7];
-	cndBE.b[1] = cndLE.b[6];
-	cndBE.b[2] = cndLE.b[5];
-	cndBE.b[3] = cndLE.b[4];
-	cndBE.b[4] = cndLE.b[3];
-	cndBE.b[5] = cndLE.b[2];
-	cndBE.b[6] = cndLE.b[1];
-	cndBE.b[7] = cndLE.b[0];
-
 	// MCCMD レジスタ設定
-   	reg_HOTSW_MCCMD0 = *(u32 *)cndBE.b;
-	reg_HOTSW_MCCMD1 = *(u32 *)&cndBE.b[4];
+	HOTSWi_SetCommand(&cndLE);
 
 	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
 	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
@@ -71,7 +81,7 @@ HotSwState ReadIDNormal(CardBootData *cbd)
 /*---------------------------------------------------------------------------*
  * Name:         ReadBootSegNormal
  * 
- * Description:  Type1のノーマルモードのBoot Segment読み込み
+ * Description:  ノーマルモードのBoot Segment読み込み
  *
  * CT=240ns  Latency1=0x1fff  Latency2=0x3f  Pagecount=8page
  *---------------------------------------------------------------------------*/
@@ -81,7 +91,7 @@ HotSwState ReadBootSegNormal(CardBootData *cbd)
     u32 		*dst = cbd->pBootSegBuf->word;
     u32			temp;
     u64 		page = 0;
-    GCDCmd64 	cndLE, cndBE;
+	GCDCmd64 	cndLE;
 
     if(cbd->cardType == DS_CARD_TYPE_1){
     	loop = 0x1UL;
@@ -110,19 +120,8 @@ HotSwState ReadBootSegNormal(CardBootData *cbd)
 		cndLE.dw  = HSWOP_N_OP_RD_PAGE;
 		cndLE.dw |= page << HSWOP_N_RD_PAGE_ADDR_SHIFT;
 
-    	// ビックエンディアンにする
-		cndBE.b[0] = cndLE.b[7];
-		cndBE.b[1] = cndLE.b[6];
-		cndBE.b[2] = cndLE.b[5];
-		cndBE.b[3] = cndLE.b[4];
-		cndBE.b[4] = cndLE.b[3];
-		cndBE.b[5] = cndLE.b[2];
-		cndBE.b[6] = cndLE.b[1];
-		cndBE.b[7] = cndLE.b[0];
-    
 		// MCCMD レジスタ設定
-    	reg_HOTSW_MCCMD0 = *(u32 *)cndBE.b;
-		reg_HOTSW_MCCMD1 = *(u32 *)&cndBE.b[4];
+		HOTSWi_SetCommand(&cndLE);
 
         if(cbd->modeType == HOTSW_MODE1){
 			// NewDMA転送の準備
@@ -152,37 +151,43 @@ HotSwState ReadBootSegNormal(CardBootData *cbd)
 /*---------------------------------------------------------------------------*
  * Name:         ChangeModeNormal
  * 
- * Description:  Type1のノーマルモードのモード変更
+ * Description:  ノーマルモードからセキュアモードへの変更
  * 
  * CT=240ns  Latency1=0x18  Latency2=0  Pagecount=0page
  *---------------------------------------------------------------------------*/
 HotSwState ChangeModeNormal(CardBootData *cbd)
 {
-	GCDCmd64 tempCnd, cnd;
-    u64 vae64 = cbd->vae;
+	return HOTSWi_ChangeModeNormal(cbd, HSWOP_N_OP_CHG_MODE);
+}
+
+/*---------------------------------------------------------------------------*
+ * Name:         ChangeModeNorma2
+ * 
+ * Description:  ノーマルモードからセキュア２モードへの変更
+ * 
+ * CT=240ns  Latency1=0x18  Latency2=0  Pagecount=0page
+ *---------------------------------------------------------------------------*/
+HotSwState ChangeModeNormal2(CardBootData *cbd)
+{
+	return HOTSWi_ChangeModeNormal(cbd, HSWOP_N_OP_CHG2_MODE);
+}
+
+
+static HotSwState HOTSWi_ChangeModeNormal(CardBootData *cbd, u64 cmd)
+{
+	GCDCmd64 cndLE;
 
     if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
 
     // リトルエンディアンで作って
-    tempCnd.dw  = HSWOP_N_OP_CHG_MODE;
-	tempCnd.dw |= cbd->vbi << HSWOP_N_VBI_SHIFT;
-	tempCnd.dw |= vae64 << HSWOP_N_VAE_SHIFT;
-
-    // ビックエンディアンにする
-	cnd.b[0] = tempCnd.b[7];
-	cnd.b[1] = tempCnd.b[6];
-	cnd.b[2] = tempCnd.b[5];
-	cnd.b[3] = tempCnd.b[4];
-	cnd.b[4] = tempCnd.b[3];
-	cnd.b[5] = tempCnd.b[2];
-	cnd.b[6] = tempCnd.b[1];
-	cnd.b[7] = tempCnd.b[0];
+    cndLE.dw  = cmd;
+	cndLE.dw |= cbd->vbi << HSWOP_N_VBI_SHIFT;
+	cndLE.dw |= (u64)cbd->vae << HSWOP_N_VAE_SHIFT;
 
 	// MCCMD レジスタ設定
-    reg_HOTSW_MCCMD0 = *(u32 *)cnd.b;
-	reg_HOTSW_MCCMD1 = *(u32 *)&cnd.b[4];
+	HOTSWi_SetCommand(&cndLE);
 
 	// MCCNT1 レジスタ設定
 	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~SCRAMBLE_MASK) |
@@ -194,6 +199,7 @@ HotSwState ChangeModeNormal(CardBootData *cbd)
     return HOTSW_SUCCESS;
 }
 
+
 /* -----------------------------------------------------------------
  * LoadTable関数
  *
@@ -204,25 +210,14 @@ HotSwState ChangeModeNormal(CardBootData *cbd)
  * ----------------------------------------------------------------- */
 HotSwState LoadTable(void)
 {
-	GCDCmd64 tempCnd, cnd;
+	GCDCmd64 cndLE;
 	u32 temp;
     
     // リトルエンディアンで作って
-    tempCnd.dw  = HSWOP_N_OP_LD_TABLE;
-
-    // ビックエンディアンにする
-	cnd.b[0] = tempCnd.b[7];
-	cnd.b[1] = tempCnd.b[6];
-	cnd.b[2] = tempCnd.b[5];
-	cnd.b[3] = tempCnd.b[4];
-	cnd.b[4] = tempCnd.b[3];
-	cnd.b[5] = tempCnd.b[2];
-	cnd.b[6] = tempCnd.b[1];
-	cnd.b[7] = tempCnd.b[0];
+    cndLE.dw  = HSWOP_N_OP_LD_TABLE;
 
 	// MCCMD レジスタ設定
-    reg_HOTSW_MCCMD0 = *(u32 *)cnd.b;
-	reg_HOTSW_MCCMD1 = *(u32 *)&cnd.b[4];
+	HOTSWi_SetCommand(&cndLE);
 
 	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
 	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
@@ -291,7 +286,7 @@ HotSwState ReadRomEmulationData(CardBootData *cbd)
  *---------------------------------------------------------------------------*/
 static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
 {
-	GCDCmd64 cndLE, cndBE;
+	GCDCmd64 cndLE;
     u64 data;
 
     // comannd0部分
@@ -322,20 +317,9 @@ static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
     	// コマンドの暗号化
 		EncryptByBlowfish( &cbd->keyTable, (u32*)&cndLE.b[4], (u32*)cndLE.b );
     }
-    
-    // ビッグエンディアンに直す(暗号化後)
-	cndBE.b[7] = cndLE.b[0];
-	cndBE.b[6] = cndLE.b[1];
-    cndBE.b[5] = cndLE.b[2];
-    cndBE.b[4] = cndLE.b[3];
-    cndBE.b[3] = cndLE.b[4];
-    cndBE.b[2] = cndLE.b[5];
-    cndBE.b[1] = cndLE.b[6];
-    cndBE.b[0] = cndLE.b[7];
 
-    // MCCMD レジスタ設定
-	reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
-	reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
+	// MCCMD レジスタ設定
+	HOTSWi_SetCommand(&cndLE);
 }
 
 
@@ -399,8 +383,7 @@ HotSwState ReadSegSecure(CardBootData *cbd)
 	u32			*buf = (cbd->modeType == HOTSW_MODE1) ? cbd->pSecureSegBuf : cbd->pSecure2SegBuf;
     u32			loop, pc, size, interval, i, j=0, k;
 	u64			segNum = 4;
-    u64			vae	= cbd->vae;
-    GCDCmd64 	cndLE, cndBE;
+	GCDCmd64 	cndLE;
 
     if(cbd->cardType == DS_CARD_TYPE_1){
     	loop	 = 0x1UL;
@@ -422,25 +405,14 @@ HotSwState ReadSegSecure(CardBootData *cbd)
 
 	    cndLE.dw  = HSWOP_S_OP_RD_SEG;
 	    cndLE.dw |= cbd->vbi;
-	    cndLE.dw |= vae << HSWOP_S_VA_SHIFT;
+	    cndLE.dw |= (u64)cbd->vae << HSWOP_S_VA_SHIFT;
 		cndLE.dw |= segNum << HSWOP_S_VC_SHIFT;
         
 	    // コマンドの暗号化
 		EncryptByBlowfish( &cbd->keyTable, (u32*)&cndLE.b[4], (u32*)cndLE.b );
 
-	    // ビッグエンディアンに直す(暗号化後)
-		cndBE.b[7] = cndLE.b[0];
-		cndBE.b[6] = cndLE.b[1];
-    	cndBE.b[5] = cndLE.b[2];
-    	cndBE.b[4] = cndLE.b[3];
-    	cndBE.b[3] = cndLE.b[4];
-   		cndBE.b[2] = cndLE.b[5];
-    	cndBE.b[1] = cndLE.b[6];
-    	cndBE.b[0] = cndLE.b[7];
-
-    	// MCCMD レジスタ設定
-		reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
-		reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
+		// MCCMD レジスタ設定
+		HOTSWi_SetCommand(&cndLE);
 
         if(cbd->cardType == DS_CARD_TYPE_2){
 			// MCCNT1 レジスタ設定
@@ -623,7 +595,7 @@ HotSwState ChangeModeSecure(CardBootData *cbd)
  *---------------------------------------------------------------------------*/
 HotSwState ReadIDGame(CardBootData *cbd)
 {
-    GCDCmd64 	cndLE, cndBE;
+	GCDCmd64 cndLE;
 
     if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
@@ -635,19 +607,8 @@ HotSwState ReadIDGame(CardBootData *cbd)
    	// リトルエンディアンで作って
 	cndLE.dw  = HSWOP_G_OP_RD_ID;
 
-   	// ビックエンディアンにする
-	cndBE.b[0] = cndLE.b[7];
-	cndBE.b[1] = cndLE.b[6];
-	cndBE.b[2] = cndLE.b[5];
-	cndBE.b[3] = cndLE.b[4];
-	cndBE.b[4] = cndLE.b[3];
-	cndBE.b[5] = cndLE.b[2];
-	cndBE.b[6] = cndLE.b[1];
-	cndBE.b[7] = cndLE.b[0];
-
 	// MCCMD レジスタ設定
-   	reg_HOTSW_MCCMD0 = *(u32 *)cndBE.b;
-	reg_HOTSW_MCCMD1 = *(u32 *)&cndBE.b[4];
+	HOTSWi_SetCommand(&cndLE);
 
    	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 111(ステータスリード) その他Romヘッダの情報におまかせ)
 	reg_HOTSW_MCCNT1 = cbd->gameCommondParam |
@@ -670,7 +631,7 @@ HotSwState ReadPageGame(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
 {
     u32 		loop, counter=0;
 	u64			i, page;
-    GCDCmd64 	cndLE, cndBE;
+	GCDCmd64	cndLE;
 
     page = (u32)(start_addr / PAGE_SIZE);
 	loop = (u32)(size / PAGE_SIZE);
@@ -691,20 +652,9 @@ HotSwState ReadPageGame(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
 		cndLE.dw  = HSWOP_G_OP_RD_PAGE;
 		cndLE.dw |= (page + i) << HSWOP_G_RD_PAGE_ADDR_SHIFT;
 
-        // ビッグエンディアンに直す(暗号化後)
-		cndBE.b[7] = cndLE.b[0];
-		cndBE.b[6] = cndLE.b[1];
-    	cndBE.b[5] = cndLE.b[2];
-    	cndBE.b[4] = cndLE.b[3];
-    	cndBE.b[3] = cndLE.b[4];
-   		cndBE.b[2] = cndLE.b[5];
-    	cndBE.b[1] = cndLE.b[6];
-	    cndBE.b[0] = cndLE.b[7];
+		// MCCMD レジスタ設定
+		HOTSWi_SetCommand(&cndLE);
 
-    	// MCCMD レジスタ設定
-		reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
-		reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
-        
    		// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 001(1ページリード) その他Romヘッダの情報におまかせ)
 		reg_HOTSW_MCCNT1 = cbd->gameCommondParam |
             				START_MASK | (PC_MASK & (0x1 << PC_SHIFT));

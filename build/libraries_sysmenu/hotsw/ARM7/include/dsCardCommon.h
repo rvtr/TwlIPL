@@ -16,14 +16,17 @@ extern "C" {
 // 	Function Describe
 // ===========================================================================
 // ■       ノーマルモードのコマンド       ■
-//	DSカードのノーマルモードのID読み込み
+//	ノーマルモードのID読み込み
 HotSwState ReadIDNormal(CardBootData *cbd);
 
-//	DSカードのノーマルモードのBoot Segment(4Kbyte)読み込み
+//	ノーマルモードのBoot Segment(4Kbyte)読み込み
 HotSwState ReadBootSegNormal(CardBootData *cbd);
 
-//	DSカードType1のノーマルモードのモード変更
+//	ノーマルモードからセキュアモードへの変更
 HotSwState ChangeModeNormal(CardBootData *cbd);
+
+//	ノーマルモードからセキュア２モードへの変更
+HotSwState ChangeModeNormal2(CardBootData *cbd);
 
 // カード側のKeyTableをロード
 HotSwState LoadTable(void);
@@ -33,28 +36,34 @@ HotSwState ReadRomEmulationData(CardBootData *cbd);
 
 
 // ■       セキュアモードのコマンド       ■
-//	DSカードのセキュアモードのID読み込み
+//	セキュアモードのID読み込み
 HotSwState ReadIDSecure(CardBootData *cbd);
 
-//	DSカードのセキュアモードのSecure Segment(16Kbyte)読み込み
+//	セキュアモードのSecure Segment(16Kbyte)読み込み
 HotSwState ReadSegSecure(CardBootData *cbd);
 
-//	DSカードのセキュアモードのPNジェネレータON
+//	セキュアモードのPNジェネレータON
 HotSwState SwitchONPNGSecure(CardBootData *cbd);
 
-//	DSカードのセキュアモードのPNジェネレータOFF
+//	セキュアモードのPNジェネレータOFF
 HotSwState SwitchOFFPNGSecure(CardBootData *cbd);
 
-//	DSカードのセキュアモードのモード変更
+//	セキュアモードのモード変更
 HotSwState ChangeModeSecure(CardBootData *cbd);
 
 
 // ■       ゲームモードのコマンド       ■
-//	DSカードのゲームモードのID読み込み
+//	ゲームモードのID読み込み
 HotSwState ReadIDGame(CardBootData *cbd);
 
-//  DSカードのゲームモードの指定ページ読み込み
+//  ゲームモードの指定ページ読み込み
 HotSwState ReadPageGame(CardBootData *cbd, u32 start_addr, void* buf, u32 size);
+
+
+// ■       内部関数  				     ■
+//	LEコマンドをBEへ変換してレジスタへセット
+void HOTSWi_SetCommand(GCDCmd64 *cndLE);
+
 
 #ifdef __cplusplus
 } /* extern "C" */
