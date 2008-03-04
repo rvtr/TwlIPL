@@ -28,6 +28,7 @@ typedef struct BannerCheckParam {
 // extern data-----------------------------------------------------------------
 // function's prototype-------------------------------------------------------
 static BOOL SYSMi_CheckBannerFile( TWLBannerFile *pBanner );
+static BOOL SYSMi_CheckSubBannerFile( TWLSubBannerFile *pBanner );
 
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
@@ -87,7 +88,7 @@ BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, TWLBannerFile *pDst )
 	s32 readLen;
 	s32 offset;
 	
-	//[TODO:]サブバナーが保存されている場合、そちらを使う
+	FS_InitFile(file);
 	
 	start = OS_GetTick();
 	readLen = NAM_GetTitleBootContentPathFast( path, titleID );
@@ -150,7 +151,48 @@ BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, TWLBannerFile *pDst )
 	}
 	
 	FS_CloseFile(file);
+	
+	// サブバナーファイルを読み込んでみる
+	if(NAM_OK == NAM_GetTitleBannerFilePath( path, titleID ))
+	{
+		if( FS_OpenFileEx(file, path, FS_FILEMODE_R) )
+		{
+			TWLSubBannerFile subBanner;
+			readLen = FS_ReadFile(file, &subBanner, sizeof(TWLSubBannerFile));
+			FS_CloseFile(file);
+			if( readLen == sizeof(TWLSubBannerFile) )
+			{
+				// 読み込みには成功したので正当性チェック
+				if( SYSMi_CheckSubBannerFile(&subBanner) )
+				{
+					// 成功したのでコピーする
+					pDst->h = subBanner.h;
+					pDst->anime = subBanner.anime;
+					OS_TPrintf("SYSMi_ReadBanner_NAND : subbanner check succeed. id=%.16x\n", titleID);
+				}else
+				{
+					OS_TPrintf("SYSMi_ReadBanner_NAND : subbanner check failed. id=%.16x\n", titleID);
+				}
+			}else
+			{
+				OS_TPrintf("SYSMi_ReadBanner_NAND : subbanner read failed. id=%.16x\n", titleID);
+			}
+		}
+	}
+	
 	return TRUE;
+}
+
+	// サブバナーデータの正誤チェック
+static BOOL SYSMi_CheckSubBannerFile( TWLSubBannerFile *pBanner )
+{
+	BOOL retval = TRUE;
+	
+	// アニメ部チェック
+	if( pBanner->h.crc16_anime != SVC_GetCRC16( 0xffff, &pBanner->anime, sizeof(BannerAnime) ) ) {
+		retval = FALSE;
+	}
+	return retval;
 }
 
 	// バナーデータの正誤チェック
