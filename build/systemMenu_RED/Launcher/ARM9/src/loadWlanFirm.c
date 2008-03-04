@@ -92,7 +92,8 @@ void InstallFirmCallback(void* arg)
         pNwmBuf = 0;
     }
     /* メッセージキューにFWダウンロードの結果を通知 */
-    OS_SendMessage(&mesq, (OSMessage)result, OS_MESSAGE_BLOCK);
+    // [TODO:] queue溢れはありえないハズだけど、一応対策しておく予定。
+    (void)OS_SendMessage(&mesq, (OSMessage)result, OS_MESSAGE_NOBLOCK);
 
 }
 
