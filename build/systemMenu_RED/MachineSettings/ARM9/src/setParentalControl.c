@@ -526,7 +526,7 @@ static BOOL SelectOFFFunc( u16 *csr, TPData *tgt )
     if(ret) *csr = KEY_OFF;
     return ret;
 }
-
+/*
 // UP/DOWNボタン専用SelectSomethingFuncの実装
 static BOOL SelectUPFunc( u16 *csr, TPData *tgt )
 {
@@ -544,7 +544,80 @@ static BOOL SelectDOWNFunc( u16 *csr, TPData *tgt )
     if(ret) *csr = KEY_DOWN;
     return ret;
 }
+*/
+// UP/DOWNボタンの長押しとトリガを検出する
+static BOOL DetectTouchUD( u16 *csr )
+{
+    BOOL         curr[2]  = {FALSE, FALSE};     // 0:UP/1:DOWN
+    static BOOL  prev[2]  = {FALSE, FALSE};     // トリガ検出のために前の状態を記憶させる
+    BOOL         trg[2]   = {FALSE, FALSE};
+    BOOL         rep[2]   = {FALSE, FALSE};     // 長押し
+    static u8    count[2] = {0, 0};             // 何フレーム連続で押されているか
+    BOOL         ret = FALSE;
+    u16          i;
 
+    for( i=0; i < 2; i++ )
+    {
+        switch(i)
+        {
+            case 0:
+                curr[i] = WithinRangeTP( UP_BUTTON_TOP_X, UP_BUTTON_TOP_Y,
+                                         UP_BUTTON_BOTTOM_X, UP_BUTTON_BOTTOM_Y, &tpd.disp );
+            break;
+            case 1:
+                curr[i] = WithinRangeTP( DOWN_BUTTON_TOP_X, DOWN_BUTTON_TOP_Y,
+                                         DOWN_BUTTON_BOTTOM_X, DOWN_BUTTON_BOTTOM_Y, &tpd.disp );
+            break;
+            default:
+            break;
+        }
+
+        // はじめて押されたかどうか
+        if( !prev[i] && curr[i] )
+        {
+            trg[i] = TRUE;
+        }
+        // 長押しカウント
+        if( curr[i] )
+        {
+            if( trg[i] )
+            {
+                count[i] = 1;
+            }
+            else if( count[i] > 25 )
+            {
+                count[i] = 25 - 10;
+                rep[i] = TRUE;
+            }
+            else
+            {
+                (count[i])++;
+            }
+        }
+        else        // 押されていないとき
+        {
+            count[i] = 0;
+        }
+        prev[i] = curr[i];        // 状態を記憶
+    }
+
+    if(trg[0] || rep[0])
+    {
+        *csr = KEY_UP;
+        ret  = TRUE;
+    }
+    else if(trg[1] || rep[1])
+    {
+        *csr = KEY_DOWN;
+        ret  = TRUE;
+    }
+    else
+    {
+        ret  = FALSE;
+    }
+    return ret;
+}
+/*
 // UP/DOWN複数個ボタン専用SelectSomethingFuncの実装
 static BOOL SelectMultiUPDOWNFunc( u16 *csr, TPData *tgt )
 {
@@ -574,6 +647,89 @@ static BOOL SelectMultiUPDOWNFunc( u16 *csr, TPData *tgt )
         if(ret)
         {
             *csr = (u16)(MULTI_KEY_DOWN | i);
+            break;
+        }
+    }
+    return ret;
+}
+*/
+// UP/DOWN複数個ボタンの長押しとトリガを検出する
+static BOOL DetectTouchMultiUD( u16 *csr )
+{
+    BOOL         curr[8]  = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};     // 0--3:UP/4--8:DOWN
+    static BOOL  prev[8]  = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
+    BOOL         trg[8]   = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
+    BOOL         rep[8]   = {FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE};
+    static u8    count[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+    BOOL         ret = FALSE;
+    int          topX, topY, bottomX, bottomY;
+    int          i;
+
+    for( i=0; i < 8; i++ )
+    {
+        if( i < 4 )
+        {
+            // UPボタン
+            topX     = MULTI_UP_BUTTON_OFFSET_X + (MULTI_UP_BUTTON_WIDTH_X * i) + (MULTI_UP_BUTTON_INTERVAL_X * i);
+            bottomX  = topX + MULTI_UP_BUTTON_WIDTH_X;
+            topY     = MULTI_UP_BUTTON_OFFSET_Y;
+            bottomY  = topY + MULTI_UP_BUTTON_WIDTH_Y;
+            curr[i] = WithinRangeTP( topX, topY, bottomX, bottomY, &tpd.disp );
+        }
+        else
+        {
+            int  pos = i - 4;
+
+            // DOWNボタン
+            topX     = MULTI_DOWN_BUTTON_OFFSET_X + (MULTI_DOWN_BUTTON_WIDTH_X * pos) + (MULTI_DOWN_BUTTON_INTERVAL_X * pos);
+            bottomX  = topX + MULTI_DOWN_BUTTON_WIDTH_X;
+            topY     = MULTI_DOWN_BUTTON_OFFSET_Y;
+            bottomY  = topY + MULTI_DOWN_BUTTON_WIDTH_Y;
+            curr[i] = WithinRangeTP( topX, topY, bottomX, bottomY, &tpd.disp );
+        }
+
+        // はじめて押されたかどうか
+        if( !prev[i] && curr[i] )
+        {
+            trg[i] = TRUE;
+        }
+        // 長押しカウント
+        if( curr[i] )
+        {
+            if( trg[i] )
+            {
+                count[i] = 1;
+            }
+            else if( count[i] > 25 )
+            {
+                count[i] = 25 - 10;
+                rep[i] = TRUE;
+            }
+            else
+            {
+                (count[i])++;
+            }
+        }
+        else        // 押されていないとき
+        {
+            count[i] = 0;
+        }
+        prev[i] = curr[i];        // 状態を記憶
+    }
+
+    ret = FALSE;
+    for( i=0; i < 8; i++ )
+    {
+        if( (i<4) && (trg[i] || rep[i]) )
+        {
+            *csr = (u16)(MULTI_KEY_UP | i);
+            ret  = TRUE;
+            break;
+        }
+        else if( (i>=4) && (trg[i] || rep[i]) )
+        {
+            *csr = (u16)(MULTI_KEY_DOWN | (i-4));
+            ret  = TRUE;
             break;
         }
     }
@@ -1449,27 +1605,30 @@ static void SetRatingAgeInit( void )
 // 表示プロセスとして呼び出されるメイン
 static int SetRatingAgeMain( void )
 {
-    SelectSomethingFunc func[4]={SelectCancelFunc, SelectOKFunc, SelectUPFunc, SelectDOWNFunc};
-    BOOL tp_touch = FALSE;
-    u16  commit;
+    SelectSomethingFunc func[2]={SelectCancelFunc, SelectOKFunc};
+    BOOL tpCommit = FALSE;
+    BOOL tpUD = FALSE;
+    u16  csrCommit;
+    u16  csrUD;
     u16  padrep;
 
     ReadTP();
 
     // TPチェック
-    tp_touch = SelectSomethingByTP( &commit, func, 4 );
+    tpCommit = SelectSomethingByTP( &csrCommit, func, 2 );
+    tpUD = DetectTouchUD( &csrUD );
 
     padrep = DetectPadRepeat();    // キーの長押し検出
 
     // 変更
-    if( (pad.trg & PAD_KEY_UP) || (padrep & PAD_KEY_UP) || (tp_touch && (commit == KEY_UP)) )
+    if( (pad.trg & PAD_KEY_UP) || (padrep & PAD_KEY_UP) || (tpUD && (csrUD == KEY_UP)) )
     {
         if( (++sRatingAge) > LCFG_TWL_PCTL_RATING_AGE_MAX )
         {
             sRatingAge = 0;
         }
     }
-    if( (pad.trg & PAD_KEY_DOWN) || (padrep & PAD_KEY_DOWN) || (tp_touch && (commit == KEY_DOWN)) )
+    if( (pad.trg & PAD_KEY_DOWN) || (padrep & PAD_KEY_DOWN) || (tpUD && (csrUD == KEY_DOWN)) )
     {
         if( (--sRatingAge) & 0x80 )
         {
@@ -1478,7 +1637,7 @@ static int SetRatingAgeMain( void )
     }
 
     // 決定
-    if( pad.trg & PAD_BUTTON_A || (tp_touch && (commit == KEY_OK)) )
+    if( pad.trg & PAD_BUTTON_A || (tpCommit && (csrCommit == KEY_OK)) )
     {
         LCFG_TSD_SetPCTLRatingAge( sRatingAge );
         // ::::::::::::::::::::::::::::::::::::::::::::::
@@ -1493,7 +1652,7 @@ static int SetRatingAgeMain( void )
         g_pNowProcess = SetParentalControlMain;
         return 0;
     }
-    else if( ( pad.trg & PAD_BUTTON_B ) || (tp_touch && (commit == KEY_CANCEL)) )
+    else if( ( pad.trg & PAD_BUTTON_B ) || (tpCommit && (csrCommit == KEY_CANCEL)) )
     {
         sbInitPage = FALSE;
         SetParentalControlInit();
@@ -1548,27 +1707,30 @@ static void SetSecretQuestionIDInit( void )
 // 表示プロセスとして呼び出されるメイン
 static int SetSecretQuestionIDMain( void )
 {
-    SelectSomethingFunc func[4]={SelectCancelFunc, SelectOKFunc, SelectUPFunc, SelectDOWNFunc};
-    BOOL tp_touch = FALSE;
-    u16  commit;
+    SelectSomethingFunc func[2]={SelectCancelFunc, SelectOKFunc};
+    BOOL tpCommit = FALSE;
+    BOOL tpUD     = FALSE;
+    u16  csrCommit;
+    u16  csrUD;
     u16  rep;
 
     ReadTP();
 
     // TPチェック
-    tp_touch = SelectSomethingByTP( &commit, func, 4 );
+    tpCommit = SelectSomethingByTP( &csrCommit, func, 2 );
+    tpUD     = DetectTouchUD( &csrUD );
 
     rep = DetectPadRepeat();
 
     // 変更
-    if( (pad.trg & PAD_KEY_UP) || (rep & PAD_KEY_UP) || (tp_touch && (commit == KEY_UP)) )
+    if( (pad.trg & PAD_KEY_UP) || (rep & PAD_KEY_UP) || (tpUD && (csrUD == KEY_UP)) )
     {
         if( (++sSecretQuestionID) > LCFG_TWL_PCTL_SECRET_QUESTION_ID_MAX )
         {
             sSecretQuestionID = 0;
         }
     }
-    if( (pad.trg & PAD_KEY_DOWN) || (rep & PAD_KEY_DOWN) || (tp_touch && (commit == KEY_DOWN)) )
+    if( (pad.trg & PAD_KEY_DOWN) || (rep & PAD_KEY_DOWN) || (tpUD && (csrUD == KEY_DOWN)) )
     {
         if( (--sSecretQuestionID) & 0x80 )
         {
@@ -1577,7 +1739,7 @@ static int SetSecretQuestionIDMain( void )
     }
 
     // 決定
-    if( pad.trg & PAD_BUTTON_A || (tp_touch && (commit == KEY_OK)) )
+    if( pad.trg & PAD_BUTTON_A || (tpCommit && (csrCommit == KEY_OK)) )
     {
         LCFG_TSD_SetPCTLSecretQuestionID( sSecretQuestionID );
         // ::::::::::::::::::::::::::::::::::::::::::::::
@@ -1592,7 +1754,7 @@ static int SetSecretQuestionIDMain( void )
         g_pNowProcess = SetParentalControlMain;
         return 0;
     }
-    else if( ( pad.trg & PAD_BUTTON_B ) || (tp_touch && (commit == KEY_CANCEL)) )
+    else if( ( pad.trg & PAD_BUTTON_B ) || (tpCommit && (csrCommit == KEY_CANCEL)) )
     {
         sbInitPage = FALSE;
         SetParentalControlInit();
@@ -1816,9 +1978,11 @@ static void SetPasswordInit( void )
 // 表示プロセスとして呼び出されるメイン
 static int SetPasswordMain( void )
 {
-    SelectSomethingFunc func[3]={SelectCancelFunc, SelectOKFunc, SelectMultiUPDOWNFunc};
-    BOOL tp_touch = FALSE;
-    u16  commit;
+    SelectSomethingFunc func[2]={SelectCancelFunc, SelectOKFunc};
+    BOOL tpCommit = FALSE;
+    BOOL tpUD     = FALSE;
+    u16  csrCommit;
+    u16  csrUD;
     int  i;
     u16  padrep;
 
@@ -1859,20 +2023,21 @@ static int SetPasswordMain( void )
     }
 
     // TPチェック
-    tp_touch = SelectSomethingByTP( &commit, func, 3 );
+    tpCommit = SelectSomethingByTP( &csrCommit, func, 2 );
+    tpUD     = DetectTouchMultiUD( &csrUD );
 
     // タッチパネルで各桁の値を変更
-    if( tp_touch && ((commit & MASK_MULTI_KEY) == MULTI_KEY_UP) )
+    if( tpUD && ((csrUD & MASK_MULTI_KEY) == MULTI_KEY_UP) )
     {
-        sCursorPassword = (u16)(commit & ~MASK_MULTI_KEY);        // 桁を特定
+        sCursorPassword = (u16)(csrUD & ~MASK_MULTI_KEY);        // 桁を特定
         if( ++(spBufPassword[sCursorPassword]) > 9 )
         {
             spBufPassword[sCursorPassword] = 0;
         }
     }
-    if( tp_touch && ((commit & MASK_MULTI_KEY) == MULTI_KEY_DOWN) )
+    if( tpUD && ((csrUD & MASK_MULTI_KEY) == MULTI_KEY_DOWN) )
     {
-        sCursorPassword = (u16)(commit & ~MASK_MULTI_KEY);
+        sCursorPassword = (u16)(csrUD & ~MASK_MULTI_KEY);
         if( --(spBufPassword[sCursorPassword]) & 0x80 )
         {
             (spBufPassword[sCursorPassword]) = 9;
@@ -1891,7 +2056,7 @@ static int SetPasswordMain( void )
     }
 
     // 決定
-    if( ((pad.trg & PAD_BUTTON_A) || (tp_touch && (commit == KEY_OK))) && sbValidPassword )     // 正当じゃないときはコミット不可
+    if( ((pad.trg & PAD_BUTTON_A) || (tpCommit && (csrCommit == KEY_OK))) && sbValidPassword )     // 正当じゃないときはコミット不可
     {
         for( i=0; i < LCFG_TWL_PCTL_PASSWORD_LENGTH; i++ )
         {
@@ -1910,7 +2075,7 @@ static int SetPasswordMain( void )
         g_pNowProcess = SetParentalControlMain;
         return 0;
     }
-    else if( ( pad.trg & PAD_BUTTON_B ) || (tp_touch && (commit == KEY_CANCEL)) )
+    else if( ( pad.trg & PAD_BUTTON_B ) || (tpCommit && (csrCommit == KEY_CANCEL)) )
     {
         sbInitPage = FALSE;
         SetParentalControlInit();
