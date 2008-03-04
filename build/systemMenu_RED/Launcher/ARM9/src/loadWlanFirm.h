@@ -24,8 +24,29 @@
 extern "C" {
 #endif
 
+typedef enum {
+    WLANFIRM_RESULT_SUCCESS = 1,
+    WLANFIRM_RESULT_FAILURE = 2
+} WLANFirmResult;
+
+/*
+  InstallWlanFirmware
+
+  引数　：なし
+  返り値：TRUE  … 無線ファームウェアインストールの非同期処理中
+　　　　　FALSE … 無線ファームウェアインストールに失敗した
+ */
+
 BOOL InstallWlanFirmware(void);
-BOOL IsWlanFirmwareInstalled(void);
+
+/*
+  IsWlanFirmwareInstalled
+
+  引数　：result 無線ファームウェアインストール結果コード(WLANFirmResult)
+  返り値：無線ファームウェアインストールの結果が存在
+ */
+
+BOOL IsWlanFirmwareInstalled(WLANFirmResult *pResult);
 
 #ifdef __cplusplus
 }
