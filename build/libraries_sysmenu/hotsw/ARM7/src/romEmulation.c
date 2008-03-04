@@ -97,7 +97,10 @@ HotSwState ReadSegSecure_ROMEMU(CardBootData *cbd)
 	    if(!HOTSW_IsCardAccessible()){
 			return HOTSW_PULLED_OUT_ERROR;
     	}
-    
+
+		// NewDMA転送の準備
+		HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, (u32 *)cbd->pSecureSegBuf + (u32)(PAGE_WORD_SIZE*i), PAGE_SIZE );
+
     	// リトルエンディアンで作って
     	cndLE.dw  = HSWOP_N_OP_RD_PAGE;
     	cndLE.dw |= page << HSWOP_N_RD_PAGE_ADDR_SHIFT;
@@ -110,12 +113,10 @@ HotSwState ReadSegSecure_ROMEMU(CardBootData *cbd)
 
 		// MCCNT1 レジスタ設定 (START = 1 PC_MASK PC = 001(1ページリード)に latency1 = 0xd)
 		reg_HOTSW_MCCNT1 = START_MASK | CT_MASK | PC_MASK & (0x1 << PC_SHIFT) | (0xd & LATENCY1_MASK);
-    
-		// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-		while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-			while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-        	*(cbd->pSecureSegBuf + j++) = reg_HOTSW_MCD1;
-		}
+
+	    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    	OS_SleepThread(NULL);
+
         page++;
     }
 

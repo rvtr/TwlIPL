@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlIPL - HOTSW - include
-  File:     command.h
+  File:     romSpec.h
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -14,12 +14,26 @@
   $Rev: $
   $Author: $
  *---------------------------------------------------------------------------*/
-#ifndef __HOTSW_COMMAND_H__
-#define __HOTSW_COMMAND_H__
+#ifndef __HOTSW_ROMSPEC_H__
+#define __HOTSW_ROMSPEC_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+// ROM memory map
+
+#define HOTSW_LOAD_TABLE_SIZE         0x2000 // 8KB
+#define HOTSW_DS_ROM_HEADER_SIZE      0x200  // 512B
+#define HOTSW_ROM_HEADER_SIZE         0x1000 // 4KB
+#define HOTSW_SECURE_AREA_SIZE        0x4000 // 16KB
+#define HOTSW_SECURE2_AREA_SIZE       0x4000 // 16KB
+
+#define HOTSW_SECURE_AREA_OFS         0x4000 // 16KB
+#define HOTSW_GAME_AREA_OFS           0x8000 // 32KB
+#define	HOTSW_SECURE2_AREA_OFS        0x3000 // 12KB
+#define	HOTSW_GAME2_AREA_OFS          0x7000 // 28KB
 
 
 // ROM ID
@@ -128,5 +142,5 @@ extern "C" {
 
 #endif
 
-/* __HOTSW_COMMAND_H__ */
+/* __HOTSW_ROMSPEC_H__ */
 #endif

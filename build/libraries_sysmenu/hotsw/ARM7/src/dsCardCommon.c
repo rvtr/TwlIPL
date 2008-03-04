@@ -38,6 +38,9 @@ void HOTSWi_SetCommand(GCDCmd64 *cndLE)
     cndBE.b[1] = cndLE->b[6];
     cndBE.b[0] = cndLE->b[7];
 
+	//---- confirm CARD free
+	while( reg_HOTSW_MCCNT1 & REG_MI_MCCNT1_START_MASK ){}
+
     // MCCMD レジスタ設定
 	reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
 	reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
@@ -115,7 +118,17 @@ HotSwState ReadBootSegNormal(CardBootData *cbd)
     	if(!HOTSW_IsCardAccessible()){
 			return HOTSW_PULLED_OUT_ERROR;
     	}
-        
+
+        if(cbd->modeType == HOTSW_MODE1){
+			// NewDMA転送の準備
+        	HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, dst + (u32)(PAGE_WORD_SIZE*i), size );
+        }
+        else{
+			// NewDMA転送（読み捨て）の準備
+			// Mode2のときは、データを捨てる。
+    		HOTSW_NDmaPipe_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &temp, size );
+        }
+
     	// リトルエンディアンで作って
 		cndLE.dw  = HSWOP_N_OP_RD_PAGE;
 		cndLE.dw |= page << HSWOP_N_RD_PAGE_ADDR_SHIFT;
@@ -123,23 +136,11 @@ HotSwState ReadBootSegNormal(CardBootData *cbd)
 		// MCCMD レジスタ設定
 		HOTSWi_SetCommand(&cndLE);
 
-        if(cbd->modeType == HOTSW_MODE1){
-			// NewDMA転送の準備
-        	HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, dst + (u32)(PAGE_WORD_SIZE*i), size );
-        
-			// MCCNT1 レジスタ設定
-			reg_HOTSW_MCCNT1 = START_MASK | CT_MASK | PC_MASK & (pc << PC_SHIFT) | LATENCY2_MASK | LATENCY1_MASK;
+		// MCCNT1 レジスタ設定
+		reg_HOTSW_MCCNT1 = START_MASK | CT_MASK | PC_MASK & (pc << PC_SHIFT) | LATENCY2_MASK | LATENCY1_MASK;
 
-			// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
-			OS_SleepThread(NULL);
-        }
-        else{
-			// Mode2のときは、データを捨てる。
-			while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-				while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-            	temp = reg_HOTSW_MCD1;
-			}
-        }
+		// カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+		OS_SleepThread(NULL);
 
         page++;
     }
@@ -213,6 +214,9 @@ HotSwState LoadTable(void)
 	GCDCmd64 cndLE;
 	u32 temp;
     
+	// NewDMA転送（読み捨て）の準備
+	HOTSW_NDmaPipe_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &temp, HOTSW_LOAD_TABLE_SIZE );
+
     // リトルエンディアンで作って
     cndLE.dw  = HSWOP_N_OP_LD_TABLE;
 
@@ -224,12 +228,9 @@ HotSwState LoadTable(void)
 
     // MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 101(16ページ) latency1 = 0(必要ないけど) に)
 	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x5 << PC_SHIFT);
-    
-	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
-	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
-		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
-        temp = reg_HOTSW_MCD1;
-	}
+
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
 
     return HOTSW_SUCCESS;
 }
