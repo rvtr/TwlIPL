@@ -16,6 +16,7 @@
 #include <twl.h>
 #include <twl/os/common/format_rom.h>
 #include <sysmenu.h>
+#include "command.h"
 
 #ifdef __cplusplus
 extern "C" {

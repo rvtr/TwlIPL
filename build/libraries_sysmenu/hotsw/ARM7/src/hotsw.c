@@ -316,7 +316,7 @@ static HotSwState LoadCardData(void)
 		retval = (retval == HOTSW_SUCCESS) ? state : retval;
         
 		// カードタイプを判別をして、使う関数を切替える IDの最上位ビットが1なら3DM
-        s_cbData.cardType = (s_cbData.id_nml & 0x80000000) ? DS_CARD_TYPE_2 : DS_CARD_TYPE_1;
+        s_cbData.cardType = (s_cbData.id_nml & HOTSW_ROMID_1TROM_MASK) ? DS_CARD_TYPE_2 : DS_CARD_TYPE_1;
 		
 		{
 			u8 i;

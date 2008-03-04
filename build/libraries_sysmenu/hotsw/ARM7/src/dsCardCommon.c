@@ -33,12 +33,27 @@
  * ----------------------------------------------------------------- */
 HotSwState ReadIDNormal(CardBootData *cbd)
 {
+    GCDCmd64 	cndLE, cndBE;
+
 	// カード割り込みによるDMAコピー
     HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_nml, sizeof(cbd->id_nml) );
 
-    // MCCMD レジスタ設定
-	reg_HOTSW_MCCMD0 = 0x00000090;
-	reg_HOTSW_MCCMD1 = 0x00000000;
+   	// リトルエンディアンで作って
+	cndLE.dw  = HSWOP_N_OP_RD_ID;
+
+   	// ビックエンディアンにする
+	cndBE.b[0] = cndLE.b[7];
+	cndBE.b[1] = cndLE.b[6];
+	cndBE.b[2] = cndLE.b[5];
+	cndBE.b[3] = cndLE.b[4];
+	cndBE.b[4] = cndLE.b[3];
+	cndBE.b[5] = cndLE.b[2];
+	cndBE.b[6] = cndLE.b[1];
+	cndBE.b[7] = cndLE.b[0];
+
+	// MCCMD レジスタ設定
+   	reg_HOTSW_MCCMD0 = *(u32 *)cndBE.b;
+	reg_HOTSW_MCCMD1 = *(u32 *)&cndBE.b[4];
 
 	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
 	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
@@ -91,12 +106,9 @@ HotSwState ReadBootSegNormal(CardBootData *cbd)
 			return HOTSW_PULLED_OUT_ERROR;
     	}
         
-        // ゼロクリア
-		MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
-        
     	// リトルエンディアンで作って
-		cndLE.dw  = 0x0  << 24;
-		cndLE.dw |= page << 33;
+		cndLE.dw  = HSWOP_N_OP_RD_PAGE;
+		cndLE.dw |= page << HSWOP_N_RD_PAGE_ADDR_SHIFT;
 
     	// ビックエンディアンにする
 		cndBE.b[0] = cndLE.b[7];
@@ -152,14 +164,11 @@ HotSwState ChangeModeNormal(CardBootData *cbd)
     if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
-    
-    // ゼロクリア
-	MI_CpuClear8(&tempCnd, sizeof(GCDCmd64));
-    
+
     // リトルエンディアンで作って
-	tempCnd.dw  = cbd->vbi << 8;
-	tempCnd.dw |= vae64 << 32;
-    tempCnd.dw |= 0x3c00000000000000;
+    tempCnd.dw  = HSWOP_N_OP_CHG_MODE;
+	tempCnd.dw |= cbd->vbi << HSWOP_N_VBI_SHIFT;
+	tempCnd.dw |= vae64 << HSWOP_N_VAE_SHIFT;
 
     // ビックエンディアンにする
 	cnd.b[0] = tempCnd.b[7];
@@ -170,7 +179,7 @@ HotSwState ChangeModeNormal(CardBootData *cbd)
 	cnd.b[5] = tempCnd.b[2];
 	cnd.b[6] = tempCnd.b[1];
 	cnd.b[7] = tempCnd.b[0];
-    
+
 	// MCCMD レジスタ設定
     reg_HOTSW_MCCMD0 = *(u32 *)cnd.b;
 	reg_HOTSW_MCCMD1 = *(u32 *)&cnd.b[4];
@@ -195,11 +204,25 @@ HotSwState ChangeModeNormal(CardBootData *cbd)
  * ----------------------------------------------------------------- */
 HotSwState LoadTable(void)
 {
+	GCDCmd64 tempCnd, cnd;
 	u32 temp;
     
+    // リトルエンディアンで作って
+    tempCnd.dw  = HSWOP_N_OP_LD_TABLE;
+
+    // ビックエンディアンにする
+	cnd.b[0] = tempCnd.b[7];
+	cnd.b[1] = tempCnd.b[6];
+	cnd.b[2] = tempCnd.b[5];
+	cnd.b[3] = tempCnd.b[4];
+	cnd.b[4] = tempCnd.b[3];
+	cnd.b[5] = tempCnd.b[2];
+	cnd.b[6] = tempCnd.b[1];
+	cnd.b[7] = tempCnd.b[0];
+
 	// MCCMD レジスタ設定
-	reg_HOTSW_MCCMD0 = 0x0000009f;
-	reg_HOTSW_MCCMD1 = 0x00000000;
+    reg_HOTSW_MCCMD0 = *(u32 *)cnd.b;
+	reg_HOTSW_MCCMD1 = *(u32 *)&cnd.b[4];
 
 	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
 	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
@@ -271,32 +294,30 @@ static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
 	GCDCmd64 cndLE, cndBE;
     u64 data;
 
-    // ゼロクリア
-	MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
-	data = (type == S_PNG_ON) ? (u64)cbd->vd : (u64)cbd->vae;
-    
-    cndLE.dw  = cbd->vbi;
-    cndLE.dw |= data << 20;
-    
     // comannd0部分
 	switch(type){
       case S_RD_ID:
-        cndLE.dw |= 0x1000000000000000;
+        cndLE.dw = HSWOP_S_OP_RD_ID;
         break;
         
       case S_PNG_ON:
-        cndLE.dw |= 0x4000000000000000;
+        cndLE.dw = HSWOP_S_OP_PNG_ON;
         break;
 
       case S_PNG_OFF:
-        cndLE.dw |= 0x6000000000000000;
+        cndLE.dw = HSWOP_S_OP_PNG_OFF;
         break;
 
       case S_CHG_MODE:
-        cndLE.dw |= 0xa000000000000000;
+        cndLE.dw = HSWOP_S_OP_CHG_MODE;
         break;
     }
 
+	data = (type == S_PNG_ON) ? (u64)cbd->vd : (u64)cbd->vae;
+    
+    cndLE.dw |= cbd->vbi;
+    cndLE.dw |= data << HSWOP_S_VA_SHIFT;
+    
     if(!cbd->debuggerFlg){
     	// コマンドの暗号化
 		EncryptByBlowfish( &cbd->keyTable, (u32*)&cndLE.b[4], (u32*)cndLE.b );
@@ -398,13 +419,11 @@ HotSwState ReadSegSecure(CardBootData *cbd)
 		if(!HOTSW_IsCardAccessible()){
 			return HOTSW_PULLED_OUT_ERROR;
     	}
-        
-		MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
-        
-	    cndLE.dw  = cbd->vbi;
-	    cndLE.dw |= vae << 20;
-		cndLE.dw |= segNum << 44;
-	    cndLE.dw |= 0x2000000000000000;
+
+	    cndLE.dw  = HSWOP_S_OP_RD_SEG;
+	    cndLE.dw |= cbd->vbi;
+	    cndLE.dw |= vae << HSWOP_S_VA_SHIFT;
+		cndLE.dw |= segNum << HSWOP_S_VC_SHIFT;
         
 	    // コマンドの暗号化
 		EncryptByBlowfish( &cbd->keyTable, (u32*)&cndLE.b[4], (u32*)cndLE.b );
@@ -604,6 +623,8 @@ HotSwState ChangeModeSecure(CardBootData *cbd)
  *---------------------------------------------------------------------------*/
 HotSwState ReadIDGame(CardBootData *cbd)
 {
+    GCDCmd64 	cndLE, cndBE;
+
     if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
@@ -611,9 +632,22 @@ HotSwState ReadIDGame(CardBootData *cbd)
 	// NewDMA転送の準備
     HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_gam, sizeof(cbd->id_gam) );
 
+   	// リトルエンディアンで作って
+	cndLE.dw  = HSWOP_G_OP_RD_ID;
+
+   	// ビックエンディアンにする
+	cndBE.b[0] = cndLE.b[7];
+	cndBE.b[1] = cndLE.b[6];
+	cndBE.b[2] = cndLE.b[5];
+	cndBE.b[3] = cndLE.b[4];
+	cndBE.b[4] = cndLE.b[3];
+	cndBE.b[5] = cndLE.b[2];
+	cndBE.b[6] = cndLE.b[1];
+	cndBE.b[7] = cndLE.b[0];
+
 	// MCCMD レジスタ設定
-	reg_HOTSW_MCCMD0 = 0x000000B8;
-	reg_HOTSW_MCCMD1 = 0x00000000;
+   	reg_HOTSW_MCCMD0 = *(u32 *)cndBE.b;
+	reg_HOTSW_MCCMD1 = *(u32 *)&cndBE.b[4];
 
    	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 111(ステータスリード) その他Romヘッダの情報におまかせ)
 	reg_HOTSW_MCCNT1 = cbd->gameCommondParam |
@@ -653,13 +687,10 @@ HotSwState ReadPageGame(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
 		// NewDMA転送の準備
 		HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, (u32 *)buf + (u32)(PAGE_WORD_SIZE*i), PAGE_SIZE );
 
-		// ゼロクリア
-		MI_CpuClear8(&cndLE, sizeof(GCDCmd64));
-
         // コマンド作成
-		cndLE.dw  = (page + i) << 33;
-		cndLE.dw |= 0xB700000000000000;
-        
+		cndLE.dw  = HSWOP_G_OP_RD_PAGE;
+		cndLE.dw |= (page + i) << HSWOP_G_RD_PAGE_ADDR_SHIFT;
+
         // ビッグエンディアンに直す(暗号化後)
 		cndBE.b[7] = cndLE.b[0];
 		cndBE.b[6] = cndLE.b[1];

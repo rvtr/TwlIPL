@@ -53,16 +53,31 @@
  *---------------------------------------------------------------------------*/
 HotSwState ReadIDSecure_ROMEMU(CardBootData *cbd)
 {
+	GCDCmd64 tempCnd, cnd;
+
     if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
     
 	// カード割り込みによるDMAコピー
 	HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_scr, sizeof(cbd->id_scr) );
-    
-    // MCCMD レジスタ設定
-	reg_HOTSW_MCCMD0 = 0x00000090;
-	reg_HOTSW_MCCMD1 = 0x00000000;
+
+  	// リトルエンディアンで作って
+   	tempCnd.dw  = HSWOP_N_OP_RD_ID;
+
+   	// ビックエンディアンにする
+	cnd.b[0] = tempCnd.b[7];
+	cnd.b[1] = tempCnd.b[6];
+	cnd.b[2] = tempCnd.b[5];
+	cnd.b[3] = tempCnd.b[4];
+	cnd.b[4] = tempCnd.b[3];
+	cnd.b[5] = tempCnd.b[2];
+	cnd.b[6] = tempCnd.b[1];
+	cnd.b[7] = tempCnd.b[0];
+
+	// MCCMD レジスタ設定
+    reg_HOTSW_MCCMD0 = *(u32 *)cnd.b;
+	reg_HOTSW_MCCMD1 = *(u32 *)&cnd.b[4];
 
 	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
 	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
@@ -92,12 +107,10 @@ HotSwState ReadSegSecure_ROMEMU(CardBootData *cbd)
 	    if(!HOTSW_IsCardAccessible()){
 			return HOTSW_PULLED_OUT_ERROR;
     	}
-        
-    	// ゼロクリア
-		MI_CpuClear8(&tempCnd, sizeof(GCDCmd64));
     
     	// リトルエンディアンで作って
-    	tempCnd.dw = page << 33;
+    	tempCnd.dw  = HSWOP_N_OP_RD_PAGE;
+    	tempCnd.dw |= page << HSWOP_N_RD_PAGE_ADDR_SHIFT;
 
     	// ビックエンディアンにする
 		cnd.b[0] = tempCnd.b[7];
@@ -108,7 +121,7 @@ HotSwState ReadSegSecure_ROMEMU(CardBootData *cbd)
 		cnd.b[5] = tempCnd.b[2];
 		cnd.b[6] = tempCnd.b[1];
 		cnd.b[7] = tempCnd.b[0];
-    
+
 		// MCCMD レジスタ設定
 	    reg_HOTSW_MCCMD0 = *(u32 *)cnd.b;
 		reg_HOTSW_MCCMD1 = *(u32 *)&cnd.b[4];
@@ -173,7 +186,7 @@ HotSwState ChangeModeSecure_ROMEMU(CardBootData *cbd)
 	MI_CpuClear8(&tempCnd, sizeof(GCDCmd64));
     
     // リトルエンディアンで作って
-    tempCnd.dw = 0xa000000000000000;
+    tempCnd.dw = HSWOP_S_OP_CHG_MODE;
 
     // ビックエンディアンにする
 	cnd.b[0] = tempCnd.b[7];
