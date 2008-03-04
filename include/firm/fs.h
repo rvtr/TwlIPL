@@ -24,7 +24,6 @@
 #else
 #include <firm/fs/ARM9/fs_firm.h>
 #include <firm/fs/ARM9/fs_loader.h>
-#include <firm/fs/ARM9/fs_loader2.h>
 #endif // SDK_ARM7
 
 
