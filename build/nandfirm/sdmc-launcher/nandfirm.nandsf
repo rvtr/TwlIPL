@@ -1,6 +1,6 @@
 #NANDSF ---  Nandfirm Spec File
 
-VERSION :		GENERATE
+VERSION :		0xffff570000000000 # GENERATE
 
 RSA_KEY :		$(MAKEFIRM_RSA_PRVKEY)
 OUT_KEY :		rsa_public.sbin
