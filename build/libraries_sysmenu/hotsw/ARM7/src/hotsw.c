@@ -100,8 +100,6 @@ static HotSwState LoadStaticModule(void);
 static HotSwState LoadCardData(void);
 static HotSwState CheckCardAuthCode(void);
 
-static void SetHotSwState(BOOL busy);
-
 static s32 LockExCard(u16 lockID);
 static s32 UnlockExCard(u16 lockID);
 
@@ -831,8 +829,6 @@ static void LockHotSwRsc(OSLockWord* word)
     while(OS_TryLockByWord( s_RscLockID, word, NULL ) != OS_LOCK_SUCCESS){
 		OS_Sleep(1);
     }
-    
-//    OS_TPrintf("++ lock id : %d  wordLockFlg : %d  wordOwnerID : %d\n", s_RscLockID, word->lockFlag, word->ownerID);
 }
 
 /* -----------------------------------------------------------------
@@ -1217,6 +1213,8 @@ static void InterruptCallbackCardData(void)
 {
 	// データ転送終了待ちまで寝ていたのを起こす
     OS_WakeupThreadDirect(&s_ctData.thread);
+
+	OS_PutString("△\n");
 }
 
 /*---------------------------------------------------------------------------*
@@ -1241,20 +1239,6 @@ static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err)
 
 	// メッセージインデックスをインクリメント
     s_ctData.idx_ctrl = (s_ctData.idx_ctrl+1) % HOTSW_CTRL_MSG_NUM;
-}
-
-/*---------------------------------------------------------------------------*
-  Name:			SetHotSwState
-
-  Description:  HotSwの状態を設定する
- *---------------------------------------------------------------------------*/
-static void SetHotSwState(BOOL busy)
-{
-    LockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
-
-    SYSMi_GetWork()->flags.hotsw.isBusyHotSW = busy ? 1 : 0;
-
-	UnlockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
 }
 
 /*---------------------------------------------------------------------------*
