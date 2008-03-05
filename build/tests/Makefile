@@ -20,7 +20,7 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS		=	SubBanner RelocateChecker
+SUBDIRS		=	RelocateChecker
 
 #----------------------------------------------------------------------------
 

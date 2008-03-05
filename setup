@@ -6,3 +6,4 @@
 #----------------------------------------------------------------
 
 export TWL_IPL_RED_ROOT=`cygpath -m $PWD`
+export TWL_KEYSDIR='$(TWL_IPL_RED_ROOT)/../twl_firmware/bootrom/build/keys'
