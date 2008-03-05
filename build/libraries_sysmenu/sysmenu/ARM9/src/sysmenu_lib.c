@@ -169,7 +169,7 @@ TitleProperty *SYSM_ReadParameters( void )
 	}
 	
 	//-----------------------------------------------------
-	// 本体設定データのリード
+	// 本体設定データのリード（※必ずHWSecureInforリード後に実行すること。LanguageBitmapを判定に使うため）
 	//-----------------------------------------------------
 	{
 		u8 *pBuffer = SYSM_Alloc( LCFG_READ_TEMP );

@@ -217,6 +217,7 @@ static void WriteHWInfoFile( u8 region )
 		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, ( MSG_Y + 4 ) * 8, TXT_COLOR_RED, pMsgFailed );
 	}
 	
+	// リージョンの更新を言語コードに反映させる。（必ずセキュアファイルのライト後に実行）
 	HWI_ModifyLanguage( region );
 	
 	// メッセージを一定時間表示して消去

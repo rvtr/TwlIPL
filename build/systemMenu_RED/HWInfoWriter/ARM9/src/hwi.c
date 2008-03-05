@@ -101,7 +101,6 @@ HwiInitResult HWI_Init( void *(*pAlloc)( u32 ), void (*pFree)( void * ) )
 	spFree  = pFree;
 
 	ACSign_SetAllocFunc( pAlloc, pFree );
-	ReadTWLSettings();
 	result = ReadPrivateKey();
 	ReadHWInfoFile();
 //	VerifyHWInfo();
@@ -115,6 +114,8 @@ HwiInitResult HWI_Init( void *(*pAlloc)( u32 ), void (*pFree)( void * ) )
 			OS_TPrintf( "HWID Signature check succeeded.\n" );
 		}
 	}
+	// ※LanguageBitmapを判定で使用するので、必ずReadHWInfoの後で実行する必要がある。
+	ReadTWLSettings();
 	
 	return result;
 }
@@ -123,10 +124,10 @@ HwiInitResult HWI_Init( void *(*pAlloc)( u32 ), void (*pFree)( void * ) )
 // TWL設定データのリード
 static void ReadTWLSettings( void )
 {
-	u8 *pBuffer = spAlloc( sizeof(LCFGTWLSettingsData) * 2 );
+	u8 *pBuffer = spAlloc( LCFG_READ_TEMP );
 	s_isReadTSD = FALSE;
 	if( pBuffer ) {
-		s_isReadTSD = LCFGi_TSD_ReadSettings( (u8 (*)[ sizeof(LCFGTWLSettingsData) * 2 ] )pBuffer );
+		s_isReadTSD = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ] )pBuffer );
 		spFree( pBuffer );
 	}
 	if( s_isReadTSD ) {
@@ -244,7 +245,8 @@ static BOOL VerifyData( const u8 *pTgt, const u8 *pOrg, u32 len )
  *---------------------------------------------------------------------------*/
 void HWI_ModifyLanguage( u8 region )
 {
-	u32 langBitmap = s_langBitmapList[ region ];
+#pragma unused( region )
+	u32 langBitmap = LCFG_THW_GetValidLanguageBitmap();
 	u8  nowLanguage = LCFG_TSD_GetLanguage();
 	
 	// TSDが読み込めていないなら、何もせずリターン
@@ -262,12 +264,24 @@ void HWI_ModifyLanguage( u8 region )
 			}
 		}
 		LCFG_TSD_SetLanguage( (LCFGTWLLangCode)i );
-		LCFG_TSD_SetFlagCountry( FALSE );				// ※ついでに国コードもクリアしておく。
-		LCFG_TSD_SetCountry( LCFG_TWL_COUNTRY_UNDEFINED );
-		LCFGi_TSD_WriteSettings();
-		
 		OS_TPrintf( "Language Change \"%s\" -> \"%s\"\n",
 					strLanguage[ nowLanguage ], strLanguage[ LCFG_TSD_GetLanguage() ] );
+	}
+	
+	// 国コードもクリアしておく。
+	LCFG_TSD_SetFlagCountry( FALSE );
+	LCFG_TSD_SetCountry( LCFG_TWL_COUNTRY_UNDEFINED );
+	
+	// ペアレンタルコントロール情報もクリアしておく
+	
+	
+	// regionが変わった場合は、LANGUAGE_BITMAPも必ず変わるので、それをNTR側に反映させるために必ずTWL設定データの書き込みも行う。
+	{
+		u8 *pBuffer = spAlloc( LCFG_WRITE_TEMP );
+		if( pBuffer ) {
+			(void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+			spFree( pBuffer );
+		}
 	}
 }
 
