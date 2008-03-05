@@ -511,7 +511,7 @@ static HotSwState LoadBannerData(void)
 
     if ( SYSMi_GetWork()->flags.hotsw.isExistCard )
     {
-        SYSMi_GetWork()->flags.hotsw.isInspectCard = ((ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BAK)->inspect_card;
+        SYSMi_GetWork()->flags.hotsw.isInspectCard = s_cbData.pBootSegBuf->rh.s.inspect_card;
     }
     else
     {

@@ -4,6 +4,7 @@
  *---------------------------------------------------------------------------*/
 
 #include 	<twl.h>
+#include 	<firm/os/common/system.h>
 #include	<blowfish.h>
 #include 	<dsCardCommon.h>
 #include	<customNDma.h>
@@ -11,7 +12,6 @@
 // define -------------------------------------------------------------------
 #define		SECURE_SEGMENT_NUM					4
 #define		ONE_SEGMENT_PAGE_NUM				8
-#define		COMMAND_DECRYPTION_WAIT				25 		// 25ms
 
 #define		ROM_EMULATION_START_OFS				0x160
 #define		ROM_EMULATION_END_OFS				0x180
@@ -310,8 +310,8 @@ static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
         break;
     }
 
+	// コマンド作成
 	data = (type == S_PNG_ON) ? (u64)cbd->vd : (u64)cbd->vae;
-    
     cndLE.dw |= cbd->vbi;
     cndLE.dw |= data << HSWOP_S_VA_SHIFT;
     
@@ -337,8 +337,8 @@ static void PreSendSecureCommand(CardBootData *cbd, u32 *scrambleMask)
 		// MCCNT1 レジスタ設定
 		reg_HOTSW_MCCNT1 = START_MASK | *scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
 
-		// 25ms待ち
-    	OS_Sleep(COMMAND_DECRYPTION_WAIT);
+		// セキュアコマンド間レイテンシ待ち
+    	OS_Sleep( OS_CPUCYC_TO_MSEC(cbd->pBootSegBuf->rh.s.secure_cmd_latency * 0x100) );
     }
     // ★ NTR-MROM対応
     else{
