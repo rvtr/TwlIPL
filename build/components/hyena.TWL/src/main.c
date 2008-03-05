@@ -57,6 +57,7 @@
 #define THREAD_PRIO_SYSMMCU 6
 #define THREAD_PRIO_SND     6
 #define THREAD_PRIO_FATFS   8
+#define THREAD_PRIO_HOTSW   11
 #define THREAD_PRIO_RTC     12
 #define THREAD_PRIO_SNDEX   14
 #define THREAD_PRIO_FS      15
@@ -217,7 +218,7 @@ TwlSpMain(void)
         SYSMi_GetWork()->flags.hotsw.isEnableHotSW = 1;
     }
 
-    HOTSW_Init();
+    HOTSW_Init(THREAD_PRIO_HOTSW);
 
     while (TRUE)
     {

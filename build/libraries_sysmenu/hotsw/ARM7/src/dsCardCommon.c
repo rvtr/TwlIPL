@@ -334,13 +334,15 @@ static void PreSendSecureCommand(CardBootData *cbd, u32 *scrambleMask)
 {
     // ★ TWL-ROM＆NTR-3DM対応
     if(cbd->cardType == DS_CARD_TYPE_2){
+		u32 latency = (u32)cbd->pBootSegBuf->rh.s.secure_cmd_latency * 0x100;
+
 		// MCCNT1 レジスタ設定
 		reg_HOTSW_MCCNT1 = START_MASK | *scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
 
 		// セキュアコマンド間レイテンシ待ち
-    	OS_Sleep( OS_CPUCYC_TO_MSEC(cbd->pBootSegBuf->rh.s.secure_cmd_latency * 0x100) );
+    	OS_Sleep( OS_CPUCYC_TO_MSEC(latency) );
     }
-    // ★ NTR-MROM対応
+    // ★ TWL-XtraROM＆NTR-MROM対応
     else{
 		*scrambleMask |= TRM_MASK;
     }

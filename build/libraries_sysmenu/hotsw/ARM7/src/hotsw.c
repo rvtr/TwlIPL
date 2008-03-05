@@ -33,7 +33,6 @@
 #define		DIGEST_HASH_BLOCK_SIZE_SHA1			(512/8)
 
 #define		HOTSW_THREAD_STACK_SIZE				(1024 + PAGE_SIZE)	// スタックサイズ
-#define		HOTSW_THREAD_PRIO					11					// カード電源ON → ゲームモードのスレッド優先度
 #define		HOTSW_INSERT_MSG_NUM				16					// 挿し割り込み送信メッセージの数
 #define		HOTSW_PULLED_MSG_NUM				16					// 抜け割り込み送信メッセージの数
 #define		HOTSW_CTRL_MSG_NUM					8					// PXI割り込み送信メッセージの数
@@ -179,7 +178,7 @@ static CardBootFunction  	s_funcTable[] = {
   Arguments:    None.
   Returns:      None.
  *---------------------------------------------------------------------------*/
-void HOTSW_Init(void)
+void HOTSW_Init(u32 threadPrio)
 {
 	OS_InitTick();
     OS_InitThread();
@@ -235,7 +234,7 @@ void HOTSW_Init(void)
                     NULL,
                     s_ctData.stack + HOTSW_THREAD_STACK_SIZE / sizeof(u64),
                     HOTSW_THREAD_STACK_SIZE,
-                    HOTSW_THREAD_PRIO
+                    threadPrio
                     );
 
     // メッセージキューの初期化

@@ -60,7 +60,7 @@ typedef struct HotSwMessage{
 
 // Function prototype -------------------------------------------------------
 // Šˆğ‘}”²ˆ—‚Ì‰Šú‰»
-void HOTSW_Init(void);
+void HOTSW_Init(u32 threadPrio);
 
 // ƒJ[ƒh‚Ì‘¶İ”»’è
 BOOL HOTSW_IsCardExist(void);
