@@ -120,12 +120,27 @@ void BOOT_Ready( void )
 	    
 		REBOOTTarget target = REBOOT_TARGET_TWL_SYSTEM;
         BOOL ds = FALSE;
+		ROM_Header *th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ（DSアプリには無い）
 		ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 		
 		// アプリケーション選択
 		if ( dh->s.platform_code )
 		{
-//			target = REBOOT_TARGET_TWL_APP;
+			if ( th->s.titleID_Hi & TITLE_ID_HI_APP_TYPE_MASK )
+			{
+				if ( th->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK )
+				{
+					target = REBOOT_TARGET_TWL_SECURE_SYSTEM;
+				}
+				else
+				{
+					target = REBOOT_TARGET_TWL_SYSTEM;
+				}
+			}
+			else
+			{
+				target = REBOOT_TARGET_TWL_APP;
+			}
 #ifdef SYSMENU_DISABLE_TWL_BOOT
             OS_Terminate();
 #endif // SYSMENU_DISABLE_TWL_BOOT

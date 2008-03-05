@@ -504,13 +504,11 @@ static HotSwState LoadBannerData(void)
         state = (retval == HOTSW_SUCCESS) ? TRUE : FALSE;
         SYSMi_GetWork()->flags.hotsw.isValidCardBanner  = state;
         SYSMi_GetWork()->flags.hotsw.isExistCard 		= state;
-        SYSMi_GetWork()->flags.hotsw.isCardStateChanged = TRUE;
 	}
     else{
         // バナーデータが登録されていない場合 (この関数の外で排他制御されているからここでは排他制御しないでOK)
         SYSMi_GetWork()->flags.hotsw.isValidCardBanner  = FALSE;
         SYSMi_GetWork()->flags.hotsw.isExistCard 		= TRUE;
-        SYSMi_GetWork()->flags.hotsw.isCardStateChanged = TRUE;
     }
 
     if ( SYSMi_GetWork()->flags.hotsw.isExistCard )
@@ -522,6 +520,7 @@ static HotSwState LoadBannerData(void)
         SYSMi_GetWork()->flags.hotsw.isInspectCard = FALSE;
     }
 
+    SYSMi_GetWork()->flags.hotsw.isCardStateChanged = TRUE;
     SYSMi_GetWork()->flags.hotsw.is1stCardChecked   = TRUE;
 
 	return retval;
@@ -593,12 +592,8 @@ static HotSwState LoadStaticModule(void)
         
 		// セキュア領域先頭2K分のハッシュ値を求めて、Work領域にコピー
         {
-			u8		sha1data[DIGEST_SIZE_SHA1];
 		    SVCHMACSHA1Context hash;
 
-    		// クリア
-			MI_CpuClear8(sha1data, sizeof(sha1data));
- 
     		// ハッシュ初期化
 			SVC_HMACSHA1Init( &hash, s_digestDefaultKey, sizeof(s_digestDefaultKey) );
 

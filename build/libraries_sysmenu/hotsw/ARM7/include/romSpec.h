@@ -24,16 +24,18 @@ extern "C" {
 
 // ROM memory map
 
+#define HOTSW_PAGE_SIZE               0x200  // 512B
+#define HOTSW_BOOT_SEG_SIZE           0x1000 // 4KB
 #define HOTSW_LOAD_TABLE_SIZE         0x2000 // 8KB
-#define HOTSW_DS_ROM_HEADER_SIZE      0x200  // 512B
-#define HOTSW_ROM_HEADER_SIZE         0x1000 // 4KB
 #define HOTSW_SECURE_AREA_SIZE        0x4000 // 16KB
 #define HOTSW_SECURE2_AREA_SIZE       0x4000 // 16KB
+#define HOTSW_EMU_INFO_SIZE           0x20
 
 #define HOTSW_SECURE_AREA_OFS         0x4000 // 16KB
 #define HOTSW_GAME_AREA_OFS           0x8000 // 32KB
 #define	HOTSW_SECURE2_AREA_OFS        0x3000 // 12KB
 #define	HOTSW_GAME2_AREA_OFS          0x7000 // 28KB
+#define	HOTSW_EMU_INFO_OFS            (HOTSW_SECURE_AREA_OFS - HOTSW_PAGE_SIZE + 0x160)
 
 
 // ROM ID

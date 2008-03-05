@@ -166,7 +166,21 @@ BOOL BOOT_WaitStart( void )
 			// アプリケーション選択
 			if ( dh->s.platform_code )
 			{
-//				target = REBOOT_TARGET_TWL_APP;
+				if ( th->s.titleID_Hi & TITLE_ID_HI_APP_TYPE_MASK )
+				{
+					if ( th->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK )
+					{
+						target = REBOOT_TARGET_TWL_SECURE_SYSTEM;
+					}
+					else
+					{
+						target = REBOOT_TARGET_TWL_SYSTEM;
+					}
+				}
+				else
+				{
+					target = REBOOT_TARGET_TWL_APP;
+				}
 #ifdef SYSMENU_DISABLE_TWL_BOOT
                 while (1)
                 {
