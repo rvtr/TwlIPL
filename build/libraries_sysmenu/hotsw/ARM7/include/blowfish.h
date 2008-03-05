@@ -40,7 +40,7 @@ void EncryptByBlowfish(const BLOWFISH_CTX *ctx, u32 *xl, u32 *xr);
 void DecryptByBlowfish(const BLOWFISH_CTX *ctx, u32 *xl, u32 *xr);
 
 // Key Table ÇÃê∂ê¨
-void GCDm_MakeBlowfishTableDS(BLOWFISH_CTX *tableBufp, ROM_Header_Short *rhs, u32 *keyBufp, s32 keyLen);
+void GCDm_MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen);
 
 
 #ifdef __cplusplus

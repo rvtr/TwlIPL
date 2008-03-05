@@ -380,7 +380,7 @@ static HotSwState LoadCardData(void)
 			s_cbData.secureLatency = AddLatency2ToLatency1(s_cbData.pBootSegBuf->rh.s.secure_cmd_param);
 
 	    	// Key Table初期化
-	    	GCDm_MakeBlowfishTableDS(&s_cbData.keyTable, &s_pBootSegBuffer->rh.s, s_cbData.keyBuf, 8);
+	    	GCDm_MakeBlowfishTableDS(&s_cbData, 8);
 
 			// コマンド認証値・コマンドカウンタ初期値・PNジェネレータ初期値の生成
             GenVA_VB_VD();

@@ -25,27 +25,30 @@ static u32 F(const BLOWFISH_CTX *ctx, u32 x);
 // 	GCDm_MakeBlowfishTableDSŠÖ”
 //
 //*****************************************
-void GCDm_MakeBlowfishTableDS(BLOWFISH_CTX *tableBufp, ROM_Header_Short *rhs, u32 *keyBufp, s32 keyLen)
+void GCDm_MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen)
 {
-  const BLOWFISH_CTX *blowfishInitTablep = &GCDi_BlowfishInitTableDS;
-  u32 blowfishedKey[2];
+	const BLOWFISH_CTX *blowfishInitTablep = &GCDi_BlowfishInitTableDS;
+	u32 blowfishedKey[2];
 
-  MI_CpuCopy32((void *)blowfishInitTablep, (void *)tableBufp, sizeof(BLOWFISH_CTX));
-
-  keyBufp[0] = *(u32 *)rhs->game_code;
-  keyBufp[1] = *(u32 *)rhs->game_code >> 1;
-  keyBufp[2] = *(u32 *)rhs->game_code << 1;
-
-  InitBlowfishKeyAndTableDS(tableBufp, keyBufp, keyLen);
-
-  blowfishedKey[0] = (u32)rhs->ctrl_reserved_B[0];
-  blowfishedKey[1] = *(u32 *)&rhs->ctrl_reserved_B[4];
-
-//  OS_TPrintf("Blowfish - key[0]:%d  key[1]:%d\n",blowfishedKey[0],blowfishedKey[1]);
+    u8 			 *RomHeaderCtrlRsvB = cbd->pBootSegBuf->rh.s.ctrl_reserved_B;
+    u32 		 *RomHeaderGameCode = (u32 *)cbd->pBootSegBuf->rh.s.game_code;
+	u32			 *keyBuf			= cbd->keyBuf;
+    BLOWFISH_CTX *ctx				= &cbd->keyTable;
     
-  DecryptByBlowfish(tableBufp, &(blowfishedKey)[1], &(blowfishedKey)[0]);
+	MI_CpuCopy32((void *)blowfishInitTablep, (void *)ctx, sizeof(BLOWFISH_CTX));
 
-  InitBlowfishKeyAndTableDS(tableBufp, keyBufp, keyLen);
+  	keyBuf[0] = *RomHeaderGameCode;
+  	keyBuf[1] = *RomHeaderGameCode >> 1;
+  	keyBuf[2] = *RomHeaderGameCode << 1;
+
+  	InitBlowfishKeyAndTableDS(ctx, keyBuf, keyLen);
+
+  	blowfishedKey[0] = (u32)RomHeaderCtrlRsvB[0];
+  	blowfishedKey[1] = *(u32 *)&RomHeaderCtrlRsvB[4];
+    
+  	DecryptByBlowfish(ctx, &(blowfishedKey)[1], &(blowfishedKey)[0]);
+
+  	InitBlowfishKeyAndTableDS(ctx, keyBuf, keyLen);
 }
 
 //*****************************************
