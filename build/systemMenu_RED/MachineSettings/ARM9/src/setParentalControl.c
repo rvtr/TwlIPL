@@ -396,23 +396,28 @@ static const u16 *sppRegionCharTable[] =
     (const u16*)L"KOREA",
 };
 
+// レーティングリストのオフセット(リストの先頭にUNDEFINEDがあるため)
+static const u16 sRatingOgnIndexOffset = 1;     // 1がリストの先頭index
+
 // レーティング団体
 static const u16 *sppRatingOgnCharTable[] =
 {
-    (const u16*)L"CERO",            //LCFG_TWL_RATING_OGN_CERO          = 0,  // 日本
-    (const u16*)L"ESRB",            //LCFG_TWL_RATING_OGN_ESRB          = 1,  // アメリカ
-    (const u16*)L"USK",             //LCFG_TWL_RATING_OGN_USK           = 2,  // ドイツ
-    (const u16*)L"PEGI GENERAL",    //LCFG_TWL_RATING_OGN_PEGI_GENERAL  = 3,  // 欧州
-    (const u16*)L"PEGI PORTUGAL",   //LCFG_TWL_RATING_OGN_PEGI_PORTUGAL = 4,  // ポルトガル
-    (const u16*)L"BBFC",            //LCFG_TWL_RATING_OGN_PEGI_BBFC     = 5,  // イギリス
-    (const u16*)L"AGCB",            //LCFG_TWL_RATING_OGN_AGCB          = 6,  // オーストラリア
-    (const u16*)L"LFLC",            //LCFG_TWL_RATING_OGN_OFLC          = 7,  // ニュージーランド
-    (const u16*)L"GRB",             //LCFG_TWL_RATING_OGN_GRB           = 8,  // 韓国
+    (const u16*)L"UNDEFINED",       //LCFG_TWL_RATING_OGN_UNDEFINED     = 0,  // 未定義
+    (const u16*)L"CERO",            //LCFG_TWL_RATING_OGN_CERO          = 1,  // 日本
+    (const u16*)L"ESRB",            //LCFG_TWL_RATING_OGN_ESRB          = 2,  // アメリカ
+    (const u16*)L"USK",             //LCFG_TWL_RATING_OGN_USK           = 3,  // ドイツ
+    (const u16*)L"PEGI GENERAL",    //LCFG_TWL_RATING_OGN_PEGI_GENERAL  = 4,  // 欧州
+    (const u16*)L"PEGI PORTUGAL",   //LCFG_TWL_RATING_OGN_PEGI_PORTUGAL = 5,  // ポルトガル
+    (const u16*)L"BBFC",            //LCFG_TWL_RATING_OGN_PEGI_BBFC     = 6,  // イギリス
+    (const u16*)L"AGCB",            //LCFG_TWL_RATING_OGN_AGCB          = 7,  // オーストラリア
+    (const u16*)L"LFLC",            //LCFG_TWL_RATING_OGN_OFLC          = 8,  // ニュージーランド
+    (const u16*)L"GRB",             //LCFG_TWL_RATING_OGN_GRB           = 9,  // 韓国
 };
 
 // 表示位置のリスト
 static MenuPos spRatingOgnPosTable[] =
 {
+    { TRUE, 10 * 8,  8 * 8 },   // UNDEFINED(ダミー)
     { TRUE, 10 * 8,  8 * 8 },   // 日本
     { TRUE, 10 * 8,  8 * 8 },   // アメリカ
     { TRUE, 10 * 8,  8 * 8 },   // 欧州
@@ -1387,11 +1392,12 @@ static void SetRatingOgnInit( void )
     sRegion = LCFG_THW_GetRegion();
 
     // リージョンにあわせて選択させる団体リストをつくる(国別のほうがいいかも)
-    sRatingOgnFirstIndex = 0;
-    for( i=0; i < sRegion; i++ )
+    sRatingOgnFirstIndex = sRatingOgnIndexOffset;
+    for( i=0; i < sRegion; i++ )                        // リージョン番号0のときループ内に入らない(オフセット値そのままとなる)
     {
         sRatingOgnFirstIndex = (u16)(sRatingOgnFirstIndex + spNumOfRatingOgnsTable[i]);     // 団体の先頭インデックスを算出
     }
+    DEBUGPRINT( "ogn index = %d\n", sRatingOgnFirstIndex );
     sRatingOgnMenuParam.num = spNumOfRatingOgnsTable[ sRegion ];                            // リストのメンバ数
     sRatingOgnMenuParam.pos = &(spRatingOgnPosTable[ sRatingOgnFirstIndex ]);               // 表示位置
     for( i=0; i < spNumOfRatingOgnsTable[ sRegion ]; i++ )
