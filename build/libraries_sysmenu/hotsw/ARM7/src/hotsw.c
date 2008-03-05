@@ -1212,8 +1212,6 @@ static void InterruptCallbackCardData(void)
 {
 	// データ転送終了待ちまで寝ていたのを起こす
     OS_WakeupThreadDirect(&s_ctData.thread);
-
-	OS_PutString("△\n");
 }
 
 /*---------------------------------------------------------------------------*
