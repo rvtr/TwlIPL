@@ -177,7 +177,11 @@ TitleProperty *SYSM_ReadParameters( void )
 			SYSMi_GetWork()->flags.common.isFatalError = TRUE;
 		}else if( LCFG_ReadTWLSettings( (u8 (*)[LCFG_READ_TEMP])pBuffer ) ) {	// NANDからTWL本体設定データをリード
 			SYSM_CaribrateTP();											// 読み出したTWL本体設定データをもとにTPキャリブレーション。
-			brightness = (u8)LCFG_TSD_GetBacklightBrightness();
+			if ( SYSMi_GetMcuVersion() <= 1 )
+			{
+				// X2ボード以前だけ輝度読み込み
+				brightness = (u8)LCFG_TSD_GetBacklightBrightness();
+			}
 		}else {
 			SYSMi_GetWork()->flags.common.isInitialSettings = TRUE;		// リード失敗なら初回起動シーケンスへ
 		}

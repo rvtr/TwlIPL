@@ -105,6 +105,7 @@ extern AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle );				// 指定し
 // デバイス制御
 extern void SYSM_CaribrateTP( void );											// タッチパネルキャリブレーション
 extern void SYSM_SetBackLightBrightness( u8 brightness );						// バックライトを制御（本体設定データへの値セーブも行う）
+extern u8   SYSM_GetBackLightBlightness( void );								// バックライト輝度を取得（X2以前とX3以降で挙動に違い）
 
 // Nintendoロゴ制御
 extern BOOL SYSM_CheckNintendoLogo( u16 *pLogoData );							// Nintendoロゴデータのチェック

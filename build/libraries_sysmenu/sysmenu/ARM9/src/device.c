@@ -41,6 +41,44 @@ u32 PMi_WriteRegisterAsync(u16 registerAddr, u16 data, PMCallback callback, void
 //
 // ============================================================================
 
+// 輝度取得で呼ぶSYSM_ReadMcuRegisterAsyncのコールバック
+static OSThreadQueue s_callback_queue;
+static SYSMMcuResult s_callback_result;
+static void BackLightBlightnessCallBack( SYSMMcuResult result, void *arg )
+{
+#pragma unused(arg)
+	s_callback_result = result;
+	OS_WakeupThread( &s_callback_queue );
+}
+
+// バックライト輝度取得
+u8 SYSM_GetBackLightBlightness( void )
+{
+	u8 brightness;
+#ifdef SDK_SUPPORT_PMIC_2
+	if ( SYSMi_GetMcuVersion() <= 1 )
+	{
+		// X2以前
+		brightness = (u8)LCFG_TSD_GetBacklightBrightness();
+	}
+	else
+#endif // SDK_SUPPORT_PMIC_2
+	{
+		// X3以降
+		while( 1 )
+		{
+			// BUSYだと失敗するので成功するまでトライ
+			if ( MCU_RESULT_SUCCESS == SYSM_ReadMcuRegisterAsync( MCU_REG_BL_ADDR, &brightness, BackLightBlightnessCallBack, NULL ) )
+			{
+				OS_SleepThread( &s_callback_queue ); // 値が返ってくるまでスリープ
+				break;
+			}
+		}
+	}
+	
+	return brightness;
+}
+
 // バックライト輝度調整
 void SYSM_SetBackLightBrightness( u8 brightness )
 {
@@ -52,23 +90,31 @@ void SYSM_SetBackLightBrightness( u8 brightness )
 	if ( SYSMi_GetMcuVersion() <= 1 )
 	{
 		( void )PMi_WriteRegister( REG_PMIC_BL_BRT_B_ADDR, (u8)(brightness * 2) );
+		
+		// X2以前のボードのみLCFGに値を保存
+		LCFG_TSD_SetBacklightBrightness( brightness );
+		{
+			u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
+			if( pBuffer != NULL ) {
+				LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+				SYSM_Free( pBuffer );
+			}
+		}
 	}
 	else
 #endif // SDK_SUPPORT_PMIC_2
 	{
-		( void )SYSM_WriteMcuRegisterAsync( MCU_REG_BL_ADDR, brightness, NULL, NULL );
-	}
-	
-	LCFG_TSD_SetBacklightBrightness( brightness );
-	
-	// [TODO:] バックライト輝度は毎回セーブせずに、アプリ起動やリセット、電源OFF時に値が変わっていたらセーブするようにする。
-	{
-		u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
-		if( pBuffer != NULL ) {
-			LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
-			SYSM_Free( pBuffer );
+		// X3以降はマイコンに保存するだけ
+		while( 1 )
+		{
+			// BUSYだと失敗するので成功するまでトライ
+			if ( MCU_RESULT_SUCCESS == SYSM_WriteMcuRegisterAsync( MCU_REG_BL_ADDR, brightness, NULL, NULL ) )
+			{
+				break;
+			}
 		}
 	}
+	
 }
 
 

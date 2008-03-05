@@ -125,11 +125,6 @@ static BannerCounter banner_counter[LAUNCHER_TITLE_LIST_NUM];
 // ランチャー
 //======================================================
 
-// バナー表示関係（暫定）
-#define DBGBNR
-#ifdef DBGBNR
-
-
 static void LoadBannerFiles( void )
 {
 	// デフォルトバナーファイルの読み込み。最終的にリブートしてしまうので、解放処理は無し
@@ -369,9 +364,6 @@ static void BannerDraw(int selected, TitleProperty *titleprop)
 	}
 }
 
-#endif //DBGBNR
-
-
 // ランチャーの初期化
 void LauncherInit( TitleProperty *pTitleList )
 {
@@ -415,56 +407,7 @@ void LauncherInit( TitleProperty *pTitleList )
 	//FS_InitFile(&strm.file);
 	//strm.isPlay = FALSE;
 	
-	#ifdef DBGBNR
 	BannerInit();
-	#endif
-}
-
-// 輝度表示ポーリングで呼んだSYSM_ReadMcuRegisterAsyncのコールバック
-static OSThreadQueue s_callback_queue;
-static SYSMMcuResult s_callback_result;
-static void PollBackLightBlightnessCallBack( SYSMMcuResult result, void *arg )
-{
-	s_callback_result = result;
-	OS_WakeupThread( &s_callback_queue );
-}
-
-// 輝度表示ポーリング
-// X3基盤から、Select+音量で輝度変更できるようになったため、輝度スイッチ表示切り替えタイミングを変更
-// 変化があれば輝度スイッチ表示を切り替えるように
-static void PollBackLightBrightness( void )
-{
-	static int old_brightness = -1;
-#ifdef SDK_SUPPORT_PMIC_2
-	if ( SYSMi_GetMcuVersion() <= 1 )
-	{
-	}
-	else
-#endif // SDK_SUPPORT_PMIC_2
-	{
-		u8 brightness;
-		( void )SYSM_ReadMcuRegisterAsync( MCU_REG_BL_ADDR, &brightness, PollBackLightBlightnessCallBack, NULL );
-		OS_SleepThread( &s_callback_queue ); // 値が返ってくるまでスリープ
-		if( s_callback_result==MCU_RESULT_SUCCESS && LCFG_TSD_GetBacklightBrightness() != brightness )
-		{
-			// マイコンから取ってきた輝度とLCFGの設定値がズレていたらLCFGの値を設定しなおし
-			LCFG_TSD_SetBacklightBrightness( brightness );
-			{
-				u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
-				if( pBuffer != NULL ) {
-					LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
-					SYSM_Free( pBuffer );
-				}
-			}
-		}
-	}
-	
-	// 1フレーム前の古い値とLCFGの値が違っていたら描画しなおし
-	if( old_brightness != LCFG_TSD_GetBacklightBrightness() )
-	{
-		old_brightness = LCFG_TSD_GetBacklightBrightness();
-		DrawBackLightSwitch();
-	}
 }
 
 // ROMのローディング中のランチャーフェードアウト
@@ -473,16 +416,13 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
 	static int fadecount = 0;
 	
 	// 描画関係
-
+	
 	// 輝度表示
-
-	PollBackLightBrightness();
+	DrawBackLightSwitch();
 	
 	DrawScrollBar( pTitleList );
 	
-	#ifdef DBGBNR
 	BannerDraw( selected, pTitleList );
-	#endif
 	
 	// 描画少し追加
 	{
@@ -575,14 +515,14 @@ static void ProcessBackLightPads( void )
 	}
 	
 	if( (pad.trg & PAD_KEY_UP) || up_bl_trg ) {
-		brightness = LCFG_TSD_GetBacklightBrightness() + 1;
+		brightness = SYSM_GetBackLightBlightness() + 1;
 		if( brightness > LCFG_TWL_BACKLIGHT_LEVEL_MAX ) {
 			brightness = LCFG_TWL_BACKLIGHT_LEVEL_MAX;
 		}
 		SYSM_SetBackLightBrightness( (u8)brightness );
 	}
 	if( ( pad.trg & PAD_KEY_DOWN) || dw_bl_trg ) {
-		brightness = LCFG_TSD_GetBacklightBrightness() - 1;
+		brightness = SYSM_GetBackLightBlightness() - 1;
 		if( brightness < 0 ) {
 			brightness = 0;
 		}
@@ -800,13 +740,11 @@ typedef struct NandFirmResetParameter {
 	MoveByScrollBar();
 	
 	// 描画関係
-	PollBackLightBrightness();
+	DrawBackLightSwitch();
 	
 	DrawScrollBar( pTitleList );
 	
-	#ifdef DBGBNR
 	BannerDraw( selected, pTitleList );
-	#endif
 	
 	// RTC情報の取得＆表示
 	GetAndDrawRTCData( &g_rtcDraw, FALSE );
@@ -817,9 +755,20 @@ typedef struct NandFirmResetParameter {
 // バックライトスイッチの表示
 static void DrawBackLightSwitch(void)
 {
-	NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL, B_LIGHT_DW_BUTTON_TOP_X + 24, B_LIGHT_DW_BUTTON_TOP_Y, 40, 13 );
-	PutStringUTF16( B_LIGHT_DW_BUTTON_TOP_X, B_LIGHT_DW_BUTTON_TOP_Y, TXT_COLOR_RED,
-					L"\xE01c　　　\xE01b" );
-	PrintfSJIS( B_LIGHT_DW_BUTTON_TOP_X + 11, B_LIGHT_DW_BUTTON_TOP_Y, TXT_COLOR_RED,
-					"BL:%2d\n", LCFG_TSD_GetBacklightBrightness() );
+	static int old_brightness = -1;
+	u8 brightness;
+	
+	brightness = SYSM_GetBackLightBlightness();
+	
+	// 1フレーム前の古い値と輝度値が違っていたら描画しなおし
+	if( old_brightness != brightness )
+	{
+		old_brightness = brightness;
+		
+		NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL, B_LIGHT_DW_BUTTON_TOP_X + 24, B_LIGHT_DW_BUTTON_TOP_Y, 40, 13 );
+		PutStringUTF16( B_LIGHT_DW_BUTTON_TOP_X, B_LIGHT_DW_BUTTON_TOP_Y, TXT_COLOR_RED,
+						L"\xE01c　　　\xE01b" );
+		PrintfSJIS( B_LIGHT_DW_BUTTON_TOP_X + 11, B_LIGHT_DW_BUTTON_TOP_Y, TXT_COLOR_RED,
+						"BL:%2d\n", brightness );
+	}
 }
