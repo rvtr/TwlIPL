@@ -488,6 +488,7 @@ void* HOTSW_GetRomEmulationBuffer(void)
  * ----------------------------------------------------------------- */
 static HotSwState LoadBannerData(void)
 {
+	static BOOL init = FALSE;
     BOOL state;
 	HotSwState retval = HOTSW_SUCCESS;
 
@@ -517,6 +518,17 @@ static HotSwState LoadBannerData(void)
         SYSMi_GetWork()->flags.hotsw.isInspectCard = FALSE;
     }
 
+	if ( ! init )
+	{
+		init = TRUE;
+
+      	// デバッガ情報
+		if ( ! SYSMi_GetWork()->flags.hotsw.is1stCardChecked && s_cbData.debuggerFlg )
+		{
+			MI_CpuCopy8( HOTSW_GetRomEmulationBuffer(), &SYSMi_GetWork()->romEmuInfo, ROM_EMULATION_DATA_SIZE );
+			SYSMi_GetWork()->flags.hotsw.isOnDebugger = s_cbData.debuggerFlg;
+		}
+	}
     SYSMi_GetWork()->flags.hotsw.isCardStateChanged = TRUE;
     SYSMi_GetWork()->flags.hotsw.is1stCardChecked   = TRUE;
 
@@ -1092,10 +1104,6 @@ static void McThread(void *arg)
                         
                     	// 新しいカードのIDを入れる
                     	SYSMi_GetWork()->nCardID = s_cbData.id_gam;
-
-                    	// デバッガ情報
-						MI_CpuCopy8( HOTSW_GetRomEmulationBuffer(), &SYSMi_GetWork()->romEmuInfo, ROM_EMULATION_DATA_SIZE );
-						SYSMi_GetWork()->flags.hotsw.isOnDebugger = s_cbData.debuggerFlg;
 
             			// カードデータロード完了フラグ
             			SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = TRUE;
