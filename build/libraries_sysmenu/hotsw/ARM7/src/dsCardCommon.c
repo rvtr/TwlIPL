@@ -18,6 +18,7 @@
 
 // Function prototype -------------------------------------------------------
 static HotSwState HOTSWi_ChangeModeNormal(CardBootData *cbd, u64 cmd);
+static void PreSendSecureCommand(CardBootData *cbd, u32 *scrambleMask);
 
 
 // ===========================================================================
@@ -325,6 +326,28 @@ static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
 
 
 /*---------------------------------------------------------------------------*
+  Name:         PreSendSecureCommand
+  
+  Description:  
+ *---------------------------------------------------------------------------*/
+static void PreSendSecureCommand(CardBootData *cbd, u32 *scrambleMask)
+{
+    // ★ TWL-ROM＆NTR-3DM対応
+    if(cbd->cardType == DS_CARD_TYPE_2){
+		// MCCNT1 レジスタ設定
+		reg_HOTSW_MCCNT1 = START_MASK | *scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
+
+		// 25ms待ち
+    	OS_Sleep(COMMAND_DECRYPTION_WAIT);
+    }
+    // ★ NTR-MROM対応
+    else{
+		*scrambleMask |= TRM_MASK;
+    }
+}
+
+
+/*---------------------------------------------------------------------------*
  * Name:         ReadIDSecure
  * 
  * Description:
@@ -345,19 +368,9 @@ HotSwState ReadIDSecure(CardBootData *cbd)
     // コマンド作成・設定
 	SetSecureCommand(S_RD_ID, cbd);
 
-    // ★ 3DM対応
-    if(cbd->cardType == DS_CARD_TYPE_2){
-		// MCCNT1 レジスタ設定
-		reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
+	// コマンド初回送信（NTR-MROMはレイテンシクロック設定変更のみ）
+	PreSendSecureCommand(cbd, &scrambleMask);
 
-		// 25ms待ち
-    	OS_Sleep(COMMAND_DECRYPTION_WAIT);
-    }
-    // ★ MROM対応
-    else{
-		scrambleMask |= TRM_MASK;
-    }
-    
 	// NewDMA転送の準備
     HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_scr, sizeof(cbd->id_scr) );
     
@@ -415,17 +428,8 @@ HotSwState ReadSegSecure(CardBootData *cbd)
 		// MCCMD レジスタ設定
 		HOTSWi_SetCommand(&cndLE);
 
-        if(cbd->cardType == DS_CARD_TYPE_2){
-			// MCCNT1 レジスタ設定
-			reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
-        
-	    	// 25ms待ち
-    		OS_Sleep(COMMAND_DECRYPTION_WAIT);
-        }
-		else{
-			// MROM対応
-			scrambleMask |= TRM_MASK;
-		}
+		// コマンド初回送信（NTR-MROMはレイテンシクロック設定変更のみ）
+		PreSendSecureCommand(cbd, &scrambleMask);
 
         for(k=0; k<loop; k++){
 			// NewDMA転送の準備
@@ -470,18 +474,8 @@ HotSwState SwitchONPNGSecure(CardBootData *cbd)
     // コマンド作成・設定
 	SetSecureCommand(S_PNG_ON, cbd);
 
-    // ★ 3DM対応
-    if(cbd->cardType == DS_CARD_TYPE_2){
-		// MCCNT1 レジスタ設定
-		reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
-
-		// 25ms待ち
-    	OS_Sleep(COMMAND_DECRYPTION_WAIT);
-    }
-    // ★ MROM対応
-    else{
-		scrambleMask |= TRM_MASK;
-    }
+	// コマンド初回送信（NTR-MROMはレイテンシクロック設定変更のみ）
+	PreSendSecureCommand(cbd, &scrambleMask);
 
 	// MCCNT1 レジスタ設定
 	reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param | (cbd->secureLatency & LATENCY1_MASK);
@@ -514,18 +508,8 @@ HotSwState SwitchOFFPNGSecure(CardBootData *cbd)
     // コマンド作成・設定
 	SetSecureCommand(S_PNG_OFF, cbd);
 
-    // ★ 3DM対応
-    if(cbd->cardType == DS_CARD_TYPE_2){
-		// MCCNT1 レジスタ設定
-		reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
-
-		// 25ms待ち
-    	OS_Sleep(COMMAND_DECRYPTION_WAIT);
-    }
-    // ★ MROM対応
-    else{
-		scrambleMask |= TRM_MASK;
-    }
+	// コマンド初回送信（NTR-MROMはレイテンシクロック設定変更のみ）
+	PreSendSecureCommand(cbd, &scrambleMask);
 
 	// MCCNT1 レジスタ設定
 	reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param | (cbd->secureLatency & LATENCY1_MASK);
@@ -560,18 +544,8 @@ HotSwState ChangeModeSecure(CardBootData *cbd)
     // コマンド作成・設定
 	SetSecureCommand(S_CHG_MODE, cbd);
 
-    // ★ 3DM対応
-    if(cbd->cardType == DS_CARD_TYPE_2){
-			// MCCNT1 レジスタ設定
-		reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
-    	
-    	// 25ms待ち
-		OS_Sleep(COMMAND_DECRYPTION_WAIT);
-    }
-    // ★ MROM対応
-    else{
-		scrambleMask |= TRM_MASK;
-    }
+	// コマンド初回送信（NTR-MROMはレイテンシクロック設定変更のみ）
+	PreSendSecureCommand(cbd, &scrambleMask);
 
 	// MCCNT1 レジスタ設定
 	reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param | (cbd->secureLatency & LATENCY1_MASK);
