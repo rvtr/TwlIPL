@@ -17,6 +17,7 @@
 
 #include <twl.h>
 #include <sysmenu.h>
+#include <sysmenu/mcu.h>
 #include "internal_api.h"
 
 // define data-----------------------------------------------------------------
@@ -189,7 +190,13 @@ TitleProperty *SYSM_ReadParameters( void )
 	// 各種デバイス設定
 	//-----------------------------------------------------
 	// バックライト輝度設定
-	SYSM_SetBackLightBrightness( brightness );
+#ifdef SDK_SUPPORT_PMIC_2
+	if ( SYSMi_GetMcuVersion() <= 1 )
+	{
+		// X2ボード以前だけ輝度設定する
+		SYSM_SetBackLightBrightness( brightness );
+	}
+#endif // SDK_SUPPORT_PMIC_2
 	// RTC補正
 	SYSMi_WriteAdjustRTC();
 	// RTC値のチェック
