@@ -461,14 +461,16 @@ static HotSwState LoadCardData(void)
         }
     }
     else{
-        retval = (retval == HOTSW_SUCCESS) ? HOTSW_PULLED_OUT_ERROR : retval;
+        state = HOTSW_PULLED_OUT_ERROR;
+        retval = (retval == HOTSW_SUCCESS) ? state : retval;
     }
 
 end:
 	if( retval == HOTSW_SUCCESS )
 	{
         // バッドブロックを置換
-		HOTSWi_RefreshBadBlock(romMode);
+		state = HOTSWi_RefreshBadBlock(romMode);
+        retval = (retval == HOTSW_SUCCESS) ? state : retval;
 	}
 
 	// カードのロック開放(※ロックIDは開放せずに持ち続ける)
