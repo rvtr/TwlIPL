@@ -18,6 +18,8 @@
 #include <twl.h>
 #include <sysmenu.h>
 #include <sysmenu/mcu.h>
+#include <firm/format/from_firm.h>
+#include <firm/hw/ARM9/mmap_firm.h>
 #include "internal_api.h"
 
 // define data-----------------------------------------------------------------
@@ -27,6 +29,7 @@ extern void LCFG_VerifyAndRecoveryNTRSettings( void );
 // function's prototype-------------------------------------------------------
 static TitleProperty *SYSMi_CheckShortcutBoot( void );
 static void SYSMi_CheckCardCloneBoot( void );
+void SYSMi_SendKeysToARM7( void );
 
 // global variable-------------------------------------------------------------
 void *(*SYSMi_Alloc)( u32 size  );
@@ -56,6 +59,9 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 	pSysm = SYSMi_GetWork();
 	pRomHeader = (ROM_Header_Short *)0x027fc000;
 #endif /* SYSM_DEBUG_ */
+	
+	// ARM7で使用する分の鍵を渡す
+	SYSMi_SendKeysToARM7();
 	
 	// ランチャーのマウント情報セット
 	SYSMi_SetLauncherMountInfo();
@@ -101,6 +107,16 @@ void SYSM_Free( void *ptr )
 {
 	OS_TPrintf( "SYSM_Free  : %08x\n", ptr );
 	SYSMi_Free( ptr );
+}
+
+
+// ARM7で使用する分の鍵を渡す
+void SYSMi_SendKeysToARM7( void )
+{
+	MI_SetWramBank(MI_WRAM_ARM9_ALL);
+	// DS互換BlowfishテーブルをARM7へ渡す
+	MI_CpuCopyFast( &((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->ds_blowfish, (void *)HW_WRAM_0, sizeof(BLOWFISH_CTX) );
+	MI_SetWramBank(MI_WRAM_ARM7_ALL);
 }
 
 
