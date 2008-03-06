@@ -176,7 +176,9 @@ static void PostInit(void)
 ***************************************************************/
 static void EraseAll(void)
 {
-    AESi_ResetAesKey();
+    AESi_ResetAesKeyA();
+    AESi_ResetAesKeyB();
+    AESi_ResetAesKeyC();
     MI_CpuClearFast( OSi_GetFromFirmAddr(), sizeof(OSFromFirmBuf) );
 #ifdef SDK_FINALROM
     MI_CpuClearFast( (void*)HW_TWL_ROM_HEADER_BUF, HW_TWL_ROM_HEADER_BUF_SIZE );
