@@ -18,8 +18,10 @@
 #include <twl.h>
 #include <twl/mcu.h>
 #include <twl/cdc.h>
+#include <twl/aes/ARM7/lo.h>
 #include <sysmenu.h>
 #include <sysmenu/ds.h>
+#include <firm/aes/ARM7/aes_init.h>
 #include "reboot.h"
 
 
@@ -76,10 +78,21 @@ void BOOT_Init( void )
 BOOL BOOT_WaitStart( void )
 {
 	if( (reg_PXI_MAINPINTF & 0x000f ) == 0x000f ) {
-		
+
 		(void)OS_DisableIrq();							// ここで割り込み禁止にしないとダメ。
 		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
 		(void)OS_SetIrqMaskEx(0);
+		
+		// [TODO]ブートするアプリに応じて、AESキースロットのクリアを行う。
+		//       ブートアプリのROMヘッダのaccessKeyControl情報を見て判定
+//		AESi_ResetAesKeyA();
+//		AESi_ResetAesKeyB();
+//		AESi_ResetAesKeyC();
+		
+		// [TODO]鍵情報の引渡しを行う。
+		//       ブートアプリのROMヘッダのaccessKeyControl情報を見て判定
+		//       引渡しは、IRQスタック領域を使うので、割り込みを禁止してからセットする。
+		
 		
 		BOOTi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。
 		reg_MI_MBK9 = 0;								// 全WRAMのロック解除
@@ -96,6 +109,7 @@ BOOL BOOT_WaitStart( void )
 			u32 *post_clear_list;
 			// メモリリストの設定
 			// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域（WRAMにある）を消さないように注意
+			// [TODO:] pre clearにARM9/7共用WRAMの32KBも入れる。
 			static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + 2 + POST_CLEAR_NUM_MAX + 1] = 
 			{
 				// pre clear

@@ -217,9 +217,10 @@ TwlSpMain(void)
         // それ以外の時は活線挿抜ON
         SYSMi_GetWork()->flags.hotsw.isEnableHotSW = 1;
     }
-
+	
+	// [TODO]アプリジャンプ有効で、カードブートでない時は、最初からHOTSW_Initを呼ばないようにしたい。
     HOTSW_Init(THREAD_PRIO_HOTSW);
-
+	
     while (TRUE)
     {
         OS_Halt();
