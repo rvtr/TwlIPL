@@ -52,7 +52,45 @@ void AESi_InitKeysForApp( u8 game_code[4] );
 void AESi_InitKeysForHard( u8 fuse[8] );
 
 /*---------------------------------------------------------------------------*
-  Name:         AESi_ResetAesKeyC
+  Name:         AESi_ResetAesKeyA
+
+  Description:  set SEED/ID/KEYs filler data for slot-C
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+static inline void AESi_ResetAesKeyA( void )
+{
+    AES_Lock();
+    AES_WaitKey();
+
+    MI_CpuCopy32( (u32*)AESi_ResetAesKeyA + 0, (u32*)REG_AES_KEY_A1_ADDR, 40 );
+
+    AES_Unlock();
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         AESi_ResetAesKeyB
+
+  Description:  set SEED/ID/KEYs filler data for slot-C
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+static inline void AESi_ResetAesKeyB( void )
+{
+    AES_Lock();
+    AES_WaitKey();
+
+    MI_CpuCopy32( (u32*)AESi_ResetAesKeyB + 1, (u32*)REG_AES_KEY_B1_ADDR, 40 );
+
+    AES_Unlock();
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         AESi_ResetAesKeyB
 
   Description:  set SEED/ID/KEYs filler data for slot-C
 
@@ -65,28 +103,7 @@ static inline void AESi_ResetAesKeyC( void )
     AES_Lock();
     AES_WaitKey();
 
-    MI_CpuCopy32( (u32*)AESi_ResetAesKeyC, (u32*)REG_AES_KEY_C1_ADDR, 40 );
-
-    AES_Unlock();
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         AESi_ResetAesKey
-
-  Description:  set SEED/ID/KEYs filler data without slot-D
-
-  Arguments:    None
-
-  Returns:      None
- *---------------------------------------------------------------------------*/
-static inline void AESi_ResetAesKey( void )
-{
-    AES_Lock();
-    AES_WaitKey();
-
-    MI_CpuCopy32( (u32*)AESi_ResetAesKey,    (u32*)REG_AES_KEY_A1_ADDR, 40 );
-    MI_CpuCopy32( (u32*)AESi_ResetAesKey+10, (u32*)REG_AES_KEY_B1_ADDR, 40 );
-    MI_CpuCopy32( (u32*)AESi_ResetAesKey+20, (u32*)REG_AES_KEY_C1_ADDR, 40 );
+    MI_CpuCopy32( (u32*)AESi_ResetAesKeyC + 2, (u32*)REG_AES_KEY_C1_ADDR, 40 );
 
     AES_Unlock();
 }
