@@ -31,7 +31,11 @@ LCFILE_SPEC     = 	main.lsf
 LCFILE_TEMPLATE	=	racoon.lcf.template
 LDRES_TEMPLATE	=	racoon.response.template
 
-SRCS		=	main.c kami_pxi.c formatter.c nvram_misc.c
+SRCS		=	main.c \
+				kami_pxi.c \
+				formatter.c \
+				nvram_misc.c \
+				initScfg.c \
 
 LINCLUDES	=	../common/include $(ROOT)/build/libraries/spi/ARM7/include
 

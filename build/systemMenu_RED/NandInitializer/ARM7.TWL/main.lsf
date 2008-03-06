@@ -22,6 +22,7 @@ Static $(TARGET_NAME)
 {
 	Address		0x02380000
 	Library		crt0.LTD.TWL.o
+	Object		$(OBJDIR)/initScfg.o
 	StackSize	1024 1024
 }
 
