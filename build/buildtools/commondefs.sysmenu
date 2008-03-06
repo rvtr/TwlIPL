@@ -44,6 +44,7 @@ SYSMENU_ROOT		:= $(call eupath,$(TWL_IPL_RED_ROOT))
 SYSMENU_BUILDTOOLSDIR	:= $(SYSMENU_ROOT)/build/buildtools
 SYSMENU_INCDIR			:= $(SYSMENU_ROOT)/include \
                            $(ROOT)/build/libraries/spi/ARM9/include \
+						   $(ROOT)/build/libraries/os/common/include \
                            $(ROOT)/build/libraries/mb/common/include
 SYSMENU_TOOLSDIR		:= $(SYSMENU_ROOT)/tools
 SYSMENU_COMPONENTSDIR	:= $(SYSMENU_ROOT)/components

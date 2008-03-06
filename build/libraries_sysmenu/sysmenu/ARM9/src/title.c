@@ -534,23 +534,7 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 		SYSMi_GetWork()->flags.common.isCardBoot = TRUE;
 	}else if(pBootTitle->flags.isAppLoadCompleted)
 	{
-		// カードブートでなく、ロード済みの場合、再配置情報をランチャーパラメタから読み込み
-		MI_CpuCopy8( SYSM_GetLauncherParamBody()->v1.relocInfo, SYSMi_GetWork()->romRelocateInfo, sizeof(Relocate_Info)*RELOCATE_INFO_NUM );
-		// 更にヘッダを再配置
-		if( ((ROM_Header_Short *)(OS_TWL_HEADER_PRELOAD_MMEM))->platform_code & PLATFORM_CODE_FLAG_TWL ) {
-			// TWLモード
-			// TWL-ROMヘッダ情報の再配置
-			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)HW_TWL_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );
-			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
-		}else {
-			// NTRモード
-			// TWL-ROMヘッダ情報の再配置
-			//   ランチャーのROMヘッダが残っている非コピー領域もクリア
-			MI_CpuClearFast( (void *)HW_TWL_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );
-			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)HW_TWL_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
-			MI_CpuCopyFast( (void *)(OS_TWL_HEADER_PRELOAD_MMEM), (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
-			// NTR-ROMヘッダ情報の再配置は、rebootライブラリで行う。
-		}
+		// カードブートでなく、ロード済みの場合は今のところ何もしない
 	}
 }
 

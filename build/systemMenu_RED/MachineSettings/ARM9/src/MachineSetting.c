@@ -198,9 +198,6 @@ void MachineSettingInit( void )
 int MachineSettingMain( void )
 {
 	BOOL tp_select;
-
-	LauncherBootFlags tempflag = {TRUE, LAUNCHER_BOOTTYPE_NAND, TRUE, FALSE, FALSE, FALSE, 0};
-	
 	ReadTP();
 	
 	//--------------------------------------
@@ -220,7 +217,7 @@ int MachineSettingMain( void )
 	DrawMenu( s_csr, &s_settingParam );
 
 	if( pad.trg & PAD_BUTTON_START ) {
-		OS_SetLauncherParamAndResetHardware( NULL, &tempflag );
+		OS_DoApplicationJump( NULL, OS_APP_JUMP_NORMAL );
 	}
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// メニュー項目への分岐
@@ -250,9 +247,6 @@ int MachineSettingMain( void )
                     SetParentalControlInit();
                     g_pNowProcess = SetParentalControlMain;
                     break;
-				case 6:
-					//pictochat起動テスト
-					OS_SetLauncherParamAndResetHardware( 0x0003000550434854, &tempflag );
 			}
 		}
 	}
