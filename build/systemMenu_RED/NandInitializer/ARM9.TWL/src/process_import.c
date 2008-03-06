@@ -61,7 +61,9 @@ typedef enum {
 
 // 表示＆インポートできる.TADファイルは最大16個まで
 // しかもＳＤカードのルートに存在するファイルのみというお手軽実装
-#define FILE_NUM_MAX         16
+#define FILE_NUM_MAX         256
+
+#define VIEW_LINES_MAX        16
 
 /*---------------------------------------------------------------------------*
     内部変数定義
@@ -82,6 +84,10 @@ static u32  sCurrentProgress;
 
 static vu8 sNowImport = FALSE;
 
+static s32 sTadListViewOffset;
+
+static s32 	sLines;
+
 /*---------------------------------------------------------------------------*
     内部関数宣言
  *---------------------------------------------------------------------------*/
@@ -89,6 +95,7 @@ static vu8 sNowImport = FALSE;
 static BOOL ImportTad(char* file_name, TadWriteOption option);
 static void ProgressThread(void* arg);
 static void Destructor(void* arg);
+static void ShowTadList(void);
 static void DumpTadInfo(void);
 static void MakeFullPathForSD(char* file_name, char* full_path);
 static void ShowTitleinfoDifference( NAMTitleInfo* titleInfoNand, NAMTitleInfo* titleInfoSd);
@@ -165,6 +172,9 @@ void* ImportProcess0(void)
 	// ファイル数初期化
 	sFileNum = 0;
 
+	// 表示オフセット初期化
+	sTadListViewOffset = 0;
+
 	// 背景全クリア
 	for (i=0;i<24;i++)
 	{
@@ -205,7 +215,7 @@ void* ImportProcess0(void)
 				pExtension = STD_SearchCharReverse( info->longname, '.');
 				if (pExtension)
 				{
-					if (!STD_CompareString( pExtension, ".tad") )
+					if (!STD_CompareString( pExtension, ".tad") || !STD_CompareString( pExtension, ".TAD")  )
 					{
 						char full_path[FS_ENTRY_LONGNAME_MAX+6];
 
@@ -215,7 +225,6 @@ void* ImportProcess0(void)
 						STD_CopyString( sFilePath[sFileNum], info->longname );
 						kamiFontPrintfConsole(CONSOLE_ORANGE, "%d:%s\n", sFileNum, info->longname);
 
-						// 最大16個で終了
 						if (++sFileNum >= FILE_NUM_MAX)
 						{
 							break;
@@ -470,11 +479,8 @@ static void* ImportAllNonexistentProcess0(void)
 
   Returns:      next sequence
  *---------------------------------------------------------------------------*/
-
 static void* ImportIndividuallyProcess0(void)
 {
-	int i;
-
 	// 文字列全クリア
 	kamiFontClear();
 
@@ -482,23 +488,8 @@ static void* ImportIndividuallyProcess0(void)
 	kamiFontPrintf(2, 1, FONT_COLOR_BLACK, "Import from SD Card ");
 	kamiFontPrintf(0, 2, FONT_COLOR_BLACK, "--------------------------------");
 
-	// メニュー一覧
-	kamiFontPrintf(3,  4, FONT_COLOR_BLACK, "+--------------------+----+");
-	for (i=0;i<sFileNum+1;i++)
-	{
-		kamiFontPrintf(3, (s16)(5+i), FONT_COLOR_BLACK, "l                    l    l");
-	}
-	kamiFontPrintf(3, (s16)(5+i), FONT_COLOR_BLACK, "+--------------------+----+");
-
-	// tad ファイルリストを表示
-	for (i=0;i<sFileNum; i++)
-	{
-		// ファイル名追加
-		kamiFontPrintf(3,  (s16)(5+CHAR_OF_MENU_SPACE_INDIVIDUALLY*i), FONT_COLOR_BLACK, "l   %-16.16s l    l", sFilePath[i]);
-	}
-
-	// 最後にリターンを追加
-	kamiFontPrintf(3, (s16)(5+CHAR_OF_MENU_SPACE_INDIVIDUALLY*sFileNum), FONT_COLOR_BLACK, "l   RETURN           l    l");
+	// TADリスト表示
+	ShowTadList();
 
 	DumpTadInfo();
 
@@ -517,23 +508,49 @@ static void* ImportIndividuallyProcess0(void)
 
   Returns:      next sequence
  *---------------------------------------------------------------------------*/
-
 void* ImportIndividuallyProcess1(void)
 {
 	// 選択メニューの変更
     if ( kamiPadIsRepeatTrigger(PAD_KEY_UP) )
 	{
-		if (--sMenuSelectNoIndividually < 0) sMenuSelectNoIndividually = sFileNum;
+		if (--sMenuSelectNoIndividually < 0) 
+		{
+			sMenuSelectNoIndividually = sFileNum - 1;
+			if (sFileNum > VIEW_LINES_MAX)
+			{
+				sTadListViewOffset = sFileNum - VIEW_LINES_MAX;
+			}
+			else
+			{
+				sTadListViewOffset = 0;
+			}
+		}
+		if (sMenuSelectNoIndividually < sTadListViewOffset)
+		{
+			sTadListViewOffset--;
+		}
+
 		DumpTadInfo();
+		ShowTadList();
 	}
 	else if ( kamiPadIsRepeatTrigger(PAD_KEY_DOWN) )
 	{
-		if (++sMenuSelectNoIndividually > sFileNum) sMenuSelectNoIndividually = 0;
+		if (++sMenuSelectNoIndividually > sFileNum - 1) 
+		{
+			sMenuSelectNoIndividually = 0;
+			sTadListViewOffset = 0;
+		}
+		if ((sMenuSelectNoIndividually - sTadListViewOffset) > VIEW_LINES_MAX - 1)
+		{
+			sTadListViewOffset++;
+		}
+
 		DumpTadInfo();
+		ShowTadList();
 	}
 
 	// カーソル配置
-	SetCursorPos((u16)CURSOR_ORIGIN_X, (u16)(CURSOR_ORIGIN_Y + sMenuSelectNoIndividually * DOT_OF_MENU_SPACE_INDIVIDUALLY));
+	SetCursorPos((u16)CURSOR_ORIGIN_X, (u16)(CURSOR_ORIGIN_Y + (sMenuSelectNoIndividually - sTadListViewOffset) * DOT_OF_MENU_SPACE_INDIVIDUALLY));
 
 	// 決定
     if (kamiPadIsTrigger(PAD_BUTTON_A))
@@ -735,6 +752,37 @@ static void ProgressThread(void* /*arg*/)
     }
 
 	sNowImport = FALSE;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         ShowTadList
+
+  Description:  .tad のリストを表示する
+
+  Arguments:    arg -   使用しない。
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static void ShowTadList(void)
+{
+	int i;
+
+	// メニュー一覧
+	kamiFontPrintf(3,  4, FONT_COLOR_BLACK, "+--------------------+----+");
+	if (sFileNum > 15)  { sLines = VIEW_LINES_MAX; }
+	else                { sLines = sFileNum; }
+	for (i=0;i<sLines;i++)
+	{
+		kamiFontPrintf(3, (s16)(5+i), FONT_COLOR_BLACK, "l                    l    l");
+	}
+	kamiFontPrintf(3, (s16)(5+sLines), FONT_COLOR_BLACK, "+--------------------+----+");
+
+	// tad ファイルリストを表示
+	for (i=0;i<sLines; i++)
+	{
+		// ファイル名追加
+		kamiFontPrintf(3,  (s16)(5+CHAR_OF_MENU_SPACE_INDIVIDUALLY*i), FONT_COLOR_BLACK, "l   %-16.16s l    l", sFilePath[sTadListViewOffset+i]);
+	}
 }
 
 /*---------------------------------------------------------------------------*
