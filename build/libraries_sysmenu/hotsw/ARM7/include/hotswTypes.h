@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlFirm - GCD - include
+  Project:  TwlIPL - HOTSW - include
   File:     type.h
 
-  Copyright 2007 Nintendo.  All rights reserved.
+  Copyright 2007-2008 Nintendo.  All rights reserved.
 
   These coded instructions, statements, and computer programs contain
   proprietary information of Nintendo of America Inc. and/or Nintendo
@@ -164,6 +164,15 @@ typedef enum CardTypeEx{
     ROM_EMULATION
 } CardTypeEx;
 
+typedef enum RomMode{
+    HOTSW_ROM_MODE_NULL = 0,
+    HOTSW_ROM_MODE_NORMAL,
+    HOTSW_ROM_MODE_SECURE,
+    HOTSW_ROM_MODE_GAME,
+
+    HOTSW_ROM_MODE_NUM
+} RomMode;
+
 typedef enum NormalCommandType{
     RD_ID = 0,
     RD_BSEG,
@@ -246,6 +255,8 @@ typedef struct CardBootData{
 
     BOOL                twlFlg;
     BOOL                debuggerFlg;
+
+    u32                 romStatus;
 
     u32                 romEmuBuf[ROM_EMULATION_DATA_SIZE/sizeof(u32)];
     u32                 keyBuf[KEY_BUF_SIZE];

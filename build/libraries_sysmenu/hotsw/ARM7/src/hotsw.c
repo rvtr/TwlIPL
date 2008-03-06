@@ -50,7 +50,6 @@
 #define		HOTSW_EXMEMCNT_SELB_SHIFT 			10								 
 #endif
 
-    
 // スレッド・メッセージ関係をまとめた構造体
 typedef struct CardThreadData{
     u64  				stack[HOTSW_THREAD_STACK_SIZE / sizeof(u64)];
@@ -110,6 +109,8 @@ static BOOL CheckExtArm9HashValue(void);
 static void ShowRegisterData(void);
 static void ShowRomHeaderData(void);
 static void DebugPrintErrorMessage(HotSwState state);
+
+HotSwState HOTSWi_RefreshBadBlock(u32 romMode);
 
 // Static Values ------------------------------------------------------------
 static char 				encrypt_object_key[] ATTRIBUTE_ALIGN(4) = "encryObj";
@@ -278,6 +279,7 @@ static HotSwState LoadCardData(void)
 	OSTick start;
 	HotSwState retval = HOTSW_SUCCESS;
     HotSwState state  = HOTSW_SUCCESS;
+    u32 romMode = HOTSW_ROM_MODE_NULL;
 
     start = OS_GetTick();
 
@@ -308,6 +310,8 @@ static HotSwState LoadCardData(void)
         retval = (retval == HOTSW_SUCCESS) ? state : retval;
         
     	// ---------------------- Normal Mode ----------------------
+		romMode = HOTSW_ROM_MODE_NORMAL;
+
     	// カードID読み込み
 		state  = ReadIDNormal(&s_cbData);
 		retval = (retval == HOTSW_SUCCESS) ? state : retval;
@@ -390,6 +394,8 @@ static HotSwState LoadCardData(void)
 			retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
 	    	// ---------------------- Secure Mode ----------------------
+			romMode = HOTSW_ROM_MODE_SECURE;
+
 			// PNG設定
 			state  = s_funcTable[s_cbData.cardType].SetPNG_S(&s_cbData);
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
@@ -417,6 +423,8 @@ static HotSwState LoadCardData(void)
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
 	    	// ---------------------- Game Mode ----------------------
+			romMode = HOTSW_ROM_MODE_GAME;
+
 	    	// ID読み込み
 			state  = ReadIDGame(&s_cbData);
 			retval = (retval == HOTSW_SUCCESS) ? state : retval;
@@ -427,7 +435,7 @@ static HotSwState LoadCardData(void)
 
 			// 排他制御ここまで(※CRCチェックまでにミスがなかったら、排他制御ここまで)
             UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
-            
+
             // カードIDの比較をして、一致しなければFALSEを返す
             if(s_cbData.id_scr != s_cbData.id_gam){
                 retval = (retval == HOTSW_SUCCESS) ? HOTSW_ID_CHECK_ERROR : retval;
@@ -457,6 +465,12 @@ static HotSwState LoadCardData(void)
     }
 
 end:
+	if( retval == HOTSW_SUCCESS )
+	{
+        // バッドブロックを置換
+		HOTSWi_RefreshBadBlock(romMode);
+	}
+
 	// カードのロック開放(※ロックIDは開放せずに持ち続ける)
 #ifndef DEBUG_USED_CARD_SLOT_B_
 	CARD_UnlockRom(s_CardLockID);
@@ -465,6 +479,52 @@ end:
 #endif
 
 //	OS_TPrintf( "Load Card Time : %dms\n\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+
+    return retval;
+}
+
+/* -----------------------------------------------------------------
+ * HOTSWi_RefreshBadBlock関数
+ *
+ * ノーマルモードまたはゲームモードでバッドブロックを置換
+ * ----------------------------------------------------------------- */
+HotSwState HOTSWi_RefreshBadBlock(u32 romMode)
+{
+    HotSwState retval = HOTSW_SUCCESS;
+    HotSwState state  = HOTSW_SUCCESS;
+
+	HotSwState (*pReadStatus)(CardBootData *cbd);
+	HotSwState (*pRefreshBadBlock)(CardBootData *cbd);
+
+	if ( ! ( romMode == HOTSW_ROM_MODE_NORMAL || romMode == HOTSW_ROM_MODE_GAME ) )
+	{
+	    return HOTSW_SUCCESS;
+	}
+
+	if ( romMode == HOTSW_ROM_MODE_NORMAL )
+	{
+		pReadStatus = ReadStatusNormal;
+		pRefreshBadBlock = RefreshBadBlockNormal;
+	}
+	else
+	if ( romMode == HOTSW_ROM_MODE_GAME )
+	{
+		pReadStatus = ReadStatusGame;
+		pRefreshBadBlock = RefreshBadBlockGame;
+	}
+
+    // ステータス対応ROMのみステータス読み込み
+	if ( s_cbData.id_nml & HOTSW_ROMID_RFSSUP_MASK )
+    {
+        state = pReadStatus(&s_cbData);
+        retval = (retval == HOTSW_SUCCESS) ? state : retval;
+		// 要求レベルに関わらずバッドブロックを置換（製品カードでは滅多に発生しない）
+   	    if ( s_cbData.romStatus & (HOTSW_ROMST_RFS_WARN_L1_MASK | HOTSW_ROMST_RFS_WARN_L2_MASK) )
+       	{
+			state = pRefreshBadBlock(&s_cbData);
+            retval = (retval == HOTSW_SUCCESS) ? state : retval;
+        }
+	}
 
     return retval;
 }
@@ -488,15 +548,14 @@ void* HOTSW_GetRomEmulationBuffer(void)
  * ----------------------------------------------------------------- */
 static HotSwState LoadBannerData(void)
 {
-	static BOOL init = FALSE;
     BOOL state;
 	HotSwState retval = HOTSW_SUCCESS;
 
 	// バナーリード
 	if( s_cbData.pBootSegBuf->rh.s.banner_offset ) {
-        retval  = ReadPageGame(&s_cbData,  			s_cbData.pBootSegBuf->rh.s.banner_offset,
-												  	 (u32 *)SYSM_CARD_BANNER_BUF,
-	                                              	 		sizeof(TWLBannerFile) );
+        retval  = ReadPageGame(&s_cbData,	s_cbData.pBootSegBuf->rh.s.banner_offset,
+											(u32 *)SYSM_CARD_BANNER_BUF,
+	                                     	sizeof(TWLBannerFile) );
 
         // バナーリードが成功していたら各種フラグTRUE その他の場合はFALSE (この関数の外で排他制御されているからここでは排他制御しないでOK)
         state = (retval == HOTSW_SUCCESS) ? TRUE : FALSE;
@@ -518,17 +577,13 @@ static HotSwState LoadBannerData(void)
         SYSMi_GetWork()->flags.hotsw.isInspectCard = FALSE;
     }
 
-	if ( ! init )
+   	// デバッガ情報
+	if ( ! SYSMi_GetWork()->flags.hotsw.is1stCardChecked && s_cbData.debuggerFlg )
 	{
-		init = TRUE;
-
-      	// デバッガ情報
-		if ( ! SYSMi_GetWork()->flags.hotsw.is1stCardChecked && s_cbData.debuggerFlg )
-		{
-			MI_CpuCopy8( HOTSW_GetRomEmulationBuffer(), &SYSMi_GetWork()->romEmuInfo, ROM_EMULATION_DATA_SIZE );
-			SYSMi_GetWork()->flags.hotsw.isOnDebugger = s_cbData.debuggerFlg;
-		}
+		MI_CpuCopy8( HOTSW_GetRomEmulationBuffer(), &SYSMi_GetWork()->romEmuInfo, ROM_EMULATION_DATA_SIZE );
+		SYSMi_GetWork()->flags.hotsw.isOnDebugger = s_cbData.debuggerFlg;
 	}
+
     SYSMi_GetWork()->flags.hotsw.isCardStateChanged = TRUE;
     SYSMi_GetWork()->flags.hotsw.is1stCardChecked   = TRUE;
 

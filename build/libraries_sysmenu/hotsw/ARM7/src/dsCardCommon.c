@@ -150,6 +150,74 @@ HotSwState ReadBootSegNormal(CardBootData *cbd)
 }
 
 
+/* -----------------------------------------------------------------
+ * ReadStatusNormal関数
+ *
+ * ノーマルモードでステータスを読み込む
+ * ----------------------------------------------------------------- */
+HotSwState ReadStatusNormal(CardBootData *cbd)
+{
+	GCDCmd64 cndLE;
+
+	cbd->romStatus = 0;
+
+  	if(!HOTSW_IsCardAccessible()){
+		return HOTSW_PULLED_OUT_ERROR;
+   	}
+
+	// カード割り込みによるDMAコピー
+    HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->romStatus, sizeof(cbd->romStatus) );
+
+   	// リトルエンディアンで作って
+	cndLE.dw  = HSWOP_N_OP_RD_STAT;
+
+	// MCCMD レジスタ設定
+	HOTSWi_SetCommand(&cndLE);
+
+	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
+
+	// MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~SCRAMBLE_MASK) |
+        				START_MASK | (PC_MASK & (0x7 << PC_SHIFT));
+
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
+
+    return HOTSW_SUCCESS;
+}
+
+
+/* -----------------------------------------------------------------
+ * RefreshBadBlockNormal関数
+ *
+ * ノーマルモードでバッドブロックを置換
+ * ----------------------------------------------------------------- */
+HotSwState RefreshBadBlockNormal(CardBootData *cbd)
+{
+	GCDCmd64 cndLE;
+
+  	if(!HOTSW_IsCardAccessible()){
+		return HOTSW_PULLED_OUT_ERROR;
+   	}
+
+   	// リトルエンディアンで作って
+	cndLE.dw  = HSWOP_N_OP_RD_STAT;
+
+	// MCCMD レジスタ設定
+	HOTSWi_SetCommand(&cndLE);
+
+	// MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~SCRAMBLE_MASK) |
+        				START_MASK | (PC_MASK & (0x0 << PC_SHIFT));
+
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
+
+    return HOTSW_SUCCESS;
+}
+
+
 /*---------------------------------------------------------------------------*
  * Name:         ChangeModeNormal
  * 
@@ -642,3 +710,66 @@ HotSwState ReadPageGame(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
 
     return HOTSW_SUCCESS;
 }
+
+/*---------------------------------------------------------------------------*
+ * Name:         ReadStatusGame
+ * 
+ * Description:  ゲームモードでステータスを読み込む
+ *---------------------------------------------------------------------------*/
+HotSwState ReadStatusGame(CardBootData *cbd)
+{
+	GCDCmd64 cndLE;
+
+    if(!HOTSW_IsCardAccessible()){
+		return HOTSW_PULLED_OUT_ERROR;
+    }
+    
+	// NewDMA転送の準備
+    HOTSW_NDmaCopy_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->romStatus, sizeof(cbd->romStatus) );
+
+   	// リトルエンディアンで作って
+	cndLE.dw  = HSWOP_G_OP_RD_STAT;
+
+	// MCCMD レジスタ設定
+	HOTSWi_SetCommand(&cndLE);
+
+   	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 111(ステータスリード) その他Romヘッダの情報におまかせ)
+	reg_HOTSW_MCCNT1 = cbd->gameCommondParam |
+        				START_MASK | (PC_MASK & (0x7 << PC_SHIFT));
+    
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
+
+    return HOTSW_SUCCESS;
+}
+
+/* -----------------------------------------------------------------
+ * RefreshBadBlockGame関数
+ *
+ * ゲームモードでバッドブロックを置換
+ * ----------------------------------------------------------------- */
+HotSwState RefreshBadBlockGame(CardBootData *cbd)
+{
+	GCDCmd64 cndLE;
+
+  	if(!HOTSW_IsCardAccessible()){
+		return HOTSW_PULLED_OUT_ERROR;
+   	}
+
+   	// リトルエンディアンで作って
+	cndLE.dw  = HSWOP_G_OP_RD_STAT;
+
+	// MCCMD レジスタ設定
+	HOTSWi_SetCommand(&cndLE);
+
+   	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 000(コマンドのみ) その他Romヘッダの情報におまかせ)
+	reg_HOTSW_MCCNT1 = cbd->gameCommondParam |
+        				START_MASK | (PC_MASK & (0x0 << PC_SHIFT));
+
+    // カードデータ転送終了割り込みが起こるまで寝る(割り込みハンドラの中で起こされる)
+    OS_SleepThread(NULL);
+
+    return HOTSW_SUCCESS;
+}
+
+

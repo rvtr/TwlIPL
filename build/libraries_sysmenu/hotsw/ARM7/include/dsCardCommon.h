@@ -22,6 +22,12 @@ HotSwState ReadIDNormal(CardBootData *cbd);
 //	ノーマルモードのBoot Segment(4Kbyte)読み込み
 HotSwState ReadBootSegNormal(CardBootData *cbd);
 
+//	ノーマルモードでステータスを読み込む
+HotSwState ReadStatusNormal(CardBootData *cbd);
+
+//	ノーマルモードでバッドブロックを置換
+HotSwState RefreshBadBlockNormal(CardBootData *cbd);
+
 //	ノーマルモードからセキュアモードへの変更
 HotSwState ChangeModeNormal(CardBootData *cbd);
 
@@ -58,6 +64,12 @@ HotSwState ReadIDGame(CardBootData *cbd);
 
 //  ゲームモードの指定ページ読み込み
 HotSwState ReadPageGame(CardBootData *cbd, u32 start_addr, void* buf, u32 size);
+
+//  ゲームモードでステータスを読み込む
+HotSwState ReadStatusGame(CardBootData *cbd);
+
+//	ゲームモードでバッドブロックを置換
+HotSwState RefreshBadBlockGame(CardBootData *cbd);
 
 
 // ■       内部関数  				     ■
