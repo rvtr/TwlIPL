@@ -48,7 +48,7 @@
 static u32*             pNwmBuf;
 static u8*              pFwBuffer = 0;
 #if (MEASURE_WIRELESS_INITTIME == 1)
-static OSTick           startTick;
+static OSTick           startTick = 0;
 #endif
 static OSMessageQueue   mesq;
 static OSMessage        mesAry[1];
@@ -277,6 +277,11 @@ BOOL InstallWlanFirmware(void)
             OS_TWarning("Error: Couldn't allocate memory for NWM.\n");
             goto instfirm_error;
         }
+
+#if (MEASURE_WIRELESS_INITTIME == 1)
+        startTick = OS_GetTick();
+#endif
+        
         // HotStart
         NWM_Init(pNwmBuf, NWM_SYSTEM_BUF_SIZE, 3); /* 3 -> DMA no. */
         err = NWMi_InstallFirmware(InstallFirmCallback, NULL, 0, FALSE);
