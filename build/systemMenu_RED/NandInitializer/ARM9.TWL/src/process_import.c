@@ -682,7 +682,7 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 	spStack = OS_Alloc(THREAD_STACK_SIZE);
 	MI_CpuClear8(spStack, THREAD_STACK_SIZE);
     OS_CreateThread(&thread, ProgressThread, NULL,
-        (void*)((u32)spStack + THREAD_STACK_SIZE), THREAD_STACK_SIZE, OS_THREAD_PRIORITY_MAX);
+        (void*)((u32)spStack + THREAD_STACK_SIZE), THREAD_STACK_SIZE, OS_GetCurrentThread()->priority - 1);
 	// デストラクタセット
 	OS_SetThreadDestructor( &thread, Destructor );
     OS_WakeupThreadDirect(&thread);
@@ -694,7 +694,7 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 	nam_result = NAM_ImportTad( full_path );
 
 	// 進捗スレッドの自力終了を待つ
-	while (sNowImport){ OS_Sleep(1); };
+	while (sNowImport){};
 
 	if ( nam_result == NAM_OK )
 	{
@@ -749,6 +749,9 @@ static void ProgressThread(void* /*arg*/)
 		}
 
 		totalSizeBk = totalSize;
+
+		// Vブランク待ち
+        OS_WaitVBlankIntr();
     }
 
 	sNowImport = FALSE;
@@ -835,6 +838,12 @@ static void DumpTadInfo(void)
 
 			// Game Version
 			kamiFontPrintfConsole(CONSOLE_ORANGE, "GameVersion   = %d\n", info.titleInfo.version);
+
+			// Public Save Size
+			kamiFontPrintfConsole(CONSOLE_ORANGE, "PublicSaveSize = %d\n", info.titleInfo.publicSaveSize);
+
+			// Private Save Size
+			kamiFontPrintfConsole(CONSOLE_ORANGE, "PrivateSaveSize = %d\n", info.titleInfo.privateSaveSize);
 
 			kamiFontPrintfConsole(CONSOLE_ORANGE, "--------------------------\n");
 		}

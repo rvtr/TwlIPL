@@ -177,7 +177,7 @@ void* FormatProcess2(void)
 
 		switch( sMenuSelectNo )
 		{
-		case 0:
+		case 0:	// 擬似フォーマット
 //			NAMUT_DrawNandTree();
 			if (NAMUT_Format())
 			{
@@ -189,17 +189,17 @@ void* FormatProcess2(void)
 			}
 //			NAMUT_DrawNandTree();
 			return FormatProcess1;
-		case 1:
+		case 1:	// ノーマルフォーマット
 			sLock = TRUE;
 			ExeFormatAsync(FORMAT_MODE_QUICK, FormatCallback);
 			kamiFontPrintf(24,  y_pos, FONT_COLOR_BLACK, "     ");
 			return FormatProcess3;
-		case 2:
+		case 2: // フルフォーマット
 			sLock = TRUE;
 			ExeFormatAsync(FORMAT_MODE_FULL, FormatCallback);
 			kamiFontPrintf(24,  y_pos, FONT_COLOR_BLACK, "     ");
 			return FormatProcess3;
-		case 3:
+		case 3: // チェックディスク
 			{
 				FATFSDiskInfo info;
 				BOOL result = FALSE;

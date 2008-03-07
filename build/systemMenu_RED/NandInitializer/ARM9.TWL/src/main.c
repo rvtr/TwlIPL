@@ -42,6 +42,7 @@ static FSEventHook  sSDHook;
  *---------------------------------------------------------------------------*/
 static void VBlankIntr(void);
 static void InitAllocation(void);
+static void RegisterMountInfo(void);
 
 /*---------------------------------------------------------------------------*
   Name:         TwlMain
@@ -88,6 +89,9 @@ TwlMain()
 	FS_Init(FS_DMA_NOT_USE);
 	// SDカードの挿抜イベント監視コールバック設定
     FS_RegisterEventHook("sdmc", &sSDHook, SDEvents, NULL);
+
+	// Fドライブ、Gドライブを登録（暫定処置）
+	RegisterMountInfo();
 
 	// SD起動などあらゆるマウント状態に対応する
 	FATFS_UnmountDrive("F:");
@@ -180,3 +184,45 @@ static void InitAllocation(void)
         OS_Panic("ARM9: Fail to create heap...\n");
     hh = OS_SetCurrentHeap(OS_ARENA_MAIN, hh);
 }
+
+/*---------------------------------------------------------------------------*
+  Name:         RegisterMountInfo
+
+  Description:  F:とG:のマウント情報が存在しない場合は登録します。
+                NAM関数がマウント情報をもとに一時的にマウントに使用する
+                ドライブを決定するため。
+
+  Arguments:    None.
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static void RegisterMountInfo(void)
+{
+	const OSMountInfo info_nand = { 'F', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand",    "/" };
+	const OSMountInfo info_sd   = { 'G', OS_MOUNT_DEVICE_SD,   OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "sdmc",    "/" };
+    OSMountInfo*    pRegisteredInfo;
+	BOOL existNAND = FALSE;
+	BOOL existSD   = FALSE;
+
+    pRegisteredInfo = (OSMountInfo*)OS_GetMountInfo();
+
+    for( ; pRegisteredInfo->drive[0] != '\0'; ++pRegisteredInfo )
+    {
+		if      ( pRegisteredInfo->drive[0] == 'F') { existNAND = TRUE; }
+		else if ( pRegisteredInfo->drive[0] == 'G') { existSD   = TRUE; }	
+    }
+
+	if (!existNAND)
+	{
+	    MI_CpuCopy8(&info_nand, pRegisteredInfo, sizeof(info_nand));
+	    pRegisteredInfo->drive[0] = 'F';
+		++pRegisteredInfo;
+	}
+
+	if (!existSD)
+	{
+	    MI_CpuCopy8(&info_sd, pRegisteredInfo, sizeof(info_sd));
+	    pRegisteredInfo->drive[0] = 'G';
+	}
+}
+
