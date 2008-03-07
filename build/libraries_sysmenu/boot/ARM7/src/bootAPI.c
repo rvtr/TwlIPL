@@ -108,7 +108,8 @@ BOOL BOOT_WaitStart( void )
 			int l;
 			u32 *post_clear_list;
 			// メモリリストの設定
-			// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域（WRAMにある）を消さないように注意
+			// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域（WRAMにある）を消さないように注意。
+			//         WRAMリマップ後の消し忘れがないように不要な鍵はpre clearで消す。
 			// [TODO:] pre clearにARM9/7共用WRAMの32KBも入れる。
 			static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + 2 + POST_CLEAR_NUM_MAX + 1] = 
 			{
@@ -129,6 +130,7 @@ BOOL BOOT_WaitStart( void )
 				// post clear
 				NULL,
 			};
+			// NANDファームから受け取った鍵領域もまとめて消している
 			mem_list[1] = SYSM_OWN_ARM7_WRAM_ADDR_END - SYSM_OWN_ARM7_WRAM_ADDR;
 			
 			// copy forwardリスト設定
