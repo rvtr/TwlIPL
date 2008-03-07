@@ -2,7 +2,7 @@
   Project:  TwlIPL
   File:     bootAPI.c
 
-  Copyright 2007 Nintendo.  All rights reserved.
+  Copyright 2007-2008 Nintendo.  All rights reserved.
 
   These coded instructions, statements, and computer programs contain
   proprietary information of Nintendo of America Inc. and/or Nintendo
@@ -165,7 +165,7 @@ void BOOT_Ready( void )
 
         // USG以前のDSアプリには無線パッチを適用
         // （キャッシュ領域の排他制御簡略化のためARM9で行う）
-        if ( ds )
+        if ( REBOOT_TARGET_DS_APP )
         {
             DS_InsertWLPatch();
         }
