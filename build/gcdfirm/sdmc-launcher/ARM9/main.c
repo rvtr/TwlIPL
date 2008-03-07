@@ -186,6 +186,7 @@ static BOOL CheckHeader(void)
     OS_TPrintf("ARM7 LTD ROM address: %08X\n", rhs->sub_ltd_rom_offset);
     OS_TPrintf("ARM7 LTD RAM address: %08X\n", rhs->sub_ltd_ram_address);
     OS_TPrintf("ARM7 LTD size       : %08X\n", rhs->sub_ltd_size);
+#ifndef NO_SECURITY_CHECK
     // ‡˜‚Ù‚ÚÅ“K‰»Ï‚Ý
 #ifndef FIRM_USE_TWLSDK_KEYS
     if ( rhs->platform_code != PLATFORM_CODE_TWL_LIMITED ||     // TWL Limited only
@@ -215,6 +216,7 @@ static BOOL CheckHeader(void)
         OS_TPrintf("Invalid ROM header for SDMC Launcher!\n");
         return FALSE;
     }
+#endif
     return TRUE;
 }
 
