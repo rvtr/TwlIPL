@@ -217,10 +217,10 @@ TwlSpMain(void)
         // それ以外の時は活線挿抜ON
         SYSMi_GetWork()->flags.hotsw.isEnableHotSW = 1;
     }
-	
-	// [TODO]アプリジャンプ有効で、カードブートでない時は、最初からHOTSW_Initを呼ばないようにしたい。
+
+    // [TODO]アプリジャンプ有効で、カードブートでない時は、最初からHOTSW_Initを呼ばないようにしたい。
     HOTSW_Init(THREAD_PRIO_HOTSW);
-	
+
     while (TRUE)
     {
         OS_Halt();
@@ -248,6 +248,12 @@ static void ResetRTC( void )
         // リセット実行
         stat1.reset = 1;
         RTC_WriteStatus1( &stat1 );
+        {
+            RTCRawFout  fout;
+
+            fout.fout   =   RTC_FOUT_DUTY_32KHZ;
+            RTC_WriteFout(&fout);
+        }
         SYSMi_GetWork()->flags.common.isResetRTC = TRUE;
     }
 }
