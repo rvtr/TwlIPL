@@ -13,7 +13,7 @@
 #include <hotswTypes.h>
 
 
-const BLOWFISH_CTX GCDi_BlowfishInitTableDS = {
+const BLOWFISH_CTX GCDi_BlowfishInitTableDS ATTRIBUTE_ALIGN(4) = {
   0x5f20d599, 0xb9f54457, 0xd9a4196e, 0x945a6a9e,
   0xebf1aed8, 0x3ae27541, 0x32d08293, 0xd531ee33,
   0x9a6157cc, 0x1ba20637, 0xf5723979, 0xbef6ae55,

@@ -18,7 +18,6 @@
 
 // Function Prototype -------------------------------------------------------
 static u32 F(const BLOWFISH_CTX *ctx, u32 x);
-//static void GCDi_InitBlowfishKeyAndTableDS(BLOWFISH_CTX *ctx, u32 *keyBufp, s32 keyLen);
 
 //*****************************************
 //
@@ -27,16 +26,22 @@ static u32 F(const BLOWFISH_CTX *ctx, u32 x);
 //*****************************************
 void GCDm_MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen)
 {
+#ifdef USE_LOCAL_KEYTABLE
 	const BLOWFISH_CTX *blowfishInitTablep = &GCDi_BlowfishInitTableDS;
+#endif
 	u32 blowfishedKey[2];
 
     u8 			 *RomHeaderCtrlRsvB = cbd->pBootSegBuf->rh.s.ctrl_reserved_B;
     u32 		 *RomHeaderGameCode = (u32 *)cbd->pBootSegBuf->rh.s.game_code;
 	u32			 *keyBuf			= cbd->keyBuf;
     BLOWFISH_CTX *ctx				= &cbd->keyTable;
-    
-	MI_CpuCopy32((void *)blowfishInitTablep, (void *)ctx, sizeof(BLOWFISH_CTX));
 
+#ifdef USE_LOCAL_KEYTABLE
+	MI_CpuCopyFast((void *)blowfishInitTablep, (void *)ctx, sizeof(BLOWFISH_CTX));
+#else
+    MI_CpuCopyFast((void *)HW_WRAM_0_LTD, (void *)ctx, sizeof(BLOWFISH_CTX));
+#endif
+    
   	keyBuf[0] = *RomHeaderGameCode;
   	keyBuf[1] = *RomHeaderGameCode >> 1;
   	keyBuf[2] = *RomHeaderGameCode << 1;

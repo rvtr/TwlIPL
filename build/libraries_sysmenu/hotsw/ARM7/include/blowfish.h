@@ -21,10 +21,14 @@
 extern "C" {
 #endif
 
+#define USE_LOCAL_KEYTABLE
+
 /*************************************************************************/
 
+#ifdef USE_LOCAL_KEYTABLE
 // ‰Šú‰»ƒe[ƒuƒ‹
 extern const BLOWFISH_CTX  GCDi_BlowfishInitTableDS;
+#endif
 
 // Function Prototype ------------------------------------------------------------------------
 // Blowfish ‰Šú‰»

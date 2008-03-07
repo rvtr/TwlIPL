@@ -34,9 +34,7 @@ SRCS				=	blowfish.c \
 						ds_blowfish_table.c \
 						dsCardCommon.c \
 						romEmulation.c \
-						customNDma.c \
-#						dsCardType1.c \
-#						dsCardType2.c \
+						customNDma.c
 
 TARGET_LIB			=	libhotsw_sp$(TWL_LIBSUFFIX).a
 
