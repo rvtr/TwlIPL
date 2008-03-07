@@ -339,7 +339,8 @@ BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key1, const void* 
     MI_CpuClear8( &sd, sizeof(sd) );    // 残り削除 (他に必要なものはない？)
 #else
     (void)pool;
-    (void)rsa_key;
+    (void)rsa_key1;
+    (void)rsa_key2;
     FS_LoadBuffer( (u8*)rh, FS_HEADER_AUTH_SIZE, NULL );
     FS_LoadBuffer( (u8*)rh + FS_HEADER_AUTH_SIZE, HW_TWL_ROM_HEADER_BUF_SIZE - FS_HEADER_AUTH_SIZE, NULL );
 #endif
