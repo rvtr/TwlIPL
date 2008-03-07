@@ -113,6 +113,8 @@ static void DebugPrintErrorMessage(HotSwState state);
 HotSwState HOTSWi_RefreshBadBlock(u32 romMode);
 
 // Static Values ------------------------------------------------------------
+#include <twl/ltdwram_begin.h>
+
 static char 				encrypt_object_key[] ATTRIBUTE_ALIGN(4) = "encryObj";
 static char					rom_emu_info[] ATTRIBUTE_ALIGN(4)	    = "TWLD";
 
@@ -170,6 +172,7 @@ static CardBootFunction  	s_funcTable[] = {
      ReadIDGame,    ReadPageGame},																	// Game  モード関数
 };
 
+#include <twl/ltdwram_end.h>
 
 // ===========================================================================
 // 	Function Describe
@@ -184,6 +187,10 @@ void HOTSW_Init(u32 threadPrio)
 	OS_InitTick();
     OS_InitThread();
 
+#ifndef USE_LOCAL_KEYTABLE
+    // 初期化後に他の用途でWRAM_0を使用できるようにローカルバッファへコピーしておく
+    MI_CpuCopyFast((void *)HW_WRAM_0_LTD, &GCDi_BlowfishInitTableBufDS, sizeof(BLOWFISH_CTX));
+#endif
     // PXI初期化
 	PXI_Init();
 	PXI_SetFifoRecvCallback(PXI_FIFO_TAG_HOTSW, InterruptCallbackPxi);

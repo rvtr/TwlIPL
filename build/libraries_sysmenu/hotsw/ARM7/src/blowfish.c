@@ -27,7 +27,9 @@ static u32 F(const BLOWFISH_CTX *ctx, u32 x);
 void GCDm_MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen)
 {
 #ifdef USE_LOCAL_KEYTABLE
-	const BLOWFISH_CTX *blowfishInitTablep = &GCDi_BlowfishInitTableDS;
+	const BLOWFISH_CTX *initTable = &GCDi_BlowfishInitTableDS;
+#else
+	const BLOWFISH_CTX *initTable = &GCDi_BlowfishInitTableBufDS;
 #endif
 	u32 blowfishedKey[2];
 
@@ -36,12 +38,8 @@ void GCDm_MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen)
 	u32			 *keyBuf			= cbd->keyBuf;
     BLOWFISH_CTX *ctx				= &cbd->keyTable;
 
-#ifdef USE_LOCAL_KEYTABLE
-	MI_CpuCopyFast((void *)blowfishInitTablep, (void *)ctx, sizeof(BLOWFISH_CTX));
-#else
-    MI_CpuCopyFast((void *)HW_WRAM_0_LTD, (void *)ctx, sizeof(BLOWFISH_CTX));
-#endif
-    
+	MI_CpuCopyFast((void *)initTable, (void *)ctx, sizeof(BLOWFISH_CTX));
+
   	keyBuf[0] = *RomHeaderGameCode;
   	keyBuf[1] = *RomHeaderGameCode >> 1;
   	keyBuf[2] = *RomHeaderGameCode << 1;

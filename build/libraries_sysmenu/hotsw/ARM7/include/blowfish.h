@@ -28,6 +28,8 @@ extern "C" {
 #ifdef USE_LOCAL_KEYTABLE
 // èâä˙âªÉeÅ[ÉuÉã
 extern const BLOWFISH_CTX  GCDi_BlowfishInitTableDS;
+#else
+extern BLOWFISH_CTX  GCDi_BlowfishInitTableBufDS;
 #endif
 
 // Function Prototype ------------------------------------------------------------------------

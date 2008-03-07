@@ -73,6 +73,7 @@ void BOOT_Ready( void )
     (void)OS_SetIrqFunction( OS_IE_SUBP, ie_subphandler );
     OS_EnableInterrupts();
     (void)OS_SetIrqMask( OS_IE_SUBP );                      // サブプロセッサ割り込みのみを許可。
+    MI_SetWramBank(MI_WRAM_ARM7_ALL);                       // WRAM0/1の最終配置はOS_Bootで行う
     reg_PXI_SUBPINTF = SUBP_RECV_IF_ENABLE | 0x0f00;        // ARM9ステートを "0x0f" に
                                                             // ※もうFIFOはクリア済みなので、使わない。
     // ARM7からの通知待ち
@@ -91,13 +92,14 @@ void BOOT_Ready( void )
         MIHeader_WramRegs *pWRAMREGS = (MIHeader_WramRegs *)pROMH->main_wram_config_data;
         reg_GX_VRAMCNT_C    = pWRAMREGS->main_vrambnk_c;
         reg_GX_VRAMCNT_D    = pWRAMREGS->main_vrambnk_d;
-        reg_GX_VRAMCNT_WRAM = pWRAMREGS->main_wrambnk_01;
+        // WRAM0/1の最終配置はOS_Bootで行う
     }
 
     // SDK共通リブート
 	{
 	    // メモリリストの設定
-		// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域(ITCMにある)を消さないように注意
+		// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域(ITCMにある)を消さないように注意。
+		//         バッファオーバランの懸念回避のため不要な鍵はpre clearで消す。
 	    static u32 mem_list[] =
 	    {
             // pre clear

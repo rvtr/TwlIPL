@@ -11,9 +11,14 @@
   in whole or in part, without the prior written consent of Nintendo.
  *---------------------------------------------------------------------------*/
 #include <hotswTypes.h>
+#include <blowfish.h>
 
+#include <twl/ltdwram_begin.h>
 
-const BLOWFISH_CTX GCDi_BlowfishInitTableDS ATTRIBUTE_ALIGN(4) = {
+#ifndef USE_LOCAL_KEYTABLE
+BLOWFISH_CTX GCDi_BlowfishInitTableBufDS;
+#else
+const BLOWFISH_CTX GCDi_BlowfishInitTableDS = {
   0x5f20d599, 0xb9f54457, 0xd9a4196e, 0x945a6a9e,
   0xebf1aed8, 0x3ae27541, 0x32d08293, 0xd531ee33,
   0x9a6157cc, 0x1ba20637, 0xf5723979, 0xbef6ae55,
@@ -280,4 +285,7 @@ const BLOWFISH_CTX GCDi_BlowfishInitTableDS ATTRIBUTE_ALIGN(4) = {
   0xb5fd02cd, 0xaa5bbce9, 0x7e19a4d8, 0x81945d0e,
   0xad776f9e, 0x93740ed6, 0x18c4e796, 0x19f5ad5f
 };
+#endif // USE_LOCAL_KEYTABLE
+
+#include <twl/ltdwram_end.h>
 

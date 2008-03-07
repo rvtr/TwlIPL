@@ -116,6 +116,7 @@ void SYSMi_SendKeysToARM7( void )
     MI_SetWramBank(MI_WRAM_ARM9_ALL);
     // DSŒÝŠ·Blowfishƒe[ƒuƒ‹‚ðARM7‚Ö“n‚·
     MI_CpuCopyFast( &((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->ds_blowfish, (void *)HW_WRAM_0, sizeof(BLOWFISH_CTX) );
+    DC_FlushRange( (void *)HW_WRAM_0, sizeof(BLOWFISH_CTX) );
     MI_SetWramBank(MI_WRAM_ARM7_ALL);
 }
 

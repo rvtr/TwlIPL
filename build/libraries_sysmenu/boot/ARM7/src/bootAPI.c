@@ -30,9 +30,9 @@
 #define reg_MI_MC_SWP		(*(REGType8v *) ( REG_MC1_ADDR + 1 ) )
 
 #ifdef	ISDBG_MB_CHILD_
-#define PRE_CLEAR_NUM_MAX		(6*2)
+#define PRE_CLEAR_NUM_MAX		(7*2)
 #else
-#define PRE_CLEAR_NUM_MAX		(4*2)
+#define PRE_CLEAR_NUM_MAX		(5*2)
 #endif
 
 #define COPY_NUM_MAX			(4*3)
@@ -109,7 +109,7 @@ BOOL BOOT_WaitStart( void )
 			u32 *post_clear_list;
 			// メモリリストの設定
 			// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域（WRAMにある）を消さないように注意。
-			//         WRAMリマップ後の消し忘れがないように不要な鍵はpre clearで消す。
+			//         WRAMリマップ後の消し漏れやバッファオーバランの懸念回避のため不要な鍵はpre clearで消す。
 			// [TODO:] pre clearにARM9/7共用WRAMの32KBも入れる。
 			static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + 2 + POST_CLEAR_NUM_MAX + 1] = 
 			{
@@ -121,6 +121,7 @@ BOOL BOOT_WaitStart( void )
 				HW_PRV_WRAM_END - 0x600, (HW_PRV_WRAM_END - HW_PRV_WRAM_SYSRV_SIZE) - (HW_PRV_WRAM_END - 0x600),
 				HW_PRV_WRAM_END - 0x600 + 0x20, HW_PRV_WRAM_END - (HW_PRV_WRAM_END - 0x600 + 0x20),
 #endif
+				HW_WRAM_LTD, HW_WRAM_LTD_END - HW_WRAM_LTD,
 				HW_MAIN_MEM_SHARED, HW_RED_RESERVED - HW_MAIN_MEM_SHARED,
 				NULL,
 				// copy forward
