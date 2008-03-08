@@ -41,6 +41,8 @@
 #define FWBUFFER_SIZE                0x40000
 #define SIGNHEAP_SIZE                0x01000
 
+#define FWHEADER_SIZE                0xE0
+
 /*
   internal variables
  */
@@ -57,13 +59,17 @@ static OSMessage        mesAry[1];
     internal functions
  */
 static void  InstallFirmCallback(void* arg);
-static s32   ReadFirmwareBinary(u8 *buffer, s32 bufSize);
+static BOOL  GetFirmwareFilepath(char *path);
+static s32   ReadFirmwareHeader(char *path, u8 *buffer, s32 bufSize);
+static s32   ReadFirmwareBinary(char *path, u32 offset, u8 *buffer, s32 bufSize);
 static BOOL  VerifyWlanfirmSignature(u8* buffer, u32 length);
-
+static BOOL  CheckHash(const u8* hash, const u8* buffer, u32 length);
 
 extern NWMRetCode NWMi_InstallFirmware(NWMCallbackFunc callback, void* addr, u32 size, BOOL isColdstart);
 
-
+extern u32 NWMi_GetFirmImageOffset(void* addr, u32 hwVersion);
+extern u32 NWMi_GetFirmImageLength(void* addr, u32 hwVersion);
+extern u8* NWMi_GetFirmImageHashAddress(void* addr, u32 hwVersion);
 
 void InstallFirmCallback(void* arg)
 {
@@ -97,12 +103,9 @@ void InstallFirmCallback(void* arg)
 
 }
 
-s32 ReadFirmwareBinary(u8 *buffer, s32 bufSize)
+BOOL GetFirmwareFilepath(char *path)
 {
-    char path[256];
-    FSFile  file[1];
     u8 title[4];
-    s32 flen;
 
 #if( USE_LCFG_STRING == 0 )
     char *title0 = "WFW0";
@@ -147,8 +150,17 @@ s32 ReadFirmwareBinary(u8 *buffer, s32 bufSize)
     }
     else {
         OS_TPrintf( "Error: NAM_GetTitleBootContentPathFast titleID = 0x%08x0x%08x\n",titleID_hi, titleID_lo);
-        return -1;
+        return FALSE;
     }
+    
+    return TRUE;
+
+}
+
+s32 ReadFirmwareHeader(char *path, u8 *buffer, s32 bufSize)
+{
+    FSFile  file[1];
+    s32 flen;
 
     if (!FS_OpenFileEx(file, path, FS_FILEMODE_R)) {
         OS_TWarning("FS_OpenFileEx(%s) failed.\n", path);
@@ -170,16 +182,43 @@ s32 ReadFirmwareBinary(u8 *buffer, s32 bufSize)
 
     return flen;
 }
+    
+s32 ReadFirmwareBinary(char *path, u32 offset, u8 *buffer, s32 bufSize)
+{
+    FSFile  file[1];
+    s32 flen;
+
+    if (!FS_OpenFileEx(file, path, FS_FILEMODE_R)) {
+        OS_TWarning("FS_OpenFileEx(%s) failed.\n", path);
+        return -1;
+    }
+
+    if( FALSE == FS_SeekFile(file, (s32)(sizeof(ROM_Header) + offset), FS_SEEK_SET) ) {
+        OS_TWarning("FS_SeekFile failed.\n");
+        return -1;
+    }
+
+    flen = FS_ReadFile(file, buffer, bufSize);
+    if( flen == -1 ) {
+        OS_TWarning("FS_ReadFile failed.\n");
+        return -1;
+    }
+
+    (void)FS_CloseFile(file);
+
+    return flen;
+}
 
 BOOL VerifyWlanfirmSignature(u8* buffer, u32 length)
 {
-    NWMFirmHeader *hdr = (NWMFirmHeader*)buffer;
+#pragma unused(length)
+    NWMFirmFileHeader *hdr = (NWMFirmFileHeader*)buffer;
     u8 *pPubkey;
     u8 *pSign;
-    u8 *txtVector[2];
-    u32 txtlenVector[2];
+    u8 *txt;
+    u32 txtlen;
     u8 txtDigest[SVC_SHA1_DIGEST_SIZE];
-    u8 signDigest[0x80];
+    u8 signDigest[SVC_SHA1_DIGEST_SIZE];
     SVCSHA1Context sctx;
     SVCSignHeapContext rctx;
     int i;
@@ -189,19 +228,14 @@ BOOL VerifyWlanfirmSignature(u8* buffer, u32 length)
 #endif
     
     pPubkey = OSi_GetFromFirmAddr()->rsa_pubkey[WLANFIRM_PUBKEY_INDEX];
-    pSign = (u8*)((u32)buffer + (u32)hdr->sofs);
+    pSign = (u8*)((u32)buffer + (u32)hdr->soffset);
 
-    txtVector[0] = buffer;
-    txtlenVector[0] = (u32)hdr->sofs; /* èêñºÇÃíºëOÇ‹Ç≈ÇÃLength */
-    txtVector[1] = (u8*)(txtVector[0] + txtlenVector[0] + (u32)SIGN_LENGTH);
-    txtlenVector[1] = length - txtlenVector[0] - (u32)SIGN_LENGTH;
+    txt = buffer;
+    txtlen = (u32)hdr->soffset; /* èêñºÇÃíºëOÇ‹Ç≈ÇÃLength */
 
     /* calculate SHA-1 digest */
     SVC_SHA1Init( &sctx );
-    for (i = 0; i < 2; i++ )
-    {
-        SVC_SHA1Update( &sctx, (const void*)txtVector[i],txtlenVector[i]);
-    }
+    SVC_SHA1Update( &sctx, (const void*)txt,txtlen);
     SVC_SHA1GetHash( &sctx, txtDigest );
 
     OS_TPrintf("Wlan Firm digest: ");
@@ -215,7 +249,7 @@ BOOL VerifyWlanfirmSignature(u8* buffer, u32 length)
     signHeap = SYSM_Alloc( SIGNHEAP_SIZE );
     SVC_InitSignHeap( &rctx, signHeap, SIGNHEAP_SIZE);
     
-    MI_CpuClear8( signDigest, 0x80 );
+    MI_CpuClear8( signDigest, SVC_SHA1_DIGEST_SIZE );
 
     if (FALSE == SVC_DecryptSign( &rctx, signDigest, (const void*)pSign, (const void*)pPubkey ))
     {
@@ -260,6 +294,48 @@ BOOL VerifyWlanfirmSignature(u8* buffer, u32 length)
 
 }
 
+BOOL CheckHash(const u8* hash, const u8* buffer, u32 length)
+{
+    u8 txtDigest[SVC_SHA1_DIGEST_SIZE];
+    SVCSHA1Context sctx;
+#if (MEASURE_VERIFY_SIGN_TIME == 1)
+    OSTick vstart = OS_GetTick();
+#endif
+    int i;
+    
+    OS_TPrintf("Digest to compare: ");
+    for (i = 0; i < SVC_SHA1_DIGEST_SIZE; i++ )
+    {
+        OS_TPrintf("%02X ", hash[i]);
+    }
+    OS_TPrintf("\n");
+    
+    /* calculate SHA-1 digest */
+    SVC_SHA1Init( &sctx );
+    SVC_SHA1Update( &sctx, (const void*)buffer, length);
+    SVC_SHA1GetHash( &sctx, txtDigest );
+
+    OS_TPrintf("Calculated digest: ");
+    for (i = 0; i < SVC_SHA1_DIGEST_SIZE; i++ )
+    {
+        OS_TPrintf("%02X ", txtDigest[i]);
+    }
+    OS_TPrintf("\n");
+    
+    /* verify digest */
+    if (FALSE == SVC_CompareSHA1( (const void*)hash, (const void*)txtDigest ))
+    {
+#if (MEASURE_VERIFY_SIGN_TIME == 1)
+    OS_TPrintf("Wlan firm:Verify digest Time=%dmsec\n", OS_TicksToMilliSeconds(OS_GetTick() - vstart));
+#endif
+        return FALSE;
+    }
+#if (MEASURE_VERIFY_SIGN_TIME == 1)
+    OS_TPrintf("Wlan firm:Verify digest Time=%dmsec\n", OS_TicksToMilliSeconds(OS_GetTick() - vstart));
+#endif
+    return TRUE;
+}
+
 BOOL InstallWlanFirmware(void)
 {
     NWMRetCode err;
@@ -287,17 +363,54 @@ BOOL InstallWlanFirmware(void)
         err = NWMi_InstallFirmware(InstallFirmCallback, NULL, 0, FALSE);
     } else {
         s32 flen = 0;
+        char path[256];
+        u32 hwVersion;
+        u32 offset, length;
+        u8 hdrBuffer[FWHEADER_SIZE];
+        u8 *pHash = NULL;
 
         // ColdStart
+        if (FALSE == GetFirmwareFilepath(path)) {
+            goto instfirm_error;
+        }
 
-        /* pFwBuffer should be allocated from heap. */
-        pFwBuffer = SYSM_Alloc( FWBUFFER_SIZE );
+        // TODO: get WLAN chip version
+        hwVersion = NWM_HW_VERSION_1_1; // tentative
+
+        flen = ReadFirmwareHeader(path, hdrBuffer, FWHEADER_SIZE);
+
+        if ( 0 >= flen )
+        {
+            OS_TPrintf("Error: Couldn't read wlan firmware header.\n");
+            goto instfirm_error;
+        }
+
+        /*
+            check signature data
+         */
+        if (FALSE == VerifyWlanfirmSignature(hdrBuffer, (u32)flen))
+        {
+            OS_TPrintf("Error: This Wlan Firmware is quite illegal!\n");
+            OS_TPrintf("       It has never been installed.\n");
+            goto instfirm_error;
+        }
+
+        offset = NWMi_GetFirmImageOffset(hdrBuffer, hwVersion);
+        length = NWMi_GetFirmImageLength(hdrBuffer, hwVersion);
+
+        if (offset == 0 || length == 0) {
+            OS_TPrintf("Error: Couldn't get Firmware image.\n");
+            goto instfirm_error;
+        }
+
+        /* Allocate FW buffer from heap. */
+        pFwBuffer = SYSM_Alloc( length );
         if (!pFwBuffer) {
             OS_TWarning("Error: Couldn't allocate memory for WlanFirmware.\n");
             goto instfirm_error;
         }
-
-        flen = ReadFirmwareBinary(pFwBuffer, FWBUFFER_SIZE);
+        
+        flen = ReadFirmwareBinary(path, offset, pFwBuffer, (s32)length);
 
         if ( 0 >= flen )
         {
@@ -305,17 +418,18 @@ BOOL InstallWlanFirmware(void)
             goto instfirm_error;
         }
 
-        /*
-            check signature data
-         */
-        if (FALSE == VerifyWlanfirmSignature(pFwBuffer, (u32)flen))
+        pHash = NWMi_GetFirmImageHashAddress(hdrBuffer, hwVersion);
+        if (pHash == NULL)
         {
-            OS_TPrintf("Error: This Wlan Firmware is quite illegal!\n");
-            OS_TPrintf("       It has never been installed.\n");
+            OS_TPrintf("Error: Couldn't get hash of wlan firmware image.\n");
             goto instfirm_error;
         }
-
-        /*************************************************************/
+        
+        if (FALSE == CheckHash((const u8*)pHash, (const u8*)pFwBuffer, length))
+        {
+            OS_TPrintf("Error: Hash data is illegal.\n");
+            goto instfirm_error;
+        }
 
         pNwmBuf = SYSM_Alloc( NWM_SYSTEM_BUF_SIZE );
         if (!pNwmBuf) {
