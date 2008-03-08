@@ -35,7 +35,7 @@ extern "C" {
 
 
 #define KEY_BUF_SIZE                        3           // Blowfishキーのバッファサイズ
-#define HOTSW_DMA_NO                        2           //
+#define HOTSW_NDMA_NO                       2           // 使用するNDmaのチャンネル
 #define BOOT_SEGMENT_SIZE                   0x1000      // Boot Segment領域のサイズ
 
 #define PAGE_SIZE                           0x200       // 1ページのサイズ(バイト単位)
@@ -51,6 +51,16 @@ extern "C" {
 #define PNA_BASE_VALUE                      0x60e8      //
 #define PNB_L_VALUE                         0x879b9b05  //
 #define PNB_H_VALUE                         0x5c        //
+
+#define	HOTSW_THREAD_STACK_SIZE				(1024 + PAGE_SIZE)	// スタックサイズ
+#define	HOTSW_DMA_MSG_NUM					8					// DMA転送終了割り込み
+#define	HOTSW_INSERT_MSG_NUM				16					// 挿し割り込み送信メッセージの数
+#define	HOTSW_PULLED_MSG_NUM				16					// 抜け割り込み送信メッセージの数
+#define	HOTSW_CTRL_MSG_NUM					8					// PXI割り込み送信メッセージの数
+#define HOTSW_MSG_BUFFER_NUM				(HOTSW_INSERT_MSG_NUM + HOTSW_PULLED_MSG_NUM + HOTSW_CTRL_MSG_NUM) // 受信バッファの数
+
+// コントロールレジスタ０
+#define HOTSW_E2PROM_CTRL_MASK		  		0x00ff
 
 // コントロールレジスタ１ bit関連
 #define START_FLG_MASK                      0x80000000
@@ -272,6 +282,28 @@ typedef struct CardBootData{
     
     BLOWFISH_CTX        keyTable;
 } CardBootData;
+
+// スレッド・メッセージ関係をまとめた構造体
+typedef struct CardThreadData{
+    u64  				stack[HOTSW_THREAD_STACK_SIZE / sizeof(u64)];
+	OSThread 			thread;
+
+	u32 				idx_insert;
+    u32					idx_pulledOut;
+    u32					idx_ctrl;
+    u32					idx_dma;
+
+   	OSMessage			hotswDmaMsg[HOTSW_DMA_MSG_NUM];
+    HotSwMessage		hotswInsertMsg[HOTSW_INSERT_MSG_NUM];
+    HotSwMessage		hotswPulledOutMsg[HOTSW_PULLED_MSG_NUM];
+	HotSwMessage		hotswPxiMsg[HOTSW_CTRL_MSG_NUM];
+
+    OSMessageQueue   	hotswQueue;
+    OSMessageQueue   	hotswDmaQueue;
+
+    OSMessage			hotswMsgBuffer[HOTSW_MSG_BUFFER_NUM];
+	OSMessage			hotswDmaMsgBuffer[HOTSW_DMA_MSG_NUM];
+} CardThreadData;
 
 // カード起動用関数
 typedef struct CardBootFunction {

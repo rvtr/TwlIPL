@@ -22,18 +22,25 @@ static void HOTSWi_NDmaCopy_Card(u32 ndmaNo, const void *src, void *dest, u32 si
 // ===========================================================================
 // 	Function Describe
 // ===========================================================================
-
-//  custom CARD DMA
+/*---------------------------------------------------------------------------*
+  Name:         HOTSW_NDmaCopy_Card
+ *---------------------------------------------------------------------------*/
 void HOTSW_NDmaCopy_Card(u32 ndmaNo, const void *src, void *dest, u32 size)
 {
 	HOTSWi_NDmaCopy_Card(ndmaNo, src, dest, size, MI_NDMA_DEST_INC);
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         HOTSW_NDmaPipe_Card
+ *---------------------------------------------------------------------------*/
 void HOTSW_NDmaPipe_Card(u32 ndmaNo, const void *src, void *dest, u32 size)
 {
 	HOTSWi_NDmaCopy_Card(ndmaNo, src, dest, size, MI_NDMA_DEST_FIX);
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         HOTSWi_NDmaCopy_Card
+ *---------------------------------------------------------------------------*/
 static void HOTSWi_NDmaCopy_Card(u32 ndmaNo, const void *src, void *dest, u32 size, u32 dcont)
 {
 	u32 contData;
@@ -46,7 +53,9 @@ static void HOTSWi_NDmaCopy_Card(u32 ndmaNo, const void *src, void *dest, u32 si
 	while( reg_HOTSW_MCCNT1 & REG_MI_MCCNT1_START_MASK ){}
 
 	//---- confirm DMA free
-	while( MI_IsNDmaBusy(ndmaNo) == TRUE ){}
+	while( MI_IsNDmaBusy(ndmaNo) == TRUE ){
+		OS_TPrintf("Dma is busy..\n");
+    }
 
 	//---- set up registers
     MI_NDMA_REG( ndmaNo, MI_NDMA_REG_SAD_WOFFSET )  = (u32)src;
@@ -54,7 +63,7 @@ static void HOTSWi_NDmaCopy_Card(u32 ndmaNo, const void *src, void *dest, u32 si
 	MI_NDMA_REG( ndmaNo, MI_NDMA_REG_BCNT_WOFFSET ) = NDMA_NO_INTERVAL_NORMAL_SCALE;
     MI_NDMA_REG( ndmaNo, MI_NDMA_REG_TCNT_WOFFSET ) = (u32)(size/4);
 	MI_NDMA_REG( ndmaNo, MI_NDMA_REG_WCNT_WOFFSET ) = NDMA_WORD_COUNT_1;
-
+    
 	//---- decide control register
 	contData  = NDMA_BLOCK_WORD_COUNT_1 | MI_NDMA_ENABLE;
 	contData |= (MI_NDMA_SRC_FIX | dcont | MI_NDMA_DEST_RELOAD_DISABLE);

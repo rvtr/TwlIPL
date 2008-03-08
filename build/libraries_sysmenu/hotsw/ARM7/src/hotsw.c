@@ -32,12 +32,6 @@
 
 #define		DIGEST_HASH_BLOCK_SIZE_SHA1			(512/8)
 
-#define		HOTSW_THREAD_STACK_SIZE				(1024 + PAGE_SIZE)	// スタックサイズ
-#define		HOTSW_INSERT_MSG_NUM				16					// 挿し割り込み送信メッセージの数
-#define		HOTSW_PULLED_MSG_NUM				16					// 抜け割り込み送信メッセージの数
-#define		HOTSW_CTRL_MSG_NUM					8					// PXI割り込み送信メッセージの数
-#define 	HOTSW_MSG_BUFFER_NUM				(HOTSW_INSERT_MSG_NUM + HOTSW_PULLED_MSG_NUM + HOTSW_CTRL_MSG_NUM) // 受信バッファの数
-
 #define 	SLOT_B_LOCK_BUF						HW_CTRDG_LOCK_BUF
 
 #ifdef SDK_ARM9
@@ -49,23 +43,6 @@
 #define		HOTSW_EXMEMCNT_SELB_MASK			0x0400
 #define		HOTSW_EXMEMCNT_SELB_SHIFT 			10								 
 #endif
-
-// スレッド・メッセージ関係をまとめた構造体
-typedef struct CardThreadData{
-    u64  				stack[HOTSW_THREAD_STACK_SIZE / sizeof(u64)];
-	OSThread 			thread;
-
-	u32 				idx_insert;
-    u32					idx_pulledOut;
-    u32					idx_ctrl;
-	
-    HotSwMessage		hotswInsertMsg[HOTSW_INSERT_MSG_NUM];
-    HotSwMessage		hotswPulledOutMsg[HOTSW_PULLED_MSG_NUM];
-	HotSwMessage		hotswPxiMsg[HOTSW_CTRL_MSG_NUM];
-    OSMessageQueue   	hotswQueue;
-	OSMessage			hotswMsgBuffer[HOTSW_MSG_BUFFER_NUM];
-}
-CardThreadData;
 
 // Function prototype -------------------------------------------------------
 static BOOL IsSwap(void);
@@ -80,7 +57,7 @@ static void SetInterrupt(void);
 
 static void InterruptCallbackCard(void);
 static void InterruptCallbackCardDet(void);
-static void InterruptCallbackCardData(void);
+static void InterruptCallbackNDma(void);
 static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err);
 
 static void LockHotSwRsc(OSLockWord* word);
@@ -128,7 +105,7 @@ static u32					*s_pSecureSegBuffer;	// カード抜けてもバッファの場所覚えとく
 static u32					*s_pSecure2SegBuffer;	// カード抜けてもバッファの場所覚えとく
 
 static CardBootData			s_cbData;
-static CardThreadData		s_ctData;
+CardThreadData				s_ctData;
 
 // HMACSHA1の鍵
 static u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = {
@@ -213,7 +190,7 @@ void HOTSW_Init(u32 threadPrio)
     // PXI経由でARM7にチャッタリングカウンタ・カウンタAの値を設定してもらう。設定されるまで待つ。
 
 #endif
-
+    
 	// カードブート用構造体の初期化
 	MI_CpuClear8(&s_cbData, sizeof(CardBootData));
 
@@ -247,6 +224,9 @@ void HOTSW_Init(u32 threadPrio)
 
     // メッセージキューの初期化
 	OS_InitMessageQueue( &s_ctData.hotswQueue, &s_ctData.hotswMsgBuffer[0], HOTSW_MSG_BUFFER_NUM );
+
+    // メッセージキューの初期化
+	OS_InitMessageQueue( &s_ctData.hotswDmaQueue, &s_ctData.hotswDmaMsgBuffer[0], HOTSW_DMA_MSG_NUM );
     
     // スレッド起動
     OS_WakeupThreadDirect(&s_ctData.thread);
@@ -313,8 +293,8 @@ static HotSwState LoadCardData(void)
     // ロード処理開始
 	if(HOTSW_IsCardAccessible()){
 		// カード側でKey Tableをロードする
-        state  = LoadTable();
-        retval = (retval == HOTSW_SUCCESS) ? state : retval;
+		state  = LoadTable();
+		retval = (retval == HOTSW_SUCCESS) ? state : retval;
         
     	// ---------------------- Normal Mode ----------------------
 		romMode = HOTSW_ROM_MODE_NORMAL;
@@ -339,7 +319,7 @@ static HotSwState LoadCardData(void)
             
             // Romエミュレーション情報を取得
 			state  = ReadRomEmulationData(&s_cbData);
-            retval = (retval == HOTSW_SUCCESS) ? state : retval;
+			retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
             // 取得したRomエミュレーション情報を比較
             s_cbData.debuggerFlg = TRUE;
@@ -887,7 +867,7 @@ static HotSwState DecryptObjectFile(void)
    	else{
 		retval = HOTSW_DATA_DECRYPT_ERROR;
 
-        MI_NDmaFill( HOTSW_DMA_NO, pEncBuf, UNDEF_CODE, (u32)size ); // 未定義コードでクリア
+        MI_NDmaFill( HOTSW_NDMA_NO, pEncBuf, UNDEF_CODE, (u32)size ); // 未定義コードでクリア
    	}
    	MI_CpuCopy32(pEncBuf, pEncDes, (u32)size);
 
@@ -1276,14 +1256,19 @@ static void InterruptCallbackCardDet(void)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:			InterruptCallbackCardData
+  Name:			InterruptCallbackNDma
 
   Description:  カードB データ転送終了割り込みハンドラ
  *---------------------------------------------------------------------------*/
-static void InterruptCallbackCardData(void)
+static void InterruptCallbackNDma(void)
 {
-	// データ転送終了待ちまで寝ていたのを起こす
-    OS_WakeupThreadDirect(&s_ctData.thread);
+	// メッセージ送信
+//    OS_SendMessage(&s_ctData.hotswDmaQueue, (OSMessage *)&s_ctData.hotswDmaMsg[s_ctData.idx_dma], OS_MESSAGE_NOBLOCK);
+
+	// メッセージインデックスをインクリメント
+//    s_ctData.idx_dma = (s_ctData.idx_dma+1) % HOTSW_DMA_MSG_NUM;
+    
+    OS_PutString("▽\n");
 }
 
 /*---------------------------------------------------------------------------*
@@ -1400,11 +1385,11 @@ static void SetInterrupt(void)
 #ifndef DEBUG_USED_CARD_SLOT_B_
   	SetInterruptCallback( OS_IE_CARD_A_IREQ , InterruptCallbackCard );
   	SetInterruptCallback( OS_IE_CARD_A_DET  , InterruptCallbackCardDet );
-  	SetInterruptCallback( OS_IE_CARD_A_DATA , InterruptCallbackCardData ); // DMA転送終了割り込み使う
+  	SetInterruptCallback( OS_IE_NDMA2 		, InterruptCallbackNDma );
 #else
 	SetInterruptCallback( OS_IE_CARD_B_IREQ , InterruptCallbackCard );
 	SetInterruptCallback( OS_IE_CARD_B_DET  , InterruptCallbackCardDet );
-	SetInterruptCallback( OS_IE_CARD_B_DATA , InterruptCallbackCardData ); // DMA転送終了割り込み使う
+	SetInterruptCallback( OS_IE_NDMA2		, InterruptCallbackNDma );
 #endif
 }
 
