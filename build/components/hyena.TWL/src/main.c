@@ -41,9 +41,7 @@
 #include    "nvram_sp.h"
 #include    "pm_pmic.h"
 #include    "internal_api.h"
-#ifdef SDK_SEA
 #include    <twl/sea.h>
-#endif  // ifdef SDK_SEA
 
 /*---------------------------------------------------------------------------*
     ’è”’è‹`

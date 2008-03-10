@@ -337,7 +337,7 @@ static BOOL WriteHWInfoFile( u8 region )
 	// セキュアファイルのライト
 	kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSecureWriting );
 	
-	if( HWI_WriteHWSecureInfoFile( region, NULL ) ) {
+	if( HWI_WriteHWSecureInfoFile( region, NULL, FALSE ) ) {	// とりあえず無線は有効で。
 		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSucceeded );
 	}else {
 		kamiFontPrintfConsoleEx(CONSOLE_RED, pMsgFailed );

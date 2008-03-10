@@ -67,6 +67,9 @@ Autoload WRAM
 	Object		$(OBJDIR)/formatter.o
 	Object		$(OBJDIR)/nvram_misc.o
 
+	Library		libsea_sp$(LIBSUFFIX).a
+	Library		libcrypto_sp$(LIBSUFFIX).a
+
 	# caches in fatfs library, that should be on WRAM.
 	# 2007/12/11 OBJECT() による .bss シンボルのリンクがうまくいかないので、
 	# 変数定義箇所に pragma で .ltdwram セクションに含まれるように暫定対策しました。

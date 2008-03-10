@@ -68,6 +68,8 @@ Autoload WRAM
 	Library		libnvram_sp$(LIBSUFFIX).a
 	Library		librtc_sp$(LIBSUFFIX).a
 
+	Library		libsea_sp$(LIBSUFFIX).a
+	Library		libcrypto_sp$(LIBSUFFIX).a
 
 	Object		* (.etable)
 	Object		* (.wram)

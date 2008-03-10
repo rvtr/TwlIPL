@@ -158,22 +158,22 @@ int main(int argc, char *argv[])
   // 0x02f0 - 0x0300 Parental Controls Rating Info
   // u8		ParentalControlsRatingInfo[ 0x10 ];
 
-  rom_header.s.ParentalControlsRatingInfo[ 0x0 ] = 0;
-  rom_header.s.ParentalControlsRatingInfo[ 0x1 ] = 1;
-  rom_header.s.ParentalControlsRatingInfo[ 0x2 ] = 2;
-  rom_header.s.ParentalControlsRatingInfo[ 0x3 ] = 3;
-  rom_header.s.ParentalControlsRatingInfo[ 0x4 ] = 4;
-  rom_header.s.ParentalControlsRatingInfo[ 0x5 ] = 5;
-  rom_header.s.ParentalControlsRatingInfo[ 0x6 ] = 6;
-  rom_header.s.ParentalControlsRatingInfo[ 0x7 ] = 7;
-  rom_header.s.ParentalControlsRatingInfo[ 0x8 ] = 8;
-  rom_header.s.ParentalControlsRatingInfo[ 0x9 ] = 9;
-  rom_header.s.ParentalControlsRatingInfo[ 0xa ] = 0xa;
-  rom_header.s.ParentalControlsRatingInfo[ 0xb ] = 0xb;
-  rom_header.s.ParentalControlsRatingInfo[ 0xc ] = 0xc;
-  rom_header.s.ParentalControlsRatingInfo[ 0xd ] = 0xd;
-  rom_header.s.ParentalControlsRatingInfo[ 0xe ] = 0xe;
-  rom_header.s.ParentalControlsRatingInfo[ 0xf ] = 0xf;
+  rom_header.s.parental_control_rating_info[ 0x0 ] = 0;
+  rom_header.s.parental_control_rating_info[ 0x1 ] = 1;
+  rom_header.s.parental_control_rating_info[ 0x2 ] = 2;
+  rom_header.s.parental_control_rating_info[ 0x3 ] = 3;
+  rom_header.s.parental_control_rating_info[ 0x4 ] = 4;
+  rom_header.s.parental_control_rating_info[ 0x5 ] = 5;
+  rom_header.s.parental_control_rating_info[ 0x6 ] = 6;
+  rom_header.s.parental_control_rating_info[ 0x7 ] = 7;
+  rom_header.s.parental_control_rating_info[ 0x8 ] = 8;
+  rom_header.s.parental_control_rating_info[ 0x9 ] = 9;
+  rom_header.s.parental_control_rating_info[ 0xa ] = 0xa;
+  rom_header.s.parental_control_rating_info[ 0xb ] = 0xb;
+  rom_header.s.parental_control_rating_info[ 0xc ] = 0xc;
+  rom_header.s.parental_control_rating_info[ 0xd ] = 0xd;
+  rom_header.s.parental_control_rating_info[ 0xe ] = 0xe;
+  rom_header.s.parental_control_rating_info[ 0xf ] = 0xf;
 
   /* ‚r‚q‚kƒtƒ@ƒCƒ‹‚Ì‘‚«o‚µ */
   if(1 != fwrite((void *)&rom_header, sizeof(ROM_Header), 1, srl_fp) ) {

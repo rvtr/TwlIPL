@@ -877,7 +877,7 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 				return SYSMi_AuthenticateTWLHeader( pBootTitle );
 			case LAUNCHER_BOOTTYPE_TEMP:
 				OS_TPrintf( "Authenticate :TWL_TEMP start.\n" );
-				if (!hs->permit_tmp_jump)
+				if (!hs->permit_landing_tmp_jump)
 				{
 					OS_TPrintf("Authenticate failed: TMP flag error.\n");
 					return AUTH_RESULT_AUTHENTICATE_FAILED;
@@ -903,7 +903,7 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 				return SYSMi_AuthenticateNTRNandAppHeader( pBootTitle );
 			case LAUNCHER_BOOTTYPE_TEMP:
 				OS_TPrintf( "Authenticate :NTR_TEMP start.\n" );
-				if (!hs->permit_tmp_jump)
+				if (!hs->permit_landing_tmp_jump)
 				{
 					OS_TPrintf("Authenticate failed: TMP flag error.\n");
 					return AUTH_RESULT_AUTHENTICATE_FAILED;

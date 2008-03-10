@@ -273,7 +273,7 @@ void HWI_ModifyLanguage( u8 region )
 	LCFG_TSD_SetCountry( LCFG_TWL_COUNTRY_UNDEFINED );
 	
 	// ペアレンタルコントロール情報もクリアしておく
-	
+	MI_CpuClearFast( (void *)LCFG_TSD_GetPCTLPtr(), sizeof(LCFGTWLParentalControl) );
 	
 	// regionが変わった場合は、LANGUAGE_BITMAPも必ず変わるので、それをNTR側に反映させるために必ずTWL設定データの書き込みも行う。
 	{
@@ -323,7 +323,7 @@ BOOL HWI_WriteHWNormalInfoFile( void )
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
-BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo )
+BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWireless )
 {
 	BOOL isWrite = TRUE;
 	LCFGReadResult result;
@@ -338,7 +338,8 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo )
 			isWrite = FALSE;
 		}
 	}
-	
+
+	LCFG_THW_SetFlagForceDisableWireless( isDisableWireless );
 	// リージョンのセット
 	LCFG_THW_SetRegion( region );
 	

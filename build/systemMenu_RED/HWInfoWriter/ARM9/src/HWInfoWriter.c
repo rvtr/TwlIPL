@@ -31,7 +31,7 @@
 // extern data------------------------------------------
 
 // function's prototype declaration---------------------
-static void WriteHWInfoFile( u8 region );
+static void WriteHWInfoFile( u8 region, BOOL isDisableWireless );
 static void DeleteHWInfoFile( void );
 static void DispMessage( int x, int y, u16 color, const u16 *pMsg );
 
@@ -46,6 +46,7 @@ static u8 *s_pPrivKeyBuffer = NULL;
 static LCFGReadResult (*s_pReadSecureInfoFunc)( void );
 static BOOL s_isReadTSD;
 static u8 s_region_old;
+static BOOL s_isDisableWireless;
 
 // const data  -----------------------------------------
 static const u16 *const s_pStrWriter[ WRITER_ELEMENT_NUM ] = {
@@ -59,13 +60,13 @@ static const u16 *const s_pStrWriter[ WRITER_ELEMENT_NUM ] = {
 };
 
 static MenuPos s_writerPos[] = {
-	{ TRUE,  3 * 8,   3 * 8 },
-	{ TRUE,  3 * 8,   5 * 8 },
-	{ TRUE,  3 * 8,   7 * 8 },
-	{ TRUE,  3 * 8,   9 * 8 },
-	{ TRUE,  3 * 8,  11 * 8 },
-	{ TRUE,  3 * 8,  13 * 8 },
-	{ TRUE,  3 * 8,  15 * 8 },
+	{ TRUE,  3 * 8,   4 * 8 },
+	{ TRUE,  3 * 8,   6 * 8 },
+	{ TRUE,  3 * 8,   8 * 8 },
+	{ TRUE,  3 * 8,  10 * 8 },
+	{ TRUE,  3 * 8,  12 * 8 },
+	{ TRUE,  3 * 8,  14 * 8 },
+	{ TRUE,  3 * 8,  16 * 8 },
 };
 
 
@@ -91,6 +92,10 @@ static const char *strRegion[] = {
 //======================================================
 // HW情報ライター
 //======================================================
+const char *pWireless[] = {
+	"Enable Wireless",
+	"Force disable Wireless",
+};
 
 // HW情報ライターの初期化
 void HWInfoWriterInit( void )
@@ -121,7 +126,11 @@ void HWInfoWriterInit( void )
 		}
 		PrintfSJIS( 14 * 8, 0 * 8, TXT_COLOR_RED, "[%s Signature MODE]", pMode );
 	}
-
+	
+	// 無線強制ON/OFF情報の表示
+	s_isDisableWireless = LCFG_THW_IsForceDisableWireless();
+	PrintfSJIS( 3 * 8, 2 * 8, TXT_COLOR_BLACK, pWireless[ s_isDisableWireless ] );
+	
 	OS_TPrintf( "region = %d\n", LCFG_THW_GetRegion() );
 	PrintfSJISSub( 2 * 8, 16 * 8, TXT_COLOR_BLACK, "Region   = %s", strRegion[ LCFG_THW_GetRegion() ] );
 	PrintfSJISSub( 2 * 8, 18 * 8, TXT_COLOR_BLACK, "SerialNo = %s", LCFG_THW_GetSerialNoPtr() );
@@ -159,7 +168,13 @@ void HWInfoWriterMain( void )
 		}
 	}
 	DrawMenu( s_csr, &s_writerParam );
-	
+
+	if( pad.trg & PAD_BUTTON_START ) {
+		PrintfSJIS( 3 * 8, 2 * 8, TXT_COLOR_WHITE, pWireless[ s_isDisableWireless ] );
+		s_isDisableWireless ^= 0x01;
+		PrintfSJIS( 3 * 8, 2 * 8, TXT_COLOR_BLACK, pWireless[ s_isDisableWireless ] );
+	}
+
 	// 実行
 	if( pad.trg == PAD_BUTTON_A ) {
 		if( s_csr == WRITER_ELEMENT_NUM - 1 ) {
@@ -167,7 +182,7 @@ void HWInfoWriterMain( void )
 			(void)DeleteHWInfoFile();
 		}else {
 			OS_TPrintf( "Write start.\n" );
-			WriteHWInfoFile( (u8)s_csr );
+			WriteHWInfoFile( (u8)s_csr, s_isDisableWireless );
 		}
 	}
 	
@@ -176,7 +191,7 @@ void HWInfoWriterMain( void )
 
 
 // HW情報全体のライト
-static void WriteHWInfoFile( u8 region )
+static void WriteHWInfoFile( u8 region, BOOL isDisableWireless )
 {
 	static const u16 *pMsgNormalWriting  = (const u16 *)L"Writing Normal File...";
 	static const u16 *pMsgSecureWriting  = (const u16 *)L"Writing Secure File...";
@@ -200,7 +215,7 @@ static void WriteHWInfoFile( u8 region )
 	// -------------------------------------
 	(void)PutStringUTF16( MSG_X * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_BLACK, pMsgSecureWriting );
 	
-	if( HWI_WriteHWSecureInfoFile( region, NULL ) ) {
+	if( HWI_WriteHWSecureInfoFile( region, NULL, isDisableWireless ) ) {
 		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_BLUE, pMsgSucceeded );
 	}else {
 		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_RED, pMsgFailed );

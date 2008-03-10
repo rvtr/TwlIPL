@@ -105,7 +105,7 @@ void InstallFirmCallback(void* arg)
 
 BOOL GetFirmwareFilepath(char *path)
 {
-    u8 title[4];
+	u8 title[4] = { 'W','F','W','0' };
 
 #if( USE_LCFG_STRING == 0 )
     char *title0 = "WFW0";
@@ -115,7 +115,6 @@ BOOL GetFirmwareFilepath(char *path)
     u32 titleID_lo;
     u64 titleID = 0;
 
-    LCFG_THW_GetWirelessFirmTitleID_Lo( title );
 
 #if( USE_LCFG_STRING == 0 )
     {
