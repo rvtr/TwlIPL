@@ -229,7 +229,7 @@ BOOL BOOT_WaitStart( void )
 
 #if defined(FIRM_USE_TWLSDK_KEYS) || defined(SYSMENU_DISABLE_RETAIL_BOOT)
             // TwlSDK内の鍵を使っている時は製品用CPUではTWLアプリはブートしない
-            if ( ! (*(u8*)HWi_WSYS08_ADDR & HWi_WSYS08_OP_OPT_MASK) && !ds )
+            if ( ! (*(u8*)HWi_WSYS08_ADDR & HWi_WSYS08_OP_OPT_MASK) )
             {
                 OS_Terminate();
             }

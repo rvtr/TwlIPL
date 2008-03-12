@@ -161,7 +161,7 @@ void BOOT_Ready( void )
 
 #if defined(FIRM_USE_TWLSDK_KEYS) || defined(SYSMENU_DISABLE_RETAIL_BOOT)
         // TwlSDK内の鍵を使っている時は製品用CPUではTWLアプリはブートしない
-        if ( ! (*(u8*)OS_CHIPTYPE_DEBUGGER_ADDR & OS_CHIPTYPE_DEBUGGER_MASK) && !ds )
+        if ( ! (*(u8*)OS_CHIPTYPE_DEBUGGER_ADDR & OS_CHIPTYPE_DEBUGGER_MASK) )
         {
             OS_Terminate();
         }
