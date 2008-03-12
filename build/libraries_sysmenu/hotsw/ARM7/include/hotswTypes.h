@@ -16,6 +16,7 @@
 #include <twl.h>
 #include <twl/os/common/format_rom.h>
 #include <sysmenu.h>
+#include <firm/gcd/blowfish.h>
 #include "romSpec.h"
 
 #ifdef __cplusplus
@@ -47,10 +48,6 @@ extern "C" {
 #define SECURE_SEGMENT_SIZE                 0x4000      // Secure領域のサイズ
 
 #define ROM_EMULATION_DATA_SIZE             0x20        // ROMエミュレーションデータサイズ
-
-#define PNA_BASE_VALUE                      0x60e8      //
-#define PNB_L_VALUE                         0x879b9b05  //
-#define PNB_H_VALUE                         0x5c        //
 
 #define	HOTSW_THREAD_STACK_SIZE				(1024 + PAGE_SIZE)	// スタックサイズ
 #define	HOTSW_DMA_MSG_NUM					8					// DMA転送終了割り込み
@@ -107,6 +104,17 @@ extern "C" {
 
 #define SCRAMBLE_MASK                       0x1840e000
 #define SECURE_COMMAND_SCRAMBLE_MASK		0x00406000 // CS SE DSのマスク
+
+// Page Count
+#define HOTSW_PAGE_0     			  		0x0UL << PC_SHIFT
+#define HOTSW_PAGE_1     			  		0x1UL << PC_SHIFT
+#define HOTSW_PAGE_2    	 		  		0x2UL << PC_SHIFT
+#define HOTSW_PAGE_4     			  		0x3UL << PC_SHIFT
+#define HOTSW_PAGE_8     			  		0x4UL << PC_SHIFT
+#define HOTSW_PAGE_16    			  		0x5UL << PC_SHIFT
+#define HOTSW_PAGE_32    			  		0x6UL << PC_SHIFT
+#define HOTSW_PAGE_STAT				  		0x7UL << PC_SHIFT
+
 
 #define AddLatency2ToLatency1(param)\
     ( (((param) &  LATENCY2_MASK)   \
@@ -235,15 +243,13 @@ typedef union BootSegmentData
 } BootSegmentData;
 
 // struct -------------------------------------------------------------------
-typedef struct BLOWFISH_CTX{
+/*typedef struct BLOWFISH_CTX{
     u32         P[16 + 2];
     u32         S[4][256];
-} BLOWFISH_CTX;
+} BLOWFISH_CTX;*/
 
 // カードブート時に必要な変数一式をまとめた構造体
 typedef struct CardBootData{
-    u16                 lockID;
-
     u32                 vae;
     u32                 vbi;
     u32                 vd;
@@ -252,11 +258,6 @@ typedef struct CardBootData{
     u32                 id_scr;
     u32                 id_scr2;
     u32                 id_gam;
-
-    u32                 arm9StcSize;
-    u32                 arm7StcSize;
-    u32                 arm9LtdSize;
-    u32                 arm7LtdSize;
 
     u32                 arm9Stc;
     u32                 arm7Stc;
@@ -270,9 +271,11 @@ typedef struct CardBootData{
 
     u32                 romEmuBuf[ROM_EMULATION_DATA_SIZE/sizeof(u32)];
     u32                 keyBuf[KEY_BUF_SIZE];
+    u32					keyBuf2[KEY_BUF_SIZE];
 
     CardTypeEx          cardType;
    	ModeType			modeType;
+    RomMode				romMode;
     u32                 secureLatency;
     u32                 gameCommondParam;
 

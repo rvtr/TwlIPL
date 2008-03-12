@@ -26,7 +26,7 @@ static u32 F(const BLOWFISH_CTX *ctx, u32 x);
 //*****************************************
 void GCDm_MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen)
 {
-	const BLOWFISH_CTX *initTable = &GCDi_BlowfishInitTableBufDS;
+	const BLOWFISH_CTX *initTable = &HotSwBlowfishInitTableBufDS;
 
 	u32 blowfishedKey[2];
 

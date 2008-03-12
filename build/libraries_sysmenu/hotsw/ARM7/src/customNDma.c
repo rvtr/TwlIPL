@@ -7,17 +7,12 @@
 #include	<hotswTypes.h>
 #include	<customNDma.h>
 
-
 // Define data --------------------------------------------------------------
-#define	NDMA_BLOCK_WORD_COUNT_1				0x0
-#define	NDMA_NO_INTERVAL_NORMAL_SCALE		0x0
-#define	NDMA_TOTAL_WORD_COUNT_1				0x1
 #define NDMA_WORD_COUNT_1					0x1
 #define ASSERT_DMANO( ndmaNo )				SDK_ASSERTMSG( (ndmaNo) <= MI_NDMA_MAX_NUM, "illegal NDMA No." );
 
 // Function prototype -------------------------------------------------------
 static void HOTSWi_NDmaCopy_Card(u32 ndmaNo, const void *src, void *dest, u32 size, u32 dcont);
-
 
 // ===========================================================================
 // 	Function Describe
@@ -50,23 +45,21 @@ static void HOTSWi_NDmaCopy_Card(u32 ndmaNo, const void *src, void *dest, u32 si
 	ASSERT_DMANO( ndmaNo );
 
 	//---- confirm CARD free
-	while( reg_HOTSW_MCCNT1 & REG_MI_MCCNT1_START_MASK ){}
+	HOTSW_WaitCardCtrl();
 
 	//---- confirm DMA free
-	while( MI_IsNDmaBusy(ndmaNo) == TRUE ){
-		OS_TPrintf("Dma is busy..\n");
-    }
+	HOTSW_WaitDmaCtrl(ndmaNo);
 
 	//---- set up registers
     MI_NDMA_REG( ndmaNo, MI_NDMA_REG_SAD_WOFFSET )  = (u32)src;
 	MI_NDMA_REG( ndmaNo, MI_NDMA_REG_DAD_WOFFSET )  = (u32)dest;
-	MI_NDMA_REG( ndmaNo, MI_NDMA_REG_BCNT_WOFFSET ) = NDMA_NO_INTERVAL_NORMAL_SCALE;
+	MI_NDMA_REG( ndmaNo, MI_NDMA_REG_BCNT_WOFFSET ) = MI_NDMA_INTERVAL_PS_1;
     MI_NDMA_REG( ndmaNo, MI_NDMA_REG_TCNT_WOFFSET ) = (u32)(size/4);
 	MI_NDMA_REG( ndmaNo, MI_NDMA_REG_WCNT_WOFFSET ) = NDMA_WORD_COUNT_1;
     
 	//---- decide control register
-	contData  = NDMA_BLOCK_WORD_COUNT_1 | MI_NDMA_ENABLE;
-	contData |= (MI_NDMA_SRC_FIX | dcont | MI_NDMA_DEST_RELOAD_DISABLE);
+	contData  = MI_NDMA_BWORD_1 | MI_NDMA_ENABLE/* | MI_NDMA_CONTINUOUS_ON*/;
+	contData |= MI_NDMA_SRC_FIX | dcont | MI_NDMA_SRC_RELOAD_DISABLE | MI_NDMA_DEST_RELOAD_DISABLE;
 #ifndef DEBUG_USED_CARD_SLOT_B_
 	contData |= MI_NDMA_TIMING_CARD_A;
 #else
