@@ -105,7 +105,6 @@ static u32					*s_pSecureSegBuffer;	// カード抜けてもバッファの場所覚えとく
 static u32					*s_pSecure2SegBuffer;	// カード抜けてもバッファの場所覚えとく
 
 static CardBootData			s_cbData;
-CardThreadData				s_ctData;
 
 // HMACSHA1の鍵
 static u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = {
@@ -148,6 +147,10 @@ static CardBootFunction  	s_funcTable[] = {
      ReadIDSecure_ROMEMU, ReadSegSecure_ROMEMU, SwitchONPNGSecure_ROMEMU, ChangeModeSecure_ROMEMU,	// Secureモード関数
      ReadIDGame,    ReadPageGame},																	// Game  モード関数
 };
+
+// Global Values ------------------------------------------------------------
+BLOWFISH_CTX 				GCDi_BlowfishInitTableBufDS;
+CardThreadData				s_ctData;
 
 #include <twl/ltdwram_end.h>
 

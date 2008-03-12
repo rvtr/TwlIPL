@@ -31,7 +31,6 @@ INCDIR				=	./include
 
 SRCS				=	blowfish.c \
 						hotsw.c \
-						ds_blowfish_table.c \
 						dsCardCommon.c \
 						romEmulation.c \
 						customNDma.c
