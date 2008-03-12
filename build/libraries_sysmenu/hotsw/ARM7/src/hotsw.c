@@ -604,9 +604,10 @@ static HotSwState LoadStaticModule(void)
 	// 配置先と再配置情報を取得 & Arm9の常駐モジュール残りを指定先に転送
     if(SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_STATIC, &s_cbData.arm9Stc, s_cbData.pBootSegBuf->rh.s.main_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC] , s_cbData.twlFlg)){
     	if(s_cbData.pBootSegBuf->rh.s.main_size > SECURE_SEGMENT_SIZE){
-	   		retval = ReadPageGame(&s_cbData,		s_cbData.pBootSegBuf->rh.s.main_rom_offset + SECURE_SEGMENT_SIZE,
-           		                      		(u32 *)(s_cbData.arm9Stc 						   + SECURE_SEGMENT_SIZE),
-               		                	    	    s_cbData.pBootSegBuf->rh.s.main_size 	   - SECURE_SEGMENT_SIZE);
+	   		state = ReadPageGame(&s_cbData,		s_cbData.pBootSegBuf->rh.s.main_rom_offset + SECURE_SEGMENT_SIZE,
+           		                      	(u32 *)(s_cbData.arm9Stc 						   + SECURE_SEGMENT_SIZE),
+               		                	   	    s_cbData.pBootSegBuf->rh.s.main_size 	   - SECURE_SEGMENT_SIZE);
+            retval = (retval == HOTSW_SUCCESS) ? state : retval;
        	}
     }
     else{

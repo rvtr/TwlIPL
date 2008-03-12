@@ -52,7 +52,7 @@ extern "C" {
 #define PNB_L_VALUE                         0x879b9b05  //
 #define PNB_H_VALUE                         0x5c        //
 
-#define	HOTSW_THREAD_STACK_SIZE				(1024 + PAGE_SIZE)	// スタックサイズ
+#define	HOTSW_THREAD_STACK_SIZE				(1024 * 2)			// スタックサイズ
 #define	HOTSW_DMA_MSG_NUM					8					// DMA転送終了割り込み
 #define	HOTSW_INSERT_MSG_NUM				16					// 挿し割り込み送信メッセージの数
 #define	HOTSW_PULLED_MSG_NUM				16					// 抜け割り込み送信メッセージの数
