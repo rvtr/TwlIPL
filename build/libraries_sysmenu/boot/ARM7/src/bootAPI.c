@@ -21,6 +21,8 @@
 #include <twl/aes/ARM7/lo.h>
 #include <sysmenu.h>
 #include <sysmenu/ds.h>
+#include <firm/hw/ARM7/mmap_firm.h>
+#include <firm/format/from_brom.h>
 #include <firm/aes/ARM7/aes_init.h>
 #include "reboot.h"
 
@@ -232,6 +234,13 @@ BOOL BOOT_WaitStart( void )
                 OS_Terminate();
             }
 #endif // FIRM_USE_SDK_KEYS || SYSMENU_DISABLE_RETAIL_BOOT
+
+			// セキュアシステム以外は鍵を消しておく
+			if ( target != REBOOT_TARGET_TWL_SECURE_SYSTEM )
+			{
+				OSFromBrom7Buf* fromBrom = (void*)HW_FIRM_FROM_BROM_BUF;
+				MI_CpuClearFast(fromBrom, sizeof(OSFromBrom7Buf) - sizeof(fromBrom->SDNandContext));
+			}
 
 			// リブート
 			OS_Boot( dh->s.sub_entry_address, mem_list, target );

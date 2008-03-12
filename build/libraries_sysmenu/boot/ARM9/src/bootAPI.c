@@ -21,6 +21,8 @@
 #include <sysmenu.h>
 #include <sysmenu/ds.h>
 #include <firm/format/wram_regs.h>
+#include <firm/hw/ARM9/mmap_firm.h>
+#include <firm/format/from_brom.h>
 #include "reboot.h"
 
 
@@ -175,6 +177,12 @@ void BOOT_Ready( void )
         // デバッガによるROMエミュレーション時はNTR-ROMヘッダバッファの
         // ゲームコマンドパラメータをスクランブルOFF設定に書き換える
         dh->s.game_cmd_param = SYSMi_GetWork()->gameCommondParam;
+
+		// セキュアシステム以外は鍵を消しておく
+		if ( target != REBOOT_TARGET_TWL_SECURE_SYSTEM )
+		{
+			MI_CpuClearFast((void*)HW_FIRM_FROM_BROM_BUF, HW_FIRM_FROM_BROM_BUF_SIZE);
+		}
 
 		// 起動するターゲットの種類を指定する必要あり
 		OS_Boot( dh->s.main_entry_address, mem_list, target );
