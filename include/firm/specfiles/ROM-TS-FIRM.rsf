@@ -143,7 +143,7 @@ AppendProperty
 	#
 	# Application type : [USER/SYSTEM]
 	#  don't have to edit
-	AppType					System
+	AppType					User
 
 	#
 	# launch title on the launcher : [TRUE/FALSE]
