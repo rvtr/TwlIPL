@@ -102,6 +102,11 @@ Property
 	###
 
 	#
+	# ROM HEADER Ltd: Provided to every product by NINTENDO
+	#
+	RomHeaderLtd	$(TWLSDK_ROOT)/tools/bin/rom_header.LTD.sbin
+
+	#
 	# Digest parameters:
 	#
 	DigestParam		1024 32
@@ -112,6 +117,11 @@ Property
 	#
 #	WramMapping		$(MAKEROM_WRAM_MAPPING)
 	WramMappingDirect	$(TWL_IPL_RED_ROOT)/build/components/hyena.TWL/wram_regs/wram_regs.rbin
+
+	#
+	# CardRegion: card region [Japan/America/Europe/Australia/China/Korea]
+	#
+	CardRegion	Japan
 
 	#
 	# Codec mode:
