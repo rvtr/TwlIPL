@@ -602,10 +602,16 @@ static HotSwState LoadStaticModule(void)
     
 	s_cbData.arm9Stc = (u32)s_cbData.pBootSegBuf->rh.s.main_ram_address;
 	// 配置先と再配置情報を取得 & Arm9の常駐モジュール残りを指定先に転送
-	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_STATIC, &s_cbData.arm9Stc, s_cbData.pBootSegBuf->rh.s.main_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC] , s_cbData.twlFlg);
-    retval = ReadPageGame(&s_cbData,		s_cbData.pBootSegBuf->rh.s.main_rom_offset + SECURE_SEGMENT_SIZE,
-                                  	(u32 *)(s_cbData.arm9Stc 						   + SECURE_SEGMENT_SIZE),
-                                	    	s_cbData.pBootSegBuf->rh.s.main_size       - SECURE_SEGMENT_SIZE);
+    if(SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_STATIC, &s_cbData.arm9Stc, s_cbData.pBootSegBuf->rh.s.main_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC] , s_cbData.twlFlg)){
+    	if(s_cbData.pBootSegBuf->rh.s.main_size > SECURE_SEGMENT_SIZE){
+	   		retval = ReadPageGame(&s_cbData,		s_cbData.pBootSegBuf->rh.s.main_rom_offset + SECURE_SEGMENT_SIZE,
+           		                      		(u32 *)(s_cbData.arm9Stc 						   + SECURE_SEGMENT_SIZE),
+               		                	    	    s_cbData.pBootSegBuf->rh.s.main_size 	   - SECURE_SEGMENT_SIZE);
+       	}
+    }
+    else{
+		retval = HOTSW_BUFFER_OVERRUN_ERROR;
+    }
 
     if(retval != HOTSW_SUCCESS){
 		return retval;
@@ -613,10 +619,14 @@ static HotSwState LoadStaticModule(void)
     
 	s_cbData.arm7Stc = (u32)s_cbData.pBootSegBuf->rh.s.sub_ram_address;
     // 配置先と再配置情報を取得 & Arm7の常駐モジュールを指定先に転送
-	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_STATIC, &s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC] , s_cbData.twlFlg);
-    state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.sub_rom_offset, (u32 *)s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size);
-    retval = (retval == HOTSW_SUCCESS) ? state : retval;
-
+    if(SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_STATIC, &s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC] , s_cbData.twlFlg)){
+    	state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.sub_rom_offset, (u32 *)s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size);
+    	retval = (retval == HOTSW_SUCCESS) ? state : retval;
+    }
+    else{
+        retval = HOTSW_BUFFER_OVERRUN_ERROR;
+    }
+    
     if(retval != HOTSW_SUCCESS){
 		return retval;
     }
@@ -1615,9 +1625,13 @@ static void DebugPrintErrorMessage(HotSwState state)
       case HOTSW_DATA_DECRYPT_ERROR:
         OS_PutString("   - Error 7 : Data Decrypt\n");
         break;
+
+      case HOTSW_BUFFER_OVERRUN_ERROR:
+        OS_PutString("   - Error 8 : Buffer OverRun\n");
+        break;
         
       case HOTSW_UNEXPECTED_ERROR:
-        OS_PutString("   - Error 8 : Unexpected\n");
+        OS_PutString("   - Error 9 : Unexpected\n");
         break;
 
       default :
