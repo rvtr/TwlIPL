@@ -460,6 +460,12 @@ end:
         retval = (retval == HOTSW_SUCCESS) ? state : retval;
 	}
 
+    // カードDMA終了確認
+    while( MI_IsNDmaBusy(HOTSW_NDMA_NO) == TRUE ){}
+
+    // カードアクセス終了確認
+	while( reg_HOTSW_MCCNT1 & REG_MI_MCCNT1_START_MASK ){}
+
 	// カードのロック開放(※ロックIDは開放せずに持ち続ける)
 #ifndef DEBUG_USED_CARD_SLOT_B_
 	CARD_UnlockRom(s_CardLockID);
