@@ -26,11 +26,8 @@ static u32 F(const BLOWFISH_CTX *ctx, u32 x);
 //*****************************************
 void GCDm_MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen)
 {
-#ifdef USE_LOCAL_KEYTABLE
-	const BLOWFISH_CTX *initTable = &GCDi_BlowfishInitTableDS;
-#else
 	const BLOWFISH_CTX *initTable = &GCDi_BlowfishInitTableBufDS;
-#endif
+
 	u32 blowfishedKey[2];
 
     u8 			 *RomHeaderCtrlRsvB = cbd->pBootSegBuf->rh.s.ctrl_reserved_B;
