@@ -44,7 +44,9 @@ extern "C" {
 #define ONE_SEGMENT_SIZE                    0x1000      // 1Segmentのサイズ(バイト単位)
 #define ONE_SEGMENT_WORD_SIZE               0x400       // 1Segmentのサイズ(ワード単位)
 
+#define SECURE_SEGMENT_START				0x4000		// Secure領域のスタートアドレス
 #define SECURE_SEGMENT_SIZE                 0x4000      // Secure領域のサイズ
+#define SECURE_SEGMENT_END	   				(SECURE_SEGMENT_START + SECURE_SEGMENT_SIZE)
 
 #define ROM_EMULATION_DATA_SIZE             0x20        // ROMエミュレーションデータサイズ
 

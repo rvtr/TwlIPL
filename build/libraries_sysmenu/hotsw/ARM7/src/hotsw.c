@@ -599,45 +599,42 @@ static HotSwState LoadStaticModule(void)
 {
 	HotSwState retval = HOTSW_SUCCESS;
     HotSwState state  = HOTSW_SUCCESS;
-    
+    u32 arm9StcEnd    = s_cbData.pBootSegBuf->rh.s.main_rom_offset + s_cbData.pBootSegBuf->rh.s.main_size;
+
+    // 配置先と再配置情報を取得 & Arm9の常駐モジュール残りを指定先に転送
 	s_cbData.arm9Stc = (u32)s_cbData.pBootSegBuf->rh.s.main_ram_address;
-	// 配置先と再配置情報を取得 & Arm9の常駐モジュール残りを指定先に転送
     if(SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_STATIC, &s_cbData.arm9Stc, s_cbData.pBootSegBuf->rh.s.main_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC] , s_cbData.twlFlg)){
-    	if(s_cbData.pBootSegBuf->rh.s.main_size > SECURE_SEGMENT_SIZE){
-	   		state = ReadPageGame(&s_cbData,		s_cbData.pBootSegBuf->rh.s.main_rom_offset + SECURE_SEGMENT_SIZE,
-           		                      	(u32 *)(s_cbData.arm9Stc 						   + SECURE_SEGMENT_SIZE),
-               		                	   	    s_cbData.pBootSegBuf->rh.s.main_size 	   - SECURE_SEGMENT_SIZE);
+        if(arm9StcEnd > SECURE_SEGMENT_END){
+	   		state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.main_rom_offset + SECURE_SEGMENT_SIZE, (u32 *)(s_cbData.arm9Stc + SECURE_SEGMENT_SIZE), arm9StcEnd - SECURE_SEGMENT_END);
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
        	}
     }
     else{
 		retval = HOTSW_BUFFER_OVERRUN_ERROR;
     }
-
     if(retval != HOTSW_SUCCESS){
 		return retval;
     }
-    
-	s_cbData.arm7Stc = (u32)s_cbData.pBootSegBuf->rh.s.sub_ram_address;
+
     // 配置先と再配置情報を取得 & Arm7の常駐モジュールを指定先に転送
-    if(SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_STATIC, &s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC] , s_cbData.twlFlg)){
+	s_cbData.arm7Stc = (u32)s_cbData.pBootSegBuf->rh.s.sub_ram_address;
+    if(SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_STATIC, &s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC], s_cbData.twlFlg)){
     	state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.sub_rom_offset, (u32 *)s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size);
     	retval = (retval == HOTSW_SUCCESS) ? state : retval;
     }
     else{
         retval = HOTSW_BUFFER_OVERRUN_ERROR;
     }
-    
     if(retval != HOTSW_SUCCESS){
 		return retval;
     }
+
     
-	// TWLでのみロード
-	if( s_cbData.pBootSegBuf->rh.s.platform_code & PLATFORM_CODE_FLAG_TWL ) {
-		u32 size = ( s_cbData.pBootSegBuf->rh.s.main_ltd_size < SECURE_SEGMENT_SIZE ) ?
-					 s_cbData.pBootSegBuf->rh.s.main_ltd_size : SECURE_SEGMENT_SIZE;
+	// [TODO] TWLカード対応	(※ 拡張領域の境界はRomHeaderの値で計算する)
+	if( s_cbData.twlFlg ) {
+		u32 size = ( s_cbData.pBootSegBuf->rh.s.main_ltd_size < SECURE_SEGMENT_SIZE ) ? s_cbData.pBootSegBuf->rh.s.main_ltd_size : SECURE_SEGMENT_SIZE;
         s_cbData.arm9Ltd = (u32)s_cbData.pBootSegBuf->rh.s.main_ltd_ram_address;
-		// 配置先と再配置情報を取得 & Arm9の常駐モジュールを指定先に転送（※TWLカード対応していないので、注意！！）
+		// 配置先と再配置情報を取得 & Arm9の常駐モジュールを指定先に転送
         if(SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_LTD_STATIC, &s_cbData.arm9Ltd, s_cbData.pBootSegBuf->rh.s.main_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_LTD_STATIC] , TRUE)){
 	    	state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset, (u32 *)SYSM_CARD_TWL_SECURE_BUF, size);
 			retval = (retval == HOTSW_SUCCESS) ? state : retval;
@@ -656,9 +653,9 @@ static HotSwState LoadStaticModule(void)
 		if(retval != HOTSW_SUCCESS){
 			return retval;
     	}
-        
-		s_cbData.arm7Ltd = (u32)s_cbData.pBootSegBuf->rh.s.sub_ltd_ram_address;
+
         // 配置先と再配置情報を取得 & Arm7の常駐モジュールを指定先に転送
+		s_cbData.arm7Ltd = (u32)s_cbData.pBootSegBuf->rh.s.sub_ltd_ram_address;
         if(SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_LTD_STATIC, &s_cbData.arm7Ltd, s_cbData.pBootSegBuf->rh.s.sub_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_LTD_STATIC], TRUE)){
 	    	state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset, (u32 *)s_cbData.arm7Ltd, s_cbData.pBootSegBuf->rh.s.sub_ltd_size);
         	retval = (retval == HOTSW_SUCCESS) ? state : retval;
@@ -666,7 +663,6 @@ static HotSwState LoadStaticModule(void)
         else{
 			retval = HOTSW_BUFFER_OVERRUN_ERROR;
         }
-
 	    if(retval != HOTSW_SUCCESS){
 			return retval;
     	}
