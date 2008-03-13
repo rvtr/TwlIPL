@@ -69,8 +69,8 @@ HotSwState ReadIDSecure_ROMEMU(CardBootData *cbd)
 	// MCCMD レジスタ設定
 	HOTSWi_SetCommand(&cndLE);
 
-	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
+	// MCCNT0 レジスタ設定
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
 
 	// MCCNT1 レジスタ設定 (START = 1 PC = 111(ステータスリード) latency1 = 1 に)
 	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x7 << PC_SHIFT) | (0x1 & LATENCY1_MASK);
@@ -108,8 +108,8 @@ HotSwState ReadSegSecure_ROMEMU(CardBootData *cbd)
 		// MCCMD レジスタ設定
 		HOTSWi_SetCommand(&cndLE);
 
-		// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-		reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
+		// MCCNT0 レジスタ設定
+		reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
 
 		// MCCNT1 レジスタ設定 (START = 1 PC_MASK PC = 001(1ページリード)に latency1 = 0xd)
 		reg_HOTSW_MCCNT1 = START_MASK | CT_MASK | PC_MASK & (0x1 << PC_SHIFT) | (0xd & LATENCY1_MASK);
@@ -168,6 +168,9 @@ HotSwState ChangeModeSecure_ROMEMU(CardBootData *cbd)
 	// MCCMD レジスタ設定
 	HOTSWi_SetCommand(&cndLE);
 
+	// MCCNT0 レジスタ設定
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
+    
 	// MCCNT1 レジスタ設定 (START = 1 に)
 	reg_HOTSW_MCCNT1 = START_MASK;
     

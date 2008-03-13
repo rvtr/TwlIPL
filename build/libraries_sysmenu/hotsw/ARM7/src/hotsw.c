@@ -51,6 +51,9 @@ static u32 GetMcSlotMask(void);
 static void SetMcSlotMode(u32 mode);
 static BOOL CmpMcSlotMode(u32 mode);
 
+static void SetBootSegmentBuffer(void* buf, u32 size);
+static void SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size);
+
 static void SetInterruptCallback( OSIrqMask intr_bit, OSIrqFunction func );
 static void SetInterruptCallbackEx( OSIrqMask intr_bit, void *func );
 static void SetInterrupt(void);
@@ -235,13 +238,13 @@ void HOTSW_Init(u32 threadPrio)
     OS_WakeupThreadDirect(&HotSwThreadData.thread);
 
     // Boot Segment バッファの設定
-	HOTSW_SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );
+	SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );
 
     // Secure1 Segment バッファの設定
-    HOTSW_SetSecureSegmentBuffer(HOTSW_MODE1, (void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
+    SetSecureSegmentBuffer(HOTSW_MODE1, (void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
 
     // Secure2 Segment バッファの設定
-    HOTSW_SetSecureSegmentBuffer(HOTSW_MODE2, (void *)SYSM_CARD_TWL_SECURE_BUF, SECURE_AREA_SIZE );
+    SetSecureSegmentBuffer(HOTSW_MODE2, (void *)SYSM_CARD_TWL_SECURE_BUF, SECURE_AREA_SIZE );
     
     // カードが挿さってあったらスレッドを起動する
 	if(HOTSW_IsCardExist()){
@@ -410,10 +413,54 @@ static HotSwState LoadCardData(void)
                 retval = (retval == HOTSW_SUCCESS) ? state : retval;
             }
 
+			// ★TWLカード対応 一旦リセット後Secure2モードに移行
+            if(s_cbData.twlFlg == TRUE){
+               // Mode2に移行する準備
+				s_cbData.modeType = HOTSW_MODE2;
+
+				// Secure2領域・Game2領域開始アドレス算出
+                
+                
+                // ---------------------- Reset ----------------------
+				McPowerOff();
+				McPowerOn();
+
+                // ---------------------- Normal Mode ----------------------
+  				// 先頭1Page分だけでOK。データは読み捨てバッファに
+	    		state  = ReadBootSegNormal(&s_cbData);
+				retval = (retval == HOTSW_SUCCESS) ? state : retval;
+
+		    	// Key Table初期化
+    			GCDm_MakeBlowfishTableDS(&s_cbData, 8);
+
+				// コマンド認証値・コマンドカウンタ初期値・PNジェネレータ初期値の生成
+        		GenVA_VB_VD();
+
+	    		// セキュア２モードに移行
+	    		state  = ChangeModeNormal2(&s_cbData);
+				retval = (retval == HOTSW_SUCCESS) ? state : retval;
+
+				// ---------------------- Secure2 Mode ----------------------
+				// PNG設定
+				state  = s_funcTable[s_cbData.cardType].SetPNG_S(&s_cbData);
+            	retval = (retval == HOTSW_SUCCESS) ? state : retval;
+
+	    		// DS側符号生成回路初期値設定 (レジスタ設定)
+				SetMCSCR();
+
+        		// セキュア２カードID読み込み
+	    		state  = s_funcTable[s_cbData.cardType].ReadID_S(&s_cbData);
+            	retval = (retval == HOTSW_SUCCESS) ? state : retval;
+
+        		// Secure２領域のSegment読み込み
+		    	state  = s_funcTable[s_cbData.cardType].ReadSegment_S(&s_cbData);
+                retval = (retval == HOTSW_SUCCESS) ? state : retval;
+            }
+            
 	    	// ゲームモードに移行
 			state  = s_funcTable[s_cbData.cardType].ChangeMode_S(&s_cbData);
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
-
+            
 	    	// ---------------------- Game Mode ----------------------
 			romMode = HOTSW_ROM_MODE_GAME;
 
@@ -601,55 +648,70 @@ static HotSwState LoadStaticModule(void)
 {
 	HotSwState retval = HOTSW_SUCCESS;
     HotSwState state  = HOTSW_SUCCESS;
-    
+    u32 arm9StcEnd    = s_cbData.pBootSegBuf->rh.s.main_rom_offset + s_cbData.pBootSegBuf->rh.s.main_size;
+
+    // 配置先と再配置情報を取得 & Arm9の常駐モジュール残りを指定先に転送
 	s_cbData.arm9Stc = (u32)s_cbData.pBootSegBuf->rh.s.main_ram_address;
-	// 配置先と再配置情報を取得 & Arm9の常駐モジュール残りを指定先に転送
-	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_STATIC, &s_cbData.arm9Stc, s_cbData.pBootSegBuf->rh.s.main_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC] , s_cbData.twlFlg);
-    retval = ReadPageGame(&s_cbData,		s_cbData.pBootSegBuf->rh.s.main_rom_offset + SECURE_SEGMENT_SIZE,
-                                  	(u32 *)(s_cbData.arm9Stc 						   + SECURE_SEGMENT_SIZE),
-                                	    	s_cbData.pBootSegBuf->rh.s.main_size       - SECURE_SEGMENT_SIZE);
-
-    if(retval != HOTSW_SUCCESS){
-		return retval;
-    }
-    
-	s_cbData.arm7Stc = (u32)s_cbData.pBootSegBuf->rh.s.sub_ram_address;
-    // 配置先と再配置情報を取得 & Arm7の常駐モジュールを指定先に転送
-	SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_STATIC, &s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC] , s_cbData.twlFlg);
-    state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.sub_rom_offset, (u32 *)s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size);
-    retval = (retval == HOTSW_SUCCESS) ? state : retval;
-
-    if(retval != HOTSW_SUCCESS){
-		return retval;
-    }
-    
-	// TWLでのみロード
-	if( s_cbData.pBootSegBuf->rh.s.platform_code & PLATFORM_CODE_FLAG_TWL ) {
-		u32 size = ( s_cbData.pBootSegBuf->rh.s.main_ltd_size < SECURE_SEGMENT_SIZE ) ?
-					 s_cbData.pBootSegBuf->rh.s.main_ltd_size : SECURE_SEGMENT_SIZE;
-        s_cbData.arm9Ltd = (u32)s_cbData.pBootSegBuf->rh.s.main_ltd_ram_address;
-		// 配置先と再配置情報を取得 & Arm9の常駐モジュールを指定先に転送（※TWLカード対応していないので、注意！！）
-		SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_LTD_STATIC, &s_cbData.arm9Ltd, s_cbData.pBootSegBuf->rh.s.main_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_LTD_STATIC] , TRUE);
-	    state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset, (u32 *)SYSM_CARD_TWL_SECURE_BUF, size);
-		retval = (retval == HOTSW_SUCCESS) ? state : retval;
-        
-		if( s_cbData.pBootSegBuf->rh.s.main_ltd_size > SECURE_SEGMENT_SIZE ) {
-		    state  = ReadPageGame(&s_cbData,		s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset + SECURE_SEGMENT_SIZE,
-	                             		 	(u32 *)(s_cbData.arm9Ltd 							   + SECURE_SEGMENT_SIZE),
-	                                        		s_cbData.pBootSegBuf->rh.s.main_ltd_size 	   - size);
+    if(SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_STATIC, &s_cbData.arm9Stc, s_cbData.pBootSegBuf->rh.s.main_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC] , s_cbData.twlFlg)){
+        if(arm9StcEnd > SECURE_SEGMENT_END){
+	   		state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.main_rom_offset + SECURE_SEGMENT_SIZE, (u32 *)(s_cbData.arm9Stc + SECURE_SEGMENT_SIZE), arm9StcEnd - SECURE_SEGMENT_END);
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
-		}
+       	}
+    }
+    else{
+		retval = HOTSW_BUFFER_OVERRUN_ERROR;
+    }
+    if(retval != HOTSW_SUCCESS){
+		return retval;
+    }
+
+    // 配置先と再配置情報を取得 & Arm7の常駐モジュールを指定先に転送
+	s_cbData.arm7Stc = (u32)s_cbData.pBootSegBuf->rh.s.sub_ram_address;
+    if(SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_STATIC, &s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC], s_cbData.twlFlg)){
+    	state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.sub_rom_offset, (u32 *)s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size);
+    	retval = (retval == HOTSW_SUCCESS) ? state : retval;
+    }
+    else{
+        retval = HOTSW_BUFFER_OVERRUN_ERROR;
+    }
+    if(retval != HOTSW_SUCCESS){
+		return retval;
+    }
+
+    
+	// [TODO] TWLカード対応	(※ 拡張領域の境界はRomHeaderの値で計算する)
+	if( s_cbData.twlFlg ) {
+		u32 size = ( s_cbData.pBootSegBuf->rh.s.main_ltd_size < SECURE_SEGMENT_SIZE ) ? s_cbData.pBootSegBuf->rh.s.main_ltd_size : SECURE_SEGMENT_SIZE;
+        s_cbData.arm9Ltd = (u32)s_cbData.pBootSegBuf->rh.s.main_ltd_ram_address;
+		// 配置先と再配置情報を取得 & Arm9の常駐モジュールを指定先に転送
+        if(SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_LTD_STATIC, &s_cbData.arm9Ltd, s_cbData.pBootSegBuf->rh.s.main_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_LTD_STATIC] , TRUE)){
+	    	state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset, (u32 *)SYSM_CARD_TWL_SECURE_BUF, size);
+			retval = (retval == HOTSW_SUCCESS) ? state : retval;
+
+			if( s_cbData.pBootSegBuf->rh.s.main_ltd_size > SECURE_SEGMENT_SIZE ) {
+		    	state  = ReadPageGame(&s_cbData,		s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset + SECURE_SEGMENT_SIZE,
+	         	                    		 	(u32 *)(s_cbData.arm9Ltd 							   + SECURE_SEGMENT_SIZE),
+	            	                            		s_cbData.pBootSegBuf->rh.s.main_ltd_size 	   - size);
+            	retval = (retval == HOTSW_SUCCESS) ? state : retval;
+			}
+        }
+        else{
+			retval = HOTSW_BUFFER_OVERRUN_ERROR;
+        }
 
 		if(retval != HOTSW_SUCCESS){
 			return retval;
     	}
-        
-		s_cbData.arm7Ltd = (u32)s_cbData.pBootSegBuf->rh.s.sub_ltd_ram_address;
-        // 配置先と再配置情報を取得 & Arm7の常駐モジュールを指定先に転送
-		SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_LTD_STATIC, &s_cbData.arm7Ltd, s_cbData.pBootSegBuf->rh.s.sub_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_LTD_STATIC], TRUE);
-	    state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset, (u32 *)s_cbData.arm7Ltd, s_cbData.pBootSegBuf->rh.s.sub_ltd_size);
-        retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
+        // 配置先と再配置情報を取得 & Arm7の常駐モジュールを指定先に転送
+		s_cbData.arm7Ltd = (u32)s_cbData.pBootSegBuf->rh.s.sub_ltd_ram_address;
+        if(SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_LTD_STATIC, &s_cbData.arm7Ltd, s_cbData.pBootSegBuf->rh.s.sub_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_LTD_STATIC], TRUE)){
+	    	state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset, (u32 *)s_cbData.arm7Ltd, s_cbData.pBootSegBuf->rh.s.sub_ltd_size);
+        	retval = (retval == HOTSW_SUCCESS) ? state : retval;
+        }
+        else{
+			retval = HOTSW_BUFFER_OVERRUN_ERROR;
+        }
 	    if(retval != HOTSW_SUCCESS){
 			return retval;
     	}
@@ -747,7 +809,7 @@ static HotSwState CheckCardAuthCode(void)
  *
  * 注：カードブート処理中は呼び出さないようにする
  * ----------------------------------------------------------------- */
-void HOTSW_SetBootSegmentBuffer(void* buf, u32 size)
+static void SetBootSegmentBuffer(void* buf, u32 size)
 {
 	SDK_ASSERT(size > BOOT_SEGMENT_SIZE);
 
@@ -767,7 +829,7 @@ void HOTSW_SetBootSegmentBuffer(void* buf, u32 size)
  * 
  * 注：カードブート処理中は呼び出さないようにする
  * ----------------------------------------------------------------- */
-void HOTSW_SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size)
+static void SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size)
 {
     SDK_ASSERT(size > SECURE_SEGMENT_SIZE);
 
@@ -1144,7 +1206,6 @@ static void McThread(void *arg)
         while(1){
 			// 活線挿抜抑制フラグが立っていたら処理しない
 			if( !SYSMi_GetWork()->flags.hotsw.isEnableHotSW ) {
-				SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
                 OS_PutString("### HotSw is restrained...\n");
 				break;
 			}
@@ -1187,6 +1248,7 @@ static void McThread(void *arg)
 					SYSMi_GetWork()->flags.hotsw.isExistCard 		 = FALSE;
                 	SYSMi_GetWork()->flags.hotsw.isValidCardBanner   = FALSE;
                 	SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
+                    SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = FALSE;
                 	UnlockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
                 
                 	// カードブート用構造体の初期化
@@ -1621,9 +1683,13 @@ static void DebugPrintErrorMessage(HotSwState state)
       case HOTSW_DATA_DECRYPT_ERROR:
         OS_PutString("   - Error 7 : Data Decrypt\n");
         break;
+
+      case HOTSW_BUFFER_OVERRUN_ERROR:
+        OS_PutString("   - Error 8 : Buffer OverRun\n");
+        break;
         
       case HOTSW_UNEXPECTED_ERROR:
-        OS_PutString("   - Error 8 : Unexpected\n");
+        OS_PutString("   - Error 9 : Unexpected\n");
         break;
 
       default :

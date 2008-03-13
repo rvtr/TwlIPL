@@ -12,6 +12,8 @@
  *---------------------------------------------------------------------------*/
 #include <twl.h>
 #include <blowfish.h>
+#include <firm/format/from_firm.h>
+#include <firm/hw/ARM7/mmap_firm.h>
 
 #define MAXKEYBYTES			56          /* 448 bits */
 #define	N					16
@@ -35,7 +37,14 @@ void GCDm_MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen)
 	u32			 *keyBuf			= cbd->keyBuf;
     BLOWFISH_CTX *ctx				= &cbd->keyTable;
 
-	MI_CpuCopyFast((void *)initTable, (void *)ctx, sizeof(BLOWFISH_CTX));
+    if(cbd->modeType == HOTSW_MODE1){
+		MI_CpuCopyFast((void *)initTable, (void *)ctx, sizeof(BLOWFISH_CTX));
+    }
+    else{
+		keyBuf	= cbd->keyBuf2;
+        
+		MI_CpuCopyFast((void *)((OSFromFirm7Buf *)HW_FIRM_FROM_FIRM_BUF)->twl_blowfish, (void *)ctx, sizeof(BLOWFISH_CTX));
+    }
 
   	keyBuf[0] = *RomHeaderGameCode;
   	keyBuf[1] = *RomHeaderGameCode >> 1;

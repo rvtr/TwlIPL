@@ -34,32 +34,43 @@ extern "C" {
 #endif
 #endif
 
+// --- NewDMA Ch
+#define HOTSW_NDMA_NO                       2
 
-#define KEY_BUF_SIZE                        3           // Blowfishキーのバッファサイズ
-#define HOTSW_NDMA_NO                       2           // 使用するNDmaのチャンネル
-#define BOOT_SEGMENT_SIZE                   0x1000      // Boot Segment領域のサイズ
+// --- Blowfish
+#define KEY_BUF_SIZE                        3
 
-#define PAGE_SIZE                           0x200       // 1ページのサイズ(バイト単位)
-#define PAGE_WORD_SIZE                      0x80        // 1ページのサイズ(ワード単位)
+// --- Boot Segment
+#define BOOT_SEGMENT_SIZE                   0x1000
 
-#define ONE_SEGMENT_SIZE                    0x1000      // 1Segmentのサイズ(バイト単位)
-#define ONE_SEGMENT_WORD_SIZE               0x400       // 1Segmentのサイズ(ワード単位)
+// --- Secure Segment
+#define SECURE_SEGMENT_START				0x4000
+#define SECURE_SEGMENT_SIZE                 0x4000
+#define SECURE_SEGMENT_END	   				(SECURE_SEGMENT_START + SECURE_SEGMENT_SIZE)
 
-#define SECURE_SEGMENT_SIZE                 0x4000      // Secure領域のサイズ
+// --- Page / Segment (Byte)
+#define PAGE_SIZE                           0x200
+#define ONE_SEGMENT_SIZE                    0x1000
 
-#define ROM_EMULATION_DATA_SIZE             0x20        // ROMエミュレーションデータサイズ
+// --- Page / Segment (Word)
+#define PAGE_WORD_SIZE                      0x80
+#define ONE_SEGMENT_WORD_SIZE               0x400
 
-#define	HOTSW_THREAD_STACK_SIZE				(1024 + PAGE_SIZE)	// スタックサイズ
-#define	HOTSW_DMA_MSG_NUM					8					// DMA転送終了割り込み
-#define	HOTSW_INSERT_MSG_NUM				16					// 挿し割り込み送信メッセージの数
-#define	HOTSW_PULLED_MSG_NUM				16					// 抜け割り込み送信メッセージの数
-#define	HOTSW_CTRL_MSG_NUM					8					// PXI割り込み送信メッセージの数
-#define HOTSW_MSG_BUFFER_NUM				(HOTSW_INSERT_MSG_NUM + HOTSW_PULLED_MSG_NUM + HOTSW_CTRL_MSG_NUM) // 受信バッファの数
+// --- Rom Emulation
+#define ROM_EMULATION_DATA_SIZE             0x20
 
-// コントロールレジスタ０
+// --- Thread
+#define	HOTSW_THREAD_STACK_SIZE				(1024 * 2)
+#define	HOTSW_DMA_MSG_NUM					8
+#define	HOTSW_INSERT_MSG_NUM				16
+#define	HOTSW_PULLED_MSG_NUM				16
+#define	HOTSW_CTRL_MSG_NUM					8
+#define HOTSW_MSG_BUFFER_NUM				(HOTSW_INSERT_MSG_NUM + HOTSW_PULLED_MSG_NUM + HOTSW_CTRL_MSG_NUM)
+
+// --- Card Control Reg 0
 #define HOTSW_E2PROM_CTRL_MASK		  		0x00ff
 
-// コントロールレジスタ１ bit関連
+// --- Card Control Reg 1
 #define START_FLG_MASK                      0x80000000
 #define READY_FLG_MASK                      0x00800000
 
@@ -102,10 +113,10 @@ extern "C" {
 #define START_SHIFT                         31
 #define START_MASK                          0x80000000
 
-#define SCRAMBLE_MASK                       0x1840e000
+#define SCRAMBLE_MASK                       0x1840e000 // スクランブル関係のフラグマスク
 #define SECURE_COMMAND_SCRAMBLE_MASK		0x00406000 // CS SE DSのマスク
 
-// Page Count
+// --- Page Count
 #define HOTSW_PAGE_0     			  		0x0UL << PC_SHIFT
 #define HOTSW_PAGE_1     			  		0x1UL << PC_SHIFT
 #define HOTSW_PAGE_2    	 		  		0x2UL << PC_SHIFT
@@ -115,13 +126,14 @@ extern "C" {
 #define HOTSW_PAGE_32    			  		0x6UL << PC_SHIFT
 #define HOTSW_PAGE_STAT				  		0x7UL << PC_SHIFT
 
-
+// --- Latency
 #define AddLatency2ToLatency1(param)\
     ( (((param) &  LATENCY2_MASK)   \
                 >> LATENCY2_SHIFT)  \
     +  ((param) &  LATENCY1_MASK)   \
     )
 
+// --- Register Define
 #ifndef DEBUG_USED_CARD_SLOT_B_
 // Slot A
 #define     SLOT_STATUS_MODE_SELECT_MSK         0x0c
@@ -175,6 +187,11 @@ extern "C" {
 #endif
 
 // Enum ---------------------------------------------------------------------
+typedef enum ModeType{
+	HOTSW_MODE1,
+    HOTSW_MODE2
+} ModeType;
+
 typedef enum CardTypeEx{
     DS_CARD_TYPE_1 = 0,
     DS_CARD_TYPE_2,
@@ -225,6 +242,7 @@ typedef enum HotSwState{
     HOTSW_ID_CHECK_ERROR,
     HOTSW_PULLED_OUT_ERROR,
     HOTSW_DATA_DECRYPT_ERROR,
+    HOTSW_BUFFER_OVERRUN_ERROR,
     HOTSW_UNEXPECTED_ERROR
 } HotSwState;
 
