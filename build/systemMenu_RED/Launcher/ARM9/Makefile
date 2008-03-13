@@ -77,6 +77,10 @@ endif
 
 MAKETAD_FLAGS			+= -s
 
+ifdef DO_NOT_SHOW_LAUNCHER
+MACRO_FLAGS += -DDO_NOT_SHOW_LAUNCHER
+endif
+
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 

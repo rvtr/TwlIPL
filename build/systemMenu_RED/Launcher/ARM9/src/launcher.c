@@ -558,7 +558,7 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 		s_wavstop = FALSE;
 	}
 
-	if( pad.trg & PAD_BUTTON_B ) {
+	if( (pad.cont & (PAD_BUTTON_START | PAD_BUTTON_SELECT | PAD_BUTTON_X )) == (PAD_BUTTON_START | PAD_BUTTON_SELECT | PAD_BUTTON_X ) ) {
 		OS_DoApplicationJump( NULL, OS_APP_JUMP_NORMAL );
 	}
 	

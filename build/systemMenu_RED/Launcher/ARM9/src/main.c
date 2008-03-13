@@ -183,6 +183,17 @@ void TwlMain( void )
         state = LOGODEMO_INIT;
     }
 
+// ランチャーを絶対表示しないバージョン
+#ifdef DO_NOT_SHOW_LAUNCHER
+	if(direct_boot == FALSE)
+	{
+		state = STOP;
+	}else
+	{
+		state = LOAD_START;
+	}
+#endif
+
     // チャンネルをロックする
     SND_LockChannel((1 << L_CHANNEL) | (1 << R_CHANNEL), 0);
 
