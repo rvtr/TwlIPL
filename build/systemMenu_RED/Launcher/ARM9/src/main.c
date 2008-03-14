@@ -184,15 +184,16 @@ void TwlMain( void )
     }
 
 // ランチャー画面を絶対表示しないバージョン
-#ifdef DO_NOT_SHOW_LAUNCHER
-	if(direct_boot == FALSE)
+	if( SYSM_IsLauncherHidden() )
 	{
-		state = STOP;
-	}else
-	{
-		state = LOAD_START;
+		if(direct_boot == FALSE)
+		{
+			state = STOP;
+		}else
+		{
+			state = LOAD_START;
+		}
 	}
-#endif
 
     // チャンネルをロックする
     SND_LockChannel((1 << L_CHANNEL) | (1 << R_CHANNEL), 0);

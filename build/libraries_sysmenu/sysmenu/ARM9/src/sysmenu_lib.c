@@ -225,6 +225,14 @@ TitleProperty *SYSM_ReadParameters( void )
     return pBootTitle;
 }
 
+BOOL SYSM_IsLauncherHidden( void )
+{
+#ifdef DO_NOT_SHOW_LAUNCHER
+	return TRUE;
+#else
+	return FALSE;
+#endif
+}
 
 // ショートカット起動のチェック
 static TitleProperty *SYSMi_CheckShortcutBoot( void )

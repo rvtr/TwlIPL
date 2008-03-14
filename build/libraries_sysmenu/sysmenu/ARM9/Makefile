@@ -43,7 +43,9 @@ SRCS			=	sysmenu_lib.c \
 
 TARGET_LIB		=	libsysmenu$(TWL_LIBSUFFIX).a
 
+ifdef DO_NOT_SHOW_LAUNCHER
 MACRO_FLAGS += -DDO_NOT_SHOW_LAUNCHER
+endif
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
