@@ -59,9 +59,11 @@ typedef struct SYSMRomEmuInfo {
 	u32			isEnableExMainMemory : 1;
 	u32			isBootMachineSettings : 1;
 	u32			isBootSpecifiedNANDApp : 1;
+	u32			isTlfRom : 1;
+
 	u32			isForceNTRMode : 1;
 	u32			isForceBannerViewMode : 1;
-	u32			rsv_flags : 23;
+	u32			:0;
 	// isBootSpecifiedNANDApp‚Å‹N“®‚·‚éƒAƒvƒŠ‚ÌTitleID
 	u64			titleID;
 	// —\–ñ
