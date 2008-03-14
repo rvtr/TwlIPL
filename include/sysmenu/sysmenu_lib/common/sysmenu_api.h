@@ -130,7 +130,8 @@ extern BOOL SYSM_IsLogoDemoSkip( void );										// ロゴデモ飛ばし状態か？
 extern void SYSM_SetLogoDemoSkip( BOOL skip );									// ロゴデモ飛ばし状態フラグを設定する。
 extern BOOL SYSM_IsValidTSD( void );											// TWL設定データは有効か？
 extern void SYSM_SetValidTSD( BOOL valid );										// TWL設定データの有効／無効フラグを設定する。
-extern const LauncherParamBody *SYSM_GetLauncherParamBody( void );					// リセットパラメータの取得
+extern const LauncherParamBody *SYSM_GetLauncherParamBody( void );				// リセットパラメータの取得
+extern BOOL SYSM_IsRunOnDebugger( void );										// ISデバッガ上で動作しているか？
 
 extern BOOL SYSM_IsLauncherHidden( void );										// ランチャーの画面を表示しないバージョンか？
 

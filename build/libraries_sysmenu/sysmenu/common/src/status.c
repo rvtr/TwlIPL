@@ -49,11 +49,18 @@ BOOL SYSM_IsLogoDemoSkip( void )
 }
 
 
+// ISデバッガ上で動作しているか？
+BOOL SYSM_IsRunOnDebugger( void )
+{
+	return SYSMi_GetWork()->flags.hotsw.isOnDebugger;
+}
+
+
 // ISデバッガのバナービューモード起動かどうか？
 BOOL SYSMi_IsDebuggerBannerViewMode( void )
 {
 #ifdef __IS_DEBUGGER_BUILD
-	return ( SYSMi_GetWork()->flags.hotsw.isOnDebugger &&
+	return ( SYSM_IsRunOnDebugger() &&
 			 SYSMi_IsValidCard() &&
 			 SYSM_GetCardRomHeader()->dbgRomSize == 0 ) ? TRUE : FALSE;
 #else
