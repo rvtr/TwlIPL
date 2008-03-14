@@ -386,20 +386,16 @@ static void PushKeys( u16 code, NameOrComment noc )
 	u16 *buf;
 	u8 *length;
 	u16 max_length;
-	void (*setflag)(BOOL) = NULL;
 	if(noc == NOC_NAME)
 	{
 		buf = s_temp_name;
 		length = &s_temp_name_length;
 		max_length = LCFG_TWL_NICKNAME_LENGTH;
-		setflag = LCFG_TSD_SetFlagNickname;
 	}else if(noc == NOC_COMMENT)
 	{
 		buf = s_temp_comment;
 		length = &s_temp_comment_length;
 		max_length = LCFG_TWL_COMMENT_LENGTH;
-		// setflag = TSD_SetFlagComment;
-		setflag = NULL;
 	}else
 	{
 		//unknown
@@ -422,7 +418,6 @@ static void PushKeys( u16 code, NameOrComment noc )
 				if(*length < max_length) buf[(*length)++] = L'　';
 				break;
 			case OK_BUTTON_:
-				if(setflag) setflag(TRUE);// 設定完了フラグを立てておく
 				SVC_CpuClear(0, buf + *length, (max_length - *length) * 2, 16);// ゼロクリア
 				if(noc == NOC_NAME) {
 					LCFG_TSD_SetNickname( buf );
@@ -766,7 +761,6 @@ static int SetBirthdayMain( void )
 	
 	if( pad.trg & PAD_BUTTON_A || (tp_touch && temp_ok_cancel == KEY_OK) ) {
 		LCFG_TSD_SetBirthday(&s_temp_birthday);
-		LCFG_TSD_SetFlagBirthday( TRUE );
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::

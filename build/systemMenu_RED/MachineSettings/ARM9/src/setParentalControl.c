@@ -1094,7 +1094,6 @@ static void PushKeys( u16 code, eUseSoftKey noc )
     u16 min_length;
     u16 max_length;
     u16 bufsize;
-    void (*setflag)(BOOL) = NULL;
     if(noc == USE_SOFTKEY_COMMON)
     {
         // unused
@@ -1108,8 +1107,6 @@ static void PushKeys( u16 code, eUseSoftKey noc )
         min_length = sMinLenAnswer;
         max_length = sMaxLenAnswer;
         bufsize    = sBufSizeAnswer;
-        // setflag = TSD_SetFlagComment;
-        setflag = NULL;
     }
     else
     {
@@ -1136,7 +1133,6 @@ static void PushKeys( u16 code, eUseSoftKey noc )
                 if( *length >= min_length )              // 最小文字数に満たないときはOKできない
                 {
                     //DEBUGPRINT( "OK: length = %d, min_length = %d, max_length = %d\n", *length, min_length, max_length );
-                    if(setflag) setflag(TRUE);// 設定完了フラグを立てておく
 
                     // 上限とバッファサイズが異なるときに中間のデータを0クリアしておいたほうが安全
                     SVC_CpuClear(0, buf + *length, (bufsize - *length) * 2, 16 );     // 文字数の上限までではなくバッファの最後まで0クリア

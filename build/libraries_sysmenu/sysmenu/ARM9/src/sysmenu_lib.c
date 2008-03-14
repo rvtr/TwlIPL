@@ -131,7 +131,6 @@ void SYSMi_SendKeysToARM7( void )
 TitleProperty *SYSM_ReadParameters( void )
 {
     TitleProperty *pBootTitle = NULL;
-    u8 brightness = LCFG_TWL_BACKLIGHT_LEVEL_MAX;
 
     // ARM7のリセットパラメータ取得が完了するのを待つ
     while( !SYSMi_GetWork()->flags.common.isARM9Start ) {
@@ -194,13 +193,6 @@ TitleProperty *SYSM_ReadParameters( void )
             SYSMi_GetWork()->flags.common.isFatalError = TRUE;
         }else if( LCFG_ReadTWLSettings( (u8 (*)[LCFG_READ_TEMP])pBuffer ) ) {   // NANDからTWL本体設定データをリード
             SYSM_CaribrateTP();                                         // 読み出したTWL本体設定データをもとにTPキャリブレーション。
-#ifdef SDK_SUPPORT_PMIC_2
-            if ( SYSMi_GetMcuVersion() <= 1 )
-            {
-                // X2ボード以前だけ輝度読み込み
-                brightness = (u8)LCFG_TSD_GetBacklightBrightness();
-            }
-#endif // SDK_SUPPORT_PMIC_2
         }else {
             SYSMi_GetWork()->flags.common.isInitialSettings = TRUE;     // リード失敗なら初回起動シーケンスへ
         }
@@ -217,7 +209,7 @@ TitleProperty *SYSM_ReadParameters( void )
     if ( SYSMi_GetMcuVersion() <= 1 )
     {
         // X2ボード以前だけ輝度設定する
-        SYSM_SetBackLightBrightness( brightness );
+        SYSM_SetBackLightBrightness( LCFG_TWL_BACKLIGHT_LEVEL_MAX );
     }
 #endif // SDK_SUPPORT_PMIC_2
     // RTC補正

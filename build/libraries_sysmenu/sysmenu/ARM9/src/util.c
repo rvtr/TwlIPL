@@ -51,7 +51,7 @@ s64 SYSM_CalcRTCOffset( RTCDate *newDatep, RTCTime *newTimep )
 	oldTime.second = 0;
 	
 	// RTC設定時は、今回の設定でどれだけRTC値が変化したか（秒オフセット単位）を算出。
-	if( ( oldDate.year < LCFG_TSD_GetRTCLastSetYear() ) && ( LCFG_TSD_IsSetDateTime() ) ) {
+	if( ( oldDate.year < LCFG_TSD_GetRTCLastSetYear() ) && ( LCFG_TSD_IsFinishedInitialSetting() ) ) {
 		oldDate.year += 100;										// 前回の設定～今回の設定の間にRTCが一周してしまったら、yearは100を加算してoffsetを計算する。
 	}
 	LCFG_TSD_SetRTCLastSetYear( (u8)newDatep->year );

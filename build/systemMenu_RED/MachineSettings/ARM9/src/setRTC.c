@@ -112,14 +112,6 @@ void SetRTCInit( void )
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"DATE & TIME SET" );
 	PutStringUTF16( RETURN_BUTTON_TOP_X, RETURN_BUTTON_TOP_Y, TXT_COLOR_CYAN, (const u16 *)L" RETURN " );
 	
-	if( g_initialSet ) {
-		if( SYSMi_GetWork()->rtcStatus & 0x01) {
-			PutStringUTF16( 8 * 8, 18 * 8, TXT_COLOR_RED, (const u16 *)L"RTC reset is detected!" );
-		}else {
-			PutStringUTF16( 8 * 8, 18 * 8, TXT_COLOR_RED, (const u16 *)L"Set RTC." );
-		}
-	}
-	
 	s_pWork = Alloc( sizeof(SetRtcWork) );	// RTC設定用ワークの確保
 	if( s_pWork == NULL ) {
 		OS_Panic( "ARM9- Fail to allocate memory...\n" );
@@ -174,9 +166,6 @@ int SetRTCMain( void )
 																// [RETURN]ボタン押下チェック
 		tp_return = WithinRangeTP(	RETURN_BUTTON_TOP_X,    RETURN_BUTTON_TOP_Y,
 									RETURN_BUTTON_BOTTOM_X, RETURN_BUTTON_BOTTOM_Y, &tpd.disp );
-	}
-	if( g_initialSet && !LCFG_TSD_IsSetDateTime() ) {
-		tp_set = TRUE;
 	}
 	//--------------------------------------
 	//  キー入力処理
@@ -379,7 +368,6 @@ static int InputRtcDateTimeMain( void )
 			LCFG_TSD_SetRTCOffset( SYSM_CalcRTCOffset( &date, &s_pWork->dtp.Time ) );
 		}
 		
-		LCFG_TSD_SetFlagDateTime( TRUE );						// RTC入力フラグを立てる。
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::
@@ -545,7 +533,6 @@ void ClearRTC( void )
 	RTCDate date = { 0, 1, 1, RTC_WEEK_SUNDAY };
 	RTCTime time = { 0, 0, 0 };
 	(void)RTC_SetDateTime( &date, &time );
-	LCFG_TSD_SetFlagDateTime( TRUE );
 	LCFG_TSD_SetRTCOffset( 0 );
 	LCFG_TSD_SetRTCLastSetYear( 0 );
 	// ::::::::::::::::::::::::::::::::::::::::::::::

@@ -418,7 +418,6 @@ int TP_CalibrationMain( void )
 				s_pTPC->calibTemp.data.dy2		= DISP_Y_SIZE - 32;
 				
 				LCFG_TSD_SetTPCalibration( &s_pTPC->calibTemp );
-				LCFG_TSD_SetFlagTP( TRUE );								// タッチパネル入力フラグを立てる。
 				// ::::::::::::::::::::::::::::::::::::::::::::::
 				// TWL設定データファイルへの書き込み
 				// ::::::::::::::::::::::::::::::::::::::::::::::
@@ -478,10 +477,6 @@ void TP_CalibrationInit( void )
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"TOUCH PANEL CALIBRATION" );
-	
-	if( g_initialSet ) {
-		PutStringUTF16( 8 * 8, 18 * 8, TXT_COLOR_RED, (const u16 *)L"Calibrate touch panel." );
-	}
 	
 	DisplayInit();
 	

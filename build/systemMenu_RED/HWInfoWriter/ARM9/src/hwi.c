@@ -269,7 +269,6 @@ void HWI_ModifyLanguage( u8 region )
 	}
 	
 	// 国コードもクリアしておく。
-	LCFG_TSD_SetFlagCountry( FALSE );
 	LCFG_TSD_SetCountry( LCFG_TWL_COUNTRY_UNDEFINED );
 	
 	// ペアレンタルコントロール情報もクリアしておく

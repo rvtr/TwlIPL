@@ -95,10 +95,6 @@ void SelectRegionInit( void )
 
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"REGION SELECT" );
 	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_CYAN, (const u16 *)L"CANCEL" );
-	if( g_initialSet ) {
-		PutStringUTF16( 8 * 8, 18 * 8, TXT_COLOR_RED, (const u16 *)L"Select region." );
-	}
-	
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -157,8 +153,6 @@ int SelectRegionMain( void )
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		TSD_SetLanguage( default_lang_list[s_regionCode] );		// デフォルト言語に強制設定
 		TSD_SetCountry( default_country_list[s_regionCode] );	// デフォルト国に強制設定
-		TSD_SetFlagLanguage( TRUE );							// Language入力フラグを立てる
-		//TSD_SetFlagCountry( TRUE );							// Country入力フラグを立てる
 		(void)SYSM_WriteTWLSettingsFile();
 
 		MachineSettingInit();

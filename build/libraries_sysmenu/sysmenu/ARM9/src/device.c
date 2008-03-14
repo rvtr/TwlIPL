@@ -33,6 +33,7 @@ u32 PMi_WriteRegisterAsync(u16 registerAddr, u16 data, PMCallback callback, void
 
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
+static u8 s_brightness;
 // const data------------------------------------------------------------------
 
 // ============================================================================
@@ -59,7 +60,7 @@ u8 SYSM_GetBackLightBlightness( void )
 	if ( SYSMi_GetMcuVersion() <= 1 )
 	{
 		// X2以前
-		brightness = (u8)LCFG_TSD_GetBacklightBrightness();
+		brightness = s_brightness;
 	}
 	else
 #endif // SDK_SUPPORT_PMIC_2
@@ -89,17 +90,8 @@ void SYSM_SetBackLightBrightness( u8 brightness )
 #ifdef SDK_SUPPORT_PMIC_2
 	if ( SYSMi_GetMcuVersion() <= 1 )
 	{
-		( void )PMi_WriteRegister( REG_PMIC_BL_BRT_B_ADDR, (u8)(brightness * 2) );
-		
-		// X2以前のボードのみLCFGに値を保存
-		LCFG_TSD_SetBacklightBrightness( brightness );
-		{
-			u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
-			if( pBuffer != NULL ) {
-				LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
-				SYSM_Free( pBuffer );
-			}
-		}
+		s_brightness = brightness;
+		( void )PMi_WriteRegister( REG_PMIC_BL_BRT_B_ADDR, (u8)(s_brightness * 2) );
 	}
 	else
 #endif // SDK_SUPPORT_PMIC_2
@@ -163,7 +155,6 @@ void SYSMi_CheckRTC( void )
 #endif
 		) {							// RTCの異常を検出したら、rtc入力フラグ＆rtcOffsetを0にしてNVRAMに書き込み。
 		OS_TPrintf("\"RTC reset\" or \"Illegal RTC data\" detect!\n");
-		LCFG_TSD_SetFlagDateTime( FALSE );
 		LCFG_TSD_SetRTCOffset( 0 );
 		LCFG_TSD_SetRTCLastSetYear( 0 );
 		{

@@ -40,12 +40,8 @@ extern u32 bg_char_data[8 * 6];
 extern u16 bg_scr_data[32 * 32];
 
 // function's prototype declaration---------------------
-static BOOL InitialSetting( void );
-static void InitialSettingFinalizeInit( void );
-static int  InitialSettingFinalizeMain( void );
 
 // global variable -------------------------------------
-BOOL g_initialSet = FALSE;
 
 // static variable -------------------------------------
 static u16 s_csr = 0;
@@ -161,11 +157,6 @@ void MachineSettingInit( void )
 {
 	int i;
 	
-	// 初回起動シーケンス
-	if( InitialSetting() ) {
-		return;
-	}
-	
 	GX_DispOff();
 	GXS_DispOff();
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
@@ -278,61 +269,6 @@ void CheckOKCancelButton(BOOL *tp_ok, BOOL *tp_cancel)
 // 設定終了
 //
 //---------------------------------------------------------
-
-// 初回起動シーケンス
-static BOOL InitialSetting( void )
-{
-#if 0
-	if( !TSD_GetFlagLanguage() ) {			// 言語設定がまだ。
-		g_initialSet = TRUE;
-		s_csr = 2;
-		SelectLangageInit();
-		g_pNowProcess	= SelectLanguageMain;
-		return TRUE;
-	}else if( !TSD_GetFlagTP() ) {			// TPキャリブレーションがまだ。
-		g_initialSet = TRUE;
-		s_csr = 3;
-		TP_CalibrationInit();
-		g_pNowProcess	= TP_CalibrationMain;
-		return TRUE;
-	}else if( !TSD_GetFlagDateTime() ) {			// RTC設定がまだ。
-		ClearRTC();
-		g_initialSet = TRUE;
-		s_csr = 1;
-		SetRTCInit();
-		g_pNowProcess	= SetRTCMain;
-		return TRUE;
-	}else if( !TSD_GetFlagNickname() ||			// ニックネームまたは好きな色入力がまだ。
-			  !TSD_GetFlagUserColor() ) {
-/*		g_initialSet = TRUE;
-		s_csr = 0;
-		SetOwnerInfoInit();
-		g_pNowProcess	= SetOwnerInfoMain;
-		return TRUE;
-*/	}
-	
-	if( g_initialSet ) {
-		InitialSettingFinalizeInit();
-		g_pNowProcess = InitialSettingFinalizeMain();
-		return TRUE;
-	}
-#endif
-	return FALSE;
-}
-
-
-static void InitialSettingFinalizeInit( void )
-{
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
-	(void)PutStringUTF16( 6 * 8, 10 * 8, TXT_COLOR_BLACK, (const u16 *)L" Initial setting completed.");
-	(void)PutStringUTF16( 6 * 8, 12 * 8, TXT_COLOR_BLACK, (const u16 *)L"      Please reboot.");
-}
-
-
-static int InitialSettingFinalizeMain( void )
-{
-	return 0;
-}
 
 
 // 本体設定データのライト

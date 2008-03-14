@@ -99,10 +99,6 @@ void SelectLanguageInit( void )
 
 	PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"LANGUAGE SELECT" );
 	PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_COLOR_CYAN, (const u16 *)L"CANCEL" );
-	if( g_initialSet ) {
-		PutStringUTF16( 8 * 8, 18 * 8, TXT_COLOR_RED, (const u16 *)L"Select language." );
-	}
-	
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -177,7 +173,6 @@ int SelectLanguageMain( void )
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || tp_select ) {				// メニュー項目への分岐
 		LCFG_TSD_SetLanguage( s_langCodeList[s_lang] );
-		LCFG_TSD_SetFlagLanguage( TRUE );							// 言語入力フラグを立てる
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		// TWL設定データファイルへの書き込み
 		// ::::::::::::::::::::::::::::::::::::::::::::::

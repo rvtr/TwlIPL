@@ -49,7 +49,6 @@ typedef struct InputNumParam {
 
 // global variable------------------------------------------------------
 extern NNSFndAllocator g_allocator;
-extern BOOL g_initialSet;
 extern int (*g_pNowProcess)( void );
 extern BOOL g_isValidTSD;
 
