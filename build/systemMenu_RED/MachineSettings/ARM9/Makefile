@@ -53,7 +53,9 @@ MAKETAD_FLAGS			+= -s
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
+MAKEROM_ARM7_BASE		=	$(TWL_COMPONENTSDIR)/armadillo/$(TWL_BUILDTYPE_ARM7)/armadillo
+MAKEROM_ARM7			=	$(MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
+MAKEROM					=	$(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 
 LDIRT_CLEAN				=	$(TARGET_TAD)
 INSTALL_TARGETS			=	$(TARGET_TAD)
