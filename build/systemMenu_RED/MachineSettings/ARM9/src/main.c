@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
+#include <twl/sea.h>
 #include "misc.h"
 #include "MachineSetting.h"
 
@@ -50,6 +51,8 @@ void TwlMain(void)
 	
 	(void)OS_EnableIrq();
 	(void)OS_EnableInterrupts();
+	
+    SEA_Init();
 	
     GX_Init();
 	GX_SetPower(GX_POWER_ALL);										// 各ロジック パワーON
