@@ -40,6 +40,7 @@ static ROM_Header rom_header;
 #define CHANNEL_SYSTEM_BIT    0x1
 #define CHANNEL_SHOW_BIT      0x2
 #define CHANNEL_CARD_BIT      0x4
+#define CHANNEL_DATA_ONLY_BIT 0x8
 
 
 int main(int argc, char *argv[])
@@ -168,7 +169,11 @@ int main(int argc, char *argv[])
     [16-31]: PublisherCode( 2:Broadon, 3:Nintendo)
   */
 
-  rom_header.s.titleID_Hi =  ( 3 /* Nintendo */ << 16) | 4 | (isLaunch? 2:0) | (isSystem? 1:0);
+  rom_header.s.titleID_Hi =   ( 3 /* Nintendo */ << 16) |
+	  							CHANNEL_CARD_BIT |
+								CHANNEL_DATA_ONLY_BIT |
+								(isLaunch? 2:0) |
+								(isSystem? 1:0);
 
   printf("titleID = 0x%08X%08x\n", (unsigned int)rom_header.s.titleID_Hi, (unsigned int)*((u32 *)&(rom_header.s.titleID_Lo[0])));
 

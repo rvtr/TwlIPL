@@ -40,7 +40,7 @@ LDEPENDS_NEF			=
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-MAKEROM			 = $(SYSMENU_TOOLSDIR)/bin/makerom.TWL.sys.exe
+MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.sys.exe
 
 #----------------------------------------------------------------------------
 

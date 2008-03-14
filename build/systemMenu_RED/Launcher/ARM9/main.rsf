@@ -156,6 +156,16 @@ AppendProperty
 	Media					NAND
 
 	#
+	# Data only title : [TRUE/FALSE]
+	#  don't have to edit
+	DataOnly				FALSE
+
+	#
+	# Secure title : [TRUE/FALSE]
+	#  don't have to edit
+	Secure					TRUE
+
+	#
 	# GameCode for TitleID : Your GameCode in 4 ascii words
 	#
 	GameCode				$(TITLEID_LO)

@@ -150,6 +150,16 @@ AppendProperty
 	Launch					TRUE
 
 	#
+	# Data only title : [TRUE/FALSE]
+	#  don't have to edit
+	DataOnly				FALSE
+
+	#
+	# Secure title : [TRUE/FALSE]
+	#  don't have to edit
+	Secure					TRUE
+
+	#
 	# Boot allowed Media: [GameCard/NAND]
 	#
 	Media					NAND
