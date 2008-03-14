@@ -266,6 +266,23 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
     }
 
     //-----------------------------------------------------
+    // スタンドアロン起動時、ショートカットキー(select)
+    // を押しながらの起動で本体設定の直接起動
+    //-----------------------------------------------------
+    if( PAD_Read() & PAD_BUTTON_SELECT )
+    {
+        s_bootTitle.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
+        s_bootTitle.titleID = TITLE_ID_MACHINE_SETTINGS;
+        s_bootTitle.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
+        s_bootTitle.flags.isValid = TRUE;
+        s_bootTitle.flags.isAppRelocate = FALSE;
+        s_bootTitle.flags.isAppLoadCompleted = FALSE;
+        return &s_bootTitle;
+    }
+
+    //[TODO:]スタンドアロンで何らかの条件を満たした場合、カード強制起動させる
+
+    //-----------------------------------------------------
     // TWL設定データ未入力時の初回起動シーケンス起動
     //-----------------------------------------------------
 #if 0

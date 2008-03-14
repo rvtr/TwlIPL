@@ -183,7 +183,7 @@ void TwlMain( void )
         state = LOGODEMO_INIT;
     }
 
-// ランチャーを絶対表示しないバージョン
+// ランチャー画面を絶対表示しないバージョン
 #ifdef DO_NOT_SHOW_LAUNCHER
 	if(direct_boot == FALSE)
 	{
