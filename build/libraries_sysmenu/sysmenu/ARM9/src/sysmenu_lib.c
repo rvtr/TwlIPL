@@ -244,7 +244,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
             SYSM_IsInspectCard() ||
             ( ( PAD_Read() & SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) ==
               SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT )
-            ) {
+            ){
             s_bootTitle.flags.isAppRelocate = TRUE;
             s_bootTitle.flags.isAppLoadCompleted = TRUE;
             s_bootTitle.flags.isInitialShortcutSkip = TRUE;         // 初回起動シーケンスを飛ばす
@@ -280,7 +280,41 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
         return &s_bootTitle;
     }
 
-    //[TODO:]スタンドアロンで何らかの条件を満たした場合、カード強制起動させる
+	// スタンドアロン起動時
+    // ランチャー画面を表示しないバージョンの場合
+    // カードがささっていたらカードを起動する
+    // ささっていない場合は本体設定を起動
+#ifdef DO_NOT_SHOW_LAUNCHER
+	if( SYSM_IsExistCard() )
+	{
+        s_bootTitle.flags.isAppRelocate = TRUE;
+        s_bootTitle.flags.isAppLoadCompleted = TRUE;
+        s_bootTitle.flags.isInitialShortcutSkip = TRUE;         // 初回起動シーケンスを飛ばす
+        s_bootTitle.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
+        s_bootTitle.flags.bootType = LAUNCHER_BOOTTYPE_ROM;
+        s_bootTitle.flags.isValid = TRUE;
+        // ROMヘッダバッファのコピー
+        {
+            u16 id = (u16)OS_GetLockID();
+            (void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );     // ARM7と排他制御する
+            (void)SYSMi_CopyCardRomHeader();
+            (void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );   // ARM7と排他制御する
+            OS_ReleaseLockID( id );
+        }
+        s_bootTitle.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
+        SYSM_SetLogoDemoSkip( s_bootTitle.flags.isLogoSkip );
+        return &s_bootTitle;
+	}else
+	{
+        s_bootTitle.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
+        s_bootTitle.titleID = TITLE_ID_MACHINE_SETTINGS;
+        s_bootTitle.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
+        s_bootTitle.flags.isValid = TRUE;
+        s_bootTitle.flags.isAppRelocate = FALSE;
+        s_bootTitle.flags.isAppLoadCompleted = FALSE;
+        return &s_bootTitle;
+	}
+#endif
 
     //-----------------------------------------------------
     // TWL設定データ未入力時の初回起動シーケンス起動
