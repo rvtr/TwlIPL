@@ -360,7 +360,7 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
 		}
 		MI_CpuCopy8( "SRN", serialNo, 3 );
 		MI_CpuClear8( &serialNo[ len ], sizeof(serialNo) - len );
-		OS_TPrintf( "serialNo : %s\n", serialNo );
+//		OS_TPrintf( "serialNo : %s\n", serialNo );
 		LCFG_THW_SetSerialNo( serialNo );
 	}else {
 		LCFG_THW_SetSerialNo( pSerialNo );
