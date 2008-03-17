@@ -83,6 +83,7 @@ static const u8 sClearData[CLEAR_DATA_SIZE] =
 
 static FSDirectoryEntryInfo sEntryInfo;
 static NAMTitleId sTitleIdArray[TITLE_LIST_MAX];
+static char sCurrentFullPath[FS_ENTRY_LONGNAME_MAX];
 
 /*---------------------------------------------------------------------------*
     内部関数宣言
@@ -141,7 +142,7 @@ BOOL NAMUT_Format(void)
   Description:  指定ディレクトリ以下を消去します。
                 指定ディレクトリ自体は残ります。
 
-  Arguments:    path : 絶対パス
+  Arguments:    path : 絶対パス（スラッシュを含めない）
 
   Returns:      None
  *---------------------------------------------------------------------------*/
@@ -160,14 +161,6 @@ static BOOL NAMUTi_DeleteNandDirectory(const char *path)
 		return FALSE;
 	}
 
-	// カレントディレクトリを設定する
-	if (!FS_SetCurrentDirectory(path))
-	{
-		SDK_ASSERTMSG(0, "Fail! FS_SetCurrentDirectory(%s) in %s\n", path, __func__);
-		FS_CloseDirectory(&dir);
-		return FALSE;
-	}
-
 	// ディレクトリの中身を読む
 	while (FS_ReadDirectory(&dir, &entryInfo))
 	{
@@ -177,23 +170,23 @@ static BOOL NAMUTi_DeleteNandDirectory(const char *path)
             continue;
         }
 
+		STD_CopyLString( sCurrentFullPath, path, FS_ENTRY_LONGNAME_MAX );
+		STD_ConcatenateLString(sCurrentFullPath, "/", FS_ENTRY_LONGNAME_MAX);
+		STD_ConcatenateLString(sCurrentFullPath, entryInfo.longname, FS_ENTRY_LONGNAME_MAX);
+
 		// ディレクトリ
 		if (entryInfo.attributes & FS_ATTRIBUTE_IS_DIRECTORY)
 		{
-			ret &= FS_DeleteDirectoryAuto(entryInfo.longname);
-			SDK_ASSERTMSG(ret, "Fail! FS_DeleteDirectoryAuto(%s) in %s\n", entryInfo.longname, __func__);
+			ret &= FS_DeleteDirectoryAuto(sCurrentFullPath);
+			SDK_ASSERTMSG(ret, "Fail! FS_DeleteDirectoryAuto(%s) in %s\n", sCurrentFullPath, __func__);
 		}
 		// ファイル
 		else
 		{
-			ret &= FS_DeleteFileAuto(entryInfo.longname);
-			SDK_ASSERTMSG(ret, "Fail! FS_DeleteFileAuto(%s) in %s\n", entryInfo.longname, __func__);
+			ret &= FS_DeleteFileAuto(sCurrentFullPath);
+			SDK_ASSERTMSG(ret, "Fail! FS_DeleteFileAuto(%s) in %s\n", sCurrentFullPath, __func__);
 		}
 	}
-
-	// カレントディレクトリを元に戻します
-	ret &= FS_SetCurrentDirectory("..");
-	SDK_ASSERTMSG(ret, "Fail! FS_SetCurrentDirectory(..) in %s\n", __func__);
 
 	// ディレクトリを閉じる
 	FS_CloseDirectory(&dir);
@@ -226,7 +219,7 @@ static BOOL NAMUTi_DeleteNonprotectedTitle(void)
 
   Description:  User App タイトルの削除を行います。
 
-  Arguments:    path
+  Arguments:    path : 絶対パス（スラッシュを含まない）
 
   Returns:      None
  *---------------------------------------------------------------------------*/
@@ -242,14 +235,6 @@ static BOOL NAMUTi_DeleteNonprotectedTitleEntity(const char* path)
 	if (!FS_OpenDirectory(&dir, path, FS_FILEMODE_R))
 	{
 		SDK_ASSERTMSG(0, "Fail! FS_OpenDirectory(%s) in %s\n", path, __func__);
-		return FALSE;
-	}
-
-	// カレントディレクトリを設定する
-	if (!FS_SetCurrentDirectory(path))
-	{
-		SDK_ASSERTMSG(0, "Fail! FS_SetCurrentDirectory(%s) in %s\n", path, __func__);
-		FS_CloseDirectory(&dir);
 		return FALSE;
 	}
 
@@ -270,15 +255,15 @@ static BOOL NAMUTi_DeleteNonprotectedTitleEntity(const char* path)
 			// プロテクト対象でない場合ディレクトリごと消去する
 			if (!(titlePropety & PROTECT_TITLE_PROPERTY))
 			{
-				ret &= FS_DeleteDirectoryAuto(entryInfo.longname);
-				SDK_ASSERTMSG(ret, "Fail! FS_DeleteDirectoryAuto(%s) in %s\n", entryInfo.longname, __func__);
+				STD_CopyLString( sCurrentFullPath, path, FS_ENTRY_LONGNAME_MAX );
+				STD_ConcatenateLString(sCurrentFullPath, "/", FS_ENTRY_LONGNAME_MAX);
+				STD_ConcatenateLString(sCurrentFullPath, entryInfo.longname, FS_ENTRY_LONGNAME_MAX);
+
+				ret &= FS_DeleteDirectoryAuto(sCurrentFullPath);
+				SDK_ASSERTMSG(ret, "Fail! FS_DeleteDirectoryAuto(%s) in %s\n", sCurrentFullPath, __func__);
 			}
 		}
 	}
-
-	// カレントディレクトリを元に戻します
-	ret &= FS_SetCurrentDirectory("..");
-	SDK_ASSERTMSG(ret, "Fail! FS_SetCurrentDirectory(..) in %s\n", __func__);
 
 	// ディレクトリを閉じる
 	ret &= FS_CloseDirectory(&dir);
@@ -361,11 +346,15 @@ static BOOL NAMUTi_ClearSavedata(const char* path, BOOL fill)
 	// ファイル構造体初期化
     FS_InitFile(&file);
 
+
 	// セーブファイルオープン
 	if (!FS_OpenFileEx(&file, path, (FS_FILEMODE_R|FS_FILEMODE_W)))
 	{
 		return FALSE;
 	}
+
+/*
+	// 月曜にセーブデータに対してマウントする関数ができるのでそれ待ち
 
 	// セーブファイルを0xFFでクリア
 	if (fill)
@@ -377,6 +366,7 @@ static BOOL NAMUTi_ClearSavedata(const char* path, BOOL fill)
 		}
 		FS_WriteFile(&file, sClearData, (s32)filesize);
 	}
+
 
 	// セーブファイルに対してマウント
 	for (drive[0]='Z'; drive[0]>='A'; drive[0]--)
@@ -408,6 +398,8 @@ static BOOL NAMUTi_ClearSavedata(const char* path, BOOL fill)
 		// アンマウント
 		FATFS_UnmountDrive(drive);
 	}
+*/
+	ret = TRUE;
 
 	// ファイルクローズ
 	FS_CloseFile(&file);
@@ -459,10 +451,10 @@ static BOOL NAMUTi_FillFile(const char* path)
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
-
 void NAMUT_DrawNandTree(void)
 {
-	NAMUTi_DrawNandTree(0, "nand:/");
+	MI_CpuClear8( sCurrentFullPath, sizeof(sCurrentFullPath) );
+	NAMUTi_DrawNandTree(0, "nand:");
 }
 
 /*---------------------------------------------------------------------------*
@@ -470,7 +462,7 @@ void NAMUT_DrawNandTree(void)
 
   Description:  指定パスのツリー情報をプリント出力します（再帰関数）
 
-  Arguments:    ...
+  Arguments:    path : 絶対パス指定(スラッシュを含めない）
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
@@ -478,8 +470,16 @@ void NAMUT_DrawNandTree(void)
 static void NAMUTi_DrawNandTree(s32 depth, const char *path)
 {
     FSFile  dir;
-	
-	PrintDirectory(depth, path);
+	char* pSlash = STD_SearchCharReverse( sCurrentFullPath, '/' );
+
+	if (pSlash != NULL)
+	{
+		PrintDirectory(depth, pSlash);
+	}
+	else
+	{
+		PrintDirectory(depth, path);		
+	}
 
 	// 深さ制限
 	if (depth > DIRECTORY_DEPTH_MAX)
@@ -488,20 +488,15 @@ static void NAMUTi_DrawNandTree(s32 depth, const char *path)
 		return;
 	}
 
+	// カレントパスを設定    
+	STD_CopyLString( sCurrentFullPath, path, FS_ENTRY_LONGNAME_MAX );
+
 	FS_InitFile(&dir);
 
 	// 引数で指定されたディレクトリを開く
-	if (!FS_OpenDirectory(&dir, path, (FS_FILEMODE_R|FS_FILEMODE_W)))
+	if (!FS_OpenDirectory(&dir, sCurrentFullPath, (FS_FILEMODE_R|FS_FILEMODE_W)))
 	{
-		OS_TPrintf("%d Fail! FS_OpenDirectory(%s)\n", __LINE__, path);
-		return;
-	}
-
-	// カレントディレクトリを設定する
-	if (!FS_SetCurrentDirectory(path))
-	{
-		OS_TPrintf("Fail! FS_SetCurrentDirectory(%s)\n", path);
-		FS_CloseDirectory(&dir);
+		OS_TPrintf("%d Fail! FS_OpenDirectory(%s)\n", __LINE__, sCurrentFullPath);
 		return;
 	}
 
@@ -517,19 +512,21 @@ static void NAMUTi_DrawNandTree(s32 depth, const char *path)
 		// ディレクトリであれば再帰呼び出し
 		if (!(sEntryInfo.attributes & FS_ATTRIBUTE_IS_DIRECTORY))
 		{
-//			PrintFile(depth, sEntryInfo.longname);
+			PrintFile(depth, sEntryInfo.longname);
 		}
 		else
 		{
-			NAMUTi_DrawNandTree(depth + 1, sEntryInfo.longname);
+			STD_ConcatenateLString(sCurrentFullPath, "/", FS_ENTRY_LONGNAME_MAX);
+			STD_ConcatenateLString(sCurrentFullPath, sEntryInfo.longname, FS_ENTRY_LONGNAME_MAX);
+			NAMUTi_DrawNandTree(depth + 1, sCurrentFullPath);
 		}
 	}
 
-	// カレントディレクトリを元に戻します
-	if (!FS_SetCurrentDirectory(".."))
+	// カレントパスを削る
+	if (pSlash != NULL)
 	{
-		OS_TPrintf("Fail! FS_SetCurrentDirectory(..)\n");
-	}	
+		*pSlash = '\0';
+	}
 
 	FS_CloseDirectory(&dir);
 }
