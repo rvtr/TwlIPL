@@ -34,11 +34,25 @@
     型定義
  *---------------------------------------------------------------------------*/
 
+enum {
+	MENU_EASY_FORMAT=0,
+	MENU_CHECK_DISK,
+#ifndef NAND_FORMATTER_MODE
+	MENU_NORMAL_FORMAT,
+	MENU_FILL_FORMAT,
+#endif
+	MENU_RETURN,
+	NUM_OF_MENU_SELECT
+};
+
 /*---------------------------------------------------------------------------*
     定数定義
  *---------------------------------------------------------------------------*/
 
-#define NUM_OF_MENU_SELECT    5
+// NANDの簡易フォーマットを実行する際に
+// ツリー情報を出力する場合は定義します
+//#define DUMP_NAND_TREE
+
 #define DOT_OF_MENU_SPACE    16
 #define CURSOR_ORIGIN_X      32
 #define CURSOR_ORIGIN_Y      56
@@ -85,16 +99,21 @@ void* FormatProcess0(void)
 
 	// メニュー一覧
 	kamiFontPrintf(3,  6, FONT_COLOR_BLACK, "+-------------------+-----+");
-	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "l  FORMAT <Easy>    l     l");
+	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "l  FORMAT           l     l");
 	kamiFontPrintf(3,  8, FONT_COLOR_BLACK, "+-------------------+-----+");
-	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "l  FORMAT <Normal>  l     l");
+	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "l  CHECK DISK       l     l");
 	kamiFontPrintf(3, 10, FONT_COLOR_BLACK, "+-------------------+-----+");
-	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "l  FORMAT <Fill ff> l     l");
+#ifndef NAND_FORMATTER_MODE
+	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "l  FORMAT <Normal>  l     l");
 	kamiFontPrintf(3, 12, FONT_COLOR_BLACK, "+-------------------+-----+");
-	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "l  CHECK DISK       l     l");
+	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "l  FORMAT <Fill FF> l     l");
 	kamiFontPrintf(3, 14, FONT_COLOR_BLACK, "+-------------------+-----+");
 	kamiFontPrintf(3, 15, FONT_COLOR_BLACK, "l  RETURN           l     l");
 	kamiFontPrintf(3, 16, FONT_COLOR_BLACK, "+-------------------+-----+");
+#else
+	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "l  RETURN           l     l");
+	kamiFontPrintf(3, 12, FONT_COLOR_BLACK, "+-------------------+-----+");
+#endif
 
 	// 背景全クリア
 	for (i=0;i<24;i++)
@@ -125,12 +144,14 @@ void* FormatProcess0(void)
 
 void* FormatProcess1(void)
 {
+#ifndef NAND_FORMATTER_MODE
 	// オート実行用
 	if (gAutoFlag)
 	{
-		sMenuSelectNo = 1;
+		sMenuSelectNo = MENU_NORMAL_FORMAT;
 		return FormatProcess2;
 	}
+#endif
 
 	// 選択メニューの変更
     if ( kamiPadIsRepeatTrigger(PAD_KEY_UP) )
@@ -177,8 +198,13 @@ void* FormatProcess2(void)
 
 		switch( sMenuSelectNo )
 		{
-		case 0:	// 擬似フォーマット
-//			NAMUT_DrawNandTree();
+		case MENU_EASY_FORMAT:	// 簡易フォーマット
+#ifdef DUMP_NAND_TREE
+			NAMUT_DrawNandTree();
+#endif
+			kamiFontPrintf(24, y_pos, FONT_COLOR_GREEN, " WAIT");
+			kamiFontLoadScreenData();
+
 			if (NAMUT_Format())
 			{
 				kamiFontPrintf(24, y_pos, FONT_COLOR_GREEN, " OK  ");
@@ -187,39 +213,32 @@ void* FormatProcess2(void)
 			{
 				kamiFontPrintf(24, y_pos, FONT_COLOR_RED, " NG  ");
 			}
-//			NAMUT_DrawNandTree();
+#ifdef DUMP_NAND_TREE
+			OS_Printf("\n");
+			NAMUT_DrawNandTree();
+#endif
 			return FormatProcess1;
-		case 1:	// ノーマルフォーマット
-			sLock = TRUE;
-			ExeFormatAsync(FORMAT_MODE_QUICK, FormatCallback);
-			kamiFontPrintf(24,  y_pos, FONT_COLOR_BLACK, "     ");
-			return FormatProcess3;
-		case 2: // フルフォーマット
-			sLock = TRUE;
-			ExeFormatAsync(FORMAT_MODE_FULL, FormatCallback);
-			kamiFontPrintf(24,  y_pos, FONT_COLOR_BLACK, "     ");
-			return FormatProcess3;
-		case 3: // チェックディスク
+		case MENU_CHECK_DISK: // チェックディスク
 			{
 				FATFSDiskInfo info;
 				BOOL result = FALSE;
 
-				kamiFontPrintf(24,  y_pos, FONT_COLOR_BLACK, "     ");
+				kamiFontPrintf(24,  y_pos, FONT_COLOR_BLACK, " WAIT");
 				kamiFontLoadScreenData();
 
-				FATFS_UnmountDrive("F:");
-				FATFS_UnmountDrive("G:");
+//				FATFS_UnmountDrive("F:");
+//				FATFS_UnmountDrive("G:");
 	            // 指定のNANDパーティション0をFドライブにマウント
-	            if (FATFS_MountDrive("F", FATFS_MEDIA_TYPE_NAND, 0))
+//	            if (FATFS_MountDrive("F", FATFS_MEDIA_TYPE_NAND, 0))
 				{
 					// チェックディスク実行
-					if (FATFS_CheckDisk("F:", &info, TRUE, TRUE, TRUE))
+					if (FATFS_CheckDisk("nand:", &info, TRUE, TRUE, TRUE))
 					{
 			            // 指定のNANDパーティション1をGドライブにマウント
-			            if (FATFS_MountDrive("G", FATFS_MEDIA_TYPE_NAND, 1))
+//			            if (FATFS_MountDrive("G", FATFS_MEDIA_TYPE_NAND, 1))
 						{
 							// チェックディスク実行
-							if (FATFS_CheckDisk("G:", &info, TRUE, TRUE, TRUE))
+							if (FATFS_CheckDisk("nand2:", &info, TRUE, TRUE, TRUE))
 							{
 								result = TRUE;
 							}
@@ -228,15 +247,27 @@ void* FormatProcess2(void)
 				}
 
 				// デフォルトマウント状態に戻しておく
-				FATFS_UnmountDrive("G:");
-				FATFS_MountDrive("G", FATFS_MEDIA_TYPE_SD, 0);
+//				FATFS_UnmountDrive("G:");
+//				FATFS_MountDrive("G", FATFS_MEDIA_TYPE_SD, 0);
 
 				if (result == TRUE) { kamiFontPrintf(24,  y_pos, FONT_COLOR_GREEN, " OK  "); }
 				else                { kamiFontPrintf(24,  y_pos, FONT_COLOR_RED,   " NG  "); }
 
 				return FormatProcess1;
 			}
-		case 4:
+#ifndef NAND_FORMATTER_MODE
+		case MENU_NORMAL_FORMAT:	// ノーマルフォーマット
+			sLock = TRUE;
+			ExeFormatAsync(FORMAT_MODE_QUICK, FormatCallback);
+			kamiFontPrintf(24,  y_pos, FONT_COLOR_BLACK, "     ");
+			return FormatProcess3;
+		case MENU_FILL_FORMAT: // フルフォーマット
+			sLock = TRUE;
+			ExeFormatAsync(FORMAT_MODE_FULL, FormatCallback);
+			kamiFontPrintf(24,  y_pos, FONT_COLOR_BLACK, "     ");
+			return FormatProcess3;
+#endif
+		case MENU_RETURN:
 			FADE_OUT_RETURN( TopmenuProcess0 );
 		}
 	}
@@ -276,25 +307,24 @@ static void FormatCallback(KAMIResult result, void* /*arg*/)
 void* FormatProcess3(void)
 {
 	static s32 progress;
-	s16 y_pos;
+	s16 y_pos = (s16)(7 + sMenuSelectNo * CHAR_OF_MENU_SPACE);
 
 	// 処理終了判定
 	if (sLock == FALSE)
 	{
 		progress = 0;
-		
+
+#ifndef NAND_FORMATTER_MODE
 		// Auto用
 		if (gAutoFlag)
 		{
 			if (sFormatResult == TRUE) { FADE_OUT_RETURN( AutoProcess1 ); }
 			else { FADE_OUT_RETURN( AutoProcess2 ); }
 		}
+#endif
 
 		return FormatProcess1;
 	}
-
-	if ( sMenuSelectNo == 0 ) { y_pos = 7; }
-	else { y_pos = 9; }
 
 	// 進捗表示更新
 	if ( ++progress >= 30*5 ) 

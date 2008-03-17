@@ -49,6 +49,7 @@ static void VBlankIntr(void);
 static void InitializeFatfs(void);
 static void InitializeCdc(void);
 static void DummyThread(void* arg);
+static void RegisterMountInfo(void);
 
 /*---------------------------------------------------------------------------*
     外部シンボル参照
@@ -97,6 +98,9 @@ void TwlSpMain(void)
     OS_CreateThread(&thread, DummyThread, NULL,
         (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
     OS_WakeupThreadDirect(&thread);
+
+	// マウント情報をを強制上書き（暫定処置）
+	RegisterMountInfo();
 
     // ファイルシステム初期化
     FS_Init(FS_DMA_NOT_USE);
@@ -418,3 +422,36 @@ VBlankIntr(void)
         PM_SelfBlinkProc();
     }
 }
+
+/*---------------------------------------------------------------------------*
+  Name:         RegisterMountInfo
+
+  Description:  マウント情報を強制的に上書きします。
+
+  Arguments:    None.
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+extern BOOL sdmc_aes_attach_for_nand;	// 強制AESマウント用
+
+static void RegisterMountInfo(void)
+{
+	// デフォルトマウント情報リスト
+	OSMountInfo DefaultSettings[] ATTRIBUTE_ALIGN(4) = {
+	//  drive  device                target  pertitionIdx  resource           userPermission                rsvA  B  archive    path
+		{ 'A', OS_MOUNT_DEVICE_SD,   OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "sdmc",    "/" },
+		{ 'B', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand",    "/" },	// ユーザーアプリはこのアーカイブではWrite不可
+		{ 'C', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 1, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand2",   "/" },	// ユーザーアプリはこのアーカイブではWrite不可
+//		{ 'D', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "shared2", "nand2:/shared2" },
+//		{ 'E', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "photo",   "nand2:/photo" },
+//		{ 'F', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPrv", NULL },	// NANDにセーブデータがないアプリの場合は、マウントされない。
+//		{ 'G', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPub", NULL },	// NANDにセーブデータがないアプリの場合は、マウントされない。
+        { 0, },
+	};
+
+    MI_CpuCopy8(DefaultSettings, (void*)OS_GetMountInfo(), sizeof(DefaultSettings));
+
+	// 強制AESマウント
+	sdmc_aes_attach_for_nand = TRUE;
+}
+

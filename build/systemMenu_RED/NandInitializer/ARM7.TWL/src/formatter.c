@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include	<nitro/types.h>
@@ -57,28 +57,26 @@ typedef struct FileProperty {
 #define FATFS_CLUSTER_SIZE			( 16 * 1024 )
 // FATFSのクラスタサイズは16KBなので、データサイズが決まっていないものは、余裕を持たせて16KBにしておく
 static const FileProperty s_fileList[] = {
-	{  128,                "F:/sys/ID.sgn"           },	// 現状、全部サイズは適当。中身も空。
-	{  FATFS_CLUSTER_SIZE, "F:/sys/HWINFO.dat"       },
-	{  FATFS_CLUSTER_SIZE, "F:/shared1/TWLCFG0.dat"  },
-	{  FATFS_CLUSTER_SIZE, "F:/shared1/TWLCFG1.dat"  },	// ミラー
-//	{  FATFS_CLUSTER_SIZE, "F:/shared1/WIFICFG0.dat" },
-//	{  FATFS_CLUSTER_SIZE, "F:/shared1/WIFICFG1.dat" },	// ミラー
+	{  128,                "nand:/sys/ID.sgn"           },	// 現状、全部サイズは適当。中身も空。
+	{  FATFS_CLUSTER_SIZE, "nand:/sys/HWINFO.dat"       },
+	{  FATFS_CLUSTER_SIZE, "nand:/shared1/TWLCFG0.dat"  },
+	{  FATFS_CLUSTER_SIZE, "nand:/shared1/TWLCFG1.dat"  },	// ミラー
 	{  0, NULL },
 };
 
 static const char *s_pDirList0[] = {
-	(const char *)"sys",
-	(const char *)"title",
-	(const char *)"ticket",
-	(const char *)"shared1",
-	(const char *)"import",
-	(const char *)"tmp",
+	(const char *)"nand:/sys",
+	(const char *)"nand:/title",
+	(const char *)"nand:/ticket",
+	(const char *)"nand:/shared1",
+	(const char *)"nand:/import",
+	(const char *)"nand:/tmp",
 	NULL,
 	};
 
 static const char *s_pDirList1[] = {
-	(const char *)"photo",
-	(const char *)"shared2",
+	(const char *)"nand2:/photo",
+	(const char *)"nand2:/shared2",
 	NULL,
 	};
 
@@ -118,6 +116,10 @@ ExeFormat(FormatMode format_mode)
     // NANDをフォーマット
     {
         int     i;
+		u8 drive_nand;
+		u8 drive_nand2;
+		char drive_nand_path[4];
+		char drive_nand2_path[4];
 
         /* パーティションサイズをプロンプトから設定 */
         u32     partition_MB_size[5];
@@ -126,12 +128,27 @@ ExeFormat(FormatMode format_mode)
         partition_MB_size[2] = PARTITION_1_SIZE;		// FAT1領域
         nand_fat_partition_num = NAND_FAT_PARTITION_NUM;
 
-		// F G ドライブアンマウント
-        for( i=0; i<nand_fat_partition_num; i++) {
-            char    drive[4];
-            STD_TSPrintf( drive, "%c:", 'F'+i);
-            FATFS_UnmountDrive( drive);
-        }
+		// OSMountInfoよりnand&nand2のドライブ割り当てを調べる
+	    {
+	        const OSMountInfo  *info;
+	        for (info = OS_GetMountInfo(); *info->drive; ++info)
+	        {
+				if (!STD_CompareNString( "nand2", info->archiveName, 5 ))
+				{
+					drive_nand2 = *(info->drive);
+                    STD_TSPrintf(drive_nand2_path, "%c:", drive_nand2);
+				}
+				else if (!STD_CompareNString( "nand", info->archiveName, 4 ))
+				{
+					drive_nand = *(info->drive);
+                    STD_TSPrintf(drive_nand_path, "%c:", drive_nand);
+				}
+			}
+		}
+
+		// nand nand2 ドライブアンマウント
+		FATFS_UnmountDrive( drive_nand_path );
+		FATFS_UnmountDrive( drive_nand2_path );
 
 		// NANDのパーティションを指定
         // sizeInMB : パーティションサイズをメガバイト単位で格納した配列
@@ -139,17 +156,15 @@ ExeFormat(FormatMode format_mode)
         if (FATFSi_SetNANDPartitions(partition_MB_size, nand_fat_partition_num))
         {
             // マウント
-            if (FATFS_MountDrive("F", FATFS_MEDIA_TYPE_NAND, 0))
+            if (FATFS_MountDrive(drive_nand_path, FATFS_MEDIA_TYPE_NAND, 0))
             {
-                const char     *path = "F:";        // "F:"がFAT0パーティションになる。
-
 				// デフォルトドライブ設定
-                if (!FATFS_SetDefaultDrive(path))
+                if (!FATFS_SetDefaultDrive(drive_nand_path))
                 {
                     return FALSE;
                 }
 				// 指定のパスが指すドライブを含むメディア全体を初期化
-                else if(!FATFS_FormatMedia(path))
+                else if(!FATFS_FormatMedia(drive_nand_path))
                 {
                     return FALSE;
                 }
@@ -159,31 +174,27 @@ ExeFormat(FormatMode format_mode)
                     return FALSE;
                 }
 				// 指定のパスが指すドライブ全体を初期化
-                else if(!FATFS_FormatDrive(path))
+                else if(!FATFS_FormatDrive(drive_nand_path))
                 {
                     return FALSE;
                 }
                 else
                 {
-					// F以降のドライブの初期化
+					// FAT1パーティションの初期化
                     for (i = 1; i < nand_fat_partition_num; ++i)
                     {
-                        char    drive[4];
-                        STD_TSPrintf(drive, "%c:", 'F' + i);
-                        if(!FATFS_MountDrive(drive, FATFS_MEDIA_TYPE_NAND, (u32)i))
+                        if(!FATFS_MountDrive(drive_nand2_path, FATFS_MEDIA_TYPE_NAND, (u32)i))
                         {
 							return FALSE;
                         }
                     }
                     for (i = 1; i < nand_fat_partition_num; ++i)
                     {
-                        char    drive[4];
-                        STD_TSPrintf(drive, "%c:", 'F' + i);
                         if (format_mode == FORMAT_MODE_FULL && !FATFSi_nandFillPartition( i, init_datbuf, 16))
                         {
                             return FALSE;
                         }
-                        else if (!FATFS_FormatDrive(drive))
+                        else if (!FATFS_FormatDrive(drive_nand2_path))
                         {
 							return FALSE;
                         }
@@ -197,28 +208,14 @@ ExeFormat(FormatMode format_mode)
 	OS_Free( init_datbuf );
 
 	// ディレクトリ生成＆チェック
-	if (!CreateDirectory( "F:", s_pDirList0 )) { return FALSE; }
-	if (!CheckDirectory ( "F:", s_pDirList0 )) { return FALSE; }
-	if (!CreateDirectory( "G:", s_pDirList1 )) { return FALSE; }
-	if (!CheckDirectory ( "G:", s_pDirList1 )) { return FALSE; }
+	if (!CreateDirectory( "nand:", s_pDirList0 )) { return FALSE; }
+	if (!CheckDirectory ( "nand:", s_pDirList0 )) { return FALSE; }
+	if (!CreateDirectory( "nand2:", s_pDirList1 )) { return FALSE; }
+	if (!CheckDirectory ( "nand2:", s_pDirList1 )) { return FALSE; }
 	
 	// ファイル生成＆チェック
 	if (!CreateFile( &s_fileList[0] )) { return FALSE; }
 	if (!CheckFile ( &s_fileList[0] )) { return FALSE; }
-
-	// F,Gドライブアンマウント
-    {
-        int i;
-        for( i=0; i<nand_fat_partition_num; i++) {
-            char    drive[4];
-            STD_TSPrintf( drive, "%c:", 'F'+i);
-            FATFS_UnmountDrive( drive);
-        }
-    }
-
-	// デフォルトマウント状態に戻しておく
-	FATFS_MountDrive("F", FATFS_MEDIA_TYPE_NAND, 0);
-	FATFS_MountDrive("G", FATFS_MEDIA_TYPE_SD, 0);
 
 	// 成功
 	return TRUE;

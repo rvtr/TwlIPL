@@ -208,12 +208,14 @@ void* HWInfoProcess0(void)
 
 void* HWInfoProcess1(void)
 {
+#ifndef NAND_FORMATTER_MODE
 	// オート実行用
 	if (gAutoFlag)
 	{
 		sMenuSelectNo = 0;
 		return HWInfoProcess2;
 	}
+#endif
 
 	// 選択メニューの変更
     if ( kamiPadIsRepeatTrigger(PAD_KEY_UP) )
@@ -291,12 +293,14 @@ void* HWInfoProcess2(void)
 		kamiFontPrintf(26,  (s16)(7+sMenuSelectNo*CHAR_OF_MENU_SPACE), FONT_COLOR_RED, "NG");
 	}
 
+#ifndef NAND_FORMATTER_MODE
 	// Auto用
 	if (gAutoFlag)
 	{
 		if (result) { FADE_OUT_RETURN( AutoProcess1 ); }
 		else { FADE_OUT_RETURN( AutoProcess2 ); }
 	}
+#endif
 
 	return HWInfoProcess1;
 }
@@ -320,8 +324,8 @@ static BOOL WriteHWInfoFile( u8 region )
 	static const char *pMsgNormalWriting  	= "Writing Normal File...";
 	static const char *pMsgSecureWriting  	= "Writing Secure File...";
 	static const char *pMsgSignWriting  	= "Writing Sign   File...";
-	static const char *pMsgSucceeded 		= "Succeeded!";
-	static const char *pMsgFailed 			= "Failed!";
+	static const char *pMsgSucceeded 		= "Success!\n";
+	static const char *pMsgFailed 			= "Failed!\n";
 	BOOL result = TRUE;
 
 	// ノーマルファイルのライト
@@ -373,8 +377,8 @@ static BOOL DeleteHWInfoFile( void )
 {
 	static const char *pMsgNormalDeleting  	= "Deleting Normal File...";
 	static const char *pMsgSecureDeleting  	= "Deteting Secure File...";
-	static const char *pMsgSucceeded 		= "Succeeded!";
-	static const char *pMsgFailed 			= "Failed!";
+	static const char *pMsgSucceeded 		= "Success!\n";
+	static const char *pMsgFailed 			= "Failed!\n";
 	BOOL result = TRUE;
 
 	// ノーマルファイル

@@ -25,6 +25,10 @@ SUBDIRS		=
 #現時点で製品鍵を使った書き込みが行えてはダメなので、デフォルトOFFにしておいてください。
 #USE_PRODUCT_KEY			=	TRUE
 #============================================================================
+#============================================================================
+# NandInitializerから一部の機能を削除するために定義を追加します。
+MACRO_FLAGS				+=	-DNAND_FORMATTER_MODE
+#============================================================================
 
 TARGET_FIRM			= SYSTEMMENU
 TARGET_PLATFORM		= TWL
@@ -32,12 +36,12 @@ TWL_ARCHGEN    		= LIMITED
 
 #TWL_CODEGEN   =       THUMB
 
-TITLEID_LO				=	NINI
+TITLEID_LO				=	FMTR
 TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
 
-TARGET_BIN	= NandInitializer.srl
-LCFILE_SPEC				=	ARM9-TS.lsf
-ROM_SPEC	= main.rsf
+TARGET_BIN	= NandFormatter.srl
+LCFILE_SPEC	= ../../NandInitializer/ARM9.TWL/ARM9-TS.lsf
+ROM_SPEC	= ../../NandInitializer/ARM9.TWL/main.rsf
 
 MAKEROM_ARM7_BASE	=	../ARM7.TWL/bin/$(TWL_BUILDTYPE_ARM7)/main
 MAKEROM_ARM7		=	$(MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
@@ -52,22 +56,20 @@ SRCS		=	main.c \
 				process_format.c \
 				process_topmenu.c \
 				process_hw_info.c \
-				process_eticket.c \
-				process_import.c \
-				process_nandfirm.c \
-				process_norfirm.c \
-				process_auto.c \
 				process_fade.c \
 				sd_event.c \
 				hwi.c
 
-LINCLUDES	=	../common/include \
-				$(ROOT)/build/libraries/lcfg/ARM9.TWL/include
+LINCLUDES	=	../../NandInitializer/common/include \
+				../../NandInitializer/ARM9.TWL/include \
+				$(ROOT)/build/libraries/lcfg/ARM9.TWL/include \
+                ../../misc/include
 
-SRCDIR		=	src \
+SRCDIR		=	../../NandInitializer/ARM9.TWL/src \
 				../../HWInfoWriter/ARM9/src
 
 #LCFILE		=	# using default
+
 
 ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
 ifdef USE_PRODUCT_KEY
@@ -93,7 +95,6 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
 
 MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
-
 
 LDIRT_CLEAN				=	$(TARGET_TAD)
 #INSTALL_TARGETS			=	$(TARGET_TAD)

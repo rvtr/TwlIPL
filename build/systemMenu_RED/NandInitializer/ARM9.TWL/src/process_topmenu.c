@@ -37,7 +37,12 @@
     定数定義
  *---------------------------------------------------------------------------*/
 
+#ifndef NAND_FORMATTER_MODE
 #define NUM_OF_MENU_SELECT    6
+#else
+#define NUM_OF_MENU_SELECT    2
+#endif
+
 #define DOT_OF_MENU_SPACE    16
 #define CURSOR_ORIGIN_X      32
 #define CURSOR_ORIGIN_Y      56
@@ -74,15 +79,21 @@ void* TopmenuProcess0(void)
 	kamiFontClear();
 
 	// バージョン表示
+#ifndef NAND_FORMATTER_MODE
 	kamiFontPrintf(4, 2, 0, "Nand Initializer ver 0.1");
+#else
+	kamiFontPrintf(4, 2, 0, "Nand Formatter ver 0.1");
+#endif
 
 	// メニュー一覧
 	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "    FORMAT NAND            ");
 	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "    WRITE HARDWARE INFO    ");
+#ifndef NAND_FORMATTER_MODE
 	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "    WRITE ETICKET SIGN     ");
 	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "    INPORT TAD FROM SD     ");
 	kamiFontPrintf(3, 15, FONT_COLOR_BLACK, "    INPORT NANDFIRM FROM SD");
 	kamiFontPrintf(3, 17, FONT_COLOR_BLACK, "    INPORT NORFIRM FROM SD");
+#endif
 
 	// 背景全クリア
 	for (i=0;i<24;i++)
@@ -98,7 +109,7 @@ void* TopmenuProcess0(void)
 	kamiFontFillChar( 8, BG_COLOR_NONE,  BG_COLOR_PURPLE );
 	kamiFontFillChar( 9, BG_COLOR_PURPLE, BG_COLOR_PURPLE );
 	kamiFontFillChar(10, BG_COLOR_PURPLE, BG_COLOR_TRANS );
-
+#ifndef NAND_FORMATTER_MODE
 	kamiFontFillChar(10, BG_COLOR_NONE,  BG_COLOR_GRAY );
 	kamiFontFillChar(11, BG_COLOR_GRAY, BG_COLOR_GRAY );
 	kamiFontFillChar(12, BG_COLOR_GRAY, BG_COLOR_TRANS );
@@ -114,6 +125,7 @@ void* TopmenuProcess0(void)
 	kamiFontFillChar(16, BG_COLOR_NONE,  BG_COLOR_VIOLET );
 	kamiFontFillChar(17, BG_COLOR_VIOLET, BG_COLOR_VIOLET );
 	kamiFontFillChar(18, BG_COLOR_VIOLET, BG_COLOR_TRANS );
+#endif
 
 	// カーソル消去
 	SetCursorPos((u16)200, (u16)200);
@@ -152,11 +164,13 @@ void* TopmenuProcess1(void)
 		return TopmenuProcess2;
 	}
 
+#ifndef NAND_FORMATTER_MODE
 	// L&R同時押しでオート実行！
     if (kamiPadIsPress(PAD_BUTTON_L) && kamiPadIsPress(PAD_BUTTON_R))
 	{
 		FADE_OUT_RETURN( AutoProcess0 );
 	}
+#endif
 
 	return TopmenuProcess1;
 }
@@ -179,6 +193,7 @@ void* TopmenuProcess2(void)
 		FADE_OUT_RETURN( FormatProcess0 );
 	case 1:
 		FADE_OUT_RETURN( HWInfoProcess0 );
+#ifndef NAND_FORMATTER_MODE
 	case 2:
 		FADE_OUT_RETURN( eTicketProcess0 );
 	case 3:
@@ -187,6 +202,7 @@ void* TopmenuProcess2(void)
 		FADE_OUT_RETURN( NandfirmProcess0 );
 	case 5:
 		FADE_OUT_RETURN( NorfirmProcess0 );
+#endif
 	}
 
 	return TopmenuProcess1;
