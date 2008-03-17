@@ -13,6 +13,7 @@
 #include 	<twl.h>
 #include 	<twl/os/common/format_rom.h>
 #include	<nitro/card/types.h>
+#include 	<firm/os/common/system.h>
 #include	<sysmenu.h>
 #include 	<hotswTypes.h>
 #include	<blowfish.h>
@@ -1091,6 +1092,52 @@ static void McPowerOff(void)
         while(CmpMcSlotMode(SLOT_STATUS_MODE_00) == FALSE){
 			OS_Sleep(1);
         }
+    }
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         HOTSWi_TurnCardPowerOn
+
+  Description:  デバッガ通信用にカードスロットの電源をONにする。
+
+  Arguments:    None.
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+void HOTSWi_TurnCardPowerOn(u32 slot)
+{
+    u32 shift;
+    u32 mask = slot >= 2 ? (u32)REG_MI_MC_SL2_CDET_MASK : (u32)REG_MI_MC_SL1_CDET_MASK;
+
+    // カードが差さっていなければONしない
+    if ( reg_MI_MC & mask )
+    {
+        return;
+    }
+
+    shift = slot >= 2 ? (u32)REG_MI_MC_SL2_MODE_SHIFT : (u32)REG_MI_MC_SL1_MODE_SHIFT;
+    mask  = slot >= 2 ? (u32)REG_MI_MC_SL2_MODE_MASK : (u32)REG_MI_MC_SL1_MODE_MASK;
+
+    // 電源が落ちている最中なら待つ
+    if ( (reg_MI_MC & mask) == (0x3 << shift) )
+    {
+        OS_SpinWait( OS_MSEC_TO_CPUCYC(1) );
+    }
+
+    if ( (reg_MI_MC & mask) == (0x0 << shift) )
+    {
+        reg_MI_MC = (u16)((reg_MI_MC & ~mask) | (0x1 << shift));
+        // VDDの安定期間
+        OS_SpinWait( OS_MSEC_TO_CPUCYC(100) );
+
+        reg_MI_MC = (u16)((reg_MI_MC & ~mask) | (0x2 << shift));
+        // RESBのLow期間
+        OS_SpinWait( OS_MSEC_TO_CPUCYC(1) );
+
+		reg_MI_MCCNT1_B = REG_MI_MCCNT1_RESB_MASK;
+
+        // RESBのHigh期間
+        OS_SpinWait( OS_MSEC_TO_CPUCYC(100) );
     }
 }
 

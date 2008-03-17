@@ -227,6 +227,14 @@ BOOL BOOT_WaitStart( void )
 								  REG_SND_SMX_CNT_E_MASK;
             }
 
+#ifdef SDK_ARM7
+            // デバッガではTWLカードスロット２を電源ON
+            if ( SYSM_IsRunOnDebugger() )
+            {
+                HOTSWi_TurnCardPowerOn( 2 );
+            }
+#endif // SDK_ARM7
+
 #if defined(FIRM_USE_TWLSDK_KEYS) || defined(SYSMENU_DISABLE_RETAIL_BOOT)
             // TwlSDK内の鍵を使っている時は製品用CPUではTWLアプリはブートしない
             if ( ! (*(u8*)HWi_WSYS08_ADDR & HWi_WSYS08_OP_OPT_MASK) )
