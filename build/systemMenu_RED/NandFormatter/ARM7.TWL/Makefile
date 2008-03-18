@@ -33,7 +33,7 @@ TWL_NO_STD_PCHDR			= True
 #TWL_CODEGEN   =       THUMB
 
 TARGET_TEF      =   main.tef
-LCFILE_SPEC     = 	../../NandInitializer/ARM7.TWL/main.lsf
+LCFILE_SPEC     = 	../../NandInitializer/ARM7.TWL/racoon.lsf
 LCFILE_TEMPLATE	=	../../NandInitializer/ARM7.TWL/racoon.lcf.template
 LDRES_TEMPLATE	=	../../NandInitializer/ARM7.TWL/racoon.response.template
 
