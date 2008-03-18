@@ -153,9 +153,12 @@ TwlSpMain(void)
     (void)OS_EnableIrq();
     (void)OS_EnableInterrupts();
 
+	// ランチャーのマウント情報登録
+	SYSMi_SetLauncherMountInfo();
+	
     // PXIコールバックの設定
     SYSM_InitPXI(THREAD_PRIO_SYSMMCU);
-
+	
     // ファイルシステム初期化
     FS_Init(FS_DMA_NOT_USE);
     FS_CreateReadServerThread(THREAD_PRIO_FS);

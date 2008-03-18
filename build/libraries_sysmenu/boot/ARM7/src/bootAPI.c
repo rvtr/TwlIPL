@@ -25,6 +25,7 @@
 #include <firm/format/from_brom.h>
 #include <firm/aes/ARM7/aes_init.h>
 #include "reboot.h"
+#include "internal_api.h"
 
 
 // define data-------------------------------------------------------
@@ -32,9 +33,9 @@
 #define reg_MI_MC_SWP		(*(REGType8v *) ( REG_MC1_ADDR + 1 ) )
 
 #ifdef	ISDBG_MB_CHILD_
-#define PRE_CLEAR_NUM_MAX		(7*2)
+#define PRE_CLEAR_NUM_MAX		(9*2)
 #else
-#define PRE_CLEAR_NUM_MAX		(5*2)
+#define PRE_CLEAR_NUM_MAX		(7*2)
 #endif
 
 #define COPY_NUM_MAX			(4*3)
@@ -95,6 +96,9 @@ BOOL BOOT_WaitStart( void )
 		//       ブートアプリのROMヘッダのaccessKeyControl情報を見て判定
 		//       引渡しは、IRQスタック領域を使うので、割り込みを禁止してからセットする。
 		
+
+		// マウント情報の登録
+		SYSMi_SetBootAppMountInfo( &SYSMi_GetWork2()->bootTitleProperty );
 		
 		BOOTi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。
 		reg_MI_MBK9 = 0;								// 全WRAMのロック解除
@@ -112,18 +116,19 @@ BOOL BOOT_WaitStart( void )
 			// メモリリストの設定
 			// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域（WRAMにある）を消さないように注意。
 			//         WRAMリマップ後の消し漏れやバッファオーバランの懸念回避のため不要な鍵はpre clearで消す。
-			// [TODO:] pre clearにARM9/7共用WRAMの32KBも入れる。
+			// [TODO:] DSPの使っているWRAMをどこからどこまで消すか？
 			static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + 2 + POST_CLEAR_NUM_MAX + 1] = 
 			{
 				// pre clear
-				SYSM_OWN_ARM7_WRAM_ADDR, NULL, // SYSM_OWN_ARM7_WRAM_ADDR（SDK_AUTOLOAD_WRAM_START）はリンカから与えられる
+				SYSM_OWN_ARM7_WRAM_ADDR, NULL, // SYSM_OWN_ARM7_WRAM_ADDR（SDK_AUTOLOAD_WRAM_START）はリンカから与えられるので定数でない
+				NULL, NULL, // 定数でないのであとで設定
 				SYSM_OWN_ARM7_MMEM_ADDR, SYSM_OWN_ARM7_MMEM_ADDR_END - SYSM_OWN_ARM7_MMEM_ADDR,
 				SYSM_OWN_ARM9_MMEM_ADDR, SYSM_OWN_ARM9_MMEM_ADDR_END - SYSM_OWN_ARM9_MMEM_ADDR,
 #ifdef	ISDBG_MB_CHILD_
 				HW_PRV_WRAM_END - 0x600, (HW_PRV_WRAM_END - HW_PRV_WRAM_SYSRV_SIZE) - (HW_PRV_WRAM_END - 0x600),
 				HW_PRV_WRAM_END - 0x600 + 0x20, HW_PRV_WRAM_END - (HW_PRV_WRAM_END - 0x600 + 0x20),
 #endif
-				HW_WRAM_LTD, HW_WRAM_LTD_END - HW_WRAM_LTD,
+				HW_WRAM_BASE, HW_WRAM_SIZE, // 共有WRAM　　Launcherの特殊配置なので、BASEからサイズぶん
 				HW_MAIN_MEM_SHARED, HW_RED_RESERVED - HW_MAIN_MEM_SHARED,
 				NULL,
 				// copy forward
@@ -133,8 +138,9 @@ BOOL BOOT_WaitStart( void )
 				// post clear
 				NULL,
 			};
-			// NANDファームから受け取った鍵領域もまとめて消している
-			mem_list[1] = SYSM_OWN_ARM7_WRAM_ADDR_END - SYSM_OWN_ARM7_WRAM_ADDR;
+			mem_list[1] = (u32)th->s.sub_mount_info_ram_address - SYSM_OWN_ARM7_WRAM_ADDR;
+			mem_list[2] = ((u32)th->s.sub_mount_info_ram_address + SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN);
+			mem_list[3] = SYSM_OWN_ARM7_WRAM_ADDR_END - ((u32)th->s.sub_mount_info_ram_address + SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN);
 			
 			// copy forwardリスト設定
 			for( l=0; l<RELOCATE_INFO_NUM ; l++ )

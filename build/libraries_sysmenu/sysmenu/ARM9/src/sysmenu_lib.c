@@ -64,7 +64,7 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
     SYSMi_SendKeysToARM7();
 
     // ランチャーのマウント情報セット
-    SYSMi_SetLauncherMountInfo();
+    //SYSMi_SetLauncherMountInfo();
 
     // ARM7コンポーネント用プロテクションユニット領域変更
     OS_SetProtectionRegion( 2, SYSM_OWN_ARM7_MMEM_ADDR, 512KB );

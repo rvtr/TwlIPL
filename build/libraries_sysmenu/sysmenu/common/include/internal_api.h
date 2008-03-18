@@ -33,10 +33,16 @@ extern "C" {
 #define OS_PutString( ... )					((void)0)
 #endif
 
-#ifdef SDK_ARM9
 //-------------------------------------------------------
 // マウント情報セット
 //-------------------------------------------------------
+
+#ifdef SDK_ARM9
+
+// BootSRLPath受け渡し用
+void SYSMi_SetBootSRLPathToWork2( TitleProperty *pBootTitle );
+
+#else
 
 // ランチャー用
 void SYSMi_SetLauncherMountInfo( void );
@@ -44,7 +50,9 @@ void SYSMi_SetLauncherMountInfo( void );
 // 起動アプリ用
 void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle );
 
+#endif
 
+#ifdef SDK_ARM9
 //-------------------------------------------------------
 // デバイス
 //-------------------------------------------------------

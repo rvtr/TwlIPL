@@ -46,6 +46,8 @@ extern "C" {
 												| PAD_BUTTON_X | PAD_BUTTON_Y | PAD_BUTTON_R )
 																	// 量産工程で使用する初回起動設定をキャンセルしてカードブートするショートカットキー
 
+#define SYSM_MOUNT_INFO_SIZE				(0x400 - OS_MOUNT_PATH_LEN)
+
 typedef enum PlatformCode {
 	PLATFORM_NTR = 0,
 	PLATFORM_TWL = 1

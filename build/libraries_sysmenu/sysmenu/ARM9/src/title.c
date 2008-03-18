@@ -990,7 +990,9 @@ AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 	}
 	
 	// マウント情報の登録
-	SYSMi_SetBootAppMountInfo( pBootTitle );
+	//SYSMi_SetBootAppMountInfo( pBootTitle );
+	SYSMi_GetWork2()->bootTitleProperty = *pBootTitle;
+	SYSMi_SetBootSRLPathToWork2( pBootTitle );
 	
 	// HW_WM_BOOT_BUFへのブート情報セット
 	( (OSBootInfo *)OS_GetBootInfo() )->boot_type = s_launcherToOSBootType[ pBootTitle->flags.bootType ];

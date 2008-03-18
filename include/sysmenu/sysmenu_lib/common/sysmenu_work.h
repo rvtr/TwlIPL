@@ -127,6 +127,8 @@ typedef struct SYSM_work {
 
 typedef struct SYSM_work2 {
 	SVCHMACSHA1Context hmac_sha1_context;
+	TitleProperty		bootTitleProperty;
+	char 				bootContentPath[ FS_ENTRY_LONGNAME_MAX ];
 }SYSM_work2;
 
 // NTRにおける仕様を継承する必要のあるワーク
