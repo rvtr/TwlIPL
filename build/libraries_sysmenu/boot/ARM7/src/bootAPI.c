@@ -138,9 +138,17 @@ BOOL BOOT_WaitStart( void )
 				// post clear
 				NULL,
 			};
-			mem_list[1] = (u32)th->s.sub_mount_info_ram_address - SYSM_OWN_ARM7_WRAM_ADDR;
-			mem_list[2] = ((u32)th->s.sub_mount_info_ram_address + SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN);
-			mem_list[3] = SYSM_OWN_ARM7_WRAM_ADDR_END - ((u32)th->s.sub_mount_info_ram_address + SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN);
+			if( dh->s.platform_code )
+			{
+				mem_list[1] = (u32)th->s.sub_mount_info_ram_address - SYSM_OWN_ARM7_WRAM_ADDR;
+				mem_list[2] = ((u32)th->s.sub_mount_info_ram_address + SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN);
+				mem_list[3] = SYSM_OWN_ARM7_WRAM_ADDR_END - ((u32)th->s.sub_mount_info_ram_address + SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN);
+			}else
+			{
+				mem_list[1] = (SYSM_OWN_ARM7_WRAM_ADDR_END / 2) - SYSM_OWN_ARM7_WRAM_ADDR;
+				mem_list[2] = (SYSM_OWN_ARM7_WRAM_ADDR_END / 2);
+				mem_list[3] = SYSM_OWN_ARM7_WRAM_ADDR_END - (SYSM_OWN_ARM7_WRAM_ADDR_END / 2) );
+			}
 			
 			// copy forwardÉäÉXÉgê›íË
 			for( l=0; l<RELOCATE_INFO_NUM ; l++ )
