@@ -33,9 +33,9 @@
 #define reg_MI_MC_SWP		(*(REGType8v *) ( REG_MC1_ADDR + 1 ) )
 
 #ifdef	ISDBG_MB_CHILD_
-#define PRE_CLEAR_NUM_MAX		(9*2)
-#else
 #define PRE_CLEAR_NUM_MAX		(7*2)
+#else
+#define PRE_CLEAR_NUM_MAX		(5*2)
 #endif
 
 #define COPY_NUM_MAX			(4*3)
@@ -129,7 +129,6 @@ BOOL BOOT_WaitStart( void )
 				HW_PRV_WRAM_END - 0x600 + 0x20, HW_PRV_WRAM_END - (HW_PRV_WRAM_END - 0x600 + 0x20),
 #endif
 				HW_WRAM_BASE, HW_WRAM_SIZE, // 共有WRAM　　Launcherの特殊配置なので、BASEからサイズぶん
-				HW_MAIN_MEM_SHARED, HW_RED_RESERVED - HW_MAIN_MEM_SHARED,
 				NULL,
 				// copy forward
 				NULL,
