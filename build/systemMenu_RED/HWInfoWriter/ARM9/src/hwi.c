@@ -51,7 +51,7 @@ static void  (*spFree)( void *ptr );
 
 // const data  -----------------------------------------
 
-static const u32 s_langBitmapList[ LCFG_TWL_REGION_MAX ] = {
+static const u32 s_langBitmapList[ OS_TWL_REGION_MAX ] = {
 	LCFG_TWL_LANG_BITMAP_JAPAN,
 	LCFG_TWL_LANG_BITMAP_AMERICA,
 	LCFG_TWL_LANG_BITMAP_EUROPE,
@@ -351,7 +351,7 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
 		u8 buffer[ 12 ] = "SERIAL";		// 適当な文字列をMACアドレスと結合してSHA1を取り、仮SerialNoとする。
 		u8 serialNo[ SVC_SHA1_DIGEST_SIZE ];
 		int i;
-		int len = ( LCFG_THW_GetRegion() == LCFG_TWL_REGION_AMERICA ) ?
+		int len = ( LCFG_THW_GetRegion() == OS_TWL_REGION_AMERICA ) ?
 					LCFG_TWL_HWINFO_SERIALNO_LEN_AMERICA : LCFG_TWL_HWINFO_SERIALNO_LEN_OTHERS;
 		OS_GetMacAddress( buffer + 6 );
 		SVC_CalcSHA1( serialNo, buffer, sizeof(buffer) );
