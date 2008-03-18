@@ -74,6 +74,7 @@ static const char *s_pDirList0[] = {
 	(const char *)"nand:/title",
 	(const char *)"nand:/ticket",
 	(const char *)"nand:/shared1",
+	(const char *)"nand:/shared2",
 	(const char *)"nand:/import",
 	(const char *)"nand:/tmp",
 	NULL,
@@ -81,9 +82,8 @@ static const char *s_pDirList0[] = {
 
 static const char *s_pDirList1[] = {
 	(const char *)"nand2:/photo",
-	(const char *)"nand2:/shared2",
 	NULL,
-	};
+};
 
 /*---------------------------------------------------------------------------*
     “à•”ŠÖ”éŒ¾

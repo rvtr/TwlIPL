@@ -28,34 +28,41 @@
     定数定義
  *---------------------------------------------------------------------------*/
 
-// クリーンアップ実行時に
+// 擬似フォーマットで消去しないタイトルを
+// TitleProperty (TitleID Hiの下位16bit）のビットで指定します。
+// どれか1つでもビットが立っていれば消去の対象から外します。
+#define PROTECT_TITLE_PROPERTY  (TITLE_ID_HI_APP_TYPE_MASK)
+
+#define DIRECTORY_DEPTH_MAX      16  // ディレクトリの深さの最大（NANDの正規構成としては最大6）
+#define TITLE_ID_HI_SIZE          8
+#define TITLE_LIST_MAX          256
+#define CLEAR_DATA_SIZE         256
+
+// 擬似フォーマット実行時に
 // 指定ディレクトリ以下は全て消去されます。
-// 指定ディレクトリ自体は残ります
+// 指定ディレクトリ自体は残ります。
 static const char* sDeleteDirectoryList[] =
 {
 	"nand:/tmp"
 };
 
-// クリーンアップ実行時に
+// 擬似フォーマット実行時に
+// 指定ディレクトリ以下のNonProtectedなタイトルは全て消去されます。
+// 指定ディレクトリ自体は残ります。
+static const char* sDeleteNonProtecedDirectoryList[] =
+{
+	"nand:/title",
+	"nand:/ticket",
+	"nand:/import"
+};
+
+// 擬似フォーマット実行時に
 // 指定ファイルは0xffでFillされます。
 static const char* sFillFileList[] =
 {
 	"nand:/shared1/TWLCFG0.dat",
 	"nand:/shared1/TWLCFG1.dat"
 };
-
-// クリーンアップで消去しないタイトルを
-// TitleProperty (TitleID Hiの下位16bit）のビットで指定します。
-// どれか1つでもビットが立っていれば消去の対象から外します。
-#define PROTECT_TITLE_PROPERTY  (TITLE_ID_HI_APP_TYPE_MASK)
-
-#define DIRECTORY_DEPTH_MAX      16  // ディレクトリの深さの最大（NANDの正規構成としては最大6）
-#define TITLE_PATH              "nand:/title"
-#define TICKET_PATH             "nand:/ticket"
-#define IMPORT_PATH             "nand:/import"
-#define TITLE_ID_HI_SIZE          8
-#define TITLE_LIST_MAX          256
-#define CLEAR_DATA_SIZE         256
 
 static const u8 sClearData[CLEAR_DATA_SIZE] = 
 { 
@@ -102,7 +109,7 @@ static void PrintFile(s32 depth, const char* path);
 /*---------------------------------------------------------------------------*
   Name:         NAMUT_Format
 
-  Description:  NANDのクリーンアップ
+  Description:  NANDの擬似フォーマット
                （システム系の必要なファイルのみを残し他を消去します）
 
   Arguments:    None
@@ -121,7 +128,7 @@ BOOL NAMUT_Format(void)
 	ret &= NAMUTi_ClearSavedataAll(TRUE);
 
 	// 指定ファイルを0xffでクリアします
-	for (i=0; i<sizeof(sFillFileList)/sizeof(char*); i++)
+	for (i=0; i<sizeof(sFillFileList)/sizeof(sFillFileList[0]); i++)
 	{
 		ret &= NAMUTi_FillFile(sFillFileList[i]);
 	}
@@ -206,10 +213,12 @@ static BOOL NAMUTi_DeleteNandDirectory(const char *path)
 static BOOL NAMUTi_DeleteNonprotectedTitle(void)
 {
 	BOOL ret = TRUE;
+	int i;
 
-	ret &= NAMUTi_DeleteNonprotectedTitleEntity(TITLE_PATH);
-	ret &= NAMUTi_DeleteNonprotectedTitleEntity(TICKET_PATH);
-	ret &= NAMUTi_DeleteNonprotectedTitleEntity(IMPORT_PATH);
+	for (i=0; i<sizeof(sDeleteNonProtecedDirectoryList)/sizeof(sDeleteNonProtecedDirectoryList[0]); i++)
+	{
+		ret &= NAMUTi_DeleteNonprotectedTitleEntity(sDeleteNonProtecedDirectoryList[i]);
+	}
 
 	return ret;
 }
