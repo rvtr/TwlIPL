@@ -47,6 +47,7 @@ extern "C" {
 																	// 量産工程で使用する初回起動設定をキャンセルしてカードブートするショートカットキー
 
 #define SYSM_MOUNT_INFO_SIZE				(0x400 - OS_MOUNT_PATH_LEN)
+#define SYSM_LAUNCHER_VER					1	// ランチャーバージョン（SDK側でランチャーに絡む処理の判定用）
 
 typedef enum PlatformCode {
 	PLATFORM_NTR = 0,

@@ -153,6 +153,9 @@ TwlSpMain(void)
     (void)OS_EnableIrq();
     (void)OS_EnableInterrupts();
 
+	// ランチャーバージョンを格納（今のところ、最低でもマウント情報登録前には格納する必要あり）
+	*(u8 *)HW_TWL_RED_LAUNCHER_VER = (u8)SYSM_LAUNCHER_VER;
+
 	// ランチャーのマウント情報登録
 	SYSMi_SetLauncherMountInfo();
 	
