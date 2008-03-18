@@ -1833,7 +1833,7 @@ static void SetAnswerInit( void )
 
     // 日本版だけ文字制限が変わる
     sRegion = LCFG_THW_GetRegion();                             // 日本版だけ入力の仕様が変わる
-    if( sRegion == LCFG_TWL_REGION_JAPAN )
+    if( sRegion == OS_TWL_REGION_JAPAN )
     {
         SetSoftKeyboardButton(0);       // 日本語が設定されているときだけデフォルトのキーボードを変える
         sMinLenAnswer = LCFG_TWL_PCTL_SECRET_ANSWER_LENGTH_MIN >> 1;

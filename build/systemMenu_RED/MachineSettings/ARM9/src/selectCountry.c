@@ -51,7 +51,7 @@
 
 // static variable -------------------------------------
 static LCFGTWLCountryCode s_countryCode;									// 国コード
-static LCFGTWLRegion s_regionCode;											// リージョン
+static OSTWLRegion s_regionCode;											// リージョン
 
 static u16 s_list_start, s_list_end;
 static u16 s_menu_display_start;
@@ -64,7 +64,7 @@ static double s_dots_per_item;
 
 // const data  -----------------------------------------
 extern const u16 *const s_pStrCountryName[];
-extern const u32 region_country_mapping[LCFG_TWL_REGION_MAX];
+extern const u32 region_country_mapping[OS_TWL_REGION_MAX];
 
 static MenuPos s_countryPos[MENU_DISPLAY_SIZE] = {
 	{ TRUE,  4 * 8,   6 * 8 },
@@ -144,7 +144,7 @@ void SelectCountryInit( void )
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// 設定済みリージョンと国名コードの取得
-	s_regionCode = (LCFGTWLRegion)LCFG_THW_GetRegion();
+	s_regionCode = (OSTWLRegion)LCFG_THW_GetRegion();
 	
 	if( !g_isValidTSD ||
 		( LCFG_TSD_GetCountry() >= LCFG_TWL_COUNTRY_MAX ) ) {

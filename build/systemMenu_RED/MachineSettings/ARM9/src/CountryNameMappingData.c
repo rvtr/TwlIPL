@@ -291,7 +291,7 @@ const u16 *const s_pStrCountryName[] = {
     (const u16 *)L"UNKNOWN"
 };
 
-const u32 region_country_mapping[LCFG_TWL_REGION_MAX] = 
+const u32 region_country_mapping[OS_TWL_REGION_MAX] = 
 {
 	LCFG_TWL_COUNTRY_MAPPING_JAPAN,
 	LCFG_TWL_COUNTRY_MAPPING_AMERICA,
