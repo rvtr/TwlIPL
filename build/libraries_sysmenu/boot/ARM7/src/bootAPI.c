@@ -147,7 +147,7 @@ BOOL BOOT_WaitStart( void )
 			{
 				mem_list[1] = (SYSM_OWN_ARM7_WRAM_ADDR_END / 2) - SYSM_OWN_ARM7_WRAM_ADDR;
 				mem_list[2] = (SYSM_OWN_ARM7_WRAM_ADDR_END / 2);
-				mem_list[3] = SYSM_OWN_ARM7_WRAM_ADDR_END - (SYSM_OWN_ARM7_WRAM_ADDR_END / 2) );
+				mem_list[3] = SYSM_OWN_ARM7_WRAM_ADDR_END - (SYSM_OWN_ARM7_WRAM_ADDR_END / 2) ;
 			}
 			
 			// copy forwardÉäÉXÉgê›íË
