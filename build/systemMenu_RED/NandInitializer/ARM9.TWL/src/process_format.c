@@ -202,7 +202,7 @@ void* FormatProcess2(void)
 #ifdef DUMP_NAND_TREE
 			NAMUT_DrawNandTree();
 #endif
-			kamiFontPrintf(24, y_pos, FONT_COLOR_GREEN, " WAIT");
+			kamiFontPrintf(24, y_pos, FONT_COLOR_BLACK, " WAIT");
 			kamiFontLoadScreenData();
 
 			if (NAMUT_Format())

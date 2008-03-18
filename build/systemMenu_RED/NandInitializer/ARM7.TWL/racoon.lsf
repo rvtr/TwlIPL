@@ -10,9 +10,9 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date:: 2007-12-11#$
-# $Rev: 2989 $
-# $Author: terui $
+# $Date::            $
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 #
 #  Nitro LCF SPEC FILE
@@ -21,7 +21,7 @@
 Static $(TARGET_NAME)
 {
 	Address		0x02380000
-	Library		crt0.LTD.TWL.o
+	Library		$(CRT0_O)
 	Object		$(OBJDIR)/initScfg.o
 	StackSize	1024 1024
 }
@@ -29,7 +29,7 @@ Static $(TARGET_NAME)
 #--------
 Autoload WRAM
 {
-	Address		0x037c0000
+	Address		$(ADDRESS_LTDWRAM)
 
 	Library		libsubpsyscall.a				\
 				libsyscall_sp.twl.a				\
@@ -59,6 +59,10 @@ Autoload WRAM
 
 	Library		libsdio_sp$(LIBSUFFIX).a
 
+	Library		libnvram_sp$(LIBSUFFIX).a
+	Library		librtc_sp$(LIBSUFFIX).a
+
+
 	Object		* (.etable)
 	Object		* (.wram)
 	Object		* (.ltdwram)
@@ -67,13 +71,10 @@ Autoload WRAM
 	Object		$(OBJDIR)/formatter.o
 	Object		$(OBJDIR)/nvram_misc.o
 
-	Library		libsea_sp$(LIBSUFFIX).a
-	Library		libcrypto_sp$(LIBSUFFIX).a
-
 	# caches in fatfs library, that should be on WRAM.
 	# 2007/12/11 OBJECT() による .bss シンボルのリンクがうまくいかないので、
 	# 変数定義箇所に pragma で .ltdwram セクションに含まれるように暫定対策しました。
-	#Object		OBJECT( FATFSi___mem_drives_structures	, libfatfs_sp$(LIBSUFFIX).a)	(.bss)
+#	Object		OBJECT( FATFSi___mem_drives_structures	, libfatfs_sp$(LIBSUFFIX).a)	(.bss)
 
 	#####
 	# Sub-routines in WL library , that should be on WRAM.
@@ -134,9 +135,63 @@ Autoload WRAM
 	Object		OBJECT( WaitLoop_BbpAccess		, libwl_sp$(LIBSUFFIX).a )	(.text)
 	Object		OBJECT( WaitLoop_RfAccess		, libwl_sp$(LIBSUFFIX).a )	(.text)
 
+#	Object		OBJECT( s_ar_cookie_mem 		, libathdrv_sp$(LIBSUFFIX).a )	(.bss)
+#	Object		OBJECT( nin_ar           		, libathdrv_sp$(LIBSUFFIX).a )	(.bss)
+
+	Object		OBJECT( a_netbuf_alloc_rx  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( a_netbuf_register_rx_callback	, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( nin_driver_tx  		    , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( nin_tx_queue_full  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( nin_tx_complete  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( nin_rx  		        , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ar6000_bitrate_rx  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ar6000_channelList_rx  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ar6000_txPwr_rx  		    , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ar6000_gpio_intr_rx  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ar6000_gpio_data_rx  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ar6000_gpio_ack_rx  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( nin_drv_BmiWriteSocReg  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ar6000_control_tx  		    , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( nin_drv_BmiReadMemory  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( nin_drv_BmiWriteMemory  		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( wmi_dix_2_dot3 	        	, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( wmi_control_rx_xtnd 		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( wmi_control_rx 	    	, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( wmi_cmd_send 	    	, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( wmi_cmd_send_xtnd 		, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( HIFReadWrite 	    	, libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( HTCAddReceivePkt            , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( HTCUnblockRecv              , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( HTCFlushRecvBuffers         , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( HTCSendPktCompletionHandler , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( HTCIssueSend                , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( HTCTrySend                  , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( HTC_PACKET_DEQUEUE          , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( HTCSendPkt                  , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( HTCFlushSendPkts            , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( HTCControlTxComplete        , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( HTCControlRecv              , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( HTC_ALLOC_CONTROL_TX        , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( _ath_delete_timer           , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( _ath_untimeout              , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( _ath_timeout_ms             , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( _ath_init_timer             , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( ath_timer_task              , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+	Object		OBJECT( timer_wakeup_function       , libathdrv_sp$(LIBSUFFIX).a )	(.text)
+
+	Object		OBJECT( wpa_sm_rx_eapol		        , libwpa_sp$(LIBSUFFIX).a )	(.text)
+
+
 }
 
+#--------
+Ltdautoload RSVWRAM
+{
+	Address		0x03040000
+	Object		* (.rsvwram)
+	Library		libathdrv_sp$(LIBSUFFIX).a (.bss)
 
+}
 
 #--------
 Ltdautoload LTDMAIN
@@ -144,13 +199,14 @@ Ltdautoload LTDMAIN
 	Address		0x02f88000
 
 	Object		* (.ltdmain)
-	Library		libnvram_sp$(LIBSUFFIX).a
-	Library		librtc_sp$(LIBSUFFIX).a
 	Library		libwm_sp$(LIBSUFFIX).a	\
 				libnwm_sp$(LIBSUFFIX).a	\
-				libathdrv_sp$(LIBSUFFIX).a \
 				libwvr_sp$(LIBSUFFIX).a	\
 				libwl_sp$(LIBSUFFIX).a
+
+    Library     libwpa_sp$(LIBSUFFIX).a
+	Library		libathdrv_sp$(LIBSUFFIX).a
+
 	Library		libfatfs_sp$(LIBSUFFIX).a	\
 				$(USE_CRYPTO_LIBS)
 	Library		$(ISDBG_LIBS_TWL)

@@ -27,9 +27,11 @@ TWL_NO_STD_PCHDR			= True
 #TWL_CODEGEN   =       THUMB
 
 TARGET_TEF      =   main.tef
-LCFILE_SPEC     = 	main.lsf
+LCFILE_SPEC     = 	racoon.lsf
 LCFILE_TEMPLATE	=	racoon.lcf.template
 LDRES_TEMPLATE	=	racoon.response.template
+
+CRT0_O			 =	crt0.LTD.TWL.o
 
 SRCS		=	main.c \
 				kami_pxi.c \

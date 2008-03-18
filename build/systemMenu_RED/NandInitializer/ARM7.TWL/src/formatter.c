@@ -55,14 +55,19 @@ typedef struct FileProperty {
 //#define NAND_SEPARATE_READ
 #define FS_READ_BLOCK_SIZE			(  2 * 1024 )
 #define FATFS_CLUSTER_SIZE			( 16 * 1024 )
+
+// ファイル名やファイルサイズ変更への追従が手間なので
+// HWInfoのライト時にLCFGライブラリでリカバリ生成するようにします
+
 // FATFSのクラスタサイズは16KBなので、データサイズが決まっていないものは、余裕を持たせて16KBにしておく
-static const FileProperty s_fileList[] = {
-	{  128,                "nand:/sys/ID.sgn"           },	// 現状、全部サイズは適当。中身も空。
-	{  FATFS_CLUSTER_SIZE, "nand:/sys/HWINFO.dat"       },
-	{  FATFS_CLUSTER_SIZE, "nand:/shared1/TWLCFG0.dat"  },
-	{  FATFS_CLUSTER_SIZE, "nand:/shared1/TWLCFG1.dat"  },	// ミラー
-	{  0, NULL },
-};
+//static const FileProperty s_fileList[] = {
+//	{  128,                "nand:/sys/ID.sgn"                     },	// 現状、全部サイズは適当。中身も空。
+//	{  LCFG_TWL_HWINFO_FILE_LENGTH, LCFG_TWL_HWINFO_NORMAL_PATH   },
+//	{  LCFG_TWL_HWINFO_FILE_LENGTH, LCFG_TWL_HWINFO_SECURE_PATH   },
+//	{  FATFS_CLUSTER_SIZE, "nand:/shared1/TWLCFG0.dat"  },
+//	{  FATFS_CLUSTER_SIZE, "nand:/shared1/TWLCFG1.dat"  },	// ミラー
+//	{  0, NULL },
+//};
 
 static const char *s_pDirList0[] = {
 	(const char *)"nand:/sys",
@@ -214,8 +219,8 @@ ExeFormat(FormatMode format_mode)
 	if (!CheckDirectory ( "nand2:", s_pDirList1 )) { return FALSE; }
 	
 	// ファイル生成＆チェック
-	if (!CreateFile( &s_fileList[0] )) { return FALSE; }
-	if (!CheckFile ( &s_fileList[0] )) { return FALSE; }
+//	if (!CreateFile( &s_fileList[0] )) { return FALSE; }
+//	if (!CheckFile ( &s_fileList[0] )) { return FALSE; }
 
 	// 成功
 	return TRUE;
