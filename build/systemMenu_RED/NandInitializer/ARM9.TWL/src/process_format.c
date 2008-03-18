@@ -49,8 +49,8 @@ enum {
     定数定義
  *---------------------------------------------------------------------------*/
 
-// NANDの簡易フォーマットを実行する際に
-// ツリー情報を出力する場合は定義します
+// NANDの簡易フォーマットを実行する際にツリー情報を出力する場合は定義します。
+//
 //#define DUMP_NAND_TREE
 
 #define DOT_OF_MENU_SPACE    16
@@ -200,6 +200,9 @@ void* FormatProcess2(void)
 		{
 		case MENU_EASY_FORMAT:	// 簡易フォーマット
 #ifdef DUMP_NAND_TREE
+			OS_Printf("---------------------------------------\n");
+			OS_Printf("                 Before                \n");
+			OS_Printf("---------------------------------------\n");
 			NAMUT_DrawNandTree();
 #endif
 			kamiFontPrintf(24, y_pos, FONT_COLOR_BLACK, " WAIT");
@@ -215,6 +218,9 @@ void* FormatProcess2(void)
 			}
 #ifdef DUMP_NAND_TREE
 			OS_Printf("\n");
+			OS_Printf("---------------------------------------\n");
+			OS_Printf("                 After                 \n");
+			OS_Printf("---------------------------------------\n");
 			NAMUT_DrawNandTree();
 #endif
 			return FormatProcess1;
