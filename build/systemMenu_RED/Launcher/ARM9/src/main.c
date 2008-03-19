@@ -282,7 +282,7 @@ void TwlMain( void )
             if( ( direct_boot || ( !direct_boot && LauncherFadeout( s_titleList ) ) ) &&
                 SYSM_IsAuthenticateTitleFinished() )
             {
-	            switch ( SYSM_TryToBootTitle( pBootTitle ) ) {   // アプリ認証結果取得orブート   成功時：never return
+	            switch ( SYSM_TryToBootTitle( pBootTitle, s_titleList ) ) {   // アプリ認証結果取得orブート   成功時：never return
 	            case AUTH_RESULT_TITLE_LOAD_FAILED:
 	            case AUTH_RESULT_TITLE_POINTER_ERROR:
 	            case AUTH_RESULT_AUTHENTICATE_FAILED:

@@ -104,7 +104,8 @@ extern void SYSM_StartLoadTitle( TitleProperty *pBootTitle );					// 指定したTit
 extern BOOL SYSM_IsLoadTitleFinished( void );									// SYSM_StartLoadTitleで起動したスレッドが終了したかどうかを確認
 extern void SYSM_StartAuthenticateTitle( TitleProperty *pBootTitle );			// 指定したTitlePropertyを別スレッドで検証開始
 extern BOOL SYSM_IsAuthenticateTitleFinished( void );							// SYSM_StartAuthenticateTitleで起動したスレッドが終了したかどうかを確認
-extern AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle );				// 指定したTitlePropertyをブート
+extern AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle, TitleProperty *pTitleList );
+																				// pBootTitleで指定したタイトルをブート
 																				// 成功時は、never return.
 // デバイス制御
 extern void SYSM_CaribrateTP( void );											// タッチパネルキャリブレーション

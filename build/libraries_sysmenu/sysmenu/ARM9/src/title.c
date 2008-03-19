@@ -56,6 +56,7 @@ static void SYSMi_EnableHotSW( BOOL enable );
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle );
 static void SYSMi_Relocate( void );
 static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle );
+static void SYSMi_makeTitleIdList( TitleProperty *pTitleList );
 
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
@@ -259,6 +260,8 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 	
 	// 最終リストに対して、カードアプリ部分を除いた部分をクリア
 	MI_CpuClearFast( &pTitleList_Nand[ 1 ], sizeof(TitleProperty) * ( listNum - 1 ) );
+	
+	listNum--; // カードのぶん引いておく
 	
 	listNum = ( validNum < listNum ) ? validNum : listNum;
 	
@@ -779,7 +782,7 @@ static AuthResult SYSMi_AuthenticateNTRNandAppHeader( TitleProperty *pBootTitle)
 // NTR版ダウンロードアプリ（TMPアプリ）のヘッダ認証処理
 static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTitle)
 {
-
+#pragma unused(pBootTitle)
 	ROM_Header *head;
 	OSTick start;
 	start = OS_GetTick();
@@ -982,7 +985,7 @@ BOOL SYSM_IsAuthenticateTitleFinished( void )
 }
 
 // ロード済みの指定タイトルの認証とブートを行う
-AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle )
+AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle, TitleProperty *pTitleList )
 {
 	if(s_authResult != AUTH_RESULT_SUCCEEDED)
 	{
@@ -997,9 +1000,135 @@ AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 	// HW_WM_BOOT_BUFへのブート情報セット
 	( (OSBootInfo *)OS_GetBootInfo() )->boot_type = s_launcherToOSBootType[ pBootTitle->flags.bootType ];
 	
+	// タイトルIDリストの作成
+	SYSMi_makeTitleIdList( pTitleList );
+	
 	BOOT_Ready();	// never return.
 	
 	return AUTH_RESULT_SUCCEEDED;
+}
+
+// タイトルIDリストの作成
+static void SYSMi_makeTitleIdList( TitleProperty *pTitleList )
+{
+	// [TODO:]現在ランチャーで表示できるタイトル（ブート可能タイトル）のみ
+	// リストに入れるようになっているが
+	// ブート不可タイトルについても対応する必要あり？（特にセキュアアプリの場合）
+	OSTitleIDList *list = ( OSTitleIDList * )HW_OS_TITLE_ID_LIST;
+	ROM_Header_Short *hs = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
+	int l;
+	u8 count = 0;
+	
+	// とりあえずゼロクリア
+	MI_CpuClear8( (void *)HW_OS_TITLE_ID_LIST, HW_OS_TITLE_ID_LIST_SIZE );
+
+	// これから起動するアプリがTWLアプリでない
+	if( !hs->platform_code )
+	{
+		return;
+	}
+/*
+	// ランチャーで作成したリストを使わないバージョン
+	NAMTitleId *pTitleIDList = NULL;
+	s32 getNum;
+
+	// インストールされているタイトルの取得
+	getNum = NAM_GetNumTitles();
+	pTitleIDList = SYSM_Alloc( sizeof(NAMTitleId) * getNum );	// Free忘れず
+	(void)NAM_GetTitleList( pTitleIDList, (u32)getNum );
+*/
+	for(l=0;l<LAUNCHER_TITLE_LIST_NUM;l++)
+	{
+		ROM_Header_Short e_hs;
+		ROM_Header_Short *pe_hs;
+		int m;
+		BOOL same_maker_code = TRUE;
+		char path[256];
+		FSFile file[1];
+		BOOL bSuccess;
+		s32 readLen;
+		if(l==0)
+		{
+			// カードアプリ
+			if(SYSM_IsExistCard())
+			{
+				pe_hs = (ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BAK;// BAKの値を使う
+			}
+		}else
+		{
+			if(pTitleList[l].titleID == NULL)
+			{
+				continue;
+			}
+			// romヘッダ読み込み
+			NAM_GetTitleBootContentPathFast(path, pTitleList[l].titleID);
+			FS_InitFile( file );
+		    bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
+			if( ! bSuccess )
+			{
+				OS_TPrintf("SYSMi_makeTitleIdList failed: cant open file(%s)\n",path);
+			    FS_CloseFile(file);
+			    continue;
+			}
+			bSuccess = FS_SeekFile(file, 0x00000000, FS_SEEK_SET);
+			if( ! bSuccess )
+			{
+				OS_TPrintf("SYSMi_makeTitleIdList failed: cant seek file(0)\n");
+			    FS_CloseFile(file);
+			    continue;
+			}
+			readLen = FS_ReadFile(file, &e_hs, (s32)sizeof(e_hs));
+			if( readLen != (s32)sizeof(e_hs) )
+			{
+			OS_TPrintf("SYSMi_makeTitleIdList failed: cant read file(%p, %d, %d, %d)\n", e_hs, 0, sizeof(e_hs), readLen);
+			    FS_CloseFile(file);
+			    continue;
+			}
+			FS_CloseFile(file);
+			pe_hs = (ROM_Header_Short *)&e_hs;
+		}
+		
+		for(m=0;m<MAKER_CODE_MAX;m++)
+		{
+			if(hs->maker_code[m] != pe_hs->maker_code[m])
+			{
+				same_maker_code = FALSE;
+			}
+		}
+		// セキュアアプリの場合か、メーカーコードが同じ場合は
+		if( (hs->titleID & TITLE_ID_HI_SECURE_FLAG_MASK) ||
+		    ( same_maker_code ) )
+		{
+			// リストに追加
+			list->TitleID[count] = pTitleList[l].titleID;
+			// sameMakerFlagをON
+			list->sameMakerFlag[count/8] |= (u8)(0x1 << (count%8));
+			// Prv,Pubそれぞれセーブデータがあるか見て、存在すればフラグON
+			if(pe_hs->public_save_data_size != 0)
+			{
+				list->publicFlag[count/8] |= (u8)(0x1 << (count%8));
+			}
+			if(pe_hs->private_save_data_size != 0)
+			{
+				list->privateFlag[count/8] |= (u8)(0x1 << (count%8));
+			}
+		}
+		
+		// ジャンプ可能ならば
+		if( pe_hs->permit_landing_normal_jump )
+		{
+			// リストに追加してジャンプ可能フラグON
+			list->TitleID[count] = pTitleList[l].titleID;
+			list->appJumpFlag[count/8] |= (u8)(0x1 << (count%8));
+		}
+		
+		// ここまでのうちに、list->TitleID[count]が編集されていたらcountインクリメント
+		if( list->TitleID[count] != NULL )
+		{
+			count++;
+		}
+	}
+	list->num = count;
 }
 
 
