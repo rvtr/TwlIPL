@@ -193,7 +193,7 @@ BOOL BOOT_WaitStart( void )
 			mem_list[list_count] = NULL;
 			
 			// サウンド停止
-			SND_Disable();
+			SND_Shutdown();
 			
 			// アプリケーション選択
 			if ( dh->s.platform_code )
@@ -229,16 +229,34 @@ BOOL BOOT_WaitStart( void )
                 ds = TRUE;
             }
 
+			// 外部デポップ回路を有効にする
+			CDC_EnableExternalDepop();
+
+			// I2S停止（MCLKは動作継続）
+			reg_SND_SMX_CNT &= ~REG_SND_SMX_CNT_E_MASK;
+
             if ( ds || th->s.codec_mode == OS_CODECMODE_NITRO )
             {
-				// I2S停止（MCLKは動作継続）
-				reg_SND_SMX_CNT &= ~REG_SND_SMX_CNT_E_MASK;
+				// （CODEC-DSモード）
 				CDC_GoDsMode();
-				// DSサウンド：DSP = 8:0
-				// 32KHz
-				reg_SND_SMX_CNT = REG_SND_SMX_CNT_MIX_RATE_MASK |
-								  REG_SND_SMX_CNT_E_MASK;
             }
+			else
+			{
+				// 再初期化（CODEC-TWLモード）
+				CDC_Init();
+			}
+
+			// I2S再開
+			// DSサウンド：DSP = 8:0
+			// 32KHz
+			reg_SND_SMX_CNT = REG_SND_SMX_CNT_MIX_RATE_MASK |
+							  REG_SND_SMX_CNT_E_MASK;
+
+			// デポップ期間のあと外部デポップ回路を無効にする
+			// 単純なウェイトになるため、将来的にはコンポーネントでデポップを
+			// 無効にするように変更する予定（TODO)
+			OS_SpinWait(OS_MilliSecondsToTicks(100) * 64);
+			CDC_DisableExternalDepop();
 
 #ifdef SDK_ARM7
             // デバッガではTWLカードスロット２を電源ON
