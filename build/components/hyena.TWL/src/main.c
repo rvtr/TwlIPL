@@ -181,6 +181,10 @@ TwlSpMain(void)
         MCU_InitIrq(THREAD_PRIO_MCU);  // MCU 初期化
     }
 
+	// CODEC初期化の際に発生するPOP音を消すため外部デポップ回路を有効にします。
+	// デポップは8ms程度でほぼ完了しますが、PoweronTimeの分余分に期間をみる必要があります。
+	CDC_EnableExternalDepop();
+
     if (OSi_IsCodecTwlMode() == TRUE)
     {
         // CODEC 初期化
@@ -224,6 +228,9 @@ TwlSpMain(void)
 
     // [TODO]アプリジャンプ有効で、カードブートでない時は、最初からHOTSW_Initを呼ばないようにしたい。
     HOTSW_Init(THREAD_PRIO_HOTSW);
+
+	// 外部デポップ回路を無効にします。
+	CDC_DisableExternalDepop();
 
     while (TRUE)
     {
@@ -384,7 +391,7 @@ InitializeCdc(void)
 
 #if 1
     // CODEC 初期化
-    CDC_Init();
+    CDC_InitForFirstBoot();
     CDC_InitMic();
 //    CDCi_DumpRegisters();
 #else
