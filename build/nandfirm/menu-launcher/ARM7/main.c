@@ -33,7 +33,7 @@
     PRINT_MEMORY_ADDR を定義すると、そのアドレスからSPrintfを行います(このファイルのみ)
     FINALROM版でもコードが残るので注意してください。
 */
-#define PRINT_MEMORY_ADDR       0x02FFC800
+//#define PRINT_MEMORY_ADDR       0x02FFC800
 
 
 #ifdef PROFILE_ENABLE
@@ -149,6 +149,8 @@ static void PostInit(void)
     PM_InitFIRM();
     // AESの初期化
     AES_Init(); // for encrypted NAND
+    // マウント情報の初期化
+    FS_InitMountInfo(TRUE, FALSE);
     // アイドルスレッドの作成
     CreateIdleThread();
     /*

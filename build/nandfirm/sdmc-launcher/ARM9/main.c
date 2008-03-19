@@ -16,12 +16,10 @@
  *---------------------------------------------------------------------------*/
 #include <firm.h>
 
-#define RSA_KEY1_ADDR    rsa_key1
-#define RSA_KEY2_ADDR    rsa_key2
-
 #ifndef FIRM_USE_TWLSDK_KEYS
-static const u8* rsa_key1 = NULL;   // not acceptable
-static const u8 rsa_key2[128] =
+static const u8* rsa_key_user = NULL;   // not acceptable
+static const u8* rsa_key_sys = NULL;    // not acceptable
+static const u8 rsa_key_secure[128] =
 {
     0xC7, 0x94, 0x50, 0x00, 0x3A, 0xE1, 0x0E, 0x6C, 0xA8, 0xD1, 0xC0, 0x2D, 0x77, 0xB7, 0x6D, 0xBC,
     0x31, 0xDB, 0x12, 0x08, 0x09, 0x0D, 0x2A, 0xE8, 0xC9, 0x1A, 0x2B, 0x6E, 0x6C, 0x85, 0x78, 0xD7,
@@ -33,7 +31,7 @@ static const u8 rsa_key2[128] =
     0x27, 0x75, 0x2B, 0x04, 0xD7, 0x26, 0xA8, 0x8A, 0x55, 0x2A, 0x76, 0xE5, 0x68, 0x80, 0x57, 0x85
 };
 #else
-static const u8 rsa_key1[128] =
+static const u8 rsa_key_user[128] =
 {
     0xAC, 0x93, 0xBB,
     0x3C, 0x15, 0x5C, 0x5F, 0x25, 0xB0, 0x4C, 0x37, 0xA4, 0x2D, 0x85, 0x29, 0x1D, 0x7A, 0x9D, 0x2D,
@@ -45,7 +43,7 @@ static const u8 rsa_key1[128] =
     0x62, 0x39, 0xFB, 0x10, 0x7E, 0x48, 0x7F, 0xDD, 0x82, 0x38, 0x38, 0x76, 0xB5, 0xCE, 0x21, 0x4B,
     0xC9, 0x6F, 0x31, 0x8D, 0x23, 0x57, 0x3D, 0xB6, 0x6C, 0xEE, 0xC2, 0x0D, 0x11
 };
-static const u8 rsa_key2[128] =
+static const u8 rsa_key_sys[128] =
 {
         0xe9, 0x9e, 0xa7, 0x9f, 0x59, 0x4d, 0xf4, 0xa7, 0x60, 0x04, 0xbd, 0x47, 0xf2, 0xb3, 0x64, 0xcd,
         0x16, 0x79, 0xc1, 0x47, 0x39, 0xf6, 0xa9, 0xf8, 0xee, 0x1a, 0xd0, 0x72, 0xcf, 0x43, 0x97, 0x0c,
@@ -55,6 +53,17 @@ static const u8 rsa_key2[128] =
         0x52, 0x42, 0xdb, 0xac, 0xd6, 0x7e, 0xa9, 0xc3, 0x3d, 0x1b, 0x51, 0x56, 0x07, 0x06, 0xd0, 0x0b,
         0x01, 0xbb, 0x58, 0x93, 0xea, 0xa0, 0x2c, 0xc7, 0x7d, 0x6a, 0x31, 0x7e, 0xc9, 0xe2, 0xda, 0xfe,
         0x1f, 0x2e, 0x9d, 0xa7, 0x54, 0x84, 0xdc, 0x28, 0xb9, 0x18, 0xea, 0x16, 0xf2, 0x95, 0x55, 0x6d,
+};
+static const u8 rsa_key_secure[128] =
+{
+        0xa7, 0x9f, 0x54, 0xa0, 0xc7, 0x45, 0xae, 0xf6, 0x63, 0xa7, 0x53, 0xb7, 0x0a, 0xcc, 0x0b, 0xcb,
+        0x65, 0xe1, 0x11, 0xc6, 0x05, 0x15, 0xb5, 0x6e, 0xbd, 0xac, 0x0c, 0xca, 0xf4, 0x7c, 0x68, 0x7a,
+        0xf9, 0x0e, 0x5d, 0x98, 0x5b, 0xc8, 0x4d, 0x22, 0x3b, 0xa3, 0xbe, 0x8b, 0x5b, 0x7f, 0x26, 0x44,
+        0x9f, 0xc4, 0x48, 0x44, 0xb1, 0x32, 0xb7, 0xbe, 0x63, 0xba, 0xd6, 0xc1, 0x10, 0xce, 0xf6, 0xed,
+        0x47, 0x8f, 0xe1, 0xff, 0x7f, 0x5a, 0xd5, 0x5d, 0x94, 0x38, 0x2f, 0xa1, 0xd4, 0xef, 0x82, 0xb1,
+        0x0d, 0xc4, 0x43, 0xec, 0xbe, 0x77, 0xb6, 0x82, 0x9c, 0xfa, 0x17, 0x87, 0x84, 0x82, 0x25, 0x46,
+        0xfb, 0xd6, 0x05, 0xc8, 0x9a, 0x7e, 0xad, 0x44, 0x40, 0x0d, 0x35, 0x9c, 0x45, 0x44, 0x64, 0x36,
+        0x61, 0x4b, 0xf7, 0xe6, 0x31, 0x5c, 0x7d, 0x96, 0x73, 0xe8, 0xac, 0xb4, 0xe3, 0x5e, 0xd1, 0x9d,
 };
 #endif
 
@@ -109,16 +118,6 @@ static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
 ***************************************************************/
 static void PreInit(void)
 {
-    static const OSMountInfo    firmSettings[] =
-    {
-        //  drive  device                target  pertitionIdx  resource           userPermission                rsvA  B  archive    path
-        { 'A', OS_MOUNT_DEVICE_SD,   OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "sdmc",    "/" },
-        { 'B', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand",    "/" },   // ユーザーアプリはこのアーカイブではWrite不可
-        { 'C', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 1, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand2",   "/" },   // ユーザーアプリはこのアーカイブではWrite不可
-        { 'D', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "shared2", "nand2:/shared2" },
-        { 'E', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "photo",   "nand2:/photo" },
-        { 0 }
-    };
     /*
      メインメモリ関連
     */
@@ -127,9 +126,6 @@ static void PreInit(void)
     MI_CpuClearFast((void *)HW_BIOS_EXCP_STACK_MAIN,    (HW_REAL_TIME_CLOCK_BUF - HW_BIOS_EXCP_STACK_MAIN));
     MI_CpuClearFast((void *)HW_PXI_SIGNAL_PARAM_ARM9,   (HW_MMEMCHECKER_MAIN - HW_PXI_SIGNAL_PARAM_ARM9));
     MI_CpuClearFast((void*)HW_ROM_HEADER_BUF,           (HW_ROM_HEADER_BUF_END-HW_ROM_HEADER_BUF));
-
-    // FS_MOUNT領域の初期化
-    MI_CpuCopy8(firmSettings, (char*)HW_TWL_FS_MOUNT_INFO_BUF, sizeof(firmSettings));
 
     /*
         FromBrom関連
@@ -163,7 +159,7 @@ static void PostInit(void)
 ***************************************************************/
 static BOOL CheckHeader(void)
 {
-    static ROM_Header_Short* const rhs = (ROM_Header_Short*)HW_TWL_ROM_HEADER_BUF;
+    ROM_Header_Short* const rhs = (ROM_Header_Short*)HW_TWL_ROM_HEADER_BUF;
     // イニシャルコードなど
     OS_TPrintf("Initial Code        : %08X (%.4s)\n", *(u32*)rhs->game_code, rhs->game_code);
     OS_TPrintf("Platform Code       : %02X\n", rhs->platform_code);
@@ -269,19 +265,19 @@ void TwlMain( void )
     switch ( PAD_Read() & PAD_KEYPORT_MASK )
     {
     case 0:
-        STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE);
+        STD_CopyString((char*)HW_FIRM_TEMP_SRL_PATH_BUF, MENU_FILE);
         break;
     case PAD_BUTTON_A:
-        STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE_A);
+        STD_CopyString((char*)HW_FIRM_TEMP_SRL_PATH_BUF, MENU_FILE_A);
         break;
     case PAD_BUTTON_B:
-        STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE_B);
+        STD_CopyString((char*)HW_FIRM_TEMP_SRL_PATH_BUF, MENU_FILE_B);
         break;
     case PAD_BUTTON_L:
-        STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE_L);
+        STD_CopyString((char*)HW_FIRM_TEMP_SRL_PATH_BUF, MENU_FILE_L);
         break;
     case PAD_BUTTON_R:
-        STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE_R);
+        STD_CopyString((char*)HW_FIRM_TEMP_SRL_PATH_BUF, MENU_FILE_R);
         break;
     default:
         OS_TPrintf("Unknown pad pattern (%X).\n", PAD_Read() & PAD_KEYPORT_MASK);
@@ -294,7 +290,7 @@ void TwlMain( void )
     // 5: after PXI
     PUSH_PROFILE();
 
-    if ( !FS_LoadHeader( &acPool, RSA_KEY1_ADDR, RSA_KEY2_ADDR ) || !CheckHeader() )
+    if ( !FS_LoadHeader( &acPool, rsa_key_user, rsa_key_sys, rsa_key_secure ) || !CheckHeader() )
     {
         OS_TPrintf("Failed to call FS_LoadHeader() and/or CheckHeader().\n");
         goto end;

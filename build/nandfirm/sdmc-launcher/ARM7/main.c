@@ -149,6 +149,8 @@ static void PostInit(void)
     PM_InitFIRM();
     // AESの初期化
     AES_Init(); // for encrypted NAND
+    // マウント情報の初期化
+    FS_InitMountInfo(FALSE, TRUE);
     // アイドルスレッドの作成
     CreateIdleThread();
     /*
@@ -320,6 +322,7 @@ void TwlSpMain( void )
     AESi_ResetAesKeyB();
     AESi_ResetAesKeyC();
     MI_CpuClearFast( OSi_GetFromFirmAddr(), sizeof(OSFromFirmBuf) );
+    FS_SetMountInfoForSrl();
     OS_BootFromFIRM();
 
 end:

@@ -46,6 +46,17 @@ extern "C" {
 #define HW_FIRM_FROM_FIRM_BUF_END       (HW_WRAM_AREA_END - 0x1000)  // END - 4KB
 #define HW_FIRM_FROM_FIRM_BUF_SIZE      0x2C00  // 11KB
 
+//------------------------------------- FIRM_MOUNT_INFO_BUF
+extern void SDK_MOUNT_INFO_TABLE(void);
+#define HW_FIRM_MOUNT_INFO_BUF          (u32)SDK_MOUNT_INFO_TABLE
+#define HW_FIRM_MOUNT_INFO_BUF_END      (HW_FIRM_MOUNT_INFO_BUF + HW_FIRM_MOUNT_INFO_BUF_SIZE)
+#define HW_FIRM_MOUNT_INFO_BUF_SIZE     (0x400 - OS_MOUNT_PATH_LEN)
+
+//------------------------------------- FIRM_BOOT_SRL_PATH_BUF
+#define HW_FIRM_BOOT_SRL_PATH_BUF       HW_FIRM_MOUNT_INFO_BUF_END
+#define HW_FIRM_BOOT_SRL_PATH_BUF_END   (HW_FIRM_BOOT_SRL_PATH_BUF + HW_FIRM_BOOT_SRL_PATH_BUF_SIZE)
+#define HW_FIRM_BOOT_SRL_PATH_BUF_SIZE  FS_ENTRY_LONGNAME_MAX
+
 
 #ifdef __cplusplus
 } /* extern "C" */

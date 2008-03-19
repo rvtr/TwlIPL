@@ -287,13 +287,13 @@ BOOL FS_LoadModule( u8* dest, u32 offset, u32 size, const u8 digest[SVC_SHA1_DIG
                 and verify signature
 
   Arguments:    pool            heap context to call SVC_DecryptSign
-                rsa_key1        public key to verify the signature
-                rsa_key2        public key to verify the signature
-                                for system applications
+                rsa_key_user    public key to verify the signature for user application
+                rsa_key_sys     public key to verify the signature for system application
+                rsa_key_secure  public key to verify the signature for secure application
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key1, const void* rsa_key2 )
+BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key_user, const void* rsa_key_sys, const void* rsa_key_secure )
 {
 #ifndef NO_SECURITY_CHECK
     const void* rsa_key;
@@ -313,7 +313,9 @@ BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key1, const void* 
     }
 
     // 鍵の確定
-    rsa_key = (rh->s.titleID_Hi & 0x1) ? rsa_key2 : rsa_key1;
+    rsa_key = (rh->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK)
+            ? rsa_key_secure
+            : ( (rh->s.titleID_Hi & TITLE_ID_HI_APP_TYPE_MASK) ? rsa_key_sys : rsa_key_user );
 #ifdef SUPPORT_CERTIFICATION
     // コンテンツ証明書
     if ( CheckRomCertificate( pool, &rh->certificate, rsa_key, *(u32*)rh->s.game_code ) )

@@ -63,13 +63,13 @@ BOOL FS_LoadModule( u8* dest, u32 offset, u32 size, const u8 digest[SVC_SHA1_BLO
                 and verify signature
 
   Arguments:    pool            heap context to call SVC_DecryptSign
-                rsa_key1        public key to verify the signature
-                rsa_key2        public key to verify the signature
-                                for system applications
+                rsa_key_user    public key to verify the signature for user application
+                rsa_key_sys     public key to verify the signature for system application
+                rsa_key_secure  public key to verify the signature for secure application
 
   Returns:      TRUE if success
  *---------------------------------------------------------------------------*/
-BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key1, const void* rsa_key2 );
+BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key_user, const void* rsa_key_sys, const void* rsa_key_secure );
 
 /*---------------------------------------------------------------------------*
   Name:         FS_LoadStatic

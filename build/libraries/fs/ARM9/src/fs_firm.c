@@ -34,7 +34,6 @@
  *---------------------------------------------------------------------------*/
 void FS_InitFIRM( void )
 {
-    MI_CpuClearFast( (void*)HW_FIRM_FS_TEMP_BUFFER, HW_FIRM_FS_TEMP_BUFFER_SIZE );
     FSiTemporaryBuffer = (void*)HW_FIRM_FS_TEMP_BUFFER;
     FATFS_InitFIRM();
     FS_Init( FS_DMA_NOT_USE );
@@ -176,7 +175,7 @@ BOOL FS_GetTitleBootContentPathFast(char* buf, OSTitleId titleId)
 /*---------------------------------------------------------------------------*
   Name:         FS_ResolveSrl
 
-  Description:  resolve srl filename and store to HW_TWL_FS_BOOT_SRL_PATH_BUF
+  Description:  resolve srl filename and store to HW_FIRM_TEMP_SRL_PATH_BUF
 
   Arguments:    titleId         title id for srl file
 
@@ -185,7 +184,7 @@ BOOL FS_GetTitleBootContentPathFast(char* buf, OSTitleId titleId)
 BOOL FS_ResolveSrl( OSTitleId titleId )
 {
     if ( ES_ERR_OK != ES_InitLib() ||
-         ES_ERR_OK != ES_GetContentPath(titleId, CONTENT_INDEX_BOOT, (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF) ||
+         ES_ERR_OK != ES_GetContentPath(titleId, CONTENT_INDEX_BOOT, (char*)HW_FIRM_TEMP_SRL_PATH_BUF) ||
          ES_ERR_OK != ES_CloseLib() )
     {
         return FALSE;
@@ -196,7 +195,7 @@ BOOL FS_ResolveSrl( OSTitleId titleId )
 /*---------------------------------------------------------------------------*
   Name:         FS_ResolveSrlUnsecured
 
-  Description:  resolve srl filename and store to HW_TWL_FS_BOOT_SRL_PATH_BUF
+  Description:  resolve srl filename and store to HW_FIRM_TEMP_SRL_PATH_BUF
                 without almost security check
 
   Arguments:    titleId         title id for srl file
@@ -205,7 +204,7 @@ BOOL FS_ResolveSrl( OSTitleId titleId )
  *---------------------------------------------------------------------------*/
 BOOL FS_ResolveSrlUnsecured( OSTitleId titleId )
 {
-    if ( !FS_GetTitleBootContentPathFast((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, titleId) )
+    if ( !FS_GetTitleBootContentPathFast((char*)HW_FIRM_TEMP_SRL_PATH_BUF, titleId) )
     {
         return FALSE;
     }
