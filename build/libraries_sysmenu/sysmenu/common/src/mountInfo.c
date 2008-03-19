@@ -76,7 +76,7 @@ OSMountInfo s_defaultMountList[ DEFAULT_MOUNT_LIST_NUM ] ATTRIBUTE_ALIGN(4) = {
 // ランチャーのマウント情報セット
 void SYSMi_SetLauncherMountInfo( void )
 {
-	NAMTitleId titleID = TITLE_ID_LAUNCHER;
+	NAMTitleId titleID = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->titleID;
 	
 	// ※とりあえず自身はROMブートで。[TODO:]後で修正
 //	SYSMi_SetBootSRLPath( LAUNCHER_BOOTTYPE_NAND, titleID );		// ※SDK2623では、BootSRLPathを"rom:"としたらFSi_InitRomArchiveでNANDアプリ扱いされてアクセス例外で落ちる。
@@ -183,7 +183,7 @@ static void SYSMi_SetMountInfoCore( LauncherBootType bootType, NAMTitleId titleI
 	MI_CpuClearFast( (void *)pDst, SYSM_MOUNT_INFO_SIZE );
 	
 	// セキュアアプリでない場合、"nand:", "nand2:"アーカイブを変更。
-	if( ( titleID & TITLE_ID_HI_SECURE_FLAG_MASK ) == 0 ) {
+	if( ( titleID & TITLE_ID_SECURE_FLAG_MASK ) == 0 ) {
 		pSrc[ NAND_MOUNT_INDEX ].userPermission = 0;	// "nand:"
 		pSrc[ NAND2_MOUNT_INDEX ].userPermission = 0;	// "nand2:"
 	}
