@@ -56,7 +56,9 @@ SRCS					=	main.c launcher.c sound.c bannerCounter.c loadWlanFirm.c \
 							$(BG_DIR)/BGData_Launcher.c
 
 LINCLUDES				=	$(MISC_DIR)/include \
-							$(SRCDIR)/$(LOGO_DIR)
+							$(SRCDIR)/$(LOGO_DIR) \
+							$(TWLSDK_ROOT)/build/libraries/wm/common.TWL/inc \
+							$(TWLSDK_ROOT)/build/libraries/wm/ARM9.TWL/nwm/inc
 
 LLIBRARIES				+=	libes$(TWL_LIBSUFFIX).a		\
 							libboc$(TWL_LIBSUFFIX).a	\
