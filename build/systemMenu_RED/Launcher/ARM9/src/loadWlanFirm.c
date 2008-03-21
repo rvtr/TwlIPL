@@ -342,14 +342,36 @@ void PrintDigest(u8 *digest)
 BOOL InstallWlanFirmware(void)
 {
     NWMRetCode err;
+    BOOL isColdStart;
 
     pNwmBuf = 0;
     pFwBuffer = 0;
 
     OS_InitMessageQueue(&mesq, mesAry, sizeof(mesAry)/sizeof(mesAry[0]));
-    
+
     /* HotStart/ColdStartのチェック */
+    /*
+        [TODO:] DSモードからHWリセットされた場合、パラメータ領域の無線DataSegmentは
+                失われる。この場合、DataSegmentをセットし直すために、
+                NANDからのFW読み直しを行わなければならない。
+                TemporallyなWorkaroundとして、この場合はColdStart扱いにしています。
+                初期化時間等の要因を鑑みて、本実装をどうするか検討します。
+     */
     if (TRUE == SYSMi_GetWork()->flags.common.isHotStart)
+    {
+        isColdStart = FALSE;
+
+        // Check integrity of WLAN data segment
+        if (FALSE == NWMi_CheckFwDataIntegrity())
+        {
+            isColdStart = TRUE;
+        }
+
+    } else {
+        isColdStart = TRUE;
+    }
+    
+    if (FALSE == isColdStart)  // HOT START
     {
         pNwmBuf = SYSM_Alloc( NWM_SYSTEM_BUF_SIZE );
         if (!pNwmBuf) {
@@ -364,7 +386,7 @@ BOOL InstallWlanFirmware(void)
         // HotStart
         NWM_Init(pNwmBuf, NWM_SYSTEM_BUF_SIZE, 3); /* 3 -> DMA no. */
         err = NWMi_InstallFirmware(InstallFirmCallback, NULL, 0, FALSE);
-    } else {
+    } else {    // COLD START
         s32 flen = 0;
         char path[256];
         u32 offset, length;
