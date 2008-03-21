@@ -192,6 +192,9 @@ RomSpec
 	HostRoot	../../data
 	Root		/data
 	File		NTR_IPL_font_m.NFTR
+	HostRoot	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/NandInitializer/data
+	Root		/data
+	File		*.*
 	HostRoot	$(PRIVKEY_PATH)
 	Root		/key
 	File		$(HWINFO_PRIVKEY)
