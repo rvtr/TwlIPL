@@ -262,7 +262,7 @@ BOOL BOOT_WaitStart( void )
 				{
 					if ( th->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK )
 					{
-						target = REBOOT_TARGET_TWL_SECURE_SYSTEM;
+						target = REBOOT_TARGET_TWL_SECURE;
 					}
 					else
 					{

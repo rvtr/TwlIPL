@@ -134,7 +134,7 @@ void BOOT_Ready( void )
 			{
 				if ( th->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK )
 				{
-					target = REBOOT_TARGET_TWL_SECURE_SYSTEM;
+					target = REBOOT_TARGET_TWL_SECURE;
 				}
 				else
 				{
@@ -178,8 +178,7 @@ void BOOT_Ready( void )
         // ゲームコマンドパラメータをスクランブルOFF設定に書き換える
         dh->s.game_cmd_param = SYSMi_GetWork()->gameCommondParam;
 
-		// セキュアシステム以外は鍵を消しておく
-		if ( target != REBOOT_TARGET_TWL_SECURE_SYSTEM )
+		// 鍵は不要になるので、消しておく
 		{
 			MI_CpuClearFast((void*)HW_FIRM_FROM_BROM_BUF, HW_FIRM_FROM_BROM_BUF_SIZE);
 		}
