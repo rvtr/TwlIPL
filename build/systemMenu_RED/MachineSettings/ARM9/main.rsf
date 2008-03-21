@@ -136,6 +136,11 @@ Property
 	HwAESSlotB		TRUE
 
 	#
+	# HwAESSlotC: launcher deliver HW AES slot C setting [TRUE/FALSE]
+	#
+	HwAESSlotC		TRUE
+
+	#
 	# SDCardAccess: sd card access control [TRUE/FALSE]
 	#
 	SDCardAccess	TRUE

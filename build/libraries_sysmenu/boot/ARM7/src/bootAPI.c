@@ -24,6 +24,7 @@
 #include <firm/hw/ARM7/mmap_firm.h>
 #include <firm/format/from_brom.h>
 #include <firm/aes/ARM7/aes_init.h>
+#include <firm/os/common/boot.h>
 #include "reboot.h"
 #include "internal_api.h"
 
@@ -73,6 +74,28 @@ static u32 nitro_post_clear_list[POST_CLEAR_NUM_MAX + 1] =
 
 // const data--------------------------------------------------------
 
+// dev_commonKeyはベタで持っていい。
+static const u8 dev_commonKey[] = {
+	0xA1, 0x60, 0x4A, 0x6A, 0x71, 0x23, 0xB5, 0x29,
+	0xAE, 0x8B, 0xEC, 0x32, 0xC8, 0x16, 0xFC, 0xAA
+};
+
+static const u8 dev_seedES[] = {
+	0x2D, 0xD4, 0x03, 0x98, 0xA7, 0x6B, 0x03, 0x28,
+	0xCE, 0x61, 0x04, 0xBB, 0x0A, 0xBB, 0x03, 0x5B,
+};
+
+static const u8 dev_seedNAM[] = {
+	0x4D, 0x04, 0xA4, 0x7F, 0xE3, 0x02, 0x30, 0x2E,
+	0x2A, 0x07, 0x06, 0xE6, 0xD9, 0x06, 0x47, 0x76,
+};
+
+static const u8 dev_seedSlotC[] = {
+	0x3B, 0x06, 0x86, 0x57, 0x33, 0x04, 0x88, 0x11,
+	0x49, 0x04, 0x6B, 0x33, 0x12, 0x02, 0xAC, 0xF3,
+};
+
+
 void BOOT_Init( void )
 {
 	reg_PXI_MAINPINTF = 0x0000;
@@ -86,17 +109,7 @@ BOOL BOOT_WaitStart( void )
 		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
 		(void)OS_SetIrqMaskEx(0);
 		
-		// [TODO]ブートするアプリに応じて、AESキースロットのクリアを行う。
-		//       ブートアプリのROMヘッダのaccessKeyControl情報を見て判定
-//		AESi_ResetAesKeyA();
-//		AESi_ResetAesKeyB();
-//		AESi_ResetAesKeyC();
-		
-		// [TODO]鍵情報の引渡しを行う。
-		//       ブートアプリのROMヘッダのaccessKeyControl情報を見て判定
-		//       引渡しは、IRQスタック領域を使うので、割り込みを禁止してからセットする。
-		
-
+		// [TODO]アプリによって示されるマウント情報アドレスは、ランチャーにとって常に安全な場所なのか？
 		// マウント情報の登録
 		SYSMi_SetBootAppMountInfo( &SYSMi_GetWork2()->bootTitleProperty );
 		
@@ -104,6 +117,57 @@ BOOL BOOT_WaitStart( void )
 		reg_MI_MBK9 = 0;								// 全WRAMのロック解除
 		reg_PXI_MAINPINTF = MAINP_SEND_IF | 0x0100;		// ARM9に対してブートするようIRQで要求＋ARM7のステートを１にする。
 		
+		// 鍵情報の引渡しを行う。
+		// ブートアプリのROMヘッダのaccessKeyControl情報を見て判定
+		// 引渡しは、IRQスタック領域を使うので、割り込みを禁止してからセットする。
+		{
+			ROM_Header *th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ
+			BOOL isClearSlotB = TRUE;
+			BOOL isClearSlotC = TRUE;
+			
+			MI_CpuClearFast( (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, HW_LAUNCHER_DELIVER_PARAM_BUF_SIZE );
+			if( th->s.platform_code & PLATFORM_CODE_FLAG_TWL ) {
+				if( th->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK ) {
+					// commonClientKey
+					if( th->s.access_control.common_client_key ) {
+						void *pCommonKey = ( SCFG_GetBondingOption() == SCFG_OP_PRODUCT ) ?
+											OSi_GetFromFirmAddr()->aes_key[ 0 ] : (void *)dev_commonKey;
+						MI_CpuCopy8( pCommonKey, (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, AES_BLOCK_SIZE );
+					}
+					// HW AES Slot B
+					if( th->s.access_control.hw_aes_slot_B ) {
+						void *pSeedES  =  ( SCFG_GetBondingOption() == SCFG_OP_PRODUCT ) ?
+											&( OSi_GetFromFirmAddr()->rsa_pubkey[ 3 ][ 0 ] ) : (void *)dev_seedES;
+						MI_CpuCopy8( pSeedES,  (void *)( HW_LAUNCHER_DELIVER_PARAM_BUF + 0x10 ), AES_BLOCK_SIZE );
+						isClearSlotB = FALSE;
+						// AESスロットのデフォルト値セットは不要
+					}
+					// HW AES Slot C
+					if( th->s.access_control.hw_aes_slot_C ) {
+						void *pSeedNAM =  ( SCFG_GetBondingOption() == SCFG_OP_PRODUCT ) ?
+											&( OSi_GetFromFirmAddr()->rsa_pubkey[ 3 ][ 0x10 ] ) : (void *)dev_seedNAM;
+						void *pSeedSlotC = ( SCFG_GetBondingOption() == SCFG_OP_PRODUCT ) ?
+											&( OSi_GetFromFirmAddr()->rsa_pubkey[ 3 ][ 0x20 ] ) : (void *)dev_seedSlotC;
+						MI_CpuCopy8( pSeedNAM, (void *)( HW_LAUNCHER_DELIVER_PARAM_BUF + 0x20 ), AES_BLOCK_SIZE );
+						isClearSlotC = FALSE;
+						// AESスロットのデフォルト値セット
+						AES_Lock();
+						AES_SetKeySeedC( pSeedSlotC );
+						AES_Unlock();
+					}
+				}
+			}
+			// ブートするアプリに応じて、AESキースロットのクリアを行う。
+			AESi_ResetAesKeyA();
+			if( isClearSlotB ) AESi_ResetAesKeyB();
+			if( isClearSlotC ) AESi_ResetAesKeyC();
+			
+			// 鍵は不要になるので、消しておく
+			{
+				OSFromBrom7Buf* fromBrom = (void*)HW_FIRM_FROM_BROM_BUF;
+				MI_CpuClearFast(fromBrom, sizeof(OSFromBrom7Buf) - sizeof(fromBrom->SDNandContext));
+			}
+		}
 		// SDK共通リブート
 		{
 			REBOOTTarget target = REBOOT_TARGET_TWL_SYSTEM;
@@ -124,10 +188,6 @@ BOOL BOOT_WaitStart( void )
 				NULL, NULL, // 定数でないのであとで設定
 				SYSM_OWN_ARM7_MMEM_ADDR, SYSM_OWN_ARM7_MMEM_ADDR_END - SYSM_OWN_ARM7_MMEM_ADDR,
 				SYSM_OWN_ARM9_MMEM_ADDR, SYSM_OWN_ARM9_MMEM_ADDR_END - SYSM_OWN_ARM9_MMEM_ADDR,
-#ifdef	ISDBG_MB_CHILD_
-				HW_PRV_WRAM_END - 0x600, (HW_PRV_WRAM_END - HW_PRV_WRAM_SYSRV_SIZE) - (HW_PRV_WRAM_END - 0x600),
-				HW_PRV_WRAM_END - 0x600 + 0x20, HW_PRV_WRAM_END - (HW_PRV_WRAM_END - 0x600 + 0x20),
-#endif
 				HW_WRAM_BASE, HW_WRAM_SIZE, // 共有WRAM　　Launcherの特殊配置なので、BASEからサイズぶん
 				NULL,
 				// copy forward
@@ -273,13 +333,6 @@ BOOL BOOT_WaitStart( void )
                 OS_Terminate();
             }
 #endif // FIRM_USE_SDK_KEYS || SYSMENU_DISABLE_RETAIL_BOOT
-
-			// セキュアシステム以外は鍵を消しておく
-			if ( target != REBOOT_TARGET_TWL_SECURE_SYSTEM )
-			{
-				OSFromBrom7Buf* fromBrom = (void*)HW_FIRM_FROM_BROM_BUF;
-				MI_CpuClearFast(fromBrom, sizeof(OSFromBrom7Buf) - sizeof(fromBrom->SDNandContext));
-			}
 
 			// リブート
 			OS_Boot( dh->s.sub_entry_address, mem_list, target );

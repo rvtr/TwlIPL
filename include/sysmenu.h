@@ -18,7 +18,7 @@
 #define SYSMENU_H_
 
 // Compile switch----------------------
-#define DEBUG_USED_CARD_SLOT_B_							// デバッグ用でカードスロットBを使用する場合に有効にする。
+//#define DEBUG_USED_CARD_SLOT_B_							// デバッグ用でカードスロットBを使用する場合に有効にする。
 
 //-------------------------------------
 
