@@ -24,8 +24,11 @@
 // define data-----------------------------------------------------------------
 #define CARD_BANNER_INDEX			( LAUNCHER_TITLE_LIST_NUM - 1 )
 
-#define SYSTEM_APP_KEY_OFFSET		1 // ファームから送られてくるSYSTEMアプリキーのためのオフセット
-#define LAUNCHER_KEY_OFFSET			0 // ファームから送られてくるLauncherキーのためのオフセット
+#define LAUNCHER_KEY_INDEX			0 // ファームから送られてくる鍵のうちLauncherキーのインデックス
+#define SYSTEM_APP_KEY_INDEX		1 // ファームから送られてくるSYSTEMアプリキーのインデックス
+#define SECURE_APP_KEY_INDEX		2 // ファームから送られてくるSECUREアプリキーのインデックス
+#define USER_APP_KEY_INDEX			3 // ファームから送られてくるUSERアプリキーのインデックス
+
 #define ROM_HEADER_HASH_OFFSET		(0x0) // 署名からROMヘッダハッシュを取り出すためのオフセット
 
 #define SIGN_HEAP_ADDR	0x023c0000	// 署名計算のためのヒープ領域開始アドレス
@@ -48,7 +51,7 @@ typedef	struct	MbAuthCode
 } MbAuthCode;	// 16byte
 
 // extern data-----------------------------------------------------------------
-extern const u8 g_devPubKey[ 3 ][ 0x80 ];
+extern const u8 g_devPubKey[ 4 ][ 0x80 ];
 
 // function's prototype-------------------------------------------------------
 static s32  ReadFile( FSFile* pf, void* buffer, s32 size );
@@ -629,6 +632,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		u8 *hash_addr[RELOCATE_INFO_NUM];
 		int module_num;
 		BOOL b_dev = FALSE;
+		u8 *gamecode = (u8 *)&(pBootTitle->titleID);
 		
 		// pBootTitle->titleIDとROMヘッダのtitleIDの一致確認をする。
 		if( pBootTitle->titleID != head->s.titleID )
@@ -645,36 +649,38 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		
 		prev = OS_GetTick();
 		hi = head->s.titleID_Hi;
-		keynum = (u8)( (hi & TITLE_ID_SECURE_FLAG_MASK) ? 1 : ( (hi & TITLE_ID_HI_APP_TYPE_MASK) ? 0 : 2 ) ); // keynum = 0:SystemApp 1:SecureApp 2:UserApp
+		// Launcherは専用の鍵を使う
+		if( gamecode[3] == 'L' && gamecode[2] == 'N' && gamecode[1] == 'C' )
+		{
+			keynum = LAUNCHER_KEY_INDEX;
+		}else
+		{
+			// keynum = 1:SystemApp 2:SecureApp 3:UserApp
+			keynum = (u8)( (hi & TITLE_ID_SECURE_FLAG_MASK) ? SECURE_APP_KEY_INDEX
+							: ( (hi & TITLE_ID_HI_APP_TYPE_MASK) ? SYSTEM_APP_KEY_INDEX : USER_APP_KEY_INDEX )
+						);
+		}
 		// アプリ種別とボンディングオプションによって使う鍵を分ける
 // #define LNC_PDTKEY_DBG
 #ifdef LNC_PDTKEY_DBG
 		{
-			// 製品版鍵デバグ用コード
-			u8 *gamecode = (u8 *)&(pBootTitle->titleID);
+			// デバグ用コード
 			// 製品版鍵取得
-			key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[SYSTEM_APP_KEY_OFFSET + keynum];
+			key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[keynum];
 			b_dev = TRUE; // 開発版のスルーフラグ
-			// 製品版のLauncherは専用の鍵を使う。開発版は今のところSystemAppの鍵で代用
-			if( gamecode[3] == 'L' && gamecode[2] == 'N' && gamecode[1] == 'C' )
-			{
-				key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[LAUNCHER_KEY_OFFSET];
-			}
 		}
 #else
 	    if( SCFG_GetBondingOption() == 0 ) {
-			u8 *gamecode = (u8 *)&(pBootTitle->titleID);
 			// 製品版鍵取得
-			key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[SYSTEM_APP_KEY_OFFSET + keynum];
-			// 製品版のLauncherは専用の鍵を使う。開発版は今のところSystemAppの鍵で代用
-			if( gamecode[3] == 'L' && gamecode[2] == 'N' && gamecode[1] == 'C' )
-			{
-				key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[LAUNCHER_KEY_OFFSET];
-			}
+			key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[keynum];
 	    }else {
 			// 開発版
 			key = g_devPubKey[keynum];
-			b_dev = TRUE;
+			// デバッガが有効ならば、ハッシュチェックスルーフラグを立てる
+			if(SYSMi_GetWork()->flags.hotsw.isOnDebugger)
+			{
+				b_dev = TRUE;
+			}
 	    }
 #endif
 	    // 署名を鍵で復号
