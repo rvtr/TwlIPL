@@ -437,7 +437,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
         // 各領域を読み込む
         source  [region_header  ] = 0x00000000;
         length  [region_header  ] = HW_TWL_ROM_HEADER_BUF_SIZE;
-        destaddr[region_header  ] = HW_TWL_ROM_HEADER_BUF;
+        destaddr[region_header  ] = SYSM_CARD_ROM_HEADER_BUF;
 		
         source  [region_arm9_ntr] = head->s.main_rom_offset;
         length  [region_arm9_ntr] = head->s.main_size;
@@ -501,9 +501,6 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
         (void)FS_CloseFile(file);
 
     }
-
-	// ROMヘッダバッファをコピー
-	MI_CpuCopy32( (void *)HW_TWL_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 	
 	SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
 }
@@ -574,16 +571,6 @@ static void SYSMi_Relocate( void )
 			dest = (u32 *)SYSMi_GetWork()->romRelocateInfo[ARM9_LTD_STATIC].src;
 		}
 		MI_CpuCopyFast( (void *)SYSM_CARD_TWL_SECURE_BUF, dest, size );
-		// TWL-ROMヘッダ情報の再配置
-		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_TWL_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );
-		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
-	}else {
-		// NTRモード
-		// TWL-ROMヘッダ情報の再配置
-		//   ランチャーのROMヘッダが残っている非コピー領域もクリア
-		MI_CpuClearFast( (void *)HW_TWL_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );
-		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_TWL_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
-		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 	}
 }
 
@@ -603,7 +590,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 	OSTick start,prev;
 	start = OS_GetTick();
 	
-	head = ( ROM_Header *)HW_TWL_ROM_HEADER_BUF;
+	head = ( ROM_Header *)SYSM_CARD_ROM_HEADER_BUF;
 	
 	// NANDアプリの場合、NAM_CheckTitleLaunchRights()を呼んでチェック
 	if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_NAND )
@@ -793,7 +780,7 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 	OSTick start;
 	start = OS_GetTick();
 	
-	head = ( ROM_Header *)HW_TWL_ROM_HEADER_BUF;
+	head = ( ROM_Header *)SYSM_CARD_ROM_HEADER_BUF;
 
 	// 署名処理
     {
@@ -871,7 +858,7 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 // ヘッダ認証
 static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 {
-	ROM_Header_Short *hs = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
+	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BUF;
 	// [TODO:]認証結果はどこかワークに保存しておく
 	if( hs->platform_code & PLATFORM_CODE_FLAG_TWL )
 	{
@@ -958,8 +945,8 @@ static void SYSMi_AuthenticateTitleThreadFunc( TitleProperty *pBootTitle )
 	// BOOTTYPE_MEMORYでNTRモードのFSありでブートすると、旧NitroSDKでビルドされたアプリの場合、
 	// ROMアーカイブにカードが割り当てられて、FSで関係ないカードにアクセスにいってしまうので、それを防止する。
 	if( ( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_MEMORY ) &&
-		( ( (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->platform_code ) == 0 ) &&
-		( ( (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->fat_size ) > 0 )
+		( ( (( ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BUF)->platform_code ) == 0 ) &&
+		( ( (( ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BUF)->fat_size ) > 0 )
 		) {
 		s_authResult = AUTH_RESULT_TITLE_BOOTTYPE_ERROR;
 		return;
@@ -1021,7 +1008,7 @@ static void SYSMi_makeTitleIdList( TitleProperty *pTitleList )
 	// リストに入れるようになっているが
 	// ブート不可タイトルについても対応する必要あり？（特にセキュアアプリの場合）
 	OSTitleIDList *list = ( OSTitleIDList * )HW_OS_TITLE_ID_LIST;
-	ROM_Header_Short *hs = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
+	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BUF;
 	int l;
 	u8 count = 0;
 	

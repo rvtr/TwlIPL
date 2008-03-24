@@ -105,9 +105,25 @@ void BOOT_Init( void )
 BOOL BOOT_WaitStart( void )
 {
 	if( (reg_PXI_MAINPINTF & 0x000f ) == 0x000f ) {
-		ROM_Header *th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ（DSアプリには無い）
-		ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
+		ROM_Header *th;  // TWL拡張ROMヘッダ（DSアプリには無い）
+		ROM_Header *dh;  // DS互換ROMヘッダ
 		BOOL isNtrMode;
+		// ヘッダ情報再配置
+		if( SYSM_GetCardRomHeader()->platform_code & PLATFORM_CODE_FLAG_TWL )
+		{
+			// TWL-ROMヘッダ情報の再配置
+			MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_TWL_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );
+			MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
+		}else {
+			// NTRモード
+			// TWL-ROMヘッダ情報の再配置
+			//   ランチャーのROMヘッダが残っている非コピー領域もクリア
+			MI_CpuClearFast( (void *)HW_TWL_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );
+			MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_TWL_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
+			MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
+		}
+		th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ（DSアプリには無い）
+		dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 
 		(void)OS_DisableIrq();							// ここで割り込み禁止にしないとダメ。
 		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
