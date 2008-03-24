@@ -19,6 +19,7 @@
 #include <twl/camera.h>
 #include <twl/os/common/format_rom.h>
 #include <sysmenu.h>
+#include <sysmenu/hotsw.h>
 #include <sysmenu/ds.h>
 #include <firm/format/wram_regs.h>
 #include <firm/hw/ARM9/mmap_firm.h>
@@ -58,6 +59,9 @@ static void ie_subphandler( void )
 // ブート準備をして、ARM7からの通知を待つ。
 void BOOT_Ready( void )
 {
+	ROM_Header *th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ（DSアプリには無い）
+	ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
+    BOOL isNtrMode;
     int i;
 
     // エントリアドレスの正当性をチェックし、無効な場合は無限ループに入る。
@@ -88,10 +92,20 @@ void BOOT_Ready( void )
     (void)OS_SetIrqMask( 0 );
     (void)OS_ResetRequestIrqMask( (u32)~0 );
 
+    // TWL/NTRモード判定
+    if ( ! dh->s.platform_code ||
+         (SYSM_IsRunOnDebugger() && ((SYSMRomEmuInfo*)HOTSW_GetRomEmulationBuffer())->isForceNTRMode) )
+    {
+        isNtrMode = TRUE;
+    }
+    else
+    {
+        isNtrMode = FALSE;
+    }
+
     // WRAMの配置
     {
-        ROM_Header_Short *pROMH = (ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
-        MIHeader_WramRegs *pWRAMREGS = (MIHeader_WramRegs *)pROMH->main_wram_config_data;
+        MIHeader_WramRegs *pWRAMREGS = (MIHeader_WramRegs *)th->s.main_wram_config_data;
         reg_GX_VRAMCNT_C    = pWRAMREGS->main_vrambnk_c;
         reg_GX_VRAMCNT_D    = pWRAMREGS->main_vrambnk_d;
         // WRAM0/1の最終配置はOS_Bootで行う
@@ -123,12 +137,9 @@ void BOOT_Ready( void )
 		};
 	    
 		REBOOTTarget target = REBOOT_TARGET_TWL_SYSTEM;
-        BOOL ds = FALSE;
-		ROM_Header *th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ（DSアプリには無い）
-		ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 		
 		// アプリケーション選択
-		if ( dh->s.platform_code )
+		if ( ! isNtrMode )
 		{
 			if ( th->s.titleID_Hi & TITLE_ID_HI_APP_TYPE_MASK )
 			{
@@ -153,11 +164,6 @@ void BOOT_Ready( void )
 		{
 			target = REBOOT_TARGET_DS_APP;
 		}
-		
-        if ( target == REBOOT_TARGET_DS_APP || target == REBOOT_TARGET_DS_WIFI )
-        {
-            ds = TRUE;
-        }
 
 #if defined(FIRM_USE_TWLSDK_KEYS) || defined(SYSMENU_DISABLE_RETAIL_BOOT)
         // TwlSDK内の鍵を使っている時は製品用CPUではTWLアプリはブートしない

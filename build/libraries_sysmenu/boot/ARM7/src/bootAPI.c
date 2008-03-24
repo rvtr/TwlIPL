@@ -20,6 +20,7 @@
 #include <twl/cdc.h>
 #include <twl/aes/ARM7/lo.h>
 #include <sysmenu.h>
+#include <sysmenu/hotsw.h>
 #include <sysmenu/ds.h>
 #include <firm/hw/ARM7/mmap_firm.h>
 #include <firm/format/from_brom.h>
@@ -104,6 +105,9 @@ void BOOT_Init( void )
 BOOL BOOT_WaitStart( void )
 {
 	if( (reg_PXI_MAINPINTF & 0x000f ) == 0x000f ) {
+		ROM_Header *th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ（DSアプリには無い）
+		ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
+		BOOL isNtrMode;
 
 		(void)OS_DisableIrq();							// ここで割り込み禁止にしないとダメ。
 		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
@@ -117,16 +121,26 @@ BOOL BOOT_WaitStart( void )
 		reg_MI_MBK9 = 0;								// 全WRAMのロック解除
 		reg_PXI_MAINPINTF = MAINP_SEND_IF | 0x0100;		// ARM9に対してブートするようIRQで要求＋ARM7のステートを１にする。
 		
+        // TWL/NTRモード判定
+        if ( ! dh->s.platform_code ||
+             (SYSM_IsRunOnDebugger() && ((SYSMRomEmuInfo*)HOTSW_GetRomEmulationBuffer())->isForceNTRMode) )
+        {
+            isNtrMode = TRUE;
+        }
+        else
+        {
+            isNtrMode = FALSE;
+        }
+		
 		// 鍵情報の引渡しを行う。
 		// ブートアプリのROMヘッダのaccessKeyControl情報を見て判定
 		// 引渡しは、IRQスタック領域を使うので、割り込みを禁止してからセットする。
 		{
-			ROM_Header *th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ
 			BOOL isClearSlotB = TRUE;
 			BOOL isClearSlotC = TRUE;
 			
 			MI_CpuClearFast( (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, HW_LAUNCHER_DELIVER_PARAM_BUF_SIZE );
-			if( th->s.platform_code & PLATFORM_CODE_FLAG_TWL ) {
+			if( ! isNtrMode ) {
 				if( th->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK ) {
 					// commonClientKey
 					if( th->s.access_control.common_client_key ) {
@@ -171,9 +185,6 @@ BOOL BOOT_WaitStart( void )
 		// SDK共通リブート
 		{
 			REBOOTTarget target = REBOOT_TARGET_TWL_SYSTEM;
-            BOOL ds = FALSE;
-			ROM_Header *th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ（DSアプリには無い）
-			ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 			int list_count = PRE_CLEAR_NUM_MAX + 1;
 			int l;
 			u32 *post_clear_list;
@@ -197,7 +208,7 @@ BOOL BOOT_WaitStart( void )
 				// post clear
 				NULL,
 			};
-			if( dh->s.platform_code )
+			if( ! isNtrMode )
 			{
 				mem_list[1] = (u32)th->s.sub_mount_info_ram_address - SYSM_OWN_ARM7_WRAM_ADDR;
 				mem_list[2] = ((u32)th->s.sub_mount_info_ram_address + SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN);
@@ -234,7 +245,7 @@ BOOL BOOT_WaitStart( void )
 			mem_list[list_count++] = NULL;
 			
 			// post clearリスト設定
-			if ( dh->s.platform_code )
+			if ( ! isNtrMode )
 			{
 				post_clear_list = twl_post_clear_list;
 				BOOTi_CutAwayRegionList( post_clear_list, (u32)th->s.main_ltd_ram_address, (u32)th->s.main_ltd_ram_address + th->s.main_ltd_size);
@@ -256,7 +267,7 @@ BOOL BOOT_WaitStart( void )
 			SND_Shutdown();
 			
 			// アプリケーション選択
-			if ( dh->s.platform_code )
+			if ( ! isNtrMode )
 			{
 				if ( th->s.titleID_Hi & TITLE_ID_HI_APP_TYPE_MASK )
 				{
@@ -283,11 +294,6 @@ BOOL BOOT_WaitStart( void )
 			{
 				target = REBOOT_TARGET_DS_APP;
 			}
-			
-            if ( target == REBOOT_TARGET_DS_APP || target == REBOOT_TARGET_DS_WIFI )
-            {
-                ds = TRUE;
-            }
 
 			// 外部デポップ回路を有効にする
 			CDC_EnableExternalDepop();
@@ -295,7 +301,7 @@ BOOL BOOT_WaitStart( void )
 			// I2S停止（MCLKは動作継続）
 			reg_SND_SMX_CNT &= ~REG_SND_SMX_CNT_E_MASK;
 
-            if ( ds || th->s.codec_mode == OS_CODECMODE_NITRO )
+            if ( isNtrMode || th->s.codec_mode == OS_CODECMODE_NITRO )
             {
 				// （CODEC-DSモード）
 				CDC_GoDsMode();
