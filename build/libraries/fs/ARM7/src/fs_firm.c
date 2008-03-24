@@ -114,8 +114,7 @@ void FS_InitMountInfo( BOOL nand, BOOL sdmc )
         *(u32*)dest = 0;
     }
     *(u8*)HW_TWL_RED_LAUNCHER_VER = 1;
-    *(char*)HW_FIRM_BOOT_SRL_PATH_BUF = 0;
-//  MI_CpuCopy8("nand:/nandfirm/menu_launcher.srl", (char*)HW_FIRM_BOOT_SRL_PATH_BUF, 0x40);
+    *(char*)HW_FIRM_BOOT_SRL_PATH_BUF = 0; // no rom archive
 }
 
 /*---------------------------------------------------------------------------*
@@ -129,8 +128,7 @@ void FS_InitMountInfo( BOOL nand, BOOL sdmc )
  *---------------------------------------------------------------------------*/
 int FS_OpenSrl( void )
 {
-#define BOOT_SRL_PATH_BUF_SIZE  (HW_TWL_ROM_HEADER_BUF - HW_TWL_FS_BOOT_SRL_PATH_BUF)
-    u16 fatpath[BOOT_SRL_PATH_BUF_SIZE];
-    ConvertPath(fatpath, (void*)HW_TWL_FS_BOOT_SRL_PATH_BUF, BOOT_SRL_PATH_BUF_SIZE);
+    u16 fatpath[HW_FIRM_FS_BOOT_SRL_PATH_BUF_SIZE];
+    ConvertPath(fatpath, (void*)HW_TWL_FS_BOOT_SRL_PATH_BUF, HW_FIRM_FS_BOOT_SRL_PATH_BUF_SIZE);
     return FATFSi_rtfs_po_open((u8*)fatpath, 0, 0);
 }

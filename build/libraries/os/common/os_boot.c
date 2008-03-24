@@ -82,23 +82,26 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     mem_list[i++] = NULL;
     // copy forward
 #ifdef SDK_ARM7
-    if ( *(char*)HW_TWL_FS_MOUNT_INFO_BUF )
-    {
-        mem_list[i++] = HW_TWL_FS_MOUNT_INFO_BUF;
-        mem_list[i++] = (u32)rom_header->s.sub_mount_info_ram_address;
-        mem_list[i++] = HW_TWL_ROM_HEADER_BUF - HW_TWL_FS_MOUNT_INFO_BUF;
-    }
+    // MountInfo (移動する？)
+    mem_list[i++] = HW_TWL_FS_MOUNT_INFO_BUF;
+    mem_list[i++] = (u32)rom_header->s.sub_mount_info_ram_address;
+    mem_list[i++] = HW_FIRM_FS_MOUNT_INFO_BUF_SIZE;
+    // srlファイル名
+    mem_list[i++] = HW_TWL_FS_BOOT_SRL_PATH_BUF;
+    mem_list[i++] = (u32)rom_header->s.sub_mount_info_ram_address + HW_FIRM_FS_MOUNT_INFO_BUF_SIZE;
+    mem_list[i++] = HW_FIRM_FS_BOOT_SRL_PATH_BUF_SIZE;
 #endif
     mem_list[i++] = NULL;
     // copy backward
     mem_list[i++] = NULL;
     // post clear
 #ifdef SDK_ARM7
-    if ( *(char*)HW_TWL_FS_MOUNT_INFO_BUF )
-    {
-        mem_list[i++] = HW_TWL_FS_MOUNT_INFO_BUF;
-        mem_list[i++] = HW_TWL_ROM_HEADER_BUF - HW_TWL_FS_MOUNT_INFO_BUF;
-    }
+    // MountInfo (移動する？)
+    mem_list[i++] = HW_TWL_FS_MOUNT_INFO_BUF;
+    mem_list[i++] = HW_FIRM_FS_MOUNT_INFO_BUF_SIZE;
+    // srlファイル名
+    mem_list[i++] = HW_TWL_FS_BOOT_SRL_PATH_BUF;
+    mem_list[i++] = HW_FIRM_FS_BOOT_SRL_PATH_BUF_SIZE;
 #endif
     mem_list[i++] = NULL;
     SDK_ASSERT(i <= sizeof(mem_list)/sizeof(mem_list[0]));
