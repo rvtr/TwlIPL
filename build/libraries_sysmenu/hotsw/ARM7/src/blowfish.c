@@ -21,11 +21,12 @@
 // Function Prototype -------------------------------------------------------
 static u32 F(const BLOWFISH_CTX *ctx, u32 x);
 
-//*****************************************
-//
-// 	GCDm_MakeBlowfishTableDSŠÖ”
-//
-//*****************************************
+
+/*---------------------------------------------------------------------------*
+  Name:         GCDm_MakeBlowfishTableDS
+  
+  Description:  KeyTable‚Ì¶¬
+ *---------------------------------------------------------------------------*/
 void GCDm_MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen)
 {
 	const BLOWFISH_CTX *initTable = &HotSwBlowfishInitTableBufDS;
@@ -42,10 +43,14 @@ void GCDm_MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen)
     }
     else{
 		keyBuf	= cbd->keyBuf2;
-        
-		MI_CpuCopyFast((void *)((OSFromFirm7Buf *)HW_FIRM_FROM_FIRM_BUF)->twl_blowfish, (void *)ctx, sizeof(BLOWFISH_CTX));
+
+		MI_CpuCopyFast(&HotSwBlowfishInitTableTWL, (void *)ctx, sizeof(BLOWFISH_CTX));
+//		MI_CpuCopyFast((void *)((OSFromFirm7Buf *)HW_FIRM_FROM_FIRM_BUF)->twl_blowfish, (void *)ctx, sizeof(BLOWFISH_CTX));
+
+        return;
     }
 
+	// [TODO] KeyTable2—p‚Ì‰Šú‰»
   	keyBuf[0] = *RomHeaderGameCode;
   	keyBuf[1] = *RomHeaderGameCode >> 1;
   	keyBuf[2] = *RomHeaderGameCode << 1;
@@ -60,11 +65,12 @@ void GCDm_MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen)
   	InitBlowfishKeyAndTableDS(ctx, keyBuf, keyLen);
 }
 
-//*****************************************
-//
-// 	InitBlowfishKeyAndTableDSŠÖ”
-//
-//*****************************************
+
+/*---------------------------------------------------------------------------*
+  Name:         InitBlowfishKeyAndTableDS
+  
+  Description:  
+ *---------------------------------------------------------------------------*/
 void InitBlowfishKeyAndTableDS(BLOWFISH_CTX *ctx, u32 *keyBufp, s32 keyLen)
 {
   EncryptByBlowfish(ctx, &(keyBufp)[2], &(keyBufp)[1]);
@@ -72,11 +78,12 @@ void InitBlowfishKeyAndTableDS(BLOWFISH_CTX *ctx, u32 *keyBufp, s32 keyLen)
   InitBlowfish(ctx, (u8 *)keyBufp, keyLen);
 }
 
-//*****************************************
-//
-// 	InitBlowfishŠÖ”
-//
-//*****************************************
+
+/*---------------------------------------------------------------------------*
+  Name:         InitBlowfish
+  
+  Description:  
+ *---------------------------------------------------------------------------*/
 void InitBlowfish(BLOWFISH_CTX *ctx, const unsigned char *key, int keyLen)
 {
   int i, j, k;
@@ -113,11 +120,12 @@ void InitBlowfish(BLOWFISH_CTX *ctx, const unsigned char *key, int keyLen)
 
 }
 
-//*****************************************
-//
-// 	EncryptByBlowfishŠÖ”
-//
-//*****************************************
+
+/*---------------------------------------------------------------------------*
+  Name:         EncryptByBlowfish
+  
+  Description:  
+ *---------------------------------------------------------------------------*/
 void EncryptByBlowfish(const BLOWFISH_CTX *ctx, u32 *xl, u32 *xr)
 {
   u32  Xl;
@@ -149,11 +157,12 @@ void EncryptByBlowfish(const BLOWFISH_CTX *ctx, u32 *xl, u32 *xr)
   *xr = Xr;
 }
 
-//*****************************************
-//
-// 	DecryptByBlowfishŠÖ”
-//
-//*****************************************
+
+/*---------------------------------------------------------------------------*
+  Name:         DecryptByBlowfish
+  
+  Description:  
+ *---------------------------------------------------------------------------*/
 void DecryptByBlowfish(const BLOWFISH_CTX *ctx, u32 *xl, u32 *xr)
 {
   u32  Xl;
@@ -187,11 +196,12 @@ void DecryptByBlowfish(const BLOWFISH_CTX *ctx, u32 *xl, u32 *xr)
   *xr = Xr;
 }
 
-//*****************************************
-//
-// 	FŠÖ”
-//
-//*****************************************
+
+/*---------------------------------------------------------------------------*
+  Name:         F
+  
+  Description:  
+ *---------------------------------------------------------------------------*/
 static u32 F(const BLOWFISH_CTX *ctx, u32 x) {
    u32  a, b, c, d;
    u32  y;
@@ -214,5 +224,3 @@ static u32 F(const BLOWFISH_CTX *ctx, u32 x) {
 
    return y;
 }
-
-

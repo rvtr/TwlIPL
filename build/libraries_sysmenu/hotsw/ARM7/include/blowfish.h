@@ -23,6 +23,7 @@ extern "C" {
 
 /*************************************************************************/
 extern BLOWFISH_CTX  HotSwBlowfishInitTableBufDS;
+extern BLOWFISH_CTX	 HotSwBlowfishInitTableTWL;
 
 // Function Prototype ------------------------------------------------------------------------
 // Blowfish èâä˙âª

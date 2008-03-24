@@ -31,6 +31,11 @@ static void PreSendSecureCommand(CardBootData *cbd, u32 *scrambleMask);
 // 	Function Describe
 // ===========================================================================
 
+/*---------------------------------------------------------------------------*
+  Name:			HOTSWi_SetCommand
+
+  Description:  引数で与えられたコマンドのエンディアンを変えてレジスタにセットする
+ *---------------------------------------------------------------------------*/
 void HOTSWi_SetCommand(GCDCmd64 *cndLE)
 {
 	GCDCmd64 cndBE;
@@ -57,11 +62,11 @@ void HOTSWi_SetCommand(GCDCmd64 *cndLE)
 // ■------------------------------------■
 // ■       ノーマルモードのコマンド     ■
 // ■------------------------------------■
-/* -----------------------------------------------------------------
- * ReadIDNormal関数
- *
- * ノーマルモード時のカードIDを読み込む関数
- * ----------------------------------------------------------------- */
+/*---------------------------------------------------------------------------*
+  Name:			ReadIDNormal
+
+  Description:  ノーマルモード時のカードIDを読み込む関数
+ *---------------------------------------------------------------------------*/
 HotSwState ReadIDNormal(CardBootData *cbd)
 {
 	GCDCmd64 cndLE;
@@ -86,6 +91,8 @@ HotSwState ReadIDNormal(CardBootData *cbd)
 
     // DMAが終了するまで待つ
     HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
+
+//	OS_TPrintf("Normal ID : 0x%08x\n", cbd->id_nml);
     
     return HOTSW_SUCCESS;
 }
@@ -165,11 +172,11 @@ HotSwState ReadBootSegNormal(CardBootData *cbd)
 }
 
 
-/* -----------------------------------------------------------------
- * ReadStatusNormal関数
- *
- * ノーマルモードでステータスを読み込む
- * ----------------------------------------------------------------- */
+/*---------------------------------------------------------------------------*
+  Name:			ReadStatusNormal
+
+  Description:  ノーマルモードでステータスを読み込む
+ *---------------------------------------------------------------------------*/
 HotSwState ReadStatusNormal(CardBootData *cbd)
 {
 	GCDCmd64 cndLE;
@@ -205,11 +212,11 @@ HotSwState ReadStatusNormal(CardBootData *cbd)
 }
 
 
-/* -----------------------------------------------------------------
- * RefreshBadBlockNormal関数
- *
- * ノーマルモードでバッドブロックを置換
- * ----------------------------------------------------------------- */
+/*---------------------------------------------------------------------------*
+  Name:			RefreshBadBlockNormal
+
+  Description:  ノーマルモードでバッドブロックを置換
+ *---------------------------------------------------------------------------*/
 HotSwState RefreshBadBlockNormal(CardBootData *cbd)
 {
 	GCDCmd64 cndLE;
@@ -248,6 +255,7 @@ HotSwState ChangeModeNormal(CardBootData *cbd)
 {
 	return HOTSWi_ChangeModeNormal(cbd, HSWOP_N_OP_CHG_MODE);
 }
+
 
 /*---------------------------------------------------------------------------*
  * Name:         ChangeModeNorma2
@@ -291,14 +299,14 @@ static HotSwState HOTSWi_ChangeModeNormal(CardBootData *cbd, u64 cmd)
 }
 
 
-/* -----------------------------------------------------------------
- * LoadTable関数
- *
- * カード側の Key Table をロードする関数。
- *
- * ※この関数は開発カード用に発行しないといけない。
- *   製品版カードの場合、このコマンドは無視される
- * ----------------------------------------------------------------- */
+/*---------------------------------------------------------------------------*
+  Name:			LoadTable
+
+  Description:  カード側の Key Table をロードする関数
+
+  ※この関数は開発カード用に発行しないといけない。
+  　製品版カードの場合、このコマンドは無視される
+ *---------------------------------------------------------------------------*/
 HotSwState LoadTable(void)
 {
 	GCDCmd64 cndLE;
@@ -327,6 +335,7 @@ HotSwState LoadTable(void)
     
     return HOTSW_SUCCESS;
 }
+
 
 /*---------------------------------------------------------------------------*
   Name:         ReadRomEmulationData
@@ -377,7 +386,7 @@ HotSwState ReadRomEmulationData(CardBootData *cbd)
 /*---------------------------------------------------------------------------*
   Name:         SetSecureCommand
   
-  Description:  
+  Description:  引数で与えられたコマンドをBlowfishで暗号化してレジスタにセット
  *---------------------------------------------------------------------------*/
 static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
 {
@@ -490,6 +499,7 @@ HotSwState ReadIDSecure(CardBootData *cbd)
     return HOTSW_SUCCESS;
 }
 
+
 /*---------------------------------------------------------------------------*
  * Name:         ReadSegSecure
  * 
@@ -565,6 +575,7 @@ HotSwState ReadSegSecure(CardBootData *cbd)
     return HOTSW_SUCCESS;
 }
 
+
 /*---------------------------------------------------------------------------*
  * Name:         SwitchONPNGSecure
  * 
@@ -602,6 +613,7 @@ HotSwState SwitchONPNGSecure(CardBootData *cbd)
     return HOTSW_SUCCESS;
 }
 
+
 /*---------------------------------------------------------------------------*
  * Name:         SwitchOFFPNGSecure
  * 
@@ -638,6 +650,7 @@ HotSwState SwitchOFFPNGSecure(CardBootData *cbd)
 
     return HOTSW_SUCCESS;
 }
+
 
 /*---------------------------------------------------------------------------*
  * Name:         ChangeModeSecure
@@ -719,6 +732,7 @@ HotSwState ReadIDGame(CardBootData *cbd)
     return HOTSW_SUCCESS;
 }
 
+
 /*---------------------------------------------------------------------------*
  * Name:         ReadPageGame
  * 
@@ -767,6 +781,7 @@ HotSwState ReadPageGame(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
     return HOTSW_SUCCESS;
 }
 
+
 /*---------------------------------------------------------------------------*
  * Name:         ReadStatusGame
  * 
@@ -803,6 +818,7 @@ HotSwState ReadStatusGame(CardBootData *cbd)
     
     return HOTSW_SUCCESS;
 }
+
 
 /* -----------------------------------------------------------------
  * RefreshBadBlockGame関数

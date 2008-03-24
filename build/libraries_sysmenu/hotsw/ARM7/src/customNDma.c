@@ -19,22 +19,32 @@ static void HOTSWi_NDmaCopy_Card(u32 ndmaNo, const void *src, void *dest, u32 si
 // ===========================================================================
 /*---------------------------------------------------------------------------*
   Name:         HOTSW_NDmaCopy_Card
+  
+  Description:  カードから送られてきたデータを指定アドレスにDMA転送する
  *---------------------------------------------------------------------------*/
 void HOTSW_NDmaCopy_Card(u32 ndmaNo, const void *src, void *dest, u32 size)
 {
 	HOTSWi_NDmaCopy_Card(ndmaNo, src, dest, size, MI_NDMA_DEST_INC);
 }
 
+
 /*---------------------------------------------------------------------------*
   Name:         HOTSW_NDmaPipe_Card
+  
+  Description:  カードから送られてきたデータを指定アドレスにDMA転送で読み捨てる
  *---------------------------------------------------------------------------*/
 void HOTSW_NDmaPipe_Card(u32 ndmaNo, const void *src, void *dest, u32 size)
 {
 	HOTSWi_NDmaCopy_Card(ndmaNo, src, dest, size, MI_NDMA_DEST_FIX);
 }
 
+
 /*---------------------------------------------------------------------------*
   Name:         HOTSWi_NDmaCopy_Card
+  
+  Description:  DMA転送の準備
+
+  注：先にこの関数でDMA転送の準備をしてから、カードレジスタのstartフラグを上げてください
  *---------------------------------------------------------------------------*/
 static void HOTSWi_NDmaCopy_Card(u32 ndmaNo, const void *src, void *dest, u32 size, u32 dcont)
 {

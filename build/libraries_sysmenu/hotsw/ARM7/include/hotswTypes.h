@@ -48,6 +48,9 @@ extern "C" {
 #define SECURE_SEGMENT_SIZE                 0x4000
 #define SECURE_SEGMENT_END	   				(SECURE_SEGMENT_START + SECURE_SEGMENT_SIZE)
 
+// --- TWL Card
+#define TWLCARD_BORDER_OFFSET				0x80000
+
 // --- Page / Segment (Byte)
 #define PAGE_SIZE                           0x200
 #define ONE_SEGMENT_SIZE                    0x1000
@@ -281,16 +284,18 @@ typedef struct CardBootData{
     u32                 arm7Stc;
     u32                 arm9Ltd;
     u32                 arm7Ltd;
-
+    
     BOOL                twlFlg;
     BOOL                debuggerFlg;
-
-    u32                 romStatus;
+	BOOL				illegalCardFlg;
+    BOOL				isLoadTypeTwl;
 
     u32                 romEmuBuf[ROM_EMULATION_DATA_SIZE/sizeof(u32)];
     u32                 keyBuf[KEY_BUF_SIZE];
     u32					keyBuf2[KEY_BUF_SIZE];
 
+    u32                 romStatus;
+    
     CardTypeEx          cardType;
    	ModeType			modeType;
     RomMode				romMode;
@@ -306,8 +311,10 @@ typedef struct CardBootData{
 
 // スレッド・メッセージ関係をまとめた構造体
 typedef struct CardThreadData{
-    u64  				stack[HOTSW_THREAD_STACK_SIZE / sizeof(u64)];
-	OSThread 			thread;
+    u64  				hotswStack[HOTSW_THREAD_STACK_SIZE / sizeof(u64)];
+    u64  				monitorStack[HOTSW_THREAD_STACK_SIZE / sizeof(u64)];
+	OSThread 			hotswThread;
+    OSThread			monitorThread;
 
 	u32 				idx_insert;
     u32					idx_pulledOut;
@@ -327,18 +334,12 @@ typedef struct CardThreadData{
 } CardThreadData;
 
 // カード起動用関数
-typedef struct CardBootFunction {
-    HotSwState (*ReadBootSegment_N)(CardBootData *cbd);
-    HotSwState (*ChangeMode_N)(CardBootData *cbd);
-
+typedef struct CardLoadFunction {
     HotSwState (*ReadID_S)(CardBootData *cbd);
     HotSwState (*ReadSegment_S)(CardBootData *cbd);
     HotSwState (*SetPNG_S)(CardBootData *cbd);
     HotSwState (*ChangeMode_S)(CardBootData *cbd);
-
-    HotSwState (*ReadID_G)(CardBootData *cbd);
-    HotSwState (*ReadPage_G)(CardBootData *cbd, u32 addr, void* buf, u32 size);
-} CardBootFunction;
+} CardLoadFunction;
 
 #ifdef __cplusplus
 } /* extern "C" */

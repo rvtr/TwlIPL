@@ -81,6 +81,7 @@ HotSwState ReadIDSecure_ROMEMU(CardBootData *cbd)
     return HOTSW_SUCCESS;
 }
 
+
 /*---------------------------------------------------------------------------*
   Name:         ReadSegSecure_ROMEMU
   
@@ -123,6 +124,7 @@ HotSwState ReadSegSecure_ROMEMU(CardBootData *cbd)
     return HOTSW_SUCCESS;
 }
 
+
 /*---------------------------------------------------------------------------*
   Name:         SwitchONPNGSecure_ROMEMU
   
@@ -135,6 +137,7 @@ HotSwState SwitchONPNGSecure_ROMEMU(CardBootData *cbd)
     return HOTSW_SUCCESS;
 }
 
+
 /*---------------------------------------------------------------------------*
   Name:         SwitchOFFPNGSecure_ROMEMU
   
@@ -146,6 +149,7 @@ HotSwState SwitchOFFPNGSecure_ROMEMU(CardBootData *cbd)
 
     return HOTSW_SUCCESS;
 }
+
 
 /*---------------------------------------------------------------------------*
   Name:         ChangeModeSecure_ROMEMU
@@ -178,6 +182,7 @@ HotSwState ChangeModeSecure_ROMEMU(CardBootData *cbd)
 
     return HOTSW_SUCCESS;
 }
+
 
 // ■------------------------------------■
 // ■       ゲームモードのコマンド       ■

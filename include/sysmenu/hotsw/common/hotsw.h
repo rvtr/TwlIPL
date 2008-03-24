@@ -63,6 +63,9 @@ BOOL HOTSW_IsCardExist(void);
 // カードにアクセスできる状態か判定
 BOOL HOTSW_IsCardAccessible(void);
 
+// デバッグ用
+void HOTSW_CardIF_Polling(void);
+
 // Romエミュレーション情報を格納しているバッファのポインタを返す
 #ifdef SDK_ARM7
 void* HOTSW_GetRomEmulationBuffer(void);
