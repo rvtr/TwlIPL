@@ -265,19 +265,19 @@ void TwlMain( void )
     switch ( PAD_Read() & PAD_KEYPORT_MASK )
     {
     case 0:
-        STD_CopyString((char*)HW_FIRM_TEMP_SRL_PATH_BUF, MENU_FILE);
+        STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE);
         break;
     case PAD_BUTTON_A:
-        STD_CopyString((char*)HW_FIRM_TEMP_SRL_PATH_BUF, MENU_FILE_A);
+        STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE_A);
         break;
     case PAD_BUTTON_B:
-        STD_CopyString((char*)HW_FIRM_TEMP_SRL_PATH_BUF, MENU_FILE_B);
+        STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE_B);
         break;
     case PAD_BUTTON_L:
-        STD_CopyString((char*)HW_FIRM_TEMP_SRL_PATH_BUF, MENU_FILE_L);
+        STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE_L);
         break;
     case PAD_BUTTON_R:
-        STD_CopyString((char*)HW_FIRM_TEMP_SRL_PATH_BUF, MENU_FILE_R);
+        STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE_R);
         break;
     default:
         OS_TPrintf("Unknown pad pattern (%X).\n", PAD_Read() & PAD_KEYPORT_MASK);

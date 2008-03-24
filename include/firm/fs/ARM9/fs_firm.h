@@ -54,7 +54,7 @@ BOOL FS_GetTitleBootContentPathFast(char* buf, OSTitleId titleId);
 /*---------------------------------------------------------------------------*
   Name:         FS_ResolveSrl
 
-  Description:  resolve srl filename and store to HW_FIRM_TEMP_SRL_PATH_BUF
+  Description:  resolve srl filename and store to HW_TWL_FS_BOOT_SRL_PATH_BUF
 
   Arguments:    titleId         title id for srl file
 
@@ -65,7 +65,7 @@ BOOL FS_ResolveSrl( OSTitleId titleId );
 /*---------------------------------------------------------------------------*
   Name:         FS_ResolveSrlUnsecured
 
-  Description:  resolve srl filename and store to HW_FIRM_TEMP_SRL_PATH_BUF
+  Description:  resolve srl filename and store to HW_TWL_FS_BOOT_SRL_PATH_BUF
                 without almost security check
 
   Arguments:    titleId         title id for srl file

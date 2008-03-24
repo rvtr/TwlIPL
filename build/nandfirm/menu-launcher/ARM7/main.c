@@ -65,8 +65,6 @@ static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
 #define DMA_FATFS_1         0
 #define DMA_FATFS_2         1
 
-extern void*   SDNandContext;  /* NAND‰Šú‰»ƒpƒ‰ƒ[ƒ^ */
-
 static ROM_Header* const rh= (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
 
 static OSThread idleThread;
@@ -220,7 +218,6 @@ void TwlSpMain( void )
 
 //    PM_BackLightOn( FALSE );
 
-    SDNandContext = &OSi_GetFromFirmAddr()->SDNandContext;
     if ( !FATFS_Init( DMA_FATFS_1, DMA_FATFS_2, THREAD_PRIO_FATFS ) )
     {
         OS_TPrintf("Failed to call FATFS_Init().\n");

@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <firm/os.h>
+#include <firm/fs.h>
 #include "reboot.h"
 
 extern void SDK_STATIC_START(void);     // static and bss start address
@@ -34,15 +35,15 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
 {
 #ifdef SDK_ARM9
     void *entry = rom_header->s.main_entry_address;
-    void *code_buf = (void*)OS_BOOT_CODE_BUF;   // 0x023fee00
-    void *stack_top = (void*)OS_BOOT_STACK_TOP; // (HW_DTCM_END - HW_DTCM_SYSRV_SIZE - HW_SVC_STACK_SIZE)
+    void *const code_buf = (void*)OS_BOOT_CODE_BUF;   // 0x023fee00
+    void *const stack_top = (void*)OS_BOOT_STACK_TOP; // (HW_DTCM_END - HW_DTCM_SYSRV_SIZE - HW_SVC_STACK_SIZE)
 #else
     void *entry = rom_header->s.sub_entry_address;
-    void *code_buf = (void*)OS_BOOT_CODE_BUF;   // 0x03fff600
-    void *stack_top = (void*)OS_BOOT_STACK_TOP; // (HW_WRAM_AREA_END - HW_PRV_WRAM_SYSRV_SIZE - HW_SVC_STACK_SIZE)
+    void *const code_buf = (void*)OS_BOOT_CODE_BUF;   // 0x03fff600
+    void *const stack_top = (void*)OS_BOOT_STACK_TOP; // (HW_WRAM_AREA_END - HW_PRV_WRAM_SYSRV_SIZE - HW_SVC_STACK_SIZE)
 #endif
-    void *wram_reg = rom_header->s.main_wram_config_data;
-    REBOOTTarget target = REBOOT_TARGET_TWL_SECURE;
+    void *const wram_reg = rom_header->s.main_wram_config_data;
+    REBOOTTarget target = rom_header->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK ? REBOOT_TARGET_TWL_SECURE : (rom_header->s.titleID_Hi & TITLE_ID_HI_APP_TYPE_MASK ? REBOOT_TARGET_TWL_SYSTEM : REBOOT_TARGET_TWL_APP);
     BOOL scfg = TRUE;   // no touch
     BOOL jtag = FALSE;  // no touch
     static u32  mem_list[32];
@@ -80,10 +81,25 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
 #endif  // SDK_ARM7
     mem_list[i++] = NULL;
     // copy forward
+#ifdef SDK_ARM7
+    if ( *(char*)HW_TWL_FS_MOUNT_INFO_BUF )
+    {
+        mem_list[i++] = HW_TWL_FS_MOUNT_INFO_BUF;
+        mem_list[i++] = (u32)rom_header->s.sub_mount_info_ram_address;
+        mem_list[i++] = HW_TWL_ROM_HEADER_BUF - HW_TWL_FS_MOUNT_INFO_BUF;
+    }
+#endif
     mem_list[i++] = NULL;
     // copy backward
     mem_list[i++] = NULL;
     // post clear
+#ifdef SDK_ARM7
+    if ( *(char*)HW_TWL_FS_MOUNT_INFO_BUF )
+    {
+        mem_list[i++] = HW_TWL_FS_MOUNT_INFO_BUF;
+        mem_list[i++] = HW_TWL_ROM_HEADER_BUF - HW_TWL_FS_MOUNT_INFO_BUF;
+    }
+#endif
     mem_list[i++] = NULL;
     SDK_ASSERT(i <= sizeof(mem_list)/sizeof(mem_list[0]));
 #ifdef FIRM_USE_TWLSDK_KEYS
@@ -128,6 +144,10 @@ BOOL OSi_FromBromToMenu( void )
             result = FALSE;
         }
     }
+#if SDK_ARM7
+    // copy nand context
+    MI_CpuCopyFast( &fromBromBuf->SDNandContext, (void*)HW_SD_NAND_CONTEXT_BUF, sizeof(SDPortContextData) );
+#endif
     // clear out of OSFromFirmBuf area
     MI_CpuClearFast( fromBromBuf->header.max, sizeof(fromBromBuf->header.max) );
     return result;

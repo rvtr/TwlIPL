@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlIPL - include - fs
-  File:     fs.h
+  File:     fs_firm_ex.h
 
-  Copyright 2007 Nintendo.  All rights reserved.
+  Copyright 2008 Nintendo.  All rights reserved.
 
   These coded instructions, statements, and computer programs contain
   proprietary information of Nintendo of America Inc. and/or Nintendo
@@ -15,18 +15,28 @@
   $Author$
  *---------------------------------------------------------------------------*/
 
-#ifndef FIRM_FS_H_
-#define FIRM_FS_H_
+#ifndef FIRM_FS_FS_FIRM_EX_H_
+#define FIRM_FS_FS_FIRM_EX_H_
 
-#ifdef SDK_ARM7
-#include <firm/fs/ARM7/fs_firm.h>
-#include <firm/fs/ARM7/fs_firm_ex.h>
-#include <firm/fs/ARM7/fs_loader.h>
-#else
-#include <firm/fs/ARM9/fs_firm.h>
-#include <firm/fs/ARM9/fs_loader.h>
-#endif // SDK_ARM7
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/*---------------------------------------------------------------------------*
+  Name:         FS_SetMountInfoForSrl
+
+  Description:  set mount info for srl file
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void FS_SetMountInfoForSrl( void );
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 
-/* FIRM_FS_H_ */
+/* FIRM_FS_FS_FIRM_EX_H_ */
 #endif

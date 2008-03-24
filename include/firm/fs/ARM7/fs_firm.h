@@ -35,17 +35,6 @@ extern "C" {
 void FS_InitMountInfo( BOOL nand, BOOL sdmc );
 
 /*---------------------------------------------------------------------------*
-  Name:         FS_SetMountInfoForSrl
-
-  Description:  set mount info for srl file
-
-  Arguments:    None
-
-  Returns:      None
- *---------------------------------------------------------------------------*/
-void FS_SetMountInfoForSrl( void );
-
-/*---------------------------------------------------------------------------*
   Name:         FS_OpenSrl
 
   Description:  open srl file named in HW_TWL_FS_BOOT_SRL_PATH_BUF

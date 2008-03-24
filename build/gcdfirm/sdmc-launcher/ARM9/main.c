@@ -260,7 +260,7 @@ void TwlMain( void )
     // 3: after PostInit
     PUSH_PROFILE();
 
-    STD_CopyString((char*)HW_FIRM_TEMP_SRL_PATH_BUF, MENU_FILE);
+    STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE);
     // 4: after STD_CopyString
     PUSH_PROFILE();
 
