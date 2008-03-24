@@ -38,7 +38,7 @@
 
 // function's prototype----------------------------------------------
 static void BOOTi_ClearREG_RAM( void );
-static void BOOTi_StartBOOT( void );
+static void BOOTi_CopyLCFGData( void );
 
 // global variables--------------------------------------------------
 
@@ -63,7 +63,7 @@ void BOOT_Ready( void )
 	ROM_Header *dh;  // DS互換ROMヘッダ
     BOOL isNtrMode;
     int i;
-
+	
     // エントリアドレスの正当性をチェックし、無効な場合は無限ループに入る。
 //  SYSMi_CheckEntryAddress();
 
@@ -106,7 +106,12 @@ void BOOT_Ready( void )
     {
         isNtrMode = FALSE;
     }
-
+	
+	// NTRモード起動でない場合は、LCFG関連データをメモリに展開
+	if( !isNtrMode ) {
+		BOOTi_CopyLCFGData();
+	}
+	
     // WRAMの配置
     {
         MIHeader_WramRegs *pWRAMREGS = (MIHeader_WramRegs *)th->s.main_wram_config_data;
@@ -207,5 +212,22 @@ static void BOOTi_ClearREG_RAM( void )
     (void)OS_ResetRequestIrqMask( (u32)~0 );
 
 	// レジスタクリアは基本的に OS_Boot で行う
+}
+
+
+// LCFG関連データをメインメモリ先頭の予約領域にコピーする
+static void BOOTi_CopyLCFGData( void )
+{
+	// 本体設定データ、HWノーマル情報、HWセキュア情報をメモリに展開しておく
+	MI_CpuCopyFast( LCFGi_GetTSD(), (void *)HW_PARAM_TWL_SETTINGS_DATA, sizeof(LCFGTWLSettingsData) );
+	MI_CpuCopyFast( LCFGi_GetHWN(), (void *)HW_PARAM_TWL_HW_NORMAL_INFO, sizeof(LCFGTWLHWNormalInfo) );
+	MI_CpuCopyFast( LCFGi_GetHWS(), (void *)HW_HW_SECURE_INFO, HW_HW_SECURE_INFO_END - HW_HW_SECURE_INFO );
+	
+	// 本体設定データの不要部分をクリアしておく
+	{
+		LCFGTWLSettingsData *pSettings = (LCFGTWLSettingsData *)HW_PARAM_TWL_SETTINGS_DATA;
+		MI_CpuClear32( &pSettings->launcherStatus, sizeof(LCFGTWLLauncherStatus) );
+		MI_CpuClearFast( &pSettings->parental, sizeof(LCFGTWLParentalControl) );
+	}
 }
 
