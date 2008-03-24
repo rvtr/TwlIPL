@@ -148,6 +148,11 @@ BOOL BOOT_WaitStart( void )
 											OSi_GetFromFirmAddr()->aes_key[ 0 ] : (void *)dev_commonKey;
 						MI_CpuCopy8( pCommonKey, (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, AES_BLOCK_SIZE );
 					}
+					// commonClientKeyForDebugger
+					else if( th->s.access_control.common_client_key_for_debugger_sysmenu ) {
+						MI_CpuCopy8( OSi_GetFromFirmAddr()->aes_key[ 1 ], (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, AES_BLOCK_SIZE );
+					}
+					
 					// HW AES Slot B
 					if( th->s.access_control.hw_aes_slot_B ) {
 						void *pSeedES  =  ( SCFG_GetBondingOption() == SCFG_OP_PRODUCT ) ?

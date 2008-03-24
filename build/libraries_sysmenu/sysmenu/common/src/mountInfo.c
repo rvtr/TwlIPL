@@ -78,8 +78,15 @@ void SYSMi_SetLauncherMountInfo( void )
 {
 	NAMTitleId titleID = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->titleID;
 	
-	// ※とりあえず自身はROMブートで。[TODO:]後で修正
-//	SYSMi_SetBootSRLPath( LAUNCHER_BOOTTYPE_NAND, titleID );		// ※SDK2623では、BootSRLPathを"rom:"としたらFSi_InitRomArchiveでNANDアプリ扱いされてアクセス例外で落ちる。
+	// bootSRLパスを設定（ランチャーが自分で設定するのは厄介なので、NANDファームからHW_TWL_FS_BOOT_SRL_PATH_BUF経由で
+	// 引き渡してもらう
+	{
+#define BOOT_SRL_PATH_OFFSET	0x3c0
+		u8 *pMountInfoAddr = ( ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->sub_mount_info_ram_address;
+		if( *(pMountInfoAddr + BOOT_SRL_PATH_OFFSET ) == 0 ) {
+			MI_CpuCopyFast( (void *)HW_TWL_FS_BOOT_SRL_PATH_BUF, pMountInfoAddr + BOOT_SRL_PATH_OFFSET, 0x40 );
+		}
+	}
 	
 	// セーブデータ有無によるマウント情報の編集
 	// ※このタイミングではFSは動かせないので、FSを使わない特別版で対応。
