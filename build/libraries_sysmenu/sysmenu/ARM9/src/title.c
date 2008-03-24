@@ -173,12 +173,11 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 			pTitleList_Card->flags.isAppRelocate = TRUE;
 		}
 		
+		// タイトル情報フラグのセット
+		pTitleList_Card->flags.bootType = LAUNCHER_BOOTTYPE_ROM;
+		pTitleList_Card->titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
 		retval = TRUE;
 	}
-	
-	// タイトル情報フラグのセット
-	pTitleList_Card->flags.bootType = LAUNCHER_BOOTTYPE_ROM;
-	pTitleList_Card->titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
 	
 	return retval;
 }
@@ -514,7 +513,10 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 	static u64 stack[ STACK_SIZE / sizeof(u64) ];
 	
 	SYSMi_EnableHotSW( FALSE );
-	
+	// このあとCardRomヘッダバッファにROMヘッダを上書きで読み込むので
+	// この時点でHotSWが止まっていないと、さらにカードのROMヘッダ
+	// を上書きしてしまう可能性がある
+
 	// 一応、アプリロード開始前に検証結果をPROCESSINGにセット
 	s_authResult = AUTH_RESULT_PROCESSING;
 	// アプリ未ロード状態なら、ロード開始
@@ -1093,7 +1095,7 @@ static void SYSMi_makeTitleIdList( TitleProperty *pTitleList )
 		    ( same_maker_code ) )
 		{
 			// リストに追加
-			list->TitleID[count] = pTitleList[l].titleID;
+			list->TitleID[count] = pe_hs->titleID;
 			// sameMakerFlagをON
 			list->sameMakerFlag[count/8] |= (u8)(0x1 << (count%8));
 			// Prv,Pubそれぞれセーブデータがあるか見て、存在すればフラグON
@@ -1111,7 +1113,7 @@ static void SYSMi_makeTitleIdList( TitleProperty *pTitleList )
 		if( pe_hs->permit_landing_normal_jump )
 		{
 			// リストに追加してジャンプ可能フラグON
-			list->TitleID[count] = pTitleList[l].titleID;
+			list->TitleID[count] = pe_hs->titleID;
 			list->appJumpFlag[count/8] |= (u8)(0x1 << (count%8));
 		}
 		
