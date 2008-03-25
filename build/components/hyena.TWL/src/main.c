@@ -277,7 +277,12 @@ void ReadLauncherParameter( void )
     SYSMi_GetWork()->flags.common.isValidLauncherParam = OS_ReadLauncherParameter( (LauncherParam *)&(SYSMi_GetWork()->launcherParam), &hot );
     SYSMi_GetWork()->flags.common.isHotStart = hot;
     // メインメモリのリセットパラメータをクリアしておく
-    MI_CpuClear32( SYSMi_GetLauncherParamAddr(), 0x100 );
+    MI_CpuClearFast( (void*)HW_PARAM_LAUNCH_PARAM, HW_PARAM_LAUNCH_PARAM_SIZE );
+    // Coldスタート時はアプリパラメータもクリア
+    if ( ! hot )
+    {
+        MI_CpuClearFast( (void*)HW_PARAM_DELIVER_ARG, HW_PARAM_DELIVER_ARG_SIZE );
+    }
 }
 
 
