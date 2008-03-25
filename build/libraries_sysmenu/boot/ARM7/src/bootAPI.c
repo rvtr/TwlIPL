@@ -35,12 +35,12 @@
 #define reg_MI_MC_SWP		(*(REGType8v *) ( REG_MC1_ADDR + 1 ) )
 
 #ifdef	ISDBG_MB_CHILD_
-#define PRE_CLEAR_NUM_MAX		(7*2)
+#define PRE_CLEAR_NUM_MAX		(6*2)
 #else
-#define PRE_CLEAR_NUM_MAX		(5*2)
+#define PRE_CLEAR_NUM_MAX		(4*2)
 #endif
 
-#define COPY_NUM_MAX			(4*3)
+#define COPY_NUM_MAX			(5*3)
 #define POST_CLEAR_NUM_MAX		(12 + 4*2)
 
 // extern data-------------------------------------------------------
@@ -59,7 +59,7 @@ static u32 twl_post_clear_list[POST_CLEAR_NUM_MAX + 1] =
 	HW_PARAM_WIRELESS_FIRMWARE_DATA_END, SYSM_OWN_ARM7_MMEM_ADDR,
 	SYSM_OWN_ARM7_MMEM_ADDR_END, OS_BOOT_A9CODE_BUF,
 	OS_BOOT_A9CODE_BUF + OS_BOOT_CODE_SIZE, SYSM_OWN_ARM9_MMEM_ADDR,
-	SYSM_OWN_ARM9_MMEM_ADDR_END, HW_TWL_MAIN_MEM_SHARED,
+	SYSM_OWN_ARM9_MMEM_ADDR_END, SYSM_TWL_MOUNT_INFO_TMP_BUFFER + SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN,
 	NULL,
 };
 
@@ -69,7 +69,7 @@ static u32 nitro_post_clear_list[POST_CLEAR_NUM_MAX + 1] =
 	HW_PARAM_RESERVED_END, SYSM_OWN_ARM7_MMEM_ADDR,
 	SYSM_OWN_ARM7_MMEM_ADDR_END, OS_BOOT_A9CODE_BUF,
 	SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_DBG_NTR_SYSTEM_BUF,
-	SYSM_OWN_ARM9_MMEM_ADDR_END, HW_TWL_MAIN_MEM_SHARED,
+	SYSM_OWN_ARM9_MMEM_ADDR_END, SYSM_TWL_MOUNT_INFO_TMP_BUFFER + SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN,
 	NULL,
 };
 
@@ -129,8 +129,7 @@ BOOL BOOT_WaitStart( void )
 		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
 		(void)OS_SetIrqMaskEx(0);
 		
-		// [TODO]アプリによって示されるマウント情報アドレスは、ランチャーにとって常に安全な場所なのか？
-		// マウント情報の登録
+		// マウント情報を一時的にSYSM_TWL_MOUNT_INFO_TMP_BUFFERに登録
 		SYSMi_SetBootAppMountInfo( &SYSMi_GetWork2()->bootTitleProperty );
 		
 		BOOTi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。
@@ -217,7 +216,6 @@ BOOL BOOT_WaitStart( void )
 			{
 				// pre clear
 				SYSM_OWN_ARM7_WRAM_ADDR, NULL, // SYSM_OWN_ARM7_WRAM_ADDR（SDK_AUTOLOAD_WRAM_START）はリンカから与えられるので定数でない
-				NULL, NULL, // 定数でないのであとで設定
 				SYSM_OWN_ARM7_MMEM_ADDR, SYSM_OWN_ARM7_MMEM_ADDR_END - SYSM_OWN_ARM7_MMEM_ADDR,
 				SYSM_OWN_ARM9_MMEM_ADDR, SYSM_OWN_ARM9_MMEM_ADDR_END - SYSM_OWN_ARM9_MMEM_ADDR,
 				HW_WRAM_BASE, HW_WRAM_SIZE, // 共有WRAM　　Launcherの特殊配置なので、BASEからサイズぶん
@@ -229,19 +227,13 @@ BOOL BOOT_WaitStart( void )
 				// post clear
 				NULL,
 			};
-			if( ! isNtrMode )
-			{
-				mem_list[1] = (u32)th->s.sub_mount_info_ram_address - SYSM_OWN_ARM7_WRAM_ADDR;
-				mem_list[2] = ((u32)th->s.sub_mount_info_ram_address + SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN);
-				mem_list[3] = SYSM_OWN_ARM7_WRAM_ADDR_END - ((u32)th->s.sub_mount_info_ram_address + SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN);
-			}else
-			{
-				mem_list[1] = (SYSM_OWN_ARM7_WRAM_ADDR_END / 2) - SYSM_OWN_ARM7_WRAM_ADDR;
-				mem_list[2] = (SYSM_OWN_ARM7_WRAM_ADDR_END / 2);
-				mem_list[3] = SYSM_OWN_ARM7_WRAM_ADDR_END - (SYSM_OWN_ARM7_WRAM_ADDR_END / 2) ;
-			}
+			
+			mem_list[1] = SYSM_OWN_ARM7_WRAM_ADDR_END - SYSM_OWN_ARM7_WRAM_ADDR;
 			
 			// copy forwardリスト設定
+			mem_list[list_count++] = SYSM_TWL_MOUNT_INFO_TMP_BUFFER;
+			mem_list[list_count++] = (u32)th->s.sub_mount_info_ram_address;
+			mem_list[list_count++] = SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN;
 			for( l=0; l<RELOCATE_INFO_NUM ; l++ )
 			{
 				if( SYSMi_GetWork()->romRelocateInfo[l].src != NULL && !SYSMi_GetWork()->romRelocateInfo[l].rev )

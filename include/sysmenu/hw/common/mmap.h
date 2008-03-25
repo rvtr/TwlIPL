@@ -100,6 +100,8 @@ extern  u32 SDK_AUTOLOAD_WRAM_START[];
 #define SYSM_TWL_ARM7_LTD_HYB_LOAD_WRAM		0x037f8000					// ロード可能なARM7 LTD static WRAM アドレス
 #define SYSM_TWL_ARM7_LTD_HYB_LOAD_WRAM_END	SYSM_NTR_ARM7_LOAD_WRAM_END	// ロード可能なARM7 LTD static WRAM 最終アドレス
 
+// マウント情報一時バッファ
+#define SYSM_TWL_MOUNT_INFO_TMP_BUFFER		0x02ff3400					// マウント情報の一時バッファ
 
 // ※旧NTR-IPL2のレガシーコード　整理予定
 #define SYSM_ARM9_LOAD_MMEM_LAST_ADDR		0x02280000					// ロード可能なARM9 staticメインメモリ最終アドレス

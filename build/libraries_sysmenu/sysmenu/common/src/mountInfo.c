@@ -39,7 +39,7 @@
 // extern data-----------------------------------------------------------------
 // function's prototype--------------------------------------------------------
 static void SYSMi_SetBootSRLPath( LauncherBootType bootType, NAMTitleId titleID );
-static void SYSMi_SetMountInfoCore( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pSrc );
+static void SYSMi_SetMountInfoCore( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pSrc, OSMountInfo *pDst );
 static void SYSMi_ModifySaveDataMount( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt );
 static void SYSMi_ModifySaveDataMountForLauncher( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt );
 
@@ -76,6 +76,7 @@ OSMountInfo s_defaultMountList[ DEFAULT_MOUNT_LIST_NUM ] ATTRIBUTE_ALIGN(4) = {
 // ランチャーのマウント情報セット
 void SYSMi_SetLauncherMountInfo( void )
 {
+	ROM_Header_Short *header = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
 	NAMTitleId titleID = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->titleID;
 	
 	// bootSRLパスを設定（ランチャーが自分で設定するのは厄介なので、NANDファームからHW_TWL_FS_BOOT_SRL_PATH_BUF経由で
@@ -97,11 +98,12 @@ void SYSMi_SetLauncherMountInfo( void )
 	// マウント情報のセット
 	SYSMi_SetMountInfoCore( LAUNCHER_BOOTTYPE_NAND,
 							titleID,
-							&s_defaultMountList[0] );
+							&s_defaultMountList[0],
+							(OSMountInfo *)header->sub_mount_info_ram_address );
 }
 
 
-// システム領域に、ブートするアプリのマウント情報を登録する
+// SYSM_TWL_MOUNT_INFO_TMP_BUFFERに、ブートするアプリのマウント情報を登録する
 void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle )
 {
 	// アプリがTWL対応でない場合は、何もセットせずにリターン
@@ -113,7 +115,7 @@ void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle )
 //	SYSMi_SetBootSRLPath( (LauncherBootType)pBootTitle->flags.bootType,
 //						  pBootTitle->titleID );
 
-	STD_CopyLStringZeroFill( (char *)((u32)((( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->sub_mount_info_ram_address) + SYSM_MOUNT_INFO_SIZE),
+	STD_CopyLStringZeroFill( (char *)(SYSM_TWL_MOUNT_INFO_TMP_BUFFER + SYSM_MOUNT_INFO_SIZE),
 							SYSMi_GetWork2()->bootContentPath, OS_MOUNT_PATH_LEN );
 	
 	// セーブデータ有無によるマウント情報の編集
@@ -130,7 +132,8 @@ void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle )
 	// マウント情報のセット
 	SYSMi_SetMountInfoCore( (LauncherBootType)pBootTitle->flags.bootType,
 							pBootTitle->titleID,
-							&s_defaultMountList[0] );
+							&s_defaultMountList[0],
+							(OSMountInfo *)SYSM_TWL_MOUNT_INFO_TMP_BUFFER );
 	
 	/*
 		※※　注意　※※
@@ -140,46 +143,12 @@ void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle )
 	*/
 }
 
-/*
-// 起動SRLパスをシステム領域にセット
-static void SYSMi_SetBootSRLPath( LauncherBootType bootType, NAMTitleId titleID  )
-{
-	static char path[ FS_ENTRY_LONGNAME_MAX ];
-	ROM_Header_Short *header = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
-	
-	switch( bootType )
-	{
-	case LAUNCHER_BOOTTYPE_NAND:
-		if( NAM_GetTitleBootContentPathFast( path, titleID ) != NAM_OK ) {
-			OS_TPrintf( "ERROR: BootContentPath Get failed.\n" );
-		}
-		break;
-	case LAUNCHER_BOOTTYPE_TEMP:
-		STD_TSNPrintf( path, FS_ENTRY_LONGNAME_MAX, OS_TMP_APP_PATH, titleID );
-		break;
-	default:
-		path[ 0 ] = 0;
-//		STD_StrCpy( path, (const char*)"rom:" );		// ※SDK2623では、BootSRLPathを"rom:"としたらFSi_InitRomArchiveでNANDアプリ扱いされてアクセス例外で落ちる。
-		break;
-	}
-	
-	if( path[ 0 ] ) {
-		STD_CopyLStringZeroFill( (char *)((u32)header->sub_mount_info_ram_address + SYSMi_MOUNT_INFO_SIZE), path, OS_MOUNT_PATH_LEN );
-	}else {
-		MI_CpuClearFast( (char *)((u32)header->sub_mount_info_ram_address + SYSMi_MOUNT_INFO_SIZE), OS_MOUNT_PATH_LEN );
-	}
-	OS_TPrintf( "boot SRL path : %s\n", (char *)((u32)header->sub_mount_info_ram_address + SYSMi_MOUNT_INFO_SIZE) );	// ※OS_Init前で呼ぶとPrintfできないので注意。
-}
-*/
-
-// マウント情報をシステム領域に書き込み
-static void SYSMi_SetMountInfoCore( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pSrc )
+// マウント情報を指定されたアドレスに書き込み
+static void SYSMi_SetMountInfoCore( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pSrc, OSMountInfo *pDst )
 {
 #pragma unused(bootType)
 	
 	int i;
-	ROM_Header_Short *header = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
-	OSMountInfo *pDst   = (OSMountInfo *)header->sub_mount_info_ram_address;
 	char contentpath[ FS_ENTRY_LONGNAME_MAX ];
 
 	// タイトルIDからcontentのファイルパスをセット
