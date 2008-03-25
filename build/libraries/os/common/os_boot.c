@@ -147,7 +147,7 @@ BOOL OSi_FromBromToMenu( void )
             result = FALSE;
         }
     }
-#if SDK_ARM7
+#ifdef SDK_ARM7
     // copy nand context
     MI_CpuCopyFast( &fromBromBuf->SDNandContext, (void*)HW_SD_NAND_CONTEXT_BUF, sizeof(SDPortContextData) );
 #endif
