@@ -83,7 +83,10 @@ static HotSwState LoadBannerData(void);
 static HotSwState LoadStaticModule(void);
 static HotSwState LoadCardData(void);
 static HotSwState CheckCardAuthCode(void);
+static HotSwState CheckRomEmulationData(void);
+static HotSwState CheckRomHeaderAndLogoHash(void);
 
+static HotSwState CheckStaticModuleHash(void);
 static HotSwState SelectErrorState(HotSwState nowState, HotSwState beforeState);
 
 static s32 LockExCard(u16 lockID);
@@ -112,9 +115,9 @@ static u16					s_bondingOp;
 
 static u32					s_BootSegBufSize, s_SecureSegBufSize, s_Secure2SegBufSize;
 
-static BootSegmentData		*s_pBootSegBuffer;		// カード抜けてもバッファの場所覚えとく
-static u32					*s_pSecureSegBuffer;	// カード抜けてもバッファの場所覚えとく
-static u32					*s_pSecure2SegBuffer;	// カード抜けてもバッファの場所覚えとく
+static BootSegmentData		*s_pBootSegBuffer;
+static u32					*s_pSecureSegBuffer;
+static u32					*s_pSecure2SegBuffer;
 
 static CardBootData			s_cbData;
 
@@ -243,7 +246,7 @@ void HOTSW_Init(u32 threadPrio)
     
     // スレッド起動
     OS_WakeupThreadDirect(&HotSwThreadData.hotswThread);
-	OS_WakeupThreadDirect(&HotSwThreadData.monitorThread);
+//	OS_WakeupThreadDirect(&HotSwThreadData.monitorThread);
 	
     // Boot Segment バッファの設定
 	SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );
@@ -307,58 +310,28 @@ static HotSwState LoadCardData(void)
     	// ---------------------- Normal Mode ----------------------
 		romMode = HOTSW_ROM_MODE_NORMAL;
 
-		{
-			u8 i;
-            u8 *romEmuInf = (u8 *)s_cbData.romEmuBuf;
-            
-			// バナーリードが完了して、フラグ処理が終わるまでARM9と排他制御する
-            LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+		// バナーリードが完了して、フラグ処理が終わるまでARM9と排他制御する
+        LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 
-    		// カードID読み込み
-            retval = SelectErrorState(ReadIDNormal(&s_cbData), retval);
+    	// カードID読み込み
+        retval = SelectErrorState(ReadIDNormal(&s_cbData), retval);
 
-			// カードタイプを判別して、使う関数を切替える IDの最上位ビットが1なら3DM
-        	s_cbData.cardType = (s_cbData.id_nml & HOTSW_ROMID_1TROM_MASK) ? DS_CARD_TYPE_2 : DS_CARD_TYPE_1;
-            
-	    	// Boot Segment読み込み
-            retval = SelectErrorState(ReadBootSegNormal(&s_cbData), retval);
+		// カードタイプを判別して、使う関数を切替える IDの最上位ビットが1なら3DM
+        s_cbData.cardType = (s_cbData.id_nml & HOTSW_ROMID_1TROM_MASK) ? DS_CARD_TYPE_2 : DS_CARD_TYPE_1;
+        
+	    // Boot Segment読み込み
+        retval = SelectErrorState(ReadBootSegNormal(&s_cbData), retval);
 
-            // Romエミュレーション情報を取得
-            retval = SelectErrorState(ReadRomEmulationData(&s_cbData), retval);
+        // Romエミュレーション情報をチェック
+        retval = SelectErrorState(CheckRomEmulationData(), retval);
 
-            // 取得したRomエミュレーション情報を比較
-            s_cbData.debuggerFlg = TRUE;
-            for(i=0; i<4; i++){
-                if ( rom_emu_info[i] != romEmuInf[i] ){
-					s_cbData.debuggerFlg = FALSE;
-                    break;
-                }
-            }
-            if(s_cbData.debuggerFlg){
-				OS_PutString("Read Debugger\n");
-				s_cbData.cardType = ROM_EMULATION;
-                s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
-            }
-            else{
-				s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param;
-            }
-			SYSMi_GetWork()->gameCommondParam = s_cbData.gameCommondParam;
-            
-			// ROMヘッダCRCを算出してチェック。NintendoロゴCRCも確認。
-			SYSMi_GetWork()->cardHeaderCrc16_bak = SVC_GetCRC16( 65535, s_cbData.pBootSegBuf, 0x015e );
-			OS_TPrintf( "RomHeaderCRC16 : calc = %04x  romh = %04x\n",
-						SYSMi_GetWork()->cardHeaderCrc16_bak, s_cbData.pBootSegBuf->rh.s.header_crc16 );
-			
-			if( ( SYSMi_GetWork()->cardHeaderCrc16_bak != s_cbData.pBootSegBuf->rh.s.header_crc16 ) ||
-				( 0xcf56 != s_cbData.pBootSegBuf->rh.s.nintendo_logo_crc16 ) ){
-                retval = SelectErrorState(HOTSW_CRC_CHECK_ERROR, retval);
-			}
-		}
+		// ROMヘッダCRCを算出してチェック。NintendoロゴCRCも確認。
+		retval = SelectErrorState(CheckRomHeaderAndLogoHash(), retval);
 		
 		if( retval == HOTSW_SUCCESS ) {
 	        // NTRカードかTWLカードか
 #ifdef DEBUG_MODE
-			if(s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset && s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset && (s_cbData.id_nml & HOTSW_ROMID_TWLROM_MASK))
+			if(s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset && s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset)
 #else
 			if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02)
 #endif
@@ -408,6 +381,8 @@ static HotSwState LoadCardData(void)
 			// ★TWLカード対応 一旦リセット後Secure2モードに移行
             // SCFG
             if((s_cbData.isLoadTypeTwl = isTwlModeLoad()) == TRUE){
+                OS_PutString("Read Mode : TwlCard\n");
+                
                // Mode2に移行する準備
 				s_cbData.modeType = HOTSW_MODE2;
 
@@ -512,6 +487,62 @@ end:
 
 
 /*---------------------------------------------------------------------------*
+  Name:         CheckRomEmulationData
+
+  Description:  Romエミュレーション情報を読み込み、デバッガを読み込んでいる
+  				状態だったら、カード読みパラメータを修正する。
+ *---------------------------------------------------------------------------*/
+static HotSwState CheckRomEmulationData(void)
+{
+	u8 i;
+    u8 *romEmuInf = (u8 *)s_cbData.romEmuBuf;
+    HotSwState retval;
+
+    // Romエミュレーション情報を取得
+    retval = ReadRomEmulationData(&s_cbData);
+    
+    // 取得したRomエミュレーション情報を比較
+    s_cbData.debuggerFlg = TRUE;
+    for(i=0; i<4; i++){
+        if ( rom_emu_info[i] != romEmuInf[i] ){
+			s_cbData.debuggerFlg = FALSE;
+            break;
+        }
+    }
+    if(s_cbData.debuggerFlg){
+		OS_PutString("Read Debugger\n");
+		s_cbData.cardType = ROM_EMULATION;
+        s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
+    }
+    else{
+		s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param;
+    }
+	SYSMi_GetWork()->gameCommondParam = s_cbData.gameCommondParam;
+
+    return retval;
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         CheckRomHeaderAndLogoHash
+
+  Description:  
+ *---------------------------------------------------------------------------*/
+static HotSwState CheckRomHeaderAndLogoHash(void)
+{
+	SYSMi_GetWork()->cardHeaderCrc16_bak = SVC_GetCRC16( 65535, s_cbData.pBootSegBuf, 0x015e );
+	OS_TPrintf( "RomHeaderCRC16 : calc = %04x  romh = %04x\n",
+				SYSMi_GetWork()->cardHeaderCrc16_bak, s_cbData.pBootSegBuf->rh.s.header_crc16 );
+	
+	if( ( SYSMi_GetWork()->cardHeaderCrc16_bak != s_cbData.pBootSegBuf->rh.s.header_crc16 ) ||
+		( 0xcf56 != s_cbData.pBootSegBuf->rh.s.nintendo_logo_crc16 ) ){
+		return HOTSW_CRC_CHECK_ERROR;
+	}
+    return HOTSW_SUCCESS;
+}
+
+
+/*---------------------------------------------------------------------------*
   Name:         isTwlModeLoad
 
   Description:  カードのロードをTWLモードで行うかDSモードで行うかを決める
@@ -523,8 +554,6 @@ end:
 		DS用	 | 	DSカード読みシーケンス  |    DSカード読みシーケンス(※1)
 	   TWL用	 |  不正カードフラグ立て    |    TWLカード読みシーケンス
 	ハイブリット |  不正カードフラグ立て	|    TWLカード読みシーケンス
-
-
 
   ■ Bonding Op = 0以外 (開発用)
 	ソフトウェア | 	　　　 DSカード  	    |  		   TWLカード
@@ -542,10 +571,12 @@ static BOOL	isTwlModeLoad(void)
 	if(s_cbData.id_nml & HOTSW_ROMID_TWLROM_MASK){
         // PlatformCodeがTwl or Hybridの場合
         if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
+            OS_PutString("TWL Card : TWL Application : Read Sequence -> TWL\n");
 			return TRUE;
         }
         else{
             // [TODO] 仕様確認
+            OS_PutString("TWL Card : NTR Application : Read Sequence -> NTR\n");
 			return FALSE;
         }
     }
@@ -555,15 +586,18 @@ static BOOL	isTwlModeLoad(void)
 		if(s_bondingOp == SCFG_OP_PRODUCT){
 			// PlatformCodeがTwl or Hybridの場合
             if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
+                OS_PutString("NTR Card : TWL Application : Illegal Card\n");
 				s_cbData.illegalCardFlg = TRUE;
                 return FALSE;
             }
             else{
+                OS_PutString("NTR Card : NTR Application : Read Sequence -> NTR\n");
 				return FALSE;
             }
         }
         // 開発用の場合
         else{
+            OS_PutString("Bonding Option Development : NTR Card : Read Sequence -> NTR\n");
             return FALSE;
         }
     }
@@ -727,21 +761,25 @@ static HotSwState LoadStaticModule(void)
 		return retval;
     }
 
-	// 拡張常駐モジュールがあるかないか
-	if(s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset && s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset) {
-		u32 size 		 = ( s_cbData.pBootSegBuf->rh.s.main_ltd_size < SECURE_SEGMENT_SIZE ) ? s_cbData.pBootSegBuf->rh.s.main_ltd_size : SECURE_SEGMENT_SIZE;
+
+	// 拡張常駐モジュールの読み込み
+	if( s_cbData.twlFlg ) {
+		u32 size = ( s_cbData.pBootSegBuf->rh.s.main_ltd_size < SECURE_SEGMENT_SIZE ) ? s_cbData.pBootSegBuf->rh.s.main_ltd_size : SECURE_SEGMENT_SIZE;
         s_cbData.arm9Ltd = (u32)s_cbData.pBootSegBuf->rh.s.main_ltd_ram_address;
-		// 配置先と再配置情報を取得 & Arm9拡張常駐モジュールを指定先に転送
+		// 配置先と再配置情報を取得 & Arm9の常駐モジュールを指定先に転送
         if(SYSM_CheckLoadRegionAndSetRelocateInfo( ARM9_LTD_STATIC, &s_cbData.arm9Ltd, s_cbData.pBootSegBuf->rh.s.main_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM9_LTD_STATIC] , TRUE)){
-			// DSカード読みシーケンスでここまで来ていたら、Secure2領域をGameモードのページ読み関数で読む
             if(!s_cbData.isLoadTypeTwl){
-				retval = SelectErrorState(ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset, (u32 *)SYSM_CARD_TWL_SECURE_BUF, size), retval);
+            	// Secure2領域読み
+            	state  = ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset, (u32 *)SYSM_CARD_TWL_SECURE_BUF, size);
+				retval = (retval == HOTSW_SUCCESS) ? state : retval;
             }
-			if( s_cbData.pBootSegBuf->rh.s.main_ltd_size > SECURE_SEGMENT_SIZE ) {
+
+            // (Arm9Ltd領域 - Secure2領域)分の読み込み
+            // [TODO] デバッガ(ランチャー自身)を読み込んだ場合、境界情報がないので、Secure2領域のケツと拡張領域のケツの比較が出来ない
+            if( s_cbData.pBootSegBuf->rh.s.main_ltd_size > SECURE_SEGMENT_SIZE ) {
+                size = s_cbData.debuggerFlg ? s_cbData.pBootSegBuf->rh.s.main_ltd_size - size : arm9LtdStcEnd - secure2SegEnd;
                 retval = SelectErrorState(
-                    ReadPageGame(&s_cbData,		s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset + SECURE_SEGMENT_SIZE,
-	     	    	               	 	(u32 *)(s_cbData.arm9Ltd 							   + SECURE_SEGMENT_SIZE),
-	        	    	                   		s_cbData.pBootSegBuf->rh.s.main_ltd_size 	   - size),
+                    ReadPageGame(&s_cbData,	s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset + SECURE_SEGMENT_SIZE, (u32 *)(s_cbData.arm9Ltd + SECURE_SEGMENT_SIZE), size),
                     retval);
 			}
         }
@@ -752,11 +790,10 @@ static HotSwState LoadStaticModule(void)
 		if(retval != HOTSW_SUCCESS){
 			return retval;
     	}
-        
+
         // 配置先と再配置情報を取得 & Arm7拡張常駐モジュールを指定先に転送
 		s_cbData.arm7Ltd = (u32)s_cbData.pBootSegBuf->rh.s.sub_ltd_ram_address;
         if(SYSM_CheckLoadRegionAndSetRelocateInfo( ARM7_LTD_STATIC, &s_cbData.arm7Ltd, s_cbData.pBootSegBuf->rh.s.sub_ltd_size, &SYSMi_GetWork()->romRelocateInfo[ARM7_LTD_STATIC], TRUE)){
-			
             retval = SelectErrorState(
                     ReadPageGame(&s_cbData, s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset, (u32 *)s_cbData.arm7Ltd, s_cbData.pBootSegBuf->rh.s.sub_ltd_size),
                     retval);
@@ -790,47 +827,52 @@ static HotSwState LoadStaticModule(void)
 
 #define MY_DEBUG
 #ifdef  MY_DEBUG
-        {
-		BOOL flg = TRUE;
-            
-        // Arm9常駐モジュール Hash値のチェック
-        if(!CheckArm9HashValue()){
-            state = HOTSW_HASH_CHECK_ERROR;
-            flg = FALSE;
-			OS_PutString("×Arm9 Static Module Hash Check Error...\n");
-    	}
-    	
-    	// Arm7常駐モジュール Hash値のチェック
-    	if(!CheckArm7HashValue()){
-            state = HOTSW_HASH_CHECK_ERROR;
-			flg = FALSE;
-            OS_PutString("×Arm7 Static Module Hash Check Error...\n");
-    	}
-        
-		// Arm9拡張常駐モジュール Hash値のチェック
-        if(!CheckExtArm9HashValue()){
-            state = HOTSW_HASH_CHECK_ERROR;
-            flg = FALSE;
-			OS_PutString("×Arm9 Ltd Static Module Hash Check Error...\n");
-    	}
-        
-        // Arm7拡張常駐モジュール Hash値のチェック
-    	if(!CheckExtArm7HashValue()){
-            state = HOTSW_HASH_CHECK_ERROR;
-            flg = FALSE;
-			OS_PutString("×Arm7 Ltd Static Module Hash Check Error...\n");
-    	}
-        retval = (retval == HOTSW_SUCCESS) ? state : retval;
-
-            if(flg){
-				OS_PutString("○ Static Module Load was Completed!!\n");
-            }
-            
-        }
+		(void)CheckStaticModuleHash();
 #endif
 	}
 
     return retval;
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         CheckStaticModuleHash
+
+  Description:  常駐モジュールのハッシュチェックを行う
+ *---------------------------------------------------------------------------*/
+static HotSwState CheckStaticModuleHash(void)
+{
+	BOOL flg = TRUE;
+    
+    // Arm9常駐モジュール Hash値のチェック
+    if(!CheckArm9HashValue()){
+        flg = FALSE;
+		OS_PutString("×Arm9 Static Module Hash Check Error...\n");
+    }
+    
+    // Arm7常駐モジュール Hash値のチェック
+    if(!CheckArm7HashValue()){
+		flg = FALSE;
+        OS_PutString("×Arm7 Static Module Hash Check Error...\n");
+    }
+    
+	// Arm9拡張常駐モジュール Hash値のチェック
+    if(!CheckExtArm9HashValue()){
+        flg = FALSE;
+		OS_PutString("×Arm9 Ltd Static Module Hash Check Error...\n");
+    }
+    
+    // Arm7拡張常駐モジュール Hash値のチェック
+    if(!CheckExtArm7HashValue()){
+        flg = FALSE;
+		OS_PutString("×Arm7 Ltd Static Module Hash Check Error...\n");
+    }
+
+    if(flg){
+		OS_PutString("*** Static Module Load was Completed!!\n");
+    }
+
+    return flg ? HOTSW_SUCCESS : HOTSW_HASH_CHECK_ERROR;
 }
 
 
@@ -1471,8 +1513,6 @@ static void InterruptCallbackCard(void)
  *---------------------------------------------------------------------------*/
 static void InterruptCallbackCardDet(void)
 {
-	CARDi_ResetSlotStatus();
-    
 	HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].ctrl  = FALSE;
     HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].value = 0;
     HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].type  = HOTSW_INSERT;
