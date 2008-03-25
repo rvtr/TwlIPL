@@ -70,6 +70,8 @@ static AuthResult		s_authResult = AUTH_RESULT_PROCESSING;	// ROM検証結果
 
 static MbAuthCode s_authcode;
 
+static BOOL				s_loadstart = FALSE;
+
 // const data------------------------------------------------------------------
 static const OSBootType s_launcherToOSBootType[ LAUNCHER_BOOTTYPE_MAX ] = {
     OS_BOOTTYPE_ILLEGAL,	// ILLEGAL
@@ -144,6 +146,11 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 {
 	BOOL retval = FALSE;
 	
+	if(s_loadstart)
+	{
+		// ロード開始していたら、もうヘッダやタイトル情報は変更しない
+		return retval;
+	}
 	// [TODO:] ROMヘッダの platform_code がNTR,TWL-HYB,TWL-LTD以外のもの
 	//                     region_codeが本体情報と違うもの
 	//         の場合は、正常に認識できないタイトルであることを示す。
@@ -513,6 +520,7 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 	static u64 stack[ STACK_SIZE / sizeof(u64) ];
 	
 	SYSMi_EnableHotSW( FALSE );
+	s_loadstart = TRUE;
 	// このあとCardRomヘッダバッファにROMヘッダを上書きで読み込むので
 	// この時点でHotSWが止まっていないと、さらにカードのROMヘッダ
 	// を上書きしてしまう可能性がある

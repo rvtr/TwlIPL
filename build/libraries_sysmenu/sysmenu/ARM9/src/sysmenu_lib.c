@@ -246,7 +246,8 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
     // 量産工程用ショートカットキー or
     // 検査カード起動
     //-----------------------------------------------------
-    if( SYSM_IsExistCard() ) {
+    if( SYSM_IsExistCard() && !SYSM_GetLauncherParamBody()->v1.flags.isLogoSkip ) { 
+    	// 「カード存在」且つ「ランチャー再起動指定（＝ロゴスキップ且つタイトル直接起動指定無し）でない」
         if( ( SYSMi_GetWork()->flags.hotsw.isOnDebugger &&      // ISデバッガが有効かつJTAGがまだ有効でない時
               !( *(u8 *)( HW_SYS_CONF_BUF + HWi_WSYS09_OFFSET ) & HWi_WSYS09_JTAG_CPUJE_MASK ) ) ||
             SYSM_IsInspectCard() ||
