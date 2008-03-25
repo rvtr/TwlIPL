@@ -130,6 +130,7 @@ BOOL BOOT_WaitStart( void )
 		(void)OS_SetIrqMaskEx(0);
 		
 		// マウント情報を一時的にSYSM_TWL_MOUNT_INFO_TMP_BUFFERに登録
+		// ここまでにHW_TWL_ROM_HEADER_BUFのヘッダが次のアプリのものに変更されている必要あり
 		SYSMi_SetBootAppMountInfo( &SYSMi_GetWork2()->bootTitleProperty );
 		
 		BOOTi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。

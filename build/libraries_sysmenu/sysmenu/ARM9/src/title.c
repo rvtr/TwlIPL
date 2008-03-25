@@ -645,7 +645,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		}else
 		{
 			// keynum = 1:SystemApp 2:SecureApp 3:UserApp
-			keynum = (u8)( (hi & TITLE_ID_SECURE_FLAG_MASK) ? SECURE_APP_KEY_INDEX
+			keynum = (u8)( (hi & TITLE_ID_HI_SECURE_FLAG_MASK) ? SECURE_APP_KEY_INDEX
 							: ( (hi & TITLE_ID_HI_APP_TYPE_MASK) ? SYSTEM_APP_KEY_INDEX : USER_APP_KEY_INDEX )
 						);
 		}
