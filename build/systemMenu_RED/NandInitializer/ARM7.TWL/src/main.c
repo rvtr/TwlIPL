@@ -24,6 +24,7 @@
 #include    <twl/cdc.h>
 #include    <twl/exi/ARM7/genPort2.h>
 #include    <twl/aes.h>
+#include    <twl/mcu.h>
 #include    "kami_pxi.h"
 #include    "formatter.h"
 #ifdef SDK_SEA
@@ -32,6 +33,7 @@
 
 /* Priorities of each threads */
 #define THREAD_PRIO_SPI     2
+#define THREAD_PRIO_MCU     4 // 暫定
 #define THREAD_PRIO_SND     6
 #define THREAD_PRIO_FATFS   8
 #define THREAD_PRIO_RTC     12
@@ -99,8 +101,8 @@ void TwlSpMain(void)
         (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
     OS_WakeupThreadDirect(&thread);
 
-	// マウント情報をを強制上書き（暫定処置）
-	RegisterMountInfo();
+    // マウント情報をを強制上書き（暫定処置）
+    RegisterMountInfo();
 
     // ファイルシステム初期化
     FS_Init(FS_DMA_NOT_USE);
@@ -116,6 +118,7 @@ void TwlSpMain(void)
         SEA_Init();
 #endif  // ifdef SDK_SEA
 #endif
+        MCU_InitIrq(THREAD_PRIO_MCU);  // MCU 初期化
     }
 
     if (OSi_IsCodecTwlMode() == TRUE)
@@ -183,7 +186,7 @@ InitializeFatfs(void)
 
     // FATFSライブラリの初期化
 #ifndef SDK_NOCRYPTO
-    if(!FATFS_Init( FATFS_DMA_4, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
+    if(!FATFS_Init( FATFS_DMA_4, FATFS_DMA_5, THREAD_PRIO_FATFS))
 #else
     if (FATFS_Init(FATFS_DMA_NOT_USE, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
 #endif
@@ -432,26 +435,26 @@ VBlankIntr(void)
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
-extern BOOL sdmc_aes_attach_for_nand;	// 強制AESマウント用
+extern BOOL sdmc_aes_attach_for_nand;   // 強制AESマウント用
 
 static void RegisterMountInfo(void)
 {
-	// デフォルトマウント情報リスト
-	OSMountInfo DefaultSettings[] ATTRIBUTE_ALIGN(4) = {
-	//  drive  device                target  pertitionIdx  resource           userPermission                rsvA  B  archive    path
-		{ 'A', OS_MOUNT_DEVICE_SD,   OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "sdmc",    "/" },
-		{ 'B', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand",    "/" },	// ユーザーアプリはこのアーカイブではWrite不可
-		{ 'C', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 1, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand2",   "/" },	// ユーザーアプリはこのアーカイブではWrite不可
-//		{ 'D', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "shared2", "nand2:/shared2" },
-//		{ 'E', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "photo",   "nand2:/photo" },
-//		{ 'F', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPrv", NULL },	// NANDにセーブデータがないアプリの場合は、マウントされない。
-//		{ 'G', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPub", NULL },	// NANDにセーブデータがないアプリの場合は、マウントされない。
+    // デフォルトマウント情報リスト
+    OSMountInfo DefaultSettings[] ATTRIBUTE_ALIGN(4) = {
+    //  drive  device                target  pertitionIdx  resource           userPermission                rsvA  B  archive    path
+        { 'A', OS_MOUNT_DEVICE_SD,   OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "sdmc",    "/" },
+        { 'B', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand",    "/" },  // ユーザーアプリはこのアーカイブではWrite不可
+        { 'C', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 1, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand2",   "/" },  // ユーザーアプリはこのアーカイブではWrite不可
+//      { 'D', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "shared2", "nand2:/shared2" },
+//      { 'E', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "photo",   "nand2:/photo" },
+//      { 'F', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPrv", NULL }, // NANDにセーブデータがないアプリの場合は、マウントされない。
+//      { 'G', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPub", NULL }, // NANDにセーブデータがないアプリの場合は、マウントされない。
         { 0, },
-	};
+    };
 
     MI_CpuCopy8(DefaultSettings, (void*)OS_GetMountInfo(), sizeof(DefaultSettings));
 
-	// 強制AESマウント
-	sdmc_aes_attach_for_nand = TRUE;
+    // 強制AESマウント
+    sdmc_aes_attach_for_nand = TRUE;
 }
 
