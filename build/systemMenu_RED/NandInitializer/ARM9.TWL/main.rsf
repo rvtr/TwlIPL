@@ -122,6 +122,26 @@ Property
 	CardRegion	Japan
 
 	#
+	# CommonClientKey: launcher deliver common client Key [TRUE/FALSE]
+	#
+	#CommonClientKey	TRUE
+
+	#
+	# HwAESSlotB: launcher deliver HW AES slot B setting [TRUE/FALSE]
+	#
+	#HwAESSlotB		TRUE
+
+	#
+	# HwAESSlotC: launcher deliver HW AES slot C setting [TRUE/FALSE]
+	#
+	#HwAESSlotC		TRUE
+
+	#
+	# SDCardAccess: sd card access control [TRUE/FALSE]
+	#
+	SDCardAccess	TRUE
+
+	#
 	# Codec mode:
 	#  don't have to edit
 	#

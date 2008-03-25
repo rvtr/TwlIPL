@@ -133,10 +133,23 @@ ExeFormat(FormatMode format_mode)
         partition_MB_size[2] = PARTITION_1_SIZE;		// FAT1領域
         nand_fat_partition_num = NAND_FAT_PARTITION_NUM;
 
-		// OSMountInfoよりnand&nand2のドライブ割り当てを調べる
+		// nand&nand2のドライブ割り当てを調べる
 	    {
 	        const OSMountInfo  *info;
-	        for (info = OS_GetMountInfo(); *info->drive; ++info)
+
+	        // ランチャーから起動していない場合はshared領域を参照。
+	        if (*(const u8 *)HW_TWL_RED_LAUNCHER_VER == 0)
+			{
+				info = OS_GetMountInfo();
+			}
+	        // 環境が新ランチャーへ移行しているならそちらを参照。
+			else
+			{
+	            extern const u8 SDK_MOUNT_INFO_TABLE[];
+	            info = (const OSMountInfo *)SDK_MOUNT_INFO_TABLE;
+			}
+
+	        for (; *info->drive; ++info)
 	        {
 				if (!STD_CompareNString( "nand2", info->archiveName, 5 ))
 				{

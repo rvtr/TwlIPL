@@ -432,7 +432,7 @@ VBlankIntr(void)
 /*---------------------------------------------------------------------------*
   Name:         AttachAES
 
-  Description:  マウント情報を強制的に上書きします。
+  Description:  強制的にAESマウントするようにします。
 
   Arguments:    None.
 
@@ -442,22 +442,6 @@ extern BOOL sdmc_aes_attach_for_nand;	// 強制AESマウント用
 
 static void AttachAES(void)
 {
-/*
-	// デフォルトマウント情報リスト
-	OSMountInfo DefaultSettings[] ATTRIBUTE_ALIGN(4) = {
-	//  drive  device                target  pertitionIdx  resource           userPermission                rsvA  B  archive    path
-		{ 'A', OS_MOUNT_DEVICE_SD,   OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "sdmc",    "/" },
-		{ 'B', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand",    "/" },	// ユーザーアプリはこのアーカイブではWrite不可
-		{ 'C', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 1, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand2",   "/" },	// ユーザーアプリはこのアーカイブではWrite不可
-//		{ 'D', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "shared2", "nand2:/shared2" },
-//		{ 'E', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "photo",   "nand2:/photo" },
-//		{ 'F', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPrv", NULL },	// NANDにセーブデータがないアプリの場合は、マウントされない。
-//		{ 'G', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPub", NULL },	// NANDにセーブデータがないアプリの場合は、マウントされない。
-        { 0, },
-	};
-
-    MI_CpuCopy8(DefaultSettings, (void*)OS_GetMountInfo(), sizeof(DefaultSettings));
-*/
 	// 強制AESマウント
 	sdmc_aes_attach_for_nand = TRUE;
 }
