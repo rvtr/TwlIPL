@@ -176,7 +176,7 @@ void BOOT_Ready( void )
 
         // USG以前のDSアプリには無線パッチを適用
         // （キャッシュ領域の排他制御簡略化のためARM9で行う）
-        if ( REBOOT_TARGET_DS_APP )
+        if ( target == REBOOT_TARGET_DS_APP )
         {
             DS_InsertWLPatch();
         }
