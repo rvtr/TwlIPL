@@ -815,7 +815,7 @@ static void DrawParentalControlMenuScene( void )
         case 0:
             // レーティング制限のON/OFF
             PutStringUTF16( 23*8, s_settingPos[0].y, TXT_UCOLOR_G0, 
-                            LCFG_TSD_IsEnablePCTLRating() ? L"ON" : L"OFF" );
+                            LCFG_TSD_IsRestrictRating() ? L"ON" : L"OFF" );
             // レーティング年齢
             PrintfSJIS( 23*8, s_settingPos[1].y, TXT_UCOLOR_G0, "%d", LCFG_TSD_GetPCTLRatingAge() );
             // レーティング団体
@@ -1504,7 +1504,7 @@ static void SetRatingLockInit( void )
     // :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     // あらかじめTWL設定データファイルから読み込み済みの設定を取得
     // :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    sbRatingLock = LCFG_TSD_IsEnablePCTLRating();
+    sbRatingLock = LCFG_TSD_IsRestrictRating();
 
     DrawSetRatingLockScene();
 
@@ -1541,7 +1541,7 @@ static int SetRatingLockMain( void )
     // 決定
     if( (pad.trg & PAD_BUTTON_A) || (tp_touch && (commit == KEY_OK)) )
     {
-        LCFG_TSD_EnablePCTLRating( sbRatingLock );
+        LCFG_TSD_SetRestrictRating( sbRatingLock );
         // ::::::::::::::::::::::::::::::::::::::::::::::
         // TWL設定データファイルへの書き込み
         // ::::::::::::::::::::::::::::::::::::::::::::::
