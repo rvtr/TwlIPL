@@ -45,11 +45,8 @@ typedef struct SDportContextData
 SDPortContextData;
 
 /*
-    hash_table_hashは、ファームヘッダの署名の中に埋められた値(現状0xffで埋められている)
-    ファームブート後に追加データをメインメモリにロードする必要に駆られた場合、
-    そのハッシュ値をmakenandfirm等で埋め込むようにすることで保護できる。
-    (Static部分に埋めても大差ないと思われるが・・・)
-    未使用の場合(現状)、0xffで埋められていることを確認すべき
+    hash_table_hashは、ファームヘッダの署名の中に埋められた値(現状0x00で埋められている)
+    未使用の場合(現状)、0x00で埋められていることを確認すべき
 */
 typedef struct
 {

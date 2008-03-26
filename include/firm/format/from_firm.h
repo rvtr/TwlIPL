@@ -18,7 +18,6 @@
 #define FIRM_FORMAT_FROM_FIRM_H_
 
 #include <firm/gcd/blowfish.h>
-#include <firm/format/from_brom.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,6 +30,11 @@ extern "C" {
 #define RSA_PUBKEY_NUM_FROM_FIRM    4
 #define AESKEY_NUM_FROM_FIRM        4
 #endif // SDK_ARM7
+
+/*
+    reservedは、ファームヘッダの署名の中に埋められた値(現状0x00で埋められている)
+    未使用の場合(現状)、0x00で埋められていることを確認すべき
+*/
 
 typedef struct
 {
@@ -50,8 +54,6 @@ typedef struct
     u8            reserved[ACS_HASH_LEN];  // 20B
 
     BLOWFISH_CTX  twl_blowfish[2];  // (4KB + α) * 2
-
-    SDPortContextData  SDNandContext;
 }
 OSFromFirm7Buf;
 
