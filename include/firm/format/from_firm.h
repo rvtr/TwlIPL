@@ -18,6 +18,7 @@
 #define FIRM_FORMAT_FROM_FIRM_H_
 
 #include <firm/gcd/blowfish.h>
+#include <firm/format/sign.h>
 
 #ifdef __cplusplus
 extern "C" {
