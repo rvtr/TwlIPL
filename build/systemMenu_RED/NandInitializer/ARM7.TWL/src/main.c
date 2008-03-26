@@ -101,11 +101,11 @@ void TwlSpMain(void)
         (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
     OS_WakeupThreadDirect(&thread);
 
-	// 強制AESモード
-	AttachAES();
+    // 強制AESモード
+    AttachAES();
 
-	// フォーマットを行うためにFATFS_Initの前にHW_SD_NAND_CONTEXT_BUFのクリアが必要
-	MI_CpuClear8((void *)HW_SD_NAND_CONTEXT_BUF, HW_SD_NAND_CONTEXT_BUF_END - HW_SD_NAND_CONTEXT_BUF);
+    // フォーマットを行うためにFATFS_Initの前にHW_SD_NAND_CONTEXT_BUFのクリアが必要
+    MI_CpuClear8((void *)HW_SD_NAND_CONTEXT_BUF, HW_SD_NAND_CONTEXT_BUF_END - HW_SD_NAND_CONTEXT_BUF);
 
     // ファイルシステム初期化
     FS_Init(FS_DMA_NOT_USE);
@@ -121,7 +121,9 @@ void TwlSpMain(void)
         SEA_Init();
 #endif  // ifdef SDK_SEA
 #endif
+#if SDK_TS_VERSION > 200
         MCU_InitIrq(THREAD_PRIO_MCU);  // MCU 初期化
+#endif
     }
 
     if (OSi_IsCodecTwlMode() == TRUE)
@@ -438,11 +440,11 @@ VBlankIntr(void)
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
-extern BOOL sdmc_aes_attach_for_nand;	// 強制AESマウント用
+extern BOOL sdmc_aes_attach_for_nand;   // 強制AESマウント用
 
 static void AttachAES(void)
 {
-	// 強制AESマウント
-	sdmc_aes_attach_for_nand = TRUE;
+    // 強制AESマウント
+    sdmc_aes_attach_for_nand = TRUE;
 }
 
