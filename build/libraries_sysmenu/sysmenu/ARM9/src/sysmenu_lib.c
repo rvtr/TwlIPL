@@ -30,6 +30,7 @@ extern void LCFG_VerifyAndRecoveryNTRSettings( void );
 static TitleProperty *SYSMi_CheckShortcutBoot( void );
 static void SYSMi_CheckCardCloneBoot( void );
 void SYSMi_SendKeysToARM7( void );
+static OSTitleId SYSMi_getTitleIdOfMachineSettings( void );
 
 // global variable-------------------------------------------------------------
 void *(*SYSMi_Alloc)( u32 size  );
@@ -310,8 +311,11 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
     if( ( PAD_Read() & SYSM_PAD_SHORTCUT_MACHINE_SETTINGS ) ==
 		SYSM_PAD_SHORTCUT_MACHINE_SETTINGS )
     {
-        s_bootTitle.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
-        s_bootTitle.titleID = TITLE_ID_MACHINE_SETTINGS;
+        s_bootTitle.titleID = SYSMi_getTitleIdOfMachineSettings();
+        if(s_bootTitle.titleID != 0)
+		{
+            s_bootTitle.flags.isLogoSkip = TRUE;                    // 本体設定を起動できる時だけロゴデモを飛ばす
+		}
         s_bootTitle.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
         s_bootTitle.flags.isValid = TRUE;
         s_bootTitle.flags.isAppRelocate = FALSE;
@@ -346,7 +350,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 	}else
 	{
         s_bootTitle.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
-        s_bootTitle.titleID = TITLE_ID_MACHINE_SETTINGS;
+        s_bootTitle.titleID = SYSMi_getTitleIdOfMachineSettings();
         s_bootTitle.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
         s_bootTitle.flags.isValid = TRUE;
         s_bootTitle.flags.isAppRelocate = FALSE;
@@ -361,8 +365,11 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 #if 0
 #ifdef ENABLE_INITIAL_SETTINGS_
     if( !LCFG_TSD_IsFinishedInitialSetting() ) {
-        s_bootTitle.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
-        s_bootTitle.titleID = TITLE_ID_MACHINE_SETTINGS;
+        s_bootTitle.titleID = SYSMi_getTitleIdOfMachineSettings();
+        if(s_bootTitle.titleID != 0)
+		{
+            s_bootTitle.flags.isLogoSkip = TRUE;                    // 本体設定を起動できる時だけロゴデモを飛ばす
+		}
         s_bootTitle.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
         s_bootTitle.flags.isValid = TRUE;
         s_bootTitle.flags.isAppRelocate = FALSE;
@@ -396,6 +403,38 @@ static void SYSMi_CheckCardCloneBoot( void )
 #endif
 }
 
+// NAM_Initされるようになったので、NAMで本体設定のID取得
+// それらしきものがインストールされていない場合は0（NULL）をリターン
+static OSTitleId SYSMi_getTitleIdOfMachineSettings( void )
+{
+	OSTitleId ret = NULL;
+	int l;
+	int getNum;
+	int validNum = 0;
+	NAMTitleId *pTitleIDList = NULL;
+	
+	// インストールされているタイトルの取得
+	getNum = NAM_GetNumTitles();
+	pTitleIDList = SYSM_Alloc( sizeof(NAMTitleId) * getNum );
+	if( pTitleIDList == NULL ) {
+		OS_TPrintf( "%s: alloc error.\n", __FUNCTION__ );
+		return 0;
+	}
+	(void)NAM_GetTitleList( pTitleIDList, (u32)getNum );
+	
+	// 取得したタイトルに本体情報のIDがあるかチェック
+	for( l = 0; l < getNum; l++ ) {
+		char *code = ((char *)&pTitleIDList[l]) + 1;
+		if( 0 == STD_CompareNString( code, "ESM", 3 ) )
+		{
+			ret = (OSTitleId)pTitleIDList[l];
+			break;
+		}
+	}
+	SYSM_Free( pTitleIDList );
+
+	return ret;
+}
 
 //======================================================================
 //  デバッグ

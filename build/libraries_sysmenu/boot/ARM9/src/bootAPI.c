@@ -140,12 +140,6 @@ void BOOT_Ready( void )
 	        NULL,
 	    };
 	    
-	    // 再配置リストの作成と設定（ほぼARM7側でやるのでこちらは空）
-	    static u32 relocate_list[] =
-	    {
-			NULL
-		};
-	    
 		REBOOTTarget target = REBOOT_TARGET_TWL_SYSTEM;
 		
 		// アプリケーション選択
