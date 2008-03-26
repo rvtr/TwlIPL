@@ -59,8 +59,9 @@ static void ie_subphandler( void )
 // ブート準備をして、ARM7からの通知を待つ。
 void BOOT_Ready( void )
 {
-	ROM_Header *th;  // TWL拡張ROMヘッダ（DSアプリには無い）
-	ROM_Header *dh;  // DS互換ROMヘッダ
+	// 最適化されるとポインタを初期化しただけでは何もコードは生成されません
+	ROM_Header *th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ（DSアプリには無い）
+	ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
     BOOL isNtrMode;
     int i;
 	
@@ -85,10 +86,6 @@ void BOOT_Ready( void )
                                                             // ※もうFIFOはクリア済みなので、使わない。
     // ARM7からの通知待ち
     OS_WaitIrq( 1, OS_IE_SUBP );
-    
-    // 同期後にヘッダ取得
-	th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ（DSアプリには無い）
-	dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 
     OS_TPrintf( "INTR SUBP passed!!\n" );
     // 割り込みをクリアして最終ブートシーケンスへ。

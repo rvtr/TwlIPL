@@ -34,14 +34,12 @@
 #define MAINP_SEND_IF		0x2000
 #define reg_MI_MC_SWP		(*(REGType8v *) ( REG_MC1_ADDR + 1 ) )
 
-#ifdef	ISDBG_MB_CHILD_
-#define PRE_CLEAR_NUM_MAX		(6*2)
-#else
-#define PRE_CLEAR_NUM_MAX		(4*2)
-#endif
-
+#define PRE_CLEAR_NUM_MAX		(5*2)
 #define COPY_NUM_MAX			(5*3)
 #define POST_CLEAR_NUM_MAX		(12 + 4*2)
+
+#define CLRLIST_OWN_ARM7_WRAM_SIZE_IDX		1
+#define CLRLIST_REBOOT_STACK_PAD_SIZE_IDX	(2*3+1)
 
 // extern data-------------------------------------------------------
 
@@ -104,9 +102,11 @@ void BOOT_Init( void )
 BOOL BOOT_WaitStart( void )
 {
 	if( (reg_PXI_MAINPINTF & 0x000f ) == 0x000f ) {
-		ROM_Header *th;  // TWL拡張ROMヘッダ（DSアプリには無い）
-		ROM_Header *dh;  // DS互換ROMヘッダ
+		// 最適化されるとポインタを初期化しただけでは何もコードは生成されません
+		ROM_Header *th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ（DSアプリには無い）
+		ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 		BOOL isNtrMode;
+
 		// ヘッダ情報再配置
 		if( SYSM_GetCardRomHeader()->platform_code & PLATFORM_CODE_FLAG_TWL )
 		{
@@ -121,8 +121,6 @@ BOOL BOOT_WaitStart( void )
 			MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_TWL_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 			MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 		}
-		th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ（DSアプリには無い）
-		dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 
 		(void)OS_DisableIrq();							// ここで割り込み禁止にしないとダメ。
 		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
@@ -218,7 +216,8 @@ BOOL BOOT_WaitStart( void )
 				SYSM_OWN_ARM7_WRAM_ADDR, NULL, // SYSM_OWN_ARM7_WRAM_ADDR（SDK_AUTOLOAD_WRAM_START）はリンカから与えられるので定数でない
 				SYSM_OWN_ARM7_MMEM_ADDR, SYSM_OWN_ARM7_MMEM_ADDR_END - SYSM_OWN_ARM7_MMEM_ADDR,
 				SYSM_OWN_ARM9_MMEM_ADDR, SYSM_OWN_ARM9_MMEM_ADDR_END - SYSM_OWN_ARM9_MMEM_ADDR,
-				HW_WRAM_BASE, HW_WRAM_SIZE, // 共有WRAM　　Launcherの特殊配置なので、BASEからサイズぶん
+				OS_BOOT_CODE_BUF_END, 1,     // REBOOTコアコードとスタックの隙間サイズはメモリリスト完成後に差し替える（NULLではREBOOT_GetCoreStackSizeが失敗する）
+				HW_WRAM_BASE, HW_WRAM_SIZE,  // 共有WRAM　　Launcherの特殊配置なので、BASEからサイズぶん
 				NULL,
 				// copy forward
 				NULL,
@@ -228,7 +227,7 @@ BOOL BOOT_WaitStart( void )
 				NULL,
 			};
 			
-			mem_list[1] = SYSM_OWN_ARM7_WRAM_ADDR_END - SYSM_OWN_ARM7_WRAM_ADDR;
+			mem_list[CLRLIST_OWN_ARM7_WRAM_SIZE_IDX] = SYSM_OWN_ARM7_WRAM_ADDR_END - SYSM_OWN_ARM7_WRAM_ADDR;
 			
 			// copy forwardリスト設定
 			mem_list[list_count++] = SYSM_TWL_MOUNT_INFO_TMP_BUFFER;
@@ -275,6 +274,8 @@ BOOL BOOT_WaitStart( void )
 				mem_list[list_count++] = post_clear_list[l+1] - post_clear_list[l];
 			}
 			mem_list[list_count] = NULL;
+			// REBOOTコアコードとスタックの隙間サイズを算出
+			mem_list[CLRLIST_REBOOT_STACK_PAD_SIZE_IDX] = OS_BOOT_STACK_TOP - REBOOT_GetCoreStackSize(mem_list) - OS_BOOT_CODE_BUF_END;
 			
 			// サウンド停止
 			SND_Shutdown();
