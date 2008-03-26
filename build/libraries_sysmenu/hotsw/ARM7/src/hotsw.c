@@ -24,8 +24,8 @@
 #define DEBUG_MODE
 
 // define -------------------------------------------------------------------
-#define		CHATTERING_COUNTER					0x600
-#define		COUNTER_A							0x100
+#define		CHATTERING_COUNTER					0x1988		// 100ms分 (0x1988 * 15.3us = 100000us)
+#define		COUNTER_A							0x51C		//  20ms分 ( 0x51C * 15.3us =  20012us)
 
 #define		CARD_EXIST_CHECK_INTERVAL			300
 
@@ -89,6 +89,8 @@ static HotSwState CheckRomHeaderAndLogoHash(void);
 static HotSwState CheckStaticModuleHash(void);
 static HotSwState SelectErrorState(HotSwState nowState, HotSwState beforeState);
 
+static void FinalizeHotSw(u32 ctrl);
+
 static s32 LockExCard(u16 lockID);
 static s32 UnlockExCard(u16 lockID);
 
@@ -122,6 +124,7 @@ static u32					*s_pSecure2SegBuffer;
 static CardBootData			s_cbData;
 
 static BOOL 				s_IsPulledOut = TRUE;
+static BOOL					s_isHotSwBusy = FALSE;
 
 // HMACSHA1の鍵
 static u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = {
@@ -246,7 +249,7 @@ void HOTSW_Init(u32 threadPrio)
     
     // スレッド起動
     OS_WakeupThreadDirect(&HotSwThreadData.hotswThread);
-//	OS_WakeupThreadDirect(&HotSwThreadData.monitorThread);
+	OS_WakeupThreadDirect(&HotSwThreadData.monitorThread);
 	
     // Boot Segment バッファの設定
 	SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );
@@ -285,6 +288,8 @@ static HotSwState LoadCardData(void)
 
     start = OS_GetTick();
 
+    s_isHotSwBusy = TRUE;
+    
 	// カードのロック
 #ifndef DEBUG_USED_CARD_SLOT_B_
 	CARD_LockRom(s_CardLockID);
@@ -480,6 +485,8 @@ end:
 	UnlockExCard(s_CardLockID);
 #endif
 
+	s_isHotSwBusy = FALSE;
+    
 //	OS_TPrintf( "Load Card Time : %dms\n\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 
     return retval;
@@ -1224,12 +1231,12 @@ static void McPowerOn(void)
     if(CmpMcSlotMode(SLOT_STATUS_MODE_00) == TRUE){
 		// [TODO:]待ち時間は暫定値。金子さんに数値を測定してもらう。
         // VDDの安定期間待ち
-        OS_Sleep(100);
+//		OS_Sleep(100);
         
     	// SCFG_MC1 の Slot Status の M1,M0 を 01 にする
     	SetMcSlotMode(SLOT_STATUS_MODE_01);
-		// 1ms待ち
-		OS_Sleep(1);
+		// 3ms待ち
+		OS_Sleep(3);
 
     	// SCFG_MC1 の Slot Status の M1,M0 を 10 にする
     	SetMcSlotMode(SLOT_STATUS_MODE_10);
@@ -1243,7 +1250,7 @@ static void McPowerOn(void)
     
 		// [TODO:]待ち時間は暫定値。金子さんに数値を測定してもらう。
         // カードへ最初のコマンドを送るまでの待ち時間
-		OS_Sleep(100);
+		OS_Sleep(120);
     }
 }
 
@@ -1325,12 +1332,7 @@ static void HotSwThread(void *arg)
         if( msg->ctrl == TRUE ) {
             // [TODO]とりあえず、ここでHOTSWを抑制した時点でisExistCardがFALSEなら、HOTSWのFinalizeをするようにする。
 			SYSMi_GetWork()->flags.hotsw.isEnableHotSW = msg->value;
-            // [TODO]カードがあるときとないときで場合分けしてFinalize処理を実装
-            //		 PXIメッセージを「抑制」と「Finalize」で分けて処理
-            //			→ １．全てのレジスタをクリアする			(カードがささっていない時)
-            //			   ２．一度電源を落としてNomalモードにする	(NANDアプリ等を起動する場合)
-            //			   ３．必要なレジスタを残して、後はクリア	(ささっているカードを起動する場合)
-//			HOTSW_Finalize();
+//			FinalizeHotSw( (u32)msg->value );
         }
         
         while(1){
@@ -1426,6 +1428,65 @@ static void HotSwThread(void *arg)
 
 
 /*---------------------------------------------------------------------------*
+  Name:		   HotSwThread
+
+  Description: 活線挿抜が抑制された時の後処理
+
+  [TODO]カードがあるときとないときで場合分けしてFinalize処理を実装
+	 PXIメッセージを「抑制」と「Finalize」で分けて処理
+		→ １．全てのレジスタをクリアする			(カードがささっていない時)
+		   ２．一度電源を落としてNomalモードにする	(NANDアプリ等を起動する場合)
+		   ３．必要なレジスタを残して、後はクリア	(ささっているカードを起動する場合)
+ *---------------------------------------------------------------------------*/
+#define HOTSW_RESET_REG_16			0x0000
+#define HOTSW_RESET_REG_32			0x00000000UL
+
+static void FinalizeHotSw(u32 ctrl)
+{
+	#pragma unused( ctrl )
+    
+	if(!HOTSW_IsCardExist()){
+        // コマンド設定レジスタ
+		reg_HOTSW_MCCMD0 = HOTSW_RESET_REG_32;
+		reg_HOTSW_MCCMD1 = HOTSW_RESET_REG_32;
+
+        // コントロールレジスタ
+		reg_HOTSW_MCCNT0 = HOTSW_RESET_REG_16;
+		reg_HOTSW_MCCNT1 = HOTSW_RESET_REG_32;
+
+        // データレジスタ
+		reg_HOTSW_MCD1   = HOTSW_RESET_REG_32;
+
+        // 符号生成回路レジスタ
+		reg_HOTSW_MCSCR0 = HOTSW_RESET_REG_32;
+		reg_HOTSW_MCSCR1 = HOTSW_RESET_REG_32;
+		reg_HOTSW_MCSCR2 = HOTSW_RESET_REG_32;
+
+        // Chattring Counter 
+		reg_MI_MC1		 = HOTSW_RESET_REG_32;
+
+		// Counter-A
+		reg_MI_MC2		 = HOTSW_RESET_REG_16;
+    }
+//	else if(Nandアプリ等を起動)
+    {
+		// 一度電源を落としてNomalモードにする
+		McPowerOff();
+        McPowerOn();
+    }
+//	else // 挿さっているカードを起動する場合
+    {
+        // Chattring Counter 
+		reg_MI_MC1		 = HOTSW_RESET_REG_32;
+
+		// Counter-A
+		reg_MI_MC2		 = HOTSW_RESET_REG_16;
+    }
+}
+
+
+
+/*---------------------------------------------------------------------------*
   Name:		   MonitorThread
 
   Description: 実際のカード状態とHotSwThreadで状態を比べて、違いがあった場合は
@@ -1441,9 +1502,12 @@ static void MonitorThread(void *arg)
 	BOOL isPullOutNow;
     
     while(1){
-		// [TODO] カードデータロード中は待機するようにする
-		OS_Sleep(CARD_EXIST_CHECK_INTERVAL);
-        
+        // カードデータロード中は待機
+        do{
+			OS_Sleep(CARD_EXIST_CHECK_INTERVAL);
+        }
+        while(s_isHotSwBusy);
+
         // 現在カードが抜けているか
 		isPullOutNow = !HOTSW_IsCardExist();
         
