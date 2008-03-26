@@ -35,13 +35,13 @@
 #define USE_LCFG_STRING              0
 
 /* 無線FWダウンロード処理にかかる時間を計測する。 */
-#define MEASURE_WIRELESS_INITTIME    1
+#define MEASURE_WIRELESS_INITTIME    0
 
 /* 無線FW認証処理にかかる時間を計測する。 */
-#define MEASURE_VERIFY_SIGN_TIME     1
+#define MEASURE_VERIFY_SIGN_TIME     0
 
 /* ハッシュ比較の情報を出力する。 */
-#define REPORT_HASH_COMPARISON       1
+#define REPORT_HASH_COMPARISON       0
 
 /* Index of public key for WLAN firm */
 #define WLANFIRM_PUBKEY_INDEX        1
