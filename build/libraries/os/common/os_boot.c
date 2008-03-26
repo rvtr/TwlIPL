@@ -147,11 +147,11 @@ BOOL OSi_FromBromToMenu( void )
             result = FALSE;
         }
     }
-#ifdef SDK_ARM7
-    // copy nand context
-    MI_CpuCopyFast( &fromBromBuf->SDNandContext, (void*)HW_SD_NAND_CONTEXT_BUF, sizeof(SDPortContextData) );
-#endif
     // clear out of OSFromFirmBuf area
     MI_CpuClearFast( fromBromBuf->header.max, sizeof(fromBromBuf->header.max) );
+#ifdef SDK_ARM7
+    MI_CpuCopyFast( &fromBromBuf->SDNandContext, (void*)HW_SD_NAND_CONTEXT_BUF, sizeof(SDPortContextData) );
+    MI_CpuClearFast( &fromBromBuf->SDNandContext, sizeof(SDPortContextData) );
+#endif
     return result;
 }
