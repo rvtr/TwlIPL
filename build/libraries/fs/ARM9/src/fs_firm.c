@@ -183,6 +183,7 @@ BOOL FS_GetTitleBootContentPathFast(char* buf, OSTitleId titleId)
  *---------------------------------------------------------------------------*/
 BOOL FS_ResolveSrl( OSTitleId titleId )
 {
+    MI_CpuClearFast( (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, HW_FIRM_FS_BOOT_SRL_PATH_BUF_SIZE );
     if ( ES_ERR_OK != ES_InitLib() ||
          ES_ERR_OK != ES_GetContentPath(titleId, CONTENT_INDEX_BOOT, (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF) ||
          ES_ERR_OK != ES_CloseLib() )
@@ -204,6 +205,7 @@ BOOL FS_ResolveSrl( OSTitleId titleId )
  *---------------------------------------------------------------------------*/
 BOOL FS_ResolveSrlUnsecured( OSTitleId titleId )
 {
+    MI_CpuClearFast( (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, HW_FIRM_FS_BOOT_SRL_PATH_BUF_SIZE );
     if ( !FS_GetTitleBootContentPathFast((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, titleId) )
     {
         return FALSE;
