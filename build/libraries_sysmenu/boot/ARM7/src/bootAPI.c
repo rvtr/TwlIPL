@@ -23,7 +23,7 @@
 #include <sysmenu/hotsw.h>
 #include <sysmenu/ds.h>
 #include <firm/hw/ARM7/mmap_firm.h>
-#include <firm/format/from_brom.h>
+#include <firm/format/from_firm.h>
 #include <firm/aes/ARM7/aes_init.h>
 #include <firm/os/common/boot.h>
 #include "reboot.h"
@@ -198,8 +198,8 @@ BOOL BOOT_WaitStart( void )
 			
 			// 鍵は不要になるので、消しておく
 			{
-				OSFromFirm7Buf* fromFirm = (void*)HW_FIRM_FROM_FIRM_BUF;
-				MI_CpuClearFast(fromFirm, sizeof(OSFromFirm7Buf));
+				OSFromFirmBuf* fromFirm = (void*)HW_FIRM_FROM_FIRM_BUF;
+				MI_CpuClearFast(fromFirm, sizeof(OSFromFirmBuf));
 			}
 		}
 		// SDK共通リブート

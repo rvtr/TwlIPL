@@ -23,7 +23,7 @@
 #include <sysmenu/ds.h>
 #include <firm/format/wram_regs.h>
 #include <firm/hw/ARM9/mmap_firm.h>
-#include <firm/format/from_brom.h>
+#include <firm/format/from_firm.h>
 #include "reboot.h"
 
 
@@ -190,7 +190,8 @@ void BOOT_Ready( void )
 
 		// 鍵は不要になるので、消しておく
 		{
-			MI_CpuClearFast((void*)HW_FIRM_FROM_BROM_BUF, HW_FIRM_FROM_BROM_BUF_SIZE);
+			OSFromFirmBuf* fromFirm = (void*)HW_FIRM_FROM_FIRM_BUF;
+			MI_CpuClearFast(fromFirm, sizeof(OSFromFirmBuf));
 		}
 
 		// 起動するターゲットの種類を指定する必要あり
