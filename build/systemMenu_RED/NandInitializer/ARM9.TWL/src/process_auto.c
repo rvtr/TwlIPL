@@ -205,6 +205,11 @@ void* AutoProcess2(void)
 
 void* AutoProcess3(void)
 {
+#ifdef AUTO_FORMAT_MODE
+	// 検査ソフトではオート処理が完了した段階でTerminateさせます。
+	OS_Terminate();
+#endif
+
     if (kamiPadIsTrigger(PAD_BUTTON_B))
 	{
 		FADE_OUT_RETURN( TopmenuProcess0 );

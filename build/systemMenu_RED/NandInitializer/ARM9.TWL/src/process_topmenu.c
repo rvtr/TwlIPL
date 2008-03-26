@@ -53,6 +53,10 @@
 
 static s8 sMenuSelectNo;
 
+#ifdef AUTO_FORMAT_MODE
+static BOOL sAutoProcessFlag = TRUE;
+#endif
+
 /*---------------------------------------------------------------------------*
     内部関数定義
  *---------------------------------------------------------------------------*/
@@ -164,7 +168,18 @@ void* TopmenuProcess1(void)
 		return TopmenuProcess2;
 	}
 
+
 #ifndef NAND_FORMATTER_MODE
+
+#ifdef AUTO_FORMAT_MODE
+	// sAutoProcessFlag でオート実行
+	if (sAutoProcessFlag)
+	{
+		sAutoProcessFlag = FALSE;
+		FADE_OUT_RETURN( AutoProcess0 );
+	}
+#endif
+
 	// L&R同時押しでオート実行！
     if (kamiPadIsPress(PAD_BUTTON_L) && kamiPadIsPress(PAD_BUTTON_R))
 	{
