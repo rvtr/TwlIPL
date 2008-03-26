@@ -68,7 +68,8 @@ void BOOT_Ready( void )
 //  SYSMi_CheckEntryAddress();
 
 //  FinalizeCardPulledOut();                                // カード抜け検出終了処理
-    BOOTi_ClearREG_RAM();                                   // レジスタ＆RAMクリア
+	DC_StoreAll();
+	BOOTi_ClearREG_RAM();                                   // レジスタ＆RAMクリア
     (void)GX_VBlankIntr( FALSE );
 
     for( i = 0; i <= MI_DMA_MAX_NUM; i++ ) {                // 割り込み禁止状態でDMA停止
