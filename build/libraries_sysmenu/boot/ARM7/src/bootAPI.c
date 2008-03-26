@@ -198,8 +198,8 @@ BOOL BOOT_WaitStart( void )
 			
 			// 鍵は不要になるので、消しておく
 			{
-				OSFromBrom7Buf* fromBrom = (void*)HW_FIRM_FROM_BROM_BUF;
-				MI_CpuClearFast(fromBrom, sizeof(OSFromBrom7Buf) - sizeof(fromBrom->SDNandContext));
+				OSFromFirm7Buf* fromFirm = (void*)HW_FIRM_FROM_FIRM_BUF;
+				MI_CpuClearFast(fromFirm, sizeof(OSFromFirm7Buf));
 			}
 		}
 		// SDK共通リブート
