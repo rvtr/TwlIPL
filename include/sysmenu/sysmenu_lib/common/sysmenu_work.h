@@ -83,7 +83,7 @@ typedef struct SYSM_work {
 			vu32		isFatalError :1;				// FATALエラー
 			vu32		isARM9Start :1;					// ARM9スタートフラグ
 			vu32		isHotStart :1;					// Hot/Coldスタート判定
-			vu32		isValidLauncherParam :1;			// リセットパラメータ有効
+			vu32		isValidLauncherParam :1;		// ランチャーパラメータ有効
 			vu32		isValidTSD :1;					// NITRO設定データ無効フラグ
 			vu32		isLogoSkip :1;					// ロゴデモスキップ
 			vu32		isLoadSucceeded :1;				// アプリロード完了？
@@ -152,7 +152,7 @@ typedef struct SDKBootCheckInfo{
 //----------------------------------------------------------------------
 //　SYSM共有ワーク領域のアドレス獲得
 //----------------------------------------------------------------------
-// SYSMリセットパラメータアドレスの取得（※ライブラリ向け。ARM9側はSYSM_GetLauncherParamを使用して下さい。）
+// SYSMランチャーパラメータアドレスの取得（※ライブラリ向け。ARM9側はSYSM_GetLauncherParamを使用して下さい。）
 #define SYSMi_GetLauncherParamAddr()			( (LauncherParam *)HW_PARAM_LAUNCH_PARAM )
 
 // SYSM共有ワークの取得
