@@ -995,8 +995,18 @@ AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle, TitleProperty *pTitle
 		return s_authResult;
 	}
 	
+	// TWL設定データにブートするタイトルのTitleIDとplatformCodeを保存。
+	{
+		u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
+		if( pBuffer != NULL ) {
+			LCFG_TSD_SetLastTimeBootSoftTitleID ( pBootTitle->titleID );
+			LCFG_TSD_SetLastTimeBootSoftPlatform( (u8)SYSM_GetCardRomHeader()->platform_code );
+			(void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+			SYSM_Free( pBuffer );
+		}
+	}
+	
 	// マウント情報の登録
-	//SYSMi_SetBootAppMountInfo( pBootTitle );
 	SYSMi_GetWork2()->bootTitleProperty = *pBootTitle;
 	SYSMi_SetBootSRLPathToWork2( pBootTitle );
 	
