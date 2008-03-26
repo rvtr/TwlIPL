@@ -119,6 +119,12 @@ TwlSpMain(void)
     OS_InitTick();
     PrintDebugInfo();
 
+	// ランチャーバージョンを格納（今のところ、最低でもマウント情報登録前には格納する必要あり）
+	*(u8 *)HW_TWL_RED_LAUNCHER_VER = (u8)SYSM_LAUNCHER_VER;
+
+	// ランチャーのマウント情報登録
+	SYSMi_SetLauncherMountInfo();
+	
     // ランチャーパラメター取得（Cold/Hotスタート判定含む）
     ReadLauncherParameter();
 
@@ -153,12 +159,6 @@ TwlSpMain(void)
     (void)OS_EnableIrq();
     (void)OS_EnableInterrupts();
 
-	// ランチャーバージョンを格納（今のところ、最低でもマウント情報登録前には格納する必要あり）
-	*(u8 *)HW_TWL_RED_LAUNCHER_VER = (u8)SYSM_LAUNCHER_VER;
-
-	// ランチャーのマウント情報登録
-	SYSMi_SetLauncherMountInfo();
-	
     // PXIコールバックの設定
     SYSM_InitPXI(THREAD_PRIO_SYSMMCU);
 	
@@ -276,7 +276,7 @@ void ReadLauncherParameter( void )
     BOOL hot;
     SYSMi_GetWork()->flags.common.isValidLauncherParam = OS_ReadLauncherParameter( (LauncherParam *)&(SYSMi_GetWork()->launcherParam), &hot );
     SYSMi_GetWork()->flags.common.isHotStart = hot;
-    // メインメモリのリセットパラメータをクリアしておく
+    // メインメモリのランチャーパラメータをクリアしておく
     MI_CpuClearFast( (void*)HW_PARAM_LAUNCH_PARAM, HW_PARAM_LAUNCH_PARAM_SIZE );
     // Coldスタート時はアプリパラメータもクリア
     if ( ! hot )
