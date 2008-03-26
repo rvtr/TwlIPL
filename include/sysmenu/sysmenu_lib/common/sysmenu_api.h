@@ -41,18 +41,14 @@ extern "C" {
 
 #define TITLE_ID_MACHINE_SETTINGS				( 0x000300154d534554LLU )	// 本体設定のタイトルID
 
+#define SYSM_PAD_SHORTCUT_TP					( PAD_BUTTON_X )
+#define SYSM_PAD_SHORTCUT_MACHINE_SETTINGS		( PAD_BUTTON_SELECT )
 #define SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT	( PAD_BUTTON_A | PAD_BUTTON_B	\
 												| PAD_BUTTON_X | PAD_BUTTON_Y | PAD_BUTTON_R )
 																	// 量産工程で使用する初回起動設定をキャンセルしてカードブートするショートカットキー
 
 #define SYSM_MOUNT_INFO_SIZE				(0x400 - OS_MOUNT_PATH_LEN)
 #define SYSM_LAUNCHER_VER					1	// ランチャーバージョン（SDK側でランチャーに絡む処理の判定用）
-
-typedef enum PlatformCode {
-	PLATFORM_NTR = 0,
-	PLATFORM_TWL = 1
-}PlatformCode;
-
 
 // タイトル情報
 typedef struct TitleProperty {			// この情報は、ランチャー時には認証通ってないけど、起動時には認証通すので大丈夫だろう。
@@ -92,7 +88,7 @@ extern void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) );			// 初期化
 extern void SYSM_InitPXI( void );												// PXI初期化
 extern void SYSM_SetArena( void );												// システムメニューのアリーナ初期化。OS_Initの後で呼んでください。
 extern void SYSM_SetAllocFunc( void *(*pAlloc)(u32), void (*pFree)(void*) );	// SYSM_initで設定した場合は必要なし。
-extern TitleProperty *SYSM_ReadParameters( void );								// 本体設定データ、リセットパラメータなどを取得
+extern TitleProperty *SYSM_ReadParameters( void );								// 本体設定データ、ランチャーパラメータなどを取得
 
 // アプリ情報取得
 extern int  SYSM_GetCardTitleList( TitleProperty *pTitleList_Card );			// カードアプリタイトルリストの取得
@@ -128,12 +124,14 @@ extern BOOL SYSM_IsLeapYear100( u32 year );										// 指定された年がうるう年か
 // 状態チェック
 extern BOOL SYSM_IsExistCard( void );											// TWL/NTRカードが差さっているか？（アプリは未認証状態）
 extern BOOL SYSM_IsInspectCard( void );											// 検査カードが差さっているか？
-extern BOOL SYSM_IsTPReadable( void );											// TPリード可能か？
+extern BOOL SYSM_IsHotStart( void );											// ホットスタートか？
+extern BOOL SYSM_IsFatalError( void );											// FATALエラーか？
+extern void SYSM_SetFatalError( BOOL isFatalError );							// FATALエラーのセット
 extern BOOL SYSM_IsLogoDemoSkip( void );										// ロゴデモ飛ばし状態か？
 extern void SYSM_SetLogoDemoSkip( BOOL skip );									// ロゴデモ飛ばし状態フラグを設定する。
 extern BOOL SYSM_IsValidTSD( void );											// TWL設定データは有効か？
 extern void SYSM_SetValidTSD( BOOL valid );										// TWL設定データの有効／無効フラグを設定する。
-extern const LauncherParamBody *SYSM_GetLauncherParamBody( void );				// リセットパラメータの取得
+extern const LauncherParamBody *SYSM_GetLauncherParamBody( void );				// ランチャーパラメータの取得
 extern BOOL SYSM_IsRunOnDebugger( void );										// ISデバッガ上で動作しているか？
 
 extern BOOL SYSM_IsLauncherHidden( void );										// ランチャーの画面を表示しないバージョンか？
