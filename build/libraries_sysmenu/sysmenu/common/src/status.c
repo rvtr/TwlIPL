@@ -35,6 +35,27 @@ const LauncherParamBody *SYSM_GetLauncherParamBody( void )
 }
 
 
+// ホットスタートか？
+BOOL SYSM_IsHotStart( void )
+{
+	return (BOOL)SYSMi_GetWork()->flags.common.isHotStart;
+}
+
+
+// FATALエラーかどうかをセット
+void SYSM_SetFatalError( BOOL isFatalError )
+{
+	SYSMi_GetWork()->flags.common.isFatalError = isFatalError;
+}
+
+
+// FATALエラーか？
+BOOL SYSM_IsFatalError( void )
+{
+	return (BOOL)SYSMi_GetWork()->flags.common.isFatalError;
+}
+
+
 // ロゴデモスキップかどうかをセット
 void SYSM_SetLogoDemoSkip( BOOL skip )
 {
@@ -66,13 +87,6 @@ BOOL SYSMi_IsDebuggerBannerViewMode( void )
 #else
 	return FALSE;
 #endif	// __IS_DEBUGGER_BUILD
-}
-
-
-// TPリード可能状態か？
-BOOL SYSM_IsTPReadable( void )
-{
-	return TRUE;
 }
 
 

@@ -100,10 +100,7 @@ void TwlMain( void )
     (void)OS_EnableInterrupts();
 
     SYSM_InitPXI();                                 // 割り込み許可後にコールする必要あり。
-	while ( ! PXI_IsCallbackReady( PXI_FIFO_TAG_HOTSW, PXI_PROC_ARM7 ) )
-    {
-    }
-    
+	
     FS_Init( FS_DMA_NOT_USE );
 
 #ifdef DEBUG_LAUNCHER_DUMP
@@ -132,10 +129,10 @@ void TwlMain( void )
     // 各種パラメータの取得------------
 	pBootTitle = SYSM_ReadParameters();   		               // 本体設定データ、リセットパラメータのリード、検査用オート起動カード判定、量産ライン用キーショートカット起動判定等のリード
 	
-	if( SYSMi_GetWork()->flags.common.isFatalError ) {
+	if( SYSM_IsFatalError() ) {
 		// FATALエラー処理
 	}
-	if( SYSMi_GetWork()->flags.common.isInitialSettings ) {
+	if( !LCFG_TSD_IsFinishedInitialSetting() ) {
 		// 初回起動シーケンス判定
 	}
 
@@ -209,11 +206,14 @@ void TwlMain( void )
 
     // 無線ファームウェアを無線モジュールにダウンロードする。
 #if( WIRELESS_FIRM_LOADING == 1 )
-    if( FALSE == InstallWlanFirmware() ) {
+    if( FALSE == InstallWlanFirmware( SYSM_IsHotStart() ) ) {
         OS_TPrintf( "ERROR: Wireless firmware download failed!\n" );
     }
 #endif
 
+	if( SYSM_IsFatalError() ) {
+		// FATALエラー処理
+	}
 
     // メインループ--------------------
     while( 1 ) {
@@ -280,6 +280,7 @@ void TwlMain( void )
             break;
         case AUTHENTICATE:
             if( ( direct_boot || ( !direct_boot && LauncherFadeout( s_titleList ) ) ) &&
+				PollingInstallWlanFirmware() &&					// アプリブート前に無線ファームのロードは完了しておく必要がある
                 SYSM_IsAuthenticateTitleFinished() )
             {
 	            switch ( SYSM_TryToBootTitle( pBootTitle, s_titleList ) ) {   // アプリ認証結果取得orブート   成功時：never return
@@ -300,8 +301,12 @@ void TwlMain( void )
         // カードアプリリストの取得（スレッドで随時カード挿抜を通知されるものをメインループで取得）
         (void)SYSM_GetCardTitleList( s_titleList );
 
+		// 無線ファームロードのポーリング
+		(void)PollingInstallWlanFirmware();
+		
         // コマンドフラッシュ
         (void)SND_FlushCommand(SND_COMMAND_NOBLOCK);
+
     }
 }
 

@@ -54,7 +54,8 @@
 /*
   internal variables
  */
-
+static BOOL				s_isHotStartWLFirm;
+static volatile BOOL	s_isFinished;
 static u32*             pNwmBuf;
 static u8*              pFwBuffer = 0;
 #if (MEASURE_WIRELESS_INITTIME == 1)
@@ -339,12 +340,13 @@ void PrintDigest(u8 *digest)
 #endif
 
 
-BOOL InstallWlanFirmware(void)
+BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 {
     NWMRetCode err;
     BOOL isColdStart;
 
-    pNwmBuf = 0;
+	s_isFinished = FALSE;
+	pNwmBuf = 0;
     pFwBuffer = 0;
 
     OS_InitMessageQueue(&mesq, mesAry, sizeof(mesAry)/sizeof(mesAry[0]));
@@ -357,7 +359,10 @@ BOOL InstallWlanFirmware(void)
                 TemporallyなWorkaroundとして、この場合はColdStart扱いにしています。
                 初期化時間等の要因を鑑みて、本実装をどうするか検討します。
      */
-    if (TRUE == SYSMi_GetWork()->flags.common.isHotStart)
+	
+	s_isHotStartWLFirm = isHotStartWLFirm;
+	
+    if (TRUE == isHotStartWLFirm )
     {
         isColdStart = FALSE;
 
@@ -498,7 +503,7 @@ instfirm_error:
     return FALSE;
 }
 
-
+BOOL GetWlanFirmwareInstallResult(WLANFirmResult *pResult);
 BOOL GetWlanFirmwareInstallResult(WLANFirmResult *pResult)
 {
     OSMessage msg;
@@ -510,3 +515,31 @@ BOOL GetWlanFirmwareInstallResult(WLANFirmResult *pResult)
 
     return retval;
 }
+
+
+// 無線ファームロード完了？
+BOOL PollingInstallWlanFirmware( void )
+{
+	if ( !s_isFinished ) {
+		WLANFirmResult result;
+		if( GetWlanFirmwareInstallResult( &result ) ) {
+			if( result != WLANFIRM_RESULT_SUCCESS ) {
+				// ロード失敗
+				if( !s_isHotStartWLFirm ) {
+					// ColdStartの無線ファームロードなら、FATALエラー
+			        SYSM_SetFatalError( TRUE );
+				}else {
+					// そうでない場合は、ColdStartロードで再度実行。
+					if( !InstallWlanFirmware( FALSE ) ) {
+				        SYSM_SetFatalError( TRUE );
+						s_isFinished = TRUE;
+					}
+				}
+			}
+			s_isFinished = TRUE;
+		}
+	}
+	return s_isFinished;
+}
+
+

@@ -33,23 +33,25 @@ typedef enum {
 
   InstallWlanFirmware
 
-  引数　：なし
+  引数　：BOOL isForceLoad : TRUE->強制ファームロード, FALSE->ファームロードせずリスタート
   返り値：TRUE  … 無線ファームウェアインストールの非同期処理中
 　　　　　FALSE … 無線ファームウェアインストールに失敗した
  */
 
-BOOL InstallWlanFirmware(void);
+BOOL InstallWlanFirmware( BOOL isHotStartWLFirm );
+
 
 /*
 
-  GetWlanFirmwareInstallResult
+  PollingInstallWlanFirmware
 
-  引数　：pResult 無線ファームウェアインストール結果コード(WLANFirmResult)
+  引数　：なし
   返り値：TRUE  … 無線ファームウェアインストール処理が完了
           FALSE … 無線ファームウェアインストール処理が未完了
  */
 
-BOOL GetWlanFirmwareInstallResult(WLANFirmResult *pResult);
+BOOL PollingInstallWlanFirmware( void );
+
 
 #ifdef __cplusplus
 }
