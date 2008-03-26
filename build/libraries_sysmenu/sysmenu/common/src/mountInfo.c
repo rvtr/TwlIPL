@@ -79,7 +79,11 @@ void SYSMi_SetLauncherMountInfo( void )
 	ROM_Header_Short *header = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
 	NAMTitleId titleID = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->titleID;
 	
-	// bootSRLパスを設定（ランチャーが自分で設定するのは厄介なので、NANDファームから引き渡してもらう
+	if( ( *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG & 0x80 ) == 0 ) {
+		MI_CpuClearFast( (u8 *)header->sub_mount_info_ram_address, 0x400 );
+	}
+	
+	// bootSRLパスの設定は、ランチャーが自分で設定するのは厄介なので、NANDファームから引き渡してもらう
 	
 	// セーブデータ有無によるマウント情報の編集
 	// ※このタイミングではFSは動かせないので、FSを使わない特別版で対応。
