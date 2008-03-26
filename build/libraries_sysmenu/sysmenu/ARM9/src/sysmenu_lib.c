@@ -132,41 +132,8 @@ TitleProperty *SYSM_ReadParameters( void )
 {
     TitleProperty *pBootTitle = NULL;
 
-    // ARM7のリセットパラメータ取得が完了するのを待つ
-    while( !SYSMi_GetWork()->flags.common.isARM9Start ) {
-        SVC_WaitByLoop( 0x1000 );
-    }
-//#ifdef DEBUG_USED_CARD_SLOT_B_
-    // ARM7のカードチェック完了を待つ
-    while( !SYSMi_GetWork()->flags.hotsw.is1stCardChecked ) {
-        SVC_WaitByLoop( 0x1000 );
-    }
-//#endif
-
-    //-----------------------------------------------------
-    // リセットパラメータの判定（リセットパラメータが有効かどうかは、ARM7でやってくれている）
-    //-----------------------------------------------------
-    {
-        if( SYSM_GetLauncherParamBody()->v1.flags.isLogoSkip ||     // ロゴデモスキップ？
-            SYSMi_IsDebuggerBannerViewMode() ) {
-            SYSM_SetLogoDemoSkip( TRUE );
-        }
-
-        if( SYSM_GetLauncherParamBody()->v1.bootTitleID ) {         // アプリ直接起動の指定があったらロゴデモを飛ばして指定アプリ起動
-            s_bootTitleBuf.titleID = SYSM_GetLauncherParamBody()->v1.bootTitleID;
-            s_bootTitleBuf.flags = SYSM_GetLauncherParamBody()->v1.flags;
-            s_bootTitleBuf.pBanner = (TWLBannerFile *)(*(TWLBannerFile **)(SYSM_GetLauncherParamBody()->v1.rsv));
-            pBootTitle = &s_bootTitleBuf;
-        }
-    }
-
-    //-----------------------------------------------------
-    // 量産工程用ショートカットキー or
-    // 検査カード起動
-    //-----------------------------------------------------
-    if( pBootTitle == NULL ) {
-        pBootTitle = SYSMi_CheckShortcutBoot();
-    }
+    //NAMの初期化
+    NAM_Init( SYSM_Alloc, SYSM_Free );
 
     //-----------------------------------------------------
     // HW情報のリード
@@ -175,13 +142,13 @@ TitleProperty *SYSM_ReadParameters( void )
     if( !LCFG_ReadHWNormalInfo() ) {
         OS_TPrintf( "HW Normal Info Broken!\n" );
         SYSMi_GetWork()->flags.common.isBrokenHWNormalInfo = TRUE;
-        SYSMi_GetWork()->flags.common.isFatalError = TRUE;
+        SYSM_SetFatalError( TRUE );
     }
     // セキュア情報リード
     if( !LCFG_ReadHWSecureInfo() ) {
         OS_TPrintf( "HW Secure Info Broken!\n" );
         SYSMi_GetWork()->flags.common.isBrokenHWSecureInfo = TRUE;
-        SYSMi_GetWork()->flags.common.isFatalError = TRUE;
+        SYSM_SetFatalError( TRUE );
     }
 
     //-----------------------------------------------------
@@ -189,16 +156,13 @@ TitleProperty *SYSM_ReadParameters( void )
     //-----------------------------------------------------
     {
         u8 *pBuffer = SYSM_Alloc( LCFG_READ_TEMP );
-        if( pBuffer == NULL ) {
-            SYSMi_GetWork()->flags.common.isFatalError = TRUE;
-        }else if( LCFG_ReadTWLSettings( (u8 (*)[LCFG_READ_TEMP])pBuffer ) ) {   // NANDからTWL本体設定データをリード
-            SYSM_CaribrateTP();                                         // 読み出したTWL本体設定データをもとにTPキャリブレーション。
-        }else {
-            SYSMi_GetWork()->flags.common.isInitialSettings = TRUE;     // リード失敗なら初回起動シーケンスへ
-        }
         if( pBuffer ) {
+			LCFG_ReadTWLSettings( (u8 (*)[LCFG_READ_TEMP])pBuffer );		   // NANDからTWL本体設定データをリード
             SYSM_Free( pBuffer );
-        }
+        }else {
+	        SYSM_SetFatalError( TRUE );
+		}
+	    LCFG_VerifyAndRecoveryNTRSettings();  		                          	// NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
     }
 
     //-----------------------------------------------------
@@ -212,15 +176,70 @@ TitleProperty *SYSM_ReadParameters( void )
         SYSM_SetBackLightBrightness( LCFG_TWL_BACKLIGHT_LEVEL_MAX );
     }
 #endif // SDK_SUPPORT_PMIC_2
+	
+    // TPキャリブレーション
+	SYSM_CaribrateTP();
     // RTC補正
     SYSMi_WriteAdjustRTC();
     // RTC値のチェック
     SYSMi_CheckRTC();
 
-    LCFG_VerifyAndRecoveryNTRSettings();                            // NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
+    //-----------------------------------------------------
+	// ARM7の処理待ち
+    //-----------------------------------------------------
+	
+    // ARM7のランチャーパラメータ取得が完了するのを待つ
+    while( !SYSMi_GetWork()->flags.common.isARM9Start ) {
+        SVC_WaitByLoop( 0x1000 );
+    }
+//#ifdef DEBUG_USED_CARD_SLOT_B_
+    // ARM7のカードチェック完了を待つ
+    while( !SYSMi_GetWork()->flags.hotsw.is1stCardChecked ) {
+        SVC_WaitByLoop( 0x1000 );
+    }
+//#endif
 
-    //NAMの初期化
-    NAM_Init( SYSM_Alloc, SYSM_Free );
+
+	//-----------------------------------------------------
+    // ランチャーパラメータの判定
+    //-----------------------------------------------------
+	if( SYSM_IsHotStart() ) {
+		// ホットスタート時は、基本ロゴデモスキップ
+		SYSM_SetLogoDemoSkip( TRUE );
+		
+		// [TODO]まだアプリブート時にPlatformCodeを保存していないので、コメントアウト
+#if 0
+		if( LCFG_TSD_GetLastTimeBootSoftPlatform() == PLATFORM_CODE_NTR ) {
+		    // 前回ブートがNTRなら、ランチャーパラメータ無効
+			SYSMi_GetWork()->flags.common.isValidLauncherParam = 0;
+			MI_CpuClear32( &SYSMi_GetWork()->launcherParam, sizeof(LauncherParam) );
+		}
+#endif
+		
+		if( SYSMi_GetWork()->flags.common.isValidLauncherParam ) {
+		    // ロゴデモスキップ無効？
+			if( !SYSM_GetLauncherParamBody()->v1.flags.isLogoSkip ) {
+	            SYSM_SetLogoDemoSkip( FALSE );
+	        }
+			
+	        // アプリ直接起動の指定があったらロゴデモを飛ばして指定アプリ起動
+			if( SYSM_GetLauncherParamBody()->v1.bootTitleID ) {
+	            s_bootTitleBuf.titleID = SYSM_GetLauncherParamBody()->v1.bootTitleID;
+	            s_bootTitleBuf.flags = SYSM_GetLauncherParamBody()->v1.flags;
+	            s_bootTitleBuf.pBanner = (TWLBannerFile *)(*(TWLBannerFile **)(SYSM_GetLauncherParamBody()->v1.rsv));
+	            pBootTitle = &s_bootTitleBuf;
+	        }
+		}
+	}
+
+    //-----------------------------------------------------
+    // 量産工程用ショートカットキー or
+    // 検査カード起動
+    //-----------------------------------------------------
+    if( pBootTitle == NULL ) {
+		// ランチャーパラメータによるダイレクトブートがない場合のみ判定
+        pBootTitle = SYSMi_CheckShortcutBoot();
+    }
 
     return pBootTitle;
 }
@@ -241,6 +260,16 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 
     MI_CpuClear8( &s_bootTitle, sizeof(TitleProperty) );
 
+    //-----------------------------------------------------
+    // ISデバッガバナーViewモード起動
+    //-----------------------------------------------------
+	//[TODO]未実装
+#if 0
+	if( SYSMi_IsDebuggerBannerViewMode() ) {
+		return NULL;
+	}
+#endif
+	
     //-----------------------------------------------------
     // ISデバッガ起動 or
     // 量産工程用ショートカットキー or
@@ -278,7 +307,8 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
     // スタンドアロン起動時、ショートカットキー(select)
     // を押しながらの起動で本体設定の直接起動
     //-----------------------------------------------------
-    if( PAD_Read() & PAD_BUTTON_SELECT )
+    if( ( PAD_Read() & SYSM_PAD_SHORTCUT_MACHINE_SETTINGS ) ==
+		SYSM_PAD_SHORTCUT_MACHINE_SETTINGS )
     {
         s_bootTitle.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
         s_bootTitle.titleID = TITLE_ID_MACHINE_SETTINGS;
@@ -330,14 +360,13 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
     //-----------------------------------------------------
 #if 0
 #ifdef ENABLE_INITIAL_SETTINGS_
-    if( !LCFG_TSD_IsSetTP() ||
-        !LCFG_TSD_IsSetLanguage() ||
-        !LCFG_TSD_IsSetDateTime() ||
-        !LCFG_TSD_IsSetUserColor() ||
-        !LCFG_TSD_IsSetNickname() ) {
+    if( !LCFG_TSD_IsFinishedInitialSetting() ) {
+        s_bootTitle.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
         s_bootTitle.titleID = TITLE_ID_MACHINE_SETTINGS;
         s_bootTitle.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
         s_bootTitle.flags.isValid = TRUE;
+        s_bootTitle.flags.isAppRelocate = FALSE;
+        s_bootTitle.flags.isAppLoadCompleted = FALSE;
         return &s_bootTitle;
     }
 #endif // ENABLE_INITIAL_SETTINGS_
