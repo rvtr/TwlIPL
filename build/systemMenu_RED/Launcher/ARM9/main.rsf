@@ -171,14 +171,14 @@ AppendProperty
 	GameCode				$(TITLEID_LO)
 
 	#
-	# Public save data size: [16K/32K/64K/128K/256K/512K/1M/2M/4M/8M]
+	# Public save data size: [0K/16K/32K/64K/128K/256K/512K/1M/2M/4M/8M]
 	#
-	#PublicSaveDataSize		32K
+	PublicSaveDataSize		0K
 
 	#
-	# Private save data size: [16K/32K/64K/128K/256K/512K/1M/2M/4M/8M]
+	# Private save data size: [0K/16K/32K/64K/128K/256K/512K/1M/2M/4M/8M]
 	#
-	PrivateSaveDataSize		16K
+	PrivateSaveDataSize		0K
 
 	#
 	# Enable SubBannerFile
