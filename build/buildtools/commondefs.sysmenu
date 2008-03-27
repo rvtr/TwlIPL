@@ -69,7 +69,6 @@ SYSMENU_LIBS	?=	\
 					libsysmenu$(TWL_LIBSUFFIX).a \
 					libsysmmcu$(TWL_LIBSUFFIX).a \
 					libmbloader$(TWL_LIBSUFFIX).a \
-					libacsign$(TWL_LIBSUFFIX).a \
 					libboot$(TWL_LIBSUFFIX).a \
 					libds$(TWL_LIBSUFFIX).a \
 

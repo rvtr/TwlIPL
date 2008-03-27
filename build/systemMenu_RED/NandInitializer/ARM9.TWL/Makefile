@@ -86,6 +86,7 @@ LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\
 					libboc$(TWL_LIBSUFFIX).a			\
 					libnam$(TWL_LIBSUFFIX).a			\
 					libsea$(TWL_LIBSUFFIX).a			\
+					libacsign$(TWL_LIBSUFFIX).a     \
 					libacsign_enc$(TWL_LIBSUFFIX).a     \
 					libnamut$(TWL_LIBSUFFIX).a
 
@@ -94,6 +95,7 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
 
 MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 
+GLIBRARIES		:= $(filter-out libcrypto$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 
 LDIRT_CLEAN				=	$(TARGET_TAD)
 #INSTALL_TARGETS			=	$(TARGET_TAD)

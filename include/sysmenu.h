@@ -18,7 +18,7 @@
 #define SYSMENU_H_
 
 // Compile switch----------------------
-//#define DEBUG_USED_CARD_SLOT_B_							// デバッグ用でカードスロットBを使用する場合に有効にする。
+//#define DEBUG_USED_CARD_SLOT_B_                           // デバッグ用でカードスロットBを使用する場合に有効にする。
 
 //-------------------------------------
 
@@ -32,7 +32,6 @@
 #include <sysmenu/boot.h>
 #include <sysmenu/memorymap.h>
 #include <sysmenu/hotsw.h>
-#include <sysmenu/acsign.h>
 #include <sysmenu/mb_loader.h>
 
 /* SYSMENU_H_ */

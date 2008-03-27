@@ -44,7 +44,8 @@ SRCS					=	main.c HWInfoWriter.c hwi.c \
 
 LINCLUDES				=	$(MISC_DIR)/include \
 							$(ROOT)/build/libraries/lcfg/ARM9.TWL/include
-LLIBRARIES				=	libacsign_enc$(TWL_LIBSUFFIX).a
+LLIBRARIES				=	libacsign$(TWL_LIBSUFFIX).a \
+							libacsign_enc$(TWL_LIBSUFFIX).a
 
 ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
 ifdef USE_PRODUCT_KEY
@@ -64,6 +65,8 @@ MAKETAD_FLAGS			+=	-s
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
+
+GLIBRARIES		:= $(filter-out libcrypto$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 
 LDIRT_CLEAN				=	$(TARGET_TAD)
 INSTALL_TARGETS			=	$(TARGET_TAD)
