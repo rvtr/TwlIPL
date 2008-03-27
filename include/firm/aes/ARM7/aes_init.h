@@ -28,6 +28,18 @@ extern "C" {
     ä÷êîíËã`
  *---------------------------------------------------------------------------*/
 /*---------------------------------------------------------------------------*
+  Name:         AESi_PreInitKeys
+
+  Description:  reset IDs preset by bootrom.
+                you SHOULD NOT touch any ID registers after this call.
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void AESi_PreInitKeys( void );
+
+/*---------------------------------------------------------------------------*
   Name:         AESi_InitKeysForApp
 
   Description:  set IDs depending on the application.

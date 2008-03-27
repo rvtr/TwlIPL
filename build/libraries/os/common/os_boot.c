@@ -79,7 +79,8 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
         mem_list[i++] = stack_bottom - code_buf_end;
     }
     /* 一部鍵バッファのクリア (鍵管理.xls参照) */
-    // 該当無し
+    mem_list[i++] = (u32)OSi_GetFromFirmAddr()->aes_key[2];
+    mem_list[i++] = ACS_AES_LEN;
 #endif  // SDK_ARM7
     mem_list[i++] = NULL;
     // copy forward

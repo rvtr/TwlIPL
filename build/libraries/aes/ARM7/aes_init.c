@@ -15,6 +15,7 @@
   $Author$
  *---------------------------------------------------------------------------*/
 
+#include <firm/os.h>
 #include <firm/aes.h>
 #include <firm/pxi.h>
 
@@ -22,6 +23,25 @@
 #define AES_IDS_ID0_C(c)    (((unsigned long)c[0] << 0) | ((unsigned long)c[1] << 8) | ((unsigned long)c[2] << 16) | ((unsigned long)c[3] << 24))
 #define AES_IDS_ID0_D(c)    (((unsigned long)c[3] << 0) | ((unsigned long)c[2] << 8) | ((unsigned long)c[1] << 16) | ((unsigned long)c[0] << 24))
 
+
+/*---------------------------------------------------------------------------*
+  Name:         AESi_PreInitKeys
+
+  Description:  reset IDs preset by bootrom.
+                you SHOULD NOT touch any ID registers after this call.
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void AESi_PreInitKeys( void )
+{
+    AES_WaitKey();
+
+    reg_AES_AES_ID_B2 = reg_OS_CHIP_ID1 ^ *(const u32*)&OSi_GetFromFirmAddr()->aes_key[2][0];
+    reg_AES_AES_ID_D1 = reg_OS_CHIP_ID0 ^ *(const u32*)&OSi_GetFromFirmAddr()->aes_key[2][8];
+    reg_AES_AES_ID_D2 = reg_OS_CHIP_ID1 ^ *(const u32*)&OSi_GetFromFirmAddr()->aes_key[2][4];
+}
 
 /*---------------------------------------------------------------------------*
   Name:         AESi_InitKeysForApp
