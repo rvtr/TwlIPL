@@ -528,6 +528,7 @@ BOOL PollingInstallWlanFirmware( void )
 				if( !s_isHotStartWLFirm ) {
 					// ColdStartの無線ファームロードなら、FATALエラー
 			        SYSM_SetFatalError( TRUE );
+					s_isFinished = TRUE;
 				}else {
 					// そうでない場合は、ColdStartロードで再度実行。
 					if( !InstallWlanFirmware( FALSE ) ) {
