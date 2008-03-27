@@ -44,8 +44,9 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
 #endif
     void *const wram_reg = rom_header->s.main_wram_config_data;
     REBOOTTarget target = rom_header->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK ? REBOOT_TARGET_TWL_SECURE : (rom_header->s.titleID_Hi & TITLE_ID_HI_APP_TYPE_MASK ? REBOOT_TARGET_TWL_SYSTEM : REBOOT_TARGET_TWL_APP);
-    BOOL scfg = TRUE;   // no touch
-    BOOL jtag = FALSE;  // no touch
+    BOOL scfg = TRUE;          // no touch
+    BOOL set_jtag = FALSE;     // no touch
+    BOOL forbid_jtag = FALSE;  // no touch
     static u32  mem_list[32];
     int i = 0;
 
@@ -116,7 +117,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
         OS_Terminate();
     }
 #endif // FIRM_USE_SDK_KEYS
-    REBOOT_Execute(entry, wram_reg, mem_list, code_buf, stack_top, target, scfg, jtag);
+    REBOOT_Execute(entry, wram_reg, mem_list, code_buf, stack_top, target, scfg, set_jtag, forbid_jtag);
     OS_Terminate();
 }
 
