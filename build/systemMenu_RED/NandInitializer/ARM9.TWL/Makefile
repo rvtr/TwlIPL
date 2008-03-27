@@ -39,7 +39,7 @@ TARGET_BIN	= NandInitializer.srl
 LCFILE_SPEC				=	ARM9-TS.lsf
 ROM_SPEC	= main.rsf
 
-MAKEROM_ARM7_BASE	=	../ARM7.TWL/bin/$(TWL_BUILDTYPE_ARM7)/main
+MAKEROM_ARM7_BASE	=	../ARM7.TWL/bin/$(TWL_BUILDTYPE_ARM7)/armadillo
 MAKEROM_ARM7		=	$(MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
 
 SRCS		=	main.c \

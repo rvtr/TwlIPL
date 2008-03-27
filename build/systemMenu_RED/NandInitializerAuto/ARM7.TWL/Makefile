@@ -1,9 +1,9 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlSDK - tests - camera-test
+# Project:  TwlSDK - components - armadillo.TWL
 # File:     Makefile
 #
-# Copyright 2007 Nintendo.  All rights reserved.
+# Copyright 2008 Nintendo.  All rights reserved.
 #
 # These coded instructions, statements, and computer programs contain
 # proprietary information of Nintendo of America Inc. and/or Nintendo
@@ -16,70 +16,60 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-SUBDIRS		=
+override TARGET_PLATFORM	=	TWL
+override TWL_PROC			=	ARM7
+override TWL_ARCHGEN		=	LIMITED
+##override TWL_PLATFORM		=	TS
+TWL_NO_STD_PCHDR			=	True
+##TWL_CODEGEN					?=	ALL
 
-
+ifndef	TWLSDK_NOCRYPTO
 #----------------------------------------------------------------------------
-
-override TARGET_PLATFORM	= TWL
-override TWL_PROC           = ARM7
-TWL_ARCHGEN                 = LIMITED
-TWL_NO_STD_PCHDR			= True
-#TWL_CODEGEN   =       THUMB
-
-TARGET_TEF      =   main.tef
-LCFILE_SPEC     = 	../../NandInitializer/ARM7.TWL/racoon.lsf
-LCFILE_TEMPLATE	=	../../NandInitializer/ARM7.TWL/racoon.lcf.template
-LDRES_TEMPLATE	=	../../NandInitializer/ARM7.TWL/racoon.response.template
 
 SRCS		=	main.c \
 				kami_pxi.c \
 				formatter.c \
-				nvram_misc.c \
-				initScfg.c \
+				nvram_misc.c
 
-LINCLUDES	=	../../NandInitializer/common/include \
-				../../NandInitializer/ARM7.TWL/include \
-                ../common/include $(ROOT)/build/libraries/spi/ARM7/include
+TARGET_NAME		=	armadillo
 
+TARGET_NEF		=	$(TARGET_NAME).tef
+LCFILE_SPEC		=	../../NandInitializer/ARM7.TWL/$(TARGET_NAME).lsf
+LCFILE_TEMPLATE	=	../../NandInitializer/ARM7.TWL/$(TARGET_NAME).lcf.template
+LDRES_TEMPLATE	=	../../NandInitializer/ARM7.TWL/$(TARGET_NAME).response.template
 
-SRCDIR		=	../../NandInitializer/ARM7.TWL/src
-#LCFILE		=	# using default
+CRT0_O			=	crt0.SCR.TWL.o
 
+# スタック不足防止の為、インライン展開せずにコンパイルする
+CCFLAGS_OPT		=	-O4 -inline off
 
+#----------------------------------------------------------------------------
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
-ifdef TWLSDK_NOCRYPTO
-CCFLAGS			+=	-DSDK_NOCRYPTO
-endif
-
-ifndef TWLSDK_NOCRYPTO
-MAKELCF_FLAGS	+=	-DUSE_CRYPTO_LIBS='libsea_sp$(TWL_LIBSUFFIX).a libcrypto_sp$(TWL_LIBSUFFIX).a'
-MACRO_FLAGS		+=	-DSDK_SEA
-endif
-
-ifeq ($(TWL_PLATFORM),BB)
-MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037e0000'
-else
-MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000'
-endif
+MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD -DSDK_SEA
 
 MAKELCF_FLAGS	+=	-DISDBG_LIBS_TWL='$(if $(ISDBG_LIBS_TWL),$(ISDBG_LIBS_TWL),libstubsistd_sp$(TWL_LIBSUFFIX).a)'	\
 					-DISDBG_LIBS_NITRO='libstubsisd_sp$(TWL_LIBSUFFIX).a'
 
-TWL_LIBS_EX		= 	libcamera_sp$(TWL_LIBSUFFIX).a	\
-					libfatfs_sp$(TWL_LIBSUFFIX).a   \
-					libi2c_sp$(TWL_LIBSUFFIX).a	\
-        			libcamera_sp$(TWL_LIBSUFFIX).a	\
-					libcdc_sp$(TWL_LIBSUFFIX).a	\
-					libtpex_sp$(TWL_LIBSUFFIX).a
+LINCLUDES		=	$(ROOT)/build/libraries/spi/ARM7/include \
+					../../NandInitializer/common/include \
+					../../NandInitializer/ARM7.TWL/include
+
+SRCDIR		=	../../NandInitializer/ARM7.TWL/src
+
+LLIBRARIES		+=	libwl_sp$(TWL_LIBSUFFIX).a			\
+					libsdio_sp$(TWL_LIBSUFFIX).a		\
+					libathdrv_sp$(TWL_LIBSUFFIX).a		\
+					libwpa_sp$(TWL_LIBSUFFIX).a			\
+
+LDEPENDS_NEF	 = $(TWL_LIBS) $(LLIBRARIES)
+
+do-build:	$(TARGETS)
 
 #----------------------------------------------------------------------------
-
-do-build:		$(TARGETS)
-
-
 include	$(TWLSDK_ROOT)/build/buildtools/modulerules
 
+#----------------------------------------------------------------------------
+endif	#ifndef	TWLSDK_NOCRYPTO
 
 #===== End of Makefile =====

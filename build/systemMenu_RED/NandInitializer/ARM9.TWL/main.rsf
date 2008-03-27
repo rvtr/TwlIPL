@@ -114,7 +114,7 @@ Property
 	# WRAM mapping: [MAP_BB_HYB/MAP_BB_LTD/MAP_TS_HYB/MAP_TS_LTD]
 	#  don't have to edit
 	#
-	WramMapping		$(MAKEROM_WRAM_MAPPING)
+	WramMapping		MAP_TS_SCR
 
 	#
 	# CardRegion: card region [Japan/America/Europe/Australia/China/Korea]
@@ -124,17 +124,17 @@ Property
 	#
 	# CommonClientKey: launcher deliver common client Key [TRUE/FALSE]
 	#
-	#CommonClientKey	TRUE
+	CommonClientKey	TRUE
 
 	#
 	# HwAESSlotB: launcher deliver HW AES slot B setting [TRUE/FALSE]
 	#
-	#HwAESSlotB		TRUE
+	HwAESSlotB		TRUE
 
 	#
 	# HwAESSlotC: launcher deliver HW AES slot C setting [TRUE/FALSE]
 	#
-	#HwAESSlotC		TRUE
+	HwAESSlotC		TRUE
 
 	#
 	# SDCardAccess: sd card access control [TRUE/FALSE]

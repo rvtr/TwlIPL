@@ -69,7 +69,7 @@ TwlMain()
     OS_InitReset();
     GX_Init();
     FX_Init();
-    SND_Init();
+//  SND_Init();
     TP_Init();
     RTC_Init();
 
@@ -121,15 +121,15 @@ TwlMain()
 		kamiPadRead();
 
         // コマンドフラッシュ
-        (void)SND_FlushCommand(SND_COMMAND_NOBLOCK);
+//      (void)SND_FlushCommand(SND_COMMAND_NOBLOCK);
 
 		// Vブランク待ち
         OS_WaitVBlankIntr();
 
         // ＡＲＭ７コマンド応答受信
-        while (SND_RecvCommandReply(SND_COMMAND_NOBLOCK) != NULL)
-        {
-        }
+//      while (SND_RecvCommandReply(SND_COMMAND_NOBLOCK) != NULL)
+//      {
+//      }
 
 		// フォントスクリーンデータロード
 		kamiFontLoadScreenData();

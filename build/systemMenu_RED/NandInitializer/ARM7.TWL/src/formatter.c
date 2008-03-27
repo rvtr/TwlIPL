@@ -110,7 +110,7 @@ ExeFormat(FormatMode format_mode)
 	u32 *init_datbuf;
     int     nand_fat_partition_num;
 
-	init_datbuf = OS_Alloc( 512*16 );
+	init_datbuf = OS_AllocFromSubPrivWram( 512*16 );
 	if( init_datbuf == NULL ) {
 		OS_TPrintf( "memory allocate error.\n" );
 		ERROR_RETURN();
@@ -223,7 +223,7 @@ ExeFormat(FormatMode format_mode)
     }
 
 	// メモリ解放
-	OS_Free( init_datbuf );
+	OS_FreeToSubPrivWram( init_datbuf );
 
 	// ディレクトリ生成＆チェック
 	if (!CreateDirectory( "nand:", s_pDirList0 )) { return FALSE; }
