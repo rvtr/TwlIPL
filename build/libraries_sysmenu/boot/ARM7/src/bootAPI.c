@@ -130,6 +130,9 @@ BOOL BOOT_WaitStart( void )
 		// ここまでにHW_TWL_ROM_HEADER_BUFのヘッダが次のアプリのものに変更されている必要あり
 		SYSMi_SetBootAppMountInfo( &SYSMi_GetWork2()->bootTitleProperty );
 		
+		// FSによってshared領域にコピーされたランチャー自身のマウントパスのクリア
+		MI_CpuClearFast((char *)HW_TWL_FS_BOOT_SRL_PATH_BUF, OS_MOUNT_PATH_LEN);
+		
 		BOOTi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。
 		reg_MI_MBK9 = 0;								// 全WRAMのロック解除
 		reg_PXI_MAINPINTF = MAINP_SEND_IF | 0x0100;		// ARM9に対してブートするようIRQで要求＋ARM7のステートを１にする。

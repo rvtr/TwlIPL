@@ -208,14 +208,11 @@ TitleProperty *SYSM_ReadParameters( void )
 		// ホットスタート時は、基本ロゴデモスキップ
 		SYSM_SetLogoDemoSkip( TRUE );
 		
-		// [TODO]まだアプリブート時にPlatformCodeを保存していないので、コメントアウト
-#if 0
 		if( LCFG_TSD_GetLastTimeBootSoftPlatform() == PLATFORM_CODE_NTR ) {
 		    // 前回ブートがNTRなら、ランチャーパラメータ無効
 			SYSMi_GetWork()->flags.common.isValidLauncherParam = 0;
 			MI_CpuClear32( &SYSMi_GetWork()->launcherParam, sizeof(LauncherParam) );
 		}
-#endif
 		
 		if( SYSMi_GetWork()->flags.common.isValidLauncherParam ) {
 		    // ロゴデモスキップ無効？
