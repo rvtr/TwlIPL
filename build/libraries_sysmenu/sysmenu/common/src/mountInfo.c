@@ -76,8 +76,12 @@ OSMountInfo s_defaultMountList[ DEFAULT_MOUNT_LIST_NUM ] ATTRIBUTE_ALIGN(4) = {
 // ランチャーのマウント情報セット
 void SYSMi_SetLauncherMountInfo( void )
 {
+	OSMountInfo mountListBuffer[ DEFAULT_MOUNT_LIST_NUM ] ATTRIBUTE_ALIGN(4);
 	ROM_Header_Short *header = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
 	NAMTitleId titleID = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->titleID;
+	
+	// デフォルトリストをバッファにコピー
+	MI_CpuCopyFast( s_defaultMountList, mountListBuffer, sizeof(s_defaultMountList) );
 	
 	if( ( *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG & 0x80 ) == 0 ) {
 		MI_CpuClearFast( (u8 *)header->sub_mount_info_ram_address, 0x400 );
@@ -89,12 +93,12 @@ void SYSMi_SetLauncherMountInfo( void )
 	// ※このタイミングではFSは動かせないので、FSを使わない特別版で対応。
 	SYSMi_ModifySaveDataMountForLauncher( LAUNCHER_BOOTTYPE_NAND,
 										  titleID,
-										  &s_defaultMountList[ PRV_SAVE_DATA_MOUNT_INDEX ] );
+										  &mountListBuffer[ PRV_SAVE_DATA_MOUNT_INDEX ] );
 
 	// マウント情報のセット
 	SYSMi_SetMountInfoCore( LAUNCHER_BOOTTYPE_NAND,
 							titleID,
-							&s_defaultMountList[0],
+							&mountListBuffer[0],
 							(OSMountInfo *)header->sub_mount_info_ram_address );
 }
 
@@ -102,10 +106,14 @@ void SYSMi_SetLauncherMountInfo( void )
 // SYSM_TWL_MOUNT_INFO_TMP_BUFFERに、ブートするアプリのマウント情報を登録する
 void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle )
 {
+	OSMountInfo mountListBuffer[ DEFAULT_MOUNT_LIST_NUM ] ATTRIBUTE_ALIGN(4);
 	// アプリがTWL対応でない場合は、何もセットせずにリターン
 	if( ( (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->platform_code ) == 0 ) {
 		return;
 	}
+	
+	// デフォルトリストをバッファにコピー
+	MI_CpuCopyFast( s_defaultMountList, mountListBuffer, sizeof(s_defaultMountList) );
 	
 	// 起動アプリのSRLパスをセット
 //	SYSMi_SetBootSRLPath( (LauncherBootType)pBootTitle->flags.bootType,
@@ -118,17 +126,17 @@ void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle )
 	// ※ARM7ではNAMは動かせないので、NAMを使わないバージョンで対応。
 	SYSMi_ModifySaveDataMountForLauncher( LAUNCHER_BOOTTYPE_NAND,
 										  pBootTitle->titleID,
-										  &s_defaultMountList[ PRV_SAVE_DATA_MOUNT_INDEX ] );
+										  &mountListBuffer[ PRV_SAVE_DATA_MOUNT_INDEX ] );
 /*
 	// セーブデータ有無によるマウント情報の編集
 	SYSMi_ModifySaveDataMount( (LauncherBootType)pBootTitle->flags.bootType,
 							   pBootTitle->titleID,
-							   &s_defaultMountList[ PRV_SAVE_DATA_MOUNT_INDEX ] );
+							   &mountListBuffer[ PRV_SAVE_DATA_MOUNT_INDEX ] );
 */
 	// マウント情報のセット
 	SYSMi_SetMountInfoCore( (LauncherBootType)pBootTitle->flags.bootType,
 							pBootTitle->titleID,
-							&s_defaultMountList[0],
+							&mountListBuffer[0],
 							(OSMountInfo *)SYSM_TWL_MOUNT_INFO_TMP_BUFFER );
 	
 	/*
