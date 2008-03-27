@@ -647,7 +647,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		prev = OS_GetTick();
 		hi = head->s.titleID_Hi;
 		// Launcher‚Íê—p‚ÌŒ®‚ğg‚¤
-		if( gamecode[3] == 'L' && gamecode[2] == 'N' && gamecode[1] == 'C' )
+		if( gamecode[3] == 'H' && gamecode[2] == 'L' && gamecode[1] == 'N' )
 		{
 			keynum = LAUNCHER_KEY_INDEX;
 		}else
