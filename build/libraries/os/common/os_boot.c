@@ -47,6 +47,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     BOOL scfg = TRUE;          // no touch
     BOOL set_jtag = FALSE;     // no touch
     BOOL forbid_jtag = FALSE;  // no touch
+    BOOL psram_4mb = FALSE;    // no touch
     static u32  mem_list[32];
     int i = 0;
 
@@ -117,7 +118,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
         OS_Terminate();
     }
 #endif // FIRM_USE_SDK_KEYS
-    REBOOT_Execute(entry, wram_reg, mem_list, code_buf, stack_top, target, scfg, set_jtag, forbid_jtag);
+    REBOOT_Execute(entry, wram_reg, mem_list, code_buf, stack_top, target, scfg, set_jtag, forbid_jtag, psram_4mb);
     OS_Terminate();
 }
 
