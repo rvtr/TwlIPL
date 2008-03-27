@@ -452,6 +452,48 @@ static BOOL NAMUTi_FillFile(const char* path)
 }
 
 /*---------------------------------------------------------------------------*
+  Name:         NAMUT_SearchInstalledSoftBoxCount
+
+  Description:  InstalledSoftBoxCountの数を調べて返します。
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+u32 NAMUT_SearchInstalledSoftBoxCount( void )
+{
+	s32 title_num;	
+	NAMTitleInfo namTitleInfo;
+	u32 count = 0;
+	s32 i;
+
+	// タイトルリスト取得
+	if (NAM_GetTitleList(sTitleIdArray, TITLE_LIST_MAX) != NAM_OK)
+	{
+		SDK_ASSERTMSG(0, "Fail! NAM_GetTitleList() in %s\n", __func__);
+		return 0;
+	}
+	
+	// タイトル数取得
+	title_num = NAM_GetNumTitles();
+
+	for (i=0;i<title_num;i++)
+	{
+		// タイトル情報取得
+	    if( NAM_ReadTitleInfo(&namTitleInfo, sTitleIdArray[i]) == NAM_OK )
+	    {
+			// NOT_LAUNCH_FLAG または DATA_ONLY_FLAG が立っているタイトルはカウントしない
+			if (!(namTitleInfo.titleId & (TITLE_ID_NOT_LAUNCH_FLAG_MASK | TITLE_ID_DATA_ONLY_FLAG_MASK)))
+			{
+				count++;
+			}
+		}
+	}
+
+	return count;
+}
+
+/*---------------------------------------------------------------------------*
   Name:         NAMUT_DrawNandTree
 
   Description:  NANDのツリー情報をプリント出力します

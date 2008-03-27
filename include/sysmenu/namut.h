@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #ifndef NAM_UTILITY_H_
@@ -23,8 +23,42 @@ extern "C" {
 #endif
 
 #ifdef SDK_ARM9
+
+/*---------------------------------------------------------------------------*
+  Name:         NAMUT_Format
+
+  Description:  NANDの擬似フォーマット
+               （システム系の必要なファイルのみを残し他を消去します）
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
 BOOL NAMUT_Format(void);
+
+/*---------------------------------------------------------------------------*
+  Name:         NAMUT_SearchInstalledSoftBoxCount
+
+  Description:  InstalledSoftBoxCountの数を調べて返します。
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+u32 NAMUT_SearchInstalledSoftBoxCount( void );
+
+/*---------------------------------------------------------------------------*
+  Name:         NAMUT_DrawNandTree
+
+  Description:  NANDのツリー情報をプリント出力します
+
+  Arguments:    ...
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
 void NAMUT_DrawNandTree(void);
+
+
 #endif // SDK_ARM9
 
 #ifdef __cplusplus
