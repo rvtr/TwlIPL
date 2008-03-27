@@ -119,7 +119,7 @@ Property
 	#
 	# CardRegion: card region [Japan/America/Europe/Australia/China/Korea]
 	#
-	CardRegion	Japan
+	CardRegion	ALL
 
 	#
 	# CommonClientKey: launcher deliver common client Key [TRUE/FALSE]

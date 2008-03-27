@@ -49,35 +49,6 @@
 #define CURSOR_ORIGIN_X      32
 #define CURSOR_ORIGIN_Y      56
 
-static char *strLanguage[] = {
-	(char *)"LANG_JAPANESE",
-	(char *)"LANG_ENGLISH",
-	(char *)"LANG_FRENCH",
-	(char *)"LANG_GERMAN",
-	(char *)"LANG_ITALIAN",
-	(char *)"LANG_SPANISH",
-	(char *)"LANG_CHINESE",
-	(char *)"LANG_KOREAN",
-};
-
-static const char *strRegion[] = {
-	"JAPAN",
-	"AMERICA",
-	"EUROPE",
-	"AUSTRALIA",
-	"CHINA",
-	"KOREA",
-};
-
-static const char *strLauncherGameCode[] = {
-	"LNCJ",
-	"LNCE",
-	"LNCP",
-	"LNCO",
-	"LNCC",
-	"LNCK",
-};
-
 /*---------------------------------------------------------------------------*
     ì‡ïîïœêîíËã`
  *---------------------------------------------------------------------------*/
