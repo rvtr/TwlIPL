@@ -69,6 +69,8 @@ extern void SelectCountryInit( void );
 extern int  SelectCountryMain( void );
 extern void SetParentalControlInit( void );
 extern int  SetParentalControlMain( void );
+extern void SetFreeSoftBoxInit( void );
+extern int  SetFreeSoftBoxMain( void );
 
 extern void DrawOKCancelButton( void );
 extern void CheckOKCancelButton(BOOL *tp_ok, BOOL *tp_cancel);

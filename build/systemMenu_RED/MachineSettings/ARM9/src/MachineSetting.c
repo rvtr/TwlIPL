@@ -32,7 +32,7 @@
 #define OK_BUTTON_BOTTOM_Y					( OK_BUTTON_TOP_Y + 2 * 8 )
 
 
-#define SETTING_MENU_ELEMENT_NUM			6						// メインメニューの項目数（※ピクトチャット起動テストは除いておく）
+#define SETTING_MENU_ELEMENT_NUM			7						// メインメニューの項目数（※ピクトチャット起動テストは除いておく）
 
 // extern data------------------------------------------
 
@@ -114,6 +114,16 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ LCFG_T
 		(const u16 *)L"PARENTAL CONTROL(C)",
 		(const u16 *)L"PARENTAL CONTROL(K)",
 	},
+	{
+		(const u16 *)L"フリーソフトBOX",
+		(const u16 *)L"FREESOFT BOX",
+		(const u16 *)L"FREESOFT BOX(F)",
+		(const u16 *)L"FREESOFT BOX(G)",
+		(const u16 *)L"FREESOFT BOX(I)",
+		(const u16 *)L"FREESOFT BOX(S)",
+		(const u16 *)L"FREESOFT BOX(C)",
+		(const u16 *)L"FREESOFT BOX(K)",
+	},
 #if 0
 	{
 		(const u16 *)L"ピクトチャット起動テスト",
@@ -136,6 +146,7 @@ static MenuPos s_settingPos[] = {
 	{ TRUE,  4 * 8,  14 * 8 },
 	{ TRUE,  4 * 8,  16 * 8 },
 	{ TRUE,  4 * 8,  18 * 8 },
+	{ TRUE,  4 * 8,  20 * 8 },
 };
 
 
@@ -237,6 +248,10 @@ int MachineSettingMain( void )
                 case 5:
                     SetParentalControlInit();
                     g_pNowProcess = SetParentalControlMain;
+                    break;
+                case 6:
+                    SetFreeSoftBoxInit();
+                    g_pNowProcess = SetFreeSoftBoxMain;
                     break;
 			}
 		}
