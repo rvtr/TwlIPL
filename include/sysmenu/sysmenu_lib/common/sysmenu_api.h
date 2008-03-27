@@ -37,9 +37,7 @@ extern "C" {
 #endif // SDK_FINALROM
 
 #define CARD_SLOT_NUM							1					// カードスロット数
-#define LAUNCHER_TITLE_LIST_NUM					40					// ランチャーのタイトルリスト数
-
-#define TITLE_ID_MACHINE_SETTINGS				( 0x000300154d534554LLU )	// 本体設定のタイトルID
+#define LAUNCHER_TITLE_LIST_NUM					( LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX + 1 )	// ランチャーのタイトルリスト数
 
 #define SYSM_PAD_SHORTCUT_TP					( PAD_BUTTON_X )
 #define SYSM_PAD_SHORTCUT_MACHINE_SETTINGS		( PAD_BUTTON_SELECT )

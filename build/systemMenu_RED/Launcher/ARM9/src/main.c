@@ -283,6 +283,10 @@ void TwlMain( void )
 				PollingInstallWlanFirmware() &&					// アプリブート前に無線ファームのロードは完了しておく必要がある
                 SYSM_IsAuthenticateTitleFinished() )
             {
+				if( SYSM_IsFatalError() ) {
+					// FATALエラー処理
+				}
+				
 	            switch ( SYSM_TryToBootTitle( pBootTitle, s_titleList ) ) {   // アプリ認証結果取得orブート   成功時：never return
 	            case AUTH_RESULT_TITLE_LOAD_FAILED:
 	            case AUTH_RESULT_TITLE_POINTER_ERROR:

@@ -500,6 +500,11 @@ instfirm_error:
         SYSM_Free( pNwmBuf );
         pNwmBuf = 0;
     }
+	
+	// インストール開始すらできなかった時は、FATALエラー
+	s_isFinished = TRUE;
+    SYSM_SetFatalError( TRUE );
+	
     return FALSE;
 }
 
@@ -531,10 +536,7 @@ BOOL PollingInstallWlanFirmware( void )
 					s_isFinished = TRUE;
 				}else {
 					// そうでない場合は、ColdStartロードで再度実行。
-					if( !InstallWlanFirmware( FALSE ) ) {
-				        SYSM_SetFatalError( TRUE );
-						s_isFinished = TRUE;
-					}
+					(void)InstallWlanFirmware( FALSE );
 				}
 			}
 			s_isFinished = TRUE;
