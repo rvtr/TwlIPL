@@ -31,13 +31,13 @@ REVISION_SRC	=	src/revision.c
 SRCS			=	sysmenu_lib.c \
 					util.c \
 					ninLogoFunc.c \
-					mountInfo.c \
 					device.c \
 					keys.c \
 					title.c \
 					banner.c \
 					../common/src/status.c \
 					../common/src/pxi.c \
+					../common/src/mountInfo.c \
 					$(REVISION_SRC)
 
 

@@ -20,6 +20,8 @@
 #include <sysmenu.h>
 #include "internal_api.h"
 
+#ifndef SDK_ARM9
+
 // define data-----------------------------------------------------------------
 #define DEFAULT_MOUNT_LIST_NUM				9
 #define NAND_MOUNT_INDEX			0
@@ -273,3 +275,34 @@ static void SYSMi_ModifySaveDataMountForLauncher( LauncherBootType bootType, NAM
 	}
 }
 
+#else //ARM9
+
+void SYSMi_SetBootSRLPathToWork2( TitleProperty *pBootTitle )
+{
+	static char path[ FS_ENTRY_LONGNAME_MAX ];
+	
+	switch( pBootTitle->flags.bootType )
+	{
+	case LAUNCHER_BOOTTYPE_NAND:
+		if( NAM_GetTitleBootContentPathFast( path, pBootTitle->titleID ) != NAM_OK ) {
+			OS_TPrintf( "ERROR: BootContentPath Get failed.\n" );
+		}
+		break;
+	case LAUNCHER_BOOTTYPE_TEMP:
+		STD_TSNPrintf( path, FS_ENTRY_LONGNAME_MAX, OS_TMP_APP_PATH, pBootTitle->titleID );
+		break;
+	default:
+		path[ 0 ] = 0;
+//		STD_StrCpy( path, (const char*)"rom:" );		// ※SDK2623では、BootSRLPathを"rom:"としたらFSi_InitRomArchiveでNANDアプリ扱いされてアクセス例外で落ちる。
+		break;
+	}
+	
+	if( path[ 0 ] ) {
+		STD_CopyLStringZeroFill( SYSMi_GetWork2()->bootContentPath, path, OS_MOUNT_PATH_LEN );
+	}else {
+		MI_CpuClearFast( SYSMi_GetWork2()->bootContentPath, OS_MOUNT_PATH_LEN );
+	}
+	OS_TPrintf( "boot SRL path : %s\n", SYSMi_GetWork2()->bootContentPath );	// ※OS_Init前で呼ぶとPrintfできないので注意。
+}
+
+#endif //#ifndef SDK_ARM9
