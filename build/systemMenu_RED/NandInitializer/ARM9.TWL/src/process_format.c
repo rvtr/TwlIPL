@@ -99,7 +99,7 @@ void* FormatProcess0(void)
 
 	// ÉÅÉjÉÖÅ[àÍóó
 	kamiFontPrintf(3,  6, FONT_COLOR_BLACK, "+-------------------+-----+");
-	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "l  FORMAT           l     l");
+	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "l  NAND Clean Up    l     l");
 	kamiFontPrintf(3,  8, FONT_COLOR_BLACK, "+-------------------+-----+");
 	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "l  CHECK DISK       l     l");
 	kamiFontPrintf(3, 10, FONT_COLOR_BLACK, "+-------------------+-----+");

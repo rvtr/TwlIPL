@@ -84,10 +84,11 @@ void* TopmenuProcess0(void)
 
 	// バージョン表示
 #ifndef NAND_FORMATTER_MODE
-	kamiFontPrintf(4, 2, 0, "Nand Initializer ver 0.1");
+	kamiFontPrintf(8, 2, 0, "Nand Initializer");
 #else
-	kamiFontPrintf(4, 2, 0, "Nand Formatter ver 0.1");
+	kamiFontPrintf(9, 2, 0, "Nand Formatter");
 #endif
+	kamiFontPrintf(9, 4, 8, "<%s>", __DATE__);
 
 	// メニュー一覧
 	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "    FORMAT NAND            ");

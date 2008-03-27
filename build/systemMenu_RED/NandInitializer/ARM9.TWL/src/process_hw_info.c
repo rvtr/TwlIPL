@@ -91,12 +91,6 @@ static BOOL s_isReadTSD;
     ì‡ïîä÷êîêÈåæ
  *---------------------------------------------------------------------------*/
 
-void HWInfoWriterInit( void );
-static void ReadTWLSettings( void );
-static void ModifyLanguage( u8 region );
-static void ReadPrivateKey( void );
-static void ReadHWInfoFile( void );
-static void VerifyHWInfo( void );
 static BOOL WriteHWInfoFile( u8 region );
 static BOOL WriteHWNormalInfoFile( void );
 static BOOL WriteHWSecureInfoFile( u8 region );
