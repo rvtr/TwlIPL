@@ -23,6 +23,7 @@
 #include "kami_pxi.h"
 #include "process_topmenu.h"
 #include "process_format.h"
+#include "process_hw_info.h"
 #include "process_auto.h"
 #include "process_fade.h"
 #include "cursor.h"
@@ -35,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 enum {
-	MENU_EASY_FORMAT=0,
+	MENU_CLEAN_UP=0,
 	MENU_CHECK_DISK,
 #ifndef NAND_FORMATTER_MODE
 	MENU_NORMAL_FORMAT,
@@ -198,7 +199,7 @@ void* FormatProcess2(void)
 
 		switch( sMenuSelectNo )
 		{
-		case MENU_EASY_FORMAT:	// 簡易フォーマット
+		case MENU_CLEAN_UP:	// 簡易フォーマット
 #ifdef DUMP_NAND_TREE
 			OS_Printf("---------------------------------------\n");
 			OS_Printf("                 Before                \n");
@@ -223,7 +224,12 @@ void* FormatProcess2(void)
 			OS_Printf("---------------------------------------\n");
 			NAMUT_DrawNandTree();
 #endif
+
+			// InstalledSoftBoxCount, FreeSoftBoxCount の値を現在のNANDの状態に合わせて更新します。
+			UpdateNandBoxCount();
+
 			return FormatProcess1;
+
 		case MENU_CHECK_DISK: // チェックディスク
 			{
 				FATFSDiskInfo info;

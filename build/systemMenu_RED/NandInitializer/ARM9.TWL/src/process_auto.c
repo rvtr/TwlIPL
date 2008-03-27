@@ -153,7 +153,9 @@ void* AutoProcess2(void)
 	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "    WRITE ETICKET SIGN     ");
 	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "    INPORT TAD FROM SD     ");
 	kamiFontPrintf(3, 15, FONT_COLOR_BLACK, "    INPORT NANDFIRM FROM SD");
+#ifndef AUTO_FORMAT_MODE
 	kamiFontPrintf(3, 22, FONT_COLOR_BLACK, " Button B : return to menu");
+#endif
 
 	for (i=0;i<sMenuSelectNo-1;i++)
 	{

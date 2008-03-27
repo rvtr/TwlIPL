@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #ifndef PROCESS_HW_INFO_H_
@@ -41,6 +41,18 @@ void* HWInfoProcess1(void);
 void* HWInfoProcess2(void);
 void* HWInfoProcess3(void);
 void* HWInfoProcess4(void);
+
+/*---------------------------------------------------------------------------*
+  Name:         UpdateNandBoxCount
+
+  Description:  InstalledSoftBoxCount, FreeSoftBoxCount の値を
+				現在のNANDの状態に合わせて更新します。
+
+  Arguments:    None.
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+void UpdateNandBoxCount( void );
 
 /*===========================================================================*/
 

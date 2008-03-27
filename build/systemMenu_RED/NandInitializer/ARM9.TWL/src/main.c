@@ -28,6 +28,8 @@
 #include "kami_pxi.h"
 #include "sd_event.h"
 #include "process_fade.h"
+#include "hwi.h"
+
 extern void HWInfoWriterInit( void );
 
 /*---------------------------------------------------------------------------*
@@ -115,6 +117,23 @@ TwlMain()
 	kamiFontPrintfConsole( CONSOLE_ORANGE, "l L&R Button  : Auto Init   l\n");
 #endif
 	kamiFontPrintfConsole( CONSOLE_ORANGE, "+---------------------------+\n");
+
+	// HWInfoä÷òAÇÃëOèÄîı
+	switch (HWI_Init( OS_AllocFromMain, OS_FreeToMain ))
+	{
+	case HWI_INIT_FAILURE:
+		kamiFontPrintfConsoleEx(CONSOLE_RED, "HWI_INIT() Failure!\n" );
+		break;
+	case HWI_INIT_SUCCESS_PRO_SIGNATURE_MODE:
+		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, "[PRO Signature MODE]\n" );
+		break;
+	case HWI_INIT_SUCCESS_DEV_SIGNATURE_MODE:
+		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, "[DEV Signature MODE]\n" );
+		break;
+	case HWI_INIT_SUCCESS_NO_SIGNATRUE_MODE:
+		kamiFontPrintfConsoleEx(CONSOLE_RED, "[No Signature MODE]\n" );
+		break;
+	}
 
     while (1)
     {

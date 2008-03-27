@@ -20,10 +20,13 @@
 #include <twl/fatfs.h>
 #include <nitro/card.h>
 #include <twl/nam.h>
+#include <twl/lcfg.h>
+#include <sysmenu/namut.h>
 #include "kami_font.h"
 #include "kami_pxi.h"
 #include "process_topmenu.h"
 #include "process_import.h"
+#include "process_hw_info.h"
 #include "process_eticket.h"
 #include "process_auto.h"
 #include "process_fade.h"
@@ -675,6 +678,17 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 		}
 	}
 
+	// NOT_LAUNCH_FLAG または DATA_ONLY_FLAG が立っていないタイトルの場合
+	// freeSoftBoxCountに空きがなければインポートしない
+	if (!(titleInfo.titleId & (TITLE_ID_NOT_LAUNCH_FLAG_MASK | TITLE_ID_DATA_ONLY_FLAG_MASK)))
+	{
+		if (NAMUT_SearchInstalledSoftBoxCount() == LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX)
+		{
+			kamiFontPrintfConsole(1, "NAND FreeSoftBoxCount == 0");
+			return FALSE;
+		}
+	}
+
 	// インポート開始フラグを立てる
 	sNowImport = TRUE;
 
@@ -698,13 +712,16 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 
 	if ( nam_result == NAM_OK )
 	{
-		kamiFontPrintfConsole(CONSOLE_ORANGE, "Import %s Sucess.\n", file_name );
+		kamiFontPrintfConsole(CONSOLE_ORANGE, "Sucess!\n");
 		ret = TRUE;
 	}
 	else
 	{
-		kamiFontPrintfConsole(1, "Import %s Fail.\n", file_name );
+		kamiFontPrintfConsole(CONSOLE_RED, "Fail!\n");
 	}
+
+	// InstalledSoftBoxCount, FreeSoftBoxCount の値を現在のNANDの状態に合わせて更新します。
+	UpdateNandBoxCount();
 
 	return ret;
 }

@@ -20,6 +20,7 @@
 #include <twl/fatfs.h>
 #include <twl/lcfg.h>
 #include <nitro/card.h>
+#include <sysmenu/namut.h>
 #include "kami_font.h"
 #include "kami_pxi.h"
 #include "process_topmenu.h"
@@ -42,7 +43,7 @@
     定数定義
  *---------------------------------------------------------------------------*/
 
-#define NUM_OF_MENU_SELECT    8
+#define NUM_OF_MENU_SELECT    7
 #define DOT_OF_MENU_SPACE    16
 #define CHAR_OF_MENU_SPACE    2
 #define CURSOR_ORIGIN_X      32
@@ -94,7 +95,7 @@ static BOOL s_isReadTSD;
 static BOOL WriteHWInfoFile( u8 region );
 static BOOL WriteHWNormalInfoFile( void );
 static BOOL WriteHWSecureInfoFile( u8 region );
-static BOOL DeleteHWInfoFile( void );
+//static BOOL DeleteHWInfoFile( void );
 
 const LCFGTWLHWNormalInfo *LCFG_THW_GetDefaultNormalInfo( void );
 const LCFGTWLHWSecureInfo *LCFG_THW_GetDefaultSecureInfo( void );
@@ -117,7 +118,6 @@ const LCFGTWLHWSecureInfo *LCFG_THW_GetSecureInfo( void );
 
 void* HWInfoProcess0(void)
 {
-	HwiInitResult initResult;
 	int i;
 
 	// 文字列全クリア
@@ -141,10 +141,10 @@ void* HWInfoProcess0(void)
 	kamiFontPrintf(3, 16, FONT_COLOR_BLACK, "+--------------------+----+");
 	kamiFontPrintf(3, 17, FONT_COLOR_BLACK, "l   REGION KOREA     l    l");
 	kamiFontPrintf(3, 18, FONT_COLOR_BLACK, "+--------------------+----+");
-	kamiFontPrintf(3, 19, FONT_COLOR_BLACK, "l   DELETE           l    l");
+//	kamiFontPrintf(3, 19, FONT_COLOR_BLACK, "l   DELETE           l    l");
+//	kamiFontPrintf(3, 20, FONT_COLOR_BLACK, "+--------------------+----+");
+	kamiFontPrintf(3, 19, FONT_COLOR_BLACK, "l   RETURN           l    l");
 	kamiFontPrintf(3, 20, FONT_COLOR_BLACK, "+--------------------+----+");
-	kamiFontPrintf(3, 21, FONT_COLOR_BLACK, "l   RETURN           l    l");
-	kamiFontPrintf(3, 22, FONT_COLOR_BLACK, "+--------------------+----+");
 
 	// 背景全クリア
 	for (i=0;i<24;i++)
@@ -159,24 +159,6 @@ void* HWInfoProcess0(void)
 
 	// カーソル除外
 	SetCursorPos((u16)200, (u16)200);
-
-	// 前準備
-	initResult = HWI_Init( OS_AllocFromMain, OS_FreeToMain );
-	switch (initResult)
-	{
-	case HWI_INIT_FAILURE:
-		kamiFontPrintfConsoleEx(CONSOLE_RED, "HWI_INIT() Failure!\n" );
-		break;
-	case HWI_INIT_SUCCESS_PRO_SIGNATURE_MODE:
-		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, "[PRO Signature MODE]\n" );
-		break;
-	case HWI_INIT_SUCCESS_DEV_SIGNATURE_MODE:
-		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, "[DEV Signature MODE]\n" );
-		break;
-	case HWI_INIT_SUCCESS_NO_SIGNATRUE_MODE:
-		kamiFontPrintfConsoleEx(CONSOLE_RED, "[No Signature MODE]\n" );
-		break;
-	}
 
 	FADE_IN_RETURN( HWInfoProcess1 );
 }
@@ -255,11 +237,11 @@ void* HWInfoProcess2(void)
 		OS_TPrintf( "Write Start.\n" );
 		result = WriteHWInfoFile( (u8)sMenuSelectNo );
 		break;
+//	case 6:
+//		OS_TPrintf( "Delete start.\n" );
+//		result = DeleteHWInfoFile();
+//		break;
 	case 6:
-		OS_TPrintf( "Delete start.\n" );
-		result = DeleteHWInfoFile();
-		break;
-	case 7:
 		FADE_OUT_RETURN( TopmenuProcess0 );
 	}
 
@@ -311,6 +293,7 @@ static BOOL WriteHWInfoFile( u8 region )
 	static const char *pMsgSignWriting  	= "Writing Sign   File...";
 	static const char *pMsgSucceeded 		= "Success!\n";
 	static const char *pMsgFailed 			= "Failed!\n";
+	u32 installedSoftBoxCount = 0;
 	BOOL result = TRUE;
 
 	// ノーマルファイルのライト
@@ -344,6 +327,9 @@ static BOOL WriteHWInfoFile( u8 region )
 	}
 	
 	HWI_ModifyLanguage( region );
+
+	// InstalledSoftBoxCount, FreeSoftBoxCount の値を現在のNANDの状態に合わせて更新します。
+	UpdateNandBoxCount();
 	
 	return result;
 }
@@ -390,3 +376,41 @@ static BOOL DeleteHWInfoFile( void )
 
 	return result;
 }
+
+/*---------------------------------------------------------------------------*
+  Name:         UpdateNandBoxCount
+
+  Description:  InstalledSoftBoxCount, FreeSoftBoxCount の値を
+				現在のNANDの状態に合わせて更新します。
+
+  Arguments:    None.
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+
+void UpdateNandBoxCount( void )
+{
+	u32 installedSoftBoxCount;
+	u32 freeSoftBoxCount;
+
+	// InstalledSoftBoxCount, FreeSoftBoxCount を数えなおす
+	installedSoftBoxCount = NAMUT_SearchInstalledSoftBoxCount();
+	freeSoftBoxCount = LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX - installedSoftBoxCount;
+
+//	OS_Printf("installedSoftBoxCount = %d\n", installedSoftBoxCount);
+//	OS_Printf("freeSoftBoxCount      = %d\n", freeSoftBoxCount);
+
+	// LCFGライブラリの静的変数に対する更新
+    LCFG_TSD_SetInstalledSoftBoxCount( (u8)installedSoftBoxCount );	
+    LCFG_TSD_SetFreeSoftBoxCount( (u8)freeSoftBoxCount );
+
+	// LCFGライブラリの静的変数の値をNANDに反映
+    {
+        u8 *pBuffer = OS_Alloc( LCFG_WRITE_TEMP );
+        if( pBuffer ) {
+            (void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+            OS_Free( pBuffer );
+        }
+    }
+}
+
