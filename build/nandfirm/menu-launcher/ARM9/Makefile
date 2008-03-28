@@ -44,12 +44,8 @@ MAKEROM_ARM7_BASE       =       $(basename $(MAKEROM_ARM7))
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 # no thumb version, no final rom version
-ifeq ($(TARGET_FINALROM),)
-LLIBRARIES	+=	libes.TWL$(ARCHGEN_TYPE).a libboc.TWL$(ARCHGEN_TYPE).a
-else
-LLIBRARIES	+=	../Release/libes.TWL$(ARCHGEN_TYPE).a ../Release/libboc.TWL$(ARCHGEN_TYPE).a
-endif
-LLIBRARIES	+=	liblcfg$(TWL_LIBSUFFIX).a
+LLIBRARIES	+=	libes.TWL$(ARCHGEN_TYPE).a libboc.TWL$(ARCHGEN_TYPE).a \
+				liblcfg$(TWL_LIBSUFFIX).a
 
 #----------------------------------------------------------------------------
 
