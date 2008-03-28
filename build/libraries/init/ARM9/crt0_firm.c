@@ -98,6 +98,15 @@ SDK_WEAK_SYMBOL asm void _start( void )
         mov             r12, #HW_REG_BASE
         str             r12, [r12, #REG_IME_OFFSET]
 
+        // カード電源ON時はカードリセット解除設定
+        ldr             r3, =REG_MC_ADDR
+        ldr             r0, [r3]
+        and             r0, r0, #REG_MI_MC_SL1_MODE_MASK
+        cmp             r0, #0x2 << REG_MI_MC_SL1_MODE_SHIFT
+        ldreq           r3, =REG_MCCNT1_ADDR
+        moveq           r0, #REG_MI_MCCNT1_RESB_MASK
+        streq           r0, [r3]
+
         //---- initialize stack pointer
         // SVC mode
         mov             r0, #HW_PSR_SVC_MODE
