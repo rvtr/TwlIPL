@@ -129,6 +129,21 @@ Property
 	#
 	CodecMode		$(MAKEROM_CODEC_MODE)
 
+	#
+	# SCFG: scfg lock [TRUE/FALSE]
+	#
+	LockSCFG		FALSE
+
+	#
+	# NANDAccess: nand access control [TRUE/FALSE]
+	#
+	NANDAccess		TRUE
+
+	#
+	# SDCardAccess: sd card access control [TRUE/FALSE]
+	#
+	SDCardAccess	TRUE
+
 	###
 	#### END
 }
