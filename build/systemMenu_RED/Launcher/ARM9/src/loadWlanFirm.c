@@ -352,22 +352,23 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
     OS_InitMessageQueue(&mesq, mesAry, sizeof(mesAry)/sizeof(mesAry[0]));
 
     /* HotStart/ColdStartのチェック */
-    /*
-        [TODO:] DSモードからHWリセットされた場合、パラメータ領域の無線DataSegmentは
-                失われる。この場合、DataSegmentをセットし直すために、
-                NANDからのFW読み直しを行わなければならない。
-                TemporallyなWorkaroundとして、この場合はColdStart扱いにしています。
-                初期化時間等の要因を鑑みて、本実装をどうするか検討します。
-     */
 	
 	s_isHotStartWLFirm = isHotStartWLFirm;
 	
     if (TRUE == isHotStartWLFirm )
     {
+        u8 fwType;
+        
         isColdStart = FALSE;
 
+        // FWタイプが1のときのみData segmentの正当性をチェックする。
+
+        // [TODO:] TWL無線ドライバRC版のためのWorkaround
+        //         その後のドライバは、Data segmentが廃止される。
+        fwType = ((NWMFirmDataSegment *)NWM_PARAM_FWDATA_ADDRESS)->fwType;
+        
         // Check integrity of WLAN data segment
-        if (FALSE == NWMi_CheckFwDataIntegrity())
+        if (fwType == 1 && FALSE == NWMi_CheckFwDataIntegrity())
         {
             isColdStart = TRUE;
         }
