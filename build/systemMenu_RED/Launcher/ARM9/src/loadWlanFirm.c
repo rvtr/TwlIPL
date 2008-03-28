@@ -365,6 +365,7 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 
         // [TODO:] TWL無線ドライバRC版のためのWorkaround
         //         その後のドライバは、Data segmentが廃止される。
+        //         ドライバがバージョンアップされたら、この処理は削除する予定。
         fwType = ((NWMFirmDataSegment *)NWM_PARAM_FWDATA_ADDRESS)->fwType;
         
         // Check integrity of WLAN data segment
