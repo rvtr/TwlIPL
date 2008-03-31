@@ -143,8 +143,10 @@ static void PreInit(void)
 ***************************************************************/
 static void PostInit(void)
 {
+#if SDK_TS_VERSION <= 200
     // PMIC‚ÌÝ’è for old version
     PM_InitFIRM();
+#endif
     // AES‚Ì‰Šú‰»
     AES_Init(); // for encrypted NAND
     // ƒ}ƒEƒ“ƒgî•ñ‚Ì‰Šú‰»

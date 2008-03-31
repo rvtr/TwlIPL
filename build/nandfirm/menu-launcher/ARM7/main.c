@@ -123,15 +123,6 @@ static void PreInit(void)
         OS_Terminate();
     }
     /*
-        AES関連 (NAND暗号化の鍵変更を含む)
-    */
-#ifndef SDK_FINALROM
-    if ( !*(u8*)HW_TWL_RED_LAUNCHER_VER )
-#endif
-    {
-        AESi_PreInitKeys();
-    }
-    /*
         リセットパラメータ(1バイト)を共有領域(1バイト)にコピー
     */
 #define HOTSTART_FLAG_ENABLE    0x80
@@ -152,8 +143,17 @@ static void PreInit(void)
 ***************************************************************/
 static void PostInit(void)
 {
+#if SDK_TS_VERSION <= 200
     // PMICの設定 for old version
     PM_InitFIRM();
+#endif
+    /*
+        AES関連 (NAND暗号化の鍵変更を含む)
+    */
+    if ( !*(u8*)HW_TWL_RED_LAUNCHER_VER )
+    {
+        AESi_PreInitKeys();
+    }
     // AESの初期化
     AES_Init(); // for encrypted NAND
     // マウント情報の初期化
