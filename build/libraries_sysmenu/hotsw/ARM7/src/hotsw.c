@@ -822,6 +822,9 @@ static void GenVA_VB_VD(void)
 	MATHRandContext32	rnd;					
     
 	// 乱数を初期化 VBlankカウンタ値を種とする。
+	// [TODO] プログラムがV周期に同期しているためVカウンタでは固定値になりやすい
+	//       （特にダイレクトブート）。
+	//        起動する度に変化するパラメータと組み合わせるべき。
     MATH_InitRand32(&rnd, (u64)OS_GetVBlankCount());
     
     s_cbData.vae = MATH_Rand32(&rnd, 0);

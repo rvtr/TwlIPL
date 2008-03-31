@@ -773,6 +773,18 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		}
 	}
 	OS_TPrintf("Authenticate : total %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
+
+	// 製品or開発実機ではNANDアプリはNAND、カードアプリはカードからのみブート許可
+	if ( ! SYSM_IsRunOnDebugger() )
+	{
+		if ( ( (pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_NAND ||
+				pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_TEMP)  && !(head->s.titleID_Hi & TITLE_ID_HI_MEDIA_MASK) ) ||
+			   (pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM    &&  (head->s.titleID_Hi & TITLE_ID_HI_MEDIA_MASK) ) )
+		{
+			return AUTH_RESULT_AUTHENTICATE_FAILED;
+		}
+	}
+
 	return AUTH_RESULT_SUCCEEDED;
 }
 
