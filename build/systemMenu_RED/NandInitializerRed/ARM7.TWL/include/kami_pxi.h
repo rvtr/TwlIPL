@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
  
 #ifndef TWL_CAMERA_TEST_CAMERATEST_H_

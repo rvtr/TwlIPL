@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK - NandInitializer
-  File:     process_nandfirm.h
+  File:     sd_event.c
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -11,45 +11,47 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
-#ifndef PROCESS_NANDFIRM_H_
-#define PROCESS_NANDFIRM_H_
-
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-/*===========================================================================*/
-
-#include <nitro.h>
+#include <twl.h>
+#include "kami_font.h"
+#include <twl/fatfs.h>
+#include <nitro/card.h>
+#include "sd_event.h"
 
 /*---------------------------------------------------------------------------*
-    型定義
+    内部変数定義
  *---------------------------------------------------------------------------*/
-
-//typedef void*  (*TpProcess)(void);
 
 /*---------------------------------------------------------------------------*
-    関数定義
+    内部関数定義
  *---------------------------------------------------------------------------*/
-
-void* NandfirmProcess0(void);
-void* NandfirmProcess1(void);
-void* NandfirmProcess2(void);
-void* NandfirmProcess3(void);
-void* NandfirmProcess4(void);
-
-/*===========================================================================*/
-
-#ifdef	__cplusplus
-}          /* extern "C" */
-#endif
-
-#endif /* PROCESS_NANDFIRM_H_ */
+static void VBlankIntr(void);
 
 /*---------------------------------------------------------------------------*
-  End of file
+  Name:         SDEvents
+
+  Description:  SDカードの挿抜イベント監視コールバック
+
+  Arguments:    userdata : 任意のユーザ定義引数
+                event    : イベント種別
+                arg      : イベント固有の引数
+
+  Returns:      None.
  *---------------------------------------------------------------------------*/
+void SDEvents(void *userdata, FSEvent event, void *arg)
+{
+    (void)userdata;
+    (void)arg;
+    if (event == FS_EVENT_MEDIA_REMOVED)
+    {
+        OS_TPrintf("sdmc:removed!\n");
+    }
+    else if (event == FS_EVENT_MEDIA_INSERTED)
+    {
+        OS_TPrintf("sdmc:inserted!\n");
+    }
+}
+

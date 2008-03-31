@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK - NandInitializer
-  File:     cursor.h
+  File:     nvram.h
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -11,35 +11,33 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
-#ifndef KAMI_CURSOR_H_
-#define KAMI_CURSOR_H_
+#ifndef FIRM_NVRAM_H_
+#define FIRM_NVRAM_H_
 
-#ifdef	__cplusplus
+#include <twl/types.h>
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
-/*===========================================================================*/
-
-#include <nitro.h>
+#ifdef  SDK_ARM9
+#else  // SDK_ARM7
 
 /*---------------------------------------------------------------------------*
     ä÷êîíËã`
  *---------------------------------------------------------------------------*/
+void NVRAMi_Read(u32 address, void *buf, u32 size);
+void NVRAMi_Write(u32 address, void *buf, u32 size);
 
-void SetCursorPos(u16 x, u16 y);
-
-/*===========================================================================*/
-
-#ifdef	__cplusplus
-}          /* extern "C" */
 #endif
 
-#endif /* KAMI_CURSOR_H_ */
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
-/*---------------------------------------------------------------------------*
-  End of file
- *---------------------------------------------------------------------------*/
+/* FIRM_NVRAM_H_ */
+#endif

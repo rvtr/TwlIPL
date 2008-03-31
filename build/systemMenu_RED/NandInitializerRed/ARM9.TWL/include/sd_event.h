@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK - NandInitializer
-  File:     nvram.h
+  File:     sd_event.h
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -11,33 +11,35 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
-#ifndef FIRM_NVRAM_H_
-#define FIRM_NVRAM_H_
+#ifndef SD_EVENT_H_
+#define SD_EVENT_H_
 
-#include <twl/types.h>
-
-#ifdef __cplusplus
+#ifdef	__cplusplus
 extern "C" {
 #endif
 
-#ifdef  SDK_ARM9
-#else  // SDK_ARM7
+/*===========================================================================*/
+
+#include <nitro.h>
 
 /*---------------------------------------------------------------------------*
     ä÷êîíËã`
  *---------------------------------------------------------------------------*/
-void NVRAMi_Read(u32 address, void *buf, u32 size);
-void NVRAMi_Write(u32 address, void *buf, u32 size);
 
+void SDEvents(void *userdata, FSEvent event, void *arg);
+
+/*===========================================================================*/
+
+#ifdef	__cplusplus
+}          /* extern "C" */
 #endif
 
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
+#endif /* SD_EVENT_H_ */
 
-/* FIRM_NVRAM_H_ */
-#endif
+/*---------------------------------------------------------------------------*
+  End of file
+ *---------------------------------------------------------------------------*/

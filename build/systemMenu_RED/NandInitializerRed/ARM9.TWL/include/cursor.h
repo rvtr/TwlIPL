@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK - NandInitializer
-  File:     process_norfirm.h
+  File:     cursor.h
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -11,12 +11,12 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
-#ifndef PROCESS_NORFIRM_H_
-#define PROCESS_NORFIRM_H_
+#ifndef KAMI_CURSOR_H_
+#define KAMI_CURSOR_H_
 
 #ifdef	__cplusplus
 extern "C" {
@@ -27,20 +27,10 @@ extern "C" {
 #include <nitro.h>
 
 /*---------------------------------------------------------------------------*
-    å^íËã`
- *---------------------------------------------------------------------------*/
-
-//typedef void*  (*TpProcess)(void);
-
-/*---------------------------------------------------------------------------*
     ä÷êîíËã`
  *---------------------------------------------------------------------------*/
 
-void* NorfirmProcess0(void);
-void* NorfirmProcess1(void);
-void* NorfirmProcess2(void);
-void* NorfirmProcess3(void);
-void* NorfirmProcess4(void);
+void SetCursorPos(u16 x, u16 y);
 
 /*===========================================================================*/
 
@@ -48,7 +38,7 @@ void* NorfirmProcess4(void);
 }          /* extern "C" */
 #endif
 
-#endif /* PROCESS_NORFIRM_H_ */
+#endif /* KAMI_CURSOR_H_ */
 
 /*---------------------------------------------------------------------------*
   End of file

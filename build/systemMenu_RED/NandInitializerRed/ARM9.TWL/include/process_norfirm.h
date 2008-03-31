@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK - NandInitializer
-  File:     process_import.h
+  File:     process_norfirm.h
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -11,12 +11,12 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
-#ifndef PROCESS_IMPORT_H_
-#define PROCESS_IMPORT_H_
+#ifndef PROCESS_NORFIRM_H_
+#define PROCESS_NORFIRM_H_
 
 #ifdef	__cplusplus
 extern "C" {
@@ -36,14 +36,11 @@ extern "C" {
     ä÷êîíËã`
  *---------------------------------------------------------------------------*/
 
-void* ImportProcess0(void);
-void* ImportProcess1(void);
-void* ImportProcess2(void);
-void* ImportProcess3(void);
-void* ImportProcess4(void);
-
-void ProgressInit(void);
-void ProgressDraw(f32 ratio);
+void* NorfirmProcess0(void);
+void* NorfirmProcess1(void);
+void* NorfirmProcess2(void);
+void* NorfirmProcess3(void);
+void* NorfirmProcess4(void);
 
 /*===========================================================================*/
 
@@ -51,7 +48,7 @@ void ProgressDraw(f32 ratio);
 }          /* extern "C" */
 #endif
 
-#endif /* PROCESS_IMPORT_H_ */
+#endif /* PROCESS_NORFIRM_H_ */
 
 /*---------------------------------------------------------------------------*
   End of file

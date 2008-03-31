@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK - NandInitializer
-  File:     process_fade.h
+  File:     keypad.c
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -11,49 +11,75 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
-
-#ifndef PROCESS_FADE_H_
-#define PROCESS_FADE_H_
-
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-/*===========================================================================*/
 
 #include <twl.h>
+#include "keypad.h"
 
 /*---------------------------------------------------------------------------*
-    型定義
+    定数定義
  *---------------------------------------------------------------------------*/
-typedef void*  (*Process)(void);
+
+#define KEY_REPEAT_TRIGGER_START  20
+#define KEY_REPEAT_TRIGGER_TERM    5
 
 /*---------------------------------------------------------------------------*
-    マクロ定義
+    内部変数定義
  *---------------------------------------------------------------------------*/
 
-#define FADE_IN_RETURN(P)  SetNextProcess(P);return fadeInProcess;
-#define FADE_OUT_RETURN(P) SetNextProcess(P);return fadeOutProcess;
+static u16     Cont;
+static u16     Trg;
+static u16     Release;
+static u16     RepeatTrg;
+static u8      key = 60;
+
+static int repeat_counter;
 
 /*---------------------------------------------------------------------------*
-    関数定義
+    内部関数定義
  *---------------------------------------------------------------------------*/
+void
+kamiPadRead(void)
+{
+    u16     ReadData;
 
-void* fadeInProcess(void);
-void* fadeOutProcess(void);
-void SetNextProcess(Process process);
+    ReadData = PAD_Read();
+    Trg      = (u16)(ReadData & (ReadData ^ Cont));
+	Release  = (u16)(Cont & (ReadData ^ Cont));
+    Cont = ReadData;
 
-/*===========================================================================*/
+	RepeatTrg = Trg;
+	if (++repeat_counter > (KEY_REPEAT_TRIGGER_START + KEY_REPEAT_TRIGGER_TERM))
+	{
+		repeat_counter = KEY_REPEAT_TRIGGER_START;
+	}
+	if (repeat_counter == KEY_REPEAT_TRIGGER_START)
+	{
+		RepeatTrg = ReadData;
+	}
+	if (!ReadData)
+	{
+		repeat_counter = 0;
+	}
+}
 
-#ifdef	__cplusplus
-}          /* extern "C" */
-#endif
+BOOL 
+kamiPadIsTrigger(u16 key)
+{
+	return (Trg	& key)? TRUE : FALSE;
+}
 
-#endif /* PROCESS_FADE_H_ */
+BOOL
+kamiPadIsRepeatTrigger(u16 key)
+{
+	return (RepeatTrg & key)? TRUE : FALSE;
+}
 
-/*---------------------------------------------------------------------------*
-  End of file
- *---------------------------------------------------------------------------*/
+BOOL 
+kamiPadIsPress(u16 key)
+{
+	return (Cont & key)? TRUE : FALSE;
+}
+

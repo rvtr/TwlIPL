@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK - NandInitializer
-  File:     sd_event.h
+  File:     formatter.h
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -11,34 +11,38 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
+ *---------------------------------------------------------------------------*/
+#ifndef NAND_INITIALIZER_FORMATTER_H_
+#define NAND_INITIALIZER_FORMATTER_H_
+
+/*---------------------------------------------------------------------------*
+    型定義
  *---------------------------------------------------------------------------*/
 
-#ifndef SD_EVENT_H_
-#define SD_EVENT_H_
+typedef enum {
+	FORMAT_MODE_QUICK,	// Quickフォーマット
+	FORMAT_MODE_FULL	// Fullフォーマット(各パーティション内を0xFFで埋める）
+} FormatMode;
 
-#ifdef	__cplusplus
+
+#ifdef  __cplusplus
 extern "C" {
 #endif
 
 /*===========================================================================*/
 
-#include <nitro.h>
-
-/*---------------------------------------------------------------------------*
-    関数定義
- *---------------------------------------------------------------------------*/
-
-void SDEvents(void *userdata, FSEvent event, void *arg);
+BOOL ExeFormat(FormatMode format_mode);
 
 /*===========================================================================*/
 
-#ifdef	__cplusplus
+
+#ifdef  __cplusplus
 }          /* extern "C" */
 #endif
 
-#endif /* SD_EVENT_H_ */
+#endif /* NAND_INITIALIZER_FORMATTER_H_ */
 
 /*---------------------------------------------------------------------------*
   End of file

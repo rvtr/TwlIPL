@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK - NandInitializer
-  File:     keypad.c
+  File:     process_import.h
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -11,75 +11,48 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
-#include <twl.h>
-#include "keypad.h"
+#ifndef PROCESS_IMPORT_H_
+#define PROCESS_IMPORT_H_
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
+/*===========================================================================*/
+
+#include <nitro.h>
 
 /*---------------------------------------------------------------------------*
-    定数定義
+    型定義
  *---------------------------------------------------------------------------*/
 
-#define KEY_REPEAT_TRIGGER_START  20
-#define KEY_REPEAT_TRIGGER_TERM    5
+//typedef void*  (*TpProcess)(void);
 
 /*---------------------------------------------------------------------------*
-    内部変数定義
+    関数定義
  *---------------------------------------------------------------------------*/
 
-static u16     Cont;
-static u16     Trg;
-static u16     Release;
-static u16     RepeatTrg;
-static u8      key = 60;
+void* ImportProcess0(void);
+void* ImportProcess1(void);
+void* ImportProcess2(void);
+void* ImportProcess3(void);
+void* ImportProcess4(void);
 
-static int repeat_counter;
+void ProgressInit(void);
+void ProgressDraw(f32 ratio);
+
+/*===========================================================================*/
+
+#ifdef	__cplusplus
+}          /* extern "C" */
+#endif
+
+#endif /* PROCESS_IMPORT_H_ */
 
 /*---------------------------------------------------------------------------*
-    内部関数定義
+  End of file
  *---------------------------------------------------------------------------*/
-void
-kamiPadRead(void)
-{
-    u16     ReadData;
-
-    ReadData = PAD_Read();
-    Trg      = (u16)(ReadData & (ReadData ^ Cont));
-	Release  = (u16)(Cont & (ReadData ^ Cont));
-    Cont = ReadData;
-
-	RepeatTrg = Trg;
-	if (++repeat_counter > (KEY_REPEAT_TRIGGER_START + KEY_REPEAT_TRIGGER_TERM))
-	{
-		repeat_counter = KEY_REPEAT_TRIGGER_START;
-	}
-	if (repeat_counter == KEY_REPEAT_TRIGGER_START)
-	{
-		RepeatTrg = ReadData;
-	}
-	if (!ReadData)
-	{
-		repeat_counter = 0;
-	}
-}
-
-BOOL 
-kamiPadIsTrigger(u16 key)
-{
-	return (Trg	& key)? TRUE : FALSE;
-}
-
-BOOL
-kamiPadIsRepeatTrigger(u16 key)
-{
-	return (RepeatTrg & key)? TRUE : FALSE;
-}
-
-BOOL 
-kamiPadIsPress(u16 key)
-{
-	return (Cont & key)? TRUE : FALSE;
-}
-

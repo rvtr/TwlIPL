@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK - NandInitializer
-  File:     formatter.h
+  File:     process_fade.h
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -11,38 +11,48 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
- *---------------------------------------------------------------------------*/
-#ifndef NAND_INITIALIZER_FORMATTER_H_
-#define NAND_INITIALIZER_FORMATTER_H_
-
-/*---------------------------------------------------------------------------*
-    型定義
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
-typedef enum {
-	FORMAT_MODE_QUICK,	// Quickフォーマット
-	FORMAT_MODE_FULL	// Fullフォーマット(各パーティション内を0xFFで埋める）
-} FormatMode;
+#ifndef PROCESS_FADE_H_
+#define PROCESS_FADE_H_
 
-
-#ifdef  __cplusplus
+#ifdef	__cplusplus
 extern "C" {
 #endif
 
 /*===========================================================================*/
 
-BOOL ExeFormat(FormatMode format_mode);
+#include <twl.h>
+
+/*---------------------------------------------------------------------------*
+    型定義
+ *---------------------------------------------------------------------------*/
+typedef void*  (*Process)(void);
+
+/*---------------------------------------------------------------------------*
+    マクロ定義
+ *---------------------------------------------------------------------------*/
+
+#define FADE_IN_RETURN(P)  SetNextProcess(P);return fadeInProcess;
+#define FADE_OUT_RETURN(P) SetNextProcess(P);return fadeOutProcess;
+
+/*---------------------------------------------------------------------------*
+    関数定義
+ *---------------------------------------------------------------------------*/
+
+void* fadeInProcess(void);
+void* fadeOutProcess(void);
+void SetNextProcess(Process process);
 
 /*===========================================================================*/
 
-
-#ifdef  __cplusplus
+#ifdef	__cplusplus
 }          /* extern "C" */
 #endif
 
-#endif /* NAND_INITIALIZER_FORMATTER_H_ */
+#endif /* PROCESS_FADE_H_ */
 
 /*---------------------------------------------------------------------------*
   End of file

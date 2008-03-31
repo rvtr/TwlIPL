@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK - NandInitializer
-  File:     graphics.h
+  File:     process_auto.h
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -11,12 +11,12 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
-#ifndef GRAPHICS_H_
-#define GRAPHICS_H_
+#ifndef AUTO_TOPMENU_H_
+#define AUTO_TOPMENU_H_
 
 #ifdef	__cplusplus
 extern "C" {
@@ -27,11 +27,27 @@ extern "C" {
 #include <nitro.h>
 
 /*---------------------------------------------------------------------------*
+    型定義
+ *---------------------------------------------------------------------------*/
+
+//typedef void*  (*TpProcess)(void);
+
+/*---------------------------------------------------------------------------*
+    グローバル変数定義
+ *---------------------------------------------------------------------------*/
+
+extern BOOL gAutoFlag;
+
+
+/*---------------------------------------------------------------------------*
     関数定義
  *---------------------------------------------------------------------------*/
 
-void InitGraphics(void);
-void DrawLine(s16 sx, s16 sy, s16 ex, s16 ey, GXRgb color);
+void* AutoProcess0(void);
+void* AutoProcess1(void);
+void* AutoProcess2(void);
+void* AutoProcess3(void);
+void* AutoProcess4(void);
 
 /*===========================================================================*/
 
@@ -39,7 +55,7 @@ void DrawLine(s16 sx, s16 sy, s16 ex, s16 ey, GXRgb color);
 }          /* extern "C" */
 #endif
 
-#endif /* GRAPHICS_H_ */
+#endif /* AUTO_TOPMENU_H_ */
 
 /*---------------------------------------------------------------------------*
   End of file

@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK - NandInitializer
-  File:     process_auto.h
+  File:     cursor.c
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -11,52 +11,83 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
-#ifndef AUTO_TOPMENU_H_
-#define AUTO_TOPMENU_H_
-
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-/*===========================================================================*/
-
-#include <nitro.h>
+#include <twl.h>
+#include "graphics.h"
+#include "cursor.h"
 
 /*---------------------------------------------------------------------------*
-    型定義
+    定数定義
  *---------------------------------------------------------------------------*/
-
-//typedef void*  (*TpProcess)(void);
 
 /*---------------------------------------------------------------------------*
-    グローバル変数定義
+    定数定義
  *---------------------------------------------------------------------------*/
 
-extern BOOL gAutoFlag;
-
+/*---------------------------------------------------------------------------*
+    内部変数定義
+ *---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*
     関数定義
  *---------------------------------------------------------------------------*/
+void SetCursorPos(u16 x, u16 y)
+{
+	GXOamAttr oam;
 
-void* AutoProcess0(void);
-void* AutoProcess1(void);
-void* AutoProcess2(void);
-void* AutoProcess3(void);
-void* AutoProcess4(void);
+/*  [] 
+	G2_SetOBJAttr( 
+		&oam, 
+		x, y, 
+		0, 
+		GX_OAM_MODE_NORMAL, 
+		FALSE, 
+  		GX_OAM_EFFECT_FLIP_H, 
+		GX_OAM_SHAPE_8x8, 
+		GX_OAM_COLORMODE_16, 
+		0xf6,	// charNo 
+		0, 
+		0 
+	);
 
-/*===========================================================================*/
+	DC_FlushRange( &oam, sizeof(GXOamAttr) );
+	GXS_LoadOAM( &oam, 8, sizeof(GXOamAttr) );
 
-#ifdef	__cplusplus
-}          /* extern "C" */
-#endif
+	G2_SetOBJAttr( 
+		&oam, 
+		x+31, y, 
+		0, 
+		GX_OAM_MODE_NORMAL, 
+		FALSE, 
+  		GX_OAM_EFFECT_NONE, 
+		GX_OAM_SHAPE_8x8, 
+		GX_OAM_COLORMODE_16, 
+		0xf6,	// charNo 
+		0, 
+		0 
+	);
 
-#endif /* AUTO_TOPMENU_H_ */
+	DC_FlushRange( &oam, sizeof(GXOamAttr) );
+	GXS_LoadOAM( &oam, 16, sizeof(GXOamAttr) );
+*/
 
-/*---------------------------------------------------------------------------*
-  End of file
- *---------------------------------------------------------------------------*/
+	G2_SetOBJAttr( 
+		&oam, 
+		x, y, 
+		0, 
+		GX_OAM_MODE_NORMAL, 
+		FALSE, 
+  		GX_OAM_EFFECT_NONE, 
+		GX_OAM_SHAPE_8x8, 
+		GX_OAM_COLORMODE_16, 
+		0xff,	// charNo 
+		0, 
+		0 
+	);
+	DC_FlushRange( &oam, sizeof(GXOamAttr) );
+	GXS_LoadOAM( &oam, 24, sizeof(GXOamAttr) );
+}
+

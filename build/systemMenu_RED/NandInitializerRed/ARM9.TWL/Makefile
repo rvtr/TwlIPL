@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlIPL - systemMenu_RED - NandInitializer
+# Project:  TwlIPL - systemMenu_RED - NandInitializerRed
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -35,7 +35,7 @@ TWL_ARCHGEN    		= LIMITED
 TITLEID_LO				=	0NIA
 TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
 
-TARGET_BIN	= NandInitializer.srl
+TARGET_BIN	= NandInitializerRed.srl
 LCFILE_SPEC				=	ARM9-TS.lsf
 ROM_SPEC	= main.rsf
 
