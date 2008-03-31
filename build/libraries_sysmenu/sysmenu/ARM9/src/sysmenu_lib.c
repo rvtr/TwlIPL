@@ -27,7 +27,9 @@
 extern void LCFG_VerifyAndRecoveryNTRSettings( void );
 
 // function's prototype-------------------------------------------------------
-static TitleProperty *SYSMi_CheckShortcutBoot( void );
+static TitleProperty *SYSMi_CheckDebuggerBannerViewModeBoot( void );
+static TitleProperty *SYSMi_CheckShortcutBoot1( void );
+static TitleProperty *SYSMi_CheckShortcutBoot2( void );
 static void SYSMi_CheckCardCloneBoot( void );
 void SYSMi_SendKeysToARM7( void );
 static OSTitleId SYSMi_getTitleIdOfMachineSettings( void );
@@ -231,12 +233,30 @@ TitleProperty *SYSM_ReadParameters( void )
 	}
 
     //-----------------------------------------------------
-    // 量産工程用ショートカットキー or
-    // 検査カード起動
+    // ISデバッガバナーViewモード起動
     //-----------------------------------------------------
     if( pBootTitle == NULL ) {
 		// ランチャーパラメータによるダイレクトブートがない場合のみ判定
-        pBootTitle = SYSMi_CheckShortcutBoot();
+        pBootTitle = SYSMi_CheckDebuggerBannerViewModeBoot();
+    }
+    
+    //-----------------------------------------------------
+    // 量産工程用ショートカットキー or
+    // 検査カード起動
+    //-----------------------------------------------------
+    if( pBootTitle == NULL && // ココまでダイレクトブートが設定されていない場合のみ判定
+        !( SYSMi_GetWork()->flags.common.isValidLauncherParam && SYSM_GetLauncherParamBody()->v1.flags.isLogoSkip ) )
+        // 「ランチャー再起動指定（直接起動指定無し 且つ ランチャパラメタ有効 且つ ロゴスキップ指定）でない」
+    {
+        pBootTitle = SYSMi_CheckShortcutBoot1();
+    }
+    
+    //-----------------------------------------------------
+    // その他のショートカット起動
+    //-----------------------------------------------------
+    if( pBootTitle == NULL ) {
+		// ココまでダイレクトブートが設定されていない場合のみ判定
+        pBootTitle = SYSMi_CheckShortcutBoot2();
     }
 
     return pBootTitle;
@@ -251,12 +271,9 @@ BOOL SYSM_IsLauncherHidden( void )
 #endif
 }
 
-// ショートカット起動のチェック
-static TitleProperty *SYSMi_CheckShortcutBoot( void )
+static TitleProperty *SYSMi_CheckDebuggerBannerViewModeBoot( void )
 {
-    static TitleProperty s_bootTitle;
-
-    MI_CpuClear8( &s_bootTitle, sizeof(TitleProperty) );
+    MI_CpuClear8( &s_bootTitleBuf, sizeof(TitleProperty) );
 
     //-----------------------------------------------------
     // ISデバッガバナーViewモード起動
@@ -267,26 +284,33 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 		return NULL;
 	}
 #endif
+
+	return NULL;
+}
+
+// ショートカット起動のチェックその１
+static TitleProperty *SYSMi_CheckShortcutBoot1( void )
+{
+    MI_CpuClear8( &s_bootTitleBuf, sizeof(TitleProperty) );
 	
     //-----------------------------------------------------
     // ISデバッガ起動 or
     // 量産工程用ショートカットキー or
     // 検査カード起動
     //-----------------------------------------------------
-    if( SYSM_IsExistCard() ) { 
-    	// 「カード存在」且つ「ランチャー再起動指定（＝ロゴスキップ且つタイトル直接起動指定無し）でない」
+    if( SYSM_IsExistCard() ) {
         if( ( SYSMi_GetWork()->flags.hotsw.isOnDebugger &&      // ISデバッガが有効かつJTAGがまだ有効でない時
               !( *(u8 *)( HW_SYS_CONF_BUF + HWi_WSYS09_OFFSET ) & HWi_WSYS09_JTAG_CPUJE_MASK ) ) ||
             SYSM_IsInspectCard() ||
             ( ( PAD_Read() & SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) ==
               SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT )
             ){
-            s_bootTitle.flags.isAppRelocate = TRUE;
-            s_bootTitle.flags.isAppLoadCompleted = TRUE;
-            s_bootTitle.flags.isInitialShortcutSkip = TRUE;         // 初回起動シーケンスを飛ばす
-            s_bootTitle.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
-            s_bootTitle.flags.bootType = LAUNCHER_BOOTTYPE_ROM;
-            s_bootTitle.flags.isValid = TRUE;
+            s_bootTitleBuf.flags.isAppRelocate = TRUE;
+            s_bootTitleBuf.flags.isAppLoadCompleted = TRUE;
+            s_bootTitleBuf.flags.isInitialShortcutSkip = TRUE;         // 初回起動シーケンスを飛ばす
+            s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
+            s_bootTitleBuf.flags.bootType = LAUNCHER_BOOTTYPE_ROM;
+            s_bootTitleBuf.flags.isValid = TRUE;
             // ROMヘッダバッファのコピー
             {
                 u16 id = (u16)OS_GetLockID();
@@ -295,11 +319,19 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
                 (void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );   // ARM7と排他制御する
                 OS_ReleaseLockID( id );
             }
-            s_bootTitle.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
-            SYSM_SetLogoDemoSkip( s_bootTitle.flags.isLogoSkip );
-            return &s_bootTitle;
+            s_bootTitleBuf.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
+            SYSM_SetLogoDemoSkip( s_bootTitleBuf.flags.isLogoSkip );
+            return &s_bootTitleBuf;
         }
     }
+
+    return NULL;                                                    // 「ブート内容未定」でリターン
+}
+
+// ショートカット起動のチェックその２
+static TitleProperty *SYSMi_CheckShortcutBoot2( void )
+{
+    MI_CpuClear8( &s_bootTitleBuf, sizeof(TitleProperty) );
 
     //-----------------------------------------------------
     // スタンドアロン起動時、ショートカットキー(select)
@@ -308,16 +340,16 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
     if( ( PAD_Read() & SYSM_PAD_SHORTCUT_MACHINE_SETTINGS ) ==
 		SYSM_PAD_SHORTCUT_MACHINE_SETTINGS )
     {
-        s_bootTitle.titleID = SYSMi_getTitleIdOfMachineSettings();
-        if(s_bootTitle.titleID != 0)
+        s_bootTitleBuf.titleID = SYSMi_getTitleIdOfMachineSettings();
+        if(s_bootTitleBuf.titleID != 0)
 		{
-            s_bootTitle.flags.isLogoSkip = TRUE;                    // 本体設定を起動できる時だけロゴデモを飛ばす
+            s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // 本体設定を起動できる時だけロゴデモを飛ばす
 		}
-        s_bootTitle.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
-        s_bootTitle.flags.isValid = TRUE;
-        s_bootTitle.flags.isAppRelocate = FALSE;
-        s_bootTitle.flags.isAppLoadCompleted = FALSE;
-        return &s_bootTitle;
+        s_bootTitleBuf.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
+        s_bootTitleBuf.flags.isValid = TRUE;
+        s_bootTitleBuf.flags.isAppRelocate = FALSE;
+        s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
+        return &s_bootTitleBuf;
     }
 
 	// スタンドアロン起動時
@@ -327,12 +359,12 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 #ifdef DO_NOT_SHOW_LAUNCHER
 	if( SYSM_IsExistCard() )
 	{
-        s_bootTitle.flags.isAppRelocate = TRUE;
-        s_bootTitle.flags.isAppLoadCompleted = TRUE;
-        s_bootTitle.flags.isInitialShortcutSkip = TRUE;         // 初回起動シーケンスを飛ばす
-        s_bootTitle.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
-        s_bootTitle.flags.bootType = LAUNCHER_BOOTTYPE_ROM;
-        s_bootTitle.flags.isValid = TRUE;
+        s_bootTitleBuf.flags.isAppRelocate = TRUE;
+        s_bootTitleBuf.flags.isAppLoadCompleted = TRUE;
+        s_bootTitleBuf.flags.isInitialShortcutSkip = TRUE;         // 初回起動シーケンスを飛ばす
+        s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
+        s_bootTitleBuf.flags.bootType = LAUNCHER_BOOTTYPE_ROM;
+        s_bootTitleBuf.flags.isValid = TRUE;
         // ROMヘッダバッファのコピー
         {
             u16 id = (u16)OS_GetLockID();
@@ -341,18 +373,18 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
             (void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );   // ARM7と排他制御する
             OS_ReleaseLockID( id );
         }
-        s_bootTitle.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
-        SYSM_SetLogoDemoSkip( s_bootTitle.flags.isLogoSkip );
-        return &s_bootTitle;
+        s_bootTitleBuf.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
+        SYSM_SetLogoDemoSkip( s_bootTitleBuf.flags.isLogoSkip );
+        return &s_bootTitleBuf;
 	}else
 	{
-        s_bootTitle.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
-        s_bootTitle.titleID = SYSMi_getTitleIdOfMachineSettings();
-        s_bootTitle.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
-        s_bootTitle.flags.isValid = TRUE;
-        s_bootTitle.flags.isAppRelocate = FALSE;
-        s_bootTitle.flags.isAppLoadCompleted = FALSE;
-        return &s_bootTitle;
+        s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
+        s_bootTitleBuf.titleID = SYSMi_getTitleIdOfMachineSettings();
+        s_bootTitleBuf.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
+        s_bootTitleBuf.flags.isValid = TRUE;
+        s_bootTitleBuf.flags.isAppRelocate = FALSE;
+        s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
+        return &s_bootTitleBuf;
 	}
 #endif
 
@@ -362,16 +394,16 @@ static TitleProperty *SYSMi_CheckShortcutBoot( void )
 #if 0
 #ifdef ENABLE_INITIAL_SETTINGS_
     if( !LCFG_TSD_IsFinishedInitialSetting() ) {
-        s_bootTitle.titleID = SYSMi_getTitleIdOfMachineSettings();
-        if(s_bootTitle.titleID != 0)
+        s_bootTitleBuf.titleID = SYSMi_getTitleIdOfMachineSettings();
+        if(s_bootTitleBuf.titleID != 0)
 		{
-            s_bootTitle.flags.isLogoSkip = TRUE;                    // 本体設定を起動できる時だけロゴデモを飛ばす
+            s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // 本体設定を起動できる時だけロゴデモを飛ばす
 		}
-        s_bootTitle.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
-        s_bootTitle.flags.isValid = TRUE;
-        s_bootTitle.flags.isAppRelocate = FALSE;
-        s_bootTitle.flags.isAppLoadCompleted = FALSE;
-        return &s_bootTitle;
+        s_bootTitleBuf.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
+        s_bootTitleBuf.flags.isValid = TRUE;
+        s_bootTitleBuf.flags.isAppRelocate = FALSE;
+        s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
+        return &s_bootTitleBuf;
     }
 #endif // ENABLE_INITIAL_SETTINGS_
 #endif
