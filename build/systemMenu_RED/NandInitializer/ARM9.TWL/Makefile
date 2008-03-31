@@ -26,7 +26,7 @@ SUBDIRS		=
 #USE_PRODUCT_KEY			=	TRUE
 #============================================================================
 #============================================================================
-# NandInitializerから一部の機能を削除するために定義を追加します。
+# NandInitializerRedから一部の機能を削除するために定義を追加します。
 MACRO_FLAGS				+=	-DNAND_FORMATTER_MODE
 #============================================================================
 
@@ -40,8 +40,8 @@ TITLEID_LO				=	0NFA
 TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
 
 TARGET_BIN	= NandFormatter.srl
-LCFILE_SPEC	= ../../NandInitializer/ARM9.TWL/ARM9-TS.lsf
-ROM_SPEC	= ../../NandInitializer/ARM9.TWL/main.rsf
+LCFILE_SPEC	= ../../NandInitializerRed/ARM9.TWL/ARM9-TS.lsf
+ROM_SPEC	= ../../NandInitializerRed/ARM9.TWL/main.rsf
 
 MAKEROM_ARM7_BASE	=	../ARM7.TWL/bin/$(TWL_BUILDTYPE_ARM7)/armadillo
 MAKEROM_ARM7		=	$(MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
@@ -60,11 +60,11 @@ SRCS		=	main.c \
 				sd_event.c \
 				hwi.c
 
-LINCLUDES	=	../../NandInitializer/common/include \
-				../../NandInitializer/ARM9.TWL/include \
+LINCLUDES	=	../../NandInitializerRed/common/include \
+				../../NandInitializerRed/ARM9.TWL/include \
 				$(ROOT)/build/libraries/lcfg/ARM9.TWL/include
 
-SRCDIR		=	../../NandInitializer/ARM9.TWL/src \
+SRCDIR		=	../../NandInitializerRed/ARM9.TWL/src \
 				../../HWInfoWriter/ARM9/src
 
 #LCFILE		=	# using default

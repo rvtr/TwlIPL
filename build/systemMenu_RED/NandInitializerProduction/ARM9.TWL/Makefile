@@ -26,7 +26,7 @@ SUBDIRS		=
 #USE_PRODUCT_KEY			=	TRUE
 #============================================================================
 #============================================================================
-# NandInitializerと同様の動作をしますが自動フォーマットが強制的に実行され停止します。
+# NandInitializerRedと同様の動作をしますが自動フォーマットが強制的に実行され停止します。
 MACRO_FLAGS				+=	-DAUTO_FORMAT_MODE
 #============================================================================
 
@@ -39,9 +39,9 @@ TWL_ARCHGEN    		= LIMITED
 TITLEID_LO				=	0NAA
 TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
 
-TARGET_BIN		= NandInitializerAuto.srl
-LCFILE_SPEC	= ../../NandInitializer/ARM9.TWL/ARM9-TS.lsf
-ROM_SPEC	= ../../NandInitializer/ARM9.TWL/main.rsf
+TARGET_BIN		= NandInitializerRedAuto.srl
+LCFILE_SPEC	= ../../NandInitializerRed/ARM9.TWL/ARM9-TS.lsf
+ROM_SPEC	= ../../NandInitializerRed/ARM9.TWL/main.rsf
 
 MAKEROM_ARM7_BASE	=	../ARM7.TWL/bin/$(TWL_BUILDTYPE_ARM7)/armadillo
 MAKEROM_ARM7		=	$(MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
@@ -65,11 +65,11 @@ SRCS		=	main.c \
 				sd_event.c \
 				hwi.c
 
-LINCLUDES	=	../../NandInitializer/common/include \
-				../../NandInitializer/ARM9.TWL/include \
+LINCLUDES	=	../../NandInitializerRed/common/include \
+				../../NandInitializerRed/ARM9.TWL/include \
 				$(ROOT)/build/libraries/lcfg/ARM9.TWL/include
 
-SRCDIR		=	../../NandInitializer/ARM9.TWL/src \
+SRCDIR		=	../../NandInitializerRed/ARM9.TWL/src \
 				../../HWInfoWriter/ARM9/src
 
 #LCFILE		=	# using default

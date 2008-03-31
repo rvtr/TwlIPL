@@ -16,11 +16,6 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-#============================================================================
-# NandInitializerから一部の機能を削除するために定義を追加します。
-MACRO_FLAGS				+=	-DNAND_FORMATTER_MODE
-#============================================================================
-
 override TARGET_PLATFORM	=	TWL
 override TWL_PROC			=	ARM7
 override TWL_ARCHGEN		=	LIMITED
@@ -39,9 +34,9 @@ SRCS		=	main.c \
 TARGET_NAME		=	armadillo
 
 TARGET_NEF		=	$(TARGET_NAME).tef
-LCFILE_SPEC		=	../../NandInitializer/ARM7.TWL/$(TARGET_NAME).lsf
-LCFILE_TEMPLATE	=	../../NandInitializer/ARM7.TWL/$(TARGET_NAME).lcf.template
-LDRES_TEMPLATE	=	../../NandInitializer/ARM7.TWL/$(TARGET_NAME).response.template
+LCFILE_SPEC		=	../../NandInitializerRed/ARM7.TWL/$(TARGET_NAME).lsf
+LCFILE_TEMPLATE	=	../../NandInitializerRed/ARM7.TWL/$(TARGET_NAME).lcf.template
+LDRES_TEMPLATE	=	../../NandInitializerRed/ARM7.TWL/$(TARGET_NAME).response.template
 
 CRT0_O			=	crt0.SCR.TWL.o
 
@@ -56,11 +51,11 @@ MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD -DSDK_SEA
 MAKELCF_FLAGS	+=	-DISDBG_LIBS_TWL='$(if $(ISDBG_LIBS_TWL),$(ISDBG_LIBS_TWL),libstubsistd_sp$(TWL_LIBSUFFIX).a)'	\
 					-DISDBG_LIBS_NITRO='libstubsisd_sp$(TWL_LIBSUFFIX).a'
 
-LINCLUDES	=	../../NandInitializer/common/include \
-				../../NandInitializer/ARM7.TWL/include \
-                ../common/include $(ROOT)/build/libraries/spi/ARM7/include
+LINCLUDES		=	$(ROOT)/build/libraries/spi/ARM7/include \
+					../../NandInitializerRed/common/include \
+					../../NandInitializerRed/ARM7.TWL/include
 
-SRCDIR		=	../../NandInitializer/ARM7.TWL/src
+SRCDIR		=	../../NandInitializerRed/ARM7.TWL/src
 
 LLIBRARIES		+=	libwl_sp$(TWL_LIBSUFFIX).a			\
 					libsdio_sp$(TWL_LIBSUFFIX).a		\
