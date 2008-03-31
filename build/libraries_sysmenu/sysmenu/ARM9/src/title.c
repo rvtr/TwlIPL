@@ -674,7 +674,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 			// 開発版
 			key = g_devPubKey[keynum];
 			// デバッガが有効ならば、ハッシュチェックスルーフラグを立てる
-			if(SYSMi_GetWork()->flags.hotsw.isOnDebugger)
+			if(SYSMi_GetWork()->flags.hotsw.isOnDebugger && SYSMi_GetWork()->romEmuInfo.isTlfRom )
 			{
 				b_dev = TRUE;
 			}
