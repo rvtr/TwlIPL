@@ -35,7 +35,14 @@ TARGET_PLATFORM			=	TWL
 TWL_CODEGEN				=	ARM
 TWL_ARCHGEN				=	LIMITED
 
-TITLEID_LO				=	HLNA
+#※REDランチャーはデバッガ対応の都合上、TITLEID_LO=HNAA, CARD_REGION=ALLとしています。
+#  UIGランチャーでは、リージョンに合わせてTITLEID_LO, CARD_REGIONを設定してください。
+##################################################################
+TITLEID_LO				=	HNAA
+CARD_REGION				=	ALL
+##################################################################
+
+
 TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
 
 TARGET_BIN				=	main.srl
@@ -70,7 +77,7 @@ ADDRESS_DTCM			=	0x0e000000
 
 DEFAULT_COMP_ARM7		=	hyena
 
-MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
+MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)' -DCARD_REGION='$(CARD_REGION)'
 ifdef FIRM_BUILD
 MAKEROM_FLAGS			+=	-s \
 							-DSYS_PRIV_KEY=$(TWL_KEYSDIR)/rsa/private9_0.der \

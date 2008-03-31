@@ -121,7 +121,7 @@ Property
 	#
 	# CardRegion: card region [Japan/America/Europe/Australia/China/Korea]
 	#
-	CardRegion	ALL
+	CardRegion	$(CARD_REGION)
 
 	#
 	# Codec mode:
@@ -142,7 +142,7 @@ Property
 	#
 	# SDCardAccess: sd card access control [TRUE/FALSE]
 	#
-	SDCardAccess	TRUE
+	#SDCardAccess	TRUE
 
 	###
 	#### END

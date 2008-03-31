@@ -422,7 +422,7 @@ static OSTitleId SYSMi_getTitleIdOfMachineSettings( void )
 	// 取得したタイトルに本体情報のIDがあるかチェック
 	for( l = 0; l < getNum; l++ ) {
 		char *code = ((char *)&pTitleIDList[l]) + 1;
-		if( 0 == STD_CompareNString( code, "SMH", 3 ) )
+		if( 0 == STD_CompareNString( code, "BNH", 3 ) )
 		{
 			ret = (OSTitleId)pTitleIDList[l];
 			break;

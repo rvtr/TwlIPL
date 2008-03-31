@@ -123,7 +123,7 @@ Property
 	#
 	# CardRegion: card region [Japan/America/Europe/Australia/China/Korea]
 	#
-	CardRegion		ALL
+	CardRegion		$(CARD_REGION)
 
 	#
 	# CommonClientKey: launcher deliver common client Key [TRUE/FALSE]

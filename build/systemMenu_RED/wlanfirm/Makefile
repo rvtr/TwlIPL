@@ -28,7 +28,7 @@ MY_FIRM_ROOT	=	$(TWLWIRELESS_ROOT)/binfile
 MY_FIRM_ROOT_CYG =	$(call eupath,$(MY_FIRM_ROOT))
 
 
-MY_TITLE		=	HWFA
+MY_TITLE		=	HNCA
 MY_FIRM			=	$(MY_FIRM_ROOT_CYG)/nwm_firm.bin
 
 #----------------------------------------------------------------------------

@@ -26,6 +26,8 @@ TWL_ARCHGEN				=	LIMITED
 
 TARGET_BIN				=	dlplay.srl
 
+TITLEID_LO				=	HNDA
+
 LCFILE_SPEC				=	ARM9-TS.lsf
 ROM_SPEC				=	main.rsf
 

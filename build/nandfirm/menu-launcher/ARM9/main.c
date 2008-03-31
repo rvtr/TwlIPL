@@ -40,7 +40,7 @@ static u8 acHeap[RSA_HEAP_SIZE] __attribute__ ((aligned (32)));
 static SVCSignHeapContext acPool;
 
 #define MENU_TITLE_ID_HI    0x00030017ULL
-#define MENU_TITLE_ID_LO    0x484c4e41ULL
+#define MENU_TITLE_ID_LO    0x484e4141ULL
 #define MENU_TITLE_ID       (MENU_TITLE_ID_HI << 32 | MENU_TITLE_ID_LO)
 
 // ‰ß‹Ž‚ÌŒÝŠ·«‚Ì‚½‚ßA‚µ‚Î‚ç‚­

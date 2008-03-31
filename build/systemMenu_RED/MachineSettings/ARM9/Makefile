@@ -26,7 +26,13 @@ TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
 
-TITLEID_LO				=	HMSA
+#※RED本体設定はデバッガ対応の都合上、TITLEID_LO=HNAA, CARD_REGION=ALLとしています。
+#  UIG本体設定では、リージョンに合わせてTITLEID_LO, CARD_REGIONを設定してください。
+##################################################################
+TITLEID_LO				=	HNBA
+CARD_REGION				=	ALL
+##################################################################
+
 TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
 
 TARGET_BIN				=	main.srl
@@ -46,7 +52,7 @@ SRCS					=	main.c MachineSetting.c \
 
 LINCLUDES				=	$(MISC_DIR)/include
 
-MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
+MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' -DCARD_REGION='$(CARD_REGION)'
 
 MAKETAD_FLAGS			+= -s
 

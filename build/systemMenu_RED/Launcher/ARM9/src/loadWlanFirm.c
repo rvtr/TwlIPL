@@ -112,10 +112,10 @@ void InstallFirmCallback(void* arg)
 
 BOOL GetFirmwareFilepath(char *path)
 {
-	u8 title[4] = { 'H','W','F','A' };
+	u8 title[4] = { 'H','N','C','A' };
 
 #if( USE_LCFG_STRING == 0 )
-    char *title0 = "HWFA";
+    char *title0 = "HNCA";
 #endif
     u32 titleID_hi;
     u32 titleID_lo;

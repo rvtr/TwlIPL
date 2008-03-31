@@ -73,12 +73,12 @@ static char *strLanguage[] = {
 };
 
 static const char *strLauncherGameCode[] = {
-    "HLNA",
-    "HLNA",
-    "HLNA",
-    "HLNA",
-    "HLNC",
-    "HLNK",
+    "HNAJ",
+    "HNAE",
+    "HNAP",
+    "HNAU",
+    "HNAC",
+    "HNAK",
 };
 
 //======================================================
