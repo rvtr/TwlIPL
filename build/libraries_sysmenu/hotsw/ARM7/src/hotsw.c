@@ -94,7 +94,6 @@ HotSwState HOTSWi_RefreshBadBlock(u32 romMode);
 #include <twl/ltdwram_begin.h>
 
 static char 				encrypt_object_key[] ATTRIBUTE_ALIGN(4) = "encryObj";
-static char					rom_emu_info[] ATTRIBUTE_ALIGN(4)	    = "TWLD";
 
 static u16					s_RscLockID;
 static u16					s_CardLockID;
@@ -311,8 +310,7 @@ static HotSwState LoadCardData(void)
         s_cbData.cardType = (s_cbData.id_nml & HOTSW_ROMID_1TROM_MASK) ? DS_CARD_TYPE_2 : DS_CARD_TYPE_1;
 		
 		{
-			u8 i;
-            u8 *romEmuInf = (u8 *)s_cbData.romEmuBuf;
+            SYSMRomEmuInfo *romEmuInfo = (void *)s_cbData.romEmuBuf;
             
 			// バナーリードが完了して、フラグ処理が終わるまでARM9と排他制御する
             LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
@@ -321,19 +319,27 @@ static HotSwState LoadCardData(void)
 	    	state  = s_funcTable[s_cbData.cardType].ReadBootSegment_N(&s_cbData);
 			retval = (retval == HOTSW_SUCCESS) ? state : retval;
             
-            // Romエミュレーション情報を取得
-			state  = ReadRomEmulationData(&s_cbData);
-			retval = (retval == HOTSW_SUCCESS) ? state : retval;
+            // ARM9/7で不整合が発生しないようにRomエミュレーション情報ロードは初回のみ
+            if ( ! SYSMi_GetWork()->flags.hotsw.is1stCardChecked )
+            {
+	            // Romエミュレーション情報を取得
+				state  = ReadRomEmulationInfo(&s_cbData);
+				retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
-            // 取得したRomエミュレーション情報を比較
-            s_cbData.debuggerFlg = TRUE;
-            for(i=0; i<4; i++){
-                if ( rom_emu_info[i] != romEmuInf[i] ){
+	            // 取得したRomエミュレーション情報を比較
+    	        s_cbData.debuggerFlg = TRUE;
+           	    if ( romEmuInfo->magic_code != SYSM_ROMEMU_INFO_MAGIC_CODE ){
 					s_cbData.debuggerFlg = FALSE;
-                    break;
-                }
-            }
-            if(s_cbData.debuggerFlg){
+    	        }
+    	    }
+            
+            // 初回のRomエミュレーション情報を使用
+            if(s_cbData.debuggerFlg &&
+#ifndef DEBUG_USED_CARD_SLOT_B_
+                romEmuInfo->isEnableSlot1){
+#else
+                romEmuInfo->isEnableSlot2){
+#endif
 				OS_PutString("Read Debugger\n");
 				s_cbData.cardType = ROM_EMULATION;
                 s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;

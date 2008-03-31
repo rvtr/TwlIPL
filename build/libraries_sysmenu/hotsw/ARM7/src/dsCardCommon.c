@@ -318,11 +318,11 @@ HotSwState LoadTable(void)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ReadRomEmulationData
+  Name:         ReadRomEmulationInfo
   
-  Description:  Romエミュレーションデータの読み込み
+  Description:  Romエミュレーション情報の読み込み
  *---------------------------------------------------------------------------*/
-HotSwState ReadRomEmulationData(CardBootData *cbd)
+HotSwState ReadRomEmulationInfo(CardBootData *cbd)
 {
 	u32 count=0;
     u32 temp;
