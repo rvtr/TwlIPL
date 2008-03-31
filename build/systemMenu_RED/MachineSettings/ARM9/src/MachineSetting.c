@@ -20,6 +20,9 @@
 #include "MachineSetting.h"
 
 // define data------------------------------------------
+
+//#define FREEBOX_ENABLE
+
 	// キャンセルボタンLCD領域
 #define CANCEL_BUTTON_TOP_X					( 12 * 8 )
 #define CANCEL_BUTTON_TOP_Y					( 21 * 8 )
@@ -31,9 +34,11 @@
 #define OK_BUTTON_BOTTOM_X					( OK_BUTTON_TOP_X + 2 * 8 )
 #define OK_BUTTON_BOTTOM_Y					( OK_BUTTON_TOP_Y + 2 * 8 )
 
-
+#ifdef FREEBOX_ENABLE
 #define SETTING_MENU_ELEMENT_NUM			7						// メインメニューの項目数（※ピクトチャット起動テストは除いておく）
-
+#else
+#define SETTING_MENU_ELEMENT_NUM			6
+#endif
 // extern data------------------------------------------
 
 extern u32 bg_char_data[8 * 6];
@@ -114,6 +119,7 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ LCFG_T
 		(const u16 *)L"PARENTAL CONTROL(C)",
 		(const u16 *)L"PARENTAL CONTROL(K)",
 	},
+#ifdef FREEBOX_ENABLE
 	{
 		(const u16 *)L"フリーソフトBOX",
 		(const u16 *)L"FREESOFT BOX",
@@ -124,6 +130,7 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ LCFG_T
 		(const u16 *)L"FREESOFT BOX(C)",
 		(const u16 *)L"FREESOFT BOX(K)",
 	},
+#endif
 #if 0
 	{
 		(const u16 *)L"ピクトチャット起動テスト",
