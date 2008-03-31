@@ -629,7 +629,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		u8 *hash_addr[RELOCATE_INFO_NUM];
 		int module_num;
 		BOOL b_dev = FALSE;
-		u8 *gamecode = (u8 *)&(pBootTitle->titleID);
+		char *gamecode = (char *)&(pBootTitle->titleID);
 		
 		// pBootTitle->titleIDとROMヘッダのtitleIDの一致確認をする。
 		if( pBootTitle->titleID != head->s.titleID )
@@ -647,7 +647,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		prev = OS_GetTick();
 		hi = head->s.titleID_Hi;
 		// Launcherは専用の鍵を使う
-		if( gamecode[3] == 'H' && gamecode[2] == 'L' && gamecode[1] == 'N' )
+		if(  0 == STD_CompareNString( &gamecode[1], "ANH", 3 ) )
 		{
 			keynum = LAUNCHER_KEY_INDEX;
 		}else
