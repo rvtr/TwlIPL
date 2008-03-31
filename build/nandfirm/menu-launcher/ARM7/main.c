@@ -150,7 +150,7 @@ static void PostInit(void)
     /*
         AESŠÖ˜A (NANDˆÃ†‰»‚ÌŒ®•ÏX‚ðŠÜ‚Þ)
     */
-    if ( !*(u8*)HW_TWL_RED_LAUNCHER_VER )
+    if ( OSi_GetFromFirmAddr()->aes_key[2][0] )
     {
         AESi_PreInitKeys();
     }
