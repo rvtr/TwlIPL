@@ -43,6 +43,10 @@ static SVCSignHeapContext acPool;
 #define MENU_TITLE_ID_LO    0x484c4e41ULL
 #define MENU_TITLE_ID       (MENU_TITLE_ID_HI << 32 | MENU_TITLE_ID_LO)
 
+// 過去の互換性のため、しばらく
+#define MENU_TITLE_ID_LO_TEMP   0x484c4e4aULL   // HLNJ
+#define MENU_TITLE_ID_TEMP      (MENU_TITLE_ID_HI << 32 | MENU_TITLE_ID_LO_TEMP)
+
 /*
     PROFILE_ENABLE を定義するとある程度のパフォーマンスチェックができます。
     利用するためには、main.cかどこかに、u32 profile[256]; u32 pf_cnt = 0; を
@@ -154,6 +158,21 @@ static BOOL RetryResolveSrl(void)
     OS_TPrintf("Launcher Title ID: 0x%016llx\n", MENU_TITLE_ID);
     return TRUE;
 }
+/***************************************************************
+    RetryResoleSrlTemp
+
+    HWInfo下位互換のため、決めうちでランチャーSRLを解決する
+***************************************************************/
+static BOOL RetryResoleSrlTemp(void)
+{
+    if ( !FS_ResolveSrl( MENU_TITLE_ID_TEMP ) )
+    {
+        OS_TPrintf("Failed to call FS_ResolveSrl( 0x%016llx ).\n", MENU_TITLE_ID_TEMP);
+        return FALSE;
+    }
+    OS_TPrintf("Launcher Title ID: 0x%016llx\n", MENU_TITLE_ID_TEMP);
+    return TRUE;
+}
 
 /***************************************************************
     CheckHeader
@@ -261,7 +280,7 @@ void TwlMain( void )
     // 3: after PostInit
     PUSH_PROFILE();
 
-    if ( !TryResolveSrl() && !RetryResolveSrl() )
+    if ( !TryResolveSrl() && !RetryResolveSrl() && !RetryResoleSrlTemp() )
     {
         goto end;
     }
