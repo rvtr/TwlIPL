@@ -17,6 +17,7 @@
 
 #include <twl.h>
 #include <twl/nam.h>
+#include <twl/os/common/format_rom_scfg.h>
 #include <sysmenu.h>
 #include "internal_api.h"
 
@@ -30,6 +31,7 @@
 #define SHARED1_MOUNT_INDEX			3
 #define PRV_SAVE_DATA_MOUNT_INDEX			6			// プライベートセーブデータの s_defaultMountInfo リストインデックス
 #define PUB_SAVE_DATA_MOUNT_INDEX			7			// パブリック　セーブデータの s_defaultMountInfo リストインデックス
+#define SDMC_MOUNT_INDEX					8
 
 #define TITLEID_APP_SYS_FLAG_SHIFT		( 32 + 0 )
 #define TITLEID_NOT_LAUNCH_FLAG_SHIFT	( 32 + 1 )
@@ -63,18 +65,12 @@ OSMountInfo s_defaultMountList[ DEFAULT_MOUNT_LIST_NUM ] ATTRIBUTE_ALIGN(4) = {
 	{ 'I', OS_MOUNT_DEVICE_SD,   OS_MOUNT_TGT_ROOT, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "sdmc",    "/" },
 };
 
-
 // ============================================================================
 //
 // マウント情報セット
 //
 // ============================================================================
 
-/*
-	要確認
-	カードブート時のBootSRLPathは、"rom:"ではなく、""でいく。
-	"nand:" と "nand1:"のuserPermissionは"OS_MOUNT_USR_R"で良いのか？
-*/
 // ランチャーのマウント情報セット
 void SYSMi_SetLauncherMountInfo( void )
 {
@@ -86,7 +82,7 @@ void SYSMi_SetLauncherMountInfo( void )
 	MI_CpuCopyFast( s_defaultMountList, mountListBuffer, sizeof(s_defaultMountList) );
 	
 	if( ( *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG & 0x80 ) == 0 ) {
-		MI_CpuClearFast( (u8 *)header->sub_mount_info_ram_address, 0x400 );
+		MI_CpuClearFast( (u8 *)header->sub_mount_info_ram_address, SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN );
 	}
 	
 	// bootSRLパスの設定は、ランチャーが自分で設定するのは厄介なので、NANDファームから引き渡してもらう
@@ -109,13 +105,11 @@ void SYSMi_SetLauncherMountInfo( void )
 void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle )
 {
 	OSMountInfo mountListBuffer[ DEFAULT_MOUNT_LIST_NUM ] ATTRIBUTE_ALIGN(4);
+	ROM_Header_Short *pROMH = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
 	// アプリがTWL対応でない場合は、何もセットせずにリターン
-	if( ( (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->platform_code ) == 0 ) {
+	if( ( pROMH->platform_code ) == 0 ) {
 		return;
 	}
-	
-	// デフォルトリストをバッファにコピー
-	MI_CpuCopyFast( s_defaultMountList, mountListBuffer, sizeof(s_defaultMountList) );
 	
 	// 起動アプリのSRLパスをセット
 //	SYSMi_SetBootSRLPath( (LauncherBootType)pBootTitle->flags.bootType,
@@ -123,6 +117,38 @@ void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle )
 
 	STD_CopyLStringZeroFill( (char *)(SYSM_TWL_MOUNT_INFO_TMP_BUFFER + SYSM_MOUNT_INFO_SIZE),
 							SYSMi_GetWork2()->bootContentPath, OS_MOUNT_PATH_LEN );
+	
+	// デフォルトリストをバッファにコピー
+	MI_CpuCopyFast( s_defaultMountList, mountListBuffer, sizeof(s_defaultMountList) );
+
+	// SDカードアクセス要求がない場合は、sdmcドライブをマウントしない。
+	if( pROMH->access_control.sd_card_access == 0 ) {
+		mountListBuffer[ SDMC_MOUNT_INDEX ].drive[ 0 ] = 0;
+	}
+	
+	// セキュアアプリでない場合、"nand:", "nand2:"アーカイブをNAに変更。
+	if( ( pBootTitle->titleID & TITLE_ID_SECURE_FLAG_MASK ) == 0 ) {
+		mountListBuffer[ NAND_MOUNT_INDEX ].userPermission = 0;	// "nand:"
+		mountListBuffer[ NAND2_MOUNT_INDEX ].userPermission = 0;	// "nand2:"
+	}
+	
+	// セキュアアプリでないカードアプリは、マウント情報をクリアする。
+	// 但し、SDIO[1]アクセスが有効なら、いくつかのアーカイブを残す。（NANDにアクセスしたいカードアプリが出てきた時のための準備。）
+	if( ( ( pBootTitle->titleID & TITLE_ID_SECURE_FLAG_MASK ) == 0 ) &&
+		( ( pBootTitle->titleID & TITLEID_MEDIA_NAND_FLAG ) == 0 ) ) {
+		int i;
+		u16 mask = 0;
+		if( pROMH->arm7_scfg_ext & ROM_SCFG_EXT_SD1_MASK ) {
+			mask = 0x0173;		// SDIO[1]アクセスが有効なアプリは、nand:/, nand2:/, shared1:/, shared2:/, photo:/, sdmc:/を残す。
+		}else {
+			mask = 0;			// 全マウント情報クリア
+		}
+		for( i = 0; i < DEFAULT_MOUNT_LIST_NUM; i++ ) {
+			if( ( mask & ( 0x0001 << i ) ) == 0 ) {
+				mountListBuffer[ i ].drive[ 0 ] = 0;
+			}
+		}
+	}
 	
 	// セーブデータ有無によるマウント情報の編集
 	// ※ARM7ではNAMは動かせないので、NAMを使わないバージョンで対応。
@@ -163,12 +189,6 @@ static void SYSMi_SetMountInfoCore( LauncherBootType bootType, NAMTitleId titleI
 	STD_CopyLStringZeroFill( pSrc[CONTENT_MOUNT_INDEX].path, contentpath, OS_MOUNT_PATH_LEN );
 	
 	MI_CpuClearFast( (void *)pDst, SYSM_MOUNT_INFO_SIZE );
-	
-	// セキュアアプリでない場合、"nand:", "nand2:"アーカイブを変更。
-	if( ( titleID & TITLE_ID_SECURE_FLAG_MASK ) == 0 ) {
-		pSrc[ NAND_MOUNT_INDEX ].userPermission = 0;	// "nand:"
-		pSrc[ NAND2_MOUNT_INDEX ].userPermission = 0;	// "nand2:"
-	}
 	
 	// セット
 	for( i = 0; i < DEFAULT_MOUNT_LIST_NUM; i++ ) {
