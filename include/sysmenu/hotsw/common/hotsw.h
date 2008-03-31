@@ -80,7 +80,7 @@ void* HOTSW_GetRomEmulationBuffer(void);
 #else // SDK_ARM9
 SDK_INLINE void* HOTSW_GetRomEmulationBuffer(void)
 {
-	return (void*)HW_ISD_RESERVED;
+	return (void*)&SYSMi_GetWork()->romEmuInfo;
 }
 #endif // SDK_ARM9
 
