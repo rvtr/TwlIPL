@@ -38,7 +38,7 @@
 enum {
 	MENU_CLEAN_UP=0,
 	MENU_CHECK_DISK,
-#ifndef NAND_FORMATTER_MODE
+#ifndef NAND_INITIALIZER_LIMITED_MODE
 	MENU_NORMAL_FORMAT,
 	MENU_FILL_FORMAT,
 #endif
@@ -104,7 +104,7 @@ void* FormatProcess0(void)
 	kamiFontPrintf(3,  8, FONT_COLOR_BLACK, "+-------------------+-----+");
 	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "l  CHECK DISK       l     l");
 	kamiFontPrintf(3, 10, FONT_COLOR_BLACK, "+-------------------+-----+");
-#ifndef NAND_FORMATTER_MODE
+#ifndef NAND_INITIALIZER_LIMITED_MODE
 	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "l  FORMAT <Normal>  l     l");
 	kamiFontPrintf(3, 12, FONT_COLOR_BLACK, "+-------------------+-----+");
 	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "l  FORMAT <Fill FF> l     l");
@@ -145,7 +145,7 @@ void* FormatProcess0(void)
 
 void* FormatProcess1(void)
 {
-#ifndef NAND_FORMATTER_MODE
+#ifndef NAND_INITIALIZER_LIMITED_MODE
 	// オート実行用
 	if (gAutoFlag)
 	{
@@ -267,7 +267,7 @@ void* FormatProcess2(void)
 
 				return FormatProcess1;
 			}
-#ifndef NAND_FORMATTER_MODE
+#ifndef NAND_INITIALIZER_LIMITED_MODE
 		case MENU_NORMAL_FORMAT:	// ノーマルフォーマット
 			sLock = TRUE;
 			ExeFormatAsync(FORMAT_MODE_QUICK, FormatCallback);
@@ -326,7 +326,7 @@ void* FormatProcess3(void)
 	{
 		progress = 0;
 
-#ifndef NAND_FORMATTER_MODE
+#ifndef NAND_INITIALIZER_LIMITED_MODE
 		// Auto用
 		if (gAutoFlag)
 		{

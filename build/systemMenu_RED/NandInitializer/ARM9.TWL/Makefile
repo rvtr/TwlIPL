@@ -27,7 +27,7 @@ SUBDIRS		=
 #============================================================================
 #============================================================================
 # NandInitializerRedから一部の機能を削除するために定義を追加します。
-MACRO_FLAGS				+=	-DNAND_FORMATTER_MODE
+MACRO_FLAGS				+=	-DNAND_INITIALIZER_LIMITED_MODE
 #============================================================================
 
 TARGET_FIRM			= SYSTEMMENU
@@ -36,10 +36,10 @@ TWL_ARCHGEN    		= LIMITED
 
 #TWL_CODEGEN   =       THUMB
 
-TITLEID_LO				=	0NFA
+TITLEID_LO				=	0NIA
 TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
 
-TARGET_BIN	= NandFormatter.srl
+TARGET_BIN	= NandInitializer.srl
 LCFILE_SPEC	= ../../NandInitializerRed/ARM9.TWL/ARM9-TS.lsf
 ROM_SPEC	= ../../NandInitializerRed/ARM9.TWL/main.rsf
 

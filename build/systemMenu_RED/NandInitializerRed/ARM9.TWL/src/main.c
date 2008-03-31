@@ -113,7 +113,7 @@ TwlMain()
 	kamiFontPrintfConsole( CONSOLE_ORANGE, "+---------------------------+\n");
 	kamiFontPrintfConsole( CONSOLE_ORANGE, "l A Button    : Select Menu l\n");
 	kamiFontPrintfConsole( CONSOLE_ORANGE, "l Up/Down Key : Change Menu l\n");
-#ifndef NAND_FORMATTER_MODE
+#ifndef NAND_INITIALIZER_LIMITED_MODE
 	kamiFontPrintfConsole( CONSOLE_ORANGE, "l L&R Button  : Auto Init   l\n");
 #endif
 	kamiFontPrintfConsole( CONSOLE_ORANGE, "+---------------------------+\n");

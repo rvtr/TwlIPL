@@ -18,7 +18,7 @@
 
 #============================================================================
 # NandInitializerRedから一部の機能を削除するために定義を追加します。
-MACRO_FLAGS				+=	-DNAND_FORMATTER_MODE
+MACRO_FLAGS				+=	-DNAND_INITIALIZER_LIMITED_MODE
 #============================================================================
 
 override TARGET_PLATFORM	=	TWL

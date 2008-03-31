@@ -37,7 +37,7 @@
     定数定義
  *---------------------------------------------------------------------------*/
 
-#ifndef NAND_FORMATTER_MODE
+#ifndef NAND_INITIALIZER_LIMITED_MODE
 #define NUM_OF_MENU_SELECT    6
 #else
 #define NUM_OF_MENU_SELECT    2
@@ -83,17 +83,17 @@ void* TopmenuProcess0(void)
 	kamiFontClear();
 
 	// バージョン表示
-#ifndef NAND_FORMATTER_MODE
-	kamiFontPrintf(8, 2, 0, "Nand Initializer");
+#ifndef NAND_INITIALIZER_LIMITED_MODE
+	kamiFontPrintf(7, 2, 0, "Nand Initializer RED");
 #else
-	kamiFontPrintf(9, 2, 0, "Nand Formatter");
+	kamiFontPrintf(8, 2, 0, "Nand Initializer");
 #endif
 	kamiFontPrintf(9, 4, 8, "<%s>", __DATE__);
 
 	// メニュー一覧
 	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "    FORMAT NAND            ");
 	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "    WRITE HARDWARE INFO    ");
-#ifndef NAND_FORMATTER_MODE
+#ifndef NAND_INITIALIZER_LIMITED_MODE
 	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "    WRITE ETICKET SIGN     ");
 	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "    INPORT TAD FROM SD     ");
 	kamiFontPrintf(3, 15, FONT_COLOR_BLACK, "    INPORT NANDFIRM FROM SD");
@@ -114,7 +114,7 @@ void* TopmenuProcess0(void)
 	kamiFontFillChar( 8, BG_COLOR_NONE,  BG_COLOR_PURPLE );
 	kamiFontFillChar( 9, BG_COLOR_PURPLE, BG_COLOR_PURPLE );
 	kamiFontFillChar(10, BG_COLOR_PURPLE, BG_COLOR_TRANS );
-#ifndef NAND_FORMATTER_MODE
+#ifndef NAND_INITIALIZER_LIMITED_MODE
 	kamiFontFillChar(10, BG_COLOR_NONE,  BG_COLOR_GRAY );
 	kamiFontFillChar(11, BG_COLOR_GRAY, BG_COLOR_GRAY );
 	kamiFontFillChar(12, BG_COLOR_GRAY, BG_COLOR_TRANS );
@@ -170,7 +170,7 @@ void* TopmenuProcess1(void)
 	}
 
 
-#ifndef NAND_FORMATTER_MODE
+#ifndef NAND_INITIALIZER_LIMITED_MODE
 
 #ifdef AUTO_FORMAT_MODE
 	// sAutoProcessFlag でオート実行
@@ -209,7 +209,7 @@ void* TopmenuProcess2(void)
 		FADE_OUT_RETURN( FormatProcess0 );
 	case 1:
 		FADE_OUT_RETURN( HWInfoProcess0 );
-#ifndef NAND_FORMATTER_MODE
+#ifndef NAND_INITIALIZER_LIMITED_MODE
 	case 2:
 		FADE_OUT_RETURN( eTicketProcess0 );
 	case 3:

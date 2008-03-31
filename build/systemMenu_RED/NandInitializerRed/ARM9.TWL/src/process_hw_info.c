@@ -146,7 +146,7 @@ void* HWInfoProcess0(void)
 
 void* HWInfoProcess1(void)
 {
-#ifndef NAND_FORMATTER_MODE
+#ifndef NAND_INITIALIZER_LIMITED_MODE
 	// オート実行用
 	if (gAutoFlag)
 	{
@@ -231,7 +231,7 @@ void* HWInfoProcess2(void)
 		kamiFontPrintf(26,  (s16)(7+sMenuSelectNo*CHAR_OF_MENU_SPACE), FONT_COLOR_RED, "NG");
 	}
 
-#ifndef NAND_FORMATTER_MODE
+#ifndef NAND_INITIALIZER_LIMITED_MODE
 	// Auto用
 	if (gAutoFlag)
 	{
