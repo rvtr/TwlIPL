@@ -37,7 +37,7 @@ typedef enum
 HwiInitResult;
 
 HwiInitResult HWI_Init( void *(*pAlloc)( u32 ), void (*pFree)( void * ) );
-void HWI_ModifyLanguage( u8 region );
+BOOL HWI_ModifyLanguage( u8 region );
 BOOL HWI_WriteHWNormalInfoFile( void );
 BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWireless );
 BOOL HWI_WriteHWIDSignFile( void );

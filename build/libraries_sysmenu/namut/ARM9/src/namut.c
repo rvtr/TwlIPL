@@ -122,22 +122,38 @@ BOOL NAMUT_Format(void)
 	BOOL ret = TRUE;
 
 	// プロテクトされていないタイトルの削除を行います
-	ret &= NAMUTi_DeleteNonprotectedTitle();
+	if (!NAMUTi_DeleteNonprotectedTitle())
+	{
+		ret = FALSE;
+		OS_TWarning("Fail! NAMUTi_DeleteNonprotectedTitle()\n");
+	}
 
 	// プロテクトタイトルのセーブデータをフォーマットします
-	ret &= NAMUTi_ClearSavedataAll(TRUE);
+	if (!NAMUTi_ClearSavedataAll(TRUE))
+	{
+		ret = FALSE;
+		OS_TWarning("Fail! NAMUTi_ClearSavedataAll()\n");
+	}
 
 	// 指定ファイルを0xffでクリアします
 	for (i=0; i<sizeof(sFillFileList)/sizeof(sFillFileList[0]); i++)
 	{
-		ret &= NAMUTi_FillFile(sFillFileList[i]);
+		if (!NAMUTi_FillFile(sFillFileList[i]))
+		{
+			ret = FALSE;
+			OS_TWarning("Fail! NAMUTi_FillFile(%s)\n", sFillFileList[i]);
+		}
 	}
 
 	// temp以下を消去します
 	// NAM関数でtempが作成&使用される可能性があるため最後に実行します
 	for (i=0; i<sizeof(sDeleteDirectoryList)/sizeof(char*); i++)
 	{
-		ret &= NAMUTi_DeleteNandDirectory(sDeleteDirectoryList[i]);
+		if (!NAMUTi_DeleteNandDirectory(sDeleteDirectoryList[i]))
+		{
+			ret = FALSE;
+			OS_TWarning("NAMUTi_DeleteNandDirectory(%s)\n", sDeleteDirectoryList[i]);
+		}
 	}
 
 	return ret;
@@ -164,7 +180,7 @@ static BOOL NAMUTi_DeleteNandDirectory(const char *path)
 	// 引数で指定されたディレクトリを開く
 	if (!FS_OpenDirectory(&dir, path, FS_FILEMODE_R))
 	{
-		SDK_ASSERTMSG(0, "Fail! FS_OpenDirectory(%s) in %s\n", path, __func__);
+		OS_TWarning("Fail! FS_OpenDirectory(%s) in %s\n", path, __func__);
 		return FALSE;
 	}
 
@@ -184,14 +200,20 @@ static BOOL NAMUTi_DeleteNandDirectory(const char *path)
 		// ディレクトリ
 		if (entryInfo.attributes & FS_ATTRIBUTE_IS_DIRECTORY)
 		{
-			ret &= FS_DeleteDirectoryAuto(sCurrentFullPath);
-			SDK_ASSERTMSG(ret, "Fail! FS_DeleteDirectoryAuto(%s) in %s\n", sCurrentFullPath, __func__);
+			if (!FS_DeleteDirectoryAuto(sCurrentFullPath))
+			{
+				ret = FALSE;
+				OS_TWarning("Fail! FS_DeleteDirectoryAuto(%s) in %s\n", sCurrentFullPath, __func__);
+			}
 		}
 		// ファイル
 		else
 		{
-			ret &= FS_DeleteFileAuto(sCurrentFullPath);
-			SDK_ASSERTMSG(ret, "Fail! FS_DeleteFileAuto(%s) in %s\n", sCurrentFullPath, __func__);
+			if (!FS_DeleteFileAuto(sCurrentFullPath))
+			{
+				ret = FALSE;
+				OS_TWarning("Fail! FS_DeleteFileAuto(%s) in %s\n", sCurrentFullPath, __func__);
+			}
 		}
 	}
 
@@ -243,7 +265,7 @@ static BOOL NAMUTi_DeleteNonprotectedTitleEntity(const char* path)
 	// 引数で指定されたディレクトリを開く
 	if (!FS_OpenDirectory(&dir, path, FS_FILEMODE_R))
 	{
-		SDK_ASSERTMSG(0, "Fail! FS_OpenDirectory(%s) in %s\n", path, __func__);
+		OS_TWarning("Fail! FS_OpenDirectory(%s) in %s\n", path, __func__);
 		return FALSE;
 	}
 
@@ -268,15 +290,21 @@ static BOOL NAMUTi_DeleteNonprotectedTitleEntity(const char* path)
 				STD_ConcatenateLString(sCurrentFullPath, "/", FS_ENTRY_LONGNAME_MAX);
 				STD_ConcatenateLString(sCurrentFullPath, entryInfo.longname, FS_ENTRY_LONGNAME_MAX);
 
-				ret &= FS_DeleteDirectoryAuto(sCurrentFullPath);
-				SDK_ASSERTMSG(ret, "Fail! FS_DeleteDirectoryAuto(%s) in %s\n", sCurrentFullPath, __func__);
+				if (!FS_DeleteDirectoryAuto(sCurrentFullPath))
+				{
+					ret = FALSE;
+					OS_TWarning("Fail! FS_DeleteDirectoryAuto(%s) in %s\n", sCurrentFullPath, __func__);
+				}
 			}
 		}
 	}
 
 	// ディレクトリを閉じる
-	ret &= FS_CloseDirectory(&dir);
-	SDK_ASSERTMSG(ret, "Fail! FS_CloseDirectory() in %s\n", __func__);
+	if (!FS_CloseDirectory(&dir))
+	{
+		ret = FALSE;
+		OS_TWarning("Fail! FS_CloseDirectory() in %s\n", __func__);
+	}
 
 	return ret;
 }
@@ -446,6 +474,7 @@ static BOOL NAMUTi_FillFile(const char* path)
 	}
 	else
 	{
+		OS_TWarning("Fail! FS_OpenFileEx(%s)\n", path);
 		return FALSE;
 	}
 	return TRUE;
@@ -470,7 +499,7 @@ u32 NAMUT_SearchInstalledSoftBoxCount( void )
 	// タイトルリスト取得
 	if (NAM_GetTitleList(sTitleIdArray, TITLE_LIST_MAX) != NAM_OK)
 	{
-		SDK_ASSERTMSG(0, "Fail! NAM_GetTitleList() in %s\n", __func__);
+		OS_TWarning("Fail! NAM_GetTitleList() in %s\n", __func__);
 		return 0;
 	}
 	

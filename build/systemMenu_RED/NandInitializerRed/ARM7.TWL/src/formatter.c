@@ -61,11 +61,11 @@ typedef struct FileProperty {
 
 // FATFSのクラスタサイズは16KBなので、データサイズが決まっていないものは、余裕を持たせて16KBにしておく
 //static const FileProperty s_fileList[] = {
-//	{  128,                "nand:/sys/ID.sgn"                     },	// 現状、全部サイズは適当。中身も空。
+//	{  RSA_KEY_LENGTH,              LCFG_TWL_HWID_SIGN_PATH       },	// 現状、全部サイズは適当。中身も空。
 //	{  LCFG_TWL_HWINFO_FILE_LENGTH, LCFG_TWL_HWINFO_NORMAL_PATH   },
 //	{  LCFG_TWL_HWINFO_FILE_LENGTH, LCFG_TWL_HWINFO_SECURE_PATH   },
-//	{  FATFS_CLUSTER_SIZE, "nand:/shared1/TWLCFG0.dat"  },
-//	{  FATFS_CLUSTER_SIZE, "nand:/shared1/TWLCFG1.dat"  },	// ミラー
+//	{  LCFG_TWL_HWINFO_FILE_LENGTH, "nand:/shared1/TWLCFG0.dat"  },
+//	{  LCFG_TWL_HWINFO_FILE_LENGTH, "nand:/shared1/TWLCFG1.dat"  },	// ミラー
 //	{  0, NULL },
 //};
 
@@ -305,7 +305,7 @@ static BOOL CreateFile( const FileProperty *pFileList )
 		}
 		pTemp++;
 	}
-	pBuffer = OS_Alloc( length );
+	pBuffer = OS_AllocFromSubPrivWram( length );
 	if( pBuffer == NULL ) {
 		OS_TPrintf( "memory allocate error.\n" );
 		ERROR_RETURN();
@@ -346,7 +346,7 @@ static BOOL CreateFile( const FileProperty *pFileList )
 		pFileList++;
 	}
 	// メモリ解放
-	OS_Free( pBuffer );
+	OS_FreeToSubPrivWram( pBuffer );
 
 	return TRUE;
 }
@@ -378,7 +378,7 @@ static BOOL CheckFile( const FileProperty *pFileList )
 			ERROR_RETURN();
 		}
 		// バッファ メモリ確保
-		pBuffer = OS_Alloc( pFileList->length );
+		pBuffer = OS_AllocFromSubPrivWram( pFileList->length );
 		if( pBuffer == NULL ) {
 			OS_TPrintf( "memory allocate error.\n" );
 			ERROR_RETURN();
@@ -406,7 +406,7 @@ static BOOL CheckFile( const FileProperty *pFileList )
 		}
 		OS_TPrintf( " [VerifyTime : %dms] ", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 		// メモリ解放
-		OS_Free( pBuffer );
+		OS_FreeToSubPrivWram( pBuffer );
 		// ファイルクローズ
 		(void)FATFS_CloseFile( file );
 		OS_TPrintf( "ok.\n" );

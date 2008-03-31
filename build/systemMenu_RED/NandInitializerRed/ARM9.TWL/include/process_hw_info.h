@@ -43,6 +43,17 @@ void* HWInfoProcess3(void);
 void* HWInfoProcess4(void);
 
 /*---------------------------------------------------------------------------*
+  Name:         HW情報全体のライト
+
+  Description:  
+
+  Arguments:    region : 
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+BOOL WriteHWInfoFile( u8 region );
+
+/*---------------------------------------------------------------------------*
   Name:         UpdateNandBoxCount
 
   Description:  InstalledSoftBoxCount, FreeSoftBoxCount の値を

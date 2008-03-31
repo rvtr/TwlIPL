@@ -19,6 +19,7 @@
 #include <nitro/snd.h>
 #include <twl/fatfs.h>
 #include <nitro/card.h>
+#include <twl/lcfg.h>
 #include "kami_font.h"
 #include "kami_pxi.h"
 #include "process_topmenu.h"
@@ -209,13 +210,22 @@ void* FormatProcess2(void)
 			kamiFontPrintf(24, y_pos, FONT_COLOR_BLACK, " WAIT");
 			kamiFontLoadScreenData();
 
-			if (NAMUT_Format())
 			{
-				kamiFontPrintf(24, y_pos, FONT_COLOR_GREEN, " OK  ");
-			}
-			else
-			{
-				kamiFontPrintf(24, y_pos, FONT_COLOR_RED, " NG  ");
+				// 現在のリージョンを保存しておきフォーマット後に保存リージョンで初期化する
+				u8 region = LCFG_THW_GetRegion();
+				BOOL result = TRUE;
+
+				result &= NAMUT_Format();
+				result &= WriteHWInfoFile(region);
+				
+				if (result)
+				{
+					kamiFontPrintf(24, y_pos, FONT_COLOR_GREEN, " OK  ");
+				}
+				else
+				{
+					kamiFontPrintf(24, y_pos, FONT_COLOR_RED, " NG  ");
+				}
 			}
 #ifdef DUMP_NAND_TREE
 			OS_Printf("\n");

@@ -63,7 +63,6 @@ static BOOL s_isReadTSD;
     内部関数宣言
  *---------------------------------------------------------------------------*/
 
-static BOOL WriteHWInfoFile( u8 region );
 static BOOL WriteHWNormalInfoFile( void );
 static BOOL WriteHWSecureInfoFile( u8 region );
 //static BOOL DeleteHWInfoFile( void );
@@ -252,12 +251,12 @@ void* HWInfoProcess2(void)
 
   Description:  
 
-  Arguments:    None.
+  Arguments:    region : 
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
 
-static BOOL WriteHWInfoFile( u8 region )
+BOOL WriteHWInfoFile( u8 region )
 {
 	static const char *pMsgNormalWriting  	= "Writing Normal File...";
 	static const char *pMsgSecureWriting  	= "Writing Secure File...";
@@ -297,7 +296,12 @@ static BOOL WriteHWInfoFile( u8 region )
 		result = FALSE;
 	}
 	
-	HWI_ModifyLanguage( region );
+	// CFGデータの修正
+	if (!HWI_ModifyLanguage( region ))
+	{
+		kamiFontPrintfConsoleEx(CONSOLE_RED, "Fail! Write TWLSettings\n" );	
+		result = FALSE;
+	}
 
 	// InstalledSoftBoxCount, FreeSoftBoxCount の値を現在のNANDの状態に合わせて更新します。
 	UpdateNandBoxCount();

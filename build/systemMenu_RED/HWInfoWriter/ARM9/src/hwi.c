@@ -242,17 +242,22 @@ static BOOL VerifyData( const u8 *pTgt, const u8 *pOrg, u32 len )
 
   Arguments:
 
-  Returns:      None.
+  Returns:      BOOL
  *---------------------------------------------------------------------------*/
-void HWI_ModifyLanguage( u8 region )
+BOOL HWI_ModifyLanguage( u8 region )
 {
 #pragma unused( region )
     u32 langBitmap = LCFG_THW_GetValidLanguageBitmap();
     u8  nowLanguage = LCFG_TSD_GetLanguage();
+	BOOL result = TRUE;
+
+	// TSDが存在しない場合はここでリカバリ生成
+	ReadTWLSettings();
 
     // TSDが読み込めていないなら、何もせずリターン
     if( !s_isReadTSD ) {
-        return;
+		OS_TPrintf("TWLSetting is not Readed!\n");
+        return FALSE;
     }
 
     if( langBitmap & ( 0x0001 << nowLanguage ) ) {
@@ -279,10 +284,16 @@ void HWI_ModifyLanguage( u8 region )
     {
         u8 *pBuffer = spAlloc( LCFG_WRITE_TEMP );
         if( pBuffer ) {
-            (void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+            if (!LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer ))
+			{
+				result = FALSE;
+				OS_TPrintf("Fail! LCFG_WriteTWLSettings()\n");
+			}
             spFree( pBuffer );
         }
     }
+
+	return result;
 }
 
 /*---------------------------------------------------------------------------*
