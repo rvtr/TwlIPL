@@ -138,7 +138,9 @@ TwlSpMain(void)
     SPI_Init(THREAD_PRIO_SPI);
 
 ///////////////
+#ifndef NAND_INITIALIZER_LIMITED_MODE
     KamiPxiInit();
+#endif
 ///////////////
 
     while (TRUE)

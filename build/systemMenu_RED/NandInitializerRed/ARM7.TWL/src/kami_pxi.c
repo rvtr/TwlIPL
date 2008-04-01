@@ -186,37 +186,6 @@ static void KamiThread(void *arg)
         switch (kamiWork.command)
         {
 ////////////////////////////////////////////////////////
-        case CODEC_READ_REGISTER:
-            {
-                u8 value;
-				value = CDC_ReadSpiRegisterEx( kamiWork.data[0], kamiWork.data[1] );
-                KamiReturnResultEx(kamiWork.command, KAMI_PXI_RESULT_SUCCESS, sizeof(u8), (u8*)&value);
-            }
-            break;
-
-        case CODEC_WRITE_REGISTER:
-            {
-                CDC_WriteSpiRegisterEx( kamiWork.data[0], kamiWork.data[1], kamiWork.data[2] );
-                KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
-            }
-            break;
-
-        case GPIO333_WRITE:
-            {
-				if (kamiWork.data[0])
-				{
-					// GPIO333 1èoóÕ
-					EXI2i_SetBitGpio2CntL(0x8080, 0x8080);
-				}
-				else
-				{
-					// GPIO333 0èoóÕ
-					EXI2i_SetBitGpio2CntL(0x8080, 0x8000);
-				}
-                KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
-            }
-            break;
-
         case EXE_FORMAT:
             {
 				result = ExeFormat((FormatMode)kamiWork.data[0]);	// Quick or Full

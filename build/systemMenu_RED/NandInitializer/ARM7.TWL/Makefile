@@ -31,15 +31,12 @@ TWL_NO_STD_PCHDR			=	True
 ifndef	TWLSDK_NOCRYPTO
 #----------------------------------------------------------------------------
 
-SRCS		=	main.c \
-				kami_pxi.c \
-				formatter.c \
-				nvram_misc.c
+SRCS		=	main.c
 
 TARGET_NAME		=	armadillo
 
 TARGET_NEF		=	$(TARGET_NAME).tef
-LCFILE_SPEC		=	../../NandInitializerRed/ARM7.TWL/$(TARGET_NAME).lsf
+LCFILE_SPEC		=	$(TARGET_NAME).lsf
 LCFILE_TEMPLATE	=	../../NandInitializerRed/ARM7.TWL/$(TARGET_NAME).lcf.template
 LDRES_TEMPLATE	=	../../NandInitializerRed/ARM7.TWL/$(TARGET_NAME).response.template
 

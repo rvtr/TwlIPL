@@ -76,8 +76,10 @@ TwlMain()
     RTC_Init();
 
 	InitAllocation();
-	
+
+#ifndef NAND_INITIALIZER_LIMITED_MODE
     KamiPxiInit();   /* “Æ©PXI‰Šú‰» */
+#endif
 
     // Vƒuƒ‰ƒ“ƒNŠ„‚è‚İİ’è
     OS_SetIrqFunction(OS_IE_V_BLANK, VBlankIntr);
