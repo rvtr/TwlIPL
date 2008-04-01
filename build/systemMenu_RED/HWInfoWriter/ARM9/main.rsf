@@ -152,7 +152,7 @@ AppendProperty
 	#
 	# Boot allowed Media: [GameCard/NAND]
 	#
-	Media					NAND
+	Media					GameCard
 
 	#
 	# Data only title : [TRUE/FALSE]

@@ -182,7 +182,7 @@ AppendProperty
 	#
 	# Boot allowed Media: [GameCard/NAND]
 	#
-	Media					NAND
+	Media					GameCard
 
 	#
 	# GameCode for TitleID : Your GameCode in 4 ascii words

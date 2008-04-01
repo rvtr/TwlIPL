@@ -31,7 +31,7 @@ TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
 
 TITLEID_LO				=	0HWA
-TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
+#TARGET_TAD				=
 
 TARGET_BIN				=	main.srl
 
@@ -68,8 +68,8 @@ MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 
 GLIBRARIES		:= $(filter-out libcrypto$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 
-LDIRT_CLEAN				=	$(TARGET_TAD)
-INSTALL_TARGETS			=	$(TARGET_TAD)
+#LDIRT_CLEAN				=
+#INSTALL_TARGETS			=
 INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------

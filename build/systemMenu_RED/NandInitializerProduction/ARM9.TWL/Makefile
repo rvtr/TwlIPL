@@ -37,7 +37,7 @@ TWL_ARCHGEN    		= LIMITED
 #TWL_CODEGEN   =       THUMB
 
 TITLEID_LO				=	0NPA
-TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
+#TARGET_TAD				=
 
 TARGET_BIN		= NandInitializerProduction.srl
 LCFILE_SPEC	= ../../NandInitializerRed/ARM9.TWL/ARM9-TS.lsf
@@ -102,8 +102,8 @@ MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 
 GLIBRARIES		:= $(filter-out libcrypto$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 
-LDIRT_CLEAN				=	$(TARGET_TAD)
-#INSTALL_TARGETS			=	$(TARGET_TAD)
+#LDIRT_CLEAN				=
+#INSTALL_TARGETS			=
 #INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
