@@ -98,10 +98,11 @@ static char sCurrentFullPath[FS_ENTRY_LONGNAME_MAX];
 
 static BOOL NAMUTi_DeleteNonprotectedTitle(void);
 static BOOL NAMUTi_DeleteNonprotectedTitleEntity(const char* path);
-static BOOL NAMUTi_ClearSavedataAll(BOOL fill);
-static BOOL NAMUTi_ClearSavedata(const char* path, BOOL fill);
+static BOOL NAMUTi_ClearSavedataAll(void);
+static BOOL NAMUTi_ClearSavedata(const char* path, u64 titleID, BOOL private);
 static BOOL NAMUTi_DeleteNandDirectory(const char *path);
 static BOOL NAMUTi_FillFile(const char* path);
+static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arcname);
 static void NAMUTi_DrawNandTree(s32 depth, const char *path);
 static void PrintDirectory(s32 depth, const char* path);
 static void PrintFile(s32 depth, const char* path);
@@ -129,7 +130,7 @@ BOOL NAMUT_Format(void)
 	}
 
 	// プロテクトタイトルのセーブデータをフォーマットします
-	if (!NAMUTi_ClearSavedataAll(TRUE))
+	if (!NAMUTi_ClearSavedataAll())
 	{
 		ret = FALSE;
 		OS_TWarning("Fail! NAMUTi_ClearSavedataAll()\n");
@@ -314,12 +315,12 @@ static BOOL NAMUTi_DeleteNonprotectedTitleEntity(const char* path)
 
   Description:  全セーブデータのＦＦクリア＆フォーマットを行います
 
-  Arguments:    fill : FFクリアを行うならTRUEを指定します
+  Arguments:    None
 
   Returns:      None
  *---------------------------------------------------------------------------*/
 
-static BOOL NAMUTi_ClearSavedataAll(BOOL fill)
+static BOOL NAMUTi_ClearSavedataAll( void )
 {
 	s32 title_num;	
 	NAMTitleInfo namTitleInfo;
@@ -348,12 +349,12 @@ static BOOL NAMUTi_ClearSavedataAll(BOOL fill)
 				// publicSaveSizeが0以上なら0xFFクリア＆フォーマット
 				if (namTitleInfo.publicSaveSize > 0)
 				{
-					ret &= NAMUTi_ClearSavedata(savePublicPath, fill);
+					ret &= NAMUTi_ClearSavedata(savePublicPath, namTitleInfo.titleId, FALSE);
 				}
 				// privateSaveSizeが0以上なら0xFFクリア＆フォーマット
 				if (namTitleInfo.privateSaveSize > 0)
 				{
-					ret &= NAMUTi_ClearSavedata(savePrivatePath, fill);
+					ret &= NAMUTi_ClearSavedata(savePrivatePath, namTitleInfo.titleId, TRUE);
 				}
 			}
 			else { ret = FALSE; }
@@ -370,19 +371,18 @@ static BOOL NAMUTi_ClearSavedataAll(BOOL fill)
   Description:  指定したセーブデータファイルに対して
 				ＦＦクリア＆フォーマットを行います。
 
-  Arguments:    fill : FFクリアを行うならTRUEを指定します
+  Arguments:    None
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-static BOOL NAMUTi_ClearSavedata(const char* path, BOOL fill)
+static BOOL NAMUTi_ClearSavedata(const char* path, u64 titleID, BOOL private)
 {
-	char drive[2] = { 'Z', '\0' };
 	FSFile file;
-	BOOL ret = FALSE;
+	u32 filesize;
+	BOOL ret;
 
 	// ファイル構造体初期化
     FS_InitFile(&file);
-
 
 	// セーブファイルオープン
 	if (!FS_OpenFileEx(&file, path, (FS_FILEMODE_R|FS_FILEMODE_W)))
@@ -390,58 +390,75 @@ static BOOL NAMUTi_ClearSavedata(const char* path, BOOL fill)
 		return FALSE;
 	}
 
-/*
-	// 月曜にセーブデータに対してマウントする関数ができるのでそれ待ち
-
-	// セーブファイルを0xFFでクリア
-	if (fill)
+	//----- セーブファイルを0xFFでクリア
+	filesize = FS_GetFileLength(&file);
+	for (; filesize > CLEAR_DATA_SIZE; filesize -= CLEAR_DATA_SIZE)
 	{
-		u32 filesize = FS_GetFileLength(&file);
-		for (; filesize > CLEAR_DATA_SIZE; filesize -= CLEAR_DATA_SIZE)
-		{
-			FS_WriteFile(&file, sClearData, CLEAR_DATA_SIZE);
-		}
-		FS_WriteFile(&file, sClearData, (s32)filesize);
+		FS_WriteFile(&file, sClearData, CLEAR_DATA_SIZE);
 	}
-
-
-	// セーブファイルに対してマウント
-	for (drive[0]='Z'; drive[0]>='A'; drive[0]--)
-	{
-		if (FATFS_MountDrive(drive, FATFS_MEDIA_TYPE_SUBNAND, (FATFSFileHandle)file.userdata))
-		{
-			break;
-		}
-	}
-	
-	// マウント成功ならフォーマットする
-	if (drive[0] >= 'A')
-	{
-		char drive_colon[3];
-		drive_colon[0] = drive[0];
-		drive_colon[1] = ':';
-		drive_colon[2] = '\0';
-
-		// メディアフォーマット
-		if (FATFSi_FormatMedia(drive_colon))
-		{
-			// ドライブフォーマット
-			if (FATFS_FormatDrive(drive_colon))
-			{
-				ret = TRUE;
-			}
-		}
-
-		// アンマウント
-		FATFS_UnmountDrive(drive);
-	}
-*/
-	ret = TRUE;
+	FS_WriteFile(&file, sClearData, (s32)filesize);
 
 	// ファイルクローズ
 	FS_CloseFile(&file);
 
+	//----- NANDアプリのセーブデータファイルをマウントかつフォーマット
+
+	// private
+	if (private)
+	{
+		ret = NAMUTi_MountAndFormatOtherTitleSaveData(titleID, "otherPrv");
+	}
+	// public
+	else
+	{
+		ret = NAMUTi_MountAndFormatOtherTitleSaveData(titleID, "otherPub");
+	}
+
 	return ret;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         NAMUTi_MountAndFormatOtherTitleSaveData
+
+  Description:  指定NANDアプリのセーブデータファイルをマウントかつフォーマット。
+
+  Arguments:    titleID : タイトルID
+                arcname : "otherPub"、"otherPriv"、またはNULL
+
+  Returns:      成功すればTRUE
+ *---------------------------------------------------------------------------*/
+static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arcname)
+{
+    BOOL    succeeded = FALSE;
+    // マウント試行。
+    FSResult    result = FS_MountOtherTitleArchive(titleID, arcname);
+    if (result != FS_RESULT_SUCCESS)
+    {
+        OS_TWarning("FS_MountOtherTitleArchive failed. (%d)\n", result);
+    }
+    else
+    {
+        // 成功したらフォーマット試行。
+        char    path[FS_ENTRY_LONGNAME_MAX];
+        (void)STD_TSPrintf(path, "%s:/", arcname);
+        if (!FATFSi_FormatMedia(path))
+        {
+            OS_TWarning("FATFSi_FormatMedia failed. (%d)\n", FATFS_GetLastError());
+        }
+        else if (!FATFS_FormatDrive(path))
+        {
+            OS_TWarning("FATFS_FormatDrive failed. (%d)\n", FATFS_GetLastError());
+        }
+        else
+        {
+            succeeded = TRUE;
+        }
+        // ドライブ情報をダンプ。
+//      DumpArchiveResource(path);
+        // アンマウント。
+        (void)FS_MountOtherTitleArchive(titleID, NULL);
+    }
+    return succeeded;
 }
 
 /*---------------------------------------------------------------------------*
