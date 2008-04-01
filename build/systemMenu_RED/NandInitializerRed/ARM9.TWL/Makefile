@@ -98,8 +98,8 @@ MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 GLIBRARIES		:= $(filter-out libcrypto$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 
 LDIRT_CLEAN				=	$(TARGET_TAD)
-#INSTALL_TARGETS			=	$(TARGET_TAD)
-#INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
+INSTALL_TARGETS			=	$(TARGET_TAD)
+INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
 
