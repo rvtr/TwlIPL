@@ -1241,6 +1241,8 @@ static void McThread(void *arg)
                 }
 
                 // カード読み込み開始
+                // [TODO] エラー発生時に電源ON/OFFを繰り返さないため、
+                //        挿入時に一度しかロードしないように必要がある
        			retval = LoadCardData();
 
 				// Debug表示
