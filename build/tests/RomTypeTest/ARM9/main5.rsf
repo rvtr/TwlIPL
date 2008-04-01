@@ -1,0 +1,200 @@
+#----------------------------------------------------------------------------
+# Project:  TwlSDK - include
+# File:     ROM-BB.rsf
+#
+# Copyright 2007 Nintendo.  All rights reserved.
+#
+# These coded insructions, statements, and computer programs contain
+# proprietary information of Nintendo of America Inc. and/or Nintendo
+# Company Ltd., and are protected by Federal copyright law.  They may
+# not be disclosed to third parties or copied or duplicated in any form,
+# in whole or in part, without the prior written consent of Nintendo.
+#
+# $Date::            $
+# $Rev$
+# $Author$
+#----------------------------------------------------------------------------
+#
+#  TWL ROM SPEC FILE
+#
+
+Arm9
+{
+	Static			"$(MAKEROM_ARM9:r).TWL.FLX.sbin$(COMPSUFFIX9)"
+	OverlayDefs		"$(MAKEROM_ARM9:r)_defs.TWL.FLX.sbin$(COMPSUFFIX9)"
+	OverlayTable	"$(MAKEROM_ARM9:r)_table.TWL.FLX.sbin$(COMPSUFFIX9)"
+	Elf				"$(MAKEROM_ARM9:r).tef"
+}
+
+Arm7
+{
+	Static			"$(MAKEROM_ARM7_BASE:r).TWL.FLX.sbin$(COMPSUFFIX7)"
+	OverlayDefs		"$(MAKEROM_ARM7_BASE:r)_defs.TWL.FLX.sbin$(COMPSUFFIX7)"
+	OverlayTable	"$(MAKEROM_ARM7_BASE:r)_table.TWL.FLX.sbin$(COMPSUFFIX7)"
+	Elf				"$(MAKEROM_ARM7_BASE:r).tef"
+}
+
+Arm9.Ltd
+{
+	Static			"$(MAKEROM_ARM9:r).TWL.LTD.sbin$(COMPSUFFIX9)"
+	OverlayDefs		"$(MAKEROM_ARM9:r)_defs.TWL.LTD.sbin$(COMPSUFFIX9)"
+	OverlayTable	"$(MAKEROM_ARM9:r)_table.TWL.LTD.sbin$(COMPSUFFIX9)"
+}
+
+Arm7.Ltd
+{
+	Static			"$(MAKEROM_ARM7_BASE:r).TWL.LTD.sbin$(COMPSUFFIX7)"
+	OverlayDefs		"$(MAKEROM_ARM7_BASE:r)_defs.TWL.LTD.sbin$(COMPSUFFIX7)"
+	OverlayTable	"$(MAKEROM_ARM7_BASE:r)_table.TWL.LTD.sbin$(COMPSUFFIX7)"
+}
+
+Property
+{
+	###
+	### Settings for FinalROM
+	###
+	#### BEGIN
+	#
+	# TITLE NAME: Your product name within 12bytes
+	#
+	#TitleName		"YourAppName"
+
+	#
+	# MAKER CODE: Your company ID# in 2 ascii words
+	#             issued by NINTENDO
+	#
+	#MakerCode		"00"
+
+	#
+	# REMASTER VERSION: Mastering version
+	#
+	#RomVersion		0
+
+	#
+	# ROM SPEED TYPE: [MROM/1TROM/UNDEFINED]
+	#
+	RomSpeedType	$(MAKEROM_ROMSPEED)
+
+	#
+	# ROM SIZE: in bit [64M/128M/256M/512M/1G/2G]
+	#
+	#RomSize		128M
+	#RomSize		256M
+
+	#
+	# ROM PADDING: TRUE if finalrom
+	#
+	#RomFootPadding 	TRUE
+
+	#
+	# ROM HEADER TEMPLATE: Provided to every product by NINTENDO
+	#
+	#RomHeaderTemplate	./etc/rom_header.template.sbin
+
+	#
+	# BANNER FILE: generated from Banner Spec File
+	#
+	BannerFile		../banner/banner.bnr
+
+	###
+	### Setting for TWL
+	###
+
+	#
+	# ROM HEADER Ltd: Provided to every product by NINTENDO
+	#
+	RomHeaderLtd	$(TWLSDK_ROOT)/tools/bin/rom_header.LTD.sbin
+
+	#
+	# Digest parameters:
+	#
+	DigestParam		1024 32
+
+	#
+	# WRAM mapping: [MAP_BB_HYB/MAP_BB_LTD/MAP_TS_HYB/MAP_TS_LTD]
+	#  don't have to edit
+	#
+	WramMapping		$(MAKEROM_WRAM_MAPPING)
+
+	#
+	# CardRegion: card region [Japan/America/Europe/Australia/China/Korea]
+	#
+	CardRegion	ALL
+
+	#
+	# Codec mode:
+	#  don't have to edit
+	#
+	CodecMode		$(MAKEROM_CODEC_MODE)
+
+	#
+	# SDCardAccess: sd card access control [TRUE/FALSE]
+	#
+	SDCardAccess	FALSE
+
+	#
+	# NandAccess: nand access control [TRUE/FALSE]
+	#
+	NANDAccess		TRUE
+
+	###
+	#### END
+}
+
+
+AppendProperty
+{
+	#
+	# Publisher : "Nintendo"
+	#  don't have to edit
+	Publisher				Nintendo
+
+	#
+	# Application type : [USER/SYSTEM]
+	#  don't have to edit
+	AppType					SYSTEM
+
+	#
+	# launch title on the launcher : [TRUE/FALSE]
+	#  don't have to edit
+	Launch					TRUE
+
+	#
+	# Boot allowed Media: [GameCard/NAND]
+	#
+	Media					GameCard
+
+	#
+	# Secure title : [TRUE/FALSE]
+	#  don't have to edit
+	Secure					FALSE
+
+	#
+	# GameCode for TitleID : Your GameCode in 4 ascii words
+	#
+	GameCode				$(TITLEID_LO)
+
+	#
+	# Public save data size: [16K/32K/64K/128K/256K/512K/1M/2M/4M/8M]
+	#
+	#PublicSaveDataSize		32K
+
+	#
+	# Private save data size: [16K/32K/64K/128K/256K/512K/1M/2M/4M/8M]
+	#
+	#PrivateSaveDataSize	16K
+
+	#
+	# Enable SubBannerFile
+	SubBannerFile			FALSE
+}
+
+
+RomSpec
+{
+	Offset		0x00000000
+	Segment		ALL
+	HostRoot	../../../systemMenu_RED/data
+	Root		/data
+	File		NTR_IPL_font_m.NFTR
+}
