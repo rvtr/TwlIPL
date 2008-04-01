@@ -39,7 +39,7 @@ TWL_ARCHGEN    		= LIMITED
 TITLEID_LO				=	0NPA
 TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
 
-TARGET_BIN		= NandInitializerRedAuto.srl
+TARGET_BIN		= NandInitializerProduction.srl
 LCFILE_SPEC	= ../../NandInitializerRed/ARM9.TWL/ARM9-TS.lsf
 ROM_SPEC	= ../../NandInitializerRed/ARM9.TWL/main.rsf
 
