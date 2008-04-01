@@ -159,6 +159,7 @@ void AESi_InitSeedWithRomHeader( ROM_Header* rom_header );
  *---------------------------------------------------------------------------*/
 static inline void AESi_InitSeed( void )
 {
+    AESi_InitSeedWithRomHeader( (ROM_Header*)HW_TWL_ROM_HEADER_BUF );
 }
 
 #ifdef __cplusplus
