@@ -131,6 +131,7 @@ Property
 	# SDCardAccess: sd card access control [TRUE/FALSE]
 	#
 	SDCardAccess	TRUE
+	#SDCardAccess	FALSE
 
 	#
 	# NandAccess: nand access control [TRUE/FALSE]
@@ -152,7 +153,8 @@ AppendProperty
 	#
 	# Application type : [USER/SYSTEM]
 	#  don't have to edit
-	AppType					SYSTEM
+	AppType					USER
+	#AppType					SYSTEM
 
 	#
 	# launch title on the launcher : [TRUE/FALSE]
@@ -162,11 +164,13 @@ AppendProperty
 	#
 	# Boot allowed Media: [GameCard/NAND]
 	#
+	#Media					GameCard
 	Media					NAND
 
 	#
 	# Secure title : [TRUE/FALSE]
 	#  don't have to edit
+	#Secure					TRUE
 	Secure					FALSE
 
 	#
@@ -177,16 +181,16 @@ AppendProperty
 	#
 	# Public save data size: [16K/32K/64K/128K/256K/512K/1M/2M/4M/8M]
 	#
-	#PublicSaveDataSize		32K
+	PublicSaveDataSize		32K
 
 	#
 	# Private save data size: [16K/32K/64K/128K/256K/512K/1M/2M/4M/8M]
 	#
-	#PrivateSaveDataSize	16K
+	PrivateSaveDataSize	16K
 
 	#
 	# Enable SubBannerFile
-	SubBannerFile			FALSE
+	SubBannerFile			TRUE
 }
 
 

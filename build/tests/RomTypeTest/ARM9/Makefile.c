@@ -41,11 +41,11 @@ SRCS					=	main.c RomTypeTest.c \
 LINCLUDES				=	$(MISC_DIR)/include
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
-MAKETAD_FLAGS			+= -s
+#MAKETAD_FLAGS			+= -s
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.sys.exe
+#MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 
 LDIRT_CLEAN				=	$(TARGET_TAD)
 

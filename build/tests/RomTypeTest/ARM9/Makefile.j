@@ -24,12 +24,12 @@ TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
 
-TARGET_NUMBER	= 4
+TARGET_NUMBER	= j
 TARGET_NAME		= RomTypeTest$(TARGET_NUMBER)
 BINDIR			= ./bin/$(TWL_BUILDTYPE)/$(TARGET_NAME)
 TARGET_BIN				=	$(TARGET_NAME).srl
 TITLEID_LO				=	RT$(TARGET_NUMBER)A
-#TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
+TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
 
 ROM_SPEC				=	main$(TARGET_NUMBER).rsf
 
@@ -41,13 +41,13 @@ SRCS					=	main.c RomTypeTest.c \
 LINCLUDES				=	$(MISC_DIR)/include
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
-#MAKETAD_FLAGS			+= -s
+MAKETAD_FLAGS			+= -s
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 
-#LDIRT_CLEAN				=	$(TARGET_TAD)
+LDIRT_CLEAN				=	$(TARGET_TAD)
 
 #----------------------------------------------------------------------------
 

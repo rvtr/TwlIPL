@@ -130,12 +130,13 @@ Property
 	#
 	# SDCardAccess: sd card access control [TRUE/FALSE]
 	#
-	SDCardAccess	FALSE
+	SDCardAccess	TRUE
+	#SDCardAccess	FALSE
 
 	#
 	# NandAccess: nand access control [TRUE/FALSE]
 	#
-	NANDAccess		TRUE
+	#NANDAccess		TRUE
 
 	###
 	#### END
@@ -153,6 +154,7 @@ AppendProperty
 	# Application type : [USER/SYSTEM]
 	#  don't have to edit
 	AppType					USER
+	#AppType					SYSTEM
 
 	#
 	# launch title on the launcher : [TRUE/FALSE]
@@ -163,10 +165,12 @@ AppendProperty
 	# Boot allowed Media: [GameCard/NAND]
 	#
 	Media					GameCard
+	#Media					NAND
 
 	#
 	# Secure title : [TRUE/FALSE]
 	#  don't have to edit
+	#Secure					TRUE
 	Secure					FALSE
 
 	#
@@ -186,7 +190,7 @@ AppendProperty
 
 	#
 	# Enable SubBannerFile
-	SubBannerFile			FALSE
+	#SubBannerFile			TRUE
 }
 
 

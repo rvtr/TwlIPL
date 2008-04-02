@@ -153,8 +153,8 @@ AppendProperty
 	#
 	# Application type : [USER/SYSTEM]
 	#  don't have to edit
-	AppType					USER
-	#AppType					SYSTEM
+	#AppType					USER
+	AppType					SYSTEM
 
 	#
 	# launch title on the launcher : [TRUE/FALSE]
@@ -164,14 +164,14 @@ AppendProperty
 	#
 	# Boot allowed Media: [GameCard/NAND]
 	#
-	Media					GameCard
-	#Media					NAND
+	#Media					GameCard
+	Media					NAND
 
 	#
 	# Secure title : [TRUE/FALSE]
 	#  don't have to edit
-	#Secure					TRUE
-	Secure					FALSE
+	Secure					TRUE
+	#Secure					FALSE
 
 	#
 	# GameCode for TitleID : Your GameCode in 4 ascii words
@@ -190,7 +190,7 @@ AppendProperty
 
 	#
 	# Enable SubBannerFile
-	#SubBannerFile			TRUE
+	SubBannerFile			TRUE
 }
 
 
