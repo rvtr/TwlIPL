@@ -78,6 +78,7 @@ static BOOL ROTestCore( char *path, char *testfile )
 	{
 		// ReadOnlyなので、Writeのファイルオープン成功したらだめ
 		if( !s_quiettest ) OS_TPrintf("%s:Write mode open succeed. (ReadOnly) \n",filename);
+		FS_CloseFile( file );
 		return FALSE;
 	}
 
