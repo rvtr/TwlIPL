@@ -325,6 +325,27 @@ static void SetOAMAttr( void )
 	SetAffineAnimation( &flipparam );
 }
 
+static BOOL my_EqualNString(NNSG2dChar *src, NNSG2dChar *dst, int size )
+{
+	int l;
+	for( l=0;l<size;l++)
+	{
+		if(*src != *dst)
+		{
+			return FALSE;
+		}
+		
+		src++;
+		dst++;
+		
+		if(*src == 0x0000)
+		{
+			break;
+		}
+	}
+	return TRUE;
+}
+
 // バナー関係の描画
 // 思ったよりVRAMへのロードが高速だったので、
 // 特に難しいことを考えず表示するイメージデータだけ毎フレームVRAMにロード
@@ -349,7 +370,7 @@ static void BannerDraw(int selected, TitleProperty *titleprop)
 	
 	// アプリ名表示
 	str = ((TWLBannerFile *)titleprop[selected].pBanner)->v1.gameName[ LCFG_TSD_GetLanguage() ];
-	if( STD_CompareNString( (const char *)old_gameName, (const char *)str, BANNER_LANG_LENGTH * 2 ) != 0 )
+	if( !my_EqualNString( old_gameName, str, BANNER_LANG_LENGTH * 2 ) )
 	{
 		NNSG2dChar *str = ((TWLBannerFile *)titleprop[selected].pBanner)->v1.gameName[ LCFG_TSD_GetLanguage() ];
 		NNSG2dTextRect rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, str );
