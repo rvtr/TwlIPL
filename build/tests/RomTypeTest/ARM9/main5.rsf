@@ -94,7 +94,7 @@ Property
 	#
 	# BANNER FILE: generated from Banner Spec File
 	#
-	BannerFile		../banner/banner.bnr
+	BannerFile		../banner/banner_5.bnr
 
 	###
 	### Setting for TWL

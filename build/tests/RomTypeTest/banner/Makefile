@@ -18,20 +18,11 @@
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-ICON_DIR			= ./icon
-
-BANNER_SPEC			= test-utf16_v3.TWL.bsf
-
-MAKEBANNER	=	$(TWL_TOOLSDIR)/bin/makebanner.TWL.exe
-
-TARGETS				= banner.bnr
-INSTALL_DIR			= ./
-INSTALL_TARGETS		= $(TARGETS)
-
-BANNER_ICON_NAME	= $(basename $(BANNER_ICON))
-
-LDIRT_CLEAN			= $(TARGETS) \
-					  $(TARGETS:.bnr=.srl)
+SUBDIRS					=	
+SUBMAKES		=	Makefile.0 Makefile.1 Makefile.2 Makefile.3 Makefile.4 Makefile.5 \
+                    Makefile.6 Makefile.7 Makefile.8 Makefile.9 Makefile.a Makefile.b \
+                    Makefile.c Makefile.d Makefile.e Makefile.f Makefile.g Makefile.h \
+					Makefile.i Makefile.j Makefile.k
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
@@ -40,7 +31,5 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 #----------------------------------------------------------------------------
 do-build:		$(TARGETS)
 
-$(TARGETS):		$(BANNER_SPEC)
-				$(MAKEBANNER) -p TWL $(BANNER_SPEC) $(TARGETS)
 
 #

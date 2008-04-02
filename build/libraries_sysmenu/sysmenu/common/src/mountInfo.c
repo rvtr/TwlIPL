@@ -139,7 +139,7 @@ void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle )
 		int i;
 		u16 mask = 0;
 		if( pROMH->arm7_scfg_ext & ROM_SCFG_EXT_SD1_MASK ) {
-			mask = 0x0173;		// SDIO[1]アクセスが有効なアプリは、nand:/, nand2:/, shared1:/, shared2:/, photo:/, sdmc:/を残す。
+			mask = 0x013b;		// SDIO[1]アクセスが有効なアプリは、nand:/, nand2:/, shared1:/, shared2:/, photo:/, sdmc:/を残す。
 		}else {
 			mask = 0;			// 全マウント情報クリア
 		}
