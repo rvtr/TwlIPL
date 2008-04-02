@@ -290,6 +290,15 @@ int SetOwnerInfoMain( void )
 			s_csr=USER_INFO_MENU_ELEMENT_NUM - 1;
 		}
 	}
+#if 0
+	if( pad.trg & PAD_BUTTON_SELECT ) {
+		u16 *pPhoto = (u16 *)LCFG_TSD_GetOwnerInfoPtr()->facePhoto;
+		int i;
+		for( i = 0; i < 64*64; i++ ) {
+			*pPhoto++ = (u16)i;
+		}
+	}
+#endif
 	tp_select = SelectMenuByTP( &s_csr, &s_settingParam );
 	
     DrawOwnerInfoMenuScene();

@@ -142,6 +142,11 @@ Property
 	SDCardAccess	TRUE
 
 	#
+	# NANDAccess: NAND access control [TRUE/FALSE]
+	#
+	NANDAccess	TRUE
+
+	#
 	# Codec mode:
 	#  don't have to edit
 	#
