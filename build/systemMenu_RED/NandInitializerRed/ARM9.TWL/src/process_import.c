@@ -712,7 +712,7 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 
 	if ( nam_result == NAM_OK )
 	{
-		kamiFontPrintfConsole(CONSOLE_ORANGE, "Sucess!\n");
+		kamiFontPrintfConsole(CONSOLE_ORANGE, "Success!\n");
 		ret = TRUE;
 	}
 	else

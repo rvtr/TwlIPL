@@ -172,7 +172,7 @@ void* AutoProcess2(void)
 	// Ž¸”s‚È‚µ
 	else
 	{
-		kamiFontPrintf(3, 18, FONT_COLOR_BLACK, "   Finished Sucessfully!");
+		kamiFontPrintf(3, 18, FONT_COLOR_BLACK, "   Finished Successfully!");
 		bg_color = BG_COLOR_GREEN;
 	}
 
