@@ -1,9 +1,9 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - firmware
+# Project:  TwlIPL - libraries - nvram
 # File:     Makefile
 #
-# Copyright 2007 Nintendo.  All rights reserved.
+# Copyright 2008 Nintendo.  All rights reserved.
 #
 # These coded instructions, statements, and computer programs contain
 # proprietary information of Nintendo of America Inc. and/or Nintendo
@@ -21,11 +21,7 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS		= \
-			gcdfirm-disp \
-			gcdfirm-print \
-			sdmc-launcher \
-			sdmc-launcher-writer \
+SUBDIRS =	ARM7
 
 #----------------------------------------------------------------------------
 

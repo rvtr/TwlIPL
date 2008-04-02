@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlIPL
+# Project:  TwlFirm - tools - menu-launcher
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -16,36 +16,39 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-SUBDIRS				=
+TWL_PROC       = ARM7
+
+SUBDIRS		=
+
+LINCLUDES	=   ../include
 
 #----------------------------------------------------------------------------
 
-# build ARM & THUMB libraries
-TWL_CODEGEN_ALL 	?=	True
+TARGET_BIN	=	sdmc_launcher_writer7.tef
 
-TWL_PROC			=	ARM7
+SRCS		=	main.c
 
-SRCDIR				=	. ../common
-SRCS				=	\
-						gcd.c \
-						gcd_init.c \
-						blowfish.c \
-						ds_blowfish.c \
-						ds_blowfish_table.c \
+CRT0_O		=	crt0_firm.o
 
-TARGET_LIB			=	libgcd_sp$(FIRM_LIBSUFFIX).a
-INCDIR				=	../include
+ADDRESS_STATIC	=	0x037b8000
 
-#----------------------------------------------------------------------------
+#LCFILE_TEMPLATE =	$(FIRM_SPECDIR)/$(TWL_PROC)-$(TWL_PLATFORM)-PARTNER.lcf.template
+
+#SRCDIR		=	# using default
+#LCFILE		=	# using default
+
+LINCLUDES	=	$(ROOT)/build/libraries/fatfs/ARM7.TWL/include	\
+				$(ROOT)/build/libraries/fatfs/ARM7.TWL/include/fatfs	\
+				$(ROOT)/build/libraries/fatfs/ARM7.TWL/include/twl/fatfs/ARM7
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-INSTALL_TARGETS		=	$(TARGETS)
-INSTALL_DIR			=	$(FIRM_INSTALL_LIBDIR)
+MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000'
 
 #----------------------------------------------------------------------------
 
 do-build:		$(TARGETS)
+
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 

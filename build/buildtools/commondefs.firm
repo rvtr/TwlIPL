@@ -88,6 +88,7 @@ FIRM_LIBS_BASE	?= \
 			   libfs_sp \
 			   libaes_sp \
 			   libpm_sp \
+			   libnvram_sp \
 
 endif
 

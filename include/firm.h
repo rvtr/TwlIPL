@@ -27,6 +27,7 @@
 #include <firm/aes.h>
 #include <firm/fatfs.h>
 #include <firm/fs.h>
+#include <firm/nvram.h>
 
 /* FIRM_H_ */
 #endif

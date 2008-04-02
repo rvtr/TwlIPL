@@ -1,9 +1,9 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlIPL
+# Project:  TwlSDK - libraries - spi
 # File:     Makefile
 #
-# Copyright 2007 Nintendo.  All rights reserved.
+# Copyright 2003 Nintendo.  All rights reserved.
 #
 # These coded instructions, statements, and computer programs contain
 # proprietary information of Nintendo of America Inc. and/or Nintendo
@@ -23,18 +23,15 @@ SUBDIRS				=
 # build ARM & THUMB libraries
 TWL_CODEGEN_ALL 	?=	True
 
-
+TWL_PROC			=	ARM7
 
 SRCDIR				=	. ../common
 SRCS				=	\
-						gcd.c \
-						gcd_init.c \
-						blowfish.c \
-						ds_blowfish.c \
-						ds_blowfish_table.c \
+						nvram_misc.c \
 
-TARGET_LIB			=	libgcd$(FIRM_LIBSUFFIX).a
+TARGET_LIB			=	libnvram_sp$(FIRM_LIBSUFFIX).a
 INCDIR				=	../include
+LINCLUDES		=	$(ROOT)/build/libraries/spi/ARM7/include ../common/include
 
 #----------------------------------------------------------------------------
 
@@ -48,10 +45,5 @@ INSTALL_DIR			=	$(FIRM_INSTALL_LIBDIR)
 do-build:		$(TARGETS)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
-
-LDEPENDS_OBJ      := $(MAKEFIRM_RSA_PUBKEY) \
-
-gcd_acsign.c : $(LDEPENDS_OBJ)
-	touch gcd_acsign.c
 
 #===== End of Makefile =====
