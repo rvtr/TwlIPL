@@ -31,11 +31,10 @@ static ROM_Header* const rh= (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
 
 static BOOL         aesFlag;
 static AESCounter   aesCounter;
-static u8           aesBuffer[HW_FIRM_LOAD_BUFFER_UNIT_SIZE] ATTRIBUTE_ALIGN(32);
 
 #define DMA_SEND         2
 #define DMA_RECV         3
-static void CopyWithAes( const void* src, void* dest, u32 size )
+static void ReplaceWithAes( void* ptr, u32 size )
 {
     AES_Lock();
     AES_Reset();
@@ -43,8 +42,8 @@ static void CopyWithAes( const void* src, void* dest, u32 size )
     AES_WaitKey();
     AES_LoadKey( AES_KEY_SLOT_A );
     AES_WaitKey();
-    AES_DmaSend( DMA_SEND, src,  size, NULL, NULL );
-    AES_DmaRecv( DMA_RECV, dest, size, NULL, NULL );
+    AES_DmaSend( DMA_SEND, ptr,  size, NULL, NULL );
+    AES_DmaRecv( DMA_RECV, ptr, size, NULL, NULL );
     AES_SetCounter( &aesCounter );
     AES_Run( AES_MODE_CTR, 0, size / AES_BLOCK_SIZE, NULL, NULL );
     AES_AddToCounter( &aesCounter, size / AES_BLOCK_SIZE );
@@ -138,8 +137,7 @@ BOOL FS_LoadBuffer( int fd, u32 offset, u32 size )
     }
     while ( size > 0 )
     {
-        u8* dest = aesFlag ? aesBuffer :
-                    (u8*)HW_FIRM_LOAD_BUFFER_BASE + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
+        u8* dest = (u8*)HW_FIRM_LOAD_BUFFER_BASE + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
         u32 unit = size < HW_FIRM_LOAD_BUFFER_UNIT_SIZE ? size : HW_FIRM_LOAD_BUFFER_UNIT_SIZE;
         PXI_AcquireLoadBufferSemaphore(); // wait to be ready
         if ( MI_GetWramBankMaster_B( count ) != MI_WRAM_ARM7 )
@@ -169,7 +167,7 @@ BOOL FS_LoadBuffer( int fd, u32 offset, u32 size )
 #endif
         if ( aesFlag )
         {
-            CopyWithAes( dest, (u8*)HW_FIRM_LOAD_BUFFER_BASE + count * HW_FIRM_LOAD_BUFFER_UNIT_SIZE, unit );
+            ReplaceWithAes( dest, unit );
         }
         PXI_ReleaseLoadBufferSemaphore();
         count = ( count + 1 ) % HW_FIRM_LOAD_BUFFER_UNIT_NUMS;
