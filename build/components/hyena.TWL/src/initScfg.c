@@ -52,11 +52,10 @@ INIT_InitializeScfg(void)
 		orr			r0, r0, #REG_SCFG_CLK_SNDMCLK_MASK
 		strh		r0, [r1]
 
-		/* ARM7 側の DMA には新 DMA 回路を採用し、サウンドにも新 DMA 回路を利用 */
+		/* ARM7 側の DMA には新 DMA 回路を採用 */
 		ldr			r1, =REG_EXT_ADDR
 		ldr			r0, [r1]
 		orr			r0, r0, #REG_SCFG_EXT_DMAC_MASK
-		orr			r0, r0, #REG_SCFG_EXT_DSEL_MASK
 		str			r0, [r1]
 
 		ldr			r2, =HW_PRV_WRAM_SYSRV
