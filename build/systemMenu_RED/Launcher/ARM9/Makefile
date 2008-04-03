@@ -17,9 +17,9 @@
 #----------------------------------------------------------------------------
 
 SUBDIRS					=	\
-							../../../libraries_sysmenu/sysmenu \
-							../../../libraries_sysmenu/hotsw \
-							../../../components/hyena.TWL
+#							../../../libraries_sysmenu/sysmenu \
+#							../../../libraries_sysmenu/hotsw \
+#							../../../components/hyena.TWL
 #							../../../libraries_sysmenu/reloc_info \
 #							../../../libraries_sysmenu/boot \
 #							../../../libraries_sysmenu/mcu \
@@ -28,7 +28,11 @@ SUBDIRS					=	\
 
 #----------------------------------------------------------------------------
 
-#FIRM_BUILD				=	TRUE
+ifdef SDK_FINALROM
+DISABLE_DEBUG			=	TRUE
+else
+DISABLE_DEBUG			=	FALSE
+endif
 
 TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
@@ -77,12 +81,10 @@ ADDRESS_DTCM			=	0x0e000000
 
 DEFAULT_COMP_ARM7		=	hyena
 
-MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)' -DCARD_REGION='$(CARD_REGION)'
-ifdef FIRM_BUILD
-MAKEROM_FLAGS			+=	-s \
-							-DSYS_PRIV_KEY=$(TWL_KEYSDIR)/rsa/private9_0.der \
-							-DSYS_PUB_KEY=$(TWL_KEYSDIR)/rsa/public9_0.der
-endif
+MAKEROM_FLAGS			+=	-F \
+							-DTITLEID_LO='$(TITLEID_LO)' \
+							-DCARD_REGION='$(CARD_REGION)' \
+							-DDISABLE_DEBUG='$(DISABLE_DEBUG)'
 
 MAKETAD_FLAGS			+= -s
 

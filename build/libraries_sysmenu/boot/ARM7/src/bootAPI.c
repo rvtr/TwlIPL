@@ -200,6 +200,7 @@ BOOL BOOT_WaitStart( void )
 			AESi_ResetAesKeyA();
 			if( isClearSlotB ) AESi_ResetAesKeyB();
 			if( isClearSlotC ) AESi_ResetAesKeyC();
+//			if( th->s.access_control.nand_access == 0 ) AESi_ResetAeskeyD(); 	// NANDにアクセスしないアプリは、スロットDの鍵をクリアする
 			
 			// 鍵は不要になるので、消しておく
 			{

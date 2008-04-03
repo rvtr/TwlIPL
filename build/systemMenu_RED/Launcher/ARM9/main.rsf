@@ -144,6 +144,11 @@ Property
 	#
 	#SDCardAccess	TRUE
 
+	#
+	# DisableDebug	：最終ROMでは、アプリジャンプされた際にデバッグできないようにTRUEにする必要があります。
+	#
+	DisableDebug	$(DISABLE_DEBUG)
+	
 	###
 	#### END
 }

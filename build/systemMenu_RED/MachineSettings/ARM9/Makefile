@@ -22,6 +22,12 @@ SUBDIRS					=	\
 
 #----------------------------------------------------------------------------
 
+ifdef SDK_FINALROM
+DISABLE_DEBUG			=	TRUE
+else
+DISABLE_DEBUG			=	FALSE
+endif
+
 TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
@@ -52,7 +58,9 @@ SRCS					=	main.c MachineSetting.c \
 
 LINCLUDES				=	$(MISC_DIR)/include
 
-MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' -DCARD_REGION='$(CARD_REGION)'
+MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
+							-DCARD_REGION='$(CARD_REGION)' \
+							-DDISABLE_DEBUG='$(DISABLE_DEBUG)'
 
 MAKETAD_FLAGS			+= -s
 
