@@ -97,9 +97,11 @@ MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 
 GLIBRARIES		:= $(filter-out libcrypto$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 
-#LDIRT_CLEAN				=
-#INSTALL_TARGETS			=
-#INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
+# インストール設定
+ifeq	($(TWL_BUILD_TYPE),FINALROM)
+INSTALL_DIR	= $(ROOT)/bin/ARM9-TS/Rom
+INSTALL_TARGETS	= $(BINDIR)/$(TARGET_NAME).srl
+endif
 
 #----------------------------------------------------------------------------
 
