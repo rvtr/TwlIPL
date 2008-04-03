@@ -52,8 +52,12 @@
 #define FILE_NUM_MAX			16
 
 #define NAND_BLOCK_BYTE 			0x200
-#define NAND_BOOT_FLAG_ADDRESS    	0x2ff
 #define NAND_FIRM_START_OFFSET    	0x200
+
+#define NVRAM_PAGE_SIZE 0x100
+#define NVRAM_NORFIRM_RESERVED_ADDRESS     0x200
+#define NVRAM_NORFIRM_NANDBOOT_FLAG_OFFSET 0xff
+#define NVRAM_NORFIRM_NANDBOOT_FLAG        0x80
 
 /*---------------------------------------------------------------------------*
     内部変数定義
@@ -62,7 +66,7 @@
 static s32 sMenuSelectNo;
 static char sFilePath[FILE_NUM_MAX][FS_ENTRY_LONGNAME_MAX];
 static u8 sFileNum;
-static u8 sNandBootFlag = 0xff;
+static u8 sNorFirmReservedData[NVRAM_PAGE_SIZE];	// ARM7からアクセスするためスタックでは駄目
 
 /*---------------------------------------------------------------------------*
     内部関数宣言
@@ -306,6 +310,7 @@ static BOOL WriteNandfirm(char* file_name)
 {
     FSFile  file;
 	char full_path[FS_ENTRY_LONGNAME_MAX+6];
+
     BOOL    open_is_ok;
 	BOOL    read_is_ok;
 	u8* pTempBuf;
@@ -315,7 +320,8 @@ static BOOL WriteNandfirm(char* file_name)
 	BOOL result = TRUE;
 	u16 crc_w1, crc_w2;
 	u16 crc_r1, crc_r2;
-
+	u16 crc_norfirm_reserved_area_w, crc_norfirm_reserved_area_r;
+	
 	// .nandのフルパスを作成
 	MakeFullPathForSD(file_name, full_path);
 
@@ -392,9 +398,36 @@ static BOOL WriteNandfirm(char* file_name)
 	}
 
 	// nandfirm 起動フラグを立てる
-	if (kamiNvramWrite(NAND_BOOT_FLAG_ADDRESS, &sNandBootFlag, 1) == KAMI_RESULT_SEND_ERROR)
+	MI_CpuClear8( sNorFirmReservedData, NVRAM_PAGE_SIZE );
+	sNorFirmReservedData[NVRAM_NORFIRM_NANDBOOT_FLAG_OFFSET] = NVRAM_NORFIRM_NANDBOOT_FLAG;
+
+	// NORファームリザーブ領域の書き込みデータのCRCを計算
+	crc_norfirm_reserved_area_w = SVC_GetCRC16( 0xffff, sNorFirmReservedData, NVRAM_PAGE_SIZE );
+
+	DC_FlushRange( sNorFirmReservedData, NVRAM_PAGE_SIZE );
+	if (kamiNvramWrite(NVRAM_NORFIRM_RESERVED_ADDRESS, sNorFirmReservedData, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
 	{
 		kamiFontPrintfConsoleEx(1, "Fail kamiNvramWrite()\n");
+		result = FALSE;
+	}
+
+	// CRCを計算するので念のためにクリアしてからリードする
+	MI_CpuFill8( sNorFirmReservedData, 0xee, NVRAM_PAGE_SIZE );
+	if (kamiNvramRead(NVRAM_NORFIRM_RESERVED_ADDRESS, sNorFirmReservedData, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
+	{
+		kamiFontPrintfConsoleEx(1, "Fail kamiNvramRead()\n");
+		result = FALSE;
+	}
+
+	// 読み込みはARM7が直接メモリに書き出すため
+	DC_InvalidateRange(sNorFirmReservedData, NVRAM_PAGE_SIZE);
+	// 書き込み後のCRCを計算
+	crc_norfirm_reserved_area_r = SVC_GetCRC16( 0xffff, sNorFirmReservedData, NVRAM_PAGE_SIZE );
+
+	// NORファームリザーブ領域のCRC比較
+	if ( crc_norfirm_reserved_area_w != crc_norfirm_reserved_area_r )
+	{
+		kamiFontPrintfConsoleEx(1, "Fail! Norfirm Reserved Area CRC check %x!=%x\n", crc_norfirm_reserved_area_w, crc_norfirm_reserved_area_r);
 		result = FALSE;
 	}
 
