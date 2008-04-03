@@ -370,7 +370,7 @@ static void BannerDraw(int selected, TitleProperty *titleprop)
 	
 	// ƒAƒvƒŠ–¼•\Ž¦
 	str = ((TWLBannerFile *)titleprop[selected].pBanner)->v1.gameName[ LCFG_TSD_GetLanguage() ];
-	if( !my_EqualNString( old_gameName, str, BANNER_LANG_LENGTH * 2 ) )
+	if( !my_EqualNString( old_gameName, str, BANNER_LANG_LENGTH ) )
 	{
 		NNSG2dChar *str = ((TWLBannerFile *)titleprop[selected].pBanner)->v1.gameName[ LCFG_TSD_GetLanguage() ];
 		NNSG2dTextRect rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, str );
