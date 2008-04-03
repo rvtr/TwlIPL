@@ -23,7 +23,7 @@
 
 #define FS_HEADER_AUTH_SIZE 0xe00
 
-#define MODULE_ALIGNMENT    0x10    // 16バイト単位で読み込む
+#define MODULE_ALIGNMENT    0x20    // 16*2バイト単位で読み込む
 //#define MODULE_ALIGNMENT  0x200   // 512バイト単位で読み込む
 #define RoundUpModuleSize(value)    (((value) + MODULE_ALIGNMENT - 1) & -MODULE_ALIGNMENT)
 
