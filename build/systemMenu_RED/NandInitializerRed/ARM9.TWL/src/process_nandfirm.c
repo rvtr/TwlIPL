@@ -37,6 +37,10 @@
 /*---------------------------------------------------------------------------*
     マクロ定義
  *---------------------------------------------------------------------------*/
+
+// NANDファーム書き込みの際にNVRAMの未割り当て領域＋予約領域を０クリアする場合は定義します（開発用）
+//#define CLEAR_NON_ASIGNED_AREA_AND_RESERVED_AREA_ALL
+
 #define ROUND_UP(value, alignment) \
     (((u32)(value) + (alignment-1)) & ~(alignment-1))
 
@@ -59,6 +63,8 @@
 #define NVRAM_NORFIRM_NANDBOOT_FLAG_OFFSET 0xff
 #define NVRAM_NORFIRM_NANDBOOT_FLAG        0x80
 
+#define NVRAM_NON_ASIGNED_AREA_ADDRESS     0x300
+
 /*---------------------------------------------------------------------------*
     内部変数定義
  *---------------------------------------------------------------------------*/
@@ -66,7 +72,8 @@
 static s32 sMenuSelectNo;
 static char sFilePath[FILE_NUM_MAX][FS_ENTRY_LONGNAME_MAX];
 static u8 sFileNum;
-static u8 sNorFirmReservedData[NVRAM_PAGE_SIZE];	// ARM7からアクセスするためスタックでは駄目
+static u8 sNvramPageSizeBuffer[NVRAM_PAGE_SIZE] ATTRIBUTE_ALIGN(32);	// ARM7からアクセスするためスタックでは駄目
+static u32 sReservedAreaEndAddress;
 
 /*---------------------------------------------------------------------------*
     内部関数宣言
@@ -321,7 +328,10 @@ static BOOL WriteNandfirm(char* file_name)
 	u16 crc_w1, crc_w2;
 	u16 crc_r1, crc_r2;
 	u16 crc_norfirm_reserved_area_w, crc_norfirm_reserved_area_r;
-	
+#ifdef CLEAR_NON_ASIGNED_AREA_AND_RESERVED_AREA_ALL
+	u32 write_offset;
+#endif
+
 	// .nandのフルパスを作成
 	MakeFullPathForSD(file_name, full_path);
 
@@ -398,31 +408,31 @@ static BOOL WriteNandfirm(char* file_name)
 	}
 
 	// nandfirm 起動フラグを立てる
-	MI_CpuClear8( sNorFirmReservedData, NVRAM_PAGE_SIZE );
-	sNorFirmReservedData[NVRAM_NORFIRM_NANDBOOT_FLAG_OFFSET] = NVRAM_NORFIRM_NANDBOOT_FLAG;
+	MI_CpuClear8( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
+	sNvramPageSizeBuffer[NVRAM_NORFIRM_NANDBOOT_FLAG_OFFSET] = NVRAM_NORFIRM_NANDBOOT_FLAG;
 
 	// NORファームリザーブ領域の書き込みデータのCRCを計算
-	crc_norfirm_reserved_area_w = SVC_GetCRC16( 0xffff, sNorFirmReservedData, NVRAM_PAGE_SIZE );
+	crc_norfirm_reserved_area_w = SVC_GetCRC16( 0xffff, sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
 
-	DC_FlushRange( sNorFirmReservedData, NVRAM_PAGE_SIZE );
-	if (kamiNvramWrite(NVRAM_NORFIRM_RESERVED_ADDRESS, sNorFirmReservedData, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
+	DC_FlushRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
+	if (kamiNvramWrite(NVRAM_NORFIRM_RESERVED_ADDRESS, sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
 	{
 		kamiFontPrintfConsoleEx(1, "Fail kamiNvramWrite()\n");
 		result = FALSE;
 	}
 
 	// CRCを計算するので念のためにクリアしてからリードする
-	MI_CpuFill8( sNorFirmReservedData, 0xee, NVRAM_PAGE_SIZE );
-	if (kamiNvramRead(NVRAM_NORFIRM_RESERVED_ADDRESS, sNorFirmReservedData, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
+	MI_CpuFill8( sNvramPageSizeBuffer, 0xee, NVRAM_PAGE_SIZE );
+	if (kamiNvramRead(NVRAM_NORFIRM_RESERVED_ADDRESS, sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
 	{
 		kamiFontPrintfConsoleEx(1, "Fail kamiNvramRead()\n");
 		result = FALSE;
 	}
 
 	// 読み込みはARM7が直接メモリに書き出すため
-	DC_InvalidateRange(sNorFirmReservedData, NVRAM_PAGE_SIZE);
+	DC_InvalidateRange(sNvramPageSizeBuffer, NVRAM_PAGE_SIZE);
 	// 書き込み後のCRCを計算
-	crc_norfirm_reserved_area_r = SVC_GetCRC16( 0xffff, sNorFirmReservedData, NVRAM_PAGE_SIZE );
+	crc_norfirm_reserved_area_r = SVC_GetCRC16( 0xffff, sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
 
 	// NORファームリザーブ領域のCRC比較
 	if ( crc_norfirm_reserved_area_w != crc_norfirm_reserved_area_r )
@@ -430,6 +440,59 @@ static BOOL WriteNandfirm(char* file_name)
 		kamiFontPrintfConsoleEx(1, "Fail! Norfirm Reserved Area CRC check %x!=%x\n", crc_norfirm_reserved_area_w, crc_norfirm_reserved_area_r);
 		result = FALSE;
 	}
+
+#ifdef CLEAR_NON_ASIGNED_AREA_AND_RESERVED_AREA_ALL
+	// 未割り当て領域＋予約領域を０クリアします（開発用）
+	if (kamiNvramRead(NVRAM_CONFIG_DATA_OFFSET_ADDRESS, &sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
+	{
+		kamiFontPrintfConsoleEx(1, "Fail kamiNvramRead()\n");
+		result = FALSE;
+	}
+	DC_InvalidateRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
+    sReservedAreaEndAddress = (u32)(*(u16 *)sNvramPageSizeBuffer << NVRAM_CONFIG_DATA_OFFSET_SHIFT) - 0xA00;// TWL WiFi設定 + NTR WiFi設定 を差し引く
+	//OS_Printf("end = %x\n", sReservedAreaEndAddress);
+
+	MI_CpuFill8( sNvramPageSizeBuffer, 0x00, NVRAM_PAGE_SIZE );
+	DC_FlushRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
+
+	for (write_offset=NVRAM_NON_ASIGNED_AREA_ADDRESS; write_offset < sReservedAreaEndAddress; write_offset += NVRAM_PAGE_SIZE)
+	{
+		if (kamiNvramWrite(write_offset, sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
+		{
+			kamiFontPrintfConsoleEx(1, "Fail kamiNvramWrite()\n");
+			result = FALSE;
+		}
+	}
+	//OS_Printf("write_offset = %x\n", write_offset);
+#else
+	// 未割り当て領域先頭256byte＋予約領域を０クリアします
+
+	MI_CpuFill8( sNvramPageSizeBuffer, 0x00, NVRAM_PAGE_SIZE );
+	DC_FlushRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
+
+	if (kamiNvramWrite(NVRAM_NON_ASIGNED_AREA_ADDRESS, sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
+	{
+		kamiFontPrintfConsoleEx(1, "Fail kamiNvramWrite()\n");
+		result = FALSE;
+	}
+
+	if (kamiNvramRead(NVRAM_CONFIG_DATA_OFFSET_ADDRESS, &sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
+	{
+		kamiFontPrintfConsoleEx(1, "Fail kamiNvramRead()\n");
+		result = FALSE;
+	}
+	DC_InvalidateRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
+    sReservedAreaEndAddress = (u32)(*(u16 *)sNvramPageSizeBuffer << NVRAM_CONFIG_DATA_OFFSET_SHIFT) - 0xA00;// TWL WiFi設定 + NTR WiFi設定 を差し引く
+
+	MI_CpuFill8( sNvramPageSizeBuffer, 0x00, NVRAM_PAGE_SIZE );
+	DC_FlushRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
+
+	if (kamiNvramWrite(sReservedAreaEndAddress - 0x100, sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
+	{
+		kamiFontPrintfConsoleEx(1, "Fail kamiNvramWrite()\n");
+		result = FALSE;
+	}
+#endif
 
 	kamiFontPrintfConsoleEx(0, "NAND Firm Import Start!\n");
 
