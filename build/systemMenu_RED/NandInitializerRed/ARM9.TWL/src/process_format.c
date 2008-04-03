@@ -211,12 +211,13 @@ void* FormatProcess2(void)
 			kamiFontLoadScreenData();
 
 			{
-				// 現在のリージョンを保存しておきフォーマット後に保存リージョンで初期化する
+				// 現在の設定を保存しておきフォーマット後に保存設定で初期化する
 				u8 region = LCFG_THW_GetRegion();
+				BOOL isForceDisableWireless = LCFG_THW_IsForceDisableWireless(); 
 				BOOL result = TRUE;
 
 				result &= NAMUT_Format();
-				result &= WriteHWInfoFile(region);
+				result &= WriteHWInfoFile(region, isForceDisableWireless);
 				
 				if (result)
 				{

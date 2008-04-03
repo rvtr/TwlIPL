@@ -48,10 +48,11 @@ void* HWInfoProcess4(void);
   Description:  
 
   Arguments:    region : 
+				wirelessForceOff : ñ≥ê¸ã≠êßOFFÇ»ÇÁTRUEÇéwíË
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
-BOOL WriteHWInfoFile( u8 region );
+BOOL WriteHWInfoFile( u8 region, BOOL wirelessForceOff );
 
 /*---------------------------------------------------------------------------*
   Name:         UpdateNandBoxCount

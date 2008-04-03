@@ -39,15 +39,29 @@
     型定義
  *---------------------------------------------------------------------------*/
 
+enum {
+	MENU_REGION_JAPAN = 0,
+	MENU_REGION_AMERICA,
+	MENU_REGION_EUROPE,
+	MENU_REGION_AUSTRALIA,
+	MENU_REGION_CHINA,
+	MENU_REGION_KOREA,
+	MENU_WIRELESS_ENABLE,
+	MENU_WIRELESS_FORCE_OFF,
+	MENU_RETURN,
+	NUM_OF_MENU_SELECT
+};
+
 /*---------------------------------------------------------------------------*
     定数定義
  *---------------------------------------------------------------------------*/
 
-#define NUM_OF_MENU_SELECT    7
+#define NUM_OF_MENU_REGION    6
 #define DOT_OF_MENU_SPACE    16
 #define CHAR_OF_MENU_SPACE    2
+#define MENU_TOP_LINE         5
 #define CURSOR_ORIGIN_X      32
-#define CURSOR_ORIGIN_Y      56
+#define CURSOR_ORIGIN_Y      40
 
 /*---------------------------------------------------------------------------*
     内部変数定義
@@ -98,23 +112,33 @@ void* HWInfoProcess0(void)
 	kamiFontPrintf(0, 2, FONT_COLOR_BLACK, "--------------------------------");
 
 	// メニュー一覧
+	kamiFontPrintf(3,  4, FONT_COLOR_BLACK, "+--------------------+----+");
+	kamiFontPrintf(3,  5, FONT_COLOR_BLACK, "l   REGION JAPAN     l    l");
 	kamiFontPrintf(3,  6, FONT_COLOR_BLACK, "+--------------------+----+");
-	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "l   REGION JAPAN     l    l");
+	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "l   REGION AMERICA   l    l");
 	kamiFontPrintf(3,  8, FONT_COLOR_BLACK, "+--------------------+----+");
-	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "l   REGION AMERICA   l    l");
+	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "l   REGION EUROPE    l    l");
 	kamiFontPrintf(3, 10, FONT_COLOR_BLACK, "+--------------------+----+");
-	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "l   REGION EUROPE    l    l");
+	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "l   REGION AUSTRALIA l    l");
 	kamiFontPrintf(3, 12, FONT_COLOR_BLACK, "+--------------------+----+");
-	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "l   REGION AUSTRALIA l    l");
+	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "l   REGION CHINA     l    l");
 	kamiFontPrintf(3, 14, FONT_COLOR_BLACK, "+--------------------+----+");
-	kamiFontPrintf(3, 15, FONT_COLOR_BLACK, "l   REGION CHINA     l    l");
+	kamiFontPrintf(3, 15, FONT_COLOR_BLACK, "l   REGION KOREA     l    l");
 	kamiFontPrintf(3, 16, FONT_COLOR_BLACK, "+--------------------+----+");
-	kamiFontPrintf(3, 17, FONT_COLOR_BLACK, "l   REGION KOREA     l    l");
+	kamiFontPrintf(3, 17, FONT_COLOR_BLACK, "l                    l    l");
 	kamiFontPrintf(3, 18, FONT_COLOR_BLACK, "+--------------------+----+");
-//	kamiFontPrintf(3, 19, FONT_COLOR_BLACK, "l   DELETE           l    l");
-//	kamiFontPrintf(3, 20, FONT_COLOR_BLACK, "+--------------------+----+");
-	kamiFontPrintf(3, 19, FONT_COLOR_BLACK, "l   RETURN           l    l");
+	kamiFontPrintf(3, 19, FONT_COLOR_BLACK, "l                    l    l");
+	kamiFontPrintf(5, 17, FONT_COLOR_CYAN,  " Wireless Enable   ");
+	kamiFontPrintf(5, 19, FONT_COLOR_CYAN,  " Wireless Force Off");
 	kamiFontPrintf(3, 20, FONT_COLOR_BLACK, "+--------------------+----+");
+	kamiFontPrintf(3, 21, FONT_COLOR_BLACK, "l   RETURN           l    l");
+	kamiFontPrintf(3, 22, FONT_COLOR_BLACK, "+--------------------+----+");
+
+	// 現在のリージョンに"now"と表示
+	kamiFontPrintf(26, (s16)(MENU_TOP_LINE+LCFG_THW_GetRegion()*CHAR_OF_MENU_SPACE), FONT_COLOR_BLACK, "now");
+
+	// 現在の無線強制OFF状態に"now"と表示
+	kamiFontPrintf(26, (s16)(MENU_TOP_LINE+(NUM_OF_MENU_REGION + LCFG_THW_IsForceDisableWireless())*CHAR_OF_MENU_SPACE), FONT_COLOR_BLACK, "now");
 
 	// 背景全クリア
 	for (i=0;i<24;i++)
@@ -198,37 +222,64 @@ void* HWInfoProcess2(void)
 
 	switch( sMenuSelectNo )
 	{
-	case 0:
-	case 1:
-	case 2:
-	case 3:
-	case 4:
-	case 5:
+	case MENU_REGION_JAPAN:
+	case MENU_REGION_AMERICA:
+	case MENU_REGION_EUROPE:
+	case MENU_REGION_AUSTRALIA:
+	case MENU_REGION_CHINA:
+	case MENU_REGION_KOREA:
 		OS_TPrintf( "Write Start.\n" );
-		result = WriteHWInfoFile( (u8)sMenuSelectNo );
+		result = WriteHWInfoFile( (u8)sMenuSelectNo, LCFG_THW_IsForceDisableWireless() );
+
+		// 全リージョンの結果をクリア
+		for (i=0;i<NUM_OF_MENU_REGION;i++)
+		{
+			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+i*CHAR_OF_MENU_SPACE), FONT_COLOR_BLACK, "   ");
+		}
+		// 今回の結果を表示
+		if ( result == TRUE )
+		{
+			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+sMenuSelectNo*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "OK ");
+		}
+		else
+		{
+			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+sMenuSelectNo*CHAR_OF_MENU_SPACE), FONT_COLOR_RED, "NG ");
+		}
 		break;
-//	case 6:
-//		OS_TPrintf( "Delete start.\n" );
-//		result = DeleteHWInfoFile();
-//		break;
-	case 6:
+
+	case MENU_WIRELESS_ENABLE:
+		result = WriteHWInfoFile( LCFG_THW_GetRegion(), FALSE );
+		if ( result == TRUE )
+		{
+			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_ENABLE*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "OK ");
+			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_FORCE_OFF*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "   ");
+		}
+		else
+		{
+			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_ENABLE*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "NG ");
+			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_FORCE_OFF*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "   ");
+		}
+		break;
+
+	case MENU_WIRELESS_FORCE_OFF:
+		result = WriteHWInfoFile( LCFG_THW_GetRegion(), TRUE );
+		if ( result == TRUE )
+		{
+			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_ENABLE*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "   ");
+			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_FORCE_OFF*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "OK ");
+		}
+		else
+		{
+			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_ENABLE*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "   ");
+			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_FORCE_OFF*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "NG ");
+		}
+		break;
+
+	case MENU_RETURN:
 		FADE_OUT_RETURN( TopmenuProcess0 );
+		break;
 	}
 
-	// 全結果をクリア
-	for (i=0;i<NUM_OF_MENU_SELECT;i++)
-	{
-		kamiFontPrintf(26,  (s16)(7+i*CHAR_OF_MENU_SPACE), FONT_COLOR_BLACK, "  ");
-	}
-	// 今回の結果を表示
-	if ( result == TRUE )
-	{
-		kamiFontPrintf(26,  (s16)(7+sMenuSelectNo*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "OK");
-	}
-	else
-	{
-		kamiFontPrintf(26,  (s16)(7+sMenuSelectNo*CHAR_OF_MENU_SPACE), FONT_COLOR_RED, "NG");
-	}
 
 #ifndef NAND_INITIALIZER_LIMITED_MODE
 	// Auto用
@@ -256,7 +307,7 @@ void* HWInfoProcess2(void)
   Returns:      None.
  *---------------------------------------------------------------------------*/
 
-BOOL WriteHWInfoFile( u8 region )
+BOOL WriteHWInfoFile( u8 region, BOOL wirelessForceOff )
 {
 	static const char *pMsgNormalWriting  	= "Writing Normal File...";
 	static const char *pMsgSecureWriting  	= "Writing Secure File...";
@@ -279,7 +330,7 @@ BOOL WriteHWInfoFile( u8 region )
 	// セキュアファイルのライト
 	kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSecureWriting );
 	
-	if( HWI_WriteHWSecureInfoFile( region, NULL, FALSE ) ) {	// とりあえず無線は有効で。
+	if( HWI_WriteHWSecureInfoFile( region, NULL, wirelessForceOff ) ) {	// とりあえず無線は有効で。
 		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSucceeded );
 	}else {
 		kamiFontPrintfConsoleEx(CONSOLE_RED, pMsgFailed );
