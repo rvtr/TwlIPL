@@ -44,8 +44,33 @@ RTCDrawProperty g_rtcDraw = {
 
 // static variable -------------------------------------
 static BOOL s_quiettest = FALSE;
+static char s_testnum = 0;
 
 // const data  -----------------------------------------
+static const BOOL s_answer_data[][15] = 
+{
+	{ FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE }, // 0
+	{ FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE }, // 1
+	{ FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE }, // 2
+	{  TRUE,  TRUE, FALSE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE }, // 3
+	{  TRUE,  TRUE, FALSE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE }, // 4
+	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 5
+	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE,  TRUE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 6
+	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 7
+	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 8
+	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 9
+	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE,  TRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // a
+	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // b
+	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // c
+	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // d
+	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE,  TRUE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // e
+	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // f
+	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE,  TRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // g
+	{  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }, // h
+	{  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE,  TRUE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }, // i
+	{  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }, // j
+	{  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }  // k
+};
 
 //======================================================
 // ÉeÉXÉgÉvÉçÉOÉâÉÄ
@@ -248,10 +273,25 @@ static void TestFSPermission( void )
 	result[13] = OS_DeleteSubBannerFile();        // nand:/<banner>
 	result[14] = TMPJumpTest();                   // nand:/<tmpjump>
 	
+	
+	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
+	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"RomTypeTest");
+	PutStringUTF16( 4 * 8, 8 * 8, TXT_COLOR_BLACK, (const u16 *)L"Push A To Start Test.");
+	PutStringUTF16( 4 * 8, 10 * 8, TXT_COLOR_BLACK, (const u16 *)L"Push X To Start Test Quietly.");
+	
+	OS_TPrintf( "Correct Answer:\n" );
+	for( l=0; l<15; l++ )
+	{
+		OS_TPrintf( "%s ", ( s_answer_data[s_testnum][l] ? "Åõ" : "Å~" ) );
+	}
+	OS_TPrintf( "\n" );
 	OS_TPrintf( "Result:\n" );
 	for( l=0; l<15; l++ )
 	{
 		OS_TPrintf( "%s ", ( result[l] ? "Åõ" : "Å~" ) );
+		PutStringUTF16( 3 * 8 + l*14, 14 * 8, TXT_COLOR_BLACK, (const u16 *)( s_answer_data[s_testnum][l] ? L"Åõ" : L"Å~" ));
+		PutStringUTF16( 3 * 8 + l*14, 16 * 8, ( result[l]==s_answer_data[s_testnum][l] ? TXT_COLOR_BLUE : TXT_COLOR_RED ),
+		                (const u16 *)( result[l] ? L"Åõ" : L"Å~" ));
 	}
 	OS_TPrintf( "\n" );
 }
@@ -267,7 +307,19 @@ void RomTypeTestInit( void )
 	PutStringUTF16( 4 * 8, 8 * 8, TXT_COLOR_BLACK, (const u16 *)L"Push A To Start Test.");
 	PutStringUTF16( 4 * 8, 10 * 8, TXT_COLOR_BLACK, (const u16 *)L"Push X To Start Test Quietly.");
 	GetAndDrawRTCData( &g_rtcDraw, TRUE );
-	
+
+	s_testnum = ((ROM_Header_Short *)(HW_TWL_ROM_HEADER_BUF))->titleID_Lo[1];
+	if( '0' <= s_testnum && s_testnum <= '9' )
+	{
+		s_testnum -= '0';
+	}else if( 'a' <= s_testnum && s_testnum <= 'z' )
+	{
+		s_testnum = (char)( s_testnum - 'a' + 10 );
+	}else
+	{
+		s_testnum = 0;
+	}
+
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	GX_DispOn();
 	GXS_DispOn();

@@ -222,6 +222,8 @@ BOOL SYSMi_CopyCardBanner( void )
 }
 
 // NANDタイトルリストの取得
+// listNumにはカード部分も含めたリストの長さを与える
+// return:取得したNANDタイトルの数
 int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 {
 															// filter_flag : ALL, ALL_APP, SYS_APP, USER_APP, Data only, 等の条件を指定してタイトルリストを取得する。
