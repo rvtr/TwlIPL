@@ -1,8 +1,15 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlSDK
-  File:     dsCardType1.c
- *---------------------------------------------------------------------------*/
+  Project:  TwlIPL
+  File:     dsCardCommon.c
 
+  Copyright 2007-2008 Nintendo.  All rights reserved.
+
+  These coded instructions, statements, and computer programs contain
+  proprietary information of Nintendo of America Inc. and/or Nintendo
+  Company Ltd., and are protected by Federal copyright law.  They may
+  not be disclosed to third parties or copied or duplicated in any form,
+  in whole or in part, without the prior written consent of Nintendo.
+ *---------------------------------------------------------------------------*/
 #include 	<twl.h>
 #include 	<firm/os/common/system.h>
 #include	<blowfish.h>
@@ -10,7 +17,7 @@
 #include	<customNDma.h>
 
 // extern -------------------------------------------------------------------
-extern CardThreadData s_ctData;
+extern CardThreadData HotSwThreadData;
 
 // define -------------------------------------------------------------------
 #define		SECURE_SEGMENT_NUM					4
@@ -20,17 +27,21 @@ extern CardThreadData s_ctData;
 #define		ROM_EMULATION_END_OFS				0x180
 
 // static value -------------------------------------------------------------
-//static OSMessage	s_Msg;
+static OSMessage	s_Msg;
 
 // Function prototype -------------------------------------------------------
 static HotSwState HOTSWi_ChangeModeNormal(CardBootData *cbd, u64 cmd);
 static void PreSendSecureCommand(CardBootData *cbd, u32 *scrambleMask);
 
-
 // ===========================================================================
 // 	Function Describe
 // ===========================================================================
 
+/*---------------------------------------------------------------------------*
+  Name:			HOTSWi_SetCommand
+
+  Description:  引数で与えられたコマンドのエンディアンを変えてレジスタにセットする
+ *---------------------------------------------------------------------------*/
 void HOTSWi_SetCommand(GCDCmd64 *cndLE)
 {
 	GCDCmd64 cndBE;
@@ -57,11 +68,11 @@ void HOTSWi_SetCommand(GCDCmd64 *cndLE)
 // ■------------------------------------■
 // ■       ノーマルモードのコマンド     ■
 // ■------------------------------------■
-/* -----------------------------------------------------------------
- * ReadIDNormal関数
- *
- * ノーマルモード時のカードIDを読み込む関数
- * ----------------------------------------------------------------- */
+/*---------------------------------------------------------------------------*
+  Name:			ReadIDNormal
+
+  Description:  ノーマルモード時のカードIDを読み込む関数
+ *---------------------------------------------------------------------------*/
 HotSwState ReadIDNormal(CardBootData *cbd)
 {
 	GCDCmd64 cndLE;
@@ -75,17 +86,19 @@ HotSwState ReadIDNormal(CardBootData *cbd)
 	// MCCMD レジスタ設定
 	HOTSWi_SetCommand(&cndLE);
 
-	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
-
-	// MCCNT1 レジスタ設定 (START = 1 PC = 111(ステータスリード) latency1 = 1 に)
-	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x7 << PC_SHIFT) | (0x1 & LATENCY1_MASK);
-
-    // メッセージ受信
-//	OS_ReceiveMessage(&s_ctData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-
+    // MCCNT0 レジスタ設定
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK | REG_MI_MCCNT0_I_MASK );
+    
+	// MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = START_MASK | HOTSW_PAGE_STAT | (0x1 & LATENCY1_MASK);
+    
+#if 0
     // DMAが終了するまで待つ
-    while( MI_IsNDmaBusy(HOTSW_NDMA_NO) == TRUE ){}
+    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
+#else
+    // メッセージ受信
+	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
+#endif
     
     return HOTSW_SUCCESS;
 }
@@ -146,14 +159,19 @@ HotSwState ReadBootSegNormal(CardBootData *cbd)
 		// MCCMD レジスタ設定
 		HOTSWi_SetCommand(&cndLE);
 
+		// MCCNT0 レジスタ設定
+		reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK | REG_MI_MCCNT0_I_MASK);
+        
 		// MCCNT1 レジスタ設定
 		reg_HOTSW_MCCNT1 = START_MASK | CT_MASK | PC_MASK & (pc << PC_SHIFT) | LATENCY2_MASK | LATENCY1_MASK;
 
+#if 0
+    	// DMAが終了するまで待つ
+    	HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
+#else
     	// メッセージ受信
-//		OS_ReceiveMessage(&s_ctData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-
-	   	// DMAが終了するまで待つ
-    	while( MI_IsNDmaBusy(HOTSW_NDMA_NO) == TRUE ){}
+		OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
+#endif
         
         page++;
     }
@@ -162,11 +180,11 @@ HotSwState ReadBootSegNormal(CardBootData *cbd)
 }
 
 
-/* -----------------------------------------------------------------
- * ReadStatusNormal関数
- *
- * ノーマルモードでステータスを読み込む
- * ----------------------------------------------------------------- */
+/*---------------------------------------------------------------------------*
+  Name:			ReadStatusNormal
+
+  Description:  ノーマルモードでステータスを読み込む
+ *---------------------------------------------------------------------------*/
 HotSwState ReadStatusNormal(CardBootData *cbd)
 {
 	GCDCmd64 cndLE;
@@ -186,27 +204,29 @@ HotSwState ReadStatusNormal(CardBootData *cbd)
 	// MCCMD レジスタ設定
 	HOTSWi_SetCommand(&cndLE);
 
-	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
+	// MCCNT0 レジスタ設定
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
 
 	// MCCNT1 レジスタ設定
-	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~SCRAMBLE_MASK) | START_MASK | (PC_MASK & (0x7 << PC_SHIFT));
+	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~SCRAMBLE_MASK) | START_MASK | HOTSW_PAGE_STAT;
 
-   	// メッセージ受信
-//	OS_ReceiveMessage(&s_ctData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-
+#if 0
     // DMAが終了するまで待つ
-    while( MI_IsNDmaBusy(HOTSW_NDMA_NO) == TRUE ){}
+    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
+#else
+    // メッセージ受信
+	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
+#endif
 
     return HOTSW_SUCCESS;
 }
 
 
-/* -----------------------------------------------------------------
- * RefreshBadBlockNormal関数
- *
- * ノーマルモードでバッドブロックを置換
- * ----------------------------------------------------------------- */
+/*---------------------------------------------------------------------------*
+  Name:			RefreshBadBlockNormal
+
+  Description:  ノーマルモードでバッドブロックを置換
+ *---------------------------------------------------------------------------*/
 HotSwState RefreshBadBlockNormal(CardBootData *cbd)
 {
 	GCDCmd64 cndLE;
@@ -221,10 +241,14 @@ HotSwState RefreshBadBlockNormal(CardBootData *cbd)
 	// MCCMD レジスタ設定
 	HOTSWi_SetCommand(&cndLE);
 
+	// MCCNT0 レジスタ設定
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
+    
 	// MCCNT1 レジスタ設定
-	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~SCRAMBLE_MASK) | START_MASK | (PC_MASK & (0x0 << PC_SHIFT));
+	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~SCRAMBLE_MASK) | START_MASK | HOTSW_PAGE_0;
 
-    while(reg_HOTSW_MCCNT1 & START_MASK){}
+    // カードデータ転送終了まで待つ
+    HOTSW_WaitCardCtrl();
 
     return HOTSW_SUCCESS;
 }
@@ -241,6 +265,7 @@ HotSwState ChangeModeNormal(CardBootData *cbd)
 {
 	return HOTSWi_ChangeModeNormal(cbd, HSWOP_N_OP_CHG_MODE);
 }
+
 
 /*---------------------------------------------------------------------------*
  * Name:         ChangeModeNorma2
@@ -271,23 +296,27 @@ static HotSwState HOTSWi_ChangeModeNormal(CardBootData *cbd, u64 cmd)
 	// MCCMD レジスタ設定
 	HOTSWi_SetCommand(&cndLE);
 
-	// MCCNT1 レジスタ設定
-	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~SCRAMBLE_MASK) | START_MASK | (PC_MASK & (0x0 << PC_SHIFT));
+	// MCCNT0 レジスタ設定
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
     
-	while(reg_HOTSW_MCCNT1 & START_MASK){}
+	// MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~SCRAMBLE_MASK) | START_MASK | HOTSW_PAGE_0;
+
+    // カードデータ転送終了まで待つ
+	HOTSW_WaitCardCtrl();
     
     return HOTSW_SUCCESS;
 }
 
 
-/* -----------------------------------------------------------------
- * LoadTable関数
- *
- * カード側の Key Table をロードする関数。
- *
- * ※この関数は開発カード用に発行しないといけない。
- *   製品版カードの場合、このコマンドは無視される
- * ----------------------------------------------------------------- */
+/*---------------------------------------------------------------------------*
+  Name:			LoadTable
+
+  Description:  カード側の Key Table をロードする関数
+
+  ※この関数は開発カード用に発行しないといけない。
+  　製品版カードの場合、このコマンドは無視される
+ *---------------------------------------------------------------------------*/
 HotSwState LoadTable(void)
 {
 	GCDCmd64 cndLE;
@@ -295,24 +324,26 @@ HotSwState LoadTable(void)
     
 	// NewDMA転送（読み捨て）の準備
 	HOTSW_NDmaPipe_Card( HOTSW_NDMA_NO, (u32 *)HOTSW_MCD1, &temp, HOTSW_LOAD_TABLE_SIZE );
-
+    
     // リトルエンディアンで作って
     cndLE.dw  = HSWOP_N_OP_LD_TABLE;
-
+    
 	// MCCMD レジスタ設定
 	HOTSWi_SetCommand(&cndLE);
 
-	// MCCNT0 レジスタ設定 (E = 1  I = 1  SEL = 0に)
-	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & 0x0fff) | 0xc000);
-
-    // MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 101(16ページ) latency1 = 0(必要ないけど) に)
-	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x5 << PC_SHIFT);
-
-    // メッセージ受信
-//	OS_ReceiveMessage(&s_ctData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-
+	// MCCNT0 レジスタ設定
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK | REG_MI_MCCNT0_I_MASK);
+    
+    // MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = START_MASK | HOTSW_PAGE_16;
+    
+#if 0
     // DMAが終了するまで待つ
-    while( MI_IsNDmaBusy(HOTSW_NDMA_NO) == TRUE ){}
+    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
+#else
+    // メッセージ受信
+	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
+#endif
     
     return HOTSW_SUCCESS;
 }
@@ -338,8 +369,11 @@ HotSwState ReadRomEmulationInfo(CardBootData *cbd)
 	reg_HOTSW_MCCMD0 = 0x3e000000;
 	reg_HOTSW_MCCMD1 = 0x0;
 
+	// MCCNT0 レジスタ設定
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
+    
 	// MCCNT1 レジスタ設定 (START = 1  PC = 001(1ページリード)に latency1 = 0x5fe)
-	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x1 << PC_SHIFT) | (0x5fe & LATENCY1_MASK);
+	reg_HOTSW_MCCNT1 = START_MASK | HOTSW_PAGE_1 | (0x5fe & LATENCY1_MASK);
 
 	// MCCNTレジスタのRDYフラグをポーリングして、フラグが立ったらデータをMCD1レジスタに再度セット。スタートフラグが0になるまでループ。
 	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
@@ -363,7 +397,7 @@ HotSwState ReadRomEmulationInfo(CardBootData *cbd)
 /*---------------------------------------------------------------------------*
   Name:         SetSecureCommand
   
-  Description:  
+  Description:  引数で与えられたコマンドをBlowfishで暗号化してレジスタにセット
  *---------------------------------------------------------------------------*/
 static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
 {
@@ -415,6 +449,9 @@ static void PreSendSecureCommand(CardBootData *cbd, u32 *scrambleMask)
     if(cbd->cardType == DS_CARD_TYPE_2){
 		u32 latency = (u32)cbd->pBootSegBuf->rh.s.secure_cmd_latency * 0x100;
 
+		// MCCNT0 レジスタ設定
+		reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
+        
 		// MCCNT1 レジスタ設定
 		reg_HOTSW_MCCNT1 = START_MASK | *scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
 
@@ -454,21 +491,27 @@ HotSwState ReadIDSecure(CardBootData *cbd)
 
 	// NewDMA転送の準備
     HOTSW_NDmaCopy_Card( HOTSW_NDMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_scr, sizeof(cbd->id_scr) );
+
+	// MCCNT0 レジスタ設定
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
     
 	// MCCNT1 レジスタ設定
-	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x7 << PC_SHIFT) | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
+	reg_HOTSW_MCCNT1 = START_MASK | HOTSW_PAGE_STAT | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
 
-    // メッセージ受信
-//	OS_ReceiveMessage(&s_ctData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-
+#if 0
     // DMAが終了するまで待つ
-    while( MI_IsNDmaBusy(HOTSW_NDMA_NO) == TRUE ){}
+    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
+#else
+    // メッセージ受信
+	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
+#endif
     
     // コマンドカウンタインクリメント
 	cbd->vbi++;
 
     return HOTSW_SUCCESS;
 }
+
 
 /*---------------------------------------------------------------------------*
  * Name:         ReadSegSecure
@@ -519,14 +562,19 @@ HotSwState ReadSegSecure(CardBootData *cbd)
 			// NewDMA転送の準備
 		    HOTSW_NDmaCopy_Card( HOTSW_NDMA_NO, (u32 *)HOTSW_MCD1, buf + (interval*j), size );
 
+			// MCCNT0 レジスタ設定
+			reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
+            
 			// MCCNT1 レジスタ設定
 			reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (pc << PC_SHIFT) | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
 
+#if 0
+    		// DMAが終了するまで待つ
+    		HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
+#else
     		// メッセージ受信
-//			OS_ReceiveMessage(&s_ctData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-
-		    // DMAが終了するまで待つ
-            while( MI_IsNDmaBusy(HOTSW_NDMA_NO) == TRUE ){}
+			OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
+#endif
             
             // 転送済みページ数
             j++;
@@ -541,6 +589,7 @@ HotSwState ReadSegSecure(CardBootData *cbd)
     
     return HOTSW_SUCCESS;
 }
+
 
 /*---------------------------------------------------------------------------*
  * Name:         SwitchONPNGSecure
@@ -564,16 +613,21 @@ HotSwState SwitchONPNGSecure(CardBootData *cbd)
 	// コマンド初回送信（NTR-MROMはレイテンシクロック設定変更のみ）
 	PreSendSecureCommand(cbd, &scrambleMask);
 
+	// MCCNT0 レジスタ設定
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
+    
 	// MCCNT1 レジスタ設定
 	reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param | (cbd->secureLatency & LATENCY1_MASK);
-    
-	while(reg_HOTSW_MCCNT1 & START_MASK){}
+
+    // カードデータ転送終了まで待つ
+	HOTSW_WaitCardCtrl();
     
     // コマンドカウンタインクリメント
 	cbd->vbi++;
 
     return HOTSW_SUCCESS;
 }
+
 
 /*---------------------------------------------------------------------------*
  * Name:         SwitchOFFPNGSecure
@@ -597,16 +651,21 @@ HotSwState SwitchOFFPNGSecure(CardBootData *cbd)
 	// コマンド初回送信（NTR-MROMはレイテンシクロック設定変更のみ）
 	PreSendSecureCommand(cbd, &scrambleMask);
 
+	// MCCNT0 レジスタ設定
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
+    
 	// MCCNT1 レジスタ設定
 	reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param | (cbd->secureLatency & LATENCY1_MASK);
-    
-	while(reg_HOTSW_MCCNT1 & START_MASK){}
+
+    // カードデータ転送終了まで待つ
+	HOTSW_WaitCardCtrl();
     
     // コマンドカウンタインクリメント
 	cbd->vbi++;
 
     return HOTSW_SUCCESS;
 }
+
 
 /*---------------------------------------------------------------------------*
  * Name:         ChangeModeSecure
@@ -632,10 +691,14 @@ HotSwState ChangeModeSecure(CardBootData *cbd)
 	// コマンド初回送信（NTR-MROMはレイテンシクロック設定変更のみ）
 	PreSendSecureCommand(cbd, &scrambleMask);
 
+	// MCCNT0 レジスタ設定
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
+    
 	// MCCNT1 レジスタ設定
 	reg_HOTSW_MCCNT1 = START_MASK | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param | (cbd->secureLatency & LATENCY1_MASK);
-    
-	while(reg_HOTSW_MCCNT1 & START_MASK){}
+
+    // カードデータ転送終了まで待つ
+	HOTSW_WaitCardCtrl();
     
     // コマンドカウンタインクリメント
 	cbd->vbi++;
@@ -669,17 +732,23 @@ HotSwState ReadIDGame(CardBootData *cbd)
 	// MCCMD レジスタ設定
 	HOTSWi_SetCommand(&cndLE);
 
-   	// MCCNT1 レジスタ設定
-	reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | (PC_MASK & (0x7 << PC_SHIFT));
+	// MCCNT0 レジスタ設定
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
     
-    // メッセージ受信
-//	OS_ReceiveMessage(&s_ctData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-
+   	// MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | HOTSW_PAGE_STAT;
+    
+#if 0
     // DMAが終了するまで待つ
-    while( MI_IsNDmaBusy(HOTSW_NDMA_NO) == TRUE ){}
+    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
+#else
+    // メッセージ受信
+	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
+#endif
     
     return HOTSW_SUCCESS;
 }
+
 
 /*---------------------------------------------------------------------------*
  * Name:         ReadPageGame
@@ -713,18 +782,24 @@ HotSwState ReadPageGame(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
 		// MCCMD レジスタ設定
 		HOTSWi_SetCommand(&cndLE);
 
-   		// MCCNT1 レジスタ設定
-		reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | (PC_MASK & (0x1 << PC_SHIFT));
+		// MCCNT0 レジスタ設定
+		reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
         
-    	// メッセージ受信
-//		OS_ReceiveMessage(&s_ctData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-
-    	// DMAが終了するまで待つ
-    	while( MI_IsNDmaBusy(HOTSW_NDMA_NO) == TRUE ){}
+   		// MCCNT1 レジスタ設定
+		reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | HOTSW_PAGE_1;
+        
+#if 0
+		// DMAが終了するまで待つ
+		HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
+#else
+		// メッセージ受信
+		OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
+#endif
     }
 
     return HOTSW_SUCCESS;
 }
+
 
 /*---------------------------------------------------------------------------*
  * Name:         ReadStatusGame
@@ -748,17 +823,23 @@ HotSwState ReadStatusGame(CardBootData *cbd)
 	// MCCMD レジスタ設定
 	HOTSWi_SetCommand(&cndLE);
 
-   	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 111(ステータスリード) その他Romヘッダの情報におまかせ)
-	reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | (PC_MASK & (0x7 << PC_SHIFT));
+	// MCCNT0 レジスタ設定
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
     
-    // メッセージ受信
-//	OS_ReceiveMessage(&s_ctData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-
+   	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 111(ステータスリード) その他Romヘッダの情報におまかせ)
+	reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | HOTSW_PAGE_STAT;
+    
+#if 0
     // DMAが終了するまで待つ
-    while( MI_IsNDmaBusy(HOTSW_NDMA_NO) == TRUE ){}
+    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
+#else
+    // メッセージ受信
+	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
+#endif
     
     return HOTSW_SUCCESS;
 }
+
 
 /* -----------------------------------------------------------------
  * RefreshBadBlockGame関数
@@ -779,10 +860,14 @@ HotSwState RefreshBadBlockGame(CardBootData *cbd)
 	// MCCMD レジスタ設定
 	HOTSWi_SetCommand(&cndLE);
 
-   	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 000(コマンドのみ) その他Romヘッダの情報におまかせ)
-	reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | (PC_MASK & (0x0 << PC_SHIFT));
+	// MCCNT0 レジスタ設定
+	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
+    
+   	// MCCNT1 レジスタ設定
+	reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | HOTSW_PAGE_0;
 
-	while(reg_HOTSW_MCCNT1 & START_MASK){}
+    // カードデータ転送終了まで待つ
+	HOTSW_WaitCardCtrl();
 
     return HOTSW_SUCCESS;
 }

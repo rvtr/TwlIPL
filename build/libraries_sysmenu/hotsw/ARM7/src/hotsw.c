@@ -150,7 +150,7 @@ static CardBootFunction  	s_funcTable[] = {
 
 // Global Values ------------------------------------------------------------
 BLOWFISH_CTX 				GCDi_BlowfishInitTableBufDS;
-CardThreadData				s_ctData;
+CardThreadData				HotSwThreadData;
 
 #include <twl/ltdwram_end.h>
 
@@ -198,7 +198,7 @@ void HOTSW_Init(u32 threadPrio)
 	MI_CpuClear8(&s_cbData, sizeof(CardBootData));
 
     // カードスレッド用構造体の初期化
-	MI_CpuClear8(&s_ctData, sizeof(CardThreadData));
+	MI_CpuClear8(&HotSwThreadData, sizeof(CardThreadData));
 
 	// HotSwリソースの排他制御用Lock IDの取得(開放しないで持ち続ける)
     {
@@ -217,22 +217,22 @@ void HOTSW_Init(u32 threadPrio)
     }
     
 	// カードブート用スレッドの生成
-	OS_CreateThread(&s_ctData.thread,
+	OS_CreateThread(&HotSwThreadData.thread,
                     McThread,
                     NULL,
-                    s_ctData.stack + HOTSW_THREAD_STACK_SIZE / sizeof(u64),
+                    HotSwThreadData.stack + HOTSW_THREAD_STACK_SIZE / sizeof(u64),
                     HOTSW_THREAD_STACK_SIZE,
                     threadPrio
                     );
 
     // メッセージキューの初期化
-	OS_InitMessageQueue( &s_ctData.hotswQueue, &s_ctData.hotswMsgBuffer[0], HOTSW_MSG_BUFFER_NUM );
+	OS_InitMessageQueue( &HotSwThreadData.hotswQueue, &HotSwThreadData.hotswMsgBuffer[0], HOTSW_MSG_BUFFER_NUM );
 
     // メッセージキューの初期化
-	OS_InitMessageQueue( &s_ctData.hotswDmaQueue, &s_ctData.hotswDmaMsgBuffer[0], HOTSW_DMA_MSG_NUM );
+	OS_InitMessageQueue( &HotSwThreadData.hotswDmaQueue, &HotSwThreadData.hotswDmaMsgBuffer[0], HOTSW_DMA_MSG_NUM );
     
     // スレッド起動
-    OS_WakeupThreadDirect(&s_ctData.thread);
+    OS_WakeupThreadDirect(&HotSwThreadData.thread);
 
     // Boot Segment バッファの設定
 	HOTSW_SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );
@@ -246,10 +246,10 @@ void HOTSW_Init(u32 threadPrio)
     // カードが挿さってあったらスレッドを起動する
 	if(HOTSW_IsCardExist()){
 		// メッセージ送信
-    	OS_SendMessage(&s_ctData.hotswQueue, (OSMessage)&s_ctData.hotswInsertMsg[s_ctData.idx_insert], OS_MESSAGE_NOBLOCK);
+    	OS_SendMessage(&HotSwThreadData.hotswQueue, (OSMessage)&HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert], OS_MESSAGE_NOBLOCK);
 
         // メッセージインデックスをインクリメント
-        s_ctData.idx_insert = (s_ctData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
+        HotSwThreadData.idx_insert = (HotSwThreadData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
 	}
     else{
 		SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
@@ -1193,7 +1193,7 @@ static void McThread(void *arg)
     HotSwMessage 	*msg;
     
     while(1){
-        OS_ReceiveMessage(&s_ctData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
+        OS_ReceiveMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
 
         if( msg->ctrl == TRUE ) {
             // [TODO]とりあえず、ここでHOTSWを抑制した時点でisExistCardがFALSEなら、HOTSWのFinalizeをするようにする。
@@ -1304,15 +1304,15 @@ static void McThread(void *arg)
  *---------------------------------------------------------------------------*/
 static void InterruptCallbackCard(void)
 {
-	s_ctData.hotswPulledOutMsg[s_ctData.idx_pulledOut].ctrl  = FALSE;
-    s_ctData.hotswPulledOutMsg[s_ctData.idx_pulledOut].value = 0;
-    s_ctData.hotswPulledOutMsg[s_ctData.idx_pulledOut].type  = HOTSW_PULLOUT;
+	HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].ctrl  = FALSE;
+    HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].value = 0;
+    HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].type  = HOTSW_PULLOUT;
     
 	// メッセージ送信
-    OS_SendMessage(&s_ctData.hotswQueue, (OSMessage *)&s_ctData.hotswPulledOutMsg[s_ctData.idx_pulledOut], OS_MESSAGE_NOBLOCK);
+    OS_SendMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut], OS_MESSAGE_NOBLOCK);
 
     // メッセージインデックスをインクリメント
-    s_ctData.idx_pulledOut = (s_ctData.idx_pulledOut+1) % HOTSW_PULLED_MSG_NUM;
+    HotSwThreadData.idx_pulledOut = (HotSwThreadData.idx_pulledOut+1) % HOTSW_PULLED_MSG_NUM;
 
 	OS_PutString("○\n");
 }
@@ -1324,15 +1324,15 @@ static void InterruptCallbackCard(void)
  *---------------------------------------------------------------------------*/
 static void InterruptCallbackCardDet(void)
 {
-	s_ctData.hotswInsertMsg[s_ctData.idx_insert].ctrl  = FALSE;
-    s_ctData.hotswInsertMsg[s_ctData.idx_insert].value = 0;
-    s_ctData.hotswInsertMsg[s_ctData.idx_insert].type  = HOTSW_INSERT;
+	HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].ctrl  = FALSE;
+    HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].value = 0;
+    HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].type  = HOTSW_INSERT;
     
 	// メッセージ送信
-    OS_SendMessage(&s_ctData.hotswQueue, (OSMessage *)&s_ctData.hotswInsertMsg[s_ctData.idx_insert], OS_MESSAGE_NOBLOCK);
+    OS_SendMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert], OS_MESSAGE_NOBLOCK);
 
 	// メッセージインデックスをインクリメント
-    s_ctData.idx_insert = (s_ctData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
+    HotSwThreadData.idx_insert = (HotSwThreadData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
 
 	OS_PutString("●\n");
 }
@@ -1345,10 +1345,10 @@ static void InterruptCallbackCardDet(void)
 static void InterruptCallbackNDma(void)
 {
 	// メッセージ送信
-//    OS_SendMessage(&s_ctData.hotswDmaQueue, (OSMessage *)&s_ctData.hotswDmaMsg[s_ctData.idx_dma], OS_MESSAGE_NOBLOCK);
+//    OS_SendMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&HotSwThreadData.hotswDmaMsg[HotSwThreadData.idx_dma], OS_MESSAGE_NOBLOCK);
 
 	// メッセージインデックスをインクリメント
-//    s_ctData.idx_dma = (s_ctData.idx_dma+1) % HOTSW_DMA_MSG_NUM;
+//    HotSwThreadData.idx_dma = (HotSwThreadData.idx_dma+1) % HOTSW_DMA_MSG_NUM;
     
     OS_PutString("▽\n");
 }
@@ -1366,15 +1366,15 @@ static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err)
 
 	d.data = data;
     
-    s_ctData.hotswPxiMsg[s_ctData.idx_ctrl].ctrl  = (d.msg.ctrl) ? TRUE : FALSE;
-    s_ctData.hotswPxiMsg[s_ctData.idx_ctrl].value = d.msg.value;
-	s_ctData.hotswPxiMsg[s_ctData.idx_ctrl].type  = HOTSW_CONTROL;
+    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].ctrl  = (d.msg.ctrl) ? TRUE : FALSE;
+    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].value = d.msg.value;
+	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].type  = HOTSW_CONTROL;
 
 	// メッセージ送信
-    OS_SendMessage(&s_ctData.hotswQueue, (OSMessage *)&s_ctData.hotswPxiMsg[s_ctData.idx_ctrl], OS_MESSAGE_NOBLOCK);
+    OS_SendMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl], OS_MESSAGE_NOBLOCK);
 
 	// メッセージインデックスをインクリメント
-    s_ctData.idx_ctrl = (s_ctData.idx_ctrl+1) % HOTSW_CTRL_MSG_NUM;
+    HotSwThreadData.idx_ctrl = (HotSwThreadData.idx_ctrl+1) % HOTSW_CTRL_MSG_NUM;
 }
 
 /*---------------------------------------------------------------------------*

@@ -7,6 +7,17 @@
 extern "C" {
 #endif
 
+
+static inline void HOTSW_WaitCardCtrl(void)
+{
+	while( reg_HOTSW_MCCNT1 & REG_MI_MCCNT1_START_MASK ){}
+}
+
+static inline void HOTSW_WaitDmaCtrl(u32 ndmaNo)
+{
+	while( MI_NDMA_REG( ndmaNo, MI_NDMA_REG_CNT_WOFFSET ) & MI_NDMA_ENABLE_MASK ){}
+}
+
 // ===========================================================================
 // 	Function Describe
 // ===========================================================================
