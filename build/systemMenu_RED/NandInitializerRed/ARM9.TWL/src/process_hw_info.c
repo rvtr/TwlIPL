@@ -46,8 +46,6 @@ enum {
 	MENU_REGION_AUSTRALIA,
 	MENU_REGION_CHINA,
 	MENU_REGION_KOREA,
-	MENU_WIRELESS_ENABLE,
-	MENU_WIRELESS_FORCE_OFF,
 	MENU_RETURN,
 	NUM_OF_MENU_SELECT
 };
@@ -56,7 +54,6 @@ enum {
     定数定義
  *---------------------------------------------------------------------------*/
 
-#define NUM_OF_MENU_REGION    6
 #define DOT_OF_MENU_SPACE    16
 #define CHAR_OF_MENU_SPACE    2
 #define MENU_TOP_LINE         5
@@ -68,10 +65,6 @@ enum {
  *---------------------------------------------------------------------------*/
 
 static s8 sMenuSelectNo;
-
-static u8 *s_pPrivKeyBuffer = NULL;
-static LCFGReadResult (*s_pReadSecureInfoFunc)( void );
-static BOOL s_isReadTSD;
 
 /*---------------------------------------------------------------------------*
     内部関数宣言
@@ -125,20 +118,11 @@ void* HWInfoProcess0(void)
 	kamiFontPrintf(3, 14, FONT_COLOR_BLACK, "+--------------------+----+");
 	kamiFontPrintf(3, 15, FONT_COLOR_BLACK, "l   REGION KOREA     l    l");
 	kamiFontPrintf(3, 16, FONT_COLOR_BLACK, "+--------------------+----+");
-	kamiFontPrintf(3, 17, FONT_COLOR_BLACK, "l                    l    l");
+	kamiFontPrintf(3, 17, FONT_COLOR_BLACK, "l   RETURN           l    l");
 	kamiFontPrintf(3, 18, FONT_COLOR_BLACK, "+--------------------+----+");
-	kamiFontPrintf(3, 19, FONT_COLOR_BLACK, "l                    l    l");
-	kamiFontPrintf(5, 17, FONT_COLOR_CYAN,  " Wireless Enable   ");
-	kamiFontPrintf(5, 19, FONT_COLOR_CYAN,  " Wireless Force Off");
-	kamiFontPrintf(3, 20, FONT_COLOR_BLACK, "+--------------------+----+");
-	kamiFontPrintf(3, 21, FONT_COLOR_BLACK, "l   RETURN           l    l");
-	kamiFontPrintf(3, 22, FONT_COLOR_BLACK, "+--------------------+----+");
 
 	// 現在のリージョンに"now"と表示
 	kamiFontPrintf(26, (s16)(MENU_TOP_LINE+LCFG_THW_GetRegion()*CHAR_OF_MENU_SPACE), FONT_COLOR_BLACK, "now");
-
-	// 現在の無線強制OFF状態に"now"と表示
-	kamiFontPrintf(26, (s16)(MENU_TOP_LINE+(NUM_OF_MENU_REGION + LCFG_THW_IsForceDisableWireless())*CHAR_OF_MENU_SPACE), FONT_COLOR_BLACK, "now");
 
 	// 背景全クリア
 	for (i=0;i<24;i++)
@@ -232,7 +216,7 @@ void* HWInfoProcess2(void)
 		result = WriteHWInfoFile( (u8)sMenuSelectNo, LCFG_THW_IsForceDisableWireless() );
 
 		// 全リージョンの結果をクリア
-		for (i=0;i<NUM_OF_MENU_REGION;i++)
+		for (i=0;i<NUM_OF_MENU_SELECT;i++)
 		{
 			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+i*CHAR_OF_MENU_SPACE), FONT_COLOR_BLACK, "   ");
 		}
@@ -244,34 +228,6 @@ void* HWInfoProcess2(void)
 		else
 		{
 			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+sMenuSelectNo*CHAR_OF_MENU_SPACE), FONT_COLOR_RED, "NG ");
-		}
-		break;
-
-	case MENU_WIRELESS_ENABLE:
-		result = WriteHWInfoFile( LCFG_THW_GetRegion(), FALSE );
-		if ( result == TRUE )
-		{
-			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_ENABLE*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "OK ");
-			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_FORCE_OFF*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "   ");
-		}
-		else
-		{
-			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_ENABLE*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "NG ");
-			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_FORCE_OFF*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "   ");
-		}
-		break;
-
-	case MENU_WIRELESS_FORCE_OFF:
-		result = WriteHWInfoFile( LCFG_THW_GetRegion(), TRUE );
-		if ( result == TRUE )
-		{
-			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_ENABLE*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "   ");
-			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_FORCE_OFF*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "OK ");
-		}
-		else
-		{
-			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_ENABLE*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "   ");
-			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_FORCE_OFF*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "NG ");
 		}
 		break;
 

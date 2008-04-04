@@ -66,16 +66,17 @@ void kamiFontPrintfConsoleEx(u8 color, const char *text, ...);
 #define FONT_COLOR_PURPLE	6
 
 // ‰º‰æ–Ê”wŒi—pƒpƒŒƒbƒg
-#define BG_COLOR_TRANS  0
-#define BG_COLOR_WHITE  1
-#define BG_COLOR_BLACK  2
-#define BG_COLOR_GRAY   3
-#define BG_COLOR_PURPLE 4
-#define BG_COLOR_PINK   5
-#define BG_COLOR_BLUE   6
-#define BG_COLOR_GREEN  7
-#define BG_COLOR_VIOLET 8
-#define BG_COLOR_RED    9
+#define BG_COLOR_TRANS   0
+#define BG_COLOR_WHITE   1
+#define BG_COLOR_BLACK   2
+#define BG_COLOR_GRAY    3
+#define BG_COLOR_PURPLE  4
+#define BG_COLOR_PINK    5
+#define BG_COLOR_BLUE    6
+#define BG_COLOR_GREEN   7
+#define BG_COLOR_VIOLET  8
+#define BG_COLOR_RED     9
+#define BG_COLOR_YELLOW 10
 
 #define BG_COLOR_NONE   0xff
 

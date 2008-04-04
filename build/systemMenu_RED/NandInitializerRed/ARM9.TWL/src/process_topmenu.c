@@ -28,24 +28,59 @@
 #include "process_fade.h"
 #include "cursor.h"
 #include "keypad.h"
+#ifdef    USE_WIRELESS_FORCE_DISABLE_SETTING
+#include "process_wireless_setting.h"
+#endif // USE_WIRELESS_FORCE_DISABLE_SETTING
 
 /*---------------------------------------------------------------------------*
     型定義
  *---------------------------------------------------------------------------*/
 
+enum {
+	MENU_FORMAT = 0,
+	MENU_HARDWARE_INFO,
+#ifdef    USE_WIRELESS_FORCE_DISABLE_SETTING
+	MENU_WIRELESS_SETTING,
+#endif // USE_WIRELESS_FORCE_DISABLE_SETTING
+#ifndef   NAND_INITIALIZER_LIMITED_MODE
+	MENU_ETICKET,
+	MENU_IMPORT_TAD,
+	MENU_IMPORT_NANDFIRM,
+	MENU_IMPORT_NORFIRM,
+#endif // NAND_INITIALIZER_LIMITED_MODE
+	NUM_OF_MENU_SELECT
+};
+
+typedef struct _MenuAndColor
+{
+	char* menu_name;
+	u8    color;
+} MenuAndColor;
+
 /*---------------------------------------------------------------------------*
     定数定義
  *---------------------------------------------------------------------------*/
 
-#ifndef NAND_INITIALIZER_LIMITED_MODE
-#define NUM_OF_MENU_SELECT    6
-#else
-#define NUM_OF_MENU_SELECT    2
-#endif
-
 #define DOT_OF_MENU_SPACE    16
 #define CURSOR_ORIGIN_X      32
 #define CURSOR_ORIGIN_Y      56
+#define MENU_TOP_LINE         7
+#define CHAR_OF_MENU_SPACE    2
+
+static const MenuAndColor sMenuArray[] =
+{
+	{"    FORMAT NAND            ", BG_COLOR_BLUE   },
+	{"    WRITE HARDWARE INFO    ", BG_COLOR_PURPLE },
+#ifdef    USE_WIRELESS_FORCE_DISABLE_SETTING
+	{"    WIRELESS FORCE SETTING ", BG_COLOR_YELLOW },
+#endif // USE_WIRELESS_FORCE_DISABLE_SETTING
+#ifndef   NAND_INITIALIZER_LIMITED_MODE
+	{"    WRITE ETICKET SIGN     ", BG_COLOR_GRAY   },
+	{"    INPORT TAD FROM SD     ", BG_COLOR_PINK   },
+	{"    INPORT NANDFIRM FROM SD", BG_COLOR_GREEN  },
+	{"    INPORT NORFIRM  FROM SD", BG_COLOR_VIOLET }
+#endif // NAND_INITIALIZER_LIMITED_MODE
+};
 
 /*---------------------------------------------------------------------------*
     内部変数定義
@@ -90,47 +125,21 @@ void* TopmenuProcess0(void)
 #endif
 	kamiFontPrintf(9, 4, 8, "<%s>", __DATE__);
 
-	// メニュー一覧
-	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "    FORMAT NAND            ");
-	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "    WRITE HARDWARE INFO    ");
-#ifndef NAND_INITIALIZER_LIMITED_MODE
-	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "    WRITE ETICKET SIGN     ");
-	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "    INPORT TAD FROM SD     ");
-	kamiFontPrintf(3, 15, FONT_COLOR_BLACK, "    INPORT NANDFIRM FROM SD");
-	kamiFontPrintf(3, 17, FONT_COLOR_BLACK, "    INPORT NORFIRM FROM SD");
-#endif
-
 	// 背景全クリア
 	for (i=0;i<24;i++)
 	{
 		kamiFontFillChar( i, BG_COLOR_TRANS, BG_COLOR_TRANS );
 	}
 
-	// 背景設定
-	kamiFontFillChar( 6, BG_COLOR_TRANS, BG_COLOR_BLUE );
-	kamiFontFillChar( 7, BG_COLOR_BLUE,  BG_COLOR_BLUE );
-	kamiFontFillChar( 8, BG_COLOR_BLUE,  BG_COLOR_TRANS );
-
-	kamiFontFillChar( 8, BG_COLOR_NONE,  BG_COLOR_PURPLE );
-	kamiFontFillChar( 9, BG_COLOR_PURPLE, BG_COLOR_PURPLE );
-	kamiFontFillChar(10, BG_COLOR_PURPLE, BG_COLOR_TRANS );
-#ifndef NAND_INITIALIZER_LIMITED_MODE
-	kamiFontFillChar(10, BG_COLOR_NONE,  BG_COLOR_GRAY );
-	kamiFontFillChar(11, BG_COLOR_GRAY, BG_COLOR_GRAY );
-	kamiFontFillChar(12, BG_COLOR_GRAY, BG_COLOR_TRANS );
-
-	kamiFontFillChar(12, BG_COLOR_NONE,  BG_COLOR_PINK );
-	kamiFontFillChar(13, BG_COLOR_PINK, BG_COLOR_PINK );
-	kamiFontFillChar(14, BG_COLOR_PINK, BG_COLOR_TRANS );
-
-	kamiFontFillChar(14, BG_COLOR_NONE,  BG_COLOR_GREEN );
-	kamiFontFillChar(15, BG_COLOR_GREEN, BG_COLOR_GREEN );
-	kamiFontFillChar(16, BG_COLOR_GREEN, BG_COLOR_TRANS );
-
-	kamiFontFillChar(16, BG_COLOR_NONE,  BG_COLOR_VIOLET );
-	kamiFontFillChar(17, BG_COLOR_VIOLET, BG_COLOR_VIOLET );
-	kamiFontFillChar(18, BG_COLOR_VIOLET, BG_COLOR_TRANS );
-#endif
+	for (i=0;i<NUM_OF_MENU_SELECT;i++)
+	{
+		// メニュー文字列描画
+		kamiFontPrintf(3,  (s16)(MENU_TOP_LINE+CHAR_OF_MENU_SPACE*i), FONT_COLOR_BLACK, sMenuArray[i].menu_name);
+		// 背景設定
+		kamiFontFillChar( MENU_TOP_LINE+CHAR_OF_MENU_SPACE*i-1, BG_COLOR_NONE, sMenuArray[i].color );
+		kamiFontFillChar( MENU_TOP_LINE+CHAR_OF_MENU_SPACE*i,   sMenuArray[i].color,  sMenuArray[i].color );
+		kamiFontFillChar( MENU_TOP_LINE+CHAR_OF_MENU_SPACE*i+1, sMenuArray[i].color,  BG_COLOR_NONE );
+	}
 
 	// カーソル消去
 	SetCursorPos((u16)200, (u16)200);
@@ -205,20 +214,24 @@ void* TopmenuProcess2(void)
 {
 	switch ( sMenuSelectNo )
 	{
-	case 0:
+	case MENU_FORMAT:
 		FADE_OUT_RETURN( FormatProcess0 );
-	case 1:
+	case MENU_HARDWARE_INFO:
 		FADE_OUT_RETURN( HWInfoProcess0 );
-#ifndef NAND_INITIALIZER_LIMITED_MODE
-	case 2:
+#ifdef    USE_WIRELESS_FORCE_DISABLE_SETTING
+	case MENU_WIRELESS_SETTING:
+		FADE_OUT_RETURN( WirelessSettingProcess0 );
+#endif // USE_WIRELESS_FORCE_DISABLE_SETTING
+#ifndef   NAND_INITIALIZER_LIMITED_MODE
+	case MENU_ETICKET:
 		FADE_OUT_RETURN( eTicketProcess0 );
-	case 3:
+	case MENU_IMPORT_TAD:
 		FADE_OUT_RETURN( ImportProcess0 );
-	case 4:
+	case MENU_IMPORT_NANDFIRM:
 		FADE_OUT_RETURN( NandfirmProcess0 );
-	case 5:
+	case MENU_IMPORT_NORFIRM:
 		FADE_OUT_RETURN( NorfirmProcess0 );
-#endif
+#endif // NAND_INITIALIZER_LIMITED_MODE
 	}
 
 	return TopmenuProcess1;
@@ -227,4 +240,3 @@ void* TopmenuProcess2(void)
 /*---------------------------------------------------------------------------*
     処理関数定義
  *---------------------------------------------------------------------------*/
-
