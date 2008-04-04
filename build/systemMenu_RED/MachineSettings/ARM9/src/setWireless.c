@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlIPL
-  File:     setFreeSoftBox.c
+  File:     setWireless.c
 
   Copyright 2007 Nintendo.  All rights reserved.
 
@@ -77,7 +77,7 @@
 
 
 // 項目の総数
-#define MS_FREESOFTBOX_NUMOF_ELEMENTS          1
+#define MS_WIRELESS_NUMOF_ELEMENTS          1
 
 // ソフトウェアキーボードのパラメータ
 #define CHAR_LIST_CHAR_NUM                  120
@@ -136,9 +136,9 @@ static BOOL   sbAvailableWireless = FALSE;
 
 // ++ メインメニュー
 
-static const u16 *s_pStrSetting[ MS_FREESOFTBOX_NUMOF_ELEMENTS ];          // メインメニュー用文字テーブルへのポインタリスト
+static const u16 *s_pStrSetting[ MS_WIRELESS_NUMOF_ELEMENTS ];          // メインメニュー用文字テーブルへのポインタリスト
 
-static const u16 *const s_pStrSettingElemTbl[ MS_FREESOFTBOX_NUMOF_ELEMENTS ][ LCFG_TWL_LANG_CODE_MAX ] = {
+static const u16 *const s_pStrSettingElemTbl[ MS_WIRELESS_NUMOF_ELEMENTS ][ LCFG_TWL_LANG_CODE_MAX ] = {
 
     {
         (const u16 *)L"無線の使用",
@@ -161,7 +161,7 @@ static MenuPos s_settingPos[] = {
 // 表示パラメータ
 static const MenuParam s_settingParam = 
 {
-    MS_FREESOFTBOX_NUMOF_ELEMENTS,
+    MS_WIRELESS_NUMOF_ELEMENTS,
     TXT_COLOR_BLACK,
     TXT_COLOR_GREEN,
     TXT_COLOR_RED,
@@ -278,7 +278,7 @@ void SetWirelessInit( void )
     int  i;
 
     // NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
-    for( i=0; i < MS_FREESOFTBOX_NUMOF_ELEMENTS; i++ )
+    for( i=0; i < MS_WIRELESS_NUMOF_ELEMENTS; i++ )
     {
         s_pStrSetting[ i ] = s_pStrSettingElemTbl[ i ][ LCFG_TSD_GetLanguage() ];
     }
@@ -310,13 +310,13 @@ int SetWirelessMain( void )
 
     // メニューからの項目選択
     if( (pad.trg & PAD_KEY_DOWN) || (padrep & PAD_KEY_DOWN) ){                               // カーソルの移動
-        if( ++sCursorMenu >= MS_FREESOFTBOX_NUMOF_ELEMENTS ) {
+        if( ++sCursorMenu >= MS_WIRELESS_NUMOF_ELEMENTS ) {
             sCursorMenu = 0;
         }
     }
     if( (pad.trg & PAD_KEY_UP) || (padrep & PAD_KEY_UP) ){
         if( --sCursorMenu & 0x80 ) {
-            sCursorMenu = (u16)(MS_FREESOFTBOX_NUMOF_ELEMENTS - 1);
+            sCursorMenu = (u16)(MS_WIRELESS_NUMOF_ELEMENTS - 1);
         }
     }
     tp_select = SelectMenuByTP( &sCursorMenu, &s_settingParam );
