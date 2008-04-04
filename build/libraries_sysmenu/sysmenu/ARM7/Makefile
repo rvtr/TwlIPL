@@ -27,7 +27,8 @@ TWL_PROC	   		=	ARM7
 SRCDIR				=	../common/src
 SRCS				=	status.c \
 						pxi.c \
-						mountInfo.c
+						mountInfo.c \
+						decodeAES.c
 
 TARGET_LIB			=	libsysmenu_sp$(TWL_LIBSUFFIX).a
 

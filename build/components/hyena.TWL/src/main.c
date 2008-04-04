@@ -240,6 +240,7 @@ TwlSpMain(void)
         {
             OS_ResetSystem();
         }
+        SYSM_WaitDecodeAESRegion();
         BOOT_WaitStart();
     }
 }

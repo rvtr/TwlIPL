@@ -38,6 +38,7 @@ SRCS			=	sysmenu_lib.c \
 					../common/src/status.c \
 					../common/src/pxi.c \
 					../common/src/mountInfo.c \
+					../common/src/decodeAES.c \
 					$(REVISION_SRC)
 
 

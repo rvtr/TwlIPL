@@ -100,6 +100,8 @@ extern BOOL SYSM_IsAuthenticateTitleFinished( void );							// SYSM_StartAuthent
 extern AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle, TitleProperty *pTitleList );
 																				// pBootTitle‚Åw’è‚µ‚½ƒ^ƒCƒgƒ‹‚ğƒu[ƒg
 																				// ¬Œ÷‚ÍAnever return.
+extern void SYSM_StartDecodeAESRegion( ROM_Header_Short *hs );					// ‹N“®‚·‚éROM‚ÌAESˆÃ†‰»—Ìˆæ‚ÌƒfƒR[ƒhŠJn
+
 // ƒfƒoƒCƒX§Œä
 extern void SYSM_CaribrateTP( void );											// ƒ^ƒbƒ`ƒpƒlƒ‹ƒLƒƒƒŠƒuƒŒ[ƒVƒ‡ƒ“
 extern void SYSM_SetBackLightBrightness( u8 brightness );						// ƒoƒbƒNƒ‰ƒCƒg‚ğ§Œäi–{‘Ìİ’èƒf[ƒ^‚Ö‚Ì’lƒZ[ƒu‚às‚¤j
@@ -133,6 +135,9 @@ extern const LauncherParamBody *SYSM_GetLauncherParamBody( void );				// ƒ‰ƒ“ƒ`ƒ
 extern BOOL SYSM_IsRunOnDebugger( void );										// ISƒfƒoƒbƒKã‚Å“®ì‚µ‚Ä‚¢‚é‚©H
 
 extern BOOL SYSM_IsLauncherHidden( void );										// ƒ‰ƒ“ƒ`ƒƒ[‚Ì‰æ–Ê‚ğ•\¦‚µ‚È‚¢ƒo[ƒWƒ‡ƒ“‚©H
+
+// AES—ÌˆæƒfƒR[ƒh
+extern void SYSM_WaitDecodeAESRegion( void );									// ARM9‚©‚çROM‚ÌAESˆÃ†‰»—Ìˆæ‚ÌƒfƒR[ƒhŠJn—v‹‚ğó‚¯AƒfƒR[ƒhŠJn
 
 #ifdef __cplusplus
 }

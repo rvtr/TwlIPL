@@ -120,6 +120,10 @@ typedef struct SYSM_work {
 	LauncherParam		launcherParam;
 	SYSMRomEmuInfo		romEmuInfo;
 	
+	BOOL				isDeveloperAESMode;				// 開発用セキュリティか？（製品版でFALSE）
+	void				*addr_AESregion[2];				// AES暗号化領域の格納アドレス
+	u32					size_AESregion[2];				// AES暗号化領域のサイズ
+	
 	// NTR-IPL2のレガシー　最終的には消すと思う
 	BOOL				enableCardNormalOnly;
 	u8					rtcStatus;
