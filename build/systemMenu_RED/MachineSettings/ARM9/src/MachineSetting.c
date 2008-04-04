@@ -21,8 +21,6 @@
 
 // define data------------------------------------------
 
-//#define FREEBOX_ENABLE
-
 	// キャンセルボタンLCD領域
 #define CANCEL_BUTTON_TOP_X					( 12 * 8 )
 #define CANCEL_BUTTON_TOP_Y					( 21 * 8 )
@@ -34,10 +32,10 @@
 #define OK_BUTTON_BOTTOM_X					( OK_BUTTON_TOP_X + 2 * 8 )
 #define OK_BUTTON_BOTTOM_Y					( OK_BUTTON_TOP_Y + 2 * 8 )
 
-#ifdef FREEBOX_ENABLE
-#define SETTING_MENU_ELEMENT_NUM			7						// メインメニューの項目数（※ピクトチャット起動テストは除いておく）
+#ifdef BROADON_ENABLE
+#define SETTING_MENU_ELEMENT_NUM			8						// メインメニューの項目数（※ピクトチャット起動テストは除いておく）
 #else
-#define SETTING_MENU_ELEMENT_NUM			6
+#define SETTING_MENU_ELEMENT_NUM			7
 #endif
 // extern data------------------------------------------
 
@@ -119,7 +117,17 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ LCFG_T
 		(const u16 *)L"PARENTAL CONTROL(C)",
 		(const u16 *)L"PARENTAL CONTROL(K)",
 	},
-#ifdef FREEBOX_ENABLE
+	{
+		(const u16 *)L"無線設定",
+		(const u16 *)L"WIRELESS",
+		(const u16 *)L"WIRELESS(F)",
+		(const u16 *)L"WIRELESS(G)",
+		(const u16 *)L"WIRELESS(I)",
+		(const u16 *)L"WIRELESS(S)",
+		(const u16 *)L"WIRELESS(C)",
+		(const u16 *)L"WIRELESS(K)",
+	},
+#ifdef BROADON_ENABLE
 	{
 		(const u16 *)L"フリーソフトBOX",
 		(const u16 *)L"FREESOFT BOX",
@@ -154,6 +162,7 @@ static MenuPos s_settingPos[] = {
 	{ TRUE,  4 * 8,  16 * 8 },
 	{ TRUE,  4 * 8,  18 * 8 },
 	{ TRUE,  4 * 8,  20 * 8 },
+	{ TRUE,  4 * 8,  22 * 8 },
 };
 
 
@@ -257,6 +266,10 @@ int MachineSettingMain( void )
                     g_pNowProcess = SetParentalControlMain;
                     break;
                 case 6:
+                    SetWirelessInit();
+                    g_pNowProcess = SetWirelessMain;
+                    break;
+                case 7:
                     SetFreeSoftBoxInit();
                     g_pNowProcess = SetFreeSoftBoxMain;
                     break;
