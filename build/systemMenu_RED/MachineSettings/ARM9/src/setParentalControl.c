@@ -110,12 +110,26 @@
 #define MULTI_DOWN_BUTTON_WIDTH_Y           ( 2 * 8 )
 #define MULTI_DOWN_BUTTON_INTERVAL_X        (MULTI_UP_BUTTON_INTERVAL_X)
 
+// RESTRICT/NOT RESTRICTボタン領域
+#define RESTRICT_BUTTON_TOP_X               (  8 * 8 )
+#define RESTRICT_BUTTON_TOP_Y               ( 10 * 8 )
+#define RESTRICT_BUTTON_BOTTOM_X            ( RESTRICT_BUTTON_TOP_X + (8 * 8) )
+#define RESTRICT_BUTTON_BOTTOM_Y            ( RESTRICT_BUTTON_TOP_Y + (2 * 8) )
+#define NOTRESTRICT_BUTTON_TOP_X            (  8 * 8 )
+#define NOTRESTRICT_BUTTON_TOP_Y            (  6 * 8 )
+#define NOTRESTRICT_BUTTON_BOTTOM_X         ( NOTRESTRICT_BUTTON_TOP_X + (12 * 8) )
+#define NOTRESTRICT_BUTTON_BOTTOM_Y         ( NOTRESTRICT_BUTTON_TOP_Y + ( 2 * 8) )
+
 
 // ページ数
 #define MS_PARENTAL_NUMOF_PAGES             3
 
 // 項目の総数
-#define MS_PARENTAL_NUMOF_ELEMENTS          9
+#ifdef BROADON_ENABLE
+#define MS_PARENTAL_NUMOF_ELEMENTS          10
+#else   // BROADON_ENABLE
+#define MS_PARENTAL_NUMOF_ELEMENTS          7
+#endif  // BROADON_ENABLE
 
 // ソフトウェアキーボードのパラメータ
 #define CHAR_LIST_CHAR_NUM                  120
@@ -145,6 +159,8 @@
 #define KEY_OFF         0xfffa
 #define KEY_UP          0xfff9
 #define KEY_DOWN        0xfff8
+#define KEY_RESTRICT    0xfff7
+#define KEY_NOTRESTRICT 0xfff6
 #define MULTI_KEY_UP    0xffe0
 #define MULTI_KEY_DOWN  0xffd0
 #define MASK_MULTI_KEY  0xfff0
@@ -182,6 +198,8 @@ static void SetPasswordInit( void );
 static int  SetPasswordMain( void );
 static u8   MY_StrLen( const u16 *pStr );
 static void SetDrawnPageElement( void );
+static void SetBroadOnSettingInit( void );
+static int  SetBroadOnSettingMain( void );
 
 // static variable------------------------------
 // 一時的にしか使わない物をstaticにしているので
@@ -212,6 +230,8 @@ static u16    sCursorPassword=0;
 static BOOL   sbValidPassword=FALSE;
 static u8     sSecretQuestionID=0;
 static BOOL   sbEnableOKButton = FALSE;
+static u8     sBroadOnMenu = 0;
+static BOOL   sbBroadOnSetting = FALSE;
 
 // const data-----------------------------------
 
@@ -308,6 +328,48 @@ static const u16 *const s_pStrSettingElemTbl[ MS_PARENTAL_NUMOF_ELEMENTS ][ LCFG
     },
     
     // ページ3
+#ifdef BROADON_ENABLE
+    {
+        (const u16 *)L"Wiiポイント",
+        (const u16 *)L"Wii Point",
+        (const u16 *)L"Wii Point(F)",
+        (const u16 *)L"Wii Point(G)",
+        (const u16 *)L"Wii Point(I)",
+        (const u16 *)L"Wii Point(S)",
+        (const u16 *)L"Wii Point(C)",
+        (const u16 *)L"Wii Point(K)",
+    },
+    {
+        (const u16 *)L"ブラウザ起動",
+        (const u16 *)L"Browser Boot",
+        (const u16 *)L"Browser Boot(F)",
+        (const u16 *)L"Browser Boot(G)",
+        (const u16 *)L"Browser Boot(I)",
+        (const u16 *)L"Browser Boot(S)",
+        (const u16 *)L"Browser Boot(C)",
+        (const u16 *)L"Browser Boot(K)",
+    },
+    {
+        (const u16 *)L"ピクトチャット起動",
+        (const u16 *)L"PictoChat Boot",
+        (const u16 *)L"PictoChat Boot(F)",
+        (const u16 *)L"PictoChat Boot(G)",
+        (const u16 *)L"PictoChat Boot(I)",
+        (const u16 *)L"PictoChat Boot(S)",
+        (const u16 *)L"PictoChat Boot(C)",
+        (const u16 *)L"PictoChat Boot(K)",
+    },
+    {
+        (const u16 *)L"Nintendoスポット",
+        (const u16 *)L"Nintendo Spot",
+        (const u16 *)L"Nintendo Spot(F)",
+        (const u16 *)L"Nintendo Spot(G)",
+        (const u16 *)L"Nintendo Spot(I)",
+        (const u16 *)L"Nintendo Spot(S)",
+        (const u16 *)L"Nintendo Spot(C)",
+        (const u16 *)L"Nintendo Spot(K)",
+    },
+#else  // BROADON_ENABLE
     {
         (const u16 *)L"その他の設定(仮)",
         (const u16 *)L"OTHER SETTINGS(None)",
@@ -318,6 +380,7 @@ static const u16 *const s_pStrSettingElemTbl[ MS_PARENTAL_NUMOF_ELEMENTS ][ LCFG
         (const u16 *)L"OTHER SETTINGS(None)(C)",
         (const u16 *)L"OTHER SETTINGS(None)(K)",
     },
+#endif // BROADON_ENABLE
 };
 
 // 表示位置
@@ -335,7 +398,14 @@ static MenuPos s_settingPos[] = {
     { TRUE,  3 * 8,  10 * 8 },
 
     // ページ3
+#ifdef BROADON_ENABLE
+    { TRUE,  2 * 8,   6 * 8 },
+    { TRUE,  2 * 8,   8 * 8 },
+    { TRUE,  2 * 8,  10 * 8 },
+    { TRUE,  2 * 8,  12 * 8 },
+#else  // BROADON_ENABLE
     { FALSE,  4 * 8,   6 * 8 },
+#endif // BROADON_ENABLE
 };
 
 // 各ページの表示項目数
@@ -343,7 +413,11 @@ static const int sNumOfPageElements[] =
 {
     3,
     3,
+#ifdef BROADON_ENABLE
+    4,
+#else  // BROADON_ENABLE
     1,
+#endif // BROADON_ENABLE
 };
 
 // 表示パラメータ
@@ -454,6 +528,14 @@ static MenuParam sRatingOgnMenuParam =
     (const u16 **)&sppRatingOgnCharList,
 };
 
+// ++ BroadOn用の設定項目
+enum
+{
+    MS_BROADON_WIIPOINT     = 0,
+    MS_BROADON_BROWSER      = 1,
+    MS_BROADON_PICTOCHAT    = 2,
+    MS_BROADON_NINTENDOSPOT = 3
+};
 
 //=========================================================
 //
@@ -741,6 +823,24 @@ static BOOL DetectTouchMultiUD( u16 *csr )
     return ret;
 }
 
+// RESTRICT/NOT RESTRICTボタン専用SelectSomethingFuncの実装
+static BOOL SelectRESTRICTFunc( u16 *csr, TPData *tgt )
+{
+    BOOL ret;
+    ret = WithinRangeTP( RESTRICT_BUTTON_TOP_X, RESTRICT_BUTTON_TOP_Y,
+                         RESTRICT_BUTTON_BOTTOM_X, RESTRICT_BUTTON_BOTTOM_Y, tgt );
+    if(ret) *csr = KEY_RESTRICT;
+    return ret;
+}
+static BOOL SelectNOTRESTRICTFunc( u16 *csr, TPData *tgt )
+{
+    BOOL ret;
+    ret = WithinRangeTP( NOTRESTRICT_BUTTON_TOP_X, NOTRESTRICT_BUTTON_TOP_Y,
+                         NOTRESTRICT_BUTTON_BOTTOM_X, NOTRESTRICT_BUTTON_BOTTOM_Y, tgt );
+    if(ret) *csr = KEY_NOTRESTRICT;
+    return ret;
+}
+
 // パッドのキーの長押しを検出(ReadPad()を呼び出しているループ内で呼ばれる必要がある)
 static u16 DetectPadRepeat( void )
 {
@@ -854,6 +954,16 @@ static void DrawParentalControlMenuScene( void )
         break;
         
         case 2:
+#ifdef BROADON_ENABLE
+            PutStringUTF16( 17*8, 6*8, TXT_UCOLOR_G0, 
+                            LCFG_TSD_IsRestrictWiiPoint() ? L"Restricted" : L"Not Restricted" );
+            PutStringUTF16( 17*8, 8*8, TXT_UCOLOR_G0, 
+                            LCFG_TSD_IsRestrictBrowserBoot() ? L"Restricted" : L"Not Restricted" );
+            PutStringUTF16( 17*8, 10*8, TXT_UCOLOR_G0, 
+                            LCFG_TSD_IsRestrictPictoChatBoot() ? L"Restricted" : L"Not Restricted" );
+            PutStringUTF16( 17*8, 12*8, TXT_UCOLOR_G0, 
+                            LCFG_TSD_IsRestrictNintendoSpot() ? L"Restricted" : L"Not Restricted" );
+#endif // BROADON_ENABLE
         break;
     }
 }
@@ -988,8 +1098,31 @@ int SetParentalControlMain( void )
                 case 2:
                     switch( sCursorMenu )
                     {
+#ifdef BROADON_ENABLE
+                        case 0:
+                            sBroadOnMenu = MS_BROADON_WIIPOINT;   // すべてON/OFF設定なので設定関数を共通化してフラグで設定項目切り替え
+                            SetBroadOnSettingInit();
+                            g_pNowProcess = SetBroadOnSettingMain;
+                        break;
+                        case 1:
+                            sBroadOnMenu = MS_BROADON_BROWSER;
+                            SetBroadOnSettingInit();
+                            g_pNowProcess = SetBroadOnSettingMain;
+                        break;
+                        case 2:
+                            sBroadOnMenu = MS_BROADON_PICTOCHAT;
+                            SetBroadOnSettingInit();
+                            g_pNowProcess = SetBroadOnSettingMain;
+                        break;
+                        case 3:
+                            sBroadOnMenu = MS_BROADON_NINTENDOSPOT;
+                            SetBroadOnSettingInit();
+                            g_pNowProcess = SetBroadOnSettingMain;
+                        break;
+#else   // BROADON_ENABLE
                         case 0:
                         break;
+#endif  // BROADON_ENABLE
                     }
                 break;
 
@@ -2087,6 +2220,144 @@ static int SetPasswordMain( void )
     
     // 再描画
     DrawSetPasswordScene();
+    return 0;
+}
+
+//=========================================================
+//
+// BroadOn用設定 (複数のON/OFFスイッチ切り替え)
+//
+//=========================================================
+
+// 描画処理
+static void DrawSetBroadOnSettingScene( void )
+{
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+    switch( sBroadOnMenu )          // 複数の設定画面をフラグで切り替える
+    {
+        case MS_BROADON_WIIPOINT:
+            PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"WII POINT USING" );
+        break;
+        case MS_BROADON_BROWSER:
+            PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"BROWSER BOOT" );
+        break;
+        case MS_BROADON_PICTOCHAT:
+            PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"PICTOCHAT BOOT" );
+        break;
+        case MS_BROADON_NINTENDOSPOT:
+            PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"NINTENDO SPOT USING" );
+        break;
+    }
+
+    if( sbBroadOnSetting )
+    {
+        PutStringUTF16( NOTRESTRICT_BUTTON_TOP_X, NOTRESTRICT_BUTTON_TOP_Y, TXT_UCOLOR_G0,   (const u16*)L"Not Restrict" );
+        PutStringUTF16( RESTRICT_BUTTON_TOP_X,   RESTRICT_BUTTON_TOP_Y,     TXT_COLOR_GREEN, (const u16*)L"Restrict" );
+    }
+    else
+    {
+        PutStringUTF16( NOTRESTRICT_BUTTON_TOP_X, NOTRESTRICT_BUTTON_TOP_Y, TXT_COLOR_GREEN, (const u16*)L"Not Restrict" );
+        PutStringUTF16( RESTRICT_BUTTON_TOP_X,   RESTRICT_BUTTON_TOP_Y,     TXT_UCOLOR_G0,   (const u16*)L"Restrict" );
+    }
+    PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"CANCEL" );
+    PutStringUTF16( OK_BUTTON_TOP_X, OK_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"OK" );
+}
+
+// 初期化
+static void SetBroadOnSettingInit( void )
+{
+    SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
+
+    // :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    // あらかじめTWL設定データファイルから読み込み済みの設定を取得
+    // :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    switch( sBroadOnMenu )
+    {
+        case MS_BROADON_WIIPOINT:
+            sbBroadOnSetting = LCFG_TSD_IsRestrictWiiPoint();
+        break;
+        case MS_BROADON_BROWSER:
+            sbBroadOnSetting = LCFG_TSD_IsRestrictBrowserBoot();
+        break;
+        case MS_BROADON_PICTOCHAT:
+            sbBroadOnSetting = LCFG_TSD_IsRestrictPictoChatBoot();
+        break;
+        case MS_BROADON_NINTENDOSPOT:
+            sbBroadOnSetting = LCFG_TSD_IsRestrictNintendoSpot();
+        break;
+    }
+
+    DrawSetBroadOnSettingScene();
+
+    GX_SetVisiblePlane ( GX_PLANEMASK_BG0 | GX_PLANEMASK_BG1);
+    GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
+}
+
+// 表示プロセスとして呼び出されるメイン
+static int SetBroadOnSettingMain( void )
+{
+    SelectSomethingFunc func[4]={SelectCancelFunc, SelectOKFunc, SelectRESTRICTFunc, SelectNOTRESTRICTFunc };
+    u16  commit;
+    BOOL tp_touch = FALSE;
+
+    ReadTP();
+    
+    // キーによる選択
+    if( (pad.trg & PAD_KEY_DOWN) || (pad.trg & PAD_KEY_UP) )
+    {
+        sbBroadOnSetting = !sbBroadOnSetting;
+    }
+
+    // タッチによる選択
+    tp_touch = SelectSomethingByTP( &commit, func, 4 );
+    if( tp_touch && (commit == KEY_RESTRICT) )
+    {
+        sbBroadOnSetting = TRUE;
+    }
+    else if( tp_touch && (commit == KEY_NOTRESTRICT) )
+    {
+        sbBroadOnSetting = FALSE;
+    }
+
+    // 決定
+    if( (pad.trg & PAD_BUTTON_A) || (tp_touch && (commit == KEY_OK)) )
+    {
+        switch( sBroadOnMenu )
+        {
+            case MS_BROADON_WIIPOINT:
+                LCFG_TSD_SetRestrictWiiPoint( sbBroadOnSetting );
+            break;
+            case MS_BROADON_BROWSER:
+                LCFG_TSD_SetRestrictBrowserBoot( sbBroadOnSetting );
+            break;
+            case MS_BROADON_PICTOCHAT:
+                LCFG_TSD_SetRestrictPictoChatBoot( sbBroadOnSetting );
+            break;
+            case MS_BROADON_NINTENDOSPOT:
+                LCFG_TSD_SetRestrictNintendoSpot( sbBroadOnSetting );
+            break;
+        }
+        // ::::::::::::::::::::::::::::::::::::::::::::::
+        // TWL設定データファイルへの書き込み
+        // ::::::::::::::::::::::::::::::::::::::::::::::
+        if( !MY_WriteTWLSettings() )
+        {
+            OS_TPrintf( "TWL settings write failed.\n" );
+        }
+        sbInitPage = FALSE;
+        SetParentalControlInit();
+        g_pNowProcess = SetParentalControlMain;
+        return 0;
+    }
+    else if( (pad.trg & PAD_BUTTON_B) || (tp_touch && (commit == KEY_CANCEL)) )
+    {
+        sbInitPage = FALSE;
+        SetParentalControlInit();                   // キャンセルのときセットしない
+        g_pNowProcess = SetParentalControlMain;
+        return 0;
+    }
+    
+    DrawSetBroadOnSettingScene();
     return 0;
 }
 
