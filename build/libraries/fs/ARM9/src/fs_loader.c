@@ -21,10 +21,6 @@
 
 #define FS_HEADER_AUTH_SIZE 0xe00
 
-#define MODULE_ALIGNMENT    0x10    // 16バイト単位で読み込む
-//#define MODULE_ALIGNMENT  0x200   // 512バイト単位で読み込む
-#define RoundUpModuleSize(value)    (((value) + MODULE_ALIGNMENT - 1) & -MODULE_ALIGNMENT)
-
 #define HASH_UNIT                   0x1000
 
 static ROM_Header* const rh = (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
@@ -198,11 +194,11 @@ static u32 GetTransferSize( u32 offset, u32 size )
 {
     if ( rh->s.enable_aes )
     {
-        u32 end = offset + RoundUpModuleSize(size);
+        u32 end = offset + size;
         u32 aes_offset = rh->s.aes_target_rom_offset;
-        u32 aes_end = aes_offset + RoundUpModuleSize(rh->s.aes_target_size);
+        u32 aes_end = aes_offset + rh->s.aes_target_size;
         u32 aes_offset2 = rh->s.aes_target2_rom_offset;
-        u32 aes_end2 = aes_offset2 + RoundUpModuleSize(rh->s.aes_target2_size);
+        u32 aes_end2 = aes_offset2 + rh->s.aes_target2_size;
 
         if ( offset >= aes_offset && offset < aes_end )
         {

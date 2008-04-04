@@ -85,7 +85,6 @@ static u8 version = 0;
 ***************************************************************/
 static void PreInit(void)
 {
-    GCDHeader* const gh = &OSi_GetFromBromAddr()->header.gcd;
     /*
         バッテリー残量チェック
     */
@@ -100,8 +99,8 @@ static void PreInit(void)
 #endif
         }
     }
-    MI_CpuCopyFast( gh, (void*)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
-//    MI_CpuCopyFast( gh, (void*)HW_CARD_ROM_HEADER, HW_CARD_ROM_HEADER_SIZE );
+    // GCDヘッダコピー
+    MI_CpuCopyFast( OSi_GetFromBromAddr(), (void*)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
     // FromBrom全消去
     MIi_CpuClearFast( 0, (void*)OSi_GetFromBromAddr(), sizeof(OSFromBromBuf) );
 }
@@ -153,7 +152,7 @@ static void PostInit(void)
 ***************************************************************/
 static void EraseAll(void)
 {
-    GCDHeader* const gh = &OSi_GetFromBromAddr()->header.gcd;
+    GCDHeader* const gh = (GCDHeader*)HW_ROM_HEADER_BUF;
     AESi_ResetAesKeyA();
     AESi_ResetAesKeyB();
     AESi_ResetAesKeyC();
@@ -161,6 +160,7 @@ static void EraseAll(void)
 }
 
 extern SDMC_ERR_CODE FATFSi_sdmcGoIdle(u16 ports, void (*func1)(),void (*func2)());
+
 void TwlSpMain( void )
 {
     GCDHeader* const gh = &OSi_GetFromBromAddr()->header.gcd;

@@ -54,7 +54,7 @@ static SVCSignHeapContext acPool;
     PRINT_MEMORY_ADDR を定義すると、そのアドレスからSPrintfを行います(このファイルのみ)
     FINALROM版でもコードが残るので注意してください。
 */
-//#define PRINT_MEMORY_ADDR       0x02FFC200
+#define PRINT_MEMORY_ADDR       0x02FFC200
 
 //#ifdef SDK_FINALROM // FINALROMで無効化
 //#undef PROFILE_ENABLE
@@ -115,41 +115,32 @@ static void PostInit(void)
 /***************************************************************
     TryResolveSrl
 
-    NANDに格納された情報からランチャーSRLを解決する
+    リストからランチャーSRLを解決する
 ***************************************************************/
 static BOOL TryResolveSrl(void)
 {
-    OSTitleId titleId = MENU_TITLE_ID_HI << 32;
+    OSTitleId titleIdList[] =
+    {
+        MENU_TITLE_ID_HI << 32, // titleId_Lo is resolved by HWSecureInfo
+        MENU_TITLE_ID
+    };
+    int num;
     if ( !LCFG_ReadHWSecureInfo() )
     {
         OS_TPrintf("Failed to load HWSecureInfo.\n");
         return FALSE;
     }
-    LCFG_THW_GetLauncherTitleID_Lo( (u8*)&titleId );
+    LCFG_THW_GetLauncherTitleID_Lo( (u8*)&titleIdList[0] );
     // 4: after LCFG_ReadHWSecureInfo
     PUSH_PROFILE();
 
-    if ( !FS_ResolveSrl( titleId ) )
+    num = FS_ResolveSrlList( titleIdList, sizeof(titleIdList)/sizeof(titleIdList[0]) );
+    if ( num < 0 )
     {
-        OS_TPrintf("Failed to call FS_ResolveSrl( 0x%016llx ).\n", titleId);
+        OS_TPrintf("Failed to call FS_ResolveSrlList().\n");
         return FALSE;
     }
-    OS_TPrintf("Launcher Title ID: 0x%016llx\n", titleId);
-    return TRUE;
-}
-/***************************************************************
-    RetryResolveSrl
-
-    デフォルト設定からランチャーSRLを解決する
-***************************************************************/
-static BOOL RetryResolveSrl(void)
-{
-    if ( !FS_ResolveSrl( MENU_TITLE_ID ) )
-    {
-        OS_TPrintf("Failed to call FS_ResolveSrl( 0x%016llx ).\n", MENU_TITLE_ID);
-        return FALSE;
-    }
-    OS_TPrintf("Launcher Title ID: 0x%016llx\n", MENU_TITLE_ID);
+    OS_TPrintf("Launcher Title ID: 0x%016llx\n", titleIdList[num]);
     return TRUE;
 }
 
@@ -170,6 +161,16 @@ static BOOL CheckHeader(void)
     if ( rhs->enable_aes )
     {
         OS_TPrintf("AES Key Type        : %s\n", rhs->developer_encrypt ? "FOR DEVELOPMENT" : "FOR PRODUCT");
+        if ( rhs->aes_target_size )
+        {
+            OS_TPrintf("AES address         : %08X\n", rhs->aes_target_rom_offset);
+            OS_TPrintf("AES size            : %08X\n", rhs->aes_target_size);
+        }
+        if ( rhs->aes_target2_size )
+        {
+            OS_TPrintf("AES2 address        : %08X\n", rhs->aes_target2_rom_offset);
+            OS_TPrintf("AES2 size           : %08X\n", rhs->aes_target2_size);
+        }
     }
     // エントリポイント
     OS_TPrintf("ARM9 Entry point    : %08X\n", rhs->main_entry_address);
@@ -259,7 +260,7 @@ void TwlMain( void )
     // 3: after PostInit
     PUSH_PROFILE();
 
-    if ( !TryResolveSrl() && !RetryResolveSrl() )
+    if ( !TryResolveSrl() )
     {
         goto end;
     }

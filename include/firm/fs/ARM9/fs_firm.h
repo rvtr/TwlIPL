@@ -63,6 +63,19 @@ BOOL FS_GetTitleBootContentPathFast(char* buf, OSTitleId titleId);
 BOOL FS_ResolveSrl( OSTitleId titleId );
 
 /*---------------------------------------------------------------------------*
+  Name:         FS_ResolveSrlList
+
+  Description:  resolve srl filename with list and store to
+                HW_TWL_FS_BOOT_SRL_PATH_BUF
+
+  Arguments:    titleIdList     pointer to title id array for srl file
+                nums            number of title id
+
+  Returns:      -1 if failed, otherwise succeeded titile id number
+ *---------------------------------------------------------------------------*/
+int FS_ResolveSrlList( const OSTitleId* titleIdList, u32 nums );
+
+/*---------------------------------------------------------------------------*
   Name:         FS_ResolveSrlUnsecured
 
   Description:  resolve srl filename and store to HW_TWL_FS_BOOT_SRL_PATH_BUF

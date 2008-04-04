@@ -194,6 +194,39 @@ BOOL FS_ResolveSrl( OSTitleId titleId )
 }
 
 /*---------------------------------------------------------------------------*
+  Name:         FS_ResolveSrlList
+
+  Description:  resolve srl filename with list and store to
+                HW_TWL_FS_BOOT_SRL_PATH_BUF
+
+  Arguments:    titleIdList     pointer to title id array for srl file
+                nums            number of title id
+
+  Returns:      -1 if failed, otherwise succeeded titile id number
+ *---------------------------------------------------------------------------*/
+int FS_ResolveSrlList( const OSTitleId* titleIdList, u32 nums )
+{
+    int i;
+    MI_CpuClearFast( (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, HW_FIRM_FS_BOOT_SRL_PATH_BUF_SIZE );
+    if ( !titleIdList || !nums || ES_ERR_OK != ES_InitLib() )
+    {
+        return FALSE;
+    }
+    for ( i = 0; i < nums; i++ )
+    {
+        if ( ES_ERR_OK == ES_GetContentPath(titleIdList[i], CONTENT_INDEX_BOOT, (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF) )
+        {
+            break;
+        }
+    }
+    if ( ES_ERR_OK != ES_CloseLib() )
+    {
+        return FALSE;
+    }
+    return (i == nums ? -1 : i);
+}
+
+/*---------------------------------------------------------------------------*
   Name:         FS_ResolveSrlUnsecured
 
   Description:  resolve srl filename and store to HW_TWL_FS_BOOT_SRL_PATH_BUF

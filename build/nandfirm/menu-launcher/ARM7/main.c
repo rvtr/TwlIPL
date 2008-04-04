@@ -33,7 +33,7 @@
     PRINT_MEMORY_ADDR を定義すると、そのアドレスからSPrintfを行います(このファイルのみ)
     FINALROM版でもコードが残るので注意してください。
 */
-//#define PRINT_MEMORY_ADDR       0x02FFC800
+#define PRINT_MEMORY_ADDR       0x02FFC800
 
 
 #ifdef PROFILE_ENABLE
