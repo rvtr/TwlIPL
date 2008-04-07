@@ -62,6 +62,7 @@ Autoload WRAM
 				libreloc_info_sp$(LIBSUFFIX).a \
 				libsysmenu_sp$(LIBSUFFIX).a \
 				libsysmmcu_sp$(LIBSUFFIX).a \
+				libaes_sp.firm.LTD.a
 
 	Library		libsdio_sp$(LIBSUFFIX).a
 

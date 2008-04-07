@@ -87,6 +87,7 @@ void SYSM_InitPXI( u32 mcu_prio )
     }
 #endif // SDK_ARM9
     PXI_SetFifoRecvCallback( SYSMENU_PXI_FIFO_TAG, SYSMi_PXIFifoRecvCallback );
+    SYSM_InitDecryptAESPXICallback();
 }
 
 // PXIコマンド送信

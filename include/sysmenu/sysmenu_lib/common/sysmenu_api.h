@@ -100,7 +100,7 @@ extern BOOL SYSM_IsAuthenticateTitleFinished( void );							// SYSM_StartAuthent
 extern AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle, TitleProperty *pTitleList );
 																				// pBootTitleで指定したタイトルをブート
 																				// 成功時は、never return.
-extern void SYSM_StartDecodeAESRegion( ROM_Header_Short *hs );					// 起動するROMのAES暗号化領域のデコード開始
+extern void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs );					// 起動するROMのAES暗号化領域のデクリプト開始
 
 // デバイス制御
 extern void SYSM_CaribrateTP( void );											// タッチパネルキャリブレーション
@@ -136,8 +136,8 @@ extern BOOL SYSM_IsRunOnDebugger( void );										// ISデバッガ上で動作している
 
 extern BOOL SYSM_IsLauncherHidden( void );										// ランチャーの画面を表示しないバージョンか？
 
-// AES領域デコード
-extern void SYSM_WaitDecodeAESRegion( void );									// ARM9からROMのAES暗号化領域のデコード開始要求を受け、デコード開始
+// AES領域デクリプト
+extern void SYSM_InitDecryptAESPXICallback( void );								// AES領域デクリプト用のPXIコールバック設定
 
 #ifdef __cplusplus
 }

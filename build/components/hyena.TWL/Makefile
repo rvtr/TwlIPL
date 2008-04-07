@@ -77,7 +77,8 @@ INSTALL_DIR		=	$(TWL_INSTALL_COMPONENTSDIR)/$(TARGET_NAME)/$(TWL_BUILDTYPE)
 LINCLUDES		= 	$(ROOT)/build/libraries/spi/ARM7/include \
 					$(ROOT)/build/libraries/spi/ARM7/pm/include \
 					$(SYSMENU_ROOT)/build/libraries_sysmenu/sysmenu/common/include
-LLIBRARIES		+= libwl_sp.TWL.LTD.a
+LLIBRARIES		+= libwl_sp.TWL.LTD.a \
+				   libaes_sp.firm.LTD.a
 LDEPENDS_NEF	= $(TWL_LIBS) $(LLIBRARIES)
 
 do-build:	$(TARGETS)

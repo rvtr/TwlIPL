@@ -123,6 +123,9 @@ typedef struct SYSM_work {
 	BOOL				isDeveloperAESMode;				// 開発用セキュリティか？（製品版でFALSE）
 	void				*addr_AESregion[2];				// AES暗号化領域の格納アドレス
 	u32					size_AESregion[2];				// AES暗号化領域のサイズ
+	u8					keyAES[AES_KEY_SIZE];			// 開発版AES暗号化領域の復号に使用するKEY（に使うタイトルネーム）
+	u8					idAES[GAME_CODE_MAX];			// 製品版AES暗号化領域の復号に使用するID（に使うゲームコード）
+	u8					seedAES[AES_KEY_SIZE];			// 製品版AES暗号化領域の復号に使用するSEED
 	
 	// NTR-IPL2のレガシー　最終的には消すと思う
 	BOOL				enableCardNormalOnly;

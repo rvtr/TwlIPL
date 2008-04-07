@@ -30,6 +30,7 @@ extern "C" {
 #define SYSMENU_PXI_FIFO_TAG				(PXI_MAX_FIFO_TAG - 1)
 #define PXI_FIFO_TAG_MCUTEST				(PXI_MAX_FIFO_TAG - 2)
 #define PXI_FIFO_TAG_HOTSW					(PXI_MAX_FIFO_TAG - 3)
+#define PXI_FIFO_TAG_DECRYPTAES				(PXI_MAX_FIFO_TAG - 4)
 
 typedef enum SYSMPXICommand {
 	SYSM_PXI_COMM_BL_BRIGHT = 0,
