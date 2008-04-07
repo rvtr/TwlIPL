@@ -71,6 +71,8 @@ static u32 load_region_check_list[RELOCATE_INFO_NUM][RELOCATE_INFO_NUM * 2 - 1] 
 static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfoEx
 ( u32 *dest, u32 length, RomSegmentRange default_region, u32 *check_dest, Relocate_Info *info )
 {
+	u32 ori_len = length;
+	length = MATH_ROUNDUP( length, 16 );// AES暗号化領域の関係で、再配置必要性のチェックに使うlengthは16バイトアライメントに補正
 	MI_CpuClearFast( info, sizeof(Relocate_Info) );
 	if( default_region.end - default_region.start < length ) return FALSE;// サイズオーバー
 	if( !( default_region.start <= *dest && *dest + length <= default_region.end ) )
@@ -82,15 +84,17 @@ static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfoEx
 			check_dest += 2;
 		}
 		
+		// ここから先はlengthでなくori_lenを使用
+		
 		// ここまで来ていれば再配置可
 		// 後方コピーフラグOFF
 		info->rev = FALSE;
-		if( default_region.start < *dest + length && *dest + length <= default_region.end )
+		if( default_region.start < *dest + ori_len && *dest + ori_len <= default_region.end )
 		{
 			// デフォルト配置領域の先頭部に、再配置先の後部が被っている
 			// ポストクリア情報
-			info->post_clear_addr = *dest + length;
-			info->post_clear_length = default_region.end - (*dest + length);
+			info->post_clear_addr = *dest + ori_len;
+			info->post_clear_length = default_region.end - (*dest + ori_len);
 		}
 		else if( default_region.start <= *dest && *dest < default_region.end )
 		{
@@ -98,7 +102,7 @@ static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfoEx
 			// ポストクリア情報
 			info->post_clear_addr = default_region.start;
 			info->post_clear_length = *dest - default_region.start;
-			if( *dest < default_region.start + length )
+			if( *dest < default_region.start + ori_len )
 			{
 				// 更に、デフォルト配置領域にロードしたデータの最後尾と再配置先の先頭部が被っている
 				// 後方コピーフラグON
@@ -113,7 +117,7 @@ static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfoEx
 		}
 		info->src = default_region.start;
 		info->dest = *dest;
-		info->length = length;
+		info->length = ori_len;
 		*dest = default_region.start;
 	}else
 	{

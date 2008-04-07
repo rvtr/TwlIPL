@@ -210,7 +210,8 @@ static void SYSMi_CallbackDecryptAESRegion(PXIFifoTag tag, u32 data, BOOL err)
 		}
 		// 鍵ロードして暗号化領域の復号開始
 		ReplaceWithAes( SYSMi_GetWork()->addr_AESregion[l], SYSMi_GetWork()->size_AESregion[l] );
-		// DMA転送なのでキャッシュケアは不要のはず……AES_DmaSendとRecvの仕様を要確認
+		// DMA転送なのでARM9のためのキャッシュフラッシュは不要のはず
+		// もうARM7側でも再配置まで触らないのでキャッシュ破棄する必要もないはず
 	}
 	
 	// ARM9に完了通知

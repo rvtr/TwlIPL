@@ -483,7 +483,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 
         for (i = region_header; i < region_max; ++i)
         {
-            u32 len = length[i];
+            u32 len = MATH_ROUNDUP( length[i], 16 );// AES暗号化領域の関係で、ロードサイズは16バイトアライメントに補正
             
             if ( !isTwlApp && i >= region_arm9_twl ) continue;// nitroでは読み込まない領域
 
@@ -498,7 +498,7 @@ OS_TPrintf("RebootSystem failed: cant seek file(%d)\n", source[i]);
 
             readLen = FS_ReadFile(file, (void *)destaddr[i], (s32)len);
 
-            if( readLen != (s32)len )
+            if( readLen < 0 )
             {
 OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
                 FS_CloseFile(file);
@@ -887,6 +887,11 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 	if( hs->platform_code & PLATFORM_CODE_FLAG_TWL )
 	{
 		// TWLアプリ
+		
+		// TWLアプリの場合はAES暗号化されている部分をデクリプトする
+		SYSM_StartDecryptAESRegion( hs );
+		
+		// 認証処理
 		switch( pBootTitle->flags.bootType )
 		{
 			case LAUNCHER_BOOTTYPE_NAND:
