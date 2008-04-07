@@ -114,7 +114,11 @@ void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs )
 
 	// Workに開発/製品情報を格納
 	SYSMi_GetWork()->isDeveloperAESMode = ( hs->developer_encrypt ? TRUE : FALSE );
-	
+
+	// Workにカウンタの初期値セット
+	MI_CpuCopy8( hs->main_static_digest, SYSMi_GetWork()->counterAES[0], AES_BLOCK_SIZE );	// 領域1初期値
+	MI_CpuCopy8( hs->sub_static_digest, SYSMi_GetWork()->counterAES[1], AES_BLOCK_SIZE );	// 領域2初期値
+
 	// Workに「鍵」or「シードとゲームコード」をセット
 	if( hs->developer_encrypt )
 	{
@@ -147,7 +151,6 @@ void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs )
 #include <twl/aes/ARM7/lo.h>
 #include <firm/aes/ARM7/aes_init.h>
 
-static BOOL         aesFlag;
 static AESCounter   aesCounter;
 
 #define DMA_SEND         2
@@ -208,6 +211,10 @@ static void SYSMi_CallbackDecryptAESRegion(PXIFifoTag tag, u32 data, BOOL err)
     		OS_TPrintf( "SYSM_StartDecryptAESRegion:Region %d skip.\n", l );
 			continue;
 		}
+		
+		// カウンタの初期値セット
+		MI_CpuCopy8( SYSMi_GetWork()->counterAES[l], &aesCounter, AES_BLOCK_SIZE );
+		
 		// 鍵ロードして暗号化領域の復号開始
 		ReplaceWithAes( SYSMi_GetWork()->addr_AESregion[l], SYSMi_GetWork()->size_AESregion[l] );
 		// DMA転送なのでARM9のためのキャッシュフラッシュは不要のはず

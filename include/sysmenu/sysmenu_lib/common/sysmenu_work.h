@@ -126,6 +126,7 @@ typedef struct SYSM_work {
 	u8					keyAES[AES_KEY_SIZE];			// 開発版AES暗号化領域の復号に使用するKEY（に使うタイトルネーム）
 	u8					idAES[GAME_CODE_MAX];			// 製品版AES暗号化領域の復号に使用するID（に使うゲームコード）
 	u8					seedAES[AES_KEY_SIZE];			// 製品版AES暗号化領域の復号に使用するSEED
+	u8					counterAES[2][AES_BLOCK_SIZE];	// AES暗号化領域の復号に使用するカウンタ初期値
 	
 	// NTR-IPL2のレガシー　最終的には消すと思う
 	BOOL				enableCardNormalOnly;
