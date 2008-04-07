@@ -337,7 +337,7 @@ static HotSwState LoadCardData(void)
             
             // 初回のRomエミュレーション情報を使用
             if(HOTSWi_IsRomEmulation()){
-				OS_PutString("Read Emuration ROM\n");
+				OS_PutString("Read Emulation ROM\n");
 				s_cbData.cardType = ROM_EMULATION;
                 s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
                 OS_TPrintf("SYSMi_GetWork()->gameCommondParam : 0x%08x\n", s_cbData.gameCommondParam);
