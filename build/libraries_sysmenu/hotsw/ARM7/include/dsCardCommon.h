@@ -38,7 +38,7 @@ HotSwState ChangeModeNormal2(CardBootData *cbd);
 HotSwState LoadTable(void);
 
 // デバッガのROMエミュレーション情報読み込み
-HotSwState ReadRomEmulationInfo(CardBootData *cbd);
+HotSwState ReadRomEmulationInfo(SYSMRomEmuInfo *info);
 
 
 // ■       セキュアモードのコマンド       ■

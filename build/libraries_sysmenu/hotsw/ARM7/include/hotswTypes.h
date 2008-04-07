@@ -290,11 +290,9 @@ typedef struct CardBootData{
     u32                 arm7Ltd;
 
     BOOL                twlFlg;
-    BOOL                debuggerFlg;
 
     u32                 romStatus;
 
-    u32                 romEmuBuf[ROM_EMULATION_DATA_SIZE/sizeof(u32)];
     u32                 keyBuf[KEY_BUF_SIZE];
 
     CardTypeEx          cardType;

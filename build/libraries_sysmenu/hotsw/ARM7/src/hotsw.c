@@ -105,6 +105,8 @@ static u32					*s_pSecureSegBuffer;	// カード抜けてもバッファの場所覚えとく
 static u32					*s_pSecure2SegBuffer;	// カード抜けてもバッファの場所覚えとく
 
 static CardBootData			s_cbData;
+static SYSMRomEmuInfo       s_romEmuInfo;
+static BOOL                 debuggerFlg;
 
 // HMACSHA1の鍵
 static u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = {
@@ -310,7 +312,7 @@ static HotSwState LoadCardData(void)
         s_cbData.cardType = (s_cbData.id_nml & HOTSW_ROMID_1TROM_MASK) ? DS_CARD_TYPE_2 : DS_CARD_TYPE_1;
 		
 		{
-            SYSMRomEmuInfo *romEmuInfo = (void *)s_cbData.romEmuBuf;
+            SYSMRomEmuInfo *romEmuInfo = (void *)&s_romEmuInfo;
             
 			// バナーリードが完了して、フラグ処理が終わるまでARM9と排他制御する
             LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
@@ -323,24 +325,19 @@ static HotSwState LoadCardData(void)
             if ( ! SYSMi_GetWork()->flags.hotsw.is1stCardChecked )
             {
 	            // Romエミュレーション情報を取得
-				state  = ReadRomEmulationInfo(&s_cbData);
+				state  = ReadRomEmulationInfo(&s_romEmuInfo);
 				retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
 	            // 取得したRomエミュレーション情報を比較
-    	        s_cbData.debuggerFlg = TRUE;
+    	        debuggerFlg = TRUE;
            	    if ( romEmuInfo->magic_code != SYSM_ROMEMU_INFO_MAGIC_CODE ){
-					s_cbData.debuggerFlg = FALSE;
+					debuggerFlg = FALSE;
     	        }
     	    }
             
             // 初回のRomエミュレーション情報を使用
-            if(s_cbData.debuggerFlg &&
-#ifndef DEBUG_USED_CARD_SLOT_B_
-                romEmuInfo->isEnableSlot1){
-#else
-                romEmuInfo->isEnableSlot2){
-#endif
-				OS_PutString("Read Debugger\n");
+            if(HOTSWi_IsRomEmulation()){
+				OS_PutString("Read Emuration ROM\n");
 				s_cbData.cardType = ROM_EMULATION;
                 s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
                 OS_TPrintf("SYSMi_GetWork()->gameCommondParam : 0x%08x\n", s_cbData.gameCommondParam);
@@ -541,7 +538,32 @@ HotSwState HOTSWi_RefreshBadBlock(u32 romMode)
  * ----------------------------------------------------------------- */
 void* HOTSW_GetRomEmulationBuffer(void)
 {
-	return s_cbData.romEmuBuf;
+	return &s_romEmuInfo;
+}
+
+/* -----------------------------------------------------------------
+ * HOTSWi_IsRunOnDebugger関数
+ *
+ * ISデバッガ上で動作しているか？
+ * ----------------------------------------------------------------- */
+BOOL HOTSWi_IsRunOnDebugger(void)
+{
+	return debuggerFlg;
+}
+
+/* -----------------------------------------------------------------
+ * HOTSWi_IsRomEmulation関数
+ *
+ * ROMをエミュレーションしているか？
+ * ----------------------------------------------------------------- */
+BOOL HOTSWi_IsRomEmulation(void)
+{
+	return debuggerFlg &&
+#ifndef DEBUG_USED_CARD_SLOT_B_
+           s_romEmuInfo.isEnableSlot1;
+#else
+           s_romEmuInfo.isEnableSlot2;
+#endif
 }
 
 /* -----------------------------------------------------------------
@@ -583,10 +605,10 @@ static HotSwState LoadBannerData(void)
     }
 
    	// デバッガ情報
-	if ( ! SYSMi_GetWork()->flags.hotsw.is1stCardChecked && s_cbData.debuggerFlg )
+	if ( ! SYSMi_GetWork()->flags.hotsw.is1stCardChecked && debuggerFlg )
 	{
-		MI_CpuCopy8( HOTSW_GetRomEmulationBuffer(), &SYSMi_GetWork()->romEmuInfo, ROM_EMULATION_DATA_SIZE );
-		SYSMi_GetWork()->flags.hotsw.isOnDebugger = s_cbData.debuggerFlg;
+		MI_CpuCopy8( HOTSW_GetRomEmulationBuffer(), &s_romEmuInfo, ROM_EMULATION_DATA_SIZE );
+		SYSMi_GetWork()->flags.hotsw.isOnDebugger = debuggerFlg;
 	}
 
     SYSMi_GetWork()->flags.hotsw.isCardStateChanged = TRUE;

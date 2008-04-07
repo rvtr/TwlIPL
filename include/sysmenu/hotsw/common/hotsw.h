@@ -84,6 +84,12 @@ SDK_INLINE void* HOTSW_GetRomEmulationBuffer(void)
 }
 #endif // SDK_ARM9
 
+// ISデバッガ上で動作しているか？
+BOOL HOTSWi_IsRunOnDebugger(void);
+
+// ROMをエミュレーションしているか？
+BOOL HOTSWi_IsRomEmulation(void);
+
 // デバッガ通信用にカードスロットの電源をONにする。
 void HOTSWi_TurnCardPowerOn(u32 slot);
 
