@@ -119,6 +119,9 @@ extern s64  SYSM_CalcRTCOffset( RTCDate *pNewDate, RTCTime *pNewTime );			// RTC
 extern u32  SYSM_GetDayNum( u32 year, u32 month );								// 指定された年・月の日数を取得する
 extern BOOL SYSM_IsLeapYear100( u32 year );										// 指定された年がうるう年か調べる
 
+// スリープモード
+extern void SYSM_GoSleepMode( void );                                           // スリープモードへの遷移
+
 #endif
 
 // 状態チェック

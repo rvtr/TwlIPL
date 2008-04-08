@@ -168,6 +168,21 @@ void SYSMi_CheckRTC( void )
 }
 
 
+// スリープモードへの遷移
+void SYSM_GoSleepMode( void )
+{
+    // デバッガ起動時にはスリープに入らない
+    if ( ! SYSM_IsRunOnDebugger() || (OSi_DetectDebugger() & OS_CONSOLE_TWLDEBUGGER) )
+    {
+    	PM_GoSleepMode( PM_TRIGGER_COVER_OPEN |
+	    				PM_TRIGGER_CARD |
+	    				PM_TRIGGER_RTC_ALARM,
+		    			0,
+			    		0 );
+    }
+}
+
+
 #ifdef SDK_FINALROM
 /*---------------------------------------------------------------------------*
   Name:         PMi_WriteRegisterAsync

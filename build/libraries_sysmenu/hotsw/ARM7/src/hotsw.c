@@ -25,8 +25,8 @@
 
 #define DEBUG_MODE
 
-// カード電源ONからROMヘッダロードまでの期間にスリープに入る時もワンセグ対策する場合
-//#define HOWSW_DSTV_MORE_IMPORTANT_THAN_DEEP_SLEEP
+// カード電源ONからROMヘッダロードまでの期間にスリープに入る時のワンセグ対策しない場合
+//#define HOWSW_TRY_DEEP_SLEEP_WHILE_INSERT_CARD
 
 // define -------------------------------------------------------------------
 #define		CHATTERING_COUNTER					0x600
@@ -291,7 +291,7 @@ static HotSwState LoadCardData(void)
     // カード電源リセット
 #ifdef SDK_ARM7
 	McPowerOff();
-#ifdef HOWSW_DSTV_MORE_IMPORTANT_THAN_DEEP_SLEEP
+#ifndef HOWSW_TRY_DEEP_SLEEP_WHILE_INSERT_CARD
     MCU_EnableDeepSleepToPowerLine( MCU_PWR_LINE_33, FALSE );
 #endif
 	McPowerOn();
