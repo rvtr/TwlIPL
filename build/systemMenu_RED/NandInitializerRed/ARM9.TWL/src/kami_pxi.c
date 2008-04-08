@@ -310,6 +310,42 @@ KAMIResult kamiCDC_GoDsMode( void )
 }
 
 /*---------------------------------------------------------------------------*
+  Name:         kamiClearNandErrorLog
+
+  Description:  NVRAMのNANDエラー情報をクリアします。
+
+  Arguments:    None.
+
+  Returns:      
+ *---------------------------------------------------------------------------*/
+
+KAMIResult kamiClearNandErrorLog( void )
+{
+    OSIntrMode enabled;
+
+	// ロック
+    enabled = OS_DisableInterrupts();
+    if (kamiWork.lock)
+    {
+        (void)OS_RestoreInterrupts(enabled);
+        return KAMI_RESULT_BUSY;
+    }
+    kamiWork.lock = TRUE;
+    (void)OS_RestoreInterrupts(enabled);
+
+    kamiWork.callback = NULL;
+    kamiWork.arg = 0;
+    kamiWork.data = 0;
+
+    if (KamiSendPxiCommand(KAMI_CLEAR_NAND_ERRORLOG, 0, (u8)0))
+    {
+	    KamiWaitBusy();
+	    return (KAMIResult)kamiWork.result;
+    }
+    return KAMI_RESULT_SEND_ERROR;
+}
+
+/*---------------------------------------------------------------------------*
 	PXI関連
  *---------------------------------------------------------------------------*/
 

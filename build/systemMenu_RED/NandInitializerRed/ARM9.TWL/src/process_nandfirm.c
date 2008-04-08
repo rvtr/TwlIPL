@@ -494,6 +494,13 @@ static BOOL WriteNandfirm(char* file_name)
 	}
 #endif
 
+	// NANDƒƒOî•ñ‚ÌƒNƒŠƒA
+	if (kamiClearNandErrorLog() != KAMI_RESULT_SUCCESS)
+	{
+		kamiFontPrintfConsoleEx(1, "Fail kamiClearNandErrorLog()\n");
+		result = FALSE;		
+	}
+
 	kamiFontPrintfConsoleEx(0, "NAND Firm Import Start!\n");
 
 	// NAND‘‚«‚İ

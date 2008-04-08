@@ -63,6 +63,7 @@ KAMIResult kamiNandIo(u32 block, void* buffer, u32 count, BOOL is_read);
 KAMIResult kamiNvramIo(u32 address, void* buffer, u32 size, BOOL is_read);
 KAMIResult kamiMcuIo(u32 reg_no, void* buffer, u32 value, BOOL is_read);
 KAMIResult kamiCDC_GoDsMode( void );
+KAMIResult kamiClearNandErrorLog( void );
 
 // (重要)
 // ARM7が読み書きするためリード後はInvalidate、ライト前はフラッシュしてください。

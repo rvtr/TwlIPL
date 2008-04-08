@@ -35,6 +35,7 @@ typedef unsigned long dword;    /* Don't change */
 #define BOOLEAN int
 
 extern BOOL FATFSi_nandRtfsIo( int driveno, dword block, void* buffer, word count, BOOLEAN reading);
+extern BOOL sdmcFormatNandLog( BOOL verify_flag);
 
 /*---------------------------------------------------------------------------*
     íËêîíËã`
@@ -131,6 +132,7 @@ static void KamiPxiCallback(PXIFifoTag tag, u32 data, BOOL err)
 		case KAMI_NVRAM_IO:
 		case KAMI_MCU_IO:
 		case KAMI_CDC_GO_DSMODE:
+		case KAMI_CLEAR_NAND_ERRORLOG:
             if (!OS_SendMessage(&kamiWork.msgQ, NULL, OS_MESSAGE_NOBLOCK))
             {
                 KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_FATAL_ERROR);
@@ -274,6 +276,19 @@ static void KamiThread(void *arg)
 			{
 				CDC_GoDsMode();
 	            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
+			}
+			break;
+
+		case KAMI_CLEAR_NAND_ERRORLOG:
+			{
+				if (sdmcFormatNandLog(TRUE))
+				{
+		            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
+				}
+				else
+				{
+		            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS_FALSE);
+				}
 			}
 			break;
 
