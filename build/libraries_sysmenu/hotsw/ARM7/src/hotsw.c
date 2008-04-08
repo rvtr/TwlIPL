@@ -12,6 +12,7 @@
  *---------------------------------------------------------------------------*/
 #include 	<twl.h>
 #include 	<twl/os/common/format_rom.h>
+#include 	<twl/mcu.h>
 #include	<nitro/card/types.h>
 #include 	<firm/os/common/system.h>
 #include	<sysmenu.h>
@@ -24,6 +25,9 @@
 
 #define DEBUG_MODE
 
+// カード電源ONからROMヘッダロードまでの期間にスリープに入る時もワンセグ対策する場合
+//#define HOWSW_DSTV_MORE_IMPORTANT_THAN_DEEP_SLEEP
+
 // define -------------------------------------------------------------------
 #define		CHATTERING_COUNTER					0x600
 #define		COUNTER_A							0x100
@@ -34,6 +38,8 @@
 #define		DIGEST_HASH_BLOCK_SIZE_SHA1			(512/8)
 
 #define 	SLOT_B_LOCK_BUF						HW_CTRDG_LOCK_BUF
+
+#define 	HOTSW_DSTV_GAME_CODE				'JSNU'
 
 #ifdef SDK_ARM9
 #define 	reg_HOTSW_EXMEMCNT		 			reg_MI_EXMEMCNT
@@ -285,6 +291,9 @@ static HotSwState LoadCardData(void)
     // カード電源リセット
 #ifdef SDK_ARM7
 	McPowerOff();
+#ifdef HOWSW_DSTV_MORE_IMPORTANT_THAN_DEEP_SLEEP
+    MCU_EnableDeepSleepToPowerLine( MCU_PWR_LINE_33, FALSE );
+#endif
 	McPowerOn();
 #else // SDK_ARM9
 	// ARM7にPXI経由でカード電源ONをお願い。ONになるまで待つ。
@@ -313,6 +322,7 @@ static HotSwState LoadCardData(void)
 		
 		{
             SYSMRomEmuInfo *romEmuInfo = (void *)&s_romEmuInfo;
+            BOOL enableDeepSleep = TRUE;
             
 			// バナーリードが完了して、フラグ処理が終わるまでARM9と排他制御する
             LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
@@ -320,6 +330,14 @@ static HotSwState LoadCardData(void)
 	    	// Boot Segment読み込み
 	    	state  = s_funcTable[s_cbData.cardType].ReadBootSegment_N(&s_cbData);
 			retval = (retval == HOTSW_SUCCESS) ? state : retval;
+            
+            // ワンセグ差込み時はカードバス電源をディープスリープ（PFM）に入れない
+            // （スリープ時シャットダウン対策。カードロード中にスリープしても良いように早目に設定）
+            if ( *(u32*)(s_cbData.pBootSegBuf->rh.s.game_code) == HOTSW_DSTV_GAME_CODE )
+            {
+                enableDeepSleep = FALSE;
+            }
+            MCU_EnableDeepSleepToPowerLine( MCU_PWR_LINE_33, enableDeepSleep );
             
             // ARM9/7で不整合が発生しないようにRomエミュレーション情報ロードは初回のみ
             if ( ! SYSMi_GetWork()->flags.hotsw.is1stCardChecked )
@@ -1311,6 +1329,9 @@ static void McThread(void *arg)
                 MI_CpuClearFast((u32 *)SYSM_CARD_BANNER_BUF, sizeof(TWLBannerFile));
                 
                 isPulledOut = TRUE;
+
+                // ワンセグのスリープ時シャットダウン対策を戻す
+                MCU_EnableDeepSleepToPowerLine( MCU_PWR_LINE_33, TRUE );
 
 				break;
             }
