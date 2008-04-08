@@ -175,7 +175,7 @@ void SYSM_GoSleepMode( void )
     if ( ! SYSM_IsRunOnDebugger() || (OSi_DetectDebugger() & OS_CONSOLE_TWLDEBUGGER) )
     {
     	PM_GoSleepMode( PM_TRIGGER_COVER_OPEN |
-	    				PM_TRIGGER_CARD |
+	    				(SYSM_IsExistCard() ? PM_TRIGGER_CARD : 0) |
 	    				PM_TRIGGER_RTC_ALARM,
 		    			0,
 			    		0 );
