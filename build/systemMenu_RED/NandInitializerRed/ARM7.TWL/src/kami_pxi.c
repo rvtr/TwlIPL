@@ -16,14 +16,14 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
-#include    <twl/exi/ARM7/genPort2.h>
+#include <twl/exi/ARM7/genPort2.h>
 #include "kami_pxi.h"
 #include "fifo.h"
 #include "twl/cdc.h"
 #include "formatter.h"
-#include    "nvram.h"
-
+#include "nvram.h"
 #include <twl/ltdmain_begin.h>
+#include <twl/mcu.h>
 
 //#include <c:/TWL_SDK/build/libraries/fatfs/ARM7.TWL/include/twl/rtfs.h>
 //#include <c:/TWL_SDK/build/libraries/fatfs/ARM7.TWL/include/twl/devices/sdmc/ARM7/sdmc.h>
@@ -126,12 +126,11 @@ static void KamiPxiCallback(PXIFifoTag tag, u32 data, BOOL err)
     {
         switch (kamiWork.command)
         {
-		case CODEC_READ_REGISTER:
-    	case CODEC_WRITE_REGISTER:
-        case GPIO333_WRITE:
-		case EXE_FORMAT:
+		case KAMI_EXE_FORMAT:
 		case KAMI_NAND_IO:
 		case KAMI_NVRAM_IO:
+		case KAMI_MCU_IO:
+		case KAMI_CDC_GO_DSMODE:
             if (!OS_SendMessage(&kamiWork.msgQ, NULL, OS_MESSAGE_NOBLOCK))
             {
                 KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_FATAL_ERROR);
@@ -185,8 +184,7 @@ static void KamiThread(void *arg)
         (void)OS_ReceiveMessage(&kamiWork.msgQ, &msg, OS_MESSAGE_BLOCK);
         switch (kamiWork.command)
         {
-////////////////////////////////////////////////////////
-        case EXE_FORMAT:
+        case KAMI_EXE_FORMAT:
             {
 				result = ExeFormat((FormatMode)kamiWork.data[0]);	// Quick or Full
 				if (result)
@@ -248,7 +246,36 @@ static void KamiThread(void *arg)
 			}
 			break;
 
-////////////////////////////////////////////////////////
+		case KAMI_MCU_IO:
+			{
+				BOOL is_read;
+				u32  reg_no;
+				void* buffer;
+				u32  value;
+
+				is_read = (BOOL)kamiWork.data[0];
+				KAMI_UNPACK_U32(&reg_no,  &kamiWork.data[1]);
+				KAMI_UNPACK_U32((u32 *)(&buffer), &kamiWork.data[5]);
+				KAMI_UNPACK_U32(&value,  &kamiWork.data[9]);
+
+				if (is_read)
+				{
+					*(u8 *)buffer = MCU_ReadRegister( (u8)reg_no );
+				}
+				else
+				{
+					MCU_WriteRegister( (u8)reg_no, (u8)value );
+				}
+	            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
+			}
+			break;
+
+		case KAMI_CDC_GO_DSMODE:
+			{
+				CDC_GoDsMode();
+	            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
+			}
+			break;
 
         default:
             KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_INVALID_COMMAND);

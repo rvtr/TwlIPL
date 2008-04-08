@@ -77,11 +77,13 @@ void KamiPxiInit( void )
     {
     }
     PXI_SetFifoRecvCallback(PXI_FIFO_TAG_KAMITEST, KamiPxiCallback);
-    if ( 0 > PXI_SendWordByFifo(PXI_FIFO_TAG_KAMITEST, 0, 0))
+    if ( 0 > PXI_SendWordByFifo(PXI_FIFO_TAG_KAMITEST, KAMITEST_PXI_START_BIT | (KAMI_TEST_COMMAND << KAMITEST_PXI_COMMAND_SHIFT), 0))
     {
         return;
     }
 }
+
+
 
 ///////////////////////////////////////////////////////////////////
 
@@ -93,127 +95,6 @@ void CDC_ReadCallback(KAMIResult result, void* arg)
 
 }
 */
-
-/*---------------------------------------------------------------------------*
-  Name:         CODEC レジスタリード関数
-
-  Description:  
-
-  Arguments:    None.
-
-  Returns:      
- *---------------------------------------------------------------------------*/
-
-KAMIResult CDC_ReadRegister(u8 page, u8 reg_no, u8* pData)
-{
-    OSIntrMode enabled;
-
-
-	// ロック
-    enabled = OS_DisableInterrupts();
-    if (kamiWork.lock)
-    {
-        (void)OS_RestoreInterrupts(enabled);
-        return KAMI_RESULT_BUSY;
-    }
-    kamiWork.lock = TRUE;
-    (void)OS_RestoreInterrupts(enabled);
-
-    kamiWork.callback = NULL;
-    kamiWork.arg = 0;
-    kamiWork.data = (u8*)pData;
-
-    if (KamiSendPxiCommand(CODEC_READ_REGISTER, 2, page))
-    {
-        KamiSendPxiData(&reg_no);
-	    KamiWaitBusy();
-	    return (KAMIResult)kamiWork.result;
-    }
-    return KAMI_RESULT_SEND_ERROR;
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         CODEC レジスタライト関数
-
-  Description:  
-
-  Arguments:    None.
-
-  Returns:      
- *---------------------------------------------------------------------------*/
-
-KAMIResult CDC_WriteRegister(u8 page, u8 reg_no, u8 value)
-{
-    OSIntrMode enabled;
-    u8  data[2];
-	int i;
-
-
-	// ロック
-    enabled = OS_DisableInterrupts();
-    if (kamiWork.lock)
-    {
-        (void)OS_RestoreInterrupts(enabled);
-        return KAMI_RESULT_BUSY;
-    }
-    kamiWork.lock = TRUE;
-    (void)OS_RestoreInterrupts(enabled);
-
-    kamiWork.callback = NULL;
-    kamiWork.arg = 0;
-    kamiWork.data = 0;
-
-	// データ作成
-	data[0] = reg_no;
-	data[1] = value;
-
-    if (KamiSendPxiCommand(CODEC_WRITE_REGISTER, 3, page))
-    {
-	    for (i = 0; i < 2; i++) 
-		{
-	        KamiSendPxiData(&data[i]);
-		}
-	    KamiWaitBusy();
-	    return (KAMIResult)kamiWork.result;
-    }
-    return KAMI_RESULT_SEND_ERROR;
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         GPIO333 アクセス関数
-
-  Description:  
-
-  Arguments:    None.
-
-  Returns:      
- *---------------------------------------------------------------------------*/
-
-KAMIResult GPIO333_Write(BOOL value)
-{
-    OSIntrMode enabled;
-
-	// ロック
-    enabled = OS_DisableInterrupts();
-    if (kamiWork.lock)
-    {
-        (void)OS_RestoreInterrupts(enabled);
-        return KAMI_RESULT_BUSY;
-    }
-    kamiWork.lock = TRUE;
-    (void)OS_RestoreInterrupts(enabled);
-
-    kamiWork.callback = NULL;
-    kamiWork.arg = 0;
-    kamiWork.data = 0;
-
-    if (KamiSendPxiCommand(GPIO333_WRITE, 1, (u8)value))
-    {
-	    KamiWaitBusy();
-	    return (KAMIResult)kamiWork.result;
-    }
-    return KAMI_RESULT_SEND_ERROR;
-}
 
 /*---------------------------------------------------------------------------*
   Name:         フォーマット実行関数
@@ -243,7 +124,7 @@ KAMIResult ExeFormatAsync(FormatMode format_mode, KAMICallback callback)
     kamiWork.arg = 0;
     kamiWork.data = 0;
 
-    if (KamiSendPxiCommand(EXE_FORMAT, 1, format_mode) == FALSE)
+    if (KamiSendPxiCommand(KAMI_EXE_FORMAT, 1, format_mode) == FALSE)
     {
     	return KAMI_RESULT_SEND_ERROR;
     }
@@ -306,6 +187,7 @@ KAMIResult kamiNandIo(u32 block, void* buffer, u32 count, BOOL is_read)
 
   Returns:      
  *---------------------------------------------------------------------------*/
+
 KAMIResult kamiNvramIo(u32 address, void* buffer, u32 size, BOOL is_read)
 {
     OSIntrMode enabled;
@@ -342,10 +224,95 @@ KAMIResult kamiNvramIo(u32 address, void* buffer, u32 size, BOOL is_read)
     }
     return KAMI_RESULT_SEND_ERROR;
 }
-///////////////////////////////////////////////////////////////////
 
 
-/////////
+/*---------------------------------------------------------------------------*
+  Name:         MCUアクセス関数
+
+  Description:  
+
+  Arguments:    None.
+
+  Returns:      
+ *---------------------------------------------------------------------------*/
+
+KAMIResult kamiMcuIo(u32 reg_no, void* buffer, u32 value, BOOL is_read)
+{
+    OSIntrMode enabled;
+    u8  data[12];
+	int i;
+
+	// ロック
+    enabled = OS_DisableInterrupts();
+    if (kamiWork.lock)
+    {
+        (void)OS_RestoreInterrupts(enabled);
+        return KAMI_RESULT_BUSY;
+    }
+    kamiWork.lock = TRUE;
+    (void)OS_RestoreInterrupts(enabled);
+
+    kamiWork.callback = NULL;
+    kamiWork.arg = 0;
+    kamiWork.data = 0;
+
+	// データ作成
+	KAMI_PACK_U32(&data[0], &reg_no);
+	KAMI_PACK_U32(&data[4], &buffer);
+	KAMI_PACK_U32(&data[8], &value);
+
+    if (KamiSendPxiCommand(KAMI_MCU_IO, 12, (u8)is_read))
+    {
+	    for (i = 0; i < 12; i+=3) 
+		{
+	        KamiSendPxiData(&data[i]);
+		}
+	    KamiWaitBusy();
+	    return (KAMIResult)kamiWork.result;
+    }
+    return KAMI_RESULT_SEND_ERROR;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         kamiCDC_GoDsMode
+
+  Description:  CODECをDSモードへ遷移させる関数
+
+  Arguments:    None.
+
+  Returns:      
+ *---------------------------------------------------------------------------*/
+
+KAMIResult kamiCDC_GoDsMode( void )
+{
+    OSIntrMode enabled;
+
+	// ロック
+    enabled = OS_DisableInterrupts();
+    if (kamiWork.lock)
+    {
+        (void)OS_RestoreInterrupts(enabled);
+        return KAMI_RESULT_BUSY;
+    }
+    kamiWork.lock = TRUE;
+    (void)OS_RestoreInterrupts(enabled);
+
+    kamiWork.callback = NULL;
+    kamiWork.arg = 0;
+    kamiWork.data = 0;
+
+    if (KamiSendPxiCommand(KAMI_CDC_GO_DSMODE, 0, (u8)0))
+    {
+	    KamiWaitBusy();
+	    return (KAMIResult)kamiWork.result;
+    }
+    return KAMI_RESULT_SEND_ERROR;
+}
+
+/*---------------------------------------------------------------------------*
+	PXI関連
+ *---------------------------------------------------------------------------*/
+
 static BOOL KamiSendPxiCommand(KamiCommand command, u8 size, u8 data)
 {
     u32 pxiData = (u32)(KAMITEST_PXI_START_BIT |

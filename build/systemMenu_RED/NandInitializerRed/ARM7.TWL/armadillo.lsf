@@ -77,7 +77,7 @@ Ltdautoload SCRWRAM
 	Library		libathdrv_sp$(LIBSUFFIX).a
 	Library		libfs_sp$(LIBSUFFIX).a
 	Library		libcard_sp$(LIBSUFFIX).a
-#	Library		libcamera_sp$(LIBSUFFIX).a
+	Library		libcamera_sp$(LIBSUFFIX).a
 
 	Object		* (.wram)
 	Object		* (.ltdwram)

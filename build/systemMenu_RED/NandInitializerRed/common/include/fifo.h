@@ -59,12 +59,12 @@ KAMIPxiResult;
 
 typedef enum KamiCommand
 {
-    CODEC_READ_REGISTER,
-    CODEC_WRITE_REGISTER,
-    GPIO333_WRITE,
-    EXE_FORMAT,
+	KAMI_TEST_COMMAND,
+    KAMI_EXE_FORMAT,
     KAMI_NAND_IO,
-    KAMI_NVRAM_IO
+    KAMI_NVRAM_IO,
+    KAMI_MCU_IO,
+    KAMI_CDC_GO_DSMODE
 }
 KamiCommand;
 

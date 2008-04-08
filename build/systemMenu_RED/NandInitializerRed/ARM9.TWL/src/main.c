@@ -71,7 +71,7 @@ TwlMain()
     OS_InitReset();
     GX_Init();
     FX_Init();
-//  SND_Init();
+    SND_Init();
     TP_Init();
     RTC_Init();
 

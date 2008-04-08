@@ -25,6 +25,7 @@
 #include    <twl/sea.h>
 #include    <twl/fatfs.h>
 #include    <twl/nwm.h>
+#include    <twl/camera.h>
 #include    <twl/mcu.h>
 #include    <twl/cdc.h>
 #include    <nitro/snd.h>
@@ -111,13 +112,12 @@ TwlSpMain(void)
     (void)GX_VBlankIntr(TRUE);
     (void)OS_EnableIrq();
     (void)OS_EnableInterrupts();
-///////////////////////////////
+
     // 強制AESモード
     AttachAES();
-
     // フォーマットを行うためにFATFS_Initの前にHW_SD_NAND_CONTEXT_BUFのクリアが必要
     MI_CpuClear8((void *)HW_SD_NAND_CONTEXT_BUF, HW_SD_NAND_CONTEXT_BUF_END - HW_SD_NAND_CONTEXT_BUF);
-///////////////////////////////
+
     /* 各ライブラリ初期化 */
     AES_Init();                                 // AES
     SEA_Init();                                 // SEA
@@ -126,13 +126,15 @@ TwlSpMain(void)
     InitializeFatfs();                          // FAT-FS
 //  InitializeNwm(heapHandle);                  // TWL 無線
     MCU_InitIrq(THREAD_PRIO_MCU);               // マイコン
+
     if (OSi_IsCodecTwlMode() == TRUE)
     {
         InitializeCdc();                        // CODEC
-//      CAMERA_Init();                          // カメラ
+        CAMERA_Init();                          // カメラ
     }
-//    SND_Init(THREAD_PRIO_SND);                  // サウンド
-//    SNDEX_Init(THREAD_PRIO_SNDEX);              // サウンド拡張
+
+    SND_Init(THREAD_PRIO_SND);                  // サウンド
+    SNDEX_Init(THREAD_PRIO_SNDEX);              // サウンド拡張
     RTC_Init(THREAD_PRIO_RTC);                  // RTC
 //  WVR_Begin(heapHandle);                      // NITRO 無線
     SPI_Init(THREAD_PRIO_SPI);

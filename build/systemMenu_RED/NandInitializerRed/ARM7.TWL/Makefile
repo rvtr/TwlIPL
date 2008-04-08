@@ -56,7 +56,7 @@ LINCLUDES		=	$(ROOT)/build/libraries/spi/ARM7/include ../common/include
 LLIBRARIES		+=	libwl_sp$(TWL_LIBSUFFIX).a			\
 					libsdio_sp$(TWL_LIBSUFFIX).a		\
 					libathdrv_sp$(TWL_LIBSUFFIX).a		\
-					libwpa_sp$(TWL_LIBSUFFIX).a			\
+					libwpa_sp$(TWL_LIBSUFFIX).a
 
 LDEPENDS_NEF	 = $(TWL_LIBS) $(LLIBRARIES)
 

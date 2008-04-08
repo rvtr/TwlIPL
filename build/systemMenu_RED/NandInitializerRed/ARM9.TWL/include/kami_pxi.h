@@ -58,13 +58,15 @@ typedef void (*KAMICallback)(KAMIResult result, void *arg);
 
 void KamiPxiInit( void );
 
-KAMIResult CDC_ReadRegister(u8 page, u8 reg_no, u8* pData);
-KAMIResult CDC_WriteRegister(u8 page, u8 reg_no, u8 value);
-KAMIResult GPIO333_Write(BOOL value);
 KAMIResult ExeFormatAsync(FormatMode format_mode, KAMICallback callback);
 KAMIResult kamiNandIo(u32 block, void* buffer, u32 count, BOOL is_read);
 KAMIResult kamiNvramIo(u32 address, void* buffer, u32 size, BOOL is_read);
+KAMIResult kamiMcuIo(u32 reg_no, void* buffer, u32 value, BOOL is_read);
+KAMIResult kamiCDC_GoDsMode( void );
 
+// (重要)
+// ARM7が読み書きするためリード後はInvalidate、ライト前はフラッシュしてください。
+// 
 static KAMIResult kamiNandRead(u32 block, void* buffer, u32 count)
 {
 	return kamiNandIo(block, buffer, count, TRUE);
@@ -81,8 +83,14 @@ static KAMIResult kamiNvramWrite(u32 adress, void* buffer, u32 size)
 {
 	return kamiNvramIo(adress, buffer, size, FALSE);
 }
-
-
+static KAMIResult kamiMcuRead(u8 reg_no, void* buffer)
+{
+	return kamiMcuIo((u32)reg_no, buffer, 0, TRUE);
+}
+static KAMIResult kamiMcuWrite(u8 reg_no, u8 value)
+{
+	return kamiMcuIo((u32)reg_no, NULL, (u32)value, FALSE);
+}
 
 /*===========================================================================*/
 
