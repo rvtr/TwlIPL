@@ -16,6 +16,7 @@
 #include <twl.h>
 #include <twl/os/common/format_rom.h>
 #include <sysmenu.h>
+#include <firm/gcd/blowfish.h>
 #include "romSpec.h"
 
 #ifdef __cplusplus
@@ -261,10 +262,10 @@ typedef union BootSegmentData
 } BootSegmentData;
 
 // struct -------------------------------------------------------------------
-typedef struct BLOWFISH_CTX{
+/*typedef struct BLOWFISH_CTX{
     u32         P[16 + 2];
     u32         S[4][256];
-} BLOWFISH_CTX;
+} BLOWFISH_CTX;*/
 
 // カードブート時に必要な変数一式をまとめた構造体
 typedef struct CardBootData{
@@ -279,21 +280,20 @@ typedef struct CardBootData{
     u32                 id_scr2;
     u32                 id_gam;
 
-    u32                 arm9StcSize;
-    u32                 arm7StcSize;
-    u32                 arm9LtdSize;
-    u32                 arm7LtdSize;
-
     u32                 arm9Stc;
     u32                 arm7Stc;
     u32                 arm9Ltd;
     u32                 arm7Ltd;
 
     BOOL                twlFlg;
-
+    BOOL                debuggerFlg;
+	BOOL				illegalCardFlg;
+    BOOL				isLoadTypeTwl;
+    
     u32                 romStatus;
 
     u32                 keyBuf[KEY_BUF_SIZE];
+    u32					keyBuf2[KEY_BUF_SIZE];
 
     CardTypeEx          cardType;
    	ModeType			modeType;
