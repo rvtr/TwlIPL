@@ -42,7 +42,7 @@ void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs )
 	// AES有効？
 	if( !hs->enable_aes )
 	{
-		OS_TPrintf( "SYSM_StartDecryptAESRegion:AES disabled.\n" );
+		OS_TPrintf( "SYSM_StartDecryptAESRegion(arm9):AES disabled.\n" );
 		return;
 	}
 	
@@ -108,7 +108,7 @@ void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs )
 	if(region_addr[0] == NULL && region_addr[1] == NULL)
 	{
 		// ターゲット１も２も存在しないor設定オフセットがおかしい
-		OS_TPrintf( "SYSM_StartDecryptAESRegion:No targets.\n" );
+		OS_TPrintf( "SYSM_StartDecryptAESRegion(arm9):No targets.\n" );
 		return;
 	}
 
@@ -133,7 +133,7 @@ void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs )
 	s_finished = FALSE;
 	while( PXI_SendWordByFifo(PXI_FIFO_TAG_DECRYPTAES, 0, FALSE) != PXI_FIFO_SUCCESS )
     {
-    	OS_TPrintf( "SYSM_StartDecryptAESRegion:ARM9 PXI send error.\n" );
+    	OS_TPrintf( "SYSM_StartDecryptAESRegion(arm9):ARM9 PXI send error.\n" );
     }
     
 	// ARM7からの完了通知を受け取って完了
@@ -142,7 +142,7 @@ void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs )
 		OS_WaitAnyIrq();
 	}
 	
-	OS_TPrintf( "SYSM_StartDecryptAESRegion:AES decryption succeed.\n" );
+	OS_TPrintf( "SYSM_StartDecryptAESRegion(arm9):AES decryption finished.\n" );
 }
 
 #else //SDK_ARM7
@@ -208,7 +208,7 @@ static void SYSMi_CallbackDecryptAESRegion(PXIFifoTag tag, u32 data, BOOL err)
     {
 		if( SYSMi_GetWork()->addr_AESregion[l]==NULL )
 		{
-    		OS_TPrintf( "SYSM_StartDecryptAESRegion:Region %d skip.\n", l );
+    		OS_TPrintf( "SYSM_StartDecryptAESRegion(arm7):Region %d skip.\n", (l+1) );
 			continue;
 		}
 		
@@ -217,6 +217,7 @@ static void SYSMi_CallbackDecryptAESRegion(PXIFifoTag tag, u32 data, BOOL err)
 		
 		// 鍵ロードして暗号化領域の復号開始
 		ReplaceWithAes( SYSMi_GetWork()->addr_AESregion[l], SYSMi_GetWork()->size_AESregion[l] );
+    	OS_TPrintf( "SYSM_StartDecryptAESRegion(arm7):Region %d decryption finished.\n", (l+1) );
 		// DMA転送なのでARM9のためのキャッシュフラッシュは不要のはず
 		// もうARM7側でも再配置まで触らないのでキャッシュ破棄する必要もないはず
 	}
@@ -224,7 +225,7 @@ static void SYSMi_CallbackDecryptAESRegion(PXIFifoTag tag, u32 data, BOOL err)
 	// ARM9に完了通知
 	while( PXI_SendWordByFifo(PXI_FIFO_TAG_DECRYPTAES, 0, FALSE) != PXI_FIFO_SUCCESS )
     {
-    	OS_TPrintf( "SYSM_StartDecryptAESRegion:ARM7 PXI send error.\n" );
+    	OS_TPrintf( "SYSM_StartDecryptAESRegion(arm7):ARM7 PXI send error.\n" );
     }
 	
 #endif //ifdef SDK_ARM9
