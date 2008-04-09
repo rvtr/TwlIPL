@@ -663,10 +663,22 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 // #define LNC_PDTKEY_DBG
 #ifdef LNC_PDTKEY_DBG
 		{
-			// デバグ用コード
-			// 製品版鍵取得
-			key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[keynum];
-			b_dev = TRUE; // 開発版のスルーフラグ
+			// 注：デバグ用コード。
+			// 開発用TSボードで開発版ROMおよび製品版ROMの署名チェックとAESデクリプトをデバグするためのコード
+			if( head->s.developer_encrypt )
+			{
+				// 開発版鍵取得
+				key = g_devPubKey[keynum];
+			}else
+			{
+				// 製品版鍵取得
+				key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[keynum];
+			}
+			// デバッガが有効でTLF読み込みならば、ハッシュチェックスルーフラグを立てる
+			if(SYSMi_GetWork()->flags.hotsw.isOnDebugger && SYSMi_GetWork()->romEmuInfo.isTlfRom )
+			{
+				b_dev = TRUE;
+			}
 		}
 #else
 	    if( SCFG_GetBondingOption() == 0 ) {
