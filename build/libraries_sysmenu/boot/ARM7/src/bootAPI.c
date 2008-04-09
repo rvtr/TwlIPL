@@ -34,11 +34,10 @@
 #define MAINP_SEND_IF		0x2000
 #define reg_MI_MC_SWP		(*(REGType8v *) ( REG_MC1_ADDR + 1 ) )
 
-#define PRE_CLEAR_NUM_MAX		(5*2)
+#define PRE_CLEAR_NUM_MAX		(6*2)
 #define COPY_NUM_MAX			(5*3)
 #define POST_CLEAR_NUM_MAX		(12 + 6*2)
 
-#define CLRLIST_OWN_ARM7_WRAM_SIZE_IDX		1
 #define CLRLIST_REBOOT_STACK_PAD_SIZE_IDX	(2*3+1)
 
 // extern data-------------------------------------------------------
@@ -221,11 +220,12 @@ BOOL BOOT_WaitStart( void )
 			static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + 2 + POST_CLEAR_NUM_MAX + 1] = 
 			{
 				// pre clear
-				SYSM_OWN_ARM7_WRAM_ADDR, NULL, // SYSM_OWN_ARM7_WRAM_ADDR（SDK_AUTOLOAD_WRAM_START）はリンカから与えられるので定数でない
+				HW_WRAM_B_OR_C_MIRROR,   SYSM_OWN_ARM7_WRAM_ADDR_END - HW_WRAM_B_OR_C_MIRROR, // SYSM_OWN_ARM7_WRAM_ADDRとHW_WRAM_Bをまとめてクリア
 				SYSM_OWN_ARM7_MMEM_ADDR, SYSM_OWN_ARM7_MMEM_ADDR_END - SYSM_OWN_ARM7_MMEM_ADDR,
 				SYSM_OWN_ARM9_MMEM_ADDR, SYSM_OWN_ARM9_MMEM_ADDR_END - SYSM_OWN_ARM9_MMEM_ADDR,
 				OS_BOOT_CODE_BUF_END, 1,     // REBOOTコアコードとスタックの隙間サイズはメモリリスト完成後に差し替える（NULLではREBOOT_GetCoreStackSizeが失敗する）
 				HW_WRAM_BASE, HW_WRAM_SIZE,  // 共有WRAM　　Launcherの特殊配置なので、BASEからサイズぶん
+				HW_WRAM_C, HW_WRAM_C_SIZE,
 				NULL,
 				// copy forward
 				NULL,
@@ -234,8 +234,6 @@ BOOL BOOT_WaitStart( void )
 				// post clear
 				NULL,
 			};
-			
-			mem_list[CLRLIST_OWN_ARM7_WRAM_SIZE_IDX] = SYSM_OWN_ARM7_WRAM_ADDR_END - SYSM_OWN_ARM7_WRAM_ADDR;
 			
 			// copy forwardリスト設定
 			mem_list[list_count++] = SYSM_TWL_MOUNT_INFO_TMP_BUFFER;
