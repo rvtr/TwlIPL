@@ -72,7 +72,7 @@ static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfoEx
 ( u32 *dest, u32 length, RomSegmentRange default_region, u32 *check_dest, Relocate_Info *info )
 {
 	u32 ori_len = length;
-	length = MATH_ROUNDUP( length, 16 );// AES暗号化領域の関係で、再配置必要性のチェックに使うlengthは16バイトアライメントに補正
+	length = MATH_ROUNDUP( length, SYSM_ALIGNMENT_LOAD_MODULE );// AES暗号化領域の関係で、再配置必要性のチェックに使うlengthは32バイトアライメントに補正
 	MI_CpuClearFast( info, sizeof(Relocate_Info) );
 	if( default_region.end - default_region.start < length ) return FALSE;// サイズオーバー
 	if( !( default_region.start <= *dest && *dest + length <= default_region.end ) )

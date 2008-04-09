@@ -483,7 +483,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 
         for (i = region_header; i < region_max; ++i)
         {
-            u32 len = MATH_ROUNDUP( length[i], 16 );// AES暗号化領域の関係で、ロードサイズは16バイトアライメントに補正
+            u32 len = MATH_ROUNDUP( length[i], SYSM_ALIGNMENT_LOAD_MODULE );// AES暗号化領域の関係で、ロードサイズは32バイトアライメントに補正
             
             if ( !isTwlApp && i >= region_arm9_twl ) continue;// nitroでは読み込まない領域
 
@@ -675,7 +675,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 	    }else {
 			// 開発版
 			key = g_devPubKey[keynum];
-			// デバッガが有効ならば、ハッシュチェックスルーフラグを立てる
+			// デバッガが有効でTLF読み込みならば、ハッシュチェックスルーフラグを立てる
 			if(SYSMi_GetWork()->flags.hotsw.isOnDebugger && SYSMi_GetWork()->romEmuInfo.isTlfRom )
 			{
 				b_dev = TRUE;
