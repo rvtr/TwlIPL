@@ -106,10 +106,10 @@ void BOOT_Ready( void )
     }
 	
 	// NTRモード起動でない場合は、LCFG関連データをメモリに展開
-	if( !isNtrMode ) {
+/*	if( !isNtrMode ) {
 		BOOTi_CopyLCFGData();
 	}
-	
+*/	
     // WRAMの配置
     {
         MIHeader_WramRegs *pWRAMREGS = (MIHeader_WramRegs *)th->s.main_wram_config_data;
@@ -207,7 +207,7 @@ static void BOOTi_ClearREG_RAM( void )
 	// レジスタクリアは基本的に OS_Boot で行う
 }
 
-
+/*
 // LCFG関連データをメインメモリ先頭の予約領域にコピーする
 static void BOOTi_CopyLCFGData( void )
 {
@@ -223,4 +223,4 @@ static void BOOTi_CopyLCFGData( void )
 		MI_CpuClearFast( &pSettings->parental, sizeof(LCFGTWLParentalControl) );
 	}
 }
-
+*/

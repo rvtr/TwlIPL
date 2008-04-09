@@ -27,6 +27,7 @@
 extern void LCFG_VerifyAndRecoveryNTRSettings( void );
 
 // function's prototype-------------------------------------------------------
+static void SYSMi_CopyLCFGData( void );
 static TitleProperty *SYSMi_CheckDebuggerBannerViewModeBoot( void );
 static TitleProperty *SYSMi_CheckShortcutBoot1( void );
 static TitleProperty *SYSMi_CheckShortcutBoot2( void );
@@ -100,7 +101,7 @@ void SYSM_SetAllocFunc( void *(*pAlloc)(u32), void (*pFree)(void*) )
 void *SYSM_Alloc( u32 size )
 {
     void *p = SYSMi_Alloc( size );
-    OS_TPrintf( "SYSM_Alloc : %08x  %xbytes\n", p, size );
+    OS_TPrintf( "SYSM_Alloc : 0x%08x  0x%xbytes\n", p, size );
     return p;
 }
 
@@ -108,7 +109,7 @@ void *SYSM_Alloc( u32 size )
 // メモリFree
 void SYSM_Free( void *ptr )
 {
-    OS_TPrintf( "SYSM_Free  : %08x\n", ptr );
+    OS_TPrintf( "SYSM_Free  : 0x%08x\n", ptr );
     SYSMi_Free( ptr );
 }
 
@@ -167,7 +168,38 @@ TitleProperty *SYSM_ReadParameters( void )
 		}
 	    LCFG_VerifyAndRecoveryNTRSettings();  		                          	// NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
     }
-
+	
+    //-----------------------------------------------------
+    // システム領域に本体設定などをコピー
+    //-----------------------------------------------------
+	// NTRカードアプリARM9コードのロード領域とメモリがかち合うが、先頭0x4000はセキュア領域で別バッファに格納されるので、
+	// ここでこれらのパラメータをロードしても大丈夫。
+	SYSMi_CopyLCFGData();
+	
+    //-----------------------------------------------------
+    // 無線ON/OFFフラグをもとに、LEDを設定する。
+    //-----------------------------------------------------
+/*	{
+		BOOL enable;
+		if( LCFG_THW_IsForceDisableWireless() ) {
+			enable = FALSE;
+			// 本体設定の無線有効フラグがTRUEの時は強制FALSEにしてファイル更新
+			if( LCFG_TSD_IsAvailableWireless() ) {
+		        u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
+        		if( pBuffer ) {
+					LCFG_TSD_SetFlagAvailableWireless( FALSE );
+					LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ])pBuffer );
+		            SYSM_Free( pBuffer );
+				}else {
+			        SYSM_SetFatalError( TRUE );
+				}
+			}
+		}else {
+			enable = LCFG_TSD_IsAvailableWireless();
+		}
+		SYSMi_SetWirelessLED( enable );
+	}
+*/	
     //-----------------------------------------------------
     // 各種デバイス設定
     //-----------------------------------------------------
@@ -262,6 +294,25 @@ TitleProperty *SYSM_ReadParameters( void )
     return pBootTitle;
 }
 
+
+// 本体設定データなどのメモリ展開。
+static void SYSMi_CopyLCFGData( void )
+{
+	// 本体設定データ、HWノーマル情報、HWセキュア情報をメモリに展開しておく
+	MI_CpuCopyFast( LCFGi_GetTSD(), (void *)HW_PARAM_TWL_SETTINGS_DATA, sizeof(LCFGTWLSettingsData) );
+	MI_CpuCopyFast( LCFGi_GetHWN(), (void *)HW_PARAM_TWL_HW_NORMAL_INFO, sizeof(LCFGTWLHWNormalInfo) );
+	MI_CpuCopyFast( LCFGi_GetHWS(), (void *)HW_HW_SECURE_INFO, HW_HW_SECURE_INFO_END - HW_HW_SECURE_INFO );
+	
+	// 本体設定データの不要部分をクリアしておく
+	{
+		LCFGTWLSettingsData *pSettings = (LCFGTWLSettingsData *)HW_PARAM_TWL_SETTINGS_DATA;
+		MI_CpuClear32( &pSettings->launcherStatus, sizeof(LCFGTWLLauncherStatus) );
+		MI_CpuClearFast( &pSettings->parental, sizeof(LCFGTWLParentalControl) );
+	}
+}
+
+
+
 BOOL SYSM_IsLauncherHidden( void )
 {
 #ifdef DO_NOT_SHOW_LAUNCHER
@@ -270,6 +321,7 @@ BOOL SYSM_IsLauncherHidden( void )
 	return FALSE;
 #endif
 }
+
 
 static TitleProperty *SYSMi_CheckDebuggerBannerViewModeBoot( void )
 {

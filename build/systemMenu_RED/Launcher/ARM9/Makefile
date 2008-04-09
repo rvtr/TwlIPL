@@ -17,11 +17,11 @@
 #----------------------------------------------------------------------------
 
 SUBDIRS					=	\
-#							../../../libraries_sysmenu/sysmenu \
+							../../../libraries_sysmenu/sysmenu \
+							../../../libraries_sysmenu/boot \
+							../../../components/hyena.TWL
 #							../../../libraries_sysmenu/hotsw \
-#							../../../components/hyena.TWL
 #							../../../libraries_sysmenu/reloc_info \
-#							../../../libraries_sysmenu/boot \
 #							../../../libraries_sysmenu/mcu \
 #							../../../libraries_sysmenu/ds \
 #							$(ROOT)/build/libraries/reboot \

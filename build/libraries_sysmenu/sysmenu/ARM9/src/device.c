@@ -45,7 +45,7 @@ static u8 s_brightness;
 // 輝度取得で呼ぶSYSM_ReadMcuRegisterAsyncのコールバック
 static OSThreadQueue s_callback_queue;
 static SYSMMcuResult s_callback_result;
-static void BackLightBlightnessCallBack( SYSMMcuResult result, void *arg )
+static void MCUCallBack( SYSMMcuResult result, void *arg )
 {
 #pragma unused(arg)
 	s_callback_result = result;
@@ -69,7 +69,7 @@ u8 SYSM_GetBackLightBlightness( void )
 		while( 1 )
 		{
 			// BUSYだと失敗するので成功するまでトライ
-			if ( MCU_RESULT_SUCCESS == SYSM_ReadMcuRegisterAsync( MCU_REG_BL_ADDR, &brightness, BackLightBlightnessCallBack, NULL ) )
+			if ( MCU_RESULT_SUCCESS == SYSM_ReadMcuRegisterAsync( MCU_REG_BL_ADDR, &brightness, MCUCallBack, NULL ) )
 			{
 				OS_SleepThread( &s_callback_queue ); // 値が返ってくるまでスリープ
 				break;
@@ -107,6 +107,34 @@ void SYSM_SetBackLightBrightness( u8 brightness )
 		}
 	}
 	
+}
+
+
+// ワイヤレスLEDの制御
+void SYSMi_SetWirelessLED( BOOL enable )
+{
+	u8 value;
+	// X3以降
+	while( 1 )
+	{
+		// BUSYだと失敗するので成功するまでトライ
+		if ( MCU_RESULT_SUCCESS == SYSM_ReadMcuRegisterAsync( MCU_REG_WIFI_ADDR, &value, MCUCallBack, NULL ) )
+		{
+			OS_SleepThread( &s_callback_queue ); // 値が返ってくるまでスリープ
+			break;
+		}
+	}
+	
+	value = (u8)( ( value & ~MCU_REG_WIFI_LED_MASK ) | ( enable ? MCU_REG_WIFI_LED_MASK : 0 ) );
+	
+	while( 1 )
+	{
+		// BUSYだと失敗するので成功するまでトライ
+		if ( MCU_RESULT_SUCCESS == SYSM_WriteMcuRegisterAsync( MCU_REG_WIFI_ADDR, value, NULL, NULL ) )
+		{
+			break;
+		}
+	}
 }
 
 
