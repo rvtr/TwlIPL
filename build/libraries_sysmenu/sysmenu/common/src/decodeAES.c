@@ -85,8 +85,9 @@ void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs )
 		}
 		for( l=0; l<4; l++ )
 		{
+			// モジュール配置先の領域（サイズは32バイト単位に補正）に、復号指定領域が含まれているか？
 			if( module_offset[l] <= region_offset[m] &&
-				region_offset[m] < module_offset[l] + module_size[l] )
+				region_offset[m] + region_size[m] <= module_offset[l] + MATH_ROUNDUP( module_size[l], SYSM_ALIGNMENT_LOAD_MODULE ) )
 			{
 				region_addr[m] = (void *)( (u32)module_addr[l] + (region_offset[m] - module_offset[l]) );
 				break;

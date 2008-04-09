@@ -701,6 +701,10 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		{
 			OS_TPrintf("Authenticate : Sign check succeed. %dms.\n", OS_TicksToMilliSeconds(OS_GetTick() - prev));
 		}
+		
+		// TWL以降のアプリはモジュールの特定領域がAES暗号化されているので、ハッシュチェック前にデクリプトする必要がある。
+		// ヘッダのデータを使うので、署名チェック後が望ましい。よってこのタイミング。
+		SYSM_StartDecryptAESRegion( &(head->s) );
 	    
 		// それぞれARM9,7のFLXおよびLTDについてハッシュを計算してヘッダに格納されているハッシュと比較
 		module_addr[ARM9_STATIC] = head->s.main_ram_address;
@@ -887,10 +891,6 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 	if( hs->platform_code & PLATFORM_CODE_FLAG_TWL )
 	{
 		// TWLアプリ
-		
-		// TWLアプリの場合はAES暗号化されている部分をデクリプトする
-		SYSM_StartDecryptAESRegion( hs );
-		
 		// 認証処理
 		switch( pBootTitle->flags.bootType )
 		{
