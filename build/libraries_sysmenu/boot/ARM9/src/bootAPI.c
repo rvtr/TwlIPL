@@ -17,6 +17,7 @@
 
 #include <twl.h>
 #include <twl/camera.h>
+#include <twl/dsp.h>
 #include <twl/os/common/format_rom.h>
 #include <sysmenu.h>
 #include <sysmenu/hotsw.h>
@@ -29,10 +30,6 @@
 
 // define data-------------------------------------------------------
 #define SUBP_RECV_IF_ENABLE     0x4000
-
-#define C1_DTCM_ENABLE          0x00010000      // データＴＣＭ イネーブル
-#define C1_EXCEPT_VEC_UPPER     0x00002000      // 例外ベクタ 上位アドレス（こちらに設定して下さい）
-#define C1_SB1_BITSET           0x00000078      // レジスタ１用１固定ビット列（後期アボートモデル、DATA32構成シグナル制御、PROG32構成シグナル制御、ライトバッファイネーブル）
 
 // extern data-------------------------------------------------------
 
@@ -116,6 +113,18 @@ void BOOT_Ready( void )
         reg_GX_VRAMCNT_C    = pWRAMREGS->main_vrambnk_c;
         reg_GX_VRAMCNT_D    = pWRAMREGS->main_vrambnk_d;
         // WRAM0/1の最終配置はOS_Bootで行う
+
+        // DSP停止
+        DSP_ResetOn();     			// DSPブロック初期化
+        DSP_ResetInterfaceCore();   // DSP-A9IFの初期化
+        DSP_PowerOff();    			// DSPをOFF
+
+        // TWL拡張WRAM
+        // ARM7のrebootでクリア
+        MI_SwitchWram_B(MI_WRAM_DSP,  MI_WRAM_ARM7);
+        MI_SwitchWram_B(MI_WRAM_ARM9, MI_WRAM_ARM7);
+        MI_SwitchWram_C(MI_WRAM_DSP,  MI_WRAM_ARM7);
+        MI_SwitchWram_C(MI_WRAM_ARM9, MI_WRAM_ARM7);
     }
 
     // SDK共通リブート
