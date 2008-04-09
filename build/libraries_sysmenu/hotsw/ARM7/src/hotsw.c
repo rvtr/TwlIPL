@@ -55,6 +55,7 @@
 static BOOL IsSwap(void);
 static u32 GetMcSlotShift(void);
 static u32 GetMcSlotMask(void);
+static u32 GetMcSlotMode(void);
 static void SetMcSlotMode(u32 mode);
 static BOOL CmpMcSlotMode(u32 mode);
 
@@ -671,21 +672,23 @@ void* HOTSW_GetRomEmulationBuffer(void)
 	return &s_romEmuInfo;
 }
 
-/* -----------------------------------------------------------------
- * HOTSWi_IsRunOnDebugger関数
- *
- * ISデバッガ上で動作しているか？
- * ----------------------------------------------------------------- */
+
+/*---------------------------------------------------------------------------*
+  Name:         HOTSWi_IsRunOnDebugger
+
+  Description:  ISデバッガ上で動作しているか？
+ *---------------------------------------------------------------------------*/
 BOOL HOTSWi_IsRunOnDebugger(void)
 {
 	return debuggerFlg;
 }
 
-/* -----------------------------------------------------------------
- * HOTSWi_IsRomEmulation関数
- *
- * ROMをエミュレーションしているか？
- * ----------------------------------------------------------------- */
+
+/*---------------------------------------------------------------------------*
+  Name:         HOTSWi_IsRomEmulation
+
+  Description:  ROMをエミュレーションしているか？
+ *---------------------------------------------------------------------------*/
 BOOL HOTSWi_IsRomEmulation(void)
 {
 	return debuggerFlg &&
@@ -696,13 +699,14 @@ BOOL HOTSWi_IsRomEmulation(void)
 #endif
 }
 
-/* -----------------------------------------------------------------
- * LoadBannerData関数
- *
- * バナーデータを読み込む
- * 
- * 注：一度カードブートしてゲームモードになってから呼び出してください
- * ----------------------------------------------------------------- */
+
+/*---------------------------------------------------------------------------*
+  Name:         LoadBannerData
+
+  Description:  バナーデータを読み込む
+
+  注：ゲームモードになってから呼び出してください
+ *---------------------------------------------------------------------------*/
 static HotSwState LoadBannerData(void)
 {
     BOOL state;
@@ -895,13 +899,14 @@ static HotSwState CheckCardAuthCode(void)
     return retval;
 }
 
-/* -----------------------------------------------------------------
- * HOTSW_SetBootSegmentBuffer関数
- *
- * Boot Segment バッファの指定
- *
- * 注：カードブート処理中は呼び出さないようにする
- * ----------------------------------------------------------------- */
+
+/*---------------------------------------------------------------------------*
+  Name:         HOTSW_SetBootSegmentBuffer
+
+  Description:  Boot Segment バッファの指定
+
+  注：カードブート処理中は呼び出さないようにする
+ *---------------------------------------------------------------------------*/
 void HOTSW_SetBootSegmentBuffer(void* buf, u32 size)
 {
 	SDK_ASSERT(size > BOOT_SEGMENT_SIZE);
@@ -915,13 +920,14 @@ void HOTSW_SetBootSegmentBuffer(void* buf, u32 size)
     MI_CpuClear8(s_pBootSegBuffer, size);
 }
 
-/* -----------------------------------------------------------------
- * HOTSW_SetSecureSegmentBuffer関数
- *
- * Secure Segment バッファの指定
- * 
- * 注：カードブート処理中は呼び出さないようにする
- * ----------------------------------------------------------------- */
+
+/*---------------------------------------------------------------------------*
+  Name:         HOTSW_SetSecureSegmentBuffer
+
+  Description:  Secure Segment バッファの指定
+
+  注：カードブート処理中は呼び出さないようにする
+ *---------------------------------------------------------------------------*/
 void HOTSW_SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size)
 {
     SDK_ASSERT(size > SECURE_SEGMENT_SIZE);
@@ -1044,11 +1050,12 @@ static HotSwState DecryptObjectFile(void)
     return retval;
 }
 
-/* -----------------------------------------------------------------
- * LockHotSwRsc関数
- *
- * 共有ワークのリソースの排他制御用　lockを行う
- * ----------------------------------------------------------------- */
+
+/*---------------------------------------------------------------------------*
+  Name:         LockHotSwRsc
+
+  Description:  共有ワークのリソースの排他制御用　lockを行う
+ *---------------------------------------------------------------------------*/
 static void LockHotSwRsc(OSLockWord* word)
 {
     while(OS_TryLockByWord( s_RscLockID, word, NULL ) != OS_LOCK_SUCCESS){
@@ -1184,6 +1191,21 @@ static BOOL CmpMcSlotMode(u32 mode)
 
 
 /*---------------------------------------------------------------------------*
+  Name:         GetMcSlotMode
+
+  Description:  スロットの現在のモードを返す
+ *---------------------------------------------------------------------------*/
+static u32 GetMcSlotMode(void)
+{
+#ifndef DEBUG_USED_CARD_SLOT_B_
+    return (reg_MI_MC1 & GetMcSlotMask()) >> GetMcSlotShift();
+#else
+    return (reg_MI_MC1 & GetMcSlotMask()) << GetMcSlotShift();
+#endif
+}
+
+
+/*---------------------------------------------------------------------------*
   Name:		   McPowerOn
 
   Description: スロット電源ON
@@ -1198,7 +1220,7 @@ static void McPowerOn(void)
     if(CmpMcSlotMode(SLOT_STATUS_MODE_00) == TRUE){
 		// [TODO:]待ち時間は暫定値。金子さんに数値を測定してもらう。
         // VDDの安定期間待ち
-//		OS_Sleep(100);
+		OS_Sleep(100);
         
     	// SCFG_MC1 の Slot Status の M1,M0 を 01 にする
     	SetMcSlotMode(SLOT_STATUS_MODE_01);
@@ -1244,6 +1266,7 @@ static void McPowerOff(void)
         }
     }
 }
+
 
 /*---------------------------------------------------------------------------*
   Name:         HOTSWi_TurnCardPowerOn
@@ -1291,6 +1314,7 @@ void HOTSWi_TurnCardPowerOn(u32 slot)
     }
 }
 
+
 /*---------------------------------------------------------------------------*
   Name:         SetMCSCR
   
@@ -1321,6 +1345,7 @@ static void SetMCSCR(void)
 	// MCCNT1 レジスタ設定 (SCR = 1に)
     reg_HOTSW_MCCNT1 = SCR_MASK;
 }
+
 
 /*---------------------------------------------------------------------------*
   Name:		   McThread
@@ -1444,6 +1469,7 @@ static void McThread(void *arg)
 		SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
     } // while loop
 }
+
 
 /*---------------------------------------------------------------------------*
   Name:			InterruptCallbackCard
@@ -1774,6 +1800,11 @@ static BOOL CheckExtArm9HashValue(void)
 
 	return SVC_CompareSHA1( sha1data, s_cbData.pBootSegBuf->rh.s.main_ltd_static_digest );
 }
+
+
+
+
+
 
 // **************************************************************************
 //
