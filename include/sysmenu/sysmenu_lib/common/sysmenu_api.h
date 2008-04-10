@@ -92,6 +92,8 @@ extern TitleProperty *SYSM_ReadParameters( void );								// –{‘Ìİ’èƒf[ƒ^Aƒ‰ƒ
 
 // ƒAƒvƒŠî•ñæ“¾
 extern int  SYSM_GetCardTitleList( TitleProperty *pTitleList_Card );			// ƒJ[ƒhƒAƒvƒŠƒ^ƒCƒgƒ‹ƒŠƒXƒg‚Ìæ“¾
+extern BOOL SYSM_InitNandTitleList( void );										// NANDƒAƒvƒŠƒ^ƒCƒgƒ‹ƒŠƒXƒgæ“¾€”õ
+extern void SYSM_FreeNandTitleList( void );										// NANDƒAƒvƒŠƒ^ƒCƒgƒ‹ƒŠƒXƒg
 extern int  SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size );	// NAND  ƒAƒvƒŠƒ^ƒCƒgƒ‹ƒŠƒXƒg‚Ìæ“¾
 
 // ƒAƒvƒŠ‹N“®
@@ -99,9 +101,7 @@ extern void SYSM_StartLoadTitle( TitleProperty *pBootTitle );					// w’è‚µ‚½Tit
 extern BOOL SYSM_IsLoadTitleFinished( void );									// SYSM_StartLoadTitle‚Å‹N“®‚µ‚½ƒXƒŒƒbƒh‚ªI—¹‚µ‚½‚©‚Ç‚¤‚©‚ğŠm”F
 extern void SYSM_StartAuthenticateTitle( TitleProperty *pBootTitle );			// w’è‚µ‚½TitleProperty‚ğ•ÊƒXƒŒƒbƒh‚ÅŒŸØŠJn
 extern BOOL SYSM_IsAuthenticateTitleFinished( void );							// SYSM_StartAuthenticateTitle‚Å‹N“®‚µ‚½ƒXƒŒƒbƒh‚ªI—¹‚µ‚½‚©‚Ç‚¤‚©‚ğŠm”F
-extern AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle, TitleProperty *pTitleList );
-																				// pBootTitle‚Åw’è‚µ‚½ƒ^ƒCƒgƒ‹‚ğƒu[ƒg
-																				// ¬Œ÷‚ÍAnever return.
+extern AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle );				// pBootTitle‚Åw’è‚µ‚½ƒ^ƒCƒgƒ‹‚ğƒu[ƒgB¬Œ÷‚ÍAnever return.
 extern void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs );					// ‹N“®‚·‚éROM‚ÌAESˆÃ†‰»—Ìˆæ‚ÌƒfƒNƒŠƒvƒgŠJn
 
 // ƒfƒoƒCƒX§Œä

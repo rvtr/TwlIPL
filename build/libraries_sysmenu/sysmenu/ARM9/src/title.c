@@ -59,7 +59,7 @@ static void SYSMi_EnableHotSW( BOOL enable );
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle );
 static void SYSMi_Relocate( void );
 static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle );
-static void SYSMi_makeTitleIdList( TitleProperty *pTitleList );
+static void SYSMi_makeTitleIdList( void );
 
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
@@ -71,6 +71,9 @@ static AuthResult		s_authResult = AUTH_RESULT_PROCESSING;	// ROM検証結果
 static MbAuthCode s_authcode;
 
 static BOOL				s_loadstart = FALSE;
+
+static NAMTitleId *s_pTitleIDList = NULL;
+static int s_listLength = 0;
 
 // const data------------------------------------------------------------------
 static const OSBootType s_launcherToOSBootType[ LAUNCHER_BOOTTYPE_MAX ] = {
@@ -221,51 +224,70 @@ BOOL SYSMi_CopyCardBanner( void )
 	return retval;
 }
 
-// NANDタイトルリストの取得
-// listNumにはカード部分も含めたリストの長さを与える
+// インポートされているすべてのNANDアプリを列挙したリストの準備
+// SYSM_GetNandTitleListおよびSYSM_TryToBootTitle前に呼ぶ必要あり
+BOOL SYSM_InitNandTitleList( void )
+{
+	OSTick start;
+
+	if( s_pTitleIDList != NULL ) return TRUE;
+
+	// インポートされているタイトルの取得
+	start = OS_GetTick();
+	s_listLength = NAM_GetNumTitles();
+	OS_TPrintf( "NAM_GetNumTitles : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+	s_pTitleIDList = SYSM_Alloc( sizeof(NAMTitleId) * s_listLength );
+	if( s_pTitleIDList == NULL ) {
+		OS_TPrintf( "%s: alloc error.\n", __FUNCTION__ );
+		return FALSE;
+	}
+	start = OS_GetTick();
+	(void)NAM_GetTitleList( s_pTitleIDList, (u32)s_listLength );
+	OS_TPrintf( "NAM_GetTitleList : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+	
+	return TRUE;
+}
+
+// NANDアプリリストの解放
+void SYSM_FreeNandTitleList( void )
+{
+	if(s_pTitleIDList != NULL)
+	{
+		SYSM_Free( s_pTitleIDList );
+		s_pTitleIDList = NULL;
+	}
+}
+
+// ローンチ対象となるNANDタイトルリストの取得
+// listNumには、pTitleList_Nandの長さを与える
+// 得られる最大のタイトル数は、(LAUNCHER_TITLE_LIST_NUM - 1)に制限される（ランチャーが表示できる最大数からカードぶんを引いた数）
 // return:取得したNANDタイトルの数
 int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 {
 															// filter_flag : ALL, ALL_APP, SYS_APP, USER_APP, Data only, 等の条件を指定してタイトルリストを取得する。
 	// とりあえずALL
-	OSTick start;
 	int l;
-	int getNum;
 	int validNum = 0;
-	NAMTitleId titleIDArray[ LAUNCHER_TITLE_LIST_NUM ];
-	NAMTitleId *pTitleIDList = NULL;
+	NAMTitleId titleIDArray[ LAUNCHER_TITLE_LIST_NUM - 1 ];// ローンチ可能なタイトルリストの一時置き場
 	
-	
-	if( listNum > LAUNCHER_TITLE_LIST_NUM ) {
-		OS_TPrintf( "Warning: TitleList_Nand num over LAUNCHER_TITLE_LIST_NUM(%d)\n", LAUNCHER_TITLE_LIST_NUM );
-	}
-	
-	// インストールされているタイトルの取得
-	start = OS_GetTick();
-	getNum = NAM_GetNumTitles();
-	OS_TPrintf( "NAM_GetNumTitles : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
-	pTitleIDList = SYSM_Alloc( sizeof(NAMTitleId) * getNum );
-	if( pTitleIDList == NULL ) {
-		OS_TPrintf( "%s: alloc error.\n", __FUNCTION__ );
-		return 0;
-	}
-	start = OS_GetTick();
-	(void)NAM_GetTitleList( pTitleIDList, (u32)getNum );
-	OS_TPrintf( "NAM_GetTitleList : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+	if( s_pTitleIDList == NULL ) return -1;
 	
 	// 取得したタイトルがローンチ対象かどうかをチェック
-	for( l = 0; l < getNum; l++ ) {
+	for( l = 0; l < s_listLength; l++ ) {
 		// "Not Launch"でない　かつ　"Data Only"でない　なら有効なタイトルとしてリストに追加
-		if( ( pTitleIDList[ l ] & ( TITLE_ID_NOT_LAUNCH_FLAG_MASK | TITLE_ID_DATA_ONLY_FLAG_MASK ) ) == 0 ) {
-			titleIDArray[ validNum ] = pTitleIDList[ l ];
-			SYSMi_ReadBanner_NAND( pTitleIDList[ l ], &s_bannerBuf[ validNum ] );
+		if( ( s_pTitleIDList[ l ] & ( TITLE_ID_NOT_LAUNCH_FLAG_MASK | TITLE_ID_DATA_ONLY_FLAG_MASK ) ) == 0 ) {
+			titleIDArray[ validNum ] = s_pTitleIDList[ l ];
+			SYSMi_ReadBanner_NAND( s_pTitleIDList[ l ], &s_bannerBuf[ validNum ] );
 			validNum++;
+			if( !( validNum < LAUNCHER_TITLE_LIST_NUM - 1 ) )// 最大(LAUNCHER_TITLE_LIST_NUM - 1)まで
+			{
+				break;
+			}
 		}
 	}
-	SYSM_Free( pTitleIDList );
 	
 	// 念のため残り領域を0クリア
-	for( l = validNum; l < LAUNCHER_TITLE_LIST_NUM; l++ ) {
+	for( l = validNum; l < LAUNCHER_TITLE_LIST_NUM - 1; l++ ) {
 		titleIDArray[ l ] = 0;
 	}
 	
@@ -274,6 +296,7 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 	
 	listNum--; // カードのぶん引いておく
 	
+	// 引数に与えられたリストの長さ-1 と、ローンチ可能タイトルリストの長さの比較
 	listNum = ( validNum < listNum ) ? validNum : listNum;
 	
 	for(l=0;l<listNum;l++)
@@ -1019,7 +1042,7 @@ BOOL SYSM_IsAuthenticateTitleFinished( void )
 }
 
 // ロード済みの指定タイトルの認証とブートを行う
-AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle, TitleProperty *pTitleList )
+AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 {
 	if(s_authResult != AUTH_RESULT_SUCCEEDED)
 	{
@@ -1045,7 +1068,8 @@ AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle, TitleProperty *pTitle
 	( (OSBootInfo *)OS_GetBootInfo() )->boot_type = s_launcherToOSBootType[ pBootTitle->flags.bootType ];
 	
 	// タイトルIDリストの作成
-	SYSMi_makeTitleIdList( pTitleList );
+	SYSMi_makeTitleIdList();
+	SYSM_FreeNandTitleList();
 	
 	BOOT_Ready();	// never return.
 	
@@ -1053,15 +1077,20 @@ AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle, TitleProperty *pTitle
 }
 
 // タイトルIDリストの作成
-static void SYSMi_makeTitleIdList( TitleProperty *pTitleList )
+static void SYSMi_makeTitleIdList( void )
 {
-	// [TODO:]現在ランチャーで表示できるタイトル（ブート可能タイトル）のみ
-	// リストに入れるようになっているが
-	// ブート不可タイトルについても対応する必要あり？（特にセキュアアプリの場合）
+	// [TODO:]現在ブート不可タイトルについても入れるようにしているが
+	// これで良いのか？
 	OSTitleIDList *list = ( OSTitleIDList * )HW_OS_TITLE_ID_LIST;
 	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BUF;
 	int l;
 	u8 count = 0;
+	
+	if( s_pTitleIDList == NULL )
+	{
+		OS_TPrintf("SYSMi_makeTitleIdList failed: SYSM_InitNandTitleList() is not called.\n");
+		return;
+	}
 	
 	// とりあえずゼロクリア
 	MI_CpuClear8( (void *)HW_OS_TITLE_ID_LIST, HW_OS_TITLE_ID_LIST_SIZE );
@@ -1071,17 +1100,8 @@ static void SYSMi_makeTitleIdList( TitleProperty *pTitleList )
 	{
 		return;
 	}
-/*
-	// ランチャーで作成したリストを使わないバージョン
-	NAMTitleId *pTitleIDList = NULL;
-	s32 getNum;
 
-	// インストールされているタイトルの取得
-	getNum = NAM_GetNumTitles();
-	pTitleIDList = SYSM_Alloc( sizeof(NAMTitleId) * getNum );	// Free忘れず
-	(void)NAM_GetTitleList( pTitleIDList, (u32)getNum );
-*/
-	for(l=0;l<LAUNCHER_TITLE_LIST_NUM;l++)
+	for(l=-1;l<s_listLength;l++) // -1はカードアプリの特別処理用
 	{
 		ROM_Header_Short e_hs;
 		ROM_Header_Short *pe_hs;
@@ -1091,7 +1111,7 @@ static void SYSMi_makeTitleIdList( TitleProperty *pTitleList )
 		FSFile file[1];
 		BOOL bSuccess;
 		s32 readLen;
-		if(l==0)
+		if(l==-1)
 		{
 			// カードアプリ
 			if(SYSM_IsExistCard())
@@ -1100,12 +1120,12 @@ static void SYSMi_makeTitleIdList( TitleProperty *pTitleList )
 			}
 		}else
 		{
-			if(pTitleList[l].titleID == NULL)
+			if(s_pTitleIDList[l] == NULL)
 			{
 				continue;
 			}
 			// romヘッダ読み込み
-			NAM_GetTitleBootContentPathFast(path, pTitleList[l].titleID);
+			NAM_GetTitleBootContentPathFast(path, s_pTitleIDList[l]);
 			FS_InitFile( file );
 		    bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
 			if( ! bSuccess )
