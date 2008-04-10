@@ -26,7 +26,7 @@
 #define DEBUG_MODE
 
 // カード電源ONからROMヘッダロードまでの期間にスリープに入る時のワンセグ対策しない場合
-//#define HOWSW_TRY_DEEP_SLEEP_WHILE_INSERT_CARD
+//#define HOWSW_ENABLE_DEEP_SLEEP_WHILE_INSERT_CARD
 
 // define -------------------------------------------------------------------
 #define		CHATTERING_COUNTER					0x1988		// 100ms分 (0x1988 * 15.3us = 100000us)
@@ -296,7 +296,7 @@ static HotSwState LoadCardData(void)
 
     // カード電源リセット
 	McPowerOff();
-#ifndef HOWSW_TRY_DEEP_SLEEP_WHILE_INSERT_CARD
+#ifndef HOWSW_ENABLE_DEEP_SLEEP_WHILE_INSERT_CARD
     MCU_EnableDeepSleepToPowerLine( MCU_PWR_LINE_33, FALSE );
 #endif
 	McPowerOn();
@@ -663,17 +663,6 @@ HotSwState HOTSWi_RefreshBadBlock(u32 romMode)
 
 
 /*---------------------------------------------------------------------------*
-  Name:         HOTSW_GetRomEmulationBuffer
-
-  Description:  Romエミュレーション情報を格納しているバッファへのポインタを返す
- *---------------------------------------------------------------------------*/
-void* HOTSW_GetRomEmulationBuffer(void)
-{
-	return &s_romEmuInfo;
-}
-
-
-/*---------------------------------------------------------------------------*
   Name:         HOTSWi_IsRunOnDebugger
 
   Description:  ISデバッガ上で動作しているか？
@@ -741,7 +730,7 @@ static HotSwState LoadBannerData(void)
    	// デバッガ情報
 	if ( ! SYSMi_GetWork()->flags.hotsw.is1stCardChecked && debuggerFlg )
 	{
-		MI_CpuCopy8( HOTSW_GetRomEmulationBuffer(), &s_romEmuInfo, ROM_EMULATION_DATA_SIZE );
+		MI_CpuCopy8( &s_romEmuInfo, &(SYSMi_GetWork()->romEmuInfo), ROM_EMULATION_DATA_SIZE );
 		SYSMi_GetWork()->flags.hotsw.isOnDebugger = debuggerFlg;
 	}
 

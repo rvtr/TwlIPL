@@ -75,14 +75,10 @@ void HOTSW_SetBootSegmentBuffer(void* buf, u32 size);
 void HOTSW_SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size);
 
 // Romエミュレーション情報を格納しているバッファのポインタを返す
-#ifdef SDK_ARM7
-void* HOTSW_GetRomEmulationBuffer(void);
-#else // SDK_ARM9
 SDK_INLINE void* HOTSW_GetRomEmulationBuffer(void)
 {
 	return (void*)&SYSMi_GetWork()->romEmuInfo;
 }
-#endif // SDK_ARM9
 
 // ISデバッガ上で動作しているか？
 BOOL HOTSWi_IsRunOnDebugger(void);
