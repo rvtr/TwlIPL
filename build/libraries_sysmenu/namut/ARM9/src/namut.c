@@ -282,7 +282,13 @@ static BOOL NAMUTi_DeleteNonprotectedTitleEntity(const char* path)
 		// ディレクトリの場合
 		if (entryInfo.attributes & FS_ATTRIBUTE_IS_DIRECTORY)
 		{
-			s8 titlePropety = (s8)(entryInfo.longname[TITLE_ID_HI_SIZE-1] - '0');
+			u8 titlePropety = (u8)(entryInfo.longname[TITLE_ID_HI_SIZE-1] - '0');
+
+			// 文字コードで0-9とa-fは連続していないという罠
+			if (titlePropety >= ('a'-'0'))
+			{
+				titlePropety -= 0x27;
+			}
 
 			// プロテクト対象でない場合ディレクトリごと消去する
 			if (!(titlePropety & PROTECT_TITLE_PROPERTY))

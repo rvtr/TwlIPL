@@ -355,14 +355,15 @@ static BOOL WriteNorfirm(char* file_name)
 		result = FALSE;
 	}
 
+	// 読み込みはARM7が直接メモリに書き出す
+	DC_InvalidateRange(pTempBuf, sizeof(NORHeaderDS));
+
 	// CRCチェックのためNvramからリード
 	if (kamiNvramRead(0, pTempBuf, sizeof(NORHeaderDS) ) == KAMI_RESULT_SEND_ERROR)
 	{
 	    OS_Printf("kamiNvramRead ... ERROR!\n");
 	}
 
-	// 読み込みはARM7が直接メモリに書き出す
-	DC_InvalidateRange(pTempBuf, sizeof(NORHeaderDS));
 	// 書き込み後のCRCを計算
 	crc_r1 = SVC_GetCRC16( 0xffff, pTempBuf, sizeof(NORHeaderDS) );
 
@@ -398,14 +399,14 @@ static BOOL WriteNorfirm(char* file_name)
 	kamiFontPrintfConsoleEx(0, "Start CRC check\n");
 	kamiFontLoadScreenData();
 	
+	// 読み込みはARM7が直接メモリに書き出す
+	DC_InvalidateRange(pTempBuf, file_size);
+
 	// CRCチェックのためNvramからリード
 	if (kamiNvramRead(0, pTempBuf, file_size ) == KAMI_RESULT_SEND_ERROR)
 	{
 	    OS_Printf("kamiNvramRead ... ERROR!\n");
 	}
-
-	// 読み込みはARM7が直接メモリに書き出す
-	DC_InvalidateRange(pTempBuf, file_size);
 
 	// 書き込み後のCRCを計算
 	crc_r2 = SVC_GetCRC16( 0xffff, pTempBuf+512, file_size-512 );

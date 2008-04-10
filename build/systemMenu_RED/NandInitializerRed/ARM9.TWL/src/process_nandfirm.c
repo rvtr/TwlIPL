@@ -394,8 +394,6 @@ static BOOL WriteNandfirm(char* file_name)
 	    kamiFontPrintfConsoleEx(1, "Fail kamiNvramRead()!\n");
 	}
 
-	// 読み込みはARM7が直接メモリに書き出すため
-	DC_InvalidateRange(pTempBuf, sizeof(NORHeaderDS));
 	// 書き込み後のCRCを計算
 	crc_r1 = SVC_GetCRC16( 0xffff, pTempBuf, sizeof(NORHeaderDS) );
 
@@ -423,14 +421,16 @@ static BOOL WriteNandfirm(char* file_name)
 
 	// CRCを計算するので念のためにクリアしてからリードする
 	MI_CpuFill8( sNvramPageSizeBuffer, 0xee, NVRAM_PAGE_SIZE );
+
+	// 読み込みはARM7が直接メモリに書き出すため
+	DC_InvalidateRange(sNvramPageSizeBuffer, NVRAM_PAGE_SIZE);
+
 	if (kamiNvramRead(NVRAM_NORFIRM_RESERVED_ADDRESS, sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
 	{
 		kamiFontPrintfConsoleEx(1, "Fail kamiNvramRead()\n");
 		result = FALSE;
 	}
 
-	// 読み込みはARM7が直接メモリに書き出すため
-	DC_InvalidateRange(sNvramPageSizeBuffer, NVRAM_PAGE_SIZE);
 	// 書き込み後のCRCを計算
 	crc_norfirm_reserved_area_r = SVC_GetCRC16( 0xffff, sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
 
@@ -442,13 +442,13 @@ static BOOL WriteNandfirm(char* file_name)
 	}
 
 #ifdef CLEAR_NON_ASIGNED_AREA_AND_RESERVED_AREA_ALL
+	DC_InvalidateRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
 	// 未割り当て領域＋予約領域を０クリアします（開発用）
 	if (kamiNvramRead(NVRAM_CONFIG_DATA_OFFSET_ADDRESS, &sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
 	{
 		kamiFontPrintfConsoleEx(1, "Fail kamiNvramRead()\n");
 		result = FALSE;
 	}
-	DC_InvalidateRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
     sReservedAreaEndAddress = (u32)(*(u16 *)sNvramPageSizeBuffer << NVRAM_CONFIG_DATA_OFFSET_SHIFT) - 0xA00;// TWL WiFi設定 + NTR WiFi設定 を差し引く
 	//OS_Printf("end = %x\n", sReservedAreaEndAddress);
 
@@ -476,12 +476,12 @@ static BOOL WriteNandfirm(char* file_name)
 		result = FALSE;
 	}
 
+	DC_InvalidateRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
 	if (kamiNvramRead(NVRAM_CONFIG_DATA_OFFSET_ADDRESS, &sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
 	{
 		kamiFontPrintfConsoleEx(1, "Fail kamiNvramRead()\n");
 		result = FALSE;
 	}
-	DC_InvalidateRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
     sReservedAreaEndAddress = (u32)(*(u16 *)sNvramPageSizeBuffer << NVRAM_CONFIG_DATA_OFFSET_SHIFT) - 0xA00;// TWL WiFi設定 + NTR WiFi設定 を差し引く
 
 	MI_CpuFill8( sNvramPageSizeBuffer, 0x00, NVRAM_PAGE_SIZE );
