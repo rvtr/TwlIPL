@@ -315,9 +315,6 @@ BOOL BOOT_WaitStart( void )
 				target = REBOOT_TARGET_DS_APP;
 			}
 
-			// 外部デポップ回路を有効にする
-			CDC_EnableExternalDepop();
-
 			// I2S停止（MCLKは動作継続）
 			reg_SND_SMX_CNT &= ~REG_SND_SMX_CNT_E_MASK;
 
@@ -337,12 +334,6 @@ BOOL BOOT_WaitStart( void )
 			// 32KHz
 			reg_SND_SMX_CNT = REG_SND_SMX_CNT_MIX_RATE_MASK |
 							  REG_SND_SMX_CNT_E_MASK;
-
-			// デポップ期間のあと外部デポップ回路を無効にする
-			// 単純なウェイトになるため、将来的にはコンポーネントでデポップを
-			// 無効にするように変更する予定（TODO)
-			OS_SpinWait(OS_MilliSecondsToTicks(100) * 64);
-			CDC_DisableExternalDepop();
 
 #ifdef SDK_ARM7
             // デバッガではTWLカードスロット２を電源ON

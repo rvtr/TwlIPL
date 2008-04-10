@@ -181,10 +181,6 @@ TwlSpMain(void)
         MCU_InitIrq(THREAD_PRIO_MCU);  // MCU 初期化
     }
 
-	// CODEC初期化の際に発生するPOP音を消すため外部デポップ回路を有効にします。
-	// デポップは8ms程度でほぼ完了しますが、PoweronTimeの分余分に期間をみる必要があります。
-	CDC_EnableExternalDepop();
-
     if (OSi_IsCodecTwlMode() == TRUE)
     {
         // CODEC 初期化
