@@ -67,6 +67,7 @@ void TwlMain(void)
 	OS_TPrintf( "Country  : %s\n", s_strCountry[ s_owner.country ] );
 	
 	OS_TPrintf( "AvailableWireless : %s\n", OS_IsAvailableWireless() ? "TRUE" : "FALSE" );
+	PMi_SetWirelessLED( OS_IsAvailableWireless() ? PM_WIRELESS_LED_ON : PM_WIRELESS_LED_OFF );
 	{
 		int i;
 		OS_TPrintf( "CameraInfo :" );

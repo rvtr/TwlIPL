@@ -257,7 +257,8 @@ static u16 DetectPadRepeat( void )
 static void DrawWirelessMenuScene( void )
 {
     BOOL  bFlg;
-
+	u16 color;
+	
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
     PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"WIRELESS" );
     PutStringUTF16( CANCEL_BUTTON_TOP_X, CANCEL_BUTTON_TOP_Y, TXT_UCOLOR_G0, (const u16 *)L"RETURN" );
@@ -266,9 +267,10 @@ static void DrawWirelessMenuScene( void )
     // :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     // あらかじめTWL設定データファイルから読み込み済みの設定を取得して表示
     // :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    // フリーソフトBOX数
-    bFlg = LCFG_TSD_IsAvailableWireless();
-    PutStringUTF16( 25*8, s_settingPos[0].y, TXT_UCOLOR_G0, 
+    // 無線強制OFF
+	color = LCFG_THW_IsForceDisableWireless() ? TXT_COLOR_RED : TXT_COLOR_BLUE;
+    bFlg  = LCFG_TSD_IsAvailableWireless();
+    PutStringUTF16( 25*8, s_settingPos[0].y, color, 
                     (bFlg)?(const u16*)L"ON":(const u16*)L"OFF" );     // 値が不正のとき赤色で表示
 }
 
@@ -276,7 +278,18 @@ static void DrawWirelessMenuScene( void )
 void SetWirelessInit( void )
 {
     int  i;
-
+	
+	// 無線強制OFFフラグが有効な時は、無線有効フラグを強制的にOFFにする。
+	if( LCFG_THW_IsForceDisableWireless() &&
+		LCFG_TSD_IsAvailableWireless() ) {
+		OS_TPrintf( "Warning : AvailableWireless flag is different value.\n" );
+		LCFG_TSD_SetFlagAvailableWireless( FALSE );
+        if( !MY_WriteTWLSettings() )
+        {
+            OS_TPrintf( "TWL settings write failed.\n" );
+        }
+	}
+	
     // NITRO設定データのlanguageに応じたメインメニュー構成言語の切り替え
     for( i=0; i < MS_WIRELESS_NUMOF_ELEMENTS; i++ )
     {
@@ -325,7 +338,9 @@ int SetWirelessMain( void )
     tpCommit = SelectSomethingByTP( &commit, func, 1 );
 
     // メニューへの分岐
-    if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {         // メニュー項目への分岐
+    if( !LCFG_THW_IsForceDisableWireless() &&
+		( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) )
+		) {         // メニュー項目への分岐
         if( (s_settingParam.pos[sCursorMenu]).enable ) {
             switch( sCursorMenu )
             {
@@ -419,13 +434,16 @@ static int SetAvailableWirelessMain( void )
     if( (pad.trg & PAD_BUTTON_A) || (tp_touch && (commit == KEY_OK)) )
     {
         LCFG_TSD_SetFlagAvailableWireless( sbAvailableWireless );
-        // ::::::::::::::::::::::::::::::::::::::::::::::
+		( (OSTWLSettingsData*) HW_PARAM_TWL_SETTINGS_DATA )->flags.isAvailableWireless = sbAvailableWireless;	// [TODO]後で取る。LCFG_TSD_SetFlagAvailableWirelessでも同じ処理をしているが、SDKをコミットできないので、暫定対応。
+		PMi_SetWirelessLED( sbAvailableWireless ? PM_WIRELESS_LED_ON : PM_WIRELESS_LED_OFF );	// 無線LEDも即座に変更
+		// ::::::::::::::::::::::::::::::::::::::::::::::
         // TWL設定データファイルへの書き込み
         // ::::::::::::::::::::::::::::::::::::::::::::::
         if( !MY_WriteTWLSettings() )
         {
             OS_TPrintf( "TWL settings write failed.\n" );
         }
+		OS_TPrintf( "AvailableWireless : %s\n", OS_IsAvailableWireless() ? "TRUE" : "FALSE " );
         SetWirelessInit();
         g_pNowProcess = SetWirelessMain;
         return 0;
