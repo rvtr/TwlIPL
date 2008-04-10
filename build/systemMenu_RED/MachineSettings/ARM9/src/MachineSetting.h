@@ -35,7 +35,7 @@ extern "C" {
 #define HANDLE_OK_BUTTON					255
 #define HANDLE_CANCEL_BUTTON				256
 
-#define BROADON_ENABLE                                            // BroadOn用に設定項目を切り替える
+//#define BROADON_ENABLE                                            // BroadOn用に設定項目を切り替える
 
 // 数値入力インターフェース用ワーク（void InputDecimal()で使用）
 typedef struct InputNumParam {

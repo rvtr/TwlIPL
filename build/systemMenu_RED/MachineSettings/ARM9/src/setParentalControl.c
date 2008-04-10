@@ -997,7 +997,17 @@ static void SetDrawnPageElement( void )
 // 初期化
 void SetParentalControlInit( void )
 {
-    // ページの初期化
+	// ペアレンタルコントロール設定前なら、とりあえず問答無用でペアレンタルコントロール設定フラグを立てる
+	if( !LCFG_TSD_IsSetParentalControl() ) {
+		OS_TPrintf( "First ParentalControl... set flag.\n" );
+		LCFG_TSD_SetFlagParentalControl( TRUE );
+        if( !MY_WriteTWLSettings() )
+        {
+            OS_TPrintf( "TWL settings write failed.\n" );
+        }
+	}
+	
+	// ページの初期化
     if( sbInitPage )            // 特別にFALSEが指定されたときだけページをそのままにする
     {
         sCurrentPage = 0;
