@@ -25,7 +25,8 @@ TWL_CODEGEN					?=	ARM
 
 #----------------------------------------------------------------------------
 
-SUBDIRS			=	wram_regs
+SUBDIRS			=	$(SYSMENU_ROOT)/build/libraries/aes \
+					wram_regs
 
 SRCS			=	main.c \
 					initScfg.c \

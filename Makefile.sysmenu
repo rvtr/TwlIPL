@@ -25,7 +25,8 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 export TWL_ARCHGEN = ALL
 
 SUBDIRS =	\
-			build/libraries_sysmenu\
+			build/tools \
+			build/libraries_sysmenu \
 			build/components \
 			build/systemmenu_RED
 

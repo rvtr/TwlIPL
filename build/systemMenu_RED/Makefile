@@ -20,8 +20,15 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS_P	=	launcher MachineSettings PictoChat HWInfoWriter \
-				NandInitializerRed NandInitializerProduction NandInitializer wlanfirm
+SUBDIRS_P	=	\
+				launcher \
+				MachineSettings \
+				PictoChat \
+				HWInfoWriter \
+				NandInitializerRed \
+				NandInitializerProduction \
+				NandInitializer \
+				wlanfirm
 				#DS_DownloadPlay
 
 #----------------------------------------------------------------------------
