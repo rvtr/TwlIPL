@@ -1111,6 +1111,7 @@ static void SYSMi_makeTitleIdList( void )
 		FSFile file[1];
 		BOOL bSuccess;
 		s32 readLen;
+		char *gamecode;
 		if(l==-1)
 		{
 			// カードアプリ
@@ -1159,22 +1160,34 @@ static void SYSMi_makeTitleIdList( void )
 				same_maker_code = FALSE;
 			}
 		}
+		
+		// ランチャーはリストに入れない
+		gamecode = (char *)&(pe_hs->titleID);
+		if(  0 == STD_CompareNString( &gamecode[1], "ANH", 3 ) )
+		{
+			continue;
+		}
+		
 		// セキュアアプリの場合か、メーカーコードが同じ場合は
-		if( (hs->titleID & TITLE_ID_HI_SECURE_FLAG_MASK) ||
+		if( (hs->titleID & TITLE_ID_SECURE_FLAG_MASK) ||
 		    ( same_maker_code ) )
 		{
-			// リストに追加
-			list->TitleID[count] = pe_hs->titleID;
-			// sameMakerFlagをON
-			list->sameMakerFlag[count/8] |= (u8)(0x1 << (count%8));
-			// Prv,Pubそれぞれセーブデータがあるか見て、存在すればフラグON
-			if(pe_hs->public_save_data_size != 0)
+			// セキュアアプリのデータはマウントさせない
+			if( !(pe_hs->titleID & TITLE_ID_SECURE_FLAG_MASK) )
 			{
-				list->publicFlag[count/8] |= (u8)(0x1 << (count%8));
-			}
-			if(pe_hs->private_save_data_size != 0)
-			{
-				list->privateFlag[count/8] |= (u8)(0x1 << (count%8));
+				// リストに追加
+				list->TitleID[count] = pe_hs->titleID;
+				// sameMakerFlagをON
+				list->sameMakerFlag[count/8] |= (u8)(0x1 << (count%8));
+				// Prv,Pubそれぞれセーブデータがあるか見て、存在すればフラグON
+				if(pe_hs->public_save_data_size != 0)
+				{
+					list->publicFlag[count/8] |= (u8)(0x1 << (count%8));
+				}
+				if(pe_hs->private_save_data_size != 0)
+				{
+					list->privateFlag[count/8] |= (u8)(0x1 << (count%8));
+				}
 			}
 		}
 		
