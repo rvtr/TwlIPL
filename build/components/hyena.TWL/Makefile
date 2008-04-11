@@ -30,6 +30,7 @@ SUBDIRS			=	$(SYSMENU_ROOT)/build/libraries/aes \
 
 SRCS			=	main.c \
 					initScfg.c \
+					$(ROOT)/build/libraries/init/ARM7.TWL/src/crt0.LTD.c
 
 TARGET_NAME		=	hyena
 
@@ -38,11 +39,13 @@ LCFILE_SPEC		=	$(TARGET_NAME).lsf
 LCFILE_TEMPLATE	=	$(TARGET_NAME).lcf.template
 LDRES_TEMPLATE	=	$(ROOT)/build/components/racoon.TWL/racoon.response.template
 
-CRT0_O			=	crt0.LTD.TWL.o
+CRT0_O			=	$(OBJDIR)/crt0.LTD.o
 
 #----------------------------------------------------------------------------
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
+
+GLIBRARIES		:= $(filter-out $(CRT0_O),$(GLIBRARIES))
 
 ifdef TWLSDK_NOCRYPTO
 CCFLAGS			+=	-DSDK_NOCRYPTO
@@ -53,6 +56,7 @@ MAKELCF_FLAGS	+=	-DUSE_CRYPTO_LIBS='libsea_sp$(TWL_LIBSUFFIX).a libcrypto_sp$(TW
 MACRO_FLAGS		+=	-DSDK_SEA
 endif
 
+MACRO_FLAGS		+=	-DSDK_SYSMENU_BUILD
 #MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD
 
 MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037a8000' \
@@ -77,7 +81,9 @@ INSTALL_DIR		=	$(TWL_INSTALL_COMPONENTSDIR)/$(TARGET_NAME)/$(TWL_BUILDTYPE)
 
 LINCLUDES		= 	$(ROOT)/build/libraries/spi/ARM7/include \
 					$(ROOT)/build/libraries/spi/ARM7/pm/include \
+					$(ROOT)/build/libraries/init/common/include \
 					$(SYSMENU_ROOT)/build/libraries_sysmenu/sysmenu/common/include
+LLIBRARY_DIRS	+=	./
 LLIBRARIES		+= libwl_sp.TWL.LTD.a \
 				   libaes_sp.firm.LTD.a
 LDEPENDS_NEF	= $(TWL_LIBS) $(LLIBRARIES)
