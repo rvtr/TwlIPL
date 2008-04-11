@@ -32,6 +32,8 @@
 #define		CHATTERING_COUNTER					0x1988		// 100ms分 (0x1988 * 15.3us = 100000us)
 #define		COUNTER_A							0x51C		//  20ms分 ( 0x51C * 15.3us =  20012us)
 
+#define		CARD_EXIST_CHECK_INTERVAL			300
+
 #define 	UNDEF_CODE							0xe7ffdeff	// 未定義コード
 #define 	ENCRYPT_DEF_SIZE					0x800		// 2KB  ※ ARM9常駐モジュール先頭2KB
 
@@ -71,7 +73,9 @@ static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err);
 static void LockHotSwRsc(OSLockWord* word);
 static void UnlockHotSwRsc(OSLockWord* word);
 
-static void McThread(void *arg);
+static void HotSwThread(void *arg);
+static void MonitorThread(void *arg);
+
 static void McPowerOn(void);
 static void McPowerOff(void);
 static void SetMCSCR(void);
@@ -112,9 +116,9 @@ static u16					s_bondingOp;
 
 static u32					s_BootSegBufSize, s_SecureSegBufSize, s_Secure2SegBufSize;
 
-static BootSegmentData		*s_pBootSegBuffer;		// カード抜けてもバッファの場所覚えとく
-static u32					*s_pSecureSegBuffer;	// カード抜けてもバッファの場所覚えとく
-static u32					*s_pSecure2SegBuffer;	// カード抜けてもバッファの場所覚えとく
+static BootSegmentData		*s_pBootSegBuffer;
+static u32					*s_pSecureSegBuffer;
+static u32					*s_pSecure2SegBuffer;
 
 static CardBootData			s_cbData;
 static SYSMRomEmuInfo       s_romEmuInfo;
@@ -210,7 +214,7 @@ void HOTSW_Init(u32 threadPrio)
 	// Bonding Optionの取得
     s_bondingOp = SCFG_REG_GetBondingOption();
     
-	// カードブート用構造体の初期化
+	// 構造体の初期化
 	MI_CpuClear8(&s_cbData, sizeof(CardBootData));
 
     // カードスレッド用構造体の初期化
@@ -232,15 +236,25 @@ void HOTSW_Init(u32 threadPrio)
    		s_CardLockID = (u16)tempLockID;
     }
     
-	// カードブート用スレッドの生成
-	OS_CreateThread(&HotSwThreadData.thread,
-                    McThread,
+	// カードデータロード用スレッドの生成
+	OS_CreateThread(&HotSwThreadData.hotswThread,
+                    HotSwThread,
                     NULL,
-                    HotSwThreadData.stack + HOTSW_THREAD_STACK_SIZE / sizeof(u64),
+                    HotSwThreadData.hotswStack + HOTSW_THREAD_STACK_SIZE / sizeof(u64),
                     HOTSW_THREAD_STACK_SIZE,
                     threadPrio
                     );
 
+	// カードの状態監視用スレッドの生成 ( DSテレビ対策 )
+    // [TODO] 優先度の設定
+	OS_CreateThread(&HotSwThreadData.monitorThread,
+                    MonitorThread,
+                    NULL,
+                    HotSwThreadData.monitorStack + HOTSW_THREAD_STACK_SIZE / sizeof(u64),
+                    HOTSW_THREAD_STACK_SIZE,
+                    threadPrio
+                    );
+    
     // メッセージキューの初期化
 	OS_InitMessageQueue( &HotSwThreadData.hotswQueue, &HotSwThreadData.hotswMsgBuffer[0], HOTSW_MSG_BUFFER_NUM );
 
@@ -248,8 +262,9 @@ void HOTSW_Init(u32 threadPrio)
 	OS_InitMessageQueue( &HotSwThreadData.hotswDmaQueue, &HotSwThreadData.hotswDmaMsgBuffer[0], HOTSW_DMA_MSG_NUM );
     
     // スレッド起動
-    OS_WakeupThreadDirect(&HotSwThreadData.thread);
-
+    OS_WakeupThreadDirect(&HotSwThreadData.hotswThread);
+	OS_WakeupThreadDirect(&HotSwThreadData.monitorThread);
+	
     // Boot Segment バッファの設定
 	HOTSW_SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );
 
@@ -290,6 +305,8 @@ static HotSwState LoadCardData(void)
 
     start = OS_GetTick();
 
+    s_isHotSwBusy = TRUE;
+    
 	// カードのロック
 #ifndef DEBUG_USED_CARD_SLOT_B_
 	CARD_LockRom(s_CardLockID);
@@ -311,6 +328,8 @@ static HotSwState LoadCardData(void)
 
     // ロード処理開始
 	if(HOTSW_IsCardAccessible()){
+		s_cbData.modeType = HOTSW_MODE1;
+        
 		// カード側でKey Tableをロードする
 		state  = LoadTable();
 		retval = (retval == HOTSW_SUCCESS) ? state : retval;
@@ -550,6 +569,8 @@ end:
 	UnlockExCard(s_CardLockID);
 #endif
 
+	s_isHotSwBusy = FALSE;
+    
 //	OS_TPrintf( "Load Card Time : %dms\n\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 
     return retval;
@@ -897,7 +918,7 @@ static HotSwState CheckCardAuthCode(void)
 
   Description:  Boot Segment バッファの指定
 
-  注：カードブート処理中は呼び出さないようにする
+  注：カードデータロード中は呼び出さないようにする
  *---------------------------------------------------------------------------*/
 void HOTSW_SetBootSegmentBuffer(void* buf, u32 size)
 {
@@ -918,7 +939,7 @@ void HOTSW_SetBootSegmentBuffer(void* buf, u32 size)
 
   Description:  Secure Segment バッファの指定
 
-  注：カードブート処理中は呼び出さないようにする
+  注：カードデータロード中は呼び出さないようにする
  *---------------------------------------------------------------------------*/
 void HOTSW_SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size)
 {
@@ -1148,6 +1169,21 @@ static u32 GetMcSlotMask(void)
 
 
 /*---------------------------------------------------------------------------*
+  Name:         GetMcSlotMode
+
+  Description:  スロットの現在のモードを返す
+ *---------------------------------------------------------------------------*/
+static u32 GetMcSlotMode(void)
+{
+#ifndef DEBUG_USED_CARD_SLOT_B_
+    return (reg_MI_MC1 & GetMcSlotMask()) >> GetMcSlotShift();
+#else
+    return (reg_MI_MC1 & GetMcSlotMask()) << GetMcSlotShift();
+#endif
+}
+
+
+/*---------------------------------------------------------------------------*
   Name:         SetMcSlotMode
 
   Description:  カードスロットのモード設定
@@ -1183,21 +1219,6 @@ static BOOL CmpMcSlotMode(u32 mode)
 
 
 /*---------------------------------------------------------------------------*
-  Name:         GetMcSlotMode
-
-  Description:  スロットの現在のモードを返す
- *---------------------------------------------------------------------------*/
-static u32 GetMcSlotMode(void)
-{
-#ifndef DEBUG_USED_CARD_SLOT_B_
-    return (reg_MI_MC1 & GetMcSlotMask()) >> GetMcSlotShift();
-#else
-    return (reg_MI_MC1 & GetMcSlotMask()) << GetMcSlotShift();
-#endif
-}
-
-
-/*---------------------------------------------------------------------------*
   Name:		   McPowerOn
 
   Description: スロット電源ON
@@ -1216,8 +1237,8 @@ static void McPowerOn(void)
         
     	// SCFG_MC1 の Slot Status の M1,M0 を 01 にする
     	SetMcSlotMode(SLOT_STATUS_MODE_01);
-		// 3ms待ち
-		OS_Sleep(3);
+		// 10ms待ち
+		OS_Sleep(10);
 
     	// SCFG_MC1 の Slot Status の M1,M0 を 10 にする
     	SetMcSlotMode(SLOT_STATUS_MODE_10);
@@ -1340,17 +1361,17 @@ static void SetMCSCR(void)
 
 
 /*---------------------------------------------------------------------------*
-  Name:		   McThread
+  Name:		   HotSwThread
 
   Description: カード抜け・挿し処理スレッド
 
   [TODO:]挿抜のフロー・フラグケアetcの確認(今の所、抜き挿ししてもタイトルが更新されない)
  *---------------------------------------------------------------------------*/
-static void McThread(void *arg)
+static void HotSwThread(void *arg)
 {
 	#pragma unused( arg )
 
-    BOOL 			isPulledOut = TRUE;
+//    BOOL 			isPulledOut = TRUE;
     HotSwState 		retval;
     HotSwMessage 	*msg;
     
@@ -1379,7 +1400,7 @@ static void McThread(void *arg)
             // カードが挿さってたら
             if(HOTSW_IsCardExist()){
                 // 前の状態が挿し
-                if(!isPulledOut){
+                if(!s_IsPulledOut){
                     // 抜きがなかったか判定
                     if(CmpMcSlotMode(SLOT_STATUS_MODE_10) == TRUE){
 	               		// フラグケア
@@ -1430,11 +1451,12 @@ static void McThread(void *arg)
                 }
                 
 				// 状態フラグを更新
-                isPulledOut = FALSE;
+                s_IsPulledOut = FALSE;
             }
             
             // カードが抜けてたら
             else{
+                // フラグ処理
                 LockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
 				SYSMi_GetWork()->flags.hotsw.isExistCard 		 = FALSE;
                 SYSMi_GetWork()->flags.hotsw.isValidCardBanner   = FALSE;
@@ -1450,8 +1472,8 @@ static void McThread(void *arg)
 				MI_CpuClearFast(s_pSecureSegBuffer, s_SecureSegBufSize);
                 MI_CpuClearFast((u32 *)SYSM_CARD_BANNER_BUF, sizeof(TWLBannerFile));
                 
-                isPulledOut = TRUE;
-
+                s_IsPulledOut = TRUE;
+                
                 // ワンセグのスリープ時シャットダウン対策を戻す
                 MCU_EnableDeepSleepToPowerLine( MCU_PWR_LINE_33, TRUE );
 
@@ -1460,6 +1482,69 @@ static void McThread(void *arg)
         }
 		SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
     } // while loop
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:		   MonitorThread
+
+  Description: 実際のカード状態とHotSwThreadで状態を比べて、違いがあった場合は
+  			   メッセージを送る
+
+  s_IsPulledOut : True  -> カードなし		HOTSW_IsCardExist : True  -> カードあり
+  				  False -> カードあり							False -> カードなし
+ *---------------------------------------------------------------------------*/
+static void MonitorThread(void *arg)
+{
+	#pragma unused( arg )
+    
+	BOOL isPullOutNow;
+    
+    while(1){
+        // カードデータロード中は待機
+        do{
+			OS_Sleep(CARD_EXIST_CHECK_INTERVAL);
+        }
+        while(s_isHotSwBusy);
+
+        // 現在カードが抜けているか
+		isPullOutNow = !HOTSW_IsCardExist();
+        
+        // 状態の比較
+        if(s_IsPulledOut != isPullOutNow){
+			OSIntrMode enabled = OS_DisableInterrupts();
+
+            // 本当は抜けてた場合
+            if(isPullOutNow){
+				HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].ctrl  = FALSE;
+    			HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].value = 0;
+				HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].type  = HOTSW_PULLOUT;
+
+				// メッセージをキューの先頭に入れる
+    			OS_JamMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut], OS_MESSAGE_NOBLOCK);
+
+    			// メッセージインデックスをインクリメント
+    			HotSwThreadData.idx_pulledOut = (HotSwThreadData.idx_pulledOut+1) % HOTSW_PULLED_MSG_NUM;
+            }
+
+            // 本当は挿さっていた場合
+            else{
+				HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].ctrl  = FALSE;
+    			HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].value = 0;
+    			HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].type  = HOTSW_INSERT;
+
+				// メッセージをキューの先頭に入れる
+    			OS_JamMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert], OS_MESSAGE_NOBLOCK);
+
+				// メッセージインデックスをインクリメント
+				HotSwThreadData.idx_insert = (HotSwThreadData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
+            }
+
+            (void)OS_RestoreInterrupts( enabled );
+
+            OS_PutString(">>> Card State Error\n");
+        }
+    }
 }
 
 
@@ -1479,6 +1564,11 @@ static void InterruptCallbackCard(void)
 
     // メッセージインデックスをインクリメント
     HotSwThreadData.idx_pulledOut = (HotSwThreadData.idx_pulledOut+1) % HOTSW_PULLED_MSG_NUM;
+
+/*	// スロットのモードを
+    if(GetMcSlotMode() == SLOT_STATUS_MODE_01 || GetMcSlotMode() == SLOT_STATUS_MODE_10){
+		SetMcSlotMode(SLOT_STATUS_MODE_11);
+    }*/
 
 	OS_PutString("○\n");
 }

@@ -47,9 +47,6 @@ extern "C" {
 #define SECURE_SEGMENT_START				0x4000
 #define SECURE_SEGMENT_SIZE                 0x4000
 #define SECURE_SEGMENT_END	   				(SECURE_SEGMENT_START + SECURE_SEGMENT_SIZE)
-#define PNA_BASE_VALUE                      0x60e8
-#define PNB_L_VALUE                         0x879b9b05
-#define PNB_H_VALUE                         0x5c
 
 // --- TWL Card
 #define TWLCARD_BORDER_OFFSET				0x80000
@@ -269,8 +266,6 @@ typedef union BootSegmentData
 
 // カードブート時に必要な変数一式をまとめた構造体
 typedef struct CardBootData{
-    u16                 lockID;
-
     u32                 vae;
     u32                 vbi;
     u32                 vd;
@@ -309,8 +304,10 @@ typedef struct CardBootData{
 
 // スレッド・メッセージ関係をまとめた構造体
 typedef struct CardThreadData{
-    u64  				stack[HOTSW_THREAD_STACK_SIZE / sizeof(u64)];
-	OSThread 			thread;
+    u64  				hotswStack[HOTSW_THREAD_STACK_SIZE / sizeof(u64)];
+	u64  				monitorStack[HOTSW_THREAD_STACK_SIZE / sizeof(u64)];
+	OSThread 			hotswThread;
+	OSThread			monitorThread;
 
 	u32 				idx_insert;
     u32					idx_pulledOut;
