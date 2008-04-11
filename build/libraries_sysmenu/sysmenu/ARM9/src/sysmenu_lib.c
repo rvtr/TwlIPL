@@ -179,27 +179,17 @@ TitleProperty *SYSM_ReadParameters( void )
     //-----------------------------------------------------
     // 無線ON/OFFフラグをもとに、LEDを設定する。
     //-----------------------------------------------------
-/*	{
+#if 0
+	{
 		BOOL enable;
 		if( LCFG_THW_IsForceDisableWireless() ) {
 			enable = FALSE;
-			// 本体設定の無線有効フラグがTRUEの時は強制FALSEにしてファイル更新
-			if( LCFG_TSD_IsAvailableWireless() ) {
-		        u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
-        		if( pBuffer ) {
-					LCFG_TSD_SetFlagAvailableWireless( FALSE );
-					LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ])pBuffer );
-		            SYSM_Free( pBuffer );
-				}else {
-			        SYSM_SetFatalError( TRUE );
-				}
-			}
 		}else {
 			enable = LCFG_TSD_IsAvailableWireless();
 		}
 		SYSMi_SetWirelessLED( enable );
 	}
-*/	
+#endif
     //-----------------------------------------------------
     // 各種デバイス設定
     //-----------------------------------------------------

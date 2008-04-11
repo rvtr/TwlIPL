@@ -18,6 +18,7 @@
 #include <twl/nam.h>
 #include <twl/os/common/format_rom.h>
 #include <twl/lcfg.h>
+#include <twl/nwm/ARM9/ForLauncher/nwm_init_for_launcher.h>
 
 #include <firm.h>
 #include <sysmenu.h>
@@ -50,6 +51,12 @@
 #define SIGNHEAP_SIZE                0x01000
 
 #define FWHEADER_SIZE                0x100
+
+
+/*
+    external functions
+ */
+extern void SYSMi_SetWirelessLED( BOOL enable );
 
 /*
   internal variables
@@ -366,7 +373,7 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
         // [TODO:] TWL無線ドライバRC版のためのWorkaround
         //         その後のドライバは、Data segmentが廃止される。
         //         ドライバがバージョンアップされたら、この処理は削除する予定。
-        fwType = ((NWMFirmDataSegment *)NWM_PARAM_FWDATA_ADDRESS)->fwType;
+        fwType = (u8)( ((NWMFirmDataSegment *)NWM_PARAM_FWDATA_ADDRESS)->fwType );
         
         // Check integrity of WLAN data segment
         if (fwType == 1 && FALSE == NWMi_CheckFwDataIntegrity())
@@ -391,7 +398,7 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 #endif
         
         // HotStart
-        NWM_Init(pNwmBuf, NWM_SYSTEM_BUF_SIZE, 3); /* 3 -> DMA no. */
+        NWMi_InitForLauncher(pNwmBuf, NWM_SYSTEM_BUF_SIZE, 3); /* 3 -> DMA no. */
         err = NWMi_InstallFirmware(InstallFirmCallback, NULL, 0, FALSE);
     } else {    // COLD START
         s32 flen = 0;
@@ -474,7 +481,7 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
         }
 
         // Start FW installation
-        NWM_Init(pNwmBuf, NWM_SYSTEM_BUF_SIZE, 3); /* 3 -> DMA no. */
+        NWMi_InitForLauncher(pNwmBuf, NWM_SYSTEM_BUF_SIZE, 3); /* 3 -> DMA no. */
 
 #if (MEASURE_WIRELESS_INITTIME == 1)
         startTick = OS_GetTick();
@@ -523,14 +530,23 @@ BOOL GetWlanFirmwareInstallResult(WLANFirmResult *pResult)
     return retval;
 }
 
-
 // 無線ファームロード完了？
 BOOL PollingInstallWlanFirmware( void )
 {
 	if ( !s_isFinished ) {
 		WLANFirmResult result;
 		if( GetWlanFirmwareInstallResult( &result ) ) {
-			if( result != WLANFIRM_RESULT_SUCCESS ) {
+			if( result == WLANFIRM_RESULT_SUCCESS ) {
+				// ロード成功
+				BOOL enable;
+				if( LCFG_THW_IsForceDisableWireless() ) {
+					enable = FALSE;
+				}else {
+					enable = LCFG_TSD_IsAvailableWireless();
+				}
+				SYSMi_SetWirelessLED( enable );
+				OS_TPrintf( "WLFIRM load finished.\n" );
+			}else {
 				// ロード失敗
 				if( !s_isHotStartWLFirm ) {
 					// ColdStartの無線ファームロードなら、FATALエラー
@@ -539,6 +555,7 @@ BOOL PollingInstallWlanFirmware( void )
 				}else {
 					// そうでない場合は、ColdStartロードで再度実行。
 					(void)InstallWlanFirmware( FALSE );
+					OS_TPrintf( "WLFIRM HotStart load failed... Start retry.\n" );
 				}
 			}
 			s_isFinished = TRUE;
