@@ -327,18 +327,12 @@ typedef struct CardThreadData{
 } CardThreadData;
 
 // カード起動用関数
-typedef struct CardBootFunction {
-    HotSwState (*ReadBootSegment_N)(CardBootData *cbd);
-    HotSwState (*ChangeMode_N)(CardBootData *cbd);
-
+typedef struct CardSecureModeFunction {
     HotSwState (*ReadID_S)(CardBootData *cbd);
     HotSwState (*ReadSegment_S)(CardBootData *cbd);
     HotSwState (*SetPNG_S)(CardBootData *cbd);
     HotSwState (*ChangeMode_S)(CardBootData *cbd);
-
-    HotSwState (*ReadID_G)(CardBootData *cbd);
-    HotSwState (*ReadPage_G)(CardBootData *cbd, u32 addr, void* buf, u32 size);
-} CardBootFunction;
+} CardSecureModeFunction;
 
 #ifdef __cplusplus
 } /* extern "C" */

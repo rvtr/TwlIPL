@@ -23,11 +23,11 @@ static u32 F(const BLOWFISH_CTX *ctx, u32 x);
 
 
 /*---------------------------------------------------------------------------*
-  Name:         GCDm_MakeBlowfishTableDS
+  Name:         MakeBlowfishTableDS
   
   Description:  KeyTableÇÃê∂ê¨
  *---------------------------------------------------------------------------*/
-void GCDm_MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen)
+void MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen)
 {
 	const BLOWFISH_CTX *initTable = &HotSwBlowfishInitTableBufDS;
 

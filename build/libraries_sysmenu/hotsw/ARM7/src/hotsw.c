@@ -150,23 +150,15 @@ static u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = {
 	0x87, 0x46, 0x58, 0x24
 };
 
-static CardBootFunction  	s_funcTable[] = {
+static CardSecureModeFunction s_funcTable[] = {
 	// DS Card Type 1
-    {				ReadBootSegNormal, 	ChangeModeNormal,						// Normalモード関数
-     ReadIDSecure, 	ReadSegSecure, 	  	SwitchONPNGSecure, ChangeModeSecure,	// Secureモード関数
-     ReadIDGame,    ReadPageGame},												// Game  モード関数
+    { ReadIDSecure, ReadSegSecure, SwitchONPNGSecure, ChangeModeSecure},
 	// DS Card Type 2
-    {				ReadBootSegNormal, 	ChangeModeNormal,						// Normalモード関数
-     ReadIDSecure, 	ReadSegSecure, 	  	SwitchONPNGSecure, ChangeModeSecure,	// Secureモード関数
-     ReadIDGame,    ReadPageGame},												// Game  モード関数
+	{ ReadIDSecure, ReadSegSecure, SwitchONPNGSecure, ChangeModeSecure},
 	// TWL Card Type 1
-    {				ReadBootSegNormal, 	ChangeModeNormal,						// Normalモード関数
-     ReadIDSecure, 	ReadSegSecure, 	  	SwitchONPNGSecure, ChangeModeSecure,	// Secureモード関数
-     ReadIDGame,    ReadPageGame},												// Game  モード関数
+    { ReadIDSecure, ReadSegSecure, SwitchONPNGSecure, ChangeModeSecure},
 	// RomEmulation
-    {				ReadBootSegNormal, 	ChangeModeNormal,											// Normalモード関数
-     ReadIDSecure_ROMEMU, ReadSegSecure_ROMEMU, SwitchONPNGSecure_ROMEMU, ChangeModeSecure_ROMEMU,	// Secureモード関数
-     ReadIDGame,    ReadPageGame},																	// Game  モード関数
+    {ReadIDSecure_ROMEMU, ReadSegSecure_ROMEMU, SwitchONPNGSecure_ROMEMU, ChangeModeSecure_ROMEMU}
 };
 
 // Global Values ------------------------------------------------------------
@@ -352,7 +344,7 @@ static HotSwState LoadCardData(void)
             LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 			
 	    	// Boot Segment読み込み
-	    	state  = s_funcTable[s_cbData.cardType].ReadBootSegment_N(&s_cbData);
+	    	state  = ReadBootSegNormal(&s_cbData);
 			retval = (retval == HOTSW_SUCCESS) ? state : retval;
             
             // ワンセグ差込み時はカードバス電源をディープスリープ（PFM）に入れない
@@ -420,7 +412,7 @@ static HotSwState LoadCardData(void)
 			s_cbData.secureLatency = AddLatency2ToLatency1(s_cbData.pBootSegBuf->rh.s.secure_cmd_param);
 
 	    	// Key Table初期化
-	    	GCDm_MakeBlowfishTableDS(&s_cbData, 8);
+	    	MakeBlowfishTableDS(&s_cbData, 8);
 
 			// コマンド認証値・コマンドカウンタ初期値・PNジェネレータ初期値の生成
             GenVA_VB_VD();
@@ -475,7 +467,7 @@ static HotSwState LoadCardData(void)
                 retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
 		    	// Key Table初期化
-    			GCDm_MakeBlowfishTableDS(&s_cbData, 8);
+    			MakeBlowfishTableDS(&s_cbData, 8);
 
 				// コマンド認証値・コマンドカウンタ初期値・PNジェネレータ初期値の生成
         		GenVA_VB_VD();
