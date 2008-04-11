@@ -32,7 +32,7 @@
 #define		CHATTERING_COUNTER					0x1988		// 100ms分 (0x1988 * 15.3us = 100000us)
 #define		COUNTER_A							0x51C		//  20ms分 ( 0x51C * 15.3us =  20012us)
 
-#define		CARD_EXIST_CHECK_INTERVAL			300
+#define		CARD_EXIST_CHECK_INTERVAL			200
 
 #define 	UNDEF_CODE							0xe7ffdeff	// 未定義コード
 #define 	ENCRYPT_DEF_SIZE					0x800		// 2KB  ※ ARM9常駐モジュール先頭2KB
@@ -81,6 +81,7 @@ static void McPowerOff(void);
 static void SetMCSCR(void);
 
 static BOOL	isTwlModeLoad(void);
+static HotSwState ReadSecureModeCardData(void);
 
 static void GenVA_VB_VD(void);
 static HotSwState DecryptObjectFile(void);
@@ -424,27 +425,9 @@ static HotSwState LoadCardData(void)
 	    	// ---------------------- Secure Mode ----------------------
 			romMode = HOTSW_ROM_MODE_SECURE;
 
-			// PNG設定
-			state  = s_funcTable[s_cbData.cardType].SetPNG_S(&s_cbData);
-            retval = (retval == HOTSW_SUCCESS) ? state : retval;
-
-	        // DS側符号生成回路初期値設定 (レジスタ設定)
-			SetMCSCR();
-
-			// ID読み込み
-	    	state  = s_funcTable[s_cbData.cardType].ReadID_S(&s_cbData);
-            retval = (retval == HOTSW_SUCCESS) ? state : retval;
-
-            // カードIDの比較をして、一致しなければFALSEを返す
-            if(s_cbData.id_nml != s_cbData.id_scr){
-                retval = (retval == HOTSW_SUCCESS) ? HOTSW_ID_CHECK_ERROR : retval;
-            }
-
-            if(retval == HOTSW_SUCCESS){
-		    	// Secure領域のSegment読み込み
-		    	state  = s_funcTable[s_cbData.cardType].ReadSegment_S(&s_cbData);
-                retval = (retval == HOTSW_SUCCESS) ? state : retval;
-            }
+			// SecureモードのIDとSecureSegmentを読み込む
+			state  = ReadSecureModeCardData();
+			retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
 			// ★TWLカード対応 一旦リセット後Secure2モードに移行
             // SCFG
@@ -477,20 +460,9 @@ static HotSwState LoadCardData(void)
                 retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
 				// ---------------------- Secure2 Mode ----------------------
-				// PNG設定
-                state  = s_funcTable[s_cbData.cardType].SetPNG_S(&s_cbData);
-                retval = (retval == HOTSW_SUCCESS) ? state : retval;
-
-	    		// DS側符号生成回路初期値設定 (レジスタ設定)
-				SetMCSCR();
-
-        		// セキュア２カードID読み込み
-                state = s_funcTable[s_cbData.cardType].ReadID_S(&s_cbData);
+				// Secure2モードのIDとSecureSegmentを読み込む
+				state  = ReadSecureModeCardData();
 				retval = (retval == HOTSW_SUCCESS) ? state : retval;
-                
-        		// Secure２領域のSegment読み込み
-                state  = s_funcTable[s_cbData.cardType].ReadSegment_S(&s_cbData);
-                retval = (retval == HOTSW_SUCCESS) ? state : retval;
             }
 
 	    	// ゲームモードに移行
@@ -628,6 +600,44 @@ static BOOL	isTwlModeLoad(void)
             return FALSE;
         }
     }
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         ReadSecureModeCardData
+
+  Description:  セキュアモードの各種読み込みを行う関数
+
+  ※ s_cbData.modeTypeの設定はこの関数の外で行う
+ *---------------------------------------------------------------------------*/
+static HotSwState ReadSecureModeCardData(void)
+{
+	HotSwState retval = HOTSW_SUCCESS;
+    HotSwState state  = HOTSW_SUCCESS;
+    
+	// PNG設定
+	state  = s_funcTable[s_cbData.cardType].SetPNG_S(&s_cbData);
+    retval = (retval == HOTSW_SUCCESS) ? state : retval;
+
+	// DS側符号生成回路初期値設定 (レジスタ設定)
+	SetMCSCR();
+
+	// ID読み込み
+	state  = s_funcTable[s_cbData.cardType].ReadID_S(&s_cbData);
+    retval = (retval == HOTSW_SUCCESS) ? state : retval;
+    
+    // カードIDの比較をして、一致しなければFALSEを返す
+    if(s_cbData.id_nml != s_cbData.id_scr){
+        retval = (retval == HOTSW_SUCCESS) ? HOTSW_ID_CHECK_ERROR : retval;
+    }
+
+    if(retval == HOTSW_SUCCESS){
+		// Secure領域のSegment読み込み
+		state  = s_funcTable[s_cbData.cardType].ReadSegment_S(&s_cbData);
+        retval = (retval == HOTSW_SUCCESS) ? state : retval;
+    }
+
+    return retval;
 }
 
 
@@ -1378,6 +1388,9 @@ static void HotSwThread(void *arg)
             //			→ １．全てのレジスタをクリアする			(カードがささっていない時)
             //			   ２．一度電源を落としてNomalモードにする	(NANDアプリ等を起動する場合)
             //			   ３．必要なレジスタを残して、後はクリア	(ささっているカードを起動する場合)
+			//
+            // NANDアプリ起動時の終了処理が確認できたら、、BOOTAPIでKillThreadでスレッドを殺せるようにしておく。
+            // スレッドを殺す前に、IREQとDET割り込みを無効にしておく。
 //			HOTSW_Finalize();
         }
         

@@ -92,24 +92,19 @@ HotSwState ReadIDNormal(CardBootData *cbd)
 	// MCCNT1 レジスタ設定
 	reg_HOTSW_MCCNT1 = START_MASK | HOTSW_PAGE_STAT | (0x1 & LATENCY1_MASK);
     
-#if 0
-    // DMAが終了するまで待つ
-    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
-#else
     // メッセージ受信
 	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-#endif
     
     return HOTSW_SUCCESS;
 }
 
 
 /*---------------------------------------------------------------------------*
- * Name:         ReadBootSegNormal
- * 
- * Description:  ノーマルモードのBoot Segment読み込み
- *
- * CT=240ns  Latency1=0x1fff  Latency2=0x3f  Pagecount=8page
+  Name:         ReadBootSegNormal
+  
+  Description:  ノーマルモードのBoot Segment読み込み
+ 
+  CT=240ns  Latency1=0x1fff  Latency2=0x3f  Pagecount=8page
  *---------------------------------------------------------------------------*/
 HotSwState ReadBootSegNormal(CardBootData *cbd)
 {
@@ -165,13 +160,8 @@ HotSwState ReadBootSegNormal(CardBootData *cbd)
 		// MCCNT1 レジスタ設定
 		reg_HOTSW_MCCNT1 = START_MASK | CT_MASK | PC_MASK & (pc << PC_SHIFT) | LATENCY2_MASK | LATENCY1_MASK;
 
-#if 0
-    	// DMAが終了するまで待つ
-    	HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
-#else
     	// メッセージ受信
 		OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-#endif
         
         page++;
     }
@@ -210,13 +200,8 @@ HotSwState ReadStatusNormal(CardBootData *cbd)
 	// MCCNT1 レジスタ設定
 	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~SCRAMBLE_MASK) | START_MASK | HOTSW_PAGE_STAT;
 
-#if 0
-    // DMAが終了するまで待つ
-    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
-#else
     // メッセージ受信
 	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-#endif
 
     return HOTSW_SUCCESS;
 }
@@ -255,11 +240,11 @@ HotSwState RefreshBadBlockNormal(CardBootData *cbd)
 
 
 /*---------------------------------------------------------------------------*
- * Name:         ChangeModeNormal
- * 
- * Description:  ノーマルモードからセキュアモードへの変更
- * 
- * CT=240ns  Latency1=0x18  Latency2=0  Pagecount=0page
+  Name:         ChangeModeNormal
+  
+  Description:  ノーマルモードからセキュアモードへの変更
+  
+  CT=240ns  Latency1=0x18  Latency2=0  Pagecount=0page
  *---------------------------------------------------------------------------*/
 HotSwState ChangeModeNormal(CardBootData *cbd)
 {
@@ -268,11 +253,11 @@ HotSwState ChangeModeNormal(CardBootData *cbd)
 
 
 /*---------------------------------------------------------------------------*
- * Name:         ChangeModeNorma2
- * 
- * Description:  ノーマルモードからセキュア２モードへの変更
- * 
- * CT=240ns  Latency1=0x18  Latency2=0  Pagecount=0page
+  Name:         ChangeModeNorma2
+  
+  Description:  ノーマルモードからセキュア２モードへの変更
+  
+  CT=240ns  Latency1=0x18  Latency2=0  Pagecount=0page
  *---------------------------------------------------------------------------*/
 HotSwState ChangeModeNormal2(CardBootData *cbd)
 {
@@ -335,18 +320,14 @@ HotSwState LoadTable(void)
 	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK | REG_MI_MCCNT0_I_MASK);
     
     // MCCNT1 レジスタ設定
-	reg_HOTSW_MCCNT1 = START_MASK | HOTSW_PAGE_16;
+	reg_HOTSW_MCCNT1 = START_MASK | HOTSW_PAGE_16 | LATENCY2_MASK & (0x18 << LATENCY2_SHIFT);
     
-#if 0
-    // DMAが終了するまで待つ
-    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
-#else
     // メッセージ受信
 	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-#endif
     
     return HOTSW_SUCCESS;
 }
+
 
 /*---------------------------------------------------------------------------*
   Name:         ReadRomEmulationInfo
@@ -466,15 +447,16 @@ static void PreSendSecureCommand(CardBootData *cbd, u32 *scrambleMask)
 
 
 /*---------------------------------------------------------------------------*
- * Name:         ReadIDSecure
- * 
- * Description:
- *
- * CT=240ns  Latency1=0x8f8+0x18  Latency2=0  Pagecount=Status
+  Name:         ReadIDSecure
+  
+  Description:
+ 
+  CT=240ns  Latency1=0x8f8+0x18  Latency2=0  Pagecount=Status
  *---------------------------------------------------------------------------*/
 HotSwState ReadIDSecure(CardBootData *cbd)
 {
 	u32 scrambleMask;
+	u32	*buf = (cbd->modeType == HOTSW_MODE1) ? &cbd->id_scr : &cbd->id_scr2;
     
     if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
@@ -490,7 +472,7 @@ HotSwState ReadIDSecure(CardBootData *cbd)
 	PreSendSecureCommand(cbd, &scrambleMask);
 
 	// NewDMA転送の準備
-    HOTSW_NDmaCopy_Card( HOTSW_NDMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_scr, sizeof(cbd->id_scr) );
+    HOTSW_NDmaCopy_Card( HOTSW_NDMA_NO, (u32 *)HOTSW_MCD1, buf, sizeof(buf) );
 
 	// MCCNT0 レジスタ設定
 	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
@@ -498,14 +480,9 @@ HotSwState ReadIDSecure(CardBootData *cbd)
 	// MCCNT1 レジスタ設定
 	reg_HOTSW_MCCNT1 = START_MASK | HOTSW_PAGE_STAT | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
 
-#if 0
-    // DMAが終了するまで待つ
-    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
-#else
     // メッセージ受信
 	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-#endif
-    
+
     // コマンドカウンタインクリメント
 	cbd->vbi++;
 
@@ -514,9 +491,9 @@ HotSwState ReadIDSecure(CardBootData *cbd)
 
 
 /*---------------------------------------------------------------------------*
- * Name:         ReadSegSecure
- * 
- * Description:
+  Name:         ReadSegSecure
+  
+  Description:
  *---------------------------------------------------------------------------*/
 HotSwState ReadSegSecure(CardBootData *cbd)
 {
@@ -564,25 +541,20 @@ HotSwState ReadSegSecure(CardBootData *cbd)
 
 			// MCCNT0 レジスタ設定
 			reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
-            
+
 			// MCCNT1 レジスタ設定
 			reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (pc << PC_SHIFT) | scrambleMask | cbd->pBootSegBuf->rh.s.secure_cmd_param;
 
-#if 0
-    		// DMAが終了するまで待つ
-    		HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
-#else
     		// メッセージ受信
 			OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-#endif
-            
+
             // 転送済みページ数
             j++;
         }
-        
+
         // 読み込みセグメント番号インクリメント
 		segNum++;
-        
+
     	// コマンドカウンタインクリメント
 		cbd->vbi++;
     }
@@ -592,9 +564,9 @@ HotSwState ReadSegSecure(CardBootData *cbd)
 
 
 /*---------------------------------------------------------------------------*
- * Name:         SwitchONPNGSecure
- * 
- * Description:
+  Name:         SwitchONPNGSecure
+  
+  Description:
  *---------------------------------------------------------------------------*/
 HotSwState SwitchONPNGSecure(CardBootData *cbd)
 {
@@ -630,9 +602,9 @@ HotSwState SwitchONPNGSecure(CardBootData *cbd)
 
 
 /*---------------------------------------------------------------------------*
- * Name:         SwitchOFFPNGSecure
- * 
- * Description:
+  Name:         SwitchOFFPNGSecure
+  
+  Description:
  *---------------------------------------------------------------------------*/
 HotSwState SwitchOFFPNGSecure(CardBootData *cbd)
 {
@@ -668,11 +640,11 @@ HotSwState SwitchOFFPNGSecure(CardBootData *cbd)
 
 
 /*---------------------------------------------------------------------------*
- * Name:         ChangeModeSecure
- * 
- * Description:
- *
- * CT=240ns  Latency1=0x8f8+0x18  Latency2=0  Pagecount=0page
+  Name:         ChangeModeSecure
+  
+  Description:
+ 
+  CT=240ns  Latency1=0x8f8+0x18  Latency2=0  Pagecount=0page
  *---------------------------------------------------------------------------*/
 HotSwState ChangeModeSecure(CardBootData *cbd)
 {
@@ -711,9 +683,9 @@ HotSwState ChangeModeSecure(CardBootData *cbd)
 // ■       ゲームモードのコマンド       ■
 // ■------------------------------------■
 /*---------------------------------------------------------------------------*
- * Name:         ReadIDGame
- * 
- * Description:  ゲームモードでIDを読み込む
+  Name:         ReadIDGame
+  
+  Description:  ゲームモードでIDを読み込む
  *---------------------------------------------------------------------------*/
 HotSwState ReadIDGame(CardBootData *cbd)
 {
@@ -738,24 +710,19 @@ HotSwState ReadIDGame(CardBootData *cbd)
    	// MCCNT1 レジスタ設定
 	reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | HOTSW_PAGE_STAT;
     
-#if 0
-    // DMAが終了するまで待つ
-    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
-#else
     // メッセージ受信
 	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-#endif
     
     return HOTSW_SUCCESS;
 }
 
 
 /*---------------------------------------------------------------------------*
- * Name:         ReadPageGame
- * 
- * Description:  ゲームモードで、指定されたページを指定バッファに指定サイズ分を読み込む
- *
- * CT=150ns  Pagecount=1page  Latency=RomHeaderで指定の値
+  Name:         ReadPageGame
+  
+  Description:  ゲームモードで、指定されたページを指定バッファに指定サイズ分を読み込む
+ 
+  CT=150ns  Pagecount=1page  Latency=RomHeaderで指定の値
  *---------------------------------------------------------------------------*/
 HotSwState ReadPageGame(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
 {
@@ -788,13 +755,8 @@ HotSwState ReadPageGame(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
    		// MCCNT1 レジスタ設定
 		reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | HOTSW_PAGE_1;
         
-#if 0
-		// DMAが終了するまで待つ
-		HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
-#else
 		// メッセージ受信
 		OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-#endif
     }
 
     return HOTSW_SUCCESS;
@@ -802,9 +764,9 @@ HotSwState ReadPageGame(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
 
 
 /*---------------------------------------------------------------------------*
- * Name:         ReadStatusGame
- * 
- * Description:  ゲームモードでステータスを読み込む
+  Name:         ReadStatusGame
+  
+  Description:  ゲームモードでステータスを読み込む
  *---------------------------------------------------------------------------*/
 HotSwState ReadStatusGame(CardBootData *cbd)
 {
@@ -829,22 +791,17 @@ HotSwState ReadStatusGame(CardBootData *cbd)
    	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 111(ステータスリード) その他Romヘッダの情報におまかせ)
 	reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | HOTSW_PAGE_STAT;
     
-#if 0
-    // DMAが終了するまで待つ
-    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
-#else
     // メッセージ受信
 	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-#endif
     
     return HOTSW_SUCCESS;
 }
 
 
 /* -----------------------------------------------------------------
- * RefreshBadBlockGame関数
- *
- * ゲームモードでバッドブロックを置換
+  RefreshBadBlockGame関数
+ 
+  ゲームモードでバッドブロックを置換
  * ----------------------------------------------------------------- */
 HotSwState RefreshBadBlockGame(CardBootData *cbd)
 {
