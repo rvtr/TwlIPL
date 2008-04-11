@@ -206,6 +206,9 @@ void HOTSW_Init(u32 threadPrio)
 
 	// Counter-Aの値を設定
     reg_MI_MC2 = COUNTER_A;
+
+	// Bonding Optionの取得
+    s_bondingOp = SCFG_REG_GetBondingOption();
     
 	// カードブート用構造体の初期化
 	MI_CpuClear8(&s_cbData, sizeof(CardBootData));
