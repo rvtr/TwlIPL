@@ -179,7 +179,6 @@ TitleProperty *SYSM_ReadParameters( void )
     //-----------------------------------------------------
     // 無線ON/OFFフラグをもとに、LEDを設定する。
     //-----------------------------------------------------
-#if 0
 	{
 		BOOL enable;
 		if( LCFG_THW_IsForceDisableWireless() ) {
@@ -189,7 +188,7 @@ TitleProperty *SYSM_ReadParameters( void )
 		}
 		SYSMi_SetWirelessLED( enable );
 	}
-#endif
+	
     //-----------------------------------------------------
     // 各種デバイス設定
     //-----------------------------------------------------

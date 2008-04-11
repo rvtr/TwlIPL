@@ -537,6 +537,7 @@ BOOL PollingInstallWlanFirmware( void )
 		WLANFirmResult result;
 		if( GetWlanFirmwareInstallResult( &result ) ) {
 			if( result == WLANFIRM_RESULT_SUCCESS ) {
+#if 0
 				// ロード成功
 				BOOL enable;
 				if( LCFG_THW_IsForceDisableWireless() ) {
@@ -545,6 +546,7 @@ BOOL PollingInstallWlanFirmware( void )
 					enable = LCFG_TSD_IsAvailableWireless();
 				}
 				SYSMi_SetWirelessLED( enable );
+#endif
 				OS_TPrintf( "WLFIRM load finished.\n" );
 			}else {
 				// ロード失敗
