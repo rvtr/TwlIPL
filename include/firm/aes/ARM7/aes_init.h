@@ -121,6 +121,25 @@ static inline void AESi_ResetAesKeyC( void )
 }
 
 /*---------------------------------------------------------------------------*
+  Name:         AESi_ResetAesKeyD
+
+  Description:  set SEED/ID/KEYs filler data for slot-D
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+static inline void AESi_ResetAesKeyD( void )
+{
+    AES_Lock();
+    AES_WaitKey();
+
+    MI_CpuCopy32( (u32*)AESi_ResetAesKeyD + 3, (u32*)REG_AES_KEY_D1_ADDR, 40 );
+
+    AES_Unlock();
+}
+
+/*---------------------------------------------------------------------------*
   Name:         AESi_InitKeysFIRM
 
   Description:  set IDs depending on the application.
