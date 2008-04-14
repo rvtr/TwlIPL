@@ -244,6 +244,8 @@ TwlSpMain(void)
 // RTCのリセットチェック
 static void ResetRTC( void )
 {
+    SYSM_work* sw = SYSMi_GetWork();
+
     // ランチャーでリセットを検出するためにこの処理をしているが、RTC_Init内でも同じことをしているので、ちょっと無駄。
     RTCRawStatus1 stat1;
     RTCRawStatus2 stat2;
@@ -261,8 +263,11 @@ static void ResetRTC( void )
             fout.fout   =   RTC_FOUT_DUTY_32KHZ;
             RTC_WriteFout(&fout);
         }
-        SYSMi_GetWork()->flags.common.isResetRTC = TRUE;
+        sw->flags.common.isResetRTC = TRUE;
     }
+
+    // RTC初回データ読み込み
+    RTC_ReadDateTime(&sw->Rtc1stData);
 }
 
 

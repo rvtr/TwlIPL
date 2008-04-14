@@ -119,6 +119,7 @@ typedef struct SYSM_work {
     
 	LauncherParam		launcherParam;
 	SYSMRomEmuInfo		romEmuInfo;
+	RTCRawData			Rtc1stData;						// RTC初回ロード値 8byte
 	
 	BOOL				isDeveloperAESMode;				// 開発用セキュリティか？（製品版でFALSE）
 	void				*addr_AESregion[2];				// AES暗号化領域の格納アドレス

@@ -190,6 +190,8 @@ CardThreadData              HotSwThreadData;
  *---------------------------------------------------------------------------*/
 void HOTSW_Init(u32 threadPrio)
 {
+    SYSM_work* sw = SYSMi_GetWork();
+
     OS_InitTick();
     OS_InitThread();
 
@@ -287,7 +289,7 @@ void HOTSW_Init(u32 threadPrio)
         HotSwThreadData.idx_insert = (HotSwThreadData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
     }
     else{
-        SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
+        sw->flags.hotsw.is1stCardChecked  = TRUE;
     }
 }
 
@@ -1040,14 +1042,15 @@ void HOTSW_SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size)
  *---------------------------------------------------------------------------*/
 static void GenVA_VB_VD(void)
 {
+    SYSM_work* sw = SYSMi_GetWork();
     u32 dummy = 0;
-    MATHRandContext32   rnd;
-
-    // 乱数を初期化 VBlankカウンタ値を種とする。
-    // [TODO] プログラムがV周期に同期しているためVカウンタでは固定値になりやすい
-    //       （特にダイレクトブート）。
-    //        起動する度に変化するパラメータと組み合わせるべき。
-    MATH_InitRand32(&rnd, (u64)OS_GetVBlankCount());
+    MATHRandContext32 rnd;
+    
+    // 乱数を初期化
+    // チック＆RTC初回ロード値を種とする。
+    // （起動する度に変化するパラメータと組み合わせる。
+    //   Vカウンタは2130サイクル変化しないので固定値になりやすい。）
+    MATH_InitRand32(&rnd, OS_GetTick() ^ sw->Rtc1stData.words[0] ^ sw->Rtc1stData.words[1]);
 
     s_cbData.vae = MATH_Rand32(&rnd, 0);
     s_cbData.vbi = MATH_Rand32(&rnd, 0);
