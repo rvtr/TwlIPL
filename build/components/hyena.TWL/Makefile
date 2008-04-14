@@ -39,7 +39,11 @@ LCFILE_SPEC		=	$(TARGET_NAME).lsf
 LCFILE_TEMPLATE	=	$(TARGET_NAME).lcf.template
 LDRES_TEMPLATE	=	$(ROOT)/build/components/racoon.TWL/racoon.response.template
 
+# crt0.oは、ランチャー向けに特殊ビルドしたものを使用
 CRT0_O			=	$(OBJDIR)/crt0.LTD.o
+
+# スタック不足防止の為、インライン展開せずにコンパイルする
+CCFLAGS_OPT		=	-O4 -inline off
 
 #----------------------------------------------------------------------------
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
@@ -52,8 +56,7 @@ CCFLAGS			+=	-DSDK_NOCRYPTO
 endif
 
 ifndef TWLSDK_NOCRYPTO
-MAKELCF_FLAGS	+=	-DUSE_CRYPTO_LIBS='libsea_sp$(TWL_LIBSUFFIX).a libcrypto_sp$(TWL_LIBSUFFIX).a'
-MACRO_FLAGS		+=	-DSDK_SEA
+MAKELCF_FLAGS	+=	-DUSE_CRYPTO_LIBS='libaes_sp$(TWL_LIBSUFFIX).a'
 endif
 
 MACRO_FLAGS		+=	-DSDK_SYSMENU_BUILD
