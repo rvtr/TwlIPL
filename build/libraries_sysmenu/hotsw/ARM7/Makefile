@@ -38,6 +38,11 @@ SRCS				=	blowfish.c \
 
 TARGET_LIB			=	libhotsw_sp$(TWL_LIBSUFFIX).a
 
+ifneq ($(DHT_TEST),)
+SRCDIR				+=  ../../../tests/CheckDSHashTable/src
+SRCS				+=  dht.c
+MACRO_FLAGS			+=  -DDHT_TEST
+endif
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 

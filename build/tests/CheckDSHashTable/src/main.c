@@ -47,6 +47,49 @@ static u8 rom_arm9[3*1024*1024] ATTRIBUTE_ALIGN(32);
 static u8 rom_arm7[1024*1024] ATTRIBUTE_ALIGN(32);
 #include <twl/ltdmain_end.h>
 
+/*
+    デバイスアクセスAPI
+*/
+#if 0
+// FS版 (fctx == FSFile*)
+static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg)
+{
+    FSFile* fp = arg;
+    s32 result;
+    if ( !FS_SeekFile(fp, offset, FS_SEEK_SET) )
+    {
+        OS_TPrintf("Cannot seek to the offset (%d bytes).\n", offset);
+        return FALSE;
+    }
+    result = FS_ReadFile(fp, dest, length);
+    if ( result != length )
+    {
+        OS_TPrintf("Cannot read the data (%d bytes).\n", length);
+        return FALSE;
+    }
+    return TRUE;
+}
+#else
+#ifdef SDK_ARM9
+#define PAGE_SIZE 512
+// CARD版 (fctx == dma no)
+static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg)
+{
+    u32 dma = (u32)arg;
+    CARD_ReadRom(dma, (void*)offset, dest, (u32)length);
+    return TRUE;
+}
+#else
+// HOTSW版 (fctx == CardBootData* cdb)
+#include    <hotswTypes.h>
+#include    <dsCardCommon.h>
+static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg)
+{
+    HotSwState retval = ReadPageGame((CardBootData*)arg, (u32)offset, dest, (u32)length);
+    return (retval == HOTSW_SUCCESS);
+}
+#endif
+#endif
 
 static void VBlankIntr( void )
 {
@@ -116,7 +159,7 @@ static BOOL CheckValidation(FSFile* fp)
         return FALSE;
     }
     // ハッシュ計算 (2) - 隠蔽は難しいか
-    if ( !DHT_CheckHashPhase2(db, &rom_header, fp, ov_buffer) )
+    if ( !DHT_CheckHashPhase2(db, &rom_header, ov_buffer, ReadImage, fp) )
     {
         return FALSE;
     }

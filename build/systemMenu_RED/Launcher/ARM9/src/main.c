@@ -102,7 +102,7 @@ void TwlMain( void )
     (void)OS_EnableInterrupts();
 
     SYSM_InitPXI();                                 // 割り込み許可後にコールする必要あり。
-	
+
     FS_Init( FS_DMA_NOT_USE );
 
 #ifdef DEBUG_LAUNCHER_DUMP
@@ -129,14 +129,18 @@ void TwlMain( void )
 
 
     // 各種パラメータの取得------------
-	pBootTitle = SYSM_ReadParameters();   		               // 本体設定データ、リセットパラメータのリード、検査用オート起動カード判定、量産ライン用キーショートカット起動判定等のリード
-	
-	if( SYSM_IsFatalError() ) {
-		// FATALエラー処理
-	}
-	if( !LCFG_TSD_IsFinishedInitialSetting() ) {
-		// 初回起動シーケンス判定
-	}
+    pBootTitle = SYSM_ReadParameters();                        // 本体設定データ、リセットパラメータのリード、検査用オート起動カード判定、量産ライン用キーショートカット起動判定等のリード
+
+#ifdef DHT_TEST
+    SYSMi_PrepareDatabase();
+#endif
+
+    if( SYSM_IsFatalError() ) {
+        // FATALエラー処理
+    }
+    if( !LCFG_TSD_IsFinishedInitialSetting() ) {
+        // 初回起動シーケンス判定
+    }
 
     (void)SYSM_GetCardTitleList( s_titleList );                 // カードアプリリストの取得（カードアプリはs_titleList[0]に格納される）
 
@@ -145,7 +149,7 @@ void TwlMain( void )
     {
         deleteTmp();
     }
-    
+
     // NANDタイトルリストの準備
     SYSM_InitNandTitleList();
 
@@ -186,16 +190,16 @@ void TwlMain( void )
     }
 
 // ランチャー画面を絶対表示しないバージョン
-	if( SYSM_IsLauncherHidden() )
-	{
-		if(direct_boot == FALSE)
-		{
-			state = STOP;
-		}else
-		{
-			state = LOAD_START;
-		}
-	}
+    if( SYSM_IsLauncherHidden() )
+    {
+        if(direct_boot == FALSE)
+        {
+            state = STOP;
+        }else
+        {
+            state = LOAD_START;
+        }
+    }
 
     // チャンネルをロックする
     SND_LockChannel((1 << L_CHANNEL) | (1 << R_CHANNEL), 0);
@@ -216,9 +220,9 @@ void TwlMain( void )
     }
 #endif
 
-	if( SYSM_IsFatalError() ) {
-		// FATALエラー処理
-	}
+    if( SYSM_IsFatalError() ) {
+        // FATALエラー処理
+    }
 
     // メインループ--------------------
     while( 1 ) {
@@ -270,13 +274,13 @@ void TwlMain( void )
             break;
         case LOADING:
             if( SYSM_IsLoadTitleFinished() ) {
-				SYSM_StartAuthenticateTitle( pBootTitle );
+                SYSM_StartAuthenticateTitle( pBootTitle );
                 state = AUTHENTICATE;
             }
-			if( !direct_boot )
-			{
-				(void)LauncherFadeout( s_titleList ); // ダイレクトブートでないときはフェードアウトも行う
-			}
+            if( !direct_boot )
+            {
+                (void)LauncherFadeout( s_titleList ); // ダイレクトブートでないときはフェードアウトも行う
+            }
             if( ( end == 0 ) &&
                 SYSM_IsLoadTitleFinished() ) {
                 end = OS_GetTick();
@@ -285,22 +289,22 @@ void TwlMain( void )
             break;
         case AUTHENTICATE:
             if( ( direct_boot || ( !direct_boot && LauncherFadeout( s_titleList ) ) ) &&
-				PollingInstallWlanFirmware() &&					// アプリブート前に無線ファームのロードは完了しておく必要がある
+                PollingInstallWlanFirmware() &&                 // アプリブート前に無線ファームのロードは完了しておく必要がある
                 SYSM_IsAuthenticateTitleFinished() )
             {
-				if( SYSM_IsFatalError() ) {
-					// FATALエラー処理
-				}
-				
-	            switch ( SYSM_TryToBootTitle( pBootTitle ) ) {   // アプリ認証結果取得orブート   成功時：never return
-	            case AUTH_RESULT_TITLE_LOAD_FAILED:
-	            case AUTH_RESULT_TITLE_POINTER_ERROR:
-	            case AUTH_RESULT_AUTHENTICATE_FAILED:
-	            case AUTH_RESULT_ENTRY_ADDRESS_ERROR:
-	                state = STOP;
-	                // [TODO:]クリアしたほうが良いデータ（鍵など）があれば消す
-	                break;
-	            }
+                if( SYSM_IsFatalError() ) {
+                    // FATALエラー処理
+                }
+
+                switch ( SYSM_TryToBootTitle( pBootTitle ) ) {   // アプリ認証結果取得orブート   成功時：never return
+                case AUTH_RESULT_TITLE_LOAD_FAILED:
+                case AUTH_RESULT_TITLE_POINTER_ERROR:
+                case AUTH_RESULT_AUTHENTICATE_FAILED:
+                case AUTH_RESULT_ENTRY_ADDRESS_ERROR:
+                    state = STOP;
+                    // [TODO:]クリアしたほうが良いデータ（鍵など）があれば消す
+                    break;
+                }
             }
             break;
         case STOP:                                              // 停止
@@ -310,9 +314,9 @@ void TwlMain( void )
         // カードアプリリストの取得（スレッドで随時カード挿抜を通知されるものをメインループで取得）
         (void)SYSM_GetCardTitleList( s_titleList );
 
-		// 無線ファームロードのポーリング
-		(void)PollingInstallWlanFirmware();
-		
+        // 無線ファームロードのポーリング
+        (void)PollingInstallWlanFirmware();
+
         // コマンドフラッシュ
         (void)SND_FlushCommand(SND_COMMAND_NOBLOCK);
 
@@ -321,9 +325,9 @@ void TwlMain( void )
         if ( PAD_DetectFold() )
         {
             SYSM_GoSleepMode();
-        }
-#endif // DISABLE_SLEEP
     }
+#endif // DISABLE_SLEEP
+}
 }
 
 
@@ -344,18 +348,18 @@ static void INTR_VBlank(void)
 // nandのtmpディレクトリの中身を消す
 static void deleteTmp()
 {
-	if( FS_DeleteFile( OS_TMP_APP_PATH ) )
-	{
-		OS_TPrintf( "deleteTmp: deleted File '%s' \n", OS_TMP_APP_PATH );
-	}else
-	{
-		FSResult res = FS_GetArchiveResultCode("nand");
-		if( FS_RESULT_SUCCESS == res )
-		{
-			OS_TPrintf( "deleteTmp: File '%s' not exists.\n", OS_TMP_APP_PATH );
-		}else
-		{
-			OS_TPrintf( "deleteTmp: delete File '%s' failed. Error code = %d.\n", OS_TMP_APP_PATH, res );
-		}
-	}
+    if( FS_DeleteFile( OS_TMP_APP_PATH ) )
+    {
+        OS_TPrintf( "deleteTmp: deleted File '%s' \n", OS_TMP_APP_PATH );
+    }else
+    {
+        FSResult res = FS_GetArchiveResultCode("nand");
+        if( FS_RESULT_SUCCESS == res )
+        {
+            OS_TPrintf( "deleteTmp: File '%s' not exists.\n", OS_TMP_APP_PATH );
+        }else
+        {
+            OS_TPrintf( "deleteTmp: delete File '%s' failed. Error code = %d.\n", OS_TMP_APP_PATH, res );
+        }
+    }
 }

@@ -28,6 +28,7 @@ TWL_PROC	   	=	ARM9
 
 REVISION_SRC	=	src/revision.c
 
+SRCDIR		= src
 SRCS			=	sysmenu_lib.c \
 					util.c \
 					ninLogoFunc.c \
@@ -46,6 +47,12 @@ TARGET_LIB		=	libsysmenu$(TWL_LIBSUFFIX).a
 
 ifdef DO_NOT_SHOW_LAUNCHER
 MACRO_FLAGS += -DDO_NOT_SHOW_LAUNCHER
+endif
+
+ifneq ($(DHT_TEST),)
+SRCDIR				+=  ../../../tests/CheckDSHashTable/src
+SRCS				+=  dht.c
+MACRO_FLAGS			+=  -DDHT_TEST
 endif
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs

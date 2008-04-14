@@ -25,10 +25,35 @@
 extern "C" {
 #endif
 
+typedef BOOL    (*DHTReadFunc)(void* dest, s32 offset, s32 length, void* arg);
+
 /*---------------------------------------------------------------------------*
   Name:         DHT_PrepareDatabase
 
-  Description:  全データベースを読み込む
+  Description:  読み込み済みのデータベースのヘッダからサイズを返す
+
+  Arguments:    pDHT        データベースヘッダの格納先
+
+  Returns:      正しそうなヘッダならサイズ、そうでないなら0
+ *---------------------------------------------------------------------------*/
+u32 DHT_GetDatabaseLength(const DHTFile* pDHT);
+
+/*---------------------------------------------------------------------------*
+  Name:         DHT_PrepareDatabase
+
+  Description:  読み込み済みの全データベースの署名を検証する
+
+  Arguments:    pDHT        データベースの格納先
+
+  Returns:      成功すればTRUE
+ *---------------------------------------------------------------------------*/
+BOOL DHT_CheckDatabase(const DHTFile* pDHT);
+
+/*---------------------------------------------------------------------------*
+  Name:         DHT_PrepareDatabase
+
+  Description:  FS関数を利用して全データベースを読み込み検証まで行う
+                ファイル名は/sign/DSHashTable.bin固定
 
   Arguments:    pDHT        全データベースの格納先
 
@@ -49,6 +74,45 @@ BOOL DHT_PrepareDatabase(DHTFile* pDHT);
 const DHTDatabase* DHT_GetDatabase(const DHTFile* pDHT, const ROM_Header_Short* pROMHeader);
 
 /*---------------------------------------------------------------------------*
+  Name:         DHT_CheckHashPhase1Init
+
+  Description:  ROMヘッダおよびARM9/ARM7スタティック領域の検証の準備
+
+  Arguments:    ctx         検証用のSVCHMACSHA1コンテキスト
+                pROMHeader  対象となるROMヘッダ格納先
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void DHT_CheckHashPhase1Init(SVCHMACSHA1Context* ctx, const ROM_Header_Short* pROMHeader);
+
+/*---------------------------------------------------------------------------*
+  Name:         DHT_CheckHashPhase1Update
+
+  Description:  ROMヘッダおよびARM9/ARM7スタティック領域の検証のスタティック部分
+                いくら分割しても良いが、ARM9スタティック、ARM7スタティックの順に
+                呼び出すこと。
+
+  Arguments:    ctx         検証用のSVCHMACSHA1コンテキスト
+                ptr         対象となるデータ領域
+                length      対象となるデータサイズ
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void DHT_CheckHashPhase1Update(SVCHMACSHA1Context* ctx, const void* ptr, u32 length);
+
+/*---------------------------------------------------------------------------*
+  Name:         DHT_CheckHashPhase1
+
+  Description:  ROMヘッダおよびARM9/ARM7スタティック領域の検証の結果判定
+
+  Arguments:    ctx         検証用のSVCHMACSHA1コンテキスト
+                db          対象データベースへのポインタ
+
+  Returns:      問題なければTRUE
+ *---------------------------------------------------------------------------*/
+BOOL DHT_CheckHashPhase1Final(SVCHMACSHA1Context* ctx, const DHTDatabase *db);
+
+/*---------------------------------------------------------------------------*
   Name:         DHT_CheckHashPhase1
 
   Description:  ROMヘッダおよびARM9/ARM7スタティック領域の検証
@@ -65,17 +129,19 @@ BOOL DHT_CheckHashPhase1(const DHTDatabase *db, const ROM_Header_Short* pROMHead
 /*---------------------------------------------------------------------------*
   Name:         DHT_CheckHashPhase2
 
-  Description:  オー馬齢領域の検証
+  Description:  オーバーレイ領域の検証
+                (デバイスのRead APIを登録できるべき)
 
   Arguments:    db          対象データベースへのポインタ
                 pROMHeader  対象となるROMヘッダ格納先
                 fctx        (FS版) FSFile構造体へのポインタ
                             (CARD版) dma番号をvoid*にキャストしたもの
+                            (HOTSW版) CardBootData構造体へのポインタ
                 buffer      本APIで使用するワーク (DHT_OVERLAY_MAXだけ必要)
 
   Returns:      問題なければTRUE
  *---------------------------------------------------------------------------*/
-BOOL DHT_CheckHashPhase2(const DHTDatabase *db, const ROM_Header_Short* pROMHeader, void* fctx, void* buffer);
+BOOL DHT_CheckHashPhase2(const DHTDatabase *db, const ROM_Header_Short* pROMHeader, void* buffer, DHTReadFunc func, void* arg);
 
 #ifdef __cplusplus
 } /* extern "C" */

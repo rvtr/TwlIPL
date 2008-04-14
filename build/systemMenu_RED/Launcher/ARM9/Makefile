@@ -92,6 +92,14 @@ ifdef DO_NOT_SHOW_LAUNCHER
 MACRO_FLAGS += -DDO_NOT_SHOW_LAUNCHER
 endif
 
+ifneq ($(DHT_TEST),)
+MACRO_FLAGS += -DDHT_TEST
+MAKEROM_FLAGS += -DDS_HASH_TABLE_FILE=DSHashTable.bin \
+			-DDS_HASH_TABLE_DIR=$(TWL_IPL_RED_PRIVATE_ROOT)/build/tools/MakeDSHashTable
+else
+MAKEROM_FLAGS += -DDS_HASH_TABLE_DIR=data
+endif
+
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 
