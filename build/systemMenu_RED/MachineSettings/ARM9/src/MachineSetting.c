@@ -33,9 +33,9 @@
 #define OK_BUTTON_BOTTOM_Y					( OK_BUTTON_TOP_Y + 2 * 8 )
 
 #ifdef BROADON_ENABLE
-#define SETTING_MENU_ELEMENT_NUM			8						// メインメニューの項目数（※ピクトチャット起動テストは除いておく）
+#define SETTING_MENU_ELEMENT_NUM			9						// メインメニューの項目数（※ピクトチャット起動テストは除いておく）
 #else
-#define SETTING_MENU_ELEMENT_NUM			7
+#define SETTING_MENU_ELEMENT_NUM			8
 #endif
 // extern data------------------------------------------
 
@@ -127,6 +127,16 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ LCFG_T
 		(const u16 *)L"WIRELESS(C)",
 		(const u16 *)L"WIRELESS(K)",
 	},
+	{
+		(const u16 *)L"本体のクリーンアップ",
+		(const u16 *)L"MACHINE CLEAN UP",
+		(const u16 *)L"MACHINE CLEAN UP(F)",
+		(const u16 *)L"MACHINE CLEAN UP(G)",
+		(const u16 *)L"MACHINE CLEAN UP(I)",
+		(const u16 *)L"MACHINE CLEAN UP(S)",
+		(const u16 *)L"MACHINE CLEAN UP(C)",
+		(const u16 *)L"MACHINE CLEAN UP(K)",
+	},
 #ifdef BROADON_ENABLE
 	{
 		(const u16 *)L"フリーソフトBOX",
@@ -154,10 +164,11 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ LCFG_T
 };
 
 static MenuPos s_settingPos[] = {
+	{ TRUE,  4 * 8,   4 * 8 },
 	{ TRUE,  4 * 8,   6 * 8 },
 	{ TRUE,  4 * 8,   8 * 8 },
-	{ TRUE,  4 * 8,  10 * 8 },
-	{ TRUE, 4 * 8,  12 * 8 },
+	{ TRUE, 4 * 8,   10 * 8 },
+	{ TRUE,  4 * 8,  12 * 8 },
 	{ TRUE,  4 * 8,  14 * 8 },
 	{ TRUE,  4 * 8,  16 * 8 },
 	{ TRUE,  4 * 8,  18 * 8 },
@@ -270,6 +281,10 @@ int MachineSettingMain( void )
                     g_pNowProcess = SetWirelessMain;
                     break;
                 case 7:
+                    CleanupMachineInit();
+                    g_pNowProcess = CleanupMachineMain;
+                    break;
+                case 8:
                     SetFreeSoftBoxInit();
                     g_pNowProcess = SetFreeSoftBoxMain;
                     break;

@@ -75,6 +75,8 @@ extern void SetWirelessInit( void );
 extern int  SetWirelessMain( void );
 extern void SetFreeSoftBoxInit( void );
 extern int  SetFreeSoftBoxMain( void );
+extern void CleanupMachineInit( void );
+extern int  CleanupMachineMain( void );
 
 extern void DrawOKCancelButton( void );
 extern void CheckOKCancelButton(BOOL *tp_ok, BOOL *tp_cancel);

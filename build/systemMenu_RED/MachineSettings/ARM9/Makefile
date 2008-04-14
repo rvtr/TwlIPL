@@ -51,7 +51,7 @@ BG_DIR					=	../../data
 
 SRCS					=	main.c MachineSetting.c \
 							setRTC.c selectLanguage.c calibrationTP.c setOwnerInfo.c selectCountry.c \
-							setParentalControl.c setFreeSoftBox.c setWireless.c\
+							setParentalControl.c setFreeSoftBox.c setWireless.c cleanupMachine.c	\
 						CountryNameMappingData.c \
 							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c \
 						$(BG_DIR)/BGData_MachineSettings.c
@@ -64,7 +64,11 @@ MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
 
 MAKETAD_FLAGS			+= -s
 
-LLIBRARIES				=	libsea$(TWL_LIBSUFFIX).a
+LLIBRARIES				=	libes$(TWL_LIBSUFFIX).a				\
+							libboc$(TWL_LIBSUFFIX).a			\
+							libnam$(TWL_LIBSUFFIX).a			\
+							libsea$(TWL_LIBSUFFIX).a			\
+							libnamut$(TWL_LIBSUFFIX).a
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
