@@ -52,7 +52,7 @@ TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
 TARGET_BIN				=	main.srl
 
 LCFILE_SPEC				=	ARM9-TS.lsf
-LCFILE_TEMPLATE			=	ARM9-TS.lcf.template
+#LCFILE_TEMPLATE			=	ARM9-TS.lcf.template
 ROM_SPEC				=	main.rsf
 
 LOGO_DIR				=	Logo
