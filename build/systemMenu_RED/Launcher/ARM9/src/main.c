@@ -21,7 +21,7 @@
 #include "logoDemo.h"
 #include "sound.h"
 
-//#define ENABLE_SLEEP
+//#define DISABLE_SLEEP
 
 // extern data-----------------------------------------------------------------
 
@@ -316,13 +316,13 @@ void TwlMain( void )
         // コマンドフラッシュ
         (void)SND_FlushCommand(SND_COMMAND_NOBLOCK);
 
-#ifdef ENABLE_SLEEP
+#ifndef DISABLE_SLEEP
         // スリープモードへの遷移
         if ( PAD_DetectFold() )
         {
             SYSM_GoSleepMode();
         }
-#endif // ENABLE_SLEEP
+#endif // DISABLE_SLEEP
     }
 }
 
