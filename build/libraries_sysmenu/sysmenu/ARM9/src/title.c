@@ -503,7 +503,16 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 				return;
 			}
 		}
-
+/*
+		// [TODO:]新規Read関数の準備、とりあえずWRAMBをガメるつもりで実装
+		FS_InitWramTransfer(3);
+		MI_FreeWram_B( MI_WRAM_ARM7 );
+		MI_FreeWram_B( MI_WRAM_ARM9 );
+		MI_FreeWram_B( MI_WRAM_DSP );
+		MI_CancelWram_B( MI_WRAM_ARM7 );
+		MI_CancelWram_B( MI_WRAM_ARM9 );
+		MI_CancelWram_B( MI_WRAM_DSP );
+*/
         for (i = region_header; i < region_max; ++i)
         {
             u32 len = MATH_ROUNDUP( length[i], SYSM_ALIGNMENT_LOAD_MODULE );// AES暗号化領域の関係で、ロードサイズは32バイトアライメントに補正
@@ -519,6 +528,16 @@ OS_TPrintf("RebootSystem failed: cant seek file(%d)\n", source[i]);
                 return;
             }
 
+/*
+            // [TODO:]ここで新規関数を使って同時にハッシュ計算やAES処理もやってしまう予定
+            // 別スレッドで同じWRAM使おうとすると多分コケるのでしっかりWRAMガメないとダメ
+			if ( !FS_ReadFileViaWram(file, (void *)destaddr[i], len, MI_WRAM_B, 0, MI_WRAM_SIZE_256KB, コールバック, 引数 ) )
+			{
+OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
+                FS_CloseFile(file);
+                return;
+			}
+*/
             readLen = FS_ReadFile(file, (void *)destaddr[i], (s32)len);
 
             if( readLen < 0 )
@@ -1191,8 +1210,8 @@ static void SYSMi_makeTitleIdList( void )
 			}
 		}
 		
-		// ジャンプ可能ならば
-		if( pe_hs->permit_landing_normal_jump )
+		// ジャンプ可能ならば(一応Data Onlyフラグも見ておくが、ジャンプAPIでも見る事)
+		if( pe_hs->permit_landing_normal_jump && !( hs->titleID & TITLE_ID_DATA_ONLY_FLAG_MASK ) )
 		{
 			// リストに追加してジャンプ可能フラグON
 			list->TitleID[count] = pe_hs->titleID;
