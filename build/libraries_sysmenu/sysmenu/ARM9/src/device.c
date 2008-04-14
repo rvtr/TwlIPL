@@ -202,8 +202,19 @@ void SYSM_GoSleepMode( void )
     // デバッガ起動時にはスリープに入らない
     if ( ! SYSM_IsRunOnDebugger() || (OSi_DetectDebugger() & OS_CONSOLE_TWLDEBUGGER) )
     {
+        // カード抜け無検出設定
+        //   TWLではゲームカードの再ロードが可能なため
+        //   スリープ時のカード抜け検出を無効化
+        //   （DS-IPLではゲームカードが起動できなくなるので
+        //     レジューム時のROM-IDチェックでエラーになると
+        //     シャットダウンしていた）
+        OSIntrMode enable = OS_DisableInterrupts();
+        reg_MI_MCCNT0 &= ~REG_MI_MCCNT0_I_MASK;
+        OS_ResetRequestIrqMask( OS_IE_CARD_IREQ );
+        OS_RestoreInterrupts( enable );
+
+        // スリープ遷移
     	PM_GoSleepMode( PM_TRIGGER_COVER_OPEN |
-	    				(u32)(SYSM_IsExistCard() ? PM_TRIGGER_CARD : 0) |
 	    				PM_TRIGGER_RTC_ALARM,
 		    			0,
 			    		0 );
