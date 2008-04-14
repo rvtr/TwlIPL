@@ -29,7 +29,7 @@
  *---------------------------------------------------------------------------*/
 void PM_InitFIRM( void )
 {
-#ifndef PMIC_FINAL
+#if SDK_TS_VERSION < 300
     // LED
     PMi_ResetFlags( REG_PMIC_LED_CTL_ADDR, PMIC_LED_CTL_AUTO_BLINK | PMIC_LED_CTL_BLINK_BY_SLEEP );
     PMi_SetParams( REG_PMIC_LVL4_BRT_ADDR,
