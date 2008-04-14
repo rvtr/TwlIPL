@@ -310,7 +310,7 @@ void TwlSpMain( void )
 #endif
     SetDebugLED( 0 );
 
-#ifndef PMIC_FINAL
+#if SDK_TS_VERSION < 300
     PMi_SetParams( REG_PMIC_BL_BRT_B_ADDR, 22, PMIC_BL_BRT_B_MASK );
 #else
     MCUi_WriteRegister( MCU_REG_BL_ADDR, MCU_REG_BL_BRIGHTNESS_MASK );
