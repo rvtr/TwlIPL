@@ -887,7 +887,7 @@ static HotSwState LoadStaticModule(void)
             UnlockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
         }
 
-#define MY_DEBUG
+//#define MY_DEBUG
 #ifdef  MY_DEBUG
         (void)CheckStaticModuleHash();
 #endif
