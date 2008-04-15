@@ -50,8 +50,6 @@ MACRO_FLAGS += -DDO_NOT_SHOW_LAUNCHER
 endif
 
 ifneq ($(DHT_TEST),)
-SRCDIR				+=  ../../../tests/CheckDSHashTable/src
-SRCS				+=  dht.c
 MACRO_FLAGS			+=  -DDHT_TEST
 endif
 
