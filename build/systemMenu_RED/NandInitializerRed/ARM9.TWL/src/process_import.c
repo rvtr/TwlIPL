@@ -680,7 +680,7 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 
 	// NOT_LAUNCH_FLAG または DATA_ONLY_FLAG が立っていないタイトルの場合
 	// freeSoftBoxCountに空きがなければインポートしない
-	if (!(titleInfo.titleId & (TITLE_ID_NOT_LAUNCH_FLAG_MASK | TITLE_ID_DATA_ONLY_FLAG_MASK)))
+	if (!(tadInfo.titleInfo.titleId & (TITLE_ID_NOT_LAUNCH_FLAG_MASK | TITLE_ID_DATA_ONLY_FLAG_MASK)))
 	{
 		if (NAMUT_SearchInstalledSoftBoxCount() == LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX)
 		{

@@ -43,6 +43,8 @@
 // 指定ディレクトリ自体は残ります。
 static const char* sDeleteDirectoryList[] =
 {
+	"nand:/shared1",
+	"nand2:/photo",
 	"nand:/tmp"
 };
 
