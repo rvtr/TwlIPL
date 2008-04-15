@@ -16,17 +16,32 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-TARGET_FIRM			=	SYSTEMMENU
+SUBDIRS			=	
+
+MYSUBDIRS		=	./
+
+#----------------------------------------------------------------------------
+TARGET_FIRM		=	SYSTEMMENU
+TARGET_PLATFORM	=	TWL
+TWL_ARCHGEN		=	LIMITED
+TWL_PROC	   	=	ARM9
+
+SRCDIR		= ../common/src
+SRCS		= dht.c
+
+TARGET_LIB		=	libdht$(TWL_LIBSUFFIX).a
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
+INSTALL_TARGETS		=	$(TARGETS)
+INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
+
+LDIRT_CLEAN		=	$(REVISION_SRC)
+
 #----------------------------------------------------------------------------
 
-SUBDIRS_P			=	reloc_info sysmenu mb_loader acsign boot hotsw namut mcu ds dht
-
-#----------------------------------------------------------------------------
+do-build: $(REVISION_SRC) $(MYSUBDIRS) $(TARGETS)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
-
 
 #===== End of Makefile =====

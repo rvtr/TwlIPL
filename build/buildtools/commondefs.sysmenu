@@ -71,6 +71,7 @@ SYSMENU_LIBS	?=	\
 					libmbloader$(TWL_LIBSUFFIX).a \
 					libboot$(TWL_LIBSUFFIX).a \
 					libds$(TWL_LIBSUFFIX).a \
+					libdht$(TWL_LIBSUFFIX).a \
 
 else #	($(CODEGEN_PROC),ARM7)
 
@@ -81,6 +82,7 @@ SYSMENU_LIBS	?=	\
 					libboot_sp$(TWL_LIBSUFFIX).a \
 					libds_sp$(TWL_LIBSUFFIX).a \
 					libhotsw_sp$(TWL_LIBSUFFIX).a \
+					libdht_sp$(TWL_LIBSUFFIX).a \
 
 endif
 

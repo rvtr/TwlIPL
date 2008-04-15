@@ -24,8 +24,7 @@ TARGET_PLATFORM		:= TWL
 TARGET_FIRM		:= SYSTEMMENU
 override TWL_ARCHGEN	:= LIMITED
 
-SRCS			= main.c dht.c
-LINCLUDES		= include
+SRCS			= main.c
 TARGET_BIN		= CheckDSHashTable.srl
 ROM_SPEC		= CheckDSHashTable.rsf
 

@@ -17,16 +17,14 @@
 #----------------------------------------------------------------------------
 
 TARGET_FIRM			=	SYSTEMMENU
+SUBDIRS				=	ARM7 ARM9
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS_P			=	reloc_info sysmenu mb_loader acsign boot hotsw namut mcu ds dht
-
-#----------------------------------------------------------------------------
+do-build:		$(TARGETS)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
-
 
 #===== End of Makefile =====
