@@ -25,6 +25,8 @@
 
 #define DEBUG_MODE
 
+//#define HOTSW_DISABLE_FORCE_CARD_OFF
+
 // カード電源ONからROMヘッダロードまでの期間にスリープに入る時のワンセグ対策しない場合
 //#define HOWSW_ENABLE_DEEP_SLEEP_WHILE_INSERT_CARD
 
@@ -1653,6 +1655,19 @@ static void MonitorThread(void *arg)
  *---------------------------------------------------------------------------*/
 static void InterruptCallbackCard(void)
 {
+    // スロット電源ON時は強制OFF
+    // （エミュレーションROMは旧コネクタでの強制OFFでデータが化けることがある）
+#ifndef HOTSW_DISABLE_FORCE_CARD_OFF
+//    if ( ! HOTSWi_IsRomEmulation() )
+    {
+        u32 mode = GetMcSlotMode();
+        if(mode == SLOT_STATUS_MODE_01 || mode == SLOT_STATUS_MODE_10){
+            SetMcSlotMode(SLOT_STATUS_MODE_11);
+        }
+        OS_TPrintf("slot status: %x\n", mode);
+    }
+#endif
+
     HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].ctrl  = FALSE;
     HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].value = 0;
     HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].type  = HOTSW_PULLOUT;
@@ -1662,14 +1677,6 @@ static void InterruptCallbackCard(void)
 
     // メッセージインデックスをインクリメント
     HotSwThreadData.idx_pulledOut = (HotSwThreadData.idx_pulledOut+1) % HOTSW_PULLED_MSG_NUM;
-
-/*  // スロットのモードを
-    {
-        u32 mode = GetMcSlotMode();
-        if(mode == SLOT_STATUS_MODE_01 || mode == SLOT_STATUS_MODE_10){
-            SetMcSlotMode(SLOT_STATUS_MODE_11);
-        }
-    }*/
 
     OS_PutString("○\n");
 }
