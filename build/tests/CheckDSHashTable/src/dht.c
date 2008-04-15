@@ -303,7 +303,7 @@ static BOOL ImageHMACSHA1Update(SVCHMACSHA1Context* ctx, s32 offset, s32 length,
 static BOOL GetOverlayInfo(int no, int fat_offset, int* pOffset, int* pLength)
 {
     ROM_FAT *fat;
-    static u8 fat_cache[PAGE_SIZE];
+    static u8 fat_cache[PAGE_SIZE]; // 本当にページをまたがないのか？
     static int last_page = 0;
     int page = (fat_offset + no * (s32)sizeof(ROM_FAT)) / PAGE_SIZE;
     if ( last_page != page )

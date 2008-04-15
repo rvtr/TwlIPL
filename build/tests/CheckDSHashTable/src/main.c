@@ -50,7 +50,7 @@ static u8 rom_arm7[1024*1024] ATTRIBUTE_ALIGN(32);
 /*
     デバイスアクセスAPI
 */
-#if 0
+#if 1
 // FS版 (fctx == FSFile*)
 static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg)
 {
