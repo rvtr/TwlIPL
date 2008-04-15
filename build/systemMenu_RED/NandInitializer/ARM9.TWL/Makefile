@@ -16,7 +16,7 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-SUBDIRS		=	$(ROOT)/build/demos/gx/UnitTours/DEMOLib
+SUBDIRS		=	
 
 #----------------------------------------------------------------------------
 
@@ -32,6 +32,14 @@ MACRO_FLAGS				+=	-DNAND_INITIALIZER_LIMITED_MODE
 # ワイヤレスの強制Disableフラグを設定可能にする場合定義します。（要:Make Clean）
 #MACRO_FLAGS				+=	-DUSE_WIRELESS_FORCE_DISABLE_SETTING
 #============================================================================
+#============================================================================
+# NightlyBuild 用に自動実行させる場合定義します。（要:Make Clean）
+#USE_FOR_NIGHTLY_AUTO_TEST = TRUE
+
+ifdef USE_FOR_NIGHTLY_AUTO_TEST
+MACRO_FLAGS				+=	-DUSE_FOR_NIGHTLY_AUTO_TEST
+endif
+#============================================================================
 
 TARGET_FIRM			= SYSTEMMENU
 TARGET_PLATFORM		= TWL
@@ -42,7 +50,12 @@ TWL_ARCHGEN    		= LIMITED
 TITLEID_LO				=	0NIA
 #TARGET_TAD				=
 
+ifdef USE_FOR_NIGHTLY_AUTO_TEST
+TARGET_BIN	= NandInitializerForAutoTest.srl
+else
 TARGET_BIN	= NandInitializer.srl
+endif
+
 LCFILE_SPEC	= ../../NandInitializerRed/ARM9.TWL/ARM9-TS.lsf
 ROM_SPEC	= ../../NandInitializerRed/ARM9.TWL/main.rsf
 
@@ -95,7 +108,6 @@ LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\
 					libnamut$(TWL_LIBSUFFIX).a
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
-include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
 
 MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 

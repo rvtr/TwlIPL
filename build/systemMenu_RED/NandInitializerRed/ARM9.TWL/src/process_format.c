@@ -73,6 +73,7 @@ static u8 sFormatResult;
  *---------------------------------------------------------------------------*/
 
 static void FormatCallback(KAMIResult result, void* arg);
+void* ForeverLoopProcess(void);
 
 /*---------------------------------------------------------------------------*
     プロセス関数定義
@@ -155,6 +156,11 @@ void* FormatProcess1(void)
 	}
 #endif
 
+#ifdef   USE_FOR_NIGHTLY_AUTO_TEST
+		sMenuSelectNo = MENU_CLEAN_UP;
+		return FormatProcess2;
+#endif //USE_FOR_NIGHTLY_AUTO_TEST
+
 	// 選択メニューの変更
     if ( kamiPadIsRepeatTrigger(PAD_KEY_UP) )
 	{
@@ -201,6 +207,8 @@ void* FormatProcess2(void)
 		switch( sMenuSelectNo )
 		{
 		case MENU_CLEAN_UP:	// 簡易フォーマット
+		{
+			BOOL result = TRUE;
 #ifdef DUMP_NAND_TREE
 			OS_Printf("---------------------------------------\n");
 			OS_Printf("                 Before                \n");
@@ -214,7 +222,6 @@ void* FormatProcess2(void)
 				// 現在の設定を保存しておきフォーマット後に保存設定で初期化する
 				u8 region = LCFG_THW_GetRegion();
 				BOOL isForceDisableWireless = LCFG_THW_IsForceDisableWireless(); 
-				BOOL result = TRUE;
 
 				result &= NAMUT_Format();
 				result &= WriteHWInfoFile(region, isForceDisableWireless);
@@ -239,8 +246,16 @@ void* FormatProcess2(void)
 			// InstalledSoftBoxCount, FreeSoftBoxCount の値を現在のNANDの状態に合わせて更新します。
 			UpdateNandBoxCount();
 
-			return FormatProcess1;
+#ifdef   USE_FOR_NIGHTLY_AUTO_TEST
+			if (result)
+			{
+				OS_Printf("NAND_CLEANUP_SUCCESS");
+			}
+			return ForeverLoopProcess;
+#endif //USE_FOR_NIGHTLY_AUTO_TEST
 
+			return FormatProcess1;
+		}
 		case MENU_CHECK_DISK: // チェックディスク
 			{
 				FATFSDiskInfo info;
@@ -359,4 +374,19 @@ void* FormatProcess3(void)
 	kamiFontPrintf((s16)(24 + (progress / 30)),  y_pos, FONT_COLOR_BLACK, "*");
 
 	return FormatProcess3;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         Format プロセス４
+
+  Description:  無限ループプロセス
+
+  Arguments:    None.
+
+  Returns:      next sequence
+ *---------------------------------------------------------------------------*/
+
+void* ForeverLoopProcess(void)
+{
+	return ForeverLoopProcess;
 }

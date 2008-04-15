@@ -76,9 +76,9 @@ static const MenuAndColor sMenuArray[] =
 #endif // USE_WIRELESS_FORCE_DISABLE_SETTING
 #ifndef   NAND_INITIALIZER_LIMITED_MODE
 	{"    WRITE ETICKET SIGN     ", BG_COLOR_GRAY   },
-	{"    INPORT TAD FROM SD     ", BG_COLOR_PINK   },
-	{"    INPORT NANDFIRM FROM SD", BG_COLOR_GREEN  },
-	{"    INPORT NORFIRM  FROM SD", BG_COLOR_VIOLET }
+	{"    IMPORT TAD FROM SD     ", BG_COLOR_PINK   },
+	{"    IMPORT NANDFIRM FROM SD", BG_COLOR_GREEN  },
+	{"    IMPORT NORFIRM  FROM SD", BG_COLOR_VIOLET }
 #endif // NAND_INITIALIZER_LIMITED_MODE
 };
 
@@ -87,10 +87,6 @@ static const MenuAndColor sMenuArray[] =
  *---------------------------------------------------------------------------*/
 
 static s8 sMenuSelectNo;
-
-#ifdef AUTO_FORMAT_MODE
-static BOOL sAutoProcessFlag = TRUE;
-#endif
 
 /*---------------------------------------------------------------------------*
     内部関数定義
@@ -178,16 +174,14 @@ void* TopmenuProcess1(void)
 		return TopmenuProcess2;
 	}
 
+#ifdef   USE_FOR_NIGHTLY_AUTO_TEST
+		FADE_OUT_RETURN( FormatProcess0 );
+#endif //USE_FOR_NIGHTLY_AUTO_TEST
 
 #ifndef NAND_INITIALIZER_LIMITED_MODE
 
 #ifdef AUTO_FORMAT_MODE
-	// sAutoProcessFlag でオート実行
-	if (sAutoProcessFlag)
-	{
-		sAutoProcessFlag = FALSE;
 		FADE_OUT_RETURN( AutoProcess0 );
-	}
 #endif
 
 	// L&R同時押しでオート実行！
@@ -195,7 +189,7 @@ void* TopmenuProcess1(void)
 	{
 		FADE_OUT_RETURN( AutoProcess0 );
 	}
-#endif
+#endif // NAND_INITIALIZER_LIMITED_MODE
 
 	return TopmenuProcess1;
 }
