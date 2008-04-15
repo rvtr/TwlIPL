@@ -233,6 +233,7 @@ typedef enum CardType{
 
 typedef enum HotSwState{
 	HOTSW_SUCCESS = 0,
+    HOTSW_ROMEMU_ONLY,
     HOTSW_TIME_OUT,
     HOTSW_CARD_LOCK_ERROR,
     HOTSW_CRC_CHECK_ERROR,

@@ -83,6 +83,7 @@ static BOOL isTwlModeLoad(void);
 static HotSwState ReadSecureModeCardData(void);
 static void ClearCaradFlgs(void);
 
+static void RegisterRomEmuInfo(void);
 static void GenVA_VB_VD(void);
 static HotSwState DecryptObjectFile(void);
 static HotSwState LoadBannerData(void);
@@ -404,6 +405,15 @@ static HotSwState LoadCardData(void)
                 ( 0xcf56 != s_cbData.pBootSegBuf->rh.s.nintendo_logo_crc16 ) ){
                 retval = (retval == HOTSW_SUCCESS) ? HOTSW_CRC_CHECK_ERROR : retval;
             }
+
+            // アプリジャンプのデバッグ時にROMエミュレーション情報だけ必要な場合
+            if(SYSMi_GetWork()->flags.hotsw.isLoadRomEmuOnly){
+                SYSMi_GetWork()->flags.hotsw.isExistCard = TRUE;
+                RegisterRomEmuInfo();
+                // 排他制御ここまで
+                UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+                goto end;
+            }
         }
 
         if( retval == HOTSW_SUCCESS ) {
@@ -502,7 +512,7 @@ static HotSwState LoadCardData(void)
             // カードIDの比較をして、一致しなければFALSEを返す
             if(s_cbData.id_scr != s_cbData.id_gam){
                 retval = (retval == HOTSW_SUCCESS) ? HOTSW_ID_CHECK_ERROR : retval;
-                goto end;
+                goto finalize;
             }
 
             // 常駐モジュール残りを指定先に転送
@@ -528,7 +538,7 @@ static HotSwState LoadCardData(void)
         retval = (retval == HOTSW_SUCCESS) ? state : retval;
     }
 
-end:
+finalize:
     if( retval == HOTSW_SUCCESS )
     {
         // バッドブロックを置換
@@ -536,6 +546,7 @@ end:
         retval = (retval == HOTSW_SUCCESS) ? state : retval;
     }
 
+end:
     // カードDMA終了確認
     HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
 
@@ -730,6 +741,26 @@ BOOL HOTSWi_IsRomEmulation(void)
 #endif
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         RegisterRomEmuInfo
+
+  Description:  ROMエミュレーション情報を登録
+ *---------------------------------------------------------------------------*/
+static void RegisterRomEmuInfo(void)
+{
+    SYSM_work* sw = SYSMi_GetWork();
+
+    // デバッガ情報
+    if ( ! sw->flags.hotsw.is1stCardChecked && debuggerFlg )
+    {
+        MI_CpuCopy8( &s_romEmuInfo, &(sw->romEmuInfo), ROM_EMULATION_DATA_SIZE );
+        sw->flags.hotsw.isOnDebugger = debuggerFlg;
+    }
+
+    sw->flags.hotsw.isCardStateChanged = TRUE;
+    sw->flags.hotsw.is1stCardChecked   = TRUE;
+}
+
 
 /*---------------------------------------------------------------------------*
   Name:         LoadBannerData
@@ -742,6 +773,7 @@ static HotSwState LoadBannerData(void)
 {
     BOOL state;
     HotSwState retval = HOTSW_SUCCESS;
+    SYSM_work* sw = SYSMi_GetWork();
 
     // バナーリード
     if( s_cbData.pBootSegBuf->rh.s.banner_offset ) {
@@ -751,33 +783,26 @@ static HotSwState LoadBannerData(void)
 
         // バナーリードが成功していたら各種フラグTRUE その他の場合はFALSE (この関数の外で排他制御されているからここでは排他制御しないでOK)
         state = (retval == HOTSW_SUCCESS) ? TRUE : FALSE;
-        SYSMi_GetWork()->flags.hotsw.isValidCardBanner  = state;
-        SYSMi_GetWork()->flags.hotsw.isExistCard        = state;
+        sw->flags.hotsw.isValidCardBanner  = state;
+        sw->flags.hotsw.isExistCard        = state;
     }
     else{
         // バナーデータが登録されていない場合 (この関数の外で排他制御されているからここでは排他制御しないでOK)
-        SYSMi_GetWork()->flags.hotsw.isValidCardBanner  = FALSE;
-        SYSMi_GetWork()->flags.hotsw.isExistCard        = TRUE;
+        sw->flags.hotsw.isValidCardBanner  = FALSE;
+        sw->flags.hotsw.isExistCard        = TRUE;
     }
 
-    if ( SYSMi_GetWork()->flags.hotsw.isExistCard )
+    if ( sw->flags.hotsw.isExistCard )
     {
-        SYSMi_GetWork()->flags.hotsw.isInspectCard = s_cbData.pBootSegBuf->rh.s.inspect_card;
+        sw->flags.hotsw.isInspectCard = s_cbData.pBootSegBuf->rh.s.inspect_card;
     }
     else
     {
-        SYSMi_GetWork()->flags.hotsw.isInspectCard = FALSE;
+        sw->flags.hotsw.isInspectCard = FALSE;
     }
 
-    // デバッガ情報
-    if ( ! SYSMi_GetWork()->flags.hotsw.is1stCardChecked && debuggerFlg )
-    {
-        MI_CpuCopy8( &s_romEmuInfo, &(SYSMi_GetWork()->romEmuInfo), ROM_EMULATION_DATA_SIZE );
-        SYSMi_GetWork()->flags.hotsw.isOnDebugger = debuggerFlg;
-    }
-
-    SYSMi_GetWork()->flags.hotsw.isCardStateChanged = TRUE;
-    SYSMi_GetWork()->flags.hotsw.is1stCardChecked   = TRUE;
+    // デバッガ情報を登録
+    RegisterRomEmuInfo();
 
     return retval;
 }

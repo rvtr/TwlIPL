@@ -100,6 +100,7 @@ typedef struct SYSM_work {
 			vu16		isOnDebugger :1;				// デバッガ動作か？
 			vu16		isEnableHotSW :1;				// 活線挿抜有効？
 			vu16		isBusyHotSW :1;					// 活線挿抜処理中？
+			vu16		isLoadRomEmuOnly :1;			// ROMエミュレーション情報のみロード
 			vu16		isCardLoadCompleted :1;			// カードからデータロード完了？
    			vu16		isValidCardBanner :1;			// バナーデータ更新？
 			vu16		is1stCardChecked :1;			// カードデータの1stチェック完了？

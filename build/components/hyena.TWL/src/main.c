@@ -44,6 +44,9 @@
 #include    "nvram_sp.h"
 #include    "twl/sea.h"
 
+// 未実装（現状ではデバッガ接続しないなら選択してもよい）
+//#define HYENA_ROMEMU_INFO_FROM_LNCR_PARAM
+
 /*---------------------------------------------------------------------------*
     定数定義
  *---------------------------------------------------------------------------*/
@@ -217,13 +220,25 @@ TwlSpMain(void)
     if( ( SYSM_GetLauncherParamBody()->v1.flags.isValid ) &&
         ( SYSM_GetLauncherParamBody()->v1.flags.bootType != LAUNCHER_BOOTTYPE_ROM ) &&
         ( SYSM_GetLauncherParamBody()->v1.bootTitleID )
-        ) {
+        )
+#ifdef HYENA_ROMEMU_INFO_FROM_LNCR_PARAM
+    {
         // ランチャーパラメータでダイレクトカードブート以外の指定がある時は、活線挿抜をOFFにする。
         SYSMi_GetWork()->flags.hotsw.isEnableHotSW = 0;
     }else {
         // それ以外の時は活線挿抜ON
         SYSMi_GetWork()->flags.hotsw.isEnableHotSW = 1;
     }
+#else
+    {
+        // ランチャーパラメータでダイレクトカードブート以外の指定がある時は、ROMエミュレーション情報のみ必要。
+        SYSMi_GetWork()->flags.hotsw.isLoadRomEmuOnly = 1;
+    }else {
+        // それ以外の時は普通にロード
+        SYSMi_GetWork()->flags.hotsw.isLoadRomEmuOnly = 0;
+    }
+    SYSMi_GetWork()->flags.hotsw.isEnableHotSW = 1;
+#endif
 
     // [TODO]アプリジャンプ有効で、カードブートでない時は、最初からHOTSW_Initを呼ばないようにしたい。
     HOTSW_Init(THREAD_PRIO_HOTSW);
