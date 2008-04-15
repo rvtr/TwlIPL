@@ -84,14 +84,14 @@ BOOL kamiImportTad(char* path, NAMTitleId* pTitleId)
 
 	// 後でアプリジャンプするTitleIdをここで読み取っておく
 	*pTitleId = tadInfo.titleInfo.titleId;
-
+/*
 	// Not Launch なら失敗
 	if (tadInfo.titleInfo.titleId & TITLE_ID_NOT_LAUNCH_FLAG_MASK)
 	{
 		OS_Warning(" Fail! :  NOT_LAUNCH_FLAG is specified in rsf file\n");
 		return FALSE;
 	}
-
+*/
 	// Data Only なら失敗
 	if (tadInfo.titleInfo.titleId & TITLE_ID_DATA_ONLY_FLAG_MASK)
 	{
