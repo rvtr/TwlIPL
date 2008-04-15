@@ -228,20 +228,35 @@ const DHTDatabase* DHT_GetDatabase(const DHTFile* pDHT, const ROM_Header_Short* 
 */
 void DHT_CheckHashPhase1Init(SVCHMACSHA1Context* ctx, const ROM_Header_Short* pROMHeader)
 {
+    PROFILE_INIT();
+    PROFILE_COUNT();
     // èÄîı
     SVC_HMACSHA1Init(ctx, hmac_key, sizeof(hmac_key));
     // ÉwÉbÉ_
     SVC_HMACSHA1Update(ctx, pROMHeader, DHT_DS_HEADER_SIZE);
+#ifdef PRINT_PROFILE
+    PROFILE_COUNT();
+    OS_TPrintf("\n%10d msec for scanning header.\n",   (int)OS_TicksToMilliSeconds(profile[1]-profile[0]));
+#endif
 }
 void DHT_CheckHashPhase1Update(SVCHMACSHA1Context* ctx, const void* ptr, u32 length)
 {
+    PROFILE_INIT();
+    PROFILE_COUNT();
     // ARM9 or ARM7 static
     SVC_HMACSHA1Update(ctx, ptr, length);
+    // åãâ ïÒçê
+#ifdef PRINT_PROFILE
+    PROFILE_COUNT();
+    OS_TPrintf("%10d msec for scanning %d bytes.\n",   (int)OS_TicksToMilliSeconds(profile[1]-profile[0]), length);
+#endif
 }
 BOOL DHT_CheckHashPhase1Final(SVCHMACSHA1Context* ctx, const u8 *hash)
 {
     u8 md[20];
     BOOL result;
+    PROFILE_INIT();
+    PROFILE_COUNT();
     SVC_HMACSHA1GetHash(ctx, md);
     result = SVC_CompareSHA1(hash, md);
     if ( !result )
@@ -251,6 +266,11 @@ BOOL DHT_CheckHashPhase1Final(SVCHMACSHA1Context* ctx, const u8 *hash)
         OS_TPrintfEx("HASH = % 20B\n", md);
         OS_TPrintf("%s: hash[0] is not valid.\n", __func__);
     }
+    // åãâ ïÒçê
+#ifdef PRINT_PROFILE
+    PROFILE_COUNT();
+    OS_TPrintf("%10d msec for comparing hash.\n",   (int)OS_TicksToMilliSeconds(profile[1]-profile[0]));
+#endif
     return result;
 }
 BOOL DHT_CheckHashPhase1(const u8* hash, const ROM_Header_Short* pROMHeader, const void* pARM9, const void* pARM7)
@@ -264,23 +284,16 @@ BOOL DHT_CheckHashPhase1(const u8* hash, const ROM_Header_Short* pROMHeader, con
     DHT_CheckHashPhase1Init(&ctx, pROMHeader);
 
     // ARM9 Static
-    PROFILE_COUNT();
     DHT_CheckHashPhase1Update(&ctx, pARM9, pROMHeader->main_size);
     // ARM7 Static
-    PROFILE_COUNT();
     DHT_CheckHashPhase1Update(&ctx, pARM7, pROMHeader->sub_size);
     // åüèÿ
-    PROFILE_COUNT();
     result = DHT_CheckHashPhase1Final(&ctx, hash);
     // åãâ ïÒçê
 #ifdef PRINT_PROFILE
     PROFILE_COUNT();
     OS_TPrintf("\nDone to check the hash (phase 1).\n");
-    OS_TPrintf("%10d msec for scanning header.\n",  (int)OS_TicksToMilliSeconds(profile[1]-profile[0]));
-    OS_TPrintf("%10d msec for scanning ARM9.\n",    (int)OS_TicksToMilliSeconds(profile[2]-profile[1]));
-    OS_TPrintf("%10d msec for scanning ARM7.\n",    (int)OS_TicksToMilliSeconds(profile[3]-profile[2]));
-    OS_TPrintf("%10d msec for comparing hash.\n",   (int)OS_TicksToMilliSeconds(profile[4]-profile[3]));
-    OS_TPrintf("\nTotal: %10d msec.\n",     (int)OS_TicksToMilliSeconds(profile[4]-profile[0]));
+    OS_TPrintf("\nTotal: %10d msec.\n",     (int)OS_TicksToMilliSeconds(profile[1]-profile[0]));
 #endif
     return result;
 }
