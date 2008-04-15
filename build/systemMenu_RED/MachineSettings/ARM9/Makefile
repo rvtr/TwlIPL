@@ -22,11 +22,7 @@ SUBDIRS					=	\
 
 #----------------------------------------------------------------------------
 
-ifdef SDK_FINALROM
 DISABLE_DEBUG			=	TRUE
-else
-DISABLE_DEBUG			=	FALSE
-endif
 
 TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
