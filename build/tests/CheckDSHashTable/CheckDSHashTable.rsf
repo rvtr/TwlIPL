@@ -234,7 +234,7 @@ RomSpec
 {
 	Offset		0x00000000
 	Segment		ALL
-	HostRoot	$(MAKEROM_DTH_ROOT)
+	HostRoot	../../systemMenu_RED/data
 	Root		/sign
 	File		DSHashTable.bin
         HostRoot        $(MAKEROM_SRL_ROOT)

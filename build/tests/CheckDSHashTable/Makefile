@@ -28,17 +28,11 @@ SRCS			= main.c
 TARGET_BIN		= CheckDSHashTable.srl
 ROM_SPEC		= CheckDSHashTable.rsf
 
-ifeq ($(TWL_IPL_RED_PRIVATE_ROOT),)
-DS_HASH_TABLE_ROOT	= data
-else
-DS_HASH_TABLE_ROOT	= $(TWL_IPL_RED_PRIVATE_ROOT)/build/tools/MakeDSHashTable
-endif
 DS_HASH_TABLE_SRL_ROOT	?= D:/SRL
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-MAKEROM_FLAGS		+= -DMAKEROM_DTH_ROOT=$(DS_HASH_TABLE_ROOT)	\
-				-DMAKEROM_SRL_ROOT=$(DS_HASH_TABLE_SRL_ROOT)
+MAKEROM_FLAGS		+= -DMAKEROM_SRL_ROOT=$(DS_HASH_TABLE_SRL_ROOT)
 
 
 #----------------------------------------------------------------------------
