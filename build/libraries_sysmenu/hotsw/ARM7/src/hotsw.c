@@ -81,6 +81,7 @@ static void SetMCSCR(void);
 
 static BOOL isTwlModeLoad(void);
 static HotSwState ReadSecureModeCardData(void);
+static void ClearCaradFlgs(void);
 
 static void GenVA_VB_VD(void);
 static HotSwState DecryptObjectFile(void);
@@ -1428,7 +1429,8 @@ static void HotSwThread(void *arg)
 {
     #pragma unused( arg )
 
-//    BOOL          isPulledOut = TRUE;
+	static BOOL 	isReadError = FALSE;
+        
     HotSwState      retval;
     HotSwMessage    *msg;
 
@@ -1450,29 +1452,22 @@ static void HotSwThread(void *arg)
         }
 
         while(1){
-            // 活線挿抜抑制フラグが立っていたら処理しない
             if( !SYSMi_GetWork()->flags.hotsw.isEnableHotSW ) {
                 SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
                 OS_PutString("### HotSw is restrained...\n");
                 break;
             }
 
-            // カードが挿さってたら
             if(HOTSW_IsCardExist()){
-                // 前の状態が挿し
                 if(!s_IsPulledOut){
-                    // 抜きがなかったか判定
                     if(GetMcSlotMode() == SLOT_STATUS_MODE_10){
-                        // フラグケア
                         LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 
                         SYSMi_GetWork()->flags.hotsw.isExistCard         = TRUE;
                         SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
 
-                        // 新しいカードのIDを入れる
                         SYSMi_GetWork()->nCardID = s_cbData.id_gam;
 
-                        // カードデータロード完了フラグ
                         SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = TRUE;
 
                         UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
@@ -1483,57 +1478,39 @@ static void HotSwThread(void *arg)
                     }
                 }
 
-                // カード読み込み開始
-                // [TODO] エラー発生時に電源ON/OFFを繰り返さないため、
-                //        挿入時に一度しかロードしないように必要がある
-                retval = LoadCardData();
+                if(!isReadError){
+                	retval = LoadCardData();
 
-                // Debug表示
-                DebugPrintErrorMessage(retval);
+                	DebugPrintErrorMessage(retval);
 
-                // カード読みが失敗していたらカードがないことにする
-                if(retval != HOTSW_SUCCESS){
-                    LockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
-                    SYSMi_GetWork()->flags.hotsw.isExistCard         = FALSE;
-                    SYSMi_GetWork()->flags.hotsw.isValidCardBanner   = FALSE;
-                    SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
-                    UnlockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
+                	if(retval != HOTSW_SUCCESS){
+						McPowerOff();
 
-                    // カードブート用構造体の初期化
-                    MI_CpuClear32(&s_cbData, sizeof(CardBootData));
+                		ClearCaradFlgs();
 
-                    // バッファのクリア
-                    MI_CpuClearFast(s_pBootSegBuffer, s_BootSegBufSize);
-                    MI_CpuClearFast(s_pSecureSegBuffer, s_SecureSegBufSize);
-                    MI_CpuClearFast((u32 *)SYSM_CARD_BANNER_BUF, sizeof(TWLBannerFile));
+						isReadError = TRUE;
+                	}
 
-                    break;
+                	s_IsPulledOut = FALSE;
                 }
-
-                // 状態フラグを更新
-                s_IsPulledOut = FALSE;
+                else{
+					break;
+                }
             }
 
             // カードが抜けてたら
             else{
-                // フラグ処理
-                LockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
-                SYSMi_GetWork()->flags.hotsw.isExistCard         = FALSE;
-                SYSMi_GetWork()->flags.hotsw.isValidCardBanner   = FALSE;
-                SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
-                SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = FALSE;
-                UnlockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
+                ClearCaradFlgs();
 
-                // カードブート用構造体の初期化
                 MI_CpuClear32(&s_cbData, sizeof(CardBootData));
 
-                // バッファのクリア
                 MI_CpuClearFast(s_pBootSegBuffer, s_BootSegBufSize);
                 MI_CpuClearFast(s_pSecureSegBuffer, s_SecureSegBufSize);
                 MI_CpuClearFast((u32 *)SYSM_CARD_BANNER_BUF, sizeof(TWLBannerFile));
 
                 s_IsPulledOut = TRUE;
-
+				isReadError   = FALSE;
+                
                 // ワンセグのスリープ時シャットダウン対策を戻す
                 MCU_EnableDeepSleepToPowerLine( MCU_PWR_LINE_33, TRUE );
 
@@ -1542,6 +1519,23 @@ static void HotSwThread(void *arg)
         }
         SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
     } // while loop
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:        ClearCaradFlgs
+
+  Description: カードデータバッファのバッファとフラグの後始末
+ *---------------------------------------------------------------------------*/
+static void ClearCaradFlgs(void)
+{
+	// フラグ処理
+    LockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
+    SYSMi_GetWork()->flags.hotsw.isExistCard         = FALSE;
+    SYSMi_GetWork()->flags.hotsw.isValidCardBanner   = FALSE;
+    SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
+    SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = FALSE;
+    UnlockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
 }
 
 
@@ -1602,6 +1596,8 @@ static void MonitorThread(void *arg)
 
                 // メッセージインデックスをインクリメント
                 HotSwThreadData.idx_pulledOut = (HotSwThreadData.idx_pulledOut+1) % HOTSW_PULLED_MSG_NUM;
+
+                OS_PutString(">>> Card State Error : PulledOut\n");
             }
 
             // 本当は挿さっていた場合
@@ -1615,11 +1611,11 @@ static void MonitorThread(void *arg)
 
                 // メッセージインデックスをインクリメント
                 HotSwThreadData.idx_insert = (HotSwThreadData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
+
+                OS_PutString(">>> Card State Error : Insert\n");
             }
 
             (void)OS_RestoreInterrupts( enabled );
-
-            OS_PutString(">>> Card State Error\n");
         }
     }
 }
