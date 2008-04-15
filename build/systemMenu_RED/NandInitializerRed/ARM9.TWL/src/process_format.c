@@ -249,7 +249,7 @@ void* FormatProcess2(void)
 #ifdef   USE_FOR_NIGHTLY_AUTO_TEST
 			if (result)
 			{
-				OS_Printf("NAND_CLEANUP_SUCCESS");
+				OS_Printf("NAND_CLEANUP_SUCCESS\n");
 			}
 			return ForeverLoopProcess;
 #endif //USE_FOR_NIGHTLY_AUTO_TEST
