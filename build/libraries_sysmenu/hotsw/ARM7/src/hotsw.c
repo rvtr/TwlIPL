@@ -59,7 +59,6 @@ static u32 GetMcSlotShift(void);
 static u32 GetMcSlotMask(void);
 static u32 GetMcSlotMode(void);
 static void SetMcSlotMode(u32 mode);
-static BOOL CmpMcSlotMode(u32 mode);
 
 static void SetInterruptCallback( OSIrqMask intr_bit, OSIrqFunction func );
 static void SetInterruptCallbackEx( OSIrqMask intr_bit, void *func );
@@ -1187,7 +1186,7 @@ static void UnlockHotSwRsc(OSLockWord* word)
  *---------------------------------------------------------------------------*/
 BOOL HOTSW_IsCardAccessible(void)
 {
-    if( HOTSW_IsCardExist() && CmpMcSlotMode(SLOT_STATUS_MODE_10) == TRUE){
+    if( HOTSW_IsCardExist() && (GetMcSlotMode() == SLOT_STATUS_MODE_10)){
         return TRUE;
     }
     else{
@@ -1269,26 +1268,6 @@ static void SetMcSlotMode(u32 mode)
 
 
 /*---------------------------------------------------------------------------*
-  Name:         CmpMcSlotMode
-
-  Description:  引数で与えられてモードと現在のカードスロットのモードを比較
- *---------------------------------------------------------------------------*/
-static BOOL CmpMcSlotMode(u32 mode)
-{
-#ifndef DEBUG_USED_CARD_SLOT_B_
-    if((reg_MI_MC1 & GetMcSlotMask()) == (mode << GetMcSlotShift())){
-#else
-    if((reg_MI_MC1 & GetMcSlotMask()) == (mode >> GetMcSlotShift())){
-#endif
-        return TRUE;
-    }
-    else{
-        return FALSE;
-    }
-}
-
-
-/*---------------------------------------------------------------------------*
   Name:        McPowerOn
 
   Description: スロット電源ON
@@ -1296,11 +1275,11 @@ static BOOL CmpMcSlotMode(u32 mode)
 static void McPowerOn(void)
 {
     // Counter-Aカウンタ設定値到達まで待つ
-    while(CmpMcSlotMode(SLOT_STATUS_MODE_11) == TRUE){
+    while(GetMcSlotMode() == SLOT_STATUS_MODE_11){
         OS_Sleep(1);
     }
 
-    if(CmpMcSlotMode(SLOT_STATUS_MODE_00) == TRUE){
+    if(GetMcSlotMode() == SLOT_STATUS_MODE_00){
         // [TODO:]待ち時間は暫定値。金子さんに数値を測定してもらう。
         // VDDの安定期間待ち
         OS_Sleep(100);
@@ -1335,16 +1314,16 @@ static void McPowerOn(void)
 static void McPowerOff(void)
 {
     // Counter-Aカウンタ設定値到達まで待つ
-    while(CmpMcSlotMode(SLOT_STATUS_MODE_11) == TRUE){
+    while(GetMcSlotMode() == SLOT_STATUS_MODE_11){
         OS_Sleep(1);
     }
 
-    if(CmpMcSlotMode(SLOT_STATUS_MODE_10) == TRUE){
+    if(GetMcSlotMode() == SLOT_STATUS_MODE_10){
         // SCFG_MC1 の Slot Status の M1,M0 を 11 にする
         SetMcSlotMode(SLOT_STATUS_MODE_11);
 
         // SCFG_MC1 の Slot Status の M1,M0 が 00 になるまでポーリング
-        while(CmpMcSlotMode(SLOT_STATUS_MODE_00) == FALSE){
+        while(GetMcSlotMode() != SLOT_STATUS_MODE_00){
             OS_Sleep(1);
         }
     }
@@ -1475,7 +1454,7 @@ static void HotSwThread(void *arg)
                 // 前の状態が挿し
                 if(!s_IsPulledOut){
                     // 抜きがなかったか判定
-                    if(CmpMcSlotMode(SLOT_STATUS_MODE_10) == TRUE){
+                    if(GetMcSlotMode() == SLOT_STATUS_MODE_10){
                         // フラグケア
                         LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 
@@ -1656,8 +1635,11 @@ static void InterruptCallbackCard(void)
     HotSwThreadData.idx_pulledOut = (HotSwThreadData.idx_pulledOut+1) % HOTSW_PULLED_MSG_NUM;
 
 /*  // スロットのモードを
-    if(GetMcSlotMode() == SLOT_STATUS_MODE_01 || GetMcSlotMode() == SLOT_STATUS_MODE_10){
-        SetMcSlotMode(SLOT_STATUS_MODE_11);
+    {
+        u32 mode = GetMcSlotMode();
+        if(mode == SLOT_STATUS_MODE_01 || mode == SLOT_STATUS_MODE_10){
+            SetMcSlotMode(SLOT_STATUS_MODE_11);
+        }
     }*/
 
     OS_PutString("○\n");
