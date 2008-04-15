@@ -115,8 +115,6 @@ TwlSpMain(void)
 
     // 強制AESモード
     AttachAES();
-    // フォーマットを行うためにFATFS_Initの前にHW_SD_NAND_CONTEXT_BUFのクリアが必要
-    MI_CpuClear8((void *)HW_SD_NAND_CONTEXT_BUF, HW_SD_NAND_CONTEXT_BUF_END - HW_SD_NAND_CONTEXT_BUF);
 
     /* 各ライブラリ初期化 */
     AES_Init();                                 // AES
