@@ -894,11 +894,12 @@ static HotSwState LoadStaticModule(void)
 #ifdef DHT_TEST
     else
     {
-        if ( !s_cbData.pBootSegBuf->rh.s.enable_signature )
+        SVCHMACSHA1Context ctx;
+        const u8* hash0;
+        const u8* hash1;
+        if ( !s_cbData.pBootSegBuf->rh.s.enable_signature ) // ホワイトリストエントリ
         {
-            SVCHMACSHA1Context ctx;
             const DHTDatabase* db;
-
             while (!dht)
             {
                 OS_Sleep(1);
@@ -912,35 +913,42 @@ static HotSwState LoadStaticModule(void)
                 return HOTSW_HASH_CHECK_ERROR;
             }
             OS_TPrintf(" Done.\n");
-
-            OS_TPrintf("DHT Pahse1...");
-            DHT_CheckHashPhase1Init(&ctx, (ROM_Header_Short*)s_cbData.pBootSegBuf);
-            if( s_cbData.pBootSegBuf->rh.s.main_size > SECURE_SEGMENT_SIZE )
-            {
-                DHT_CheckHashPhase1Update(&ctx, s_cbData.pSecureSegBuf, SECURE_SEGMENT_SIZE);
-                DHT_CheckHashPhase1Update(&ctx, (u32 *)(s_cbData.arm9Stc + SECURE_SEGMENT_SIZE), s_cbData.pBootSegBuf->rh.s.main_size - SECURE_SEGMENT_SIZE );
-            }
-            else
-            {
-                DHT_CheckHashPhase1Update(&ctx, s_cbData.pSecureSegBuf, s_cbData.pBootSegBuf->rh.s.main_size);
-            }
-
-            DHT_CheckHashPhase1Update(&ctx, (u32 *)s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size);
-            if ( !DHT_CheckHashPhase1Final(&ctx, db) )
-            {
-                OS_TPrintf(" Failed.\n");
-                return HOTSW_HASH_CHECK_ERROR;
-            }
-            OS_TPrintf(" Done.\n");
-
-            OS_TPrintf("DHT Pahse2...");
-            if ( !DHT_CheckHashPhase2(db, &s_cbData.pBootSegBuf->rh.s, ov_buffer, ReadImage, &s_cbData) )
-            {
-                OS_TPrintf(" Failed.\n");
-                return HOTSW_HASH_CHECK_ERROR;
-            }
-            OS_TPrintf(" Done.\n");
+            hash0 = db->hash[0];
+            hash1 = db->hash[1];
         }
+        else    // マスタリング済みエントリ
+        {
+            hash0 = s_cbData.pBootSegBuf->rh.s.main_static_digest;
+            hash1 = s_cbData.pBootSegBuf->rh.s.sub_static_digest;
+        }
+
+        OS_TPrintf("DHT Pahse1...");
+        DHT_CheckHashPhase1Init(&ctx, (ROM_Header_Short*)s_cbData.pBootSegBuf);
+        if( s_cbData.pBootSegBuf->rh.s.main_size > SECURE_SEGMENT_SIZE )
+        {
+            DHT_CheckHashPhase1Update(&ctx, s_cbData.pSecureSegBuf, SECURE_SEGMENT_SIZE);
+            DHT_CheckHashPhase1Update(&ctx, (u32 *)(s_cbData.arm9Stc + SECURE_SEGMENT_SIZE), s_cbData.pBootSegBuf->rh.s.main_size - SECURE_SEGMENT_SIZE );
+        }
+        else
+        {
+            DHT_CheckHashPhase1Update(&ctx, s_cbData.pSecureSegBuf, s_cbData.pBootSegBuf->rh.s.main_size);
+        }
+
+        DHT_CheckHashPhase1Update(&ctx, (u32 *)s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size);
+        if ( !DHT_CheckHashPhase1Final(&ctx, hash0) )
+        {
+            OS_TPrintf(" Failed.\n");
+            return HOTSW_HASH_CHECK_ERROR;
+        }
+        OS_TPrintf(" Done.\n");
+
+        OS_TPrintf("DHT Pahse2...");
+        if ( !DHT_CheckHashPhase2(hash1, &s_cbData.pBootSegBuf->rh.s, ov_buffer, ReadImage, &s_cbData) )
+        {
+            OS_TPrintf(" Failed.\n");
+            return HOTSW_HASH_CHECK_ERROR;
+        }
+        OS_TPrintf(" Done.\n");
     }
 #endif
 
@@ -1044,7 +1052,7 @@ static void GenVA_VB_VD(void)
     SYSM_work* sw = SYSMi_GetWork();
     u32 dummy = 0;
     MATHRandContext32 rnd;
-    
+
     // 乱数を初期化
     // チック＆RTC初回ロード値を種とする。
     // （起動する度に変化するパラメータと組み合わせる。

@@ -238,22 +238,22 @@ void DHT_CheckHashPhase1Update(SVCHMACSHA1Context* ctx, const void* ptr, u32 len
     // ARM9 or ARM7 static
     SVC_HMACSHA1Update(ctx, ptr, length);
 }
-BOOL DHT_CheckHashPhase1Final(SVCHMACSHA1Context* ctx, const DHTDatabase *db)
+BOOL DHT_CheckHashPhase1Final(SVCHMACSHA1Context* ctx, const u8 *hash)
 {
     u8 md[20];
     BOOL result;
     SVC_HMACSHA1GetHash(ctx, md);
-    result = SVC_CompareSHA1(db->hash[0], md);
+    result = SVC_CompareSHA1(hash, md);
     if ( !result )
     {
         OS_TPrintf("\n");
-        OS_TPrintfEx("DB   = % 20B\n", db->hash[0]);
+        OS_TPrintfEx("DB   = % 20B\n", hash);
         OS_TPrintfEx("HASH = % 20B\n", md);
         OS_TPrintf("%s: hash[0] is not valid.\n", __func__);
     }
     return result;
 }
-BOOL DHT_CheckHashPhase1(const DHTDatabase *db, const ROM_Header_Short* pROMHeader, const void* pARM9, const void* pARM7)
+BOOL DHT_CheckHashPhase1(const u8* hash, const ROM_Header_Short* pROMHeader, const void* pARM9, const void* pARM7)
 {
     SVCHMACSHA1Context ctx;
     BOOL result;
@@ -271,7 +271,7 @@ BOOL DHT_CheckHashPhase1(const DHTDatabase *db, const ROM_Header_Short* pROMHead
     DHT_CheckHashPhase1Update(&ctx, pARM7, pROMHeader->sub_size);
     // 検証
     PROFILE_COUNT();
-    result = DHT_CheckHashPhase1Final(&ctx, db);
+    result = DHT_CheckHashPhase1Final(&ctx, hash);
     // 結果報告
 #ifdef PRINT_PROFILE
     PROFILE_COUNT();
@@ -303,14 +303,25 @@ static BOOL ImageHMACSHA1Update(SVCHMACSHA1Context* ctx, s32 offset, s32 length,
 static BOOL GetOverlayInfo(int no, int fat_offset, int* pOffset, int* pLength)
 {
     ROM_FAT *fat;
-    static u8 fat_cache[PAGE_SIZE]; // 本当にページをまたがないのか？
+    static u8 fat_cache[PAGE_SIZE*2];
     static int last_page = 0;
     int page = (fat_offset + no * (s32)sizeof(ROM_FAT)) / PAGE_SIZE;
     if ( last_page != page )
     {
-        if ( !ReadFunc(&fat_cache, page * PAGE_SIZE, PAGE_SIZE, readArg) )
+        if ( last_page + 1 == page )    // 1ページはキャッシュ済み
         {
-            return FALSE;
+            MI_CpuCopy8( &fat_cache[PAGE_SIZE], &fat_cache[0], PAGE_SIZE );
+            if ( !ReadFunc(&fat_cache[PAGE_SIZE], (page+1) * PAGE_SIZE, PAGE_SIZE, readArg) )
+            {
+                return FALSE;
+            }
+        }
+        else    // 通常は2ページ読み
+        {
+            if ( !ReadFunc(fat_cache, page * PAGE_SIZE, PAGE_SIZE*2, readArg) )
+            {
+                return FALSE;
+            }
         }
         last_page = page;
     }
@@ -326,7 +337,7 @@ static BOOL GetOverlayInfo(int no, int fat_offset, int* pOffset, int* pLength)
     return TRUE;
 }
 
-BOOL DHT_CheckHashPhase2(const DHTDatabase *db, const ROM_Header_Short* pROMHeader, void* buffer, DHTReadFunc func, void* arg)
+BOOL DHT_CheckHashPhase2(const u8* hash, const ROM_Header_Short* pROMHeader, void* buffer, DHTReadFunc func, void* arg)
 {
     int overlay_nums = (int)(pROMHeader->main_ovt_size / sizeof(ROM_OVT));
     u8 md[20];
@@ -400,10 +411,10 @@ BOOL DHT_CheckHashPhase2(const DHTDatabase *db, const ROM_Header_Short* pROMHead
         PROFILE_COUNT();
         MI_CpuClear8(md, sizeof(md));
     }
-    if ( !SVC_CompareSHA1(md, db->hash[1]) )
+    if ( !SVC_CompareSHA1(md, hash) )
     {
         OS_TPrintf("\n");
-        OS_TPrintfEx("DB   = % 20B\n", db->hash[1]);
+        OS_TPrintfEx("DB   = % 20B\n", hash);
         OS_TPrintfEx("HASH = % 20B\n", md);
         OS_TPrintf("%s: hash[1] is not valid.\n", __func__);
         return FALSE;

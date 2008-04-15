@@ -154,12 +154,12 @@ static BOOL CheckValidation(FSFile* fp)
     }
 //OS_TPrintf("FOUND: 0x%08X: %.4s(%d)\n", db, db->game_code, db->rom_version);
     // ハッシュ計算 (1) - 隠蔽可能なはず
-    if ( !DHT_CheckHashPhase1(db, &rom_header, rom_arm9, rom_arm7) )
+    if ( !DHT_CheckHashPhase1(db->hash[0], &rom_header, rom_arm9, rom_arm7) )
     {
         return FALSE;
     }
     // ハッシュ計算 (2) - 隠蔽は難しいか
-    if ( !DHT_CheckHashPhase2(db, &rom_header, ov_buffer, ReadImage, fp) )
+    if ( !DHT_CheckHashPhase2(db->hash[1], &rom_header, ov_buffer, ReadImage, fp) )
     {
         return FALSE;
     }

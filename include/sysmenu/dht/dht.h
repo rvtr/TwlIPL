@@ -106,25 +106,25 @@ void DHT_CheckHashPhase1Update(SVCHMACSHA1Context* ctx, const void* ptr, u32 len
   Description:  ROMヘッダおよびARM9/ARM7スタティック領域の検証の結果判定
 
   Arguments:    ctx         検証用のSVCHMACSHA1コンテキスト
-                db          対象データベースへのポインタ
+                hash        対応するハッシュ (db->hash[0])
 
   Returns:      問題なければTRUE
  *---------------------------------------------------------------------------*/
-BOOL DHT_CheckHashPhase1Final(SVCHMACSHA1Context* ctx, const DHTDatabase *db);
+BOOL DHT_CheckHashPhase1Final(SVCHMACSHA1Context* ctx, const u8* hash);
 
 /*---------------------------------------------------------------------------*
   Name:         DHT_CheckHashPhase1
 
   Description:  ROMヘッダおよびARM9/ARM7スタティック領域の検証
 
-  Arguments:    db          対象データベースへのポインタ
+  Arguments:    hash        対応するハッシュ (db->hash[0])
                 pROMHeader  対象となるROMヘッダ格納先
                 pARM9       対象となるARM9スタティック格納先
                 pARM7       対象となるARM7スタティック格納先
 
   Returns:      問題なければTRUE
  *---------------------------------------------------------------------------*/
-BOOL DHT_CheckHashPhase1(const DHTDatabase *db, const ROM_Header_Short* pROMHeader, const void* pARM9, const void* pARM7);
+BOOL DHT_CheckHashPhase1(const u8* hash, const ROM_Header_Short* pROMHeader, const void* pARM9, const void* pARM7);
 
 /*---------------------------------------------------------------------------*
   Name:         DHT_CheckHashPhase2
@@ -132,7 +132,7 @@ BOOL DHT_CheckHashPhase1(const DHTDatabase *db, const ROM_Header_Short* pROMHead
   Description:  オーバーレイ領域の検証
                 (デバイスのRead APIを登録できるべき)
 
-  Arguments:    db          対象データベースへのポインタ
+  Arguments:    hash        対応するハッシュ (db->hash[1])
                 pROMHeader  対象となるROMヘッダ格納先
                 fctx        (FS版) FSFile構造体へのポインタ
                             (CARD版) dma番号をvoid*にキャストしたもの
@@ -141,7 +141,7 @@ BOOL DHT_CheckHashPhase1(const DHTDatabase *db, const ROM_Header_Short* pROMHead
 
   Returns:      問題なければTRUE
  *---------------------------------------------------------------------------*/
-BOOL DHT_CheckHashPhase2(const DHTDatabase *db, const ROM_Header_Short* pROMHeader, void* buffer, DHTReadFunc func, void* arg);
+BOOL DHT_CheckHashPhase2(const u8* hash, const ROM_Header_Short* pROMHeader, void* buffer, DHTReadFunc func, void* arg);
 
 #ifdef __cplusplus
 } /* extern "C" */
