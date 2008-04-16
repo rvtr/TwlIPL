@@ -18,7 +18,6 @@
 #include <twl.h>
 #include <sysmenu/dht/dht.h>
 
-#define HASH_PATH   "/sign/DSHashTable.bin"
 
 /*
     定義すると処理時間を表示する
@@ -110,7 +109,7 @@ u32 DHT_GetDatabaseLength(const DHTFile* pDHT)
 {
     if ( pDHT->header.magic_code != DHT_MAGIC_CODE )    // magic codeチェック
     {
-        OS_TPrintf("Invalid " HASH_PATH " magic code (magic=0x%08X).\n", pDHT->header.magic_code);
+        OS_TPrintf("Invalid magic code (magic=0x%08X).\n", pDHT->header.magic_code);
         return 0;
     }
     return sizeof(DHTHeader) + pDHT->header.nums * sizeof(DHTDatabase);
@@ -140,47 +139,68 @@ BOOL DHT_CheckDatabase(const DHTFile* pDHT)
     return TRUE;
 }
 
-BOOL DHT_PrepareDatabase(DHTFile* pDHT)
+BOOL DHT_PrepareDatabase(DHTFile* pDHT, const char* filepath)
 {
     FSFile file;
-    u32 length;
     s32 result;
+    s32 length;
+    u8 title[4] = { 'H','N','G','A' };
     PROFILE_INIT();
 
-    // ファイルオープン
-    PROFILE_COUNT();
-    if (!FS_OpenFileEx(&file, HASH_PATH, FS_FILEMODE_R))
+    if ( filepath )
     {
-        OS_TPrintf("Cannot open " HASH_PATH ".\n");
-        return FALSE;
+        // ファイルオープン
+        PROFILE_COUNT();
+        if (!FS_OpenFileEx(&file, filepath, FS_FILEMODE_R))
+        {
+            OS_TPrintf("Cannot open %s.\n", filepath);
+            return FALSE;
+        }
+        // ヘッダ読み込み
+        PROFILE_COUNT();
+        result = FS_ReadFile(&file, &pDHT->header, sizeof(DHTHeader));
+        if ( result != sizeof(DHTHeader) )
+        {
+            OS_TPrintf("Cannot read the header of %s (result=%d).\n", filepath, result);
+            return FALSE;
+        }
+        // magic_codeが HNGA のときはROM_Header分だけシークし直す
+        if ( pDHT->header.magic_code == *(u32*)title )
+        {
+            if ( !FS_SeekFile(&file, sizeof(ROM_Header), FS_SEEK_SET) )
+            {
+                OS_TPrintf("Cannot seek to the header of %s.\n", filepath);
+                return FALSE;
+            }
+            // 再びヘッダ読み込み
+            result = FS_ReadFile(&file, &pDHT->header, sizeof(DHTHeader));
+            if ( result != sizeof(DHTHeader) )
+            {
+                OS_TPrintf("Cannot read the header of %s (result=%d).\n", filepath, result);
+                return FALSE;
+            }
+        }
+
+        // サイズチェック
+        PROFILE_COUNT();
+        length = (s32)DHT_GetDatabaseLength(pDHT);
+        if ( FS_GetFileLength(&file) < length ) // パディングがあり得る
+        {
+            OS_TPrintf("Invalid %s size (%d < %d).\n", filepath, FS_GetFileLength(&file), length);
+            return FALSE;
+        }
+        // ヘッダ分を削除
+        length -= sizeof(DHTHeader);
+        // データベース読み込み
+        PROFILE_COUNT();
+        result = FS_ReadFile(&file, pDHT->database, length);
+        if ( result != length )
+        {
+            OS_TPrintf("Cannot read the database of %s (result=%d).\n", filepath, result);
+            return FALSE;
+        }
+        FS_CloseFile(&file);
     }
-    // ヘッダ読み込み
-    PROFILE_COUNT();
-    result = FS_ReadFile(&file, &pDHT->header, sizeof(DHTHeader));
-    if ( result != sizeof(DHTHeader) )
-    {
-        OS_TPrintf("Cannot read the header of " HASH_PATH " (result=%d).\n", result);
-        return FALSE;
-    }
-    // サイズチェック
-    PROFILE_COUNT();
-    length = FS_GetFileLength(&file);
-    if ( length != DHT_GetDatabaseLength(pDHT) )
-    {
-        OS_TPrintf("Invalid " HASH_PATH " size (%d != %d).\n", length, DHT_GetDatabaseLength(pDHT));
-        return FALSE;
-    }
-    // databaseサイズの保存
-    length -= sizeof(DHTHeader);
-    // データベース読み込み
-    PROFILE_COUNT();
-    result = FS_ReadFile(&file, pDHT->database, (s32)length);
-    if ( result != length )
-    {
-        OS_TPrintf("Cannot read the database of " HASH_PATH " (result=%d).\n", result);
-        return FALSE;
-    }
-    FS_CloseFile(&file);
 
     // データベースの検証
     PROFILE_COUNT();
@@ -199,6 +219,7 @@ BOOL DHT_PrepareDatabase(DHTFile* pDHT)
 #endif
     return result;
 }
+
 /*
 ROMヘッダに対応するデータベースを手に入れる
 */

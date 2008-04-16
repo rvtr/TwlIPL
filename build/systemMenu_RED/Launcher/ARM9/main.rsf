@@ -213,6 +213,4 @@ RomSpec
 	HostRoot	../../data
 	Root		/data
 	File		NTR_IPL_font_m.NFTR NoCardBanner.bnr EmptyBanner.bnr NoBanner.bnr fanfare.32.wav
-	Root		/sign
-	File		$(DS_HASH_TABLE_FILE)
 }

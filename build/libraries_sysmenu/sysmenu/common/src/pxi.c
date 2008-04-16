@@ -102,10 +102,65 @@ void SYSM_InitPXI( u32 mcu_prio )
 
 #ifdef DHT_TEST
 #ifdef SDK_ARM9
+static BOOL GetDatabaseFilepath(char *path)
+{
+    u8 title[4] = { 'H','N','G','A' };
+
+#if( USE_LCFG_STRING == 0 )
+    char *title0 = "HNGA";
+#endif
+    u32 titleID_hi;
+    u32 titleID_lo;
+    u64 titleID = 0;
+
+
+#if( USE_LCFG_STRING == 0 )
+    {
+        int i;
+        if( title[0] == 0 ) {
+            for( i = 0 ; i < 4 ; i++ ) {
+                title[i] = (u8)*title0++;
+            }
+        }
+    }
+#endif
+
+
+    titleID_hi = (( 3 /* Nintendo */ << 16) | 8 /* CHANNEL_DATA_ONLY */ | 4 /* CHANNEL_CARD */ | 2 /* isLaunch */ | 1 /* isSystem */);
+
+    titleID_lo =  ((u32)( title[0] ) & 0xff) << 24;
+    titleID_lo |= ((u32)( title[1] )& 0xff) << 16;
+    titleID_lo |= ((u32)( title[2] )& 0xff) << 8;
+    titleID_lo |= (u32)( title[3] ) & 0xff;
+
+    titleID = ((u64)(titleID_hi) << 32)  | (u64)titleID_lo;
+
+    // OS_TPrintf( "[DHT]  titleID = 0x%08x%08x\n", titleID_hi, titleID_lo);
+
+    if( NAM_OK == NAM_GetTitleBootContentPathFast(path, titleID) ) {
+        OS_TPrintf( "[DHT]  File = %s\n", path);
+    }
+    else {
+        OS_TPrintf( "[DHT]  Error: NAM_GetTitleBootContentPathFast titleID = 0x%08x0x%08x\n",titleID_hi, titleID_lo);
+        return FALSE;
+    }
+
+    return TRUE;
+
+}
+
 void SYSMi_PrepareDatabase(void)
 {
-    DHT_PrepareDatabase(dht);
-    DC_FlushRange(dht, DHT_GetDatabaseLength(dht));
+    char path[256];
+    if ( GetDatabaseFilepath( path ) )
+    {
+        DHT_PrepareDatabase(dht, path);
+        DC_FlushRange(dht, DHT_GetDatabaseLength(dht));
+    }
+    else
+    {
+        MI_CpuClear8(dht, sizeof(DHTHeader));
+    }
     OS_TPrintf("[ARM9] dht address: %08X\n", dht);
     SYSMi_SendPXICommand( SYSM_PXI_COMM_DS_HASH_TABLE, (u16)(((u32)dht - 0x2000000) >> 8) );
 }

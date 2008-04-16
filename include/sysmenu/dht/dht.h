@@ -62,14 +62,14 @@ BOOL DHT_CheckDatabase(const DHTFile* pDHT);
 /*---------------------------------------------------------------------------*
   Name:         DHT_PrepareDatabase
 
-  Description:  FS関数を利用して全データベースを読み込み検証まで行う
-                ファイル名は/sign/DSHashTable.bin固定
+  Description:  FS関数を利用して全データベースを読み込みと検証を行う
 
   Arguments:    pDHT        全データベースの格納先
+                filepath    ファイルパス (NULLで格納済みと判定(真贋チェックのみ))
 
   Returns:      成功すればTRUE
  *---------------------------------------------------------------------------*/
-BOOL DHT_PrepareDatabase(DHTFile* pDHT);
+BOOL DHT_PrepareDatabase(DHTFile* pDHT, const char* filepath);
 
 /*---------------------------------------------------------------------------*
   Name:         DHT_GetDatabase

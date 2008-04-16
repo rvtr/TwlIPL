@@ -18,6 +18,8 @@
 #include <twl.h>
 #include <sysmenu/dht/dht.h>
 
+#define HASH_PATH   "/sign/DSHashTable.bin"
+
 /*
     このサンプルはテスト用であり、CARD関数の代わりにFS関数で
     DHTライブラリが実装されている前提である
@@ -183,7 +185,7 @@ void TwlMain(void)
     FS_Init(FS_DMA_NOT_USE);
 
     // 署名ロード
-    if ( !DHT_PrepareDatabase(dht) )
+    if ( !DHT_PrepareDatabase(dht, HASH_PATH) )
     {
         OS_TPanic("Cannot prepare the database.\n");
     }
