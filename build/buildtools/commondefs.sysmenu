@@ -34,6 +34,11 @@ TWL_KEYSDIR		?=	$(SYSMENU_ROOT)/keys/dummy
 #include $(TWLSDK_ROOT)/build/buildtools/commondefs
 include	$(NITROSYSTEM_ROOT)/build/buildtools/commondefs
 
+# TwlSDK の TWLSYSTEM_* -> NITROSYSTEM_* 変更暫定対策
+# NitroSystemパッチが更新されれば不要のはず
+NITROSYSTEM_INCDIR ?= $(TWLSYSTEM_INCDIR)
+NITROSYSTEM_LIBDIR ?= $(TWLSYSTEM_LIBDIR)
+
 #----------------------------------------------------------------------------
 #  TWL-SYSTEM-MENU path settings
 #
