@@ -557,81 +557,64 @@ static asm void INITi_CopySysConfig( void )
 
 /*---------------------------------------------------------------------------*
   Name:         INITi_DetectMainMemorySize
-
-  Description:  detect main memory size.
-                result is written into (u32*)HW_MMEMCHECKER_SUB.
-                value is [OS_CONSOLE_SIZE_4MB|OS_CONSOLE_SIZE_8MB|
-                OS_CONSOLE_SIZE_16MB|OS_CONSOLE_SIZE_32MB]
-
-  Arguments:    None.
-
-  Returns:      None.
+  Description:  メインメモリサイズを調査する。
+                調査結果は (u16*)HW_MMEMCHECER_SUB に格納される。
+                格納される値は [OS_CONSOLE_SIZE_16MB|OS_CONSOLE_SIZE_32B]
+    NOTE:       プラットフォームが NITRO の場合は考慮していない。
+  Arguments:    なし。
+  Returns:      なし。
  *---------------------------------------------------------------------------*/
-#define OSi_IMAGE_DIFFERENCE  0x400000
-#define OSi_IMAGE_DIFFERENCE2 0xb000000
-#define OSi_DETECT_NITRO_MASK  (REG_SND_SMX_CNT_E_MASK | REG_SND_SMX_CNT_FSEL_MASK)
-#define OSi_DETECT_NITRO_VAL   (REG_SND_SMX_CNT_E_MASK)
+#define     OSi_IMAGE_DIFFERENCE2   0xb000000
+#define     OSi_DETECT_NITRO_MASK   (REG_SND_SMX_CNT_E_MASK | REG_SND_SMX_CNT_FSEL_MASK)
+#define     OSi_DETECT_NITRO_VAL    (REG_SND_SMX_CNT_E_MASK)
 
-static asm void INITi_DetectMainMemorySize( void )
+#define     OSi_CHECKNUM1           0x55
+#define     OSi_CHECKNUM2           0xaa
+#define     OSi_100usWAIT           3352  // 100us = 3351.4cycles(33.514MHz)
+
+static asm void
+INITi_DetectMainMemorySize(void)
 {
-        stmfd   sp!, {r4,lr}
+        ldr         r2, =HW_MMEMCHECKER_SUB
+        add         r3, r2, #OSi_IMAGE_DIFFERENCE2
+        mov         r0, #OS_CONSOLE_SIZE_16MB
 
-        //---- detect memory size
-#if 0
-        mov     r4, #OS_CONSOLE_SIZE_4MB
-        mov     r1, #0
+        /* OSi_CHECKNUM1 (0x55) 書き込みテスト */
+        mov         r1, #OSi_CHECKNUM1
+        strb        r1, [r3]
 
-        ldr     r2, =HW_MMEMCHECKER_SUB
-        sub     r3, r2, #OSi_IMAGE_DIFFERENCE
-@1:
-        strh    r1, [r2]
-        ldrh    r12, [r3]
-        cmp     r1, r12
-        bne     @2
+        ldr         r2, =OSi_100usWAIT
+@1      subs        r2, r2, #4
+        bcs         @1
 
-        add     r1, r1, #1
-        cmp     r1, #2 // check 2 loop
-        bne     @1
+        ldrb        r1, [r3]
+        cmp         r1, #OSi_CHECKNUM1
+        bne         @check_smix
 
-        //---- 4MB
-        b       @4
+        /* OSi_CHECKNUM2 (0xaa) を 書き込みテスト */
+        mov         r1, #OSi_CHECKNUM2
+        strb        r1, [r3]
 
-        //---- 8MB or 16MB or 32MB
-@2:
-        // check if running on twl/nitro
-        bl      INITi_IsRunOnTwl
-        movne   r4, #OS_CONSOLE_SIZE_8MB
-        bne     @4
-#else
-        ldr     r2, =HW_MMEMCHECKER_SUB
-#endif
-        //---- 16MB or 32MB
-        mov     r1, #0
-        add     r3, r2, #OSi_IMAGE_DIFFERENCE2
-@3:
-        strh    r1, [r2]
-        ldrh    r12, [r3]
-        cmp     r1, r12
+        ldr         r2, =OSi_100usWAIT
+@2      subs        r2, r2, #4
+        bcs         @2
 
-        movne   r4, #OS_CONSOLE_SIZE_32MB
-        bne     @4
+        ldrb        r1, [r3]
+        cmp         r1, #OSi_CHECKNUM2
+        moveq       r0, #OS_CONSOLE_SIZE_32MB
 
-        add     r1, r1, #1
-        cmp     r1, #2 // check 2 loop
-        bne     @3
-        mov     r4, #OS_CONSOLE_SIZE_16MB
-@4:
-        //---- check SMX_CNT
-        ldr     r3, =REG_SMX_CNT_ADDR
-        ldrh    r1, [r3]
-        and     r1, r1, #OSi_DETECT_NITRO_MASK
-        cmp     r1, #OSi_DETECT_NITRO_VAL
-        orreq   r4, r4, #OS_CHIPTYPE_SMX_MASK
+@check_smix:
+        /* SMIX レジスタを調査 */
+        ldr         r3, =REG_SMX_CNT_ADDR
+        ldrh        r1, [r3]
+        and         r1, r1, #OSi_DETECT_NITRO_MASK
+        cmp         r1, #OSi_DETECT_NITRO_VAL
+        orreq       r0, r0, #OS_CHIPTYPE_SMX_MASK
 
-        strb    r4, [r2]
-
-        ldmfd   sp!, {r4,lr}
-        bx      lr
+        /* 調査結果を格納 */
+        ldr         r2, =HW_MMEMCHECKER_SUB
+        strb        r0, [r2]
+        bx          lr
 }
 
 /*---------------------------------------------------------------------------*
