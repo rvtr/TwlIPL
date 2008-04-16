@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*
-  Project:  NandAppDebugCoordinator
+  Project:  ImportJump
   File:     praphics.c
 
   Copyright 2008 Nintendo.  All rights reserved.
@@ -66,7 +66,7 @@ InitGraphics(void)
 	//---- 3D初期化
     G3X_Init();
     G3X_InitMtxStack();
-    G2_SetBG0Priority(0);
+    G2_SetBG0Priority(3);
     G3X_AlphaTest(FALSE, 0);
     G3X_AntiAlias(TRUE);
     G3X_EdgeMarking(FALSE);
@@ -158,3 +158,42 @@ DrawLine(s16 sx, s16 sy, s16 ex, s16 ey, GXRgb color)
     }
     G3_End();
 }
+
+/*---------------------------------------------------------------------------*
+  Name:         DrawQuad
+
+  Description:  四角ポリゴンを描画
+
+  Arguments:    sx    - 描画する線の開始点のｘ座標
+                sy    - 描画する線の開始点のｙ座標
+                ex    - 描画する線の終点のｘ座標
+                ey    - 描画する線の終点のｙ座標
+				color - 描画する線の色
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+void 
+DrawQuad(s16 sx, s16 sy, s16 ex, s16 ey, GXRgb color)
+{
+    fx16    fsx = (fx16)(((sx - 128) * 0x1000) / 128);
+    fx16    fsy = (fx16)(((96 - sy) * 0x1000) / 96);
+    fx16    fex = (fx16)(((ex - 128) * 0x1000) / 128);
+    fx16    fey = (fx16)(((96 - ey) * 0x1000) / 96);
+
+    G3_Begin(GX_BEGIN_QUADS);
+    {
+        G3_Color( color );
+        G3_Vtx(fsx, fsy, 0);
+
+        G3_Color( color );
+        G3_Vtx(fex, fsy, 0);
+
+        G3_Color( color );
+        G3_Vtx(fex, fey, 0);
+
+        G3_Color( color );
+        G3_Vtx(fsx, fey, 1);
+    }
+    G3_End();
+}
+

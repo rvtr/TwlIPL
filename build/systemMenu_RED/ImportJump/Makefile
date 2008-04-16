@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlSDK - tests - camera
+# Project:  ImportJump
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.

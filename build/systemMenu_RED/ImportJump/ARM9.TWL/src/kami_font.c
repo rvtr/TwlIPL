@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*
-  Project:  NandAppDebugCoordinator
+  Project:  ImportJump
   File:     kami_font.c
 
   Copyright 2008 Nintendo.  All rights reserved.

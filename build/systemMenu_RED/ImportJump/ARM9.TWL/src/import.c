@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*
-  Project:  NandAppDebugCoordinator
+  Project:  ImportJump
   File:     process_import.c
 
   Copyright 2008 Nintendo.  All rights reserved.
@@ -25,6 +25,7 @@
 #include "kami_font.h"
 #include "import.h"
 #include "TWLHWInfo_api.h"
+#include "graphics.h"
 
 
 /*---------------------------------------------------------------------------*
@@ -51,7 +52,6 @@ static vu8 sNowImport = FALSE;
 
 static void ProgressThread(void* arg);
 static void Destructor(void* arg);
-void ProgressInit(void);
 void ProgressDraw(f32 ratio);
 static void UpdateNandBoxCount( void );
 
@@ -159,7 +159,8 @@ static void ProgressThread(void* /*arg*/)
     u32  totalSize   = 0;
 	u32  totalSizeBk = 0;
 
-	ProgressInit();
+	kamiFontPrintfMain( 4, 9, 8, "Now Importing...");
+	kamiFontLoadScreenData();
 
     while (TRUE)
     {
@@ -186,20 +187,6 @@ static void ProgressThread(void* /*arg*/)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ProgressInit
-
-  Description:  インポートの進捗を表示します
-
-  Arguments:   
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-void ProgressInit(void)
-{
-	sCurrentProgress = 0;
-}
-
-/*---------------------------------------------------------------------------*
   Name:         ProgressDraw
 
   Description:  インポートの進捗を表示します
@@ -210,23 +197,24 @@ void ProgressInit(void)
  *---------------------------------------------------------------------------*/
 void ProgressDraw(f32 ratio)
 {
-	char square[2] = { 0x01, 0x00 };
-	u32 temp;
-	s32 i;
+	s16 x = (s16)(30 + (226 - 30)*ratio);
 
-	temp = (u32)(32 * ratio);
-	if (temp > sCurrentProgress)
-	{
-		s32 diff = (s32)(temp - sCurrentProgress);
-		for (i=0;i<diff;i++)
-		{
-			kamiFontPrintfConsole(2, square);
-		}
-	}
-	sCurrentProgress = temp;
+	// 3D初期化
+	G3X_Reset();
+	G3_Identity();
+	G3_PolygonAttr(GX_LIGHTMASK_NONE, GX_POLYGONMODE_DECAL, GX_CULL_NONE, 0, 31, 0);
 
-	// フォントスクリーンデータロード
-	kamiFontLoadScreenData();
+	// グリーンバー
+	DrawQuad( 30,  90,   x,  95, GX_RGB(12, 25, 12));
+
+	// グレーバー
+	DrawQuad( 30,  90, 226,  95, GX_RGB(28, 28, 28));
+
+	// グレーダイアログ
+	DrawQuad( 20,  60, 236, 110, GX_RGB(25, 25, 25));
+
+	// 3Dスワップ
+	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
 }
 
 /*---------------------------------------------------------------------------*

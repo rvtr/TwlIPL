@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*
-  Project:  NandAppDebugCoordinator
+  Project:  ImportJump
   File:     main.c
 
   Copyright 2008 Nintendo.  All rights reserved.
@@ -120,17 +120,13 @@ TwlMain()
 	switch (HWI_Init( OS_AllocFromMain, OS_FreeToMain ))
 	{
 	case HWI_INIT_FAILURE:
-//		kamiFontPrintfConsoleEx(CONSOLE_RED, "HWI_INIT() Failure!\n" );
 		OS_Warning(" Fail! : HWI_INIT()");
 		break;
 	case HWI_INIT_SUCCESS_PRO_SIGNATURE_MODE:
-//		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, "[PRO Signature MODE]\n" );
 		break;
 	case HWI_INIT_SUCCESS_DEV_SIGNATURE_MODE:
-//		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, "[DEV Signature MODE]\n" );
 		break;
 	case HWI_INIT_SUCCESS_NO_SIGNATRUE_MODE:
-//		kamiFontPrintfConsoleEx(CONSOLE_RED, "[No Signature MODE]\n" );
 		break;
 	}
 

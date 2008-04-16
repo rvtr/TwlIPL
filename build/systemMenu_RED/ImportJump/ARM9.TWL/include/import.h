@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*
-  Project:  NandAppDebugCoordinator
+  Project:  ImportJump
   File:     import.h
 
   Copyright 2008 Nintendo.  All rights reserved.

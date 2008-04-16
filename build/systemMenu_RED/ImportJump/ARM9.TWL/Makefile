@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  NandAppDebugCoordinator
+# Project:  ImportJump
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -35,7 +35,7 @@ TWL_ARCHGEN    	= LIMITED
 TITLEID_LO		=	0NIA
 #TARGET_TAD		=
 
-TARGET_BIN		= NandAppImporter.srl
+TARGET_BIN		= ImportJump.srl
 LCFILE_SPEC		= ARM9-TS.lsf
 ROM_SPEC		= main.rsf
 

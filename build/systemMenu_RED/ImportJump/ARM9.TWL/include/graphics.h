@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*
-  Project:  NandAppDebugCoordinator
+  Project:  ImportJump
   File:     graphics.h
 
   Copyright 2008 Nintendo.  All rights reserved.
@@ -32,6 +32,7 @@ extern "C" {
 
 void InitGraphics(void);
 void DrawLine(s16 sx, s16 sy, s16 ex, s16 ey, GXRgb color);
+void DrawQuad(s16 sx, s16 sy, s16 ex, s16 ey, GXRgb color);
 
 /*===========================================================================*/
 
