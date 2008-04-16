@@ -36,7 +36,7 @@ static DHTFile *const dht = (DHTFile*)dht_buffer;
 /*
     Phase2用バッファ
 */
-static u8 ov_buffer[DHT_OVERLAY_MAX];
+static DHTPhase2Work p2work;
 
 /*
     実際にはアドレス固定
@@ -159,7 +159,7 @@ static BOOL CheckValidation(FSFile* fp)
         return FALSE;
     }
     // ハッシュ計算 (2) - 隠蔽は難しいか
-    if ( !DHT_CheckHashPhase2(db->hash[1], &rom_header, ov_buffer, ReadImage, fp) )
+    if ( !DHT_CheckHashPhase2(db->hash[1], &rom_header, &p2work, ReadImage, fp) )
     {
         return FALSE;
     }

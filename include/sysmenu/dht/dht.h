@@ -21,6 +21,16 @@
 #include <twl/os/common/format_rom.h>
 #include <sysmenu/dht/dht_format.h>
 
+#define DHT_FAT_PAGE_SIZE   512
+#define DHT_FAT_CACHE_SIZE  (DHT_FAT_PAGE_SIZE * 2)
+
+typedef struct DHTPhase2Work
+{
+    u32 buffer[DHT_OVERLAY_MAX/sizeof(u32)];    // multiple usage
+    u8  fatCache[DHT_FAT_CACHE_SIZE];           // for fat cache only
+}
+DHTPhase2Work;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -137,11 +147,11 @@ BOOL DHT_CheckHashPhase1(const u8* hash, const ROM_Header_Short* pROMHeader, con
                 fctx        (FS版) FSFile構造体へのポインタ
                             (CARD版) dma番号をvoid*にキャストしたもの
                             (HOTSW版) CardBootData構造体へのポインタ
-                buffer      本APIで使用するワーク (DHT_OVERLAY_MAXだけ必要)
+                work        本APIで使用するワーク (DHT_OVERLAY_MAXだけ必要)
 
   Returns:      問題なければTRUE
  *---------------------------------------------------------------------------*/
-BOOL DHT_CheckHashPhase2(const u8* hash, const ROM_Header_Short* pROMHeader, void* buffer, DHTReadFunc func, void* arg);
+BOOL DHT_CheckHashPhase2(const u8* hash, const ROM_Header_Short* pROMHeader, DHTPhase2Work* work, DHTReadFunc func, void* arg);
 
 #ifdef __cplusplus
 } /* extern "C" */

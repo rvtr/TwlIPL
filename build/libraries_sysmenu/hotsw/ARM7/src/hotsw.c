@@ -168,7 +168,7 @@ static CardSecureModeFunction s_funcTable[] = {
 #ifdef DHT_TEST
 #include <sysmenu/dht/dht.h>
 DHTFile* dht;
-static void* ov_buffer = (void*)0x02e80000;
+static DHTPhase2Work* p2work = (void*)0x02e80000;
 static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg)
 {
     HotSwState retval = ReadPageGame((CardBootData*)arg, (u32)offset, dest, (u32)length);
@@ -971,7 +971,7 @@ static HotSwState LoadStaticModule(void)
         OS_TPrintf(" Done.\n");
 
         OS_TPrintf("DHT Pahse2...");
-        if ( !DHT_CheckHashPhase2(hash1, &s_cbData.pBootSegBuf->rh.s, ov_buffer, ReadImage, &s_cbData) )
+        if ( !DHT_CheckHashPhase2(hash1, &s_cbData.pBootSegBuf->rh.s, p2work, ReadImage, &s_cbData) )
         {
             OS_TPrintf(" Failed.\n");
             return HOTSW_HASH_CHECK_ERROR;
@@ -1456,8 +1456,8 @@ static void HotSwThread(void *arg)
 {
     #pragma unused( arg )
 
-	static BOOL 	isReadError = FALSE;
-        
+    static BOOL     isReadError = FALSE;
+
     HotSwState      retval;
     HotSwMessage    *msg;
 
@@ -1506,22 +1506,22 @@ static void HotSwThread(void *arg)
                 }
 
                 if(!isReadError){
-                	retval = LoadCardData();
+                    retval = LoadCardData();
 
-                	DebugPrintErrorMessage(retval);
+                    DebugPrintErrorMessage(retval);
 
-                	if(retval != HOTSW_SUCCESS){
-						McPowerOff();
+                    if(retval != HOTSW_SUCCESS){
+                        McPowerOff();
 
-                		ClearCaradFlgs();
+                        ClearCaradFlgs();
 
-						isReadError = TRUE;
-                	}
+                        isReadError = TRUE;
+                    }
 
-                	s_IsPulledOut = FALSE;
+                    s_IsPulledOut = FALSE;
                 }
                 else{
-					break;
+                    break;
                 }
             }
 
@@ -1536,8 +1536,8 @@ static void HotSwThread(void *arg)
                 MI_CpuClearFast((u32 *)SYSM_CARD_BANNER_BUF, sizeof(TWLBannerFile));
 
                 s_IsPulledOut = TRUE;
-				isReadError   = FALSE;
-                
+                isReadError   = FALSE;
+
                 // ワンセグのスリープ時シャットダウン対策を戻す
                 MCU_EnableDeepSleepToPowerLine( MCU_PWR_LINE_33, TRUE );
 
@@ -1556,7 +1556,7 @@ static void HotSwThread(void *arg)
  *---------------------------------------------------------------------------*/
 static void ClearCaradFlgs(void)
 {
-	// フラグ処理
+    // フラグ処理
     LockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
     SYSMi_GetWork()->flags.hotsw.isExistCard         = FALSE;
     SYSMi_GetWork()->flags.hotsw.isValidCardBanner   = FALSE;
