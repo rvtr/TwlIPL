@@ -20,6 +20,7 @@
 #include <firm/format/from_firm.h>
 #include <firm/hw/ARM9/mmap_firm.h>
 #include "internal_api.h"
+#include "fs_wram.h"
 
 // define data-----------------------------------------------------------------
 #define CARD_BANNER_INDEX			( LAUNCHER_TITLE_LIST_NUM - 1 )
@@ -503,7 +504,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 				return;
 			}
 		}
-/*
+
 		// [TODO:]新規Read関数の準備、とりあえずWRAMBをガメるつもりで実装
 		FS_InitWramTransfer(3);
 		MI_FreeWram_B( MI_WRAM_ARM7 );
@@ -512,7 +513,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 		MI_CancelWram_B( MI_WRAM_ARM7 );
 		MI_CancelWram_B( MI_WRAM_ARM9 );
 		MI_CancelWram_B( MI_WRAM_DSP );
-*/
+
         for (i = region_header; i < region_max; ++i)
         {
             u32 len = MATH_ROUNDUP( length[i], SYSM_ALIGNMENT_LOAD_MODULE );// AES暗号化領域の関係で、ロードサイズは32バイトアライメントに補正
@@ -528,16 +529,15 @@ OS_TPrintf("RebootSystem failed: cant seek file(%d)\n", source[i]);
                 return;
             }
 
-/*
-            // [TODO:]ここで新規関数を使って同時にハッシュ計算やAES処理もやってしまう予定
-            // 別スレッドで同じWRAM使おうとすると多分コケるのでしっかりWRAMガメないとダメ
-			if ( !FS_ReadFileViaWram(file, (void *)destaddr[i], len, MI_WRAM_B, 0, MI_WRAM_SIZE_256KB, コールバック, 引数 ) )
+            // [TODO:]ここで同時にハッシュ計算やAES処理もやってしまう予定
+            // 別スレッドで同じWRAM使おうとすると多分コケるので注意
+			if ( !FS_ReadFileViaWram(file, (void *)destaddr[i], (s32)len, MI_WRAM_B, 0, MI_WRAM_SIZE_128KB, NULL, NULL ) )
 			{
 OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
                 FS_CloseFile(file);
                 return;
 			}
-*/
+/*
             readLen = FS_ReadFile(file, (void *)destaddr[i], (s32)len);
 
             if( readLen < 0 )
@@ -546,12 +546,14 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
                 FS_CloseFile(file);
                 return;
             }
+*/
         }
 
         (void)FS_CloseFile(file);
 
     }
 	
+OS_TPrintf("RebootSystem : Load Succeed.\n");
 	SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
 }
 
@@ -942,6 +944,7 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 {
 	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BUF;
 	// [TODO:]認証結果はどこかワークに保存しておく
+	// [TODO:]ヘッダに署名ビットがあるはずなので、それを確認して署名チェックを行う
 	if( hs->platform_code & PLATFORM_CODE_FLAG_TWL )
 	{
 		// TWLアプリ

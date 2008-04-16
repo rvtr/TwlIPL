@@ -36,6 +36,7 @@ SRCS			=	sysmenu_lib.c \
 					keys.c \
 					title.c \
 					banner.c \
+					fs_wram.c \
 					../common/src/status.c \
 					../common/src/pxi.c \
 					../common/src/mountInfo.c \
