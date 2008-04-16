@@ -28,6 +28,7 @@ SUBDIRS_P	=	\
 				NandInitializerRed \
 				NandInitializerProduction \
 				NandInitializer \
+				ImportJump \
 				wlanfirm
 				#DS_DownloadPlay
 
