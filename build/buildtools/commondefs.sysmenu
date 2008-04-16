@@ -38,6 +38,7 @@ include	$(NITROSYSTEM_ROOT)/build/buildtools/commondefs
 # NitroSystemパッチが更新されれば不要のはず
 NITROSYSTEM_INCDIR ?= $(TWLSYSTEM_INCDIR)
 NITROSYSTEM_LIBDIR ?= $(TWLSYSTEM_LIBDIR)
+NITROSYSTEM_LIBS ?= $(TWLSYSTEM_LIBS)
 
 #----------------------------------------------------------------------------
 #  TWL-SYSTEM-MENU path settings
