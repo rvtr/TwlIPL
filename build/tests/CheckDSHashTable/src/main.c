@@ -183,11 +183,18 @@ void TwlMain(void)
     (void)GX_VBlankIntr(TRUE);
 
     FS_Init(FS_DMA_NOT_USE);
-
-    // 署名ロード
-    if ( !DHT_PrepareDatabase(dht, HASH_PATH) )
     {
-        OS_TPanic("Cannot prepare the database.\n");
+        FSFile file;
+        if ( !FS_OpenFileEx(&file, HASH_PATH, FS_FILEMODE_R) )
+        {
+            OS_TPanic("Cannot open %s.\n", HASH_PATH);
+        }
+        // 署名ロード
+        if ( !DHT_PrepareDatabase(dht, &file) )
+        {
+            OS_TPanic("Cannot prepare the database.\n");
+        }
+        FS_CloseFile(&file);
     }
 
     // 本番

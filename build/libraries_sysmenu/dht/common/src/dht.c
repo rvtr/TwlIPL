@@ -139,67 +139,41 @@ BOOL DHT_CheckDatabase(const DHTFile* pDHT)
     return TRUE;
 }
 
-BOOL DHT_PrepareDatabase(DHTFile* pDHT, const char* filepath)
+BOOL DHT_PrepareDatabase(DHTFile* pDHT, FSFile* fp)
 {
-    FSFile file;
     s32 result;
     s32 length;
     u8 title[4] = { 'H','N','G','A' };
     PROFILE_INIT();
 
-    if ( filepath )
+    if ( fp )
     {
-        // ファイルオープン
-        PROFILE_COUNT();
-        if (!FS_OpenFileEx(&file, filepath, FS_FILEMODE_R))
-        {
-            OS_TPrintf("Cannot open %s.\n", filepath);
-            return FALSE;
-        }
         // ヘッダ読み込み
         PROFILE_COUNT();
-        result = FS_ReadFile(&file, &pDHT->header, sizeof(DHTHeader));
+        result = FS_ReadFile(fp, &pDHT->header, sizeof(DHTHeader));
         if ( result != sizeof(DHTHeader) )
         {
-            OS_TPrintf("Cannot read the header of %s (result=%d).\n", filepath, result);
+            OS_TPrintf("Cannot read the DHT header (result=%d).\n", result);
             return FALSE;
         }
-        // magic_codeが HNGA のときはROM_Header分だけシークし直す
-        if ( pDHT->header.magic_code == *(u32*)title )
-        {
-            if ( !FS_SeekFile(&file, sizeof(ROM_Header), FS_SEEK_SET) )
-            {
-                OS_TPrintf("Cannot seek to the header of %s.\n", filepath);
-                return FALSE;
-            }
-            // 再びヘッダ読み込み
-            result = FS_ReadFile(&file, &pDHT->header, sizeof(DHTHeader));
-            if ( result != sizeof(DHTHeader) )
-            {
-                OS_TPrintf("Cannot read the header of %s (result=%d).\n", filepath, result);
-                return FALSE;
-            }
-        }
-
         // サイズチェック
         PROFILE_COUNT();
         length = (s32)DHT_GetDatabaseLength(pDHT);
-        if ( FS_GetFileLength(&file) < length ) // パディングがあり得る
+        if ( FS_GetFileLength(fp) < length ) // パディングがあり得る
         {
-            OS_TPrintf("Invalid %s size (%d < %d).\n", filepath, FS_GetFileLength(&file), length);
+            OS_TPrintf("Invalid DHT file size (%d < %d).\n", FS_GetFileLength(fp), length);
             return FALSE;
         }
         // ヘッダ分を削除
         length -= sizeof(DHTHeader);
         // データベース読み込み
         PROFILE_COUNT();
-        result = FS_ReadFile(&file, pDHT->database, length);
+        result = FS_ReadFile(fp, pDHT->database, length);
         if ( result != length )
         {
-            OS_TPrintf("Cannot read the database of %s (result=%d).\n", filepath, result);
+            OS_TPrintf("Cannot read the DHT database (result=%d).\n", result);
             return FALSE;
         }
-        FS_CloseFile(&file);
     }
 
     // データベースの検証

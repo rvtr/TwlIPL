@@ -104,7 +104,7 @@ void SYSM_InitPXI( u32 mcu_prio )
 #ifdef SDK_ARM9
 static BOOL GetDatabaseFilepath(char *path)
 {
-    u8 title[4] = { 'H','N','G','A' };
+    u8 title[4] = { 'H','N','H','A' };
 
 #if( USE_LCFG_STRING == 0 )
     char *title0 = "HNGA";
@@ -154,8 +154,16 @@ void SYSMi_PrepareDatabase(void)
     char path[256];
     if ( GetDatabaseFilepath( path ) )
     {
-        DHT_PrepareDatabase(dht, path);
-        DC_FlushRange(dht, DHT_GetDatabaseLength(dht));
+        FSFile file;
+        if ( FS_OpenFileEx(&file, path, FS_FILEMODE_R) )
+        {
+            if ( FS_SeekFile(&file, sizeof(ROM_Header), FS_SEEK_SET) )
+            {
+                DHT_PrepareDatabase(dht, &file);
+                DC_FlushRange(dht, DHT_GetDatabaseLength(dht));
+            }
+            FS_CloseFile(&file);
+        }
     }
     else
     {

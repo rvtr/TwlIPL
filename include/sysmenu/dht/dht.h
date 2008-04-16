@@ -65,11 +65,12 @@ BOOL DHT_CheckDatabase(const DHTFile* pDHT);
   Description:  FS関数を利用して全データベースを読み込みと検証を行う
 
   Arguments:    pDHT        全データベースの格納先
-                filepath    ファイルパス (NULLで格納済みと判定(真贋チェックのみ))
+                fp          ファイル構造体へのポインタ
+                            DHTHeaderの先頭までシーク済みである必要がある
 
   Returns:      成功すればTRUE
  *---------------------------------------------------------------------------*/
-BOOL DHT_PrepareDatabase(DHTFile* pDHT, const char* filepath);
+BOOL DHT_PrepareDatabase(DHTFile* pDHT, FSFile* fp);
 
 /*---------------------------------------------------------------------------*
   Name:         DHT_GetDatabase
