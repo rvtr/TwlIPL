@@ -50,7 +50,7 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm );
           FALSE … 無線ファームウェアインストール処理が未完了
  */
 
-BOOL PollingInstallWlanFirmware( void );
+BOOL PollingInstallWlanFirmware( BOOL isStartScanWDS );
 
 
 #ifdef __cplusplus

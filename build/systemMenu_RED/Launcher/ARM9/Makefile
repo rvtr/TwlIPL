@@ -17,9 +17,9 @@
 #----------------------------------------------------------------------------
 
 SUBDIRS					=	\
-							../../../libraries_sysmenu/sysmenu \
-							../../../libraries_sysmenu/boot \
-							../../../components/hyena.TWL
+#							../../../libraries_sysmenu/sysmenu \
+#							../../../libraries_sysmenu/boot \
+#							../../../components/hyena.TWL
 #							../../../libraries_sysmenu/hotsw \
 #							../../../libraries_sysmenu/reloc_info \
 #							../../../libraries_sysmenu/mcu \
@@ -57,7 +57,7 @@ MISC_DIR				=	../../misc
 BG_DIR					=	../../data
 
 SRCS_LOGO				=	logoDemo.c logoData.c
-SRCS					=	main.c launcher.c sound.c bannerCounter.c loadWlanFirm.c \
+SRCS					=	main.c launcher.c sound.c bannerCounter.c loadWlanFirm.c scanWDS.c \
 							$(addprefix $(LOGO_DIR)/, $(SRCS_LOGO)) \
 							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c \
 							$(BG_DIR)/BGData_Launcher.c
@@ -71,7 +71,8 @@ LLIBRARIES				+=	libes$(TWL_LIBSUFFIX).a		\
 							libboc$(TWL_LIBSUFFIX).a	\
 							libnam$(TWL_LIBSUFFIX).a	\
 							libsea$(TWL_LIBSUFFIX).a	\
-							libreloc_info$(TWL_LIBSUFFIX).a
+							libreloc_info$(TWL_LIBSUFFIX).a \
+							WDS$(TWL_LIBSUFFIX).a
 
 ADDRESS_DTCM			=	0x0e000000
 

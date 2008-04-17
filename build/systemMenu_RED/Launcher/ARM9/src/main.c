@@ -289,7 +289,7 @@ void TwlMain( void )
             break;
         case AUTHENTICATE:
             if( ( direct_boot || ( !direct_boot && LauncherFadeout( s_titleList ) ) ) &&
-                PollingInstallWlanFirmware() &&                 // アプリブート前に無線ファームのロードは完了しておく必要がある
+                PollingInstallWlanFirmware( FALSE ) &&                 // アプリブート前に無線ファームのロードは完了しておく必要がある
                 SYSM_IsAuthenticateTitleFinished() )
             {
                 if( SYSM_IsFatalError() ) {
@@ -315,7 +315,7 @@ void TwlMain( void )
         (void)SYSM_GetCardTitleList( s_titleList );
 
         // 無線ファームロードのポーリング
-        (void)PollingInstallWlanFirmware();
+		(void)PollingInstallWlanFirmware( pBootTitle ? FALSE : TRUE );
 
         // コマンドフラッシュ
         (void)SND_FlushCommand(SND_COMMAND_NOBLOCK);
