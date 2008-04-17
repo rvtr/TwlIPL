@@ -10,9 +10,9 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Date:: 
-  $Rev: 
-  $Author: 
+  $Date::
+  $Rev:
+  $Author:
  *---------------------------------------------------------------------------*/
 
 #include <unistd.h>
@@ -60,30 +60,30 @@ int main(int argc, char *argv[])
     switch (n) {
     case 'h':
       printf("Usage:\n"
-	     " %s -s -l -c -i inputfile -o outputfile\n"
-	     "  -s (Systemfile) \n"
-	     "  -l (Not Launch) \n"
-	     "  -c XXXX ( GameCode )\n"
-	     "  -i XXXX ( input file )\n"
-	     "  -o XXXX ( output file )\n\n",
-	     argv[0]);
+             " %s -s -l -c -i inputfile -o outputfile\n"
+             "  -s (Systemfile) \n"
+             "  -l (Not Launch) \n"
+             "  -c XXXX ( GameCode )\n"
+             "  -i XXXX ( input file )\n"
+             "  -o XXXX ( output file )\n\n",
+             argv[0]);
       return 0;
 
     case 'i':
-      binFile =	strdup( argv[optind] );
+      binFile =        strdup( argv[optind] );
       printf("input file = %s\n", binFile);
       break;
     case 'o':
-      srlFile =	strdup( argv[optind] );
+      srlFile =        strdup( argv[optind] );
       printf("srl file = %s\n", srlFile);
       break;
-      
+
     case 'c':
       g_code = strdup( argv[optind] );
       printf("game code = %s\n", g_code);
       if( 4 != strlen(g_code) ) {
-	fprintf(stderr,"Error: invalid game code %s\n",g_code);
-	return -1;
+        fprintf(stderr,"Error: invalid game code %s\n",g_code);
+        return -1;
       }
 
       break;
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
     }
 
   }
-  
+
   if( binFile && srlFile ) {
     if( NULL == (bin_fp = fopen(binFile, "rb")) ) {
       fprintf(stderr,"Error:binFile open error %s\n",binFile);
@@ -128,30 +128,30 @@ int main(int argc, char *argv[])
   rom_header.s.maker_code[0] = 0;    // Maker code
   rom_header.s.maker_code[1] = 3;    // Maker code
   rom_header.s.platform_code = 0x03; /* Platform code bit0: not support NTR,  bit1: support TWL
-				     ( NTR_only=0x00, NTR/TWL=0x03, TWL_only=0x02 ) */
+                                     ( NTR_only=0x00, NTR/TWL=0x03, TWL_only=0x02 ) */
 
   // rom_header.s.rom_type;
   // rom_header.s.rom_size;                /* Rom size (2のrom_size乗 Mbit: ex. 128Mbitのときrom_size = 7) */
-  
+
   // rom_header.s.enable_signature:1;        // enable ROM Header signature
   // rom_header.s.enable_aes:1;              // enable AES encryption
   // rom_header.s.developer_encrypt:1;       // 開発用セキュリティがかかっている場合に"1"。製品版では"0"
 
-  //	u32     arm7_scfg_ext;                  // SCFG-EXT
-  //	u8      arm7_scfg_clk;                  // SCFG-CLK
+  //        u32     arm7_scfg_ext;                  // SCFG-EXT
+  //        u8      arm7_scfg_clk;                  // SCFG-CLK
 
 
   // 0x1BF - TWL expansion flags
-  // u8		codec_mode:1;					// 0:NTR mode, 1:TWL mode		// undeveloped
-  // u8		otherParentalControls:1;		// 1: Enable OtherParentalControls
-  // u8		subBannerFile:1;				// 1: Enable SubBannerFile
-  rom_header.s.codec_mode = 1;			// 0:NTR mode, 1:TWL mode		// undeveloped
-  rom_header.s.otherParentalControls = 0;	// 1: Enable OtherParentalControls
-  rom_header.s.subBannerFile = 0;		// 1: Enable SubBannerFile
+  // u8                codec_mode:1;                                        // 0:NTR mode, 1:TWL mode                // undeveloped
+  // u8                otherParentalControls:1;                // 1: Enable OtherParentalControls
+  // u8                subBannerFile:1;                                // 1: Enable SubBannerFile
+  rom_header.s.codec_mode = 1;                        // 0:NTR mode, 1:TWL mode                // undeveloped
+  rom_header.s.otherParentalControls = 0;        // 1: Enable OtherParentalControls
+  rom_header.s.subBannerFile = 0;                // 1: Enable SubBannerFile
 
 
-  //    u8		titleID_Lo[ 4 ];
-  //  u32		titleID_Hi;
+  //    u8                titleID_Lo[ 4 ];
+  //  u32                titleID_Hi;
 
   rom_header.s.titleID_Lo[ 3 ] = *(g_code);
   rom_header.s.titleID_Lo[ 2 ] = *(g_code+1);
@@ -168,15 +168,15 @@ int main(int argc, char *argv[])
   */
 
   rom_header.s.titleID_Hi =   ( 3 /* Nintendo */ << 16) |
-	  							CHANNEL_CARD_BIT |
-								CHANNEL_DATA_ONLY_BIT |
-								(isLaunch? 2:0) |
-								(isSystem? 1:0);
+                                                                  CHANNEL_CARD_BIT |
+                                                                CHANNEL_DATA_ONLY_BIT |
+                                                                (isLaunch? 2:0) |
+                                                                (isSystem? 1:0);
 
   printf("titleID = 0x%08X%08x\n", (unsigned int)rom_header.s.titleID_Hi, (unsigned int)*((u32 *)&(rom_header.s.titleID_Lo[0])));
 
   // 0x02f0 - 0x0300 Parental Controls Rating Info
-  // u8		ParentalControlsRatingInfo[ 0x10 ];
+  // u8                ParentalControlsRatingInfo[ 0x10 ];
 
   rom_header.s.parental_control_rating_info[ 0x0 ] = 0;
   rom_header.s.parental_control_rating_info[ 0x1 ] = 1;
@@ -200,18 +200,30 @@ int main(int argc, char *argv[])
     fprintf(stderr,"Error:file write error(ROM_Header)\n");
     return -1;
   }
-  
-  
+
+
   while( 1 ) {
     read_size = fread((void *)file_read_buffer, 1, FILE_READ_BUFFER_LENGTH, bin_fp);
     if( read_size ) {
       if( 1 != fwrite((void *)&file_read_buffer, read_size, 1, srl_fp) ) {
-	fprintf(stderr,"Error:file write error(bin file)\n");	
-	return -1;
+        fprintf(stderr,"Error:file write error(bin file)\n");
+        return -1;
       }
     }
     else {
       break;
+    }
+  }
+  /* SRLファイルは最低16バイトの倍数にしておく */
+#define PADDING_TARGET  16
+  {
+    long fraction = ftell(srl_fp) % PADDING_TARGET;
+    if( fraction ) {
+      long zero[4] = { 0, 0, 0, 0 };
+      if( 1 != fwrite((void*)zero, PADDING_TARGET - fraction, 1, srl_fp) ) {
+        fprintf(stderr,"Error:file write error(padding)\n");
+        return -1;
+      }
     }
   }
 
