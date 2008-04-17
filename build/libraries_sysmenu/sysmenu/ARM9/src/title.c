@@ -43,6 +43,9 @@
 #define AUTH_KEY_BUFFER_LEN 128
 #define MB_AUTH_SIGN_SIZE				(128)	/* digital sign size */
 
+#define WRAM_SLOT_FOR_FS	4
+#define WRAM_SIZE_FOR_FS	MI_WRAM_SIZE_128KB
+
 typedef	struct	MbAuthCode
 {
 	char		magic_code[2];			// マジックナンバー
@@ -347,6 +350,11 @@ static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
 //
 // ============================================================================
 
+static void SYSMi_CalcHashCallback(const void* addr, u32 len, void* arg)
+{
+	SVC_HMACSHA1Update( (SVCHMACSHA1Context *)arg, addr, len );
+}
+
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
 {
 	enum
@@ -505,17 +513,19 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 			}
 		}
 
-		// [TODO:]新規Read関数の準備、とりあえずWRAMBをガメるつもりで実装
+		// WRAM利用Read関数の準備、WRAMCの後半だけ解放しておく
 		FS_InitWramTransfer(3);
-		MI_FreeWram_B( MI_WRAM_ARM7 );
-		MI_FreeWram_B( MI_WRAM_ARM9 );
-		MI_FreeWram_B( MI_WRAM_DSP );
-		MI_CancelWram_B( MI_WRAM_ARM7 );
-		MI_CancelWram_B( MI_WRAM_ARM9 );
-		MI_CancelWram_B( MI_WRAM_DSP );
+		MI_FreeWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM7 );
+		MI_FreeWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM9 );
+		MI_FreeWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_DSP );
+		MI_CancelWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM7 );
+		MI_CancelWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM9 );
+		MI_CancelWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_DSP );
 
         for (i = region_header; i < region_max; ++i)
         {
+			SVCHMACSHA1Context ctx;
+			u8 calc_hash[SVC_SHA1_DIGEST_SIZE];
             u32 len = MATH_ROUNDUP( length[i], SYSM_ALIGNMENT_LOAD_MODULE );// AES暗号化領域の関係で、ロードサイズは32バイトアライメントに補正
             
             if ( !isTwlApp && i >= region_arm9_twl ) continue;// nitroでは読み込まない領域
@@ -529,15 +539,20 @@ OS_TPrintf("RebootSystem failed: cant seek file(%d)\n", source[i]);
                 return;
             }
 
+#ifdef LOAD_APP_VIA_WRAM
+OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
             // [TODO:]ここで同時にハッシュ計算やAES処理もやってしまう予定
             // 別スレッドで同じWRAM使おうとすると多分コケるので注意
-			if ( !FS_ReadFileViaWram(file, (void *)destaddr[i], (s32)len, MI_WRAM_B, 0, MI_WRAM_SIZE_128KB, NULL, NULL ) )
+            SVC_HMACSHA1Init( &ctx, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
+			if ( !FS_ReadFileViaWram(file, (void *)destaddr[i], (s32)len, MI_WRAM_C, WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcHashCallback, &ctx ) )
 			{
 OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
                 FS_CloseFile(file);
                 return;
 			}
-/*
+			SVC_HMACSHA1GetHash( &ctx, calc_hash );
+#else
+OS_TPrintf("RebootSystem : Load VIA PRIMAL FS %d.\n", i);
             readLen = FS_ReadFile(file, (void *)destaddr[i], (s32)len);
 
             if( readLen < 0 )
@@ -546,14 +561,13 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
                 FS_CloseFile(file);
                 return;
             }
-*/
+#endif // LAUNCHER_READ_VIA_WRAM
+
         }
 
         (void)FS_CloseFile(file);
 
     }
-	
-OS_TPrintf("RebootSystem : Load Succeed.\n");
 	SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
 }
 

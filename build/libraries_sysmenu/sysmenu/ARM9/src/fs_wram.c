@@ -391,13 +391,19 @@ BOOL FS_ReadFileViaWram( FSFile *p_file, void *dst, s32 len, MIWramPos wram, s32
     FSiWramWork.nums    = MI_WRAM_ENUM_TO_SIZE( size ) * 1024 / FS_WRAM_SLOT_SIZE;
     
     // 必要に応じて7側にスイッチ可能なWRAMとして指定
-    n = 1 << slot;
-    for(l=0;l<FSiWramWork.nums-1;l++)
+    n = 0;
+    for(l=0;l<FSiWramWork.nums;l++)
     {
 		n = n << 1;
-		n += 1;
+		n += (1 << slot);
 	}
-    FSi_SetSwitchableWramSlots(n,0);
+	if( wram == MI_WRAM_B )
+	{
+	    FSi_SetSwitchableWramSlots(n,0);
+	}else if ( wram == MI_WRAM_C )
+	{
+	    FSi_SetSwitchableWramSlots(0,n);
+	}
     
     // WRAM->ARM9起動
     result = FSi_ReadWram(dst, (u32)len, wram, slot, callback, arg);
@@ -439,13 +445,19 @@ BOOL FS_WriteFileViaWram( FSFile *p_file, const void *src, s32 len, MIWramPos wr
     FSiWramWork.nums    = MI_WRAM_ENUM_TO_SIZE( size ) * 1024 / FS_WRAM_SLOT_SIZE;
 
     // 必要に応じて7側にスイッチ可能なWRAMとして指定
-    n = 1 << slot;
-    for(l=0;l<FSiWramWork.nums-1;l++)
+    n = 0;
+    for(l=0;l<FSiWramWork.nums;l++)
     {
 		n = n << 1;
-		n += 1;
+		n += (1 << slot);
 	}
-    FSi_SetSwitchableWramSlots(n,0);
+	if( wram == MI_WRAM_B )
+	{
+	    FSi_SetSwitchableWramSlots(n,0);
+	}else if ( wram == MI_WRAM_C )
+	{
+	    FSi_SetSwitchableWramSlots(0,n);
+	}
 
     // ARM9->WRAM起動
     result = FSi_WriteWram(src, (u32)len, wram, slot, callback, arg);
