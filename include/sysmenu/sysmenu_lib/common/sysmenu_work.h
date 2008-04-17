@@ -86,6 +86,7 @@ typedef struct SYSM_work {
 			vu32		isValidLauncherParam :1;		// ランチャーパラメータ有効
 			vu32		isValidTSD :1;					// NITRO設定データ無効フラグ
 			vu32		isLogoSkip :1;					// ロゴデモスキップ
+            vu32		isHeaderLoadCompleted :1;		// アプリヘッダロード完了？
 			vu32		isLoadSucceeded :1;				// アプリロード完了？
 			vu32		isCardBoot :1;					// カードブートか？
 			vu32		isInitialSettings :1;			// 初回起動シーケンスか？
