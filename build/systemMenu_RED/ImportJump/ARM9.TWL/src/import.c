@@ -69,18 +69,29 @@ static void UpdateNandBoxCount( void );
   Returns:      None.
  *---------------------------------------------------------------------------*/
 
-BOOL kamiImportTad(NAMTitleId* pTitleId)
+BOOL kamiImportTad(void)
 {
 	NAMTadInfo tadInfo;
+	NAMTitleInfo titleInfo;
 	OSThread thread;
 	s32  nam_result;
 	FSFile file;
+
+	// TADファイルが更新されていないためインポート処理をスキップする
+	if (GetImportJumpSetting()->importTad == 0)
+	{
+		// しかしNandInitializerによって消去されている可能性もあるので確認する
+		if (NAM_ReadTitleInfo(&titleInfo, GetImportJumpSetting()->bootTitleID) == NAM_OK)
+		{
+			return TRUE;
+		}
+	}
 
 	// ファイル初期化
 	FS_InitFile(&file);
 
 	// CARD-ROM 領域を一時的なファイルとみなしそのファイルを開きます。
-	if (!FS_CreateFileFromRom(&file, IMPORT_TAD_ADDRESS, GetImportJumpSetting()->tadLength))
+	if (!FS_CreateFileFromRom(&file, GetImportJumpSetting()->tadRomOffset, GetImportJumpSetting()->tadLength))
 	{
 		OS_Warning(" Fail : FS_CreateFileFromRom\n");
 		return FALSE;
@@ -92,9 +103,6 @@ BOOL kamiImportTad(NAMTitleId* pTitleId)
 		OS_Warning(" Fail! : NAM_ReadTadInfo\n");
 		return FALSE;
 	}
-
-	// 後でアプリジャンプするTitleIdをここで読み取っておく
-	*pTitleId = tadInfo.titleInfo.titleId;
 
 	// Data Only なら失敗
 	if (tadInfo.titleInfo.titleId & TITLE_ID_DATA_ONLY_FLAG_MASK)

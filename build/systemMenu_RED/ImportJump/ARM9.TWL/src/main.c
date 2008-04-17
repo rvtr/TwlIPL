@@ -108,6 +108,13 @@ TwlMain()
         (void)FS_LoadTable(p_table, need_size);
     }
 
+	// magicCodeが異なる場合は停止
+	if (STD_CompareNString( (char *)&GetImportJumpSetting()->magicCode, "TWLD", 4 ))
+	{
+		OS_Warning(" Magic Code Wrong!\n");
+		while(1){};
+	}
+
 	// HWInfo関連の前準備
 	// InstalledSoftBoxCount, FreeSoftBoxCount の更新のために必要
 	switch (HWI_Init( OS_AllocFromMain, OS_FreeToMain ))
@@ -124,10 +131,10 @@ TwlMain()
 	}
 
 	// TADのインポート開始
-	if (kamiImportTad(&titleId))
+	if (kamiImportTad())
 	{
 		// インポートに成功したならアプリジャンプ
-		OS_DoApplicationJump( titleId, OS_APP_JUMP_NORMAL );
+		OS_DoApplicationJump( GetImportJumpSetting()->bootTitleID, OS_APP_JUMP_NORMAL );
 	}
 
 	// アプリジャンプに成功したならここへは到達しない
