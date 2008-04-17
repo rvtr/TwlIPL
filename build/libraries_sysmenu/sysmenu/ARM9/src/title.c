@@ -524,8 +524,8 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 
         for (i = region_header; i < region_max; ++i)
         {
-			SVCHMACSHA1Context ctx;
 			u8 calc_hash[SVC_SHA1_DIGEST_SIZE];
+			SVCHMACSHA1Context ctx;
             u32 len = MATH_ROUNDUP( length[i], SYSM_ALIGNMENT_LOAD_MODULE );// AES暗号化領域の関係で、ロードサイズは32バイトアライメントに補正
             
             if ( !isTwlApp && i >= region_arm9_twl ) continue;// nitroでは読み込まない領域
@@ -562,6 +562,12 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
                 return;
             }
 #endif // LAUNCHER_READ_VIA_WRAM
+
+			// ヘッダ読み込み完了フラグ
+			if( i == region_header )
+			{
+				SYSMi_GetWork()->flags.common.isHeaderLoadCompleted = TRUE;
+			}
 
         }
 
