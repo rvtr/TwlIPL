@@ -51,17 +51,6 @@ u32 DHT_GetDatabaseLength(const DHTFile* pDHT);
 /*---------------------------------------------------------------------------*
   Name:         DHT_PrepareDatabase
 
-  Description:  読み込み済みの全データベースの署名を検証する
-
-  Arguments:    pDHT        データベースの格納先
-
-  Returns:      成功すればTRUE
- *---------------------------------------------------------------------------*/
-BOOL DHT_CheckDatabase(const DHTFile* pDHT);
-
-/*---------------------------------------------------------------------------*
-  Name:         DHT_PrepareDatabase
-
   Description:  FS関数を利用して全データベースを読み込みと検証を行う
 
   Arguments:    pDHT        全データベースの格納先

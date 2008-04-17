@@ -114,7 +114,7 @@ u32 DHT_GetDatabaseLength(const DHTFile* pDHT)
     }
     return sizeof(DHTHeader) + pDHT->header.nums * sizeof(DHTDatabase);
 }
-BOOL DHT_CheckDatabase(const DHTFile* pDHT)
+static BOOL DHT_CheckDatabase(const DHTFile* pDHT)
 {
     SVCSignHeapContext pool;
     u8 heap[4*1024];
@@ -143,7 +143,6 @@ BOOL DHT_PrepareDatabase(DHTFile* pDHT, FSFile* fp)
 {
     s32 result;
     s32 length;
-    u8 title[4] = { 'H','N','G','A' };
     PROFILE_INIT();
 
     if ( fp )
@@ -406,6 +405,11 @@ BOOL DHT_CheckHashPhase2(const u8* hash, const ROM_Header_Short* pROMHeader, DHT
             if ( length > max_sectors )
             {
                 length = max_sectors;
+            }
+            if ( length < 0 || offset < sizeof(ROM_Header) )
+            {
+                OS_TPrintf("Broaken FAT for %d of overlay.\n", i);
+                return FALSE;
             }
             if ( !ImageHMACSHA1Update(&ctx, offset, length * 512) )
             {
