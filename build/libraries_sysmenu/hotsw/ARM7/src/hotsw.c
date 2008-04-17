@@ -34,7 +34,7 @@
 #define     CHATTERING_COUNTER                  0x1988      // 100ms分 (0x1988 * 15.3us = 100000us)
 #define     COUNTER_A                           0x51C       //  20ms分 ( 0x51C * 15.3us =  20012us)
 
-#define     CARD_EXIST_CHECK_INTERVAL           200
+#define     CARD_EXIST_CHECK_INTERVAL           100
 
 #define     UNDEF_CODE                          0xe7ffdeff  // 未定義コード
 #define     ENCRYPT_DEF_SIZE                    0x800       // 2KB  ※ ARM9常駐モジュール先頭2KB
@@ -1456,8 +1456,6 @@ static void HotSwThread(void *arg)
 {
     #pragma unused( arg )
 
-    static BOOL     isReadError = FALSE;
-
     HotSwState      retval;
     HotSwMessage    *msg;
 
@@ -1505,24 +1503,21 @@ static void HotSwThread(void *arg)
                     }
                 }
 
-                if(!isReadError){
-                    retval = LoadCardData();
+                retval = LoadCardData();
 
-                    DebugPrintErrorMessage(retval);
+                DebugPrintErrorMessage(retval);
 
-                    if(retval != HOTSW_SUCCESS){
-                        McPowerOff();
+                if(retval != HOTSW_SUCCESS){
+					McPowerOff();
 
-                        ClearCaradFlgs();
+                	ClearCaradFlgs();
 
-                        isReadError = TRUE;
-                    }
+                    s_IsPulledOut = TRUE;
 
-                    s_IsPulledOut = FALSE;
+					break;
                 }
-                else{
-                    break;
-                }
+
+                s_IsPulledOut = FALSE;
             }
 
             // カードが抜けてたら
@@ -1536,7 +1531,6 @@ static void HotSwThread(void *arg)
                 MI_CpuClearFast((u32 *)SYSM_CARD_BANNER_BUF, sizeof(TWLBannerFile));
 
                 s_IsPulledOut = TRUE;
-                isReadError   = FALSE;
 
                 // ワンセグのスリープ時シャットダウン対策を戻す
                 MCU_EnableDeepSleepToPowerLine( MCU_PWR_LINE_33, TRUE );
