@@ -156,24 +156,25 @@ BOOL DHT_PrepareDatabase(DHTFile* pDHT, FSFile* fp)
             OS_TPrintf("Cannot read the DHT header (result=%d).\n", result);
             return FALSE;
         }
-        // サイズチェック
-        PROFILE_COUNT();
-        length = (s32)DHT_GetDatabaseLength(pDHT);
-        if ( FS_GetFileLength(fp) < length ) // パディングがあり得る
-        {
-            OS_TPrintf("Invalid DHT file size (%d < %d).\n", FS_GetFileLength(fp), length);
-            return FALSE;
-        }
-        // ヘッダ分を削除
-        length -= sizeof(DHTHeader);
         // データベース読み込み
         PROFILE_COUNT();
+        length = (s32)DHT_GetDatabaseLength(pDHT) - (s32)sizeof(DHTHeader); // ヘッダを除く
+        if ( length < 0 )
+        {
+            OS_TPrintf("Invalid DHT header.\n");
+            return FALSE;
+        }
         result = FS_ReadFile(fp, pDHT->database, length);
         if ( result != length )
         {
             OS_TPrintf("Cannot read the DHT database (result=%d).\n", result);
             return FALSE;
         }
+    }
+    else
+    {
+        PROFILE_COUNT();
+        PROFILE_COUNT();
     }
 
     // データベースの検証
@@ -184,12 +185,10 @@ BOOL DHT_PrepareDatabase(DHTFile* pDHT, FSFile* fp)
 #ifdef PRINT_PROFILE
     PROFILE_COUNT();
     OS_TPrintf("\nDone to prepare the database.\n");
-    OS_TPrintf("%10d msec for file open.\n",        (int)OS_TicksToMilliSeconds(profile[1]-profile[0]));
-    OS_TPrintf("%10d msec for reading header.\n",   (int)OS_TicksToMilliSeconds(profile[2]-profile[1]));
-    OS_TPrintf("%10d msec for size check.\n",       (int)OS_TicksToMilliSeconds(profile[3]-profile[2]));
-    OS_TPrintf("%10d msec for reading database.\n", (int)OS_TicksToMilliSeconds(profile[4]-profile[3]));
-    OS_TPrintf("%10d msec for comparing hash.\n",   (int)OS_TicksToMilliSeconds(profile[5]-profile[4]));
-    OS_TPrintf("\nTotal: %10d msec.\n",             (int)OS_TicksToMilliSeconds(profile[5]-profile[0]));
+    OS_TPrintf("%10d msec for reading header.\n",   (int)OS_TicksToMilliSeconds(profile[1]-profile[0]));
+    OS_TPrintf("%10d msec for reading database.\n", (int)OS_TicksToMilliSeconds(profile[2]-profile[1]));
+    OS_TPrintf("%10d msec for comparing hash.\n",   (int)OS_TicksToMilliSeconds(profile[3]-profile[2]));
+    OS_TPrintf("\nTotal: %10d msec.\n",             (int)OS_TicksToMilliSeconds(profile[3]-profile[0]));
 #endif
     return result;
 }
