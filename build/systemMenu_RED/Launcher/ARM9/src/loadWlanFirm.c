@@ -32,6 +32,8 @@
   definitions
  */
 
+#define IGNORE_SIGN_ERROR            0
+
 /* LCFGの無線ファームバージョンをタイトルＩＤとしてそのまま使う場合 */
 #define USE_LCFG_STRING              0
 
@@ -258,14 +260,21 @@ BOOL VerifyWlanfirmSignature(u8* buffer, u32 length)
     if (FALSE == SVC_DecryptSign( &rctx, signDigest, (const void*)pSign, (const void*)pPubkey ))
     {
         OS_TPrintf("[Wlan Firm]  Wlan Firmware authentication has failed.\n");
+
+#if (IGNORE_SIGN_ERROR == 1)
+        
         /* continue verifying process even though decryption fails
            in the case of bonding option = 0x01 (support ARM9/ARM7) */
         if (!( HWi_WSYS08_OP_OP0_MASK == SCFG_ReadBondingOption() ))
         {
+#endif
             SYSM_Free(signHeap);
             return FALSE;
+
+#if (IGNORE_SIGN_ERROR == 1)
         }
         OS_TPrintf("[Wlan Firm]  But installation continues.\n");
+#endif
     }
 
     SYSM_Free(signHeap);
