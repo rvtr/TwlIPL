@@ -26,7 +26,7 @@
 #include "import.h"
 #include "TWLHWInfo_api.h"
 #include "graphics.h"
-
+#include "ImportJump.h"
 
 /*---------------------------------------------------------------------------*
     型定義
@@ -69,14 +69,25 @@ static void UpdateNandBoxCount( void );
   Returns:      None.
  *---------------------------------------------------------------------------*/
 
-BOOL kamiImportTad(char* path, NAMTitleId* pTitleId)
+BOOL kamiImportTad(NAMTitleId* pTitleId)
 {
 	NAMTadInfo tadInfo;
 	OSThread thread;
 	s32  nam_result;
+	FSFile file;
+
+	// ファイル初期化
+	FS_InitFile(&file);
+
+	// CARD-ROM 領域を一時的なファイルとみなしそのファイルを開きます。
+	if (!FS_CreateFileFromRom(&file, IMPORT_TAD_ADDRESS, GetImportJumpSetting()->tadLength))
+	{
+		OS_Warning(" Fail : FS_CreateFileFromRom\n");
+		return FALSE;
+	}
 
 	// tadファイルの情報取得
-	if (NAM_ReadTadInfo(&tadInfo, path) != NAM_OK)
+	if (NAM_ReadTadInfoWithFile(&tadInfo, &file) != NAM_OK)
 	{
 		OS_Warning(" Fail! : NAM_ReadTadInfo\n");
 		return FALSE;
@@ -84,14 +95,7 @@ BOOL kamiImportTad(char* path, NAMTitleId* pTitleId)
 
 	// 後でアプリジャンプするTitleIdをここで読み取っておく
 	*pTitleId = tadInfo.titleInfo.titleId;
-/*
-	// Not Launch なら失敗
-	if (tadInfo.titleInfo.titleId & TITLE_ID_NOT_LAUNCH_FLAG_MASK)
-	{
-		OS_Warning(" Fail! :  NOT_LAUNCH_FLAG is specified in rsf file\n");
-		return FALSE;
-	}
-*/
+
 	// Data Only なら失敗
 	if (tadInfo.titleInfo.titleId & TITLE_ID_DATA_ONLY_FLAG_MASK)
 	{
@@ -119,7 +123,7 @@ BOOL kamiImportTad(char* path, NAMTitleId* pTitleId)
     OS_WakeupThreadDirect(&thread);
 
 	// Import開始
-	nam_result = NAM_ImportTad( path );
+	nam_result = NAM_ImportTadWithFile( &file );
 
 	// 進捗スレッドの自力終了を待つ
 	while (sNowImport){};

@@ -78,13 +78,7 @@ Property
 	#
 	# ROM SIZE: in bit [64M/128M/256M/512M/1G/2G]
 	#
-	#RomSize		128M
-	#RomSize		256M
-	# TADの最大サイズがおそらく48MByte = 384Mbitなどになるため
-	# RomSize はそれ以上にしておく必要がある。そうしないと
-	# FS_ReadFile で tad ファイルをリードしにいった場合に
-	# out of range エラーが発生する
-	RomSize  512M
+	RomSize  64M
 
 	#
 	# ROM PADDING: TRUE if finalrom

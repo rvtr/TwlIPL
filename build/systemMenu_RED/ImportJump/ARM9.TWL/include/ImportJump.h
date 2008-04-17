@@ -15,8 +15,8 @@
   $Author$
  *---------------------------------------------------------------------------*/
 
-#ifndef PROCESS_IMPORT_H_
-#define PROCESS_IMPORT_H_
+#ifndef IMPORT_JUMP_H_
+#define IMPORT_JUMP_H_
 
 #ifdef	__cplusplus
 extern "C" {
@@ -30,11 +30,32 @@ extern "C" {
     型定義
  *---------------------------------------------------------------------------*/
 
+typedef struct _ImportJumpSetting
+{
+	u32	 magicCode;		             	// = TWLD
+	u32	 clearPublicSaveData :1;	    // publicセーブデータをクリアする（デフォルトOFF）
+	u32	 clearPrivateSaveData :1;	 	// privareセーブデータをクリアする（デフォルトOFF）
+	u32	 clearSaveBannerFile:1;	     	// セーブバナーファイルをクリアする（デフォルトOFF）
+	u32  importTad:1;                  	// パスで指定されたTADファイルをインポートするか（TADの更新有無に依存）
+	u32	 rsv :28;                       // 予約
+	u32	 tadLength;		                // TADファイルの長さ
+} ImportJump;
+
+/*---------------------------------------------------------------------------*
+    定数定義
+ *---------------------------------------------------------------------------*/
+
+// TADファイル配置アドレス
+#define IMPORT_TAD_ADDRESS    0x00800000
+
 /*---------------------------------------------------------------------------*
     関数定義
  *---------------------------------------------------------------------------*/
 
-BOOL kamiImportTad(NAMTitleId* pTitleId);
+inline ImportJump* GetImportJumpSetting(void)
+{
+	return (ImportJump *)0x0dfc0000;
+}
 
 /*===========================================================================*/
 
@@ -42,7 +63,7 @@ BOOL kamiImportTad(NAMTitleId* pTitleId);
 }          /* extern "C" */
 #endif
 
-#endif /* PROCESS_IMPORT_H_ */
+#endif /* IMPORT_JUMP_H_ */
 
 /*---------------------------------------------------------------------------*
   End of file

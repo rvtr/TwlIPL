@@ -24,33 +24,22 @@
 #include "import.h"
 #include "graphics.h"
 #include "hwi.h"
-
-
-#define DEBUG_TARGET_TAD_FILE_PATH   "hostio:/c:/TwlIPL/build/systemMenu_RED/MachineSettings/ARM9/bin/ARM9-TS.LTD/Release/HNBA.Release.tad"
-
-
-extern void HWInfoWriterInit( void );
-extern void FS_MountHostIO(const char *basepath);
+#include "ImportJump.h"
 
 /*---------------------------------------------------------------------------*
     内部変数定義
  *---------------------------------------------------------------------------*/
 
 static NAMTitleId   titleId;
+char sTadPath[FS_ENTRY_LONGNAME_MAX];
 
 /*---------------------------------------------------------------------------*
     内部関数定義
  *---------------------------------------------------------------------------*/
 static void VBlankIntr(void);
 static void InitAllocation(void);
-
-// 現時点ではカード割り込みをHIO通知に使用しているようなので
-// カード抜け誤検出を無視するようにしてテストを作成している。
-static BOOL IgnoreRemoval(void)
-{
-    OS_TWarning("detected CARD-removal!(miss-notification from debugger Host-I/O)\n");
-    return FALSE;
-}
+static BOOL IgnoreRemoval(void);
+extern void FS_MountHostIO(const char *basepath);
 
 /*---------------------------------------------------------------------------*
   Name:         TwlMain
@@ -64,6 +53,16 @@ static BOOL IgnoreRemoval(void)
 void 
 TwlMain()
 {
+	// OS_Initより前に実行する
+	{
+		// SRLの後方に配置したTADファイルにアクセス可能にするために
+		// カードアクセスのハッシュチェックを無効化する
+	    const CARDRomHeaderTWL *header = (const CARDRomHeaderTWL *)HW_TWL_ROM_HEADER_BUF;
+        *(u32 *)header->digest_tabel2_digest = 0x00000000;
+		// デバッガ情報を読み取るため拡張メモリを有効にする
+		OS_EnableMainExArena();
+	}
+
     OS_Init();
     OS_InitArena();
     PXI_Init();
@@ -93,12 +92,6 @@ TwlMain()
 
     // initialize file-system
 	FS_Init(FS_DMA_NOT_USE);
-
-    // HostI/Oをマウント。
-    {
-        CARD_SetPulledOutCallback(IgnoreRemoval);
-        FS_MountHostIO("c:");
-    }
 
 	// NAMライブラリ初期化
 	NAM_Init( OS_AllocFromMain, OS_FreeToMain);
@@ -131,12 +124,13 @@ TwlMain()
 	}
 
 	// TADのインポート開始
-	if (kamiImportTad(DEBUG_TARGET_TAD_FILE_PATH, &titleId))
+	if (kamiImportTad(&titleId))
 	{
 		// インポートに成功したならアプリジャンプ
 		OS_DoApplicationJump( titleId, OS_APP_JUMP_NORMAL );
 	}
 
+	// アプリジャンプに成功したならここへは到達しない
 	while(1){};
 }
 
@@ -178,3 +172,19 @@ static void InitAllocation(void)
     hh = OS_SetCurrentHeap(OS_ARENA_MAIN, hh);
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         IgnoreRemoval
+
+  Description:  カード抜けコールバック
+
+  Arguments:    None.
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+// 現時点ではカード割り込みをHIO通知に使用しているようなので
+// カード抜け誤検出を無視するようにしてテストを作成している。
+static BOOL IgnoreRemoval(void)
+{
+    OS_TWarning("detected CARD-removal!(miss-notification from debugger Host-I/O)\n");
+    return FALSE;
+}
