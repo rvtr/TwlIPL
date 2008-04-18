@@ -54,6 +54,18 @@ typedef	struct	MbAuthCode
 	u32		serial_number;			// シリアル番号
 } MbAuthCode;	// 16byte
 
+typedef struct CalcHMACSHA1CallbackArg
+{
+	SVCHMACSHA1Context	ctx;
+	u32					hash_length;
+} CalcHMACSHA1CallbackArg;
+
+typedef struct CalcSHA1CallbackArg
+{
+	SVCSHA1Context	ctx;
+	u32					hash_length;
+} CalcSHA1CallbackArg;
+
 // extern data-----------------------------------------------------------------
 extern const u8 g_devPubKey[ 4 ][ 0x80 ];
 
@@ -78,6 +90,8 @@ static BOOL				s_loadstart = FALSE;
 
 static NAMTitleId *s_pTitleIDList = NULL;
 static int s_listLength = 0;
+
+static u8 *s_calc_hash = NULL;
 
 // const data------------------------------------------------------------------
 static const OSBootType s_launcherToOSBootType[ LAUNCHER_BOOTTYPE_MAX ] = {
@@ -350,9 +364,22 @@ static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
 //
 // ============================================================================
 
-static void SYSMi_CalcHashCallback(const void* addr, u32 len, void* arg)
+static void SYSMi_CalcHMACSHA1Callback(const void* addr, u32 len, void* arg)
 {
-	SVC_HMACSHA1Update( (SVCHMACSHA1Context *)arg, addr, len );
+	CalcHMACSHA1CallbackArg *cba = (CalcHMACSHA1CallbackArg *)arg;
+	u32 calc_len = ( cba->hash_length < len ? cba->hash_length : len );
+	if( calc_len == 0 ) return;
+	cba->hash_length -= calc_len;
+	SVC_HMACSHA1Update( &cba->ctx, addr, calc_len );
+}
+
+static void SYSMi_CalcSHA1Callback(const void* addr, u32 len, void* arg)
+{
+	CalcSHA1CallbackArg *cba = (CalcSHA1CallbackArg *)arg;
+	u32 calc_len = ( cba->hash_length < len ? cba->hash_length : len );
+	if( calc_len == 0 ) return;
+	cba->hash_length -= calc_len;
+	SVC_SHA1Update( &cba->ctx, addr, calc_len );
 }
 
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
@@ -521,11 +548,12 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 		MI_CancelWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM7 );
 		MI_CancelWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM9 );
 		MI_CancelWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_DSP );
+		
+		s_calc_hash = SYSM_Alloc( region_max * SVC_SHA1_DIGEST_SIZE );
 
         for (i = region_header; i < region_max; ++i)
         {
-			u8 calc_hash[SVC_SHA1_DIGEST_SIZE];
-			SVCHMACSHA1Context ctx;
+			BOOL result;
             u32 len = MATH_ROUNDUP( length[i], SYSM_ALIGNMENT_LOAD_MODULE );// AES暗号化領域の関係で、ロードサイズは32バイトアライメントに補正
             
             if ( !isTwlApp && i >= region_arm9_twl ) continue;// nitroでは読み込まない領域
@@ -543,14 +571,31 @@ OS_TPrintf("RebootSystem failed: cant seek file(%d)\n", source[i]);
 OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
             // [TODO:]ここで同時にハッシュ計算やAES処理もやってしまう予定
             // 別スレッドで同じWRAM使おうとすると多分コケるので注意
-            SVC_HMACSHA1Init( &ctx, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
-			if ( !FS_ReadFileViaWram(file, (void *)destaddr[i], (s32)len, MI_WRAM_C, WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcHashCallback, &ctx ) )
+            
+            // コールバック関数に与える引数を初期化してRead
+            if(region_header == i)
+            {
+				CalcSHA1CallbackArg arg;
+	            SVC_SHA1Init( &arg.ctx );
+	            arg.hash_length = (u32)(isTwlApp ? TWL_ROM_HEADER_HASH_CALC_DATA_LEN : NTR_ROM_HEADER_HASH_CALC_DATA_LEN);
+	            result = FS_ReadFileViaWram(file, (void *)destaddr[i], (s32)len, MI_WRAM_C,
+	            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcSHA1Callback, &arg );
+	            SVC_SHA1GetHash( &arg.ctx, &s_calc_hash[i * SVC_SHA1_DIGEST_SIZE] );
+			}else
+			{
+				CalcHMACSHA1CallbackArg arg;
+	            SVC_HMACSHA1Init( &arg.ctx, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
+	            arg.hash_length = length[i];
+	            result = FS_ReadFileViaWram(file, (void *)destaddr[i], (s32)len, MI_WRAM_C,
+	            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcHMACSHA1Callback, &arg );
+	            SVC_HMACSHA1GetHash( &arg.ctx, &s_calc_hash[i * SVC_SHA1_DIGEST_SIZE] );
+			}
+			if ( !result )
 			{
 OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
                 FS_CloseFile(file);
                 return;
 			}
-			SVC_HMACSHA1GetHash( &ctx, calc_hash );
 #else
 OS_TPrintf("RebootSystem : Load VIA PRIMAL FS %d.\n", i);
             readLen = FS_ReadFile(file, (void *)destaddr[i], (s32)len);
@@ -561,7 +606,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
                 FS_CloseFile(file);
                 return;
             }
-#endif // LAUNCHER_READ_VIA_WRAM
+#endif // LOAD_APP_VIA_WRAM
 
 			// ヘッダ読み込み完了フラグ
 			if( i == region_header )
@@ -766,17 +811,40 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 			OS_TPrintf("Authenticate failed: Sign decryption failed.\n");
 			if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}
-		// ヘッダのハッシュ(SHA1)計算
-		SVC_CalcSHA1( calculated_hash, (const void*)head, TWL_ROM_HEADER_HASH_CALC_DATA_LEN );
-	    // 署名のハッシュ値とヘッダのハッシュ値を比較
-	    if(!SVC_CompareSHA1(sigbuf.digest, (const void *)calculated_hash))
-	    {
-			OS_TPrintf("Authenticate failed: Sign check failed.\n");
-			if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+#ifdef LOAD_APP_VIA_WRAM
+		if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM )
+#endif
+		{
+			// ヘッダのハッシュ(SHA1)計算
+			SVC_CalcSHA1( calculated_hash, (const void*)head, TWL_ROM_HEADER_HASH_CALC_DATA_LEN );
+		    // 署名のハッシュ値とヘッダのハッシュ値を比較
+		    if(!SVC_CompareSHA1(sigbuf.digest, (const void *)calculated_hash))
+		    {
+				OS_TPrintf("Authenticate failed: Sign check failed.\n");
+				if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+			}else
+			{
+				OS_TPrintf("Authenticate : Sign check succeed. %dms.\n", OS_TicksToMilliSeconds(OS_GetTick() - prev));
+			}
+		}
+#ifdef LOAD_APP_VIA_WRAM
+		else if(s_calc_hash)
+		{
+		    // 署名のハッシュ値とヘッダのハッシュ値を比較
+		    if(!SVC_CompareSHA1(sigbuf.digest, (const void *)&s_calc_hash[0]))
+		    {
+				OS_TPrintf("Authenticate failed: Sign check failed.\n");
+				if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+			}else
+			{
+				OS_TPrintf("Authenticate : Sign check succeed. %dms.\n", OS_TicksToMilliSeconds(OS_GetTick() - prev));
+			}
 		}else
 		{
-			OS_TPrintf("Authenticate : Sign check succeed. %dms.\n", OS_TicksToMilliSeconds(OS_GetTick() - prev));
+			OS_TPrintf("Authenticate failed: Sign check failed.\n");
+			if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}
+#endif
 		
 		// TWL以降のアプリはモジュールの特定領域がAES暗号化されているので、ハッシュチェック前にデクリプトする必要がある。
 		// ヘッダのデータを使うので、署名チェック後が望ましい。よってこのタイミング。
@@ -807,51 +875,80 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		{
 			static const char *str[4]={"ARM9_STATIC","ARM7_STATIC","ARM9_LTD_STATIC","ARM7_LTD_STATIC"};
 			prev = OS_GetTick();
-			// 一時的に格納位置をずらしている場合は、再配置情報からモジュール格納アドレスを取得
-			if( SYSMi_GetWork()->romRelocateInfo[l].src != NULL )
+			
+#ifdef LOAD_APP_VIA_WRAM
+			// とりあえず、カードアプリはここでハッシュ計算
+			if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM )
+#endif
 			{
-				module_addr[l] = (u32 *)SYSMi_GetWork()->romRelocateInfo[l].src;
-			}
-			// ハッシュ計算
-			if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM && l == 0)
-			{
-				// カードの場合のARM9_STATICハッシュチェック
-				// カード読み込み時、work2に暗号化オブジェクト部分のハッシュ計算済みのコンテキストが保存されるので
-				// それを用いてARM9_STATIC残りの部分を計算
-				SVCHMACSHA1Context ctx;
-				u16 id;
-                
-				SVC_HMACSHA1Init( &ctx, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
-                
-				// ARM7とのhmac_sha1_contextの排他制御開始
-                id = (u16)OS_GetLockID();
-				(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-                
-				SYSMi_GetWork2()->hmac_sha1_context.sha1_ctx.sha_block = ctx.sha1_ctx.sha_block;// この関数ポインタだけARM7とARM9で変えないとダメ
-				ctx = SYSMi_GetWork2()->hmac_sha1_context;										// SYSMi_GetWork2は非キャッシュなのでスタック（DTCMまたはキャッシュ領域）へコピー
+				// 一時的に格納位置をずらしている場合は、再配置情報からモジュール格納アドレスを取得
+				if( SYSMi_GetWork()->romRelocateInfo[l].src != NULL )
+				{
+					module_addr[l] = (u32 *)SYSMi_GetWork()->romRelocateInfo[l].src;
+				}
+				// ハッシュ計算
+#ifdef LOAD_APP_VIA_WRAM
+				if( l == 0)
+#else
+				if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM && l == 0)
+#endif
+				{
+					// カードのARM9_STATICハッシュチェック
+					// カード読み込み時、work2に暗号化オブジェクト部分のハッシュ計算済みのコンテキストが保存されるので
+					// それを用いてARM9_STATIC残りの部分を計算
+					SVCHMACSHA1Context ctx;
+					u16 id;
+	                
+					SVC_HMACSHA1Init( &ctx, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
+	                
+					// ARM7とのhmac_sha1_contextの排他制御開始
+	                id = (u16)OS_GetLockID();
+					(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
+	                
+					SYSMi_GetWork2()->hmac_sha1_context.sha1_ctx.sha_block = ctx.sha1_ctx.sha_block;// この関数ポインタだけARM7とARM9で変えないとダメ
+					ctx = SYSMi_GetWork2()->hmac_sha1_context;										// SYSMi_GetWork2は非キャッシュなのでスタック（DTCMまたはキャッシュ領域）へコピー
 
-                // ARM7とのhmac_sha1_contextの排他制御終了
-				(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-				OS_ReleaseLockID( id );
-                
-				SVC_HMACSHA1Update( &ctx,
-									(const void*)((u32)module_addr[l] + ARM9_ENCRYPT_DEF_SIZE),
-									(module_size[l] - ARM9_ENCRYPT_DEF_SIZE) );
-				SVC_HMACSHA1GetHash( &ctx, calculated_hash );
+	                // ARM7とのhmac_sha1_contextの排他制御終了
+					(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
+					OS_ReleaseLockID( id );
+	                
+					SVC_HMACSHA1Update( &ctx,
+										(const void*)((u32)module_addr[l] + ARM9_ENCRYPT_DEF_SIZE),
+										(module_size[l] - ARM9_ENCRYPT_DEF_SIZE) );
+					SVC_HMACSHA1GetHash( &ctx, calculated_hash );
+				}else
+				{
+					SVC_CalcHMACSHA1( calculated_hash, (const void*)module_addr[l], module_size[l],
+									 (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
+				}
+				// 比較
+			    if(!SVC_CompareSHA1((const void *)hash_addr[l], (const void *)calculated_hash))
+			    {
+					OS_TPrintf("Authenticate failed: %s module hash check failed.\n", str[l]);
+					if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+				}else
+				{
+					OS_TPrintf("Authenticate : %s module hash check succeed. %dms.\n", str[l], OS_TicksToMilliSeconds(OS_GetTick() - prev));
+				}
+			}
+#ifdef LOAD_APP_VIA_WRAM
+			else if(s_calc_hash)
+			{
+				// カード以外のアプリをロードする時に計算したハッシュを検証
+			    if(!SVC_CompareSHA1((const void *)hash_addr[l], (const void *)&s_calc_hash[(l+1) * SVC_SHA1_DIGEST_SIZE]))
+			    {
+					OS_TPrintf("Authenticate failed: %s module hash check failed.\n", str[l]);
+					if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+				}else
+				{
+					OS_TPrintf("Authenticate : %s module hash check succeed. %dms.\n", str[l], OS_TicksToMilliSeconds(OS_GetTick() - prev));
+				}
 			}else
 			{
-				SVC_CalcHMACSHA1( calculated_hash, (const void*)module_addr[l], module_size[l],
-								 (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
-			}
-			// 比較
-		    if(!SVC_CompareSHA1((const void *)hash_addr[l], (const void *)calculated_hash))
-		    {
 				OS_TPrintf("Authenticate failed: %s module hash check failed.\n", str[l]);
 				if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
-			}else
-			{
-				OS_TPrintf("Authenticate : %s module hash check succeed. %dms.\n", str[l], OS_TicksToMilliSeconds(OS_GetTick() - prev));
 			}
+#endif
 		}
 	}
 	OS_TPrintf("Authenticate : total %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
@@ -890,13 +987,15 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
     {
 		u8 buf[0x80];
 		SVCSignHeapContext con;
-		u8 calculated_hash[SVC_SHA1_DIGEST_SIZE * 3 + sizeof(u32)];
 		u8 final_hash[SVC_SHA1_DIGEST_SIZE];
-		int l;
 		u32 *module_addr[RELOCATE_INFO_NUM];
 		u32 module_size[RELOCATE_INFO_NUM];
 		u8 *hash_addr[RELOCATE_INFO_NUM];
 		int module_num;
+#ifndef LOAD_APP_VIA_WRAM
+		u8 calculated_hash[SVC_SHA1_DIGEST_SIZE * 3 + sizeof(u32)];
+		int l;
+#endif
 
 		// [TODO:]pBootTitle->titleIDと、それにこじつけたNTRヘッダのなんらかのデータとの一致確認をする。
 
@@ -923,7 +1022,16 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 		hash_addr[ARM9_STATIC] = &(head->s.main_static_digest[0]);
 		hash_addr[ARM7_STATIC] = &(head->s.sub_static_digest[0]);
 		module_num = 2;
-		
+
+#ifdef LOAD_APP_VIA_WRAM
+		if(s_calc_hash)
+		{
+			// シリアルナンバー付加
+			*(u32 *)(&(s_calc_hash[SVC_SHA1_DIGEST_SIZE * 3])) = s_authcode.serial_number;
+			// 最終ハッシュ計算
+			SVC_CalcSHA1( final_hash, s_calc_hash, SVC_SHA1_DIGEST_SIZE * 3 + sizeof(u32));
+		}
+#else
 		// ヘッダ
 		SVC_CalcSHA1( calculated_hash, (const void*)head, NTR_ROM_HEADER_HASH_CALC_DATA_LEN );
 		// モジュール
@@ -943,6 +1051,7 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 		*(u32 *)(&(calculated_hash[SVC_SHA1_DIGEST_SIZE * 3])) = s_authcode.serial_number;
 		// 最終ハッシュ計算
 		SVC_CalcSHA1( final_hash, calculated_hash, SVC_SHA1_DIGEST_SIZE * 3 + sizeof(u32));
+#endif
 		
 		// 計算した最終ハッシュと、署名から得たハッシュとを比較
 	    if(!SVC_CompareSHA1((const void *)buf, (const void *)final_hash))
@@ -1089,6 +1198,13 @@ AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 	if(s_authResult != AUTH_RESULT_SUCCEEDED)
 	{
 		return s_authResult;
+	}
+	
+	if(s_calc_hash)
+	{
+		// ハッシュ値保存領域解放
+		SYSM_Free( s_calc_hash );
+		s_calc_hash = NULL;
 	}
 	
 	// TWL設定データにブートするタイトルのTitleIDとplatformCodeを保存。
