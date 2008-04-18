@@ -53,6 +53,8 @@ extern void FS_MountHostIO(const char *basepath);
 void 
 TwlMain()
 {
+	NAMTitleId titleID;
+
 	// OS_Initより前に実行する
 	{
 		// SRLの後方に配置したTADファイルにアクセス可能にするために
@@ -131,10 +133,10 @@ TwlMain()
 	}
 
 	// TADのインポート開始
-	if (kamiImportTad())
+	if (kamiImportTad(&titleID))
 	{
 		// インポートに成功したならアプリジャンプ
-		OS_DoApplicationJump( GetImportJumpSetting()->bootTitleID, OS_APP_JUMP_NORMAL );
+		OS_DoApplicationJump( titleID, OS_APP_JUMP_NORMAL );
 	}
 
 	// アプリジャンプに成功したならここへは到達しない

@@ -69,23 +69,16 @@ static void UpdateNandBoxCount( void );
   Returns:      None.
  *---------------------------------------------------------------------------*/
 
-BOOL kamiImportTad(void)
+BOOL kamiImportTad(NAMTitleId* pTitleID)
 {
 	NAMTadInfo tadInfo;
-	NAMTitleInfo titleInfo;
+	NAMTitleInfo titleInfoTmp;
 	OSThread thread;
 	s32  nam_result;
 	FSFile file;
-
-	// TADファイルが更新されていないためインポート処理をスキップする
-	if (GetImportJumpSetting()->importTad == 0)
-	{
-		// しかしNandInitializerによって消去されている可能性もあるので確認する
-		if (NAM_ReadTitleInfo(&titleInfo, GetImportJumpSetting()->bootTitleID) == NAM_OK)
-		{
-			return TRUE;
-		}
-	}
+	char savePublicPath[FS_ENTRY_LONGNAME_MAX];
+	char savePrivatePath[FS_ENTRY_LONGNAME_MAX];
+	char subBannerPath[FS_ENTRY_LONGNAME_MAX];
 
 	// ファイル初期化
 	FS_InitFile(&file);
@@ -104,6 +97,9 @@ BOOL kamiImportTad(void)
 		return FALSE;
 	}
 
+	// titleIDを保存しておく
+	*pTitleID = tadInfo.titleInfo.titleId;
+
 	// Data Only なら失敗
 	if (tadInfo.titleInfo.titleId & TITLE_ID_DATA_ONLY_FLAG_MASK)
 	{
@@ -119,34 +115,91 @@ BOOL kamiImportTad(void)
 		return FALSE;
 	}
 
-	// インポート開始フラグを立てる
-	sNowImport = TRUE;
-
-    // 進捗スレッド作成
-	spStack = OS_Alloc(THREAD_STACK_SIZE);
-	MI_CpuClear8(spStack, THREAD_STACK_SIZE);
-    OS_CreateThread(&thread, ProgressThread, NULL,
-        (void*)((u32)spStack + THREAD_STACK_SIZE), THREAD_STACK_SIZE, OS_GetCurrentThread()->priority - 1);
-	OS_SetThreadDestructor( &thread, Destructor );
-    OS_WakeupThreadDirect(&thread);
-
-	// Import開始
-	nam_result = NAM_ImportTadWithFile( &file );
-
-	// 進捗スレッドの自力終了を待つ
-	while (sNowImport){};
-
-	if ( nam_result == NAM_OK )
+	// TADファイルが更新されている場合に限りインポート処理を行う
+	// NandInitializerによって消去されている可能性もあるので確認する
+	if (GetImportJumpSetting()->importTad == 1 || NAM_ReadTitleInfo(&titleInfoTmp, tadInfo.titleInfo.titleId) != NAM_OK)
 	{
-		// InstalledSoftBoxCount, FreeSoftBoxCount の値を現在のNANDの状態に合わせて更新します。
-		UpdateNandBoxCount();
-		return TRUE;
+		// インポート開始フラグを立てる
+		sNowImport = TRUE;
+
+	    // 進捗スレッド作成
+		spStack = OS_Alloc(THREAD_STACK_SIZE);
+		MI_CpuClear8(spStack, THREAD_STACK_SIZE);
+	    OS_CreateThread(&thread, ProgressThread, NULL,
+	        (void*)((u32)spStack + THREAD_STACK_SIZE), THREAD_STACK_SIZE, OS_GetCurrentThread()->priority - 1);
+		OS_SetThreadDestructor( &thread, Destructor );
+	    OS_WakeupThreadDirect(&thread);
+
+		// Import開始
+		nam_result = NAM_ImportTadWithFile( &file );
+
+		// 進捗スレッドの自力終了を待つ
+		while (sNowImport){};
+
+		if ( nam_result == NAM_OK )
+		{
+			// InstalledSoftBoxCount, FreeSoftBoxCount の値を現在のNANDの状態に合わせて更新します。
+			UpdateNandBoxCount();
+		}
+		else
+		{
+			OS_Warning(" Fail! : NAM Result Code = 0x%x\n", nam_result);
+			return FALSE;
+		}
 	}
-	else
+
+	// セーブデータクリア処理
+	if (GetImportJumpSetting()->clearPublicSaveData || GetImportJumpSetting()->clearPrivateSaveData)
 	{
-		OS_Warning(" Fail! : NAM Result Code = 0x%x\n", nam_result);
-		return FALSE;
+		// セーブファイルパス取得
+		if ( NAM_GetTitleSaveFilePath(savePublicPath, savePrivatePath, tadInfo.titleInfo.titleId) != NAM_OK )
+		{
+			OS_Warning(" Fail! NAM_GetTitleSaveFilePath\n");
+			return FALSE;
+		}
+		
+		// publicセーブデータFFクリア＆フォーマット
+		if (GetImportJumpSetting()->clearPublicSaveData && tadInfo.titleInfo.publicSaveSize > 0)
+		{
+			if (NAMUTi_ClearSavedataPublic(savePublicPath, tadInfo.titleInfo.titleId) == FALSE)
+			{
+				OS_Warning(" Fail! NAMUTi_ClearSavedataPublic\n");
+				return FALSE;
+			}
+		}
+
+		// privateセーブデータFFクリア＆フォーマット
+		if (GetImportJumpSetting()->clearPrivateSaveData && tadInfo.titleInfo.privateSaveSize > 0)
+		{
+			if (NAMUTi_ClearSavedataPublic(savePrivatePath, tadInfo.titleInfo.titleId) == FALSE)
+			{
+				OS_Warning(" Fail! NAMUTi_ClearSavedataPrivate\n");
+				return FALSE;
+			}
+		}
 	}
+
+	// サブバナークリア処理
+	if (GetImportJumpSetting()->clearSaveBannerFile)
+	{
+		// サブバナーパス取得
+		if ( NAM_GetTitleBannerFilePath(subBannerPath, tadInfo.titleInfo.titleId) != NAM_OK )
+		{
+			OS_Warning(" Fail! NAM_GetTitleBannerFilePath\n");
+			return FALSE;
+		}
+
+		// サブバナー破壊
+		{
+			if (NAMUTi_DestroySubBanner(subBannerPath) == FALSE)
+			{
+				OS_Warning(" Fail! NAMUTi_DestroySubBanner\n");
+				return FALSE;
+			}
+		}	
+	}
+
+	return TRUE;
 }
 
 static void Destructor(void* /*arg*/)

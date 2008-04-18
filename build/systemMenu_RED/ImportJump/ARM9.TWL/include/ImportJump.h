@@ -38,7 +38,6 @@ typedef struct _ImportJumpSetting
 	u32	 clearSaveBannerFile:1;	     	// セーブバナーファイルをクリアする（デフォルトOFF）
 	u32  importTad:1;                  	// パスで指定されたTADファイルをインポートするか（TADの更新有無に依存）
 	u32	 rsv :28;                       // 予約
-	u64  bootTitleID;					// タイトルID
 	u32  tadRomOffset;					// TADをロードしたエミュレーションROMオフセット
 	u32	 tadLength;		                // TADファイルの長さ
 } ImportJump;
