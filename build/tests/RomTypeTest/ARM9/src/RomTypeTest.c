@@ -30,6 +30,7 @@
 
 // function's prototype declaration---------------------
 static BOOL ROTestCore( char *path, char *testfile );
+static BOOL RWExTestCore( char *path, char *testfile );
 static BOOL SRLTest( void );
 static BOOL ContentTest( void );
 static void FinalizeRWTest( FSFile *file, char* filename );
@@ -99,7 +100,7 @@ static BOOL ROTestCore( char *path, char *testfile )
 */
 
 	// ファイルオープン
-	if ( FS_OpenFileEx( file, filename, FS_FILEMODE_W ) )
+	if ( FS_OpenFileEx( file, filename, FS_FILEMODE_RWL ) )
 	{
 		// ReadOnlyなので、Writeのファイルオープン成功したらだめ
 		if( !s_quiettest ) OS_TPrintf("%s:Write mode open succeed. (ReadOnly) \n",filename);
@@ -134,9 +135,59 @@ static BOOL ROTestCore( char *path, char *testfile )
 	return TRUE;
 }
 
+static BOOL RWExTestCore( char *path, char *testfile )
+{
+	char filename[256];
+	char testfilename[256];
+	int len;
+	char buf[5];
+	FSFile file[1];
+	
+	FS_InitFile( file );
+	STD_TSNPrintf( filename, 256, "%s/%s", path, testfile );
+	STD_TSNPrintf( testfilename, 256, "%s/test.txt", path );
+
+	// ファイルオープン
+	if ( !FS_OpenFileEx( file, filename, FS_FILEMODE_RWL ) )
+	{
+		// RWLモードファイルオープン失敗
+		if( !s_quiettest ) OS_TPrintf("%s:RWL mode open failed.\n",filename);
+		FS_CloseFile( file );
+		return FALSE;
+	}
+
+	// ファイルリード
+	len = FS_ReadFile( file, buf, 3 );
+	if( len != 3 )
+	{
+		// リード失敗
+		if( !s_quiettest ) OS_TPrintf("%s:read failed.\n",filename);
+		FS_CloseFile( file );
+		return FALSE;
+	}
+	// ファイルクローズ
+	if( !FS_CloseFile( file ) )
+	{
+		// クローズ失敗
+		if( !s_quiettest ) OS_TPrintf("%s:close failed.\n",filename);
+		return FALSE;
+	}
+	
+	return TRUE;
+}
+
 static BOOL SRLTest( void )
 {
-	return ROTestCore( "nand:", "<srl>" );
+	if( s_testnum < 17 )
+	{
+		return ROTestCore( "nand:", "<srl>" );
+	}else if( 16 < s_testnum && s_testnum < 21)
+	{
+		return RWExTestCore( "nand:", "<srl>" );
+	}else
+	{
+		return FALSE;
+	}
 }
 
 static BOOL ContentTest( void )
@@ -251,6 +302,7 @@ static BOOL TMPJumpTest( void )
 }
 
 u8 tempbuf[ LCFG_TEMP_BUFFER_SIZE * 2 ];
+static TWLSubBannerFile sbf;
 
 static void TestFSPermission( void )
 {
@@ -270,7 +322,7 @@ static void TestFSPermission( void )
 	result[10] = RWTest( "nand:/import" );        // nand:/import
 	result[11] = RWTest( "nand:/tmp" );           // nand:/tmp
 	result[12] = SRLTest();                       // nand:/<srl>
-	result[13] = OS_DeleteSubBannerFile();        // nand:/<banner>
+	result[13] = OS_DeleteSubBannerFile(&sbf);    // nand:/<banner>
 	result[14] = TMPJumpTest();                   // nand:/<tmpjump>
 	
 	
@@ -308,7 +360,7 @@ void RomTypeTestInit( void )
 	PutStringUTF16( 4 * 8, 10 * 8, TXT_COLOR_BLACK, (const u16 *)L"Push X To Start Test Quietly.");
 	GetAndDrawRTCData( &g_rtcDraw, TRUE );
 
-	s_testnum = ((ROM_Header_Short *)(HW_TWL_ROM_HEADER_BUF))->titleID_Lo[1];
+	s_testnum = (char)((ROM_Header_Short *)(HW_TWL_ROM_HEADER_BUF))->titleID_Lo[1];
 	if( '0' <= s_testnum && s_testnum <= '9' )
 	{
 		s_testnum -= '0';

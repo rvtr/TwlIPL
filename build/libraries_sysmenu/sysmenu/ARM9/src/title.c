@@ -849,9 +849,14 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		}
 #endif
 		
-		// TWL以降のアプリはモジュールの特定領域がAES暗号化されているので、ハッシュチェック前にデクリプトする必要がある。
-		// ヘッダのデータを使うので、署名チェック後が望ましい。よってこのタイミング。
-		SYSM_StartDecryptAESRegion( &(head->s) );
+#ifdef LOAD_APP_VIA_WRAM
+		if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM )
+#endif
+		{
+			// TWL以降のアプリはモジュールの特定領域がAES暗号化されているので、ハッシュチェック前にデクリプトする必要がある。
+			// ヘッダのデータを使うので、署名チェック後が望ましい。よってこのタイミング。
+			SYSM_StartDecryptAESRegion( &(head->s) );
+		}
 	    
 		// それぞれARM9,7のFLXおよびLTDについてハッシュを計算してヘッダに格納されているハッシュと比較
 		module_addr[ARM9_STATIC] = head->s.main_ram_address;
