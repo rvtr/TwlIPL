@@ -154,7 +154,7 @@ Property
 	#
 	# DisableDebug	：最終ROMではデバッグできないようにTRUEにする必要があります。
 	#
-#	DisableDebug	TRUE
+	DisableDebug	TRUE
 
 	###
 	#### END

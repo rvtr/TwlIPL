@@ -80,6 +80,13 @@ BOOL kamiImportTad(NAMTitleId* pTitleID)
 	char savePrivatePath[FS_ENTRY_LONGNAME_MAX];
 	char subBannerPath[FS_ENTRY_LONGNAME_MAX];
 
+	// 製品用CPUではインポート不可に
+	if ( !((*(u8*)(OS_CHIPTYPE_DEBUGGER_ADDR) & OS_CHIPTYPE_DEBUGGER_MASK)) )
+	{
+		OS_Warning(" Fail : Production CPU\n");
+		return FALSE;
+    }
+
 	// ファイル初期化
 	FS_InitFile(&file);
 

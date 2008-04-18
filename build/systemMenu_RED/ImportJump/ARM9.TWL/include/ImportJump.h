@@ -52,7 +52,8 @@ typedef struct _ImportJumpSetting
 
 inline ImportJump* GetImportJumpSetting(void)
 {
-	return (ImportJump *)0x0deffc00;
+	// リセット後は各PSRAMの先頭8MBしか保証されない
+	return (ImportJump *)HW_TWL_MAIN_MEM_EX;
 }
 
 /*===========================================================================*/
