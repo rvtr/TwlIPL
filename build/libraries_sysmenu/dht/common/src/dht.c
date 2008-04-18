@@ -408,7 +408,7 @@ BOOL DHT_CheckHashPhase2(const u8* hash, const ROM_Header_Short* pROMHeader, DHT
             }
             if ( length < 0 || offset < sizeof(ROM_Header) )
             {
-                OS_TPrintf("Broaken FAT for %d of overlay.\n", i);
+                OS_TPrintf("Broken FAT for %d of overlay.\n", i);
                 return FALSE;
             }
             if ( !ImageHMACSHA1Update(&ctx, offset, length * 512) )
