@@ -22,6 +22,7 @@
 #include <twl/fatfs.h>
 #include <twl/os/common/format_rom.h>
 #include <twl/nam.h>
+#include <twl/os/common/banner.h>
 #include <sysmenu/namut.h>
 
 /*---------------------------------------------------------------------------*
@@ -101,11 +102,10 @@ static char sCurrentFullPath[FS_ENTRY_LONGNAME_MAX];
 static BOOL NAMUTi_DeleteNonprotectedTitle(void);
 static BOOL NAMUTi_DeleteNonprotectedTitleEntity(const char* path);
 static BOOL NAMUTi_ClearSavedataAll(void);
-static BOOL NAMUTi_ClearSavedata(const char* path, u64 titleID, BOOL private);
 static BOOL NAMUTi_DeleteNandDirectory(const char *path);
-static BOOL NAMUTi_FillFile(const char* path);
 static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arcname);
 static void NAMUTi_DrawNandTree(s32 depth, const char *path);
+static BOOL NAMUTi_FillFile(const char* path);
 static void PrintDirectory(s32 depth, const char* path);
 static void PrintFile(s32 depth, const char* path);
 
@@ -334,6 +334,7 @@ static BOOL NAMUTi_ClearSavedataAll( void )
 	NAMTitleInfo namTitleInfo;
 	char savePublicPath[ FS_ENTRY_LONGNAME_MAX ];
 	char savePrivatePath[ FS_ENTRY_LONGNAME_MAX ];
+	char subBannerPath[ FS_ENTRY_LONGNAME_MAX ];
 	BOOL ret = TRUE;
 	s32 i;
 
@@ -357,13 +358,20 @@ static BOOL NAMUTi_ClearSavedataAll( void )
 				// publicSaveSizeが0以上なら0xFFクリア＆フォーマット
 				if (namTitleInfo.publicSaveSize > 0)
 				{
-					ret &= NAMUTi_ClearSavedata(savePublicPath, namTitleInfo.titleId, FALSE);
+					ret &= NAMUTi_ClearSavedataPublic(savePublicPath, namTitleInfo.titleId);
 				}
 				// privateSaveSizeが0以上なら0xFFクリア＆フォーマット
 				if (namTitleInfo.privateSaveSize > 0)
 				{
-					ret &= NAMUTi_ClearSavedata(savePrivatePath, namTitleInfo.titleId, TRUE);
+					ret &= NAMUTi_ClearSavedataPrivate(savePrivatePath, namTitleInfo.titleId);
 				}
+			}
+			else { ret = FALSE; }
+
+			// サブバナーファイルパス取得
+			if (NAM_GetTitleBannerFilePath( subBannerPath, namTitleInfo.titleId) == NAM_OK)
+			{
+				NAMUTi_DestroySubBanner( subBannerPath );
 			}
 			else { ret = FALSE; }
 		}
@@ -374,7 +382,7 @@ static BOOL NAMUTi_ClearSavedataAll( void )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         NAMUTi_ClearSavedata
+  Name:         NAMUTi_ClearSavedataPublic
 
   Description:  指定したセーブデータファイルに対して
 				ＦＦクリア＆フォーマットを行います。
@@ -383,45 +391,98 @@ static BOOL NAMUTi_ClearSavedataAll( void )
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-static BOOL NAMUTi_ClearSavedata(const char* path, u64 titleID, BOOL private)
+BOOL NAMUTi_ClearSavedataPublic(const char* path, u64 titleID)
 {
-	FSFile file;
-	u32 filesize;
-	BOOL ret;
-
-	// ファイル構造体初期化
-    FS_InitFile(&file);
-
-	// セーブファイルオープン
-	if (!FS_OpenFileEx(&file, path, (FS_FILEMODE_R|FS_FILEMODE_W)))
+	//----- FFクリア
+	if (NAMUTi_FillFile(path) == FALSE)
 	{
+		OS_Warning(" Fail NAMUTi_FillFile");
 		return FALSE;
 	}
 
-	//----- セーブファイルを0xFFでクリア
-	filesize = FS_GetFileLength(&file);
-	for (; filesize > CLEAR_DATA_SIZE; filesize -= CLEAR_DATA_SIZE)
-	{
-		FS_WriteFile(&file, sClearData, CLEAR_DATA_SIZE);
-	}
-	FS_WriteFile(&file, sClearData, (s32)filesize);
+	//----- NANDアプリのセーブデータファイルをマウントかつフォーマット
+	return NAMUTi_MountAndFormatOtherTitleSaveData(titleID, "otherPub");
+}
 
-	// ファイルクローズ
-	FS_CloseFile(&file);
+/*---------------------------------------------------------------------------*
+  Name:         NAMUTi_ClearSavedataPrivate
+
+  Description:  指定したセーブデータファイルに対して
+				ＦＦクリア＆フォーマットを行います。
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL NAMUTi_ClearSavedataPrivate(const char* path, u64 titleID)
+{
+	//----- FFクリア
+	if (NAMUTi_FillFile(path) == FALSE)
+	{
+		OS_Warning(" Fail NAMUTi_FillFile");
+		return FALSE;
+	}
 
 	//----- NANDアプリのセーブデータファイルをマウントかつフォーマット
+	return NAMUTi_MountAndFormatOtherTitleSaveData(titleID, "otherPrv");
+}
 
-	// private
-	if (private)
+/*---------------------------------------------------------------------------*
+  Name:         NAMUTi_DestroySubBanner
+
+  Description:  指定したサブバナーのCRC破壊を試みます。
+				指定したサブバナーが存在しない可能性もありますが
+				その場合でもTRUEを返します。（コードはOS_DeleteSubBannerFileのパクリ）
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL NAMUTi_DestroySubBanner(const char* path)
+{
+	TWLSubBannerFile buf[1];	// 4KBあるのでよくない。NAM関数のアロケータが使いたい・・
+	u16 crc, solt;
+	FSFile file[1];
+	BOOL ret = FALSE;
+
+	// R属性でファイルをオープンを試みてファイルの存在有無を確認する
+	// 存在しない場合はTRUEで返す
+	FS_InitFile(file);
+	if ( !FS_OpenFileEx(file, path, FS_FILEMODE_R) )
 	{
-		ret = NAMUTi_MountAndFormatOtherTitleSaveData(titleID, "otherPrv");
+		return TRUE;
 	}
-	// public
-	else
+	
+	// RWL属性で開きなおす
+	FS_InitFile(file);
+	if ( !FS_OpenFileEx(file, path, FS_FILEMODE_RWL) )
 	{
-		ret = NAMUTi_MountAndFormatOtherTitleSaveData(titleID, "otherPub");
+		OS_TPrintf("OS_DeleteSubBannerFile : banner file open failed.\n");
+		return FALSE;
 	}
 
+	// CRCを改竄して書き戻す
+	if( FS_ReadFile( file, buf, sizeof(TWLSubBannerFile) ) != -1 )
+	{
+		crc = SVC_GetCRC16( 0xffff, &buf->anime, sizeof(BannerAnime) );
+		solt = 1;
+		crc += solt;
+		buf->h.crc16_anime = crc;
+		FS_SeekFile( file, 0, FS_SEEK_SET );
+		if( sizeof(BannerHeader) == FS_WriteFile(file, &buf->h, sizeof(BannerHeader)) )
+		{
+			OS_TPrintf("OS_DeleteSubBannerFile : banner file write succeed.\n");
+			ret = TRUE;
+		}else
+		{
+			OS_TPrintf("OS_DeleteSubBannerFile : banner file write failed.\n");
+		}
+	}else
+	{
+		OS_TPrintf("OS_DeleteSubBannerFile : banner file read failed.\n");
+	}
+	FS_CloseFile(file);
+		
 	return ret;
 }
 
@@ -486,7 +547,7 @@ static BOOL NAMUTi_FillFile(const char* path)
     FS_InitFile(&file);
 
 	// ファイルオープン
-	if (FS_OpenFileEx(&file, path, (FS_FILEMODE_R|FS_FILEMODE_W)))
+	if (FS_OpenFileEx(&file, path, (FS_FILEMODE_RWL)))
 	{
 		// ファイルを0xFFでクリア
 		u32 filesize = FS_GetFileLength(&file);
@@ -499,7 +560,6 @@ static BOOL NAMUTi_FillFile(const char* path)
 	}
 	else
 	{
-		OS_TWarning("Fail! FS_OpenFileEx(%s)\n", path);
 		return FALSE;
 	}
 	return TRUE;

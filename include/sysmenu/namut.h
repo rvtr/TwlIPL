@@ -58,6 +58,42 @@ u32 NAMUT_SearchInstalledSoftBoxCount( void );
  *---------------------------------------------------------------------------*/
 void NAMUT_DrawNandTree(void);
 
+/*---------------------------------------------------------------------------*
+  Name:         NAMUTi_ClearSavedataPublic
+
+  Description:  指定したセーブデータファイルに対して
+				ＦＦクリア＆フォーマットを行います。
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL NAMUTi_ClearSavedataPublic(const char* path, u64 titleID);
+
+/*---------------------------------------------------------------------------*
+  Name:         NAMUTi_ClearSavedataPrivate
+
+  Description:  指定したセーブデータファイルに対して
+				ＦＦクリア＆フォーマットを行います。
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL NAMUTi_ClearSavedataPrivate(const char* path, u64 titleID);
+
+/*---------------------------------------------------------------------------*
+  Name:         NAMUTi_DestroySubBanner
+
+  Description:  指定したサブバナーのCRC破壊を試みます。
+				指定したサブバナーが存在しない可能性もありますが
+				その場合でもTRUEを返します。（コードはOS_DeleteSubBannerFileのパクリ）
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL NAMUTi_DestroySubBanner(const char* path);
 
 #endif // SDK_ARM9
 
