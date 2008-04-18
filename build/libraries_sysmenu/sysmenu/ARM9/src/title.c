@@ -573,16 +573,19 @@ OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
             // 別スレッドで同じWRAM使おうとすると多分コケるので注意
             
             // コールバック関数に与える引数を初期化してRead
-            if(region_header == i)
+            if(region_header == i || (!isTwlApp && pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_TEMP ) )
             {
+				// ヘッダか、NTRダウンロードアプリのモジュール
 				CalcSHA1CallbackArg arg;
 	            SVC_SHA1Init( &arg.ctx );
-	            arg.hash_length = (u32)(isTwlApp ? TWL_ROM_HEADER_HASH_CALC_DATA_LEN : NTR_ROM_HEADER_HASH_CALC_DATA_LEN);
+	            arg.hash_length = (u32)(region_header != i ? length[i] : 
+	            						(isTwlApp ? TWL_ROM_HEADER_HASH_CALC_DATA_LEN : NTR_ROM_HEADER_HASH_CALC_DATA_LEN) );
 	            result = FS_ReadFileViaWram(file, (void *)destaddr[i], (s32)len, MI_WRAM_C,
 	            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcSHA1Callback, &arg );
 	            SVC_SHA1GetHash( &arg.ctx, &s_calc_hash[i * SVC_SHA1_DIGEST_SIZE] );
 			}else
 			{
+				// それ以外
 				CalcHMACSHA1CallbackArg arg;
 	            SVC_HMACSHA1Init( &arg.ctx, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
 	            arg.hash_length = length[i];
