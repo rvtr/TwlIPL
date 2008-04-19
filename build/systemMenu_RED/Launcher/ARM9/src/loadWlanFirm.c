@@ -172,6 +172,8 @@ s32 ReadFirmwareHeader(char *path, u8 *buffer, s32 bufSize)
     FSFile  file[1];
     s32 flen;
 
+    FS_InitFile( file );
+    
     if (!FS_OpenFileEx(file, path, FS_FILEMODE_R)) {
         OS_TWarning("FS_OpenFileEx(%s) failed.\n", path);
         return -1;
@@ -198,6 +200,8 @@ s32 ReadFirmwareBinary(char *path, u32 offset, u8 *buffer, s32 bufSize)
     FSFile  file[1];
     s32 flen;
 
+    FS_InitFile( file );
+    
     if (!FS_OpenFileEx(file, path, FS_FILEMODE_R)) {
         OS_TWarning("FS_OpenFileEx(%s) failed.\n", path);
         return -1;
@@ -379,7 +383,6 @@ void PrintDigest(u8 *digest)
 BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 {
     NWMRetCode err;
-    BOOL isColdStart;
 
 	s_isFinished = FALSE;
 	pNwmBuf = 0;
@@ -390,31 +393,8 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
     /* HotStart/ColdStartのチェック */
 	
 	s_isHotStartWLFirm = isHotStartWLFirm;
-	
-    if (TRUE == isHotStartWLFirm )
-    {
-        u8 fwType;
-        
-        isColdStart = FALSE;
-
-        // FWタイプが1のときのみData segmentの正当性をチェックする。
-
-        // [TODO:] TWL無線ドライバRC版のためのWorkaround
-        //         その後のドライバは、Data segmentが廃止される。
-        //         ドライバがバージョンアップされたら、この処理は削除する予定。
-        fwType = (u8)( ((NWMFirmDataSegment *)NWM_PARAM_FWDATA_ADDRESS)->fwType );
-        
-        // Check integrity of WLAN data segment
-        if (fwType == 1 && FALSE == NWMi_CheckFwDataIntegrity())
-        {
-            isColdStart = TRUE;
-        }
-
-    } else {
-        isColdStart = TRUE;
-    }
     
-    if (FALSE == isColdStart)  // HOT START
+    if (TRUE == isHotStartWLFirm)  // HOT START
     {
         pNwmBuf = SYSM_Alloc( NWM_SYSTEM_BUF_SIZE );
         if (!pNwmBuf) {
@@ -432,18 +412,17 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
     } else {    // COLD START
         s32 flen = 0;
         char path[256];
-        u32 offset, length;
+        u32 offset, length, fwType;
         u8 hdrBuffer[FWHEADER_SIZE];
         u8 *pHash = NULL;
-        u32 fwType;
 
-        // ColdStart
+        // Get Filepath
         if (FALSE == GetFirmwareFilepath(path)) {
             goto instfirm_error;
         }
 
         // Get WLAN Firmware type
-        fwType = ((NWMFirmDataSegment *)NWM_PARAM_FWDATA_ADDRESS)->fwType;
+        fwType = ((NWMFirmDataParam *)NWM_PARAM_FWDATA_ADDRESS)->fwType;
         OS_TPrintf("[Wlan Firm]  FWtype is %d\n", fwType);
 
         // Read header of WLAN firm
