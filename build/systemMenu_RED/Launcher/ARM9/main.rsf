@@ -135,6 +135,11 @@ Property
 	LockSCFG		FALSE
 
 	#
+	# HwAESSlotB: launcher deliver HW AES slot B setting [TRUE/FALSE]
+	#
+	HwAESSlotB		TRUE
+
+	#
 	# NANDAccess: nand access control [TRUE/FALSE]
 	#
 	NANDAccess		TRUE

@@ -105,6 +105,7 @@ static void         InitializeCdc(void);
 extern void         SDK_LTDAUTOLOAD_LTDWRAM_BSS_END(void);
 extern void         SDK_LTDAUTOLOAD_LTDMAIN_BSS_END(void);
 #endif
+extern void			SDK_SEA_KEY_STORE(void);
 
 /*---------------------------------------------------------------------------*
   Name:         TwlSpMain
@@ -180,6 +181,9 @@ TwlSpMain(void)
         InitializeNwm(mainHeapHandle, mainHeapHandle);      // NWM èâä˙âª
 #ifndef SDK_NOCRYPTO
         AES_Init();           // AES èâä˙âª
+		
+		SYSMi_SetAESKeysForAccessControl( (ROM_Header *)HW_TWL_ROM_HEADER_BUF, (u8 *)SDK_SEA_KEY_STORE, NULL, NULL );
+		
 #ifdef SDK_SEA
         SEA_Init();
 #endif  // ifdef SDK_SEA

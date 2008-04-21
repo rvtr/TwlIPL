@@ -42,7 +42,7 @@ extern "C" {
 // BootSRLPath受け渡し用
 void SYSMi_SetBootSRLPathToWork2( TitleProperty *pBootTitle );
 
-#else
+#else // !SDK_ARM9
 
 // ランチャー用
 void SYSMi_SetLauncherMountInfo( void );
@@ -50,7 +50,8 @@ void SYSMi_SetLauncherMountInfo( void );
 // 起動アプリ用
 void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle );
 
-#endif
+#endif // SDK_ARM9
+
 
 #ifdef SDK_ARM9
 //-------------------------------------------------------
@@ -83,7 +84,16 @@ BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, TWLBannerFile *pDst );
 void SYSMi_EnableHotSW( BOOL enable );
 
 
-#endif
+#endif // SDK_ARM9
+
+
+#ifdef SDK_ARM7
+//-------------------------------------------------------
+// AES鍵設定
+//-------------------------------------------------------
+void SYSMi_SetAESKeysForAccessControl( ROM_Header *pROMH, u8 *pDst, BOOL *pIsClearSlotB, BOOL *pIsClearSlotC );
+
+#endif // SDK_ARM7
 
 
 //=======================================================

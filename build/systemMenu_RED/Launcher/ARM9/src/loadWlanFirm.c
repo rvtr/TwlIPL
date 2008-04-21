@@ -545,23 +545,14 @@ BOOL PollingInstallWlanFirmware( BOOL isStartScanWDS )
 		WLANFirmResult result;
 		if( GetWlanFirmwareInstallResult( &result ) ) {
 			if( result == WLANFIRM_RESULT_SUCCESS ) {
-#if 0
-				// ロード成功
-				BOOL enable;
-				if( LCFG_THW_IsForceDisableWireless() ) {
-					enable = FALSE;
-				}else {
-					enable = LCFG_TSD_IsAvailableWireless();
-				}
-				SYSMi_SetWirelessLED( enable );
-#endif
 				OS_TPrintf( "WLFIRM load finished.\n" );
-				
+#ifdef ENABLE_WDS_SCAN
 				// WDSスキャンがTRUE かつ 無線フラグがONならば、引き続きWDSビーコン受信開始
 				if( isStartScanWDS &&
 					!LCFG_THW_IsForceDisableWireless() && LCFG_TSD_IsAvailableWireless() ) {
 					StartScanWDS();
 				}
+#endif // ENABLE_WDS_SCAN
 			}else {
 				// ロード失敗
 				if( !s_isHotStartWLFirm ) {

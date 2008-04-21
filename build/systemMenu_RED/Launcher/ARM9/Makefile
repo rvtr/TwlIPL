@@ -29,6 +29,8 @@ SUBDIRS					=	\
 #----------------------------------------------------------------------------
 
 DISABLE_DEBUG			=	TRUE
+DO_NOT_SHOW_LAUNCHER	=	FALSE
+ENABLE_WDS_SCAN			=	FALSE
 
 TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
@@ -88,6 +90,10 @@ MAKETAD_FLAGS			+= -s
 
 ifdef DO_NOT_SHOW_LAUNCHER
 MACRO_FLAGS += -DDO_NOT_SHOW_LAUNCHER
+endif
+
+ifdef ENABLE_WDS_SCAN
+MACRO_FLAGS += -DENABLE_WDS_SCAN
 endif
 
 ifneq ($(DHT_TEST),)

@@ -24,11 +24,13 @@ TARGET_PLATFORM		=	TWL
 TWL_ARCHGEN			=	LIMITED
 TWL_PROC	   		=	ARM7
 
-SRCDIR				=	../common/src
-SRCS				=	status.c \
+SRCS_COMMON			=	status.c \
 						pxi.c \
 						mountInfo.c \
 						decodeAES.c
+
+SRCS				=	setAESKey.c \
+						$(addprefix ../common/src/, $(SRCS_COMMON))
 
 TARGET_LIB			=	libsysmenu_sp$(TWL_LIBSUFFIX).a
 
