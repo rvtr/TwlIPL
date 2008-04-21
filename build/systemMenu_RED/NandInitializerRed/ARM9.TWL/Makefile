@@ -84,6 +84,7 @@ MAKETAD_FLAGS			+=	-s
 
 LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\
 					libboc$(TWL_LIBSUFFIX).a			\
+					libsfs$(TWL_LIBSUFFIX).a	\
 					libnam$(TWL_LIBSUFFIX).a			\
 					libsea$(TWL_LIBSUFFIX).a			\
 					libacsign$(TWL_LIBSUFFIX).a     \
