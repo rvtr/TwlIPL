@@ -659,7 +659,7 @@ static void NAMUTi_DrawNandTree(s32 depth, const char *path)
 	FS_InitFile(&dir);
 
 	// 引数で指定されたディレクトリを開く
-	if (!FS_OpenDirectory(&dir, sCurrentFullPath, (FS_FILEMODE_R|FS_FILEMODE_W)))
+	if (!FS_OpenDirectory(&dir, sCurrentFullPath, (FS_FILEMODE_R)))
 	{
 		OS_TPrintf("%d Fail! FS_OpenDirectory(%s)\n", __LINE__, sCurrentFullPath);
 		return;

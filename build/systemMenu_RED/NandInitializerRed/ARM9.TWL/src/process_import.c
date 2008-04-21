@@ -625,7 +625,7 @@ void* ImportIndividuallyProcess2(void)
 static BOOL ImportTad(char* file_name, TadWriteOption option)
 {
 	NAMTadInfo tadInfo;
-	NAMTitleInfo titleInfo;
+	NAMTitleInfo titleInfoTmp;
 	char full_path[FS_ENTRY_LONGNAME_MAX+6];
 	OSThread thread;
 	BOOL ret = FALSE;
@@ -641,17 +641,17 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 	}
 
 	// NANDの情報を取得
-	if ( option != TAD_WRITE_OPTION_OVERWRITE && NAM_ReadTitleInfo(&titleInfo, tadInfo.titleInfo.titleId) == NAM_OK)
+	if ( option != TAD_WRITE_OPTION_OVERWRITE && NAM_ReadTitleInfo(&titleInfoTmp, tadInfo.titleInfo.titleId) == NAM_OK)
 	{
 		// NANDに既にインストールされているかどうか確認する
-		if (tadInfo.titleInfo.titleId == titleInfo.titleId)
+		if (tadInfo.titleInfo.titleId == titleInfoTmp.titleId)
 		{
 			switch (option)
 			{
 			case TAD_WRITE_OPTION_NONEXISTENT:
 				return TRUE;
 			case TAD_WRITE_OPTION_USER:
-				ShowTitleinfoDifference(&titleInfo, &tadInfo.titleInfo);
+				ShowTitleinfoDifference(&titleInfoTmp, &tadInfo.titleInfo);
 
 				kamiFontPrintfConsole(1, "The program has already existed.");
 				kamiFontPrintfConsole(1, "Do you overwrite ?\n");
@@ -689,6 +689,15 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 		}
 	}
 
+	// ESの仕様で古い e-ticket があると新しい e-ticket を使ったインポートができない
+	// 暫定対応として該当タイトルを完全削除してからインポートする
+	nam_result = NAM_DeleteTitleCompletely(tadInfo.titleInfo.titleId);
+	if ( nam_result != NAM_OK )
+	{
+		kamiFontPrintfConsole(CONSOLE_RED, "Fail! RetCode=%x\n", nam_result);
+		return FALSE;
+	}
+
 	// インポート開始フラグを立てる
 	sNowImport = TRUE;
 
@@ -717,7 +726,7 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 	}
 	else
 	{
-		kamiFontPrintfConsole(CONSOLE_RED, "Fail!\n");
+		kamiFontPrintfConsole(CONSOLE_RED, "Fail! RetCode=%x\n", nam_result);
 	}
 
 	// InstalledSoftBoxCount, FreeSoftBoxCount の値を現在のNANDの状態に合わせて更新します。

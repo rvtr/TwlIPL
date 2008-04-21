@@ -16,9 +16,6 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-SUBDIRS		=	$(ROOT)/build/demos/gx/UnitTours/DEMOLib
-
-
 #----------------------------------------------------------------------------
 
 #============================================================================
@@ -92,7 +89,6 @@ LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\
 					libnamut$(TWL_LIBSUFFIX).a
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
-include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
 
 MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 
