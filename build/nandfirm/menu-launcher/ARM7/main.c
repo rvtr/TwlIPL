@@ -194,11 +194,12 @@ void TwlSpMain( void )
     SetDebugLED(++step);  // 0x82
 
     OS_InitFIRM();
-    OS_EnableIrq();
-    OS_EnableInterrupts();
     // 2: after OS_InitFIRM
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x83
+
+    OS_EnableIrq();
+    OS_EnableInterrupts();
 
     PostInit();
     // 3: after PostInit
