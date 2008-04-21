@@ -103,16 +103,7 @@ static void PreInit(void)
         リセットパラメータ(1バイト)を共有領域(1バイト)にコピー
     */
 #define HOTSTART_FLAG_ENABLE    0x80
-#if SDK_TS_VERSION <= 200
-    if ( MCU_GetVerInfo() < 0x20 )   // MCU旧バージョン対策
-    {
-        *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_OLD_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
-    }
-    else
-#endif
-    {
-        *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
-    }
+    *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
 }
 
 /***************************************************************
@@ -143,16 +134,13 @@ static void PostInit(void)
         バッテリー残量チェック
     */
     MCUi_WriteRegister( MCU_REG_MODE_ADDR, MCU_SYSTEMMODE_FIRMWARE );   // change battery level only
-    if ( MCU_GetVerInfo() >= 0x20 )   // MCU旧バージョン対策
+    if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
     {
-        if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
-        {
 #ifndef SDK_FINALROM
-            OS_TPanic("Battery is empty.\n");
+        OS_TPanic("Battery is empty.\n");
 #else
-            PM_Shutdown();
+        PM_Shutdown();
 #endif
-        }
     }
 }
 
