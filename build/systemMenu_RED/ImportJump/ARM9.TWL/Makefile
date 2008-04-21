@@ -49,8 +49,6 @@ SRCS		=	main.c \
 				import.c \
 				hwi.c
 
-SRCS       +=   $(ROOT)/build/tests/debugger/fio/src/fs_archive_hostio.c
-
 LINCLUDES	=	../common/include \
 				$(ROOT)/build/libraries/lcfg/ARM9.TWL/include \
 				$(ROOT)/build/libraries/fs/common/include

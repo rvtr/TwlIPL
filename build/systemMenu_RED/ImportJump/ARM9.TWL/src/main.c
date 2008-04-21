@@ -38,8 +38,6 @@ char sTadPath[FS_ENTRY_LONGNAME_MAX];
  *---------------------------------------------------------------------------*/
 static void VBlankIntr(void);
 static void InitAllocation(void);
-static BOOL IgnoreRemoval(void);
-extern void FS_MountHostIO(const char *basepath);
 
 /*---------------------------------------------------------------------------*
   Name:         TwlMain
@@ -179,21 +177,4 @@ static void InitAllocation(void)
     if (hh < 0)
         OS_Panic("ARM9: Fail to create heap...\n");
     hh = OS_SetCurrentHeap(OS_ARENA_MAIN, hh);
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         IgnoreRemoval
-
-  Description:  カード抜けコールバック
-
-  Arguments:    None.
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-// 現時点ではカード割り込みをHIO通知に使用しているようなので
-// カード抜け誤検出を無視するようにしてテストを作成している。
-static BOOL IgnoreRemoval(void)
-{
-    OS_TWarning("detected CARD-removal!(miss-notification from debugger Host-I/O)\n");
-    return FALSE;
 }
