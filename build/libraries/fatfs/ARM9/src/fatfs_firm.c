@@ -17,6 +17,7 @@
 
 #include <firm.h>
 #include <twl/types.h>
+#include <twl/fatfs/common/api.h>
 
 void FATFS_InitFIRM( void )
 {
