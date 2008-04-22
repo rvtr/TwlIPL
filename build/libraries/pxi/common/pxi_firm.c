@@ -112,7 +112,7 @@ void PXI_InitFIRM(void)
 
     PXI_Init();
 #ifdef SDK_ARM9
-    while (!PXI_IsCallbackReady(PXI_FIFO_TAG_USER_0, PXI_PROC_ARM7))
+    while (!PXI_IsCallbackReady(PXI_FIFO_TAG_USER_1, PXI_PROC_ARM7))
     {
     }
 #endif
