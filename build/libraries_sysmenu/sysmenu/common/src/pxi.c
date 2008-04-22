@@ -27,7 +27,7 @@
 #ifdef DHT_TEST
 #include <sysmenu/dht/dht.h>
 #ifdef SDK_ARM9
-#define DS_HASH_TABLE_SIZE  (128*1024)
+#define DS_HASH_TABLE_SIZE  (256*1024)
 static u8 dht_buffer[DS_HASH_TABLE_SIZE] ATTRIBUTE_ALIGN(256);
 static DHTFile *const dht = (DHTFile*)dht_buffer;
 #else
