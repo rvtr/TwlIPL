@@ -171,7 +171,28 @@ DHTFile* dht;
 static DHTPhase2Work* p2work = (void*)0x02e80000;
 static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg)
 {
-    HotSwState retval = ReadPageGame((CardBootData*)arg, (u32)offset, dest, (u32)length);
+    HotSwState retval;
+    if ( offset % 512 )
+    {
+        u8 page_buffer[512];
+        u32 page_offset = (u32)(offset & -512);
+        u32 buffer_offset = (u32)(offset % 512);
+        u32 valid_length = 512 - buffer_offset;
+        retval = ReadPageGame((CardBootData*)arg, page_offset, page_buffer, 512);
+        if (retval != HOTSW_SUCCESS)
+        {
+            return FALSE;
+        }
+        MI_CpuCopy8(page_buffer + buffer_offset, dest, (length < valid_length ? length : valid_length));
+        dest = (u8*)dest + valid_length;
+        offset += valid_length;
+        length -= valid_length;
+        if ( length < 0)
+        {
+            return TRUE;
+        }
+    }
+    retval = ReadPageGame((CardBootData*)arg, (u32)offset, dest, (u32)length);
     return (retval == HOTSW_SUCCESS);
 }
 #endif
@@ -431,7 +452,7 @@ static HotSwState LoadCardData(void)
             }
             else{
 #ifdef DHT_TEST
-                if ( !s_cbData.pBootSegBuf->rh.s.enable_signature )
+                if ( !s_cbData.pBootSegBuf->rh.s.enable_nitro_whitelist_signature )
 #endif
                 // NTRカードの場合はRomHeaderバッファの1ページ目以降をクリアしておく。
                 MI_CpuClearFast((void *)(SYSM_CARD_ROM_HEADER_BAK + PAGE_SIZE), SYSM_CARD_ROM_HEADER_SIZE - PAGE_SIZE);
@@ -925,7 +946,7 @@ static HotSwState LoadStaticModule(void)
         SVCHMACSHA1Context ctx;
         const u8* hash0;
         const u8* hash1;
-        if ( !s_cbData.pBootSegBuf->rh.s.enable_signature ) // ホワイトリストエントリ
+        if ( !s_cbData.pBootSegBuf->rh.s.enable_nitro_whitelist_signature ) // ホワイトリストエントリ
         {
             const DHTDatabase* db;
             while (!dht)
@@ -946,8 +967,8 @@ static HotSwState LoadStaticModule(void)
         }
         else    // マスタリング済みエントリ
         {
-            hash0 = s_cbData.pBootSegBuf->rh.s.main_static_digest;
-            hash1 = s_cbData.pBootSegBuf->rh.s.sub_static_digest;
+            hash0 = s_cbData.pBootSegBuf->rh.s.nitro_whitelist_phase1_digest;
+            hash1 = s_cbData.pBootSegBuf->rh.s.nitro_whitelist_phase2_diegst;
         }
 
         OS_TPrintf("DHT Pahse1...");
@@ -1508,13 +1529,13 @@ static void HotSwThread(void *arg)
                 DebugPrintErrorMessage(retval);
 
                 if(retval != HOTSW_SUCCESS){
-					McPowerOff();
+                    McPowerOff();
 
-                	ClearCaradFlgs();
+                    ClearCaradFlgs();
 
                     s_IsPulledOut = TRUE;
 
-					break;
+                    break;
                 }
 
                 s_IsPulledOut = FALSE;
