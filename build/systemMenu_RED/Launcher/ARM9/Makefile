@@ -29,6 +29,8 @@ SUBDIRS					=	\
 
 #----------------------------------------------------------------------------
 
+ifneq ($(UPDATER_RELEASE),TRUE)
+
 # COMPILE SWITCH　※最終ROM作成時は、全てFALSEにセットする。SUBDIRのビルド時にも影響するようexportで環境変数設定する。
 export DO_NOT_SHOW_LAUNCHER	=	FALSE
 export DISABLE_WDS_SCAN		=	TRUE
@@ -38,9 +40,12 @@ export DISABLE_SLEEP		=	TRUE
 # COMPILE SWITCH ※最終ROM作成時は、全てTRUEにセットする
 export LOAD_APP_VIA_WRAM	=	FALSE
 
+endif
+
 # MAKEROM SWITCH ※最終ROM作成時は、全てTRUEにセットする
-DISABLE_DEBUG			=	FALSE
-ENABLE_AES				=	FALSE
+DISABLE_DEBUG			?=	FALSE
+ENABLE_AES				?=	FALSE
+
 
 TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL

@@ -22,8 +22,8 @@ SUBDIRS					=	\
 
 #----------------------------------------------------------------------------
 
-// MAKEROM SWITCH ※最終ROM作成時は、TRUEにする
-DISABLE_DEBUG			=	FALSE
+# MAKEROM SWITCH ※最終ROM作成時は、TRUEにする
+DISABLE_DEBUG			?=	FALSE
 
 TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL

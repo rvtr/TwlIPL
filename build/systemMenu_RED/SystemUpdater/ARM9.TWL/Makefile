@@ -16,10 +16,36 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-SUBDIRS		=
+SUBDIRS		=	$(LAUNCHER_DIR) \
+				$(MACHINESETTINGS_DIR) \
+				$(WLANFIRM_DIR)
 
 
 #----------------------------------------------------------------------------
+
+#============================================================================
+
+LAUNCHER_DIR				=	../../Launcher
+MACHINESETTINGS_DIR			=	../../MachineSettings
+WLANFIRM_DIR				=	../../wlanfirm
+
+
+# COMPILE SWITCH　for build SystemMenu
+
+export UPDATER_RELEASE		=	TRUE
+
+export DO_NOT_SHOW_LAUNCHER	=	TRUE
+export DISABLE_WDS_SCAN		=	TRUE
+export DISABLE_WLFIRM_LOAD	=	FALSE
+export DISABLE_SLEEP		=	TRUE
+export LOAD_APP_VIA_WRAM	=	FALSE
+
+# MAKEROM SWITCH for build SystemMenu
+export DISABLE_DEBUG		=	TRUE
+export ENABLE_AES			=	TRUE
+
+
+#============================================================================
 
 #============================================================================
 #現時点で製品鍵を使った書き込みが行えてはダメなので、デフォルトOFFにしておいてください。
@@ -75,7 +101,9 @@ endif
 endif
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
-							-DPRIVKEY_PATH='$(TWL_KEYSDIR)/rsa'
+							-DPRIVKEY_PATH='$(TWL_KEYSDIR)/rsa' \
+							-DCARD_REGION='$(CARD_REGION)' \
+							-DDISABLE_DEBUG='$(DISABLE_DEBUG)'
 MAKETAD_FLAGS			+=	-s
 
 LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\
@@ -94,8 +122,8 @@ MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 
 GLIBRARIES		:= $(filter-out libcrypto$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 
-#LDIRT_CLEAN				=
-#INSTALL_TARGETS			=
+#LDIRT_CLEAN			=
+#INSTALL_TARGETS		=
 INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------

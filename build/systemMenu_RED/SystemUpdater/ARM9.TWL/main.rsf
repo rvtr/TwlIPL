@@ -153,6 +153,11 @@ Property
 	#
 	CodecMode		$(MAKEROM_CODEC_MODE)
 
+	#
+	# DisableDebug	：最終ROMでは、実行時にデバッグできないようにTRUEにする必要があります。
+	#
+	DisableDebug	$(DISABLE_DEBUG)
+
 	###
 	#### END
 }
