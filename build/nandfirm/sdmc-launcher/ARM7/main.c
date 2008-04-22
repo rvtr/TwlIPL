@@ -35,6 +35,11 @@
 */
 //#define PRINT_MEMORY_ADDR       0x02FFC800
 
+/*
+    AES鍵設定API
+*/
+extern void SYSMi_SetAESKeysForAccessControl( BOOL isNtrMode, ROM_Header *pROMH );
+
 
 #ifdef PROFILE_ENABLE
 #define PROFILE_MAX  16
@@ -103,16 +108,7 @@ static void PreInit(void)
         リセットパラメータ(1バイト)を共有領域(1バイト)にコピー
     */
 #define HOTSTART_FLAG_ENABLE    0x80
-#if SDK_TS_VERSION <= 200
-    if ( MCU_GetVerInfo() < 0x20 )   // MCU旧バージョン対策
-    {
-        *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_OLD_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
-    }
-    else
-#endif
-    {
-        *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
-    }
+    *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
 }
 
 /***************************************************************
@@ -122,10 +118,6 @@ static void PreInit(void)
 ***************************************************************/
 static void PostInit(void)
 {
-#if SDK_TS_VERSION <= 200
-    // PMICの設定 for old version
-    PM_InitFIRM();
-#endif
     /*
         AES関連 (NAND暗号化の鍵変更を含む)
     */
@@ -143,16 +135,15 @@ static void PostInit(void)
         バッテリー残量チェック
     */
     MCUi_WriteRegister( MCU_REG_MODE_ADDR, MCU_SYSTEMMODE_FIRMWARE );   // change battery level only
-    if ( MCU_GetVerInfo() >= 0x20 )   // MCU旧バージョン対策
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x87
+    if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
     {
-        if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
-        {
 #ifndef SDK_FINALROM
-            OS_TPanic("Battery is empty.\n");
+        OS_TPanic("Battery is empty.\n");
 #else
-            PM_Shutdown();
+        PM_Shutdown();
 #endif
-        }
     }
 }
 
@@ -304,9 +295,7 @@ void TwlSpMain( void )
 #endif
     PM_BackLightOn( TRUE );
 
-    AESi_ResetAesKeyA();
-    AESi_ResetAesKeyB();
-    AESi_ResetAesKeyC();
+    SYSMi_SetAESKeysForAccessControl(FALSE, rh);
     MI_CpuClearFast( OSi_GetFromFirmAddr(), sizeof(OSFromFirmBuf) );
     FS_SetMountInfoForSrl();
     OS_BootFromFIRM();
