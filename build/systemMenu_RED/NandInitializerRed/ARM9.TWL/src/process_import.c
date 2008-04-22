@@ -726,7 +726,7 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 	}
 	else
 	{
-		kamiFontPrintfConsole(CONSOLE_RED, "Fail! RetCode=%x\n", nam_result);
+		kamiFontPrintfConsole(CONSOLE_RED, "Fail! RetCode=%d\n", nam_result);
 	}
 
 	// InstalledSoftBoxCount, FreeSoftBoxCount の値を現在のNANDの状態に合わせて更新します。

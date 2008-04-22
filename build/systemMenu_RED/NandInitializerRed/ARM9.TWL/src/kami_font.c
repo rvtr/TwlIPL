@@ -188,6 +188,21 @@ kamiFontClear(void)
 }
 
 /*---------------------------------------------------------------------------*
+  Name:         kamiFontClearMain
+
+  Description:  仮想スクリーンをクリアする
+
+  Arguments:    None
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+void 
+kamiFontClearMain(void)
+{
+	MI_CpuClear8( sFontScreenDataMain, sizeof(sFontScreenDataMain) );
+}
+
+/*---------------------------------------------------------------------------*
   Name:         kamiFontPrintf
 
   Description:  仮想スクリーンに文字列を配置する。文字列は32文字まで。

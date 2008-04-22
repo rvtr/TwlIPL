@@ -331,8 +331,8 @@ static BOOL WriteNorfirm(char* file_name)
 	}
 
 	// .norファイルリード
+	DC_InvalidateRange(pTempBuf, alloc_size);
 	read_is_ok = FS_ReadFile( &file, pTempBuf, (s32)file_size );
-	DC_FlushRange(pTempBuf, file_size);
 	if (!read_is_ok)
 	{
     	kamiFontPrintfConsoleEx(1, "FS_ReadFile(\"%s\") ... ERROR!\n", full_path);
@@ -345,6 +345,7 @@ static BOOL WriteNorfirm(char* file_name)
 	FS_CloseFile(&file);
 
 	// 書き込み前のCRCを計算
+	DC_StoreRange(pTempBuf, file_size);
 	crc_w1 = SVC_GetCRC16( 0xffff, pTempBuf, sizeof(NORHeaderDS) );
 	crc_w2 = SVC_GetCRC16( 0xffff, pTempBuf+512, file_size-512 );
 
@@ -365,6 +366,7 @@ static BOOL WriteNorfirm(char* file_name)
 	}
 
 	// 書き込み後のCRCを計算
+	DC_StoreRange(pTempBuf, sizeof(NORHeaderDS));
 	crc_r1 = SVC_GetCRC16( 0xffff, pTempBuf, sizeof(NORHeaderDS) );
 
 	// NVRAM前半部のCRCをチェック
@@ -409,6 +411,7 @@ static BOOL WriteNorfirm(char* file_name)
 	}
 
 	// 書き込み後のCRCを計算
+	DC_StoreRange(pTempBuf, file_size);
 	crc_r2 = SVC_GetCRC16( 0xffff, pTempBuf+512, file_size-512 );
 
 	// CRC比較

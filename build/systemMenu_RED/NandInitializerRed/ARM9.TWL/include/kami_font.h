@@ -42,6 +42,7 @@ extern const u16 PlttDataSub[16][16];
 
 void kamiFontInit(void);
 void kamiFontClear(void);
+void kamiFontClearMain(void);
 void kamiFontPut(u16 x, u16 y, u16 color, u16 no);
 void kamiFontPrintf(s16 x, s16 y, u8 color, char *text, ...);
 void kamiFontPrintfMain(s16 x, s16 y, u8 color, char *text, ...);

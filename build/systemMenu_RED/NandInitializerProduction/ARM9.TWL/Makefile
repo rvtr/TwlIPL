@@ -48,6 +48,7 @@ MAKEROM_ARM7		=	$(MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
 
 SRCS		=	main.c \
 				kami_pxi.c \
+				kami_write_nandfirm.c \
 				font_data.c \
 				graphics.c \
 				keypad.c \

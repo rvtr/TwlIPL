@@ -45,6 +45,7 @@ SRCS		=	main.c \
 				graphics.c \
 				keypad.c \
 				kami_font.c \
+				kami_write_nandfirm.c \
 				cursor.c \
 				process_format.c \
 				process_topmenu.c \
