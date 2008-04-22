@@ -113,10 +113,6 @@ static void PreInit(void)
 ***************************************************************/
 static void PostInit(void)
 {
-#if SDK_TS_VERSION <= 200
-    // PMIC‚ÌÝ’è for old version
-    PM_InitFIRM();
-#endif
     /*
         AESŠÖ˜A (NANDˆÃ†‰»‚ÌŒ®•ÏX‚ðŠÜ‚Þ)
     */
