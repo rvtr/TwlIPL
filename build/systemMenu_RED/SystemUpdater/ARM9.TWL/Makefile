@@ -16,37 +16,6 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-SUBDIRS		=	$(LAUNCHER_DIR) \
-				$(MACHINESETTINGS_DIR) \
-				$(WLANFIRM_DIR)
-
-
-#----------------------------------------------------------------------------
-
-#============================================================================
-
-LAUNCHER_DIR				=	../../Launcher
-MACHINESETTINGS_DIR			=	../../MachineSettings
-WLANFIRM_DIR				=	../../wlanfirm
-
-
-# COMPILE SWITCH　for build SystemMenu
-
-export UPDATER_RELEASE		=	TRUE
-
-export DO_NOT_SHOW_LAUNCHER	=	TRUE
-export DISABLE_WDS_SCAN		=	TRUE
-export DISABLE_WLFIRM_LOAD	=	FALSE
-export DISABLE_SLEEP		=	TRUE
-export LOAD_APP_VIA_WRAM	=	FALSE
-
-# MAKEROM SWITCH for build SystemMenu
-export DISABLE_DEBUG		=	TRUE
-export ENABLE_AES			=	TRUE
-
-
-#============================================================================
-
 #============================================================================
 #現時点で製品鍵を使った書き込みが行えてはダメなので、デフォルトOFFにしておいてください。
 #USE_PRODUCT_KEY			=	TRUE

@@ -21,8 +21,32 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS =	ARM7.TWL \
+LAUNCHER_DIR				=	../Launcher
+MACHINESETTINGS_DIR			=	../MachineSettings
+WLANFIRM_DIR				=	../wlanfirm
+NANDFIRM_DIR                =   ../../nandfirm/menu-launcher
+
+SUBDIRS =	$(LAUNCHER_DIR) \
+			$(MACHINESETTINGS_DIR) \
+			$(WLANFIRM_DIR) \
+			$(NANDFIRM_DIR) \
+			data \
+			ARM7.TWL \
 			ARM9.TWL
+
+# COMPILE SWITCH for build SystemMenu
+
+export UPDATER_RELEASE		=	TRUE
+
+export DO_NOT_SHOW_LAUNCHER	=	TRUE
+export DISABLE_WDS_SCAN		=	TRUE
+export DISABLE_WLFIRM_LOAD	=	FALSE
+export DISABLE_SLEEP		=	TRUE
+export LOAD_APP_VIA_WRAM	=	FALSE
+
+# MAKEROM SWITCH for build SystemMenu
+export DISABLE_DEBUG		=	TRUE
+export ENABLE_AES			=	TRUE
 
 #----------------------------------------------------------------------------
 

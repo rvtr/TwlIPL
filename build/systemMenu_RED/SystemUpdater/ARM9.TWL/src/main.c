@@ -33,9 +33,9 @@
 
 static const char* ImportTadFileList[] =
 {
-	"rom:/data/HNAA.Release.updater.tad",
-	"rom:/data/HNBA.Release.updater.tad",
-	"rom:/data/HNCA.updater.tad"
+	"rom:/data/HNAA.tad",
+	"rom:/data/HNBA.tad",
+	"rom:/data/HNCA.tad"
 };
 
 static const char* NandFirmPath = "rom:/data/menu_launcher-RELEASE.nand";
