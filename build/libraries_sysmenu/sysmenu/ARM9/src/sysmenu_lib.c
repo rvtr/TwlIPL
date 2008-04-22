@@ -292,11 +292,10 @@ static void SYSMi_CopyLCFGData( void )
 	MI_CpuCopyFast( LCFGi_GetHWN(), (void *)HW_PARAM_TWL_HW_NORMAL_INFO, sizeof(LCFGTWLHWNormalInfo) );
 	MI_CpuCopyFast( LCFGi_GetHWS(), (void *)HW_HW_SECURE_INFO, HW_HW_SECURE_INFO_END - HW_HW_SECURE_INFO );
 	
-	// 本体設定データの不要部分をクリアしておく
+	// 本体設定データのLauncherStatus部分をクリアしておく
 	{
 		LCFGTWLSettingsData *pSettings = (LCFGTWLSettingsData *)HW_PARAM_TWL_SETTINGS_DATA;
 		MI_CpuClear32( &pSettings->launcherStatus, sizeof(LCFGTWLLauncherStatus) );
-		MI_CpuClearFast( &pSettings->parental, sizeof(LCFGTWLParentalControl) );
 	}
 }
 
