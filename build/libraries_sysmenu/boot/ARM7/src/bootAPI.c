@@ -131,32 +131,8 @@ BOOL BOOT_WaitStart( void )
 		
 		// 鍵情報の引渡しを行う。
 		// ブートアプリのROMヘッダのaccessKeyControl情報を見て判定
-		// 引渡しは、IRQスタック領域を使うので、割り込みを禁止してからセットする。
-		{
-			BOOL isClearSlotB = TRUE;
-			BOOL isClearSlotC = TRUE;
-			
-			MI_CpuClearFast( (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, HW_LAUNCHER_DELIVER_PARAM_BUF_SIZE );
-			if( ! isNtrMode ) {
-				if( th->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK ) {
-					SYSMi_SetAESKeysForAccessControl( th, (u8 *)HW_LAUNCHER_DELIVER_PARAM_BUF, &isClearSlotB, &isClearSlotC );
-				}
-			}
-			// ブートするアプリに応じて、AESキースロットのクリアを行う。
-			AESi_ResetAesKeyA();
-			if( isClearSlotB ) AESi_ResetAesKeyB();
-			if( isClearSlotC ) AESi_ResetAesKeyC();
-			
-			// [TODO:]本当にこの後NANDにアクセスしない保証があるか確認する。
-		 	// NANDにアクセスしないアプリは、スロットDの鍵をクリアする
-//			if( th->s.access_control.nand_access == 0 ) AESi_ResetAesKeyD();
-			
-			// 鍵は不要になるので、消しておく
-			{
-				OSFromFirmBuf* fromFirm = (void*)HW_FIRM_FROM_FIRM_BUF;
-				MI_CpuClearFast(fromFirm, sizeof(OSFromFirmBuf));
-			}
-		}
+		SYSMi_SetAESKeysForAccessControl( isNtrMode, th );
+		
 		// SDK共通リブート
 		{
 			REBOOTTarget target = REBOOT_TARGET_TWL_SYSTEM;

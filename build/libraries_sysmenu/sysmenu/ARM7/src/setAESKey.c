@@ -59,8 +59,37 @@ static const u8 dev_seedSlotC[] = {
 //
 // ============================================================================
 
+void SYSMi_SetAESKeysForAccessControl( BOOL isNtrMode, ROM_Header *pROMH )
+{
+	BOOL isClearSlotB = TRUE;
+	BOOL isClearSlotC = TRUE;
+	
+	// 鍵のセット
+	MI_CpuClearFast( (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, HW_LAUNCHER_DELIVER_PARAM_BUF_SIZE );
+	if( !isNtrMode &&
+		( pROMH->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK ) ) {
+		SYSMi_SetAESKeysForAccessControlCore( pROMH, (u8 *)HW_LAUNCHER_DELIVER_PARAM_BUF, &isClearSlotB, &isClearSlotC );
+	}
+	
+	// ブートするアプリに応じて、AESキースロットのクリアを行う。
+	{
+		AESi_ResetAesKeyA();
+		if( isClearSlotB ) AESi_ResetAesKeyB();
+		if( isClearSlotC ) AESi_ResetAesKeyC();
+		
+		// NANDにアクセスしないアプリは、スロットDの鍵をクリアする　
+//		if( th->s.access_control.nand_access == 0 ) AESi_ResetAesKeyD();　※rebootの中のREBOOTi_DetachAllDrivesでNANDにアクセスする場合があるので、ここでクリアはできない。やるならその後ろで。
+	}
+	
+	// その他の鍵は不要になるので、消しておく
+	{
+		OSFromFirmBuf* fromFirm = (void*)HW_FIRM_FROM_FIRM_BUF;
+		MI_CpuClearFast(fromFirm, sizeof(OSFromFirmBuf));
+	}
+}
 
-void SYSMi_SetAESKeysForAccessControl( ROM_Header *pROMH, u8 *pDst, BOOL *pIsClearSlotB, BOOL *pIsClearSlotC )
+
+void SYSMi_SetAESKeysForAccessControlCore( ROM_Header *pROMH, u8 *pDst, BOOL *pIsClearSlotB, BOOL *pIsClearSlotC )
 {
 	// commonClientKey
 	if( pROMH->s.access_control.common_client_key ) {
@@ -99,4 +128,5 @@ void SYSMi_SetAESKeysForAccessControl( ROM_Header *pROMH, u8 *pDst, BOOL *pIsCle
 		AES_Unlock();
 	}
 }
+
 

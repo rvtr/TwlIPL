@@ -91,7 +91,11 @@ void SYSMi_EnableHotSW( BOOL enable );
 //-------------------------------------------------------
 // AES鍵設定
 //-------------------------------------------------------
-void SYSMi_SetAESKeysForAccessControl( ROM_Header *pROMH, u8 *pDst, BOOL *pIsClearSlotB, BOOL *pIsClearSlotC );
+// アプリブート用
+void SYSMi_SetAESKeysForAccessControl( BOOL isNtrMode, ROM_Header *pROMH );
+
+// ランチャー自身用
+void SYSMi_SetAESKeysForAccessControlCore( ROM_Header *pROMH, u8 *pDst, BOOL *pIsClearSlotB, BOOL *pIsClearSlotC );
 
 #endif // SDK_ARM7
 
