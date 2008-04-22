@@ -126,14 +126,22 @@ static void PostInit(void)
     }
     // AESの初期化
     AES_Init(); // for encrypted NAND
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x85
+
     // マウント情報の初期化
     FS_InitMountInfo(TRUE, FALSE);
     // アイドルスレッドの作成
     CreateIdleThread();
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x86
+
     /*
         バッテリー残量チェック
     */
     MCUi_WriteRegister( MCU_REG_MODE_ADDR, MCU_SYSTEMMODE_FIRMWARE );   // change battery level only
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x87
     if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
     {
 #ifndef SDK_FINALROM
@@ -188,11 +196,14 @@ void TwlSpMain( void )
 
     OS_EnableIrq();
     OS_EnableInterrupts();
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x84
 
     PostInit();
     // 3: after PostInit
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x84
+    step = 0x88;
+    SetDebugLED(step); // 0x88
 
 //    PM_BackLightOn( FALSE );
 
@@ -203,7 +214,7 @@ void TwlSpMain( void )
     }
     // 4: after FATFS_Init
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x85
+    SetDebugLED(++step); // 0x89
 
 //    PM_BackLightOn( FALSE );
 
@@ -214,7 +225,7 @@ void TwlSpMain( void )
     }
     // 5: after PXI
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x86
+    SetDebugLED(++step); // 0x8a
 
 //    PM_BackLightOn( FALSE );
 
@@ -225,7 +236,7 @@ void TwlSpMain( void )
     }
     // 6: after FS_OpenSrl
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x87
+    SetDebugLED(++step); // 0x8b
 
 //    PM_BackLightOn( FALSE );
 
@@ -236,7 +247,7 @@ void TwlSpMain( void )
     }
     // 7: after FS_LoadHeader
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x88
+    SetDebugLED(++step); // 0x8c
 
 //    PM_BackLightOn( FALSE );
 
@@ -247,7 +258,7 @@ void TwlSpMain( void )
     }
     // 8: after PXI
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x89
+    SetDebugLED(++step); // 0x8d
 
 //    PM_BackLightOn( FALSE );
 
@@ -255,7 +266,7 @@ void TwlSpMain( void )
     AESi_InitSeed();
     // 9: after AESi_InitSeed
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x8a
+    SetDebugLED(++step); // 0x8e
 
 //    PM_BackLightOn( FALSE );
 
@@ -266,7 +277,7 @@ void TwlSpMain( void )
     }
     // 10: after FS_LoadStatic
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x8b
+    SetDebugLED(++step); // 0x8f
 
 //    PM_BackLightOn( FALSE );
 

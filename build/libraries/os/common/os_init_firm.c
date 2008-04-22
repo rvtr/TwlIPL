@@ -133,6 +133,11 @@ void OS_InitFIRM(void)
     OS_InitException();
 #endif
 
+    //---- Init MI
+#ifdef SDK_TWL
+    MI_Init();
+#endif
+
     //---- Init Tick
     OS_InitTick();
 
