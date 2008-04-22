@@ -195,6 +195,19 @@ int main(int argc, char *argv[])
   rom_header.s.parental_control_rating_info[ 0xe ] = 0xe;
   rom_header.s.parental_control_rating_info[ 0xf ] = 0xf;
 
+  /* ROMバージョンの設定 */
+  {
+      /* FWファイルの先頭1バイト(version)を取得 */
+      unsigned char version = fgetc(bin_fp);
+      
+      rom_header.s.rom_version = version;
+
+      if (fseek(bin_fp, 0, SEEK_SET)) {
+          fprintf(stderr,"Error:file seek error(bin file)\n");
+          return -1;
+      }
+  }
+    
   /* ＳＲＬファイルの書き出し */
   if(1 != fwrite((void *)&rom_header, sizeof(ROM_Header), 1, srl_fp) ) {
     fprintf(stderr,"Error:file write error(ROM_Header)\n");
