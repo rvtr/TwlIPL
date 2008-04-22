@@ -68,15 +68,6 @@ static void CreateIdleThread(void)
     OS_WakeupThreadDirect(&idleThread);
 }
 
-// MCU旧バージョン対策
-#if SDK_TS_VERSION <= 200
-static u8 version = 0;
-#define IS_OLD_MCU  (version ? (version < 0x20) : ((version=MCUi_ReadRegister( MCU_REG_VER_INFO_ADDR )) < 0x20))
-#else
-#define IS_OLD_MCU  FALSE
-#define MCU_OLD_REG_TEMP_ADDR   MCU_REG_TEMP_ADDR   // avoid compiler error
-#endif
-
 /***************************************************************
     PreInit
 
@@ -85,20 +76,6 @@ static u8 version = 0;
 ***************************************************************/
 static void PreInit(void)
 {
-    /*
-        バッテリー残量チェック
-    */
-    if ( !IS_OLD_MCU )   // MCU旧バージョン対策
-    {
-        if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
-        {
-#ifndef SDK_FINALROM
-            OS_TPanic("Battery is empty.\n");
-#else
-            PM_Shutdown();
-#endif
-        }
-    }
     // GCDヘッダコピー
     MI_CpuCopyFast( OSi_GetFromBromAddr(), (void*)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
     // FromBrom全消去
@@ -112,16 +89,7 @@ static void PreInit(void)
 ***************************************************************/
 static void PostInit(void)
 {
-#if SDK_TS_VERSION <= 200
-    // PMICの設定 for old version
-    PM_InitFIRM();
-#endif
-#if SDK_TS_VERSION <= 200
-    PMi_SetParams( REG_PMIC_BL_BRT_A_ADDR, PMIC_BACKLIGHT_BRIGHT_DEFAULT, PMIC_BL_BRT_A_MASK );
-    PMi_SetParams( REG_PMIC_BL_BRT_B_ADDR, PMIC_BACKLIGHT_BRIGHT_DEFAULT, PMIC_BL_BRT_B_MASK );
-#else
     MCUi_WriteRegister( MCU_REG_BL_ADDR, MCU_REG_BL_BRIGHTNESS_MASK );
-#endif
     PM_BackLightOn( TRUE );
     // アイドルスレッドの作成
     CreateIdleThread();
@@ -130,16 +98,14 @@ static void PostInit(void)
     /*
         バッテリー残量チェック
     */
-    if ( !IS_OLD_MCU )   // MCU旧バージョン対策
+    MCUi_WriteRegister( MCU_REG_MODE_ADDR, MCU_SYSTEMMODE_FIRMWARE );   // change battery level only
+    if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
     {
-        if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
-        {
 #ifndef SDK_FINALROM
-            OS_TPanic("Battery is empty.\n");
+        OS_TPanic("Battery is empty.\n");
 #else
-            PM_Shutdown();
+        PM_Shutdown();
 #endif
-        }
     }
 }
 
