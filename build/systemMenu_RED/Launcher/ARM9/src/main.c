@@ -20,17 +20,12 @@
 #include "misc.h"
 #include "logoDemo.h"
 #include "sound.h"
-
-//#define DISABLE_SLEEP
+#include "loadWlanFirm.h"
 
 // extern data-----------------------------------------------------------------
 
 // define data-----------------------------------------------------------------
-#define WIRELESS_FIRM_LOADING 1
 
-#if( WIRELESS_FIRM_LOADING == 1 )
-#include "loadWlanFirm.h"
-#endif
 
 // function's prototype-------------------------------------------------------
 static void INTR_VBlank( void );
@@ -214,11 +209,11 @@ void TwlMain( void )
 
 
     // 無線ファームウェアを無線モジュールにダウンロードする。
-#if( WIRELESS_FIRM_LOADING == 1 )
+#ifndef DISABLE_WLFIRM_LOAD
     if( FALSE == InstallWlanFirmware( SYSM_IsHotStart() ) ) {
         OS_TPrintf( "ERROR: Wireless firmware download failed!\n" );
     }
-#endif
+#endif // DISABLE_WLFIRM_LOAD
 
     if( SYSM_IsFatalError() ) {
         // FATALエラー処理
@@ -289,7 +284,9 @@ void TwlMain( void )
             break;
         case AUTHENTICATE:
             if( ( direct_boot || ( !direct_boot && LauncherFadeout( s_titleList ) ) ) &&
+#ifndef DISABLE_WLFIRM_LOAD
                 PollingInstallWlanFirmware( FALSE ) &&                 // アプリブート前に無線ファームのロードは完了しておく必要がある
+#endif // DISABLE_WLFIRM_LOAD
                 SYSM_IsAuthenticateTitleFinished() )
             {
                 if( SYSM_IsFatalError() ) {

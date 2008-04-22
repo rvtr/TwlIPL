@@ -18,8 +18,6 @@
 
 SUBDIRS			=	
 
-MYSUBDIRS		=	./
-
 #----------------------------------------------------------------------------
 TARGET_FIRM		=	SYSTEMMENU
 TARGET_PLATFORM	=	TWL
@@ -28,7 +26,7 @@ TWL_PROC	   	=	ARM9
 
 REVISION_SRC	=	src/revision.c
 
-SRCDIR		= src
+SRCDIR			=	src
 SRCS			=	sysmenu_lib.c \
 					util.c \
 					ninLogoFunc.c \
@@ -46,22 +44,22 @@ SRCS			=	sysmenu_lib.c \
 
 TARGET_LIB		=	libsysmenu$(TWL_LIBSUFFIX).a
 
-ifdef DO_NOT_SHOW_LAUNCHER
-MACRO_FLAGS += -DDO_NOT_SHOW_LAUNCHER
+ifeq ($(DO_NOT_SHOW_LAUNCHER),TRUE)
+MACRO_FLAGS		+=	-DDO_NOT_SHOW_LAUNCHER
 endif
 
-ifdef LOAD_APP_VIA_WRAM
-MACRO_FLAGS += -DLOAD_APP_VIA_WRAM
+ifeq ($(LOAD_APP_VIA_WRAM),TRUE)
+MACRO_FLAGS		+=	-DLOAD_APP_VIA_WRAM
 endif
 
 ifneq ($(DHT_TEST),)
-MACRO_FLAGS			+=  -DDHT_TEST
+MACRO_FLAGS		+=	-DDHT_TEST
 endif
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-INSTALL_TARGETS		=	$(TARGETS)
-INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
+INSTALL_TARGETS	=	$(TARGETS)
+INSTALL_DIR		=	$(SYSMENU_INSTALL_LIBDIR)
 
 LINCLUDES		=	$(ROOT)/build/libraries/mb/common/include	\
 					$(ROOT)/build/libraries/spi/ARM9/include	\
@@ -71,7 +69,7 @@ LDIRT_CLEAN		=	$(REVISION_SRC)
 
 #----------------------------------------------------------------------------
 
-do-build: $(REVISION_SRC) $(MYSUBDIRS) $(TARGETS)
+do-build: $(REVISION_SRC) $(TARGETS)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
@@ -89,8 +87,5 @@ $(REVISION_SRC) ::
 		echo "const char *g_strSDKSvnRevision = \"-\";" >> $(REVISION_SRC); \
 	fi
 
-
-$(MYSUBDIRS)::
-#	$(MAKE) -C $@ -f MakeCrt0
 
 #===== End of Makefile =====

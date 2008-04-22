@@ -22,7 +22,8 @@ SUBDIRS					=	\
 
 #----------------------------------------------------------------------------
 
-DISABLE_DEBUG			=	TRUE
+// MAKEROM SWITCH Å¶ç≈èIROMçÏê¨éûÇÕÅATRUEÇ…Ç∑ÇÈ
+DISABLE_DEBUG			=	FALSE
 
 TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL

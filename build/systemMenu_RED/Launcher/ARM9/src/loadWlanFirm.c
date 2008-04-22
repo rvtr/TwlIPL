@@ -541,18 +541,21 @@ BOOL GetWlanFirmwareInstallResult(WLANFirmResult *pResult)
 // 無線ファームロード完了？
 BOOL PollingInstallWlanFirmware( BOOL isStartScanWDS )
 {
+#ifndef ENABLE_WDS_SCAN
+#pragma unused(isStartScanWDS)
+#endif
 	if ( !s_isFinished ) {
 		WLANFirmResult result;
 		if( GetWlanFirmwareInstallResult( &result ) ) {
 			if( result == WLANFIRM_RESULT_SUCCESS ) {
 				OS_TPrintf( "WLFIRM load finished.\n" );
-#ifdef ENABLE_WDS_SCAN
+#ifndef DISABLE_WDS_SCAN
 				// WDSスキャンがTRUE かつ 無線フラグがONならば、引き続きWDSビーコン受信開始
 				if( isStartScanWDS &&
 					!LCFG_THW_IsForceDisableWireless() && LCFG_TSD_IsAvailableWireless() ) {
 					StartScanWDS();
 				}
-#endif // ENABLE_WDS_SCAN
+#endif // DISABLE_WDS_SCAN
 			}else {
 				// ロード失敗
 				if( !s_isHotStartWLFirm ) {

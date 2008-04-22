@@ -16,8 +16,9 @@
 # $Author$
 #----------------------------------------------------------------------------
 
+# ※コンパイルスイッチの都合上、../../../libraries_sysmenu/sysmenu　は有効にしておく
 SUBDIRS					=	\
-#							../../../libraries_sysmenu/sysmenu \
+							../../../libraries_sysmenu/sysmenu \
 #							../../../libraries_sysmenu/boot \
 #							../../../components/hyena.TWL
 #							../../../libraries_sysmenu/hotsw \
@@ -28,9 +29,18 @@ SUBDIRS					=	\
 
 #----------------------------------------------------------------------------
 
-DISABLE_DEBUG			=	TRUE
-DO_NOT_SHOW_LAUNCHER	=	FALSE
-ENABLE_WDS_SCAN			=	FALSE
+# COMPILE SWITCH　※最終ROM作成時は、全てFALSEにセットする。SUBDIRのビルド時にも影響するようexportで環境変数設定する。
+export DO_NOT_SHOW_LAUNCHER	=	FALSE
+export DISABLE_WDS_SCAN		=	TRUE
+export DISABLE_WLFIRM_LOAD	=	TRUE
+export DISABLE_SLEEP		=	TRUE
+
+# COMPILE SWITCH ※最終ROM作成時は、全てTRUEにセットする
+export LOAD_APP_VIA_WRAM	=	FALSE
+
+# MAKEROM SWITCH ※最終ROM作成時は、全てTRUEにセットする
+DISABLE_DEBUG			=	FALSE
+ENABLE_AES				=	FALSE
 
 TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
@@ -88,12 +98,24 @@ MAKEROM_FLAGS			+=	-F \
 
 MAKETAD_FLAGS			+= -s
 
-ifdef DO_NOT_SHOW_LAUNCHER
+ifeq ($(DO_NOT_SHOW_LAUNCHER),TRUE)
 MACRO_FLAGS += -DDO_NOT_SHOW_LAUNCHER
 endif
 
-ifdef ENABLE_WDS_SCAN
-MACRO_FLAGS += -DENABLE_WDS_SCAN
+ifeq ($(DISABLE_WDS_SCAN),TRUE)
+MACRO_FLAGS += -DDISABLE_WDS_SCAN
+endif
+
+ifeq ($(DISABLE_WLFIRM_LOAD),TRUE)
+MACRO_FLAGS += -DDISABLE_WLFIRM_LOAD
+endif
+
+ifeq ($(DISABLE_SLEEP),TRUE)
+MACRO_FLAGS += -DDISABLE_SLEEP
+endif
+
+ifeq ($(ENABLE_AES),TRUE)
+MAKEROM_FLAGS += -a
 endif
 
 ifneq ($(DHT_TEST),)
