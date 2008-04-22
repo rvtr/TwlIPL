@@ -120,6 +120,13 @@ INSTALL_DIR	= $(ROOT)/bin/ARM9-TS/Rom
 INSTALL_TARGETS	= $(BINDIR)/$(TARGET_NAME).srl
 endif
 
+ifdef USE_FOR_NIGHTLY_AUTO_TEST
+ifeq	($(TWL_BUILD_TYPE),RELEASE)
+INSTALL_DIR	= $(ROOT)/bin/ARM9-TS/Release
+INSTALL_TARGETS	= $(BINDIR)/$(TARGET_NAME).srl
+endif
+endif
+
 #----------------------------------------------------------------------------
 
 do-build:		$(TARGETS)
