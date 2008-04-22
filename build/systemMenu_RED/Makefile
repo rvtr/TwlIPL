@@ -29,7 +29,8 @@ SUBDIRS_P	=	\
 				NandInitializerProduction \
 				NandInitializer \
 				ImportJump \
-				wlanfirm
+				wlanfirm \
+				DSHashTable
 				#DS_DownloadPlay
 
 #----------------------------------------------------------------------------
