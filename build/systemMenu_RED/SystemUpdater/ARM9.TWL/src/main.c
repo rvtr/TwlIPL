@@ -27,6 +27,7 @@
 #include "hw_info.h"
 #include "graphics.h"
 #include "hwi.h"
+#include "keypad.h"
 
 /*---------------------------------------------------------------------------*
     内部定数定義
@@ -53,7 +54,8 @@ static NAMTitleId   titleId;
 static void VBlankIntr(void);
 static void InitAllocation(void);
 static BOOL IgnoreRemoval(void);
-extern void FS_MountHostIO(const char *basepath);
+static void DrawWaitButtonA(void);
+static void DrawAlready(void);
 
 /*---------------------------------------------------------------------------*
   Name:         TwlMain
@@ -118,6 +120,20 @@ TwlMain()
         (void)FS_LoadTable(p_table, need_size);
     }
 
+	// ログが存在するならシステム更新済みと判定
+	{
+		FSFile file;
+		FS_InitFile( &file );
+		if (FS_OpenFileEx(&file, "nand:/sys/log/updater.log", FS_FILEMODE_R) == TRUE)
+		{
+			FS_CloseFile(&file);
+			DrawAlready();
+		}
+	}
+
+	// Ａボタン待ち
+	DrawWaitButtonA();
+
 	// HWInfo関連の前準備
 	switch (HWI_Init( OS_AllocFromMain, OS_FreeToMain ))
 	{
@@ -171,6 +187,14 @@ TwlMain()
 	}
 	kamiFontLoadScreenData();
 
+	// 調査に不便なので一時的に削除
+/*
+	// 更新ログを残して再実行を防ぐ
+	if (result)
+	{
+		(void)FS_CreateFileAuto("nand:/sys/log/updater.log", FS_PERMIT_R | FS_PERMIT_W);
+	}
+*/
 	// 結果表示
 	while(1)
 	{
@@ -216,3 +240,76 @@ static void InitAllocation(void)
         OS_Panic("ARM9: Fail to create heap...\n");
     hh = OS_SetCurrentHeap(OS_ARENA_MAIN, hh);
 }
+
+/*---------------------------------------------------------------------------*
+  Name:         DrawWaitButtonA
+
+  Description:  Aボタン待ちを表示します
+
+  Arguments:   
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static void DrawWaitButtonA(void)
+{
+	kamiFontPrintfMain( 5,  3, 8, "--- System Updater ---");
+
+	kamiFontPrintfMain( 5,  8, 3, "<Push A: Start Update>");
+	kamiFontPrintfMain( 3, 10, 1, "--------------------------");
+	kamiFontPrintfMain( 3, 11, 1, "Do not turn off power");
+	kamiFontPrintfMain( 3, 12, 1, "while update is processing");
+	kamiFontPrintfMain( 3, 13, 1, "--------------------------");
+	kamiFontLoadScreenData();
+
+	while(1)
+	{
+		G3X_Reset();
+		G3_Identity();
+		G3_PolygonAttr(GX_LIGHTMASK_NONE, GX_POLYGONMODE_DECAL, GX_CULL_NONE, 0, 31, 0);
+
+		DrawQuad( 10,  50, 246, 120, GX_RGB(28, 28, 28));
+
+		G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
+
+		kamiPadRead();
+		if (kamiPadIsTrigger(PAD_BUTTON_A))
+		{
+			kamiFontClearMain();
+			break;
+		}
+	    OS_WaitVBlankIntr();
+	}
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         DrawAlready
+
+  Description:  Alreadyを表示します
+
+  Arguments:   
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static void DrawAlready(void)
+{
+	kamiFontPrintfMain( 8,  8, 3, "<Infomation>");
+	kamiFontPrintfMain( 3, 10, 1, "--------------------------");
+	kamiFontPrintfMain( 3, 11, 1, "This machine has already");
+	kamiFontPrintfMain( 3, 12, 1, "been updated.");
+	kamiFontPrintfMain( 3, 13, 1, "--------------------------");
+	kamiFontLoadScreenData();
+
+	while(1)
+	{
+		G3X_Reset();
+		G3_Identity();
+		G3_PolygonAttr(GX_LIGHTMASK_NONE, GX_POLYGONMODE_DECAL, GX_CULL_NONE, 0, 31, 0);
+
+		DrawQuad( 10,  50, 246, 120, GX_RGB(28, 28, 28));
+
+		G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
+
+	    OS_WaitVBlankIntr();
+	}
+}
+

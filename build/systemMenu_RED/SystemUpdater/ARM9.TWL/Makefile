@@ -47,7 +47,8 @@ SRCS		=	main.c \
 				hwi.c \
 				kami_pxi.c \
 				kami_write_nandfirm.c \
-				hw_info.c
+				hw_info.c \
+				keypad.c
 
 
 SRCS       +=   $(ROOT)/build/tests/debugger/fio/src/fs_archive_hostio.c
