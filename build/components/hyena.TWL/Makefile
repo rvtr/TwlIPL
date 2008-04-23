@@ -89,7 +89,8 @@ LINCLUDES		= 	$(ROOT)/build/libraries/spi/ARM7/include \
 					$(SYSMENU_ROOT)/build/libraries_sysmenu/sysmenu/common/include
 LLIBRARY_DIRS	+=	./
 LLIBRARIES		+= libwl_sp.TWL.LTD.a \
-				   libaes_sp.firm.LTD.a
+				   libaes_sp.firm.LTD.a \
+				   libsea_sp.TWL.LTD.a
 LDEPENDS_NEF	= $(TWL_LIBS) $(LLIBRARIES)
 
 do-build:	$(TARGETS)
