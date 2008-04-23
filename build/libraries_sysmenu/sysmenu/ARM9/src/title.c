@@ -553,7 +553,9 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 
         for (i = region_header; i < region_max; ++i)
         {
+#ifdef LOAD_APP_VIA_WRAM
 			BOOL result;
+#endif
             u32 len = MATH_ROUNDUP( length[i], SYSM_ALIGNMENT_LOAD_MODULE );// AES暗号化領域の関係で、ロードサイズは32バイトアライメントに補正
             
             if ( !isTwlApp && i >= region_arm9_twl ) continue;// nitroでは読み込まない領域

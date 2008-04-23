@@ -72,6 +72,11 @@ MAKELCF_FLAGS	+=	-DISDBG_LIBS_TWL='$(if $(ISDBG_LIBS_TWL),$(ISDBG_LIBS_TWL),libs
 					-DISDBG_LIBS_NITRO='libstubsisd_sp$(TWL_LIBSUFFIX).a'
 
 
+ifeq ($(LAUNCHER_DEBUG_MODE),TRUE)
+MACRO_FLAGS += -DLAUNCHER_DEBUG_MODE
+endif
+
+
 #--------------------------------
 #   install target
 #--------------------------------

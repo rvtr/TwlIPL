@@ -24,8 +24,8 @@ SUBDIRS					=	\
 
 
 # COMPILE SWITCH　※最終ROM作成時は、全てFALSEにセットする。
-OUTSIDE_UI				?=	FALSE
-BROADON_UI				?=	FALSE
+SYSM_OUTSIDE_UI			?=	FALSE
+SYSM_BROADON_UI			?=	FALSE
 
 
 # MAKEROM SWITCH ※最終ROM作成時は、TRUEにする
@@ -77,11 +77,11 @@ LLIBRARIES				=	libes$(TWL_LIBSUFFIX).a				\
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 
-ifeq ($(OUTSIDE_UI),TRUE)
+ifeq ($(SYSM_OUTSIDE_UI),TRUE)
 MACRO_FLAGS += -DOUTSIDE_UI
 endif
 
-ifeq ($(BROADON_UI),TRUE)
+ifeq ($(SYSM_BROADON_UI),TRUE)
 MACRO_FLAGS += -DBROADON_UI
 endif
 

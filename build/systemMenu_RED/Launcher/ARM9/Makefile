@@ -19,8 +19,8 @@
 # ※コンパイルスイッチの都合上、../../../libraries_sysmenu/sysmenu　は有効にしておく
 SUBDIRS					=	\
 							../../../libraries_sysmenu/sysmenu \
-#							../../../libraries_sysmenu/boot \
-#							../../../components/hyena.TWL
+							../../../libraries_sysmenu/boot \
+							../../../components/hyena.TWL
 #							../../../libraries_sysmenu/hotsw \
 #							../../../libraries_sysmenu/reloc_info \
 #							../../../libraries_sysmenu/mcu \
@@ -32,9 +32,10 @@ SUBDIRS					=	\
 ifneq ($(UPDATER_RELEASE),TRUE)
 
 # COMPILE SWITCH　※最終ROM作成時は、全てFALSEにセットする。SUBDIRのビルド時にも影響するようexportで環境変数設定する。
+export LAUNCHER_DEBUG_MODE		=	TRUE
 export DO_NOT_SHOW_LAUNCHER		=	FALSE
 export DISABLE_WDS_SCAN			=	TRUE
-export DISABLE_WLFIRM_LOAD		=	TRUE
+export DISABLE_WLFIRM_LOAD		=	FALSE
 export IGNORE_WLFIRM_SIGNCHECK	=	FALSE
 export DISABLE_SLEEP			=	TRUE
 
@@ -97,6 +98,9 @@ ADDRESS_DTCM			=	0x0e000000
 
 DEFAULT_COMP_ARM7		=	hyena
 
+#----------------------------------------------------------------------------
+# Append Flags
+
 MAKEROM_FLAGS			+=	-F \
 							-DTITLEID_LO='$(TITLEID_LO)' \
 							-DCARD_REGION='$(CARD_REGION)' \
@@ -134,6 +138,8 @@ MAKEROM_FLAGS += -DDS_HASH_TABLE_FILE=DSHashTable.bin
 else
 MAKEROM_FLAGS += -DDS_HASH_TABLE_DIR=data
 endif
+
+#----------------------------------------------------------------------------
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
