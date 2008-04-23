@@ -281,10 +281,10 @@ BOOL VerifyWlanfirmSignature(u8* buffer, u32 length)
 
     if (FALSE == SVC_DecryptSign( &rctx, signDigest, (const void*)pSign, (const void*)pPubkey ))
     {
-        OS_TPrintf("[Wlan Firm]  Wlan Firmware authentication has failed.\n");
+        OS_TPrintf("[Wlan Firm]  !!!! Wlan Firmware authentication has failed !!!!\n");
 
 #ifdef IGNORE_WLFIRM_SIGNCHECK
-        OS_TPrintf("[Wlan Firm]  But installation continues.\n");
+        OS_TPrintf("[Wlan Firm]  But this failure is ignored.\n");
         if ( 0 )
 #endif
         {
@@ -300,14 +300,14 @@ BOOL VerifyWlanfirmSignature(u8* buffer, u32 length)
     PrintDigest((u8*)signDigest);
 #endif
     
-    /*
-      skip comparing SHA1 digests in the case of bonding option = 0x01 (support ARM9/ARM7)
-      this restriction is for debugging TWL wireless firmware.
-     */
-    if (!( HWi_WSYS08_OP_OP0_MASK == SCFG_ReadBondingOption() ))
+    /* verify digest */
+    if (FALSE == SVC_CompareSHA1( (const void*)txtDigest, (const void*)signDigest ))
     {
-        /* verify digest */
-        if (FALSE == SVC_CompareSHA1( (const void*)txtDigest, (const void*)signDigest ))
+        OS_TPrintf("[Wlan Firm]  !!!! Digest verification failed !!!!\n");
+#ifdef IGNORE_WLFIRM_SIGNCHECK
+        OS_TPrintf("[Wlan Firm]  But this failure is ignored.\n");
+        if ( 0 )
+#endif
         {
             return FALSE;
         }
@@ -399,6 +399,7 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 #endif
         
         // HotStart
+        OS_TPrintf("[Wlan Firm]  Start InstallFirmware (HOT START)\n");
         NWMi_InitForLauncher(pNwmBuf, NWM_SYSTEM_BUF_SIZE, 3); /* 3 -> DMA no. */
         err = NWMi_InstallFirmware(InstallFirmCallback, NULL, 0, FALSE);
     } else {    // COLD START
@@ -473,6 +474,7 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
             OS_TPrintf("[Wlan Firm]  Error: Hash data is illegal.\n");
             goto instfirm_error;
         }
+        OS_TPrintf("[Wlan Firm]  CheckHash ok.\n");
 
         pNwmBuf = SYSM_Alloc( NWM_SYSTEM_BUF_SIZE );
         if (!pNwmBuf) {
@@ -487,6 +489,7 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
         startTick = OS_GetTick();
 #endif
 
+        OS_TPrintf("[Wlan Firm]  Start InstallFirmware (COLD START)\n");
         err = NWMi_InstallFirmware(InstallFirmCallback, pFwBuffer, (u32)flen, TRUE);
     }
     
