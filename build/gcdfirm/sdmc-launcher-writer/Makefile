@@ -52,6 +52,8 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 do-build:	$(TARGET_BIN)
 
+$(TARGET_BIN):	$(NANDFIRM_BIN)
+
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 #===== End of Makefile =====
