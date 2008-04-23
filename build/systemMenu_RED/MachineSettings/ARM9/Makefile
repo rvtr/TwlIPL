@@ -22,6 +22,12 @@ SUBDIRS					=	\
 
 #----------------------------------------------------------------------------
 
+
+# COMPILE SWITCH　※最終ROM作成時は、全てFALSEにセットする。
+OUTSIDE_UI				?=	FALSE
+BROADON_UI				?=	FALSE
+
+
 # MAKEROM SWITCH ※最終ROM作成時は、TRUEにする
 DISABLE_DEBUG			?=	FALSE
 
@@ -69,6 +75,16 @@ LLIBRARIES				=	libes$(TWL_LIBSUFFIX).a				\
 							libnamut$(TWL_LIBSUFFIX).a
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+
+
+ifeq ($(OUTSIDE_UI),TRUE)
+MACRO_FLAGS += -DOUTSIDE_UI
+endif
+
+ifeq ($(BROADON_UI),TRUE)
+MACRO_FLAGS += -DBROADON_UI
+endif
+
 
 MAKEROM_ARM7_BASE		=	$(TWL_COMPONENTSDIR)/armadillo/$(TWL_BUILDTYPE_ARM7)/armadillo
 MAKEROM_ARM7			=	$(MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)

@@ -125,11 +125,11 @@
 #define MS_PARENTAL_NUMOF_PAGES             3
 
 // 項目の総数
-#ifdef BROADON_ENABLE
+#ifdef BROADON_UI
 #define MS_PARENTAL_NUMOF_ELEMENTS          10
-#else   // BROADON_ENABLE
+#else   // BROADON_UI
 #define MS_PARENTAL_NUMOF_ELEMENTS          7
-#endif  // BROADON_ENABLE
+#endif  // BROADON_UI
 
 // ソフトウェアキーボードのパラメータ
 #define CHAR_LIST_CHAR_NUM                  120
@@ -328,7 +328,7 @@ static const u16 *const s_pStrSettingElemTbl[ MS_PARENTAL_NUMOF_ELEMENTS ][ LCFG
     },
     
     // ページ3
-#ifdef BROADON_ENABLE
+#ifdef BROADON_UI
     {
         (const u16 *)L"Wiiポイント",
         (const u16 *)L"Wii Point",
@@ -369,7 +369,7 @@ static const u16 *const s_pStrSettingElemTbl[ MS_PARENTAL_NUMOF_ELEMENTS ][ LCFG
         (const u16 *)L"Nintendo Spot(C)",
         (const u16 *)L"Nintendo Spot(K)",
     },
-#else  // BROADON_ENABLE
+#else  // BROADON_UI
     {
         (const u16 *)L"その他の設定(仮)",
         (const u16 *)L"OTHER SETTINGS(None)",
@@ -380,7 +380,7 @@ static const u16 *const s_pStrSettingElemTbl[ MS_PARENTAL_NUMOF_ELEMENTS ][ LCFG
         (const u16 *)L"OTHER SETTINGS(None)(C)",
         (const u16 *)L"OTHER SETTINGS(None)(K)",
     },
-#endif // BROADON_ENABLE
+#endif // BROADON_UI
 };
 
 // 表示位置
@@ -398,14 +398,14 @@ static MenuPos s_settingPos[] = {
     { TRUE,  3 * 8,  10 * 8 },
 
     // ページ3
-#ifdef BROADON_ENABLE
+#ifdef BROADON_UI
     { TRUE,  2 * 8,   6 * 8 },
     { TRUE,  2 * 8,   8 * 8 },
     { TRUE,  2 * 8,  10 * 8 },
     { TRUE,  2 * 8,  12 * 8 },
-#else  // BROADON_ENABLE
+#else  // BROADON_UI
     { FALSE,  4 * 8,   6 * 8 },
-#endif // BROADON_ENABLE
+#endif // BROADON_UI
 };
 
 // 各ページの表示項目数
@@ -413,11 +413,11 @@ static const int sNumOfPageElements[] =
 {
     3,
     3,
-#ifdef BROADON_ENABLE
+#ifdef BROADON_UI
     4,
-#else  // BROADON_ENABLE
+#else  // BROADON_UI
     1,
-#endif // BROADON_ENABLE
+#endif // BROADON_UI
 };
 
 // 表示パラメータ
@@ -954,7 +954,7 @@ static void DrawParentalControlMenuScene( void )
         break;
         
         case 2:
-#ifdef BROADON_ENABLE
+#ifdef BROADON_UI
             PutStringUTF16( 17*8, 6*8, TXT_UCOLOR_G0, 
                             LCFG_TSD_IsRestrictWiiPoint() ? L"Restricted" : L"Not Restricted" );
             PutStringUTF16( 17*8, 8*8, TXT_UCOLOR_G0, 
@@ -963,7 +963,7 @@ static void DrawParentalControlMenuScene( void )
                             LCFG_TSD_IsRestrictPictoChatBoot() ? L"Restricted" : L"Not Restricted" );
             PutStringUTF16( 17*8, 12*8, TXT_UCOLOR_G0, 
                             LCFG_TSD_IsRestrictNintendoSpot() ? L"Restricted" : L"Not Restricted" );
-#endif // BROADON_ENABLE
+#endif // BROADON_UI
         break;
     }
 }
@@ -1108,7 +1108,7 @@ int SetParentalControlMain( void )
                 case 2:
                     switch( sCursorMenu )
                     {
-#ifdef BROADON_ENABLE
+#ifdef BROADON_UI
                         case 0:
                             sBroadOnMenu = MS_BROADON_WIIPOINT;   // すべてON/OFF設定なので設定関数を共通化してフラグで設定項目切り替え
                             SetBroadOnSettingInit();
@@ -1129,10 +1129,10 @@ int SetParentalControlMain( void )
                             SetBroadOnSettingInit();
                             g_pNowProcess = SetBroadOnSettingMain;
                         break;
-#else   // BROADON_ENABLE
+#else   // BROADON_UI
                         case 0:
                         break;
-#endif  // BROADON_ENABLE
+#endif  // BROADON_UI
                     }
                 break;
 

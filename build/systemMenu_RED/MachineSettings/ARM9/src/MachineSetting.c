@@ -32,11 +32,19 @@
 #define OK_BUTTON_BOTTOM_X					( OK_BUTTON_TOP_X + 2 * 8 )
 #define OK_BUTTON_BOTTOM_Y					( OK_BUTTON_TOP_Y + 2 * 8 )
 
-#ifdef BROADON_ENABLE
-#define SETTING_MENU_ELEMENT_NUM			9						// メインメニューの項目数（※ピクトチャット起動テストは除いておく）
-#else
-#define SETTING_MENU_ELEMENT_NUM			8
-#endif
+// メインメニューの項目数（※ピクトチャット起動テストは除いておく）
+#ifdef OUTSIDE_UI
+#define SETTING_MENU_ELEMENT_NUM			5						// 社外用
+#else  // !OUTSIDE_UI
+
+#ifdef BROADON_UI
+#define SETTING_MENU_ELEMENT_NUM			9						// BroadON用
+#else  // !BROADON_UI
+#define SETTING_MENU_ELEMENT_NUM			8						// 社内用
+#endif // BROADON_UI
+
+#endif // OUTSIDE_UI
+
 // extern data------------------------------------------
 
 extern u32 bg_char_data[8 * 6];
@@ -98,6 +106,27 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ LCFG_T
 		(const u16 *)L"TOUCH PANEL(K)",
 	},
 	{
+		(const u16 *)L"無線設定",
+		(const u16 *)L"WIRELESS",
+		(const u16 *)L"WIRELESS(F)",
+		(const u16 *)L"WIRELESS(G)",
+		(const u16 *)L"WIRELESS(I)",
+		(const u16 *)L"WIRELESS(S)",
+		(const u16 *)L"WIRELESS(C)",
+		(const u16 *)L"WIRELESS(K)",
+	},
+#ifndef OUTSIDE_UI
+	{
+		(const u16 *)L"本体のクリーンアップ",
+		(const u16 *)L"MACHINE CLEAN UP",
+		(const u16 *)L"MACHINE CLEAN UP(F)",
+		(const u16 *)L"MACHINE CLEAN UP(G)",
+		(const u16 *)L"MACHINE CLEAN UP(I)",
+		(const u16 *)L"MACHINE CLEAN UP(S)",
+		(const u16 *)L"MACHINE CLEAN UP(C)",
+		(const u16 *)L"MACHINE CLEAN UP(K)",
+	},
+	{
 		(const u16 *)L"国設定",
 		(const u16 *)L"COUNTRY",
 		(const u16 *)L"COUNTRY(F)",
@@ -117,27 +146,7 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ LCFG_T
 		(const u16 *)L"PARENTAL CONTROL(C)",
 		(const u16 *)L"PARENTAL CONTROL(K)",
 	},
-	{
-		(const u16 *)L"無線設定",
-		(const u16 *)L"WIRELESS",
-		(const u16 *)L"WIRELESS(F)",
-		(const u16 *)L"WIRELESS(G)",
-		(const u16 *)L"WIRELESS(I)",
-		(const u16 *)L"WIRELESS(S)",
-		(const u16 *)L"WIRELESS(C)",
-		(const u16 *)L"WIRELESS(K)",
-	},
-	{
-		(const u16 *)L"本体のクリーンアップ",
-		(const u16 *)L"MACHINE CLEAN UP",
-		(const u16 *)L"MACHINE CLEAN UP(F)",
-		(const u16 *)L"MACHINE CLEAN UP(G)",
-		(const u16 *)L"MACHINE CLEAN UP(I)",
-		(const u16 *)L"MACHINE CLEAN UP(S)",
-		(const u16 *)L"MACHINE CLEAN UP(C)",
-		(const u16 *)L"MACHINE CLEAN UP(K)",
-	},
-#ifdef BROADON_ENABLE
+#ifdef BROADON_UI
 	{
 		(const u16 *)L"フリーソフトBOX",
 		(const u16 *)L"FREESOFT BOX",
@@ -148,7 +157,8 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ LCFG_T
 		(const u16 *)L"FREESOFT BOX(C)",
 		(const u16 *)L"FREESOFT BOX(K)",
 	},
-#endif
+#endif // BROADON_UI
+#endif // OUTSIE_UI
 #if 0
 	{
 		(const u16 *)L"ピクトチャット起動テスト",
@@ -268,21 +278,21 @@ int MachineSettingMain( void )
 					TP_CalibrationInit();
 					g_pNowProcess = TP_CalibrationMain;
 					break;
-				case 4:
-					SelectCountryInit();
-					g_pNowProcess = SelectCountryMain;
-					break;
-                case 5:
-                    SetParentalControlInit();
-                    g_pNowProcess = SetParentalControlMain;
-                    break;
-                case 6:
+                case 4:
                     SetWirelessInit();
                     g_pNowProcess = SetWirelessMain;
                     break;
-                case 7:
+                case 5:
                     CleanupMachineInit();
                     g_pNowProcess = CleanupMachineMain;
+                    break;
+				case 6:
+					SelectCountryInit();
+					g_pNowProcess = SelectCountryMain;
+					break;
+                case 7:
+                    SetParentalControlInit();
+                    g_pNowProcess = SetParentalControlMain;
                     break;
                 case 8:
                     SetFreeSoftBoxInit();
