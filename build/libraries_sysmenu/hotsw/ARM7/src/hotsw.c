@@ -174,7 +174,7 @@ static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg)
     HotSwState retval;
     if ( offset % 512 )
     {
-        u8 page_buffer[512];
+        static u8 page_buffer[512];
         u32 page_offset = (u32)(offset & -512);
         u32 buffer_offset = (u32)(offset % 512);
         u32 valid_length = 512 - buffer_offset;
