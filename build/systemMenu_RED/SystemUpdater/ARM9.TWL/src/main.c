@@ -39,7 +39,7 @@ static const char* ImportTadFileList[] =
 	"rom:/data/HNCA.tad"
 };
 
-static const char* NandFirmPath = "rom:/data/menu_launcher-RELEASE.nand";
+static const char* NandFirmPath = "rom:/data/menu_launcher.nand";
 
 /*---------------------------------------------------------------------------*
     “à•”•Ï”’è‹`

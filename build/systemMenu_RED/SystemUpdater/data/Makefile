@@ -31,7 +31,7 @@ MAKETAD			= $(SYSMENU_TOOLSDIR)/bin/maketad.updater.exe
 LDIRT_CLEAN		=	HNAA.tad \
 					HNBA.tad \
 					HNCA.tad \
-					menu_launcher-RELEASE.nand
+					menu_launcher-$(TWL_BUILD_DIR).nand
 
 #----------------------------------------------------------------------------
 
@@ -40,7 +40,7 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 do-build :	HNAA.tad \
 			HNBA.tad \
 			HNCA.tad \
-			menu_launcher-RELEASE.nand
+			menu_launcher.nand
 			
 HNAA.tad: ../../Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/main.srl
 	$(MAKETAD) -s $< $(MAKETAD_FLAGS) -o $@
@@ -51,7 +51,7 @@ HNBA.tad: ../../MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/main.srl
 HNCA.tad: ../../wlanfirm/HNCA.srl
 	$(MAKETAD) -s $< $(MAKETAD_FLAGS) -o $@
 
-menu_launcher-RELEASE.nand: ../../../nandfirm/menu-launcher/menu_launcher-RELEASE.nand
-	cp $< .
+menu_launcher.nand: ../../../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_DIR).nand
+	cp $< ./$@
 
 #===== End of Makefile =====
