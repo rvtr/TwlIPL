@@ -21,6 +21,8 @@
 #USE_PRODUCT_KEY			=	TRUE
 #============================================================================
 
+DISABLE_DEBUG	?=	TRUE
+
 TARGET_FIRM		= SYSTEMMENU
 TARGET_PLATFORM	= TWL
 TWL_ARCHGEN    	= LIMITED
@@ -44,7 +46,9 @@ SRCS		=	main.c \
 				import.c \
 				hwi.c \
 				kami_pxi.c \
-				kami_write_nandfirm.c
+				kami_write_nandfirm.c \
+				hw_info.c
+
 
 SRCS       +=   $(ROOT)/build/tests/debugger/fio/src/fs_archive_hostio.c
 

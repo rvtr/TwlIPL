@@ -226,4 +226,7 @@ RomSpec
 	HostRoot	$(PRIVKEY_PATH)
 	Root		/key
 	File		$(HWINFO_PRIVKEY)
+	HostRoot	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/NandInitializerRed/data
+	Root		/data
+	File		camera_volatile_info.bin
 }

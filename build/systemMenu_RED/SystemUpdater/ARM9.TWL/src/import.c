@@ -24,6 +24,7 @@
 #include <sysmenu/namut.h>
 #include "kami_font.h"
 #include "import.h"
+#include "hw_info.h"
 #include "TWLHWInfo_api.h"
 #include "graphics.h"
 
@@ -53,7 +54,6 @@ static u8  sStack[THREAD_STACK_SIZE];
 static void ProgressThread(void* arg);
 static void Destructor(void* arg);
 void ProgressDraw(f32 ratio);
-static void UpdateNandBoxCount( void );
 
 /*---------------------------------------------------------------------------*
     処理関数定義
@@ -111,6 +111,9 @@ s32 kamiImportTad(int no, int total, const char* path)
 
 	// 進捗スレッドの自力終了を待つ
 	while (sProgress){};
+
+	// InstalledSoftBoxCount, FreeSoftBoxCount の値を現在のNANDの状態に合わせて更新します。
+	UpdateNandBoxCount();
 
 	return nam_result;
 }
@@ -227,39 +230,5 @@ void DrawResult(BOOL result)
 
 	// 3Dスワップ
 	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         UpdateNandBoxCount
-
-  Description:  InstalledSoftBoxCount, FreeSoftBoxCount の値を
-				現在のNANDの状態に合わせて更新します。
-
-  Arguments:    None.
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-
-static void UpdateNandBoxCount( void )
-{
-	u32 installedSoftBoxCount;
-	u32 freeSoftBoxCount;
-
-	// InstalledSoftBoxCount, FreeSoftBoxCount を数えなおす
-	installedSoftBoxCount = NAMUT_SearchInstalledSoftBoxCount();
-	freeSoftBoxCount = LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX - installedSoftBoxCount;
-
-	// LCFGライブラリの静的変数に対する更新
-    LCFG_TSD_SetInstalledSoftBoxCount( (u8)installedSoftBoxCount );	
-    LCFG_TSD_SetFreeSoftBoxCount( (u8)freeSoftBoxCount );
-
-	// LCFGライブラリの静的変数の値をNANDに反映
-    {
-        u8 *pBuffer = OS_Alloc( LCFG_WRITE_TEMP );
-        if( pBuffer ) {
-            (void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
-            OS_Free( pBuffer );
-        }
-    }
 }
 

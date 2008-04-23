@@ -24,6 +24,7 @@
 #include "kami_font.h"
 #include "kami_write_nandfirm.h"
 #include "import.h"
+#include "hw_info.h"
 #include "graphics.h"
 #include "hwi.h"
 
@@ -118,7 +119,6 @@ TwlMain()
     }
 
 	// HWInfo関連の前準備
-	// InstalledSoftBoxCount, FreeSoftBoxCount の更新のために必要
 	switch (HWI_Init( OS_AllocFromMain, OS_FreeToMain ))
 	{
 	case HWI_INIT_FAILURE:
@@ -132,8 +132,16 @@ TwlMain()
 		break;
 	}
 
-	// TADのインポート開始
 	result = TRUE;
+
+	// 全ハードウェア情報の更新
+	if (WriteHWInfoFile(OS_GetRegion(), OS_IsForceDisableWireless()) == FALSE)
+	{
+		result = FALSE;
+		kamiFontPrintfConsole(CONSOLE_RED, "Hardware Update Failure!\n");		
+	}
+
+	// TADのインポート開始
 	tadNum = sizeof(ImportTadFileList)/sizeof(ImportTadFileList[0]);
 
 	for (i=0; i<tadNum; i++)

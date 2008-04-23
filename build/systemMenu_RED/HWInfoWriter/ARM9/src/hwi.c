@@ -170,7 +170,7 @@ HwiInitResult ReadPrivateKey( void )
         spFree( s_pPrivKeyBuffer );
         s_pPrivKeyBuffer = NULL;
     }
-    OS_TPrintf( "PrivKey read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+//  OS_TPrintf( "PrivKey read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 
     if (result) {
 #ifdef USE_PRODUCT_KEY
@@ -196,7 +196,7 @@ static void ReadHWInfoFile( void )
         OS_TPrintf( "HW Normal Info read failed.\n" );
     }
 
-    OS_TPrintf( "HW Normal Info read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+//  OS_TPrintf( "HW Normal Info read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 
     start = OS_GetTick();
     retval = LCFGi_THW_ReadSecureInfo();
@@ -205,7 +205,7 @@ static void ReadHWInfoFile( void )
     }else {
         OS_TPrintf( "HW Secure Info read failed.\n" );
     }
-    OS_TPrintf( "HW Secure Info read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+//  OS_TPrintf( "HW Secure Info read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 }
 
 // HWInfoファイルのベリファイ
