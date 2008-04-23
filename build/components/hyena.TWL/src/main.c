@@ -182,8 +182,8 @@ TwlSpMain(void)
 #ifndef SDK_NOCRYPTO
         AES_Init();           // AES èâä˙âª
 		
-		SYSMi_SetAESKeysForAccessControlCore( (ROM_Header *)HW_TWL_ROM_HEADER_BUF, (u8 *)SDK_SEA_KEY_STORE, NULL, NULL );
-		
+		//SYSMi_SetAESKeysForAccessControlCore( (ROM_Header *)HW_TWL_ROM_HEADER_BUF, (u8 *)SDK_SEA_KEY_STORE, NULL, NULL );
+		MI_CpuCopyFast( (void *)0x0380f000, (u8 *)SDK_SEA_KEY_STORE, 0x40 );
 #ifdef SDK_SEA
         SEA_Init();
 #endif  // ifdef SDK_SEA
