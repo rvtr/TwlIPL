@@ -33,6 +33,9 @@
     内部定数定義
  *---------------------------------------------------------------------------*/
 
+// リトライ回数
+#define MAX_RETRY_COUNT   10
+
 static const char* ImportTadFileList[] =
 {
 	"rom:/data/HNAA.tad",
@@ -70,8 +73,10 @@ void
 TwlMain()
 {
 	BOOL result;
+	BOOL hw_info_result;
+	BOOL nand_firm_result;
 	int tadNum;
-	int i;
+	int i,j;
 
     OS_Init();
     OS_InitArena();
@@ -91,8 +96,6 @@ TwlMain()
     TP_Init();
     RTC_Init();
 
-	InitAllocation();
-
     KamiPxiInit();   /* 独自PXI初期化 */
 
     // Vブランク割り込み設定
@@ -104,6 +107,8 @@ TwlMain()
 
     // initialize file-system
 	FS_Init(FS_DMA_NOT_USE);
+
+	InitAllocation();
 
 	// NAMライブラリ初期化
 	NAM_Init( OS_AllocFromMain, OS_FreeToMain);
@@ -151,10 +156,23 @@ TwlMain()
 	result = TRUE;
 
 	// 全ハードウェア情報の更新
-	if (WriteHWInfoFile(OS_GetRegion(), OS_IsForceDisableWireless()) == FALSE)
+	for (i=0;i<MAX_RETRY_COUNT;i++)
+	{
+		hw_info_result = WriteHWInfoFile(OS_GetRegion(), OS_IsForceDisableWireless());
+		if (hw_info_result)
+		{
+			kamiFontPrintf( 0, (s16)0, FONT_COLOR_GREEN, "Write Hardware Info Success.");			
+			break;
+		}
+		else
+		{
+			kamiFontPrintfConsole(CONSOLE_RED, "Write Hardware Info Retry!\n");
+		}
+	}
+	if ( hw_info_result == FALSE)
 	{
 		result = FALSE;
-		kamiFontPrintfConsole(CONSOLE_RED, "Hardware Update Failure!\n");		
+		kamiFontPrintf( 0, (s16)0, FONT_COLOR_RED, "Write Hardware Info Failure!");			
 	}
 
 	// TADのインポート開始
@@ -162,30 +180,52 @@ TwlMain()
 
 	for (i=0; i<tadNum; i++)
 	{
-		s32  nam_result = kamiImportTad(i+1, tadNum, ImportTadFileList[i]);
+		s32  nam_result;
+	
+		// MAX_RETRY_COUNTまでリトライする
+		for (j=0; j<MAX_RETRY_COUNT; j++)
+		{	
+			nam_result = kamiImportTad(i+1, tadNum, ImportTadFileList[i]);
+			if (nam_result == NAM_OK)
+			{
+				break;
+			}
+			else
+			{
+				kamiFontPrintfConsole(CONSOLE_RED, "Import %d Retry!\n", i+1);
+			}
+		}
 
 		if ( nam_result == NAM_OK)
 		{
-			kamiFontPrintf( 0, (s16)i, FONT_COLOR_GREEN, "List : %d Update Success.", i+1 );			
+			kamiFontPrintf( 0, (s16)(i+1), FONT_COLOR_GREEN, "List : %d Update Success.", i+1 );			
 		}
 		else
 		{
-			kamiFontPrintf( 0, (s16)i, FONT_COLOR_RED, "Error: %d : RetCode = %d", i+1, nam_result );
+			kamiFontPrintf( 0, (s16)(i+1), FONT_COLOR_RED, "Error: %d : RetCode = %d", i+1, nam_result );
 			result = FALSE;
 		}
 	}
 
 	// NANDファームのインストール開始
-	if( kamiWriteNandfirm(NandFirmPath, OS_AllocFromMain, OS_FreeToMain))
+	for (j=0;j<MAX_RETRY_COUNT;j++)
 	{
-			kamiFontPrintf( 0, (s16)i, FONT_COLOR_GREEN, "Firm Update Success.");			
+		nand_firm_result = kamiWriteNandfirm(NandFirmPath, OS_AllocFromMain, OS_FreeToMain);
+		if (nand_firm_result)
+		{
+			kamiFontPrintf( 0, (s16)(i+1), FONT_COLOR_GREEN, "Firm Update Success.");			
+			break;
+		}
+		else
+		{
+			kamiFontPrintfConsole(CONSOLE_RED, "Write Firm Retry!\n");
+		}
 	}
-	else
+	if ( nand_firm_result == FALSE)
 	{
-		kamiFontPrintf( 0, (s16)i, FONT_COLOR_RED, "Firm Update Failure!");
 		result = FALSE;
+		kamiFontPrintf( 0, (s16)(i+1), FONT_COLOR_RED, "Firm Update Failure!");
 	}
-	kamiFontLoadScreenData();
 
 	// 調査に不便なので一時的に削除
 /*
@@ -215,6 +255,7 @@ TwlMain()
 static void 
 VBlankIntr(void)
 {
+	kamiFontLoadScreenData();
     OS_SetIrqCheckFlag(OS_IE_V_BLANK); // checking VBlank interrupt
 }
 
@@ -259,7 +300,6 @@ static void DrawWaitButtonA(void)
 	kamiFontPrintfMain( 3, 11, 1, "Do not turn off power");
 	kamiFontPrintfMain( 3, 12, 1, "while update is processing");
 	kamiFontPrintfMain( 3, 13, 1, "--------------------------");
-	kamiFontLoadScreenData();
 
 	while(1)
 	{
@@ -279,6 +319,10 @@ static void DrawWaitButtonA(void)
 		}
 	    OS_WaitVBlankIntr();
 	}
+
+	G3X_Reset();
+	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
+	OS_WaitVBlankIntr();
 }
 
 /*---------------------------------------------------------------------------*
@@ -297,7 +341,6 @@ static void DrawAlready(void)
 	kamiFontPrintfMain( 3, 11, 1, "This machine has already");
 	kamiFontPrintfMain( 3, 12, 1, "been updated.");
 	kamiFontPrintfMain( 3, 13, 1, "--------------------------");
-	kamiFontLoadScreenData();
 
 	while(1)
 	{
@@ -312,4 +355,3 @@ static void DrawAlready(void)
 	    OS_WaitVBlankIntr();
 	}
 }
-
