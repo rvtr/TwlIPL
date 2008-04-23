@@ -20,6 +20,7 @@
 #include <twl/fatfs.h>
 #include <nitro/card.h>
 #include <twl/nam.h>
+#include <twl/os/common/format_rom.h>
 #include "kami_font.h"
 #include "import.h"
 #include "graphics.h"
@@ -57,8 +58,10 @@ TwlMain()
 	{
 		// SRLの後方に配置したTADファイルにアクセス可能にするために
 		// カードアクセスのハッシュチェックを無効化する
-	    const CARDRomHeaderTWL *header = (const CARDRomHeaderTWL *)HW_TWL_ROM_HEADER_BUF;
-        *(u32 *)header->digest_tabel2_digest = 0x00000000;
+        ROM_Header_Short *th = (ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
+        ROM_Header_Short *dh = (ROM_Header_Short *)HW_ROM_HEADER_BUF;
+        th->enable_signature = FALSE;
+        dh->enable_signature = FALSE;
 		// デバッガ情報を読み取るため拡張メモリを有効にする
 		OS_EnableMainExArena();
 	}
