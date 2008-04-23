@@ -75,8 +75,6 @@ TwlMain()
     TP_Init();
     RTC_Init();
 
-	InitAllocation();
-
 #ifndef NAND_INITIALIZER_LIMITED_MODE
     KamiPxiInit();   /* 独自PXI初期化 */
 #endif
@@ -92,6 +90,9 @@ TwlMain()
 	FS_Init(FS_DMA_NOT_USE);
 	// SDカードの挿抜イベント監視コールバック設定
 //  FS_RegisterEventHook("sdmc", &sSDHook, SDEvents, NULL);
+
+	// FS_Initの後の方が良い模様
+	InitAllocation();
 
 	// NAMライブラリ初期化
 	NAM_Init( OS_AllocFromMain, OS_FreeToMain);
