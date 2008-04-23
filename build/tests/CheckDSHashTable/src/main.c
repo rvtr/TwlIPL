@@ -53,7 +53,7 @@ static u8 rom_arm7[1024*1024] ATTRIBUTE_ALIGN(32);
     デバイスアクセスAPI
 */
 #if 1
-// FS版 (fctx == FSFile*)
+// FS版 (arg == FSFile*)
 static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg)
 {
     FSFile* fp = arg;
@@ -74,7 +74,7 @@ static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg)
 #else
 #ifdef SDK_ARM9
 #define PAGE_SIZE 512
-// CARD版 (fctx == dma no)
+// CARD版 (arg == dma no)
 static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg)
 {
     u32 dma = (u32)arg;
@@ -82,12 +82,33 @@ static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg)
     return TRUE;
 }
 #else
-// HOTSW版 (fctx == CardBootData* cdb)
+// HOTSW版 (arg == CardBootData* cdb)
 #include    <hotswTypes.h>
 #include    <dsCardCommon.h>
 static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg)
 {
-    HotSwState retval = ReadPageGame((CardBootData*)arg, (u32)offset, dest, (u32)length);
+    HotSwState retval;
+    if ( offset % 512 )
+    {
+        static u8 page_buffer[512];
+        u32 page_offset = (u32)(offset & -512);
+        u32 buffer_offset = (u32)(offset % 512);
+        u32 valid_length = 512 - buffer_offset;
+        retval = ReadPageGame((CardBootData*)arg, page_offset, page_buffer, 512);
+        if (retval != HOTSW_SUCCESS)
+        {
+            return FALSE;
+        }
+        MI_CpuCopy8(page_buffer + buffer_offset, dest, (length < valid_length ? length : valid_length));
+        dest = (u8*)dest + valid_length;
+        offset += valid_length;
+        length -= valid_length;
+        if ( length < 0)
+        {
+            return TRUE;
+        }
+    }
+    retval = ReadPageGame((CardBootData*)arg, (u32)offset, dest, (u32)length);
     return (retval == HOTSW_SUCCESS);
 }
 #endif
