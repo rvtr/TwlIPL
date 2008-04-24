@@ -12,8 +12,8 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
@@ -24,8 +24,8 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 SUBDIRS =	\
             tools \
             libraries \
-			nandfirm \
 			libraries_sysmenu\
+			nandfirm \
 			components \
 			systemmenu_RED \
 			gcdfirm \
