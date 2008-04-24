@@ -47,7 +47,7 @@ HNBA.tad: ../../MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/main.srl
 HNCA.tad: ../../wlanfirm/HNCA.srl
 	$(MAKETAD) -s $< $(MAKETAD_FLAGS) -o $@
 
-menu_launcher.nand: ../../../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_DIR).nand
+menu_launcher.nand: ../../../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nand
 	cp $< ./$@
 
 #===== End of Makefile =====
