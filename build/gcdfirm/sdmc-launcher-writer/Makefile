@@ -44,6 +44,8 @@ MAKEFIRM_DEFS		+= 	-DNANDFIRM_BIN=$(NANDFIRM_BIN)
 LDIRT_CLEAN		+=	$(wildcard *.gcd) \
 				rsa_public.sbin \
 
+LDEPENDS_BIN		+=	$(NANDFIRM_BIN)
+
 endif
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
@@ -52,7 +54,8 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 do-build:	$(TARGET_BIN)
 
-$(TARGET_BIN):	$(NANDFIRM_BIN)
+$(NANDFIRM_BIN):
+	$(REMAKE) -C $(dir $(NANDFIRM_BIN))
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
