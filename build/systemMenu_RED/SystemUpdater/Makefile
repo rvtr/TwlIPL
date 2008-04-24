@@ -31,6 +31,7 @@ SUBDIRS =	$(LAUNCHER_DIR) \
 			$(WLANFIRM_DIR) \
 			$(NANDFIRM_DIR) \
 			data \
+			banner \
 			ARM7.TWL \
 			ARM9.TWL
 
