@@ -155,18 +155,26 @@ const u8 *const g_strWeek[] ATTRIBUTE_ALIGN(2) = {
 // アロケータの初期化
 void InitAllocator( void )
 {
-	NNSFndAllocator	*pAllocator = &g_allocator;
-    u32   arenaLow      = MATH_ROUNDUP  ( (u32)OS_GetMainArenaLo(), 16 );
-    u32   arenaHigh     = MATH_ROUNDDOWN( (u32)OS_GetMainArenaHi(), 16 );
-    u32   heapSize      = arenaHigh - arenaLow;
-    void* heapMemory    = OS_AllocFromMainArenaLo( heapSize, 16 );
-    NNSFndHeapHandle    heapHandle;
-    SDK_NULL_ASSERT( pAllocator );
-    
-    heapHandle = NNS_FndCreateExpHeap( heapMemory, heapSize );
-    SDK_ASSERT( heapHandle != NNS_FND_HEAP_INVALID_HANDLE );
+	// ※暫定対策　FS_Init内でハッシュチェック用のヒープを確保しているため、
+	//             ユーザーヒープの確保前にFS_Initを行う必要がある。
 	
-    NNS_FndInitAllocatorForExpHeap( pAllocator, heapHandle, 32 );
+    // ファイルシステム初期化
+    FS_Init( FS_DMA_NOT_USE );
+	
+	{
+		NNSFndAllocator	*pAllocator = &g_allocator;
+	    u32   arenaLow      = MATH_ROUNDUP  ( (u32)OS_GetMainArenaLo(), 16 );
+	    u32   arenaHigh     = MATH_ROUNDDOWN( (u32)OS_GetMainArenaHi(), 16 );
+	    u32   heapSize      = arenaHigh - arenaLow;
+	    void* heapMemory    = OS_AllocFromMainArenaLo( heapSize, 16 );
+	    NNSFndHeapHandle    heapHandle;
+	    SDK_NULL_ASSERT( pAllocator );
+	    
+	    heapHandle = NNS_FndCreateExpHeap( heapMemory, heapSize );
+	    SDK_ASSERT( heapHandle != NNS_FND_HEAP_INVALID_HANDLE );
+		
+	    NNS_FndInitAllocatorForExpHeap( pAllocator, heapHandle, 32 );
+	}
 }
 
 

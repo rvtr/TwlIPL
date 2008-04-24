@@ -39,9 +39,6 @@ void CMN_InitFileSystem( NNSFndAllocator* pAllocator )
     // ARM7との通信FIFO割り込み許可
     (void)OS_EnableIrqMask(OS_IE_SPFIFO_RECV);
 
-    // ファイルシステム初期化
-    FS_Init( FS_DMA_NOT_USE );
-
     // ファイルテーブルキャッシュ
     if( pAllocator != NULL )
     {
