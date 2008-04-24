@@ -309,7 +309,7 @@ void SYSMi_SetBootSRLPathToWork2( TitleProperty *pBootTitle )
 		}
 		break;
 	case LAUNCHER_BOOTTYPE_TEMP:
-		STD_TSNPrintf( path, FS_ENTRY_LONGNAME_MAX, OS_TMP_APP_PATH, pBootTitle->titleID );
+		STD_TSNPrintf( path, FS_ENTRY_LONGNAME_MAX, "nand:/tmp/jump.app", pBootTitle->titleID );
 		break;
 	default:
 		path[ 0 ] = 0;
