@@ -86,7 +86,11 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	// .nandファイルオープン
     FS_InitFile(&file);
     open_is_ok = FS_OpenFile(&file, pFullPath);
-//  OS_Printf("FS_OpenFile(\"%s\") ... %s!\n", pFullPath, open_is_ok ? "OK" : "ERROR");
+	if (!open_is_ok)
+	{
+		OS_Warning("Failure! FS_OpenFile");
+		return FALSE;
+	}
 
 	// サイズチェック
 	file_size  = FS_GetFileLength(&file) ;
