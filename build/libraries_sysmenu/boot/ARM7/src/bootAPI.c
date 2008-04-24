@@ -39,12 +39,21 @@
 
 #define CLRLIST_REBOOT_STACK_PAD_SIZE_IDX	(2*3+1)
 
+#define TITLE_ID_NAND_INITIALIZER		0x00030011304E4941UL	// 0NIA
+
+// 起動制限をかけるタイトル一覧
+typedef struct TitleBlackList {
+	OSTitleId	titleID;
+	int			rom_version;
+}TitleBlackList;
+
 // extern data-------------------------------------------------------
 
 // function's prototype----------------------------------------------
 
 static void BOOTi_ClearREG_RAM( void );
 static void BOOTi_CutAwayRegionList( u32 *regionlist, u32 start, u32 end );
+static void BOOTi_CheckTitleBlackList( void );
 
 // global variables--------------------------------------------------
 
@@ -73,6 +82,13 @@ static u32 nitro_post_clear_list[POST_CLEAR_NUM_MAX + 1] =
 };
 
 // const data--------------------------------------------------------
+
+// 起動制限をかけるタイトル一覧
+static const TitleBlackList s_blackList[] = {
+	{ TITLE_ID_NAND_INITIALIZER, 0 },
+	{ 0UL, -1 },
+};
+
 
 void BOOT_Init( void )
 {
@@ -103,6 +119,9 @@ BOOL BOOT_WaitStart( void )
 			MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
 		}
 
+		// ブラックリストをチェックし、起動制限をかける
+		BOOTi_CheckTitleBlackList();
+		
 		(void)OS_DisableIrq();							// ここで割り込み禁止にしないとダメ。
 		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
 		(void)OS_SetIrqMaskEx(0);
@@ -372,5 +391,23 @@ static void BOOTi_CutAwayRegionList( u32 *regionlist, u32 start, u32 end )
 	for( n=l; l<m; l++ )
 	{
 		BOOTi_DeliteElementFromList( regionlist, (u32)n );
+	}
+}
+
+// 起動制限をかけるブラックリストTITLEのチェック
+static void BOOTi_CheckTitleBlackList( void )
+{
+	const TitleBlackList *pBlackList = &s_blackList[ 0 ];
+	ROM_Header_Short *pROMH = (ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
+	
+	while( pBlackList->rom_version >= 0 ) {
+		if( ( pBlackList->titleID ==  pROMH->titleID ) &&
+			( pBlackList->rom_version ==  pROMH->rom_version ) ) {
+			OS_TPrintf( "Hit black list : %c%c%c%c ver.%d...Terminate.\n",
+						pROMH->titleID_Lo[ 3 ], pROMH->titleID_Lo[ 2 ], pROMH->titleID_Lo[ 1 ], pROMH->titleID_Lo[ 0 ],
+						pROMH->rom_version );
+			OS_Terminate();
+		}
+		pBlackList++;
 	}
 }
