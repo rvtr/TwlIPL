@@ -221,7 +221,7 @@ s32 ReadFirmwareBinary(char *path, u32 offset, u8 *buffer, s32 bufSize)
     return flen;
 }
 
-#ifdef SDK_RELEASE
+#if 0
 static const u8 s_pubkey9_1[ 0x80 ] = {
 	0xb6, 0x18, 0xd8, 0x61, 0x28, 0xcb, 0x5c, 0x6f, 0x05, 0xfc, 0xd7, 0x09, 0x18, 0x3f, 0xb2, 0xd0, 
 	0x6b, 0x7d, 0xee, 0xd9, 0x98, 0xdc, 0x4f, 0xdd, 0xc1, 0xa8, 0x59, 0x18, 0xfb, 0xb0, 0x65, 0xbd, 
@@ -251,7 +251,7 @@ BOOL VerifyWlanfirmSignature(u8* buffer, u32 length)
     OSTick vstart = OS_GetTick();
 #endif
 
-#ifdef SDK_RELEASE
+#if 0
 	// ランチャー経由でのデバッガ起動では、鍵情報を受け取ることができない。
 	// よってリリースビルドの時は、デバッグ動作を優先して鍵を自分で持つ。
 	pPubkey = (u8 *)s_pubkey9_1;
@@ -514,6 +514,9 @@ instfirm_error:
     }
 	
 	// インストール開始すらできなかった時は、FATALエラー
+#ifdef SDK_RELEASE	
+	SYSMi_SetWirelessLED( FALSE );
+#endif
 	s_isFinished = TRUE;
     SYSM_SetFatalError( TRUE );
 	
@@ -556,6 +559,9 @@ BOOL PollingInstallWlanFirmware( BOOL isStartScanWDS )
 				if( !s_isHotStartWLFirm ) {
 					// ColdStartの無線ファームロードなら、FATALエラー
 			        SYSM_SetFatalError( TRUE );
+#ifdef SDK_RELEASE	
+					SYSMi_SetWirelessLED( FALSE );
+#endif
 					s_isFinished = TRUE;
 				}else {
 					// そうでない場合は、ColdStartロードで再度実行。
