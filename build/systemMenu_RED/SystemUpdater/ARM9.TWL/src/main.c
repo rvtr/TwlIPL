@@ -58,7 +58,7 @@ static void VBlankIntr(void);
 static void InitAllocation(void);
 static BOOL IgnoreRemoval(void);
 static void DrawWaitButtonA(void);
-static void DrawAlready(void);
+static void DrawAlready(char* date);
 
 /*---------------------------------------------------------------------------*
   Name:         TwlMain
@@ -131,8 +131,13 @@ TwlMain()
 		FS_InitFile( &file );
 		if (FS_OpenFileEx(&file, "nand:/sys/log/updater.log", FS_FILEMODE_R) == TRUE)
 		{
+			char date[sizeof(__DATE__)];
+			if (FS_ReadFile(&file, date, sizeof(__DATE__)) != sizeof(__DATE__))
+			{
+				OS_Warning("Failure! FS_ReadFile");
+			}
 			FS_CloseFile(&file);
-			DrawAlready();
+			DrawAlready(date);
 		}
 	}
 
@@ -228,13 +233,30 @@ TwlMain()
 	}
 
 	// 調査に不便なので一時的に削除
-/*
-	// 更新ログを残して再実行を防ぐ
+
+	// 更新ログを作成して再実行を防ぐ
 	if (result)
 	{
-		(void)FS_CreateFileAuto("nand:/sys/log/updater.log", FS_PERMIT_R | FS_PERMIT_W);
+		if (FS_CreateFileAuto("nand:/sys/log/updater.log", FS_PERMIT_R | FS_PERMIT_W))
+		{
+			FSFile file;
+			FS_InitFile( &file );
+			if (FS_OpenFileEx(&file, "nand:/sys/log/updater.log", FS_FILEMODE_W))
+			{
+				char date[sizeof(__DATE__)];
+				if (STD_CopyLString( date, __DATE__, sizeof(__DATE__) ) != (sizeof(__DATE__)-1))
+				{
+					OS_Warning("Failure! STD_CopyLString\n");
+				}
+				if (FS_WriteFile(&file, (void*)date, sizeof(__DATE__) ) == -1)
+				{
+					OS_Warning("Failure : FS_WriteFile\n");
+				}
+				FS_CloseFile(&file);
+			}
+		}
 	}
-*/
+
 	// 結果表示
 	while(1)
 	{
@@ -293,7 +315,8 @@ static void InitAllocation(void)
  *---------------------------------------------------------------------------*/
 static void DrawWaitButtonA(void)
 {
-	kamiFontPrintfMain( 5,  3, 8, "--- System Updater ---");
+	kamiFontPrintfMain( 5,  3, 8, "    System Updater    ");
+	kamiFontPrintfMain( 5,  5, 8, " --- %s ---", __DATE__);
 
 	kamiFontPrintfMain( 5,  8, 3, "<Push A: Start Update>");
 	kamiFontPrintfMain( 3, 10, 1, "--------------------------");
@@ -307,7 +330,7 @@ static void DrawWaitButtonA(void)
 		G3_Identity();
 		G3_PolygonAttr(GX_LIGHTMASK_NONE, GX_POLYGONMODE_DECAL, GX_CULL_NONE, 0, 31, 0);
 
-		DrawQuad( 10,  50, 246, 120, GX_RGB(28, 28, 28));
+		DrawQuad( 10,  54, 246, 120, GX_RGB(28, 28, 28));
 
 		G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
 
@@ -334,12 +357,12 @@ static void DrawWaitButtonA(void)
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
-static void DrawAlready(void)
+static void DrawAlready(char* date)
 {
-	kamiFontPrintfMain( 8,  8, 3, "<Infomation>");
-	kamiFontPrintfMain( 3, 10, 1, "--------------------------");
-	kamiFontPrintfMain( 3, 11, 1, "This machine has already");
-	kamiFontPrintfMain( 3, 12, 1, "been updated.");
+	kamiFontPrintfMain( 3,  8, 1, "--------------------------");
+	kamiFontPrintfMain( 3,  9, 1, "This machine has already");
+	kamiFontPrintfMain( 3, 10, 1, "been updated.");
+	kamiFontPrintfMain( 3, 12, 1, "version: %s", date);
 	kamiFontPrintfMain( 3, 13, 1, "--------------------------");
 
 	while(1)
@@ -348,7 +371,7 @@ static void DrawAlready(void)
 		G3_Identity();
 		G3_PolygonAttr(GX_LIGHTMASK_NONE, GX_POLYGONMODE_DECAL, GX_CULL_NONE, 0, 31, 0);
 
-		DrawQuad( 10,  50, 246, 120, GX_RGB(28, 28, 28));
+		DrawQuad( 10,  50, 246, 128, GX_RGB(28, 28, 28));
 
 		G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
 
