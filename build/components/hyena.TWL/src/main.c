@@ -182,11 +182,11 @@ TwlSpMain(void)
 #ifndef SDK_NOCRYPTO
         AES_Init();           // AES èâä˙âª
 
-#if ( defined(LAUNCHER_DEBUG_MODE) && defined(SDK_RELEASE) )
-		MI_CpuCopyFast( (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, (void *)SDK_SEA_KEY_STORE, HW_LAUNCHER_DELIVER_PARAM_BUF_SIZE );
-#else
-		SYSMi_SetAESKeysForAccessControlCore( (ROM_Header *)HW_TWL_ROM_HEADER_BUF, (u8 *)SDK_SEA_KEY_STORE, NULL, NULL );
-#endif
+		if( SCFG_IsCPUJtagEnable() ) {
+			MI_CpuCopyFast( (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, (void *)SDK_SEA_KEY_STORE, HW_LAUNCHER_DELIVER_PARAM_BUF_SIZE );
+		}else {
+			SYSMi_SetAESKeysForAccessControlCore( (ROM_Header *)HW_TWL_ROM_HEADER_BUF, (u8 *)SDK_SEA_KEY_STORE, NULL, NULL );
+		}
 		
 #ifdef SDK_SEA
         SEA_Init();
