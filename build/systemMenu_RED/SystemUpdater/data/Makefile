@@ -22,16 +22,12 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 
 #----------------------------------------------------------------------------
-MAKETAD			= $(SYSMENU_TOOLSDIR)/bin/maketad.updater.exe
-
-
-#INSTALL_TARGETS		=	HNCA.tad
-#INSTALL_DIR		=	$(ROOT)/build/tools/TwlNMenu/data
+#MAKETAD			= $(SYSMENU_TOOLSDIR)/bin/maketad.updater.exe
 
 LDIRT_CLEAN		=	HNAA.tad \
 					HNBA.tad \
 					HNCA.tad \
-					menu_launcher-$(TWL_BUILD_DIR).nand
+					menu_launcher.nand
 
 #----------------------------------------------------------------------------
 

@@ -124,8 +124,8 @@ Property
 	# CommonClientKey: launcher deliver common client Key [TRUE/FALSE]
 	#
 	# ========= SystemUpdater‚Í“Á•Ê‚ÈŒ®‚ðŽg‚¤ =========
-	#CommonClientKey	TRUE
-	CommonClientKeyForDebugger    TRUE
+	CommonClientKey	TRUE
+	#CommonClientKeyForDebugger    TRUE
 
 	#
 	# HwAESSlotB: launcher deliver HW AES slot B setting [TRUE/FALSE]
