@@ -41,14 +41,16 @@ MACRO_FLAGS				+=	-DUSE_FOR_NIGHTLY_AUTO_TEST
 endif
 #============================================================================
 
+DISABLE_DEBUG		= TRUE
+
 TARGET_FIRM			= SYSTEMMENU
 TARGET_PLATFORM		= TWL
 TWL_ARCHGEN    		= LIMITED
 
-#TWL_CODEGEN   =       THUMB
+#TWL_CODEGEN   		= THUMB
 
-TITLEID_LO				=	0NIA
-#TARGET_TAD				=
+TITLEID_LO			= 0NIA
+#TARGET_TAD			=
 
 ifdef USE_FOR_NIGHTLY_AUTO_TEST
 TARGET_BIN	= NandInitializerForAutoTest.srl
@@ -57,7 +59,7 @@ TARGET_BIN	= NandInitializer.srl
 endif
 
 LCFILE_SPEC	= ../../NandInitializerRed/ARM9.TWL/ARM9-TS.lsf
-ROM_SPEC	= ../../NandInitializerRed/ARM9.TWL/main.rsf
+ROM_SPEC	= ./main.rsf
 
 MAKEROM_ARM7_BASE	=	../ARM7.TWL/bin/$(TWL_BUILDTYPE_ARM7)/armadillo
 MAKEROM_ARM7		=	$(MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
@@ -96,7 +98,10 @@ endif
 endif
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
-							-DPRIVKEY_PATH='$(TWL_KEYSDIR)/rsa'
+							-DPRIVKEY_PATH='$(TWL_KEYSDIR)/rsa' \
+							-DCARD_REGION='$(CARD_REGION)' \
+							-DDISABLE_DEBUG='$(DISABLE_DEBUG)'
+
 MAKETAD_FLAGS			+=	-s
 
 LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\

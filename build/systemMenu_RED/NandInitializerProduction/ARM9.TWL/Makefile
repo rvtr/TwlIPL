@@ -30,6 +30,8 @@ SUBDIRS		=	$(ROOT)/build/demos/gx/UnitTours/DEMOLib
 MACRO_FLAGS				+=	-DAUTO_FORMAT_MODE
 #============================================================================
 
+DISABLE_DEBUG	=	TRUE
+
 TARGET_FIRM			= SYSTEMMENU
 TARGET_PLATFORM		= TWL
 TWL_ARCHGEN    		= LIMITED
@@ -85,7 +87,10 @@ endif
 endif
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
-							-DPRIVKEY_PATH='$(TWL_KEYSDIR)/rsa'
+							-DPRIVKEY_PATH='$(TWL_KEYSDIR)/rsa' \
+							-DCARD_REGION='$(CARD_REGION)' \
+							-DDISABLE_DEBUG='$(DISABLE_DEBUG)'
+
 MAKETAD_FLAGS			+=	-s
 
 LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\
