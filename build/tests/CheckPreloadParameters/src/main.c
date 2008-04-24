@@ -15,6 +15,7 @@
   $Author$
  *---------------------------------------------------------------------------*/
 #include <twl.h>
+#include <twl/lcfg/common/TWLSettings.h>
 
 void VBlankIntr(void);
 
@@ -23,6 +24,7 @@ u8 s_cameraInfo[ OS_TWL_HWINFO_CAMERA_LEN ];
 static char *s_strCountry[ 256 ];
 static char *s_strRegion[ OS_TWL_REGION_MAX ];
 static char *s_strUserColor[ OS_FAVORITE_COLOR_MAX ];
+static char *s_strRatingOgn[ 10 ];
 static char *s_strLanguage[ OS_LANGUAGE_CODE_MAX ];
 
 
@@ -37,6 +39,8 @@ static char *s_strLanguage[ OS_LANGUAGE_CODE_MAX ];
  *---------------------------------------------------------------------------*/
 void TwlMain(void)
 {
+	char string[ 256 ];
+	int srcLen, dstLen;
 	OS_Init();
 
 	//---- interrupt setting
@@ -50,8 +54,6 @@ void TwlMain(void)
 	OS_TPrintf( "UserColor : %02x %s\n", s_owner.favoriteColor, s_strUserColor[ s_owner.favoriteColor ] );
 	OS_TPrintf( "Birthday  : %02d/%02d\n", s_owner.birthday.month, s_owner.birthday.day );
 	{
-		char string[ 256 ];
-		int srcLen, dstLen;
 		MI_CpuClear8( string, sizeof(string) );
 		srcLen = (int)s_owner.nickNameLength;
 		dstLen = sizeof(string);
@@ -68,6 +70,28 @@ void TwlMain(void)
 	
 	OS_TPrintf( "AvailableWireless : %s\n", OS_IsAvailableWireless() ? "TRUE" : "FALSE" );
 	PMi_SetWirelessLED( OS_IsAvailableWireless() ? PM_WIRELESS_LED_ON : PM_WIRELESS_LED_OFF );
+	
+	{
+		const LCFGTWLParentalControl *pPC = (const LCFGTWLParentalControl *)OS_GetParentalControlInfoPtr();
+		
+		OS_TPrintf( "ParentalControls :\n");
+		OS_TPrintf( "    Rating       : %s\n", pPC->flags.rating ? "TRUE" : "FALSE" );
+		OS_TPrintf( "    WiiPoint     : %s\n", pPC->flags.wiiPoint ? "TRUE" : "FALSE" );
+		OS_TPrintf( "    Browser      : %s\n", pPC->flags.browser ? "TRUE" : "FALSE" );
+		OS_TPrintf( "    PictoChat    : %s\n", pPC->flags.pictoChat ? "TRUE" : "FALSE" );
+		OS_TPrintf( "    NintendoSpot : %s\n", pPC->flags.nintendoSpot ? "TRUE" : "FALSE" );
+		OS_TPrintf( "    isSetPCTL    : %s\n", pPC->flags.isSetParentalControl ? "TRUE" : "FALSE" );
+		OS_TPrintf( "    RatingOgn    : %s\n", s_strRatingOgn[ pPC->ogn ] );
+		OS_TPrintf( "    RatingAge    : %d\n", pPC->ratingAge );
+		OS_TPrintf( "    SecretQ ID   : %d\n", pPC->secretQuestionID );
+		OS_TPrintf( "    Password     : %s\n", pPC->password );
+		MI_CpuClear8( string, sizeof(string) );
+		srcLen = (int)pPC->secretAnswerLength;
+		dstLen = sizeof(string);
+		STD_ConvertStringUnicodeToSjis( string, &dstLen, pPC->secretAnswer, &srcLen, NULL );
+		OS_TPrintf( "    SecretAnswer : %s\n", string );
+	}
+	
 	{
 		int i;
 		OS_TPrintf( "CameraInfo :" );
@@ -147,6 +171,19 @@ static char *s_strLanguage[] = {
 	"SPANISH",
 	"CHINESE",
 	"KOREAN",
+};
+
+static char *s_strRatingOgn[] = {
+	"UNDEFINED",
+	"CERO",
+	"ESRB",
+	"USK",
+	"PEGI_GENERAL",
+	"PEGI_PORTUGAL",
+	"PEGI_BBFC",
+	"AGCB",
+	"OFLC",
+	"GRB",
 };
 
 static char *s_strCountry[] = {
