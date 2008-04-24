@@ -721,9 +721,10 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 	// NANDアプリの場合、NAM_CheckTitleLaunchRights()を呼んでチェック
 	if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_NAND )
 	{
-		if( NAM_OK != NAM_CheckTitleLaunchRights( pBootTitle->titleID ))
+		s32 result = NAM_CheckTitleLaunchRights( pBootTitle->titleID );
+		if( NAM_OK != result)
 		{
-			OS_TPrintf("Authenticate failed: NAM_CheckTitleLaunchRights failed.\n");
+			OS_TPrintf("Authenticate failed: NAM_CheckTitleLaunchRights failed. %d \n",result);
 			return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}else
 		{

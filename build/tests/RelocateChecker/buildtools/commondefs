@@ -41,7 +41,7 @@ endif
 #
 
 MAKEFBD ?= $(FBDDIR)/incre.exe
-MAKEFOB ?= $(TWLSDK_ROOT)/tools/bin/bin2obj.exe
+MAKEFOB ?= $(TWLSDK_ROOT)/tools/bin/bin2obj.TWL.exe
 
 #----------------------------------------------------------------------------
 endif	# TWL_RELOCATECHECKER_COMMONDEFS_
