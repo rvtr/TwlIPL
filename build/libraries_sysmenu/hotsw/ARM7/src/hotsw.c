@@ -166,6 +166,7 @@ static CardSecureModeFunction s_funcTable[] = {
 };
 
 #ifdef DHT_TEST
+#include <twl/os/ARM7/debugLED.h>
 #include <sysmenu/dht/dht.h>
 DHTFile* dht;
 static DHTPhase2Work* p2work = (void*)0x02e80000;
@@ -959,6 +960,8 @@ static HotSwState LoadStaticModule(void)
             if ( !db )
             {
                 OS_TPrintf(" Failed.\n");
+OS_SetDebugLED(0xFF);
+while(1){ OS_WaitVBlankIntr(); }
                 return HOTSW_HASH_CHECK_ERROR;
             }
             OS_TPrintf(" Done.\n");
@@ -987,6 +990,8 @@ static HotSwState LoadStaticModule(void)
         if ( !DHT_CheckHashPhase1Final(&ctx, hash0) )
         {
             OS_TPrintf(" Failed.\n");
+OS_SetDebugLED(0xAA);
+while(1){ OS_WaitVBlankIntr(); }
             return HOTSW_HASH_CHECK_ERROR;
         }
         OS_TPrintf(" Done.\n");
@@ -995,6 +1000,8 @@ static HotSwState LoadStaticModule(void)
         if ( !DHT_CheckHashPhase2(hash1, &s_cbData.pBootSegBuf->rh.s, p2work, ReadImage, &s_cbData) )
         {
             OS_TPrintf(" Failed.\n");
+OS_SetDebugLED(0xCC);
+while(1){ OS_WaitVBlankIntr(); }
             return HOTSW_HASH_CHECK_ERROR;
         }
         OS_TPrintf(" Done.\n");
