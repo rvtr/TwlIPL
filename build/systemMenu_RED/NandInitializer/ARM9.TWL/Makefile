@@ -41,7 +41,11 @@ MACRO_FLAGS				+=	-DUSE_FOR_NIGHTLY_AUTO_TEST
 endif
 #============================================================================
 
+ifdef USE_FOR_NIGHTLY_AUTO_TEST
+DISABLE_DEBUG		= FALSE
+else
 DISABLE_DEBUG		= TRUE
+endif
 
 TARGET_FIRM			= SYSTEMMENU
 TARGET_PLATFORM		= TWL
