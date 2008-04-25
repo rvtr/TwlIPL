@@ -123,6 +123,12 @@ void PXI_InitFIRM(void)
     {
     }
 #endif
+#ifdef SDK_ARM9
+    PXIi_WaitIDByIntf( FIRM_PXI_ID_INIT_ARM7 );
+#else
+    PXIi_SendIDByIntf( FIRM_PXI_ID_INIT_ARM7 );
+#endif
+
 }
 
 /*---------------------------------------------------------------------------*
