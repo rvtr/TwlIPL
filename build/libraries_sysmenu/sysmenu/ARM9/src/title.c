@@ -1283,6 +1283,9 @@ static void SYSMi_makeTitleIdList( void )
 			if(SYSM_IsExistCard())
 			{
 				pe_hs = (ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BAK;// BAK‚Ì’l‚ðŽg‚¤
+			}else
+			{
+				continue;
 			}
 		}else
 		{
