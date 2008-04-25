@@ -126,6 +126,9 @@ TwlMain()
     }
 
 	// ログが存在するならシステム更新済みと判定
+#ifdef IGNORE_VERSION_CHECK
+	if( 0 )
+#endif // IGNORE_VERSION_CHECK
 	{
 		FSFile file;
 		FS_InitFile( &file );

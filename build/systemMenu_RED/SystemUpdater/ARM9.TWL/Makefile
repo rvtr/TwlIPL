@@ -21,7 +21,11 @@
 #USE_PRODUCT_KEY			=	TRUE
 #============================================================================
 
-DISABLE_DEBUG	?=	TRUE
+# COMPILE SWITCH for build SystemUpdater
+IGNORE_VERSION_CHECK	?=	FALSE
+
+# MAKEROM SWITCH for build SystemUpdater
+DISABLE_DEBUG			?=	TRUE
 
 TARGET_FIRM		= SYSTEMMENU
 TARGET_PLATFORM	= TWL
@@ -73,6 +77,11 @@ else
 MAKEROM_FLAGS			+=	-DHWINFO_PRIVKEY='private_HWInfo_dev.der'
 endif
 endif
+
+ifeq ($(IGNORE_VERSION_CHECK),TRUE)
+MACRO_FLAGS += -DIGNORE_VERSION_CHECK
+endif
+
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
 							-DPRIVKEY_PATH='$(TWL_KEYSDIR)/rsa' \
