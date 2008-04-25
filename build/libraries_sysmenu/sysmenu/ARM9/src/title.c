@@ -672,18 +672,8 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 static void SYSMi_Relocate( void )
 {
 	u32 size;
-	u32 *dest = SYSM_GetCardRomHeader()->main_ram_address;
-	// NTRセキュア領域の再配置
-	DC_InvalidateRange( (void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );	// キャッシュケア
-	size = ( SYSM_GetCardRomHeader()->main_size < SECURE_AREA_SIZE ) ?
-			 SYSM_GetCardRomHeader()->main_size : SECURE_AREA_SIZE;
-	// romの再配置情報を参照して、セキュア領域の再配置先を変更する必要が無いか調べる
-	if( SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC].src != NULL )
-	{
-		dest = (u32 *)SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC].src;
-	}
-	MI_CpuCopyFast( (void *)SYSM_CARD_NTR_SECURE_BUF, dest, size );
-	
+	u32 *dest ;
+	// NTRセキュア領域の再配置は後でbootAPIおよびrebootライブラリにて行う
 	if( SYSM_GetCardRomHeader()->platform_code & PLATFORM_CODE_FLAG_TWL ) {
 		// TWLモード
 		// TWLセキュア領域の再配置
@@ -924,9 +914,15 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 					OS_ReleaseLockID( id );
 	                
 					SVC_HMACSHA1Update( &ctx,
-										(const void*)((u32)module_addr[l] + ARM9_ENCRYPT_DEF_SIZE),
-										(module_size[l] - ARM9_ENCRYPT_DEF_SIZE) );
-					SVC_HMACSHA1GetHash( &ctx, calculated_hash );
+										(const void*)(SYSM_CARD_NTR_SECURE_BUF + ARM9_ENCRYPT_DEF_SIZE),
+										(SECURE_AREA_SIZE - ARM9_ENCRYPT_DEF_SIZE) );
+					if( module_size[l] > SECURE_AREA_SIZE )
+					{
+						SVC_HMACSHA1Update( &ctx,
+											(const void*)((u32)module_addr[l] + SECURE_AREA_SIZE),
+											(module_size[l] - SECURE_AREA_SIZE) );
+						SVC_HMACSHA1GetHash( &ctx, calculated_hash );
+					}
 				}else
 				{
 					SVC_CalcHMACSHA1( calculated_hash, (const void*)module_addr[l], module_size[l],

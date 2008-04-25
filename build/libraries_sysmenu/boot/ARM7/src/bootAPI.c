@@ -34,7 +34,7 @@
 #define reg_MI_MC_SWP		(*(REGType8v *) ( REG_MC1_ADDR + 1 ) )
 
 #define PRE_CLEAR_NUM_MAX		(6*2)
-#define COPY_NUM_MAX			(5*3)
+#define COPY_NUM_MAX			(6*3)
 #define POST_CLEAR_NUM_MAX		(12 + 6*2)
 
 #define CLRLIST_REBOOT_STACK_PAD_SIZE_IDX	(2*3+1)
@@ -181,9 +181,27 @@ BOOL BOOT_WaitStart( void )
 			};
 			
 			// copy forwardリスト設定
-			mem_list[list_count++] = SYSM_TWL_MOUNT_INFO_TMP_BUFFER;
-			mem_list[list_count++] = (u32)th->s.sub_mount_info_ram_address;
-			mem_list[list_count++] = SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN;
+			// カードアプリのときはNTRセキュア領域再配置コピー
+			if( SYSMi_GetWork2()->bootTitleProperty.flags.bootType == LAUNCHER_BOOTTYPE_ROM)
+			{
+				u32 *dest = dh->s.main_ram_address;
+				// romの再配置情報を参照して、セキュア領域の再配置先を変更する必要が無いか調べる
+				if( SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC].src != NULL )
+				{
+					dest = (u32 *)SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC].src;
+				}
+				mem_list[list_count++] = SYSM_CARD_NTR_SECURE_BUF;
+				mem_list[list_count++] = (u32)dest;
+				mem_list[list_count++] = ( dh->s.main_size < SECURE_AREA_SIZE ) ? dh->s.main_size : SECURE_AREA_SIZE;
+			}
+			// マウント情報
+			if( !isNtrMode )
+			{
+				mem_list[list_count++] = SYSM_TWL_MOUNT_INFO_TMP_BUFFER;
+				mem_list[list_count++] = (u32)th->s.sub_mount_info_ram_address;
+				mem_list[list_count++] = SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN;
+			}
+			// モジュール再配置コピーforward
 			for( l=0; l<RELOCATE_INFO_NUM ; l++ )
 			{
 				if( SYSMi_GetWork()->romRelocateInfo[l].src != NULL && !SYSMi_GetWork()->romRelocateInfo[l].rev )
@@ -196,6 +214,7 @@ BOOL BOOT_WaitStart( void )
 			mem_list[list_count++] = NULL;
 			
 			// copy backwardリスト設定
+			// モジュール再配置コピーbackward
 			for( l=0; l<RELOCATE_INFO_NUM ; l++ )
 			{
 				if( SYSMi_GetWork()->romRelocateInfo[l].src != NULL && SYSMi_GetWork()->romRelocateInfo[l].rev )
