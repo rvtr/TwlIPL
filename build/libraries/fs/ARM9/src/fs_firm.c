@@ -173,6 +173,25 @@ BOOL FS_GetTitleBootContentPathFast(char* buf, OSTitleId titleId)
 }
 
 /*---------------------------------------------------------------------------*
+  Name:         SEA_Decrypt
+
+  Description:  stub function
+
+  Arguments:
+
+  Returns:
+ *---------------------------------------------------------------------------*/
+AESResult SEA_Decrypt(const void* src, u32 srcSize, void* dst);
+SDK_WEAK_SYMBOL AESResult SEA_Decrypt(const void* src, u32 srcSize, void* dst)
+ __attribute__((never_inline))
+{
+(void)src;
+(void)srcSize;
+(void)dst;
+    return AES_RESULT_SUCCESS;
+}
+
+/*---------------------------------------------------------------------------*
   Name:         FS_ResolveSrl
 
   Description:  resolve srl filename and store to HW_TWL_FS_BOOT_SRL_PATH_BUF
