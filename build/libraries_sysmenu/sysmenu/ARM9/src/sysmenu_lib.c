@@ -346,7 +346,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot1( void )
               SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT )
             ){
             s_bootTitleBuf.flags.isAppRelocate = TRUE;
-            s_bootTitleBuf.flags.isAppLoadCompleted = TRUE;
+            s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
             s_bootTitleBuf.flags.isInitialShortcutSkip = TRUE;         // 初回起動シーケンスを飛ばす
             s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
             s_bootTitleBuf.flags.bootType = LAUNCHER_BOOTTYPE_ROM;
@@ -400,7 +400,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
 	if( SYSM_IsExistCard() )
 	{
         s_bootTitleBuf.flags.isAppRelocate = TRUE;
-        s_bootTitleBuf.flags.isAppLoadCompleted = TRUE;
+        s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
         s_bootTitleBuf.flags.isInitialShortcutSkip = TRUE;         // 初回起動シーケンスを飛ばす
         s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
         s_bootTitleBuf.flags.bootType = LAUNCHER_BOOTTYPE_ROM;

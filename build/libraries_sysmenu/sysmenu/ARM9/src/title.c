@@ -73,7 +73,7 @@ extern const u8 g_devPubKey[ 4 ][ 0x80 ];
 static s32  ReadFile( FSFile* pf, void* buffer, s32 size );
 static void SYSMi_EnableHotSW( BOOL enable );
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle );
-static void SYSMi_Relocate( void );
+static void SYSMi_AppendRelocateInfoCardSecureArea( void );
 static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle );
 static void SYSMi_makeTitleIdList( void );
 
@@ -156,9 +156,12 @@ static inline u16 SCFG_GetBondingOption(void)
 	return (u16)(*(u8*)(HW_SYS_CONF_BUF+HWi_WSYS08_OFFSET) & HWi_WSYS08_OP_OPT_MASK);
 }
 
+
 // ============================================================================
 //
+//
 // 情報取得
+//
 //
 // ============================================================================
 
@@ -197,7 +200,7 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 
 			pTitleList_Card->pBanner = &s_bannerBuf[ CARD_BANNER_INDEX ];
 			pTitleList_Card->flags.isValid = TRUE;
-			pTitleList_Card->flags.isAppLoadCompleted = TRUE;
+			pTitleList_Card->flags.isAppLoadCompleted = FALSE;
 			pTitleList_Card->flags.isAppRelocate = TRUE;
 		}
 		
@@ -360,7 +363,9 @@ static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
 
 // ============================================================================
 //
-// アプリ起動
+//
+// アプリロード
+//
 //
 // ============================================================================
 
@@ -427,7 +432,7 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
     if( ! bSuccess )
     {
 OS_TPrintf("RebootSystem failed: cant open file\n");
-        return;
+		goto ERROR;
     }
 
     {
@@ -446,8 +451,7 @@ OS_TPrintf("RebootSystem failed: cant open file\n");
         if( ! bSuccess )
         {
 OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
-            FS_CloseFile(file);
-            return;
+			goto ERROR;
         }
 
         readLen = FS_ReadFile(file, header, (s32)sizeof(header));
@@ -455,8 +459,7 @@ OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
         if( readLen != (s32)sizeof(header) )
         {
 OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", header, 0, sizeof(header), readLen);
-            FS_CloseFile(file);
-            return;
+			goto ERROR;
         }
 
         if( head->s.nintendo_logo_crc16 != 0xCF56 )
@@ -471,8 +474,7 @@ OS_TPrintf("%02X ", header[i * 0x10 + j]);
 OS_TPrintf("\n");
 }
 OS_TPrintf("RebootSystem failed: logo CRC error\n");
-            FS_CloseFile(file);
-            return;
+			goto ERROR;
         }
         
         if( !(head->s.platform_code & PLATFORM_CODE_FLAG_TWL) )
@@ -488,15 +490,13 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
 		        if( ! bSuccess )
 		        {
 OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
-		            FS_CloseFile(file);
-		            return;
+					goto ERROR;
 		        }
 		        readLen = FS_ReadFile(file, &s_authcode, (s32)sizeof(s_authcode));
 		        if( readLen != (s32)sizeof(s_authcode) )
 		        {
 OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode, 0, sizeof(s_authcode), readLen);
-		            FS_CloseFile(file);
-		            return;
+					goto ERROR;
 		        }
 			}
 		}
@@ -535,8 +535,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 				 &(SYSMi_GetWork()->romRelocateInfo[i]), isTwlApp ) )
 			{
 	OS_TPrintf("RebootSystem failed: ROM Load Region error\n");
-	            FS_CloseFile(file);
-				return;
+				goto ERROR;
 			}
 		}
 
@@ -565,8 +564,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
             if( ! bSuccess )
             {
 OS_TPrintf("RebootSystem failed: cant seek file(%d)\n", source[i]);
-                FS_CloseFile(file);
-                return;
+				goto ERROR;
             }
 
 #ifdef LOAD_APP_VIA_WRAM
@@ -598,8 +596,7 @@ OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
 			if ( !result )
 			{
 OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
-                FS_CloseFile(file);
-                return;
+				goto ERROR;
 			}
 #else
 OS_TPrintf("RebootSystem : Load VIA PRIMAL FS %d.\n", i);
@@ -608,8 +605,7 @@ OS_TPrintf("RebootSystem : Load VIA PRIMAL FS %d.\n", i);
             if( readLen < 0 )
             {
 OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
-                FS_CloseFile(file);
-                return;
+				goto ERROR;
             }
 #endif // LOAD_APP_VIA_WRAM
 
@@ -625,6 +621,10 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 
     }
 	SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
+	return;
+	
+ERROR:
+    (void)FS_CloseFile(file);
 }
 
 
@@ -645,18 +645,20 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 	s_authResult = AUTH_RESULT_PROCESSING;
 	// アプリ未ロード状態なら、ロード開始
 	if( !pBootTitle->flags.isAppLoadCompleted ) {
-		SYSMi_GetWork()->flags.common.isLoadSucceeded = FALSE;
-		OS_InitThread();
-		OS_CreateThread( &s_thread, (void (*)(void *))SYSMi_LoadTitleThreadFunc, (void*)pBootTitle, stack+STACK_SIZE/sizeof(u64), STACK_SIZE,THREAD_PRIO );
-		OS_WakeupThreadDirect( &s_thread );
-	}else if( pBootTitle->flags.isAppRelocate ) {
-	// アプリロード済みで、再配置要求ありなら、再配置（カードのみ対応）
-		SYSMi_Relocate();
+		SYSMi_GetWork()->flags.common.isLoadFinished  = FALSE;
+		
+		if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM ) {
+			SYSMi_AppendRelocateInfoCardSecureArea();
+		}else {
+			SYSMi_GetWork()->flags.common.isLoadSucceeded = FALSE;
+			OS_InitThread();
+			OS_CreateThread( &s_thread, (void (*)(void *))SYSMi_LoadTitleThreadFunc, (void*)pBootTitle, stack+STACK_SIZE/sizeof(u64), STACK_SIZE,THREAD_PRIO );
+			OS_WakeupThreadDirect( &s_thread );
+		}
+	}else {
+		// アプリロード済み
 		SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
-	}else
-	{
-		// アプリロード済みで、再配置要求なし
-		SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
+		SYSMi_GetWork()->flags.common.isLoadFinished  = TRUE;
 	}
 	
 	if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM ) {
@@ -668,8 +670,8 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 }
 
 
-// カードアプリケーションの再配置
-static void SYSMi_Relocate( void )
+// カードアプリのセキュア領域を再配置情報に追加
+static void SYSMi_AppendRelocateInfoCardSecureArea( void )
 {
 	u32 size;
 	u32 *dest ;
@@ -690,14 +692,31 @@ static void SYSMi_Relocate( void )
 	}
 }
 
-// アプリロード済み？
+// アプリロード済みかどうかをチェック
 BOOL SYSM_IsLoadTitleFinished( void )
 {
-	if( SYSMi_GetWork()->flags.common.isLoadSucceeded ) {
-		return TRUE;
+	// ロード済みの時は、常にTRUE
+	if( !SYSMi_GetWork()->flags.common.isLoadFinished ) {
+		if( SYSMi_GetWork()->flags.common.isCardBoot ) {
+			// カードブートの時は、HOTSWライブラリのロード完了をチェック。
+			SYSMi_GetWork()->flags.common.isLoadFinished  = SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted;
+			SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
+		}else {
+			// NANDブートの時は、ロードスレッドの完了をチェック。
+			SYSMi_GetWork()->flags.common.isLoadFinished = OS_IsThreadTerminated( &s_thread );
+		}
 	}
-	return OS_IsThreadTerminated( &s_thread );
+	return SYSMi_GetWork()->flags.common.isLoadFinished ? TRUE : FALSE;
 }
+
+
+// ============================================================================
+//
+//
+// アプリ認証
+//
+//
+// ============================================================================
 
 // TWLアプリおよびNTR拡張NANDアプリ共通のヘッダ認証処理
 static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
