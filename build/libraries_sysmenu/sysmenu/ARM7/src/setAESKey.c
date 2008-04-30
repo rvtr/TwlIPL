@@ -99,7 +99,7 @@ void SYSMi_SetAESKeysForAccessControlCore( ROM_Header *pROMH, u8 *pDst, BOOL *pI
 	}
 	// commonClientKeyForDebugger
 	else if( pROMH->s.access_control.common_client_key_for_debugger_sysmenu ) {
-		MI_CpuCopy8( OSi_GetFromFirmAddr()->aes_key[ 1 ], (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, AES_BLOCK_SIZE );
+		MI_CpuCopy8( OSi_GetFromFirmAddr()->aes_key[ 1 ], pDst, AES_BLOCK_SIZE );
 	}
 	
 	// HW AES Slot B

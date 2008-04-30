@@ -182,11 +182,8 @@ TwlSpMain(void)
 #ifndef SDK_NOCRYPTO
         AES_Init();           // AES 初期化
 
-		if( SCFG_IsCPUJtagEnable() ) {
-			MI_CpuCopyFast( (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, (void *)SDK_SEA_KEY_STORE, HW_LAUNCHER_DELIVER_PARAM_BUF_SIZE );
-		}else {
-			SYSMi_SetAESKeysForAccessControlCore( (ROM_Header *)HW_TWL_ROM_HEADER_BUF, (u8 *)SDK_SEA_KEY_STORE, NULL, NULL );
-		}
+		// NANDファームがHW_LAUNCHER_DELIVER_PARAM_BUFへのAES_SEEDセットを行ってくれるので、ISデバッガ接続に関係なくSDK_SEA_KEY_STOREへのコピーを行えばよい
+		MI_CpuCopyFast( (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, (void *)SDK_SEA_KEY_STORE, HW_LAUNCHER_DELIVER_PARAM_BUF_SIZE );
 		
 #ifdef SDK_SEA
         SEA_Init();

@@ -38,7 +38,8 @@
 /*
     AESåÆê›íËAPI
 */
-extern void SYSMi_SetAESKeysForAccessControl( BOOL isNtrMode, ROM_Header *pROMH );
+extern void SYSMi_SetAESKeysForAccessControlCore( ROM_Header *pROMH, u8 *pDst, BOOL *pIsClearSlotB, BOOL *pIsClearSlotC );
+
 
 #ifdef PROFILE_ENABLE
 #define PROFILE_MAX  16
@@ -315,7 +316,7 @@ void TwlSpMain( void )
 
 //    PM_BackLightOn( TRUE ); // last chance
 
-    SYSMi_SetAESKeysForAccessControl(FALSE, rh);
+	SYSMi_SetAESKeysForAccessControlCore( (ROM_Header *)HW_TWL_ROM_HEADER_BUF, (u8 *)HW_LAUNCHER_DELIVER_PARAM_BUF, NULL, NULL );
     OS_BootFromFIRM();
 
 end:
