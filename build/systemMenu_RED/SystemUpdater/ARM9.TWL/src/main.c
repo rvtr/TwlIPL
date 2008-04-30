@@ -15,6 +15,7 @@
   $Author$
  *---------------------------------------------------------------------------*/
 
+#include <stdlib.h>	// atoi
 #include <twl.h>
 #include <nitro/snd.h>
 #include <twl/fatfs.h>
@@ -29,9 +30,28 @@
 #include "hwi.h"
 #include "keypad.h"
 
+extern const char *g_strIPLSvnRevision;
+extern const char *g_strSDKSvnRevision;
+
+/*---------------------------------------------------------------------------*
+    型定義
+ *---------------------------------------------------------------------------*/
+
+typedef struct _SystemUpdaterLog
+{
+	int magic_code;
+	int sdk_version;
+	int ipl_version;
+	int reserve[5];
+} SystemUpdaterLog;
+
 /*---------------------------------------------------------------------------*
     内部定数定義
  *---------------------------------------------------------------------------*/
+
+#define SYSTEM_UPDATER_LOG_PATH     "nand:/sys/log/updater.log"
+
+#define SYSTEM_UPDATER_MAGIC_CODE   44001111
 
 // リトライ回数
 #define MAX_RETRY_COUNT   10
@@ -58,7 +78,7 @@ static void VBlankIntr(void);
 static void InitAllocation(void);
 static BOOL IgnoreRemoval(void);
 static void DrawWaitButtonA(void);
-static void DrawAlready(char* date);
+static void DrawAlready(SystemUpdaterLog* log);
 
 /*---------------------------------------------------------------------------*
   Name:         TwlMain
@@ -125,22 +145,48 @@ TwlMain()
         (void)FS_LoadTable(p_table, need_size);
     }
 
-	// ログが存在するならシステム更新済みと判定
+	// （更新可能条件）
+	//  1.ログが存在しない
+	//  2.ログが存在し、ログに記載のマジックコードが不正（初版SystemUpdater実行後の状態）
+	//  2.ログが存在し、ログに記載のマジックコードが正しくかつログに記載の 
+    //    SDK & IPL のバージョンが SystemUpdater のそれ以下である
+
 #ifdef IGNORE_VERSION_CHECK
 	if( 0 )
 #endif // IGNORE_VERSION_CHECK
 	{
+		SystemUpdaterLog log;
 		FSFile file;
 		FS_InitFile( &file );
-		if (FS_OpenFileEx(&file, "nand:/sys/log/updater.log", FS_FILEMODE_R) == TRUE)
+
+		if (FS_OpenFileEx(&file, SYSTEM_UPDATER_LOG_PATH, FS_FILEMODE_R) == TRUE)
 		{
-			char date[sizeof(__DATE__)];
-			if (FS_ReadFile(&file, date, sizeof(__DATE__)) != sizeof(__DATE__))
+			DC_InvalidateRange(&log, sizeof(log));
+
+			if (FS_ReadFile(&file, &log, sizeof(log)) == sizeof(log))
 			{
+				// ログリード成功
+				OS_Printf("magic=%d, sdk=%d, ipl=%d\n", log.magic_code, log.sdk_version, log.ipl_version);
+
+				// 初版SystemUpdater実行状態でないことをマジックコードで判別する
+				if (log.magic_code == SYSTEM_UPDATER_MAGIC_CODE)
+				{
+					// マジックコード、SDKバージョン、IPLバージョンの確認
+					if (log.sdk_version > atoi(g_strSDKSvnRevision) || 
+						log.ipl_version > atoi(g_strIPLSvnRevision))
+					{
+						// 更新不可
+						DrawAlready(&log);
+					}
+				}
+			}
+			else
+			{
+				// ログリード失敗
 				OS_Warning("Failure! FS_ReadFile");
 			}
+
 			FS_CloseFile(&file);
-			DrawAlready(date);
 		}
 	}
 
@@ -240,23 +286,32 @@ TwlMain()
 	// 更新ログを作成して再実行を防ぐ
 	if (result)
 	{
-		if (FS_CreateFileAuto("nand:/sys/log/updater.log", FS_PERMIT_R | FS_PERMIT_W))
+		SystemUpdaterLog log;
+
+		(void)FS_DeleteFile(SYSTEM_UPDATER_LOG_PATH);
+
+		if (FS_CreateFileAuto(SYSTEM_UPDATER_LOG_PATH, FS_PERMIT_R | FS_PERMIT_W))
 		{
 			FSFile file;
 			FS_InitFile( &file );
-			if (FS_OpenFileEx(&file, "nand:/sys/log/updater.log", FS_FILEMODE_W))
+			if (FS_OpenFileEx(&file, SYSTEM_UPDATER_LOG_PATH, FS_FILEMODE_W))
 			{
-				char date[sizeof(__DATE__)];
-				if (STD_CopyLString( date, __DATE__, sizeof(__DATE__) ) != (sizeof(__DATE__)-1))
-				{
-					OS_Warning("Failure! STD_CopyLString\n");
-				}
-				if (FS_WriteFile(&file, (void*)date, sizeof(__DATE__) ) == -1)
+				log.magic_code  = SYSTEM_UPDATER_MAGIC_CODE;
+				log.sdk_version = atoi(g_strSDKSvnRevision);
+				log.ipl_version = atoi(g_strIPLSvnRevision);
+				
+				DC_FlushRange(&log, sizeof(log));
+
+				if (FS_WriteFile(&file, (void*)&log, sizeof(log) ) == -1)
 				{
 					OS_Warning("Failure : FS_WriteFile\n");
 				}
 				FS_CloseFile(&file);
 			}
+		}
+		else
+		{
+			OS_Warning("Failure : FS_CreateFileAuto\n");
 		}
 	}
 
@@ -319,7 +374,7 @@ static void InitAllocation(void)
 static void DrawWaitButtonA(void)
 {
 	kamiFontPrintfMain( 5,  3, 8, "    System Updater    ");
-	kamiFontPrintfMain( 5,  5, 8, " --- %s ---", __DATE__);
+	kamiFontPrintfMain( 4,  5, 8, " --- ver %s %s ---", g_strSDKSvnRevision, g_strIPLSvnRevision );
 
 	kamiFontPrintfMain( 5,  8, 3, "<Push A: Start Update>");
 	kamiFontPrintfMain( 3, 10, 1, "--------------------------");
@@ -360,12 +415,12 @@ static void DrawWaitButtonA(void)
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
-static void DrawAlready(char* date)
+static void DrawAlready(SystemUpdaterLog* log)
 {
 	kamiFontPrintfMain( 3,  8, 1, "--------------------------");
 	kamiFontPrintfMain( 3,  9, 1, "This machine has already");
 	kamiFontPrintfMain( 3, 10, 1, "been updated.");
-	kamiFontPrintfMain( 3, 12, 1, "version: %s", date);
+	kamiFontPrintfMain( 3, 12, 1, "ver: %s %s", log->sdk_version, log->ipl_version );
 	kamiFontPrintfMain( 3, 13, 1, "--------------------------");
 
 	while(1)
