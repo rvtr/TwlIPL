@@ -166,7 +166,7 @@ TwlMain()
 			if (FS_ReadFile(&file, &log, sizeof(log)) == sizeof(log))
 			{
 				// ログリード成功
-//				OS_Printf("magic=%d, sdk=%d, ipl=%d\n", log.magic_code, log.sdk_version, log.ipl_version);
+				OS_Printf("[%d, %d]\n", log.sdk_version, log.ipl_version);
 
 				// 初版SystemUpdater実行状態でないことをマジックコードで判別する
 				if (log.magic_code == SYSTEM_UPDATER_MAGIC_CODE)
@@ -280,8 +280,6 @@ TwlMain()
 		result = FALSE;
 		kamiFontPrintf( 0, (s16)(i+1), FONT_COLOR_RED, "Firm Update Failure!");
 	}
-
-	// 調査に不便なので一時的に削除
 
 	// 更新ログを作成して再実行を防ぐ
 	if (result)
@@ -420,7 +418,7 @@ static void DrawAlready(SystemUpdaterLog* log)
 	kamiFontPrintfMain( 3,  8, 1, "--------------------------");
 	kamiFontPrintfMain( 3,  9, 1, "This machine has already");
 	kamiFontPrintfMain( 3, 10, 1, "been updated.");
-	kamiFontPrintfMain( 3, 12, 1, "ver: %s %s", log->sdk_version, log->ipl_version );
+	kamiFontPrintfMain( 3, 12, 1, "ver: %d %d", log->sdk_version, log->ipl_version );
 	kamiFontPrintfMain( 3, 13, 1, "--------------------------");
 
 	while(1)
