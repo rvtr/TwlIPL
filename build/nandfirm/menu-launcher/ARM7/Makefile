@@ -12,8 +12,8 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
 TWL_PROC       = ARM7
@@ -36,6 +36,8 @@ ADDRESS_STATIC	=	0x037b8000
 
 #SRCDIR		=	# using default
 #LCFILE		=	# using default
+
+LLIBRARIES	+=	libsysmenu_sp.TWL$(ARCHGEN_TYPE).a
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 

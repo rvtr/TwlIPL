@@ -35,6 +35,10 @@
 */
 #define PRINT_MEMORY_ADDR       0x02FFC800
 
+/*
+    AESåÆê›íËAPI
+*/
+extern void SYSMi_SetAESKeysForAccessControl( BOOL isNtrMode, ROM_Header *pROMH );
 
 #ifdef PROFILE_ENABLE
 #define PROFILE_MAX  16
@@ -311,6 +315,7 @@ void TwlSpMain( void )
 
 //    PM_BackLightOn( TRUE ); // last chance
 
+    SYSMi_SetAESKeysForAccessControl(FALSE, rh);
     OS_BootFromFIRM();
 
 end:
