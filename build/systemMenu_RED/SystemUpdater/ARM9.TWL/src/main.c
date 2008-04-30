@@ -166,7 +166,7 @@ TwlMain()
 			if (FS_ReadFile(&file, &log, sizeof(log)) == sizeof(log))
 			{
 				// ログリード成功
-				OS_Printf("magic=%d, sdk=%d, ipl=%d\n", log.magic_code, log.sdk_version, log.ipl_version);
+//				OS_Printf("magic=%d, sdk=%d, ipl=%d\n", log.magic_code, log.sdk_version, log.ipl_version);
 
 				// 初版SystemUpdater実行状態でないことをマジックコードで判別する
 				if (log.magic_code == SYSTEM_UPDATER_MAGIC_CODE)
