@@ -46,7 +46,6 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 # no thumb version, no final rom version
 LLIBRARIES	+=	libes.TWL$(ARCHGEN_TYPE).a libboc.TWL$(ARCHGEN_TYPE).a \
 				libsfs$(TWL_LIBSUFFIX).a	\
-				libsea$(TWL_LIBSUFFIX).a	\
 				liblcfg$(TWL_LIBSUFFIX).a
 
 #----------------------------------------------------------------------------
