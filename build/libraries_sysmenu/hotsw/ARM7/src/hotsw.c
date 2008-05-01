@@ -85,6 +85,11 @@ static BOOL isTwlModeLoad(void);
 static HotSwState ReadSecureModeCardData(void);
 static void ClearCaradFlgs(void);
 
+static void FinalizeHotSw(HotSwApliType type);
+static BOOL ShiftGameMode(void);
+static void ClearUnnecessaryCardRegister(void);
+static void ClearAllCardRegister(void);
+
 static void RegisterRomEmuInfo(void);
 static void GenVA_VB_VD(void);
 static HotSwState DecryptObjectFile(void);
@@ -126,10 +131,11 @@ static u32                  *s_pSecure2SegBuffer;
 
 static CardBootData         s_cbData;
 static SYSMRomEmuInfo       s_romEmuInfo;
-static BOOL                 debuggerFlg;
+static BOOL                 s_debuggerFlg;
 
-static BOOL                 s_IsPulledOut = TRUE;
+static BOOL                 s_isPulledOut = TRUE;
 static BOOL                 s_isHotSwBusy = FALSE;
+static BOOL					s_pollingThreadSleepFlg = FALSE;
 
 // HMACSHA1の鍵
 static u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = {
@@ -287,22 +293,17 @@ void HOTSW_Init(u32 threadPrio)
                     );
 
     // メッセージキューの初期化
-    OS_InitMessageQueue( &HotSwThreadData.hotswQueue, &HotSwThreadData.hotswMsgBuffer[0], HOTSW_MSG_BUFFER_NUM );
-
-    // メッセージキューの初期化
-    OS_InitMessageQueue( &HotSwThreadData.hotswDmaQueue, &HotSwThreadData.hotswDmaMsgBuffer[0], HOTSW_DMA_MSG_NUM );
-
+    OS_InitMessageQueue( &HotSwThreadData.hotswQueue, 			 &HotSwThreadData.hotswMsgBuffer[0], 		 HOTSW_MSG_BUFFER_NUM );
+    OS_InitMessageQueue( &HotSwThreadData.hotswDmaQueue, 		 &HotSwThreadData.hotswDmaMsgBuffer[0], 	 HOTSW_DMA_MSG_NUM );
+	OS_InitMessageQueue( &HotSwThreadData.hotswPollingCtrlQueue, &HotSwThreadData.hotswPollingCtrlBuffer[0], HOTSW_POLLING_CTRL_BUFFER_NUM );
+    
     // スレッド起動
     OS_WakeupThreadDirect(&HotSwThreadData.hotswThread);
     OS_WakeupThreadDirect(&HotSwThreadData.monitorThread);
 
-    // Boot Segment バッファの設定
+    // バッファの設定
     HOTSW_SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );
-
-    // Secure1 Segment バッファの設定
     HOTSW_SetSecureSegmentBuffer(HOTSW_MODE1, (void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
-
-    // Secure2 Segment バッファの設定
     HOTSW_SetSecureSegmentBuffer(HOTSW_MODE2, (void *)SYSM_CARD_TWL_SECURE_BUF, SECURE_AREA_SIZE );
 
     // カードが挿さってあったらスレッドを起動する
@@ -402,9 +403,9 @@ static HotSwState LoadCardData(void)
                 retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
                 // 取得したRomエミュレーション情報を比較
-                debuggerFlg = TRUE;
+                s_debuggerFlg = TRUE;
                 if ( romEmuInfo->magic_code != SYSM_ROMEMU_INFO_MAGIC_CODE ){
-                    debuggerFlg = FALSE;
+                    s_debuggerFlg = FALSE;
                 }
             }
 
@@ -621,12 +622,12 @@ static BOOL isTwlModeLoad(void)
     if(s_cbData.id_nml & HOTSW_ROMID_TWLROM_MASK){
         // PlatformCodeがTwl or Hybridの場合
         if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
-            OS_PutString("TWL Card : TWL Application : Read Sequence -> TWL\n");
+            OS_PutString("TWL Card : TWL Application   Read Sequence -> TWL\n");
             return TRUE;
         }
         else{
             // [TODO] 仕様確認
-            OS_PutString("TWL Card : NTR Application : Read Sequence -> NTR\n");
+            OS_PutString("TWL Card : NTR Application   Read Sequence -> NTR\n");
             return FALSE;
         }
     }
@@ -636,18 +637,18 @@ static BOOL isTwlModeLoad(void)
         if(s_bondingOp == SCFG_OP_PRODUCT){
             // PlatformCodeがTwl or Hybridの場合
             if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
-                OS_PutString("NTR Card : TWL Application : Illegal Card\n");
+                OS_PutString("NTR Card : TWL Application   Error Illegal Card\n");
                 s_cbData.illegalCardFlg = TRUE;
                 return FALSE;
             }
             else{
-                OS_PutString("NTR Card : NTR Application : Read Sequence -> NTR\n");
+                OS_PutString("NTR Card : NTR Application   Read Sequence -> NTR\n");
                 return FALSE;
             }
         }
         // 開発用の場合
         else{
-            OS_PutString("Bonding Option Development : NTR Card : Read Sequence -> NTR\n");
+            OS_PutString("Bonding Option Development : NTR Card   Read Sequence -> NTR\n");
             return FALSE;
         }
     }
@@ -746,7 +747,7 @@ HotSwState HOTSWi_RefreshBadBlock(u32 romMode)
  *---------------------------------------------------------------------------*/
 BOOL HOTSWi_IsRunOnDebugger(void)
 {
-    return debuggerFlg;
+    return s_debuggerFlg;
 }
 
 
@@ -757,7 +758,7 @@ BOOL HOTSWi_IsRunOnDebugger(void)
  *---------------------------------------------------------------------------*/
 BOOL HOTSWi_IsRomEmulation(void)
 {
-    return debuggerFlg &&
+    return s_debuggerFlg &&
 #ifndef DEBUG_USED_CARD_SLOT_B_
            s_romEmuInfo.isEnableSlot1;
 #else
@@ -775,10 +776,10 @@ static void RegisterRomEmuInfo(void)
     SYSM_work* sw = SYSMi_GetWork();
 
     // デバッガ情報
-    if ( ! sw->flags.hotsw.is1stCardChecked && debuggerFlg )
+    if ( ! sw->flags.hotsw.is1stCardChecked && s_debuggerFlg )
     {
         MI_CpuCopy8( &s_romEmuInfo, &(sw->romEmuInfo), ROM_EMULATION_DATA_SIZE );
-        sw->flags.hotsw.isOnDebugger = debuggerFlg;
+        sw->flags.hotsw.isOnDebugger = s_debuggerFlg;
     }
 
     sw->flags.hotsw.isCardStateChanged = TRUE;
@@ -1477,8 +1478,6 @@ static void SetMCSCR(void)
   Name:        HotSwThread
 
   Description: カード抜け・挿し処理スレッド
-
-  [TODO:]挿抜のフロー・フラグケアetcの確認(今の所、抜き挿ししてもタイトルが更新されない)
  *---------------------------------------------------------------------------*/
 static void HotSwThread(void *arg)
 {
@@ -1491,19 +1490,23 @@ static void HotSwThread(void *arg)
         OS_ReceiveMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
 
         if( msg->ctrl == TRUE ) {
-            // [TODO]とりあえず、ここでHOTSWを抑制した時点でisExistCardがFALSEなら、HOTSWのFinalizeをするようにする。
             SYSMi_GetWork()->flags.hotsw.isEnableHotSW = msg->value;
-            // [TODO]カードがあるときとないときで場合分けしてFinalize処理を実装
-            //       PXIメッセージを「抑制」と「Finalize」で分けて処理
-            //          → １．全てのレジスタをクリアする           (カードがささっていない時)
-            //             ２．一度電源を落としてNomalモードにする  (NANDアプリ等を起動する場合)
-            //             ３．必要なレジスタを残して、後はクリア   (ささっているカードを起動する場合)
-            //
-            // NANDアプリ起動時の終了処理が確認できたら、、BOOTAPIでKillThreadでスレッドを殺せるようにしておく。
-            // スレッドを殺す前に、IREQとDET割り込みを無効にしておく。
-//          HOTSW_Finalize();
+            s_pollingThreadSleepFlg = msg->value ? FALSE : TRUE;
+            
+            if(msg->value){
+                s_isPulledOut = TRUE;
+                
+				OS_SendMessage(&HotSwThreadData.hotswPollingCtrlQueue,
+                               (OSMessage *)&HotSwThreadData.hotswPollingCtrlMsg[HotSwThreadData.idx_polling],
+                               OS_MESSAGE_NOBLOCK);
+                HotSwThreadData.idx_polling = (HotSwThreadData.idx_polling+1) % HOTSW_POLLING_CTRL_BUFFER_NUM;
+            }
         }
 
+        if( msg->finalize == TRUE ) {
+			FinalizeHotSw( msg->apli );
+        }
+        
         while(1){
             if( !SYSMi_GetWork()->flags.hotsw.isEnableHotSW ) {
                 SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
@@ -1512,7 +1515,7 @@ static void HotSwThread(void *arg)
             }
 
             if(HOTSW_IsCardExist()){
-                if(!s_IsPulledOut){
+                if(!s_isPulledOut){
                     if(GetMcSlotMode() == SLOT_STATUS_MODE_10){
                         LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 
@@ -1540,12 +1543,12 @@ static void HotSwThread(void *arg)
 
                     ClearCaradFlgs();
 
-                    s_IsPulledOut = TRUE;
+                    s_isPulledOut = TRUE;
 
                     break;
                 }
 
-                s_IsPulledOut = FALSE;
+                s_isPulledOut = FALSE;
             }
 
             // カードが抜けてたら
@@ -1558,7 +1561,7 @@ static void HotSwThread(void *arg)
                 MI_CpuClearFast(s_pSecureSegBuffer, s_SecureSegBufSize);
                 MI_CpuClearFast((u32 *)SYSM_CARD_BANNER_BUF, sizeof(TWLBannerFile));
 
-                s_IsPulledOut = TRUE;
+                s_isPulledOut = TRUE;
 
                 // ワンセグのスリープ時シャットダウン対策を戻す
                 MCU_EnableDeepSleepToPowerLine( MCU_PWR_LINE_33, TRUE );
@@ -1589,20 +1592,280 @@ static void ClearCaradFlgs(void)
 
 
 /*---------------------------------------------------------------------------*
-  [TODO:] Finalize処理の前にやるべきこと
+  Name:        FinalizeHotSw
 
-・NANDアプリ起動時、カード電源OFF
+  Description: アプリ起動時に、活線挿抜関係の後始末を行う。
 
-・TWL NANDアプリなら
-        ゲームカードONフラグ(NANDのRomHeader TWL拡張諸フラグ)を見て、
-        NANDアプリ起動後もカード電源(OFF後)ONにしてNormalモードにする
+・カードが挿さっていて
+  TWL NANDアプリ起動なら
+        NANDアプリヘッダのゲームカードONフラグ=1
+  		  → NANDアプリ起動後もカード電源(OFF後)ONにしてNormalモードにする
 
-・NTR NANDアプリなら
-        カード種別問わず、GAMEモードに遷移(NTR互換のRomHeaderのみ読む)
-        拡張領域残しておいてもよいかも
-        TWLカードがささっていて、Game2モードになっていたら、
-        電源OFFしてONして、Gameモードに遷移させる。
+  		NANDアプリヘッダのゲームカードONフラグ=0
+  		  → スロット電源OFF
+  
+  NTR NANDアプリ起動なら
+        カード種別問わず、一度スロット電源OFFしてから、GAMEモードに遷移させておく。
+		その際、NTR互換のRomHeaderのみ読み込んでおく。(拡張領域残しておいてもよいかも)
+
+・カードが抜かれていて
+  NANDアプリ起動なら
+  		スロット電源OFFして、カードスロット関連のレジスタをクリアする
+
+  
+ // NANDアプリ起動時の終了処理が確認できたら、、BOOTAPIでKillThreadでスレッドを殺せるようにしておく。
+ // スレッドを殺す前に、IREQとDET割り込みを無効にしておく。
  *---------------------------------------------------------------------------*/
+static void FinalizeHotSw(HotSwApliType type)
+{
+	static BOOL finalized = FALSE;
+    BOOL	isCardExist;
+
+    if(finalized){
+        OS_PutString("HotSw has been already finalized...");
+		return;
+    }
+	finalized = TRUE;
+    
+    isCardExist = HOTSW_IsCardExist();
+
+	McPowerOff();
+
+	// ポーリングスレッドを消去
+	OS_KillThread( &HotSwThreadData.monitorThread, NULL );
+    
+    // カードがなかったら、レジスタクリアしてリターン
+	if(!isCardExist){
+        ClearAllCardRegister();
+        
+        return;
+    }
+
+    switch(type){
+      // Card Application Boot
+      case HOTSW_APLITYPE_CARD:
+        OS_PutString("Finalize Type : Card Application\n");
+        break;
+
+      // NTR NAND Application Boot
+      case HOTSW_APLITYPE_NTR_NAND:
+        OS_PutString("Finalize Type : NTR NAND Application\n");
+        
+        if(!ShiftGameMode()){
+			ClearAllCardRegister();
+
+            McPowerOff();
+
+			OS_PutString("Failed To Shift Game Mode... Card Slot Power Off\n");
+            
+            return;
+        }
+        break;
+
+      // TWL NAND Application Boot
+      case HOTSW_APLITYPE_TWL_NAND:
+		OS_PutString("Finalize Type : TWL NAND Application\n");
+        
+        while(!SYSMi_GetWork()->flags.common.isHeaderLoadCompleted){
+			OS_Sleep(1);
+		}
+        
+        if(s_cbData.pBootSegBuf->rh.s.game_card_on){
+        	McPowerOn();
+
+            s_cbData.modeType = HOTSW_MODE2;
+            (void)ReadBootSegNormal(&s_cbData);
+
+            OS_PutString("- game card on flg is TRUE : now Normal Mode\n");
+        }
+        break;
+
+      // else
+      default:
+		OS_PutString("Finalize Type : Unexpected Type\n");
+
+        ClearAllCardRegister();
+
+        McPowerOff();
+
+        break;
+    }
+
+    // 必要なレジスタ以外クリア
+    ClearUnnecessaryCardRegister();
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:        ShiftGameMode
+
+  Description: Nitro互換のRomHeaderを読んで、Game Modeに移行させる
+ *---------------------------------------------------------------------------*/
+BOOL ShiftGameMode(void)
+{
+    HotSwState state;
+
+	MI_CpuClear32(&s_cbData, sizeof(CardBootData));
+    
+#ifndef DEBUG_USED_CARD_SLOT_B_
+    CARD_LockRom(s_CardLockID);
+#else
+    LockExCard(s_CardLockID);
+#endif
+
+    McPowerOn();
+
+    s_cbData.pBootSegBuf = s_pBootSegBuffer;
+
+    s_cbData.modeType = HOTSW_MODE1;
+    state = LoadTable();
+
+    // ---------------------- Normal Mode ----------------------
+    state = ReadIDNormal(&s_cbData);
+
+    // ARM9と排他制御
+    LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+
+    // Boot Segment読み込み
+	// [TODO] Rom Header読み込む必要あるのか？挿したときに読み込まれた情報を使えばよい？
+    state = ReadBootSegNormal(&s_cbData);
+
+    // CRCのチェック
+    // [TODO] Rom Header読み込まないんだったらCRCのチェックもいらない
+    {
+		u16 crc16;
+        
+    	// ROMヘッダCRCを算出してチェック。NintendoロゴCRCも確認。
+    	crc16 = SVC_GetCRC16( 65535, s_cbData.pBootSegBuf, 0x015e );
+
+    	if( ( crc16 != s_cbData.pBootSegBuf->rh.s.header_crc16 ) ||	( 0xcf56 != crc16 ) ){
+        	state = HOTSW_CRC_CHECK_ERROR;
+    	}
+    }
+    
+    // NTR互換 Rom Headerをコピー
+    // [TODO] HW_CARD_ROM_HEADERだとデータが消されるっぽい
+    MI_NDmaCopy(HOTSW_NDMA_NO, (void *)SYSM_CARD_ROM_HEADER_BAK, (void *)HW_CARD_ROM_HEADER, HW_CARD_ROM_HEADER_SIZE);
+
+    OS_TPrintf("SYSM_CARD_ROM_HEADER_BAK( 0x%08x ) -> HW_CARD_ROM_HEADER( 0x%08x )  size : 0x%08x\n", SYSM_CARD_ROM_HEADER_BAK, HW_CARD_ROM_HEADER, HW_CARD_ROM_HEADER_SIZE);
+    
+    // カード読みパラメータ設定
+    if(s_debuggerFlg){
+		s_cbData.cardType = ROM_EMULATION;
+        s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
+    }
+    else{
+        s_cbData.cardType = (s_cbData.id_nml & HOTSW_ROMID_1TROM_MASK) ? DS_CARD_TYPE_2 : DS_CARD_TYPE_1;
+		s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param;
+    }
+    s_cbData.secureLatency = AddLatency2ToLatency1(s_cbData.pBootSegBuf->rh.s.secure_cmd_param);
+    
+    // ARM9と排他制御ここまで
+    UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+
+    // KeyTable初期化
+    MakeBlowfishTableDS(&s_cbData, 8);
+    GenVA_VB_VD();
+
+    // Secure Modeへ
+    state = ChangeModeNormal(&s_cbData);
+
+    // ---------------------- Secure Mode ----------------------
+	// PNG On 設定
+    state = s_funcTable[s_cbData.cardType].SetPNG_S(&s_cbData);
+
+	// 本体側符号化回路初期化
+    SetMCSCR();
+
+	// [TODO] デバッグ用に読み込み。後で消す。
+	state = s_funcTable[s_cbData.cardType].ReadID_S(&s_cbData);
+    
+    // Game Modeへ
+    state = s_funcTable[s_cbData.cardType].ChangeMode_S(&s_cbData);
+    
+    // ---------------------- Game Mode ----------------------
+    state = ReadIDGame(&s_cbData);
+
+    if(s_cbData.id_nml != s_cbData.id_gam){
+		state = HOTSW_ID_CHECK_ERROR;
+    }
+
+    OS_TPrintf("Card Normal ID : 0x%08x\n", s_cbData.id_nml);
+    OS_TPrintf("Card Secure ID : 0x%08x\n", s_cbData.id_scr);
+	OS_TPrintf("Card Game   ID : 0x%08x\n", s_cbData.id_gam);
+    
+    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
+    HOTSW_WaitCardCtrl();
+
+#ifndef DEBUG_USED_CARD_SLOT_B_
+    CARD_UnlockRom(s_CardLockID);
+#else
+    UnlockExCard(s_CardLockID);
+#endif
+
+    if(state == HOTSW_SUCCESS){
+		return TRUE;
+    }
+    else{
+		return FALSE;
+    }
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:        ClearUnnecessaryCardRegister
+
+  Description: カード関連の不要なレジスタをクリアする
+ *---------------------------------------------------------------------------*/
+#define REGCLEAR_16		0x0000
+#define REGCLEAR_32		0x00000000UL
+
+static void ClearUnnecessaryCardRegister(void)
+{
+    // Chattering Coungerをクリア [d31-d16 Chattering Counter]
+	reg_MI_MC1 &= ~REG_MI_MC1_CC_MASK;
+
+    // Counter-Aをクリア
+	reg_MI_MC2 = REGCLEAR_16;
+
+    // HotSwで使っている割り込みを無効にする
+    (void)OS_DisableIrq();
+    (void)OS_SetIrqMask( OS_GetIrqMask() & ~(HOTSW_IF_CARD_DET | HOTSW_IF_CARD_IREQ) );
+    (void)OS_ResetRequestIrqMask( HOTSW_IF_CARD_DET | HOTSW_IF_CARD_IREQ );
+    (void)OS_EnableIrq();
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:        ClearAllCardRegister
+
+  Description: カード関連の全てのレジスタをクリアする。
+ *---------------------------------------------------------------------------*/
+static void ClearAllCardRegister(void)
+{
+	ClearUnnecessaryCardRegister();
+
+    // コマンド設定レジスタをクリア [各32bit]
+	reg_HOTSW_MCCMD0 = REGCLEAR_32; 
+    reg_HOTSW_MCCMD1 = REGCLEAR_32;
+
+    // メモリカードイネーブルとか割り込みイネーブルとかをクリア [16bit中 d15-d8が関係あり]
+	reg_HOTSW_MCCNT0 &= HOTSW_E2PROM_CTRL_MASK;
+
+    // latencyとかstartフラグとかのレジスタをクリア [32bit]
+	reg_HOTSW_MCCNT1 = REGCLEAR_32;
+
+	// カードからのデータがたまるレジスタをクリア [32bit]
+	reg_HOTSW_MCD1 = REGCLEAR_32;
+
+    // 符号生成回路初期値設定レジスタをクリア [各32bit]
+	reg_HOTSW_MCSCR0 = REGCLEAR_32;
+	reg_HOTSW_MCSCR1 = REGCLEAR_32;
+	reg_HOTSW_MCSCR2 = REGCLEAR_32;
+
+    // Slot Status,SWPをクリア [d15-d0 Slot Status,SWP]
+	reg_MI_MC1 = REGCLEAR_16;
+}
 
 
 /*---------------------------------------------------------------------------*
@@ -1611,7 +1874,7 @@ static void ClearCaradFlgs(void)
   Description: 実際のカード状態とHotSwThreadで状態を比べて、違いがあった場合は
                メッセージを送る
 
-  s_IsPulledOut : True  -> カードなし       HOTSW_IsCardExist : True  -> カードあり
+  s_isPulledOut : True  -> カードなし       HOTSW_IsCardExist : True  -> カードあり
                   False -> カードあり                           False -> カードなし
  *---------------------------------------------------------------------------*/
 static void MonitorThread(void *arg)
@@ -1627,11 +1890,17 @@ static void MonitorThread(void *arg)
         }
         while(s_isHotSwBusy);
 
+        // ポーリングスレッド抑制フラグが上がってたら、スリープ。抑制フラグが下りたら起床。
+		if(s_pollingThreadSleepFlg){
+            OSMessage msg;
+            OS_ReceiveMessage(&HotSwThreadData.hotswPollingCtrlQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
+        }
+        
         // 現在カードが抜けているか
         isPullOutNow = !HOTSW_IsCardExist();
 
         // 状態の比較
-        if(s_IsPulledOut != isPullOutNow){
+        if(s_isPulledOut != isPullOutNow){
             OSIntrMode enabled = OS_DisableInterrupts();
 
             // 本当は抜けてた場合
@@ -1738,9 +2007,13 @@ static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err)
 
     d.data = data;
 
-    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].ctrl  = (d.msg.ctrl) ? TRUE : FALSE;
-    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].value = d.msg.value;
-    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].type  = HOTSW_CONTROL;
+	OS_TPrintf("... Pxi Message - value:%x  ctrl:%x  finalize:%x  bootType:%x\n",
+               					d.msg.value, d.msg.ctrl, d.msg.finalize, d.msg.bootType);
+    
+    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].ctrl  	= (d.msg.ctrl) ? TRUE : FALSE;
+    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].finalize 	= (d.msg.finalize) ? TRUE : FALSE;
+    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].value 	= d.msg.value;
+    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].apli  	= (HotSwApliType)d.msg.bootType;
 
     // メッセージ送信
     OS_SendMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl], OS_MESSAGE_NOBLOCK);

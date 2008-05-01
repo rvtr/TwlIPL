@@ -11,24 +11,42 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date:: #$
+# $Date:: $
 # $Rev$
 # $Author$
 #----------------------------------------------------------------------------
 
+SUBDIRS				=
+
+#----------------------------------------------------------------------------
 TARGET_FIRM			=	SYSTEMMENU
+TARGET_PLATFORM		=	TWL
+TWL_ARCHGEN			=	LIMITED
+TWL_PROC	    	=	ARM9
+
+#----------------------------------------------------------------------------
+
+SRCDIR				=	./src
+
+SRCS				=	hotsw_ctrl.c
+
+TARGET_LIB			=	libhotsw$(TWL_LIBSUFFIX).a
+
+ifneq ($(DHT_TEST),)
+MACRO_FLAGS			+=  -DDHT_TEST
+endif
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-
-
-#----------------------------------------------------------------------------
-
-SUBDIRS				=	ARM7 ARM9
+INSTALL_TARGETS		=	$(TARGETS)
+INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
 
 #----------------------------------------------------------------------------
+
+do-build:		$(TARGETS)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 
 #===== End of Makefile =====
+

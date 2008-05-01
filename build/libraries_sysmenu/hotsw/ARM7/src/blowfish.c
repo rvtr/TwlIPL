@@ -44,10 +44,13 @@ void MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen)
     else{
 		keyBuf	= cbd->keyBuf2;
 
+#define USE_LOCAL_KEYTABLE
+#ifdef USE_LOCAL_KEYTABLE
 		MI_CpuCopyFast(&HotSwBlowfishInitTableTWL, (void *)ctx, sizeof(BLOWFISH_CTX));
-//		MI_CpuCopyFast((void *)((OSFromFirm7Buf *)HW_FIRM_FROM_FIRM_BUF)->twl_blowfish, (void *)ctx, sizeof(BLOWFISH_CTX));
-
-        return;
+		return;
+#else
+		MI_CpuCopyFast((void *)((OSFromFirm7Buf *)HW_FIRM_FROM_FIRM_BUF)->twl_blowfish, (void *)ctx, sizeof(BLOWFISH_CTX));
+#endif
     }
 
   	keyBuf[0] = *RomHeaderGameCode;

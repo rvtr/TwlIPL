@@ -71,7 +71,7 @@ extern const u8 g_devPubKey[ 4 ][ 0x80 ];
 
 // function's prototype-------------------------------------------------------
 static s32  ReadFile( FSFile* pf, void* buffer, s32 size );
-static void SYSMi_EnableHotSW( BOOL enable );
+
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle );
 static void SYSMi_AppendRelocateInfoCardSecureArea( void );
 static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle );
@@ -635,7 +635,12 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 #define STACK_SIZE 0xc00
 	static u64 stack[ STACK_SIZE / sizeof(u64) ];
 	
-	SYSMi_EnableHotSW( FALSE );
+	HOTSW_EnableHotSWAsync( FALSE );
+	// 値が変化するまでスリープして待つ。
+	while( HOTSW_isEnableHotSW() != FALSE ) {
+		OS_Sleep( 2 );
+	}
+    
 	s_loadstart = TRUE;
 	// このあとCardRomヘッダバッファにROMヘッダを上書きで読み込むので
 	// この時点でHotSWが止まっていないと、さらにカードのROMヘッダ
@@ -1430,33 +1435,3 @@ void CheckDigest( void )
 	}
 }
 #endif
-
-
-// 活線挿抜有効／無効をセット
-void SYSMi_EnableHotSW( BOOL enable )
-{
-	enable = enable ? 1 : 0;
-	
-	// 現在の値と同じなら何もせずリターン
-	if( SYSMi_GetWork()->flags.hotsw.isEnableHotSW == enable ) {
-		return;
-	}
-	
-	{
-		HotSwPxiMessage msg;
-
-        msg.msg.value = enable;
-        msg.msg.ctrl  = TRUE;
-
-	    while (PXI_SendWordByFifo(PXI_FIFO_TAG_HOTSW, msg.data, FALSE) != PXI_FIFO_SUCCESS)
-    	{
-        	// do nothing
-    	}
-        
-	}
-	
-	// 値が変化するまでスリープして待つ。
-	while( SYSMi_GetWork()->flags.hotsw.isEnableHotSW != enable ) {
-		OS_Sleep( 2 );
-	}
-}

@@ -69,6 +69,7 @@ extern "C" {
 #define	HOTSW_PULLED_MSG_NUM				16
 #define	HOTSW_CTRL_MSG_NUM					8
 #define HOTSW_MSG_BUFFER_NUM				(HOTSW_INSERT_MSG_NUM + HOTSW_PULLED_MSG_NUM + HOTSW_CTRL_MSG_NUM)
+#define	HOTSW_POLLING_CTRL_BUFFER_NUM		4
 
 // --- Card Control Reg 0
 #define HOTSW_E2PROM_CTRL_MASK		  		0x00ff
@@ -314,17 +315,21 @@ typedef struct CardThreadData{
     u32					idx_pulledOut;
     u32					idx_ctrl;
     u32					idx_dma;
+    u32					idx_polling;
 
    	OSMessage			hotswDmaMsg[HOTSW_DMA_MSG_NUM];
+    OSMessage			hotswPollingCtrlMsg[HOTSW_POLLING_CTRL_BUFFER_NUM];
     HotSwMessage		hotswInsertMsg[HOTSW_INSERT_MSG_NUM];
     HotSwMessage		hotswPulledOutMsg[HOTSW_PULLED_MSG_NUM];
 	HotSwMessage		hotswPxiMsg[HOTSW_CTRL_MSG_NUM];
 
     OSMessageQueue   	hotswQueue;
     OSMessageQueue   	hotswDmaQueue;
+    OSMessageQueue		hotswPollingCtrlQueue;
 
     OSMessage			hotswMsgBuffer[HOTSW_MSG_BUFFER_NUM];
 	OSMessage			hotswDmaMsgBuffer[HOTSW_DMA_MSG_NUM];
+    OSMessage			hotswPollingCtrlBuffer[HOTSW_POLLING_CTRL_BUFFER_NUM];
 } CardThreadData;
 
 // カード起動用関数

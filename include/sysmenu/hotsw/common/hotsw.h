@@ -38,13 +38,21 @@ typedef enum ModeType{
     HOTSW_MODE2
 } ModeType;
 
+typedef enum HotSwApliType{
+    HOTSW_APLITYPE_CARD,
+    HOTSW_APLITYPE_NTR_NAND,
+    HOTSW_APLITYPE_TWL_NAND
+} HotSwApliType;
+
 // union  -------------------------------------------------------------------
 // PXI用メッセージ
 typedef union HotSwPxiMessage{
     struct {
     	u32		value	:1;
     	u32		ctrl	:1;
-    	u32		:30;
+        u32		finalize:1;
+        u32		bootType:8;
+    	u32		:21;
     } msg;
     u32 data;
 } HotSwPxiMessage;
@@ -54,7 +62,9 @@ typedef union HotSwPxiMessage{
 typedef struct HotSwMessage{
     u32				 value;
     BOOL			 ctrl;
+    BOOL			 finalize;
 	HotSwMessageType type;
+    HotSwApliType    apli;
 } HotSwMessage;
 
 
@@ -88,6 +98,18 @@ BOOL HOTSWi_IsRomEmulation(void);
 
 // デバッガ通信用にカードスロットの電源をONにする。
 void HOTSWi_TurnCardPowerOn(u32 slot);
+
+// PXI通信でARM7に活線挿抜有効／無効を通知
+void HOTSW_EnableHotSWAsync( BOOL enable );
+
+// PXI通信でARM7に活線挿抜Finalize処理を通知
+void HOTSW_FinalizeHotSWAsync( HotSwApliType apliType );
+
+// 活線挿抜の許可/抑制の状態を返す
+BOOL HOTSW_isEnableHotSW(void);
+
+// カードアプリのロードが完了しているかを返す
+BOOL HOTSW_isCardLoadCompleted(void);
 
 #ifdef __cplusplus
 } /* extern "C" */

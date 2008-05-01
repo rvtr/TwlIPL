@@ -81,13 +81,8 @@ HotSwState ReadIDSecure_ROMEMU(CardBootData *cbd)
 	// MCCNT1 レジスタ設定 (START = 1 PC = 111(ステータスリード) latency1 = 1 に)
 	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x7 << PC_SHIFT) | (0x1 & LATENCY1_MASK);
 
-#if 0
-    // DMAが終了するまで待つ
-    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
-#else
     // メッセージ受信
 	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-#endif
 
     return HOTSW_SUCCESS;
 }
@@ -125,13 +120,8 @@ HotSwState ReadSegSecure_ROMEMU(CardBootData *cbd)
 		// MCCNT1 レジスタ設定 (START = 1 PC_MASK PC = 001(1ページリード)に latency1 = 0xd)
 		reg_HOTSW_MCCNT1 = START_MASK | CT_MASK | PC_MASK & (0x1 << PC_SHIFT) | (0xd & LATENCY1_MASK);
 
-#if 0
-    	// DMAが終了するまで待つ
-    	HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
-#else
     	// メッセージ受信
 		OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-#endif
 
         page++;
     }
