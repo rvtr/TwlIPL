@@ -1238,8 +1238,8 @@ AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 		s_calc_hash = NULL;
 	}
 	
-	// TWL設定データにブートするタイトルのTitleIDとplatformCodeを保存。
-	{
+	// 製品本体のみTWL設定データにブートするタイトルのTitleIDとplatformCodeを保存。
+    if( SCFG_GetBondingOption() == 0 ) {
 		u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
 		if( pBuffer != NULL ) {
 			LCFG_TSD_SetLastTimeBootSoftTitleID ( pBootTitle->titleID );
