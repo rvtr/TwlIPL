@@ -83,7 +83,7 @@ static void SetMCSCR(void);
 
 static BOOL isTwlModeLoad(void);
 static HotSwState ReadSecureModeCardData(void);
-static void ClearCaradFlgs(void);
+static void ClearCardFlgs(void);
 
 static void FinalizeHotSw(HotSwApliType type);
 static BOOL ShiftGameMode(void);
@@ -1541,7 +1541,7 @@ static void HotSwThread(void *arg)
                 if(retval != HOTSW_SUCCESS){
                     McPowerOff();
 
-                    ClearCaradFlgs();
+                    ClearCardFlgs();
 
                     s_isPulledOut = TRUE;
 
@@ -1553,7 +1553,7 @@ static void HotSwThread(void *arg)
 
             // カードが抜けてたら
             else{
-                ClearCaradFlgs();
+                ClearCardFlgs();
 
                 MI_CpuClear32(&s_cbData, sizeof(CardBootData));
 
@@ -1575,11 +1575,11 @@ static void HotSwThread(void *arg)
 
 
 /*---------------------------------------------------------------------------*
-  Name:        ClearCaradFlgs
+  Name:        ClearCardFlgs
 
   Description: カードデータバッファのバッファとフラグの後始末
  *---------------------------------------------------------------------------*/
-static void ClearCaradFlgs(void)
+static void ClearCardFlgs(void)
 {
     // フラグ処理
     LockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
