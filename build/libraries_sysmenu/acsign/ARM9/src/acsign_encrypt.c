@@ -84,18 +84,21 @@ static int add_padding(unsigned char *out,
 //
 // RSA
 //
+#define SIGN_DATA_ENCODE_BER_LEN	0x0f
 #define ACS_ENCRYPTED_SIGN_LEN	128
-BOOL ACSign_Encrypto(void *sign, const void *key, const void *data, int length)
+BOOL ACSign_Encrypto(void *sign, const void *key, const void *data, int length, BOOL isEncodeBER )
 {
     BN_CTX          *ctx;
     BIGNUM          src, dst, exp, mod;
     u8              buf[ACS_ENCRYPTED_SIGN_LEN];
-    int             len = length;
+	u8				dataBER[ACS_ENCRYPTED_SIGN_LEN];
     BOOL            result = TRUE;
 	KeyParam		key_mod;
 	KeyParam		key_prvExp;
+	const void		*pData;
+    int             len;
 	
-    if (NULL == sign || NULL == key || NULL == data || 0 > length) {
+    if (NULL == sign || NULL == key || NULL == data || 0 > length || ( ACS_ENCRYPTED_SIGN_LEN - SIGN_DATA_ENCODE_BER_LEN ) < length ) {
         return FALSE;
     }
 
@@ -103,9 +106,24 @@ BOOL ACSign_Encrypto(void *sign, const void *key, const void *data, int length)
 		OS_TPrintf( "RSA PrivKey Param get failed.\n" );
 		return FALSE;
 	}
-
 	
-    if ( add_padding( buf, ACS_ENCRYPTED_SIGN_LEN, data, length ) ) {
+	if( isEncodeBER ) {
+		const u8 *pSignDataEncodeBER = (const u8 *)"\x30\x21\x30\x09\x06\x05\x2b\x0e\x03\x02\x1a\x05\x00\x04\x14";
+		u8 *p = dataBER;
+		int i;
+		for( i = 0; i < SIGN_DATA_ENCODE_BER_LEN; i++ ) {
+			*p++ = pSignDataEncodeBER[ i ];
+		}
+		for( i = 0; i < length; i++ ) {
+			*p++ = ((const u8 *)data)[ i ];
+		}
+		pData = dataBER;
+		length += SIGN_DATA_ENCODE_BER_LEN;
+	}else {
+		pData = data;
+	}
+	
+    if ( add_padding( buf, ACS_ENCRYPTED_SIGN_LEN, pData, length ) ) {
         OS_TPrintf("encode_padding was failed.\n");
         result = FALSE;
         goto end;

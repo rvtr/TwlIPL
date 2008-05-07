@@ -40,7 +40,8 @@ BOOL	ACSign_Encrypto(
 					void *sign,			// 署名出力バッファへのポインタ
 					const void *key,	// DERフォーマット秘密鍵へのポインタ
 					const void *data,	// 署名対象データへのポインタ
-					int length			// 署名対象データ長
+					int length,			// 署名対象データ長
+					BOOL isEncodeBER		// 署名データをDERエンコードするか？
 					);
 
 // 
