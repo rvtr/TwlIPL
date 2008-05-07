@@ -102,7 +102,11 @@ extern BOOL SYSM_IsLoadTitleFinished( void );									// SYSM_StartLoadTitleで起
 extern void SYSM_StartAuthenticateTitle( TitleProperty *pBootTitle );			// 指定したTitlePropertyを別スレッドで検証開始
 extern BOOL SYSM_IsAuthenticateTitleFinished( void );							// SYSM_StartAuthenticateTitleで起動したスレッドが終了したかどうかを確認
 extern AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle );				// pBootTitleで指定したタイトルをブート。成功時は、never return.
+
+// AES領域デクリプト
 extern void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs );					// 起動するROMのAES暗号化領域のデクリプト開始
+extern BOOL SYSM_InitDecryptAESRegion_W( ROM_Header_Short *hs );				// WRAM経由ファイル読み込みのコールバックで使うAESデクリプト処理の初期化
+extern void SYSM_StartDecryptAESRegion_W( void *wram_addr, void *orig_addr, u32 size );	// WRAM経由ファイル読み込みのコールバックで使うAESデクリプト処理関数
 
 // デバイス制御
 extern void SYSM_CaribrateTP( void );											// タッチパネルキャリブレーション
