@@ -30,10 +30,13 @@ extern "C" {
         Read/Write中のWRAMにデータがある状態で呼び出されるAPI
         改ざんした場合は、改ざん後のデータが有効となることに注意
         addr        データがあるアドレス
+        orig_addr   本来のRead格納先/Write元アドレス
         len         有効なデータサイズ
+        wram        使用しているWRAM
+        slot        使用しているスロット
         arg         APIに渡した引数
 */
-typedef void (*FSWramCallback)(const void* addr, u32 len, void* arg);
+typedef void (*FSWramCallback)(const void* addr, const void* orig_addr, u32 len, MIWramPos wram, s32 slot, void* arg);
 
 /*
     FS_InitWramTransfer

@@ -106,7 +106,8 @@ extern AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle );				// pBootT
 // AES領域デクリプト
 extern void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs );					// 起動するROMのAES暗号化領域のデクリプト開始
 extern BOOL SYSM_InitDecryptAESRegion_W( ROM_Header_Short *hs );				// WRAM経由ファイル読み込みのコールバックで使うAESデクリプト処理の初期化
-extern void SYSM_StartDecryptAESRegion_W( void *wram_addr, void *orig_addr, u32 size );	// WRAM経由ファイル読み込みのコールバックで使うAESデクリプト処理関数
+extern void SYSM_StartDecryptAESRegion_W( const void *wram_addr, const void *orig_addr, u32 size );
+																				// WRAM経由ファイル読み込みのコールバックで使うAESデクリプト処理関数
 
 // デバイス制御
 extern void SYSM_CaribrateTP( void );											// タッチパネルキャリブレーション

@@ -369,19 +369,25 @@ static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
 //
 // ============================================================================
 
-static void SYSMi_CalcHMACSHA1Callback(const void* addr, u32 len, void* arg)
+static void SYSMi_CalcHMACSHA1Callback(const void* addr, const void* orig_addr, u32 len, MIWramPos wram, s32 slot, void* arg)
 {
 	CalcHMACSHA1CallbackArg *cba = (CalcHMACSHA1CallbackArg *)arg;
 	u32 calc_len = ( cba->hash_length < len ? cba->hash_length : len );
+	MI_SwitchWramSlot( wram, slot, MI_WRAM_SIZE_32KB, MI_WRAM_ARM9, MI_WRAM_ARM7 );// Wramを7にスイッチ
+	SYSM_StartDecryptAESRegion_W( addr, orig_addr, len ); // AES領域デクリプト
+	MI_SwitchWramSlot( wram, slot, MI_WRAM_SIZE_32KB, MI_WRAM_ARM7, MI_WRAM_ARM9 );// Wramが7にスイッチしてしまっているので戻す
 	if( calc_len == 0 ) return;
 	cba->hash_length -= calc_len;
 	SVC_HMACSHA1Update( &cba->ctx, addr, calc_len );
 }
 
-static void SYSMi_CalcSHA1Callback(const void* addr, u32 len, void* arg)
+static void SYSMi_CalcSHA1Callback(const void* addr, const void* orig_addr, u32 len, MIWramPos wram, s32 slot, void* arg)
 {
 	CalcSHA1CallbackArg *cba = (CalcSHA1CallbackArg *)arg;
 	u32 calc_len = ( cba->hash_length < len ? cba->hash_length : len );
+	MI_SwitchWramSlot( wram, slot, MI_WRAM_SIZE_32KB, MI_WRAM_ARM9, MI_WRAM_ARM7 );// Wramを7にスイッチ
+	SYSM_StartDecryptAESRegion_W( addr, orig_addr, len ); // AES領域デクリプト
+	MI_SwitchWramSlot( wram, slot, MI_WRAM_SIZE_32KB, MI_WRAM_ARM7, MI_WRAM_ARM9 );// Wramが7にスイッチしてしまっているので戻す
 	if( calc_len == 0 ) return;
 	cba->hash_length -= calc_len;
 	SVC_SHA1Update( &cba->ctx, addr, calc_len );
@@ -609,10 +615,15 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
             }
 #endif // LOAD_APP_VIA_WRAM
 
-			// ヘッダ読み込み完了フラグ
+			// ヘッダ読み込み完了
 			if( i == region_header )
 			{
+				// ヘッダ読み込み完了フラグを立てる
 				SYSMi_GetWork()->flags.common.isHeaderLoadCompleted = TRUE;
+#ifdef LOAD_APP_VIA_WRAM
+				// WRAM経由ロードの場合はAES初期化
+				(void)SYSM_InitDecryptAESRegion_W( (ROM_Header_Short *)destaddr[region_header] );
+#endif // LOAD_APP_VIA_WRAM
 			}
 
         }
@@ -867,12 +878,15 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 #endif
 		
 #ifdef LOAD_APP_VIA_WRAM
+		// NANDアプリをWRAM経由でロードする場合は、転送時にチェックしてしまうので、ここではCARDアプリのみ必要
 		if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM )
 #endif
 		{
+			prev = OS_GetTick();
 			// TWL以降のアプリはモジュールの特定領域がAES暗号化されているので、ハッシュチェック前にデクリプトする必要がある。
 			// ヘッダのデータを使うので、署名チェック後が望ましい。よってこのタイミング。
 			SYSM_StartDecryptAESRegion( &(head->s) );
+			OS_TPrintf("Authenticate : DecryptAESRegion %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - prev) );
 		}
 	    
 		// それぞれARM9,7のFLXおよびLTDについてハッシュを計算してヘッダに格納されているハッシュと比較

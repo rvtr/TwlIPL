@@ -265,7 +265,7 @@ static BOOL FSi_ReadWram(u8* dest, u32 len, MIWramPos wram, s32 slot, FSWramCall
                 const u8* s = src + done;
                 u8* d = dest + done;
                 u32 u = unit - done < FS_WRAM_CALLBACK_UNIT ? unit - done : FS_WRAM_CALLBACK_UNIT;
-                callback(s, u, arg);
+                callback(s, d, u, wram, slot + ret, arg);
                 MI_CpuCopyFast( s, d, u );
             }
         }
@@ -326,7 +326,7 @@ static BOOL FSi_WriteWram(const u8* src, u32 len, MIWramPos wram, s32 slot, FSWr
                 u8* d = dest + done;
                 u32 u = unit - done < FS_WRAM_CALLBACK_UNIT ? unit - done : FS_WRAM_CALLBACK_UNIT;
                 MI_CpuCopyFast( s, d, u );
-                callback(d, u, arg);
+                callback(d, s, u, wram, slot + ret, arg);
             }
         }
         else

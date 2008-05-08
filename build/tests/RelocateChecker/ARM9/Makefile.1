@@ -57,7 +57,7 @@ LLIBRARY_DIRS				+=	../crt/ARM9/obj/ARM9-TS.HYB/$(TWL_BUILD_DIR)
 CRT0_O		=	crt0_rc.FLX.TWL.o
 
 //MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
-MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
+MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)' -a
 
 include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/commondefs
 

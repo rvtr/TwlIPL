@@ -30,13 +30,15 @@
 // static variable-------------------------------------------------------------
 #ifdef SDK_ARM9
 static BOOL s_finished = FALSE;
-void *s_Addr_AESregion[2];
-u32 s_Size_AESregion[2];
-BOOL s_initialized = FALSE;
+static void *s_Addr_AESregion[2];
+static u32 s_Size_AESregion[2];
+static BOOL s_initialized = FALSE;
+static u8 s_initCounterAES[2][AES_BLOCK_SIZE];
 #endif
 // const data------------------------------------------------------------------
 
 #ifdef SDK_ARM9
+#include <twl/aes/ARM9/aes_internal.h>
 
 // WRAM経由ファイル読み込みのコールバックで使うAESデクリプト処理の初期化
 BOOL SYSM_InitDecryptAESRegion_W( ROM_Header_Short *hs )
@@ -131,6 +133,10 @@ BOOL SYSM_InitDecryptAESRegion_W( ROM_Header_Short *hs )
 
 	// Workに開発/製品情報を格納
 	SYSMi_GetWork()->isDeveloperAESMode = ( hs->developer_encrypt ? TRUE : FALSE );
+	
+	// カウンタの初期値記録
+	MI_CpuCopy8( hs->main_static_digest, s_initCounterAES[0], AES_BLOCK_SIZE );	// 領域1初期値
+	MI_CpuCopy8( hs->sub_static_digest, s_initCounterAES[1], AES_BLOCK_SIZE );	// 領域2初期値
 
 	// Workに「鍵」or「シードとゲームコード」をセット
 	if( hs->developer_encrypt )
@@ -161,22 +167,57 @@ BOOL SYSM_InitDecryptAESRegion_W( ROM_Header_Short *hs )
 }
 
 // WRAM経由ファイル読み込みのコールバックで使うAESデクリプト処理関数
-void SYSM_StartDecryptAESRegion_W( void *wram_addr, void *orig_addr, u32 size )
+// 注意：キャッシュケア済み、WRAMが7に倒れ済みである事を前提とする
+void SYSM_StartDecryptAESRegion_W( const void *wram_addr, const void *orig_addr, u32 size )
 {
-#pragma unused(wram_addr)
-#pragma unused(orig_addr)
-#pragma unused(size)
-	// [TODO:]
-	// AESデクリプト領域と、ファイルからWRAMに読み込んできた領域の目的地の比較
-	// 共通部分となる領域のアドレスとサイズ（WRAMでのアドレス）をWORKに記録し、7で該当領域をデクリプトしてもらう
-	// 対象となる領域をデクリプトする際に必要なカウンタの値も算出してWORKに入れておく
-	// 一応、デクリプトする領域のキャッシュもケアしておく
-	// ついでにtarget1なのか2なのかもFIFOで送ると良いかも
+	int l;
 	if( !s_initialized )
 	{
 		return;
 	}
 	
+	SYSMi_GetWork()->addr_AESregion[0] = NULL;
+	SYSMi_GetWork()->addr_AESregion[1] = NULL;
+	// target1と2について両方調べる
+	for( l=0;l<2;l++ )
+	{
+		u32 start;
+		u32 end;
+		
+		// AESデクリプト領域と、ファイルからWRAMに読み込んできた領域の目的地の比較
+		if( ( ((u32)orig_addr + size) < (u32)s_Addr_AESregion[l] ) ||
+		    ( ((u32)s_Addr_AESregion[l] + s_Size_AESregion[l]) < (u32)orig_addr )
+		  )
+		{
+			continue;
+		}
+		
+		// 上で比較した結果、共通部分があればデクリプトする領域なので括り出す
+		start = ( orig_addr < s_Addr_AESregion[l] ) ? (u32)s_Addr_AESregion[l] : (u32)orig_addr;
+		end = ( (u32)orig_addr + size < (u32)s_Addr_AESregion[l] + s_Size_AESregion[l] ) ?
+				(u32)orig_addr + size : (u32)s_Addr_AESregion[l] + s_Size_AESregion[l];
+				
+		// デクリプトする領域のアドレスとサイズ（WRAMに読み込んだ状態でのアドレスとサイズ）をWORKに記録
+		SYSMi_GetWork()->addr_AESregion[l] = (void *)( (s32)wram_addr + (start - (u32)orig_addr) );
+		SYSMi_GetWork()->size_AESregion[l] = end - start;
+		
+		// 対象となる領域をデクリプトする際に必要なカウンタの値も算出してWORKに入れておく
+		MI_CpuCopy8( s_initCounterAES[l], SYSMi_GetWork()->counterAES[l], AES_BLOCK_SIZE );
+		AESi_AddToCounter( (AESCounter *)SYSMi_GetWork()->counterAES[l], (start - (u32)s_Addr_AESregion[l]) / AES_BLOCK_SIZE );
+//		OS_TPrintf( "SYSM_StartDecryptAESRegion_W(arm9):wramaddr:0x%0.8x start:0x%0.8x end:0x%0.8x counter offset: %d.\n",wram_addr, start,end,(start - (u32)s_Addr_AESregion[l]) / AES_BLOCK_SIZE );
+
+		// 7にデクリプトしてもらう（target1なのか2なのかFIFOで送る）
+		s_finished = FALSE;
+		while( PXI_SendWordByFifo(PXI_FIFO_TAG_DECRYPTAES, (u32)(PXI_FIFO_DATA_DECRYPTAES_W_TARGET1 + l), FALSE) != PXI_FIFO_SUCCESS )
+	    {
+	    	OS_TPrintf( "SYSM_StartDecryptAESRegion_W(arm9):ARM9 PXI send error.\n" );
+	    }
+		// ARM7からの完了通知を受け取って完了
+		while( !s_finished )
+		{
+			OS_WaitAnyIrq();
+		}
+	}
 }
 
 // べた書きAESデクリプト処理
@@ -349,7 +390,7 @@ static void SYSMi_DecryptAESRegion_sub( int target )
 {
 	if( SYSMi_GetWork()->addr_AESregion[target]==NULL )
 	{
-		OS_TPrintf( "SYSMi_DecryptAESRegion_sub(arm7):Target Addr Error!\n" );
+		OS_TPrintf( "SYSMi_DecryptAESRegion_sub(arm7):Target%d Addr Error!\n",target+1 );
 		return;
 	}
 	
@@ -358,6 +399,7 @@ static void SYSMi_DecryptAESRegion_sub( int target )
 	
 	// 鍵ロードして暗号化領域の復号開始
 	ReplaceWithAes( SYSMi_GetWork()->addr_AESregion[target], SYSMi_GetWork()->size_AESregion[target] );
+//	OS_TPrintf( "SYSMi_DecryptAESRegion_sub(arm7):target:%d addr:0x%0.8x size:0x%x\n",target+1, SYSMi_GetWork()->addr_AESregion[target], SYSMi_GetWork()->size_AESregion[target] );
 }
 
 #endif //ifdef SDK_ARM9

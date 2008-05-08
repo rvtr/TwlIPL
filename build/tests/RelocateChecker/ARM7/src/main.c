@@ -147,12 +147,9 @@ TwlSpMain(void)
     (void)OS_EnableInterrupts();
 
     // ファイルシステム初期化
-    FS_Init(FS_DMA_NOT_USE);
-    FS_CreateReadServerThread(THREAD_PRIO_FS);
 
     if (OS_IsRunOnTwl() == TRUE)
     {
-        InitializeFatfs();    // FATFS 初期化
 #ifndef SDK_NOCRYPTO
         AES_Init();           // AES 初期化
 #endif
@@ -170,8 +167,6 @@ TwlSpMain(void)
     // SPI 初期化
     SPI_Init(THREAD_PRIO_SPI);
 
-    BOOT_Init();
-
     while (TRUE)
     {
         OS_Halt();
@@ -180,7 +175,6 @@ TwlSpMain(void)
         {
             OS_ResetSystem();
         }
-        BOOT_WaitStart();
     }
 }
 
