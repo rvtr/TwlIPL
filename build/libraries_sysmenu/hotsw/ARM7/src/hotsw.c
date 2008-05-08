@@ -86,7 +86,7 @@ static HotSwState ReadSecureModeCardData(void);
 static void ClearCardFlgs(void);
 
 static void FinalizeHotSw(HotSwApliType type);
-static BOOL ShiftGameMode(void);
+static BOOL ChangeGameMode(void);
 static void ClearUnnecessaryCardRegister(void);
 static void ClearAllCardRegister(void);
 
@@ -408,7 +408,11 @@ static HotSwState LoadCardData(void)
                     s_debuggerFlg = FALSE;
                 }
             }
-
+#if 0
+            else{
+				s_debuggerFlg = FALSE;
+			}
+#endif
             // 初回のRomエミュレーション情報を使用
             if(HOTSWi_IsRomEmulation()){
                 OS_PutString("Read Emulation ROM\n");
@@ -1612,9 +1616,9 @@ static void ClearCardFlgs(void)
   NANDアプリ起動なら
   		スロット電源OFFして、カードスロット関連のレジスタをクリアする
 
-  
- // NANDアプリ起動時の終了処理が確認できたら、、BOOTAPIでKillThreadでスレッドを殺せるようにしておく。
- // スレッドを殺す前に、IREQとDET割り込みを無効にしておく。
+	NANDアプリ起動時の終了処理が確認できたら、、BOOTAPIでKillThreadでスレッドを殺せるようにしておく。
+	スレッドを殺す前に、IREQとDET割り込みを無効にしておく。
+
  *---------------------------------------------------------------------------*/
 static void FinalizeHotSw(HotSwApliType type)
 {
@@ -1622,41 +1626,38 @@ static void FinalizeHotSw(HotSwApliType type)
     BOOL	isCardExist;
 
     if(finalized){
-        OS_PutString("HotSw has been already finalized...");
 		return;
     }
 	finalized = TRUE;
+
+	// ポーリングスレッドを消去
+	OS_KillThread( &HotSwThreadData.monitorThread, NULL );
+    
+    if(type == HOTSW_APLITYPE_CARD){
+		ClearUnnecessaryCardRegister();
+		return;
+    }
     
     isCardExist = HOTSW_IsCardExist();
 
 	McPowerOff();
 
-	// ポーリングスレッドを消去
-	OS_KillThread( &HotSwThreadData.monitorThread, NULL );
-    
     // カードがなかったら、レジスタクリアしてリターン
 	if(!isCardExist){
         ClearAllCardRegister();
-        
         return;
     }
 
     switch(type){
-      // Card Application Boot
-      case HOTSW_APLITYPE_CARD:
-        OS_PutString("Finalize Type : Card Application\n");
-        break;
-
       // NTR NAND Application Boot
       case HOTSW_APLITYPE_NTR_NAND:
         OS_PutString("Finalize Type : NTR NAND Application\n");
         
-        if(!ShiftGameMode()){
+        if(!ChangeGameMode()){
 			ClearAllCardRegister();
-
             McPowerOff();
 
-			OS_PutString("Failed To Shift Game Mode... Card Slot Power Off\n");
+			OS_PutString("Failed To Change Game Mode... Card Slot Power Off\n");
             
             return;
         }
@@ -1674,6 +1675,7 @@ static void FinalizeHotSw(HotSwApliType type)
         	McPowerOn();
 
             s_cbData.modeType = HOTSW_MODE2;
+            (void)LoadTable();
             (void)ReadBootSegNormal(&s_cbData);
 
             OS_PutString("- game card on flg is TRUE : now Normal Mode\n");
@@ -1682,11 +1684,10 @@ static void FinalizeHotSw(HotSwApliType type)
 
       // else
       default:
-		OS_PutString("Finalize Type : Unexpected Type\n");
-
         ClearAllCardRegister();
-
         McPowerOff();
+
+        OS_PutString("Finalize Type : Unexpected Type\n");
 
         break;
     }
@@ -1697,15 +1698,13 @@ static void FinalizeHotSw(HotSwApliType type)
 
 
 /*---------------------------------------------------------------------------*
-  Name:        ShiftGameMode
+  Name:        ChangeGameMode
 
   Description: Nitro互換のRomHeaderを読んで、Game Modeに移行させる
  *---------------------------------------------------------------------------*/
-BOOL ShiftGameMode(void)
+static BOOL ChangeGameMode(void)
 {
     HotSwState state;
-
-	MI_CpuClear32(&s_cbData, sizeof(CardBootData));
     
 #ifndef DEBUG_USED_CARD_SLOT_B_
     CARD_LockRom(s_CardLockID);
@@ -1716,40 +1715,16 @@ BOOL ShiftGameMode(void)
     McPowerOn();
 
     s_cbData.pBootSegBuf = s_pBootSegBuffer;
-
     s_cbData.modeType = HOTSW_MODE1;
+
+	// ---------------------- Normal Mode ----------------------
     state = LoadTable();
-
-    // ---------------------- Normal Mode ----------------------
     state = ReadIDNormal(&s_cbData);
-
-    // ARM9と排他制御
-    LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
-
-    // Boot Segment読み込み
-	// [TODO] Rom Header読み込む必要あるのか？挿したときに読み込まれた情報を使えばよい？
     state = ReadBootSegNormal(&s_cbData);
 
-    // CRCのチェック
-    // [TODO] Rom Header読み込まないんだったらCRCのチェックもいらない
-    {
-		u16 crc16;
-        
-    	// ROMヘッダCRCを算出してチェック。NintendoロゴCRCも確認。
-    	crc16 = SVC_GetCRC16( 65535, s_cbData.pBootSegBuf, 0x015e );
-
-    	if( ( crc16 != s_cbData.pBootSegBuf->rh.s.header_crc16 ) ||	( 0xcf56 != crc16 ) ){
-        	state = HOTSW_CRC_CHECK_ERROR;
-    	}
-    }
-    
     // NTR互換 Rom Headerをコピー
-    // [TODO] HW_CARD_ROM_HEADERだとデータが消されるっぽい
-    MI_NDmaCopy(HOTSW_NDMA_NO, (void *)SYSM_CARD_ROM_HEADER_BAK, (void *)HW_CARD_ROM_HEADER, HW_CARD_ROM_HEADER_SIZE);
+//	MI_NDmaCopy(HOTSW_NDMA_NO, (void *)SYSM_CARD_ROM_HEADER_BAK, (void *)HW_CARD_ROM_HEADER, HW_CARD_ROM_HEADER_SIZE);
 
-    OS_TPrintf("SYSM_CARD_ROM_HEADER_BAK( 0x%08x ) -> HW_CARD_ROM_HEADER( 0x%08x )  size : 0x%08x\n", SYSM_CARD_ROM_HEADER_BAK, HW_CARD_ROM_HEADER, HW_CARD_ROM_HEADER_SIZE);
-    
-    // カード読みパラメータ設定
     if(s_debuggerFlg){
 		s_cbData.cardType = ROM_EMULATION;
         s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
@@ -1759,28 +1734,20 @@ BOOL ShiftGameMode(void)
 		s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param;
     }
     s_cbData.secureLatency = AddLatency2ToLatency1(s_cbData.pBootSegBuf->rh.s.secure_cmd_param);
-    
-    // ARM9と排他制御ここまで
-    UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 
-    // KeyTable初期化
+	MI_CpuClear32(&s_cbData.keyTable, sizeof(BLOWFISH_CTX));
+    MI_CpuClear32(s_cbData.keyBuf, sizeof(s_cbData.keyBuf));
+    
     MakeBlowfishTableDS(&s_cbData, 8);
     GenVA_VB_VD();
-
-    // Secure Modeへ
     state = ChangeModeNormal(&s_cbData);
 
     // ---------------------- Secure Mode ----------------------
-	// PNG On 設定
     state = s_funcTable[s_cbData.cardType].SetPNG_S(&s_cbData);
-
-	// 本体側符号化回路初期化
     SetMCSCR();
 
 	// [TODO] デバッグ用に読み込み。後で消す。
 	state = s_funcTable[s_cbData.cardType].ReadID_S(&s_cbData);
-    
-    // Game Modeへ
     state = s_funcTable[s_cbData.cardType].ChangeMode_S(&s_cbData);
     
     // ---------------------- Game Mode ----------------------
@@ -1822,12 +1789,6 @@ BOOL ShiftGameMode(void)
 
 static void ClearUnnecessaryCardRegister(void)
 {
-    // Chattering Coungerをクリア [d31-d16 Chattering Counter]
-	reg_MI_MC1 &= ~REG_MI_MC1_CC_MASK;
-
-    // Counter-Aをクリア
-	reg_MI_MC2 = REGCLEAR_16;
-
     // HotSwで使っている割り込みを無効にする
     (void)OS_DisableIrq();
     (void)OS_SetIrqMask( OS_GetIrqMask() & ~(HOTSW_IF_CARD_DET | HOTSW_IF_CARD_IREQ) );
