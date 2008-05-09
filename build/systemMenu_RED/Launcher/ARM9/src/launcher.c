@@ -364,10 +364,6 @@ static void BannerDraw(int selected, TitleProperty *titleprop)
 	// OAMデータの設定
 	SetOAMAttr();
 	
-	// OAMをVRAMへロード
-	DC_FlushRange(&banner_oam_attr, sizeof(banner_oam_attr));
-	GX_LoadOAM(&banner_oam_attr, 0, sizeof(banner_oam_attr));
-	
 	// アプリ名表示
 	str = ((TWLBannerFile *)titleprop[selected].pBanner)->v1.gameName[ LCFG_TSD_GetLanguage() ];
 	if( !my_EqualNString( old_gameName, str, BANNER_LANG_LENGTH ) )
@@ -459,6 +455,7 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
 		wa += 0.0333333333333;
 	}
 	
+	// OAMをVRAMへロード
 	DC_FlushRange(&banner_oam_attr, sizeof(banner_oam_attr));
 	GX_LoadOAM(&banner_oam_attr, 0, sizeof(banner_oam_attr));
 
@@ -766,6 +763,10 @@ typedef struct NandFirmResetParameter {
 	DrawScrollBar( pTitleList );
 	
 	BannerDraw( selected, pTitleList );
+	
+	// OAMをVRAMへロード
+	DC_FlushRange(&banner_oam_attr, sizeof(banner_oam_attr));
+	GX_LoadOAM(&banner_oam_attr, 0, sizeof(banner_oam_attr));
 	
 	// RTC情報の取得＆表示
 	GetAndDrawRTCData( &g_rtcDraw, FALSE );
