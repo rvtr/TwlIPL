@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+
+#----------------------------------------------------------------
+# This script is not for execute directly.
+# Please use 'source ./setup'.
+#----------------------------------------------------------------
+
+export TWL_IPL_RED_ROOT=`cygpath -m $PWD`

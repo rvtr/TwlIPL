@@ -1,0 +1,25 @@
+---------------
+このパッチは暫定的ながら NitroSystem を
+TWL-SDK 上でビルド/使用できるようにするものです。
+添付の zip ファイルを展開し既存の NitroSystem に上書きしてください。
+
+注意
+・TWLSYSTEM_ROOT 環境変数に NITROSYSTEM_ROOT 環境変数と
+　同じ値を設定する必要があります。
+・NitroSystem はビルドしなおす必要があります。
+・snd, mcs ライブラリは使用できません。
+・demo はそのままではビルドできません。
+　TWL-SDK では nef が tef へ変更されたため
+　TARGET_NEF が設定されているものは削除する必要があります。
+----
+
+
+demoのビルドを通す方法
+
+LLIBRARY_DIRS   =   $(G2D_DEMOLIB)/lib/$(NITRO_BUILDTYPE)
+↓
+LLIBRARY_DIRS   =   $(G2D_DEMOLIB)/$(LIBDIR)
+
+
+TARGET_NEF		=	main.nef　を削除。
+

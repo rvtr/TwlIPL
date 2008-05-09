@@ -1,0 +1,142 @@
+#! make -f
+#----------------------------------------------------------------------------
+# Project:  TwlIPL - commondefs - common definitions for build system
+# File:     commondefs
+#
+#  Copyright 2007 Nintendo.  All rights reserved.
+#
+# These coded instructions, statements, and computer programs contain
+# proprietary information of Nintendo of America Inc. and/or Nintendo
+# Company Ltd., and are protected by Federal copyright law.  They may
+# not be disclosed to third parties or copied or duplicated in any form,
+# in whole or in part, without the prior written consent of Nintendo.
+#
+# $Date:: 2007-09-06$
+# $Rev$
+# $Author$
+#----------------------------------------------------------------------------
+ifndef TWL_SYSMENU_COMMONDEFS_
+TWL_SYSMENU_COMMONDEFS_ = TRUE
+
+#SYSMENU_DISABLE_TWL_BOOT = TRUE
+#SYSMENU_DISABLE_RETAIL_BOOT = TRUE
+
+NITRO_NO_STD_PCHDR = TRUE # プリコンパイルヘッダ抑止
+
+EMPTY	 	?=
+SPACE 		?= $(EMPTY) $(EMPTY)
+
+TWL_KEYSDIR		?=	$(SYSMENU_ROOT)/keys/dummy
+
+#----------------------------------------------------------------------------
+### TWL-commondefs
+#
+#include $(TWLSDK_ROOT)/build/buildtools/commondefs
+include	$(NITROSYSTEM_ROOT)/build/buildtools/commondefs
+
+# TwlSDK の TWLSYSTEM_* -> NITROSYSTEM_* 変更暫定対策
+# NitroSystemパッチが更新されれば不要のはず
+NITROSYSTEM_INCDIR ?= $(TWLSYSTEM_INCDIR)
+NITROSYSTEM_LIBDIR ?= $(TWLSYSTEM_LIBDIR)
+NITROSYSTEM_LIBS ?= $(TWLSYSTEM_LIBS)
+
+#----------------------------------------------------------------------------
+#  TWL-SYSTEM-MENU path settings
+#
+
+#SYSMENU_ROOT			:= $(subst $(SPACE),\ ,$(subst \,/,$(TWL_IPL_RED_ROOT)))
+SYSMENU_ROOT		:= $(call eupath,$(TWL_IPL_RED_ROOT))
+
+SYSMENU_BUILDTOOLSDIR	:= $(SYSMENU_ROOT)/build/buildtools
+SYSMENU_INCDIR			:= $(SYSMENU_ROOT)/include \
+                           $(ROOT)/build/libraries/spi/ARM9/include \
+						   $(ROOT)/build/libraries/os/common/include \
+                           $(ROOT)/build/libraries/mb/common/include
+SYSMENU_TOOLSDIR		:= $(SYSMENU_ROOT)/tools
+SYSMENU_COMPONENTSDIR	:= $(SYSMENU_ROOT)/components
+
+LDEPENDS_LCF			+= $(SYSMENU_BUILDTOOLSDIR)/commondefs.sysmenu
+LDEPENDS_RES			+= $(SYSMENU_BUILDTOOLSDIR)/commondefs.sysmenu
+
+
+ifneq	($(TARGET_TAD),)
+TARGETS					+=	 $(TARGET_TAD)
+endif
+
+#----------------------------------------------------------------------------
+### SYSTEM_MENU Library settings
+
+SYSMENU_LIBDIR			:= $(SYSMENU_ROOT)/lib/$(TWL_LIBTYPE)
+
+ifeq	($(CODEGEN_PROC),ARM9)
+
+SYSMENU_LIBS	?=	\
+					liblcfg$(TWL_LIBSUFFIX).a \
+					libsysmenu$(TWL_LIBSUFFIX).a \
+					libsysmmcu$(TWL_LIBSUFFIX).a \
+					libmbloader$(TWL_LIBSUFFIX).a \
+					libboot$(TWL_LIBSUFFIX).a \
+					libds$(TWL_LIBSUFFIX).a \
+					libhotsw$(TWL_LIBSUFFIX).a \
+					libdht$(TWL_LIBSUFFIX).a \
+
+else #	($(CODEGEN_PROC),ARM7)
+
+SYSMENU_LIBS	?=	\
+					libsysmenu_sp$(TWL_LIBSUFFIX).a \
+					libsysmmcu_sp$(TWL_LIBSUFFIX).a \
+					libmbloader_sp$(TWL_LIBSUFFIX).a \
+					libboot_sp$(TWL_LIBSUFFIX).a \
+					libds_sp$(TWL_LIBSUFFIX).a \
+					libhotsw_sp$(TWL_LIBSUFFIX).a \
+					libdht_sp$(TWL_LIBSUFFIX).a \
+
+endif
+
+
+#----------------------------------------------------------------------------
+#  MY BUILD TOOLS
+#
+OPENSSL			:= $(SYSMENU_TOOLSDIR)/openssl/openssl.exe
+NTEXCONV		:= $(ROOT)/tools/bin/ntexconv.exe
+MAKEBANNER		:= $(TWL_TOOLSDIR)/bin/makebanner.TWL.exe
+
+MAKESYSMENU_RSA_PRVKEY	?= $(SYSMENU_TOOLSDIR)/openssl/rsa_private.der
+MAKESYSMENU_RSA_PUBKEY	?= $(SYSMENU_TOOLSDIR)/openssl/rsa_public.der
+
+MAKETAD			?= $(ROOT)/tools/bin/makeTad.pl
+
+#----------------------------------------------------------------------------
+
+### Global Library resettings
+
+GINCLUDES		:= $(SYSMENU_INCDIR) $(GINCLUDES)
+ifneq ($(ES_ROOT),)
+GINCLUDES		+= $(ES_ROOT)/twl/include
+endif
+GLIBRARY_DIRS	:= $(SYSMENU_LIBDIR) $(GLIBRARY_DIRS)
+GLIBRARIES		:= $(SYSMENU_LIBS)   $(GLIBRARIES)
+
+#----------------------------------------------------------------------------
+#  TWLSYSMENU_INSTALL_ROOT
+#
+SYSMENU_INSTALL_ROOT			:= $(subst $(SPACE),\ ,$(subst \,/,$(TWL_IPL_RED_ROOT)))
+SYSMENU_INSTALL_INCDIR			:= $(SYSMENU_INSTALL_ROOT)/include
+SYSMENU_INSTALL_TOOLSDIR		:= $(SYSMENU_INSTALL_ROOT)/tools
+SYSMENU_INSTALL_LIBDIR			:= $(SYSMENU_INSTALL_ROOT)/lib/$(TWL_LIBTYPE)
+SYSMENU_INSTALL_COMPONENTSDIR	:= $(SYSMENU_INSTALL_ROOT)/components
+SDK_NMENU_DATADIR				=  $(ROOT)/build/tools/TwlNMenu/data
+
+#----------------------------------------------------------------------------
+
+ifdef SYSMENU_DISABLE_TWL_BOOT
+MACRO_FLAGS	+= -DSYSMENU_DISABLE_TWL_BOOT=$(SYSMENU_DISABLE_TWL_BOOT)
+endif
+
+ifdef SYSMENU_DISABLE_RETAIL_BOOT
+MACRO_FLAGS	+= -DSYSMENU_DISABLE_RETAIL_BOOT=$(SYSMENU_DISABLE_RETAIL_BOOT)
+endif
+
+#----------------------------------------------------------------------------
+endif	# TWL_SYSMENU_COMMONDEFS_
+#----- End of commondefs -----
