@@ -65,8 +65,8 @@ endif
 LCFILE_SPEC	= ../../NandInitializerRed/ARM9.TWL/ARM9-TS.lsf
 ROM_SPEC	= ./main.rsf
 
-MAKEROM_ARM7_BASE	=	../ARM7.TWL/bin/$(TWL_BUILDTYPE_ARM7)/armadillo
-MAKEROM_ARM7		=	$(MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
+MAKEROM_ARM7_BASE   = $(TWL_COMPONENTSDIR)/armadillo/$(TWL_BUILDTYPE_ARM7)/armadillo
+MAKEROM_ARM7        = $(MAKEROM_ARM7_BASE).TWL.FLX.sbin
 
 SRCS		=	main.c \
 				kami_pxi.c \
