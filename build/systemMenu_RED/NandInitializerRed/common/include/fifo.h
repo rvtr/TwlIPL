@@ -57,6 +57,7 @@ typedef enum KAMIPxiResult
 }
 KAMIPxiResult;
 
+
 typedef enum KamiCommand
 {
 	KAMI_TEST_COMMAND,
@@ -66,9 +67,27 @@ typedef enum KamiCommand
     KAMI_MCU_IO,
     KAMI_ARM7_IO,
     KAMI_CDC_GO_DSMODE,
-    KAMI_CLEAR_NAND_ERRORLOG    
+    KAMI_CLEAR_NAND_ERRORLOG,
+    KAMI_GET_CAMERA_MODULE_TYPE
 }
 KamiCommand;
+
+
+typedef enum CameraModuleType
+{
+    CAMERA_MODULE_TYPE_UNKNOWN,
+    CAMERA_MODULE_TYPE_SHARP,
+    CAMERA_MODULE_TYPE_MICRON
+}
+CameraModuleType;
+
+
+typedef struct CameraModuleTypes
+{
+    CameraModuleType in;
+    CameraModuleType out;
+}
+CameraModuleTypes;
 
 /*===========================================================================*/
 

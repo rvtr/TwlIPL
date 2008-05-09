@@ -24,10 +24,9 @@
 #include "nvram.h"
 #include <twl/ltdmain_begin.h>
 #include <twl/mcu.h>
-
-//#include <c:/TWL_SDK/build/libraries/fatfs/ARM7.TWL/include/twl/rtfs.h>
-//#include <c:/TWL_SDK/build/libraries/fatfs/ARM7.TWL/include/twl/devices/sdmc/ARM7/sdmc.h>
-
+#include <twl/camera.h>
+#include <twl/camera/ARM7/i2c_sharp.h>
+#include <twl/camera/ARM7/i2c_micron.h>
 
 typedef unsigned char byte;     /* Don't change */
 typedef unsigned short word;    /* Don't change */
@@ -134,6 +133,7 @@ static void KamiPxiCallback(PXIFifoTag tag, u32 data, BOOL err)
 		case KAMI_ARM7_IO:
 		case KAMI_CDC_GO_DSMODE:
 		case KAMI_CLEAR_NAND_ERRORLOG:
+		case KAMI_GET_CAMERA_MODULE_TYPE:
             if (!OS_SendMessage(&kamiWork.msgQ, NULL, OS_MESSAGE_NOBLOCK))
             {
                 KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_FATAL_ERROR);
@@ -253,23 +253,23 @@ static void KamiThread(void *arg)
 			{
 				BOOL is_read;
 				u32  reg_no;
-				void* buffer;
-				u32  value;
+				u32  write;
+				u32  read;
 
 				is_read = (BOOL)kamiWork.data[0];
 				KAMI_UNPACK_U32(&reg_no,  &kamiWork.data[1]);
-				KAMI_UNPACK_U32((u32 *)(&buffer), &kamiWork.data[5]);
-				KAMI_UNPACK_U32(&value,  &kamiWork.data[9]);
+				KAMI_UNPACK_U32(&write,  &kamiWork.data[5]);
 
 				if (is_read)
 				{
-					*(u8 *)buffer = MCU_ReadRegister( (u8)reg_no );
+					read = MCU_ReadRegister( (u8)reg_no );
+	            	KamiReturnResultEx(kamiWork.command, KAMI_PXI_RESULT_SUCCESS,  sizeof(u8), (u8*)&read );
 				}
 				else
 				{
-					MCU_WriteRegister( (u8)reg_no, (u8)value );
+					MCU_WriteRegister( (u8)reg_no, (u8)write );
+		            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
 				}
-	            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
 			}
 			break;
 
@@ -316,6 +316,37 @@ static void KamiThread(void *arg)
 				}
 			}
 			break;
+
+        case KAMI_GET_CAMERA_MODULE_TYPE:
+            {
+                CameraModuleTypes types;
+                if (CAMERAi_IsSharpModule(CAMERA_SELECT_IN))
+                {
+                    types.in = CAMERA_MODULE_TYPE_SHARP;
+                }
+                else if (CAMERAi_IsMicronModule(CAMERA_SELECT_IN))
+                {
+                    types.in = CAMERA_MODULE_TYPE_MICRON;
+                }
+                else
+                {
+                    types.in = CAMERA_MODULE_TYPE_UNKNOWN;
+                }
+                if (CAMERAi_IsSharpModule(CAMERA_SELECT_OUT))
+                {
+                    types.out = CAMERA_MODULE_TYPE_SHARP;
+                }
+                else if (CAMERAi_IsMicronModule(CAMERA_SELECT_OUT))
+                {
+                    types.out = CAMERA_MODULE_TYPE_MICRON;
+                }
+                else
+                {
+                    types.out = CAMERA_MODULE_TYPE_UNKNOWN;
+                }
+                KamiReturnResultEx(kamiWork.command, KAMI_PXI_RESULT_SUCCESS, sizeof(CameraModuleTypes), (u8*)&types);
+            }
+            break;
 
         default:
             KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_INVALID_COMMAND);

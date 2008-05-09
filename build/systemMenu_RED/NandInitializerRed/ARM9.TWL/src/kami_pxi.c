@@ -254,12 +254,18 @@ KAMIResult kamiMcuIo(u32 reg_no, void* buffer, u32 value, BOOL is_read)
 
     kamiWork.callback = NULL;
     kamiWork.arg = 0;
-    kamiWork.data = 0;
+	if (is_read)
+	{
+		kamiWork.data = (u8*)buffer;
+	}
+	else
+	{
+	    kamiWork.data = 0;
+	}
 
 	// データ作成
 	KAMI_PACK_U32(&data[0], &reg_no);
-	KAMI_PACK_U32(&data[4], &buffer);
-	KAMI_PACK_U32(&data[8], &value);
+	KAMI_PACK_U32(&data[4], &value);
 
     if (KamiSendPxiCommand(KAMI_MCU_IO, 12, (u8)is_read))
     {
@@ -393,6 +399,83 @@ KAMIResult kamiClearNandErrorLog( void )
     kamiWork.data = 0;
 
     if (KamiSendPxiCommand(KAMI_CLEAR_NAND_ERRORLOG, 0, (u8)0))
+    {
+	    KamiWaitBusy();
+	    return (KAMIResult)kamiWork.result;
+    }
+    return KAMI_RESULT_SEND_ERROR;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         kamiGetCameraModuleTypesAsync
+
+  Description:  カメラモジュールタイプを取得します（非同期版）
+
+  Arguments:    None.
+
+  Returns:      
+ *---------------------------------------------------------------------------*/
+
+KAMIResult kamiGetCameraModuleTypesAsync( CameraModuleTypes *pTypes, KAMICallback callback, void* arg )
+{
+    OSIntrMode enabled;
+
+    if (pTypes == NULL)
+    {
+        return KAMI_RESULT_INVALID_PARAMETER;
+    }
+
+    enabled = OS_DisableInterrupts();
+    if (kamiWork.lock)
+    {
+        (void)OS_RestoreInterrupts(enabled);
+        return KAMI_RESULT_BUSY;
+    }
+    kamiWork.lock = TRUE;
+    kamiWork.callback = callback;
+    kamiWork.arg = arg;
+    kamiWork.data = (u8*)pTypes;
+    (void)OS_RestoreInterrupts(enabled);
+
+    if (KamiSendPxiCommand(KAMI_GET_CAMERA_MODULE_TYPE, 0, 0))
+    {
+        return KAMI_RESULT_SUCCESS;
+    }
+    return KAMI_RESULT_SEND_ERROR;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         kamiGetCameraModuleTypes
+
+  Description:  カメラモジュールタイプを取得します（同期版）
+
+  Arguments:    None.
+
+  Returns:      
+ *---------------------------------------------------------------------------*/
+
+KAMIResult kamiGetCameraModuleTypes( CameraModuleTypes *pTypes )
+{
+    OSIntrMode enabled;
+
+    if (pTypes == NULL)
+    {
+        return KAMI_RESULT_INVALID_PARAMETER;
+    }
+
+    enabled = OS_DisableInterrupts();
+    if (kamiWork.lock)
+    {
+        (void)OS_RestoreInterrupts(enabled);
+        return KAMI_RESULT_BUSY;
+    }
+    kamiWork.lock = TRUE;
+    kamiWork.callback = NULL;
+    kamiWork.arg  = 0;
+    kamiWork.data = (u8*)pTypes;
+    (void)OS_RestoreInterrupts(enabled);
+
+    if (KamiSendPxiCommand(KAMI_GET_CAMERA_MODULE_TYPE, 0, 0))
     {
 	    KamiWaitBusy();
 	    return (KAMIResult)kamiWork.result;

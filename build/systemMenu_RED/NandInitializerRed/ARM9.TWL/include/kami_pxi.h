@@ -65,9 +65,11 @@ KAMIResult kamiMcuIo(u32 reg_no, void* buffer, u32 value, BOOL is_read);
 KAMIResult kamiARM7Io(u32 addr, u32* buffer, u32 value, BOOL is_read);
 KAMIResult kamiCDC_GoDsMode( void );
 KAMIResult kamiClearNandErrorLog( void );
+KAMIResult kamiGetCameraModuleTypesAsync( CameraModuleTypes *pTypes, KAMICallback callback, void* arg );
+KAMIResult kamiGetCameraModuleTypes( CameraModuleTypes *pTypes );
 
 // (重要)
-// ARM7が読み書きするためリード後はInvalidate、ライト前はフラッシュしてください。
+// ARM7が読み書きするためリード前はInvalidate、ライト前はフラッシュしてください。
 // 
 static KAMIResult kamiNandRead(u32 block, void* buffer, u32 count)
 {
