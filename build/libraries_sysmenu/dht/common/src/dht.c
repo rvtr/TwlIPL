@@ -117,7 +117,7 @@ u32 DHT_GetDatabaseLength(const DHTFile* pDHT)
 static BOOL DHT_CheckDatabase(const DHTFile* pDHT)
 {
     SVCSignHeapContext pool;
-    u8 heap[4*1024];
+    static u8 heap[4*1024]; // avoid stack overflow
     u8 md1[20];
     u8 md2[20];
     s32 result;
