@@ -26,7 +26,8 @@ TWL_NO_STD_PCHDR			=	True
 ifndef	TWLSDK_NOCRYPTO
 #----------------------------------------------------------------------------
 
-SRCS		=	main.c \
+SRCS		=	crt0.SCFG_NOLOCK.c \
+				main.c \
 				kami_pxi.c \
 				formatter.c \
 				nvram_misc.c
@@ -38,7 +39,7 @@ LCFILE_SPEC		=	$(TARGET_NAME).lsf
 LCFILE_TEMPLATE	=	$(TARGET_NAME).lcf.template
 LDRES_TEMPLATE	=	$(TARGET_NAME).response.template
 
-CRT0_O			=	crt0.SCR.TWL.o
+CRT0_O			=	crt0.SCFG_NOLOCK.o
 
 # スタック不足防止の為、インライン展開せずにコンパイルする
 CCFLAGS_OPT		=	-O4 -inline off
@@ -46,17 +47,26 @@ CCFLAGS_OPT		=	-O4 -inline off
 #----------------------------------------------------------------------------
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
-MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD -DSDK_SEA
+MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD -DSDK_SEA -DSDK_NOINIT
 
 MAKELCF_FLAGS	+=	-DISDBG_LIBS_TWL='$(if $(ISDBG_LIBS_TWL),$(ISDBG_LIBS_TWL),libstubsistd_sp$(TWL_LIBSUFFIX).a)'	\
 					-DISDBG_LIBS_NITRO='libstubsisd_sp$(TWL_LIBSUFFIX).a'
 
-LINCLUDES		=	$(ROOT)/build/libraries/spi/ARM7/include ../common/include
+LINCLUDES		+=	$(ROOT)/build/libraries/spi/ARM7/include \
+					$(ROOT)/build/libraries/os/common/include \
+					$(TWL_IPL_RED_ROOT)/include \
+					../common/include \
+					$(ROOT)/build/libraries/init/common/include
+
+LLIBRARY_DIRS	+=	$(TWL_IPL_RED_ROOT)/lib/ARM7-TS/$(TWL_BUILD_DIR) \
+					./obj/ARM7-TS.LTD/$(TWL_BUILD_DIR)
 
 LLIBRARIES		+=	libwl_sp$(TWL_LIBSUFFIX).a			\
 					libsdio_sp$(TWL_LIBSUFFIX).a		\
 					libathdrv_sp$(TWL_LIBSUFFIX).a		\
-					libwpa_sp$(TWL_LIBSUFFIX).a
+					libwpa_sp$(TWL_LIBSUFFIX).a			\
+					libhotsw_sp$(TWL_LIBSUFFIX).a		\
+					libreloc_info_sp$(TWL_LIBSUFFIX).a
 
 LDEPENDS_NEF	 = $(TWL_LIBS) $(LLIBRARIES)
 

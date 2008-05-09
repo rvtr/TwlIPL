@@ -26,6 +26,7 @@
 #include    <twl/fatfs.h>
 #include    <twl/nwm.h>
 #include    <twl/camera.h>
+#include    <sysmenu.h>
 #include    <twl/mcu.h>
 #include    <twl/cdc.h>
 #include    <nitro/snd.h>
@@ -35,6 +36,7 @@
 #include    <twl/spi.h>
 #include    "nvram_sp.h"
 #include    "kami_pxi.h"
+#include    <firm/os/common/system.h>
 
 /*---------------------------------------------------------------------------*
     定数定義
@@ -48,6 +50,7 @@
 #define THREAD_PRIO_FATFS       8
 #define THREAD_PRIO_NWM_COMMAND 9
 #define THREAD_PRIO_NWM_WPA     10
+#define THREAD_PRIO_HOTSW   	11
 #define THREAD_PRIO_RTC         12
 #define THREAD_PRIO_SNDEX       14
 #define THREAD_PRIO_FS          15
@@ -60,6 +63,9 @@
 /* 使用 DMA 番号 */
 #define DMA_NO_FATFS        FATFS_DMA_4     // = 0
 #define DMA_NO_NWM          3
+
+/* カードチャタリングカウンタ */
+#define     CHATTERING_COUNTER   0x1988		// 100ms分 (0x1988 * 15.3us = 100000us)
 
 /*---------------------------------------------------------------------------*
     内部関数定義
@@ -136,6 +142,16 @@ TwlSpMain(void)
     RTC_Init(THREAD_PRIO_RTC);                  // RTC
 //  WVR_Begin(heapHandle);                      // NITRO 無線
     SPI_Init(THREAD_PRIO_SPI);
+
+    // チャッタリングカウンタの値を設定
+    reg_MI_MC1 = (u32)((reg_MI_MC1 & ~REG_MI_MC1_CC_MASK) |
+                       (CHATTERING_COUNTER << REG_MI_MC1_CC_SHIFT));
+
+	// チャタリングカウンタ分待つことによりCDETが0になる
+    OS_SpinWait( OS_MSEC_TO_CPUCYC(200) );
+
+	// カードスロット１電源ON
+	HOTSWi_TurnCardPowerOn(1);
 
 ///////////////
 #ifndef NAND_INITIALIZER_LIMITED_MODE
@@ -290,7 +306,7 @@ InitializeCdc(void)
 {
     OSThread    thread;
     u32         stack[18];
-
+/*
 	// ランチャー経由で起動した場合はCODECは既に初期化されているため
 	// コンポーネントがCODECを初期化する必要はありません。
 	// 将来的にはバッサリと切る必要がありますが、
@@ -299,7 +315,7 @@ InitializeCdc(void)
 	{
 		return;
 	}
-
+*/
     /* ダミースレッド作成 */
     OS_CreateThread(&thread, DummyThread, NULL,
         (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
