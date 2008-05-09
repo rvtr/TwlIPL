@@ -24,6 +24,7 @@
 #define PXI_FIFO_DATA_DECRYPTAES_W_TARGET1	1
 #define PXI_FIFO_DATA_DECRYPTAES_W_TARGET2	2
 #define PXI_FIFO_DATA_DECRYPTAES_NORMAL		3
+#define SYSM_DECODE_AES_MESSAGE_ARRAY_MAX   8
 // extern data-----------------------------------------------------------------
 // function's prototype-------------------------------------------------------
 // global variable-------------------------------------------------------------
@@ -34,6 +35,11 @@ static void *s_Addr_AESregion[2];
 static u32 s_Size_AESregion[2];
 static BOOL s_initialized = FALSE;
 static u8 s_initCounterAES[2][AES_BLOCK_SIZE];
+static OSMessageQueue  msgQ4arm9;
+static OSMessage       msgArray4arm9[SYSM_DECODE_AES_MESSAGE_ARRAY_MAX];
+#else
+static OSMessageQueue  msgQ4arm7;
+static OSMessage       msgArray4arm7[SYSM_DECODE_AES_MESSAGE_ARRAY_MAX];
 #endif
 // const data------------------------------------------------------------------
 
@@ -156,10 +162,7 @@ BOOL SYSM_InitDecryptAESRegion_W( ROM_Header_Short *hs )
     }
     
 	// ARM7からの完了通知を受け取って完了
-	while( !s_finished )
-	{
-		OS_WaitAnyIrq();
-	}
+	OS_ReceiveMessage(&msgQ4arm9, (OSMessage*)&s_finished, OS_MESSAGE_BLOCK);
 	
 	OS_TPrintf( "SYSM_InitDecryptAESRegion(arm9):Init finished.\n" );
 	s_initialized = TRUE;
@@ -213,10 +216,7 @@ void SYSM_StartDecryptAESRegion_W( const void *wram_addr, const void *orig_addr,
 	    	OS_TPrintf( "SYSM_StartDecryptAESRegion_W(arm9):ARM9 PXI send error.\n" );
 	    }
 		// ARM7からの完了通知を受け取って完了
-		while( !s_finished )
-		{
-			OS_WaitAnyIrq();
-		}
+		OS_ReceiveMessage(&msgQ4arm9, (OSMessage*)&s_finished, OS_MESSAGE_BLOCK);
 	}
 }
 
@@ -330,10 +330,7 @@ void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs )
     }
     
 	// ARM7からの完了通知を受け取って完了
-	while( !s_finished )
-	{
-		OS_WaitAnyIrq();
-	}
+	OS_ReceiveMessage(&msgQ4arm9, (OSMessage*)&s_finished, OS_MESSAGE_BLOCK);
 	
 	OS_TPrintf( "SYSM_StartDecryptAESRegion(arm9):AES decryption finished.\n" );
 }
@@ -411,35 +408,69 @@ static void SYSMi_CallbackDecryptAESRegion(PXIFifoTag tag, u32 data, BOOL err)
 #pragma unused(err)
 
 #ifdef SDK_ARM9
-	s_finished = TRUE;
-#else //SDK_ARM7
-	if(data == PXI_FIFO_DATA_DECRYPTAES_W_INIT)
+	if(!OS_SendMessage(&msgQ4arm9, (OSMessage)TRUE, OS_MESSAGE_NOBLOCK))
 	{
-		SYSMi_SetKeys();
-	}else if(data == PXI_FIFO_DATA_DECRYPTAES_W_TARGET1 || data == PXI_FIFO_DATA_DECRYPTAES_W_TARGET2)
-	{
-		int target = (int)(data - PXI_FIFO_DATA_DECRYPTAES_W_TARGET1);
-		SYSMi_DecryptAESRegion_sub( target );
-	}else if(data == PXI_FIFO_DATA_DECRYPTAES_NORMAL)
-	{
-		int l;
-		SYSMi_SetKeys();
-	    for( l=0; l<2; l++ )
-	    {
-			SYSMi_DecryptAESRegion_sub( l );
-		}
+		OS_TPrintf( "SYSMi_CallbackDecryptAESRegion(arm9):Message send error.\n" );
 	}
-	
-	// ARM9に完了通知
-	while( PXI_SendWordByFifo(PXI_FIFO_TAG_DECRYPTAES, 0, FALSE) != PXI_FIFO_SUCCESS )
-    {
-    	OS_TPrintf( "SYSM_StartDecryptAESRegion(arm7):ARM7 PXI send error.\n" );
-    }
-	
+#else //SDK_ARM7
+	if(!OS_SendMessage(&msgQ4arm7, (OSMessage)data, OS_MESSAGE_NOBLOCK))
+	{
+		OS_TPrintf( "SYSMi_CallbackDecryptAESRegion(arm7):Message send error.\n" );
+	}
 #endif //ifdef SDK_ARM9
 }
+
+#ifdef SDK_ARM7
+#define SYSM_AES_THREAD_STACK_SIZE   512
+#define AES_THREAD_PRIORITY 5
+static OSThread aes_thread;
+static u64 aes_thread_stack[SYSM_AES_THREAD_STACK_SIZE/sizeof(u64)];
+
+static void SYSMi_DecryptAESThread(void* arg)
+{
+#pragma unused(arg)
+	int aes_start;
+	while(1)
+	{
+		OS_ReceiveMessage(&msgQ4arm7, (OSMessage*)&aes_start, OS_MESSAGE_BLOCK);
+		
+		if(aes_start == PXI_FIFO_DATA_DECRYPTAES_W_INIT)
+		{
+			SYSMi_SetKeys();
+		}else if(aes_start == PXI_FIFO_DATA_DECRYPTAES_W_TARGET1 || aes_start == PXI_FIFO_DATA_DECRYPTAES_W_TARGET2)
+		{
+			int target = (int)(aes_start - PXI_FIFO_DATA_DECRYPTAES_W_TARGET1);
+			SYSMi_DecryptAESRegion_sub( target );
+		}else if(aes_start == PXI_FIFO_DATA_DECRYPTAES_NORMAL)
+		{
+			int l;
+			SYSMi_SetKeys();
+		    for( l=0; l<2; l++ )
+		    {
+				SYSMi_DecryptAESRegion_sub( l );
+			}
+		}
+		
+		// ARM9に完了通知
+		while( PXI_SendWordByFifo(PXI_FIFO_TAG_DECRYPTAES, 0, FALSE) != PXI_FIFO_SUCCESS )
+	    {
+	    	OS_TPrintf( "SYSM_StartDecryptAESRegion(arm7):ARM7 PXI send error.\n" );
+	    }
+	}
+}
+#endif
 
 void SYSM_InitDecryptAESPXICallback( void )
 {
 	PXI_SetFifoRecvCallback(PXI_FIFO_TAG_DECRYPTAES, SYSMi_CallbackDecryptAESRegion);
+#ifdef SDK_ARM9
+	OS_InitMessageQueue(&msgQ4arm9, msgArray4arm9, SYSM_DECODE_AES_MESSAGE_ARRAY_MAX);
+#else
+	OS_InitMessageQueue(&msgQ4arm7, msgArray4arm7, SYSM_DECODE_AES_MESSAGE_ARRAY_MAX);
+	// ARM7側の処理を行うためのスレッド開始
+    OS_CreateThread(&aes_thread, SYSMi_DecryptAESThread, 0,
+                    (void*)(aes_thread_stack + (SYSM_AES_THREAD_STACK_SIZE/sizeof(u64))),
+                    SYSM_AES_THREAD_STACK_SIZE, AES_THREAD_PRIORITY);
+    OS_WakeupThreadDirect(&aes_thread);
+#endif
 }

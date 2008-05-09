@@ -373,9 +373,11 @@ static void SYSMi_CalcHMACSHA1Callback(const void* addr, const void* orig_addr, 
 {
 	CalcHMACSHA1CallbackArg *cba = (CalcHMACSHA1CallbackArg *)arg;
 	u32 calc_len = ( cba->hash_length < len ? cba->hash_length : len );
+	OSIntrMode enabled = OS_DisableInterrupts();// WRAM切り替え途中で割り込み発生→別スレッドでWRAM切り替え→死亡の可能性があるので暫定対応
 	MI_SwitchWramSlot( wram, slot, MI_WRAM_SIZE_32KB, MI_WRAM_ARM9, MI_WRAM_ARM7 );// Wramを7にスイッチ
 	SYSM_StartDecryptAESRegion_W( addr, orig_addr, len ); // AES領域デクリプト
 	MI_SwitchWramSlot( wram, slot, MI_WRAM_SIZE_32KB, MI_WRAM_ARM7, MI_WRAM_ARM9 );// Wramが7にスイッチしてしまっているので戻す
+	OS_RestoreInterrupts(enabled);// 割り込み許可
 	if( calc_len == 0 ) return;
 	cba->hash_length -= calc_len;
 	SVC_HMACSHA1Update( &cba->ctx, addr, calc_len );
@@ -385,9 +387,11 @@ static void SYSMi_CalcSHA1Callback(const void* addr, const void* orig_addr, u32 
 {
 	CalcSHA1CallbackArg *cba = (CalcSHA1CallbackArg *)arg;
 	u32 calc_len = ( cba->hash_length < len ? cba->hash_length : len );
+	OSIntrMode enabled = OS_DisableInterrupts();// WRAM切り替え途中で割り込み発生→別スレッドでWRAM切り替え→死亡の可能性があるので暫定対応
 	MI_SwitchWramSlot( wram, slot, MI_WRAM_SIZE_32KB, MI_WRAM_ARM9, MI_WRAM_ARM7 );// Wramを7にスイッチ
 	SYSM_StartDecryptAESRegion_W( addr, orig_addr, len ); // AES領域デクリプト
 	MI_SwitchWramSlot( wram, slot, MI_WRAM_SIZE_32KB, MI_WRAM_ARM7, MI_WRAM_ARM9 );// Wramが7にスイッチしてしまっているので戻す
+	OS_RestoreInterrupts(enabled);// 割り込み許可
 	if( calc_len == 0 ) return;
 	cba->hash_length -= calc_len;
 	SVC_SHA1Update( &cba->ctx, addr, calc_len );
