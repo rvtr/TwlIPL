@@ -45,6 +45,7 @@
 static void* spStack;
 static u32  sCurrentProgress;
 static vu8 sNowImport = FALSE;
+static ImportJump sImportJumpSetting;
 
 /*---------------------------------------------------------------------------*
     内部関数宣言
@@ -323,3 +324,32 @@ static void UpdateNandBoxCount( void )
     }
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         GetImportJumpSetting
+
+  Description:  
+
+  Arguments:    None.
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+
+ImportJump* GetImportJumpSetting( void )
+{
+    static BOOL inited = FALSE;
+
+    if ( ! inited )
+    {
+        // 開発用CPUでのみリード
+        if ( *(u8*)(OS_CHIPTYPE_DEBUGGER_ADDR) & OS_CHIPTYPE_DEBUGGER_MASK )
+        {
+            u16 id = (u16)OS_GetLockID();
+            CARD_LockRom( id );
+            CARD_ReadRom( MI_DMA_NOT_USE, (void*)IMPORT_JUMP_SETTING_OFS, &sImportJumpSetting, sizeof(ImportJump) );
+            CARD_UnlockRom( id );
+        }
+        inited = TRUE;
+    }
+
+    return &sImportJumpSetting;
+}

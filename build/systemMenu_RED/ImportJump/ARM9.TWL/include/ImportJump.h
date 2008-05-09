@@ -46,15 +46,14 @@ typedef struct _ImportJumpSetting
     定数定義
  *---------------------------------------------------------------------------*/
 
+#define IMPORT_TAD_ROM_OFS       0x00800000
+#define IMPORT_JUMP_SETTING_OFS  (IMPORT_TAD_ROM_OFS - CARD_ROM_PAGE_SIZE)
+
 /*---------------------------------------------------------------------------*
     関数定義
  *---------------------------------------------------------------------------*/
 
-inline ImportJump* GetImportJumpSetting(void)
-{
-	// リセット後は各PSRAMの先頭8MBしか保証されない
-	return (ImportJump *)HW_TWL_MAIN_MEM_EX;
-}
+ImportJump* GetImportJumpSetting( void );
 
 /*===========================================================================*/
 
