@@ -56,7 +56,6 @@ Autoload WRAM
 				libtpex_sp$(LIBSUFFIX).a		\
 				libmicex_sp$(LIBSUFFIX).a		\
 				libmcu_sp$(LIBSUFFIX).a		\
-				libdht_sp$(LIBSUFFIX).a		\
 
 	Library		libsdio_sp$(LIBSUFFIX).a
 
@@ -219,6 +218,7 @@ Ltdautoload LTDMAIN
 	Library		libathdrv_sp$(LIBSUFFIX).a
 
 	Library		libfatfs_sp$(LIBSUFFIX).a	\
+				libdht_sp$(LIBSUFFIX).a		\
 				$(USE_CRYPTO_LIBS)
 	Library		$(ISDBG_LIBS_TWL)
 	Library		$(ISDBG_LIBS_NITRO)
