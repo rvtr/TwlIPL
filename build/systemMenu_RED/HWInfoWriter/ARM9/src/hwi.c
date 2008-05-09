@@ -251,9 +251,6 @@ BOOL HWI_ModifyLanguage( u8 region )
     u8  nowLanguage = LCFG_TSD_GetLanguage();
 	BOOL result = TRUE;
 
-	// TSDが存在しない場合はここでリカバリ生成
-	ReadTWLSettings();
-
     // TSDが読み込めていないなら、何もせずリターン
     if( !s_isReadTSD ) {
 		OS_TPrintf("TWLSetting is not Readed!\n");
