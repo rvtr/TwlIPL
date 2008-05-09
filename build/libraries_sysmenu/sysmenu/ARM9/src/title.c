@@ -44,7 +44,7 @@
 #define MB_AUTH_SIGN_SIZE				(128)	/* digital sign size */
 
 #define WRAM_SLOT_FOR_FS	4
-#define WRAM_SIZE_FOR_FS	MI_WRAM_SIZE_128KB
+#define WRAM_SIZE_FOR_FS	MI_WRAM_SIZE_96KB
 
 typedef	struct	MbAuthCode
 {
