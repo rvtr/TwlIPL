@@ -1768,14 +1768,14 @@ static int SetRatingAgeMain( void )
     // 変更
     if( (pad.trg & PAD_KEY_UP) || (padrep & PAD_KEY_UP) || (tpUD && (csrUD == KEY_UP)) )
     {
-        if( (++sRatingAge) > LCFG_TWL_PCTL_RATING_AGE_MAX )
+        if( (--sRatingAge) > LCFG_TWL_PCTL_RATING_AGE_MAX )
         {
             sRatingAge = 0;
         }
     }
     if( (pad.trg & PAD_KEY_DOWN) || (padrep & PAD_KEY_DOWN) || (tpUD && (csrUD == KEY_DOWN)) )
     {
-        if( (--sRatingAge) & 0x80 )
+        if( (++sRatingAge) & 0x80 )
         {
             sRatingAge = LCFG_TWL_PCTL_RATING_AGE_MAX;
         }
@@ -1870,14 +1870,14 @@ static int SetSecretQuestionIDMain( void )
     // 変更
     if( (pad.trg & PAD_KEY_UP) || (rep & PAD_KEY_UP) || (tpUD && (csrUD == KEY_UP)) )
     {
-        if( (++sSecretQuestionID) > LCFG_TWL_PCTL_SECRET_QUESTION_ID_MAX )
+        if( (--sSecretQuestionID) > LCFG_TWL_PCTL_SECRET_QUESTION_ID_MAX )
         {
             sSecretQuestionID = 0;
         }
     }
     if( (pad.trg & PAD_KEY_DOWN) || (rep & PAD_KEY_DOWN) || (tpUD && (csrUD == KEY_DOWN)) )
     {
-        if( (--sSecretQuestionID) & 0x80 )
+        if( (++sSecretQuestionID) & 0x80 )
         {
             sSecretQuestionID = LCFG_TWL_PCTL_SECRET_QUESTION_ID_MAX;
         }
@@ -2154,14 +2154,14 @@ static int SetPasswordMain( void )
     // 十字キーで各桁の値を変更
     if( (pad.trg & PAD_KEY_UP) || (padrep & PAD_KEY_UP) )
     {
-        if( ++(spBufPassword[sCursorPassword]) > 9 )        // 現在選択されている桁の値を変更
+        if( --(spBufPassword[sCursorPassword]) > 9 )        // 現在選択されている桁の値を変更
         {
             spBufPassword[sCursorPassword] = 0;
         }
     }
     if( (pad.trg & PAD_KEY_DOWN) || (padrep & PAD_KEY_DOWN) )
     {
-        if( --(spBufPassword[sCursorPassword]) & 0x80 )
+        if( ++(spBufPassword[sCursorPassword]) & 0x80 )
         {
             (spBufPassword[sCursorPassword]) = 9;
         }
@@ -2175,7 +2175,7 @@ static int SetPasswordMain( void )
     if( tpUD && ((csrUD & MASK_MULTI_KEY) == MULTI_KEY_UP) )
     {
         sCursorPassword = (u16)(csrUD & ~MASK_MULTI_KEY);        // 桁を特定
-        if( ++(spBufPassword[sCursorPassword]) > 9 )
+        if( --(spBufPassword[sCursorPassword]) > 9 )
         {
             spBufPassword[sCursorPassword] = 0;
         }
@@ -2183,7 +2183,7 @@ static int SetPasswordMain( void )
     if( tpUD && ((csrUD & MASK_MULTI_KEY) == MULTI_KEY_DOWN) )
     {
         sCursorPassword = (u16)(csrUD & ~MASK_MULTI_KEY);
-        if( --(spBufPassword[sCursorPassword]) & 0x80 )
+        if( ++(spBufPassword[sCursorPassword]) & 0x80 )
         {
             (spBufPassword[sCursorPassword]) = 9;
         }

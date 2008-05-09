@@ -38,9 +38,9 @@
 #else  // !OUTSIDE_UI
 
 #ifdef BROADON_UI
-#define SETTING_MENU_ELEMENT_NUM			9						// BroadON用
+#define SETTING_MENU_ELEMENT_NUM			10						// BroadON用
 #else  // !BROADON_UI
-#define SETTING_MENU_ELEMENT_NUM			8						// 社内用
+#define SETTING_MENU_ELEMENT_NUM			9						// 社内用
 #endif // BROADON_UI
 
 #endif // OUTSIDE_UI
@@ -145,6 +145,16 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ LCFG_T
 		(const u16 *)L"PARENTAL CONTROL(S)",
 		(const u16 *)L"PARENTAL CONTROL(C)",
 		(const u16 *)L"PARENTAL CONTROL(K)",
+	},
+	{
+		(const u16 *)L"EULA",
+		(const u16 *)L"EULA",
+		(const u16 *)L"EULA(F)",
+		(const u16 *)L"EULA(G)",
+		(const u16 *)L"EULA(I)",
+		(const u16 *)L"EULA(S)",
+		(const u16 *)L"EULA(C)",
+		(const u16 *)L"EULA(K)",
 	},
 #ifdef BROADON_UI
 	{
@@ -295,6 +305,10 @@ int MachineSettingMain( void )
                     g_pNowProcess = SetParentalControlMain;
                     break;
                 case 8:
+                    SetEULAInit();
+                    g_pNowProcess = SetEULAMain;
+                    break;
+                case 9:
                     SetFreeSoftBoxInit();
                     g_pNowProcess = SetFreeSoftBoxMain;
                     break;

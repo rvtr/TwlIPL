@@ -55,9 +55,10 @@ BG_DIR					=	../../data
 SRCS					=	main.c MachineSetting.c \
 							setRTC.c selectLanguage.c calibrationTP.c setOwnerInfo.c selectCountry.c \
 							setParentalControl.c setFreeSoftBox.c setWireless.c cleanupMachine.c	\
-						CountryNameMappingData.c \
+							setEULA.c \
+							CountryNameMappingData.c \
 							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c \
-						$(BG_DIR)/BGData_MachineSettings.c
+							$(BG_DIR)/BGData_MachineSettings.c
 
 LINCLUDES				=	$(MISC_DIR)/include
 

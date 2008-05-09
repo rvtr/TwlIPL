@@ -705,19 +705,19 @@ static void Birthday_AutoNumScrollByTP( void )
 					{
 						case 0:
 							s_birth_csr = TRUE;
-							s_temp_birthday.month++;
+							s_temp_birthday.month--;
 							break;
 						case 1:
 							s_birth_csr = FALSE;
-							s_temp_birthday.day++;
+							s_temp_birthday.day--;
 							break;
 						case 2:
 							s_birth_csr = TRUE;
-							s_temp_birthday.month--;
+							s_temp_birthday.month++;
 							break;
 						case 3:
 							s_birth_csr = FALSE;
-							s_temp_birthday.day--;
+							s_temp_birthday.day++;
 							break;
 						default:
 							break;
@@ -746,10 +746,10 @@ static int SetBirthdayMain( void )
 	//  キー入力処理
 	//--------------------------------------
 	if( pad.trg & PAD_KEY_DOWN ){
-		(*(s_birth_csr ? &s_temp_birthday.month : &s_temp_birthday.day))--;
+		(*(s_birth_csr ? &s_temp_birthday.month : &s_temp_birthday.day))++;
 	}
 	if( pad.trg & PAD_KEY_UP ){
-		(*(s_birth_csr ? &s_temp_birthday.month : &s_temp_birthday.day))++;
+		(*(s_birth_csr ? &s_temp_birthday.month : &s_temp_birthday.day))--;
 	}
 	if( pad.trg & (PAD_KEY_RIGHT | PAD_KEY_LEFT)){									// カーソルの移動
 		s_birth_csr = !s_birth_csr;
