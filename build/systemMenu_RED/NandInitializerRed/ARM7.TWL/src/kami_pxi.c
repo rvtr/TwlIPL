@@ -131,6 +131,7 @@ static void KamiPxiCallback(PXIFifoTag tag, u32 data, BOOL err)
 		case KAMI_NAND_IO:
 		case KAMI_NVRAM_IO:
 		case KAMI_MCU_IO:
+		case KAMI_ARM7_IO:
 		case KAMI_CDC_GO_DSMODE:
 		case KAMI_CLEAR_NAND_ERRORLOG:
             if (!OS_SendMessage(&kamiWork.msgQ, NULL, OS_MESSAGE_NOBLOCK))
@@ -269,6 +270,30 @@ static void KamiThread(void *arg)
 					MCU_WriteRegister( (u8)reg_no, (u8)value );
 				}
 	            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
+			}
+			break;
+
+		case KAMI_ARM7_IO:
+			{
+				BOOL is_read;
+				u32  addr;
+				u32  write;
+				u32  read;
+
+				is_read = (BOOL)kamiWork.data[0];
+				KAMI_UNPACK_U32(&addr,  &kamiWork.data[1]);
+				KAMI_UNPACK_U32(&write, &kamiWork.data[5]);
+
+				if (is_read)
+				{
+					read = *(u32 *)addr;
+	            	KamiReturnResultEx(kamiWork.command, KAMI_PXI_RESULT_SUCCESS,  sizeof(u32), (u8*)&read );
+				}
+				else
+				{
+					*(u32 *)addr = write;
+					KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
+				}
 			}
 			break;
 

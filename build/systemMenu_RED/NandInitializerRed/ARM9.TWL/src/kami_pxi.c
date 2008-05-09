@@ -273,6 +273,61 @@ KAMIResult kamiMcuIo(u32 reg_no, void* buffer, u32 value, BOOL is_read)
     return KAMI_RESULT_SEND_ERROR;
 }
 
+
+/*---------------------------------------------------------------------------*
+  Name:         ARM7アクセス関数
+
+  Description:  
+
+  Arguments:    None.
+
+  Returns:      
+ *---------------------------------------------------------------------------*/
+
+KAMIResult kamiARM7Io(u32 addr, u32* buffer, u32 value, BOOL is_read)
+{
+    OSIntrMode enabled;
+    u8  data[12];
+	int i;
+
+	// ロック
+    enabled = OS_DisableInterrupts();
+    if (kamiWork.lock)
+    {
+        (void)OS_RestoreInterrupts(enabled);
+        return KAMI_RESULT_BUSY;
+    }
+    kamiWork.lock = TRUE;
+    (void)OS_RestoreInterrupts(enabled);
+
+    kamiWork.callback = NULL;
+    kamiWork.arg = 0;
+	if (is_read)
+	{
+		kamiWork.data = (u8*)buffer;
+	}
+	else
+	{
+	    kamiWork.data = 0;
+	}
+
+	// データ作成
+	KAMI_PACK_U32(&data[0], &addr);
+	KAMI_PACK_U32(&data[4], &value);
+
+    if (KamiSendPxiCommand(KAMI_ARM7_IO, 12, (u8)is_read))
+    {
+	    for (i = 0; i < 12; i+=3) 
+		{
+	        KamiSendPxiData(&data[i]);
+		}
+	    KamiWaitBusy();
+	    return (KAMIResult)kamiWork.result;
+    }
+
+    return KAMI_RESULT_SEND_ERROR;
+}
+
 /*---------------------------------------------------------------------------*
   Name:         kamiCDC_GoDsMode
 
