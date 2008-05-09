@@ -1489,6 +1489,7 @@ static void HotSwThread(void *arg)
 
     HotSwState      retval;
     HotSwMessage    *msg;
+    BOOL 			breakFlg;
 
     while(1){
         OS_ReceiveMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
@@ -1521,19 +1522,18 @@ static void HotSwThread(void *arg)
             if(HOTSW_IsCardExist()){
                 if(!s_isPulledOut){
                     if(GetMcSlotMode() == SLOT_STATUS_MODE_10){
-                        LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+                        if(!s_cbData.illegalCardFlg){
+                        	LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 
-                        SYSMi_GetWork()->flags.hotsw.isExistCard         = TRUE;
-                        SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
+                        	SYSMi_GetWork()->flags.hotsw.isExistCard         = TRUE;
+                        	SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
+							SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = TRUE;
+                        	SYSMi_GetWork()->nCardID = s_cbData.id_gam;
 
-                        SYSMi_GetWork()->nCardID = s_cbData.id_gam;
+                        	UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 
-                        SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = TRUE;
-
-                        UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
-
-                        OS_PutString("ok!\n");
-
+                        	OS_PutString("ok!\n");
+                        }
                         break;
                     }
                 }
@@ -1542,13 +1542,40 @@ static void HotSwThread(void *arg)
 
                 DebugPrintErrorMessage(retval);
 
-                if(retval != HOTSW_SUCCESS){
-                    McPowerOff();
+                breakFlg = FALSE;
+                
+                switch(retval){
+                  // 成功してたらなにもせずにぬける
+                  case HOTSW_SUCCESS:
+                    break;
 
+                  // カードデータリード中に抜け
+				  case HOTSW_PULLED_OUT_ERROR:
                     ClearCardFlgs();
-
                     s_isPulledOut = TRUE;
-
+                    breakFlg = TRUE;
+                    break;
+                    
+                  // どのモードでも起こるエラー
+                  case HOTSW_ID_CHECK_ERROR:
+                  case HOTSW_CRC_CHECK_ERROR:
+                    McPowerOff();
+                    ClearCardFlgs();
+                    s_isPulledOut = TRUE;
+                    breakFlg = TRUE;
+					break;
+                    
+                  // Gameモードで起こるエラー
+                  case HOTSW_HASH_CHECK_ERROR:
+                  case HOTSW_BUFFER_OVERRUN_ERROR:
+                  case HOTSW_DATA_DECRYPT_ERROR:
+					ClearCardFlgs();
+                    s_cbData.illegalCardFlg = TRUE;
+                    
+					break;
+                }
+                
+                if(breakFlg){
                     break;
                 }
 
@@ -1722,9 +1749,6 @@ static BOOL ChangeGameMode(void)
     state = ReadIDNormal(&s_cbData);
     state = ReadBootSegNormal(&s_cbData);
 
-    // NTR互換 Rom Headerをコピー
-//	MI_NDmaCopy(HOTSW_NDMA_NO, (void *)SYSM_CARD_ROM_HEADER_BAK, (void *)HW_CARD_ROM_HEADER, HW_CARD_ROM_HEADER_SIZE);
-
     if(s_debuggerFlg){
 		s_cbData.cardType = ROM_EMULATION;
         s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
@@ -1745,9 +1769,6 @@ static BOOL ChangeGameMode(void)
     // ---------------------- Secure Mode ----------------------
     state = s_funcTable[s_cbData.cardType].SetPNG_S(&s_cbData);
     SetMCSCR();
-
-	// [TODO] デバッグ用に読み込み。後で消す。
-	state = s_funcTable[s_cbData.cardType].ReadID_S(&s_cbData);
     state = s_funcTable[s_cbData.cardType].ChangeMode_S(&s_cbData);
     
     // ---------------------- Game Mode ----------------------
@@ -1758,7 +1779,6 @@ static BOOL ChangeGameMode(void)
     }
 
     OS_TPrintf("Card Normal ID : 0x%08x\n", s_cbData.id_nml);
-    OS_TPrintf("Card Secure ID : 0x%08x\n", s_cbData.id_scr);
 	OS_TPrintf("Card Game   ID : 0x%08x\n", s_cbData.id_gam);
     
     HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
