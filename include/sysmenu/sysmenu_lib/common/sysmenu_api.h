@@ -129,6 +129,10 @@ extern BOOL SYSM_IsLeapYear100( u32 year );										// 指定された年がうるう年か
 // スリープモード
 extern void SYSM_GoSleepMode( void );                                           // スリープモードへの遷移
 
+// ペアレンタルコントロール問い合わせ
+u32 SYSM_CalcPCTLInquiryCode( void );											// 問い合わせコード（１０進８桁）算出
+u32 SYSM_CalcPCTLMasterKey( void );												// マスターキー　　（１０進５桁）算出
+
 #endif
 
 // 状態チェック
