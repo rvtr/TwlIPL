@@ -41,6 +41,12 @@ typedef struct TitleID_HiLo {
 	u32			Hi;
 }TitleID_HiLo;
 
+// WRAM経由でカードデータを読み込む場合に使用
+typedef struct CardReadParam {
+	u32			src;
+    u32			dest;
+	u32			size;
+}CardReadParam;
 
 //----------------------------------------------------------------------
 //　ROMエミュレーション情報
@@ -106,6 +112,7 @@ typedef struct SYSM_work {
 			vu16		isCardLoadCompleted :1;			// カードからデータロード完了？
    			vu16		isValidCardBanner :1;			// バナーデータ更新？
 			vu16		is1stCardChecked :1;			// カードデータの1stチェック完了？
+            vu16		isCardGameMode :1;				// カードがゲームモードに遷移したか？
             vu16		:0;
             vu8			isCardStateChanged;				// カード状態更新フラグ
         }hotsw;
@@ -119,6 +126,8 @@ typedef struct SYSM_work {
 	u32					nCardID;						// カードID
 	u32					gameCommondParam;				// NTRのゲームコマンドパラメータ(NTRのROMヘッダのゲームコマンドパラメータに上書きする)
 	u8					cloneBootMode;
+    
+	CardReadParam		cardReadParam;					// カードリードパラメータ
     
 	LauncherParam		launcherParam;
 	SYSMRomEmuInfo		romEmuInfo;

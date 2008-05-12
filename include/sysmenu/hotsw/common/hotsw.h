@@ -24,6 +24,7 @@ extern "C" {
 #endif
 
 #define SYSM_HOTSW_ENABLE_ROMEMU
+//#define USE_WRAM_LOAD
 
 // enum   -------------------------------------------------------------------
 // スレッドに送るメッセージのステート
@@ -51,8 +52,9 @@ typedef union HotSwPxiMessage{
     	u32		value	:1;
     	u32		ctrl	:1;
         u32		finalize:1;
+        u32		read	:1;
         u32		bootType:8;
-    	u32		:21;
+    	u32		:20;
     } msg;
     u32 data;
 } HotSwPxiMessage;
@@ -99,6 +101,7 @@ BOOL HOTSWi_IsRomEmulation(void);
 // デバッガ通信用にカードスロットの電源をONにする。
 void HOTSWi_TurnCardPowerOn(u32 slot);
 
+#ifdef SDK_ARM9
 // PXI通信でARM7に活線挿抜有効／無効を通知
 void HOTSW_EnableHotSWAsync( BOOL enable );
 
@@ -110,6 +113,17 @@ BOOL HOTSW_isEnableHotSW(void);
 
 // カードアプリのロードが完了しているかを返す
 BOOL HOTSW_isCardLoadCompleted(void);
+
+#ifdef USE_WRAM_LOAD
+// カードデータを読み出す関数
+void HOTSW_ReadCardData(void* src, void* dest, u32 size);
+
+// カードがゲームモードになったかどうか
+BOOL HOTSW_isGameMode(void);
+#endif
+
+#endif
+
 
 #ifdef __cplusplus
 } /* extern "C" */

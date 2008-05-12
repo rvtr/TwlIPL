@@ -90,23 +90,27 @@ static BOOL ChangeGameMode(void);
 static void ClearUnnecessaryCardRegister(void);
 static void ClearAllCardRegister(void);
 
+static HotSwState LoadCardData(void);
 static void RegisterRomEmuInfo(void);
 static void GenVA_VB_VD(void);
-static HotSwState DecryptObjectFile(void);
-static HotSwState LoadBannerData(void);
-static HotSwState LoadStaticModule(void);
-static HotSwState LoadCardData(void);
-static HotSwState CheckCardAuthCode(void);
-
-static HotSwState CheckStaticModuleHash(void);
 
 static s32 LockExCard(u16 lockID);
 static s32 UnlockExCard(u16 lockID);
 
+#ifndef USE_WRAM_LOAD
+static HotSwState DecryptObjectFile(void);
+static HotSwState LoadBannerData(void);
+static HotSwState LoadStaticModule(void);
+static HotSwState CheckCardAuthCode(void);
+
+static HotSwState CheckStaticModuleHash(void);
 static BOOL CheckArm7HashValue(void);
 static BOOL CheckArm9HashValue(void);
 static BOOL CheckExtArm7HashValue(void);
 static BOOL CheckExtArm9HashValue(void);
+#else
+static HotSwState ReadCardData(u32 src, u32 dest, u32 size);
+#endif
 
 static void ShowRegisterData(void);
 static void ShowRomHeaderData(void);
@@ -497,9 +501,6 @@ static HotSwState LoadCardData(void)
                 McPowerOn();
 
                 // ---------------------- Normal Mode ----------------------
-                state  = ReadIDNormal(&s_cbData);
-                retval = (retval == HOTSW_SUCCESS) ? state : retval;
-
                 // 先頭1Page分だけでOK。データは読み捨てバッファに
                 state  = ReadBootSegNormal(&s_cbData);
                 retval = (retval == HOTSW_SUCCESS) ? state : retval;
@@ -531,6 +532,12 @@ static HotSwState LoadCardData(void)
             state  = ReadIDGame(&s_cbData);
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
+#ifdef USE_WRAM_LOAD
+			SYSMi_GetWork()->flags.hotsw.isCardGameMode = TRUE;
+            
+            // 排他制御ここまで(※CRCチェックまでにミスがなかったら、排他制御ここまで)
+            UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+#else
             // バナーファイルの読み込み
             state  = LoadBannerData();
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
@@ -554,6 +561,7 @@ static HotSwState LoadCardData(void)
             // 認証コード読み込み＆ワーク領域にコピー
             state  = CheckCardAuthCode();
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
+#endif
         }
         else{
             // 排他制御ここまで(※CRCチェックまでにミスがあったら、ここで開放する)
@@ -798,6 +806,7 @@ static void RegisterRomEmuInfo(void)
 
   注：ゲームモードになってから呼び出してください
  *---------------------------------------------------------------------------*/
+#ifndef USE_WRAM_LOAD
 static HotSwState LoadBannerData(void)
 {
     BOOL state;
@@ -835,6 +844,35 @@ static HotSwState LoadBannerData(void)
 
     return retval;
 }
+#endif
+
+
+/*---------------------------------------------------------------------------*
+  Name:         ReadCardData
+
+  Description:  ARM9から通知された範囲のデータをカードから読み込み
+ *---------------------------------------------------------------------------*/
+#ifdef USE_WRAM_LOAD
+static HotSwState ReadCardData(u32 src, u32 dest, u32 size)
+{
+	// [TODO] src と size の範囲で場合分け
+	// Boot Segment, Secure Segmentが指定されていたら、バッファからコピー
+	// Game Segmentが指定されていたら、コマンド発行してページ読み
+
+	/*
+		0x0000_0000 - 0x0000_0fff	Boot Segment
+      	0x0000_1000 - 0x0000_3fff	Key Table
+      	0x0000_4000 - 0x0000_8000	Secure Segment
+
+      TWL Card
+      	0x90の境界値でKey Table2の開始アドレスが決まる
+		4Mbit単位なので index × 0x0008_0000 で開始アドレスを求める
+     */
+	
+    
+    return HOTSW_SUCCESS;
+}
+#endif
 
 
 /*---------------------------------------------------------------------------*
@@ -844,6 +882,7 @@ static HotSwState LoadBannerData(void)
 
   注：ゲームモードになってから呼び出してください
  *---------------------------------------------------------------------------*/
+#ifndef USE_WRAM_LOAD
 static HotSwState LoadStaticModule(void)
 {
     HotSwState retval = HOTSW_SUCCESS;
@@ -1022,6 +1061,7 @@ while(1){ OS_WaitVBlankIntr(); }
 
     return retval;
 }
+#endif
 
 
 /*---------------------------------------------------------------------------*
@@ -1029,6 +1069,7 @@ while(1){ OS_WaitVBlankIntr(); }
 
   Description:  Rom Headerの認証コードアドレスを読んで、クローンブート対応か判定する
  *---------------------------------------------------------------------------*/
+#ifndef USE_WRAM_LOAD
 static HotSwState CheckCardAuthCode(void)
 {
     u32 authBuf[PAGE_SIZE/sizeof(u32)];
@@ -1055,6 +1096,7 @@ static HotSwState CheckCardAuthCode(void)
 
     return retval;
 }
+#endif
 
 
 /*---------------------------------------------------------------------------*
@@ -1148,6 +1190,7 @@ static void GenVA_VB_VD(void)
 
   注：セキュア領域を読み込んでからこの関数を呼び出してください
  *---------------------------------------------------------------------------*/
+#ifndef USE_WRAM_LOAD
 static u32 encDestBuf[ENCRYPT_DEF_SIZE/sizeof(u32)];
 
 static HotSwState DecryptObjectFile(void)
@@ -1207,6 +1250,7 @@ static HotSwState DecryptObjectFile(void)
 
     return retval;
 }
+#endif
 
 
 /*---------------------------------------------------------------------------*
@@ -1551,6 +1595,7 @@ static void HotSwThread(void *arg)
 
                 breakFlg = FALSE;
 
+                // [TODO] エラー処理見直し
                 switch(retval){
                   // 成功してたらなにもせずにぬける
                   case HOTSW_SUCCESS:
@@ -1625,6 +1670,9 @@ static void ClearCardFlgs(void)
     SYSMi_GetWork()->flags.hotsw.isValidCardBanner   = FALSE;
     SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
     SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = FALSE;
+#ifdef USE_WRAM_LOAD
+	SYSMi_GetWork()->flags.hotsw.isCardGameMode 	 = FALSE;
+#endif
     UnlockHotSwRsc(&SYSMi_GetWork()->lockHotSW);
 }
 
@@ -1946,7 +1994,7 @@ static void InterruptCallbackCard(void)
         OS_TPrintf("slot status: %x\n", mode);
     }
 #endif
-
+    
     HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].ctrl  = FALSE;
     HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].value = 0;
     HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].type  = HOTSW_PULLOUT;
@@ -1995,19 +2043,27 @@ static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err)
 
     d.data = data;
 
-    OS_TPrintf("... Pxi Message - value:%x  ctrl:%x  finalize:%x  bootType:%x\n",
-                                d.msg.value, d.msg.ctrl, d.msg.finalize, d.msg.bootType);
+	OS_TPrintf("... Pxi Message - value:%x  ctrl:%x  finalize:%x  read:%x  bootType:%x\n",
+               					d.msg.value, d.msg.ctrl, d.msg.finalize, d.msg.read, d.msg.bootType);
 
-    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].ctrl      = (d.msg.ctrl) ? TRUE : FALSE;
-    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].finalize  = (d.msg.finalize) ? TRUE : FALSE;
-    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].value     = d.msg.value;
-    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].apli      = (HotSwApliType)d.msg.bootType;
+    if(!d.msg.read){
+	    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].ctrl  	= (d.msg.ctrl) ? TRUE : FALSE;
+	    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].finalize 	= (d.msg.finalize) ? TRUE : FALSE;
+    	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].value 	= d.msg.value;
+    	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].apli  	= (HotSwApliType)d.msg.bootType;
 
-    // メッセージ送信
-    OS_SendMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl], OS_MESSAGE_NOBLOCK);
+    	// メッセージ送信
+    	OS_SendMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl], OS_MESSAGE_NOBLOCK);
 
-    // メッセージインデックスをインクリメント
-    HotSwThreadData.idx_ctrl = (HotSwThreadData.idx_ctrl+1) % HOTSW_CTRL_MSG_NUM;
+    	// メッセージインデックスをインクリメント
+    	HotSwThreadData.idx_ctrl = (HotSwThreadData.idx_ctrl+1) % HOTSW_CTRL_MSG_NUM;
+    }
+    else{
+        OS_PutString("--- ARM7\n");
+		OS_TPrintf("src  : 0x%08x\n", SYSMi_GetWork()->cardReadParam.src);
+    	OS_TPrintf("dst  : 0x%08x\n", SYSMi_GetWork()->cardReadParam.dest);
+    	OS_TPrintf("size : 0x%08x\n", SYSMi_GetWork()->cardReadParam.size);
+    }
 }
 
 
@@ -2116,12 +2172,13 @@ static void SetInterrupt(void)
 }
 
 
-#include <twl/os/common/systemCall.h>
 /*---------------------------------------------------------------------------*
   Name:         CheckStaticModuleHash
 
   Description:  常駐モジュールのハッシュチェックを行う
  *---------------------------------------------------------------------------*/
+#ifndef USE_WRAM_LOAD
+#include <twl/os/common/systemCall.h>
 static HotSwState CheckStaticModuleHash(void)
 {
     BOOL flg = TRUE;
@@ -2156,6 +2213,7 @@ static HotSwState CheckStaticModuleHash(void)
 
     return flg ? HOTSW_SUCCESS : HOTSW_HASH_CHECK_ERROR;
 }
+#endif
 
 
 /*---------------------------------------------------------------------------*
@@ -2163,6 +2221,7 @@ static HotSwState CheckStaticModuleHash(void)
 
   Description:  Arm7常駐モジュールのハッシュチェック
  *---------------------------------------------------------------------------*/
+#ifndef USE_WRAM_LOAD
 static BOOL CheckArm7HashValue(void)
 {
     u8      sha1data[DIGEST_SIZE_SHA1];
@@ -2180,6 +2239,7 @@ static BOOL CheckArm7HashValue(void)
 
     return SVC_CompareSHA1( sha1data, s_cbData.pBootSegBuf->rh.s.sub_static_digest );
 }
+#endif
 
 
 /*---------------------------------------------------------------------------*
@@ -2189,6 +2249,7 @@ static BOOL CheckArm7HashValue(void)
 
   ※ 先頭2Kの復号化が行われる前のデータのハッシュを比べる
  *---------------------------------------------------------------------------*/
+#ifndef USE_WRAM_LOAD
 static BOOL CheckArm9HashValue(void)
 {
     u8      sha1data[DIGEST_SIZE_SHA1];
@@ -2212,6 +2273,7 @@ static BOOL CheckArm9HashValue(void)
 
     return SVC_CompareSHA1( sha1data, s_cbData.pBootSegBuf->rh.s.main_static_digest );
 }
+#endif
 
 
 /*---------------------------------------------------------------------------*
@@ -2219,6 +2281,7 @@ static BOOL CheckArm9HashValue(void)
 
   Description:  Arm7拡張常駐モジュールのハッシュチェック
  *---------------------------------------------------------------------------*/
+#ifndef USE_WRAM_LOAD
 static BOOL CheckExtArm7HashValue(void)
 {
     u8      sha1data[DIGEST_SIZE_SHA1];
@@ -2236,6 +2299,7 @@ static BOOL CheckExtArm7HashValue(void)
 
     return SVC_CompareSHA1( sha1data, s_cbData.pBootSegBuf->rh.s.sub_ltd_static_digest );
 }
+#endif
 
 
 /*---------------------------------------------------------------------------*
@@ -2243,6 +2307,7 @@ static BOOL CheckExtArm7HashValue(void)
 
   Description:  Arm9拡張常駐モジュールのハッシュチェック
  *---------------------------------------------------------------------------*/
+#ifndef USE_WRAM_LOAD
 static BOOL CheckExtArm9HashValue(void)
 {
     u8      sha1data[DIGEST_SIZE_SHA1];
@@ -2273,7 +2338,7 @@ static BOOL CheckExtArm9HashValue(void)
 
     return SVC_CompareSHA1( sha1data, s_cbData.pBootSegBuf->rh.s.main_ltd_static_digest );
 }
-
+#endif
 
 
 

@@ -277,11 +277,13 @@ typedef struct CardBootData{
     u32                 id_scr2;
     u32                 id_gam;
 
+#ifndef USE_WRAM_LOAD
     u32                 arm9Stc;
     u32                 arm7Stc;
     u32                 arm9Ltd;
     u32                 arm7Ltd;
-
+#endif
+    
     BOOL                twlFlg;
     BOOL                debuggerFlg;
 	BOOL				illegalCardFlg;
