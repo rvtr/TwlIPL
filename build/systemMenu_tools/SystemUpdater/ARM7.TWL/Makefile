@@ -28,15 +28,14 @@ ifndef	TWLSDK_NOCRYPTO
 
 SRCS		=	main.c \
 				kami_pxi.c \
-				formatter.c \
 				nvram_misc.c
 
 TARGET_NAME		=	armadillo
 
 TARGET_NEF		=	$(TARGET_NAME).tef
-LCFILE_SPEC		=	../../NandInitializerRed/ARM7.TWL/$(TARGET_NAME).lsf
-LCFILE_TEMPLATE	=	../../NandInitializerRed/ARM7.TWL/$(TARGET_NAME).lcf.template
-LDRES_TEMPLATE	=	../../NandInitializerRed/ARM7.TWL/$(TARGET_NAME).response.template
+LCFILE_SPEC		=	$(TARGET_NAME).lsf
+LCFILE_TEMPLATE	=	$(TARGET_NAME).lcf.template
+LDRES_TEMPLATE	=	$(TARGET_NAME).response.template
 
 CRT0_O			=	crt0.SCR.TWL.o
 
@@ -52,10 +51,7 @@ MAKELCF_FLAGS	+=	-DISDBG_LIBS_TWL='$(if $(ISDBG_LIBS_TWL),$(ISDBG_LIBS_TWL),libs
 					-DISDBG_LIBS_NITRO='libstubsisd_sp$(TWL_LIBSUFFIX).a'
 
 LINCLUDES		=	$(ROOT)/build/libraries/spi/ARM7/include \
-					../../NandInitializerRed/common/include \
-					../../NandInitializerRed/ARM7.TWL/include
-
-SRCDIR		=	../../NandInitializerRed/ARM7.TWL/src
+					..//common/include \
 
 LLIBRARIES		+=	libwl_sp$(TWL_LIBSUFFIX).a			\
 					libsdio_sp$(TWL_LIBSUFFIX).a		\

@@ -21,10 +21,10 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-LAUNCHER_DIR				=	../Launcher
-MACHINESETTINGS_DIR			=	../MachineSettings
-WLANFIRM_DIR				=	../wlanfirm
-NANDFIRM_DIR                =   ../../nandfirm/menu-launcher
+LAUNCHER_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/Launcher
+MACHINESETTINGS_DIR			=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/MachineSettings
+WLANFIRM_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/wlanfirm
+NANDFIRM_DIR                =   $(TWL_IPL_RED_ROOT)/build/nandfirm/menu-launcher
 
 SUBDIRS =	$(LAUNCHER_DIR) \
 			$(MACHINESETTINGS_DIR) \

@@ -54,17 +54,12 @@ SRCS		=	main.c \
 				hw_info.c \
 				keypad.c
 
-
-SRCS       +=   $(ROOT)/build/tests/debugger/fio/src/fs_archive_hostio.c
-
 LINCLUDES	=	include \
+				../common/include \
 				$(ROOT)/build/libraries/lcfg/ARM9.TWL/include \
-				$(ROOT)/build/libraries/fs/common/include \
-				../../NandInitializerRed/common/include \
-				../../NandInitializerRed/ARM9.TWL/include
+				$(ROOT)/build/libraries/fs/common/include
 
 SRCDIR		=	src \
-				../../NandInitializerRed/ARM9.TWL/src \
 				../../HWInfoWriter/ARM9/src
 
 #LCFILE		=	# using default

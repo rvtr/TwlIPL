@@ -37,14 +37,14 @@ do-build :	HNAA.tad \
 			HNBA.tad \
 			HNCA.tad \
 			menu_launcher.nand
-			
-HNAA.tad: ../../Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/main.srl
+
+HNAA.tad: ../../../systemMenu_RED/Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/main.srl
 	$(MAKETAD) -s $< $(MAKETAD_FLAGS) -o $@
 
-HNBA.tad: ../../MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/main.srl
+HNBA.tad: ../../../systemMenu_RED/MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/main.srl
 	$(MAKETAD) -s $< $(MAKETAD_FLAGS) -o $@
 
-HNCA.tad: ../../wlanfirm/HNCA.srl
+HNCA.tad: ../../../systemMenu_RED/wlanfirm/HNCA.srl
 	$(MAKETAD) -s $< $(MAKETAD_FLAGS) -o $@
 
 menu_launcher.nand: ../../../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nand
