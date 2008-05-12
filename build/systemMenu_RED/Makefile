@@ -24,11 +24,6 @@ SUBDIRS_P	=	\
 				launcher \
 				MachineSettings \
 				PictoChat \
-				HWInfoWriter \
-				NandInitializerRed \
-				NandInitializerProduction \
-				NandInitializer \
-				ImportJump \
 				wlanfirm \
 				DSHashTable
 				#DS_DownloadPlay

@@ -27,7 +27,8 @@ SUBDIRS =	\
 			libraries_sysmenu\
 			nandfirm \
 			components \
-			systemmenu_RED \
+			systemMenu_RED \
+			systemMenu_tools \
 			gcdfirm \
 
 ifdef TWL_IPL_WITH_TESTS

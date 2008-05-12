@@ -37,7 +37,7 @@ TARGET_BIN				=	main.srl
 
 ROM_SPEC				=	main.rsf
 
-MISC_DIR				=	../../misc
+MISC_DIR				=	../../../systemMenu_RED/misc
 
 SRCS					=	main.c HWInfoWriter.c hwi.c \
 							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
