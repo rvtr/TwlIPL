@@ -131,7 +131,7 @@ extern void SYSM_GoSleepMode( void );                                           
 
 // ペアレンタルコントロール問い合わせ
 u32 SYSM_CalcPCTLInquiryCode( void );											// 問い合わせコード（１０進８桁）算出
-u32 SYSM_CalcPCTLMasterKey( void );												// マスターキー　　（１０進５桁）算出
+u32 SYSM_CalcPCTLMasterKey( void );												// マスターキー　　（１０進５桁）算出（※内部でRTC_GetDateを使用します。）
 
 #endif
 
