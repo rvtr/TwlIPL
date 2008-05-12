@@ -579,7 +579,7 @@ OS_TPrintf("RebootSystem failed: cant seek file(%d)\n", source[i]);
 
 #ifdef LOAD_APP_VIA_WRAM
 OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
-            // [TODO:]ここで同時にAES処理もやってしまう予定
+            // ここでロード処理と同時にハッシュ計算とAES処理もやってしまう
             // 別スレッドで同じWRAM使おうとすると多分コケるので注意
             
             // コールバック関数に与える引数を初期化してRead
@@ -654,6 +654,13 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 	// 値が変化するまでスリープして待つ。
 	while( HOTSW_isEnableHotSW() != FALSE ) {
 		OS_Sleep( 2 );
+	}
+	
+	// DataOnlyなアプリはロードも起動もしない
+	if( pBootTitle->titleID & TITLE_ID_DATA_ONLY_FLAG_MASK )
+	{
+		OS_TPrintf("SYSM_StartLoadTitle failed: This App has Data_Only flag.\n");
+		return;
 	}
     
 	s_loadstart = TRUE;

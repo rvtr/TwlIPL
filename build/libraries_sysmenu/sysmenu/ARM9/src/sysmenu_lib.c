@@ -252,6 +252,13 @@ TitleProperty *SYSM_ReadParameters( void )
 	        }
 		}
 	}
+	
+    // アプリジャンプでないときには、アプリ間パラメタをクリア
+    // [TODO:]あらかじめNTRカードのセキュア領域を退避せずに直接0x2000000からロードしている場合も容赦なく消すので注意
+    if( !pBootTitle )
+    {
+    	MI_CpuClearFast((void *)HW_PARAM_DELIVER_ARG, HW_PARAM_DELIVER_ARG_SIZE);
+	}
 
     //-----------------------------------------------------
     // ISデバッガバナーViewモード起動

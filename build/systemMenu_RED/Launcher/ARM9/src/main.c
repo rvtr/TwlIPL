@@ -150,9 +150,6 @@ void TwlMain( void )
 
     // 「ダイレクトブートでない」なら
     if( !pBootTitle ) {
-        // アプリ間パラメタをクリア
-        // TODO:あらかじめNTRカードのセキュア領域を退避せずに直接0x2000000からロードしている場合も容赦なく消すので注意
-        MI_CpuClearFast((void *)HW_PARAM_DELIVER_ARG, HW_PARAM_DELIVER_ARG_SIZE);
 
         // NAND & カードアプリリスト取得
         (void)SYSM_GetNandTitleList( s_titleList, LAUNCHER_TITLE_LIST_NUM );    // NANDアプリリストの取得（内蔵アプリはs_titleList[1]から格納される）
