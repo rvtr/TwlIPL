@@ -218,7 +218,7 @@ RomSpec
 {
 	Offset		0x00000000
 	Segment		ALL
-	HostRoot	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/NandInitializerRed/data
+	HostRoot	$(TWL_IPL_RED_ROOT)/build/systemMenu_tools/NandInitializerRed/data
 	Root		/data
 	File		*.*
 	HostRoot	$(PRIVKEY_PATH)
