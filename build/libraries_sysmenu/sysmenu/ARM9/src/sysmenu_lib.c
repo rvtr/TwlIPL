@@ -169,7 +169,7 @@ TitleProperty *SYSM_ReadParameters( void )
 	    LCFG_VerifyAndRecoveryNTRSettings();  		                          	// NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
     }
 	
-    //-----------------------------------------------------
+	//-----------------------------------------------------
     // システム領域に本体設定などをコピー
     //-----------------------------------------------------
 	// NTRカードアプリARM9コードのロード領域とメモリがかち合うが、先頭0x4000はセキュア領域で別バッファに格納されるので、
@@ -303,6 +303,12 @@ static void SYSMi_CopyLCFGData( void )
 	{
 		LCFGTWLSettingsData *pSettings = (LCFGTWLSettingsData *)HW_PARAM_TWL_SETTINGS_DATA;
 		MI_CpuClear32( &pSettings->launcherStatus, sizeof(LCFGTWLLauncherStatus) );
+	}
+	
+	// NTR本体設定データをメモリに展開しておく
+	{
+		LCFG_NSD_SetLanguage( LCFG_NSD_GetLanguageEx() );
+		MI_CpuCopy8( LCFGi_GetNSD(), OS_GetSystemWork()->nvramUserInfo, sizeof(LCFGNTRSettingsData) );
 	}
 }
 
