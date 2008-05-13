@@ -115,16 +115,21 @@ void HOTSW_ReadCardData(void* src, void* dest, u32 size)
 	OS_TPrintf("src  : 0x%08x\n", SYSMi_GetWork()->cardReadParam.src);
     OS_TPrintf("dst  : 0x%08x\n", SYSMi_GetWork()->cardReadParam.dest);
     OS_TPrintf("size : 0x%08x\n", SYSMi_GetWork()->cardReadParam.size);
+
+	DC_FlushRange( dest, size );
     
     msg.msg.read = TRUE;
-    
+	
 	while (PXI_SendWordByFifo(PXI_FIFO_TAG_HOTSW, msg.data, FALSE) != PXI_FIFO_SUCCESS)
     {
     	// do nothing
     }
 
     // [TODO] ARM7側でリードが終了してステートが返ってくるのを待つ？
-    
+	while (!SYSMi_GetWork()->flags.hotsw.isCardReadCompleted)
+    {
+
+    }
 }
 #endif
 

@@ -711,7 +711,11 @@ HotSwState ReadIDGame(CardBootData *cbd)
 	reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | HOTSW_PAGE_STAT;
     
     // メッセージ受信
+#ifndef USE_WRAM_LOAD
 	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
+#else
+    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
+#endif
     
     return HOTSW_SUCCESS;
 }
@@ -756,7 +760,11 @@ HotSwState ReadPageGame(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
 		reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | HOTSW_PAGE_1;
         
 		// メッセージ受信
+#ifndef USE_WRAM_LOAD
 		OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
+#else
+    	HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
+#endif
     }
 
     return HOTSW_SUCCESS;
@@ -792,7 +800,11 @@ HotSwState ReadStatusGame(CardBootData *cbd)
 	reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | HOTSW_PAGE_STAT;
     
     // メッセージ受信
-	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
+#ifndef USE_WRAM_LOAD
+		OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
+#else
+    	HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
+#endif
     
     return HOTSW_SUCCESS;
 }

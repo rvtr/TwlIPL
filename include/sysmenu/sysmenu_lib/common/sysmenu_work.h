@@ -115,6 +115,7 @@ typedef struct SYSM_work {
             vu16		isCardGameMode :1;				// カードがゲームモードに遷移したか？
             vu16		:0;
             vu8			isCardStateChanged;				// カード状態更新フラグ
+            vu8			isCardReadCompleted;			// カードデータリード完了？
         }hotsw;
 	}flags; // 7B
 
