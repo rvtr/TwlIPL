@@ -129,6 +129,14 @@ static void ReadTWLSettings( void )
     s_isReadTSD = FALSE;
     if( pBuffer ) {
         s_isReadTSD = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ] )pBuffer );
+		// Readに失敗した場合 LCFG_ReadTWLSettings 内部でファイルがリカバリ生成されるが
+		// 返り値は FALSE となる。HWI_ModifyLanguage のために s_isReadTSD は TRUEにしておく
+		// 必要があるためもう一度リードを試みる
+		if (!s_isReadTSD)
+		{
+			OS_TPrintf( "TSD read failed. Retry onece more.\n" );
+	        s_isReadTSD = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ] )pBuffer );
+		}
         spFree( pBuffer );
     }
     if( s_isReadTSD ) {
