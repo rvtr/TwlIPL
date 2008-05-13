@@ -383,6 +383,8 @@ BOOL FS_ReadFileViaWram( FSFile *p_file, void *dst, s32 len, MIWramPos wram, s32
         OS_TPrintf("Cannot allocate WRAM %d, %d, %d\n", wram, slot, size);
         return FALSE;
     }
+    // cash care
+    DC_InvalidateRange((void *)FSiWramWork.base, size);
 
 
     // ÉpÉâÉÅÅ[É^ê›íË
