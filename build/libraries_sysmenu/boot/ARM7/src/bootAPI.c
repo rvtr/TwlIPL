@@ -104,6 +104,10 @@ BOOL BOOT_WaitStart( void )
 		ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 		BOOL isNtrMode;
 
+		(void)OS_DisableIrq();							// ここで割り込み禁止にしないとダメ。
+		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
+		(void)OS_SetIrqMaskEx(0);
+		
 		// ヘッダ情報再配置
 		if( SYSM_GetCardRomHeader()->platform_code & PLATFORM_CODE_FLAG_TWL )
 		{
@@ -121,10 +125,6 @@ BOOL BOOT_WaitStart( void )
 
 		// ブラックリストをチェックし、起動制限をかける
 		BOOTi_CheckTitleBlackList();
-		
-		(void)OS_DisableIrq();							// ここで割り込み禁止にしないとダメ。
-		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
-		(void)OS_SetIrqMaskEx(0);
 		
 		// マウント情報を一時的にSYSM_TWL_MOUNT_INFO_TMP_BUFFERに登録
 		// ここまでにHW_TWL_ROM_HEADER_BUFのヘッダが次のアプリのものに変更されている必要あり
