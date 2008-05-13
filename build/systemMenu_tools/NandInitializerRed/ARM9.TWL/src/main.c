@@ -86,6 +86,12 @@ TwlMain()
     (void)OS_EnableIrq();
     (void)GX_VBlankIntr(TRUE);
 
+	// ボンディングオプションが製品なら停止
+	if (SCFG_ReadBondingOption() == SCFG_OP_PRODUCT)
+	{
+		OS_Panic("Bonding Option == PRODUCT\n");
+	}
+
     // initialize file-system
 	FS_Init(FS_DMA_NOT_USE);
 	// SDカードの挿抜イベント監視コールバック設定
