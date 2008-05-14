@@ -124,6 +124,7 @@ CardDataReadState HOTSW_ReadCardData(void* src, void* dest, u32 size)
     {
 		// do nothing
     }
+            SYSMi_GetWork()->flags.hotsw.isCardReadCompleted = FALSE;
 
     return SYSMi_GetWork()->cardReadParam.result;
 }

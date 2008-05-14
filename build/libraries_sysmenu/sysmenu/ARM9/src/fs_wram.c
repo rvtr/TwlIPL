@@ -190,6 +190,11 @@ static void FSi_WramThread(void* arg)
             break;
         case FS_WRAM_COMMAND_READ_CARD:
             // カードリード
+            if(!FSi_IsValidAddressForARM7(cmd->addr, (u32)cmd->length))
+            {
+				result = 0;
+				break;
+			}
             HOTSW_ReadCardData( FSiWramWork.card_src, cmd->addr, (u32)cmd->length);
             result = cmd->length;//暫定
             break;

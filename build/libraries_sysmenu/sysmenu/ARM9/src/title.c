@@ -417,6 +417,7 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
     FSFile  file[1];
     BOOL bSuccess;
     BOOL isTwlApp = TRUE;
+    BOOL isCardApp = FALSE;
 	
 	switch( pBootTitle->flags.bootType )
 	{
@@ -425,7 +426,8 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
     	NAM_GetTitleBootContentPathFast(path, pBootTitle->titleID);
 		break;
 	case LAUNCHER_BOOTTYPE_ROM:
-		// TODO:CARD未読の場合の処理
+		// CARD
+		isCardApp = TRUE;
 		break;
 	case LAUNCHER_BOOTTYPE_TEMP:
 		// tmpフォルダ
@@ -436,8 +438,14 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
 		return;
 	}
 
-	FS_InitFile( file );
-    bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
+	if(!isCardApp)
+	{
+		FS_InitFile( file );
+	    bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
+    }else
+    {
+		bSuccess = TRUE;
+	}
 
     if( ! bSuccess )
     {
@@ -456,7 +464,13 @@ OS_TPrintf("RebootSystem failed: cant open file\n");
 
         // まずROMヘッダを読み込む
         // (本来ならここでSRLの正当性判定)
-        bSuccess = FS_SeekFile(file, 0x00000000, FS_SEEK_SET);
+        if(!isCardApp)
+        {
+        	bSuccess = FS_SeekFile(file, 0x00000000, FS_SEEK_SET);
+		}else
+		{
+			bSuccess = TRUE;
+		}
 
         if( ! bSuccess )
         {
@@ -464,7 +478,14 @@ OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
 			goto ERROR;
         }
 
-        readLen = FS_ReadFile(file, header, (s32)sizeof(header));
+		if(!isCardApp)
+		{
+	        readLen = FS_ReadFile(file, header, (s32)sizeof(header));
+	    }else
+	    {
+			HOTSW_ReadCardData((void*) 0, (void*)header, (s32)sizeof(header));
+			readLen = (s32)sizeof(header);
+		}
 
         if( readLen != (s32)sizeof(header) )
         {
@@ -496,7 +517,8 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
 				// NTR-DLアプリの場合はDLアプリ署名データを取得しておく
 				u32 valid_size = ( head->s.rom_valid_size ? head->s.rom_valid_size : 0x01000000 );
 
-		        bSuccess = FS_SeekFile(file, (s32)valid_size, FS_SEEK_SET);
+			    bSuccess = FS_SeekFile(file, (s32)valid_size, FS_SEEK_SET);
+
 		        if( ! bSuccess )
 		        {
 OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
@@ -567,8 +589,13 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
             u32 len = MATH_ROUNDUP( length[i], SYSM_ALIGNMENT_LOAD_MODULE );// AES暗号化領域の関係で、ロードサイズは32バイトアライメントに補正
             
             if ( !isTwlApp && i >= region_arm9_twl ) continue;// nitroでは読み込まない領域
-
-            bSuccess = FS_SeekFile(file, (s32)source[i], FS_SEEK_SET);
+	        if(!isCardApp)
+	        {
+	            bSuccess = FS_SeekFile(file, (s32)source[i], FS_SEEK_SET);
+            }else
+            {
+				bSuccess = TRUE;
+			}
 
             if( ! bSuccess )
             {
@@ -588,8 +615,15 @@ OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
 	            SVC_SHA1Init( &arg.ctx );
 	            arg.hash_length = (u32)(region_header != i ? length[i] : 
 	            						(isTwlApp ? TWL_ROM_HEADER_HASH_CALC_DATA_LEN : NTR_ROM_HEADER_HASH_CALC_DATA_LEN) );
-	            result = FS_ReadFileViaWram(file, (void *)destaddr[i], (s32)len, MI_WRAM_C,
-	            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcSHA1Callback, &arg );
+	            if(!isCardApp)
+		        {
+		            result = FS_ReadFileViaWram(file, (void *)destaddr[i], (s32)len, MI_WRAM_C,
+		            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcSHA1Callback, &arg );
+		        }else
+		        {
+					result = HOTSW_ReadCardViaWram((void *)source[i], (void *)destaddr[i], (s32)len, MI_WRAM_C,
+		            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcSHA1Callback, &arg );
+				}
 	            SVC_SHA1GetHash( &arg.ctx, &s_calc_hash[i * SVC_SHA1_DIGEST_SIZE] );
 			}else
 			{
@@ -597,8 +631,15 @@ OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
 				CalcHMACSHA1CallbackArg arg;
 	            SVC_HMACSHA1Init( &arg.ctx, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
 	            arg.hash_length = length[i];
-	            result = FS_ReadFileViaWram(file, (void *)destaddr[i], (s32)len, MI_WRAM_C,
-	            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcHMACSHA1Callback, &arg );
+	            if(!isCardApp)
+		        {
+		            result = FS_ReadFileViaWram(file, (void *)destaddr[i], (s32)len, MI_WRAM_C,
+		            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcHMACSHA1Callback, &arg );
+		        }else
+		        {
+					result = HOTSW_ReadCardViaWram((void *)source[i], (void *)destaddr[i], (s32)len, MI_WRAM_C,
+		            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcHMACSHA1Callback, &arg );
+				}
 	            SVC_HMACSHA1GetHash( &arg.ctx, &s_calc_hash[i * SVC_SHA1_DIGEST_SIZE] );
 			}
 			if ( !result )
@@ -618,14 +659,20 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 
         }
 
-        (void)FS_CloseFile(file);
+		if(!isCardApp)
+		{
+	        (void)FS_CloseFile(file);
+        }
 
     }
 	SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
 	return;
 	
 ERROR:
-    (void)FS_CloseFile(file);
+	if(!isCardApp)
+	{
+        (void)FS_CloseFile(file);
+    }
 }
 
 
@@ -660,14 +707,11 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 	if( !pBootTitle->flags.isAppLoadCompleted ) {
 		SYSMi_GetWork()->flags.common.isLoadFinished  = FALSE;
 		
-		if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM ) {
-			SYSMi_AppendRelocateInfoCardSecureArea();
-		}else {
-			SYSMi_GetWork()->flags.common.isLoadSucceeded = FALSE;
-			OS_InitThread();
-			OS_CreateThread( &s_thread, (void (*)(void *))SYSMi_LoadTitleThreadFunc, (void*)pBootTitle, stack+STACK_SIZE/sizeof(u64), STACK_SIZE,THREAD_PRIO );
-			OS_WakeupThreadDirect( &s_thread );
-		}
+		SYSMi_GetWork()->flags.common.isLoadSucceeded = FALSE;
+		OS_InitThread();
+		OS_CreateThread( &s_thread, (void (*)(void *))SYSMi_LoadTitleThreadFunc, (void*)pBootTitle, stack+STACK_SIZE/sizeof(u64), STACK_SIZE,THREAD_PRIO );
+		OS_WakeupThreadDirect( &s_thread );
+
 	}else {
 		// アプリロード済み
 		SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
@@ -710,14 +754,15 @@ BOOL SYSM_IsLoadTitleFinished( void )
 {
 	// ロード済みの時は、常にTRUE
 	if( !SYSMi_GetWork()->flags.common.isLoadFinished ) {
+		/*
 		if( SYSMi_GetWork()->flags.common.isCardBoot ) {
 			// カードブートの時は、HOTSWライブラリのロード完了をチェック。
 			SYSMi_GetWork()->flags.common.isLoadFinished  = SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted;
 			SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
 		}else {
-			// NANDブートの時は、ロードスレッドの完了をチェック。
-			SYSMi_GetWork()->flags.common.isLoadFinished = OS_IsThreadTerminated( &s_thread );
-		}
+		*/
+		// NANDブートの時は、ロードスレッドの完了をチェック。
+		SYSMi_GetWork()->flags.common.isLoadFinished = OS_IsThreadTerminated( &s_thread );
 	}
 	return SYSMi_GetWork()->flags.common.isLoadFinished ? TRUE : FALSE;
 }
@@ -894,7 +939,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 				}
 			}else
 			{
-				OS_TPrintf("Authenticate failed: %s module hash check failed.\n", str[l]);
+				OS_TPrintf("Authenticate failed: %s module hash calc failed.\n", str[l]);
 				if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
 			}
 		}
