@@ -21,6 +21,7 @@
 #include "process_format.h"
 #include "process_hw_info.h"
 #include "process_import.h"
+#include "process_font.h"
 #include "process_eticket.h"
 #include "process_nandfirm.h"
 #include "process_norfirm.h"
@@ -43,6 +44,7 @@ enum {
 	MENU_WIRELESS_SETTING,
 #endif // USE_WIRELESS_FORCE_DISABLE_SETTING
 #ifndef   NAND_INITIALIZER_LIMITED_MODE
+	MENU_FONT_DATA,
 	MENU_ETICKET,
 	MENU_IMPORT_TAD,
 	MENU_IMPORT_NANDFIRM,
@@ -75,6 +77,7 @@ static const MenuAndColor sMenuArray[] =
 	{"    WIRELESS FORCE SETTING ", BG_COLOR_YELLOW },
 #endif // USE_WIRELESS_FORCE_DISABLE_SETTING
 #ifndef   NAND_INITIALIZER_LIMITED_MODE
+	{"    WRITE FONT DATA        ", BG_COLOR_BROWN  },
 	{"    WRITE ETICKET SIGN     ", BG_COLOR_GRAY   },
 	{"    IMPORT TAD FROM SD     ", BG_COLOR_PINK   },
 	{"    IMPORT NANDFIRM FROM SD", BG_COLOR_GREEN  },
@@ -217,6 +220,8 @@ void* TopmenuProcess2(void)
 		FADE_OUT_RETURN( WirelessSettingProcess0 );
 #endif // USE_WIRELESS_FORCE_DISABLE_SETTING
 #ifndef   NAND_INITIALIZER_LIMITED_MODE
+	case MENU_FONT_DATA:
+		FADE_OUT_RETURN( fontProcess0 );
 	case MENU_ETICKET:
 		FADE_OUT_RETURN( eTicketProcess0 );
 	case MENU_IMPORT_TAD:

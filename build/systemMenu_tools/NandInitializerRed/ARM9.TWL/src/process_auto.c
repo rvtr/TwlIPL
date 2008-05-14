@@ -21,6 +21,7 @@
 #include "process_format.h"
 #include "process_hw_info.h"
 #include "process_import.h"
+#include "process_font.h"
 #include "process_eticket.h"
 #include "process_nandfirm.h"
 #include "process_norfirm.h"
@@ -37,10 +38,7 @@
     定数定義
  *---------------------------------------------------------------------------*/
 
-#define NUM_OF_MENU_SELECT    6
-#define DOT_OF_MENU_SPACE    16
-#define CURSOR_ORIGIN_X      32
-#define CURSOR_ORIGIN_Y      56
+#define NUM_OF_MENU  6
 
 /*---------------------------------------------------------------------------*
     グローバル変数定義
@@ -104,14 +102,15 @@ void* AutoProcess1(void)
 		return FormatProcess0;
 	case 1:
 		return HWInfoProcess0;
-		break;
 	case 2:
-		return eTicketProcess0;
+		return fontProcess0;	
 	case 3:
-		return ImportProcess0;
+		return eTicketProcess0;
 	case 4:
-		return NandfirmProcess0;
+		return ImportProcess0;
 	case 5:
+		return NandfirmProcess0;
+	case 6:
 		return AutoProcess2;
 	}
 
@@ -150,9 +149,10 @@ void* AutoProcess2(void)
 	// メニュー一覧
 	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "    FORMAT NAND            ");
 	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "    WRITE HARDWARE INFO    ");
-	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "    WRITE ETICKET SIGN     ");
-	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "    INPORT TAD FROM SD     ");
-	kamiFontPrintf(3, 15, FONT_COLOR_BLACK, "    INPORT NANDFIRM FROM SD");
+	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "    WRITE FONT DATA        ");
+	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "    WRITE ETICKET SIGN     ");
+	kamiFontPrintf(3, 15, FONT_COLOR_BLACK, "    INPORT TAD FROM SD     ");
+	kamiFontPrintf(3, 17, FONT_COLOR_BLACK, "    INPORT NANDFIRM FROM SD");
 #ifndef AUTO_FORMAT_MODE
 	kamiFontPrintf(3, 22, FONT_COLOR_BLACK, " Button B : return to menu");
 #endif
@@ -163,16 +163,16 @@ void* AutoProcess2(void)
 	}
 
 	// 失敗あり
-	if (i<5)
+	if (i<NUM_OF_MENU)
 	{
 		kamiFontPrintf(3, (s16)(7+2*i), FONT_COLOR_RED, "NG");
-		kamiFontPrintf(3, 18, FONT_COLOR_BLACK, "    Error Occured!");
+		kamiFontPrintf(3, 19, FONT_COLOR_BLACK, "    Error Occured!");
 		bg_color = BG_COLOR_RED;
 	}
 	// 失敗なし
 	else
 	{
-		kamiFontPrintf(3, 18, FONT_COLOR_BLACK, "   Finished Successfully!");
+		kamiFontPrintf(3, 19, FONT_COLOR_BLACK, "   Finished Successfully!");
 		bg_color = BG_COLOR_GREEN;
 	}
 
@@ -182,9 +182,9 @@ void* AutoProcess2(void)
 	kamiFontFillChar( 2, bg_color, BG_COLOR_TRANS );
 
 	// 背景下部
-	kamiFontFillChar(17, BG_COLOR_TRANS, bg_color );
-	kamiFontFillChar(18, bg_color, bg_color );
-	kamiFontFillChar(19, bg_color, BG_COLOR_TRANS );
+	kamiFontFillChar(18, BG_COLOR_TRANS, bg_color );
+	kamiFontFillChar(19, bg_color, bg_color );
+	kamiFontFillChar(20, bg_color, BG_COLOR_TRANS );
 
 	// カーソル消去
 	SetCursorPos((u16)200, (u16)200);

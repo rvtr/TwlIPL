@@ -16,9 +16,6 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-SUBDIRS		=	$(ROOT)/build/demos/gx/UnitTours/DEMOLib
-
-
 #----------------------------------------------------------------------------
 
 #============================================================================
@@ -65,6 +62,7 @@ SRCS		=	main.c \
 				process_norfirm.c \
 				process_auto.c \
 				process_fade.c \
+				process_font.c \
 				sd_event.c \
 				hwi.c
 
@@ -103,7 +101,6 @@ LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\
 					libnamut$(TWL_LIBSUFFIX).a
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
-include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
 
 MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 

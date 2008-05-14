@@ -313,18 +313,17 @@ void* FormatProcess2(void)
 	return FormatProcess1;
 }
 
+// äÑÇËçûÇ›ì‡Ç…Ç¬Ç´ïââ◊ÇÕåyÇ≠
 static void FormatCallback(KAMIResult result, void* /*arg*/)
 {
 	s16 y_pos = (s16)(7 + sMenuSelectNo * CHAR_OF_MENU_SPACE);
 
 	if ( result == KAMI_RESULT_SUCCESS_TRUE )
 	{
-		kamiFontPrintf(24,  y_pos, FONT_COLOR_GREEN, " OK  ");
 		sFormatResult = TRUE;
 	}
 	else
 	{
-		kamiFontPrintf(24,  y_pos, FONT_COLOR_RED,   " NG  ");
 		sFormatResult = FALSE;
 	}
 
@@ -352,11 +351,21 @@ void* FormatProcess3(void)
 	{
 		progress = 0;
 
+		if ( sFormatResult )
+		{
+			kamiFontPrintf(24,  y_pos, FONT_COLOR_GREEN, " OK  ");
+		}
+		else
+		{
+			kamiFontPrintf(24,  y_pos, FONT_COLOR_RED,   " NG  ");
+		}
+		
+
 #ifndef NAND_INITIALIZER_LIMITED_MODE
 		// Autoóp
 		if (gAutoFlag)
 		{
-			if (sFormatResult == TRUE) { FADE_OUT_RETURN( AutoProcess1 ); }
+			if (sFormatResult) { FADE_OUT_RETURN( AutoProcess1 ); }
 			else { FADE_OUT_RETURN( AutoProcess2 ); }
 		}
 #endif

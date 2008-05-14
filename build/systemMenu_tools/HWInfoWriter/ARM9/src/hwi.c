@@ -36,17 +36,16 @@ const LCFGTWLHWNormalInfo *LCFG_THW_GetNormalInfo( void );
 const LCFGTWLHWSecureInfo *LCFG_THW_GetSecureInfo( void );
 
 // function's prototype declaration---------------------
-static void ReadTWLSettings( void );
 static HwiInitResult ReadPrivateKey( void );
-static void ReadHWInfoFile( void );
 static void VerifyHWInfo( void );
 static BOOL VerifyData( const u8 *pTgt, const u8 *pOrg, u32 len );
+static BOOL ReadHWInfoFile( void );
+static BOOL ReadTWLSettings( void );
 
 // global variable -------------------------------------
 
 // static variable -------------------------------------
 static u8 *s_pPrivKeyBuffer = NULL;
-static BOOL s_isReadTSD;
 static void *(*spAlloc)( u32 length );
 static void  (*spFree)( void *ptr );
 
@@ -123,27 +122,28 @@ HwiInitResult HWI_Init( void *(*pAlloc)( u32 ), void (*pFree)( void * ) )
 
 
 // TWL設定データのリード
-static void ReadTWLSettings( void )
+static BOOL ReadTWLSettings( void )
 {
     u8 *pBuffer = spAlloc( LCFG_READ_TEMP );
-    s_isReadTSD = FALSE;
+    BOOL result;
     if( pBuffer ) {
-        s_isReadTSD = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ] )pBuffer );
+        result = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ] )pBuffer );
 		// Readに失敗した場合 LCFG_ReadTWLSettings 内部でファイルがリカバリ生成されるが
-		// 返り値は FALSE となる。HWI_ModifyLanguage のために s_isReadTSD は TRUEにしておく
-		// 必要があるためもう一度リードを試みる
-		if (!s_isReadTSD)
+		// 返り値は FALSE となるためもう一度リードを試みる
+		if (!result)
 		{
 			OS_TPrintf( "TSD read failed. Retry onece more.\n" );
-	        s_isReadTSD = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ] )pBuffer );
+	        result = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ] )pBuffer );
 		}
         spFree( pBuffer );
     }
-    if( s_isReadTSD ) {
+    if( result ) {
         OS_TPrintf( "TSD read succeeded.\n" );
     }else {
         OS_TPrintf( "TSD read failed.\n" );
     }
+
+	return result;
 }
 
 // 秘密鍵のリード
@@ -192,15 +192,17 @@ HwiInitResult ReadPrivateKey( void )
 }
 
 // HW情報全体のリード
-static void ReadHWInfoFile( void )
+static BOOL ReadHWInfoFile( void )
 {
     LCFGReadResult retval;
+	BOOL result = TRUE;
     OSTick start = OS_GetTick();
 
     retval = LCFGi_THW_ReadNormalInfo();
     if( retval == LCFG_TSF_READ_RESULT_SUCCEEDED ) {
         OS_TPrintf( "HW Normal Info read succeeded.\n" );
     }else {
+		result = FALSE;
         OS_TPrintf( "HW Normal Info read failed.\n" );
     }
 
@@ -211,9 +213,12 @@ static void ReadHWInfoFile( void )
     if( retval == LCFG_TSF_READ_RESULT_SUCCEEDED ) {
         OS_TPrintf( "HW Secure Info read succeeded.\n" );
     }else {
+		result = FALSE;
         OS_TPrintf( "HW Secure Info read failed.\n" );
     }
 //  OS_TPrintf( "HW Secure Info read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+
+	return result;
 }
 
 // HWInfoファイルのベリファイ
@@ -259,11 +264,11 @@ BOOL HWI_ModifyLanguage( u8 region )
     u8  nowLanguage = LCFG_TSD_GetLanguage();
 	BOOL result = TRUE;
 
-    // TSDが読み込めていないなら、何もせずリターン
-    if( !s_isReadTSD ) {
-		OS_TPrintf("TWLSetting is not Readed!\n");
-        return FALSE;
-    }
+	if (!ReadTWLSettings())
+	{
+		result = FALSE;
+        OS_TPrintf( "HW Normal Info read failed.\n" );
+	}
 
     if( langBitmap & ( 0x0001 << nowLanguage ) ) {
         OS_TPrintf( "Language no change.\n" );

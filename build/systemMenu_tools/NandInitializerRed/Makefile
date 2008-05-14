@@ -22,6 +22,7 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 #----------------------------------------------------------------------------
 
 SUBDIRS =	\
+			$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/sharedFont \
             banner \
             ARM7.TWL \
             ARM9.TWL \

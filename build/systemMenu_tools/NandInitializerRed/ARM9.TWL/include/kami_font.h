@@ -78,6 +78,7 @@ void kamiFontPrintfConsoleEx(u8 color, const char *text, ...);
 #define BG_COLOR_VIOLET  8
 #define BG_COLOR_RED     9
 #define BG_COLOR_YELLOW 10
+#define BG_COLOR_BROWN  11
 
 #define BG_COLOR_NONE   0xff
 

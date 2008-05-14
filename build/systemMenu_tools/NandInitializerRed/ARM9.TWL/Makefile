@@ -58,6 +58,7 @@ SRCS		=	main.c \
 				process_norfirm.c \
 				process_auto.c \
 				process_fade.c \
+				process_font.c \
 				sd_event.c \
 				hwi.c
 
