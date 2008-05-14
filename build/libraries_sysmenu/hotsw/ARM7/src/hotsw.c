@@ -391,8 +391,8 @@ static HotSwState LoadCardData(void)
 
     // バッファを設定
     s_cbData.pBootSegBuf   = s_pBootSegBuffer;
-    s_cbData.pSecureSegBuf = s_pSecureSegBuffer;
-    s_cbData.pSecure2SegBuf= s_pSecure2SegBuffer;
+//	s_cbData.pSecureSegBuf = s_pSecureSegBuffer;
+//	s_cbData.pSecure2SegBuf= s_pSecure2SegBuffer;
 
     // ロード処理開始
     if(HOTSW_IsCardAccessible()){
@@ -570,10 +570,6 @@ static HotSwState LoadCardData(void)
             state  = ReadIDGame(&s_cbData);
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
-#ifdef USE_WRAM_LOAD
-            // 排他制御ここまで(※CRCチェックまでにミスがなかったら、排他制御ここまで)
-            UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
-#else
             // バナーファイルの読み込み
             state  = LoadBannerData();
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
@@ -587,16 +583,17 @@ static HotSwState LoadCardData(void)
                 goto finalize;
             }
 
+            // 認証コード読み込み＆ワーク領域にコピー
+            state  = CheckCardAuthCode();
+            retval = (retval == HOTSW_SUCCESS) ? state : retval;
+
+#ifndef USE_WRAM_LOAD
             // 常駐モジュール残りを指定先に転送
             state  = LoadStaticModule();
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
             // ARM9常駐モジュールの先頭2KBの暗号化領域を複合化
             (void)DecryptObjectFile();
-
-            // 認証コード読み込み＆ワーク領域にコピー
-            state  = CheckCardAuthCode();
-            retval = (retval == HOTSW_SUCCESS) ? state : retval;
 #endif
         }
         else{
