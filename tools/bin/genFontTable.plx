@@ -168,7 +168,7 @@ if (!$KEYROOT) {
 # ƒwƒbƒ_‚Ö‚Ì–¼•t‰Á
 {
     system ( "openssl dgst -sha1 -binary -out $digestFile $headerFile" );
-    system ( "openssl rsautl -sign -in $digestFile -inkey $KEYROOT/keys/rsa/private9_1.der -keyform DER -out $signFile" );
+    system ( "openssl rsautl -sign -in $digestFile -inkey $KEYROOT/keys/rsa/private_sharedFont.der -keyform DER -out $signFile" );
 	system ( "cat $signFile $headerFile >$tempFile" );
 	system ( "cat $tempFile $infoFile >$outFile" );
 	deleteTemp();
