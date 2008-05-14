@@ -109,7 +109,7 @@ static BOOL CheckArm9HashValue(void);
 static BOOL CheckExtArm7HashValue(void);
 static BOOL CheckExtArm9HashValue(void);
 #else
-static HotSwState ReadCardData(u32 src, u32 dest, u32 size);
+static CardDataReadState ReadCardData(u32 src, u32 dest, u32 size);
 #endif
 
 static void ShowRegisterData(void);
@@ -886,18 +886,13 @@ static HotSwState LoadBannerData(void)
   twl_card_keytable_area_rom_offset -> KeyTable2領域オフセット
  *---------------------------------------------------------------------------*/
 #ifdef USE_WRAM_LOAD
-static HotSwState ReadCardData(u32 src, u32 dest, u32 size)
+static CardDataReadState ReadCardData(u32 src, u32 dest, u32 size)
 {
-    u32 sendSize   = 0;
-    u32 remainSize = size;
-    u32 srcAdd     = src;
-    u32 destAdd    = dest;
-
-    SYSMi_GetWork()->flags.hotsw.isCardReadCompleted = FALSE;
+    u32 sendSize = 0;
+    BOOL result	 = TRUE;
 
     if(!SYSMi_GetWork()->flags.hotsw.isCardGameMode){
-        // [TODO] 適切なエラーコード作って、返す
-        return HOTSW_UNEXPECTED_ERROR;
+		return CARD_READ_MODE_ERROR;
     }
 
     // カードのロック
@@ -907,26 +902,28 @@ static HotSwState ReadCardData(u32 src, u32 dest, u32 size)
     LockExCard(s_CardLockID);
 #endif
 
-    while(remainSize > 0){
+    while(size > 0){
         // --- Boot Segment
-        if(srcAdd >= HOTSW_BOOTSEGMENT_AREA_OFS && srcAdd < HOTSW_KEYTABLE_AREA_OFS){
+		if(src >= HOTSW_BOOTSEGMENT_AREA_OFS && src < HOTSW_KEYTABLE_AREA_OFS){
             OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
-            sendSize = ((srcAdd + remainSize) > HOTSW_KEYTABLE_AREA_OFS) ? HOTSW_KEYTABLE_AREA_OFS - srcAdd : remainSize;
-            MI_CpuCopy8((u32 *)(SYSM_CARD_ROM_HEADER_BAK + (srcAdd - HOTSW_BOOTSEGMENT_AREA_OFS)), (u32 *)destAdd, sendSize);
-        }
+    	    sendSize = ((src + size) > HOTSW_KEYTABLE_AREA_OFS) ? HOTSW_KEYTABLE_AREA_OFS - src : size;
+			MI_CpuCopy8((u32 *)(SYSM_CARD_ROM_HEADER_BAK + (src - HOTSW_BOOTSEGMENT_AREA_OFS)), (u32 *)dest, sendSize);
+    	}
+
         // --- Key Table
-        else if(srcAdd >= HOTSW_KEYTABLE_AREA_OFS && srcAdd < HOTSW_SECURE_AREA_OFS){
-            // [TODO] ここなにも処理しない？
-            sendSize = remainSize;
+        else if(src >= HOTSW_KEYTABLE_AREA_OFS && src < HOTSW_SECURE_AREA_OFS){
+            OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
+        	sendSize = ((src + size) > HOTSW_SECURE_AREA_OFS) ? HOTSW_SECURE_AREA_OFS - src : size;
+            result = ReadImage((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
         }
         // --- Secure Segment
-        else if(srcAdd >= HOTSW_SECURE_AREA_OFS && srcAdd < HOTSW_GAME_AREA_OFS){
-            sendSize = ((srcAdd + remainSize) > HOTSW_GAME_AREA_OFS) ? HOTSW_GAME_AREA_OFS - srcAdd : remainSize;
-            OS_TPrintf("%s %d   Src Adr : 0x%08x\n", __FUNCTION__, __LINE__, (SYSM_CARD_NTR_SECURE_BUF + (srcAdd - HOTSW_SECURE_AREA_OFS)) );
-            MI_CpuCopy8((u32 *)(SYSM_CARD_NTR_SECURE_BUF + (srcAdd - HOTSW_SECURE_AREA_OFS)), (u32 *)destAdd, sendSize);
+        else if(src >= HOTSW_SECURE_AREA_OFS && src < HOTSW_GAME_AREA_OFS){
+            OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
+            sendSize = ((src + size) > HOTSW_GAME_AREA_OFS) ? HOTSW_GAME_AREA_OFS - src : size;
+            MI_CpuCopy8((u32 *)(SYSM_CARD_NTR_SECURE_BUF + (src - HOTSW_SECURE_AREA_OFS)), (u32 *)dest, sendSize);
         }
         // --- Game Segment
-        else if(srcAdd >= HOTSW_GAME_AREA_OFS){
+        else if(src >= HOTSW_GAME_AREA_OFS){
             // KeyTable2が設定されている場合
             if(s_cbData.pBootSegBuf->rh.s.twl_card_keytable_area_rom_offset){
                 u32 keyTable2Adr = (u32)s_cbData.pBootSegBuf->rh.s.twl_card_keytable_area_rom_offset * TWLCARD_BORDER_OFFSET;
@@ -934,40 +931,41 @@ static HotSwState ReadCardData(u32 src, u32 dest, u32 size)
                 u32 Game2Adr     = keyTable2Adr + HOTSW_GAME2_AREA_OFS;
 
                 // --- Game Segment
-                if(srcAdd < keyTable2Adr){
-                    sendSize = ((srcAdd + remainSize) > keyTable2Adr) ? keyTable2Adr - srcAdd : remainSize;
-                    OS_TPrintf("%s %d   Src Adr : 0x%08x  Dest Adr : 0x%08x  Size : 0x%08x\n", __FUNCTION__, __LINE__, srcAdd, destAdd, sendSize );
-                    ReadImage((u32 *)destAdd, (s32)srcAdd, (s32)sendSize, &s_cbData);
+                if(src < keyTable2Adr){
+                    OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
+                    sendSize = ((src + size) > keyTable2Adr) ? keyTable2Adr - src : size;
+                    result = ReadImage((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
                 }
                 // --- Key Table2
-                else if(srcAdd >= keyTable2Adr && srcAdd < Secure2Adr){
-                    // [TODO] ここなにも処理しない？
-                    sendSize = remainSize;
+                else if(src >= keyTable2Adr && src < Secure2Adr){
+                    OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
+                    sendSize = ((src + size) > Secure2Adr) ? Secure2Adr - src : size;
+                    result = ReadImage((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
                 }
                 // --- Secure2 Segment
-                else if(srcAdd >= Secure2Adr && srcAdd < Game2Adr){
-                    sendSize = ((srcAdd + remainSize) > Game2Adr) ? Game2Adr - srcAdd : remainSize;
-                    OS_TPrintf("%s %d   Src Adr : 0x%08x\n", __FUNCTION__, __LINE__, (SYSM_CARD_TWL_SECURE_BUF + (srcAdd - Secure2Adr)) );
-                    MI_CpuCopy8((u32 *)(SYSM_CARD_TWL_SECURE_BUF + (srcAdd - Secure2Adr)), (u32 *)destAdd, sendSize);
+                else if(src >= Secure2Adr && src < Game2Adr){
+                    OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
+                    sendSize = ((src + size) > Game2Adr) ? Game2Adr - src : size;
+    	        	MI_CpuCopy8((u32 *)(SYSM_CARD_TWL_SECURE_BUF + (src - Secure2Adr)), (u32 *)dest, sendSize);
                 }
                 // --- Game2 Segment
                 else{
-                    sendSize = remainSize;
-                    OS_TPrintf("%s %d   Src Adr : 0x%08x  Dest Adr : 0x%08x  Size : 0x%08x\n", __FUNCTION__, __LINE__, srcAdd, destAdd, sendSize );
-                    ReadImage((u32 *)destAdd, (s32)srcAdd, (s32)sendSize, &s_cbData);
+                    OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
+					sendSize = size;
+                    result = ReadImage((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
                 }
             }
             // --- Game Segment
             else{
-                sendSize = remainSize;
-                OS_TPrintf("%s %d   Src Adr : 0x%08x  Dest Adr : 0x%08x  Size : 0x%08x\n", __FUNCTION__, __LINE__, srcAdd, destAdd, sendSize );
-                ReadImage((u32 *)destAdd, (s32)srcAdd, (s32)sendSize, &s_cbData);
+				OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
+                sendSize = size;
+                result = ReadImage((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
             }
         }
 
-        remainSize -= sendSize;
-        srcAdd     += sendSize;
-        destAdd    += sendSize;
+		size -= sendSize;
+		src  += sendSize;
+		dest += sendSize;
     }
 
 #ifndef DEBUG_USED_CARD_SLOT_B_
@@ -975,11 +973,13 @@ static HotSwState ReadCardData(u32 src, u32 dest, u32 size)
 #else
     UnlockExCard(s_CardLockID);
 #endif
-
-    OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
-    SYSMi_GetWork()->flags.hotsw.isCardReadCompleted = TRUE;
-
-    return HOTSW_SUCCESS;
+    
+    if(result){
+		return CARD_READ_SUCCESS;
+    }
+    else{
+    	return CARD_READ_UNKNOWN_ERROR;
+    }
 }
 #endif
 
@@ -1674,6 +1674,17 @@ static void HotSwThread(void *arg)
             FinalizeHotSw( msg->apli );
         }
 
+#ifdef USE_WRAM_LOAD
+        if( msg->read == TRUE ){
+            SYSMi_GetWork()->flags.hotsw.isCardReadCompleted = FALSE;
+			SYSMi_GetWork()->cardReadParam.result = ReadCardData(SYSMi_GetWork()->cardReadParam.src,
+                         										 SYSMi_GetWork()->cardReadParam.dest,
+                         										 SYSMi_GetWork()->cardReadParam.size);
+            SYSMi_GetWork()->flags.hotsw.isCardReadCompleted = TRUE;
+            continue;
+        }
+#endif
+        
         while(1){
             if( !SYSMi_GetWork()->flags.hotsw.isEnableHotSW ) {
                 SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
@@ -2156,30 +2167,33 @@ static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err)
 
     d.data = data;
 
-    OS_TPrintf("... Pxi Message - value:%x  ctrl:%x  finalize:%x  read:%x  bootType:%x\n",
-                                d.msg.value, d.msg.ctrl, d.msg.finalize, d.msg.read, d.msg.bootType);
+#ifndef USE_WRAM_LOAD
+	OS_TPrintf("... Pxi Message - value:%x  ctrl:%x  finalize:%x  bootType:%x\n",
+               					d.msg.value, d.msg.ctrl, d.msg.finalize, d.msg.bootType);
+#else
+	OS_TPrintf("... Pxi Message - value:%x  ctrl:%x  finalize:%x  read:%x  bootType:%x\n",
+               					d.msg.value, d.msg.ctrl, d.msg.finalize, d.msg.read, d.msg.bootType);
 
-    if(!d.msg.read){
-        HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].ctrl      = (d.msg.ctrl) ? TRUE : FALSE;
-        HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].finalize  = (d.msg.finalize) ? TRUE : FALSE;
-        HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].value     = d.msg.value;
-        HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].apli      = (HotSwApliType)d.msg.bootType;
+/*    
+    if(d.msg.read){
+		OS_PutString("--- ARM7\n");
+		OS_TPrintf("src  : 0x%08x\n", SYSMi_GetWork()->cardReadParam.src);
+		OS_TPrintf("dst  : 0x%08x\n", SYSMi_GetWork()->cardReadParam.dest);
+		OS_TPrintf("size : 0x%08x\n", SYSMi_GetWork()->cardReadParam.size);
+    }*/
 
-        // メッセージ送信
-        OS_SendMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl], OS_MESSAGE_NOBLOCK);
-
-        // メッセージインデックスをインクリメント
-        HotSwThreadData.idx_ctrl = (HotSwThreadData.idx_ctrl+1) % HOTSW_CTRL_MSG_NUM;
-    }
-    else{
-#ifdef USE_WRAM_LOAD
-        OS_PutString("--- ARM7\n");
-        OS_TPrintf("src  : 0x%08x\n", SYSMi_GetWork()->cardReadParam.src);
-        OS_TPrintf("dst  : 0x%08x\n", SYSMi_GetWork()->cardReadParam.dest);
-        OS_TPrintf("size : 0x%08x\n", SYSMi_GetWork()->cardReadParam.size);
-        ReadCardData(SYSMi_GetWork()->cardReadParam.src, SYSMi_GetWork()->cardReadParam.dest, SYSMi_GetWork()->cardReadParam.size);
+    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].read	 	= (d.msg.read) ? TRUE : FALSE;
 #endif
-    }
+	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].ctrl  	= (d.msg.ctrl) ? TRUE : FALSE;
+	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].finalize 	= (d.msg.finalize) ? TRUE : FALSE;
+	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].value 	= d.msg.value;
+	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].apli  	= (HotSwApliType)d.msg.bootType;
+    
+	// メッセージ送信
+	OS_SendMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl], OS_MESSAGE_NOBLOCK);
+
+	// メッセージインデックスをインクリメント
+	HotSwThreadData.idx_ctrl = (HotSwThreadData.idx_ctrl+1) % HOTSW_CTRL_MSG_NUM;
 }
 
 

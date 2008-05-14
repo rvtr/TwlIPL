@@ -99,7 +99,7 @@ BOOL HOTSW_isCardLoadCompleted(void)
   				※実際に読んでるのはARM7側
  *---------------------------------------------------------------------------*/
 #ifdef USE_WRAM_LOAD
-void HOTSW_ReadCardData(void* src, void* dest, u32 size)
+CardDataReadState HOTSW_ReadCardData(void* src, void* dest, u32 size)
 {
 	HotSwPxiMessage msg;
 
@@ -110,12 +110,6 @@ void HOTSW_ReadCardData(void* src, void* dest, u32 size)
 	SYSMi_GetWork()->cardReadParam.size = size;
 
     DC_FlushRange( &SYSMi_GetWork()->cardReadParam, sizeof(CardReadParam) );
-
-    OS_PutString("--- ARM9\n");
-	OS_TPrintf("src  : 0x%08x\n", SYSMi_GetWork()->cardReadParam.src);
-    OS_TPrintf("dst  : 0x%08x\n", SYSMi_GetWork()->cardReadParam.dest);
-    OS_TPrintf("size : 0x%08x\n", SYSMi_GetWork()->cardReadParam.size);
-
 	DC_FlushRange( dest, size );
     
     msg.msg.read = TRUE;
@@ -128,8 +122,10 @@ void HOTSW_ReadCardData(void* src, void* dest, u32 size)
     // [TODO] ARM7側でリードが終了してステートが返ってくるのを待つ？
 	while (!SYSMi_GetWork()->flags.hotsw.isCardReadCompleted)
     {
-
+		// do nothing
     }
+
+    return SYSMi_GetWork()->cardReadParam.result;
 }
 #endif
 

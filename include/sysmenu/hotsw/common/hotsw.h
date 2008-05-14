@@ -35,12 +35,12 @@ typedef enum HotSwMessageType{
 } HotSwMessageType;
 
 typedef enum ModeType{
-	HOTSW_MODE1,
+	HOTSW_MODE1 = 0,
     HOTSW_MODE2
 } ModeType;
 
 typedef enum HotSwApliType{
-    HOTSW_APLITYPE_CARD,
+    HOTSW_APLITYPE_CARD = 0,
     HOTSW_APLITYPE_NTR_NAND,
     HOTSW_APLITYPE_TWL_NAND
 } HotSwApliType;
@@ -65,42 +65,14 @@ typedef struct HotSwMessage{
     u32				 value;
     BOOL			 ctrl;
     BOOL			 finalize;
+    BOOL			 read;
 	HotSwMessageType type;
     HotSwApliType    apli;
 } HotSwMessage;
 
 
 // Function prototype -------------------------------------------------------
-// 活栓挿抜処理の初期化
-void HOTSW_Init(u32 threadPrio);
-
-// カードの存在判定
-BOOL HOTSW_IsCardExist(void);
-
-// カードにアクセスできる状態か判定
-BOOL HOTSW_IsCardAccessible(void);
-
-// Boot Segment バッファの指定
-void HOTSW_SetBootSegmentBuffer(void* buf, u32 size);
-
-// Secure Segment バッファの指定
-void HOTSW_SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size);
-
-// Romエミュレーション情報を格納しているバッファのポインタを返す
-SDK_INLINE void* HOTSW_GetRomEmulationBuffer(void)
-{
-	return (void*)&SYSMi_GetWork()->romEmuInfo;
-}
-
-// ISデバッガ上で動作しているか？
-BOOL HOTSWi_IsRunOnDebugger(void);
-
-// ROMをエミュレーションしているか？
-BOOL HOTSWi_IsRomEmulation(void);
-
-// デバッガ通信用にカードスロットの電源をONにする。
-void HOTSWi_TurnCardPowerOn(u32 slot);
-
+// --- ARM9
 #ifdef SDK_ARM9
 // PXI通信でARM7に活線挿抜有効／無効を通知
 void HOTSW_EnableHotSWAsync( BOOL enable );
@@ -116,14 +88,44 @@ BOOL HOTSW_isCardLoadCompleted(void);
 
 #ifdef USE_WRAM_LOAD
 // カードデータを読み出す関数
-void HOTSW_ReadCardData(void* src, void* dest, u32 size);
+CardDataReadState HOTSW_ReadCardData(void* src, void* dest, u32 size);
 
 // カードがゲームモードになったかどうか
 BOOL HOTSW_isGameMode(void);
 #endif
 
+// --- ARM7
+#else
+// 活栓挿抜処理の初期化
+void HOTSW_Init(u32 threadPrio);
+
+// カードの存在判定
+BOOL HOTSW_IsCardExist(void);
+
+// カードにアクセスできる状態か判定
+BOOL HOTSW_IsCardAccessible(void);
+
+// Boot Segment バッファの指定
+void HOTSW_SetBootSegmentBuffer(void* buf, u32 size);
+
+// Secure Segment バッファの指定
+void HOTSW_SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size);
+
+// ISデバッガ上で動作しているか？
+BOOL HOTSWi_IsRunOnDebugger(void);
+
+// ROMをエミュレーションしているか？
+BOOL HOTSWi_IsRomEmulation(void);
+
+// デバッガ通信用にカードスロットの電源をONにする。
+void HOTSWi_TurnCardPowerOn(u32 slot);
 #endif
 
+// Romエミュレーション情報を格納しているバッファのポインタを返す
+SDK_INLINE void* HOTSW_GetRomEmulationBuffer(void)
+{
+	return (void*)&SYSMi_GetWork()->romEmuInfo;
+}
 
 #ifdef __cplusplus
 } /* extern "C" */

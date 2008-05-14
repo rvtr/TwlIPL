@@ -35,6 +35,14 @@ typedef enum SYSMCloneBootMode {
 }
 SYSMCloneBootMode;
 
+typedef enum CardDataReadState {
+	CARD_READ_SUCCESS = 0,
+    CARD_READ_PULLED_OUT_ERROR,
+    CARD_READ_MODE_ERROR,
+	CARD_READ_UNKNOWN_ERROR
+}
+CardDataReadState;
+
 // NAMTitleIDをHiLoに分割してアクセスする場合に使用
 typedef struct TitleID_HiLo {
 	u8			Lo[ 4 ];
@@ -43,9 +51,10 @@ typedef struct TitleID_HiLo {
 
 // WRAM経由でカードデータを読み込む場合に使用
 typedef struct CardReadParam {
-	u32			src;
-    u32			dest;
-	u32			size;
+	u32					src;
+    u32					dest;
+	u32					size;
+    CardDataReadState	result;
 }CardReadParam;
 
 //----------------------------------------------------------------------
