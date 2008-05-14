@@ -26,7 +26,7 @@ FONTS			=	TWL_BF00_l.NFTR \
 					TWL_BF00_s.NFTR
 FONT_RSC		=	$(addprefix $(FONT_DIR)/, $(FONTS))
 
-ifdef $(TWL_IPL_RED_PRIVATE_ROOT)
+ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
 FONT_TABLE		=	TWLFontTable.dat
 endif
 
@@ -36,7 +36,7 @@ GEN_FONT_TABLE	=	$(SYSMENU_TOOLSDIR)/bin/genFontTable.plx
 #INSTALL_TARGETS	=	$(FONT_TABLE)
 #INSTALL_DIR		=	$(FONT_TABLE)/build/tools/TwlNMenu/data
 
-LDIRT_CLEAN		=	$(FONT_TABLE) $(FONTS)
+LDIRT_CLEAN		=	$(FONT_TABLE)
 
 #----------------------------------------------------------------------------
 
@@ -46,6 +46,5 @@ do-build : $(FONT_TABLE)
 
 $(FONT_TABLE): $(FONT_RSC)
 	$(GEN_FONT_TABLE) $(FONT_RSC)
-	cp $(FONT_RSC) ./
 
 #===== End of Makefile =====

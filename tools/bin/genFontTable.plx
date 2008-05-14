@@ -3,22 +3,25 @@
 ######################################################################
 #	genFontTable.pl
 #
-#	attach signature to firmware file
+#	generate Secure Shared Font Data Table
 #   
 #   [[ HEADER FORMAT ]]
-#   Header
-#       TimeStamp           (  4 bytes) : number of file sections
-#       number              (  2 bytes) : number of font files
-#       padding             ( 26 bytes) : 
-#
 #   security code           (128 bytes) : RSA signature of Header
 #
-#   section information     ( 48 bytes * number) 
-#       fileName            ( 24 bytes) : font file name
+#   Header                  ( 32 bytes)
+#       TimeStamp           (  4 bytes) : date %y%m%d%H
+#       number              (  2 bytes) : number of font files
+#       padding             (  6 bytes) : 
+#       padding             ( 20 bytes) : SHA1 digest of Font info table
+# 
+#   Font info table         ( 64 bytes * number)
+#       fileName            ( 32 bytes) : font file name
+#       padding             (  4 bytes) : 
+#       file offset         (  4 bytes) : file offset of Font data
 #       length              (  4 bytes) : length of file (bytes)
-#       digest              ( 20 bytes) : WLAN FW=2 DATAPATCH=5 signature = 128
+#       digest              ( 20 bytes) : SHA1 digest of Font data
 #
-#   note: each section image is aligned to 48 bytes.
+#   note: each section image is aligned to 32 bytes.
 #
 ######################################################################
 
@@ -31,19 +34,99 @@ if ($#ARGV < 1) {
 }
 
 my $outFile    = "TWLFontTable.dat";
+my $infoFile   = "info.bin";
 my $headerFile = "header.bin";
 my $digestFile = "sha1.bin";
 my $signFile   = "sign.bin";
+my $tempFile   = "temp.bin";
 
 # 後始末
 sub deleteTemp {
+	system ("rm -f $infoFile");
 	system ("rm -f $headerFile");
 	system ("rm -f $digestFile");
 	system ("rm -f $signFile");
+	system ("rm -f $tempFile");
+}
+
+my $signSize   = 0x80;
+my $headerSize = 0x30;
+
+# 要素数算出
+my $num = 0;
+foreach ( @ARGV ) {
+	$num++;
+}
+
+# 情報テーブルの出力
+{
+	my $elementSize = 0x40;
+	my $fileNameMax = 0x20;
+	my $padLen      = 0x04;
+	# offset length = 0x04;
+	# file length   = 0x04;
+	my $sha1Len     = 0x14;
+	
+	open INFO, ">$infoFile" or die;
+	binmode INFO;
+	
+	# オフセット算出
+	my $offset = $signSize + $headerSize + $num * $elementSize;
+	if( ( $offset % 32 ) > 0 ) { $offset += 32 - ( $offset % 32 ); }
+	
+	foreach ( @ARGV ) {
+		# ファイルネームの出力
+		if( !( -e $_ ) ) {
+			close( INFO );
+			deleteTemp();
+			die "file not exist. : $_\n";
+		}
+		my $name = basename( $_ );
+		if( length $name >= $fileNameMax ) {
+			close( INFO );
+			deleteTemp();
+			die "file name length must be smaller than $fileNameMax. : $_\n";
+		}
+		my $data = pack( "a$fileNameMax", $name );
+		syswrite( INFO, $data, $fileNameMax );
+		
+		# パディングの出力
+		syswrite( INFO, pack( "x$padLen") );
+		
+		# ファイルオフセットの出力
+		$data = pack( "L", $offset );
+		syswrite( INFO, $data, 4 );
+		
+		# ファイル長の出力
+		$data = pack( "L", -s $_ );
+		syswrite( INFO, $data, 4 );
+		
+		# ファイルのSHA1ハッシュの出力
+		{
+			my $digest;
+			system ("openssl dgst -sha1 -binary -out $digestFile $_");
+			open DIGEST, $digestFile or die;
+			binmode DIGEST;
+			sysread( DIGEST, $digest, $sha1Len );
+			close DIGEST;
+			syswrite( INFO, $digest, $sha1Len );
+		}
+		
+		printf "%s\t0x%08x\t0x%08x\n", $_, $offset, -s $_;
+		
+		# オフセット加算
+		$offset += -s $_;
+		if( ( $offset % 32 ) > 0 ) { $offset += 32 - ( $offset % 32 ); }
+	}
+	close INFO;
 }
 
 # ヘッダの出力
 {
+	# timestampLen  = 0x08;
+	# elementNumLen = 0x02;
+	my $padLen      = 0x06;
+	my $sha1Len     = 0x14;
 	
 	open HEADER, ">$headerFile" or die;
 	binmode HEADER;
@@ -53,47 +136,20 @@ sub deleteTemp {
 	syswrite( HEADER, pack( "H8", $date ) );
 	
 	# 要素数の出力
-	my $num = 0;
-	foreach ( @ARGV ) {
-		$num++;
-	}
 	syswrite( HEADER, pack( "S", $num ) );
 	
 	# パディングの出力
-	syswrite( HEADER, pack( "x26") );
+	syswrite( HEADER, pack( "x$padLen") );
 	
-	foreach ( @ARGV ) {
-		# ファイルネームの出力
-		my $fileNameMax = 0x18;
-		if( !( -e $_ ) ) {
-			close( HEADER );
-			deleteTemp();
-			die "file not exist. : $_\n";
-		}
-		my $name = basename( $_ );
-		if( length $name >= $fileNameMax ) {
-			close( HEADER );
-			deleteTemp();
-			die "file name length must be smaller than $fileNameMax. : $_\n";
-		}
-		my $data = pack( "a$fileNameMax", $name );
-		syswrite( HEADER, $data, $fileNameMax );
-		
-		# ファイル長の出力
-		$data = pack( "L", -s $_ );
-		syswrite( HEADER, $data, 4 );
-		
-		# ファイルのSHA1ハッシュの出力
-		{
-			my $sha1Len = 20;
-			my $digest;
-			system ("openssl dgst -sha1 -binary -out $digestFile $_");
-			open DIGEST, $digestFile or die;
-			binmode DIGEST;
-			sysread( DIGEST, $digest, $sha1Len );
-			close DIGEST;
-			syswrite( HEADER, $digest, $sha1Len );
-		}
+	# 情報テーブルのSHA1ハッシュの出力
+	{
+		my $digest;
+		system ("openssl dgst -sha1 -binary -out $digestFile $infoFile");
+		open DIGEST, $digestFile or die;
+		binmode DIGEST;
+		sysread( DIGEST, $digest, $sha1Len );
+		close DIGEST;
+		syswrite( HEADER, $digest, $sha1Len );
 	}
 	close HEADER;
 }
@@ -113,7 +169,38 @@ if (!$KEYROOT) {
 {
     system ( "openssl dgst -sha1 -binary -out $digestFile $headerFile" );
     system ( "openssl rsautl -sign -in $digestFile -inkey $KEYROOT/keys/rsa/private9_1.der -keyform DER -out $signFile" );
-	system ( "cat $signFile $headerFile >$outFile" );
+	system ( "cat $signFile $headerFile >$tempFile" );
+	system ( "cat $tempFile $infoFile >$outFile" );
 	deleteTemp();
 }
 
+
+# フォントの出力
+{
+	open FONTTABLE, ">>$outFile" or die;
+	binmode FONTTABLE;
+	
+	{
+		# パディング出力
+		my $fileLen = -s $outFile;
+		my $padNum = ( $fileLen % 32 ) ? ( 32 - ( $fileLen % 32 ) ) : 0;
+		my $padding = pack( "x$padNum" );
+		syswrite( FONTTABLE, $padding, $padNum );
+	}
+	
+	foreach ( @ARGV ) {
+		# フォント出力
+		my $fileLen = -s $_;
+		open TEST, $_ or die;
+		binmode TEST;
+		sysread ( TEST, $buffer, $fileLen );
+		close TEST;
+		syswrite( FONTTABLE, $buffer, $fileLen );
+		
+		# パディング出力
+		my $padNum = ( $fileLen % 32 ) ? ( 32 - ( $fileLen % 32 ) ) : 0;
+		my $padding = pack( "x$padNum" );
+		syswrite( FONTTABLE, $padding, $padNum );
+	}
+	close FONTTABLE;
+}
