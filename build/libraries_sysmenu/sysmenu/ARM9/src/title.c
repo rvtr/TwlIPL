@@ -562,9 +562,8 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 
         for (i = region_header; i < region_max; ++i)
         {
-#ifdef LOAD_APP_VIA_WRAM
 			BOOL result;
-#endif
+			
             u32 len = MATH_ROUNDUP( length[i], SYSM_ALIGNMENT_LOAD_MODULE );// AES暗号化領域の関係で、ロードサイズは32バイトアライメントに補正
             
             if ( !isTwlApp && i >= region_arm9_twl ) continue;// nitroでは読み込まない領域
@@ -577,7 +576,6 @@ OS_TPrintf("RebootSystem failed: cant seek file(%d)\n", source[i]);
 				goto ERROR;
             }
 
-#ifdef LOAD_APP_VIA_WRAM
 OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
             // ここでロード処理と同時にハッシュ計算とAES処理もやってしまう
             // 別スレッドで同じWRAM使おうとすると多分コケるので注意
@@ -608,26 +606,14 @@ OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
 OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 				goto ERROR;
 			}
-#else
-OS_TPrintf("RebootSystem : Load VIA PRIMAL FS %d.\n", i);
-            readLen = FS_ReadFile(file, (void *)destaddr[i], (s32)len);
-
-            if( readLen < 0 )
-            {
-OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
-				goto ERROR;
-            }
-#endif // LOAD_APP_VIA_WRAM
 
 			// ヘッダ読み込み完了
 			if( i == region_header )
 			{
 				// ヘッダ読み込み完了フラグを立てる
 				SYSMi_GetWork()->flags.common.isHeaderLoadCompleted = TRUE;
-#ifdef LOAD_APP_VIA_WRAM
 				// WRAM経由ロードの場合はAES初期化
 				(void)SYSM_InitDecryptAESRegion_W( (ROM_Header_Short *)destaddr[region_header] );
-#endif // LOAD_APP_VIA_WRAM
 			}
 
         }
@@ -774,7 +760,6 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		u32 hi;
 		u8 keynum;
 		SignatureData sigbuf;
-		u8 calculated_hash[SVC_SHA1_DIGEST_SIZE];
 		SVCSignHeapContext con;
 		int l;
 		u32 *module_addr[RELOCATE_INFO_NUM];
@@ -853,24 +838,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 			OS_TPrintf("Authenticate failed: Sign decryption failed.\n");
 			if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}
-#ifdef LOAD_APP_VIA_WRAM
-		if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM )
-#endif
-		{
-			// ヘッダのハッシュ(SHA1)計算
-			SVC_CalcSHA1( calculated_hash, (const void*)head, TWL_ROM_HEADER_HASH_CALC_DATA_LEN );
-		    // 署名のハッシュ値とヘッダのハッシュ値を比較
-		    if(!SVC_CompareSHA1(sigbuf.digest, (const void *)calculated_hash))
-		    {
-				OS_TPrintf("Authenticate failed: Sign check failed.\n");
-				if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
-			}else
-			{
-				OS_TPrintf("Authenticate : Sign check succeed. %dms.\n", OS_TicksToMilliSeconds(OS_GetTick() - prev));
-			}
-		}
-#ifdef LOAD_APP_VIA_WRAM
-		else if(s_calc_hash)
+		if(s_calc_hash)
 		{
 		    // 署名のハッシュ値とヘッダのハッシュ値を比較
 		    if(!SVC_CompareSHA1(sigbuf.digest, (const void *)&s_calc_hash[0]))
@@ -885,19 +853,6 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		{
 			OS_TPrintf("Authenticate failed: Sign check failed.\n");
 			if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
-		}
-#endif
-		
-#ifdef LOAD_APP_VIA_WRAM
-		// NANDアプリをWRAM経由でロードする場合は、転送時にチェックしてしまうので、ここではCARDアプリのみ必要
-		if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM )
-#endif
-		{
-			prev = OS_GetTick();
-			// TWL以降のアプリはモジュールの特定領域がAES暗号化されているので、ハッシュチェック前にデクリプトする必要がある。
-			// ヘッダのデータを使うので、署名チェック後が望ましい。よってこのタイミング。
-			SYSM_StartDecryptAESRegion( &(head->s) );
-			OS_TPrintf("Authenticate : DecryptAESRegion %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - prev) );
 		}
 	    
 		// それぞれARM9,7のFLXおよびLTDについてハッシュを計算してヘッダに格納されているハッシュと比較
@@ -926,69 +881,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 			static const char *str[4]={"ARM9_STATIC","ARM7_STATIC","ARM9_LTD_STATIC","ARM7_LTD_STATIC"};
 			prev = OS_GetTick();
 			
-#ifdef LOAD_APP_VIA_WRAM
-			// とりあえず、カードアプリはここでハッシュ計算
-			if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM )
-#endif
-			{
-				// 一時的に格納位置をずらしている場合は、再配置情報からモジュール格納アドレスを取得
-				if( SYSMi_GetWork()->romRelocateInfo[l].src != NULL )
-				{
-					module_addr[l] = (u32 *)SYSMi_GetWork()->romRelocateInfo[l].src;
-				}
-				// ハッシュ計算
-#ifdef LOAD_APP_VIA_WRAM
-				if( l == 0)
-#else
-				if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM && l == 0)
-#endif
-				{
-					// カードのARM9_STATICハッシュチェック
-					// カード読み込み時、work2に暗号化オブジェクト部分のハッシュ計算済みのコンテキストが保存されるので
-					// それを用いてARM9_STATIC残りの部分を計算
-					SVCHMACSHA1Context ctx;
-					u16 id;
-	                
-					SVC_HMACSHA1Init( &ctx, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
-	                
-					// ARM7とのhmac_sha1_contextの排他制御開始
-	                id = (u16)OS_GetLockID();
-					(void)OS_LockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-	                
-					SYSMi_GetWork2()->hmac_sha1_context.sha1_ctx.sha_block = ctx.sha1_ctx.sha_block;// この関数ポインタだけARM7とARM9で変えないとダメ
-					ctx = SYSMi_GetWork2()->hmac_sha1_context;										// SYSMi_GetWork2は非キャッシュなのでスタック（DTCMまたはキャッシュ領域）へコピー
-
-	                // ARM7とのhmac_sha1_contextの排他制御終了
-					(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockHotSW, NULL );
-					OS_ReleaseLockID( id );
-	                
-					SVC_HMACSHA1Update( &ctx,
-										(const void*)(SYSM_CARD_NTR_SECURE_BUF + ARM9_ENCRYPT_DEF_SIZE),
-										(SECURE_AREA_SIZE - ARM9_ENCRYPT_DEF_SIZE) );
-					if( module_size[l] > SECURE_AREA_SIZE )
-					{
-						SVC_HMACSHA1Update( &ctx,
-											(const void*)((u32)module_addr[l] + SECURE_AREA_SIZE),
-											(module_size[l] - SECURE_AREA_SIZE) );
-						SVC_HMACSHA1GetHash( &ctx, calculated_hash );
-					}
-				}else
-				{
-					SVC_CalcHMACSHA1( calculated_hash, (const void*)module_addr[l], module_size[l],
-									 (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
-				}
-				// 比較
-			    if(!SVC_CompareSHA1((const void *)hash_addr[l], (const void *)calculated_hash))
-			    {
-					OS_TPrintf("Authenticate failed: %s module hash check failed.\n", str[l]);
-					if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
-				}else
-				{
-					OS_TPrintf("Authenticate : %s module hash check succeed. %dms.\n", str[l], OS_TicksToMilliSeconds(OS_GetTick() - prev));
-				}
-			}
-#ifdef LOAD_APP_VIA_WRAM
-			else if(s_calc_hash)
+			if(s_calc_hash)
 			{
 				// カード以外のアプリをロードする時に計算したハッシュを検証
 			    if(!SVC_CompareSHA1((const void *)hash_addr[l], (const void *)&s_calc_hash[(l+1) * SVC_SHA1_DIGEST_SIZE]))
@@ -1004,7 +897,6 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 				OS_TPrintf("Authenticate failed: %s module hash check failed.\n", str[l]);
 				if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
 			}
-#endif
 		}
 	}
 	OS_TPrintf("Authenticate : total %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
@@ -1048,10 +940,6 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 		u32 module_size[RELOCATE_INFO_NUM];
 		u8 *hash_addr[RELOCATE_INFO_NUM];
 		int module_num;
-#ifndef LOAD_APP_VIA_WRAM
-		u8 calculated_hash[SVC_SHA1_DIGEST_SIZE * 3 + sizeof(u32)];
-		int l;
-#endif
 
 		// [TODO:]pBootTitle->titleIDと、それにこじつけたNTRヘッダのなんらかのデータとの一致確認をする。
 
@@ -1079,35 +967,17 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 		hash_addr[ARM7_STATIC] = &(head->s.sub_static_digest[0]);
 		module_num = 2;
 
-#ifdef LOAD_APP_VIA_WRAM
 		if(s_calc_hash)
 		{
 			// シリアルナンバー付加
 			*(u32 *)(&(s_calc_hash[SVC_SHA1_DIGEST_SIZE * 3])) = s_authcode.serial_number;
 			// 最終ハッシュ計算
 			SVC_CalcSHA1( final_hash, s_calc_hash, SVC_SHA1_DIGEST_SIZE * 3 + sizeof(u32));
-		}
-#else
-		// ヘッダ
-		SVC_CalcSHA1( calculated_hash, (const void*)head, NTR_ROM_HEADER_HASH_CALC_DATA_LEN );
-		// モジュール
-		for( l=0; l<module_num ; l++ )
+		}else
 		{
-			// 一時的に格納位置をずらしている場合は、再配置情報からモジュール格納アドレスを取得
-			if( SYSMi_GetWork()->romRelocateInfo[l].src != NULL )
-			{
-				module_addr[l] = (u32 *)SYSMi_GetWork()->romRelocateInfo[l].src;
-			}
-			// ハッシュ計算
-			{
-				SVC_CalcSHA1( &calculated_hash[SVC_SHA1_DIGEST_SIZE * (l+1)], (const void*)module_addr[l], module_size[l]);
-			}
+			OS_TPrintf("Authenticate failed: hash check failed.\n");
+			return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}
-		// シリアルナンバー付加
-		*(u32 *)(&(calculated_hash[SVC_SHA1_DIGEST_SIZE * 3])) = s_authcode.serial_number;
-		// 最終ハッシュ計算
-		SVC_CalcSHA1( final_hash, calculated_hash, SVC_SHA1_DIGEST_SIZE * 3 + sizeof(u32));
-#endif
 		
 		// 計算した最終ハッシュと、署名から得たハッシュとを比較
 	    if(!SVC_CompareSHA1((const void *)buf, (const void *)final_hash))
