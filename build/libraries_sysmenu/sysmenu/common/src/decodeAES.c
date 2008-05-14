@@ -127,6 +127,7 @@ BOOL SYSM_InitDecryptAESRegion_W( ROM_Header_Short *hs )
 		// Workに暗号化領域情報を格納
 		s_Addr_AESregion[m] = region_addr[m];
 		s_Size_AESregion[m] = region_size[m];
+		// [TODO:緊急]AES領域がカードのセキュア領域に被った場合の処理
 	}
 	
 	if(region_addr[0] == NULL && region_addr[1] == NULL)
@@ -296,6 +297,8 @@ void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs )
 		// Workに暗号化領域情報を格納
 		SYSMi_GetWork()->addr_AESregion[m] = region_addr[m];
 		SYSMi_GetWork()->size_AESregion[m] = region_size[m];
+		
+		// [TODO:緊急]AES領域がカードのセキュア領域に被った場合の処理
 	}
 	
 	if(region_addr[0] == NULL && region_addr[1] == NULL)
@@ -395,7 +398,7 @@ static void SYSMi_DecryptAESRegion_sub( int target )
 	MI_CpuCopy8( SYSMi_GetWork()->counterAES[target], &aesCounter, AES_BLOCK_SIZE );
 	
 	// 鍵ロードして暗号化領域の復号開始
-	ReplaceWithAes( SYSMi_GetWork()->addr_AESregion[target], SYSMi_GetWork()->size_AESregion[target] );
+	ReplaceWithAes( SYSMi_GetWork()->addr_AESregion[target], MATH_ROUNDUP( SYSMi_GetWork()->size_AESregion[target] ,32 ) );
 //	OS_TPrintf( "SYSMi_DecryptAESRegion_sub(arm7):target:%d addr:0x%0.8x size:0x%x\n",target+1, SYSMi_GetWork()->addr_AESregion[target], SYSMi_GetWork()->size_AESregion[target] );
 }
 
