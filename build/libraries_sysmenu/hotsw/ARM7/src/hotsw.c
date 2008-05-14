@@ -97,11 +97,12 @@ static void GenVA_VB_VD(void);
 static s32 LockExCard(u16 lockID);
 static s32 UnlockExCard(u16 lockID);
 
+static HotSwState LoadBannerData(void);
+static HotSwState CheckCardAuthCode(void);
+
 #ifndef USE_WRAM_LOAD
 static HotSwState DecryptObjectFile(void);
-static HotSwState LoadBannerData(void);
 static HotSwState LoadStaticModule(void);
-static HotSwState CheckCardAuthCode(void);
 
 static HotSwState CheckStaticModuleHash(void);
 static BOOL CheckArm7HashValue(void);
@@ -839,7 +840,7 @@ static void RegisterRomEmuInfo(void)
 
   注：ゲームモードになってから呼び出してください
  *---------------------------------------------------------------------------*/
-#ifndef USE_WRAM_LOAD
+
 static HotSwState LoadBannerData(void)
 {
     BOOL state;
@@ -877,7 +878,6 @@ static HotSwState LoadBannerData(void)
 
     return retval;
 }
-#endif
 
 
 /*---------------------------------------------------------------------------*
@@ -1183,7 +1183,7 @@ while(1){ OS_WaitVBlankIntr(); }
 
   Description:  Rom Headerの認証コードアドレスを読んで、クローンブート対応か判定する
  *---------------------------------------------------------------------------*/
-#ifndef USE_WRAM_LOAD
+
 static HotSwState CheckCardAuthCode(void)
 {
     u32 authBuf[PAGE_SIZE/sizeof(u32)];
@@ -1210,7 +1210,6 @@ static HotSwState CheckCardAuthCode(void)
 
     return retval;
 }
-#endif
 
 
 /*---------------------------------------------------------------------------*
