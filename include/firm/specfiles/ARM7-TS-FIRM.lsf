@@ -25,6 +25,7 @@ Static $(TARGET_NAME)
 	Library		$(LLIBS) $(GLIBS) $(CW_LIBS)
 	Object		* (.etable)
 	Object		* (.wram)
+	Object		* (.rsvwram)
 	Object		* (.ltdwram)
 	Object		* (.ltdmain)
 	StackSize	1024 1024

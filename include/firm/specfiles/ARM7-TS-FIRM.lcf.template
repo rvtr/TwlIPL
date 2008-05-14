@@ -157,6 +157,12 @@ SECTIONS
 				<FOREACH.STATIC.LIBRARIES=.ltdmain>
 				<STATIC.LIBRARY=.ltdmain:t>
 				<END.STATIC.LIBRARIES>
+				<FOREACH.STATIC.OBJECTS=.rsvwram>
+				<STATIC.OBJECT=.rsvwram:t>
+				<END.STATIC.OBJECTS>
+				<FOREACH.STATIC.LIBRARIES=.rsvwram>
+				<STATIC.LIBRARY=.rsvwram:t>
+				<END.STATIC.LIBRARIES>
 				#:::::::::: data
 		SDK_STATIC_DATA_END		=.;
 		. = ALIGN(4);
@@ -209,6 +215,12 @@ SECTIONS
 				<END.STATIC.OBJECTS>
 				<FOREACH.STATIC.LIBRARIES=.ltdmain>
 				<STATIC.LIBRARY=.ltdmain.bss:t>
+				<END.STATIC.LIBRARIES>
+				<FOREACH.STATIC.OBJECTS=.rsvwram>
+				<STATIC.OBJECT=.rsvwram.bss:t>
+				<END.STATIC.OBJECTS>
+				<FOREACH.STATIC.LIBRARIES=.rsvwram>
+				<STATIC.LIBRARY=.rsvwram.bss:t>
 				<END.STATIC.LIBRARIES>
 				#:::::::::: bss
 		. = ALIGN(4);
