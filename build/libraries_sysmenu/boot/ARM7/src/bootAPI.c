@@ -100,34 +100,22 @@ BOOL BOOT_WaitStart( void )
 {
 	if( (reg_PXI_MAINPINTF & 0x000f ) == 0x000f ) {
 		// 最適化されるとポインタを初期化しただけでは何もコードは生成されません
-		ROM_Header *th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ（DSアプリには無い）
-		ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
+		ROM_Header *th = (ROM_Header *)SYSM_CARD_ROM_HEADER_BUF;         // TWL拡張ROMヘッダ（DSアプリには無い）
+		ROM_Header *dh = (ROM_Header *)(SYSMi_GetWork()->romHeaderNTR);  // DS互換ROMヘッダ
 		BOOL isNtrMode;
 
 		(void)OS_DisableIrq();							// ここで割り込み禁止にしないとダメ。
 		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
 		(void)OS_SetIrqMaskEx(0);
-		
-		// ヘッダ情報再配置
-		if( SYSM_GetCardRomHeader()->platform_code & PLATFORM_CODE_FLAG_TWL )
-		{
-			// TWL-ROMヘッダ情報の再配置
-			MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_TWL_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );
-			MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
-		}else {
-			// NTRモード
-			// TWL-ROMヘッダ情報の再配置
-			//   ランチャーのROMヘッダが残っている非コピー領域もクリア
-			MI_CpuClearFast( (void *)HW_TWL_ROM_HEADER_BUF, SYSM_CARD_ROM_HEADER_SIZE );
-			MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_TWL_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
-			MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, (void *)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
-		}
+
+		// NTR-ROMヘッダへのパッチ処理のためコピー
+		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BUF, dh, HW_CARD_ROM_HEADER_SIZE );
 
 		// ブラックリストをチェックし、起動制限をかける
 		BOOTi_CheckTitleBlackList();
 		
 		// マウント情報を一時的にSYSM_TWL_MOUNT_INFO_TMP_BUFFERに登録
-		// ここまでにHW_TWL_ROM_HEADER_BUFのヘッダが次のアプリのものに変更されている必要あり
+		// ここまでにSYSM_CARD_ROM_HEADER_BUFのキャッシュがライトバックされている必要あり
 		SYSMi_SetBootAppMountInfo( &SYSMi_GetWork2()->bootTitleProperty );
 		
 		// FSによってshared領域にコピーされたランチャー自身のマウントパスのクリア
@@ -161,7 +149,6 @@ BOOL BOOT_WaitStart( void )
 			// メモリリストの設定
 			// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域（WRAMにある）を消さないように注意。
 			//         WRAMリマップ後の消し漏れやバッファオーバランの懸念回避のため不要な鍵はpre clearで消す。
-			// [TODO:] DSPの使っているWRAMをどこからどこまで消すか？
 			static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + 2 + POST_CLEAR_NUM_MAX + 1] = 
 			{
 				// pre clear
@@ -303,6 +290,8 @@ BOOL BOOT_WaitStart( void )
 #endif // FIRM_USE_SDK_KEYS || SYSMENU_DISABLE_RETAIL_BOOT
 
 			// リブート
+			REBOOTi_SetTwlRomHeaderAddr( th );
+			REBOOTi_SetRomHeaderAddr( dh );
 			OS_Boot( dh->s.sub_entry_address, mem_list, target );
 		}
 	}
@@ -404,7 +393,7 @@ static void BOOTi_CutAwayRegionList( u32 *regionlist, u32 start, u32 end )
 static void BOOTi_CheckTitleBlackList( void )
 {
 	const TitleBlackList *pBlackList = &s_blackList[ 0 ];
-	ROM_Header_Short *pROMH = (ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
+	ROM_Header_Short *pROMH = (ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BUF;
 	
 	while( pBlackList->rom_version >= 0 ) {
 		if( ( pBlackList->titleID ==  pROMH->titleID ) &&

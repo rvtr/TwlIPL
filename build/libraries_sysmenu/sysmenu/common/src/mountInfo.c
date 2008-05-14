@@ -105,7 +105,7 @@ void SYSMi_SetLauncherMountInfo( void )
 void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle )
 {
 	OSMountInfo mountListBuffer[ DEFAULT_MOUNT_LIST_NUM ] ATTRIBUTE_ALIGN(4);
-	ROM_Header_Short *pROMH = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
+	ROM_Header_Short *pROMH = ( ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BUF;
 	// アプリがTWL対応でない場合は、何もセットせずにリターン
 	if( ( pROMH->platform_code ) == 0 ) {
 		return;
@@ -225,8 +225,8 @@ static void SYSMi_ModifySaveDataMount( LauncherBootType bootType, NAMTitleId tit
 		) {
 		char saveFilePath[ 2 ][ FS_ENTRY_LONGNAME_MAX ];
 		u32 saveDataSize[ 2 ];
-		saveDataSize[ 0 ] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->private_save_data_size;
-		saveDataSize[ 1 ] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->public_save_data_size;
+		saveDataSize[ 0 ] = (( ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BUF)->private_save_data_size;
+		saveDataSize[ 1 ] = (( ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BUF)->public_save_data_size;
 		
 		// セーブデータのファイルパスを取得
 		NAM_GetTitleSaveFilePath( saveFilePath[ 1 ], saveFilePath[ 0 ], titleID );

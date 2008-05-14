@@ -56,11 +56,11 @@ static void ie_subphandler( void )
 void BOOT_Ready( void )
 {
 	// 最適化されるとポインタを初期化しただけでは何もコードは生成されません
-	ROM_Header *th = (ROM_Header *)HW_TWL_ROM_HEADER_BUF;  // TWL拡張ROMヘッダ（DSアプリには無い）
-	ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
+	ROM_Header *th = (ROM_Header *)SYSM_CARD_ROM_HEADER_BUF;         // TWL拡張ROMヘッダ（DSアプリには無い）
+	ROM_Header *dh = (ROM_Header *)(SYSMi_GetWork()->romHeaderNTR);  // DS互換ROMヘッダ
     BOOL isNtrMode;
     int i;
-	
+
     // エントリアドレスの正当性をチェックし、無効な場合は無限ループに入る。
 //  SYSMi_CheckEntryAddress();
 
@@ -182,7 +182,7 @@ void BOOT_Ready( void )
         // （キャッシュ領域の排他制御簡略化のためARM9で行う）
         if ( target == REBOOT_TARGET_DS_APP )
         {
-            DS_InsertWLPatch();
+            DS_InsertWLPatch( dh );
         }
 
         // デバッガによるROMエミュレーション時はNTR-ROMヘッダバッファの
@@ -196,6 +196,8 @@ void BOOT_Ready( void )
 		}
 
 		// 起動するターゲットの種類を指定する必要あり
+		REBOOTi_SetTwlRomHeaderAddr( th );
+		REBOOTi_SetRomHeaderAddr( dh );
 		OS_Boot( dh->s.main_entry_address, mem_list, target );
 	}
 }

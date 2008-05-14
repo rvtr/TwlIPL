@@ -86,6 +86,7 @@ static const u32 patch3_code[] = {
 
 // static variables-----------------------------------------------------
 static u32	mbSignBuf[MB_AUTHCODE_SIZE / sizeof(u32)] __attribute__ ((aligned(32)));
+static ROM_Header *dh;  // DS互換ROMヘッダ
 
 // function's description-----------------------------------------------
 
@@ -98,8 +99,10 @@ static u32	mbSignBuf[MB_AUTHCODE_SIZE / sizeof(u32)] __attribute__ ((aligned(32)
 //----------------------------------------------------------------------
 
 // パッチコードの挿入
-void DS_InsertWLPatch( void )
+void DS_InsertWLPatch( void* romHeaderNTR )
 {
+	dh = romHeaderNTR;
+
 	// SDKバージョンがパッチ対象？
 	if( DSi_IsPatchedSDKVersion() ) {
 		// patch1, patch3をサーチ
@@ -112,7 +115,7 @@ void DS_InsertWLPatch( void )
 		}
 		// パッチ対象コードが見つかったら、パッチコードをセット。
 		if( patch_addr ) {
-			ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
+			ROM_Header *dh = romHeaderNTR;      // DS互換ROMヘッダ
 			if( SYSMi_GetWork()->cloneBootMode == SYSM_CLONE_BOOT_MODE ) {	// ※クローンブートかどうかはDS_CheckROMCloneBoot()で事前に調査。
 				// クローンブートならば、直パッチ
 				SVC_CpuCopyFast( patchp, patch_addr, DS_WLPATCH_SIZE );
@@ -131,7 +134,6 @@ void DS_InsertWLPatch( void )
 // パッチベースアドレスの取得
 static void* DSi_GetPatchBaseAddr( void )
 {
-	ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 	void* p = (void*)SYSMi_GetWork()->romRelocateInfo[1].src;
 
     // 再配置しない場合は
@@ -177,7 +179,6 @@ static BOOL DSi_IsPatchedSDKVersion( void )
 //　バイナリサーチ
 static u32 DSi_SearchBinaryCore( const u32 *patp, int pat_word_size, int patch_offset )
 {
-	ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 	u32 *tgtp;
 	int tgt_word_size;
 	
@@ -222,7 +223,6 @@ static u32 DSi_SearchBinaryCore( const u32 *patp, int pat_word_size, int patch_o
 // パッチコードをシステムのRED予約領域にセット
 static void DSi_SetPatchCodeToREDRsvArea( u32 patch_addr, const u32 *patchp )
 {
-	ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 	u32 *dstp = (u32 *)HW_RED_RESERVED;
 	u32 *srcp = (u32 *)&DSi_CopyWLPatch;
 	int i;
@@ -287,7 +287,6 @@ asm void DSi_CopyWLPatch( void )
 // クローンブート判定
 void DS_CheckROMCloneBoot( void )
 {
-	ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 	s32	lockCardID;
 	u8 	*buffp         = (u8 *)&mbSignBuf;
 	u32 auth_offset = dh->s.rom_valid_size ? dh->s.rom_valid_size : 0x01000000;
@@ -316,7 +315,6 @@ void DS_CheckROMCloneBoot( void )
 // NITROカード存在チェック 		「リターン　1：カード認識　0：カードなし」
 static int DSi_ExistNitroCard(void)
 {
-	ROM_Header *dh = (ROM_Header *)HW_ROM_HEADER_BUF;      // DS互換ROMヘッダ
 	if((dh->s.nintendo_logo_crc16 == 0xcf56)
 	 &&(dh->s.header_crc16 == SYSMi_GetWork()->cardHeaderCrc16)) {
 		return TRUE;												// NITROカードあり（NintendoロゴCRC、カードヘッダCRCが正しい場合）

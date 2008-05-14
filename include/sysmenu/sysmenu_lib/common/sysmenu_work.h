@@ -140,6 +140,7 @@ typedef struct SYSM_work {
 	u8					cloneBootMode;
     
 	CardReadParam		cardReadParam;					// カードリードパラメータ
+	u32					romHeaderNTR[HW_CARD_ROM_HEADER_SIZE/sizeof(u32)];  // NTR-ROMヘッダ一時バッファ
     
 	LauncherParam		launcherParam;
 	SYSMRomEmuInfo		romEmuInfo;
