@@ -17,6 +17,7 @@
 
 #include <twl.h>
 #include "fs_wram.h"
+#include <sysmenu.h>
 /*
     基本概念
 
@@ -106,7 +107,8 @@
 typedef enum FSWramCommand
 {
     FS_WRAM_COMMAND_READ,
-    FS_WRAM_COMMAND_WRITE
+    FS_WRAM_COMMAND_WRITE,
+    FS_WRAM_COMMAND_READ_CARD
 }
 FSWramCommand;
 
@@ -133,6 +135,7 @@ typedef struct FSWramWork
 
     FSWramCommand   command;
     FSFile          *p_file;
+    void            *card_src;
 
     int             nums;   // WRAMスロット数
     u32             base;   // WRAMの先頭アドレス
@@ -184,6 +187,11 @@ static void FSi_WramThread(void* arg)
         case FS_WRAM_COMMAND_READ:
             result = FS_ReadFile( FSiWramWork.p_file, cmd->addr, cmd->length );
 //OS_TPrintf("%s:   (0x%08X)             %d msec\n", __func__, cmd->addr, (int)OS_TicksToMilliSeconds(OS_GetTick()));
+            break;
+        case FS_WRAM_COMMAND_READ_CARD:
+            // カードリード
+            HOTSW_ReadCardData( FSiWramWork.card_src, cmd->addr, (u32)cmd->length);
+            result = cmd->length;//暫定
             break;
         case FS_WRAM_COMMAND_WRITE:
             result = FS_WriteFile( FSiWramWork.p_file, cmd->addr, cmd->length );
@@ -357,6 +365,63 @@ static BOOL FSi_WriteWram(const u8* src, u32 len, MIWramPos wram, s32 slot, FSWr
         ret = FSi_Increment(ret);
     }
     return TRUE;
+}
+
+BOOL HOTSW_ReadCardViaWram( void *src, void *dst, s32 len, MIWramPos wram, s32 slot, MIWramSize size, FSWramCallback callback, void* arg )
+{
+    OSIntrMode enabled = OS_DisableInterrupts();
+    BOOL result;
+    int l,n;
+    SDK_ASSERT( wram != MI_WRAM_A );
+
+    if ( FSiWramWork.busy ) // 転送中
+    {
+        OS_RestoreInterrupts(enabled);
+        return FALSE;
+    }
+    FSiWramWork.busy = TRUE;
+    OS_RestoreInterrupts(enabled);
+
+
+    // WRAMの確保
+    FSiWramWork.base = MI_AllocWramSlot( wram, slot, size, MI_WRAM_ARM9 );
+    if ( FSiWramWork.base == 0 )
+    {
+        FSiWramWork.busy = FALSE;
+        OS_TPrintf("Cannot allocate WRAM %d, %d, %d\n", wram, slot, size);
+        return FALSE;
+    }
+    // cash care
+    DC_InvalidateRange((void *)FSiWramWork.base, size);
+
+
+    // パラメータ設定
+    FSiWramWork.command = FS_WRAM_COMMAND_READ_CARD;
+    FSiWramWork.card_src  = src;
+    FSiWramWork.nums    = MI_WRAM_ENUM_TO_SIZE( size ) * 1024 / FS_WRAM_SLOT_SIZE;
+    
+    // 必要に応じて7側にスイッチ可能なWRAMとして指定
+    n = 0;
+    for(l=0;l<FSiWramWork.nums;l++)
+    {
+		n = n << 1;
+		n += (1 << slot);
+	}
+	if( wram == MI_WRAM_B )
+	{
+	    FSi_SetSwitchableWramSlots(n,0);
+	}else if ( wram == MI_WRAM_C )
+	{
+	    FSi_SetSwitchableWramSlots(0,n);
+	}
+    
+    // WRAM->ARM9起動
+    result = FSi_ReadWram(dst, (u32)len, wram, slot, callback, arg);
+
+    MI_FreeWramSlot( wram, slot, size, MI_WRAM_ARM9 );
+    FSi_SetSwitchableWramSlots(0,0); // スイッチ可能WRAMの指定を元に戻す
+    FSiWramWork.busy = FALSE;
+    return result;
 }
 
 BOOL FS_ReadFileViaWram( FSFile *p_file, void *dst, s32 len, MIWramPos wram, s32 slot, MIWramSize size, FSWramCallback callback, void* arg )

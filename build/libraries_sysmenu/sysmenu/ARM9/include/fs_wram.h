@@ -58,6 +58,7 @@ BOOL FS_InitWramTransfer( u32 priority );
         arg         コールバックに渡される引数
 */
 BOOL FS_ReadFileViaWram( FSFile *p_file, void *dst, s32 len, MIWramPos wram, s32 slot, MIWramSize size, FSWramCallback callback, void* arg );
+BOOL HOTSW_ReadCardViaWram( void *src, void *dst, s32 len, MIWramPos wram, s32 slot, MIWramSize size, FSWramCallback callback, void* arg );
 /*
     FS_WriteFileViaWram
         FS/FATFSに対して同期Writeを行う
