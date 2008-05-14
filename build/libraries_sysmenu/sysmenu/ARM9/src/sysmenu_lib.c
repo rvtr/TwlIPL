@@ -27,7 +27,7 @@
 extern void LCFG_VerifyAndRecoveryNTRSettings( void );
 
 // function's prototype-------------------------------------------------------
-static void SYSMi_CopyLCFGData( void );
+static void SYSMi_CopyLCFGData( u32 dst_addr );
 static TitleProperty *SYSMi_CheckDebuggerBannerViewModeBoot( void );
 static TitleProperty *SYSMi_CheckShortcutBoot1( void );
 static TitleProperty *SYSMi_CheckShortcutBoot2( void );
@@ -45,6 +45,9 @@ SYSM_work       *pSysm;                                         // デバッガでのS
 ROM_Header_Short *pRomHeader;
 #endif
 // static variable-------------------------------------------------------------
+static u8 s_lcfgBuffer[ HW_PARAM_TWL_SETTINGS_DATA_SIZE								// 0x01fc
+					  + HW_PARAM_WIRELESS_FIRMWARE_DATA_SIZE						// 0x0004
+					  + HW_PARAM_TWL_HW_NORMAL_INFO_SIZE ] ATTRIBUTE_ALIGN(32);		// 0x1000
 
 static TitleProperty s_bootTitleBuf;
 
@@ -63,7 +66,7 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
     pSysm = SYSMi_GetWork();
     pRomHeader = (ROM_Header_Short *)0x027fc000;
 #endif /* SYSM_DEBUG_ */
-
+	
     // ARM7で使用する分の鍵を渡す
     SYSMi_SendKeysToARM7();
 
@@ -174,7 +177,7 @@ TitleProperty *SYSM_ReadParameters( void )
     //-----------------------------------------------------
 	// NTRカードアプリARM9コードのロード領域とメモリがかち合うが、先頭0x4000はセキュア領域で別バッファに格納されるので、
 	// ここでこれらのパラメータをロードしても大丈夫。
-	SYSMi_CopyLCFGData();
+	SYSMi_CopyLCFGData( (u32)s_lcfgBuffer );
 	
     //-----------------------------------------------------
     // 無線ON/OFFフラグをもとに、LEDを設定する。
@@ -292,8 +295,10 @@ TitleProperty *SYSM_ReadParameters( void )
 
 
 // 本体設定データなどのメモリ展開。
-static void SYSMi_CopyLCFGData( void )
+static void SYSMi_CopyLCFGData( u32 dst_addr )
 {
+	*(u32 *)HW_PRELOAD_PARAMETER_ADDR = dst_addr;
+	
 	// 本体設定データ、HWノーマル情報、HWセキュア情報をメモリに展開しておく
 	MI_CpuCopyFast( LCFGi_GetTSD(), (void *)HW_PARAM_TWL_SETTINGS_DATA, sizeof(LCFGTWLSettingsData) );
 	MI_CpuCopyFast( LCFGi_GetHWN(), (void *)HW_PARAM_TWL_HW_NORMAL_INFO, sizeof(LCFGTWLHWNormalInfo) );

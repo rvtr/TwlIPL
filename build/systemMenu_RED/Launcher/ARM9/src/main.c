@@ -357,3 +357,78 @@ static void deleteTmp()
         }
     }
 }
+
+#define OS_SHARED_FONT_FILE_NAME_LENGTH		0x20
+
+typedef struct OSSharedFontHeader {
+	u32 timestamp;
+	u16 fontNum;
+	u8  pad[ 6 ];
+	u8  digest[ SVC_SHA1_DIGEST_SIZE ];
+}OSSharedFontHeader;
+
+typedef struct OSSharedFontInfo {
+	u8		fileName[ OS_SHARED_FONT_FILE_NAME_LENGTH ];
+	u8		pad[ 4 ];
+	u32		offset;
+	u32		length;
+	u8		digest[ SVC_SHA1_DIGEST_SIZE ];
+}OSSharedFontInfo;
+
+#if 0
+BOOL ReadSharedFontTable( void )
+{
+#define SIGN_SIZE 0x80
+#define HEADER_SIZE 0x20
+	const char *pPath = "sdmc:/TWLFontTable.dat";
+	FSFile file[1];
+	u8 signature[ SIGN_SIZE ];
+	OSSharedFontHeader header;
+	u8 calc_digest[ SVC_SHA1_DIGEST_SIZE ];
+	u8 sign_digest[ SVC_SHA1_DIGEST_SIZE ];
+    static u32 heap[ 4096 / sizeof(u32) ];
+    SVCSignHeapContext acmemoryPool;
+	u32 len = 0;
+	
+	if( !FS_OpenFileEx( file, pPath, FS_FILEMODE_R ) ) {
+		return FALSE;
+	}
+	
+	// 署名リード
+	if( FS_ReadFile( file, signature, SIGN_SIZE ) != SIGN_SIZE ){
+		goto ERROR;
+	}
+	
+	// ヘッダリード
+	if( FS_ReadFile( file, header, HEADER_SIZE ) != HEADER_SIZE ){
+		goto ERROR;
+	}
+	
+	// ヘッダ署名チェック
+    SVC_InitSignHeap( &acmemoryPool, heap, 4096 );
+	if( !SVC_DecryptSign( &acmemoryPool, sign_digest, signature, pPubKey ) ) {
+		goto ERROR;
+	}
+	
+	// フォントInfoテーブルリード
+	len = sizeof(OSSHaredFontInfo) * header->fontNum;
+	if( FS_ReadFile( file, infoTable, len ) != len ){
+		goto ERROR;
+	}
+	
+	// フォントInfoテーブル　ハッシュチェック
+    SVC_CalcSHA1( calc_digest, infoTable, len );
+	if( !SVC_CompareSHA1( calc_digest, header->digest ) ) {
+		return FALSE;
+	}
+	
+	
+	
+	FS_CloseFile( file );
+	
+	
+ERROR:
+	FS_CloseFile( file );
+	return FALSE;
+}
+#endif
