@@ -339,8 +339,8 @@ void HOTSW_Init(u32 threadPrio)
 
     // バッファの設定
     HOTSW_SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );
-    HOTSW_SetSecureSegmentBuffer(HOTSW_MODE1, (void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
-    HOTSW_SetSecureSegmentBuffer(HOTSW_MODE2, (void *)SYSM_CARD_TWL_SECURE_BUF, SECURE_AREA_SIZE );
+//	HOTSW_SetSecureSegmentBuffer(HOTSW_MODE1, (void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
+//	HOTSW_SetSecureSegmentBuffer(HOTSW_MODE2, (void *)SYSM_CARD_TWL_SECURE_BUF, SECURE_AREA_SIZE );
 
     // カードが挿さってあったらスレッドを起動する
     if(HOTSW_IsCardExist()){
@@ -516,6 +516,9 @@ static HotSwState LoadCardData(void)
             // ---------------------- Secure Mode ----------------------
             romMode = HOTSW_ROM_MODE_SECURE;
 
+            // Secure Segment の バッファ設定
+			HOTSW_SetSecureSegmentBuffer(HOTSW_MODE1, (void *)s_cbData.pBootSegBuf->rh.s.main_rom_offset, SECURE_AREA_SIZE );
+            
             // SecureモードのIDとSecureSegmentを読み込む
             state  = ReadSecureModeCardData();
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
@@ -548,6 +551,9 @@ static HotSwState LoadCardData(void)
                 retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
                 // ---------------------- Secure2 Mode ----------------------
+	            // Secure Segment の バッファ設定
+			    HOTSW_SetSecureSegmentBuffer(HOTSW_MODE2, (void *)s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset, SECURE_AREA_SIZE );
+                
                 // Secure2モードのIDとSecureSegmentを読み込む
                 state  = ReadSecureModeCardData();
                 retval = (retval == HOTSW_SUCCESS) ? state : retval;
