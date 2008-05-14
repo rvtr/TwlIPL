@@ -37,9 +37,12 @@ SYSMCloneBootMode;
 
 typedef enum CardDataReadState {
 	CARD_READ_SUCCESS = 0,
+    CARD_READ_TIME_OUT,
     CARD_READ_PULLED_OUT_ERROR,
+    CARD_READ_BUFFER_OVERRUN_ERROR,
     CARD_READ_MODE_ERROR,
-	CARD_READ_UNKNOWN_ERROR
+    CARD_READ_BUSY,
+    CARD_READ_UNEXPECTED_ERROR
 }
 CardDataReadState;
 
@@ -124,7 +127,6 @@ typedef struct SYSM_work {
             vu16		isCardGameMode :1;				// カードがゲームモードに遷移したか？
             vu16		:0;
             vu8			isCardStateChanged;				// カード状態更新フラグ
-            vu8			isCardReadCompleted;			// カードデータリード完了？
         }hotsw;
 	}flags; // 7B
 

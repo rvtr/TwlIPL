@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 #define SYSM_HOTSW_ENABLE_ROMEMU
-#define USE_WRAM_LOAD
+//#define USE_WRAM_LOAD
 
 // enum   -------------------------------------------------------------------
 // スレッドに送るメッセージのステート
@@ -47,7 +47,7 @@ typedef enum HotSwApliType{
 
 // union  -------------------------------------------------------------------
 // PXI用メッセージ
-typedef union HotSwPxiMessage{
+typedef union HotSwPxiMessageForArm7{
     struct {
     	u32		value	:1;
     	u32		ctrl	:1;
@@ -57,23 +57,46 @@ typedef union HotSwPxiMessage{
     	u32		:20;
     } msg;
     u32 data;
-} HotSwPxiMessage;
+} HotSwPxiMessageForArm7;
+
+typedef union HotSwPxiMessageForArm9{
+    struct {
+    	u32		mode	:1;
+    	u32		insert	:1;
+        u32		pullout :1;
+        u32		read	:1;
+        u32		result  :8;
+    	u32		:20;
+    } msg;
+    u32 data;
+} HotSwPxiMessageForArm9;
 
 // struct -------------------------------------------------------------------
 // スレッド用メッセージ
-typedef struct HotSwMessage{
+typedef struct HotSwMessageForArm7{
     u32				 value;
     BOOL			 ctrl;
     BOOL			 finalize;
     BOOL			 read;
 	HotSwMessageType type;
     HotSwApliType    apli;
-} HotSwMessage;
+} HotSwMessageForArm7;
+
+typedef struct HotSwMessageForArm9{
+    BOOL			 	isGameMode;
+    BOOL			 	isInsert;
+    BOOL			 	isPulledOut;
+    BOOL				isReadComplete;
+	CardDataReadState 	result;
+} HotSwMessageForArm9;
 
 
 // Function prototype -------------------------------------------------------
 // --- ARM9
 #ifdef SDK_ARM9
+// 活栓挿抜処理の初期化
+void HOTSW_Init();
+
 // PXI通信でARM7に活線挿抜有効／無効を通知
 void HOTSW_EnableHotSWAsync( BOOL enable );
 
@@ -87,8 +110,11 @@ BOOL HOTSW_isEnableHotSW(void);
 BOOL HOTSW_isCardLoadCompleted(void);
 
 #ifdef USE_WRAM_LOAD
-// カードデータを読み出す関数
+// カードデータを読み出す関数(同期版)
 CardDataReadState HOTSW_ReadCardData(void* src, void* dest, u32 size);
+
+// カードデータを読み出す関数(非同期版)
+CardDataReadState HOTSW_ReadCardDataAsync(void* src, void* dest, u32 size);
 
 // カードがゲームモードになったかどうか
 BOOL HOTSW_isGameMode(void);

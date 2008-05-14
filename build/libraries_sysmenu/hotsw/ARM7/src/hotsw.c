@@ -94,6 +94,9 @@ static HotSwState LoadCardData(void);
 static void RegisterRomEmuInfo(void);
 static void GenVA_VB_VD(void);
 
+static HotSwState ReadImageReturnErrorCode(void* dest, s32 offset, s32 length, void* arg);
+static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg);
+
 static s32 LockExCard(u16 lockID);
 static s32 UnlockExCard(u16 lockID);
 
@@ -110,7 +113,7 @@ static BOOL CheckArm9HashValue(void);
 static BOOL CheckExtArm7HashValue(void);
 static BOOL CheckExtArm9HashValue(void);
 #else
-static CardDataReadState ReadCardData(u32 src, u32 dest, u32 size);
+static void ReadCardData(u32 src, u32 dest, u32 size);
 #endif
 
 static void ShowRegisterData(void);
@@ -175,64 +178,6 @@ static CardSecureModeFunction s_funcTable[] = {
     // RomEmulation
     {ReadIDSecure_ROMEMU, ReadSegSecure_ROMEMU, SwitchONPNGSecure_ROMEMU, ChangeModeSecure_ROMEMU}
 };
-
-
-static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg)
-{
-    HotSwState retval;
-
-    static u8 page_buffer[512];
-    u32 page_offset = (u32)(offset & -512);
-    u32 buffer_offset = (u32)(offset % 512);
-    u32 valid_length = 512 - buffer_offset;
-    u32 remain_length;
-
-    // 開始アドレスがページの途中
-    if ( offset % 512 )
-    {
-        retval = ReadPageGame((CardBootData*)arg, page_offset, page_buffer, 512);
-        OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
-
-        if (retval != HOTSW_SUCCESS)
-        {
-            return FALSE;
-        }
-
-        MI_CpuCopy8(page_buffer + buffer_offset, dest, (length < valid_length ? length : valid_length));
-        OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
-
-        dest = (u8*)dest + valid_length;
-        offset += valid_length;
-        length -= valid_length;
-        if ( length < 0)
-        {
-            return TRUE;
-        }
-    }
-
-    remain_length = (u32)(length % 512);
-    retval = ReadPageGame((CardBootData*)arg, (u32)offset, dest, (u32)(length - remain_length));
-
-    // ケツがページ途中
-    if( remain_length ){
-        dest   = (u8*)dest + (length - remain_length);
-        offset += length - remain_length;
-
-        retval = ReadPageGame((CardBootData*)arg, page_offset, page_buffer, 512);
-        OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
-
-        if (retval != HOTSW_SUCCESS)
-        {
-            return FALSE;
-        }
-
-        MI_CpuCopy8(page_buffer, dest, remain_length);
-        OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
-    }
-
-    OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
-    return (retval == HOTSW_SUCCESS);
-}
 
 #ifdef DHT_TEST
 #include <twl/os/ARM7/debugLED.h>
@@ -518,7 +463,7 @@ static HotSwState LoadCardData(void)
             romMode = HOTSW_ROM_MODE_SECURE;
 
             // Secure Segment の バッファ設定
-			HOTSW_SetSecureSegmentBuffer(HOTSW_MODE1, (void *)s_cbData.pBootSegBuf->rh.s.main_rom_offset, SECURE_AREA_SIZE );
+			HOTSW_SetSecureSegmentBuffer(HOTSW_MODE1, (void *)s_cbData.pBootSegBuf->rh.s.main_ram_address, SECURE_AREA_SIZE );
             
             // SecureモードのIDとSecureSegmentを読み込む
             state  = ReadSecureModeCardData();
@@ -553,7 +498,7 @@ static HotSwState LoadCardData(void)
 
                 // ---------------------- Secure2 Mode ----------------------
 	            // Secure Segment の バッファ設定
-			    HOTSW_SetSecureSegmentBuffer(HOTSW_MODE2, (void *)s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset, SECURE_AREA_SIZE );
+			    HOTSW_SetSecureSegmentBuffer(HOTSW_MODE2, (void *)s_cbData.pBootSegBuf->rh.s.main_ltd_ram_address, SECURE_AREA_SIZE );
                 
                 // Secure2モードのIDとSecureSegmentを読み込む
                 state  = ReadSecureModeCardData();
@@ -840,7 +785,6 @@ static void RegisterRomEmuInfo(void)
 
   注：ゲームモードになってから呼び出してください
  *---------------------------------------------------------------------------*/
-
 static HotSwState LoadBannerData(void)
 {
     BOOL state;
@@ -881,21 +825,89 @@ static HotSwState LoadBannerData(void)
 
 
 /*---------------------------------------------------------------------------*
+  Name:         ReadImageReturnErrorCode
+
+  Description:  カードから中途半端なサイズ(page途中)のデータを読み出す関数
+  				エラーコードを返す
+ *---------------------------------------------------------------------------*/
+static HotSwState ReadImageReturnErrorCode(void* dest, s32 offset, s32 length, void* arg)
+{
+    HotSwState retval = HOTSW_SUCCESS;
+
+    static u8 page_buffer[512];
+    u32 page_offset = (u32)(offset & -512);
+    u32 buffer_offset = (u32)(offset % 512);
+    u32 valid_length = 512 - buffer_offset;
+    u32 remain_length;
+
+    // 開始アドレスがページの途中
+    if ( offset % 512 )
+    {
+        retval = ReadPageGame((CardBootData*)arg, page_offset, page_buffer, 512);
+
+        if (retval != HOTSW_SUCCESS)
+        {
+            return retval;
+        }
+
+        MI_CpuCopy8(page_buffer + buffer_offset, dest, (length < valid_length ? length : valid_length));
+
+        dest = (u8*)dest + valid_length;
+        offset += valid_length;
+        length -= valid_length;
+        if ( length < 0)
+        {
+            return retval;
+        }
+    }
+
+    remain_length = (u32)(length % 512);
+    retval = ReadPageGame((CardBootData*)arg, (u32)offset, dest, (u32)(length - remain_length));
+
+    // ケツがページ途中
+    if( remain_length ){
+        dest   = (u8*)dest + (length - remain_length);
+        offset += length - remain_length;
+
+        retval = ReadPageGame((CardBootData*)arg, page_offset, page_buffer, 512);
+
+        if (retval != HOTSW_SUCCESS)
+        {
+            return retval;
+        }
+
+        MI_CpuCopy8(page_buffer, dest, remain_length);
+    }
+
+    return retval;
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         ReadImage
+
+  Description:  カードから中途半端なサイズ(page途中)のデータを読み出す関数
+  				成功するとTRUEを返す
+ *---------------------------------------------------------------------------*/
+static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg)
+{
+	return (ReadImageReturnErrorCode(dest, offset, length, arg) == HOTSW_SUCCESS);
+}
+
+
+/*---------------------------------------------------------------------------*
   Name:         ReadCardData
 
   Description:  ARM9から通知された範囲のデータをカードから読み込み
-
-  twl_card_normal_area_rom_offset   -> Normal領域オフセット
-  twl_card_keytable_area_rom_offset -> KeyTable2領域オフセット
  *---------------------------------------------------------------------------*/
 #ifdef USE_WRAM_LOAD
-static CardDataReadState ReadCardData(u32 src, u32 dest, u32 size)
+static void ReadCardData(u32 src, u32 dest, u32 size)
 {
     u32 sendSize = 0;
-    BOOL result	 = TRUE;
+    HotSwState state = HOTSW_SUCCESS;
 
     if(!SYSMi_GetWork()->flags.hotsw.isCardGameMode){
-		return CARD_READ_MODE_ERROR;
+		state = HOTSW_MODE_ERROR;
     }
 
     // カードのロック
@@ -905,7 +917,7 @@ static CardDataReadState ReadCardData(u32 src, u32 dest, u32 size)
     LockExCard(s_CardLockID);
 #endif
 
-    while(size > 0){
+    while(size > 0 && state == HOTSW_SUCCESS){
         // --- Boot Segment
 		if(src >= HOTSW_BOOTSEGMENT_AREA_OFS && src < HOTSW_KEYTABLE_AREA_OFS){
             OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
@@ -917,13 +929,13 @@ static CardDataReadState ReadCardData(u32 src, u32 dest, u32 size)
         else if(src >= HOTSW_KEYTABLE_AREA_OFS && src < HOTSW_SECURE_AREA_OFS){
             OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
         	sendSize = ((src + size) > HOTSW_SECURE_AREA_OFS) ? HOTSW_SECURE_AREA_OFS - src : size;
-            result = ReadImage((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
+            state = ReadImageReturnErrorCode((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
         }
         // --- Secure Segment
         else if(src >= HOTSW_SECURE_AREA_OFS && src < HOTSW_GAME_AREA_OFS){
-            OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
+            OS_TPrintf("%s %d  Secure Seg Buf:0x%08x\n", __FUNCTION__, __LINE__, s_cbData.pSecureSegBuf);
             sendSize = ((src + size) > HOTSW_GAME_AREA_OFS) ? HOTSW_GAME_AREA_OFS - src : size;
-            MI_CpuCopy8((u32 *)(SYSM_CARD_NTR_SECURE_BUF + (src - HOTSW_SECURE_AREA_OFS)), (u32 *)dest, sendSize);
+            MI_CpuCopy8((u32 *)((u32)s_cbData.pSecureSegBuf + (src - HOTSW_SECURE_AREA_OFS)), (u32 *)dest, sendSize);
         }
         // --- Game Segment
         else if(src >= HOTSW_GAME_AREA_OFS){
@@ -937,32 +949,32 @@ static CardDataReadState ReadCardData(u32 src, u32 dest, u32 size)
                 if(src < keyTable2Adr){
                     OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
                     sendSize = ((src + size) > keyTable2Adr) ? keyTable2Adr - src : size;
-                    result = ReadImage((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
+                    state = ReadImageReturnErrorCode((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
                 }
                 // --- Key Table2
                 else if(src >= keyTable2Adr && src < Secure2Adr){
                     OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
                     sendSize = ((src + size) > Secure2Adr) ? Secure2Adr - src : size;
-                    result = ReadImage((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
+                    state = ReadImageReturnErrorCode((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
                 }
                 // --- Secure2 Segment
                 else if(src >= Secure2Adr && src < Game2Adr){
                     OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
                     sendSize = ((src + size) > Game2Adr) ? Game2Adr - src : size;
-    	        	MI_CpuCopy8((u32 *)(SYSM_CARD_TWL_SECURE_BUF + (src - Secure2Adr)), (u32 *)dest, sendSize);
+    	        	MI_CpuCopy8((u32 *)((u32)s_cbData.pSecure2SegBuf + (src - Secure2Adr)), (u32 *)dest, sendSize);
                 }
                 // --- Game2 Segment
                 else{
                     OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
 					sendSize = size;
-                    result = ReadImage((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
+                    state = ReadImageReturnErrorCode((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
                 }
             }
             // --- Game Segment
             else{
 				OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
                 sendSize = size;
-                result = ReadImage((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
+                state = ReadImageReturnErrorCode((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
             }
         }
 
@@ -977,11 +989,47 @@ static CardDataReadState ReadCardData(u32 src, u32 dest, u32 size)
     UnlockExCard(s_CardLockID);
 #endif
     
-    if(result){
-		return CARD_READ_SUCCESS;
-    }
-    else{
-    	return CARD_READ_UNKNOWN_ERROR;
+    {
+        HotSwPxiMessageForArm9 	msg;
+        CardDataReadState 		retval;
+
+        switch(state){
+          case HOTSW_SUCCESS:
+            retval = CARD_READ_SUCCESS;
+            break;
+
+          case HOTSW_TIME_OUT:
+            retval = CARD_READ_TIME_OUT;
+            break;
+
+          case HOTSW_PULLED_OUT_ERROR:
+            retval = CARD_READ_PULLED_OUT_ERROR;
+            break;
+
+          case HOTSW_BUFFER_OVERRUN_ERROR:
+            retval = CARD_READ_BUFFER_OVERRUN_ERROR;
+			break;
+
+          case HOTSW_MODE_ERROR:
+            retval = CARD_READ_MODE_ERROR;
+            break;
+
+          default:
+            retval = CARD_READ_UNEXPECTED_ERROR;
+			break;
+        }
+
+        OS_TPrintf("%s %d  Send Error Code[Arm7]:%x\n", __FUNCTION__, __LINE__, retval);
+        
+        MI_CpuClear8( &msg, sizeof(HotSwPxiMessageForArm9));
+        
+        msg.msg.read   = TRUE;
+        msg.msg.result = (u8)retval;
+        
+        while (PXI_SendWordByFifo(PXI_FIFO_TAG_HOTSW, msg.data, FALSE) != PXI_FIFO_SUCCESS)
+    	{
+    		// do nothing
+    	}
     }
 }
 #endif
@@ -1183,7 +1231,6 @@ while(1){ OS_WaitVBlankIntr(); }
 
   Description:  Rom Headerの認証コードアドレスを読んで、クローンブート対応か判定する
  *---------------------------------------------------------------------------*/
-
 static HotSwState CheckCardAuthCode(void)
 {
     u32 authBuf[PAGE_SIZE/sizeof(u32)];
@@ -1651,9 +1698,9 @@ static void HotSwThread(void *arg)
 {
     #pragma unused( arg )
 
-    HotSwState      retval;
-    HotSwMessage    *msg;
-    BOOL            breakFlg;
+    HotSwState      		retval;
+    HotSwMessageForArm7		*msg;
+    BOOL            		breakFlg;
 
     while(1){
         OS_ReceiveMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
@@ -1678,11 +1725,9 @@ static void HotSwThread(void *arg)
 
 #ifdef USE_WRAM_LOAD
         if( msg->read == TRUE ){
-            SYSMi_GetWork()->flags.hotsw.isCardReadCompleted = FALSE;
-			SYSMi_GetWork()->cardReadParam.result = ReadCardData(SYSMi_GetWork()->cardReadParam.src,
-                         										 SYSMi_GetWork()->cardReadParam.dest,
-                         										 SYSMi_GetWork()->cardReadParam.size);
-            SYSMi_GetWork()->flags.hotsw.isCardReadCompleted = TRUE;
+			ReadCardData(SYSMi_GetWork()->cardReadParam.src,
+                         SYSMi_GetWork()->cardReadParam.dest,
+                         SYSMi_GetWork()->cardReadParam.size);
             continue;
         }
 #endif
@@ -2165,7 +2210,7 @@ static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err)
 {
 #pragma unused(tag)
 #pragma unused(err)
-    HotSwPxiMessage d;
+    HotSwPxiMessageForArm7 d;
 
     d.data = data;
 

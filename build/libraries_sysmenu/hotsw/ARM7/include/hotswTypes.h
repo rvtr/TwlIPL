@@ -243,6 +243,7 @@ typedef enum HotSwState{
     HOTSW_PULLED_OUT_ERROR,
     HOTSW_DATA_DECRYPT_ERROR,
     HOTSW_BUFFER_OVERRUN_ERROR,
+    HOTSW_MODE_ERROR,
     HOTSW_UNEXPECTED_ERROR
 } HotSwState;
 
@@ -321,9 +322,9 @@ typedef struct CardThreadData{
 
    	OSMessage			hotswDmaMsg[HOTSW_DMA_MSG_NUM];
     OSMessage			hotswPollingCtrlMsg[HOTSW_POLLING_CTRL_BUFFER_NUM];
-    HotSwMessage		hotswInsertMsg[HOTSW_INSERT_MSG_NUM];
-    HotSwMessage		hotswPulledOutMsg[HOTSW_PULLED_MSG_NUM];
-	HotSwMessage		hotswPxiMsg[HOTSW_CTRL_MSG_NUM];
+    HotSwMessageForArm7	hotswInsertMsg[HOTSW_INSERT_MSG_NUM];
+    HotSwMessageForArm7	hotswPulledOutMsg[HOTSW_PULLED_MSG_NUM];
+	HotSwMessageForArm7	hotswPxiMsg[HOTSW_CTRL_MSG_NUM];
 
     OSMessageQueue   	hotswQueue;
     OSMessageQueue   	hotswDmaQueue;

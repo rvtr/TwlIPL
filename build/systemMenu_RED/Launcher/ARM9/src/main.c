@@ -110,7 +110,8 @@ void TwlMain( void )
     TP_Init();
     RTC_Init();
     SND_Init();// sound init
-
+	HOTSW_Init();
+    
     OS_TPrintf( "SYSM_work size = 0x%x\n", sizeof(SYSM_work) );
 
     // äÑÇËçûÇ›ãñâ¬--------------------
