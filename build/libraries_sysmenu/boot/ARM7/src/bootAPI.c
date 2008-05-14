@@ -181,19 +181,6 @@ BOOL BOOT_WaitStart( void )
 			};
 			
 			// copy forwardリスト設定
-			// カードアプリのときはNTRセキュア領域再配置コピー
-			if( SYSMi_GetWork2()->bootTitleProperty.flags.bootType == LAUNCHER_BOOTTYPE_ROM)
-			{
-				u32 *dest = dh->s.main_ram_address;
-				// romの再配置情報を参照して、セキュア領域の再配置先を変更する必要が無いか調べる
-				if( SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC].src != NULL )
-				{
-					dest = (u32 *)SYSMi_GetWork()->romRelocateInfo[ARM9_STATIC].src;
-				}
-				mem_list[list_count++] = SYSM_CARD_NTR_SECURE_BUF;
-				mem_list[list_count++] = (u32)dest;
-				mem_list[list_count++] = ( dh->s.main_size < SECURE_AREA_SIZE ) ? dh->s.main_size : SECURE_AREA_SIZE;
-			}
 			// マウント情報
 			if( !isNtrMode )
 			{
