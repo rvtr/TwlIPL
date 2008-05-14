@@ -33,8 +33,8 @@ endif
 GEN_FONT_TABLE	=	$(SYSMENU_TOOLSDIR)/bin/genFontTable.plx
 
 #----------------------------------------------------------------------------
-#INSTALL_TARGETS	=	$(FONT_TABLE)
-#INSTALL_DIR		=	$(FONT_TABLE)/build/tools/TwlNMenu/data
+INSTALL_TARGETS	=	$(FONT_TABLE)
+INSTALL_DIR		=	$(TWL_IPL_RED_ROOT)/build/systemMenu_tools/NandInitializerRed/data
 
 LDIRT_CLEAN		=	$(FONT_TABLE)
 
