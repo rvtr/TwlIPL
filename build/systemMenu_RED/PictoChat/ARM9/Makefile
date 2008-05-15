@@ -43,6 +43,10 @@ MAKETAD_FLAGS			+= -s
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
+ifeq ($(ENABLE_AES),TRUE)
+MAKEROM_FLAGS += -a
+endif
+
 MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.sys.exe
 
 LDIRT_CLEAN				=	$(TARGET_TAD)
