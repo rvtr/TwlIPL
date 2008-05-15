@@ -196,6 +196,7 @@ static void FSi_WramThread(void* arg)
 				break;
 			}
             HOTSW_ReadCardData( FSiWramWork.card_src, cmd->addr, (u32)cmd->length);
+            FSiWramWork.card_src = (void *)((u32)FSiWramWork.card_src + (u32)cmd->length);
             result = cmd->length;//Žb’è
             break;
         case FS_WRAM_COMMAND_WRITE:
