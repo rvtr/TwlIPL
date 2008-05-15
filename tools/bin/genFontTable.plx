@@ -28,8 +28,8 @@
 use POSIX 'strftime';
 use File::Basename;
 
-if ($#ARGV < 1) {
-    printf STDOUT ("Usage: %s [genFontTable] [Target font files...]\n", $0);
+if ($#ARGV < 2) {
+    printf STDOUT ("Usage: %s [genFontTable] timestamp [Target font files...]\n", $0);
     exit(-1);
 }
 
@@ -51,10 +51,13 @@ sub deleteTemp {
 
 my $signSize   = 0x80;
 my $headerSize = 0x20;
+my @files;
 
 # 要素数算出
 my $num = 0;
 foreach ( @ARGV ) {
+	next if( $_ eq $ARGV[0] );
+	$files[ $num ] = $_;
 	$num++;
 }
 
@@ -74,7 +77,13 @@ foreach ( @ARGV ) {
 	my $offset = $signSize + $headerSize + $num * $elementSize;
 	if( ( $offset % 32 ) > 0 ) { $offset += 32 - ( $offset % 32 ); }
 	
-	foreach ( @ARGV ) {
+	foreach ( @files ) {
+		# NULL指定時は、NULL出力
+		if( "NULL" eq basename( $_ ) ) {
+			syswrite( INFO, pack( "x$elementSize") );
+			next;
+		}
+		
 		# ファイルネームの出力
 		if( !( -e $_ ) ) {
 			close( INFO );
@@ -132,8 +141,10 @@ foreach ( @ARGV ) {
 	binmode HEADER;
 	
 	# タイムスタンプの出力
-	my $date = strftime "%y%m%d%H", localtime;
-	syswrite( HEADER, pack( "H8", $date ) );
+#	my $timestamp = strftime "%y%m%d%H", localtime;
+	my $timestamp = $ARGV[ 0 ];
+	printf "timestamp = %s\n", $timestamp;
+	syswrite( HEADER, pack( "N", unpack( "L", pack( "H8", $timestamp ) ) ) );
 	
 	# 要素数の出力
 	syswrite( HEADER, pack( "S", $num ) );
@@ -187,8 +198,13 @@ if (!$KEYROOT) {
 		my $padding = pack( "x$padNum" );
 		syswrite( FONTTABLE, $padding, $padNum );
 	}
-	
-	foreach ( @ARGV ) {
+
+	foreach ( @files ) {
+		# NULL指定時はスキップ
+		if( "NULL" eq basename( $_ ) ) {
+			next;
+		}
+		
 		# フォント出力
 		my $fileLen = -s $_;
 		open TEST, $_ or die;

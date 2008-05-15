@@ -20,6 +20,7 @@ TARGET_FIRM			=	SYSTEMMENU
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
+FONT_TIMESTAMP	=	08041700
 FONT_DIR		=	WW
 FONTS			=	TWL_BF00_l.NFTR \
 					TWL_BF00_m.NFTR \
@@ -45,6 +46,6 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 do-build : $(FONT_TABLE)
 
 $(FONT_TABLE): $(FONT_RSC)
-	$(GEN_FONT_TABLE) $(FONT_RSC)
+	$(GEN_FONT_TABLE) $(FONT_TIMESTAMP) $(FONT_RSC)
 
 #===== End of Makefile =====
