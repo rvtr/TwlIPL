@@ -157,7 +157,9 @@ void SYSMi_PrepareDatabase(void)
         FSFile file;
         if ( FS_OpenFileEx(&file, path, FS_FILEMODE_R) )
         {
+#if 0   // 1 if using attach_dummyromheader
             if ( FS_SeekFile(&file, sizeof(ROM_Header), FS_SEEK_SET) )
+#endif
             {
                 DHT_PrepareDatabase(dht, &file);
                 DC_FlushRange(dht, DHT_GetDatabaseLength(dht));
