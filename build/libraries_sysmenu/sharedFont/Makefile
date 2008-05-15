@@ -20,20 +20,10 @@ TARGET_FIRM			=	SYSTEMMENU
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
+
 #----------------------------------------------------------------------------
 
-SUBDIRS_P			=	reloc_info \
-						sysmenu \
-						mb_loader \
-						acsign \
-						boot \
-						hotsw \
-						namut \
-						mcu \
-						ds \
-						dht \
-						wds \
-						sharedFont
+SUBDIRS				=	ARM9
 
 #----------------------------------------------------------------------------
 

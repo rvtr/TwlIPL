@@ -18,6 +18,7 @@
 #include <twl.h>
 #include <sysmenu.h>
 #include <sysmenu/mcu.h>
+#include <sysmenu/namut.h>
 #include <firm/format/from_firm.h>
 #include <firm/hw/ARM9/mmap_firm.h>
 #include "internal_api.h"
@@ -127,6 +128,19 @@ void SYSMi_SendKeysToARM7( void )
     MI_SetWramBank(MI_WRAM_ARM7_ALL);
 }
 
+
+// nandのtmpディレクトリの中身を消す
+void SYSM_DeleteTmpDirectory( TitleProperty *pBootTitle )
+{
+    // bootTypeがLAUNCHER_BOOTTYPE_TEMPでない場合、tmpフォルダ内のデータを消す
+	if( !pBootTitle || pBootTitle->flags.bootType != LAUNCHER_BOOTTYPE_TEMP ) {
+		if( NAMUT_DeleteNandDirectory( "nand:/tmp" ) ) {
+	        OS_TPrintf( "\"nand:/tmp\" delete succeeded.\n" );
+		}else {
+	        OS_TPrintf( "\"nand:/tmp\" delete failed.\n" );
+		}
+	}
+}
 
 // ============================================================================
 //

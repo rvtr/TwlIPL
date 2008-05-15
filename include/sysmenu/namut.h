@@ -95,6 +95,19 @@ BOOL NAMUTi_ClearSavedataPrivate(const char* path, u64 titleID);
  *---------------------------------------------------------------------------*/
 BOOL NAMUTi_DestroySubBanner(const char* path);
 
+/*---------------------------------------------------------------------------*
+  Name:         NAMUT_DeleteNandDirectory
+
+  Description:  指定ディレクトリ以下を消去します。
+                指定ディレクトリ自体は残ります。
+
+  Arguments:    path : 絶対パス（スラッシュを含めない）
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL NAMUT_DeleteNandDirectory(const char *path);
+
+
 #endif // SDK_ARM9
 
 #ifdef __cplusplus

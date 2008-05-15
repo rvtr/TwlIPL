@@ -16,28 +16,32 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-TARGET_FIRM			=	SYSTEMMENU
+SUBDIRS			=	
+
+#----------------------------------------------------------------------------
+TARGET_FIRM		=	SYSTEMMENU
+TARGET_PLATFORM	=	TWL
+TWL_ARCHGEN		=	LIMITED
+TWL_PROC	   	=	ARM9
+
+SRCDIR			=	src
+SRCS			=	sharedFont.c
+
+TARGET_LIB		=	libsharedfont$(TWL_LIBSUFFIX).a
+
+LINCLUDES		+=	$(SYSMENU_ROOT)/build/libraries_sysmenu/sysmenu/ARM9/include
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-#----------------------------------------------------------------------------
+INSTALL_TARGETS	=	$(TARGETS)
+INSTALL_DIR		=	$(SYSMENU_INSTALL_LIBDIR)
 
-SUBDIRS_P			=	reloc_info \
-						sysmenu \
-						mb_loader \
-						acsign \
-						boot \
-						hotsw \
-						namut \
-						mcu \
-						ds \
-						dht \
-						wds \
-						sharedFont
+LDIRT_CLEAN		=	$(REVISION_SRC)
 
 #----------------------------------------------------------------------------
+
+do-build: $(TARGETS)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
-
 
 #===== End of Makefile =====

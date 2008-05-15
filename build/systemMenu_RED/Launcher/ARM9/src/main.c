@@ -21,25 +21,25 @@
 #include "logoDemo.h"
 #include "sound.h"
 #include "loadWlanFirm.h"
+#include "loadSharedFont.h"
 
 // extern data-----------------------------------------------------------------
 
 // define data-----------------------------------------------------------------
 
-
 // function's prototype-------------------------------------------------------
 static void INTR_VBlank( void );
 static void deleteTmp();
+void SYSM_DeleteTempDirectory( TitleProperty *pBootTitle );
 
 // global variable-------------------------------------------------------------
 
 // static variable-------------------------------------------------------------
 static TitleProperty s_titleList[ LAUNCHER_TITLE_LIST_NUM ];
 
-static u64 strmThreadStack[THREAD_STACK_SIZE / sizeof(u64)];
-static OSThread strmThread;
-
-static StreamInfo strm; // stream info
+static u64 s_strmThreadStack[THREAD_STACK_SIZE / sizeof(u64)];
+static OSThread s_strmThread;
+static StreamInfo s_strm; // stream info
 
 // const data------------------------------------------------------------------
 
@@ -140,18 +140,14 @@ void TwlMain( void )
 
     (void)SYSM_GetCardTitleList( s_titleList );                 // カードアプリリストの取得（カードアプリはs_titleList[0]に格納される）
 
-    // bootTypeがLAUNCHER_BOOTTYPE_TEMPでない場合、tmpフォルダ内のデータを消す
-    if( !pBootTitle || pBootTitle->flags.bootType != LAUNCHER_BOOTTYPE_TEMP )
-    {
-        deleteTmp();
-    }
+	// TMPフォルダのクリーン
+	SYSM_DeleteTmpDirectory( pBootTitle );
 
     // NANDタイトルリストの準備
     SYSM_InitNandTitleList();
 
     // 「ダイレクトブートでない」なら
     if( !pBootTitle ) {
-
         // NAND & カードアプリリスト取得
         (void)SYSM_GetNandTitleList( s_titleList, LAUNCHER_TITLE_LIST_NUM );    // NANDアプリリストの取得（内蔵アプリはs_titleList[1]から格納される）
     }
@@ -160,9 +156,13 @@ void TwlMain( void )
     // 「ダイレクトブートだが、ロゴデモ表示」の時、各種リソースのロード------------
     if( !pBootTitle ||
         ( pBootTitle && !SYSM_IsLogoDemoSkip() ) ) {
-//      FS_ReadContentFile( ContentID );                        // タイトル内リソースファイルのリード
-//      FS_ReadSharedContentFile( ContentID );                  // 共有コンテントファイルのリード
-    }
+		u32 timestamp;
+		if( !LoadSharedFontInit() ) {				// 共有フォントのロード
+			SYSM_SetFatalError( TRUE );
+		}
+		timestamp = SFONT_GetFontTimestamp();
+		if( timestamp > 0 ) OS_TPrintf( "SharedFont timestamp : %08x\n", timestamp );
+	}
 
     // 開始ステートの判定--------------
 
@@ -198,12 +198,12 @@ void TwlMain( void )
     SND_LockChannel((1 << L_CHANNEL) | (1 << R_CHANNEL), 0);
 
     /* ストリームスレッドの起動 */
-    OS_CreateThread(&strmThread,
+    OS_CreateThread(&s_strmThread,
                     StrmThread,
                     NULL,
-                    strmThreadStack + THREAD_STACK_SIZE / sizeof(u64),
+                    s_strmThreadStack + THREAD_STACK_SIZE / sizeof(u64),
                     THREAD_STACK_SIZE, STREAM_THREAD_PRIO);
-    OS_WakeupThreadDirect(&strmThread);
+    OS_WakeupThreadDirect(&s_strmThread);
 
 
     // 無線ファームウェアを無線モジュールにダウンロードする。
@@ -233,15 +233,21 @@ void TwlMain( void )
         case LOGODEMO_INIT:
             LogoInit();
             // 音鳴らすテスト
-            FS_InitFile(&strm.file);
-            strm.isPlay = FALSE;
-            PlayStream(&strm, filename);
+            FS_InitFile(&s_strm.file);
+            s_strm.isPlay = FALSE;
+            PlayStream(&s_strm, filename);
 
             state = LOGODEMO;
             break;
         case LOGODEMO:
-            if( LogoMain() ) {
-                if( !direct_boot ) {
+            if( LogoMain() &&
+				IsFinishedLoadSharedFont() ) {	// フォントロード終了をここでチェック
+#if 0
+				if( SYSM_IsFatalError() ) {
+					state = STOP;
+				}else
+#endif
+				if( !direct_boot ) {
                     state = LAUNCHER_INIT;
                 }else {
                     state = LOAD_START;
@@ -333,100 +339,3 @@ static void INTR_VBlank(void)
     OS_SetIrqCheckFlag(OS_IE_V_BLANK);                              // Vブランク割込チェックのセット
 }
 
-// ============================================================================
-// ディレクトリ操作
-// ============================================================================
-
-// nandのtmpディレクトリの中身を消す
-static void deleteTmp()
-{
-    if( FS_DeleteFile( OS_TMP_APP_PATH ) )
-    {
-        OS_TPrintf( "deleteTmp: deleted File '%s' \n", OS_TMP_APP_PATH );
-    }else
-    {
-        FSResult res = FS_GetArchiveResultCode("nand");
-        if( FS_RESULT_SUCCESS == res )
-        {
-            OS_TPrintf( "deleteTmp: File '%s' not exists.\n", OS_TMP_APP_PATH );
-        }else
-        {
-            OS_TPrintf( "deleteTmp: delete File '%s' failed. Error code = %d.\n", OS_TMP_APP_PATH, res );
-        }
-    }
-}
-
-#define OS_SHARED_FONT_FILE_NAME_LENGTH		0x20
-
-typedef struct OSSharedFontHeader {
-	u32 timestamp;
-	u16 fontNum;
-	u8  pad[ 6 ];
-	u8  digest[ SVC_SHA1_DIGEST_SIZE ];
-}OSSharedFontHeader;
-
-typedef struct OSSharedFontInfo {
-	u8		fileName[ OS_SHARED_FONT_FILE_NAME_LENGTH ];
-	u8		pad[ 4 ];
-	u32		offset;
-	u32		length;
-	u8		digest[ SVC_SHA1_DIGEST_SIZE ];
-}OSSharedFontInfo;
-
-#if 0
-BOOL ReadSharedFontTable( void )
-{
-#define SIGN_SIZE 0x80
-#define HEADER_SIZE 0x20
-	const char *pPath = "sdmc:/TWLFontTable.dat";
-	FSFile file[1];
-	u8 signature[ SIGN_SIZE ];
-	OSSharedFontHeader header;
-	u8 calc_digest[ SVC_SHA1_DIGEST_SIZE ];
-	u8 sign_digest[ SVC_SHA1_DIGEST_SIZE ];
-    static u32 heap[ 4096 / sizeof(u32) ];
-    SVCSignHeapContext acmemoryPool;
-	u32 len = 0;
-	
-	if( !FS_OpenFileEx( file, pPath, FS_FILEMODE_R ) ) {
-		return FALSE;
-	}
-	
-	// 署名リード
-	if( FS_ReadFile( file, signature, SIGN_SIZE ) != SIGN_SIZE ){
-		goto ERROR;
-	}
-	
-	// ヘッダリード
-	if( FS_ReadFile( file, header, HEADER_SIZE ) != HEADER_SIZE ){
-		goto ERROR;
-	}
-	
-	// ヘッダ署名チェック
-    SVC_InitSignHeap( &acmemoryPool, heap, 4096 );
-	if( !SVC_DecryptSign( &acmemoryPool, sign_digest, signature, pPubKey ) ) {
-		goto ERROR;
-	}
-	
-	// フォントInfoテーブルリード
-	len = sizeof(OSSHaredFontInfo) * header->fontNum;
-	if( FS_ReadFile( file, infoTable, len ) != len ){
-		goto ERROR;
-	}
-	
-	// フォントInfoテーブル　ハッシュチェック
-    SVC_CalcSHA1( calc_digest, infoTable, len );
-	if( !SVC_CompareSHA1( calc_digest, header->digest ) ) {
-		return FALSE;
-	}
-	
-	
-	
-	FS_CloseFile( file );
-	
-	
-ERROR:
-	FS_CloseFile( file );
-	return FALSE;
-}
-#endif

@@ -33,6 +33,7 @@
 #include <sysmenu/memorymap.h>
 #include <sysmenu/hotsw.h>
 #include <sysmenu/mb_loader.h>
+#include <sysmenu/sharedFont.h>
 
 /* SYSMENU_H_ */
 #endif

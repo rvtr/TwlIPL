@@ -88,7 +88,6 @@ static char sCurrentFullPath[FS_ENTRY_LONGNAME_MAX];
 static BOOL NAMUTi_DeleteNonprotectedTitle(void);
 static BOOL NAMUTi_DeleteNonprotectedTitleEntity(const char* path);
 static BOOL NAMUTi_ClearSavedataAll(void);
-static BOOL NAMUTi_DeleteNandDirectory(const char *path);
 static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arcname);
 static void NAMUTi_DrawNandTree(s32 depth, const char *path);
 static BOOL NAMUTi_FillFile(const char* path);
@@ -139,10 +138,10 @@ BOOL NAMUT_Format(void)
 	// NAM関数でtempが作成&使用される可能性があるため最後に実行します
 	for (i=0; i<sizeof(sDeleteDirectoryList)/sizeof(char*); i++)
 	{
-		if (!NAMUTi_DeleteNandDirectory(sDeleteDirectoryList[i]))
+		if (!NAMUT_DeleteNandDirectory(sDeleteDirectoryList[i]))
 		{
 			ret = FALSE;
-			OS_TWarning("NAMUTi_DeleteNandDirectory(%s)\n", sDeleteDirectoryList[i]);
+			OS_TWarning("NAMUT_DeleteNandDirectory(%s)\n", sDeleteDirectoryList[i]);
 		}
 	}
 
@@ -153,7 +152,7 @@ BOOL NAMUT_Format(void)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         NAMUTi_DeleteNandDirectory
+  Name:         NAMUT_DeleteNandDirectory
 
   Description:  指定ディレクトリ以下を消去します。
                 指定ディレクトリ自体は残ります。
@@ -162,7 +161,7 @@ BOOL NAMUT_Format(void)
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-static BOOL NAMUTi_DeleteNandDirectory(const char *path)
+BOOL NAMUT_DeleteNandDirectory(const char *path)
 {
     FSFile  dir;
 	FSDirectoryEntryInfo entryInfo;
