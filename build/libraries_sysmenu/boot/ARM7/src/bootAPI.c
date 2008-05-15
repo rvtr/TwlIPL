@@ -121,6 +121,13 @@ BOOL BOOT_WaitStart( void )
 		// FSによってshared領域にコピーされたランチャー自身のマウントパスのクリア
 		MI_CpuClearFast((char *)HW_TWL_FS_BOOT_SRL_PATH_BUF, OS_MOUNT_PATH_LEN);
 		
+		// カードアプリの場合はARM9FLXの先頭2k暗号オブジェクトをデクリプト
+		if( SYSMi_GetWork()->flags.common.isCardBoot ) {
+			// 再配置情報があればそちらのアドレス、なければヘッダ指定のアドレス
+			void *addr = (SYSMi_GetWork()->romRelocateInfo[0].src != NULL) ? SYSMi_GetWork()->romRelocateInfo[0].src : dh->s.main_ram_address;
+			HOTSW_DecryptObjectFile( addr );
+		}
+		
 		BOOTi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。
 		reg_MI_MBK9 = 0;								// 全WRAMのロック解除
 		reg_PXI_MAINPINTF = MAINP_SEND_IF | 0x0100;		// ARM9に対してブートするようIRQで要求＋ARM7のステートを１にする。
