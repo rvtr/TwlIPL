@@ -52,7 +52,8 @@ SRCS		=	main.c \
 				kami_pxi.c \
 				kami_write_nandfirm.c \
 				hw_info.c \
-				keypad.c
+				keypad.c \
+				kami_copy_file.c
 
 LINCLUDES	=	include \
 				../common/include \

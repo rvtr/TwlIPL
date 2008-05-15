@@ -24,6 +24,7 @@
 #include "kami_pxi.h"
 #include "kami_font.h"
 #include "kami_write_nandfirm.h"
+#include "kami_copy_file.h"
 #include "import.h"
 #include "hw_info.h"
 #include "graphics.h"
@@ -45,11 +46,18 @@ typedef struct _SystemUpdaterLog
 	int reserve[5];
 } SystemUpdaterLog;
 
+typedef struct _CopyFileList
+{
+	char* srcPath;
+	char* dstPath;
+} CopyFileList;
+
 /*---------------------------------------------------------------------------*
     内部定数定義
  *---------------------------------------------------------------------------*/
 
 #define SYSTEM_UPDATER_LOG_PATH     "nand:/sys/log/updater.log"
+#define NAND_FIRM_PATH_IN_ROM       "rom:/data/menu_launcher.nand"
 
 #define SYSTEM_UPDATER_MAGIC_CODE   44001111
 
@@ -63,13 +71,17 @@ static const char* ImportTadFileList[] =
 	"rom:/data/HNCA.tad"
 };
 
-static const char* NandFirmPath = "rom:/data/menu_launcher.nand";
+static const CopyFileList sCopyFileList[] =
+{
+	{ "rom:/data/TWLFontTable.dat", "nand:sys/TWLFontTable.dat" }
+};
 
 /*---------------------------------------------------------------------------*
     内部変数定義
  *---------------------------------------------------------------------------*/
 
 static NAMTitleId   titleId;
+static s16 printLine;
 
 /*---------------------------------------------------------------------------*
     内部関数定義
@@ -215,7 +227,7 @@ TwlMain()
 		hw_info_result = WriteHWInfoFile(OS_GetRegion(), OS_IsForceDisableWireless());
 		if (hw_info_result)
 		{
-			kamiFontPrintf( 0, (s16)0, FONT_COLOR_GREEN, "Write Hardware Info Success.");			
+			kamiFontPrintf( 0, printLine++, FONT_COLOR_GREEN, "Write Hardware Info Success.");			
 			break;
 		}
 		else
@@ -226,7 +238,21 @@ TwlMain()
 	if ( hw_info_result == FALSE)
 	{
 		result = FALSE;
-		kamiFontPrintf( 0, (s16)0, FONT_COLOR_RED, "Write Hardware Info Failure!");			
+		kamiFontPrintf( 0, printLine++, FONT_COLOR_RED, "Write Hardware Info Failure!");			
+	}
+
+	// 必要なファイルの書き込み
+	for (i=0;i<sizeof(sCopyFileList)/sizeof(sCopyFileList[0]);i++)
+	{
+		if (kamiCopyFile(sCopyFileList[i].srcPath, sCopyFileList[i].dstPath))
+		{
+			kamiFontPrintf( 0, printLine++, FONT_COLOR_GREEN, "Write Data File %d Success.", i);			
+		}
+		else
+		{
+			result = FALSE;
+			kamiFontPrintf( 0, printLine++, FONT_COLOR_RED, "Write Data File %d Failure!", i);
+		}
 	}
 
 	// TADのインポート開始
@@ -252,11 +278,11 @@ TwlMain()
 
 		if ( nam_result == NAM_OK)
 		{
-			kamiFontPrintf( 0, (s16)(i+1), FONT_COLOR_GREEN, "List : %d Update Success.", i+1 );			
+			kamiFontPrintf( 0, printLine++, FONT_COLOR_GREEN, "List : %d Update Success.", i+1 );			
 		}
 		else
 		{
-			kamiFontPrintf( 0, (s16)(i+1), FONT_COLOR_RED, "Error: %d : RetCode = %d", i+1, nam_result );
+			kamiFontPrintf( 0, printLine++, FONT_COLOR_RED, "Error: %d : RetCode = %d", i+1, nam_result );
 			result = FALSE;
 		}
 	}
@@ -264,10 +290,10 @@ TwlMain()
 	// NANDファームのインストール開始
 	for (j=0;j<MAX_RETRY_COUNT;j++)
 	{
-		nand_firm_result = kamiWriteNandfirm(NandFirmPath, OS_AllocFromMain, OS_FreeToMain);
+		nand_firm_result = kamiWriteNandfirm(NAND_FIRM_PATH_IN_ROM, OS_AllocFromMain, OS_FreeToMain);
 		if (nand_firm_result)
 		{
-			kamiFontPrintf( 0, (s16)(i+1), FONT_COLOR_GREEN, "Firm Update Success.");			
+			kamiFontPrintf( 0, printLine++, FONT_COLOR_GREEN, "Firm Update Success.");			
 			break;
 		}
 		else
@@ -278,7 +304,7 @@ TwlMain()
 	if ( nand_firm_result == FALSE)
 	{
 		result = FALSE;
-		kamiFontPrintf( 0, (s16)(i+1), FONT_COLOR_RED, "Firm Update Failure!");
+		kamiFontPrintf( 0, printLine++, FONT_COLOR_RED, "Firm Update Failure!");
 	}
 
 	// 更新ログを作成して再実行を防ぐ

@@ -228,5 +228,5 @@ RomSpec
 	File		$(HWINFO_PRIVKEY)
 	HostRoot	$(TWL_IPL_RED_ROOT)/build/systemMenu_tools/NandInitializerRed/data
 	Root		/data
-	File		camera_volatile_info.bin
+	File		camera_volatile_info.bin TWLFontTable.dat
 }

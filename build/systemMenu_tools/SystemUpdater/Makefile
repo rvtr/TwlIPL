@@ -24,11 +24,13 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 LAUNCHER_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/Launcher
 MACHINESETTINGS_DIR			=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/MachineSettings
 WLANFIRM_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/wlanfirm
+SHARED_FONT_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/sharedFont
 NANDFIRM_DIR                =   $(TWL_IPL_RED_ROOT)/build/nandfirm/menu-launcher
 
 SUBDIRS =	$(LAUNCHER_DIR) \
 			$(MACHINESETTINGS_DIR) \
 			$(WLANFIRM_DIR) \
+			$(SHARED_FONT_DIR) \
 			$(NANDFIRM_DIR) \
 			data \
 			banner \
