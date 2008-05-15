@@ -25,17 +25,29 @@ override TWL_ARCHGEN		:= LIMITED
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 MY_TITLE		=	HNHA
-DS_HASH_TABLE			=	DSHashTable.bin
+
+MY_DATA			=	DSHashTable.bin
+
+MY_MAJOR_VERSION	=	0
+
+#MY_TITLE_NAME		=	$(MY_TITLE)
+MY_TITLE_NAME		=	DSHashTable
+
 
 #----------------------------------------------------------------------------
-MY_SRL			=	$(MY_TITLE).srl
 MY_TAD			=	$(MY_TITLE).tad
-ATTACH_HEADER_COMMAND	=	$(SYSMENU_TOOLSDIR)/bin/attach_dummyromheader.exe
+
+MY_TITLE_ID_HI		=	0003000F
+MY_TITLE_ID_LO		=	$(shell perl -e 'printf "%02X%02X%02X%02X", unpack("C4", "'$(MY_TITLE)'")')
+MY_TITLE_ID		=	$(MY_TITLE_ID_HI)$(MY_TITLE_ID_LO)
+MY_GROUP_ID		=	3031
 
 INSTALL_TARGETS		=	$(MY_TAD)
 INSTALL_DIR		=	$(ROOT)/build/tools/TwlNMenu/data
 
-LDIRT_CLEAN		=	$(MY_SRL) $(MY_TAD) $(DS_HASH_TABLE2)
+MAKETAD_FLAGS		=	-d $(MY_TITLE_ID) $(MY_GROUP_ID) $(MY_MAJOR_VERSION) $(MY_TITLE_NAME)
+
+LDIRT_CLEAN		=	$(MY_TAD)
 
 #----------------------------------------------------------------------------
 
@@ -43,10 +55,7 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 do-build : $(MY_TAD)
 
-$(MY_SRL): $(DS_HASH_TABLE)
-	$(ATTACH_HEADER_COMMAND) -s -l -i $(call empath,$<) -c $(MY_TITLE) -o $@
-
-$(MY_TAD): $(MY_SRL)
-	$(MAKETAD) -s $< $(MAKETAD_FLAGS) -o $@
+$(MY_TAD): $(MY_DATA)
+	$(MAKETAD) $(call empath,$<) $(MAKETAD_FLAGS) -o $@
 
 #===== End of Makefile =====
