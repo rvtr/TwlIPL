@@ -227,6 +227,7 @@ BOOL FS_InitWramTransfer( u32 priority )
                     (void*)(FSiWramWork.stack + (FS_WRAM_THREAD_STACK_SIZE/sizeof(u64))),
                     FS_WRAM_THREAD_STACK_SIZE, priority);
     OS_WakeupThreadDirect(&FSiWramWork.thread);
+	initialized = TRUE;
     return TRUE;
 }
 
