@@ -43,7 +43,7 @@
 #define AUTH_KEY_BUFFER_LEN 128
 #define MB_AUTH_SIGN_SIZE				(128)	/* digital sign size */
 
-#define WRAM_SLOT_FOR_FS	4
+#define WRAM_SLOT_FOR_FS	5
 #define WRAM_SIZE_FOR_FS	MI_WRAM_SIZE_96KB
 
 typedef	struct	MbAuthCode
@@ -462,8 +462,19 @@ OS_TPrintf("RebootSystem failed: cant open file\n");
         s32 readLen;
         ROM_Header *head = (ROM_Header *)header;
 
+		// WRAM利用Read関数の準備、WRAMCのスロットのうち後ろ3つだけ解放しておく
+		FS_InitWramTransfer(3);
+		MI_FreeWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM7 );
+		MI_FreeWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM9 );
+		MI_FreeWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_DSP );
+		MI_CancelWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM7 );
+		MI_CancelWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM9 );
+		MI_CancelWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_DSP );
+		
+		// ハッシュ格納用バッファ（ヒープから取っているけど変更するかも）
+		s_calc_hash = SYSM_Alloc( region_max * SVC_SHA1_DIGEST_SIZE );
+
         // まずROMヘッダを読み込む
-        // (本来ならここでSRLの正当性判定)
         if(!isCardApp)
         {
         	bSuccess = FS_SeekFile(file, 0x00000000, FS_SEEK_SET);
@@ -478,6 +489,7 @@ OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
 			goto ERROR;
         }
 
+		//[TODO:]ヘッダ読み込みと同時に各種ハッシュ計算
 		if(!isCardApp)
 		{
 	        readLen = FS_ReadFile(file, header, (s32)sizeof(header));
@@ -533,6 +545,8 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 			}
 		}
 		
+		//[TODO:]この時点でヘッダの正当性検証
+		
         // 各領域を読み込む
         source  [region_header  ] = 0x00000000;
         length  [region_header  ] = HW_TWL_ROM_HEADER_BUF_SIZE;
@@ -571,22 +585,11 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 			}
 		}
 
-		// WRAM利用Read関数の準備、WRAMCの後半だけ解放しておく
-		FS_InitWramTransfer(3);
-		MI_FreeWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM7 );
-		MI_FreeWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM9 );
-		MI_FreeWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_DSP );
-		MI_CancelWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM7 );
-		MI_CancelWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM9 );
-		MI_CancelWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_DSP );
-		
-		s_calc_hash = SYSM_Alloc( region_max * SVC_SHA1_DIGEST_SIZE );
-
         for (i = region_header; i < region_max; ++i)
         {
 			BOOL result;
 			
-            u32 len = MATH_ROUNDUP( length[i], SYSM_ALIGNMENT_LOAD_MODULE );// AES暗号化領域の関係で、ロードサイズは32バイトアライメントに補正
+            u32 len = MATH_ROUNDUP( length[i], SYSM_ALIGNMENT_LOAD_MODULE );// AESおよびDMA転送サイズの仕様で、ロードサイズは32バイトアライメントに補正
             
             if ( !isTwlApp && i >= region_arm9_twl ) continue;// nitroでは読み込まない領域
 	        if(!isCardApp)
@@ -608,6 +611,7 @@ OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
             // 別スレッドで同じWRAM使おうとすると多分コケるので注意
             
             // コールバック関数に与える引数を初期化してRead
+            // [TODO:]ヘッダは先で読んだものをコピーするだけ
             if(region_header == i || (!isTwlApp && pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_TEMP ) )
             {
 				// ヘッダか、NTRダウンロードアプリのモジュール
@@ -627,6 +631,11 @@ OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
 	            SVC_SHA1GetHash( &arg.ctx, &s_calc_hash[i * SVC_SHA1_DIGEST_SIZE] );
 			}else
 			{
+				//[TODO:]TWLアプリとNTRNANDアプリはこのままで良いが、NTRカードアプリはDHTのため更に処理を分ける必要あり
+				//       ヘッダ署名用にヘッダのSHA1（HMACでない）をとりつつ（これは上でやっている）
+				//       DHTチェックphase1用のハッシュを計算（DHT_CheckHashPhase1Update 関数）し、結果まで出しておく
+				//       DHTチェック用にヘッダのHMACSHA1を計算する必要もあるが面倒なのでヘッダ読み込み後に
+				//       DHT_CheckHashPhase1Init を呼べば良い気もする（最小単位32KBよりも小さいし）
 				// それ以外
 				CalcHMACSHA1CallbackArg arg;
 	            SVC_HMACSHA1Init( &arg.ctx, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
@@ -639,6 +648,11 @@ OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
 		        {
 					result = HOTSW_ReadCardViaWram((void *)source[i], (void *)destaddr[i], (s32)len, MI_WRAM_C,
 		            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcHMACSHA1Callback, &arg );
+		            //speed test code
+		            /*
+		            HOTSW_ReadCardData((void *)source[i], (void *)destaddr[i], (u32)len);
+		            SVC_HMACSHA1Update( &arg.ctx, (void *)destaddr[i], length[i] );
+		            */
 				}
 	            SVC_HMACSHA1GetHash( &arg.ctx, &s_calc_hash[i * SVC_SHA1_DIGEST_SIZE] );
 			}
@@ -1039,6 +1053,14 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 	return AUTH_RESULT_SUCCEEDED;
 }
 
+// NTR版カードアプリのヘッダ認証処理
+static AuthResult SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle)
+{
+#pragma unused(pBootTitle)
+	// [TODO:]NTRカード ホワイトリストorホワイトリスト署名チェック＋DHTチェック
+	return AUTH_RESULT_SUCCEEDED;
+}
+
 // ヘッダ認証
 static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 {
@@ -1093,8 +1115,7 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 				return SYSMi_AuthenticateNTRDownloadAppHeader( pBootTitle );
 			case LAUNCHER_BOOTTYPE_ROM:
 				OS_TPrintf( "Authenticate :NTR_ROM start.\n" );
-				// NTRカードは今のところ認証予定無し
-				return AUTH_RESULT_SUCCEEDED;
+				return SYSMi_AuthenticateNTRCardAppHeader( pBootTitle );
 			default:
 				return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}
