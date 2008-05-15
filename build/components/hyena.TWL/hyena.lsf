@@ -201,6 +201,7 @@ Autoload WRAM
 	
 	Library		libathdrv_sp$(LIBSUFFIX).a (.bss)
 	Library		libathdrv_sp$(LIBSUFFIX).a (.data)
+	Object		* (.rsvwram)
 }
 
 #--------
