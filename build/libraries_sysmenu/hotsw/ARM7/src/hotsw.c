@@ -875,7 +875,7 @@ static HotSwState ReadImageReturnErrorCode(void* dest, s32 offset, s32 length, v
         dest   = (u8*)dest + (length - remain_length);
         offset += length - remain_length;
 
-        retval = ReadPageGame((CardBootData*)arg, offset, page_buffer, 512);
+        retval = ReadPageGame((CardBootData*)arg, (u32)offset, page_buffer, 512);
 
         if (retval != HOTSW_SUCCESS)
         {
