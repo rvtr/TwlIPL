@@ -397,6 +397,32 @@ static void SYSMi_CalcSHA1Callback(const void* addr, const void* orig_addr, u32 
 	SVC_SHA1Update( &cba->ctx, addr, calc_len );
 }
 
+static void SYSMi_FinalizeHotSWAsync( TitleProperty *pBootTitle, ROM_Header *head )
+{
+	HotSwApliType hotsw_type;
+
+	switch( pBootTitle->flags.bootType )
+	{
+		case LAUNCHER_BOOTTYPE_NAND:
+		case LAUNCHER_BOOTTYPE_TEMP:
+			if ( head->s.platform_code & PLATFORM_CODE_FLAG_TWL )
+			{
+				hotsw_type = HOTSW_APLITYPE_TWL_NAND;
+			}
+			else
+			{
+				hotsw_type = HOTSW_APLITYPE_NTR_NAND;
+			}
+			break;
+		case LAUNCHER_BOOTTYPE_ROM:
+		default:
+			hotsw_type = HOTSW_APLITYPE_CARD;
+			break;
+	}
+
+	HOTSW_FinalizeHotSWAsync( hotsw_type );
+}
+
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
 {
 	enum
@@ -668,6 +694,8 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 				SYSMi_GetWork()->flags.common.isHeaderLoadCompleted = TRUE;
 				// WRAM経由ロードの場合はAES初期化
 				(void)SYSM_InitDecryptAESRegion_W( (ROM_Header_Short *)destaddr[region_header] );
+				// HOTSW終了処理有効化
+				SYSMi_FinalizeHotSWAsync( pBootTitle, head );
 			}
 
         }
