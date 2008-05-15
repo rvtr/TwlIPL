@@ -869,7 +869,7 @@ static HotSwState ReadImageReturnErrorCode(void* dest, s32 offset, s32 length, v
         dest   = (u8*)dest + (length - remain_length);
         offset += length - remain_length;
 
-        retval = ReadPageGame((CardBootData*)arg, page_offset, page_buffer, 512);
+        retval = ReadPageGame((CardBootData*)arg, offset, page_buffer, 512);
 
         if (retval != HOTSW_SUCCESS)
         {
@@ -940,7 +940,7 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
         // --- Game Segment
         else if(src >= HOTSW_GAME_AREA_OFS){
             // KeyTable2‚ªÝ’è‚³‚ê‚Ä‚¢‚éê‡
-            if(s_cbData.pBootSegBuf->rh.s.twl_card_keytable_area_rom_offset){
+            if(s_cbData.isLoadTypeTwl){
                 u32 keyTable2Adr = (u32)s_cbData.pBootSegBuf->rh.s.twl_card_keytable_area_rom_offset * TWLCARD_BORDER_OFFSET;
                 u32 Secure2Adr   = keyTable2Adr + HOTSW_SECURE2_AREA_OFS;
                 u32 Game2Adr     = keyTable2Adr + HOTSW_GAME2_AREA_OFS;
