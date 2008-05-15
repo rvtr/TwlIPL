@@ -199,6 +199,12 @@ void SYSMi_CheckRTC( void )
 // スリープモードへの遷移
 void SYSM_GoSleepMode( void )
 {
+    // 蓋閉じ判定
+    if ( ! PAD_DetectFold() )
+    {
+        return;
+    }
+
     // デバッガ起動時にはスリープに入らない
     if ( ! SYSM_IsRunOnDebugger() || (OSi_DetectDebugger() & OS_CONSOLE_TWLDEBUGGER) )
     {

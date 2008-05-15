@@ -409,8 +409,7 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
 	    region_max
 	};
 	// [TODO:]DSダウンロードプレイおよびpictochat等のNTR拡張NANDアプリの時は、ROMヘッダを退避する
-	// が、どうもNTR-ROMヘッダ情報の再配置は、rebootライブラリで行う。らしい。
-	// とりあえず現状のままにしておき、動かなければ考える。
+	// が、NTR-ROMヘッダは旧無線パッチとデバッガパッチを当てる必要があるため、再配置はrebootライブラリで行う。
 	
 	// ロード
     char path[256];

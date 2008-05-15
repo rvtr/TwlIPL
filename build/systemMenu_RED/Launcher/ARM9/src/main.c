@@ -316,13 +316,10 @@ void TwlMain( void )
         (void)SND_FlushCommand(SND_COMMAND_NOBLOCK);
 
 #ifndef DISABLE_SLEEP
-        // スリープモードへの遷移
-        if ( PAD_DetectFold() )
-        {
-            SYSM_GoSleepMode();
-    }
+        // スリープモードへの遷移（蓋閉じ判定はデフォルトで行う）
+        SYSM_GoSleepMode();
 #endif // DISABLE_SLEEP
-}
+    }
 }
 
 
