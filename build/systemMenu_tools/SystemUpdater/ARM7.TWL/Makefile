@@ -34,8 +34,8 @@ TARGET_NAME		=	armadillo
 
 TARGET_NEF		=	$(TARGET_NAME).tef
 LCFILE_SPEC		=	$(TARGET_NAME).lsf
-LCFILE_TEMPLATE	=	$(TARGET_NAME).lcf.template
-LDRES_TEMPLATE	=	$(TARGET_NAME).response.template
+LCFILE_TEMPLATE	=	$(ROOT)/build/components/$(TARGET_NAME).TWL/$(TARGET_NAME).lcf.template
+LDRES_TEMPLATE	=	$(ROOT)/build/components/$(TARGET_NAME).TWL/$(TARGET_NAME).response.template
 
 CRT0_O			=	crt0.SCR.TWL.o
 
