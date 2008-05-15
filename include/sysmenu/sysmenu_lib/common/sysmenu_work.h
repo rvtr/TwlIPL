@@ -57,7 +57,6 @@ typedef struct CardReadParam {
 	u32					src;
     u32					dest;
 	u32					size;
-    CardDataReadState	result;
 }CardReadParam;
 
 //----------------------------------------------------------------------

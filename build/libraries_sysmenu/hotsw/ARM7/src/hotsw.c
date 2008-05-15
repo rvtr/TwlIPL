@@ -285,8 +285,10 @@ void HOTSW_Init(u32 threadPrio)
 
     // バッファの設定
     HOTSW_SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );
-//	HOTSW_SetSecureSegmentBuffer(HOTSW_MODE1, (void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
-//	HOTSW_SetSecureSegmentBuffer(HOTSW_MODE2, (void *)SYSM_CARD_TWL_SECURE_BUF, SECURE_AREA_SIZE );
+#ifndef USE_WRAM_LOAD
+	HOTSW_SetSecureSegmentBuffer(HOTSW_MODE1, (void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
+	HOTSW_SetSecureSegmentBuffer(HOTSW_MODE2, (void *)SYSM_CARD_TWL_SECURE_BUF, SECURE_AREA_SIZE );
+#endif
 
     // カードが挿さってあったらスレッドを起動する
     if(HOTSW_IsCardExist()){
@@ -337,9 +339,11 @@ static HotSwState LoadCardData(void)
 
     // バッファを設定
     s_cbData.pBootSegBuf   = s_pBootSegBuffer;
-//	s_cbData.pSecureSegBuf = s_pSecureSegBuffer;
-//	s_cbData.pSecure2SegBuf= s_pSecure2SegBuffer;
-
+#ifndef USE_WRAM_LOAD
+	s_cbData.pSecureSegBuf = s_pSecureSegBuffer;
+	s_cbData.pSecure2SegBuf= s_pSecure2SegBuffer;
+#endif
+    
     // ロード処理開始
     if(HOTSW_IsCardAccessible()){
         s_cbData.modeType = HOTSW_MODE1;
@@ -463,8 +467,9 @@ static HotSwState LoadCardData(void)
             romMode = HOTSW_ROM_MODE_SECURE;
 
             // Secure Segment の バッファ設定
+#ifndef USE_WRAM_LOAD
 			HOTSW_SetSecureSegmentBuffer(HOTSW_MODE1, (void *)s_cbData.pBootSegBuf->rh.s.main_ram_address, SECURE_AREA_SIZE );
-            
+#endif
             // SecureモードのIDとSecureSegmentを読み込む
             state  = ReadSecureModeCardData();
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
@@ -498,8 +503,9 @@ static HotSwState LoadCardData(void)
 
                 // ---------------------- Secure2 Mode ----------------------
 	            // Secure Segment の バッファ設定
+#ifndef USE_WRAM_LOAD
 			    HOTSW_SetSecureSegmentBuffer(HOTSW_MODE2, (void *)s_cbData.pBootSegBuf->rh.s.main_ltd_ram_address, SECURE_AREA_SIZE );
-                
+#endif
                 // Secure2モードのIDとSecureSegmentを読み込む
                 state  = ReadSecureModeCardData();
                 retval = (retval == HOTSW_SUCCESS) ? state : retval;
@@ -1347,22 +1353,31 @@ static void GenVA_VB_VD(void)
   Name:         DecryptObjectFile
 
   Description:  セキュア領域先頭2KBの暗号化領域を復号化
-
-  注：セキュア領域を読み込んでからこの関数を呼び出してください
  *---------------------------------------------------------------------------*/
-#ifndef USE_WRAM_LOAD
 static u32 encDestBuf[ENCRYPT_DEF_SIZE/sizeof(u32)];
 
+#ifndef USE_WRAM_LOAD
 static HotSwState DecryptObjectFile(void)
+#else
+BOOL HOTSW_DecryptObjectFile(void* dest)
+#endif
 {
     u8  i;
     s32 restSize;
     s32 size                = (s32)s_cbData.pBootSegBuf->rh.s.main_size;
     u32 *pEncBuf            = encDestBuf;
+#ifndef USE_WRAM_LOAD
     u32 *pEncDes            = s_cbData.pSecureSegBuf;
+#else
+    u32 *pEncDes            = (u32 *)dest;
+#endif
     BLOWFISH_CTX *tableBufp = &s_cbData.keyTable;
     BOOL exist              = TRUE;
+#ifndef USE_WRAM_LOAD
     HotSwState retval       = HOTSW_SUCCESS;
+#else
+    BOOL	   retval		= TRUE;
+#endif
 
     if (size > ENCRYPT_DEF_SIZE) {
         size = ENCRYPT_DEF_SIZE;
@@ -1370,7 +1385,7 @@ static HotSwState DecryptObjectFile(void)
     restSize = size;
 
     // 読み込んだセキュア領域をバッファから一時バッファにコピー
-    MI_CpuCopy32(s_cbData.pSecureSegBuf, pEncBuf, (u32)size);
+    MI_CpuCopy32(pEncDes, pEncBuf, (u32)size);
 
     // セキュア領域先頭8バイトをBlowfishで複合化
     DecryptByBlowfish(&s_cbData.keyTable, &(pEncBuf)[1], &(pEncBuf)[0]);
@@ -1402,15 +1417,17 @@ static HotSwState DecryptObjectFile(void)
         }
     }
     else{
+#ifndef USE_WRAM_LOAD
         retval = HOTSW_DATA_DECRYPT_ERROR;
-
+#else
+        retval = FALSE;
+#endif
         MI_NDmaFill( HOTSW_NDMA_NO, pEncBuf, UNDEF_CODE, (u32)size ); // 未定義コードでクリア
     }
     MI_CpuCopy32(pEncBuf, pEncDes, (u32)size);
 
     return retval;
 }
-#endif
 
 
 /*---------------------------------------------------------------------------*

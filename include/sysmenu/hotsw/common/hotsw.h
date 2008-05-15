@@ -145,6 +145,11 @@ BOOL HOTSWi_IsRomEmulation(void);
 
 // デバッガ通信用にカードスロットの電源をONにする。
 void HOTSWi_TurnCardPowerOn(u32 slot);
+
+#ifdef USE_WRAM_LOAD
+// 引数で与えられたバッファから2KB分の領域をBlowfishで復号化する
+BOOL HOTSW_DecryptObjectFile(void* dest);
+#endif
 #endif
 
 // Romエミュレーション情報を格納しているバッファのポインタを返す
