@@ -28,8 +28,6 @@ MY_TITLE		=	HNHA
 
 MY_DATA			=	DSHashTable.bin
 
-MY_MAJOR_VERSION	=	0
-
 #MY_TITLE_NAME		=	$(MY_TITLE)
 MY_TITLE_NAME		=	DSHashTable
 
@@ -42,10 +40,17 @@ MY_TITLE_ID_LO		=	$(shell perl -e 'printf "%02X%02X%02X%02X", unpack("C4", "'$(M
 MY_TITLE_ID		=	$(MY_TITLE_ID_HI)$(MY_TITLE_ID_LO)
 MY_GROUP_ID		=	3031
 
+MY_VERSION		=	$(shell LANG=C svn info $(MY_DATA) | grep 'Revision' | gawk '{print $$2}')
+
+MY_MAJOR_VERSION	=	$(shell echo $(MY_VERSION)/256 | bc)
+MY_MINOR_VERSION	=	$(shell echo $(MY_VERSION)%256 | bc)
+
+
 INSTALL_TARGETS		=	$(MY_TAD)
 INSTALL_DIR		=	$(ROOT)/build/tools/TwlNMenu/data
 
-MAKETAD_FLAGS		=	-d $(MY_TITLE_ID) $(MY_GROUP_ID) $(MY_MAJOR_VERSION) $(MY_TITLE_NAME)
+MAKETAD_FLAGS		=	-d $(MY_TITLE_ID) $(MY_GROUP_ID) $(MY_MAJOR_VERSION) $(MY_TITLE_NAME) \
+				-v $(MY_MINOR_VERSION)
 
 LDIRT_CLEAN		=	$(MY_TAD)
 
