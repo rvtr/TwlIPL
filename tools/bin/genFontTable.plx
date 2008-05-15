@@ -50,7 +50,7 @@ sub deleteTemp {
 }
 
 my $signSize   = 0x80;
-my $headerSize = 0x30;
+my $headerSize = 0x20;
 
 # —v‘f”Zo
 my $num = 0;
