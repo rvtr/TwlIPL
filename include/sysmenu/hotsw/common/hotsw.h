@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 #define SYSM_HOTSW_ENABLE_ROMEMU
-//#define USE_WRAM_LOAD
+#define USE_WRAM_LOAD
 
 // enum   -------------------------------------------------------------------
 // スレッドに送るメッセージのステート
