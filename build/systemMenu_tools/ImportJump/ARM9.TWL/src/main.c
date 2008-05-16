@@ -139,7 +139,12 @@ TwlMain()
 	// TADのインポート開始
 	if (kamiImportTad(&titleID))
 	{
-		// インポートに成功したならアプリジャンプ
+		// アプリジャンプのためにジャンプ可能リストに直接追加する
+    	OSTitleIDList *list  = ( OSTitleIDList * )HW_OS_TITLE_ID_LIST;
+		list->TitleID[0]     = titleID;
+		list->appJumpFlag[0] = 0x01;
+
+		// アプリジャンプ
 		OS_DoApplicationJump( titleID, OS_APP_JUMP_NORMAL );
 	}
 
