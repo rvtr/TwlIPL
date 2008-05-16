@@ -21,17 +21,16 @@
 #include "process_format.h"
 #include "process_hw_info.h"
 #include "process_import.h"
-#include "process_font.h"
+
 #include "process_eticket.h"
 #include "process_nandfirm.h"
 #include "process_norfirm.h"
 #include "process_auto.h"
 #include "process_fade.h"
+#include "process_wireless_setting.h"
+#include "process_font.h"
 #include "cursor.h"
 #include "keypad.h"
-#ifdef    USE_WIRELESS_FORCE_DISABLE_SETTING
-#include "process_wireless_setting.h"
-#endif // USE_WIRELESS_FORCE_DISABLE_SETTING
 
 /*---------------------------------------------------------------------------*
     Œ^’è‹`
@@ -40,11 +39,16 @@
 enum {
 	MENU_FORMAT = 0,
 	MENU_HARDWARE_INFO,
+
 #ifdef    USE_WIRELESS_FORCE_DISABLE_SETTING
 	MENU_WIRELESS_SETTING,
 #endif // USE_WIRELESS_FORCE_DISABLE_SETTING
-#ifndef   NAND_INITIALIZER_LIMITED_MODE
+
+#ifdef    USE_WRITE_FONT_DATA
 	MENU_FONT_DATA,
+#endif // USE_WRITE_FONT_DATA
+
+#ifndef   NAND_INITIALIZER_LIMITED_MODE
 	MENU_ETICKET,
 	MENU_IMPORT_TAD,
 	MENU_IMPORT_NANDFIRM,
@@ -73,11 +77,16 @@ static const MenuAndColor sMenuArray[] =
 {
 	{"    FORMAT NAND            ", BG_COLOR_BLUE   },
 	{"    WRITE HARDWARE INFO    ", BG_COLOR_PURPLE },
+
 #ifdef    USE_WIRELESS_FORCE_DISABLE_SETTING
 	{"    WIRELESS FORCE SETTING ", BG_COLOR_YELLOW },
 #endif // USE_WIRELESS_FORCE_DISABLE_SETTING
-#ifndef   NAND_INITIALIZER_LIMITED_MODE
+
+#ifdef    USE_WRITE_FONT_DATA
 	{"    WRITE FONT DATA        ", BG_COLOR_BROWN  },
+#endif // USE_WRITE_FONT_DATA
+
+#ifndef   NAND_INITIALIZER_LIMITED_MODE
 	{"    WRITE ETICKET SIGN     ", BG_COLOR_GRAY   },
 	{"    IMPORT TAD FROM SD     ", BG_COLOR_PINK   },
 	{"    IMPORT NANDFIRM FROM SD", BG_COLOR_GREEN  },
@@ -215,13 +224,18 @@ void* TopmenuProcess2(void)
 		FADE_OUT_RETURN( FormatProcess0 );
 	case MENU_HARDWARE_INFO:
 		FADE_OUT_RETURN( HWInfoProcess0 );
+
 #ifdef    USE_WIRELESS_FORCE_DISABLE_SETTING
 	case MENU_WIRELESS_SETTING:
 		FADE_OUT_RETURN( WirelessSettingProcess0 );
 #endif // USE_WIRELESS_FORCE_DISABLE_SETTING
-#ifndef   NAND_INITIALIZER_LIMITED_MODE
+
+#ifdef    USE_WRITE_FONT_DATA
 	case MENU_FONT_DATA:
 		FADE_OUT_RETURN( fontProcess0 );
+#endif // USE_WRITE_FONT_DATA
+
+#ifndef   NAND_INITIALIZER_LIMITED_MODE
 	case MENU_ETICKET:
 		FADE_OUT_RETURN( eTicketProcess0 );
 	case MENU_IMPORT_TAD:

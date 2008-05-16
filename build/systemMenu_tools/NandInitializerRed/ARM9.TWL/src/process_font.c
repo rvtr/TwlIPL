@@ -117,12 +117,14 @@ void* fontProcess0(void)
 
 void* fontProcess1(void)
 {
+#ifndef NAND_INITIALIZER_LIMITED_MODE
 	// オート実行用
 	if (gAutoFlag)
 	{
 		sMenuSelectNo = 0;
 		return fontProcess2;
 	}
+#endif
 
 	// 選択メニューの変更
     if ( kamiPadIsRepeatTrigger(PAD_KEY_UP) )
@@ -182,12 +184,14 @@ void* fontProcess2(void)
 		FADE_OUT_RETURN( TopmenuProcess0 );
 	}
 
+#ifndef NAND_INITIALIZER_LIMITED_MODE
 	// Auto用
 	if (gAutoFlag)
 	{
 		if (result) { FADE_OUT_RETURN( AutoProcess1 ); }
 		else { FADE_OUT_RETURN( AutoProcess2); }
 	}
+#endif
 
 	return fontProcess1;
 }

@@ -33,6 +33,14 @@ MACRO_FLAGS				+=	-DNAND_INITIALIZER_LIMITED_MODE
 #MACRO_FLAGS				+=	-DUSE_WIRELESS_FORCE_DISABLE_SETTING
 #============================================================================
 #============================================================================
+# フォントデータを書き込み可能にする場合定義します。（要:Make Clean）
+#USE_WRITE_FONT_DATA = TRUE
+
+ifdef USE_WRITE_FONT_DATA
+MACRO_FLAGS				    +=	-DUSE_WRITE_FONT_DATA
+endif
+#============================================================================
+#============================================================================
 # NightlyBuild 用に自動実行させる場合定義します。（要:Make Clean）
 #USE_FOR_NIGHTLY_AUTO_TEST = TRUE
 
@@ -59,7 +67,11 @@ TITLEID_LO			= 0NIA
 ifdef USE_FOR_NIGHTLY_AUTO_TEST
 TARGET_BIN	= NandInitializerForAutoTest.srl
 else
+ifdef USE_WRITE_FONT_DATA
+TARGET_BIN	= NandInitializerWithSharedFont.srl
+else
 TARGET_BIN	= NandInitializer.srl
+endif
 endif
 
 LCFILE_SPEC	= ../../NandInitializerRed/ARM9.TWL/ARM9-TS.lsf
@@ -80,6 +92,7 @@ SRCS		=	main.c \
 				process_hw_info.c \
 				process_wireless_setting.c \
 				process_fade.c \
+				process_font.c \
 				sd_event.c \
 				hwi.c
 
