@@ -61,6 +61,11 @@ void BOOT_Ready( void )
     BOOL isNtrMode;
     int i;
 
+	// HOTSW終了処理待ち
+	while( ! HOTSW_isFinalized() ) {
+		OS_Sleep( 1 );
+	}
+
     // エントリアドレスの正当性をチェックし、無効な場合は無限ループに入る。
 //  SYSMi_CheckEntryAddress();
 

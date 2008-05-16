@@ -1908,7 +1908,7 @@ static void FinalizeHotSw(HotSwApliType type)
 
     if(type == HOTSW_APLITYPE_CARD){
         ClearUnnecessaryCardRegister();
-        return;
+        goto final;
     }
 
     isCardExist = HOTSW_IsCardExist();
@@ -1918,7 +1918,7 @@ static void FinalizeHotSw(HotSwApliType type)
     // カードがなかったら、レジスタクリアしてリターン
     if(!isCardExist){
         ClearAllCardRegister();
-        return;
+        goto final;
     }
 
     switch(type){
@@ -1932,7 +1932,7 @@ static void FinalizeHotSw(HotSwApliType type)
 
             OS_PutString("Failed To Change Game Mode... Card Slot Power Off\n");
 
-            return;
+            goto final;
         }
         break;
 
@@ -1944,7 +1944,8 @@ static void FinalizeHotSw(HotSwApliType type)
             OS_Sleep(1);
         }
 
-        if(s_cbData.pBootSegBuf->rh.s.game_card_on){
+        // NANDアプリヘッダはコピー済み
+        if(((ROM_Header*)SYSM_CARD_ROM_HEADER_BUF)->s.game_card_on){
             McPowerOn();
 
             s_cbData.modeType = HOTSW_MODE2;
@@ -1967,6 +1968,10 @@ static void FinalizeHotSw(HotSwApliType type)
 
     // 必要なレジスタ以外クリア
     ClearUnnecessaryCardRegister();
+
+final:
+    // 終了完了通知
+    SYSMi_GetWork()->flags.hotsw.isFinalized = TRUE;
 }
 
 

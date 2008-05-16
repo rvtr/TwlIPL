@@ -401,6 +401,8 @@ static void SYSMi_FinalizeHotSWAsync( TitleProperty *pBootTitle, ROM_Header *hea
 {
 	HotSwApliType hotsw_type;
 
+	DC_StoreRange( head, sizeof(ROM_Header) );
+
 	switch( pBootTitle->flags.bootType )
 	{
 		case LAUNCHER_BOOTTYPE_NAND:
@@ -692,10 +694,10 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 			{
 				// ヘッダ読み込み完了フラグを立てる
 				SYSMi_GetWork()->flags.common.isHeaderLoadCompleted = TRUE;
-				// WRAM経由ロードの場合はAES初期化
-				(void)SYSM_InitDecryptAESRegion_W( (ROM_Header_Short *)destaddr[region_header] );
 				// HOTSW終了処理有効化
 				SYSMi_FinalizeHotSWAsync( pBootTitle, head );
+				// WRAM経由ロードの場合はAES初期化
+				(void)SYSM_InitDecryptAESRegion_W( (ROM_Header_Short *)destaddr[region_header] );
 			}
 
         }

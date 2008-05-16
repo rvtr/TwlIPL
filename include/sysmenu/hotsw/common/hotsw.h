@@ -107,6 +107,9 @@ BOOL HOTSW_isEnableHotSW(void);
 // カードアプリのロードが完了しているかを返す
 BOOL HOTSW_isCardLoadCompleted(void);
 
+//  終了処理が完了したかを返す
+BOOL HOTSW_isFinalized(void);
+
 #ifdef USE_WRAM_LOAD
 // 活栓挿抜処理の初期化
 void HOTSW_Init();

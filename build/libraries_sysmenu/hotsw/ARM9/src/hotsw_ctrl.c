@@ -118,13 +118,24 @@ void HOTSW_FinalizeHotSWAsync( HotSwApliType apliType )
 
 
 /*---------------------------------------------------------------------------*
+  Name:         HOTSW_isFinalized
+  
+  Description:  I—¹ˆ—‚ªŠ®—¹‚µ‚½‚©‚ð•Ô‚·
+ *---------------------------------------------------------------------------*/
+BOOL HOTSW_isFinalized(void)
+{
+    return SYSMi_GetWork()->flags.hotsw.isFinalized;
+}
+
+
+/*---------------------------------------------------------------------------*
   Name:         HOTSW_isEnableHotSW
   
   Description:  Šˆü‘}”²‚Ì‹–‰Â/—}§‚Ìó‘Ô‚ð•Ô‚·
  *---------------------------------------------------------------------------*/
 BOOL HOTSW_isEnableHotSW(void)
 {
-    return SYSMi_GetWork()->flags.hotsw.isEnableHotSW ? TRUE : FALSE;
+    return SYSMi_GetWork()->flags.hotsw.isEnableHotSW;
 }
 
 
@@ -135,7 +146,7 @@ BOOL HOTSW_isEnableHotSW(void)
  *---------------------------------------------------------------------------*/
 BOOL HOTSW_isCardLoadCompleted(void)
 {
-    return SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted ? TRUE : FALSE;
+    return SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted;
 }
 
 

@@ -124,6 +124,7 @@ typedef struct SYSM_work {
    			vu16		isValidCardBanner :1;			// バナーデータ更新？
 			vu16		is1stCardChecked :1;			// カードデータの1stチェック完了？
             vu16		isCardGameMode :1;				// カードがゲームモードに遷移したか？
+            vu16		isFinalized :1;					// HOTSW終了処理完了
             vu16		:0;
             vu8			isCardStateChanged;				// カード状態更新フラグ
         }hotsw;
