@@ -442,7 +442,8 @@ BOOL NAMUTi_ClearSavedataPrivate(const char* path, u64 titleID)
   Name:         NAMUTi_DestroySubBanner
 
   Description:  指定したサブバナーのCRC破壊を試みます。
-				（コードはOS_DeleteSubBannerFileのパクリ）
+				指定したサブバナーが存在しない可能性もありますが
+				その場合でもTRUEを返します。（コードはOS_DeleteSubBannerFileのパクリ）
 
   Arguments:    None
 
@@ -455,9 +456,17 @@ BOOL NAMUTi_DestroySubBanner(const char* path)
 	FSFile file[1];
 	BOOL ret = FALSE;
 
+	// R属性でファイルをオープンを試みてファイルの存在有無を確認する
+	// 存在しない場合はTRUEで返す
+	FS_InitFile(file);
+	if ( !FS_OpenFileEx(file, path, FS_FILEMODE_R) )
+	{
+		return TRUE;
+	}
+
 	if ( !spAllocFunc || !spFreeFunc )
 	{
-		OS_TPrintf("NAMUT_Init should be called previously.");		
+		OS_Warning("NAMUT_Init should be called previously.");		
 		return FALSE;
 	}
 
@@ -472,7 +481,7 @@ BOOL NAMUTi_DestroySubBanner(const char* path)
 	FS_InitFile(file);
 	if ( !FS_OpenFileEx(file, path, FS_FILEMODE_RWL) )
 	{
-		OS_TPrintf("OS_DeleteSubBannerFile : banner file open failed.\n");
+		OS_Warning("banner file open failed.\n");
 		spFreeFunc( pBanner );
 		return FALSE;
 	}
@@ -487,15 +496,15 @@ BOOL NAMUTi_DestroySubBanner(const char* path)
 		FS_SeekFile( file, 0, FS_SEEK_SET );
 		if( sizeof(BannerHeader) == FS_WriteFile(file, &pBanner->h, sizeof(BannerHeader)) )
 		{
-			OS_TPrintf("OS_DeleteSubBannerFile : banner file write succeed.\n");
+			OS_Warning("banner file write succeed.\n");
 			ret = TRUE;
 		}else
 		{
-			OS_TPrintf("OS_DeleteSubBannerFile : banner file write failed.\n");
+			OS_Warning("banner file write failed.\n");
 		}
 	}else
 	{
-		OS_TPrintf("OS_DeleteSubBannerFile : banner file read failed.\n");
+		OS_Warning("banner file read failed.\n");
 	}
 	FS_CloseFile(file);
 	
@@ -670,7 +679,7 @@ static void NAMUTi_DrawNandTree(s32 depth, const char *path)
 	// 深さ制限
 	if (depth > DIRECTORY_DEPTH_MAX)
 	{
-		OS_TPrintf("Fail! Depth is too deep.\n");
+		OS_Warning("Fail! Depth is too deep.\n");
 		return;
 	}
 
@@ -682,7 +691,7 @@ static void NAMUTi_DrawNandTree(s32 depth, const char *path)
 	// 引数で指定されたディレクトリを開く
 	if (!FS_OpenDirectory(&dir, sCurrentFullPath, (FS_FILEMODE_R)))
 	{
-		OS_TPrintf("%d Fail! FS_OpenDirectory(%s)\n", __LINE__, sCurrentFullPath);
+		OS_Warning("%d Fail! FS_OpenDirectory(%s)\n", __LINE__, sCurrentFullPath);
 		return;
 	}
 
