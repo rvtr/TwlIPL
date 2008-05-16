@@ -297,7 +297,7 @@ void HOTSW_Init(u32 threadPrio)
     OS_WakeupThreadDirect(&HotSwThreadData.monitorThread);
 
     // バッファの設定
-    HOTSW_SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_CARD_ROM_HEADER_SIZE );
+    HOTSW_SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_APP_ROM_HEADER_SIZE );
 	HOTSW_SetSecureSegmentBuffer(HOTSW_MODE1, (void *)SYSM_CARD_NTR_SECURE_BUF, SECURE_AREA_SIZE );
 	HOTSW_SetSecureSegmentBuffer(HOTSW_MODE2, (void *)SYSM_CARD_TWL_SECURE_BUF, SECURE_AREA_SIZE );
 
@@ -458,7 +458,7 @@ static HotSwState LoadCardData(void)
                 if ( !s_cbData.pBootSegBuf->rh.s.enable_nitro_whitelist_signature )
 #endif
                 // NTRカードの場合はRomHeaderバッファの1ページ目以降をクリアしておく。
-                MI_CpuClearFast((void *)(SYSM_CARD_ROM_HEADER_BAK + PAGE_SIZE), SYSM_CARD_ROM_HEADER_SIZE - PAGE_SIZE);
+                MI_CpuClearFast((void *)(SYSM_CARD_ROM_HEADER_BAK + PAGE_SIZE), SYSM_APP_ROM_HEADER_SIZE - PAGE_SIZE);
             }
 
             // SecureコマンドのPNG_ONコマンドetc用のレイテンシを求める(Latency1とLatency2を足す)
@@ -1945,7 +1945,7 @@ static void FinalizeHotSw(HotSwApliType type)
         }
 
         // NANDアプリヘッダはコピー済み
-        if(((ROM_Header*)SYSM_CARD_ROM_HEADER_BUF)->s.game_card_on){
+        if(((ROM_Header*)SYSM_APP_ROM_HEADER_BUF)->s.game_card_on){
             McPowerOn();
 
             s_cbData.modeType = HOTSW_MODE2;

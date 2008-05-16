@@ -56,7 +56,7 @@ static void ie_subphandler( void )
 void BOOT_Ready( void )
 {
 	// 最適化されるとポインタを初期化しただけでは何もコードは生成されません
-	ROM_Header *th = (ROM_Header *)SYSM_CARD_ROM_HEADER_BUF;         // TWL拡張ROMヘッダ（DSアプリには無い）
+	ROM_Header *th = (ROM_Header *)SYSM_APP_ROM_HEADER_BUF;         // TWL拡張ROMヘッダ（DSアプリには無い）
 	ROM_Header *dh = (ROM_Header *)(SYSMi_GetWork()->romHeaderNTR);  // DS互換ROMヘッダ
     BOOL isNtrMode;
     int i;

@@ -200,8 +200,9 @@ typedef struct SDKBootCheckInfo{
 // NANDファームがロードしてくれているマイコンフリーレジスタ値の取得
 #define SYSMi_GetMCUFreeRegisterValue()		( *(vu8 *)HW_RESET_PARAMETER_BUF )
 
-// カードROMヘッダワークの取得
-#define SYSM_GetCardRomHeader()				( (ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BUF )
+// ROMヘッダワークの取得
+#define SYSM_GetAppRomHeader()				( (ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF )
+#define SYSM_GetCardRomHeader()				SYSM_GetAppRomHeader()
 
 #ifdef __cplusplus
 }
