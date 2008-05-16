@@ -2128,7 +2128,7 @@ static void ClearAllCardRegister(void)
     reg_HOTSW_MCSCR2 = REGCLEAR_32;
 
     // Slot Status,SWP‚ðƒNƒŠƒA [d15-d0 Slot Status,SWP]
-    reg_MI_MC1 = REGCLEAR_16;
+    reg_MI_MC1 &= REG_MI_MC1_CC_MASK;
 }
 
 
