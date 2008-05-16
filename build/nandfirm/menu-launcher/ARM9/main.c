@@ -20,7 +20,7 @@
 #ifndef FIRM_USE_TWLSDK_KEYS
 #define RSA_KEY_ADDR    OSi_GetFromFirmAddr()->rsa_pubkey[0]    // åÆä«óù.xlséQè∆
 #else
-#define RSA_KEY_ADDR    rsa_key
+#define RSA_KEY_ADDR    rsa_key_launcher
 static const u8 rsa_key_launcher[128] =
 {
         0xbc, 0xfd, 0xa1, 0xff, 0x1f, 0x66, 0xdf, 0xec, 0xb4, 0x69, 0xf8, 0xf7, 0x43, 0x0c, 0x5d, 0x0f,
@@ -271,7 +271,7 @@ void TwlMain( void )
     // 6: after PXI
     PUSH_PROFILE();
 
-    if ( !FS_LoadHeader( &acPool, NULL, NULL, rsa_key_launcher ) || !CheckHeader() )
+    if ( !FS_LoadHeader( &acPool, NULL, NULL, RSA_KEY_ADDR ) || !CheckHeader() )
     {
         OS_TPrintf("Failed to call FS_LoadHeader() and/or CheckHeader().\n");
         goto end;
