@@ -695,7 +695,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 				// ヘッダ読み込み完了フラグを立てる
 				SYSMi_GetWork()->flags.common.isHeaderLoadCompleted = TRUE;
 				// HOTSW終了処理有効化
-				SYSMi_FinalizeHotSWAsync( pBootTitle, head );
+				SYSMi_FinalizeHotSWAsync( pBootTitle, (void*)destaddr[region_header] );
 				// WRAM経由ロードの場合はAES初期化
 				(void)SYSM_InitDecryptAESRegion_W( (ROM_Header_Short *)destaddr[region_header] );
 			}
