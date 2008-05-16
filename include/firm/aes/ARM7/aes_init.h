@@ -129,6 +129,7 @@ static inline void AESi_ResetAesKeyC( void )
 
   Returns:      None
  *---------------------------------------------------------------------------*/
+#if 0	// rebootƒ‰ƒCƒuƒ‰ƒŠ‚ÉˆÚ“®.
 static inline void AESi_ResetAesKeyD( void )
 {
     AES_Lock();
@@ -138,7 +139,7 @@ static inline void AESi_ResetAesKeyD( void )
 
     AES_Unlock();
 }
-
+#endif
 /*---------------------------------------------------------------------------*
   Name:         AESi_InitKeysFIRM
 
