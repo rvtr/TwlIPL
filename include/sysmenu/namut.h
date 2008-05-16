@@ -24,6 +24,21 @@ extern "C" {
 
 #ifdef SDK_ARM9
 
+typedef void* (*NAMUTAlloc)(u32 size);
+typedef void  (*NAMUTFree)(void* ptr);
+
+/*---------------------------------------------------------------------------*
+  Name:         NAMUT_Init
+
+  Description:  NAMUT ライブラリの初期化を行います。
+
+  Arguments:    allocFunc:  メモリ確保関数へのポインタ。
+                freeFunc:   メモリ解放関数へのポインタ。
+
+  Returns:      なし。
+ *---------------------------------------------------------------------------*/
+void NAMUT_Init(NAMUTAlloc allocFunc, NAMUTFree freeFunc);
+
 /*---------------------------------------------------------------------------*
   Name:         NAMUT_Format
 

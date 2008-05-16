@@ -69,7 +69,6 @@ static const char* sFillFileList[] =
 	"nand:/shared1/TWLCFG1.dat"
 };
 
-
 static u8  sClearData[CLEAR_DATA_SIZE] ATTRIBUTE_ALIGN(32);
 static u32 sNCFGAddr;
 
@@ -77,6 +76,8 @@ static u32 sNCFGAddr;
     内部変数定義
  *---------------------------------------------------------------------------*/
 
+static NAMUTAlloc spAllocFunc;
+static NAMUTFree  spFreeFunc;
 static FSDirectoryEntryInfo sEntryInfo;
 static NAMTitleId sTitleIdArray[TITLE_LIST_MAX];
 static char sCurrentFullPath[FS_ENTRY_LONGNAME_MAX];
@@ -90,10 +91,31 @@ static BOOL NAMUTi_DeleteNonprotectedTitleEntity(const char* path);
 static BOOL NAMUTi_ClearSavedataAll(void);
 static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arcname);
 static void NAMUTi_DrawNandTree(s32 depth, const char *path);
-static BOOL NAMUTi_FillFile(const char* path);
+static BOOL NAMUTi_RandClearFile(const char* path);
 static void NAMUTi_ClearWiFiSettings( void );
 static void PrintDirectory(s32 depth, const char* path);
 static void PrintFile(s32 depth, const char* path);
+
+/*---------------------------------------------------------------------------*
+  Name:         NAMUT_Init
+
+  Description:  NAMUT ライブラリの初期化を行います。
+
+  Arguments:    allocFunc:  メモリ確保関数へのポインタ。
+                freeFunc:   メモリ解放関数へのポインタ。
+
+  Returns:      なし。
+ *---------------------------------------------------------------------------*/
+void NAMUT_Init(NAMUTAlloc allocFunc, NAMUTFree freeFunc)
+{
+    SDK_ASSERT( spAllocFunc == NULL );
+    SDK_ASSERT( spFreeFunc  == NULL );
+    SDK_POINTER_ASSERT(allocFunc);
+    SDK_POINTER_ASSERT(freeFunc);
+
+    spAllocFunc        = allocFunc;
+    spFreeFunc         = freeFunc;
+}
 
 /*---------------------------------------------------------------------------*
   Name:         NAMUT_Format
@@ -124,13 +146,13 @@ BOOL NAMUT_Format(void)
 		OS_TWarning("Fail! NAMUTi_ClearSavedataAll()\n");
 	}
 
-	// 指定ファイルを0xffでクリアします
+	// 指定ファイルを乱数でクリアします
 	for (i=0; i<sizeof(sFillFileList)/sizeof(sFillFileList[0]); i++)
 	{
-		if (!NAMUTi_FillFile(sFillFileList[i]))
+		if (!NAMUTi_RandClearFile(sFillFileList[i]))
 		{
 			ret = FALSE;
-			OS_TWarning("Fail! NAMUTi_FillFile(%s)\n", sFillFileList[i]);
+			OS_TWarning("Fail! NAMUTi_RandClearFile(%s)\n", sFillFileList[i]);
 		}
 	}
 
@@ -310,7 +332,7 @@ static BOOL NAMUTi_DeleteNonprotectedTitleEntity(const char* path)
 /*---------------------------------------------------------------------------*
   Name:         NAMUTi_ClearSavedataAll
 
-  Description:  全セーブデータのＦＦクリア＆フォーマットを行います
+  Description:  全セーブデータの乱数クリア＆フォーマットを行います
 
   Arguments:    None
 
@@ -374,7 +396,7 @@ static BOOL NAMUTi_ClearSavedataAll( void )
   Name:         NAMUTi_ClearSavedataPublic
 
   Description:  指定したセーブデータファイルに対して
-				ＦＦクリア＆フォーマットを行います。
+				乱数クリア＆フォーマットを行います。
 
   Arguments:    None
 
@@ -382,10 +404,10 @@ static BOOL NAMUTi_ClearSavedataAll( void )
  *---------------------------------------------------------------------------*/
 BOOL NAMUTi_ClearSavedataPublic(const char* path, u64 titleID)
 {
-	//----- FFクリア
-	if (NAMUTi_FillFile(path) == FALSE)
+	//----- 乱数クリア
+	if (NAMUTi_RandClearFile(path) == FALSE)
 	{
-		OS_Warning(" Fail NAMUTi_FillFile");
+		OS_Warning(" Fail NAMUTi_RandClearFile");
 		return FALSE;
 	}
 
@@ -397,7 +419,7 @@ BOOL NAMUTi_ClearSavedataPublic(const char* path, u64 titleID)
   Name:         NAMUTi_ClearSavedataPrivate
 
   Description:  指定したセーブデータファイルに対して
-				ＦＦクリア＆フォーマットを行います。
+				乱数クリア＆フォーマットを行います。
 
   Arguments:    None
 
@@ -405,10 +427,10 @@ BOOL NAMUTi_ClearSavedataPublic(const char* path, u64 titleID)
  *---------------------------------------------------------------------------*/
 BOOL NAMUTi_ClearSavedataPrivate(const char* path, u64 titleID)
 {
-	//----- FFクリア
-	if (NAMUTi_FillFile(path) == FALSE)
+	//----- 乱数クリア
+	if (NAMUTi_RandClearFile(path) == FALSE)
 	{
-		OS_Warning(" Fail NAMUTi_FillFile");
+		OS_Warning(" Fail NAMUTi_RandClearFile");
 		return FALSE;
 	}
 
@@ -420,8 +442,7 @@ BOOL NAMUTi_ClearSavedataPrivate(const char* path, u64 titleID)
   Name:         NAMUTi_DestroySubBanner
 
   Description:  指定したサブバナーのCRC破壊を試みます。
-				指定したサブバナーが存在しない可能性もありますが
-				その場合でもTRUEを返します。（コードはOS_DeleteSubBannerFileのパクリ）
+				（コードはOS_DeleteSubBannerFileのパクリ）
 
   Arguments:    None
 
@@ -429,36 +450,42 @@ BOOL NAMUTi_ClearSavedataPrivate(const char* path, u64 titleID)
  *---------------------------------------------------------------------------*/
 BOOL NAMUTi_DestroySubBanner(const char* path)
 {
-	TWLSubBannerFile buf[1];	// 4KBあるのでよくない。NAM関数のアロケータが使いたい・・
+	TWLSubBannerFile* pBanner;
 	u16 crc, solt;
 	FSFile file[1];
 	BOOL ret = FALSE;
 
-	// R属性でファイルをオープンを試みてファイルの存在有無を確認する
-	// 存在しない場合はTRUEで返す
-	FS_InitFile(file);
-	if ( !FS_OpenFileEx(file, path, FS_FILEMODE_R) )
+	if ( !spAllocFunc || !spFreeFunc )
 	{
-		return TRUE;
+		OS_TPrintf("NAMUT_Init should be called previously.");		
+		return FALSE;
 	}
-	
-	// RWL属性で開きなおす
+
+	pBanner = spAllocFunc( sizeof(TWLSubBannerFile) );
+
+	if (!pBanner)
+	{
+		return FALSE;
+	}
+
+	// RWL属性で開く
 	FS_InitFile(file);
 	if ( !FS_OpenFileEx(file, path, FS_FILEMODE_RWL) )
 	{
 		OS_TPrintf("OS_DeleteSubBannerFile : banner file open failed.\n");
+		spFreeFunc( pBanner );
 		return FALSE;
 	}
 
 	// CRCを改竄して書き戻す
-	if( FS_ReadFile( file, buf, sizeof(TWLSubBannerFile) ) != -1 )
+	if( FS_ReadFile( file, pBanner, sizeof(TWLSubBannerFile) ) != -1 )
 	{
-		crc = SVC_GetCRC16( 0xffff, &buf->anime, sizeof(BannerAnime) );
+		crc = SVC_GetCRC16( 0xffff, &pBanner->anime, sizeof(BannerAnime) );
 		solt = 1;
 		crc += solt;
-		buf->h.crc16_anime = crc;
+		pBanner->h.crc16_anime = crc;
 		FS_SeekFile( file, 0, FS_SEEK_SET );
-		if( sizeof(BannerHeader) == FS_WriteFile(file, &buf->h, sizeof(BannerHeader)) )
+		if( sizeof(BannerHeader) == FS_WriteFile(file, &pBanner->h, sizeof(BannerHeader)) )
 		{
 			OS_TPrintf("OS_DeleteSubBannerFile : banner file write succeed.\n");
 			ret = TRUE;
@@ -471,7 +498,8 @@ BOOL NAMUTi_DestroySubBanner(const char* path)
 		OS_TPrintf("OS_DeleteSubBannerFile : banner file read failed.\n");
 	}
 	FS_CloseFile(file);
-		
+	
+	spFreeFunc( pBanner );
 	return ret;
 }
 
@@ -520,15 +548,15 @@ static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arc
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         NAMUTi_FillFile
+  Name:         NAMUTi_RandClearFile
 
-  Description:  指定したファイルを0xFFで埋めます。
+  Description:  指定したファイルを乱数で埋めます。
 
   Arguments:    path
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-static BOOL NAMUTi_FillFile(const char* path)
+static BOOL NAMUTi_RandClearFile(const char* path)
 {
 	FSFile file;
 

@@ -163,46 +163,43 @@ BOOL kamiImportTad(NAMTitleId* pTitleID)
 		if ( NAM_GetTitleSaveFilePath(savePublicPath, savePrivatePath, tadInfo.titleInfo.titleId) != NAM_OK )
 		{
 			OS_Warning(" Fail! NAM_GetTitleSaveFilePath\n");
-			return FALSE;
 		}
-		
-		// publicセーブデータFFクリア＆フォーマット
-		if (GetImportJumpSetting()->clearPublicSaveData && tadInfo.titleInfo.publicSaveSize > 0)
+		else
 		{
-			if (NAMUTi_ClearSavedataPublic(savePublicPath, tadInfo.titleInfo.titleId) == FALSE)
+			// publicセーブデータFFクリア＆フォーマット
+			if (GetImportJumpSetting()->clearPublicSaveData && tadInfo.titleInfo.publicSaveSize > 0)
 			{
-				OS_Warning(" Fail! NAMUTi_ClearSavedataPublic\n");
-				return FALSE;
+				if (NAMUTi_ClearSavedataPublic(savePublicPath, tadInfo.titleInfo.titleId) == FALSE)
+				{
+					OS_Warning(" Fail! NAMUTi_ClearSavedataPublic\n");
+				}
 			}
-		}
 
-		// privateセーブデータFFクリア＆フォーマット
-		if (GetImportJumpSetting()->clearPrivateSaveData && tadInfo.titleInfo.privateSaveSize > 0)
-		{
-			if (NAMUTi_ClearSavedataPublic(savePrivatePath, tadInfo.titleInfo.titleId) == FALSE)
+			// privateセーブデータFFクリア＆フォーマット
+			if (GetImportJumpSetting()->clearPrivateSaveData && tadInfo.titleInfo.privateSaveSize > 0)
 			{
-				OS_Warning(" Fail! NAMUTi_ClearSavedataPrivate\n");
-				return FALSE;
+				if (NAMUTi_ClearSavedataPublic(savePrivatePath, tadInfo.titleInfo.titleId) == FALSE)
+				{
+					OS_Warning(" Fail! NAMUTi_ClearSavedataPrivate\n");
+				}
 			}
 		}
 	}
 
 	// サブバナークリア処理
-	if (GetImportJumpSetting()->clearSaveBannerFile)
+	if (GetImportJumpSetting()->clearSubBannerFile)
 	{
 		// サブバナーパス取得
 		if ( NAM_GetTitleBannerFilePath(subBannerPath, tadInfo.titleInfo.titleId) != NAM_OK )
 		{
 			OS_Warning(" Fail! NAM_GetTitleBannerFilePath\n");
-			return FALSE;
 		}
-
-		// サブバナー破壊
+		else
 		{
+			// サブバナー破壊
 			if (NAMUTi_DestroySubBanner(subBannerPath) == FALSE)
 			{
 				OS_Warning(" Fail! NAMUTi_DestroySubBanner\n");
-				return FALSE;
 			}
 		}	
 	}

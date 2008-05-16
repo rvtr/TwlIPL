@@ -21,6 +21,8 @@
 #include <nitro/card.h>
 #include <twl/nam.h>
 #include <twl/os/common/format_rom.h>
+#include <sysmenu/namut.h>
+
 #include "kami_font.h"
 #include "import.h"
 #include "graphics.h"
@@ -97,7 +99,8 @@ TwlMain()
 	FS_Init(FS_DMA_NOT_USE);
 
 	// NAMライブラリ初期化
-	NAM_Init( OS_AllocFromMain, OS_FreeToMain);
+	NAM_Init( OS_AllocFromMain, OS_FreeToMain );
+	NAMUT_Init( OS_AllocFromMain, OS_FreeToMain );
 
     // 表示関連初期化
     InitGraphics();

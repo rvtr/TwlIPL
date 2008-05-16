@@ -20,6 +20,7 @@
 #include <twl/fatfs.h>
 #include <nitro/card.h>
 #include <twl/nam.h>
+#include <sysmenu/namut.h>
 #include "kami_font.h"
 #include "process_format.h"
 #include "process_topmenu.h"
@@ -102,6 +103,7 @@ TwlMain()
 
 	// NAMライブラリ初期化
 	NAM_Init( OS_AllocFromMain, OS_FreeToMain);
+	NAMUT_Init( OS_AllocFromMain, OS_FreeToMain);
 
     // 表示関連初期化
     InitGraphics();

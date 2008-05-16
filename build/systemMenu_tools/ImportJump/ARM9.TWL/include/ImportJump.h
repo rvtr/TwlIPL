@@ -35,7 +35,7 @@ typedef struct _ImportJumpSetting
 	u32	 magicCode;		             	// = TWLD
 	u32	 clearPublicSaveData :1;	    // publicセーブデータをクリアする（デフォルトOFF）
 	u32	 clearPrivateSaveData :1;	 	// privareセーブデータをクリアする（デフォルトOFF）
-	u32	 clearSaveBannerFile:1;	     	// セーブバナーファイルをクリアする（デフォルトOFF）
+	u32	 clearSubBannerFile:1;	     	// サブバナーファイルをクリアする（デフォルトOFF）
 	u32  importTad:1;                  	// パスで指定されたTADファイルをインポートするか（TADの更新有無に依存）
 	u32	 rsv :28;                       // 予約
 	u32  tadRomOffset;					// TADをロードしたエミュレーションROMオフセット

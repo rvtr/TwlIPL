@@ -17,6 +17,7 @@
 
 #include <twl.h>
 #include <twl/sea.h>
+#include <sysmenu/namut.h>
 #include "misc.h"
 #include "MachineSetting.h"
 
@@ -72,6 +73,7 @@ void TwlMain(void)
 	
 	// NAMライブラリ初期化
 	NAM_Init( Alloc, Free );        // NAMUTライブラリがNAMライブラリを使用している
+	NAMUT_Init( Alloc, Free );
 	
 	// ※本来ならランチャーからのパラメータチェックを行い、
 	//   初回起動シーケンスに入るパスがある
