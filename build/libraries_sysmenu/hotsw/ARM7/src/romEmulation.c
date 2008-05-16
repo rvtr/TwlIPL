@@ -65,10 +65,12 @@ HotSwState ReadIDSecure_ROMEMU(CardBootData *cbd)
     if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
-    
+
+#ifndef USE_CPU_COPY
 	// カード割り込みによるDMAコピー
 	HOTSW_NDmaCopy_Card( HOTSW_NDMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_scr, sizeof(cbd->id_scr) );
-
+#endif
+    
   	// リトルエンディアンで作って
    	cndLE.dw  = HSWOP_N_OP_RD_ID;
 
@@ -81,9 +83,15 @@ HotSwState ReadIDSecure_ROMEMU(CardBootData *cbd)
 	// MCCNT1 レジスタ設定 (START = 1 PC = 111(ステータスリード) latency1 = 1 に)
 	reg_HOTSW_MCCNT1 = START_MASK | PC_MASK & (0x7 << PC_SHIFT) | (0x1 & LATENCY1_MASK);
 
+#ifndef USE_CPU_COPY
     // メッセージ受信
 	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
-
+#else
+	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+		while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
+		cbd->id_scr = reg_HOTSW_MCD1;
+	}
+#endif
     return HOTSW_SUCCESS;
 }
 
@@ -103,10 +111,12 @@ HotSwState ReadSegSecure_ROMEMU(CardBootData *cbd)
 	    if(!HOTSW_IsCardAccessible()){
 			return HOTSW_PULLED_OUT_ERROR;
     	}
-
+        
+#ifndef USE_CPU_COPY
 		// NewDMA転送の準備
 		HOTSW_NDmaCopy_Card( HOTSW_NDMA_NO, (u32 *)HOTSW_MCD1, (u32 *)cbd->pSecureSegBuf + (u32)(PAGE_WORD_SIZE*i), PAGE_SIZE );
-
+#endif
+        
     	// リトルエンディアンで作って
     	cndLE.dw  = HSWOP_N_OP_RD_PAGE;
     	cndLE.dw |= page << HSWOP_N_RD_PAGE_ADDR_SHIFT;
@@ -120,8 +130,15 @@ HotSwState ReadSegSecure_ROMEMU(CardBootData *cbd)
 		// MCCNT1 レジスタ設定 (START = 1 PC_MASK PC = 001(1ページリード)に latency1 = 0xd)
 		reg_HOTSW_MCCNT1 = START_MASK | CT_MASK | PC_MASK & (0x1 << PC_SHIFT) | (0xd & LATENCY1_MASK);
 
+#ifndef USE_CPU_COPY
     	// メッセージ受信
 		OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
+#else
+    	while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+			while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
+    		*((u32 *)cbd->pSecureSegBuf + j++) = reg_HOTSW_MCD1;
+		}
+#endif
 
         page++;
     }

@@ -2397,10 +2397,12 @@ static void SetInterrupt(void)
 #ifndef DEBUG_USED_CARD_SLOT_B_
     SetInterruptCallback( OS_IE_CARD_A_IREQ , InterruptCallbackCard );
     SetInterruptCallback( OS_IE_CARD_A_DET  , InterruptCallbackCardDet );
-    (void)OS_EnableIrqMask(OS_IE_NDMA2);
 #else
     SetInterruptCallback( OS_IE_CARD_B_IREQ , InterruptCallbackCard );
     SetInterruptCallback( OS_IE_CARD_B_DET  , InterruptCallbackCardDet );
+#endif
+
+#ifndef USE_CPU_COPY
     (void)OS_EnableIrqMask(OS_IE_NDMA2);
 #endif
 }
