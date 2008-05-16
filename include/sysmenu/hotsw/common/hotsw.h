@@ -94,9 +94,6 @@ typedef struct HotSwMessageForArm9{
 // Function prototype -------------------------------------------------------
 // --- ARM9
 #ifdef SDK_ARM9
-// 活栓挿抜処理の初期化
-void HOTSW_Init();
-
 // PXI通信でARM7に活線挿抜有効／無効を通知
 void HOTSW_EnableHotSWAsync( BOOL enable );
 
@@ -110,11 +107,23 @@ BOOL HOTSW_isEnableHotSW(void);
 BOOL HOTSW_isCardLoadCompleted(void);
 
 #ifdef USE_WRAM_LOAD
+// 活栓挿抜処理の初期化
+void HOTSW_Init();
+
 // カードデータを読み出す関数(同期版)
 CardDataReadState HOTSW_ReadCardData(void* src, void* dest, u32 size);
 
 // カードデータを読み出す関数(非同期版)
 CardDataReadState HOTSW_ReadCardDataAsync(void* src, void* dest, u32 size);
+
+// カードがGameモードになった時のコールバック関数を設定
+void HOTSW_SetGameModeCallBackFunction(OSIrqFunction function);
+
+// カードが刺さった時のコールバック関数を設定
+void HOTSW_SetCardInsertCallBackFunction(OSIrqFunction function);
+
+// カードが抜けた時のコールバック関数を設定
+void HOTSW_SetCardPullOutCallBackFunction(OSIrqFunction function);
 
 // カードがゲームモードになったかどうか
 BOOL HOTSW_isGameMode(void);

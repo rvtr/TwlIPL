@@ -18,17 +18,23 @@
 #include <sysmenu.h>
 
 // define -------------------------------------------------------------------
-#define HOTSW_READ_MSG_NUM	1
+#define HOTSW_READ_MSG_NUM				1
+#define HOTSW_CARD_GAME_MODE_CALLBACK	1
+#define HOTSW_CARD_INSERT_CALLBACK		2
+#define HOTSW_CARD_PULLOUT_CALLBACK		3
+#define HOTSW_CALLBACK_FUNCTION_NUM		3
 
 // Function prototype -------------------------------------------------------
 static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err);
 
 // Static Values ------------------------------------------------------------
-HotSwMessageForArm9		s_HotswMsg;
-OSMessage				s_HotswMsgBuffer[HOTSW_READ_MSG_NUM];
-OSMessageQueue  		s_HotswQueue;
+static HotSwMessageForArm9	s_HotswMsg;
+static OSMessage			s_HotswMsgBuffer[HOTSW_READ_MSG_NUM];
+static OSMessageQueue  		s_HotswQueue;
 
-BOOL					s_ReadBusy;
+static BOOL					s_ReadBusy;
+static OSIrqFunction		s_HotswFuncTable[HOTSW_CALLBACK_FUNCTION_NUM];
+
 
 // ===========================================================================
 // 	Function Describe
@@ -38,18 +44,25 @@ BOOL					s_ReadBusy;
   
   Description:  活栓挿抜処理の初期化
  *---------------------------------------------------------------------------*/
+#ifdef USE_WRAM_LOAD
 void HOTSW_Init()
 {
-    // PXI初期化
-    PXI_Init();
-    PXI_SetFifoRecvCallback(PXI_FIFO_TAG_HOTSW, InterruptCallbackPxi);
-
     // メッセージキューの初期化
     OS_InitMessageQueue( &s_HotswQueue, &s_HotswMsgBuffer[0], HOTSW_READ_MSG_NUM );
 
     // Busyフラグを落としておく
     s_ReadBusy = FALSE;
+    
+    // PXI初期化
+    PXI_Init();
+    PXI_SetFifoRecvCallback(PXI_FIFO_TAG_HOTSW, InterruptCallbackPxi);
+
+	while(!PXI_IsCallbackReady(PXI_FIFO_TAG_HOTSW, PXI_PROC_ARM7))
+    {
+		// do nothing
+    }
 }
+#endif
 
 
 /*---------------------------------------------------------------------------*
@@ -72,6 +85,8 @@ void HOTSW_EnableHotSWAsync( BOOL enable )
 	msg.msg.value = enable;
 	msg.msg.ctrl  = TRUE;
 
+	OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
+    
 	while (PXI_SendWordByFifo(PXI_FIFO_TAG_HOTSW, msg.data, FALSE) != PXI_FIFO_SUCCESS)
 	{
 		// do nothing
@@ -93,6 +108,8 @@ void HOTSW_FinalizeHotSWAsync( HotSwApliType apliType )
     msg.msg.finalize = TRUE;
     msg.msg.bootType = (u8)apliType;
 
+    OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
+    
 	while (PXI_SendWordByFifo(PXI_FIFO_TAG_HOTSW, msg.data, FALSE) != PXI_FIFO_SUCCESS)
     {
     	// do nothing
@@ -214,14 +231,32 @@ static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err)
 #pragma unused(err)
     HotSwPxiMessageForArm9 d;
 
+	MI_CpuClear8( &d, sizeof(HotSwPxiMessageForArm9) );
+    
     d.data = data;
+
+    if(d.msg.mode){
+        if(s_HotswFuncTable[HOTSW_CARD_GAME_MODE_CALLBACK] != NULL){
+			s_HotswFuncTable[HOTSW_CARD_GAME_MODE_CALLBACK]();
+        }
+    }
+
+    if(d.msg.insert){
+        if(s_HotswFuncTable[HOTSW_CARD_INSERT_CALLBACK] != NULL){
+			s_HotswFuncTable[HOTSW_CARD_INSERT_CALLBACK]();
+        }
+    }
+
+    if(d.msg.pullout){
+        if(s_HotswFuncTable[HOTSW_CARD_PULLOUT_CALLBACK] != NULL){
+			s_HotswFuncTable[HOTSW_CARD_PULLOUT_CALLBACK]();
+        }
+    }
+	
     
     if(d.msg.read){
 		s_ReadBusy = FALSE;
         
-    	s_HotswMsg.isGameMode		= (d.msg.mode) ? TRUE : FALSE;
-    	s_HotswMsg.isInsert			= (d.msg.insert) ? TRUE : FALSE;
-    	s_HotswMsg.isPulledOut		= (d.msg.pullout) ? TRUE : FALSE;
     	s_HotswMsg.isReadComplete	= (d.msg.read) ? TRUE : FALSE;
 		s_HotswMsg.result			= (CardDataReadState)d.msg.result;
 
@@ -231,3 +266,48 @@ static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err)
 		OS_SendMessage( &s_HotswQueue, (OSMessage *)&s_HotswMsg, OS_MESSAGE_NOBLOCK);
     }
 }
+
+
+/*---------------------------------------------------------------------------*
+  Name:         SetGameModeCallBackFunction
+  
+  Description:  カードがGameモードになった時のコールバック関数を設定
+
+  ※ HOTSW_Initが呼び出される前に設定してください
+ *---------------------------------------------------------------------------*/
+#ifdef USE_WRAM_LOAD
+void HOTSW_SetGameModeCallBackFunction(OSIrqFunction function)
+{
+	s_HotswFuncTable[HOTSW_CARD_GAME_MODE_CALLBACK] = function;
+}
+#endif
+
+
+/*---------------------------------------------------------------------------*
+  Name:         SetCardInsertCallBackFunction
+  
+  Description:  カードが刺さった時のコールバック関数を設定
+
+  ※ HOTSW_Initが呼び出される前に設定してください
+ *---------------------------------------------------------------------------*/
+#ifdef USE_WRAM_LOAD
+void HOTSW_SetCardInsertCallBackFunction(OSIrqFunction function)
+{
+	s_HotswFuncTable[HOTSW_CARD_INSERT_CALLBACK] = function;
+}
+#endif
+
+
+/*---------------------------------------------------------------------------*
+  Name:         SetCardPullOutCallBackFunction
+  
+  Description:  カードが抜けた時のコールバック関数を設定
+
+  ※ HOTSW_Initが呼び出される前に設定してください
+ *---------------------------------------------------------------------------*/
+#ifdef USE_WRAM_LOAD
+void HOTSW_SetCardPullOutCallBackFunction(OSIrqFunction function)
+{
+	s_HotswFuncTable[HOTSW_CARD_PULLOUT_CALLBACK] = function;
+}
+#endif

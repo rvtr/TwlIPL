@@ -55,6 +55,13 @@
 #define     HOTSW_EXMEMCNT_SELB_SHIFT           10
 #endif
 
+// enum ---------------------------------------------------------------------
+typedef enum HotSwCallBackType{
+	HOTSW_CHANGE_GAMEMODE = 0,
+    HOTSW_CARD_INSERT,
+    HOTSW_CARD_PULLOUT
+} HotSwCallBackType;
+
 // Function prototype -------------------------------------------------------
 static BOOL IsSwap(void);
 static u32 GetMcSlotShift(void);
@@ -114,10 +121,9 @@ static BOOL CheckExtArm7HashValue(void);
 static BOOL CheckExtArm9HashValue(void);
 #else
 static void ReadCardData(u32 src, u32 dest, u32 size);
+static void SendPxiMessage(HotSwCallBackType type);
 #endif
 
-static void ShowRegisterData(void);
-static void ShowRomHeaderData(void);
 static void DebugPrintErrorMessage(HotSwState state);
 
 HotSwState HOTSWi_RefreshBadBlock(u32 romMode);
@@ -216,6 +222,13 @@ void HOTSW_Init(u32 threadPrio)
     PXI_Init();
     PXI_SetFifoRecvCallback(PXI_FIFO_TAG_HOTSW, InterruptCallbackPxi);
 
+#ifdef USE_WRAM_LOAD
+	while(!PXI_IsCallbackReady(PXI_FIFO_TAG_HOTSW, PXI_PROC_ARM9))
+    {
+		// do nothing
+    }
+#endif
+    
     // 割り込みマスクの設定
     SetInterrupt();
 
@@ -244,13 +257,13 @@ void HOTSW_Init(u32 threadPrio)
         s32 tempLockID;
         // ARM9と排他制御用のロックIDの取得
         while((tempLockID = OS_GetLockID()) == OS_LOCK_ID_ERROR){
-            OS_PutString("Error - Can't Get Lock ID\n");
+            // do nothing
         }
         s_RscLockID = (u16)tempLockID;
 
         // カードアクセス用のロックIDの取得
         while((tempLockID = OS_GetLockID()) == OS_LOCK_ID_ERROR){
-            OS_PutString("Error - Can't Get Lock ID\n");
+            // do nothing
         }
         s_CardLockID = (u16)tempLockID;
     }
@@ -916,20 +929,17 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
     while(size > 0 && state == HOTSW_SUCCESS){
         // --- Boot Segment
 		if(src >= HOTSW_BOOTSEGMENT_AREA_OFS && src < HOTSW_KEYTABLE_AREA_OFS){
-            OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
     	    sendSize = ((src + size) > HOTSW_KEYTABLE_AREA_OFS) ? HOTSW_KEYTABLE_AREA_OFS - src : size;
 			MI_CpuCopy8((u32 *)(SYSM_CARD_ROM_HEADER_BAK + (src - HOTSW_BOOTSEGMENT_AREA_OFS)), (u32 *)dest, sendSize);
     	}
 
         // --- Key Table
         else if(src >= HOTSW_KEYTABLE_AREA_OFS && src < HOTSW_SECURE_AREA_OFS){
-            OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
         	sendSize = ((src + size) > HOTSW_SECURE_AREA_OFS) ? HOTSW_SECURE_AREA_OFS - src : size;
             state = ReadImageReturnErrorCode((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
         }
         // --- Secure Segment
         else if(src >= HOTSW_SECURE_AREA_OFS && src < HOTSW_GAME_AREA_OFS){
-            OS_TPrintf("%s %d  Secure Seg Buf:0x%08x\n", __FUNCTION__, __LINE__, s_cbData.pSecureSegBuf);
             sendSize = ((src + size) > HOTSW_GAME_AREA_OFS) ? HOTSW_GAME_AREA_OFS - src : size;
             MI_CpuCopy8((u32 *)((u32)s_cbData.pSecureSegBuf + (src - HOTSW_SECURE_AREA_OFS)), (u32 *)dest, sendSize);
         }
@@ -943,32 +953,27 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
 
                 // --- Game Segment
                 if(src < keyTable2Adr){
-                    OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
                     sendSize = ((src + size) > keyTable2Adr) ? keyTable2Adr - src : size;
                     state = ReadImageReturnErrorCode((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
                 }
                 // --- Key Table2
                 else if(src >= keyTable2Adr && src < Secure2Adr){
-                    OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
                     sendSize = ((src + size) > Secure2Adr) ? Secure2Adr - src : size;
                     state = ReadImageReturnErrorCode((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
                 }
                 // --- Secure2 Segment
                 else if(src >= Secure2Adr && src < Game2Adr){
-                    OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
                     sendSize = ((src + size) > Game2Adr) ? Game2Adr - src : size;
     	        	MI_CpuCopy8((u32 *)((u32)s_cbData.pSecure2SegBuf + (src - Secure2Adr)), (u32 *)dest, sendSize);
                 }
                 // --- Game2 Segment
                 else{
-                    OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
 					sendSize = size;
                     state = ReadImageReturnErrorCode((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
                 }
             }
             // --- Game Segment
             else{
-				OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
                 sendSize = size;
                 state = ReadImageReturnErrorCode((u32 *)dest, (s32)src, (s32)sendSize, &s_cbData);
             }
@@ -1014,8 +1019,6 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
             retval = CARD_READ_UNEXPECTED_ERROR;
 			break;
         }
-
-        OS_TPrintf("%s %d  Send Error Code[Arm7]:%x\n", __FUNCTION__, __LINE__, retval);
         
         MI_CpuClear8( &msg, sizeof(HotSwPxiMessageForArm9));
         
@@ -1737,6 +1740,10 @@ static void HotSwThread(void *arg)
                          SYSMi_GetWork()->cardReadParam.size);
             continue;
         }
+
+        if( msg->type == HOTSW_INSERT ){
+			SendPxiMessage(HOTSW_CARD_INSERT);
+        }
 #endif
         
         while(1){
@@ -1760,7 +1767,9 @@ static void HotSwThread(void *arg)
                             SYSMi_GetWork()->flags.hotsw.isCardGameMode      = TRUE;
 #endif
                             UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
-
+#ifdef USE_WRAM_LOAD
+							SendPxiMessage(HOTSW_CHANGE_GAMEMODE);
+#endif
                             OS_PutString("ok!\n");
                         }
                         break;
@@ -1814,6 +1823,10 @@ static void HotSwThread(void *arg)
 
             // カードが抜けてたら
             else{
+#ifdef USE_WRAM_LOAD
+				SendPxiMessage(HOTSW_CARD_PULLOUT);
+#endif
+                
                 ClearCardFlgs();
 
                 MI_CpuClear32(&s_cbData, sizeof(CardBootData));
@@ -2030,6 +2043,43 @@ static BOOL ChangeGameMode(void)
         return FALSE;
     }
 }
+
+
+/*---------------------------------------------------------------------------*
+  Name:        SendPxiMessage
+
+  Description: ARM9にメッセージを送る
+ *---------------------------------------------------------------------------*/
+#ifdef USE_WRAM_LOAD
+static void SendPxiMessage(HotSwCallBackType type)
+{
+	HotSwPxiMessageForArm9 	msg;
+    
+    MI_CpuClear8( &msg, sizeof(HotSwPxiMessageForArm9));
+
+    switch(type){
+      case HOTSW_CHANGE_GAMEMODE:
+    	msg.msg.mode = TRUE;
+        break;
+
+      case HOTSW_CARD_INSERT:
+		msg.msg.insert = TRUE;
+        break;
+
+      case HOTSW_CARD_PULLOUT:
+		msg.msg.pullout = TRUE;
+        break;
+
+      default:
+        return;
+    }
+        
+    while (PXI_SendWordByFifo(PXI_FIFO_TAG_HOTSW, msg.data, FALSE) != PXI_FIFO_SUCCESS)
+    {
+    	// do nothing
+    }
+}
+#endif
 
 
 /*---------------------------------------------------------------------------*
@@ -2524,70 +2574,6 @@ static BOOL CheckExtArm9HashValue(void)
 }
 #endif
 
-
-
-
-
-// **************************************************************************
-//
-//                             Debug用表示関数
-//
-// **************************************************************************
-/*---------------------------------------------------------------------------*
-  Name:         ShowRomHeaderData
-
-  Description:
- *---------------------------------------------------------------------------*/
-static void ShowRomHeaderData(void)
-{
-    OS_TPrintf("\nDebug Data -------------------------------\n");
-    OS_TPrintf("1. Normal Mode ID  : 0x%08x\n"  , s_cbData.id_nml);
-    OS_TPrintf("2. Secure Mode ID  : 0x%08x\n"  , s_cbData.id_scr);
-    OS_TPrintf("3. Game   Mode ID  : 0x%08x\n"  , s_cbData.id_gam);
-
-    OS_TPrintf("title Name         : %s\n",     s_pBootSegBuffer->rh.s.title_name);
-    OS_TPrintf("initial Code       : %x\n\n",   *(u32 *)s_pBootSegBuffer->rh.s.game_code);
-
-    OS_TPrintf("platform Code      : 0x%02x\n\n", s_cbData.pBootSegBuf->rh.s.platform_code);
-
-    OS_TPrintf("main rom offset    : 0x%08x\n"  , s_cbData.pBootSegBuf->rh.s.main_rom_offset);
-    OS_TPrintf("main entry addr    : 0x%08x\n"  , s_cbData.pBootSegBuf->rh.s.main_entry_address);
-    OS_TPrintf("main ram   addr    : 0x%08x\n"  , s_cbData.pBootSegBuf->rh.s.main_ram_address);
-    OS_TPrintf("main size          : 0x%08x\n\n", s_cbData.pBootSegBuf->rh.s.main_size);
-
-    OS_TPrintf("sub  rom offset    : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.sub_rom_offset);
-    OS_TPrintf("sub  entry addr    : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.sub_entry_address);
-    OS_TPrintf("sub  ram   addr    : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.sub_ram_address);
-    OS_TPrintf("sub  size          : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.sub_size);
-
-    if(s_cbData.twlFlg){
-    OS_TPrintf("\nLtd main rom offset: 0x%08x\n"  , s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset);
-    OS_TPrintf("Ltd main ram   addr: 0x%08x\n"  , s_cbData.pBootSegBuf->rh.s.main_ltd_ram_address);
-    OS_TPrintf("Ltd main size      : 0x%08x\n\n", s_cbData.pBootSegBuf->rh.s.main_ltd_size);
-
-    OS_TPrintf("Ltd Sub rom offset : 0x%08x\n"  , s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset);
-    OS_TPrintf("Ltd Sub ram   addr : 0x%08x\n"  , s_cbData.pBootSegBuf->rh.s.sub_ltd_ram_address);
-    OS_TPrintf("Ltd Sub size       : 0x%08x\n", s_cbData.pBootSegBuf->rh.s.sub_ltd_size);
-    }
-
-    OS_TPrintf("------------------------------------------\n\n");
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         ShowRegisterData
-
-  Description:
- *---------------------------------------------------------------------------*/
-static void ShowRegisterData(void)
-{
-    OS_TPrintf("----------------------------------------------------------\n");
-    OS_TPrintf("拡張機能制御レジスタ         (MC_B(d24))   : %08x\n", reg_SCFG_EXT);
-    OS_TPrintf("MC I/F制御レジスタ１         (slot status) : %08x\n", reg_MI_MC1);
-    OS_TPrintf("MC I/F制御レジスタ２         (Counter-A)   : %04x\n", reg_MI_MC2);
-    OS_TPrintf("MC コントロールレジスタ0     (SEL etc)     : %04x\n", reg_HOTSW_MCCNT0);
-    OS_TPrintf("MC コントロールレジスタ1     (START etc)   : %08x\n", reg_HOTSW_MCCNT1);
-    OS_TPrintf("----------------------------------------------------------\n");
-}
 
 /*---------------------------------------------------------------------------*
   Name:         DebugPrintErrorMessage
