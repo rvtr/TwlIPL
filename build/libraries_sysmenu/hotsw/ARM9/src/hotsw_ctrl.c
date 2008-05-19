@@ -29,6 +29,7 @@
 
 // Function prototype -------------------------------------------------------
 static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err);
+static CardDataReadState ReadPageGame(u32 start_addr, void* buf, u32 size);
 
 // Static Values ------------------------------------------------------------
 static HotSwMessageForArm9	s_HotswMsg;
@@ -338,11 +339,70 @@ void HOTSW_SetCardPullOutCallBackFunction(OSIrqFunction function)
 
 
 /*---------------------------------------------------------------------------*
-  Name:         HOTSW_ReadPageGame
+  Name:         HOTSW_ReadCardDataOnGameMode
+  
+  Description:  Gameモードのデータ読み関数
+ *---------------------------------------------------------------------------*/
+CardDataReadState HOTSW_ReadCardDataOnGameMode(const void* src, void* dest, u32 size)
+{
+    CardDataReadState retval = CARD_READ_SUCCESS;
+
+    static u8 page_buffer[512];
+    s32 offset      	= (u32)src;
+    u32 page_offset 	= (u32)(offset & -512);
+    u32 buffer_offset 	= (u32)(offset % 512);
+    u32 valid_length 	= 512 - buffer_offset;
+    u32 remain_length;
+
+    // 開始アドレスがページの途中
+    if ( offset % 512 )
+    {
+        retval = ReadPageGame(page_offset, page_buffer, 512);
+
+        if (retval != HOTSW_SUCCESS)
+        {
+            return retval;
+        }
+
+        MI_CpuCopy8(page_buffer + buffer_offset, dest, (size < valid_length ? size : valid_length));
+
+        dest   = (u8*)dest + valid_length;
+        offset += valid_length;
+        size   -= valid_length;
+        if ( size < 0)
+        {
+            return retval;
+        }
+    }
+
+    remain_length = (u32)(size % 512);
+    retval = ReadPageGame(offset, dest, (u32)(size - remain_length));
+
+    // ケツがページ途中
+    if( remain_length ){
+        dest   = (u8*)dest + (size - remain_length);
+        offset += size - remain_length;
+
+        retval = ReadPageGame(offset, page_buffer, 512);
+
+        if (retval != HOTSW_SUCCESS)
+        {
+            return retval;
+        }
+
+        MI_CpuCopy8(page_buffer, dest, remain_length);
+    }
+
+    return retval;
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         ReadPageGame
   
   Description:  GameモードのPage読み関数
  *---------------------------------------------------------------------------*/
-CardDataReadState HOTSW_ReadPageGame(u32 start_addr, void* buf, u32 size)
+static CardDataReadState ReadPageGame(u32 start_addr, void* buf, u32 size)
 {
     u32 		loop, counter=0;
 	u64			i, page;

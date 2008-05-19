@@ -132,8 +132,8 @@ void HOTSW_SetCardPullOutCallBackFunction(OSIrqFunction function);
 // カードがゲームモードになったかどうか
 BOOL HOTSW_isGameMode(void);
 
-// GameモードのPage読み関数
-CardDataReadState HOTSW_ReadPageGame(u32 start_addr, void* buf, u32 size);
+// Gameモードのデータ読み関数
+CardDataReadState HOTSW_ReadCardDataOnGameMode(const void* src, void* dest, u32 size);
 #endif
 
 // --- ARM7
