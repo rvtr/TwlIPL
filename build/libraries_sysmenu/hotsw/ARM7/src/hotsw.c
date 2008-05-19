@@ -73,9 +73,7 @@ static void SetInterruptCallback( OSIrqMask intr_bit, OSIrqFunction func );
 static void SetInterruptCallbackEx( OSIrqMask intr_bit, void *func );
 static void SetInterrupt(void);
 
-static void InterruptCallbackCard(void);
 static void InterruptCallbackCardDet(void);
-static void InterruptCallbackNDma(void);
 static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err);
 
 static void LockHotSwRsc(OSLockWord* word);
@@ -2174,6 +2172,16 @@ static void MonitorThread(void *arg)
 
             // 本当は抜けてた場合
             if(isPullOutNow){
+#ifndef HOTSW_DISABLE_FORCE_CARD_OFF
+			    {
+        			u32 mode = GetMcSlotMode();
+        			if(mode == SLOT_STATUS_MODE_01 || mode == SLOT_STATUS_MODE_10){
+            			SetMcSlotMode(SLOT_STATUS_MODE_11);
+        			}
+        			OS_TPrintf("slot status: %x\n", mode);
+    			}
+#endif
+                
                 HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].ctrl  = FALSE;
                 HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].value = 0;
                 HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].type  = HOTSW_PULLOUT;
@@ -2205,40 +2213,6 @@ static void MonitorThread(void *arg)
             (void)OS_RestoreInterrupts( enabled );
         }
     }
-}
-
-
-/*---------------------------------------------------------------------------*
-  Name:         InterruptCallbackCard
-
-  Description: カードB抜け割り込みハンドラ
- *---------------------------------------------------------------------------*/
-static void InterruptCallbackCard(void)
-{
-    // スロット電源ON時は強制OFF
-    // （エミュレーションROMは旧コネクタでの強制OFFでデータが化けることがある）
-#ifndef HOTSW_DISABLE_FORCE_CARD_OFF
-//    if ( ! HOTSWi_IsRomEmulation() )
-    {
-        u32 mode = GetMcSlotMode();
-        if(mode == SLOT_STATUS_MODE_01 || mode == SLOT_STATUS_MODE_10){
-            SetMcSlotMode(SLOT_STATUS_MODE_11);
-        }
-        OS_TPrintf("slot status: %x\n", mode);
-    }
-#endif
-
-    HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].ctrl  = FALSE;
-    HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].value = 0;
-    HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].type  = HOTSW_PULLOUT;
-
-    // メッセージ送信
-    OS_SendMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut], OS_MESSAGE_NOBLOCK);
-
-    // メッセージインデックスをインクリメント
-    HotSwThreadData.idx_pulledOut = (HotSwThreadData.idx_pulledOut+1) % HOTSW_PULLED_MSG_NUM;
-
-    OS_PutString("○\n");
 }
 
 
@@ -2400,10 +2374,8 @@ static void SetInterruptCallbackEx( OSIrqMask intr_bit, void *func )
 static void SetInterrupt(void)
 {
 #ifndef DEBUG_USED_CARD_SLOT_B_
-    SetInterruptCallback( OS_IE_CARD_A_IREQ , InterruptCallbackCard );
     SetInterruptCallback( OS_IE_CARD_A_DET  , InterruptCallbackCardDet );
 #else
-    SetInterruptCallback( OS_IE_CARD_B_IREQ , InterruptCallbackCard );
     SetInterruptCallback( OS_IE_CARD_B_DET  , InterruptCallbackCardDet );
 #endif
 
