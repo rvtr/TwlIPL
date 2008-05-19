@@ -109,7 +109,11 @@ void* AutoProcess1(void)
 	case 4:
 		return ImportProcess0;
 	case 5:
+#ifndef MARIOCLUB_VERSION
 		return NandfirmProcess0;
+#else
+		return AutoProcess2;
+#endif //MARIOCLUB_VERSION
 	case 6:
 		return AutoProcess2;
 	}
@@ -152,10 +156,12 @@ void* AutoProcess2(void)
 	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "    WRITE FONT DATA        ");
 	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "    WRITE ETICKET SIGN     ");
 	kamiFontPrintf(3, 15, FONT_COLOR_BLACK, "    INPORT TAD FROM SD     ");
+#ifndef MARIOCLUB_VERSION
 	kamiFontPrintf(3, 17, FONT_COLOR_BLACK, "    INPORT NANDFIRM FROM SD");
+#endif //MARIOCLUB_VERSION
 #ifndef AUTO_FORMAT_MODE
 	kamiFontPrintf(3, 22, FONT_COLOR_BLACK, " Button B : return to menu");
-#endif
+#endif //AUTO_FORMAT_MODE
 
 	for (i=0;i<sMenuSelectNo-1;i++)
 	{
@@ -163,7 +169,7 @@ void* AutoProcess2(void)
 	}
 
 	// Ž¸”s‚ ‚è
-	if (i<NUM_OF_MENU)
+	if (i<sMenuSelectNo-1)
 	{
 		kamiFontPrintf(3, (s16)(7+2*i), FONT_COLOR_RED, "NG");
 		kamiFontPrintf(3, 19, FONT_COLOR_BLACK, "    Error Occured!");
