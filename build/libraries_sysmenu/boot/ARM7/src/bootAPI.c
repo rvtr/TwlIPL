@@ -108,8 +108,11 @@ BOOL BOOT_WaitStart( void )
 		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
 		(void)OS_SetIrqMaskEx(0);
 
-		// NTR-ROMヘッダへのパッチ処理のためコピー
+		// 起動アプリNTR-ROMヘッダへのパッチ処理のためコピー
 		MI_CpuCopyFast( th, dh, HW_CARD_ROM_HEADER_SIZE );
+
+		// カードNTR-ROMヘッダをNANDアプリやマルチブートのためコピー
+		MI_CpuCopyFast( (void*)SYSM_CARD_ROM_HEADER_BAK, (void*)HW_CARD_ROM_HEADER, HW_CARD_ROM_HEADER_SIZE );
 
 		// ブラックリストをチェックし、起動制限をかける
 		BOOTi_CheckTitleBlackList( (void*)th );
