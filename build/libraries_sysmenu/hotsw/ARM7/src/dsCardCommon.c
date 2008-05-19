@@ -104,6 +104,9 @@ HotSwState ReadIDNormal(CardBootData *cbd)
 	}
 #endif
 
+	// 1us Wait
+    OS_SpinWait( OS_USEC_TO_CPUCYC(1) );
+    
     return HOTSW_SUCCESS;
 }
 
@@ -190,8 +193,11 @@ HotSwState ReadBootSegNormal(CardBootData *cbd)
 		}
 #endif
         page++;
-    }
 
+		// 10us Wait
+    	OS_SpinWait( OS_USEC_TO_CPUCYC(10) );        
+    }
+    
     return HOTSW_SUCCESS;
 }
 
@@ -324,6 +330,9 @@ static HotSwState HOTSWi_ChangeModeNormal(CardBootData *cbd, u64 cmd)
 
     // カードデータ転送終了まで待つ
 	HOTSW_WaitCardCtrl();
+
+	// 47us Wait
+    OS_SpinWait( OS_USEC_TO_CPUCYC(47) );
     
     return HOTSW_SUCCESS;
 }
@@ -368,6 +377,9 @@ HotSwState LoadTable(void)
         temp = reg_HOTSW_MCD1;
 	}
 #endif
+
+	// 1us Wait
+    OS_SpinWait( OS_USEC_TO_CPUCYC(1) );
     
     return HOTSW_SUCCESS;
 }
@@ -783,6 +795,9 @@ HotSwState ReadIDGame(CardBootData *cbd)
 		cbd->id_gam = reg_HOTSW_MCD1;
 	}
 #endif
+
+	// 1us Wait
+    OS_SpinWait( OS_USEC_TO_CPUCYC(1) );
     
     return HOTSW_SUCCESS;
 }
@@ -839,6 +854,9 @@ HotSwState ReadPageGame(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
 #endif
     }
 
+	// 100ns Wait
+    OS_SpinWait( OS_NSEC_TO_CPUCYC(100) );
+    
     return HOTSW_SUCCESS;
 }
 
