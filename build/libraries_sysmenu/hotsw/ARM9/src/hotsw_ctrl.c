@@ -348,7 +348,7 @@ CardDataReadState HOTSW_ReadCardDataOnGameMode(const void* src, void* dest, u32 
     CardDataReadState retval = CARD_READ_SUCCESS;
 
     static u8 page_buffer[512];
-    s32 offset      	= (u32)src;
+    u32 offset      	= (u32)src;
     u32 page_offset 	= (u32)(offset & -512);
     u32 buffer_offset 	= (u32)(offset % 512);
     u32 valid_length 	= 512 - buffer_offset;
@@ -413,11 +413,7 @@ static CardDataReadState ReadPageGame(u32 start_addr, void* buf, u32 size)
     loop = (size % PAGE_SIZE) ? loop + 1 : loop;
 
     // カードのロック
-#ifndef DEBUG_USED_CARD_SLOT_B_
     CARD_LockRom(s_CardLockID);
-#else
-    LockExCard(s_CardLockID);
-#endif
     
     for(i=0; i<loop; i++){
 	    if(!HOTSW_isGameMode()){
@@ -471,11 +467,7 @@ static CardDataReadState ReadPageGame(u32 start_addr, void* buf, u32 size)
     OS_SpinWait( OS_NSEC_TO_CPUCYC(100) );
 
     // カードのロック開放(※ロックIDは開放せずに持ち続ける)
-#ifndef DEBUG_USED_CARD_SLOT_B_
     CARD_UnlockRom(s_CardLockID);
-#else
-    UnlockExCard(s_CardLockID);
-#endif
     
     return CARD_READ_SUCCESS;
 }
