@@ -162,7 +162,7 @@ void TwlMain( void )
 		if( !LoadSharedFontInit() ) {				// 共有フォントのロード
 			SYSM_SetFatalError( TRUE );
 		}
-		timestamp = SFONT_GetFontTimestamp();
+		timestamp = OS_GetSharedFontTimestamp();
 		if( timestamp > 0 ) OS_TPrintf( "SharedFont timestamp : %08x\n", timestamp );
 	}
 

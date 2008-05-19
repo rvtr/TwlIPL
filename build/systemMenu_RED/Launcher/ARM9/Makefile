@@ -69,7 +69,7 @@ TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
 TARGET_BIN				=	main.srl
 
 LCFILE_SPEC				=	ARM9-TS.lsf
-#LCFILE_TEMPLATE			=	ARM9-TS.lcf.template
+LCFILE_TEMPLATE			=	ARM9-TS.lcf.template
 ROM_SPEC				=	main.rsf
 
 LOGO_DIR				=	Logo
@@ -95,7 +95,7 @@ LLIBRARIES				+=	libes$(TWL_LIBSUFFIX).a		\
 							libsea$(TWL_LIBSUFFIX).a	\
 							libreloc_info$(TWL_LIBSUFFIX).a \
 							libnamut$(TWL_LIBSUFFIX).a \
-							libsharedfont$(TWL_LIBSUFFIX).a \
+							libsharedfont_launcher$(TWL_LIBSUFFIX).a \
 							WDS$(TWL_LIBSUFFIX).a
 
 ADDRESS_DTCM			=	0x0e000000
@@ -147,6 +147,9 @@ endif
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
+
+# ローカルでビルドしたlibsharedfont_launcherを使用するので、SDKのlibsharedfontは除外する。
+GLIBRARIES		:= $(filter-out libsharedfont$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 
 MAKEROM			 = $(SYSMENU_TOOLSDIR)/bin/makerom.TWL.launcher.exe
 

@@ -19,6 +19,7 @@
 #define	__LOAD_SHARED_FONT_H__
 
 #include <twl.h>
+#include <twl/os/common/sharedFont.h>
 #include <sysmenu.h>
 
 #ifdef __cplusplus

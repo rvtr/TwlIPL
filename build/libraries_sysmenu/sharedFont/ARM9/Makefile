@@ -24,14 +24,16 @@ TARGET_PLATFORM	=	TWL
 TWL_ARCHGEN		=	LIMITED
 TWL_PROC	   	=	ARM9
 
-SRCDIR			=	src
-SRCS			=	sharedFont.c
+SRCDIR			=	$(ROOT)/build/libraries/os/ARM9.TWL/src/
+SRCS			=	os_sharedFont.c
 
-TARGET_LIB		=	libsharedfont$(TWL_LIBSUFFIX).a
+TARGET_LIB		=	libsharedfont_launcher$(TWL_LIBSUFFIX).a
 
 LINCLUDES		+=	$(SYSMENU_ROOT)/build/libraries_sysmenu/sysmenu/ARM9/include
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+
+MACRO_FLAGS		+=	-DUSE_FONT_WRAM_LOAD
 
 INSTALL_TARGETS	=	$(TARGETS)
 INSTALL_DIR		=	$(SYSMENU_INSTALL_LIBDIR)

@@ -58,13 +58,13 @@ BOOL LoadSharedFontInit( void )
                     THREAD_STACK_SIZE, FONT_LOAD_THREAD_PRIO);
 	
 	// フォントロード準備
-	if( !SFONT_Init() ) {
-		OS_TPrintf( "SFONT_LoadInfoTable failed.\n" );
+	if( !OS_InitSharedFont() ) {
+		OS_TPrintf( "OS_InitSharedFont failed.\n" );
 		return FALSE;
 	}
-	size = SFONT_GetInfoTableSize();
+	size = OS_GetSharedFontTableSize();
 	if( size < 0 ) {
-		OS_TPrintf( "SFONT_GetInfoTableSize failed.\n" );
+		OS_TPrintf( "OS_GetSharedTableSize failed.\n" );
 		return FALSE;
 	}
 	
@@ -73,8 +73,8 @@ BOOL LoadSharedFontInit( void )
 		OS_TPrintf( "malloc failed.\n" );
 		return FALSE;
 	}
-	if( !SFONT_LoadInfoTable( pBuffer ) ) {
-		OS_TPrintf( "SFONT_LoadInfoTable failed.\n" );
+	if( !OS_LoadSharedFontTable( pBuffer ) ) {
+		OS_TPrintf( "OS_LoadSharedTable failed.\n" );
 		return FALSE;
 	}
 	
@@ -89,16 +89,16 @@ void LoadSharedFontThread( void *arg )
 {
 #pragma unused(arg)
 	BOOL retval = TRUE;
-	SFONT_Index i;
+	OSSharedFontIndex i;
 	
-	for( i = SHARED_FONT_WW_S; i < SHARED_FONT_MAX; i++ ) {
+	for( i = OS_SHARED_FONT_WW_S; i < OS_SHARED_FONT_MAX; i++ ) {
 		int size;
 		
-		OS_TPrintf( "%s read.\n", SFONT_GetFontName( i ) );
+		OS_TPrintf( "%s read.\n", OS_GetSharedFontName( i ) );
 		
-		size = SFONT_GetFontSize( i );
+		size = OS_GetSharedFontSize( i );
 		if( size < 0 ) {
-			OS_TPrintf( "SFONT_GetFontSize failed.\n" );
+			OS_TPrintf( "OS_GetSharedFontSize failed.\n" );
 			retval = FALSE;
 			break;
 		}
@@ -113,8 +113,8 @@ void LoadSharedFontThread( void *arg )
 			break;
 		}
 		
-		if( !SFONT_LoadFont( i, s_pFontBuffer[ i ] ) ) {
-			OS_TPrintf( "SFONT_LoadFont failed.\n" );
+		if( !OS_LoadSharedFont( i, s_pFontBuffer[ i ] ) ) {
+			OS_TPrintf( "OS_LoadSharedFont failed.\n" );
 			retval = FALSE;
 			break;
 		}
