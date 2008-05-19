@@ -107,6 +107,8 @@ extern void         SDK_LTDAUTOLOAD_LTDMAIN_BSS_END(void);
 #endif
 extern void			SDK_SEA_KEY_STORE(void);
 
+extern BOOL sdmcGetNandLogFatal( void );
+
 /*---------------------------------------------------------------------------*
   Name:         TwlSpMain
   Description:  起動ベクタ。
@@ -145,6 +147,12 @@ TwlSpMain(void)
 
     // NVRAM からユーザー情報読み出し
     ReadUserInfo();
+
+	// NANDのFATALエラー検出
+	if( sdmcGetNandLogFatal() != FALSE) {
+    	/* 故障扱い処理 */
+		SYSM_SetFatalError( TRUE );
+	}
 
     // [TODO:] カード電源ONして、ROMヘッダのみリード＆チェックくらいはやっておきたい
 
