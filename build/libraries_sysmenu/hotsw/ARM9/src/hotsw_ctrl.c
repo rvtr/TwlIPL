@@ -17,6 +17,9 @@
 #include <twl.h>
 #include <sysmenu.h>
 
+#include <firm/os/common/system.h>
+#include <../ARM7/include/hotswTypes.h>
+
 // define -------------------------------------------------------------------
 #define HOTSW_READ_MSG_NUM				1
 #define HOTSW_CARD_GAME_MODE_CALLBACK	1
@@ -35,6 +38,8 @@ static OSMessageQueue  		s_HotswQueue;
 static BOOL					s_ReadBusy;
 static OSIrqFunction		s_HotswFuncTable[HOTSW_CALLBACK_FUNCTION_NUM];
 
+static u16                  s_CardLockID;
+
 
 // ===========================================================================
 // 	Function Describe
@@ -47,6 +52,14 @@ static OSIrqFunction		s_HotswFuncTable[HOTSW_CALLBACK_FUNCTION_NUM];
 #ifdef USE_WRAM_LOAD
 void HOTSW_Init()
 {
+    s32 tempLockID;
+    
+    // カードアクセス用のロックIDの取得
+    while((tempLockID = OS_GetLockID()) == OS_LOCK_ID_ERROR){
+        // do nothing
+    }
+    s_CardLockID = (u16)tempLockID;
+    
     // メッセージキューの初期化
     OS_InitMessageQueue( &s_HotswQueue, &s_HotswMsgBuffer[0], HOTSW_READ_MSG_NUM );
 
@@ -322,3 +335,87 @@ void HOTSW_SetCardPullOutCallBackFunction(OSIrqFunction function)
 	s_HotswFuncTable[HOTSW_CARD_PULLOUT_CALLBACK] = function;
 }
 #endif
+
+
+/*---------------------------------------------------------------------------*
+  Name:         HOTSW_ReadPageGame
+  
+  Description:  GameモードのPage読み関数
+ *---------------------------------------------------------------------------*/
+CardDataReadState HOTSW_ReadPageGame(u32 start_addr, void* buf, u32 size)
+{
+    u32 		loop, counter=0;
+	u64			i, page;
+	GCDCmd64	cndLE, cndBE;
+
+    page = (u32)(start_addr / PAGE_SIZE);
+	loop = (u32)(size / PAGE_SIZE);
+    loop = (size % PAGE_SIZE) ? loop + 1 : loop;
+
+    // カードのロック
+#ifndef DEBUG_USED_CARD_SLOT_B_
+    CARD_LockRom(s_CardLockID);
+#else
+    LockExCard(s_CardLockID);
+#endif
+    
+    for(i=0; i<loop; i++){
+	    if(!HOTSW_isGameMode()){
+			return CARD_READ_MODE_ERROR;
+    	}
+        
+#ifndef USE_CPU_COPY
+		// NewDMA転送の準備
+		HOTSW_NDmaCopy_Card( HOTSW_NDMA_NO, (u32 *)HOTSW_MCD1, (u32 *)buf + (u32)(PAGE_WORD_SIZE*i), PAGE_SIZE );
+#endif
+        
+        // コマンド作成
+		cndLE.dw  = HSWOP_G_OP_RD_PAGE;
+		cndLE.dw |= (page + i) << HSWOP_G_RD_PAGE_ADDR_SHIFT;
+
+	    // ビッグエンディアンに直す
+		cndBE.b[7] = cndLE.b[0];
+		cndBE.b[6] = cndLE.b[1];
+    	cndBE.b[5] = cndLE.b[2];
+	    cndBE.b[4] = cndLE.b[3];
+	    cndBE.b[3] = cndLE.b[4];
+    	cndBE.b[2] = cndLE.b[5];
+	    cndBE.b[1] = cndLE.b[6];
+    	cndBE.b[0] = cndLE.b[7];
+
+		//---- confirm CARD free
+		while( reg_HOTSW_MCCNT1 & REG_MI_MCCNT1_START_MASK ){}
+
+    	// MCCMD レジスタ設定
+		reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
+		reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];
+
+		// MCCNT0 レジスタ設定
+		reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
+        
+   		// MCCNT1 レジスタ設定
+		reg_HOTSW_MCCNT1 = SYSMi_GetWork()->gameCommondParam | START_MASK | HOTSW_PAGE_1;
+
+#ifndef USE_CPU_COPY
+		// メッセージ受信
+		OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
+#else
+		while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
+			while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}
+            *((u32 *)buf + counter++) = reg_HOTSW_MCD1;
+		}
+#endif
+    }
+
+	// 100ns Wait
+    OS_SpinWait( OS_NSEC_TO_CPUCYC(100) );
+
+    // カードのロック開放(※ロックIDは開放せずに持ち続ける)
+#ifndef DEBUG_USED_CARD_SLOT_B_
+    CARD_UnlockRom(s_CardLockID);
+#else
+    UnlockExCard(s_CardLockID);
+#endif
+    
+    return CARD_READ_SUCCESS;
+}
