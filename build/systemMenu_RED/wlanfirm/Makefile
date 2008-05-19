@@ -34,23 +34,18 @@ MY_FIRM			=	$(MY_FIRM_ROOT_CYG)/nwm_firm.bin
 MAKETAD_FLAGS	+=	0003000F484E4341 3031 0 WIRELESS_FW
 
 #----------------------------------------------------------------------------
-MY_SRL			=	$(MY_TITLE).srl
 MY_TAD			=	$(MY_TITLE).tad
-ATTACH_HEADER_COMMAND	=	$(SYSMENU_TOOLSDIR)/bin/attach_dummyromheader.exe
 
-INSTALL_TARGETS		=	$(MY_TAD)
+INSTALL_TARGETS	=	$(MY_TAD)
 INSTALL_DIR		=	$(ROOT)/build/tools/TwlNMenu/data
 
-LDIRT_CLEAN		=	$(MY_SRL) $(MY_TAD)
+LDIRT_CLEAN		=	$(MY_TAD)
 
 #----------------------------------------------------------------------------
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 do-build : $(MY_TAD)
-
-$(MY_SRL): $(MY_FIRM)
-	$(ATTACH_HEADER_COMMAND) -s -l -i $(call empath,$<) -c $(MY_TITLE) -o $@
 
 $(MY_TAD): $(MY_FIRM)
 	$(MAKETAD) $(call empath,$<) -s -d $(MAKETAD_FLAGS) -o $@
