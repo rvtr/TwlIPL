@@ -346,7 +346,7 @@ void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs )
 
 static AESCounter   aesCounter;
 
-#define DMA_SEND         1
+#define DMA_SEND         2
 #define DMA_RECV         3
 static void ReplaceWithAes( void* ptr, u32 size )
 {
