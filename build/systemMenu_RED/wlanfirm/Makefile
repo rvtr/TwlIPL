@@ -53,6 +53,6 @@ $(MY_SRL): $(MY_FIRM)
 	$(ATTACH_HEADER_COMMAND) -s -l -i $(call empath,$<) -c $(MY_TITLE) -o $@
 
 $(MY_TAD): $(MY_FIRM)
-	$(MAKETAD) -s -d $< $(MAKETAD_FLAGS) -o $@
+	$(MAKETAD) $(call empath,$<) -s -d $(MAKETAD_FLAGS) -o $@
 
 #===== End of Makefile =====
