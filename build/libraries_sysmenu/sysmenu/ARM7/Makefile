@@ -27,7 +27,7 @@ TWL_PROC	   		=	ARM7
 SRCS_COMMON			=	status.c \
 						pxi.c \
 						mountInfo.c \
-						decodeAES.c
+						decryptAES.c
 
 SRCS				=	setAESKey.c \
 						$(addprefix ../common/src/, $(SRCS_COMMON))

@@ -38,7 +38,7 @@ SRCS			=	sysmenu_lib.c \
 					../common/src/status.c \
 					../common/src/pxi.c \
 					../common/src/mountInfo.c \
-					../common/src/decodeAES.c \
+					../common/src/decryptAES.c \
 					../common/src/masterkey.c \
 					$(REVISION_SRC)
 

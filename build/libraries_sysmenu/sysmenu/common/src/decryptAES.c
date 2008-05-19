@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlIPL
-  File:     decodeAES.c
+  File:     decryptAES.c
 
   Copyright 2007 Nintendo.  All rights reserved.
 
