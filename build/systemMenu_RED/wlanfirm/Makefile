@@ -31,6 +31,8 @@ MY_FIRM_ROOT_CYG =	$(call eupath,$(MY_FIRM_ROOT))
 MY_TITLE		=	HNCA
 MY_FIRM			=	$(MY_FIRM_ROOT_CYG)/nwm_firm.bin
 
+MAKETAD_FLAGS	+=	0003000F484E4341 3031 0 WIRELESS_FW
+
 #----------------------------------------------------------------------------
 MY_SRL			=	$(MY_TITLE).srl
 MY_TAD			=	$(MY_TITLE).tad
@@ -50,7 +52,7 @@ do-build : $(MY_TAD)
 $(MY_SRL): $(MY_FIRM)
 	$(ATTACH_HEADER_COMMAND) -s -l -i $(call empath,$<) -c $(MY_TITLE) -o $@
 
-$(MY_TAD): $(MY_SRL)
-	$(MAKETAD) -s $< $(MAKETAD_FLAGS) -o $@
+$(MY_TAD): $(MY_FIRM)
+	$(MAKETAD) -s -d $< $(MAKETAD_FLAGS) -o $@
 
 #===== End of Makefile =====
