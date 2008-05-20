@@ -25,9 +25,8 @@ TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
 
 TITLEID_LO				=	HNEA
-TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
 
-TARGET_BIN				=	main.srl
+TARGET_BIN				=	$(TITLEID_LO).tad
 
 ROM_SPEC				=	main.rsf
 
@@ -39,7 +38,7 @@ SRCS					=	main.c PictoChat.c \
 LINCLUDES				=	$(MISC_DIR)/include
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
-MAKETAD_FLAGS			+= -s
+MAKETAD_OPTION			+= -s
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
@@ -49,8 +48,7 @@ endif
 
 MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.sys.exe
 
-LDIRT_CLEAN				=	$(TARGET_TAD)
-INSTALL_TARGETS			=	$(TARGET_TAD)
+INSTALL_TARGETS			=	$(BINDIR)/$(TARGET_BIN)
 INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------

@@ -42,9 +42,7 @@ TITLEID_LO				=	HNBA
 CARD_REGION				=	ALL
 ##################################################################
 
-TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
-
-TARGET_BIN				=	main.srl
+TARGET_BIN				=	$(TITLEID_LO).tad
 
 ROM_SPEC				=	main.rsf
 
@@ -66,7 +64,7 @@ MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
 							-DCARD_REGION='$(CARD_REGION)' \
 							-DDISABLE_DEBUG='$(DISABLE_DEBUG)'
 
-MAKETAD_FLAGS			+= -s
+MAKETAD_OPTION			+= -s
 
 LLIBRARIES				=	libes$(TWL_LIBSUFFIX).a				\
 							libboc$(TWL_LIBSUFFIX).a			\
@@ -94,8 +92,7 @@ MAKEROM_ARM7_BASE		=	$(TWL_COMPONENTSDIR)/armadillo/$(TWL_BUILDTYPE_ARM7)/armadi
 MAKEROM_ARM7			=	$(MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
 MAKEROM					=	$(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 
-LDIRT_CLEAN				=	$(TARGET_TAD)
-INSTALL_TARGETS			=	$(TARGET_TAD)
+INSTALL_TARGETS			=	$(BINDIR)/$(TARGET_BIN)
 INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------

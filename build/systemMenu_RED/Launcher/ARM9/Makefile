@@ -64,9 +64,7 @@ CARD_REGION				=	ALL
 ##################################################################
 
 
-TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
-
-TARGET_BIN				=	main.srl
+TARGET_BIN				=	$(TITLEID_LO).tad
 
 LCFILE_SPEC				=	ARM9-TS.lsf
 LCFILE_TEMPLATE			=	ARM9-TS.lcf.template
@@ -110,7 +108,7 @@ MAKEROM_FLAGS			+=	-F \
 							-DCARD_REGION='$(CARD_REGION)' \
 							-DDISABLE_DEBUG='$(DISABLE_DEBUG)'
 
-MAKETAD_FLAGS			+= -s
+MAKETAD_OPTION			+= -s
 
 ifeq ($(DO_NOT_SHOW_LAUNCHER),TRUE)
 MACRO_FLAGS += -DDO_NOT_SHOW_LAUNCHER
@@ -153,8 +151,7 @@ GLIBRARIES		:= $(filter-out libsharedfont$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 
 MAKEROM			 = $(SYSMENU_TOOLSDIR)/bin/makerom.TWL.launcher.exe
 
-LDIRT_CLEAN				=	$(TARGET_TAD)
-INSTALL_TARGETS			=	$(TARGET_TAD)
+INSTALL_TARGETS			=	$(BINDIR)/$(TARGET_BIN)
 INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
