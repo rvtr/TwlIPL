@@ -26,7 +26,7 @@ SUBDIRS_P	=	\
 				PictoChat \
 				wlanfirm \
 				sharedFont \
-				DSHashTable
+				#DSHashTable
 				#DS_DownloadPlay
 
 #----------------------------------------------------------------------------
