@@ -71,6 +71,15 @@ static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg)
     }
     return TRUE;
 }
+static BOOL ReadImageEx(SVCHMACSHA1Context* ctx, s32 offset, s32 length, void* arg)
+{
+    if ( !ReadImage(p2work.buffer, offset, length, arg) )
+    {
+        return FALSE;
+    }
+    DHT_CheckHashPhase2ExUpdate(ctx, p2work.buffer, length);
+    return TRUE;
+}
 #else
 #ifdef SDK_ARM9
 #define PAGE_SIZE 512
@@ -183,6 +192,12 @@ static BOOL CheckValidation(FSFile* fp)
     }
     // ƒnƒbƒVƒ…ŒvŽZ (2) - ‰B•Á‚Í“ï‚µ‚¢‚©
     if ( !DHT_CheckHashPhase2(db->hash[1], &rom_header, &p2work, ReadImage, fp) )
+    {
+        return FALSE;
+    }
+
+    // ƒnƒbƒVƒ…ŒvŽZ (2ex) - ‰B•Á‚Í“ï‚µ‚¢‚©
+    if ( !DHT_CheckHashPhase2Ex(db->hash[1], &rom_header, (DHTPhase2ExWork*)&p2work, ReadImage, ReadImageEx, fp) )
     {
         return FALSE;
     }
