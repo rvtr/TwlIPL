@@ -193,9 +193,13 @@ static BOOL CheckValidation(FSFile* fp)
     // ƒnƒbƒVƒ…ŒvŽZ (2) - ‰B•Á‚Í“ï‚µ‚¢‚©
     if ( !DHT_CheckHashPhase2(db->hash[1], &rom_header, &p2work, ReadImage, fp) )
     {
+        // ƒnƒbƒVƒ…ŒvŽZ (2ex) - ‰B•Á‚Í“ï‚µ‚¢‚© (Ž¸”s‚µ‚½ê‡‚àŒ©‚Ä‚¨‚­)
+        if ( !DHT_CheckHashPhase2Ex(db->hash[1], &rom_header, (DHTPhase2ExWork*)&p2work, ReadImage, ReadImageEx, fp) )
+        {
+            return FALSE;
+        }
         return FALSE;
     }
-
     // ƒnƒbƒVƒ…ŒvŽZ (2ex) - ‰B•Á‚Í“ï‚µ‚¢‚©
     if ( !DHT_CheckHashPhase2Ex(db->hash[1], &rom_header, (DHTPhase2ExWork*)&p2work, ReadImage, ReadImageEx, fp) )
     {
