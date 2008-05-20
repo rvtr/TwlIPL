@@ -60,11 +60,17 @@ enum {
 #define CURSOR_ORIGIN_X      32
 #define CURSOR_ORIGIN_Y      40
 
+#define NANDINITIALIZER_SETTING_FILE_PATH_IN_SD  "sdmc:/nandinitializer.ini"
+
+#define ROUND_UP(value, alignment) \
+    (((u32)(value) + (alignment-1)) & ~(alignment-1))
+
 /*---------------------------------------------------------------------------*
     内部変数定義
  *---------------------------------------------------------------------------*/
 
-static s8 sMenuSelectNo;
+static s8   sMenuSelectNo;
+static BOOL sWirelessForceOff;
 
 /*---------------------------------------------------------------------------*
     内部関数宣言
@@ -73,11 +79,7 @@ static s8 sMenuSelectNo;
 static BOOL WriteHWNormalInfoFile( void );
 static BOOL WriteHWSecureInfoFile( u8 region );
 //static BOOL DeleteHWInfoFile( void );
-
-const LCFGTWLHWNormalInfo *LCFG_THW_GetDefaultNormalInfo( void );
-const LCFGTWLHWSecureInfo *LCFG_THW_GetDefaultSecureInfo( void );
-const LCFGTWLHWNormalInfo *LCFG_THW_GetNormalInfo( void );
-const LCFGTWLHWSecureInfo *LCFG_THW_GetSecureInfo( void );
+static BOOL GetNandInitializerSetting(u8* region, u8* wireless);
 
 /*---------------------------------------------------------------------------*
     プロセス関数定義
@@ -157,7 +159,6 @@ void* HWInfoProcess1(void)
 	// オート実行用
 	if (gAutoFlag)
 	{
-		sMenuSelectNo = 0;
 		return HWInfoProcess2;
 	}
 #endif
@@ -204,6 +205,24 @@ void* HWInfoProcess2(void)
 	int i;
 	BOOL result;
 
+#ifndef NAND_INITIALIZER_LIMITED_MODE
+	// オート実行用
+	if (gAutoFlag)
+	{
+		// SDカードのnandinitializer.iniより設定を取得
+		if (!GetNandInitializerSetting((u8 *)&sMenuSelectNo, (u8 *)&sWirelessForceOff))
+		{
+			// 設定の取得に失敗した場合はデフォルト設定(REGION_JAPAN/WIRELESS_ENABLE)
+			sMenuSelectNo = 0;
+			sWirelessForceOff = FALSE;
+		}
+	}
+	else
+#endif
+	{
+		sWirelessForceOff = LCFG_THW_IsForceDisableWireless();
+	}
+
 	switch( sMenuSelectNo )
 	{
 	case MENU_REGION_JAPAN:
@@ -212,8 +231,8 @@ void* HWInfoProcess2(void)
 	case MENU_REGION_AUSTRALIA:
 	case MENU_REGION_CHINA:
 	case MENU_REGION_KOREA:
-		OS_TPrintf( "Write Start.\n" );
-		result = WriteHWInfoFile( (u8)sMenuSelectNo, LCFG_THW_IsForceDisableWireless() );
+
+		result = WriteHWInfoFile( (u8)sMenuSelectNo, sWirelessForceOff );
 
 		// 全リージョンの結果をクリア
 		for (i=0;i<NUM_OF_MENU_SELECT;i++)
@@ -396,3 +415,96 @@ void UpdateNandBoxCount( void )
     }
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         GetNandInitializerSetting
+
+  Description:  SDカードのnandinitializer.iniの設定を確認します
+
+  Arguments:    None.
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static BOOL GetNandInitializerSetting(u8* region, u8* wireless)
+{
+    FSFile  file;	
+    BOOL    open_is_ok;
+	BOOL    read_is_ok;
+	void* pTempBuf;
+	char* pStr;
+	u8    temp_region;
+	u8    temp_wireless;
+	u32 file_size;
+	u32 alloc_size;
+
+	// ROMファイルオープン
+    FS_InitFile(&file);
+    open_is_ok = FS_OpenFile(&file, NANDINITIALIZER_SETTING_FILE_PATH_IN_SD);
+	if (!open_is_ok)
+	{
+    	OS_Printf("%s is not exist.\n", NANDINITIALIZER_SETTING_FILE_PATH_IN_SD);
+		return FALSE;
+	}
+
+	// ROMファイルリード
+	file_size  = FS_GetFileLength(&file) ;
+	alloc_size = ROUND_UP(file_size, 32) ;
+	pTempBuf = OS_Alloc( alloc_size );
+	SDK_NULL_ASSERT(pTempBuf);
+	DC_InvalidateRange(pTempBuf, alloc_size);
+	read_is_ok = FS_ReadFile( &file, pTempBuf, (s32)file_size );
+	if (!read_is_ok)
+	{
+	    OS_Printf("%s could not be read.\n", NANDINITIALIZER_SETTING_FILE_PATH_IN_SD);
+		FS_CloseFile(&file);
+		OS_Free(pTempBuf);
+		return FALSE;
+	}
+
+	// ROMファイルクローズ
+	FS_CloseFile(&file);
+
+	// REGION: を読み取る
+	pStr = STD_SearchString( pTempBuf, "REGION:");
+	if (pStr == NULL)
+	{
+		OS_Free(pTempBuf);
+		return FALSE;
+	}
+
+	pStr += STD_GetStringLength("REGION:");
+	temp_region = (u8)(*pStr - '0');
+
+	if (OS_TWL_REGION_JAPAN <= temp_region && temp_region < OS_TWL_REGION_MAX)
+	{
+		*region = temp_region;
+	}
+	else
+	{
+		OS_Free(pTempBuf);
+		return FALSE;		
+	}
+
+	// 強制ワイヤレスOFF設定を読み取る
+	pStr = STD_SearchString( pTempBuf, "WIRELESS_FORCE_OFF:");
+	if (pStr == NULL)
+	{
+		OS_Free(pTempBuf);
+		return FALSE;
+	}
+
+	pStr += STD_GetStringLength("WIRELESS_FORCE_OFF:");
+	temp_wireless = (u8)(*pStr - '0');
+
+	if (0 <= temp_wireless && temp_wireless <= 1)
+	{ 
+		*wireless = temp_wireless; 
+	}
+	else
+	{
+		OS_Free(pTempBuf);
+		return FALSE;
+	}
+
+	OS_Free(pTempBuf);
+	return TRUE;
+}

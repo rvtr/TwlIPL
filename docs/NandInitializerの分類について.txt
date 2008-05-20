@@ -55,6 +55,14 @@
 4. IMPORT TAD FROM SD      -> OVERWRITE ALL
 5. IMPORT NANDFIRM FROM SD -> 最初に見つけた*.nandファイル
 
+★ SDカードのルートにnandinitializer.iniというファイルを用意することで
+   初期化する際の Region と ワイヤレス設定を指定することができます。
+   nandinitializer.ini のフォーマットは以下のとおりです。
+
+--- ここから ----
+REGION:0               //(0:JAPAN, 1:AMERICA, 2:EUROPE, 3:AUSTRALIA, 4:CHINA, 5:KOREA)
+WIRELESS_FORCE_OFF:0   //(0:Wireless Enable, 1:Wireless Disable)
+--- ここまで ----
 
 ～～～ NandInitializer ～～～
 
