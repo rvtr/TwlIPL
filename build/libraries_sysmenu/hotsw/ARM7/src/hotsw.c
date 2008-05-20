@@ -31,8 +31,8 @@
 //#define HOWSW_ENABLE_DEEP_SLEEP_WHILE_INSERT_CARD
 
 // define -------------------------------------------------------------------
-#define     CHATTERING_COUNTER                  0x1988      // 100ms分 (0x1988 * 15.3us = 100000us)
-#define     COUNTER_A                           0x51C       //  20ms分 ( 0x51C * 15.3us =  20012us)
+#define     CHATTERING_COUNTER                  0x264c      // 150ms分 (0x264C * 15.3us = 150001us)
+#define     COUNTER_A                           0x1988      // 100ms分 (0x1988 * 15.3us = 100000us)
 
 #define     CARD_EXIST_CHECK_INTERVAL           100
 
@@ -92,7 +92,7 @@ static void ClearCardFlgs(void);
 
 static void FinalizeHotSw(HotSwApliType type);
 static BOOL ChangeGameMode(void);
-static void ClearUnnecessaryCardRegister(void);
+static void ClearCardIrq(void);
 static void ClearAllCardRegister(void);
 
 static HotSwState LoadCardData(void);
@@ -1568,26 +1568,24 @@ static void McPowerOn(void)
     }
 
     if(GetMcSlotMode() == SLOT_STATUS_MODE_00){
-        // [TODO:]待ち時間は暫定値。金子さんに数値を測定してもらう。
-        // VDDの安定期間待ち
-        OS_Sleep(100);
-
+		// 3DMのリセット待ち
+        OS_Sleep(1);
+        
         // SCFG_MC1 の Slot Status の M1,M0 を 01 にする
         SetMcSlotMode(SLOT_STATUS_MODE_01);
-        // 10ms待ち
+
+        // VDDの安定期間待ち
         OS_Sleep(10);
 
         // SCFG_MC1 の Slot Status の M1,M0 を 10 にする
         SetMcSlotMode(SLOT_STATUS_MODE_10);
 
-        // [TODO:]待ち時間は暫定値。金子さんに数値を測定してもらう。
         // RESBを上げるまでの待ち時間
-        OS_Sleep(1);
+        OS_Sleep(27);
 
         // リセットをhighに (RESB = 1にする)
         reg_HOTSW_MCCNT1 = RESB_MASK;
 
-        // [TODO:]待ち時間は暫定値。金子さんに数値を測定してもらう。
         // カードへ最初のコマンドを送るまでの待ち時間
         OS_Sleep(120);
     }
@@ -1905,7 +1903,7 @@ static void FinalizeHotSw(HotSwApliType type)
     OS_KillThread( &HotSwThreadData.monitorThread, NULL );
 
     if(type == HOTSW_APLITYPE_CARD){
-        ClearUnnecessaryCardRegister();
+        ClearCardIrq();
         goto final;
     }
 
@@ -1964,8 +1962,7 @@ static void FinalizeHotSw(HotSwApliType type)
         break;
     }
 
-    // 必要なレジスタ以外クリア
-    ClearUnnecessaryCardRegister();
+    ClearCardIrq();
 
 final:
     // 終了完了通知
@@ -2086,19 +2083,19 @@ static void SendPxiMessage(HotSwCallBackType type)
 
 
 /*---------------------------------------------------------------------------*
-  Name:        ClearUnnecessaryCardRegister
+  Name:        ClearCardIrq
 
-  Description: カード関連の不要なレジスタをクリアする
+  Description: カード関連の割り込みをクリアする
  *---------------------------------------------------------------------------*/
 #define REGCLEAR_16     0x0000
 #define REGCLEAR_32     0x00000000UL
 
-static void ClearUnnecessaryCardRegister(void)
+static void ClearCardIrq(void)
 {
     // HotSwで使っている割り込みを無効にする
     (void)OS_DisableIrq();
-    (void)OS_SetIrqMask( OS_GetIrqMask() & ~(HOTSW_IF_CARD_DET | HOTSW_IF_CARD_IREQ) );
-    (void)OS_ResetRequestIrqMask( HOTSW_IF_CARD_DET | HOTSW_IF_CARD_IREQ );
+    (void)OS_SetIrqMask( OS_GetIrqMask() & ~HOTSW_IF_CARD_DET );
+    (void)OS_ResetRequestIrqMask( HOTSW_IF_CARD_DET );
     (void)OS_EnableIrq();
 }
 
@@ -2110,7 +2107,7 @@ static void ClearUnnecessaryCardRegister(void)
  *---------------------------------------------------------------------------*/
 static void ClearAllCardRegister(void)
 {
-    ClearUnnecessaryCardRegister();
+    ClearCardIrq();
 
     // コマンド設定レジスタをクリア [各32bit]
     reg_HOTSW_MCCMD0 = REGCLEAR_32;
