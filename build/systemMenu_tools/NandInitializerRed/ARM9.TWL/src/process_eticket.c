@@ -207,7 +207,10 @@ static BOOL MakeETicketFile(void)
 	u32 file_size;
 	u32 alloc_size;
 	BOOL result = TRUE;
-
+	
+	// 2008/5/20 ‚à‚¤CERT‚Í‘‚©‚È‚¢B
+	return TRUE;
+	
 	// F:sys/cert.sys‚ªŠù‚É‘¶İ‚·‚é‚È‚ç‰½‚à‚µ‚È‚¢
     fat_handle = FATFS_OpenFile(E_TICKET_FILE_PATH_IN_NAND, "r");
     if (fat_handle)

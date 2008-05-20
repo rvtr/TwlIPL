@@ -138,10 +138,12 @@ static void* ImportAllNonexistentProcess3(void);
 
 void* ImportProcess0(void)
 {
-    FATFSFileHandle fat_handle;
     FSFile    dir;
 	int i;
 
+	// 2008/05/20 もうcert.sysは必要なし。
+#if 0
+    FATFSFileHandle fat_handle;
 	// F:sys/cert.sysが存在しないなら出直してもらう
     fat_handle = FATFS_OpenFile(E_TICKET_FILE_PATH_IN_NAND, "r");
     if (!fat_handle)
@@ -150,7 +152,8 @@ void* ImportProcess0(void)
 		return ImportProcessReturn0;
     }
 	FATFS_CloseFile(fat_handle);
-
+#endif
+	
 	// 文字列全クリア
 	kamiFontClear();
 
