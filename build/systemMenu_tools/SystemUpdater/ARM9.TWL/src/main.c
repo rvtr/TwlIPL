@@ -70,12 +70,12 @@ static const char* ImportTadFileList[] =
 	"rom:/data/HNBA.tad",
 	"rom:/data/HNCA.tad"
 };
-
+/*
 static const CopyFileList sCopyFileList[] =
 {
 	{ "rom:/data/TWLFontTable.dat", "nand:sys/TWLFontTable.dat" }
 };
-
+*/
 /*---------------------------------------------------------------------------*
     内部変数定義
  *---------------------------------------------------------------------------*/
@@ -240,7 +240,7 @@ TwlMain()
 		result = FALSE;
 		kamiFontPrintf( 0, printLine++, FONT_COLOR_RED, "Write Hardware Info Failure!");			
 	}
-
+/*
 	// 必要なファイルの書き込み
 	for (i=0;i<sizeof(sCopyFileList)/sizeof(sCopyFileList[0]);i++)
 	{
@@ -254,7 +254,7 @@ TwlMain()
 			kamiFontPrintf( 0, printLine++, FONT_COLOR_RED, "Write Data File %d Failure!", i);
 		}
 	}
-
+*/
 	// TADのインポート開始
 	tadNum = sizeof(ImportTadFileList)/sizeof(ImportTadFileList[0]);
 
