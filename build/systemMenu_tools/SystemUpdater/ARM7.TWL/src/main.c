@@ -84,7 +84,6 @@ static s32          CheckCorrectNCDEx(NVRAMConfigEx* ncdsp);
 static s32          CheckCorrectNCD(NVRAMConfig* ncdsp);
 #endif
 static void         VBlankIntr(void);
-static void AttachAES(void);
 
 /*---------------------------------------------------------------------------*
   Name:         TwlSpMain
@@ -116,9 +115,6 @@ TwlSpMain(void)
     (void)GX_VBlankIntr(TRUE);
     (void)OS_EnableIrq();
     (void)OS_EnableInterrupts();
-
-    // 強制AESモード
-    AttachAES();
 
     /* 各ライブラリ初期化 */
     AES_Init();                                 // AES
@@ -676,21 +672,3 @@ VBlankIntr(void)
         PM_SelfBlinkProc();
     }
 }
-
-/*---------------------------------------------------------------------------*
-  Name:         AttachAES
-
-  Description:  強制的にAESマウントするようにします。
-
-  Arguments:    None.
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-extern BOOL sdmc_aes_attach_for_nand;   // 強制AESマウント用
-
-static void AttachAES(void)
-{
-    // 強制AESマウント
-    sdmc_aes_attach_for_nand = TRUE;
-}
-
