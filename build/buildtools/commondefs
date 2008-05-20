@@ -36,7 +36,7 @@ else
 TWL_KEYSDIR	:= $(TWL_IPL_RED_PRIVATE_ROOT)/keys
 endif
 
-MAKEROM_FLAGS += -a
+#MAKEROM_FLAGS += -a
 
 #----------------------------------------------------------------------------
 endif	# TWL_IPL_COMMONDEFS_
