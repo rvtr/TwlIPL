@@ -636,7 +636,6 @@ static BOOL isTwlModeLoad(void)
             // PlatformCodeがTwl or Hybridの場合
             if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
                 OS_PutString("NTR Card : TWL Application   Error Illegal Card\n");
-                s_cbData.illegalCardFlg = TRUE;
                 return FALSE;
             }
             else{
@@ -1706,7 +1705,6 @@ static void HotSwThread(void *arg)
 
     HotSwState      		retval;
     HotSwMessageForArm7		*msg;
-    BOOL            		breakFlg;
 
     while(1){
         OS_ReceiveMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
@@ -1752,22 +1750,21 @@ static void HotSwThread(void *arg)
             if(HOTSW_IsCardExist()){
                 if(!s_isPulledOut){
                     if(GetMcSlotMode() == SLOT_STATUS_MODE_10){
-                        if(!s_cbData.illegalCardFlg){
-                            LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+						LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 
-                            SYSMi_GetWork()->flags.hotsw.isExistCard         = TRUE;
-                            SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
-                            SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = TRUE;
-                            SYSMi_GetWork()->nCardID = s_cbData.id_gam;
+                        SYSMi_GetWork()->flags.hotsw.isExistCard         = TRUE;
+                        SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
+                        SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = TRUE;
+                        SYSMi_GetWork()->nCardID = s_cbData.id_gam;
 #ifdef USE_WRAM_LOAD
-                            SYSMi_GetWork()->flags.hotsw.isCardGameMode      = TRUE;
+                        SYSMi_GetWork()->flags.hotsw.isCardGameMode      = TRUE;
 #endif
-                            UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+                        UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 #ifdef USE_WRAM_LOAD
-							SendPxiMessage(HOTSW_CHANGE_GAMEMODE);
+						SendPxiMessage(HOTSW_CHANGE_GAMEMODE);
 #endif
-                            OS_PutString("ok!\n");
-                        }
+                        OS_PutString("ok!\n");
+
                         break;
                     }
                 }
@@ -1776,45 +1773,15 @@ static void HotSwThread(void *arg)
 
                 DebugPrintErrorMessage(retval);
 
-                breakFlg = FALSE;
-
-                // [TODO] エラー処理見直し
-                switch(retval){
-                  // 成功してたらなにもせずにぬける
-                  case HOTSW_SUCCESS:
-                    break;
-
-                  // カードデータリード中に抜け
-                  case HOTSW_PULLED_OUT_ERROR:
-                    ClearCardFlgs();
-                    s_isPulledOut = TRUE;
-                    breakFlg = TRUE;
-                    break;
-
-                  // どのモードでも起こるエラー
-                  case HOTSW_ID_CHECK_ERROR:
-                  case HOTSW_CRC_CHECK_ERROR:
-                    McPowerOff();
-                    ClearCardFlgs();
-                    s_isPulledOut = TRUE;
-                    breakFlg = TRUE;
-                    break;
-
-                  // Gameモードで起こるエラー
-                  case HOTSW_HASH_CHECK_ERROR:
-                  case HOTSW_BUFFER_OVERRUN_ERROR:
-                  case HOTSW_DATA_DECRYPT_ERROR:
-                    ClearCardFlgs();
-                    s_cbData.illegalCardFlg = TRUE;
-
-                    break;
-                }
-
-                if(breakFlg){
-                    break;
-                }
-
                 s_isPulledOut = FALSE;
+                
+                // エラー処理
+                if(retval != HOTSW_SUCCESS){
+                    ClearCardFlgs();
+                    McPowerOff();
+
+                    break;
+                }
             }
 
             // カードが抜けてたら

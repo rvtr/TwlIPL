@@ -287,7 +287,6 @@ typedef struct CardBootData{
     
     BOOL                twlFlg;
     BOOL                debuggerFlg;
-	BOOL				illegalCardFlg;
     BOOL				isLoadTypeTwl;
     
     u32                 romStatus;
