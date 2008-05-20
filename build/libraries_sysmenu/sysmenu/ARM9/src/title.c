@@ -803,8 +803,8 @@ BOOL SYSM_IsLoadTitleFinished( void )
 //
 // ============================================================================
 
-// TWLアプリおよびNTR拡張NANDアプリ共通のヘッダ認証処理
-static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle, ROM_Header *head )
+// 署名つきアプリ（≠DSダウンロードアプリ署名）共通のヘッダ認証処理
+static AuthResult SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, ROM_Header *head )
 {
 	// 署名処理
 	const u8 *key;
@@ -818,6 +818,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle, ROM_He
 	start = OS_GetTick();
 	
 	// pBootTitle->titleIDとROMヘッダのtitleIDの一致確認をする。
+	// [TODO:]ホワイトリストマスタリングされたNTRアプリで行わない場合はSYSMi_AuthenticateTWLHeaderへ移動
 	if( pBootTitle->titleID != head->s.titleID )
 	{
 		//TWL対応ROMで、ヘッダのtitleIDが起動指定されたIDと違う
@@ -907,7 +908,21 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle, ROM_He
 	return AUTH_RESULT_SUCCEEDED;
 }
 
-// TWLアプリおよびNTR拡張NANDアプリ共通の認証
+// TWLアプリ、NTR拡張NANDアプリ 共通のヘッダ認証処理
+static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle, ROM_Header *head )
+{
+	if( head->s.enable_signature )
+	{
+		return SYSMi_AuthenticateHeaderWithSign( pBootTitle, head );
+	}else
+	{
+		// 署名有効フラグが立っていなければFAILED
+		OS_TPrintf("Authenticate_Header failed: Sign check flag is OFF.\n");
+		return AUTH_RESULT_AUTHENTICATE_FAILED;
+	}
+}
+
+// TWLアプリ、NTR拡張NANDアプリ 共通の認証
 static AuthResult SYSMi_AuthenticateTWLTitle( TitleProperty *pBootTitle )
 {
 	ROM_Header *head;
@@ -1084,16 +1099,40 @@ static AuthResult SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
 // NTR版カードアプリのヘッダ認証処理
 static AuthResult SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_Header *head )
 {
-#pragma unused(pBootTitle,head)
-	// [TODO:]NTRカード ホワイトリストorホワイトリスト署名チェック
-	return AUTH_RESULT_SUCCEEDED;
+	AuthResult ret;
+	if( head->s.enable_nitro_whitelist_signature )
+	{
+		// マスタリング済みNTRカードアプリの署名チェック（実はTWLアプリと同じ）
+		ret = SYSMi_AuthenticateHeaderWithSign( pBootTitle, head );
+		if( ret == AUTH_RESULT_SUCCEEDED )
+		{
+#ifdef DHT_TEST
+			// [TODO:]retを捕まえてOKならhash値をstatic変数に保存しておき、DHTのphase1とphase2で使う
+#endif
+		}
+	}else
+	{
+		// [TODO:]NTRカード ホワイトリスト検索
+		// ホワイトリスト検索
+		ret = AUTH_RESULT_SUCCEEDED;
+		if( ret == AUTH_RESULT_SUCCEEDED )
+		{
+#ifdef DHT_TEST
+			// [TODO:]retを捕まえてOKならhash値をstatic変数に保存しておき、DHTのphase1とphase2で使う
+#endif
+		}
+	}
+	return ret;
 }
 
 // NTR版カードアプリの認証
 static AuthResult SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 {
 #pragma unused(pBootTitle)
-	// [TODO:]DHTチェック
+	// [TODO:]DHTチェックphase2（phase1はstaticの読み込み時に平行処理）
+#ifdef DHT_TEST
+	
+#endif
 	return AUTH_RESULT_SUCCEEDED;
 }
 
@@ -1102,7 +1141,6 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle, ROM_Heade
 {
 	ROM_Header_Short *hs = ( ROM_Header_Short *)head;
 	// [TODO:]認証結果はどこかワークに保存しておく？
-	// [TODO:]署名チェックを行う場合、ヘッダに署名ビットがあるはずなので、それを確認して署名チェックを行う
 	if( hs->platform_code & PLATFORM_CODE_FLAG_TWL )
 	{
 		// TWLアプリ
@@ -1163,7 +1201,6 @@ static AuthResult SYSMi_AuthenticateTitleCore( TitleProperty *pBootTitle)
 {
 	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
 	// [TODO:]認証結果はどこかワークに保存しておく？
-	// [TODO:]署名チェックを行う場合、ヘッダに署名ビットがあるはずなので、それを確認して署名チェックを行う
 	if( hs->platform_code & PLATFORM_CODE_FLAG_TWL )
 	{
 		// TWLアプリ
