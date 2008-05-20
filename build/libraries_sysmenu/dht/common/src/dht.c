@@ -51,10 +51,10 @@ static const u8 g_pubkey_DER[ 0xa2 ] = {
 
 static const u8 hmac_key[] = DHT_HMAC_KEY;
 
-static  DHTReadFunc     ReadFunc;
-static  void*           readArg;
-static  DHTPhase2Work*  p2work;
-static  int             fatPage;
+static DHTReadFunc  imageReadFunc;
+static void*        imageBuffer;
+static u8*          fatCache;
+static int          fatPage;
 
 /*
     自家製bsearch
@@ -238,7 +238,7 @@ void DHT_CheckHashPhase1Update(SVCHMACSHA1Context* ctx, const void* ptr, s32 len
     PROFILE_INIT();
     PROFILE_COUNT();
     // ARM9 or ARM7 static
-    if ( length > 0)
+    if ( length > 0 )
     {
         SVC_HMACSHA1Update(ctx, ptr, (u32)length);
     }
@@ -299,25 +299,25 @@ BOOL DHT_CheckHashPhase1(const u8* hash, const ROM_Header_Short* pROMHeader, con
 ハッシュ計算 (2)
 対象領域の読み込みとチェックを行う
 */
-static BOOL ImageHMACSHA1Update(SVCHMACSHA1Context* ctx, s32 offset, s32 length)
+static BOOL ImageHMACSHA1Update(SVCHMACSHA1Context* ctx, s32 offset, s32 length, void* arg)
 {
-    if ( !p2work )
+    if ( !imageBuffer || !imageReadFunc )
     {
         return FALSE;
     }
-    if ( !ReadFunc(p2work->buffer, offset, length, readArg) )
+    if ( !imageReadFunc(imageBuffer, offset, length, arg) )
     {
         return FALSE;
     }
-    SVC_HMACSHA1Update(ctx, p2work->buffer, (u32)length);
+    SVC_HMACSHA1Update(ctx, imageBuffer, (u32)length);
     return TRUE;
 }
 
-static BOOL GetOverlayInfo(int no, int fat_offset, int* pOffset, int* pLength)
+static BOOL GetOverlayInfo(int no, int fat_offset, int* pOffset, int* pLength, DHTReadFunc func, void* arg)
 {
     ROM_FAT *fat;
     int page = (fat_offset + no * (s32)sizeof(ROM_FAT)) / DHT_FAT_PAGE_SIZE;
-    if ( !p2work )
+    if ( !fatCache )
     {
         return FALSE;
     }
@@ -325,22 +325,22 @@ static BOOL GetOverlayInfo(int no, int fat_offset, int* pOffset, int* pLength)
     {
         if ( fatPage + 1 == page )    // 1ページはキャッシュ済み
         {
-            MI_CpuCopy8( &p2work->fatCache[DHT_FAT_PAGE_SIZE], &p2work->fatCache[0], DHT_FAT_PAGE_SIZE );
-            if ( !ReadFunc(&p2work->fatCache[DHT_FAT_PAGE_SIZE], (page+1) * DHT_FAT_PAGE_SIZE, DHT_FAT_PAGE_SIZE, readArg) )
+            MI_CpuCopy8( &fatCache[DHT_FAT_PAGE_SIZE], &fatCache[0], DHT_FAT_PAGE_SIZE );
+            if ( !func(&fatCache[DHT_FAT_PAGE_SIZE], (page+1) * DHT_FAT_PAGE_SIZE, DHT_FAT_PAGE_SIZE, arg) )
             {
                 return FALSE;
             }
         }
         else    // 通常は2ページ読み
         {
-            if ( !ReadFunc(p2work->fatCache, page * DHT_FAT_PAGE_SIZE, DHT_FAT_CACHE_SIZE, readArg) )
+            if ( !func(fatCache, page * DHT_FAT_PAGE_SIZE, DHT_FAT_CACHE_SIZE, arg) )
             {
                 return FALSE;
             }
         }
         fatPage = page;
     }
-    fat = (ROM_FAT*)(p2work->fatCache + fat_offset + no * sizeof(ROM_FAT) - page * DHT_FAT_PAGE_SIZE);
+    fat = (ROM_FAT*)(fatCache + fat_offset + no * sizeof(ROM_FAT) - page * DHT_FAT_PAGE_SIZE);
     if ( pOffset )
     {
         *pOffset = (s32)fat->top.offset;
@@ -354,107 +354,10 @@ static BOOL GetOverlayInfo(int no, int fat_offset, int* pOffset, int* pLength)
 
 BOOL DHT_CheckHashPhase2(const u8* hash, const ROM_Header_Short* pROMHeader, DHTPhase2Work* work, DHTReadFunc func, void* arg)
 {
-    int overlay_nums = (int)(pROMHeader->main_ovt_size / sizeof(ROM_OVT));
-    u8 md[20];
-    PROFILE_INIT();
-
-    if ( overlay_nums )
-    {
-        SVCHMACSHA1Context ctx;
-        int total_sectors;
-        int i;
-
-        if ( !func || !work )
-        {
-            return FALSE;
-        }
-        ReadFunc    = func;
-        readArg     = arg;
-        p2work      = work;
-        fatPage     = -2;   // default value = out of range
-
-        // 準備
-        PROFILE_COUNT();
-        SVC_HMACSHA1Init(&ctx, hmac_key, sizeof(hmac_key));
-        // OVT
-        PROFILE_COUNT();
-        if ( !ImageHMACSHA1Update(&ctx, (s32)pROMHeader->main_ovt_offset, (s32)pROMHeader->main_ovt_size) )
-        {
-            OS_TPrintf("Cannot calc HMAC-SHA1 for OVT.\n");
-            return FALSE;
-        }
-        // FAT
-        PROFILE_COUNT();
-        if ( !ImageHMACSHA1Update(&ctx, (s32)pROMHeader->fat_offset, overlay_nums * (s32)sizeof(ROM_FAT)) )
-        {
-            OS_TPrintf("Cannot calc HMAC-SHA1 for %d of FAT.\n", overlay_nums);
-            return FALSE;
-        }
-        // 各オーバーレイ
-        PROFILE_COUNT();
-        total_sectors = 0;
-        for (i = 0; i < overlay_nums; i++)
-        {
-            int max_sectors = (DHT_OVERLAY_MAX/512 - total_sectors) / (overlay_nums - i);
-            int offset;
-            int length;
-            if ( !GetOverlayInfo(i, (s32)pROMHeader->fat_offset, &offset, &length) )
-            {
-                OS_TPrintf("Cannot get %d of overlay info.\n", i);
-                return FALSE;
-            }
-            length = (length + 511) / 512;  // bytes -> sectors
-            if ( length > max_sectors )
-            {
-                length = max_sectors;
-            }
-            if ( length < 0 || offset < sizeof(ROM_Header) )
-            {
-                OS_TPrintf("Broken FAT for %d of overlay.\n", i);
-                return FALSE;
-            }
-            if ( !ImageHMACSHA1Update(&ctx, offset, length * 512) )
-            {
-                OS_TPrintf("Cannot calc HMAC-SHA1 for %d of overlay.\n", i);
-                return FALSE;
-            }
-            total_sectors += length;
-        }
-        // 検証
-        PROFILE_COUNT();
-        SVC_HMACSHA1GetHash(&ctx, md);
-    }
-    else
-    {
-        PROFILE_COUNT();
-        PROFILE_COUNT();
-        PROFILE_COUNT();
-        PROFILE_COUNT();
-        PROFILE_COUNT();
-        MI_CpuClear8(md, sizeof(md));
-    }
-    if ( !SVC_CompareSHA1(md, hash) )
-    {
-        OS_TPrintf("\n");
-        OS_TPrintfEx("DB   = % 20B\n", hash);
-        OS_TPrintfEx("HASH = % 20B\n", md);
-        OS_TPrintf("%s: hash[1] is not valid.\n", __func__);
-        return FALSE;
-    }
-    // 結果報告
-#ifdef PRINT_PROFILE
-    PROFILE_COUNT();
-    OS_TPrintf("\nDone to check the hash (phase 2).\n");
-    OS_TPrintf("%10d msec for preparing hash.\n",   (int)OS_TicksToMilliSeconds(profile[1]-profile[0]));
-    OS_TPrintf("%10d msec for scanning OVT.\n",     (int)OS_TicksToMilliSeconds(profile[2]-profile[1]));
-    OS_TPrintf("%10d msec for scanning FAT.\n",     (int)OS_TicksToMilliSeconds(profile[3]-profile[2]));
-    OS_TPrintf("%10d msec for scanning every overlays.\n",  (int)OS_TicksToMilliSeconds(profile[4]-profile[3]));
-    OS_TPrintf("%10d msec for comparing hash.\n",   (int)OS_TicksToMilliSeconds(profile[5]-profile[4]));
-    OS_TPrintf("\nTotal: %10d msec.\n",     (int)OS_TicksToMilliSeconds(profile[5]-profile[0]));
-#endif
-    return TRUE;
+    imageBuffer = work->buffer;
+    imageReadFunc = func;
+    return DHT_CheckHashPhase2Ex(hash, pROMHeader, (DHTPhase2ExWork*)work->fatCache, func, ImageHMACSHA1Update, arg);
 }
-
 
 BOOL DHT_CheckHashPhase2Ex(const u8* hash, const ROM_Header_Short* pROMHeader, DHTPhase2ExWork* work, DHTReadFunc func, DHTReadFuncEx funcEx, void* arg)
 {
@@ -468,13 +371,11 @@ BOOL DHT_CheckHashPhase2Ex(const u8* hash, const ROM_Header_Short* pROMHeader, D
         int total_sectors;
         int i;
 
-        if ( !func || !work )
+        if ( !func || !funcEx || !work )
         {
             return FALSE;
         }
-        ReadFunc    = func;
-        readArg     = arg;
-        p2work      = (DHTPhase2Work*)work; // メモリリーク注意！
+        fatCache    = work->fatCache;
         fatPage     = -2;   // default value = out of range
 
         // 準備
@@ -502,7 +403,7 @@ BOOL DHT_CheckHashPhase2Ex(const u8* hash, const ROM_Header_Short* pROMHeader, D
             int max_sectors = (DHT_OVERLAY_MAX/512 - total_sectors) / (overlay_nums - i);
             int offset;
             int length;
-            if ( !GetOverlayInfo(i, (s32)pROMHeader->fat_offset, &offset, &length) )
+            if ( !GetOverlayInfo(i, (s32)pROMHeader->fat_offset, &offset, &length, func, arg) )
             {
                 OS_TPrintf("Cannot get %d of overlay info.\n", i);
                 return FALSE;
@@ -562,7 +463,7 @@ BOOL DHT_CheckHashPhase2Ex(const u8* hash, const ROM_Header_Short* pROMHeader, D
 void DHT_CheckHashPhase2ExUpdate(SVCHMACSHA1Context* ctx, const void* ptr, s32 length)
 {
     // ARM9 or ARM7 static
-    if ( length > 0)
+    if ( length > 0 )
     {
         SVC_HMACSHA1Update(ctx, ptr, (u32)length);
     }
