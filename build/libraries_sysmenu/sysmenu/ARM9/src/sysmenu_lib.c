@@ -248,7 +248,7 @@ TitleProperty *SYSM_ReadParameters( void )
 		// ホットスタート時は、基本ロゴデモスキップ
 		SYSM_SetLogoDemoSkip( TRUE );
 		
-		if( LCFG_TSD_GetLastTimeBootSoftPlatform() == PLATFORM_CODE_NTR ) {
+		if( !SYSM_IsRunOnDebugger() && LCFG_TSD_GetLastTimeBootSoftPlatform() == PLATFORM_CODE_NTR ) {
 		    // 前回ブートがNTRなら、ランチャーパラメータ無効
 			SYSMi_GetWork()->flags.common.isValidLauncherParam = 0;
 			MI_CpuClear32( &SYSMi_GetWork()->launcherParam, sizeof(LauncherParam) );

@@ -1035,10 +1035,6 @@ static AuthResult SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
 		u8 buf[0x80];
 		SVCSignHeapContext con;
 		u8 final_hash[SVC_SHA1_DIGEST_SIZE];
-		u32 *module_addr[RELOCATE_INFO_NUM];
-		u32 module_size[RELOCATE_INFO_NUM];
-		u8 *hash_addr[RELOCATE_INFO_NUM];
-		int module_num;
 
 		// [TODO:]pBootTitle->titleIDと、それにこじつけたNTRヘッダのなんらかのデータとの一致確認をする。
 
@@ -1057,15 +1053,7 @@ static AuthResult SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
 			return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}
 		
-		// それぞれARM9,7のFLXについてハッシュを計算して、それら3つを並べたものに対してまたハッシュをとる
-		module_addr[ARM9_STATIC] = head->s.main_ram_address;
-		module_addr[ARM7_STATIC] = head->s.sub_ram_address;
-		module_size[ARM9_STATIC] = head->s.main_size;
-		module_size[ARM7_STATIC] = head->s.sub_size;
-		hash_addr[ARM9_STATIC] = &(head->s.main_static_digest[0]);
-		hash_addr[ARM7_STATIC] = &(head->s.sub_static_digest[0]);
-		module_num = 2;
-
+		// それぞれheader,ARM9FLX,ARM7FLXについてハッシュを計算して、それら3つを並べたものに対してまたハッシュをとる
 		if(s_calc_hash)
 		{
 			// シリアルナンバー付加
@@ -1309,7 +1297,7 @@ AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 	}
 	
 	// 製品本体のみTWL設定データにブートするタイトルのTitleIDとplatformCodeを保存。
-    if( SCFG_GetBondingOption() == 0 ) {
+    if( !SYSM_IsRunOnDebugger() ) {
 		u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
 		if( pBuffer != NULL ) {
 			LCFG_TSD_SetLastTimeBootSoftTitleID ( pBootTitle->titleID );
