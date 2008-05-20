@@ -47,7 +47,6 @@ CCFLAGS_OPT		=	-O4 -inline off
 
 #----------------------------------------------------------------------------
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
-include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 
 GLIBRARIES		:= $(filter-out $(CRT0_O),$(GLIBRARIES))
 
@@ -91,12 +90,18 @@ INSTALL_DIR		=	$(TWL_INSTALL_COMPONENTSDIR)/$(TARGET_NAME)/$(TWL_BUILDTYPE)
 LINCLUDES		= 	$(ROOT)/build/libraries/spi/ARM7/include \
 					$(ROOT)/build/libraries/spi/ARM7/pm/include \
 					$(ROOT)/build/libraries/init/common/include \
+					$(ROOT)/build/libraries/reboot/common/include \
 					$(SYSMENU_ROOT)/build/libraries_sysmenu/sysmenu/common/include
+
 LLIBRARY_DIRS	+=	./
-LLIBRARIES		+= libwl_sp.TWL.LTD.a \
-				   libaes_sp.firm.LTD.a \
-				   libsea_sp.TWL.LTD.a
+
+LLIBRARIES		+=	libwl_sp.TWL.LTD.a \
+					libaes_sp.firm.LTD.a \
+					libsea_sp.TWL.LTD.a \
+					libreboot_sp$(TWL_LIBSUFFIX).a
+
 LDEPENDS_NEF	= $(TWL_LIBS) $(LLIBRARIES)
+
 
 do-build:	$(TARGETS)
 

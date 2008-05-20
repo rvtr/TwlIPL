@@ -111,8 +111,11 @@ BOOL BOOT_WaitStart( void )
 		// 起動アプリNTR-ROMヘッダへのパッチ処理のためコピー
 		MI_CpuCopyFast( th, dh, HW_CARD_ROM_HEADER_SIZE );
 
-		// カードNTR-ROMヘッダをNANDアプリやマルチブートのためコピー
+		// カードNTR-ROMヘッダをNANDアプリやDSダウンロードプレイのためコピー
 		MI_CpuCopyFast( (void*)SYSM_CARD_ROM_HEADER_BAK, (void*)HW_CARD_ROM_HEADER, HW_CARD_ROM_HEADER_SIZE );
+
+		// この処理は、DSダウンロードプレイ側で行う。
+		// MI_CpuCopyFast ( (void *)HW_CARD_ROM_HEADER, (void *)MB_CARD_ROM_HEADER_ADDRESS, 0x160);
 
 		// ブラックリストをチェックし、起動制限をかける
 		BOOTi_CheckTitleBlackList( (void*)th );

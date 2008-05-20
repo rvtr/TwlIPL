@@ -19,11 +19,11 @@
 
 # ※コンパイルスイッチの都合上、../../../libraries_sysmenu/sysmenu　は有効にしておく
 SUBDIRS					=	\
-							../../../libraries_sysmenu/sysmenu \
-							../../../libraries_sysmenu/boot \
-							../../../components/hyena.TWL \
-							../../../libraries_sysmenu/hotsw \
-							../../../libraries_sysmenu/sharedFont \
+#							../../../libraries_sysmenu/sysmenu \
+#							../../../libraries_sysmenu/boot \
+#							../../../components/hyena.TWL \
+#							../../../libraries_sysmenu/hotsw \
+#							../../../libraries_sysmenu/sharedFont \
 #							../../../libraries_sysmenu/reloc_info \
 #							../../../libraries_sysmenu/mcu \
 #							../../../libraries_sysmenu/ds \
@@ -83,8 +83,9 @@ SRCS					=	main.c launcher.c sound.c bannerCounter.c loadWlanFirm.c loadSharedFo
 
 LINCLUDES				=	$(MISC_DIR)/include \
 							$(SRCDIR)/$(LOGO_DIR) \
-							$(TWLSDK_ROOT)/build/libraries/wm/common.TWL/inc \
-							$(TWLSDK_ROOT)/build/libraries/wm/ARM9.TWL/nwm/inc
+							$(ROOT)/build/libraries/wm/common.TWL/inc \
+							$(ROOT)/build/libraries/wm/ARM9.TWL/nwm/inc \
+							$(ROOT)/build/libraries/reboot/common/include
 
 LLIBRARIES				+=	libes$(TWL_LIBSUFFIX).a		\
 							libboc$(TWL_LIBSUFFIX).a	\
@@ -96,12 +97,20 @@ LLIBRARIES				+=	libes$(TWL_LIBSUFFIX).a		\
 							libsharedfont_launcher$(TWL_LIBSUFFIX).a \
 							WDS$(TWL_LIBSUFFIX).a
 
+REBOOT_LIB				=	libreboot$(TWL_LIBSUFFIX).a
+
+LDEPENDS_NEF			+=	$(REBOOT_LIB)
+
 ADDRESS_DTCM			=	0x0e000000
 
 DEFAULT_COMP_ARM7		=	hyena
 
+
 #----------------------------------------------------------------------------
 # Append Flags
+
+
+MAKELCF_FLAGS			+=	-DREBOOT_LIB='$(REBOOT_LIB)'
 
 MAKEROM_FLAGS			+=	-F \
 							-DTITLEID_LO='$(TITLEID_LO)' \
@@ -144,7 +153,7 @@ endif
 #----------------------------------------------------------------------------
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
-include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
+
 
 # ローカルでビルドしたlibsharedfont_launcherを使用するので、SDKのlibsharedfontは除外する。
 GLIBRARIES		:= $(filter-out libsharedfont$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
