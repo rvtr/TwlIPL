@@ -24,19 +24,52 @@
 #define DHT_FAT_PAGE_SIZE   512
 #define DHT_FAT_CACHE_SIZE  (DHT_FAT_PAGE_SIZE * 2)
 
+/*
+    DHT_CheckHashPhase2で必要なワークメモリ
+*/
 typedef struct DHTPhase2Work
 {
-    u32 buffer[DHT_OVERLAY_MAX/sizeof(u32)];    // multiple usage
     u8  fatCache[DHT_FAT_CACHE_SIZE];           // for fat cache only
+    u32 buffer[DHT_OVERLAY_MAX/sizeof(u32)];    // multiple usage
 }
 DHTPhase2Work;
+
+/*
+    DHT_CheckHashPhase2Exで必要なワークメモリ
+*/
+typedef struct DHTPhase2ExWork
+{
+    u8  fatCache[DHT_FAT_CACHE_SIZE];           // for fat cache only
+}
+DHTPhase2ExWork;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/*
+    DHT_CheckHashPhase2/DHT_CheckHashPhase2Exで使用するRead関数
+    dest        転送先アドレス
+    offset      転送元ROMオフセット
+    length      転送サイズ
+    arg         アプリケーションから渡された値
+
+    回復不能な内部エラー発生時にはFALSEを返すこと
+*/
 typedef BOOL    (*DHTReadFunc)(void* dest, s32 offset, s32 length, void* arg);
 
+/*
+    DHT_CheckHashPhase2Exで使用するRead関数
+    転送先アドレスは存在せず、代わりに独自バッファに読み込んだ後
+    DHT_CheckHashPhase2ExUpdateを呼び出すこと(細分化可能)
+    ctx         DHT_CheckHashPhase2ExUpdateに渡す引数
+    offset      転送元ROMオフセット
+    length      転送サイズ
+    arg         アプリケーションから渡された値
+
+    回復不能な内部エラー発生時にはFALSEを返すこと
+*/
+typedef BOOL    (*DHTReadFuncEx)(SVCHMACSHA1Context* ctx, s32 offset, s32 length, void* arg);
 /*---------------------------------------------------------------------------*
   Name:         DHT_PrepareDatabase
 
@@ -98,7 +131,7 @@ void DHT_CheckHashPhase1Init(SVCHMACSHA1Context* ctx, const ROM_Header_Short* pR
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-void DHT_CheckHashPhase1Update(SVCHMACSHA1Context* ctx, const void* ptr, u32 length);
+void DHT_CheckHashPhase1Update(SVCHMACSHA1Context* ctx, const void* ptr, s32 length);
 
 /*---------------------------------------------------------------------------*
   Name:         DHT_CheckHashPhase1
@@ -130,18 +163,48 @@ BOOL DHT_CheckHashPhase1(const u8* hash, const ROM_Header_Short* pROMHeader, con
   Name:         DHT_CheckHashPhase2
 
   Description:  オーバーレイ領域の検証
-                (デバイスのRead APIを登録できるべき)
 
   Arguments:    hash        対応するハッシュ (db->hash[1])
                 pROMHeader  対象となるROMヘッダ格納先
-                fctx        (FS版) FSFile構造体へのポインタ
-                            (CARD版) dma番号をvoid*にキャストしたもの
-                            (HOTSW版) CardBootData構造体へのポインタ
-                work        本APIで使用するワーク (DHT_OVERLAY_MAXだけ必要)
+                work        本APIで使用するワーク (513KB)
+                func        対象デバイスに応じたRead関数
+                arg         Read関数に渡される引数
 
   Returns:      問題なければTRUE
  *---------------------------------------------------------------------------*/
 BOOL DHT_CheckHashPhase2(const u8* hash, const ROM_Header_Short* pROMHeader, DHTPhase2Work* work, DHTReadFunc func, void* arg);
+
+/*---------------------------------------------------------------------------*
+  Name:         DHT_CheckHashPhase2Ex
+
+  Description:  オーバーレイ領域の検証
+                (デバイスのRead APIを登録できるべき)
+
+  Arguments:    hash        対応するハッシュ (db->hash[1])
+                pROMHeader  対象となるROMヘッダ格納先
+                work        本APIで使用するワーク (1KB)
+                func        対象デバイスに応じたRead関数
+                funcEx      対象デバイスに応じて独自バッファにデータを読み込み
+                            DHT_CheckHashPhase2ExUpdateを呼び出す必要がある
+                arg         Read関数に渡される引数
+
+  Returns:      問題なければTRUE
+ *---------------------------------------------------------------------------*/
+BOOL DHT_CheckHashPhase2Ex(const u8* hash, const ROM_Header_Short* pROMHeader, DHTPhase2ExWork* work, DHTReadFunc func, DHTReadFuncEx funcEx, void* arg);
+
+/*---------------------------------------------------------------------------*
+  Name:         DHT_CheckHashPhase2ExUpdate
+
+  Description:  オーバーレイ部分の検証
+                DHTReadFuncExから呼び出すこと(さらなる細分化は自由)
+
+  Arguments:    ctx         検証用のSVCHMACSHA1コンテキスト
+                ptr         対象となるデータ領域
+                length      対象となるデータサイズ
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void DHT_CheckHashPhase2ExUpdate(SVCHMACSHA1Context* ctx, const void* ptr, s32 length);
 
 #ifdef __cplusplus
 } /* extern "C" */
