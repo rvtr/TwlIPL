@@ -24,9 +24,6 @@ ifndef TWL_SYSMENU_MODULERULES_
 include	$(NITROSYSTEM_ROOT)/build/buildtools/modulerules
 
 
-%.tad: $(BINDIR)/$(TARGET_BIN)
-	$(MAKETAD) $< $(MAKETAD_FLAGS) -o $@
-
 # .rbin
 $(BINDIR)/$(TARGET_BIN_BASENAME).rbin: $(OBJS)
 	objcopy -I elf32-little -O binary $< $@
