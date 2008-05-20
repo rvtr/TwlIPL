@@ -817,20 +817,6 @@ static AuthResult SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, R
 	OSTick start,prev;
 	start = OS_GetTick();
 	
-	// pBootTitle->titleIDとROMヘッダのtitleIDの一致確認をする。
-	// [TODO:]ホワイトリストマスタリングされたNTRアプリで行わない場合はSYSMi_AuthenticateTWLHeaderへ移動
-	if( pBootTitle->titleID != head->s.titleID )
-	{
-		//TWL対応ROMで、ヘッダのtitleIDが起動指定されたIDと違う
-		OS_TPrintf( "Authenticate_Header failed: header TitleID error\n" );
-		OS_TPrintf( "Authenticate_Header failed: selectedTitleID=%.16llx\n", pBootTitle->titleID );
-		OS_TPrintf( "Authenticate_Header failed: headerTitleID=%.16llx\n", head->s.titleID );
-		return AUTH_RESULT_AUTHENTICATE_FAILED;
-	}else
-	{
-		OS_TPrintf( "Authenticate_Header : header TitleID check succeed.\n" );
-	}
-	
 	prev = OS_GetTick();
 	hi = head->s.titleID_Hi;
 	// Launcherは専用の鍵を使う
@@ -911,13 +897,27 @@ static AuthResult SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, R
 // TWLアプリ、NTR拡張NANDアプリ 共通のヘッダ認証処理
 static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle, ROM_Header *head )
 {
-	if( head->s.enable_signature )
+	// pBootTitle->titleIDとROMヘッダのtitleIDの一致確認をする。
+	// ホワイトリストマスタリングされたNTRアプリでも行う場合はSYSMi_AuthenticateTWLHeaderへ移動
+	if( pBootTitle->titleID != head->s.titleID )
+	{
+		//TWL対応ROMで、ヘッダのtitleIDが起動指定されたIDと違う
+		OS_TPrintf( "Authenticate_Header failed: header TitleID error\n" );
+		OS_TPrintf( "Authenticate_Header failed: selectedTitleID=%.16llx\n", pBootTitle->titleID );
+		OS_TPrintf( "Authenticate_Header failed: headerTitleID=%.16llx\n", head->s.titleID );
+		return AUTH_RESULT_AUTHENTICATE_FAILED;
+	}else
+	{
+		OS_TPrintf( "Authenticate_Header : header TitleID check succeed.\n" );
+	}
+	
+	if( head->s.enable_signature || (SYSMi_GetWork()->flags.hotsw.isOnDebugger && SYSMi_GetWork()->romEmuInfo.isTlfRom))
 	{
 		return SYSMi_AuthenticateHeaderWithSign( pBootTitle, head );
 	}else
 	{
-		// 署名有効フラグが立っていなければFAILED
-		OS_TPrintf("Authenticate_Header failed: Sign check flag is OFF.\n");
+		// 署名有効フラグが立っていない　且つ　デバッガが有効でTLFを読み込んでいるのでなければFAILED
+		OS_TPrintf("Authenticate_Header failed: Sign check flag is OFF!\n");
 		return AUTH_RESULT_AUTHENTICATE_FAILED;
 	}
 }
