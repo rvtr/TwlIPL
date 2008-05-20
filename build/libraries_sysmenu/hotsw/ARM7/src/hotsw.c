@@ -1866,6 +1866,9 @@ static void FinalizeHotSw(HotSwApliType type)
     }
     finalized = TRUE;
 
+    // カード挿入検出停止
+    (void)OS_DisableIrqMask( HOTSW_IF_CARD_DET );
+
     // ポーリングスレッドを消去
     OS_KillThread( &HotSwThreadData.monitorThread, NULL );
 
@@ -1908,7 +1911,7 @@ static void FinalizeHotSw(HotSwApliType type)
         }
 
         // NANDアプリヘッダはコピー済み
-        if(((ROM_Header*)SYSM_APP_ROM_HEADER_BUF)->s.game_card_on){
+        if(((ROM_Header*)SYSM_APP_ROM_HEADER_BUF)->s.access_control.game_card_on){
             McPowerOn();
 
             s_cbData.modeType = HOTSW_MODE2;
@@ -2060,10 +2063,10 @@ static void SendPxiMessage(HotSwCallBackType type)
 static void ClearCardIrq(void)
 {
     // HotSwで使っている割り込みを無効にする
-    (void)OS_DisableIrq();
-    (void)OS_SetIrqMask( OS_GetIrqMask() & ~HOTSW_IF_CARD_DET );
+    OSIntrMode irq = OS_DisableInterrupts();
+    (void)OS_DisableIrqMask( HOTSW_IF_CARD_DET );
     (void)OS_ResetRequestIrqMask( HOTSW_IF_CARD_DET );
-    (void)OS_EnableIrq();
+    (void)OS_RestoreInterrupts( irq );
 }
 
 
