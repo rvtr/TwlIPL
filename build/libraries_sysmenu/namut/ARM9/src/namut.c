@@ -34,7 +34,7 @@
 // 擬似フォーマットで消去しないタイトルを
 // TitleProperty (TitleID Hiの下位16bit）のビットで指定します。
 // どれか1つでもビットが立っていれば消去の対象から外します。
-#define PROTECT_TITLE_PROPERTY  (TITLE_ID_HI_APP_TYPE_MASK)
+#define PROTECT_TITLE_PROPERTY  (TITLE_ID_APP_TYPE_MASK)
 
 #define DIRECTORY_DEPTH_MAX      16  // ディレクトリの深さの最大（NANDの正規構成としては最大6）
 #define TITLE_ID_HI_SIZE          8
@@ -49,16 +49,6 @@ static const char* sDeleteDirectoryList[] =
 	"nand:/shared2",
 	"nand2:/photo",
 	"nand:/tmp"
-};
-
-// 擬似フォーマット実行時に
-// 指定ディレクトリ以下のNonProtectedなタイトルは全て消去されます。
-// 指定ディレクトリ自体は残ります。
-static const char* sDeleteNonProtecedDirectoryList[] =
-{
-	"nand:/title",
-	"nand:/ticket",
-	"nand:/import"
 };
 
 // 擬似フォーマット実行時に
@@ -246,87 +236,50 @@ BOOL NAMUT_DeleteNandDirectory(const char *path)
 
   Returns:      None
  *---------------------------------------------------------------------------*/
+
 static BOOL NAMUTi_DeleteNonprotectedTitle(void)
 {
-	BOOL ret = TRUE;
-	int i;
+    char dirPath[NAM_PATH_LEN];
+	s32 title_num;	
+	NAMTitleInfo namTitleInfo;
+    s32 result = TRUE;
+	s32 i;
 
-	for (i=0; i<sizeof(sDeleteNonProtecedDirectoryList)/sizeof(sDeleteNonProtecedDirectoryList[0]); i++)
+	// タイトルリスト取得
+	if (NAM_GetTitleList(sTitleIdArray, TITLE_LIST_MAX) != NAM_OK)
 	{
-		ret &= NAMUTi_DeleteNonprotectedTitleEntity(sDeleteNonProtecedDirectoryList[i]);
-	}
-
-	return ret;
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         NAMUTi_DeleteNonprotectedTitleEntity
-
-  Description:  User App タイトルの削除を行います。
-
-  Arguments:    path : 絶対パス（スラッシュを含まない）
-
-  Returns:      None
- *---------------------------------------------------------------------------*/
-static BOOL NAMUTi_DeleteNonprotectedTitleEntity(const char* path)
-{
-    FSFile  dir;
-	FSDirectoryEntryInfo entryInfo;
-	BOOL ret = TRUE;
-
-	FS_InitFile(&dir);
-
-	// 引数で指定されたディレクトリを開く
-	if (!FS_OpenDirectory(&dir, path, FS_FILEMODE_R))
-	{
-		OS_TWarning("Fail! FS_OpenDirectory(%s) in %s\n", path, __func__);
+		OS_TWarning("Fail! NAM_GetTitleList() in %s\n", __func__);
 		return FALSE;
 	}
+	
+	// タイトル数取得
+	title_num = NAM_GetNumTitles();
 
-	// ディレクトリの中身を読む
-	while (FS_ReadDirectory(&dir, &entryInfo))
+	for (i=0;i<title_num;i++)
 	{
-        if (STD_CompareString(entryInfo.longname, ".")  == 0 ||
-            STD_CompareString(entryInfo.longname, "..") == 0)
-        {
-            continue;
-        }
-
-		// ディレクトリの場合
-		if (entryInfo.attributes & FS_ATTRIBUTE_IS_DIRECTORY)
-		{
-			u8 titlePropety = (u8)(entryInfo.longname[TITLE_ID_HI_SIZE-1] - '0');
-
-			// 文字コードで0-9とa-fは連続していないという罠
-			if (titlePropety >= ('a'-'0'))
+		// タイトル情報取得
+	    if( NAM_ReadTitleInfo(&namTitleInfo, sTitleIdArray[i]) == NAM_OK )
+	    {
+			// プロテクト対象以外であればtitleId_Hiディレクトリごと消去する
+			if (!(namTitleInfo.titleId & PROTECT_TITLE_PROPERTY))
 			{
-				titlePropety -= 0x27;
-			}
-
-			// プロテクト対象でない場合ディレクトリごと消去する
-			if (!(titlePropety & PROTECT_TITLE_PROPERTY))
-			{
-				STD_CopyLString( sCurrentFullPath, path, FS_ENTRY_LONGNAME_MAX );
-				STD_ConcatenateLString(sCurrentFullPath, "/", FS_ENTRY_LONGNAME_MAX);
-				STD_ConcatenateLString(sCurrentFullPath, entryInfo.longname, FS_ENTRY_LONGNAME_MAX);
-
-				if (!FS_DeleteDirectoryAuto(sCurrentFullPath))
+				// nand:/title/titleID_Hi/ 以下を消去
+		    	STD_TSNPrintf(dirPath, NAM_PATH_LEN, "nand:/title/%08x", NAM_GetTitleIdHi(namTitleInfo.titleId) );
+				if ( !FS_DeleteDirectoryAuto( dirPath ) )
 				{
-					ret = FALSE;
-					OS_TWarning("Fail! FS_DeleteDirectoryAuto(%s) in %s\n", sCurrentFullPath, __func__);
+					result = FALSE;
+				}
+				// nand:/ticket/titleID_Hi/ 以下を消去
+		    	STD_TSNPrintf(dirPath, NAM_PATH_LEN, "nand:/ticket/%08x", NAM_GetTitleIdHi(namTitleInfo.titleId) );
+				if ( !FS_DeleteDirectoryAuto( dirPath ) )
+				{
+					result = FALSE;
 				}
 			}
 		}
 	}
 
-	// ディレクトリを閉じる
-	if (!FS_CloseDirectory(&dir))
-	{
-		ret = FALSE;
-		OS_TWarning("Fail! FS_CloseDirectory() in %s\n", __func__);
-	}
-
-	return ret;
+	return result;
 }
 
 /*---------------------------------------------------------------------------*
@@ -366,12 +319,12 @@ static BOOL NAMUTi_ClearSavedataAll( void )
 			// セーブファイルパス取得
 			if (NAM_GetTitleSaveFilePath(savePublicPath, savePrivatePath, sTitleIdArray[i]) == NAM_OK)
 			{
-				// publicSaveSizeが0以上なら0xFFクリア＆フォーマット
+				// publicSaveSizeが0以上なら乱数クリア＆フォーマット
 				if (namTitleInfo.publicSaveSize > 0)
 				{
 					ret &= NAMUTi_ClearSavedataPublic(savePublicPath, namTitleInfo.titleId);
 				}
-				// privateSaveSizeが0以上なら0xFFクリア＆フォーマット
+				// privateSaveSizeが0以上なら乱数クリア＆フォーマット
 				if (namTitleInfo.privateSaveSize > 0)
 				{
 					ret &= NAMUTi_ClearSavedataPrivate(savePrivatePath, namTitleInfo.titleId);
@@ -496,7 +449,6 @@ BOOL NAMUTi_DestroySubBanner(const char* path)
 		FS_SeekFile( file, 0, FS_SEEK_SET );
 		if( sizeof(BannerHeader) == FS_WriteFile(file, &pBanner->h, sizeof(BannerHeader)) )
 		{
-			OS_Warning("banner file write succeed.\n");
 			ret = TRUE;
 		}else
 		{
