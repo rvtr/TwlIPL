@@ -73,9 +73,9 @@ extern const u8 g_devPubKey[ 4 ][ 0x80 ];
 static s32  ReadFile( FSFile* pf, void* buffer, s32 size );
 
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle );
-static void SYSMi_AppendRelocateInfoCardSecureArea( void );
 static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle );
 static void SYSMi_makeTitleIdList( void );
+static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle, ROM_Header *head );
 
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
@@ -516,21 +516,29 @@ OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
 			goto ERROR;
         }
 
-		//[TODO:]ヘッダ読み込みと同時に各種ハッシュ計算
-		if(!isCardApp)
+		//ヘッダ読み込みと同時に各種ハッシュ計算
 		{
-	        readLen = FS_ReadFile(file, header, (s32)sizeof(header));
-	    }else
-	    {
-			HOTSW_ReadCardData((void*) 0, (void*)header, (s32)sizeof(header));
-			readLen = (s32)sizeof(header);
+            BOOL result;
+            u32 len = MATH_ROUNDUP( (s32)sizeof(header), SYSM_ALIGNMENT_LOAD_MODULE );
+			CalcSHA1CallbackArg arg;
+            SVC_SHA1Init( &arg.ctx );
+            arg.hash_length = (u32)( isTwlApp ? TWL_ROM_HEADER_HASH_CALC_DATA_LEN : NTR_ROM_HEADER_HASH_CALC_DATA_LEN );
+            if(!isCardApp)
+	        {
+	            result = FS_ReadFileViaWram(file, (void *)header, (s32)len, MI_WRAM_C,
+	            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcSHA1Callback, &arg );
+	        }else
+	        {
+				result = HOTSW_ReadCardViaWram((void*) 0, (void*)header, (s32)len, MI_WRAM_C,
+	            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcSHA1Callback, &arg );
+			}
+            SVC_SHA1GetHash( &arg.ctx, &s_calc_hash[0] );
+			if ( !result )
+			{
+OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", 0, len);
+				goto ERROR;
+			}
 		}
-
-        if( readLen != (s32)sizeof(header) )
-        {
-OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", header, 0, sizeof(header), readLen);
-			goto ERROR;
-        }
 
         if( head->s.nintendo_logo_crc16 != 0xCF56 )
         {
@@ -573,12 +581,22 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 		}
 		
 		//[TODO:]この時点でヘッダの正当性検証
+		// ※ROMヘッダ認証
+		if( AUTH_RESULT_SUCCEEDED != SYSMi_AuthenticateHeader( pBootTitle, head ) )
+		{
+			goto ERROR;
+		}
+		
+		// 正当性の検証されたヘッダを、本来のヘッダバッファへコピー
+		MI_CpuCopy8( head, (void*)SYSM_APP_ROM_HEADER_BUF, HW_TWL_ROM_HEADER_BUF_SIZE );
+		
+		// ヘッダ読み込み完了直後の処理
+		// ヘッダ読み込み完了フラグを立てる
+		SYSMi_GetWork()->flags.common.isHeaderLoadCompleted = TRUE;
+		// HOTSW終了処理有効化
+		SYSMi_FinalizeHotSWAsync( pBootTitle, (void*)SYSM_APP_ROM_HEADER_BUF );
 		
         // 各領域を読み込む
-        source  [region_header  ] = 0x00000000;
-        length  [region_header  ] = HW_TWL_ROM_HEADER_BUF_SIZE;
-        destaddr[region_header  ] = SYSM_APP_ROM_HEADER_BUF;
-		
         source  [region_arm9_ntr] = head->s.main_rom_offset;
         length  [region_arm9_ntr] = head->s.main_size;
         destaddr[region_arm9_ntr] = (u32)head->s.main_ram_address;
@@ -611,8 +629,11 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 				goto ERROR;
 			}
 		}
+		
+		// AES初期化（ヘッダと再配置情報がそろってから）
+		(void)SYSM_InitDecryptAESRegion_W( (ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF );
 
-        for (i = region_header; i < region_max; ++i)
+        for (i = region_arm9_ntr; i < region_max; ++i)
         {
 			BOOL result;
 			
@@ -638,14 +659,12 @@ OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
             // 別スレッドで同じWRAM使おうとすると多分コケるので注意
             
             // コールバック関数に与える引数を初期化してRead
-            // [TODO:]ヘッダは先で読んだものをコピーするだけ
-            if(region_header == i || (!isTwlApp && pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_TEMP ) )
+            if( !isTwlApp && pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_TEMP )
             {
-				// ヘッダか、NTRダウンロードアプリのモジュール
+				// NTRダウンロードアプリのモジュール
 				CalcSHA1CallbackArg arg;
 	            SVC_SHA1Init( &arg.ctx );
-	            arg.hash_length = (u32)(region_header != i ? length[i] : 
-	            						(isTwlApp ? TWL_ROM_HEADER_HASH_CALC_DATA_LEN : NTR_ROM_HEADER_HASH_CALC_DATA_LEN) );
+	            arg.hash_length = (u32)length[i];
 	            if(!isCardApp)
 		        {
 		            result = FS_ReadFileViaWram(file, (void *)destaddr[i], (s32)len, MI_WRAM_C,
@@ -688,18 +707,6 @@ OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
 OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 				goto ERROR;
 			}
-
-			// ヘッダ読み込み完了
-			if( i == region_header )
-			{
-				// ヘッダ読み込み完了フラグを立てる
-				SYSMi_GetWork()->flags.common.isHeaderLoadCompleted = TRUE;
-				// HOTSW終了処理有効化
-				SYSMi_FinalizeHotSWAsync( pBootTitle, (void*)destaddr[region_header] );
-				// WRAM経由ロードの場合はAES初期化
-				(void)SYSM_InitDecryptAESRegion_W( (ROM_Header_Short *)destaddr[region_header] );
-			}
-
         }
 
 		if(!isCardApp)
@@ -769,29 +776,6 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 	}
 }
 
-
-// カードアプリのセキュア領域を再配置情報に追加
-static void SYSMi_AppendRelocateInfoCardSecureArea( void )
-{
-	u32 size;
-	u32 *dest;
-	// NTRセキュア領域の再配置は後でbootAPIおよびrebootライブラリにて行う
-	if( SYSM_GetCardRomHeader()->platform_code & PLATFORM_CODE_FLAG_TWL ) {
-		// TWLモード
-		// TWLセキュア領域の再配置
-		dest = SYSM_GetCardRomHeader()->main_ltd_ram_address;
-		DC_InvalidateRange( (void *)SYSM_CARD_TWL_SECURE_BUF, SECURE_AREA_SIZE );	// キャッシュケア
-		size = ( SYSM_GetCardRomHeader()->main_ltd_size < SECURE_AREA_SIZE ) ?
-				 SYSM_GetCardRomHeader()->main_ltd_size : SECURE_AREA_SIZE;
-		// romの再配置情報を参照して、セキュア領域の再配置先を変更する必要が無いか調べる
-		if( SYSMi_GetWork()->romRelocateInfo[ARM9_LTD_STATIC].src != NULL )
-		{
-			dest = (u32 *)SYSMi_GetWork()->romRelocateInfo[ARM9_LTD_STATIC].src;
-		}
-		MI_CpuCopyFast( (void *)SYSM_CARD_TWL_SECURE_BUF, dest, size );
-	}
-}
-
 // アプリロード済みかどうかをチェック
 BOOL SYSM_IsLoadTitleFinished( void )
 {
@@ -820,7 +804,111 @@ BOOL SYSM_IsLoadTitleFinished( void )
 // ============================================================================
 
 // TWLアプリおよびNTR拡張NANDアプリ共通のヘッダ認証処理
-static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
+static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle, ROM_Header *head )
+{
+	// 署名処理
+	const u8 *key;
+	u32 hi;
+	u8 keynum;
+	SignatureData sigbuf;
+	SVCSignHeapContext con;
+	BOOL b_dev = FALSE;
+	char *gamecode = (char *)&(pBootTitle->titleID);
+	OSTick start,prev;
+	start = OS_GetTick();
+	
+	// pBootTitle->titleIDとROMヘッダのtitleIDの一致確認をする。
+	if( pBootTitle->titleID != head->s.titleID )
+	{
+		//TWL対応ROMで、ヘッダのtitleIDが起動指定されたIDと違う
+		OS_TPrintf( "Authenticate_Header failed: header TitleID error\n" );
+		OS_TPrintf( "Authenticate_Header failed: selectedTitleID=%.16llx\n", pBootTitle->titleID );
+		OS_TPrintf( "Authenticate_Header failed: headerTitleID=%.16llx\n", head->s.titleID );
+		return AUTH_RESULT_AUTHENTICATE_FAILED;
+	}else
+	{
+		OS_TPrintf( "Authenticate_Header : header TitleID check succeed.\n" );
+	}
+	
+	prev = OS_GetTick();
+	hi = head->s.titleID_Hi;
+	// Launcherは専用の鍵を使う
+	if(  0 == STD_CompareNString( &gamecode[1], "ANH", 3 ) )
+	{
+		keynum = LAUNCHER_KEY_INDEX;
+	}else
+	{
+		// keynum = 1:SystemApp 2:SecureApp 3:UserApp
+		keynum = (u8)( (hi & TITLE_ID_HI_SECURE_FLAG_MASK) ? SECURE_APP_KEY_INDEX
+						: ( (hi & TITLE_ID_HI_APP_TYPE_MASK) ? SYSTEM_APP_KEY_INDEX : USER_APP_KEY_INDEX )
+					);
+	}
+	// アプリ種別とボンディングオプションによって使う鍵を分ける
+// #define LNC_PDTKEY_DBG
+#ifdef LNC_PDTKEY_DBG
+	{
+		// 注：デバグ用コード。
+		// 開発用TSボードで開発版ROMおよび製品版ROMの署名チェックとAESデクリプトをデバグするためのコード
+		if( head->s.developer_encrypt )
+		{
+			// 開発版鍵取得
+			key = g_devPubKey[keynum];
+		}else
+		{
+			// 製品版鍵取得
+			key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[keynum];
+		}
+		// デバッガが有効でTLF読み込みならば、ハッシュチェックスルーフラグを立てる
+		if(SYSMi_GetWork()->flags.hotsw.isOnDebugger && SYSMi_GetWork()->romEmuInfo.isTlfRom )
+		{
+			b_dev = TRUE;
+		}
+	}
+#else
+    if( SCFG_GetBondingOption() == 0 ) {
+		// 製品版鍵取得
+		key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[keynum];
+    }else {
+		// 開発版
+		key = g_devPubKey[keynum];
+		// デバッガが有効でTLF読み込みならば、ハッシュチェックスルーフラグを立てる
+		if(SYSMi_GetWork()->flags.hotsw.isOnDebugger && SYSMi_GetWork()->romEmuInfo.isTlfRom )
+		{
+			b_dev = TRUE;
+		}
+    }
+#endif
+    // 署名を鍵で復号
+    MI_CpuClear8( &sigbuf, sizeof(sigbuf) );
+    SVC_InitSignHeap( &con, (void *)SIGN_HEAP_ADDR, SIGN_HEAP_SIZE );// ヒープの初期化
+    if( !SVC_DecryptSign( &con, sigbuf.digest, head->signature, key ))
+    {
+		OS_TPrintf("Authenticate_Header failed: Sign decryption failed.\n");
+		if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+	}
+	if(s_calc_hash)
+	{
+	    // 署名のハッシュ値とヘッダのハッシュ値を比較
+	    if(!SVC_CompareSHA1(sigbuf.digest, (const void *)&s_calc_hash[0]))
+	    {
+			OS_TPrintf("Authenticate_Header failed: Sign check failed.\n");
+			if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+		}else
+		{
+			OS_TPrintf("Authenticate_Header : Sign check succeed. %dms.\n", OS_TicksToMilliSeconds(OS_GetTick() - prev));
+		}
+	}else
+	{
+		OS_TPrintf("Authenticate_Header failed: Sign check failed.\n");
+		if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+	}
+	OS_TPrintf("Authenticate_Header : total %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
+	
+	return AUTH_RESULT_SUCCEEDED;
+}
+
+// TWLアプリおよびNTR拡張NANDアプリ共通の認証
+static AuthResult SYSMi_AuthenticateTWLTitle( TitleProperty *pBootTitle )
 {
 	ROM_Header *head;
 	OSTick start,prev;
@@ -842,13 +930,8 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		}
 	}
 
-	// 署名処理
+	// ハッシュ比較
     {
-		const u8 *key;
-		u32 hi;
-		u8 keynum;
-		SignatureData sigbuf;
-		SVCSignHeapContext con;
 		int l;
 		u32 *module_addr[RELOCATE_INFO_NUM];
 		u32 module_size[RELOCATE_INFO_NUM];
@@ -856,92 +939,6 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 		int module_num;
 		BOOL b_dev = FALSE;
 		char *gamecode = (char *)&(pBootTitle->titleID);
-		
-		// pBootTitle->titleIDとROMヘッダのtitleIDの一致確認をする。
-		if( pBootTitle->titleID != head->s.titleID )
-		{
-			//TWL対応ROMで、ヘッダのtitleIDが起動指定されたIDと違う
-			OS_TPrintf( "Authenticate failed: header TitleID error\n" );
-			OS_TPrintf( "Authenticate failed: selectedTitleID=%.16llx\n", pBootTitle->titleID );
-			OS_TPrintf( "Authenticate failed: headerTitleID=%.16llx\n", head->s.titleID );
-			return AUTH_RESULT_AUTHENTICATE_FAILED;
-		}else
-		{
-			OS_TPrintf( "Authenticate : header TitleID check succeed.\n" );
-		}
-		
-		prev = OS_GetTick();
-		hi = head->s.titleID_Hi;
-		// Launcherは専用の鍵を使う
-		if(  0 == STD_CompareNString( &gamecode[1], "ANH", 3 ) )
-		{
-			keynum = LAUNCHER_KEY_INDEX;
-		}else
-		{
-			// keynum = 1:SystemApp 2:SecureApp 3:UserApp
-			keynum = (u8)( (hi & TITLE_ID_HI_SECURE_FLAG_MASK) ? SECURE_APP_KEY_INDEX
-							: ( (hi & TITLE_ID_HI_APP_TYPE_MASK) ? SYSTEM_APP_KEY_INDEX : USER_APP_KEY_INDEX )
-						);
-		}
-		// アプリ種別とボンディングオプションによって使う鍵を分ける
-// #define LNC_PDTKEY_DBG
-#ifdef LNC_PDTKEY_DBG
-		{
-			// 注：デバグ用コード。
-			// 開発用TSボードで開発版ROMおよび製品版ROMの署名チェックとAESデクリプトをデバグするためのコード
-			if( head->s.developer_encrypt )
-			{
-				// 開発版鍵取得
-				key = g_devPubKey[keynum];
-			}else
-			{
-				// 製品版鍵取得
-				key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[keynum];
-			}
-			// デバッガが有効でTLF読み込みならば、ハッシュチェックスルーフラグを立てる
-			if(SYSMi_GetWork()->flags.hotsw.isOnDebugger && SYSMi_GetWork()->romEmuInfo.isTlfRom )
-			{
-				b_dev = TRUE;
-			}
-		}
-#else
-	    if( SCFG_GetBondingOption() == 0 ) {
-			// 製品版鍵取得
-			key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[keynum];
-	    }else {
-			// 開発版
-			key = g_devPubKey[keynum];
-			// デバッガが有効でTLF読み込みならば、ハッシュチェックスルーフラグを立てる
-			if(SYSMi_GetWork()->flags.hotsw.isOnDebugger && SYSMi_GetWork()->romEmuInfo.isTlfRom )
-			{
-				b_dev = TRUE;
-			}
-	    }
-#endif
-	    // 署名を鍵で復号
-	    MI_CpuClear8( &sigbuf, sizeof(sigbuf) );
-	    SVC_InitSignHeap( &con, (void *)SIGN_HEAP_ADDR, SIGN_HEAP_SIZE );// ヒープの初期化
-	    if( !SVC_DecryptSign( &con, sigbuf.digest, head->signature, key ))
-	    {
-			OS_TPrintf("Authenticate failed: Sign decryption failed.\n");
-			if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
-		}
-		if(s_calc_hash)
-		{
-		    // 署名のハッシュ値とヘッダのハッシュ値を比較
-		    if(!SVC_CompareSHA1(sigbuf.digest, (const void *)&s_calc_hash[0]))
-		    {
-				OS_TPrintf("Authenticate failed: Sign check failed.\n");
-				if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
-			}else
-			{
-				OS_TPrintf("Authenticate : Sign check succeed. %dms.\n", OS_TicksToMilliSeconds(OS_GetTick() - prev));
-			}
-		}else
-		{
-			OS_TPrintf("Authenticate failed: Sign check failed.\n");
-			if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
-		}
 	    
 		// それぞれARM9,7のFLXおよびLTDについてハッシュを計算してヘッダに格納されているハッシュと比較
 		module_addr[ARM9_STATIC] = head->s.main_ram_address;
@@ -971,7 +968,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 			
 			if(s_calc_hash)
 			{
-				// カード以外のアプリをロードする時に計算したハッシュを検証
+				// アプリをロードする時に計算したハッシュを検証
 			    if(!SVC_CompareSHA1((const void *)hash_addr[l], (const void *)&s_calc_hash[(l+1) * SVC_SHA1_DIGEST_SIZE]))
 			    {
 					OS_TPrintf("Authenticate failed: %s module hash check failed.\n", str[l]);
@@ -1004,13 +1001,27 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle )
 }
 
 // NTR版特殊NANDアプリ（pictochat等）のヘッダ認証処理
-static AuthResult SYSMi_AuthenticateNTRNandAppHeader( TitleProperty *pBootTitle)
+static AuthResult SYSMi_AuthenticateNTRNandAppHeader( TitleProperty *pBootTitle, ROM_Header *head )
 {
-	return SYSMi_AuthenticateTWLHeader( pBootTitle );
+	return SYSMi_AuthenticateTWLHeader( pBootTitle, head );
+}
+
+// NTR版特殊NANDアプリ（pictochat等）の認証
+static AuthResult SYSMi_AuthenticateNTRNandTitle( TitleProperty *pBootTitle)
+{
+	return SYSMi_AuthenticateTWLTitle( pBootTitle );
 }
 
 // NTR版ダウンロードアプリ（TMPアプリ）のヘッダ認証処理
-static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTitle)
+static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTitle, ROM_Header *head )
+{
+#pragma unused(pBootTitle, head)
+	// [TODO:]署名はstaticに絡んでくるので、それ以外にヘッダ認証処理があれば
+	return AUTH_RESULT_SUCCEEDED;
+}
+
+// NTR版ダウンロードアプリ（TMPアプリ）の認証
+static AuthResult SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
 {
 #pragma unused(pBootTitle)
 	ROM_Header *head;
@@ -1083,19 +1094,88 @@ static AuthResult SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTi
 }
 
 // NTR版カードアプリのヘッダ認証処理
-static AuthResult SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle)
+static AuthResult SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_Header *head )
+{
+#pragma unused(pBootTitle,head)
+	// [TODO:]NTRカード ホワイトリストorホワイトリスト署名チェック
+	return AUTH_RESULT_SUCCEEDED;
+}
+
+// NTR版カードアプリの認証
+static AuthResult SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 {
 #pragma unused(pBootTitle)
-	// [TODO:]NTRカード ホワイトリストorホワイトリスト署名チェック＋DHTチェック
+	// [TODO:]DHTチェック
 	return AUTH_RESULT_SUCCEEDED;
 }
 
 // ヘッダ認証
-static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
+static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle, ROM_Header *head )
+{
+	ROM_Header_Short *hs = ( ROM_Header_Short *)head;
+	// [TODO:]認証結果はどこかワークに保存しておく？
+	// [TODO:]署名チェックを行う場合、ヘッダに署名ビットがあるはずなので、それを確認して署名チェックを行う
+	if( hs->platform_code & PLATFORM_CODE_FLAG_TWL )
+	{
+		// TWLアプリ
+		// 認証処理
+		switch( pBootTitle->flags.bootType )
+		{
+			case LAUNCHER_BOOTTYPE_NAND:
+				OS_TPrintf( "Authenticate_Header :TWL_NAND start.\n" );
+				return SYSMi_AuthenticateTWLHeader( pBootTitle, head );
+			case LAUNCHER_BOOTTYPE_ROM:
+				OS_TPrintf( "Authenticate_Header :TWL_ROM start.\n" );
+				return SYSMi_AuthenticateTWLHeader( pBootTitle, head );
+			case LAUNCHER_BOOTTYPE_TEMP:
+				OS_TPrintf( "Authenticate_Header :TWL_TEMP start.\n" );
+				if (!hs->permit_landing_tmp_jump)
+				{
+					OS_TPrintf("Authenticate failed: TMP flag error.\n");
+					return AUTH_RESULT_AUTHENTICATE_FAILED;
+				}
+				return SYSMi_AuthenticateTWLHeader( pBootTitle, head );
+			default:
+				return AUTH_RESULT_AUTHENTICATE_FAILED;
+		}
+	}
+	else
+	{
+		if( hs->platform_code & PLATFORM_CODE_FLAG_NOT_NTR )
+		{
+			// TWLでもNTRでもない不正なアプリ
+			OS_TPrintf( "Authenticate_Header failed :NOT NTR NOT TWL.\n" );
+			return AUTH_RESULT_AUTHENTICATE_FAILED;
+		}
+		// NTRアプリ
+		switch( pBootTitle->flags.bootType )
+		{
+			case LAUNCHER_BOOTTYPE_NAND:
+				OS_TPrintf( "Authenticate_Header :NTR_NAND start.\n" );
+				return SYSMi_AuthenticateNTRNandAppHeader( pBootTitle, head );
+			case LAUNCHER_BOOTTYPE_TEMP:
+				OS_TPrintf( "Authenticate_Header :NTR_TEMP start.\n" );
+				if (!hs->permit_landing_tmp_jump)
+				{
+					OS_TPrintf("Authenticate_Header failed : TMP flag error.\n");
+					return AUTH_RESULT_AUTHENTICATE_FAILED;
+				}
+				return SYSMi_AuthenticateNTRDownloadAppHeader( pBootTitle, head );
+			case LAUNCHER_BOOTTYPE_ROM:
+				OS_TPrintf( "Authenticate_Header :NTR_ROM start.\n" );
+				return SYSMi_AuthenticateNTRCardAppHeader( pBootTitle, head );
+			default:
+				return AUTH_RESULT_AUTHENTICATE_FAILED;
+		}
+	}
+}
+
+// 認証
+static AuthResult SYSMi_AuthenticateTitleCore( TitleProperty *pBootTitle)
 {
 	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
-	// [TODO:]認証結果はどこかワークに保存しておく
-	// [TODO:]ヘッダに署名ビットがあるはずなので、それを確認して署名チェックを行う
+	// [TODO:]認証結果はどこかワークに保存しておく？
+	// [TODO:]署名チェックを行う場合、ヘッダに署名ビットがあるはずなので、それを確認して署名チェックを行う
 	if( hs->platform_code & PLATFORM_CODE_FLAG_TWL )
 	{
 		// TWLアプリ
@@ -1104,10 +1184,10 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 		{
 			case LAUNCHER_BOOTTYPE_NAND:
 				OS_TPrintf( "Authenticate :TWL_NAND start.\n" );
-				return SYSMi_AuthenticateTWLHeader( pBootTitle );
+				return SYSMi_AuthenticateTWLTitle( pBootTitle );
 			case LAUNCHER_BOOTTYPE_ROM:
 				OS_TPrintf( "Authenticate :TWL_ROM start.\n" );
-				return SYSMi_AuthenticateTWLHeader( pBootTitle );
+				return SYSMi_AuthenticateTWLTitle( pBootTitle );
 			case LAUNCHER_BOOTTYPE_TEMP:
 				OS_TPrintf( "Authenticate :TWL_TEMP start.\n" );
 				if (!hs->permit_landing_tmp_jump)
@@ -1115,7 +1195,7 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 					OS_TPrintf("Authenticate failed: TMP flag error.\n");
 					return AUTH_RESULT_AUTHENTICATE_FAILED;
 				}
-				return SYSMi_AuthenticateTWLHeader( pBootTitle );
+				return SYSMi_AuthenticateTWLTitle( pBootTitle );
 			default:
 				return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}
@@ -1133,7 +1213,7 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 		{
 			case LAUNCHER_BOOTTYPE_NAND:
 				OS_TPrintf( "Authenticate :NTR_NAND start.\n" );
-				return SYSMi_AuthenticateNTRNandAppHeader( pBootTitle );
+				return SYSMi_AuthenticateNTRNandTitle( pBootTitle );
 			case LAUNCHER_BOOTTYPE_TEMP:
 				OS_TPrintf( "Authenticate :NTR_TEMP start.\n" );
 				if (!hs->permit_landing_tmp_jump)
@@ -1141,10 +1221,10 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle)
 					OS_TPrintf("Authenticate failed: TMP flag error.\n");
 					return AUTH_RESULT_AUTHENTICATE_FAILED;
 				}
-				return SYSMi_AuthenticateNTRDownloadAppHeader( pBootTitle );
+				return SYSMi_AuthenticateNTRDownloadTitle( pBootTitle );
 			case LAUNCHER_BOOTTYPE_ROM:
 				OS_TPrintf( "Authenticate :NTR_ROM start.\n" );
-				return SYSMi_AuthenticateNTRCardAppHeader( pBootTitle );
+				return SYSMi_AuthenticateNTRCardTitle( pBootTitle );
 			default:
 				return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}
@@ -1188,8 +1268,8 @@ static void SYSMi_AuthenticateTitleThreadFunc( TitleProperty *pBootTitle )
 		return;
 	}
 	
-	// ※ROMヘッダ認証
-	s_authResult = SYSMi_AuthenticateHeader( pBootTitle );
+	// 認証
+	s_authResult = SYSMi_AuthenticateTitleCore( pBootTitle );
 }
 
 
@@ -1260,6 +1340,7 @@ static void SYSMi_makeTitleIdList( void )
 {
 	// [TODO:]現在ブート不可タイトルについても入れるようにしているが
 	// これで良いのか？
+	// カード以外はもっと早いタイミングで作れるのでは？->高速化
 	OSTitleIDList *list = ( OSTitleIDList * )HW_OS_TITLE_ID_LIST;
 	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
 	int l;
