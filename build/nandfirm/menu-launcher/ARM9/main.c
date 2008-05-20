@@ -17,7 +17,7 @@
 #include <firm.h>
 #include <twl/lcfg.h>
 
-#ifndef FIRM_USE_TWLSDK_KEYS
+#ifdef FIRM_USE_PRODUCT_KEYS
 #define RSA_KEY_ADDR    OSi_GetFromFirmAddr()->rsa_pubkey[0]    // Œ®ŠÇ—.xlsQÆ
 #else
 #define RSA_KEY_ADDR    rsa_key_launcher

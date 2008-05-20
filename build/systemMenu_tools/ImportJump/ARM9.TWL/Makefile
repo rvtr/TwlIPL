@@ -22,8 +22,7 @@ SUBDIRS		=
 #----------------------------------------------------------------------------
 
 #============================================================================
-#現時点で製品鍵を使った書き込みが行えてはダメなので、デフォルトOFFにしておいてください。
-#USE_PRODUCT_KEY			=	TRUE
+#製品鍵を使った書き込みを行う場合は、TwlIPL/build/buildtools/commondefsの"FIRM_USE_PRODUCT_KEYS=TRUE"を有効にしてください。
 #============================================================================
 
 TARGET_FIRM		= SYSTEMMENU
@@ -58,9 +57,14 @@ SRCDIR		=	src \
 
 #LCFILE		=	# using default
 
+#----------------------------------------------------------------------------
+
+include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
+
+
 ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
-ifdef USE_PRODUCT_KEY
-MACRO_FLAGS				+=	-DUSE_PRODUCT_KEY
+ifdef FIRM_USE_PRODUCT_KEYS
 MAKEROM_FLAGS			+=	-DHWINFO_PRIVKEY='private_HWInfo.der'
 else
 MAKEROM_FLAGS			+=	-DHWINFO_PRIVKEY='private_HWInfo_dev.der'
@@ -80,8 +84,6 @@ LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\
 					libacsign_enc$(TWL_LIBSUFFIX).a     \
 					libnamut$(TWL_LIBSUFFIX).a
 
-include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
-include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
 
 MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 

@@ -23,7 +23,7 @@
 #include "hwi.h"
 
 // define data------------------------------------------
-#ifdef USE_PRODUCT_KEY                                                      // 鍵選択スイッチ
+#ifdef FIRM_USE_PRODUCT_KEYS                                                      // 鍵選択スイッチ
 #define HWINFO_PRIVKEY_PATH     "rom:key/private_HWInfo.der"                // 製品用秘密鍵
 #else
 #define HWINFO_PRIVKEY_PATH     "rom:key/private_HWInfo_dev.der"            // 開発用秘密鍵
@@ -181,7 +181,7 @@ HwiInitResult ReadPrivateKey( void )
 //  OS_TPrintf( "PrivKey read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 
     if (result) {
-#ifdef USE_PRODUCT_KEY
+#ifdef FIRM_USE_PRODUCT_KEYS
         return HWI_INIT_SUCCESS_PRO_SIGNATURE_MODE;
 #else
         return HWI_INIT_SUCCESS_DEV_SIGNATURE_MODE;

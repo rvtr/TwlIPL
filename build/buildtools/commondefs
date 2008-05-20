@@ -18,7 +18,7 @@
 ifndef TWL_IPL_COMMONDEFS_
 TWL_IPL_COMMONDEFS_ = TRUE
 
-FIRM_USE_TWLSDK_KEYS = TRUE
+#FIRM_USE_PRODUCT_KEYS = TRUE
 
 ifeq	($(TARGET_FIRM),SYSTEMMENU)
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs.sysmenu
@@ -26,8 +26,8 @@ else
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs.firm
 endif
 
-ifdef FIRM_USE_TWLSDK_KEYS
-MACRO_FLAGS	+= -DFIRM_USE_TWLSDK_KEYS=$(FIRM_USE_TWLSDK_KEYS)
+ifdef FIRM_USE_PRODUCT_KEYS
+MACRO_FLAGS	+= -DFIRM_USE_PRODUCT_KEYS=$(FIRM_USE_PRODUCT_KEYS)
 endif
 
 ifeq ($(TWL_IPL_RED_PRIVATE_ROOT),)
@@ -35,6 +35,8 @@ TWL_KEYSDIR	:= $(TWL_IPL_RED_ROOT)/keys/dummy
 else
 TWL_KEYSDIR	:= $(TWL_IPL_RED_PRIVATE_ROOT)/keys
 endif
+
+MAKEROM_FLAGS += -a
 
 #----------------------------------------------------------------------------
 endif	# TWL_IPL_COMMONDEFS_

@@ -291,13 +291,13 @@ BOOL BOOT_WaitStart( void )
             }
 #endif // SDK_ARM7
 
-#if defined(FIRM_USE_TWLSDK_KEYS) || defined(SYSMENU_DISABLE_RETAIL_BOOT)
-            // TwlSDK内の鍵を使っている時は製品用CPUではTWLアプリはブートしない
+#if !defined(FIRM_USE_PRODUCT_KEYS) || defined(SYSMENU_DISABLE_RETAIL_BOOT)
+            // 開発鍵を使っている時は製品用CPUではTWLアプリはブートしない
             if ( ! (*(u8*)HWi_WSYS08_ADDR & HWi_WSYS08_OP_OPT_MASK) )
             {
                 OS_Terminate();
             }
-#endif // FIRM_USE_SDK_KEYS || SYSMENU_DISABLE_RETAIL_BOOT
+#endif // FIRM_USE_PRODUCT_KEYS || SYSMENU_DISABLE_RETAIL_BOOT
 
 			// リブート
 			REBOOTi_SetTwlRomHeaderAddr( th );

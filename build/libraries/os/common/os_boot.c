@@ -108,8 +108,8 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
 #endif
     mem_list[i++] = NULL;
     SDK_ASSERT(i <= sizeof(mem_list)/sizeof(mem_list[0]));
-#ifdef FIRM_USE_TWLSDK_KEYS
-    // TwlSDK内の鍵を使っている時は量産用CPUではブートしない
+#ifndef FIRM_USE_PRODUCT_KEYS
+    // 開発鍵を使っている時は量産用CPUではブートしない
 #ifdef SDK_ARM9
     if ( ! ((*(u8*)OS_CHIPTYPE_DEBUGGER_ADDR & OS_CHIPTYPE_DEBUGGER_MASK)) )
 #else   // SDK_ARM7
@@ -118,7 +118,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     {
         OS_Terminate();
     }
-#endif // FIRM_USE_SDK_KEYS
+#endif // FIRM_USE_PRODUCT_KEYS
     REBOOT_Execute(entry, wram_reg, mem_list, code_buf, stack_top, target, scfg, set_jtag, forbid_jtag, psram_4mb);
     OS_Terminate();
 }

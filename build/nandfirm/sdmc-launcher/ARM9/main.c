@@ -21,7 +21,7 @@
 */
 //#define SUPPORT_SRL_SELECT
 
-#ifndef FIRM_USE_TWLSDK_KEYS
+#ifdef FIRM_USE_PRODUCT_KEYS
 static const u8* const rsa_key_user = NULL;   // not acceptable
 static const u8* const rsa_key_sys = NULL;    // not acceptable
 static const u8 rsa_key_secure[128] =
@@ -199,7 +199,7 @@ static BOOL CheckHeader(void)
     OS_TPrintf("ARM7 LTD RAM address: %08X\n", rhs->sub_ltd_ram_address);
     OS_TPrintf("ARM7 LTD size       : %08X\n", rhs->sub_ltd_size);
     // ‡˜‚Ù‚ÚÅ“K‰»Ï‚İ
-#ifndef FIRM_USE_TWLSDK_KEYS
+#ifdef FIRM_USE_PRODUCT_KEYS
     if ( rhs->platform_code != PLATFORM_CODE_TWL_LIMITED ||     // TWL Limited only
          !rhs->enable_signature ||                              // Should be use ROM header signature
 #else
