@@ -129,10 +129,6 @@ void TwlMain( void )
     // 各種パラメータの取得------------
     pBootTitle = SYSM_ReadParameters();                        // 本体設定データ、リセットパラメータのリード、検査用オート起動カード判定、量産ライン用キーショートカット起動判定等のリード
 
-#ifdef DHT_TEST
-    SYSMi_PrepareDatabase();
-#endif
-
     if( SYSM_IsFatalError() ) {
         // FATALエラー処理
     }

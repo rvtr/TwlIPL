@@ -46,6 +46,13 @@
 #define WRAM_SLOT_FOR_FS	5
 #define WRAM_SIZE_FOR_FS	MI_WRAM_SIZE_96KB
 
+#include <sysmenu/dht/dht.h>
+#define DS_HASH_TABLE_SIZE  (256*1024)
+static u8 dht_buffer[DS_HASH_TABLE_SIZE] ATTRIBUTE_ALIGN(256);
+static DHTFile *const dht = (DHTFile*)dht_buffer;
+static const u8* hash0;
+static const u8* hash1;
+
 typedef	struct	MbAuthCode
 {
 	char		magic_code[2];			// マジックナンバー
@@ -137,6 +144,87 @@ static const u8 nitro_dl_sign_key[AUTH_KEY_BUFFER_LEN] = {
   0xF7,0xBF,0xBF,0xA0,0x0E,0x1E,0xF0,0x25,0xF8,0x66,0x17,0x54,0x34,0x28,0x2D,0x28,
   0xA3,0xAE,0xF0,0xA9,0xFA,0x3A,0x70,0x56,0xD2,0x34,0xA9,0xC5,0x9E,0x5D,0xF5,0xE1
 };
+
+// ============================================================================
+// DHT
+// ============================================================================
+
+static BOOL GetDatabaseFilepath(char *path)
+{
+    u8 title[4] = { 'H','N','H','A' };
+
+#if( USE_LCFG_STRING == 0 )
+    char *title0 = "HNGA";
+#endif
+    u32 titleID_hi;
+    u32 titleID_lo;
+    u64 titleID = 0;
+
+
+#if( USE_LCFG_STRING == 0 )
+    {
+        int i;
+        if( title[0] == 0 ) {
+            for( i = 0 ; i < 4 ; i++ ) {
+                title[i] = (u8)*title0++;
+            }
+        }
+    }
+#endif
+
+    titleID_hi = (( 3 /* Nintendo */ << 16) | 8 /* CHANNEL_DATA_ONLY */ | 4 /* CHANNEL_CARD */ | 2 /* isLaunch */ | 1 /* isSystem */);
+
+    titleID_lo =  ((u32)( title[0] ) & 0xff) << 24;
+    titleID_lo |= ((u32)( title[1] )& 0xff) << 16;
+    titleID_lo |= ((u32)( title[2] )& 0xff) << 8;
+    titleID_lo |= (u32)( title[3] ) & 0xff;
+
+    titleID = ((u64)(titleID_hi) << 32)  | (u64)titleID_lo;
+
+    // OS_TPrintf( "[DHT]  titleID = 0x%08x%08x\n", titleID_hi, titleID_lo);
+
+    if( NAM_OK == NAM_GetTitleBootContentPathFast(path, titleID) ) {
+        OS_TPrintf( "[DHT]  File = %s\n", path);
+    }
+    else {
+        OS_TPrintf( "[DHT]  Error: NAM_GetTitleBootContentPathFast titleID = 0x%08x0x%08x\n",titleID_hi, titleID_lo);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static void PrepareDHTDatabase(void)
+{
+    char path[256];
+    if ( GetDatabaseFilepath( path ) )
+    {
+        FSFile file;
+        if ( FS_OpenFileEx(&file, path, FS_FILEMODE_R) )
+        {
+#if 0   // 1 if using attach_dummyromheader
+            if ( FS_SeekFile(&file, sizeof(ROM_Header), FS_SEEK_SET) )
+#endif
+            {
+                DHT_PrepareDatabase(dht, &file);
+                DC_FlushRange(dht, DHT_GetDatabaseLength(dht));
+            }
+            FS_CloseFile(&file);
+        }
+    }
+    else
+    {
+        MI_CpuClear8(dht, sizeof(DHTHeader));
+    }
+}
+
+static BOOL WrapperFunc_ReadCardData(void* dest, s32 offset, s32 length, void* arg)
+{
+#pragma unused(arg)
+	HOTSW_ReadCardData( (void *)offset, dest, (u32)length);
+	return TRUE;
+}
+
 
 //================================================================================
 // for register SCFG_OP
@@ -831,7 +919,7 @@ static AuthResult SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, R
 					);
 	}
 	// アプリ種別とボンディングオプションによって使う鍵を分ける
-// #define LNC_PDTKEY_DBG
+//#define LNC_PDTKEY_DBG
 #ifdef LNC_PDTKEY_DBG
 	{
 		// 注：デバグ用コード。
@@ -886,7 +974,7 @@ static AuthResult SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, R
 		}
 	}else
 	{
-		OS_TPrintf("Authenticate_Header failed: Sign check failed.\n");
+		OS_TPrintf("Authenticate_Header failed: Sign calc failed.\n");
 		if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
 	}
 	OS_TPrintf("Authenticate_Header : total %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
@@ -1099,28 +1187,43 @@ static AuthResult SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
 // NTR版カードアプリのヘッダ認証処理
 static AuthResult SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_Header *head )
 {
-	AuthResult ret;
+	AuthResult ret = AUTH_RESULT_SUCCEEDED;
+
+	// デバッガで読み込むROMには適用しない
+	if( SYSM_IsRunOnDebugger() )
+	{
+		return AUTH_RESULT_SUCCEEDED;
+	}
+	
 	if( head->s.enable_nitro_whitelist_signature )
 	{
 		// マスタリング済みNTRカードアプリの署名チェック（実はTWLアプリと同じ）
 		ret = SYSMi_AuthenticateHeaderWithSign( pBootTitle, head );
 		if( ret == AUTH_RESULT_SUCCEEDED )
 		{
-#ifdef DHT_TEST
-			// [TODO:]retを捕まえてOKならhash値をstatic変数に保存しておき、DHTのphase1とphase2で使う
-#endif
+			hash0 = head->s.nitro_whitelist_phase1_digest;
+			hash1 = head->s.nitro_whitelist_phase2_diegst;
 		}
 	}else
 	{
-		// [TODO:]NTRカード ホワイトリスト検索
 		// ホワイトリスト検索
-		ret = AUTH_RESULT_SUCCEEDED;
-		if( ret == AUTH_RESULT_SUCCEEDED )
+		const DHTDatabase* db;
+		PrepareDHTDatabase();// [TODO:]遅ければ場所を変えることも検討
+		if(!dht)
 		{
-#ifdef DHT_TEST
-			// [TODO:]retを捕まえてOKならhash値をstatic変数に保存しておき、DHTのphase1とphase2で使う
-#endif
+		    OS_TPrintf(" Search DHT : database init Failed.\n");
+		    return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}
+		OS_TPrintf("Searching DHT for %.4s(%02X)...", head->s.game_code, head->s.rom_version);
+		db = DHT_GetDatabase(dht, &head->s);
+		if ( !db )
+		{
+		    OS_TPrintf(" Search DHT : Failed.\n");
+		    return AUTH_RESULT_AUTHENTICATE_FAILED;
+		}
+		hash0 = db->hash[0];
+		hash1 = db->hash[1];
+		ret = AUTH_RESULT_SUCCEEDED;
 	}
 	return ret;
 }
@@ -1129,10 +1232,38 @@ static AuthResult SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle,
 static AuthResult SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 {
 #pragma unused(pBootTitle)
-	// [TODO:]DHTチェックphase2（phase1はstaticの読み込み時に平行処理）
-#ifdef DHT_TEST
-	
-#endif
+	DHTPhase2Work* p2work;
+	SVCHMACSHA1Context ctx;
+	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
+
+	// デバッガで読み込むROMには適用しない
+	if( SYSM_IsRunOnDebugger() )
+	{
+		return AUTH_RESULT_SUCCEEDED;
+	}
+
+	// べた書きphase1テスト([TODO:]実際にはstaticの読み込み時に平行処理)
+	OS_TPrintf("DHT Phase1...");
+	DHT_CheckHashPhase1Init(&ctx, hs);
+	DHT_CheckHashPhase1Update(&ctx, hs->main_ram_address, (s32)hs->main_size);
+	DHT_CheckHashPhase1Update(&ctx, hs->sub_ram_address, (s32)hs->sub_size);
+	if ( !DHT_CheckHashPhase1Final(&ctx, hash0) )
+	{
+	    OS_TPrintf(" DHT Phase1 : Failed.\n");
+	    return AUTH_RESULT_AUTHENTICATE_FAILED;
+	}
+
+	// DHTチェックphase2（phase1はstaticの読み込み時に平行処理）
+	OS_TPrintf("DHT Phase2...");
+	p2work = SYSM_Alloc( sizeof(DHTPhase2Work) );
+	if ( !DHT_CheckHashPhase2(hash1, hs, p2work, WrapperFunc_ReadCardData, NULL) )
+	{
+	    OS_TPrintf(" DHT Phase2 : Failed.\n");
+	    SYSM_Free(p2work);
+	    return AUTH_RESULT_AUTHENTICATE_FAILED;
+	}
+	SYSM_Free(p2work);
+
 	return AUTH_RESULT_SUCCEEDED;
 }
 

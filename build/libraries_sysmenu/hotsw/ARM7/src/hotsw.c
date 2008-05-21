@@ -183,13 +183,6 @@ static CardSecureModeFunction s_funcTable[] = {
     {ReadIDSecure_ROMEMU, ReadSegSecure_ROMEMU, SwitchONPNGSecure_ROMEMU, ChangeModeSecure_ROMEMU}
 };
 
-#ifdef DHT_TEST
-#include <twl/os/ARM7/debugLED.h>
-#include <sysmenu/dht/dht.h>
-DHTFile* dht;
-static DHTPhase2Work* p2work = (void*)0x02e80000;
-#endif
-
 // Global Values ------------------------------------------------------------
 BLOWFISH_CTX                HotSwBlowfishInitTableBufDS;
 CardThreadData              HotSwThreadData;
@@ -452,9 +445,7 @@ static HotSwState LoadCardData(void)
                 s_cbData.twlFlg = TRUE;
             }
             else{
-#ifdef DHT_TEST
                 if ( !s_cbData.pBootSegBuf->rh.s.enable_nitro_whitelist_signature )
-#endif
                 // NTRカードの場合はRomHeaderバッファの1ページ目以降をクリアしておく。
                 MI_CpuClearFast((void *)(SYSM_CARD_ROM_HEADER_BAK + PAGE_SIZE), SYSM_APP_ROM_HEADER_SIZE - PAGE_SIZE);
             }
@@ -1141,81 +1132,6 @@ static HotSwState LoadStaticModule(void)
         (void)CheckStaticModuleHash();
 #endif
     }
-#ifdef DHT_TEST
-    else
-    {
-        SVCHMACSHA1Context ctx;
-        const u8* hash0;
-        const u8* hash1;
-        if ( !s_cbData.pBootSegBuf->rh.s.enable_nitro_whitelist_signature ) // ホワイトリストエントリ
-        {
-            const DHTDatabase* db;
-            while (!dht)
-            {
-                OS_Sleep(1);
-            }
-OS_SetDebugLED(0x00);
-            OS_TPrintf("Searching DHT for %.4s(%02X)...", s_cbData.pBootSegBuf->rh.s.game_code, s_cbData.pBootSegBuf->rh.s.rom_version);
-            db = DHT_GetDatabase(dht, &s_cbData.pBootSegBuf->rh.s);
-            if ( !db )
-            {
-                OS_TPrintf(" Failed.\n");
-OS_SetDebugLED(0xFF);
-#ifdef DO_NOT_SHOW_LAUNCHER
-while(1){ OS_WaitVBlankIntr(); }
-#endif
-                return HOTSW_HASH_CHECK_ERROR;
-            }
-            OS_TPrintf(" Done.\n");
-            hash0 = db->hash[0];
-            hash1 = db->hash[1];
-        }
-        else    // マスタリング済みエントリ
-        {
-            hash0 = s_cbData.pBootSegBuf->rh.s.nitro_whitelist_phase1_digest;
-            hash1 = s_cbData.pBootSegBuf->rh.s.nitro_whitelist_phase2_diegst;
-        }
-
-        OS_TPrintf("DHT Pahse1...");
-        DHT_CheckHashPhase1Init(&ctx, (ROM_Header_Short*)s_cbData.pBootSegBuf);
-        if( s_cbData.pBootSegBuf->rh.s.main_size > SECURE_SEGMENT_SIZE )
-        {
-            DHT_CheckHashPhase1Update(&ctx, s_cbData.pSecureSegBuf, SECURE_SEGMENT_SIZE);
-            DHT_CheckHashPhase1Update(&ctx, (u32 *)(s_cbData.arm9Stc + SECURE_SEGMENT_SIZE), s_cbData.pBootSegBuf->rh.s.main_size - SECURE_SEGMENT_SIZE );
-        }
-        else
-        {
-OS_SetDebugLED(0x00);
-            OS_TPrintf("%.4s(%02X) is mastering for DHT format.\n", s_cbData.pBootSegBuf->rh.s.game_code, s_cbData.pBootSegBuf->rh.s.rom_version);
-            // 署名チェック！！！
-            DHT_CheckHashPhase1Update(&ctx, s_cbData.pSecureSegBuf, s_cbData.pBootSegBuf->rh.s.main_size);
-        }
-
-        DHT_CheckHashPhase1Update(&ctx, (u32 *)s_cbData.arm7Stc, s_cbData.pBootSegBuf->rh.s.sub_size);
-        if ( !DHT_CheckHashPhase1Final(&ctx, hash0) )
-        {
-            OS_TPrintf(" Failed.\n");
-OS_SetDebugLED(0xAA);
-#ifdef DO_NOT_SHOW_LAUNCHER
-while(1){ OS_WaitVBlankIntr(); }
-#endif
-            return HOTSW_HASH_CHECK_ERROR;
-        }
-        OS_TPrintf(" Done.\n");
-
-        OS_TPrintf("DHT Pahse2...");
-        if ( !DHT_CheckHashPhase2(hash1, &s_cbData.pBootSegBuf->rh.s, p2work, ReadImage, &s_cbData) )
-        {
-            OS_TPrintf(" Failed.\n");
-OS_SetDebugLED(0xCC);
-#ifdef DO_NOT_SHOW_LAUNCHER
-while(1){ OS_WaitVBlankIntr(); }
-#endif
-            return HOTSW_HASH_CHECK_ERROR;
-        }
-        OS_TPrintf(" Done.\n");
-    }
-#endif
 
     return retval;
 }
