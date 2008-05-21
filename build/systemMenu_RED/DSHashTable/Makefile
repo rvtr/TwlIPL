@@ -42,8 +42,8 @@ MY_GROUP_ID		=	3031
 
 MY_VERSION		=	$(shell LANG=C svn info $(MY_DATA) | grep 'Revision' | gawk '{print $$2}')
 
-MY_MAJOR_VERSION	=	$(shell echo $(MY_VERSION)/256 | bc)
-MY_MINOR_VERSION	=	$(shell echo $(MY_VERSION)%256 | bc)
+MY_MAJOR_VERSION	=	$(shell expr $(MY_VERSION) / 256)
+MY_MINOR_VERSION	=	$(shell expr $(MY_VERSION) % 256)
 
 
 INSTALL_TARGETS		=	$(MY_TAD)
