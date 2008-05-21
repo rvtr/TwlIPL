@@ -48,7 +48,8 @@ CCFLAGS_OPT		=	-O4 -inline off
 #----------------------------------------------------------------------------
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-GLIBRARIES		:= $(filter-out $(CRT0_O),$(GLIBRARIES))
+# crt0.o と libpm_sp は、ローカルでビルドしたものを使用するので、除外する。
+GLIBRARIES		:= $(filter-out $(CRT0_O) libpm_sp$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 
 ifdef TWLSDK_NOCRYPTO
 CCFLAGS			+=	-DSDK_NOCRYPTO
@@ -101,6 +102,7 @@ SYSMENU_LIBS	=	\
 					libds_sp$(TWL_LIBSUFFIX).a \
 					libhotsw_sp$(TWL_LIBSUFFIX).a \
 					libdht_sp$(TWL_LIBSUFFIX).a \
+					libpm_mset_sp$(TWL_LIBSUFFIX).a
 
 SDK_APPEND_LIBS	=	\
 					libwl_sp.TWL.LTD.a \

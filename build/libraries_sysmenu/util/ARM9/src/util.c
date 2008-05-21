@@ -28,6 +28,36 @@ static s64 UTLi_CalcRTCSecOffset( RTCDate *datep, RTCTime *timep );
 // const data  -----------------------------------------
 // function's description-------------------------------
 
+
+//======================================================================
+//  バックライト
+//======================================================================
+
+// バックライト輝度セット
+u32 UTL_SetBacklightBrightness( u8 brightness )
+{
+	brightness %= ( BACKLIGHT_BRIGHTNESS_MAX + 1 );
+	return PM_SendUtilityCommand( PMi_UTIL_SET_BACKLIGHT_BRIGHTNESS, (u16)brightness, NULL );
+}
+
+
+// バックライト輝度
+u32 UTL_GetBacklightBrightness( u8 *pBrightness )
+{
+	u16 status;
+	u32 result = PM_SendUtilityCommand( PM_UTIL_GET_STATUS, PMi_UTIL_GET_BACKLIGHT_BRIGHTNESS, &status);
+
+	if ( result == PM_RESULT_SUCCESS )
+	{
+		if (pBrightness)
+		{
+			*pBrightness = (u8)status;
+		}
+	}
+	return result;
+}
+
+
 //======================================================================
 //  タッチパネル
 //======================================================================

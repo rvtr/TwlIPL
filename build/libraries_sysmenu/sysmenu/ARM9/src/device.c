@@ -83,9 +83,9 @@ u8 SYSM_GetBackLightBlightness( void )
 // バックライト輝度調整
 void SYSM_SetBackLightBrightness( u8 brightness )
 {
-	if( brightness > LCFG_TWL_BACKLIGHT_LEVEL_MAX ) {
-		OS_TPrintf( "Backlight brightness over! Change brightenss forcibly : %d -> %d\n", brightness, LCFG_TWL_BACKLIGHT_LEVEL_MAX );
-		brightness = LCFG_TWL_BACKLIGHT_LEVEL_MAX;
+	if( brightness > BACKLIGHT_BRIGHTNESS_MAX ) {
+		OS_TPrintf( "Backlight brightness over! Change brightenss forcibly : %d -> %d\n", brightness, BACKLIGHT_BRIGHTNESS_MAX );
+		brightness = BACKLIGHT_BRIGHTNESS_MAX;
 	}
 #ifdef SDK_SUPPORT_PMIC_2
 	if ( SYSMi_GetMcuVersion() <= 1 )

@@ -516,7 +516,7 @@ static void ProcessBackLightPads( void )
 	static BOOL dw_bl_bak = FALSE;
 	BOOL up_bl_trg = FALSE;
 	BOOL dw_bl_trg = FALSE;
-	int brightness;
+	u8 brightness = 0;
 	
 	if(tpd.disp.touch) {
 		BOOL up_bl = WithinRangeTP(	B_LIGHT_UP_BUTTON_TOP_X,    B_LIGHT_UP_BUTTON_TOP_Y,
@@ -533,18 +533,18 @@ static void ProcessBackLightPads( void )
 	}
 	
 	if( (pad.trg & PAD_KEY_UP) || up_bl_trg ) {
-		brightness = SYSM_GetBackLightBlightness() + 1;
-		if( brightness > LCFG_TWL_BACKLIGHT_LEVEL_MAX ) {
-			brightness = LCFG_TWL_BACKLIGHT_LEVEL_MAX;
+		(void)UTL_GetBacklightBrightness( &brightness );
+		if( ++brightness > BACKLIGHT_BRIGHTNESS_MAX ) {
+			brightness = BACKLIGHT_BRIGHTNESS_MAX;
 		}
-		SYSM_SetBackLightBrightness( (u8)brightness );
+		(void)UTL_SetBacklightBrightness( brightness );
 	}
 	if( ( pad.trg & PAD_KEY_DOWN) || dw_bl_trg ) {
-		brightness = SYSM_GetBackLightBlightness() - 1;
-		if( brightness < 0 ) {
+		(void)UTL_GetBacklightBrightness( &brightness );
+		if( --brightness < 0 ) {
 			brightness = 0;
 		}
-		SYSM_SetBackLightBrightness( (u8)brightness );
+		(void)UTL_SetBacklightBrightness( brightness );
 	}
 }
 

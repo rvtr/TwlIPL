@@ -38,8 +38,6 @@ MACRO_FLAGS		+=	-DUSE_FONT_WRAM_LOAD
 INSTALL_TARGETS	=	$(TARGETS)
 INSTALL_DIR		=	$(SYSMENU_INSTALL_LIBDIR)
 
-LDIRT_CLEAN		=	$(REVISION_SRC)
-
 #----------------------------------------------------------------------------
 
 do-build: $(TARGETS)
