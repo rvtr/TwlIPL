@@ -38,10 +38,10 @@ do-build :	HNAA.tad \
 			HNCA.tad \
 			menu_launcher.nand
 
-HNAA.tad: ../../../systemMenu_RED/Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/main.srl
+HNAA.tad: ../../../systemMenu_RED/Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNAA.srl
 	$(MAKETAD) -s $< $(MAKETAD_FLAGS) -o $@
 
-HNBA.tad: ../../../systemMenu_RED/MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/main.srl
+HNBA.tad: ../../../systemMenu_RED/MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNBA.srl
 	$(MAKETAD) -s $< $(MAKETAD_FLAGS) -o $@
 
 HNCA.tad: ../../../systemMenu_RED/wlanfirm/HNCA.srl
