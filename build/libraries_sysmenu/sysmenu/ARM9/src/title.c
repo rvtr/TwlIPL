@@ -48,10 +48,6 @@
 
 #include <sysmenu/dht/dht.h>
 #define DS_HASH_TABLE_SIZE  (256*1024)
-static u8 dht_buffer[DS_HASH_TABLE_SIZE] ATTRIBUTE_ALIGN(256);
-static DHTFile *const dht = (DHTFile*)dht_buffer;
-static const u8* hash0;
-static const u8* hash1;
 
 typedef	struct	MbAuthCode
 {
@@ -99,6 +95,12 @@ static NAMTitleId *s_pTitleIDList = NULL;
 static int s_listLength = 0;
 
 static u8 *s_calc_hash = NULL;
+static BOOL s_b_dev = FALSE;
+
+static u8 dht_buffer[DS_HASH_TABLE_SIZE] ATTRIBUTE_ALIGN(256);
+static DHTFile *const dht = (DHTFile*)dht_buffer;
+static const u8* hash0;
+static const u8* hash1;
 
 // const data------------------------------------------------------------------
 static const OSBootType s_launcherToOSBootType[ LAUNCHER_BOOTTYPE_MAX ] = {
@@ -900,7 +902,6 @@ static AuthResult SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, R
 	u8 keynum;
 	SignatureData sigbuf;
 	SVCSignHeapContext con;
-	BOOL b_dev = FALSE;
 	char *gamecode = (char *)&(pBootTitle->titleID);
 	OSTick start,prev;
 	start = OS_GetTick();
@@ -918,6 +919,9 @@ static AuthResult SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, R
 						: ( (hi & TITLE_ID_HI_APP_TYPE_MASK) ? SYSTEM_APP_KEY_INDEX : USER_APP_KEY_INDEX )
 					);
 	}
+	
+	s_b_dev = FALSE;
+	
 	// アプリ種別とボンディングオプションによって使う鍵を分ける
 //#define LNC_PDTKEY_DBG
 #ifdef LNC_PDTKEY_DBG
@@ -936,7 +940,7 @@ static AuthResult SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, R
 		// デバッガが有効でTLF読み込みならば、ハッシュチェックスルーフラグを立てる
 		if(SYSMi_GetWork()->flags.hotsw.isOnDebugger && SYSMi_GetWork()->romEmuInfo.isTlfRom )
 		{
-			b_dev = TRUE;
+			s_b_dev = TRUE;
 		}
 	}
 #else
@@ -949,7 +953,7 @@ static AuthResult SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, R
 		// デバッガが有効でTLF読み込みならば、ハッシュチェックスルーフラグを立てる
 		if(SYSMi_GetWork()->flags.hotsw.isOnDebugger && SYSMi_GetWork()->romEmuInfo.isTlfRom )
 		{
-			b_dev = TRUE;
+			s_b_dev = TRUE;
 		}
     }
 #endif
@@ -959,7 +963,7 @@ static AuthResult SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, R
     if( !SVC_DecryptSign( &con, sigbuf.digest, head->signature, key ))
     {
 		OS_TPrintf("Authenticate_Header failed: Sign decryption failed.\n");
-		if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+		if(!s_b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
 	}
 	if(s_calc_hash)
 	{
@@ -967,7 +971,7 @@ static AuthResult SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, R
 	    if(!SVC_CompareSHA1(sigbuf.digest, (const void *)&s_calc_hash[0]))
 	    {
 			OS_TPrintf("Authenticate_Header failed: Sign check failed.\n");
-			if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+			if(!s_b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
 		}else
 		{
 			OS_TPrintf("Authenticate_Header : Sign check succeed. %dms.\n", OS_TicksToMilliSeconds(OS_GetTick() - prev));
@@ -975,7 +979,7 @@ static AuthResult SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, R
 	}else
 	{
 		OS_TPrintf("Authenticate_Header failed: Sign calc failed.\n");
-		if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+		if(!s_b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
 	}
 	OS_TPrintf("Authenticate_Header : total %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
 	
@@ -1040,7 +1044,6 @@ static AuthResult SYSMi_AuthenticateTWLTitle( TitleProperty *pBootTitle )
 		u32 module_size[RELOCATE_INFO_NUM];
 		u8 *hash_addr[RELOCATE_INFO_NUM];
 		int module_num;
-		BOOL b_dev = FALSE;
 		char *gamecode = (char *)&(pBootTitle->titleID);
 	    
 		// それぞれARM9,7のFLXおよびLTDについてハッシュを計算してヘッダに格納されているハッシュと比較
@@ -1075,7 +1078,7 @@ static AuthResult SYSMi_AuthenticateTWLTitle( TitleProperty *pBootTitle )
 			    if(!SVC_CompareSHA1((const void *)hash_addr[l], (const void *)&s_calc_hash[(l+1) * SVC_SHA1_DIGEST_SIZE]))
 			    {
 					OS_TPrintf("Authenticate failed: %s module hash check failed.\n", str[l]);
-					if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+					if(!s_b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
 				}else
 				{
 					OS_TPrintf("Authenticate : %s module hash check succeed. %dms.\n", str[l], OS_TicksToMilliSeconds(OS_GetTick() - prev));
@@ -1083,7 +1086,7 @@ static AuthResult SYSMi_AuthenticateTWLTitle( TitleProperty *pBootTitle )
 			}else
 			{
 				OS_TPrintf("Authenticate failed: %s module hash calc failed.\n", str[l]);
-				if(!b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+				if(!s_b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
 			}
 		}
 	}
