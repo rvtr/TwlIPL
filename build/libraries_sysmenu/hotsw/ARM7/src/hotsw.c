@@ -75,6 +75,9 @@ static void SetInterrupt(void);
 
 static void InterruptCallbackCardDet(void);
 static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err);
+#ifndef USE_NEW_DMA
+static void InterruptCallbackCardData(void);
+#endif
 
 static void LockHotSwRsc(OSLockWord* word);
 static void UnlockHotSwRsc(OSLockWord* word);
@@ -562,8 +565,12 @@ finalize:
 
 end:
     // カードDMA終了確認
-    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
-
+#ifdef USE_NEW_DMA
+    HOTSW_WaitNDmaCtrl(HOTSW_NDMA_NO);
+#else
+    HOTSW_WaitDmaCtrl(HOTSW_DMA_NO);
+#endif
+    
     // カードアクセス終了確認
     HOTSW_WaitCardCtrl();
 
@@ -1827,7 +1834,7 @@ static void FinalizeHotSw(HotSwApliType type)
         }
 
         // NANDアプリヘッダはコピー済み
-        if(((ROM_Header*)SYSM_APP_ROM_HEADER_BUF)->s.access_control.game_card_on){
+        if(((ROM_Header*)SYSM_APP_ROM_HEADER_BUF)->s.game_card_on/*access_control.game_card_on*/){
             McPowerOn();
 
             s_cbData.modeType = HOTSW_MODE2;
@@ -1913,7 +1920,12 @@ static BOOL ChangeGameMode(void)
     OS_TPrintf("Card Normal ID : 0x%08x\n", s_cbData.id_nml);
     OS_TPrintf("Card Game   ID : 0x%08x\n", s_cbData.id_gam);
 
-    HOTSW_WaitDmaCtrl(HOTSW_NDMA_NO);
+#ifdef USE_NEW_DMA
+    HOTSW_WaitNDmaCtrl(HOTSW_NDMA_NO);
+#else
+    HOTSW_WaitDmaCtrl(HOTSW_DMA_NO);
+#endif
+    
     HOTSW_WaitCardCtrl();
 
 #ifndef DEBUG_USED_CARD_SLOT_B_
@@ -2164,6 +2176,26 @@ static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err)
 
 
 /*---------------------------------------------------------------------------*
+  Name:			InterruptCallbackCardData
+
+  Description:  カードB データ転送終了割り込みハンドラ
+ *---------------------------------------------------------------------------*/
+#ifndef USE_NEW_DMA
+static void InterruptCallbackCardData(void)
+{
+	// DMA強制終了
+	MI_StopDma(HOTSW_DMA_NO);
+
+	// メッセージ送信
+    OS_SendMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&HotSwThreadData.hotswDmaMsg[HotSwThreadData.idx_dma], OS_MESSAGE_NOBLOCK);
+
+	// メッセージインデックスをインクリメント
+    HotSwThreadData.idx_dma = (HotSwThreadData.idx_dma+1) % HOTSW_DMA_MSG_NUM;
+}
+#endif
+
+
+/*---------------------------------------------------------------------------*
   Name:         AllocateExCardBus
 
   Description:  アクセス権を設定する
@@ -2261,9 +2293,11 @@ static void SetInterrupt(void)
 #else
     SetInterruptCallback( OS_IE_CARD_B_DET  , InterruptCallbackCardDet );
 #endif
-
-#ifndef USE_CPU_COPY
-    (void)OS_EnableIrqMask(OS_IE_NDMA2);
+    
+#ifdef USE_NEW_DMA
+	(void)OS_EnableIrqMask(OS_IE_NDMA2);
+#else
+    SetInterruptCallback( OS_IE_CARD_DATA  , InterruptCallbackCardData );
 #endif
 }
 

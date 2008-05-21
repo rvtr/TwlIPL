@@ -19,6 +19,10 @@
 
 #include <firm/os/common/system.h>
 #include <../ARM7/include/hotswTypes.h>
+#include <../ARM7/include/customNDma.h>
+
+// Extern -------------------------------------------------------------------
+extern CardThreadData HotSwThreadData;
 
 // define -------------------------------------------------------------------
 #define HOTSW_READ_MSG_NUM				1
@@ -408,6 +412,10 @@ static CardDataReadState ReadPageGame(u32 start_addr, void* buf, u32 size)
 	u64			i, page;
 	GCDCmd64	cndLE, cndBE;
 
+#ifdef USE_NEW_DMA
+	OSMessage	msg;
+#endif
+    
     page = (u32)(start_addr / PAGE_SIZE);
 	loop = (u32)(size / PAGE_SIZE);
     loop = (size % PAGE_SIZE) ? loop + 1 : loop;
@@ -420,7 +428,7 @@ static CardDataReadState ReadPageGame(u32 start_addr, void* buf, u32 size)
 			return CARD_READ_MODE_ERROR;
     	}
         
-#ifndef USE_CPU_COPY
+#ifdef USE_NEW_DMA
 		// NewDMA転送の準備
 		HOTSW_NDmaCopy_Card( HOTSW_NDMA_NO, (u32 *)HOTSW_MCD1, (u32 *)buf + (u32)(PAGE_WORD_SIZE*i), PAGE_SIZE );
 #endif
@@ -452,9 +460,9 @@ static CardDataReadState ReadPageGame(u32 start_addr, void* buf, u32 size)
    		// MCCNT1 レジスタ設定
 		reg_HOTSW_MCCNT1 = SYSMi_GetWork()->gameCommondParam | START_MASK | HOTSW_PAGE_1;
 
-#ifndef USE_CPU_COPY
+#ifdef USE_NEW_DMA
 		// メッセージ受信
-		OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
+		OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
 #else
 		while(reg_HOTSW_MCCNT1 & START_FLG_MASK){
 			while(!(reg_HOTSW_MCCNT1 & READY_FLG_MASK)){}

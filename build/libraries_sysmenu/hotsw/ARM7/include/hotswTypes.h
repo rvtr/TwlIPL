@@ -36,6 +36,7 @@ extern "C" {
 
 // --- NewDMA Ch
 #define HOTSW_NDMA_NO                       2
+#define HOTSW_DMA_NO						3
 
 // --- Blowfish
 #define KEY_BUF_SIZE                        3
