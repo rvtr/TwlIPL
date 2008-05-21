@@ -21,8 +21,6 @@
 #include "process_format.h"
 #include "process_hw_info.h"
 #include "process_import.h"
-
-#include "process_eticket.h"
 #include "process_nandfirm.h"
 #include "process_norfirm.h"
 #include "process_auto.h"
@@ -49,7 +47,6 @@ enum {
 #endif // USE_WRITE_FONT_DATA
 
 #ifndef   NAND_INITIALIZER_LIMITED_MODE
-	MENU_ETICKET,
 	MENU_IMPORT_TAD,
 	MENU_IMPORT_NANDFIRM,
 	MENU_IMPORT_NORFIRM,
@@ -87,7 +84,6 @@ static const MenuAndColor sMenuArray[] =
 #endif // USE_WRITE_FONT_DATA
 
 #ifndef   NAND_INITIALIZER_LIMITED_MODE
-	{"    WRITE ETICKET SIGN     ", BG_COLOR_GRAY   },
 	{"    IMPORT TAD FROM SD     ", BG_COLOR_PINK   },
 	{"    IMPORT NANDFIRM FROM SD", BG_COLOR_GREEN  },
 	{"    IMPORT NORFIRM  FROM SD", BG_COLOR_VIOLET }
@@ -236,8 +232,6 @@ void* TopmenuProcess2(void)
 #endif // USE_WRITE_FONT_DATA
 
 #ifndef   NAND_INITIALIZER_LIMITED_MODE
-	case MENU_ETICKET:
-		FADE_OUT_RETURN( eTicketProcess0 );
 	case MENU_IMPORT_TAD:
 		FADE_OUT_RETURN( ImportProcess0 );
 	case MENU_IMPORT_NANDFIRM:

@@ -317,12 +317,8 @@ BOOL HWI_ModifyLanguage( u8 region )
  *---------------------------------------------------------------------------*/
 BOOL HWI_WriteHWNormalInfoFile( void )
 {
-    const char* CAMERA_VOLATILE_INFO_PATH = "rom:/data/camera_volatile_info.bin";
     LCFGTWLHWNormalInfo Info;
-    FSFile  file;
     LCFGReadResult result;
-    BOOL open_is_ok;
-    BOOL read_is_ok;
 
     result = LCFGi_THW_ReadNormalInfo();
     if( result != LCFG_TSF_READ_RESULT_SUCCEEDED ) {
@@ -333,29 +329,6 @@ BOOL HWI_WriteHWNormalInfoFile( void )
     }
 
     Info.rtcAdjust = LCFG_THW_GetRTCAdjust();
-
-    // ROMファイルオープン(カメラ情報）
-    FS_InitFile(&file);
-    open_is_ok = FS_OpenFile(&file, CAMERA_VOLATILE_INFO_PATH);
-    if (!open_is_ok)
-    {
-        OS_Printf("FS_OpenFile(\"%s\") ... ERROR!\n", CAMERA_VOLATILE_INFO_PATH);
-        return FALSE;
-    }
-
-    // ROMファイルリード
-    read_is_ok = FS_ReadFile( &file, Info.camera, (s32)sizeof( Info.camera ) );
-    if (!read_is_ok)
-    {
-        OS_Printf("FS_ReadFile(\"%s\") ... ERROR!\n", CAMERA_VOLATILE_INFO_PATH);
-        FS_CloseFile(&file);
-        return FALSE;
-    }
-
-    FS_FlushFile(&file);
-
-    // ROMファイルクローズ
-    FS_CloseFile(&file);
 
     if (!LCFGi_THW_WriteNormalInfoDirect( &Info ))
     {

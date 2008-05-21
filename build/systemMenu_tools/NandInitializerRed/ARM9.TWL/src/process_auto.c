@@ -22,7 +22,7 @@
 #include "process_hw_info.h"
 #include "process_import.h"
 #include "process_font.h"
-#include "process_eticket.h"
+//#include "process_eticket.h"
 #include "process_nandfirm.h"
 #include "process_norfirm.h"
 #include "process_auto.h"
@@ -34,11 +34,22 @@
     型定義
  *---------------------------------------------------------------------------*/
 
+enum {
+	MENU_FORMAT = 0,
+	MENU_HARDWARE_INFO,
+#ifdef    USE_WRITE_FONT_DATA
+	MENU_FONT_DATA,
+#endif // USE_WRITE_FONT_DATA
+	MENU_IMPORT_TAD,
+#ifndef   MARIOCLUB_VERSION
+	MENU_IMPORT_NANDFIRM,
+#endif // MARIOCLUB_VERSION
+	MENU_END
+};
+
 /*---------------------------------------------------------------------------*
     定数定義
  *---------------------------------------------------------------------------*/
-
-#define NUM_OF_MENU  6
 
 /*---------------------------------------------------------------------------*
     グローバル変数定義
@@ -98,23 +109,25 @@ void* AutoProcess1(void)
 {
 	switch ( sMenuSelectNo++ )
 	{
-	case 0:
+	case MENU_FORMAT:
 		return FormatProcess0;
-	case 1:
+	case MENU_HARDWARE_INFO:
 		return HWInfoProcess0;
-	case 2:
+
+#ifdef    USE_WRITE_FONT_DATA
+	case MENU_FONT_DATA:
 		return fontProcess0;	
-	case 3:
-		return eTicketProcess0;
-	case 4:
+#endif // USE_WRITE_FONT_DATA
+
+	case MENU_IMPORT_TAD:
 		return ImportProcess0;
-	case 5:
-#ifndef MARIOCLUB_VERSION
+
+#ifndef   MARIOCLUB_VERSION
+	case MENU_IMPORT_NANDFIRM:
 		return NandfirmProcess0;
-#else
-		return AutoProcess2;
-#endif //MARIOCLUB_VERSION
-	case 6:
+#endif // MARIOCLUB_VERSION
+
+	case MENU_END:
 		return AutoProcess2;
 	}
 
@@ -154,10 +167,10 @@ void* AutoProcess2(void)
 	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "    FORMAT NAND            ");
 	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "    WRITE HARDWARE INFO    ");
 	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "    WRITE FONT DATA        ");
-	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "    WRITE ETICKET SIGN     ");
-	kamiFontPrintf(3, 15, FONT_COLOR_BLACK, "    INPORT TAD FROM SD     ");
+//	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "    WRITE ETICKET SIGN     ");
+	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "    INPORT TAD FROM SD     ");
 #ifndef MARIOCLUB_VERSION
-	kamiFontPrintf(3, 17, FONT_COLOR_BLACK, "    INPORT NANDFIRM FROM SD");
+	kamiFontPrintf(3, 15, FONT_COLOR_BLACK, "    INPORT NANDFIRM FROM SD");
 #endif //MARIOCLUB_VERSION
 #ifndef AUTO_FORMAT_MODE
 	kamiFontPrintf(3, 22, FONT_COLOR_BLACK, " Button B : return to menu");
@@ -169,7 +182,7 @@ void* AutoProcess2(void)
 	}
 
 	// 失敗あり
-	if (i<sMenuSelectNo-1)
+	if (i<MENU_END)
 	{
 		kamiFontPrintf(3, (s16)(7+2*i), FONT_COLOR_RED, "NG");
 		kamiFontPrintf(3, 19, FONT_COLOR_BLACK, "    Error Occured!");
