@@ -1834,7 +1834,7 @@ static void FinalizeHotSw(HotSwApliType type)
         }
 
         // NANDアプリヘッダはコピー済み
-        if(((ROM_Header*)SYSM_APP_ROM_HEADER_BUF)->s.game_card_on/*access_control.game_card_on*/){
+        if(((ROM_Header*)SYSM_APP_ROM_HEADER_BUF)->s.access_control.game_card_on){
             McPowerOn();
 
             s_cbData.modeType = HOTSW_MODE2;
