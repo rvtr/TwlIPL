@@ -153,8 +153,10 @@ int SelectRegionMain( void )
 		// ::::::::::::::::::::::::::::::::::::::::::::::
 		TSD_SetLanguage( default_lang_list[s_regionCode] );		// デフォルト言語に強制設定
 		TSD_SetCountry( default_country_list[s_regionCode] );	// デフォルト国に強制設定
-		(void)SYSM_WriteTWLSettingsFile();
-
+		if( !MY_WriteTWLSettings() ) {
+			OS_TPrintf( "TWL settings write failed.\n" );
+		}
+		
 		MachineSettingInit();
 		return 0;
 	}else if( ( pad.trg & PAD_BUTTON_B ) || tp_cancel ) {

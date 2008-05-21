@@ -307,7 +307,7 @@ static int InputRtcDateTimeMain( void )
 	  case SEQ_DAY_INIT:
 		s_pWork->inp.pos_x		= DAY_TOP_X;
 		s_pWork->inp.keta_max	= 2;
-		s_pWork->inp.value_max	= (int)SYSM_GetDayNum( s_pWork->dtp.Date.year, s_pWork->dtp.Date.month );
+		s_pWork->inp.value_max	= (int)UTL_GetDayNum( s_pWork->dtp.Date.year, s_pWork->dtp.Date.month );
 																	// 年・月をもとにその月の日数を算出する。
 		s_pWork->inp.value_min	= 1;
 		if(s_pWork->dtp.Date.day > s_pWork->inp.value_max) {
@@ -349,7 +349,7 @@ static int InputRtcDateTimeMain( void )
 		// 年・月入力ならば、日数を算出して、現在の入力日が日数を超えていたら修正する。
 		if( ( s_pWork->dtp.seq == SEQ_YEAR_SET ) ||
 			( s_pWork->dtp.seq == SEQ_MONTH_SET ) ) {
-			u32 dayNum = SYSM_GetDayNum( s_pWork->dtp.Date.year, s_pWork->dtp.Date.month );
+			u32 dayNum = UTL_GetDayNum( s_pWork->dtp.Date.year, s_pWork->dtp.Date.month );
 			if( dayNum < s_pWork->dtp.Date.day ) {
 				PrintfSJIS( DAY_TOP_X, DATE_TOP_Y, TXT_COLOR_WHITE, "%02d", s_pWork->dtp.Date.day );
 				PrintfSJIS( DAY_TOP_X, DATE_TOP_Y, TXT_COLOR_BLACK, "%02d", dayNum );
@@ -365,7 +365,7 @@ static int InputRtcDateTimeMain( void )
 			MI_CpuCopy32( &s_pWork->dtp.Date, &date, sizeof(RTCDate) );
 			date.year -= 2000;
 			(void)RTC_SetDateTime( &date, &s_pWork->dtp.Time );
-			LCFG_TSD_SetRTCOffset( SYSM_CalcRTCOffset( &date, &s_pWork->dtp.Time ) );
+			LCFG_TSD_SetRTCOffset( UTL_CalcRTCOffset( &date, &s_pWork->dtp.Time ) );
 		}
 		
 		// ::::::::::::::::::::::::::::::::::::::::::::::

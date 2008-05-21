@@ -26,14 +26,13 @@ TWL_PROC	   		=	ARM9
 
 #----------------------------------------------------------------------------
 
-SRCDIR				=	../common/src
+SRCDIR				=	./src
 
-INCDIR				=	../common/include \
-						$(ROOT)/build/libraries/mb/common/include
+INCDIR				=	
 
-SRCS				=	mb_loader.c
+SRCS				=	banner.c
 
-TARGET_LIB			=	libmbloader$(TWL_LIBSUFFIX).a
+TARGET_LIB			=	libbanner$(TWL_LIBSUFFIX).a
 
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs

@@ -320,20 +320,29 @@ BOOL SYSMi_CopyCardRomHeader( void )
 	return retval;
 }
 
+
 // カードバナーのARM7バッファからARM9バッファへのコピー
 BOOL SYSMi_CopyCardBanner( void )
 {
 	BOOL retval = FALSE;
 
 	if( SYSM_IsExistCard() ) {
-		// バナーデータのリード
-		SYSMi_ReadCardBannerFile( SYSM_GetCardRomHeader()->banner_offset, &s_bannerBuf[ CARD_BANNER_INDEX ] );
-
-		retval = TRUE;
+		// バナーデータのコピー
+		TWLBannerFile *pBanner = &s_bannerBuf[ CARD_BANNER_INDEX ];
+		if( SYSMi_GetWork()->flags.hotsw.isValidCardBanner ) {
+			DC_InvalidateRange( (void *)SYSM_CARD_BANNER_BUF, 0x3000 );
+			MI_CpuCopyFast( (void *)SYSM_CARD_BANNER_BUF, pBanner, sizeof(TWLBannerFile) );
+		}
+		retval = BANNER_CheckBanner( pBanner );
+		
+		if( !retval ) {
+			MI_CpuClearFast( pBanner, sizeof(TWLBannerFile) );
+		}
 	}
 
 	return retval;
 }
+
 
 // インポートされているすべてのNANDアプリを列挙したリストの準備
 // SYSM_GetNandTitleListおよびSYSM_TryToBootTitle前に呼ぶ必要あり
@@ -388,7 +397,7 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 		// "Not Launch"でない　かつ　"Data Only"でない　なら有効なタイトルとしてリストに追加
 		if( ( s_pTitleIDList[ l ] & ( TITLE_ID_NOT_LAUNCH_FLAG_MASK | TITLE_ID_DATA_ONLY_FLAG_MASK ) ) == 0 ) {
 			titleIDArray[ validNum ] = s_pTitleIDList[ l ];
-			SYSMi_ReadBanner_NAND( s_pTitleIDList[ l ], &s_bannerBuf[ validNum ] );
+			BANNER_ReadBannerFromNAND( s_pTitleIDList[ l ], &s_bannerBuf[ validNum ] );
 			validNum++;
 			if( !( validNum < LAUNCHER_TITLE_LIST_NUM - 1 ) )// 最大(LAUNCHER_TITLE_LIST_NUM - 1)まで
 			{
@@ -1543,7 +1552,8 @@ static void SYSMi_makeTitleIdList( void )
 			}
 		}else
 		{
-			if(s_pTitleIDList[l] == NULL)
+			// 無効なTitleID または、DataOnlyアプリはスキップ
+			if( (s_pTitleIDList[l] == NULL) || !( s_pTitleIDList[l] & TITLE_ID_DATA_ONLY_FLAG_MASK ) )
 			{
 				continue;
 			}
@@ -1613,8 +1623,8 @@ static void SYSMi_makeTitleIdList( void )
 			}
 		}
 		
-		// ジャンプ可能ならば(一応Data Onlyフラグも見ておくが、ジャンプAPIでも見る事)
-		if( pe_hs->permit_landing_normal_jump && !( hs->titleID & TITLE_ID_DATA_ONLY_FLAG_MASK ) )
+		// ジャンプ可能ならば
+		if( pe_hs->permit_landing_normal_jump )
 		{
 			// リストに追加してジャンプ可能フラグON
 			list->TitleID[count] = pe_hs->titleID;

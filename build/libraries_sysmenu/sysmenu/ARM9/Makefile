@@ -28,12 +28,10 @@ REVISION_SRC	=	src/revision.c
 
 SRCDIR			=	src
 SRCS			=	sysmenu_lib.c \
-					util.c \
 					ninLogoFunc.c \
 					device.c \
 					keys.c \
 					title.c \
-					banner.c \
 					fs_wram.c \
 					../common/src/status.c \
 					../common/src/pxi.c \

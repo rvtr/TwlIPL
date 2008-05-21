@@ -676,7 +676,7 @@ static void CheckDate( void )
 	u8 maxday;
 	if( s_temp_birthday.month == 0 ) s_temp_birthday.month = 12;
 	if( s_temp_birthday.month == 13 ) s_temp_birthday.month = 1;
-	maxday = (u8)SYSM_GetDayNum( 2000, s_temp_birthday.month );
+	maxday = (u8)UTL_GetDayNum( 2000, s_temp_birthday.month );
 	if( s_temp_birthday.day == 0 ) s_temp_birthday.day = maxday;
 	if( s_temp_birthday.day > maxday ) s_temp_birthday.day = 1;
 }

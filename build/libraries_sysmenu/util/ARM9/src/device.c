@@ -138,6 +138,26 @@ void SYSMi_SetWirelessLED( BOOL enable )
 }
 
 
+// タッチパネルキャリブレーション
+void SYSM_CaribrateTP( void )
+{
+	LCFGTWLTPCalibData store;
+	TPCalibrateParam calibParam;
+	
+	// 本体設定データからキャリブレーション情報を取得
+	LCFG_TSD_GetTPCalibration( &store );
+	
+	// TPキャリブレーション
+	( void )TP_CalcCalibrateParam( &calibParam,							// タッチパネル初期化
+			store.data.raw_x1, store.data.raw_y1, (u16)store.data.dx1, (u16)store.data.dy1,
+			store.data.raw_x2, store.data.raw_y2, (u16)store.data.dx2, (u16)store.data.dy2 );
+	TP_SetCalibrateParam( &calibParam );
+	OS_TPrintf("TP_calib: %4d %4d %4d %4d %4d %4d\n",
+			store.data.raw_x1, store.data.raw_y1, (u16)store.data.dx1, (u16)store.data.dy1,
+			store.data.raw_x2, store.data.raw_y2, (u16)store.data.dx2, (u16)store.data.dy2 );
+}
+
+
 // RTCクロック補正値をセット
 void SYSMi_WriteAdjustRTC( void )
 {

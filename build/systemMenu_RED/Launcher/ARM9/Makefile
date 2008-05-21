@@ -41,9 +41,6 @@ export DISABLE_WLFIRM_LOAD		=	FALSE
 export IGNORE_WLFIRM_SIGNCHECK	=	FALSE
 export DISABLE_SLEEP			=	TRUE
 
-# COMPILE SWITCH ※最終ROM作成時は、全てTRUEにセットする
-export LOAD_APP_VIA_WRAM	=	FALSE
-
 endif
 
 # MAKEROM SWITCH ※最終ROM作成時は、全てTRUEにセットする
@@ -87,15 +84,29 @@ LINCLUDES				=	$(MISC_DIR)/include \
 							$(ROOT)/build/libraries/wm/ARM9.TWL/nwm/inc \
 							$(ROOT)/build/libraries/reboot/common/include
 
-LLIBRARIES				+=	libes$(TWL_LIBSUFFIX).a		\
-							libboc$(TWL_LIBSUFFIX).a	\
-							libsfs$(TWL_LIBSUFFIX).a	\
-							libnam$(TWL_LIBSUFFIX).a	\
-							libsea$(TWL_LIBSUFFIX).a	\
+SYSMENU_LIBS			=	\
+							liblcfg$(TWL_LIBSUFFIX).a \
+							libsysmenu$(TWL_LIBSUFFIX).a \
+							libsysmmcu$(TWL_LIBSUFFIX).a \
+							libsysmutil$(TWL_LIBSUFFIX).a \
+							libbanner$(TWL_LIBSUFFIX).a \
+							libboot$(TWL_LIBSUFFIX).a \
+							libds$(TWL_LIBSUFFIX).a \
+							libhotsw$(TWL_LIBSUFFIX).a \
+							libdht$(TWL_LIBSUFFIX).a \
 							libreloc_info$(TWL_LIBSUFFIX).a \
 							libnamut$(TWL_LIBSUFFIX).a \
 							libsharedfont_launcher$(TWL_LIBSUFFIX).a \
 							WDS$(TWL_LIBSUFFIX).a
+
+SDK_APPEND_LIBS		=		\
+							libes$(TWL_LIBSUFFIX).a		\
+							libboc$(TWL_LIBSUFFIX).a	\
+							libsfs$(TWL_LIBSUFFIX).a	\
+							libnam$(TWL_LIBSUFFIX).a	\
+							libsea$(TWL_LIBSUFFIX).a
+
+LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
 REBOOT_LIB				=	libreboot$(TWL_LIBSUFFIX).a
 

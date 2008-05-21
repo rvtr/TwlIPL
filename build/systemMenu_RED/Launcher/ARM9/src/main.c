@@ -113,7 +113,10 @@ void TwlMain( void )
 #ifdef USE_WRAM_LOAD
 	HOTSW_Init();
 #endif
-    
+	
+     //NAMの初期化
+    NAM_Init( Alloc, Free );
+   
     OS_TPrintf( "SYSM_work size = 0x%x\n", sizeof(SYSM_work) );
 
     // 割り込み許可--------------------
@@ -128,7 +131,10 @@ void TwlMain( void )
 
     // 各種パラメータの取得------------
     pBootTitle = SYSM_ReadParameters();                        // 本体設定データ、リセットパラメータのリード、検査用オート起動カード判定、量産ライン用キーショートカット起動判定等のリード
-
+	
+    // TPキャリブレーション
+	UTL_CaribrateTP( LCFG_TSD_GetTPCalibrationPtr() );
+	
     if( SYSM_IsFatalError() ) {
         // FATALエラー処理
     }

@@ -68,22 +68,6 @@ void SYSMi_WriteAdjustRTC( void );
 void SYSMi_CheckRTC( void );
 
 
-//-------------------------------------------------------
-// バナー
-//-------------------------------------------------------
-
-// カードバナーリード（※NTR-IPL2仕様）
-BOOL SYSMi_ReadCardBannerFile( u32 bannerOffset, TWLBannerFile *pBanner );
-
-// NANDアプリバナーリード
-BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, TWLBannerFile *pDst );
-
-//-------------------------------------------------------
-// 活線挿抜
-//-------------------------------------------------------
-void SYSMi_EnableHotSW( BOOL enable );
-
-
 #endif // SDK_ARM9
 
 

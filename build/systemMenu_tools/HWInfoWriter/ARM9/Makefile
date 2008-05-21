@@ -43,8 +43,15 @@ SRCS					=	main.c HWInfoWriter.c hwi.c \
 
 LINCLUDES				=	$(MISC_DIR)/include \
 							$(ROOT)/build/libraries/lcfg/ARM9.TWL/include
-LLIBRARIES				=	libacsign$(TWL_LIBSUFFIX).a \
-							libacsign_enc$(TWL_LIBSUFFIX).a
+
+SYSMENU_LIBS			=	\
+							libacsign$(TWL_LIBSUFFIX).a \
+							libacsign_enc$(TWL_LIBSUFFIX).a \
+
+SDK_APPEND_LIBS			=	\
+							liblcfg$(TWL_LIBSUFFIX).a
+
+LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
 #----------------------------------------------------------------------------
 

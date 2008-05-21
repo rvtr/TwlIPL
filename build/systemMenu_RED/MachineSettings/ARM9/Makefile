@@ -16,9 +16,9 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-SUBDIRS					=	\
-#							../../../libraries_sysmenu/sysmenu \
-#							../../../libraries_sysmenu/settings
+SUBDIRS					=
+SUBMAKES				=	\
+							$(ROOT)/build/libraries/os/ARM9.TWL/Makefile.sharedFont
 
 #----------------------------------------------------------------------------
 
@@ -66,12 +66,24 @@ MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
 
 MAKETAD_OPTION			+= -s
 
-LLIBRARIES				=	libes$(TWL_LIBSUFFIX).a				\
-							libboc$(TWL_LIBSUFFIX).a			\
+# libsysmenu.a　は、RED本体設定でSVNのリビジョンを取得するためだけに使用しているので、
+# UIG本体設定でリンクする必要はありません。
+SYSMENU_LIBS			=	\
+							libbanner$(TWL_LIBSUFFIX).a \
+							libnamut$(TWL_LIBSUFFIX).a \
+							libsysmutil$(TWL_LIBSUFFIX).a \
+							libsysmenu$(TWL_LIBSUFFIX).a
+
+SDK_APPEND_LIBS			=	\
+							liblcfg$(TWL_LIBSUFFIX).a \
+							libes$(TWL_LIBSUFFIX).a		\
+							libboc$(TWL_LIBSUFFIX).a	\
 							libsfs$(TWL_LIBSUFFIX).a	\
-							libnam$(TWL_LIBSUFFIX).a			\
-							libsea$(TWL_LIBSUFFIX).a			\
-							libnamut$(TWL_LIBSUFFIX).a
+							libnam$(TWL_LIBSUFFIX).a	\
+							libsea$(TWL_LIBSUFFIX).a	\
+							libsharedfont$(TWL_LIBSUFFIX).a
+
+LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 

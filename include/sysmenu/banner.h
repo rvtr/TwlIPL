@@ -15,20 +15,40 @@
   $Author$
  *---------------------------------------------------------------------------*/
 
-#ifndef BANNER_H_
-#define BANNER_H_
+#ifndef SYSM_BANNER_H_
+#define SYSM_BANNER_H_
 
 #include <twl/types.h>
-#include <sysmenu/banner/common/NTRBanner.h>
-#include <sysmenu/banner/common/TWLBanner.h>
+#include <twl/os/common/banner.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+// define data----------------------------------------------------------
+// global variable------------------------------------------------------
+// function-------------------------------------------------------------
+
+#ifdef SDK_ARM9
+
+// カードからのバナーリード
+BOOL BANNER_ReadBannerFromCARD( u32 bannerOffset, TWLBannerFile *pDst );
+
+// NANDからのバナーリード
+BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst );
+
+// バナーのフォーマットが正しいかチェック（NTRバナー、TWLバナーのどちらでもOK）
+BOOL BANNER_CheckBanner( TWLBannerFile *pBanner );
+
+// サブバナーチェック
+BOOL BANNER_CheckSubBanner( TWLSubBannerFile *pBanner );
+
+#endif //SDK_ARM9
+
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-/* BANNER_H_ */
+/* SYSM_BANNER_H_ */
 #endif

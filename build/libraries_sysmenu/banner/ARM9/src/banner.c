@@ -16,8 +16,8 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
-#include <sysmenu.h>
-#include "internal_api.h"
+#include <twl/nam.h>
+#include <sysmenu/banner.h>
 
 // define data-----------------------------------------------------------------
 typedef struct BannerCheckParam {
@@ -27,8 +27,6 @@ typedef struct BannerCheckParam {
 
 // extern data-----------------------------------------------------------------
 // function's prototype-------------------------------------------------------
-static BOOL SYSMi_CheckBannerFile( TWLBannerFile *pBanner );
-static BOOL SYSMi_CheckSubBannerFile( TWLSubBannerFile *pBanner );
 
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
@@ -41,23 +39,10 @@ static BOOL SYSMi_CheckSubBannerFile( TWLSubBannerFile *pBanner );
 //
 // ============================================================================
 
-// カードバナーリード（※NTR-IPL2仕様）
-BOOL SYSMi_ReadCardBannerFile( u32 bannerOffset, TWLBannerFile *pBanner )
+
+// カードアプリバナーリード
+BOOL BANNER_ReadBannerFromCARD( u32 bannerOffset, TWLBannerFile *pBanner )
 {
-#pragma unused(bannerOffset)
-	BOOL isRead;
-	if( SYSMi_GetWork()->flags.hotsw.isValidCardBanner ) {
-		DC_InvalidateRange( (void *)SYSM_CARD_BANNER_BUF, 0x3000 );
-		MI_CpuCopyFast( (void *)SYSM_CARD_BANNER_BUF, pBanner, sizeof(TWLBannerFile) );
-	}
-	isRead = SYSMi_CheckBannerFile( pBanner );
-	
-	if( !isRead ) {
-		MI_CpuClearFast( pBanner, sizeof(TWLBannerFile) );
-	}
-	return isRead;
-/*
-	// ※カードライブラリでは、スロットAからのリードなら問題ないが、スロットBからは読めないのでとりあえず使わない
 	BOOL isRead;
 	u16 id = (u16)OS_GetLockID();
 	
@@ -68,17 +53,17 @@ BOOL SYSMi_ReadCardBannerFile( u32 bannerOffset, TWLBannerFile *pBanner )
 	CARD_UnlockRom( id );
 	OS_ReleaseLockID( id );
 	
-	isRead = SYSMi_CheckBannerFile( (TWLBannerFile *)pBanner );
+	isRead = BANNER_CheckBanner( (TWLBannerFile *)pBanner );
 	
 	if( !isRead ) {
 		MI_CpuClearFast( pBanner, sizeof(TWLBannerFile) );
 	}
 	return isRead;
-*/
 }
 
+
 // NANDアプリバナーリード
-BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, TWLBannerFile *pDst )
+BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst )
 {
 #define PATH_LENGTH		1024
 	OSTick start;
@@ -104,7 +89,7 @@ BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, TWLBannerFile *pDst )
 	bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
 	if( ! bSuccess )
 	{
-		OS_TPrintf("SYSM_GetNandTitleList failed: cant open file %s\n",path);
+		OS_TPrintf("BANNER_GetNandTitleList failed: cant open file %s\n",path);
 		return FALSE;
 	}
 	
@@ -112,14 +97,14 @@ BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, TWLBannerFile *pDst )
 	bSuccess = FS_SeekFile(file, 0x68, FS_SEEK_SET);
 	if( ! bSuccess )
 	{
-		OS_TPrintf("SYSM_GetNandTitleList failed: cant seek file(0)\n");
+		OS_TPrintf("BANNER_GetNandTitleList failed: cant seek file(0)\n");
 		FS_CloseFile(file);
 		return FALSE;
 	}
 	readLen = FS_ReadFile(file, &offset, sizeof(offset));
 	if( readLen != sizeof(offset) )
 	{
-		OS_TPrintf("SYSM_GetNandTitleList failed: cant read file\n");
+		OS_TPrintf("BANNER_GetNandTitleList failed: cant read file\n");
 		FS_CloseFile(file);
 		return FALSE;
 	}
@@ -129,18 +114,18 @@ BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, TWLBannerFile *pDst )
 		bSuccess = FS_SeekFile(file, offset, FS_SEEK_SET);
 		if( ! bSuccess )
 		{
-			OS_TPrintf("SYSM_GetNandTitleList failed: cant seek file(offset)\n");
+			OS_TPrintf("BANNER_GetNandTitleList failed: cant seek file(offset)\n");
 			FS_CloseFile(file);
 			return FALSE;
 		}
 		readLen = FS_ReadFile( file, pDst, (s32)sizeof(TWLBannerFile) );
 		if( readLen != (s32)sizeof(TWLBannerFile) )
 		{
-			OS_TPrintf("SYSM_GetNandTitleList failed: cant read file2\n");
+			OS_TPrintf("BANNER_GetNandTitleList failed: cant read file2\n");
 			FS_CloseFile(file);
 			return FALSE;
 		}
-		if( !SYSMi_CheckBannerFile( pDst ) )
+		if( !BANNER_CheckBanner( pDst ) )
 		{
 			// 正当性チェック失敗の場合はバッファクリア
 			MI_CpuClearFast( pDst, sizeof(TWLBannerFile) );
@@ -163,19 +148,19 @@ BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, TWLBannerFile *pDst )
 			if( readLen == sizeof(TWLSubBannerFile) )
 			{
 				// 読み込みには成功したので正当性チェック
-				if( SYSMi_CheckSubBannerFile(&subBanner) )
+				if( BANNER_CheckSubBanner(&subBanner) )
 				{
 					// 成功したのでコピーする
 					pDst->h = subBanner.h;
 					pDst->anime = subBanner.anime;
-					OS_TPrintf("SYSMi_ReadBanner_NAND : subbanner check succeed. id=%.16x\n", titleID);
+					OS_TPrintf("BANNER_ReadBanner_NAND : subbanner check succeed. id=%.16x\n", titleID);
 				}else
 				{
-					OS_TPrintf("SYSMi_ReadBanner_NAND : subbanner check failed. id=%.16x\n", titleID);
+					OS_TPrintf("BANNER_ReadBanner_NAND : subbanner check failed. id=%.16x\n", titleID);
 				}
 			}else
 			{
-				OS_TPrintf("SYSMi_ReadBanner_NAND : subbanner read failed. id=%.16x\n", titleID);
+				OS_TPrintf("BANNER_ReadBanner_NAND : subbanner read failed. id=%.16x\n", titleID);
 			}
 		}
 	}
@@ -183,20 +168,9 @@ BOOL SYSMi_ReadBanner_NAND( NAMTitleId titleID, TWLBannerFile *pDst )
 	return TRUE;
 }
 
-	// サブバナーデータの正誤チェック
-static BOOL SYSMi_CheckSubBannerFile( TWLSubBannerFile *pBanner )
-{
-	BOOL retval = TRUE;
-	
-	// アニメ部チェック
-	if( pBanner->h.crc16_anime != SVC_GetCRC16( 0xffff, &pBanner->anime, sizeof(BannerAnime) ) ) {
-		retval = FALSE;
-	}
-	return retval;
-}
 
 	// バナーデータの正誤チェック
-static BOOL SYSMi_CheckBannerFile( TWLBannerFile *pBanner )
+BOOL BANNER_CheckBanner( TWLBannerFile *pBanner )
 {
 	int i;
 	BOOL retval = TRUE;
@@ -231,6 +205,19 @@ static BOOL SYSMi_CheckBannerFile( TWLBannerFile *pBanner )
 		if( pBanner->h.crc16_anime != SVC_GetCRC16( 0xffff, &pBanner->anime, sizeof(BannerAnime) ) ) {
 			retval = FALSE;
 		}
+	}
+	return retval;
+}
+
+
+// サブバナーデータの正誤チェック
+BOOL BANNER_CheckSubBanner( TWLSubBannerFile *pBanner )
+{
+	BOOL retval = TRUE;
+	
+	// アニメ部チェック
+	if( pBanner->h.crc16_anime != SVC_GetCRC16( 0xffff, &pBanner->anime, sizeof(BannerAnime) ) ) {
+		retval = FALSE;
 	}
 	return retval;
 }

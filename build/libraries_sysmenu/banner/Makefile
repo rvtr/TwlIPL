@@ -17,7 +17,7 @@
 #----------------------------------------------------------------------------
 
 TARGET_FIRM			=	SYSTEMMENU
-SUBDIRS				=	ARM7 ARM9
+SUBDIRS				=	ARM9
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 

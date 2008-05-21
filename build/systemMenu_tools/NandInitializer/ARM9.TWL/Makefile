@@ -124,14 +124,20 @@ MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
 
 MAKETAD_FLAGS			+=	-s
 
-LLIBRARIES		+=	libes$(TWL_LIBSUFFIX).a				\
-					libboc$(TWL_LIBSUFFIX).a			\
-					libsfs$(TWL_LIBSUFFIX).a	\
-					libnam$(TWL_LIBSUFFIX).a			\
-					libsea$(TWL_LIBSUFFIX).a			\
-					libacsign$(TWL_LIBSUFFIX).a     \
-					libacsign_enc$(TWL_LIBSUFFIX).a     \
-					libnamut$(TWL_LIBSUFFIX).a
+SYSMENU_LIBS			=	\
+							libacsign$(TWL_LIBSUFFIX).a \
+							libacsign_enc$(TWL_LIBSUFFIX).a \
+							libnamut$(TWL_LIBSUFFIX).a
+
+SDK_APPEND_LIBS			=	\
+							libes$(TWL_LIBSUFFIX).a \
+							libboc$(TWL_LIBSUFFIX).a \
+							libsfs$(TWL_LIBSUFFIX).a \
+							libnam$(TWL_LIBSUFFIX).a \
+							libsea$(TWL_LIBSUFFIX).a \
+							liblcfg$(TWL_LIBSUFFIX).a
+
+LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
 MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 

@@ -349,10 +349,10 @@ void CheckOKCancelButton(BOOL *tp_ok, BOOL *tp_cancel)
 BOOL MY_WriteTWLSettings( void )
 {
 	BOOL retval = FALSE;
-	u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
+	u8 *pBuffer = Alloc( LCFG_WRITE_TEMP );
 	if( pBuffer != NULL ) {
 		retval = LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
-		SYSM_Free( pBuffer );
+		Free( pBuffer );
 	}
 	return retval;
 }

@@ -153,9 +153,6 @@ TitleProperty *SYSM_ReadParameters( void )
 {
     TitleProperty *pBootTitle = NULL;
 
-    //NAMの初期化
-    NAM_Init( SYSM_Alloc, SYSM_Free );
-
     //-----------------------------------------------------
     // HW情報のリード
     //-----------------------------------------------------
@@ -218,8 +215,6 @@ TitleProperty *SYSM_ReadParameters( void )
     }
 #endif // SDK_SUPPORT_PMIC_2
 	
-    // TPキャリブレーション
-	SYSM_CaribrateTP();
     // RTC補正
     SYSMi_WriteAdjustRTC();
     // RTC値のチェック

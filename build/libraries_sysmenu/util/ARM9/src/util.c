@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlIPL
-  File:     SYSM_util.c
+  File:     util.c
 
   Copyright 2007 Nintendo.  All rights reserved.
 
@@ -19,26 +19,41 @@
 #include <sysmenu.h>
 
 // define data------------------------------------------
-
 // extern data------------------------------------------
-
 // function's prototype declaration---------------------
-static s64 SYSMi_CalcRTCSecOffset( RTCDate *datep, RTCTime *timep );
+static s64 UTLi_CalcRTCSecOffset( RTCDate *datep, RTCTime *timep );
 
 // global variable -------------------------------------
-
 // static variable -------------------------------------
-
 // const data  -----------------------------------------
-
 // function's description-------------------------------
+
+//======================================================================
+//  タッチパネル
+//======================================================================
+
+// タッチパネルキャリブレーション
+void UTL_CaribrateTP( const LCFGTWLTPCalibData *pCalib )
+{
+	TPCalibrateParam calibParam;
+	
+	// TPキャリブレーション
+	( void )TP_CalcCalibrateParam( &calibParam,							// タッチパネル初期化
+			pCalib->data.raw_x1, pCalib->data.raw_y1, (u16)pCalib->data.dx1, (u16)pCalib->data.dy1,
+			pCalib->data.raw_x2, pCalib->data.raw_y2, (u16)pCalib->data.dx2, (u16)pCalib->data.dy2 );
+	TP_SetCalibrateParam( &calibParam );
+	OS_TPrintf("TP_calib: %4d %4d %4d %4d %4d %4d\n",
+			pCalib->data.raw_x1, pCalib->data.raw_y1, (u16)pCalib->data.dx1, (u16)pCalib->data.dy1,
+			pCalib->data.raw_x2, pCalib->data.raw_y2, (u16)pCalib->data.dx2, (u16)pCalib->data.dy2 );
+}
+
 
 //======================================================================
 //  RTCオフセット制御
 //======================================================================
 
 // RTCに新しい設定値をセットして、その値をもとにrtcOffset値を算出する。
-s64 SYSM_CalcRTCOffset( RTCDate *newDatep, RTCTime *newTimep )
+s64 UTL_CalcRTCOffset( RTCDate *newDatep, RTCTime *newTimep )
 {
 	RTCDate oldDate;
 	RTCTime oldTime;
@@ -56,8 +71,8 @@ s64 SYSM_CalcRTCOffset( RTCDate *newDatep, RTCTime *newTimep )
 	}
 	LCFG_TSD_SetRTCLastSetYear( (u8)newDatep->year );
 	
-	offset0	= SYSMi_CalcRTCSecOffset( &oldDate, &oldTime );			// 設定直前のRTC値のオフセットを算出
-	offset1	= SYSMi_CalcRTCSecOffset(  newDatep, newTimep );		// 新しくセットされたRTC値のオフセットを算出
+	offset0	= UTLi_CalcRTCSecOffset( &oldDate, &oldTime );			// 設定直前のRTC値のオフセットを算出
+	offset1	= UTLi_CalcRTCSecOffset(  newDatep, newTimep );		// 新しくセットされたRTC値のオフセットを算出
 	offset	= LCFG_TSD_GetRTCOffset() + offset1 - offset0;			// 新RTC_ofs と 現在のRTC_ofs の差分の値を加算してリターン。
 	
 	OS_Printf ("Now    Date = year:%3d month:%3d date:%3d  hour:%3d minute:%3d second:%3d\n",
@@ -76,7 +91,7 @@ s64 SYSM_CalcRTCOffset( RTCDate *newDatep, RTCTime *newTimep )
 
 // RTCオフセット値の算出
 #define SECOND_OFFSET
-static s64 SYSMi_CalcRTCSecOffset( RTCDate *datep, RTCTime *timep )
+static s64 UTLi_CalcRTCSecOffset( RTCDate *datep, RTCTime *timep )
 {
 	u32 i;
 	int uruu   = 0;
@@ -93,7 +108,7 @@ static s64 SYSMi_CalcRTCSecOffset( RTCDate *datep, RTCTime *timep )
 	// 月、日を　日数に換算してから、　秒 or 分オフセットに
 	dayNum = (int)datep->day - 1;
 	for( i = 1; i < datep->month; i++ ) {
-		dayNum += SYSM_GetDayNum( datep->year, i );
+		dayNum += UTL_GetDayNum( datep->year, i );
 	}
 	
 	// 年を　日数に換算
@@ -114,11 +129,11 @@ static s64 SYSMi_CalcRTCSecOffset( RTCDate *datep, RTCTime *timep )
 
 
 // 指定された年・月の日数を返す。
-u32 SYSM_GetDayNum( u32 year, u32 month )
+u32 UTL_GetDayNum( u32 year, u32 month )
 {
 	u32 dayNum = 31;
 	if( month == 2 ) {
-		if( SYSM_IsLeapYear100( year ) ) {
+		if( UTL_IsLeapYear100( year ) ) {
 			dayNum -= 2;
 		}else {
 			dayNum -= 3;
@@ -131,7 +146,7 @@ u32 SYSM_GetDayNum( u32 year, u32 month )
 
 
 // 簡易うるう年の判定 (うるう年：1、通常の年：0）※RTCのとりうる範2000～2100年に限定する。
-BOOL SYSM_IsLeapYear100( u32 year )
+BOOL UTL_IsLeapYear100( u32 year )
 {
 	if( ( year & 0x03 ) || ( year == 100 ) ) {						// うるう年は、「4で割り切れ　かつ　100で割り切れない年」または「400で割り切れる年」
 		return FALSE;
@@ -142,7 +157,7 @@ BOOL SYSM_IsLeapYear100( u32 year )
 
 
 // RTCの日付が正しいかチェック
-BOOL SYSM_CheckRTCDate( RTCDate *datep )
+BOOL UTL_CheckRTCDate( RTCDate *datep )
 {
 	if(	 ( datep->year >= 100 )
 	  || ( datep->month < 1 ) || ( datep->month > 12 )
@@ -155,7 +170,7 @@ BOOL SYSM_CheckRTCDate( RTCDate *datep )
 
 
 // RTCの時刻が正しいかチェック
-BOOL SYSM_CheckRTCTime( RTCTime *timep )
+BOOL UTL_CheckRTCTime( RTCTime *timep )
 {
 	if(  ( timep->hour   > 23 )
 	  || ( timep->minute > 59 )

@@ -93,12 +93,24 @@ LINCLUDES		= 	$(ROOT)/build/libraries/spi/ARM7/include \
 					$(ROOT)/build/libraries/reboot/common/include \
 					$(SYSMENU_ROOT)/build/libraries_sysmenu/sysmenu/common/include
 
-LLIBRARY_DIRS	+=	./
+SYSMENU_LIBS	=	\
+					libsysmenu_sp$(TWL_LIBSUFFIX).a \
+					libsysmmcu_sp$(TWL_LIBSUFFIX).a \
+					libmbloader_sp$(TWL_LIBSUFFIX).a \
+					libboot_sp$(TWL_LIBSUFFIX).a \
+					libds_sp$(TWL_LIBSUFFIX).a \
+					libhotsw_sp$(TWL_LIBSUFFIX).a \
+					libdht_sp$(TWL_LIBSUFFIX).a \
 
-LLIBRARIES		+=	libwl_sp.TWL.LTD.a \
+SDK_APPEND_LIBS	=	\
+					libwl_sp.TWL.LTD.a \
 					libaes_sp.firm.LTD.a \
 					libsea_sp.TWL.LTD.a \
 					libreboot_sp$(TWL_LIBSUFFIX).a
+
+LLIBRARIES		+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
+
+LLIBRARY_DIRS	+=	./
 
 LDEPENDS_NEF	= $(TWL_LIBS) $(LLIBRARIES)
 
