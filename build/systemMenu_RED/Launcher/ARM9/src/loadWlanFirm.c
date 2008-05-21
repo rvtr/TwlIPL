@@ -177,11 +177,13 @@ s32 ReadFirmwareHeader(char *path, u8 *buffer, s32 bufSize)
         return -1;
     }
 
+#if 0 // skip rom header seeking
     if( FALSE == FS_SeekFile(file, sizeof(ROM_Header), FS_SEEK_SET) ) {
         OS_TWarning("FS_SeekFile failed.\n");
         return -1;
     }
-
+#endif
+    
     flen = FS_ReadFile(file, buffer, bufSize);
     if( flen == -1 ) {
         OS_TWarning("FS_ReadFile failed.\n");
@@ -205,11 +207,13 @@ s32 ReadFirmwareBinary(char *path, u32 offset, u8 *buffer, s32 bufSize)
         return -1;
     }
 
+#if 0 // skip rom header seeking
     if( FALSE == FS_SeekFile(file, (s32)(sizeof(ROM_Header) + offset), FS_SEEK_SET) ) {
         OS_TWarning("FS_SeekFile failed.\n");
         return -1;
     }
-
+#endif
+    
     flen = FS_ReadFile(file, buffer, bufSize);
     if( flen == -1 ) {
         OS_TWarning("FS_ReadFile failed.\n");
