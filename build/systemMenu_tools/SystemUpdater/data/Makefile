@@ -44,8 +44,8 @@ HNAA.tad: ../../../systemMenu_RED/Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)
 HNBA.tad: ../../../systemMenu_RED/MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNBA.srl
 	$(MAKETAD) -s $< $(MAKETAD_FLAGS) -o $@
 
-HNCA.tad: ../../../systemMenu_RED/wlanfirm/HNCA.srl
-	$(MAKETAD) -s $< $(MAKETAD_FLAGS) -o $@
+HNCA.tad: ../../../systemMenu_RED/wlanfirm/HNCA.tad
+	cp $< ./$@
 
 menu_launcher.nand: ../../../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nand
 	cp $< ./$@
