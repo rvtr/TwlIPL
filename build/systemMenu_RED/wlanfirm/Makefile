@@ -31,7 +31,10 @@ MY_FIRM_ROOT_CYG =	$(call eupath,$(MY_FIRM_ROOT))
 MY_TITLE		=	HNCA
 MY_FIRM			=	$(MY_FIRM_ROOT_CYG)/nwm_firm.bin
 
-MAKETAD_FLAGS	+=	0003000F484E4341 3031 0 WIRELESS_FW -p
+# FWファイルの先頭1バイトに入っているバージョン情報を取得
+MY_VERSION		=	$(shell perl -e "open(IN,'$(MY_FIRM)');binmode(IN);read(IN, \$$buf, 1);print unpack("C", \$$buf);close(IN);")
+
+MAKETAD_FLAGS	+=	0003000F484E4341 3031 $(MY_VERSION) WIRELESS_FW -p
 
 #----------------------------------------------------------------------------
 MY_TAD			=	$(MY_TITLE).tad
