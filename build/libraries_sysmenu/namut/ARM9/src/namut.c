@@ -629,8 +629,8 @@ BOOL NAMUT_UpdateSoftBoxCount( void )
 		return FALSE;
 	}
 
-	OS_Printf("installedSoftBoxCount = %d\n", installedSoftBoxCount);
-	OS_Printf("freeSoftBoxCount      = %d\n", freeSoftBoxCount);
+//	OS_Printf("installedSoftBoxCount = %d\n", installedSoftBoxCount);
+//	OS_Printf("freeSoftBoxCount      = %d\n", freeSoftBoxCount);
 
 	// LCFGライブラリの静的変数に対する更新
     LCFG_TSD_SetInstalledSoftBoxCount( installedSoftBoxCount );	

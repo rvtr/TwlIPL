@@ -22,7 +22,6 @@
 #include "process_hw_info.h"
 #include "process_import.h"
 #include "process_font.h"
-//#include "process_eticket.h"
 #include "process_nandfirm.h"
 #include "process_norfirm.h"
 #include "process_auto.h"
@@ -148,6 +147,7 @@ void* AutoProcess1(void)
 void* AutoProcess2(void)
 {
 	int i;
+	s8 line = 5;
 	u8 bg_color;
 
 	// 文字列全クリア
@@ -164,13 +164,14 @@ void* AutoProcess2(void)
 	kamiFontPrintf(0, 2, FONT_COLOR_BLACK, "--------------------------------");
 
 	// メニュー一覧
-	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "    FORMAT NAND            ");
-	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "    WRITE HARDWARE INFO    ");
-	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "    WRITE FONT DATA        ");
-//	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "    WRITE ETICKET SIGN     ");
-	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "    INPORT TAD FROM SD     ");
+	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    FORMAT NAND            "); 
+	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    WRITE HARDWARE INFO    ");
+#ifdef    USE_WRITE_FONT_DATA
+	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    WRITE FONT DATA        ");
+#endif // USE_WRITE_FONT_DATA
+	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    INPORT TAD FROM SD     ");
 #ifndef MARIOCLUB_VERSION
-	kamiFontPrintf(3, 15, FONT_COLOR_BLACK, "    INPORT NANDFIRM FROM SD");
+	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    INPORT NANDFIRM FROM SD");
 #endif //MARIOCLUB_VERSION
 #ifndef AUTO_FORMAT_MODE
 	kamiFontPrintf(3, 22, FONT_COLOR_BLACK, " Button B : return to menu");
