@@ -19,7 +19,7 @@
 #include <twl.h>
 #include <nitro/snd.h>
 #include <twl/fatfs.h>
-#include <nitro/card.h>
+#include <sysmenu/namut.h>
 #include <twl/nam.h>
 #include "kami_pxi.h"
 #include "kami_font.h"
