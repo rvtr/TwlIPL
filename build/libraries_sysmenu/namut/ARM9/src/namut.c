@@ -26,6 +26,8 @@
 #include <twl/os/common/banner.h>
 #include <sysmenu/namut.h>
 #include <nitro/nvram.h>
+#include <twl/lcfg/common/TWLSettings.h>
+#include <twl/lcfg/common/api.h>
 
 /*---------------------------------------------------------------------------*
     定数定義
@@ -159,6 +161,9 @@ BOOL NAMUT_Format(void)
 
 	// WiFi設定データをクリアします
 	NAMUTi_ClearWiFiSettings();
+
+	// SoftBoxCountの更新を行います
+	NAMUT_UpdateSoftBoxCount();
 
 	return ret;
 }
@@ -548,26 +553,29 @@ static BOOL NAMUTi_RandClearFile(const char* path)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         NAMUT_SearchInstalledSoftBoxCount
+  Name:         NAMUT_GetSoftBoxCount
 
-  Description:  InstalledSoftBoxCountの数を調べて返します。
+  Description:  NANDの InstalledSoftBoxCount、FreeSoftBoxCountを調べて
+                指定された変数に格納します。
 
-  Arguments:    None
+  Arguments:    installed : installedカウント格納変数
+				free      : freeカウント格納変数
 
-  Returns:      None
+  Returns:      成功ならTRUE
  *---------------------------------------------------------------------------*/
-u32 NAMUT_SearchInstalledSoftBoxCount( void )
+BOOL NAMUT_GetSoftBoxCount( u8* installed, u8* free )
 {
 	s32 title_num;	
 	NAMTitleInfo namTitleInfo;
-	u32 count = 0;
+	u8 count = 0;
+	BOOL result = TRUE;
 	s32 i;
 
 	// タイトルリスト取得
 	if (NAM_GetTitleList(sTitleIdArray, TITLE_LIST_MAX) != NAM_OK)
 	{
 		OS_TWarning("Fail! NAM_GetTitleList() in %s\n", __func__);
-		return 0;
+		return FALSE;
 	}
 	
 	// タイトル数取得
@@ -584,9 +592,57 @@ u32 NAMUT_SearchInstalledSoftBoxCount( void )
 				count++;
 			}
 		}
+		else
+		{
+			result = FALSE;
+		}
 	}
 
-	return count;
+    // installed count
+    *installed = count;
+
+    // free count
+    *free = (u8)(LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX - count);
+
+	return result;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         NAMUT_UpdateSoftBoxCount
+
+  Description:  InstalledSoftBoxCount, FreeSoftBoxCount の値を
+				現在のNANDの状態に合わせて更新します。
+
+  Arguments:    None.
+
+  Returns:      成功ならTRUE
+ *---------------------------------------------------------------------------*/
+BOOL NAMUT_UpdateSoftBoxCount( void )
+{
+	u8 installedSoftBoxCount;
+	u8 freeSoftBoxCount;
+	u8 *pBuffer;
+
+	// InstalledSoftBoxCount, FreeSoftBoxCount を数えなおす
+	if (!NAMUT_GetSoftBoxCount(&installedSoftBoxCount, &freeSoftBoxCount))
+	{
+		return FALSE;
+	}
+
+	OS_Printf("installedSoftBoxCount = %d\n", installedSoftBoxCount);
+	OS_Printf("freeSoftBoxCount      = %d\n", freeSoftBoxCount);
+
+	// LCFGライブラリの静的変数に対する更新
+    LCFG_TSD_SetInstalledSoftBoxCount( installedSoftBoxCount );	
+    LCFG_TSD_SetFreeSoftBoxCount( freeSoftBoxCount );
+
+	// LCFGライブラリの静的変数の値をNANDに反映
+    pBuffer = spAllocFunc( LCFG_WRITE_TEMP );
+	if (!pBuffer) { return FALSE; }
+    (void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+    spFreeFunc( pBuffer );
+
+	return TRUE;
 }
 
 /*---------------------------------------------------------------------------*

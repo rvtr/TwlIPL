@@ -685,7 +685,13 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 	// freeSoftBoxCountに空きがなければインポートしない
 	if (!(tadInfo.titleInfo.titleId & (TITLE_ID_NOT_LAUNCH_FLAG_MASK | TITLE_ID_DATA_ONLY_FLAG_MASK)))
 	{
-		if (NAMUT_SearchInstalledSoftBoxCount() == LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX)
+		u8 installed, free;
+		if (!NAMUT_GetSoftBoxCount( &installed, &free ))
+		{
+			return FALSE;
+		}
+
+		if (free == 0)
 		{
 			kamiFontPrintfConsole(1, "NAND FreeSoftBoxCount == 0");
 			return FALSE;
@@ -733,7 +739,7 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 	}
 
 	// InstalledSoftBoxCount, FreeSoftBoxCount の値を現在のNANDの状態に合わせて更新します。
-	UpdateNandBoxCount();
+	NAMUT_UpdateSoftBoxCount();
 
 	return ret;
 }

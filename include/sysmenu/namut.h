@@ -52,15 +52,29 @@ void NAMUT_Init(NAMUTAlloc allocFunc, NAMUTFree freeFunc);
 BOOL NAMUT_Format(void);
 
 /*---------------------------------------------------------------------------*
-  Name:         NAMUT_SearchInstalledSoftBoxCount
+  Name:         NAMUT_GetSoftBoxCount
 
-  Description:  InstalledSoftBoxCountの数を調べて返します。
+  Description:  NANDの installedカウント、freeカウントを調べて
+                指定された変数に格納します。
 
-  Arguments:    None
+  Arguments:    installed : installedカウント格納変数
+				free      : freeカウント格納変数
 
-  Returns:      None
+  Returns:      成功ならTRUE
  *---------------------------------------------------------------------------*/
-u32 NAMUT_SearchInstalledSoftBoxCount( void );
+BOOL NAMUT_GetSoftBoxCount( u8* installed, u8* free );
+
+/*---------------------------------------------------------------------------*
+  Name:         NAMUT_UpdateSoftBoxCount
+
+  Description:  InstalledSoftBoxCount, FreeSoftBoxCount の値を
+				現在のNANDの状態に合わせて更新します。
+
+  Arguments:    None.
+
+  Returns:      成功ならTRUE
+ *---------------------------------------------------------------------------*/
+BOOL NAMUT_UpdateSoftBoxCount( void );
 
 /*---------------------------------------------------------------------------*
   Name:         NAMUT_DrawNandTree

@@ -36,6 +36,9 @@ TARGET_BIN				=	main.srl
 
 ROM_SPEC				=	main.rsf
 
+MAKEROM_ARM7_BASE   = $(TWL_COMPONENTSDIR)/armadillo/$(TWL_BUILDTYPE_ARM7)/armadillo
+MAKEROM_ARM7        = $(MAKEROM_ARM7_BASE).TWL.FLX.sbin
+
 MISC_DIR				=	../../../systemMenu_RED/misc
 
 SRCS					=	main.c HWInfoWriter.c hwi.c \
@@ -51,7 +54,13 @@ SYSMENU_LIBS			=	\
 SDK_APPEND_LIBS			=	\
 							liblcfg$(TWL_LIBSUFFIX).a
 
-LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
+LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS) 	\
+							libnamut$(TWL_LIBSUFFIX).a 			\
+							libes$(TWL_LIBSUFFIX).a				\
+							libnam$(TWL_LIBSUFFIX).a			\
+							libsea$(TWL_LIBSUFFIX).a			\
+							libboc$(TWL_LIBSUFFIX).a			\
+							libsfs$(TWL_LIBSUFFIX).a
 
 #----------------------------------------------------------------------------
 

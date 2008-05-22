@@ -58,18 +58,6 @@ BOOL WriteHWInfoFile( u8 region, BOOL wirelessForceOff );
  *---------------------------------------------------------------------------*/
 BOOL DeleteHWInfoFile( void );
 
-/*---------------------------------------------------------------------------*
-  Name:         UpdateNandBoxCount
-
-  Description:  InstalledSoftBoxCount, FreeSoftBoxCount の値を
-				現在のNANDの状態に合わせて更新します。
-
-  Arguments:    None.
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-void UpdateNandBoxCount( void );
-
 /*===========================================================================*/
 
 #ifdef	__cplusplus

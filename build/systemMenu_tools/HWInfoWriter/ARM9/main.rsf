@@ -114,7 +114,7 @@ Property
 	# WRAM mapping: [MAP_BB_HYB/MAP_BB_LTD/MAP_TS_HYB/MAP_TS_LTD]
 	#  don't have to edit
 	#
-	WramMapping		$(MAKEROM_WRAM_MAPPING)
+	WramMapping		MAP_TS_SCR
 
 	#
 	# CardRegion: card region [Japan/America/Europe/Australia/China/Korea]

@@ -218,23 +218,17 @@ void* FormatProcess2(void)
 			kamiFontPrintf(24, y_pos, FONT_COLOR_BLACK, " WAIT");
 			kamiFontLoadScreenData();
 
+			result &= NAMUT_Format();
+			
+			if (result)
 			{
-				// 現在の設定を保存しておきフォーマット後に保存設定で初期化する
-				u8 region = LCFG_THW_GetRegion();
-				BOOL isForceDisableWireless = LCFG_THW_IsForceDisableWireless(); 
-
-				result &= NAMUT_Format();
-				result &= WriteHWInfoFile(region, isForceDisableWireless);
-				
-				if (result)
-				{
-					kamiFontPrintf(24, y_pos, FONT_COLOR_GREEN, " OK  ");
-				}
-				else
-				{
-					kamiFontPrintf(24, y_pos, FONT_COLOR_RED, " NG  ");
-				}
+				kamiFontPrintf(24, y_pos, FONT_COLOR_GREEN, " OK  ");
 			}
+			else
+			{
+				kamiFontPrintf(24, y_pos, FONT_COLOR_RED, " NG  ");
+			}
+
 #ifdef DUMP_NAND_TREE
 			OS_Printf("\n");
 			OS_Printf("---------------------------------------\n");
@@ -242,9 +236,6 @@ void* FormatProcess2(void)
 			OS_Printf("---------------------------------------\n");
 			NAMUT_DrawNandTree();
 #endif
-
-			// InstalledSoftBoxCount, FreeSoftBoxCount の値を現在のNANDの状態に合わせて更新します。
-			UpdateNandBoxCount();
 
 #ifdef   USE_FOR_NIGHTLY_AUTO_TEST
 			if (result)

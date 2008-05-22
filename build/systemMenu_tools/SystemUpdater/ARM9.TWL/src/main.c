@@ -143,7 +143,8 @@ TwlMain()
 	InitAllocation();
 
 	// NAMライブラリ初期化
-	NAM_Init( OS_AllocFromMain, OS_FreeToMain);
+	NAM_Init( OS_AllocFromMain, OS_FreeToMain );
+	NAMUT_Init( OS_AllocFromMain, OS_FreeToMain );	// SoftBoxCountの計算に必要
 
     // 表示関連初期化
     InitGraphics();

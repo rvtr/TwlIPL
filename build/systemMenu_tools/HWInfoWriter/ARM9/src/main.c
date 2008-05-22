@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
+#include <sysmenu/namut.h>
 #include "misc.h"
 #include "HWInfoWriter.h"
 
@@ -59,6 +60,10 @@ void TwlMain(void)
 	// システムの初期化------------------
 	InitAllocator();
 	
+	// SoftBoxCountを調べるのにNAM/NAMUTを使用する
+	NAM_Init( Alloc, Free );
+	NAMUT_Init( Alloc, Free );
+
 	// メインループ----------------------------
 	HWInfoWriterInit();
 	while(1){

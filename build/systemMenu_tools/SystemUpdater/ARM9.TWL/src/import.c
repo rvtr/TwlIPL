@@ -113,7 +113,7 @@ s32 kamiImportTad(int no, int total, const char* path)
 	while (sProgress){};
 
 	// InstalledSoftBoxCount, FreeSoftBoxCount の値を現在のNANDの状態に合わせて更新します。
-	UpdateNandBoxCount();
+	(void)NAMUT_UpdateSoftBoxCount();
 
 	return nam_result;
 }

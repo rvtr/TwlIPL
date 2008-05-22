@@ -18,6 +18,7 @@
 #include <twl.h>
 #include <sysmenu.h>
 #include <sysmenu/acsign.h>
+#include <sysmenu/namut.h>
 #include "TWLHWInfo_api.h"
 #include "TWLSettings_api.h"
 #include "hwi.h"
@@ -262,6 +263,8 @@ BOOL HWI_ModifyLanguage( u8 region )
 #pragma unused( region )
     u32 langBitmap = LCFG_THW_GetValidLanguageBitmap();
     u8  nowLanguage = LCFG_TSD_GetLanguage();
+	u8  installedSoftBoxCount;
+	u8  freeSoftBoxCount;
 	BOOL result = TRUE;
 
 	if (!ReadTWLSettings())
@@ -290,6 +293,16 @@ BOOL HWI_ModifyLanguage( u8 region )
     // ペアレンタルコントロール情報もクリアしておく
     MI_CpuClearFast( (void *)LCFG_TSD_GetPCTLPtr(), sizeof(LCFGTWLParentalControl) );
 
+	// ソフトボックスカウントを更新
+	if (!NAMUT_GetSoftBoxCount(&installedSoftBoxCount, &freeSoftBoxCount))
+	{
+		return FALSE;
+	}
+
+	// LCFGライブラリの静的変数に対する更新
+    LCFG_TSD_SetInstalledSoftBoxCount( installedSoftBoxCount );	
+    LCFG_TSD_SetFreeSoftBoxCount( freeSoftBoxCount );
+	
     // regionが変わった場合は、LANGUAGE_BITMAPも必ず変わるので、それをNTR側に反映させるために必ずTWL設定データの書き込みも行う。
     {
         u8 *pBuffer = spAlloc( LCFG_WRITE_TEMP );

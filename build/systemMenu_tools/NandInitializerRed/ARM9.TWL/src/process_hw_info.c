@@ -328,9 +328,6 @@ BOOL WriteHWInfoFile( u8 region, BOOL wirelessForceOff )
 		kamiFontPrintfConsoleEx(CONSOLE_RED, "Fail! Write TWLSettings\n" );	
 		result = FALSE;
 	}
-
-	// InstalledSoftBoxCount, FreeSoftBoxCount の値を現在のNANDの状態に合わせて更新します。
-	UpdateNandBoxCount();
 	
 	return result;
 }
@@ -376,43 +373,6 @@ static BOOL DeleteHWInfoFile( void )
 	}
 
 	return result;
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         UpdateNandBoxCount
-
-  Description:  InstalledSoftBoxCount, FreeSoftBoxCount の値を
-				現在のNANDの状態に合わせて更新します。
-
-  Arguments:    None.
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-
-void UpdateNandBoxCount( void )
-{
-	u32 installedSoftBoxCount;
-	u32 freeSoftBoxCount;
-
-	// InstalledSoftBoxCount, FreeSoftBoxCount を数えなおす
-	installedSoftBoxCount = NAMUT_SearchInstalledSoftBoxCount();
-	freeSoftBoxCount = LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX - installedSoftBoxCount;
-
-//	OS_Printf("installedSoftBoxCount = %d\n", installedSoftBoxCount);
-//	OS_Printf("freeSoftBoxCount      = %d\n", freeSoftBoxCount);
-
-	// LCFGライブラリの静的変数に対する更新
-    LCFG_TSD_SetInstalledSoftBoxCount( (u8)installedSoftBoxCount );	
-    LCFG_TSD_SetFreeSoftBoxCount( (u8)freeSoftBoxCount );
-
-	// LCFGライブラリの静的変数の値をNANDに反映
-    {
-        u8 *pBuffer = OS_Alloc( LCFG_WRITE_TEMP );
-        if( pBuffer ) {
-            (void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
-            OS_Free( pBuffer );
-        }
-    }
 }
 
 /*---------------------------------------------------------------------------*
