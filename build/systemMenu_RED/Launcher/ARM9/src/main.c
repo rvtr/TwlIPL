@@ -297,11 +297,13 @@ void TwlMain( void )
 #endif // DISABLE_WLFIRM_LOAD
                 SYSM_IsAuthenticateTitleFinished() )
             {
+				AuthResult res;
                 if( SYSM_IsFatalError() ) {
                     // FATALエラー処理
                 }
 
-                switch ( SYSM_TryToBootTitle( pBootTitle ) ) {   // アプリ認証結果取得orブート   成功時：never return
+				res = SYSM_TryToBootTitle( pBootTitle );
+                switch ( res ) {   // アプリ認証結果取得orブート   成功時：never return
                 case AUTH_RESULT_TITLE_LOAD_FAILED:
                 case AUTH_RESULT_TITLE_POINTER_ERROR:
                 case AUTH_RESULT_AUTHENTICATE_FAILED:
@@ -310,11 +312,15 @@ void TwlMain( void )
                     // [TODO:]クリアしたほうが良いデータ（鍵など）があれば消す
                     
                     // デバグ表示
-					NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
-					G2_ChangeBlendAlpha( 0, 31 );
-					PrintfSJIS( 1, 36, TXT_COLOR_RED,"   LAUNCHER : ERROR OCCURRED!\n" );
-					GX_DispOn();
-					GXS_DispOn();
+                    if( !SYSM_IsLauncherHidden() )
+                    {
+						NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+						G2_ChangeBlendAlpha( 0, 31 );
+						PrintfSJIS( 1, 38, TXT_COLOR_RED,"   LAUNCHER : ERROR OCCURRED!\n" );
+						PrintfSJIS( 1, 24, TXT_COLOR_RED,"   ERROR CODE = 0x%0.8x\n",res );
+						GX_DispOn();
+						GXS_DispOn();
+					}
 					
                     break;
                 }
