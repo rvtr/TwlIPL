@@ -95,8 +95,17 @@ typedef struct HotSwMessageForArm9{
 // Function prototype -------------------------------------------------------
 // --- ARM9
 #ifdef SDK_ARM9
-// PXI通信でARM7に活線挿抜有効／無効を通知
+// PXI通信でARM7に活線挿抜有効／無効を通知。カード関連のフラグ処理も行う(非同期版)
 void HOTSW_EnableHotSWAsync( BOOL enable );
+
+// PXI通信でARM7に活線挿抜有効／無効を通知。カード関連のフラグ処理も行う(同期版)
+void HOTSW_EnableHotSW( BOOL enable );
+
+// PXI通信でARM7に活線挿抜無効を通知。(非同期版)
+void HOTSW_InvalidHotSWAsync( void );
+
+// PXI通信でARM7に活線挿抜無効を通知。(同期版)
+void HOTSW_InvalidHotSW( void );
 
 // PXI通信でARM7に活線挿抜Finalize処理を通知
 void HOTSW_FinalizeHotSWAsync( HotSwApliType apliType );

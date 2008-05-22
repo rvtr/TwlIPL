@@ -607,7 +607,27 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 			}
 		}
 	}
-	
+
+    // HOTSW許可・抑制テスト
+    {
+        static BOOL hotswEnable = TRUE;
+
+    	if( pad.trg & PAD_BUTTON_X ){
+        	hotswEnable ^= TRUE;
+
+            // 活線挿抜許可・抑制
+        	HOTSW_EnableHotSW(hotswEnable);
+
+            NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL, 0, 175, 100, 13 );
+    	}
+        if(hotswEnable){
+			PutStringUTF16(   0, 175, TXT_COLOR_BLUE, L"HotSw Enable" );
+        }
+        else{
+			PutStringUTF16(   0, 175, TXT_COLOR_RED, L"HotSw Disable" );
+        }
+    }
+    
 	return ret;
 }
 

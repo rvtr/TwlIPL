@@ -86,7 +86,9 @@ void HOTSW_Init()
 /*---------------------------------------------------------------------------*
   Name:         HOTSW_EnableHotSWAsync
   
-  Description:  PXI通信でARM7に活線挿抜有効／無効を通知
+  Description:  PXI通信でARM7に活線挿抜有効／無効を通知(非同期版)
+
+  ※ 活線挿抜を一時的に抑制する場合はこちらの関数を使ってください。
  *---------------------------------------------------------------------------*/
 void HOTSW_EnableHotSWAsync( BOOL enable )
 {
@@ -99,16 +101,78 @@ void HOTSW_EnableHotSWAsync( BOOL enable )
 	if( SYSMi_GetWork()->flags.hotsw.isEnableHotSW == enable ) {
 		return;
 	}
-	
-	msg.msg.value = enable;
-	msg.msg.ctrl  = TRUE;
 
-	OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
+    msg.msg.finalize = FALSE;
+    msg.msg.ctrl  	 = TRUE;
+	msg.msg.value 	 = enable;
     
 	while (PXI_SendWordByFifo(PXI_FIFO_TAG_HOTSW, msg.data, FALSE) != PXI_FIFO_SUCCESS)
 	{
 		// do nothing
 	}
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         HOTSW_EnableHotSWAsync
+  
+  Description:  PXI通信でARM7に活線挿抜有効／無効を通知(同期版)
+
+  ※ 活線挿抜を一時的に抑制する場合はこちらの関数を使ってください。
+ *---------------------------------------------------------------------------*/
+void HOTSW_EnableHotSW( BOOL enable )
+{
+	HOTSW_EnableHotSWAsync( enable );
+
+    while(HOTSW_isEnableHotSW() != enable){
+		// do nothing
+    }
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         HOTSW_InvalidHotSWAsync
+  
+  Description:  PXI通信でARM7に活線挿抜無効を通知。(非同期版)
+
+  ※ アプリをブートさせるときに活線挿抜を抑制する場合はこちらの関数を使ってください。
+ *---------------------------------------------------------------------------*/
+void HOTSW_InvalidHotSWAsync( void )
+{
+	HotSwPxiMessageForArm7 msg;
+
+    MI_CpuClear8( &msg, sizeof(HotSwPxiMessageForArm7));
+    
+	// 現在の値と同じなら何もせずリターン
+	if( SYSMi_GetWork()->flags.hotsw.isEnableHotSW == FALSE ) {
+		return;
+	}
+
+    msg.msg.finalize = TRUE;
+    msg.msg.ctrl     = TRUE;
+	msg.msg.value    = FALSE;
+    
+	while (PXI_SendWordByFifo(PXI_FIFO_TAG_HOTSW, msg.data, FALSE) != PXI_FIFO_SUCCESS)
+	{
+		// do nothing
+	}
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         HOTSW_InvalidHotSW
+  
+  Description:  PXI通信でARM7に活線挿抜無効を通知。(同期版)
+
+  ※ アプリをブートさせるときに活線挿抜を抑制する場合はこちらの関数を使ってください。
+ *---------------------------------------------------------------------------*/
+void HOTSW_InvalidHotSW( void )
+{
+	HOTSW_InvalidHotSWAsync();
+
+    while(HOTSW_isEnableHotSW() != FALSE){
+		// do nothing
+    }
 }
 
 
@@ -124,9 +188,8 @@ void HOTSW_FinalizeHotSWAsync( HotSwApliType apliType )
     MI_CpuClear8( &msg, sizeof(HotSwPxiMessageForArm7));
     
     msg.msg.finalize = TRUE;
+    msg.msg.ctrl     = FALSE;
     msg.msg.bootType = (u8)apliType;
-
-    OS_TPrintf("%s %d\n", __FUNCTION__, __LINE__);
     
 	while (PXI_SendWordByFifo(PXI_FIFO_TAG_HOTSW, msg.data, FALSE) != PXI_FIFO_SUCCESS)
     {

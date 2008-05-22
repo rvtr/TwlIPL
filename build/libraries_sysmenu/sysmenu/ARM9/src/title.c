@@ -832,7 +832,7 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 #define STACK_SIZE 0xc00
 	static u64 stack[ STACK_SIZE / sizeof(u64) ];
 	
-	HOTSW_EnableHotSWAsync( FALSE );
+	HOTSW_InvalidHotSWAsync();
 	// 値が変化するまでスリープして待つ。
 	while( HOTSW_isEnableHotSW() != FALSE ) {
 		OS_Sleep( 2 );

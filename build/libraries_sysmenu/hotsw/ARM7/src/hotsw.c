@@ -1644,9 +1644,14 @@ static void HotSwThread(void *arg)
                                OS_MESSAGE_NOBLOCK);
                 HotSwThreadData.idx_polling = (HotSwThreadData.idx_polling+1) % HOTSW_POLLING_CTRL_BUFFER_NUM;
             }
+            else{
+                if(msg->finalize == FALSE){
+					ClearCardFlgs();
+                }
+            }
         }
 
-        if( msg->finalize == TRUE ) {
+        if( msg->finalize == TRUE && msg->ctrl == FALSE) {
             FinalizeHotSw( msg->apli );
         }
 
