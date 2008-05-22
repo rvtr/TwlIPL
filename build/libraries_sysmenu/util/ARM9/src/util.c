@@ -91,8 +91,8 @@ void UTL_GoSleepMode( void )
         return;
     }
 
-    // デバッガ起動時にはスリープに入らない
-    if ( OSi_DetectDebugger() & OS_CONSOLE_TWLDEBUGGER )
+    // デバッガ接続中だけはスリープに入らない（蓋閉じでもデバッガが起動するように）
+    if ( !SYSM_IsRunOnDebugger() || (OSi_DetectDebugger() & OS_CONSOLE_TWLDEBUGGER) )
     {
         // カード抜け無検出設定
         //   TWLではゲームカードの再ロードが可能なため

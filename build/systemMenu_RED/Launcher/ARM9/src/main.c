@@ -340,11 +340,8 @@ void TwlMain( void )
         (void)SND_FlushCommand(SND_COMMAND_NOBLOCK);
 
 #ifndef DISABLE_SLEEP
-		// デバッガ動作時はスリープしない
-		if( !SYSM_IsRunOnDebugger() ) {
-	        // スリープモードへの遷移（蓋閉じ判定はデフォルトで行う）
-	        UTL_GoSleepMode();
-		}
+        // スリープモードへの遷移（蓋開き状態とデバッガ接続中のキャンセルはデフォルトで行う）
+        UTL_GoSleepMode();
 #endif // DISABLE_SLEEP
     }
 }
