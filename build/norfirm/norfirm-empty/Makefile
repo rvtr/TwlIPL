@@ -33,7 +33,7 @@ BINDIR			=	.
 MAKEFIRM_ARM9	 	=
 MAKEFIRM_ARM7	 	=
 MAKEFIRM_RSA_PRVKEY	=	$(TWL_KEYSDIR)/rsa/private_nor.der
-MAKEFIRM_FLAGS		+=	-p
+#MAKEFIRM_FLAGS		+=	-p
 FIRM_SPEC		=	norfirm-BB.norsf
 
 LDIRT_CLEAN		+=	$(TARGETS) \

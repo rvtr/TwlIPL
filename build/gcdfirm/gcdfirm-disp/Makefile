@@ -31,7 +31,7 @@ MAKEFIRM_ARM7		=	ARM7/bin/$(TWL_BUILDTYPE_ARM7)/gcdfirm_disp7.tef
 MAKEFIRM_RSA_PRVKEY	=	$(TWL_KEYSDIR)/rsa/private_gcd.der
 LDEPENDS_BIN		+=	wram_regs/wram_regs.rbin
 
-MAKEFIRM_FLAGS		+=	-p
+#MAKEFIRM_FLAGS		+=	-p
 FIRM_SPEC		=	gcdfirm.gcdsf
 
 LDIRT_CLEAN		+=	$(wildcard *.gcd) \

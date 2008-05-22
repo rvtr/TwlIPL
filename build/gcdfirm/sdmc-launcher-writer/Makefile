@@ -36,7 +36,7 @@ MAKEFIRM_ARM7		=	ARM7/bin/$(TWL_BUILDTYPE_ARM7)/sdmc_launcher_writer7.tef
 MAKEFIRM_RSA_PRVKEY	=	$(TWL_KEYSDIR)/rsa/private_gcd.der
 LDEPENDS_BIN		+=	wram_regs/wram_regs.rbin
 
-MAKEFIRM_FLAGS		+=	-p
+#MAKEFIRM_FLAGS		+=	-p
 FIRM_SPEC		=	gcdfirm.gcdsf
 
 MAKEFIRM_DEFS		+= 	-DNANDFIRM_BIN=$(NANDFIRM_BIN)

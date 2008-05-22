@@ -31,7 +31,7 @@ MAKEFIRM_ARM7		=	ARM7/bin/$(TWL_BUILDTYPE_ARM7)/firm_dev7.tef
 MAKEFIRM_RSA_PRVKEY	=	$(TWL_KEYSDIR)/rsa/private_nor.der
 LDEPENDS_BIN		+=	wram_regs/wram_regs.rbin
 
-MAKEFIRM_FLAGS		+=	-p
+#MAKEFIRM_FLAGS		+=	-p
 FIRM_SPEC		=	norfirm.norsf
 
 LDIRT_CLEAN		+=	$(wildcard *.nor) \

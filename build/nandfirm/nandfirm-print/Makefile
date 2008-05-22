@@ -28,7 +28,7 @@ MAKEFIRM_ARM7		=	../../norfirm/norfirm-print/ARM7/bin/$(TWL_BUILDTYPE_ARM7)/twl_
 MAKEFIRM_RSA_PRVKEY	=	$(TWL_KEYSDIR)/rsa/private_nand.der
 LDEPENDS_BIN		+=	../../norfirm/norfirm-print/wram_regs/wram_regs.rbin
 
-MAKEFIRM_FLAGS		+=	-p
+#MAKEFIRM_FLAGS		+=	-p
 FIRM_SPEC		=	nandfirm-BB.nandsf
 
 LDIRT_CLEAN		+=	$(wildcard *.nand) \
