@@ -32,9 +32,10 @@ MY_TITLE		=	HNCA
 MY_FIRM			=	$(MY_FIRM_ROOT_CYG)/nwm_firm.bin
 
 # FWファイルの先頭1バイトに入っているバージョン情報を取得
-MY_VERSION		=	$(shell perl -e "open(IN,'$(MY_FIRM)');binmode(IN);read(IN, \$$buf, 1);print unpack("C", \$$buf);close(IN);")
+MY_VERSION_MAJOR	=	$(shell perl -e "open(IN,'$(MY_FIRM)');binmode(IN);seek(IN, 160 + 0, 0);read(IN, \$$buf, 1);print unpack("C", \$$buf);close(IN);")
+MY_VERSION_MINOR	=	$(shell perl -e "open(IN,'$(MY_FIRM)');binmode(IN);seek(IN, 160 + 1, 0);read(IN, \$$buf, 1);print unpack("C", \$$buf);close(IN);")
 
-MAKETAD_FLAGS	+=	0003000F484E4341 3031 $(MY_VERSION) WIRELESS_FW -p
+MAKETAD_FLAGS	+=	0003000F484E4341 3031 $(MY_VERSION_MAJOR) WIRELESS_FW -v $(MY_VERSION_MINOR) -p
 
 #----------------------------------------------------------------------------
 MY_TAD			=	$(MY_TITLE).tad

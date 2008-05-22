@@ -26,7 +26,7 @@
 // extern data-----------------------------------------------------------------
 
 // define data-----------------------------------------------------------------
-#define DISABLE_WLFIRM_LOAD
+
 // function's prototype-------------------------------------------------------
 static void INTR_VBlank( void );
 static void deleteTmp();

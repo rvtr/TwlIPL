@@ -19,6 +19,7 @@
 #include <twl/os/common/format_rom.h>
 #include <twl/lcfg.h>
 #include <twl/nwm/ARM9/ForLauncher/nwm_init_for_launcher.h>
+#include <nitro/nvram/nvram.h>
 
 #include <firm.h>
 #include <sysmenu.h>
@@ -51,8 +52,6 @@
 
 #define SIGNHEAP_SIZE                0x01000
 
-#define FWHEADER_SIZE                0x100
-
 
 /*
   internal variables
@@ -67,11 +66,14 @@ static OSTick           startTick = 0;
 static OSMessageQueue   mesq;
 static OSMessage        mesAry[1];
 
+static u8 fwType; // must be in main memory
+
 /*
     internal functions
  */
 static void  InstallFirmCallback(void* arg);
 static BOOL  GetFirmwareFilepath(char *path);
+static s32   ReadFirmwareSecurityArea(char *path, u8 *buffer, s32 bufSize);
 static s32   ReadFirmwareHeader(char *path, u8 *buffer, s32 bufSize);
 static s32   ReadFirmwareBinary(char *path, u32 offset, u8 *buffer, s32 bufSize);
 static BOOL  VerifyWlanfirmSignature(u8* buffer, u32 length);
@@ -160,27 +162,14 @@ BOOL GetFirmwareFilepath(char *path)
 
 }
 
+s32 ReadFirmwareSecurityArea(char *path, u8 *buffer, s32 bufSize)
+{
+    return ReadFirmwareBinary(path, 0, buffer, bufSize);
+}
+
 s32 ReadFirmwareHeader(char *path, u8 *buffer, s32 bufSize)
 {
-    FSFile  file[1];
-    s32 flen;
-
-    FS_InitFile( file );
-    
-    if (!FS_OpenFileEx(file, path, FS_FILEMODE_R)) {
-        OS_TWarning("FS_OpenFileEx(%s) failed.\n", path);
-        return -1;
-    }
-    
-    flen = FS_ReadFile(file, buffer, bufSize);
-    if( flen == -1 ) {
-        OS_TWarning("FS_ReadFile failed.\n");
-        return -1;
-    }
-
-    (void)FS_CloseFile(file);
-
-    return flen;
+    return ReadFirmwareBinary(path, NWM_FW_SECURITY_AREA_SIZE, buffer, bufSize);
 }
     
 s32 ReadFirmwareBinary(char *path, u32 offset, u8 *buffer, s32 bufSize)
@@ -228,7 +217,7 @@ static const u8 s_pubkey9_1[ 0x80 ] = {
 BOOL VerifyWlanfirmSignature(u8* buffer, u32 length)
 {
 #pragma unused(length)
-    NWMFirmFileHeader *hdr = (NWMFirmFileHeader*)buffer;
+    NWMFirmSecurityArea *hdr = (NWMFirmSecurityArea*)buffer;
     u8 *pPubkey;
     u8 *pSign;
     u8 *txt;
@@ -249,14 +238,14 @@ BOOL VerifyWlanfirmSignature(u8* buffer, u32 length)
 #else
     pPubkey = OSi_GetFromFirmAddr()->rsa_pubkey[WLANFIRM_PUBKEY_INDEX];
 #endif
-    pSign = (u8*)((u32)buffer + (u32)hdr->soffset);
+    pSign = (u8*)hdr->sign;
 
-    txt = buffer;
-    txtlen = (u32)hdr->soffset; /* 署名の直前までのLength */
+    txt = (u8*)hdr->hash;
+    txtlen = (u32)NWM_FW_SECURITY_AREA_SIZE - SIGN_LENGTH; /* 署名の直前までのLength */
 
     /* calculate SHA-1 digest */
     SVC_SHA1Init( &sctx );
-    SVC_SHA1Update( &sctx, (const void*)txt,txtlen);
+    SVC_SHA1Update( &sctx, (const void*)txt, txtlen);
     SVC_SHA1GetHash( &sctx, txtDigest );
 
 #if (REPORT_HASH_COMPARISON == 1)
@@ -366,17 +355,39 @@ void PrintDigest(u8 *digest)
 BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 {
     NWMRetCode err;
+    NWMFirmDataParam *pFdParam = (NWMFirmDataParam *)NWM_PARAM_FWDATA_ADDRESS;
+    NVRAMResult nvRes;
 
-	s_isFinished = FALSE;
-	pNwmBuf = 0;
-    pFwBuffer = 0;
+    s_isFinished = FALSE;
+    pNwmBuf = NULL;
+    pFwBuffer = NULL;
 
     OS_InitMessageQueue(&mesq, mesAry, sizeof(mesAry)/sizeof(mesAry[0]));
 
+    /* Read FW type from NVRAM */
+    nvRes = NVRAMi_Read(NWM_NVR_FWTYPE_OFFSET_ADDRESS, 1, &fwType );
+
+    if (nvRes != NVRAM_RESULT_SUCCESS)
+    {
+        OS_TWarning("Error: Couldn't access NVRAM.\n");
+        goto instfirm_error;
+    }
+
+    if (fwType == 0xFF)
+    {
+        // NVRAMの該当領域が0xFF(何も書かれていない)の場合は、fwType=0として扱う。
+        OS_TWarning("Firmware Type has not been found in NVRAM.\n");
+        fwType = 0;
+    }
+
+    pFdParam->fwType = fwType;
+
+    OS_TPrintf("[Wlan Firm]  FWtype is %d\n", fwType);
+
     /* HotStart/ColdStartのチェック */
-	
-	s_isHotStartWLFirm = isHotStartWLFirm;
-    
+
+    s_isHotStartWLFirm = isHotStartWLFirm;
+
     if (TRUE == isHotStartWLFirm)  // HOT START
     {
         pNwmBuf = SYSM_Alloc( NWM_SYSTEM_BUF_SIZE );
@@ -388,7 +399,7 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 #if (MEASURE_WIRELESS_INITTIME == 1)
         startTick = OS_GetTick();
 #endif
-        
+
         // HotStart
         OS_TPrintf("[Wlan Firm]  Start InstallFirmware (HOT START)\n");
         NWMi_InitForLauncher(pNwmBuf, NWM_SYSTEM_BUF_SIZE, 3); /* 3 -> DMA no. */
@@ -396,42 +407,80 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
     } else {    // COLD START
         s32 flen = 0;
         char path[256];
-        u32 offset, length, fwType;
-        u8 hdrBuffer[FWHEADER_SIZE];
+        u32 offset, length, hdrLen;
         u8 *pHash = NULL;
+        u8 *pSecBuf = NULL;
+        u8 *pHdrBuf = NULL;
 
         // Get Filepath
         if (FALSE == GetFirmwareFilepath(path)) {
             goto instfirm_error;
         }
 
-        // Get WLAN Firmware type
-        fwType = ((NWMFirmDataParam *)NWM_PARAM_FWDATA_ADDRESS)->fwType;
-        OS_TPrintf("[Wlan Firm]  FWtype is %d\n", fwType);
+        // Read Security area of WLAN firm
+        /* Allocate security area buffer from heap. */
+        pSecBuf = SYSM_Alloc( NWM_FW_SECURITY_AREA_SIZE );
 
-        // Read header of WLAN firm
-        flen = ReadFirmwareHeader(path, hdrBuffer, FWHEADER_SIZE);
+        if (!pSecBuf) {
+            OS_TWarning("[Wlan Firm]  Error: Couldn't allocate memory for Security Area.\n");
+            goto instfirm_error;
+        }
+
+        flen = ReadFirmwareSecurityArea(path, pSecBuf, NWM_FW_SECURITY_AREA_SIZE);
 
         if ( 0 >= flen )
         {
-            OS_TPrintf("[Wlan Firm]  Error: Couldn't read wlan firmware header.\n");
+            OS_TPrintf("[Wlan Firm]  Error: Couldn't read wlan firmware security area.\n");
+            SYSM_Free( pSecBuf );
+            pSecBuf = NULL;
             goto instfirm_error;
         }
 
         // Check signature data
-        if (FALSE == VerifyWlanfirmSignature(hdrBuffer, (u32)flen))
+        if (FALSE == VerifyWlanfirmSignature(pSecBuf, (u32)flen))
         {
             OS_TPrintf("[Wlan Firm]  Error: This Wlan Firmware is quite illegal!\n");
             OS_TPrintf("[Wlan Firm]         It has never been installed.\n");
+            SYSM_Free( pSecBuf );
+            pSecBuf = NULL;
+            goto instfirm_error;
+        }
+
+        hdrLen = ((NWMFirmSecurityArea*)pSecBuf)->hdrLen;
+
+        // Free Security area buffer
+        SYSM_Free( pSecBuf );
+        pSecBuf = NULL;
+
+        /* Allocate header area buffer from heap. */
+        pHdrBuf = SYSM_Alloc( hdrLen );
+
+        if (!pHdrBuf) {
+            OS_TWarning("[Wlan Firm]  Error: Couldn't allocate memory for Header area.\n");
+            goto instfirm_error;
+        }
+
+        // Read header of WLAN firm
+        flen = ReadFirmwareHeader(path, pHdrBuf, (s32)hdrLen);
+
+        if ( 0 >= flen )
+        {
+            OS_TPrintf("[Wlan Firm]  Error: Couldn't read wlan firmware header.\n");
+            // Free Header area buffer
+            SYSM_Free( pHdrBuf );
+            pHdrBuf = NULL;
             goto instfirm_error;
         }
 
         // Find corresponding FW image
-        offset = NWMi_GetFirmImageOffset(hdrBuffer, fwType);
-        length = NWMi_GetFirmImageLength(hdrBuffer, fwType);
+        offset = NWMi_GetFirmImageOffset(pHdrBuf, (u32)fwType);
+        length = NWMi_GetFirmImageLength(pHdrBuf, (u32)fwType);
 
         if (offset == 0 || length == 0) {
             OS_TPrintf("[Wlan Firm]  Error: Couldn't get Firmware image.\n");
+            // Free Header area buffer
+            SYSM_Free( pHdrBuf );
+            pHdrBuf = NULL;
             goto instfirm_error;
         }
 
@@ -439,6 +488,9 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
         pFwBuffer = SYSM_Alloc( length );
         if (!pFwBuffer) {
             OS_TWarning("[Wlan Firm]  Error: Couldn't allocate memory for WlanFirmware.\n");
+            // Free Header area buffer
+            SYSM_Free( pHdrBuf );
+            pHdrBuf = NULL;
             goto instfirm_error;
         }
 
@@ -448,14 +500,20 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
         if ( 0 >= flen )
         {
             OS_TPrintf("[Wlan Firm]  Error: Couldn't read wlan firmware.\n");
+            // Free Header area buffer
+            SYSM_Free( pHdrBuf );
+            pHdrBuf = NULL;
             goto instfirm_error;
         }
 
         // Compare hashes
-        pHash = NWMi_GetFirmImageHashAddress(hdrBuffer, fwType);
+        pHash = NWMi_GetFirmImageHashAddress(pHdrBuf, (u32)fwType);
         if (pHash == NULL)
         {
             OS_TPrintf("[Wlan Firm]  Error: Couldn't get hash of wlan firmware image.\n");
+            // Free Header area buffer
+            SYSM_Free( pHdrBuf );
+            pHdrBuf = NULL;
             goto instfirm_error;
         }
 
@@ -463,9 +521,16 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
         if (FALSE == CheckHash((const u8*)pHash, (const u8*)pFwBuffer, length))
         {
             OS_TPrintf("[Wlan Firm]  Error: Hash data is illegal.\n");
+            // Free Header area buffer
+            SYSM_Free( pHdrBuf );
+            pHdrBuf = NULL;
             goto instfirm_error;
         }
         OS_TPrintf("[Wlan Firm]  CheckHash ok.\n");
+
+        // Free Header area buffer
+        SYSM_Free( pHdrBuf );
+        pHdrBuf = NULL;
 
         pNwmBuf = SYSM_Alloc( NWM_SYSTEM_BUF_SIZE );
         if (!pNwmBuf) {
@@ -483,7 +548,7 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
         OS_TPrintf("[Wlan Firm]  Start InstallFirmware (COLD START)\n");
         err = NWMi_InstallFirmware(InstallFirmCallback, pFwBuffer, (u32)flen, TRUE);
     }
-    
+
     /*
         無線ロード処理の完了は、IsWlanFirmwareInstalledでチェックする。
      */
@@ -503,14 +568,14 @@ instfirm_error:
         SYSM_Free( pNwmBuf );
         pNwmBuf = 0;
     }
-	
-	// インストール開始すらできなかった時は、FATALエラー
-#ifdef SDK_RELEASE	
-	PMi_SetWirelessLED( PM_WIRELESS_LED_OFF );
+
+    // インストール開始すらできなかった時は、FATALエラー
+#ifdef SDK_RELEASE
+    PMi_SetWirelessLED( PM_WIRELESS_LED_OFF );
 #endif
-	s_isFinished = TRUE;
+    s_isFinished = TRUE;
     SYSM_SetFatalError( TRUE );
-	
+
     return FALSE;
 }
 
