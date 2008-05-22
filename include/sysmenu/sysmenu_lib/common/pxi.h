@@ -35,9 +35,8 @@ extern "C" {
 
 typedef enum SYSMPXICommand {
     SYSM_PXI_COMM_BL_BRIGHT = 0,
-    SYSM_PXI_COMM_DISABLE_HOTSW = 1,
 #ifdef DHT_TEST
-    SYSM_PXI_COMM_DS_HASH_TABLE = 2,
+    SYSM_PXI_COMM_DS_HASH_TABLE = 1,
 #endif
 
     SYSM_PXI_COMM_NUM

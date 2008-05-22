@@ -91,10 +91,6 @@ void SYSM_InitPXI( u32 mcu_prio )
     while ( ! PXI_IsCallbackReady( SYSMENU_PXI_FIFO_TAG, PXI_PROC_ARM7 ) )
     {
     }
-
-    while ( ! PXI_IsCallbackReady( PXI_FIFO_TAG_HOTSW, PXI_PROC_ARM7 ) )
-    {
-    }
 #endif // SDK_ARM9
     PXI_SetFifoRecvCallback( SYSMENU_PXI_FIFO_TAG, SYSMi_PXIFifoRecvCallback );
     SYSM_InitDecryptAESPXICallback();
@@ -269,47 +265,4 @@ void SYSMi_PXIFifoRecvCallback( PXIFifoTag tag, u32 data, BOOL err )
     PXI_SendWordByFifo( SYSMENU_PXI_FIFO_TAG, packet.raw, FALSE );
 
 #endif // SDK_ARM7
-
-#if 0
-
-#ifdef SDK_ARM9
-
-    if( packet.stat == SYSM_PXI_COMM_STAT_ACK ) {
-        switch( data ) {
-        case SYSM_PXI_COMM_DISABLE_HOTSW:
-            SYSMi_GetWork()->flags.arm9.isEnableHotSW = 0;
-            break;
-        default:
-            break;
-        }
-    }else { // SYSM_PXI_COMM_STAT_REQ
-        switch( data ) {
-        default:
-            break;
-        }
-    }
-#else  // !SDK_ARM9
-
-    if( packet.stat == SYSM_PXI_COMM_STAT_REQ ) {
-        switch( data ) {
-        case SYSM_PXI_COMM_DISABLE_HOTSW:
-            if( SYSMi_GetWork()->flags.arm7.isBusyHotSW ) {
-                SYSMi_GetWork()->flags.arm7.disableHotSW_REQ = 1;
-            }else {
-                SYSMi_GetWork()->flags.arm7.isEnableHotSW = 0;
-                // PXI�ŕԐM
-            }
-            break;
-        default:
-            break;
-        }
-    }else { // SYSM_PXI_COMM_STAT_ACK
-        switch( data ) {
-        default:
-            break;
-        }
-    }
-#endif // SDK_ARM9
-#endif
 }
-
