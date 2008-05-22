@@ -55,11 +55,6 @@
 
 
 /*
-    external functions
- */
-extern void SYSMi_SetWirelessLED( BOOL enable );
-
-/*
   internal variables
  */
 static BOOL				s_isHotStartWLFirm;
@@ -511,7 +506,7 @@ instfirm_error:
 	
 	// インストール開始すらできなかった時は、FATALエラー
 #ifdef SDK_RELEASE	
-	SYSMi_SetWirelessLED( FALSE );
+	PMi_SetWirelessLED( PM_WIRELESS_LED_OFF );
 #endif
 	s_isFinished = TRUE;
     SYSM_SetFatalError( TRUE );
@@ -556,7 +551,7 @@ BOOL PollingInstallWlanFirmware( BOOL isStartScanWDS )
 					// ColdStartの無線ファームロードなら、FATALエラー
 			        SYSM_SetFatalError( TRUE );
 #ifdef SDK_RELEASE	
-					SYSMi_SetWirelessLED( FALSE );
+					PMi_SetWirelessLED( PM_WIRELESS_LED_OFF );
 #endif
 					s_isFinished = TRUE;
 				}else {

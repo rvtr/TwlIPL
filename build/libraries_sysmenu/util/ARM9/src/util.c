@@ -79,6 +79,42 @@ void UTL_CaribrateTP( const LCFGTWLTPCalibData *pCalib )
 
 
 //======================================================================
+//  スリープ
+//======================================================================
+
+// スリープモードへの遷移
+void UTL_GoSleepMode( void )
+{
+    // 蓋閉じ判定
+    if ( ! PAD_DetectFold() )
+    {
+        return;
+    }
+
+    // デバッガ起動時にはスリープに入らない
+    if ( OSi_DetectDebugger() & OS_CONSOLE_TWLDEBUGGER )
+    {
+        // カード抜け無検出設定
+        //   TWLではゲームカードの再ロードが可能なため
+        //   スリープ時のカード抜け検出を無効化
+        //   （DS-IPLではゲームカードが起動できなくなるので
+        //     レジューム時のROM-IDチェックでエラーになると
+        //     シャットダウンしていた）
+        OSIntrMode enable = OS_DisableInterrupts();
+        reg_MI_MCCNT0 &= ~REG_MI_MCCNT0_I_MASK;
+        OS_ResetRequestIrqMask( OS_IE_CARD_IREQ );
+        OS_RestoreInterrupts( enable );
+
+        // スリープ遷移
+    	PM_GoSleepMode( PM_TRIGGER_COVER_OPEN |
+	    				PM_TRIGGER_RTC_ALARM,
+		    			0,
+			    		0 );
+    }
+}
+
+
+//======================================================================
 //  RTCオフセット制御
 //======================================================================
 

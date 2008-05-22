@@ -194,13 +194,13 @@ TitleProperty *SYSM_ReadParameters( void )
     // 無線ON/OFFフラグをもとに、LEDを設定する。
     //-----------------------------------------------------
 	{
-		BOOL enable;
+		PMWirelessLEDStatus enable;
 		if( LCFG_THW_IsForceDisableWireless() ) {
-			enable = FALSE;
+			enable = PM_WIRELESS_LED_OFF;
 		}else {
-			enable = LCFG_TSD_IsAvailableWireless();
+			enable = LCFG_TSD_IsAvailableWireless() ? PM_WIRELESS_LED_ON : PM_WIRELESS_LED_OFF;
 		}
-		SYSMi_SetWirelessLED( enable );
+		PMi_SetWirelessLED( enable );
 	}
 	
     //-----------------------------------------------------

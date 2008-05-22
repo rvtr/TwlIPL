@@ -58,9 +58,6 @@ void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle );
 // デバイス
 //-------------------------------------------------------
 
-// ワイヤレスLED制御
-void SYSMi_SetWirelessLED( BOOL enable );
-
 // RTC補正
 void SYSMi_WriteAdjustRTC( void );
 

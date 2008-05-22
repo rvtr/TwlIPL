@@ -39,6 +39,9 @@ extern u32 UTL_GetBacklightBrightness( u8 *pBrightness );					// ƒoƒbƒNƒ‰ƒCƒg‹P“
 // ƒ^ƒbƒ`ƒpƒlƒ‹
 extern void UTL_CaribrateTP( const LCFGTWLTPCalibData *pCalib );
 
+// ƒXƒŠ[ƒv
+extern void UTL_GoSleepMode( void );
+
 // RTCŠÖŒW
 extern BOOL UTL_CheckRTCDate( RTCDate *pDate );								// “ú•t‚ª³í‚©ƒ`ƒFƒbƒN
 extern BOOL UTL_CheckRTCTime( RTCTime *pTime );								// ‚ª³í‚©ƒ`ƒFƒbƒN

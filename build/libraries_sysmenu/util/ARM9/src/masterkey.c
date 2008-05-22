@@ -72,10 +72,10 @@ u32 CalcMasterkey(const u8 *src)
 //  マスターキー算出
 //
 //======================================================================
-u32 SYSM_CalcPCTLMasterKey( void )
+u32 UTL_CalcPCTLMasterKey( void )
 {
 	u32 masterKey;
-	u32 inquiryCode = SYSM_CalcPCTLInquiryCode();
+	u32 inquiryCode = UTL_CalcPCTLInquiryCode();
 	u8 arg[ 9 ];
 	RTCDate date;
 	RTC_Init();
@@ -92,7 +92,7 @@ u32 SYSM_CalcPCTLMasterKey( void )
 //  ペアレンタルコントロール問い合わせ番号算出
 //
 //======================================================================
-u32 SYSM_CalcPCTLInquiryCode( void )
+u32 UTL_CalcPCTLInquiryCode( void )
 {
 	int i;
 	u64 num = 0;

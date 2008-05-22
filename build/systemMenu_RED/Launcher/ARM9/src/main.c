@@ -326,8 +326,11 @@ void TwlMain( void )
         (void)SND_FlushCommand(SND_COMMAND_NOBLOCK);
 
 #ifndef DISABLE_SLEEP
-        // スリープモードへの遷移（蓋閉じ判定はデフォルトで行う）
-        SYSM_GoSleepMode();
+		// デバッガ動作時はスリープしない
+		if( !SYSM_IsRunOnDebugger() ) {
+	        // スリープモードへの遷移（蓋閉じ判定はデフォルトで行う）
+	        UTL_GoSleepMode();
+		}
 #endif // DISABLE_SLEEP
     }
 }

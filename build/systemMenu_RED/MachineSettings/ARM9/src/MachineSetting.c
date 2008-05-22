@@ -316,6 +316,23 @@ int MachineSettingMain( void )
 		}
 	}
 	
+	// とりあえずバックライト輝度変更をここで確認。
+	if( pad.trg & PAD_BUTTON_R) {
+		u8 brightness;
+		(void)UTL_GetBacklightBrightness( &brightness );
+		if( ++brightness > BACKLIGHT_BRIGHTNESS_MAX ) {
+			brightness = BACKLIGHT_BRIGHTNESS_MAX;
+		}
+		(void)UTL_SetBacklightBrightness( brightness );
+	}
+	if( pad.trg & PAD_BUTTON_L ) {
+		u8 brightness;
+		(void)UTL_GetBacklightBrightness( &brightness );
+		if( --brightness < 0 ) {
+			brightness = 0;
+		}
+		(void)UTL_SetBacklightBrightness( brightness );
+	}
 	return 0;
 }
 

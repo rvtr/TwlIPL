@@ -780,7 +780,7 @@ static void DrawBackLightSwitch(void)
 	static int old_brightness = -1;
 	u8 brightness;
 	
-	brightness = SYSM_GetBackLightBlightness();
+	(void)UTL_GetBacklightBrightness( &brightness );
 	
 	// 1フレーム前の古い値と輝度値が違っていたら描画しなおし
 	if( old_brightness != brightness )

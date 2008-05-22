@@ -34,9 +34,9 @@ extern "C" {
 #define SYSMENU_PXI_FIFO_TAG                (PXI_MAX_FIFO_TAG - 5)
 
 typedef enum SYSMPXICommand {
-    SYSM_PXI_COMM_BL_BRIGHT = 0,
+	SYSM_PXI_COMM_DUMMY = 0,
 #ifdef DHT_TEST
-    SYSM_PXI_COMM_DS_HASH_TABLE = 1,
+    SYSM_PXI_COMM_DS_HASH_TABLE,
 #endif
 
     SYSM_PXI_COMM_NUM

@@ -234,18 +234,6 @@ void SYSMi_PXIFifoRecvCallback( PXIFifoTag tag, u32 data, BOOL err )
 
     switch( cmd )
     {
-        case SYSM_PXI_COMM_BL_BRIGHT:
-#ifdef SDK_SUPPORT_PMIC_2
-            if ( SYSMi_GetMcuVersion() <= 1 )
-            {
-                PMi_SetRegister( REG_PMIC_BL_BRT_B_ADDR, (u8)packet.data );
-            }
-            else
-#endif // SDK_SUPPORT_PMIC_2
-            {
-                MCU_WriteRegister( MCU_REG_BL_ADDR, (u8)packet.data );
-            }
-            break;
 #ifdef DHT_TEST
         case SYSM_PXI_COMM_DS_HASH_TABLE:
             dht = (void*)(0x2000000 + (packet.data << 8));

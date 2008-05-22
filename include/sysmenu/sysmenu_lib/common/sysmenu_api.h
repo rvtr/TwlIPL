@@ -109,30 +109,10 @@ extern void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs );					// 起動するR
 extern BOOL SYSM_InitDecryptAESRegion_W( ROM_Header_Short *hs );				// WRAM経由ファイル読み込みのコールバックで使うAESデクリプト処理の初期化
 extern void SYSM_StartDecryptAESRegion_W( const void *wram_addr, const void *orig_addr, u32 size );
 																				// WRAM経由ファイル読み込みのコールバックで使うAESデクリプト処理関数
-
-// デバイス制御
-extern void SYSM_CaribrateTP( void );											// タッチパネルキャリブレーション
-extern void SYSM_SetBackLightBrightness( u8 brightness );						// バックライトを制御（本体設定データへの値セーブも行う）
-extern u8   SYSM_GetBackLightBlightness( void );								// バックライト輝度を取得（X2以前とX3以降で挙動に違い）
-
 // Nintendoロゴ制御
 extern BOOL SYSM_CheckNintendoLogo( u16 *pLogoData );							// Nintendoロゴデータのチェック
 extern void SYSM_LoadNintendoLogo2D( u16 *pLogoData, u16 *pDst, int paletteColorIndex ); // NintendoロゴデータをOBJ_2D形式でロード（pTempBufferには0x700bytes必要)
 extern void SYSM_LoadNintendoLogo1D( u16 *pLogoData, u16 *pDst, int paletteColorIndex ); // NintendoロゴデータをOBJ_1D形式でロード（同上）
-
-// RTC制御
-extern BOOL SYSM_CheckRTCDate( RTCDate *pDate );								// 日付が正常かチェック
-extern BOOL SYSM_CheckRTCTime( RTCTime *pTime );								// 時刻が正常かチェック
-extern s64  SYSM_CalcRTCOffset( RTCDate *pNewDate, RTCTime *pNewTime );			// RTCオフセット計算とRTCへの日付時刻チェックを行う
-extern u32  SYSM_GetDayNum( u32 year, u32 month );								// 指定された年・月の日数を取得する
-extern BOOL SYSM_IsLeapYear100( u32 year );										// 指定された年がうるう年か調べる
-
-// スリープモード
-extern void SYSM_GoSleepMode( void );                                           // スリープモードへの遷移
-
-// ペアレンタルコントロール問い合わせ
-u32 SYSM_CalcPCTLInquiryCode( void );											// 問い合わせコード（１０進８桁）算出
-u32 SYSM_CalcPCTLMasterKey( void );												// マスターキー　　（１０進５桁）算出（※内部でRTC_GetDateを使用します。）
 
 #endif
 
