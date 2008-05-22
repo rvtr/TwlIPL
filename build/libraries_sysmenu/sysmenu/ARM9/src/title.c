@@ -1513,6 +1513,7 @@ static void SYSMi_makeTitleIdList( void )
 	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
 	int l;
 	u8 count = 0;
+	int max = ( s_listLength < OS_TITLEIDLIST_MAX ) ? s_listLength : OS_TITLEIDLIST_MAX;
 	
 	if( s_pTitleIDList == NULL )
 	{
@@ -1529,7 +1530,7 @@ static void SYSMi_makeTitleIdList( void )
 		return;
 	}
 
-	for(l=-1;l<s_listLength;l++) // -1はカードアプリの特別処理用
+	for(l=-1;l<max;l++) // -1はカードアプリの特別処理用
 	{
 		ROM_Header_Short e_hs;
 		ROM_Header_Short *pe_hs;
