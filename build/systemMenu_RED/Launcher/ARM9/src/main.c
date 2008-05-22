@@ -308,6 +308,14 @@ void TwlMain( void )
                 case AUTH_RESULT_ENTRY_ADDRESS_ERROR:
                     state = STOP;
                     // [TODO:]クリアしたほうが良いデータ（鍵など）があれば消す
+                    
+                    // デバグ表示
+					NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+					G2_ChangeBlendAlpha( 0, 31 );
+					PrintfSJIS( 1, 36, TXT_COLOR_RED,"   LAUNCHER : ERROR OCCURRED!\n" );
+					GX_DispOn();
+					GXS_DispOn();
+					
                     break;
                 }
             }
