@@ -143,6 +143,7 @@ TwlMain()
     	OSTitleIDList *list  = ( OSTitleIDList * )HW_OS_TITLE_ID_LIST;
 		list->TitleID[0]     = titleID;
 		list->appJumpFlag[0] = 0x01;
+		list->num = 1;
 
 		// アプリジャンプ
 		OS_DoApplicationJump( titleID, OS_APP_JUMP_NORMAL );
