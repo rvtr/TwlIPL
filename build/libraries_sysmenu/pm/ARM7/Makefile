@@ -21,7 +21,7 @@ SUBDIRS			 =
 #----------------------------------------------------------------------------
 TARGET_FIRM		=	SYSTEMMENU
 TARGET_PLATFORM	=	TWL
-TWL_CODEGEN		=	ARM
+TWL_CODEGEN		?=	ALL
 TWL_ARCHGEN		=	LIMITED
 TWL_PROC		=	ARM7
 
