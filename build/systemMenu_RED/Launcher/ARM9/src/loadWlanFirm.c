@@ -241,7 +241,7 @@ BOOL VerifyWlanfirmSignature(u8* buffer, u32 length)
     pSign = (u8*)hdr->sign;
 
     txt = (u8*)hdr->hash;
-    txtlen = (u32)NWM_FW_SECURITY_AREA_SIZE - SIGN_LENGTH; /* 署名の直前までのLength */
+    txtlen = (u32)NWM_FW_SECURITY_AREA_SIZE - SIGN_LENGTH; /* 署名を除いたSecurity Areaのサイズ */
 
     /* calculate SHA-1 digest */
     SVC_SHA1Init( &sctx );
