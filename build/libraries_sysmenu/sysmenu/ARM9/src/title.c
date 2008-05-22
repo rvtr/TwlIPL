@@ -1553,7 +1553,7 @@ static void SYSMi_makeTitleIdList( void )
 		}else
 		{
 			// 無効なTitleID または、DataOnlyアプリはスキップ
-			if( (s_pTitleIDList[l] == NULL) || !( s_pTitleIDList[l] & TITLE_ID_DATA_ONLY_FLAG_MASK ) )
+			if( (s_pTitleIDList[l] == NULL) || ( s_pTitleIDList[l] & TITLE_ID_DATA_ONLY_FLAG_MASK ) )
 			{
 				continue;
 			}
