@@ -223,7 +223,7 @@ BOOL VerifyWlanfirmSignature(u8* buffer, u32 length)
     u8 *txt;
     u32 txtlen;
     u8 txtDigest[SVC_SHA1_DIGEST_SIZE];
-    u8 signDigest[SVC_RSA1024_BLOCK_SIZE];
+    u8 signDigest[SVC_SHA1_DIGEST_SIZE];
     SVCSHA1Context sctx;
     SVCSignHeapContext rctx;
     u8*   signHeap;

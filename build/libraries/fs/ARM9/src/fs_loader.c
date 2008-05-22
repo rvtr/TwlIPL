@@ -295,7 +295,7 @@ BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key_user, const vo
     const void* rsa_key;
     SVCSHA1Context ctx;
     u8 md[SVC_SHA1_DIGEST_SIZE];
-    u32 sd[SVC_RSA1024_BLOCK_SIZE/sizeof(u32)];
+    SignatureData sd;
 
     SVC_SHA1Init( &ctx );
     if ( !FS_LoadBuffer( (u8*)rh, FS_HEADER_AUTH_SIZE, &ctx ) )
@@ -326,7 +326,7 @@ BOOL FS_LoadHeader( SVCSignHeapContext* pool, const void* rsa_key_user, const vo
     // ヘッダ署名チェック
     SVC_DecryptSign( pool, &sd, rh->signature, rsa_key );
 
-    if ( !CheckDigest( md, ((SignatureData*)sd)->digest, TRUE, FALSE ) )
+    if ( !CheckDigest( md, sd.digest, TRUE, FALSE ) )
     {
         MI_CpuClear8( &sd, sizeof(sd) );    // 残り削除 (他に必要なものはない？)
         return FALSE;
