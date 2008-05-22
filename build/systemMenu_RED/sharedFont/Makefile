@@ -20,11 +20,11 @@ TARGET_FIRM			=	SYSTEMMENU
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-FONT_TIMESTAMP	=	08041700
+FONT_TIMESTAMP	=	08052100
 FONT_DIR		=	WW
-FONTS			=	TWL_BF00_l.NFTR \
-					TWL_BF00_m.NFTR \
-					TWL_BF00_s.NFTR
+FONTS			=	TBF1_l.NFTR \
+					TBF1_m.NFTR \
+					TBF1_s.NFTR
 FONT_RSC		=	$(addprefix $(FONT_DIR)/, $(FONTS))
 
 ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
