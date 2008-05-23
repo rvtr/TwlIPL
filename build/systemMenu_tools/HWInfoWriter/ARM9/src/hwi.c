@@ -322,6 +322,12 @@ BOOL HWI_ModifyLanguage( u8 region )
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
+
+const u8 s_serialNo_mask[] = {
+	0x82, 0xb7, 0x0e, 0xf3, 0xad, 0x0a, 0x35, 0x85,
+	0xaa, 0x84, 0xae, 0x14, 0xe7, 0x06, 0xd5, 0x00,
+};
+
 BOOL HWI_WriteHWNormalInfoFile( void )
 {
     LCFGTWLHWNormalInfo Info;
@@ -336,6 +342,17 @@ BOOL HWI_WriteHWNormalInfoFile( void )
     }
 
     Info.rtcAdjust = LCFG_THW_GetRTCAdjust();
+	{
+		int i;
+		u8 serialNo[ LCFG_TWL_HWINFO_MOVABLE_UNIQUE_ID_LEN ];
+		
+		MI_CpuClear8( serialNo, LCFG_TWL_HWINFO_MOVABLE_UNIQUE_ID_LEN );
+		LCFG_THW_GetSerialNo( serialNo );
+		
+		for( i = 0; i < LCFG_TWL_HWINFO_MOVABLE_UNIQUE_ID_LEN; i++ ) {
+			Info.movableUniqueID[ i ] = (u8)( serialNo[ i ] ^ s_serialNo_mask[ i ] );
+		}
+	}
 
     if (!LCFGi_THW_WriteNormalInfoDirect( &Info ))
     {
