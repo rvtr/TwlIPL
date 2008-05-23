@@ -182,7 +182,9 @@ static void SYSMi_SetMountInfoCore( LauncherBootType bootType, NAMTitleId titleI
 	
 	int i;
 	char contentpath[ FS_ENTRY_LONGNAME_MAX ];
-
+	
+	// [TODO]TMPジャンプ時のcontentパス指定がうまくいっていない。マウントしないようにしたら良い。
+	
 	// タイトルIDからcontentのファイルパスをセット
 	STD_TSNPrintf( contentpath, FS_ENTRY_LONGNAME_MAX,
 				   "nand:/title/%08x/%08x/content", (u32)( titleID >> 32 ), titleID );

@@ -23,6 +23,7 @@
 
 #include <sysmenu/memorymap.h>
 #include <sysmenu/reloc_info/common/reloc_info.h>
+#include <firm/gcd/blowfish.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -183,6 +184,12 @@ typedef struct SDKBootCheckInfo{
 }SDKBootCheckInfo;
 
 
+// ARM9からARM7にWRAM経由で引き渡す鍵情報ワーク
+typedef struct DeliverBROM9Key {
+	BLOWFISH_CTX	ds_blowfish;
+}DeliverBROM9Key;
+
+
 //----------------------------------------------------------------------
 //　SYSM共有ワーク領域のアドレス獲得
 //----------------------------------------------------------------------
@@ -203,6 +210,13 @@ typedef struct SDKBootCheckInfo{
 // ROMヘッダワークの取得
 #define SYSM_GetAppRomHeader()				( (ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF )
 #define SYSM_GetCardRomHeader()				SYSM_GetAppRomHeader()
+
+// ARM9から引き渡す鍵情報ワークの取得
+#ifdef SDK_ARM9
+#define GetDeliverBROM9KeyAddr()			( (DeliverBROM9Key *)HW_WRAM_0 )
+#else
+#define GetDeliverBROM9KeyAddr()			( (DeliverBROM9Key *)HW_WRAM_0_LTD )
+#endif
 
 #ifdef __cplusplus
 }

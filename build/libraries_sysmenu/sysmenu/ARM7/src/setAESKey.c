@@ -27,6 +27,8 @@
 // define data-----------------------------------------------------------------
 // extern data-----------------------------------------------------------------
 // function's prototype-------------------------------------------------------
+void SYSMi_SetAESKeysForAccessControlCore( ROM_Header *pROMH, u8 *pDst, BOOL *pIsClearSlotB, BOOL *pIsClearSlotC );
+
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
 // const data------------------------------------------------------------------
@@ -52,6 +54,16 @@ static const u8 dev_seedSlotC[] = {
 	0x49, 0x04, 0x6B, 0x33, 0x12, 0x02, 0xAC, 0xF3,
 };
 
+static const u8 dev_jpegEncodeKeyForLauncher[] = {
+	0xEF, 0x9A, 0xB3, 0x39, 0x48, 0x3C, 0x2B, 0x13,
+	0x39, 0x31, 0xA5, 0x3F, 0x86, 0x25, 0x9B, 0xB3,
+};
+
+static const u8 dev_jpegEncodeKeyForNormal[] = {
+	0x79, 0xAF, 0xFE, 0xA7, 0xF3, 0x6A, 0xB7, 0xBE,
+	0x83, 0xB6, 0x41, 0xFD, 0xFC, 0x42, 0xD7, 0x3B,
+};
+
 
 // ============================================================================
 //
@@ -66,8 +78,8 @@ void SYSMi_SetAESKeysForAccessControl( BOOL isNtrMode, ROM_Header *pROMH )
 	
 	// 鍵のセット
 	MI_CpuClearFast( (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, HW_LAUNCHER_DELIVER_PARAM_BUF_SIZE );
-	if( !isNtrMode &&
-		( pROMH->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK ) ) {
+	if( !isNtrMode ) {
+		SYSMi_SetAESKeysForSignJPEG( pROMH, &isClearSlotB, &isClearSlotC );
 		SYSMi_SetAESKeysForAccessControlCore( pROMH, (u8 *)HW_LAUNCHER_DELIVER_PARAM_BUF, &isClearSlotB, &isClearSlotC );
 	}
 	
@@ -88,9 +100,51 @@ void SYSMi_SetAESKeysForAccessControl( BOOL isNtrMode, ROM_Header *pROMH )
 	}
 }
 
+void SYSMi_SetAESKeysForSignJPEG( ROM_Header *pROMH, BOOL *pIsClearSlotB, BOOL *pIsClearSlotC )
+{
+	void *pAESKey;
+	if( ( pROMH->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK ) &&
+		( 0 == STD_CompareNString( (const char *)&pROMH->s.titleID_Lo[ 1 ], "ANH", 3 ) ) ) {
+		// for Launcher
+		pAESKey = ( SCFG_GetBondingOption() == SCFG_OP_PRODUCT ) ?
+					&( OSi_GetFromFirmAddr()->rsa_pubkey[ 3 ][ 0x30 ] ) : (void *)dev_jpegEncodeKeyForLauncher;
+		if( pIsClearSlotC ) {
+			*pIsClearSlotC = FALSE;
+		}
+		// AESスロットのデフォルト値セット
+		AES_Lock();
+		AES_SetKeyC( pAESKey );
+		AES_Unlock();
+		
+	}else {
+		// SignJPEG用AESキー
+		if ( pROMH->s.access_control.hw_aes_slot_B_SignJPEGForLauncher == TRUE) {
+			// for Launcher
+			pAESKey = ( SCFG_GetBondingOption() == SCFG_OP_PRODUCT ) ?
+						&( OSi_GetFromFirmAddr()->rsa_pubkey[ 3 ][ 0x30 ] ) : (void *)dev_jpegEncodeKeyForLauncher;
+		}else {
+			// for ノーマルアプリ
+			pAESKey = ( SCFG_GetBondingOption() == SCFG_OP_PRODUCT ) ?
+						&( OSi_GetFromFirmAddr()->rsa_pubkey[ 3 ][ 0x40 ] ) : (void *)dev_jpegEncodeKeyForNormal;
+		}
+		if( pIsClearSlotB ) {
+			*pIsClearSlotB = FALSE;
+		}
+		// AESスロットのデフォルト値セット
+		AES_Lock();
+		AES_SetKeyB( pAESKey );
+		AES_Unlock();
+	}
+}
+
 
 void SYSMi_SetAESKeysForAccessControlCore( ROM_Header *pROMH, u8 *pDst, BOOL *pIsClearSlotB, BOOL *pIsClearSlotC )
 {
+	// セキュアアプリ以外はセットなし
+	if ( !( pROMH->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK ) ) {
+		return;
+	}
+	
 	// commonClientKey
 	if( pROMH->s.access_control.common_client_key ) {
 		void *pCommonKey = ( SCFG_GetBondingOption() == SCFG_OP_PRODUCT ) ?

@@ -189,9 +189,13 @@ TwlSpMain(void)
         InitializeNwm(mainHeapHandle, mainHeapHandle);      // NWM 初期化
 #ifndef SDK_NOCRYPTO
         AES_Init();           // AES 初期化
-
-		// NANDファームがHW_LAUNCHER_DELIVER_PARAM_BUFへのAES_SEEDセットを行ってくれるので、ISデバッガ接続に関係なくSDK_SEA_KEY_STOREへのコピーを行えばよい
-		MI_CpuCopyFast( (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, (void *)SDK_SEA_KEY_STORE, HW_LAUNCHER_DELIVER_PARAM_BUF_SIZE );
+		
+		{
+			// JPEGエンコード用の鍵セット
+			SYSMi_SetAESKeysForSignJPEG( (ROM_Header *)HW_TWL_ROM_HEADER_BUF, NULL, NULL );
+			// NANDファームがHW_LAUNCHER_DELIVER_PARAM_BUFへのAES_SEEDセットを行ってくれるので、ISデバッガ接続に関係なくSDK_SEA_KEY_STOREへのコピーを行えばよい
+			MI_CpuCopyFast( (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, (void *)SDK_SEA_KEY_STORE, HW_LAUNCHER_DELIVER_PARAM_BUF_SIZE );
+		}
 		
 #ifdef SDK_SEA
         SEA_Init();

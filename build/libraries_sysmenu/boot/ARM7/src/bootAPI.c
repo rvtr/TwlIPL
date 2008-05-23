@@ -159,6 +159,9 @@ BOOL BOOT_WaitStart( void )
 			int list_count = PRE_CLEAR_NUM_MAX + 1;
 			int l;
 			u32 *post_clear_list;
+			
+			// [TODO] WRAM_0_1はちゃんと消えてる？blowfishやaes鍵を引き渡しているので心配
+			
 			// メモリリストの設定
 			// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域（WRAMにある）を消さないように注意。
 			//         WRAMリマップ後の消し漏れやバッファオーバランの懸念回避のため不要な鍵はpre clearで消す。

@@ -72,11 +72,12 @@ void SYSMi_CheckRTC( void );
 //-------------------------------------------------------
 // AES鍵設定
 //-------------------------------------------------------
+
+// JPEG署名用（ランチャー、アプリブート共用）
+void SYSMi_SetAESKeysForSignJPEG( ROM_Header *pROMH, BOOL *pIsClearSlotB, BOOL *pIsClearSlotC );
+
 // アプリブート用
 void SYSMi_SetAESKeysForAccessControl( BOOL isNtrMode, ROM_Header *pROMH );
-
-// ランチャー自身用
-void SYSMi_SetAESKeysForAccessControlCore( ROM_Header *pROMH, u8 *pDst, BOOL *pIsClearSlotB, BOOL *pIsClearSlotC );
 
 #endif // SDK_ARM7
 
