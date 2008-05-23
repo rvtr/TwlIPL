@@ -1211,8 +1211,13 @@ static AuthResult SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle,
 {
 	AuthResult ret = AUTH_RESULT_SUCCEEDED;
 
-	// ボンディングオプション00にだけ適用
+	// ボンディングオプション00でないときは適用しない
+#ifdef AUTH_NTR_CARD_PRODUCT_ONLY
 	if( !SCFG_GetBondingOption() == 0 )
+#else
+	// デバッガに接続してるときは適用しない
+	if( SYSM_IsRunOnDebugger() )
+#endif
 	{
 		return AUTH_RESULT_SUCCEEDED;
 	}
@@ -1258,8 +1263,13 @@ static AuthResult SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 	SVCHMACSHA1Context ctx;
 	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
 
-	// ボンディングオプション00にだけ適用
+	// ボンディングオプション00でないときは適用しない
+#ifdef AUTH_NTR_CARD_PRODUCT_ONLY
 	if( !SCFG_GetBondingOption() == 0 )
+#else
+	// デバッガに接続してるときは適用しない
+	if( SYSM_IsRunOnDebugger() )
+#endif
 	{
 		return AUTH_RESULT_SUCCEEDED;
 	}
