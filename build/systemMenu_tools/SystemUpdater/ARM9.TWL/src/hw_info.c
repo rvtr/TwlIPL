@@ -61,24 +61,24 @@ BOOL DeleteHWInfoFile( void );
 
 BOOL WriteHWInfoFile( u8 region, BOOL wirelessForceOff )
 {
-	static const char *pMsgNormalWriting  	= "Writing Normal File...";
 	static const char *pMsgSecureWriting  	= "Writing Secure File...";
+	static const char *pMsgNormalWriting  	= "Writing Normal File...";
 	static const char *pMsgSignWriting  	= "Writing Sign   File...";
 	static const char *pMsgSucceeded 		= "Success!\n";
 	static const char *pMsgFailed 			= "Failed!\n";
 	u32 installedSoftBoxCount = 0;
 	BOOL result = TRUE;
 
-	// ノーマルファイルのライト
-	if( HWI_WriteHWNormalInfoFile() ) {
+	// セキュアファイルのライト
+	if( HWI_WriteHWSecureInfoFile( region, NULL, wirelessForceOff ) ) {	// とりあえず無線は有効で。
 //		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSucceeded );
 	}else {
 		kamiFontPrintfConsoleEx(CONSOLE_RED, pMsgFailed );
 		result = FALSE;
 	}
 
-	// セキュアファイルのライト
-	if( HWI_WriteHWSecureInfoFile( region, NULL, wirelessForceOff ) ) {	// とりあえず無線は有効で。
+	// ノーマルファイルのライト(移行可能なユニークIDのためにセキュアファイルの後で書き込む）
+	if( HWI_WriteHWNormalInfoFile() ) {
 //		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSucceeded );
 	}else {
 		kamiFontPrintfConsoleEx(CONSOLE_RED, pMsgFailed );

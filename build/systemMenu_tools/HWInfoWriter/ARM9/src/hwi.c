@@ -24,7 +24,7 @@
 #include "hwi.h"
 
 // define data------------------------------------------
-#ifdef FIRM_USE_PRODUCT_KEYS                                                      // 鍵選択スイッチ
+#ifdef FIRM_USE_PRODUCT_KEYS                                                // 鍵選択スイッチ
 #define HWINFO_PRIVKEY_PATH     "rom:key/private_HWInfo.der"                // 製品用秘密鍵
 #else
 #define HWINFO_PRIVKEY_PATH     "rom:key/private_HWInfo_dev.der"            // 開発用秘密鍵
@@ -197,7 +197,14 @@ static BOOL ReadHWInfoFile( void )
 {
     LCFGReadResult retval;
 	BOOL result = TRUE;
-    OSTick start = OS_GetTick();
+
+    retval = LCFGi_THW_ReadSecureInfo();
+    if( retval == LCFG_TSF_READ_RESULT_SUCCEEDED ) {
+        OS_TPrintf( "HW Secure Info read succeeded.\n" );
+    }else {
+		result = FALSE;
+        OS_TPrintf( "HW Secure Info read failed.\n" );
+    }
 
     retval = LCFGi_THW_ReadNormalInfo();
     if( retval == LCFG_TSF_READ_RESULT_SUCCEEDED ) {
@@ -207,35 +214,22 @@ static BOOL ReadHWInfoFile( void )
         OS_TPrintf( "HW Normal Info read failed.\n" );
     }
 
-//  OS_TPrintf( "HW Normal Info read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
-
-    start = OS_GetTick();
-    retval = LCFGi_THW_ReadSecureInfo();
-    if( retval == LCFG_TSF_READ_RESULT_SUCCEEDED ) {
-        OS_TPrintf( "HW Secure Info read succeeded.\n" );
-    }else {
-		result = FALSE;
-        OS_TPrintf( "HW Secure Info read failed.\n" );
-    }
-//  OS_TPrintf( "HW Secure Info read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
-
 	return result;
 }
 
 // HWInfoファイルのベリファイ
 static void VerifyHWInfo( void )
 {
-    if( VerifyData( (const u8 *)LCFG_THW_GetNormalInfo(), (const u8 *)LCFG_THW_GetDefaultNormalInfo(), sizeof(LCFGTWLHWNormalInfo) ) ) {
-        OS_TPrintf( "HW normal Info verify succeeded.\n" );
-    }else {
-        OS_TPrintf( "HW normal Info verify failed.\n" );
-    }
     if( VerifyData( (const u8 *)LCFG_THW_GetSecureInfo(), (const u8 *)LCFG_THW_GetDefaultSecureInfo(), sizeof(LCFGTWLHWSecureInfo) ) ) {
         OS_TPrintf( "HW secure Info verify succeeded.\n" );
     }else {
         OS_TPrintf( "HW secure Info verify failed.\n" );
     }
-
+    if( VerifyData( (const u8 *)LCFG_THW_GetNormalInfo(), (const u8 *)LCFG_THW_GetDefaultNormalInfo(), sizeof(LCFGTWLHWNormalInfo) ) ) {
+        OS_TPrintf( "HW normal Info verify succeeded.\n" );
+    }else {
+        OS_TPrintf( "HW normal Info verify failed.\n" );
+    }
 }
 
 // メモリ上のデータベリファイ
@@ -270,7 +264,7 @@ BOOL HWI_ModifyLanguage( u8 region )
 	if (!ReadTWLSettings())
 	{
 		result = FALSE;
-        OS_TPrintf( "HW Normal Info read failed.\n" );
+        OS_TPrintf( "Read TWLSettings failed.\n" );
 	}
 
     if( langBitmap & ( 0x0001 << nowLanguage ) ) {

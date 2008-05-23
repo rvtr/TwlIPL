@@ -193,22 +193,11 @@ void HWInfoWriterMain( void )
 // HW情報全体のライト
 static void WriteHWInfoFile( u8 region, BOOL isDisableWireless )
 {
-	static const u16 *pMsgNormalWriting  = (const u16 *)L"Writing Normal File...";
 	static const u16 *pMsgSecureWriting  = (const u16 *)L"Writing Secure File...";
+	static const u16 *pMsgNormalWriting  = (const u16 *)L"Writing Normal File...";
 	static const u16 *pMsgHWIDSignWriting = (const u16 *)L"Writing HWID Sign File...";
 	static const u16 *pMsgSucceeded = (const u16 *)L"Succeeded!";
 	static const u16 *pMsgFailed = (const u16 *)L"Failed!";
-	
-	// -------------------------------------
-	// ノーマルファイルのライト
-	// -------------------------------------
-	(void)PutStringUTF16( MSG_X * 8, MSG_Y * 8, TXT_COLOR_BLACK, pMsgNormalWriting );
-	
-	if( HWI_WriteHWNormalInfoFile() ) {
-		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, MSG_Y * 8, TXT_COLOR_BLUE, pMsgSucceeded );
-	}else {
-		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, MSG_Y * 8, TXT_COLOR_RED, pMsgFailed );
-	}
 	
 	// -------------------------------------
 	// セキュアファイルのライト
@@ -220,7 +209,18 @@ static void WriteHWInfoFile( u8 region, BOOL isDisableWireless )
 	}else {
 		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_RED, pMsgFailed );
 	}
+
+	// -------------------------------------
+	// ノーマルファイルのライト (移行可能なユニークIDのためセキュアファイルの後でライトする）
+	// -------------------------------------
+	(void)PutStringUTF16( MSG_X * 8, MSG_Y * 8, TXT_COLOR_BLACK, pMsgNormalWriting );
 	
+	if( HWI_WriteHWNormalInfoFile() ) {
+		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, MSG_Y * 8, TXT_COLOR_BLUE, pMsgSucceeded );
+	}else {
+		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, MSG_Y * 8, TXT_COLOR_RED, pMsgFailed );
+	}
+		
 	// -------------------------------------
 	// HWID署名ファイルのライト
 	// -------------------------------------
@@ -248,21 +248,11 @@ static void WriteHWInfoFile( u8 region, BOOL isDisableWireless )
 // HWInfoファイルの削除
 static void DeleteHWInfoFile( void )
 {
-	static const u16 *pMsgNormalDeleting  = (const u16 *)L"Deleting Normal File...";
 	static const u16 *pMsgSecureDeleting  = (const u16 *)L"Deteting Secure File...";
+	static const u16 *pMsgNormalDeleting  = (const u16 *)L"Deleting Normal File...";
 	static const u16 *pMsgHWIDSignDeleting = (const u16 *)L"Deteting HWID Sign File.";
 	static const u16 *pMsgSucceeded = (const u16 *)L"Succeeded!";
 	static const u16 *pMsgFailed = (const u16 *)L"Failed!";
-	
-	// -------------------------------------
-	// ノーマルファイルの削除
-	// -------------------------------------
-	(void)PutStringUTF16( MSG_X * 8, MSG_Y * 8, TXT_COLOR_BLACK, pMsgNormalDeleting );
-	if( HWI_DeleteHWNormalInfoFile() ) {
-		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, MSG_Y * 8, TXT_COLOR_BLUE, pMsgSucceeded );
-	}else {
-		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, MSG_Y * 8, TXT_COLOR_RED, pMsgFailed );
-	}
 	
 	// -------------------------------------
 	// セキュアファイルの削除
@@ -273,7 +263,17 @@ static void DeleteHWInfoFile( void )
 	}else {
 		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_RED, pMsgFailed );
 	}
-	
+
+	// -------------------------------------
+	// ノーマルファイルの削除
+	// -------------------------------------
+	(void)PutStringUTF16( MSG_X * 8, MSG_Y * 8, TXT_COLOR_BLACK, pMsgNormalDeleting );
+	if( HWI_DeleteHWNormalInfoFile() ) {
+		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, MSG_Y * 8, TXT_COLOR_BLUE, pMsgSucceeded );
+	}else {
+		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, MSG_Y * 8, TXT_COLOR_RED, pMsgFailed );
+	}
+		
 	// -------------------------------------
 	// HWID署名ファイルの削除
 	// -------------------------------------
