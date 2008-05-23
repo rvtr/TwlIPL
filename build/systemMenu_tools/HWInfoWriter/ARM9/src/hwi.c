@@ -81,6 +81,15 @@ static const char *strLauncherGameCode[] = {
     "HNAK",
 };
 
+static const char regionAsciiForSerialNo[] = {
+	'J',	// 日本
+	'W',	// 米国
+	'E',	// 欧州
+	'A',	// 豪州
+	'C',	// 中国
+	'K'		// 韓国
+};
+
 //======================================================
 // HW情報ライター
 //======================================================
@@ -376,6 +385,7 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
 {
     BOOL isWrite = TRUE;
     LCFGReadResult result;
+	u8 old_region;
 
     // ファイルのリード
     result = LCFGi_THW_ReadSecureInfo();
@@ -389,6 +399,10 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
     }
 
     LCFG_THW_SetFlagForceDisableWireless( isDisableWireless );
+
+	// 旧リージョンを保存
+	old_region = LCFG_THW_GetRegion();
+
     // リージョンのセット
     LCFG_THW_SetRegion( region );
 
@@ -399,19 +413,91 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
     if( pSerialNo == NULL ) {
         // 量産工程でないとシリアルNo.は用意できないので、ここではMACアドレスをもとに適当な値をセットする。
         u8 buffer[ 12 ] = "SERIAL";     // 適当な文字列をMACアドレスと結合してSHA1を取り、仮SerialNoとする。
-        u8 serialNo[ SVC_SHA1_DIGEST_SIZE ];
+        u8 serialNoOld[ SVC_SHA1_DIGEST_SIZE ];
+		u8 serialNoNew[ SVC_SHA1_DIGEST_SIZE ];
         int i;
-        int len = ( LCFG_THW_GetRegion() == OS_TWL_REGION_AMERICA ) ?
-                    LCFG_TWL_HWINFO_SERIALNO_LEN_AMERICA : LCFG_TWL_HWINFO_SERIALNO_LEN_OTHERS;
-        OS_GetMacAddress( buffer + 6 );
-        SVC_CalcSHA1( serialNo, buffer, sizeof(buffer) );
-        for( i = 3; i < SVC_SHA1_DIGEST_SIZE; i++ ) {
-            serialNo[ i ] = (u8)( ( serialNo[ i ] % 10 ) + 0x30 );
-        }
-        MI_CpuCopy8( "SRN", serialNo, 3 );
-        MI_CpuClear8( &serialNo[ len ], sizeof(serialNo) - len );
-//      OS_TPrintf( "serialNo : %s\n", serialNo );
-        LCFG_THW_SetSerialNo( serialNo );
+        int len;
+		int offset;
+		int old_offset;
+
+		if ( region == OS_TWL_REGION_AMERICA ) 
+		{
+			len    = LCFG_TWL_HWINFO_SERIALNO_LEN_AMERICA;
+			offset = LCFG_TWL_HWINFO_SERIALNO_UNIQUE_OFFSET_AMERICA;
+		}
+		else
+		{
+            len    = LCFG_TWL_HWINFO_SERIALNO_LEN_OTHERS;
+			offset = LCFG_TWL_HWINFO_SERIALNO_UNIQUE_OFFSET_OTHERS;
+		}
+
+		// 現在のシリアルNo取得
+		LCFG_THW_GetSerialNo( serialNoOld );
+
+		// 新しいシリアルNoをクリアしておく
+		MI_CpuClear8( serialNoNew, sizeof(serialNoNew) );
+
+		// シリアルNoの先頭が'T'でなければ不正なので仮のシリアルNo.を作成する
+		if ( serialNoOld[0] != 'T')
+		{
+			// 数字8桁
+	        OS_GetMacAddress( buffer + 6 );
+	        SVC_CalcSHA1( serialNoNew, buffer, sizeof(buffer) );
+	        for( i = offset; i < len-1; i++ ) {
+	            serialNoNew[ i ] = (u8)( ( serialNoNew[ i ] % 10 ) + 0x30 );
+	        }
+
+			// 1バイト目はTWLの'T'
+			serialNoNew[0] = 'T';
+			// 2バイト目はリージョン別ASCII
+			serialNoNew[1] = (u8)regionAsciiForSerialNo[region];			
+			// 米国リージョン以外は3バイト目にEMS（仮シリアルNo.なので任天堂の'N'）
+			if ( region != OS_TWL_REGION_AMERICA )
+			{
+				serialNoNew[2] = 'N';
+			}
+
+			// チェックコードは暫定値0
+			serialNoNew[len-1] = 0;
+
+			// 仮シリアルNo.であることの印として14バイト目を'K'とする
+			serialNoNew[13] = 'K';
+
+		}
+		// シリアルNoの先頭が'T'である場合ユニーク数字８桁はそのままで他を変更する
+		else
+		{
+			if ( old_region == OS_TWL_REGION_AMERICA )
+			{
+				old_offset = LCFG_TWL_HWINFO_SERIALNO_UNIQUE_OFFSET_AMERICA;
+			}
+			else
+			{
+				old_offset = LCFG_TWL_HWINFO_SERIALNO_UNIQUE_OFFSET_OTHERS;
+			}
+
+			// ユニーク数字をコピー
+			MI_CpuCopy( &serialNoOld[old_offset], &serialNoNew[offset], LCFG_TWL_HWINFO_SERIALNO_UNIQUE_LENGTH );
+
+			// 1バイト目はTWLの'T'
+			serialNoNew[0] = 'T';
+			// 2バイト目はリージョン別ASCII
+			serialNoNew[1] = (u8)regionAsciiForSerialNo[region];
+			// 米国リージョン以外は3バイト目にEMS（仮シリアルNo.なので任天堂の'N'）
+			if ( LCFG_THW_GetRegion() != OS_TWL_REGION_AMERICA )
+			{
+				serialNoNew[2] = 'N';
+			}
+			// チェックコードは暫定値0
+			serialNoNew[len-1] = 0;
+
+			// 14バイト目は旧から新へコピー
+			serialNoNew[13] = serialNoOld[13];
+		}
+
+     	OS_TPrintf( "serialNo : %s\n", serialNoNew );
+
+        LCFG_THW_SetSerialNo( serialNoNew );
     }else {
         LCFG_THW_SetSerialNo( pSerialNo );
     }
