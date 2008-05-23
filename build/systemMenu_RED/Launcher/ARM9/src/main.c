@@ -350,7 +350,7 @@ void TwlMain( void )
 						LauncherInit( s_titleList );
 						NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 						G2_ChangeBlendAlpha( 0, 31 );
-						PrintfSJIS( 1, 25, TXT_COLOR_RED,"LAUNCHER : ERROR OCCURRED!\n" );
+						PrintfSJIS( 1, 25, TXT_COLOR_RED,"LAUNCHER : ERROR OCCURRED! - %d\n",res );
 						PrintfSJIS( 1, 40, TXT_COLOR_RED,"%s",error_msg[res] );
 						GX_DispOn();
 						GXS_DispOn();
