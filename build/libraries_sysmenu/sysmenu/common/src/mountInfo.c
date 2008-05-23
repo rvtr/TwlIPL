@@ -243,14 +243,14 @@ static void SYSMi_ModifyShared2FileMount( LauncherBootType bootType, NAMTitleId 
 	BOOL sizeok = FALSE;
 	
 	// NANDアクセス可能でshared2_fileビットが立っていればマウント
-	if( (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->access_control.nand_access &&
-		(( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->access_control.shared2_file ) {
+	if( (( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF)->access_control.nand_access &&
+		(( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF)->access_control.shared2_file ) {
 		char shared2FilePath[ FS_ENTRY_LONGNAME_MAX ];
-		u32 shared2DataSize = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->shared2_file_size;
+		u32 shared2DataSize = (( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF)->shared2_file_size;
 		
 		// ファイルパスを取得
 		STD_TSNPrintf( shared2FilePath, FS_ENTRY_LONGNAME_MAX,
-					   "nand:/shared2/%04X", (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->shared2_file_index);
+					   "nand:/shared2/%04X", (( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF)->shared2_file_index);
 		
 		//[TODO:]実際にファイルのサイズを見て同じかどうかもチェック
 		// サイズチェックしてマウント情報登録
