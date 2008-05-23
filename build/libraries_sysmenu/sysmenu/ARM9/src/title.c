@@ -1111,7 +1111,7 @@ static AuthResult SYSMi_AuthenticateTWLTitle( TitleProperty *pBootTitle )
 	}
 	OS_TPrintf("Authenticate : total %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
 
-	// 製品or開発実機ではNANDアプリはNAND、カードアプリはカードからのみブート許可
+	// デバッガ動作以外の時はNANDアプリはNAND、カードアプリはカードからのみブート許可
 	if ( ! SYSM_IsRunOnDebugger() )
 	{
 		if ( ( (pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_NAND ||
@@ -1486,7 +1486,7 @@ AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 		s_calc_hash = NULL;
 	}
 	
-	// 製品本体のみTWL設定データにブートするタイトルのTitleIDとplatformCodeを保存。
+	// デバッガ動作以外の時のみTWL設定データにブートするタイトルのTitleIDとplatformCodeを保存。
     if( !SYSM_IsRunOnDebugger() ) {
 		u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
 		if( pBuffer != NULL ) {
