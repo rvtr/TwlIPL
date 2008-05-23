@@ -357,6 +357,8 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
     NWMRetCode err;
     NWMFirmDataParam *pFdParam = (NWMFirmDataParam *)NWM_PARAM_FWDATA_ADDRESS;
     NVRAMResult nvRes;
+    u8 *pSecBuf = NULL;
+    u8 *pHdrBuf = NULL;
 
     s_isFinished = FALSE;
     pNwmBuf = NULL;
@@ -404,18 +406,21 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
         OS_TPrintf("[Wlan Firm]  Start InstallFirmware (HOT START)\n");
         NWMi_InitForLauncher(pNwmBuf, NWM_SYSTEM_BUF_SIZE, 3); /* 3 -> DMA no. */
         err = NWMi_InstallFirmware(InstallFirmCallback, NULL, 0, FALSE);
+
     } else {    // COLD START
         s32 flen = 0;
         char path[256];
-        u32 offset, length, hdrLen;
+        u32 fwOffset, fwLen, hdrLen;
         u8 *pHash = NULL;
-        u8 *pSecBuf = NULL;
-        u8 *pHdrBuf = NULL;
 
         // Get Filepath
         if (FALSE == GetFirmwareFilepath(path)) {
             goto instfirm_error;
         }
+
+        /* ------------------------------------
+           Stage 1 -- Security Area の署名認証
+           ------------------------------------ */
 
         // Read Security area of WLAN firm
         /* Allocate security area buffer from heap. */
@@ -431,8 +436,6 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
         if ( 0 >= flen )
         {
             OS_TPrintf("[Wlan Firm]  Error: Couldn't read wlan firmware security area.\n");
-            SYSM_Free( pSecBuf );
-            pSecBuf = NULL;
             goto instfirm_error;
         }
 
@@ -441,16 +444,14 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
         {
             OS_TPrintf("[Wlan Firm]  Error: This Wlan Firmware is quite illegal!\n");
             OS_TPrintf("[Wlan Firm]         It has never been installed.\n");
-            SYSM_Free( pSecBuf );
-            pSecBuf = NULL;
             goto instfirm_error;
         }
 
+        /* ------------------------------------
+           Stage 2 -- Header Area のHashチェック
+           ------------------------------------ */
+        
         hdrLen = ((NWMFirmSecurityArea*)pSecBuf)->hdrLen;
-
-        // Free Security area buffer
-        SYSM_Free( pSecBuf );
-        pSecBuf = NULL;
 
         /* Allocate header area buffer from heap. */
         pHdrBuf = SYSM_Alloc( hdrLen );
@@ -466,43 +467,49 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
         if ( 0 >= flen )
         {
             OS_TPrintf("[Wlan Firm]  Error: Couldn't read wlan firmware header.\n");
-            // Free Header area buffer
-            SYSM_Free( pHdrBuf );
-            pHdrBuf = NULL;
             goto instfirm_error;
         }
 
-        // Find corresponding FW image
-        offset = NWMi_GetFirmImageOffset(pHdrBuf, (u32)fwType);
-        length = NWMi_GetFirmImageLength(pHdrBuf, (u32)fwType);
+        pHash = (u8*)pSecBuf + SIGN_LENGTH;
+        
+        OS_TPrintf("[Wlan Firm]  Check hash of Header Area.\n");
+        if (FALSE == CheckHash((const u8*)pHash, (const u8*)pHdrBuf, hdrLen))
+        {
+            OS_TPrintf("[Wlan Firm]  Error: Header Hash data is illegal.\n");
+            goto instfirm_error;
+        }
+        OS_TPrintf("[Wlan Firm]  Header Area CheckHash ok.\n");
 
-        if (offset == 0 || length == 0) {
-            OS_TPrintf("[Wlan Firm]  Error: Couldn't get Firmware image.\n");
-            // Free Header area buffer
-            SYSM_Free( pHdrBuf );
-            pHdrBuf = NULL;
+        // Free Security area buffer
+        SYSM_Free( pSecBuf );
+        pSecBuf = NULL;
+        
+        /* ------------------------------------
+           Stage 3 -- FW image Area のHashチェック
+           ------------------------------------ */
+        
+        // Find corresponding FW image
+        fwOffset = NWMi_GetFirmImageOffset(pHdrBuf, (u32)fwType);
+        fwLen    = NWMi_GetFirmImageLength(pHdrBuf, (u32)fwType);
+
+        if (fwOffset == 0 || fwLen == 0) {
+            OS_TPrintf("[Wlan Firm]  Error: Couldn't get FW image.\n");
             goto instfirm_error;
         }
 
         /* Allocate FW buffer from heap. */
-        pFwBuffer = SYSM_Alloc( length );
+        pFwBuffer = SYSM_Alloc( fwLen );
         if (!pFwBuffer) {
-            OS_TWarning("[Wlan Firm]  Error: Couldn't allocate memory for WlanFirmware.\n");
-            // Free Header area buffer
-            SYSM_Free( pHdrBuf );
-            pHdrBuf = NULL;
+            OS_TWarning("[Wlan Firm]  Error: Couldn't allocate memory for FW image.\n");
             goto instfirm_error;
         }
 
         // Read FW image
-        flen = ReadFirmwareBinary(path, offset, pFwBuffer, (s32)length);
+        flen = ReadFirmwareBinary(path, fwOffset, pFwBuffer, (s32)fwLen);
 
         if ( 0 >= flen )
         {
             OS_TPrintf("[Wlan Firm]  Error: Couldn't read wlan firmware.\n");
-            // Free Header area buffer
-            SYSM_Free( pHdrBuf );
-            pHdrBuf = NULL;
             goto instfirm_error;
         }
 
@@ -511,22 +518,16 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
         if (pHash == NULL)
         {
             OS_TPrintf("[Wlan Firm]  Error: Couldn't get hash of wlan firmware image.\n");
-            // Free Header area buffer
-            SYSM_Free( pHdrBuf );
-            pHdrBuf = NULL;
             goto instfirm_error;
         }
 
-        OS_TPrintf("[Wlan Firm]  Check hash of firmware image.\n");
-        if (FALSE == CheckHash((const u8*)pHash, (const u8*)pFwBuffer, length))
+        OS_TPrintf("[Wlan Firm]  Check hash of FW image.\n");
+        if (FALSE == CheckHash((const u8*)pHash, (const u8*)pFwBuffer, fwLen))
         {
-            OS_TPrintf("[Wlan Firm]  Error: Hash data is illegal.\n");
-            // Free Header area buffer
-            SYSM_Free( pHdrBuf );
-            pHdrBuf = NULL;
+            OS_TPrintf("[Wlan Firm]  Error: FW image Hash data is illegal.\n");
             goto instfirm_error;
         }
-        OS_TPrintf("[Wlan Firm]  CheckHash ok.\n");
+        OS_TPrintf("[Wlan Firm]  FW image CheckHash ok.\n");
 
         // Free Header area buffer
         SYSM_Free( pHdrBuf );
@@ -547,6 +548,7 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 
         OS_TPrintf("[Wlan Firm]  Start InstallFirmware (COLD START)\n");
         err = NWMi_InstallFirmware(InstallFirmCallback, pFwBuffer, (u32)flen, TRUE);
+
     }
 
     /*
@@ -557,16 +559,29 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 
     /* エラー処理 */
 instfirm_error:
+    // Free Security area buffer
+    if (pSecBuf)
+    {
+        SYSM_Free( pSecBuf );
+        pSecBuf = NULL;
+    }
+    // Free Header area buffer
+    if (pHdrBuf)
+    {
+        SYSM_Free( pHdrBuf );
+        pHdrBuf = NULL;
+    }
+    
     if (pFwBuffer)
     {
         SYSM_Free( pFwBuffer );
-        pFwBuffer = 0;
+        pFwBuffer = NULL;
     }
     if (pNwmBuf)
     {
         NWM_End();
         SYSM_Free( pNwmBuf );
-        pNwmBuf = 0;
+        pNwmBuf = NULL;
     }
 
     // インストール開始すらできなかった時は、FATALエラー
