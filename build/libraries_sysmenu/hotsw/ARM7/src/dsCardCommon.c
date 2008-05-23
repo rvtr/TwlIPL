@@ -26,6 +26,8 @@ extern CardThreadData HotSwThreadData;
 #define		ROM_EMULATION_START_OFS				0x160
 #define		ROM_EMULATION_END_OFS				0x180
 
+#define 	RD_NORMAL_ID_LATENCY1				0x657
+
 // static value -------------------------------------------------------------
 static OSMessage	s_Msg;
 
@@ -98,7 +100,7 @@ HotSwState ReadIDNormal(CardBootData *cbd)
 #endif
     
 	// MCCNT1 レジスタ設定
-	reg_HOTSW_MCCNT1 = START_MASK | HOTSW_PAGE_STAT | (0x1 & LATENCY1_MASK);
+	reg_HOTSW_MCCNT1 = START_MASK | HOTSW_PAGE_STAT | (RD_NORMAL_ID_LATENCY1 & LATENCY1_MASK);
 
     // メッセージ受信
 	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
