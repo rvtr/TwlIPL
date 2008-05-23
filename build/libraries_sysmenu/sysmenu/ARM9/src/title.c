@@ -86,6 +86,7 @@ static OSThread			s_thread;
 static OSThread			s_auth_thread;
 static TWLBannerFile	s_bannerBuf[ LAUNCHER_TITLE_LIST_NUM ] ATTRIBUTE_ALIGN(32);
 static AuthResult		s_authResult = AUTH_RESULT_PROCESSING;	// ROM検証結果
+static AuthResult		s_headerAuthResult = AUTH_RESULT_TITLE_LOAD_FAILED;
 
 static MbAuthCode s_authcode;
 
@@ -681,7 +682,8 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 		
 		//[TODO:]この時点でヘッダの正当性検証
 		// ※ROMヘッダ認証
-		if( AUTH_RESULT_SUCCEEDED != SYSMi_AuthenticateHeader( pBootTitle, head ) )
+		s_headerAuthResult = SYSMi_AuthenticateHeader( pBootTitle, head );
+		if( AUTH_RESULT_SUCCEEDED != s_headerAuthResult )
 		{
 			goto ERROR;
 		}
@@ -1410,7 +1412,7 @@ static void SYSMi_AuthenticateTitleThreadFunc( TitleProperty *pBootTitle )
 	// ロード成功？
 	if( SYSMi_GetWork()->flags.common.isLoadSucceeded == FALSE )
 	{
-		s_authResult = AUTH_RESULT_TITLE_LOAD_FAILED;
+		s_authResult = (s_headerAuthResult == AUTH_RESULT_SUCCEEDED) ? AUTH_RESULT_TITLE_LOAD_FAILED : s_headerAuthResult;
 		return;
 	}
 	// パラメータチェック
