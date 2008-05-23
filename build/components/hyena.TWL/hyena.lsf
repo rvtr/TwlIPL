@@ -42,7 +42,7 @@ Autoload WRAM
 				libexi_sp$(LIBSUFFIX).a		\
 				libsnd_sp$(LIBSUFFIX).a		\
 				libspi_sp$(LIBSUFFIX).a		\
-				libpm_mset_sp$(LIBSUFFIX).a		\
+				libpm_sp.SYSMENU$(LIBSUFFIX).a	\
 				libmath_sp$(LIBSUFFIX).a		\
 				libscfg_sp$(LIBSUFFIX).a		\
 				libtp_sp$(LIBSUFFIX).a		\
