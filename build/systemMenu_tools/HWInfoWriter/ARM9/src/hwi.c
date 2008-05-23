@@ -458,7 +458,7 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
 			}
 
 			// チェックコードは暫定値0
-			serialNoNew[len-1] = 0;
+			serialNoNew[len-1] = 0x30;
 
 			// 仮シリアルNo.であることの印として14バイト目を'K'とする
 			serialNoNew[13] = 'K';
@@ -488,8 +488,8 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
 			{
 				serialNoNew[2] = 'N';
 			}
-			// チェックコードは暫定値0
-			serialNoNew[len-1] = 0;
+			// チェックコードは暫定値0x30
+			serialNoNew[len-1] = 0x30;
 
 			// 14バイト目は旧から新へコピー
 			serialNoNew[13] = serialNoOld[13];
