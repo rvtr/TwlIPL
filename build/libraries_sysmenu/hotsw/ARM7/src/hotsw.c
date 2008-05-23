@@ -344,10 +344,8 @@ static HotSwState LoadCardData(void)
 
     // バッファを設定
     s_cbData.pBootSegBuf   = s_pBootSegBuffer;
-#ifndef USE_WRAM_LOAD
 	s_cbData.pSecureSegBuf = s_pSecureSegBuffer;
 	s_cbData.pSecure2SegBuf= s_pSecure2SegBuffer;
-#endif
     
     // ロード処理開始
     if(HOTSW_IsCardAccessible()){
