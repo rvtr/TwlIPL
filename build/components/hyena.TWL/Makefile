@@ -101,7 +101,7 @@ SYSMENU_LIBS	=	\
 					libds_sp$(TWL_LIBSUFFIX).a \
 					libhotsw_sp$(TWL_LIBSUFFIX).a \
 					libdht_sp$(TWL_LIBSUFFIX).a \
-					libpm_mset_sp$(TWL_LIBSUFFIX).a
+					libpm_sp.SYSMENU$(TWL_LIBSUFFIX).a
 
 SDK_APPEND_LIBS	=	\
 					libwl_sp.TWL.LTD.a \
