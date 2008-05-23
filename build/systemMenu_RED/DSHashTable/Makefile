@@ -40,11 +40,10 @@ MY_TITLE_ID_LO		=	$(shell perl -e 'printf "%02X%02X%02X%02X", unpack("C4", "'$(M
 MY_TITLE_ID		=	$(MY_TITLE_ID_HI)$(MY_TITLE_ID_LO)
 MY_GROUP_ID		=	3031
 
-MY_VERSION		=	$(if $(wildcard $(dir $(MY_DATA))/.svn),$(shell LANG=C svn info $(MY_DATA) | grep 'Revision' | gawk '{print $$2}'),0)
+MY_VERSION		=	$(shell perl -e 'open IN, "$(MY_DATA)"; binmode IN; seek IN, 132, 0; read IN, $$buf, 2; print unpack "S", $$buf; close IN')
 
-MY_MAJOR_VERSION	=	$(shell expr $(MY_VERSION) / 256)
-MY_MINOR_VERSION	=	$(shell expr $(MY_VERSION) % 256)
-
+MY_MAJOR_VERSION        =       $(shell expr $(MY_VERSION) / 256)
+MY_MINOR_VERSION        =       $(shell expr $(MY_VERSION) % 256)
 
 INSTALL_TARGETS		=	$(MY_TAD)
 INSTALL_DIR		=	$(ROOT)/build/tools/TwlNMenu/data
