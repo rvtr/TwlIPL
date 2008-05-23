@@ -35,6 +35,7 @@
 
 #define PRE_CLEAR_NUM_MAX		(6*2)
 #define COPY_NUM_MAX			(6*3)
+#define COPY_HEADER_NUM_MAX		(1*3)
 #define POST_CLEAR_NUM_MAX		(12 + 6*2)
 
 #define CLRLIST_REBOOT_STACK_PAD_SIZE_IDX	(2*3+1)
@@ -165,7 +166,7 @@ BOOL BOOT_WaitStart( void )
 			// メモリリストの設定
 			// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域（WRAMにある）を消さないように注意。
 			//         WRAMリマップ後の消し漏れやバッファオーバランの懸念回避のため不要な鍵はpre clearで消す。
-			static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + 2 + POST_CLEAR_NUM_MAX + 1] = 
+			static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + COPY_HEADER_NUM_MAX + 2 + POST_CLEAR_NUM_MAX + 1] = 
 			{
 				// pre clear
 				HW_WRAM_B_OR_C_MIRROR,   SYSM_OWN_ARM7_WRAM_ADDR_END - HW_WRAM_B_OR_C_MIRROR, // SYSM_OWN_ARM7_WRAM_ADDRとHW_WRAM_Bをまとめてクリア
@@ -213,6 +214,13 @@ BOOL BOOT_WaitStart( void )
 					mem_list[list_count++] = SYSMi_GetWork()->romRelocateInfo[l].dest;
 					mem_list[list_count++] = SYSMi_GetWork()->romRelocateInfo[l].length;
 				}
+			}
+			// NTRシステム領域コピー（pre clearの消去範囲へ含まれるようになったため）
+			if( isNtrMode )
+			{
+				mem_list[list_count++] = HW_MAIN_MEM_SHARED;
+				mem_list[list_count++] = 0x02800000 - HW_MAIN_MEM_SHARED_SIZE;
+				mem_list[list_count++] = HW_MAIN_MEM_SHARED_SIZE;
 			}
 			mem_list[list_count++] = NULL;
 			
