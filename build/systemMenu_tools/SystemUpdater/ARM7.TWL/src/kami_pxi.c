@@ -20,6 +20,7 @@
 #include "kami_pxi.h"
 #include "fifo.h"
 #include "twl/cdc.h"
+#include "formatter.h"
 #include "nvram.h"
 #include <twl/ltdmain_begin.h>
 #include <twl/mcu.h>
@@ -125,6 +126,7 @@ static void KamiPxiCallback(PXIFifoTag tag, u32 data, BOOL err)
     {
         switch (kamiWork.command)
         {
+		case KAMI_EXE_FORMAT:
 		case KAMI_NAND_IO:
 		case KAMI_NVRAM_IO:
 		case KAMI_CLEAR_NAND_ERRORLOG:
@@ -181,6 +183,20 @@ static void KamiThread(void *arg)
         (void)OS_ReceiveMessage(&kamiWork.msgQ, &msg, OS_MESSAGE_BLOCK);
         switch (kamiWork.command)
         {
+        case KAMI_EXE_FORMAT:
+            {
+				result = ExeFormat((FormatMode)kamiWork.data[0]);	// Quick or Full
+				if (result)
+				{
+	                KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS_TRUE);
+				}
+				else
+				{
+	                KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS_FALSE);
+				}
+            }
+            break;
+
 		case KAMI_NAND_IO:
 			{
 				BOOL is_read;

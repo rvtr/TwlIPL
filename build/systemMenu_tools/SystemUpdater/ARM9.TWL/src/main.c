@@ -83,6 +83,8 @@ static const CopyFileList sCopyFileList[] =
 
 static NAMTitleId   titleId;
 static s16 printLine;
+static vu8 sIsFormatFinish;
+static u8 sFormatResult;
 
 /*---------------------------------------------------------------------------*
     内部関数定義
@@ -92,6 +94,7 @@ static void InitAllocation(void);
 static BOOL IgnoreRemoval(void);
 static void DrawWaitButtonA(void);
 static void DrawAlready(SystemUpdaterLog* log);
+static void FormatCallback(KAMIResult result, void* arg);
 
 /*---------------------------------------------------------------------------*
   Name:         TwlMain
@@ -222,6 +225,21 @@ TwlMain()
 	}
 
 	result = TRUE;
+
+	// フォーマット実行
+	sIsFormatFinish = FALSE;
+    ExeFormatAsync(FORMAT_MODE_QUICK, FormatCallback);
+	kamiFontPrintfMain( 7, 11, 8, "Now Format...");
+	while(!sIsFormatFinish);
+	if (sFormatResult)
+	{
+		kamiFontPrintf( 0, printLine++, FONT_COLOR_GREEN, "NAND Format Success.");
+	}
+	else
+	{
+		kamiFontPrintf( 0, printLine++, FONT_COLOR_RED, "NAND Format Failure!");		
+	}
+	kamiFontPrintfMain( 3, 11, 1, "              ");
 
 	// 全ハードウェア情報の更新
 	for (i=0;i<MAX_RETRY_COUNT;i++)
@@ -461,4 +479,27 @@ static void DrawAlready(SystemUpdaterLog* log)
 
 	    OS_WaitVBlankIntr();
 	}
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         FormatCallback
+
+  Description:  フォーマットコールバック
+
+  Arguments:   
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static void FormatCallback(KAMIResult result, void* /*arg*/)
+{
+	if ( result == KAMI_RESULT_SUCCESS_TRUE )
+	{
+		sFormatResult = TRUE;
+	}
+	else
+	{
+		sFormatResult = FALSE;
+	}
+
+	sIsFormatFinish = TRUE;
 }

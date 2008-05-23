@@ -58,6 +58,7 @@ typedef void (*KAMICallback)(KAMIResult result, void *arg);
 
 void KamiPxiInit( void );
 
+KAMIResult ExeFormatAsync(FormatMode format_mode, KAMICallback callback);
 KAMIResult kamiNandIo(u32 block, void* buffer, u32 count, BOOL is_read);
 KAMIResult kamiNvramIo(u32 address, void* buffer, u32 size, BOOL is_read);
 KAMIResult kamiClearNandErrorLog( void );

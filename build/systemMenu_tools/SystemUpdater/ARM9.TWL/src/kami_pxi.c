@@ -84,6 +84,41 @@ void KamiPxiInit( void )
 }
 
 /*---------------------------------------------------------------------------*
+  Name:         フォーマット実行関数
+
+  Description:  
+
+  Arguments:    FormatMode
+
+  Returns:      
+ *---------------------------------------------------------------------------*/
+
+KAMIResult ExeFormatAsync(FormatMode format_mode, KAMICallback callback)
+{
+    OSIntrMode enabled;
+
+	// ロック
+    enabled = OS_DisableInterrupts();
+    if (kamiWork.lock)
+    {
+        (void)OS_RestoreInterrupts(enabled);
+        return KAMI_RESULT_BUSY;
+    }
+    kamiWork.lock = TRUE;
+    (void)OS_RestoreInterrupts(enabled);
+
+    kamiWork.callback = callback;
+    kamiWork.arg = 0;
+    kamiWork.data = 0;
+
+    if (KamiSendPxiCommand(KAMI_EXE_FORMAT, 1, format_mode) == FALSE)
+    {
+    	return KAMI_RESULT_SEND_ERROR;
+    }
+    return KAMI_RESULT_SUCCESS;
+}
+
+/*---------------------------------------------------------------------------*
   Name:         NANDアクセス関数
 
   Description:  
