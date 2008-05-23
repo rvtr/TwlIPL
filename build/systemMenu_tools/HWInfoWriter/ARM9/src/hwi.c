@@ -443,6 +443,8 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
 			// êîéö8åÖ
 	        OS_GetMacAddress( buffer + 6 );
 	        SVC_CalcSHA1( serialNoNew, buffer, sizeof(buffer) );
+			MI_CpuClear8( &serialNoNew[len], (u32)(LCFG_TWL_HWINFO_SERIALNO_LEN_MAX - len));
+
 	        for( i = offset; i < len-1; i++ ) {
 	            serialNoNew[ i ] = (u8)( ( serialNoNew[ i ] % 10 ) + 0x30 );
 	        }
