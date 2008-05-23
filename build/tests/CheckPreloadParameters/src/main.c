@@ -20,7 +20,6 @@
 void VBlankIntr(void);
 
 OSOwnerInfoEx s_owner;
-u8 s_cameraInfo[ OS_TWL_HWINFO_CAMERA_LEN ];
 static char *s_strCountry[ 256 ];
 static char *s_strRegion[ OS_TWL_REGION_MAX ];
 static char *s_strUserColor[ OS_FAVORITE_COLOR_MAX ];
@@ -97,13 +96,13 @@ void TwlMain(void)
 	
 	{
 		int i;
-		OS_TPrintf( "CameraInfo :" );
-		OS_GetCameraInfo( s_cameraInfo );
-		for( i = 0; i < OS_TWL_HWINFO_CAMERA_LEN; i++ ) {
+		const u8 *p = OS_GetMovableUniqueIDPtr();
+		OS_TPrintf( "MovableUniqueID :" );
+		for( i = 0; i < OS_TWL_HWINFO_MOVABLE_UNIQUE_ID_LEN; i++ ) {
 			if( ( i & 0x0f ) == 0 ) {
 				OS_TPrintf( "\n" );
 			}
-			OS_TPrintf( " %02x,", s_cameraInfo[ i ] );
+			OS_TPrintf( " %02x,", *p++ );
 		}
 		OS_TPrintf( "\n" );
 	}
