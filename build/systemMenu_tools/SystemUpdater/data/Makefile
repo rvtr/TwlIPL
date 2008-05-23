@@ -22,11 +22,11 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 
 #----------------------------------------------------------------------------
-MAKETAD			= $(SYSMENU_TOOLSDIR)/bin/maketad.updater.exe
 
 LDIRT_CLEAN		=	HNAA.tad \
 					HNBA.tad \
 					HNCA.tad \
+					HNHA.tad \
 					menu_launcher.nand
 
 #----------------------------------------------------------------------------
@@ -36,15 +36,19 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 do-build :	HNAA.tad \
 			HNBA.tad \
 			HNCA.tad \
+			HNHA.tad \
 			menu_launcher.nand
 
-HNAA.tad: ../../../systemMenu_RED/Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNAA.srl
-	$(MAKETAD) -s $< $(MAKETAD_FLAGS) -o $@
+HNAA.tad: ../../../systemMenu_RED/Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNAA.tad
+	cp $< ./$@
 
-HNBA.tad: ../../../systemMenu_RED/MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNBA.srl
-	$(MAKETAD) -s $< $(MAKETAD_FLAGS) -o $@
+HNBA.tad: ../../../systemMenu_RED/MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNBA.tad
+	cp $< ./$@
 
 HNCA.tad: ../../../systemMenu_RED/wlanfirm/HNCA.tad
+	cp $< ./$@
+
+HNHA.tad: ../../../systemMenu_RED/DSHashTable/HNHA.tad
 	cp $< ./$@
 
 menu_launcher.nand: ../../../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nand

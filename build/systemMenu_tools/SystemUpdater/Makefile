@@ -16,20 +16,26 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-include	$(TWLSDK_ROOT)/build/buildtools/commondefs
+TARGET_FIRM				=	SYSTEMMENU
 
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+
+# SystemUpdaterでインポートするTADは専用のmaketadでTAD化します。
+SUBDIR_FLAGS += MAKETAD=$(SYSMENU_TOOLSDIR)/bin/maketad.updater.exe
 
 #----------------------------------------------------------------------------
 
 LAUNCHER_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/Launcher
 MACHINESETTINGS_DIR			=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/MachineSettings
 WLANFIRM_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/wlanfirm
+DS_HASH_TABLE				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/DSHashTable
 SHARED_FONT_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/sharedFont
 NANDFIRM_DIR                =   $(TWL_IPL_RED_ROOT)/build/nandfirm/menu-launcher
 
 SUBDIRS =	$(LAUNCHER_DIR) \
 			$(MACHINESETTINGS_DIR) \
 			$(WLANFIRM_DIR) \
+			$(DS_HASH_TABLE) \
 			$(SHARED_FONT_DIR) \
 			$(NANDFIRM_DIR) \
 			data \
@@ -54,9 +60,9 @@ export SYSM_BROADON_UI		=	FALSE
 export DISABLE_DEBUG		=	TRUE
 export ENABLE_AES			=	TRUE
 
+
 #----------------------------------------------------------------------------
 
-include	$(TWLSDK_ROOT)/build/buildtools/modulerules
-
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 #===== End of Makefile =====

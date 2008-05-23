@@ -68,7 +68,8 @@ static const char* ImportTadFileList[] =
 {
 	"rom:/data/HNAA.tad",
 	"rom:/data/HNBA.tad",
-	"rom:/data/HNCA.tad"
+	"rom:/data/HNCA.tad",
+	"rom:/data/HNHA.tad"
 };
 /*
 static const CopyFileList sCopyFileList[] =
