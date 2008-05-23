@@ -20,6 +20,9 @@
 
 TARGET_FIRM				=	SYSTEMMENU
 
+TWL_CODEGEN                             =       ARM
+TWL_ARCHGEN                             =       LIMITED
+
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 ifeq ($(TWL_IPL_RED_PRIVATE_ROOT),)
