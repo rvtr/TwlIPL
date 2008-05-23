@@ -623,7 +623,12 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
         	hotswEnable ^= TRUE;
 
             // 活線挿抜許可・抑制
-        	HOTSW_EnableHotSW(hotswEnable);
+			HOTSW_EnableHotSWAsync( hotswEnable );
+
+            // 活線挿抜が指定した状態になるまでポーリング
+    		while(HOTSW_isEnableHotSW() != hotswEnable){
+				// do nothing
+    		}
 
             NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL, 0, 175, 100, 13 );
     	}
