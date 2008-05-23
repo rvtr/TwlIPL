@@ -751,7 +751,8 @@ static void NAMUTi_ClearWiFiSettings( void )
 #define NCFG_ADDR			0x20
 #define NTR_WIFI_DATA_SIZE	0x400
 #define TWL_WIFI_DATA_SIZE	0x600
-	int len = ( NTR_WIFI_DATA_SIZE + TWL_WIFI_DATA_SIZE );
+#define NTR_MACHINE_SETTINGS_DATA_SIZE 0x200
+	int total_size = ( NTR_WIFI_DATA_SIZE + TWL_WIFI_DATA_SIZE + NTR_MACHINE_SETTINGS_DATA_SIZE);
 	
     if (!NVRAMi_IsInitialized()) {
         NVRAMi_Init();
@@ -759,14 +760,14 @@ static void NAMUTi_ClearWiFiSettings( void )
     DC_FlushRange( &sNCFGAddr, 2 );
 	sNCFGAddr = 0;
     NVRAMi_Read( NCFG_ADDR, 2, (u8 *)&sNCFGAddr);
-	sNCFGAddr = (u32)( ( sNCFGAddr << 3 ) - len );
+	sNCFGAddr = (u32)( ( sNCFGAddr << 3 ) - ( NTR_WIFI_DATA_SIZE + TWL_WIFI_DATA_SIZE ) );
 	
 	MI_CpuFillFast( sClearData, 0xffffffff, CLEAR_DATA_SIZE);
     DC_FlushRange( sClearData, CLEAR_DATA_SIZE );
-	while( len > 0 ) {
+	while( total_size > 0 ) {
     	NVRAMi_Write( sNCFGAddr, CLEAR_DATA_SIZE , sClearData );
 		sNCFGAddr += CLEAR_DATA_SIZE;
-		len -= CLEAR_DATA_SIZE;
+		total_size -= CLEAR_DATA_SIZE;
 	}
 }
 
