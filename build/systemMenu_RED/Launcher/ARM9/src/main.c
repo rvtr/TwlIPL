@@ -45,6 +45,38 @@ static StreamInfo s_strm; // stream info
 
 const char filename[] = "data/fanfare.32.wav";
 
+static const char *error_msg[AUTH_RESULT_MAX] = 
+{
+	"SUCCEEDED",
+	"PROCESSING",
+	"TITLE_LOAD_FAILED",
+	"TITLE_POINTER_ERROR",
+	"AUTHENTICATE_FAILED",
+	"ENTRY_ADDRESS_ERROR",
+	"TITLE_BOOTTYPE_ERROR",
+	"SIGN_DECRYPTION_FAILED",
+	"SIGN_COMPARE_FAILED",
+	"HEADER_HASH_CALC_FAILED",
+	"TITLEID_COMPARE_FAILED",
+	"VALID_SIGN_FLAG_OFF",
+	"CHECK_TITLE_LAUNCH_RIGHTS_FAILED",
+	"MODULE_HASH_CHECK_FAILED",
+	"MODULE_HASH_CALC_FAILED",
+	"MEDIA_CHECK_FAILED",
+	"DL_MAGICCODE_CHECK_FAILED",
+	"DL_SIGN_DECRYPTION_FAILED",
+	"DL_HASH_CALC_FAILED",
+	"DL_SIGN_COMPARE_FAILED",
+	"WHITELIST_INITDB_FAILED",
+	"WHITELIST_NOTFOUND",
+	"DHT_PHASE1_FAILED",
+	"DHT_PHASE2_FAILED",
+	"LANDING_TMP_JUMP_FLAG_OFF",
+	"TWL_BOOTTYPE_UNKNOWN",
+	"NTR_BOOTTYPE_UNKNOWN",
+	"PLATFORM_UNKNOWN"
+};
+
 //#define DEBUG_LAUNCHER_DUMP
 #ifdef DEBUG_LAUNCHER_DUMP
 // デバグ用。SDに0x02ffc000から0x02ffe000までdump.datというダンプを吐く
@@ -308,16 +340,18 @@ void TwlMain( void )
                 case AUTH_RESULT_TITLE_POINTER_ERROR:
                 case AUTH_RESULT_AUTHENTICATE_FAILED:
                 case AUTH_RESULT_ENTRY_ADDRESS_ERROR:
+                default:
                     state = STOP;
                     // [TODO:]クリアしたほうが良いデータ（鍵など）があれば消す
                     
                     // デバグ表示
                     if( !SYSM_IsLauncherHidden() )
                     {
+						LauncherInit( s_titleList );
 						NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 						G2_ChangeBlendAlpha( 0, 31 );
-						PrintfSJIS( 1, 38, TXT_COLOR_RED,"   LAUNCHER : ERROR OCCURRED!\n" );
-						PrintfSJIS( 1, 24, TXT_COLOR_RED,"   ERROR CODE = 0x%0.8x\n",res );
+						PrintfSJIS( 1, 25, TXT_COLOR_RED,"   LAUNCHER : ERROR OCCURRED!\n" );
+						PrintfSJIS( 1, 40, TXT_COLOR_RED,"   %s",error_msg[res] );
 						GX_DispOn();
 						GXS_DispOn();
 					}

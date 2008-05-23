@@ -112,6 +112,8 @@ static fx32 s_selected_banner_size;
 static BOOL s_wavstop = FALSE;
 static BannerCounter banner_counter[LAUNCHER_TITLE_LIST_NUM];
 
+static BOOL s_launcher_initialized = FALSE;
+
 //static StreamInfo strm; // stream info
 
 // const data  -----------------------------------------
@@ -385,7 +387,12 @@ static void BannerDraw(int selected, TitleProperty *titleprop)
 void LauncherInit( TitleProperty *pTitleList )
 {
 #pragma unused( pTitleList )
+	if(s_launcher_initialized)
+	{
+		return;
+	}
 	
+	s_launcher_initialized = TRUE;
 	InitBG();										// BGèâä˙âª
 	
 	GX_DispOff();

@@ -972,23 +972,23 @@ static AuthResult SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, R
     if( !SVC_DecryptSign( &con, sigbuf.digest, head->signature, key ))
     {
 		OS_TPrintf("Authenticate_Header failed: Sign decryption failed.\n");
-		if(!s_b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+		if(!s_b_dev) return AUTH_RESULT_SIGN_DECRYPTION_FAILED;
 	}
 	if(s_calc_hash)
 	{
 	    // 署名のハッシュ値とヘッダのハッシュ値を比較
 	    if(!SVC_CompareSHA1(sigbuf.digest, (const void *)&s_calc_hash[0]))
 	    {
-			OS_TPrintf("Authenticate_Header failed: Sign check failed.\n");
-			if(!s_b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+			OS_TPrintf("Authenticate_Header failed: Sign compare failed.\n");
+			if(!s_b_dev) return AUTH_RESULT_SIGN_COMPARE_FAILED;
 		}else
 		{
 			OS_TPrintf("Authenticate_Header : Sign check succeed. %dms.\n", OS_TicksToMilliSeconds(OS_GetTick() - prev));
 		}
 	}else
 	{
-		OS_TPrintf("Authenticate_Header failed: Sign calc failed.\n");
-		if(!s_b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+		OS_TPrintf("Authenticate_Header failed: Header Hash calc failed.\n");
+		if(!s_b_dev) return AUTH_RESULT_HEADER_HASH_CALC_FAILED;
 	}
 	OS_TPrintf("Authenticate_Header : total %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
 	
@@ -1006,7 +1006,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle, ROM_He
 		OS_TPrintf( "Authenticate_Header failed: header TitleID error\n" );
 		OS_TPrintf( "Authenticate_Header failed: selectedTitleID=%.16llx\n", pBootTitle->titleID );
 		OS_TPrintf( "Authenticate_Header failed: headerTitleID=%.16llx\n", head->s.titleID );
-		return AUTH_RESULT_AUTHENTICATE_FAILED;
+		return AUTH_RESULT_TITLEID_COMPARE_FAILED;
 	}else
 	{
 		OS_TPrintf( "Authenticate_Header : header TitleID check succeed.\n" );
@@ -1019,7 +1019,7 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle, ROM_He
 	{
 		// 署名有効フラグが立っていない　且つ　デバッガが有効でTLFを読み込んでいるのでなければFAILED
 		OS_TPrintf("Authenticate_Header failed: Sign check flag is OFF!\n");
-		return AUTH_RESULT_AUTHENTICATE_FAILED;
+		return AUTH_RESULT_VALID_SIGN_FLAG_OFF;
 	}
 }
 
@@ -1039,7 +1039,7 @@ static AuthResult SYSMi_AuthenticateTWLTitle( TitleProperty *pBootTitle )
 		if( NAM_OK != result)
 		{
 			OS_TPrintf("Authenticate failed: NAM_CheckTitleLaunchRights failed. %d \n",result);
-			return AUTH_RESULT_AUTHENTICATE_FAILED;
+			return AUTH_RESULT_CHECK_TITLE_LAUNCH_RIGHTS_FAILED;
 		}else
 		{
 			OS_TPrintf("Authenticate : NAM_CheckTitleLaunchRights succeed. %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
@@ -1087,7 +1087,7 @@ static AuthResult SYSMi_AuthenticateTWLTitle( TitleProperty *pBootTitle )
 			    if(!SVC_CompareSHA1((const void *)hash_addr[l], (const void *)&s_calc_hash[(l+1) * SVC_SHA1_DIGEST_SIZE]))
 			    {
 					OS_TPrintf("Authenticate failed: %s module hash check failed.\n", str[l]);
-					if(!s_b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+					if(!s_b_dev) return AUTH_RESULT_MODULE_HASH_CHECK_FAILED;
 				}else
 				{
 					OS_TPrintf("Authenticate : %s module hash check succeed. %dms.\n", str[l], OS_TicksToMilliSeconds(OS_GetTick() - prev));
@@ -1095,7 +1095,7 @@ static AuthResult SYSMi_AuthenticateTWLTitle( TitleProperty *pBootTitle )
 			}else
 			{
 				OS_TPrintf("Authenticate failed: %s module hash calc failed.\n", str[l]);
-				if(!s_b_dev) return AUTH_RESULT_AUTHENTICATE_FAILED;
+				if(!s_b_dev) return AUTH_RESULT_MODULE_HASH_CALC_FAILED;
 			}
 		}
 	}
@@ -1108,7 +1108,7 @@ static AuthResult SYSMi_AuthenticateTWLTitle( TitleProperty *pBootTitle )
 				pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_TEMP)  && !(head->s.titleID_Hi & TITLE_ID_HI_MEDIA_MASK) ) ||
 			   (pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM    &&  (head->s.titleID_Hi & TITLE_ID_HI_MEDIA_MASK) ) )
 		{
-			return AUTH_RESULT_AUTHENTICATE_FAILED;
+			return AUTH_RESULT_MEDIA_CHECK_FAILED;
 		}
 	}
 
@@ -1156,7 +1156,7 @@ static AuthResult SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
 		// NTRダウンロードアプリ署名のマジックコードチェック
 		if( s_authcode.magic_code[0] != 'a' || s_authcode.magic_code[1] != 'c' ) {
 			OS_TPrintf("Authenticate failed: Invalid AuthCode.\n");
-			return AUTH_RESULT_AUTHENTICATE_FAILED;
+			return AUTH_RESULT_DL_MAGICCODE_CHECK_FAILED;
 		}
 
 		// NTRダウンロードアプリ署名（DERフォーマット）の計算、ハッシュの取得。
@@ -1165,7 +1165,7 @@ static AuthResult SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
 	    if( !SVC_DecryptSignDER( &con, buf, s_authcode.sign, nitro_dl_sign_key ))
 	    {
 			OS_TPrintf("Authenticate failed: Sign decryption failed.\n");
-			return AUTH_RESULT_AUTHENTICATE_FAILED;
+			return AUTH_RESULT_DL_SIGN_DECRYPTION_FAILED;
 		}
 		
 		// それぞれheader,ARM9FLX,ARM7FLXについてハッシュを計算して、それら3つを並べたものに対してまたハッシュをとる
@@ -1177,15 +1177,15 @@ static AuthResult SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
 			SVC_CalcSHA1( final_hash, s_calc_hash, SVC_SHA1_DIGEST_SIZE * 3 + sizeof(u32));
 		}else
 		{
-			OS_TPrintf("Authenticate failed: hash check failed.\n");
-			return AUTH_RESULT_AUTHENTICATE_FAILED;
+			OS_TPrintf("Authenticate failed: hash calc failed.\n");
+			return AUTH_RESULT_DL_HASH_CALC_FAILED;
 		}
 		
 		// 計算した最終ハッシュと、署名から得たハッシュとを比較
 	    if(!SVC_CompareSHA1((const void *)buf, (const void *)final_hash))
 	    {
 			OS_TPrintf("Authenticate failed: hash check failed.\n");
-			return AUTH_RESULT_AUTHENTICATE_FAILED;
+			return AUTH_RESULT_DL_SIGN_COMPARE_FAILED;
 		}else
 		{
 			OS_TPrintf("Authenticate : hash check succeed.\n");
@@ -1224,14 +1224,14 @@ static AuthResult SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle,
 		if(!dht)
 		{
 		    OS_TPrintf(" Search DHT : database init Failed.\n");
-		    return AUTH_RESULT_AUTHENTICATE_FAILED;
+		    return AUTH_RESULT_WHITELIST_INITDB_FAILED;
 		}
 		OS_TPrintf("Searching DHT for %.4s(%02X)...", head->s.game_code, head->s.rom_version);
 		db = DHT_GetDatabase(dht, &head->s);
 		if ( !db )
 		{
 		    OS_TPrintf(" Search DHT : Failed.\n");
-		    return AUTH_RESULT_AUTHENTICATE_FAILED;
+		    return AUTH_RESULT_WHITELIST_NOTFOUND;
 		}
 		hash0 = db->hash[0];
 		hash1 = db->hash[1];
@@ -1262,7 +1262,7 @@ static AuthResult SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 	if ( !DHT_CheckHashPhase1Final(&ctx, hash0) )
 	{
 	    OS_TPrintf(" DHT Phase1 : Failed.\n");
-	    return AUTH_RESULT_AUTHENTICATE_FAILED;
+	    return AUTH_RESULT_DHT_PHASE1_FAILED;
 	}
 
 	// DHTチェックphase2（phase1はstaticの読み込み時に平行処理）
@@ -1272,7 +1272,7 @@ static AuthResult SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 	{
 	    OS_TPrintf(" DHT Phase2 : Failed.\n");
 	    SYSM_Free(p2work);
-	    return AUTH_RESULT_AUTHENTICATE_FAILED;
+	    return AUTH_RESULT_DHT_PHASE2_FAILED;
 	}
 	SYSM_Free(p2work);
 
@@ -1301,11 +1301,11 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle, ROM_Heade
 				if (!hs->permit_landing_tmp_jump)
 				{
 					OS_TPrintf("Authenticate failed: TMP flag error.\n");
-					return AUTH_RESULT_AUTHENTICATE_FAILED;
+					return AUTH_RESULT_LANDING_TMP_JUMP_FLAG_OFF;
 				}
 				return SYSMi_AuthenticateTWLHeader( pBootTitle, head );
 			default:
-				return AUTH_RESULT_AUTHENTICATE_FAILED;
+				return AUTH_RESULT_TWL_BOOTTYPE_UNKNOWN;
 		}
 	}
 	else
@@ -1314,7 +1314,7 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle, ROM_Heade
 		{
 			// TWLでもNTRでもない不正なアプリ
 			OS_TPrintf( "Authenticate_Header failed :NOT NTR NOT TWL.\n" );
-			return AUTH_RESULT_AUTHENTICATE_FAILED;
+			return AUTH_RESULT_PLATFORM_UNKNOWN;
 		}
 		// NTRアプリ
 		switch( pBootTitle->flags.bootType )
@@ -1327,14 +1327,14 @@ static AuthResult SYSMi_AuthenticateHeader( TitleProperty *pBootTitle, ROM_Heade
 				if (!hs->permit_landing_tmp_jump)
 				{
 					OS_TPrintf("Authenticate_Header failed : TMP flag error.\n");
-					return AUTH_RESULT_AUTHENTICATE_FAILED;
+					return AUTH_RESULT_LANDING_TMP_JUMP_FLAG_OFF;
 				}
 				return SYSMi_AuthenticateNTRDownloadAppHeader( pBootTitle, head );
 			case LAUNCHER_BOOTTYPE_ROM:
 				OS_TPrintf( "Authenticate_Header :NTR_ROM start.\n" );
 				return SYSMi_AuthenticateNTRCardAppHeader( pBootTitle, head );
 			default:
-				return AUTH_RESULT_AUTHENTICATE_FAILED;
+				return AUTH_RESULT_NTR_BOOTTYPE_UNKNOWN;
 		}
 	}
 }
@@ -1361,11 +1361,11 @@ static AuthResult SYSMi_AuthenticateTitleCore( TitleProperty *pBootTitle)
 				if (!hs->permit_landing_tmp_jump)
 				{
 					OS_TPrintf("Authenticate failed: TMP flag error.\n");
-					return AUTH_RESULT_AUTHENTICATE_FAILED;
+					return AUTH_RESULT_LANDING_TMP_JUMP_FLAG_OFF;
 				}
 				return SYSMi_AuthenticateTWLTitle( pBootTitle );
 			default:
-				return AUTH_RESULT_AUTHENTICATE_FAILED;
+				return AUTH_RESULT_TWL_BOOTTYPE_UNKNOWN;
 		}
 	}
 	else
@@ -1374,7 +1374,7 @@ static AuthResult SYSMi_AuthenticateTitleCore( TitleProperty *pBootTitle)
 		{
 			// TWLでもNTRでもない不正なアプリ
 			OS_TPrintf( "Authenticate :NOT NTR NOT TWL.\n" );
-			return AUTH_RESULT_AUTHENTICATE_FAILED;
+			return AUTH_RESULT_PLATFORM_UNKNOWN;
 		}
 		// NTRアプリ
 		switch( pBootTitle->flags.bootType )
@@ -1387,14 +1387,14 @@ static AuthResult SYSMi_AuthenticateTitleCore( TitleProperty *pBootTitle)
 				if (!hs->permit_landing_tmp_jump)
 				{
 					OS_TPrintf("Authenticate failed: TMP flag error.\n");
-					return AUTH_RESULT_AUTHENTICATE_FAILED;
+					return AUTH_RESULT_LANDING_TMP_JUMP_FLAG_OFF;
 				}
 				return SYSMi_AuthenticateNTRDownloadTitle( pBootTitle );
 			case LAUNCHER_BOOTTYPE_ROM:
 				OS_TPrintf( "Authenticate :NTR_ROM start.\n" );
 				return SYSMi_AuthenticateNTRCardTitle( pBootTitle );
 			default:
-				return AUTH_RESULT_AUTHENTICATE_FAILED;
+				return AUTH_RESULT_NTR_BOOTTYPE_UNKNOWN;
 		}
 	}
 }
