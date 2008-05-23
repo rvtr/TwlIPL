@@ -33,7 +33,7 @@
     定数定義
  *---------------------------------------------------------------------------*/
 
-// 擬似フォーマットで消去しないタイトルを
+// 本体初期化(NAND初期化)で消去しないタイトルを
 // TitleProperty (TitleID Hiの下位16bit）のビットで指定します。
 // どれか1つでもビットが立っていれば消去の対象から外します。
 #define PROTECT_TITLE_PROPERTY  (TITLE_ID_APP_TYPE_MASK)
@@ -43,17 +43,19 @@
 #define TITLE_LIST_MAX          256
 #define CLEAR_DATA_SIZE         256
 
-// 擬似フォーマット実行時に
+// 本体初期化(NAND初期化)実行時に
 // 指定ディレクトリ以下は全て消去されます。
 // 指定ディレクトリ自体は残ります。
 static const char* sDeleteDirectoryList[] =
 {
 	"nand:/shared2",
+	"nand:/import",
+	"nand:/progress",
 	"nand2:/photo",
 	"nand:/tmp"
 };
 
-// 擬似フォーマット実行時に
+// 本体初期化(NAND初期化)実行時に
 // 指定ファイルはランダムデータでFillされます。
 static const char* sFillFileList[] =
 {
@@ -112,7 +114,7 @@ void NAMUT_Init(NAMUTAlloc allocFunc, NAMUTFree freeFunc)
 /*---------------------------------------------------------------------------*
   Name:         NAMUT_Format
 
-  Description:  NANDの擬似フォーマット
+  Description:  本体初期化(NAND初期化)を行います。
                （システム系の必要なファイルのみを残し他を消去します）
 
   Arguments:    None
