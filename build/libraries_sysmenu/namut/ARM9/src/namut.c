@@ -660,6 +660,7 @@ void NAMUT_DrawNandTree(void)
 {
 	MI_CpuClear8( sCurrentFullPath, sizeof(sCurrentFullPath) );
 	NAMUTi_DrawNandTree(0, "nand:");
+	NAMUTi_DrawNandTree(0, "nand2:");
 }
 
 /*---------------------------------------------------------------------------*
