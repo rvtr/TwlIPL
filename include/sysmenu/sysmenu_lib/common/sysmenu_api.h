@@ -137,6 +137,8 @@ extern BOOL SYSM_CheckNintendoLogo( u16 *pLogoData );							// NintendoƒƒSƒf[ƒ
 extern void SYSM_LoadNintendoLogo2D( u16 *pLogoData, u16 *pDst, int paletteColorIndex ); // NintendoƒƒSƒf[ƒ^‚ğOBJ_2DŒ`®‚Åƒ[ƒhipTempBuffer‚É‚Í0x700bytes•K—v)
 extern void SYSM_LoadNintendoLogo1D( u16 *pLogoData, u16 *pDst, int paletteColorIndex ); // NintendoƒƒSƒf[ƒ^‚ğOBJ_1DŒ`®‚Åƒ[ƒhi“¯ãj
 
+extern s32 SYSMi_getCheckTitleLaunchRightsResult( void );						// CheckTitleLaunchRights‚ÌŒ‹‰Ê‚ğ•Ô‚·iƒfƒoƒO—pj
+
 #endif
 
 // ó‘Ôƒ`ƒFƒbƒN

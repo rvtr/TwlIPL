@@ -1025,6 +1025,13 @@ static AuthResult SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle, ROM_He
 	}
 }
 
+static s32 s_nam_error = NAM_OK;
+
+s32 SYSMi_getCheckTitleLaunchRightsResult( void )
+{
+	return s_nam_error;
+}
+
 // TWLアプリ、NTR拡張NANDアプリ 共通の認証
 static AuthResult SYSMi_AuthenticateTWLTitle( TitleProperty *pBootTitle )
 {
@@ -1040,6 +1047,7 @@ static AuthResult SYSMi_AuthenticateTWLTitle( TitleProperty *pBootTitle )
 		s32 result = NAM_CheckTitleLaunchRights( pBootTitle->titleID );
 		if( NAM_OK != result)
 		{
+			s_nam_error = result;
 			OS_TPrintf("Authenticate failed: NAM_CheckTitleLaunchRights failed. %d \n",result);
 			return AUTH_RESULT_CHECK_TITLE_LAUNCH_RIGHTS_FAILED;
 		}else

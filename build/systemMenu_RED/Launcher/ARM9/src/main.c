@@ -345,16 +345,19 @@ void TwlMain( void )
                     // [TODO:]クリアしたほうが良いデータ（鍵など）があれば消す
                     
                     // デバグ表示
-                    if( !SYSM_IsLauncherHidden() )
-                    {
-						LauncherInit( s_titleList );
-						NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
-						G2_ChangeBlendAlpha( 0, 31 );
-						PrintfSJIS( 1, 25, TXT_COLOR_RED,"LAUNCHER : ERROR OCCURRED! - %d\n",res );
-						PrintfSJIS( 1, 40, TXT_COLOR_RED,"%s",error_msg[res] );
-						GX_DispOn();
-						GXS_DispOn();
+					LauncherInit( s_titleList );
+					GX_SetVisiblePlane( GX_PLANEMASK_BG0 );
+					NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+					G2_ChangeBlendAlpha( 0, 31 );
+					PrintfSJIS( 1, 25, TXT_COLOR_RED,"LAUNCHER : ERROR OCCURRED! - %d\n",res );
+					PrintfSJIS( 1, 40, TXT_COLOR_RED,"%s",error_msg[res] );
+					// 特殊表示
+					if(res == AUTH_RESULT_CHECK_TITLE_LAUNCH_RIGHTS_FAILED)
+					{
+						PrintfSJIS( 1, 55, TXT_COLOR_RED,"NAM result = %d", SYSMi_getCheckTitleLaunchRightsResult() );
 					}
+					GX_DispOn();
+					GXS_DispOn();
 					
                     break;
                 }
