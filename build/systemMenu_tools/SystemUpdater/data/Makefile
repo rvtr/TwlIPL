@@ -22,7 +22,7 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 
 #----------------------------------------------------------------------------
-#MAKETAD			= $(SYSMENU_TOOLSDIR)/bin/maketad.updater.exe
+MAKETAD			= $(SYSMENU_TOOLSDIR)/bin/maketad.updater.exe
 
 LDIRT_CLEAN		=	HNAA.tad \
 					HNBA.tad \

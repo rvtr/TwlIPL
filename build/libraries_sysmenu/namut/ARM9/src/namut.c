@@ -34,7 +34,7 @@
  *---------------------------------------------------------------------------*/
 
 // 本体初期化(NAND初期化)で消去しないタイトルを
-// TitleProperty (TitleID Hiの下位16bit）のビットで指定します。
+// TitleProperty (TitleID 32bit）のビットで指定します。
 // どれか1つでもビットが立っていれば消去の対象から外します。
 #define PROTECT_TITLE_PROPERTY  (TITLE_ID_APP_TYPE_MASK)
 

@@ -35,6 +35,10 @@ MY_FIRM			=	$(MY_FIRM_ROOT_CYG)/nwm_firm.bin
 MY_VERSION_MAJOR	=	$(shell perl -e "open(IN,'$(MY_FIRM)');binmode(IN);seek(IN, 160 + 0, 0);read(IN, \$$buf, 1);print unpack("C", \$$buf);close(IN);")
 MY_VERSION_MINOR	=	$(shell perl -e "open(IN,'$(MY_FIRM)');binmode(IN);seek(IN, 160 + 1, 0);read(IN, \$$buf, 1);print unpack("C", \$$buf);close(IN);")
 
+ifeq ($(UPDATER_RELEASE),TRUE)
+MAKETAD			= $(SYSMENU_TOOLSDIR)/bin/maketad.updater.exe
+endif
+
 MAKETAD_FLAGS	+=	0003000F484E4341 3031 $(MY_VERSION_MAJOR) WIRELESS_FW -v $(MY_VERSION_MINOR) -p
 
 #----------------------------------------------------------------------------
