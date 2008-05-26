@@ -239,7 +239,7 @@ TwlMain()
 	{
 		kamiFontPrintf( 0, printLine++, FONT_COLOR_RED, "NAND Format Failure!");		
 	}
-	kamiFontPrintfMain( 3, 11, 8, "              ");
+	kamiFontPrintfMain( 7, 11, 8, "              ");
 
 	// 全ハードウェア情報の更新
 	for (i=0;i<MAX_RETRY_COUNT;i++)

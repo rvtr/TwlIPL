@@ -42,6 +42,7 @@ static void VerifyHWInfo( void );
 static BOOL VerifyData( const u8 *pTgt, const u8 *pOrg, u32 len );
 static BOOL ReadHWInfoFile( void );
 static BOOL ReadTWLSettings( void );
+static u8 HWIi_CalcCheckCode(u8 src[8]);
 
 // global variable -------------------------------------
 
@@ -415,10 +416,10 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
         u8 buffer[ 12 ] = "SERIAL";     // 適当な文字列をMACアドレスと結合してSHA1を取り、仮SerialNoとする。
         u8 serialNoOld[ SVC_SHA1_DIGEST_SIZE ];
 		u8 serialNoNew[ SVC_SHA1_DIGEST_SIZE ];
+		u8 sha1_buffer[ SVC_SHA1_DIGEST_SIZE ];
         int i;
         int len;
 		int offset;
-		int old_offset;
 
 		if ( region == OS_TWL_REGION_AMERICA ) 
 		{
@@ -440,15 +441,6 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
 		// シリアルNoの先頭が'T'でなければ不正なので仮のシリアルNo.を作成する
 		if ( serialNoOld[0] != 'T')
 		{
-			// 数字8桁
-	        OS_GetMacAddress( buffer + 6 );
-	        SVC_CalcSHA1( serialNoNew, buffer, sizeof(buffer) );
-			MI_CpuClear8( &serialNoNew[len], (u32)(LCFG_TWL_HWINFO_SERIALNO_LEN_MAX - len));
-
-	        for( i = offset; i < len-1; i++ ) {
-	            serialNoNew[ i ] = (u8)( ( serialNoNew[ i ] % 10 ) + 0x30 );
-	        }
-
 			// 1バイト目はTWLの'T'
 			serialNoNew[0] = 'T';
 			// 2バイト目はリージョン別ASCII
@@ -459,39 +451,53 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
 				serialNoNew[2] = 'N';
 			}
 
-			// チェックコードは暫定値0
-			serialNoNew[len-1] = 0x30;
+			// 数字8桁
+	        OS_GetMacAddress( buffer + 6 );
+	        SVC_CalcSHA1( sha1_buffer, buffer, sizeof(buffer) );
+	        for( i = offset; i < len-1; i++ ) {
+	            serialNoNew[ i ] = (u8)( ( sha1_buffer[ i ] % 10 ) + 0x30 );
+	        }
+
+			// チェックコード取得
+			serialNoNew[len-1] = HWIi_CalcCheckCode(&serialNoNew[offset]);
 
 			// 仮シリアルNo.であることの印として14バイト目を'K'とする
 			serialNoNew[13] = 'K';
-
 		}
 		// シリアルNoの先頭が'T'である場合ユニーク数字８桁はそのままで他を変更する
 		else
 		{
-			if ( old_region == OS_TWL_REGION_AMERICA )
-			{
-				old_offset = LCFG_TWL_HWINFO_SERIALNO_UNIQUE_OFFSET_AMERICA;
-			}
-			else
-			{
-				old_offset = LCFG_TWL_HWINFO_SERIALNO_UNIQUE_OFFSET_OTHERS;
-			}
-
-			// ユニーク数字をコピー
-			MI_CpuCopy( &serialNoOld[old_offset], &serialNoNew[offset], LCFG_TWL_HWINFO_SERIALNO_UNIQUE_LENGTH );
-
 			// 1バイト目はTWLの'T'
 			serialNoNew[0] = 'T';
 			// 2バイト目はリージョン別ASCII
 			serialNoNew[1] = (u8)regionAsciiForSerialNo[region];
-			// 米国リージョン以外は3バイト目にEMS（仮シリアルNo.なので任天堂の'N'）
-			if ( LCFG_THW_GetRegion() != OS_TWL_REGION_AMERICA )
+			// 米国リージョン以外は3バイト目にEMS
+			if ( region != OS_TWL_REGION_AMERICA )
 			{
-				serialNoNew[2] = 'N';
+				// EMS情報が存在するなら引き継ぐ
+				if ( old_region != OS_TWL_REGION_AMERICA )
+				{
+					serialNoNew[2] = serialNoOld[2];
+				}
+				// EMS情報が存在しないため仮に任天堂の'N'とする
+				else
+				{
+					serialNoNew[2] = 'N';
+				}
 			}
-			// チェックコードは暫定値0x30
-			serialNoNew[len-1] = 0x30;
+
+			// ユニーク数字をコピー
+			if ( old_region == OS_TWL_REGION_AMERICA )
+			{
+				MI_CpuCopy( &serialNoOld[LCFG_TWL_HWINFO_SERIALNO_UNIQUE_OFFSET_AMERICA], &serialNoNew[offset], LCFG_TWL_HWINFO_SERIALNO_UNIQUE_LENGTH );
+			}
+			else
+			{
+				MI_CpuCopy( &serialNoOld[LCFG_TWL_HWINFO_SERIALNO_UNIQUE_OFFSET_OTHERS], &serialNoNew[offset], LCFG_TWL_HWINFO_SERIALNO_UNIQUE_LENGTH );
+			}
+
+			// チェックコード取得
+			serialNoNew[len-1] = HWIi_CalcCheckCode(&serialNoNew[offset]);
 
 			// 14バイト目は旧から新へコピー
 			serialNoNew[13] = serialNoOld[13];
@@ -521,7 +527,6 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
 
     return isWrite;
 }
-
 
 /*---------------------------------------------------------------------------*
   Name:         HWI_WriteHWIDSignFile
@@ -615,3 +620,30 @@ BOOL HWI_DeleteHWIDSignFile( void )
         return FALSE;
     }
 }
+
+/*---------------------------------------------------------------------------*
+  Name:         HWIi_CalcCheckCode
+
+  Description:  シリアル番号の数字８桁のチェックコードを計算します
+
+  Arguments:    Ascii 数字文字列
+
+  Returns:      Ascii 数字
+ *---------------------------------------------------------------------------*/
+static u8 HWIi_CalcCheckCode(u8 src[8])
+{
+	// モジュラス10 ウェイト3･1（M10W31）
+	int temp = (src[7] - '0')*3 +
+               (src[6] - '0')*1 +
+               (src[5] - '0')*3 +
+               (src[4] - '0')*1 +
+               (src[3] - '0')*3 +
+               (src[2] - '0')*1 +
+               (src[1] - '0')*3 +
+               (src[0] - '0')*1;
+	temp %= 10;
+	temp = 10-temp;
+
+	return (u8)('0' + temp);
+}
+
