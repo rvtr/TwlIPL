@@ -18,40 +18,20 @@
 
 TARGET_FIRM			=	SYSTEMMENU
 
-override TARGET_PLATFORM	:= TWL
-override TARGET_CODEGEN		:= ARM
-override TWL_ARCHGEN		:= LIMITED
+override TARGET_PLATFORM := TWL
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+include ./commondefs.DSHashTable
 
-MY_TITLE		=	HNHA
-
-MY_DATA			=	DSHashTable.bin
-
-#MY_TITLE_NAME		=	$(MY_TITLE)
-MY_TITLE_NAME		=	DSHashTable
-
+MY_DATA				=	$(DS_HASH_TABLE_DATA)
 
 #----------------------------------------------------------------------------
-MY_TAD			=	$(MY_TITLE).tad
+MY_TAD				=	$(MY_TITLE).tad
 
-MY_TITLE_ID_HI		=	0003000F
-MY_TITLE_ID_LO		=	$(shell perl -e 'printf "%02X%02X%02X%02X", unpack("C4", "'$(MY_TITLE)'")')
-MY_TITLE_ID		=	$(MY_TITLE_ID_HI)$(MY_TITLE_ID_LO)
-MY_GROUP_ID		=	3031
+#INSTALL_TARGETS	=	$(MY_TAD)
+#INSTALL_DIR		=
 
-MY_VERSION		=	$(shell perl -e 'open IN, "$(MY_DATA)"; binmode IN; seek IN, 132, 0; read IN, $$buf, 2; print unpack "S", $$buf; close IN')
-
-MY_MAJOR_VERSION        =       $(shell expr $(MY_VERSION) / 256)
-MY_MINOR_VERSION        =       $(shell expr $(MY_VERSION) % 256)
-
-INSTALL_TARGETS		=	$(MY_TAD)
-INSTALL_DIR		=	$(ROOT)/build/tools/TwlNMenu/data
-
-MAKETAD_FLAGS		=	-d $(MY_TITLE_ID) $(MY_GROUP_ID) $(MY_MAJOR_VERSION) $(MY_TITLE_NAME) \
-				-v $(MY_MINOR_VERSION) -p
-
-LDIRT_CLEAN		=	$(MY_TAD)
+LDIRT_CLEAN			=	$(MY_TAD)
 
 #----------------------------------------------------------------------------
 
@@ -60,6 +40,6 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 do-build : $(MY_TAD)
 
 $(MY_TAD): $(MY_DATA)
-	$(MAKETAD) $(call empath,$<) $(MAKETAD_FLAGS) -o $@
+	$(MAKETAD) $(call empath,$<) $(DS_HASH_TABLE_MAKETAD_OPTION) -o $@
 
 #===== End of Makefile =====

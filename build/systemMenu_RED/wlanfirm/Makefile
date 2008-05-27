@@ -16,32 +16,21 @@
 # $Author: 
 #----------------------------------------------------------------------------
 
-TARGET_FIRM			=	SYSTEMMENU
-
+TARGET_FIRM					=	SYSTEMMENU
 override TARGET_PLATFORM	:= TWL
-override TARGET_CODEGEN		:= ARM
-override TWL_ARCHGEN		:= LIMITED
+
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
-MY_FIRM_ROOT	=	$(TWLWIRELESS_ROOT)/binfile
-
-MY_FIRM_ROOT_CYG =	$(call eupath,$(MY_FIRM_ROOT))
+include ./commondefs.wlanfirm
 
 
 MY_TITLE		=	HNCA
-MY_FIRM			=	$(MY_FIRM_ROOT_CYG)/nwm_firm.bin
-
-# FWファイルの先頭1バイトに入っているバージョン情報を取得
-MY_VERSION_MAJOR	=	$(shell perl -e "open(IN,'$(MY_FIRM)');binmode(IN);seek(IN, 160 + 0, 0);read(IN, \$$buf, 1);print unpack("C", \$$buf);close(IN);")
-MY_VERSION_MINOR	=	$(shell perl -e "open(IN,'$(MY_FIRM)');binmode(IN);seek(IN, 160 + 1, 0);read(IN, \$$buf, 1);print unpack("C", \$$buf);close(IN);")
-
-MAKETAD_FLAGS	+=	0003000F484E4341 3031 $(MY_VERSION_MAJOR) WIRELESS_FW -v $(MY_VERSION_MINOR) -p
 
 #----------------------------------------------------------------------------
 MY_TAD			=	$(MY_TITLE).tad
 
-INSTALL_TARGETS	=	$(MY_TAD)
-INSTALL_DIR		=	$(ROOT)/build/tools/TwlNMenu/data
+#INSTALL_TARGETS	=
+#INSTALL_DIR		=
 
 LDIRT_CLEAN		=	$(MY_TAD)
 
@@ -51,7 +40,7 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 do-build : $(MY_TAD)
 
-$(MY_TAD): $(MY_FIRM)
-	$(MAKETAD) $(call empath,$<) -s -d $(MAKETAD_FLAGS) -o $@
+$(MY_TAD): $(MY_WLANFIRM)
+	$(MAKETAD) $(call empath,$<) $(WLANFIRM_MAKETAD_OPTION) -o $@
 
 #===== End of Makefile =====
