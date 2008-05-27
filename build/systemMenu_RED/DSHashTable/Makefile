@@ -25,6 +25,8 @@ include ./commondefs.DSHashTable
 
 MY_DATA				=	$(DS_HASH_TABLE_DATA)
 
+MY_TITLE			=	$(DS_HASH_TABLE_TITLE)
+
 #----------------------------------------------------------------------------
 MY_TAD				=	$(MY_TITLE).tad
 
