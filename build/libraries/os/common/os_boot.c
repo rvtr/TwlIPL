@@ -51,6 +51,11 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     static u32  mem_list[32];
     int i = 0;
 
+#ifdef SDK_ARM9
+    // 無線ファームパラメータのコピー元アドレスの設定
+    *(u32 *)HW_PRELOAD_PARAMETER_ADDR = HW_PARAM_TWL_SETTINGS_DATA_DEFAULT;
+#endif
+
     // pre clear
     /* 自身の static & bss のクリア */
     mem_list[i++] = (u32)SDK_STATIC_START;
