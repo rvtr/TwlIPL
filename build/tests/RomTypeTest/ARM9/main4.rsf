@@ -136,7 +136,7 @@ Property
 	#
 	# NandAccess: nand access control [TRUE/FALSE]
 	#
-	#NANDAccess		TRUE
+	NANDAccess		TRUE
 
 	###
 	#### END
