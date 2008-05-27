@@ -48,7 +48,11 @@ MAKEFIRM_DEFS	+= -DFIRM_ROOT='$(FIRM_ROOT)' \
 				-DMAKEFIRM_RSA_PRVKEY='$(MAKEFIRM_RSA_PRVKEY_M)' \
 
 ifdef TWL_KEYSDIR
+ifeq ($(TWL_IPL_RED_PRIVATE_ROOT),)
+MAKEGCDFIRM_FLAGS	+= -t'$(TWLSDK_ROOT)/tools/bin/rom_header.template.sbin'
+else
 MAKEGCDFIRM_FLAGS	+= -t'$(TWL_KEYSDIR)/blowfish/gcdfirm_header_twlj.template.sbin'
+endif
 else
 MAKEGCDFIRM_FLAGS	+= -t'$(FIRM_ROOT)/build/tools/makegcdfirm/gcdfirm_header_twlj.template.sbin'
 endif
