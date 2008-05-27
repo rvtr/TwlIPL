@@ -193,9 +193,11 @@ void TwlMain( void )
     if( !pBootTitle ||
         ( pBootTitle && !SYSM_IsLogoDemoSkip() ) ) {
 		u32 timestamp;
+#if 0
 		if( !LoadSharedFontInit() ) {				// 共有フォントのロード
 			SYSM_SetFatalError( TRUE );
 		}
+#endif
 		timestamp = OS_GetSharedFontTimestamp();
 		if( timestamp > 0 ) OS_TPrintf( "SharedFont timestamp : %08x\n", timestamp );
 	}
@@ -301,11 +303,12 @@ void TwlMain( void )
             }
             break;
         case LOAD_START:
-            SYSM_StartLoadTitle( pBootTitle );
-            state = LOADING;
+			if( IsFinishedLoadSharedFont() ) {		// ダイレクトブートの時があるので、フォントロード終了をここでチェック
+	            SYSM_StartLoadTitle( pBootTitle );
+    	        state = LOADING;
 
-            start = OS_GetTick();
-
+    	        start = OS_GetTick();
+			}
             break;
         case LOADING:
             if( SYSM_IsLoadTitleFinished() ) {
