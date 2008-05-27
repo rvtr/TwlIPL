@@ -19,7 +19,13 @@
 TARGET_FIRM				=	SYSTEMMENU
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+include $(SYSMENU_ROOT)/build/systemMenu_RED/wlanfirm/commondefs.wlanfirm
+include $(SYSMENU_ROOT)/build/systemMenu_RED/DSHashTable/commondefs.DSHashTable
 
+# SystemUpdaterでインポートするTADは専用のmaketadでTAD化します。
+MAKETAD			:=	$(SYSMENU_TOOLSDIR)/bin/maketad.updater.exe
+
+MAKETAD_OPTION	+=	-s
 
 #----------------------------------------------------------------------------
 
@@ -39,17 +45,20 @@ do-build :	HNAA.tad \
 			HNHA.tad \
 			menu_launcher.nand
 
-HNAA.tad: ../../../systemMenu_RED/Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNAA.tad
-	cp $< ./$@
 
-HNBA.tad: ../../../systemMenu_RED/MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNBA.tad
-	cp $< ./$@
+# maketad.updaterで作られたTADが他のフォルダに残らないように、ここでTAD化処理する。
+
+HNAA.tad: ../../../systemMenu_RED/Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNAA.srl
+	$(MAKETAD) $< $(MAKETAD_OPTION) -o $@
+
+HNBA.tad: ../../../systemMenu_RED/MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNBA.srl
+	$(MAKETAD) $< $(MAKETAD_OPTION) -o $@
 
 HNCA.tad: ../../../systemMenu_RED/wlanfirm/HNCA.tad
-	cp $< ./$@
+	$(MAKETAD) $< $(WLANFIRM_MAKETAD_OPTION) -o $@
 
 HNHA.tad: ../../../systemMenu_RED/DSHashTable/HNHA.tad
-	cp $< ./$@
+	$(MAKETAD) $< $(DS_HASH_TABLE_MAKETAD_OPTION) -o $@
 
 menu_launcher.nand: ../../../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nand
 	cp $< ./$@

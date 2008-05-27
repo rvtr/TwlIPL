@@ -20,9 +20,6 @@ TARGET_FIRM				=	SYSTEMMENU
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-# SystemUpdaterでインポートするTADは専用のmaketadでTAD化します。
-SUBDIR_FLAGS += MAKETAD=$(SYSMENU_TOOLSDIR)/bin/maketad.updater.exe
-
 #----------------------------------------------------------------------------
 
 LAUNCHER_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/Launcher
