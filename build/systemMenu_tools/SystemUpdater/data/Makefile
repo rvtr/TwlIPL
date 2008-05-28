@@ -54,11 +54,11 @@ HNAA.tad: ../../../systemMenu_RED/Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)
 HNBA.tad: ../../../systemMenu_RED/MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNBA.srl
 	$(MAKETAD) $< $(MAKETAD_OPTION) -o $@
 
-HNCA.tad: $(call empath,$(MY_WLANFIRM))
-	$(MAKETAD) $< $(WLANFIRM_MAKETAD_OPTION) -o $@
+HNCA.tad: $(MY_WLANFIRM)
+	$(MAKETAD) $(call empath,$<) $(WLANFIRM_MAKETAD_OPTION) -o $@
 
-HNHA.tad: $(call empath,$(DS_HASH_TABLE_DATA))
-	$(MAKETAD) $< $(DS_HASH_TABLE_MAKETAD_OPTION) -o $@
+HNHA.tad: $(DS_HASH_TABLE_DATA)
+	$(MAKETAD) $(call empath,$<) $(DS_HASH_TABLE_MAKETAD_OPTION) -o $@
 
 menu_launcher.nand: ../../../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nand
 	cp $< ./$@
