@@ -16,7 +16,7 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-TARGET_FIRM			=	SYSTEMMENU
+TARGET_FIRM		=	SYSTEMMENU
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
@@ -24,7 +24,7 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS				=	ARM7 ARM9
+SUBDIRS			=	ARM7 ARM9
 
 #----------------------------------------------------------------------------
 
