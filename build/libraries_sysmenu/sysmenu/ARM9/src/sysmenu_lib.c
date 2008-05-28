@@ -306,6 +306,11 @@ TitleProperty *SYSM_ReadParameters( void )
 // 本体設定データなどのメモリ展開。
 static void SYSMi_CopyLCFGData( u32 dst_addr )
 {
+	// HotStart時にも保持する必要のあるデータをランチャー用に移動するプリロードパラメータバッファにコピー。
+	MI_CpuCopy8( (void *)HW_PARAM_WIRELESS_FIRMWARE_DATA, (void *)(dst_addr + HW_PARAM_TWL_SETTINGS_DATA_SIZE),
+                 HW_PARAM_WIRELESS_FIRMWARE_DATA_SIZE );	// 無線ファーム用
+	
+	// プリロードパラメータアドレスをランチャー向けに変更。
 	*(u32 *)HW_PRELOAD_PARAMETER_ADDR = dst_addr;
 	
 	// 本体設定データ、HWノーマル情報、HWセキュア情報をメモリに展開しておく
