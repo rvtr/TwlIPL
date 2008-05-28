@@ -50,10 +50,6 @@ ifneq ($(DHT_TEST),)
 MACRO_FLAGS		+=	-DDHT_TEST
 endif
 
-ifneq ($(AUTH_NTR_CARD_PRODUCT_ONLY),)
-MACRO_FLAGS     +=  -DAUTH_NTR_CARD_PRODUCT_ONLY
-endif
-
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS	=	$(TARGETS)
