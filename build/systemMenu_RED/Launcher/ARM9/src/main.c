@@ -31,6 +31,9 @@
 static void INTR_VBlank( void );
 static void deleteTmp();
 void SYSM_DeleteTempDirectory( TitleProperty *pBootTitle );
+static BOOL IsCommandSelected(void);
+static void PrintPause(void);
+static void PrintError(AuthResult res);
 
 // global variable-------------------------------------------------------------
 
@@ -102,9 +105,10 @@ void TwlMain( void )
         LAUNCHER = 3,
         LOAD_START = 4,
         LOADING = 5,
-        AUTHENTICATE = 6,
-        BOOT = 7,
-        STOP = 8
+        LOAD_PAUSE = 6,
+        AUTHENTICATE = 7,
+        BOOT = 8,
+        STOP = 9
     };
     u32 state = LOGODEMO_INIT;
     TitleProperty *pBootTitle = NULL;
@@ -309,6 +313,12 @@ void TwlMain( void )
 			}
             break;
         case LOADING:
+            // ここでロード前ホワイトリストチェック失敗メッセージをポーリングし、受け取ったらstateをLOAD_PAUSEに
+            if( SYSM_IsLoadTitlePaused() )
+            {
+				state = LOAD_PAUSE;
+				PrintPause();
+			}
             if( SYSM_IsLoadTitleFinished() ) {
                 SYSM_StartAuthenticateTitle( pBootTitle );
                 state = AUTHENTICATE;
@@ -322,6 +332,14 @@ void TwlMain( void )
                 end = OS_GetTick();
                 OS_TPrintf( "Load Time : %dms\n", OS_TicksToMilliSeconds( end - start ) );
             }
+            break;
+        case LOAD_PAUSE:
+            // ロード前ホワイトリストチェック失敗で一時停止中
+            // 強制起動するか中止するかの選択がされたらLOADINGに戻る
+            if( IsCommandSelected() )
+            {
+				state = LOADING;
+			}
             break;
         case AUTHENTICATE:
             if( ( direct_boot || ( !direct_boot && LauncherFadeout( s_titleList ) ) ) &&
@@ -345,20 +363,8 @@ void TwlMain( void )
                     state = STOP;
                     // [TODO:]クリアしたほうが良いデータ（鍵など）があれば消す
                     
-                    // デバグ表示
-					LauncherInit( s_titleList );
-					GX_SetVisiblePlane( GX_PLANEMASK_BG0 );
-					NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
-					G2_ChangeBlendAlpha( 0, 31 );
-					PrintfSJIS( 1, 25, TXT_COLOR_RED,"LAUNCHER : ERROR OCCURRED! - %d\n",res );
-					PrintfSJIS( 1, 40, TXT_COLOR_RED,"%s",error_msg[res] );
-					// 特殊表示
-					if(res == AUTH_RESULT_CHECK_TITLE_LAUNCH_RIGHTS_FAILED)
-					{
-						PrintfSJIS( 1, 55, TXT_COLOR_RED,"NAM result = %d", SYSMi_getCheckTitleLaunchRightsResult() );
-					}
-					GX_DispOn();
-					GXS_DispOn();
+                    // エラー表示
+                    PrintError(res);
 					
                     break;
                 }
@@ -384,6 +390,63 @@ void TwlMain( void )
     }
 }
 
+static BOOL IsCommandSelected(void)
+{
+	static BOOL left = FALSE;
+	if( !( pad.cont & ( PAD_BUTTON_A | PAD_BUTTON_B ) ) )
+	{
+		left = TRUE;
+	}
+	
+	if( left && ( pad.trg & PAD_BUTTON_A ) )
+	{
+		NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+		PrintfSJIS( 1, 25, TXT_COLOR_RED,"Resume Loading....\n" );
+		SYSM_ResumeLoadingThread( TRUE );
+		left = FALSE;
+		return TRUE;
+	}else if( left && ( pad.trg & PAD_BUTTON_B ) )
+	{
+		NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+		PrintfSJIS( 1, 25, TXT_COLOR_RED,"Please Wait....\n" );
+		SYSM_ResumeLoadingThread( FALSE );
+		left = FALSE;
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static void PrintPause(void)
+{
+	LauncherInit( s_titleList );
+	GX_SetVisiblePlane( GX_PLANEMASK_BG0 );
+	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+	G2_ChangeBlendAlpha( 0, 31 );
+	PrintfSJIS( 1, 25, TXT_COLOR_RED,"WhiteList Check Failed.\n" );
+	PrintfSJIS( 1, 40, TXT_COLOR_RED,"Prease Select Command." );
+	PrintfSJIS( 1, 55, TXT_COLOR_RED,"A : Force to Launch" );
+	PrintfSJIS( 1, 70, TXT_COLOR_RED,"        or" );
+	PrintfSJIS( 1, 85, TXT_COLOR_RED,"B : Stop And Show Error Message" );
+	GX_DispOn();
+	GXS_DispOn();
+}
+
+static void PrintError(AuthResult res)
+{
+	LauncherInit( s_titleList );
+	GX_SetVisiblePlane( GX_PLANEMASK_BG0 );
+	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
+	G2_ChangeBlendAlpha( 0, 31 );
+	PrintfSJIS( 1, 25, TXT_COLOR_RED,"LAUNCHER : ERROR OCCURRED! - %d\n",res );
+	PrintfSJIS( 1, 40, TXT_COLOR_RED,"%s",error_msg[res] );
+	// 特殊表示
+	if(res == AUTH_RESULT_CHECK_TITLE_LAUNCH_RIGHTS_FAILED)
+	{
+		PrintfSJIS( 1, 55, TXT_COLOR_RED,"NAM result = %d", SYSMi_getCheckTitleLaunchRightsResult() );
+	}
+	GX_DispOn();
+	GXS_DispOn();
+}
 
 // ============================================================================
 // 割り込み処理

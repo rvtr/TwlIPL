@@ -49,6 +49,8 @@
 #include <sysmenu/dht/dht.h>
 #define DS_HASH_TABLE_SIZE  (256*1024)
 
+#define SYSM_TITLE_MESSAGE_ARRAY_MAX		1
+
 typedef	struct	MbAuthCode
 {
 	char		magic_code[2];			// マジックナンバー
@@ -91,6 +93,12 @@ static AuthResult		s_headerAuthResult = AUTH_RESULT_TITLE_LOAD_FAILED;
 static MbAuthCode s_authcode;
 
 static BOOL				s_loadstart = FALSE;
+
+static BOOL				s_loadPaused = FALSE;
+static BOOL				s_loadForcibly = FALSE;
+
+static OSMessageQueue	s_msgQ;
+static OSMessage		s_msgArray[SYSM_TITLE_MESSAGE_ARRAY_MAX];
 
 static NAMTitleId *s_pTitleIDList = NULL;
 static int s_listLength = 0;
@@ -1206,18 +1214,32 @@ static AuthResult SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
 	return AUTH_RESULT_SUCCEEDED;
 }
 
+BOOL SYSM_IsLoadTitlePaused(void)
+{
+	return s_loadPaused;
+}
+
+void SYSM_ResumeLoadingThread( BOOL force )
+{
+	if( !s_loadPaused )
+	{
+		return;
+	}
+	s_loadPaused = FALSE;
+	// メッセージ送信
+	if(!OS_SendMessage(&s_msgQ, (OSMessage)force, OS_MESSAGE_NOBLOCK))
+	{
+		OS_TPrintf( "SYSM_ResumeLoadingThread:Message send error.\n" );
+	}
+}
+
 // NTR版カードアプリのヘッダ認証処理
 static AuthResult SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_Header *head )
 {
 	AuthResult ret = AUTH_RESULT_SUCCEEDED;
 
-	// ボンディングオプション00でないときは適用しない
-#ifdef AUTH_NTR_CARD_PRODUCT_ONLY
-	if( !SCFG_GetBondingOption() == 0 )
-#else
 	// デバッガに接続してるときは適用しない
 	if( SYSM_IsRunOnDebugger() )
-#endif
 	{
 		return AUTH_RESULT_SUCCEEDED;
 	}
@@ -1239,19 +1261,48 @@ static AuthResult SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle,
 		if(!dht)
 		{
 		    OS_TPrintf(" Search DHT : database init Failed.\n");
-		    return AUTH_RESULT_WHITELIST_INITDB_FAILED;
-		}
-		OS_TPrintf("Searching DHT for %.4s(%02X)...", head->s.game_code, head->s.rom_version);
-		db = DHT_GetDatabase(dht, &head->s);
-		if ( !db )
+		    ret = AUTH_RESULT_WHITELIST_INITDB_FAILED;
+		}else
 		{
-		    OS_TPrintf(" Search DHT : Failed.\n");
-		    return AUTH_RESULT_WHITELIST_NOTFOUND;
+			OS_TPrintf("Searching DHT for %.4s(%02X)...", head->s.game_code, head->s.rom_version);
+			db = DHT_GetDatabase(dht, &head->s);
+			if ( !db )
+			{
+			    OS_TPrintf(" Search DHT : Failed.\n");
+			    ret = AUTH_RESULT_WHITELIST_NOTFOUND;
+			}else
+			{
+				hash0 = db->hash[0];
+				hash1 = db->hash[1];
+				ret = AUTH_RESULT_SUCCEEDED;
+			}
 		}
-		hash0 = db->hash[0];
-		hash1 = db->hash[1];
-		ret = AUTH_RESULT_SUCCEEDED;
 	}
+
+	// ボンディングオプションが0のときは以下の特殊処理をせずにリターン
+	if( SCFG_GetBondingOption() == 0 )
+	{
+		return ret;
+	}
+
+	// データロード前認証に失敗した場合にボタン押しで強制ロードするようにする
+	// 失敗時にメインスレッドにメッセージを送り、ボタン押し待ち
+	// 押されたらメインスレッドからこちらのスレッドにメッセージを送る
+	// メッセージ内容次第でロードを続行するか、エラーを返して中止するか選択
+	// 続行する場合は強制実行フラグを立てる
+	if( ret != AUTH_RESULT_SUCCEEDED )
+	{
+		BOOL forcing;
+		OS_InitMessageQueue(&s_msgQ, s_msgArray, SYSM_TITLE_MESSAGE_ARRAY_MAX);
+		s_loadPaused = TRUE;
+		OS_ReceiveMessage(&s_msgQ, (OSMessage*)&forcing, OS_MESSAGE_BLOCK);
+		if(forcing)
+		{
+			ret = AUTH_RESULT_SUCCEEDED;
+			s_loadForcibly = TRUE;
+		}
+	}
+	
 	return ret;
 }
 
@@ -1263,13 +1314,14 @@ static AuthResult SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 	SVCHMACSHA1Context ctx;
 	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
 
-	// ボンディングオプション00でないときは適用しない
-#ifdef AUTH_NTR_CARD_PRODUCT_ONLY
-	if( !SCFG_GetBondingOption() == 0 )
-#else
 	// デバッガに接続してるときは適用しない
 	if( SYSM_IsRunOnDebugger() )
-#endif
+	{
+		return AUTH_RESULT_SUCCEEDED;
+	}
+	
+	// ロード前認証で強制実行フラグを立てていれば、飛ばす
+	if( s_loadForcibly )
 	{
 		return AUTH_RESULT_SUCCEEDED;
 	}

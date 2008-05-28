@@ -139,6 +139,9 @@ extern void SYSM_LoadNintendoLogo1D( u16 *pLogoData, u16 *pDst, int paletteColor
 
 extern s32 SYSMi_getCheckTitleLaunchRightsResult( void );						// CheckTitleLaunchRightsの結果を返す（デバグ用）
 
+extern BOOL SYSM_IsLoadTitlePaused(void);										// ローディングスレッドが一時停止しているか？
+extern void SYSM_ResumeLoadingThread( BOOL force );								// ローディングスレッドが一時停止していたら再開
+
 #endif
 
 // 状態チェック
