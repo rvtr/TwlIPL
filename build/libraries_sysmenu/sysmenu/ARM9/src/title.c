@@ -105,6 +105,7 @@ static int s_listLength = 0;
 
 static u8 *s_calc_hash = NULL;
 static BOOL s_b_dev = FALSE;
+static BOOL s_result_phase1 = FALSE;
 
 static u8 dht_buffer[DS_HASH_TABLE_SIZE] ATTRIBUTE_ALIGN(256);
 static DHTFile *const dht = (DHTFile*)dht_buffer;
@@ -477,15 +478,20 @@ static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
 //
 // ============================================================================
 
-static void SYSMi_CalcHMACSHA1Callback(const void* addr, const void* orig_addr, u32 len, MIWramPos wram, s32 slot, void* arg)
+static void CallbackSub_DecryptAES(const void* addr, const void* orig_addr, u32 len, MIWramPos wram, s32 slot)
 {
-	CalcHMACSHA1CallbackArg *cba = (CalcHMACSHA1CallbackArg *)arg;
-	u32 calc_len = ( cba->hash_length < len ? cba->hash_length : len );
 	OSIntrMode enabled = OS_DisableInterrupts();// WRAM切り替え途中で割り込み発生→別スレッドでWRAM切り替え→死亡の可能性があるので暫定対応
 	MI_SwitchWramSlot( wram, slot, MI_WRAM_SIZE_32KB, MI_WRAM_ARM9, MI_WRAM_ARM7 );// Wramを7にスイッチ
 	SYSM_StartDecryptAESRegion_W( addr, orig_addr, len ); // AES領域デクリプト
 	MI_SwitchWramSlot( wram, slot, MI_WRAM_SIZE_32KB, MI_WRAM_ARM7, MI_WRAM_ARM9 );// Wramが7にスイッチしてしまっているので戻す
 	OS_RestoreInterrupts(enabled);// 割り込み許可
+}
+
+static void SYSMi_CalcHMACSHA1Callback(const void* addr, const void* orig_addr, u32 len, MIWramPos wram, s32 slot, void* arg)
+{
+	CalcHMACSHA1CallbackArg *cba = (CalcHMACSHA1CallbackArg *)arg;
+	u32 calc_len = ( cba->hash_length < len ? cba->hash_length : len );
+	CallbackSub_DecryptAES( addr, orig_addr, len, wram, slot );
 	if( calc_len == 0 ) return;
 	cba->hash_length -= calc_len;
 	SVC_HMACSHA1Update( &cba->ctx, addr, calc_len );
@@ -495,14 +501,20 @@ static void SYSMi_CalcSHA1Callback(const void* addr, const void* orig_addr, u32 
 {
 	CalcSHA1CallbackArg *cba = (CalcSHA1CallbackArg *)arg;
 	u32 calc_len = ( cba->hash_length < len ? cba->hash_length : len );
-	OSIntrMode enabled = OS_DisableInterrupts();// WRAM切り替え途中で割り込み発生→別スレッドでWRAM切り替え→死亡の可能性があるので暫定対応
-	MI_SwitchWramSlot( wram, slot, MI_WRAM_SIZE_32KB, MI_WRAM_ARM9, MI_WRAM_ARM7 );// Wramを7にスイッチ
-	SYSM_StartDecryptAESRegion_W( addr, orig_addr, len ); // AES領域デクリプト
-	MI_SwitchWramSlot( wram, slot, MI_WRAM_SIZE_32KB, MI_WRAM_ARM7, MI_WRAM_ARM9 );// Wramが7にスイッチしてしまっているので戻す
-	OS_RestoreInterrupts(enabled);// 割り込み許可
+	CallbackSub_DecryptAES( addr, orig_addr, len, wram, slot );
 	if( calc_len == 0 ) return;
 	cba->hash_length -= calc_len;
 	SVC_SHA1Update( &cba->ctx, addr, calc_len );
+}
+
+static void SYSMi_DHTPhase1Callback(const void* addr, const void* orig_addr, u32 len, MIWramPos wram, s32 slot, void* arg)
+{
+	CalcHMACSHA1CallbackArg *cba = (CalcHMACSHA1CallbackArg *)arg;
+	u32 calc_len = ( cba->hash_length < len ? cba->hash_length : len );
+	CallbackSub_DecryptAES( addr, orig_addr, len, wram, slot );
+	if( calc_len == 0 ) return;
+	cba->hash_length -= calc_len;
+	DHT_CheckHashPhase1Update( &cba->ctx, addr, (s32)calc_len );
 }
 
 static void SYSMi_FinalizeHotSWAsync( TitleProperty *pBootTitle, ROM_Header *head )
@@ -544,7 +556,7 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
 	    region_arm7_twl,
 	    region_max
 	};
-	// [TODO:]DSダウンロードプレイおよびpictochat等のNTR拡張NANDアプリの時は、ROMヘッダを退避する
+	// DSダウンロードプレイおよびpictochat等のNTR拡張NANDアプリの時は、ROMヘッダを退避する
 	// が、NTR-ROMヘッダは旧無線パッチとデバッガパッチを当てる必要があるため、再配置はrebootライブラリで行う。
 	
 	// ロード
@@ -596,6 +608,7 @@ OS_TPrintf("RebootSystem failed: cant open file\n");
         static u8   header[HW_TWL_ROM_HEADER_BUF_SIZE] ATTRIBUTE_ALIGN(32);
         s32 readLen;
         ROM_Header *head = (ROM_Header *)header;
+        CalcHMACSHA1CallbackArg dht_arg;
 
 		// WRAM利用Read関数の準備、WRAMCのスロットのうち後ろ3つだけ解放しておく
 		FS_InitWramTransfer(3);
@@ -608,6 +621,11 @@ OS_TPrintf("RebootSystem failed: cant open file\n");
 		
 		// ハッシュ格納用バッファ（ヒープから取っているけど変更するかも）
 		s_calc_hash = SYSM_Alloc( region_max * SVC_SHA1_DIGEST_SIZE );
+		if(!s_calc_hash)
+		{
+OS_TPrintf("RebootSystem failed: Alloc Failed.\n");
+			goto ERROR;
+		}
 
         // まずROMヘッダを読み込む
         if(!isCardApp)
@@ -688,7 +706,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 			}
 		}
 		
-		//[TODO:]この時点でヘッダの正当性検証
+		//この時点でヘッダの正当性検証
 		// ※ROMヘッダ認証
 		s_headerAuthResult = SYSMi_AuthenticateHeader( pBootTitle, head );
 		if( AUTH_RESULT_SUCCEEDED != s_headerAuthResult )
@@ -698,6 +716,12 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 		
 		// 正当性の検証されたヘッダを、本来のヘッダバッファへコピー
 		MI_CpuCopy8( head, (void*)SYSM_APP_ROM_HEADER_BUF, HW_TWL_ROM_HEADER_BUF_SIZE );
+		
+		// NTRカードアプリはDHTのPhase1のための計算が必要
+		if( !isTwlApp && pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM )
+		{
+			DHT_CheckHashPhase1Init(&dht_arg.ctx, &head->s);
+		}
 		
 		// ヘッダ読み込み完了直後の処理
 		// ヘッダ読み込み完了フラグを立てる
@@ -784,13 +808,15 @@ OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
 		            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcSHA1Callback, &arg );
 				}
 	            SVC_SHA1GetHash( &arg.ctx, &s_calc_hash[i * SVC_SHA1_DIGEST_SIZE] );
+	        }else if( !isTwlApp && pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM )
+	        {
+				// NTRカードアプリはDHTのPhase1のための計算が必要
+				// DHTチェックphase1用のハッシュを計算（DHT_CheckHashPhase1Update 関数）し、結果まで出しておく
+	            dht_arg.hash_length = (u32)length[i];
+				result = HOTSW_ReadCardViaWram((void *)source[i], (void *)destaddr[i], (s32)len, MI_WRAM_C,
+	            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_DHTPhase1Callback, &dht_arg );
 			}else
 			{
-				//[TODO:]TWLアプリとNTRNANDアプリはこのままで良いが、NTRカードアプリはDHTのため更に処理を分ける必要あり
-				//       ヘッダ署名用にヘッダのSHA1（HMACでない）をとりつつ（これは上でやっている）
-				//       DHTチェックphase1用のハッシュを計算（DHT_CheckHashPhase1Update 関数）し、結果まで出しておく
-				//       DHTチェック用にヘッダのHMACSHA1を計算する必要もあるが面倒なのでヘッダ読み込み後に
-				//       DHT_CheckHashPhase1Init を呼べば良い気もする（最小単位32KBよりも小さいし）
 				// それ以外
 				CalcHMACSHA1CallbackArg arg;
 	            SVC_HMACSHA1Init( &arg.ctx, (void *)s_digestDefaultKey, DIGEST_HASH_BLOCK_SIZE_SHA1 );
@@ -817,6 +843,12 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 				goto ERROR;
 			}
         }
+        
+        // NTRカードアプリはDHTのPhase1最終計算を行う
+        if( !isTwlApp && pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM )
+        {
+			SVC_HMACSHA1GetHash(&dht_arg.ctx, &s_calc_hash[1 * SVC_SHA1_DIGEST_SIZE]);
+		}
 
 		if(!isCardApp)
 		{
@@ -1311,7 +1343,6 @@ static AuthResult SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 {
 #pragma unused(pBootTitle)
 	DHTPhase2Work* p2work;
-	SVCHMACSHA1Context ctx;
 	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
 
 	// デバッガに接続してるときは適用しない
@@ -1325,19 +1356,26 @@ static AuthResult SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 	{
 		return AUTH_RESULT_SUCCEEDED;
 	}
-
-	// べた書きphase1テスト([TODO:]実際にはstaticの読み込み時に平行処理)
-	OS_TPrintf("DHT Phase1...");
-	DHT_CheckHashPhase1Init(&ctx, hs);
-	DHT_CheckHashPhase1Update(&ctx, hs->main_ram_address, (s32)hs->main_size);
-	DHT_CheckHashPhase1Update(&ctx, hs->sub_ram_address, (s32)hs->sub_size);
-	if ( !DHT_CheckHashPhase1Final(&ctx, hash0) )
+	
+	// phase1最終検証
+	if(s_calc_hash)
 	{
-	    OS_TPrintf(" DHT Phase1 : Failed.\n");
-	    return AUTH_RESULT_DHT_PHASE1_FAILED;
+		// アプリをロードする時に計算したハッシュを検証
+	    if(!SVC_CompareSHA1((const void *)hash0, (const void *)&s_calc_hash[1 * SVC_SHA1_DIGEST_SIZE]))
+	    {
+			OS_TPrintf("DHT Phase1 failed: hash check failed.\n");
+			if(!s_b_dev) return AUTH_RESULT_DHT_PHASE1_FAILED;
+		}else
+		{
+			OS_TPrintf("DHT Phase1 : hash check succeed. %dms.\n");
+		}
+	}else
+	{
+		OS_TPrintf("DHT Phase1 failed: hash calc failed.\n");
+		if(!s_b_dev) return AUTH_RESULT_DHT_PHASE1_FAILED;
 	}
 
-	// DHTチェックphase2（phase1はstaticの読み込み時に平行処理）
+	// DHTチェックphase2
 	OS_TPrintf("DHT Phase2...");
 	p2work = SYSM_Alloc( sizeof(DHTPhase2Work) );
 	if ( !DHT_CheckHashPhase2(hash1, hs, p2work, WrapperFunc_ReadCardData, NULL) )
