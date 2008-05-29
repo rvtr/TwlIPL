@@ -1367,7 +1367,7 @@ static AuthResult SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 			if(!s_b_dev) return AUTH_RESULT_DHT_PHASE1_FAILED;
 		}else
 		{
-			OS_TPrintf("DHT Phase1 : hash check succeed. %dms.\n");
+			OS_TPrintf("DHT Phase1 : hash check succeed..\n");
 		}
 	}else
 	{
