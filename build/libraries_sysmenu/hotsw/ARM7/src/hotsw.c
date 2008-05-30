@@ -1241,10 +1241,10 @@ static void GenVA_VB_VD(void)
     MATHRandContext32 rnd;
 
     // 乱数を初期化
-    // チック＆RTC初回ロード値を種とする。
+    // チック＆RTC初回ロード値＆ゲームコードを種とする。
     // （起動する度に変化するパラメータと組み合わせる。
     //   Vカウンタは2130サイクル変化しないので固定値になりやすい。）
-    MATH_InitRand32(&rnd, OS_GetTick() ^ sw->Rtc1stData.words[0] ^ sw->Rtc1stData.words[1]);
+    MATH_InitRand32(&rnd, OS_GetTick() ^ sw->Rtc1stData.words[0] ^ sw->Rtc1stData.words[1] ^ *(u32*)(s_cbData.pBootSegBuf->rh.s.game_code));
 
     s_cbData.vae = MATH_Rand32(&rnd, 0);
     s_cbData.vbi = MATH_Rand32(&rnd, 0);
