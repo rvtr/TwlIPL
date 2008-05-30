@@ -64,7 +64,7 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 do-build :	$(TARGETS)
 
-MASTERING =	$(SYSMENU_TOOLSDIR)/bin/mastering.TWL.exe
+MASTERING =	$(TWL_IPL_RED_PRIVATE_ROOT)/build/tools/mastering.TWL/mastering.TWL.exe
 
 
 #---------------------------
@@ -151,7 +151,7 @@ $(OUT_DIR)/menu_launcher-$(TWL_BUILD_TYPE).nand: ../nandfirm/menu-launcher/menu_
 #---------------------------
 $(OUT_DIR)/$(NAND_INITIALIZER_NAME)-$(TWL_BUILD_TYPE)$(MASTER).srl: ../systemMenu_tools/$(NAND_INITIALIZER_NAME)/ARM9.TWL/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/$(NAND_INITIALIZER_NAME).srl
 ifneq ($(DO_MASTERING),)
-	$(MASTERING) $< $@
+	$(MASTERING) -s $< $@
 else
 	cp $< $@
 endif
