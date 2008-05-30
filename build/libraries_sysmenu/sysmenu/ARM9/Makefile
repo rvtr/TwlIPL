@@ -46,10 +46,6 @@ ifeq ($(DO_NOT_SHOW_LAUNCHER),TRUE)
 MACRO_FLAGS		+=	-DDO_NOT_SHOW_LAUNCHER
 endif
 
-ifneq ($(DHT_TEST),)
-MACRO_FLAGS		+=	-DDHT_TEST
-endif
-
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS	=	$(TARGETS)

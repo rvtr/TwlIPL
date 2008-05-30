@@ -34,10 +34,6 @@ SRCS				=	setAESKey.c \
 
 TARGET_LIB			=	libsysmenu_sp$(TWL_LIBSUFFIX).a
 
-ifneq ($(DHT_TEST),)
-MACRO_FLAGS			+=  -DDHT_TEST
-endif
-
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS		=	$(TARGETS)
