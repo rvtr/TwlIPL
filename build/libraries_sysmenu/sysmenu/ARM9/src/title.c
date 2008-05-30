@@ -1201,8 +1201,6 @@ static AuthResult SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
 		SVCSignHeapContext con;
 		u8 final_hash[SVC_SHA1_DIGEST_SIZE];
 
-		// [TODO:]pBootTitle->titleIDと、それにこじつけたNTRヘッダのなんらかのデータとの一致確認をする。
-
 		// NTRダウンロードアプリ署名のマジックコードチェック
 		if( s_authcode.magic_code[0] != 'a' || s_authcode.magic_code[1] != 'c' ) {
 			OS_TPrintf("Authenticate failed: Invalid AuthCode.\n");
@@ -1552,12 +1550,13 @@ static void SYSMi_AuthenticateTitleThreadFunc( TitleProperty *pBootTitle )
 
 
 // ロード済みの指定タイトルを別スレッドで検証開始する
+#define AUTH_STACK_SIZE 0x1400
 void SYSM_StartAuthenticateTitle( TitleProperty *pBootTitle )
 {
-	static u64 stack[ STACK_SIZE / sizeof(u64) ];
+	static u64 stack[ AUTH_STACK_SIZE / sizeof(u64) ];
 	s_authResult = AUTH_RESULT_PROCESSING;
 	OS_InitThread();
-	OS_CreateThread( &s_auth_thread, (void (*)(void *))SYSMi_AuthenticateTitleThreadFunc, (void*)pBootTitle, stack+STACK_SIZE/sizeof(u64), STACK_SIZE,THREAD_PRIO );
+	OS_CreateThread( &s_auth_thread, (void (*)(void *))SYSMi_AuthenticateTitleThreadFunc, (void*)pBootTitle, stack+AUTH_STACK_SIZE/sizeof(u64), AUTH_STACK_SIZE,THREAD_PRIO );
 	OS_WakeupThreadDirect( &s_auth_thread );
 }
 
