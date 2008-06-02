@@ -233,6 +233,9 @@ BOOL BOOT_WaitStart( void )
 			}else
 			{
 				post_clear_list = nitro_post_clear_list;
+				// NTR-IPLと同様にシステム領域直前をクリアしておく
+				mem_list[list_count++] = 0x02800000 - OS_BOOT_SYS_CLR_SIZE;
+				mem_list[list_count++] = OS_BOOT_SYS_CLR_SIZE - HW_MAIN_MEM_SHARED_SIZE;
 			}
 			BOOTi_CutAwayRegionList( post_clear_list, (u32)dh->s.main_ram_address, (u32)dh->s.main_ram_address + dh->s.main_size);
 			BOOTi_CutAwayRegionList( post_clear_list, (u32)dh->s.sub_ram_address, (u32)dh->s.sub_ram_address + dh->s.sub_size);
