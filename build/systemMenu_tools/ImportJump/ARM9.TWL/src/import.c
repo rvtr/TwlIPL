@@ -133,6 +133,16 @@ BOOL kamiImportTad(NAMTitleId* pTitleID)
 	// NandInitializerによって消去されている可能性もあるので確認する
 	if (GetImportJumpSetting()->importTad == 1 || NAM_ReadTitleInfo(&titleInfoTmp, tadInfo.titleInfo.titleId) != NAM_OK)
 	{
+/*
+		// ESの仕様で古い e-ticket があると新しい e-ticket を使ったインポートができない
+		// 暫定対応として該当タイトルを完全削除してからインポートする
+		nam_result = NAM_DeleteTitleCompletely(tadInfo.titleInfo.titleId);
+		if ( nam_result != NAM_OK )
+		{
+			kamiFontPrintfConsole(CONSOLE_RED, "Fail! RetCode=%x\n", nam_result);
+			return FALSE;
+		}
+*/
 		// インポート開始フラグを立てる
 		sNowImport = TRUE;
 
