@@ -960,7 +960,11 @@ static AuthResult SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, R
 	prev = OS_GetTick();
 	hi = head->s.titleID_Hi;
 	// Launcherは専用の鍵を使う
-	if(  0 == STD_CompareNString( &gamecode[1], "ANH", 3 ) )
+	if( ( 0 == STD_CompareNString( &gamecode[1], "ANH", 3 ) )
+#ifdef DEV_UIG_LAUNCHER
+	 || ( ( 0 == STD_CompareNString( &gamecode[1], "AN4", 3 ) ) && ( SCFG_GetBondingOption() != 0 ) )
+#endif
+	)
 	{
 		keynum = LAUNCHER_KEY_INDEX;
 	}else
@@ -1705,7 +1709,11 @@ static void SYSMi_makeTitleIdList( void )
 		
 		// ランチャーはリストに入れない
 		gamecode = (char *)&(pe_hs->titleID);
-		if(  0 == STD_CompareNString( &gamecode[1], "ANH", 3 ) )
+		if( ( 0 == STD_CompareNString( &gamecode[1], "ANH", 3 ) )
+#ifdef DEV_UIG_LAUNCHER
+		 || ( ( 0 == STD_CompareNString( &gamecode[1], "AN4", 3 ) ) && ( SCFG_GetBondingOption() != 0 ) )
+#endif
+		)
 		{
 			continue;
 		}
