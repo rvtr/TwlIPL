@@ -245,14 +245,14 @@ static const u16 *const s_pStrSettingElemTbl[ MS_PARENTAL_NUMOF_ELEMENTS ][ LCFG
 
     // ページ1
     {
-        (const u16 *)L"レーティング制限",
-        (const u16 *)L"RATING LOCK",
-        (const u16 *)L"RATING LOCK(F)",
-        (const u16 *)L"RATING LOCK(G)",
-        (const u16 *)L"RATING LOCK(I)",
-        (const u16 *)L"RATING LOCK(S)",
-        (const u16 *)L"RATING LOCK(C)",
-        (const u16 *)L"RATING LOCK(K)",
+        (const u16 *)L"ペアレンタルコントロール",
+        (const u16 *)L"PARENTAL CONTROL",
+        (const u16 *)L"PARENTAL CONTROL(F)",
+        (const u16 *)L"PARENTAL CONTROL(G)",
+        (const u16 *)L"PARENTAL CONTROL(I)",
+        (const u16 *)L"PARENTAL CONTROL(S)",
+        (const u16 *)L"PARENTAL CONTROL(C)",
+        (const u16 *)L"PARENTAL CONTROL(K)",
     },
     {
         (const u16 *)L"レーティング対象年齢",
@@ -330,14 +330,24 @@ static const u16 *const s_pStrSettingElemTbl[ MS_PARENTAL_NUMOF_ELEMENTS ][ LCFG
     // ページ3
 #ifdef BROADON_UI
     {
-        (const u16 *)L"Wiiポイント",
-        (const u16 *)L"Wii Point",
-        (const u16 *)L"Wii Point(F)",
-        (const u16 *)L"Wii Point(G)",
-        (const u16 *)L"Wii Point(I)",
-        (const u16 *)L"Wii Point(S)",
-        (const u16 *)L"Wii Point(C)",
-        (const u16 *)L"Wii Point(K)",
+        (const u16 *)L"ピクトチャット起動",
+        (const u16 *)L"PictoChat Boot",
+        (const u16 *)L"PictoChat Boot(F)",
+        (const u16 *)L"PictoChat Boot(G)",
+        (const u16 *)L"PictoChat Boot(I)",
+        (const u16 *)L"PictoChat Boot(S)",
+        (const u16 *)L"PictoChat Boot(C)",
+        (const u16 *)L"PictoChat Boot(K)",
+    },
+    {
+        (const u16 *)L"DSダウンロード起動",
+        (const u16 *)L"DSDownload Boot",
+        (const u16 *)L"DSDownload Boot(F)",
+        (const u16 *)L"DSDownload Boot(G)",
+        (const u16 *)L"DSDownload Boot(I)",
+        (const u16 *)L"DSDownload Boot(S)",
+        (const u16 *)L"DSDownload Boot(C)",
+        (const u16 *)L"DSDownload Boot(K)",
     },
     {
         (const u16 *)L"ブラウザ起動",
@@ -350,24 +360,34 @@ static const u16 *const s_pStrSettingElemTbl[ MS_PARENTAL_NUMOF_ELEMENTS ][ LCFG
         (const u16 *)L"Browser Boot(K)",
     },
     {
-        (const u16 *)L"ピクトチャット起動",
-        (const u16 *)L"PictoChat Boot",
-        (const u16 *)L"PictoChat Boot(F)",
-        (const u16 *)L"PictoChat Boot(G)",
-        (const u16 *)L"PictoChat Boot(I)",
-        (const u16 *)L"PictoChat Boot(S)",
-        (const u16 *)L"PictoChat Boot(C)",
-        (const u16 *)L"PictoChat Boot(K)",
+        (const u16 *)L"Wiiポイント",
+        (const u16 *)L"Wii Point",
+        (const u16 *)L"Wii Point(F)",
+        (const u16 *)L"Wii Point(G)",
+        (const u16 *)L"Wii Point(I)",
+        (const u16 *)L"Wii Point(S)",
+        (const u16 *)L"Wii Point(C)",
+        (const u16 *)L"Wii Point(K)",
     },
     {
-        (const u16 *)L"Nintendoスポット",
-        (const u16 *)L"Nintendo Spot",
-        (const u16 *)L"Nintendo Spot(F)",
-        (const u16 *)L"Nintendo Spot(G)",
-        (const u16 *)L"Nintendo Spot(I)",
-        (const u16 *)L"Nintendo Spot(S)",
-        (const u16 *)L"Nintendo Spot(C)",
-        (const u16 *)L"Nintendo Spot(K)",
+        (const u16 *)L"写真交換",
+        (const u16 *)L"Photo Exchange",
+        (const u16 *)L"Photo Exchange(F)",
+        (const u16 *)L"Photo Exchange(G)",
+        (const u16 *)L"Photo Exchange(I)",
+        (const u16 *)L"Photo Exchange(S)",
+        (const u16 *)L"Photo Exchange(C)",
+        (const u16 *)L"Photo Exchange(K)",
+    },
+    {
+        (const u16 *)L"UGC",
+        (const u16 *)L"UGC",
+        (const u16 *)L"UGC(F)",
+        (const u16 *)L"UGC(G)",
+        (const u16 *)L"UGC(I)",
+        (const u16 *)L"UGC(S)",
+        (const u16 *)L"UGC(C)",
+        (const u16 *)L"UGC(K)",
     },
 #else  // BROADON_UI
     {
@@ -540,10 +560,12 @@ static MenuParam sRatingOgnMenuParam =
 // ++ BroadOn用の設定項目
 enum
 {
-    MS_BROADON_WIIPOINT     = 0,
-    MS_BROADON_BROWSER      = 1,
-    MS_BROADON_PICTOCHAT    = 2,
-    MS_BROADON_NINTENDOSPOT = 3
+    MS_BROADON_PICTOCHAT      = 0,
+    MS_BROADON_DS_DOWNLOAD    = 1,
+    MS_BROADON_BROWSER        = 2,
+    MS_BROADON_WIIPOINT       = 3,
+    MS_BROADON_PHOTO_EXCHANGE = 4,
+    MS_BROADON_UGC            = 5
 };
 
 //=========================================================
@@ -922,9 +944,9 @@ static void DrawParentalControlMenuScene( void )
     switch( sCurrentPage )      // ページ別に表示項目が変わる
     {
         case 0:
-            // レーティング制限のON/OFF
+            // ペアレンタルコントロール制限のON/OFF
             PutStringUTF16( 23*8, s_settingPos[0].y, TXT_UCOLOR_G0, 
-                            LCFG_TSD_IsRestrictRating() ? L"ON" : L"OFF" );
+                            LCFG_TSD_IsSetParentalControl() ? L"ON" : L"OFF" );
             // レーティング年齢
             PrintfSJIS( 23*8, s_settingPos[1].y, TXT_UCOLOR_G0, "%d", LCFG_TSD_GetPCTLRatingAge() );
             // レーティング団体
@@ -1652,7 +1674,7 @@ static void SetRatingLockInit( void )
     // :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     // あらかじめTWL設定データファイルから読み込み済みの設定を取得
     // :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    sbRatingLock = LCFG_TSD_IsRestrictRating();
+    sbRatingLock = LCFG_TSD_IsSetParentalControl();
 
     DrawSetRatingLockScene();
 
@@ -1689,7 +1711,7 @@ static int SetRatingLockMain( void )
     // 決定
     if( (pad.trg & PAD_BUTTON_A) || (tp_touch && (commit == KEY_OK)) )
     {
-        LCFG_TSD_SetRestrictRating( sbRatingLock );
+        LCFG_TSD_SetFlagParentalControl( sbRatingLock );
         // ::::::::::::::::::::::::::::::::::::::::::::::
         // TWL設定データファイルへの書き込み
         // ::::::::::::::::::::::::::::::::::::::::::::::
@@ -2250,17 +2272,23 @@ static void DrawSetBroadOnSettingScene( void )
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
     switch( sBroadOnMenu )          // 複数の設定画面をフラグで切り替える
     {
-        case MS_BROADON_WIIPOINT:
-            PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"WII POINT USING" );
+        case MS_BROADON_PICTOCHAT:
+            PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"PICTOCHAT BOOT" );
+        break;
+        case MS_BROADON_DS_DOWNLOAD:
+            PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"DS DOWNLOAD BOOT" );
         break;
         case MS_BROADON_BROWSER:
             PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"BROWSER BOOT" );
         break;
-        case MS_BROADON_PICTOCHAT:
-            PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"PICTOCHAT BOOT" );
+        case MS_BROADON_WIIPOINT:
+            PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"WII POINT USING" );
         break;
-        case MS_BROADON_NINTENDOSPOT:
-            PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"NINTENDO SPOT USING" );
+        case MS_BROADON_PHOTO_EXCHANGE:
+            PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"PHOTO EXCHANGE USING" );
+        break;
+        case MS_BROADON_UGC:
+            PutStringUTF16( 0, 0, TXT_COLOR_BLUE, (const u16 *)L"UGC USING" );
         break;
     }
 
@@ -2288,17 +2316,23 @@ static void SetBroadOnSettingInit( void )
     // :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     switch( sBroadOnMenu )
     {
-        case MS_BROADON_WIIPOINT:
-            sbBroadOnSetting = LCFG_TSD_IsRestrictWiiPoint();
+        case MS_BROADON_PICTOCHAT:
+            sbBroadOnSetting = LCFG_TSD_IsRestrictPictoChatBoot();
+        break;
+        case MS_BROADON_DS_DOWNLOAD:
+            sbBroadOnSetting = LCFG_TSD_IsRestrictDSDownloadBoot();
         break;
         case MS_BROADON_BROWSER:
             sbBroadOnSetting = LCFG_TSD_IsRestrictBrowserBoot();
         break;
-        case MS_BROADON_PICTOCHAT:
-            sbBroadOnSetting = LCFG_TSD_IsRestrictPictoChatBoot();
+        case MS_BROADON_WIIPOINT:
+            sbBroadOnSetting = LCFG_TSD_IsRestrictWiiPoint();
         break;
-        case MS_BROADON_NINTENDOSPOT:
-            sbBroadOnSetting = LCFG_TSD_IsRestrictNintendoSpot();
+        case MS_BROADON_PHOTO_EXCHANGE:
+            sbBroadOnSetting = LCFG_TSD_IsRestrictPhotoExchange();
+        break;
+        case MS_BROADON_UGC:
+            sbBroadOnSetting = LCFG_TSD_IsRestrictUGC();
         break;
     }
 
@@ -2339,17 +2373,23 @@ static int SetBroadOnSettingMain( void )
     {
         switch( sBroadOnMenu )
         {
-            case MS_BROADON_WIIPOINT:
-                LCFG_TSD_SetRestrictWiiPoint( sbBroadOnSetting );
+            case MS_BROADON_PICTOCHAT:
+                LCFG_TSD_SetRestrictPictoChatBoot( sbBroadOnSetting );
+            break;
+            case MS_BROADON_DS_DOWNLOAD:
+                LCFG_TSD_SetRestrictDSDownloadBoot( sbBroadOnSetting );
             break;
             case MS_BROADON_BROWSER:
                 LCFG_TSD_SetRestrictBrowserBoot( sbBroadOnSetting );
             break;
-            case MS_BROADON_PICTOCHAT:
-                LCFG_TSD_SetRestrictPictoChatBoot( sbBroadOnSetting );
+            case MS_BROADON_WIIPOINT:
+                LCFG_TSD_SetRestrictWiiPoint( sbBroadOnSetting );
             break;
-            case MS_BROADON_NINTENDOSPOT:
-                LCFG_TSD_SetRestrictNintendoSpot( sbBroadOnSetting );
+            case MS_BROADON_PHOTO_EXCHANGE:
+                LCFG_TSD_SetRestrictPhotoExchange( sbBroadOnSetting );
+            break;
+            case MS_BROADON_UGC:
+                LCFG_TSD_SetRestrictUGC( sbBroadOnSetting );
             break;
         }
         // ::::::::::::::::::::::::::::::::::::::::::::::
