@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
+#include <twl/nam.h>
 #include <sysmenu.h>
 
 // define data------------------------------------------
@@ -244,5 +245,33 @@ BOOL UTL_CheckRTCTime( RTCTime *timep )
 		return FALSE;
 	}
 	return TRUE;
+}
+
+//======================================================================
+//  タイトル数取得
+//======================================================================
+
+// ローンチ対象のアプリ数カウント
+int UTL_GetInstalledSoftBoxCount( void )
+{
+	int l;
+	int listNum;
+	int validNum = 0;
+	OSTitleId titleIDArray[ LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX ];
+	
+	MI_CpuClear32( titleIDArray, sizeof(titleIDArray) );
+	
+	// インストールされているNANDアプリ全タイトルのTitleID取得
+	listNum = NAM_GetNumTitles();
+	(void)NAM_GetTitleList( titleIDArray, (u32)listNum );
+	
+	// 取得したタイトルがローンチ対象かどうかをチェック
+	for( l = 0; l < listNum; l++ ) {
+		// "Not Launch"でない　かつ　"Data Only"でない　なら有効なタイトルとしてリストに追加
+		if( ( titleIDArray[ l ] & ( TITLE_ID_NOT_LAUNCH_FLAG_MASK | TITLE_ID_DATA_ONLY_FLAG_MASK ) ) == 0 ) {
+			validNum++;
+		}
+	}
+	return validNum;
 }
 
