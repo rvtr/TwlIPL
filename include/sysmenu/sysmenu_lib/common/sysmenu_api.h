@@ -23,7 +23,7 @@
 #include <twl/os/common/format_rom.h>
 #include <twl/os/common/banner.h>
 #include <sysmenu/reloc_info/common/reloc_info.h>
-#include <launcherParam_private.h>
+#include <application_jump_private.h>
 
 #ifdef __cplusplus
 extern "C" {
