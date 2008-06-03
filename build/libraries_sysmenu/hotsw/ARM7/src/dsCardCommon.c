@@ -58,9 +58,6 @@ void HOTSWi_SetCommand(GCDCmd64 *cndLE)
     cndBE.b[1] = cndLE->b[6];
     cndBE.b[0] = cndLE->b[7];
 
-	//---- confirm CARD free
-	while( reg_HOTSW_MCCNT1 & REG_MI_MCCNT1_START_MASK ){}
-
     // MCCMD ÉåÉWÉXÉ^ê›íË
 	reg_HOTSW_MCCMD0 = *(u32*)cndBE.b;
 	reg_HOTSW_MCCMD1 = *(u32*)&cndBE.b[4];

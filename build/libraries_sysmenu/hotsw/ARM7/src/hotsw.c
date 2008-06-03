@@ -63,9 +63,6 @@ typedef enum HotSwCallBackType{
 } HotSwCallBackType;
 
 // Function prototype -------------------------------------------------------
-static BOOL IsSwap(void);
-static u32 GetMcSlotShift(void);
-static u32 GetMcSlotMask(void);
 static u32 GetMcSlotMode(void);
 static void SetMcSlotMode(u32 mode);
 
@@ -104,9 +101,6 @@ static void GenVA_VB_VD(void);
 
 static HotSwState ReadImageReturnErrorCode(void* dest, s32 offset, s32 length, void* arg);
 static BOOL ReadImage(void* dest, s32 offset, s32 length, void* arg);
-
-static s32 LockExCard(u16 lockID);
-static s32 UnlockExCard(u16 lockID);
 
 static HotSwState LoadBannerData(void);
 static HotSwState CheckCardAuthCode(void);
@@ -176,14 +170,10 @@ static u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = {
 };
 
 static CardSecureModeFunction s_funcTable[] = {
-    // DS Card Type 1
-    { ReadIDSecure, ReadSegSecure, SwitchONPNGSecure, ChangeModeSecure},
-    // DS Card Type 2
-    { ReadIDSecure, ReadSegSecure, SwitchONPNGSecure, ChangeModeSecure},
-    // TWL Card Type 1
+    // Game Card
     { ReadIDSecure, ReadSegSecure, SwitchONPNGSecure, ChangeModeSecure},
     // RomEmulation
-    {ReadIDSecure_ROMEMU, ReadSegSecure_ROMEMU, SwitchONPNGSecure_ROMEMU, ChangeModeSecure_ROMEMU}
+    { ReadIDSecure_ROMEMU, ReadSegSecure_ROMEMU, SwitchONPNGSecure_ROMEMU, ChangeModeSecure_ROMEMU }
 };
 
 // Global Values ------------------------------------------------------------
@@ -262,21 +252,20 @@ void HOTSW_Init(u32 threadPrio)
         s_CardLockID = (u16)tempLockID;
     }
 
-    // カードデータロード用スレッドの生成
-    OS_CreateThread(&HotSwThreadData.hotswThread,
-                    HotSwThread,
-                    NULL,
-                    HotSwThreadData.hotswStack + HOTSW_THREAD_STACK_SIZE / sizeof(u64),
-                    HOTSW_THREAD_STACK_SIZE,
-                    threadPrio
-                    );
-
     // カードの状態監視用スレッドの生成 ( DSテレビ対策 )
-    // [TODO] 優先度の設定
     OS_CreateThread(&HotSwThreadData.monitorThread,
                     MonitorThread,
                     NULL,
                     HotSwThreadData.monitorStack + HOTSW_THREAD_STACK_SIZE / sizeof(u64),
+                    HOTSW_THREAD_STACK_SIZE,
+                    threadPrio
+                    );
+    
+    // カードデータロード用スレッドの生成 ※カード状態監視スレッドと優先度同じだけど、後に作成したこっちのスレッドが優先される
+    OS_CreateThread(&HotSwThreadData.hotswThread,
+                    HotSwThread,
+                    NULL,
+                    HotSwThreadData.hotswStack + HOTSW_THREAD_STACK_SIZE / sizeof(u64),
                     HOTSW_THREAD_STACK_SIZE,
                     threadPrio
                     );
@@ -319,21 +308,14 @@ void HOTSW_Init(u32 threadPrio)
  *---------------------------------------------------------------------------*/
 static HotSwState LoadCardData(void)
 {
-    OSTick start;
     HotSwState retval = HOTSW_SUCCESS;
     HotSwState state  = HOTSW_SUCCESS;
     u32 romMode = HOTSW_ROM_MODE_NULL;
 
-    start = OS_GetTick();
-
     s_isHotSwBusy = TRUE;
 
     // カードのロック
-#ifndef DEBUG_USED_CARD_SLOT_B_
     CARD_LockRom(s_CardLockID);
-#else
-    LockExCard(s_CardLockID);
-#endif
 
     // カード電源リセット
     McPowerOff();
@@ -397,11 +379,7 @@ static HotSwState LoadCardData(void)
                     s_debuggerFlg = FALSE;
                 }
             }
-#if 0
-            else{
-                s_debuggerFlg = FALSE;
-            }
-#endif
+
             // 初回のRomエミュレーション情報を使用
             if(HOTSWi_IsRomEmulation()){
                 OS_PutString("Read Emulation ROM\n");
@@ -505,7 +483,7 @@ static HotSwState LoadCardData(void)
             }
 
             // ゲームモードに移行
-            state  = s_funcTable[s_cbData.cardType].ChangeMode_S(&s_cbData);
+            state  = s_funcTable[s_debuggerFlg].ChangeMode_S(&s_cbData);
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
             // ---------------------- Game Mode ----------------------
@@ -573,15 +551,9 @@ end:
     HOTSW_WaitCardCtrl();
 
     // カードのロック開放(※ロックIDは開放せずに持ち続ける)
-#ifndef DEBUG_USED_CARD_SLOT_B_
     CARD_UnlockRom(s_CardLockID);
-#else
-    UnlockExCard(s_CardLockID);
-#endif
 
     s_isHotSwBusy = FALSE;
-
-//  OS_TPrintf( "Load Card Time : %dms\n\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 
     return retval;
 }
@@ -661,14 +633,14 @@ static HotSwState ReadSecureModeCardData(void)
     HotSwState state  = HOTSW_SUCCESS;
 
     // PNG設定
-    state  = s_funcTable[s_cbData.cardType].SetPNG_S(&s_cbData);
+    state  = s_funcTable[s_debuggerFlg].SetPNG_S(&s_cbData);
     retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
     // DS側符号生成回路初期値設定 (レジスタ設定)
     SetMCSCR();
 
     // ID読み込み
-    state  = s_funcTable[s_cbData.cardType].ReadID_S(&s_cbData);
+    state  = s_funcTable[s_debuggerFlg].ReadID_S(&s_cbData);
     retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
     // カードIDの比較をして、一致しなければFALSEを返す
@@ -678,7 +650,7 @@ static HotSwState ReadSecureModeCardData(void)
 
     if(retval == HOTSW_SUCCESS){
         // Secure領域のSegment読み込み
-        state  = s_funcTable[s_cbData.cardType].ReadSegment_S(&s_cbData);
+        state  = s_funcTable[s_debuggerFlg].ReadSegment_S(&s_cbData);
         retval = (retval == HOTSW_SUCCESS) ? state : retval;
     }
 
@@ -751,12 +723,7 @@ BOOL HOTSWi_IsRunOnDebugger(void)
  *---------------------------------------------------------------------------*/
 BOOL HOTSWi_IsRomEmulation(void)
 {
-    return s_debuggerFlg &&
-#ifndef DEBUG_USED_CARD_SLOT_B_
-           s_romEmuInfo.isEnableSlot1;
-#else
-           s_romEmuInfo.isEnableSlot2;
-#endif
+    return s_debuggerFlg && s_romEmuInfo.isEnableSlot1;
 }
 
 /*---------------------------------------------------------------------------*
@@ -913,11 +880,7 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
     }
 
     // カードのロック
-#ifndef DEBUG_USED_CARD_SLOT_B_
     CARD_LockRom(s_CardLockID);
-#else
-    LockExCard(s_CardLockID);
-#endif
 
     while(size > 0 && state == HOTSW_SUCCESS){
         // --- Boot Segment
@@ -977,11 +940,8 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
 		dest += sendSize;
     }
 
-#ifndef DEBUG_USED_CARD_SLOT_B_
+    // カードのアンロック
     CARD_UnlockRom(s_CardLockID);
-#else
-    UnlockExCard(s_CardLockID);
-#endif
     
     {
         HotSwPxiMessageForArm9 	msg;
@@ -1370,15 +1330,9 @@ static void UnlockHotSwRsc(OSLockWord* word)
 
   Description:  SCFG_MC1のCDETフラグを見て、カードの存在判定を行う
  *---------------------------------------------------------------------------*/
- BOOL HOTSW_IsCardExist(void)
+BOOL HOTSW_IsCardExist(void)
 {
-#ifndef DEBUG_USED_CARD_SLOT_B_
-    u32 mask = (u32)(REG_MI_MC_SL1_CDET_MASK << GetMcSlotShift());
-#else
-    u32 mask = (u32)(REG_MI_MC_SL2_CDET_MASK >> GetMcSlotShift());
-#endif
-
-    if( !(reg_MI_MC1 & mask) ){
+    if( !(reg_MI_MC1 & REG_MI_MC_SL1_CDET_MASK) ){
         return TRUE;
     }
     else{
@@ -1404,59 +1358,13 @@ BOOL HOTSW_IsCardAccessible(void)
 
 
 /*---------------------------------------------------------------------------*
-  Name:         IsSwap
-
-  Description:  SCFG_MC1のSWPフラグを見て、スロットがスワップされているか判定する
- *---------------------------------------------------------------------------*/
-static BOOL IsSwap(void)
-{
-    if( reg_MI_MC1 & REG_MI_MC1_SWP_MASK ){
-        return TRUE;
-    }
-    else{
-        return FALSE;
-    }
-}
-
-
-/*---------------------------------------------------------------------------*
-  Name:         GetMcSlotShift
-
-  Description:  カードスロットのシフトビット数の取得
- *---------------------------------------------------------------------------*/
-static u32 GetMcSlotShift(void)
-{
-    return (u32)(IsSwap() * REG_MI_MC_SL2_CDET_SHIFT);
-}
-
-
-/*---------------------------------------------------------------------------*
-  Name:         GetMcSlotMask
-
-  Description:  カードスロットのシフトビット数の取得
- *---------------------------------------------------------------------------*/
-static u32 GetMcSlotMask(void)
-{
-#ifndef DEBUG_USED_CARD_SLOT_B_
-    return (u32)(REG_MI_MC_SL1_MODE_MASK << GetMcSlotShift());
-#else
-    return (u32)(REG_MI_MC_SL2_MODE_MASK >> GetMcSlotShift());
-#endif
-}
-
-
-/*---------------------------------------------------------------------------*
   Name:         GetMcSlotMode
 
   Description:  スロットの現在のモードを返す
  *---------------------------------------------------------------------------*/
 static u32 GetMcSlotMode(void)
 {
-#ifndef DEBUG_USED_CARD_SLOT_B_
-    return (reg_MI_MC1 & GetMcSlotMask()) >> GetMcSlotShift();
-#else
-    return (reg_MI_MC1 & GetMcSlotMask()) << GetMcSlotShift();
-#endif
+    return reg_MI_MC1 & REG_MI_MC_SL1_MODE_MASK;
 }
 
 
@@ -1467,11 +1375,7 @@ static u32 GetMcSlotMode(void)
  *---------------------------------------------------------------------------*/
 static void SetMcSlotMode(u32 mode)
 {
-#ifndef DEBUG_USED_CARD_SLOT_B_
-    reg_MI_MC1 = (u32)((reg_MI_MC1 & ~GetMcSlotMask()) | (mode << GetMcSlotShift()));
-#else
-    reg_MI_MC1 = (u32)((reg_MI_MC1 & ~GetMcSlotMask()) | (mode >> GetMcSlotShift()));
-#endif
+    reg_MI_MC1 = (u32)((reg_MI_MC1 & ~REG_MI_MC_SL1_MODE_MASK) | mode);
 }
 
 
@@ -1875,11 +1779,7 @@ static BOOL ChangeGameMode(void)
 {
     HotSwState state;
 
-#ifndef DEBUG_USED_CARD_SLOT_B_
     CARD_LockRom(s_CardLockID);
-#else
-    LockExCard(s_CardLockID);
-#endif
 
     McPowerOn();
 
@@ -1909,9 +1809,9 @@ static BOOL ChangeGameMode(void)
     state = ChangeModeNormal(&s_cbData);
 
     // ---------------------- Secure Mode ----------------------
-    state = s_funcTable[s_cbData.cardType].SetPNG_S(&s_cbData);
+    state = s_funcTable[s_debuggerFlg].SetPNG_S(&s_cbData);
     SetMCSCR();
-    state = s_funcTable[s_cbData.cardType].ChangeMode_S(&s_cbData);
+    state = s_funcTable[s_debuggerFlg].ChangeMode_S(&s_cbData);
 
     // ---------------------- Game Mode ----------------------
     state = ReadIDGame(&s_cbData);
@@ -1931,11 +1831,7 @@ static BOOL ChangeGameMode(void)
     
     HOTSW_WaitCardCtrl();
 
-#ifndef DEBUG_USED_CARD_SLOT_B_
     CARD_UnlockRom(s_CardLockID);
-#else
-    UnlockExCard(s_CardLockID);
-#endif
 
     if(state == HOTSW_SUCCESS){
         return TRUE;
@@ -2155,14 +2051,6 @@ static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err)
 	OS_TPrintf("... Pxi Message - value:%x  ctrl:%x  finalize:%x  read:%x  bootType:%x\n",
                					d.msg.value, d.msg.ctrl, d.msg.finalize, d.msg.read, d.msg.bootType);
 
-/*    
-    if(d.msg.read){
-		OS_PutString("--- ARM7\n");
-		OS_TPrintf("src  : 0x%08x\n", SYSMi_GetWork()->cardReadParam.src);
-		OS_TPrintf("dst  : 0x%08x\n", SYSMi_GetWork()->cardReadParam.dest);
-		OS_TPrintf("size : 0x%08x\n", SYSMi_GetWork()->cardReadParam.size);
-    }*/
-
     HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].read	 	= (d.msg.read) ? TRUE : FALSE;
 #endif
 	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].ctrl  	= (d.msg.ctrl) ? TRUE : FALSE;
@@ -2199,73 +2087,6 @@ static void InterruptCallbackCardData(void)
 
 
 /*---------------------------------------------------------------------------*
-  Name:         AllocateExCardBus
-
-  Description:  アクセス権を設定する
- *---------------------------------------------------------------------------*/
-#ifdef  SDK_ARM9
-static inline void SetExCardProcessor(MIProcessor proc)
-{
-    reg_HOTSW_EXMEMCNT =
-        (u16)((reg_HOTSW_EXMEMCNT & ~HOTSW_EXMEMCNT_SELB_MASK) | (proc << HOTSW_EXMEMCNT_SELB_SHIFT));
-}
-#endif
-
-
-/*---------------------------------------------------------------------------*
-  Name:         AllocateExCardBus
-
-  Description:  スロットBへのアクセス権を設定する
- *---------------------------------------------------------------------------*/
-static void AllocateExCardBus(void)
-{
-#ifdef  SDK_ARM9
-    // preset reset flag with status of disable interrupts in OSi_DoTryLockByWord
-    if ( ! ( reg_MI_MC & REG_MI_MC_SL2_CDET_MASK ) )
-    {
-        reg_MI_MCCNT1 |= REG_MI_MCCNT2_RESB_MASK;
-    }
-    SetExCardProcessor(MI_PROCESSOR_ARM9);    // Arm9側で動作している場合
-#endif
-}
-
-
-/*---------------------------------------------------------------------------*
-  Name:         FreeExCardBus
-
-  Description:  スロットBへのアクセス権を設定する
- *---------------------------------------------------------------------------*/
-static void FreeExCardBus(void)
-{
-#ifdef  SDK_ARM9
-    SetExCardProcessor(MI_PROCESSOR_ARM7);    // Card for SUB
-#endif
-}
-
-
-/*---------------------------------------------------------------------------*
-  Name:         LockSlotB
-
-  Description:  スロットBをロックする
- *---------------------------------------------------------------------------*/
-static s32 LockExCard(u16 lockID)
-{
-    return OS_LockByWord(lockID, (OSLockWord *)SLOT_B_LOCK_BUF, AllocateExCardBus);
-}
-
-
-/*---------------------------------------------------------------------------*
-  Name:         UnlockSlotB
-
-  Description:  スロットBをロックする
- *---------------------------------------------------------------------------*/
-static s32 UnlockExCard(u16 lockID)
-{
-    return OS_UnlockByWord(lockID, (OSLockWord *)SLOT_B_LOCK_BUF, FreeExCardBus);
-}
-
-
-/*---------------------------------------------------------------------------*
   Name:         SetInterruptCallback
                 SetInterruptCallbackEx
 
@@ -2291,11 +2112,7 @@ static void SetInterruptCallbackEx( OSIrqMask intr_bit, void *func )
  *---------------------------------------------------------------------------*/
 static void SetInterrupt(void)
 {
-#ifndef DEBUG_USED_CARD_SLOT_B_
     SetInterruptCallback( OS_IE_CARD_A_DET  , InterruptCallbackCardDet );
-#else
-    SetInterruptCallback( OS_IE_CARD_B_DET  , InterruptCallbackCardDet );
-#endif
     
 #ifdef USE_NEW_DMA
 	(void)OS_EnableIrqMask(OS_IE_NDMA2);
