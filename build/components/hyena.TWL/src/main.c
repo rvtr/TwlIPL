@@ -98,6 +98,7 @@ static void         VBlankIntr(void);
 static void         InitializeFatfs(void);
 static void         InitializeNwm(OSHeapHandle drvHeapHandle, OSHeapHandle wpaHeapHandle);
 static void         InitializeCdc(void);
+static void         AdjustVolume(void);
 /*---------------------------------------------------------------------------*
     外部シンボル参照
  *---------------------------------------------------------------------------*/
@@ -105,7 +106,7 @@ static void         InitializeCdc(void);
 extern void         SDK_LTDAUTOLOAD_LTDWRAM_BSS_END(void);
 extern void         SDK_LTDAUTOLOAD_LTDMAIN_BSS_END(void);
 #endif
-extern void			SDK_SEA_KEY_STORE(void);
+extern void         SDK_SEA_KEY_STORE(void);
 
 extern BOOL sdmcGetNandLogFatal( void );
 
@@ -133,12 +134,12 @@ TwlSpMain(void)
     OS_Init();
     PrintDebugInfo();
 
-	// ランチャーバージョンを格納（今のところ、最低でもマウント情報登録前には格納する必要あり）
-	*(u8 *)HW_TWL_RED_LAUNCHER_VER = (u8)SYSM_LAUNCHER_VER;
+    // ランチャーバージョンを格納（今のところ、最低でもマウント情報登録前には格納する必要あり）
+    *(u8 *)HW_TWL_RED_LAUNCHER_VER = (u8)SYSM_LAUNCHER_VER;
 
-	// ランチャーのマウント情報登録
-	SYSMi_SetLauncherMountInfo();
-	
+    // ランチャーのマウント情報登録
+    SYSMi_SetLauncherMountInfo();
+
     // ランチャーパラメター取得（Cold/Hotスタート判定含む）
     ReadLauncherParameter();
 
@@ -148,11 +149,11 @@ TwlSpMain(void)
     // NVRAM からユーザー情報読み出し
     ReadUserInfo();
 
-	// NANDのFATALエラー検出
-	if( sdmcGetNandLogFatal() != FALSE) {
-    	/* 故障扱い処理 */
-		SYSM_SetFatalError( TRUE );
-	}
+    // NANDのFATALエラー検出
+    if( sdmcGetNandLogFatal() != FALSE) {
+        /* 故障扱い処理 */
+        SYSM_SetFatalError( TRUE );
+    }
 
     // [TODO:] カード電源ONして、ROMヘッダのみリード＆チェックくらいはやっておきたい
 
@@ -178,7 +179,7 @@ TwlSpMain(void)
 
     // PXIコールバックの設定
     SYSM_InitPXI(THREAD_PRIO_SYSMMCU);
-	
+
     // ファイルシステム初期化
     FS_Init(FS_DMA_NOT_USE);
     FS_CreateReadServerThread(THREAD_PRIO_FS);
@@ -189,19 +190,22 @@ TwlSpMain(void)
         InitializeNwm(mainHeapHandle, mainHeapHandle);      // NWM 初期化
 #ifndef SDK_NOCRYPTO
         AES_Init();           // AES 初期化
-		
-		{
-			// JPEGエンコード用の鍵セット
-			SYSMi_SetAESKeysForSignJPEG( (ROM_Header *)HW_TWL_ROM_HEADER_BUF, NULL, NULL );
-			// NANDファームがHW_LAUNCHER_DELIVER_PARAM_BUFへのAES_SEEDセットを行ってくれるので、ISデバッガ接続に関係なくSDK_SEA_KEY_STOREへのコピーを行えばよい
-			MI_CpuCopyFast( (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, (void *)SDK_SEA_KEY_STORE, HW_LAUNCHER_DELIVER_PARAM_BUF_SIZE );
-		}
-		
+
+        {
+            // JPEGエンコード用の鍵セット
+            SYSMi_SetAESKeysForSignJPEG( (ROM_Header *)HW_TWL_ROM_HEADER_BUF, NULL, NULL );
+            // NANDファームがHW_LAUNCHER_DELIVER_PARAM_BUFへのAES_SEEDセットを行ってくれるので、ISデバッガ接続に関係なくSDK_SEA_KEY_STOREへのコピーを行えばよい
+            MI_CpuCopyFast( (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, (void *)SDK_SEA_KEY_STORE, HW_LAUNCHER_DELIVER_PARAM_BUF_SIZE );
+        }
+
 #ifdef SDK_SEA
         SEA_Init();
 #endif  // ifdef SDK_SEA
 #endif
         MCU_InitIrq(THREAD_PRIO_MCU);  // MCU 初期化
+
+        // ボリューム設定の調整
+        AdjustVolume();
     }
 
     if (OSi_IsCodecTwlMode() == TRUE)
@@ -260,8 +264,8 @@ TwlSpMain(void)
     // [TODO]アプリジャンプ有効で、カードブートでない時は、最初からHOTSW_Initを呼ばないようにしたい。
     HOTSW_Init(THREAD_PRIO_HOTSW);
 
-	// 外部デポップ回路を無効にします。
-	CDC_DisableExternalDepop();
+    // 外部デポップ回路を無効にします。
+    CDC_DisableExternalDepop();
 
     while (TRUE)
     {
@@ -420,17 +424,17 @@ InitializeCdc(void)
     OSThread    thread;
     u32         stack[18];
 
-	// ※ランチャーでは必要なし
+    // ※ランチャーでは必要なし
 #if 0
-	// ランチャー経由で起動した場合はCODECは既に初期化されているため
-	// コンポーネントがCODECを初期化する必要はありません。
-	// 将来的にはバッサリと切る必要がありますが、
-	// 暫定的にI2Sが有効かどうかでCODECが初期化済みかどうかを判定します。
-	if (reg_SND_SMX_CNT & REG_SND_SMX_CNT_E_MASK)
-	{
-		CDC_InitLib();
-		return;
-	}
+    // ランチャー経由で起動した場合はCODECは既に初期化されているため
+    // コンポーネントがCODECを初期化する必要はありません。
+    // 将来的にはバッサリと切る必要がありますが、
+    // 暫定的にI2Sが有効かどうかでCODECが初期化済みかどうかを判定します。
+    if (reg_SND_SMX_CNT & REG_SND_SMX_CNT_E_MASK)
+    {
+        CDC_InitLib();
+        return;
+    }
 #endif
 
     // ダミースレッド作成
@@ -440,7 +444,7 @@ InitializeCdc(void)
 
 #if 1
     // CODEC 初期化
-    CDC_InitForFirstBoot();		// ※ランチャー特殊処理。
+    CDC_InitForFirstBoot();     // ※ランチャー特殊処理。
     CDC_InitMic();
 //    CDCi_DumpRegisters();
 #else
@@ -831,6 +835,58 @@ static void ReadUserInfo(void)
 #endif
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         AdjustVolume
+
+  Description:  32段階のボリュームを8段階に量子化する
+
+  Arguments:    None.
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+void AdjustVolume(void)
+{
+    u8 volume = MCU_GetVolume();
+    u8 adjust;
+    if ( volume < 2 )
+    {
+        adjust = 0;
+    }
+    else if ( volume < 5 )
+    {
+        adjust = 2;
+    }
+    else if ( volume < 9 )
+    {
+        adjust = 6;
+    }
+    else if ( volume < 14 )
+    {
+        adjust = 11;
+    }
+    else if ( volume < 19 )
+    {
+        adjust = 16;
+    }
+    else if ( volume < 24 )
+    {
+        adjust = 21;
+    }
+    else if ( volume < 29 )
+    {
+        adjust = 26;
+    }
+    else
+    {
+        adjust = 31;
+    }
+    OS_TPrintf("Current volume: %d.\n", volume);
+    if ( volume != adjust )
+    {
+        OS_TPrintf("Volume adjusts to %d.\n", adjust);
+        MCU_SetVolume(adjust);
+    }
+}
 
 /*---------------------------------------------------------------------------*
   Name:         VBlankIntr
