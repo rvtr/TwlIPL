@@ -784,6 +784,9 @@ static void NAMUTi_ClearWiFiSettings( void )
  *---------------------------------------------------------------------------*/
 static void PrintDirectory(s32 depth, const char* path)
 {
+#ifdef SDK_FINALROM
+#pragma unused(path)
+#endif
 	int i;
 
 	for (i=0; i<depth; i++)
@@ -805,6 +808,9 @@ static void PrintDirectory(s32 depth, const char* path)
  *---------------------------------------------------------------------------*/
 static void PrintFile(s32 depth, const char* filename)
 {
+#ifdef SDK_FINALROM
+#pragma unused(filename)
+#endif
 	int i;
 
 	for (i=0; i<depth+1; i++)
