@@ -52,7 +52,10 @@ MAKELCF_FLAGS	+=	-DISDBG_LIBS_TWL='$(if $(ISDBG_LIBS_TWL),$(ISDBG_LIBS_TWL),libs
 					-DISDBG_LIBS_NITRO='libstubsisd_sp$(TWL_LIBSUFFIX).a'
 
 LINCLUDES		=	$(ROOT)/build/libraries/spi/ARM7/include \
-					..//common/include \
+					../common/include \
+					../../common/include
+
+SRCDIR		    +=  ../../common/src
 
 LLIBRARIES		+=	libwl_sp$(TWL_LIBSUFFIX).a			\
 					libsdio_sp$(TWL_LIBSUFFIX).a		\
