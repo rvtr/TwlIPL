@@ -45,8 +45,8 @@ typedef struct FileProperty {
 
 //------- 重要 --------
 #define NAND_SIZE				239
-#define PARTITION_RAW_SIZE		4
-#define PARTITION_0_SIZE		203
+#define PARTITION_RAW_SIZE		1
+#define PARTITION_0_SIZE		206
 #define PARTITION_1_SIZE		32
 #define NAND_FAT_PARTITION_NUM	2		// FATパーティション数（RAWパーティションを除く）
 		
