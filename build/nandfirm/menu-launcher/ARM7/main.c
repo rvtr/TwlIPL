@@ -140,7 +140,7 @@ static void PostInit(void)
     /*
         バッテリー残量チェック
     */
-    MCUi_WriteRegister( MCU_REG_MODE_ADDR, MCU_SYSTEMMODE_FIRMWARE );   // change battery level only
+    MCUi_WriteRegister( MCU_REG_MODE_ADDR, MCU_SYSTEMMODE_TWL );   // TWL mode for ES library
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x87
     if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
@@ -316,7 +316,7 @@ void TwlSpMain( void )
 
 //    PM_BackLightOn( TRUE ); // last chance
 
-	SYSMi_SetAESKeysForAccessControlCore( (ROM_Header *)HW_TWL_ROM_HEADER_BUF, (u8 *)HW_LAUNCHER_DELIVER_PARAM_BUF, NULL, NULL );
+    SYSMi_SetAESKeysForAccessControlCore( (ROM_Header *)HW_TWL_ROM_HEADER_BUF, (u8 *)HW_LAUNCHER_DELIVER_PARAM_BUF, NULL, NULL );
     OS_BootFromFIRM();
 
 end:
