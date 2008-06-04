@@ -298,6 +298,7 @@ void TwlSpMain( void )
     SYSMi_SetAESKeysForAccessControl(FALSE, rh);
     MI_CpuClearFast( OSi_GetFromFirmAddr(), sizeof(OSFromFirmBuf) );
     FS_SetMountInfoForSrl();
+    MCUi_WriteRegister( MCU_REG_MODE_ADDR, MCU_SYSTEMMODE_TWL );   // change TWL mode
     OS_BootFromFIRM();
 
 end:
