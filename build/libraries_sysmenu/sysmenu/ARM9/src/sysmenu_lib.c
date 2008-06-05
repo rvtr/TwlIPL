@@ -513,6 +513,8 @@ static OSTitleId SYSMi_getTitleIdOfMachineSettings( void )
 	int getNum;
 	int validNum = 0;
 	NAMTitleId *pTitleIDList = NULL;
+	char machine_setting_code[4];
+	ROM_Header_Short *header = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
 	
 	// インストールされているタイトルの取得
 	getNum = NAM_GetNumTitles();
@@ -523,10 +525,13 @@ static OSTitleId SYSMi_getTitleIdOfMachineSettings( void )
 	}
 	(void)NAM_GetTitleList( pTitleIDList, (u32)getNum );
 	
+	// 本体情報のTitleIDの4バイト目はランチャーのTitleIDの4バイト目と同じ
+	STD_TSNPrintf( machine_setting_code, 4, "BN%c", header->titleID_Lo[3]);
+	
 	// 取得したタイトルに本体情報のIDがあるかチェック
 	for( l = 0; l < getNum; l++ ) {
 		char *code = ((char *)&pTitleIDList[l]) + 1;
-		if( 0 == STD_CompareNString( code, "BNH", 3 ) )
+		if( 0 == STD_CompareNString( code, machine_setting_code, 3 ) )
 		{
 			ret = (OSTitleId)pTitleIDList[l];
 			break;

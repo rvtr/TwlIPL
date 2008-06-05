@@ -52,6 +52,9 @@ void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle );
 
 #endif // SDK_ARM9
 
+// UIGランチャーの開発版（4NA*）を開発用CPUに乗ったREDランチャーから
+// 起動するためのスイッチ
+#define DEV_UIG_LAUNCHER
 
 #ifdef SDK_ARM9
 //-------------------------------------------------------

@@ -104,7 +104,12 @@ void SYSMi_SetAESKeysForSignJPEG( ROM_Header *pROMH, BOOL *pIsClearSlotB, BOOL *
 {
 	void *pAESKey;
 	if( ( pROMH->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK ) &&
-		( 0 == STD_CompareNString( (const char *)&pROMH->s.titleID_Lo[ 1 ], "ANH", 3 ) ) ) {
+	( ( 0 == STD_CompareNString( (const char *)&pROMH->s.titleID_Lo[ 1 ], "ANH", 3 ) )
+#ifdef DEV_UIG_LAUNCHER
+	 || ( ( 0 == STD_CompareNString( (const char *)&pROMH->s.titleID_Lo[ 1 ], "AN4", 3 ) ) && ( SCFG_GetBondingOption() != 0 ) )
+#endif
+	)
+		 ) {
 		// for Launcher
 		pAESKey = ( SCFG_GetBondingOption() == SCFG_OP_PRODUCT ) ?
 					&( OSi_GetFromFirmAddr()->rsa_pubkey[ 3 ][ 0x30 ] ) : (void *)dev_jpegEncodeKeyForLauncher;

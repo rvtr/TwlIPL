@@ -920,7 +920,11 @@ static AuthResult SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, R
 	prev = OS_GetTick();
 	hi = head->s.titleID_Hi;
 	// Launcherは専用の鍵を使う
-	if(  0 == STD_CompareNString( &gamecode[1], "ANH", 3 ) )
+	if( ( 0 == STD_CompareNString( &gamecode[1], "ANH", 3 ) )
+#ifdef DEV_UIG_LAUNCHER
+	 || ( ( 0 == STD_CompareNString( &gamecode[1], "AN4", 3 ) ) && ( SCFG_GetBondingOption() != 0 ) )
+#endif
+	)
 	{
 		keynum = LAUNCHER_KEY_INDEX;
 	}else
@@ -1462,12 +1466,13 @@ static void SYSMi_AuthenticateTitleThreadFunc( TitleProperty *pBootTitle )
 
 
 // ロード済みの指定タイトルを別スレッドで検証開始する
+#define AUTH_STACK_SIZE 0x1400
 void SYSM_StartAuthenticateTitle( TitleProperty *pBootTitle )
 {
-	static u64 stack[ STACK_SIZE / sizeof(u64) ];
+	static u64 stack[ AUTH_STACK_SIZE / sizeof(u64) ];
 	s_authResult = AUTH_RESULT_PROCESSING;
 	OS_InitThread();
-	OS_CreateThread( &s_auth_thread, (void (*)(void *))SYSMi_AuthenticateTitleThreadFunc, (void*)pBootTitle, stack+STACK_SIZE/sizeof(u64), STACK_SIZE,THREAD_PRIO );
+	OS_CreateThread( &s_auth_thread, (void (*)(void *))SYSMi_AuthenticateTitleThreadFunc, (void*)pBootTitle, stack+AUTH_STACK_SIZE/sizeof(u64), AUTH_STACK_SIZE,THREAD_PRIO );
 	OS_WakeupThreadDirect( &s_auth_thread );
 }
 
@@ -1616,7 +1621,11 @@ static void SYSMi_makeTitleIdList( void )
 		
 		// ランチャーはリストに入れない
 		gamecode = (char *)&(pe_hs->titleID);
-		if(  0 == STD_CompareNString( &gamecode[1], "ANH", 3 ) )
+		if( ( 0 == STD_CompareNString( &gamecode[1], "ANH", 3 ) )
+#ifdef DEV_UIG_LAUNCHER
+		 || ( ( 0 == STD_CompareNString( &gamecode[1], "AN4", 3 ) ) && ( SCFG_GetBondingOption() != 0 ) )
+#endif
+		)
 		{
 			continue;
 		}
