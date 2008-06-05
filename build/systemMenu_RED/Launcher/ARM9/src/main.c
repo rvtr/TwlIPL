@@ -16,6 +16,9 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
+#include <twl/dsp.h>
+#include <twl/dsp/ARM9/dsp_jpeg_dec.h>
+#include <twl/camera.h>
 #include "launcher.h"
 #include "misc.h"
 #include "logoDemo.h"
@@ -26,6 +29,8 @@
 // extern data-----------------------------------------------------------------
 
 // define data-----------------------------------------------------------------
+
+#define INIT_DEVICES_LIKE_UIG_LAUNCHER
 
 // function's prototype-------------------------------------------------------
 static void INTR_VBlank( void );
@@ -95,6 +100,23 @@ static void debugWriteToSD( void )
 }
 #endif
 
+#ifdef INIT_DEVICES_LIKE_UIG_LAUNCHER
+
+static int CreateDspSlotBitmap(int slot_num)
+{
+    int i, bitmap;
+    bitmap = 0;
+    
+    for (i=0; i<slot_num; i++)
+    {
+        bitmap += (1 << i);
+    }
+    
+    return bitmap;
+}
+
+#endif // INIT_DEVICES_LIKE_UIG_LAUNCHER
+
 // メイン
 void TwlMain( void )
 {
@@ -163,7 +185,31 @@ void TwlMain( void )
     // システムの初期化----------------
     InitAllocator();                                            // ※SYSM_Init以外のSYSMライブラリ関数を呼ぶ前に
                                                                 //   Alloc, Freeで登録したメモリアロケータを初期化してください。
+#ifdef INIT_DEVICES_LIKE_UIG_LAUNCHER
+    // カメラ初期化
+    CAMERA_Init();
 
+    // DSP初期化
+    {
+        FSFile file[1];
+        MIWramSize sizeB = MI_WRAM_SIZE_128KB;
+        MIWramSize sizeC = MI_WRAM_SIZE_128KB;
+        int slotB = CreateDspSlotBitmap( DSP_SLOT_B_COMPONENT_JPEGDECODER );  // ２スロット
+        int slotC = CreateDspSlotBitmap( DSP_SLOT_C_COMPONENT_JPEGDECODER );  // ４スロット
+
+        FS_InitFile( file );
+        DSP_OpenStaticComponentJpegDecoder( file );
+        MI_FreeWramSlot_B( 0, sizeB, MI_WRAM_ARM9 );
+        MI_FreeWramSlot_C( 0, sizeC, MI_WRAM_ARM9 );
+        MI_CancelWramSlot_B( 0, sizeB, MI_WRAM_ARM9 );
+        MI_CancelWramSlot_C( 0, sizeC, MI_WRAM_ARM9 );
+        if ( ! DSP_LoadJpegDecoder( file, slotB, slotC ) )
+        {
+            OS_TPanic("failed to load JpegDecoder DSP-component! (lack of WRAM-B/C)");
+        }
+        DSP_UnloadJpegDecoder();
+    }
+#endif // INIT_DEVICES_LIKE_UIG_LAUNCHER
 
     // 各種パラメータの取得------------
     pBootTitle = SYSM_ReadParameters();                        // 本体設定データ、リセットパラメータのリード、検査用オート起動カード判定、量産ライン用キーショートカット起動判定等のリード
