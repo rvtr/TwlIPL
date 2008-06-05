@@ -54,7 +54,7 @@ static SVCSignHeapContext acPool;
     PRINT_MEMORY_ADDR を定義すると、そのアドレスからSPrintfを行います(このファイルのみ)
     FINALROM版でもコードが残るので注意してください。
 */
-#define PRINT_MEMORY_ADDR       0x02FFC200
+#define PRINT_MEMORY_ADDR       0x02FFC2A0
 
 //#ifdef SDK_FINALROM // FINALROMで無効化
 //#undef PROFILE_ENABLE

@@ -33,7 +33,7 @@
     PRINT_MEMORY_ADDR を定義すると、そのアドレスからSPrintfを行います(このファイルのみ)
     FINALROM版でもコードが残るので注意してください。
 */
-#define PRINT_MEMORY_ADDR       0x02FFC800
+#define PRINT_MEMORY_ADDR       0x02FFC8A0
 
 /*
     AES鍵設定API
@@ -127,6 +127,7 @@ static void PostInit(void)
     }
     // AESの初期化
     AES_Init(); // for encrypted NAND
+    // 4: after AES_Init
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x85
 
@@ -134,6 +135,7 @@ static void PostInit(void)
     FS_InitMountInfo(TRUE, FALSE);
     // アイドルスレッドの作成
     CreateIdleThread();
+    // 5: after CreateIdleThread
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x86
 
@@ -141,6 +143,7 @@ static void PostInit(void)
         バッテリー残量チェック
     */
     MCUi_WriteRegister( MCU_REG_MODE_ADDR, MCU_SYSTEMMODE_TWL );   // TWL mode for ES library
+    // 6: after MCUi_WriteRegister
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x87
     if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
@@ -197,11 +200,12 @@ void TwlSpMain( void )
 
     OS_EnableIrq();
     OS_EnableInterrupts();
+    // 3: after OS_EnableIrq
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x84
 
     PostInit();
-    // 3: after PostInit
+    // 7: after PostInit
     PUSH_PROFILE();
     step = 0x88;
     SetDebugLED(step); // 0x88
@@ -213,7 +217,7 @@ void TwlSpMain( void )
         OS_TPrintf("Failed to call FATFS_Init().\n");
         goto end;
     }
-    // 4: after FATFS_Init
+    // 8: after FATFS_Init
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x89
 
@@ -224,7 +228,7 @@ void TwlSpMain( void )
         OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_SET_PATH).\n");
         goto end;
     }
-    // 5: after PXI
+    // 9: after PXI
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8a
 
@@ -235,7 +239,7 @@ void TwlSpMain( void )
         OS_TPrintf("Failed to call FS_OpenSrl().\n");
         goto end;
     }
-    // 6: after FS_OpenSrl
+    // 10: after FS_OpenSrl
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8b
 
@@ -246,7 +250,7 @@ void TwlSpMain( void )
         OS_TPrintf("Failed to call FS_LoadHeader().\n");
         goto end;
     }
-    // 7: after FS_LoadHeader
+    // 11: after FS_LoadHeader
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8c
 
@@ -257,7 +261,7 @@ void TwlSpMain( void )
         OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_DONE_HEADER).\n");
         goto end;
     }
-    // 8: after PXI
+    // 12: after PXI
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8d
 
@@ -265,7 +269,7 @@ void TwlSpMain( void )
 
     AESi_InitKeysFIRM();
     AESi_InitSeed();
-    // 9: after AESi_InitSeed
+    // 13: after AESi_InitSeed
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8e
 
@@ -276,7 +280,7 @@ void TwlSpMain( void )
         OS_TPrintf("Failed to call FS_LoadStatic().\n");
         goto end;
     }
-    // 10: after FS_LoadStatic
+    // 14: after FS_LoadStatic
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x8f
 
@@ -287,7 +291,7 @@ void TwlSpMain( void )
         OS_TPrintf("PXI_RecvID() was received invalid value (!=FIRM_PXI_ID_DONE_STATIC).\n");
         goto end;
     }
-    // 11: after PXI
+    // 15: after PXI
     PUSH_PROFILE();
 
 #ifdef PROFILE_ENABLE
