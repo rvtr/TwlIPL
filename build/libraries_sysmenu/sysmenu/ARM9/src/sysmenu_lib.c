@@ -405,9 +405,32 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
 {
     MI_CpuClear8( &s_bootTitleBuf, sizeof(TitleProperty) );
 
+
+    //-----------------------------------------------------
+    // TWL設定データ未入力時の初回起動シーケンス起動
+    //-----------------------------------------------------
+#if 0
+#ifdef ENABLE_INITIAL_SETTINGS_
+    if( !LCFG_TSD_IsFinishedInitialSetting() ) {
+        s_bootTitleBuf.titleID = SYSMi_getTitleIdOfMachineSettings();
+        if(s_bootTitleBuf.titleID != 0)
+		{
+            s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // 本体設定を起動できる時だけロゴデモを飛ばす
+		}
+        s_bootTitleBuf.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
+        s_bootTitleBuf.flags.isValid = TRUE;
+        s_bootTitleBuf.flags.isAppRelocate = FALSE;
+        s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
+        return &s_bootTitleBuf;
+    }
+#endif // ENABLE_INITIAL_SETTINGS_
+#endif
+
+
     //-----------------------------------------------------
     // スタンドアロン起動時、ショートカットキー(select)
     // を押しながらの起動で本体設定の直接起動
+    // [TODO:]最終的にはL+R+Start起動でタッチパネル設定のショートカット起動になる予定
     //-----------------------------------------------------
     if( ( PAD_Read() & SYSM_PAD_SHORTCUT_MACHINE_SETTINGS ) ==
 		SYSM_PAD_SHORTCUT_MACHINE_SETTINGS )
@@ -460,25 +483,6 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
 	}
 #endif
 
-    //-----------------------------------------------------
-    // TWL設定データ未入力時の初回起動シーケンス起動
-    //-----------------------------------------------------
-#if 0
-#ifdef ENABLE_INITIAL_SETTINGS_
-    if( !LCFG_TSD_IsFinishedInitialSetting() ) {
-        s_bootTitleBuf.titleID = SYSMi_getTitleIdOfMachineSettings();
-        if(s_bootTitleBuf.titleID != 0)
-		{
-            s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // 本体設定を起動できる時だけロゴデモを飛ばす
-		}
-        s_bootTitleBuf.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
-        s_bootTitleBuf.flags.isValid = TRUE;
-        s_bootTitleBuf.flags.isAppRelocate = FALSE;
-        s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
-        return &s_bootTitleBuf;
-    }
-#endif // ENABLE_INITIAL_SETTINGS_
-#endif
 
     return NULL;                                                    // 「ブート内容未定」でリターン
 }
