@@ -71,7 +71,7 @@
 /* OS_THREAD_LAUNCHER_PRIORITY 16 */
 
 /* [TODO] à»â∫ÇÕ New WM ë§Ç…à⁄çsÇ∑ÇÈÇŸÇ§Ç™çDÇ‹ÇµÇ¢? */
-#define NWM_DMANO                   3
+#define NWM_DMANO                   NWMSP_DMA_7
 #define THREAD_PRIO_NWM_COMMMAND    9
 #define THREAD_PRIO_NWM_EVENT       7
 #define THREAD_PRIO_NWM_SDIO        8
