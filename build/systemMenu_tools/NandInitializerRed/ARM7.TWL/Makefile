@@ -57,9 +57,9 @@ LINCLUDES		+=	$(ROOT)/build/libraries/spi/ARM7/include \
 					$(TWL_IPL_RED_ROOT)/include \
 					../common/include \
 					$(ROOT)/build/libraries/init/common/include \
-					../../common/include
+					../../common/ARM7/include
 
-SRCDIR		    +=  ../../common/src
+SRCDIR		    +=  ../../common/ARM7/src
 
 LLIBRARY_DIRS	+=	$(TWL_IPL_RED_ROOT)/lib/ARM7-TS/$(TWL_BUILD_DIR) \
 					./obj/ARM7-TS.LTD/$(TWL_BUILD_DIR)
