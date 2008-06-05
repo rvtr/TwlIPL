@@ -55,10 +55,35 @@ typedef struct TitleBlackList {
 static void BOOTi_ClearREG_RAM( void );
 static void BOOTi_CutAwayRegionList( u32 *regionlist, u32 start, u32 end );
 static void BOOTi_CheckTitleBlackList( ROM_Header_Short *pROMH );
+static void BOOTi_RebootCallback( void** entryp, void* mem_list, REBOOTTarget* target );
 
 // global variables--------------------------------------------------
 
 // static variables--------------------------------------------------
+
+static volatile REBOOTTarget target;
+
+// メモリリスト
+// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域（WRAMにある）を消さないように注意。
+//         WRAMリマップ後の消し漏れやバッファオーバランの懸念回避のため不要な鍵はpre clearで消す。
+// [TODO] WRAM_0_1はちゃんと消えてる？blowfishやaes鍵を引き渡しているので心配
+static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + COPY_HEADER_NUM_MAX + 2 + POST_CLEAR_NUM_MAX + 1] = 
+{
+	// pre clear
+	HW_WRAM_B_OR_C_MIRROR,   SYSM_OWN_ARM7_WRAM_ADDR_END - HW_WRAM_B_OR_C_MIRROR, // SYSM_OWN_ARM7_WRAM_ADDRとHW_WRAM_Bをまとめてクリア
+	SYSM_OWN_ARM7_MMEM_ADDR, SYSM_OWN_ARM7_MMEM_ADDR_END - SYSM_OWN_ARM7_MMEM_ADDR,
+	SYSM_OWN_ARM9_MMEM_ADDR, SYSM_OWN_ARM9_MMEM_ADDR_END - SYSM_OWN_ARM9_MMEM_ADDR,
+	OS_BOOT_CODE_BUF_END, 1,     // REBOOTコアコードとスタックの隙間サイズはメモリリスト完成後に差し替える（NULLではREBOOT_GetCoreStackSizeが失敗する）
+	HW_WRAM_BASE, HW_WRAM_SIZE,  // 共有WRAM　　Launcherの特殊配置なので、BASEからサイズぶん
+	HW_WRAM_C, HW_WRAM_C_SIZE,
+	NULL,
+	// copy forward
+	NULL,
+	// copy backward
+	NULL,
+	// post clear
+	NULL,
+};
 
 static u32 twl_post_clear_list[POST_CLEAR_NUM_MAX + 1] = 
 {
@@ -103,6 +128,21 @@ BOOL BOOT_WaitStart( void )
 		// 最適化されるとポインタを初期化しただけでは何もコードは生成されません
 		ROM_Header *th = (ROM_Header *)SYSM_APP_ROM_HEADER_BUF;          // TWL拡張ROMヘッダ（DSアプリには無い）
 		ROM_Header *dh = (ROM_Header *)(SYSMi_GetWork()->romHeaderNTR);  // DS互換ROMヘッダ
+		// リブート
+		REBOOTi_SetTwlRomHeaderAddr( th );
+		REBOOTi_SetRomHeaderAddr( dh );
+		REBOOTi_SetPostFinalizeCallback( BOOTi_RebootCallback );
+		OS_Boot( OS_BOOT_ENTRY_FROM_ROMHEADER, mem_list, target );
+	}
+	return FALSE;
+}
+
+static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget* target )
+{
+#pragma unused(entryp)
+		u32* mem_list = mem_list_v;
+		ROM_Header *th = (void*)REBOOTi_GetTwlRomHeaderAddr();
+		ROM_Header *dh = (void*)REBOOTi_GetRomHeaderAddr();
 		BOOL isNtrMode;
 
 		(void)OS_DisableIrq();							// ここで割り込み禁止にしないとダメ。
@@ -156,33 +196,11 @@ BOOL BOOT_WaitStart( void )
 		
 		// SDK共通リブート
 		{
-			REBOOTTarget target = REBOOT_TARGET_TWL_SYSTEM;
 			int list_count = PRE_CLEAR_NUM_MAX + 1;
 			int l;
 			u32 *post_clear_list;
 			
-			// [TODO] WRAM_0_1はちゃんと消えてる？blowfishやaes鍵を引き渡しているので心配
-			
-			// メモリリストの設定
-			// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域（WRAMにある）を消さないように注意。
-			//         WRAMリマップ後の消し漏れやバッファオーバランの懸念回避のため不要な鍵はpre clearで消す。
-			static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + COPY_HEADER_NUM_MAX + 2 + POST_CLEAR_NUM_MAX + 1] = 
-			{
-				// pre clear
-				HW_WRAM_B_OR_C_MIRROR,   SYSM_OWN_ARM7_WRAM_ADDR_END - HW_WRAM_B_OR_C_MIRROR, // SYSM_OWN_ARM7_WRAM_ADDRとHW_WRAM_Bをまとめてクリア
-				SYSM_OWN_ARM7_MMEM_ADDR, SYSM_OWN_ARM7_MMEM_ADDR_END - SYSM_OWN_ARM7_MMEM_ADDR,
-				SYSM_OWN_ARM9_MMEM_ADDR, SYSM_OWN_ARM9_MMEM_ADDR_END - SYSM_OWN_ARM9_MMEM_ADDR,
-				OS_BOOT_CODE_BUF_END, 1,     // REBOOTコアコードとスタックの隙間サイズはメモリリスト完成後に差し替える（NULLではREBOOT_GetCoreStackSizeが失敗する）
-				HW_WRAM_BASE, HW_WRAM_SIZE,  // 共有WRAM　　Launcherの特殊配置なので、BASEからサイズぶん
-				HW_WRAM_C, HW_WRAM_C_SIZE,
-				NULL,
-				// copy forward
-				NULL,
-				// copy backward
-				NULL,
-				// post clear
-				NULL,
-			};
+			*target = REBOOT_TARGET_TWL_SYSTEM;
 			
 			// copy forwardリスト設定
 			// マウント情報
@@ -258,16 +276,16 @@ BOOL BOOT_WaitStart( void )
 				{
 					if ( th->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK )
 					{
-						target = REBOOT_TARGET_TWL_SECURE;
+						*target = REBOOT_TARGET_TWL_SECURE;
 					}
 					else
 					{
-						target = REBOOT_TARGET_TWL_SYSTEM;
+						*target = REBOOT_TARGET_TWL_SYSTEM;
 					}
 				}
 				else
 				{
-					target = REBOOT_TARGET_TWL_APP;
+					*target = REBOOT_TARGET_TWL_APP;
 				}
 #ifdef SYSMENU_DISABLE_TWL_BOOT
                 while (1)
@@ -277,7 +295,7 @@ BOOL BOOT_WaitStart( void )
 			}
 			else
 			{
-				target = REBOOT_TARGET_DS_APP;
+				*target = REBOOT_TARGET_DS_APP;
 			}
 
 			// I2S停止（MCLKは動作継続）
@@ -315,14 +333,7 @@ BOOL BOOT_WaitStart( void )
                 OS_Terminate();
             }
 #endif // FIRM_USE_PRODUCT_KEYS || SYSMENU_DISABLE_RETAIL_BOOT
-
-			// リブート
-			REBOOTi_SetTwlRomHeaderAddr( th );
-			REBOOTi_SetRomHeaderAddr( dh );
-			OS_Boot( dh->s.sub_entry_address, mem_list, target );
 		}
-	}
-	return FALSE;
 }
 
 static void BOOTi_ClearREG_RAM( void )

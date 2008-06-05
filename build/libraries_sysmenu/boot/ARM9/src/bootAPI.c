@@ -35,10 +35,30 @@
 
 // function's prototype----------------------------------------------
 static void BOOTi_ClearREG_RAM( void );
+static void BOOTi_RebootCallback( void** entryp, void* mem_list, REBOOTTarget* target );
 
 // global variables--------------------------------------------------
 
 // static variables--------------------------------------------------
+
+static REBOOTTarget target;
+
+// メモリリスト
+// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域(ITCMにある)を消さないように注意。
+//         バッファオーバランのリスク回避のため不要な鍵はpre clearで消す。
+static u32 mem_list[] =
+{
+    // pre clear
+    HW_ITCM, HW_ITCM_SIZE,
+    //HW_DTCM, HW_DTCM_SIZE,
+    NULL,
+    // copy forward
+    NULL,
+    // copy backward
+    NULL,
+    // post clear
+    NULL,
+};
 
 // const data--------------------------------------------------------
 void BOOT_Init( void )
@@ -52,19 +72,33 @@ static void ie_subphandler( void )
     OS_SetIrqCheckFlag( OS_IE_SUBP );
 }
 
-// ブート準備をして、ARM7からの通知を待つ。
 void BOOT_Ready( void )
 {
 	// 最適化されるとポインタを初期化しただけでは何もコードは生成されません
 	ROM_Header *th = (ROM_Header *)SYSM_APP_ROM_HEADER_BUF;         // TWL拡張ROMヘッダ（DSアプリには無い）
 	ROM_Header *dh = (ROM_Header *)(SYSMi_GetWork()->romHeaderNTR);  // DS互換ROMヘッダ
-    BOOL isNtrMode;
-    int i;
 
 	// HOTSW終了処理待ち
 	while( ! HOTSW_isFinalized() ) {
 		OS_Sleep( 1 );
 	}
+
+	// リブート
+	REBOOTi_SetTwlRomHeaderAddr( th );
+	REBOOTi_SetRomHeaderAddr( dh );
+	REBOOTi_SetPostFinalizeCallback( BOOTi_RebootCallback );
+	OS_Boot( OS_BOOT_ENTRY_FROM_ROMHEADER, mem_list, target );
+}
+
+// ブート準備をして、ARM7からの通知を待つ。
+static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget* target )
+{
+#pragma unused(entryp)
+	u32* mem_list = mem_list_v;
+	ROM_Header *th = (void*)REBOOTi_GetTwlRomHeaderAddr();
+	ROM_Header *dh = (void*)REBOOTi_GetRomHeaderAddr();
+    BOOL isNtrMode;
+    int i;
 
     // エントリアドレスの正当性をチェックし、無効な場合は無限ループに入る。
 //  SYSMi_CheckEntryAddress();
@@ -129,24 +163,7 @@ void BOOT_Ready( void )
 
     // SDK共通リブート
 	{
-	    // メモリリストの設定
-		// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域(ITCMにある)を消さないように注意。
-		//         バッファオーバランの懸念回避のため不要な鍵はpre clearで消す。
-	    static u32 mem_list[] =
-	    {
-            // pre clear
-	        HW_ITCM, HW_ITCM_SIZE,
-	        //HW_DTCM, HW_DTCM_SIZE,
-	        NULL,
-            // copy forward
-	        NULL,
-            // copy backward
-	        NULL,
-            // post clear
-	        NULL,
-	    };
-	    
-		REBOOTTarget target = REBOOT_TARGET_TWL_SYSTEM;
+		*target = REBOOT_TARGET_TWL_SYSTEM;
 		
 		// アプリケーション選択
 		if ( ! isNtrMode )
@@ -155,16 +172,16 @@ void BOOT_Ready( void )
 			{
 				if ( th->s.titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK )
 				{
-					target = REBOOT_TARGET_TWL_SECURE;
+					*target = REBOOT_TARGET_TWL_SECURE;
 				}
 				else
 				{
-					target = REBOOT_TARGET_TWL_SYSTEM;
+					*target = REBOOT_TARGET_TWL_SYSTEM;
 				}
 			}
 			else
 			{
-				target = REBOOT_TARGET_TWL_APP;
+				*target = REBOOT_TARGET_TWL_APP;
 			}
 #ifdef SYSMENU_DISABLE_TWL_BOOT
             OS_Terminate();
@@ -172,7 +189,7 @@ void BOOT_Ready( void )
 		}
 		else
 		{
-			target = REBOOT_TARGET_DS_APP;
+			*target = REBOOT_TARGET_DS_APP;
 		}
 
 #if !defined(FIRM_USE_PRODUCT_KEYS) || defined(SYSMENU_DISABLE_RETAIL_BOOT)
@@ -185,7 +202,7 @@ void BOOT_Ready( void )
 
         // USG以前のDSアプリには無線パッチを適用
         // （キャッシュ領域の排他制御簡略化のためARM9で行う）
-        if ( target == REBOOT_TARGET_DS_APP )
+        if ( *target == REBOOT_TARGET_DS_APP )
         {
             DS_InsertWLPatch( dh );
         }
@@ -199,11 +216,6 @@ void BOOT_Ready( void )
 			OSFromFirmBuf* fromFirm = (void*)HW_FIRM_FROM_FIRM_BUF;
 			MI_CpuClearFast(fromFirm, sizeof(OSFromFirmBuf));
 		}
-
-		// 起動するターゲットの種類を指定する必要あり
-		REBOOTi_SetTwlRomHeaderAddr( th );
-		REBOOTi_SetRomHeaderAddr( dh );
-		OS_Boot( dh->s.main_entry_address, mem_list, target );
 	}
 }
 
