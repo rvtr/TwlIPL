@@ -29,6 +29,7 @@
 #include "process_fade.h"
 #include "cursor.h"
 #include "keypad.h"
+#include "debugger_hw_reset_control.h"
 
 #include <sysmenu/namut.h>
 
@@ -218,8 +219,14 @@ void* FormatProcess2(void)
 			kamiFontPrintf(24, y_pos, FONT_COLOR_BLACK, " WAIT");
 			kamiFontLoadScreenData();
 
+			// ISデバッガのハードウェアリセットを禁止する
+			DEBUGGER_HwResetDisable();
+
 			result &= NAMUT_Format();
-			
+
+			// ISデバッガのハードウェアリセットを許可する
+   			DEBUGGER_HwResetEnable();
+
 			if (result)
 			{
 				kamiFontPrintf(24, y_pos, FONT_COLOR_GREEN, " OK  ");
@@ -255,29 +262,21 @@ void* FormatProcess2(void)
 				kamiFontPrintf(24,  y_pos, FONT_COLOR_BLACK, " WAIT");
 				kamiFontLoadScreenData();
 
-//				FATFS_UnmountDrive("F:");
-//				FATFS_UnmountDrive("G:");
-	            // 指定のNANDパーティション0をFドライブにマウント
-//	            if (FATFS_MountDrive("F", FATFS_MEDIA_TYPE_NAND, 0))
+				// ISデバッガのハードウェアリセットを禁止する
+    			DEBUGGER_HwResetDisable();
+
+				// チェックディスク実行
+				if (FATFS_CheckDisk("nand:", &info, TRUE, TRUE, TRUE))
 				{
 					// チェックディスク実行
-					if (FATFS_CheckDisk("nand:", &info, TRUE, TRUE, TRUE))
+					if (FATFS_CheckDisk("nand2:", &info, TRUE, TRUE, TRUE))
 					{
-			            // 指定のNANDパーティション1をGドライブにマウント
-//			            if (FATFS_MountDrive("G", FATFS_MEDIA_TYPE_NAND, 1))
-						{
-							// チェックディスク実行
-							if (FATFS_CheckDisk("nand2:", &info, TRUE, TRUE, TRUE))
-							{
-								result = TRUE;
-							}
-						}
+						result = TRUE;
 					}
 				}
 
-				// デフォルトマウント状態に戻しておく
-//				FATFS_UnmountDrive("G:");
-//				FATFS_MountDrive("G", FATFS_MEDIA_TYPE_SD, 0);
+				// ISデバッガのハードウェアリセットを許可する
+    			DEBUGGER_HwResetEnable();
 
 				if (result == TRUE) { kamiFontPrintf(24,  y_pos, FONT_COLOR_GREEN, " OK  "); }
 				else                { kamiFontPrintf(24,  y_pos, FONT_COLOR_RED,   " NG  "); }

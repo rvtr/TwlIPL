@@ -52,15 +52,18 @@ SRCS		=	main.c \
 				kami_write_nandfirm.c \
 				hw_info.c \
 				keypad.c \
-				kami_copy_file.c
+				kami_copy_file.c \
+				debugger_hw_reset_control.c
 
 LINCLUDES	=	include \
 				../common/include \
 				$(ROOT)/build/libraries/lcfg/ARM9.TWL/include \
-				$(ROOT)/build/libraries/fs/common/include
+				$(ROOT)/build/libraries/fs/common/include \
+				../../common/ARM9/include
 
 SRCDIR		=	src \
-				../../HWInfoWriter/ARM9/src
+				../../HWInfoWriter/ARM9/src \
+				../../common/ARM9/src
 
 #LCFILE		=	# using default
 

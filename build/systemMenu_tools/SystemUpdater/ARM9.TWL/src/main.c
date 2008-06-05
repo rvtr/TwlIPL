@@ -30,6 +30,7 @@
 #include "graphics.h"
 #include "hwi.h"
 #include "keypad.h"
+#include "debugger_hw_reset_control.h"
 
 extern const char *g_strIPLSvnRevision;
 extern const char *g_strSDKSvnRevision;
@@ -115,6 +116,9 @@ TwlMain()
 	int i,j;
 
     OS_Init();
+	OS_InitThread();
+	OS_InitTick();
+	OS_InitAlarm();
     OS_InitArena();
     PXI_Init();
     OS_InitLock();
@@ -207,8 +211,12 @@ TwlMain()
 		}
 	}
 
+
 	// Ａボタン待ち
 	DrawWaitButtonA();
+
+	// ISデバッガのハードウェアリセットを禁止する
+    DEBUGGER_HwResetDisable();
 
 	// HWInfo関連の前準備
 	switch (HWI_Init( OS_AllocFromMain, OS_FreeToMain ))
@@ -230,7 +238,7 @@ TwlMain()
 	sIsFormatFinish = FALSE;
     ExeFormatAsync(FORMAT_MODE_QUICK, FormatCallback);
 	kamiFontPrintfMain( 7, 11, 8, "Now Format...");
-	while(!sIsFormatFinish);
+	while(!sIsFormatFinish){};
 	if (sFormatResult)
 	{
 		kamiFontPrintf( 0, printLine++, FONT_COLOR_GREEN, "NAND Format Success.");
@@ -358,6 +366,9 @@ TwlMain()
 			OS_Warning("Failure : FS_CreateFileAuto\n");
 		}
 	}
+
+	// ISデバッガのハードウェアリセットを許可する
+    DEBUGGER_HwResetEnable();
 
 	// 結果表示
 	while(1)

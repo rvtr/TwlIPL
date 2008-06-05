@@ -76,14 +76,17 @@ SRCS		=	main.c \
 				process_font.c \
 				process_wireless_setting.c \
 				sd_event.c \
-				hwi.c
+				hwi.c \
+				debugger_hw_reset_control.c
 
 LINCLUDES	=	../../NandInitializerRed/common/include \
 				../../NandInitializerRed/ARM9.TWL/include \
-				$(ROOT)/build/libraries/lcfg/ARM9.TWL/include
+				$(ROOT)/build/libraries/lcfg/ARM9.TWL/include \
+				../../common/ARM9/include
 
 SRCDIR		=	../../NandInitializerRed/ARM9.TWL/src \
-				../../HWInfoWriter/ARM9/src
+				../../HWInfoWriter/ARM9/src \
+				../../common/ARM9/src
 
 #LCFILE		=	# using default
 
