@@ -71,7 +71,7 @@
 /* OS_THREAD_LAUNCHER_PRIORITY 16 */
 
 /* [TODO] 以下は New WM 側に移行するほうが好ましい? */
-#define NWM_DMANO                   NWMSP_DMA_7
+#define NWM_DMANO                   NWMSP_DMA_NOT_USE // NWMのNDMAは使用しない。
 #define THREAD_PRIO_NWM_COMMMAND    9
 #define THREAD_PRIO_NWM_EVENT       7
 #define THREAD_PRIO_NWM_SDIO        8

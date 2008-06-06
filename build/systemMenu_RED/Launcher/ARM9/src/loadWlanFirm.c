@@ -633,6 +633,7 @@ BOOL PollingInstallWlanFirmware( BOOL isStartScanWDS )
 					StartScanWDS();
 				}
 #endif // DISABLE_WDS_SCAN
+				s_isFinished = TRUE; // 正常終了
 			}else {
 				// ロード失敗
 				if( !s_isHotStartWLFirm ) {
@@ -641,14 +642,14 @@ BOOL PollingInstallWlanFirmware( BOOL isStartScanWDS )
 #ifdef SDK_RELEASE	
 					PMi_SetWirelessLED( PM_WIRELESS_LED_OFF );
 #endif
-					s_isFinished = TRUE;
+					s_isFinished = TRUE; // 異常終了
 				}else {
 					// そうでない場合は、ColdStartロードで再度実行。
 					(void)InstallWlanFirmware( FALSE );
 					OS_TPrintf( "WLFIRM HotStart load failed... Start retry.\n" );
 				}
 			}
-			s_isFinished = TRUE;
+
 		}
 	}
 	return s_isFinished;
