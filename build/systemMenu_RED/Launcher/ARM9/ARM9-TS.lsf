@@ -20,15 +20,9 @@
 
 Static $(TARGET_NAME)
 {
-	Address		0x02681400
+	Address		0x02680200
 	Object		$(OBJS_STATIC)
 	Library		$(LLIBS) $(GLIBS) $(CW_LIBS)
-}
-
-Autoload REBOOT
-{
-	Address		0x02680200
-	Library		$(REBOOT_LIB)
 }
 
 Autoload ITCM

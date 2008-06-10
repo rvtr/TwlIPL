@@ -103,13 +103,10 @@ SDK_APPEND_LIBS		=		\
 							libboc$(TWL_LIBSUFFIX).a	\
 							libsfs$(TWL_LIBSUFFIX).a	\
 							libnam$(TWL_LIBSUFFIX).a	\
-							libsea$(TWL_LIBSUFFIX).a
+							libsea$(TWL_LIBSUFFIX).a	\
+							libreboot$(TWL_LIBSUFFIX).a	\
 
 LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
-
-REBOOT_LIB				=	libreboot$(TWL_LIBSUFFIX).a
-
-LDEPENDS_NEF			+=	$(REBOOT_LIB)
 
 ADDRESS_DTCM			=	0x0e000000
 
@@ -119,8 +116,6 @@ DEFAULT_COMP_ARM7		=	hyena
 #----------------------------------------------------------------------------
 # Append Flags
 
-
-MAKELCF_FLAGS			+=	-DREBOOT_LIB='$(REBOOT_LIB)'
 
 MAKEROM_FLAGS			+=	-F \
 							-DTITLEID_LO='$(TITLEID_LO)' \
