@@ -61,7 +61,7 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list, REBOOTTarget* t
 
 // static variables--------------------------------------------------
 
-static volatile REBOOTTarget target;
+static REBOOTTarget target;
 
 // メモリリスト
 // [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域（WRAMにある）を消さないように注意。
