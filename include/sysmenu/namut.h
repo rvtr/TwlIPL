@@ -137,6 +137,19 @@ BOOL NAMUTi_DestroySubBanner(const char* path);
 BOOL NAMUT_DeleteNandDirectory(const char *path);
 
 
+/*---------------------------------------------------------------------------*
+  Name:         NAMUT_ClearTWLSettings
+
+  Description:  TWL本体設定データのクリアを行います。
+
+  Arguments:    TRUE : クリアした値をNANDにライトバックします。
+				FALSE: NANDへのライトバックは行いません。
+
+  Returns:      成功ならTRUE
+ *---------------------------------------------------------------------------*/
+BOOL NAMUT_ClearTWLSettings( BOOL doWriteback );
+
+
 #endif // SDK_ARM9
 
 #ifdef __cplusplus

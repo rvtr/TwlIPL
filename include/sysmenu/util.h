@@ -55,9 +55,6 @@ extern BOOL UTL_IsLeapYear100( u32 year );									// 指定された年がうるう年か調
 extern u32  UTL_CalcPCTLInquiryCode( void );								// 問い合わせコード（１０進８桁）算出
 extern u32  UTL_CalcPCTLMasterKey( void );									// マスターキー　　（１０進５桁）算出（※内部でRTC_GetDateを使用します。）
 
-// タイトル数取得（内部でNAMを使用するので、NAM_Initが事前に呼ばれている必要あり）
-extern int  UTL_GetInstalledSoftBoxCount( void );
-
 // アプリROMヘッダの要EULAフラグ取得
 static inline BOOL UTL_IsROMHeaderEULARequired( void )
 {

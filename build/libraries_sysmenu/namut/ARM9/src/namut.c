@@ -164,8 +164,8 @@ BOOL NAMUT_Format(void)
 	// WiFi設定データをクリアします
 	NAMUTi_ClearWiFiSettings();
 
-	// SoftBoxCountの更新を行います
-	NAMUT_UpdateSoftBoxCount();
+	// 本体設定データのクリア
+	ret &= NAMUT_ClearTWLSettings( TRUE );
 
 	return ret;
 }
@@ -610,39 +610,42 @@ BOOL NAMUT_GetSoftBoxCount( u8* installed, u8* free )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         NAMUT_UpdateSoftBoxCount
+  Name:         NAMUT_ClearTWLSettings
 
-  Description:  InstalledSoftBoxCount, FreeSoftBoxCount の値を
-				現在のNANDの状態に合わせて更新します。
+  Description:  TWL本体設定データのクリアを行います。
 
   Arguments:    None.
 
   Returns:      成功ならTRUE
  *---------------------------------------------------------------------------*/
-BOOL NAMUT_UpdateSoftBoxCount( void )
+BOOL NAMUT_ClearTWLSettings( BOOL doWriteback )
 {
-	u8 installedSoftBoxCount;
-	u8 freeSoftBoxCount;
-	u8 *pBuffer;
-
-	// InstalledSoftBoxCount, FreeSoftBoxCount を数えなおす
-	if (!NAMUT_GetSoftBoxCount(&installedSoftBoxCount, &freeSoftBoxCount))
+	BOOL retval = TRUE;
+	
+	// 本体設定データのクリア。TPキャリブレーションデータは残す。
 	{
-		return FALSE;
+		LCFGTWLTPCalibData calib;
+		u32 installedSoftBoxCount;
+
+		// installedSoftBoxCountの取得
+		if ( NAM_OK != NAM_GetInstalledSoftBoxCount( &installedSoftBoxCount ) ) {
+			return FALSE;
+		}
+
+		LCFG_TSD_GetTPCalibration( &calib );
+		LCFG_ClearTWLSettings( (u8)installedSoftBoxCount );
+		LCFG_TSD_SetTPCalibration( &calib );
 	}
 
-//	OS_Printf("installedSoftBoxCount = %d\n", installedSoftBoxCount);
-//	OS_Printf("freeSoftBoxCount      = %d\n", freeSoftBoxCount);
-
-	// LCFGライブラリの静的変数に対する更新
-    LCFG_TSD_SetInstalledSoftBoxCount( installedSoftBoxCount );	
-    LCFG_TSD_SetFreeSoftBoxCount( freeSoftBoxCount );
-
 	// LCFGライブラリの静的変数の値をNANDに反映
-    pBuffer = spAllocFunc( LCFG_WRITE_TEMP );
-	if (!pBuffer) { return FALSE; }
-    (void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
-    spFreeFunc( pBuffer );
+	if( doWriteback ) {
+		u8 *pBuffer = spAllocFunc( LCFG_WRITE_TEMP );
+		if (!pBuffer) { return FALSE; }
+		// ミラーリングデータの両方に書き込みを行う。
+	    retval &= LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+	    retval &= LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+    	spFreeFunc( pBuffer );
+	}
 
 	return TRUE;
 }
@@ -752,8 +755,7 @@ static void NAMUTi_ClearWiFiSettings( void )
 #define NCFG_ADDR			0x20
 #define NTR_WIFI_DATA_SIZE	0x400
 #define TWL_WIFI_DATA_SIZE	0x600
-#define NTR_MACHINE_SETTINGS_DATA_SIZE 0x200
-	int total_size = ( NTR_WIFI_DATA_SIZE + TWL_WIFI_DATA_SIZE + NTR_MACHINE_SETTINGS_DATA_SIZE);
+	int total_size = ( NTR_WIFI_DATA_SIZE + TWL_WIFI_DATA_SIZE );
 	
     if (!NVRAMi_IsInitialized()) {
         NVRAMi_Init();
