@@ -25,8 +25,6 @@ SUBMAKES				=	\
 
 # COMPILE SWITCH　※最終ROM作成時は、全てFALSEにセットする。
 SYSM_OUTSIDE_UI			?=	FALSE
-SYSM_BROADON_UI			?=	FALSE
-
 
 # MAKEROM SWITCH ※最終ROM作成時は、TRUEにする
 DISABLE_DEBUG			?=	FALSE
@@ -90,14 +88,6 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 ifeq ($(SYSM_OUTSIDE_UI),TRUE)
 MACRO_FLAGS += -DOUTSIDE_UI
-endif
-
-ifeq ($(SYSM_BROADON_UI),TRUE)
-MACRO_FLAGS += -DBROADON_UI
-endif
-
-ifeq ($(ENABLE_AES),TRUE)
-MAKEROM_FLAGS += -a
 endif
 
 MAKEROM_ARM7_BASE		=	$(TWL_COMPONENTSDIR)/armadillo_SYSMENU/$(TWL_BUILDTYPE_ARM7)/armadillo_SYSMENU

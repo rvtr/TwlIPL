@@ -44,18 +44,14 @@ SUBDIRS =	$(LAUNCHER_DIR) \
 
 export UPDATER_RELEASE		=	TRUE
 
-export LAUNCHER_DEBUG_MODE	=	FALSE
 export DO_NOT_SHOW_LAUNCHER	=	TRUE
 export DISABLE_WDS_SCAN		=	TRUE
 export IGNORE_WLFIRM_SIGNCHECK	=	FALSE
 export DISABLE_WLFIRM_LOAD	=	FALSE
-export DISABLE_SLEEP		=	FASLE
 export SYSM_OUTSIDE_UI		=	TRUE
-export SYSM_BROADON_UI		=	FALSE
 
 # MAKEROM SWITCH for build SystemMenu
 export DISABLE_DEBUG		=	TRUE
-export ENABLE_AES			=	TRUE
 
 
 #----------------------------------------------------------------------------
