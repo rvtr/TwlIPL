@@ -190,6 +190,7 @@ void TwlMain( void )
     CAMERA_Init();
 
     // DSP初期化
+#if 0
     {
         FSFile file[1];
         MIWramSize sizeB = MI_WRAM_SIZE_128KB;
@@ -209,6 +210,7 @@ void TwlMain( void )
         }
         DSP_UnloadJpegDecoder();
     }
+#endif
 #endif // INIT_DEVICES_LIKE_UIG_LAUNCHER
 
     // 各種パラメータの取得------------
