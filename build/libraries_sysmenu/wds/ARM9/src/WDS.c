@@ -27,6 +27,9 @@
 ***********************************************************************/
 #include <sysmenu/WDS.h>
 #include <nitro/crypto/rc4.h>
+#ifdef WDS_WITHDWC
+#include <dwc.h>
+#endif
 
 //-----------------------------------------------------
 //	Macros
@@ -60,25 +63,40 @@ enum
 */
 typedef struct WDSWork
 {
-	u8				wmwork[ WM_SYSTEM_BUF_SIZE ];	///< WMライブラリ用バッファ
-	
-	u8				scanbuf[ WDS_SCAN_BUF_SIZE ] ATTRIBUTE_ALIGN(32);	///< スキャンバッファ
-	WMScanExParam	scanparam;						///< スキャンパラメータ
-	WDSCallbackFunc	scancb;							///< スキャン用コールバック
-	WDSApInfo		apinfo[ WDS_APINFO_MAX ];		///< スキャン出来たAP情報
-	u16				linklevel[ WDS_APINFO_MAX ];	///< 電波強度
-	u16				tgid[ WDS_APINFO_MAX ];			///< 複数のビーコンを受け取った際に識別用に使うTGID
-	s32				apnum;							///< スキャン出来たAP情報数
-	u32				status;							///< ステータス
-	
-	MATHCRC32Context	crcContext;
-	MATHCRC32Table		crcTable;
+	u8					wmwork[ WM_SYSTEM_BUF_SIZE ];	///< WMライブラリ用バッファ
+	u8					scanbuf[ WDS_SCAN_BUF_SIZE ] ATTRIBUTE_ALIGN(32);	///< スキャンバッファ
+	WMScanExParam		scanparam;						///< スキャンパラメータ
+	WDSCallbackFunc		scancb;							///< スキャン用コールバック
+	WDSApInfo			apinfo[ WDS_APINFO_MAX ];		///< スキャン出来たAP情報
+	u16					rssi[ WDS_APINFO_MAX ];			///< 電波強度
+	u16					tgid[ WDS_APINFO_MAX ];			///< 複数のビーコンを受け取った際に識別用に使うTGID
+	s32					apnum;							///< スキャン出来たAP情報数
+	s32					apindex;						///< スキャン出来たAPを配列内のどこに書き込むかのインデックス
+	u32					status;							///< ステータス
+	MATHCRC16Context	crcContext;						///< CRC計算用コンテキスト
+	MATHCRC16Table		crcTable;						///< CRC計算用テーブル
 } WDSWork;
 
 //-----------------------------------------------------
 //	Variables
 //-----------------------------------------------------
 static WDSWork	*gWdsWork	= NULL;
+
+//--------------------------------------------------------------------------------
+/**	WMBssDesc内のrssiのアッテネータ使用フラグを解釈し、単純に大小比較できる値に変換します
+		@param	<1> アッテネータ使用フラグを含んだRSSI
+		@return	正規化されたRSSI
+	@note
+		WMライブラリから移植。
+*///------------------------------------------------------------------------------
+static u8 WDSGetRssi8(u8 rssi)
+{
+    if (rssi & 0x0002)
+    {
+        return (u8)(rssi >> 2);
+    }
+    return (u8)((rssi >> 2) + 25);
+}
 
 //--------------------------------------------------------------------------------
 /**	UTF8 → UCS2 へ変換します
@@ -145,6 +163,9 @@ static void	WDSScanCallback( void *arg )
 				u8						rc4key[ 8 ];
 				BOOL					duplicated;
 				const u32				magic	= 'WDS!';
+				u8						*pCrcData;
+				u16						crc;
+				u32						crcLength;
 				
 				// ビーコンの重複チェック
 				duplicated = FALSE;
@@ -163,16 +184,32 @@ static void	WDSScanCallback( void *arg )
 				OS_TPrintf( "Found AP GGID : %08x TGID : %04x\n", pParam->bssDesc[i]->gameInfo.ggid, pParam->bssDesc[i]->gameInfo.tgid );
 				
 				// ビーコン内容をコピーし、暗号化解除
-				MI_CpuCopy8( pParam->bssDesc[i]->gameInfo.userGameInfo, &gWdsWork->apinfo[gWdsWork->apnum], sizeof(WDSApInfo) );
+				MI_CpuCopy8( pParam->bssDesc[i]->gameInfo.userGameInfo, &gWdsWork->apinfo[gWdsWork->apindex], sizeof(WDSApInfo) );
 				MI_CpuCopy8( &magic, &rc4key[0], 4 );
 				MI_CpuCopy8( &pParam->bssDesc[i]->bssid[2], &rc4key[4], 4 );
 				CRYPTO_RC4FastInit( &rc4context, rc4key, 8 );
-				CRYPTO_RC4FastEncrypt( &rc4context, &gWdsWork->apinfo[gWdsWork->apnum], sizeof(WDSApInfo), &gWdsWork->apinfo[gWdsWork->apnum] );
+				CRYPTO_RC4FastEncrypt( &rc4context, &gWdsWork->apinfo[gWdsWork->apindex], sizeof(WDSApInfo), &gWdsWork->apinfo[gWdsWork->apindex] );
+				
+				// CRC 判定
+				pCrcData	= (u8*)&gWdsWork->apinfo[gWdsWork->apindex];
+				crcLength	= sizeof(WDSApInfo) - sizeof(u16);
+				MATH_CRC16Update( &gWdsWork->crcTable, &gWdsWork->crcContext, pCrcData, crcLength );
+				crc	= MATH_CalcCRC16( &gWdsWork->crcTable, pCrcData, crcLength );
+				
+				// 旧バージョンの親機はCRC部分に0x0000を入れているためそれだけは受け入れる
+				if( crc != gWdsWork->apinfo[gWdsWork->apindex].crc && gWdsWork->apinfo[gWdsWork->apindex].crc != 0x0000 ) {
+					OS_TPrintf( "AP Infomation CRC Error.\n" );
+					MI_CpuClear8( &gWdsWork->apinfo[gWdsWork->apindex], sizeof(WDSApInfo) );
+					continue;
+				}
 				
 				// その他のデータを設定
-				gWdsWork->linklevel[gWdsWork->apnum]	= pParam->linkLevel[i];
-				gWdsWork->tgid[gWdsWork->apnum]			= pParam->bssDesc[i]->gameInfo.tgid;
-				gWdsWork->apnum = ( gWdsWork->apnum + 1 ) % WDS_APINFO_MAX;
+				gWdsWork->rssi[gWdsWork->apindex]	= WDSGetRssi8( (u8)pParam->bssDesc[i]->rssi );
+				gWdsWork->tgid[gWdsWork->apindex]			= pParam->bssDesc[i]->gameInfo.tgid;
+				gWdsWork->apindex = ( gWdsWork->apindex + 1 ) % WDS_APINFO_MAX;
+				gWdsWork->apnum = ( gWdsWork->apnum + 1 );
+				if( gWdsWork->apnum > WDS_APINFO_MAX )
+					gWdsWork->apnum = WDS_APINFO_MAX;
 			}
 		}
 	}
@@ -226,6 +263,10 @@ int	WDS_Initialize( void *wdsWork, WDSCallbackFunc callback, u16 dmaNo )
 	MI_CpuClear8( gWdsWork, WDS_GetWorkAreaSize() );
 	gWdsWork->status	= WDS_STATUS_INIT;
 	
+	// CRC計算用コンテキスト・テーブル初期化
+	MATH_CRC16Init( &gWdsWork->crcContext );
+	MATH_CRC16InitTable( &gWdsWork->crcTable );
+	
 	// WM ライブラリ初期化
 	errcode	= WM_Initialize( gWdsWork->wmwork, callback, dmaNo );
 	if( errcode != WM_ERRCODE_OPERATING )
@@ -272,8 +313,9 @@ int	WDS_InitializeEx( void *wdsWork, WDSCallbackFunc callback, u16 dmaNo, WDSBri
 		if( apinfo[i].isvalid == TRUE )
 		{
 			gWdsWork->apnum++;
+			gWdsWork->apindex = ( gWdsWork->apindex + 1 ) % WDS_APINFO_MAX;
 			gWdsWork->apinfo[i]		= apinfo[i].apinfo;
-			gWdsWork->linklevel[i]	= apinfo[i].rssi;
+			gWdsWork->rssi[i]	= apinfo[i].rssi;
 		}
 	}
 	
@@ -425,7 +467,7 @@ int	WDS_GetApInfoByIndex( int index, WDSBriefApInfo *briefapinfo )
 	
 	// その他設定
 	briefapinfo->isvalid		= TRUE;
-	briefapinfo->rssi			= gWdsWork->linklevel[index];
+	briefapinfo->rssi			= gWdsWork->rssi[index];
 	MI_CpuCopy8(&gWdsWork->apinfo[index], &briefapinfo->apinfo, sizeof(WDSApInfo));
 	
 	return 0;
@@ -467,6 +509,7 @@ int	WDS_GetApInfoAll( WDSBriefApInfo *briefapinfo )
 	return 0;
 }
 
+#ifdef WDS_WITHDWC
 //--------------------------------------------------------------------------------
 /**	APビーコン情報をDWCの自動接続先として設定します
 		@param	<1> 自動接続先として設定するAPビーコン情報のインデックス値(0～15)
@@ -488,7 +531,7 @@ int	WDS_SetConnectTargetByIndex( int index )
 		return -1;
 	
 	// 指定 SSID へ接続
-	//DWC_AC_SetSpecifyAp2( gWdsWork->apinfo[index].ssid, (u16)((int)gWdsWork->apinfo[index].channel-1), gWdsWork->apinfo[index].wepkey, gWdsWork->apinfo[index].encryptflag );
+	DWC_AC_SetSpecifyAp( gWdsWork->apinfo[index].ssid, gWdsWork->apinfo[index].wepkey, gWdsWork->apinfo[index].encryptflag );
 	
 	return 0;
 }
@@ -503,8 +546,6 @@ int	WDS_SetConnectTargetByIndex( int index )
 *///------------------------------------------------------------------------------
 int	WDS_SetConnectTargetByBriefApInfo( WDSBriefApInfo *briefapinfo )
 {
-#pragma unused(briefapinfo)
-	
 	SDK_ASSERT( gWdsWork );
 	
 	// スキャン中判定
@@ -512,10 +553,11 @@ int	WDS_SetConnectTargetByBriefApInfo( WDSBriefApInfo *briefapinfo )
 		return -1;
 	
 	// 指定 SSID へ接続
-	//DWC_AC_SetSpecifyAp2( briefapinfo->apinfo.ssid, (u16)((int)briefapinfo->apinfo.channel-1), briefapinfo->apinfo.wepkey, briefapinfo->apinfo.encryptflag );
+	DWC_AC_SetSpecifyAp( briefapinfo->apinfo.ssid, briefapinfo->apinfo.wepkey, briefapinfo->apinfo.encryptflag );
 	
 	return 0;
 }
+#endif
 
 //--------------------------------------------------------------------------------
 /**	APビーコン情報のAP説明文をUTF-16で得ます

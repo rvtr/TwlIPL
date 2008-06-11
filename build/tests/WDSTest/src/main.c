@@ -43,6 +43,7 @@ typedef enum AppState {
 	APP_STATE_WDSENDSCAN,
 	APP_STATE_WDSWAITENDSCAN,
 	APP_STATE_WDSCOMPLETEENDSCAN,
+        APP_STATE_WDSEND,
 	APP_STATE_WDSWAITEND,
 	APP_STATE_WDSCOMPLETEEND
 } AppState;
@@ -100,17 +101,14 @@ void NitroMain(void)
 			
 			// WDSライブラリの初期化関数を呼び出し、その非同期処理の完了を待つ
 			OS_Printf("*** WDS_Initialize\n");
+			g_appstate = APP_STATE_WDSWAITINIT;
 			if( WDS_Initialize( wdsSysBuf, WDS_Initialize_CB, 0 ) == 0 )
 			{
 				OS_Printf("WDS_Initialize successed\n");
-				// コールバックが先に返ってくる場合があるのでその対策
-				if( g_appstate < APP_STATE_WDSWAITINIT )
-				{
-					g_appstate = APP_STATE_WDSWAITINIT;
-				}
 			}
 			else {
-				OS_Panic("WDS_Initialize failed");
+				OS_TPrintf("WDS_Initialize failed");
+				g_appstate = APP_STATE_WDSCOMPLETEEND;
 			}
 			break;
 			OS_Printf("*** WDS_Initialize waiting asyncronous process\n");
@@ -127,18 +125,15 @@ void NitroMain(void)
 			
 			//OS_Printf("*** WDS_StartScan\n");
 			// ビーコンスキャン非同期処理を開始する
+			g_appstate = APP_STATE_WDSWAITSCAN;
 			if( WDS_StartScan( WDS_StartScan_CB ) == 0 )
 			{
 				if( wdsScanBeginTick == 0 )
 					wdsScanBeginTick = OS_GetTick();
-				// コールバックが先に返ってくる場合があるのでその対策
-				if( g_appstate < APP_STATE_WDSWAITSCAN )
-				{
-					g_appstate = APP_STATE_WDSWAITSCAN;
-				}
 			}
 			else {
-				OS_Panic("WDS_StartScan failed");
+				OS_TPrintf("WDS_EndScan failed");
+				g_appstate = APP_STATE_WDSEND;
 			}
 			break;
 		case APP_STATE_WDSCOMPLETESCAN:
@@ -161,17 +156,14 @@ void NitroMain(void)
 			OS_Printf("*** WDS_EndScan\n");
 			
 			// スキャンを終了させる非同期処理を開始する
+			g_appstate = APP_STATE_WDSWAITENDSCAN;
 			if( WDS_EndScan( WDS_EndScan_CB ) == 0 )
 			{
 				OS_Printf("WDS_EndScan successed\n");
-				// コールバックが先に返ってくる場合があるのでその対策
-				if( g_appstate < APP_STATE_WDSWAITENDSCAN )
-				{
-					g_appstate = APP_STATE_WDSWAITENDSCAN;
-				}
 			}
 			else {
-				OS_Panic("WDS_EndScan failed");
+				OS_TPrintf("WDS_EndScan failed");
+				g_appstate = APP_STATE_WDSEND;
 			}
 			break;
 		case APP_STATE_WDSCOMPLETEENDSCAN:
@@ -189,17 +181,15 @@ void NitroMain(void)
 					DumpWDSApInfo( &briefapinfo[i].apinfo );
 				}
 			}
-			
+			g_appstate = APP_STATE_WDSEND;
+			break;
+                case APP_STATE_WDSEND:	
 			// WDSライブラリを終了し、無線ハードの電源を落とす非同期処理を開始する
 			OS_Printf("*** WDS_End\n");
+			g_appstate = APP_STATE_WDSWAITEND;
 			if( WDS_End( WDS_End_CB ) == 0 )
 			{
 				OS_Printf("WDS_End successed\n");
-				// コールバックが先に返ってくる場合があるのでその対策
-				if( g_appstate < APP_STATE_WDSWAITEND )
-				{
-					g_appstate = APP_STATE_WDSWAITEND;
-				}
 			}
 			else {
 				OS_Panic("WDS_End failed");
@@ -208,7 +198,7 @@ void NitroMain(void)
 		case APP_STATE_WDSCOMPLETEEND:
 			// WDSライブラリの解放処理が完了した際に入って来るステート
 			
-			OS_TPrintf("WDS test successfully completed\n");
+			OS_TPrintf("WDS completed\n");
 			OS_Terminate();
 		}
 	}

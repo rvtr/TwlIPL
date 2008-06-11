@@ -50,6 +50,12 @@ extern "C" {
 */
 #define	WDS_APINFO_MAX			16
 
+/**
+	@brief	親機情報フラグ定義
+*/
+#define WDS_INFOFLAG_NOTIFY				(0x01)							///< 通知フラグ
+#define WDS_INFOFLAG_ALLOWAUTOCONNECT	(0x01 << 1)						///< インターネットフルアクセス可能フラグ
+
 //-----------------------------------------------------
 //	Types
 //-----------------------------------------------------
@@ -73,7 +79,10 @@ typedef struct WDSApInfo
 	u8		wepkey[ WDS_WEPKEY_BUF_SIZE ];				///< 親機が接続するAPのWEP キー
 	u8		channel;									///< 親機が接続したAPが使っているチャンネル
 	u8		encryptflag;								///< AP接続時にNitroWiFiが使う暗号化方式
-	u8		reserve[10];								///< 予約領域
+	u8		infoflag;									///< 親機の接続するネットの特性を記録するフラグ領域
+	u8		reserve[ 5 ];								///< 予約領域
+	u16		mtu;										///< 使用可能なMTU
+	u16		crc;										///< CRC
 } WDSApInfo;
 
 /**
@@ -83,7 +92,7 @@ typedef struct WDSBriefApInfo
 {
 	// WDSライブラリによって生成される値
 	BOOL	isvalid;
-	u16		rssi;											///< 電波強度
+	u16		rssi;		///< 電波強度
 	
 	// AP情報ビーコンそのもの
 	WDSApInfo apinfo;
@@ -198,6 +207,7 @@ int	WDS_GetApInfoByIndex( int index, WDSBriefApInfo *briefapinfo );
 *///------------------------------------------------------------------------------
 int	WDS_GetApInfoAll( WDSBriefApInfo *briefapinfo );
 
+#ifdef WDS_WITHDWC
 //--------------------------------------------------------------------------------
 /**	APビーコン情報をDWCの自動接続先として設定します
 		@param	<1> 自動接続先として設定するAPビーコン情報のインデックス値(0～15)
@@ -217,7 +227,8 @@ int	WDS_SetConnectTargetByIndex( int index );
 		スキャン中に実行した場合はエラー値を返します。
 *///------------------------------------------------------------------------------
 int	WDS_SetConnectTargetByBriefApInfo( WDSBriefApInfo *briefapinfo );
-
+#endif
+   
 //--------------------------------------------------------------------------------
 /**	APビーコン情報のAP説明文をUTF-16で得ます
 		@param	<1> AP説明文を取得する対象のAPビーコン情報
