@@ -20,6 +20,8 @@
 #include <sysmenu.h>
 
 // define data------------------------------------------
+#define TP_CL_CONFIRM_MARGIN		4				// TPキャリブレーションの座標マージン（キャリブレーション後の座標での値）
+
 // extern data------------------------------------------
 // function's prototype declaration---------------------
 static s64 UTLi_CalcRTCSecOffset( RTCDate *datep, RTCTime *timep );
@@ -76,6 +78,16 @@ void UTL_CaribrateTP( const LCFGTWLTPCalibData *pCalib )
 	OS_TPrintf("TP_calib: %4d %4d %4d %4d %4d %4d\n",
 			pCalib->data.raw_x1, pCalib->data.raw_y1, (u16)pCalib->data.dx1, (u16)pCalib->data.dy1,
 			pCalib->data.raw_x2, pCalib->data.raw_y2, (u16)pCalib->data.dx2, (u16)pCalib->data.dy2 );
+}
+
+
+// キャリブレーションが正常に行われたかチェック
+BOOL UTL_IsValidCalibration( u16 x, u16 y, u16 correct_x, u16 correct_y )
+{
+	return !( x < correct_x - TP_CL_CONFIRM_MARGIN ||
+			  x > correct_x + TP_CL_CONFIRM_MARGIN ||
+			  y < correct_y - TP_CL_CONFIRM_MARGIN ||
+			  y > correct_y + TP_CL_CONFIRM_MARGIN );
 }
 
 

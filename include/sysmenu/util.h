@@ -38,7 +38,8 @@ extern u32 UTL_SetBacklightBrightness( u8 brightness );						// バックライト輝度
 extern u32 UTL_GetBacklightBrightness( u8 *pBrightness );					// バックライト輝度ゲット
 
 // タッチパネル
-extern void UTL_CaribrateTP( const LCFGTWLTPCalibData *pCalib );
+extern void UTL_CaribrateTP( const LCFGTWLTPCalibData *pCalib );			// TPキャリブレーション
+extern BOOL UTL_IsValidCalibration( u16 x, u16 y, u16 correct_x, u16 correct_y );	// TPキャリブレーション後にタッチしたポイントが正確か？
 
 // スリープ
 extern void UTL_GoSleepMode( void );
