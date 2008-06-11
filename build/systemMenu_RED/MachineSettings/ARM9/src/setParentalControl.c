@@ -125,11 +125,7 @@
 #define MS_PARENTAL_NUMOF_PAGES             3
 
 // 項目の総数
-#ifdef BROADON_UI
-#define MS_PARENTAL_NUMOF_ELEMENTS          10
-#else   // BROADON_UI
-#define MS_PARENTAL_NUMOF_ELEMENTS          7
-#endif  // BROADON_UI
+#define MS_PARENTAL_NUMOF_ELEMENTS          12
 
 // ソフトウェアキーボードのパラメータ
 #define CHAR_LIST_CHAR_NUM                  120
@@ -274,27 +270,6 @@ static const u16 *const s_pStrSettingElemTbl[ MS_PARENTAL_NUMOF_ELEMENTS ][ LCFG
         (const u16 *)L"RATING ORGANIZATION(C)",
         (const u16 *)L"RATING ORGANIZATION(K)",
     },
-//    {
-//        (const u16 *)L"Wi-Fi制限",
-//        (const u16 *)L"Wi-Fi LOCK",
-//        (const u16 *)L"Wi-Fi LOCK(F)",
-//        (const u16 *)L"Wi-Fi LOCK(G)",
-//        (const u16 *)L"Wi-Fi LOCK(I)",
-//        (const u16 *)L"Wi-Fi LOCK(S)",
-//        (const u16 *)L"Wi-Fi LOCK(C)",
-//        (const u16 *)L"Wi-Fi LOCK(K)",
-//    },
-//    {
-//        (const u16 *)L"すれちがい通信制限",
-//        (const u16 *)L"Pass-by LOCK",
-//        (const u16 *)L"Pass-by LOCK(F)",
-//        (const u16 *)L"Pass-by LOCK(G)",
-//        (const u16 *)L"Pass-by LOCK(I)",
-//        (const u16 *)L"Pass-by LOCK(S)",
-//        (const u16 *)L"Pass-by LOCK(C)",
-//        (const u16 *)L"Pass-by LOCK(K)",
-//    },
-    
     // ページ2
     {
         (const u16 *)L"暗証番号",
@@ -328,7 +303,6 @@ static const u16 *const s_pStrSettingElemTbl[ MS_PARENTAL_NUMOF_ELEMENTS ][ LCFG
     },
     
     // ページ3
-#ifdef BROADON_UI
     {
         (const u16 *)L"ピクトチャット起動",
         (const u16 *)L"PictoChat Boot",
@@ -389,18 +363,6 @@ static const u16 *const s_pStrSettingElemTbl[ MS_PARENTAL_NUMOF_ELEMENTS ][ LCFG
         (const u16 *)L"UGC(C)",
         (const u16 *)L"UGC(K)",
     },
-#else  // BROADON_UI
-    {
-        (const u16 *)L"その他の設定(仮)",
-        (const u16 *)L"OTHER SETTINGS(None)",
-        (const u16 *)L"OTHER SETTINGS(None)(F)",
-        (const u16 *)L"OTHER SETTINGS(None)(G)",
-        (const u16 *)L"OTHER SETTINGS(None)(I)",
-        (const u16 *)L"OTHER SETTINGS(None)(S)",
-        (const u16 *)L"OTHER SETTINGS(None)(C)",
-        (const u16 *)L"OTHER SETTINGS(None)(K)",
-    },
-#endif // BROADON_UI
 };
 
 // 表示位置
@@ -409,8 +371,6 @@ static MenuPos s_settingPos[] = {
     { TRUE,  4 * 8,   6 * 8 },
     { TRUE,  4 * 8,   8 * 8 },
     { TRUE,  4 * 8,  10 * 8 },
-//    { TRUE,  4 * 8,  12 * 8 },
-//    { TRUE,  4 * 8,  14 * 8 },
 
     // ページ2
     { TRUE,  3 * 8,   6 * 8 },
@@ -418,14 +378,12 @@ static MenuPos s_settingPos[] = {
     { TRUE,  3 * 8,  10 * 8 },
 
     // ページ3
-#ifdef BROADON_UI
     { TRUE,  2 * 8,   6 * 8 },
     { TRUE,  2 * 8,   8 * 8 },
     { TRUE,  2 * 8,  10 * 8 },
     { TRUE,  2 * 8,  12 * 8 },
-#else  // BROADON_UI
-    { FALSE,  4 * 8,   6 * 8 },
-#endif // BROADON_UI
+    { TRUE,  2 * 8,  14 * 8 },
+    { TRUE,  2 * 8,  16 * 8 },
 };
 
 // 各ページの表示項目数
@@ -433,11 +391,7 @@ static const int sNumOfPageElements[] =
 {
     3,
     3,
-#ifdef BROADON_UI
-    4,
-#else  // BROADON_UI
-    1,
-#endif // BROADON_UI
+    6,
 };
 
 // 表示パラメータ
@@ -985,16 +939,18 @@ static void DrawParentalControlMenuScene( void )
         break;
         
         case 2:
-#ifdef BROADON_UI
-            PutStringUTF16( 17*8, 6*8, TXT_UCOLOR_G0, 
-                            LCFG_TSD_IsRestrictWiiPoint() ? L"Restricted" : L"Not Restricted" );
-            PutStringUTF16( 17*8, 8*8, TXT_UCOLOR_G0, 
-                            LCFG_TSD_IsRestrictBrowserBoot() ? L"Restricted" : L"Not Restricted" );
-            PutStringUTF16( 17*8, 10*8, TXT_UCOLOR_G0, 
+            PutStringUTF16( 17*8,  6*8, TXT_UCOLOR_G0, 
                             LCFG_TSD_IsRestrictPictoChatBoot() ? L"Restricted" : L"Not Restricted" );
+            PutStringUTF16( 17*8,  8*8, TXT_UCOLOR_G0, 
+                            LCFG_TSD_IsRestrictDSDownloadBoot() ? L"Restricted" : L"Not Restricted" );
+            PutStringUTF16( 17*8, 10*8, TXT_UCOLOR_G0, 
+                            LCFG_TSD_IsRestrictBrowserBoot() ? L"Restricted" : L"Not Restricted" );
             PutStringUTF16( 17*8, 12*8, TXT_UCOLOR_G0, 
-                            LCFG_TSD_IsRestrictNintendoSpot() ? L"Restricted" : L"Not Restricted" );
-#endif // BROADON_UI
+                            LCFG_TSD_IsRestrictWiiPoint() ? L"Restricted" : L"Not Restricted" );
+            PutStringUTF16( 17*8, 14*8, TXT_UCOLOR_G0, 
+                            LCFG_TSD_IsRestrictPhotoExchange() ? L"Restricted" : L"Not Restricted" );
+            PutStringUTF16( 17*8, 16*8, TXT_UCOLOR_G0, 
+                            LCFG_TSD_IsRestrictUGC() ? L"Restricted" : L"Not Restricted" );
         break;
     }
 }
@@ -1127,33 +1083,39 @@ int SetParentalControlMain( void )
                 break;
 
                 case 2:
+				   // すべてON/OFF設定なので設定関数を共通化してフラグで設定項目切り替え
                     switch( sCursorMenu )
                     {
-#ifdef BROADON_UI
-                        case 0:
-                            sBroadOnMenu = MS_BROADON_WIIPOINT;   // すべてON/OFF設定なので設定関数を共通化してフラグで設定項目切り替え
-                            SetBroadOnSettingInit();
-                            g_pNowProcess = SetBroadOnSettingMain;
-                        break;
-                        case 1:
-                            sBroadOnMenu = MS_BROADON_BROWSER;
-                            SetBroadOnSettingInit();
-                            g_pNowProcess = SetBroadOnSettingMain;
-                        break;
-                        case 2:
+					case 0:
                             sBroadOnMenu = MS_BROADON_PICTOCHAT;
                             SetBroadOnSettingInit();
                             g_pNowProcess = SetBroadOnSettingMain;
                         break;
-                        case 3:
-                            sBroadOnMenu = MS_BROADON_NINTENDOSPOT;
+                        case 1:
+                            sBroadOnMenu = MS_BROADON_DS_DOWNLOAD;
                             SetBroadOnSettingInit();
                             g_pNowProcess = SetBroadOnSettingMain;
                         break;
-#else   // BROADON_UI
-                        case 0:
+                        case 2:
+                            sBroadOnMenu = MS_BROADON_BROWSER;
+                            SetBroadOnSettingInit();
+                            g_pNowProcess = SetBroadOnSettingMain;
                         break;
-#endif  // BROADON_UI
+                        case 3:
+                            sBroadOnMenu = MS_BROADON_WIIPOINT;
+                            SetBroadOnSettingInit();
+                            g_pNowProcess = SetBroadOnSettingMain;
+                        break;
+                        case 4:
+                            sBroadOnMenu = MS_BROADON_PHOTO_EXCHANGE;
+                            SetBroadOnSettingInit();
+                            g_pNowProcess = SetBroadOnSettingMain;
+                        break;
+                        case 5:
+                            sBroadOnMenu = MS_BROADON_UGC;
+                            SetBroadOnSettingInit();
+                            g_pNowProcess = SetBroadOnSettingMain;
+                        break;
                     }
                 break;
 

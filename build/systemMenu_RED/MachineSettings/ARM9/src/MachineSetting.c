@@ -36,13 +36,7 @@
 #ifdef OUTSIDE_UI
 #define SETTING_MENU_ELEMENT_NUM			5						// 社外用
 #else  // !OUTSIDE_UI
-
-#ifdef BROADON_UI
-#define SETTING_MENU_ELEMENT_NUM			10						// BroadON用
-#else  // !BROADON_UI
-#define SETTING_MENU_ELEMENT_NUM			9						// 社内用
-#endif // BROADON_UI
-
+#define SETTING_MENU_ELEMENT_NUM			10						// 社内用
 #endif // OUTSIDE_UI
 
 // extern data------------------------------------------
@@ -156,7 +150,6 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ LCFG_T
 		(const u16 *)L"EULA(C)",
 		(const u16 *)L"EULA(K)",
 	},
-#ifdef BROADON_UI
 	{
 		(const u16 *)L"フリーソフトBOX",
 		(const u16 *)L"FREESOFT BOX",
@@ -167,7 +160,6 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ LCFG_T
 		(const u16 *)L"FREESOFT BOX(C)",
 		(const u16 *)L"FREESOFT BOX(K)",
 	},
-#endif // BROADON_UI
 #endif // OUTSIE_UI
 #if 0
 	{
@@ -184,6 +176,7 @@ static const u16 *const s_pStrSettingElemTbl[ SETTING_MENU_ELEMENT_NUM ][ LCFG_T
 };
 
 static MenuPos s_settingPos[] = {
+	{ TRUE,  4 * 8,   2 * 8 },
 	{ TRUE,  4 * 8,   4 * 8 },
 	{ TRUE,  4 * 8,   6 * 8 },
 	{ TRUE,  4 * 8,   8 * 8 },
@@ -193,7 +186,6 @@ static MenuPos s_settingPos[] = {
 	{ TRUE,  4 * 8,  16 * 8 },
 	{ TRUE,  4 * 8,  18 * 8 },
 	{ TRUE,  4 * 8,  20 * 8 },
-	{ TRUE,  4 * 8,  22 * 8 },
 };
 
 
