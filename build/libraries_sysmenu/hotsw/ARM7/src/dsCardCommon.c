@@ -386,8 +386,12 @@ HotSwState ReadRomEmulationInfo(SYSMRomEmuInfo *info)
     u32 temp;
     u32 *dst = (void*)info;
 
+    MI_CpuClear8( info, sizeof(SYSMRomEmuInfo) );
+
     // 量産用CPUでは平文アクセス防止のためリードしない
-    if ( ! (*(u8*)(OS_CHIPTYPE_DEBUGGER_ADDR) & OS_CHIPTYPE_DEBUGGER_MASK) )
+    if ( ! (*(u8*)HWi_WSYS08_ADDR & HWi_WSYS08_OP_OPT_MASK) ||
+         ! ((OS_GetRunningConsoleType() & OS_CONSOLE_SIZE_MASK) == OS_CONSOLE_SIZE_32MB)
+       )
     {
         return HOTSW_SUCCESS;
     }

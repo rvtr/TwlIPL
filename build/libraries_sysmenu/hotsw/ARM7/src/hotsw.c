@@ -369,7 +369,7 @@ static HotSwState LoadCardData(void)
             // ARM9/7で不整合が発生しないようにRomエミュレーション情報ロードは初回のみ
             if ( ! SYSMi_GetWork()->flags.hotsw.is1stCardChecked )
             {
-                // Romエミュレーション情報を取得
+                // Romエミュレーション情報を取得（開発用CPUのみ）
                 state  = ReadRomEmulationInfo(&s_romEmuInfo);
                 retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
@@ -1466,23 +1466,26 @@ void HOTSWi_TurnCardPowerOn(u32 slot)
     // 電源が落ちている最中なら待つ
     if ( (reg_MI_MC & mask) == (0x3 << shift) )
     {
-        OS_SpinWait( OS_MSEC_TO_CPUCYC(1) );
+        OS_Sleep(1);
     }
 
     if ( (reg_MI_MC & mask) == (0x0 << shift) )
     {
+        // 3DMのリセット待ち
+        OS_Sleep(1);
+
         reg_MI_MC = (u16)((reg_MI_MC & ~mask) | (0x1 << shift));
         // VDDの安定期間
-        OS_SpinWait( OS_MSEC_TO_CPUCYC(100) );
+        OS_Sleep(10);
 
         reg_MI_MC = (u16)((reg_MI_MC & ~mask) | (0x2 << shift));
         // RESBのLow期間
-        OS_SpinWait( OS_MSEC_TO_CPUCYC(1) );
+        OS_Sleep(27);
 
         reg_MI_MCCNT1_B = REG_MI_MCCNT1_RESB_MASK;
-
         // RESBのHigh期間
-        OS_SpinWait( OS_MSEC_TO_CPUCYC(100) );
+        // カードへ最初のコマンドを送るまでの待ち時間
+        OS_Sleep(120);
     }
 }
 
@@ -1765,6 +1768,12 @@ static void FinalizeHotSw(HotSwApliType type)
     ClearCardIrq();
 
 final:
+    // デバッガではTWLカードスロット２を電源ON（既にONなら何もしない）
+    if ( SYSM_IsRunOnDebugger() )
+    {
+        HOTSWi_TurnCardPowerOn( 2 );
+    }
+
     // 終了完了通知
     SYSMi_GetWork()->flags.hotsw.isFinalized = TRUE;
 }
