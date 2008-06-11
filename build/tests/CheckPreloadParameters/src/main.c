@@ -67,8 +67,9 @@ void TwlMain(void)
 	}
 	OS_TPrintf( "Country  : %s\n", s_strCountry[ s_owner.country ] );
 	
-	OS_TPrintf( "IsAgreeEULA       : %s\n", OS_IsAgreeEULA() ? "Agree" : "Not agree" );
-	OS_TPrintf( "AgreedEULAVersion : %d\n", OS_GetAgreedEULAVersion() );
+	OS_TPrintf( "IsAgreeEULA          : %s\n", OS_IsAgreeEULA() ? "Agree" : "Not agree" );
+	OS_TPrintf( "AgreedEULAVersion    : %d\n", OS_GetAgreedEULAVersion() );
+	OS_TPrintf( "ROMHeaderEULAVersion : %d\n", OS_GetROMHeaderEULAVersion() );
 	
 	OS_TPrintf( "AvailableWireless : %s\n", OS_IsAvailableWireless() ? "TRUE" : "FALSE" );
 	PMi_SetWirelessLED( OS_IsAvailableWireless() ? PM_WIRELESS_LED_ON : PM_WIRELESS_LED_OFF );
@@ -77,16 +78,17 @@ void TwlMain(void)
 		const LCFGTWLParentalControl *pPC = (const LCFGTWLParentalControl *)OS_GetParentalControlInfoPtr();
 		
 		OS_TPrintf( "ParentalControls :\n");
-		OS_TPrintf( "    Rating       : %s\n", pPC->flags.rating ? "TRUE" : "FALSE" );
-		OS_TPrintf( "    WiiPoint     : %s\n", pPC->flags.wiiPoint ? "TRUE" : "FALSE" );
-		OS_TPrintf( "    Browser      : %s\n", pPC->flags.browser ? "TRUE" : "FALSE" );
-		OS_TPrintf( "    PictoChat    : %s\n", pPC->flags.pictoChat ? "TRUE" : "FALSE" );
-		OS_TPrintf( "    NintendoSpot : %s\n", pPC->flags.nintendoSpot ? "TRUE" : "FALSE" );
-		OS_TPrintf( "    isSetPCTL    : %s\n", pPC->flags.isSetParentalControl ? "TRUE" : "FALSE" );
-		OS_TPrintf( "    RatingOgn    : %s\n", s_strRatingOgn[ pPC->ogn ] );
-		OS_TPrintf( "    RatingAge    : %d\n", pPC->ratingAge );
-		OS_TPrintf( "    SecretQ ID   : %d\n", pPC->secretQuestionID );
-		OS_TPrintf( "    Password     : %s\n", pPC->password );
+		OS_TPrintf( "    isSetParentalControl : %s\n", pPC->flags.isSetParentalControl ? "TRUE" : "FALSE" );
+		OS_TPrintf( "    PictoChat            : %s\n", pPC->flags.pictoChat ? "TRUE" : "FALSE" );
+		OS_TPrintf( "    DS Download          : %s\n", pPC->flags.dsDownload ? "TRUE" : "FALSE" );
+		OS_TPrintf( "    Browser              : %s\n", pPC->flags.browser ? "TRUE" : "FALSE" );
+		OS_TPrintf( "    WiiPoint             : %s\n", pPC->flags.wiiPoint ? "TRUE" : "FALSE" );
+		OS_TPrintf( "    PhotoExchange        : %s\n", pPC->flags.photoExchange ? "TRUE" : "FALSE" );
+		OS_TPrintf( "    UGC                  : %s\n", pPC->flags.ugc ? "TRUE" : "FALSE" );
+		OS_TPrintf( "    RatingOgn            : %s\n", s_strRatingOgn[ pPC->ogn ] );
+		OS_TPrintf( "    RatingAge            : %d\n", pPC->ratingAge );
+		OS_TPrintf( "    SecretQ ID           : %d\n", pPC->secretQuestionID );
+		OS_TPrintf( "    Password             : %s\n", pPC->password );
 		MI_CpuClear8( string, sizeof(string) );
 		srcLen = (int)pPC->secretAnswerLength;
 		dstLen = sizeof(string);
