@@ -166,6 +166,25 @@ void OS_InitFIRM(void)
 #endif
 
 #endif // SDK_ARM9
+
+#ifndef FIRM_USE_PRODUCT_KEYS
+    // 開発鍵を使っている時は量産用CPUでは起動しない
+#ifdef SDK_ARM9
+    if ( ! (*(u8*)OS_CHIPTYPE_DEBUGGER_ADDR & OS_CHIPTYPE_DEBUGGER_MASK) )
+#else   // SDK_ARM7
+    if ( ! (*(u8*)HWi_WSYS08_ADDR & HWi_WSYS08_OP_OPT_MASK) )
+#endif  // SDK_ARM7
+#else  // !FIRM_USE_PRODUCT_KEYS
+    // 量産鍵を使っている時は開発用CPUでは起動しない
+#ifdef SDK_ARM9
+    if ( *(u8*)OS_CHIPTYPE_DEBUGGER_ADDR & OS_CHIPTYPE_DEBUGGER_MASK )
+#else   // SDK_ARM7
+    if ( *(u8*)HWi_WSYS08_ADDR & HWi_WSYS08_OP_OPT_MASK )
+#endif  // SDK_ARM7
+#endif // !FIRM_USE_PRODUCT_KEYS
+    {
+        OS_Terminate();
+    }
 }
 
 #pragma profile reset

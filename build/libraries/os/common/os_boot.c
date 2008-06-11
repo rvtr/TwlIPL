@@ -116,14 +116,21 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
 #ifndef FIRM_USE_PRODUCT_KEYS
     // 開発鍵を使っている時は量産用CPUではブートしない
 #ifdef SDK_ARM9
-    if ( ! ((*(u8*)OS_CHIPTYPE_DEBUGGER_ADDR & OS_CHIPTYPE_DEBUGGER_MASK)) )
+    if ( ! (*(u8*)OS_CHIPTYPE_DEBUGGER_ADDR & OS_CHIPTYPE_DEBUGGER_MASK) )
 #else   // SDK_ARM7
-    if ( ! ((*(u8*)HWi_WSYS08_ADDR & HWi_WSYS08_OP_OPT_MASK)) )
+    if ( ! (*(u8*)HWi_WSYS08_ADDR & HWi_WSYS08_OP_OPT_MASK) )
 #endif  // SDK_ARM7
+#else  // !FIRM_USE_PRODUCT_KEYS
+    // 量産鍵を使っている時は開発用CPUではブートしない
+#ifdef SDK_ARM9
+    if ( *(u8*)OS_CHIPTYPE_DEBUGGER_ADDR & OS_CHIPTYPE_DEBUGGER_MASK )
+#else   // SDK_ARM7
+    if ( *(u8*)HWi_WSYS08_ADDR & HWi_WSYS08_OP_OPT_MASK )
+#endif  // SDK_ARM7
+#endif // !FIRM_USE_PRODUCT_KEYS
     {
         OS_Terminate();
     }
-#endif // FIRM_USE_PRODUCT_KEYS
     REBOOT_Execute(entry, wram_reg, mem_list, code_buf, stack_top, target, scfg, set_jtag, forbid_jtag, psram_4mb);
     OS_Terminate();
 }
