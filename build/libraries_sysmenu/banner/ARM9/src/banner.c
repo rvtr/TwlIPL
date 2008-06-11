@@ -25,6 +25,8 @@ typedef struct BannerCheckParam {
 	u32		size;
 }BannerCheckParam;
 
+#define MEASURE_BANNER_LOAD_TIME     0
+
 // extern data-----------------------------------------------------------------
 // function's prototype-------------------------------------------------------
 
@@ -66,7 +68,11 @@ BOOL BANNER_ReadBannerFromCARD( u32 bannerOffset, TWLBannerFile *pBanner )
 BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst )
 {
 #define PATH_LENGTH		1024
+
+#if (MEASURE_BANNER_LOAD_TIME == 1)
 	OSTick start;
+#endif
+
 	FSFile  file[1];
 	BOOL bSuccess;
 	char path[PATH_LENGTH];
@@ -75,9 +81,15 @@ BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst )
 	
 	FS_InitFile(file);
 	
+#if (MEASURE_BANNER_LOAD_TIME == 1)
 	start = OS_GetTick();
+#endif
+
 	readLen = NAM_GetTitleBootContentPathFast( path, titleID );
+	
+#if (MEASURE_BANNER_LOAD_TIME == 1)
 	OS_TPrintf( "NAM_GetTitleBootContentPath : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+#endif
 	
 	// ファイルパスを取得
 	if(readLen != NAM_OK){
@@ -85,6 +97,10 @@ BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst )
 		return FALSE;
 	}
 	
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+	start = OS_GetTick();
+#endif
+
 	// ファイルオープン
 	bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
 	if( ! bSuccess )
@@ -93,6 +109,11 @@ BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst )
 		return FALSE;
 	}
 	
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+	OS_TPrintf( "OpenFileEX : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+	start = OS_GetTick();
+#endif
+
 	// ROMヘッダのバナーデータオフセットを読み込む
 	bSuccess = FS_SeekFile(file, 0x68, FS_SEEK_SET);
 	if( ! bSuccess )
@@ -101,6 +122,12 @@ BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst )
 		FS_CloseFile(file);
 		return FALSE;
 	}
+	
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+	OS_TPrintf( "FS_SeekFile offset: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+	start = OS_GetTick();
+#endif
+	
 	readLen = FS_ReadFile(file, &offset, sizeof(offset));
 	if( readLen != sizeof(offset) )
 	{
@@ -108,9 +135,18 @@ BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst )
 		FS_CloseFile(file);
 		return FALSE;
 	}
+
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+	OS_TPrintf( "FS_ReadFile offset : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+#endif
 	
 	// バナーが存在する場合のみリード
 	if( offset ) {
+		
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+		start = OS_GetTick();
+#endif
+
 		bSuccess = FS_SeekFile(file, offset, FS_SEEK_SET);
 		if( ! bSuccess )
 		{
@@ -118,6 +154,12 @@ BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst )
 			FS_CloseFile(file);
 			return FALSE;
 		}
+
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+		OS_TPrintf( "FS_SeekFile banner: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+		start = OS_GetTick();
+#endif
+		
 		readLen = FS_ReadFile( file, pDst, (s32)sizeof(TWLBannerFile) );
 		if( readLen != (s32)sizeof(TWLBannerFile) )
 		{
@@ -125,21 +167,46 @@ BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst )
 			FS_CloseFile(file);
 			return FALSE;
 		}
+
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+		OS_TPrintf( "FS_ReadFile banner: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+		start = OS_GetTick();
+#endif
+		
 		if( !BANNER_CheckBanner( pDst ) )
 		{
 			// 正当性チェック失敗の場合はバッファクリア
 			MI_CpuClearFast( pDst, sizeof(TWLBannerFile) );
 		}
+
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+		OS_TPrintf( "check banner: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+#endif
+
 	}else {
 		// バナーが存在しない場合はバッファクリア
 		MI_CpuClearFast( pDst, sizeof(TWLBannerFile) );
 	}
 	
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+	start = OS_GetTick();
+#endif
+
 	FS_CloseFile(file);
+	
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+	OS_TPrintf( "close file : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+	start = OS_GetTick();
+#endif
 	
 	// サブバナーファイルを読み込んでみる
 	if(NAM_OK == NAM_GetTitleBannerFilePath( path, titleID ))
 	{
+
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+		OS_TPrintf( "NAM_GetTitleBannerFilePath : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+		start = OS_GetTick();
+#endif
 		if( FS_OpenFileEx(file, path, FS_FILEMODE_R) )
 		{
 			TWLSubBannerFile subBanner;
@@ -153,16 +220,21 @@ BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst )
 					// 成功したのでコピーする
 					pDst->h = subBanner.h;
 					pDst->anime = subBanner.anime;
-					OS_TPrintf("BANNER_ReadBanner_NAND : subbanner check succeed. id=%.16x\n", titleID);
+//					OS_TPrintf("BANNER_ReadBanner_NAND : subbanner check succeed. id=%.16x\n", titleID);
 				}else
 				{
-					OS_TPrintf("BANNER_ReadBanner_NAND : subbanner check failed. id=%.16x\n", titleID);
+//					OS_TPrintf("BANNER_ReadBanner_NAND : subbanner check failed. id=%.16x\n", titleID);
 				}
 			}else
 			{
 				OS_TPrintf("BANNER_ReadBanner_NAND : subbanner read failed. id=%.16x\n", titleID);
 			}
 		}
+
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+		OS_TPrintf( "open-read-close-check subbanner : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+#endif
+
 	}
 	
 	return TRUE;

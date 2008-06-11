@@ -201,6 +201,17 @@ Autoload WRAM
 	
 	Library		libathdrv_sp$(LIBSUFFIX).a (.bss)
 	Library		libathdrv_sp$(LIBSUFFIX).a (.data)
+
+	# FATFS core symbols
+	Object OBJECT(FATFSi_lfi2text, libfatfs_sp$(LIBSUFFIX).a) (.text) # 360 BYTEs
+	Object OBJECT(FATFSi_pc_findin, libfatfs_sp$(LIBSUFFIX).a) (.text) # 904 BYTEs
+	Object OBJECT(FATFSi_pc_patcmp_vfat, libfatfs_sp$(LIBSUFFIX).a) (.text) # 436 BYTEs
+	Object OBJECT(FATFSi_pc_ascii_mfile, libfatfs_sp$(LIBSUFFIX).a) (.text) # 160 BYTEs
+	Object OBJECT(FATFSi_map_ascii_to_unicode, libfatfs_sp$(LIBSUFFIX).a) (.text) # 48 BYTEs
+	Object OBJECT(SDCARD_Intr_Thread, libfatfs_sp$(LIBSUFFIX).a) (.text) # 520 BYTEs
+	Object OBJECT(FATFSi_unicode_cmp_to_ascii_char, libfatfs_sp$(LIBSUFFIX).a) (.text) # 40 BYTEs
+	Object OBJECT(FATFSi_pc_read_blk, libfatfs_sp$(LIBSUFFIX).a) (.text) # 352 BYTEs
+
 	Object		* (.rsvwram)
 }
 

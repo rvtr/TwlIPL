@@ -23,6 +23,9 @@
 #include "fs_wram.h"
 
 // define data-----------------------------------------------------------------
+
+#define MEASURE_MAKELIST_TIME     0
+
 #define CARD_BANNER_INDEX			( LAUNCHER_TITLE_LIST_NUM - 1 )
 
 #define LAUNCHER_KEY_INDEX			0 // ファームから送られてくる鍵のうちLauncherキーのインデックス
@@ -1627,7 +1630,13 @@ static void SYSMi_makeTitleIdList( void )
 	int l;
 	u8 count = 0;
 	int max = ( s_listLength < OS_TITLEIDLIST_MAX ) ? s_listLength : OS_TITLEIDLIST_MAX;
+	OSTick start;	
+#if (MEASURE_MAKELIST_TIME == 1)
+	OSTick prev;
+#endif
 	
+	// 時間計測総合
+	start = OS_GetTick();
 	if( s_pTitleIDList == NULL )
 	{
 		OS_TPrintf("SYSMi_makeTitleIdList failed: SYSM_InitNandTitleList() is not called.\n");
@@ -1672,7 +1681,22 @@ static void SYSMi_makeTitleIdList( void )
 				continue;
 			}
 			// romヘッダ読み込み
+			
+#if (MEASURE_MAKELIST_TIME == 1)
+			// 時間計測１
+			prev = OS_GetTick();
+#endif
+
 			NAM_GetTitleBootContentPathFast(path, s_pTitleIDList[l]);
+
+#if (MEASURE_MAKELIST_TIME == 1)
+			OS_TPrintf("SYSMi_makeTitleIdList : NAM_GetTitleBootContentPathFast %dms\n",OS_TicksToMilliSeconds(OS_GetTick() - prev));
+			// end時間計測１
+			
+			// 時間計測２
+			prev = OS_GetTick();
+#endif
+
 			FS_InitFile( file );
 		    bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
 			if( ! bSuccess )
@@ -1697,6 +1721,10 @@ static void SYSMi_makeTitleIdList( void )
 			}
 			FS_CloseFile(file);
 			pe_hs = (ROM_Header_Short *)&e_hs;
+			// end時間計測２
+#if (MEASURE_MAKELIST_TIME == 1)
+			OS_TPrintf("SYSMi_makeTitleIdList : read header. %dms\n",OS_TicksToMilliSeconds(OS_GetTick() - prev));
+#endif
 		}
 		
 		for(m=0;m<MAKER_CODE_MAX;m++)
@@ -1756,6 +1784,8 @@ static void SYSMi_makeTitleIdList( void )
 		}
 	}
 	list->num = count;
+	// end時間計測総合
+	OS_TPrintf("SYSMi_makeTitleIdList : total %dms\n",OS_TicksToMilliSeconds(OS_GetTick() - start));
 }
 
 

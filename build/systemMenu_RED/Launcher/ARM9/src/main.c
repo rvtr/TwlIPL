@@ -32,6 +32,8 @@
 
 #define INIT_DEVICES_LIKE_UIG_LAUNCHER
 
+#define MEASURE_TIME     1
+
 // function's prototype-------------------------------------------------------
 static void INTR_VBlank( void );
 static void deleteTmp();
@@ -134,7 +136,7 @@ void TwlMain( void )
     };
     u32 state = LOGODEMO_INIT;
     TitleProperty *pBootTitle = NULL;
-    OSTick start, end = 0;
+    OSTick allstart, start, end = 0;
     BOOL direct_boot = FALSE;
 
 #ifdef DEBUG_LAUNCHER_DUMP
@@ -149,6 +151,17 @@ void TwlMain( void )
 
     // OS初期化------------------------
     OS_InitTick();
+    
+	// start 時間計測total
+#if (MEASURE_TIME == 1)
+    allstart = OS_GetTick();
+#endif
+    
+    // start時間計測１
+#if (MEASURE_TIME == 1)
+    start = OS_GetTick();
+#endif
+    
     PM_Init();
 
     (void)OS_EnableIrq();
@@ -171,23 +184,38 @@ void TwlMain( void )
 #ifdef USE_WRAM_LOAD
 	HOTSW_Init();
 #endif
-	
+    
      //NAMの初期化
     NAM_Init( Alloc, Free );
-   
+    
     OS_TPrintf( "SYSM_work size = 0x%x\n", sizeof(SYSM_work) );
 
     // 割り込み許可--------------------
     (void)OS_SetIrqFunction(OS_IE_V_BLANK, INTR_VBlank);
     (void)OS_EnableIrqMask(OS_IE_V_BLANK);
     (void)GX_VBlankIntr(TRUE);
-
+    
     // システムの初期化----------------
     InitAllocator();                                            // ※SYSM_Init以外のSYSMライブラリ関数を呼ぶ前に
-                                                                //   Alloc, Freeで登録したメモリアロケータを初期化してください。
+
+    // end時間計測１
+#if (MEASURE_TIME == 1)
+    OS_TPrintf( "System Init Time 1: %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+#endif
+    
+    // start時間計測１-b
+#if (MEASURE_TIME == 1)
+    start = OS_GetTick();
+#endif
+                                                                    //   Alloc, Freeで登録したメモリアロケータを初期化してください。
 #ifdef INIT_DEVICES_LIKE_UIG_LAUNCHER
     // カメラ初期化
     CAMERA_Init();
+
+    // end時間計測１-b
+#if (MEASURE_TIME == 1)
+    OS_TPrintf( "Camera Init: %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+#endif
 
     // DSP初期化
 #if 0
@@ -211,11 +239,27 @@ void TwlMain( void )
         DSP_UnloadJpegDecoder();
     }
 #endif
+
 #endif // INIT_DEVICES_LIKE_UIG_LAUNCHER
 
+    // start時間計測１-c
+#if (MEASURE_TIME == 1)
+    start = OS_GetTick();
+#endif
+    
     // 各種パラメータの取得------------
     pBootTitle = SYSM_ReadParameters();                        // 本体設定データ、リセットパラメータのリード、検査用オート起動カード判定、量産ライン用キーショートカット起動判定等のリード
 	
+    // end時間計測１-c
+#if (MEASURE_TIME == 1)
+    OS_TPrintf( "SYSM_ReadParameters: %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+#endif
+
+    // start時間計測２
+#if (MEASURE_TIME == 1)
+    start = OS_GetTick();
+#endif
+    
     // TPキャリブレーション
 	UTL_CaribrateTP( LCFG_TSD_GetTPCalibrationPtr() );
 	
@@ -225,21 +269,53 @@ void TwlMain( void )
     if( !LCFG_TSD_IsFinishedInitialSetting() ) {
         // 初回起動シーケンス判定
     }
-
+    
     (void)SYSM_GetCardTitleList( s_titleList );                 // カードアプリリストの取得（カードアプリはs_titleList[0]に格納される）
+    // end時間計測２
+#if (MEASURE_TIME == 1)
+    OS_TPrintf( "GetCardTitleList Time : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+#endif
 
+    // start時間計測3
+#if (MEASURE_TIME == 1)
+    start = OS_GetTick();
+#endif
 	// TMPフォルダのクリーン
 	SYSM_DeleteTmpDirectory( pBootTitle );
+    // end時間計測3
+#if (MEASURE_TIME == 1)
+    OS_TPrintf( "TmpClean : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+#endif
 
+    // start時間計測4
+#if (MEASURE_TIME == 1)
+    start = OS_GetTick();
+#endif
     // NANDタイトルリストの準備
     SYSM_InitNandTitleList();
+    // end時間計測4
+#if (MEASURE_TIME == 1)
+    OS_TPrintf( "InitNandTitleList : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+#endif
 
+    // start時間計測5
+#if (MEASURE_TIME == 1)
+    start = OS_GetTick();
+#endif
     // 「ダイレクトブートでない」なら
     if( !pBootTitle ) {
         // NAND & カードアプリリスト取得
         (void)SYSM_GetNandTitleList( s_titleList, LAUNCHER_TITLE_LIST_NUM );    // NANDアプリリストの取得（内蔵アプリはs_titleList[1]から格納される）
     }
+    // end時間計測5
+#if (MEASURE_TIME == 1)
+    OS_TPrintf( "GetNandTitleList : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+#endif
 
+    // start時間計測6
+#if (MEASURE_TIME == 1)
+    start = OS_GetTick();
+#endif
     // 「ダイレクトブートでない」もしくは
     // 「ダイレクトブートだが、ロゴデモ表示」の時、各種リソースのロード------------
     if( !pBootTitle ||
@@ -251,9 +327,17 @@ void TwlMain( void )
 		timestamp = OS_GetSharedFontTimestamp();
 		if( timestamp > 0 ) OS_TPrintf( "SharedFont timestamp : %08x\n", timestamp );
 	}
+    // end時間計測6
+#if (MEASURE_TIME == 1)
+    OS_TPrintf( "GetSharedFont : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+#endif
 
     // 開始ステートの判定--------------
 
+    // start時間計測7
+#if (MEASURE_TIME == 1)
+    start = OS_GetTick();
+#endif
     if( pBootTitle ) {
         // ダイレクトブートなら、ロゴ、ランチャーを飛ばしてロード開始
         if( pBootTitle->flags.isLogoSkip ) {
@@ -292,19 +376,36 @@ void TwlMain( void )
                     s_strmThreadStack + THREAD_STACK_SIZE / sizeof(u64),
                     THREAD_STACK_SIZE, STREAM_THREAD_PRIO);
     OS_WakeupThreadDirect(&s_strmThread);
+    // end時間計測7
+#if (MEASURE_TIME == 1)
+    OS_TPrintf( "time 7 (etc...) : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+#endif
 
 
+    // start時間計測8
+#if (MEASURE_TIME == 1)
+    start = OS_GetTick();
+#endif
     // 無線ファームウェアを無線モジュールにダウンロードする。
 #ifndef DISABLE_WLFIRM_LOAD
     if( FALSE == InstallWlanFirmware( SYSM_IsHotStart() ) ) {
         OS_TPrintf( "ERROR: Wireless firmware download failed!\n" );
     }
 #endif // DISABLE_WLFIRM_LOAD
+    // end時間計測8
+#if (MEASURE_TIME == 1)
+    OS_TPrintf( "Load WlanFirm Time : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+#endif
 
     if( SYSM_IsFatalError() ) {
         // FATALエラー処理
     }
 
+	// end 時間計測total
+#if (MEASURE_TIME == 1)
+    OS_TPrintf( "Total Time : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - allstart ) );
+#endif
+    
     // メインループ--------------------
     while( 1 ) {
         OS_WaitIrq(1, OS_IE_V_BLANK);                           // Vブランク割り込み待ち
