@@ -1671,8 +1671,10 @@ AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 		s_calc_hash = NULL;
 	}
 	
-	// デバッガ動作以外の時のみTWL設定データにブートするタイトルのTitleIDとplatformCodeを保存。
-    if( !SYSM_IsRunOnDebugger() ) {
+	// デバッガ接続中以外の時のみTWL設定データにブートするタイトルのTitleIDとplatformCodeを保存。
+    if( !SYSM_IsRunOnDebugger() ||                         // スタンドアロン
+        (OSi_DetectDebugger() & OS_CONSOLE_TWLDEBUGGER) )  // デバッグ時
+    {
 		u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
 		if( pBuffer != NULL ) {
 			LCFG_TSD_SetLastTimeBootSoftTitleID ( pBootTitle->titleID );
