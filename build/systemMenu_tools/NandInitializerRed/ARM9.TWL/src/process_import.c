@@ -104,7 +104,6 @@ static void MakeFullPathForSD(char* file_name, char* full_path);
 static void ShowTitleinfoDifference( NAMTitleInfo* titleInfoNand, NAMTitleInfo* titleInfoSd);
 void ProgessInit(void);
 void ProgressDraw(f32 ratio);
-static void* ImportProcessReturn0(void);
 static void* ImportProcessReturn1(void);
 
 static void* ImportIndividuallyProcess0(void);
@@ -141,19 +140,6 @@ void* ImportProcess0(void)
     FSFile    dir;
 	int i;
 
-	// 2008/05/20 もうcert.sysは必要なし。
-#if 0
-    FATFSFileHandle fat_handle;
-	// F:sys/cert.sysが存在しないなら出直してもらう
-    fat_handle = FATFS_OpenFile(E_TICKET_FILE_PATH_IN_NAND, "r");
-    if (!fat_handle)
-    {
-		FATFS_CloseFile(fat_handle);
-		return ImportProcessReturn0;
-    }
-	FATFS_CloseFile(fat_handle);
-#endif
-	
 	// 文字列全クリア
 	kamiFontClear();
 
@@ -325,51 +311,6 @@ void* ImportProcess2(void)
 	}
 
 	return ImportProcess1;
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         ImportProcessReturn0
-
-  Description:  
-
-  Arguments:    None.
-
-  Returns:      next sequence
- *---------------------------------------------------------------------------*/
-
-void* ImportProcessReturn0(void)
-{
-	int i;
-
-	// 文字列全クリア
-	kamiFontClear();
-	kamiFontPrintf(2,  10, FONT_COLOR_RED, "%s is not exist", E_TICKET_FILE_PATH_IN_NAND);
-	kamiFontPrintf(2,  11, FONT_COLOR_RED, "You should write e-ticket", E_TICKET_FILE_PATH_IN_NAND);
-	kamiFontPrintf(2,  12, FONT_COLOR_RED, "beforehand.", E_TICKET_FILE_PATH_IN_NAND);
-	kamiFontPrintf(2,  22, FONT_COLOR_BLACK, "B Button : return to menu");
-
-	// バージョン表示
-	kamiFontPrintf(2, 1, FONT_COLOR_BLACK, "Import TAD from SD");
-	kamiFontPrintf(0, 2, FONT_COLOR_BLACK, "--------------------------------");
-
-	// 背景全クリア
-	for (i=0;i<24;i++)
-	{
-		kamiFontFillChar( i, BG_COLOR_TRANS, BG_COLOR_TRANS );
-	}
-
-	// 背景上部
-	kamiFontFillChar( 0, BG_COLOR_PINK, BG_COLOR_PINK );
-	kamiFontFillChar( 1, BG_COLOR_PINK, BG_COLOR_PINK );
-	kamiFontFillChar( 2, BG_COLOR_PINK, BG_COLOR_TRANS );
-
-	// カーソル消去
-	SetCursorPos((u16)200, (u16)200);
-
-	// フォントスクリーンデータロード
-	kamiFontLoadScreenData();
-
-	FADE_IN_RETURN( ImportProcessReturn1 );
 }
 
 /*---------------------------------------------------------------------------*

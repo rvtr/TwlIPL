@@ -70,6 +70,7 @@ SRCS		=	main.c \
 				process_auto.c \
 				process_fade.c \
 				process_font.c \
+				process_mcu.c \
 				process_wireless_setting.c \
 				sd_event.c \
 				hwi.c \

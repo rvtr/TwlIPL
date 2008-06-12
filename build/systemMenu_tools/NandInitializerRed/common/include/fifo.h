@@ -65,6 +65,7 @@ typedef enum KamiCommand
     KAMI_NAND_IO,
     KAMI_NVRAM_IO,
     KAMI_MCU_IO,
+    KAMI_MCU_WRITE_FIRM,
     KAMI_ARM7_IO,
     KAMI_CDC_GO_DSMODE,
     KAMI_CLEAR_NAND_ERRORLOG,

@@ -27,6 +27,7 @@
 #include "process_fade.h"
 #include "process_wireless_setting.h"
 #include "process_font.h"
+#include "process_mcu.h"
 #include "cursor.h"
 #include "keypad.h"
 
@@ -50,6 +51,7 @@ enum {
 	MENU_IMPORT_TAD,
 	MENU_IMPORT_NANDFIRM,
 	MENU_IMPORT_NORFIRM,
+	MENU_WRITE_MCU_DATA,
 #endif // NAND_INITIALIZER_LIMITED_MODE
 	NUM_OF_MENU_SELECT
 };
@@ -86,7 +88,8 @@ static const MenuAndColor sMenuArray[] =
 #ifndef   NAND_INITIALIZER_LIMITED_MODE
 	{"    IMPORT TAD FROM SD     ", BG_COLOR_PINK   },
 	{"    IMPORT NANDFIRM FROM SD", BG_COLOR_GREEN  },
-	{"    IMPORT NORFIRM  FROM SD", BG_COLOR_VIOLET }
+	{"    IMPORT NORFIRM  FROM SD", BG_COLOR_VIOLET },
+	{"    WRITE MCU DATA         ", BG_COLOR_GRAY   }
 #endif // NAND_INITIALIZER_LIMITED_MODE
 };
 
@@ -238,6 +241,8 @@ void* TopmenuProcess2(void)
 		FADE_OUT_RETURN( NandfirmProcess0 );
 	case MENU_IMPORT_NORFIRM:
 		FADE_OUT_RETURN( NorfirmProcess0 );
+	case MENU_WRITE_MCU_DATA:
+		FADE_OUT_RETURN( mcuProcess0 );
 #endif // NAND_INITIALIZER_LIMITED_MODE
 	}
 

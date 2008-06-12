@@ -225,6 +225,50 @@ KAMIResult kamiNvramIo(u32 address, void* buffer, u32 size, BOOL is_read)
     return KAMI_RESULT_SEND_ERROR;
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         kamiMcuWriteFirm
+
+  Description:  MCUファーム更新関数
+
+  Arguments:    buffer : new mcu data buffer
+
+  Returns:      
+ *---------------------------------------------------------------------------*/
+
+KAMIResult kamiMcuWriteFirm(void* buffer )
+{
+    OSIntrMode enabled;
+    u8  data[4];
+	int i;
+
+	// ロック
+    enabled = OS_DisableInterrupts();
+    if (kamiWork.lock)
+    {
+        (void)OS_RestoreInterrupts(enabled);
+        return KAMI_RESULT_BUSY;
+    }
+    kamiWork.lock = TRUE;
+    (void)OS_RestoreInterrupts(enabled);
+
+    kamiWork.callback = NULL;
+    kamiWork.arg = 0;
+
+	// データ作成
+	KAMI_PACK_U32(&data[0], &buffer);
+
+    if (KamiSendPxiCommand(KAMI_MCU_WRITE_FIRM, 4, (u8)0))
+    {
+	    for (i = 0; i < 4; i+=3) 
+		{
+	        KamiSendPxiData(&data[i]);
+		}
+	    KamiWaitBusy();
+	    return (KAMIResult)kamiWork.result;
+    }
+
+    return KAMI_RESULT_SEND_ERROR;
+}
 
 /*---------------------------------------------------------------------------*
   Name:         MCUアクセス関数

@@ -22,6 +22,7 @@
 #include "twl/cdc.h"
 #include "formatter.h"
 #include "nvram.h"
+#include "mcu_firm.h"
 #include <twl/ltdmain_begin.h>
 #include <twl/mcu.h>
 #include <twl/camera.h>
@@ -129,6 +130,7 @@ static void KamiPxiCallback(PXIFifoTag tag, u32 data, BOOL err)
 		case KAMI_EXE_FORMAT:
 		case KAMI_NAND_IO:
 		case KAMI_NVRAM_IO:
+		case KAMI_MCU_WRITE_FIRM:
 		case KAMI_MCU_IO:
 		case KAMI_ARM7_IO:
 		case KAMI_CDC_GO_DSMODE:
@@ -246,6 +248,22 @@ static void KamiThread(void *arg)
 					NVRAMi_Write( adress, buffer, size );
 				}
 	            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
+			}
+			break;
+
+		case KAMI_MCU_WRITE_FIRM:
+			{
+				void* buffer;
+				KAMI_UNPACK_U32((u32 *)(&buffer), &kamiWork.data[1]);
+
+				if ( MCU_WriteFirm( buffer ) )
+				{
+		            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
+				}
+				else
+				{
+		            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS_FALSE);
+				}
 			}
 			break;
 

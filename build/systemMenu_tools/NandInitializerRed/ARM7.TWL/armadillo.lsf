@@ -42,6 +42,7 @@ Ltdautoload SCRWRAM
 	Object		$(OBJDIR)/kami_pxi.o
 	Object		$(OBJDIR)/formatter.o
 	Object		$(OBJDIR)/nvram_misc.o
+	Object      $(OBJDIR)/mcu_firm.o
 
 	Library		libsea_sp$(LIBSUFFIX).a
 	Library		libcrypto_sp$(LIBSUFFIX).a
