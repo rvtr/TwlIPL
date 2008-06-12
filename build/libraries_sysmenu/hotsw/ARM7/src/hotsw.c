@@ -92,6 +92,7 @@ static void ClearCardFlgs(void);
 
 static void FinalizeHotSw(HotSwApliType type);
 static void ForceNitroModeToFinalize(void);
+static void ForceNormalModeToFinalize(void);
 static BOOL ChangeGameMode(void);
 static void ClearCardIrq(void);
 static void ClearAllCardRegister(void);
@@ -1747,15 +1748,7 @@ static void FinalizeHotSw(HotSwApliType type)
             ForceNitroModeToFinalize();
         }
         else if(rh->s.access_control.game_card_on){
-            McPowerOn();
-
-            s_cbData.modeType = HOTSW_MODE2;
-            (void)LoadTable();
-            (void)ReadIDNormal(&s_cbData);
-            (void)ReadBootSegNormal(&s_cbData);
-            SYSMi_GetWork()->appCardID = s_cbData.id_nml;
-
-            OS_PutString("- game card on flg is TRUE : now Normal Mode\n");
+            ForceNormalModeToFinalize();
         }
         break;
 
@@ -1782,6 +1775,7 @@ final:
     }
 
     // 終了完了通知
+    SYSMi_GetWork()->gameCommondParam = s_cbData.gameCommondParam;
     SYSMi_GetWork()->flags.hotsw.isFinalized = TRUE;
 }
 
@@ -1803,6 +1797,27 @@ static void ForceNitroModeToFinalize(void)
     }
 
     SYSMi_GetWork()->appCardID = s_cbData.id_gam;
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:        ForceNormalModeToFinalize
+
+  Description: Normal Modeに強制移行させる
+ *---------------------------------------------------------------------------*/
+static void ForceNormalModeToFinalize(void)
+{
+    McPowerOff();  // 既にOFFになっているため実質的には無効
+    McPowerOn();
+
+    s_cbData.modeType = HOTSW_MODE2;
+    (void)LoadTable();
+    (void)ReadIDNormal(&s_cbData);
+    (void)ReadBootSegNormal(&s_cbData);
+    s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
+    SYSMi_GetWork()->appCardID = s_cbData.id_nml;
+
+    OS_PutString("- game card on flg is TRUE : now Normal Mode\n");
 }
 
 
