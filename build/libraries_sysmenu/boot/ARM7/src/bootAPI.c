@@ -330,14 +330,11 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 
 static void BOOTi_ClearREG_RAM( void )
 {
-	if( SYSMi_GetWork()->flags.common.isCardBoot ) {
 #ifdef DEBUG_USED_CARD_SLOT_B_
-		reg_MI_MC_SWP ^= 0x80;											// カードスロットのスワップ
+	reg_MI_MC_SWP ^= 0x80;												// カードスロットのスワップ
 #endif
-		*(u32 *)HW_BOOT_CHECK_INFO_BUF = SYSMi_GetWork()->nCardID;		// カード抜けチェックバッファにカードIDをセット
-	}else {
-		*(u32 *)HW_BOOT_CHECK_INFO_BUF = 0;
-	}
+																		// カード抜けチェックバッファにカードIDをセット
+	((SDKBootCheckInfo*)HW_BOOT_CHECK_INFO_BUF)->nCardID = SYSMi_GetWork()->appCardID;
 	
 	*(vu32 *)HW_RESET_PARAMETER_BUF = 0;								// リセットバッファをクリア
 	

@@ -91,6 +91,7 @@ static HotSwState ReadSecureModeCardData(void);
 static void ClearCardFlgs(void);
 
 static void FinalizeHotSw(HotSwApliType type);
+static void ForceNitroModeToFinalize(void);
 static BOOL ChangeGameMode(void);
 static void ClearCardIrq(void);
 static void ClearAllCardRegister(void);
@@ -408,7 +409,7 @@ static HotSwState LoadCardData(void)
                 RegisterRomEmuInfo();
                 // 排他制御ここまで
                 UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
-                goto end;
+                goto finalize;
             }
         }
 
@@ -1588,7 +1589,6 @@ static void HotSwThread(void *arg)
                         SYSMi_GetWork()->flags.hotsw.isExistCard         = TRUE;
                         SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
                         SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = TRUE;
-                        SYSMi_GetWork()->nCardID = s_cbData.id_gam;
 #ifdef USE_WRAM_LOAD
                         SYSMi_GetWork()->flags.hotsw.isCardGameMode      = TRUE;
 #endif
@@ -1671,11 +1671,14 @@ static void ClearCardFlgs(void)
 
 ・カードが挿さっていて
   TWL NANDアプリ起動なら
+        NANDアプリヘッダ指定無し
+          → スロット電源OFF
+
         NANDアプリヘッダのゲームカードONフラグ=1
           → NANDアプリ起動後もカード電源(OFF後)ONにしてNormalモードにする
 
-        NANDアプリヘッダのゲームカードONフラグ=0
-          → スロット電源OFF
+        NANDアプリヘッダのゲームカードNITROモードフラグ=1
+          → NTR NANDアプリ同様
 
   NTR NANDアプリ起動なら
         カード種別問わず、一度スロット電源OFFしてから、GAMEモードに遷移させておく。
@@ -1691,8 +1694,9 @@ static void ClearCardFlgs(void)
  *---------------------------------------------------------------------------*/
 static void FinalizeHotSw(HotSwApliType type)
 {
+    ROM_Header* rh = (void*)SYSM_APP_ROM_HEADER_BUF;
     static BOOL finalized = FALSE;
-    BOOL    isCardExist;
+    BOOL    isAccessible;
 
     if(finalized){
         return;
@@ -1705,17 +1709,19 @@ static void FinalizeHotSw(HotSwApliType type)
     // ポーリングスレッドを消去
     OS_KillThread( &HotSwThreadData.monitorThread, NULL );
 
+    SYSMi_GetWork()->appCardID = 0;
+
     if(type == HOTSW_APLITYPE_CARD){
-        ClearCardIrq();
+        SYSMi_GetWork()->appCardID = s_cbData.id_gam;
         goto final;
     }
 
-    isCardExist = HOTSW_IsCardExist();
+    isAccessible = HOTSW_IsCardAccessible();
 
     McPowerOff();
 
-    // カードがなかったら、レジスタクリアしてリターン
-    if(!isCardExist){
+    // カードが無い（アクセスできない）なら、レジスタクリアしてリターン
+    if(!isAccessible){
         ClearAllCardRegister();
         goto final;
     }
@@ -1725,14 +1731,7 @@ static void FinalizeHotSw(HotSwApliType type)
       case HOTSW_APLITYPE_NTR_NAND:
         OS_PutString("Finalize Type : NTR NAND Application\n");
 
-        if(!ChangeGameMode()){
-            ClearAllCardRegister();
-            McPowerOff();
-
-            OS_PutString("Failed To Change Game Mode... Card Slot Power Off\n");
-
-            goto final;
-        }
+        ForceNitroModeToFinalize();
         break;
 
       // TWL NAND Application Boot
@@ -1744,12 +1743,17 @@ static void FinalizeHotSw(HotSwApliType type)
         }
 
         // NANDアプリヘッダはコピー済み
-        if(((ROM_Header*)SYSM_APP_ROM_HEADER_BUF)->s.access_control.game_card_on){
+        if(rh->s.access_control.game_card_nitro_mode){
+            ForceNitroModeToFinalize();
+        }
+        else if(rh->s.access_control.game_card_on){
             McPowerOn();
 
             s_cbData.modeType = HOTSW_MODE2;
             (void)LoadTable();
+            (void)ReadIDNormal(&s_cbData);
             (void)ReadBootSegNormal(&s_cbData);
+            SYSMi_GetWork()->appCardID = s_cbData.id_nml;
 
             OS_PutString("- game card on flg is TRUE : now Normal Mode\n");
         }
@@ -1765,10 +1769,13 @@ static void FinalizeHotSw(HotSwApliType type)
         break;
     }
 
+final:
     ClearCardIrq();
 
-final:
-    // デバッガではTWLカードスロット２を電源ON（既にONなら何もしない）
+    // デバッガではTWLカードスロット２を電源ON
+    //（既にONなら何もしない）
+    // NANDアプリ起動時はデフォルトではカードI/FをOFFにするが、
+    // デバッガモニタではカードI/Fが必要なためスロット２を使用
     if ( SYSM_IsRunOnDebugger() )
     {
         HOTSWi_TurnCardPowerOn( 2 );
@@ -1776,6 +1783,26 @@ final:
 
     // 終了完了通知
     SYSMi_GetWork()->flags.hotsw.isFinalized = TRUE;
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:        ForceNitroModeToFinalize
+
+  Description: Nitro互換のGame Modeに強制移行させる
+ *---------------------------------------------------------------------------*/
+static void ForceNitroModeToFinalize(void)
+{
+    s_cbData.id_gam = 0;
+
+    if(!ChangeGameMode()){
+        ClearAllCardRegister();
+        McPowerOff();
+
+        OS_PutString("Failed To Change Game Mode... Card Slot Power Off\n");
+    }
+
+    SYSMi_GetWork()->appCardID = s_cbData.id_gam;
 }
 
 

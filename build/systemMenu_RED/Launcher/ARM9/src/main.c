@@ -218,7 +218,6 @@ void TwlMain( void )
 #endif
 
     // DSPèâä˙âª
-#if 0
     {
         FSFile file[1];
         MIWramSize sizeB = MI_WRAM_SIZE_128KB;
@@ -238,8 +237,6 @@ void TwlMain( void )
         }
         DSP_UnloadJpegDecoder();
     }
-#endif
-
 #endif // INIT_DEVICES_LIKE_UIG_LAUNCHER
 
     // startéûä‘åvë™ÇP-c
