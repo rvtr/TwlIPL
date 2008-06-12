@@ -574,6 +574,7 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 	OSThread thread;
 	BOOL ret = FALSE;
 	s32  nam_result;
+	BOOL overwrite = FALSE;
 
 	// フルパスを作成
 	MakeFullPathForSD(file_name, full_path);
@@ -585,11 +586,13 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 	}
 
 	// NANDの情報を取得
-	if ( option != TAD_WRITE_OPTION_OVERWRITE && NAM_ReadTitleInfo(&titleInfoTmp, tadInfo.titleInfo.titleId) == NAM_OK)
+	if ( option != TAD_WRITE_OPTION_OVERWRITE && NAM_ReadTitleInfo(&titleInfoTmp, tadInfo.titleInfo.titleId) == NAM_OK )
 	{
 		// NANDに既にインストールされているかどうか確認する
 		if (tadInfo.titleInfo.titleId == titleInfoTmp.titleId)
 		{
+			overwrite = TRUE;
+
 			switch (option)
 			{
 			case TAD_WRITE_OPTION_NONEXISTENT:
@@ -626,16 +629,20 @@ static BOOL ImportTad(char* file_name, TadWriteOption option)
 	// freeSoftBoxCountに空きがなければインポートしない
 	if (!(tadInfo.titleInfo.titleId & (TITLE_ID_NOT_LAUNCH_FLAG_MASK | TITLE_ID_DATA_ONLY_FLAG_MASK)))
 	{
-		u8 installed, free;
-		if (!NAMUT_GetSoftBoxCount( &installed, &free ))
+		// 上書きインポートの場合はfreeSoftBoxCountはチェックしない
+		if (!overwrite)
 		{
-			return FALSE;
-		}
+			u8 installed, free;
+			if (!NAMUT_GetSoftBoxCount( &installed, &free ))
+			{
+				return FALSE;
+			}
 
-		if (free == 0)
-		{
-			kamiFontPrintfConsole(1, "NAND FreeSoftBoxCount == 0");
-			return FALSE;
+			if (free == 0)
+			{
+				kamiFontPrintfConsole(1, "NAND FreeSoftBoxCount == 0");
+				return FALSE;
+			}
 		}
 	}
 
