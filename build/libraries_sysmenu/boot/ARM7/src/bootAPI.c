@@ -40,7 +40,7 @@
 
 #define CLRLIST_REBOOT_STACK_PAD_SIZE_IDX	(2*3+1)
 
-#define TITLE_ID_NAND_INITIALIZER		0x00030011304E4941UL	// 0NIA
+#define TITLE_ID_NAND_INITIALIZER		0x00030011304E4941ULL	// 0NIA
 
 // 起動制限をかけるタイトル一覧
 typedef struct TitleBlackList {
@@ -112,7 +112,7 @@ static u32 nitro_post_clear_list[POST_CLEAR_NUM_MAX + 1] =
 // 起動制限をかけるタイトル一覧
 static const TitleBlackList s_blackList[] = {
 	{ TITLE_ID_NAND_INITIALIZER, 0 },
-	{ 0UL, -1 },
+	{ 0ULL, -1 },
 };
 
 
