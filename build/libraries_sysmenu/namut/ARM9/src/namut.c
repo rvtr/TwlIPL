@@ -567,46 +567,58 @@ static BOOL NAMUTi_RandClearFile(const char* path)
  *---------------------------------------------------------------------------*/
 BOOL NAMUT_GetSoftBoxCount( u8* installed, u8* free )
 {
-	s32 title_num;	
-	NAMTitleInfo namTitleInfo;
-	u8 count = 0;
-	BOOL result = TRUE;
-	s32 i;
+	u32 installedSoftBoxCount;
 
-	// タイトルリスト取得
-	if (NAM_GetTitleList(sTitleIdArray, TITLE_LIST_MAX) != NAM_OK)
-	{
-		OS_TWarning("Fail! NAM_GetTitleList() in %s\n", __func__);
+	// installedSoftBoxCountの取得
+	if ( NAM_OK != NAM_GetInstalledSoftBoxCount( &installedSoftBoxCount ) ) {
 		return FALSE;
-	}
-	
-	// タイトル数取得
-	title_num = NAM_GetNumTitles();
-
-	for (i=0;i<title_num;i++)
-	{
-		// タイトル情報取得
-	    if( NAM_ReadTitleInfo(&namTitleInfo, sTitleIdArray[i]) == NAM_OK )
-	    {
-			// NOT_LAUNCH_FLAG または DATA_ONLY_FLAG が立っているタイトルはカウントしない
-			if (!(namTitleInfo.titleId & (TITLE_ID_NOT_LAUNCH_FLAG_MASK | TITLE_ID_DATA_ONLY_FLAG_MASK)))
-			{
-				count++;
-			}
-		}
-		else
-		{
-			result = FALSE;
-		}
 	}
 
     // installed count
-    *installed = count;
+    *installed = (u8)installedSoftBoxCount;
 
     // free count
-    *free = (u8)(LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX - count);
+    *free = (u8)(LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX - installedSoftBoxCount);
 
-	return result;
+	return TRUE;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         NAMUT_UpdateSoftBoxCount
+
+  Description:  InstalledSoftBoxCount, FreeSoftBoxCount の値を
+				現在のNANDの状態に合わせて更新します。
+
+  Arguments:    None.
+
+  Returns:      成功ならTRUE
+ *---------------------------------------------------------------------------*/
+BOOL NAMUT_UpdateSoftBoxCount( void )
+{
+	u8 installedSoftBoxCount;
+	u8 freeSoftBoxCount;
+	u8 *pBuffer;
+	BOOL retval = TRUE;
+
+	// InstalledSoftBoxCount, FreeSoftBoxCount を数えなおす
+	if (!NAMUT_GetSoftBoxCount(&installedSoftBoxCount, &freeSoftBoxCount))
+	{
+		return FALSE;
+	}
+
+	// LCFGライブラリの静的変数に対する更新
+    LCFG_TSD_SetInstalledSoftBoxCount( installedSoftBoxCount );	
+    LCFG_TSD_SetFreeSoftBoxCount( freeSoftBoxCount );
+
+	// LCFGライブラリの静的変数の値をNANDに反映
+    pBuffer = spAllocFunc( LCFG_WRITE_TEMP );
+	if (!pBuffer) { return FALSE; }
+	// ミラーリングデータの両方に書き込みを行う。
+	retval &= LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+	retval &= LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+    spFreeFunc( pBuffer );
+
+	return retval;
 }
 
 /*---------------------------------------------------------------------------*
@@ -647,7 +659,7 @@ BOOL NAMUT_ClearTWLSettings( BOOL doWriteback )
     	spFreeFunc( pBuffer );
 	}
 
-	return TRUE;
+	return retval;
 }
 
 /*---------------------------------------------------------------------------*
