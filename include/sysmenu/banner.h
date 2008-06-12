@@ -20,6 +20,7 @@
 
 #include <twl/types.h>
 #include <twl/os/common/banner.h>
+#include <sysmenu.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,7 +36,7 @@ extern "C" {
 BOOL BANNER_ReadBannerFromCARD( u32 bannerOffset, TWLBannerFile *pDst );
 
 // NANDからのバナーリード
-BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst );
+BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst, TitleListMakerInfo *pTitleListMakerInfo );
 
 // バナーのフォーマットが正しいかチェック（NTRバナー、TWLバナーのどちらでもOK）
 BOOL BANNER_CheckBanner( TWLBannerFile *pBanner );

@@ -65,7 +65,7 @@ BOOL BANNER_ReadBannerFromCARD( u32 bannerOffset, TWLBannerFile *pBanner )
 
 
 // NANDアプリバナーリード
-BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst )
+BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst, TitleListMakerInfo *pTitleListMakerInfo )
 {
 #define PATH_LENGTH		1024
 
@@ -77,7 +77,8 @@ BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst )
 	BOOL bSuccess;
 	char path[PATH_LENGTH];
 	s32 readLen;
-	s32 offset;
+	u32 offset;
+	ROM_Header_Short hs;
 	
 	FS_InitFile(file);
 	
@@ -113,31 +114,19 @@ BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst )
 	OS_TPrintf( "OpenFileEX : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
 	start = OS_GetTick();
 #endif
-
-	// ROMヘッダのバナーデータオフセットを読み込む
-	bSuccess = FS_SeekFile(file, 0x68, FS_SEEK_SET);
-	if( ! bSuccess )
-	{
-		OS_TPrintf("BANNER_GetNandTitleList failed: cant seek file(0)\n");
-		FS_CloseFile(file);
-		return FALSE;
-	}
 	
-#if (MEASURE_BANNER_LOAD_TIME == 1)
-	OS_TPrintf( "FS_SeekFile offset: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
-	start = OS_GetTick();
-#endif
-	
-	readLen = FS_ReadFile(file, &offset, sizeof(offset));
-	if( readLen != sizeof(offset) )
+	readLen = FS_ReadFile(file, &hs, sizeof(hs));
+	if( readLen != sizeof(hs) )
 	{
 		OS_TPrintf("BANNER_GetNandTitleList failed: cant read file\n");
 		FS_CloseFile(file);
 		return FALSE;
 	}
+	
+	offset = hs.banner_offset;
 
 #if (MEASURE_BANNER_LOAD_TIME == 1)
-	OS_TPrintf( "FS_ReadFile offset : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+	OS_TPrintf( "FS_ReadFile header : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
 #endif
 	
 	// バナーが存在する場合のみリード
@@ -147,7 +136,7 @@ BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst )
 		start = OS_GetTick();
 #endif
 
-		bSuccess = FS_SeekFile(file, offset, FS_SEEK_SET);
+		bSuccess = FS_SeekFile(file, (s32)offset, FS_SEEK_SET);
 		if( ! bSuccess )
 		{
 			OS_TPrintf("BANNER_GetNandTitleList failed: cant seek file(offset)\n");
@@ -235,6 +224,12 @@ BOOL BANNER_ReadBannerFromNAND( OSTitleId titleID, TWLBannerFile *pDst )
 		OS_TPrintf( "open-read-close-check subbanner : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
 #endif
 
+	}
+	
+	// タイトルリスト用情報の生成
+	if(!SYSM_MakeTitleListMakerInfoFromHeader( pTitleListMakerInfo, &hs ))
+	{
+		return FALSE;
 	}
 	
 	return TRUE;

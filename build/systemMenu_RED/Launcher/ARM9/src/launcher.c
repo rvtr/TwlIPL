@@ -646,14 +646,33 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 // スクロールバーによるスクロール
 static void MoveByScrollBar( void )
 {
+	static double vx = 0;
+	
 	// スクロールバーによるスクロール
 	{
 		static BOOL holding = FALSE;
 		static int dx;
+		static const int list_len = 4;
+		static int list_x[list_len];
+		int l;
 		
-		if(!holding)
+		if(!holding && vx == 0)
 		{
 			bar_left = (int)(BAR_ZERO_X + (ITEMDOT_PER_FRAME * s_csr));
+		}
+		
+		// 慣性移動
+		if(vx!=0)
+		{
+			bar_left += (int)vx;
+			s_csr = (u16)((bar_left - BAR_ZERO_X) * FRAME_PER_ITEMDOT);
+			vx = vx * 0.9;
+			if(vx*vx < 1)
+			{
+				int det = s_csr % FRAME_PER_SELECT;
+				csr_v = (det == 0 ? 0 : (vx>0 ? 1 : -1) );
+				vx = 0;
+			}
 		}
 		
 		if(tpd.disp.touch)
@@ -669,11 +688,23 @@ static void MoveByScrollBar( void )
 					bar_left = tpd.disp.x - dx - BAR_LOOSENESS;
 				}
 				s_csr = (u16)((bar_left - BAR_ZERO_X) * FRAME_PER_ITEMDOT);
+				
+				// 移動履歴追記
+				for( l=0; l<list_len-1; l++ )
+				{
+					list_x[l] = list_x[l+1];
+				}
+				list_x[list_len-1] = tpd.disp.x;
 			}
 			else if(WithinRangeTP(bar_left+5-BAR_WIDTH/2, BAR_ZERO_Y+BAR_OFFSET,bar_left+5+BAR_WIDTH/2,BAR_ZERO_Y+BAR_OFFSET+BAR_HEIGHT,&tpd.disp))
 			{
 				holding = TRUE;
 				dx = tpd.disp.x - bar_left;
+				// 移動履歴初期化
+				for( l=0; l<list_len; l++ )
+				{
+					list_x[l] = tpd.disp.x;
+				}
 			}
 		}
 		else
@@ -682,15 +713,37 @@ static void MoveByScrollBar( void )
 			{
 				int det = s_csr % FRAME_PER_SELECT;
 				holding = FALSE;
-				csr_v = (det < FRAME_PER_SELECT/2) ? (det == 0 ? 0 : -1) : 1;
+				
+				// 移動履歴から速度算出
+				for( l=1; l<list_len; l++ )
+				{
+					int ax = list_x[l] - list_x[l-1];
+					vx += (double)ax;
+					if(l == list_len-1 && ax == 0)
+					{
+						vx = 0;
+					}
+				}
+				vx /= (list_len-1);
+				if(vx == 0)
+				{
+					csr_v = (det < FRAME_PER_SELECT/2) ? (det == 0 ? 0 : -1) : 1;
+				}
 			}
 		}
 	}
 	
 	// タッチパッドによるスクロール後の調整
 	if( BAR_ZERO_X + (ITEM_SIZE + ITEM_INTERVAL) * (LAUNCHER_TITLE_LIST_NUM - 1) < bar_left )
+	{
 		bar_left = BAR_ZERO_X + (ITEM_SIZE + ITEM_INTERVAL) * (LAUNCHER_TITLE_LIST_NUM - 1);
-	if( bar_left < BAR_ZERO_X ) bar_left = BAR_ZERO_X;
+		vx = -vx;
+	}
+	if( bar_left < BAR_ZERO_X )
+	{
+		bar_left = BAR_ZERO_X;
+		vx = -vx;
+	}
 	if((LAUNCHER_TITLE_LIST_NUM-1)*FRAME_PER_SELECT < s_csr) s_csr = (LAUNCHER_TITLE_LIST_NUM-1)*FRAME_PER_SELECT;
 	if( s_csr < 0 ) s_csr = 0;
 }

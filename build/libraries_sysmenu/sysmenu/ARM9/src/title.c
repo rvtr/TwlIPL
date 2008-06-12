@@ -103,6 +103,7 @@ static BOOL				s_loadForcibly = FALSE;
 static OSMessageQueue	s_msgQ;
 static OSMessage		s_msgArray[SYSM_TITLE_MESSAGE_ARRAY_MAX];
 
+static TitleListMakerInfo *s_pTitleListMakerInfo = NULL;
 static NAMTitleId *s_pTitleIDList = NULL;
 static int s_listLength = 0;
 
@@ -370,7 +371,8 @@ BOOL SYSM_InitNandTitleList( void )
 	s_listLength = NAM_GetNumTitles();
 	OS_TPrintf( "NAM_GetNumTitles : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
 	s_pTitleIDList = SYSM_Alloc( sizeof(NAMTitleId) * s_listLength );
-	if( s_pTitleIDList == NULL ) {
+	s_pTitleListMakerInfo = SYSM_Alloc( sizeof(TitleListMakerInfo) * s_listLength );
+	if( s_pTitleIDList == NULL || s_pTitleListMakerInfo == NULL ) {
 		OS_TPrintf( "%s: alloc error.\n", __FUNCTION__ );
 		return FALSE;
 	}
@@ -384,11 +386,80 @@ BOOL SYSM_InitNandTitleList( void )
 // NANDアプリリストの解放
 void SYSM_FreeNandTitleList( void )
 {
-	if(s_pTitleIDList != NULL)
+	if( s_pTitleIDList != NULL)
 	{
 		SYSM_Free( s_pTitleIDList );
 		s_pTitleIDList = NULL;
 	}
+	if(s_pTitleListMakerInfo != NULL )
+	{
+		SYSM_Free( s_pTitleListMakerInfo );
+		s_pTitleListMakerInfo = NULL;
+	}
+}
+
+static BOOL MakeTitleListMakerInfoFromTitleID( TitleListMakerInfo *info, OSTitleId titleID )
+{
+	ROM_Header_Short e_hs;
+	FSFile  file[1];
+	char path[256];
+	BOOL bSuccess;
+	s32 readLen;
+#if (MEASURE_MAKELIST_TIME == 1)
+	OSTick prev;
+#endif
+	
+	// 無効なTitleID または、DataOnlyアプリはスキップ
+	if( (titleID == NULL) || ( titleID & TITLE_ID_DATA_ONLY_FLAG_MASK ) )
+	{
+		return FALSE;
+	}
+	// romヘッダ読み込み
+	
+#if (MEASURE_MAKELIST_TIME == 1)
+	// 時間計測１
+	prev = OS_GetTick();
+#endif
+
+	NAM_GetTitleBootContentPathFast(path, titleID);
+
+#if (MEASURE_MAKELIST_TIME == 1)
+	OS_TPrintf("SYSMi_makeTitleIdList : NAM_GetTitleBootContentPathFast %dms\n",OS_TicksToMilliSeconds(OS_GetTick() - prev));
+	// end時間計測１
+	
+	// 時間計測２
+	prev = OS_GetTick();
+#endif
+
+	FS_InitFile( file );
+    bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
+	if( ! bSuccess )
+	{
+		OS_TPrintf("SYSMi_makeTitleIdList failed: cant open file(%s)\n",path);
+	    FS_CloseFile(file);
+	    return FALSE;
+	}
+	bSuccess = FS_SeekFile(file, 0x00000000, FS_SEEK_SET);
+	if( ! bSuccess )
+	{
+		OS_TPrintf("SYSMi_makeTitleIdList failed: cant seek file(0)\n");
+	    FS_CloseFile(file);
+	    return FALSE;
+	}
+	readLen = FS_ReadFile(file, &e_hs, (s32)sizeof(e_hs));
+	if( readLen != (s32)sizeof(e_hs) )
+	{
+	OS_TPrintf("SYSMi_makeTitleIdList failed: cant read file(%p, %d, %d, %d)\n", e_hs, 0, sizeof(e_hs), readLen);
+	    FS_CloseFile(file);
+	    return FALSE;
+	}
+	FS_CloseFile(file);
+	// end時間計測２
+#if (MEASURE_MAKELIST_TIME == 1)
+	OS_TPrintf("SYSMi_makeTitleIdList : read header. %dms\n",OS_TicksToMilliSeconds(OS_GetTick() - prev));
+#endif
+	
+	return SYSM_MakeTitleListMakerInfoFromHeader( info, &e_hs);
 }
 
 // ローンチ対象となるNANDタイトルリストの取得
@@ -403,20 +474,28 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 	int validNum = 0;
 	NAMTitleId titleIDArray[ LAUNCHER_TITLE_LIST_NUM - 1 ];// ローンチ可能なタイトルリストの一時置き場
 	
-	if( s_pTitleIDList == NULL ) return -1;
+	if( s_pTitleIDList == NULL || s_pTitleListMakerInfo == NULL ) return -1;
 	
 	// 取得したタイトルがローンチ対象かどうかをチェック
 	for( l = 0; l < s_listLength; l++ ) {
 		// "Not Launch"でない　かつ　"Data Only"でない　なら有効なタイトルとしてリストに追加
 		if( ( s_pTitleIDList[ l ] & ( TITLE_ID_NOT_LAUNCH_FLAG_MASK | TITLE_ID_DATA_ONLY_FLAG_MASK ) ) == 0 ) {
 			titleIDArray[ validNum ] = s_pTitleIDList[ l ];
-			BANNER_ReadBannerFromNAND( s_pTitleIDList[ l ], &s_bannerBuf[ validNum ] );
+			BANNER_ReadBannerFromNAND( s_pTitleIDList[ l ], &s_bannerBuf[ validNum ], &s_pTitleListMakerInfo[l] );
 			validNum++;
 			if( !( validNum < LAUNCHER_TITLE_LIST_NUM - 1 ) )// 最大(LAUNCHER_TITLE_LIST_NUM - 1)まで
 			{
 				break;
 			}
+		}else
+		{
+			MakeTitleListMakerInfoFromTitleID( &s_pTitleListMakerInfo[l], s_pTitleIDList[ l ] );
 		}
+	}
+	// 画面に表示できる以上のNANDタイトルが存在する場合、それらについてタイトルリスト作成用情報を生成
+	for( ; l<s_listLength; l++ )
+	{
+		MakeTitleListMakerInfoFromTitleID( &s_pTitleListMakerInfo[l], s_pTitleIDList[ l ] );
 	}
 	
 	// 念のため残り領域を0クリア
@@ -1624,20 +1703,16 @@ static void SYSMi_makeTitleIdList( void )
 {
 	// [TODO:]現在ブート不可タイトルについても入れるようにしているが
 	// これで良いのか？
-	// カード以外はもっと早いタイミングで作れるのでは？->高速化
 	OSTitleIDList *list = ( OSTitleIDList * )HW_OS_TITLE_ID_LIST;
 	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
 	int l;
 	u8 count = 0;
-	int max = ( s_listLength < OS_TITLEIDLIST_MAX ) ? s_listLength : OS_TITLEIDLIST_MAX;
-	OSTick start;	
-#if (MEASURE_MAKELIST_TIME == 1)
-	OSTick prev;
-#endif
+	int max = ( s_listLength < OS_TITLEIDLIST_MAX-1 ) ? s_listLength : OS_TITLEIDLIST_MAX-1;
+	OSTick start;
 	
 	// 時間計測総合
 	start = OS_GetTick();
-	if( s_pTitleIDList == NULL )
+	if( s_pTitleIDList == NULL || s_pTitleListMakerInfo == NULL )
 	{
 		OS_TPrintf("SYSMi_makeTitleIdList failed: SYSM_InitNandTitleList() is not called.\n");
 		return;
@@ -1654,17 +1729,16 @@ static void SYSMi_makeTitleIdList( void )
 
 	for(l=-1;l<max;l++) // -1はカードアプリの特別処理用
 	{
-		ROM_Header_Short e_hs;
-		ROM_Header_Short *pe_hs;
 		int m;
 		BOOL same_maker_code = TRUE;
-		char path[256];
-		FSFile file[1];
-		BOOL bSuccess;
-		s32 readLen;
 		char *gamecode;
+		TitleListMakerInfo *p_info;
+		TitleListMakerInfo info;
+		OSTitleId id;
+
 		if(l==-1)
 		{
+			ROM_Header_Short *pe_hs;
 			// カードアプリ
 			if(SYSM_IsExistCard())
 			{
@@ -1673,70 +1747,31 @@ static void SYSMi_makeTitleIdList( void )
 			{
 				continue;
 			}
+			p_info = &info;
+			SYSM_MakeTitleListMakerInfoFromHeader( p_info, pe_hs);
+			id = pe_hs->titleID;
 		}else
 		{
-			// 無効なTitleID または、DataOnlyアプリはスキップ
-			if( (s_pTitleIDList[l] == NULL) || ( s_pTitleIDList[l] & TITLE_ID_DATA_ONLY_FLAG_MASK ) )
-			{
-				continue;
-			}
-			// romヘッダ読み込み
-			
-#if (MEASURE_MAKELIST_TIME == 1)
-			// 時間計測１
-			prev = OS_GetTick();
-#endif
-
-			NAM_GetTitleBootContentPathFast(path, s_pTitleIDList[l]);
-
-#if (MEASURE_MAKELIST_TIME == 1)
-			OS_TPrintf("SYSMi_makeTitleIdList : NAM_GetTitleBootContentPathFast %dms\n",OS_TicksToMilliSeconds(OS_GetTick() - prev));
-			// end時間計測１
-			
-			// 時間計測２
-			prev = OS_GetTick();
-#endif
-
-			FS_InitFile( file );
-		    bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
-			if( ! bSuccess )
-			{
-				OS_TPrintf("SYSMi_makeTitleIdList failed: cant open file(%s)\n",path);
-			    FS_CloseFile(file);
-			    continue;
-			}
-			bSuccess = FS_SeekFile(file, 0x00000000, FS_SEEK_SET);
-			if( ! bSuccess )
-			{
-				OS_TPrintf("SYSMi_makeTitleIdList failed: cant seek file(0)\n");
-			    FS_CloseFile(file);
-			    continue;
-			}
-			readLen = FS_ReadFile(file, &e_hs, (s32)sizeof(e_hs));
-			if( readLen != (s32)sizeof(e_hs) )
-			{
-			OS_TPrintf("SYSMi_makeTitleIdList failed: cant read file(%p, %d, %d, %d)\n", e_hs, 0, sizeof(e_hs), readLen);
-			    FS_CloseFile(file);
-			    continue;
-			}
-			FS_CloseFile(file);
-			pe_hs = (ROM_Header_Short *)&e_hs;
-			// end時間計測２
-#if (MEASURE_MAKELIST_TIME == 1)
-			OS_TPrintf("SYSMi_makeTitleIdList : read header. %dms\n",OS_TicksToMilliSeconds(OS_GetTick() - prev));
-#endif
+			p_info = &s_pTitleListMakerInfo[l];
+			id = s_pTitleIDList[l];
 		}
 		
 		for(m=0;m<MAKER_CODE_MAX;m++)
 		{
-			if(hs->maker_code[m] != pe_hs->maker_code[m])
+			if(hs->maker_code[m] != p_info->makerCode[m])
 			{
 				same_maker_code = FALSE;
 			}
 		}
 		
+		// 無効なTitleID または、DataOnlyアプリはスキップ
+		if( (id == NULL) || ( id & TITLE_ID_DATA_ONLY_FLAG_MASK ) )
+		{
+			continue;
+		}
+	
 		// ランチャーはリストに入れない
-		gamecode = (char *)&(pe_hs->titleID);
+		gamecode = (char *)&(id);
 		if( ( 0 == STD_CompareNString( &gamecode[1], "ANH", 3 ) )
 #ifdef DEV_UIG_LAUNCHER
 		 || ( ( 0 == STD_CompareNString( &gamecode[1], "AN4", 3 ) ) && ( SCFG_GetBondingOption() != 0 ) )
@@ -1751,18 +1786,18 @@ static void SYSMi_makeTitleIdList( void )
 		    ( same_maker_code ) )
 		{
 			// セキュアアプリのデータはマウントさせない
-			if( !(pe_hs->titleID & TITLE_ID_SECURE_FLAG_MASK) )
+			if( !(id & TITLE_ID_SECURE_FLAG_MASK) )
 			{
 				// リストに追加
-				list->TitleID[count] = pe_hs->titleID;
+				list->TitleID[count] = id;
 				// sameMakerFlagをON
 				list->sameMakerFlag[count/8] |= (u8)(0x1 << (count%8));
 				// Prv,Pubそれぞれセーブデータがあるか見て、存在すればフラグON
-				if(pe_hs->public_save_data_size != 0)
+				if(p_info->public_save_data_size != 0)
 				{
 					list->publicFlag[count/8] |= (u8)(0x1 << (count%8));
 				}
-				if(pe_hs->private_save_data_size != 0)
+				if(p_info->private_save_data_size != 0)
 				{
 					list->privateFlag[count/8] |= (u8)(0x1 << (count%8));
 				}
@@ -1770,10 +1805,10 @@ static void SYSMi_makeTitleIdList( void )
 		}
 		
 		// ジャンプ可能ならば
-		if( pe_hs->permit_landing_normal_jump )
+		if( p_info->permit_landing_normal_jump )
 		{
 			// リストに追加してジャンプ可能フラグON
-			list->TitleID[count] = pe_hs->titleID;
+			list->TitleID[count] = id;
 			list->appJumpFlag[count/8] |= (u8)(0x1 << (count%8));
 		}
 		
@@ -1786,6 +1821,23 @@ static void SYSMi_makeTitleIdList( void )
 	list->num = count;
 	// end時間計測総合
 	OS_TPrintf("SYSMi_makeTitleIdList : total %dms\n",OS_TicksToMilliSeconds(OS_GetTick() - start));
+}
+
+BOOL SYSM_MakeTitleListMakerInfoFromHeader( TitleListMakerInfo *info, ROM_Header_Short *hs)
+{
+	int l;
+	if( info == NULL || hs == NULL )
+	{
+		return FALSE;
+	}
+	for(l=0;l<MAKER_CODE_MAX;l++)
+	{
+		info->makerCode[l] = hs->maker_code[l];
+	}
+	info->public_save_data_size = hs->public_save_data_size;
+	info->private_save_data_size = hs->private_save_data_size;
+	info->permit_landing_normal_jump = ( hs->permit_landing_normal_jump ? TRUE : FALSE );
+	return TRUE;
 }
 
 

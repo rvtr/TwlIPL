@@ -57,6 +57,14 @@ typedef struct TitleProperty {			// この情報は、ランチャー時には認証通ってないけ
 	TWLBannerFile		*pBanner;		// バナーへのポインタ（固定長フォーマットなら偽造されても大丈夫だろう。)
 }TitleProperty;
 
+// タイトルリスト作成用情報構造体
+typedef struct TitleListMakerInfo {
+	char				makerCode[MAKER_CODE_MAX];
+	u32					public_save_data_size;
+	u32					private_save_data_size;
+	BOOL				permit_landing_normal_jump;
+}TitleListMakerInfo;
+
 // アプリ認証結果
 typedef enum AuthResult {
 	AUTH_RESULT_SUCCEEDED = 0,
@@ -141,6 +149,9 @@ extern s32 SYSMi_getCheckTitleLaunchRightsResult( void );						// CheckTitleLaun
 
 extern BOOL SYSM_IsLoadTitlePaused(void);										// ローディングスレッドが一時停止しているか？
 extern void SYSM_ResumeLoadingThread( BOOL force );								// ローディングスレッドが一時停止していたら再開
+
+extern BOOL SYSM_MakeTitleListMakerInfoFromHeader( TitleListMakerInfo *info, ROM_Header_Short *hs);
+																				// タイトルリスト作成用情報をヘッダ情報から作成
 
 #endif
 
