@@ -559,6 +559,12 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 
     }
 
+    // APIの実行結果が OPERATING 以外の場合、エラーとして処理する。
+    if (err != NWM_RETCODE_OPERATING)
+    {
+        goto instfirm_error;
+    }
+    
     /*
         無線ロード処理の完了は、IsWlanFirmwareInstalledでチェックする。
      */
