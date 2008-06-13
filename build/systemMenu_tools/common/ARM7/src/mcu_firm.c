@@ -19,16 +19,16 @@
 #include <twl/i2c/ARM7/i2c.h>
 #include "mcu_firm.h"
 
-#define PRINT_DEBUG
+//#define PRINT_DEBUG
 //#define PRINT_DEBUG_MINI  // rough version
 
 #ifdef PRINT_DEBUG
 #include <nitro/os/common/printf.h>
 #define DBG_PRINTF OS_TPrintf
 #undef PRINT_DEBUG_MINI     // because of the alternative option
-#define DBG_PRINT_PROFILE_INIT  OSTick debug
+#define DBG_PRINT_PROFILE_INIT  OSTick debug, d
 #define DBG_PRINT_PROFILE_BEGIN()   (debug = OS_GetTick())
-#define DBG_PRINT_PROFILE_END()     OS_TPrintf("(%d msec)\n", (int)OS_TicksToMilliSeconds(OS_GetTick()-debug))
+#define DBG_PRINT_PROFILE_END()     (d=(int)OS_TicksToMilliSeconds(OS_GetTick()-debug), (d ? OS_TPrintf("(%d msec)\n", d) : (void)0))
 #else
 #define DBG_PRINTF( ... )  ((void)0)
 #define DBG_PRINT_PROFILE_INIT
@@ -105,8 +105,11 @@ static inline void I2Ci_StopPhase2( void )
 
 static inline void I2Ci_WaitEx( void )  // support slowRate
 {
+    DBG_PRINT_PROFILE_INIT;
     I2Ci_Wait();
+    DBG_PRINT_PROFILE_BEGIN();
     SVC_WaitByLoop(slowRate);
+    DBG_PRINT_PROFILE_END();
 }
 
 static inline void I2Ci_StopEx( I2CReadWrite rw )   // support slowRate
@@ -162,25 +165,26 @@ static inline BOOL I2Ci_SendLast( u8 data )
     return I2Ci_GetResult();
 }
 
-#define SLOW_RATE_DEFAULT   0x90
-#define SLOW_RATE_LONG      HW_CPU_CLOCK_ARM7       // 4 sec
-#define SLOW_RATE_ENTER     (HW_CPU_CLOCK_ARM7 / 400)   // 10msec
+#define SLOW_RATE_DEFAULT   0x50
+#define SLOW_RATE_SHORT     0x0
+#define SLOW_RATE_LONG      (HW_CPU_CLOCK_ARM7 / 13)    // 300msec
+#define SLOW_RATE_ENTER     (HW_CPU_CLOCK_ARM7 / 180)   // 22msec
 
 BOOL MCU_WriteFirm(const unsigned char* hex)
 {
     BOOL result = TRUE;
-    DBG_PRINT_PROFILE_INIT;
+    BOOL temp;
 
     I2C_Lock();
 
-    // start phase
     slowRate = SLOW_RATE_DEFAULT;
+
+    // start phase
     result &= I2Ci_SendStart( I2C_SLAVE_MICRO_CONTROLLER );
     result &= I2Ci_SendMiddle( 0x77 );        // free register 7
-    slowRate = SLOW_RATE_LONG;
-    DBG_PRINT_PROFILE_BEGIN();
     result &= I2Ci_SendMiddle( 0x4A );        // goto firm writing mode
-    DBG_PRINT_PROFILE_END();
+
+    slowRate = SLOW_RATE_LONG;
 
     // main phase
     while ( hex[0] == ':' && hex[3] < '3' ) // フォーマットが正しく0x3000以前のアドレスである場合に処理する
@@ -199,24 +203,25 @@ BOOL MCU_WriteFirm(const unsigned char* hex)
             }
             continue;
         }
-        // 通常出力
-        slowRate = SLOW_RATE_DEFAULT;
-        while ( *hex != '\n' )
-        {
-            result &= I2Ci_SendMiddle( *hex++ );
-        }
-        // 最後の1文字(\n固定)
-        slowRate = SLOW_RATE_ENTER;
-        DBG_PRINT_PROFILE_BEGIN();
+        // 最初の1文字 (':'のはず)
         result &= I2Ci_SendMiddle( *hex++ );
-        DBG_PRINT_PROFILE_END();
+
+        slowRate = SLOW_RATE_SHORT;
+
+        // 通常出力
+        temp = TRUE;    /* 1回遅延させることで'\n'の結果を無視する */
+        do
+        {
+            result &= temp;
+            temp = I2Ci_SendMiddle( *hex );
+        }
+        while ( *hex++ != '\n' );
+
+        slowRate = SLOW_RATE_ENTER;
     }
 
-    // stop phase
-    I2Ci_Wait();
-    DBG_PRINT_PROFILE_BEGIN();
-    SVC_WaitByLoop(slowRate);
-    DBG_PRINT_PROFILE_END();
+    // stop phase (only 2nd call)
+    I2Ci_WaitEx();
     I2Ci_StopPhase2();
 
     I2C_Unlock();
