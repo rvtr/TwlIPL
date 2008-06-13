@@ -209,7 +209,16 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 
         // デバッガによるROMエミュレーション時はNTR-ROMヘッダバッファの
         // ゲームコマンドパラメータをスクランブルOFF設定に書き換える
-        dh->s.game_cmd_param = SYSMi_GetWork()->gameCommondParam;
+        if ( OS_GetBootType() == OS_BOOTTYPE_ROM )
+        {
+            // ブート対象のROMヘッダはカードブート時のみ
+            dh->s.game_cmd_param = SYSMi_GetWork()->gameCommondParam;
+        }
+        {
+            // カードROMヘッダは常時設定
+           	ROM_Header *ch = (void*)HW_CARD_ROM_HEADER;
+            ch->s.game_cmd_param = SYSMi_GetWork()->gameCommondParam;
+        }
 
 		// 鍵は不要になるので、消しておく
 		{
