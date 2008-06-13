@@ -1707,8 +1707,8 @@ AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 	SYSMi_GetWork2()->bootTitleProperty = *pBootTitle;
 	SYSMi_SetBootSRLPathToWork2( pBootTitle );
 	
-	// HW_WM_BOOT_BUFへのブート情報セット
-	( (OSBootInfo *)OS_GetBootInfo() )->boot_type = s_launcherToOSBootType[ pBootTitle->flags.bootType ];
+	// ブート種別仮セット
+	SYSMi_GetWork()->appBootType = s_launcherToOSBootType[ pBootTitle->flags.bootType ];
 	
 	// タイトルIDリストの作成
 	SYSMi_makeTitleIdList();

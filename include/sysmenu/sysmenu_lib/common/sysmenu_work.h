@@ -137,6 +137,7 @@ typedef struct SYSM_work {
     OSLockWord			lockCardRsc ATTRIBUTE_ALIGN(8);	// カードリソース排他制御用
 	OSLockWord			lockHotSW;						// カードリソース排他制御用
 	u32					appCardID;						// カードID
+	OSBootType			appBootType;					// ブート種別
 	u32					gameCommondParam;				// NTRのゲームコマンドパラメータ(NTRのROMヘッダのゲームコマンドパラメータに上書きする)
 	u8					cloneBootMode;
     

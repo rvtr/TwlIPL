@@ -123,7 +123,10 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
     OS_WaitIrq( 1, OS_IE_SUBP );
 
     OS_TPrintf( "INTR SUBP passed!!\n" );
-	
+
+    // SDKのFinalize処理完了後にブート種別をアプリのものへ変更
+    ( (OSBootInfo *)OS_GetBootInfo() )->boot_type = SYSMi_GetWork()->appBootType;
+
     // 割り込みをクリアして最終ブートシーケンスへ。
     reg_PXI_SUBPINTF &= 0x0f00;                             // サブプロセッサ割り込み許可フラグをクリア
     (void)OS_DisableIrq();
@@ -209,7 +212,7 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 
         // デバッガによるROMエミュレーション時はNTR-ROMヘッダバッファの
         // ゲームコマンドパラメータをスクランブルOFF設定に書き換える
-        if ( OS_GetBootType() == OS_BOOTTYPE_ROM )
+        if ( SYSMi_GetWork()->appBootType == OS_BOOTTYPE_ROM )
         {
             // ブート対象のROMヘッダはカードブート時のみ
             dh->s.game_cmd_param = SYSMi_GetWork()->gameCommondParam;
