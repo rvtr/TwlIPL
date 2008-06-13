@@ -409,13 +409,32 @@ static BOOL MakeTitleListMakerInfoFromTitleID( TitleListMakerInfo *info, OSTitle
 	OSTick prev;
 #endif
 	
-	// 無効なTitleID または、DataOnlyアプリはスキップ
-	if( (titleID == NULL) || ( titleID & TITLE_ID_DATA_ONLY_FLAG_MASK ) )
+	// 無効なTitleIDはスキップ
+	if( titleID == NULL)
 	{
 		return FALSE;
 	}
-	// romヘッダ読み込み
 	
+	// DataOnlyはTADからメーカーコードを読み出し、他の情報はOFFでリスト登録
+	if( titleID & TITLE_ID_DATA_ONLY_FLAG_MASK )
+	{
+		int l;
+		NAMTitleInfo naminfo;
+		// [TODO:]この関数で得られる情報は無検証なので改ざんの可能性があるが、これで良いか
+		// （でもFastつけないと一回300msぐらいかかる）
+		NAM_ReadTitleInfoFast( &naminfo, titleID );
+		for(l=0;l<MAKER_CODE_MAX;l++)
+		{
+			info->makerCode[l] = ((char *)&naminfo.companyCode)[l];
+			//OS_TPrintf("companyCode[%d]::::%c\n",l,((char *)&naminfo.companyCode)[l]);
+		}
+		info->public_save_data_size = 0;
+		info->private_save_data_size = 0;
+		info->permit_landing_normal_jump = FALSE;
+		return TRUE;
+	}
+	
+	// romヘッダ読み込み
 #if (MEASURE_MAKELIST_TIME == 1)
 	// 時間計測１
 	prev = OS_GetTick();
@@ -1703,8 +1722,6 @@ AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 // タイトルIDリストの作成
 static void SYSMi_makeTitleIdList( void )
 {
-	// [TODO:]現在ブート不可タイトルについても入れるようにしているが
-	// これで良いのか？
 	OSTitleIDList *list = ( OSTitleIDList * )HW_OS_TITLE_ID_LIST;
 	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
 	int l;
@@ -1766,8 +1783,8 @@ static void SYSMi_makeTitleIdList( void )
 			}
 		}
 		
-		// 無効なTitleID または、DataOnlyアプリはスキップ
-		if( (id == NULL) || ( id & TITLE_ID_DATA_ONLY_FLAG_MASK ) )
+		// 無効なTitleIDはスキップ
+		if( id == NULL )
 		{
 			continue;
 		}
@@ -1783,27 +1800,12 @@ static void SYSMi_makeTitleIdList( void )
 			continue;
 		}
 		
-		// セキュアアプリの場合か、メーカーコードが同じ場合は
-		if( (hs->titleID & TITLE_ID_SECURE_FLAG_MASK) ||
-		    ( same_maker_code ) )
+		if( same_maker_code )
 		{
-			// セキュアアプリのデータはマウントさせない
-			if( !(id & TITLE_ID_SECURE_FLAG_MASK) )
-			{
-				// リストに追加
-				list->TitleID[count] = id;
-				// sameMakerFlagをON
-				list->sameMakerFlag[count/8] |= (u8)(0x1 << (count%8));
-				// Prv,Pubそれぞれセーブデータがあるか見て、存在すればフラグON
-				if(p_info->public_save_data_size != 0)
-				{
-					list->publicFlag[count/8] |= (u8)(0x1 << (count%8));
-				}
-				if(p_info->private_save_data_size != 0)
-				{
-					list->privateFlag[count/8] |= (u8)(0x1 << (count%8));
-				}
-			}
+			// リストに追加
+			list->TitleID[count] = id;
+			// sameMakerFlagをON
+			list->sameMakerFlag[count/8] |= (u8)(0x1 << (count%8));
 		}
 		
 		// ジャンプ可能ならば
@@ -1812,6 +1814,41 @@ static void SYSMi_makeTitleIdList( void )
 			// リストに追加してジャンプ可能フラグON
 			list->TitleID[count] = id;
 			list->appJumpFlag[count/8] |= (u8)(0x1 << (count%8));
+		}
+		
+		// ブートアプリがセキュアアプリの場合
+		if( hs->titleID & TITLE_ID_SECURE_FLAG_MASK )
+		{
+			// Prv,Pubそれぞれセーブデータがあるか見て、存在すればフラグON
+			if(p_info->public_save_data_size != 0)
+			{
+				list->publicFlag[count/8] |= (u8)(0x1 << (count%8));
+			}
+			if(p_info->private_save_data_size != 0)
+			{
+				list->privateFlag[count/8] |= (u8)(0x1 << (count%8));
+			}
+			// リストに強制追加
+			list->TitleID[count] = id;
+		}else
+		{
+			// セキュアアプリでない && メーカーコードが同じ
+			if( !(id & TITLE_ID_SECURE_FLAG_MASK) && same_maker_code )
+			{
+				// Prv,Pubそれぞれセーブデータがあるか見て、存在すればフラグON
+				if(p_info->public_save_data_size != 0)
+				{
+					list->publicFlag[count/8] |= (u8)(0x1 << (count%8));
+					// リストに追加
+					list->TitleID[count] = id;
+				}
+				if(p_info->private_save_data_size != 0)
+				{
+					list->privateFlag[count/8] |= (u8)(0x1 << (count%8));
+					// リストに追加
+					list->TitleID[count] = id;
+				}
+			}
 		}
 		
 		// ここまでのうちに、list->TitleID[count]が編集されていたらcountインクリメント

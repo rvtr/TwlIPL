@@ -37,10 +37,10 @@
 #define B_LIGHT_UP_BUTTON_BOTTOM_Y			( B_LIGHT_UP_BUTTON_TOP_Y + 13 )
 
 // スクロールバー関係
-#define BAR_ZERO_X							( (WINDOW_WIDTH - ((ITEM_SIZE + ITEM_INTERVAL) * (LAUNCHER_TITLE_LIST_NUM - 1) + ITEM_SIZE)) / 2)
-#define BAR_ZERO_Y							WINDOW_HEIGHT - 32
+#define BAR_ZERO_X							( (WINDOW_WIDTH - ((ITEM_SIZE + ITEM_INTERVAL) * (LAUNCHER_TITLE_LIST_NUM - 1) + ITEM_SIZE)) / 2 - 3)
+#define BAR_ZERO_Y							(WINDOW_HEIGHT - 32 + 1)
 #define BAR_HEIGHT							14
-#define BAR_WIDTH							32 //((ITEM_SIZE + ITEM_INTERVAL) * 4 + ITEM_SIZE + 2)
+#define BAR_WIDTH							14 //((ITEM_SIZE + ITEM_INTERVAL) * 4 + ITEM_SIZE + 2)
 #define BAR_LOOSENESS						2
 #define ITEMDOT_PER_FRAME					((double)(ITEM_SIZE + ITEM_INTERVAL) / (double)FRAME_PER_SELECT)
 #define FRAME_PER_ITEMDOT					((double)FRAME_PER_SELECT / (double)(ITEM_SIZE + ITEM_INTERVAL))
@@ -52,13 +52,13 @@
 #define DOT_PER_FRAME			((BANNER_WIDTH + BANNER_INTERVAL) / FRAME_PER_SELECT)		// 割り切れないと動きがカクカクするはず
 #define FRAME_PER_SELECT		14															// バナーからバナーへの移動にかかるフレーム数
 #define BANNER_FAR_LEFT_POS		(WINDOW_WIDTH/2 - BANNER_WIDTH*5/2 - BANNER_INTERVAL * 2)
-#define BANNER_TOP				(WINDOW_HEIGHT/2 - 16)
+#define BANNER_TOP				(WINDOW_HEIGHT/2 + 4)
 #define WINDOW_WIDTH			256
 #define WINDOW_HEIGHT			192
 #define BANNER_WIDTH			32
 #define BANNER_HEIGHT			32
 #define BANNER_INTERVAL			24
-#define TITLE_V_CENTER			39
+#define TITLE_V_CENTER			47
 
 #define MAX_SHOW_BANNER			6
 
@@ -372,7 +372,7 @@ static void BannerDraw(int selected, TitleProperty *titleprop)
 	{
 		NNSG2dChar *str = ((TWLBannerFile *)titleprop[selected].pBanner)->v1.gameName[ LCFG_TSD_GetLanguage() ];
 		NNSG2dTextRect rect = NNS_G2dTextCanvasGetTextRect( &gTextCanvas, str );
-		NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL, 0, 24, WINDOW_WIDTH, 32 );
+		NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL, 0, 24, WINDOW_WIDTH, 48 );
 		PutStringUTF16( (WINDOW_WIDTH-rect.width)>>1, TITLE_V_CENTER - (rect.height>>1), TXT_COLOR_BLACK, str );
 		MI_CpuCopy8( str, old_gameName, BANNER_LANG_LENGTH * 2 );
 	}
@@ -506,9 +506,9 @@ static BOOL SelectFunc( u16 *csr, TPData *tgt )
 	
 	for(l=0; l<2; l++)
 	{
-		int x = 11*8 + l*6*8;
-		int y = 17*8;
-		if(WithinRangeTP( x, y, x+32, y+16, tgt ))
+		int x = 1*8 + l*28*8;
+		int y = 20*8;
+		if(WithinRangeTP( x, y, x+16, y+16, tgt ))
 		{
 			*csr = (u16)l;
 			return TRUE;
@@ -647,16 +647,19 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 static void MoveByScrollBar( void )
 {
 	static double vx = 0;
+	static int last_move_dir = 0;
+	static int last_bar_left;
 	
 	// スクロールバーによるスクロール
 	{
 		static BOOL holding = FALSE;
+		static BOOL ground_holding = FALSE;
 		static int dx;
 		static const int list_len = 4;
 		static int list_x[list_len];
 		int l;
 		
-		if(!holding && vx == 0)
+		if( !ground_holding && !holding && vx == 0)
 		{
 			bar_left = (int)(BAR_ZERO_X + (ITEMDOT_PER_FRAME * s_csr));
 		}
@@ -669,8 +672,6 @@ static void MoveByScrollBar( void )
 			vx = vx * 0.9;
 			if(vx*vx < 1)
 			{
-				int det = s_csr % FRAME_PER_SELECT;
-				csr_v = (det == 0 ? 0 : (vx>0 ? 1 : -1) );
 				vx = 0;
 			}
 		}
@@ -696,7 +697,9 @@ static void MoveByScrollBar( void )
 				}
 				list_x[list_len-1] = tpd.disp.x;
 			}
-			else if(WithinRangeTP(bar_left+5-BAR_WIDTH/2, BAR_ZERO_Y+BAR_OFFSET,bar_left+5+BAR_WIDTH/2,BAR_ZERO_Y+BAR_OFFSET+BAR_HEIGHT,&tpd.disp))
+			else if(WithinRangeTP(bar_left+5-BAR_WIDTH/2, BAR_ZERO_Y+BAR_OFFSET,bar_left+5+BAR_WIDTH/2,BAR_ZERO_Y+BAR_OFFSET+BAR_HEIGHT,&tpd.disp) ||
+					( ground_holding && WithinRangeTP(bar_left+5-BAR_WIDTH/2, 0,bar_left+5+BAR_WIDTH/2,WINDOW_HEIGHT,&tpd.disp) )
+			)
 			{
 				holding = TRUE;
 				dx = tpd.disp.x - bar_left;
@@ -706,12 +709,21 @@ static void MoveByScrollBar( void )
 					list_x[l] = tpd.disp.x;
 				}
 			}
+			else if(ground_holding)
+			{
+				bar_left += ( tpd.disp.x > bar_left ? 1 : -1 );
+				s_csr = (u16)((bar_left - BAR_ZERO_X) * FRAME_PER_ITEMDOT);
+			}
+			else if( WithinRangeTP(BAR_ZERO_X+BAR_OFFSET, BAR_ZERO_Y+BAR_OFFSET,BAR_ZERO_X + (ITEM_SIZE + ITEM_INTERVAL) * (LAUNCHER_TITLE_LIST_NUM),BAR_ZERO_Y+BAR_OFFSET+BAR_HEIGHT,&tpd.disp) )
+			{
+				ground_holding = TRUE;
+			}
 		}
 		else
 		{
+			int det = s_csr % FRAME_PER_SELECT;
 			if(holding)
 			{
-				int det = s_csr % FRAME_PER_SELECT;
 				holding = FALSE;
 				
 				// 移動履歴から速度算出
@@ -725,10 +737,16 @@ static void MoveByScrollBar( void )
 					}
 				}
 				vx /= (list_len-1);
-				if(vx == 0)
-				{
-					csr_v = (det < FRAME_PER_SELECT/2) ? (det == 0 ? 0 : -1) : 1;
-				}
+			}
+			if(ground_holding)
+			{
+				ground_holding = FALSE;
+			}
+			
+			// タッチパネル放置状態でカーソルがアイコンの中間にある場合は最後に動いてた方に移動
+			if(vx == 0 && det != 0 && csr_v == 0)
+			{
+				csr_v = last_move_dir;
 			}
 		}
 	}
@@ -746,6 +764,11 @@ static void MoveByScrollBar( void )
 	}
 	if((LAUNCHER_TITLE_LIST_NUM-1)*FRAME_PER_SELECT < s_csr) s_csr = (LAUNCHER_TITLE_LIST_NUM-1)*FRAME_PER_SELECT;
 	if( s_csr < 0 ) s_csr = 0;
+	
+	// 最後に動いた方向の記録
+	if(bar_left != last_bar_left)
+		last_move_dir = ( bar_left > last_bar_left ? 1 : -1);
+	last_bar_left = bar_left;
 }
 
 static void DrawScrollBar( TitleProperty *pTitleList )
