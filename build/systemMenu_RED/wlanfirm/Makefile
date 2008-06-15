@@ -32,7 +32,7 @@ MY_TAD			=	$(MY_TITLE).tad
 #INSTALL_TARGETS	=
 #INSTALL_DIR		=
 
-LDIRT_CLEAN		=	$(MY_TAD)
+LDIRT_CLEAN		=	$(MY_TAD) properties
 
 #----------------------------------------------------------------------------
 
