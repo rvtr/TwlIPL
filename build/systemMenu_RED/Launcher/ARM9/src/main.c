@@ -17,7 +17,7 @@
 
 #include <twl.h>
 #include <twl/dsp.h>
-#include <twl/dsp/ARM9/dsp_jpeg_dec.h>
+#include <twl/dsp/common/shutter.h>
 #include <twl/camera.h>
 #include "launcher.h"
 #include "misc.h"
@@ -219,23 +219,20 @@ void TwlMain( void )
 
     // DSP初期化
     {
-        FSFile file[1];
-        MIWramSize sizeB = MI_WRAM_SIZE_128KB;
-        MIWramSize sizeC = MI_WRAM_SIZE_128KB;
-        int slotB = CreateDspSlotBitmap( DSP_SLOT_B_COMPONENT_JPEGDECODER );  // ２スロット
-        int slotC = CreateDspSlotBitmap( DSP_SLOT_C_COMPONENT_JPEGDECODER );  // ４スロット
+        MIWramSize sizeB = MI_WRAM_SIZE_32KB;
+        MIWramSize sizeC = MI_WRAM_SIZE_64KB;
+        int slotB = CreateDspSlotBitmap( DSP_SLOT_B_COMPONENT_G711 );  // １スロット
+        int slotC = CreateDspSlotBitmap( DSP_SLOT_C_COMPONENT_G711 );  // ２スロット
 
-        FS_InitFile( file );
-        DSP_OpenStaticComponentJpegDecoder( file );
         MI_FreeWramSlot_B( 0, sizeB, MI_WRAM_ARM9 );
         MI_FreeWramSlot_C( 0, sizeC, MI_WRAM_ARM9 );
         MI_CancelWramSlot_B( 0, sizeB, MI_WRAM_ARM9 );
         MI_CancelWramSlot_C( 0, sizeC, MI_WRAM_ARM9 );
-        if ( ! DSP_LoadJpegDecoder( file, slotB, slotC ) )
+        if ( ! DSP_LoadShutter() )
         {
-            OS_TPanic("failed to load JpegDecoder DSP-component! (lack of WRAM-B/C)");
+            OS_TPanic("failed to load Shutter DSP-component! (lack of WRAM-B/C)");
         }
-        DSP_UnloadJpegDecoder();
+        DSP_UnloadShutter();
     }
 #endif // INIT_DEVICES_LIKE_UIG_LAUNCHER
 
