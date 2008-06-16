@@ -1842,8 +1842,10 @@ static void SYSMi_makeTitleIdList( void )
 			list->sameMakerFlag[count/8] |= (u8)(0x1 << (count%8));
 		}
 		
-		// ジャンプ可能ならば
-		if( p_info->permit_landing_normal_jump )
+		// ジャンプ可能フラグON or ブートアプリ自身 or ジャンプ元アプリ ならばジャンプ可能
+		if( p_info->permit_landing_normal_jump || hs->titleID == id ||
+			( SYSMi_GetWork()->flags.common.isValidLauncherParam && SYSM_GetLauncherParamBody()->v1.bootTitleID && ( SYSM_GetLauncherParamBody()->v1.prevTitleID == id ) )
+		  )
 		{
 			// リストに追加してジャンプ可能フラグON
 			list->TitleID[count] = id;
