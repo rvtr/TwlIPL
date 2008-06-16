@@ -370,8 +370,16 @@ static void* ImportAllOverwriteProcess0(void)
 	// Auto—p
 	if (gAutoFlag)
 	{
-		if (result && sFileNum > 0) { FADE_OUT_RETURN( AutoProcess1 ); }
-		else { FADE_OUT_RETURN( AutoProcess2 ); }
+		if (result && sFileNum > 0) 
+		{
+			gAutoProcessResult[AUTO_PROCESS_MENU_IMPORT_TAD] = AUTO_PROCESS_RESULT_SUCCESS;  
+			FADE_OUT_RETURN( AutoProcess1 ); 
+		}
+		else 
+		{ 
+			gAutoProcessResult[AUTO_PROCESS_MENU_IMPORT_TAD] = AUTO_PROCESS_RESULT_FAILURE;  
+			FADE_OUT_RETURN( AutoProcess2 ); 
+		}
 	}
 
 	return ImportProcess1;

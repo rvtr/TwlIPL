@@ -39,9 +39,6 @@
     マクロ定義
  *---------------------------------------------------------------------------*/
 
-// NANDファーム書き込みの際にNVRAMの未割り当て領域＋予約領域を０クリアする場合は定義します（開発用）
-//#define CLEAR_NON_ASIGNED_AREA_AND_RESERVED_AREA_ALL
-
 #define ROUND_UP(value, alignment) \
     (((u32)(value) + (alignment-1)) & ~(alignment-1))
 
@@ -56,16 +53,6 @@
 
 #define FILE_NUM_MAX			16
 
-#define NAND_BLOCK_BYTE 			0x200
-#define NAND_FIRM_START_OFFSET    	0x200
-
-#define NVRAM_PAGE_SIZE 0x100
-#define NVRAM_NORFIRM_RESERVED_ADDRESS     0x200
-#define NVRAM_NORFIRM_NANDBOOT_FLAG_OFFSET 0xff
-#define NVRAM_NORFIRM_NANDBOOT_FLAG        0x80
-
-#define NVRAM_NON_ASIGNED_AREA_ADDRESS     0x300
-
 /*---------------------------------------------------------------------------*
     内部変数定義
  *---------------------------------------------------------------------------*/
@@ -73,14 +60,12 @@
 static s32 sMenuSelectNo;
 static char sFilePath[FILE_NUM_MAX][FS_ENTRY_LONGNAME_MAX];
 static u8 sFileNum;
-static u8 sNvramPageSizeBuffer[NVRAM_PAGE_SIZE] ATTRIBUTE_ALIGN(32);	// ARM7からアクセスするためスタックでは駄目
-static u32 sReservedAreaEndAddress;
 
 /*---------------------------------------------------------------------------*
-    内部関数宣言
+    関数宣言
  *---------------------------------------------------------------------------*/
 
-static void MakeFullPathForSD(char* file_name, char* full_path);
+void MakeFullPathForSD(char* file_name, char* full_path);
 
 /*---------------------------------------------------------------------------*
     プロセス関数定義
@@ -280,8 +265,16 @@ void* NandfirmProcess2(void)
 	// Auto用
 	if (gAutoFlag)
 	{
-		if (ret) { FADE_OUT_RETURN( AutoProcess1 ); }
-		else { FADE_OUT_RETURN( AutoProcess2 ); }
+		if (ret) 
+		{
+			gAutoProcessResult[AUTO_PROCESS_MENU_IMPORT_NANDFIRM] = AUTO_PROCESS_RESULT_SUCCESS;  
+			FADE_OUT_RETURN( AutoProcess1 ); 
+		}
+		else 
+		{ 
+			gAutoProcessResult[AUTO_PROCESS_MENU_IMPORT_NANDFIRM] = AUTO_PROCESS_RESULT_FAILURE;
+			FADE_OUT_RETURN( AutoProcess2 ); 
+		}
 	}
 
 	return NandfirmProcess1;
@@ -300,7 +293,7 @@ void* NandfirmProcess2(void)
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
-static void MakeFullPathForSD(char* file_name, char* full_path)
+void MakeFullPathForSD(char* file_name, char* full_path)
 {
 	// フルパスを作成
 	STD_CopyString( full_path, "sdmc:/" );

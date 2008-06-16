@@ -30,14 +30,32 @@ extern "C" {
     型定義
  *---------------------------------------------------------------------------*/
 
-//typedef void*  (*TpProcess)(void);
+enum {
+	AUTO_PROCESS_MENU_FORMAT = 0,
+	AUTO_PROCESS_MENU_HARDWARE_INFO,
+#ifdef    USE_WRITE_FONT_DATA
+	AUTO_PROCESS_MENU_FONT_DATA,
+#endif // USE_WRITE_FONT_DATA
+	AUTO_PROCESS_MENU_IMPORT_TAD,
+	AUTO_PROCESS_MENU_IMPORT_NANDFIRM,
+	AUTO_PROCESS_MENU_MCU,
+	AUTO_PROCESS_MENU_NUM
+};
+
+typedef enum _AutoProcessResult
+{
+	AUTO_PROCESS_RESULT_SUCCESS,
+	AUTO_PROCESS_RESULT_FAILURE,
+	AUTO_PROCESS_RESULT_SKIP
+} 
+AutoProcessResult;
 
 /*---------------------------------------------------------------------------*
     グローバル変数定義
  *---------------------------------------------------------------------------*/
 
 extern BOOL gAutoFlag;
-
+extern AutoProcessResult gAutoProcessResult[AUTO_PROCESS_MENU_NUM];
 
 /*---------------------------------------------------------------------------*
     関数定義

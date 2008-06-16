@@ -15,6 +15,8 @@
   $Author$
  *---------------------------------------------------------------------------*/
 
+#ifdef USE_WRITE_FONT_DATA
+
 #include <twl.h>
 #include <nitro/snd.h>
 #include <twl/fatfs.h>
@@ -188,8 +190,16 @@ void* fontProcess2(void)
 	// Auto—p
 	if (gAutoFlag)
 	{
-		if (result) { FADE_OUT_RETURN( AutoProcess1 ); }
-		else { FADE_OUT_RETURN( AutoProcess2); }
+		if (result) 
+		{ 
+			gAutoProcessResult[AUTO_PROCESS_MENU_FONT_DATA] = AUTO_PROCESS_RESULT_SUCCESS; 
+			FADE_OUT_RETURN( AutoProcess1 ); 
+		}
+		else 
+		{ 
+			gAutoProcessResult[AUTO_PROCESS_MENU_FONT_DATA] = AUTO_PROCESS_RESULT_FAILURE; 
+			FADE_OUT_RETURN( AutoProcess2); 
+		}
 	}
 #endif
 
@@ -270,3 +280,4 @@ static BOOL WriteFontData(void)
 	return result;
 }
 
+#endif // USE_WRITE_FONT_DATA

@@ -28,33 +28,39 @@
 #include "cursor.h"
 #include "keypad.h"
 
+extern void MakeFullPathForSD(char* file_name, char* full_path);
+
 /*---------------------------------------------------------------------------*
-    型定義
+    マクロ定義
  *---------------------------------------------------------------------------*/
+
+#define ROUND_UP(value, alignment) \
+    (((u32)(value) + (alignment-1)) & ~(alignment-1))
 
 /*---------------------------------------------------------------------------*
     定数定義
  *---------------------------------------------------------------------------*/
 
-#define NUM_OF_MENU_SELECT    2
-#define DOT_OF_MENU_SPACE    16
-#define CURSOR_ORIGIN_X      32
-#define CURSOR_ORIGIN_Y      56
+#define DOT_OF_MENU_SPACE		8
+#define CHAR_OF_MENU_SPACE		1
+#define CURSOR_ORIGIN_X			32
+#define CURSOR_ORIGIN_Y			40
 
-#define ROUND_UP(value, alignment) \
-    (((u32)(value) + (alignment-1)) & ~(alignment-1))
+#define FILE_NUM_MAX			16
 
 /*---------------------------------------------------------------------------*
     内部変数定義
  *---------------------------------------------------------------------------*/
 
 static s8 sMenuSelectNo;
+static char sFilePath[FILE_NUM_MAX][FS_ENTRY_LONGNAME_MAX];
+static u8 sFileNum;
 
 /*---------------------------------------------------------------------------*
     内部関数宣言
  *---------------------------------------------------------------------------*/
 
-static BOOL WriteMcuData(void);
+static BOOL WriteMcuData(char* full_path);
 
 /*---------------------------------------------------------------------------*
     プロセス関数定義
@@ -72,6 +78,7 @@ static BOOL WriteMcuData(void);
 
 void* mcuProcess0(void)
 {
+    FSFile    dir;
 	int i;
 
 	// 文字列全クリア
@@ -81,12 +88,11 @@ void* mcuProcess0(void)
 	kamiFontPrintf(2, 1, FONT_COLOR_BLACK, "Write MCU Data");
 	kamiFontPrintf(0, 2, FONT_COLOR_BLACK, "--------------------------------");
 
-	// メニュー一覧
-	kamiFontPrintf(3,  6, FONT_COLOR_BLACK, "+-------------------+-----+");
-	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "l   WRITE MCU DATA  l     l");
-	kamiFontPrintf(3,  8, FONT_COLOR_BLACK, "+-------------------+-----+");
-	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "l   RETURN          l     l");
-	kamiFontPrintf(3, 10, FONT_COLOR_BLACK, "+-------------------+-----+");
+	// 配列クリア
+	MI_CpuClear8( sFilePath, sizeof(sFilePath) );
+
+	// ファイル数初期化
+	sFileNum = 0;
 
 	// 背景全クリア
 	for (i=0;i<24;i++)
@@ -98,6 +104,69 @@ void* mcuProcess0(void)
 	kamiFontFillChar( 0, BG_COLOR_GRAY, BG_COLOR_GRAY );
 	kamiFontFillChar( 1, BG_COLOR_GRAY, BG_COLOR_GRAY );
 	kamiFontFillChar( 2, BG_COLOR_GRAY, BG_COLOR_TRANS );
+
+    // SDカードのルートディレクトリを検索
+    if ( !FS_OpenDirectory(&dir, "sdmc:/", FS_FILEMODE_R | FS_FILEMODE_W) )
+    {
+        OS_Printf("Error FS_OpenDirectory(sdmc:/)\n");
+		kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "Error FS_OpenDirectory(sdmc:/)");
+    }
+    else
+    {
+        FSDirectoryEntryInfo   info[1];
+        OS_Printf("[%s]:\n", "sdmc:/");
+
+		kamiFontPrintfConsole(CONSOLE_ORANGE, "------ hex file list -----\n");
+
+		// .hex を探してファイル名を保存しておく
+        while (FS_ReadDirectory(&dir, info))
+        {
+            OS_Printf("  %s", info->longname);
+            if ((info->attributes & (FS_ATTRIBUTE_DOS_DIRECTORY | FS_ATTRIBUTE_IS_DIRECTORY)) != 0)
+            {
+                OS_Printf("/\n");
+            }
+            else
+            {
+				char* pExtension;
+              OS_Printf(" (%d BYTEs)\n", info->filesize);
+
+				// 拡張子のチェック
+				pExtension = STD_SearchCharReverse( info->longname, '.');
+				if (pExtension)
+				{
+					if (!STD_CompareString( pExtension, ".hex") || !STD_CompareString( pExtension, ".HEX"))
+					{
+						STD_CopyString( sFilePath[sFileNum], info->longname );
+						kamiFontPrintfConsole(CONSOLE_ORANGE, "%d:%s\n", sFileNum, info->longname);
+
+						// 最大16個で終了
+						if (++sFileNum >= FILE_NUM_MAX)
+						{
+							break;
+						}
+					}
+				}
+            }
+        }
+        (void)FS_CloseDirectory(&dir);
+
+		kamiFontPrintfConsole(CONSOLE_ORANGE, "--------------------------\n");
+    }
+
+	// メニュー一覧
+	kamiFontPrintf((s16)3, (s16)4, FONT_COLOR_BLACK, "+--------------------+----+");
+	kamiFontPrintf((s16)3, (s16)(5+sFileNum+1), FONT_COLOR_BLACK, "+--------------------+----+");
+
+	// tad ファイルリストを表示
+	for (i=0;i<sFileNum; i++)
+	{
+		// ファイル名追加
+		kamiFontPrintf((s16)3,  (s16)(5+CHAR_OF_MENU_SPACE*i), FONT_COLOR_BLACK, "l   %-16.16s l    l", sFilePath[i]);
+	}
+
+	// 最後にリターンを追加
+	kamiFontPrintf((s16)3,  (s16)(5+CHAR_OF_MENU_SPACE*sFileNum), FONT_COLOR_BLACK, "l   RETURN           l    l");
 
 	// カーソル消去
 	SetCursorPos((u16)200, (u16)200);
@@ -117,7 +186,6 @@ void* mcuProcess0(void)
 
 void* mcuProcess1(void)
 {
-/*
 #ifndef NAND_INITIALIZER_LIMITED_MODE
 	// オート実行用
 	if (gAutoFlag)
@@ -126,16 +194,15 @@ void* mcuProcess1(void)
 		return mcuProcess2;
 	}
 #endif
-*/
 
 	// 選択メニューの変更
     if ( kamiPadIsRepeatTrigger(PAD_KEY_UP) )
 	{
-		if (--sMenuSelectNo < 0) sMenuSelectNo = NUM_OF_MENU_SELECT -1;
+		if (--sMenuSelectNo < 0) sMenuSelectNo = (s8)sFileNum;
 	}
 	else if ( kamiPadIsRepeatTrigger(PAD_KEY_DOWN) )
 	{
-		if (++sMenuSelectNo >= NUM_OF_MENU_SELECT) sMenuSelectNo = 0;
+		if (++sMenuSelectNo > sFileNum) sMenuSelectNo = 0;
 	}
 
 	// カーソル配置
@@ -168,33 +235,50 @@ void* mcuProcess1(void)
 void* mcuProcess2(void)
 {
 	BOOL result;
+	char full_path[FS_ENTRY_LONGNAME_MAX+6];
 
-	switch( sMenuSelectNo )
+	if (STD_GetStringLength(sFilePath[sMenuSelectNo]))
 	{
-	case 0:
-		result = WriteMcuData();
-		if (result)
-		{
-			kamiFontPrintf(25, 7, FONT_COLOR_GREEN, "OK");
-		}
-		else
-		{
-			kamiFontPrintf(25, 7, FONT_COLOR_RED, "NG");
-		}
-		break;
-	case 1:
-		FADE_OUT_RETURN( TopmenuProcess0 );
+		kamiFontPrintf((s16)26,  (s16)(5+sMenuSelectNo*CHAR_OF_MENU_SPACE), FONT_COLOR_BLACK, "WAIT");
+		kamiFontLoadScreenData();
+
+		// .hexのフルパスを作成
+		MakeFullPathForSD(sFilePath[sMenuSelectNo], full_path);
+		result = WriteMcuData(full_path);
 	}
-/*
+	else
+	{
+		if (gAutoFlag)	{ FADE_OUT_RETURN( AutoProcess2 ); 		}
+		else 			{ FADE_OUT_RETURN( TopmenuProcess0 );	}
+	}
+
+	// 今回の結果を表示
+	if ( result == TRUE )
+	{
+		kamiFontPrintf((s16)26,  (s16)(5+sMenuSelectNo*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "OK");
+	}
+	else
+	{
+		kamiFontPrintf((s16)26,  (s16)(5+sMenuSelectNo*CHAR_OF_MENU_SPACE), FONT_COLOR_RED, "NG");
+	}
+
 #ifndef NAND_INITIALIZER_LIMITED_MODE
 	// Auto用
 	if (gAutoFlag)
 	{
-		if (result) { FADE_OUT_RETURN( AutoProcess1 ); }
-		else { FADE_OUT_RETURN( AutoProcess2); }
+		if (result) 
+		{ 
+			gAutoProcessResult[AUTO_PROCESS_MENU_MCU] = AUTO_PROCESS_RESULT_SUCCESS; 
+			FADE_OUT_RETURN( AutoProcess1 ); 
+		}
+		else 
+		{ 
+			gAutoProcessResult[AUTO_PROCESS_MENU_MCU] = AUTO_PROCESS_RESULT_FAILURE;  
+			FADE_OUT_RETURN( AutoProcess2); 
+		}
 	}
 #endif
-*/
+
 	return mcuProcess1;
 }
 
@@ -202,7 +286,7 @@ void* mcuProcess2(void)
     処理関数定義
  *---------------------------------------------------------------------------*/
 
-static BOOL WriteMcuData(void)
+static BOOL WriteMcuData(char* full_path)
 {
     FSFile  file;	
     BOOL    open_is_ok;
@@ -214,10 +298,10 @@ static BOOL WriteMcuData(void)
 
 	// ROMファイルオープン
     FS_InitFile(&file);
-    open_is_ok = FS_OpenFile(&file, MCU_DATA_FILE_PATH_IN_ROM);
+    open_is_ok = FS_OpenFile(&file, full_path);
 	if (!open_is_ok)
 	{
-    	OS_Printf("FS_OpenFile(\"%s\") ... ERROR!\n", MCU_DATA_FILE_PATH_IN_ROM);
+    	OS_Printf("FS_OpenFile(\"%s\") ... ERROR!\n", full_path);
 		return FALSE;
 	}
 
@@ -230,7 +314,7 @@ static BOOL WriteMcuData(void)
 	read_is_ok = FS_ReadFile( &file, pTempBuf, (s32)file_size );
 	if (!read_is_ok)
 	{
-	    kamiFontPrintfConsoleEx(CONSOLE_RED, "FS_ReadFile(\"%s\") ... ERROR!\n", MCU_DATA_FILE_PATH_IN_ROM);
+	    kamiFontPrintfConsoleEx(CONSOLE_RED, "FS_ReadFile(\"%s\") ... ERROR!\n", full_path);
 		FS_CloseFile(&file);
 		OS_Free(pTempBuf);
 		return FALSE;

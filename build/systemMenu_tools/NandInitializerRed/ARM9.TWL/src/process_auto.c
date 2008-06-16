@@ -26,25 +26,13 @@
 #include "process_norfirm.h"
 #include "process_auto.h"
 #include "process_fade.h"
+#include "process_mcu.h"
 #include "cursor.h"
 #include "keypad.h"
 
 /*---------------------------------------------------------------------------*
     型定義
  *---------------------------------------------------------------------------*/
-
-enum {
-	MENU_FORMAT = 0,
-	MENU_HARDWARE_INFO,
-#ifdef    USE_WRITE_FONT_DATA
-	MENU_FONT_DATA,
-#endif // USE_WRITE_FONT_DATA
-	MENU_IMPORT_TAD,
-#ifndef   MARIOCLUB_VERSION
-	MENU_IMPORT_NANDFIRM,
-#endif // MARIOCLUB_VERSION
-	MENU_END
-};
 
 /*---------------------------------------------------------------------------*
     定数定義
@@ -55,6 +43,7 @@ enum {
  *---------------------------------------------------------------------------*/
 
 BOOL gAutoFlag = FALSE;
+AutoProcessResult gAutoProcessResult[AUTO_PROCESS_MENU_NUM];
 
 /*---------------------------------------------------------------------------*
     内部変数定義
@@ -82,8 +71,16 @@ static s8 sMenuSelectNo;
 
 void* AutoProcess0(void)
 {
+	s32 i;
+
 	// オートフラグセット
 	gAutoFlag = TRUE;
+
+	// 処理結果初期化
+	for (i=0;i<AUTO_PROCESS_MENU_NUM; i++)
+	{
+		gAutoProcessResult[i] = AUTO_PROCESS_RESULT_SKIP;
+	}
 
 	// メニュー初期化
 	sMenuSelectNo = 0;
@@ -108,25 +105,26 @@ void* AutoProcess1(void)
 {
 	switch ( sMenuSelectNo++ )
 	{
-	case MENU_FORMAT:
+	case AUTO_PROCESS_MENU_FORMAT:
 		return FormatProcess0;
-	case MENU_HARDWARE_INFO:
+	case AUTO_PROCESS_MENU_HARDWARE_INFO:
 		return HWInfoProcess0;
 
 #ifdef    USE_WRITE_FONT_DATA
-	case MENU_FONT_DATA:
+	case AUTO_PROCESS_MENU_FONT_DATA:
 		return fontProcess0;	
 #endif // USE_WRITE_FONT_DATA
 
-	case MENU_IMPORT_TAD:
+	case AUTO_PROCESS_MENU_IMPORT_TAD:
 		return ImportProcess0;
 
-#ifndef   MARIOCLUB_VERSION
-	case MENU_IMPORT_NANDFIRM:
+	case AUTO_PROCESS_MENU_IMPORT_NANDFIRM:
 		return NandfirmProcess0;
-#endif // MARIOCLUB_VERSION
 
-	case MENU_END:
+	case AUTO_PROCESS_MENU_MCU:
+		return mcuProcess0;
+
+	case AUTO_PROCESS_MENU_NUM:
 		return AutoProcess2;
 	}
 
@@ -149,6 +147,7 @@ void* AutoProcess2(void)
 	int i;
 	s8 line = 5;
 	u8 bg_color;
+	BOOL totalResult = TRUE;
 
 	// 文字列全クリア
 	kamiFontClear();
@@ -170,30 +169,54 @@ void* AutoProcess2(void)
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    WRITE FONT DATA        ");
 #endif // USE_WRITE_FONT_DATA
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    INPORT TAD FROM SD     ");
-#ifndef MARIOCLUB_VERSION
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    INPORT NANDFIRM FROM SD");
-#endif //MARIOCLUB_VERSION
+	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    WRITE MCU FIRM         ");
 #ifndef AUTO_FORMAT_MODE
-	kamiFontPrintf(3, 22, FONT_COLOR_BLACK, " Button B : return to menu");
+	if (gAutoProcessResult[AUTO_PROCESS_MENU_MCU] == AUTO_PROCESS_RESULT_SKIP)
+	{
+		kamiFontPrintf(3, 22, FONT_COLOR_BLACK, " Button B : return to menu");
+	}
+	else
+	{
+		kamiFontPrintf(3, 22, FONT_COLOR_BLACK, " Please Shut Down");
+	}
 #endif //AUTO_FORMAT_MODE
 
+/*
 	for (i=0;i<sMenuSelectNo-1;i++)
 	{
 		kamiFontPrintf(3, (s16)(7+2*i), FONT_COLOR_GREEN, "OK");
 	}
+*/
 
-	// 失敗あり
-	if (i<MENU_END)
+	for (i=0;i<AUTO_PROCESS_MENU_NUM;i++)
 	{
-		kamiFontPrintf(3, (s16)(7+2*i), FONT_COLOR_RED, "NG");
-		kamiFontPrintf(3, 19, FONT_COLOR_BLACK, "    Error Occured!");
-		bg_color = BG_COLOR_RED;
+		switch (gAutoProcessResult[i])
+		{
+			case AUTO_PROCESS_RESULT_SUCCESS:
+				kamiFontPrintf(3, (s16)(7+2*i), FONT_COLOR_GREEN, "OK");
+				break;
+			case AUTO_PROCESS_RESULT_FAILURE:
+				totalResult = FALSE;
+				kamiFontPrintf(3, (s16)(7+2*i), FONT_COLOR_RED, "NG");
+				break;
+			case AUTO_PROCESS_RESULT_SKIP:
+				kamiFontPrintf(2, (s16)(7+2*i), FONT_COLOR_PURPLE, "SKIP");
+				break;				
+		}
 	}
+
 	// 失敗なし
-	else
+	if (totalResult)
 	{
 		kamiFontPrintf(3, 19, FONT_COLOR_BLACK, "   Finished Successfully!");
 		bg_color = BG_COLOR_GREEN;
+	}
+	// 失敗あり
+	else
+	{
+		kamiFontPrintf(3, 19, FONT_COLOR_BLACK, "    Error Occured!");
+		bg_color = BG_COLOR_RED;
 	}
 
 	// 背景上部
@@ -229,15 +252,17 @@ void* AutoProcess3(void)
 {
 	// NandInitializerProdectはオート処理が完了した段階で終了です。
 #ifndef AUTO_FORMAT_MODE
-    if (kamiPadIsTrigger(PAD_BUTTON_B))
+	if (gAutoProcessResult[AUTO_PROCESS_MENU_MCU] == AUTO_PROCESS_RESULT_SKIP)
 	{
-		FADE_OUT_RETURN( TopmenuProcess0 );
+	    if (kamiPadIsTrigger(PAD_BUTTON_B))
+		{
+			FADE_OUT_RETURN( TopmenuProcess0 );
+		}
 	}
 #endif
 
 	return AutoProcess3;
 }
-
 
 /*---------------------------------------------------------------------------*
     処理関数定義

@@ -355,8 +355,16 @@ void* FormatProcess3(void)
 		// Auto—p
 		if (gAutoFlag)
 		{
-			if (sFormatResult) { FADE_OUT_RETURN( AutoProcess1 ); }
-			else { FADE_OUT_RETURN( AutoProcess2 ); }
+			if (sFormatResult) 
+			{
+				gAutoProcessResult[AUTO_PROCESS_MENU_FORMAT] = AUTO_PROCESS_RESULT_SUCCESS; 
+				FADE_OUT_RETURN( AutoProcess1 ); 
+			}
+			else 
+			{
+				gAutoProcessResult[AUTO_PROCESS_MENU_FORMAT] = AUTO_PROCESS_RESULT_FAILURE; 
+				FADE_OUT_RETURN( AutoProcess2 ); 
+			}
 		}
 #endif
 

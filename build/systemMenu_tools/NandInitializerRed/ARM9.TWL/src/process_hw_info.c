@@ -260,8 +260,16 @@ void* HWInfoProcess2(void)
 	// Auto—p
 	if (gAutoFlag)
 	{
-		if (result) { FADE_OUT_RETURN( AutoProcess1 ); }
-		else { FADE_OUT_RETURN( AutoProcess2 ); }
+		if (result) 
+		{ 
+			gAutoProcessResult[AUTO_PROCESS_MENU_HARDWARE_INFO] = AUTO_PROCESS_RESULT_SUCCESS; 
+			FADE_OUT_RETURN( AutoProcess1 ); 
+		}
+		else 
+		{
+			gAutoProcessResult[AUTO_PROCESS_MENU_HARDWARE_INFO] = AUTO_PROCESS_RESULT_FAILURE;  
+			FADE_OUT_RETURN( AutoProcess2 ); 
+		}
 	}
 #endif
 
