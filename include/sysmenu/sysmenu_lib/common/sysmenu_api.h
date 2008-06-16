@@ -127,6 +127,7 @@ extern int  SYSM_GetCardTitleList( TitleProperty *pTitleList_Card );			// カード
 extern BOOL SYSM_InitNandTitleList( void );										// NANDアプリタイトルリスト取得準備
 extern void SYSM_FreeNandTitleList( void );										// NANDアプリタイトルリスト
 extern int  SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size );	// NAND  アプリタイトルリストの取得
+extern void SYSM_GetNandTitleListMakerInfo( void );								// アプリ引き渡しタイトルリスト作成用情報の取得（ダイレクトブート用）
 
 // アプリ起動
 extern void SYSM_StartLoadTitle( TitleProperty *pBootTitle );					// 指定したTitlePropertyを別スレッドでロード開始
@@ -151,7 +152,7 @@ extern BOOL SYSM_IsLoadTitlePaused(void);										// ローディングスレッドが一時
 extern void SYSM_ResumeLoadingThread( BOOL force );								// ローディングスレッドが一時停止していたら再開
 
 extern BOOL SYSM_MakeTitleListMakerInfoFromHeader( TitleListMakerInfo *info, ROM_Header_Short *hs);
-																				// タイトルリスト作成用情報をヘッダ情報から作成
+																				// アプリ引き渡しタイトルリスト作成用情報をヘッダ情報から作成
 
 #endif
 

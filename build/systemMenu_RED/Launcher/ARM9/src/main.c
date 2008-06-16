@@ -303,7 +303,10 @@ void TwlMain( void )
     if( !pBootTitle ) {
         // NAND & カードアプリリスト取得
         (void)SYSM_GetNandTitleList( s_titleList, LAUNCHER_TITLE_LIST_NUM );    // NANDアプリリストの取得（内蔵アプリはs_titleList[1]から格納される）
-    }
+    }else
+    {
+		SYSM_GetNandTitleListMakerInfo();	// 	アプリに引き渡すタイトルリスト作成用情報の取得
+	}
     // end時間計測5
 #if (MEASURE_TIME == 1)
     OS_TPrintf( "GetNandTitleList : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );

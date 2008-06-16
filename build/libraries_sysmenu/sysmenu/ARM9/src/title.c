@@ -111,6 +111,8 @@ static u8 *s_calc_hash = NULL;
 static BOOL s_b_dev = FALSE;
 static BOOL s_result_phase1 = FALSE;
 
+static BOOL s_nand_title_list_maker_info_enabled = FALSE;
+
 static u8 dht_buffer[DS_HASH_TABLE_SIZE] ATTRIBUTE_ALIGN(256);
 static DHTFile *const dht = (DHTFile*)dht_buffer;
 static const u8* hash0;
@@ -359,7 +361,7 @@ BOOL SYSMi_CopyCardBanner( void )
 
 
 // インポートされているすべてのNANDアプリを列挙したリストの準備
-// SYSM_GetNandTitleListおよびSYSM_TryToBootTitle前に呼ぶ必要あり
+// SYSM_GetNandTitleListおよびSYSM_GetNandTitleListMakerInfo前に呼ぶ必要あり
 BOOL SYSM_InitNandTitleList( void )
 {
 	OSTick start;
@@ -481,9 +483,30 @@ static BOOL MakeTitleListMakerInfoFromTitleID( TitleListMakerInfo *info, OSTitle
 	return SYSM_MakeTitleListMakerInfoFromHeader( info, &e_hs);
 }
 
+// SYSM_InitNandTitleListを事前に呼ぶ必要あり
+// この関数か、SYSM_GetNandTitleListのどちらかをSYSM_TryToBootTitle前に呼ぶ必要あり
+void SYSM_GetNandTitleListMakerInfo( void )
+{
+	int l;
+	
+	if( s_pTitleIDList == NULL || s_pTitleListMakerInfo == NULL )
+	{
+		OS_TPrintf("SYSM_GetNandTitleListMakerInfo failed : SYSM_InitNandTitleList() is not called.");
+		return;
+	}
+	
+	for( l = 0; l < s_listLength; l++ ) {
+		MakeTitleListMakerInfoFromTitleID( &s_pTitleListMakerInfo[l], s_pTitleIDList[ l ] );
+	}
+	
+	s_nand_title_list_maker_info_enabled = TRUE;
+}
+
 // ローンチ対象となるNANDタイトルリストの取得
 // listNumには、pTitleList_Nandの長さを与える
 // 得られる最大のタイトル数は、(LAUNCHER_TITLE_LIST_NUM - 1)に制限される（ランチャーが表示できる最大数からカードぶんを引いた数）
+// SYSM_InitNandTitleListを事前に呼ぶ必要あり
+// この関数か、SYSM_GetNandTitleListMakerInfoのどちらかをSYSM_TryToBootTitle前に呼ぶ必要あり
 // return:取得したNANDタイトルの数
 int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 {
@@ -493,7 +516,11 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 	int validNum = 0;
 	NAMTitleId titleIDArray[ LAUNCHER_TITLE_LIST_NUM - 1 ];// ローンチ可能なタイトルリストの一時置き場
 	
-	if( s_pTitleIDList == NULL || s_pTitleListMakerInfo == NULL ) return -1;
+	if( s_pTitleIDList == NULL || s_pTitleListMakerInfo == NULL )
+	{
+		OS_TPrintf("SYSM_GetNandTitleList failed : SYSM_InitNandTitleList() is not called.");
+		return -1;
+	}
 	
 	// 取得したタイトルがローンチ対象かどうかをチェック
 	for( l = 0; l < s_listLength; l++ ) {
@@ -516,6 +543,7 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 	{
 		MakeTitleListMakerInfoFromTitleID( &s_pTitleListMakerInfo[l], s_pTitleIDList[ l ] );
 	}
+	s_nand_title_list_maker_info_enabled = TRUE;
 	
 	// 念のため残り領域を0クリア
 	for( l = validNum; l < LAUNCHER_TITLE_LIST_NUM - 1; l++ ) {
@@ -1676,6 +1704,7 @@ BOOL SYSM_IsAuthenticateTitleFinished( void )
 }
 
 // ロード済みの指定タイトルの認証とブートを行う
+// SYSM_GetNandTitleListまたはSYSM_GetNandTitleListMakerInfoのどちらかをSYSM_TryToBootTitle前に呼ぶ必要あり
 AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 {
 	if(s_authResult != AUTH_RESULT_SUCCEEDED)
@@ -1735,6 +1764,11 @@ static void SYSMi_makeTitleIdList( void )
 	{
 		OS_TPrintf("SYSMi_makeTitleIdList failed: SYSM_InitNandTitleList() is not called.\n");
 		return;
+	}
+	
+	if( !s_nand_title_list_maker_info_enabled )
+	{
+		OS_TPrintf("SYSMi_makeTitleIdList failed: SYSM_GetNandTitleList or SYSM_GetNandTitleListMakerInfo is not called.\n");
 	}
 	
 	// とりあえずゼロクリア
