@@ -10,9 +10,9 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Date:: 2008-02-15#$
-  $Rev: 677 $
-  $Author: sato_masaki $
+  $Date$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 #include <twl.h>
 #include <twl/nam.h>
@@ -582,6 +582,8 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 
     /* エラー処理 */
 instfirm_error:
+    // Heapから確保した各バッファのクリア
+    
     // Free Security area buffer
     if (pSecBuf)
     {
@@ -594,12 +596,15 @@ instfirm_error:
         SYSM_Free( pHdrBuf );
         pHdrBuf = NULL;
     }
-    
+
+    // Free firmware buffer
     if (pFwBuffer)
     {
         SYSM_Free( pFwBuffer );
         pFwBuffer = NULL;
     }
+
+    // Free NWM buffer
     if (pNwmBuf)
     {
         NWM_End();
