@@ -292,11 +292,14 @@ static void ResetRTC( void )
     RTC_ReadStatus1( &stat1 );
     RTC_ReadStatus2( &stat2 );
 	
-	// FOUTを常にONするようにする。（無線で使用している）
+	// FOUTが32KHz出力でない場合は、32KHz出力に修正設定する。（無線で使用している）
     {
         RTCRawFout  fout;
-        fout.fout   =   RTC_FOUT_DUTY_32KHZ;
-        RTC_WriteFout(&fout);
+		RTC_ReadFout(&fout);
+		if( fout.fout != RTC_FOUT_DUTY_32KHZ ) {
+	        fout.fout = RTC_FOUT_DUTY_32KHZ;
+    	    RTC_WriteFout(&fout);
+		}
     }
     // リセット、電源投入、電源電圧低下、ICテストの各フラグを確認
     if ( stat1.reset || stat1.poc || stat1.bld || stat2.test )
