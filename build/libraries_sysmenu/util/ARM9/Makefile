@@ -26,7 +26,8 @@ TWL_PROC	   	=	ARM9
 
 SRCDIR			=	src
 SRCS			=	util.c \
-					masterkey.c
+					masterkey.c \
+					util_menuAppManager.c
 
 
 TARGET_LIB		=	libsysmutil$(TWL_LIBSUFFIX).a
