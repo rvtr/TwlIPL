@@ -12,27 +12,27 @@
 #include <../build/libraries/os/common/include/application_jump_private.h>
 // see also TwlIPL_RED/include/sysmenu/sysmenu_lib/common/sysmenu_api.h
 // タイトル情報
-typedef struct TitleProperty {			// この情報は、ランチャー時には認証通ってないけど、起動時には認証通すので大丈夫だろう。
+typedef struct AMNTitleProperty {			// この情報は、ランチャー時には認証通ってないけど、起動時には認証通すので大丈夫だろう。
 	NAMTitleId			titleID;		// タイトルID（TitleID_Hiで起動メディアは判定できる？）
 	LauncherBootFlags	flags;			// ブート時のランチャー動作フラグ
 	TWLBannerFile		*pBanner;		// バナーへのポインタ（固定長フォーマットなら偽造されても大丈夫だろう。)
-}TitleProperty;
+}AMNTitleProperty;
 
-typedef struct BannerCounter
+typedef struct AMNBannerCounter
 {
 	u32 control;
 	u8 count;
 	const TWLBannerFile *banner;
 }
-BannerCounter;
+AMNBannerCounter;
 
-typedef struct FrameAnimeData{
+typedef struct AMNFrameAnimeData{
 	const u8 *image;
 	const u8 *pltt;
 	BOOL vflip;
 	BOOL hflip;
 }
-FrameAnimeData;
+AMNFrameAnimeData;
 
 
 // アプリマネージャ
@@ -79,7 +79,7 @@ enum {
     cParentalControlRatingInfoSize = 0x10
 };
 typedef struct {
-    TitleProperty   prop;
+    AMNTitleProperty   prop;
     u8              parental_control_rating_info[ cParentalControlRatingInfoSize ];
     ExpansionFlags  expansionFlags;
 } AppInfo;
@@ -89,7 +89,7 @@ const u8*       AMN_getBannerImage(s32 index);
 const u8*       AMN_getBannerPltt(s32 index);
 BOOL            AMN_getBannerHFlip(s32 index);
 BOOL            AMN_getBannerVFlip(s32 index);
-FrameAnimeData  AMN_getBannerAnime(s32 index);
+AMNFrameAnimeData  AMN_getBannerAnime(s32 index);
 const u16*      AMN_getBannerText(s32 index);
 const u16*      AMN_getBannerText2(s32 index, OSLanguage language);
 

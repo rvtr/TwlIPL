@@ -68,38 +68,38 @@ static TWLBannerFile*      mpEmptyBannerFileBuffer;
     // メモリが厳しいのでサブバナーバッファは1個で使い回す。
 static TWLSubBannerFile*   mpSubBannerFileBuffer;
 
-static BannerCounter       mBannerCounterArray[cAllTitleArrayMax];
-static FrameAnimeData      mFrameAnimeDataArray[cAllTitleArrayMax];
-static FrameAnimeData      mEmptyAnimeData;
+static AMNBannerCounter       mBannerCounterArray[cAllTitleArrayMax];
+static AMNFrameAnimeData      mFrameAnimeDataArray[cAllTitleArrayMax];
+static AMNFrameAnimeData      mEmptyAnimeData;
 
 static ROM_Header_Short    mRomHeaderBuffer;
 
 // see also TwlIPL_RED/build/systemmenu_RED/Launcher/ARM9/src/bannerCounter.h
-inline void AMN_BNC_resetCount( BannerCounter *c )
+inline void AMN_BNC_resetCount( AMNBannerCounter *c )
 {
 	c->count = 0;
 	c->control = 0;
 }
     
-inline void AMN_BNC_setBanner( BannerCounter *c, const TWLBannerFile *b)
+inline void AMN_BNC_setBanner( AMNBannerCounter *c, const TWLBannerFile *b)
 {
 	c->banner = b;
 }
     
-inline void AMN_BNC_initCounter( BannerCounter *c, const TWLBannerFile *b)
+inline void AMN_BNC_initCounter( AMNBannerCounter *c, const TWLBannerFile *b)
 {
 	AMN_BNC_setBanner( c, b );
 	AMN_BNC_resetCount( c );
 }
     
-inline const TWLBannerFile* AMN_BNC_getBanner( BannerCounter *c )
+inline const TWLBannerFile* AMN_BNC_getBanner( AMNBannerCounter *c )
 {
 	return c->banner;
 }
 
-static void AMN_BNC_incrementCount( BannerCounter *c );
-static FrameAnimeData AMN_BNC_getFAD( BannerCounter *c );
-static FrameAnimeData AMN_BNC_getFADAndIncCount( BannerCounter *c );
+static void AMN_BNC_incrementCount( AMNBannerCounter *c );
+static AMNFrameAnimeData AMN_BNC_getFAD( AMNBannerCounter *c );
+static AMNFrameAnimeData AMN_BNC_getFADAndIncCount( AMNBannerCounter *c );
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -192,7 +192,7 @@ void AMN_init( OSArenaId id, OSHeapHandle heap )
     mpSubBannerFileBuffer = (TWLSubBannerFile*)OS_AllocFromHeap( s_id_arena, s_hHeap, sizeof(TWLSubBannerFile) );
     SDK_ASSERT( mpSubBannerFileBuffer );
 
-    MI_CpuClearFast(mpEmptyBannerFileBuffer, sizeof(*mpEmptyBannerFileBuffer));
+    MI_CpuClearFast(mpEmptyBannerFileBuffer, sizeof(TWLBannerFile));
     mEmptyAnimeData.image = mpEmptyBannerFileBuffer->v1.image;
     mEmptyAnimeData.pltt  = mpEmptyBannerFileBuffer->v1.pltt;
     mEmptyAnimeData.hflip = FALSE;
@@ -768,7 +768,7 @@ void AMN_stepBannerAnimeAll(BOOL restart)
 void AMN_stepBannerAnime(s32 index, BOOL restart)
 {
     const TWLBannerFile* pBanner;
-    BannerCounter* pBNC;
+    AMNBannerCounter* pBNC;
 
     if (cAllTitleIndexStart <= index && index < cAllTitleArrayMax) {
         pBNC = &mBannerCounterArray[index];
@@ -787,33 +787,33 @@ void AMN_stepBannerAnime(s32 index, BOOL restart)
 
 const u8* AMN_getBannerImage(s32 index)
 {
-    FrameAnimeData ret = AMN_getBannerAnime(index);
+    AMNFrameAnimeData ret = AMN_getBannerAnime(index);
 
     return ret.image;
 }
 
 const u8* AMN_getBannerPltt(s32 index)
 {
-    FrameAnimeData ret = AMN_getBannerAnime(index);
+    AMNFrameAnimeData ret = AMN_getBannerAnime(index);
 
     return ret.pltt;
 }
 
 BOOL AMN_getBannerHFlip(s32 index)
 {
-    FrameAnimeData ret = AMN_getBannerAnime(index);
+    AMNFrameAnimeData ret = AMN_getBannerAnime(index);
 
     return ret.hflip;
 }
 
 BOOL AMN_getBannerVFlip(s32 index)
 {
-    FrameAnimeData ret = AMN_getBannerAnime(index);
+    AMNFrameAnimeData ret = AMN_getBannerAnime(index);
 
     return ret.vflip;
 }
 
-FrameAnimeData AMN_getBannerAnime(s32 index)
+AMNFrameAnimeData AMN_getBannerAnime(s32 index)
 {
     if (cAllTitleIndexStart <= index && index < cAllTitleArrayMax) {
         return mFrameAnimeDataArray[index];
@@ -931,7 +931,7 @@ BOOL AMN_checkAndReplaceBannerAnime(s32 index)
 }
 
 // see also TwlIPL_RED/build/systemmenu_RED/Launcher/ARM9/src/bannerCounter.c
-void AMN_BNC_incrementCount( BannerCounter *c )
+void AMN_BNC_incrementCount( AMNBannerCounter *c )
 {
 	// TWLのみカウントインクリメント
 	if( c->banner->h.platform == BANNER_PLATFORM_TWL )
@@ -974,9 +974,9 @@ void AMN_BNC_incrementCount( BannerCounter *c )
 	}
 }
 
-FrameAnimeData AMN_BNC_getFAD( BannerCounter *c )
+AMNFrameAnimeData AMN_BNC_getFAD( AMNBannerCounter *c )
 {
-	FrameAnimeData ret;
+	AMNFrameAnimeData ret;
 	if( c->banner->h.platform == BANNER_PLATFORM_NTR )
 	{
 		ret.image = c->banner->v1.image;
@@ -1005,9 +1005,9 @@ FrameAnimeData AMN_BNC_getFAD( BannerCounter *c )
 	return ret;
 }
 
-FrameAnimeData AMN_BNC_getFADAndIncCount( BannerCounter *c )
+AMNFrameAnimeData AMN_BNC_getFADAndIncCount( AMNBannerCounter *c )
 {
-	FrameAnimeData ret = AMN_BNC_getFAD( c );
+	AMNFrameAnimeData ret = AMN_BNC_getFAD( c );
 	AMN_BNC_incrementCount( c );
 	return ret;
 }
@@ -1029,3 +1029,84 @@ BOOL AMN_isIndexValidForSetting(s32 index)
     return FALSE;
 }
 
+/*--------------------------------------------------------------------------------------------------------
+
+// アプリケーションに埋め込むテストコードのサンプル
+// 実験用にヒープを拡張メインメモリから確保しているので注意
+// 事前にOS_EnableMainExArena、OS_Init（OS_InitArena）、およびNAM_Initを呼んでおく必要あり
+static void test()
+{
+
+	s32 length;
+	s32 idx;
+	void *nstart;
+	OSHeapHandle handle;
+	
+	nstart = OS_InitAlloc( OS_ARENA_MAINEX, OS_GetMainExArenaLo(), OS_GetMainExArenaHi(), 1 );
+	OS_SetMainExArenaLo( nstart );
+	
+	handle = OS_CreateHeap( OS_ARENA_MAINEX, OS_GetMainExArenaLo(), OS_GetMainExArenaHi() );
+	
+	AMN_Manager();
+	
+	AMN_init( OS_ARENA_MAINEX, handle );
+
+	// 起動直後、自動的にバナーデータ読み込みを行います。
+	// メインスレッドでは、とりあえず完了まで待ちます。
+	while (!AMN_isNandTitleListReady()) {
+	    OS_Sleep(1);
+	}
+
+	// タイトル一覧をOS_Printfします。
+	// cmn::util::U16toSjisは、STDライブラリの関数を呼び出してUnicodeからShiftJISへ変換します。
+	length = AMN_getNandTitleListLengthForLauncher();
+	for (idx = 0; idx < length; idx++) {
+	    s32 i;
+	    char dst[256];
+	    int dstlen = 256;
+	    i = cNandTitleIndexStart + idx;
+	    MI_CpuClearFast(dst,256);
+	    STD_ConvertStringUnicodeToSjis(dst, &dstlen, AMN_getBannerText(i), NULL, NULL);
+	    OS_TPrintf("title idx=%2d, titleId=%016llx exp=%02x forStg=%d bannerText=%s\n",
+	              i, (u64)AMN_getTitleIdByIndex(i),
+	              AMN_getAppInfo(i)->expansionFlags,
+	              AMN_isIndexValidForSetting(i),
+	              dst);
+	}
+
+// タイトルIDからの逆引き
+    {
+        static const NAMTitleId table[] = {
+            0x00030015344e4141, // "4NAA" - UIG launcher default
+            0x0003001534303141, // "401A" - UIG launcher clone
+            0x0003001534303241, // "402A" - UIG launcher clone
+            0x00030017484e4141, // "HNAA" - RED launcher default
+            0x00030015484e4241, // "HNBA" - RED MachineSettings
+            0x0000000000000001, // nonexistent
+            0 // stopper
+        };
+        u32 i;
+
+        i = 0;
+        while (table[i]) {
+            OS_TPrintf("index by titleId(%016llx)=%d\n", (u64)table[i], AMN_getIndexByTitleId(table[i]));
+            i++;
+        }
+    }
+
+// バナーイメージデータ
+    {
+        s32 index;
+        const u8* pImage;
+
+        index = 3; //app::Manager::cNandTitleIndexStart;
+        pImage = AMN_getBannerImage(index);
+        OS_TPrintf("banner image for index(%02d)=%02x %02x %02x %02x %02x %02x %02x %02x \n",
+                  index,
+                  pImage[0], pImage[1], pImage[2], pImage[3],
+                  pImage[4], pImage[5], pImage[6], pImage[7]);
+    }
+
+}
+
+--------------------------------------------------------------------------------------------------------*/
