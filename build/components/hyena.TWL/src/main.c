@@ -291,18 +291,19 @@ static void ResetRTC( void )
     RTCRawStatus2 stat2;
     RTC_ReadStatus1( &stat1 );
     RTC_ReadStatus2( &stat2 );
+	
+	// FOUTを常にONするようにする。（無線で使用している）
+    {
+        RTCRawFout  fout;
+        fout.fout   =   RTC_FOUT_DUTY_32KHZ;
+        RTC_WriteFout(&fout);
+    }
     // リセット、電源投入、電源電圧低下、ICテストの各フラグを確認
     if ( stat1.reset || stat1.poc || stat1.bld || stat2.test )
     {
         // リセット実行
         stat1.reset = 1;
         RTC_WriteStatus1( &stat1 );
-        {
-            RTCRawFout  fout;
-
-            fout.fout   =   RTC_FOUT_DUTY_32KHZ;
-            RTC_WriteFout(&fout);
-        }
         sw->flags.common.isResetRTC = TRUE;
     }
 
