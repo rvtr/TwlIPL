@@ -1720,15 +1720,21 @@ AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 	}
 	
 	// デバッガ接続中以外の時のみTWL設定データにブートするタイトルのTitleIDとplatformCodeを保存。
-    if( !SYSM_IsRunOnDebugger() ||                         // スタンドアロン
-        (OSi_DetectDebugger() & OS_CONSOLE_TWLDEBUGGER) )  // デバッグ時
+    if( !SYSM_IsRunOnDebugger() ||                          // スタンドアロン
+        (OSi_DetectDebugger() & OS_CONSOLE_TWLDEBUGGER) ) // デバッグ時
     {
-		u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
-		if( pBuffer != NULL ) {
-			LCFG_TSD_SetLastTimeBootSoftTitleID ( pBootTitle->titleID );
-			LCFG_TSD_SetLastTimeBootSoftPlatform( (u8)SYSM_GetAppRomHeader()->platform_code );
-			(void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
-			SYSM_Free( pBuffer );
+        // NANDフラッシュ延命のためブートタイトルが変更された時のみ保存
+        // LCFGはSYSM_ReadParametersでリード済み
+        if( (pBootTitle->titleID != LCFG_TSD_GetLastTimeBootSoftTitleID()) ||
+            ((u8)SYSM_GetAppRomHeader()->platform_code != LCFG_TSD_GetLastTimeBootSoftPlatform()) )
+        {
+			u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
+			if( pBuffer != NULL ) {
+				LCFG_TSD_SetLastTimeBootSoftTitleID ( pBootTitle->titleID );
+				LCFG_TSD_SetLastTimeBootSoftPlatform( (u8)SYSM_GetAppRomHeader()->platform_code );
+				(void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+				SYSM_Free( pBuffer );
+			}
 		}
 	}
 	
