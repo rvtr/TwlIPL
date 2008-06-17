@@ -394,10 +394,19 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 
     OS_TPrintf("[Wlan Firm]  FWtype is %d\n", fwType);
 
-    /* HotStart/ColdStartのチェック */
-
+    /*
+        FWDATAパラメータの正当性チェック(HotStartの場合)
+        FALSEならCold扱いでFWロードを行う。
+     */
+    if (TRUE == isHotStartWLFirm && FALSE == NWMi_CheckFirmDataParamIntegrity()) {
+        OS_TPrintf("[Wlan Firm]  FirmDataParam doesn't exist.\n");
+        OS_TPrintf("[Wlan Firm]  Reinstall firmware as ColdStart.\n");
+        isHotStartWLFirm = FALSE;
+    }
+    
     s_isHotStartWLFirm = isHotStartWLFirm;
 
+    /* HotStart/ColdStartのチェック */
     if (TRUE == isHotStartWLFirm)  // HOT START
     {
         pNwmBuf = SYSM_Alloc( NWM_SYSTEM_BUF_SIZE );
