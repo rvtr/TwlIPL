@@ -403,12 +403,11 @@ InitializeNwm(OSHeapHandle drvHeapHandle, OSHeapHandle wpaHeapHandle)
     nwmInit.sdioPrio = THREAD_PRIO_NWM_SDIO;
     nwmInit.drvHeap.id = OS_ARENA_MAIN_SUBPRIV; /* [TODO] */
     nwmInit.drvHeap.handle = drvHeapHandle;
-#ifdef WPA_BUILT_IN /* WPA ‚ª‘g‚İ‚Ü‚ê‚éê‡AˆÈ‰º‚Ìƒƒ“ƒo‚ª’Ç‰Á‚³‚ê‚é */
 
     nwmInit.wpaPrio = THREAD_PRIO_NWM_WPA;
     nwmInit.wpaHeap.id = OS_ARENA_MAIN_SUBPRIV; /* [TODO] */
     nwmInit.wpaHeap.handle = wpaHeapHandle;
-#endif
+
     NWMSP_Init(&nwmInit);
 
 }
