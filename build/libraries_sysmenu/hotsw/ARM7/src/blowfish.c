@@ -31,40 +31,64 @@ void MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen)
 {
 	const BLOWFISH_CTX *initTable = &HotSwBlowfishInitTableBufDS;
 
-	u32 blowfishedKey[2];
-
-    u8 			 *RomHeaderCtrlRsvB = cbd->pBootSegBuf->rh.s.ctrl_reserved_B;
     u32 		 *RomHeaderGameCode = (u32 *)cbd->pBootSegBuf->rh.s.game_code;
 	u32			 *keyBuf			= cbd->keyBuf;
     BLOWFISH_CTX *ctx				= &cbd->keyTable;
 
-    if(cbd->modeType == HOTSW_MODE1){
-		MI_CpuCopyFast((void *)initTable, (void *)ctx, sizeof(BLOWFISH_CTX));
-    }
-    else{
-		keyBuf	= cbd->keyBuf2;
-
-#define USE_LOCAL_KEYTABLE
-#ifdef USE_LOCAL_KEYTABLE
-		MI_CpuCopyFast(&HotSwBlowfishInitTableTWL, (void *)ctx, sizeof(BLOWFISH_CTX));
-		return;
-#else
-		MI_CpuCopyFast((void *)((OSFromFirm7Buf *)HW_FIRM_FROM_FIRM_BUF)->twl_blowfish, (void *)ctx, sizeof(BLOWFISH_CTX));
-#endif
-    }
-
+	MI_CpuCopyFast((void *)initTable, (void *)ctx, sizeof(BLOWFISH_CTX));
+    
   	keyBuf[0] = *RomHeaderGameCode;
   	keyBuf[1] = *RomHeaderGameCode >> 1;
   	keyBuf[2] = *RomHeaderGameCode << 1;
 
   	InitBlowfishKeyAndTableDS(ctx, keyBuf, keyLen);
-
-  	blowfishedKey[0] = (u32)RomHeaderCtrlRsvB[0];
-  	blowfishedKey[1] = *(u32 *)&RomHeaderCtrlRsvB[4];
-    
-  	DecryptByBlowfish(ctx, &(blowfishedKey)[1], &(blowfishedKey)[0]);
-
   	InitBlowfishKeyAndTableDS(ctx, keyBuf, keyLen);
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         MakeBlowfishTableTWL
+  
+  Description:  KeyTable2の生成
+ *---------------------------------------------------------------------------*/
+void MakeBlowfishTableTWL(CardBootData *cbd, s32 keyLen, u16 bondingOp)
+{
+	u32 		 *RomHeaderGameCode = (u32 *)cbd->pBootSegBuf->rh.s.game_code;
+	u32			 *keyBuf			= cbd->keyBuf2;
+    BLOWFISH_CTX *ctx				= &cbd->keyTable2;
+	void 		 *tempCTX;
+
+
+    // 製品機の場合
+	if(bondingOp == SCFG_OP_PRODUCT){
+        MI_CpuCopyFast((void *)((OSFromFirm7Buf *)HW_FIRM_FROM_FIRM_BUF)->twl_blowfish, (void *)ctx, sizeof(BLOWFISH_CTX));
+    }
+    // 開発機の場合
+    else{
+		MI_CpuCopyFast(&HotSwBlowfishInitTableTWL, (void *)ctx, sizeof(BLOWFISH_CTX));
+
+
+		// スタック領域がオーバーフローするから、ヒープ領域から領域を確保する。
+        tempCTX = OS_AllocFromSubPrivWram( sizeof(BLOWFISH_CTX) );
+
+        if(tempCTX != NULL){
+			ctx = tempCTX;
+        }
+        else{
+			return;
+        }
+	}
+
+	keyBuf[0] = *RomHeaderGameCode;
+	keyBuf[1] = *RomHeaderGameCode >> 1;
+	keyBuf[2] = *RomHeaderGameCode << 1;
+
+	InitBlowfishKeyAndTableDS(ctx, keyBuf, keyLen);
+
+    // Heapの開放
+	if(bondingOp != SCFG_OP_PRODUCT){
+		OS_FreeToSubPrivWram( tempCTX );
+	}
 }
 
 
@@ -75,9 +99,9 @@ void MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen)
  *---------------------------------------------------------------------------*/
 void InitBlowfishKeyAndTableDS(BLOWFISH_CTX *ctx, u32 *keyBufp, s32 keyLen)
 {
-  EncryptByBlowfish(ctx, &(keyBufp)[2], &(keyBufp)[1]);
-  EncryptByBlowfish(ctx, &(keyBufp)[1], &(keyBufp)[0]);
-  InitBlowfish(ctx, (u8 *)keyBufp, keyLen);
+	EncryptByBlowfish(ctx, &(keyBufp)[2], &(keyBufp)[1]);
+	EncryptByBlowfish(ctx, &(keyBufp)[1], &(keyBufp)[0]);
+	InitBlowfish(ctx, (u8 *)keyBufp, keyLen);
 }
 
 
@@ -119,7 +143,6 @@ void InitBlowfish(BLOWFISH_CTX *ctx, const unsigned char *key, int keyLen)
       ctx->S[i][j + 1] = datar;
     }
   }
-
 }
 
 

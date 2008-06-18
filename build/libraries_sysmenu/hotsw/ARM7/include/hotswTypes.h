@@ -305,6 +305,7 @@ typedef struct CardBootData{
 	u32                 *pSecure2SegBuf;
     
     BLOWFISH_CTX        keyTable;
+    BLOWFISH_CTX        keyTable2;
 } CardBootData;
 
 // スレッド・メッセージ関係をまとめた構造体

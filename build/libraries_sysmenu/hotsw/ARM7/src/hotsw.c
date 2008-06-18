@@ -469,7 +469,7 @@ static HotSwState LoadCardData(void)
                 retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
                 // Key Table初期化
-                MakeBlowfishTableDS(&s_cbData, 8);
+                MakeBlowfishTableTWL(&s_cbData, 8, s_bondingOp);
 
                 // コマンド認証値・コマンドカウンタ初期値・PNジェネレータ初期値の生成
                 GenVA_VB_VD();

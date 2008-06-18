@@ -432,8 +432,9 @@ HotSwState ReadRomEmulationInfo(SYSMRomEmuInfo *info)
  *---------------------------------------------------------------------------*/
 static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
 {
-	GCDCmd64 cndLE;
-    u64 data;
+	GCDCmd64 		cndLE;
+    u64 			data;
+    BLOWFISH_CTX	*ctx;
 
     // comannd0部分
 	switch(type){
@@ -460,8 +461,10 @@ static void SetSecureCommand(SecureCommandType type, CardBootData *cbd)
     cndLE.dw |= data << HSWOP_S_VA_SHIFT;
     
     if(!HOTSWi_IsRomEmulation()){
+		ctx = (cbd->modeType == HOTSW_MODE1) ? &cbd->keyTable : &cbd->keyTable2;
+        
     	// コマンドの暗号化
-		EncryptByBlowfish( &cbd->keyTable, (u32*)&cndLE.b[4], (u32*)cndLE.b );
+		EncryptByBlowfish( ctx, (u32*)&cndLE.b[4], (u32*)cndLE.b );
     }
 
 	// MCCMD レジスタ設定
@@ -555,11 +558,12 @@ HotSwState ReadIDSecure(CardBootData *cbd)
  *---------------------------------------------------------------------------*/
 HotSwState ReadSegSecure(CardBootData *cbd)
 {
-    u32 		scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
-	u32			*buf = (cbd->modeType == HOTSW_MODE1) ? cbd->pSecureSegBuf : cbd->pSecure2SegBuf;
-    u32			loop, pc, size, interval, i, j=0, k;
-	u64			segNum = 4;
-	GCDCmd64 	cndLE;
+    u32 			scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
+	u32				*buf = (cbd->modeType == HOTSW_MODE1) ? cbd->pSecureSegBuf : cbd->pSecure2SegBuf;
+    u32				loop, pc, size, interval, i, j=0, k;
+	u64				segNum = 4;
+	GCDCmd64 		cndLE;
+    BLOWFISH_CTX	*ctx = (cbd->modeType == HOTSW_MODE1) ? &cbd->keyTable : &cbd->keyTable2;
 
     if(cbd->cardType == DS_CARD_TYPE_1){
     	loop	 = 0x1UL;
@@ -585,7 +589,7 @@ HotSwState ReadSegSecure(CardBootData *cbd)
 		cndLE.dw |= segNum << HSWOP_S_VC_SHIFT;
         
 	    // コマンドの暗号化
-		EncryptByBlowfish( &cbd->keyTable, (u32*)&cndLE.b[4], (u32*)cndLE.b );
+		EncryptByBlowfish( ctx, (u32*)&cndLE.b[4], (u32*)cndLE.b );
 
 		// MCCMD レジスタ設定
 		HOTSWi_SetCommand(&cndLE);
