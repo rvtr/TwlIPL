@@ -14,6 +14,9 @@
 #  $Rev$
 #  $Author$
 #---------------------------------------------------------------------------
+
+# check.XXX は、ランチャーがロード可能なサイズおよびautoload後のメモリマップに応じて制限サイズを設定する。
+
 MEMORY
 {
 	<STATIC.NAME>				(RWX) :	ORIGIN = <STATIC.ADDRESS>,		LENGTH = 0x0	>	<STATIC.NAME><PROPERTY.FLXSUFFIX>
@@ -44,7 +47,7 @@ MEMORY
 	<LTDOVERLAY.NAME>			(RWXO):	ORIGIN = <LTDOVERLAY.ADDRESS>,	LENGTH = 0x0	>	<LTDOVERLAY.NAME><PROPERTY.LTDSUFFIX>
 	<END.LTDOVERLAYS>
 
-	check.LTDMAIN				(RWX) :	ORIGIN = 0x02280200,			LENGTH = 0x73e00	>	ltdmain.check
+	check.LTDMAIN				(RWX) :	ORIGIN = 0x02280200,			LENGTH = 0xf8000	>	ltdmain.check
 }
 
 KEEP_SECTION
