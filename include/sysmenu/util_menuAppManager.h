@@ -39,7 +39,7 @@ AMNFrameAnimeData;
 
 void AMN_Manager( );
 
-void AMN_init( OSArenaId id, OSHeapHandle heap );
+void AMN_init( void *(*pAlloc)(u32), void (*pFree)(void*) );
 void AMN_restart();
 void AMN_destroy();
 

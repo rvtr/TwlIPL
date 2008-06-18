@@ -8,8 +8,8 @@
 
 #include <stddef.h>
 
-static OSArenaId s_id_arena = OS_ARENA_MAIN;
-static OSHeapHandle s_hHeap = -1;
+void *(*AMNi_Alloc)( u32 size  ) = NULL;
+void  (*AMNi_Free )( void *ptr ) = NULL;
 
 /////////////////////////////////////////////////////////////////////////////////
 // private:
@@ -110,7 +110,8 @@ s32 AMN_getCardTitleListLength() { return mCardTitleListLength; }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*!
-  コンストラクタ
+  コンストラクタ（C++時代の遺物）
+  もうAMN_Init()とまとめて良いかも……
  */
 void AMN_Manager( )
 {
@@ -176,20 +177,21 @@ void AMN_Manager( )
 /*!
   起動。
  */
-void AMN_init( OSArenaId id, OSHeapHandle heap )
+void AMN_init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 {
-    // この時点でs_hHeapが-1であるべし
-    SDK_ASSERT( s_hHeap == -1 );
-    s_id_arena = id;
-    s_hHeap = heap;
+    // この時点でAMNi_AllocとAMNi_FreeがNULLであるべし
+    SDK_ASSERT( AMNi_Alloc == NULL && AMNi_Free == NULL );
 
-    mpNandBannerFileArray = (TWLBannerFile*)OS_AllocFromHeap( s_id_arena, s_hHeap, sizeof(TWLBannerFile) * cNandTitleArrayMax );
+    AMNi_Alloc = pAlloc;
+    AMNi_Free  = pFree;
+
+    mpNandBannerFileArray = (TWLBannerFile*)AMNi_Alloc( sizeof(TWLBannerFile) * cNandTitleArrayMax );
     SDK_ASSERT( mpNandBannerFileArray );
 
-    mpEmptyBannerFileBuffer = (TWLBannerFile*)OS_AllocFromHeap( s_id_arena, s_hHeap, sizeof(TWLBannerFile) );
+    mpEmptyBannerFileBuffer = (TWLBannerFile*)AMNi_Alloc( sizeof(TWLBannerFile) );
     SDK_ASSERT( mpEmptyBannerFileBuffer );
 
-    mpSubBannerFileBuffer = (TWLSubBannerFile*)OS_AllocFromHeap( s_id_arena, s_hHeap, sizeof(TWLSubBannerFile) );
+    mpSubBannerFileBuffer = (TWLSubBannerFile*)AMNi_Alloc( sizeof(TWLSubBannerFile) );
     SDK_ASSERT( mpSubBannerFileBuffer );
 
     MI_CpuClearFast(mpEmptyBannerFileBuffer, sizeof(TWLBannerFile));
@@ -273,8 +275,8 @@ void AMN_init( OSArenaId id, OSHeapHandle heap )
  */
 void AMN_restart()
 {
-    // s_hHeapはセットされているべし
-    SDK_ASSERT( s_hHeap != -1 );
+    // AMNi_AllocおよびAMNi_Freeはセットされているべし
+    SDK_ASSERT( AMNi_Alloc != NULL && AMNi_Free != NULL );
 
     AMN_initFlags_();
 
@@ -308,19 +310,18 @@ void AMN_destroy()
         OS_Sleep(1);
     }
 
-	if( s_hHeap != -1 && mpSubBannerFileBuffer)
+	if( AMNi_Free != NULL && mpSubBannerFileBuffer)
 	{
-		OS_FreeToHeap( s_id_arena, s_hHeap, mpSubBannerFileBuffer );
+		AMNi_Free( mpSubBannerFileBuffer );
 	}
-	if( s_hHeap != -1 && mpEmptyBannerFileBuffer)
+	if( AMNi_Free != NULL && mpEmptyBannerFileBuffer)
 	{
-		OS_FreeToHeap( s_id_arena, s_hHeap, mpEmptyBannerFileBuffer );
+		AMNi_Free( mpEmptyBannerFileBuffer );
 	}
-	if( s_hHeap != -1 && mpNandBannerFileArray)
+	if( AMNi_Free != NULL && mpNandBannerFileArray)
 	{
-		OS_FreeToHeap( s_id_arena, s_hHeap, mpNandBannerFileArray );
+		AMNi_Free( mpNandBannerFileArray );
 	}
-	s_hHeap = -1;
 }
 
 void AMN_initFlags_()
@@ -355,7 +356,7 @@ void AMN_initNandTitleList_()
     SDK_ASSERT( mNandAllTitleListLength >= 0 );
 
     if (mNandAllTitleListLength > 0) {
-        pNandAllTitleIDList = (NAMTitleId*)OS_AllocFromHeap( s_id_arena, s_hHeap, sizeof(NAMTitleId) * mNandAllTitleListLength );
+        pNandAllTitleIDList = (NAMTitleId*)AMNi_Alloc( sizeof(NAMTitleId) * mNandAllTitleListLength );
         SDK_ASSERT( pNandAllTitleIDList );
 
         if (!pNandAllTitleIDList) {
@@ -397,7 +398,7 @@ void AMN_initNandTitleList_()
     }
 
     if (pNandAllTitleIDList) {
-        OS_FreeToHeap( s_id_arena, s_hHeap, pNandAllTitleIDList);
+        AMNi_Free( pNandAllTitleIDList);
     }
 }
 
@@ -1034,22 +1035,29 @@ BOOL AMN_isIndexValidForSetting(s32 index)
 // アプリケーションに埋め込むテストコードのサンプル
 // 実験用にヒープを拡張メインメモリから確保しているので注意
 // 事前にOS_EnableMainExArena、OS_Init（OS_InitArena）、およびNAM_Initを呼んでおく必要あり
-static void test()
+static OSHeapHandle os_heap_handle;
+static void *alloc_tmp(u32 size)
+{
+	return OS_AllocFromHeap( OS_ARENA_MAINEX, os_heap_handle, size);
+}
+static void free_tmp( void *ptr )
+{
+	OS_FreeToHeap( OS_ARENA_MAINEX, os_heap_handle, ptr );
+}
+static void test2()
 {
 
 	s32 length;
 	s32 idx;
 	void *nstart;
-	OSHeapHandle handle;
 	
 	nstart = OS_InitAlloc( OS_ARENA_MAINEX, OS_GetMainExArenaLo(), OS_GetMainExArenaHi(), 1 );
 	OS_SetMainExArenaLo( nstart );
 	
-	handle = OS_CreateHeap( OS_ARENA_MAINEX, OS_GetMainExArenaLo(), OS_GetMainExArenaHi() );
+	os_heap_handle = OS_CreateHeap( OS_ARENA_MAINEX, OS_GetMainExArenaLo(), OS_GetMainExArenaHi() );
 	
 	AMN_Manager();
-	
-	AMN_init( OS_ARENA_MAINEX, handle );
+	AMN_init( alloc_tmp, free_tmp );
 
 	// 起動直後、自動的にバナーデータ読み込みを行います。
 	// メインスレッドでは、とりあえず完了まで待ちます。
