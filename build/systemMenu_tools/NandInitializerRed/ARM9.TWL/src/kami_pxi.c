@@ -131,6 +131,32 @@ KAMIResult ExeFormatAsync(FormatMode format_mode, KAMICallback callback)
     return KAMI_RESULT_SUCCESS;
 }
 
+KAMIResult ExeFormat(FormatMode format_mode)
+{
+    OSIntrMode enabled;
+
+	// ロック
+    enabled = OS_DisableInterrupts();
+    if (kamiWork.lock)
+    {
+        (void)OS_RestoreInterrupts(enabled);
+        return KAMI_RESULT_BUSY;
+    }
+    kamiWork.lock = TRUE;
+    (void)OS_RestoreInterrupts(enabled);
+
+    kamiWork.callback = NULL;
+    kamiWork.arg = 0;
+    kamiWork.data = 0;
+
+    if (KamiSendPxiCommand(KAMI_EXE_FORMAT, 1, format_mode))
+    {
+	    KamiWaitBusy();
+	    return (KAMIResult)kamiWork.result;
+    }
+    return KAMI_RESULT_SEND_ERROR;
+}
+
 /*---------------------------------------------------------------------------*
   Name:         NANDアクセス関数
 

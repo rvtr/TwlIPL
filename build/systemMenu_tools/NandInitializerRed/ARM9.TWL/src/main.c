@@ -103,9 +103,6 @@ TwlMain()
 	// FS_Initの後の方が良い模様
 	InitAllocation();
 
-	// NAMライブラリ初期化
-	NAM_Init( OS_AllocFromMain, OS_FreeToMain);
-	NAMUT_Init( OS_AllocFromMain, OS_FreeToMain);
 
     // 表示関連初期化
     InitGraphics();
@@ -131,6 +128,16 @@ TwlMain()
 #endif
 	kamiFontPrintfConsole( CONSOLE_ORANGE, "+---------------------------+\n");
 
+#ifdef AUTO_FORMAT_MODE
+//  検査工程ではNANDが初期化されていないがその状態でFATにアクセスすると
+//  問題があるため強制的にフォーマットを行う
+	ExeFormat(FORMAT_MODE_QUICK);
+#endif
+
+	// NAMライブラリ初期化
+	NAM_Init( OS_AllocFromMain, OS_FreeToMain);
+	NAMUT_Init( OS_AllocFromMain, OS_FreeToMain);
+
 	// HWInfo関連の前準備
 	switch (HWI_Init( OS_AllocFromMain, OS_FreeToMain ))
 	{
@@ -147,6 +154,7 @@ TwlMain()
 		kamiFontPrintfConsoleEx(CONSOLE_RED, "[No Signature MODE]\n" );
 		break;
 	}
+
 
     while (1)
     {
