@@ -16,6 +16,9 @@
 # $Author$
 #----------------------------------------------------------------------------
 
+# Main memory にコードを退避させたathdrvを使用。(for test)
+TMP_WL_MAIN ?= FALSE
+
 TARGET_FIRM					=	SYSTEMMENU
 override TARGET_PLATFORM	=	TWL
 override TWL_PROC			=	ARM7
@@ -35,7 +38,13 @@ SRCS			=	main.c \
 TARGET_NAME		=	hyena
 
 TARGET_NEF		=	$(TARGET_NAME).tef
+
+ifeq ($(TMP_WL_MAIN), TRUE)
+LCFILE_SPEC		=	$(TARGET_NAME)_wlmain.lsf
+else
 LCFILE_SPEC		=	$(TARGET_NAME).lsf
+endif
+
 LCFILE_TEMPLATE	=	$(TARGET_NAME).lcf.template
 LDRES_TEMPLATE	=	$(ROOT)/build/components/racoon.TWL/racoon.response.template
 
@@ -48,8 +57,12 @@ CCFLAGS_OPT		=	-O4 -inline off
 #----------------------------------------------------------------------------
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-# crt0.o と libpm_sp は、ローカルでビルドしたものを使用するので、除外する。
+# crt0.o 、 libpm_sp および libnwm_sp は、ローカルでビルドしたものを使用するので、除外する。
+ifeq ($(TMP_WL_MAIN), TRUE)
+GLIBRARIES		:= $(filter-out $(CRT0_O) libpm_sp$(TWL_LIBSUFFIX).a libathdrv_sp$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
+else
 GLIBRARIES		:= $(filter-out $(CRT0_O) libpm_sp$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
+endif
 
 ifdef TWLSDK_NOCRYPTO
 CCFLAGS			+=	-DSDK_NOCRYPTO
@@ -98,6 +111,11 @@ SYSMENU_LIBS	=	\
 					libdht_sp$(TWL_LIBSUFFIX).a \
 					libpm_sp.SYSMENU$(TWL_LIBSUFFIX).a
 
+ifeq ($(TMP_WL_MAIN), TRUE)
+SYSMENU_LIBS	+=	\
+					libathdrv_sp.SYSMENU$(TWL_LIBSUFFIX).a 
+endif
+
 SDK_APPEND_LIBS	=	\
 					libwl_sp.TWL.LTD.a \
 					libaes_sp.firm.LTD.a \
@@ -107,6 +125,10 @@ SDK_APPEND_LIBS	=	\
 LLIBRARIES		+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
 LLIBRARY_DIRS	+=	./
+
+ifeq ($(TMP_WL_MAIN), TRUE)
+LLIBRARY_DIRS	+=	$(SYSMENU_ROOT)/lib/TwlWireless/$(TWL_LIBTYPE)
+endif
 
 LDEPENDS_NEF	= $(TWL_LIBS) $(LLIBRARIES)
 
