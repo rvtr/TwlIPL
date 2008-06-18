@@ -66,13 +66,14 @@ do-build :	$(TARGETS)
 
 MASTERING =	$(TWL_IPL_RED_PRIVATE_ROOT)/build/tools/mastering.TWL/mastering.TWL.exe
 
+MASTERING_FLAGS	=	-t
 
 #---------------------------
 #ÉâÉìÉ`ÉÉÅ[
 #---------------------------
 $(OUT_DIR)/HNAA : $(SYSMENU_DIR)/Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNAA.srl
 ifneq ($(DO_MASTERING),)
-	$(MASTERING) $< $(OUT_DIR)/$(SRL_DIR)/$(notdir $<)
+	$(MASTERING) $(MASTERING_FLAGS) $< $(OUT_DIR)/$(SRL_DIR)/$(notdir $<)
 else
 	cp $< $(OUT_DIR)/$(SRL_DIR)
 endif
@@ -90,7 +91,7 @@ endif
 #---------------------------
 $(OUT_DIR)/HNBA : $(SYSMENU_DIR)/MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNBA.srl
 ifneq ($(DO_MASTERING),)
-	$(MASTERING) $< $(OUT_DIR)/$(SRL_DIR)/$(notdir $<)
+	$(MASTERING) $(MASTERING_FLAGS) $< $(OUT_DIR)/$(SRL_DIR)/$(notdir $<)
 else
 	cp $< $(OUT_DIR)/$(SRL_DIR)
 endif
@@ -151,7 +152,7 @@ $(OUT_DIR)/menu_launcher-$(TWL_BUILD_TYPE).nand: ../nandfirm/menu-launcher/menu_
 #---------------------------
 $(OUT_DIR)/$(NAND_INITIALIZER_NAME)-$(TWL_BUILD_TYPE)$(MASTER).srl: ../systemMenu_tools/$(NAND_INITIALIZER_NAME)/ARM9.TWL/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/$(NAND_INITIALIZER_NAME).srl
 ifneq ($(DO_MASTERING),)
-	$(MASTERING) -s $< $@
+	$(MASTERING) -s $(MASTERING_FLAGS) $< $@
 else
 	cp $< $@
 endif
