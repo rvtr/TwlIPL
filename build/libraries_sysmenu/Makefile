@@ -34,7 +34,8 @@ SUBDIRS			=		reloc_info \
 						banner \
 						util \
 						dht \
-						wds
+						wds \
+						TwlWireless
 
 #----------------------------------------------------------------------------
 
