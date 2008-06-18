@@ -192,7 +192,7 @@ BOOL MCU_WriteFirm(const unsigned char* hex)
     slowRate = SLOW_RATE_LONG;
 
     // main phase
-    while ( hex[0] == ':' && ( hex[3] < '2' || (hex[3] == '2' && hex[4] < '4') ) // フォーマットが正しく0x2400以前のアドレスである場合に処理する
+    while ( hex[0] == ':' && ( hex[3] < '2' || (hex[3] == '2' && hex[4] < '4') )) // フォーマットが正しく0x2400以前のアドレスである場合に処理する
     {
         // データ終端チェック (基本的にこの前で終了している)
         if ( !MI_CpuComp8( hex, ":00000001FF", 11) )
