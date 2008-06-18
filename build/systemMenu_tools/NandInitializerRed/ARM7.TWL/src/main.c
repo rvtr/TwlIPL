@@ -73,6 +73,7 @@
 static void         PrintDebugInfo(void);
 static OSHeapHandle InitializeAllocateSystem(void);
 static void         InitializeFatfs(void);
+static void			InitializeCardPower(void);
 static void         InitializeNwm(OSHeapHandle hh);
 static void         InitializeCdc(void);
 static void         DummyThread(void* arg);
@@ -118,6 +119,10 @@ TwlSpMain(void)
     (void)OS_EnableIrq();
     (void)OS_EnableInterrupts();
 
+#ifndef NAND_INITIALIZER_LIMITED_MODE
+    KamiPxiInit();
+#endif
+
     /* 各ライブラリ初期化 */
     AES_Init();                                 // AES
     SEA_Init();                                 // SEA
@@ -138,22 +143,7 @@ TwlSpMain(void)
     RTC_Init(THREAD_PRIO_RTC);                  // RTC
 //  WVR_Begin(heapHandle);                      // NITRO 無線
     SPI_Init(THREAD_PRIO_SPI);
-
-    // チャッタリングカウンタの値を設定
-    reg_MI_MC1 = (u32)((reg_MI_MC1 & ~REG_MI_MC1_CC_MASK) |
-                       (CHATTERING_COUNTER << REG_MI_MC1_CC_SHIFT));
-
-	// チャタリングカウンタ分待つことによりCDETが0になる
-    OS_SpinWait( OS_MSEC_TO_CPUCYC(200) );
-
-	// カードスロット１電源ON
-	HOTSWi_TurnCardPowerOn(1);
-
-///////////////
-#ifndef NAND_INITIALIZER_LIMITED_MODE
-    KamiPxiInit();
-#endif
-///////////////
+	InitializeCardPower();						// カード電源ON（検査プログラム用）
 
     while (TRUE)
     {
@@ -255,6 +245,37 @@ InitializeFatfs(void)
     {
         /* do nothing */
     }
+
+    /* ダミースレッド破棄 */
+    OS_KillThread(&thread, NULL);
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         InitializeCardPower
+  Description:  カード電源をONする。
+  Arguments:    None.
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static void
+InitializeCardPower(void)
+{
+    OSThread    thread;
+    u32         stack[18];
+
+    /* ダミースレッド作成 */
+    OS_CreateThread(&thread, DummyThread, NULL,
+        (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
+    OS_WakeupThreadDirect(&thread);
+
+    // チャッタリングカウンタの値を設定
+    reg_MI_MC1 = (u32)((reg_MI_MC1 & ~REG_MI_MC1_CC_MASK) |
+                       (CHATTERING_COUNTER << REG_MI_MC1_CC_SHIFT));
+
+	// チャタリングカウンタ分待つことによりCDETが0になる
+    OS_SpinWait( OS_MSEC_TO_CPUCYC(200) );
+
+	// カードスロット１電源ON
+	HOTSWi_TurnCardPowerOn(1);
 
     /* ダミースレッド破棄 */
     OS_KillThread(&thread, NULL);
