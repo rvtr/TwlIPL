@@ -166,14 +166,19 @@ static inline BOOL I2Ci_SendLast( u8 data )
 }
 
 #define SLOW_RATE_DEFAULT   0x50
-#define SLOW_RATE_SHORT     0x0
+#define SLOW_RATE_SHORT     0x140
 #define SLOW_RATE_LONG      (HW_CPU_CLOCK_ARM7 / 13)    // 300msec
-#define SLOW_RATE_ENTER     (HW_CPU_CLOCK_ARM7 / 180)   // 22msec
+#define SLOW_RATE_ENTER     (HW_CPU_CLOCK_ARM7 / 160)   // 25msec
 
 BOOL MCU_WriteFirm(const unsigned char* hex)
 {
     BOOL result = TRUE;
     BOOL temp;
+
+    if ( !hex )
+    {
+        return FALSE;   // no data
+    }
 
     I2C_Lock();
 
@@ -187,7 +192,7 @@ BOOL MCU_WriteFirm(const unsigned char* hex)
     slowRate = SLOW_RATE_LONG;
 
     // main phase
-    while ( hex[0] == ':' && hex[3] < '3' ) // フォーマットが正しく0x3000以前のアドレスである場合に処理する
+    while ( hex[0] == ':' && ( hex[3] < '2' || (hex[3] == '2' && hex[4] < '4') ) // フォーマットが正しく0x2400以前のアドレスである場合に処理する
     {
         // データ終端チェック (基本的にこの前で終了している)
         if ( !MI_CpuComp8( hex, ":00000001FF", 11) )
