@@ -29,7 +29,8 @@ TWL_PROC	    	=	ARM7
 SRCDIR				=	./src
 INCDIR				=	./include
 
-SRCS				=	blowfish.c \
+SRCS				=	hotswBlowfish.c \
+						Blowfish.c \
 						hotsw.c \
 						dsCardCommon.c \
 						romEmulation.c \
