@@ -30,7 +30,7 @@ SRCDIR				=	./src
 INCDIR				=	./include
 
 SRCS				=	hotswBlowfish.c \
-						Blowfish.c \
+						Blowfish_megachips.c \
 						hotsw.c \
 						dsCardCommon.c \
 						romEmulation.c \
