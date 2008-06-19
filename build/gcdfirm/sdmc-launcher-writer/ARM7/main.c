@@ -161,7 +161,6 @@ void TwlSpMain( void )
         goto err;
     }
     FATFSi_sdmcGoIdle( 2, NULL, NULL );
-    FATFSi_sdmcSelect( SDMC_PORT_NAND );
     SetDebugLED(++step);  // 0x05
 
     // CARDèâä˙âª
@@ -197,7 +196,7 @@ void TwlSpMain( void )
     SetDebugLED(++step);  // 0x0a
 
     // write NAND
-    if ( FATFSi_sdmcWriteFifo( nand, sectors, 1, NULL, &sdResult ) )
+    if ( FATFSi_sdmcWriteFifo( nand, sectors, 1, SDMC_PORT_NAND, &sdResult ) )
     {
         OS_TPrintf("Failed to call FATFSi_sdmcWriteFifo() to write header.\n");
         goto err;
@@ -216,7 +215,7 @@ void TwlSpMain( void )
     SetDebugLED(++step);  // 0x0c
 
     // verify NAND
-    if ( FATFSi_sdmcReadFifo( nand2, sectors, 1, NULL, &sdResult ) )
+    if ( FATFSi_sdmcReadFifo( nand2, sectors, 1, SDMC_PORT_NAND, &sdResult ) )
     {
         OS_TPrintf("Failed to call FATFSi_sdmcReadFifo() to write header.\n");
         goto err;
