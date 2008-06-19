@@ -15,6 +15,7 @@
 
 
 #include <twl/types.h>
+#include <firm/gcd/blowfish.h>
 #include <hotswTypes.h>
 
 #ifdef __cplusplus
@@ -26,17 +27,9 @@ extern BLOWFISH_CTX  HotSwBlowfishInitTableBufDS;
 extern BLOWFISH_CTX	 HotSwBlowfishInitTableTWL;
 
 // Function Prototype ------------------------------------------------------------------------
-// Blowfish èâä˙âª
-void InitBlowfish(BLOWFISH_CTX *ctx, const unsigned char *key, int keyLen);
 
 // Blowfish KeyÇ∆TableÇÃèâä˙âª
 void InitBlowfishKeyAndTableDS(BLOWFISH_CTX *ctx, u32 *keyBufp, s32 keyLen);
-
-// Blowfish ïúçÜâª
-void EncryptByBlowfish(const BLOWFISH_CTX *ctx, u32 *xl, u32 *xr);
-
-// Blowfish à√çÜâª
-void DecryptByBlowfish(const BLOWFISH_CTX *ctx, u32 *xl, u32 *xr);
 
 // Key Table ÇÃê∂ê¨
 void MakeBlowfishTableDS(CardBootData *cbd, s32 keyLen);
