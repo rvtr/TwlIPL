@@ -102,8 +102,11 @@ HotSwState ReadIDSecure_ROMEMU(CardBootData *cbd)
  *---------------------------------------------------------------------------*/
 HotSwState ReadSegSecure_ROMEMU(CardBootData *cbd)
 {
+	u32	*buf = (cbd->modeType == HOTSW_MODE1) ? cbd->pSecureSegBuf : cbd->pSecure2SegBuf;
 	u32 i,j=0;
-    u64 page = 0x20;
+    u32 keyTable2Adr = (u32)cbd->pBootSegBuf->rh.s.twl_card_keytable_area_rom_offset * TWLCARD_BORDER_OFFSET;
+    u32 Secure2Adr   = (cbd->modeType == HOTSW_MODE1) ? HOTSW_SECURE_AREA_OFS : (keyTable2Adr + HOTSW_SECURE2_AREA_OFS);
+    u64 page = Secure2Adr/HOTSW_PAGE_SIZE;
 	GCDCmd64 cndLE;
 	u32 n = 0;
     
@@ -114,9 +117,9 @@ HotSwState ReadSegSecure_ROMEMU(CardBootData *cbd)
         
 #ifdef USE_NEW_DMA
 		// NewDMA転送の準備
-		HOTSW_NDmaCopy_Card( HOTSW_NDMA_NO, (u32 *)HOTSW_MCD1, (u32 *)cbd->pSecureSegBuf + (u32)(PAGE_WORD_SIZE*i), PAGE_SIZE );
+		HOTSW_NDmaCopy_Card( HOTSW_NDMA_NO, (u32 *)HOTSW_MCD1, buf + (u32)(PAGE_WORD_SIZE*i), PAGE_SIZE );
 #else
-		HOTSW_DmaCopy32_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, (u32 *)cbd->pSecureSegBuf + (u32)(PAGE_WORD_SIZE*i), PAGE_SIZE );
+		HOTSW_DmaCopy32_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, buf + (u32)(PAGE_WORD_SIZE*i), PAGE_SIZE );
 #endif
         
     	// リトルエンディアンで作って
