@@ -230,7 +230,7 @@ HotSwState ReadStatusNormal(CardBootData *cbd)
 #endif
 
 	// MCCNT1 レジスタ設定
-	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~SCRAMBLE_MASK) | START_MASK | HOTSW_PAGE_STAT;
+	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~(SCRAMBLE_MASK | LATENCY1_MASK)) | START_MASK | HOTSW_PAGE_STAT;
 
     // メッセージ受信
 	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
@@ -262,7 +262,7 @@ HotSwState RefreshBadBlockNormal(CardBootData *cbd)
 	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
     
 	// MCCNT1 レジスタ設定
-	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~SCRAMBLE_MASK) | START_MASK | HOTSW_PAGE_0;
+	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~(SCRAMBLE_MASK | LATENCY1_MASK)) | START_MASK | HOTSW_PAGE_0;
 
     // カードデータ転送終了まで待つ
     HOTSW_WaitCardCtrl();
@@ -891,7 +891,7 @@ HotSwState ReadStatusGame(CardBootData *cbd)
 #endif
     
    	// MCCNT1 レジスタ設定 (START = 1 W/R = 0 PC = 111(ステータスリード) その他Romヘッダの情報におまかせ)
-	reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | HOTSW_PAGE_STAT;
+	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~LATENCY1_MASK) | START_MASK | HOTSW_PAGE_STAT;
     
     // メッセージ受信
 	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
@@ -923,7 +923,7 @@ HotSwState RefreshBadBlockGame(CardBootData *cbd)
 	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK );
     
    	// MCCNT1 レジスタ設定
-	reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | HOTSW_PAGE_0;
+	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~LATENCY1_MASK) | START_MASK | HOTSW_PAGE_0;
 
     // カードデータ転送終了まで待つ
 	HOTSW_WaitCardCtrl();

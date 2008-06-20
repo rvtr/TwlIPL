@@ -709,6 +709,7 @@ HotSwState HOTSWi_RefreshBadBlock(u32 romMode)
                 {
                     break;
                 }
+                OS_Sleep(1);
             }
         }
     }
