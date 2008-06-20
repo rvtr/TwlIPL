@@ -203,7 +203,7 @@ HotSwState ReadStatusNormal(CardBootData *cbd)
 {
 	GCDCmd64 cndLE;
 
-	cbd->romStatus = 0;
+	cbd->romStatus = HOTSW_ROMST_RFS_READY_MASK;
 
   	if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
@@ -863,6 +863,8 @@ HotSwState ReadPageGame(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
 HotSwState ReadStatusGame(CardBootData *cbd)
 {
 	GCDCmd64 cndLE;
+
+	cbd->romStatus = HOTSW_ROMST_RFS_READY_MASK;
 
     if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;

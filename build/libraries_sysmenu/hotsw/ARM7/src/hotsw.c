@@ -700,6 +700,16 @@ HotSwState HOTSWi_RefreshBadBlock(u32 romMode)
         {
             state = pRefreshBadBlock(&s_cbData);
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
+            while (1)
+            {
+                state = pReadStatus(&s_cbData);
+                retval = (retval == HOTSW_SUCCESS) ? state : retval;
+                if ( s_cbData.romStatus & HOTSW_ROMST_RFS_READY_MASK ||
+                     (retval != HOTSW_SUCCESS) )
+                {
+                    break;
+                }
+            }
         }
     }
 
