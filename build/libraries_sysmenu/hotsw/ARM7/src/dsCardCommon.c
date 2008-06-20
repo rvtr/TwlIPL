@@ -253,7 +253,7 @@ HotSwState RefreshBadBlockNormal(CardBootData *cbd)
    	}
 
    	// リトルエンディアンで作って
-	cndLE.dw  = HSWOP_N_OP_RD_STAT;
+	cndLE.dw  = HSWOP_N_OP_RFS_BLK;
 
 	// MCCMD レジスタ設定
 	HOTSWi_SetCommand(&cndLE);
@@ -912,7 +912,7 @@ HotSwState RefreshBadBlockGame(CardBootData *cbd)
    	}
 
    	// リトルエンディアンで作って
-	cndLE.dw  = HSWOP_G_OP_RD_STAT;
+	cndLE.dw  = HSWOP_G_OP_RFS_BLK;
 
 	// MCCMD レジスタ設定
 	HOTSWi_SetCommand(&cndLE);
