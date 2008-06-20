@@ -173,7 +173,6 @@ static inline BOOL I2Ci_SendLast( u8 data )
 BOOL MCU_WriteFirm(const unsigned char* hex)
 {
     BOOL result = TRUE;
-    BOOL temp;
 
     if ( !hex )
     {
@@ -192,37 +191,28 @@ BOOL MCU_WriteFirm(const unsigned char* hex)
     slowRate = SLOW_RATE_LONG;
 
     // main phase
-    while ( hex[0] == ':' && ( hex[3] < '2' || (hex[3] == '2' && hex[4] < '4') )) // フォーマットが正しく0x2400以前のアドレスである場合に処理する
+    while ( hex[0] == ':' ) // ':'から始まっている限りループする
     {
-        // データ終端チェック (基本的にこの前で終了している)
-        if ( !MI_CpuComp8( hex, ":00000001FF", 11) )
-        {
-            break;
-        }
-        // 無視行チェック
-        if ( hex[1] == '1' && hex[2] == '0' && !MI_CpuComp8( &hex[9], "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 32 ) )
-        {
-            while ( *hex++ != '\n' )
-            {
-                // skip
-            }
-            continue;
-        }
+        int isContinue = MI_CpuComp8( hex, ":00000001FF", 11);  // データ終端チェック
+
         // 最初の1文字 (':'のはず)
         result &= I2Ci_SendMiddle( *hex++ );
 
         slowRate = SLOW_RATE_SHORT;
 
         // 通常出力
-        temp = TRUE;    /* 1回遅延させることで'\n'の結果を無視する */
         do
         {
-            result &= temp;
-            temp = I2Ci_SendMiddle( *hex );
+            I2Ci_SendMiddle( *hex );
         }
         while ( *hex++ != '\n' );
 
         slowRate = SLOW_RATE_ENTER;
+
+        if ( !isContinue )  // 最終行だった
+        {
+            break;
+        }
     }
 
     // stop phase (only 2nd call)
