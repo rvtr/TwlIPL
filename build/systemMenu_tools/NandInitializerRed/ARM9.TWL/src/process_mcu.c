@@ -239,7 +239,7 @@ void* mcuProcess2(void)
 
 	if (STD_GetStringLength(sFilePath[sMenuSelectNo]))
 	{
-		kamiFontPrintf((s16)26,  (s16)(5+sMenuSelectNo*CHAR_OF_MENU_SPACE), FONT_COLOR_BLACK, "WAIT");
+		kamiFontPrintf((s16)25,  (s16)(5+sMenuSelectNo*CHAR_OF_MENU_SPACE), FONT_COLOR_BLACK, "WAIT");
 		kamiFontLoadScreenData();
 
 		// .hexのフルパスを作成
@@ -255,11 +255,11 @@ void* mcuProcess2(void)
 	// 今回の結果を表示
 	if ( result == TRUE )
 	{
-		kamiFontPrintf((s16)26,  (s16)(5+sMenuSelectNo*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "OK");
+		kamiFontPrintf((s16)25,  (s16)(5+sMenuSelectNo*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, " OK ");
 	}
 	else
 	{
-		kamiFontPrintf((s16)26,  (s16)(5+sMenuSelectNo*CHAR_OF_MENU_SPACE), FONT_COLOR_RED, "NG");
+		kamiFontPrintf((s16)25,  (s16)(5+sMenuSelectNo*CHAR_OF_MENU_SPACE), FONT_COLOR_RED, " NG ");
 	}
 
 #ifndef NAND_INITIALIZER_LIMITED_MODE
