@@ -184,6 +184,13 @@ _start(void)
         /* SCFG 設定を確認 */
         bl          INITi_CheckSysConfig
 
+        /* プリロードパラメータアドレスが格納されていない場合は、デフォルト値をセット */
+		ldr				r0, =HW_PRELOAD_PARAMETER_ADDR
+		ldr				r1, [r0]
+		cmp				r1, #0
+		ldreq			r1, =HW_PARAM_TWL_SETTINGS_DATA_DEFAULT
+		streq			r1, [r0]
+
         /* ランチャーから渡された情報を退避 */
         ldr         r3, =SDK_WRAM_ARENA_LO
         sub         r2, r3, #0x40
@@ -194,6 +201,7 @@ _start(void)
         strlt       r0, [r2], #4
         blt         @001
 
+			
         /* ハンドシェイク用マイクロコードを専用 WRAM にコピー */
         ldr         r1, =microcode_ShakeHand
         ldr         r2, =HW_PRV_WRAM

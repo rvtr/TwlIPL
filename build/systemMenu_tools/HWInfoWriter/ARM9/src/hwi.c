@@ -271,12 +271,6 @@ BOOL HWI_ModifyLanguage( u8 region )
 	u8  freeSoftBoxCount;
 	BOOL result = TRUE;
 
-	if (!ReadTWLSettings())
-	{
-		result = FALSE;
-        OS_TPrintf( "Read TWLSettings failed.\n" );
-	}
-
     if( langBitmap & ( 0x0001 << nowLanguage ) ) {
         OS_TPrintf( "Language no change.\n" );
     }else {
@@ -369,6 +363,9 @@ BOOL HWI_WriteHWNormalInfoFile( void )
         OS_TPrintf( "HW Normal Info Write failed.\n" );
         return FALSE;
     }
+
+	// MMEMのシステム領域にセット
+	MI_CpuCopyFast( LCFGi_GetHWN(), (void *)HW_PARAM_TWL_HW_NORMAL_INFO, sizeof(LCFGTWLHWNormalInfo) );
 
     return TRUE;
 }
@@ -524,6 +521,9 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
         isWrite = FALSE;
         OS_TPrintf( "HW Secure Info Write failed.\n" );
     }
+
+	// MMEMのシステム領域にセット
+	MI_CpuCopyFast( LCFGi_GetHWS(), (void *)HW_HW_SECURE_INFO, HW_HW_SECURE_INFO_END - HW_HW_SECURE_INFO );
 
     return isWrite;
 }
