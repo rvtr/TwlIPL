@@ -61,7 +61,6 @@ void KamiPxiInit( void );
 KAMIResult ExeFormatAsync(FormatMode format_mode, KAMICallback callback);
 KAMIResult ExeFormat(FormatMode format_mode);
 KAMIResult kamiNandIo(u32 block, void* buffer, u32 count, BOOL is_read);
-KAMIResult kamiNvramIo(u32 address, void* buffer, u32 size, BOOL is_read);
 KAMIResult kamiMcuWriteFirm(void* buffer );
 KAMIResult kamiMcuIo(u32 reg_no, void* buffer, u32 value, BOOL is_read);
 KAMIResult kamiARM7Io(u32 addr, u32* buffer, u32 value, BOOL is_read);
@@ -80,14 +79,6 @@ static KAMIResult kamiNandRead(u32 block, void* buffer, u32 count)
 static KAMIResult kamiNandWrite(u32 block, void* buffer, u32 count)
 {
 	return kamiNandIo(block, buffer, count, FALSE);
-}
-static KAMIResult kamiNvramRead(u32 adress, void* buffer, u32 size)
-{
-	return kamiNvramIo(adress, buffer, size, TRUE);
-}
-static KAMIResult kamiNvramWrite(u32 adress, void* buffer, u32 size)
-{
-	return kamiNvramIo(adress, buffer, size, FALSE);
 }
 static KAMIResult kamiMcuRead(u8 reg_no, void* buffer)
 {

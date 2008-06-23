@@ -21,7 +21,6 @@
 #include "fifo.h"
 #include "twl/cdc.h"
 #include "formatter.h"
-#include "nvram.h"
 #include "mcu_firm.h"
 #include <twl/ltdmain_begin.h>
 #include <twl/mcu.h>
@@ -129,7 +128,6 @@ static void KamiPxiCallback(PXIFifoTag tag, u32 data, BOOL err)
         {
 		case KAMI_EXE_FORMAT:
 		case KAMI_NAND_IO:
-		case KAMI_NVRAM_IO:
 		case KAMI_MCU_WRITE_FIRM:
 		case KAMI_MCU_IO:
 		case KAMI_ARM7_IO:
@@ -224,30 +222,6 @@ static void KamiThread(void *arg)
 				{
 	                KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS_FALSE);
 				}
-			}
-			break;
-
-		case KAMI_NVRAM_IO:
-			{
-				BOOL is_read;
-				u32  adress;
-				void* buffer;
-				u32  size;
-
-				is_read = (BOOL)kamiWork.data[0];
-				KAMI_UNPACK_U32(&adress,  &kamiWork.data[1]);
-				KAMI_UNPACK_U32((u32 *)(&buffer), &kamiWork.data[5]);
-				KAMI_UNPACK_U32(&size,  &kamiWork.data[9]);
-
-				if (is_read)
-				{
-					NVRAMi_Read( adress, buffer, size );
-				}
-				else
-				{
-					NVRAMi_Write( adress, buffer, size );
-				}
-	            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
 			}
 			break;
 

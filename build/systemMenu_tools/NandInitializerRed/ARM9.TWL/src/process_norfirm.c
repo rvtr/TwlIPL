@@ -21,6 +21,7 @@
 #include <nitro/card.h>
 #include <twl/nam.h>
 #include <stddef.h>
+#include <nitro/nvram.h>
 #include "kami_font.h"
 #include "kami_pxi.h"
 #include "process_topmenu.h"
@@ -350,9 +351,9 @@ static BOOL WriteNorfirm(char* file_name)
 	crc_w2 = SVC_GetCRC16( 0xffff, pTempBuf+512, file_size-512 );
 
 	// まずNORHeaderDS領域を書き込む（40byte?）
-	if (kamiNvramWrite(0, (void*)pTempBuf, sizeof(NORHeaderDS)) == KAMI_RESULT_SEND_ERROR)
+	if (NVRAMi_Write(0, sizeof(NORHeaderDS), (void*)pTempBuf ) != NVRAM_RESULT_SUCCESS)
 	{
-		kamiFontPrintfConsoleEx(1, "Fail SPI_NvramPageWrite()\n");
+		kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Write()\n");
 		result = FALSE;
 	}
 
@@ -360,9 +361,9 @@ static BOOL WriteNorfirm(char* file_name)
 	DC_InvalidateRange(pTempBuf, sizeof(NORHeaderDS));
 
 	// CRCチェックのためNvramからリード
-	if (kamiNvramRead(0, pTempBuf, sizeof(NORHeaderDS) ) == KAMI_RESULT_SEND_ERROR)
+	if (NVRAMi_Read(0, sizeof(NORHeaderDS), pTempBuf) != NVRAM_RESULT_SUCCESS)
 	{
-	    OS_Printf("kamiNvramRead ... ERROR!\n");
+	    OS_Printf("NVRAMi_Read ... ERROR!\n");
 	}
 
 	// 書き込み後のCRCを計算
@@ -386,9 +387,9 @@ static BOOL WriteNorfirm(char* file_name)
 	while ( nor_addr < file_size)
 	{
 		// 書きこみ
-		if (kamiNvramWrite((u32)nor_addr, (void*)(pTempBuf + nor_addr), NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
+		if (NVRAMi_Write((u32)nor_addr, NVRAM_PAGE_SIZE, (void*)(pTempBuf + nor_addr)) != NVRAM_RESULT_SUCCESS)
 		{
-			OS_TPrintf("======= Fail SPI_NvramPageWrite() ======== \n");
+			OS_TPrintf("======= Fail NVRAMi_Write() ======== \n");
 			result = FALSE;
 			break;
 		}
@@ -405,7 +406,7 @@ static BOOL WriteNorfirm(char* file_name)
 	DC_InvalidateRange(pTempBuf, file_size);
 
 	// CRCチェックのためNvramからリード
-	if (kamiNvramRead(0, pTempBuf, file_size ) == KAMI_RESULT_SEND_ERROR)
+	if (NVRAMi_Read(0, file_size, pTempBuf ) != NVRAM_RESULT_SUCCESS)
 	{
 	    OS_Printf("kamiNvramRead ... ERROR!\n");
 	}

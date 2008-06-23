@@ -205,53 +205,6 @@ KAMIResult kamiNandIo(u32 block, void* buffer, u32 count, BOOL is_read)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         Nvramアクセス関数
-
-  Description:  
-
-  Arguments:    None.
-
-  Returns:      
- *---------------------------------------------------------------------------*/
-
-KAMIResult kamiNvramIo(u32 address, void* buffer, u32 size, BOOL is_read)
-{
-    OSIntrMode enabled;
-    u8  data[12];
-	int i;
-
-	// ロック
-    enabled = OS_DisableInterrupts();
-    if (kamiWork.lock)
-    {
-        (void)OS_RestoreInterrupts(enabled);
-        return KAMI_RESULT_BUSY;
-    }
-    kamiWork.lock = TRUE;
-    (void)OS_RestoreInterrupts(enabled);
-
-    kamiWork.callback = NULL;
-    kamiWork.arg = 0;
-    kamiWork.data = 0;
-
-	// データ作成
-	KAMI_PACK_U32(&data[0], &address);
-	KAMI_PACK_U32(&data[4], &buffer);
-	KAMI_PACK_U32(&data[8], &size);
-
-    if (KamiSendPxiCommand(KAMI_NVRAM_IO, 12, (u8)is_read))
-    {
-	    for (i = 0; i < 12; i+=3) 
-		{
-	        KamiSendPxiData(&data[i]);
-		}
-	    KamiWaitBusy();
-	    return (KAMIResult)kamiWork.result;
-    }
-    return KAMI_RESULT_SEND_ERROR;
-}
-
-/*---------------------------------------------------------------------------*
   Name:         kamiMcuWriteFirm
 
   Description:  MCUファーム更新関数

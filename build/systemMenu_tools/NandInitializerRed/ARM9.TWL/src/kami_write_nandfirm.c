@@ -19,6 +19,7 @@
 #include <twl/fatfs.h>
 #include <nitro/card.h>
 #include <twl/nam.h>
+#include <nitro/nvram.h>
 #include "kami_font.h"
 #include "kami_pxi.h"
 
@@ -131,9 +132,9 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	crc_w2 = SVC_GetCRC16( 0xffff, pTempBuf+512, file_size-512 );
 
 	// まずNORHeaderDS領域を書き込む（40byte?）
-	if (kamiNvramWrite(0, (void*)pTempBuf, sizeof(NORHeaderDS)) == KAMI_RESULT_SEND_ERROR)
+	if (NVRAMi_Write(0, sizeof(NORHeaderDS), (void*)pTempBuf) != NVRAM_RESULT_SUCCESS)
 	{
-		kamiFontPrintfConsoleEx(1, "Fail kamiNvramWrite()\n");
+		kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Write()\n");
 		result = FALSE;
 	}
 
@@ -142,9 +143,9 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	DC_FlushRange(pTempBuf, sizeof(NORHeaderDS));
 
 	// CRCチェックのためNvramからリード
-	if (kamiNvramRead(0, pTempBuf, sizeof(NORHeaderDS) ) == KAMI_RESULT_SEND_ERROR)
+	if (NVRAMi_Read(0, sizeof(NORHeaderDS), pTempBuf) != NVRAM_RESULT_SUCCESS)
 	{
-	    kamiFontPrintfConsoleEx(1, "Fail kamiNvramRead()!\n");
+	    kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Read()!\n");
 	}
 	DC_StoreRange(pTempBuf, sizeof(NORHeaderDS));
 
@@ -167,9 +168,9 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	// NORファームリザーブ領域の書き込みデータのCRCを計算
 	crc_norfirm_reserved_area_w = SVC_GetCRC16( 0xffff, sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
 
-	if (kamiNvramWrite(NVRAM_NORFIRM_RESERVED_ADDRESS, sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
+	if (NVRAMi_Write(NVRAM_NORFIRM_RESERVED_ADDRESS, NVRAM_PAGE_SIZE, sNvramPageSizeBuffer) != NVRAM_RESULT_SUCCESS)
 	{
-		kamiFontPrintfConsoleEx(1, "Fail kamiNvramWrite()\n");
+		kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Write()\n");
 		result = FALSE;
 	}
 
@@ -179,9 +180,9 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	// 読み込みはARM7が直接メモリに書き出すため
 	DC_FlushRange(sNvramPageSizeBuffer, NVRAM_PAGE_SIZE);
 
-	if (kamiNvramRead(NVRAM_NORFIRM_RESERVED_ADDRESS, sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
+	if (NVRAMi_Read(NVRAM_NORFIRM_RESERVED_ADDRESS, NVRAM_PAGE_SIZE, sNvramPageSizeBuffer) != NVRAM_RESULT_SUCCESS)
 	{
-		kamiFontPrintfConsoleEx(1, "Fail kamiNvramRead()\n");
+		kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Read()\n");
 		result = FALSE;
 	}
 
@@ -199,9 +200,9 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 #ifdef CLEAR_NON_ASIGNED_AREA_AND_RESERVED_AREA_ALL
 	DC_InvalidateRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
 	// 未割り当て領域＋予約領域を０クリアします（開発用）
-	if (kamiNvramRead(NVRAM_CONFIG_DATA_OFFSET_ADDRESS, &sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
+	if (NVRAMi_Read(NVRAM_CONFIG_DATA_OFFSET_ADDRESS, NVRAM_PAGE_SIZE, &sNvramPageSizeBuffer) != NVRAM_RESULT_SUCCESS)
 	{
-		kamiFontPrintfConsoleEx(1, "Fail kamiNvramRead()\n");
+		kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Read()\n");
 		result = FALSE;
 	}
     sReservedAreaEndAddress = (u32)(*(u16 *)sNvramPageSizeBuffer << NVRAM_CONFIG_DATA_OFFSET_SHIFT) - 0xA00;// TWL WiFi設定 + NTR WiFi設定 を差し引く
@@ -212,9 +213,9 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 
 	for (write_offset=NVRAM_NON_ASIGNED_AREA_ADDRESS; write_offset < sReservedAreaEndAddress; write_offset += NVRAM_PAGE_SIZE)
 	{
-		if (kamiNvramWrite(write_offset, sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
+		if (NVRAMi_Write(write_offset, NVRAM_PAGE_SIZE, sNvramPageSizeBuffer) != NVRAM_RESULT_SUCCESS)
 		{
-			kamiFontPrintfConsoleEx(1, "Fail kamiNvramWrite()\n");
+			kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Write()\n");
 			result = FALSE;
 		}
 	}
@@ -225,16 +226,16 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	MI_CpuFill8( sNvramPageSizeBuffer, 0x00, NVRAM_PAGE_SIZE );
 	DC_FlushRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
 
-	if (kamiNvramWrite(NVRAM_NON_ASIGNED_AREA_ADDRESS, sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
+	if (NVRAMi_Write(NVRAM_NON_ASIGNED_AREA_ADDRESS, NVRAM_PAGE_SIZE, sNvramPageSizeBuffer) != NVRAM_RESULT_SUCCESS)
 	{
-		kamiFontPrintfConsoleEx(1, "Fail kamiNvramWrite()\n");
+		kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Write()\n");
 		result = FALSE;
 	}
 
 	DC_InvalidateRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
-	if (kamiNvramRead(NVRAM_CONFIG_DATA_OFFSET_ADDRESS, &sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
+	if (NVRAMi_Read(NVRAM_CONFIG_DATA_OFFSET_ADDRESS, NVRAM_PAGE_SIZE, &sNvramPageSizeBuffer) != NVRAM_RESULT_SUCCESS)
 	{
-		kamiFontPrintfConsoleEx(1, "Fail kamiNvramRead()\n");
+		kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Read()\n");
 		result = FALSE;
 	}
     sReservedAreaEndAddress = (u32)(*(u16 *)sNvramPageSizeBuffer << NVRAM_CONFIG_DATA_OFFSET_SHIFT) - 0xA00;// TWL WiFi設定 + NTR WiFi設定 を差し引く
@@ -242,9 +243,9 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	MI_CpuFill8( sNvramPageSizeBuffer, 0x00, NVRAM_PAGE_SIZE );
 	DC_FlushRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
 
-	if (kamiNvramWrite(sReservedAreaEndAddress - 0x100, sNvramPageSizeBuffer, NVRAM_PAGE_SIZE) == KAMI_RESULT_SEND_ERROR)
+	if (NVRAMi_Write(sReservedAreaEndAddress - 0x100, NVRAM_PAGE_SIZE, sNvramPageSizeBuffer) != NVRAM_RESULT_SUCCESS)
 	{
-		kamiFontPrintfConsoleEx(1, "Fail kamiNvramWrite()\n");
+		kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Write()\n");
 		result = FALSE;
 	}
 #endif
