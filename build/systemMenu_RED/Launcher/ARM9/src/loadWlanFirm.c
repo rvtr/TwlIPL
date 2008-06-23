@@ -40,6 +40,9 @@
 /* 無線FWダウンロード処理にかかる時間を計測する。 */
 #define MEASURE_WIRELESS_INITTIME    0
 
+/* 無線FWファイルの各エリアについて読み込み時間を計測する。 */
+#define MEASURE_READ_FWFILE_TIME     0
+
 /* 無線FW認証処理にかかる時間を計測する。 */
 #define MEASURE_VERIFY_SIGN_TIME     0
 
@@ -176,6 +179,9 @@ s32 ReadFirmwareBinary(char *path, u32 offset, u8 *buffer, s32 bufSize)
 {
     FSFile  file[1];
     s32 flen;
+#if (MEASURE_READ_FWFILE_TIME == 1)
+    OSTick rstart = OS_GetTick();
+#endif
 
     FS_InitFile( file );
     
@@ -197,6 +203,11 @@ s32 ReadFirmwareBinary(char *path, u32 offset, u8 *buffer, s32 bufSize)
 
     (void)FS_CloseFile(file);
 
+#if (MEASURE_READ_FWFILE_TIME == 1)
+    OS_TPrintf("[Wlan Firm]  Read Firmware Time[OFS:0x%08X, SIZE:0x%08X]=%dmsec\n",
+               offset, bufSize, OS_TicksToMilliSeconds(OS_GetTick() - rstart));
+#endif
+    
     return flen;
 }
 
