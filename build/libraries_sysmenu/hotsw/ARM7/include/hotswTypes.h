@@ -270,6 +270,8 @@ typedef union BootSegmentData
 
 // カードブート時に必要な変数一式をまとめた構造体
 typedef struct CardBootData{
+	u8					retry;
+    
     u32                 vae;
     u32                 vbi;
     u32                 vd;

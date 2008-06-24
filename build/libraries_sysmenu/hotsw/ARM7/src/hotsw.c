@@ -31,10 +31,15 @@
 //#define HOWSW_ENABLE_DEEP_SLEEP_WHILE_INSERT_CARD
 
 // define -------------------------------------------------------------------
-#define     CHATTERING_COUNTER                  0x264c      // 150ms分 (0x264C * 15.3us = 150001us)
-#define     COUNTER_A                           0x1988      // 100ms分 (0x1988 * 15.3us = 100000us)
+#define		CHATTERING_COUNTER					0x1988		// 100ms分 (0x1988 * 15.3us = 100000us)
+//#define	CHATTERING_COUNTER					0x264c		// 150ms分 (0x264c * 15.3us = 150001us)
+//#define	CHATTERING_COUNTER					0x3310		// 200ms分 (0x3310 * 15.3us = 200001us)
+//#define	CHATTERING_COUNTER					0x4c98		// 300ms分 (0x4c98 * 15.3us = 300002us)
+
+#define     COUNTER_A                           0x264c      // 150ms分 (0x264c * 15.3us = 150001us)
 
 #define     CARD_EXIST_CHECK_INTERVAL           100
+#define		CARD_READ_RETRY_NUM					3			// リードミス時のリトライ回数
 
 #define     UNDEF_CODE                          0xe7ffdeff  // 未定義コード
 #define     ENCRYPT_DEF_SIZE                    0x800       // 2KB  ※ ARM9常駐モジュール先頭2KB
@@ -1625,7 +1630,15 @@ static void HotSwThread(void *arg)
                     ClearCardFlgs();
                     McPowerOff();
 
-                    break;
+                    // リトライ
+                    if(s_cbData.retry >= CARD_READ_RETRY_NUM){
+                		break;
+                    }
+                    else{
+						s_isPulledOut = TRUE;
+                    }
+
+                    s_cbData.retry++;
                 }
             }
 
