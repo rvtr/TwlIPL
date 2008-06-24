@@ -144,7 +144,7 @@ void SelectCountryInit( void )
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// 設定済みリージョンと国名コードの取得
-	s_regionCode = (OSTWLRegion)LCFG_THW_GetRegion();
+	s_regionCode = (OSTWLRegion)OS_GetRegion();
 	
 	if( !g_isValidTSD ||
 		( LCFG_TSD_GetCountry() >= LCFG_TWL_COUNTRY_MAX ) ) {

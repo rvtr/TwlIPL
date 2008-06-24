@@ -1511,7 +1511,7 @@ static void SetRatingOgnInit( void )
     // あらかじめTWL設定データファイルから読み込み済みの設定を取得
     // :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     ogn     = LCFG_TSD_GetPCTLRatingOgn();
-    sRegion = LCFG_THW_GetRegion();
+    sRegion = OS_GetRegion();
 
     // リージョンにあわせて選択させる団体リストをつくる(国別のほうがいいかも)
     sRatingOgnFirstIndex = (u16)sIndexFirstOgnTable[ sRegion ];
@@ -1954,7 +1954,7 @@ static void SetAnswerInit( void )
     sCurrentLenAnswer = LCFG_TSD_GetPCTLSecretAnswerLength();
 
     // 日本版だけ文字制限が変わる
-    sRegion = LCFG_THW_GetRegion();                             // 日本版だけ入力の仕様が変わる
+    sRegion = OS_GetRegion();                             // 日本版だけ入力の仕様が変わる
     if( sRegion == OS_TWL_REGION_JAPAN )
     {
         SetSoftKeyboardButton(0);       // 日本語が設定されているときだけデフォルトのキーボードを変える

@@ -89,7 +89,6 @@ void TwlMain(void)
 	// ::::::::::::::::::::::::::::::::::::::::::::::
 	// TWL設定データファイルの読み込み
 	// ::::::::::::::::::::::::::::::::::::::::::::::
-	(void)LCFG_ReadHWSecureInfo();
 	{
 		u8 *pBuffer = Alloc( LCFG_READ_TEMP );
 		g_isValidTSD = FALSE;

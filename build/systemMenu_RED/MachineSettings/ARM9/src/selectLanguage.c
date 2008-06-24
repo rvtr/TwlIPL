@@ -33,21 +33,11 @@
 
 // static variable -------------------------------------
 static int s_lang;											// 言語選択肢の何番目を選択しているか
-static OSTWLRegion s_regionCode;											// リージョンコード
 
 static const u16* s_pStrLanguage[LCFG_TWL_LANG_CODE_MAX];
 static LCFGTWLLangCode s_langCodeList[LCFG_TWL_LANG_CODE_MAX];
 
 // const data  -----------------------------------------
-static const u16 region_lang_Mapping[OS_TWL_REGION_MAX] =
-{
-	LCFG_TWL_LANG_BITMAP_JAPAN,
-	LCFG_TWL_LANG_BITMAP_AMERICA,
-	LCFG_TWL_LANG_BITMAP_EUROPE,
-	LCFG_TWL_LANG_BITMAP_AUSTRALIA,
-	LCFG_TWL_LANG_BITMAP_CHINA,
-	LCFG_TWL_LANG_BITMAP_KOREA
-};
 
 static const u16 *const s_pStrLanguageData[LCFG_TWL_LANG_CODE_MAX] = {
 	(const u16 *)L"日本語",
@@ -102,8 +92,6 @@ void SelectLanguageInit( void )
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 	// あらかじめTWL設定データファイルから読み込み済みの設定を取得
 	// :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-	// リージョンの取得
-	s_regionCode = (OSTWLRegion)LCFG_THW_GetRegion();
 	
 	// 言語の取得
 	if( !g_isValidTSD ||
@@ -117,7 +105,7 @@ void SelectLanguageInit( void )
 	s_lang = 0;
 	for(l=0; l<LCFG_TWL_LANG_CODE_MAX; l++)
 	{
-		if( ( 0x0001 << l ) & region_lang_Mapping[s_regionCode] )
+		if( ( 0x0001 << l ) & OS_GetValidLanguageBitmap() )
 		{
 			s_pStrLanguage[lang_count] = s_pStrLanguageData[l];
 			s_langCodeList[lang_count] = (LCFGTWLLangCode)l;
