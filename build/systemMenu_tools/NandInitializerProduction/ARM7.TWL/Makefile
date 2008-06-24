@@ -30,7 +30,6 @@ SRCS		=	crt0.SCFG_NOLOCK.c \
 				main.c \
 				kami_pxi.c \
 				formatter.c \
-				nvram_misc.c \
 				mcu_firm.c
 
 TARGET_NAME		=	armadillo
