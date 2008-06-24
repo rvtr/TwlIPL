@@ -22,6 +22,7 @@
 #include <twl/nam.h>
 #include <twl/os/common/format_rom.h>
 #include <twl/os/common/banner.h>
+#include <twl/os/common/msJump.h>
 #include <sysmenu/reloc_info/common/reloc_info.h>
 #include <application_jump_private.h>
 
@@ -39,7 +40,7 @@ extern "C" {
 #define CARD_SLOT_NUM							1					// カードスロット数
 #define LAUNCHER_TITLE_LIST_NUM					( LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX + 1 )	// ランチャーのタイトルリスト数
 
-#define SYSM_PAD_SHORTCUT_TP					( PAD_BUTTON_X )
+#define SYSM_PAD_SHORTCUT_TP_CALIBRATION		( PAD_BUTTON_L | PAD_BUTTON_R | PAD_BUTTON_START )
 #define SYSM_PAD_SHORTCUT_MACHINE_SETTINGS		( PAD_BUTTON_SELECT )
 #define SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT	( PAD_BUTTON_A | PAD_BUTTON_B	\
 												| PAD_BUTTON_X | PAD_BUTTON_Y | PAD_BUTTON_R )
@@ -160,8 +161,6 @@ extern BOOL SYSM_MakeTitleListMakerInfoFromHeader( TitleListMakerInfo *info, ROM
 extern BOOL SYSM_IsExistCard( void );											// TWL/NTRカードが差さっているか？（アプリは未認証状態）
 extern BOOL SYSM_IsInspectCard( void );											// 検査カードが差さっているか？
 extern BOOL SYSM_IsHotStart( void );											// ホットスタートか？
-extern BOOL SYSM_IsFatalError( void );											// FATALエラーか？
-extern void SYSM_SetFatalError( BOOL isFatalError );							// FATALエラーのセット
 extern BOOL SYSM_IsLogoDemoSkip( void );										// ロゴデモ飛ばし状態か？
 extern void SYSM_SetLogoDemoSkip( BOOL skip );									// ロゴデモ飛ばし状態フラグを設定する。
 extern BOOL SYSM_IsValidTSD( void );											// TWL設定データは有効か？

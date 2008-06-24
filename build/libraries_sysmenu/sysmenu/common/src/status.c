@@ -42,20 +42,6 @@ BOOL SYSM_IsHotStart( void )
 }
 
 
-// FATALエラーかどうかをセット
-void SYSM_SetFatalError( BOOL isFatalError )
-{
-	SYSMi_GetWork()->flags.common.isFatalError = isFatalError;
-}
-
-
-// FATALエラーか？
-BOOL SYSM_IsFatalError( void )
-{
-	return (BOOL)SYSMi_GetWork()->flags.common.isFatalError;
-}
-
-
 // ロゴデモスキップかどうかをセット
 void SYSM_SetLogoDemoSkip( BOOL skip )
 {
@@ -80,13 +66,13 @@ BOOL SYSM_IsRunOnDebugger( void )
 // ISデバッガのバナービューモード起動かどうか？
 BOOL SYSMi_IsDebuggerBannerViewMode( void )
 {
-#ifdef __IS_DEBUGGER_BUILD
+#if 0
 	return ( SYSM_IsRunOnDebugger() &&
 			 SYSMi_IsValidCard() &&
 			 SYSM_GetCardRomHeader()->dbgRomSize == 0 ) ? TRUE : FALSE;
 #else
 	return FALSE;
-#endif	// __IS_DEBUGGER_BUILD
+#endif
 }
 
 

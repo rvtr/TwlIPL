@@ -152,6 +152,13 @@ void SYSM_DeleteTmpDirectory( TitleProperty *pBootTitle )
 TitleProperty *SYSM_ReadParameters( void )
 {
     TitleProperty *pBootTitle = NULL;
+	
+    //-----------------------------------------------------
+    // FATALエラーチェック
+    //-----------------------------------------------------
+	if( SYSMi_GetWork()->flags.common.isNANDFatalError ) {
+		UTL_SetFatalError( FATAL_ERROR_NAND );
+	}
 
     //-----------------------------------------------------
     // HW情報のリード
@@ -159,14 +166,12 @@ TitleProperty *SYSM_ReadParameters( void )
     // ノーマル情報リード
     if( !LCFG_ReadHWNormalInfo() ) {
         OS_TPrintf( "HW Normal Info Broken!\n" );
-        SYSMi_GetWork()->flags.common.isBrokenHWNormalInfo = TRUE;
-        SYSM_SetFatalError( TRUE );
+        UTL_SetFatalError( FATAL_ERROR_HWINFO_NORMAL );
     }
     // セキュア情報リード
     if( !LCFG_ReadHWSecureInfo() ) {
         OS_TPrintf( "HW Secure Info Broken!\n" );
-        SYSMi_GetWork()->flags.common.isBrokenHWSecureInfo = TRUE;
-        SYSM_SetFatalError( TRUE );
+        UTL_SetFatalError( FATAL_ERROR_HWINFO_SECURE );
     }
 
     //-----------------------------------------------------
@@ -175,10 +180,20 @@ TitleProperty *SYSM_ReadParameters( void )
     {
         u8 *pBuffer = SYSM_Alloc( LCFG_READ_TEMP );
         if( pBuffer ) {
-			LCFG_ReadTWLSettings( (u8 (*)[LCFG_READ_TEMP])pBuffer );		   // NANDからTWL本体設定データをリード
+			if( !LCFG_ReadTWLSettings( (u8 (*)[LCFG_READ_TEMP])pBuffer ) ) {  // NANDからTWL本体設定データをリード
+				// リード失敗時は、ファイルをリカバリ
+				if( LCFG_RecoveryTWLSettings() ) {
+					// リカバリ成功時は、フラッシュ壊れシーケンスへ
+					SYSMi_GetWork()->flags.common.isBrokenTWLSettings = TRUE;
+				}else {
+					// リカバリ失敗時は、FALTALエラー
+			        UTL_SetFatalError( FATAL_ERROR_TWLSETTINGS );
+				}
+			}
             SYSM_Free( pBuffer );
         }else {
-	        SYSM_SetFatalError( TRUE );
+			// メモリ確保ができなかった時は、FATALエラー
+	        UTL_SetFatalError( FATAL_ERROR_TWLSETTINGS );
 		}
 	    LCFG_VerifyAndRecoveryNTRSettings();  		                          	// NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
     }
@@ -266,7 +281,7 @@ TitleProperty *SYSM_ReadParameters( void )
 	}
 	
     // アプリジャンプでないときには、アプリ間パラメタをクリア
-    // [TODO:]あらかじめNTRカードのセキュア領域を退避せずに直接0x2000000からロードしている場合も容赦なく消すので注意
+    // ※あらかじめNTRカードのセキュア領域を退避せずに直接0x2000000からロードしている場合も容赦なく消すので注意
     if( !pBootTitle )
     {
     	MI_CpuClearFast((void *)HW_PARAM_DELIVER_ARG, HW_PARAM_DELIVER_ARG_SIZE);
@@ -284,10 +299,8 @@ TitleProperty *SYSM_ReadParameters( void )
     // 量産工程用ショートカットキー or
     // 検査カード起動
     //-----------------------------------------------------
-    if( pBootTitle == NULL && // ココまでダイレクトブートが設定されていない場合のみ判定
-        !( SYSMi_GetWork()->flags.common.isValidLauncherParam && SYSM_GetLauncherParamBody()->v1.flags.isLogoSkip ) )
-        // 「ランチャー再起動指定（直接起動指定無し 且つ ランチャパラメタ有効 且つ ロゴスキップ指定）でない」
-    {
+    if( pBootTitle == NULL ) {
+		// ココまでダイレクトブートが設定されていない場合のみ判定
         pBootTitle = SYSMi_CheckShortcutBoot1();
     }
     
@@ -403,54 +416,47 @@ static TitleProperty *SYSMi_CheckShortcutBoot1( void )
 // ショートカット起動のチェックその２
 static TitleProperty *SYSMi_CheckShortcutBoot2( void )
 {
+	BOOL isSetArgument = FALSE;
+	BOOL isBootMSET = FALSE;
+	u16 argument = 0;
+	
     MI_CpuClear8( &s_bootTitleBuf, sizeof(TitleProperty) );
 
+    //-----------------------------------------------------
+    // TWL設定データ破損時のフラッシュ壊れシーケンス起動
+    //-----------------------------------------------------
+	if( SYSMi_GetWork()->flags.common.isBrokenTWLSettings ) {
+		argument      = 100;		// フラッシュ壊れシーケンス起動
+		isSetArgument = TRUE;
+		isBootMSET    = TRUE;
+	}
 
     //-----------------------------------------------------
-    // TWL設定データ未入力時の初回起動シーケンス起動
+    // TWL設定データ未設定時の初回起動シーケンス起動
     //-----------------------------------------------------
-#if 0
-#ifdef ENABLE_INITIAL_SETTINGS_
+#ifndef DISABLE_INITIAL_SETTINGS
     if( !LCFG_TSD_IsFinishedInitialSetting() ) {
-        s_bootTitleBuf.titleID = SYSMi_getTitleIdOfMachineSettings();
-        if(s_bootTitleBuf.titleID != 0)
-		{
-            s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // 本体設定を起動できる時だけロゴデモを飛ばす
-		}
-        s_bootTitleBuf.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
-        s_bootTitleBuf.flags.isValid = TRUE;
-        s_bootTitleBuf.flags.isAppRelocate = FALSE;
-        s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
-        return &s_bootTitleBuf;
+		argument      = 0;
+		isSetArgument = FALSE;
+		isBootMSET    = TRUE;
     }
-#endif // ENABLE_INITIAL_SETTINGS_
 #endif
-
-
+	
     //-----------------------------------------------------
-    // スタンドアロン起動時、ショートカットキー(select)
-    // を押しながらの起動で本体設定の直接起動
-    // [TODO:]最終的にはL+R+Start起動でタッチパネル設定のショートカット起動になる予定
+    // L+R+Startボタン押下起動で、本体設定のタッチパネル設定を起動
     //-----------------------------------------------------
     if( ( PAD_Read() & SYSM_PAD_SHORTCUT_MACHINE_SETTINGS ) ==
-		SYSM_PAD_SHORTCUT_MACHINE_SETTINGS )
-    {
-        s_bootTitleBuf.titleID = SYSMi_getTitleIdOfMachineSettings();
-        if(s_bootTitleBuf.titleID != 0)
-		{
-            s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // 本体設定を起動できる時だけロゴデモを飛ばす
-		}
-        s_bootTitleBuf.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
-        s_bootTitleBuf.flags.isValid = TRUE;
-        s_bootTitleBuf.flags.isAppRelocate = FALSE;
-        s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
-        return &s_bootTitleBuf;
+		SYSM_PAD_SHORTCUT_TP_CALIBRATION ) {
+		argument      = OS_TWL_MACHINE_SETTING_TP_CALIBRATION;
+		isSetArgument = TRUE;
+		isBootMSET    = TRUE;
     }
 
-	// スタンドアロン起動時
+    //-----------------------------------------------------
     // ランチャー画面を表示しないバージョンの場合
     // カードがささっていたらカードを起動する
     // ささっていない場合は本体設定を起動
+    //-----------------------------------------------------
 #ifdef DO_NOT_SHOW_LAUNCHER
 	if( SYSM_IsExistCard() )
 	{
@@ -473,17 +479,44 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
         return &s_bootTitleBuf;
 	}else
 	{
-        s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
+		argument      = 0;
+		isSetArgument = FALSE;
+		isBootMSET    = TRUE;
+	}
+#endif
+
+	// 「アプリ間パラメータセット」有効時は、パラメータをセット
+	if( isSetArgument ) {
+        OSDeliverArgInfo argInfo;
+        int result;
+		
+        OS_InitDeliverArgInfo(&argInfo, 0);
+        OS_DecodeDeliverArg();
+        OSi_SetDeliverArgState( OS_DELIVER_ARG_BUF_ACCESSIBLE | OS_DELIVER_ARG_BUF_WRITABLE );
+        result = OS_SetSysParamToDeliverArg( (u16)argument );
+        
+        if(result != OS_DELIVER_ARG_SUCCESS )
+        {
+            OS_Warning("Failed to Set DeliverArgument.");
+            return FALSE;
+        }
+        OS_EncodeDeliverArg();
+    }
+	
+	// 「本体設定ブート」有効時は、本体設定プート決定
+	if( isBootMSET ) {
         s_bootTitleBuf.titleID = SYSMi_getTitleIdOfMachineSettings();
+        if(s_bootTitleBuf.titleID != 0)
+		{
+            s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // 本体設定を起動できる時だけロゴデモを飛ばす
+		}
         s_bootTitleBuf.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
         s_bootTitleBuf.flags.isValid = TRUE;
         s_bootTitleBuf.flags.isAppRelocate = FALSE;
         s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
         return &s_bootTitleBuf;
 	}
-#endif
-
-
+	
     return NULL;                                                    // 「ブート内容未定」でリターン
 }
 

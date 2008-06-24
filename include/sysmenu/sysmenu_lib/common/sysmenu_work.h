@@ -98,7 +98,6 @@ typedef struct SYSM_work {
 	Relocate_Info		romRelocateInfo[RELOCATE_INFO_NUM];	// ROM再配置情報（arm9,arm7それぞれltdとflxで最大4つ）
 	struct {
 		struct {
-			vu32		isFatalError :1;				// FATALエラー
 			vu32		isARM9Start :1;					// ARM9スタートフラグ
 			vu32		isHotStart :1;					// Hot/Coldスタート判定
 			vu32		isValidLauncherParam :1;		// ランチャーパラメータ有効
@@ -108,10 +107,9 @@ typedef struct SYSM_work {
 			vu32		isLoadFinished :1;				// アプリロード完了？
 			vu32		isLoadSucceeded :1;				// アプリロード成功？
 			vu32		isCardBoot :1;					// カードブートか？
-			vu32		isInitialSettings :1;			// 初回起動シーケンスか？
-			vu32		isBrokenHWNormalInfo :1;		// HWノーマル情報が破損している。
-			vu32		isBrokenHWSecureInfo :1;		// HWセキュア情報が破損している。
+			vu32		isBrokenTWLSettings :1;		    // TWL本体設定データが破損している。
 			vu32		isResetRTC :1;					// RTCリセット発生
+			vu32		isNANDFatalError :1;			// NANDFATALエラー発生
 			vu32		:0;
 		}common;
         struct {

@@ -28,6 +28,19 @@ extern "C" {
 // define data----------------------------------------------------------
 #define BACKLIGHT_BRIGHTNESS_MAX   	4
 
+typedef enum FatalErrorCode {
+	FATAL_ERROR_UNDEFINED = 0,
+	FATAL_ERROR_NAND = 1,
+	FATAL_ERROR_HWINFO_NORMAL = 2,
+	FATAL_ERROR_HWINFO_SECURE = 3,
+	FATAL_ERROR_TWLSETTINGS = 4,
+	FATAL_ERROR_SHARED_FONT = 5,
+	FATAL_ERROR_WLANFIRM_AUTH = 6,
+	FATAL_ERROR_WLANFIRM_LOAD = 7,
+	FATAL_ERROR_MAX = 8
+}FatalErrorCode;
+
+
 // global variable------------------------------------------------------
 // function-------------------------------------------------------------
 
@@ -61,8 +74,13 @@ static inline BOOL UTL_IsROMHeaderEULARequired( void )
 	return (BOOL)SYSM_GetAppRomHeader()->agree_EULA;
 }
 
-
 #endif
+
+// FATALエラー
+extern BOOL UTL_IsFatalError( void );										// FATALエラーか？
+extern void UTL_SetFatalError( FatalErrorCode error );						// FATALエラーのセット
+extern u32  UTL_GetFatalError( void );										// FATALエラー状態の取得（FatalErrorCodeをビットに割り当てて格納しています。）
+
 
 #ifdef __cplusplus
 }

@@ -68,7 +68,7 @@ BOOL LoadSharedFontInit( void )
 		return FALSE;
 	}
 	
-	pBuffer = Alloc( (u32)size );
+	pBuffer = SYSM_Alloc( (u32)size );
 	if( pBuffer == NULL ) {
 		OS_TPrintf( "malloc failed.\n" );
 		return FALSE;
@@ -106,7 +106,7 @@ void LoadSharedFontThread( void *arg )
 		// FSのキャッシュが怪しそうなので、とりあえずアラインメントをとっておく。
 		size = MATH_ROUNDUP( size, SYSM_ALIGNMENT_LOAD_MODULE );
 		
-		s_pFontBuffer[ i ] = Alloc( (u32)size );
+		s_pFontBuffer[ i ] = SYSM_Alloc( (u32)size );
 		if( s_pFontBuffer[ i ] == NULL ) {
 			OS_TPrintf( "malloc failed.\n" );
 			retval = FALSE;
@@ -125,7 +125,7 @@ void LoadSharedFontThread( void *arg )
 		OS_TPrintf( "Shared Font load succeeded.\n" );
 	}else {
 		OS_TPrintf( "Shared Font load failed.\n" );
-		SYSM_SetFatalError( TRUE );
+		UTL_SetFatalError( FATAL_ERROR_SHARED_FONT );
 	}
 }
 

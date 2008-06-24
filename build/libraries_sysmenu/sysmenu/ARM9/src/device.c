@@ -52,11 +52,8 @@ void SYSMi_CheckRTC( void )
 	// RTCのリセット or おかしい値を検出した場合は初回起動シーケンスへ。
 	( void )RTC_GetDateTime( &date, &time );
 	if( !UTL_CheckRTCDate( &date ) ||
-	    !UTL_CheckRTCTime( &time )
-#ifndef __IS_DEBUGGER_BUILD											// 青デバッガではRTCの電池がないので、毎回ここにひっかかって設定データが片方クリアされてしまう。これを防ぐスイッチ。
-		||
+	    !UTL_CheckRTCTime( &time ) ||
 		SYSMi_GetWork()->flags.common.isResetRTC
-#endif
 		) {							// RTCの異常を検出したら、rtc入力フラグ＆rtcOffsetを0にしてNVRAMに書き込み。
 		OS_TPrintf("\"RTC reset\" or \"Illegal RTC data\" detect!\n");
 		LCFG_TSD_SetRTCOffset( 0 );

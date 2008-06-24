@@ -628,7 +628,7 @@ instfirm_error:
     PMi_SetWirelessLED( PM_WIRELESS_LED_OFF );
 #endif
     s_isFinished = TRUE;
-    SYSM_SetFatalError( TRUE );
+    UTL_SetFatalError( FATAL_ERROR_WLANFIRM_AUTH );
 
     return FALSE;
 }
@@ -669,7 +669,7 @@ BOOL PollingInstallWlanFirmware( BOOL isStartScanWDS )
 				// ロード失敗
 				if( !s_isHotStartWLFirm ) {
 					// ColdStartの無線ファームロードなら、FATALエラー
-			        SYSM_SetFatalError( TRUE );
+			        UTL_SetFatalError( FATAL_ERROR_WLANFIRM_LOAD );
 #ifdef SDK_RELEASE	
 					PMi_SetWirelessLED( PM_WIRELESS_LED_OFF );
 #endif

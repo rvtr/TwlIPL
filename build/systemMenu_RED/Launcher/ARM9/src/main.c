@@ -25,7 +25,6 @@
 #include "sound.h"
 #include "loadWlanFirm.h"
 #include "loadSharedFont.h"
-#include "loadSysmVersion.h"
 
 // extern data-----------------------------------------------------------------
 
@@ -245,7 +244,8 @@ void TwlMain( void )
 #endif
     
     // 各種パラメータの取得------------
-    pBootTitle = SYSM_ReadParameters();                        // 本体設定データ、リセットパラメータのリード、検査用オート起動カード判定、量産ライン用キーショートカット起動判定等のリード
+    pBootTitle = SYSM_ReadParameters();        // 本体設定データ、HW情報リード
+											   // アプリジャンプ、検査用カード起動、生産工程用ショートカット、デバッガ起動、初回起動シーケンス、TP設定ショートカットの判定
 	
     // end時間計測１-c
 #if (MEASURE_TIME == 1)
@@ -260,11 +260,12 @@ void TwlMain( void )
     // TPキャリブレーション
 	UTL_CaribrateTP( LCFG_TSD_GetTPCalibrationPtr() );
 	
-    if( SYSM_IsFatalError() ) {
+    if( UTL_IsFatalError() ) {
         // FATALエラー処理
     }
-    if( !LCFG_TSD_IsFinishedInitialSetting() ) {
-        // 初回起動シーケンス判定
+    if( !LCFG_TSD_IsFinishedInitialSetting_Launcher() ) {
+        // ランチャー内での初回起動シーケンス中なら、写真撮影を実行するようにする。
+		// ※本体設定内での初会起動シーケンス中の場合は、SYSM_ReadParameters 内のチェックで検出されて、本体設定が起動されるようになっています。
     }
 	
     (void)SYSM_GetCardTitleList( s_titleList );                 // カードアプリリストの取得（カードアプリはs_titleList[0]に格納される）
@@ -322,7 +323,7 @@ void TwlMain( void )
         ( pBootTitle && !SYSM_IsLogoDemoSkip() ) ) {
 		u32 timestamp;
 		if( !LoadSharedFontInit() ) {				// 共有フォントのロード
-			SYSM_SetFatalError( TRUE );
+			UTL_SetFatalError( FATAL_ERROR_SHARED_FONT );
 		}
 		timestamp = OS_GetSharedFontTimestamp();
 		if( timestamp > 0 ) OS_TPrintf( "SharedFont timestamp : %08x\n", timestamp );
@@ -331,10 +332,6 @@ void TwlMain( void )
 #if (MEASURE_TIME == 1)
     OS_TPrintf( "GetSharedFont : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 #endif
-
-	// バージョン情報のロード
-	LoadSysmVersion();
-	OS_TPrintf( "Launcher Version = %d", GetSysmVersion() );
 
     // 開始ステートの判定--------------
 
@@ -401,7 +398,7 @@ void TwlMain( void )
     OS_TPrintf( "Load WlanFirm Time : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 #endif
 
-    if( SYSM_IsFatalError() ) {
+    if( UTL_IsFatalError() ) {
         // FATALエラー処理
     }
 
@@ -436,7 +433,7 @@ void TwlMain( void )
             if( LogoMain() &&
 				IsFinishedLoadSharedFont() ) {	// フォントロード終了をここでチェック
 #if 0
-				if( SYSM_IsFatalError() ) {
+				if( UTL_IsFatalError() ) {
 					state = STOP;
 				}else
 #endif
@@ -502,7 +499,7 @@ void TwlMain( void )
                 SYSM_IsAuthenticateTitleFinished() )
             {
 				AuthResult res;
-                if( SYSM_IsFatalError() ) {
+                if( UTL_IsFatalError() ) {
                     // FATALエラー処理
                 }
 
