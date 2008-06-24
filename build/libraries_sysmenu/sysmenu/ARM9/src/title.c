@@ -46,8 +46,14 @@
 #define AUTH_KEY_BUFFER_LEN 128
 #define MB_AUTH_SIGN_SIZE				(128)	/* digital sign size */
 
-#define WRAM_SLOT_FOR_FS	5
+#define THREAD_PRIO_FS_WRAM	3
 #define WRAM_SIZE_FOR_FS	MI_WRAM_SIZE_96KB
+
+#ifdef USE_HYENA_COMPONENT
+#define WRAM_SLOT_FOR_FS	5
+#else
+#define WRAM_SLOT_FOR_FS	0
+#endif
 
 #include <sysmenu/dht/dht.h>
 #define DS_HASH_TABLE_SIZE  (256*1024)
@@ -422,7 +428,7 @@ static BOOL MakeTitleListMakerInfoFromTitleID( TitleListMakerInfo *info, OSTitle
 	{
 		int l;
 		NAMTitleInfo naminfo;
-		// [TODO:]この関数で得られる情報は無検証なので改ざんの可能性があるが、これで良いか
+		// この関数で得られる情報は無検証なので改ざんの可能性があるが、メーカーコードのみの判定なので、速度を優先する。(2008.06.20吉岡)
 		// （でもFastつけないと一回300msぐらいかかる）
 		NAM_ReadTitleInfoFast( &naminfo, titleID );
 		for(l=0;l<MAKER_CODE_MAX;l++)
@@ -739,8 +745,11 @@ OS_TPrintf("RebootSystem failed: cant open file\n");
         ROM_Header *head = (ROM_Header *)header;
         CalcHMACSHA1CallbackArg dht_arg;
 
-		// WRAM利用Read関数の準備、WRAMCのスロットのうち後ろ3つだけ解放しておく
-		FS_InitWramTransfer(3);
+		// WRAM利用Read関数の準備、
+		// 使用するコンポーネントに応じて、WRAMのスロットを解放しておく
+		//		hyena  : WRAM_C		slot 5-7
+		//		jackal : WRAM_C		slot 0-2
+		FS_InitWramTransfer( THREAD_PRIO_FS_WRAM );
 		MI_FreeWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM7 );
 		MI_FreeWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM9 );
 		MI_FreeWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_DSP );

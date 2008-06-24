@@ -22,12 +22,20 @@ SUBDIRS					=	\
 							../../../libraries_sysmenu/sysmenu \
 							../../../libraries_sysmenu/boot \
 							../../../libraries_sysmenu/hotsw \
-							../../../components/hyena.TWL \
 #							../../../libraries_sysmenu/sharedFont \
 #							../../../libraries_sysmenu/reloc_info \
 #							../../../libraries_sysmenu/mcu \
 #							../../../libraries_sysmenu/ds \
 #							$(ROOT)/build/libraries/reboot \
+
+#----------------------------------------------------------------------------
+# コンポーネント選択 ( hyena or jackal )
+
+export DEFAULT_COMP_ARM7	=	jackal
+
+COMPONENT_DIR			=	$(TWL_IPL_RED_ROOT)/build/components/$(DEFAULT_COMP_ARM7).TWL
+SUBDIRS					+=	$(COMPONENT_DIR)
+WRAM_MAP_FILE			=	$(COMPONENT_DIR)/wram_regs/wram_regs.rbin
 
 #----------------------------------------------------------------------------
 
@@ -37,6 +45,7 @@ ifneq ($(UPDATER_RELEASE),TRUE)
 export DO_NOT_SHOW_LAUNCHER		=	FALSE
 export DISABLE_WDS_SCAN			=	TRUE
 export DISABLE_WLFIRM_LOAD		=	FALSE
+export DISABLE_INITIAL_SETTINGS	=	TRUE
 export IGNORE_WLFIRM_SIGNCHECK	=	FALSE
 endif
 
@@ -108,8 +117,6 @@ LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
 ADDRESS_DTCM			=	0x0e000000
 
-DEFAULT_COMP_ARM7		=	hyena
-
 
 #----------------------------------------------------------------------------
 # Append Flags
@@ -118,7 +125,8 @@ DEFAULT_COMP_ARM7		=	hyena
 MAKEROM_FLAGS			+=	-F \
 							-DTITLEID_LO='$(TITLEID_LO)' \
 							-DCARD_REGION='$(CARD_REGION)' \
-							-DDISABLE_DEBUG='$(DISABLE_DEBUG)'
+							-DDISABLE_DEBUG='$(DISABLE_DEBUG)' \
+							-DWRAM_MAP_FILE='$(WRAM_MAP_FILE)'
 
 MAKETAD_OPTION			+= -s
 
@@ -143,6 +151,10 @@ MACRO_FLAGS += -DDHT_TEST
 MAKEROM_FLAGS += -DDS_HASH_TABLE_FILE=DSHashTable.bin
 else
 MAKEROM_FLAGS += -DDS_HASH_TABLE_DIR=data
+endif
+
+ifeq ($(DEFAULT_COMP_ARM7),hyena)
+MACRO_FLAGS += -DUSE_HYENA_COMPONENT
 endif
 
 #----------------------------------------------------------------------------

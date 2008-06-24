@@ -1,9 +1,9 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlIPL
+# Project:  TwlIPL - components - jackal.TWL
 # File:     Makefile
 #
-# Copyright 2007 Nintendo.  All rights reserved.
+# Copyright 2008 Nintendo.  All rights reserved.
 #
 # These coded instructions, statements, and computer programs contain
 # proprietary information of Nintendo of America Inc. and/or Nintendo
@@ -23,6 +23,7 @@ TARGET_FIRM					=	SYSTEMMENU
 override TARGET_PLATFORM	=	TWL
 override TWL_PROC			=	ARM7
 override TWL_ARCHGEN		=	LIMITED
+override TWL_PLATFORM		=	TS
 TWL_NO_STD_PCHDR			=	True
 TWL_CODEGEN					?=	ARM
 
@@ -31,24 +32,18 @@ TWL_CODEGEN					?=	ARM
 SUBDIRS			=	$(SYSMENU_ROOT)/build/libraries/aes \
 					wram_regs
 
-SRCS			=	crt0.LTD.c \
-					main.c \
-					initScfg.c
+HYENA_SRCDIR	=	../hyena.TWL/src
+SRCS			=	$(HYENA_SRCDIR)/crt0.LTD.c \
+					$(HYENA_SRCDIR)/main.c \
+					$(HYENA_SRCDIR)/initScfg.c
 
-TARGET_NAME		=	hyena
+TARGET_NAME		=	jackal
 
 TARGET_NEF		=	$(TARGET_NAME).tef
-
-ifeq ($(TMP_WL_MAIN), TRUE)
-LCFILE_SPEC		=	$(TARGET_NAME)_wlmain.lsf
-else
 LCFILE_SPEC		=	$(TARGET_NAME).lsf
-endif
-
 LCFILE_TEMPLATE	=	$(TARGET_NAME).lcf.template
-LDRES_TEMPLATE	=	$(ROOT)/build/components/racoon.TWL/racoon.response.template
+LDRES_TEMPLATE	=	$(ROOT)/build/components/armadillo.TWL/armadillo.response.template
 
-# crt0.oは、ランチャー向けに特殊ビルドしたものを使用
 CRT0_O			=	$(OBJDIR)/crt0.LTD.o
 
 # スタック不足防止の為、インライン展開せずにコンパイルする
@@ -64,31 +59,16 @@ else
 GLIBRARIES		:= $(filter-out $(CRT0_O) libpm_sp$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 endif
 
-ifdef TWLSDK_NOCRYPTO
-CCFLAGS			+=	-DSDK_NOCRYPTO
-endif
-
-ifndef TWLSDK_NOCRYPTO
-MAKELCF_FLAGS	+=	-DUSE_CRYPTO_LIBS='libsea_sp$(TWL_LIBSUFFIX).a libcrypto_sp$(TWL_LIBSUFFIX).a'
-MACRO_FLAGS		+=	-DSDK_SEA
-endif
-
-MACRO_FLAGS		+=	-DSDK_NOINIT \
+MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD -DSDK_SEA \
+					-DSDK_NOINIT \
 					-DSDK_SYSMENU_BUILD
-#MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD
 
-ifeq ($(DEFAULT_COMP_ARM7),hyena)
-MACRO_FLAGS		+=	-DUSE_HYENA_COMPONENT
-endif
-
-MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037a8000' \
-					-DADDRESS_FLXMAIN='0x02280200' \
+MAKELCF_FLAGS	+=	-DADDRESS_FLXMAIN='0x02280200' \
 					-DADDRESS_BOOTCORE='0x0380f000' \
 					-DCRT0_O='$(CRT0_O)'
 
 MAKELCF_FLAGS	+=	-DISDBG_LIBS_TWL='$(if $(ISDBG_LIBS_TWL),$(ISDBG_LIBS_TWL),libstubsistd_sp$(TWL_LIBSUFFIX).a)'	\
 					-DISDBG_LIBS_NITRO='libstubsisd_sp$(TWL_LIBSUFFIX).a'
-
 
 #--------------------------------
 #   install target
@@ -142,5 +122,7 @@ do-build:	$(TARGETS)
 
 #----------------------------------------------------------------------------
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+
+#----------------------------------------------------------------------------
 
 #===== End of Makefile =====

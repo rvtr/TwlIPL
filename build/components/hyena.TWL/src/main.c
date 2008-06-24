@@ -107,6 +107,7 @@ extern void         SDK_LTDAUTOLOAD_LTDWRAM_BSS_END(void);
 extern void         SDK_LTDAUTOLOAD_LTDMAIN_BSS_END(void);
 #endif
 extern void         SDK_SEA_KEY_STORE(void);
+extern void         SDK_STATIC_BSS_END(void);
 
 extern BOOL sdmcGetNandLogFatal( void );
 
@@ -116,6 +117,13 @@ extern BOOL sdmcGetNandLogFatal( void );
   Arguments:    None.
   Returns:      None.
  *---------------------------------------------------------------------------*/
+#define COMPONENT_WRAM_A_OFS      (HW_WRAM_A_LTD - HW_WRAM_BASE)
+#define COMPONENT_WRAM_A_OFS_END  (COMPONENT_WRAM_A_OFS + HW_WRAM_A_SIZE)
+#define COMPONENT_WRAM_B_OFS      (COMPONENT_WRAM_A_OFS - HW_WRAM_B_SIZE)
+#define COMPONENT_WRAM_B_OFS_END  (COMPONENT_WRAM_A_OFS)
+#define COMPONENT_WRAM_C_OFS      (COMPONENT_WRAM_B_OFS - HW_WRAM_C_SIZE)
+#define COMPONENT_WRAM_C_OFS_END  (COMPONENT_WRAM_B_OFS)
+
 void
 TwlSpMain(void)
 {
@@ -152,14 +160,15 @@ TwlSpMain(void)
     // NANDのFATALエラー検出
     if( sdmcGetNandLogFatal() != FALSE) {
         /* 故障扱い処理 */
-        SYSM_SetFatalError( TRUE );
+		SYSMi_GetWork()->flags.common.isNANDFatalError = TRUE;
     }
 
-    // [TODO:] カード電源ONして、ROMヘッダのみリード＆チェックくらいはやっておきたい
-
-    SYSMi_GetWork()->flags.common.isARM9Start = TRUE;                // [TODO:] HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
+    SYSMi_GetWork()->flags.common.isARM9Start = TRUE;
 
     // ヒープ領域設定
+#ifndef USE_HYENA_COMPONENT
+	OS_SetSubPrivArenaLo( (void*)SDK_STATIC_BSS_END );
+#endif
     OS_SetSubPrivArenaHi( (void*)SYSM_OWN_ARM7_MMEM_ADDR_END );     // メモリ配置をいじっているので、アリーナHiも変更しないとダメ！！
     OS_SetWramSubPrivArenaHi( (void*)(SYSM_OWN_ARM7_WRAM_ADDR_END - HW_FIRM_FROM_FIRM_BUF_SIZE) ); // この時点では鍵をつぶさないように
     OS_TPrintf( "MMEM SUBPRV ARENA HI : %08x -> %08x\n", OS_GetSubPrivArenaHi(), OS_GetSubPrivArenaHi() );
@@ -270,12 +279,6 @@ TwlSpMain(void)
     while (TRUE)
     {
         OS_Halt();
-
-        //---- check reset
-        if (OS_IsResetOccurred())
-        {
-            OS_ResetSystem();
-        }
         BOOT_WaitStart();
     }
 }
@@ -347,7 +350,11 @@ PrintDebugInfo(void)
     {
         OS_TPrintf("ARM7: This component is running on NITRO.\n");
     }
+#ifdef USE_HYENA_COMPONENT
     OS_TPrintf("ARM7: This component is \"hyena.TWL\"\n");
+#else
+    OS_TPrintf("ARM7: This component is \"jackal.TWL\"\n");
+#endif
 }
 
 #include    <twl/ltdwram_begin.h>

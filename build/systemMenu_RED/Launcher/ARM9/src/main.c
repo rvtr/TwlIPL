@@ -218,6 +218,7 @@ void TwlMain( void )
     OS_TPrintf( "Camera Init: %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 #endif
 
+#ifdef USE_HYENA_COMPONENT
     // DSP初期化
     {
         MIWramSize sizeB = MI_WRAM_SIZE_32KB;
@@ -235,6 +236,7 @@ void TwlMain( void )
         }
         DSP_UnloadShutter();
     }
+#endif // USE_HYENA_COMPONENT
 #endif // INIT_DEVICES_LIKE_UIG_LAUNCHER
 
     // start時間計測１-c
@@ -264,7 +266,7 @@ void TwlMain( void )
     if( !LCFG_TSD_IsFinishedInitialSetting() ) {
         // 初回起動シーケンス判定
     }
-    
+	
     (void)SYSM_GetCardTitleList( s_titleList );                 // カードアプリリストの取得（カードアプリはs_titleList[0]に格納される）
     // end時間計測２
 #if (MEASURE_TIME == 1)
