@@ -64,8 +64,6 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list, REBOOTTarget* t
 static REBOOTTarget target;
 
 // メモリリスト
-// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域（WRAMにある）を消さないように注意。
-//         WRAMリマップ後の消し漏れやバッファオーバランの懸念回避のため不要な鍵はpre clearで消す。
 // [TODO] WRAM_0_1はちゃんと消えてる？blowfishやaes鍵を引き渡しているので心配
 static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + COPY_HEADER_NUM_MAX + 2 + POST_CLEAR_NUM_MAX + 1] = 
 {

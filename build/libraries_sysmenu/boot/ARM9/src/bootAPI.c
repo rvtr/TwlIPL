@@ -44,8 +44,7 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list, REBOOTTarget* t
 static REBOOTTarget target;
 
 // メモリリスト
-// [TODO:] ショップアプリで鍵を残す場合、NANDファーム引数の領域(ITCMにある)を消さないように注意。
-//         バッファオーバランのリスク回避のため不要な鍵はpre clearで消す。
+// バッファオーバランのリスク回避のため不要な鍵はpre clearで消す。
 static u32 mem_list[] =
 {
     // pre clear
