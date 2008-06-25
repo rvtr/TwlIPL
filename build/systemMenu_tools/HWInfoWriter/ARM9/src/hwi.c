@@ -139,12 +139,11 @@ static BOOL ReadTWLSettings( void )
     BOOL result;
     if( pBuffer ) {
         result = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ] )pBuffer );
-		// Readに失敗した場合 LCFG_ReadTWLSettings 内部でファイルがリカバリ生成されるが
-		// 返り値は FALSE となるためもう一度リードを試みる
+		// Readに失敗した場合ファイルのリカバリ生成を試みる
 		if (!result)
 		{
 			OS_TPrintf( "TSD read failed. Retry onece more.\n" );
-	        result = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ] )pBuffer );
+	        result = LCFG_RecoveryTWLSettings();
 		}
         spFree( pBuffer );
     }
@@ -307,8 +306,13 @@ BOOL HWI_ModifyLanguage( u8 region )
         if( pBuffer ) {
             if (!LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer ))
 			{
-				result = FALSE;
-				OS_TPrintf("Fail! LCFG_WriteTWLSettings()\n");
+				// NANDをフォーマットした直後でTWL設定ファイルが存在しない場合は書き込みに失敗するため
+				// TWL設定ファイルをリカバリ生成して再チャレンジする
+	        	if (!LCFG_RecoveryTWLSettings() && !LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer ))
+				{
+					result = FALSE;
+					OS_TPrintf("Fail! LCFG_WriteTWLSettings()\n");
+				}
 			}
             spFree( pBuffer );
         }
