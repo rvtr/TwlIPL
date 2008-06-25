@@ -61,6 +61,7 @@ static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
 #define OS_TPrintf(...) (debugPtr += STD_TSPrintf(debugPtr, __VA_ARGS__))
 #endif
 
+#define THREAD_PRIO_AES     12
 #define THREAD_PRIO_FATFS   8
 #define DMA_FATFS_1         0
 #define DMA_FATFS_2         1
@@ -148,7 +149,7 @@ static void PostInit(void)
     PM_InitFIRM();
 #endif
     // AESの初期化
-    AES_Init(); // for encrypted NAND
+    AES_Init(THREAD_PRIO_AES);           // for encrypted NAND
     // マウント情報の初期化
     FS_InitMountInfo(FALSE, TRUE);
     // アイドルスレッドの作成

@@ -65,6 +65,8 @@
 #define THREAD_PRIO_SND     6
 #define THREAD_PRIO_FATFS   8
 #define THREAD_PRIO_HOTSW   11
+#define THREAD_PRIO_AES     12
+#define THREAD_PRIO_SEA     12
 #define THREAD_PRIO_RTC     12
 #define THREAD_PRIO_SNDEX   14
 #define THREAD_PRIO_FS      15
@@ -117,13 +119,6 @@ extern BOOL sdmcGetNandLogFatal( void );
   Arguments:    None.
   Returns:      None.
  *---------------------------------------------------------------------------*/
-#define COMPONENT_WRAM_A_OFS      (HW_WRAM_A_LTD - HW_WRAM_BASE)
-#define COMPONENT_WRAM_A_OFS_END  (COMPONENT_WRAM_A_OFS + HW_WRAM_A_SIZE)
-#define COMPONENT_WRAM_B_OFS      (COMPONENT_WRAM_A_OFS - HW_WRAM_B_SIZE)
-#define COMPONENT_WRAM_B_OFS_END  (COMPONENT_WRAM_A_OFS)
-#define COMPONENT_WRAM_C_OFS      (COMPONENT_WRAM_B_OFS - HW_WRAM_C_SIZE)
-#define COMPONENT_WRAM_C_OFS_END  (COMPONENT_WRAM_B_OFS)
-
 void
 TwlSpMain(void)
 {
@@ -198,7 +193,7 @@ TwlSpMain(void)
         InitializeFatfs();    // FATFS 初期化
         InitializeNwm(mainHeapHandle, mainHeapHandle);      // NWM 初期化
 #ifndef SDK_NOCRYPTO
-        AES_Init();           // AES 初期化
+        AES_Init(THREAD_PRIO_AES);           // AES 初期化
 
         {
             // JPEGエンコード用の鍵セット
@@ -208,7 +203,7 @@ TwlSpMain(void)
         }
 
 #ifdef SDK_SEA
-        SEA_Init();
+        SEA_Init(THREAD_PRIO_SEA);
 #endif  // ifdef SDK_SEA
 #endif
         MCU_InitIrq(THREAD_PRIO_MCU);  // MCU 初期化

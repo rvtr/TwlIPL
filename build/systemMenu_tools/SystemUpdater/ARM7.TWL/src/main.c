@@ -49,6 +49,8 @@
 #define THREAD_PRIO_NWM_COMMAND 9
 #define THREAD_PRIO_NWM_WPA     10
 #define THREAD_PRIO_HOTSW   	11
+#define THREAD_PRIO_AES         12
+#define THREAD_PRIO_SEA         12
 #define THREAD_PRIO_RTC         12
 #define THREAD_PRIO_SNDEX       14
 #define THREAD_PRIO_FS          15
@@ -117,8 +119,8 @@ TwlSpMain(void)
     (void)OS_EnableInterrupts();
 
     /* äeÉâÉCÉuÉâÉäèâä˙âª */
-    AES_Init();                                 // AES
-    SEA_Init();                                 // SEA
+    AES_Init(THREAD_PRIO_AES);                  // AES
+    SEA_Init(THREAD_PRIO_SEA);                  // SEA
     FS_Init(FS_DMA_NOT_USE);                    // FS for CARD
     FS_CreateReadServerThread(THREAD_PRIO_FS);  // FS for CARD
     InitializeFatfs();                          // FAT-FS

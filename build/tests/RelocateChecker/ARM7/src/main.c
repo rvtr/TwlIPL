@@ -46,6 +46,7 @@
 #define THREAD_PRIO_SPI     2
 #define THREAD_PRIO_SND     6
 #define THREAD_PRIO_FATFS   8
+#define THREAD_PRIO_AES     12
 #define THREAD_PRIO_RTC     12
 #define THREAD_PRIO_FS      15
 /* OS_THREAD_LAUNCHER_PRIORITY 16 */
@@ -151,7 +152,7 @@ TwlSpMain(void)
     if (OS_IsRunOnTwl() == TRUE)
     {
 #ifndef SDK_NOCRYPTO
-        AES_Init();           // AES èâä˙âª
+        AES_Init(THREAD_PRIO_AES);                  // AES
 #endif
     }
 
