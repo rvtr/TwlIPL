@@ -137,7 +137,7 @@ static void PostInit(void)
     */
     MCUi_WriteRegister( MCU_REG_MODE_ADDR, MCU_SYSTEMMODE_FIRMWARE );   // change battery level only
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x87
+    SetDebugLED(++step); // 0x84
     if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
     {
 #ifndef SDK_FINALROM
@@ -195,7 +195,7 @@ void TwlSpMain( void )
     PostInit();
     // 3: after PostInit
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x84
+    SetDebugLED(++step); // 0x85
 
     if ( !FATFS_Init( DMA_FATFS_1, DMA_FATFS_2, THREAD_PRIO_FATFS ) )
     {
@@ -204,7 +204,7 @@ void TwlSpMain( void )
     }
     // 4: after FATFS_Init
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x85
+    SetDebugLED(++step); // 0x86
 
     if ( PXI_RecvID() != FIRM_PXI_ID_SET_PATH )
     {
@@ -213,7 +213,7 @@ void TwlSpMain( void )
     }
     // 5: after PXI
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x86
+    SetDebugLED(++step); // 0x87
 
     if ( (fd = FS_OpenSrl()) < 0 )
     {
@@ -222,7 +222,7 @@ void TwlSpMain( void )
     }
     // 6: after FS_OpenSrl
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x87
+    SetDebugLED(++step); // 0x88
 
     if ( !FS_LoadHeader( fd ) )
     {
@@ -231,7 +231,7 @@ void TwlSpMain( void )
     }
     // 7: after FS_LoadHeader
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x88
+    SetDebugLED(++step); // 0x89
 
     if ( PXI_RecvID() != FIRM_PXI_ID_DONE_HEADER )
     {
@@ -240,13 +240,13 @@ void TwlSpMain( void )
     }
     // 8: after PXI
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x89
+    SetDebugLED(++step); // 0x8a
 
     AESi_InitKeysFIRM();
     AESi_InitSeed();
     // 9: after AESi_InitSeed
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x8a
+    SetDebugLED(++step); // 0x8b
 
     if ( !FS_LoadStatic( fd ) )
     {
@@ -255,7 +255,7 @@ void TwlSpMain( void )
     }
     // 10: after FS_LoadStatic
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x8b
+    SetDebugLED(++step); // 0x8c
 
     if ( PXI_RecvID() != FIRM_PXI_ID_DONE_STATIC )
     {
