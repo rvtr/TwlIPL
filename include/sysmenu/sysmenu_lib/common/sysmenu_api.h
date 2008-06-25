@@ -51,19 +51,20 @@ extern "C" {
 
 #define SYSM_ALIGNMENT_LOAD_MODULE			32	// モジュールをsrlから読み込む際のアライメント（AESおよびAESで使うDMAの仕様による）
 
+typedef struct TitleInfoSub {
+	RomExpansionFlags	exFlags;
+	char				platform_code;
+	u8					parental_control_rating_info[0x10];
+	u32					card_region_bitmap;
+	u8					agree_EULA_version;
+}TitleInfoSub;
+
 // タイトル情報
 typedef struct TitleProperty {			// この情報は、ランチャー時には認証通ってないけど、起動時には認証通すので大丈夫だろう。
 	NAMTitleId			titleID;		// タイトルID（TitleID_Hiで起動メディアは判定できる？）
 	LauncherBootFlags	flags;			// ブート時のランチャー動作フラグ
 	TWLBannerFile		*pBanner;		// バナーへのポインタ（固定長フォーマットなら偽造されても大丈夫だろう。)
-	u8					agree_EULA:1;
-	u8					availableSubBannerFile:1;
-	u8					WiFiConnectionIcon:1;
-	u8					DSWirelessIcon:1;
-	u8					rsv:4;
-	char				platform_code;
-	u8					parental_control_rating_info[0x10];
-	u32					card_region_bitmap;
+	TitleInfoSub		sub_info;
 }TitleProperty;
 
 // タイトルリスト作成用情報構造体
@@ -72,14 +73,7 @@ typedef struct TitleListMakerInfo {
 	u32					public_save_data_size;
 	u32					private_save_data_size;
 	BOOL				permit_landing_normal_jump;
-	u8					agree_EULA:1;
-	u8					availableSubBannerFile:1;
-	u8					WiFiConnectionIcon:1;
-	u8					DSWirelessIcon:1;
-	u8					rsv:4;
-	char				platform_code;
-	u8					parental_control_rating_info[0x10];
-	u32					card_region_bitmap;
+	TitleInfoSub		sub_info;
 }TitleListMakerInfo;
 
 // アプリ認証結果

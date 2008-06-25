@@ -314,13 +314,11 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 			pTitleList_Card->flags.isValid = TRUE;
 			pTitleList_Card->flags.isAppLoadCompleted = FALSE;
 			pTitleList_Card->flags.isAppRelocate = TRUE;
-			pTitleList_Card->agree_EULA = SYSM_GetCardRomHeader()->exFlags.agree_EULA;
-			pTitleList_Card->availableSubBannerFile = SYSM_GetCardRomHeader()->exFlags.availableSubBannerFile;
-			pTitleList_Card->WiFiConnectionIcon = SYSM_GetCardRomHeader()->exFlags.WiFiConnectionIcon;
-			pTitleList_Card->DSWirelessIcon = SYSM_GetCardRomHeader()->exFlags.DSWirelessIcon;
-			pTitleList_Card->platform_code = SYSM_GetCardRomHeader()->platform_code;
-			MI_CpuCopy8( SYSM_GetCardRomHeader()->parental_control_rating_info, pTitleList_Card->parental_control_rating_info, 0x10);
-			pTitleList_Card->card_region_bitmap = SYSM_GetCardRomHeader()->card_region_bitmap;
+			pTitleList_Card->sub_info.exFlags = SYSM_GetCardRomHeader()->exFlags;
+			pTitleList_Card->sub_info.platform_code = SYSM_GetCardRomHeader()->platform_code;
+			MI_CpuCopy8( SYSM_GetCardRomHeader()->parental_control_rating_info, pTitleList_Card->sub_info.parental_control_rating_info, 0x10);
+			pTitleList_Card->sub_info.card_region_bitmap = SYSM_GetCardRomHeader()->card_region_bitmap;
+			pTitleList_Card->sub_info.agree_EULA_version = SYSM_GetCardRomHeader()->agree_EULA_version;
 		}
 		
 		// タイトル情報フラグのセット
@@ -581,13 +579,7 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 		if( titleIDArray[l] ) {
 			pTitleList_Nand[l+1].flags.isValid = TRUE;
 			pTitleList_Nand[l+1].flags.bootType = LAUNCHER_BOOTTYPE_NAND;
-			pTitleList_Nand[l+1].agree_EULA = local_titleListMakerinfo[l].agree_EULA;
-			pTitleList_Nand[l+1].availableSubBannerFile = local_titleListMakerinfo[l].availableSubBannerFile;
-			pTitleList_Nand[l+1].WiFiConnectionIcon = local_titleListMakerinfo[l].WiFiConnectionIcon;
-			pTitleList_Nand[l+1].DSWirelessIcon = local_titleListMakerinfo[l].DSWirelessIcon;
-			pTitleList_Nand[l+1].platform_code = local_titleListMakerinfo[l].platform_code;
-			MI_CpuCopy8( local_titleListMakerinfo[l].parental_control_rating_info, pTitleList_Nand[l+1].parental_control_rating_info, 0x10);
-			pTitleList_Nand[l+1].card_region_bitmap = local_titleListMakerinfo[l].card_region_bitmap;
+			MI_CpuCopy8( &local_titleListMakerinfo[l].sub_info, &pTitleList_Nand[l+1].sub_info, sizeof(TitleInfoSub));
 		}
 	}
 	// return : *TitleProperty Array
@@ -1756,6 +1748,7 @@ AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle )
         {
 			u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
 			if( pBuffer != NULL ) {
+				LCFG_TSD_SetLastTimeBootSoftTitleID ( pBootTitle->titleID );
 				LCFG_TSD_SetLastTimeBootSoftPlatform( (u8)SYSM_GetAppRomHeader()->platform_code );
 				(void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
 				SYSM_Free( pBuffer );
@@ -1943,13 +1936,11 @@ BOOL SYSM_MakeTitleListMakerInfoFromHeader( TitleListMakerInfo *info, ROM_Header
 	info->public_save_data_size = hs->public_save_data_size;
 	info->private_save_data_size = hs->private_save_data_size;
 	info->permit_landing_normal_jump = ( hs->permit_landing_normal_jump ? TRUE : FALSE );
-	info->agree_EULA = hs->exFlags.agree_EULA;
-	info->availableSubBannerFile = hs->exFlags.availableSubBannerFile;
-	info->WiFiConnectionIcon = hs->exFlags.WiFiConnectionIcon;
-	info->DSWirelessIcon = hs->exFlags.DSWirelessIcon;
-	info->platform_code = hs->platform_code;
-	MI_CpuCopy8( hs->parental_control_rating_info, info->parental_control_rating_info, PARENTAL_CONTROL_INFO_SIZE);
-	info->card_region_bitmap = hs->card_region_bitmap;
+	info->sub_info.exFlags = hs->exFlags;
+	info->sub_info.platform_code = hs->platform_code;
+	MI_CpuCopy8( hs->parental_control_rating_info, info->sub_info.parental_control_rating_info, 0x10);
+	info->sub_info.card_region_bitmap = hs->card_region_bitmap;
+	info->sub_info.agree_EULA_version = hs->agree_EULA_version;
 	return TRUE;
 }
 
