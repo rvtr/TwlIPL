@@ -167,6 +167,9 @@ BOOL NAMUT_Format(void)
 	// 本体設定データのクリア
 	ret &= NAMUT_ClearTWLSettings( TRUE );
 
+	// RTCのクリアは必要ない。2008.06.25 小野沢確認。
+	// 本体初期化後の初回起動シーケンス起動時にRTCをクリアするため。
+	
 	return ret;
 }
 
