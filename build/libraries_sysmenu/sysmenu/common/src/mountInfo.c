@@ -21,6 +21,8 @@
 #include <sysmenu.h>
 #include "internal_api.h"
 
+//#define USE_SHARED2_FILE_OLD_FORMAT
+
 #ifndef SDK_ARM9
 
 // define data-----------------------------------------------------------------
@@ -60,7 +62,11 @@ OSMountInfo s_defaultMountList[ DEFAULT_MOUNT_LIST_NUM ] ATTRIBUTE_ALIGN(4) = {
 	{ 'B', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_ROOT, 1, OS_MOUNT_RSC_WRAM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "nand2",   "/" },	// ユーザーアプリはこのアーカイブではR/W不可
 	{ 'C', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R), 0, 0, "content", NULL },			// Write不可
 	{ 'D', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R), 0, 0, "shared1", "nand:/shared1" },	// Write不可
+#ifdef USE_SHARED2_FILE_OLD_FORMAT
 	{ 'E', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "shared2", NULL },	// アプリ間共有ファイル
+#else
+	{ 'E', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "shared2", "nand:/shared2" },	// アプリ間共有ファイル
+#endif
 	{ 'F', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_DIR,  1, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "photo",   "nand2:/photo" },
 	{ 'G', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPrv", NULL },	// NANDにセーブデータがないアプリの場合は、マウントされない。
 	{ 'H', OS_MOUNT_DEVICE_NAND, OS_MOUNT_TGT_FILE, 0, OS_MOUNT_RSC_MMEM, (OS_MOUNT_USR_R|OS_MOUNT_USR_W), 0, 0, "dataPub", NULL },	// NANDにセーブデータがないアプリの場合は、マウントされない。
@@ -94,11 +100,13 @@ void SYSMi_SetLauncherMountInfo( void )
 	SYSMi_ModifySaveDataMountForLauncher( LAUNCHER_BOOTTYPE_NAND,
 										  titleID,
 										  &mountListBuffer[ PRV_SAVE_DATA_MOUNT_INDEX ] );
-
+#ifdef USE_SHARED2_FILE_OLD_FORMAT
+	// 2008.06.20 shared2仕様変更に伴い、無効にする
 	// Shared2のアプリ間共有ファイルセット(LAUNCHERで使うかどうかは微妙)
 	SYSMi_ModifyShared2FileMount( LAUNCHER_BOOTTYPE_NAND,
 										  titleID,
 										  &mountListBuffer[ SHARED2_MOUNT_INDEX ] );
+#endif
 
 	// マウント情報のセット
 	SYSMi_SetMountInfoCore( LAUNCHER_BOOTTYPE_NAND,
@@ -128,39 +136,49 @@ void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle )
 	// デフォルトリストをバッファにコピー
 	MI_CpuCopyFast( s_defaultMountList, mountListBuffer, sizeof(s_defaultMountList) );
 
-	// SDカードアクセス要求がない場合は、sdmcドライブをマウントしない。
-	if( pROMH->access_control.sd_card_access == 0 ) {
-		mountListBuffer[ SDMC_MOUNT_INDEX ].drive[ 0 ] = 0;
-	}
-	
 	// セキュアアプリでない場合、"nand:", "nand2:"アーカイブをNAに変更。
 	if( ( pBootTitle->titleID & TITLE_ID_SECURE_FLAG_MASK ) == 0 ) {
 		mountListBuffer[ NAND_MOUNT_INDEX ].userPermission = 0;	// "nand:"
 		mountListBuffer[ NAND2_MOUNT_INDEX ].userPermission = 0;	// "nand2:"
 	}
-	
-	// セキュアアプリでないカードアプリは、マウント情報をクリアする。
-	// 但し、SDIO[1]アクセスが有効なら、いくつかのアーカイブを残す。（NANDにアクセスしたいカードアプリが出てきた時のための準備。）
-	if( ( ( pBootTitle->titleID & TITLE_ID_SECURE_FLAG_MASK ) == 0 ) &&
-		( ( pBootTitle->titleID & TITLEID_MEDIA_NAND_FLAG ) == 0 ) ) {
+
+	// 2008.06.26 contentとshared2はマウントしない方針とする。
+	mountListBuffer[ CONTENT_MOUNT_INDEX ].drive[ 0 ] = 0;
+	mountListBuffer[ SHARED2_MOUNT_INDEX ].drive[ 0 ] = 0;
+
+	{
 		int i;
-		u16 mask = 0;
-		if( pROMH->arm7_scfg_ext & ROM_SCFG_EXT_SD1_MASK ) {
-			mask = 0x013b;		// SDIO[1]アクセスが有効なアプリは、nand:/, nand2:/, shared1:/, shared2:/, photo:/, sdmc:/を残す。
-		}else {
-			mask = 0;			// 全マウント情報クリア
+		u16 notMount = 0x0000;
+		
+		// カードアプリは、content, dataPub, dataPrv をマウントしない。
+		if( ( pBootTitle->titleID & TITLEID_MEDIA_NAND_FLAG ) == 0 ) {
+			notMount |= ( 0x0001 << CONTENT_MOUNT_INDEX ) |
+						( 0x0001 << PRV_SAVE_DATA_MOUNT_INDEX ) |
+						( 0x0001 << PUB_SAVE_DATA_MOUNT_INDEX );
 		}
+		
+		// TMPジャンプアプリは、contentをマウントしない
+		if( (LauncherBootType)pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_TEMP )
+		{
+			notMount |= ( 0x0001 << CONTENT_MOUNT_INDEX );
+		}
+		
+		// SDカードアクセス要求がない場合は、sdmcをマウントしない。
+		if( pROMH->access_control.sd_card_access == 0 ) {
+			notMount |= ( 0x0001 << SDMC_MOUNT_INDEX );
+		}
+		
+		// NANDアクセス要求がない場合は、NAND関係のドライブを全てマウントしない。
+		if( pROMH->access_control.nand_access == 0 ) {
+			notMount |= 0x00ff;
+		}
+		
+		// アクセス不可なドライブを無効にする。
 		for( i = 0; i < DEFAULT_MOUNT_LIST_NUM; i++ ) {
-			if( ( mask & ( 0x0001 << i ) ) == 0 ) {
+			if( notMount & ( 0x0001 << i ) ) {
 				mountListBuffer[ i ].drive[ 0 ] = 0;
 			}
 		}
-	}
-	
-	// TMPジャンプ時のcontentはマウントしない
-	if( (LauncherBootType)pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_TEMP )
-	{
-		mountListBuffer[CONTENT_MOUNT_INDEX].drive[ 0 ] = 0;
 	}
 	
 	// セーブデータ有無によるマウント情報の編集
@@ -175,10 +193,13 @@ void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle )
 							   &mountListBuffer[ PRV_SAVE_DATA_MOUNT_INDEX ] );
 */
 
+#if 0
+	// 2008.06.20 shared2仕様変更に伴い、無効にする
 	// Shared2のアプリ間共有ファイルセット
 	SYSMi_ModifyShared2FileMount( LAUNCHER_BOOTTYPE_NAND,
 										  pBootTitle->titleID,
 										  &mountListBuffer[ SHARED2_MOUNT_INDEX ] );
+#endif
 
 	// マウント情報のセット
 	SYSMi_SetMountInfoCore( (LauncherBootType)pBootTitle->flags.bootType,
@@ -227,6 +248,8 @@ static void SYSMi_SetMountInfoCore( LauncherBootType bootType, NAMTitleId titleI
 #endif
 }
 
+#ifdef USE_SHARED2_FILE_OLD_FORMAT
+// 2008.06.20 shared2仕様変更に伴い、無効にする
 #define KB		( 1024 )
 #define MB		( 1024 * 1024 )
 #define SHARED2FILE_SIZE_VALUE_TABLE_LENGTH		9
@@ -252,7 +275,6 @@ static void SYSMi_ModifyShared2FileMount( LauncherBootType bootType, NAMTitleId 
 		STD_TSNPrintf( shared2FilePath, FS_ENTRY_LONGNAME_MAX,
 					   "nand:/shared2/%04X", (( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF)->shared2_file_index);
 		
-		//[TODO:]実際にファイルのサイズを見て同じかどうかもチェック
 		// サイズチェックしてマウント情報登録
 		for(l=0; l<SHARED2FILE_SIZE_VALUE_TABLE_LENGTH; l++)
 		{
@@ -273,7 +295,7 @@ static void SYSMi_ModifyShared2FileMount( LauncherBootType bootType, NAMTitleId 
 		pMountTgt->drive[ 0 ] = 0;
 	}
 }
-
+#endif
 
 // タイトルIDをもとにセーブデータ有無を判定して、マウント情報を編集する。
 static void SYSMi_ModifySaveDataMount( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt )
