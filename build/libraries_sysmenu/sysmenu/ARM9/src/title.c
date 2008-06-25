@@ -841,7 +841,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 		}
 		
 		// ヘッダのハッシュ計算
-		SVC_CalcSHA1( s_calc_hash, header, (u32)( ( isTwlApp || ( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_NAND ) ) ?
+		SVC_CalcSHA1( s_calc_hash, header, (u32)( ( isTwlApp || ( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_NAND ) || head->s.enable_nitro_whitelist_signature ) ?
 												TWL_ROM_HEADER_HASH_CALC_DATA_LEN : NTR_ROM_HEADER_HASH_CALC_DATA_LEN ));
 		
 		//この時点でヘッダの正当性検証
