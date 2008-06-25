@@ -61,7 +61,6 @@ static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
 #define OS_TPrintf(...) (debugPtr += STD_TSPrintf(debugPtr, __VA_ARGS__))
 #endif
 
-#define THREAD_PRIO_AES     12
 #define THREAD_PRIO_FATFS   8
 #define DMA_FATFS_1         0
 #define DMA_FATFS_2         1
@@ -85,15 +84,6 @@ static void CreateIdleThread(void)
     OS_WakeupThreadDirect(&idleThread);
 }
 
-// MCU旧バージョン対策
-#if SDK_TS_VERSION <= 200
-static u8 version = 0;
-#define IS_OLD_MCU  (version ? (version < 0x20) : ((version=MCUi_ReadRegister( MCU_REG_VER_INFO_ADDR )) < 0x20))
-#else
-#define IS_OLD_MCU  FALSE
-#define MCU_OLD_REG_TEMP_ADDR   MCU_REG_TEMP_ADDR   // avoid compiler error
-#endif
-
 /***************************************************************
     PreInit
 
@@ -102,20 +92,6 @@ static u8 version = 0;
 ***************************************************************/
 static void PreInit(void)
 {
-    /*
-        バッテリー残量チェック
-    */
-    if ( !IS_OLD_MCU )   // MCU旧バージョン対策
-    {
-        if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
-        {
-#ifndef SDK_FINALROM
-            OS_TPanic("Battery is empty.\n");
-#else
-            PM_Shutdown();
-#endif
-        }
-    }
     /*
         FromBrom関連
     */
@@ -127,14 +103,7 @@ static void PreInit(void)
         リセットパラメータ(1バイト)を共有領域(1バイト)にコピー
     */
 #define HOTSTART_FLAG_ENABLE    0x80
-    if ( IS_OLD_MCU )   // MCU旧バージョン対策
-    {
-        *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_OLD_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
-    }
-    else
-    {
-        *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
-    }
+    *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = (u8)(MCUi_ReadRegister( (u16)(MCU_REG_TEMP_ADDR + OS_MCU_RESET_VALUE_OFS) ) | HOTSTART_FLAG_ENABLE);
 }
 
 /***************************************************************
@@ -148,8 +117,6 @@ static void PostInit(void)
     // PMICの設定 for old version
     PM_InitFIRM();
 #endif
-    // AESの初期化
-    AES_Init(THREAD_PRIO_AES);           // for encrypted NAND
     // マウント情報の初期化
     FS_InitMountInfo(FALSE, TRUE);
     // アイドルスレッドの作成
@@ -157,16 +124,16 @@ static void PostInit(void)
     /*
         バッテリー残量チェック
     */
-    if ( !IS_OLD_MCU )   // MCU旧バージョン対策
+    MCUi_WriteRegister( MCU_REG_MODE_ADDR, MCU_SYSTEMMODE_FIRMWARE );   // change battery level only
+    PUSH_PROFILE();
+    SetDebugLED(++step); // 0x84
+    if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
     {
-        if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
-        {
 #ifndef SDK_FINALROM
-            OS_TPanic("Battery is empty.\n");
+        OS_TPanic("Battery is empty.\n");
 #else
-            PM_Shutdown();
+        PM_Shutdown();
 #endif
-        }
     }
 }
 
@@ -217,7 +184,7 @@ void TwlSpMain( void )
     PostInit();
     // 3: after PostInit
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x84
+    SetDebugLED(++step); // 0x85
 
     if ( !FATFS_Init( DMA_FATFS_1, DMA_FATFS_2, THREAD_PRIO_FATFS ) )
     {
@@ -226,7 +193,7 @@ void TwlSpMain( void )
     }
     // 4: after FATFS_Init
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x85
+    SetDebugLED(++step); // 0x86
 
     if ( PXI_RecvID() != FIRM_PXI_ID_SET_PATH )
     {
@@ -235,7 +202,7 @@ void TwlSpMain( void )
     }
     // 5: after PXI
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x86
+    SetDebugLED(++step); // 0x87
 
     if ( (fd = FS_OpenSrl()) < 0 )
     {
@@ -244,7 +211,7 @@ void TwlSpMain( void )
     }
     // 6: after FS_OpenSrl
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x87
+    SetDebugLED(++step); // 0x88
 
     if ( !FS_LoadHeader( fd ) )
     {
@@ -253,7 +220,7 @@ void TwlSpMain( void )
     }
     // 7: after FS_LoadHeader
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x88
+    SetDebugLED(++step); // 0x89
 
     if ( PXI_RecvID() != FIRM_PXI_ID_DONE_HEADER )
     {
@@ -262,13 +229,13 @@ void TwlSpMain( void )
     }
     // 8: after PXI
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x89
+    SetDebugLED(++step); // 0x8a
 
     AESi_InitKeysFIRM();
     AESi_InitSeed();
     // 9: after AESi_InitSeed
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x8a
+    SetDebugLED(++step); // 0x8b
 
     if ( !FS_LoadStatic( fd ) )
     {
@@ -277,7 +244,7 @@ void TwlSpMain( void )
     }
     // 10: after FS_LoadStatic
     PUSH_PROFILE();
-    SetDebugLED(++step); // 0x8b
+    SetDebugLED(++step); // 0x8c
 
     if ( PXI_RecvID() != FIRM_PXI_ID_DONE_STATIC )
     {
