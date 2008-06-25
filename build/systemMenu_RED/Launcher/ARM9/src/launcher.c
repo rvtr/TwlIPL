@@ -609,8 +609,9 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 			{
 				//PlayStream(&strm, filename);
 				ret = &pTitleList[selected];
-				// ブートするアプリのindex番号を本体設定に保存する。（実際の保存は、SYSMライブラリがブート時に行います。）
+				// ブートするアプリのindex番号とTitleIDを本体設定に保存する。（実際の保存は、SYSMライブラリがブート時に行います。）
 				LCFG_TSD_SetLastTimeBootSoftIndex( (u8)selected );
+				LCFG_TSD_SetLastTimeBootSoftTitleID ( pTitleList[selected].titleID );
 			}
 		}
 	}

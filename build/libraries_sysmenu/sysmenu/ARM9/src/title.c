@@ -314,10 +314,10 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 			pTitleList_Card->flags.isValid = TRUE;
 			pTitleList_Card->flags.isAppLoadCompleted = FALSE;
 			pTitleList_Card->flags.isAppRelocate = TRUE;
-			pTitleList_Card->agree_EULA = SYSM_GetCardRomHeader()->agree_EULA;
-			pTitleList_Card->availableSubBannerFile = SYSM_GetCardRomHeader()->availableSubBannerFile;
-			pTitleList_Card->WiFiConnectionIcon = SYSM_GetCardRomHeader()->WiFiConnectionIcon;
-			pTitleList_Card->DSWirelessIcon = SYSM_GetCardRomHeader()->DSWirelessIcon;
+			pTitleList_Card->agree_EULA = SYSM_GetCardRomHeader()->exFlags.agree_EULA;
+			pTitleList_Card->availableSubBannerFile = SYSM_GetCardRomHeader()->exFlags.availableSubBannerFile;
+			pTitleList_Card->WiFiConnectionIcon = SYSM_GetCardRomHeader()->exFlags.WiFiConnectionIcon;
+			pTitleList_Card->DSWirelessIcon = SYSM_GetCardRomHeader()->exFlags.DSWirelessIcon;
 			pTitleList_Card->platform_code = SYSM_GetCardRomHeader()->platform_code;
 			MI_CpuCopy8( SYSM_GetCardRomHeader()->parental_control_rating_info, pTitleList_Card->parental_control_rating_info, 0x10);
 			pTitleList_Card->card_region_bitmap = SYSM_GetCardRomHeader()->card_region_bitmap;
@@ -858,7 +858,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 		}
 		
 		// ヘッダのハッシュ計算
-		SVC_CalcSHA1( s_calc_hash, header, (u32)( ( isTwlApp || ( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_NAND ) || head->s.enable_nitro_whitelist_signature ) ?
+		SVC_CalcSHA1( s_calc_hash, header, (u32)( ( isTwlApp || ( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_NAND ) || head->s.exFlags.enable_nitro_whitelist_signature ) ?
 												TWL_ROM_HEADER_HASH_CALC_DATA_LEN : NTR_ROM_HEADER_HASH_CALC_DATA_LEN ));
 		
 		//この時点でヘッダの正当性検証
@@ -1756,7 +1756,6 @@ AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle )
         {
 			u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
 			if( pBuffer != NULL ) {
-				LCFG_TSD_SetLastTimeBootSoftTitleID ( pBootTitle->titleID );
 				LCFG_TSD_SetLastTimeBootSoftPlatform( (u8)SYSM_GetAppRomHeader()->platform_code );
 				(void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
 				SYSM_Free( pBuffer );
@@ -1944,12 +1943,12 @@ BOOL SYSM_MakeTitleListMakerInfoFromHeader( TitleListMakerInfo *info, ROM_Header
 	info->public_save_data_size = hs->public_save_data_size;
 	info->private_save_data_size = hs->private_save_data_size;
 	info->permit_landing_normal_jump = ( hs->permit_landing_normal_jump ? TRUE : FALSE );
-	info->agree_EULA = hs->agree_EULA;
-	info->availableSubBannerFile = hs->availableSubBannerFile;
-	info->WiFiConnectionIcon = hs->WiFiConnectionIcon;
-	info->DSWirelessIcon = hs->DSWirelessIcon;
+	info->agree_EULA = hs->exFlags.agree_EULA;
+	info->availableSubBannerFile = hs->exFlags.availableSubBannerFile;
+	info->WiFiConnectionIcon = hs->exFlags.WiFiConnectionIcon;
+	info->DSWirelessIcon = hs->exFlags.DSWirelessIcon;
 	info->platform_code = hs->platform_code;
-	MI_CpuCopy8( hs->parental_control_rating_info, info->parental_control_rating_info, 0x10);
+	MI_CpuCopy8( hs->parental_control_rating_info, info->parental_control_rating_info, PARENTAL_CONTROL_INFO_SIZE);
 	info->card_region_bitmap = hs->card_region_bitmap;
 	return TRUE;
 }
