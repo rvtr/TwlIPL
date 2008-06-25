@@ -575,19 +575,16 @@ end:
   ■ Bonding Op = 0 (製品版)
     ソフトウェア |  　　　 DSカード         |          TWLカード
     ------------------------------------------------------------------------
-        DS用     |  DSカード読みシーケンス  |    DSカード読みシーケンス(※1)
+        DS用     |  DSカード読みシーケンス  |    DSカード読みシーケンス
        TWL用     |  不正カードフラグ立て    |    TWLカード読みシーケンス
     ハイブリット |  不正カードフラグ立て    |    TWLカード読みシーケンス
 
   ■ Bonding Op = 0以外 (開発用)
     ソフトウェア |  　　　 DSカード         |          TWLカード
     ------------------------------------------------------------------------
-        DS用     |  DSカード読みシーケンス  |    DSカード読みシーケンス(※1)
+        DS用     |  DSカード読みシーケンス  |    DSカード読みシーケンス
        TWL用     |  DSカード読みシーケンス  |    TWLカード読みシーケンス
     ハイブリット |  DSカード読みシーケンス  |    TWLカード読みシーケンス
-
-
-  ※1 [TODO] 動作に関してはカードGと相談して決める
  *---------------------------------------------------------------------------*/
 static BOOL isTwlModeLoad(void)
 {
@@ -599,7 +596,6 @@ static BOOL isTwlModeLoad(void)
             return TRUE;
         }
         else{
-            // [TODO] 仕様確認
             OS_PutString("TWL Card : NTR Application   Read Sequence -> NTR\n");
             return FALSE;
         }
@@ -611,6 +607,7 @@ static BOOL isTwlModeLoad(void)
             // PlatformCodeがTwl or Hybridの場合
             if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
                 OS_PutString("NTR Card : TWL Application   Error Illegal Card\n");
+                s_cbData.illegalCardFlg = TRUE;
                 return FALSE;
             }
             else{
@@ -1626,19 +1623,11 @@ static void HotSwThread(void *arg)
                 s_isPulledOut = FALSE;
                 
                 // エラー処理
-                if(retval != HOTSW_SUCCESS){
+                if(retval != HOTSW_SUCCESS || s_cbData.illegalCardFlg){
                     ClearCardFlgs();
                     McPowerOff();
 
-                    // リトライ
-                    if(s_cbData.retry >= CARD_READ_RETRY_NUM){
-                		break;
-                    }
-                    else{
-						s_isPulledOut = TRUE;
-                    }
-
-                    s_cbData.retry++;
+                    break;
                 }
             }
 
