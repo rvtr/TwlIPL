@@ -249,6 +249,11 @@ TwlMain()
 	}
 	kamiFontPrintfMain( 7, 11, 8, "              ");
 
+	// フォーマット後はESに必要なファイルがなくなっているため
+	// ES_InitLibを呼び出すことで作成しておく
+	NAM_End( NULL, NULL );
+	NAM_Init( OS_AllocFromMain, OS_FreeToMain );
+
 	// 全ハードウェア情報の更新
 	for (i=0;i<MAX_RETRY_COUNT;i++)
 	{

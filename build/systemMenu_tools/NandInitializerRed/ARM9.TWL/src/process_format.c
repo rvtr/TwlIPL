@@ -20,6 +20,7 @@
 #include <twl/fatfs.h>
 #include <nitro/card.h>
 #include <twl/lcfg.h>
+#include <twl/nam.h>
 #include "kami_font.h"
 #include "kami_pxi.h"
 #include "process_topmenu.h"
@@ -344,6 +345,11 @@ void* FormatProcess3(void)
 		if ( sFormatResult )
 		{
 			kamiFontPrintf(24,  y_pos, FONT_COLOR_GREEN, " OK  ");
+
+			// フォーマット後はESに必要なファイルがなくなっているため
+			// ES_InitLibを呼び出すことで作成しておく
+			NAM_End(NULL, NULL);
+			NAM_Init( OS_AllocFromMain, OS_FreeToMain);
 		}
 		else
 		{
