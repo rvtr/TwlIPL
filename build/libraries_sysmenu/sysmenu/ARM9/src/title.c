@@ -1433,7 +1433,7 @@ static AuthResult SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle,
 		return AUTH_RESULT_SUCCEEDED;
 	}
 	
-	if( head->s.enable_nitro_whitelist_signature )
+	if( head->s.exFlags.enable_nitro_whitelist_signature )
 	{
 		// マスタリング済みNTRカードアプリの署名チェック（実はTWLアプリと同じ）
 		ret = SYSMi_AuthenticateHeaderWithSign( pBootTitle, head );

@@ -71,7 +71,7 @@ extern u32  UTL_CalcPCTLMasterKey( void );									// マスターキー　　（１０進５
 // アプリROMヘッダの要EULAフラグ取得
 static inline BOOL UTL_IsROMHeaderEULARequired( void )
 {
-	return (BOOL)SYSM_GetAppRomHeader()->agree_EULA;
+	return (BOOL)SYSM_GetAppRomHeader()->exFlags.agree_EULA;
 }
 
 #endif

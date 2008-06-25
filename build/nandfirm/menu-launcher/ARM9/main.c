@@ -155,7 +155,7 @@ static BOOL CheckHeader(void)
     // イニシャルコードなど
     OS_TPrintf("Initial Code        : %08X (%.4s)\n", *(u32*)rhs->game_code, rhs->game_code);
     OS_TPrintf("Platform Code       : %02X\n", rhs->platform_code);
-    OS_TPrintf("Codec Mode          : %s\n", rhs->codec_mode ? "TWL" : "NITRO");
+    OS_TPrintf("Codec Mode          : %s\n", rhs->exFlags.codec_mode ? "TWL" : "NITRO");
     OS_TPrintf("Sigunature          : %s\n", rhs->enable_signature ? "AVAILABLE" : "NOT AVAILABLE");
     OS_TPrintf("AES Encryption      : %s\n", rhs->enable_aes ? "AVAILABLE" : "NOT AVAILABLE");
     if ( rhs->enable_aes )
@@ -190,7 +190,7 @@ static BOOL CheckHeader(void)
     OS_TPrintf("ARM7 LTD size       : %08X\n", rhs->sub_ltd_size);
     // 順序ほぼ最適化済み
     if ( rhs->platform_code != PLATFORM_CODE_TWL_LIMITED ||     // TWL Limited only
-         !rhs->codec_mode ||                                    // TWL mode only
+         !rhs->exFlags.codec_mode ||                            // TWL mode only
          !rhs->enable_signature ||                              // Should be use ROM header signature
          (rhs->titleID_Hi & 0x0005) != 0x0005 ||                // check only NAND/SYSTEM bits (need?)
         // should be in main memory

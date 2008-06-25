@@ -431,7 +431,7 @@ static HotSwState LoadCardData(void)
                 s_cbData.twlFlg = TRUE;
             }
             else{
-                if ( !s_cbData.pBootSegBuf->rh.s.enable_nitro_whitelist_signature )
+                if ( !s_cbData.pBootSegBuf->rh.s.exFlags.enable_nitro_whitelist_signature )
                 // NTRカードの場合はRomHeaderバッファの1ページ目以降をクリアしておく。
                 MI_CpuClearFast((void *)(SYSM_CARD_ROM_HEADER_BAK + PAGE_SIZE), SYSM_APP_ROM_HEADER_SIZE - PAGE_SIZE);
             }

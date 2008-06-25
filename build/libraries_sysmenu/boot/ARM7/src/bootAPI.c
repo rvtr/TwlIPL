@@ -299,7 +299,7 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 			// I2S停止（MCLKは動作継続）
 			reg_SND_SMX_CNT &= ~REG_SND_SMX_CNT_E_MASK;
 
-            if ( isNtrMode || th->s.codec_mode == OS_CODECMODE_NITRO )
+            if ( isNtrMode || th->s.exFlags.codec_mode == OS_CODECMODE_NITRO )
             {
 				// （CODEC-DSモード）
 				CDC_GoDsMode();

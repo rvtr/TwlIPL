@@ -145,8 +145,8 @@ int main(int argc, char *argv[])
   // u8                codec_mode:1;                                        // 0:NTR mode, 1:TWL mode                // undeveloped
   // u8                otherParentalControls:1;                // 1: Enable OtherParentalControls
   // u8                subBannerFile:1;                                // 1: Enable SubBannerFile
-  rom_header.s.codec_mode = 1;                        // 0:NTR mode, 1:TWL mode                // undeveloped
-  rom_header.s.availableSubBannerFile = 0;                // 1: Enable SubBannerFile
+  rom_header.s.exFlags.codec_mode = 1;                        // 0:NTR mode, 1:TWL mode                // undeveloped
+  rom_header.s.exFlags.availableSubBannerFile = 0;                // 1: Enable SubBannerFile
 
 
   //    u8                titleID_Lo[ 4 ];

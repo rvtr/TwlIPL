@@ -174,7 +174,7 @@ static BOOL CheckHeader(void)
     // イニシャルコードなど
     OS_TPrintf("Initial Code        : %08X (%.4s)\n", *(u32*)rhs->game_code, rhs->game_code);
     OS_TPrintf("Platform Code       : %02X\n", rhs->platform_code);
-    OS_TPrintf("Codec Mode          : %s\n", rhs->codec_mode ? "TWL" : "NITRO");
+    OS_TPrintf("Codec Mode          : %s\n", rhs->exFlags.codec_mode ? "TWL" : "NITRO");
     OS_TPrintf("Sigunature          : %s\n", rhs->enable_signature ? "AVAILABLE" : "NOT AVAILABLE");
     OS_TPrintf("AES Encryption      : %s\n", rhs->enable_aes ? "AVAILABLE" : "NOT AVAILABLE");
     if ( rhs->enable_aes )
@@ -204,7 +204,7 @@ static BOOL CheckHeader(void)
 #else
     if ( // no check
 #endif
-         !rhs->codec_mode ||                                    // TWL mode only
+         !rhs->exFlags.codec_mode ||                                    // TWL mode only
         // should be in main memory
          HW_TWL_MAIN_MEM > (u32)rhs->main_ram_address ||
          HW_TWL_MAIN_MEM > (u32)rhs->sub_ram_address ||
