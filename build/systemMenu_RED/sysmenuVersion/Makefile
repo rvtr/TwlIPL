@@ -26,7 +26,9 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 VER_TIMESTAMP	=	08062300
 
-VERSION_NUM		=	1
+MAJOR_VERSION		=	0
+MINOR_VERSION		=	1
+USER_AREA_SIZE		=	16
 
 VERSION_FILE	=	SysmenuVersion.dat
 
@@ -53,7 +55,7 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 do-build :  $(VERSION_TAD)
 
 $(VERSION_DAT):
-	$(GEN_VERSION_FILE) $(VER_TIMESTAMP) $(VERSION_NUM)
+	$(GEN_VERSION_FILE) $(VER_TIMESTAMP) $(MAJOR_VERSION) $(MINOR_VERSION) $(USER_AREA_SIZE)
 
 $(VERSION_TAD) : $(VERSION_FILE)
 	$(MAKETAD) $(call empath,$<) $(VERSION_MAKETAD_OPTION) -o $@

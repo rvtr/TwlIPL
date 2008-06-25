@@ -25,6 +25,7 @@
 #include "sound.h"
 #include "loadWlanFirm.h"
 #include "loadSharedFont.h"
+#include "loadSysmVersion.h"
 
 // extern data-----------------------------------------------------------------
 
@@ -332,6 +333,11 @@ void TwlMain( void )
 #if (MEASURE_TIME == 1)
     OS_TPrintf( "GetSharedFont : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 #endif
+
+	if( LoadSysmVersion() )
+	{
+		OS_TPrintf("Launcher Version = %d.%d\n",GetSysmMajorVersion(), GetSysmMinorVersion() );
+	}
 
     // 開始ステートの判定--------------
 

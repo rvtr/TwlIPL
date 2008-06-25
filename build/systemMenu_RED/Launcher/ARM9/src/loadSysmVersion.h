@@ -30,6 +30,8 @@ extern "C" {
 // function----------------------------------------------------------
 BOOL LoadSysmVersion( void );
 u32 GetSysmVersion( void );
+u16 GetSysmMajorVersion( void );
+u16 GetSysmMinorVersion( void );
 
 #ifdef __cplusplus
 }

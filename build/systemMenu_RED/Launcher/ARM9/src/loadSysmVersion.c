@@ -26,24 +26,30 @@
 #define VER_TITLEID					0x0003000F484E5641 //HNVA
 
 #define VERSION_DATA_SIGN_SIZE		128
-#define VERSION_DATA_BODY_SIZE		32
-#define VERSION_DATA_PADDING_SIZE	(VERSION_DATA_BODY_SIZE - 4 - 4)
+#define VERSION_DATA_HEADER_SIZE	96
+#define VERSION_DATA_PADDING1_SIZE	12
+#define VERSION_DATA_PADDING2_SIZE	44
 
-typedef struct VersionData
+typedef struct VersionDataHeader
 {
 	u8 rsa_sign[VERSION_DATA_SIGN_SIZE];
 	union
 	{
-		u8 body[VERSION_DATA_BODY_SIZE];
+		u8 header[VERSION_DATA_HEADER_SIZE];
 		struct
 		{
 			u32 timestamp;
 			u32 version;
-			u8 res[VERSION_DATA_PADDING_SIZE];
+			u32 userAreaSize;
+			u32 data1Offset;
+			u32 data1Size;
+			u8 padding1[VERSION_DATA_PADDING1_SIZE];
+			u8 data1Digest;
+			u8 padding2[VERSION_DATA_PADDING2_SIZE];
 		};
 	};
 }
-VersionData;
+VersionDataHeader;
 
 // function's prototype-------------------------------------------------------
 
@@ -60,7 +66,7 @@ static u32 s_version = 0;
 BOOL LoadSysmVersion( void )
 {
 	char path[256];
-	VersionData vd;
+	VersionDataHeader vdh;
 	FSFile file[1];
 	BOOL bSuccess;
 	s32 len;
@@ -78,8 +84,8 @@ OS_TPrintf("LoadSysmVersion failed: cant open file\n");
 		return FALSE;
 	}
 
-	len = FS_ReadFile(file, &vd, sizeof(vd));
-	if( len != sizeof(vd) )
+	len = FS_ReadFile(file, &vdh, sizeof(vdh));
+	if( len != sizeof(vdh) )
 	{
 OS_TPrintf("LoadSysmVersion failed: read file error!\n");
 		(void)FS_CloseFile(file);
@@ -91,8 +97,8 @@ OS_TPrintf("LoadSysmVersion failed: read file error!\n");
 	// ŒŸØ
 	// [TODO:]–¼ˆ—
 	
-	s_version = vd.version;
-	if( vd.timestamp > 0 ) OS_TPrintf( "VersionData timestamp : %08x\n", vd.timestamp );
+	s_version = vdh.version;
+	if( vdh.timestamp > 0 ) OS_TPrintf( "VersionData timestamp : %08x\n", vdh.timestamp );
 	
 	return TRUE;
 }
@@ -100,5 +106,15 @@ OS_TPrintf("LoadSysmVersion failed: read file error!\n");
 u32 GetSysmVersion( void )
 {
 	return s_version;
+}
+
+u16 GetSysmMajorVersion( void )
+{
+	return (u16)( ( 0xffff0000 & s_version ) >> 16 );
+}
+
+u16 GetSysmMinorVersion( void )
+{
+	return (u16)( 0xffff & s_version );
 }
 
