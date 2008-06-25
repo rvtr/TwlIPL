@@ -780,23 +780,19 @@ OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
 			goto ERROR;
         }
 
-		//ヘッダ読み込みと同時に各種ハッシュ計算
+		//ヘッダ読み込みと同時に各種ハッシュ計算……できない（NTRかTWLか判別できないため）ので読み込みのみ
 		{
             BOOL result;
             u32 len = MATH_ROUNDUP( (s32)sizeof(header), SYSM_ALIGNMENT_LOAD_MODULE );
-			CalcSHA1CallbackArg arg;
-            SVC_SHA1Init( &arg.ctx );
-            arg.hash_length = (u32)( isTwlApp ? TWL_ROM_HEADER_HASH_CALC_DATA_LEN : NTR_ROM_HEADER_HASH_CALC_DATA_LEN );
             if(!isCardApp)
 	        {
 	            result = FS_ReadFileViaWram(file, (void *)header, (s32)len, MI_WRAM_C,
-	            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcSHA1Callback, &arg );
+	            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, NULL, NULL );
 	        }else
 	        {
 				result = HOTSW_ReadCardViaWram((void*) 0, (void*)header, (s32)len, MI_WRAM_C,
-	            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, SYSMi_CalcSHA1Callback, &arg );
+	            							WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, NULL, NULL );
 			}
-            SVC_SHA1GetHash( &arg.ctx, &s_calc_hash[0] );
 			if ( !result )
 			{
 OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", 0, len);
@@ -843,6 +839,9 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 		        }
 			}
 		}
+		
+		// ヘッダのハッシュ計算
+		SVC_CalcSHA1( s_calc_hash, header, (u32)( isTwlApp ? TWL_ROM_HEADER_HASH_CALC_DATA_LEN : NTR_ROM_HEADER_HASH_CALC_DATA_LEN ));
 		
 		//この時点でヘッダの正当性検証
 		// ※ROMヘッダ認証
