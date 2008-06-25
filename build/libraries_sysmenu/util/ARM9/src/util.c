@@ -282,6 +282,6 @@ BOOL UTL_IsFatalError( void )
 // FATALエラーコード取得
 u32 UTL_GetFatalError( void )
 {
-	return s_fatalError ? TRUE : FALSE;
+	return s_fatalError;
 }
 
