@@ -311,7 +311,9 @@ static void TestFSPermission( void )
 	
 	result[0] = RWTest( "nand:" );                // nand:
 	result[1] = RWTest( "nand2:" );               // nand2:
+#if (ENABLE_CONTENT_TEST == 1)
 	result[2] = ContentTest();                    // content:
+#endif
 	result[3] = Shared1Test();                    // shared1:
 	result[4] = RWTest( "shared2:" );             // shared2:
 	result[5] = RWTest( "photo:" );               // photo:
@@ -334,12 +336,18 @@ static void TestFSPermission( void )
 	OS_TPrintf( "Correct Answer:\n" );
 	for( l=0; l<15; l++ )
 	{
+#if (ENABLE_CONTENT_TEST == 0)
+		if(l==2) continue; // contentチェック飛ばし
+#endif
 		OS_TPrintf( "%s ", ( s_answer_data[s_testnum][l] ? "○" : "×" ) );
 	}
 	OS_TPrintf( "\n" );
 	OS_TPrintf( "Result:\n" );
 	for( l=0; l<15; l++ )
 	{
+#if (ENABLE_CONTENT_TEST == 0)
+		if(l==2) continue; // contentチェック飛ばし
+#endif
 		OS_TPrintf( "%s ", ( result[l] ? "○" : "×" ) );
 		PutStringUTF16( 3 * 8 + l*14, 14 * 8, TXT_COLOR_BLACK, (const u16 *)( s_answer_data[s_testnum][l] ? L"○" : L"×" ));
 		PutStringUTF16( 3 * 8 + l*14, 16 * 8, ( result[l]==s_answer_data[s_testnum][l] ? TXT_COLOR_BLUE : TXT_COLOR_RED ),

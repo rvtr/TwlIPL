@@ -22,6 +22,7 @@
 extern "C" {
 #endif
 
+#define ENABLE_CONTENT_TEST 0
 
 #include <twl.h>
 
