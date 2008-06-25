@@ -39,18 +39,12 @@ WRAM_MAP_FILE			=	$(COMPONENT_DIR)/wram_regs/wram_regs.rbin
 
 #----------------------------------------------------------------------------
 
-ifneq ($(UPDATER_RELEASE),TRUE)
+# ランチャーのビルドスイッチ設定インクルード
+include $(TWL_IPL_RED_ROOT)/build/systemMenu_RED/Launcher/ARM9/commondefs.launcher
 
-# COMPILE SWITCH　※最終ROM作成時は、全てFALSEにセットする。SUBDIRのビルド時にも影響するようexportで環境変数設定する。
-export DO_NOT_SHOW_LAUNCHER		=	FALSE
-export DISABLE_WDS_SCAN			=	TRUE
-export DISABLE_WLFIRM_LOAD		=	FALSE
-export DISABLE_INITIAL_SETTINGS	=	TRUE
-export IGNORE_WLFIRM_SIGNCHECK	=	FALSE
-endif
 
 # MAKEROM SWITCH ※最終ROM作成時は、全てTRUEにセットする
-DISABLE_DEBUG			?=	FALSE
+DISABLE_DEBUG					?=	FALSE
 
 
 TARGET_FIRM				=	SYSTEMMENU

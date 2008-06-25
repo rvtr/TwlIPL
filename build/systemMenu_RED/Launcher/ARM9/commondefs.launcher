@@ -1,7 +1,7 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - build
-# File:     Makefile
+# Project:  TwlIPL
+# File:     commondefs.launcher -
 #
 # Copyright 2007 Nintendo.  All rights reserved.
 #
@@ -11,24 +11,19 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date::            $
-# $Rev$
-# $Author$
+# $Date:: 
+# $Rev: 
+# $Author: 
 #----------------------------------------------------------------------------
 
-include $(TWL_IPL_RED_ROOT)/build/systemMenu_RED/Launcher/ARM9/commondefs.launcher
-include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+ifneq ($(UPDATER_RELEASE),TRUE)
 
+# COMPILE SWITCH　※最終ROM作成時は、全てFALSEにセットする。SUBDIRのビルド時にも影響するようexportで環境変数設定する。
+export DO_NOT_SHOW_LAUNCHER		=	FALSE
+export DISABLE_WDS_SCAN			=	TRUE
+export DISABLE_WLFIRM_LOAD		=	FALSE
+export DISABLE_INITIAL_SETTINGS	=	TRUE
+export IGNORE_WLFIRM_SIGNCHECK	=	FALSE
 
-#----------------------------------------------------------------------------
-export TWL_ARCHGEN = ALL
+endif
 
-SUBDIRS =	\
-			build
-
-#----------------------------------------------------------------------------
-
-include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
-
-
-#===== End of Makefile =====
