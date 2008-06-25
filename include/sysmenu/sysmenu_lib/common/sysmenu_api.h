@@ -56,6 +56,14 @@ typedef struct TitleProperty {			// この情報は、ランチャー時には認証通ってないけ
 	NAMTitleId			titleID;		// タイトルID（TitleID_Hiで起動メディアは判定できる？）
 	LauncherBootFlags	flags;			// ブート時のランチャー動作フラグ
 	TWLBannerFile		*pBanner;		// バナーへのポインタ（固定長フォーマットなら偽造されても大丈夫だろう。)
+	u8					agree_EULA:1;
+	u8					availableSubBannerFile:1;
+	u8					WiFiConnectionIcon:1;
+	u8					DSWirelessIcon:1;
+	u8					rsv:4;
+	char				platform_code;
+	u8					parental_control_rating_info[0x10];
+	u32					card_region_bitmap;
 }TitleProperty;
 
 // タイトルリスト作成用情報構造体
@@ -64,6 +72,14 @@ typedef struct TitleListMakerInfo {
 	u32					public_save_data_size;
 	u32					private_save_data_size;
 	BOOL				permit_landing_normal_jump;
+	u8					agree_EULA:1;
+	u8					availableSubBannerFile:1;
+	u8					WiFiConnectionIcon:1;
+	u8					DSWirelessIcon:1;
+	u8					rsv:4;
+	char				platform_code;
+	u8					parental_control_rating_info[0x10];
+	u32					card_region_bitmap;
 }TitleListMakerInfo;
 
 // アプリ認証結果

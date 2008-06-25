@@ -314,6 +314,13 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 			pTitleList_Card->flags.isValid = TRUE;
 			pTitleList_Card->flags.isAppLoadCompleted = FALSE;
 			pTitleList_Card->flags.isAppRelocate = TRUE;
+			pTitleList_Card->agree_EULA = SYSM_GetCardRomHeader()->agree_EULA;
+			pTitleList_Card->availableSubBannerFile = SYSM_GetCardRomHeader()->availableSubBannerFile;
+			pTitleList_Card->WiFiConnectionIcon = SYSM_GetCardRomHeader()->WiFiConnectionIcon;
+			pTitleList_Card->DSWirelessIcon = SYSM_GetCardRomHeader()->DSWirelessIcon;
+			pTitleList_Card->platform_code = SYSM_GetCardRomHeader()->platform_code;
+			MI_CpuCopy8( SYSM_GetCardRomHeader()->parental_control_rating_info, pTitleList_Card->parental_control_rating_info, 0x10);
+			pTitleList_Card->card_region_bitmap = SYSM_GetCardRomHeader()->card_region_bitmap;
 		}
 		
 		// タイトル情報フラグのセット
@@ -429,7 +436,7 @@ static BOOL MakeTitleListMakerInfoFromTitleID( TitleListMakerInfo *info, OSTitle
 		int l;
 		NAMTitleInfo naminfo;
 		// この関数で得られる情報は無検証なので改ざんの可能性があるが、メーカーコードのみの判定なので、速度を優先する。(2008.06.20吉岡)
-		// （でもFastつけないと一回300msぐらいかかる）
+		// （Fastつけないと一回300msぐらいかかる）
 		NAM_ReadTitleInfoFast( &naminfo, titleID );
 		for(l=0;l<MAKER_CODE_MAX;l++)
 		{
@@ -520,7 +527,9 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 	// とりあえずALL
 	int l;
 	int validNum = 0;
+	
 	NAMTitleId titleIDArray[ LAUNCHER_TITLE_LIST_NUM - 1 ];// ローンチ可能なタイトルリストの一時置き場
+	static TitleListMakerInfo local_titleListMakerinfo[ LAUNCHER_TITLE_LIST_NUM - 1 ];// 苦肉の策
 	
 	if( s_pTitleIDList == NULL || s_pTitleListMakerInfo == NULL )
 	{
@@ -534,6 +543,7 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 		if( ( s_pTitleIDList[ l ] & ( TITLE_ID_NOT_LAUNCH_FLAG_MASK | TITLE_ID_DATA_ONLY_FLAG_MASK ) ) == 0 ) {
 			titleIDArray[ validNum ] = s_pTitleIDList[ l ];
 			BANNER_ReadBannerFromNAND( s_pTitleIDList[ l ], &s_bannerBuf[ validNum ], &s_pTitleListMakerInfo[l] );
+			local_titleListMakerinfo[validNum] = s_pTitleListMakerInfo[l];
 			validNum++;
 			if( !( validNum < LAUNCHER_TITLE_LIST_NUM - 1 ) )// 最大(LAUNCHER_TITLE_LIST_NUM - 1)まで
 			{
@@ -571,6 +581,13 @@ int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
 		if( titleIDArray[l] ) {
 			pTitleList_Nand[l+1].flags.isValid = TRUE;
 			pTitleList_Nand[l+1].flags.bootType = LAUNCHER_BOOTTYPE_NAND;
+			pTitleList_Nand[l+1].agree_EULA = local_titleListMakerinfo[l].agree_EULA;
+			pTitleList_Nand[l+1].availableSubBannerFile = local_titleListMakerinfo[l].availableSubBannerFile;
+			pTitleList_Nand[l+1].WiFiConnectionIcon = local_titleListMakerinfo[l].WiFiConnectionIcon;
+			pTitleList_Nand[l+1].DSWirelessIcon = local_titleListMakerinfo[l].DSWirelessIcon;
+			pTitleList_Nand[l+1].platform_code = local_titleListMakerinfo[l].platform_code;
+			MI_CpuCopy8( local_titleListMakerinfo[l].parental_control_rating_info, pTitleList_Nand[l+1].parental_control_rating_info, 0x10);
+			pTitleList_Nand[l+1].card_region_bitmap = local_titleListMakerinfo[l].card_region_bitmap;
 		}
 	}
 	// return : *TitleProperty Array
@@ -1927,6 +1944,13 @@ BOOL SYSM_MakeTitleListMakerInfoFromHeader( TitleListMakerInfo *info, ROM_Header
 	info->public_save_data_size = hs->public_save_data_size;
 	info->private_save_data_size = hs->private_save_data_size;
 	info->permit_landing_normal_jump = ( hs->permit_landing_normal_jump ? TRUE : FALSE );
+	info->agree_EULA = hs->agree_EULA;
+	info->availableSubBannerFile = hs->availableSubBannerFile;
+	info->WiFiConnectionIcon = hs->WiFiConnectionIcon;
+	info->DSWirelessIcon = hs->DSWirelessIcon;
+	info->platform_code = hs->platform_code;
+	MI_CpuCopy8( hs->parental_control_rating_info, info->parental_control_rating_info, 0x10);
+	info->card_region_bitmap = hs->card_region_bitmap;
 	return TRUE;
 }
 
