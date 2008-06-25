@@ -445,7 +445,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
     //-----------------------------------------------------
     // L+R+Startボタン押下起動で、本体設定のタッチパネル設定を起動
     //-----------------------------------------------------
-    if( ( PAD_Read() & SYSM_PAD_SHORTCUT_MACHINE_SETTINGS ) ==
+    if( ( PAD_Read() & SYSM_PAD_SHORTCUT_TP_CALIBRATION ) ==
 		SYSM_PAD_SHORTCUT_TP_CALIBRATION ) {
 		argument      = OS_TWL_MACHINE_SETTING_TP_CALIBRATION;
 		isSetArgument = TRUE;
