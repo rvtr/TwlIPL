@@ -184,7 +184,7 @@ TitleProperty *SYSM_ReadParameters( void )
 				// リード失敗時は、ファイルをリカバリ
 				if( LCFG_RecoveryTWLSettings() ) {
 					// リカバリ成功時は、フラッシュ壊れシーケンスへ
-					SYSMi_GetWork()->flags.common.isBrokenTWLSettings = TRUE;
+					// 関数内で、LCFGのisBrokenTWLSettingsフラグがセットされる。
 				}else {
 					// リカバリ失敗時は、FALTALエラー
 			        UTL_SetFatalError( FATAL_ERROR_TWLSETTINGS );
@@ -425,7 +425,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
     //-----------------------------------------------------
     // TWL設定データ破損時のフラッシュ壊れシーケンス起動
     //-----------------------------------------------------
-	if( SYSMi_GetWork()->flags.common.isBrokenTWLSettings ) {
+	if( !LCFG_TSD_IsFinishedBrokenTWLSettings() ) {
 		argument      = 100;		// フラッシュ壊れシーケンス起動
 		isSetArgument = TRUE;
 		isBootMSET    = TRUE;

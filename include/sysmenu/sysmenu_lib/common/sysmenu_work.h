@@ -107,7 +107,6 @@ typedef struct SYSM_work {
 			vu32		isLoadFinished :1;				// アプリロード完了？
 			vu32		isLoadSucceeded :1;				// アプリロード成功？
 			vu32		isCardBoot :1;					// カードブートか？
-			vu32		isBrokenTWLSettings :1;		    // TWL本体設定データが破損している。
 			vu32		isResetRTC :1;					// RTCリセット発生
 			vu32		isNANDFatalError :1;			// NANDFATALエラー発生
 			vu32		:0;
