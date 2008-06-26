@@ -47,6 +47,7 @@ TARGETS			=	$(OUT_DIR)/HNAA \
 					$(OUT_DIR)/HNBA \
 					$(OUT_DIR)/HNCA \
 					$(OUT_DIR)/HNHA \
+					$(OUT_DIR)/HNLA \
 					$(OUT_DIR)/TWLFontTable.dat \
 					$(OUT_DIR)/menu_launcher-$(TWL_BUILD_TYPE).nand \
 					$(OUT_DIR)/$(NAND_INITIALIZER_NAME)-$(TWL_BUILD_TYPE)$(MASTER).srl
@@ -132,6 +133,19 @@ else
 	cp $< $(OUT_DIR)
 endif
 
+#---------------------------
+#システムメニューバージョン
+#---------------------------
+# [TODO] TADからバージョンを取得して、バージョン番号でディレクトリを作成する。
+$(OUT_DIR)/HNLA : $(SYSMENU_DIR)/sysmenuVersion/HNLA.tad
+ifeq ($(DO_MASTERING),TRUE)
+	mkdir -p $(OUT_DIR)/$(notdir $(basename $<))
+	mkdir -p $(OUT_DIR)/$(notdir $(basename $<))/V0
+	cp $< ./$@/V0/
+	cp $(dir $<)/properties ./$@
+else
+	cp $< $(OUT_DIR)
+endif
 
 #---------------------------
 #共有フォント

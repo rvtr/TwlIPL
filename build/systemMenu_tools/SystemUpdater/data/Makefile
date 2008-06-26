@@ -21,6 +21,7 @@ TARGET_FIRM				=	SYSTEMMENU
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include $(SYSMENU_ROOT)/build/systemMenu_RED/wlanfirm/commondefs.wlanfirm
 include $(SYSMENU_ROOT)/build/systemMenu_RED/DSHashTable/commondefs.DSHashTable
+include $(SYSMENU_ROOT)/build/systemMenu_RED/sysmenuVersion/commondefs.sysmenuVersion
 
 # SystemUpdaterでインポートするTADは専用のmaketadでTAD化します。
 MAKETAD			:=	$(SYSMENU_TOOLSDIR)/bin/maketad.updater.exe
@@ -33,6 +34,7 @@ LDIRT_CLEAN		=	HNAA.tad \
 					HNBA.tad \
 					HNCA.tad \
 					HNHA.tad \
+					HNLA.tad \
 					menu_launcher.nand
 
 #----------------------------------------------------------------------------
@@ -43,6 +45,7 @@ do-build :	HNAA.tad \
 			HNBA.tad \
 			HNCA.tad \
 			HNHA.tad \
+			HNLA.tad \
 			menu_launcher.nand
 
 
@@ -59,6 +62,9 @@ HNCA.tad: $(MY_WLANFIRM)
 
 HNHA.tad: $(DS_HASH_TABLE_DATA)
 	$(MAKETAD) $(call empath,$<) $(DS_HASH_TABLE_MAKETAD_OPTION) -o $@
+
+HNLA.tad: $(SYSMENU_VERSION_DIR)/$(SYSMENU_VERSION_FILE)
+	$(MAKETAD) $(call empath,$<) $(SYSMENU_VERSION_MAKETAD_OPTION) -o $@
 
 menu_launcher.nand: ../../../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nand
 	cp $< ./$@

@@ -1,0 +1,22 @@
+#! make -f
+#----------------------------------------------------------------------------
+# Project:  TwlIPL
+# File:     commondefs.sysmenuVersion
+#
+# Copyright 2007 Nintendo.  All rights reserved.
+#
+# These coded instructions, statements, and computer programs contain
+# proprietary information of Nintendo of America Inc. and/or Nintendo
+# Company Ltd., and are protected by Federal copyright law.  They may
+# not be disclosed to third parties or copied or duplicated in any form,
+# in whole or in part, without the prior written consent of Nintendo.
+#
+# $Date:: 
+# $Rev: 
+# $Author: 
+#----------------------------------------------------------------------------
+
+SYSMENU_VERSION_DIR				 =	$(SYSMENU_ROOT)/build/systemMenu_RED/sysmenuVersion
+SYSMENU_VERSION_FILE			 =	SysmenuVersion.dat
+SYSMENU_VERSION_MAKETAD_OPTION	+=	-s -d 0003000F484E4c41 3031 0 SYSM_VERSION -v 0 -p
+

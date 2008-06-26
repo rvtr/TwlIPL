@@ -23,6 +23,7 @@
 TARGET_FIRM			=	SYSTEMMENU
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+include ./commondefs.sysmenuVersion
 
 VER_TIMESTAMP	=	08062300
 
@@ -33,16 +34,12 @@ MINOR_VERSION		=	1
 # ユーザー領域サイズ(=128MB)
 USER_AREA_SIZE		=	134217728
 
-VERSION_FILE	=	SysmenuVersion.dat
-
 GEN_VERSION_FILE	=	$(SYSMENU_TOOLSDIR)/bin/genVersion.plx
-
-VERSION_MAKETAD_OPTION		+=	-s -d 0003000F484E4c41 3031 0 SYSM_VERSION -v 0 -p
 
 VERSION_TAD			=	HNLA.tad
 
 ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
-	VERSION_DAT		=	$(VERSION_FILE)
+	VERSION_DAT		=	$(SYSMENU_VERSION_FILE)
 endif
 
 TARGETS				+=	$(VERSION_TAD)
@@ -60,7 +57,7 @@ do-build :  $(VERSION_TAD)
 $(VERSION_DAT):
 	$(GEN_VERSION_FILE) $(VER_TIMESTAMP) $(MAJOR_VERSION) $(MINOR_VERSION) $(USER_AREA_SIZE)
 
-$(VERSION_TAD) : $(VERSION_FILE)
-	$(MAKETAD) $(call empath,$<) $(VERSION_MAKETAD_OPTION) -o $@
+$(VERSION_TAD) : $(SYSMENU_VERSION_FILE)
+	$(MAKETAD) $(call empath,$<) $(SYSMENU_VERSION_MAKETAD_OPTION) -o $@
 
 #===== End of Makefile =====
