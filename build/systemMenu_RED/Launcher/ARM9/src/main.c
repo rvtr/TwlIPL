@@ -41,7 +41,7 @@ static void deleteTmp();
 void SYSM_DeleteTempDirectory( TitleProperty *pBootTitle );
 static BOOL IsCommandSelected(void);
 static void PrintPause(void);
-static void PrintError(AuthResult res);
+static void PrintError(void);
 
 // global variable-------------------------------------------------------------
 
@@ -56,10 +56,16 @@ static StreamInfo s_strm; // stream info
 
 const char filename[] = "data/fanfare.32.wav";
 
-static const char *error_msg[AUTH_RESULT_MAX] = 
+static const char *fatal_error_msg[FATAL_ERROR_MAX] = 
 {
-	"SUCCEEDED",
-	"PROCESSING",
+	"UNDEFINED",
+	"NAND",
+	"HWINFO_NORMAL",
+	"HWINFO_SECURE",
+	"TWLSETTINGS",
+	"SHARED_FONT",
+	"WLANFIRM_AUTH",
+	"WLANFIRM_LOAD",
 	"TITLE_LOAD_FAILED",
 	"TITLE_POINTER_ERROR",
 	"AUTHENTICATE_FAILED",
@@ -85,7 +91,8 @@ static const char *error_msg[AUTH_RESULT_MAX] =
 	"LANDING_TMP_JUMP_FLAG_OFF",
 	"TWL_BOOTTYPE_UNKNOWN",
 	"NTR_BOOTTYPE_UNKNOWN",
-	"PLATFORM_UNKNOWN"
+	"PLATFORM_UNKNOWN",
+	"LOAD_UNFINISHED"
 };
 
 //#define DEBUG_LAUNCHER_DUMP
@@ -263,7 +270,11 @@ void TwlMain( void )
 	
     if( UTL_IsFatalError() ) {
         // FATALエラー処理
+        PrintError(); // エラー表示
+        state = STOP;
+        goto MAIN_LOOP_START; // state を STOP にして強制的にメインループ開始
     }
+    
     if( !LCFG_TSD_IsFinishedInitialSetting_Launcher() ) {
         // ランチャー内での初回起動シーケンス中なら、写真撮影を実行するようにする。
 		// ※本体設定内での初会起動シーケンス中の場合は、SYSM_ReadParameters 内のチェックで検出されて、本体設定が起動されるようになっています。
@@ -406,12 +417,17 @@ void TwlMain( void )
 
     if( UTL_IsFatalError() ) {
         // FATALエラー処理
+        PrintError(); // エラー表示
+        state = STOP;
+        goto MAIN_LOOP_START; // state を STOP にして強制的にメインループ開始
     }
 
 	// end 時間計測total
 #if (MEASURE_TIME == 1)
     OS_TPrintf( "Total Time : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - allstart ) );
 #endif
+    
+MAIN_LOOP_START:
     
     // メインループ--------------------
     while( 1 ) {
@@ -438,11 +454,6 @@ void TwlMain( void )
         case LOGODEMO:
             if( LogoMain() &&
 				IsFinishedLoadSharedFont() ) {	// フォントロード終了をここでチェック
-#if 0
-				if( UTL_IsFatalError() ) {
-					state = STOP;
-				}else
-#endif
 				if( !direct_boot ) {
                     state = LAUNCHER_INIT;
                 }else {
@@ -504,26 +515,16 @@ void TwlMain( void )
 #endif // DISABLE_WLFIRM_LOAD
                 SYSM_IsAuthenticateTitleFinished() )
             {
-				AuthResult res;
+				// メインループ開始から検証終了までの間に起きたFATALの処理
                 if( UTL_IsFatalError() ) {
                     // FATALエラー処理
+                    // [TODO:]クリアしたほうが良いデータ（鍵など）があれば消す
+                    PrintError(); // エラー表示
+                    state = STOP;
+                    break; // state を STOP にして break し、 Boot させない
                 }
 
-				res = SYSM_TryToBootTitle( pBootTitle );
-                switch ( res ) {   // アプリ認証結果取得orブート   成功時：never return
-                case AUTH_RESULT_TITLE_LOAD_FAILED:
-                case AUTH_RESULT_TITLE_POINTER_ERROR:
-                case AUTH_RESULT_AUTHENTICATE_FAILED:
-                case AUTH_RESULT_ENTRY_ADDRESS_ERROR:
-                default:
-                    state = STOP;
-                    // [TODO:]クリアしたほうが良いデータ（鍵など）があれば消す
-                    
-                    // エラー表示
-                    PrintError(res);
-					
-                    break;
-                }
+				SYSM_TryToBootTitle( pBootTitle ); // never return.
             }
             break;
         case STOP:                                              // 停止
@@ -587,18 +588,25 @@ static void PrintPause(void)
 	GXS_DispOn();
 }
 
-static void PrintError(AuthResult res)
+static void PrintError( void )
 {
+	u64 error_code;
+	int l;
+	int count = 0;
 	LauncherInit( s_titleList );
 	GX_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	G2_ChangeBlendAlpha( 0, 31 );
-	PrintfSJIS( 1, 25, TXT_COLOR_RED,"LAUNCHER : ERROR OCCURRED! - %d\n",res );
-	PrintfSJIS( 1, 40, TXT_COLOR_RED,"%s",error_msg[res] );
-	// 特殊表示
-	if(res == AUTH_RESULT_CHECK_TITLE_LAUNCH_RIGHTS_FAILED)
+	error_code = UTL_GetFatalError();
+	PrintfSJIS( 2, 25, TXT_COLOR_RED,"ERROR! - 0x%0.16x\n", error_code );
+	for(l=0;l<64;l++)
 	{
-		PrintfSJIS( 1, 55, TXT_COLOR_RED,"NAM result = %d", SYSMi_getCheckTitleLaunchRightsResult() );
+		if( error_code & 0x1 )
+		{
+			PrintfSJIS( 2, 50+count*13, TXT_COLOR_RED,"%s\n", fatal_error_msg[l] );
+			count++;
+		}
+		error_code = error_code >> 1;
 	}
 	GX_DispOn();
 	GXS_DispOn();

@@ -25,7 +25,7 @@
 // extern data------------------------------------------
 // function's prototype declaration---------------------
 static s64 UTLi_CalcRTCSecOffset( RTCDate *datep, RTCTime *timep );
-static u32 s_fatalError = 0;
+static u64 s_fatalError = 0;
 
 // global variable -------------------------------------
 // static variable -------------------------------------
@@ -280,7 +280,7 @@ BOOL UTL_IsFatalError( void )
 
 
 // FATALエラーコード取得
-u32 UTL_GetFatalError( void )
+u64 UTL_GetFatalError( void )
 {
 	return s_fatalError;
 }

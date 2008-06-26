@@ -76,40 +76,6 @@ typedef struct TitleListMakerInfo {
 	TitleInfoSub		sub_info;
 }TitleListMakerInfo;
 
-// アプリ認証結果
-typedef enum AuthResult {
-	AUTH_RESULT_SUCCEEDED = 0,
-	AUTH_RESULT_PROCESSING = 1,
-	AUTH_RESULT_TITLE_LOAD_FAILED = 2,
-	AUTH_RESULT_TITLE_POINTER_ERROR = 3,
-	AUTH_RESULT_AUTHENTICATE_FAILED = 4,
-	AUTH_RESULT_ENTRY_ADDRESS_ERROR = 5,
-	AUTH_RESULT_TITLE_BOOTTYPE_ERROR = 6,
-	AUTH_RESULT_SIGN_DECRYPTION_FAILED = 7,
-	AUTH_RESULT_SIGN_COMPARE_FAILED = 8,
-	AUTH_RESULT_HEADER_HASH_CALC_FAILED = 9,
-	AUTH_RESULT_TITLEID_COMPARE_FAILED = 10,
-	AUTH_RESULT_VALID_SIGN_FLAG_OFF = 11,
-	AUTH_RESULT_CHECK_TITLE_LAUNCH_RIGHTS_FAILED = 12,
-	AUTH_RESULT_MODULE_HASH_CHECK_FAILED = 13,
-	AUTH_RESULT_MODULE_HASH_CALC_FAILED = 14,
-	AUTH_RESULT_MEDIA_CHECK_FAILED = 15,
-	AUTH_RESULT_DL_MAGICCODE_CHECK_FAILED = 16,
-	AUTH_RESULT_DL_SIGN_DECRYPTION_FAILED = 17,
-	AUTH_RESULT_DL_HASH_CALC_FAILED = 18,
-	AUTH_RESULT_DL_SIGN_COMPARE_FAILED = 19,
-	AUTH_RESULT_WHITELIST_INITDB_FAILED = 20,
-	AUTH_RESULT_WHITELIST_NOTFOUND = 21,
-	AUTH_RESULT_DHT_PHASE1_FAILED = 22,
-	AUTH_RESULT_DHT_PHASE2_FAILED = 23,
-	AUTH_RESULT_LANDING_TMP_JUMP_FLAG_OFF = 24,
-	AUTH_RESULT_TWL_BOOTTYPE_UNKNOWN = 25,
-	AUTH_RESULT_NTR_BOOTTYPE_UNKNOWN = 26,
-	AUTH_RESULT_PLATFORM_UNKNOWN = 27,
-	
-	AUTH_RESULT_MAX = 28
-}AuthResult;
-
 
 // global variable------------------------------------------------------
 #ifdef SDK_ARM9
@@ -145,7 +111,7 @@ extern void SYSM_StartLoadTitle( TitleProperty *pBootTitle );					// 指定したTit
 extern BOOL SYSM_IsLoadTitleFinished( void );									// SYSM_StartLoadTitleで起動したスレッドが終了したかどうかを確認
 extern void SYSM_StartAuthenticateTitle( TitleProperty *pBootTitle );			// 指定したTitlePropertyを別スレッドで検証開始
 extern BOOL SYSM_IsAuthenticateTitleFinished( void );							// SYSM_StartAuthenticateTitleで起動したスレッドが終了したかどうかを確認
-extern AuthResult SYSM_TryToBootTitle( TitleProperty *pBootTitle );				// pBootTitleで指定したタイトルをブート。成功時は、never return.
+extern void SYSM_TryToBootTitle( TitleProperty *pBootTitle );					// pBootTitleで指定したタイトルをブート。never return.
 
 // AES領域デクリプト
 extern void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs );					// 起動するROMのAES暗号化領域のデクリプト開始
