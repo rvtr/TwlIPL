@@ -434,6 +434,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
 	
     MI_CpuClear8( &s_bootTitleBuf, sizeof(TitleProperty) );
 
+#ifndef DISABLE_INITIAL_SETTINGS
     //-----------------------------------------------------
     // TWL設定データ破損時のフラッシュ壊れシーケンス起動
     //-----------------------------------------------------
@@ -446,7 +447,6 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
     //-----------------------------------------------------
     // TWL設定データ未設定時の初回起動シーケンス起動
     //-----------------------------------------------------
-#ifndef DISABLE_INITIAL_SETTINGS
     if( !LCFG_TSD_IsFinishedInitialSetting() ) {
 		argument      = 0;
 		isSetArgument = FALSE;
