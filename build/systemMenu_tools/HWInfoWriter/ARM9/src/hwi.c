@@ -303,15 +303,24 @@ BOOL HWI_ModifyLanguage( u8 region )
     // regionが変わった場合は、LANGUAGE_BITMAPも必ず変わるので、それをNTR側に反映させるために必ずTWL設定データの書き込みも行う。
     {
         u8 *pBuffer = spAlloc( LCFG_WRITE_TEMP );
-        if( pBuffer ) {
-            if (!LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer ))
+        if( pBuffer ) 
+		{
+			int i;
+			// TWLCFG0.datとTWLCFG1.datの両方について生成/書き込みを行うため2回実行する
+			for (i=0;i<2;i++)
 			{
-				// NANDをフォーマットした直後でTWL設定ファイルが存在しない場合は書き込みに失敗するため
-				// TWL設定ファイルをリカバリ生成して再チャレンジする
-	        	if (!LCFG_RecoveryTWLSettings() && !LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer ))
+				// 内部変数を変更せずにリード状態(s_rdResult)をFALSEにするためにベリファイする
+				(void)LCFGi_TSD_VerifySettings( (u8 (*)[ sizeof(LCFGTWLSettingsData) ])pBuffer );
+
+	            if (!LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer ))
 				{
-					result = FALSE;
-					OS_TPrintf("Fail! LCFG_WriteTWLSettings()\n");
+					// NANDをフォーマットした直後でTWL設定ファイルが存在しない場合は書き込みに失敗するため
+					// TWL設定ファイルをリカバリ生成して再チャレンジする
+		        	if (!LCFG_RecoveryTWLSettings() && !LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer ))
+					{
+						result = FALSE;
+						OS_TPrintf("Fail! LCFG_WriteTWLSettings()\n");
+					}
 				}
 			}
             spFree( pBuffer );

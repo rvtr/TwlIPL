@@ -63,7 +63,7 @@ typedef struct _CopyFileList
 #define SYSTEM_UPDATER_MAGIC_CODE   44001111
 
 // ƒŠƒgƒ‰ƒC‰ñ”
-#define MAX_RETRY_COUNT   10
+#define MAX_RETRY_COUNT   2
 
 static const char* ImportTadFileList[] =
 {
