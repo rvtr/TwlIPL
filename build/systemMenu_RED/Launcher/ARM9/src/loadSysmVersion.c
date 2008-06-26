@@ -23,7 +23,7 @@
 // extern data-----------------------------------------------------------------
 
 // define data-----------------------------------------------------------------
-#define VER_TITLEID					0x0003000F484E5641 //HNVA
+#define VER_TITLEID					0x0003000F484E4C41 //HNLA
 
 #define VERSION_DATA_SIGN_SIZE		128
 #define VERSION_DATA_HEADER_SIZE	96
