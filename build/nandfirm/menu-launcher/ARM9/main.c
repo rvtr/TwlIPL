@@ -106,6 +106,12 @@ static void PreInit(void)
 ***************************************************************/
 static void PostInit(void)
 {
+    // アリーナ設定
+    {
+        static u32 arena[ 0x400 / sizeof(u32) ];
+        OS_SetMainArenaLo( arena );
+        OS_SetMainArenaHi( &arena[ 0x400 / sizeof(u32) ] );
+    }
     // RSA用ヒープ設定
     SVC_InitSignHeap( &acPool, acHeap, sizeof(acHeap) );
     // FS/FATFS初期化
