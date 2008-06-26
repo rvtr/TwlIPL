@@ -217,8 +217,10 @@ void TwlMain( void )
 #endif
                                                                     //   Alloc, Freeで登録したメモリアロケータを初期化してください。
 #ifdef INIT_DEVICES_LIKE_UIG_LAUNCHER
+
+	// [TODO]カメラが接続されていないと無限ループになる！！注意！！
     // カメラ初期化
-    CAMERA_Init();
+ //   CAMERA_Init();
 
     // end時間計測１-b
 #if (MEASURE_TIME == 1)
