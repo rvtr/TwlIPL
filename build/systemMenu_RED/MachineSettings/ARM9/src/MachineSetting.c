@@ -360,6 +360,13 @@ BOOL MY_WriteTWLSettings( void )
 	BOOL retval = FALSE;
 	u8 *pBuffer = Alloc( LCFG_WRITE_TEMP );
 	if( pBuffer != NULL ) {
+		// ***********************************************************
+		// RED本体設定では、初回起動シーケンスもフラッシュ壊れシーケンスもないので、とりあえず何でも設定したらシーケンスを終了するようにする。
+		LCFG_TSD_SetFlagFinishedInitialSetting( TRUE );
+		LCFG_TSD_SetFlagFinishedInitialSetting_Launcher( TRUE );
+		LCFG_TSD_SetFlagFinishedBrokenTWLSettings( TRUE );
+		// ***********************************************************
+		
 		retval = LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
 		Free( pBuffer );
 	}
