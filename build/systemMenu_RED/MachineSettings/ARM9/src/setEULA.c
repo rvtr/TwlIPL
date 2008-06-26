@@ -594,14 +594,20 @@ static int SetAgreedVersionMain( void )
     if( (pad.trg & PAD_KEY_UP) || (padrep & PAD_KEY_UP) || (tpUD && (csrUD == KEY_UP)) )
     {
         --sAgreedVersion;
+		if( sAgreedVersion == 0 ) {
+	        sAgreedVersion = 255;
+		}
     }
     if( (pad.trg & PAD_KEY_DOWN) || (padrep & PAD_KEY_DOWN) || (tpUD && (csrUD == KEY_DOWN)) )
     {
         ++sAgreedVersion;
+		if( sAgreedVersion == 0 ) {
+		    sAgreedVersion = 1;
+		}
     }
     if(pad.trg & PAD_BUTTON_START)
     {
-        sAgreedVersion = 0;
+        sAgreedVersion = 1;
     }
 
     // Œˆ’è
