@@ -1448,8 +1448,8 @@ static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_H
 	// ŠJ”­”Å‚Å‚ÍŠ®‘S‚É”ò‚Î‚·‚æ‚¤‚É‚µ‚½‚¢
 	if( SCFG_GetBondingOption() != 0 )
 	{
-		ret = TRUE;
 		s_loadForcibly = TRUE;
+		return TRUE;
 	}
 #endif
 	
