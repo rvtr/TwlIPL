@@ -1,20 +1,3 @@
-/*---------------------------------------------------------------------------*
-  Project:  TwlIPL
-  File:     WDS.c
-
-  Copyright 2007 Nintendo.  All rights reserved.
-
-  These coded instructions, statements, and computer programs contain
-  proprietary information of Nintendo of America Inc. and/or Nintendo
-  Company Ltd., and are protected by Federal copyright law.  They may
-  not be disclosed to third parties or copied or duplicated in any form,
-  in whole or in part, without the prior written consent of Nintendo.
-
-  $Date::            $
-  $Rev$
-  $Author$
- *---------------------------------------------------------------------------*/
-
 //**********************************************************************
 /**
 //	@file		WDS.c
@@ -25,7 +8,7 @@
 //	@version	01.00
 //
 ***********************************************************************/
-#include <sysmenu/WDS.h>
+#include "WDS.h"
 #include <nitro/crypto/rc4.h>
 #ifdef WDS_WITHDWC
 #include <dwc.h>
@@ -59,22 +42,22 @@ enum
 //	Structs
 //-----------------------------------------------------
 /**
-	@brief	ワーク領域
+	@brief	WDSライブラリのワーク領域
 */
 typedef struct WDSWork
 {
-	u8					wmwork[ WM_SYSTEM_BUF_SIZE ];	///< WMライブラリ用バッファ
-	u8					scanbuf[ WDS_SCAN_BUF_SIZE ] ATTRIBUTE_ALIGN(32);	///< スキャンバッファ
-	WMScanExParam		scanparam;						///< スキャンパラメータ
-	WDSCallbackFunc		scancb;							///< スキャン用コールバック
-	WDSApInfo			apinfo[ WDS_APINFO_MAX ];		///< スキャン出来たAP情報
-	u16					rssi[ WDS_APINFO_MAX ];			///< 電波強度
-	u16					tgid[ WDS_APINFO_MAX ];			///< 複数のビーコンを受け取った際に識別用に使うTGID
-	s32					apnum;							///< スキャン出来たAP情報数
-	s32					apindex;						///< スキャン出来たAPを配列内のどこに書き込むかのインデックス
-	u32					status;							///< ステータス
-	MATHCRC16Context	crcContext;						///< CRC計算用コンテキスト
-	MATHCRC16Table		crcTable;						///< CRC計算用テーブル
+	u8					wmwork[ WM_SYSTEM_BUF_SIZE ];						///< WMライブラリ用バッファ
+	u8					scanbuf[ WDS_SCAN_BUF_SIZE ] ATTRIBUTE_ALIGN(32);	///< WMライブラリが使用するスキャンバッファ
+	WMScanExParam		scanparam;											///< WMライブラリのスキャンパラメータ
+	WDSCallbackFunc		scancb;												///< WMライブラリから呼び出されるコールバック
+	WDSApInfo			apinfo[ WDS_APINFO_MAX ];							///< スキャンしたAPビーコンを格納する配列
+	u16					rssi[ WDS_APINFO_MAX ];								///< 受信したAPビーコンの電波強度を格納する配列
+	u16					tgid[ WDS_APINFO_MAX ];								///< 複数のビーコンを識別するためのTGIDを格納する配列
+	s32					apnum;												///< スキャン出来たAP情報数
+	s32					apindex;											///< スキャン出来たAPを配列内のどこに書き込むかのインデックス
+	u32					status;												///< WDSライブラリのステータス
+	MATHCRC16Context	crcContext;											///< CRC計算用コンテキスト
+	MATHCRC16Table		crcTable;											///< CRC計算用テーブル
 } WDSWork;
 
 //-----------------------------------------------------
@@ -181,7 +164,9 @@ static void	WDSScanCallback( void *arg )
 					continue;
 				
 				// デバッグ表示
+#ifdef WDS_DEBUGPRINT
 				OS_TPrintf( "Found AP GGID : %08x TGID : %04x\n", pParam->bssDesc[i]->gameInfo.ggid, pParam->bssDesc[i]->gameInfo.tgid );
+#endif
 				
 				// ビーコン内容をコピーし、暗号化解除
 				MI_CpuCopy8( pParam->bssDesc[i]->gameInfo.userGameInfo, &gWdsWork->apinfo[gWdsWork->apindex], sizeof(WDSApInfo) );
@@ -198,7 +183,9 @@ static void	WDSScanCallback( void *arg )
 				
 				// 旧バージョンの親機はCRC部分に0x0000を入れているためそれだけは受け入れる
 				if( crc != gWdsWork->apinfo[gWdsWork->apindex].crc && gWdsWork->apinfo[gWdsWork->apindex].crc != 0x0000 ) {
+#ifdef WDS_DEBUGPRINT
 					OS_TPrintf( "AP Infomation CRC Error.\n" );
+#endif
 					MI_CpuClear8( &gWdsWork->apinfo[gWdsWork->apindex], sizeof(WDSApInfo) );
 					continue;
 				}
@@ -239,7 +226,7 @@ size_t WDS_GetWorkAreaSize( void )
 		@param	<2> 処理が完了した際に呼び出されるコールバック関数へのポインタ
 		@param	<3> WM_InitializeのdmaNoに準ずる引数
 		@return 0      : 成功 ( コールバックを待つこと )
-				0 以外 : 失敗
+		@return 0 以外 : 失敗
 	@note
 		<1> のサイズはWDS_SYSTEM_BUF_SIZEだけ必要であり、
 		かつ 32バイトアラインされている必要があります。
@@ -346,14 +333,15 @@ int	WDS_End( WDSCallbackFunc callback )
 	if( callback == NULL )
 		return -1;
 	
-	// WDS 終了
-	gWdsWork->status	= WDS_STATUS_END;
-	gWdsWork			= NULL;
-	
 	// WM 終了
 	errcode	= WM_End( callback );
 	if( errcode != WM_ERRCODE_OPERATING )
 		return errcode;
+	
+	// WDS 終了
+	gWdsWork->status	= WDS_STATUS_END;
+	gWdsWork			= NULL;
+	
 	return 0;
 }
 

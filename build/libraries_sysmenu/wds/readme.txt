@@ -1,6 +1,6 @@
 ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 ■                                                                          ■
-■  TWLWDSライブラリ                                           2008/6/11版  ■
+■  TWLWDSライブラリ                                           2008/6/26版  ■
 ■                                                                          ■
 ■  ネットワーク開発部からのお知らせ                                        ■
 ■                                                                          ■
@@ -22,8 +22,13 @@
   %make TWLSDK_PLATFORM=TWL
 ・受信サンプルのビルドはWDSTestディレクトリ下で
   %make TWLSDK_PLATFORM=TWL
+・WDSラッパーを使用した受信サンプルのビルドはWDSWrapperTestディレクトリ下で
+  %make TWLSDK_PLATFORM=TWL
 
 ●変更履歴
+
+2008/06/26 20080626版
+・WDSライブラリを簡易に使用するためのWDSWrapperが追加されました。
 
 2008/06/11 初版
 ・動作確認用バージョンから、ビーコンに以下の情報が追加されました
@@ -40,3 +45,4 @@ infoflagの扱い
 ・ランチャーメニューでのニンテンドースポットビューアの強調表示は、
   infoflagのWDS_INFOFLAG_NOTIFYビットが1にセットされたビーコンを
   受信した場合のみ行ってください。
+・なお、WDSWrapperはWDS_INFOFLAG_NOTIFYに関連した処理を内部で自動的に行います。

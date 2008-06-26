@@ -1,22 +1,5 @@
-/*---------------------------------------------------------------------------*
-  Project:  TwlIPL
-  File:     WDS.c
-
-  Copyright 2007 Nintendo.  All rights reserved.
-
-  These coded instructions, statements, and computer programs contain
-  proprietary information of Nintendo of America Inc. and/or Nintendo
-  Company Ltd., and are protected by Federal copyright law.  They may
-  not be disclosed to third parties or copied or duplicated in any form,
-  in whole or in part, without the prior written consent of Nintendo.
-
-  $Date::            $
-  $Rev$
-  $Author$
- *---------------------------------------------------------------------------*/
-
-#include <twl.h>
-#include <sysmenu/WDS.h>
+#include <nitro.h>
+#include "WDS.h"
 
 // ヒープ初期化関数
 static void InitializeAllocateSystem(void);
@@ -53,6 +36,9 @@ static AppState g_appstate = APP_STATE_WDSINIT;
 
 // 受け取ったビーコン情報を格納する変数(この配列をランチャー経由でホットスポットチャンネルに渡す)
 static WDSBriefApInfo briefapinfo[WDS_APINFO_MAX];
+
+// 時間計測用
+static OSTick wdsBegin;
 
 /*---------------------------------------------------------------------------*
   Name:         NitroMain
@@ -102,6 +88,7 @@ void NitroMain(void)
 			// WDSライブラリの初期化関数を呼び出し、その非同期処理の完了を待つ
 			OS_Printf("*** WDS_Initialize\n");
 			g_appstate = APP_STATE_WDSWAITINIT;
+			wdsBegin = OS_GetTick();
 			if( WDS_Initialize( wdsSysBuf, WDS_Initialize_CB, 0 ) == 0 )
 			{
 				OS_Printf("WDS_Initialize successed\n");
@@ -126,6 +113,7 @@ void NitroMain(void)
 			//OS_Printf("*** WDS_StartScan\n");
 			// ビーコンスキャン非同期処理を開始する
 			g_appstate = APP_STATE_WDSWAITSCAN;
+			wdsBegin = OS_GetTick();
 			if( WDS_StartScan( WDS_StartScan_CB ) == 0 )
 			{
 				if( wdsScanBeginTick == 0 )
@@ -156,6 +144,7 @@ void NitroMain(void)
 			OS_Printf("*** WDS_EndScan\n");
 			
 			// スキャンを終了させる非同期処理を開始する
+			wdsBegin = OS_GetTick();
 			g_appstate = APP_STATE_WDSWAITENDSCAN;
 			if( WDS_EndScan( WDS_EndScan_CB ) == 0 )
 			{
@@ -187,6 +176,7 @@ void NitroMain(void)
 			// WDSライブラリを終了し、無線ハードの電源を落とす非同期処理を開始する
 			OS_Printf("*** WDS_End\n");
 			g_appstate = APP_STATE_WDSWAITEND;
+			wdsBegin = OS_GetTick();
 			if( WDS_End( WDS_End_CB ) == 0 )
 			{
 				OS_Printf("WDS_End successed\n");
@@ -263,13 +253,15 @@ static void WDS_Initialize_CB(void *arg)
 #pragma unused(arg)
 	OS_TPrintf("WDS_Initialize_CB\n");
 	g_appstate = APP_STATE_WDSSCAN;
+	OS_TPrintf("Elapsed time = %llu\n", OS_TicksToMicroSeconds( OS_GetTick() - wdsBegin ) );
 }
 
 static void WDS_StartScan_CB(void *arg)
 {
 #pragma unused(arg)
-//	OS_TPrintf("WDS_StartScan_CB\n");
+	OS_TPrintf("WDS_StartScan_CB\n");
 	g_appstate = APP_STATE_WDSCOMPLETESCAN;
+	OS_TPrintf("Elapsed time = %llu\n", OS_TicksToMicroSeconds( OS_GetTick() - wdsBegin ) );
 }
 
 static void WDS_EndScan_CB(void *arg)
@@ -277,6 +269,7 @@ static void WDS_EndScan_CB(void *arg)
 #pragma unused(arg)
 	OS_TPrintf("WDS_EndScan_CB\n");
 	g_appstate = APP_STATE_WDSCOMPLETEENDSCAN;
+	OS_TPrintf("Elapsed time = %llu\n", OS_TicksToMicroSeconds( OS_GetTick() - wdsBegin ) );
 }
 
 static void WDS_End_CB(void *arg)
@@ -284,4 +277,5 @@ static void WDS_End_CB(void *arg)
 #pragma unused(arg)
 	OS_TPrintf("WDS_End_CB\n");
 	g_appstate = APP_STATE_WDSCOMPLETEEND;
+	OS_TPrintf("Elapsed time = %llu\n", OS_TicksToMicroSeconds( OS_GetTick() - wdsBegin ) );
 }
