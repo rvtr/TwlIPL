@@ -25,7 +25,7 @@ TARGET_FIRM			=	SYSTEMMENU
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include ./commondefs.sysmenuVersion
 
-VER_TIMESTAMP	=	08062300
+VER_TIMESTAMP		=	08062300
 
 # システムメニューバージョン
 MAJOR_VERSION		=	0
@@ -46,7 +46,7 @@ TARGETS				+=	$(VERSION_TAD)
 
 #----------------------------------------------------------------------------
 
-LDIRT_CLEAN		=	$(VERSION_DAT) $(VERSION_TAD) properties
+LDIRT_CLEAN			=	$(VERSION_TAD) properties
 
 #----------------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 do-build :  $(VERSION_TAD)
 
-$(VERSION_DAT):
+$(VERSION_DAT): ./Makefile ./commondefs.sysmenuVersion
 	$(GEN_VERSION_FILE) $(VER_TIMESTAMP) $(MAJOR_VERSION) $(MINOR_VERSION) $(USER_AREA_SIZE)
 
 $(VERSION_TAD) : $(SYSMENU_VERSION_FILE)

@@ -45,7 +45,7 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 do-build : $(FONT_TABLE)
 
-$(FONT_TABLE): $(FONT_RSC)
+$(FONT_TABLE): $(FONT_RSC) ./Makefile
 	$(GEN_FONT_TABLE) $(FONT_TIMESTAMP) $(FONT_RSC)
 
 #===== End of Makefile =====
