@@ -43,6 +43,9 @@ WRAM_MAP_FILE			=	$(COMPONENT_DIR)/wram_regs/wram_regs.rbin
 include $(TWL_IPL_RED_ROOT)/build/systemMenu_RED/Launcher/ARM9/commondefs.launcher
 
 
+# MAKEROM SWITCH ※最終ROM作成時は、全てFALSEにセットする
+USE_WLANFIRM_LOCAL_PUBKEY		?=	TRUE
+
 # MAKEROM SWITCH ※最終ROM作成時は、全てTRUEにセットする
 DISABLE_DEBUG					?=	FALSE
 
@@ -149,6 +152,10 @@ endif
 
 ifeq ($(DEFAULT_COMP_ARM7),hyena)
 MACRO_FLAGS += -DUSE_HYENA_COMPONENT
+endif
+
+ifeq ($(USE_WLANFIRM_LOCAL_PUBKEY),TRUE)
+MACRO_FLAGS += -DUSE_WLANFIRM_LOCAL_PUBKEY
 endif
 
 #----------------------------------------------------------------------------

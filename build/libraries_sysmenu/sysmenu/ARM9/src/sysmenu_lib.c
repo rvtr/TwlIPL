@@ -28,6 +28,7 @@
 extern void LCFG_VerifyAndRecoveryNTRSettings( void );
 
 // function's prototype-------------------------------------------------------
+void _start_AutoloadDoneCallback(void* argv[]);
 static void SYSMi_CopyLCFGData( u32 dst_addr );
 static TitleProperty *SYSMi_CheckDebuggerBannerViewModeBoot( void );
 static TitleProperty *SYSMi_CheckShortcutBoot1( void );
@@ -60,6 +61,17 @@ static TitleProperty s_bootTitleBuf;
 //
 // ============================================================================
 
+#if 0
+// AutoloadDoneCallbackを利用して鍵を引き渡す
+void _start_AutoloadDoneCallback(void* argv[])
+{
+#pragma unused(argv)
+    // ARM7で使用する分の鍵を渡す
+    SYSMi_SendKeysToARM7();
+}
+#endif
+
+
 // SystemMenuの初期化
 void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 {
@@ -67,7 +79,7 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
     pSysm = SYSMi_GetWork();
     pRomHeader = (ROM_Header_Short *)0x027fc000;
 #endif /* SYSM_DEBUG_ */
-	
+
     // ARM7で使用する分の鍵を渡す
     SYSMi_SendKeysToARM7();
 
@@ -430,7 +442,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
 		isSetArgument = TRUE;
 		isBootMSET    = TRUE;
 	}
-
+	
     //-----------------------------------------------------
     // TWL設定データ未設定時の初回起動シーケンス起動
     //-----------------------------------------------------
