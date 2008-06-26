@@ -1442,6 +1442,16 @@ static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_H
 	{
 		return TRUE;
 	}
+
+#define DEV_WHITELIST_CHECK_SKIP
+#ifdef DEV_WHITELIST_CHECK_SKIP
+	// 開発版では完全に飛ばすようにしたい
+	if( SCFG_GetBondingOption() != 0 )
+	{
+		ret = TRUE;
+		s_loadForcibly = TRUE;
+	}
+#endif
 	
 	if( head->s.exFlags.enable_nitro_whitelist_signature )
 	{
@@ -1480,6 +1490,7 @@ static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_H
 		}
 	}
 
+#ifndef DEV_WHITELIST_CHECK_SKIP
 	// ボンディングオプションが0のときは以下の特殊処理をせずにリターン
 	if( SCFG_GetBondingOption() == 0 )
 	{
@@ -1503,6 +1514,7 @@ static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_H
 			s_loadForcibly = TRUE;
 		}
 	}
+#endif
 	
 	return ret;
 }
