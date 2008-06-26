@@ -26,6 +26,21 @@
 #define RETURN_BUTTON_BOTTOM_X				( RETURN_BUTTON_TOP_X + 8 )
 #define RETURN_BUTTON_BOTTOM_Y				( RETURN_BUTTON_TOP_Y + 2 )
 
+#define ENABLE_CONTENT 0
+#define ENABLE_SHARED2 0
+
+#if (ENABLE_CONTENT == 1)
+#define CTRUE TRUE
+#else
+#define CTRUE FALSE
+#endif
+
+#if (ENABLE_SHARED2 == 1)
+#define STRUE TRUE
+#else
+#define STRUE FALSE
+#endif
+
 // extern data------------------------------------------
 
 // function's prototype declaration---------------------
@@ -51,26 +66,26 @@ static char s_testnum = 0;
 static const BOOL s_answer_data[][15] = 
 {
 	{ FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE }, // 0
-	{ FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE }, // 1
-	{ FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE }, // 2
-	{  TRUE,  TRUE, FALSE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE }, // 3
-	{  TRUE,  TRUE, FALSE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE }, // 4
-	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 5
-	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE,  TRUE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 6
-	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 7
-	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 8
-	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 9
-	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE,  TRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // a
-	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // b
-	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // c
-	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // d
-	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE,  TRUE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // e
-	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // f
-	{ FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE,  TRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // g
-	{  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }, // h
-	{  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE,  TRUE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }, // i
-	{  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }, // j
-	{  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }  // k
+	{ FALSE, FALSE, FALSE,  TRUE, STRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE }, // 1
+	{ FALSE, FALSE, FALSE,  TRUE, STRUE,  TRUE, FALSE, FALSE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE }, // 2
+	{  TRUE,  TRUE, FALSE,  TRUE, STRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE }, // 3
+	{  TRUE,  TRUE, FALSE,  TRUE, STRUE,  TRUE, FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE }, // 4
+	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 5
+	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE, FALSE,  TRUE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 6
+	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 7
+	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 8
+	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE, FALSE, FALSE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 9
+	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE, FALSE,  TRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // a
+	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE,  TRUE, FALSE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // b
+	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // c
+	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // d
+	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE, FALSE,  TRUE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // e
+	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE, FALSE, FALSE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // f
+	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE, FALSE,  TRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // g
+	{  TRUE,  TRUE, CTRUE,  TRUE, STRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }, // h
+	{  TRUE,  TRUE, CTRUE,  TRUE, STRUE,  TRUE, FALSE,  TRUE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }, // i
+	{  TRUE,  TRUE, CTRUE,  TRUE, STRUE,  TRUE, FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }, // j
+	{  TRUE,  TRUE, CTRUE,  TRUE, STRUE,  TRUE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }  // k
 };
 
 //======================================================
@@ -311,9 +326,7 @@ static void TestFSPermission( void )
 	
 	result[0] = RWTest( "nand:" );                // nand:
 	result[1] = RWTest( "nand2:" );               // nand2:
-#if (ENABLE_CONTENT_TEST == 1)
 	result[2] = ContentTest();                    // content:
-#endif
 	result[3] = Shared1Test();                    // shared1:
 	result[4] = RWTest( "shared2:" );             // shared2:
 	result[5] = RWTest( "photo:" );               // photo:
@@ -336,18 +349,12 @@ static void TestFSPermission( void )
 	OS_TPrintf( "Correct Answer:\n" );
 	for( l=0; l<15; l++ )
 	{
-#if (ENABLE_CONTENT_TEST == 0)
-		if(l==2) continue; // contentチェック飛ばし
-#endif
 		OS_TPrintf( "%s ", ( s_answer_data[s_testnum][l] ? "○" : "×" ) );
 	}
 	OS_TPrintf( "\n" );
 	OS_TPrintf( "Result:\n" );
 	for( l=0; l<15; l++ )
 	{
-#if (ENABLE_CONTENT_TEST == 0)
-		if(l==2) continue; // contentチェック飛ばし
-#endif
 		OS_TPrintf( "%s ", ( result[l] ? "○" : "×" ) );
 		PutStringUTF16( 3 * 8 + l*14, 14 * 8, TXT_COLOR_BLACK, (const u16 *)( s_answer_data[s_testnum][l] ? L"○" : L"×" ));
 		PutStringUTF16( 3 * 8 + l*14, 16 * 8, ( result[l]==s_answer_data[s_testnum][l] ? TXT_COLOR_BLUE : TXT_COLOR_RED ),
