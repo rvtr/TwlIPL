@@ -89,12 +89,30 @@ void TwlMain(void)
 	// ::::::::::::::::::::::::::::::::::::::::::::::
 	// TWL設定データファイルの読み込み
 	// ::::::::::::::::::::::::::::::::::::::::::::::
-	{
-		u8 *pBuffer = Alloc( LCFG_READ_TEMP );
-		g_isValidTSD = FALSE;
-		if( pBuffer) {
-			g_isValidTSD = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ] )pBuffer );
-			Free( pBuffer );
+	g_isValidTSD = TRUE;
+    {
+        u8 *pBuffer = Alloc( LCFG_READ_TEMP );
+        if( pBuffer ) {
+			// NANDからTWL本体設定データをリード
+			BOOL isRead = LCFG_ReadTWLSettings( (u8 (*)[LCFG_READ_TEMP])pBuffer );
+			
+			// リード失敗ファイルが存在する場合は、ファイルをリカバリ
+			if( LCFG_RecoveryTWLSettings() ) {
+				if( isRead ) {
+					// ミラーデータのうち、一方でもリードできていたなら何もしない。
+				}else {
+					// リードに完全に失敗していた場合は、フラッシュ壊れシーケンスへ。
+					LCFG_TSD_SetFlagFinishedBrokenTWLSettings( FALSE );
+					(void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );	// LCFG_READ_TEMP > LCFG_WRITE_TEMP なので、pBufferをそのまま流用
+				}
+			}else {
+				// リカバリ失敗時は、FALTALエラー
+				g_isValidTSD = FALSE;
+			}
+            Free( pBuffer );
+        }else {
+			// メモリ確保ができなかった時は、FATALエラー
+			g_isValidTSD = FALSE;
 		}
 	}
 	

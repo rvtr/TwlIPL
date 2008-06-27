@@ -257,9 +257,23 @@ int MachineSettingMain( void )
 	tp_select = SelectMenuByTP( &s_csr, &s_settingParam );
 	DrawMenu( s_csr, &s_settingParam );
 
+#if 0
 	if( pad.trg & PAD_BUTTON_START ) {
 		OS_DoApplicationJump( NULL, OS_APP_JUMP_NORMAL );
+		u8 *pBuffer = Alloc( LCFG_READ_TEMP );
+		g_isValidTSD = FALSE;
+		if( pBuffer) {
+			g_isValidTSD = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ] )pBuffer );
+			Free( pBuffer );
+			if( g_isValidTSD ) {
+				OS_TPrintf( "TSD Read succeeded.\n" );
+			}else {
+				OS_TPrintf( "TSD Read failed.\n" );
+				PrintfSJIS( 0, 22*8, TXT_COLOR_RED, "TSD Read failed.\n" );
+			}
+		}
 	}
+#endif
 	
 	if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {				// ÉÅÉjÉÖÅ[çÄñ⁄Ç÷ÇÃï™äÚ
 		if( s_settingPos[ s_csr ].enable ) {
