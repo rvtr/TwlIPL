@@ -8,7 +8,7 @@
 //	@version	01.00
 //
 ***********************************************************************/
-#include "WDS.h"
+#include <sysmenu/WDS.h>
 #include <nitro/crypto/rc4.h>
 #ifdef WDS_WITHDWC
 #include <dwc.h>
