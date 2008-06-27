@@ -29,7 +29,8 @@ extern void LCFG_VerifyAndRecoveryNTRSettings( void );
 
 // function's prototype-------------------------------------------------------
 void _start_AutoloadDoneCallback(void* argv[]);
-static void SYSMi_CopyLCFGData( u32 dst_addr );
+static void SYSMi_CopyLCFGDataHWInfo( u32 dst_addr );
+static void SYSMi_CopyLCFGDataSettings( void );
 static TitleProperty *SYSMi_CheckDebuggerBannerViewModeBoot( void );
 static TitleProperty *SYSMi_CheckShortcutBoot1( void );
 static TitleProperty *SYSMi_CheckShortcutBoot2( void );
@@ -186,21 +187,34 @@ TitleProperty *SYSM_ReadParameters( void )
         UTL_SetFatalError( FATAL_ERROR_HWINFO_SECURE );
     }
 
+	//-----------------------------------------------------
+    // システム領域にHWInfoをコピー
     //-----------------------------------------------------
+	// NTRカードアプリARM9コードのロード領域とメモリがかち合うが、先頭0x4000はセキュア領域で別バッファに格納されるので、
+	// ここでこれらのパラメータをロードしても大丈夫。
+	SYSMi_CopyLCFGDataHWInfo( (u32)s_lcfgBuffer );
+	
+	//-----------------------------------------------------
     // 本体設定データのリード（※必ずHWSecureInforリード後に実行すること。LanguageBitmapを判定に使うため）
     //-----------------------------------------------------
     {
         u8 *pBuffer = SYSM_Alloc( LCFG_READ_TEMP );
         if( pBuffer ) {
-			if( !LCFG_ReadTWLSettings( (u8 (*)[LCFG_READ_TEMP])pBuffer ) ) {  // NANDからTWL本体設定データをリード
-				// リード失敗時は、ファイルをリカバリ
-				if( LCFG_RecoveryTWLSettings() ) {
-					// リカバリ成功時は、フラッシュ壊れシーケンスへ
-					// 関数内で、LCFGのisBrokenTWLSettingsフラグがセットされる。
+			// NANDからTWL本体設定データをリード
+			BOOL isRead = LCFG_ReadTWLSettings( (u8 (*)[LCFG_READ_TEMP])pBuffer );
+			
+			// リード失敗ファイルが存在する場合は、ファイルをリカバリ
+			if( LCFG_RecoveryTWLSettings() ) {
+				if( isRead ) {
+					// ミラーデータのうち、一方がリードできていたなら何もしない。
 				}else {
-					// リカバリ失敗時は、FALTALエラー
-			        UTL_SetFatalError( FATAL_ERROR_TWLSETTINGS );
+					// リードに完全に失敗していた場合は、フラッシュ壊れシーケンスへ。
+					LCFG_TSD_SetFlagFinishedBrokenTWLSettings( FALSE );
+					(void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );	// LCFG_READ_TEMP > LCFG_WRITE_TEMP なので、pBufferをそのまま流用
 				}
+			}else {
+				// リカバリ失敗時は、FALTALエラー
+		        UTL_SetFatalError( FATAL_ERROR_TWLSETTINGS );
 			}
             SYSM_Free( pBuffer );
         }else {
@@ -211,11 +225,11 @@ TitleProperty *SYSM_ReadParameters( void )
     }
 	
 	//-----------------------------------------------------
-    // システム領域に本体設定などをコピー
+    // システム領域に本体設定をコピー
     //-----------------------------------------------------
 	// NTRカードアプリARM9コードのロード領域とメモリがかち合うが、先頭0x4000はセキュア領域で別バッファに格納されるので、
 	// ここでこれらのパラメータをロードしても大丈夫。
-	SYSMi_CopyLCFGData( (u32)s_lcfgBuffer );
+	SYSMi_CopyLCFGDataSettings();
 	
     //-----------------------------------------------------
     // 無線ON/OFFフラグをもとに、LEDを設定する。
@@ -328,8 +342,8 @@ TitleProperty *SYSM_ReadParameters( void )
 }
 
 
-// 本体設定データなどのメモリ展開。
-static void SYSMi_CopyLCFGData( u32 dst_addr )
+// HWInfoのメモリ展開。
+static void SYSMi_CopyLCFGDataHWInfo( u32 dst_addr )
 {
 	// HotStart時にも保持する必要のあるデータをランチャー用に移動するプリロードパラメータバッファにコピー。
 	MI_CpuCopy8( (void *)HW_PARAM_WIRELESS_FIRMWARE_DATA, (void *)(dst_addr + HW_PARAM_TWL_SETTINGS_DATA_SIZE),
@@ -338,10 +352,17 @@ static void SYSMi_CopyLCFGData( u32 dst_addr )
 	// プリロードパラメータアドレスをランチャー向けに変更。
 	*(u32 *)HW_PRELOAD_PARAMETER_ADDR = dst_addr;
 	
-	// 本体設定データ、HWノーマル情報、HWセキュア情報をメモリに展開しておく
-	MI_CpuCopyFast( LCFGi_GetTSD(), (void *)HW_PARAM_TWL_SETTINGS_DATA, sizeof(LCFGTWLSettingsData) );
+	// HWノーマル情報、HWセキュア情報をメモリに展開しておく
 	MI_CpuCopyFast( LCFGi_GetHWN(), (void *)HW_PARAM_TWL_HW_NORMAL_INFO, sizeof(LCFGTWLHWNormalInfo) );
 	MI_CpuCopyFast( LCFGi_GetHWS(), (void *)HW_HW_SECURE_INFO, HW_HW_SECURE_INFO_END - HW_HW_SECURE_INFO );
+}
+
+
+// 本体設定データのメモリ展開。
+static void SYSMi_CopyLCFGDataSettings( void )
+{
+	// 本体設定データ
+	MI_CpuCopyFast( LCFGi_GetTSD(), (void *)HW_PARAM_TWL_SETTINGS_DATA, sizeof(LCFGTWLSettingsData) );
 	
 	// 本体設定データのLauncherStatus部分をクリアしておく
 	{
