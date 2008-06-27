@@ -30,7 +30,7 @@ TWL_PROC	   	=	ARM9
 
 SUBDIRS		=
 
-SRCS		= WDS.c
+SRCS		= WDS.c WDSWrapper.c
 
 TARGET_LIB	= WDS$(TWL_LIBSUFFIX).a
 
