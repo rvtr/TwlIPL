@@ -25,8 +25,10 @@
 
 // MAP_TS_LTD for hyena
 // WRAM-A Lock:ON,  Master:ARM7, Enable:Slot0-3(256Kbytes), Address(7):0x037c0000-0x037fffff, Address(9):None
-// WRAM-B Lock:ON,  Master:ARM7, Enable:Slot5-7(96Kbytes),  Address(7):0x037a8000-0x037bffff, Address(9):None
-// WRAM-B Lock:OFF, Master:ARM9, Enable:Slot0-4(160Kbytes), Address(7):0x03740000-0x037bffff, Address(9):0x03740000-0x037bffff
+// WRAM-B Lock:ON,  Master:ARM7, Enable:Slot4-7(128Kbytes), Address(7):0x03760000-0x0377ffff, Address(9):None
+//                                                          Address(7):0x037a0000-0x037bffff, Address(9):None
+// WRAM-B Lock:OFF, Master:ARM9, Enable:Slot0-3(128Kbytes), Address(7):0x03740000-0x0375ffff, Address(9):0x03740000-0x0375ffff
+//                                                          Address(7):0x03780000-0x0379ffff, Address(9):0x03780000-0x0379ffff
 // WRAM-C Lock:OFF, Msster:ARM9, Enable:Slot0-7(256Kbytes), Address(7):0x03700000-0x0373ffff, Address(9):0x03700000-0x0373ffff
 // WRAM-0           Master:ARM9,               (16Kbytes),  Address(7):0x03040000-0x03043fff, Address(9):0x03040000-0x03043fff
 // WRAM-1           Master:ARM9,               (16Kbytes),  Address(7):0x03044000-0x03047fff, Address(9):0x03044000-0x03047fff
@@ -106,7 +108,7 @@ u32 HYENA_WramReg[0x30/sizeof(u32)] =
     // WRAM Lock
     (u32)(
     (0x0F <<  0) |
-    (0xE0 <<  8) |
+    (0xF0 <<  8) |
     (0x00 << 16) |
 
     // WRAM-0/1
