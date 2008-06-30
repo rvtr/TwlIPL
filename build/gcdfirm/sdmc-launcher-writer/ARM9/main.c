@@ -80,8 +80,6 @@ void TwlMain( void )
     myInit();
     PostInit();
 
-    CARD_Init();
-
     //---- clear screen buffer
     ClearScreen();
 

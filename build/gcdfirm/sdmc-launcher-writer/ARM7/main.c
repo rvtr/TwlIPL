@@ -77,7 +77,9 @@ static void CreateIdleThread(void)
 static void PreInit(void)
 {
     // GCDヘッダコピー
-    MI_CpuCopyFast( OSi_GetFromBromAddr(), (void*)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
+    MI_CpuCopyFast( OSi_GetFromBromAddr(), (void*)HW_CARD_ROM_HEADER, HW_CARD_ROM_HEADER_SIZE );
+    // NANDコンテキストコピー
+    MI_CpuCopyFast( &OSi_GetFromBromAddr()->SDNandContext, (void*)HW_SD_NAND_CONTEXT_BUF, sizeof(SDPortContextData) );
     // FromBrom全消去
     MIi_CpuClearFast( 0, (void*)OSi_GetFromBromAddr(), sizeof(OSFromBromBuf) );
 }
@@ -98,7 +100,7 @@ static void PostInit(void)
     /*
         バッテリー残量チェック
     */
-    MCUi_WriteRegister( MCU_REG_MODE_ADDR, MCU_SYSTEMMODE_FIRMWARE );   // change battery level only
+    MCUi_WriteRegister( MCU_REG_MODE_ADDR, MCU_SYSTEMMODE_TWL );   // TWL mode for ES library
     if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
     {
 #ifndef SDK_FINALROM
@@ -125,6 +127,159 @@ static void EraseAll(void)
     MI_CpuClearFast( nor, (gh->l.nandfirm_size + 512) * 2 );
 }
 
+/*
+  独自CARDライブラリ
+*/
+
+#define CARD_COMMAND_PAGE           0x01000000
+#define CARD_COMMAND_MASK           0x07000000
+#define CARD_RESET_HI               0x20000000
+#define CARD_COMMAND_OP_G_READPAGE  0xB7
+
+static u32                  cache_page;
+static u8                   CARDi_cache_buf[CARD_ROM_PAGE_SIZE] ATTRIBUTE_ALIGN(32);
+
+/*---------------------------------------------------------------------------*
+  Name:         CARDi_SetRomOp
+
+  Description:  カードコマンド設定
+
+  Arguments:    command    コマンド
+                offset     転送ページ数
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static void CARDi_SetRomOp(u32 command, u32 offset)
+{
+    u32     cmd1 = (u32)((offset >> 8) | (command << 24));
+    u32     cmd2 = (u32)((offset << 24));
+    // 念のため前回のROMコマンドの完了待ち。
+    while ((reg_MI_MCCNT1 & REG_MI_MCCNT1_START_MASK) != 0)
+    {
+    }
+    // マスターイネーブル。
+    reg_MI_MCCNT0 = (u16)(REG_MI_MCCNT0_E_MASK | REG_MI_MCCNT0_I_MASK |
+                          (reg_MI_MCCNT0 & ~REG_MI_MCCNT0_SEL_MASK));
+    // コマンド設定。
+    reg_MI_MCCMD0 = MI_HToBE32(cmd1);
+    reg_MI_MCCMD1 = MI_HToBE32(cmd2);
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         CARDi_GetRomFlag
+
+  Description:  カードコマンドコントロールパラメータを取得
+
+  Arguments:    flag       カードデバイスへ発行するコマンドのタイプ
+                           (CARD_COMMAND_PAGE / CARD_COMMAND_ID /
+                            CARD_COMMAND_STAT / CARD_COMMAND_REFRESH)
+
+  Returns:      カードコマンドコントロールパラメータ
+ *---------------------------------------------------------------------------*/
+SDK_INLINE u32 CARDi_GetRomFlag(u32 flag)
+{
+    u32     rom_ctrl = *(vu32 *)(HW_CARD_ROM_HEADER + 0x60);
+    return (u32)(flag | REG_MI_MCCNT1_START_MASK | CARD_RESET_HI | (rom_ctrl & ~CARD_COMMAND_MASK));
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         CARDi_StartRomPageTransfer
+
+  Description:  ROMページ転送を開始。
+
+  Arguments:    offset     転送元のROMオフセット
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static void CARDi_StartRomPageTransfer(u32 offset)
+{
+    u8 op = CARD_COMMAND_OP_G_READPAGE;
+    CARDi_SetRomOp(op, offset);
+    reg_MI_MCCNT1 = CARDi_GetRomFlag(CARD_COMMAND_PAGE);
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         CARDi_ReadRomWithCPU
+
+  Description:  CPUを使用してROM転送。
+                キャッシュやページ単位の制限を考慮する必要は無いが
+                転送完了まで関数がブロッキングする点に注意。
+
+  Arguments:    userdata          (他のコールバックとして使用するためのダミー)
+                buffer            転送先バッファ
+                offset            転送元ROMオフセット
+                length            転送サイズ
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static int CARDi_ReadRomWithCPU(void *userdata, void *buffer, u32 offset, u32 length)
+{
+    int     retval = (int)length;
+    // 頻繁に使用するグローバル変数をローカル変数へキャッシュ。
+    u32         cachedPage = cache_page;
+    u8  * const cacheBuffer = CARDi_cache_buf;
+    while (length > 0)
+    {
+        // ROM転送は常にページ単位。
+        u8     *ptr = (u8 *)buffer;
+        u32     n = CARD_ROM_PAGE_SIZE;
+        u32     pos = MATH_ROUNDDOWN(offset, CARD_ROM_PAGE_SIZE);
+        // 以前のページと同じならばキャッシュを使用。
+        if (pos == cachedPage)
+        {
+            ptr = cacheBuffer;
+        }
+        else
+        {
+            // バッファへ直接転送できないならキャッシュへ転送。
+            if(((pos != offset) || (((u32)buffer & 3) != 0) || (length < n)))
+            {
+                cachedPage = pos;
+                ptr = cacheBuffer;
+            }
+            // 4バイト整合の保証されたバッファへCPUで直接リード。
+            CARDi_StartRomPageTransfer(pos);
+            {
+                u32     word = 0;
+                for (;;)
+                {
+                    // 1ワード転送完了を待つ。
+                    u32     ctrl = reg_MI_MCCNT1;
+                    if ((ctrl & REG_MI_MCCNT1_RDY_MASK) != 0)
+                    {
+                        // データを読み出し、必要ならバッファへ格納。
+                        u32     data = reg_MI_MCD1;
+                        if (word < (CARD_ROM_PAGE_SIZE / sizeof(u32)))
+                        {
+                            ((u32 *)ptr)[word++] = data;
+                        }
+                    }
+                    // 1ページ転送完了なら終了。
+                    if ((ctrl & REG_MI_MCCNT1_START_MASK) == 0)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+        // キャッシュ経由ならキャッシュから転送。
+        if (ptr == cacheBuffer)
+        {
+            u32     mod = offset - pos;
+            n = MATH_MIN(length, CARD_ROM_PAGE_SIZE - mod);
+            MI_CpuCopy8(cacheBuffer + mod, buffer, n);
+        }
+        buffer = (u8 *)buffer + n;
+        offset += n;
+        length -= n;
+    }
+    // ローカル変数からグローバル変数へ反映。
+    cache_page = cachedPage;
+    (void)userdata;
+    return retval;
+}
+
+
 extern SDMC_ERR_CODE FATFSi_sdmcGoIdle(u16 ports, void (*func1)(),void (*func2)());
 
 void TwlSpMain( void )
@@ -137,7 +292,6 @@ void TwlSpMain( void )
     u8* nor2 = nor + size;      // buffer to verify
     u8* nand2 = nand + size;    // buffer to verify
 
-    s32             lock_id;
     SdmcResultInfo  sdResult;
 
     InitDebugLED();
@@ -164,10 +318,6 @@ void TwlSpMain( void )
     SetDebugLED(++step);  // 0x05
 
     // CARD初期化
-    CARD_Init();
-    CARD_Enable(TRUE);
-    lock_id = OS_GetLockID();
-    CARD_LockRom((u16)lock_id);
     SetDebugLED(++step);  // 0x06
 
     PXI_SendStream(&size, sizeof(size));
@@ -180,7 +330,8 @@ void TwlSpMain( void )
     SetDebugLED(++step);  // 0x07
 
     // read all
-    CARD_ReadRom( DMA_CARD, (void*)offset, nor, size );
+    *(u32*)nor = 0;
+    CARDi_ReadRomWithCPU( NULL, nor, offset, size );
     SetDebugLED(++step);  // 0x08
 
     PXI_NotifyID( FIRM_PXI_ID_NULL );
@@ -196,11 +347,12 @@ void TwlSpMain( void )
     SetDebugLED(++step);  // 0x0a
 
     // write NAND
-    if ( FATFSi_sdmcWriteFifo( nand, sectors, 1, SDMC_PORT_NAND, &sdResult ) )
+    if (SDMC_NORMAL != FATFSi_sdmcWriteFifo( nand, sectors, 1, SDMC_PORT_NAND, &sdResult ))
     {
         OS_TPrintf("Failed to call FATFSi_sdmcWriteFifo() to write header.\n");
         goto err;
     }
+
     SetDebugLED(++step);  // 0x0b
 
     PXI_NotifyID( FIRM_PXI_ID_NULL );
