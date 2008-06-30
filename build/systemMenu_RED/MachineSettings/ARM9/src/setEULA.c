@@ -509,7 +509,7 @@ static int SetAgreeEULAMain( void )
     {
         LCFG_TSD_SetFlagAgreeEULA( sbAgreeEULA );
 		if( !sbAgreeEULA ) {
-	        LCFG_TSD_SetAgreedEULAVersion( 0 );
+	        LCFG_TSD_SetAgreedEULAVersion( 1 );
 		}
 		// ::::::::::::::::::::::::::::::::::::::::::::::
         // TWL設定データファイルへの書き込み
