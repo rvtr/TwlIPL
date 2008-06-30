@@ -77,7 +77,9 @@ static void CreateIdleThread(void)
 static void PreInit(void)
 {
     // GCDヘッダコピー
-    MI_CpuCopyFast( OSi_GetFromBromAddr(), (void*)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
+    MI_CpuCopyFast( OSi_GetFromBromAddr(), (void*)HW_CARD_ROM_HEADER, HW_CARD_ROM_HEADER_SIZE );
+    // NANDコンテキストコピー
+    MI_CpuCopyFast( &OSi_GetFromBromAddr()->SDNandContext, (void*)HW_SD_NAND_CONTEXT_BUF, sizeof(SDPortContextData) );
     // FromBrom全消去
     MIi_CpuClearFast( 0, (void*)OSi_GetFromBromAddr(), sizeof(OSFromBromBuf) );
 }
@@ -98,7 +100,7 @@ static void PostInit(void)
     /*
         バッテリー残量チェック
     */
-    MCUi_WriteRegister( MCU_REG_MODE_ADDR, MCU_SYSTEMMODE_FIRMWARE );   // change battery level only
+    MCUi_WriteRegister( MCU_REG_MODE_ADDR, MCU_SYSTEMMODE_TWL );   // TWL mode for ES library
     if ( (MCUi_ReadRegister( MCU_REG_POWER_INFO_ADDR ) & MCU_REG_POWER_INFO_LEVEL_MASK) == 0 )
     {
 #ifndef SDK_FINALROM
@@ -278,14 +280,13 @@ static int CARDi_ReadRomWithCPU(void *userdata, void *buffer, u32 offset, u32 le
 }
 
 
-extern SDPortContext *SDNandContext;
 extern SDMC_ERR_CODE FATFSi_sdmcGoIdle(u16 ports, void (*func1)(),void (*func2)());
 
 void TwlSpMain( void )
 {
     GCDHeader* const gh = &OSi_GetFromBromAddr()->header.gcd;
     u32 offset = gh->l.nandfirm_offset;
-    u32 size = 261120;//gh->l.nandfirm_size;
+    u32 size = gh->l.nandfirm_size;
     u32 nsize = size - offsetof(NANDHeader,l);  // size to write to nand
     u32 sectors = (nsize + 511)/512;
     u8* nor2 = nor + size;      // buffer to verify
@@ -313,7 +314,6 @@ void TwlSpMain( void )
         OS_TPrintf("Failed to call FATFSi_sdmcInit().\n");
         goto err;
     }
-    SDNandContext = NULL;
     FATFSi_sdmcGoIdle( 2, NULL, NULL );
     SetDebugLED(++step);  // 0x05
 
@@ -330,6 +330,7 @@ void TwlSpMain( void )
     SetDebugLED(++step);  // 0x07
 
     // read all
+    *(u32*)nor = 0;
     CARDi_ReadRomWithCPU( NULL, nor, offset, size );
     SetDebugLED(++step);  // 0x08
 
@@ -351,6 +352,7 @@ void TwlSpMain( void )
         OS_TPrintf("Failed to call FATFSi_sdmcWriteFifo() to write header.\n");
         goto err;
     }
+
     SetDebugLED(++step);  // 0x0b
 
     PXI_NotifyID( FIRM_PXI_ID_NULL );
