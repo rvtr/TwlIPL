@@ -562,7 +562,7 @@ static void WDS_WrapperThreadFunc( void *arg )
 	g_wdswrapperwork->state = WDSWRAPPER_STATE_INIT;
 	
 	while( 1 ) {
-		OS_WaitVBlankIntr();
+		OS_Sleep(20);
 		
 		// ステートにより処理を分岐(ステート処理中はmutexによりlockが行われる)
 		OS_LockMutex( &g_wdswrapperwork->mutex );
