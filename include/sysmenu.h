@@ -35,6 +35,7 @@
 #include <sysmenu/sharedFont.h>
 #include <sysmenu/banner.h>
 #include <sysmenu/util.h>
+#include <sysmenu/WDSWrapper.h>
 
 /* SYSMENU_H_ */
 #endif

@@ -25,6 +25,7 @@ extern "C" {
 #endif
 
 typedef enum {
+	WLANFIRM_RESULT_UNFINISHED = 0,
     WLANFIRM_RESULT_SUCCESS = 1,
     WLANFIRM_RESULT_FAILURE = 2
 } WLANFirmResult;
@@ -50,7 +51,19 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm );
           FALSE … 無線ファームウェアインストール処理が未完了
  */
 
-BOOL PollingInstallWlanFirmware( BOOL isStartScanWDS );
+BOOL PollingInstallWlanFirmware( void );
+
+
+/*
+
+  GetWlanFirmwareInstallFinalResult
+
+  引数　：なし
+  返り値：WLANFIRM_RESULT_UNFINISHED  … 無線ファームウェアインストール処理が未完了
+          WLANFIRM_RESULT_SUCCESS     … 無線ファームウェアインストール処理が成功
+          WLANFIRM_RESULT_FAILURE     … 無線ファームウェアインストール処理が失敗
+ */
+WLANFirmResult GetWlanFirmwareInstallFinalResult( void );
 
 
 #ifdef __cplusplus

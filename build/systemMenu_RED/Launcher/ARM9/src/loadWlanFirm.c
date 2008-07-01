@@ -61,6 +61,7 @@
  */
 static BOOL				s_isHotStartWLFirm;
 static volatile BOOL	s_isFinished;
+static volatile WLANFirmResult	s_result = WLANFIRM_RESULT_UNFINISHED;
 static u32*             pNwmBuf;
 static u8*              pFwBuffer = 0;
 #if (MEASURE_WIRELESS_INITTIME == 1)
@@ -84,6 +85,7 @@ static BOOL  CheckHash(const u8* hash, const u8* buffer, u32 length);
 #if (REPORT_HASH_COMPARISON == 1)
 static void PrintDigest(u8 *digest);
 #endif
+static BOOL GetWlanFirmwareInstallResult(WLANFirmResult *pResult);
 
 
 void InstallFirmCallback(void* arg)
@@ -633,8 +635,7 @@ instfirm_error:
     return FALSE;
 }
 
-BOOL GetWlanFirmwareInstallResult(WLANFirmResult *pResult);
-BOOL GetWlanFirmwareInstallResult(WLANFirmResult *pResult)
+static BOOL GetWlanFirmwareInstallResult(WLANFirmResult *pResult)
 {
     OSMessage msg;
     BOOL retval;
@@ -647,24 +648,15 @@ BOOL GetWlanFirmwareInstallResult(WLANFirmResult *pResult)
 }
 
 // 無線ファームロード完了？
-BOOL PollingInstallWlanFirmware( BOOL isStartScanWDS )
+BOOL PollingInstallWlanFirmware( void )
 {
-#ifndef ENABLE_WDS_SCAN
-#pragma unused(isStartScanWDS)
-#endif
 	if ( !s_isFinished ) {
 		WLANFirmResult result;
 		if( GetWlanFirmwareInstallResult( &result ) ) {
 			if( result == WLANFIRM_RESULT_SUCCESS ) {
 				OS_TPrintf( "WLFIRM load finished.\n" );
-#ifndef DISABLE_WDS_SCAN
-				// WDSスキャンがTRUE かつ 無線フラグがONならば、引き続きWDSビーコン受信開始
-				if( isStartScanWDS &&
-					!LCFG_THW_IsForceDisableWireless() && LCFG_TSD_IsAvailableWireless() ) {
-					StartScanWDS();
-				}
-#endif // DISABLE_WDS_SCAN
 				s_isFinished = TRUE; // 正常終了
+				s_result = result;
 			}else {
 				// ロード失敗
 				if( !s_isHotStartWLFirm ) {
@@ -673,7 +665,8 @@ BOOL PollingInstallWlanFirmware( BOOL isStartScanWDS )
 #ifdef SDK_RELEASE	
 					PMi_SetWirelessLED( PM_WIRELESS_LED_OFF );
 #endif
-					s_isFinished = TRUE; // 異常終了
+					s_isFinished = TRUE;
+					s_result = result;
 				}else {
 					// そうでない場合は、ColdStartロードで再度実行。
 					(void)InstallWlanFirmware( FALSE );
@@ -687,3 +680,7 @@ BOOL PollingInstallWlanFirmware( BOOL isStartScanWDS )
 }
 
 
+WLANFirmResult GetWlanFirmwareInstallFinalResult( void )
+{
+    return s_result;
+}

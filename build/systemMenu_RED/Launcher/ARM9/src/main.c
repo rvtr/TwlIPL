@@ -26,10 +26,13 @@
 #include "loadWlanFirm.h"
 #include "loadSharedFont.h"
 #include "loadSysmVersion.h"
+#include "scanWDS.h"
 
 // extern data-----------------------------------------------------------------
 
 // define data-----------------------------------------------------------------
+#define WDS_THREAD_PRIO			15
+#define WDS_DMA_NO				3
 
 #define INIT_DEVICES_LIKE_UIG_LAUNCHER
 
@@ -154,7 +157,8 @@ void TwlMain( void )
     TitleProperty *pBootTitle = NULL;
     OSTick allstart, start, end = 0;
     BOOL direct_boot = FALSE;
-
+	BOOL isStartScanWDS = FALSE;
+	
 #ifdef DEBUG_LAUNCHER_DUMP
     // you should comment out to clear GX/G2/DMA/TM/PAD register in reboot.c to retreive valid boot time
     STD_TSPrintf((char*)0x02FFCFC0, "\nLauncher Boot Time: %lld usec\n", OS_TicksToMicroSeconds(reg_OS_TM3CNT_L * (1024/64)));
@@ -462,8 +466,9 @@ MAIN_LOOP_START:
             state = LOGODEMO;
             break;
         case LOGODEMO:
-            if( LogoMain() &&
-				IsFinishedLoadSharedFont() ) {	// フォントロード終了をここでチェック
+            if( IsFinishedLoadSharedFont() &&					// 通常ブート時は、フォントロード終了をここでチェック
+				LogoMain()
+				) {
 				if( !direct_boot ) {
                     state = LAUNCHER_INIT;
                 }else {
@@ -482,10 +487,16 @@ MAIN_LOOP_START:
             }
             break;
         case LOAD_START:
-			if( IsFinishedLoadSharedFont() ) {		// ダイレクトブートの時があるので、フォントロード終了をここでチェック
+			if( IsFinishedLoadSharedFont()						// ダイレクトブートの時は、フォントロード終了をここでチェック
+#ifndef DISABLE_WLFIRM_LOAD										// アプリブート前に無線ファームのロードは完了しておく
+                && PollingInstallWlanFirmware()
+#endif // DISABLE_WLFIRM_LOAD
+#ifndef DISABLE_WDS_SCAN										// アプリブート前にWDSスキャンは終了しておく必要がある
+			    && ( WDS_WrapperStopScan() != WDSWRAPPER_ERRCODE_OPERATING )
+#endif // DISABLE_WLFIRM_LOAD
+				) {
 	            SYSM_StartLoadTitle( pBootTitle );
     	        state = LOADING;
-
     	        start = OS_GetTick();
 			}
             break;
@@ -520,11 +531,8 @@ MAIN_LOOP_START:
             break;
         case AUTHENTICATE:
             if( ( direct_boot || ( !direct_boot && LauncherFadeout( s_titleList ) ) ) &&
-#ifndef DISABLE_WLFIRM_LOAD
-                PollingInstallWlanFirmware( FALSE ) &&                 // アプリブート前に無線ファームのロードは完了しておく必要がある
-#endif // DISABLE_WLFIRM_LOAD
-                SYSM_IsAuthenticateTitleFinished() )
-            {
+                SYSM_IsAuthenticateTitleFinished()
+				) {
 				// メインループ開始から検証終了までの間に起きたFATALの処理
                 if( UTL_IsFatalError() ) {
                     // FATALエラー処理
@@ -533,7 +541,25 @@ MAIN_LOOP_START:
                     state = STOP;
                     break; // state を STOP にして break し、 Boot させない
                 }
-
+				
+#ifndef DISABLE_WDS_SCAN
+				// Nintendoスポットブート時は、アプリ間パラメータにビーコン情報をセットする。
+				if( STD_CompareNString( (char *)&pBootTitle->titleID + 1, "JNH", 3 ) == 0 )
+				{
+					(void)WDS_WrapperSetArgumentParam();
+				}
+#endif // DISABLE_WDS_SCAN
+				
+				state = BOOT;
+			}
+			break;
+		case BOOT:
+#ifndef DISABLE_WDS_SCAN
+			// アプリブート前にWDSスキャンは終了しておく必要がある
+			if( ( WDS_WrapperCleanup() != WDSWRAPPER_ERRCODE_OPERATING ) &&
+				IsClearnupWDSWrapper() )
+#endif // DISABLE_WDS_SCAN
+			{
 				SYSM_TryToBootTitle( pBootTitle ); // never return.
             }
             break;
@@ -545,7 +571,27 @@ MAIN_LOOP_START:
         (void)SYSM_GetCardTitleList( s_titleList );
 
         // 無線ファームロードのポーリング
-		(void)PollingInstallWlanFirmware( pBootTitle ? FALSE : TRUE );
+		if( PollingInstallWlanFirmware() &&
+			( GetWlanFirmwareInstallFinalResult() == WLANFIRM_RESULT_SUCCESS )			// ロード成功
+			) {
+			// 下記条件を満たすなら、WDSスキャン開始
+#ifndef DISABLE_WDS_SCAN
+			if( !isStartScanWDS &&														// WDSスキャン開始済みでない
+				!direct_boot &&															// ダイレクトブートでない
+				!LCFG_THW_IsForceDisableWireless() &&									// 無線強制OFFでない
+				LCFG_TSD_IsAvailableWireless() 											// 無線ON
+				) {
+				WDSWrapperInitializeParam param;
+				param.threadprio = WDS_THREAD_PRIO;
+				param.dmano      = WDS_DMA_NO;
+				param.callback   = Callback_WDSWrapper;
+				param.alloc      = SYSM_Alloc;
+				param.free       = SYSM_Free;
+				(void)WDS_WrapperInitialize( param );		// 初期化と動作開始を兼ねている。（失敗しても止まりはしないので、気にしない）
+				isStartScanWDS = TRUE;
+			}
+#endif // DISABLE_WDS_SCAN
+		}
 
         // コマンドフラッシュ
         (void)SND_FlushCommand(SND_COMMAND_NOBLOCK);

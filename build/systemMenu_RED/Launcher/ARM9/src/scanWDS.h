@@ -30,8 +30,8 @@ extern "C" {
 // global variables--------------------------------------------------
 
 // function----------------------------------------------------------
-extern void StartScanWDS( void );
-
+extern BOOL IsClearnupWDSWrapper( void );
+extern void Callback_WDSWrapper( void *ptr );
 
 #ifdef __cplusplus
 }
