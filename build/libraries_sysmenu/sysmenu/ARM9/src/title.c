@@ -739,6 +739,7 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
     if( ! bSuccess )
     {
 OS_TPrintf("RebootSystem failed: cant open file\n");
+		UTL_SetFatalError(FATAL_ERROR_LOAD_OPENFILE_FAILED);
 		goto ERROR;
     }
 
@@ -769,6 +770,7 @@ OS_TPrintf("RebootSystem failed: cant open file\n");
 		if(!s_calc_hash)
 		{
 OS_TPrintf("RebootSystem failed: Alloc Failed.\n");
+			UTL_SetFatalError(FATAL_ERROR_LOAD_MEMALLOC_FAILED);
 			goto ERROR;
 		}
 
@@ -784,6 +786,7 @@ OS_TPrintf("RebootSystem failed: Alloc Failed.\n");
         if( ! bSuccess )
         {
 OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
+			UTL_SetFatalError(FATAL_ERROR_LOAD_SEEKFILE_FAILED);
 			goto ERROR;
         }
 
@@ -803,6 +806,7 @@ OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
 			if ( !result )
 			{
 OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", 0, len);
+				UTL_SetFatalError(FATAL_ERROR_LOAD_READHEADER_FAILED);
 				goto ERROR;
 			}
 		}
@@ -819,6 +823,7 @@ OS_TPrintf("%02X ", header[i * 0x10 + j]);
 OS_TPrintf("\n");
 }
 OS_TPrintf("RebootSystem failed: logo CRC error\n");
+			UTL_SetFatalError(FATAL_ERROR_LOAD_LOGOCRC_ERROR);
 			goto ERROR;
         }
         
@@ -836,12 +841,14 @@ OS_TPrintf("RebootSystem failed: logo CRC error\n");
 		        if( ! bSuccess )
 		        {
 OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
+					UTL_SetFatalError(FATAL_ERROR_LOAD_SEEKFILE_FAILED);
 					goto ERROR;
 		        }
 		        readLen = FS_ReadFile(file, &s_authcode, (s32)sizeof(s_authcode));
 		        if( readLen != (s32)sizeof(s_authcode) )
 		        {
 OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode, 0, sizeof(s_authcode), readLen);
+					UTL_SetFatalError(FATAL_ERROR_LOAD_READDLSIGN_FAILED);
 					goto ERROR;
 		        }
 			}
@@ -903,6 +910,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 				 &(SYSMi_GetWork()->romRelocateInfo[i]), isTwlApp ) )
 			{
 	OS_TPrintf("RebootSystem failed: ROM Load Region error\n");
+				UTL_SetFatalError(FATAL_ERROR_LOAD_RELOCATEINFO_FAILED);
 				goto ERROR;
 			}
 		}
@@ -928,6 +936,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
             if( ! bSuccess )
             {
 OS_TPrintf("RebootSystem failed: cant seek file(%d)\n", source[i]);
+				UTL_SetFatalError(FATAL_ERROR_LOAD_SEEKFILE_FAILED);
 				goto ERROR;
             }
 
@@ -984,6 +993,7 @@ OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
 			if ( !result )
 			{
 OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
+				UTL_SetFatalError(FATAL_ERROR_LOAD_READMODULE_FAILED);
 				goto ERROR;
 			}
         }
