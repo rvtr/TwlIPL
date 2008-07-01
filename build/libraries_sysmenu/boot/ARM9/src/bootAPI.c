@@ -194,14 +194,6 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 			*target = REBOOT_TARGET_DS_APP;
 		}
 
-#if !defined(FIRM_USE_PRODUCT_KEYS) || defined(SYSMENU_DISABLE_RETAIL_BOOT)
-        // 開発鍵を使っている時は製品用CPUではTWLアプリはブートしない
-        if ( ! (*(u8*)OS_CHIPTYPE_DEBUGGER_ADDR & OS_CHIPTYPE_DEBUGGER_MASK) )
-        {
-            OS_Terminate();
-        }
-#endif // FIRM_USE_PRODUCT_KEYS || SYSMENU_DISABLE_RETAIL_BOOT
-
         // USG以前のDSアプリには無線パッチを適用
         // （キャッシュ領域の排他制御簡略化のためARM9で行う）
         if ( *target == REBOOT_TARGET_DS_APP )
