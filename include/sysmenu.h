@@ -36,6 +36,7 @@
 #include <sysmenu/banner.h>
 #include <sysmenu/util.h>
 #include <sysmenu/WDSWrapper.h>
+#include <sysmenu/types.h>
 
 /* SYSMENU_H_ */
 #endif
