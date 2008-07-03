@@ -118,7 +118,7 @@ extern "C" {
 #define START_SHIFT                         31
 #define START_MASK                          0x80000000
 
-#define SCRAMBLE_MASK                       0x1840e000 // スクランブル関係のフラグマスク
+#define SCRAMBLE_MASK                       0x1040e000 // スクランブル関係のフラグマスク
 #define SECURE_COMMAND_SCRAMBLE_MASK		0x00406000 // CS SE DSのマスク
 
 // --- Page Count
