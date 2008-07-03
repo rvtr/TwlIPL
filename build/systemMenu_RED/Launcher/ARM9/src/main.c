@@ -568,7 +568,9 @@ MAIN_LOOP_START:
         }
 
         // カードアプリリストの取得（スレッドで随時カード挿抜を通知されるものをメインループで取得）
-        (void)SYSM_GetCardTitleList( s_titleList );
+		if( SYSM_GetCardTitleList( s_titleList ) ) {
+			OS_TPrintf( "Change CARD status.\n" );
+		}
 
         // 無線ファームロードのポーリング
 		if( PollingInstallWlanFirmware() &&

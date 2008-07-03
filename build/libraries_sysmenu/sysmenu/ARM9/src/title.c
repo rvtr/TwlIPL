@@ -290,24 +290,20 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 	//         の場合は、正常に認識できないタイトルであることを示す。
 	
 	if( SYSMi_GetWork()->flags.hotsw.isCardStateChanged ) {
+		u16 id = (u16)OS_GetLockID();
 		
 		MI_CpuClear32( pTitleList_Card, sizeof(TitleProperty) );
 		
+		(void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );						// ARM7と排他制御する
+		
 		// ROMヘッダバッファのコピー
 		if( SYSM_IsExistCard() ) {
-			u16 id = (u16)OS_GetLockID();
-			(void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );						// ARM7と排他制御する
 			
 			// ROMヘッダのリード
 			(void)SYSMi_CopyCardRomHeader();
-			
 			// バナーデータのリード
 			(void)SYSMi_CopyCardBanner();
 			
-			SYSMi_GetWork()->flags.hotsw.isCardStateChanged = FALSE;							// カード情報更新フラグを落とす
-			(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );					// ARM7と排他制御する
-			OS_ReleaseLockID( id );
-
 			pTitleList_Card->pBanner = &s_bannerBuf[ CARD_BANNER_INDEX ];
 			pTitleList_Card->flags.isValid = TRUE;
 			pTitleList_Card->flags.isAppLoadCompleted = FALSE;
@@ -317,7 +313,16 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 			MI_CpuCopy8( SYSM_GetCardRomHeader()->parental_control_rating_info, pTitleList_Card->sub_info.parental_control_rating_info, 0x10);
 			pTitleList_Card->sub_info.card_region_bitmap = SYSM_GetCardRomHeader()->card_region_bitmap;
 			pTitleList_Card->sub_info.agree_EULA_version = SYSM_GetCardRomHeader()->agree_EULA_version;
+		}else {
+			// ROMヘッダのクリア
+			MI_CpuClearFast( (void *)SYSM_APP_ROM_HEADER_BUF, SYSM_APP_ROM_HEADER_SIZE );
+			// バナーデータのクリア
+			MI_CpuClearFast( &s_bannerBuf[ CARD_BANNER_INDEX ], sizeof(TWLBannerFile) );
 		}
+		
+		SYSMi_GetWork()->flags.hotsw.isCardStateChanged = FALSE;							// カード情報更新フラグを落とす
+		(void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );					// ARM7と排他制御する
+		OS_ReleaseLockID( id );
 		
 		// タイトル情報フラグのセット
 		pTitleList_Card->flags.bootType = LAUNCHER_BOOTTYPE_ROM;
@@ -1800,7 +1805,6 @@ void SYSM_TryToBootTitle( TitleProperty *pBootTitle )
         {
 			u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
 			if( pBuffer != NULL ) {
-				LCFG_TSD_SetLastTimeBootSoftTitleID ( pBootTitle->titleID );
 				LCFG_TSD_SetLastTimeBootSoftPlatform( (u8)SYSM_GetAppRomHeader()->platform_code );
 				(void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
 				SYSM_Free( pBuffer );
