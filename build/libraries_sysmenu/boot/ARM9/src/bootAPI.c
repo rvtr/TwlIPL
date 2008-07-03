@@ -26,6 +26,7 @@
 #include <firm/hw/ARM9/mmap_firm.h>
 #include <firm/format/from_firm.h>
 #include "reboot.h"
+#include "../../../hotsw/ARM7/include/hotswTypes.h"
 
 
 // define data-------------------------------------------------------
@@ -203,10 +204,10 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 
         // デバッガによるROMエミュレーション時はNTR-ROMヘッダバッファの
         // ゲームコマンドパラメータをスクランブルOFF設定に書き換える
-        if ( SYSMi_GetWork()->appBootType == OS_BOOTTYPE_ROM )
+        if ( SYSM_IsRunOnDebugger() )
         {
-            // ブート対象のROMヘッダはカードブート時のみ
-            dh->s.game_cmd_param = SYSMi_GetWork()->gameCommondParam;
+            // NitroSDKバグ対策でブートメディア種別に関わらずROMヘッダを常時書き換え
+            dh->s.game_cmd_param &= ~SCRAMBLE_MASK;
         }
         {
             // カードROMヘッダは常時設定
