@@ -38,8 +38,8 @@
 
 #define     COUNTER_A                           0x264c      // 150ms分 (0x264c * 15.3us = 150001us)
 
-#define     CARD_EXIST_CHECK_INTERVAL           100
-#define		CARD_READ_RETRY_NUM					3			// リードミス時のリトライ回数
+#define		CARD_EXIST_CHECK_POLLING_TIME		100
+#define		CARD_INSERT_CHECK_INTERVAL			5
 
 #define     UNDEF_CODE                          0xe7ffdeff  // 未定義コード
 #define     ENCRYPT_DEF_SIZE                    0x800       // 2KB  ※ ARM9常駐モジュール先頭2KB
@@ -129,6 +129,11 @@ static void SendPxiMessage(HotSwCallBackType type);
 static void DebugPrintErrorMessage(HotSwState state);
 
 HotSwState HOTSWi_RefreshBadBlock(u32 romMode);
+
+static void CheckCardInsert(BOOL cardExist);
+static void CheckCardPullOut(BOOL cardExist);
+
+
 
 // Static Values ------------------------------------------------------------
 #include <twl/ltdwram_begin.h>
@@ -1549,6 +1554,8 @@ static void HotSwThread(void *arg)
     HotSwState      		retval;
     HotSwMessageForArm7		*msg;
 
+	static BOOL				card_exist = FALSE;
+    
     while(1){
         OS_ReceiveMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
 
@@ -1603,20 +1610,23 @@ static void HotSwThread(void *arg)
             if(HOTSW_IsCardExist()){
                 if(!s_isPulledOut){
                     if(GetMcSlotMode() == SLOT_STATUS_MODE_10){
-						LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+                        if(!card_exist){
+                            card_exist = TRUE;
+                            
+							LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 
-                        SYSMi_GetWork()->flags.hotsw.isExistCard         = TRUE;
-                        SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
-                        SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = TRUE;
+                        	SYSMi_GetWork()->flags.hotsw.isExistCard         = TRUE;
+                        	SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
+                        	SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = TRUE;
 #ifdef USE_WRAM_LOAD
-                        SYSMi_GetWork()->flags.hotsw.isCardGameMode      = TRUE;
+                        	SYSMi_GetWork()->flags.hotsw.isCardGameMode      = TRUE;
 #endif
-                        UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+                        	UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 #ifdef USE_WRAM_LOAD
-						SendPxiMessage(HOTSW_CHANGE_GAMEMODE);
+							SendPxiMessage(HOTSW_CHANGE_GAMEMODE);
 #endif
-                        OS_PutString("ok!\n");
-
+                        	OS_PutString("ok!\n");
+						}
                         break;
                     }
                 }
@@ -1632,12 +1642,16 @@ static void HotSwThread(void *arg)
                     ClearCardFlgs();
                     McPowerOff();
 
+					s_isPulledOut = TRUE;
+                    
                     break;
                 }
             }
 
             // カードが抜けてたら
             else{
+                card_exist = FALSE;
+                
 #ifdef USE_WRAM_LOAD
 				SendPxiMessage(HOTSW_CARD_PULLOUT);
 #endif
@@ -2013,12 +2027,15 @@ static void MonitorThread(void *arg)
 {
     #pragma unused( arg )
 
-    BOOL isPullOutNow;
-
+    u32  count = 0;
+	BOOL isCardExist;
+        
     while(1){
         // カードデータロード中は待機
         do{
-            OS_Sleep(CARD_EXIST_CHECK_INTERVAL);
+            OS_Sleep(CARD_EXIST_CHECK_POLLING_TIME);
+
+            count++;
         }
         while(s_isHotSwBusy);
 
@@ -2028,55 +2045,74 @@ static void MonitorThread(void *arg)
             OS_ReceiveMessage(&HotSwThreadData.hotswPollingCtrlQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
         }
 
-        // 現在カードが抜けているか
-        isPullOutNow = !HOTSW_IsCardExist();
+		isCardExist = HOTSW_IsCardExist();
 
-        // 状態の比較
-        if(s_isPulledOut != isPullOutNow){
-            OSIntrMode enabled = OS_DisableInterrupts();
+		CheckCardPullOut(isCardExist);
 
-            // 本当は抜けてた場合
-            if(isPullOutNow){
+		if(count >= CARD_INSERT_CHECK_INTERVAL){
+			CheckCardInsert(isCardExist);
+			count = 0;
+		}
+    }
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:        CheckCardInsert
+
+  Description: カードは挿さっているのに、ランチャーが認識してなかったらメッセージを送る
+ *---------------------------------------------------------------------------*/
+static void CheckCardInsert(BOOL cardExist)
+{
+    if(cardExist && s_isPulledOut){
+		OSIntrMode enabled = OS_DisableInterrupts();
+        
+		HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].ctrl  = FALSE;
+    	HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].value = 0;
+    	HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].type  = HOTSW_INSERT;
+
+    	// メッセージをキューの先頭に入れる
+    	OS_JamMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert], OS_MESSAGE_NOBLOCK);
+
+    	// メッセージインデックスをインクリメント
+    	HotSwThreadData.idx_insert = (HotSwThreadData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
+
+        (void)OS_RestoreInterrupts( enabled );
+    }
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:        CheckCardPullOut
+
+  Description: カードは抜かれているのに、ランチャーが認識していたらメッセージを送る
+ *---------------------------------------------------------------------------*/
+static void CheckCardPullOut(BOOL cardExist)
+{
+    if(!cardExist && !s_isPulledOut){
+        OSIntrMode enabled;
+        
 #ifndef HOTSW_DISABLE_FORCE_CARD_OFF
-			    {
-        			u32 mode = GetMcSlotMode();
-        			if(mode == SLOT_STATUS_MODE_01 || mode == SLOT_STATUS_MODE_10){
-            			SetMcSlotMode(SLOT_STATUS_MODE_11);
-        			}
-        			OS_TPrintf("slot status: %x\n", mode);
-    			}
+		{
+    		u32 mode = GetMcSlotMode();
+    		if(mode == SLOT_STATUS_MODE_01 || mode == SLOT_STATUS_MODE_10){
+    			SetMcSlotMode(SLOT_STATUS_MODE_11);
+    		}
+    	}
 #endif
-                
-                HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].ctrl  = FALSE;
-                HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].value = 0;
-                HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].type  = HOTSW_PULLOUT;
+		enabled = OS_DisableInterrupts();
+        
+    	HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].ctrl  = FALSE;
+    	HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].value = 0;
+    	HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut].type  = HOTSW_PULLOUT;
 
-                // メッセージをキューの先頭に入れる
-                OS_JamMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut], OS_MESSAGE_NOBLOCK);
+    	// メッセージをキューの先頭に入れる
+    	OS_JamMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswPulledOutMsg[HotSwThreadData.idx_pulledOut], OS_MESSAGE_NOBLOCK);
 
-                // メッセージインデックスをインクリメント
-                HotSwThreadData.idx_pulledOut = (HotSwThreadData.idx_pulledOut+1) % HOTSW_PULLED_MSG_NUM;
+    	// メッセージインデックスをインクリメント
+    	HotSwThreadData.idx_pulledOut = (HotSwThreadData.idx_pulledOut+1) % HOTSW_PULLED_MSG_NUM;
 
-                OS_PutString(">>> Card State Error : PulledOut\n");
-            }
-
-            // 本当は挿さっていた場合
-            else{
-                HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].ctrl  = FALSE;
-                HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].value = 0;
-                HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].type  = HOTSW_INSERT;
-
-                // メッセージをキューの先頭に入れる
-                OS_JamMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert], OS_MESSAGE_NOBLOCK);
-
-                // メッセージインデックスをインクリメント
-                HotSwThreadData.idx_insert = (HotSwThreadData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
-
-                OS_PutString(">>> Card State Error : Insert\n");
-            }
-
-            (void)OS_RestoreInterrupts( enabled );
-        }
+        (void)OS_RestoreInterrupts( enabled );
     }
 }
 
