@@ -576,20 +576,7 @@ end:
 
   Description:  カードのロードをTWLモードで行うかDSモードで行うかを決める
 
-
-  ■ Bonding Op = 0 (製品版)
-    ソフトウェア |  　　　 DSカード         |          TWLカード
-    ------------------------------------------------------------------------
-        DS用     |  DSカード読みシーケンス  |    DSカード読みシーケンス
-       TWL用     |  不正カードフラグ立て    |    TWLカード読みシーケンス
-    ハイブリット |  不正カードフラグ立て    |    TWLカード読みシーケンス
-
-  ■ Bonding Op = 0以外 (開発用)
-    ソフトウェア |  　　　 DSカード         |          TWLカード
-    ------------------------------------------------------------------------
-        DS用     |  DSカード読みシーケンス  |    DSカード読みシーケンス
-       TWL用     |  DSカード読みシーケンス  |    TWLカード読みシーケンス
-    ハイブリット |  DSカード読みシーケンス  |    TWLカード読みシーケンス
+  ※ 読み込みシーケンスの詳細は docs/ゲームカード/カード読み込みシーケンス表.xls 参照
  *---------------------------------------------------------------------------*/
 static BOOL isTwlModeLoad(void)
 {
@@ -597,34 +584,28 @@ static BOOL isTwlModeLoad(void)
     if(s_cbData.id_nml & HOTSW_ROMID_TWLROM_MASK){
         // PlatformCodeがTwl or Hybridの場合
         if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
-            OS_PutString("TWL Card : TWL Application   Read Sequence -> TWL\n");
             return TRUE;
         }
         else{
-            OS_PutString("TWL Card : NTR Application   Read Sequence -> NTR\n");
             return FALSE;
         }
     }
     // DSカード
     else{
-        // 製品版の場合
-        if(s_bondingOp == SCFG_OP_PRODUCT){
-            // PlatformCodeがTwl or Hybridの場合
-            if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
-                OS_PutString("NTR Card : TWL Application   Error Illegal Card\n");
+        // PlatformCodeがTwl or Hybridの場合
+		if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
+            // 製品用本体 (最終的には開発用本体も)
+#ifdef HOTSW_FINAL_VERSION
+            if(s_bondingOp == SCFG_OP_PRODUCT || !s_debuggerFlg)
+#else
+     		if(s_bondingOp == SCFG_OP_PRODUCT)
+#endif
+            {
                 s_cbData.illegalCardFlg = TRUE;
-                return FALSE;
-            }
-            else{
-                OS_PutString("NTR Card : NTR Application   Read Sequence -> NTR\n");
-                return FALSE;
             }
         }
-        // 開発用の場合
-        else{
-            OS_PutString("Bonding Option Development : NTR Card   Read Sequence -> NTR\n");
-            return FALSE;
-        }
+
+        return FALSE;
     }
 }
 
