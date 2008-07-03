@@ -18,7 +18,10 @@
 #include <twl.h>
 #include <sysmenu/errorLog.h>
  
-#define BUFSIZE 512
+// なぜかバッファサイズが256byteを超えると出力が欠けるようになる
+// ダンプを見ると、OS_TPrintf()呼び出し時にもバッファにはちゃんと格納されている模様
+// 原因は現在調査中
+#define BUFSIZE 250
  
 void VBlankIntr(void);
 
