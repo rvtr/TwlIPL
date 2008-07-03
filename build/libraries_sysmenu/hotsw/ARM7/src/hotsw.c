@@ -1552,6 +1552,8 @@ static void HotSwThread(void *arg)
     while(1){
         OS_ReceiveMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
 
+        SYSMi_GetWork()->flags.hotsw.isBusyHotSW = TRUE;
+        
         if( msg->ctrl == TRUE ) {
             SYSMi_GetWork()->flags.hotsw.isEnableHotSW = msg->value;
             s_pollingThreadSleepFlg = msg->value ? FALSE : TRUE;
@@ -1580,6 +1582,9 @@ static void HotSwThread(void *arg)
 			ReadCardData(SYSMi_GetWork()->cardReadParam.src,
                          SYSMi_GetWork()->cardReadParam.dest,
                          SYSMi_GetWork()->cardReadParam.size);
+
+        	SYSMi_GetWork()->flags.hotsw.isBusyHotSW = FALSE;
+            
             continue;
         }
 
@@ -1652,8 +1657,10 @@ static void HotSwThread(void *arg)
 
                 break;
             }
-        }
+        } // Card Read while loop
+        
         SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
+       	SYSMi_GetWork()->flags.hotsw.isBusyHotSW 	   = FALSE;
     } // while loop
 }
 

@@ -116,7 +116,6 @@ typedef struct SYSM_work {
 			vu16		isInspectCard :1;				// 検査カードか？
 			vu16		isOnDebugger :1;				// デバッガ動作か？
 			vu16		isEnableHotSW :1;				// 活線挿抜有効？
-			vu16		isBusyHotSW :1;					// 活線挿抜処理中？
 			vu16		isLoadRomEmuOnly :1;			// ROMエミュレーション情報のみロード
 			vu16		isCardLoadCompleted :1;			// カードからデータロード完了？
    			vu16		isValidCardBanner :1;			// バナーデータ更新？
@@ -125,8 +124,9 @@ typedef struct SYSM_work {
             vu16		isFinalized :1;					// HOTSW終了処理完了
             vu16		:0;
             vu8			isCardStateChanged;				// カード状態更新フラグ
+            vu8			isBusyHotSW;					// 活線挿抜処理中？
         }hotsw;
-	}flags; // 7B
+	}flags; // 8B
 
 	u16					cardHeaderCrc16;				// カード検出時に算出したROMヘッダCRC16（ARM9側でコピーして使用する側）
 	u16					cardHeaderCrc16_bak;			// カード検出時に算出したROMヘッダCRC16（ARM7側ライブラリでダイレクトに書き換わる側）

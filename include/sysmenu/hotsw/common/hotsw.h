@@ -25,6 +25,9 @@ extern "C" {
 
 #define SYSM_HOTSW_ENABLE_ROMEMU
 #define USE_WRAM_LOAD
+
+#define HOTSW_isBusyHotSw()			SYSMi_GetWork()->flags.hotsw.isBusyHotSW
+
 //#define USE_NEW_DMA
 
 // enum   -------------------------------------------------------------------
