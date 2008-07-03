@@ -23,6 +23,7 @@
 #include <twl/os/common/format_rom.h>
 #include <twl/os/common/banner.h>
 #include <twl/os/common/msJump.h>
+#include <sysmenu/types.h>
 #include <sysmenu/reloc_info/common/reloc_info.h>
 #include <application_jump_private.h>
 
@@ -50,22 +51,6 @@ extern "C" {
 #define SYSM_LAUNCHER_VER					1	// ランチャーバージョン（SDK側でランチャーに絡む処理の判定用）
 
 #define SYSM_ALIGNMENT_LOAD_MODULE			32	// モジュールをsrlから読み込む際のアライメント（AESおよびAESで使うDMAの仕様による）
-
-typedef struct TitleInfoSub {
-	RomExpansionFlags	exFlags;
-	char				platform_code;
-	u8					parental_control_rating_info[0x10];
-	u32					card_region_bitmap;
-	u8					agree_EULA_version;
-}TitleInfoSub;
-
-// タイトル情報
-typedef struct TitleProperty {			// この情報は、ランチャー時には認証通ってないけど、起動時には認証通すので大丈夫だろう。
-	NAMTitleId			titleID;		// タイトルID（TitleID_Hiで起動メディアは判定できる？）
-	LauncherBootFlags	flags;			// ブート時のランチャー動作フラグ
-	TWLBannerFile		*pBanner;		// バナーへのポインタ（固定長フォーマットなら偽造されても大丈夫だろう。)
-	TitleInfoSub		sub_info;
-}TitleProperty;
 
 // タイトルリスト作成用情報構造体
 typedef struct TitleListMakerInfo {

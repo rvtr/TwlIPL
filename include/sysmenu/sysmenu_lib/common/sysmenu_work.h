@@ -20,7 +20,7 @@
 
 #include <twl.h>
 #include <twl/nam.h>
-
+#include <sysmenu/types.h>
 #include <sysmenu/memorymap.h>
 #include <sysmenu/reloc_info/common/reloc_info.h>
 #include <firm/gcd/blowfish.h>
@@ -46,12 +46,6 @@ typedef enum CardDataReadState {
     CARD_READ_UNEXPECTED_ERROR
 }
 CardDataReadState;
-
-// NAMTitleIDをHiLoに分割してアクセスする場合に使用
-typedef struct TitleID_HiLo {
-	u8			Lo[ 4 ];
-	u32			Hi;
-}TitleID_HiLo;
 
 // WRAM経由でカードデータを読み込む場合に使用
 typedef struct CardReadParam {

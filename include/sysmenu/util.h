@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlIPL
-  File:     SYSM_lib.h
+  File:     util.h
 
   Copyright 2007 Nintendo.  All rights reserved.
 
@@ -19,7 +19,6 @@
 #define	__SYSM_UTIL_H__
 
 #include <twl.h>
-#include <sysmenu.h>
 
 #ifdef __cplusplus
 extern "C" {
