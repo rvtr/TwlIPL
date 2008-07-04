@@ -59,8 +59,8 @@
 #define MEM_TYPE_MAIN 1
 
 /* Priorities of each threads */
+#define THREAD_PRIO_MCU     1 //4   /* ハードウェアリセット時に他のスレッドに優先して動く必要アリ */
 #define THREAD_PRIO_SPI     2
-#define THREAD_PRIO_MCU     4 // 暫定
 #define THREAD_PRIO_SYSMMCU 6
 #define THREAD_PRIO_SND     6
 #define THREAD_PRIO_FATFS   8
@@ -155,14 +155,14 @@ TwlSpMain(void)
     // NANDのFATALエラー検出
     if( sdmcGetNandLogFatal() != FALSE) {
         /* 故障扱い処理 */
-		SYSMi_GetWork()->flags.common.isNANDFatalError = TRUE;
+        SYSMi_GetWork()->flags.common.isNANDFatalError = TRUE;
     }
 
     SYSMi_GetWork()->flags.common.isARM9Start = TRUE;
 
     // ヒープ領域設定
 #ifndef USE_HYENA_COMPONENT
-	OS_SetSubPrivArenaLo( (void*)SDK_STATIC_BSS_END );
+    OS_SetSubPrivArenaLo( (void*)SDK_STATIC_BSS_END );
 #endif
     OS_SetSubPrivArenaHi( (void*)SYSM_OWN_ARM7_MMEM_ADDR_END );     // メモリ配置をいじっているので、アリーナHiも変更しないとダメ！！
     OS_SetWramSubPrivArenaHi( (void*)(SYSM_OWN_ARM7_WRAM_ADDR_END - HW_FIRM_FROM_FIRM_BUF_SIZE) ); // この時点では鍵をつぶさないように
@@ -289,15 +289,15 @@ static void ResetRTC( void )
     RTCRawStatus2 stat2;
     RTC_ReadStatus1( &stat1 );
     RTC_ReadStatus2( &stat2 );
-	
-	// FOUTが32KHz出力でない場合は、32KHz出力に修正設定する。（無線で使用している）
+
+    // FOUTが32KHz出力でない場合は、32KHz出力に修正設定する。（無線で使用している）
     {
         RTCRawFout  fout;
-		RTC_ReadFout(&fout);
-		if( fout.fout != RTC_FOUT_DUTY_32KHZ ) {
-	        fout.fout = RTC_FOUT_DUTY_32KHZ;
-    	    RTC_WriteFout(&fout);
-		}
+        RTC_ReadFout(&fout);
+        if( fout.fout != RTC_FOUT_DUTY_32KHZ ) {
+            fout.fout = RTC_FOUT_DUTY_32KHZ;
+            RTC_WriteFout(&fout);
+        }
     }
     // リセット、電源投入、電源電圧低下、ICテストの各フラグを確認
     if ( stat1.reset || stat1.poc || stat1.bld || stat2.test )
