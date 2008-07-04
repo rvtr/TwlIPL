@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
@@ -21,7 +21,7 @@
 // なぜかバッファサイズが256byteを超えると出力が欠けるようになる
 // ダンプを見ると、OS_TPrintf()呼び出し時にもバッファにはちゃんと格納されている模様
 // 原因は現在調査中
-#define BUFSIZE 250
+#define BUFSIZE 128
  
 void VBlankIntr(void);
 
@@ -60,17 +60,25 @@ void TwlMain( void )
 		// ログファイルの中身を出力
 		FSFile file;
 		char buf[BUFSIZE+1];
+		int numEntry = 0;
+		int totalSize = 0, nowSize = 0;
 		buf[BUFSIZE] = '\0';
 		
 		FS_InitFile( &file );
 		FS_OpenFileEx( &file, "nand:/sys/log/sysmenu.log", FS_FILEMODE_R );
 		
-		while( FS_ReadFile( &file, buf, BUFSIZE ) == BUFSIZE )
+		while( ( nowSize = FS_ReadFile( &file, buf, BUFSIZE ) ) == BUFSIZE )
 		{
 			OS_TPrintf("%s",buf);
+			numEntry++;
+			totalSize += nowSize;
 		}
 		
 		OS_TPrintf("%s\n",buf);
+		totalSize += nowSize;
+		
+		OS_TPrintf("num entry : %d\n", numEntry );
+		OS_TPrintf("total Size : %d\n", totalSize);
 	}
 		 
 	OS_TPrintf( "*** End of demo\n" ); 
