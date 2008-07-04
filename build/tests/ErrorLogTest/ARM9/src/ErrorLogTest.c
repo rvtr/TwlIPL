@@ -69,9 +69,18 @@ void TwlMain( void )
 		
 		while( ( nowSize = FS_ReadFile( &file, buf, BUFSIZE ) ) == BUFSIZE )
 		{
+			char *p = buf;
+			
 			OS_TPrintf("%s",buf);
-			numEntry++;
 			totalSize += nowSize;
+			
+			while( (p = STD_SearchChar(p, '#')) != NULL)
+			{
+				// '#'‚ªo‚Ä‚«‚½‰ñ”‚¾‚¯ƒGƒ“ƒgƒŠ”‚ğ‘‚â‚·
+				numEntry++;
+				p++;
+			}
+			
 		}
 		
 		OS_TPrintf("%s\n",buf);

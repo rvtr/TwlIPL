@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 // Fatal error発生時に"nand:/sys/log/sysmenu.log"にログを吐くためのライブラリ
@@ -235,7 +235,7 @@ CheckStatus ELi_CheckAndCreateFile( FSFile *file, const char *path )
 		char nullbuf[1024];
 		int i;
 
-		memset( nullbuf, '\0', 1024);
+		MI_CpuClear8( nullbuf, 1024);
 		
 		for(i = 0; i < 16; i++)
 		{
@@ -262,25 +262,27 @@ CheckStatus ELi_CheckAndCreateFile( FSFile *file, const char *path )
 
 int ELi_ReadEntry( FSFile *file, ErrorLogEntry *entry )
 {
-	char buf[ERRORLOG_BUFSIZE];
+	char buf[ERRORLOG_BUFSIZE+1];
 	int numEntry = 0;
-	FS_SeekFileToBegin( file );
 	
+	buf[ERRORLOG_BUFSIZE] = '\0';
+	
+	FS_SeekFileToBegin( file );
 	FS_ReadFile( file, buf, ERRORLOG_BUFSIZE );
 
 	// エントリの頭には必ず'#'が書き込まれているのでそれで判定	
 	while( buf[0] == '#' )
 	{
 		// 決められたファイルフォーマットからエントリに読み込む
-		sscanf( buf, ERRORLOG_READ_FORMAT, 
-				&(entry[numEntry].year) ,
-				&(entry[numEntry].month) ,
-				&(entry[numEntry].day) ,
-				&(entry[numEntry].week) ,
-				&(entry[numEntry].hour) ,
-				&(entry[numEntry].minute) ,
-				&(entry[numEntry].second) ,
-				&(entry[numEntry].errorCode)  );
+		STD_TSScanf( buf, ERRORLOG_READ_FORMAT, 
+					&(entry[numEntry].year) ,
+					&(entry[numEntry].month) ,
+					&(entry[numEntry].day) ,
+					&(entry[numEntry].week) ,
+					&(entry[numEntry].hour) ,
+					&(entry[numEntry].minute) ,
+					&(entry[numEntry].second) ,
+					&(entry[numEntry].errorCode)  );
 
 		numEntry++;
 
@@ -306,10 +308,10 @@ int ELi_ReadEntry( FSFile *file, ErrorLogEntry *entry )
 
 BOOL ELi_SetString( char *buf, ErrorLogEntry *entry )
 {
-	snprintf(buf, ERRORLOG_BUFSIZE, ERRORLOG_WRITE_FORMAT, 
-				entry->year, entry->month, entry->day, entry->week,
-				entry->hour, entry->minute, entry->second,
-				entry->errorCode, s_strError[entry->errorCode] );
+	STD_TSNPrintf(buf, ERRORLOG_BUFSIZE, ERRORLOG_WRITE_FORMAT, 
+					entry->year, entry->month, entry->day, entry->week,
+					entry->hour, entry->minute, entry->second,
+					entry->errorCode, s_strError[entry->errorCode] );
 	
 	// 余りをスペースで埋めて、改行で終端する
 	ELi_fillSpace( buf, ERRORLOG_BUFSIZE );
@@ -388,7 +390,7 @@ BOOL ELi_WriteLog( FSFile *file ,ErrorLogEntry *entry, int num, u64 err )
 
 	// ファイルの余りを0埋めする
 	// open modeがサイズ固定なのでファイル終端を気にせず書き込む
-	memset( buf, '\0', ERRORLOG_BUFSIZE );
+	MI_CpuClear8( buf, ERRORLOG_BUFSIZE );
 	while ( FS_WriteFile( file, buf, (s32) ERRORLOG_BUFSIZE ) == ERRORLOG_BUFSIZE ) {};
 
 	
@@ -407,7 +409,7 @@ void ELi_fillSpace( char *buf, int bufsize )
 	// エントリの末尾にスペースを入れて
 	// 一つのエントリがちょうど128バイトになるように辻褄を合わせる
 	u32 length = strlen( buf );
-	memset( &buf[length], ' ', bufsize - length );	
+	MI_CpuFill8( &buf[length], ' ', bufsize - length );	
 }
 
 static char *s_strWeek[] = {
