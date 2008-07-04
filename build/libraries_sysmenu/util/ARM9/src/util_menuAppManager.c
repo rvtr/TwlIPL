@@ -37,7 +37,6 @@ static void AMN_initNandTitleList_();
 static void AMN_lockSubBannerFileBuffer();
 static void AMN_unlockSubBannerFileBuffer();
 
-static BOOL AMN_checkBannerFile(TWLBannerFile* pBanner);
 static u32  AMN_getBannerAnimeCRC(const BannerAnime* pAnime);
 static BOOL AMN_checkAndReplaceBannerAnime(s32 index);
 
@@ -1020,7 +1019,7 @@ const u16* AMN_getBannerText(s32 index)
 
 // see also SYSMi_CheckBannerFile()
 // バナーデータの正誤チェック
-static BOOL AMN_checkBannerFile(TWLBannerFile* pBanner)
+BOOL AMN_checkBannerFile(TWLBannerFile* pBanner)
 {
 typedef struct BannerCheckParam {
 	u8		*pSrc;

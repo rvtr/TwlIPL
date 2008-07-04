@@ -33,7 +33,6 @@
 #include <sysmenu/memorymap.h>
 #include <sysmenu/hotsw.h>
 #include <sysmenu/sharedFont.h>
-#include <sysmenu/banner.h>
 #include <sysmenu/util.h>
 #include <sysmenu/WDSWrapper.h>
 #include <sysmenu/types.h>

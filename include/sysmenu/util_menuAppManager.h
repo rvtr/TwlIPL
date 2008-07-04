@@ -85,6 +85,8 @@ BOOL            AMN_isAgreeEULAFlag(s32 index);
 // info size is cParentalControlRatingInfoSize
 const u8*       AMN_getParentalControlRatingInfo(s32 index);
 
+BOOL AMN_checkBannerFile(TWLBannerFile* pBanner);
+
 // 生データ（TitlePropertyのリスト、HeaderShortリスト）にアクセスできる抜け道関数
 TitleProperty* AMN_getTitlePropertyList( void );
 ROM_Header_Short* AMN_getRomHeaderList( void );

@@ -19,9 +19,9 @@
 #include <sysmenu.h>
 #include <firm/format/from_firm.h>
 #include <firm/hw/ARM9/mmap_firm.h>
+#include <sysmenu/util_menuAppManager.h>
 #include "internal_api.h"
 #include "fs_wram.h"
-#include <sysmenu/util_menuAppManager.h>
 
 // define data-----------------------------------------------------------------
 
@@ -357,7 +357,7 @@ BOOL SYSMi_CopyCardBanner( void )
 			DC_InvalidateRange( (void *)SYSM_CARD_BANNER_BUF, 0x3000 );
 			MI_CpuCopyFast( (void *)SYSM_CARD_BANNER_BUF, pBanner, sizeof(TWLBannerFile) );
 		}
-		retval = BANNER_CheckBanner( pBanner );
+		retval = AMN_checkBannerFile( pBanner );
 		
 		if( !retval ) {
 			MI_CpuClearFast( pBanner, sizeof(TWLBannerFile) );

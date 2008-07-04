@@ -75,7 +75,7 @@ MISC_DIR				=	../../misc
 BG_DIR					=	../../data
 
 SRCS_LOGO				=	logoDemo.c logoData.c
-SRCS					=	main.c launcher.c sound.c bannerCounter.c loadWlanFirm.c \
+SRCS					=	main.c launcher.c sound.c loadWlanFirm.c \
 							loadSharedFont.c scanWDS.c loadSysmVersion.c \
 							$(addprefix $(LOGO_DIR)/, $(SRCS_LOGO)) \
 							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c \
@@ -89,10 +89,9 @@ LINCLUDES				=	$(MISC_DIR)/include \
 
 SYSMENU_LIBS			=	\
 							liblcfg$(TWL_LIBSUFFIX).a \
+							libsysmutil$(TWL_LIBSUFFIX).a \
 							libsysmenu$(TWL_LIBSUFFIX).a \
 							libsysmmcu$(TWL_LIBSUFFIX).a \
-							libsysmutil$(TWL_LIBSUFFIX).a \
-							libbanner$(TWL_LIBSUFFIX).a \
 							libboot$(TWL_LIBSUFFIX).a \
 							libds$(TWL_LIBSUFFIX).a \
 							libhotsw$(TWL_LIBSUFFIX).a \

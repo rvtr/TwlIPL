@@ -31,7 +31,6 @@ SUBDIRS			=		reloc_info \
 						mcu \
 						ds \
 						sharedFont \
-						banner \
 						util \
 						dht \
 						wds \
