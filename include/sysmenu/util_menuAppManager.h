@@ -1,7 +1,20 @@
-/*!
-  @file menuAppManager.h
-  @brief アプリマネージャ
- */
+/*---------------------------------------------------------------------------*
+  Project:  TwlIPL
+  File:     util_menuAppManager.h
+
+  Copyright 2007 Nintendo.  All rights reserved.
+
+  These coded instructions, statements, and computer programs contain
+  proprietary information of Nintendo of America Inc. and/or Nintendo
+  Company Ltd., and are protected by Federal copyright law.  They may
+  not be disclosed to third parties or copied or duplicated in any form,
+  in whole or in part, without the prior written consent of Nintendo.
+
+  $Date::            $
+  $Rev$
+  $Author$
+ *---------------------------------------------------------------------------*/
+
 #ifndef MENU_APP_MANAGER_H_
 #define MENU_APP_MANAGER_H_
 
@@ -10,13 +23,9 @@
 #include <twl/os/common/banner.h>
 #include <twl/lcfg.h>
 #include <../build/libraries/os/common/include/application_jump_private.h>
+
+#include <sysmenu/sysmenu_lib/common/sysmenu_api.h>
 // see also TwlIPL_RED/include/sysmenu/sysmenu_lib/common/sysmenu_api.h
-// タイトル情報
-typedef struct AMNTitleProperty {			// この情報は、ランチャー時には認証通ってないけど、起動時には認証通すので大丈夫だろう。
-	NAMTitleId			titleID;		// タイトルID（TitleID_Hiで起動メディアは判定できる？）
-	LauncherBootFlags	flags;			// ブート時のランチャー動作フラグ
-	TWLBannerFile		*pBanner;		// バナーへのポインタ（固定長フォーマットなら偽造されても大丈夫だろう。)
-}AMNTitleProperty;
 
 typedef struct AMNBannerCounter
 {
@@ -37,15 +46,16 @@ AMNFrameAnimeData;
 
 // アプリマネージャ
 
-void AMN_Manager( );
-
 void AMN_init( void *(*pAlloc)(u32), void (*pFree)(void*) );
 void AMN_restart();
+void AMN_restartWithReadNandTitle();
+void AMN_restartWithReadNandTitleHeaderShort();
 void AMN_destroy();
 
 BOOL AMN_isNandTitleListReady();
 s32 AMN_getNandTitleListLengthForLauncher();
 s32 AMN_getCardTitleListLength();
+s32 AMN_getRomHeaderListLength();
 
 // 本体設定の場合、アプリマネージャ用indexは飛び飛びになったり、
 // ForSetting()が返す値(個数)より大きくなるので
@@ -59,31 +69,8 @@ NAMTitleId  AMN_getTitleIdByIndex(s32 index);
 void            AMN_stepBannerAnimeAll(BOOL restart);
 void            AMN_stepBannerAnime(s32 index, BOOL restart);
 
-// see also TwlSDK/include/twl/os/common/format_rom.h
-// 0x1BF - TWL expansion flags
-typedef union {
-    u8      packed;
-    struct {
-        u8      codec_mode:1;                   // 0:NTR mode, 1:TWL mode       // undeveloped
-        u8      otherParentalControls:1;        // 1: Enable OtherParentalControls
-        u8      subBannerFile:1;                // 1: Enable subBannerFile
-        u8      WiFiConnectionIcon :1;          // 1: WiFiConnectionをランチャーで表示
-        u8      DSWirelessIcon :1;              // 1: DSWirelessIconをランチャーで表示
-        u8      game_card_on :1;                // 1: NANDアプリでゲームカード電源ON（ノーマルモード）
-        u8      enable_nitro_whitelist_signature :1; // 1: NITROホワイトリスト署名有効フラグ
-        u8      rsv:1;
-    };
-} ExpansionFlags;
-enum {
-    // 0x02f0 - 0x0300 Parental Controls Rating Info
-    cParentalControlRatingInfoSize = 0x10
-};
-typedef struct {
-    AMNTitleProperty   prop;
-    u8              parental_control_rating_info[ cParentalControlRatingInfoSize ];
-    ExpansionFlags  expansionFlags;
-} AppInfo;
-const AppInfo*  AMN_getAppInfo(s32 index);
+const TitleProperty*  AMN_getTitleProperty(s32 index);
+const ROM_Header_Short*  AMN_getTitleRomHeaderShort(s32 index);
 
 const u8*       AMN_getBannerImage(s32 index);
 const u8*       AMN_getBannerPltt(s32 index);
@@ -95,9 +82,13 @@ const u16*      AMN_getBannerText2(s32 index, OSLanguage language);
 
 BOOL            AMN_isDSWirelessIcon(s32 index);
 BOOL            AMN_isWiFiConnectionIcon(s32 index);
-BOOL            AMN_isOtherParentalControlsFlag(s32 index);
+BOOL            AMN_isAgreeEULAFlag(s32 index);
 // info size is cParentalControlRatingInfoSize
 const u8*       AMN_getParentalControlRatingInfo(s32 index);
+
+// 生データ（TitlePropertyのリスト、HeaderShortリスト）にアクセスできる抜け道関数
+TitleProperty* AMN_getTitlePropertyList( void );
+ROM_Header_Short* AMN_getRomHeaderList( void );
 
 enum {
     // アプリマネージャ用タイトルindexは、0から始まり非負です。

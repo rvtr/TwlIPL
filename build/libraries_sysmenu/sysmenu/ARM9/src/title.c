@@ -21,6 +21,7 @@
 #include <firm/hw/ARM9/mmap_firm.h>
 #include "internal_api.h"
 #include "fs_wram.h"
+#include <sysmenu/util_menuAppManager.h>
 
 // define data-----------------------------------------------------------------
 
@@ -84,7 +85,6 @@ typedef struct CalcSHA1CallbackArg
 extern const u8 g_devPubKey[ 4 ][ 0x80 ];
 
 // function's prototype-------------------------------------------------------
-static s32  ReadFile( FSFile* pf, void* buffer, s32 size );
 
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle );
 static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle );
@@ -95,7 +95,7 @@ static BOOL SYSMi_AuthenticateHeader( TitleProperty *pBootTitle, ROM_Header *hea
 // static variable-------------------------------------------------------------
 static OSThread			s_thread;
 static OSThread			s_auth_thread;
-static TWLBannerFile	s_bannerBuf[ LAUNCHER_TITLE_LIST_NUM ] ATTRIBUTE_ALIGN(32);
+static TWLBannerFile	s_card_bannerBuf;
 
 static MbAuthCode s_authcode;
 
@@ -107,15 +107,11 @@ static BOOL				s_loadForcibly = FALSE;
 static OSMessageQueue	s_msgQ;
 static OSMessage		s_msgArray[SYSM_TITLE_MESSAGE_ARRAY_MAX];
 
-static TitleListMakerInfo *s_pTitleListMakerInfo = NULL;
-static NAMTitleId *s_pTitleIDList = NULL;
 static int s_listLength = 0;
 
 static u8 *s_calc_hash = NULL;
 static BOOL s_b_dev = FALSE;
 static BOOL s_result_phase1 = FALSE;
-
-static BOOL s_nand_title_list_maker_info_enabled = FALSE;
 
 static u8 dht_buffer[DS_HASH_TABLE_SIZE] ATTRIBUTE_ALIGN(256);
 static DHTFile *const dht = (DHTFile*)dht_buffer;
@@ -276,14 +272,15 @@ static inline u16 SCFG_GetBondingOption(void)
 // ============================================================================
 
 // カードタイトルの取得
-BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
+TitleProperty *SYSM_GetCardTitleList( BOOL *changed )
 {
-	BOOL retval = FALSE;
+	TitleProperty *pTitleList_Card = AMN_getTitlePropertyList();
+	if(changed) *changed = FALSE;
 	
 	if(s_loadstart)
 	{
 		// ロード開始していたら、もうヘッダやタイトル情報は変更しない
-		return retval;
+		return pTitleList_Card;
 	}
 	// [TODO:] ROMヘッダの platform_code がNTR,TWL-HYB,TWL-LTD以外のもの
 	//                     region_codeが本体情報と違うもの
@@ -304,20 +301,17 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 			// バナーデータのリード
 			(void)SYSMi_CopyCardBanner();
 			
-			pTitleList_Card->pBanner = &s_bannerBuf[ CARD_BANNER_INDEX ];
+			pTitleList_Card->pBanner = &s_card_bannerBuf;
+			AMN_stepBannerAnime(0, TRUE); // バナーカウンタセットしなおし
 			pTitleList_Card->flags.isValid = TRUE;
 			pTitleList_Card->flags.isAppLoadCompleted = FALSE;
 			pTitleList_Card->flags.isAppRelocate = TRUE;
-			pTitleList_Card->sub_info.exFlags = SYSM_GetCardRomHeader()->exFlags;
-			pTitleList_Card->sub_info.platform_code = SYSM_GetCardRomHeader()->platform_code;
-			MI_CpuCopy8( SYSM_GetCardRomHeader()->parental_control_rating_info, pTitleList_Card->sub_info.parental_control_rating_info, 0x10);
-			pTitleList_Card->sub_info.card_region_bitmap = SYSM_GetCardRomHeader()->card_region_bitmap;
-			pTitleList_Card->sub_info.agree_EULA_version = SYSM_GetCardRomHeader()->agree_EULA_version;
+			MI_CpuCopy8( SYSM_GetCardRomHeader(), AMN_getRomHeaderList(), sizeof(ROM_Header_Short) );
 		}else {
 			// ROMヘッダのクリア
 			MI_CpuClearFast( (void *)SYSM_APP_ROM_HEADER_BUF, SYSM_APP_ROM_HEADER_SIZE );
 			// バナーデータのクリア
-			MI_CpuClearFast( &s_bannerBuf[ CARD_BANNER_INDEX ], sizeof(TWLBannerFile) );
+			MI_CpuClearFast( &s_card_bannerBuf, sizeof(TWLBannerFile) );
 		}
 		
 		SYSMi_GetWork()->flags.hotsw.isCardStateChanged = FALSE;							// カード情報更新フラグを落とす
@@ -327,10 +321,10 @@ BOOL SYSM_GetCardTitleList( TitleProperty *pTitleList_Card )
 		// タイトル情報フラグのセット
 		pTitleList_Card->flags.bootType = LAUNCHER_BOOTTYPE_ROM;
 		pTitleList_Card->titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
-		retval = TRUE;
+		if(changed) *changed = TRUE;
 	}
 	
-	return retval;
+	return pTitleList_Card;
 }
 
 // カードROMヘッダのARM7バッファからARM9バッファへのコピー
@@ -358,7 +352,7 @@ BOOL SYSMi_CopyCardBanner( void )
 
 	if( SYSM_IsExistCard() ) {
 		// バナーデータのコピー
-		TWLBannerFile *pBanner = &s_bannerBuf[ CARD_BANNER_INDEX ];
+		TWLBannerFile *pBanner = &s_card_bannerBuf;
 		if( SYSMi_GetWork()->flags.hotsw.isValidCardBanner ) {
 			DC_InvalidateRange( (void *)SYSM_CARD_BANNER_BUF, 0x3000 );
 			MI_CpuCopyFast( (void *)SYSM_CARD_BANNER_BUF, pBanner, sizeof(TWLBannerFile) );
@@ -373,249 +367,32 @@ BOOL SYSMi_CopyCardBanner( void )
 	return retval;
 }
 
-
-// インポートされているすべてのNANDアプリを列挙したリストの準備
-// SYSM_GetNandTitleListおよびSYSM_GetNandTitleListMakerInfo前に呼ぶ必要あり
-BOOL SYSM_InitNandTitleList( void )
+void SYSM_InitTitleList( void )
 {
-	OSTick start;
-
-	if( s_pTitleIDList != NULL ) return TRUE;
-
-	// インポートされているタイトルの取得
-	start = OS_GetTick();
-	s_listLength = NAM_GetNumTitles();
-	OS_TPrintf( "NAM_GetNumTitles : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
-	s_pTitleIDList = SYSM_Alloc( sizeof(NAMTitleId) * s_listLength );
-	s_pTitleListMakerInfo = SYSM_Alloc( sizeof(TitleListMakerInfo) * s_listLength );
-	if( s_pTitleIDList == NULL || s_pTitleListMakerInfo == NULL ) {
-		OS_TPrintf( "%s: alloc error.\n", __FUNCTION__ );
-		return FALSE;
-	}
-	start = OS_GetTick();
-	(void)NAM_GetTitleList( s_pTitleIDList, (u32)s_listLength );
-	OS_TPrintf( "NAM_GetTitleList : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
-	
-	return TRUE;
+	AMN_init( SYSM_Alloc, SYSM_Free );
 }
 
-// NANDアプリリストの解放
-void SYSM_FreeNandTitleList( void )
-{
-	if( s_pTitleIDList != NULL)
-	{
-		SYSM_Free( s_pTitleIDList );
-		s_pTitleIDList = NULL;
-	}
-	if(s_pTitleListMakerInfo != NULL )
-	{
-		SYSM_Free( s_pTitleListMakerInfo );
-		s_pTitleListMakerInfo = NULL;
-	}
-}
-
-static BOOL MakeTitleListMakerInfoFromTitleID( TitleListMakerInfo *info, OSTitleId titleID )
-{
-	ROM_Header_Short e_hs;
-	FSFile  file[1];
-	char path[256];
-	BOOL bSuccess;
-	s32 readLen;
-#if (MEASURE_MAKELIST_TIME == 1)
-	OSTick prev;
-#endif
-	
-	// 無効なTitleIDはスキップ
-	if( titleID == NULL)
-	{
-		return FALSE;
-	}
-	
-	// DataOnlyはTADからメーカーコードを読み出し、他の情報はOFFでリスト登録
-	if( titleID & TITLE_ID_DATA_ONLY_FLAG_MASK )
-	{
-		int l;
-		NAMTitleInfo naminfo;
-		// この関数で得られる情報は無検証なので改ざんの可能性があるが、メーカーコードのみの判定なので、速度を優先する。(2008.06.20吉岡)
-		// （Fastつけないと一回300msぐらいかかる）
-		NAM_ReadTitleInfoFast( &naminfo, titleID );
-		for(l=0;l<MAKER_CODE_MAX;l++)
-		{
-			info->makerCode[l] = ((char *)&naminfo.companyCode)[l];
-			//OS_TPrintf("companyCode[%d]::::%c\n",l,((char *)&naminfo.companyCode)[l]);
-		}
-		info->public_save_data_size = 0;
-		info->private_save_data_size = 0;
-		info->permit_landing_normal_jump = FALSE;
-		return TRUE;
-	}
-	
-	// romヘッダ読み込み
-#if (MEASURE_MAKELIST_TIME == 1)
-	// 時間計測１
-	prev = OS_GetTick();
-#endif
-
-	NAM_GetTitleBootContentPathFast(path, titleID);
-
-#if (MEASURE_MAKELIST_TIME == 1)
-	OS_TPrintf("SYSMi_makeTitleIdList : NAM_GetTitleBootContentPathFast %dms\n",OS_TicksToMilliSeconds(OS_GetTick() - prev));
-	// end時間計測１
-	
-	// 時間計測２
-	prev = OS_GetTick();
-#endif
-
-	FS_InitFile( file );
-    bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
-	if( ! bSuccess )
-	{
-		OS_TPrintf("SYSMi_makeTitleIdList failed: cant open file(%s)\n",path);
-	    FS_CloseFile(file);
-	    return FALSE;
-	}
-	bSuccess = FS_SeekFile(file, 0x00000000, FS_SEEK_SET);
-	if( ! bSuccess )
-	{
-		OS_TPrintf("SYSMi_makeTitleIdList failed: cant seek file(0)\n");
-	    FS_CloseFile(file);
-	    return FALSE;
-	}
-	readLen = FS_ReadFile(file, &e_hs, (s32)sizeof(e_hs));
-	if( readLen != (s32)sizeof(e_hs) )
-	{
-	OS_TPrintf("SYSMi_makeTitleIdList failed: cant read file(%p, %d, %d, %d)\n", e_hs, 0, sizeof(e_hs), readLen);
-	    FS_CloseFile(file);
-	    return FALSE;
-	}
-	FS_CloseFile(file);
-	// end時間計測２
-#if (MEASURE_MAKELIST_TIME == 1)
-	OS_TPrintf("SYSMi_makeTitleIdList : read header. %dms\n",OS_TicksToMilliSeconds(OS_GetTick() - prev));
-#endif
-	
-	return SYSM_MakeTitleListMakerInfoFromHeader( info, &e_hs);
-}
-
-// SYSM_InitNandTitleListを事前に呼ぶ必要あり
-// この関数か、SYSM_GetNandTitleListのどちらかをSYSM_TryToBootTitle前に呼ぶ必要あり
+// SYSM_InitTitleListを事前に呼ぶ必要あり
 void SYSM_GetNandTitleListMakerInfo( void )
 {
-	int l;
-	
-	if( s_pTitleIDList == NULL || s_pTitleListMakerInfo == NULL )
-	{
-		OS_TPrintf("SYSM_GetNandTitleListMakerInfo failed : SYSM_InitNandTitleList() is not called.");
-		return;
+	AMN_restartWithReadNandTitleHeaderShort();
+	while (!AMN_isNandTitleListReady()) {
+	    OS_Sleep(1);
 	}
-	
-	for( l = 0; l < s_listLength; l++ ) {
-		MakeTitleListMakerInfoFromTitleID( &s_pTitleListMakerInfo[l], s_pTitleIDList[ l ] );
-	}
-	
-	s_nand_title_list_maker_info_enabled = TRUE;
 }
 
 // ローンチ対象となるNANDタイトルリストの取得
-// listNumには、pTitleList_Nandの長さを与える
-// 得られる最大のタイトル数は、(LAUNCHER_TITLE_LIST_NUM - 1)に制限される（ランチャーが表示できる最大数からカードぶんを引いた数）
-// SYSM_InitNandTitleListを事前に呼ぶ必要あり
-// この関数か、SYSM_GetNandTitleListMakerInfoのどちらかをSYSM_TryToBootTitle前に呼ぶ必要あり
-// return:取得したNANDタイトルの数
-int SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int listNum )
+// SYSM_InitTitleListを事前に呼ぶ必要あり
+// return:Titleリストのポインタ
+TitleProperty *SYSM_GetNandTitleList( void )
 {
 															// filter_flag : ALL, ALL_APP, SYS_APP, USER_APP, Data only, 等の条件を指定してタイトルリストを取得する。
-	// とりあえずALL
-	int l;
-	int validNum = 0;
-	
-	NAMTitleId titleIDArray[ LAUNCHER_TITLE_LIST_NUM - 1 ];// ローンチ可能なタイトルリストの一時置き場
-	static TitleListMakerInfo local_titleListMakerinfo[ LAUNCHER_TITLE_LIST_NUM - 1 ];// 苦肉の策
-	
-	if( s_pTitleIDList == NULL || s_pTitleListMakerInfo == NULL )
-	{
-		OS_TPrintf("SYSM_GetNandTitleList failed : SYSM_InitNandTitleList() is not called.");
-		return -1;
+	AMN_restartWithReadNandTitle();
+	while (!AMN_isNandTitleListReady()) {
+	    OS_Sleep(1);
 	}
-	
-	// 取得したタイトルがローンチ対象かどうかをチェック
-	for( l = 0; l < s_listLength; l++ ) {
-		// "Not Launch"でない　かつ　"Data Only"でない　なら有効なタイトルとしてリストに追加
-		if( ( s_pTitleIDList[ l ] & ( TITLE_ID_NOT_LAUNCH_FLAG_MASK | TITLE_ID_DATA_ONLY_FLAG_MASK ) ) == 0 ) {
-			titleIDArray[ validNum ] = s_pTitleIDList[ l ];
-			BANNER_ReadBannerFromNAND( s_pTitleIDList[ l ], &s_bannerBuf[ validNum ], &s_pTitleListMakerInfo[l] );
-			local_titleListMakerinfo[validNum] = s_pTitleListMakerInfo[l];
-			validNum++;
-			if( !( validNum < LAUNCHER_TITLE_LIST_NUM - 1 ) )// 最大(LAUNCHER_TITLE_LIST_NUM - 1)まで
-			{
-				break;
-			}
-		}else
-		{
-			MakeTitleListMakerInfoFromTitleID( &s_pTitleListMakerInfo[l], s_pTitleIDList[ l ] );
-		}
-	}
-	// 画面に表示できる以上のNANDタイトルが存在する場合、それらについてタイトルリスト作成用情報を生成
-	for( ; l<s_listLength; l++ )
-	{
-		MakeTitleListMakerInfoFromTitleID( &s_pTitleListMakerInfo[l], s_pTitleIDList[ l ] );
-	}
-	s_nand_title_list_maker_info_enabled = TRUE;
-	
-	// 念のため残り領域を0クリア
-	for( l = validNum; l < LAUNCHER_TITLE_LIST_NUM - 1; l++ ) {
-		titleIDArray[ l ] = 0;
-	}
-	
-	// 最終リストに対して、カードアプリ部分を除いた部分をクリア
-	MI_CpuClearFast( &pTitleList_Nand[ 1 ], sizeof(TitleProperty) * ( listNum - 1 ) );
-	
-	listNum--; // カードのぶん引いておく
-	
-	// 引数に与えられたリストの長さ-1 と、ローンチ可能タイトルリストの長さの比較
-	listNum = ( validNum < listNum ) ? validNum : listNum;
-	
-	for(l=0;l<listNum;l++)
-	{
-		pTitleList_Nand[l+1].titleID = titleIDArray[l];
-		pTitleList_Nand[l+1].pBanner = &s_bannerBuf[l];
-		if( titleIDArray[l] ) {
-			pTitleList_Nand[l+1].flags.isValid = TRUE;
-			pTitleList_Nand[l+1].flags.bootType = LAUNCHER_BOOTTYPE_NAND;
-			MI_CpuCopy8( &local_titleListMakerinfo[l].sub_info, &pTitleList_Nand[l+1].sub_info, sizeof(TitleInfoSub));
-		}
-	}
-	// return : *TitleProperty Array
-	return listNum;
+	return AMN_getTitlePropertyList();
 }
-
-// 指定ファイルリード
-static s32 ReadFile(FSFile* pf, void* buffer, s32 size)
-{
-    u8* p = (u8*)buffer;
-    s32 remain = size;
-
-    while( remain > 0 )
-    {
-        const s32 len = MATH_IMin(1024, remain);
-        const s32 readLen = FS_ReadFile(pf, p, len);
-
-        if( readLen < 0 )
-        {
-            return readLen;
-        }
-        if( readLen != len )
-        {
-            return size - remain + readLen;
-        }
-
-        remain -= readLen;
-        p      += readLen;
-    }
-
-    return size;
-}
-
 
 // ============================================================================
 //
@@ -1821,7 +1598,6 @@ void SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 	
 	// タイトルIDリストの作成
 	SYSMi_makeTitleIdList();
-	SYSM_FreeNandTitleList();
 	
 	BOOT_Ready();	// never return.
 	
@@ -1834,21 +1610,11 @@ static void SYSMi_makeTitleIdList( void )
 	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
 	int l;
 	u8 count = 0;
-	int max = ( s_listLength < OS_TITLEIDLIST_MAX-1 ) ? s_listLength : OS_TITLEIDLIST_MAX-1;
+	int max = AMN_getRomHeaderListLength();
 	OSTick start;
 	
 	// 時間計測総合
 	start = OS_GetTick();
-	if( s_pTitleIDList == NULL || s_pTitleListMakerInfo == NULL )
-	{
-		OS_TPrintf("SYSMi_makeTitleIdList failed: SYSM_InitNandTitleList() is not called.\n");
-		return;
-	}
-	
-	if( !s_nand_title_list_maker_info_enabled )
-	{
-		OS_TPrintf("SYSMi_makeTitleIdList failed: SYSM_GetNandTitleList or SYSM_GetNandTitleListMakerInfo is not called.\n");
-	}
 	
 	// とりあえずゼロクリア
 	MI_CpuClear8( (void *)HW_OS_TITLE_ID_LIST, HW_OS_TITLE_ID_LIST_SIZE );
@@ -1859,38 +1625,20 @@ static void SYSMi_makeTitleIdList( void )
 		return;
 	}
 
-	for(l=-1;l<max;l++) // -1はカードアプリの特別処理用
+	for(l=0;l<max;l++)
 	{
 		int m;
 		BOOL same_maker_code = TRUE;
 		char *gamecode;
-		TitleListMakerInfo *p_info;
-		TitleListMakerInfo info;
 		OSTitleId id;
+		ROM_Header_Short *pe_hs;
 
-		if(l==-1)
-		{
-			ROM_Header_Short *pe_hs;
-			// カードアプリ
-			if(SYSM_IsExistCard())
-			{
-				pe_hs = (ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BAK;// BAKの値を使う
-			}else
-			{
-				continue;
-			}
-			p_info = &info;
-			SYSM_MakeTitleListMakerInfoFromHeader( p_info, pe_hs);
-			id = pe_hs->titleID;
-		}else
-		{
-			p_info = &s_pTitleListMakerInfo[l];
-			id = s_pTitleIDList[l];
-		}
+		pe_hs = &((AMN_getRomHeaderList())[l]);
+		id = pe_hs->titleID;
 		
 		for(m=0;m<MAKER_CODE_MAX;m++)
 		{
-			if(hs->maker_code[m] != p_info->makerCode[m])
+			if(hs->maker_code[m] != pe_hs->maker_code[m])
 			{
 				same_maker_code = FALSE;
 			}
@@ -1922,7 +1670,7 @@ static void SYSMi_makeTitleIdList( void )
 		}
 		
 		// ジャンプ可能フラグON or ブートアプリ自身 or ジャンプ元アプリ ならばジャンプ可能
-		if( p_info->permit_landing_normal_jump || hs->titleID == id ||
+		if( pe_hs->permit_landing_normal_jump || hs->titleID == id ||
 			( SYSMi_GetWork()->flags.common.isValidLauncherParam && SYSM_GetLauncherParamBody()->v1.bootTitleID && ( SYSM_GetLauncherParamBody()->v1.prevTitleID == id ) )
 		  )
 		{
@@ -1935,11 +1683,11 @@ static void SYSMi_makeTitleIdList( void )
 		if( hs->titleID & TITLE_ID_SECURE_FLAG_MASK )
 		{
 			// Prv,Pubそれぞれセーブデータがあるか見て、存在すればフラグON
-			if(p_info->public_save_data_size != 0)
+			if(pe_hs->public_save_data_size != 0)
 			{
 				list->publicFlag[count/8] |= (u8)(0x1 << (count%8));
 			}
-			if(p_info->private_save_data_size != 0)
+			if(pe_hs->private_save_data_size != 0)
 			{
 				list->privateFlag[count/8] |= (u8)(0x1 << (count%8));
 			}
@@ -1951,13 +1699,13 @@ static void SYSMi_makeTitleIdList( void )
 			if( !(id & TITLE_ID_SECURE_FLAG_MASK) && same_maker_code )
 			{
 				// Prv,Pubそれぞれセーブデータがあるか見て、存在すればフラグON
-				if(p_info->public_save_data_size != 0)
+				if(pe_hs->public_save_data_size != 0)
 				{
 					list->publicFlag[count/8] |= (u8)(0x1 << (count%8));
 					// リストに追加
 					list->TitleID[count] = id;
 				}
-				if(p_info->private_save_data_size != 0)
+				if(pe_hs->private_save_data_size != 0)
 				{
 					list->privateFlag[count/8] |= (u8)(0x1 << (count%8));
 					// リストに追加
@@ -1975,28 +1723,6 @@ static void SYSMi_makeTitleIdList( void )
 	list->num = count;
 	// end時間計測総合
 	OS_TPrintf("SYSMi_makeTitleIdList : total %dms\n",OS_TicksToMilliSeconds(OS_GetTick() - start));
-}
-
-BOOL SYSM_MakeTitleListMakerInfoFromHeader( TitleListMakerInfo *info, ROM_Header_Short *hs)
-{
-	int l;
-	if( info == NULL || hs == NULL )
-	{
-		return FALSE;
-	}
-	for(l=0;l<MAKER_CODE_MAX;l++)
-	{
-		info->makerCode[l] = hs->maker_code[l];
-	}
-	info->public_save_data_size = hs->public_save_data_size;
-	info->private_save_data_size = hs->private_save_data_size;
-	info->permit_landing_normal_jump = ( hs->permit_landing_normal_jump ? TRUE : FALSE );
-	info->sub_info.exFlags = hs->exFlags;
-	info->sub_info.platform_code = hs->platform_code;
-	MI_CpuCopy8( hs->parental_control_rating_info, info->sub_info.parental_control_rating_info, 0x10);
-	info->sub_info.card_region_bitmap = hs->card_region_bitmap;
-	info->sub_info.agree_EULA_version = hs->agree_EULA_version;
-	return TRUE;
 }
 
 

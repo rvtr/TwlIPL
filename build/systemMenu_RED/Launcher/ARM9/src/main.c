@@ -49,7 +49,7 @@ static void PrintError(void);
 // global variable-------------------------------------------------------------
 
 // static variable-------------------------------------------------------------
-static TitleProperty s_titleList[ LAUNCHER_TITLE_LIST_NUM ];
+static TitleProperty *sp_titleList;
 
 static u64 s_strmThreadStack[THREAD_STACK_SIZE / sizeof(u64)];
 static OSThread s_strmThread;
@@ -268,16 +268,6 @@ void TwlMain( void )
     // 各種パラメータの取得------------
     pBootTitle = SYSM_ReadParameters();        // 本体設定データ、HW情報リード
 											   // アプリジャンプ、検査用カード起動、生産工程用ショートカット、デバッガ起動、初回起動シーケンス、TP設定ショートカットの判定
-	
-    // end時間計測１-c
-#if (MEASURE_TIME == 1)
-    OS_TPrintf( "SYSM_ReadParameters: %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
-#endif
-
-    // start時間計測２
-#if (MEASURE_TIME == 1)
-    start = OS_GetTick();
-#endif
     
     // TPキャリブレーション
 	UTL_CaribrateTP( LCFG_TSD_GetTPCalibrationPtr() );
@@ -293,8 +283,28 @@ void TwlMain( void )
         // ランチャー内での初回起動シーケンス中なら、写真撮影を実行するようにする。
 		// ※本体設定内での初会起動シーケンス中の場合は、SYSM_ReadParameters 内のチェックで検出されて、本体設定が起動されるようになっています。
     }
-	
-    (void)SYSM_GetCardTitleList( s_titleList );                 // カードアプリリストの取得（カードアプリはs_titleList[0]に格納される）
+
+    // end時間計測１-c
+#if (MEASURE_TIME == 1)
+    OS_TPrintf( "SYSM_ReadParameters: %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+#endif
+    
+    // start時間計測4
+#if (MEASURE_TIME == 1)
+    start = OS_GetTick();
+#endif
+    // タイトルリストの準備
+    SYSM_InitTitleList();
+    // end時間計測4
+#if (MEASURE_TIME == 1)
+    OS_TPrintf( "InitNandTitleList : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
+#endif
+
+    // start時間計測２
+#if (MEASURE_TIME == 1)
+    start = OS_GetTick();
+#endif
+    sp_titleList = SYSM_GetCardTitleList(NULL);                 // カードアプリリストの取得（カードアプリはsp_titleList[0]に格納される）
     // end時間計測２
 #if (MEASURE_TIME == 1)
     OS_TPrintf( "GetCardTitleList Time : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
@@ -311,17 +321,6 @@ void TwlMain( void )
     OS_TPrintf( "TmpClean : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 #endif
 
-    // start時間計測4
-#if (MEASURE_TIME == 1)
-    start = OS_GetTick();
-#endif
-    // NANDタイトルリストの準備
-    SYSM_InitNandTitleList();
-    // end時間計測4
-#if (MEASURE_TIME == 1)
-    OS_TPrintf( "InitNandTitleList : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
-#endif
-
     // start時間計測5
 #if (MEASURE_TIME == 1)
     start = OS_GetTick();
@@ -329,7 +328,7 @@ void TwlMain( void )
     // 「ダイレクトブートでない」なら
     if( !pBootTitle ) {
         // NAND & カードアプリリスト取得
-        (void)SYSM_GetNandTitleList( s_titleList, LAUNCHER_TITLE_LIST_NUM );    // NANDアプリリストの取得（内蔵アプリはs_titleList[1]から格納される）
+        sp_titleList = SYSM_GetNandTitleList();    // NANDアプリリストの取得（内蔵アプリはsp_titleList[1]から格納される）
     }else
     {
 		SYSM_GetNandTitleListMakerInfo();	// 	アプリに引き渡すタイトルリスト作成用情報の取得
@@ -477,11 +476,11 @@ MAIN_LOOP_START:
             }
             break;
         case LAUNCHER_INIT:
-            LauncherInit( s_titleList );
+            LauncherInit( NULL );
             state = LAUNCHER;
             break;
         case LAUNCHER:
-            pBootTitle = LauncherMain( s_titleList );
+            pBootTitle = LauncherMain( sp_titleList );
             if( pBootTitle ) {
                 state = LOAD_START;
             }
@@ -513,7 +512,7 @@ MAIN_LOOP_START:
             }
             if( !direct_boot )
             {
-                (void)LauncherFadeout( s_titleList ); // ダイレクトブートでないときはフェードアウトも行う
+                (void)LauncherFadeout( sp_titleList ); // ダイレクトブートでないときはフェードアウトも行う
             }
             if( ( end == 0 ) &&
                 SYSM_IsLoadTitleFinished() ) {
@@ -530,7 +529,7 @@ MAIN_LOOP_START:
 			}
             break;
         case AUTHENTICATE:
-            if( ( direct_boot || ( !direct_boot && LauncherFadeout( s_titleList ) ) ) &&
+            if( ( direct_boot || ( !direct_boot && LauncherFadeout( sp_titleList ) ) ) &&
                 SYSM_IsAuthenticateTitleFinished()
 				) {
 				// メインループ開始から検証終了までの間に起きたFATALの処理
@@ -568,8 +567,13 @@ MAIN_LOOP_START:
         }
 
         // カードアプリリストの取得（スレッドで随時カード挿抜を通知されるものをメインループで取得）
-		if( SYSM_GetCardTitleList( s_titleList ) ) {
-			OS_TPrintf( "Change CARD status.\n" );
+        {
+	        BOOL changed;
+	        sp_titleList = SYSM_GetCardTitleList( &changed );
+	        if( changed )
+	        {
+				OS_TPrintf( "Change CARD status.\n" );
+			}
 		}
 
         // 無線ファームロードのポーリング
@@ -633,7 +637,7 @@ static BOOL IsCommandSelected(void)
 
 static void PrintPause(void)
 {
-	LauncherInit( s_titleList );
+	LauncherInit( NULL );
 	GX_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	G2_ChangeBlendAlpha( 0, 31 );
@@ -651,7 +655,7 @@ static void PrintError( void )
 	u64 error_code;
 	int l;
 	int count = 0;
-	LauncherInit( s_titleList );
+	LauncherInit( NULL );
 	GX_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	G2_ChangeBlendAlpha( 0, 31 );

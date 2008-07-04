@@ -18,10 +18,10 @@
 #include <twl.h>
 #include "misc.h"
 #include "launcher.h"
-#include "bannerCounter.h"
 #include "sound.h"
 #include <math.h>
 #include <sysmenu/mcu.h>
+#include <sysmenu/util_menuAppManager.h>
 
 
 // define data------------------------------------------
@@ -81,7 +81,6 @@ static void LoadBannerFiles( void );
 static void BannerInit( void );
 static void SetDefaultBanner( TitleProperty *titleprop );
 static void SetAffineAnimation( BOOL (*flipparam)[4] );
-static void SetBannerCounter( TitleProperty *titleprop );
 static void SetOAMAttr( void );
 static void BannerDraw( int selected, TitleProperty *titleprop);
 static BOOL SelectCenterFunc( u16 *csr, TPData *tgt );
@@ -110,7 +109,6 @@ static int selected = 0;
 static int bar_left = BAR_ZERO_X;
 static fx32 s_selected_banner_size;
 static BOOL s_wavstop = FALSE;
-static BannerCounter banner_counter[LAUNCHER_TITLE_LIST_NUM];
 
 static BOOL s_launcher_initialized = FALSE;
 
@@ -148,12 +146,6 @@ static void BannerInit( void )
 	
 	// OBJModeの設定
     GX_SetOBJVRamModeChar(GX_OBJVRAMMODE_CHAR_1D_128K);     // 2D mapping mode
-    
-    // BannerCounterの初期化
-    for( l=0; l<LAUNCHER_TITLE_LIST_NUM; l++ )
-    {
-		BNC_initCounter( &banner_counter[l], empty_banner);
-	}
 	
 	//OBJATTRの初期化……表示前には値を弄る
 	for(l=0;l<MAX_SHOW_BANNER;l++)
@@ -192,10 +184,12 @@ static void SetDefaultBanner( TitleProperty *titleprop )
 			{
 				titleprop[l].pBanner = no_card_banner;
 			}
+			AMN_stepBannerAnime(l, TRUE); // バナーカウンタセットしなおし
 		}
 		else if(titleprop[l].pBanner == NULL) //isValidフラグがTRUEでバナーがNULLならノーバナー
 		{
 			titleprop[l].pBanner = nobanner_banner;
+			AMN_stepBannerAnime(l, TRUE); // バナーカウンタセットしなおし
 		}
 	}
 }
@@ -239,24 +233,6 @@ static void SetAffineAnimation( BOOL (*flipparam)[4] )
 	G2_SetOBJPosition(&banner_oam_attr[3], (int)x-( mtx._00==-FX32_ONE ? 1 : 0 ), (int)y-( mtx._11==-FX32_ONE ? 1 : 0 ));
 }
 
-static void SetBannerCounter( TitleProperty *titleprop )
-{
-	int l;
-	for( l=0; l<LAUNCHER_TITLE_LIST_NUM; l++ )
-	{
-		// nandも一応毎回セット
-		BNC_setBanner( &banner_counter[l], titleprop[l].pBanner);
-		if( l==0 )
-		{
-			// カードの場合、バナーヘッダのv1のCRCが違ったらカウントをリセット
-			if ( BNC_getBanner( &banner_counter[l] )->h.crc16_v1 != titleprop[l].pBanner->h.crc16_v1)
-			{
-				BNC_resetCount( &banner_counter[l] );
-			}
-		}
-	}
-}
-
 // OAMデータの設定
 static void SetOAMAttr( void )
 {
@@ -265,19 +241,19 @@ static void SetOAMAttr( void )
 	int div2 = s_csr % FRAME_PER_SELECT;
 	BOOL flipparam[4];
 
+	AMN_stepBannerAnimeAll(FALSE);
+	
 	for (l=0;l<MAX_SHOW_BANNER;l++)
 	{
 		int num = div1 - 2 + l;
 		if(-1 < num && num < LAUNCHER_TITLE_LIST_NUM){
-			// バナーカウンタからフレームデータを取得し、カウンタをインクリメント
-			FrameAnimeData fad = BNC_getFADAndIncCount( &banner_counter[num] );
 			
 		    // パレットのロード
-			GX_LoadOBJPltt( fad.pltt, (u16)(l * BANNER_PLTT_SIZE), BANNER_PLTT_SIZE );
+			GX_LoadOBJPltt( AMN_getBannerPltt(num), (u16)(l * BANNER_PLTT_SIZE), BANNER_PLTT_SIZE );
 			G2_SetOBJMode(&banner_oam_attr[l], GX_OAM_MODE_NORMAL, l);
 			
 			// バナー画像のロード
-			GX_LoadOBJ( fad.image, (u32)l*BANNER_IMAGE_SIZE , BANNER_IMAGE_SIZE);
+			GX_LoadOBJ( AMN_getBannerImage(num), (u32)l*BANNER_IMAGE_SIZE , BANNER_IMAGE_SIZE);
 
 			// 表示画像の設定、キャラクタネーム境界128バイトである事に注意
 			banner_oam_attr[l].charNo = l*4;
@@ -290,16 +266,16 @@ static void SetOAMAttr( void )
 				G2_SetOBJPosition(&banner_oam_attr[l],
 									BANNER_FAR_LEFT_POS - BANNER_WIDTH/2 + l*(BANNER_WIDTH + BANNER_INTERVAL) - div2 * DOT_PER_FRAME,
 									BANNER_TOP - BANNER_HEIGHT/2 );
-				flipparam[(l-2)*2] = fad.hflip;// フリップ情報は一旦保存
-				flipparam[(l-2)*2+1] = fad.vflip;
+				flipparam[(l-2)*2] = AMN_getBannerHFlip(num);// フリップ情報は一旦保存
+				flipparam[(l-2)*2+1] = AMN_getBannerVFlip(num);
 			}
 			else
 			{
 				// その他のバナー
 				GXOamEffect effect = GX_OAM_EFFECT_NONE;
-				if( fad.vflip )
+				if( AMN_getBannerVFlip(num) )
 				{
-					if( fad.hflip )
+					if( AMN_getBannerHFlip(num) )
 					{
 						effect = GX_OAM_EFFECT_FLIP_HV;
 					}
@@ -308,7 +284,7 @@ static void SetOAMAttr( void )
 						effect = GX_OAM_EFFECT_FLIP_V;
 					}
 				}
-				else if( fad.hflip )
+				else if( AMN_getBannerHFlip(num) )
 				{
 					effect = GX_OAM_EFFECT_FLIP_H;
 				}
@@ -359,9 +335,6 @@ static void BannerDraw(int selected, TitleProperty *titleprop)
 	
 	// デフォルトバナーをTitlePropertyに埋め込み
     SetDefaultBanner( titleprop );
-	
-	// バナーカウンタのバナーセット
-	SetBannerCounter( titleprop );
 	
 	// OAMデータの設定
 	SetOAMAttr();

@@ -85,10 +85,9 @@ extern TitleProperty *SYSM_ReadParameters( void );								// –{‘Ìİ’èƒf[ƒ^Aƒ‰ƒ
 extern void SYSM_DeleteTmpDirectory( TitleProperty *pBootTitle );              // "nand:/tmp"ƒtƒHƒ‹ƒ_‚ÌƒNƒŠ[ƒ“
 
 // ƒAƒvƒŠî•ñæ“¾
-extern int  SYSM_GetCardTitleList( TitleProperty *pTitleList_Card );			// ƒJ[ƒhƒAƒvƒŠƒ^ƒCƒgƒ‹ƒŠƒXƒg‚Ìæ“¾
-extern BOOL SYSM_InitNandTitleList( void );										// NANDƒAƒvƒŠƒ^ƒCƒgƒ‹ƒŠƒXƒgæ“¾€”õ
-extern void SYSM_FreeNandTitleList( void );										// NANDƒAƒvƒŠƒ^ƒCƒgƒ‹ƒŠƒXƒg
-extern int  SYSM_GetNandTitleList( TitleProperty *pTitleList_Nand, int size );	// NAND  ƒAƒvƒŠƒ^ƒCƒgƒ‹ƒŠƒXƒg‚Ìæ“¾
+extern TitleProperty *SYSM_GetCardTitleList( BOOL *changed );					// ƒJ[ƒhƒAƒvƒŠƒ^ƒCƒgƒ‹ƒŠƒXƒg‚Ìæ“¾
+extern void SYSM_InitTitleList( void );											// ƒAƒvƒŠƒ^ƒCƒgƒ‹ƒŠƒXƒgæ“¾€”õ
+extern TitleProperty *SYSM_GetNandTitleList( void );							// NAND  ƒAƒvƒŠƒ^ƒCƒgƒ‹ƒŠƒXƒg‚Ìæ“¾
 extern void SYSM_GetNandTitleListMakerInfo( void );								// ƒAƒvƒŠˆø‚«“n‚µƒ^ƒCƒgƒ‹ƒŠƒXƒgì¬—pî•ñ‚Ìæ“¾iƒ_ƒCƒŒƒNƒgƒu[ƒg—pj
 
 // ƒAƒvƒŠ‹N“®
