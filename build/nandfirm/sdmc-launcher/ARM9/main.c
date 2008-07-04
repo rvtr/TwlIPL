@@ -15,6 +15,8 @@
   $Author$
  *---------------------------------------------------------------------------*/
 #include <firm.h>
+#include  "font.h"
+#include  "screen.h"
 
 /*
     SRL選択機能
@@ -252,8 +254,13 @@ static void EraseAll(void)
 #endif
 }
 
+static void myInit(void);
+static void myVBlankIntr(void);
+
 void TwlMain( void )
 {
+#define X_OFF   2
+    s16 y = 2;
 #ifdef PROFILE_ENABLE
     // 0: bootrom
     profile[pf_cnt++] = OS_TicksToMicroSecondsBROM32(OS_GetTick());
@@ -265,9 +272,7 @@ void TwlMain( void )
     profile[pf_cnt++] = OS_TicksToMicroSecondsBROM32(OS_GetTick());
 #endif
 
-    OS_InitFIRM();
-    OS_EnableIrq();
-    OS_EnableInterrupts();
+    myInit();
 #ifdef PROFILE_ENABLE
     // 2: before OS_InitTick
     profile[pf_cnt++] = OS_TicksToMicroSecondsBROM32(OS_GetTick());
@@ -278,6 +283,14 @@ void TwlMain( void )
     PostInit();
     // 3: after PostInit
     PUSH_PROFILE();
+
+    //---- clear screen buffer
+    ClearScreen();
+    PrintString( X_OFF, y, FONT_CYAAN, "SDMC Launcher" );
+    PrintString( X_OFF+18, y++, FONT_YELLOW, "%s", __DATE__ );
+    PrintString( X_OFF+21, y++, FONT_YELLOW, "%s", __TIME__ );
+    OS_WaitVBlankIntr();
+    y++;
 
 #ifdef SUPPORT_SRL_SELECT
     switch ( PAD_Read() & PAD_KEYPORT_MASK )
@@ -311,11 +324,17 @@ void TwlMain( void )
     // 5: after PXI
     PUSH_PROFILE();
 
+    PrintString( X_OFF, y++, FONT_WHITE, "Initialized." );
+    y++;
+    PrintString( X_OFF, y++, FONT_WHITE, "Loading header..." );
+    OS_WaitVBlankIntr();
+
     if ( !FS_LoadHeader( &acPool, rsa_key_user, rsa_key_sys, rsa_key_secure ) || !CheckHeader() )
     {
         OS_TPrintf("Failed to call FS_LoadHeader() and/or CheckHeader().\n");
         goto end;
     }
+    PrintString( X_OFF+20, y++, FONT_GREEN, "Done." );
     // 6: after FS_LoadHeader
     PUSH_PROFILE();
 
@@ -323,14 +342,19 @@ void TwlMain( void )
     // 7: after PXI
     PUSH_PROFILE();
 
+    PrintString( X_OFF, y++, FONT_WHITE, "Loading static data..." );
+    OS_WaitVBlankIntr();
+
     if ( !FS_LoadStatic( NULL ) )
     {
         OS_TPrintf("Failed to call FS_LoadStatic().\n");
         goto end;
     }
+    PrintString( X_OFF+20, y++, FONT_GREEN, "Done." );
     // 8: after FS_LoadStatic
     PUSH_PROFILE();
 
+    OS_WaitVBlankIntr();
     PXI_NotifyID( FIRM_PXI_ID_DONE_STATIC );
     // 9: after PXI
     PUSH_PROFILE();
@@ -359,9 +383,13 @@ void TwlMain( void )
 #endif
 
     MI_CpuClearFast( OSi_GetFromFirmAddr(), sizeof(OSFromFirmBuf) );
+    PrintString( X_OFF, y++, FONT_WHITE, "Booting..." );
+    OS_WaitVBlankIntr();
     OS_BootFromFIRM();
 
 end:
+    PrintString( X_OFF+20, y, FONT_RED, "Failed." );
+    OS_WaitVBlankIntr();
     EraseAll();
 
     // failed
@@ -372,3 +400,94 @@ end:
     OS_Terminate();
 }
 
+
+//----------------------------------------------------------------
+//  myInit
+//
+void myInit(void)
+{
+    //---- init
+    OS_InitFIRM();
+    OS_InitTick();
+    OS_InitAlarm();
+    FX_Init();
+    GX_Init();
+    GX_DispOff();
+    GXS_DispOff();
+
+    //---- init displaying
+    GX_SetBankForLCDC(GX_VRAM_LCDC_ALL);
+    MI_CpuClearFast((void *)HW_LCDC_VRAM, HW_LCDC_VRAM_SIZE);
+    (void)GX_DisableBankForLCDC();
+
+    MI_CpuFillFast((void *)HW_OAM, 192, HW_OAM_SIZE);
+    MI_CpuClearFast((void *)HW_PLTT, HW_PLTT_SIZE);
+    MI_CpuFillFast((void *)HW_DB_OAM, 192, HW_DB_OAM_SIZE);
+    MI_CpuClearFast((void *)HW_DB_PLTT, HW_DB_PLTT_SIZE);
+
+    //---- setting 2D for top screen
+    GX_SetBankForBG(GX_VRAM_BG_128_A);
+
+    G2_SetBG0Control(GX_BG_SCRSIZE_TEXT_256x256,
+                     GX_BG_COLORMODE_16,
+                     GX_BG_SCRBASE_0xf800, GX_BG_CHARBASE_0x00000, GX_BG_EXTPLTT_01);
+    G2_SetBG0Priority(0);
+    G2_BG0Mosaic(FALSE);
+    GX_SetGraphicsMode(GX_DISPMODE_GRAPHICS, GX_BGMODE_0, GX_BG0_AS_2D);
+    GX_SetVisiblePlane(GX_PLANEMASK_BG0);
+
+    GX_LoadBG0Char(d_CharData, 0, sizeof(d_CharData));
+    GX_LoadBGPltt(d_PaletteData, 0, sizeof(d_PaletteData));
+
+
+
+    //---- setting 2D for bottom screen
+    GX_SetBankForSubBG(GX_VRAM_SUB_BG_128_C);
+
+    G2S_SetBG0Control(GX_BG_SCRSIZE_TEXT_256x256,
+                      GX_BG_COLORMODE_16,
+                      GX_BG_SCRBASE_0xf800, GX_BG_CHARBASE_0x00000, GX_BG_EXTPLTT_01);
+    G2S_SetBG0Priority(0);
+    G2S_BG0Mosaic(FALSE);
+    GXS_SetGraphicsMode(GX_BGMODE_0);
+    GXS_SetVisiblePlane(GX_PLANEMASK_BG0);
+
+    GXS_LoadBG0Char(d_CharData, 0, sizeof(d_CharData));
+    GXS_LoadBGPltt(d_PaletteData, 0, sizeof(d_PaletteData));
+
+
+    //---- screen
+    MI_CpuFillFast((void *)gScreen, 0, sizeof(gScreen));
+    DC_FlushRange(gScreen, sizeof(gScreen));
+    /* DMA操作でIOレジスタへアクセスするのでキャッシュの Wait は不要 */
+    // DC_WaitWriteBufferEmpty();
+    GX_LoadBG0Scr(gScreen, 0, sizeof(gScreen));
+    GXS_LoadBG0Scr(gScreen, 0, sizeof(gScreen));
+
+    //---- init interrupt
+    OS_SetIrqFunction(OS_IE_V_BLANK, myVBlankIntr);
+    (void)OS_EnableIrqMask(OS_IE_V_BLANK);
+    (void)GX_VBlankIntr(TRUE);
+    (void)OS_EnableIrq();
+    (void)OS_EnableInterrupts();
+
+    //---- start displaying
+    GX_DispOn();
+    GXS_DispOn();
+}
+
+//----------------------------------------------------------------
+//  myVBlankIntr
+//             vblank interrupt handler
+//
+static void myVBlankIntr(void)
+{
+    //---- upload pseudo screen to VRAM
+    DC_FlushRange(gScreen, sizeof(gScreen));
+    /* DMA操作でIOレジスタへアクセスするのでキャッシュの Wait は不要 */
+    // DC_WaitWriteBufferEmpty();
+    GX_LoadBG0Scr(gScreen, 0, sizeof(gScreen));
+    GXS_LoadBG0Scr(gScreen, 0, sizeof(gScreen));
+
+    OS_SetIrqCheckFlag(OS_IE_V_BLANK);
+}
