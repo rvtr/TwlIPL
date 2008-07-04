@@ -24,8 +24,7 @@
 #include <twl/lcfg.h>
 #include <../build/libraries/os/common/include/application_jump_private.h>
 
-#include <sysmenu/sysmenu_lib/common/sysmenu_api.h>
-// see also TwlIPL_RED/include/sysmenu/sysmenu_lib/common/sysmenu_api.h
+#include <sysmenu/types.h>
 
 typedef struct AMNBannerCounter
 {
