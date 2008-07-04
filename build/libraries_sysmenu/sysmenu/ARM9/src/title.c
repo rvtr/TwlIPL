@@ -102,7 +102,6 @@ static MbAuthCode s_authcode;
 static BOOL				s_loadstart = FALSE;
 
 static BOOL				s_loadPaused = FALSE;
-static BOOL				s_loadForcibly = FALSE;
 
 static OSMessageQueue	s_msgQ;
 static OSMessage		s_msgArray[SYSM_TITLE_MESSAGE_ARRAY_MAX];
@@ -115,8 +114,8 @@ static BOOL s_result_phase1 = FALSE;
 
 static u8 dht_buffer[DS_HASH_TABLE_SIZE] ATTRIBUTE_ALIGN(256);
 static DHTFile *const dht = (DHTFile*)dht_buffer;
-static const u8* hash0;
-static const u8* hash1;
+static const u8* hash0 = NULL;
+static const u8* hash1 = NULL;
 
 // const data------------------------------------------------------------------
 static const OSBootType s_launcherToOSBootType[ LAUNCHER_BOOTTYPE_MAX ] = {
@@ -909,8 +908,6 @@ static BOOL SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, ROM_Hea
 					);
 	}
 	
-	s_b_dev = FALSE;
-	
 	// アプリ種別とボンディングオプションによって使う鍵を分ける
 //#define LNC_PDTKEY_DBG
 #ifdef LNC_PDTKEY_DBG
@@ -1228,20 +1225,18 @@ void SYSM_ResumeLoadingThread( BOOL force )
 static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_Header *head )
 {
 	BOOL ret = TRUE;
-
 	// デバッガに接続してるときは適用しない
 	if( SYSM_IsRunOnDebugger() )
 	{
 		return TRUE;
 	}
-
+	
 #define DEV_WHITELIST_CHECK_SKIP
 #ifdef DEV_WHITELIST_CHECK_SKIP
-	// 開発版では完全に飛ばすようにしたい
+	// 開発版ではハッシュチェックスルーフラグを立てる
 	if( SCFG_GetBondingOption() != 0 )
 	{
-		s_loadForcibly = TRUE;
-		return TRUE;
+		s_b_dev = TRUE;
 	}
 #endif
 	
@@ -1262,8 +1257,11 @@ static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_H
 		if(!dht)
 		{
 		    OS_TPrintf(" Search DHT : database init Failed.\n");
-			UTL_SetFatalError(FATAL_ERROR_WHITELIST_INITDB_FAILED);
-		    ret = FALSE;
+		    if(!s_b_dev)
+		    {
+				UTL_SetFatalError(FATAL_ERROR_WHITELIST_INITDB_FAILED);
+			    ret = FALSE;
+		    }
 		}else
 		{
 			OS_TPrintf("Searching DHT for %.4s(%02X)...", head->s.game_code, head->s.rom_version);
@@ -1271,8 +1269,11 @@ static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_H
 			if ( !db )
 			{
 			    OS_TPrintf(" Search DHT : Failed.\n");
-				UTL_SetFatalError(FATAL_ERROR_WHITELIST_NOTFOUND);
-			    ret = FALSE;
+			    if(!s_b_dev)
+			    {
+					UTL_SetFatalError(FATAL_ERROR_WHITELIST_NOTFOUND);
+				    ret = FALSE;
+			    }
 			}else
 			{
 				hash0 = db->hash[0];
@@ -1281,32 +1282,6 @@ static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_H
 			}
 		}
 	}
-
-#ifndef DEV_WHITELIST_CHECK_SKIP
-	// ボンディングオプションが0のときは以下の特殊処理をせずにリターン
-	if( SCFG_GetBondingOption() == 0 )
-	{
-		return ret;
-	}
-
-	// データロード前認証に失敗した場合にボタン押しで強制ロードするようにする
-	// 失敗時にメインスレッドにメッセージを送り、ボタン押し待ち
-	// 押されたらメインスレッドからこちらのスレッドにメッセージを送る
-	// メッセージ内容次第でロードを続行するか、エラーを返して中止するか選択
-	// 続行する場合は強制実行フラグを立てる
-	if( ret != TRUE )
-	{
-		BOOL forcing;
-		OS_InitMessageQueue(&s_msgQ, s_msgArray, SYSM_TITLE_MESSAGE_ARRAY_MAX);
-		s_loadPaused = TRUE;
-		OS_ReceiveMessage(&s_msgQ, (OSMessage*)&forcing, OS_MESSAGE_BLOCK);
-		if(forcing)
-		{
-			ret = TRUE;
-			s_loadForcibly = TRUE;
-		}
-	}
-#endif
 	
 	return ret;
 }
@@ -1317,19 +1292,13 @@ static BOOL SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 #pragma unused(pBootTitle)
 	DHTPhase2Work* p2work;
 	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
-
+	
 	// デバッガに接続してるときは適用しない
 	if( SYSM_IsRunOnDebugger() )
 	{
 		return TRUE;
 	}
-	
-	// ロード前認証で強制実行フラグを立てていれば、飛ばす
-	if( s_loadForcibly )
-	{
-		return TRUE;
-	}
-	
+
 	// phase1最終検証
 	if(s_calc_hash)
 	{
@@ -1357,7 +1326,7 @@ static BOOL SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 	// DHTチェックphase2
 	OS_TPrintf("DHT Phase2...");
 	p2work = SYSM_Alloc( sizeof(DHTPhase2Work) );
-	if ( !DHT_CheckHashPhase2(hash1, hs, p2work, WrapperFunc_ReadCardData, NULL) )
+	if ( !hash1 || !DHT_CheckHashPhase2(hash1, hs, p2work, WrapperFunc_ReadCardData, NULL) )
 	{
 	    OS_TPrintf(" DHT Phase2 : Failed.\n");
 	    SYSM_Free(p2work);
