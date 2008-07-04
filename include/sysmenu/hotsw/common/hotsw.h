@@ -25,9 +25,6 @@ extern "C" {
 
 #define SYSM_HOTSW_ENABLE_ROMEMU
 #define USE_WRAM_LOAD
-
-#define HOTSW_isBusyHotSw()			SYSMi_GetWork()->flags.hotsw.isBusyHotSW
-
 //#define USE_NEW_DMA
 
 // enum   -------------------------------------------------------------------
@@ -121,6 +118,9 @@ BOOL HOTSW_isCardLoadCompleted(void);
 
 //  I—¹ˆ—‚ªŠ®—¹‚µ‚½‚©‚ğ•Ô‚·
 BOOL HOTSW_isFinalized(void);
+
+// Šˆü‘}”²ˆ—’†‚©‚Ç‚¤‚©‚ğ•Ô‚·
+BOOL HOTSW_isBusyHotSW(void);
 
 #ifdef USE_WRAM_LOAD
 // Šˆğ‘}”²ˆ—‚Ì‰Šú‰»

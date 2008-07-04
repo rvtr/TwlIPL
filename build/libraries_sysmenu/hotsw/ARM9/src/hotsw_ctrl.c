@@ -232,6 +232,17 @@ BOOL HOTSW_isCardLoadCompleted(void)
 
 
 /*---------------------------------------------------------------------------*
+  Name:         HOTSW_isBusyHotSW
+  
+  Description:  活線挿抜処理中かどうかを返す
+ *---------------------------------------------------------------------------*/
+BOOL HOTSW_isBusyHotSW(void)
+{
+    return SYSMi_GetWork()->flags.hotsw.isBusyHotSW;
+}
+
+
+/*---------------------------------------------------------------------------*
   Name:         HOTSW_ReadCardDataAsync
   
   Description:  カードデータを読み出す関数。(非同期版)
