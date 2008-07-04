@@ -26,7 +26,9 @@ LINCLUDES	=
 
 TARGET_BIN	=	menu_launcher9.srl
 
-SRCS		=	main.c
+REVISION_SRC	=	revision.c
+
+SRCS		=	main.c $(REVISION_SRC)
 
 CRT0_O		=	crt0_firm.o
 
@@ -48,12 +50,29 @@ LLIBRARIES	+=	libes.TWL$(ARCHGEN_TYPE).a libboc.TWL$(ARCHGEN_TYPE).a \
 				libsfs$(TWL_LIBSUFFIX).a	\
 				liblcfg$(TWL_LIBSUFFIX).a
 
+LDIRT_CLEAN		=	$(REVISION_SRC)
+
 #----------------------------------------------------------------------------
 
 do-build:		$(TARGETS)
 
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+
+
+#SVNƒŠƒrƒWƒ‡ƒ“–„‚ßž‚Ý
+$(REVISION_SRC) ::
+	@if test -e $(TWL_IPL_RED_ROOT)/.svn; then \
+		LANG=C svn info $(call empath,$(TWL_IPL_RED_ROOT)) | grep 'Revision' | sed "s|Revision: \(.*\)|const char *g_strIPLSvnRevision = \"\1\";|" > $(REVISION_SRC); \
+	else \
+		echo "const char *g_strIPLSvnRevision = \"-\";" > $(REVISION_SRC); \
+	fi
+	@if test -e $(ROOT)/.svn; then \
+		LANG=C svn info $(call empath,$(ROOT)) | grep 'Revision' | sed "s|Revision: \(.*\)|const char *g_strSDKSvnRevision = \"\1\";|" >> $(REVISION_SRC); \
+	else \
+		echo "const char *g_strSDKSvnRevision = \"-\";" >> $(REVISION_SRC); \
+	fi
+
 
 
 #===== End of Makefile =====

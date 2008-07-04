@@ -81,12 +81,21 @@ static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
 
     FromBootの対応＆OS_Init前に必要なメインメモリの初期化
 ***************************************************************/
+extern const char *g_strIPLSvnRevision;
+extern const char *g_strSDKSvnRevision;
 static void PreInit(void)
 {
     ROM_Header_Short* const rhs = (ROM_Header_Short*)HW_TWL_ROM_HEADER_BUF;
+    static char buffer[4][8];   // バージョン情報
     /*
      メインメモリ関連
     */
+    // バージョン埋め込み
+    MI_CpuClear8( buffer, sizeof(buffer) );
+    MI_CpuCopy8( "VERSION", buffer[0], 8 );
+    STD_CopyLStringZeroFill( buffer[1], g_strIPLSvnRevision, 8 );
+    STD_CopyLStringZeroFill( buffer[2], g_strSDKSvnRevision, 8 );
+    MI_CpuCopy8( "VERSION", buffer[3], 8 );
     // SHARED領域はスタートアップ時でクリア
     /*
         FromBrom関連
