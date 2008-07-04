@@ -286,7 +286,7 @@ void TwlMain( void )
 
     //---- clear screen buffer
     ClearScreen();
-    PrintString( X_OFF, y, FONT_CYAAN, "SDMC Launcher" );
+    PrintString( X_OFF, y, FONT_CYAAN, "SDMC Launcher (N)" );
     PrintString( X_OFF+18, y++, FONT_YELLOW, "%s", __DATE__ );
     PrintString( X_OFF+21, y++, FONT_YELLOW, "%s", __TIME__ );
     OS_WaitVBlankIntr();
@@ -354,10 +354,11 @@ void TwlMain( void )
     // 8: after FS_LoadStatic
     PUSH_PROFILE();
 
-    OS_WaitVBlankIntr();
     PXI_NotifyID( FIRM_PXI_ID_DONE_STATIC );
     // 9: after PXI
     PUSH_PROFILE();
+
+    OS_WaitVBlankIntr();
 
 #ifdef PROFILE_ENABLE
     {
