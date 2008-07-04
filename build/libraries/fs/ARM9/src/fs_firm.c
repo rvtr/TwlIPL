@@ -40,6 +40,21 @@ void FS_InitFIRM( void )
 }
 
 /*---------------------------------------------------------------------------*
+  Name:         FSi_OverrideRomArchive
+
+  Description:  override weak function
+
+  Arguments:
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL FSi_OverrideRomArchive(FSArchive *arc)
+{
+    (void)arc;
+    return FALSE;
+}
+
+/*---------------------------------------------------------------------------*
   Name:         LoadTMD
 
   Description:  対象のタイトルの TMD ファイルをメモリに読み込みます。
@@ -226,22 +241,32 @@ BOOL FS_ResolveSrl( OSTitleId titleId )
 int FS_ResolveSrlList( const OSTitleId* titleIdList, u32 nums )
 {
     int i;
+OSTick tick[8];
+char*ptr=(char*)0x02FFCB00;
+tick[0] = OS_GetTick();
     MI_CpuClearFast( (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, HW_FIRM_FS_BOOT_SRL_PATH_BUF_SIZE );
+tick[1] = OS_GetTick();
     if ( !titleIdList || !nums || ES_ERR_OK != ES_InitLib() )
     {
         return FALSE;
     }
     for ( i = 0; i < nums; i++ )
     {
+tick[2+i] = OS_GetTick();
         if ( ES_ERR_OK == ES_GetContentPath(titleIdList[i], CONTENT_INDEX_BOOT, (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF) )
         {
             break;
         }
     }
+tick[3+i] = OS_GetTick();
     if ( ES_ERR_OK != ES_CloseLib() )
     {
         return FALSE;
     }
+tick[4+i] = OS_GetTick();
+tick[5+i] = tick[4+i];
+for(i=0;i<7;i++)
+ptr+=STD_TSPrintf(ptr, "tick[%d]:%d\n",i,(int)OS_TicksToMicroSeconds(tick[i+1]-tick[i]));
     return (i == nums ? -1 : i);
 }
 
