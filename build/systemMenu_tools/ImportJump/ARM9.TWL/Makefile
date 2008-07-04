@@ -65,9 +65,11 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
 
 ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
 ifdef FIRM_USE_PRODUCT_KEYS
-MAKEROM_FLAGS			+=	-DHWINFO_PRIVKEY='private_HWInfo.der'
+MAKEROM_FLAGS			+=	-DHWINFO_PRIVKEY='private_HWInfo.der' \
+							-DHWID_PRIVKEY='private_HWID.der'
 else
-MAKEROM_FLAGS			+=	-DHWINFO_PRIVKEY='private_HWInfo_dev.der'
+MAKEROM_FLAGS			+=	-DHWINFO_PRIVKEY='private_HWInfo_dev.der' \
+							-DHWID_PRIVKEY='private_HWID_dev.der'
 endif
 endif
 
@@ -76,7 +78,6 @@ MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
 MAKETAD_FLAGS			+=	-s
 
 SYSMENU_LIBS			=	\
-							libacsign$(TWL_LIBSUFFIX).a \
 							libnamut$(TWL_LIBSUFFIX).a
 
 SDK_APPEND_LIBS			=	\
@@ -91,8 +92,6 @@ LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
 
 MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
-
-GLIBRARIES		:= $(filter-out libcrypto$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 
 #LDIRT_CLEAN				=
 #INSTALL_TARGETS			=

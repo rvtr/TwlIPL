@@ -223,5 +223,5 @@ RomSpec
 	File		*.*
 	HostRoot	$(PRIVKEY_PATH)
 	Root		/key
-	File		$(HWINFO_PRIVKEY)
+	File		$(HWINFO_PRIVKEY) $(HWID_PRIVKEY)
 }

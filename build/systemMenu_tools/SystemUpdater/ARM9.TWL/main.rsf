@@ -225,7 +225,7 @@ RomSpec
 	File		*.*
 	HostRoot	$(PRIVKEY_PATH)
 	Root		/key
-	File		$(HWINFO_PRIVKEY)
+	File		$(HWINFO_PRIVKEY) $(HWID_PRIVKEY)
 	HostRoot	$(TWL_IPL_RED_ROOT)/build/systemMenu_tools/NandInitializerRed/data
 	Root		/data
 	File		TWLFontTable.dat

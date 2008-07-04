@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
+#include <nitro/crypto.h>
 #include <sysmenu.h>
 #include <sysmenu/acsign.h>
 #include <sysmenu/namut.h>
@@ -26,8 +27,10 @@
 // define data------------------------------------------
 #ifdef FIRM_USE_PRODUCT_KEYS                                                // 鍵選択スイッチ
 #define HWINFO_PRIVKEY_PATH     "rom:key/private_HWInfo.der"                // 製品用秘密鍵
+#define HWID_PRIVKEY_PATH       "rom:key/private_HWID.der"
 #else
 #define HWINFO_PRIVKEY_PATH     "rom:key/private_HWInfo_dev.der"            // 開発用秘密鍵
+#define HWID_PRIVKEY_PATH       "rom:key/private_HWID_dev.der"
 #endif
 
 // extern data------------------------------------------
@@ -37,9 +40,10 @@ const LCFGTWLHWNormalInfo *LCFG_THW_GetNormalInfo( void );
 const LCFGTWLHWSecureInfo *LCFG_THW_GetSecureInfo( void );
 
 // function's prototype declaration---------------------
-static HwiInitResult ReadPrivateKey( void );
+static HwiInitResult ReadPrivateKey( void **ppBuffer, u32 *pKeyFileLen, char *pPath );
 static void VerifyHWInfo( void );
 static BOOL VerifyData( const u8 *pTgt, const u8 *pOrg, u32 len );
+static BOOL CheckHWID_Signature( BOOL isPrintf );
 static BOOL ReadHWInfoFile( void );
 static BOOL ReadTWLSettings( void );
 static u8 HWIi_CalcCheckCode(u8 src[8]);
@@ -47,7 +51,10 @@ static u8 HWIi_CalcCheckCode(u8 src[8]);
 // global variable -------------------------------------
 
 // static variable -------------------------------------
-static u8 *s_pPrivKeyBuffer = NULL;
+static void *s_pPrivKeyBuffer = NULL;
+static void *s_pPrivKeyBufferHWID = NULL;
+static u32  s_privKeyBufferLen;
+static u32  s_privKeyBufferLenHWID;
 static void *(*spAlloc)( u32 length );
 static void  (*spFree)( void *ptr );
 
@@ -111,20 +118,16 @@ HwiInitResult HWI_Init( void *(*pAlloc)( u32 ), void (*pFree)( void * ) )
     spAlloc = pAlloc;
     spFree  = pFree;
 
-    ACSign_SetAllocFunc( pAlloc, pFree );
-    result = ReadPrivateKey();
+	CRYPTO_SetMemAllocator( pAlloc, pFree, NULL );
+	
+    result = ReadPrivateKey( &s_pPrivKeyBuffer, &s_privKeyBufferLen, HWINFO_PRIVKEY_PATH );
+	if( result != HWI_INIT_SUCCESS_NO_SIGNATRUE_MODE ) {
+	    result = ReadPrivateKey( &s_pPrivKeyBufferHWID, &s_privKeyBufferLenHWID, HWID_PRIVKEY_PATH );
+	}
     ReadHWInfoFile();
 //  VerifyHWInfo();
-    if( 1 ) {
-        u8 sign[ RSA_KEY_LENGTH ];
-        if( !LCFG_ReadHWID_Signature( sign ) ||
-            !LCFG_CheckHWID_Signature( sign )
-            ) {
-            OS_TPrintf( "HWID Signature check failed.\n" );
-        }else {
-            OS_TPrintf( "HWID Signature check succeeded.\n" );
-        }
-    }
+	(void)CheckHWID_Signature( TRUE );
+	
     // ※LanguageBitmapを判定で使用するので、必ずReadHWInfoの後で実行する必要がある。
     ReadTWLSettings();
 
@@ -157,24 +160,23 @@ static BOOL ReadTWLSettings( void )
 }
 
 // 秘密鍵のリード
-HwiInitResult ReadPrivateKey( void )
+static HwiInitResult ReadPrivateKey( void **ppBuffer, u32 *pKeyFileLen, char *pPath )
 {
     BOOL result = FALSE;
-    u32 keyLength;
     FSFile file;
     OSTick start = OS_GetTick();
 
     FS_InitFile( &file );
-    if( !FS_OpenFileEx( &file, HWINFO_PRIVKEY_PATH, FS_FILEMODE_R ) )
+    if( !FS_OpenFileEx( &file, pPath, FS_FILEMODE_R ) )
     {
         OS_TPrintf( "PrivateKey read failed.\n" );
     }
     else
     {
-        keyLength = FS_GetFileLength( &file );
-        if( keyLength > 0 ) {
-            s_pPrivKeyBuffer = spAlloc( keyLength );
-            if( FS_ReadFile( &file, s_pPrivKeyBuffer, (s32)keyLength ) == keyLength ) {
+        *pKeyFileLen = FS_GetFileLength( &file );
+        if( *pKeyFileLen > 0 ) {
+            *ppBuffer = spAlloc( *pKeyFileLen );
+			if( FS_ReadFile( &file, *ppBuffer, (s32)*pKeyFileLen ) == *pKeyFileLen ) {
                 OS_TPrintf( "PrivateKey read succeeded.\n" );
                 result = TRUE;
             }else {
@@ -184,9 +186,9 @@ HwiInitResult ReadPrivateKey( void )
         FS_CloseFile( &file );
     }
 
-    if( !result && s_pPrivKeyBuffer ) {
-        spFree( s_pPrivKeyBuffer );
-        s_pPrivKeyBuffer = NULL;
+	if( !result && *ppBuffer ) {
+		spFree( *ppBuffer );
+        *ppBuffer = NULL;
     }
 //  OS_TPrintf( "PrivKey read time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 
@@ -241,6 +243,7 @@ static void VerifyHWInfo( void )
     }
 }
 
+
 // メモリ上のデータベリファイ
 static BOOL VerifyData( const u8 *pTgt, const u8 *pOrg, u32 len )
 {
@@ -251,6 +254,23 @@ static BOOL VerifyData( const u8 *pTgt, const u8 *pOrg, u32 len )
     }
     return TRUE;
 }
+
+
+// HWID署名の確認
+static BOOL CheckHWID_Signature( BOOL isPrintf )
+{
+    u8 sign[ LCFG_TWL_HWID_SIGN_LENGTH ];
+    if( !LCFG_ReadHWID_Signature( sign ) ||
+        !LCFG_CheckHWID_Signature( sign )
+        ) {
+        if( isPrintf ) OS_TPrintf( "HWID Signature check failed.\n" );
+		return FALSE;
+    }else {
+        if( isPrintf ) OS_TPrintf( "HWID Signature check succeeded.\n" );
+		return TRUE;
+    }
+}
+
 
 /*---------------------------------------------------------------------------*
   Name:         HWI_ModifyLanguage
@@ -530,7 +550,7 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
 
     // ライト
     if( isWrite &&
-        !LCFGi_THW_WriteSecureInfo( s_pPrivKeyBuffer ) ) {
+        !LCFGi_THW_WriteSecureInfo( s_pPrivKeyBuffer, s_privKeyBufferLen ) ) {
         isWrite = FALSE;
         OS_TPrintf( "HW Secure Info Write failed.\n" );
     }
@@ -552,13 +572,14 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
  *---------------------------------------------------------------------------*/
 BOOL HWI_WriteHWIDSignFile( void )
 {
-    BOOL retval;
+    BOOL retval = TRUE;
 
     (void)FS_DeleteFile( (char *)LCFG_TWL_HWID_SIGN_PATH );
     if( !FS_CreateFile( LCFG_TWL_HWID_SIGN_PATH, FS_PERMIT_R | FS_PERMIT_W ) ) {
         OS_TPrintf( "file create error. %s\n", LCFG_TWL_HWID_SIGN_PATH );
     }
-    retval = LCFG_WriteHWID_Signature( s_pPrivKeyBuffer );
+    retval &= LCFG_WriteHWID_Signature( s_pPrivKeyBufferHWID, s_privKeyBufferLenHWID );
+	retval &= CheckHWID_Signature( FALSE );
     if( !retval ) {
         OS_TPrintf( "HWID Signature Write failed.\n" );
     }
