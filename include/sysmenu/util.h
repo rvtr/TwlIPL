@@ -104,10 +104,7 @@ extern u32  UTL_CalcPCTLInquiryCode( void );								// –â‚¢‡‚í‚¹ƒR[ƒhi‚P‚Oi‚
 extern u32  UTL_CalcPCTLMasterKey( void );									// ƒ}ƒXƒ^[ƒL[@@i‚P‚Oi‚TŒ…jŽZoi¦“à•”‚ÅRTC_GetDate‚ðŽg—p‚µ‚Ü‚·Bj
 
 // ƒAƒvƒŠROMƒwƒbƒ_‚Ì—vEULAƒtƒ‰ƒOŽæ“¾
-static inline BOOL UTL_IsROMHeaderEULARequired( void )
-{
-	return (BOOL)SYSM_GetAppRomHeader()->exFlags.agree_EULA;
-}
+extern BOOL UTL_IsROMHeaderEULARequired( void );
 
 #endif
 
