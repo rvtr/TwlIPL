@@ -36,6 +36,8 @@
  *---------------------------------------------------------------------------*/
 void FS_InitFIRM( void )
 {
+    // FS/FATFSÇÃëSÉÅÉÇÉäÉNÉäÉA
+    MI_CpuClearFast((void*)HW_FIRM_FATFS_ARCHNAME_LIST, HW_FIRM_FS_FATFS_ASYNC_REQUEST_END - HW_FIRM_FATFS_ARCHNAME_LIST);
     FATFS_InitFIRM();
     FS_Init( FS_DMA_NOT_USE );
 }
