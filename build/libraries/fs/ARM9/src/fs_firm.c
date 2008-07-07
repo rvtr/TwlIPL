@@ -17,6 +17,8 @@
 #include <firm.h>
 #include <es.h>
 
+//#define PROFILE_ES    0x02FFCB00
+
 // bootContent ‚ð•\‚·“ÁŽê‚È contentIndex
 #define CONTENT_INDEX_BOOT          0xFFFF
 
@@ -34,9 +36,24 @@
  *---------------------------------------------------------------------------*/
 void FS_InitFIRM( void )
 {
-    FSiTemporaryBuffer = (void*)HW_FIRM_FS_TEMP_BUFFER;
     FATFS_InitFIRM();
     FS_Init( FS_DMA_NOT_USE );
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         FSi_SetupFATBuffers
+
+  Description:  override weak function
+
+  Arguments:
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void FSi_SetupFATBuffers(void)
+{
+    FSiFATFSDrive           = (void*)HW_FIRM_FS_FATFS_DRIVE;
+    FSiFATFSAsyncRequest    = (void*)HW_FIRM_FS_FATFS_ASYNC_REQUEST;
+    FSiTemporaryBuffer      = (void*)HW_FIRM_FS_TEMP_BUFFER;
 }
 
 /*---------------------------------------------------------------------------*
@@ -241,32 +258,42 @@ BOOL FS_ResolveSrl( OSTitleId titleId )
 int FS_ResolveSrlList( const OSTitleId* titleIdList, u32 nums )
 {
     int i;
-OSTick tick[8];
-char*ptr=(char*)0x02FFCB00;
-tick[0] = OS_GetTick();
+#ifdef PROFILE_ES
+    OSTick tick[8];
+    char*ptr=(char*)PROFILE_ES;
+    tick[0] = OS_GetTick();
+#endif
     MI_CpuClearFast( (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, HW_FIRM_FS_BOOT_SRL_PATH_BUF_SIZE );
-tick[1] = OS_GetTick();
+#ifdef PROFILE_ES
+    tick[1] = OS_GetTick();
+#endif
     if ( !titleIdList || !nums || ES_ERR_OK != ES_InitLib() )
     {
         return FALSE;
     }
     for ( i = 0; i < nums; i++ )
     {
-tick[2+i] = OS_GetTick();
+#ifdef PROFILE_ES
+    tick[2+i] = OS_GetTick();
+#endif
         if ( ES_ERR_OK == ES_GetContentPath(titleIdList[i], CONTENT_INDEX_BOOT, (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF) )
         {
             break;
         }
     }
-tick[3+i] = OS_GetTick();
+#ifdef PROFILE_ES
+    tick[3+i] = OS_GetTick();
+#endif
     if ( ES_ERR_OK != ES_CloseLib() )
     {
         return FALSE;
     }
-tick[4+i] = OS_GetTick();
-tick[5+i] = tick[4+i];
-for(i=0;i<7;i++)
-ptr+=STD_TSPrintf(ptr, "tick[%d]:%d\n",i,(int)OS_TicksToMicroSeconds(tick[i+1]-tick[i]));
+#ifdef PROFILE_ES
+    tick[4+i] = OS_GetTick();
+    tick[5+i] = tick[4+i];
+    for(i=0;i<7;i++)
+        ptr+=STD_TSPrintf(ptr, "tick[%d]:%d\n",i,(int)OS_TicksToMicroSeconds(tick[i+1]-tick[i]));
+#endif
     return (i == nums ? -1 : i);
 }
 
