@@ -18,7 +18,9 @@
 
 TARGET_FIRM			=	SYSTEMMENU
 
-override TARGET_PLATFORM := TWL
+override TARGET_PLATFORM	:= TWL
+override TARGET_CODEGEN		:= ARM
+override TWL_ARCHGEN		:= LIMITED
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include ./commondefs.DSHashTable
@@ -41,29 +43,24 @@ LDIRT_CLEAN			=	$(MY_TAD) $(MY_APPEND) $(MY_DATA2)
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
-.PHONY: revision
-
 do-build : $(MY_TAD)
 
 $(MY_TAD): $(MY_DATA2)
 	$(MAKETAD) $(call empath,$<) $(DS_HASH_TABLE_MAKETAD_OPTION) -o $@
 
-$(MY_DATA2): $(MY_DATA) revision
+$(MY_DATA2): $(MY_DATA) $(MY_APPEND)
 	cat $(MY_DATA) $(MY_APPEND) > $@
 
-revision:
+$(MY_APPEND)::
 	@if test -e $(SYSMENU_ROOT)/.svn; then \
-		LANG=C svn info $(call empath,$(SYSMENU_ROOT)) | grep 'Revision' | sed "s|Revision: \(.*\)|\1|" > $(MY_APPEND); \
+		LANG=C svn info $(call empath,$(SYSMENU_ROOT)) | grep 'Revision' | sed s/[^0-9]//g > $(MY_APPEND); \
 	else \
-		echo `date` > $(MY_APPEND); \
+		date > $(MY_APPEND); \
 	fi
 	@if test -e $(ROOT)/.svn; then \
-		LANG=C svn info $(call empath,$(ROOT)) | grep 'Revision' | sed "s|Revision: \(.*\)|\1|" >> $(MY_APPEND); \
+		LANG=C svn info $(call empath,$(ROOT)) | grep 'Revision' | sed s/[^0-9]//g >> $(MY_APPEND); \
 	else \
 		echo "" >> $(MY_APPEND); \
 	fi
-
-revision:
-	echo `(LANG=C svn info $(TWL_IPL_RED_ROOT) | grep 'Revision') || date` > $(MY_APPEND)
 
 #===== End of Makefile =====
