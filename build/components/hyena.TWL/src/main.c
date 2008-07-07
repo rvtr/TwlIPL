@@ -25,7 +25,7 @@
 #include    <nitro/std.h>
 #include    <nitro/snd.h>
 #include    <nitro/wvr.h>
-#include    <twl/nwm.h>
+#include    <twl/nwm/ARM7/ForLauncher/nwm_sp_init_for_launcher.h>
 #include    <twl/camera.h>
 #include    <twl/rtc.h>
 #include    <nitro/hw/common/lcd.h>
@@ -233,8 +233,7 @@ TwlSpMain(void)
     // RTC 初期化
     RTC_Init(THREAD_PRIO_RTC);
 
-    // 旧無線初期化
-    WVR_Begin(wramHeapHandle);
+    // (旧無線初期化はmain loopで行う。)
 
     // SPI 初期化
     SPI_Init(THREAD_PRIO_SPI);
@@ -274,6 +273,12 @@ TwlSpMain(void)
     while (TRUE)
     {
         OS_Halt();
+        // 無線ファームのロード完了後に旧無線を初期化する。
+        if (TRUE == NWMSPi_CheckInstalledNotification())
+        {
+            WVR_Begin(wramHeapHandle);
+            NWMSPi_NotifyConfirmation();
+        }
         BOOT_WaitStart();
     }
 }
@@ -410,7 +415,7 @@ InitializeNwm(OSHeapHandle drvHeapHandle, OSHeapHandle wpaHeapHandle)
     nwmInit.wpaHeap.id = OS_ARENA_MAIN_SUBPRIV; /* [TODO] */
     nwmInit.wpaHeap.handle = wpaHeapHandle;
 
-    NWMSP_Init(&nwmInit);
+    NWMSP_InitForLauncher(&nwmInit);
 
 }
 #include    <twl/ltdwram_end.h>
