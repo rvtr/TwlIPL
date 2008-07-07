@@ -104,9 +104,9 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 //  SYSMi_CheckEntryAddress();
 
 //  FinalizeCardPulledOut();                                // カード抜け検出終了処理
-	DC_StoreAll();
 	BOOTi_ClearREG_RAM();                                   // レジスタ＆RAMクリア
     (void)GX_VBlankIntr( FALSE );
+	DC_StoreAll();
 
     for( i = 0; i <= MI_DMA_MAX_NUM; i++ ) {                // 割り込み禁止状態でDMA停止
         MI_StopDma( (u16)i );
@@ -194,13 +194,6 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 		{
 			*target = REBOOT_TARGET_DS_APP;
 		}
-
-        // USG以前のDSアプリには無線パッチを適用
-        // （キャッシュ領域の排他制御簡略化のためARM9で行う）
-        if ( *target == REBOOT_TARGET_DS_APP )
-        {
-            DS_InsertWLPatch( dh );
-        }
 
         // デバッガによるROMエミュレーション時はNTR-ROMヘッダバッファの
         // ゲームコマンドパラメータをスクランブルOFF設定に書き換える
