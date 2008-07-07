@@ -93,6 +93,7 @@ SYSMENU_LIBS			=	\
 							libsysmenu$(TWL_LIBSUFFIX).a \
 							libsysmmcu$(TWL_LIBSUFFIX).a \
 							libboot$(TWL_LIBSUFFIX).a \
+							liberrorlog$(TWL_LIBSUFFIX).a \
 							libds$(TWL_LIBSUFFIX).a \
 							libhotsw$(TWL_LIBSUFFIX).a \
 							libdht$(TWL_LIBSUFFIX).a \

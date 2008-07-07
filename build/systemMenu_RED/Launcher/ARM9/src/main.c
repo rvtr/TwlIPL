@@ -19,6 +19,7 @@
 #include <twl/dsp.h>
 #include <twl/dsp/common/shutter.h>
 #include <twl/camera.h>
+#include <sysmenu/errorLog.h>
 #include "launcher.h"
 #include "misc.h"
 #include "logoDemo.h"
@@ -661,6 +662,7 @@ static void PrintError( void )
 	G2_ChangeBlendAlpha( 0, 31 );
 	error_code = UTL_GetFatalError();
 	PrintfSJIS( 2, 25, TXT_COLOR_RED,"ERROR! - 0x%0.16x\n", error_code );
+	EL_WriteErrorLog(error_code);
 	for(l=0;l<64;l++)
 	{
 		if( error_code & 0x1 )
