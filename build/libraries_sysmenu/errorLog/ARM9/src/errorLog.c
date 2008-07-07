@@ -168,14 +168,14 @@ BOOL EL_addNewEntry( ErrorLogEntry *entry, int idx, int errorCode, RTCDate *date
 		return FALSE;
 	}
 	
-	entry[idx].year = date->year;
-	entry[idx].month = date->month;
-	entry[idx].day = date->day;
+	entry[idx].year = (int)date->year;
+	entry[idx].month = (int)date->month;
+	entry[idx].day = (int)date->day;
 	STD_CopyLStringZeroFill( entry[idx].week, s_strWeek[ date->week ], 4 );
-	entry[idx].hour = time->hour;
-	entry[idx].minute = time->minute;
-	entry[idx].second = time->second;
-	entry[idx].errorCode = errorCode;
+	entry[idx].hour = (int)time->hour;
+	entry[idx].minute = (int)time->minute;
+	entry[idx].second = (int)time->second;
+	entry[idx].errorCode = (int)errorCode;
 	
 	return TRUE;
 }
