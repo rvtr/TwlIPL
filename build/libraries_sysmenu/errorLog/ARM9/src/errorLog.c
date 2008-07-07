@@ -29,8 +29,8 @@
 #define ERRORLOG_DIRECTORYPATH	"nand:/sys/log"
 #define ERRORLOG_FILEPATH		"nand:/sys/log/sysmenu.log"
 #define ERRORLOG_BAR			"======================"
-#define ERRORLOG_WRITE_FORMAT	"#%02lu-%02lu-%02lu[%3s] %02lu:%02lu:%02lu  ErrorCode: %llu\n%s \n"ERRORLOG_BAR"\n\0"
-#define ERRORLOG_READ_FORMAT	"#%2lu-%2lu-%2lu[%3s] %2lu:%2lu:%2lu  ErrorCode: %llu\n%*s \n"ERRORLOG_BAR"\n\0"
+#define ERRORLOG_WRITE_FORMAT	"#%02u-%02u-%02u[%3s] %02u:%02u:%02u  ErrorCode: %u\n%s \n"ERRORLOG_BAR"\n\0"
+#define ERRORLOG_READ_FORMAT	"#%d-%d-%d[%3s] %d:%d:%d  ErrorCode: %u\n%*s \n"ERRORLOG_BAR"\n\0"
 
 #define ERRORLOG_SIZE			( 16 * 1024 )	// ファイルは16KBサイズ固定
 #define ERRORLOG_BUFSIZE		128				// 一番長い名前のエラーでも128字以内に収まる
@@ -48,15 +48,15 @@ typedef enum CheckStatus {
 // 既に書き込まれたエラーログを表現するためのエントリ
 typedef struct ErrorLogEntry{
 	// エラーのタイムスタンプ
-	u32 year;
-	u32 month;
-	u32 day;
+	int year;
+	int month;
+	int day;
 	char week[4]; // 曜日の3文字表現
-	u32 hour;
-	u32 minute;
-	u32 second;
+	int hour;
+	int minute;
+	int second;
 	// エラーコード
-	u64 errorCode;
+	int errorCode;
 } ErrorLogEntry;
 
 // ログエラーのエントリを持つ
@@ -66,11 +66,14 @@ CheckStatus ELi_CheckAndCreateDirectory( const char *path );
 CheckStatus ELi_CheckAndCreateFile( FSFile *file, const char *path );
 int ELi_ReadEntry( FSFile *file, ErrorLogEntry *entry );
 BOOL ELi_SetString( char *buf, ErrorLogEntry *entry );
-BOOL ELi_WriteLog( FSFile *file ,ErrorLogEntry *entry, int num, u64 err );
+BOOL EL_addNewEntry( ErrorLogEntry *entry, int idx, int errorCode, RTCDate *date, RTCTime *time );
+BOOL ELi_WriteLog( FSFile *file ,ErrorLogEntry *entry, int numEntry );
 void ELi_fillSpace( char *buf, int bufsize );
 
 static char *s_strWeek[7];
 static char *s_strError[FATAL_ERROR_MAX];
+
+
 
 /*---------------------------------------------------------------------------*
   Name:         EL_WriteErrorLog
@@ -85,23 +88,23 @@ static char *s_strError[FATAL_ERROR_MAX];
 BOOL EL_WriteErrorLog( u64 errorCode )
 {
 	FSFile file;
-	ErrorLogEntry entry[ERRORLOG_NUM_ENTRY];
+	ErrorLogEntry entry[ERRORLOG_NUM_ENTRY]; // エラーエントリを持つリングバッファ
+	int bufBeginPoint = 0; 	// リングバッファの開始点
 	int numEntry = 0;
-	
-	FS_InitFile( &file );	
+	int counter = 0;
 
-	if( errorCode >= FATAL_ERROR_MAX )
-	{
-		// イリーガルなエラーコード
-		OS_TPrintf("EL Error: Illigal error code (%d)\n", errorCode);
-		return FALSE;
-	}
+	RTCDate date;
+	RTCTime time;
+	RTCResult rtcRes;
+
 	
 	if( !FS_IsAvailable() )
 	{
 		// FSがInitされてなかったらInitする
 		FS_Init( FS_DMA_NOT_USE );
 	}
+
+	FS_InitFile( &file );
 	
 	if( ELi_CheckAndCreateDirectory( ERRORLOG_DIRECTORYPATH ) == CHECK_FAILED )
 	{
@@ -123,13 +126,57 @@ BOOL EL_WriteErrorLog( u64 errorCode )
 			// 新規にファイルが作られたなら何もしなくていい
 			break;
 	}
+
+
+	// 新しいログエントリを書き込むためのRTC
+	if( ( rtcRes = RTC_GetDateTime( &date, &time )) != RTC_RESULT_SUCCESS)
+	{
+		OS_TPrintf("EL Error: RTC getDateTime() Failed!  Status:%d\n", rtcRes);
+		return FALSE;
+	}
+
+	
+	for(counter = 0; counter < FATAL_ERROR_MAX; counter++ )
+	{
+		if( ( errorCode >> counter ) & 0x1LL )
+		{
+			// 末尾のビットが立っていたらエントリに入れてバッファ開始点を進める
+			EL_addNewEntry( entry, numEntry % ERRORLOG_NUM_ENTRY , counter , &date, &time );
+			numEntry++;
+		}
+	}
 	
 	
-	if( !ELi_WriteLog( &file, entry, numEntry+1 , errorCode ) )
+	// 最終的にファイルを書き込む
+	if( !ELi_WriteLog( &file, entry, numEntry ) )
 	{
 		return FALSE;
 	}
-		
+	
+	return TRUE;
+}
+
+
+
+BOOL EL_addNewEntry( ErrorLogEntry *entry, int idx, int errorCode, RTCDate *date, RTCTime *time )
+{
+
+	if( errorCode >= FATAL_ERROR_MAX )
+	{
+		// イリーガルなエラーコード
+		OS_TPrintf("EL Error: Illigal error code (%d)\n", errorCode);
+		return FALSE;
+	}
+	
+	entry[idx].year = date->year;
+	entry[idx].month = date->month;
+	entry[idx].day = date->day;
+	STD_CopyLStringZeroFill( entry[idx].week, s_strWeek[ date->week ], 4 );
+	entry[idx].hour = time->hour;
+	entry[idx].minute = time->minute;
+	entry[idx].second = time->second;
+	entry[idx].errorCode = errorCode;
+	
 	return TRUE;
 }
 
@@ -264,17 +311,18 @@ int ELi_ReadEntry( FSFile *file, ErrorLogEntry *entry )
 {
 	char buf[ERRORLOG_BUFSIZE+1];
 	int numEntry = 0;
+	int readSize = 0;
 	
 	buf[ERRORLOG_BUFSIZE] = '\0';
 	
 	FS_SeekFileToBegin( file );
-	FS_ReadFile( file, buf, ERRORLOG_BUFSIZE );
+	readSize = FS_ReadFile( file, buf, ERRORLOG_BUFSIZE );
 
 	// エントリの頭には必ず'#'が書き込まれているのでそれで判定	
-	while( buf[0] == '#' )
+	while( readSize == ERRORLOG_BUFSIZE && buf[0] == '#')
 	{
 		// 決められたファイルフォーマットからエントリに読み込む
-		STD_TSScanf( buf, ERRORLOG_READ_FORMAT, 
+		sscanf( buf, ERRORLOG_READ_FORMAT, 
 					&(entry[numEntry].year) ,
 					&(entry[numEntry].month) ,
 					&(entry[numEntry].day) ,
@@ -284,9 +332,7 @@ int ELi_ReadEntry( FSFile *file, ErrorLogEntry *entry )
 					&(entry[numEntry].second) ,
 					&(entry[numEntry].errorCode)  );
 
-		numEntry++;
-
-		FS_ReadFile( file, buf, ERRORLOG_BUFSIZE );
+		readSize = FS_ReadFile( file, buf, ERRORLOG_BUFSIZE );
 
 	}
 	
@@ -317,8 +363,6 @@ BOOL ELi_SetString( char *buf, ErrorLogEntry *entry )
 	ELi_fillSpace( buf, ERRORLOG_BUFSIZE );
 	buf[ ERRORLOG_BUFSIZE-1 ] = '\n';
 	
-	//OS_TPrintf("set String...\n%s", buf );
-				
 	return TRUE;
 }
 
@@ -335,27 +379,28 @@ BOOL ELi_SetString( char *buf, ErrorLogEntry *entry )
   Returns:      成功した場合はTRUE、失敗した場合はFALSEが返ります。
  *---------------------------------------------------------------------------*/
 
-BOOL ELi_WriteLog( FSFile *file ,ErrorLogEntry *entry, int num, u64 err )
+BOOL ELi_WriteLog( FSFile *file ,ErrorLogEntry *entry, int numEntry )
 {
-	RTCDate date;
-	RTCTime time;
-	RTCResult rtcRes;
 	
-	int entryIdx = 0;
+	// エントリを書き出す開始点
+	int entryIdx = numEntry <= ERRORLOG_NUM_ENTRY ? 0 : numEntry % ERRORLOG_NUM_ENTRY ;
+	int counter;
+	int counterMax = numEntry <= ERRORLOG_NUM_ENTRY ? numEntry : ERRORLOG_NUM_ENTRY ;
 	char buf[ERRORLOG_BUFSIZE];
 
-	// ファイル数チェック
-	if( num >= ERRORLOG_NUM_ENTRY ) 
-	{
-		entryIdx++;
-	}
 	
 	// ファイルの頭に戻って書き込みなおす
 	FS_SeekFileToBegin( file );
 	
-	for( ; entryIdx < num - 1; entryIdx++ )
+	for( counter = 0; counter < counterMax ; counter++ )
 	{
-		ELi_SetString( buf, &entry[entryIdx] );
+		ELi_SetString( buf, &(entry[ (entryIdx + counter) % ERRORLOG_NUM_ENTRY ]) );
+		
+		if( counter == counterMax-1 )
+		{
+			buf[ERRORLOG_BUFSIZE-1] = '\0';
+		}
+		
 		
 		if( FS_WriteFile( file, buf, (s32)ERRORLOG_BUFSIZE ) == -1 )
 		{
@@ -364,30 +409,6 @@ BOOL ELi_WriteLog( FSFile *file ,ErrorLogEntry *entry, int num, u64 err )
 		}
 	}
 	
-	// 最後の一つは自前でRTCを取得して書き込む
-	if( ( rtcRes = RTC_GetDateTime( &date, &time )) != RTC_RESULT_SUCCESS)
-	{
-		OS_TPrintf("EL Error: RTC getDateTime() Failed!  Status:%d\n", rtcRes);
-		return FALSE;
-	}
-	
-	snprintf( buf, ERRORLOG_BUFSIZE, ERRORLOG_WRITE_FORMAT, 
-				date.year, date.month, date.day, s_strWeek[ date.week ], 
-				time.hour, time.minute, time.second,
-				err, s_strError[ err ] );
-	
-	// エントリ一つのサイズをきっちり128バイト固定にするために余白分を空白で埋めて
-	// \0で終端する
-	ELi_fillSpace( buf, ERRORLOG_BUFSIZE );
-	buf[ERRORLOG_BUFSIZE-1] = '\0';
-	
-	// 最後のエントリをファイルに書き出す
-	if( FS_WriteFile( file, buf, (s32)strlen(buf) ) == -1 )
-	{
-		OS_TPrintf("EL Error: FS_WriteFile() failed.\n" );
-		return FALSE;
-	}
-
 	// ファイルの余りを0埋めする
 	// open modeがサイズ固定なのでファイル終端を気にせず書き込む
 	MI_CpuClear8( buf, ERRORLOG_BUFSIZE );
@@ -457,5 +478,14 @@ static char *s_strError[] = {
 	"FATAL_ERROR_TWL_BOOTTYPE_UNKNOWN",
 	"FATAL_ERROR_NTR_BOOTTYPE_UNKNOWN",
 	"FATAL_ERROR_PLATFORM_UNKNOWN",
-	"FATAL_ERROR_LOAD_UNFINISHED"
+	"FATAL_ERROR_LOAD_UNFINISHED",
+	"FATAL_ERROR_LOAD_OPENFILE_FAILED",
+	"FATAL_ERROR_LOAD_MEMALLOC_FAILED",
+	"FATAL_ERROR_LOAD_SEEKFILE_FAILED",
+	"FATAL_ERROR_LOAD_READHEADER_FAILED",
+	"FATAL_ERROR_LOAD_LOGOCRC_ERROR = 39",
+	"FATAL_ERROR_LOAD_READDLSIGN_FAILED",
+	"FATAL_ERROR_LOAD_RELOCATEINFO_FAILED",
+	"FATAL_ERROR_LOAD_READMODULE_FAILED"
+
 };

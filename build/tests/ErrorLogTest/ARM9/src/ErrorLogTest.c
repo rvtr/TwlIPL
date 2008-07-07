@@ -21,7 +21,7 @@
 // なぜかバッファサイズが256byteを超えると出力が欠けるようになる
 // ダンプを見ると、OS_TPrintf()呼び出し時にもバッファにはちゃんと格納されている模様
 // 原因は現在調査中
-#define BUFSIZE 128
+#define BUFSIZE 100
  
 void VBlankIntr(void);
 
@@ -40,19 +40,7 @@ void TwlMain( void )
 	
 	FS_Init( FS_DMA_NOT_USE );
 
-	{
-		int test = 0;
-		
-		for( test = 0; test < 10 ; test++ )
-		{
-			// エラーログの書き込み
-			OS_TPrintf("test %d/10 ...\n", test+1 );
-			EL_WriteErrorLog(test);
-		}
-	}
-		
-	// イリーガルなエラーコードは怒られる
-	EL_WriteErrorLog(99);
+	EL_WriteErrorLog( (u64)0x077777777777LL );
 	
 	OS_TPrintf( "*** log file data\n" );
 	
@@ -82,6 +70,8 @@ void TwlMain( void )
 			}
 			
 		}
+		
+		FS_CloseFile( &file );
 		
 		OS_TPrintf("%s\n",buf);
 		totalSize += nowSize;
