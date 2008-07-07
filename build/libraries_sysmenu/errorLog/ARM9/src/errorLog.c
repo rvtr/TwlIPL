@@ -332,6 +332,7 @@ int ELi_ReadEntry( FSFile *file, ErrorLogEntry *entry )
 					&(entry[numEntry].second) ,
 					&(entry[numEntry].errorCode)  );
 
+		numEntry++;
 		readSize = FS_ReadFile( file, buf, ERRORLOG_BUFSIZE );
 
 	}
