@@ -83,6 +83,7 @@ Ltdautoload SCRWRAM
 	Library		libreloc_info_sp$(LIBSUFFIX).a
 	Library		libsysmenu_sp$(LIBSUFFIX).a
 	Library		libsysmmcu_sp$(LIBSUFFIX).a
+	Library		libds_sp$(LIBSUFFIX).a
 	Library		libaes_sp.firm.LTD.a
 	Library		libdht_sp$(LIBSUFFIX).a
 

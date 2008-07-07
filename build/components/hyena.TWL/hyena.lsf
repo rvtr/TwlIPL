@@ -144,6 +144,7 @@ Autoload WRAM
 				libreloc_info_sp$(LIBSUFFIX).a \
 				libsysmenu_sp$(LIBSUFFIX).a \
 				libsysmmcu_sp$(LIBSUFFIX).a \
+				libds_sp$(LIBSUFFIX).a \
 				libaes_sp.firm.LTD.a \
 				libsea_sp$(LIBSUFFIX).a \
 				libcrypto_sp$(LIBSUFFIX).a
