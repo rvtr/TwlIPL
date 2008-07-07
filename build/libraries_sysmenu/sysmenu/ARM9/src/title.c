@@ -1225,11 +1225,6 @@ void SYSM_ResumeLoadingThread( BOOL force )
 static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_Header *head )
 {
 	BOOL ret = TRUE;
-	// デバッガに接続してるときは適用しない
-	if( SYSM_IsRunOnDebugger() )
-	{
-		return TRUE;
-	}
 	
 #define DEV_WHITELIST_CHECK_SKIP
 #ifdef DEV_WHITELIST_CHECK_SKIP
@@ -1292,18 +1287,12 @@ static BOOL SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 #pragma unused(pBootTitle)
 	DHTPhase2Work* p2work;
 	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
-	
-	// デバッガに接続してるときは適用しない
-	if( SYSM_IsRunOnDebugger() )
-	{
-		return TRUE;
-	}
 
 	// phase1最終検証
 	if(s_calc_hash)
 	{
 		// アプリをロードする時に計算したハッシュを検証
-	    if(!SVC_CompareSHA1((const void *)hash0, (const void *)&s_calc_hash[1 * SVC_SHA1_DIGEST_SIZE]))
+	    if( !hash0 || !SVC_CompareSHA1( (const void *)hash0, (const void *)&s_calc_hash[1 * SVC_SHA1_DIGEST_SIZE] ) )
 	    {
 			OS_TPrintf("DHT Phase1 failed: hash check failed.\n");
 			if(!s_b_dev) {
@@ -1322,15 +1311,15 @@ static BOOL SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 			return FALSE;
 		}
 	}
-
+	
 	// DHTチェックphase2
 	OS_TPrintf("DHT Phase2...");
 	p2work = SYSM_Alloc( sizeof(DHTPhase2Work) );
 	if ( !hash1 || !DHT_CheckHashPhase2(hash1, hs, p2work, WrapperFunc_ReadCardData, NULL) )
 	{
 	    OS_TPrintf(" DHT Phase2 : Failed.\n");
-	    SYSM_Free(p2work);
 	    if(!s_b_dev){
+		    SYSM_Free(p2work);
 			UTL_SetFatalError(FATAL_ERROR_DHT_PHASE2_FAILED);
 			return FALSE;
 		}
