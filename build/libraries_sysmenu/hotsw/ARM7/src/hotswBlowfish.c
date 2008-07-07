@@ -61,7 +61,7 @@ void MakeBlowfishTableTWL(CardBootData *cbd, s32 keyLen, u16 bondingOp)
     }
     // 開発機の場合
     else{
-		MI_CpuCopyFast(&HotSwBlowfishInitTableTWL, (void *)ctx, sizeof(BLOWFISH_CTX));
+		MI_CpuCopyFast(&HotSwBlowfishInitTableTWL_dev, (void *)ctx, sizeof(BLOWFISH_CTX));
 
 
 		// スタック領域がオーバーフローするから、ヒープ領域から領域を確保する。
