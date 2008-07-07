@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 #include <firm.h>
 #include <twl/lcfg.h>
+#include "print.h"
 
 #ifdef FIRM_USE_PRODUCT_KEYS
 #define RSA_KEY_ADDR    OSi_GetFromFirmAddr()->rsa_pubkey[0]    // 鍵管理.xls参照
@@ -90,12 +91,6 @@ static void PreInit(void)
     /*
      メインメモリ関連
     */
-    // バージョン埋め込み
-    MI_CpuClear8( buffer, sizeof(buffer) );
-    MI_CpuCopy8( "VERSION", buffer[0], 8 );
-    STD_CopyLStringZeroFill( buffer[1], g_strIPLSvnRevision, 8 );
-    STD_CopyLStringZeroFill( buffer[2], g_strSDKSvnRevision, 8 );
-    MI_CpuCopy8( "VERSION", buffer[3], 8 );
     // SHARED領域はスタートアップ時でクリア
     /*
         FromBrom関連
@@ -251,6 +246,7 @@ static void EraseAll(void)
 
 void TwlMain( void )
 {
+    int point = 1;
 #ifdef PROFILE_ENABLE
     // 0: bootrom
     profile[pf_cnt++] = OS_TicksToMicroSecondsBROM32(OS_GetTick());
@@ -279,6 +275,7 @@ void TwlMain( void )
     {
         goto end;
     }
+    point++;    // 2
     // 5: after FS_ResolveSrl
     PUSH_PROFILE();
 
@@ -291,6 +288,7 @@ void TwlMain( void )
         OS_TPrintf("Failed to call FS_LoadHeader() and/or CheckHeader().\n");
         goto end;
     }
+    point++;    // 3
     // 7: after FS_LoadHeader
     PUSH_PROFILE();
 
@@ -303,6 +301,7 @@ void TwlMain( void )
         OS_TPrintf("Failed to call FS_LoadStatic().\n");
         goto end;
     }
+    point++;    // 4
     // 9: after FS_LoadStatic
     PUSH_PROFILE();
 
@@ -339,6 +338,7 @@ void TwlMain( void )
     OS_BootFromFIRM();
 
 end:
+    PrintError("Error: %d-%s-%s", point, g_strIPLSvnRevision, g_strSDKSvnRevision);
     EraseAll();
 
     // failed

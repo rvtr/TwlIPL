@@ -327,6 +327,7 @@ void TwlSpMain( void )
 end:
     SetDebugLED( (u8)(0xF0 | step));
 
+    PM_BackLightOn( TRUE );
     EraseAll();
 
     // failed

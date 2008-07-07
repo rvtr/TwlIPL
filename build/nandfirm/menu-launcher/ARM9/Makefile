@@ -28,7 +28,7 @@ TARGET_BIN	=	menu_launcher9.srl
 
 REVISION_SRC	=	revision.c
 
-SRCS		=	main.c $(REVISION_SRC)
+SRCS		=	main.c print.c $(REVISION_SRC)
 
 CRT0_O		=	crt0_firm.o
 
