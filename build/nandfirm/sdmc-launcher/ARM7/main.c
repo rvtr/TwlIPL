@@ -119,6 +119,8 @@ static void PreInit(void)
 ***************************************************************/
 static void PostInit(void)
 {
+    PM_BackLightOn( TRUE ); // ARM9‘¤‰æ–Ê•\¦‚Ì‚½‚ß
+
     /*
         AESŠÖ˜A (NANDˆÃ†‰»‚ÌŒ®•ÏX‚ğŠÜ‚Ş)
     */
@@ -288,13 +290,6 @@ void TwlSpMain( void )
     }
 #endif
     SetDebugLED( 0 );
-
-#if SDK_TS_VERSION < 300
-    PMi_SetParams( REG_PMIC_BL_BRT_B_ADDR, 22, PMIC_BL_BRT_B_MASK );
-#else
-    MCUi_WriteRegister( MCU_REG_BL_ADDR, MCU_REG_BL_BRIGHTNESS_MASK );
-#endif
-    PM_BackLightOn( TRUE );
 
     SYSMi_SetAESKeysForAccessControl(FALSE, rh);
     MI_CpuClearFast( OSi_GetFromFirmAddr(), sizeof(OSFromFirmBuf) );

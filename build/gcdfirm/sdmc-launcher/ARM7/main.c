@@ -113,10 +113,8 @@ static void PreInit(void)
 ***************************************************************/
 static void PostInit(void)
 {
-#if SDK_TS_VERSION <= 200
-    // PMICの設定 for old version
-    PM_InitFIRM();
-#endif
+    PM_BackLightOn( TRUE ); // ARM9側画面表示のため
+
     // マウント情報の初期化
     FS_InitMountInfo(FALSE, TRUE);
     // アイドルスレッドの作成
@@ -277,13 +275,6 @@ void TwlSpMain( void )
     }
 #endif
     SetDebugLED( 0 );
-
-#if SDK_TS_VERSION < 300
-    PMi_SetParams( REG_PMIC_BL_BRT_B_ADDR, 22, PMIC_BL_BRT_B_MASK );
-#else
-    MCUi_WriteRegister( MCU_REG_BL_ADDR, MCU_REG_BL_BRIGHTNESS_MASK );
-#endif
-    PM_BackLightOn( TRUE );
 
     AESi_ResetAesKeyA();
     AESi_ResetAesKeyB();
