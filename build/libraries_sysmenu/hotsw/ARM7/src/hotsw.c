@@ -1166,6 +1166,13 @@ void HOTSW_SetBootSegmentBuffer(void* buf, u32 size)
  *---------------------------------------------------------------------------*/
 void HOTSW_SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size)
 {
+    HOTSWi_SetSecureSegmentBuffer(type, buf, size);
+    // バッファの初期化
+    MI_CpuClear8(s_pSecureSegBuffer, size);
+}
+
+void HOTSWi_SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size)
+{
     SDK_ASSERT(size > SECURE_SEGMENT_SIZE);
 
     if(type == HOTSW_MODE1){
@@ -1174,17 +1181,12 @@ void HOTSW_SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size)
 
         s_cbData.pSecureSegBuf = s_pSecureSegBuffer;
 
-        // バッファの初期化
-        MI_CpuClear8(s_pSecureSegBuffer, size);
     }
     else{
         s_pSecure2SegBuffer = (u32 *)buf;
         s_Secure2SegBufSize = size;
 
         s_cbData.pSecure2SegBuf = s_pSecure2SegBuffer;
-
-        // バッファの初期化
-        MI_CpuClear8(s_pSecure2SegBuffer, size);
     }
 }
 
@@ -2376,6 +2378,17 @@ static BOOL CheckExtArm9HashValue(void)
     return SVC_CompareSHA1( sha1data, s_cbData.pBootSegBuf->rh.s.main_ltd_static_digest );
 }
 #endif
+
+
+/*---------------------------------------------------------------------------*
+  Name:         HOTSWi_GetCardBootData
+
+  Description:
+ *---------------------------------------------------------------------------*/
+void *HOTSWi_GetCardBootData(void)
+{
+    return &s_cbData;
+}
 
 
 /*---------------------------------------------------------------------------*

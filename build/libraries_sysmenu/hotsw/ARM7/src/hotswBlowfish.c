@@ -19,6 +19,18 @@
 
 
 /*---------------------------------------------------------------------------*
+  Name:         MakeBlowfishTableDSForNAND
+  
+  Description:  NANDÉAÉvÉäópKeyTableÇÃê∂ê¨
+ *---------------------------------------------------------------------------*/
+void HOTSWi_MakeBlowfishTableDSForNAND(void)
+{
+    CardBootData *cbd = HOTSWi_GetCardBootData();
+    cbd->pBootSegBuf = (void*)SYSM_APP_ROM_HEADER_BUF;
+    MakeBlowfishTableDS(cbd, 8);
+}
+
+/*---------------------------------------------------------------------------*
   Name:         MakeBlowfishTableDS
   
   Description:  KeyTableÇÃê∂ê¨

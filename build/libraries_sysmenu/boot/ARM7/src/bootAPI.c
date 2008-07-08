@@ -166,10 +166,16 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 		// FSによってshared領域にコピーされたランチャー自身のマウントパスのクリア
 		MI_CpuClearFast((char *)HW_TWL_FS_BOOT_SRL_PATH_BUF, OS_MOUNT_PATH_LEN);
 		
-		// カードアプリの場合はARM9FLXの先頭2k暗号オブジェクトをデクリプト
-		if( SYSMi_GetWork()->flags.common.isCardBoot ) {
+		// NAND/TMPアプリ用KeyTableの生成
+		if( ! SYSMi_GetWork()->flags.common.isCardBoot )
+		{
+			HOTSWi_MakeBlowfishTableDSForNAND();
+		}
+		// ARM9FLXの先頭2k暗号オブジェクトをデクリプト
+		{
 			// 再配置情報があればそちらのアドレス、なければヘッダ指定のアドレス
 			void *addr = (SYSMi_GetWork()->romRelocateInfo[0].src != NULL) ? SYSMi_GetWork()->romRelocateInfo[0].src : dh->s.main_ram_address;
+			HOTSWi_SetSecureSegmentBuffer(HOTSW_MODE1, addr, SECURE_AREA_SIZE);
 			HOTSW_DecryptObjectFile( addr );
 		}
 		
