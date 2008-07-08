@@ -22,6 +22,9 @@
 
 # 現在、製品版の証明書を含んだものは生成しない
 
+override TARGET_PLATFORM	:= TWL
+override TWL_ARCHGEN		:= LIMITED
+
 TARGET_FIRM			=	SYSTEMMENU
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
@@ -31,9 +34,9 @@ include ./commondefs.sysmenuVersion
 VER_TIMESTAMP		=	08062300
 
 # システムメニューバージョン
-STR_VERSION			=	0.1A
 MAJOR_VERSION		=	0
 MINOR_VERSION		=	1
+STR_VERSION			=	$(MAJOR_VERSION).$(MINOR_VERSION)
 
 # ユーザー領域サイズ(=128MB)
 USER_AREA_SIZE		=	134217728

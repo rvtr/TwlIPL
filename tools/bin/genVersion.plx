@@ -73,15 +73,21 @@ if (exists($ENV{"TWL_IPL_RED_ROOT"}) ){
 	die "No TWL_IPL_RED_ROOT is found.\n";
 }
 
-# バージョンの出力
+# システムメニューバージョンの出力
 {
+	my $length = 0x20;
+	my $sysMenuVersion = $ARGV[1];
+	if( length $sysMenuVersion >= $length ) {
+		printf "ERROR: SystemMenu version length less than %d.\n", $length;
+		die;
+	}
 	open VERSION, ">$versionFile" or die "File Open Error.\n";
 	binmode VERSION;
 #	my $ver = ( ( $ARGV[ 1 ] & 0xffff ) << 16 ) | ($ARGV[ 2 ] & 0xffff);
 #	printf "version = %d.%d\n", ($ver >> 16), ($ver & 0xffff);
 #	syswrite( VERSION, pack( "L", $ver ) );
-	printf "version = %s\n", $ARGV[1];
-    syswrite( VERSION, pack( "a*x", $ARGV[1]) );
+	printf "SysMenu version = %s\n", $sysMenuVersion;
+    syswrite( VERSION, pack( "a$length", $sysMenuVersion) );
 	close VERSION;
 }
 
@@ -108,21 +114,31 @@ if (exists($ENV{"TWL_IPL_RED_ROOT"}) ){
 
 # NUP_HOSTNAMEの出力
 {
+	my $length = 0x40;
+	my $nupHostName = $ARGV[ 5 ];
+	if( length $nupHostName >= $length ) {
+		printf "ERROR: NUP Host Name length less than %d.\n", $length;
+		die;
+	}
 	open NUPHOSTNAME, ">$nupHostFile" or die "File Open Error.\n";
 	binmode NUPHOSTNAME;
-	my $nupHostName = $ARGV[ 5 ];
 	printf "NUPHostName = $nupHostName\n";
-	syswrite( NUPHOSTNAME, pack( "a*x", $nupHostName ) );
+	syswrite( NUPHOSTNAME, pack( "a$length", $nupHostName ) );
 	close NUPHOSTNAME;
 }
 
 # EULA_URLの出力
 {
+	my $length = 0x80;
+	my $urlEULA = $ARGV[ 6 ];
+	if( length $urlEULA >= $length ) {
+		printf "ERROR: EULA URL length less than %d.\n", $length;
+		die;
+	}
 	open EULAURL, ">$urlEULAFile" or die "File Open Error.\n";
 	binmode EULAURL;
-	my $urlEULA = $ARGV[ 6 ];
 	printf "EULAURL = $urlEULA\n";
-	syswrite( EULAURL, pack( "a*x", $urlEULA ) );
+	syswrite( EULAURL, pack( "a$length", $urlEULA ) );
 	close EULAURL;
 }
 
@@ -139,7 +155,7 @@ if (exists($ENV{"TWLSYSTEM_ROOT"}) ){
 
 # アーカイブ作成
 {
-    system ( "$TWLSYSTEM_ROOT/tools/bin/nnsarc.exe -c $archiveFile $dataDir -s -E .svn" );
+    system ( "$TWLSYSTEM_ROOT/tools/bin/nnsarc.exe -c $archiveFile -A 16 $dataDir -s -E .svn" );
 }
 
 # アーカイブのハッシュの出力
