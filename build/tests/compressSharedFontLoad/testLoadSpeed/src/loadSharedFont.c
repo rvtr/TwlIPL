@@ -21,6 +21,9 @@
 // 圧縮フォントを解凍するときは1にする
 #define  UNCOMPRESS_FONTS    1
 
+// 前方圧縮のときには1にする
+#define  FORWARD_COMPRESS    0
+
 // extern data-----------------------------------------------------------------
 
 // function's prototype-------------------------------------------------------
@@ -108,9 +111,12 @@ void LoadSharedFont( STicks *pTicks )
         }
 
         // 圧縮後のフォントをロード
-//        s_pCompressedBuffer[i] = OS_Alloc( (u32)MATH_ROUNDUP( compsize, 32 ) );
-//        if( OS_LoadSharedFont( i, s_pCompressedBuffer[ i ] ) )
+#if (FORWARD_COMPRESS==1)
+        s_pCompressedBuffer[i] = OS_Alloc( (u32)MATH_ROUNDUP( compsize, 32 ) );
+        if( OS_LoadSharedFont( i, s_pCompressedBuffer[ i ] ) )
+#else
         if( OS_LoadSharedFont( i, s_pFontBuffer[ i ] ) )
+#endif
         {
             OS_TPrintf( "    load succeeded.\n" );
             g_isSucceededLoad[ i ] = TRUE;
@@ -125,8 +131,12 @@ void LoadSharedFont( STicks *pTicks )
 #if (UNCOMPRESS_FONTS==1)
         comptick = OS_GetTick();
         OS_TPrintf( "    uncompress font\n" );
-//        comperr = MI_SecureUncompressLZ( s_pCompressedBuffer[i], (u32)compsize, s_pFontBuffer[i], (u32)origsize );
+#if (FORWARD_COMPRESS==1)
+        //comperr = MI_SecureUncompressLZ( s_pCompressedBuffer[i], (u32)compsize, s_pFontBuffer[i], (u32)origsize );
+        comperr = MI_SecureUncompressHuffman( s_pCompressedBuffer[i], (u32)compsize, s_pFontBuffer[i], (u32)origsize );
+#else
         comperr = MI_SecureUncompressBLZ( s_pFontBuffer[i], (u32)compsize, (u32)origsize );
+#endif
         if( MI_ERR_SUCCESS == comperr  )
         {
             OS_TPrintf( "    uncompression succeeded\n" );
