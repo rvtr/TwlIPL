@@ -17,22 +17,35 @@
 #----------------------------------------------------------------------------
 
 # バージョンファイルとTADを生成する
-# WL_IPL_RED_PRIVATE_ROOTが設定されていない場合は
+# TWL_IPL_RED_PRIVATE_ROOTが設定されていない場合は
 # 既存のバージョンファイルからTADのみ生成する
+
+# 現在、製品版の証明書を含んだものは生成しない
 
 TARGET_FIRM			=	SYSTEMMENU
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include ./commondefs.sysmenuVersion
 
+# タイムスタンプ
 VER_TIMESTAMP		=	08062300
 
 # システムメニューバージョン
+STR_VERSION			=	0.1A
 MAJOR_VERSION		=	0
 MINOR_VERSION		=	1
 
 # ユーザー領域サイズ(=128MB)
 USER_AREA_SIZE		=	134217728
+
+# NUPホストネーム
+NUP_HOSTNAME		=	nus.shop.wii.com:443
+
+# EULAのURL
+EULA_URL			=	https://cfh-test.t.app.nintendowifi.net/eula/
+
+GEN_VERSION_PARAM	=	$(VER_TIMESTAMP) $(STR_VERSION) $(MAJOR_VERSION) $(MINOR_VERSION) \
+						$(USER_AREA_SIZE) $(NUP_HOSTNAME) $(EULA_URL)
 
 GEN_VERSION_FILE	=	$(SYSMENU_TOOLSDIR)/bin/genVersion.plx
 
@@ -55,7 +68,7 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 do-build :  $(VERSION_TAD)
 
 $(VERSION_DAT): ./Makefile ./commondefs.sysmenuVersion
-	$(GEN_VERSION_FILE) $(VER_TIMESTAMP) $(MAJOR_VERSION) $(MINOR_VERSION) $(USER_AREA_SIZE)
+	$(GEN_VERSION_FILE) $(GEN_VERSION_PARAM)
 
 $(VERSION_TAD) : $(SYSMENU_VERSION_FILE)
 	$(MAKETAD) $(call empath,$<) $(SYSMENU_VERSION_MAKETAD_OPTION) -o $@
