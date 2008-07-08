@@ -153,6 +153,11 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 		// カードNTR-ROMヘッダをNANDアプリやDSダウンロードプレイのためコピー
 		MI_CpuCopyFast( (void*)SYSM_CARD_ROM_HEADER_BAK, (void*)HW_CARD_ROM_HEADER, HW_CARD_ROM_HEADER_SIZE );
 
+    	if ( dh->s.platform_code ){
+			// カードTWL-ROMヘッダをHW_TWL_CARD_ROM_HEADER_BUFにコピー
+			MI_CpuCopyFast( (void*)SYSM_CARD_ROM_HEADER_BAK, (void*)HW_TWL_CARD_ROM_HEADER_BUF, HW_TWL_CARD_ROM_HEADER_BUF_SIZE );
+        }
+
 		// この処理は、DSダウンロードプレイ側で行う。
 		// MI_CpuCopyFast ( (void *)HW_CARD_ROM_HEADER, (void *)MB_CARD_ROM_HEADER_ADDRESS, 0x160);
 
