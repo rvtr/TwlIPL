@@ -179,6 +179,7 @@ typedef struct SDKBootCheckInfo{
 // ARM9からARM7にWRAM経由で引き渡す鍵情報ワーク
 typedef struct DeliverBROM9Key {
 	BLOWFISH_CTX	ds_blowfish;
+//	u8              aes_key[ AES_KEY_SIZE ];
 }DeliverBROM9Key;
 
 
