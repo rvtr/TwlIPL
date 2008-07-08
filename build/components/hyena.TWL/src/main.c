@@ -236,6 +236,7 @@ TwlSpMain(void)
     // (旧無線初期化はmain loopで行う。)
 
     // SPI 初期化
+	// ※ARM9側のOS_Init内のPM_InitでPMのPXIコールバック待ちをしており、ここでARM9と同期が取られる。
     SPI_Init(THREAD_PRIO_SPI);
 
     BOOT_Init();

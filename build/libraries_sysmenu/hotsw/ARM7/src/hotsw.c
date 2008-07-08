@@ -210,10 +210,9 @@ void HOTSW_Init(u32 threadPrio)
     OS_InitTick();
     OS_InitThread();
 
-#ifndef USE_LOCAL_KEYTABLE
     // 初期化後に他の用途でWRAM_0を使用できるようにローカルバッファへコピーしておく
     MI_CpuCopyFast((void *)HW_WRAM_0_LTD, &HotSwBlowfishInitTableBufDS, sizeof(BLOWFISH_CTX));
-#endif
+	
     // PXI初期化
     PXI_Init();
     PXI_SetFifoRecvCallback(PXI_FIFO_TAG_HOTSW, InterruptCallbackPxi);
