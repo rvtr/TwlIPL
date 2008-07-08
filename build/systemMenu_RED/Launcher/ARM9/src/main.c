@@ -359,10 +359,13 @@ void TwlMain( void )
     OS_TPrintf( "GetSharedFont : %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 #endif
 
+// 現状のバージョンファイルに未対応なためコメントアウト
+/*
 	if( LoadSysmVersion() )
 	{
 		OS_TPrintf("Launcher Version = %d.%d\n",GetSysmMajorVersion(), GetSysmMinorVersion() );
 	}
+*/
 
     // 開始ステートの判定--------------
 
