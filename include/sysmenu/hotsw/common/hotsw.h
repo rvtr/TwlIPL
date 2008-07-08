@@ -164,6 +164,8 @@ void HOTSW_SetBootSegmentBuffer(void* buf, u32 size);
 
 // Secure Segment バッファの指定
 void HOTSW_SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size);
+// 上記のバッファ非クリアバージョン
+void HOTSWi_SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size);
 
 // ISデバッガ上で動作しているか？
 BOOL HOTSWi_IsRunOnDebugger(void);
@@ -174,7 +176,12 @@ BOOL HOTSWi_IsRomEmulation(void);
 // デバッガ通信用にカードスロットの電源をONにする。
 void HOTSWi_TurnCardPowerOn(u32 slot);
 
+// カードワーク取得
+void *HOTSWi_GetCardBootData(void);
+
 #ifdef USE_WRAM_LOAD
+// NANDアプリ用KeyTableの生成
+void HOTSWi_MakeBlowfishTableDSForNAND(void);
 // 引数で与えられたバッファから2KB分の領域をBlowfishで復号化する
 BOOL HOTSW_DecryptObjectFile(void* dest);
 #endif
