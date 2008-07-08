@@ -137,6 +137,8 @@ void SYSMi_SendKeysToARM7( void )
     MI_SetWramBank(MI_WRAM_ARM9_ALL);
     // DSŒÝŠ·Blowfishƒe[ƒuƒ‹‚ðARM7‚Ö“n‚·
     MI_CpuCopyFast( &((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->ds_blowfish, (void *)&GetDeliverBROM9KeyAddr()->ds_blowfish, sizeof(BLOWFISH_CTX) );
+    // AESŒ®0‚ðARM7‚Ö“n‚·
+//    MI_CpuCopyFast( &((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->aes_key[ 0 ], (void *)&GetDeliverBROM9KeyAddr()->aes_key[ 0 ], AES_KEY_SIZE );
     DC_FlushRange( (void *)HW_WRAM_0, sizeof(DeliverBROM9Key) );
     MI_SetWramBank(MI_WRAM_ARM7_ALL);
 }

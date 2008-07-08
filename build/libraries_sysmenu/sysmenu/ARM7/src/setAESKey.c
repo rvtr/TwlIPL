@@ -33,6 +33,11 @@ void SYSMi_SetAESKeysForAccessControlCore( ROM_Header *pROMH, u8 *pDst, BOOL *pI
 // static variable-------------------------------------------------------------
 // const data------------------------------------------------------------------
 
+static const u8 dev_sslClientCert[] = {
+	0x79, 0xf9, 0x51, 0xbc, 0x3b, 0xb7, 0xe4, 0xca,
+	0x18, 0x8f, 0xaf, 0x91, 0x8d, 0x89, 0xd3, 0x46,
+};
+
 // dev_commonKeyはベタで持っていい。
 static const u8 dev_commonKey[] = {
 	0xA1, 0x60, 0x4A, 0x6A, 0x71, 0x23, 0xB5, 0x29,
@@ -73,19 +78,21 @@ static const u8 dev_jpegEncodeKeyForNormal[] = {
 
 void SYSMi_SetAESKeysForAccessControl( BOOL isNtrMode, ROM_Header *pROMH )
 {
+	BOOL isClearSlotA = TRUE;
 	BOOL isClearSlotB = TRUE;
 	BOOL isClearSlotC = TRUE;
 	
 	// 鍵のセット
 	MI_CpuClearFast( (void *)HW_LAUNCHER_DELIVER_PARAM_BUF, HW_LAUNCHER_DELIVER_PARAM_BUF_SIZE );
 	if( !isNtrMode ) {
+		SYSMi_SetAESKeysForSSLClientCert( pROMH, &isClearSlotA );
 		SYSMi_SetAESKeysForSignJPEG( pROMH, &isClearSlotB, &isClearSlotC );
 		SYSMi_SetAESKeysForAccessControlCore( pROMH, (u8 *)HW_LAUNCHER_DELIVER_PARAM_BUF, &isClearSlotB, &isClearSlotC );
 	}
 	
 	// ブートするアプリに応じて、AESキースロットのクリアを行う。
 	{
-		AESi_ResetAesKeyA();
+		if( isClearSlotA ) AESi_ResetAesKeyA();
 		if( isClearSlotB ) AESi_ResetAesKeyB();
 		if( isClearSlotC ) AESi_ResetAesKeyC();
 		
@@ -99,6 +106,24 @@ void SYSMi_SetAESKeysForAccessControl( BOOL isNtrMode, ROM_Header *pROMH )
 		MI_CpuClearFast(fromFirm, sizeof(OSFromFirmBuf));
 	}
 }
+
+
+void SYSMi_SetAESKeysForSSLClientCert( ROM_Header *pROMH, BOOL *pIsClearSlotA )
+{
+	if ( pROMH->s.access_control.hw_aes_slot_A_SSLClientCert == TRUE ) {
+		void *pAESKey = ( SCFG_GetBondingOption() == SCFG_OP_PRODUCT ) ?
+						&( OSi_GetFromFirmAddr()->aes_key[ 3 ] ) : (void *)dev_sslClientCert;
+		
+		if( pIsClearSlotA ) {
+			*pIsClearSlotA = FALSE;
+		}
+		// AESスロットのデフォルト値セット
+		AES_Lock();
+		AES_SetKeyA( pAESKey );
+		AES_Unlock();
+	}
+}
+
 
 void SYSMi_SetAESKeysForSignJPEG( ROM_Header *pROMH, BOOL *pIsClearSlotB, BOOL *pIsClearSlotC )
 {

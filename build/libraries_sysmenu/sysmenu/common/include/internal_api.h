@@ -76,6 +76,9 @@ void SYSMi_CheckRTC( void );
 // AES鍵設定
 //-------------------------------------------------------
 
+// SSLクライアント証明書用
+void SYSMi_SetAESKeysForSSLClientCert( ROM_Header *pROMH, BOOL *pIsClearSlotA );
+
 // JPEG署名用（ランチャー、アプリブート共用）
 void SYSMi_SetAESKeysForSignJPEG( ROM_Header *pROMH, BOOL *pIsClearSlotB, BOOL *pIsClearSlotC );
 
