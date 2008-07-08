@@ -18,7 +18,8 @@
 
 TARGET_FIRM			=	SYSTEMMENU
 
-SUBDIRS			=	compBLZ_modified
+SUBDIRS			=	compBLZ_modified \
+					ntrcomp
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 

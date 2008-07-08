@@ -46,8 +46,10 @@ my $headerFile = "header.bin";
 my $digestFile = "sha1.bin";
 my $signFile   = "sign.bin";
 my $tempFile   = "temp.bin";
-my $compprog   = "compBLZ.exe";    # 圧縮プログラム
+my $compprog   = "./compBLZ_modified/bin/compBLZ.exe";    # 圧縮プログラム
 my $compoption = "-e \"\"";
+#my $compprog   = "./ntrcomp/gcc/ntrcomp.exe";
+#my $compoption = "-h8 -A32 -s";
 
 # 後始末
 sub deleteTemp {
@@ -121,8 +123,7 @@ foreach ( @ARGV ) {
         # 圧縮
         # SDKのcompBLZ.exeは引数バグがあるためローカルに修正版を入れておく
         my $compfile = "$_.comp";
-        #system ("${SDKROOT}/tools/bin/${compprog} $compoption $_ -o $compfile");
-        system ("./compBLZ_modified/bin/${compprog} $compoption $_ -o $compfile");
+        system ("${compprog} $compoption $_ -o $compfile");
 
         # パディングの出力
         #syswrite( INFO, pack( "x$padLen") );
