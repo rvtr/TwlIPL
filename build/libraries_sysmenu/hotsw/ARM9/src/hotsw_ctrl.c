@@ -181,7 +181,7 @@ void HOTSW_InvalidHotSW( void )
   
   Description:  PXI’ÊM‚ÅARM7‚ÉŠˆü‘}”²Finalizeˆ—‚ğ’Ê’m
  *---------------------------------------------------------------------------*/
-void HOTSW_FinalizeHotSWAsync( HotSwApliType apliType )
+void HOTSW_FinalizeHotSWAsync( HotSwCardState apliType )
 {
 	HotSwPxiMessageForArm7 msg;
 

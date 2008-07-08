@@ -95,7 +95,7 @@ static BOOL isTwlModeLoad(void);
 static HotSwState ReadSecureModeCardData(void);
 static void ClearCardFlgs(void);
 
-static void FinalizeHotSw(HotSwApliType type);
+static void FinalizeHotSw(HotSwCardState type);
 static void ForceNitroModeToFinalize(void);
 static void ForceNormalModeToFinalize(void);
 static BOOL ChangeGameMode(void);
@@ -1685,35 +1685,11 @@ static void ClearCardFlgs(void)
   Name:        FinalizeHotSw
 
   Description: アプリ起動時に、活線挿抜関係の後始末を行う。
-
-・カードが挿さっていて
-  TWL NANDアプリ起動なら
-        NANDアプリヘッダ指定無し
-          → スロット電源OFF
-
-        NANDアプリヘッダのゲームカードONフラグ=1
-          → NANDアプリ起動後もカード電源(OFF後)ONにしてNormalモードにする
-
-        NANDアプリヘッダのゲームカードNITROモードフラグ=1
-          → NTR NANDアプリ同様
-
-  NTR NANDアプリ起動なら
-        カード種別問わず、一度スロット電源OFFしてから、GAMEモードに遷移させておく。
-        その際、NTR互換のRomHeaderのみ読み込んでおく。(拡張領域残しておいてもよいかも)
-
-・カードが抜かれていて
-  NANDアプリ起動なら
-        スロット電源OFFして、カードスロット関連のレジスタをクリアする
-
-    NANDアプリ起動時の終了処理が確認できたら、、BOOTAPIでKillThreadでスレッドを殺せるようにしておく。
-    スレッドを殺す前に、IREQとDET割り込みを無効にしておく。
-
  *---------------------------------------------------------------------------*/
-static void FinalizeHotSw(HotSwApliType type)
+static void FinalizeHotSw(HotSwCardState state)
 {
     ROM_Header* rh = (void*)SYSM_APP_ROM_HEADER_BUF;
     static BOOL finalized = FALSE;
-    BOOL    isAccessible;
 
     if(finalized){
         return;
@@ -1726,58 +1702,42 @@ static void FinalizeHotSw(HotSwApliType type)
     // ポーリングスレッドを消去
     OS_KillThread( &HotSwThreadData.monitorThread, NULL );
 
-    SYSMi_GetWork()->appCardID = 0;
-
-    if(type == HOTSW_APLITYPE_CARD){
-        SYSMi_GetWork()->appCardID = s_cbData.id_gam;
-        goto final;
-    }
-
-    isAccessible = HOTSW_IsCardAccessible();
-
-    McPowerOff();
-
-    // カードが無い（アクセスできない）なら、レジスタクリアしてリターン
-    if(!isAccessible){
+	SYSMi_GetWork()->appCardID = 0;
+    
+    // カードアクセスできないなら、(一応)スロット電源OFFしてレジスタクリア
+    if(!HOTSW_IsCardAccessible()){
+        McPowerOff();
         ClearAllCardRegister();
         goto final;
     }
+    
+    switch(state){
+        // Slot Power Off
+      case HOTSW_CARD_STATE_POWER_OFF:
+        McPowerOff();
+        break;
 
-    switch(type){
-      // NTR NAND Application Boot
-      case HOTSW_APLITYPE_NTR_NAND:
-        OS_PutString("Finalize Type : NTR NAND Application\n");
+        // Normalモードに移行
+      case HOTSW_CARD_STATE_NORMAL_MODE:
+        ForceNormalModeToFinalize();
+        break;
 
+        // Gameモードに移行
+      case HOTSW_CARD_STATE_GAME_MODE:
         ForceNitroModeToFinalize();
         break;
 
-      // TWL NAND Application Boot
-      case HOTSW_APLITYPE_TWL_NAND:
-        OS_PutString("Finalize Type : TWL NAND Application\n");
-
-        while(!SYSMi_GetWork()->flags.common.isHeaderLoadCompleted){
-            OS_Sleep(1);
-        }
-
-        // NANDアプリヘッダはコピー済み
-        if(rh->s.access_control.game_card_nitro_mode){
-            ForceNitroModeToFinalize();
-        }
-        else if(rh->s.access_control.game_card_on){
-            ForceNormalModeToFinalize();
-        }
+        // 状態キープ
+      case HOTSW_CARD_STATE_KEEP:
+        SYSMi_GetWork()->appCardID = s_cbData.id_gam;
         break;
 
-      // else
+		// else
       default:
         ClearAllCardRegister();
         McPowerOff();
-
-        OS_PutString("Finalize Type : Unexpected Type\n");
-
-        break;
     }
-
+    
 final:
     ClearCardIrq();
 
@@ -1823,6 +1783,8 @@ static void ForceNitroModeToFinalize(void)
  *---------------------------------------------------------------------------*/
 static void ForceNormalModeToFinalize(void)
 {
+	CARD_LockRom(s_CardLockID);
+    
     McPowerOff();  // 既にOFFになっているため実質的には無効
     McPowerOn();
 
@@ -1830,6 +1792,9 @@ static void ForceNormalModeToFinalize(void)
     (void)LoadTable();
     (void)ReadIDNormal(&s_cbData);
     (void)ReadBootSegNormal(&s_cbData);
+
+    CARD_UnlockRom(s_CardLockID);
+    
     s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
     SYSMi_GetWork()->appCardID = s_cbData.id_nml;
 
@@ -1848,6 +1813,7 @@ static BOOL ChangeGameMode(void)
 
     CARD_LockRom(s_CardLockID);
 
+    McPowerOff();
     McPowerOn();
 
     s_cbData.pBootSegBuf = s_pBootSegBuffer;
@@ -2145,7 +2111,7 @@ static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err)
 	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].ctrl  	= (d.msg.ctrl) ? TRUE : FALSE;
 	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].finalize 	= (d.msg.finalize) ? TRUE : FALSE;
 	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].value 	= d.msg.value;
-	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].apli  	= (HotSwApliType)d.msg.bootType;
+	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].apli  	= (HotSwCardState)d.msg.bootType;
     
 	// メッセージ送信
 	OS_SendMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl], OS_MESSAGE_NOBLOCK);

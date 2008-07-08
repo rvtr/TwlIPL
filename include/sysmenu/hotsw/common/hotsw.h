@@ -40,11 +40,12 @@ typedef enum ModeType{
     HOTSW_MODE2
 } ModeType;
 
-typedef enum HotSwApliType{
-    HOTSW_APLITYPE_CARD = 0,
-    HOTSW_APLITYPE_NTR_NAND,
-    HOTSW_APLITYPE_TWL_NAND
-} HotSwApliType;
+typedef enum HotSwCardState{
+    HOTSW_CARD_STATE_POWER_OFF = 0,
+    HOTSW_CARD_STATE_NORMAL_MODE,
+    HOTSW_CARD_STATE_GAME_MODE,
+    HOTSW_CARD_STATE_KEEP
+} HotSwCardState; // 旧 HotSwApliType
 
 // union  -------------------------------------------------------------------
 // PXI用メッセージ
@@ -80,7 +81,7 @@ typedef struct HotSwMessageForArm7{
     BOOL			 finalize;
     BOOL			 read;
 	HotSwMessageType type;
-    HotSwApliType    apli;
+    HotSwCardState   apli;
 } HotSwMessageForArm7;
 
 typedef struct HotSwMessageForArm9{
@@ -108,7 +109,7 @@ void HOTSW_InvalidHotSWAsync( void );
 void HOTSW_InvalidHotSW( void );
 
 // PXI通信でARM7に活線挿抜Finalize処理を通知
-void HOTSW_FinalizeHotSWAsync( HotSwApliType apliType );
+void HOTSW_FinalizeHotSWAsync( HotSwCardState apliType );
 
 // 活線挿抜の許可/抑制の状態を返す
 BOOL HOTSW_isEnableHotSW(void);
