@@ -329,10 +329,22 @@ void TwlMain( void )
     // 「ダイレクトブートでない」なら
     if( !pBootTitle ) {
         // NAND & カードアプリリスト取得
-        SYSM_MakeNandTitleListAsync();    // NANDアプリリストの作成（取得はしていないので注意）
+        if( !SYSM_IsLogoDemoSkip() )
+        {
+        	SYSM_MakeNandTitleListAsync();    // NANDアプリリストの作成（取得はしていないので注意）
+        }else
+        {
+			sp_titleList = SYSM_GetNandTitleList();
+		}
     }else
     {
-		SYSM_MakeNandTitleListMakerInfo();	// 	アプリに引き渡すタイトルリスト作成用情報の作成
+		if( !pBootTitle->flags.isLogoSkip )
+		{
+			SYSM_MakeNandTitleListMakerInfoAsync();	// 	アプリに引き渡すタイトルリスト作成用情報の作成
+		}else
+		{
+			SYSM_MakeNandTitleListMakerInfo();
+		}
 	}
     // end時間計測5
 #if (MEASURE_TIME == 1)
