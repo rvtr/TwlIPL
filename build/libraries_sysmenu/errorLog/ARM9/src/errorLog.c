@@ -78,8 +78,8 @@ static char *s_strError[FATAL_ERROR_MAX];
  *---------------------------------------------------------------------------*/
 BOOL EL_Init( void* (*AllocFunc) (u32) , void (*FreeFunc) (void*)  )
 {
-	SDK_POINTER_ASSERT(allocFunc);
-    SDK_POINTER_ASSERT(freeFunc);
+	SDK_POINTER_ASSERT(AllocFunc);
+    SDK_POINTER_ASSERT(FreeFunc);
 
 	elWork.Alloc = AllocFunc;
 	elWork.Free = FreeFunc;
