@@ -17,17 +17,20 @@
 
 #include <twl.h>
 #include <sysmenu/errorLog.h>
+#include "misc.h"
  
 // なぜかバッファサイズが256byteを超えると出力が欠けるようになる
 // ダンプを見ると、OS_TPrintf()呼び出し時にもバッファにはちゃんと格納されている模様
 // 原因は現在調査中
-#define BUFSIZE 100
+#define BUFSIZE 128
  
 void VBlankIntr(void);
 
 
 void TwlMain( void )
 {	
+	int numEntry;
+	const ErrorLogEntry *pEntry;
 	
 	OS_Init();
 	RTC_Init();
@@ -39,9 +42,28 @@ void TwlMain( void )
 	GX_VBlankIntr(TRUE);
 	
 	FS_Init( FS_DMA_NOT_USE );
-
-	EL_WriteErrorLog( (u64)0x077777777777LL );
+	InitAllocator();
 	
+	EL_Init( Alloc, Free );
+	
+	EL_WriteErrorLog( (u64)0x077777777777LL );
+
+	numEntry = EL_getErrorLogNum();
+	OS_TPrintf("numEntry : %d\n", numEntry );
+	
+	if( numEntry > 2 )
+	{
+		pEntry = EL_getErrorLog(1);
+		OS_TPrintf("entry[1] : %02d-%02d-%02d %02d:%02d:%02d  errorCode: %d\n",
+					pEntry->year,
+					pEntry->month,
+					pEntry->day,
+					pEntry->hour,
+					pEntry->minute,
+					pEntry->second,
+					pEntry->errorCode);
+	}
+
 	OS_TPrintf( "*** log file data\n" );
 	
 	{
@@ -71,15 +93,16 @@ void TwlMain( void )
 			
 		}
 		
+		//OS_TPrintf("%s\n",buf);
+		OS_TPrintf("\n");
 		FS_CloseFile( &file );
 		
-		OS_TPrintf("%s\n",buf);
 		totalSize += nowSize;
 		
-		OS_TPrintf("num entry : %d\n", numEntry );
 		OS_TPrintf("total Size : %d\n", totalSize);
 	}
 		 
+	EL_End();
 	OS_TPrintf( "*** End of demo\n" ); 
 	OS_Terminate();
 }

@@ -21,14 +21,14 @@ TARGET_FIRM		=	SYSTEMMENU
 TARGET_PLATFORM	=	TWL
 TWL_ARCHGEN		=	LIMITED
 
-
-
-
 #----------------------------------------------------------------------------
 
 TARGET_BIN       = main.srl
 
-SRCS             = ErrorLogTest.c
+MISC_DIR	=	../../../systemMenu_RED/misc
+LINCLUDES		+=	$(MISC_DIR)/include
+
+SRCS             = ErrorLogTest.c $(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
 
 LLIBRARIES		+=	liberrorlog$(TWL_LIBSUFFIX).a
 
