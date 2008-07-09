@@ -372,7 +372,7 @@ void SYSM_InitTitleList( void )
 }
 
 // SYSM_InitTitleListを事前に呼ぶ必要あり
-void SYSM_GetNandTitleListMakerInfo( void )
+void SYSM_MakeNandTitleListMakerInfo( void )
 {
 	AMN_restartWithReadNandTitleHeaderShort();
 	while (!AMN_isNandTitleListReady()) {
@@ -390,6 +390,27 @@ TitleProperty *SYSM_GetNandTitleList( void )
 	while (!AMN_isNandTitleListReady()) {
 	    OS_Sleep(1);
 	}
+	return AMN_getTitlePropertyList();
+}
+
+// SYSM_InitTitleListを事前に呼ぶ必要あり
+void SYSM_MakeNandTitleListMakerInfoAsync( void )
+{
+	AMN_restartWithReadNandTitleHeaderShort();
+}
+
+void SYSM_MakeNandTitleListAsync( void )
+{
+	AMN_restartWithReadNandTitle();
+}
+
+BOOL SYSM_isNandTitleListReady( void )
+{
+	return AMN_isNandTitleListReady();
+}
+
+TitleProperty *SYSM_GetTitlePropertyList( void )
+{
 	return AMN_getTitlePropertyList();
 }
 

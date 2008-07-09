@@ -329,10 +329,10 @@ void TwlMain( void )
     // 「ダイレクトブートでない」なら
     if( !pBootTitle ) {
         // NAND & カードアプリリスト取得
-        sp_titleList = SYSM_GetNandTitleList();    // NANDアプリリストの取得（内蔵アプリはsp_titleList[1]から格納される）
+        SYSM_MakeNandTitleListAsync();    // NANDアプリリストの作成（取得はしていないので注意）
     }else
     {
-		SYSM_GetNandTitleListMakerInfo();	// 	アプリに引き渡すタイトルリスト作成用情報の取得
+		SYSM_MakeNandTitleListMakerInfoAsync();	// 	アプリに引き渡すタイトルリスト作成用情報の作成
 	}
     // end時間計測5
 #if (MEASURE_TIME == 1)
@@ -470,9 +470,11 @@ MAIN_LOOP_START:
             break;
         case LOGODEMO:
             if( IsFinishedLoadSharedFont() &&					// 通常ブート時は、フォントロード終了をここでチェック
-				LogoMain()
+				LogoMain() &&
+            	SYSM_isNandTitleListReady()						// NANDタイトル取得完了かどうかチェック
 				) {
 				if( !direct_boot ) {
+					sp_titleList = SYSM_GetTitlePropertyList();// TitlePropertyListの取得
                     state = LAUNCHER_INIT;
                 }else {
                     state = LOAD_START;
