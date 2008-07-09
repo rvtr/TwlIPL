@@ -90,7 +90,7 @@ extern void SYSM_DeleteTmpDirectory( TitleProperty *pBootTitle );              /
 extern TitleProperty *SYSM_GetCardTitleList( BOOL *changed );					// カードアプリタイトルリストの取得
 extern void SYSM_InitTitleList( void );											// アプリタイトルリスト取得準備
 extern TitleProperty *SYSM_GetNandTitleList( void );							// NAND  アプリタイトルリストの取得
-extern void SYSM_MakeNandTitleListMakerInfo( void );								// アプリ引き渡しタイトルリスト作成用情報の取得（ダイレクトブート用）
+extern void SYSM_MakeNandTitleListMakerInfo( void );							// アプリ引き渡しタイトルリスト作成用情報の作成（ダイレクトブート用）
 extern void SYSM_MakeNandTitleListAsync( void );								// 非同期版NANDアプリタイトルリストの作成
 extern void SYSM_MakeNandTitleListMakerInfoAsync( void );						// 非同期版アプリ引き渡しタイトルリスト作成用情報の作成
 extern BOOL SYSM_isNandTitleListReady( void );									// 非同期版が終了したかどうかの判定に使う

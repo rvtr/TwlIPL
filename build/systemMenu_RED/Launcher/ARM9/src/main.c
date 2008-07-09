@@ -332,7 +332,7 @@ void TwlMain( void )
         SYSM_MakeNandTitleListAsync();    // NANDアプリリストの作成（取得はしていないので注意）
     }else
     {
-		SYSM_MakeNandTitleListMakerInfoAsync();	// 	アプリに引き渡すタイトルリスト作成用情報の作成
+		SYSM_MakeNandTitleListMakerInfo();	// 	アプリに引き渡すタイトルリスト作成用情報の作成
 	}
     // end時間計測5
 #if (MEASURE_TIME == 1)
