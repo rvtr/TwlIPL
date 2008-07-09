@@ -30,13 +30,16 @@ TARGET_FIRM			=	SYSTEMMENU
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include ./commondefs.sysmenuVersion
 
+REGION				?=	A
+DST_DIR				=	dev
+
 # タイムスタンプ
 VER_TIMESTAMP		=	08062300
 
 # システムメニューバージョン
 MAJOR_VERSION		=	0
 MINOR_VERSION		=	1
-STR_VERSION			=	$(MAJOR_VERSION).$(MINOR_VERSION)
+STR_VERSION			=	$(MAJOR_VERSION).$(MINOR_VERSION)$(REGION)
 
 # ユーザー領域サイズ(=128MB)
 USER_AREA_SIZE		=	134217728
@@ -47,12 +50,12 @@ NUP_HOSTNAME		=	nus.shop.wii.com:443
 # EULAのURL
 EULA_URL			=	https://cfh-test.t.app.nintendowifi.net/eula/
 
-GEN_VERSION_PARAM	=	$(VER_TIMESTAMP) $(STR_VERSION) $(MAJOR_VERSION) $(MINOR_VERSION) \
+GEN_VERSION_PARAM	=	$(DST_DIR) $(VER_TIMESTAMP) $(STR_VERSION) $(MAJOR_VERSION) $(MINOR_VERSION) \
 						$(USER_AREA_SIZE) $(NUP_HOSTNAME) $(EULA_URL)
 
 GEN_VERSION_FILE	=	$(SYSMENU_TOOLSDIR)/bin/genVersion.plx
 
-VERSION_TAD			=	HNLA.tad
+VERSION_TAD			=	HNL$(REGION).tad
 
 ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
 	VERSION_DAT		=	$(SYSMENU_VERSION_FILE)

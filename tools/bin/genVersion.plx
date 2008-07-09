@@ -15,13 +15,13 @@
 use POSIX 'strftime';
 use File::Basename;
 
-if ($#ARGV < 6) {
-    printf STDOUT ("Usage: %s [genVersion] timestamp strVersion majorVersion minorVersion userAreaSize NUPHostName EULAURL\n", $0);
+if ($#ARGV < 7) {
+    printf STDOUT ("Usage: %s [genVersion] dir timestamp strVersion majorVersion minorVersion userAreaSize NUPHostName EULAURL\n", $0);
     exit(-1);
 }
 
 # アーカイブにまとめるデータファイル
-my $dataDir                   = "archive_data";
+my $dataDir                   = $ARGV[0];
 my $versionFile               = "$dataDir/version.bin";
 my $timeStampFile             = "$dataDir/time_stamp.bin";
 my $userAreaSizeFile          = "$dataDir/user_area_size.bin";
@@ -75,19 +75,22 @@ if (exists($ENV{"TWL_IPL_RED_ROOT"}) ){
 
 # システムメニューバージョンの出力
 {
-	my $length = 0x20;
-	my $sysMenuVersion = $ARGV[1];
+	my $length = 0x1c;
+	my $sysMenuVersion = $ARGV[2];
 	if( length $sysMenuVersion >= $length ) {
 		printf "ERROR: SystemMenu version length less than %d.\n", $length;
 		die;
 	}
 	open VERSION, ">$versionFile" or die "File Open Error.\n";
 	binmode VERSION;
-#	my $ver = ( ( $ARGV[ 1 ] & 0xffff ) << 16 ) | ($ARGV[ 2 ] & 0xffff);
+#	my $ver = ( ( $ARGV[ 3 ] & 0xffff ) << 16 ) | ($ARGV[ 4 ] & 0xffff);
 #	printf "version = %d.%d\n", ($ver >> 16), ($ver & 0xffff);
 #	syswrite( VERSION, pack( "L", $ver ) );
 	printf "SysMenu version = %s\n", $sysMenuVersion;
-    syswrite( VERSION, pack( "a$length", $sysMenuVersion) );
+	$length /= 2;	# to UTF16 length
+	syswrite( VERSION, pack( "SSS$length", $ARGV[ 3 ], $ARGV[ 4 ], unpack( "C*", $sysMenuVersion ) ) );
+#	pack "S*", unpack( "C*", $ascii ), 0;
+
 	close VERSION;
 }
 
@@ -96,7 +99,7 @@ if (exists($ENV{"TWL_IPL_RED_ROOT"}) ){
 	open TIMESTAMP, ">$timeStampFile" or die "File Open Error.\n";
 	binmode TIMESTAMP;
 #	my $timestamp = strftime "%y%m%d%H", localtime;
-	my $timestamp = $ARGV[ 0 ];
+	my $timestamp = $ARGV[ 1 ];
 	printf "timestamp = %s\n", $timestamp;
 	syswrite( TIMESTAMP, pack( "N", unpack( "L", pack( "H8", $timestamp ) ) ) );
 	close TIMESTAMP;
@@ -106,7 +109,7 @@ if (exists($ENV{"TWL_IPL_RED_ROOT"}) ){
 {
 	open USERAREA, ">$userAreaSizeFile" or die "File Open Error.\n";
 	binmode USERAREA;
-	my $userAreaSize = $ARGV[ 4 ];
+	my $userAreaSize = $ARGV[ 5 ];
 	printf "userAreaSize = $userAreaSize\n";
 	syswrite( USERAREA, pack( "L", $userAreaSize ) );
 	close USERAREA;
@@ -115,7 +118,7 @@ if (exists($ENV{"TWL_IPL_RED_ROOT"}) ){
 # NUP_HOSTNAMEの出力
 {
 	my $length = 0x40;
-	my $nupHostName = $ARGV[ 5 ];
+	my $nupHostName = $ARGV[ 6 ];
 	if( length $nupHostName >= $length ) {
 		printf "ERROR: NUP Host Name length less than %d.\n", $length;
 		die;
@@ -130,7 +133,7 @@ if (exists($ENV{"TWL_IPL_RED_ROOT"}) ){
 # EULA_URLの出力
 {
 	my $length = 0x80;
-	my $urlEULA = $ARGV[ 6 ];
+	my $urlEULA = $ARGV[ 7 ];
 	if( length $urlEULA >= $length ) {
 		printf "ERROR: EULA URL length less than %d.\n", $length;
 		die;
@@ -155,7 +158,7 @@ if (exists($ENV{"TWLSYSTEM_ROOT"}) ){
 
 # アーカイブ作成
 {
-    system ( "$TWLSYSTEM_ROOT/tools/bin/nnsarc.exe -c $archiveFile -A 16 $dataDir -s -E .svn" );
+    system ( "$TWLSYSTEM_ROOT/tools/bin/nnsarc.exe -c $archiveFile -A 16 -a $dataDir -s -E .svn" );
 }
 
 # アーカイブのハッシュの出力
