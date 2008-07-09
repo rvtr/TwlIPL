@@ -67,7 +67,6 @@ MAKETAD_OPTION			+= -s
 # libsysmenu.a　は、RED本体設定でSVNのリビジョンを取得するためだけに使用しているので、
 # UIG本体設定でリンクする必要はありません。
 SYSMENU_LIBS			=	\
-							libbanner$(TWL_LIBSUFFIX).a \
 							libnamut$(TWL_LIBSUFFIX).a \
 							libsysmutil$(TWL_LIBSUFFIX).a \
 							libsysmenu$(TWL_LIBSUFFIX).a
