@@ -41,7 +41,6 @@ typedef struct WDSWrapperWork
 {
 	u8							*stack;							//!< WDSラッパーが使用するスタック
 	OSThread					thread;							//!< WDSラッパーが使用するスレッド構造体
-	OSMutex						mutex;							//!< WDSラッパーが使用するmutex
 	
 	u8							*wdswork;						//!< WDSが使用するワークエリア
 	
@@ -57,6 +56,8 @@ typedef struct WDSWrapperWork
 	BOOL						restart;						//!< 間欠スキャン再開フラグ
 	
 	OSDeliverArgInfo			deliverinfo;					//!< TWL用アプリ間引数ワークエリア
+	
+	BOOL						callingback;					//!< コールバック関数呼び出し中はTRUE
 } WDSWrapperWork;
 
 //-----------------------------------------------------
@@ -71,6 +72,19 @@ static void WDS_WrapperInitialize_CB( void *arg );
 static void WDS_WrapperStartScan_CB( void *arg );
 static void WDS_WrapperEndScan_CB(void *arg);
 static void WDS_WrapperEnd_CB( void *arg );
+static void WDS_WrapperCallUserCallback( void *arg );
+
+//--------------------------------------------------------------------------------
+/**	ユーザー指定のコールバック関数を呼び出すユーティリティ関数
+		@param arg コールバック関数に与えるパラメータ
+		@return なし
+*///------------------------------------------------------------------------------
+static void WDS_WrapperCallUserCallback( void *arg )
+{
+	g_wdswrapperwork->callingback = TRUE;
+	g_wdswrapperwork->initparam.callback( arg );
+	g_wdswrapperwork->callingback = FALSE;
+}
 
 //--------------------------------------------------------------------------------
 /**	アクセスポイント情報のデバッグ用表示関数
@@ -111,6 +125,10 @@ static void DumpWDSApInfo( WDSApInfo *apinfo )
 /**	スキャン開始前ウェイトステート関数
 		@param	なし
 		@return	なし
+	@note
+		@LI このステートに入っている場合、WMからのコールバックが発生する可能性はない
+		@LI IF関数からのフラグ変化がイレギュラーな存在としてあるが
+		@LI Mutexのロックを行わなくても、処理中のフラグ変化による動作異常はない
 *///------------------------------------------------------------------------------
 static void WDS_WrapperBeforeInitState( void )
 {
@@ -181,6 +199,8 @@ static void WDS_WrapperInitState( void )
 		@param	arg 非同期処理の結果を格納するWMCallback型変数へのポインタ
 		@return	なし
 		@note
+			@LI この関数が呼ばれる際のステートは常にWDSWRAPPER_STATE_WAITINIT
+			@LI 何の処理もメインスレッドは行っていない
 			@LI 処理成功時は自動的にスキャン開始ステートへ
 			@LI 処理失敗時は自動的にWDSラッパー解放ステートへ
 *///------------------------------------------------------------------------------
@@ -188,9 +208,6 @@ static void WDS_WrapperInitialize_CB( void *arg )
 {
 	WMCallback *callback = (WMCallback *)arg;
 	WDSWrapperCallbackParam param;
-	
-	// ステート処理と重複処理しないため
-	OS_LockMutex( &g_wdswrapperwork->mutex );
 	
 #ifdef WDSWRAPPER_DEBUGPRINT
 	OS_TPrintf("WDS_Initialize_CB\n");
@@ -204,7 +221,7 @@ static void WDS_WrapperInitialize_CB( void *arg )
 		param.errcode	= WDSWRAPPER_ERRCODE_SUCCESS;
 	
 	// コールバック関数の呼び出し
-	g_wdswrapperwork->initparam.callback( &param );
+	WDS_WrapperCallUserCallback( &param );
 	
 	// 返り値に基づいてステートを変更
 	if( callback->errcode != WM_ERRCODE_SUCCESS )
@@ -216,15 +233,14 @@ static void WDS_WrapperInitialize_CB( void *arg )
 		// 連続スキャン開始時間の記録
 		g_wdswrapperwork->tickstart = OS_GetTick();
 	}
-	
-	// ステート処理と重複処理しないため
-	OS_UnlockMutex( &g_wdswrapperwork->mutex );
 }
 
 //--------------------------------------------------------------------------------
 /**	スキャン開始ステート関数
 		@param	なし
 		@return	なし
+		@note
+			@LI この関数が呼ばれる際は、WDSは初期化済みだがWDS_StartScan要因以外でコールバック関数は呼ばれない
 *///------------------------------------------------------------------------------
 static void WDS_WrapperScanState( void )
 {
@@ -256,6 +272,9 @@ static void WDS_WrapperScanState( void )
 /**	スキャン完了待ちステート関数
 		@param	なし
 		@return	なし
+		@note
+			@LI このステートの間は外部IFからのキャンセルを受け付ける
+			@LI この処理の中でフラグが変化しても、動作は結局同じなのでMutexロックはしない
 *///------------------------------------------------------------------------------
 static void WDS_WrapperWaitScanState( void )
 {
@@ -272,6 +291,7 @@ static void WDS_WrapperWaitScanState( void )
 		@param	arg 非同期処理の結果を格納するWMCallback型変数へのポインタ
 		@return なし
 		@note
+			@LI ユーザー中断が原因で、ステートがWDSWRAPPER_STATE_WAITSCANではない場合がある
 			@LI 処理成功時はスキャン時間に基づいてIDLEかスキャン前ウェイトステートへ
 			@LI 処理失敗時はスキャン停止後WDSラッパー解放ステートへ
 *///------------------------------------------------------------------------------
@@ -283,19 +303,19 @@ static void WDS_WrapperStartScan_CB( void *arg )
 #endif
 	WDSWrapperCallbackParam param;
 
-	// ステート処理と重複処理しないため
-	OS_LockMutex( &g_wdswrapperwork->mutex );
-	
 #ifdef WDSWRAPPER_DEBUGPRINT
 	OS_Printf("*** WDS_WrapperStartScan_CB\n");
 #endif
+	
+	// ライブラリがすでに解放済みである場合に備える
+	if( g_wdswrapperwork == NULL )
+		return;
 
 	// 外部からの停止等の理由でコールバック待ちステートでない場合には何もしない
 	if( g_wdswrapperwork->state != WDSWRAPPER_STATE_WAITSCAN ) {
 #ifdef WDSWRAPPER_DEBUGPRINT
 		OS_Printf("state != WDSWRAPPER_STATE_WAITSCAN\n");
 #endif
-		OS_UnlockMutex( &g_wdswrapperwork->mutex );
 		return;
 	}
 	
@@ -309,16 +329,13 @@ static void WDS_WrapperStartScan_CB( void *arg )
 		param.errcode	= WDSWRAPPER_ERRCODE_FAILURE;
 		
 		// コールバック関数の呼び出し
-		g_wdswrapperwork->initparam.callback( &param );
+		WDS_WrapperCallUserCallback( &param );
 		
 		// ただちにスキャン停止ステートへ
 		g_wdswrapperwork->state = WDSWRAPPER_STATE_ENDSCAN;
 		
 		// 最終的にTERMINATEステートに入るよう設定
 		g_wdswrapperwork->terminate = TRUE;
-		
-		// ステート処理と重複処理しないため
-		OS_UnlockMutex( &g_wdswrapperwork->mutex );
 		
 		return;
 	}
@@ -349,7 +366,7 @@ static void WDS_WrapperStartScan_CB( void *arg )
 		param.errcode	= WDSWRAPPER_ERRCODE_SUCCESS;
 			
 		// コールバック関数の呼び出し
-		g_wdswrapperwork->initparam.callback( &param );
+		WDS_WrapperCallUserCallback( &param );
 		
 		// 十分長い時間スキャンしたのでスキャン中断ステートへ
 		g_wdswrapperwork->state = WDSWRAPPER_STATE_ENDSCAN;
@@ -360,14 +377,11 @@ static void WDS_WrapperStartScan_CB( void *arg )
 		param.errcode	= WDSWRAPPER_ERRCODE_SUCCESS;
 			
 		// コールバック関数の呼び出し
-		g_wdswrapperwork->initparam.callback( &param );
+		WDS_WrapperCallUserCallback( &param );
 
 		// ただちにスキャン開始ステートへ
 		g_wdswrapperwork->state = WDSWRAPPER_STATE_SCAN;
 	}
-	
-	// ステート処理と重複処理しないため
-	OS_UnlockMutex( &g_wdswrapperwork->mutex );
 }
 
 //--------------------------------------------------------------------------------
@@ -414,15 +428,13 @@ static void WDS_WrapperEndScanState( void )
 		@param	arg 非同期処理の結果を格納するWMCallback型変数へのポインタ
 		@return	なし
 		@note
+			@LI このコールバックが呼ばれる際は、ステートは必ずWDSWRAPPER_STATE_WAITENDSCAN
 			@LI 処理成功時は自動的にWDS解放ステートへ
 			@LI 処理失敗時は自動的に再度スキャン停止ステートへ
 *///------------------------------------------------------------------------------
 static void WDS_WrapperEndScan_CB(void *arg)
 {
 	WMCallback *callback = (WMCallback *)arg;
-	
-	// ステート処理と重複処理しないため
-	OS_LockMutex( &g_wdswrapperwork->mutex );
 	
 #ifdef WDSWRAPPER_DEBUGPRINT
 	OS_TPrintf("WDS_WrapperEndScan_CB\n");
@@ -443,9 +455,6 @@ static void WDS_WrapperEndScan_CB(void *arg)
 		// スキャン停止完了したら自動的にWDS解放ステートへ
 		g_wdswrapperwork->state = WDSWRAPPER_STATE_END;
 	}
-	
-	// ステート処理と重複処理しないため
-	OS_UnlockMutex( &g_wdswrapperwork->mutex );
 }
 
 //--------------------------------------------------------------------------------
@@ -497,9 +506,6 @@ static void WDS_WrapperEnd_CB( void *arg )
 #pragma unused(arg)
 	WDSWrapperCallbackParam	param;
 	
-	// ステート処理と重複処理しないため
-	OS_LockMutex( &g_wdswrapperwork->mutex );
-	
 #ifdef WDSWRAPPER_DEBUGPRINT
 	OS_TPrintf("WDS_WrapperEnd_CB\n");
 #endif
@@ -519,21 +525,19 @@ static void WDS_WrapperEnd_CB( void *arg )
 		param.errcode	= WDSWRAPPER_ERRCODE_SUCCESS;
 		
 		// コールバック関数の呼び出し
-		g_wdswrapperwork->initparam.callback( &param );
+		WDS_WrapperCallUserCallback( &param );
 	}
 	else {
 		g_wdswrapperwork->state = WDSWRAPPER_STATE_BEFOREINIT;
 	}
-	
-	
-	// ステート処理と重複処理しないため
-	OS_UnlockMutex( &g_wdswrapperwork->mutex );
 }
 
 //--------------------------------------------------------------------------------
 /**	アイドルステート関数
 		@param	なし
 		@return	なし
+			@LI このステートの間は外部IFからのスキャン開始とライブラリ解放を受け付ける
+			@LI この処理の中でフラグが変化しても、動作は結局同じなのでMutexロックはしない
 *///------------------------------------------------------------------------------
 static void WDS_WrapperIdleState( void )
 {
@@ -562,12 +566,12 @@ static void WDS_WrapperThreadFunc( void *arg )
 	g_wdswrapperwork->state = WDSWRAPPER_STATE_INIT;
 	
 	while( 1 ) {
-		OS_Sleep(20);
+		OS_Sleep( 20 );
 		
 		// ステートにより処理を分岐(ステート処理中はmutexによりlockが行われる)
-		OS_LockMutex( &g_wdswrapperwork->mutex );
 		if( g_wdswrapperwork->state == WDSWRAPPER_STATE_TERMINATE )
 			break;
+		OS_Sleep( 20 );
 		
 		switch( g_wdswrapperwork->state ) {
 		case WDSWRAPPER_STATE_BEFOREINIT:		WDS_WrapperBeforeInitState();	break;
@@ -582,7 +586,6 @@ static void WDS_WrapperThreadFunc( void *arg )
 		case WDSWRAPPER_STATE_IDLE:				WDS_WrapperIdleState();			break;
 		case WDSWRAPPER_STATE_TERMINATE:		break;
 		}
-		OS_UnlockMutex( &g_wdswrapperwork->mutex );
 	}
 	
 	// コールバックパラメータの設定
@@ -590,7 +593,7 @@ static void WDS_WrapperThreadFunc( void *arg )
 	param.errcode	= WDSWRAPPER_ERRCODE_SUCCESS;
 	
 	// コールバック関数の呼び出し
-	g_wdswrapperwork->initparam.callback( &param );
+	WDS_WrapperCallUserCallback( &param );
 }
 
 //--------------------------------------------------------------------------------
@@ -658,9 +661,6 @@ WDSWrapperErrCode WDS_WrapperInitialize( WDSWrapperInitializeParam param )
 	// パラメータのコピー
 	g_wdswrapperwork->initparam = param;
 	
-	// mutexの初期化
-	OS_InitMutex( &g_wdswrapperwork->mutex );
-	
 	// スレッドの生成
 	OS_CreateThread( &g_wdswrapperwork->thread,
 					WDS_WrapperThreadFunc,
@@ -711,17 +711,12 @@ WDSWrapperErrCode WDS_WrapperCleanup( void )
 	if( g_wdswrapperwork == NULL )
 		return WDSWRAPPER_ERRCODE_UNINITIALIZED;
 	
-	OS_LockMutex( &g_wdswrapperwork->mutex );
-	
 	// 解放処理実行中をチェック
 	if( g_wdswrapperwork->terminate == TRUE ) {
-		OS_UnlockMutex( &g_wdswrapperwork->mutex );
 		return WDSWRAPPER_ERRCODE_OPERATING;
 	}
 	
 	g_wdswrapperwork->terminate = TRUE;
-	
-	OS_UnlockMutex( &g_wdswrapperwork->mutex );
 	
 	return WDSWRAPPER_ERRCODE_SUCCESS;
 }
@@ -742,23 +737,17 @@ WDSWrapperErrCode WDS_WrapperStartScan( void )
 	if( g_wdswrapperwork == NULL )
 		return WDSWRAPPER_ERRCODE_UNINITIALIZED;
 	
-	OS_LockMutex( &g_wdswrapperwork->mutex );
-	
 	// ステートがIDLEかBEFOREINITであることを確認
 	if( g_wdswrapperwork->state != WDSWRAPPER_STATE_IDLE && g_wdswrapperwork->state != WDSWRAPPER_STATE_BEFOREINIT ) {
-		OS_UnlockMutex( &g_wdswrapperwork->mutex );
 		return WDSWRAPPER_ERRCODE_FAILURE;
 	}
 	
 	// 再スタート処理実行中をチェック
 	if( g_wdswrapperwork->restart == TRUE ) {
-		OS_UnlockMutex( &g_wdswrapperwork->mutex );
 		return WDSWRAPPER_ERRCODE_OPERATING;
 	}
 	
 	g_wdswrapperwork->restart = TRUE;
-	
-	OS_UnlockMutex( &g_wdswrapperwork->mutex );
 	
 	return WDSWRAPPER_ERRCODE_SUCCESS;
 }
@@ -780,17 +769,12 @@ WDSWrapperErrCode WDS_WrapperStopScan( void )
 	if( g_wdswrapperwork == NULL )
 		return WDSWRAPPER_ERRCODE_UNINITIALIZED;
 	
-	OS_LockMutex( &g_wdswrapperwork->mutex );
-	
 	// 間欠受信停止処理実行中をチェック
 	if( g_wdswrapperwork->idle == TRUE ) {
-		OS_UnlockMutex( &g_wdswrapperwork->mutex );
 		return WDSWRAPPER_ERRCODE_OPERATING;
 	}
 	
 	g_wdswrapperwork->idle = TRUE;
-	
-	OS_UnlockMutex( &g_wdswrapperwork->mutex );
 	
 	return WDSWRAPPER_ERRCODE_SUCCESS;
 }
@@ -802,6 +786,7 @@ WDSWrapperErrCode WDS_WrapperStopScan( void )
 		@return	WDSWRAPPER_ERRCODE_SUCCESS: 直前に完了した間欠受信で有効な親機ビーコンを受け取った
 		@return	WDSWRAPPER_ERRCODE_FAILURE: 直前に完了した間欠受信で有効な親機ビーコンを受け取っていない
 		@return	WDSWRAPPER_ERRCODE_UNINITIALIZED: WDSラッパーライブラリが初期化されていない
+		@note	ライブラリ初期化時に指定したコールバック関数の中でのみ呼び出して下さい
 *///------------------------------------------------------------------------------
 WDSWrapperErrCode WDS_WrapperCheckValidBeacon( void )
 {
@@ -812,7 +797,9 @@ WDSWrapperErrCode WDS_WrapperCheckValidBeacon( void )
 	if( g_wdswrapperwork == NULL )
 		return WDSWRAPPER_ERRCODE_UNINITIALIZED;
 	
-	OS_LockMutex( &g_wdswrapperwork->mutex );
+	// コールバック関数からの呼び出しかを確認
+	if( g_wdswrapperwork->callingback != TRUE )
+		return WDSWRAPPER_ERRCODE_FAILURE;
 	
 	if( g_wdswrapperwork->briefapinfonum > 0 ) {
 		for( i = 0; i < g_wdswrapperwork->briefapinfonum; i++ ) {
@@ -824,7 +811,6 @@ WDSWrapperErrCode WDS_WrapperCheckValidBeacon( void )
 			}
 		}
 	}
-	OS_UnlockMutex( &g_wdswrapperwork->mutex );
 	
 	return ret;
 }

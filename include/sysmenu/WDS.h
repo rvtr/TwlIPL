@@ -24,6 +24,11 @@ extern "C" {
 //	Macros
 //-----------------------------------------------------
 /**
+	@brief	デバッグ表示指定
+*/
+//#define WDS_DEBUGPRINT
+
+/**
 	@brief	ホットスポット名エンコード情報
 */
 #define	WDS_HOTSPOT_ENCODE_UTF8		0x0000		///< UTF-8
@@ -48,7 +53,7 @@ extern "C" {
 /**
 	@brief	親機AP情報保持最大数
 */
-#define	WDS_APINFO_MAX			16
+#define	WDS_APINFO_MAX			4
 
 /**
 	@brief	親機情報フラグ定義
@@ -68,12 +73,12 @@ typedef void (*WDSCallbackFunc)(void *arg);
 //	Structs
 //-----------------------------------------------------
 /**
-	@brief	親機から送られてくるAPビーコンの内容
+	@brief	親機から送られてくるAPビーコン
 */
 typedef struct WDSApInfo
 {
 	u8		ssid[ WDS_SSID_BUF_SIZE ];					///< 親機が接続するAPのSSID
-	u8		apnum[ WDS_APNUM_BUF_SIZE ];				///< 本来はAPのSSIDに埋め込まれているAP識別番号
+	u8		apnum[ WDS_APNUM_BUF_SIZE ];				///< Wi-FiステーションのAPのSSIDに埋め込まれているAP識別番号と同等の文字列
 	u16		hotspotid;									///< ホットスポットの認証方式を示すフラグ+hotspotnameのエンコード情報
 	u8		hotspotname[ WDS_HOTSPOTNAME_BUF_SIZE ];	///< UTF-8あるいはUTF-16で記述されたホットスポットの名前
 	u8		wepkey[ WDS_WEPKEY_BUF_SIZE ];				///< 親機が接続するAPのWEP キー
@@ -86,16 +91,15 @@ typedef struct WDSApInfo
 } WDSApInfo;
 
 /**
-	@brief	アプリケーションから閲覧可能なAPビーコンの内容
+	@brief	アプリケーションが参照するAPビーコン構造体
 */
 typedef struct WDSBriefApInfo
 {
 	// WDSライブラリによって生成される値
-	BOOL	isvalid;
+	BOOL	isvalid;	///< apinfoに有効な値が代入されていればTRUE
 	u16		rssi;		///< 電波強度
 	
-	// AP情報ビーコンそのもの
-	WDSApInfo apinfo;
+	WDSApInfo apinfo;	///< 親機から送られてくるAPビーコン
 } WDSBriefApInfo;
 
 //-----------------------------------------------------

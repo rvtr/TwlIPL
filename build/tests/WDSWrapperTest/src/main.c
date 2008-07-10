@@ -128,7 +128,7 @@ void NitroMain(void)
 			WDS_WrapperStopScan();
 		if( ( lastpad ^ nowpad ) & PAD_BUTTON_X && !( nowpad & PAD_BUTTON_X ) ) {
 			// WDSWrapper‰Šú‰»‚Æ“®ìŠJn
-			param.threadprio = 10;
+			param.threadprio = 20;
 			param.dmano = 1;
 	
 			param.callback = Callback_WDSWrapper;
