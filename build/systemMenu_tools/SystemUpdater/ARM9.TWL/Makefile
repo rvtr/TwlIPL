@@ -53,7 +53,8 @@ SRCS		=	main.c \
 				hw_info.c \
 				keypad.c \
 				kami_copy_file.c \
-				debugger_hw_reset_control.c
+				debugger_hw_reset_control.c \
+				debugger_card_rom.c
 
 LINCLUDES	=	include \
 				../common/include \

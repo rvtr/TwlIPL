@@ -35,7 +35,7 @@
 vu8       sHwResetEnable = TRUE;
 OSThread  sThread;
 u32       sStack[1024];
-s32       sLockId;
+static s32 sLockId;
 
 /*---------------------------------------------------------------------------*
     ŠÖ”éŒ¾

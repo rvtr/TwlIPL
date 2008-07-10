@@ -170,6 +170,8 @@ BOOL kamiImportTad(NAMTitleId* pTitleID)
 		}
 		else
 		{
+			kamiFontPrintfMain( 4, 20, 1, "Import was failed! 0x%x", nam_result);
+			kamiFontLoadScreenData();
 			OS_Warning(" Fail! : NAM Result Code = 0x%x\n", nam_result);
 			return FALSE;
 		}
@@ -197,7 +199,7 @@ BOOL kamiImportTad(NAMTitleId* pTitleID)
 			// privateセーブデータFFクリア＆フォーマット
 			if (GetImportJumpSetting()->clearPrivateSaveData && tadInfo.titleInfo.privateSaveSize > 0)
 			{
-				if (NAMUTi_ClearSavedataPublic(savePrivatePath, tadInfo.titleInfo.titleId) == FALSE)
+				if (NAMUTi_ClearSavedataPrivate(savePrivatePath, tadInfo.titleInfo.titleId) == FALSE)
 				{
 					OS_Warning(" Fail! NAMUTi_ClearSavedataPrivate\n");
 				}

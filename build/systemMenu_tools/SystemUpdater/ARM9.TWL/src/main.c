@@ -31,6 +31,7 @@
 #include "hwi.h"
 #include "keypad.h"
 #include "debugger_hw_reset_control.h"
+#include "debugger_card_rom.h"
 
 extern const char *g_strIPLSvnRevision;
 extern const char *g_strSDKSvnRevision;
@@ -87,6 +88,7 @@ static NAMTitleId   titleId;
 static s16 printLine;
 static vu8 sIsFormatFinish;
 static u8 sFormatResult;
+static s32       sLockId;
 
 /*---------------------------------------------------------------------------*
     内部関数定義
@@ -95,7 +97,9 @@ static void VBlankIntr(void);
 static void InitAllocation(void);
 static BOOL IgnoreRemoval(void);
 static void DrawWaitButtonA(void);
+static void DrawCancel(void);
 static void DrawAlready(SystemUpdaterLog* log);
+static void DrawResult(BOOL result);
 static void FormatCallback(KAMIResult result, void* arg);
 
 /*---------------------------------------------------------------------------*
@@ -159,6 +163,9 @@ TwlMain()
     InitGraphics();
 	kamiFontInit();
 
+	// メインスレッドのカードロックID取得
+	sLockId = OS_GetLockID();
+
     /* always preload FS table for faster directory access. */
     {
         u32     need_size = FS_GetTableSize();
@@ -212,9 +219,13 @@ TwlMain()
 		}
 	}
 
-
 	// Ａボタン待ち
 	DrawWaitButtonA();
+
+	// TWLの更新処理を実行中です
+	CARD_LockRom((u16)sLockId);
+	(void)CARDi_ReadRomIDCoreEx(DEBUGGER_COMMAND_NOW_UPDATE);
+	CARD_UnlockRom((u16)sLockId);
 
 	// ISデバッガのハードウェアリセットを禁止する
     DEBUGGER_HwResetDisable();
@@ -376,6 +387,11 @@ TwlMain()
 	// ISデバッガのハードウェアリセットを許可する
     DEBUGGER_HwResetEnable();
 
+	// TWLの更新処理が完了しました
+	CARD_LockRom((u16)sLockId);
+	(void)CARDi_ReadRomIDCoreEx(DEBUGGER_COMMAND_FINISHED);
+	CARD_UnlockRom((u16)sLockId);
+
 	// 結果表示
 	while(1)
 	{
@@ -434,14 +450,20 @@ static void InitAllocation(void)
  *---------------------------------------------------------------------------*/
 static void DrawWaitButtonA(void)
 {
+	// 液晶を見てください。
+	CARD_LockRom((u16)sLockId);
+	(void)CARDi_ReadRomIDCoreEx(DEBUGGER_COMMAND_LOOK_SCREEN);
+	CARD_UnlockRom((u16)sLockId);
+
 	kamiFontPrintfMain( 5,  3, 8, "    System Updater    ");
 	kamiFontPrintfMain( 4,  5, 8, " --- ver %s %s ---", g_strSDKSvnRevision, g_strIPLSvnRevision );
 
-	kamiFontPrintfMain( 5,  8, 3, "<Push A: Start Update>");
-	kamiFontPrintfMain( 3, 10, 1, "--------------------------");
-	kamiFontPrintfMain( 3, 11, 1, "Do not turn off power");
-	kamiFontPrintfMain( 3, 12, 1, "while update is processing");
-	kamiFontPrintfMain( 3, 13, 1, "--------------------------");
+	kamiFontPrintfMain( 5,  9, 3, " A Button: Start  Update ");
+	kamiFontPrintfMain( 5, 10, 3, " B Button: Cancel Update ");
+
+	kamiFontPrintfMain( 3, 13, 1, "Do not turn off power");
+	kamiFontPrintfMain( 3, 14, 1, "while update is processing");
+
 
 	while(1)
 	{
@@ -449,7 +471,7 @@ static void DrawWaitButtonA(void)
 		G3_Identity();
 		G3_PolygonAttr(GX_LIGHTMASK_NONE, GX_POLYGONMODE_DECAL, GX_CULL_NONE, 0, 31, 0);
 
-		DrawQuad( 10,  54, 246, 120, GX_RGB(28, 28, 28));
+		DrawQuad( 10,  54, 246, 150, GX_RGB(28, 28, 28));
 
 		G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
 
@@ -459,12 +481,53 @@ static void DrawWaitButtonA(void)
 			kamiFontClearMain();
 			break;
 		}
+		else if (kamiPadIsTrigger(PAD_BUTTON_B))
+		{
+			kamiFontClearMain();
+			DrawCancel();
+		}
+
 	    OS_WaitVBlankIntr();
 	}
 
 	G3X_Reset();
 	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
 	OS_WaitVBlankIntr();
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         DrawCancel
+
+  Description:  Cancelを表示します
+
+  Arguments:   
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static void DrawCancel(void)
+{
+	// キャンセルされました
+	CARD_LockRom((u16)sLockId);
+	(void)CARDi_ReadRomIDCoreEx(DEBUGGER_COMMAND_CANCELED);
+	CARD_UnlockRom((u16)sLockId);
+
+	kamiFontPrintfMain( 3,  9, 1, "--------------------------");
+	kamiFontPrintfMain( 3, 10, 1, "    Update was Canceld.");
+	kamiFontPrintfMain( 3, 11, 1, "--------------------------");
+
+	while(1)
+	{
+		G3X_Reset();
+		G3_Identity();
+		G3_PolygonAttr(GX_LIGHTMASK_NONE, GX_POLYGONMODE_DECAL, GX_CULL_NONE, 0, 31, 0);
+
+		DrawQuad( 10,  50, 246, 128, GX_RGB(28, 28, 28));
+
+		G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
+
+	    OS_WaitVBlankIntr();
+	}
 }
 
 /*---------------------------------------------------------------------------*
@@ -478,6 +541,11 @@ static void DrawWaitButtonA(void)
  *---------------------------------------------------------------------------*/
 static void DrawAlready(SystemUpdaterLog* log)
 {
+	// 既にアップデート済み
+	CARD_LockRom((u16)sLockId);
+	(void)CARDi_ReadRomIDCoreEx(DEBUGGER_COMMAND_ALREADY);
+	CARD_UnlockRom((u16)sLockId);
+
 	kamiFontPrintfMain( 3,  8, 1, "--------------------------");
 	kamiFontPrintfMain( 3,  9, 1, "This machine has already");
 	kamiFontPrintfMain( 3, 10, 1, "been updated.");
@@ -496,6 +564,44 @@ static void DrawAlready(SystemUpdaterLog* log)
 
 	    OS_WaitVBlankIntr();
 	}
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         DrawResult
+
+  Description:  処理結果を表示します。
+
+  Arguments:   
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static void DrawResult(BOOL result)
+{
+	// 3D初期化
+	G3X_Reset();
+	G3_Identity();
+	G3_PolygonAttr(GX_LIGHTMASK_NONE, GX_POLYGONMODE_DECAL, GX_CULL_NONE, 0, 31, 0);
+
+	// "Now Updating.." を消去
+	kamiFontPrintfMain( 0, 9, 7, "                                ");
+
+	if (result)
+	{
+		kamiFontPrintfMain( 9, 10, 7, "Update Success!");
+		// グリーンダイアログ
+		DrawQuad( 50,  50, 206, 120, GX_RGB(12, 25, 12));
+	}
+	else
+	{
+		kamiFontPrintfMain( 9, 10, 7, "Update Failure!");
+		// レッドダイアログ
+		DrawQuad( 50,  50, 206, 120, GX_RGB(31,  0,  0));
+	}
+
+	kamiFontLoadScreenData();
+
+	// 3Dスワップ
+	G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
 }
 
 /*---------------------------------------------------------------------------*
