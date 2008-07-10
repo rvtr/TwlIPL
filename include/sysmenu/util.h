@@ -19,6 +19,7 @@
 #define	__SYSM_UTIL_H__
 
 #include <twl.h>
+#include <twl/os/common/format_rom.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -71,8 +72,9 @@ typedef enum FatalErrorCode {
 	FATAL_ERROR_LOAD_READDLSIGN_FAILED = 40,
 	FATAL_ERROR_LOAD_RELOCATEINFO_FAILED = 41,
 	FATAL_ERROR_LOAD_READMODULE_FAILED = 42,
+    FATAL_ERROR_NINTENDO_LOGO_CHECK_FAILED = 43,
 
-	FATAL_ERROR_MAX = 43
+	FATAL_ERROR_MAX = 44
 }FatalErrorCode;
 
 
@@ -105,6 +107,9 @@ extern u32  UTL_CalcPCTLMasterKey( void );									// マスターキー　　（１０進５
 
 // アプリROMヘッダの要EULAフラグ取得
 extern BOOL UTL_IsROMHeaderEULARequired( void );
+
+// アプリROMヘッダのnintendoロゴの正当性チェック
+extern BOOL UTL_CheckNintendoLogoData( ROM_Header_Short *rh );
 
 #endif
 

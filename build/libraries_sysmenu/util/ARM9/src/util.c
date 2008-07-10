@@ -270,6 +270,17 @@ BOOL UTL_IsROMHeaderEULARequired( void )
 
 
 //======================================================================
+//  ROMヘッダのnintendoロゴの正当性チェック
+//======================================================================
+//#define CTRDG_SYSROM9_NINLOGO_ADR       0xffff0020
+
+BOOL UTL_CheckNintendoLogoData( ROM_Header_Short *rh )
+{
+	return !MI_CpuComp8(rh->nintendo_logo, (u8 *)CTRDG_SYSROM9_NINLOGO_ADR, NINTENDO_LOGO_DATA_LENGTH);
+}
+
+
+//======================================================================
 //  FATALエラー処理
 //======================================================================
 
