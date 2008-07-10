@@ -1078,7 +1078,7 @@ static BOOL AMN_checkAndReplaceBannerAnime(s32 index)
     if (cNandTitleIndexStart <= index && index < (cNandTitleIndexStart + sNandTitleListLengthForLauncher)) {
         if (spSubBannerFileBuffer->h.crc16_anime == AMN_getBannerAnimeCRC(&spSubBannerFileBuffer->anime)) {
             // 成功したのでコピーする
-            pBanner = &spNandBannerFileArray[index];
+            pBanner = &spNandBannerFileArray[index-cNandTitleIndexStart];
             // h.crc16_animeしかチェックしていないので、それとanimeだけコピー
             pBanner->h.crc16_anime = spSubBannerFileBuffer->h.crc16_anime;
             // MI_CpuCopy()の方が遅くなった…
