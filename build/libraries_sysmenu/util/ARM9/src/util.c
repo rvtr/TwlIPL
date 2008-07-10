@@ -120,8 +120,7 @@ void UTL_GoSleepMode( void )
         OS_RestoreInterrupts( enable );
 
         // ÉXÉäÅ[ÉvëJà⁄
-    	PM_GoSleepMode( PM_TRIGGER_COVER_OPEN |
-	    				PM_TRIGGER_RTC_ALARM,
+    	PM_GoSleepMode( PM_TRIGGER_COVER_OPEN,
 		    			0,
 			    		0 );
     }
