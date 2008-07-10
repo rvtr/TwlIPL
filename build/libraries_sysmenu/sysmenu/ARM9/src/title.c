@@ -472,14 +472,17 @@ static void SYSMi_FinalizeHotSWAsync( TitleProperty *pBootTitle, ROM_Header *hea
 	{
 		case LAUNCHER_BOOTTYPE_NAND:
 		case LAUNCHER_BOOTTYPE_TEMP:
-			if ( head->s.platform_code & PLATFORM_CODE_FLAG_TWL )
+			if ( ( head->s.platform_code & PLATFORM_CODE_TWL_LIMITED ) == PLATFORM_CODE_TWL_LIMITED )
 			{
 				if(rh->s.access_control.game_card_nitro_mode){
                 	card_state = HOTSW_CARD_STATE_GAME_MODE;
         		}
                 else if(rh->s.access_control.game_card_on){
                 	card_state = HOTSW_CARD_STATE_NORMAL_MODE;
-				} 
+				}else
+				{
+					card_state = HOTSW_CARD_STATE_POWER_OFF;
+				}
 			}
 			else
 			{

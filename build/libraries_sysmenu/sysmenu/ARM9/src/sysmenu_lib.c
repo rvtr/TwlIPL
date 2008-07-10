@@ -470,11 +470,11 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
     //-----------------------------------------------------
     // TWL設定データ未設定時の初回起動シーケンス起動
     //-----------------------------------------------------
-    if( !LCFG_TSD_IsFinishedInitialSetting() ) {
+    else if( !LCFG_TSD_IsFinishedInitialSetting() ) {
 		argument      = 0;
 		isSetArgument = FALSE;
 		isBootMSET    = TRUE;
-    }
+    }else 
 #endif
 	
     //-----------------------------------------------------
@@ -493,7 +493,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
     // ささっていない場合は本体設定を起動
     //-----------------------------------------------------
 #ifdef DO_NOT_SHOW_LAUNCHER
-	if( SYSM_IsExistCard() )
+	else if( SYSM_IsExistCard() )
 	{
         s_bootTitleBuf.flags.isAppRelocate = TRUE;
         s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
