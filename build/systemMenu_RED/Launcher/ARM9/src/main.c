@@ -219,6 +219,8 @@ void TwlMain( void )
     // システムの初期化----------------
     InitAllocator();                                            // ※SYSM_Init以外のSYSMライブラリ関数を呼ぶ前に
 
+    EL_Init( Alloc, Free );
+    
     // end時間計測１
 #if (MEASURE_TIME == 1)
     OS_TPrintf( "System Init Time 1: %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
