@@ -46,6 +46,7 @@
 
 // 未実装（現状ではデバッガ接続しないなら選択してもよい）
 //#define HYENA_ROMEMU_INFO_FROM_LNCR_PARAM
+//#define HYENA_RTC_DEBUG
 
 /*---------------------------------------------------------------------------*
     定数定義
@@ -316,6 +317,29 @@ static void ResetRTC( void )
 
     // RTC初回データ読み込み
     RTC_ReadDateTime(&sw->Rtc1stData);
+
+    // NTR-IPL同様にアラーム時間をクリア
+    //（割り込みイネーブルでないとアクセスできない）
+    {
+        static RTCRawAlarm alarm = {0,0,0,0,0,0,0,0,0};
+
+        stat2.intr_mode  = RTC_INTERRUPT_MODE_ALARM;                // アラーム割り込みイネーブル
+        stat2.intr2_mode = TRUE;
+        RTC_WriteStatus2( &stat2 );
+        
+        (void)RTC_WriteAlarm1( &alarm );
+        (void)RTC_WriteAlarm2( &alarm );
+#ifdef HYENA_RTC_DEBUG
+        {
+            static RTCRawAlarm rd_alarm = {1,1,1,1,1,1,1,1,1};
+            (void)RTC_ReadAlarm1( &rd_alarm );
+            (void)RTC_ReadAlarm2( &rd_alarm );
+        }
+#endif
+        stat2.intr_mode  = RTC_INTERRUPT_MODE_NONE;                  // アラーム割り込みディセーブル
+        stat2.intr2_mode = RTC_INTERRUPT_MODE_NONE;
+        RTC_WriteStatus2( &stat2 );
+    }
 }
 
 
