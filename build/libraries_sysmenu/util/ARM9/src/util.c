@@ -95,6 +95,12 @@ BOOL UTL_IsValidCalibration( u16 x, u16 y, u16 correct_x, u16 correct_y )
 //======================================================================
 //  スリープ
 //======================================================================
+static volatile BOOL isWmEnd = FALSE;
+
+static void UTLi_WmCallback( void* )
+{
+    isWmEnd = TRUE;
+}
 
 // スリープモードへの遷移
 void UTL_GoSleepMode( void )
@@ -108,21 +114,37 @@ void UTL_GoSleepMode( void )
     // デバッガ接続中だけはスリープに入らない（蓋閉じでもデバッガが起動するように）
     if ( !SYSM_IsRunOnDebugger() || (OSi_DetectDebugger() & OS_CONSOLE_TWLDEBUGGER) )
     {
+        // 無線停止
+        isWmEnd = FALSE;
+        WM_Reset( UTLi_WmCallback );
+        while (isWmEnd == FALSE)
+        {
+            OS_Sleep(1);
+        }
+        isWmEnd = FALSE;
+        WM_End( UTLi_WmCallback );
+        while (isWmEnd == FALSE)
+        {
+            OS_Sleep(1);
+        }
+
         // カード抜け無検出設定
         //   TWLではゲームカードの再ロードが可能なため
         //   スリープ時のカード抜け検出を無効化
         //   （DS-IPLではゲームカードが起動できなくなるので
         //     レジューム時のROM-IDチェックでエラーになると
         //     シャットダウンしていた）
-        OSIntrMode enable = OS_DisableInterrupts();
-        reg_MI_MCCNT0 &= ~REG_MI_MCCNT0_I_MASK;
-        OS_ResetRequestIrqMask( OS_IE_CARD_IREQ );
-        OS_RestoreInterrupts( enable );
+        {
+            OSIntrMode enable = OS_DisableInterrupts();
+            reg_MI_MCCNT0 &= ~REG_MI_MCCNT0_I_MASK;
+            OS_ResetRequestIrqMask( OS_IE_CARD_IREQ );
+            OS_RestoreInterrupts( enable );
 
-        // スリープ遷移
-    	PM_GoSleepMode( PM_TRIGGER_COVER_OPEN,
-		    			0,
-			    		0 );
+            // スリープ遷移
+            PM_GoSleepMode( PM_TRIGGER_COVER_OPEN,
+                            0,
+                            0 );
+        }
     }
 }
 
