@@ -220,7 +220,7 @@ void TwlMain( void )
     // システムの初期化----------------
     InitAllocator();                                            // ※SYSM_Init以外のSYSMライブラリ関数を呼ぶ前に
 
-    EL_Init( Alloc, Free );
+    ErrorLog_Init( Alloc, Free );
     
     // end時間計測１
 #if (MEASURE_TIME == 1)
@@ -682,7 +682,7 @@ static void PrintError( void )
 	G2_ChangeBlendAlpha( 0, 31 );
 	error_code = UTL_GetFatalError();
 	PrintfSJIS( 2, 25, TXT_COLOR_RED,"ERROR! - 0x%0.16x\n", error_code );
-	EL_WriteErrorLog(error_code);
+	ErrorLog_WriteErrorLog(error_code);
 	for(l=0;l<64;l++)
 	{
 		if( error_code & 0x1 )
