@@ -64,7 +64,7 @@ void* const _start_ModuleParams[]   =
     (void*)SDK_STATIC_BSS_START,
     (void*)SDK_STATIC_BSS_END,
     (void*)0,       // CompressedStaticEnd. This fixed number will be updated by compstatic tool.
-    (void*)0,       // SDK_VERSION_ID   // SDK version info /* [TODO] ビルドを通すため */
+    (void*)0,       // SDK_VERSION_ID   // SDK version info
     (void*)SDK_NITROCODE_BE,
     (void*)SDK_NITROCODE_LE,
 };
@@ -239,8 +239,6 @@ _start(void)
         mov             r0, #REG_SCFG_CLK_CPUSPD_MASK
         mov             r1, #8
         blx             r2
-
-        /* [TODO] ARM9 側でしか設定できない追加 I/O レジスタの初期設定を行う */
 
 @020:
         /* リージョン初期設定 */

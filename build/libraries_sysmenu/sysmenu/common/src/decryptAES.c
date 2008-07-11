@@ -127,7 +127,6 @@ BOOL SYSM_InitDecryptAESRegion_W( ROM_Header_Short *hs )
 		// Workに暗号化領域情報を格納
 		s_Addr_AESregion[m] = region_addr[m];
 		s_Size_AESregion[m] = region_size[m];
-		// [TODO:緊急]AES領域がカードのセキュア領域に被った場合の処理
 	}
 	
 	if(region_addr[0] == NULL && region_addr[1] == NULL)
@@ -298,7 +297,6 @@ void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs )
 		SYSMi_GetWork()->addr_AESregion[m] = region_addr[m];
 		SYSMi_GetWork()->size_AESregion[m] = region_size[m];
 		
-		// [TODO:緊急]AES領域がカードのセキュア領域に被った場合の処理
 	}
 	
 	if(region_addr[0] == NULL && region_addr[1] == NULL)

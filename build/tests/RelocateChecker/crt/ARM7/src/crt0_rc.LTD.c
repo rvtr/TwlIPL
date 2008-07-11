@@ -63,7 +63,7 @@ void* const _start_ModuleParams[]   =
     (void*)SDK_STATIC_BSS_START,
     (void*)SDK_STATIC_BSS_END,
     (void*)0,       // CompressedStaticEnd. This fixed number will be updated by compstatic tool.
-    (void*)0,       // SDK_VERSION_ID   // SDK version info /* [TODO] ビルドを通すため */
+    (void*)0,       // SDK_VERSION_ID   // SDK version info
     (void*)SDK_NITROCODE_BE,
     (void*)SDK_NITROCODE_LE,
 };
@@ -114,9 +114,6 @@ static const u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] =
     0x87, 0x46, 0x58, 0x24,
 };
 
-/* [TODO] 
- * 現状 TWL のマルチブートローダーがどこに情報を残してくれるか未定のため、
- * ビルドを通すためだけのでたらめな定義です。*/
 #define TWLIPL_PARAM_DOWNLOAD_PARAMETER     0x02ffb000
 
 /*---------------------------------------------------------------------------*
@@ -266,7 +263,6 @@ _start(void)
         orr             r0, r0, #REG_SCFG_EXT_DMAC_MASK
         orr             r0, r0, #REG_SCFG_EXT_DSEL_MASK
         str             r0, [r1]
-        /* [TODO] ARM7 側でしか設定できない追加 I/O レジスタの初期設定を行う */
         
 
         /* Autoload を実施 */

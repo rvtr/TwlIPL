@@ -39,7 +39,6 @@
 /*---------------------------------------------------------------------------*
     定数定義
  *---------------------------------------------------------------------------*/
-/* [TODO] Work around. Should be defined in wm_sp.h */
 #define WM_WL_HEAP_SIZE     0x2100
 
 /* Priorities of each threads */
@@ -51,7 +50,6 @@
 #define THREAD_PRIO_FS      15
 /* OS_THREAD_LAUNCHER_PRIORITY 16 */
 
-/* [TODO] 以下は New WM 側に移行するほうが好ましい? */
 #define NWM_DMANO                   3
 #define THREAD_PRIO_NWM_COMMMAND    6
 #define THREAD_PRIO_NWM_EVENT       4
@@ -109,7 +107,6 @@ TwlSpMain(void)
 	// SCFGレジスタ→HWi_WSYS04 etc.→system shared領域への値セットは、ランチャー起動時点では行われていないので、
 	// ランチャー自身がこれらの値を使うには、自身でこれらの値をセットしてやる必要がある。
 	// ランチャーからアプリを起動する際には、reboot.cが値を再セットしてくれる。
-//	SetSCFGWork();	// [TODO]未デバッグ
 	
     // OS 初期化
     OS_Init();
@@ -122,9 +119,7 @@ TwlSpMain(void)
     // Cold/Hotスタート判定
 	ReadLauncherParameter();
 	
-	// [TODO:] カード電源ONして、ROMヘッダのみリード＆チェックくらいはやっておきたい
-	
-	SYSMi_GetWork()->flags.common.isARM9Start = TRUE;				// [TODO:] HW_RED_RESERVEDはNANDファームでクリアしておいて欲しい
+	SYSMi_GetWork()->flags.common.isARM9Start = TRUE;
 	
     // ヒープ領域設定
     {
@@ -319,17 +314,15 @@ InitializeNwm(void)
     void*   Hi =   (void*)OS_GetSubPrivArenaHi();
     heapHandle  =   OS_CreateHeap(OS_ARENA_MAIN_SUBPRIV, Lo, Hi);
 
-    /* [TODO] 確保したヒープ領域が新無線一式が必要としているメモリ量以上かのチェックが必要 */
-
     nwmInit.dmaNo = NWM_DMANO;
     nwmInit.cmdPrio = THREAD_PRIO_NWM_COMMMAND;
     nwmInit.evtPrio = THREAD_PRIO_NWM_EVENT;
     nwmInit.sdioPrio = THREAD_PRIO_NWM_SDIO;
-	nwmInit.drvHeap.id = OS_ARENA_MAIN_SUBPRIV; /* [TODO] */
+	nwmInit.drvHeap.id = OS_ARENA_MAIN_SUBPRIV;
 	nwmInit.drvHeap.handle = heapHandle;
 #ifdef WPA_BUILT_IN /* WPA が組み込まれる場合、以下のメンバが追加される */
     nwmInit.wpaPrio = THREAD_PRIO_NWM_WPA;
-	nwmInit.wpaHeap.id = OS_ARENA_MAIN_SUBPRIV; /* [TODO] */
+	nwmInit.wpaHeap.id = OS_ARENA_MAIN_SUBPRIV;
 	nwmInit.wpaHeap.handle = heapHandle;
 #endif
     NWMSP_Init(&nwmInit);
