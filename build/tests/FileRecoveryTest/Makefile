@@ -1,9 +1,9 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlIPL
+# Project:  TwlIPL - tests - FileRecoveryTest
 # File:     Makefile
 #
-# Copyright 2007 Nintendo.  All rights reserved.
+# Copyright **** Nintendo.  All rights reserved.
 #
 # These coded instructions, statements, and computer programs contain
 # proprietary information of Nintendo of America Inc. and/or Nintendo
@@ -12,37 +12,31 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev$
-# $Author$
+# $Rev:$
+# $Author:$
 #----------------------------------------------------------------------------
+SUBDIRS          = $(TWL_IPL_RED_ROOT)/build/libraries_sysmenu/util/
 
-SUBDIRS			=	
-
-#----------------------------------------------------------------------------
 TARGET_FIRM		=	SYSTEMMENU
 TARGET_PLATFORM	=	TWL
 TWL_ARCHGEN		=	LIMITED
-TWL_PROC	   	=	ARM9
-
-SRCDIR			=	src
-SRCS			=	util.c \
-					masterkey.c \
-					util_menuAppManager.c	\
-					util_recoveryFile.c
-#SRCS			=	util_recoveryFile.c
-
-TARGET_LIB		=	libsysmutil$(TWL_LIBSUFFIX).a
-
-include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
-
-INSTALL_TARGETS	=	$(TARGETS)
-INSTALL_DIR		=	$(SYSMENU_INSTALL_LIBDIR)
-
-LINCLUDES		=	$(ROOT)/build/libraries/spi/ARM9/include	\
 
 #----------------------------------------------------------------------------
 
-do-build: $(TARGETS)
+TARGET_BIN       = main.srl
+
+SRCS             = main.c
+
+LLIBRARIES		+=	libsysmutil$(TWL_LIBSUFFIX).a
+
+ROM_SPEC		=	main.rsf
+
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+MAKEROM		 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
+
+#----------------------------------------------------------------------------
+
+do-build:		$(TARGETS)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
