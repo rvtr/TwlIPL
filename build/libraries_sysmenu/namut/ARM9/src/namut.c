@@ -487,11 +487,12 @@ BOOL NAMUTi_DestroySubBanner(const char* path)
 static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arcname)
 {
     BOOL    succeeded = FALSE;
+    static FSFATFSArchiveWork work;
     // マウント試行。
-    FSResult    result = FS_MountOtherTitleArchive(titleID, arcname);
+    FSResult    result = FSi_MountSpecialArchive(titleID, arcname, &work);
     if (result != FS_RESULT_SUCCESS)
     {
-        OS_TWarning("FS_MountOtherTitleArchive failed. (%d)\n", result);
+        OS_TWarning("FSi_MountSpecialArchive failed. (%d)\n", result);
     }
     else
     {
@@ -513,7 +514,7 @@ static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arc
         // ドライブ情報をダンプ。
 //      DumpArchiveResource(path);
         // アンマウント。
-        (void)FS_MountOtherTitleArchive(titleID, NULL);
+        (void)FSi_MountSpecialArchive(titleID, NULL, &work);
     }
     return succeeded;
 }
