@@ -1363,7 +1363,6 @@ static BOOL SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 static BOOL SYSMi_AuthenticateHeader( TitleProperty *pBootTitle, ROM_Header *head )
 {
 	ROM_Header_Short *hs = ( ROM_Header_Short *)head;
-	// [TODO:]認証結果はどこかワークに保存しておく？
 	if( hs->platform_code & PLATFORM_CODE_FLAG_TWL )
 	{
 		// TWLアプリ
@@ -1428,7 +1427,6 @@ static BOOL SYSMi_AuthenticateHeader( TitleProperty *pBootTitle, ROM_Header *hea
 static BOOL SYSMi_AuthenticateTitleCore( TitleProperty *pBootTitle)
 {
 	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
-	// [TODO:]認証結果はどこかワークに保存しておく？
 	if( hs->platform_code & PLATFORM_CODE_FLAG_TWL )
 	{
 		// TWLアプリ
