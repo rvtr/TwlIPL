@@ -18,12 +18,13 @@
 #include <twl.h>
 #include <sysmenu/util_recoveryFile.h>
 
+static char *s_strResult[4];
 
 void VBlankIntr(void);
 
 void TwlMain( void )
 {	
-	char path[] = "nand:/shared2/a/b/c/d/hogehoge.dat";
+	char path[] = "nand:/tmp/a/b/c/d/hogehoge.dat";
 	UTL_RecoveryStatus result;
 
 	OS_Init();
@@ -35,10 +36,11 @@ void TwlMain( void )
 	GX_VBlankIntr(TRUE);
 	
 
-	// とりあえずファイルサイズに4KB指定
-	result = UTL_RecoveryFile( path, 0x1000 );
+	// とりあえずファイルサイズに16byte指定
+	result = UTL_RecoveryFile( path, 0x0010 );
 	
 	OS_TPrintf("recovery result: %d\n", result);
+	OS_TPrintf("%s\n", s_strResult[result] );
 	OS_TPrintf( "*** End of demo\n" ); 
 	OS_Terminate();
 	
@@ -49,3 +51,10 @@ void VBlankIntr(void)
 {
 	OS_SetIrqCheckFlag(OS_IE_V_BLANK);
 }
+
+static char *s_strResult[] = {
+	"Target file exists and file size matched.",
+	"File size didn't match. Changing size succeeded.",
+	"Target file didn't exist. Creating file and setting size succeeded.",
+	"ERROR: File Recovery Failed."
+};
