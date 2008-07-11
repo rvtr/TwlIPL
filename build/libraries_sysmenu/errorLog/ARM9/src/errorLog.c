@@ -51,14 +51,14 @@ typedef enum CheckStatus {
 ErrorLogWork elWork;
 
 /*-- function prototype ----------------------*/
-CheckStatus ELi_CheckAndCreateDirectory( const char *path );
-CheckStatus ELi_CheckAndCreateFile( const char *path );
-int ELi_ReadEntry( void );
-BOOL ELi_SetString( char *buf, ErrorLogEntry *entry );
-BOOL ELi_addNewEntry( int idx, int errorCode, RTCDate *date, RTCTime *time );
-void ELi_WriteLogToBuf( char *buf );
-BOOL ELi_WriteLogToFile( char *buf );
-void ELi_fillSpace( char *buf, int bufsize );
+CheckStatus ErrorLogi_CheckAndCreateDirectory( const char *path );
+CheckStatus ErrorLogi_CheckAndCreateFile( const char *path );
+int ErrorLogi_ReadEntry( void );
+BOOL ErrorLogi_SetString( char *buf, ErrorLogEntry *entry );
+BOOL ErrorLogi_addNewEntry( int idx, int errorCode, RTCDate *date, RTCTime *time );
+void ErrorLogi_WriteLogToBuf( char *buf );
+BOOL ErrorLogi_WriteLogToFile( char *buf );
+void ErrorLogi_fillSpace( char *buf, int bufsize );
 
 static char *s_strWeek[7];
 static char *s_strError[FATAL_ERROR_MAX];
@@ -66,7 +66,7 @@ static char *s_strError[FATAL_ERROR_MAX];
 
 
 /*---------------------------------------------------------------------------*
-  Name:         EL_Init
+  Name:         ErrorLog_Init
 
   Description:  Errorlogライブラリ用の初期化関数です。
   				
@@ -76,7 +76,7 @@ static char *s_strError[FATAL_ERROR_MAX];
 
   Returns:      成功すればTRUEを、失敗すればFALSEを返します。
  *---------------------------------------------------------------------------*/
-BOOL EL_Init( void* (*AllocFunc) (u32) , void (*FreeFunc) (void*)  )
+BOOL ErrorLog_Init( void* (*AllocFunc) (u32) , void (*FreeFunc) (void*)  )
 {
 	SDK_POINTER_ASSERT(AllocFunc);
     SDK_POINTER_ASSERT(FreeFunc);
@@ -96,12 +96,12 @@ BOOL EL_Init( void* (*AllocFunc) (u32) , void (*FreeFunc) (void*)  )
 	FS_InitFile( &elWork.file );	
 	
 	// ファイルの存在確認
-	if( ELi_CheckAndCreateDirectory( ERRORLOG_DIRECTORYPATH ) == CHECK_FAILED )
+	if( ErrorLogi_CheckAndCreateDirectory( ERRORLOG_DIRECTORYPATH ) == CHECK_FAILED )
 	{
 		return FALSE;
 	}
 	
-	switch ( ELi_CheckAndCreateFile( ERRORLOG_FILEPATH ) )
+	switch ( ErrorLogi_CheckAndCreateFile( ERRORLOG_FILEPATH ) )
 	{
 		case CHECK_FAILED:
 			return FALSE;
@@ -109,7 +109,7 @@ BOOL EL_Init( void* (*AllocFunc) (u32) , void (*FreeFunc) (void*)  )
 			
 		case CHECK_EXIST:
 			// 既にログファイルが存在していたら、そこからログを読み出す
-			elWork.numEntry = ELi_ReadEntry();
+			elWork.numEntry = ErrorLogi_ReadEntry();
 			break;
 			
 		case CHECK_CREATE:
@@ -121,16 +121,16 @@ BOOL EL_Init( void* (*AllocFunc) (u32) , void (*FreeFunc) (void*)  )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         EL_End
+  Name:         ErrorLog_End
 
   Description:  Errorlogライブラリの終了処理を行います。
-  				再度ELライブラリを利用するためにはEL_Initを呼ぶ必要があります。
+  				再度ELライブラリを利用するためにはErrorLog_Initを呼ぶ必要があります。
   				
   Arguments:    なし。
 
   Returns:      なし。
  *---------------------------------------------------------------------------*/
-void EL_End( void )
+void ErrorLog_End( void )
 {
 	elWork.Free( elWork.entry );
 
@@ -141,7 +141,7 @@ void EL_End( void )
 }
 	
 /*---------------------------------------------------------------------------*
-  Name:         EL_WriteErrorLog
+  Name:         ErrorLog_WriteErrorLog
 
   Description:  nand:/sys/log/sysmenu.logにエラーログを出力します。
   
@@ -150,7 +150,7 @@ void EL_End( void )
 
   Returns:      書き込みに成功したときはTRUEを、失敗したときはFALSEを返します。
  *---------------------------------------------------------------------------*/
-BOOL EL_WriteErrorLog( u64 errorCode )
+BOOL ErrorLog_WriteErrorLog( u64 errorCode )
 {
 	int bufBeginPoint = 0; 	// リングバッファの開始点
 	int numEntry = 0;
@@ -177,17 +177,17 @@ BOOL EL_WriteErrorLog( u64 errorCode )
 		if( ( errorCode >> counter ) & 0x1LL )
 		{
 			// 末尾のビットが立っていたらエントリに入れてバッファ開始点を進める
-			ELi_addNewEntry( elWork.numEntry % ERRORLOG_NUM_ENTRY , counter , &date, &time );
+			ErrorLogi_addNewEntry( elWork.numEntry % ERRORLOG_NUM_ENTRY , counter , &date, &time );
 			elWork.numEntry++;
 		}
 	}
 	
 	
 	// まずエントリをもとにバッファに書き込む
-	ELi_WriteLogToBuf( writeBuf );
+	ErrorLogi_WriteLogToBuf( writeBuf );
 	
 	// 最終的にファイルを書き込む
-	if( !ELi_WriteLogToFile( writeBuf ) )
+	if( !ErrorLogi_WriteLogToFile( writeBuf ) )
 	{
 		return FALSE;
 	}
@@ -198,7 +198,7 @@ BOOL EL_WriteErrorLog( u64 errorCode )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         EL_getErrorLogNum
+  Name:         ErrorLog_getErrorLogNum
 
   Description:  読み出したエントリ数を取得します。
 
@@ -207,14 +207,14 @@ BOOL EL_WriteErrorLog( u64 errorCode )
   Returns:      ログファイルから読み出したエントリ数を返します。
  *---------------------------------------------------------------------------*/
 
-int EL_getErrorLogNum()
+int ErrorLog_getErrorLogNum()
 {
-	return elWork.numEntry;
+	return elWork.numEntry < ERRORLOG_NUM_ENTRY ? elWork.numEntry : ERRORLOG_NUM_ENTRY;
 }
 
 	
 /*---------------------------------------------------------------------------*
-  Name:         EL_getErrorLog
+  Name:         ErrorLog_getErrorLog
 
   Description:  指定したナンバのエラーログエントリへのポインタを取得します。
 
@@ -223,13 +223,20 @@ int EL_getErrorLogNum()
   Returns:      idx番目のエントリへのポインタです。
  *---------------------------------------------------------------------------*/
 
-const ErrorLogEntry* EL_getErrorLog( int idx )
+const ErrorLogEntry* ErrorLog_getErrorLog( int idx )
 {
-	return &elWork.entry[idx];
+	if( idx >= 0 && idx < ERRORLOG_NUM_ENTRY )
+	{
+		return &elWork.entry[idx];
+	}
+	else
+	{
+		return NULL;
+	}
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ELi_addNewEntry
+  Name:         ErrorLogi_addNewEntry
 
   Description:  エラーコードとRTCデータをエラーログのエントリに追加します。
 
@@ -243,7 +250,7 @@ const ErrorLogEntry* EL_getErrorLog( int idx )
  *---------------------------------------------------------------------------*/
 
 
-BOOL ELi_addNewEntry( int idx, int errorCode, RTCDate *date, RTCTime *time )
+BOOL ErrorLogi_addNewEntry( int idx, int errorCode, RTCDate *date, RTCTime *time )
 {
 
 	if( errorCode >= FATAL_ERROR_MAX )
@@ -267,7 +274,7 @@ BOOL ELi_addNewEntry( int idx, int errorCode, RTCDate *date, RTCTime *time )
 
 
 /*---------------------------------------------------------------------------*
-  Name:         ELi_CheckAndCreateDirectory
+  Name:         ErrorLogi_CheckAndCreateDirectory
 
   Description:  この関数は該当ディレクトリが存在していれば何もしません。
 				該当ディレクトリが存在していなかった場合は
@@ -280,7 +287,7 @@ BOOL ELi_addNewEntry( int idx, int errorCode, RTCDate *date, RTCTime *time )
   				ディレクトリ作成に失敗した場合はCHECK_FAILEDを返します。
  *---------------------------------------------------------------------------*/
 
-CheckStatus ELi_CheckAndCreateDirectory( const char *path )
+CheckStatus ErrorLogi_CheckAndCreateDirectory( const char *path )
 {
 	FSFile dir;
 
@@ -306,7 +313,7 @@ CheckStatus ELi_CheckAndCreateDirectory( const char *path )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ELi_CheckAndCreateFile
+  Name:         ErrorLogi_CheckAndCreateFile
 
   Description:  この関数は該当ファイルが存在していれば何もしません。
 				該当ファイルが存在していなかった場合はファイルを作成します。
@@ -318,7 +325,7 @@ CheckStatus ELi_CheckAndCreateDirectory( const char *path )
   				ファイル作成に失敗した場合はCHECK_FAILEDを返します。
  *---------------------------------------------------------------------------*/
 
-CheckStatus ELi_CheckAndCreateFile( const char *path )
+CheckStatus ErrorLogi_CheckAndCreateFile( const char *path )
 {
 
 	if( FS_OpenFileEx( &elWork.file, path, FS_FILEMODE_RWL ) )
@@ -380,7 +387,7 @@ CheckStatus ELi_CheckAndCreateFile( const char *path )
 
 
 /*---------------------------------------------------------------------------*
-  Name:         ELi_ReadEntry
+  Name:         ErrorLogi_ReadEntry
 
   Description:  ログファイルに書き込まれた過去のエントリを読み出す
 
@@ -389,7 +396,7 @@ CheckStatus ELi_CheckAndCreateFile( const char *path )
   Returns:      読み出したエントリの数
  *---------------------------------------------------------------------------*/
 
-int ELi_ReadEntry( void )
+int ErrorLogi_ReadEntry( void )
 {
 	char buf[ERRORLOG_BUFSIZE+1];
 	int numEntry = 0;
@@ -424,7 +431,7 @@ int ELi_ReadEntry( void )
 
 
 /*---------------------------------------------------------------------------*
-  Name:         ELi_SetString
+  Name:         ErrorLogi_SetString
 
   Description:  バッファに書き込むべきログデータをセットします。
 
@@ -434,7 +441,7 @@ int ELi_ReadEntry( void )
   Returns:      成功した場合はTRUE、失敗した場合はFALSEが返ります。
  *---------------------------------------------------------------------------*/
 
-BOOL ELi_SetString( char *buf, ErrorLogEntry *entry )
+BOOL ErrorLogi_SetString( char *buf, ErrorLogEntry *entry )
 {
 	STD_TSNPrintf(buf, ERRORLOG_BUFSIZE, ERRORLOG_WRITE_FORMAT, 
 					entry->year, entry->month, entry->day, entry->week,
@@ -442,14 +449,14 @@ BOOL ELi_SetString( char *buf, ErrorLogEntry *entry )
 					entry->errorCode, s_strError[entry->errorCode] );
 	
 	// 余りをスペースで埋めて、改行で終端する
-	ELi_fillSpace( buf, ERRORLOG_BUFSIZE );
+	ErrorLogi_fillSpace( buf, ERRORLOG_BUFSIZE );
 	buf[ ERRORLOG_BUFSIZE-1 ] = '\n';
 	
 	return TRUE;
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ELi_WriteLogToBuf
+  Name:         ErrorLogi_WriteLogToBuf
 
   Description:  受け取ったエントリの中身をバッファへ書き出します。
 
@@ -459,7 +466,7 @@ BOOL ELi_SetString( char *buf, ErrorLogEntry *entry )
 
   Returns:      なし。
  *---------------------------------------------------------------------------*/
-void ELi_WriteLogToBuf( char *buf )
+void ErrorLogi_WriteLogToBuf( char *buf )
 {
 	// エントリを書き出す開始点
 	int entryIdx = elWork.numEntry <= ERRORLOG_NUM_ENTRY ? 0 : elWork.numEntry % ERRORLOG_NUM_ENTRY ;
@@ -472,7 +479,7 @@ void ELi_WriteLogToBuf( char *buf )
 	for( counter = 0; counter < counterMax ; counter++ )
 	{
 		// bufに一エントリずつ文字列化して詰めていく
-		ELi_SetString( &buf[ counter * ERRORLOG_BUFSIZE ], &(elWork.entry[ (entryIdx + counter) % ERRORLOG_NUM_ENTRY ]) );
+		ErrorLogi_SetString( &buf[ counter * ERRORLOG_BUFSIZE ], &(elWork.entry[ (entryIdx + counter) % ERRORLOG_NUM_ENTRY ]) );
 		
 		if( counter == counterMax-1 )
 		{
@@ -486,7 +493,7 @@ void ELi_WriteLogToBuf( char *buf )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ELi_WriteLogToFile
+  Name:         ErrorLogi_WriteLogToFile
 
   Description:  受け取ったエントリの中身をログファイルに書き出します。
 
@@ -495,7 +502,7 @@ void ELi_WriteLogToBuf( char *buf )
   Returns:      成功した場合はTRUE、失敗した場合はFALSEが返ります。
  *---------------------------------------------------------------------------*/
 
-BOOL ELi_WriteLogToFile( char *buf )
+BOOL ErrorLogi_WriteLogToFile( char *buf )
 {
 	FSResult res;
 	
@@ -515,7 +522,7 @@ BOOL ELi_WriteLogToFile( char *buf )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ELi_fillSpace
+  Name:         ErrorLogi_fillSpace
 
   Description:  受け取ったエントリの余りの部分を0で埋めます。
 
@@ -525,7 +532,7 @@ BOOL ELi_WriteLogToFile( char *buf )
   Returns:      なし。
  *---------------------------------------------------------------------------*/
 
-void ELi_fillSpace( char *buf, int bufsize )
+void ErrorLogi_fillSpace( char *buf, int bufsize )
 {
 	u32 length = strlen( buf );
 	MI_CpuFill8( &buf[length], ' ', bufsize - length );	
