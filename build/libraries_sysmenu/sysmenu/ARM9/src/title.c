@@ -1539,6 +1539,11 @@ void SYSM_StartAuthenticateTitle( TitleProperty *pBootTitle )
 	OS_InitThread();
 	OS_CreateThread( &s_auth_thread, (void (*)(void *))SYSMi_AuthenticateTitleThreadFunc, (void*)pBootTitle, stack+AUTH_STACK_SIZE/sizeof(u64), AUTH_STACK_SIZE,THREAD_PRIO );
 	OS_WakeupThreadDirect( &s_auth_thread );
+    
+    // ROMヘッダのNintendoロゴ 正当性チェック
+    if( !UTL_CheckNintendoLogoData((ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF) ){
+		UTL_SetFatalError( FATAL_ERROR_NINTENDO_LOGO_CHECK_FAILED );
+    }
 }
 
 // 検証済み？
