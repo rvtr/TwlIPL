@@ -29,7 +29,6 @@ extern "C" {
 #define DS_WLPATCH_COPYCODE_SIZE			(10*4)
 
 void DS_InsertWLPatch( void* romHeaderNTR );
-void DS_CheckROMCloneBoot( void );
 
 
 #ifdef __cplusplus

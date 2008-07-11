@@ -281,9 +281,6 @@ TitleProperty *SYSM_GetCardTitleList( BOOL *changed )
 		// ロード開始していたら、もうヘッダやタイトル情報は変更しない
 		return pTitleList_Card;
 	}
-	// [TODO:] ROMヘッダの platform_code がNTR,TWL-HYB,TWL-LTD以外のもの
-	//                     region_codeが本体情報と違うもの
-	//         の場合は、正常に認識できないタイトルであることを示す。
 	
 	if( SYSMi_GetWork()->flags.hotsw.isCardStateChanged ) {
 		u16 id = (u16)OS_GetLockID();
@@ -335,7 +332,6 @@ BOOL SYSMi_CopyCardRomHeader( void )
 		// ROMヘッダのリード
 		DC_InvalidateRange( (void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_APP_ROM_HEADER_SIZE );	// キャッシュケア
 		MI_CpuCopyFast( (void *)SYSM_CARD_ROM_HEADER_BAK, (void *)SYSM_APP_ROM_HEADER_BUF, SYSM_APP_ROM_HEADER_SIZE );	// ROMヘッダコピー
-		SYSMi_GetWork()->cardHeaderCrc16 = SYSMi_GetWork()->cardHeaderCrc16_bak;			// ROMヘッダCRCコピー
 
 		retval = TRUE;
 	}

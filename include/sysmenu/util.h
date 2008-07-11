@@ -119,6 +119,24 @@ extern void UTL_SetFatalError( FatalErrorCode error );						// FATALエラーのセッ
 extern u64  UTL_GetFatalError( void );										// FATALエラー状態の取得（FatalErrorCodeをビットに割り当てて格納しています。）
 
 
+// リージョンチェック
+static inline BOOL UTL_CheckAppRegion( u32 card_region_bitmap )
+{
+	return ( card_region_bitmap & ( 0x00000001 << OS_GetRegion() ) ) ? TRUE : FALSE;
+}
+
+// CRCチェック
+static BOOL UTL_CheckAppCRC16( ROM_Header_Short *pROMH )
+{
+	u16 calc_crc = SVC_GetCRC16( 65535, pROMH, 0x015e );
+	if( ( calc_crc != pROMH->header_crc16 ) ||
+	    ( 0xcf56   != pROMH->nintendo_logo_crc16 ) ){
+		return FALSE;
+	}
+	return TRUE;
+}
+
+
 #ifdef __cplusplus
 }
 #endif

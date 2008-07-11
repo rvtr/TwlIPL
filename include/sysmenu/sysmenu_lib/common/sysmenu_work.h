@@ -122,9 +122,6 @@ typedef struct SYSM_work {
         }hotsw;
 	}flags; // 8B
 
-	u16					cardHeaderCrc16;				// カード検出時に算出したROMヘッダCRC16（ARM9側でコピーして使用する側）
-	u16					cardHeaderCrc16_bak;			// カード検出時に算出したROMヘッダCRC16（ARM7側ライブラリでダイレクトに書き換わる側）
-	
     OSLockWord			lockCardRsc ATTRIBUTE_ALIGN(8);	// カードリソース排他制御用
 	OSLockWord			lockHotSW;						// カードリソース排他制御用
 	u32					appCardID;						// カードID

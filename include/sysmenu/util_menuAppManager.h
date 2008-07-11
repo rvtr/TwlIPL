@@ -25,6 +25,7 @@
 #include <../build/libraries/os/common/include/application_jump_private.h>
 
 #include <sysmenu/types.h>
+#include <sysmenu/util.h>
 
 typedef struct AMNBannerCounter
 {

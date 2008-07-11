@@ -22,6 +22,7 @@ SUBDIRS					=	\
 							../../../libraries_sysmenu/sysmenu \
 							../../../libraries_sysmenu/boot \
 							../../../libraries_sysmenu/hotsw \
+							../../../libraries_sysmenu/util \
 #							../../../libraries_sysmenu/sharedFont \
 #							../../../libraries_sysmenu/reloc_info \
 #							../../../libraries_sysmenu/mcu \

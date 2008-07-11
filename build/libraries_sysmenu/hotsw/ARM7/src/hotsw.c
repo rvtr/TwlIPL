@@ -404,16 +404,18 @@ static HotSwState LoadCardData(void)
             }
             SYSMi_GetWork()->gameCommondParam = s_cbData.gameCommondParam;
 
-            // ROMヘッダCRCを算出してチェック。NintendoロゴCRCも確認。
-            SYSMi_GetWork()->cardHeaderCrc16_bak = SVC_GetCRC16( 65535, s_cbData.pBootSegBuf, 0x015e );
-            OS_TPrintf( "RomHeaderCRC16 : calc = %04x  romh = %04x\n",
-                        SYSMi_GetWork()->cardHeaderCrc16_bak, s_cbData.pBootSegBuf->rh.s.header_crc16 );
-
-            if( ( SYSMi_GetWork()->cardHeaderCrc16_bak != s_cbData.pBootSegBuf->rh.s.header_crc16 ) ||
-                ( 0xcf56 != s_cbData.pBootSegBuf->rh.s.nintendo_logo_crc16 ) ){
-                retval = (retval == HOTSW_SUCCESS) ? HOTSW_CRC_CHECK_ERROR : retval;
-            }
-
+            
+			
+			// CRCチェック
+			if( !UTL_CheckAppCRC16( &s_cbData.pBootSegBuf->rh.s ) ) {
+       	        retval = (retval == HOTSW_SUCCESS) ? HOTSW_CRC_CHECK_ERROR : retval;
+			}
+			
+			// リージョンチェック
+			if( !UTL_CheckAppRegion( s_cbData.pBootSegBuf->rh.s.card_region_bitmap ) ) {
+				retval = (retval == HOTSW_SUCCESS) ? HOWSW_REGION_CHECK_ERROR : retval;
+			}
+			
             // アプリジャンプのデバッグ時にROMエミュレーション情報だけ必要な場合
             if(SYSMi_GetWork()->flags.hotsw.isLoadRomEmuOnly){
                 SYSMi_GetWork()->flags.hotsw.isExistCard = TRUE;
@@ -2380,6 +2382,10 @@ static void DebugPrintErrorMessage(HotSwState state)
 
       case HOTSW_CRC_CHECK_ERROR:
         OS_PutString("   - Error 3 : CRC Check\n");
+        break;
+
+      case HOWSW_REGION_CHECK_ERROR:
+        OS_PutString("   - Error 3 : Region Check\n");
         break;
 
       case HOTSW_HASH_CHECK_ERROR:

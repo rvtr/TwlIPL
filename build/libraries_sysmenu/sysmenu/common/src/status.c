@@ -22,7 +22,6 @@
 // define data-----------------------------------------------------------------
 // extern data-----------------------------------------------------------------
 // function's prototype-------------------------------------------------------
-static int  SYSMi_IsValidCard( void );
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
 // const data------------------------------------------------------------------
@@ -68,7 +67,7 @@ BOOL SYSMi_IsDebuggerBannerViewMode( void )
 {
 #if 0
 	return ( SYSM_IsRunOnDebugger() &&
-			 SYSMi_IsValidCard() &&
+			 SYSMi_IsExistCard() &&
 			 SYSM_GetCardRomHeader()->dbgRomSize == 0 ) ? TRUE : FALSE;
 #else
 	return FALSE;
@@ -117,19 +116,6 @@ BOOL SYSM_IsNTRCard( void );
 BOOL SYSM_IsNTRCard( void )
 {
 	return ( SYSM_IsExistCard() && ( SYSM_GetCardRomHeader()->platform_code == PLATFORM_CODE_NTR ) );
-}
-
-
-// NTR,TWLカード存在チェック 		「リターン　1：カード認識　0：カードなし」
-static int SYSMi_IsValidCard( void )
-{
-	if( ( SYSM_GetCardRomHeader()->nintendo_logo_crc16 == 0xcf56 ) &&
-	    ( SYSM_GetCardRomHeader()->header_crc16 == SYSMi_GetWork()->cardHeaderCrc16 ) ) {
-		return TRUE;												// NTR,TWLカードあり（NintendoロゴCRC、カードヘッダCRCが正しい場合）
-																	// ※Nintendoロゴデータのチェックは、特許の都合上、ロゴ表示ルーチン起動後に行います。
-	}else {
-		return FALSE;												// NTR,TWLカードなし
-	}
 }
 
 

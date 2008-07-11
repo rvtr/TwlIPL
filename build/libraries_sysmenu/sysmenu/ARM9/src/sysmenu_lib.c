@@ -34,7 +34,6 @@ static void SYSMi_CopyLCFGDataSettings( void );
 static TitleProperty *SYSMi_CheckDebuggerBannerViewModeBoot( void );
 static TitleProperty *SYSMi_CheckShortcutBoot1( void );
 static TitleProperty *SYSMi_CheckShortcutBoot2( void );
-static void SYSMi_CheckCardCloneBoot( void );
 void SYSMi_SendKeysToARM7( void );
 static OSTitleId SYSMi_getTitleIdOfMachineSettings( void );
 
@@ -555,26 +554,6 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
     return NULL;                                                    // 「ブート内容未定」でリターン
 }
 
-
-// クローンブート判定
-static void SYSMi_CheckCardCloneBoot( void )
-{
-#if 0
-    u8  *buffp         = (u8 *)&pTempBuffer;
-    u32 total_rom_size = SYSM_GetCardRomHeader()->rom_valid_size ? SYSM_GetCardRomHeader()->rom_valid_size : 0x01000000;
-    u32 file_offset    = total_rom_size & 0xFFFFFE00;
-
-    DC_FlushRange( buffp, BNR_IMAGE_SIZE );
-    CARD_ReadRom( 4, (void *)file_offset, buffp, BNR_IMAGE_SIZE );
-
-    buffp += total_rom_size & 0x000001FF;
-    if( *buffp++ == 'a' && *buffp == 'c' ) {
-        SYSMi_GetWork()->flags.common.cloneBootMode = CLONE_BOOT_MODE;
-    }else {
-        SYSMi_GetWork()->flags.common.cloneBootMode = OTHER_BOOT_MODE;
-    }
-#endif
-}
 
 // NAM_Initされるようになったので、NAMで本体設定のID取得
 // それらしきものがインストールされていない場合は0（NULL）をリターン

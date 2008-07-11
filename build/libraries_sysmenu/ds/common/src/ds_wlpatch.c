@@ -32,7 +32,6 @@
 #define PATCH3_OFFSET_IN_PATTERN			0x04
 
 // function's prototype-------------------------------------------------
-static int  DSi_ExistNitroCard(void);
 static void* DSi_GetPatchBaseAddr( void );
 static BOOL DSi_IsPatchedSDKVersion( void );
 static u32  DSi_SearchBinaryCore( const u32 *patp, int pat_word_size, int patch_offset );
@@ -283,44 +282,3 @@ asm void DSi_CopyWLPatch( void )
 				    (u8 *)(destp),         \
 				    ( DMA_SRC_INC | ( (size)/(32/8) & 0x1fffff ) ) )
 */
-
-// クローンブート判定
-void DS_CheckROMCloneBoot( void )
-{
-	s32	lockCardID;
-	u8 	*buffp         = (u8 *)&mbSignBuf;
-	u32 auth_offset = dh->s.rom_valid_size ? dh->s.rom_valid_size : 0x01000000;
-	u32 page_offset    = auth_offset & 0xFFFFFE00;
-	
-	if( !DSi_ExistNitroCard() ) {
-		return;
-	}
-	
-	if ((lockCardID = OS_GetLockID()) > 0) {
-		(void)OS_LockCard( (u16 )lockCardID );
-//		DC_FlushRange( buffp, sizeof(mbSignBuf) );
-//		IPL2_ReadCard( (void *)page_offset, buffp, sizeof(mbSignBuf) );
-		(void)OS_UnLockCard( (u16 )lockCardID );
-		OS_ReleaseLockID( (u16 )lockCardID );
-	}
-	
-	buffp += auth_offset & 0x000001FF;
-	if( *buffp++ == 'a' && *buffp == 'c' ) {
-		SYSMi_GetWork()->cloneBootMode = SYSM_CLONE_BOOT_MODE;
-	}else {
-		SYSMi_GetWork()->cloneBootMode = SYSM_OTHER_BOOT_MODE;
-	}
-}
-
-// NITROカード存在チェック 		「リターン　1：カード認識　0：カードなし」
-static int DSi_ExistNitroCard(void)
-{
-	if((dh->s.nintendo_logo_crc16 == 0xcf56)
-	 &&(dh->s.header_crc16 == SYSMi_GetWork()->cardHeaderCrc16)) {
-		return TRUE;												// NITROカードあり（NintendoロゴCRC、カードヘッダCRCが正しい場合）
-																	// ※Nintendoロゴデータのチェックは、特許の都合上、ロゴ表示ルーチン起動後に行います。
-	}else {
-		return FALSE;												// NITROカードなし
-	}
-}
-
