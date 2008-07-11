@@ -380,7 +380,8 @@ static HotSwState LoadCardData(void)
             // ARM9/7で不整合が発生しないようにRomエミュレーション情報ロードは初回のみ
             if ( ! SYSMi_GetWork()->flags.hotsw.is1stCardChecked )
             {
-                // Romエミュレーション情報を取得（開発用CPUのみ）
+                // Romエミュレーション情報を取得
+                //（製品本体なら内部で構造体をクリアするだけ）
                 state  = ReadRomEmulationInfo(&s_romEmuInfo);
                 retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
