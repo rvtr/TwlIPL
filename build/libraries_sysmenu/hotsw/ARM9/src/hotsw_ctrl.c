@@ -181,7 +181,7 @@ void HOTSW_InvalidHotSW( void )
   
   Description:  PXIí êMÇ≈ARM7Ç…äàê¸ë}î≤FinalizeèàóùÇí ím
  *---------------------------------------------------------------------------*/
-void HOTSW_FinalizeHotSWAsync( HotSwCardState apliType )
+void HOTSW_FinalizeHotSWAsync( HotSwCardState cardState )
 {
 	HotSwPxiMessageForArm7 msg;
 
@@ -189,7 +189,7 @@ void HOTSW_FinalizeHotSWAsync( HotSwCardState apliType )
     
     msg.msg.finalize = TRUE;
     msg.msg.ctrl     = FALSE;
-    msg.msg.bootType = (u8)apliType;
+    msg.msg.cardState= (u8)cardState;
     
 	while (PXI_SendWordByFifo(PXI_FIFO_TAG_HOTSW, msg.data, FALSE) != PXI_FIFO_SUCCESS)
     {

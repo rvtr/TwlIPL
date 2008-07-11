@@ -51,11 +51,11 @@ typedef enum HotSwCardState{
 // PXI用メッセージ
 typedef union HotSwPxiMessageForArm7{
     struct {
-    	u32		value	:1;
-    	u32		ctrl	:1;
-        u32		finalize:1;
-        u32		read	:1;
-        u32		bootType:8;
+    	u32		value	 :1;
+    	u32		ctrl	 :1;
+        u32		finalize :1;
+        u32		read	 :1;
+        u32		cardState:8;
     	u32		:20;
     } msg;
     u32 data;
@@ -81,7 +81,7 @@ typedef struct HotSwMessageForArm7{
     BOOL			 finalize;
     BOOL			 read;
 	HotSwMessageType type;
-    HotSwCardState   apli;
+    HotSwCardState   state;
 } HotSwMessageForArm7;
 
 typedef struct HotSwMessageForArm9{
@@ -109,7 +109,7 @@ void HOTSW_InvalidHotSWAsync( void );
 void HOTSW_InvalidHotSW( void );
 
 // PXI通信でARM7に活線挿抜Finalize処理を通知
-void HOTSW_FinalizeHotSWAsync( HotSwCardState apliType );
+void HOTSW_FinalizeHotSWAsync( HotSwCardState cardState );
 
 // 活線挿抜の許可/抑制の状態を返す
 BOOL HOTSW_isEnableHotSW(void);

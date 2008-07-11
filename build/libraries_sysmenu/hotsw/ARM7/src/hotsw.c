@@ -95,7 +95,7 @@ static BOOL isTwlModeLoad(void);
 static HotSwState ReadSecureModeCardData(void);
 static void ClearCardFlgs(void);
 
-static void FinalizeHotSw(HotSwCardState type);
+static void FinalizeHotSw(HotSwCardState state);
 static void ForceNitroModeToFinalize(void);
 static void ForceNormalModeToFinalize(void);
 static BOOL ChangeGameMode(void);
@@ -1563,7 +1563,7 @@ static void HotSwThread(void *arg)
         }
 
         if( msg->finalize == TRUE && msg->ctrl == FALSE) {
-            FinalizeHotSw( msg->apli );
+            FinalizeHotSw( msg->state );
         }
 
 #ifdef USE_WRAM_LOAD
@@ -2101,17 +2101,17 @@ static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err)
 
 #ifndef USE_WRAM_LOAD
 	OS_TPrintf("... Pxi Message - value:%x  ctrl:%x  finalize:%x  bootType:%x\n",
-               					d.msg.value, d.msg.ctrl, d.msg.finalize, d.msg.bootType);
+               					d.msg.value, d.msg.ctrl, d.msg.finalize, d.msg.cardState);
 #else
 	OS_TPrintf("... Pxi Message - value:%x  ctrl:%x  finalize:%x  read:%x  bootType:%x\n",
-               					d.msg.value, d.msg.ctrl, d.msg.finalize, d.msg.read, d.msg.bootType);
+               					d.msg.value, d.msg.ctrl, d.msg.finalize, d.msg.read, d.msg.cardState);
 
     HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].read	 	= (d.msg.read) ? TRUE : FALSE;
 #endif
 	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].ctrl  	= (d.msg.ctrl) ? TRUE : FALSE;
 	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].finalize 	= (d.msg.finalize) ? TRUE : FALSE;
 	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].value 	= d.msg.value;
-	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].apli  	= (HotSwCardState)d.msg.bootType;
+	HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].state  	= (HotSwCardState)d.msg.cardState;
     
 	// メッセージ送信
 	OS_SendMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl], OS_MESSAGE_NOBLOCK);
