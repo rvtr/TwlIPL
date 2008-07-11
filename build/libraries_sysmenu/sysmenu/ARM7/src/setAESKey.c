@@ -146,6 +146,30 @@ void SYSMi_SetAESKeysForSignJPEG( ROM_Header *pROMH, BOOL *pIsClearSlotB, BOOL *
 		AES_SetKeyC( pAESKey );
 		AES_Unlock();
 		
+	}else if( ( pROMH->s.titleID_Hi & TITLE_ID_HI_APP_TYPE_MASK ) &&
+			  ( 0 == STD_CompareNString( (const char *)&pROMH->s.titleID_Lo[ 1 ], "INH", 3 ) )
+		) {
+		// for 写真帳
+		pAESKey = ( SCFG_GetBondingOption() == SCFG_OP_PRODUCT ) ?
+						&( OSi_GetFromFirmAddr()->rsa_pubkey[ 3 ][ 0x40 ] ) : (void *)dev_jpegEncodeKeyForNormal;
+		if( pIsClearSlotB ) {
+			*pIsClearSlotB = FALSE;
+		}
+		// AESスロットのデフォルト値セット
+		AES_Lock();
+		AES_SetKeyB( pAESKey );
+		AES_Unlock();
+		
+		pAESKey = ( SCFG_GetBondingOption() == SCFG_OP_PRODUCT ) ?
+					&( OSi_GetFromFirmAddr()->rsa_pubkey[ 3 ][ 0x30 ] ) : (void *)dev_jpegEncodeKeyForLauncher;
+		if( pIsClearSlotC ) {
+			*pIsClearSlotC = FALSE;
+		}
+		// AESスロットのデフォルト値セット
+		AES_Lock();
+		AES_SetKeyC( pAESKey );
+		AES_Unlock();
+		
 	}else {
 		// SignJPEG用AESキー
 		if ( pROMH->s.access_control.hw_aes_slot_B_SignJPEGForLauncher == TRUE) {
