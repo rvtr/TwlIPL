@@ -73,6 +73,7 @@ TwlMain()
     GX_Init();
     FX_Init();
     SND_Init();
+	SNDEX_Init();
     TP_Init();
     RTC_Init();
 

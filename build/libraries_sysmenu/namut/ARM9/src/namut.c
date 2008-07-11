@@ -48,7 +48,6 @@
 // 指定ディレクトリ自体は残ります。
 static const char* sDeleteDirectoryList[] =
 {
-	"nand:/shared2",
 	"nand:/import",
 	"nand:/progress",
 	"nand2:/photo",
@@ -63,8 +62,8 @@ static const char* sFillFileList[] =
 	"nand:/shared1/TWLCFG1.dat"
 };
 
-static u8  sClearData[CLEAR_DATA_SIZE] ATTRIBUTE_ALIGN(32);
-static u32 sNCFGAddr;
+#define VOLUME_INITIAL_VALUE     5		// 本体初期化時に設定する本体ボリューム値
+#define BACKLIGHT_INITIAL_VALUE  3		// 本体初期化時に設定するバックライト輝度
 
 /*---------------------------------------------------------------------------*
     内部変数定義
@@ -75,6 +74,8 @@ static NAMUTFree  spFreeFunc;
 static FSDirectoryEntryInfo sEntryInfo;
 static NAMTitleId sTitleIdArray[TITLE_LIST_MAX];
 static char sCurrentFullPath[FS_ENTRY_LONGNAME_MAX];
+static u8  sClearData[CLEAR_DATA_SIZE] ATTRIBUTE_ALIGN(32);
+static u32 sNCFGAddr;
 
 /*---------------------------------------------------------------------------*
     内部関数宣言
@@ -170,6 +171,18 @@ BOOL NAMUT_Format(void)
 	// RTCのクリアは必要ない。2008.06.25 小野沢確認。
 	// 本体初期化後の初回起動シーケンス起動時にRTCをクリアするため。
 	
+    // 本体ボリューム設定
+	if (SNDEX_SetVolume(VOLUME_INITIAL_VALUE) != SNDEX_RESULT_SUCCESS)
+	{
+		ret = FALSE;
+	}
+
+	// バックライト輝度設定
+	if (PM_SendUtilityCommand( PMi_UTIL_SET_BACKLIGHT_BRIGHTNESS, (u16)BACKLIGHT_INITIAL_VALUE, NULL ) != PM_SUCCESS)
+	{
+		ret = FALSE;
+	}
+
 	return ret;
 }
 
@@ -487,9 +500,18 @@ BOOL NAMUTi_DestroySubBanner(const char* path)
 static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arcname)
 {
     BOOL    succeeded = FALSE;
-    static FSFATFSArchiveWork work;
+    FSFATFSArchiveWork* pWork;
+	FSResult    result;
+
+	if (!spAllocFunc || !spFreeFunc) 
+	{
+		return FALSE;
+	}
+
+	pWork = spAllocFunc( sizeof(FSFATFSArchiveWork) );
+
     // マウント試行。
-    FSResult    result = FSi_MountSpecialArchive(titleID, arcname, &work);
+    result = FSi_MountSpecialArchive(titleID, arcname, pWork);
     if (result != FS_RESULT_SUCCESS)
     {
         OS_TWarning("FSi_MountSpecialArchive failed. (%d)\n", result);
@@ -514,8 +536,11 @@ static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arc
         // ドライブ情報をダンプ。
 //      DumpArchiveResource(path);
         // アンマウント。
-        (void)FSi_MountSpecialArchive(titleID, NULL, &work);
+        (void)FSi_MountSpecialArchive(titleID, NULL, pWork);
     }
+
+    spFreeFunc ( pWork );
+
     return succeeded;
 }
 

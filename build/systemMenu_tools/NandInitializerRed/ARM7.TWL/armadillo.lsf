@@ -61,7 +61,7 @@ Ltdautoload SCRWRAM
 	Library		libsnd_sp$(LIBSUFFIX).a
 	Library		libsndex_sp$(LIBSUFFIX).a
 	Library		libspi_sp$(LIBSUFFIX).a
-	Library		libpm_sp$(LIBSUFFIX).a
+	Library		libpm_sp.SYSMENU$(LIBSUFFIX).a
 	Library		libtp_sp$(LIBSUFFIX).a
 	Library		libtpex_sp$(LIBSUFFIX).a
 	Library		libmic_sp$(LIBSUFFIX).a

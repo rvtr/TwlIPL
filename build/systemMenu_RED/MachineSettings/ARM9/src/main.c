@@ -61,6 +61,9 @@ void TwlMain(void)
 	GX_SetPower(GX_POWER_ALL);										// 各ロジック パワーON
 	FS_Init( 3 );
 	
+	SND_Init();
+	SNDEX_Init();
+
 	// 割り込み許可----------------------------
 	(void)OS_SetIrqFunction(OS_IE_V_BLANK, INTR_VBlank);
 	(void)OS_EnableIrqMask(OS_IE_V_BLANK);

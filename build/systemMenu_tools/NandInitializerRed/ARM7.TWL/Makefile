@@ -71,6 +71,9 @@ LLIBRARIES		+=	libwl_sp$(TWL_LIBSUFFIX).a			\
 					libhotsw_sp$(TWL_LIBSUFFIX).a		\
 					libreloc_info_sp$(TWL_LIBSUFFIX).a
 
+LLIBRARIES		+=	libpm_sp.SYSMENU$(TWL_LIBSUFFIX).a
+GLIBRARIES		:= $(filter-out libpm_sp$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
+
 LDEPENDS_NEF	 = $(TWL_LIBS) $(LLIBRARIES)
 
 do-build:	$(TARGETS)
