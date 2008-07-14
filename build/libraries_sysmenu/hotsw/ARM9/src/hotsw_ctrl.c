@@ -363,7 +363,7 @@ static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err)
     	s_HotswMsg.isReadComplete	= (d.msg.read) ? TRUE : FALSE;
 		s_HotswMsg.result			= (CardDataReadState)d.msg.result;
 
-        OS_TPrintf("%s %d  Rcev Error Code[Arm9]:%x\n", __FUNCTION__, __LINE__, s_HotswMsg.result);
+        HOTSW_TPrintf("%s %d  Rcev Error Code[Arm9]:%x\n", __FUNCTION__, __LINE__, s_HotswMsg.result);
         
 		// メッセージ送信
 		OS_SendMessage( &s_HotswQueue, (OSMessage *)&s_HotswMsg, OS_MESSAGE_NOBLOCK);

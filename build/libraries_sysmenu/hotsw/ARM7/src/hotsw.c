@@ -392,10 +392,10 @@ static HotSwState LoadCardData(void)
 
             // 初回のRomエミュレーション情報を使用
             if(HOTSWi_IsRomEmulation()){
-                OS_PutString("Read Emulation ROM\n");
+                HOTSW_PutString("Read Emulation ROM\n");
                 s_cbData.cardType = ROM_EMULATION;
                 s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
-                OS_TPrintf("SYSMi_GetWork()->gameCommondParam : 0x%08x\n", s_cbData.gameCommondParam);
+                HOTSW_TPrintf("SYSMi_GetWork()->gameCommondParam : 0x%08x\n", s_cbData.gameCommondParam);
             }
             else{
                 s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param;
@@ -456,7 +456,7 @@ static HotSwState LoadCardData(void)
             // ★TWLカード対応 一旦リセット後Secure2モードに移行
             // SCFG
             if((s_cbData.isLoadTypeTwl = isTwlModeLoad()) == TRUE){
-                OS_PutString("Read Mode : TwlCard\n");
+                HOTSW_PutString("Read Mode : TwlCard\n");
 
                // Mode2に移行する準備
                 s_cbData.modeType = HOTSW_MODE2;
@@ -527,7 +527,7 @@ static HotSwState LoadCardData(void)
             // 排他制御ここまで(※CRCチェックまでにミスがあったら、ここで開放する)
             UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 
-            OS_TPrintf("ng... Card Data Load Skip ( state : %d )\n", retval);
+            HOTSW_TPrintf("ng... Card Data Load Skip ( state : %d )\n", retval);
         }
     }
     else{
@@ -1118,10 +1118,10 @@ static HotSwState CheckCardAuthCode(void)
 
     p += auth_offset & 0x000001FF;
     if( *p++ == 'a' && *p == 'c' ) {
-        OS_PutString("  ☆ Clone Boot Mode\n");
+        HOTSW_PutString("  ☆ Clone Boot Mode\n");
         SYSMi_GetWork()->cloneBootMode = SYSM_CLONE_BOOT_MODE;
     }else {
-        OS_PutString("  □ Other Boot Mode\n");
+        HOTSW_PutString("  □ Other Boot Mode\n");
         SYSMi_GetWork()->cloneBootMode = SYSM_OTHER_BOOT_MODE;
     }
 
@@ -1578,7 +1578,7 @@ static void HotSwThread(void *arg)
         while(1){
             if( !SYSMi_GetWork()->flags.hotsw.isEnableHotSW ) {
                 SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
-                OS_PutString("### HotSw is restrained...\n");
+                HOTSW_PutString("### HotSw is restrained...\n");
                 break;
             }
 
@@ -1600,7 +1600,7 @@ static void HotSwThread(void *arg)
 #ifdef USE_WRAM_LOAD
 							SendPxiMessage(HOTSW_CHANGE_GAMEMODE);
 #endif
-                        	OS_PutString("ok!\n");
+                        	HOTSW_PutString("ok!\n");
 						}
                         break;
                     }
@@ -1762,7 +1762,7 @@ static void ForceNitroModeToFinalize(void)
         ClearAllCardRegister();
         McPowerOff();
 
-        OS_PutString("Failed To Change Game Mode... Card Slot Power Off\n");
+        HOTSW_PutString("Failed To Change Game Mode... Card Slot Power Off\n");
     }
 
     SYSMi_GetWork()->appCardID = s_cbData.id_gam;
@@ -1791,7 +1791,7 @@ static void ForceNormalModeToFinalize(void)
     s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
     SYSMi_GetWork()->appCardID = s_cbData.id_nml;
 
-    OS_PutString("- game card on flg is TRUE : now Normal Mode\n");
+    HOTSW_PutString("- game card on flg is TRUE : now Normal Mode\n");
 }
 
 
@@ -1846,8 +1846,8 @@ static BOOL ChangeGameMode(void)
         state = HOTSW_ID_CHECK_ERROR;
     }
 
-    OS_TPrintf("Card Normal ID : 0x%08x\n", s_cbData.id_nml);
-    OS_TPrintf("Card Game   ID : 0x%08x\n", s_cbData.id_gam);
+    HOTSW_TPrintf("Card Normal ID : 0x%08x\n", s_cbData.id_nml);
+    HOTSW_TPrintf("Card Game   ID : 0x%08x\n", s_cbData.id_gam);
 
 #ifdef USE_NEW_DMA
     HOTSW_WaitNDmaCtrl(HOTSW_NDMA_NO);
@@ -2075,7 +2075,7 @@ static void InterruptCallbackCardDet(void)
     // メッセージインデックスをインクリメント
     HotSwThreadData.idx_insert = (HotSwThreadData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
 
-    OS_PutString("●\n");
+    HOTSW_PutString("●\n");
 }
 
 
@@ -2093,10 +2093,10 @@ static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err)
     d.data = data;
 
 #ifndef USE_WRAM_LOAD
-	OS_TPrintf("... Pxi Message - value:%x  ctrl:%x  finalize:%x  bootType:%x\n",
+	HOTSW_TPrintf("... Pxi Message - value:%x  ctrl:%x  finalize:%x  bootType:%x\n",
                					d.msg.value, d.msg.ctrl, d.msg.finalize, d.msg.cardState);
 #else
-	OS_TPrintf("... Pxi Message - value:%x  ctrl:%x  finalize:%x  read:%x  bootType:%x\n",
+	HOTSW_TPrintf("... Pxi Message - value:%x  ctrl:%x  finalize:%x  read:%x  bootType:%x\n",
                					d.msg.value, d.msg.ctrl, d.msg.finalize, d.msg.read, d.msg.cardState);
 
     HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].read	 	= (d.msg.read) ? TRUE : FALSE;
@@ -2184,29 +2184,29 @@ static HotSwState CheckStaticModuleHash(void)
     // Arm9常駐モジュール Hash値のチェック
     if(!CheckArm9HashValue()){
         flg = FALSE;
-        OS_PutString("×Arm9 Static Module Hash Check Error...\n");
+        HOTSW_PutString("×Arm9 Static Module Hash Check Error...\n");
     }
 
     // Arm7常駐モジュール Hash値のチェック
     if(!CheckArm7HashValue()){
         flg = FALSE;
-        OS_PutString("×Arm7 Static Module Hash Check Error...\n");
+        HOTSW_PutString("×Arm7 Static Module Hash Check Error...\n");
     }
 
     // Arm9拡張常駐モジュール Hash値のチェック
     if(!CheckExtArm9HashValue()){
         flg = FALSE;
-        OS_PutString("×Arm9 Ltd Static Module Hash Check Error...\n");
+        HOTSW_PutString("×Arm9 Ltd Static Module Hash Check Error...\n");
     }
 
     // Arm7拡張常駐モジュール Hash値のチェック
     if(!CheckExtArm7HashValue()){
         flg = FALSE;
-        OS_PutString("×Arm7 Ltd Static Module Hash Check Error...\n");
+        HOTSW_PutString("×Arm7 Ltd Static Module Hash Check Error...\n");
     }
 
     if(flg){
-        OS_PutString("*** Static Module Load was Completed!!\n");
+        HOTSW_PutString("*** Static Module Load was Completed!!\n");
     }
 
     return flg ? HOTSW_SUCCESS : HOTSW_HASH_CHECK_ERROR;
@@ -2359,51 +2359,51 @@ static void DebugPrintErrorMessage(HotSwState state)
 {
     switch(state){
       case HOTSW_SUCCESS:
-        OS_PutString("   - Success\n");
+        HOTSW_PutString("   - Success\n");
         break;
 
       case HOTSW_TIME_OUT:
-        OS_PutString("   - Error 1 : TimeOut\n");
+        HOTSW_PutString("   - Error 1 : TimeOut\n");
         break;
 
       case HOTSW_CARD_LOCK_ERROR:
-        OS_PutString("   - Error 2 : Slot Lock\n");
+        HOTSW_PutString("   - Error 2 : Slot Lock\n");
         break;
 
       case HOTSW_CRC_CHECK_ERROR:
-        OS_PutString("   - Error 3 : CRC Check\n");
+        HOTSW_PutString("   - Error 3 : CRC Check\n");
         break;
 
       case HOWSW_REGION_CHECK_ERROR:
-        OS_PutString("   - Error 3 : Region Check\n");
+        HOTSW_PutString("   - Error 3 : Region Check\n");
         break;
 
       case HOTSW_HASH_CHECK_ERROR:
-        OS_PutString("   - Error 4 : Hash Check\n");
+        HOTSW_PutString("   - Error 4 : Hash Check\n");
         break;
 
       case HOTSW_ID_CHECK_ERROR:
-        OS_PutString("   - Error 5 : ID Check\n");
+        HOTSW_PutString("   - Error 5 : ID Check\n");
         break;
 
       case HOTSW_PULLED_OUT_ERROR:
-        OS_PutString("   - Error 6 : Pulled Out\n");
+        HOTSW_PutString("   - Error 6 : Pulled Out\n");
         break;
 
       case HOTSW_DATA_DECRYPT_ERROR:
-        OS_PutString("   - Error 7 : Data Decrypt\n");
+        HOTSW_PutString("   - Error 7 : Data Decrypt\n");
         break;
 
       case HOTSW_BUFFER_OVERRUN_ERROR:
-        OS_PutString("   - Error 8 : Buffer OverRun\n");
+        HOTSW_PutString("   - Error 8 : Buffer OverRun\n");
         break;
 
       case HOTSW_UNEXPECTED_ERROR:
-        OS_PutString("   - Error 9 : Unexpected\n");
+        HOTSW_PutString("   - Error 9 : Unexpected\n");
         break;
 
       default :
-        OS_PutString("   - illigal Error\n");
+        HOTSW_PutString("   - illigal Error\n");
         break;
     }
 }

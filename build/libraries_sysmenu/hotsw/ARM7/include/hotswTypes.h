@@ -25,15 +25,6 @@ extern "C" {
 
 
 // Define -------------------------------------------------------------------
-//#define HOTSW_NO_MESSAGE                    // Printf抑制スイッチ
-
-#ifdef  HOTSW_NO_MESSAGE
-#ifndef SDK_FINALROM
-#define OS_TPrintf( ... )                   ((void)0)
-#define OS_PutString( ... )                 ((void)0)
-#endif
-#endif
-
 // --- NewDMA Ch
 #define HOTSW_NDMA_NO                       2
 #define HOTSW_DMA_NO						3

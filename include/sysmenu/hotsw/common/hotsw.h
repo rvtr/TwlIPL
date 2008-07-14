@@ -23,9 +23,21 @@
 extern "C" {
 #endif
 
+// Define -------------------------------------------------------------------
 #define SYSM_HOTSW_ENABLE_ROMEMU
 #define USE_WRAM_LOAD
 //#define USE_NEW_DMA
+//#define HOTSW_NO_MESSAGE					// Printf抑制スイッチ
+
+#ifndef SDK_FINALROM
+	#ifdef  HOTSW_NO_MESSAGE
+		#define HOTSW_TPrintf( ... )        ((void)0)
+		#define HOTSW_PutString( ... )      ((void)0)
+	#else
+		#define HOTSW_TPrintf				OS_TPrintf
+		#define HOTSW_PutString				OS_PutString
+	#endif
+#endif
 
 // enum   -------------------------------------------------------------------
 // スレッドに送るメッセージのステート
