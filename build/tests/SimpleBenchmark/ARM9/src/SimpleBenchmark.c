@@ -38,6 +38,8 @@ RTCDrawProperty g_rtcDraw = {
 // テストプログラムの初期化
 void SimpleBenchmarkInit( void )
 {
+	OS_InitTick();
+	
 	GX_DispOff();
  	GXS_DispOff();
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
@@ -55,7 +57,7 @@ void SimpleBenchmarkInit( void )
 void SimpleBenchmarkMain(void)
 {
 	BOOL tp_cancel = FALSE;
-	
+	OSTick ot;
 	
 	ReadTP();													// タッチパネル入力の取得
 	
@@ -64,6 +66,34 @@ void SimpleBenchmarkMain(void)
 		tp_cancel = WithinRangeTP(  RETURN_BUTTON_TOP_X * 8,    RETURN_BUTTON_TOP_Y * 8 - 4,
 									RETURN_BUTTON_BOTTOM_X * 8, RETURN_BUTTON_BOTTOM_Y * 8 - 4, &tpd.disp );
 	}
+	
+	
+	ot = OS_GetTick();
+	PutStringUTF16( 1 * 8, 1 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 2 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 3 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 4 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 5 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 6 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 7 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 8 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 9 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 10 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 11 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 12 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 13 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 14 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 15 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 16 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 17 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 18 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 19 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 20 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 21 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PutStringUTF16( 1 * 8, 22 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	ot = OS_GetTick()-ot;
+	
+	OS_TPrintf("%d\n", OS_TicksToMicroSeconds(ot));
 	
 	if( ( pad.trg & PAD_BUTTON_A ) ) {
 	}
