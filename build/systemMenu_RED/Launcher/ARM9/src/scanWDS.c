@@ -51,6 +51,7 @@ void Callback_WDSWrapper( void *ptr )
 	switch( callback->callback ) {
 	case WDSWRAPPER_CALLBACK_INITIALIZE:
 		s_isStarted = TRUE;
+		s_isClearnup = FALSE;
 		break;
 	case WDSWRAPPER_CALLBACK_STARTSCAN2:
 		// n秒間隔のビーコン間欠スキャン一回分が完了
@@ -68,6 +69,7 @@ void Callback_WDSWrapper( void *ptr )
 			OS_TPrintf( "強調表示をつけます" );
 		break;
 	case WDSWRAPPER_CALLBACK_CLEANUP:
+		s_isStarted = FALSE;
 		s_isClearnup = TRUE;
 		break;
 	}
