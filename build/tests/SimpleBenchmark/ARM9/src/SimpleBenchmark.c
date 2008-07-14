@@ -40,6 +40,8 @@ void SimpleBenchmarkInit( void )
 {
 	OS_InitTick();
 	
+	HOTSW_Init();
+	
 	GX_DispOff();
  	GXS_DispOff();
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );

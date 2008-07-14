@@ -49,6 +49,8 @@ MISC_DIR				=	../../../systemMenu_RED/misc
 SRCS					=	main.c SimpleBenchmark.c \
 							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
 
+LLIBRARIES			=	libhotsw$(TWL_LIBSUFFIX).a
+
 LINCLUDES				=	$(MISC_DIR)/include
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)'
