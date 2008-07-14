@@ -26,6 +26,7 @@ override TARGET_PLATFORM	:= TWL
 override TWL_ARCHGEN		:= LIMITED
 
 TARGET_FIRM			=	SYSTEMMENU
+TWL_NANDAPP			=	TRUE
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include ./commondefs.sysmenuVersion

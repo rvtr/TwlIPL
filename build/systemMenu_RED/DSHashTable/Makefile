@@ -21,6 +21,7 @@ TARGET_FIRM			=	SYSTEMMENU
 override TARGET_PLATFORM	:= TWL
 override TARGET_CODEGEN		:= ARM
 override TWL_ARCHGEN		:= LIMITED
+TWL_NANDAPP			=	TRUE
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include ./commondefs.DSHashTable

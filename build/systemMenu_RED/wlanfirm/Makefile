@@ -18,6 +18,7 @@
 
 TARGET_FIRM					=	SYSTEMMENU
 override TARGET_PLATFORM	:= TWL
+TWL_NANDAPP		=	TRUE
 
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
