@@ -214,7 +214,11 @@ TwlSpMain(void)
     if (OSi_IsCodecTwlMode() == TRUE)
     {
         // CODEC 初期化
+        // ランチャーのみCDC_InitForFirstBootで実際にCODECの初期化を行う。
+		// アプリ起動時にはCODECは既に初期化されているためmongooseなどでは
+		// 簡易的な初期化CDC_InitLibで良い。 2008/07/14
         InitializeCdc();
+
         // カメラ初期化
         CAMERA_Init();
         /* CODEC が TWL モードでないとシャッター音を強制的に鳴らす
@@ -266,7 +270,7 @@ TwlSpMain(void)
 
     HOTSW_Init(THREAD_PRIO_HOTSW);
 
-    // 外部デポップ回路を無効にします。
+    // 外部デポップ回路を無効にします。（ランチャーのみ 2008/07/14）
     CDC_DisableExternalDepop();
 
     while (TRUE)
@@ -452,36 +456,12 @@ InitializeCdc(void)
     OSThread    thread;
     u32         stack[18];
 
-    // ※ランチャーでは必要なし
-#if 0
-    // ランチャー経由で起動した場合はCODECは既に初期化されているため
-    // コンポーネントがCODECを初期化する必要はありません。
-    // 将来的にはバッサリと切る必要がありますが、
-    // 暫定的にI2Sが有効かどうかでCODECが初期化済みかどうかを判定します。
-    if (reg_SND_SMX_CNT & REG_SND_SMX_CNT_E_MASK)
-    {
-        CDC_InitLib();
-        return;
-    }
-#endif
-
     // ダミースレッド作成
     OS_CreateThread(&thread, DummyThread, NULL,
         (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
     OS_WakeupThreadDirect(&thread);
 
-#if 1
-    // CODEC 初期化
     CDC_InitForFirstBoot();     // ※ランチャー特殊処理。
-    CDC_InitMic();
-//    CDCi_DumpRegisters();
-#else
-    /* [Debug] CODEC を DS モードで初期化 */
-    *((u8*)(HW_TWL_ROM_HEADER_BUF + 0x01bf))    &=  ~(0x01);
-    CDC_Init();
-    CDC_GoDsMode();
-    OS_TPrintf("Codec mode changed to DS mode for debug.\n");
-#endif
 
     // ダミースレッド破棄
     OS_KillThread(&thread, NULL);
