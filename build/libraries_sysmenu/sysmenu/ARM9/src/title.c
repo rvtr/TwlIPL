@@ -1724,9 +1724,26 @@ static void SYSMi_makeTitleIdList( void )
 		{
 			continue;
 		}
+		
+		gamecode = (char *)&(id);
+		// バージョン情報の特殊処理
+		if( ( 0 == STD_CompareNString( &gamecode[1], "LNH", 3 ) ) )
+		{
+			char path[ FS_ENTRY_LONGNAME_MAX ];
+			char *p;
+			NAM_GetTitleBootContentPathFast(path, id);
+			p = STD_SearchString( path, ".app" );
+			if( p == NULL)
+			{
+				// 失敗
+				continue;
+			}
+			MI_CpuCopy8( p-8, (void *)HW_SYSM_VER_INFO_CONTENT_ID, 8 );
+			((char *)HW_SYSM_VER_INFO_CONTENT_ID )[8] = '\0';
+			((char *)HW_SYSM_VER_INFO_CONTENT_ID )[9] = gamecode[0];
+		}
 	
 		// ランチャーはリストに入れない
-		gamecode = (char *)&(id);
 		if( ( 0 == STD_CompareNString( &gamecode[1], "ANH", 3 ) )
 #ifdef DEV_UIG_LAUNCHER
 		 || ( ( 0 == STD_CompareNString( &gamecode[1], "AN4", 3 ) ) && ( SCFG_GetBondingOption() != 0 ) )
