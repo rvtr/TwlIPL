@@ -23,8 +23,6 @@
 #include    <customNDma.h>
 #include    <../build/libraries/mb/common/include/mb_fileinfo.h>
 
-#define DEBUG_MODE
-
 //#define HOTSW_DISABLE_FORCE_CARD_OFF
 
 // カード電源ONからROMヘッダロードまでの期間にスリープに入る時のワンセグ対策しない場合
@@ -414,6 +412,8 @@ static HotSwState LoadCardData(void)
 				if( !UTL_CheckAppRegion( s_cbData.pBootSegBuf->rh.s.card_region_bitmap ) ) {
 					retval = (retval == HOTSW_SUCCESS) ? HOWSW_REGION_CHECK_ERROR : retval;
 				}
+
+                s_cbData.twlFlg = TRUE;
             }
 			
             // アプリジャンプのデバッグ時にROMエミュレーション情報だけ必要な場合
@@ -427,20 +427,10 @@ static HotSwState LoadCardData(void)
         }
 
         if( retval == HOTSW_SUCCESS ) {
-            // NTRカードかTWLカードか
-#ifdef DEBUG_MODE
-            if(s_cbData.pBootSegBuf->rh.s.main_ltd_rom_offset && s_cbData.pBootSegBuf->rh.s.sub_ltd_rom_offset)
-#else
-            if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02)
-#endif
-            {
-                OS_TPrintf("TWL Card.\n");
-                s_cbData.twlFlg = TRUE;
-            }
-            else{
+            if(!s_cbData.twlFlg){
                 if ( !s_cbData.pBootSegBuf->rh.s.exFlags.enable_nitro_whitelist_signature )
-                // NTRカードの場合はRomHeaderバッファの1ページ目以降をクリアしておく。
-                MI_CpuClearFast((void *)(SYSM_CARD_ROM_HEADER_BAK + PAGE_SIZE), SYSM_APP_ROM_HEADER_SIZE - PAGE_SIZE);
+               	// NTRカードの場合はRomHeaderバッファの1ページ目以降をクリアしておく。
+               	MI_CpuClearFast((void *)(SYSM_CARD_ROM_HEADER_BAK + PAGE_SIZE), SYSM_APP_ROM_HEADER_SIZE - PAGE_SIZE);
             }
 
             // SecureコマンドのPNG_ONコマンドetc用のレイテンシを求める(Latency1とLatency2を足す)
