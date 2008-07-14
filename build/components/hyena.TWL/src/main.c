@@ -51,7 +51,6 @@
 /*---------------------------------------------------------------------------*
     定数定義
  *---------------------------------------------------------------------------*/
-/* [TODO] Work around. Should be defined in wm_sp.h */
 #define WM_WL_HEAP_SIZE     0x2100
 #define ATH_DRV_HEAP_SIZE   0x5800  /* TBD */
 #define WPA_HEAP_SIZE       0x0000 /* TBD */
@@ -73,7 +72,6 @@
 #define THREAD_PRIO_FS      15
 /* OS_THREAD_LAUNCHER_PRIORITY 16 */
 
-/* [TODO] 以下は New WM 側に移行するほうが好ましい? */
 #define NWM_DMANO                   NWMSP_DMA_NOT_USE // NWMのNDMAは使用しない。
 #define THREAD_PRIO_NWM_COMMMAND    9
 #define THREAD_PRIO_NWM_EVENT       7
@@ -266,7 +264,6 @@ TwlSpMain(void)
     SYSMi_GetWork()->flags.hotsw.isEnableHotSW = 1;
 #endif
 
-    // [TODO]アプリジャンプ有効で、カードブートでない時は、最初からHOTSW_Initを呼ばないようにしたい。
     HOTSW_Init(THREAD_PRIO_HOTSW);
 
     // 外部デポップ回路を無効にします。
@@ -403,11 +400,7 @@ InitializeFatfs(void)
 
 
     // FATFSライブラリの初期化
-#ifndef SDK_NOCRYPTO
     if(!FATFS_Init( FATFS_DMA_4, FATFS_DMA_5, THREAD_PRIO_FATFS))
-#else
-    if (FATFS_Init(FATFS_DMA_NOT_USE, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
-#endif
     {
         // do nothing
     }
@@ -838,6 +831,8 @@ extern u16 WMSP_GetAllowedChannel(u16 bitField);
  *---------------------------------------------------------------------------*/
 static void ReadUserInfo(void)
 {
+	// ※hyenaでは、NITRO本体設定データはリードしない。
+	
     u8     *p = OS_GetSystemWork()->nvramUserInfo;
 
     // 無線MACアドレスをユーザー情報の後ろに展開
