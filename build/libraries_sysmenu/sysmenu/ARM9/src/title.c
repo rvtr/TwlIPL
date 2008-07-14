@@ -20,6 +20,7 @@
 #include <firm/format/from_firm.h>
 #include <firm/hw/ARM9/mmap_firm.h>
 #include <sysmenu/util_menuAppManager.h>
+#include <sysmenu/util_recoveryFile.h>
 #include "internal_api.h"
 #include "fs_wram.h"
 
@@ -60,6 +61,8 @@
 #define DS_HASH_TABLE_SIZE  (256*1024)
 
 #define SYSM_TITLE_MESSAGE_ARRAY_MAX		1
+
+#define SIZE_16KB	( 16 * 1024 )
 
 typedef	struct	MbAuthCode
 {
@@ -1546,6 +1549,86 @@ BOOL SYSM_IsAuthenticateTitleFinished( void )
 	return OS_IsThreadTerminated( &s_auth_thread );
 }
 
+// アプリ起動に必要なセーブファイルやSharedファイルのリカバリ
+static char *s_strResult[] = {
+	"Target file exists and file size matched.",
+	"File size didn't match. Changing size succeeded.",
+	"Target file didn't exist. Creating file and setting size succeeded.",
+	"ERROR: File Recovery Failed."
+};
+static void SYSMi_FileRecovery( TitleProperty *pBootTitle )
+{
+	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
+	char path[2][ FS_ENTRY_LONGNAME_MAX ];
+	UTL_RecoveryStatus stat;
+	
+	// TWL非対応のときは不要なのでreturn
+	if ( !(hs->platform_code & PLATFORM_CODE_FLAG_TWL) )
+	{
+		return;
+	}
+	
+	// NANDアプリのときだけ
+	if ( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_NAND )
+	{
+		// get savedata_path
+		s32 result = NAM_GetTitleSaveFilePath( path[ 0 ], path[ 1 ], hs->titleID );
+		
+		// pub_save
+		if( result == NAM_OK && hs->public_save_data_size != 0 )
+		{
+			stat = UTL_RecoveryFile( path[0], hs->public_save_data_size );
+			OS_TPrintf("pub_save recovery result : %s \n", s_strResult[stat]);
+		}
+		
+		// prv_save
+		if( result == NAM_OK && hs->private_save_data_size != 0 )
+		{
+			stat = UTL_RecoveryFile( path[1], hs->private_save_data_size );
+			OS_TPrintf("prv_save recovery result : %s \n", s_strResult[stat]);
+		}
+		
+		// sub_banner
+		if( hs->exFlags.availableSubBannerFile && NAM_GetTitleBannerFilePath( path[0], hs->titleID ) == NAM_OK )
+		{
+			stat = UTL_RecoveryFile( path[0], SIZE_16KB );
+			OS_TPrintf("sub_banner recovery result : %s \n", s_strResult[stat]);
+		}
+	}
+	
+	// shared2 (size+1) * 16kb
+	if( hs->shared2_file0_size != 0 )
+	{
+		stat = UTL_RecoveryFile( "nand:/shared2/0000", (u32)( hs->shared2_file0_size + 1 ) * SIZE_16KB );
+			OS_TPrintf("shared2_0 recovery result : %s \n", s_strResult[stat]);
+	}
+	if( hs->shared2_file1_size != 0 )
+	{
+		stat = UTL_RecoveryFile( "nand:/shared2/0001", (u32)( hs->shared2_file1_size + 1 ) * SIZE_16KB );
+			OS_TPrintf("shared2_1 recovery result : %s \n", s_strResult[stat]);
+	}
+	if( hs->shared2_file2_size != 0 )
+	{
+		stat = UTL_RecoveryFile( "nand:/shared2/0002", (u32)( hs->shared2_file2_size + 1 ) * SIZE_16KB );
+			OS_TPrintf("shared2_2 recovery result : %s \n", s_strResult[stat]);
+	}
+	if( hs->shared2_file3_size != 0 )
+	{
+		stat = UTL_RecoveryFile( "nand:/shared2/0003", (u32)( hs->shared2_file3_size + 1 ) * SIZE_16KB );
+			OS_TPrintf("shared2_3 recovery result : %s \n", s_strResult[stat]);
+	}
+	if( hs->shared2_file4_size != 0 )
+	{
+		stat = UTL_RecoveryFile( "nand:/shared2/0004", (u32)( hs->shared2_file4_size + 1 ) * SIZE_16KB );
+			OS_TPrintf("shared2_4 recovery result : %s \n", s_strResult[stat]);
+	}
+	if( hs->shared2_file5_size != 0 )
+	{
+		stat = UTL_RecoveryFile( "nand:/shared2/0005", (u32)( hs->shared2_file5_size + 1 ) * SIZE_16KB );
+			OS_TPrintf("shared2_5 recovery result : %s \n", s_strResult[stat]);
+	}
+}
+
 // ロード済みの指定タイトルの認証とブートを行う
 // SYSM_GetNandTitleListまたはSYSM_GetNandTitleListMakerInfoのどちらかをSYSM_TryToBootTitle前に呼ぶ必要あり
 void SYSM_TryToBootTitle( TitleProperty *pBootTitle )
@@ -1582,6 +1665,9 @@ void SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 	
 	// ブート種別仮セット
 	SYSMi_GetWork()->appBootType = s_launcherToOSBootType[ pBootTitle->flags.bootType ];
+	
+	// ブート時ファイルリカバリ処理
+	SYSMi_FileRecovery( pBootTitle );
 	
 	// タイトルIDリストの作成
 	SYSMi_makeTitleIdList();

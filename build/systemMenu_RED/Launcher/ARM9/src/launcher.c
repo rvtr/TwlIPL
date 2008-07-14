@@ -66,9 +66,9 @@
 
 // フェードアウト関係
 #define FADE_COUNT_PER_ALPHA	((FADE_COUNT_MAX - FADE_START) / ALPHA_MAX)
-#define FADE_COUNT_MAX			124
+#define FADE_COUNT_MAX			62
 #define ALPHA_MAX				31
-#define FADE_START				62
+#define FADE_START				31
 
 // extern data------------------------------------------
 
@@ -351,7 +351,7 @@ static void BannerDraw(int selected, TitleProperty *titleprop)
 	}
 	
 	if(fadecount < (FADE_COUNT_MAX - FADE_START)) {
-		fadecount += 2;
+		fadecount += 1;
 		G2_ChangeBlendAlpha( ALPHA_MAX-((fadecount)/FADE_COUNT_PER_ALPHA), (fadecount)/FADE_COUNT_PER_ALPHA );
 	}
 }
@@ -425,14 +425,20 @@ BOOL LauncherFadeout( TitleProperty *pTitleList )
 	{
 		MtxFx22 mtx;
 		static double wa;
-		double s = cos(wa*3);
-		if( s!=0 ) mtx._00 = (fx32)((s_selected_banner_size/s) * (1.0 + wa));
-		else mtx._00 = 0x8fff;
-		mtx._01 = 0;
-		mtx._10 = 0;
-		mtx._11 = (fx32)(s_selected_banner_size * (1.0 + wa));
+		double s = sin(wa*2.2);
+		double c = cos(wa*2.2);
+		mtx._00 = (fx32)((s_selected_banner_size*c) * (1.0 + wa));
+		mtx._01 = (fx32)((s_selected_banner_size*s) * (1.0 + wa));
+		mtx._10 = (fx32)((s_selected_banner_size*-s) * (1.0 + wa));
+		mtx._11 = (fx32)((s_selected_banner_size*c) * (1.0 + wa));
+		
+		//if( c!=0 ) mtx._00 = (fx32)((s_selected_banner_size/c) * (1.0 + wa));
+		//else mtx._00 = 0x8fff;
+		//mtx._01 = 0;
+		//mtx._10 = 0;
+		//mtx._11 = (fx32)(s_selected_banner_size * (1.0 + wa));
 		G2_SetOBJAffine((GXOamAffine *)(&banner_oam_attr[0]), &mtx);
-		wa += 0.0333333333333;
+		wa += 0.1;
 	}
 	
 	// OAMをVRAMへロード
