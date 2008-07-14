@@ -477,12 +477,14 @@ static void AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
 		return;
 	}
 
-	// ROMヘッダのリージョンチェックとCRCチェックを行い、不正なアプリは無視する。
-	if( !UTL_CheckAppRegion( s_AllRomHeaderArray[rhArrayLen].card_region_bitmap ) ) {
-		OS_TPrintf( "Region Check NG : %llx\n", titleID );
-		FS_CloseFile(file);
-		return;
-	}
+    if(s_AllRomHeaderArray[rhArrayLen].platform_code & 0x02){
+		// ROMヘッダのリージョンチェックとCRCチェックを行い、不正なアプリは無視する。
+		if( !UTL_CheckAppRegion( s_AllRomHeaderArray[rhArrayLen].card_region_bitmap ) ) {
+			OS_TPrintf( "Region Check NG : %llx\n", titleID );
+			FS_CloseFile(file);
+			return;
+		}
+    }
 	if( !UTL_CheckAppCRC16( &s_AllRomHeaderArray[rhArrayLen] ) ) {
 		OS_TPrintf( "CRC16  Check NG : %llx\n", titleID );
 		FS_CloseFile(file);
