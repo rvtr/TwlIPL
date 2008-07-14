@@ -37,6 +37,10 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 INSTALL_TARGETS		=	$(TARGETS)
 INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
 
+ifeq ($(HOTSW_NO_MESSAGE),TRUE)
+MACRO_FLAGS		   +=	-DHOTSW_NO_MESSAGE
+endif
+
 #----------------------------------------------------------------------------
 
 do-build:		$(TARGETS)
