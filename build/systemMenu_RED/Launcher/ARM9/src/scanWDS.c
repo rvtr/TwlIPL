@@ -46,7 +46,7 @@ BOOL IsClearnupWDSWrapper( void )
 void Callback_WDSWrapper( void *ptr )
 {
 	WDSWrapperCallbackParam *callback = (WDSWrapperCallbackParam *)ptr;
-	OS_TPrintf("Callback_WDSWrapper: %s %d ", callbackstring[callback->callback], callback->errcode );
+	WDS_PRINTF("Callback_WDSWrapper: %s %d ", callbackstring[callback->callback], callback->errcode );
 	
 	switch( callback->callback ) {
 	case WDSWRAPPER_CALLBACK_INITIALIZE:
@@ -57,16 +57,16 @@ void Callback_WDSWrapper( void *ptr )
 		// n秒間隔のビーコン間欠スキャン一回分が完了
 		// ビーコンを受け取っていないという結果が出た場合、強調表示を消します
 		if( WDS_WrapperCheckValidBeacon() == WDSWRAPPER_ERRCODE_FAILURE )
-			OS_TPrintf( "強調表示を消します" );
+			WDS_PRINTF( "強調表示を消します" );
 		else {
-			OS_TPrintf( "強調表示をつけます" );
+			WDS_PRINTF( "強調表示をつけます" );
 		}
 		break;
 	case WDSWRAPPER_CALLBACK_STARTSCAN:
 		// n秒間隔のビーコン間欠スキャン一回分が完了
 		// ビーコンを受け取っている場合のみ強調表示を付けます
 		if( WDS_WrapperCheckValidBeacon() == WDSWRAPPER_ERRCODE_SUCCESS )
-			OS_TPrintf( "強調表示をつけます" );
+			WDS_PRINTF( "強調表示をつけます" );
 		break;
 	case WDSWRAPPER_CALLBACK_CLEANUP:
 		s_isStarted = FALSE;
@@ -74,7 +74,7 @@ void Callback_WDSWrapper( void *ptr )
 		break;
 	}
 	
-	OS_TPrintf( "\n" );
+	WDS_PRINTF( "\n" );
 }
 
 // Sleepコールバック関数

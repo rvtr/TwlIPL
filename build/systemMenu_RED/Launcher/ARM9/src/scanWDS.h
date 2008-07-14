@@ -26,6 +26,7 @@ extern "C" {
 #endif
 
 // define data-------------------------------------------------------
+//#define ENABLE_WDS_PRINTF	1
 
 // global variables--------------------------------------------------
 
@@ -35,6 +36,12 @@ BOOL IsClearnupWDSWrapper( void );
 void Callback_WDSWrapper( void *ptr );
 void Callback_WDSPreSleep( void *ptr );
 void Callback_WDSPostSleep( void *ptr );
+
+#ifdef ENABLE_WDS_PRINTF
+#define WDS_PRINTF				OS_TPrintf
+#else
+#define WDS_PRINTF(...)			((void) 0)
+#endif
 
 #ifdef __cplusplus
 }
