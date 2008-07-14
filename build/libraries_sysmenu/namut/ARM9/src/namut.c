@@ -41,7 +41,7 @@
 #define DIRECTORY_DEPTH_MAX      16  // ディレクトリの深さの最大（NANDの正規構成としては最大6）
 #define TITLE_ID_HI_SIZE          8
 #define TITLE_LIST_MAX          256
-#define CLEAR_DATA_SIZE         256
+#define CLEAR_DATA_SIZE        4096  // ファイル消去データ用（512の倍数で大きいほど処理が早い）
 
 // 本体初期化(NAND初期化)実行時に
 // 指定ディレクトリ以下は全て消去されます。
@@ -64,6 +64,7 @@ static const char* sFillFileList[] =
 
 #define VOLUME_INITIAL_VALUE     5		// 本体初期化時に設定する本体ボリューム値
 #define BACKLIGHT_INITIAL_VALUE  3		// 本体初期化時に設定するバックライト輝度
+#define NAMUT_SHARE_ARCHIVE_MAX  6      // shareデータ個数
 
 /*---------------------------------------------------------------------------*
     内部変数定義
@@ -74,7 +75,6 @@ static NAMUTFree  spFreeFunc;
 static FSDirectoryEntryInfo sEntryInfo;
 static NAMTitleId sTitleIdArray[TITLE_LIST_MAX];
 static char sCurrentFullPath[FS_ENTRY_LONGNAME_MAX];
-static u8  sClearData[CLEAR_DATA_SIZE] ATTRIBUTE_ALIGN(32);
 static u32 sNCFGAddr;
 
 /*---------------------------------------------------------------------------*
@@ -84,6 +84,7 @@ static u32 sNCFGAddr;
 static BOOL NAMUTi_DeleteNonprotectedTitle(void);
 static BOOL NAMUTi_DeleteNonprotectedTitleEntity(const char* path);
 static BOOL NAMUTi_ClearSavedataAll(void);
+static BOOL NAMUTi_InitShareData(void);
 static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arcname);
 static void NAMUTi_DrawNandTree(s32 depth, const char *path);
 static BOOL NAMUTi_RandClearFile(const char* path);
@@ -96,7 +97,7 @@ static void PrintFile(s32 depth, const char* path);
 
   Description:  NAMUT ライブラリの初期化を行います。
 
-  Arguments:    allocFunc:  メモリ確保関数へのポインタ。
+  Arguments:    allocFunc:  メモリ確保関数へのポインタ。(要：32byteアライメント）
                 freeFunc:   メモリ解放関数へのポインタ。
 
   Returns:      なし。
@@ -134,11 +135,18 @@ BOOL NAMUT_Format(void)
 		OS_TWarning("Fail! NAMUTi_DeleteNonprotectedTitle()\n");
 	}
 
-	// プロテクトタイトルのセーブデータをフォーマットします
+	// プロテクトタイトルのセーブデータを初期化します
 	if (!NAMUTi_ClearSavedataAll())
 	{
 		ret = FALSE;
 		OS_TWarning("Fail! NAMUTi_ClearSavedataAll()\n");
+	}
+
+	// shareデータを初期化します
+	if (!NAMUTi_InitShareData())
+	{
+		ret = FALSE;
+		OS_TWarning("Fail! NAMUTi_InitShareData()\n");
 	}
 
 	// 指定ファイルを乱数でクリアします
@@ -447,9 +455,9 @@ BOOL NAMUTi_DestroySubBanner(const char* path)
 	}
 
 	pBanner = spAllocFunc( sizeof(TWLSubBannerFile) );
-
 	if (!pBanner)
 	{
+        OS_TWarning("Allocation failed. (%d)\n");
 		return FALSE;
 	}
 
@@ -509,6 +517,12 @@ static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arc
 	}
 
 	pWork = spAllocFunc( sizeof(FSFATFSArchiveWork) );
+	if (!pWork)
+	{
+        OS_TWarning("Allocation failed. (%d)\n");
+		return FALSE;
+	}
+	MI_CpuClear8( pWork, sizeof(FSFATFSArchiveWork) );
 
     // マウント試行。
     result = FSi_MountSpecialArchive(titleID, arcname, pWork);
@@ -545,6 +559,90 @@ static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arc
 }
 
 /*---------------------------------------------------------------------------*
+  Name:         NAMUTi_InitShareData
+
+  Description:  全Shareデータファイルを乱数クリア＆フォーマット。
+                この関数実行前にShare:/がマウントされていてはいけない。
+
+  Arguments:    None
+
+  Returns:      成功すればTRUE
+ *---------------------------------------------------------------------------*/
+static BOOL NAMUTi_InitShareData(void)
+{
+    BOOL    succeeded = TRUE;
+    FSFATFSArchiveWork* pWork;
+    char path[NAM_PATH_LEN];
+	FSResult    result;
+	int i;
+
+	if (!spAllocFunc || !spFreeFunc) 
+	{
+		return FALSE;
+	}
+
+	pWork = spAllocFunc( sizeof(FSFATFSArchiveWork) );
+	if (!pWork)
+	{
+        OS_TWarning("Allocation failed. (%d)\n");
+		return FALSE;
+	}
+	MI_CpuClear8( pWork, sizeof(FSFATFSArchiveWork) );
+
+	for (i=0;i<NAMUT_SHARE_ARCHIVE_MAX;i++)
+	{
+		// 乱数クリア
+		STD_TSNPrintf(path, NAM_PATH_LEN, "nand:/shared2/000%d", i);
+		if (NAMUTi_RandClearFile(path) == FALSE)
+		{
+			// ファイルが存在しないものとみなし終了
+	        OS_TPrintf("%s is not exist\n", path);
+			break;
+		}
+
+	    // マウント
+		result = FSi_MountSpecialArchive((OSTitleId)i, "share", pWork);
+	    if (result != FS_RESULT_SUCCESS)
+	    {
+			succeeded = FALSE;
+	        OS_TWarning("FSi_MountSpecialArchive failed. (%d)\n", result);
+			continue;
+	    }
+
+        // Mediaフォーマット
+        if (!FATFSi_FormatMedia("share:/"))
+        {
+			succeeded = FALSE;
+            OS_TWarning("FATFSi_FormatMedia failed. (%d)\n", FATFS_GetLastError());
+			FSi_MountSpecialArchive(0, NULL, pWork);
+			continue;
+        }
+
+		// Driveフォーマット
+        if (!FATFS_FormatDrive("share:/"))
+        {
+			succeeded = FALSE;
+            OS_TWarning("FATFS_FormatDrive failed. (%d)\n", FATFS_GetLastError());
+			FSi_MountSpecialArchive(0, NULL, pWork);
+			continue;
+        }
+
+		// アンマウント
+		result = FSi_MountSpecialArchive((OSTitleId)i, NULL, pWork);
+        if (result != FS_RESULT_SUCCESS)
+		{
+			succeeded = FALSE;
+            OS_TWarning("FSi_MountSpecialArchive failed. (%d)\n", result);
+			continue;
+		}
+	}
+
+    spFreeFunc ( pWork );
+
+    return succeeded;
+}
+
+/*---------------------------------------------------------------------------*
   Name:         NAMUTi_RandClearFile
 
   Description:  指定したファイルを乱数で埋めます。
@@ -565,16 +663,26 @@ static BOOL NAMUTi_RandClearFile(const char* path)
 	{
 		// ファイルをランダムデータでクリア
 		u32 filesize = FS_GetFileLength(&file);
+        u8* pClearData = spAllocFunc( CLEAR_DATA_SIZE );
+		if (!pClearData)
+		{
+	        OS_TWarning("Allocation failed. (%d)\n");
+			FS_CloseFile(&file);
+			return FALSE;
+		}
+
 		for (; filesize > CLEAR_DATA_SIZE; filesize -= CLEAR_DATA_SIZE)
 		{
-	        if( AES_Rand(sClearData, CLEAR_DATA_SIZE) != AES_RESULT_SUCCESS )
+	        if( AES_Rand(pClearData, CLEAR_DATA_SIZE) != AES_RESULT_SUCCESS )
 	        {
+                spFreeFunc( pClearData );
 	            return FALSE;
 	        }
-			FS_WriteFile(&file, sClearData, CLEAR_DATA_SIZE);
+			FS_WriteFile(&file, pClearData, CLEAR_DATA_SIZE);
 		}
-		FS_WriteFile(&file, sClearData, (s32)filesize);
+		FS_WriteFile(&file, pClearData, (s32)filesize);
 		FS_CloseFile(&file);
+        spFreeFunc( pClearData );
 	}
 	else
 	{
@@ -796,8 +904,14 @@ static void NAMUTi_ClearWiFiSettings( void )
 #define NCFG_ADDR			0x20
 #define NTR_WIFI_DATA_SIZE	0x400
 #define TWL_WIFI_DATA_SIZE	0x600
-	int total_size = ( NTR_WIFI_DATA_SIZE + TWL_WIFI_DATA_SIZE );
-	
+	u32 total_size = ( NTR_WIFI_DATA_SIZE + TWL_WIFI_DATA_SIZE );
+	u8* pClearData = spAllocFunc( total_size );
+	if (!pClearData)
+	{
+        OS_TWarning("Allocation failed. (%d)\n");
+		return;
+	}
+
     if (!NVRAMi_IsInitialized()) {
         NVRAMi_Init();
     }
@@ -806,13 +920,11 @@ static void NAMUTi_ClearWiFiSettings( void )
     NVRAMi_Read( NCFG_ADDR, 2, (u8 *)&sNCFGAddr);
 	sNCFGAddr = (u32)( ( sNCFGAddr << 3 ) - ( NTR_WIFI_DATA_SIZE + TWL_WIFI_DATA_SIZE ) );
 	
-	MI_CpuFillFast( sClearData, 0xffffffff, CLEAR_DATA_SIZE);
-    DC_FlushRange( sClearData, CLEAR_DATA_SIZE );
-	while( total_size > 0 ) {
-    	NVRAMi_Write( sNCFGAddr, CLEAR_DATA_SIZE , sClearData );
-		sNCFGAddr += CLEAR_DATA_SIZE;
-		total_size -= CLEAR_DATA_SIZE;
-	}
+	MI_CpuFillFast( pClearData, 0xffffffff, total_size);
+    DC_FlushRange( pClearData, total_size );
+    NVRAMi_Write( sNCFGAddr, total_size , pClearData );
+
+	spFreeFunc( pClearData );
 }
 
 

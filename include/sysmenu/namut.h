@@ -32,7 +32,7 @@ typedef void  (*NAMUTFree)(void* ptr);
 
   Description:  NAMUT ライブラリの初期化を行います。
 
-  Arguments:    allocFunc:  メモリ確保関数へのポインタ。
+  Arguments:    allocFunc:  メモリ確保関数へのポインタ。(要：32byteアライメント）
                 freeFunc:   メモリ解放関数へのポインタ。
 
   Returns:      なし。
