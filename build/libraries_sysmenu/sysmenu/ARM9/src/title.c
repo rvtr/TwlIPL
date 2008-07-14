@@ -1600,32 +1600,32 @@ static void SYSMi_FileRecovery( TitleProperty *pBootTitle )
 	if( hs->shared2_file0_size != 0 )
 	{
 		stat = UTL_RecoveryFile( "nand:/shared2/0000", (u32)( hs->shared2_file0_size + 1 ) * SIZE_16KB );
-			OS_TPrintf("shared2_0 recovery result : %s \n", s_strResult[stat]);
+		OS_TPrintf("shared2_0 recovery result : %s \n", s_strResult[stat]);
 	}
 	if( hs->shared2_file1_size != 0 )
 	{
 		stat = UTL_RecoveryFile( "nand:/shared2/0001", (u32)( hs->shared2_file1_size + 1 ) * SIZE_16KB );
-			OS_TPrintf("shared2_1 recovery result : %s \n", s_strResult[stat]);
+		OS_TPrintf("shared2_1 recovery result : %s \n", s_strResult[stat]);
 	}
 	if( hs->shared2_file2_size != 0 )
 	{
 		stat = UTL_RecoveryFile( "nand:/shared2/0002", (u32)( hs->shared2_file2_size + 1 ) * SIZE_16KB );
-			OS_TPrintf("shared2_2 recovery result : %s \n", s_strResult[stat]);
+		OS_TPrintf("shared2_2 recovery result : %s \n", s_strResult[stat]);
 	}
 	if( hs->shared2_file3_size != 0 )
 	{
 		stat = UTL_RecoveryFile( "nand:/shared2/0003", (u32)( hs->shared2_file3_size + 1 ) * SIZE_16KB );
-			OS_TPrintf("shared2_3 recovery result : %s \n", s_strResult[stat]);
+		OS_TPrintf("shared2_3 recovery result : %s \n", s_strResult[stat]);
 	}
 	if( hs->shared2_file4_size != 0 )
 	{
 		stat = UTL_RecoveryFile( "nand:/shared2/0004", (u32)( hs->shared2_file4_size + 1 ) * SIZE_16KB );
-			OS_TPrintf("shared2_4 recovery result : %s \n", s_strResult[stat]);
+		OS_TPrintf("shared2_4 recovery result : %s \n", s_strResult[stat]);
 	}
 	if( hs->shared2_file5_size != 0 )
 	{
 		stat = UTL_RecoveryFile( "nand:/shared2/0005", (u32)( hs->shared2_file5_size + 1 ) * SIZE_16KB );
-			OS_TPrintf("shared2_5 recovery result : %s \n", s_strResult[stat]);
+		OS_TPrintf("shared2_5 recovery result : %s \n", s_strResult[stat]);
 	}
 }
 
@@ -1666,9 +1666,11 @@ void SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 	// ブート種別仮セット
 	SYSMi_GetWork()->appBootType = s_launcherToOSBootType[ pBootTitle->flags.bootType ];
 	
+#if 0
 	// ブート時ファイルリカバリ処理
 	SYSMi_FileRecovery( pBootTitle );
-	
+#endif
+
 	// タイトルIDリストの作成
 	SYSMi_makeTitleIdList();
 	
