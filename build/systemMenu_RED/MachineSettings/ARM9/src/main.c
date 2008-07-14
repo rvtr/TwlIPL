@@ -126,13 +126,13 @@ void TwlMain(void)
 	UTL_CaribrateTP( LCFG_TSD_GetTPCalibrationPtr() );
 	
 	// ::::::::::::::::::::::::::::::::::::::::::::::
-	// SystemMenuバージョンおよびユーザー領域MAXサイズの読み込み
+	// SystemMenuバージョンetc.の読み込み
 	// ::::::::::::::::::::::::::::::::::::::::::::::
 	{
         u8 *pBuffer = Alloc( NA_VERSION_INFO_WORK_SIZE );
 		
         if( pBuffer &&
-			ReadSystemMenuVersion( pBuffer, NA_VERSION_INFO_WORK_SIZE ) ) {
+			ReadSystemMenuVersionInfo( pBuffer, NA_VERSION_INFO_WORK_SIZE ) ) {
 			// リード成功
 		}else {
 			// FATALエラー
@@ -143,24 +143,24 @@ void TwlMain(void)
 	
 	// バージョン情報の表示
 	{
-		u16 major = 65535;
-		u16 minor = 65535;
 		char str_ver[ TWL_SYSMENU_VER_STR_LEN / sizeof(u16) ];
 		int len = sizeof(str_ver);
-		OS_TPrintf( "SystemMenuVersion\n" );
+		OS_TPrintf( "SystemMenuVersionInfo\n" );
 		// 文字列
 		if( STD_ConvertStringUnicodeToSjis( str_ver, &len, GetSystemMenuVersionString(), NULL, NULL ) == STD_RESULT_SUCCESS ) {
-			OS_TPrintf( "\tstr: %s\n", str_ver );
+			OS_TPrintf( "  Version(str)       : %s\n", str_ver );
 		}
 		// 数値
-		(void)GetSystemMenuMajorVersion( &major );
-		(void)GetSystemMenuMinorVersion( &minor );
-		OS_TPrintf( "\tnum: %d.%d\n", major, minor );
+		OS_TPrintf( "  Version(num)       : %d.%d\n", GetSystemMenuMajorVersion(), GetSystemMenuMinorVersion() );
+		// ユーザー領域MAXサイズの表示
+		OS_TPrintf( "  TotalUserAreadSize : 0x%08x\n", FSi_GetTotalUserAreaSize() );
+		// EULA URLの表示
+		OS_TPrintf( "  EULA URL           : %s\n", GetEULA_URL() );
+		// NUP HostNameの表示
+		OS_TPrintf( "  NUP HostName       : %s\n", GetNUP_HostName() );
+		// SystemMenuVersion情報のタイムスタンプの取得
+		OS_TPrintf( "  Timestamp          : %08x\n", GetSystemMenuVersionTimeStamp() );
 	}
-	
-	// ユーザー領域MAXサイズの表示
-	OS_TPrintf( "TotalUserAreadSize : 0x%08x\n", FSi_GetTotalUserAreaSize() );
-	
 	InitBG();
 	GetAndDrawRTCData( &g_rtcDraw, TRUE );
 	MachineSettingInit();
