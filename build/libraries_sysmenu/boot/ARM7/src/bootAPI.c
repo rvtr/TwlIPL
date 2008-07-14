@@ -309,16 +309,19 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 			// I2S停止（MCLKは動作継続）
 			reg_SND_SMX_CNT &= ~REG_SND_SMX_CNT_E_MASK;
 
+			// CODEC再初期化
+			CDC_Init();
+
+			// CODEC-DSモードへの遷移
             if ( isNtrMode || th->s.exFlags.codec_mode == OS_CODECMODE_NITRO )
             {
-				// （CODEC-DSモード）
+				// マイク不具合DSタイトルは音量を絞る
+	            if ( *target == REBOOT_TARGET_DS_APP )
+	            {
+                    DS_CheckSpeakerVolume( dh );
+				}
 				CDC_GoDsMode();
             }
-			else
-			{
-				// 再初期化（CODEC-TWLモード）
-				CDC_Init();
-			}
 
 			// I2S再開
 			// DSサウンド：DSP = 8:0

@@ -26,12 +26,14 @@ TWL_PROC	    	=	ARM7
 
 #----------------------------------------------------------------------------
 
-SRCDIR				=	../common/src
+SRCDIR				=	./src \
+                        ../common/src
 
 INCDIR				=	../common/include \
 						$(ROOT)/build/libraries/mb/common/include \
 
 SRCS				=	ds_wlpatch.c \
+                        ds_volume.c
 
 TARGET_LIB			=	libds_sp$(TWL_LIBSUFFIX).a
 
