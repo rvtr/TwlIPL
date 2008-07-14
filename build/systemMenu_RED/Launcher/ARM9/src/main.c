@@ -17,7 +17,7 @@
 
 #include <twl.h>
 #include <twl/dsp.h>
-#include <twl/dsp/common/shutter.h>
+#include <twl/dsp/common/g711.h>
 #include <twl/camera.h>
 #include <sysmenu/errorLog.h>
 #include "launcher.h"
@@ -233,7 +233,7 @@ void TwlMain( void )
 
 	// [TODO]カメラが接続されていないと無限ループになる！！注意！！
     // カメラ初期化
- //   CAMERA_Init();
+//    CAMERA_Init();
 
     // end時間計測１-b
 #if (MEASURE_TIME == 1)
@@ -243,6 +243,7 @@ void TwlMain( void )
 #ifdef USE_HYENA_COMPONENT
     // DSP初期化
     {
+        FSFile  file[1];
         MIWramSize sizeB = MI_WRAM_SIZE_32KB;
         MIWramSize sizeC = MI_WRAM_SIZE_64KB;
         int slotB = CreateDspSlotBitmap( DSP_SLOT_B_COMPONENT_G711 );  // １スロット
@@ -252,11 +253,13 @@ void TwlMain( void )
         MI_FreeWramSlot_C( 0, sizeC, MI_WRAM_ARM9 );
         MI_CancelWramSlot_B( 0, sizeB, MI_WRAM_ARM9 );
         MI_CancelWramSlot_C( 0, sizeC, MI_WRAM_ARM9 );
-        if ( ! DSP_LoadShutter() )
+        FS_InitFile(file);
+        DSPi_OpenStaticComponentG711Core(file);
+        if ( ! DSP_LoadG711(file, slotB, slotC) )
         {
-            OS_TPanic("failed to load Shutter DSP-component! (lack of WRAM-B/C)");
+            OS_TPanic("failed to load G.711 DSP-component! (lack of WRAM-B/C)");
         }
-        DSP_UnloadShutter();
+        DSP_UnloadG711();
     }
 #endif // USE_HYENA_COMPONENT
 #endif // INIT_DEVICES_LIKE_UIG_LAUNCHER
