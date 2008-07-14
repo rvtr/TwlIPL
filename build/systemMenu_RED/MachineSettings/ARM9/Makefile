@@ -52,7 +52,7 @@ BG_DIR					=	../../data
 SRCS					=	main.c MachineSetting.c \
 							setRTC.c selectLanguage.c calibrationTP.c setOwnerInfo.c selectCountry.c \
 							setParentalControl.c setFreeSoftBox.c setWireless.c cleanupMachine.c	\
-							setEULA.c \
+							setEULA.c getSysMenuVersion.c \
 							CountryNameMappingData.c \
 							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c \
 							$(BG_DIR)/BGData_MachineSettings.c
@@ -79,7 +79,8 @@ SDK_APPEND_LIBS			=	\
 							libsfs$(TWL_LIBSUFFIX).a	\
 							libnam$(TWL_LIBSUFFIX).a	\
 							libsea$(TWL_LIBSUFFIX).a	\
-							libsharedfont$(TWL_LIBSUFFIX).a
+							libsharedfont$(TWL_LIBSUFFIX).a \
+							libna$(TWL_LIBSUFFIX).a
 
 LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 

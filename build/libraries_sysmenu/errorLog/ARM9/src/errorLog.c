@@ -446,7 +446,7 @@ BOOL ErrorLogi_SetString( char *buf, ErrorLogEntry *entry )
 	STD_TSNPrintf(buf, ERRORLOG_BUFSIZE, ERRORLOG_WRITE_FORMAT, 
 					entry->year, entry->month, entry->day, entry->week,
 					entry->hour, entry->minute, entry->second,
-					entry->errorCode, s_strError[entry->errorCode] );
+				    entry->errorCode, s_strError[entry->errorCode] ? s_strError[entry->errorCode] : "" );
 	
 	// 余りをスペースで埋めて、改行で終端する
 	ErrorLogi_fillSpace( buf, ERRORLOG_BUFSIZE );
@@ -548,7 +548,7 @@ static char *s_strWeek[] = {
 	"SAT"
 };
 
-static char *s_strError[] = {
+static char *s_strError[ FATAL_ERROR_MAX ] = {
 	"FATAL_ERROR_UNDEFINED",
 	"FATAL_ERROR_NAND",
 	"FATAL_ERROR_HWINFO_NORMAL",
@@ -591,6 +591,7 @@ static char *s_strError[] = {
 	"FATAL_ERROR_LOAD_LOGOCRC_ERROR = 39",
 	"FATAL_ERROR_LOAD_READDLSIGN_FAILED",
 	"FATAL_ERROR_LOAD_RELOCATEINFO_FAILED",
-	"FATAL_ERROR_LOAD_READMODULE_FAILED"
-
+	"FATAL_ERROR_LOAD_READMODULE_FAILED",
+    "FATAL_ERROR_NINTENDO_LOGO_CHECK_FAILED",
+    "FATAL_ERROR_SYSMENU_VERSION",
 };

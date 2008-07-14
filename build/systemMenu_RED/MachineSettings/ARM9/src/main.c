@@ -18,10 +18,13 @@
 #include <twl.h>
 #include <twl/sea.h>
 #include <twl/lcfg.h>
+#include <twl/na.h>
+#include <nitro/fs/sysarea.h>
 #include <sysmenu/namut.h>
 #include <sysmenu/util.h>
 #include "misc.h"
 #include "MachineSetting.h"
+#include "getSysMenuVersion.h"
 
 // extern data-----------------------------------------------------------------
 
@@ -110,6 +113,7 @@ void TwlMain(void)
 				}
 			}else {
 				// リカバリ失敗時は、FALTALエラー
+				UTL_SetFatalError( FATAL_ERROR_TWLSETTINGS );
 				g_isValidTSD = FALSE;
 			}
             Free( pBuffer );
@@ -120,6 +124,42 @@ void TwlMain(void)
 	}
 	
 	UTL_CaribrateTP( LCFG_TSD_GetTPCalibrationPtr() );
+	
+	// ::::::::::::::::::::::::::::::::::::::::::::::
+	// SystemMenuバージョンおよびユーザー領域MAXサイズの読み込み
+	// ::::::::::::::::::::::::::::::::::::::::::::::
+	{
+        u8 *pBuffer = Alloc( NA_VERSION_INFO_WORK_SIZE );
+		
+        if( pBuffer &&
+			ReadSystemMenuVersion( pBuffer, NA_VERSION_INFO_WORK_SIZE ) ) {
+			// リード成功
+		}else {
+			// FATALエラー
+			UTL_SetFatalError( FATAL_ERROR_TWLSETTINGS );
+		}
+        Free( pBuffer );
+	}
+	
+	// バージョン情報の表示
+	{
+		u16 major = 65535;
+		u16 minor = 65535;
+		char str_ver[ TWL_SYSMENU_VER_STR_LEN / sizeof(u16) ];
+		int len = sizeof(str_ver);
+		OS_TPrintf( "SystemMenuVersion\n" );
+		// 文字列
+		if( STD_ConvertStringUnicodeToSjis( str_ver, &len, GetSystemMenuVersionString(), NULL, NULL ) == STD_RESULT_SUCCESS ) {
+			OS_TPrintf( "\tstr: %s\n", str_ver );
+		}
+		// 数値
+		(void)GetSystemMenuMajorVersion( &major );
+		(void)GetSystemMenuMinorVersion( &minor );
+		OS_TPrintf( "\tnum: %d.%d\n", major, minor );
+	}
+	
+	// ユーザー領域MAXサイズの表示
+	OS_TPrintf( "TotalUserAreadSize : 0x%08x\n", FSi_GetTotalUserAreaSize() );
 	
 	InitBG();
 	GetAndDrawRTCData( &g_rtcDraw, TRUE );
