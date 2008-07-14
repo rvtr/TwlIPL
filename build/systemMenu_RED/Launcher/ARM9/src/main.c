@@ -32,9 +32,6 @@
 // extern data-----------------------------------------------------------------
 
 // define data-----------------------------------------------------------------
-#define WDS_THREAD_PRIO			15
-#define WDS_DMA_NO				3
-
 #define INIT_DEVICES_LIKE_UIG_LAUNCHER
 
 #define MEASURE_TIME     1
@@ -608,13 +605,7 @@ MAIN_LOOP_START:
 				!LCFG_THW_IsForceDisableWireless() &&									// 無線強制OFFでない
 				LCFG_TSD_IsAvailableWireless() 											// 無線ON
 				) {
-				WDSWrapperInitializeParam param;
-				param.threadprio = WDS_THREAD_PRIO;
-				param.dmano      = WDS_DMA_NO;
-				param.callback   = Callback_WDSWrapper;
-				param.alloc      = SYSM_Alloc;
-				param.free       = SYSM_Free;
-				(void)WDS_WrapperInitialize( param );		// 初期化と動作開始を兼ねている。（失敗しても止まりはしないので、気にしない）
+				InitializeWDS();		// 初期化と動作開始を兼ねている。（失敗しても止まりはしないので、気にしない）
 				isStartScanWDS = TRUE;
 			}
 #endif // DISABLE_WDS_SCAN

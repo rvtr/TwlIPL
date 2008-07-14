@@ -17,6 +17,9 @@
 
 #include "scanWDS.h"
 
+#define WDS_THREAD_PRIO			15
+#define WDS_DMA_NO				3
+
 char *callbackstring[] = {
 	"WDSWRAPPER_CALLBACK_INITIALIZE",
 	"WDSWRAPPER_CALLBACK_CLEANUP",
@@ -70,5 +73,49 @@ void Callback_WDSWrapper( void *ptr )
 	}
 	
 	OS_TPrintf( "\n" );
+}
+
+// Sleepコールバック関数
+void Callback_WDSPreSleep( void *ptr )
+{
+#pragma unused( ptr )
+	WDS_WrapperCleanup();
+	while ( ! IsClearnupWDSWrapper() )
+	{
+		OS_Sleep(1);
+	}
+}
+
+void Callback_WDSPostSleep( void *ptr )
+{
+#pragma unused( ptr )
+	InitializeWDS();
+}
+
+// 初期化関数
+void InitializeWDS( void )
+{
+	static BOOL	isInitialized = FALSE;
+
+	{
+		WDSWrapperInitializeParam param;
+		param.threadprio = WDS_THREAD_PRIO;
+		param.dmano      = WDS_DMA_NO;
+		param.callback   = Callback_WDSWrapper;
+		param.alloc      = SYSM_Alloc;
+		param.free       = SYSM_Free;
+		(void)WDS_WrapperInitialize( param );		// 初期化と動作開始を兼ねている。（失敗しても止まりはしないので、気にしない）
+	}
+
+	if ( ! isInitialized )
+	{
+		static PMSleepCallbackInfo preCbInfo;
+		static PMSleepCallbackInfo postCbInfo;
+		PM_SetSleepCallbackInfo( &preCbInfo, Callback_WDSPreSleep, NULL );
+		PM_PrependPreSleepCallback( &preCbInfo );
+		PM_SetSleepCallbackInfo( &postCbInfo, Callback_WDSPostSleep, NULL );
+		PM_AppendPostSleepCallback( &postCbInfo );
+	}
+	isInitialized = TRUE;
 }
 
