@@ -40,7 +40,11 @@ void SimpleBenchmarkInit( void )
 {
 	OS_InitTick();
 	
-	HOTSW_Init();
+	
+	if( (u32)OS_GetTitleId() == 0x53423041 ) //SB0A
+	{
+		HOTSW_Init();
+	}
 	
 	GX_DispOff();
  	GXS_DispOff();
