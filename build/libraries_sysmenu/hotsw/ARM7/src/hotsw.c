@@ -407,7 +407,7 @@ static HotSwState LoadCardData(void)
        	        retval = (retval == HOTSW_SUCCESS) ? HOTSW_CRC_CHECK_ERROR : retval;
 			}
 
-            if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
+            if(s_cbData.pBootSegBuf->rh.s.platform_code & PLATFORM_CODE_FLAG_TWL){
 				// リージョンチェック
 				if( !UTL_CheckAppRegion( s_cbData.pBootSegBuf->rh.s.card_region_bitmap ) ) {
 					retval = (retval == HOTSW_SUCCESS) ? HOWSW_REGION_CHECK_ERROR : retval;
