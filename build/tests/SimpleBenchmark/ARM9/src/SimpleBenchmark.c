@@ -62,6 +62,7 @@ void SimpleBenchmarkMain(void)
 {
 	BOOL tp_cancel = FALSE;
 	OSTick ot;
+	static u64 tm = 0;
 	
 	ReadTP();													// タッチパネル入力の取得
 	
@@ -74,8 +75,7 @@ void SimpleBenchmarkMain(void)
 	
 	ot = OS_GetTick();
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
-	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
-	PutStringUTF16( 1 * 8, 1 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
+	PrintfSJIS( 0 * 8, 0 * 8, TXT_COLOR_RED,  "%d\n",tm);
 	PutStringUTF16( 1 * 8, 2 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
 	PutStringUTF16( 1 * 8, 3 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
 	PutStringUTF16( 1 * 8, 4 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
@@ -99,7 +99,9 @@ void SimpleBenchmarkMain(void)
 	PutStringUTF16( 1 * 8, 22 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
 	ot = OS_GetTick()-ot;
 	
-	OS_TPrintf("%d\n", OS_TicksToMicroSeconds(ot));
+	tm = OS_TicksToMicroSeconds(ot);
+	
+	OS_TPrintf("%d\n", tm);
 	
 	if( ( pad.trg & PAD_BUTTON_A ) ) {
 	}
