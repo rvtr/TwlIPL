@@ -522,7 +522,6 @@ static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arc
         OS_TWarning("Allocation failed. (%d)\n");
 		return FALSE;
 	}
-	MI_CpuClear8( pWork, sizeof(FSFATFSArchiveWork) );
 
     // マウント試行。
     result = FSi_MountSpecialArchive(titleID, arcname, pWork);
@@ -587,7 +586,6 @@ static BOOL NAMUTi_InitShareData(void)
         OS_TWarning("Allocation failed. (%d)\n");
 		return FALSE;
 	}
-	MI_CpuClear8( pWork, sizeof(FSFATFSArchiveWork) );
 
 	for (i=0;i<NAMUT_SHARE_ARCHIVE_MAX;i++)
 	{
@@ -595,9 +593,9 @@ static BOOL NAMUTi_InitShareData(void)
 		STD_TSNPrintf(path, NAM_PATH_LEN, "nand:/shared2/000%d", i);
 		if (NAMUTi_RandClearFile(path) == FALSE)
 		{
-			// ファイルが存在しないものとみなし終了
+			// ファイルが存在しないものとみなす
 	        OS_TPrintf("%s is not exist\n", path);
-			break;
+			continue;
 		}
 
 	    // マウント
@@ -609,23 +607,13 @@ static BOOL NAMUTi_InitShareData(void)
 			continue;
 	    }
 
-        // Mediaフォーマット
-        if (!FATFSi_FormatMedia("share:/"))
-        {
+		// 再フォーマット
+		result = FSi_FormatSpecialArchive("share:/");
+		if (result != FS_RESULT_SUCCESS)
+		{
 			succeeded = FALSE;
-            OS_TWarning("FATFSi_FormatMedia failed. (%d)\n", FATFS_GetLastError());
-			FSi_MountSpecialArchive(0, NULL, pWork);
-			continue;
-        }
-
-		// Driveフォーマット
-        if (!FATFS_FormatDrive("share:/"))
-        {
-			succeeded = FALSE;
-            OS_TWarning("FATFS_FormatDrive failed. (%d)\n", FATFS_GetLastError());
-			FSi_MountSpecialArchive(0, NULL, pWork);
-			continue;
-        }
+	        OS_TWarning("FSi_MountSpecialArchive failed. (%d)\n", result);
+		}
 
 		// アンマウント
 		result = FSi_MountSpecialArchive((OSTitleId)i, NULL, pWork);
@@ -633,7 +621,6 @@ static BOOL NAMUTi_InitShareData(void)
 		{
 			succeeded = FALSE;
             OS_TWarning("FSi_MountSpecialArchive failed. (%d)\n", result);
-			continue;
 		}
 	}
 
