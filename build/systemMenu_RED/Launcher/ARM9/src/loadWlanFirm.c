@@ -115,8 +115,11 @@ void InstallFirmCallback(void* arg)
         pNwmBuf = 0;
     }
     /* メッセージキューにFWダウンロードの結果を通知 */
-    // [TODO:] queue溢れはありえないハズだけど、一応対策しておく予定。
-    (void)OS_SendMessage(&mesq, (OSMessage)result, OS_MESSAGE_NOBLOCK);
+    if (FALSE == OS_SendMessage(&mesq, (OSMessage)result, OS_MESSAGE_NOBLOCK))
+    {
+        // queue溢れはありえないハズだが、発生した場合は無線の不具合とみなしFATALにする。
+        UTL_SetFatalError( FATAL_ERROR_WLANFIRM_LOAD );
+    }
 
 }
 
