@@ -1,9 +1,9 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlIPL
+# Project:  TwlSDK - libraries - wm
 # File:     Makefile
 #
-# Copyright 2007 Nintendo.  All rights reserved.
+# Copyright 2003 Nintendo.  All rights reserved.
 #
 # These coded instructions, statements, and computer programs contain
 # proprietary information of Nintendo of America Inc. and/or Nintendo
@@ -16,31 +16,25 @@
 # $Author$
 #----------------------------------------------------------------------------
 
+
 TARGET_FIRM			=	SYSTEMMENU
+
+TARGET_PLATFORM		:= 	TWL
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS			=		reloc_info \
-						sysmenu \
-						boot \
-						hotsw \
-						namut \
-						mcu \
-						ds \
-						sharedFont \
-						util \
-						dht \
-						wds \
-						errorLog \
-						TwlWireless \
-						nwm \
-#						acsign \
+#SUBDIRS    =   $(GSUBDIRS)
+
+ifneq	($(filter TWL,$(TARGET_PLATFORM_LIST)),)
+ifeq    ($(TWLSDK_PRIVATE),TRUE)
+SUBDIRS_P   +=  ARM7
+endif
+endif
 
 #----------------------------------------------------------------------------
 
-include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
-
+include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 #===== End of Makefile =====

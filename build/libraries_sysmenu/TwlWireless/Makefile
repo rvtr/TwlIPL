@@ -44,11 +44,14 @@ export ATH_WLAN_DRV_PATH
 export COM_TYPE
 
 export TARGET_FIRM
-export LIBDIR			= ./lib.SYSMENU/$(TWL_BUILDTYPE)
+export LIBDIR			 = ./lib.SYSMENU/$(TWL_BUILDTYPE)
 export OBJDIR			 = ./obj.SYSMENU/$(TWL_BUILDTYPE)
+export DEPENDDIR		 = ./depend.SYSMENU/$(TWL_BUILDTYPE)
 export MACRO_FLAGS  = -DSDK_SYSMENU_BUILD
 
 export TWLSDK_INSTALL_ROOT	=	$(SYSMENU_INSTALL_LIBDIR)/../../..
+
+export LDIRT_CLEAN = ./obj.SYSMENU ./depend.SYSMENU ./lib.SYSMENU
 
 # Install 
 INSTALL_DIR     =  $(call eupath,$(TWLSDK_INSTALL_ROOT)/lib/TwlWireless/$(TWL_LIBTYPE))
