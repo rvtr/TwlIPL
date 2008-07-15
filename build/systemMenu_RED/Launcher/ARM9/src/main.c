@@ -26,7 +26,6 @@
 #include "sound.h"
 #include "loadWlanFirm.h"
 #include "loadSharedFont.h"
-#include "loadSysmVersion.h"
 #include "scanWDS.h"
 
 // extern data-----------------------------------------------------------------
