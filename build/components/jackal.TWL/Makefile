@@ -54,9 +54,9 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 # crt0.o 、 libpm_sp および libnwm_sp は、ローカルでビルドしたものを使用するので、除外する。
 ifeq ($(TMP_WL_MAIN), TRUE)
-GLIBRARIES		:= $(filter-out $(CRT0_O) libpm_sp$(TWL_LIBSUFFIX).a libathdrv_sp$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
+GLIBRARIES		:= $(filter-out $(CRT0_O) libpm_sp$(TWL_LIBSUFFIX).a libnwm_sp$(TWL_LIBSUFFIX).a libathdrv_sp$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 else
-GLIBRARIES		:= $(filter-out $(CRT0_O) libpm_sp$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
+GLIBRARIES		:= $(filter-out $(CRT0_O) libpm_sp$(TWL_LIBSUFFIX).a libnwm_sp$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 endif
 
 MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD -DSDK_SEA \
@@ -94,7 +94,8 @@ SYSMENU_LIBS	=	\
 					libds_sp$(TWL_LIBSUFFIX).a \
 					libhotsw_sp$(TWL_LIBSUFFIX).a \
 					libdht_sp$(TWL_LIBSUFFIX).a \
-					libpm_sp.SYSMENU$(TWL_LIBSUFFIX).a
+					libpm_sp.SYSMENU$(TWL_LIBSUFFIX).a \
+					libnwm_sp.SYSMENU$(TWL_LIBSUFFIX).a
 
 ifeq ($(TMP_WL_MAIN), TRUE)
 SYSMENU_LIBS	+=	\

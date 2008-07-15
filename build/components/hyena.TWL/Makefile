@@ -59,9 +59,9 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 # crt0.o 、 libpm_sp および libnwm_sp は、ローカルでビルドしたものを使用するので、除外する。
 ifeq ($(TMP_WL_MAIN), TRUE)
-GLIBRARIES		:= $(filter-out $(CRT0_O) libpm_sp$(TWL_LIBSUFFIX).a libathdrv_sp$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
+GLIBRARIES		:= $(filter-out $(CRT0_O) libpm_sp$(TWL_LIBSUFFIX).a libnwm_sp$(TWL_LIBSUFFIX).a libathdrv_sp$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 else
-GLIBRARIES		:= $(filter-out $(CRT0_O) libpm_sp$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
+GLIBRARIES		:= $(filter-out $(CRT0_O) libpm_sp$(TWL_LIBSUFFIX).a libnwm_sp$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 endif
 
 ifdef TWLSDK_NOCRYPTO

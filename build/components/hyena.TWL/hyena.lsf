@@ -210,7 +210,7 @@ Ltdautoload LTDMAIN
 
 	Object		* (.ltdmain)
 	Library		libwm_sp$(LIBSUFFIX).a	\
-				libnwm_sp$(LIBSUFFIX).a	\
+				libnwm_sp.SYSMENU$(LIBSUFFIX).a	\
 				libwvr_sp$(LIBSUFFIX).a	\
 				libwl_sp$(LIBSUFFIX).a
 

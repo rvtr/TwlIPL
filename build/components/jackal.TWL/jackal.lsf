@@ -25,10 +25,16 @@ Static $(TARGET_NAME)
 
 	Library		$(CRT0_O)
 	Object		$(OBJDIR)/initScfg.o
-	Library		libwm_sp$(LIBSUFFIX).a
-	Library		libnwm_sp$(LIBSUFFIX).a
-	Library		libwvr_sp$(LIBSUFFIX).a
-	Library		libwpa_sp$(LIBSUFFIX).a
+#	Library		libwpa_sp$(LIBSUFFIX).a
+	Library		libwm_sp$(LIBSUFFIX).a (.text)
+	Library		libwm_sp$(LIBSUFFIX).a (.rodata)
+	Library		libwm_sp$(LIBSUFFIX).a (.data)
+	Library		libmic_sp$(LIBSUFFIX).a (.text)
+	Library		libmic_sp$(LIBSUFFIX).a (.rodata)
+	Library		libmic_sp$(LIBSUFFIX).a (.data)
+	Library		libmicex_sp$(LIBSUFFIX).a (.text)
+	Library		libmicex_sp$(LIBSUFFIX).a (.rodata)
+	Library		libmicex_sp$(LIBSUFFIX).a (.data)
 }
 
 #--------
@@ -66,8 +72,6 @@ Ltdautoload SCRWRAM
 	Library		libpm_sp.SYSMENU$(LIBSUFFIX).a
 	Library		libtp_sp$(LIBSUFFIX).a
 	Library		libtpex_sp$(LIBSUFFIX).a
-	Library		libmic_sp$(LIBSUFFIX).a
-	Library		libmicex_sp$(LIBSUFFIX).a
 	Library		libnvram_sp$(LIBSUFFIX).a
 	Library		librtc_sp$(LIBSUFFIX).a
 	Library		libfatfs_sp$(LIBSUFFIX).a
@@ -76,6 +80,11 @@ Ltdautoload SCRWRAM
 	Library		libfs_sp$(LIBSUFFIX).a
 	Library		libcard_sp$(LIBSUFFIX).a
 	Library		libcamera_sp$(LIBSUFFIX).a
+	Library		libnwm_sp.SYSMENU$(LIBSUFFIX).a
+	Library		libwvr_sp$(LIBSUFFIX).a
+	Library		libwm_sp$(LIBSUFFIX).a (.bss)
+	Library		libmic_sp$(LIBSUFFIX).a (.bss)
+	Library		libmicex_sp$(LIBSUFFIX).a (.bss)
 
 	Library		libboot_sp$(LIBSUFFIX).a
 	Library		libreboot_sp$(LIBSUFFIX).a
