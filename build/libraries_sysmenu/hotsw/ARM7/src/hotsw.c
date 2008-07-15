@@ -375,7 +375,7 @@ static HotSwState LoadCardData(void)
             }
             MCU_EnableDeepSleepToPowerLine( MCU_PWR_LINE_33, enableDeepSleep );
 
-            // ARM9/7で不整合が発生しないようにRomエミュレーション情報ロードは初回のみ
+			// ARM9/7で不整合が発生しないようにRomエミュレーション情報ロードは初回のみ
             if ( ! SYSMi_GetWork()->flags.hotsw.is1stCardChecked )
             {
                 // Romエミュレーション情報を取得
@@ -389,6 +389,8 @@ static HotSwState LoadCardData(void)
                     s_debuggerFlg = FALSE;
                 }
             }
+			// ※ROMエミュレーション情報を読まなければ、デバッガ上でカードアクセスができなくなるため、ランチャー自身をデバッグできなくなる。
+			//   よって、ROMエミュレーション情報リード部分をデバッガビルド時以外に切ることはできない。
 
             // 初回のRomエミュレーション情報を使用
             if(HOTSWi_IsRomEmulation()){
@@ -695,17 +697,6 @@ HotSwState HOTSWi_RefreshBadBlock(u32 romMode)
     }
 
     return retval;
-}
-
-
-/*---------------------------------------------------------------------------*
-  Name:         HOTSWi_IsRunOnDebugger
-
-  Description:  ISデバッガ上で動作しているか？
- *---------------------------------------------------------------------------*/
-BOOL HOTSWi_IsRunOnDebugger(void)
-{
-    return s_debuggerFlg;
 }
 
 

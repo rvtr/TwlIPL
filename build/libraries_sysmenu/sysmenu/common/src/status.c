@@ -55,13 +55,6 @@ BOOL SYSM_IsLogoDemoSkip( void )
 }
 
 
-// ISデバッガ上で動作しているか？
-BOOL SYSM_IsRunOnDebugger( void )
-{
-	return SYSMi_GetWork()->flags.hotsw.isOnDebugger;
-}
-
-
 // ISデバッガのバナービューモード起動かどうか？
 BOOL SYSMi_IsDebuggerBannerViewMode( void )
 {

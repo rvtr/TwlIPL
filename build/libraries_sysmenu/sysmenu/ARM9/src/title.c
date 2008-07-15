@@ -471,6 +471,7 @@ static void SYSMi_FinalizeHotSWAsync( TitleProperty *pBootTitle, ROM_Header *hea
 	{
 		case LAUNCHER_BOOTTYPE_NAND:
 		case LAUNCHER_BOOTTYPE_TEMP:
+			// ROMヘッダのアクセスコントロール情報をもとにカード状態を制御するのは "NAND/TMPブートのTWL-LTD" アプリのみ
 			if ( ( head->s.platform_code & PLATFORM_CODE_TWL_LIMITED ) == PLATFORM_CODE_TWL_LIMITED )
 			{
 				if(rh->s.access_control.game_card_nitro_mode){
@@ -483,6 +484,7 @@ static void SYSMi_FinalizeHotSWAsync( TitleProperty *pBootTitle, ROM_Header *hea
 					card_state = HOTSW_CARD_STATE_POWER_OFF;
 				}
 			}
+			// それ以外は強制的にNTR互換Game領域にアクセス可能な状態となる（DSダウンロードプレイも含む）
 			else
 			{
 				card_state = HOTSW_CARD_STATE_GAME_MODE;
@@ -953,7 +955,7 @@ static BOOL SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, ROM_Hea
 			key = ((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->rsa_pubkey[keynum];
 		}
 		// デバッガが有効でTLF読み込みならば、ハッシュチェックスルーフラグを立てる
-		if(SYSMi_GetWork()->flags.hotsw.isOnDebugger && SYSMi_GetWork()->romEmuInfo.isTlfRom )
+		if( SYSM_IsRunOnDebugger() && SYSMi_GetWork()->romEmuInfo.isTlfRom )
 		{
 			s_b_dev = TRUE;
 		}
@@ -966,7 +968,7 @@ static BOOL SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, ROM_Hea
 		// 開発版
 		key = g_devPubKey[keynum];
 		// デバッガが有効でTLF読み込みならば、ハッシュチェックスルーフラグを立てる
-		if(SYSMi_GetWork()->flags.hotsw.isOnDebugger && SYSMi_GetWork()->romEmuInfo.isTlfRom )
+		if( SYSM_IsRunOnDebugger() && SYSMi_GetWork()->romEmuInfo.isTlfRom )
 		{
 			s_b_dev = TRUE;
 		}
@@ -1028,7 +1030,7 @@ static BOOL SYSMi_AuthenticateTWLHeader( TitleProperty *pBootTitle, ROM_Header *
 		OS_TPrintf( "Authenticate_Header : header TitleID check succeed.\n" );
 	}
 	
-	if( head->s.enable_signature || (SYSMi_GetWork()->flags.hotsw.isOnDebugger && SYSMi_GetWork()->romEmuInfo.isTlfRom))
+	if( head->s.enable_signature || ( SYSM_IsRunOnDebugger() && SYSMi_GetWork()->romEmuInfo.isTlfRom))
 	{
 		return SYSMi_AuthenticateHeaderWithSign( pBootTitle, head );
 	}else

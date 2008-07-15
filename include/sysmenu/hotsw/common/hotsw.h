@@ -180,9 +180,6 @@ void HOTSW_SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size);
 // 上記のバッファ非クリアバージョン
 void HOTSWi_SetSecureSegmentBuffer(ModeType type ,void* buf, u32 size);
 
-// ISデバッガ上で動作しているか？
-BOOL HOTSWi_IsRunOnDebugger(void);
-
 // ROMをエミュレーションしているか？
 BOOL HOTSWi_IsRomEmulation(void);
 

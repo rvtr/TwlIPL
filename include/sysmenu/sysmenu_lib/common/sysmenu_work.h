@@ -208,6 +208,18 @@ typedef struct DeliverBROM9Key {
 #define GetDeliverBROM9KeyAddr()			( (DeliverBROM9Key *)HW_WRAM_0_LTD )
 #endif
 
+// ISデバッガ上で動作しているか？
+static inline BOOL SYSM_IsRunOnDebugger( void )
+{
+#ifdef SYSMENU_DEBUGGER_BUILD
+	return SYSMi_GetWork()->flags.hotsw.isOnDebugger;
+#else
+	return FALSE;
+#endif
+}
+
+
+
 #ifdef __cplusplus
 }
 #endif
