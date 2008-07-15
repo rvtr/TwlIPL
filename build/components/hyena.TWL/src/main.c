@@ -52,14 +52,14 @@
     定数定義
  *---------------------------------------------------------------------------*/
 #define WM_WL_HEAP_SIZE     0x2100
-#define ATH_DRV_HEAP_SIZE   0x5800  /* TBD */
-#define WPA_HEAP_SIZE       0x0000 /* TBD */
+#define ATH_DRV_HEAP_SIZE   0x5800
+#define WPA_HEAP_SIZE       0x1C00
 
 #define MEM_TYPE_WRAM 0
 #define MEM_TYPE_MAIN 1
 
 /* Priorities of each threads */
-#define THREAD_PRIO_MCU     1 //4   /* ハードウェアリセット時に他のスレッドに優先して動く必要アリ */
+#define THREAD_PRIO_MCU     1   /* ハードウェアリセット時に他のスレッドに優先して動く必要アリ */
 #define THREAD_PRIO_SPI     2
 #define THREAD_PRIO_SYSMMCU 6
 #define THREAD_PRIO_SND     6
@@ -97,7 +97,8 @@ static void         DummyThread(void* arg);
 static void         ReadUserInfo(void);
 static void         VBlankIntr(void);
 static void         InitializeFatfs(void);
-static void         InitializeNwm(OSHeapHandle drvHeapHandle, OSHeapHandle wpaHeapHandle);
+static void         InitializeNwm(OSArenaId drvArenaId, OSHeapHandle drvHeapHandle,
+                                  OSArenaId wpaArenaId, OSHeapHandle wpaHeapHandle);
 static void         InitializeCdc(void);
 static void         AdjustVolume(void);
 /*---------------------------------------------------------------------------*
@@ -190,7 +191,10 @@ TwlSpMain(void)
     if (OS_IsRunOnTwl() == TRUE)
     {
         InitializeFatfs();    // FATFS 初期化
-        InitializeNwm(mainHeapHandle, mainHeapHandle);      // NWM 初期化
+        // NWM 初期化
+        InitializeNwm(OS_ARENA_MAIN_SUBPRIV, mainHeapHandle, // heap setting for TWL wireless host driver
+                      OS_ARENA_MAIN_SUBPRIV, mainHeapHandle  // heap setting for wpa
+                      );
 #ifndef SDK_NOCRYPTO
         AES_Init(THREAD_PRIO_AES);           // AES 初期化
 
@@ -236,7 +240,7 @@ TwlSpMain(void)
     // RTC 初期化
     RTC_Init(THREAD_PRIO_RTC);
 
-    // (旧無線初期化はmain loopで行う。)
+    // ランチャーでは、旧無線の初期化はmain loopで行う。
 
     // SPI 初期化
 	// ※ARM9側のOS_Init内のPM_InitでPMのPXIコールバック待ちをしており、ここでARM9と同期が取られる。
@@ -276,9 +280,12 @@ TwlSpMain(void)
     while (TRUE)
     {
         OS_Halt();
-        // 無線ファームのロード完了後に旧無線を初期化する。
+        // 無線ファームのロード完了をチェック。
         if (TRUE == NWMSPi_CheckInstalledNotification())
         {
+            /* M&M chipでは無線ファームのDL完了 → 旧無線初期化の順序を守る必要あり。
+               そのため、新無線のファームDL完了通知をmain loopでチェックし、
+               完了が通知されたら旧無線初期化を行った後、NWMに確認通知を送る。[twl-dev:0980] */
             WVR_Begin(wramHeapHandle);
             NWMSPi_NotifyConfirmation();
         }
@@ -422,7 +429,8 @@ InitializeFatfs(void)
   Returns:      None.
  *---------------------------------------------------------------------------*/
 static void
-InitializeNwm(OSHeapHandle drvHeapHandle, OSHeapHandle wpaHeapHandle)
+InitializeNwm(OSArenaId drvArenaId, OSHeapHandle drvHeapHandle,
+              OSArenaId wpaArenaId, OSHeapHandle wpaHeapHandle)
 {
     NwmspInit nwmInit;
 
@@ -430,13 +438,14 @@ InitializeNwm(OSHeapHandle drvHeapHandle, OSHeapHandle wpaHeapHandle)
     nwmInit.cmdPrio = THREAD_PRIO_NWM_COMMMAND;
     nwmInit.evtPrio = THREAD_PRIO_NWM_EVENT;
     nwmInit.sdioPrio = THREAD_PRIO_NWM_SDIO;
-    nwmInit.drvHeap.id = OS_ARENA_MAIN_SUBPRIV; /* [TODO] */
+    nwmInit.drvHeap.id = drvArenaId;
     nwmInit.drvHeap.handle = drvHeapHandle;
 
     nwmInit.wpaPrio = THREAD_PRIO_NWM_WPA;
-    nwmInit.wpaHeap.id = OS_ARENA_MAIN_SUBPRIV; /* [TODO] */
+    nwmInit.wpaHeap.id = wpaArenaId;
     nwmInit.wpaHeap.handle = wpaHeapHandle;
 
+    /* 新無線初期化(ランチャー専用) */
     NWMSP_InitForLauncher(&nwmInit);
 
 }
