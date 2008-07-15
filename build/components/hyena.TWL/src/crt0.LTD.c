@@ -111,11 +111,6 @@ u32 const wramMapping[12] = {
 };
 #endif
 
-/* [TODO] 
- * 現状 TWL のマルチブートローダーがどこに情報を残してくれるか未定のため、
- * ビルドを通すためだけのでたらめな定義です。*/
-#define TWLIPL_PARAM_DOWNLOAD_PARAMETER     0x02ffb000
-
 /*---------------------------------------------------------------------------*
   Name:         ShakeHand
   Description:  ARM9 の ShakeHand 関数と同期を取る。
@@ -241,12 +236,6 @@ _start(void)
         bl              INITi_IsRunOnTwl
         /* TWL ハードウェア上で動作していない場合は永久ループ */
 @012:   bne             @012
-
-        /* ダウンロードパラメータ情報を共有エリアに退避 */
-        ldr             r0, =HW_DOWNLOAD_PARAMETER              // r0 = start address of destination range
-        ldr             r1, =TWLIPL_PARAM_DOWNLOAD_PARAMETER    // r1 = start address of source range
-        mov             r2, #HW_DOWNLOAD_PARAMETER_SIZE         // r2 = size of download parameter
-        bl              INITi_Copy32
 
         /* プリロードパラメータアドレスが格納されていない場合は、デフォルト値をセット */
 		ldr				r0, =HW_PRELOAD_PARAMETER_ADDR

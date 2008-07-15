@@ -24,7 +24,6 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 SUBDIRS			=		reloc_info \
 						sysmenu \
-						acsign \
 						boot \
 						hotsw \
 						namut \
@@ -35,7 +34,8 @@ SUBDIRS			=		reloc_info \
 						dht \
 						wds \
 						errorLog \
-						TwlWireless
+						TwlWireless \
+#						acsign \
 
 #----------------------------------------------------------------------------
 

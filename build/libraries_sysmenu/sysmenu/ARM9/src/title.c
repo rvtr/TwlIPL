@@ -1166,7 +1166,7 @@ static BOOL SYSMi_AuthenticateNTRNandTitle( TitleProperty *pBootTitle)
 static BOOL SYSMi_AuthenticateNTRDownloadAppHeader( TitleProperty *pBootTitle, ROM_Header *head )
 {
 #pragma unused(pBootTitle, head)
-	// [TODO:]署名はstaticに絡んでくるので、それ以外にヘッダ認証処理があれば
+	// 署名はstaticに絡んでくるので、ここでチェックするものは特になし。
 	return TRUE;
 }
 
@@ -1279,7 +1279,7 @@ static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_H
 	{
 		// ホワイトリスト検索
 		const DHTDatabase* db;
-		PrepareDHTDatabase();// [TODO:]遅ければ場所を変えることも検討
+		PrepareDHTDatabase();// 60msくらいなので、ここでやってしまってOKとする。
 		if(!dht)
 		{
 		    OS_TPrintf(" Search DHT : database init Failed.\n");
