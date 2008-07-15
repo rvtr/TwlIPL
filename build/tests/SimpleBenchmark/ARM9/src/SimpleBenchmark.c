@@ -48,9 +48,7 @@ void SimpleBenchmarkInit( void )
 	
 	GX_DispOff();
  	GXS_DispOff();
-    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
 	
-	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTest");
 	GetAndDrawRTCData( &g_rtcDraw, TRUE );
 
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
@@ -75,6 +73,8 @@ void SimpleBenchmarkMain(void)
 	
 	
 	ot = OS_GetTick();
+    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
+	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
 	PutStringUTF16( 1 * 8, 1 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
 	PutStringUTF16( 1 * 8, 2 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");
 	PutStringUTF16( 1 * 8, 3 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SimpleBenchmarkTestSimpleBenchmarkTest");

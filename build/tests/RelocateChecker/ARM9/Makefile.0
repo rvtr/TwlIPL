@@ -20,6 +20,8 @@ SUBDIRS					=
 
 #----------------------------------------------------------------------------
 
+TWL_NANDAPP				=	TRUE
+
 TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED

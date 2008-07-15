@@ -15,6 +15,9 @@
 # $Rev$
 # $Author$
 #----------------------------------------------------------------------------
+
+TWL_NANDAPP				=	TRUE
+
 TARGET_PLATFORM	=	TWL
 
 SRCS			=	main.c

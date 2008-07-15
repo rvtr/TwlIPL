@@ -26,6 +26,8 @@ TITLEID_LO		=	0S2A
 SRCS			 =	main.c
 TARGET_BIN		 =	shared2Test.tad
 
+TWL_NANDAPP				=	TRUE
+
 #-------------------------
 #-- NAND アプリではいくつかのパラメータの指定のために固有の RSF ファイルが必要です。
 

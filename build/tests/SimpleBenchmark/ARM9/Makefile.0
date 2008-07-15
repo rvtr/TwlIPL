@@ -28,6 +28,8 @@ WRAM_MAP_FILE			=	$(COMPONENT_DIR)/wram_regs/wram_regs.rbin
 
 #----------------------------------------------------------------------------
 
+TWL_NANDAPP				=	TRUE
+
 TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
 TWL_ARCHGEN				=	LIMITED
@@ -35,12 +37,11 @@ TWL_ARCHGEN				=	LIMITED
 TARGET_NUMBER	= 0
 TARGET_NAME		= SimpleBenchmark$(TARGET_NUMBER)
 BINDIR			= ./bin/$(TWL_BUILDTYPE)/$(TARGET_NAME)
-TARGET_BIN				=	$(TARGET_NAME).srl
+TARGET_BIN				=	$(TARGET_NAME).tad
 LCFILE_SPEC				=	ARM9-TS.lsf
 LCFILE_TEMPLATE			=	ARM9-TS.lcf.template
 
 TITLEID_LO				=	SB$(TARGET_NUMBER)A
-#TARGET_TAD				=	$(BINDIR)/$(TITLEID_LO).$(TWL_BUILD_DIR)$(CODEGEN_ARCH).tad
 
 ROM_SPEC				=	main$(TARGET_NUMBER).rsf
 
