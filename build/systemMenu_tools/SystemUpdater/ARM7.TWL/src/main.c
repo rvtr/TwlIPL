@@ -73,7 +73,6 @@
 static void         PrintDebugInfo(void);
 static OSHeapHandle InitializeAllocateSystem(void);
 static void         InitializeFatfs(void);
-static void         InitializeNwm(OSHeapHandle hh);
 static void         InitializeCdc(void);
 static void         DummyThread(void* arg);
 
@@ -234,50 +233,20 @@ InitializeFatfs(void)
     OSThread    thread;
     u32         stack[18];
 
-    /* ダミースレッド作成 */
+    // ダミースレッド作成
     OS_CreateThread(&thread, DummyThread, NULL,
         (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
     OS_WakeupThreadDirect(&thread);
 
-    /* FATFS 初期化 */
-    /* [TODO] DMA は NOT_USE のままで良い？ */
-    if(!FATFS_Init(DMA_NO_FATFS, FATFS_DMA_NOT_USE, THREAD_PRIO_FATFS))
+
+    // FATFSライブラリの初期化
+    if(!FATFS_Init( FATFS_DMA_4, FATFS_DMA_5, THREAD_PRIO_FATFS))
     {
-        /* do nothing */
+        // do nothing
     }
 
-    /* ダミースレッド破棄 */
+    // ダミースレッド破棄
     OS_KillThread(&thread, NULL);
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         InitializeNwm
-  Description:  NWMライブラリを初期化する。
-  Arguments:    hh  -   利用可能なヒープのハンドルを指定。
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-static void
-InitializeNwm(OSHeapHandle hh)
-{
-    NwmspInit   nwmInit;
-
-    /* [TODO] 確保しているヒープ領域が新無線一式が必要としているメモリ量以上かのチェックが必要 */
-
-    nwmInit.cmdPrio         =   THREAD_PRIO_NWM_COMMAND;
-    nwmInit.evtPrio         =   THREAD_PRIO_NWM_EVENT;
-    nwmInit.sdioPrio        =   THREAD_PRIO_NWM_SDIO;
-
-    nwmInit.dmaNo           =   DMA_NO_NWM;
-    nwmInit.drvHeap.id      =   OS_ARENA_WRAM_SUBPRIV;
-    nwmInit.drvHeap.handle  =   hh;
-
-#ifdef  WPA_BUILT_IN    // WPA が組み込まれる場合、以下のメンバが追加される
-    nwmInit.wpaPrio         =   THREAD_PRIO_NWM_WPA;
-    nwmInit.wpaHeap.id      =   OS_ARENA_WRAM_SUBPRIV;
-    nwmInit.wpaHeap.handle  =   hh;
-#endif
-
-    NWMSP_Init(&nwmInit);
 }
 
 /*---------------------------------------------------------------------------*
