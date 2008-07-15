@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include "drawFunc.h"
@@ -42,23 +42,22 @@ const u8 s_numMenu[] = {
 	ROOTMENU_SIZE
 };
 
-const u16 *s_strARM7RegisterName[] = {
-	L"ROM State",
-	L"CLK",
-	L"JTAG",
-	L"EXTEND",
-	L"MC I/F 1",
-	L"MC I/F 2",
-	L"DS WL",
-	L"BONDING",
+const char *s_strARM7RegisterName[] = {
+	"ROM",
+	"CLK",
+	"JTAG",
+	"EXP",
+	"MC1",
+	"MC2",
+	"DSWL",
+	"OPT",
 };
 
-const u16 *s_strARM9RegisterName[] = {
-	L"ROMステータスレジスタ",
-	L"新規ブロッククロック制御レジスタ",
-	L"新規ブロックリセット制御レジスタ",
-	L"拡張機能制御レジスタ",
-	L"メモリーカード I/F ステータスレジスタ"
+const char *s_strARM9RegisterName[] = {
+	"ROM",
+	"CLK",
+	"RST",
+	"EXP",
 };
 
 const char *s_strRootMenu[] = {
@@ -123,28 +122,33 @@ const char *s_strSecureHWMenu[] = {
 };
 
 const char *s_strSCFGArm9Menu[] = {
+	"ARM9 SecureROM",
 	"Rom Status",
-	"Camera CKI",
-	"WRAM Clock",
-	"Camera Clock",
-	"DSP Clock",
+
 	"CPU Speed",
+	"DSP Clock",	
+	"Camera Clock",
+	"WRAM Clock",
+	"Camera CKI",
+	
 	"DSP Reset Flag",
-	"CFG Block Access",
-	"WRAM Access",
-	"DSP Access",
-	"Camera Access",	
-	"New DMA Access",
-	"PSRAM Boundary",
-	"Expanded INTC",
-	"Expanded LCDC",
-	"Expanded VRAM",
-	"Fixed Card I/F",
-	"Fixed Divider",
-	"Fixed 2D Engine",
-	"Fixed Renderer",
+
+	"Fixed DMA",
 	"Fixed Geometry",
-	"Fixed DMA"	
+	"Fixed Renderer",
+	"Fixed 2D Engine",
+	"Fixed Divider",
+	"Fixed Card I/F",
+	"Expanded VRAM",
+	"Expanded LCDC",
+	"Expanded INTC",
+	"PSRAM Boundary",
+	"New DMA Access",
+	"Camera Access",	
+	"DSP Access",
+	"MemoryCard I/F",
+	"WRAM Access",
+	"CFG Block Access"
 };
 
 const char *s_strSCFGArm7Menu[] = {

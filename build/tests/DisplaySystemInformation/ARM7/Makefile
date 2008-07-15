@@ -24,8 +24,9 @@ TWL_NO_STD_PCHDR			=	True
 TWL_CODEGEN					?=	ALL
 
 #----------------------------------------------------------------------------
+DISP_INFO	= $(TWL_IPL_RED_ROOT)/build/tests/DisplaySystemInformation
 
-SRCS			=	main.c overwriteRtc.c
+SRCS			=	overwriteRtc.c crt0.SCR.c main.c 
 
 TARGET_NAME		=	armadillo
 
@@ -34,7 +35,7 @@ LCFILE_SPEC		=	$(TARGET_NAME).lsf
 LCFILE_TEMPLATE	=	$(TARGET_NAME).lcf.template
 LDRES_TEMPLATE	=	$(TARGET_NAME).response.template
 
-CRT0_O			=	crt0.SCR.TWL.o
+CRT0_O			=	$(DISP_INFO)/ARM7/obj/ARM7-TS.LTD/Release/crt0.SCR.o
 
 # スタック不足防止の為、インライン展開せずにコンパイルする
 CCFLAGS_OPT		=	-O4 -inline off
@@ -42,9 +43,10 @@ CCFLAGS_OPT		=	-O4 -inline off
 #----------------------------------------------------------------------------
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
-DISP_INFO	= $(TWL_IPL_RED_ROOT)/build/tests/DisplaySystemInformation
 
-MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD -DSDK_SEA
+TWL_NO_STD_PCHDR            =   True
+
+MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD -DSDK_SEA -DSDK_NOINIT
 
 MAKELCF_FLAGS	+=	-DISDBG_LIBS_TWL='$(if $(ISDBG_LIBS_TWL),$(ISDBG_LIBS_TWL),libstubsistd_sp$(TWL_LIBSUFFIX).a)'	\
 					-DISDBG_LIBS_NITRO='libstubsisd_sp$(TWL_LIBSUFFIX).a'
@@ -61,7 +63,8 @@ MAKELCF_FLAGS	+=	-DISDBG_LIBS_TWL='$(if $(ISDBG_LIBS_TWL),$(ISDBG_LIBS_TWL),libs
 #INSTALL_DIR		=	$(TWL_INSTALL_COMPONENTSDIR)/$(TARGET_NAME)/$(TWL_BUILDTYPE)
 
 LINCLUDES		=	$(ROOT)/build/libraries/spi/ARM7/include	\
-				$(DISP_INFO)/common/include
+				$(DISP_INFO)/common/include	\
+				$(TWLSDK_ROOT)/build/libraries/init/common/include
 
 
 LLIBRARIES		+=	libwl_sp$(TWL_LIBSUFFIX).a			\

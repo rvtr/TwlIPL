@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
  
 
@@ -46,19 +46,19 @@
 
 #define REGISTER_NAME_LEFT	10
 #define REGISTER_NAME_UP	15
-#define REGISTER_DATA_LEFT	100
+#define REGISTER_DATA_LEFT	50
 #define REGISTER_DATA_UP	15
 
 #define SCROLL_MARGIN 2 							// 画面端何行でスクロールするか
 
 #define UNIQUE_BUF 12
-#define BINARY_BUF 20
+#define BINARY_BUF 18
 
 /* global variables -------------------- */
 
 static int gDrawIdx[ROOTMENU_SIZE];			// 今何項目目から下を描画しているのか
 static int gMenuLineSize[ROOTMENU_SIZE] = {};// 各メニューの全体行数
-
+static const int gRegisterIdx[2][SCFG_ARM7_MENU_SIZE];
 int gMenuKindOffset[ROOTMENU_SIZE][MAXITEM];
 
 /* function prototypes -------------------- */
@@ -66,8 +66,8 @@ int gMenuKindOffset[ROOTMENU_SIZE][MAXITEM];
 void printData( int x, int y, int color, DispInfoEntry *entry );
 void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry );
 void printKindName( int menu, int entryLine, int drawOffset, int selected );
-void printBinary16( int x, int y, u16 value );
-void printBinary32( int x, int y, u32 value );
+void printBinary16( int x, int y, u16 value, int selected, int selectSize );
+void printBinary32( int x, int y, u32 value, int selected, int selectSize );
 void drawRegister( int menu, int selected );
 void drawOwnerMenu( int page, int linenum, int valueIdx, char** info, int* kindOffset, const int* pageOffset);
 void drawParentalMenu( int page, int linenum, int valueIdx, char** info, int* kindOffset, const int* pageOffset);
@@ -175,6 +175,13 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 		return;
 	}
 	
+	if( menu == MENU_PARENTAL && entryLine == PARENTAL_PASSWORD )
+	{
+		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawOffset, TXT_COLOR_BLACK, "%04d", entry->iValue );
+	}
+	
+	
+	
 	
 	// 通常の値の描画
 	if( entry->isAligned )
@@ -191,9 +198,8 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 void drawRegister( int menu, int selected )
 {
 	// SCFGレジスタのバイナリをサブ画面に描画する
-	u32 regState = 0;
-	DispInfoEntry *p;
-	int drawOffset = 0;
+	int selectRegSize = 1;
+	int selectBitNum;
 	
 	if( menu == MENU_SCFG_ARM7 && selected < SCFG_ARM7_MI_SC1_CDET)
 	{
@@ -202,9 +208,14 @@ void drawRegister( int menu, int selected )
 		u16 regClk = 0;
 		u16 regJtag = 0;
 		u32 regExt = 0;
-		p = gAllInfo[MENU_SCFG_ARM7];
+		selectBitNum = gRegisterIdx[0][selected];
 		
+		regRom = MI_LoadLE32( &gArm7SCFGReg[DISP_REG_ROM_OFFSET - 0x4000] );
+		regClk = MI_LoadLE16( &gArm7SCFGReg[DISP_REG_CLK_OFFSET - 0x4000] );
+		regJtag = MI_LoadLE16( &gArm7SCFGReg[DISP_REG_JTAG_OFFSET - 0x4000] );
+		regExt = MI_LoadLE32( &gArm7SCFGReg[DISP_REG_EXT_OFFSET - 0x4000] );
 		
+		/*
 		regRom =(u32)(
 						p[SCFG_ARM7_ROM_ARM9_SEC].iValue << DISP_REG_SCFG_ROM_ARM9SEL_SHIFT 	|
 						p[SCFG_ARM7_ROM_ARM9_RSEL].iValue << DISP_REG_SCFG_ROM_ARM9RSEL_SHIFT	|
@@ -253,46 +264,109 @@ void drawRegister( int menu, int selected )
 						p[SCFG_ARM7_EXT_PU].iValue << DISP_REG_SCFG_EXT_PUENABLE_SHIFT	|
 						p[SCFG_ARM7_EXT_CFG].iValue << DISP_REG_SCFG_EXT_CFG_SHIFT
 					);
+		*/
+
+		if( selected == SCFG_ARM7_EXT_PS )
+		{
+			selectRegSize = 2;
+		}
 		
-		PutStringUTF16Sub( REGISTER_NAME_LEFT, REGISTER_NAME_UP, TXT_COLOR_BLACK, s_strARM7RegisterName[0] );
-		printBinary32( REGISTER_DATA_LEFT, REGISTER_DATA_UP, regRom );
-		PutStringUTF16Sub( REGISTER_NAME_LEFT, REGISTER_NAME_UP + 2*LINE_OFFSET, TXT_COLOR_BLACK, s_strARM7RegisterName[1] );
-		printBinary16( REGISTER_DATA_LEFT, REGISTER_DATA_UP + 2*LINE_OFFSET, regClk );
-		PutStringUTF16Sub( REGISTER_NAME_LEFT, REGISTER_NAME_UP + 3*LINE_OFFSET, TXT_COLOR_BLACK, s_strARM7RegisterName[2] );
-		printBinary16( REGISTER_DATA_LEFT, REGISTER_DATA_UP + 3*LINE_OFFSET, regJtag );
-		PutStringUTF16Sub( REGISTER_NAME_LEFT, REGISTER_NAME_UP + 4*LINE_OFFSET, TXT_COLOR_BLACK, s_strARM7RegisterName[3] );
-		printBinary32( REGISTER_DATA_LEFT, REGISTER_DATA_UP + 4*LINE_OFFSET, regExt );
+		PrintfSJISSub( REGISTER_NAME_LEFT, REGISTER_NAME_UP, TXT_COLOR_BLACK, s_strARM7RegisterName[0] );
+		printBinary32( REGISTER_DATA_LEFT, REGISTER_DATA_UP, regRom, selectBitNum, selectRegSize);
+		
+		PrintfSJISSub( REGISTER_NAME_LEFT, REGISTER_NAME_UP + 2*LINE_OFFSET, TXT_COLOR_BLACK, s_strARM7RegisterName[1] );
+		printBinary16( REGISTER_DATA_LEFT, REGISTER_DATA_UP + 2*LINE_OFFSET, regClk, selectBitNum - 32, selectRegSize );
+		
+		PrintfSJISSub( REGISTER_NAME_LEFT, REGISTER_NAME_UP + 3*LINE_OFFSET, TXT_COLOR_BLACK, s_strARM7RegisterName[2] );
+		printBinary16( REGISTER_DATA_LEFT, REGISTER_DATA_UP + 3*LINE_OFFSET, regJtag, selectBitNum - 48, selectRegSize );
+		
+		PrintfSJISSub( REGISTER_NAME_LEFT, REGISTER_NAME_UP + 4*LINE_OFFSET, TXT_COLOR_BLACK, s_strARM7RegisterName[3] );
+		printBinary32( REGISTER_DATA_LEFT, REGISTER_DATA_UP + 4*LINE_OFFSET, regExt, selectBitNum - 64, selectRegSize );
 	}
 	else if( menu == MENU_SCFG_ARM7 && selected >= SCFG_ARM7_MI_SC1_CDET )
 	{
 		// SCFGの後半4つ
-		u32 regMcard1;
-		u16 regMcard2;
-		u16 regOldWL;
-		u16 regOption;
+		u32 regMc1 = MI_LoadLE32( &gArm7SCFGReg[DISP_REG_MC_OFFSET - 0x4000] );
+		u16 regMc2 = MI_LoadLE16( &gArm7SCFGReg[DISP_REG_MC2_OFFSET - 0x4000] );
+		u16 regOldWL = MI_LoadLE16( &gArm7SCFGReg[DISP_REG_WL_OFFSET - 0x4000] );
+		u16 regOption = MI_LoadLE16( &gArm7SCFGReg[DISP_REG_OP_OFFSET - 0x4000] );
+		selectBitNum = gRegisterIdx[0][selected];
+		
+		if( selected == SCFG_ARM7_MI_SC1_MODE ||
+			selected == SCFG_ARM7_MI_SC2_MODE ||
+			selected == SCFG_ARM7_OP_FORM ||
+			selected == SCFG_ARM7_OP_APP 	)
+		{
+				selectRegSize = 2;
+		}
+		else if( selected == SCFG_ARM7_MI_CC || selected == SCFG_ARM7_MI_CA )
+		{
+			selectRegSize = 16;
+		}
+		
+		// 描画				
+		PrintfSJISSub( REGISTER_NAME_LEFT, REGISTER_NAME_UP, TXT_COLOR_BLACK, s_strARM7RegisterName[4] );
+		printBinary32( REGISTER_DATA_LEFT, REGISTER_DATA_UP, regMc1, selectBitNum - 96, selectRegSize );
 
+		PrintfSJISSub( REGISTER_NAME_LEFT, REGISTER_NAME_UP + 2*LINE_OFFSET, TXT_COLOR_BLACK, s_strARM7RegisterName[5]);
+		printBinary16( REGISTER_DATA_LEFT, REGISTER_DATA_UP + 2*LINE_OFFSET, regMc2, selectBitNum - 128, selectRegSize );
+		
+		PrintfSJISSub( REGISTER_NAME_LEFT, REGISTER_NAME_UP + 3*LINE_OFFSET, TXT_COLOR_BLACK, s_strARM7RegisterName[6] );
+		printBinary16( REGISTER_DATA_LEFT, REGISTER_DATA_UP + 3*LINE_OFFSET, regOldWL, selectBitNum - 144, selectRegSize );
+		
+		PrintfSJISSub( REGISTER_NAME_LEFT, REGISTER_NAME_UP + 4*LINE_OFFSET, TXT_COLOR_BLACK, s_strARM7RegisterName[7] );
+		printBinary16( REGISTER_DATA_LEFT, REGISTER_DATA_UP + 4*LINE_OFFSET, regOption, selectBitNum - 160, selectRegSize );
+	
 	}
 	else if( menu == MENU_SCFG_ARM9 )
 	{
+		// ARM9側のSCFGレジスタ
+		u16 regRom = MI_LoadLE16( (void*) (HW_IOREG + REG_A9ROM_OFFSET) );
+		u16 regClk = MI_LoadLE16( (void*) (HW_IOREG + REG_CLK_OFFSET) );
+		u16 regRst = MI_LoadLE16( (void*) (HW_IOREG + REG_RST_OFFSET) );
+		u32 regExt = MI_LoadLE32( (void*) (HW_IOREG + REG_EXT_OFFSET) );
+		u16 regMc  = MI_LoadLE16( (void*) (HW_IOREG + REG_MC_OFFSET ) );
+		selectBitNum = gRegisterIdx[1][selected];
+
+		if( selected == SCFG_ARM9_PSRAM_BOUNDARY )
+		{
+			selectRegSize = 2;
+		}
+		
+		// 描画				
+		PrintfSJISSub( REGISTER_NAME_LEFT, REGISTER_NAME_UP, TXT_COLOR_BLACK, s_strARM9RegisterName[0] );
+		printBinary16( REGISTER_DATA_LEFT, REGISTER_DATA_UP, regRom, selectBitNum, selectRegSize );
+
+		PrintfSJISSub( REGISTER_NAME_LEFT, REGISTER_NAME_UP + LINE_OFFSET, TXT_COLOR_BLACK, s_strARM9RegisterName[1] );
+		printBinary16( REGISTER_DATA_LEFT, REGISTER_DATA_UP + LINE_OFFSET, regClk, selectBitNum - 16, selectRegSize );
+
+		PrintfSJISSub( REGISTER_NAME_LEFT, REGISTER_NAME_UP + 2*LINE_OFFSET, TXT_COLOR_BLACK, s_strARM9RegisterName[2] );
+		printBinary16( REGISTER_DATA_LEFT, REGISTER_DATA_UP + 2*LINE_OFFSET, regRst, selectBitNum - 32, selectRegSize );
+
+		PrintfSJISSub( REGISTER_NAME_LEFT, REGISTER_NAME_UP + 3*LINE_OFFSET, TXT_COLOR_BLACK, s_strARM9RegisterName[3] );
+		printBinary32( REGISTER_DATA_LEFT, REGISTER_DATA_UP + 3*LINE_OFFSET, regExt, selectBitNum - 48, selectRegSize );
 		
 	}
 }
 
-void printBinary32( int x, int y, u32 value )
+void printBinary32( int x, int y, u32 value, int selected, int selectSize )
 {
-	printBinary16( x, y, (u16)(value >> 16) );
-	printBinary16( x, y + LINE_OFFSET, (u16)(value & 0xFF) );
+	printBinary16( x, y, (u16)(value >> 16), selected - 16, selectSize );
+	printBinary16( x, y + LINE_OFFSET, (u16)(value & 0xFFFF), selected, selectSize );
 }
 
-void printBinary16( int x, int y, u16 value )
+void printBinary16( int x, int y, u16 value, int selected, int selectSize )
 {
+	// 16ビットのバイナリをディスプレイに描画
+	
 	int i;
-	u16 buf[BINARY_BUF] = {0};	// 16bit + 3 space + EOS
+	int bitNum;
+	u16 buf[BINARY_BUF] = {0};	// 16bit + 1 space + 1 EOS
 	u16 mask = 0x8000;
 
-	for( i=0; i<BINARY_BUF; i++)
+	for( i = 0; i < BINARY_BUF; i++)
 	{
-		if( i%5 == 4 )
+		if( i%9 == 8 )
 		{
 			buf[i] = L'　';
 			continue;
@@ -300,19 +374,53 @@ void printBinary16( int x, int y, u16 value )
 		
 		if( value & mask )
 		{
-			buf[i] = L'1';
+			buf[i] = L'１';
 		}
 		else
 		{
-			buf[i] = L'0';
+			buf[i] = L'０';
 		}
 		
-		mask = mask >> 1;
+		mask = (u16)( mask >> 1 );
 	}
 	
-	buf[20] = L'\0';
+	buf[BINARY_BUF] = L'\0';
 
 	PutStringUTF16Sub( x, y, TXT_COLOR_BLACK, buf );
+	
+	if( selected >= 16 || selected < 0 )
+	{
+		// 描画レジスタ内に選択項目に対応するビットがなければこれで終わり
+		return;
+	}
+	
+	// マスクをリセット
+	mask = 0x8000;
+	
+	// 今回の描画レジスタ内に選択項目に対応するビットがあるとき
+	// そのビットだけ赤字で表示する
+	for( i = 0, bitNum = 0; bitNum < 16; i++ )
+	{
+		if( i == 8 )
+		{
+			// 8ビット、8ビットの間の空白
+			buf[i] = L'　';
+			continue;
+		}
+		
+		if( selected <= 15 - bitNum && 15 - bitNum < selected + selectSize )
+		{
+			buf[i] = ( value & ( mask >> bitNum )) ? L'１': L'０' ;
+		}
+		else
+		{
+			buf[i] = L'　';
+		}
+		
+		bitNum++;
+	}
+	
+	PutStringUTF16Sub( x, y, TXT_COLOR_RED, buf );
 }
 
 void drawMenu( int menu, int line )
@@ -602,3 +710,97 @@ int getPageNum( int valueIdx, const int* pageOffset )
 	
 	return -1;
 }
+
+const static int gRegisterIdx[2][SCFG_ARM7_MENU_SIZE] = {
+	// ARM7, ARM9のSCFGの各項目がレジスタにおいて対応しているのかをリストで記述
+
+	// ARM7 side
+	{
+		DISP_REG_SCFG_ROM_ARM9SEL_SHIFT,
+		DISP_REG_SCFG_ROM_ARM9RSEL_SHIFT,
+		DISP_REG_SCFG_ROM_ARM7SEL_SHIFT,
+		DISP_REG_SCFG_ROM_ARM7RSEL_SHIFT,
+		DISP_REG_SCFG_ROM_ARM7FUSE_SHIFT,
+		DISP_REG_SCFG_ROM_ROMWE_SHIFT,
+		
+		DISP_REG_SCFG_CLK_SD1HCLK_SHIFT + 32,
+		DISP_REG_SCFG_CLK_SD2HCLK_SHIFT + 32,
+		DISP_REG_SCFG_CLK_AESHCLK_SHIFT + 32,
+		DISP_REG_SCFG_CLK_WRAMHCLK_SHIFT + 32,
+		DISP_REG_SCFG_CLK_SNDMCLK_SHIFT + 32,
+		
+		DISP_REG_SCFG_JTAG_ARM7SEL_SHIFT + 48,
+		DISP_REG_SCFG_JTAG_CPUJE_SHIFT + 48,
+		DISP_REG_SCFG_JTAG_DSPJE_SHIFT + 48,
+		
+		DISP_REG_SCFG_EXT_DMA_SHIFT + 64,
+		DISP_REG_SCFG_EXT_SDMA_SHIFT + 64,
+		DISP_REG_SCFG_EXT_SND_SHIFT + 64,
+		DISP_REG_SCFG_EXT_MC_SHIFT + 64,
+		DISP_REG_SCFG_EXT_INTC_SHIFT + 64,
+		DISP_REG_SCFG_EXT_SPI_SHIFT + 64,
+		DISP_REG_SCFG_EXT_DSEL_SHIFT + 64,
+		DISP_REG_SCFG_EXT_SIO_SHIFT + 64,
+		DISP_REG_SCFG_EXT_LCDC_SHIFT + 64,
+		DISP_REG_SCFG_EXT_VRAM_SHIFT + 64,
+		DISP_REG_SCFG_EXT_PSRAM_SHIFT + 64,
+		DISP_REG_SCFG_EXT_DMAC_SHIFT + 64,
+		DISP_REG_SCFG_EXT_AES_SHIFT + 64,
+		DISP_REG_SCFG_EXT_SD1_SHIFT + 64,
+		DISP_REG_SCFG_EXT_SD2_SHIFT + 64,
+		DISP_REG_SCFG_EXT_MIC_SHIFT + 64,
+		DISP_REG_SCFG_EXT_I2S_SHIFT + 64,
+		DISP_REG_SCFG_EXT_I2C_SHIFT + 64,
+		DISP_REG_SCFG_EXT_GPIO_SHIFT + 64,
+		DISP_REG_SCFG_EXT_MC_B_SHIFT + 64,
+		DISP_REG_SCFG_EXT_WRAM_SHIFT + 64,
+		DISP_REG_SCFG_EXT_PUENABLE_SHIFT + 64,
+		DISP_REG_SCFG_EXT_CFG_SHIFT + 64,
+		
+		DISP_REG_MI_MC1_SL1_CDET_SHIFT + 96,
+		DISP_REG_MI_MC1_SL1_M0_SHIFT + 96,
+		DISP_REG_MI_MC1_SL2_CDET_SHIFT + 96,
+		DISP_REG_MI_MC1_SL2_M0_SHIFT + 96,
+		DISP_REG_MI_MC1_SWP_SHIFT + 96,
+		DISP_REG_MI_MC1_CC_SHIFT + 96,
+		
+		DISP_REG_MI_MC2_CA_SHIFT + 128,
+		
+		DISP_REG_SCFG_WL_OFFB_SHIFT + 144,
+		
+		DISP_REG_SCFG_OP_OP0_SHIFT + 160,
+		DISP_REG_SCFG_OP_OP0_SHIFT + 160	
+	},
+	
+	// ARM9 side
+	{
+		REG_SCFG_A9ROM_SEC_SHIFT,
+		REG_SCFG_A9ROM_RSEL_SHIFT,
+		
+		REG_SCFG_CLK_CPUSPD_SHIFT + 16,
+		REG_SCFG_CLK_DSPHCLK_SHIFT + 16,
+		REG_SCFG_CLK_CAMHCLK_SHIFT + 16,
+		REG_SCFG_CLK_WRAMHCLK_SHIFT + 16,
+		REG_SCFG_CLK_CAMCKI_SHIFT  + 16,
+		
+		REG_SCFG_RST_DSPRSTB_SHIFT + 32,
+		
+		REG_SCFG_EXT_DMA_SHIFT + 48,
+		REG_SCFG_EXT_GEO_SHIFT + 48,
+		REG_SCFG_EXT_REN_SHIFT + 48,
+		REG_SCFG_EXT_G2DE_SHIFT + 48,
+		REG_SCFG_EXT_DIV_SHIFT + 48,
+		REG_SCFG_EXT_MC_SHIFT + 48,
+		REG_SCFG_EXT_INTC_SHIFT + 48,
+		REG_SCFG_EXT_LCDC_SHIFT + 48,
+		REG_SCFG_EXT_VRAM_SHIFT + 48,
+		REG_SCFG_EXT_PSRAM_SHIFT + 48,
+		REG_SCFG_EXT_DMAC_SHIFT + 48, 
+		REG_SCFG_EXT_CAM_SHIFT + 48,
+		REG_SCFG_EXT_DSP_SHIFT + 48,
+		REG_SCFG_EXT_MC_B_SHIFT + 48,
+		REG_SCFG_EXT_WRAM_SHIFT + 48,
+		REG_SCFG_EXT_CFG_SHIFT + 48,
+		
+	}
+};

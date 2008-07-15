@@ -387,6 +387,48 @@ extern "C" {
     ((u32)(dma) << DISP_REG_SCFG_EXT_DMA_SHIFT))
 #endif
 
+/* MC1 */
+
+#define DISP_REG_MI_MC1_CC_SHIFT                                16
+#define DISP_REG_MI_MC1_CC_SIZE                                 16
+#define DISP_REG_MI_MC1_CC_MASK                                 0xffff0000
+
+#define DISP_REG_MI_MC1_SWP_SHIFT                               15
+#define DISP_REG_MI_MC1_SWP_SIZE                                1
+#define DISP_REG_MI_MC1_SWP_MASK                                0x00008000
+
+#define DISP_REG_MI_MC1_SL2_STATUS_SHIFT                        4
+#define DISP_REG_MI_MC1_SL2_STATUS_SIZE                         4
+#define DISP_REG_MI_MC1_SL2_STATUS_MASK                         0x000000f0
+
+#define DISP_REG_MI_MC1_SL2_M1_SHIFT                            7
+#define DISP_REG_MI_MC1_SL2_M1_SIZE                             1
+#define DISP_REG_MI_MC1_SL2_M1_MASK                             0x00000080
+
+#define DISP_REG_MI_MC1_SL2_M0_SHIFT                            6
+#define DISP_REG_MI_MC1_SL2_M0_SIZE                             1
+#define DISP_REG_MI_MC1_SL2_M0_MASK                             0x00000040
+
+#define DISP_REG_MI_MC1_SL2_CDET_SHIFT                          4
+#define DISP_REG_MI_MC1_SL2_CDET_SIZE                           1
+#define DISP_REG_MI_MC1_SL2_CDET_MASK                           0x00000010
+
+#define DISP_REG_MI_MC1_SL1_STATUS_SHIFT                        0
+#define DISP_REG_MI_MC1_SL1_STATUS_SIZE                         4
+#define DISP_REG_MI_MC1_SL1_STATUS_MASK                         0x0000000f
+
+#define DISP_REG_MI_MC1_SL1_M1_SHIFT                            3
+#define DISP_REG_MI_MC1_SL1_M1_SIZE                             1
+#define DISP_REG_MI_MC1_SL1_M1_MASK                             0x00000008
+
+#define DISP_REG_MI_MC1_SL1_M0_SHIFT                            2
+#define DISP_REG_MI_MC1_SL1_M0_SIZE                             1
+#define DISP_REG_MI_MC1_SL1_M0_MASK                             0x00000004
+
+#define DISP_REG_MI_MC1_SL1_CDET_SHIFT                          0
+#define DISP_REG_MI_MC1_SL1_CDET_SIZE                           1
+#define DISP_REG_MI_MC1_SL1_CDET_MASK                           0x00000001
+
 
 /* MC */
 

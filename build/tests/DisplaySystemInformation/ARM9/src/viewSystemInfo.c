@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include <wchar.h>
@@ -38,7 +38,8 @@ void getParentalInfo( void );
 void getNormalHWInfo( void );
 BOOL getSecureHWInfo( void );
 void getSCFGARM9Info( void );
-void getSCFGARM7Info( void );
+void getSCFGARM7InfoReg( void );
+void getSCFGARM7InfoShared( void );
 void getVersions( void );
 void getWirelessVersion( void );
 void getContentsVersion( void );
@@ -164,7 +165,8 @@ void getAllInfo( void )
 	getParentalInfo();
 	getNormalHWInfo();
 	getSecureHWInfo();
-	getSCFGARM7Info();
+	getSCFGARM7InfoReg();
+	getSCFGARM7InfoShared();
 	getSCFGARM9Info();
 	getVersions();
 	
@@ -317,6 +319,7 @@ BOOL getSecureHWInfo( void )
 				DISPINFO_BUFSIZE-1, "%016llx", SCFG_ReadFuseData() );
 
 		// 返り値でセキュアアプリかどうか判定できるように
+		// あとでロムヘッダの情報を読むように変更したほうがいいかも
 		if( buf )
 		{
 			return TRUE;
@@ -329,255 +332,369 @@ BOOL getSecureHWInfo( void )
 }
 
 void getSCFGARM9Info( void )
-// SCFG情報を取得する
+// ARM9側で取得できるSCFG情報を取得する
+// ARM9SCFGAPIはレジスタを直接参照しているので、APIを使ってもレジスタを直接見ても同じ値
 {
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_ROM_STATE].str.sjis = 
-		SCFG_GetSystemRomType() == SCFG_SYSTEM_ROM_FOR_NITRO ? s_strRomMode[1] : s_strRomMode[0];
-	
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CAMERA_CKI].str.sjis = s_strEnable[ SCFG_IsCameraCKIClockEnable() ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_WRAM_CLOCK].str.sjis = s_strSupply[ SCFG_IsClockSuppliedToWram() ];	
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CAMERA_CLOCK].str.sjis = s_strSupply[ SCFG_IsClockSuppliedToCamera() ];	
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_DSP_CLOCK].str.sjis = s_strSupply[ SCFG_IsClockSuppliedToDSP() ];	
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CPU_SPEED].str.sjis = 
-		SCFG_GetCpuSpeed() == SCFG_CPU_SPEED_1X ? s_strCpuSpeed[0] : s_strCpuSpeed[1];
-		
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_DSP_RESET].str.sjis = s_strBool[ SCFG_IsDSPReset() ];
+	int value;
 
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CFG_ACCESSIBLE].str.sjis = s_strEnable[ SCFG_IsConfigBlockAccessible() ];
+	// ROM制御レジスタ	
+	value = SCFG_IsSecureRomAccessible();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_ROM_SEC].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_ROM_SEC].str.sjis = s_strAccess[ value ];
+	
+	value = SCFG_GetSystemRomType();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_ROM_STATE].iValue = 	value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_ROM_STATE].str.sjis = (value == SCFG_SYSTEM_ROM_FOR_NITRO) ? s_strRomMode[1] : s_strRomMode[0];
+	
+	// クロック制御レジスタ
+	value = SCFG_IsCameraCKIClockEnable();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CAMERA_CKI].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CAMERA_CKI].str.sjis = s_strEnable[ value ];
+	
+	value = SCFG_IsClockSuppliedToWram();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_WRAM_CLOCK].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_WRAM_CLOCK].str.sjis = s_strSupply[ value ];	
+	
+	value = SCFG_IsClockSuppliedToCamera();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CAMERA_CLOCK].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CAMERA_CLOCK].str.sjis = s_strSupply[ value ];
+	
+	value = SCFG_IsClockSuppliedToDSP();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_DSP_CLOCK].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_DSP_CLOCK].str.sjis = s_strSupply[ value ];	
+	
+	value = SCFG_GetCpuSpeed();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CPU_SPEED].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CPU_SPEED].str.sjis = (value == SCFG_CPU_SPEED_1X) ? s_strCpuSpeed[0] : s_strCpuSpeed[1];
+	
+	// 新規ブロック制御レジスタ
+	value = SCFG_IsDSPReset();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_DSP_RESET].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_DSP_RESET].str.sjis = s_strBool[ value ];
+
+	// 拡張機能制御レジスタ
+	value = SCFG_IsConfigBlockAccessible();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CFG_ACCESSIBLE].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CFG_ACCESSIBLE].str.sjis = s_strAccess[ value ];
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CFG_ACCESSIBLE].isAligned = FALSE;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CFG_ACCESSIBLE].numLines = 2;
+
+	value = (reg_SCFG_EXT & REG_SCFG_EXT_MC_B_MASK) || 0;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_MCB].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_MCB].str.sjis = s_strAccess[ value ];
 	
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_WRAM_ACCESSIBLE].str.sjis = s_strEnable[ SCFG_IsWramAccessible() ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_DSP_ACCESSIBLE].str.sjis = s_strEnable[ SCFG_IsDSPAccessible() ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CAMERA_ACCESSIBLE].str.sjis = s_strEnable[ SCFG_IsCameraAccessible() ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_NDMA_ACCESSIBLE].str.sjis = s_strEnable[ SCFG_IsNDmaAccessible() ];
+	value = SCFG_IsWramAccessible();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_WRAM_ACCESSIBLE].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_WRAM_ACCESSIBLE].str.sjis = s_strAccess[ value ];
+	
+	value = SCFG_IsDSPAccessible();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_DSP_ACCESSIBLE].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_DSP_ACCESSIBLE].str.sjis = s_strAccess[ value ];
+	
+	value = SCFG_IsCameraAccessible();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CAMERA_ACCESSIBLE].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CAMERA_ACCESSIBLE].str.sjis = s_strAccess[ value ];
+	
+	value = SCFG_IsNDmaAccessible();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_NDMA_ACCESSIBLE].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_NDMA_ACCESSIBLE].str.sjis = s_strAccess[ value ];
 	
 	{
 		u8 idx;
+		value = SCFG_GetPsramBoundary();
 		
-		if( SCFG_GetPsramBoundary() == SCFG_PSRAM_BOUNDARY_4MB )
+		if( value  == SCFG_PSRAM_BOUNDARY_4MB )
 		{
 			idx = 0;
 		}
-		else if ( SCFG_GetPsramBoundary() == SCFG_PSRAM_BOUNDARY_16MB )
+		else if ( value == SCFG_PSRAM_BOUNDARY_16MB )
 		{
 			idx = 1;
 		}
-		else if ( SCFG_GetPsramBoundary() == SCFG_PSRAM_BOUNDARY_32MB )
+		else if ( value == SCFG_PSRAM_BOUNDARY_32MB )
 		{
 			idx = 2;
 		}
 		
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_PSRAM_BOUNDARY].iValue = value;
 		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_PSRAM_BOUNDARY].str.sjis = s_strPSRAM[ idx ];
 	}
 	
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_INTC_EXPANSION].str.sjis = s_strEnable[ SCFG_IsIntcExpanded() ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_LCDC_EXPANSION].str.sjis = s_strEnable[ SCFG_IsLCDCExpanded() ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_VRAM_EXPANSION].str.sjis = s_strEnable[ SCFG_IsVramExpanded() ];
+	value = SCFG_IsIntcExpanded();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_INTC_EXPANSION].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_INTC_EXPANSION].str.sjis = s_strEnable[ value ];
 	
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_CARD].str.sjis = s_strEnable[ SCFG_IsCardFixed() ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_DIVIDER].str.sjis = s_strEnable[ SCFG_IsDividerFixed() ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_2DENGINE].str.sjis = s_strEnable[ SCFG_Is2DEngineFixed() ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_RENDERER].str.sjis = s_strEnable[ SCFG_IsRendererFixed() ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_GEOMETRY].str.sjis = s_strEnable[ SCFG_IsGeometryFixed() ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_DMA].str.sjis = s_strEnable[ SCFG_IsDmacFixed() ];
+	value = SCFG_IsLCDCExpanded();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_LCDC_EXPANSION].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_LCDC_EXPANSION].str.sjis = s_strEnable[ value ];
 	
+	value = SCFG_IsVramExpanded();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_VRAM_EXPANSION].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_VRAM_EXPANSION].str.sjis = s_strEnable[ value ];
+	
+	
+	value =  SCFG_IsCardFixed() ;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_CARD].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_CARD].str.sjis = s_strEnable[ value ];
+
+	value =  SCFG_IsDividerFixed() ;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_DIVIDER].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_DIVIDER].str.sjis = s_strEnable[ value ];
+
+	value =  SCFG_Is2DEngineFixed() ;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_2DENGINE].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_2DENGINE].str.sjis = s_strEnable[ value ];
+
+	value =  SCFG_IsRendererFixed() ;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_RENDERER].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_RENDERER].str.sjis = s_strEnable[ value ];
+
+	value =  SCFG_IsGeometryFixed() ;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_GEOMETRY].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_GEOMETRY].str.sjis = s_strEnable[ value ];
+
+	value =  SCFG_IsDmacFixed() ;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_DMA].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_FIX_DMA].str.sjis = s_strEnable[ value ];
+
 }
 
-void getSCFGARM7Info( void )
+void getSCFGARM7InfoReg( void )
 {
-	// 必要なデータは全てgARM7SCFGReg, gARM7SCFGWramで確保済
+	// レジスタに直接格納されているほうのSCFGデータを取得
+	
+
+	int value;
 	
 	// ROM制御レジスタ(L)、(H)
 	{
 		// SECフラグはTRUE = 切り離し(アクセス不可),  FALSE = 接続(アクセス可)
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_SEC].str.sjis = 
-			gArm7SCFGReg[DISP_REG_A9ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A9ROM_SEC_MASK ? s_strAccess[0]: s_strAccess[1];
+		value = ( gArm7SCFGReg[DISP_REG_A9ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A9ROM_SEC_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_SEC].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_SEC].str.sjis = value ? s_strAccess[0]: s_strAccess[1];
 			
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_RSEL].str.sjis = 
-			gArm7SCFGReg[DISP_REG_A9ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A9ROM_RSEL_MASK ? s_strRomMode[1]: s_strRomMode[0];
+		value = ( gArm7SCFGReg[DISP_REG_A9ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A9ROM_RSEL_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_RSEL].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_RSEL].str.sjis = value ? s_strRomMode[1]: s_strRomMode[0];
 
 		// SECフラグはTRUE = 切り離し(アクセス不可),  FALSE = 接続(アクセス可)
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_SEC].str.sjis = 
-			gArm7SCFGReg[DISP_REG_A7ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A7ROM_SEC_MASK ? s_strAccess[0]: s_strAccess[1];
+		value = ( gArm7SCFGReg[DISP_REG_A7ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A7ROM_SEC_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_SEC].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_SEC].str.sjis = value ? s_strAccess[0]: s_strAccess[1];
 			
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_RSEL].str.sjis = 
-			gArm7SCFGReg[DISP_REG_A7ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A7ROM_RSEL_MASK ? s_strRomMode[1]: s_strRomMode[0];
+		value = ( gArm7SCFGReg[DISP_REG_A7ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A7ROM_RSEL_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_RSEL].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_RSEL].str.sjis = value ? s_strRomMode[1]: s_strRomMode[0];
 			
 		// FuseROMフラグはTRUE = 切り離し(アクセス不可),  FALSE = 接続(アクセス可)
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_FUSE].str.sjis = 
-			gArm7SCFGReg[DISP_REG_A7ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A7ROM_FUSE_MASK ? s_strAccess[0]: s_strAccess[1];
+		value = ( gArm7SCFGReg[DISP_REG_A7ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A7ROM_FUSE_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_FUSE].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_FUSE].str.sjis = value ? s_strAccess[0]: s_strAccess[1];
 			
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_WE].str.sjis = 
-			gArm7SCFGReg[DISP_REG_ROMWE_OFFSET - 0x4000] & DISP_REG_SCFG_ROMWE_WE_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( gArm7SCFGReg[DISP_REG_ROMWE_OFFSET - 0x4000] & DISP_REG_SCFG_ROMWE_WE_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_WE].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_WE].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 	}
 		
 	// 新規ブロッククロック制御レジスタ
 	{
 		u16 flag = MI_LoadLE16( &gArm7SCFGReg[DISP_REG_CLK_OFFSET - 0x4000] );
 		
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SD1].str.sjis = 
-			flag & DISP_REG_SCFG_CLK_SD1HCLK_MASK ? s_strSupply[1]: s_strSupply[0];
+		value = ( flag & DISP_REG_SCFG_CLK_SD1HCLK_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SD1].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SD1].str.sjis = value ? s_strSupply[1]: s_strSupply[0];
 			
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SD2].str.sjis = 
-			flag & DISP_REG_SCFG_CLK_SD2HCLK_MASK ? s_strSupply[1]: s_strSupply[0];
+		value = ( flag & DISP_REG_SCFG_CLK_SD2HCLK_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SD2].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SD2].str.sjis = value ? s_strSupply[1]: s_strSupply[0];
 		
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_AES].str.sjis = 
-			flag & DISP_REG_SCFG_CLK_AESHCLK_MASK ? s_strSupply[1]: s_strSupply[0];
+		value = ( flag & DISP_REG_SCFG_CLK_AESHCLK_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_AES].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_AES].str.sjis = value ? s_strSupply[1]: s_strSupply[0];
 			
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_WRAM].str.sjis = 
-			flag & DISP_REG_SCFG_CLK_WRAMHCLK_MASK ? s_strSupply[1]: s_strSupply[0];
+		value = ( flag & DISP_REG_SCFG_CLK_WRAMHCLK_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_WRAM].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_WRAM].str.sjis = value ? s_strSupply[1]: s_strSupply[0];
 			
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SND].str.sjis = 
-			flag & DISP_REG_SCFG_CLK_SNDMCLK_MASK ? s_strSupply[1]: s_strSupply[0];
+		value = ( flag & DISP_REG_SCFG_CLK_SNDMCLK_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SND].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SND].str.sjis = value ? s_strSupply[1]: s_strSupply[0];
 	}
 	
 	// JTAG制御レジスタ
 	{
 		u16 flag = MI_LoadLE16( &gArm7SCFGReg[DISP_REG_JTAG_OFFSET - 0x4000] );
 		
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_JTAG_A7].str.sjis = 
-			flag & DISP_REG_SCFG_JTAG_ARM7SEL_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_JTAG_ARM7SEL_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_JTAG_A7].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_JTAG_A7].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_JTAG_A7].isAligned = FALSE;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_JTAG_A7].numLines = 2;
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_JTAG_CPU].str.sjis = 
-			flag & DISP_REG_SCFG_JTAG_CPUJE_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_JTAG_CPUJE_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_JTAG_CPU].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_JTAG_CPU].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_JTAG_DSP].str.sjis = 
-			flag & DISP_REG_SCFG_JTAG_DSPJE_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_JTAG_DSPJE_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_JTAG_DSP].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_JTAG_DSP].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 	}	
 	
 	// 拡張機能制御レジスタ
 	{
 		u32 flag = MI_LoadLE32( &gArm7SCFGReg[DISP_REG_EXT_OFFSET - 0x4000] );
 		
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DMA].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_DMA_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_DMA_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DMA].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DMA].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SDMA].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_SDMA_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_SDMA_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SDMA].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SDMA].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SND].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_SND_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_SND_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SND].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SND].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MC].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_MC_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_MC_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MC].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MC].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MC].isAligned = FALSE;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MC].numLines = 2;
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_INTC].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_INTC_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_INTC_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_INTC].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_INTC].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_INTC].isAligned = FALSE;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_INTC].numLines = 2;
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SPI].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_SPI_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_SPI_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SPI].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SPI].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DSEL].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_DSEL_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_DSEL_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DSEL].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DSEL].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DSEL].isAligned = FALSE;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DSEL].numLines = 2;
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SIO].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_SIO_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_SIO_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SIO].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SIO].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_LCDC].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_LCDC_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_LCDC_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_LCDC].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_LCDC].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_VRAM].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_VRAM_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_VRAM_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_VRAM].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_VRAM].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
 		{
-			u32 psFlag = (flag & DISP_REG_SCFG_EXT_PSRAM_MASK) >> DISP_REG_SCFG_EXT_PSRAM_SHIFT;
 			u8 idx = 0;
+			value = (int) ( (flag & DISP_REG_SCFG_EXT_PSRAM_MASK) >> DISP_REG_SCFG_EXT_PSRAM_SHIFT );
+
 			
-			if( psFlag <= 1 )
+			if( value <= 1 )
 			{
 				idx = 0;
 			}
-			else if ( psFlag == 2 )
+			else if ( value == 2 )
 			{
 				idx = 1;
 			}
-			else if ( psFlag == 3 )
+			else if ( value == 3 )
 			{
 				idx = 2;
 			}
 
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_PS].iValue = value;
 			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_PS].str.sjis = s_strPSRAM[idx];
 		}
 		
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DMAC].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_DMAC_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_DMAC_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DMAC].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DMAC].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_AES].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_AES_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_AES_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_AES].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_AES].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SD1].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_SD1_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_SD1_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SD1].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SD1].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SD2].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_SD2_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_SD2_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SD2].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SD2].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MIC].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_MIC_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_MIC_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MIC].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MIC].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_I2S].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_I2S_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_I2S_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_I2S].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_I2S].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_I2C].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_I2C_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_I2C_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_I2C].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_I2C].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_GPIO].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_GPIO_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_GPIO_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_GPIO].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_GPIO].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MCB].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_MC_B_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_MC_B_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MCB].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MCB].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_WRAM].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_WRAM_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_WRAM_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_WRAM].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_WRAM].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_PU].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_PUENABLE_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_PUENABLE_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_PU].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_PU].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_CFG].str.sjis = 
-			flag & DISP_REG_SCFG_EXT_CFG_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_EXT_CFG_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_CFG].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_CFG].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 	
 	}
 	
 	// メモリカード I/F 制御レジスタ
 	{
 		u16 flag = MI_LoadLE16( &gArm7SCFGReg[DISP_REG_MC_OFFSET - 0x4000] );
-		u8 idx;
 		
-		OS_TPrintf("mc flag: %04x\n", flag );
-		OS_TPrintf("flag & SC1 cdet mask: %d\n", flag & DISP_REG_MI_MC_SL1_CDET_MASK );
-		
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC1_CDET].str.sjis = 
-			flag & DISP_REG_MI_MC_SL1_CDET_MASK ? s_strBool[1]: s_strBool[0];
+		value = ( flag & DISP_REG_MI_MC_SL1_CDET_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC1_CDET].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC1_CDET].str.sjis = value ? s_strBool[1]: s_strBool[0];
 
-		OS_TPrintf("mi SC1 cdet: %s\n", gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC1_CDET].str.sjis );
-
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC2_CDET].str.sjis = 
-			flag & DISP_REG_MI_MC_SL2_CDET_MASK ? s_strBool[1]: s_strBool[0];
+		value = ( flag & DISP_REG_MI_MC_SL2_CDET_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC2_CDET].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC2_CDET].str.sjis = value ? s_strBool[1]: s_strBool[0];
 			
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SWP].str.sjis = 
-			flag & DISP_REG_MI_MC_SWP_MASK ? s_strBool[1]: s_strBool[0];
+		value = ( flag & DISP_REG_MI_MC_SWP_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SWP].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SWP].str.sjis = value ? s_strBool[1]: s_strBool[0];
 
-		idx = (u8) ( (flag & DISP_REG_MI_MC_SL1_MODE_MASK) >> DISP_REG_MI_MC_SL1_MODE_SHIFT );
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC1_MODE].str.sjis = s_strMCMode[idx];
+		value = (flag & DISP_REG_MI_MC_SL1_MODE_MASK) >> DISP_REG_MI_MC_SL1_MODE_SHIFT ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC1_MODE].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC1_MODE].str.sjis = s_strMCMode[value];
 
-		idx = (u8) ( (flag & DISP_REG_MI_MC_SL2_MODE_MASK) >> DISP_REG_MI_MC_SL2_MODE_SHIFT );
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC2_MODE].str.sjis = s_strMCMode[idx];
+		value = (flag & DISP_REG_MI_MC_SL2_MODE_MASK) >> DISP_REG_MI_MC_SL2_MODE_SHIFT;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC2_MODE].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC2_MODE].str.sjis = s_strMCMode[value];
 		
 		flag = MI_LoadLE16( &gArm7SCFGReg[DISP_REG_MCCHAT_OFFSET - 0x4000] );
-		snprintf( gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_CC].str.sjis , DISPINFO_BUFSIZE-1, "%04x", 
-					flag & DISP_REG_MI_MCCHAT_CC_MASK);
+		value = (flag & DISP_REG_MI_MCCHAT_CC_MASK) >> DISP_REG_MI_MCCHAT_CC_SHIFT;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_CC].iValue = value;
+		snprintf( gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_CC].str.sjis , DISPINFO_BUFSIZE-1, "%04x", value);
 		
 		flag = MI_LoadLE16( &gArm7SCFGReg[DISP_REG_MC2_OFFSET - 0x4000] );
-		snprintf( gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_CA].str.sjis , DISPINFO_BUFSIZE-1, "%04x", 
-					flag & DISP_REG_MI_MC2_CA_MASK );
+		value = (flag & DISP_REG_MI_MC2_CA_MASK ) >> DISP_REG_MI_MC2_CA_SHIFT;
+		;gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_CA].iValue = value;
+		snprintf( gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_CA].str.sjis , DISPINFO_BUFSIZE-1, "%04x", value );
 		
 	}
 	
@@ -585,8 +702,9 @@ void getSCFGARM7Info( void )
 	{
 		u8 flag =  gArm7SCFGReg[DISP_REG_WL_OFFSET - 0x4000];
 
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_WL_OFFB].str.sjis = 
-			flag & DISP_REG_SCFG_WL_OFFB_MASK ? s_strEnable[1]: s_strEnable[0];
+		value = ( flag & DISP_REG_SCFG_WL_OFFB_MASK ) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_WL_OFFB].iValue = value;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_WL_OFFB].str.sjis = value ? s_strEnable[1]: s_strEnable[0];
 
 	}
 	
@@ -595,14 +713,22 @@ void getSCFGARM7Info( void )
 	{
 		
 		u8 flag = gArm7SCFGReg[DISP_REG_OP_OFFSET - 0x4000];
-		u8 idx =  (u8)(flag & DISP_REG_SCFG_OP_OPT_MASK);
+		value =  (flag & DISP_REG_SCFG_OP_OPT_MASK) >> DISP_REG_SCFG_OP_OPT_SHIFT;
+				
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_OP_FORM].iValue = (value & 0x2) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_OP_FORM].str.sjis = value == 3 ? s_strRomForm[1] : s_strRomForm[0];
 		
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_OP_FORM].str.sjis = idx == 3 ? s_strRomForm[1] : s_strRomForm[0];
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_OP_APP].str.sjis = s_strRomApp[idx];
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_OP_APP].iValue = (value & 0x1) || 0 ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_OP_APP].str.sjis = s_strRomApp[ value ];
 	}
 
 }
 
+void getSCFGARM7InfoShared( void )
+{
+	// 共有領域に退避されたほうのSCFGデータを取得する
+	
+}
 
 void getVersions( void )
 {
@@ -621,7 +747,7 @@ void getWirelessVersion( void )
 
 	FS_InitFile( &file );	
 	NAM_GetTitleBootContentPath( filePath , WL_TITLEID); // 無線ファームのファイルパスを取得
-	
+	OS_TPrintf("wireless firm path: %s\n", filePath ) ;
 	res = FS_OpenFileEx( &file, filePath, FS_FILEMODE_R );
 	
 	// バージョン情報の読み取り
