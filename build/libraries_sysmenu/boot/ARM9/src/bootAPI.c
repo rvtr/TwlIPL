@@ -186,9 +186,6 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 			{
 				*target = REBOOT_TARGET_TWL_APP;
 			}
-#ifdef SYSMENU_DISABLE_TWL_BOOT
-            OS_Terminate();
-#endif // SYSMENU_DISABLE_TWL_BOOT
 		}
 		else
 		{

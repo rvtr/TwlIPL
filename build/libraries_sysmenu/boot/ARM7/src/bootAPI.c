@@ -152,7 +152,7 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 		// カードNTR-ROMヘッダをNANDアプリやDSダウンロードプレイのためコピー
 		MI_CpuCopyFast( (void*)SYSM_CARD_ROM_HEADER_BAK, (void*)HW_CARD_ROM_HEADER, HW_CARD_ROM_HEADER_SIZE );
 
-    	if ( dh->s.platform_code ){
+    	if ( dh->s.platform_code & PLATFORM_CODE_FLAG_TWL ){
 			// カードTWL-ROMヘッダをHW_TWL_CARD_ROM_HEADER_BUFにコピー
 			MI_CpuCopyFast( (void*)SYSM_CARD_ROM_HEADER_BAK, (void*)HW_TWL_CARD_ROM_HEADER_BUF, HW_TWL_CARD_ROM_HEADER_BUF_SIZE );
         }
@@ -295,11 +295,6 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 				{
 					*target = REBOOT_TARGET_TWL_APP;
 				}
-#ifdef SYSMENU_DISABLE_TWL_BOOT
-                while (1)
-                {
-                }
-#endif // SYSMENU_DISABLE_TWL_BOOT
 			}
 			else
 			{
