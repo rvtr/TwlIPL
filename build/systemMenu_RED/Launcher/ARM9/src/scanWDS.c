@@ -82,7 +82,7 @@ void Callback_WDSPreSleep( void *ptr )
 {
 #pragma unused( ptr )
 	WDS_WrapperCleanup();
-	while ( ! IsClearnupWDSWrapper() )
+	while ( WDS_WrapperCheckThreadRunning() == WDSWRAPPER_ERRCODE_SUCCESS )
 	{
 		OS_Sleep(1);
 	}
