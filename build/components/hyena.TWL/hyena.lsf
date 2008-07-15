@@ -223,3 +223,5 @@ Ltdautoload LTDMAIN
 	Library		$(ISDBG_LIBS_TWL)
 	Library		$(ISDBG_LIBS_NITRO)
 }
+
+# BootROMの鍵データが0x0380c400～にあるので、hyenaのWRAM配置の上限はその値になることに注意。

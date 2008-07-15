@@ -93,3 +93,5 @@ Ltdautoload SCRWRAM
 	Object		* (.main)
 	Object		* (.ltdmain)
 }
+
+# BootROMの鍵データが0x0380c400～にあるので、jackalのWRAM配置の上限はその値になることに注意。
