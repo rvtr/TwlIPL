@@ -29,9 +29,9 @@ extern "C" {
 
 // 共有フォントインデックス
 typedef enum OSSharedFontIndex {
-	OS_SHARED_FONT_WW_S = 0,
+	OS_SHARED_FONT_WW_L = 0,
 	OS_SHARED_FONT_WW_M = 1,
-	OS_SHARED_FONT_WW_L = 2,
+	OS_SHARED_FONT_WW_S = 2,
 	OS_SHARED_FONT_MAX  = 3
 }OSSharedFontIndex;
 

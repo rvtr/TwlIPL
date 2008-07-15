@@ -133,7 +133,9 @@ void LoadSharedFont( STicks *pTicks )
         OS_TPrintf( "    uncompress font\n" );
 #if (FORWARD_COMPRESS==1)
         //comperr = MI_SecureUncompressLZ( s_pCompressedBuffer[i], (u32)compsize, s_pFontBuffer[i], (u32)origsize );
-        comperr = MI_SecureUncompressHuffman( s_pCompressedBuffer[i], (u32)compsize, s_pFontBuffer[i], (u32)origsize );
+        //comperr = MI_SecureUncompressHuffman( s_pCompressedBuffer[i], (u32)compsize, s_pFontBuffer[i], (u32)origsize );
+        MI_UncompressHuffman( s_pCompressedBuffer[i], s_pFontBuffer[i] );
+        comperr = MI_ERR_SUCCESS;
 #else
         comperr = MI_SecureUncompressBLZ( s_pFontBuffer[i], (u32)compsize, (u32)origsize );
 #endif
