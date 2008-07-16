@@ -616,8 +616,13 @@ MAIN_LOOP_START:
         (void)SND_FlushCommand(SND_COMMAND_NOBLOCK);
 
 #ifndef DISABLE_SLEEP
-        // スリープモードへの遷移（蓋開き状態とデバッガ接続中のキャンセルはデフォルトで行う）
-        UTL_GoSleepMode();
+        // スリープモードへの遷移
+        //（無線ファームのロード完了はアプリ側でチェックしてもらう方針）
+        //（蓋開き状態とデバッガ接続中のキャンセルはデフォルトで行う）
+        if ( PollingInstallWlanFirmware() )
+        {
+            UTL_GoSleepMode();
+        }
 #endif // DISABLE_SLEEP
     }
 }
