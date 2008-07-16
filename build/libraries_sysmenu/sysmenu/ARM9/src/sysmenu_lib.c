@@ -421,8 +421,8 @@ static TitleProperty *SYSMi_CheckShortcutBoot1( void )
         if( ( SYSM_IsRunOnDebugger() &&      // ISデバッガが有効かつJTAGがまだ有効でない時
               !( *(u8 *)( HW_SYS_CONF_BUF + HWi_WSYS09_OFFSET ) & HWi_WSYS09_JTAG_CPUJE_MASK ) ) ||
             SYSM_IsInspectCard() ||
-            ( ( PAD_Read() & SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) ==
-              SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT )
+            ( ( PAD_Read() == SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) && 
+              ( !LCFG_TSD_IsFinishedBrokenTWLSettings() || !LCFG_TSD_IsFinishedInitialSetting() || !LCFG_TSD_IsFinishedInitialSetting_Launcher() ) )
             ){
             s_bootTitleBuf.flags.isAppRelocate = TRUE;
             s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
