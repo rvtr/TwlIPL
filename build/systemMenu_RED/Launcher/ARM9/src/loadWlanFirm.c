@@ -119,6 +119,7 @@ void InstallFirmCallback(void* arg)
     {
         // queue溢れはありえないハズだが、発生した場合は無線の不具合とみなしFATALにする。
         UTL_SetFatalError( FATAL_ERROR_WLANFIRM_LOAD );
+        s_isFinished = TRUE;
     }
 
 }
