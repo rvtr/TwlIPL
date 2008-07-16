@@ -91,7 +91,7 @@ void LoadSharedFontThread( void *arg )
 	BOOL retval = TRUE;
 	OSSharedFontIndex i;
 	
-	for( i = OS_SHARED_FONT_WW_S; i < OS_SHARED_FONT_MAX; i++ ) {
+	for( i = OS_SHARED_FONT_WW_L; i < OS_SHARED_FONT_MAX; i++ ) {
 		int size;
 		
 		OS_TPrintf( "%s read.\n", OS_GetSharedFontName( i ) );
@@ -119,6 +119,8 @@ void LoadSharedFontThread( void *arg )
 			break;
 		}
 	}
+
+
 	OS_TPrintf( "Shared Font load time = %dms\n", OS_TicksToMilliSeconds( OS_GetTick() - s_fontLoadStartTick ) );
 	
 	if( retval ) {
