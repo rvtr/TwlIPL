@@ -51,11 +51,7 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 do-build : $(FONT_TABLE)
 
-# step1 : copy sharedFonts into local directory for work
-$(FONT_RSC):
-	cp $(FONT_ORG_RSC) $(FONT_DIR)
-
-# step2 : compress sharedFonts and them in local directory
+# compress sharedFonts and them in local directory
 $(FONT_TABLE): $(FONT_RSC)
 	$(GEN_FONT_TABLE) $(FONT_TIMESTAMP) $(FONT_RSC)
 
