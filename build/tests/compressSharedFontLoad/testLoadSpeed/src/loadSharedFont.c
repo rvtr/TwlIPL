@@ -75,7 +75,7 @@ void LoadSharedFont( STicks *pTicks )
 		return;
 	}
 	
-    for( i = OS_SHARED_FONT_WW_S; i < OS_SHARED_FONT_MAX; i++ )
+    for( i = OS_SHARED_FONT_WW_L; i < OS_SHARED_FONT_MAX; i++ )
     {
         int origsize;
 #if (UNCOMPRESS_FONTS==1)
