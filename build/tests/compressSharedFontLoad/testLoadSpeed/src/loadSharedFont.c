@@ -167,7 +167,7 @@ void WriteFontIntoSD( void )
 
     FS_InitFile( fp );
 
-    for( i = OS_SHARED_FONT_WW_S; i < OS_SHARED_FONT_MAX; i++ )
+    for( i = OS_SHARED_FONT_WW_L; i < OS_SHARED_FONT_MAX; i++ )
     {
         pFont = s_pFontBuffer[i];
         size = OS_GetSharedFontSize(i);
