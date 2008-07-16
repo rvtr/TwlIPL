@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
@@ -27,8 +27,12 @@
 #include <twl/mi.h>
 #include <nitro/std.h>
 #include <twl/lcfg.h>
+
+#ifdef TWL_IPL_USE_RED_IPL
 #include <sysmenu.h>
 #include <sysmenu/hotsw.h>
+#endif
+
 // #include <twl/dsp.h>
 // #include <twl/dsp/common/pipe.h>
 #include "DEMOBitmap.h"
