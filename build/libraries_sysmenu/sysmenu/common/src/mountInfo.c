@@ -89,10 +89,6 @@ void SYSMi_SetLauncherMountInfo( void )
 	// デフォルトリストをバッファにコピー
 	MI_CpuCopyFast( s_defaultMountList, mountListBuffer, sizeof(s_defaultMountList) );
 	
-	if( ( *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG & 0x80 ) == 0 ) {
-		MI_CpuClearFast( (u8 *)header->sub_mount_info_ram_address, SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN );
-	}
-	
 	// bootSRLパスの設定は、ランチャーが自分で設定するのは厄介なので、NANDファームから引き渡してもらう
 	
 	// セーブデータ有無によるマウント情報の編集
