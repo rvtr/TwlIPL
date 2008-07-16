@@ -826,19 +826,6 @@ typedef struct NandFirmResetParameter {
 			a=FALSE;
 		}
 	}
-	PrintfSJIS( 1, 12, TXT_COLOR_RED,
-					"ValidLParam:%d\n", SYSMi_GetWork()->flags.common.isValidLauncherParam );
-#define OSi_GetNandFirmResetParam()         ( (NandFirmResetParameter *)HW_NAND_FIRM_HOTSTART_FLAG )
-	PrintfSJIS( 1, 24, TXT_COLOR_RED,
-					"HotStartFlag:%d\n", OSi_GetNandFirmResetParam()->isHotStart );
-	PrintfSJIS( 1, 36, TXT_COLOR_RED,
-					"ResetSWFlag:%d\n", OSi_GetNandFirmResetParam()->isResetSW );
-	PrintfSJIS( 1, 48, TXT_COLOR_RED,
-					"LParamCRC16:%.04x\n", SVC_GetCRC16( 65535, &SYSMi_GetLauncherParamAddr()->body, SYSMi_GetLauncherParamAddr()->header.bodyLength ) );
-	PrintfSJIS( 1, 60, TXT_COLOR_RED,
-					"NandFirmResetParam:%.01x\n", *(u8 *)(OSi_GetNandFirmResetParam()) );
-	PrintfSJIS( 1, 72, TXT_COLOR_RED,
-					"McuVersion:%d\n", SYSMi_GetMcuVersion() );
 #endif
 
 	// キー及びタッチ制御
