@@ -39,7 +39,7 @@ my $headerFile = "header.bin";
 my $digestFile = "sha1.bin";
 my $signFile   = "sign.bin";
 my $tempFile   = "temp.bin";
-my $compprog   = "./compBLZ_modified/bin/compBLZ.exe";    # 圧縮プログラム
+my $compprog   = "compBLZ.exe";    # 圧縮プログラム
 my $compoption = "-e \"\"";
 #my $compprog   = "./ntrcomp/gcc/ntrcomp.exe";
 #my $compoption = "-h8 -A32 -s";
@@ -54,12 +54,13 @@ sub deleteTemp {
 }
 
 # 環境変数からSDKのルートをサーチして(ntrcompの場所特定に必要)
-#foreach ( sort keys ( %ENV ) ){
-#    if ($_ =~ m/TWLSDK_ROOT/s) {
-#        $SDKROOT = $ENV{$_};
-#    }
-#}
-#printf "TWLSDK_ROOT is ${SDKROOT}\n";
+foreach ( sort keys ( %ENV ) ){
+    if ($_ =~ m/TWLSDK_ROOT/s) {
+        $SDKROOT = $ENV{$_};
+    }
+}
+printf "TWLSDK_ROOT is ${SDKROOT}\n";
+$compprog = "${SDKROOT}/tools/bin/" . $compprog;
 
 my $signSize   = 0x80;
 my $headerSize = 0x20;
