@@ -178,6 +178,12 @@ void TwlMain( void )
     OS_Init();
     SYSM_SetArena();                                // OS_Initの後でコールする必要あり。
 
+	// ColdStart時は、ロゴデモが終わるまでは、HWリセットボタンによるHotBootフラグセットを抑制する。
+	// （「健康と安全」画面を必ず表示するため）
+	if( !SYSM_IsHotStart() ) {
+		OSi_SetEnableHotBoot( FALSE );
+	}
+	
     // OS初期化------------------------
     OS_InitTick();
     
@@ -463,6 +469,8 @@ MAIN_LOOP_START:
                 }else {
                     state = LOAD_START;
                 }
+				// ロゴデモが終了した場合は、HotBootフラグ抑制を解除する。
+				OSi_SetEnableHotBoot( TRUE );
 			}
             break;
         case LAUNCHER_INIT:
@@ -487,6 +495,8 @@ MAIN_LOOP_START:
 	            SYSM_StartLoadTitle( pBootTitle );
     	        state = LOADING;
     	        start = OS_GetTick();
+				// 念のため必ず通るパスでもショートカット起動、HotBootフラグ抑制を解除しておく。
+				OSi_SetEnableHotBoot( TRUE );
 			}
             break;
         case LOADING:
@@ -592,7 +602,7 @@ MAIN_LOOP_START:
         //（蓋開き状態とデバッガ接続中のキャンセルはデフォルトで行う）
         if ( PollingInstallWlanFirmware() )
         {
-            UTL_GoSleepMode();
+	        UTL_GoSleepMode();
         }
 #endif // DISABLE_SLEEP
     }
