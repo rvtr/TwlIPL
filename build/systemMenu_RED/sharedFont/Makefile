@@ -18,26 +18,32 @@
 
 TARGET_FIRM			=	SYSTEMMENU
 
+SUBDIRS			=	compBLZ_modified \
+					ntrcomp
+
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-FONT_TIMESTAMP	=	08071200
+FONT_TIMESTAMP	=	08061300
 FONT_DIR		=	WW
 FONTS			=	TBF1_l.NFTR \
 					TBF1_m.NFTR \
 					TBF1_s.NFTR
 FONT_RSC		=	$(addprefix $(FONT_DIR)/, $(FONTS))
 
+FONT_ORG_DIR	=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/sharedFont/WW
+FONT_ORG_RSC	=	$(addprefix $(FONT_ORG_DIR)/, $(FONTS))
+
 ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
 FONT_TABLE		=	TWLFontTable.dat
 endif
 
-GEN_FONT_TABLE	=	$(SYSMENU_TOOLSDIR)/bin/genFontTable.plx
+GEN_FONT_TABLE	=	./genFontTable.plx
 
 #----------------------------------------------------------------------------
 INSTALL_TARGETS	=	$(FONT_TABLE)
 INSTALL_DIR		=	$(TWL_IPL_RED_ROOT)/build/systemMenu_tools/NandInitializerRed/data
 
-LDIRT_CLEAN		=	
+LDIRT_CLEAN		=	$(FONT_TABLE) $(FONT_RSC)
 
 #----------------------------------------------------------------------------
 
@@ -45,7 +51,12 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 do-build : $(FONT_TABLE)
 
-$(FONT_TABLE): $(FONT_RSC) ./Makefile
+# step1 : copy sharedFonts into local directory for work
+$(FONT_RSC):
+	cp $(FONT_ORG_RSC) $(FONT_DIR)
+
+# step2 : compress sharedFonts and them in local directory
+$(FONT_TABLE): $(FONT_RSC)
 	$(GEN_FONT_TABLE) $(FONT_TIMESTAMP) $(FONT_RSC)
 
 #===== End of Makefile =====
