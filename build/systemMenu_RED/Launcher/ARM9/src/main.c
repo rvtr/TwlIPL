@@ -563,6 +563,7 @@ MAIN_LOOP_START:
             }
             break;
         case STOP:                                              // í‚é~
+			OS_Terminate();
             break;
         }
 
