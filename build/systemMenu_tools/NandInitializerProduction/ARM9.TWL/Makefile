@@ -58,11 +58,11 @@ MAKEROM_ARM7		=	$(MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
 
 SRCS		=	main.c \
 				kami_pxi.c \
-				kami_write_nandfirm.c \
 				font_data.c \
 				graphics.c \
 				keypad.c \
 				kami_font.c \
+				kami_write_nandfirm.c \
 				cursor.c \
 				process_format.c \
 				process_topmenu.c \
@@ -122,7 +122,8 @@ SDK_APPEND_LIBS			=	\
 							libsfs$(TWL_LIBSUFFIX).a \
 							libnam$(TWL_LIBSUFFIX).a \
 							libsea$(TWL_LIBSUFFIX).a \
-							liblcfg$(TWL_LIBSUFFIX).a
+							liblcfg$(TWL_LIBSUFFIX).a \
+							libna$(TWL_LIBSUFFIX).a
 
 LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
