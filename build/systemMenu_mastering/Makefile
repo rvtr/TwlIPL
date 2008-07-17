@@ -22,6 +22,7 @@ TARGET_FIRM				=	SYSTEMMENU
 
 TWL_CODEGEN                             =       ARM
 TWL_ARCHGEN                             =       LIMITED
+TWL_NANDAPP				=	TRUE
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
@@ -72,7 +73,7 @@ MASTERING_FLAGS	=	-t
 #---------------------------
 #ÉâÉìÉ`ÉÉÅ[
 #---------------------------
-$(OUT_DIR)/HNAA : $(SYSMENU_DIR)/Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNAA.srl
+$(OUT_DIR)/HNAA : $(SYSMENU_DIR)/Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNAA.nand.srl
 ifneq ($(DO_MASTERING),)
 	$(MASTERING) $(MASTERING_FLAGS) $< $(OUT_DIR)/$(SRL_DIR)/$(notdir $<)
 else
@@ -90,7 +91,7 @@ endif
 #---------------------------
 #ñ{ëÃê›íË
 #---------------------------
-$(OUT_DIR)/HNBA : $(SYSMENU_DIR)/MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNBA.srl
+$(OUT_DIR)/HNBA : $(SYSMENU_DIR)/MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNBA.nand.srl
 ifneq ($(DO_MASTERING),)
 	$(MASTERING) $(MASTERING_FLAGS) $< $(OUT_DIR)/$(SRL_DIR)/$(notdir $<)
 else
