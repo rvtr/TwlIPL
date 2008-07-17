@@ -32,7 +32,7 @@ extern "C" {
 #define TWL_NUP_HOSTNAME_LEN			64
 
 // システムメニューバージョン情報もろもろのリード
-extern BOOL ReadSystemMenuVersionInfo( void *pWork, u32 workSize );
+extern BOOL ReadSystemMenuVersionData( void *pWork, u32 workSize );
 
 
 // バージョン文字列の取得

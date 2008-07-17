@@ -129,10 +129,10 @@ void TwlMain(void)
 	// SystemMenuバージョンetc.の読み込み
 	// ::::::::::::::::::::::::::::::::::::::::::::::
 	{
-        u8 *pBuffer = Alloc( NA_VERSION_INFO_WORK_SIZE );
+        u8 *pBuffer = Alloc( NA_VERSION_DATA_WORK_SIZE );
 		
         if( pBuffer &&
-			ReadSystemMenuVersionInfo( pBuffer, NA_VERSION_INFO_WORK_SIZE ) ) {
+			ReadSystemMenuVersionData( pBuffer, NA_VERSION_DATA_WORK_SIZE ) ) {
 			// リード成功
 		}else {
 			// FATALエラー

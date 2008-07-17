@@ -29,10 +29,10 @@
 
 
 // define data----------------------------------
-#define FS_VERSION_FILE					"verinfo:/version.bin"
-#define FS_EULA_URL_FILE				"verinfo:/eula_url.bin"
-#define FS_NUP_HOSTNAME_FILE			"verinfo:/nup_host.bin"
-#define FS_TIMESTAMP_FILE				"verinfo:/time_stamp.bin"
+#define FS_VERSION_FILE					"verdata:/version.bin"
+#define FS_EULA_URL_FILE				"verdata:/eula_url.bin"
+#define FS_NUP_HOSTNAME_FILE			"verdata:/nup_host.bin"
+#define FS_TIMESTAMP_FILE				"verdata:/time_stamp.bin"
 
 typedef struct SystemMenuVersion {
 	u16		major;
@@ -53,7 +53,7 @@ static u32 s_timestamp;
 
 
 // システムメニューバージョンのリード
-BOOL ReadSystemMenuVersionInfo( void *pWork, u32 workSize )
+BOOL ReadSystemMenuVersionData( void *pWork, u32 workSize )
 {
 	BOOL retval = TRUE;
 	
@@ -64,7 +64,7 @@ BOOL ReadSystemMenuVersionInfo( void *pWork, u32 workSize )
 	s_isRead = TRUE;
 	
 	// SystemMenuVersionのマウント（認証含む）
-	if( !NA_LoadVersionInfoArchive( pWork, workSize ) ) {
+	if( !NA_LoadVersionDataArchive( pWork, workSize ) ) {
 		return FALSE;
 	}
 	
@@ -148,7 +148,7 @@ BOOL ReadSystemMenuVersionInfo( void *pWork, u32 workSize )
     }
 	
 	// SystemMenuVersionのアンマウント
-	if( !NA_UnloadVersionInfoArchive() ) {
+	if( !NA_UnloadVersionDataArchive() ) {
 		return FALSE;
 	}
 	
