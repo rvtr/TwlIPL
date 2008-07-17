@@ -64,7 +64,7 @@ BOOL ReadSystemMenuVersionInfo( void *pWork, u32 workSize )
 	s_isRead = TRUE;
 	
 	// SystemMenuVersionのマウント（認証含む）
-	if( !NA_LoadVersionInfoArchive( pWork, workSize ) ) {
+	if( !NA_LoadVersionDataArchive( pWork, workSize ) ) {
 		return FALSE;
 	}
 	
@@ -148,7 +148,7 @@ BOOL ReadSystemMenuVersionInfo( void *pWork, u32 workSize )
     }
 	
 	// SystemMenuVersionのアンマウント
-	if( !NA_UnloadVersionInfoArchive() ) {
+	if( !NA_UnloadVersionDataArchive() ) {
 		return FALSE;
 	}
 	
