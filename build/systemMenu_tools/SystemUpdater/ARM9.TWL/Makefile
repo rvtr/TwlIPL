@@ -99,8 +99,6 @@ MAKEROM_FLAGS			:= $(filter-out -a,$(MAKEROM_FLAGS))
 MAKETAD_FLAGS			+=	-s
 
 SYSMENU_LIBS			=	\
-							libacsign$(TWL_LIBSUFFIX).a \
-							libacsign_enc$(TWL_LIBSUFFIX).a \
 							libnamut$(TWL_LIBSUFFIX).a \
 							libsysmenu$(TWL_LIBSUFFIX).a
 

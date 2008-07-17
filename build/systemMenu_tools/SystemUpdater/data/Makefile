@@ -51,10 +51,10 @@ do-build :	HNAA.tad \
 
 # maketad.updaterで作られたTADが他のフォルダに残らないように、ここでTAD化処理する。
 
-HNAA.tad: ../../../systemMenu_RED/Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNAA.srl
+HNAA.tad: ../../../systemMenu_RED/Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNAA.nand.srl
 	$(MAKETAD) $< $(MAKETAD_OPTION) -o $@
 
-HNBA.tad: ../../../systemMenu_RED/MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNBA.srl
+HNBA.tad: ../../../systemMenu_RED/MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNBA.nand.srl
 	$(MAKETAD) $< $(MAKETAD_OPTION) -o $@
 
 HNCA.tad: $(MY_WLANFIRM)
