@@ -65,15 +65,13 @@ void TwlMain( void )
 	// ARM7側でメモリ内にセットされたSCFGのデータを確保
 	MI_CpuMove16( DISPINFO_SHARED_SCFG_REG_ADDR, gArm7SCFGReg, DISPINFO_SHARED_SCFG_REG_SIZE );
 	// WRAMに退避されてる分もコピー
-	MI_CpuMove16( DISPINFO_SHARED_SCFG_WRAM_ADDR, gArm7SCFGWram,  DISPINFO_SHARED_SCFG_WRAM_SIZE );
+	MI_CpuMove16( DISPINFO_SHARED_SCFG_WRAM_ADDR, gArm7SCFGShared,  DISPINFO_SHARED_SCFG_WRAM_SIZE );
 
 	//---- interrupt setting
 	OS_EnableIrq();
 	OS_EnableInterrupts();
 
 	GX_Init();
-	OS_TPrintf( "File System Initialize...\n");
-//	FS_Init( FS_DMA_NOT_USE  );
 
 	OS_SetIrqFunction( OS_IE_V_BLANK, VBlankHandler );
 	OS_EnableIrqMask( OS_IE_V_BLANK );	
@@ -85,8 +83,11 @@ void TwlMain( void )
 	OS_TPrintf("Allocator Initialize...\n");
 	InitAllocator();
 
+#ifdef COMP_ARMADILLO
 	OS_TPrintf("NAM Initialize...\n");
 	NAM_Init( Alloc, Free );
+#endif
+
 		
 	InitBG();
 	OS_TPrintf("Initialize Finished\n");

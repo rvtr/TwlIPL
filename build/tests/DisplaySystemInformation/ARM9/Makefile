@@ -11,8 +11,8 @@
 #  in whole or in part, without the prior written consent of Nintendo.
 #
 #  $Date::            $
-#  $Rev:$
-#  $Author:$
+#  $Rev$
+#  $Author$
 # *---------------------------------------------------------------------------*/
 TARGET_FIRM	= SYSTEMMENU
 TARGET_PLATFORM	=	TWL
@@ -56,15 +56,24 @@ SDK_APPEND_LIBS		=		\
 
 LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
+DEFAULT_COMP_ARM7	=	armadillo
+
 TARGET_BIN		=	main.srl
-ROM_SPEC		=	main.rsf
+ROM_SPEC		=	main_$(DEFAULT_COMP_ARM7).rsf
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 MAKEROM			=	$(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
-DEFAULT_COMP_ARM7	=	armadillo
-DEFAULT_MAKEROM_ARM7_BASE	=	../ARM7/bin/$(TWL_BUILDTYPE_ARM7)/$(DEFAULT_COMP_ARM7)
-DEFAULT_MAKEROM_ARM7	=	$(DEFAULT_MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
+
+DEFAULT_MAKEROM_ARM7_BASE	= ../ARM7_$(DEFAULT_COMP_ARM7)/bin/$(TWL_BUILDTYPE_ARM7)/$(DEFAULT_COMP_ARM7)
+DEFAULT_MAKEROM_ARM7		= $(DEFAULT_MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
+
+MACRO_FLAGS	+= -DCOMP_ARMADILLO=TRUE
+
+ifeq ($(DEFAULTCOMP_ARM7), armadillo)
+MACRO_FLAGS	+= -DCOMP_ARMADILLO
+endif
+
 
 
 #----------------------------------------------------------------------------

@@ -24,8 +24,14 @@
 extern "C" {
 #endif
 
+typedef enum ChangeCotnrolResult{
+	CHANGE_NOTHING,
+	CHANGE_CONTROL,
+	CHANGE_VALUE_CHANGED
+} ChangeCotnrolResult;
 
-BOOL control( int *menu, int *line );
+ChangeCotnrolResult changeControl( int *menu, int *line, int *changeLine, int *changeMode );
+BOOL control( int *menu, int *line, int *changeLine, int *changeMode );
 int getMaxPage( int menu );
 int getMaxLine( int menu , int page );
 

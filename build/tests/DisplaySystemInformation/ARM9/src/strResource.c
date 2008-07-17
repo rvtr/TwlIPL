@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev$
-  $Author$
+  $Rev:$
+  $Author:$
  *---------------------------------------------------------------------------*/
 
 #include "drawFunc.h"
@@ -58,6 +58,11 @@ const char *s_strARM9RegisterName[] = {
 	"CLK",
 	"RST",
 	"EXP",
+};
+
+const char *s_strSCFGViewMode[] = {
+	"<Shared Area Data>",
+	"<Register Data>"
 };
 
 const char *s_strRootMenu[] = {
@@ -238,6 +243,11 @@ const char **s_strMetaMenu[] = {
 char *s_strAccess[] = {
 	"Inaccessible",
 	"Accessible"
+};
+
+char *s_strJoint[] = {
+	"Jointed",
+	"DisJointed"
 };
 
 char *s_strSupply[] = {

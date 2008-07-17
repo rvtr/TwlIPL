@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #ifndef	__LOAD_VIEW_INFO__
@@ -27,6 +27,12 @@ extern "C" {
 #endif
 
 ////////////////////////////////
+
+typedef enum ChangeFuncArg{
+	ARG_BOOL,
+	ARG_INT,
+	ARG_OTHER
+} ChangeFuncArg;
 
 typedef struct DispInfoEntry
 {
@@ -43,7 +49,21 @@ typedef struct DispInfoEntry
 	} str;
 	
 	int		iValue;		// データの数値型表現(インデクスとか)
+	
 	BOOL	changable;	// その値が変更可能か否か
+	
+	// ここから先はchangableがtrueのエントリのみ設定される
+	ChangeFuncArg	argType; // 値を変更するための関数の引数型
+	
+	// 値を変更するための関数
+	union {
+		void	(*cBool)(bool);
+		void	(*cInt)(int);
+	} changeFunc;
+	
+	char 		**kindNameList;	// 項目名一覧の先頭へのポインタ
+	int			numKindName;	// 項目名一覧の長さ
+	
 } DispInfoEntry;
 
 
@@ -57,7 +77,7 @@ extern OSTitleId *gContentsTitle;
 extern u16 *gContentsVersion;
 
 extern u8 gArm7SCFGReg[DISPINFO_SHARED_SCFG_REG_SIZE];		// ARM7からのデータ取得用バッファ
-extern u8 gArm7SCFGWram[DISPINFO_SHARED_SCFG_WRAM_SIZE];	// ARM7からのデータ取得用バッファ
+extern u8 gArm7SCFGShared[DISPINFO_SHARED_SCFG_WRAM_SIZE];	// ARM7からのデータ取得用バッファ
 
 ////////////////////////////////
 

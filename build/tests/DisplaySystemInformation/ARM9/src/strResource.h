@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev$
-  $Author$
+  $Rev:$
+  $Author:$
  *---------------------------------------------------------------------------*/
 
 #ifndef __DISPLAY_INFO_RESOURCE__
@@ -34,7 +34,9 @@ extern const char *s_strVersionMenu[];
 extern const char **s_strMetaMenu[];
 extern const char *s_strARM7RegisterName[];
 extern const char *s_strARM9RegisterName[];
+extern const char *s_strSCFGViewMode[];
 extern char *s_strEnable[];
+extern char *s_strJoint[];
 extern char *s_strSupply[];
 extern char *s_strRomMode[];
 extern char *s_strPSRAM[];

@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev$
-  $Author$
+  $Rev:$
+  $Author:$
  *---------------------------------------------------------------------------*/
 
 #ifndef	__DRAW_FUNC__
@@ -86,28 +86,28 @@ extern "C" {
 
 #define SCFG_ARM9_ROM_SEC			0
 #define SCFG_ARM9_ROM_STATE			1
-#define SCFG_ARM9_CPU_SPEED			2
-#define SCFG_ARM9_DSP_CLOCK			3
-#define SCFG_ARM9_CAMERA_CLOCK		4
-#define SCFG_ARM9_WRAM_CLOCK		5
-#define SCFG_ARM9_CAMERA_CKI		6
-#define SCFG_ARM9_DSP_RESET			7
-#define SCFG_ARM9_FIX_DMA			8
-#define SCFG_ARM9_FIX_GEOMETRY		9
-#define SCFG_ARM9_FIX_RENDERER		10
-#define SCFG_ARM9_FIX_2DENGINE		11
-#define SCFG_ARM9_FIX_DIVIDER		12
-#define SCFG_ARM9_FIX_CARD			13
-#define SCFG_ARM9_VRAM_EXPANSION	14
-#define SCFG_ARM9_LCDC_EXPANSION	15
-#define SCFG_ARM9_INTC_EXPANSION	16
-#define SCFG_ARM9_PSRAM_BOUNDARY	17
-#define SCFG_ARM9_NDMA_ACCESSIBLE	18
-#define SCFG_ARM9_CAMERA_ACCESSIBLE	19
-#define SCFG_ARM9_DSP_ACCESSIBLE	20
-#define SCFG_ARM9_WRAM_ACCESSIBLE	21
-#define SCFG_ARM9_MCB				22
-#define SCFG_ARM9_CFG_ACCESSIBLE	23
+#define SCFG_ARM9_CLK_CPU			2
+#define SCFG_ARM9_CLK_DSP			3
+#define SCFG_ARM9_CLK_CAM			4
+#define SCFG_ARM9_CLK_WRAM			5
+#define SCFG_ARM9_CLK_CAM_CKI		6
+#define SCFG_ARM9_RST_DSP			7
+#define SCFG_ARM9_EXT_DMA			8
+#define SCFG_ARM9_EXT_GEO			9
+#define SCFG_ARM9_EXT_REN			10
+#define SCFG_ARM9_EXT_2DE			11
+#define SCFG_ARM9_EXT_DIV			12
+#define SCFG_ARM9_EXT_MC			13
+#define SCFG_ARM9_EXT_INTC			14
+#define SCFG_ARM9_EXT_LCDC			15
+#define SCFG_ARM9_EXT_VRAM			16
+#define SCFG_ARM9_EXT_PS			17
+#define SCFG_ARM9_EXT_DMAC			18
+#define SCFG_ARM9_EXT_CAM			19
+#define SCFG_ARM9_EXT_DSP			20
+#define SCFG_ARM9_EXT_MCB			21
+#define SCFG_ARM9_EXT_WRAM			22
+#define SCFG_ARM9_EXT_CFG			23
 
 
 #define SCFG_ARM7_ROM_ARM9_SEC		0
@@ -158,7 +158,7 @@ extern "C" {
 #define SCFG_ARM7_OP_FORM			45
 #define SCFG_ARM7_OP_APP			46
 
-#define SCFG_ARM7_WRAM_OFFSET		47
+#define SCFG_ARM7_SHARED_OFFSET		47
 
 #define VERSION_WIRELESS	0
 #define VERSION_FONT		1
@@ -178,7 +178,8 @@ extern int gMenuKindOffset[ROOTMENU_SIZE][MAXITEM];
 /* function prototypes ----------------- */
 
 void drawHeader( int menu, int line );
-void drawMenu( int menu, int line );
+void drawMenu( int menu, int line, int changeLine, BOOL isChangeMode );
+void switchViewMode( void );
 
 #ifdef __cplusplus
 }

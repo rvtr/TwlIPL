@@ -1,7 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlIPL - tests - DisplaySystemInformation
   File:     drawFunc.c
-
   Copyright **** Nintendo.  All rights reserved.
 
   These coded instructions, statements, and computer programs contain
@@ -11,8 +10,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev$
-  $Author$
+  $Rev:$
+  $Author:$
  *---------------------------------------------------------------------------*/
  
 
@@ -32,7 +31,7 @@
 #define HEADER_UP 0
 #define HEADER_LEFT 10
 #define PAGE_LEFT 160
-#define FOOTER_UP 140
+#define FOOTER_UP 110
 #define FOOTER_LEFT 10
 #define ALLOW_LEFT 0
 
@@ -49,6 +48,21 @@
 #define REGISTER_DATA_LEFT	50
 #define REGISTER_DATA_UP	15
 
+#define FOOTER_REGIST 	0
+#define FOOTER_CONTROL1 1
+#define FOOTER_CONTROL2 2
+#define FOOTER_MENU		3
+#define FOOTER_LINES	4
+
+#define CHANGE_ITEMNAME_UP		20
+#define CHANGE_ITEMNAME_LEFT	20
+#define CHANGE_VALUE_LEFT 		80
+#define CHANGE_VALUE_UP 		80
+#define CHANGE_ALLOW_LEFT		(CHANGE_VALUE_LEFT - 15)
+#define CHANGE_NOW_SETTING_UP	150
+
+
+
 #define SCROLL_MARGIN 2 							// 画面端何行でスクロールするか
 
 #define UNIQUE_BUF 12
@@ -59,26 +73,22 @@
 static int gDrawIdx[ROOTMENU_SIZE];			// 今何項目目から下を描画しているのか
 static int gMenuLineSize[ROOTMENU_SIZE] = {};// 各メニューの全体行数
 static const int gRegisterIdx[2][SCFG_ARM7_MENU_SIZE];
-int gMenuKindOffset[ROOTMENU_SIZE][MAXITEM];
+static BOOL gSelectedARM7SCFGReg = TRUE;			// ARM7SCFGでレジスタサイドの描画ならtrue,共有領域ならfalse
 
 /* function prototypes -------------------- */
 
+void calibrateDrawIdx( int menu, int idx );
 void printData( int x, int y, int color, DispInfoEntry *entry );
 void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry );
 void printKindName( int menu, int entryLine, int drawOffset, int selected );
 void printBinary16( int x, int y, u16 value, int selected, int selectSize );
 void printBinary32( int x, int y, u32 value, int selected, int selectSize );
 void drawRegister( int menu, int selected );
-void drawOwnerMenu( int page, int linenum, int valueIdx, char** info, int* kindOffset, const int* pageOffset);
-void drawParentalMenu( int page, int linenum, int valueIdx, char** info, int* kindOffset, const int* pageOffset);
-void drawNormalHWMenu( int page, int linenum, int valueIdx, char** info, int* kindOffset, const int* pageOffset);
-void drawSecureHWMenu( int page, int linenum, int valueIdx, char** info, int* kindOffset, const int* pageOffset);
-void drawSCFGARM7Menu( int page, int linenum, int valueIdx, char** info, int* kindOffset, const int* pageOffset);
-void drawSCFGARM9Menu( int page, int linenum, int valueIdx, char** info, int* kindOffset, const int* pageOffset);
-void drawVersionMenu( int page, int linenum, int valueIdx, char** info, int* kindOffset, const int* pageOffset);
+void drawChangeMode( DispInfoEntry *Entry,  int changeLine );
 void printUniqueID( int drawLineOffset, char *uniqueId );
 int getPageNum( int valueIdx, const int* pageOffset );
 int countMenuLine( int menu );
+int countLinesDown( int menu, int idx );
 
 void drawHeader( int menu, int line)
 // 画面端に簡単な情報を表示する
@@ -86,23 +96,29 @@ void drawHeader( int menu, int line)
 	u16 buf[256];
 	
 	PutStringUTF16Sub( HEADER_LEFT, HEADER_UP, TXT_COLOR_RED, (const u16 *)L"DisplaySystemInfo");
+
 	if( menu != MENU_ROOT )
 	{
-
 		swprintf(buf, 256, L"Root > %s", s_strMenuName[menu] );
-		PutStringUTF16Sub( FOOTER_LEFT, FOOTER_UP + LINE_OFFSET, TXT_COLOR_BLUE, buf );	
+		PutStringUTF16Sub( FOOTER_LEFT, FOOTER_UP + FOOTER_MENU * LINE_OFFSET, TXT_COLOR_BLUE, buf );
 		
 		swprintf(buf, 256, L"%d / %d", line+1 , s_numMenu[menu] );
-		PutStringUTF16Sub( FOOTER_LEFT, FOOTER_UP + 2*LINE_OFFSET, TXT_COLOR_BLUE, buf );	
+		PutStringUTF16Sub( FOOTER_LEFT, FOOTER_UP + FOOTER_LINES * LINE_OFFSET, TXT_COLOR_BLUE, buf );	
 	}
 	else
 	{
-		PutStringUTF16Sub( FOOTER_LEFT, FOOTER_UP + LINE_OFFSET, TXT_COLOR_BLUE, (const u16 *)L"Root" );
+		PutStringUTF16Sub( FOOTER_LEFT, FOOTER_UP + FOOTER_MENU * LINE_OFFSET, TXT_COLOR_BLUE, (const u16 *)L"Root" );
 		swprintf(buf, 256, L"%d / %d", line+1 , ROOTMENU_SIZE );
-		PutStringUTF16Sub( FOOTER_LEFT, FOOTER_UP + 2*LINE_OFFSET, TXT_COLOR_BLUE, buf );			
+		PutStringUTF16Sub( FOOTER_LEFT, FOOTER_UP + FOOTER_LINES * LINE_OFFSET, TXT_COLOR_BLUE, buf );
 	}
 	
-	PutStringUTF16Sub( FOOTER_LEFT, FOOTER_UP, TXT_COLOR_BLUE, (const u16 *)L" A: Decide   B: Back ");
+	PutStringUTF16Sub( FOOTER_LEFT, FOOTER_UP + FOOTER_CONTROL1 * LINE_OFFSET, TXT_COLOR_BLUE, (const u16 *)L" A: Decide   B: Back ");
+	
+	if( menu == MENU_SCFG_ARM7 )
+	{
+		PrintfSJISSub( FOOTER_LEFT, FOOTER_UP + FOOTER_REGIST * LINE_OFFSET, TXT_COLOR_RED, s_strSCFGViewMode[ gSelectedARM7SCFGReg ] );
+		PutStringUTF16Sub( FOOTER_LEFT, FOOTER_UP + FOOTER_CONTROL2 * LINE_OFFSET, TXT_COLOR_BLUE, (const u16 *)L" Select: Switch Viewing Area" );
+	}
 }
 
 void printData( int x, int y, int color, DispInfoEntry *entry )
@@ -215,57 +231,6 @@ void drawRegister( int menu, int selected )
 		regJtag = MI_LoadLE16( &gArm7SCFGReg[DISP_REG_JTAG_OFFSET - 0x4000] );
 		regExt = MI_LoadLE32( &gArm7SCFGReg[DISP_REG_EXT_OFFSET - 0x4000] );
 		
-		/*
-		regRom =(u32)(
-						p[SCFG_ARM7_ROM_ARM9_SEC].iValue << DISP_REG_SCFG_ROM_ARM9SEL_SHIFT 	|
-						p[SCFG_ARM7_ROM_ARM9_RSEL].iValue << DISP_REG_SCFG_ROM_ARM9RSEL_SHIFT	|
-						p[SCFG_ARM7_ROM_ARM9_SEC].iValue << DISP_REG_SCFG_ROM_ARM7SEL_SHIFT		|
-						p[SCFG_ARM7_ROM_ARM7_RSEL].iValue << DISP_REG_SCFG_ROM_ARM7RSEL_SHIFT	|
-						p[SCFG_ARM7_ROM_ARM7_FUSE].iValue << DISP_REG_SCFG_ROM_ARM7FUSE_SHIFT	|
-						p[SCFG_ARM7_ROM_WE].iValue << DISP_REG_SCFG_ROM_ROMWE_SHIFT
-					);
-
-		regClk =(u16)(
-					 	p[SCFG_ARM7_CLK_SD1].iValue << DISP_REG_SCFG_CLK_SD1HCLK_SHIFT	|
-						p[SCFG_ARM7_CLK_SD2].iValue << DISP_REG_SCFG_CLK_SD2HCLK_SHIFT	|
-						p[SCFG_ARM7_CLK_AES].iValue << DISP_REG_SCFG_CLK_AESHCLK_SHIFT	|
-						p[SCFG_ARM7_CLK_WRAM].iValue << DISP_REG_SCFG_CLK_WRAMHCLK_SHIFT|
-						p[SCFG_ARM7_CLK_SND].iValue << DISP_REG_SCFG_CLK_SNDMCLK_SHIFT
-					);
-					
-		regJtag =(u16)(
-						p[SCFG_ARM7_JTAG_A7].iValue << DISP_REG_SCFG_JTAG_ARM7SEL_SHIFT	|
-						p[SCFG_ARM7_JTAG_CPU].iValue << DISP_REG_SCFG_JTAG_CPUJE_SHIFT	|
-						p[SCFG_ARM7_JTAG_DSP].iValue << DISP_REG_SCFG_JTAG_DSPJE_SHIFT
-					);
-					
-		regExt =(u32)(
-						p[SCFG_ARM7_EXT_DMA].iValue << DISP_REG_SCFG_EXT_DMA_SHIFT	|
-						p[SCFG_ARM7_EXT_SDMA].iValue << DISP_REG_SCFG_EXT_SDMA_SHIFT	|
-						p[SCFG_ARM7_EXT_SND].iValue << DISP_REG_SCFG_EXT_SND_SHIFT	|
-						p[SCFG_ARM7_EXT_MC].iValue << DISP_REG_SCFG_EXT_MC_SHIFT	|
-						p[SCFG_ARM7_EXT_INTC].iValue << DISP_REG_SCFG_EXT_INTC_SHIFT	|
-						p[SCFG_ARM7_EXT_SPI].iValue << DISP_REG_SCFG_EXT_SPI_SHIFT	|
-						p[SCFG_ARM7_EXT_DSEL].iValue << DISP_REG_SCFG_EXT_DSEL_SHIFT	|
-						p[SCFG_ARM7_EXT_SIO].iValue << DISP_REG_SCFG_EXT_SIO_SHIFT	|
-						p[SCFG_ARM7_EXT_LCDC].iValue << DISP_REG_SCFG_EXT_LCDC_SHIFT	|
-						p[SCFG_ARM7_EXT_VRAM].iValue << DISP_REG_SCFG_EXT_VRAM_SHIFT	|
-						p[SCFG_ARM7_EXT_PS].iValue << DISP_REG_SCFG_EXT_PSRAM_SHIFT	|
-						p[SCFG_ARM7_EXT_DMAC].iValue << DISP_REG_SCFG_EXT_DMAC_SHIFT	|
-						p[SCFG_ARM7_EXT_AES].iValue << DISP_REG_SCFG_EXT_AES_SHIFT	|
-						p[SCFG_ARM7_EXT_SD1].iValue << DISP_REG_SCFG_EXT_SD1_SHIFT	|
-						p[SCFG_ARM7_EXT_SD2].iValue << DISP_REG_SCFG_EXT_SD2_SHIFT	|
-						p[SCFG_ARM7_EXT_MIC].iValue << DISP_REG_SCFG_EXT_MIC_SHIFT	|
-						p[SCFG_ARM7_EXT_I2S].iValue << DISP_REG_SCFG_EXT_I2S_SHIFT	|
-						p[SCFG_ARM7_EXT_I2C].iValue << DISP_REG_SCFG_EXT_I2C_SHIFT	|
-						p[SCFG_ARM7_EXT_GPIO].iValue << DISP_REG_SCFG_EXT_GPIO_SHIFT	|
-						p[SCFG_ARM7_EXT_MCB].iValue << DISP_REG_SCFG_EXT_MC_B_SHIFT	|
-						p[SCFG_ARM7_EXT_WRAM].iValue << DISP_REG_SCFG_EXT_WRAM_SHIFT	|
-						p[SCFG_ARM7_EXT_PU].iValue << DISP_REG_SCFG_EXT_PUENABLE_SHIFT	|
-						p[SCFG_ARM7_EXT_CFG].iValue << DISP_REG_SCFG_EXT_CFG_SHIFT
-					);
-		*/
-
 		if( selected == SCFG_ARM7_EXT_PS )
 		{
 			selectRegSize = 2;
@@ -320,7 +285,7 @@ void drawRegister( int menu, int selected )
 	}
 	else if( menu == MENU_SCFG_ARM9 )
 	{
-		// ARM9側のSCFGレジスタ
+		// ARM9側のSCFGレジスタセット
 		u16 regRom = MI_LoadLE16( (void*) (HW_IOREG + REG_A9ROM_OFFSET) );
 		u16 regClk = MI_LoadLE16( (void*) (HW_IOREG + REG_CLK_OFFSET) );
 		u16 regRst = MI_LoadLE16( (void*) (HW_IOREG + REG_RST_OFFSET) );
@@ -328,7 +293,7 @@ void drawRegister( int menu, int selected )
 		u16 regMc  = MI_LoadLE16( (void*) (HW_IOREG + REG_MC_OFFSET ) );
 		selectBitNum = gRegisterIdx[1][selected];
 
-		if( selected == SCFG_ARM9_PSRAM_BOUNDARY )
+		if( selected == SCFG_ARM9_EXT_PS)
 		{
 			selectRegSize = 2;
 		}
@@ -423,11 +388,54 @@ void printBinary16( int x, int y, u16 value, int selected, int selectSize )
 	PutStringUTF16Sub( x, y, TXT_COLOR_RED, buf );
 }
 
-void drawMenu( int menu, int line )
+void drawChangeMode( DispInfoEntry *entry,  int changeLine )
+// 値変更画面の描画
+{
+	int i;
+	
+	// 項目名
+	PrintfSJIS( CHANGE_ITEMNAME_LEFT, CHANGE_ITEMNAME_UP, TXT_COLOR_RED, entry->kind );
+	
+	if( entry->kindNameList != NULL )
+	{
+		// BOOL値で変更設定する項目の場合は値一覧を選択肢として表示
+		PrintfSJIS( CHANGE_ITEMNAME_LEFT, CHANGE_NOW_SETTING_UP, TXT_COLOR_BLACK, "Now Setting: %s", entry->kindNameList[entry->iValue] );
+		
+		for( i = 0; i < entry->numKindName; i++ )
+		{
+			int kindColor = TXT_COLOR_BLACK;
+			
+			if( i == changeLine )
+			{
+				kindColor = TXT_COLOR_GREEN;
+				PutStringUTF16( CHANGE_ALLOW_LEFT, CHANGE_VALUE_UP + i*LINE_OFFSET, TXT_COLOR_BLACK, (const u16 *)L"→" );
+			}
+			
+			PrintfSJIS( CHANGE_VALUE_LEFT, CHANGE_VALUE_UP + i*LINE_OFFSET, kindColor, entry->kindNameList[i] );
+		}
+		
+		return;
+	}
+	
+}
+
+
+void drawMenu( int menu, int line, int changeLine, BOOL isChangeMode )
 // 情報一覧を描画する
 {
 	int lineNum = 0;
 	int i=0;
+	
+	drawHeader( menu, line );	
+	drawRegister( menu, line );	
+	
+	if( isChangeMode )
+	{
+		// 変更モード画面の描画
+		drawChangeMode( &gAllInfo[menu][line], changeLine );
+		return;
+	}
+	
 	
 	if( menu == MENU_ROOT )
 	{
@@ -440,28 +448,33 @@ void drawMenu( int menu, int line )
 		return;
 	}
 	
+	// 描画位置の調整
 	if( line - gDrawIdx[menu] < SCROLL_MARGIN )
 	{
 		gDrawIdx[menu] = line - SCROLL_MARGIN >= 0 ? line - SCROLL_MARGIN : 0;
 	}
-	else if( gDrawIdx[menu] + DISP_NUM_LINES - line - 1 <= SCROLL_MARGIN )	
+	else if( countLinesDown(menu, line) < SCROLL_MARGIN )	
 	{
-		// 矢印が下に近すぎる場合のスクロール補正
-		gDrawIdx[menu] = line + SCROLL_MARGIN < s_numMenu[menu] ?
-			 line + SCROLL_MARGIN - DISP_NUM_LINES + 1 : s_numMenu[menu] - DISP_NUM_LINES ;
+	
+		calibrateDrawIdx( menu, line );
 	}
 	
-
 	for( i = gDrawIdx[menu] ; i < s_numMenu[menu] && lineNum < DISP_NUM_LINES ; i++ )
 	{
 		printKindName( menu, i, lineNum, line );
-		printValue( menu, i, lineNum, &gAllInfo[menu][i] );
+		
+		if( menu == MENU_SCFG_ARM7 && !gSelectedARM7SCFGReg )
+		{
+			printValue( menu, i, lineNum, &gAllInfo[menu][i + SCFG_ARM7_SHARED_OFFSET] );
+		}
+		else
+		{
+			printValue( menu, i, lineNum, &gAllInfo[menu][i] );
+		}
 		
 		// 描画オフセットの更新
 		lineNum += gAllInfo[menu][i].numLines;
 	}
-
-	drawRegister( menu, line );
 	
 	// 全体の行数を把握
 	if( gMenuLineSize[menu] == 0 )
@@ -469,44 +482,74 @@ void drawMenu( int menu, int line )
 		gMenuLineSize[menu] = countMenuLine(menu);
 	}
 
-	// スクロールバーとか出す
+	// スクロールバーとか出す？
+	
 }
 
-
-
-/*	
-	for( linenum = 0; linenum < nowPageMaxLine; linenum++ )
+int countLinesDown( int menu, int idx )
+// 選択項目より下側に何項目表示されているかカウント
+{
+	int i;
+	int lines = 0;
+	
+	for( i = gDrawIdx[menu]; lines < DISP_NUM_LINES && i < s_numMenu[menu] ; i++ )
 	{
-		drawMenuSub( menu, line, &gAllInfo[menu][0] );
+		lines += gAllInfo[menu][i].numLines;
+	}
+	
+	return (i-1) - idx;
+}
 
-		switch( menu ){
-			case MENU_ROOT:
-				break;
-			case MENU_OWNER:
-				drawOwnerMenu( page, linenum, valueIdx, &gAllInfo[menu][0], &gMenuKindOffset[menu][0], &s_pageOffset[menu][0] );
-				break;
-			case MENU_PARENTAL:
-				drawParentalMenu( page, linenum, valueIdx, &gAllInfo[menu][0], &gMenuKindOffset[menu][0], &s_pageOffset[menu][0] );
-				break;
-			case MENU_NORMAL_HW:
-				drawNormalHWMenu( page, linenum, valueIdx, &gAllInfo[menu][0], &gMenuKindOffset[menu][0], &s_pageOffset[menu][0] );
-				break;
-			case MENU_SECURE_HW:
-				drawSecureHWMenu( page, linenum, valueIdx, &gAllInfo[menu][0], &gMenuKindOffset[menu][0], &s_pageOffset[menu][0] );
-				break;
-			case MENU_SCFG_ARM7:
-				drawSCFGARM7Menu( page, linenum, valueIdx, &gAllInfo[menu][0], &gMenuKindOffset[menu][0], &s_pageOffset[menu][0] );
-				break;
-			case MENU_SCFG_ARM9:
-				drawSCFGARM9Menu( page, linenum, valueIdx, &gAllInfo[menu][0], &gMenuKindOffset[menu][0], &s_pageOffset[menu][0] );
-				break;
-			case MENU_VERSION:
-				drawVersionMenu( page, linenum, valueIdx, &gAllInfo[menu][0], &gMenuKindOffset[menu][0], &s_pageOffset[menu][0] );
-				break;
-		}	
-*/
+void calibrateDrawIdx( int menu, int idx )
+// 折り返し項目とかがあると描画位置がずれるので
+// 下側に常に2項目表示されるように補正を行う
+{
+	int i;
+	int lines = 0;
+	
+	// まずは自分と下2項目の行数を探索
+	for( i = 0; i <= 2 && i + idx < s_numMenu[menu] ; i++ )
+	{
+		lines += gAllInfo[menu][i + idx].numLines;
+	}
+	
+	// 自分より上方向へ探索
+	for( i = 1; 0 <= idx - i && lines < DISP_NUM_LINES ; i++)
+	{
+		lines += gAllInfo[menu][idx - i].numLines;
+	}
+	
+	// ループが一回余計に回る
+	i--;
+	
+	if( lines < DISP_NUM_LINES )
+	{
+		// idx - iがゼロより小さくなった場合
+		gDrawIdx[menu] = 0;
+	}
+	else if( lines == DISP_NUM_LINES )
+	{
+		// 表示行数ちょうどはそのまま
+		gDrawIdx[menu] = idx - i;
+	}
+	else if( lines == DISP_NUM_LINES + 1  && gAllInfo[menu][ idx - i ].numLines != 1)
+	{
+		// 1行溢れてて、かつ一番上の項目が複数行描画だった場合はそのまま
+		gDrawIdx[menu] = idx - i;
+	}
+	else
+	{
+		// それ以外の場合は一番上の行を外す
+		gDrawIdx[menu] = idx - i + 1;
+	}
+	
+}
 
-
+void switchViewMode( void )
+// ARM7SCFGのレジスタデータと共有領域データの表示内容を切り替える
+{
+	gSelectedARM7SCFGReg = !gSelectedARM7SCFGReg;
+}
 
 /*
 void drawKindName( int menu, int page, int line )

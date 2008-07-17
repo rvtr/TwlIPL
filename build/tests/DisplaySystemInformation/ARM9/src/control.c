@@ -20,16 +20,113 @@
 #include "drawFunc.h"
 #include "control.h"
 #include "strResource.h"
+#include "viewSystemInfo.h"
 
 static int selectLine[ROOTMENU_SIZE+1];
 
+ChangeCotnrolResult changeControl( int *menu, int *line, int *changeLine, int *changeMode )
+{
+	int linemax = gAllInfo[*menu][*line].numKindName;
+	BOOL controlFlag = FALSE;
 
-BOOL control( int *menu, int *line )
+	if( !gAllInfo[*menu][*line].changable )
+	{
+		*changeMode = FALSE;
+		return CHANGE_CONTROL;
+	}
+		
+	// 上下で項目変更
+	if( pad.trg & PAD_KEY_UP )
+	{
+		controlFlag = TRUE;
+		
+		if( --(*changeLine) < 0 )
+		{
+			// ラインをデクリメントした結果マイナスになったら一番最後へ
+			*changeLine = linemax - 1;
+		}
+	}
+	else if( pad.trg & PAD_KEY_DOWN )
+	{
+		controlFlag = TRUE;
+		
+		if( ++(*changeLine) >= linemax )
+		{
+			// ラインをインクリメントした結果、maxlineを超えたら最初へ
+			*changeLine = 0;
+		}
+	}
+
+	if( pad.trg & PAD_BUTTON_A )
+	{
+		switch( gAllInfo[*menu][*line].argType )
+		{
+			case ARG_INT:
+				gAllInfo[*menu][*line].changeFunc.cInt(*changeLine);
+				break;
+			
+			case ARG_BOOL:
+				gAllInfo[*menu][*line].changeFunc.cBool(*changeLine);
+				break;
+				
+			case ARG_OTHER:
+				// 論理値でもintでも渡せない関数は残念な対応をする
+				if( *menu == MENU_SCFG_ARM7 && *line == SCFG_ARM9_RST_DSP )
+				{
+					*changeLine == 0 ? SCFG_ReleaseResetDSP(): SCFG_ResetDSP();
+				}
+				else if( *menu == MENU_SCFG_ARM7 && *line == SCFG_ARM9_EXT_PS )
+				{
+					SCFGPsramBoundary idx = SCFG_PSRAM_BOUNDARY_4MB;
+					
+					switch(*changeLine)
+					{
+						case 0:
+							idx = SCFG_PSRAM_BOUNDARY_4MB;
+							break;
+						case 1:
+							idx = SCFG_PSRAM_BOUNDARY_16MB;
+							break;
+						case 2:
+							idx = SCFG_PSRAM_BOUNDARY_32MB;
+							break;
+					}
+					
+					SCFG_SetPsramBoundary( idx );
+					
+				}
+				
+				else if( *menu == MENU_SCFG_ARM7 && *line == SCFG_ARM9_EXT_CFG )
+				{
+					if( *changeLine == 0 )
+					{
+						SCFG_SetConfigBlockInaccessible();
+					}
+				}
+				
+				break;
+		}
+		
+		return CHANGE_VALUE_CHANGED;
+	}
+
+	// Bでキャンセルして戻る
+	if( pad.trg & PAD_BUTTON_B )
+	{
+		controlFlag = TRUE;
+		*changeMode = FALSE;
+	}
+	
+	return controlFlag ? CHANGE_CONTROL : CHANGE_NOTHING ;
+}
+
+
+BOOL control( int *menu, int *line, int *changeLine, int *changeMode )
 {
 	int linemax = s_numMenu[*menu]; // 選択中ページの項目数
 	BOOL controlFlag = FALSE;				// 何か操作があったらTRUEになる
 
-	// 上下で項目変更								
+	// 上下で項目変更
 	if( pad.trg & PAD_KEY_UP )
 	{
 		controlFlag = TRUE;
@@ -73,13 +170,12 @@ BOOL control( int *menu, int *line )
 		}
 	}
 
-
 	if( pad.trg & PAD_BUTTON_A )
 	{
-		controlFlag = TRUE;
-		
 		if(*menu == MENU_ROOT)
 		{
+			controlFlag = TRUE;
+			
 			// 今の画面の選択位置を記録
 			selectLine[ROOTMENU_SIZE] = *line;
 
@@ -87,9 +183,13 @@ BOOL control( int *menu, int *line )
 			*menu = *line;
 			*line = selectLine[*menu];
 		}
-		else
+		else if( gAllInfo[*menu][*line].changable )
 		{
-			// !!! 設定可能な項目だったら設定変更画面
+			controlFlag = TRUE;
+
+			// 変更可能な項目は変更画面を開く
+			*changeMode = TRUE;
+			*changeLine = gAllInfo[*menu][*line].iValue;
 		}
 		
 	}
@@ -98,14 +198,21 @@ BOOL control( int *menu, int *line )
 	{
 		if( *menu != MENU_ROOT )
 		{
-			// !!! とりあえず今はルートに戻る
-			// 値設定画面の時はキャンセルするだけにする
 			controlFlag = TRUE;
-			
+
+			// 設定値表示画面のときはルートに戻る
 			selectLine[*menu] = *line;
 			*menu = MENU_ROOT;
 			*line = selectLine[ROOTMENU_SIZE];
 		}
+	}
+
+	if( ( pad.trg & PAD_BUTTON_SELECT ) && *menu == MENU_SCFG_ARM7 )
+	{
+		controlFlag = TRUE;
+		
+		// ARM7SCFGの表示データを切り替える
+		switchViewMode();
 	}
 		
 	return controlFlag;

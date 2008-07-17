@@ -20,7 +20,7 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS		=	banner ARM7 ARM9
+SUBDIRS		=	banner ARM7_armadillo ARM7_racoon ARM9
 
 #----------------------------------------------------------------------------
 
