@@ -26,6 +26,7 @@ extern "C" {
 // Define -------------------------------------------------------------------
 #define SYSM_HOTSW_ENABLE_ROMEMU
 #define USE_WRAM_LOAD
+//#define INITIAL_KEYTABLE_PRELOAD
 //#define USE_NEW_DMA
 //#define HOTSW_NO_MESSAGE					// Printf抑制スイッチ
 
@@ -37,6 +38,9 @@ extern "C" {
 		#define HOTSW_TPrintf				OS_TPrintf
 		#define HOTSW_PutString				OS_PutString
 	#endif
+#else
+		#define HOTSW_TPrintf( ... )        ((void)0)
+		#define HOTSW_PutString( ... )      ((void)0)
 #endif
 
 // enum   -------------------------------------------------------------------
