@@ -576,12 +576,18 @@ static BOOL isTwlModeLoad(void)
 {
     // TWLカード
     if(s_cbData.id_nml & HOTSW_ROMID_TWLROM_MASK){
-        // PlatformCodeがTwl or Hybridの場合
-        if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
-            return TRUE;
+        // NANDアプリの場合
+        if(s_cbData.pBootSegBuf->rh.s.titleID_Hi & TITLE_ID_HI_MEDIA_MASK){
+			return FALSE;
         }
         else{
-            return FALSE;
+        	// PlatformCodeがTwl or Hybridの場合
+        	if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
+            	return TRUE;
+        	}
+        	else{
+            	return FALSE;
+        	}
         }
     }
     // DSカード
