@@ -16,13 +16,41 @@
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
+#include <twl/lcfg.h>
 #include "misc.h"
 #include "drawFunc.h"
 #include "control.h"
 #include "strResource.h"
 #include "viewSystemInfo.h"
 
+#define SAVE_COUNT_MASK                 0x7f        // saveCountの値の範囲をマスクする。(0x00-0x7f）
+
+
+// TSFヘッダ
+typedef struct TSFHeader{
+    union digest {
+        u8              sha1[ SVC_SHA1_DIGEST_SIZE ];   // SHA-1ダイジェスト
+        u8              rsa[ RSA_KEY_LENGTH ];          // RSA署名
+        u8              dst[ RSA_KEY_LENGTH ];          // 転送用の最大サイズ要素
+    }digest;
+    u8                  version;                        // データver.
+    u8                  saveCount;                      // セーブカウント（ミラーリングしないファイルは使用しない）
+    u8                  rsv[2];                         // 予約
+    u32                 bodyLength;                     // データ長
+}TSFHeader; // 134bytes
+
+static const char *s_TSDPath[] = {
+    (const char *)"nand:/shared1/TWLCFG0.dat",
+    (const char *)"nand:/shared1/TWLCFG1.dat",
+};
+
+
 static int selectLine[ROOTMENU_SIZE+1];
+void resetUserData( int idx );
+void breakUserData( int idx );
+static void TSDi_ClearSettingsDirect( LCFGTWLSettingsData *pTSD );
+static BOOL LCFGi_TSD_WriteSettingsDirectForRecovery( const LCFGTWLSettingsData *pSrcInfo, int index );
+BOOL LCFGi_TSF_WriteFile( char *pPath, TSFHeader *pHeader, const void *pSrcBody, u8 *pSaveCount );
 
 ChangeCotnrolResult changeControl( int *menu, int *line, int *changeLine, int *changeMode )
 {
@@ -172,7 +200,7 @@ BOOL control( int *menu, int *line, int *changeLine, int *changeMode )
 
 	if( pad.trg & PAD_BUTTON_A )
 	{
-		if(*menu == MENU_ROOT)
+		if(*menu == MENU_ROOT && *line <= MENU_VERSION)
 		{
 			controlFlag = TRUE;
 			
@@ -182,6 +210,16 @@ BOOL control( int *menu, int *line, int *changeLine, int *changeMode )
 			// 次のメニュー画面を開く
 			*menu = *line;
 			*line = selectLine[*menu];
+		}
+		else if( *menu == MENU_ROOT && *line == MENU_RESET_INFO )
+		{
+			resetUserData(0);
+			resetUserData(1);
+		}
+		else if( *menu == MENU_ROOT && *line <= MENU_BREAK_DATA )
+		{
+			breakUserData(0);
+			breakUserData(1);
 		}
 		else if( gAllInfo[*menu][*line].changable )
 		{
@@ -243,4 +281,137 @@ int getMaxLine( int menu , int page )
 	if( menu == MENU_ROOT) return ROOTMENU_SIZE;
 	
 	return s_pageOffset[menu][page+1] - s_pageOffset[menu][page];
+}
+
+void resetUserData( int idx )
+// idx(0 or 1)番目のユーザデータをリセットする
+{
+	u8 *dataBuf = (u8*) Alloc (LCFG_READ_TEMP);
+	
+	LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ])dataBuf );
+	TSDi_ClearSettingsDirect( (LCFGTWLSettingsData *)(&dataBuf[ LCFG_TEMP_BUFFER_SIZE*idx ]) );
+	LCFGi_TSD_WriteSettingsDirectForRecovery( (LCFGTWLSettingsData *)&dataBuf[ LCFG_TEMP_BUFFER_SIZE*idx ], idx );
+}
+
+void breakUserData( int idx )
+{
+	// LCFG APIを使わずに、FSレベルでファイルを読んで、データを破壊してから書き戻す
+	FSFile file;
+	FSResult res;
+	u8 *fileBuf = (u8*) Alloc ( LCFG_TEMP_BUFFER_SIZE );
+	
+	FS_InitFile( &file );
+
+	if( !FS_OpenFileEx( &file, s_TSDPath[idx], FS_FILEMODE_R | FS_FILEMODE_W ) )
+	{
+		OS_TPrintf("OpenFile failed. result: %d path: %s\n", FS_GetArchiveResultCode(&file), s_TSDPath[idx]);
+		return;
+	}
+/*	
+	if( FS_ReadFile( &file, fileBuf, LCFG_TEMP_BUFFER_SIZE ) == -1 )
+	{
+		OS_TPrintf("readFile failed. path: %s\n", s_TSDPath[idx]);
+		return;
+	}
+*/	
+	// 適当にデータを壊す
+	MI_CpuFill8( fileBuf, 0xFF, LCFG_TEMP_BUFFER_SIZE );
+	
+	// データの書き戻し
+	FS_SeekFileToBegin( &file );
+	
+	if( FS_WriteFile( &file, fileBuf, LCFG_TEMP_BUFFER_SIZE ) == -1 )
+	{
+		OS_TPrintf("writeFile failed. path: %s\n", s_TSDPath[idx]);
+		return;
+	}
+
+	OS_TPrintf("Breaking UserData Succeeded. path: %s\n", s_TSDPath[idx]);
+}
+
+// TWL設定データの直接クリア
+static void TSDi_ClearSettingsDirect( LCFGTWLSettingsData *pTSD )
+{
+    int i;
+    MI_CpuClearFast( pTSD, sizeof(LCFGTWLSettingsData) );
+    // 初期値が"0"以外のもの
+    pTSD->owner.userColor = OS_FAVORITE_COLOR_MAGENTA;	// 2008.06.23 UIG松島さんの要望により
+    pTSD->owner.birthday.month  = 1;
+    pTSD->owner.birthday.day    = 1;
+	pTSD->flags.isAvailableWireless = 1;
+	pTSD->launcherStatus.InstalledSoftBoxCount = 0;
+	pTSD->launcherStatus.freeSoftBoxCount      = LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX;
+	pTSD->agreeEulaVersion[ 0 ] = 1;
+    // 言語コードはHW情報の言語ビットマップから算出
+    for( i = 0; i < LCFG_TWL_LANG_CODE_MAX; i++ ) {
+        if( OS_GetValidLanguageBitmap() & ( 0x0001 << i ) ) {	// ValidLanguageBitmap情報は、ランチャーがMMEMにロードしたものを使用
+            pTSD->language = (LCFGTWLLangCode)i;
+            break;
+        }
+    }
+}
+
+
+
+
+// 指定データの値をファイルに直接ライト(リカバリ用にs_indexTSDの変更をライト後に行う）
+static BOOL LCFGi_TSD_WriteSettingsDirectForRecovery( const LCFGTWLSettingsData *pSrcInfo, int index )
+{
+	u8 saveCount = 0;
+    // ヘッダの作成
+    TSFHeader header;
+    MI_CpuClear8( &header, sizeof(TSFHeader) );
+    header.version = LCFG_TWL_SETTINGS_DATA_VERSION;
+    header.bodyLength = sizeof(LCFGTWLSettingsData);
+    SVC_CalcSHA1( header.digest.sha1, pSrcInfo, sizeof(LCFGTWLSettingsData) );
+	
+    // ファイルにライト
+    if( !LCFGi_TSF_WriteFile( (char *)s_TSDPath[ index ],
+                        &header,
+                        (const void *)pSrcInfo,
+                        &saveCount ) ) {
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+// TWLファイルのライト
+BOOL LCFGi_TSF_WriteFile( char *pPath, TSFHeader *pHeader, const void *pSrcBody, u8 *pSaveCount )
+{
+    BOOL retval = FALSE;
+    FSFile file;
+    FS_InitFile( &file );
+    
+    if( pSaveCount ) {
+        *pSaveCount = (u8)( ( *pSaveCount + 1 ) & SAVE_COUNT_MASK );
+        pHeader->saveCount = *pSaveCount;
+    }else {
+        pHeader->saveCount = 0;
+    }
+    
+    OS_TPrintf( "Write > %s : %d\n", pPath, pHeader->saveCount );
+    
+    // ファイルオープン
+    if( !FS_OpenFileEx( &file, pPath, FS_FILEMODE_R | FS_FILEMODE_W ) ) {       // R|Wモードで開くと、既存ファイルを残したまま更新。
+        OS_TPrintf( "Write : file open error. %s\n", pPath );
+        return FALSE;
+    }
+    
+    // ライト
+    if( FS_WriteFile( &file, pHeader, sizeof(TSFHeader) ) < sizeof(TSFHeader) ) {
+        OS_TPrintf( "Write : file header write error. %s\n", pPath );
+        goto END;
+    }
+    if( FS_WriteFile( &file, pSrcBody, (long)pHeader->bodyLength ) < pHeader->bodyLength ) {
+        OS_TPrintf( "Write : file body write error. %s\n", pPath );
+        goto END;
+    }
+    
+    retval = TRUE;
+END:
+    // ファイルクローズ
+    (void)FS_CloseFile( &file );
+    
+    return retval;
 }

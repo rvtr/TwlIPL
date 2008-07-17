@@ -99,7 +99,7 @@ void drawHeader( int menu, int line)
 
 	if( menu != MENU_ROOT )
 	{
-		swprintf(buf, 256, L"Root > %s", s_strMenuName[menu] );
+		swprintf(buf, 256, L"Root > %s", s_strRootMenu[menu] );
 		PutStringUTF16Sub( FOOTER_LEFT, FOOTER_UP + FOOTER_MENU * LINE_OFFSET, TXT_COLOR_BLUE, buf );
 		
 		swprintf(buf, 256, L"%d / %d", line+1 , s_numMenu[menu] );
@@ -194,6 +194,7 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 	if( menu == MENU_PARENTAL && entryLine == PARENTAL_PASSWORD )
 	{
 		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawOffset, TXT_COLOR_BLACK, "%04d", entry->iValue );
+		return;
 	}
 	
 	

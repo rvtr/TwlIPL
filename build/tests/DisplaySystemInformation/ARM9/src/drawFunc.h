@@ -31,7 +31,7 @@ extern "C" {
 
 #define DISP_NUM_LINES 11		// 一ページあたりの項目数
 
-#define ROOTMENU_SIZE 7
+#define ROOTMENU_SIZE 9
 #define OWNERMENU_SIZE 6
 #define PARENTALMENU_SIZE 12
 #define NORMAL_HW_MENU_SIZE 4
@@ -42,14 +42,17 @@ extern "C" {
 
 
 // メニューID
-#define MENU_ROOT 10
-#define MENU_OWNER 0
-#define MENU_PARENTAL 1
-#define MENU_NORMAL_HW 2
-#define MENU_SECURE_HW 3
-#define MENU_SCFG_ARM7 4
-#define MENU_SCFG_ARM9 5
-#define MENU_VERSION 6
+#define MENU_ROOT 		10
+#define MENU_OWNER 		0
+#define MENU_PARENTAL 	1
+#define MENU_NORMAL_HW	2
+#define MENU_SECURE_HW	3
+#define MENU_SCFG_ARM7	4
+#define MENU_SCFG_ARM9	5
+#define MENU_VERSION	6
+#define MENU_RESET_INFO	7
+#define MENU_BREAK_DATA	8
+
 
 // 行番号
 #define OWNER_LANGUAGE			0

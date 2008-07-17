@@ -66,25 +66,16 @@ const char *s_strSCFGViewMode[] = {
 };
 
 const char *s_strRootMenu[] = {
-	"Owner",
-	"Parental control",
-	"Normal Hardware Info",
-	"Secure Hardware Info",
-	"SCFG Info (ARM7 side)",
-	"SCFG Info (ARM9 side)",
-	"Content Version"
+	"< Owner >",
+	"< Parental control >",
+	"< Normal Hardware Info >",
+	"< Secure Hardware Info >",
+	"< SCFG Info (ARM7 side) >",
+	"< SCFG Info (ARM9 side) >",
+	"< Content Version >",
+	"Reset HW Setting to Default",
+	"break HW Setting"
 };
-
-const char *s_strMenuName[] = {
-	"Owner",
-	"Parental control",
-	"Normal Hardware Info",
-	"Secure Hardware Info",
-	"SCFG Info (ARM7 side)",
-	"SCFG Info (ARM9 side)",
-	"Content Version"
-};
-
 
 const char *s_strOwnerMenu[] = {
 	"Language",

@@ -23,7 +23,6 @@ extern const int s_pageOffset[ROOTMENU_SIZE][MAXPAGE];
 
 extern const u8 s_numMenu[];
 extern const char *s_strRootMenu[];
-extern const char *s_strMenuName[];
 extern const char *s_strOwnerMenu[];
 extern const char *s_strParentalMenu[];
 extern const char *s_strNormalHWMenu[];
