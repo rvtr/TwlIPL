@@ -481,7 +481,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
     //-----------------------------------------------------
     if( ( PAD_Read() & SYSM_PAD_SHORTCUT_TP_CALIBRATION ) ==
 		SYSM_PAD_SHORTCUT_TP_CALIBRATION ) {
-		argument      = OS_TWL_MACHINE_SETTING_TP_CALIBRATION;
+		argument      = 101;
 		isSetArgument = TRUE;
 		isBootMSET    = TRUE;
     }
