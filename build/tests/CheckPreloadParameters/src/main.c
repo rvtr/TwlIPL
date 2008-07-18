@@ -23,7 +23,7 @@ OSOwnerInfoEx s_owner;
 static char *s_strCountry[ 256 ];
 static char *s_strRegion[ OS_TWL_REGION_MAX ];
 static char *s_strUserColor[ OS_FAVORITE_COLOR_MAX ];
-static char *s_strRatingOgn[ 10 ];
+static char *s_strRatingOgn[ OS_TWL_PCTL_OGN_MAX ];
 static char *s_strLanguage[ OS_LANGUAGE_CODE_MAX ];
 
 
@@ -85,7 +85,7 @@ void TwlMain(void)
 		OS_TPrintf( "    WiiPoint             : %s\n", pPC->flags.wiiPoint ? "TRUE" : "FALSE" );
 		OS_TPrintf( "    PhotoExchange        : %s\n", pPC->flags.photoExchange ? "TRUE" : "FALSE" );
 		OS_TPrintf( "    UGC                  : %s\n", pPC->flags.ugc ? "TRUE" : "FALSE" );
-		OS_TPrintf( "    RatingOgn            : %s\n", s_strRatingOgn[ pPC->ogn ] );
+		OS_TPrintf( "    RatingOgn            : %s\n", pPC->ogn < LCFG_TWL_PCTL_OGN_MAX ? s_strRatingOgn[ pPC->ogn ] : s_strRatingOgn[ LCFG_TWL_PCTL_OGN_MAX ] );
 		OS_TPrintf( "    RatingAge            : %d\n", pPC->ratingAge );
 		OS_TPrintf( "    SecretQ ID           : %d\n", pPC->secretQuestionID );
 		OS_TPrintf( "    Password             : %s\n", pPC->password );
@@ -178,16 +178,22 @@ static char *s_strLanguage[] = {
 };
 
 static char *s_strRatingOgn[] = {
-	"UNDEFINED",
 	"CERO",
 	"ESRB",
+	"RESERVED2",
 	"USK",
 	"PEGI_GENERAL",
+	"RESERVED5",
 	"PEGI_PORTUGAL",
 	"PEGI_BBFC",
-	"AGCB",
 	"OFLC",
 	"GRB",
+	"RESERVED_A",
+	"RESERVED_B",
+	"RESERVED_C",
+	"RESERVED_D",
+	"RESERVED_E",
+	"UNKNOWN",
 };
 
 static char *s_strCountry[] = {
