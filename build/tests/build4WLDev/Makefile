@@ -43,20 +43,20 @@ NANDFIRM_DIR                =   $(SYSMENU_ROOT)/build/nandfirm/menu-launcher
 
 SYSTEMUPDATER_DIR			=	$(SYSMENU_ROOT)/build/systemMenu_tools/SystemUpdater
 
-SUBMAKES +=	Makefile_modification			\
-			$(SYSMENU_ROOT)/build/tools/Makefile	\
-			$(SYSMENU_ROOT)/build/libraries/Makefile	\
+SUBMAKES +=	./scripts/Makefile											\
+			$(SYSMENU_ROOT)/build/tools/Makefile						\
+			$(SYSMENU_ROOT)/build/libraries/Makefile					\
 			$(SYSMENU_ROOT)/build/libraries_sysmenu/Makefile_autogen	\
-			\
-			$(LAUNCHER_DIR)/Makefile_autogen \
-			$(MACHINESETTINGS_DIR)/Makefile_autogen \
-			$(WLANFIRM_DIR)/Makefile \
-			$(DS_HASH_TABLE)/Makefile \
-			$(SHARED_FONT_DIR)/Makefile \
-			$(NANDFIRM_DIR)/Makefile \
-			$(SYSTEMUPDATER_DIR)/data/Makefile \
-			$(SYSTEMUPDATER_DIR)/banner/Makefile \
-			$(SYSTEMUPDATER_DIR)/ARM7.TWL/Makefile \
+																		\
+			$(LAUNCHER_DIR)/Makefile_autogen							\
+			$(MACHINESETTINGS_DIR)/Makefile_autogen						\
+			$(WLANFIRM_DIR)/Makefile									\
+			$(DS_HASH_TABLE)/Makefile									\
+			$(SHARED_FONT_DIR)/Makefile									\
+			$(NANDFIRM_DIR)/Makefile									\
+			$(SYSTEMUPDATER_DIR)/data/Makefile							\
+			$(SYSTEMUPDATER_DIR)/banner/Makefile						\
+			$(SYSTEMUPDATER_DIR)/ARM7.TWL/Makefile						\
 			$(SYSTEMUPDATER_DIR)/ARM9.TWL/Makefile
 
 # COMPILE SWITCH for build SystemMenu

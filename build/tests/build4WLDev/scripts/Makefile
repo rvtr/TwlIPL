@@ -29,7 +29,7 @@ SYSMENU_LIBRARIES_DIR		=	$(SYSMENU_ROOT)/build/libraries_sysmenu
 
 SYSTEMUPDATER_DIR			=	$(SYSMENU_ROOT)/build/systemMenu_tools/SystemUpdater
 
-SCRIPTS_DIR					=	./scripts
+SCRIPTS_DIR					=	./
 
 MAKEFILES_ORG			=	$(LAUNCHER_DIR)/Makefile $(LAUNCHER_DIR)/ARM9/Makefile \
 							$(MACHINESETTINGS_DIR)/Makefile $(MACHINESETTINGS_DIR)/ARM9/Makefile
