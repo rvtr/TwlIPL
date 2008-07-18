@@ -45,8 +45,6 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 DISP_INFO	= $(call eupath,$(TWL_IPL_RED_ROOT)/build/tests/DisplaySystemInformation)
 
-#MACRO_FLAGS	+=	-DSDK_ARM7COMP_LTD
-
 ifeq ($(TWL_PLATFORM),BB)
 MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037e0000'
 else

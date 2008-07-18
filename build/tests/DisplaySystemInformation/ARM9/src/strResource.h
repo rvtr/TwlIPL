@@ -27,10 +27,11 @@
 #define MENU_SECURE_HW	4
 #define MENU_SCFG_ARM7	5
 #define MENU_SCFG_ARM9	6
-#define MENU_VERSION	7
-#define MENU_RESET_INFO	8
-#define MENU_BREAK_DATA	9
-#define MENU_RESET		10
+#define MENU_SYSMENU	7
+#define MENU_VERSION	8
+#define MENU_RESET_INFO	9
+#define MENU_BREAK_DATA	10
+
 
 // 行番号
 #define OWNER_LANGUAGE			0
@@ -151,12 +152,18 @@
 
 #define SCFG_ARM7_SHARED_OFFSET		47
 
+#define SYSMENU_VERSION_NUM		0
+#define SYSMENU_VERSION_STR		1
+#define SYSMENU_EULA_URL		2
+#define SYSMENU_NUP_HOST		3
+#define SYSMENU_TIMESTAMP		4
+
 #define VERSION_WIRELESS	0
 #define VERSION_FONT		1
 #define VERSION_OTHER		2
 
 // 各メニューサイズ
-#define ROOTMENU_SIZE 			10
+#define ROOTMENU_SIZE 			11
 #define OWNERMENU_SIZE 			6
 #define PARENTALMENU_SIZE 		12
 #define OTHERMENU_SIZE			11
@@ -164,7 +171,8 @@
 #define SECURE_HW_MENU_SIZE 	6
 #define SCFG_ARM7_MENU_SIZE 	47
 #define SCFG_ARM9_MENU_SIZE 	24
-#define VERSIONMENU_SIZE 		3
+#define SYSMENU_MENU_SIZE		5
+#define VERSIONMENU_SIZE 		2
 
 
 extern int s_numMenu[];
@@ -175,6 +183,7 @@ extern const char *s_strNormalHWMenu[];
 extern const char *s_strSecureHWMenu[];
 extern const char *s_strSCFGARM7Menu[];
 extern const char *s_strSCFGARM9Menu[];
+extern const char *s_strSystemMenu[];
 extern const char *s_strVersionMenu[];
 extern const char **s_strMetaMenu[];
 extern const char *s_strARM7RegisterName[];

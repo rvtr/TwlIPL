@@ -45,6 +45,7 @@ MEMORY
 	<END.LTDOVERLAYS>
 
 	check.LTDMAIN				(RWX) :	ORIGIN = 0x02f88000,			LENGTH = 0x74000	>	ltdmain.check
+	check.RSVWRAM				(RWX) :	ORIGIN = 0x03040000,			LENGTH = 0x08000	>	rsvwram.check
 }
 
 KEEP_SECTION
@@ -924,5 +925,11 @@ SECTIONS
 		. = SDK_SUBPRIV_ARENA_LO;
 	
 	} > check.LTDMAIN
+
+	.check.RSVWRAM:
+	{
+		. = SDK_LTDAUTOLOAD.RSVWRAM.BSS_END;
+	
+	} > check.RSVWRAM
 
 }

@@ -19,14 +19,32 @@
 #include <stdlib.h>
 #include <twl/os/common/ownerInfoEx_private.h>
 #include <twl/os/common/sharedFont.h>
+#include <twl/na.h>
 #include "misc.h"
 #include "viewSystemInfo.h"
 #include "strResource.h"
 #include "control.h"
 #include "myIoreg_SCFG.h"
 
+
+
 #define DISPINFO_BUFSIZE 64
 #define WL_TITLEID 0x0003000F484E4341
+
+#define FS_VERSION_FILE					"verdata:/version.bin"
+#define FS_EULA_URL_FILE				"verdata:/eula_url.bin"
+#define FS_NUP_HOSTNAME_FILE			"verdata:/nup_host.bin"
+#define FS_TIMESTAMP_FILE				"verdata:/time_stamp.bin"
+#define TWL_SYSMENU_VER_STR_LEN			28				// システムメニューバージョン文字列MAX bytes
+#define TWL_EULA_URL_LEN				128
+#define TWL_NUP_HOSTNAME_LEN			64
+
+
+typedef struct SystemMenuVersion {
+	u16		major;
+	u16		minor;
+	u16		str[ TWL_SYSMENU_VER_STR_LEN / sizeof(u16) ];
+}SystemMenuVersion;
 
 /* function prototype  ----------------------------- */
 void getAllInfo( void );
@@ -41,6 +59,7 @@ void getSecureHWInfo( void );
 void getSCFGARM9Info( void );
 void getSCFGARM7InfoReg( void );
 void getSCFGARM7InfoShared( void );
+void getSysmenuInfo( void );
 void getVersions( void );
 void getWirelessVersion( void );
 void getContentsVersion( void );
@@ -107,7 +126,6 @@ void displayInfoMain( void )
 		// 何か操作があったときはキャンバスクリアして描画しなおし
 	    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
    	    NNS_G2dCharCanvasClear( &gCanvasSub, TXT_COLOR_WHITE );
-		
 		// 情報一覧を描画する
 		drawMenu( menu, line, changeLine, isChangeMode);
 
@@ -131,10 +149,13 @@ void initInfo( void )
 	infoAlloc( gAllInfo[MENU_SECURE_HW], SECURE_HW_TITLEID_LO, DISPINFO_BUFSIZE, TRUE );
 	infoAlloc( gAllInfo[MENU_SCFG_ARM7], SCFG_ARM7_MI_CC, DISPINFO_BUFSIZE , TRUE );
 	infoAlloc( gAllInfo[MENU_SCFG_ARM7], SCFG_ARM7_MI_CA, DISPINFO_BUFSIZE , TRUE );
+	infoAlloc( gAllInfo[MENU_SYSMENU], SYSMENU_EULA_URL, TWL_EULA_URL_LEN + 1, FALSE );
+	infoAlloc( gAllInfo[MENU_SYSMENU], SYSMENU_NUP_HOST, TWL_NUP_HOSTNAME_LEN + 1, FALSE );
 
 	infoAlloc( gAllInfo[MENU_OWNER], OWNER_NICKNAME, OS_OWNERINFO_NICKNAME_MAX + 1 , FALSE );
 	infoAlloc( gAllInfo[MENU_OWNER], OWNER_COMMENT, OS_OWNERINFO_COMMENT_MAX + 1 , FALSE );
 	infoAlloc( gAllInfo[MENU_PARENTAL], PARENTAL_ANSWER, OS_TWL_PCTL_SECRET_ANSWER_LENGTH_MAX + 1 , FALSE );
+	infoAlloc( gAllInfo[MENU_SYSMENU], SYSMENU_VERSION_STR, TWL_SYSMENU_VER_STR_LEN + 1, FALSE );
 
 	OS_TPrintf( "information alloc succeeded\n" );
 }
@@ -175,16 +196,9 @@ void getAllInfo( void )
 	getSCFGARM7InfoReg();
 	getSCFGARM7InfoShared();
 	getSCFGARM9Info();
-
-#ifdef COMP_ARMADILLO
+	getSysmenuInfo();
 	getVersions();
-#endif
-	
-	/*
-	if( fuseRomAccessable )
-	{
-		
-	}*/
+
 	
 	printAllInfo();
 	OS_TPrintf("reflesh information finished\n");
@@ -238,12 +252,22 @@ void displayInfoInit( void )
 void printAllInfo ( void )
 {
 	int loop1, loop2;
+	OS_TPrintf(" size version: %d\n", s_numMenu[MENU_VERSION]);
 	
 	for(loop1=0; loop1 < ROOTMENU_SIZE; loop1++ )
 	{
 		for(loop2=0; loop2 < s_numMenu[loop1]; loop2++ )
 		{
-			DispInfoEntry *entry = &gAllInfo[loop1][loop2];
+			DispInfoEntry *entry;
+			
+			if( loop1 == MENU_VERSION && loop2 >= MENU_OTHER )
+			{
+				int idx = loop2 - MENU_OTHER;
+				OS_TPrintf("%d %d : %x %x\n", loop1, loop2, gContentsTitle[idx], gContentsVersion[idx] );
+				continue;
+			}
+			
+			entry = &gAllInfo[loop1][loop2];
 
 			if( entry->isNumData )
 			{
@@ -743,7 +767,7 @@ void getSCFGARM7InfoReg( void )
 		// SECフラグはTRUE = 切り離し(アクセス不可),  FALSE = 接続(アクセス可)
 		value = ( gArm7SCFGReg[DISP_REG_A9ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A9ROM_SEC_MASK ) || 0 ;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_SEC].iValue = value;
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_SEC].str.sjis = s_strAccess[ !value ];
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_SEC].str.sjis = s_strJoint[ !value ];
 			
 		value = ( gArm7SCFGReg[DISP_REG_A9ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A9ROM_RSEL_MASK ) || 0 ;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_RSEL].iValue = value;
@@ -752,7 +776,7 @@ void getSCFGARM7InfoReg( void )
 		// SECフラグはTRUE = 切り離し(アクセス不可),  FALSE = 接続(アクセス可)
 		value = ( gArm7SCFGReg[DISP_REG_A7ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A7ROM_SEC_MASK ) || 0 ;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_SEC].iValue = value;
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_SEC].str.sjis = s_strAccess[ !value ];
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_SEC].str.sjis = s_strJoint[ !value ];
 			
 		value = ( gArm7SCFGReg[DISP_REG_A7ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A7ROM_RSEL_MASK ) || 0 ;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_RSEL].iValue = value;
@@ -1193,11 +1217,106 @@ void getSCFGARM7InfoShared( void )
 	
 }
 
+void getSysmenuInfo( void )
+{
+	u8 *pBuffer = (u8*) Alloc (NA_VERSION_DATA_WORK_SIZE);
+	
+	if( !NA_LoadVersionDataArchive( pBuffer, NA_VERSION_DATA_WORK_SIZE ) ) {
+		return ;
+	}
+	
+	// バージョンの読み出し
+    {
+        FSFile file;
+        SystemMenuVersion bufVersion;
+        s32 len;
+		
+        FS_InitFile(&file);
+		
+        if (!FS_OpenFileEx(&file, FS_VERSION_FILE, FS_FILEMODE_R))
+        {
+            return ;
+        }
+		
+        len = FS_ReadFile(&file, &bufVersion, sizeof(SystemMenuVersion));
+        FS_CloseFile(&file);
+		        
+        gAllInfo[MENU_SYSMENU][SYSMENU_VERSION_NUM].iValue = (int)( bufVersion.major << 16 | bufVersion.minor );
+        gAllInfo[MENU_SYSMENU][SYSMENU_VERSION_NUM].isNumData = TRUE;
+        
+		wcsncpy( gAllInfo[MENU_SYSMENU][SYSMENU_VERSION_STR].str.utf, bufVersion.str, TWL_SYSMENU_VER_STR_LEN );
+		gAllInfo[MENU_SYSMENU][SYSMENU_VERSION_STR].isSjis = FALSE;
+		
+    }
+	
+	// EULA URLの読み出し
+    {
+        FSFile file;
+        s32 len;
+		
+        FS_InitFile(&file);
+		
+        if (!FS_OpenFileEx(&file, FS_EULA_URL_FILE, FS_FILEMODE_R)) {
+            return;
+        }
+		
+        len = FS_ReadFile(&file, gAllInfo[MENU_SYSMENU][SYSMENU_EULA_URL].str.sjis , TWL_EULA_URL_LEN) ;
+        FS_CloseFile(&file);
+		
+    }
+	
+	// NUP HOST NAME の読み出し
+    {
+        FSFile file;
+        s32 len;
+		
+        FS_InitFile(&file);
+		
+        if (!FS_OpenFileEx(&file, FS_NUP_HOSTNAME_FILE, FS_FILEMODE_R)) {
+    		return;
+        }
+		
+        len = FS_ReadFile(&file, gAllInfo[MENU_SYSMENU][SYSMENU_NUP_HOST].str.sjis, TWL_NUP_HOSTNAME_LEN);
+        FS_CloseFile(&file);
+		
+    }
+	
+	// タイムスタンプ の読み出し
+    {
+        FSFile file;
+        s32 len;
+		
+        FS_InitFile(&file);
+		
+        if (!FS_OpenFileEx(&file, FS_TIMESTAMP_FILE, FS_FILEMODE_R)) {
+            return ;
+        }
+		
+        len = FS_ReadFile(&file, &gAllInfo[MENU_SYSMENU][SYSMENU_TIMESTAMP].iValue, sizeof(u32) );
+        FS_CloseFile(&file);
+        
+		gAllInfo[MENU_SYSMENU][SYSMENU_TIMESTAMP].isNumData = TRUE;
+    }
+	
+	// SystemMenuVersionのアンマウント
+	if( !NA_UnloadVersionDataArchive() ) {
+		return;
+	}
+	
+	Free(pBuffer);
+
+}
+
 void getVersions( void )
 {
+	
+#ifdef SEA_ENABLE
 	getWirelessVersion();
-	getSharedFontVersion();
 	getContentsVersion();
+#endif
+
+	getSharedFontVersion();
+
 }
 
 void getWirelessVersion( void )
@@ -1220,11 +1339,15 @@ void getWirelessVersion( void )
 	
 	gAllInfo[MENU_VERSION][VERSION_WIRELESS].iValue = filebuf[0] *100 + filebuf[1];
 	gAllInfo[MENU_VERSION][VERSION_WIRELESS].isNumData = TRUE;
+
 }
 
 void getSharedFontVersion( void )
 {
-	u32 time = OS_GetSharedFontTimestamp();
+	u32 time;
+	
+	OS_InitSharedFont();
+	time = OS_GetSharedFontTimestamp();
 	OS_TPrintf("SharedFont Time Stamp %08lx\n", time );
 	gAllInfo[MENU_VERSION][VERSION_FONT].iValue = (int) time;
 	gAllInfo[MENU_VERSION][VERSION_FONT].isNumData = TRUE;
@@ -1237,12 +1360,15 @@ void getContentsVersion( void )
 	int i;
 
 	gNumContents = NAM_GetNumTitles();
+	OS_TPrintf(" numContents: %d\n", gNumContents);	
 	
 	if( gContentsTitle == NULL )
 	{
 		// 初回処理の時はバッファを確保
 		gContentsTitle = (NAMTitleId*) Alloc( sizeof(NAMTitleId) * gNumContents );
 		gContentsVersion = (u16*) Alloc( sizeof(u16) * (u32)gNumContents);
+		SDK_ASSERT( gContentsTitle );
+		SDK_ASSERT( gContentsVersion );
 	}
 			
 	NAM_GetTitleList( gContentsTitle, (u32)gNumContents);
@@ -1251,10 +1377,11 @@ void getContentsVersion( void )
 	for( i=0; i<gNumContents; i++ )
 	{
 		NAM_ReadTitleInfo( &info, gContentsTitle[i] );
-		gContentsTitle[i] = info.titleId;
+//		gContentsTitle[i] = info.titleId;
 		gContentsVersion[i] = info.version;
 	}
 	
+	s_numMenu[MENU_VERSION] += gNumContents;	
 }
 
 

@@ -215,6 +215,7 @@ BOOL control( int *menu, int *line, int *changeLine, int *changeMode )
 				case MENU_SECURE_HW:
 				case MENU_SCFG_ARM7:
 				case MENU_SCFG_ARM9:
+				case MENU_SYSMENU:
 				case MENU_VERSION:
 					// 今の画面の選択位置を記録
 					selectLine[ROOTMENU_SIZE] = *line;
@@ -234,10 +235,6 @@ BOOL control( int *menu, int *line, int *changeLine, int *changeMode )
 					breakUserData(1);
 					break;
 					
-				case MENU_RESET	:
-					// リセット実行
-					OS_ResetSystem( 0 );
-					break;
 			}
 		}
 		else if( gAllInfo[*menu][*line].changable )

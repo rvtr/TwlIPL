@@ -132,6 +132,17 @@ Autoload WRAM
 	Object		OBJECT( WaitLoop_BbpAccess		, libwl_sp$(LIBSUFFIX).a )	(.text)
 	Object		OBJECT( WaitLoop_RfAccess		, libwl_sp$(LIBSUFFIX).a )	(.text)
 
+
+}
+
+#--------
+Ltdautoload RSVWRAM
+{
+	Address		0x03040000
+	Object		* (.rsvwram)
+	Library		libathdrv_sp$(LIBSUFFIX).a (.bss)
+	Library		libathdrv_sp$(LIBSUFFIX).a (.data)
+
 	#####
 	# Sub-routines in TWL WIRELESS Driver , that should be on WRAM.
 	Object		OBJECT( HTCSendPktCompletionHandler,    libathdrv_sp$(LIBSUFFIX).a )	(.text)
@@ -187,18 +198,6 @@ Autoload WRAM
 	Object		OBJECT( bmiBufferSend,                  libathdrv_sp$(LIBSUFFIX).a )	(.text)
 	Object		OBJECT( BMIWriteMemory,                 libathdrv_sp$(LIBSUFFIX).a )	(.text)
 
-	Object		OBJECT( wpa_sm_rx_eapol		        , libwpa_sp$(LIBSUFFIX).a )	(.text)
-
-
-}
-
-#--------
-Ltdautoload RSVWRAM
-{
-	Address		0x03040000
-	Object		* (.rsvwram)
-	Library		libathdrv_sp$(LIBSUFFIX).a (.bss)
-	Library		libathdrv_sp$(LIBSUFFIX).a (.data)
 
 	# FATFS core symbols
 	Object OBJECT(FATFSi_lfi2text, libfatfs_sp$(LIBSUFFIX).a) (.text) # 360 BYTEs

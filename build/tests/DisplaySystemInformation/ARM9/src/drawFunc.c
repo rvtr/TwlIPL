@@ -85,7 +85,7 @@ void printBinary16( int x, int y, u16 value, int selected, int selectSize );
 void printBinary32( int x, int y, u32 value, int selected, int selectSize );
 void drawRegister( int menu, int selected );
 void drawChangeMode( DispInfoEntry *Entry,  int changeLine );
-void drawVersion( int startIdx, int selected );
+void drawVersion( int idx, int drawLine ,int selected );
 void printUniqueID( int drawLineOffset, char *uniqueId );
 int getPageNum( int valueIdx, const int* pageOffset );
 int countMenuLine( int menu );
@@ -206,7 +206,20 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 		return;
 	}
 	
+	if( menu == MENU_SYSMENU && entryLine == SYSMENU_VERSION_NUM )
+	{
+		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawOffset,
+			 txtColor, "%d.%d", entry->iValue >> 16,  entry->iValue & 0xFFFF );
+		return;
+	}
 	
+	if( ( menu == MENU_SYSMENU && entryLine == SYSMENU_TIMESTAMP )||
+		( menu == MENU_VERSION && entryLine == VERSION_FONT ))
+	{
+		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawOffset, txtColor, "%08lx", entry->iValue );
+		return;
+	}
+		
 	// 通常の値の描画
 	if( entry->isAligned )
 	{
@@ -427,20 +440,10 @@ void drawChangeMode( DispInfoEntry *entry,  int changeLine )
 	
 }
 
-void drawVersion( int startIdx, int selected )
+void drawVersion( int idx, int drawLine ,int selected )
 {
-	int drawLine = 0;
 	int kindColor = TXT_COLOR_BLACK;
-	/*
-	
-	for( drawLine = 0;
-	if( idx < 2 )
-	{
-		printKindName( MENU_VERSION, idx, drawLine, selected );
-		printValue(  MENU_VERSION, idx, drawLine, &gAllInfo[MENU_VERSION][idx] );
-		return;
-	}
-		
+			
 	if( idx == selected)
 	{
 		// 選択項目はいろかえる
@@ -450,10 +453,24 @@ void drawVersion( int startIdx, int selected )
 	
 	
 	// 項目名
-	PrintfSJIS( KIND_LEFT, KIND_UP + LINE_OFFSET*drawLine , kindColor, "%d", gContentsTitle[idx - 2] );
+	// gContentsTitle[i]は頭4バイトがイニシャルコードのビッグエンディアン記述、
+	// お尻4バイトがアプリのフラグ
+	{
+		u64 id = gContentsTitle[idx];
+		char buf[4] = {0};
+		int i;
+
+		for(i = 3; 0<=i; i-- )
+		{
+			buf[i] = id & 0xFF ;
+			id >>= 8;
+		}
+		
+		PrintfSJIS( KIND_LEFT, KIND_UP + LINE_OFFSET*drawLine , kindColor, "%s", buf );
+	}
+	
 	// 値
-	PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawLine , TXT_COLOR_BLACK, "%u",gContentsVersion[idx - 2] );
-	*/
+	PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawLine , TXT_COLOR_BLACK, "%x", gContentsVersion[idx] );
 }
 
 
@@ -497,15 +514,15 @@ void drawMenu( int menu, int line, int changeLine, BOOL isChangeMode )
 		calibrateDrawIdx( menu, line );
 	}
 	
-	// 項目数可変なVersion infoだけ別枠で描画する
-	if( menu == MENU_VERSION )
-	{
-		drawVersion( gDrawIdx[menu], line  );
-		return;
-	}
-		
 	for( i = gDrawIdx[menu] ; i < s_numMenu[menu] && lineNum < DISP_NUM_LINES ; i++ )
 	{		
+		// 可変長項目なバージョン情報だけ特例処理
+		if( menu == MENU_VERSION && VERSION_OTHER <= i )
+		{
+			drawVersion( i - VERSION_OTHER, lineNum++, line - VERSION_OTHER );
+			continue;
+		}
+
 		// 項目名の描画
 		printKindName( menu, i, lineNum, line );
 	
@@ -558,13 +575,15 @@ void calibrateDrawIdx( int menu, int idx )
 	// まずは自分と下2項目の行数を探索
 	for( i = 0; i <= 2 && i + idx < s_numMenu[menu] ; i++ )
 	{
-		lines += gAllInfo[menu][i + idx].numLines;
+		lines += menu == MENU_VERSION && VERSION_OTHER <= i+idx ?
+								1 : gAllInfo[menu][i + idx].numLines;
 	}
 	
 	// 自分より上方向へ探索
 	for( i = 1; 0 <= idx - i && lines < DISP_NUM_LINES ; i++)
 	{
-		lines += gAllInfo[menu][idx - i].numLines;
+		lines += menu == MENU_VERSION && VERSION_OTHER <= i+idx ?
+								1 : gAllInfo[menu][idx - i].numLines;
 	}
 	
 	// ループが一回余計に回る

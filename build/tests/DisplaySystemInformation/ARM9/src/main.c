@@ -83,7 +83,7 @@ void TwlMain( void )
 	OS_TPrintf("Allocator Initialize...\n");
 	InitAllocator();
 
-#ifdef COMP_ARMADILLO
+#ifdef SEA_ENABLE
 	OS_TPrintf("NAM Initialize...\n");
 	NAM_Init( Alloc, Free );
 #endif

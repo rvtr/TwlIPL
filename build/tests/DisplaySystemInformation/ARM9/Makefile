@@ -17,8 +17,8 @@
 #----------------------------------------------------------------------------
 
 SUBDIRS					=	
-SUBMAKES		=	Makefile.racoon_SCFG Makefile.racoon_noSCFG Makefile.armadillo
-
+#SUBMAKES		=	Makefile.racoon_SCFG Makefile.racoon_noSCFG Makefile.armadillo
+SUBMAKES		=	Makefile.armadillo
 include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/commondefs
 
 #----------------------------------------------------------------------------

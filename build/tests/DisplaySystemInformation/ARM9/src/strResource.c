@@ -27,6 +27,7 @@ int s_numMenu[] = {
 	SECURE_HW_MENU_SIZE,
 	SCFG_ARM7_MENU_SIZE,
 	SCFG_ARM9_MENU_SIZE,
+	SYSMENU_MENU_SIZE,
 	VERSIONMENU_SIZE,
 	0,
 	0,
@@ -64,6 +65,7 @@ const char *s_strRootMenu[] = {
 	"ÅÉSecure Hardware InfoÅÑ",
 	"ÅÉSCFG Info (ARM7 side)ÅÑ",
 	"ÅÉSCFG Info (ARM9 side)ÅÑ",
+	"ÅÉAbout SysmenuÅÑ",
 	"ÅÉContent VersionÅÑ",
 	"Reset HW Setting to Default",
 	"break HW Setting"
@@ -215,10 +217,17 @@ const char *s_strSCFGArm7Menu[] = {
 	"Option App for"
 };
 
+const char *s_strSystemMenu[] = {
+	"Version (numeric)",
+	"Version (string)",
+	"EULA URL",
+	"NUP Hostname",
+	"Timestamp"
+};
+
 const char *s_strVersionMenu[] = {
-	"Shared Font",
 	"Wireless Firm",
-	"Whitelist"
+	"Font(Timestamp)"
 };
 
 const char **s_strMetaMenu[] = {
@@ -229,8 +238,8 @@ const char **s_strMetaMenu[] = {
 	s_strSecureHWMenu,
 	s_strSCFGArm7Menu,
 	s_strSCFGArm9Menu,
+	s_strSystemMenu,
 	s_strVersionMenu,
-	NULL,
 	NULL,
 	NULL,
 	s_strRootMenu
