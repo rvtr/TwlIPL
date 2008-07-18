@@ -24,7 +24,7 @@ TWL_NO_STD_PCHDR			=	True
 TWL_CODEGEN					?=	ALL
 
 #----------------------------------------------------------------------------
-DISP_INFO	= $(TWL_IPL_RED_ROOT)/build/tests/DisplaySystemInformation
+DISP_INFO	= $(call eupath,$(TWL_IPL_RED_ROOT)/build/tests/DisplaySystemInformation)
 
 SRCS			=	overwriteRtc.c crt0.SCR.c main.c 
 
@@ -35,7 +35,7 @@ LCFILE_SPEC		=	$(TARGET_NAME).lsf
 LCFILE_TEMPLATE	=	$(TARGET_NAME).lcf.template
 LDRES_TEMPLATE	=	$(TARGET_NAME).response.template
 
-CRT0_O			=	$(DISP_INFO)/ARM7_armadillo/obj/ARM7-TS.LTD/Release/crt0.SCR.o
+CRT0_O			=	crt0.SCR.o
 
 # スタック不足防止の為、インライン展開せずにコンパイルする
 CCFLAGS_OPT		=	-O4 -inline off
@@ -66,6 +66,7 @@ LINCLUDES		=	$(ROOT)/build/libraries/spi/ARM7/include	\
 				$(DISP_INFO)/common/include	\
 				$(TWLSDK_ROOT)/build/libraries/init/common/include
 
+LLIBRARY_DIRS	+=	$(DISP_INFO)/ARM7_armadillo/obj/$(TWL_BUILDTYPE_ARM7)
 
 LLIBRARIES		+=	libwl_sp$(TWL_LIBSUFFIX).a			\
 					libsdio_sp$(TWL_LIBSUFFIX).a		\

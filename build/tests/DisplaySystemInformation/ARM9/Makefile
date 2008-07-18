@@ -23,7 +23,7 @@ DEFAULT_COMP_ARM7	=	armadillo
 ROM_SPEC		=	main_$(DEFAULT_COMP_ARM7).rsf
 
 
-DISP_INFO	= $(TWL_IPL_RED_ROOT)/build/tests/DisplaySystemInformation
+DISP_INFO	= $(call eupath,$(TWL_IPL_RED_ROOT)/build/tests/DisplaySystemInformation)
 
 SUBDIRS          =
 
@@ -41,7 +41,6 @@ SYSMENU_LIBS			=	\
 							libsysmenu$(TWL_LIBSUFFIX).a \
 							libsysmmcu$(TWL_LIBSUFFIX).a \
 							libsysmutil$(TWL_LIBSUFFIX).a \
-							libbanner$(TWL_LIBSUFFIX).a \
 							libboot$(TWL_LIBSUFFIX).a \
 							libds$(TWL_LIBSUFFIX).a \
 							libhotsw$(TWL_LIBSUFFIX).a \
