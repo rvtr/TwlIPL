@@ -517,7 +517,7 @@ void getSCFGARM9Info( void )
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MCB].iValue = value;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MCB].str.sjis = s_strAccess[ value ];
 	
-	value = SCFG_IsWramAccessible();
+	value = SCFG_IsWRAMAccessible();
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_WRAM].iValue = value;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_WRAM].str.sjis = s_strAccess[ value ];
 	
@@ -550,7 +550,7 @@ void getSCFGARM9Info( void )
 	
 	{
 		u8 idx;
-		value = SCFG_GetPsramBoundary();
+		value = SCFG_GetPsramdBoundary();
 		
 		if( value  == SCFG_PSRAM_BOUNDARY_4MB )
 		{
@@ -591,11 +591,11 @@ void getSCFGARM9Info( void )
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_LCDC].kindNameList = s_strEnable;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_LCDC].numKindName = 2;
 	
-	value = SCFG_IsVramExpanded();
+	value = SCFG_IsVRAMExpanded();
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_VRAM].iValue = value;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_VRAM].str.sjis = s_strEnable[ value ];
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_VRAM].changable = TRUE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_VRAM].changeFunc.cBool = SCFG_SetVramExpanded;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_VRAM].changeFunc.cBool = SCFG_SetVRAMExpanded;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_VRAM].argType = ARG_BOOL;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_VRAM].kindNameList = s_strEnable;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_VRAM].numKindName = 2;
@@ -1180,7 +1180,7 @@ void getContentsVersion( void )
 		gContentsTitle[i] = info.titleId;
 		gContentsVersion[i] = info.version;
 	}
-
+	
 }
 
 

@@ -160,7 +160,7 @@
 #define VERSIONMENU_SIZE 		3
 
 
-extern const u8 s_numMenu[];
+extern int s_numMenu[];
 extern const char *s_strRootMenu[];
 extern const char *s_strOwnerMenu[];
 extern const char *s_strParentalMenu[];

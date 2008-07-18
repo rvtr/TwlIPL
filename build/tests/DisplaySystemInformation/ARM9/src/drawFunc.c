@@ -85,6 +85,7 @@ void printBinary16( int x, int y, u16 value, int selected, int selectSize );
 void printBinary32( int x, int y, u32 value, int selected, int selectSize );
 void drawRegister( int menu, int selected );
 void drawChangeMode( DispInfoEntry *Entry,  int changeLine );
+void drawVersion( int startIdx, int selected );
 void printUniqueID( int drawLineOffset, char *uniqueId );
 int getPageNum( int valueIdx, const int* pageOffset );
 int countMenuLine( int menu );
@@ -420,6 +421,36 @@ void drawChangeMode( DispInfoEntry *entry,  int changeLine )
 	
 }
 
+void drawVersion( int startIdx, int selected )
+{
+	int drawLine = 0;
+	int kindColor = TXT_COLOR_BLACK;
+	/*
+	
+	for( drawLine = 0;
+	if( idx < 2 )
+	{
+		printKindName( MENU_VERSION, idx, drawLine, selected );
+		printValue(  MENU_VERSION, idx, drawLine, &gAllInfo[MENU_VERSION][idx] );
+		return;
+	}
+		
+	if( idx == selected)
+	{
+		// 選択項目はいろかえる
+		kindColor = TXT_COLOR_GREEN;
+		PutStringUTF16( ALLOW_LEFT, KIND_UP + LINE_OFFSET*drawLine, TXT_COLOR_BLACK, (const u16 *)L"→");
+	}
+	
+	
+	// 項目名
+	PrintfSJIS( KIND_LEFT, KIND_UP + LINE_OFFSET*drawLine , kindColor, "%d", gContentsTitle[idx - 2] );
+	// 値
+	PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawLine , TXT_COLOR_BLACK, "%u",gContentsVersion[idx - 2] );
+	*/
+}
+
+
 
 void drawMenu( int menu, int line, int changeLine, BOOL isChangeMode )
 // 情報一覧を描画する
@@ -459,16 +490,24 @@ void drawMenu( int menu, int line, int changeLine, BOOL isChangeMode )
 	
 		calibrateDrawIdx( menu, line );
 	}
-
 	
+	// 項目数可変なVersion infoだけ別枠で描画する
+	if( menu == MENU_VERSION )
+	{
+		drawVersion( gDrawIdx[menu], line  );
+	}
+		
 	for( i = gDrawIdx[menu] ; i < s_numMenu[menu] && lineNum < DISP_NUM_LINES ; i++ )
 	{
+		
+		
 		// 項目名の描画
 		printKindName( menu, i, lineNum, line );
 		
 		// 値の描画
 		if( menu == MENU_SCFG_ARM7 && !gSelectedARM7SCFGReg )
 		{
+			// ARM7のSCFGで共有領域側の値を表示してるときはオフセットを加える
 			printValue( menu, i, lineNum, &gAllInfo[menu][i + SCFG_ARM7_SHARED_OFFSET] );
 		}
 		else
@@ -479,15 +518,15 @@ void drawMenu( int menu, int line, int changeLine, BOOL isChangeMode )
 		// 描画オフセットの更新
 		lineNum += gAllInfo[menu][i].numLines;
 	}
-	
+
+	/*
+	// スクロールバーとか出す？	
 	// 全体の行数を把握
 	if( gMenuLineSize[menu] == 0 )
 	{
 		gMenuLineSize[menu] = countMenuLine(menu);
 	}
-
-	// スクロールバーとか出す？
-	
+	*/
 }
 
 int countLinesDown( int menu, int idx )

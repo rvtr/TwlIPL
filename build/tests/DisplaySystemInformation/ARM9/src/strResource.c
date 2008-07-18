@@ -28,7 +28,8 @@ const int s_pageOffset[ROOTMENU_SIZE][MAXPAGE] = {
 	{ 0, VERSIONMENU_SIZE }			// fuse
 };
 
-const u8 s_numMenu[] = {
+// VERSION_MENU_SIZE‚¾‚¯ƒRƒ“ƒeƒ“ƒc”‚É‰‚¶‚Ä‰Â•Ï‚È‚Ì‚Åconst‚Å‚Í‚È‚¢
+int s_numMenu[] = {
 	OWNERMENU_SIZE,
 	PARENTALMENU_SIZE,
 	NORMAL_HW_MENU_SIZE,
