@@ -43,6 +43,10 @@ NANDFIRM_DIR                =   $(SYSMENU_ROOT)/build/nandfirm/menu-launcher
 
 SYSTEMUPDATER_DIR			=	$(SYSMENU_ROOT)/build/systemMenu_tools/SystemUpdater
 
+ifdef BUILD_TWLSDK
+SUBMAKES +=	Makefile_environment
+endif
+
 SUBMAKES +=	./scripts/Makefile											\
 			$(SYSMENU_ROOT)/build/tools/Makefile						\
 			$(SYSMENU_ROOT)/build/libraries/Makefile					\

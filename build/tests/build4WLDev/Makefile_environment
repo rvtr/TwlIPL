@@ -27,8 +27,11 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 export NITRO_WITHOUT_DEMOS			=	TRUE
 export TWL_WITHOUT_DEMOS			=	TRUE
 
-SUBDIRS =	$(TWLSYSTEM_ROOT)		\
-			$(ROOT)					\
+override TWLSYSTEM_ROOT=
+export TWLSYSTEM_ROOT
+
+SUBDIRS =	$(ROOT)					\
+			$(NITROSYSTEM_ROOT)		\
 			
 
 #----------------------------------------------------------------------------
