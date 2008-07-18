@@ -10,8 +10,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
  
 
@@ -459,11 +459,14 @@ void drawMenu( int menu, int line, int changeLine, BOOL isChangeMode )
 	
 		calibrateDrawIdx( menu, line );
 	}
+
 	
 	for( i = gDrawIdx[menu] ; i < s_numMenu[menu] && lineNum < DISP_NUM_LINES ; i++ )
 	{
+		// €–Ú–¼‚Ì•`‰æ
 		printKindName( menu, i, lineNum, line );
 		
+		// ’l‚Ì•`‰æ
 		if( menu == MENU_SCFG_ARM7 && !gSelectedARM7SCFGReg )
 		{
 			printValue( menu, i, lineNum, &gAllInfo[menu][i + SCFG_ARM7_SHARED_OFFSET] );

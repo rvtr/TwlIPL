@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include <twl.h>
@@ -198,28 +198,46 @@ BOOL control( int *menu, int *line, int *changeLine, int *changeMode )
 		}
 	}
 
+	// Aボタン
 	if( pad.trg & PAD_BUTTON_A )
 	{
-		if(*menu == MENU_ROOT && *line <= MENU_VERSION)
+		if(*menu == MENU_ROOT)
 		{
 			controlFlag = TRUE;
 			
-			// 今の画面の選択位置を記録
-			selectLine[ROOTMENU_SIZE] = *line;
+			switch( *line )
+			{
+				case MENU_ROOT :
+				case MENU_OWNER:
+				case MENU_PARENTAL:
+				case MENU_NORMAL_HW:
+				case MENU_SECURE_HW:
+				case MENU_SCFG_ARM7:
+				case MENU_SCFG_ARM9:
+				case MENU_VERSION:
+					// 今の画面の選択位置を記録
+					selectLine[ROOTMENU_SIZE] = *line;
 
-			// 次のメニュー画面を開く
-			*menu = *line;
-			*line = selectLine[*menu];
-		}
-		else if( *menu == MENU_ROOT && *line == MENU_RESET_INFO )
-		{
-			resetUserData(0);
-			resetUserData(1);
-		}
-		else if( *menu == MENU_ROOT && *line <= MENU_BREAK_DATA )
-		{
-			breakUserData(0);
-			breakUserData(1);
+					// 次のメニュー画面を開く
+					*menu = *line;
+					*line = selectLine[*menu];
+					break;
+				
+				case MENU_RESET_INFO:
+					resetUserData(0);
+					resetUserData(1);
+					break;
+					
+				case MENU_BREAK_DATA:
+					breakUserData(0);
+					breakUserData(1);
+					break;
+					
+				case MENU_RESET	:
+					// リセット実行
+					OS_ResetSystem( 0 );
+					break;
+			}
 		}
 		else if( gAllInfo[*menu][*line].changable )
 		{
@@ -256,33 +274,6 @@ BOOL control( int *menu, int *line, int *changeLine, int *changeMode )
 	return controlFlag;
 }
 
-
-int getMaxPage( int menu )
-{
-// 表示中メニューのページが何ページあるのか
-	int i;
-	
-	if( menu == MENU_ROOT ) return 0;
-	
-	for(i=0; i<MAXPAGE; i++ )
-	{
-		if( s_pageOffset[menu][i] == s_numMenu[menu] )
-		{
-			return i;
-		}
-	}
-	
-	return 0;
-}
-
-int getMaxLine( int menu , int page )
-{
-// 表示中メニューにおける現在のページが何項目あるのか
-	if( menu == MENU_ROOT) return ROOTMENU_SIZE;
-	
-	return s_pageOffset[menu][page+1] - s_pageOffset[menu][page];
-}
-
 void resetUserData( int idx )
 // idx(0 or 1)番目のユーザデータをリセットする
 {
@@ -297,7 +288,6 @@ void breakUserData( int idx )
 {
 	// LCFG APIを使わずに、FSレベルでファイルを読んで、データを破壊してから書き戻す
 	FSFile file;
-	FSResult res;
 	u8 *fileBuf = (u8*) Alloc ( LCFG_TEMP_BUFFER_SIZE );
 	
 	FS_InitFile( &file );
@@ -325,6 +315,34 @@ void breakUserData( int idx )
 		OS_TPrintf("writeFile failed. path: %s\n", s_TSDPath[idx]);
 		return;
 	}
+	
+	/*
+	// 念のため中身を確認
+	MI_CpuClear8( fileBuf, LCFG_TEMP_BUFFER_SIZE );
+	FS_SeekFileToBegin( &file );
+	if( FS_ReadFile( &file, fileBuf, LCFG_TEMP_BUFFER_SIZE ) == -1 )
+	{
+		OS_TPrintf("readFile failed. path: %s\n", s_TSDPath[idx]);
+		return;
+	}
+	
+	{
+		int i;	
+		for( i = 0; i < LCFG_TEMP_BUFFER_SIZE; i++ )
+		{
+			if( i % 16  == 0 )
+			{
+				OS_TPrintf("\n");
+			}
+			
+			OS_TPrintf("%x ",fileBuf[i] );
+		}
+	}
+	*/
+	
+	FS_CloseFile( &file );
+	
+	
 
 	OS_TPrintf("Breaking UserData Succeeded. path: %s\n", s_TSDPath[idx]);
 }

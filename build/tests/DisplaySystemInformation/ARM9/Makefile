@@ -18,6 +18,11 @@ TARGET_FIRM	= SYSTEMMENU
 TARGET_PLATFORM	=	TWL
 TWL_ARCHGEN   = LIMITED
 
+# ï™äÚèåè
+DEFAULT_COMP_ARM7	=	armadillo
+ROM_SPEC		=	main_$(DEFAULT_COMP_ARM7).rsf
+
+
 DISP_INFO	= $(TWL_IPL_RED_ROOT)/build/tests/DisplaySystemInformation
 
 SUBDIRS          =
@@ -56,10 +61,9 @@ SDK_APPEND_LIBS		=		\
 
 LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
-DEFAULT_COMP_ARM7	=	armadillo
 
-TARGET_BIN		=	main.srl
-ROM_SPEC		=	main_$(DEFAULT_COMP_ARM7).rsf
+TARGET_BIN		=	DisplaySystemInfo.srl
+
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 

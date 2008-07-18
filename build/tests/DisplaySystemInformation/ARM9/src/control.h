@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #ifndef	__DISPLAY_SYSTEM_CONTROL_H__
@@ -32,8 +32,6 @@ typedef enum ChangeCotnrolResult{
 
 ChangeCotnrolResult changeControl( int *menu, int *line, int *changeLine, int *changeMode );
 BOOL control( int *menu, int *line, int *changeLine, int *changeMode );
-int getMaxPage( int menu );
-int getMaxLine( int menu , int page );
 
 #ifdef __cplusplus
 }

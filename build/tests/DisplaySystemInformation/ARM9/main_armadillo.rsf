@@ -57,13 +57,13 @@ Property
 	#
 	# TITLE NAME: Your product name within 12bytes
 	#
-	#TitleName		"YourAppName"
+	TitleName		"DispInfo"
 
 	#
 	# MAKER CODE: Your company ID# in 2 ascii words
 	#             issued by NINTENDO
 	#
-	#MakerCode		"00"
+	MakerCode		01
 
 	#
 	# REMASTER VERSION: Mastering version
@@ -131,7 +131,7 @@ Property
 	#
 	# CardRegion: card region [Japan/America/Europe/Australia/China/Korea]
 	#
-	CardRegion	Japan
+	CardRegion	ALL
 
 	#
 	# CommonClientKey: launcher deliver common client Key [TRUE/FALSE]
@@ -216,7 +216,7 @@ AppendProperty
 	#
 	# GameCode for TitleID : Your GameCode in 4 ascii words
 	#
-	GameCode				ABCJ
+	GameCode				ABCZ
 
 	#
 	# Public save data size: [0K/16K/32K/64K/128K/256K/512K/1M/2M/4M]

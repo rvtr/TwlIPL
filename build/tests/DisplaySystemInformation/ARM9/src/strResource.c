@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include "drawFunc.h"
@@ -74,7 +74,8 @@ const char *s_strRootMenu[] = {
 	"< SCFG Info (ARM9 side) >",
 	"< Content Version >",
 	"Reset HW Setting to Default",
-	"break HW Setting"
+	"break HW Setting",
+	"Reset"
 };
 
 const char *s_strOwnerMenu[] = {
@@ -114,7 +115,10 @@ const char *s_strSecureHWMenu[] = {
 	"Unique ID",
 	"Serial No",
 	"Language Bitmap",
-	"Fuse Data"
+	"Fuse Data",
+	"Finished Initial Setting",
+	"Finished Initial Setting(Launcher)",
+	"Broken Setting Flag"
 };
 
 const char *s_strSCFGArm9Menu[] = {

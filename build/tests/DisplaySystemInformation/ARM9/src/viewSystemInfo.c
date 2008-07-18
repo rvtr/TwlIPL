@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #include <wchar.h>
@@ -36,7 +36,7 @@ void printAllInfo ( void );
 void getOwnerInfo( void );
 void getParentalInfo( void );
 void getNormalHWInfo( void );
-BOOL getSecureHWInfo( void );
+void getSecureHWInfo( void );
 void getSCFGARM9Info( void );
 void getSCFGARM7InfoReg( void );
 void getSCFGARM7InfoShared( void );
@@ -327,30 +327,37 @@ void getParentalInfo( void )
 
 void getNormalHWInfo( void )
 {
-	int val;
+	int value;
 
-	val = OS_IsAvailableWireless();
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_WIRELESS].iValue = val;
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_WIRELESS].str.sjis = s_strEnable[ val ];
+	value = OS_IsAvailableWireless();
+	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_WIRELESS].iValue = value;
+	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_WIRELESS].str.sjis = s_strEnable[value];
 
 	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_OFFSET].iValue = (int) OS_GetOwnerRtcOffset();
 	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_OFFSET].isNumData = TRUE;
 
-	val = OS_IsAgreeEULA();
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_AGREE_EULA].iValue = val;
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_AGREE_EULA].str.sjis = s_strBool[ val ];
+	value = OS_IsAgreeEULA();
+	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_AGREE_EULA].iValue = value;
+	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_AGREE_EULA].str.sjis = s_strBool[value];
 	
 	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_EULA_VERSION].iValue = OS_GetAgreedEULAVersion();
 	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_EULA_VERSION].isNumData = TRUE;
 }
 
-BOOL getSecureHWInfo( void )
+void getSecureHWInfo( void )
 {
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_FORCE_DISABLE].str.sjis = s_strBool[ OS_IsForceDisableWireless() ];
+	int value;
+	
+	value = OS_IsForceDisableWireless();
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_FORCE_DISABLE].iValue = value;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_FORCE_DISABLE].str.sjis = s_strBool[ value ];
 	gAllInfo[MENU_SECURE_HW][SECURE_HW_FORCE_DISABLE].isAligned = FALSE;
 	gAllInfo[MENU_SECURE_HW][SECURE_HW_FORCE_DISABLE].numLines = 2;
-		
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_REGION].str.sjis = s_strRegion[ OS_GetRegion() ];
+	
+	value = OS_GetRegion();
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_REGION].iValue = value;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_REGION].str.sjis = s_strRegion[ value ];
+	
 	
 	{
 		int i;
@@ -380,7 +387,8 @@ BOOL getSecureHWInfo( void )
 		OS_TPrintf("language bitmap : %lx\n", buf );
 		snprintf( gAllInfo[MENU_SECURE_HW][SECURE_HW_LANGUAGE].str.sjis ,
 				DISPINFO_BUFSIZE-1, "%08lx", OS_GetValidLanguageBitmap() );
-		
+
+
 		// fuseRomデータの読み出し
 		// secureなアプリ以外はハード的に切り離されるのでゼロになる
 		buf = SCFG_ReadFuseData();
@@ -388,17 +396,41 @@ BOOL getSecureHWInfo( void )
 		snprintf( gAllInfo[MENU_SECURE_HW][SECURE_HW_FUSE].str.sjis ,
 				DISPINFO_BUFSIZE-1, "%016llx", SCFG_ReadFuseData() );
 
-		// 返り値でセキュアアプリかどうか判定できるように
-		// あとでロムヘッダの情報を読むように変更したほうがいいかも
-		if( buf )
-		{
-			return TRUE;
-		}
-		else
-		{
-			return FALSE;
-		}
 	}
+	
+	value = LCFG_TSD_IsFinishedInitialSetting();
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].iValue = value;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].str.sjis = s_strBool[ value ];
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].changable = TRUE;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].changeFunc.cBool = LCFG_TSD_SetFlagFinishedInitialSetting;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].argType = ARG_BOOL;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].kindNameList = s_strBool;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].numKindName = 2;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].isAligned = FALSE;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].numLines = 2;
+	
+	value = LCFG_TSD_IsFinishedInitialSetting_Launcher();
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].iValue = value;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].str.sjis = s_strBool[ value ];
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].changable = TRUE;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].changeFunc.cBool = LCFG_TSD_SetFlagFinishedInitialSetting_Launcher;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].argType = ARG_BOOL;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].kindNameList = s_strBool;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].numKindName = 2;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].isAligned = FALSE;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].numLines = 2;
+		
+	value = LCFG_TSD_IsFinishedBrokenTWLSettings();
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].iValue = value;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].str.sjis = s_strBool[ value ];
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].changable = TRUE;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].changeFunc.cBool = LCFG_TSD_SetFlagFinishedBrokenTWLSettings;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].argType = ARG_BOOL;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].kindNameList = s_strBool;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].numKindName = 2;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].isAligned = FALSE;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].numLines = 2;
+
 }
 
 void getSCFGARM9Info( void )
