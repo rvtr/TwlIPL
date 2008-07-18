@@ -18,26 +18,16 @@
 #include "drawFunc.h"
 
 
-const int s_pageOffset[ROOTMENU_SIZE][MAXPAGE] = {
-	{ 0, OWNERMENU_SIZE },			// owner
-	{ 0, 7, PARENTALMENU_SIZE },		// parental
-	{ 0, NORMAL_HW_MENU_SIZE },		// normal hw
-	{ 0, SECURE_HW_MENU_SIZE },		// secure hw
-	{ 0, SCFG_ARM7_MENU_SIZE },			// scfg arm7
-	{ 0, SCFG_ARM9_MENU_SIZE },			// scfg arm9
-	{ 0, VERSIONMENU_SIZE }			// fuse
-};
-
 // VERSION_MENU_SIZEÇæÇØÉRÉìÉeÉìÉcêîÇ…âûÇ∂Çƒâ¬ïœÇ»ÇÃÇ≈constÇ≈ÇÕÇ»Ç¢
 int s_numMenu[] = {
 	OWNERMENU_SIZE,
 	PARENTALMENU_SIZE,
+	OTHERMENU_SIZE,
 	NORMAL_HW_MENU_SIZE,
 	SECURE_HW_MENU_SIZE,
 	SCFG_ARM7_MENU_SIZE,
 	SCFG_ARM9_MENU_SIZE,
 	VERSIONMENU_SIZE,
-	0,
 	0,
 	0,
 	ROOTMENU_SIZE
@@ -67,16 +57,16 @@ const char *s_strSCFGViewMode[] = {
 };
 
 const char *s_strRootMenu[] = {
-	"< Owner >",
-	"< Parental control >",
-	"< Normal Hardware Info >",
-	"< Secure Hardware Info >",
-	"< SCFG Info (ARM7 side) >",
-	"< SCFG Info (ARM9 side) >",
-	"< Content Version >",
+	"ÅÉOwnerÅÑ",
+	"ÅÉParental controlÅÑ",
+	"ÅÉOther InfoÅÑ",
+	"ÅÉNormal Hardware InfoÅÑ",
+	"ÅÉSecure Hardware InfoÅÑ",
+	"ÅÉSCFG Info (ARM7 side)ÅÑ",
+	"ÅÉSCFG Info (ARM9 side)ÅÑ",
+	"ÅÉContent VersionÅÑ",
 	"Reset HW Setting to Default",
-	"break HW Setting",
-	"Reset"
+	"break HW Setting"
 };
 
 const char *s_strOwnerMenu[] = {
@@ -103,23 +93,32 @@ const char *s_strParentalMenu[] = {
 	"Answer"
 };
 
-const char *s_strNormalHWMenu[] = {
-	"Wireless",
-	"RTC Offset",
+const char *s_strOtherMenu[] = {
 	"Agree EULA",
-	"Eula Version"
+	"EULA Version",
+	"Wireless",
+	"Finished Initial Setting",
+	"Finished Initial Setting(Launcher)",
+	"Broken Setting Flag",
+	"Installed Softbox Count",
+	"Free Softbox Count",
+	"Last Boot Soft Index",
+	"Last Boot Soft Platform",
+	"Last Boot Soft ID"	
+};
+
+const char *s_strNormalHWMenu[] = {
+	"RTC Offset",
+	"Unique ID"
 };
 
 const char *s_strSecureHWMenu[] = {
 	"Force Disable Wireless",
 	"Region",
-	"Unique ID",
 	"Serial No",
 	"Language Bitmap",
 	"Fuse Data",
-	"Finished Initial Setting",
-	"Finished Initial Setting(Launcher)",
-	"Broken Setting Flag"
+	"Launcher TitleID Lo"
 };
 
 const char *s_strSCFGArm9Menu[] = {
@@ -225,6 +224,7 @@ const char *s_strVersionMenu[] = {
 const char **s_strMetaMenu[] = {
 	s_strOwnerMenu,
 	s_strParentalMenu,
+	s_strOtherMenu,
 	s_strNormalHWMenu,
 	s_strSecureHWMenu,
 	s_strSCFGArm7Menu,

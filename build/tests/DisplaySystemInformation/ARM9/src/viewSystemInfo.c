@@ -35,6 +35,7 @@ void infoAlloc( DispInfoEntry *p, u8 index, u8 size, BOOL isSjis );
 void printAllInfo ( void );
 void getOwnerInfo( void );
 void getParentalInfo( void );
+void getOtherInfo();
 void getNormalHWInfo( void );
 void getSecureHWInfo( void );
 void getSCFGARM9Info( void );
@@ -59,6 +60,8 @@ u16 *gContentsVersion;			// gContentsTitleそれぞれのバージョン情報
 u8 gArm7SCFGReg[DISPINFO_SHARED_SCFG_REG_SIZE];
 u8 gArm7SCFGShared[DISPINFO_SHARED_SCFG_WRAM_SIZE];
 
+// LCFGデータを読み込むためのバッファ
+u8 *bufLCFG;
 /* static data ---------------------------------- */
 
 
@@ -94,6 +97,7 @@ void displayInfoMain( void )
 	if( ccResult == CHANGE_VALUE_CHANGED )
 	{
 		// 値が更新されたときは全部取得しなおす
+		LCFG_WriteTWLSettings( (u8 (*) [LCFG_WRITE_TEMP] ) bufLCFG );
 		getAllInfo();
 	}
 	
@@ -119,10 +123,12 @@ void initInfo( void )
 	
 
 	infoAlloc( gAllInfo[MENU_OWNER], OWNER_BIRTHDAY, DISPINFO_BUFSIZE , TRUE );
-	infoAlloc( gAllInfo[MENU_SECURE_HW], SECURE_HW_UNIQUE_ID, OS_TWL_HWINFO_MOVABLE_UNIQUE_ID_LEN*3 , TRUE );
+	infoAlloc( gAllInfo[MENU_OTHER], OTHER_LCFG_LASTBOOT_ID, DISPINFO_BUFSIZE , TRUE );
+	infoAlloc( gAllInfo[MENU_NORMAL_HW], NORMAL_HW_UNIQUE_ID, OS_TWL_HWINFO_MOVABLE_UNIQUE_ID_LEN*3 , TRUE );
 	infoAlloc( gAllInfo[MENU_SECURE_HW], SECURE_HW_SERIAL , OS_TWL_HWINFO_SERIALNO_LEN_MAX + 1, TRUE );
 	infoAlloc( gAllInfo[MENU_SECURE_HW], SECURE_HW_LANGUAGE, DISPINFO_BUFSIZE , TRUE );
 	infoAlloc( gAllInfo[MENU_SECURE_HW], SECURE_HW_FUSE, DISPINFO_BUFSIZE , TRUE );
+	infoAlloc( gAllInfo[MENU_SECURE_HW], SECURE_HW_TITLEID_LO, DISPINFO_BUFSIZE, TRUE );
 	infoAlloc( gAllInfo[MENU_SCFG_ARM7], SCFG_ARM7_MI_CC, DISPINFO_BUFSIZE , TRUE );
 	infoAlloc( gAllInfo[MENU_SCFG_ARM7], SCFG_ARM7_MI_CA, DISPINFO_BUFSIZE , TRUE );
 
@@ -132,7 +138,6 @@ void initInfo( void )
 
 	OS_TPrintf( "information alloc succeeded\n" );
 }
-
 
 	
 void infoAlloc( DispInfoEntry *p, u8 index, u8 size, BOOL isSjis )
@@ -164,6 +169,7 @@ void getAllInfo( void )
 		
 	getOwnerInfo();
 	getParentalInfo();
+	getOtherInfo();
 	getNormalHWInfo();
 	getSecureHWInfo();
 	getSCFGARM7InfoReg();
@@ -216,9 +222,14 @@ void displayInfoInit( void )
 			gAllInfo[loop1][loop2].isAligned = TRUE;
 			gAllInfo[loop1][loop2].str.sjis = s_strNA;
 			gAllInfo[loop1][loop2].changable = FALSE;
+			gAllInfo[loop1][loop2].fromLCFG = FALSE;
 		}
 	}
-
+	
+	bufLCFG = (u8*) Alloc ( LCFG_READ_TEMP );
+	SDK_ASSERT( bufLCFG );
+	LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ]) bufLCFG );
+	
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	GX_DispOn();
 	GXS_DispOn();
@@ -325,23 +336,120 @@ void getParentalInfo( void )
 	gAllInfo[MENU_PARENTAL][PARENTAL_ANSWER].isSjis = FALSE;
 }
 
+void getOtherInfo( void ) 
+{
+	int value;
+	
+	value = OS_IsAgreeEULA();
+	gAllInfo[MENU_OTHER][OTHER_AGREE_EULA].iValue = value;
+	gAllInfo[MENU_OTHER][OTHER_AGREE_EULA].str.sjis = s_strBool[value];
+	
+	gAllInfo[MENU_OTHER][OTHER_EULA_VERSION].iValue = OS_GetAgreedEULAVersion();
+	gAllInfo[MENU_OTHER][OTHER_EULA_VERSION].isNumData = TRUE;
+	
+	value = OS_IsAvailableWireless();
+	gAllInfo[MENU_OTHER][OTHER_WIRELESS].iValue = value;
+	gAllInfo[MENU_OTHER][OTHER_WIRELESS].str.sjis = s_strEnable[value];
+
+	value = LCFG_TSD_IsFinishedInitialSetting();
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_SETTINGS].iValue = value;
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_SETTINGS].str.sjis = s_strBool[ value ];
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_SETTINGS].changable = TRUE;
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_SETTINGS].changeFunc.cBool = LCFG_TSD_SetFlagFinishedInitialSetting;
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_SETTINGS].argType = ARG_BOOL;
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_SETTINGS].kindNameList = s_strBool;
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_SETTINGS].numKindName = 2;
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_SETTINGS].isAligned = FALSE;
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_SETTINGS].numLines = 2;
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_SETTINGS].fromLCFG = TRUE;
+	
+	value = LCFG_TSD_IsFinishedInitialSetting_Launcher();
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_LAUNCHER].iValue = value;
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_LAUNCHER].str.sjis = s_strBool[ value ];
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_LAUNCHER].changable = TRUE;
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_LAUNCHER].changeFunc.cBool = LCFG_TSD_SetFlagFinishedInitialSetting_Launcher;
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_LAUNCHER].argType = ARG_BOOL;
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_LAUNCHER].kindNameList = s_strBool;
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_LAUNCHER].numKindName = 2;
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_LAUNCHER].isAligned = FALSE;
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_LAUNCHER].numLines = 2;
+	gAllInfo[MENU_OTHER][OTHER_INITIAL_LAUNCHER].fromLCFG = TRUE;
+	
+	value = LCFG_TSD_IsFinishedBrokenTWLSettings();
+	gAllInfo[MENU_OTHER][OTHER_BROKEN_SETTINGS].iValue = value;
+	gAllInfo[MENU_OTHER][OTHER_BROKEN_SETTINGS].str.sjis = s_strBool[ value ];
+	gAllInfo[MENU_OTHER][OTHER_BROKEN_SETTINGS].changable = TRUE;
+	gAllInfo[MENU_OTHER][OTHER_BROKEN_SETTINGS].changeFunc.cBool = LCFG_TSD_SetFlagFinishedBrokenTWLSettings;
+	gAllInfo[MENU_OTHER][OTHER_BROKEN_SETTINGS].argType = ARG_BOOL;
+	gAllInfo[MENU_OTHER][OTHER_BROKEN_SETTINGS].kindNameList = s_strBool;
+	gAllInfo[MENU_OTHER][OTHER_BROKEN_SETTINGS].numKindName = 2;
+	gAllInfo[MENU_OTHER][OTHER_BROKEN_SETTINGS].isAligned = FALSE;
+	gAllInfo[MENU_OTHER][OTHER_BROKEN_SETTINGS].numLines = 2;
+	gAllInfo[MENU_OTHER][OTHER_BROKEN_SETTINGS].fromLCFG = TRUE;
+
+	value = LCFG_TSD_GetInstalledSoftBoxCount();
+	gAllInfo[MENU_OTHER][OTHER_LCFG_INSTALLED_SOFTBOX].iValue = value;
+	gAllInfo[MENU_OTHER][OTHER_LCFG_INSTALLED_SOFTBOX].isNumData = TRUE;
+	gAllInfo[MENU_OTHER][OTHER_LCFG_INSTALLED_SOFTBOX].isAligned = FALSE;
+	gAllInfo[MENU_OTHER][OTHER_LCFG_INSTALLED_SOFTBOX].numLines = 2;
+	gAllInfo[MENU_OTHER][OTHER_LCFG_INSTALLED_SOFTBOX].fromLCFG = TRUE;
+	
+	
+	value = LCFG_TSD_GetFreeSoftBoxCount();
+	gAllInfo[MENU_OTHER][OTHER_LCFG_FREE_SOFTBOX].iValue = value;
+	gAllInfo[MENU_OTHER][OTHER_LCFG_FREE_SOFTBOX].isNumData = TRUE;
+	gAllInfo[MENU_OTHER][OTHER_LCFG_FREE_SOFTBOX].isAligned = FALSE;
+	gAllInfo[MENU_OTHER][OTHER_LCFG_FREE_SOFTBOX].numLines = 2;
+	gAllInfo[MENU_OTHER][OTHER_LCFG_FREE_SOFTBOX].fromLCFG = TRUE;
+	
+	value = LCFG_TSD_GetLastTimeBootSoftIndex();
+	gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_IDX].iValue = value;
+	gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_IDX].isNumData = TRUE;
+	gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_IDX].isAligned = FALSE;
+	gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_IDX].numLines = 2;
+	gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_IDX].fromLCFG = TRUE;
+	
+	value = LCFG_TSD_GetLastTimeBootSoftPlatform();
+	gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_PLATFORM].iValue = value;
+	gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_PLATFORM].isNumData = TRUE;
+	gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_PLATFORM].isAligned = FALSE;
+	gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_PLATFORM].numLines = 2;
+	gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_PLATFORM].fromLCFG = TRUE;
+	
+
+	{
+		u64 buf = LCFG_TSD_GetLastTimeBootSoftTitleID();
+		gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].isAligned = FALSE;
+		gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].numLines = 2;
+		gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].fromLCFG = TRUE;
+		snprintf( gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].str.sjis, DISPINFO_BUFSIZE, "%016llx", buf );
+	}
+}
+
 void getNormalHWInfo( void )
 {
 	int value;
 
-	value = OS_IsAvailableWireless();
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_WIRELESS].iValue = value;
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_WIRELESS].str.sjis = s_strEnable[value];
-
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_OFFSET].iValue = (int) OS_GetOwnerRtcOffset();
+	value = (int) OS_GetOwnerRtcOffset();
+	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_OFFSET].iValue = (int) value;
 	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_OFFSET].isNumData = TRUE;
 
-	value = OS_IsAgreeEULA();
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_AGREE_EULA].iValue = value;
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_AGREE_EULA].str.sjis = s_strBool[value];
-	
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_EULA_VERSION].iValue = OS_GetAgreedEULAVersion();
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_EULA_VERSION].isNumData = TRUE;
+	{
+		int i;
+		char ascii[] = "0123456789abcdef";
+		const u8 *unq = OS_GetMovableUniqueIDPtr();
+		// 16進で1バイトずつ詰めていく
+		// バッファが長さの3倍長なのは、データを"%02x-%02x-%02x..."に置換するため
+		for(i=0; i < OS_TWL_HWINFO_MOVABLE_UNIQUE_ID_LEN*3; i += 3, unq++ )
+		{	
+			gAllInfo[MENU_NORMAL_HW][NORMAL_HW_UNIQUE_ID].str.sjis[i] = ascii[(*unq>>4) & 0x0f];
+			gAllInfo[MENU_NORMAL_HW][NORMAL_HW_UNIQUE_ID].str.sjis[i+1] = ascii[*unq & 0x0f];
+			gAllInfo[MENU_NORMAL_HW][NORMAL_HW_UNIQUE_ID].str.sjis[i+2] = 
+				(i+2) == (OS_TWL_HWINFO_MOVABLE_UNIQUE_ID_LEN*3 - 1) ? (char)'\0' : (char)'-' ;
+			OS_TPrintf("uniqid: %d\n", *unq);
+		}
+	}
+
 }
 
 void getSecureHWInfo( void )
@@ -357,24 +465,7 @@ void getSecureHWInfo( void )
 	value = OS_GetRegion();
 	gAllInfo[MENU_SECURE_HW][SECURE_HW_REGION].iValue = value;
 	gAllInfo[MENU_SECURE_HW][SECURE_HW_REGION].str.sjis = s_strRegion[ value ];
-	
-	
-	{
-		int i;
-		char ascii[] = "0123456789abcdef";
-		const u8 *unq = OS_GetMovableUniqueIDPtr();
-		// 16進で1バイトずつ詰めていく
-		// バッファが長さの3倍長なのは、データを"%02x-%02x-%02x..."に置換するため
-		for(i=0; i < OS_TWL_HWINFO_MOVABLE_UNIQUE_ID_LEN*3; i += 3, unq++ )
-		{	
-			gAllInfo[MENU_SECURE_HW][SECURE_HW_UNIQUE_ID].str.sjis[i] = ascii[(*unq>>4) & 0x0f];
-			gAllInfo[MENU_SECURE_HW][SECURE_HW_UNIQUE_ID].str.sjis[i+1] = ascii[*unq & 0x0f];
-			gAllInfo[MENU_SECURE_HW][SECURE_HW_UNIQUE_ID].str.sjis[i+2] = 
-				(i+2) == (OS_TWL_HWINFO_MOVABLE_UNIQUE_ID_LEN*3 - 1) ? (char)'\0' : (char)'-' ;
-			OS_TPrintf("uniqid: %d\n", *unq);
-		}
-	}
-	
+
 	{
 		u8 serialBuf[OS_TWL_HWINFO_SERIALNO_LEN_MAX];
 		OS_GetSerialNo( serialBuf );
@@ -398,38 +489,21 @@ void getSecureHWInfo( void )
 
 	}
 	
-	value = LCFG_TSD_IsFinishedInitialSetting();
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].iValue = value;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].str.sjis = s_strBool[ value ];
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].changable = TRUE;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].changeFunc.cBool = LCFG_TSD_SetFlagFinishedInitialSetting;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].argType = ARG_BOOL;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].kindNameList = s_strBool;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].numKindName = 2;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].isAligned = FALSE;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_SETTINGS].numLines = 2;
-	
-	value = LCFG_TSD_IsFinishedInitialSetting_Launcher();
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].iValue = value;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].str.sjis = s_strBool[ value ];
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].changable = TRUE;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].changeFunc.cBool = LCFG_TSD_SetFlagFinishedInitialSetting_Launcher;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].argType = ARG_BOOL;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].kindNameList = s_strBool;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].numKindName = 2;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].isAligned = FALSE;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_INITIAL_LAUNCHER].numLines = 2;
-		
-	value = LCFG_TSD_IsFinishedBrokenTWLSettings();
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].iValue = value;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].str.sjis = s_strBool[ value ];
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].changable = TRUE;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].changeFunc.cBool = LCFG_TSD_SetFlagFinishedBrokenTWLSettings;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].argType = ARG_BOOL;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].kindNameList = s_strBool;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].numKindName = 2;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].isAligned = FALSE;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_BROKEN_SETTINGS].numLines = 2;
+	// ランチャのタイトルIDLoの取得
+	if( LCFG_ReadHWSecureInfo() )
+	{
+		const u8 *titleIDLo = LCFG_THW_GetLauncherTitleID_LoPtr();
+		value = ( int )(	titleIDLo[0] << 8*3 |
+							titleIDLo[1] << 8*2 |
+							titleIDLo[2] << 8*1 |
+							titleIDLo[3] << 8*0 );
+
+		gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].iValue = value;
+		gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].isNumData = TRUE;;
+		gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].isAligned = FALSE;
+		gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].numLines = 2;
+		gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].fromLCFG = TRUE;	
+	}
 
 }
 

@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 
 #ifndef	__LOAD_VIEW_INFO__
@@ -39,6 +39,7 @@ typedef struct DispInfoEntry
 	BOOL	isNumData;	// 表示するときは数値データか文字列データか
 	BOOL	isSjis;		// UTF16で描画するデータだけFALSE isNumData=TRUEなら未定義
 	BOOL	isAligned;	// 一列に表示できるならTRUE、字下げが必要ならFALSE
+	BOOL	fromLCFG;	// LCFGから取得したデータは色つけて表示
 	int 	numLines;	// 項目名、項目内容を表示するのに必要な行数
 	
 	const char	*kind;		// 項目名

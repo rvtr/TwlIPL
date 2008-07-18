@@ -210,6 +210,7 @@ BOOL control( int *menu, int *line, int *changeLine, int *changeMode )
 				case MENU_ROOT :
 				case MENU_OWNER:
 				case MENU_PARENTAL:
+				case MENU_OTHER:
 				case MENU_NORMAL_HW:
 				case MENU_SECURE_HW:
 				case MENU_SCFG_ARM7:

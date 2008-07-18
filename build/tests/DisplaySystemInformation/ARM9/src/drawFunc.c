@@ -177,15 +177,23 @@ void printKindName( int menu, int entryLine, int drawOffset, int selected )
 
 void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 {
+	int txtColor = TXT_COLOR_BLACK;
+	
+	if( entry->fromLCFG )
+	{
+		// LCFG経由で取得したデータは青にする
+		txtColor = TXT_COLOR_BLUE;
+	}
+	
 	// 特殊描画を行う必要がある場合の処理
 	if( menu == MENU_OWNER && entryLine == OWNER_COLOR )
 	{
 		PrintfSJIS( VALUE_LEFT , VALUE_UP + LINE_OFFSET*drawOffset, TXT_UCOLOR_G0 + entry->iValue , "■" );
-		printData( VALUE_LEFT + LINE_OFFSET , VALUE_UP + LINE_OFFSET*drawOffset, TXT_COLOR_BLACK, entry );
+		printData( VALUE_LEFT + LINE_OFFSET , VALUE_UP + LINE_OFFSET*drawOffset, txtColor, entry );
 		return;
 	}
 	
-	if( menu == MENU_SECURE_HW && entryLine == SECURE_HW_UNIQUE_ID )
+	if( menu == MENU_NORMAL_HW && entryLine == NORMAL_HW_UNIQUE_ID )
 	{
 		printUniqueID( drawOffset, entry->str.sjis );
 		entry->numLines = 4;
@@ -194,22 +202,20 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 	
 	if( menu == MENU_PARENTAL && entryLine == PARENTAL_PASSWORD )
 	{
-		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawOffset, TXT_COLOR_BLACK, "%04d", entry->iValue );
+		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawOffset, txtColor, "%04d", entry->iValue );
 		return;
 	}
-	
-	
 	
 	
 	// 通常の値の描画
 	if( entry->isAligned )
 	{
-		printData( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawOffset, TXT_COLOR_BLACK, entry );
+		printData( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawOffset, txtColor, entry );
 	}
 	else
 	{
 		// 項目名が長くて字下げが必要な場合
-		printData( VALUE_LEFT, VALUE_UP + LINE_OFFSET* ( drawOffset + 1 ), TXT_COLOR_BLACK, entry );
+		printData( VALUE_LEFT, VALUE_UP + LINE_OFFSET* ( drawOffset + 1 ), txtColor, entry );
 	}
 }	
 
@@ -495,15 +501,14 @@ void drawMenu( int menu, int line, int changeLine, BOOL isChangeMode )
 	if( menu == MENU_VERSION )
 	{
 		drawVersion( gDrawIdx[menu], line  );
+		return;
 	}
 		
 	for( i = gDrawIdx[menu] ; i < s_numMenu[menu] && lineNum < DISP_NUM_LINES ; i++ )
-	{
-		
-		
+	{		
 		// 項目名の描画
 		printKindName( menu, i, lineNum, line );
-		
+	
 		// 値の描画
 		if( menu == MENU_SCFG_ARM7 && !gSelectedARM7SCFGReg )
 		{
