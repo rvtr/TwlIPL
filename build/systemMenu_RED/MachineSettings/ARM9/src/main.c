@@ -132,7 +132,7 @@ void TwlMain(void)
         u8 *pBuffer = Alloc( NA_VERSION_DATA_WORK_SIZE );
 		
         if( pBuffer &&
-			ReadSystemMenuVersionInfo( pBuffer, NA_VERSION_DATA_WORK_SIZE ) ) {
+			ReadSystemMenuVersionData( pBuffer, NA_VERSION_DATA_WORK_SIZE ) ) {
 			// リード成功
 		}else {
 			// FATALエラー
@@ -145,7 +145,7 @@ void TwlMain(void)
 	{
 		char str_ver[ TWL_SYSMENU_VER_STR_LEN / sizeof(u16) ];
 		int len = sizeof(str_ver);
-		OS_TPrintf( "SystemMenuVersionInfo\n" );
+		OS_TPrintf( "SystemMenuVersionData\n" );
 		// 文字列
 		if( STD_ConvertStringUnicodeToSjis( str_ver, &len, GetSystemMenuVersionString(), NULL, NULL ) == STD_RESULT_SUCCESS ) {
 			OS_TPrintf( "  Version(str)       : %s\n", str_ver );
