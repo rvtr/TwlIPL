@@ -18,8 +18,7 @@
 
 TARGET_FIRM			=	SYSTEMMENU
 
-SUBDIRS			=	compBLZ_modified \
-					ntrcomp
+SUBDIRS			=	$(ROOT)/build/tools/compBLZ
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
@@ -52,7 +51,7 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 do-build : $(FONT_TABLE)
 
 # compress sharedFonts and them in local directory
-$(FONT_TABLE): $(FONT_RSC)
+$(FONT_TABLE): $(FONT_RSC) $(GEN_FONT_TABLE)
 	$(GEN_FONT_TABLE) $(FONT_TIMESTAMP) $(FONT_RSC)
 
 #===== End of Makefile =====

@@ -115,7 +115,6 @@ foreach ( @ARGV ) {
         syswrite( INFO, $data, $fileNameMax );
         
         # 圧縮
-        # SDKのcompBLZ.exeは引数バグがあるためローカルに修正版を入れておく
         my $compfile = "$_.comp";
         system ("${compprog} $compoption $_ -o $compfile");
 
