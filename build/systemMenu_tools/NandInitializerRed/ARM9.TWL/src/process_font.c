@@ -222,10 +222,10 @@ static BOOL WriteFontData(void)
 
 	// ROMファイルオープン
     FS_InitFile(&file);
-    open_is_ok = FS_OpenFile(&file, FONT_DATA_FILE_PATH_IN_ROM);
+    open_is_ok = FS_OpenFile(&file, FONT_DATA_FILE_PATH_IN_SDMC);
 	if (!open_is_ok)
 	{
-    	OS_Printf("FS_OpenFile(\"%s\") ... ERROR!\n", FONT_DATA_FILE_PATH_IN_ROM);
+    	OS_Printf("FS_OpenFile(\"%s\") ... ERROR!\n", FONT_DATA_FILE_PATH_IN_SDMC);
 		return FALSE;
 	}
 
@@ -238,7 +238,7 @@ static BOOL WriteFontData(void)
 	read_is_ok = FS_ReadFile( &file, pTempBuf, (s32)file_size );
 	if (!read_is_ok)
 	{
-	    kamiFontPrintfConsoleEx(CONSOLE_RED, "FS_ReadFile(\"%s\") ... ERROR!\n", FONT_DATA_FILE_PATH_IN_ROM);
+	    kamiFontPrintfConsoleEx(CONSOLE_RED, "FS_ReadFile(\"%s\") ... ERROR!\n", FONT_DATA_FILE_PATH_IN_SDMC);
 		FS_CloseFile(&file);
 		OS_Free(pTempBuf);
 		return FALSE;
