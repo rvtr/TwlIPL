@@ -367,7 +367,7 @@ void getOtherInfo( void )
 	value = OS_IsAgreeEULA();
 	gAllInfo[MENU_OTHER][OTHER_AGREE_EULA].iValue = value;
 	gAllInfo[MENU_OTHER][OTHER_AGREE_EULA].str.sjis = s_strBool[value];
-	
+		
 	gAllInfo[MENU_OTHER][OTHER_EULA_VERSION].iValue = OS_GetAgreedEULAVersion();
 	gAllInfo[MENU_OTHER][OTHER_EULA_VERSION].isNumData = TRUE;
 	
@@ -443,10 +443,14 @@ void getOtherInfo( void )
 
 	{
 		u64 buf = LCFG_TSD_GetLastTimeBootSoftTitleID();
+		int charIdx;
+		
 		gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].isAligned = FALSE;
 		gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].numLines = 2;
 		gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].fromLCFG = TRUE;
-		snprintf( gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].str.sjis, DISPINFO_BUFSIZE, "%016llx", buf );
+		
+		MI_CpuCopy( &buf, gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].str.sjis, 8 );
+		gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].str.sjis[8] = '\0';
 	}
 }
 
@@ -510,6 +514,7 @@ void getSecureHWInfo( void )
 		OS_TPrintf("fuse data : %llx\n", buf);
 		snprintf( gAllInfo[MENU_SECURE_HW][SECURE_HW_FUSE].str.sjis ,
 				DISPINFO_BUFSIZE-1, "%016llx", SCFG_ReadFuseData() );
+		gAllInfo[MENU_SECURE_HW][SECURE_HW_FUSE].numLines = 2;
 
 	}
 	
@@ -544,43 +549,11 @@ void getSCFGARM9Info( void )
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_ROM_SEC].iValue = value;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_ROM_SEC].str.sjis = s_strJoint[ value ];
 	
-	value = SCFG_GetSystemRomType();
+	value = SCFG_GetSystemRomType() == SCFG_SYSTEM_ROM_FOR_NITRO;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_ROM_STATE].iValue = 	value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_ROM_STATE].str.sjis = (value == SCFG_SYSTEM_ROM_FOR_NITRO) ? s_strRomMode[1] : s_strRomMode[0];
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_ROM_STATE].str.sjis = s_strRomMode[ value ];
 	
 	// クロック制御レジスタ
-	value = SCFG_IsCameraCKIClockEnable();
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM_CKI].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM_CKI].str.sjis = s_strEnable[ value ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM_CKI].changable = TRUE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM_CKI].changeFunc.cBool = SCFG_SetCameraCKIClock;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM_CKI].argType = ARG_BOOL;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM_CKI].kindNameList = s_strEnable;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM_CKI].numKindName = 2;
-	
-	value = SCFG_IsClockSuppliedToWram();
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_WRAM].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_WRAM].str.sjis = s_strSupply[ value ];	
-	
-	value = SCFG_IsClockSuppliedToCamera();
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM].str.sjis = s_strSupply[ value ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM].changable = TRUE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM].changeFunc.cBool = SCFG_SupplyClockToCamera;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM].argType = ARG_BOOL;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM].kindNameList = s_strSupply;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM].numKindName = 2;
-	
-	value = SCFG_IsClockSuppliedToDSP();
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_DSP].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_DSP].str.sjis = s_strSupply[ value ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_DSP].changable = TRUE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_DSP].changeFunc.cBool = SCFG_SupplyClockToDSP;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_DSP].argType = ARG_BOOL;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_DSP].kindNameList = s_strSupply;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_DSP].numKindName = 2;
-
-	
 	value = SCFG_GetCpuSpeed();
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CPU].iValue = value;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CPU].str.sjis = s_strCpuSpeed[ value ];
@@ -590,7 +563,38 @@ void getSCFGARM9Info( void )
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CPU].kindNameList = s_strCpuSpeed;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CPU].numKindName = 2;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CPU].changable = TRUE;
-	
+
+	value = SCFG_IsClockSuppliedToDSP();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_DSP].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_DSP].str.sjis = s_strSupply[ value ];
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_DSP].changable = TRUE;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_DSP].changeFunc.cBool = SCFG_SupplyClockToDSP;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_DSP].argType = ARG_BOOL;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_DSP].kindNameList = s_strSupply;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_DSP].numKindName = 2;
+
+	value = SCFG_IsClockSuppliedToCamera();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM].str.sjis = s_strSupply[ value ];
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM].changable = TRUE;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM].changeFunc.cBool = SCFG_SupplyClockToCamera;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM].argType = ARG_BOOL;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM].kindNameList = s_strSupply;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM].numKindName = 2;
+
+	value = SCFG_IsClockSuppliedToWram();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_WRAM].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_WRAM].str.sjis = s_strSupply[ value ];	
+
+	value = SCFG_IsCameraCKIClockEnable();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM_CKI].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM_CKI].str.sjis = s_strEnable[ value ];
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM_CKI].changable = TRUE;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM_CKI].changeFunc.cBool = SCFG_SetCameraCKIClock;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM_CKI].argType = ARG_BOOL;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM_CKI].kindNameList = s_strEnable;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM_CKI].numKindName = 2;
+
 	// 新規ブロック制御レジスタ
 	value = SCFG_IsDSPReset();
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].iValue = value;
@@ -601,76 +605,61 @@ void getSCFGARM9Info( void )
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].numKindName = 2;
 
 	// 拡張機能制御レジスタ
-	value = SCFG_IsConfigBlockAccessible();
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].str.sjis = s_strAccess[ value ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].changable = TRUE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].argType = ARG_OTHER;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].kindNameList = s_strAccess;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].numKindName = 2;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].isAligned = FALSE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].numLines = 2;
 
-	value = (reg_SCFG_EXT & REG_SCFG_EXT_MC_B_MASK) || 0;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MCB].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MCB].str.sjis = s_strAccess[ value ];
+	value =  SCFG_IsDmacFixed() ;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMA].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMA].str.sjis = s_strEnable[ value ];
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMA].changable = TRUE;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMA].changeFunc.cBool = SCFG_SetDmacFixed;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMA].argType = ARG_BOOL;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMA].kindNameList = s_strEnable;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMA].numKindName = 2;
+
+	value =  SCFG_IsGeometryFixed() ;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_GEO].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_GEO].str.sjis = s_strEnable[ value ];
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_GEO].changable = TRUE;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_GEO].changeFunc.cBool = SCFG_SetGeometryFixed;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_GEO].argType = ARG_BOOL;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_GEO].kindNameList = s_strEnable;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_GEO].numKindName = 2;
+
+	value =  SCFG_IsRendererFixed() ;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_REN].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_REN].str.sjis = s_strEnable[ value ];
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_REN].changable = TRUE;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_REN].changeFunc.cBool = SCFG_SetRendererFixed;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_REN].argType = ARG_BOOL;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_REN].kindNameList = s_strEnable;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_REN].numKindName = 2;
+
+	value =  SCFG_Is2DEngineFixed() ;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_2DE].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_2DE].str.sjis = s_strEnable[ value ];
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_2DE].changable = TRUE;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_2DE].changeFunc.cBool = SCFG_Set2DEngineFixed;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_2DE].argType = ARG_BOOL;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_2DE].kindNameList = s_strEnable;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_2DE].numKindName = 2;
+
+	value =  SCFG_IsDividerFixed();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DIV].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DIV].str.sjis = s_strEnable[ value ];
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DIV].changable = TRUE;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DIV].changeFunc.cBool = SCFG_SetDividerFixed;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DIV].argType = ARG_BOOL;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DIV].kindNameList = s_strEnable;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DIV].numKindName = 2;
 	
-	value = SCFG_IsWRAMAccessible();
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_WRAM].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_WRAM].str.sjis = s_strAccess[ value ];
-	
-	value = SCFG_IsDSPAccessible();
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DSP].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DSP].str.sjis = s_strAccess[ value ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DSP].changable = TRUE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DSP].changeFunc.cBool = SCFG_SetDSPAccessible;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DSP].argType = ARG_BOOL;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DSP].kindNameList = s_strAccess;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DSP].numKindName = 2;
-	
-	value = SCFG_IsCameraAccessible();
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CAM].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CAM].str.sjis = s_strAccess[ value ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CAM].changable = TRUE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CAM].changeFunc.cBool = SCFG_SetCameraAccessible;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CAM].argType = ARG_BOOL;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CAM].kindNameList = s_strAccess;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CAM].numKindName = 2;
-	
-	value = SCFG_IsNDmaAccessible();
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMAC].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMAC].str.sjis = s_strAccess[ value ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMAC].changable = TRUE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMAC].changeFunc.cBool = SCFG_SetNDmaAccessible;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMAC].argType = ARG_BOOL;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMAC].kindNameList = s_strAccess;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMAC].numKindName = 2;
-	
-	{
-		u8 idx;
-		value = SCFG_GetPsramdBoundary();
-		
-		if( value  == SCFG_PSRAM_BOUNDARY_4MB )
-		{
-			idx = 0;
-		}
-		else if ( value == SCFG_PSRAM_BOUNDARY_16MB )
-		{
-			idx = 1;
-		}
-		else if ( value == SCFG_PSRAM_BOUNDARY_32MB )
-		{
-			idx = 2;
-		}
-		
-		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].iValue = idx;
-		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].str.sjis = s_strPSRAM[ idx ];
-		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].changable = TRUE;
-		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].argType = ARG_OTHER;
-		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].kindNameList = s_strPSRAM;
-		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].numKindName = 3;
-	}
-	
+	value =  SCFG_IsCardFixed() ;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MC].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MC].str.sjis = s_strEnable[ value ];
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MC].changable = TRUE;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MC].changeFunc.cBool = SCFG_SetCardFixed;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MC].argType = ARG_BOOL;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MC].kindNameList = s_strEnable;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MC].numKindName = 2;
+
 	value = SCFG_IsIntcExpanded();
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_INTC].iValue = value;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_INTC].str.sjis = s_strEnable[ value ];
@@ -697,62 +686,76 @@ void getSCFGARM9Info( void )
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_VRAM].argType = ARG_BOOL;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_VRAM].kindNameList = s_strEnable;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_VRAM].numKindName = 2;
+
+	{
+		u8 idx;
+		value = SCFG_GetPsramdBoundary();
+		
+		if( value  == SCFG_PSRAM_BOUNDARY_4MB )
+		{
+			idx = 0;
+		}
+		else if ( value == SCFG_PSRAM_BOUNDARY_16MB )
+		{
+			idx = 1;
+		}
+		else if ( value == SCFG_PSRAM_BOUNDARY_32MB )
+		{
+			idx = 2;
+		}
+		
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].iValue = idx;
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].str.sjis = s_strPSRAM[ idx ];
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].changable = TRUE;
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].argType = ARG_OTHER;
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].kindNameList = s_strPSRAM;
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].numKindName = 3;
+	}
 	
+	value = SCFG_IsNDmaAccessible();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMAC].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMAC].str.sjis = s_strAccess[ value ];
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMAC].changable = TRUE;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMAC].changeFunc.cBool = SCFG_SetNDmaAccessible;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMAC].argType = ARG_BOOL;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMAC].kindNameList = s_strAccess;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMAC].numKindName = 2;
 	
-	value =  SCFG_IsCardFixed() ;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MC].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MC].str.sjis = s_strEnable[ value ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MC].changable = TRUE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MC].changeFunc.cBool = SCFG_SetCardFixed;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MC].argType = ARG_BOOL;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MC].kindNameList = s_strEnable;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MC].numKindName = 2;
+	value = SCFG_IsCameraAccessible();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CAM].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CAM].str.sjis = s_strAccess[ value ];
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CAM].changable = TRUE;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CAM].changeFunc.cBool = SCFG_SetCameraAccessible;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CAM].argType = ARG_BOOL;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CAM].kindNameList = s_strAccess;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CAM].numKindName = 2;
+	
+	value = SCFG_IsDSPAccessible();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DSP].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DSP].str.sjis = s_strAccess[ value ];
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DSP].changable = TRUE;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DSP].changeFunc.cBool = SCFG_SetDSPAccessible;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DSP].argType = ARG_BOOL;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DSP].kindNameList = s_strAccess;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DSP].numKindName = 2;
+	
+	value = (reg_SCFG_EXT & REG_SCFG_EXT_MC_B_MASK) || 0;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MCB].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MCB].str.sjis = s_strAccess[ value ];
+	
+	value = SCFG_IsWRAMAccessible();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_WRAM].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_WRAM].str.sjis = s_strAccess[ value ];
 
-	value =  SCFG_IsDividerFixed() ;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DIV].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DIV].str.sjis = s_strEnable[ value ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DIV].changable = TRUE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DIV].changeFunc.cBool = SCFG_SetDividerFixed;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DIV].argType = ARG_BOOL;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DIV].kindNameList = s_strEnable;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DIV].numKindName = 2;
-
-	value =  SCFG_Is2DEngineFixed() ;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_2DE].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_2DE].str.sjis = s_strEnable[ value ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_2DE].changable = TRUE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_2DE].changeFunc.cBool = SCFG_Set2DEngineFixed;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_2DE].argType = ARG_BOOL;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_2DE].kindNameList = s_strEnable;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_2DE].numKindName = 2;
-
-	value =  SCFG_IsRendererFixed() ;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_REN].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_REN].str.sjis = s_strEnable[ value ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_REN].changable = TRUE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_REN].changeFunc.cBool = SCFG_SetRendererFixed;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_REN].argType = ARG_BOOL;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_REN].kindNameList = s_strEnable;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_REN].numKindName = 2;
-
-	value =  SCFG_IsGeometryFixed() ;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_GEO].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_GEO].str.sjis = s_strEnable[ value ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_GEO].changable = TRUE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_GEO].changeFunc.cBool = SCFG_SetGeometryFixed;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_GEO].argType = ARG_BOOL;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_GEO].kindNameList = s_strEnable;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_GEO].numKindName = 2;
-
-	value =  SCFG_IsDmacFixed() ;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMA].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMA].str.sjis = s_strEnable[ value ];
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMA].changable = TRUE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMA].changeFunc.cBool = SCFG_SetDmacFixed;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMA].argType = ARG_BOOL;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMA].kindNameList = s_strEnable;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMA].numKindName = 2;
-
+	value = SCFG_IsConfigBlockAccessible();
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].iValue = value;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].str.sjis = s_strAccess[ value ];
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].changable = TRUE;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].argType = ARG_OTHER;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].kindNameList = s_strAccess;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].numKindName = 2;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].isAligned = FALSE;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].numLines = 2;
 }
 
 void getSCFGARM7InfoReg( void )
@@ -767,7 +770,7 @@ void getSCFGARM7InfoReg( void )
 		// SECフラグはTRUE = 切り離し(アクセス不可),  FALSE = 接続(アクセス可)
 		value = ( gArm7SCFGReg[DISP_REG_A9ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A9ROM_SEC_MASK ) || 0 ;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_SEC].iValue = value;
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_SEC].str.sjis = s_strJoint[ !value ];
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_SEC].str.sjis = s_strJoint[ value ];
 			
 		value = ( gArm7SCFGReg[DISP_REG_A9ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A9ROM_RSEL_MASK ) || 0 ;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_RSEL].iValue = value;
@@ -776,7 +779,7 @@ void getSCFGARM7InfoReg( void )
 		// SECフラグはTRUE = 切り離し(アクセス不可),  FALSE = 接続(アクセス可)
 		value = ( gArm7SCFGReg[DISP_REG_A7ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A7ROM_SEC_MASK ) || 0 ;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_SEC].iValue = value;
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_SEC].str.sjis = s_strJoint[ !value ];
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_SEC].str.sjis = s_strJoint[ value ];
 			
 		value = ( gArm7SCFGReg[DISP_REG_A7ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A7ROM_RSEL_MASK ) || 0 ;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_RSEL].iValue = value;
@@ -785,7 +788,7 @@ void getSCFGARM7InfoReg( void )
 		// FuseROMフラグはTRUE = 切り離し(アクセス不可),  FALSE = 接続(アクセス可)
 		value = ( gArm7SCFGReg[DISP_REG_A7ROM_OFFSET - 0x4000] & DISP_REG_SCFG_A7ROM_FUSE_MASK ) || 0 ;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_FUSE].iValue = value;
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_FUSE].str.sjis = s_strAccess[ !value ];
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_FUSE].str.sjis = s_strJoint[ value ];
 			
 		value = ( gArm7SCFGReg[DISP_REG_ROMWE_OFFSET - 0x4000] & DISP_REG_SCFG_ROMWE_WE_MASK ) || 0 ;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_WE].iValue = value;

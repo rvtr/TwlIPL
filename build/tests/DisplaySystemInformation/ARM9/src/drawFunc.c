@@ -185,7 +185,8 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 		txtColor = TXT_COLOR_BLUE;
 	}
 	
-	// 特殊描画を行う必要がある場合の処理
+	// 特殊描画を行う必要がある場合の処理はここ
+	
 	if( menu == MENU_OWNER && entryLine == OWNER_COLOR )
 	{
 		PrintfSJIS( VALUE_LEFT , VALUE_UP + LINE_OFFSET*drawOffset, TXT_UCOLOR_G0 + entry->iValue , "■" );
@@ -219,8 +220,64 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawOffset, txtColor, "%08lx", entry->iValue );
 		return;
 	}
+	
+	if( menu == MENU_SECURE_HW && entryLine == SECURE_HW_TITLEID_LO )
+	{
+		char buf[5];
+		MI_CpuCopy( &(entry->iValue), buf, 4 );
+		buf[4] = '\0';
+		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET * (1 + drawOffset), txtColor, "%s", buf );
+		return;
+	}
+	
+	if( menu == MENU_SECURE_HW && entryLine == SECURE_HW_FUSE )
+	{
+		// 16文字を8文字の二段組みに変更
+		char buf[9] = {0};
+		STD_StrLCpy( buf, entry->str.sjis , 8 );
+		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET * drawOffset, txtColor, "%s", buf );
+		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET * (1+drawOffset), txtColor, "%s", &(entry->str.sjis[8]) );
+		return;
+	}
+	
+	if( ( menu == MENU_SYSMENU && entryLine == SYSMENU_EULA_URL ) ||
+		( menu == MENU_SYSMENU && entryLine == SYSMENU_NUP_HOST ))
+	{
+		char buf[17] = {0};
+		int i, lineOffset = 0;
 		
-	// 通常の値の描画
+		for( i = 0; i < STD_StrLen( entry->str.sjis ) ; i+=16 )
+		{
+			STD_StrLCpy( buf, &(entry->str.sjis[i]), 17 );
+			PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET * ( drawOffset + lineOffset++), txtColor, "%s", buf );
+		}
+		
+		entry->numLines = lineOffset;
+		return;
+	}
+
+	if( ( menu == MENU_OWNER && entryLine == OWNER_COMMENT ) ||
+		( menu == MENU_PARENTAL && entryLine == PARENTAL_ANSWER ))
+	{
+		u16 buf[11] = {0};
+		int i, lineOffset = 0;
+		
+		for( i = 0; i < wcslen( entry->str.utf ) ; i+=10 )
+		{
+			MI_CpuCopy( &(entry->str.utf[i]), buf, 20 );
+			PutStringUTF16( VALUE_LEFT, VALUE_UP + LINE_OFFSET * ( drawOffset + lineOffset++), txtColor, buf );
+		}
+		
+		entry->numLines = lineOffset;
+		
+		return;
+	}
+
+
+	
+	
+	// 通常の描画はここ
+	
 	if( entry->isAligned )
 	{
 		printData( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawOffset, txtColor, entry );
