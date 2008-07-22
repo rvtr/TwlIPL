@@ -362,6 +362,8 @@ void getParentalInfo( void )
 
 void getOtherInfo( void ) 
 {
+	// Ç±ÇÃï”Ç©ÇÁÉ}ÉNÉçÇ≈ê∂ê¨ÇµÇΩï™
+	
 	int value;
 	
 	value = OS_IsAgreeEULA();
@@ -443,12 +445,14 @@ void getOtherInfo( void )
 
 	{
 		u64 buf = LCFG_TSD_GetLastTimeBootSoftTitleID();
+		u32 titleID = MI_LoadBE32( &buf );
 		
 		gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].isAligned = FALSE;
 		gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].numLines = 2;
 		gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].fromLCFG = TRUE;
 		
-		MI_CpuCopy( &buf, gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].str.sjis, 8 );
+		
+		MI_CpuCopy( &titleID, gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].str.sjis, 4 );
 		gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].str.sjis[8] = '\0';
 	}
 }

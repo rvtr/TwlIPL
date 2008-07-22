@@ -237,7 +237,7 @@ BOOL control( int *menu, int *line, int *changeLine, int *changeMode )
 					
 			}
 		}
-		else if( gAllInfo[*menu][*line].changable )
+		else if( *menu < MENU_VERSION && gAllInfo[*menu][*line].changable )
 		{
 			controlFlag = TRUE;
 
