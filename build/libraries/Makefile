@@ -23,7 +23,7 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 SUBDIRS_P	= \
 			init \
-#			os \
+			os \
 			pxi \
 			fs \
 			mi \
