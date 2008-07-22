@@ -443,7 +443,6 @@ void getOtherInfo( void )
 
 	{
 		u64 buf = LCFG_TSD_GetLastTimeBootSoftTitleID();
-		int charIdx;
 		
 		gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].isAligned = FALSE;
 		gAllInfo[MENU_OTHER][OTHER_LCFG_LASTBOOT_ID].numLines = 2;

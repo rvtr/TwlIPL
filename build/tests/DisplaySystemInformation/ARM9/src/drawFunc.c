@@ -514,12 +514,12 @@ void drawVersion( int idx, int drawLine ,int selected )
 	// お尻4バイトがアプリのフラグ
 	{
 		u64 id = gContentsTitle[idx];
-		char buf[4] = {0};
+		char buf[5] = {0};
 		int i;
 
 		for(i = 3; 0<=i; i-- )
 		{
-			buf[i] = id & 0xFF ;
+			buf[i] = (char)(id & 0xFF) ;
 			id >>= 8;
 		}
 		
