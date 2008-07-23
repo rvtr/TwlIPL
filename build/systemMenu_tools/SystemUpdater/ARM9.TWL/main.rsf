@@ -222,11 +222,9 @@ RomSpec
 	Segment		ALL
 	HostRoot	../data
 	Root		/data
-	File		*.*
+	File		HNAA.tad HNBA.tad HNCA.tad HNHA.tad HNLA.tad \
+                menu_launcher.nand TWLFontTable.dat
 	HostRoot	$(PRIVKEY_PATH)
 	Root		/key
 	File		$(HWINFO_PRIVKEY) $(HWID_PRIVKEY)
-	HostRoot	$(TWL_IPL_RED_ROOT)/build/systemMenu_tools/NandInitializerRed/data
-	Root		/data
-	File		TWLFontTable.dat
 }

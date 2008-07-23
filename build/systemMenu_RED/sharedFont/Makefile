@@ -40,7 +40,7 @@ GEN_FONT_TABLE	=	$(SYSMENU_TOOLSDIR)/bin/genFontTable.plx
 
 #----------------------------------------------------------------------------
 INSTALL_TARGETS	=	$(FONT_TABLE)
-INSTALL_DIR		=	$(TWL_IPL_RED_ROOT)/build/systemMenu_tools/NandInitializerRed/data
+INSTALL_DIR		=	$(TWL_IPL_RED_ROOT)/build/systemMenu_tools/SystemUpdater/data
 
 LDIRT_CLEAN		=	
 
