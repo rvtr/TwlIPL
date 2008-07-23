@@ -676,7 +676,10 @@ static u8 HWIi_CalcCheckCode(u8 src[8])
                (src[1] - '0')*3 +
                (src[0] - '0')*1;
 	temp %= 10;
-	temp = 10-temp;
+	if (temp > 0)
+	{
+		temp = 10-temp;
+	}
 
 	return (u8)('0' + temp);
 }
