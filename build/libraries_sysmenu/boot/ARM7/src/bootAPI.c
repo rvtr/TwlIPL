@@ -310,10 +310,10 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 			// CODEC-DSモードへの遷移
             if ( isNtrMode || th->s.exFlags.codec_mode == OS_CODECMODE_NITRO )
             {
-				// マイク不具合DSタイトルは音量を絞る
+				// DSタイトルのスピーカ設定を行う
 	            if ( *target == REBOOT_TARGET_DS_APP )
 	            {
-                    DS_CheckSpeakerVolume( dh );
+                    DS_SetSpeakerVolume( dh );
 				}
 				CDC_GoDsMode();
             }

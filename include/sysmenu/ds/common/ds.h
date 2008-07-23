@@ -29,7 +29,7 @@ extern "C" {
 #define DS_WLPATCH_COPYCODE_SIZE			(10*4)
 
 void DS_InsertWLPatch( void* romHeaderNTR );
-void DS_CheckSpeakerVolume( void* romHeaderNTR );
+void DS_SetSpeakerVolume( void* romHeaderNTR );
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -21,66 +21,206 @@
 #include <sysmenu/ds.h>
 
 /*---------------------------------------------------------------------------*
+    定数定義
+ *---------------------------------------------------------------------------*/
+
+#define NUM_OF_MIC_PROBLEM_TITLE   128
+
+/*---------------------------------------------------------------------------*
     型宣言
  *---------------------------------------------------------------------------*/
 
-typedef struct _DsSpecialSpeakerVolumeTitle
+typedef struct _DsMicProblemTitle
 {
-	u8 gamecode[6];  // NULL終端兼アライメント用に2バイト大きいサイズを与える
-	u8 rom_version;
-	u8 volume;
-} DsSpecialSpeakerVolumeTitle;
+	u8 gamecode[4];  // NULL終端兼アライメント用に1バイト大きいサイズを与える
+
+} DsMicProblemTitle;
 
 /*---------------------------------------------------------------------------*
     静的変数定義
  *---------------------------------------------------------------------------*/
 
-static DsSpecialSpeakerVolumeTitle sList[] ATTRIBUTE_ALIGN(32) =
+static DsMicProblemTitle sList[NUM_OF_MIC_PROBLEM_TITLE] ATTRIBUTE_ALIGN(32) =
 {
-	{ "AKEJ", 0, 0x40 },
-	{ "ABXJ", 0, 0x40 },
-	{ "ALHJ", 0, 0x40 },
-	{ "YFSJ", 0, 0x40 },
-	{ "AY8E", 0, 0x40 },
-	{ "YONJ", 0, 0x40 },
-	{ "ACCE", 0, 0x40 },
-	{ "AN9E", 0, 0x40 },
-	{ "A5HE", 0, 0x40 },
-	{ "A5IE", 0, 0x40 },
-	{ "AMHE", 0, 0x40 },
-	{ "A3TX", 0, 0x40 },
-	{ "YCQE", 0, 0x40 },
-	{ "YBOE", 0, 0x40 },
-	{ "ADAE", 5, 0x40 },
-	{ "APAE", 5, 0x40 },
-	{ "ACZY", 0, 0x40 },
-	{ "APYJ", 0, 0x40 },
-	{ "AY7P", 0, 0x40 },
-	{ "AWHP", 0, 0x40 },
-	{ "AWHE", 0, 0x40 },
-	{ "AOIJ", 0, 0x40 },
-	{ "AOIJ", 1, 0x40 },
-	{ "YO9J", 0, 0x40 },
-	{ "YYKJ", 0, 0x40 }
+	"ABX",
+	"YO9",
+	"ALH",
+    "ACC",
+    "YCQ",
+    "YYK",
+    "AZW",
+    "AKA",
+    "AN9",
+    "AKE",
+    "YFS",
+    "YG8",
+    "AY7",
+    "YON",
+    "A5H",
+    "A5I",
+    "AMH",
+    "A3T",
+    "YBO",
+    "ADA",
+    "APA",
+    "CPU",
+    "APY",
+    "AWH",
+    "AXB",
+
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+    "000",
+
+    "000",
+    "000",
+    "000"
 };
 
 /*---------------------------------------------------------------------------*
     グローバル関数定義
  *---------------------------------------------------------------------------*/
 
-void DS_CheckSpeakerVolume( void* romHeaderNTR )
+/*---------------------------------------------------------------------------*
+  Name:         DS_SetSpeakerVolume
+
+  Description:  DSタイトルのスピーカ音量を設定します。
+                マイク入力関係で問題の発生するタイトルは音量をNTRレベルに
+                抑えます。
+
+  Arguments:    romHeaderNTR: DSタイトルのROMヘッダ
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+void DS_SetSpeakerVolume( void* romHeaderNTR )
 {
-	ROM_Header* dh = romHeaderNTR;
+	ROM_Header* dh   = romHeaderNTR;
+	u32 arg_gamecode = *(u32 *)dh->s.game_code & 0x00ffffff;
+	BOOL hit;
 	int i;
-	int limit = sizeof(sList)/sizeof(sList[0]);
-	for (i=0;i<limit;i++)
+
+	// 負荷をなるべく一定にするためリストと一致した場合でも全リストをチェックする
+	for (i=0;i<NUM_OF_MIC_PROBLEM_TITLE;i++)
 	{
-		if (*(u32 *)sList[i].gamecode == *(u32 *)dh->s.game_code && 
-            sList[i].rom_version == dh->s.rom_version)
+		// リージョンに関係なく比較する
+		u32 list_gamecode = *(u32 *)sList[i].gamecode & 0x00ffffff;
+		if ( list_gamecode == arg_gamecode)
 		{
-		    CDC_WriteSpiRegisterEx( 1, REG_CDC1_SP_ANGVOL_L_ADDR, (u8)(CDC1_ANGVOL_E | sList[i].volume) );
-		    CDC_WriteSpiRegisterEx( 1, REG_CDC1_SP_ANGVOL_R_ADDR, (u8)(CDC1_ANGVOL_E | sList[i].volume) );
-			break;
+			hit = TRUE;
 		}
 	}
+
+	if (hit)
+	{
+		// NTR並のSP音量(マイク入力問題のあるDSタイトル）
+		CDC_WriteSpiRegisterEx( 1, REG_CDC1_SP_ANGVOL_L_ADDR, (u8)(CDC1_ANGVOL_E | CDC1_ANGVOL_GAIN_NTR_SP) );
+		CDC_WriteSpiRegisterEx( 1, REG_CDC1_SP_ANGVOL_R_ADDR, (u8)(CDC1_ANGVOL_E | CDC1_ANGVOL_GAIN_NTR_SP) );
+	}
+	else
+	{
+		// NTRよりもやや大きいSP音量
+		CDC_WriteSpiRegisterEx( 1, REG_CDC1_SP_ANGVOL_L_ADDR, (u8)(CDC1_ANGVOL_E | CDC1_ANGVOL_GAIN_MAX_SP) );
+		CDC_WriteSpiRegisterEx( 1, REG_CDC1_SP_ANGVOL_R_ADDR, (u8)(CDC1_ANGVOL_E | CDC1_ANGVOL_GAIN_MAX_SP) );
+	}
 }
+
