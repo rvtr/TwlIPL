@@ -32,7 +32,6 @@ TARGET_BIN				=	$(TARGET_NAME).tad
 TITLEID_LO				=	CTMP
 
 ROM_SPEC				=	main.rsf
-LCFILE_TEMPLATE			=	hct.lcf.template
 
 MISC_DIR				=	$(SYSMENU_ROOT)/build/systemMenu_RED/misc
 
@@ -40,9 +39,6 @@ SRCS					=	main.c HashCheckTemplate.c \
 							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
 
 LINCLUDES				=	$(MISC_DIR)/include
-LLIBRARY_DIRS				+=	../crt/ARM9/obj/ARM9-TS.HYB/$(TWL_BUILD_DIR)
-
-CRT0_O		=	crt0_hct.FLX.TWL.o
 
 MAKEROM_FLAGS			+=	-F -DTITLEID_LO='$(TITLEID_LO)'
 
