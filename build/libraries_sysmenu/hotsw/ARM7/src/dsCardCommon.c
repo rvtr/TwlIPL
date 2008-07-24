@@ -516,7 +516,7 @@ HotSwState ReadIDSecure(CardBootData *cbd)
     }
 
     // スクランブルの設定
-    scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
+    scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
     
     // コマンド作成・設定
 	SetSecureCommand(S_RD_ID, cbd);
@@ -558,7 +558,7 @@ HotSwState ReadIDSecure(CardBootData *cbd)
  *---------------------------------------------------------------------------*/
 HotSwState ReadSegSecure(CardBootData *cbd)
 {
-    u32 			scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
+    u32 			scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
 	u32				*buf = (cbd->modeType == HOTSW_MODE1) ? cbd->pSecureSegBuf : cbd->pSecure2SegBuf;
     u32				loop, pc, size, interval, i, j=0, k;
 	u64				segNum = 4;
@@ -647,7 +647,7 @@ HotSwState SwitchONPNGSecure(CardBootData *cbd)
     }
 
     // スクランブルの設定
-    scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
+    scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
     
     // コマンド作成・設定
 	SetSecureCommand(S_PNG_ON, cbd);
@@ -685,7 +685,7 @@ HotSwState SwitchOFFPNGSecure(CardBootData *cbd)
     }
 
     // スクランブルの設定
-    scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
+    scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
     
     // コマンド作成・設定
 	SetSecureCommand(S_PNG_OFF, cbd);
@@ -725,7 +725,7 @@ HotSwState ChangeModeSecure(CardBootData *cbd)
     }
 
     // スクランブルの設定
-    scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SECURE_COMMAND_SCRAMBLE_MASK & ~CS_MASK);
+    scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
     
     // コマンド作成・設定
 	SetSecureCommand(S_CHG_MODE, cbd);
