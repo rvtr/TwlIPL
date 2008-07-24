@@ -196,7 +196,7 @@ void DS_SetSpeakerVolume( void* romHeaderNTR )
 {
 	ROM_Header* dh   = romHeaderNTR;
 	u32 arg_gamecode = *(u32 *)dh->s.game_code & 0x00ffffff;
-	BOOL hit;
+	BOOL hit = FALSE;
 	int i;
 
 	// 負荷をなるべく一定にするためリストと一致した場合でも全リストをチェックする
