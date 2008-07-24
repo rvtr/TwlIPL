@@ -44,17 +44,17 @@ void TwlMain( void )
 	FS_Init( FS_DMA_NOT_USE );
 	InitAllocator();
 	
-	ErrorLog_Init( Alloc, Free );
+	ERRORLOG_Init( Alloc, Free );
 
-	numEntry = ErrorLog_getErrorLogNum();
+	numEntry = ERRORLOG_getNum();
 	OS_TPrintf("API: before numEntry : %d\n", numEntry );
 	
-	ErrorLog_WriteErrorLog( (u64)0x077777777777LL );
+	ERRORLOG_Write( (u64)0x077777777777LL );
 
 	
 	if( numEntry > 2 )
 	{
-		pEntry = ErrorLog_getErrorLog(1);
+		pEntry = ERRORLOG_Read(1);
 		OS_TPrintf("entry[1] : %02d-%02d-%02d %02d:%02d:%02d  errorCode: %d\n",
 					pEntry->year,
 					pEntry->month,
@@ -104,11 +104,11 @@ void TwlMain( void )
 		OS_TPrintf("total Size : %d\n", totalSize);
 	}
 
-	numEntry = ErrorLog_getErrorLogNum();
+	numEntry = ERRORLOG_getNum();
 	OS_TPrintf("API: end numEntry : %d\n", numEntry );
 
 		 
-	ErrorLog_End();
+	ERRORLOG_End();
 	OS_TPrintf( "*** End of demo\n" ); 
 	OS_Terminate();
 }

@@ -57,11 +57,11 @@ typedef struct ErrorLogWork{
 
 
 /*-- function prototype -------------------------*/
-extern BOOL ErrorLog_WriteErrorLog( u64 errorCode );
-extern BOOL ErrorLog_Init( void* (*AllocFunc) (u32) , void (*FreeFunc) (void*)  );
-extern void ErrorLog_End( void );
-extern int ErrorLog_getErrorLogNum() ;
-extern const ErrorLogEntry* ErrorLog_getErrorLog( int idx );
+extern BOOL ERRORLOG_Write( u64 errorCode );
+extern BOOL ERRORLOG_Init( void* (*AllocFunc) (u32) , void (*FreeFunc) (void*)  );
+extern void ERRORLOG_End( void );
+extern int ERRORLOG_getNum() ;
+extern const ErrorLogEntry* ERRORLOG_Read( int idx );
 
 
 	
