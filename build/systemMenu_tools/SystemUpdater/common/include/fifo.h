@@ -63,10 +63,18 @@ typedef enum KamiCommand
 	KAMI_TEST_COMMAND,
     KAMI_EXE_FORMAT,	
     KAMI_NAND_IO,
-    KAMI_NVRAM_IO,
-    KAMI_CLEAR_NAND_ERRORLOG
+    KAMI_CLEAR_NAND_ERRORLOG,
+    KAMI_GET_IS_TOOL_TYPE
 }
 KamiCommand;
+
+typedef enum _IsToolType
+{
+	IS_TOOL_TYPE_ERROR,
+    IS_TOOL_TYPE_DEBUGGER,
+    IS_TOOL_TYPE_CAPTURE
+}
+IsToolType;
 
 /*===========================================================================*/
 

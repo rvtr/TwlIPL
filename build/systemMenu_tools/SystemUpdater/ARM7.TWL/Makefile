@@ -28,7 +28,6 @@ ifndef	TWLSDK_NOCRYPTO
 
 SRCS		=	main.c \
 				kami_pxi.c \
-				nvram_misc.c \
 				formatter.c
 
 TARGET_NAME		=	armadillo

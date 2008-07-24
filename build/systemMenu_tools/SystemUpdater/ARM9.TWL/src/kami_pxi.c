@@ -166,53 +166,6 @@ KAMIResult kamiNandIo(u32 block, void* buffer, u32 count, BOOL is_read)
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         Nvramアクセス関数
-
-  Description:  
-
-  Arguments:    None.
-
-  Returns:      
- *---------------------------------------------------------------------------*/
-
-KAMIResult kamiNvramIo(u32 address, void* buffer, u32 size, BOOL is_read)
-{
-    OSIntrMode enabled;
-    u8  data[12];
-	int i;
-
-	// ロック
-    enabled = OS_DisableInterrupts();
-    if (kamiWork.lock)
-    {
-        (void)OS_RestoreInterrupts(enabled);
-        return KAMI_RESULT_BUSY;
-    }
-    kamiWork.lock = TRUE;
-    (void)OS_RestoreInterrupts(enabled);
-
-    kamiWork.callback = NULL;
-    kamiWork.arg = 0;
-    kamiWork.data = 0;
-
-	// データ作成
-	KAMI_PACK_U32(&data[0], &address);
-	KAMI_PACK_U32(&data[4], &buffer);
-	KAMI_PACK_U32(&data[8], &size);
-
-    if (KamiSendPxiCommand(KAMI_NVRAM_IO, 12, (u8)is_read))
-    {
-	    for (i = 0; i < 12; i+=3) 
-		{
-	        KamiSendPxiData(&data[i]);
-		}
-	    KamiWaitBusy();
-	    return (KAMIResult)kamiWork.result;
-    }
-    return KAMI_RESULT_SEND_ERROR;
-}
-
-/*---------------------------------------------------------------------------*
   Name:         kamiClearNandErrorLog
 
   Description:  NVRAMのNANDエラー情報をクリアします。
@@ -241,6 +194,45 @@ KAMIResult kamiClearNandErrorLog( void )
     kamiWork.data = 0;
 
     if (KamiSendPxiCommand(KAMI_CLEAR_NAND_ERRORLOG, 0, (u8)0))
+    {
+	    KamiWaitBusy();
+	    return (KAMIResult)kamiWork.result;
+    }
+    return KAMI_RESULT_SEND_ERROR;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         kamiGetIsToolType
+
+  Description:  IS-TWL-DEBUGGER or CAPTURE を取得します（同期版）
+
+  Arguments:    None.
+
+  Returns:      
+ *---------------------------------------------------------------------------*/
+
+KAMIResult kamiGetIsToolType( IsToolType *pType )
+{
+    OSIntrMode enabled;
+
+    if (pType == NULL)
+    {
+        return KAMI_RESULT_INVALID_PARAMETER;
+    }
+
+    enabled = OS_DisableInterrupts();
+    if (kamiWork.lock)
+    {
+        (void)OS_RestoreInterrupts(enabled);
+        return KAMI_RESULT_BUSY;
+    }
+    kamiWork.lock = TRUE;
+    kamiWork.callback = NULL;
+    kamiWork.arg  = 0;
+    kamiWork.data = (u8*)pType;
+    (void)OS_RestoreInterrupts(enabled);
+
+    if (KamiSendPxiCommand(KAMI_GET_IS_TOOL_TYPE, 0, 0))
     {
 	    KamiWaitBusy();
 	    return (KAMIResult)kamiWork.result;

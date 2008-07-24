@@ -60,8 +60,8 @@ void KamiPxiInit( void );
 
 KAMIResult ExeFormatAsync(FormatMode format_mode, KAMICallback callback);
 KAMIResult kamiNandIo(u32 block, void* buffer, u32 count, BOOL is_read);
-KAMIResult kamiNvramIo(u32 address, void* buffer, u32 size, BOOL is_read);
 KAMIResult kamiClearNandErrorLog( void );
+KAMIResult kamiGetIsToolType( IsToolType *pType );
 
 // (重要)
 // ARM7が読み書きするためリード前はInvalidate、ライト前はフラッシュしてください。
@@ -73,14 +73,6 @@ static KAMIResult kamiNandRead(u32 block, void* buffer, u32 count)
 static KAMIResult kamiNandWrite(u32 block, void* buffer, u32 count)
 {
 	return kamiNandIo(block, buffer, count, FALSE);
-}
-static KAMIResult kamiNvramRead(u32 adress, void* buffer, u32 size)
-{
-	return kamiNvramIo(adress, buffer, size, TRUE);
-}
-static KAMIResult kamiNvramWrite(u32 adress, void* buffer, u32 size)
-{
-	return kamiNvramIo(adress, buffer, size, FALSE);
 }
 
 /*===========================================================================*/

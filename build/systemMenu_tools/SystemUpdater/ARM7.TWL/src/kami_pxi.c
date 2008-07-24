@@ -21,7 +21,6 @@
 #include "fifo.h"
 #include "twl/cdc.h"
 #include "formatter.h"
-#include "nvram.h"
 #include <twl/ltdmain_begin.h>
 #include <twl/mcu.h>
 #include <twl/camera.h>
@@ -128,8 +127,8 @@ static void KamiPxiCallback(PXIFifoTag tag, u32 data, BOOL err)
         {
 		case KAMI_EXE_FORMAT:
 		case KAMI_NAND_IO:
-		case KAMI_NVRAM_IO:
 		case KAMI_CLEAR_NAND_ERRORLOG:
+		case KAMI_GET_IS_TOOL_TYPE:
             if (!OS_SendMessage(&kamiWork.msgQ, NULL, OS_MESSAGE_NOBLOCK))
             {
                 KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_FATAL_ERROR);
@@ -221,30 +220,6 @@ static void KamiThread(void *arg)
 			}
 			break;
 
-		case KAMI_NVRAM_IO:
-			{
-				BOOL is_read;
-				u32  adress;
-				void* buffer;
-				u32  size;
-
-				is_read = (BOOL)kamiWork.data[0];
-				KAMI_UNPACK_U32(&adress,  &kamiWork.data[1]);
-				KAMI_UNPACK_U32((u32 *)(&buffer), &kamiWork.data[5]);
-				KAMI_UNPACK_U32(&size,  &kamiWork.data[9]);
-
-				if (is_read)
-				{
-					NVRAMi_Read( adress, buffer, size );
-				}
-				else
-				{
-					NVRAMi_Write( adress, buffer, size );
-				}
-	            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
-			}
-			break;
-
 		case KAMI_CLEAR_NAND_ERRORLOG:
 			{
 				if (sdmcFormatNandLog(TRUE))
@@ -255,6 +230,26 @@ static void KamiThread(void *arg)
 				{
 		            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS_FALSE);
 				}
+			}
+			break;
+
+		case KAMI_GET_IS_TOOL_TYPE:
+			{
+                IsToolType type = IS_TOOL_TYPE_ERROR;
+				u8 temp = I2C_ReadRegister( I2C_SLAVE_DEBUGGER, 0);
+				if (temp != (u8)(-1)) // 赤箱、キャプチャ以外は通信エラー
+				{
+					if (temp == 0x44)
+					{
+						type = IS_TOOL_TYPE_DEBUGGER;
+					}
+					else if (temp == 0x43)
+					{
+						type = IS_TOOL_TYPE_CAPTURE;
+					}
+				}
+
+                KamiReturnResultEx(kamiWork.command, KAMI_PXI_RESULT_SUCCESS, sizeof(IsToolType), (u8*)&type);
 			}
 			break;
 

@@ -97,6 +97,7 @@ static void VBlankIntr(void);
 static void InitAllocation(void);
 static BOOL IgnoreRemoval(void);
 static void DrawWaitButtonA(void);
+static void DrawInvalidConsole(void);
 static void DrawCancel(void);
 static void DrawAlready(SystemUpdaterLog* log);
 static void DrawResult(BOOL result);
@@ -173,6 +174,93 @@ TwlMain()
         SDK_ASSERT(p_table != NULL);
         (void)FS_LoadTable(p_table, need_size);
     }
+
+	// コンソールチェック
+	{
+		u32 console = OS_GetRunningConsoleType();
+		enum { IS_TWL_DEBUGGER=0, IS_TWL_CAPTURE, TWL, UNKNOWN };
+		int running = UNKNOWN;
+
+		// SystemUpdaterはデバッグ不可で作成されるためOS_CONSOLE_TWLが取得される
+		// 赤箱にカードを挿してSystemUpdaterを実行した場合も同様（但しOS_CONSOLE_TWLTYPE_RETAILにはならない）
+		// デバッガかどうかの判定はメモリサイズチェックにより行う
+		// 念のためOS_CONSOLE_TWLTYPE_RETAILでないことも確認する
+
+		if ((console & OS_CONSOLE_SIZE_MASK) == OS_CONSOLE_SIZE_32MB)
+		{
+			if ((console & OS_CONSOLE_TWLTYPE_MASK) != OS_CONSOLE_TWLTYPE_RETAIL)
+			{
+				IsToolType type;
+				kamiGetIsToolType(&type);
+				if (type == IS_TOOL_TYPE_DEBUGGER)
+				{
+					running = IS_TWL_DEBUGGER;
+				}
+				else if (type == IS_TOOL_TYPE_CAPTURE)
+				{
+					running = IS_TWL_CAPTURE;
+				}
+			}
+		}
+		else if ((console & OS_CONSOLE_MASK) == OS_CONSOLE_TWL)
+		{
+			IsToolType type;
+			kamiGetIsToolType(&type);
+			if (type == IS_TOOL_TYPE_CAPTURE)
+			{
+				running = IS_TWL_CAPTURE;
+			}
+			else
+			{
+				running = TWL;
+			}
+		}
+
+		switch (running)
+		{
+		case IS_TWL_DEBUGGER:
+			kamiFontPrintf( 0, printLine++, FONT_COLOR_GREEN, "Running on IS_TWL_DEBUGGER.");
+			break;
+		case IS_TWL_CAPTURE:
+			kamiFontPrintf( 0, printLine++, FONT_COLOR_GREEN, "Running on IS_TWL_CAPTURE.");
+			break;
+		case TWL:
+			kamiFontPrintf( 0, printLine++, FONT_COLOR_GREEN, "Running on TWL CONSOLE.");
+			break;
+		case UNKNOWN:
+			kamiFontPrintf( 0, printLine++, FONT_COLOR_GREEN, "Running on UNKNOWN.");
+			break;
+		}
+
+#ifdef SYSMENU_DEBUGGER_BUILD
+		// デバッガ向けSystemUpdaterは実機とキャプチャでは動作させない
+		if (running != IS_TWL_DEBUGGER)
+		{
+			kamiFontPrintfMain( 2,  9, 3, " Sorry,                     ");
+			kamiFontPrintfMain( 2, 10, 3, " This SystemUpdater can not ");
+			kamiFontPrintfMain( 2, 11, 3, " execute on TWL-CONSOLE.    ");
+			DrawInvalidConsole();
+		}
+#else
+	    // 実機向けSystemUpdaterはデバッガでは動作させない
+		if (running == IS_TWL_DEBUGGER)
+		{
+			kamiFontPrintfMain( 2,  9, 3, " Sorry,                     ");
+			kamiFontPrintfMain( 2, 10, 3, " This SystemUpdater can not ");
+			kamiFontPrintfMain( 2, 11, 3, " execute on IS-TWL-DEBUGGER.");
+			DrawInvalidConsole();
+		}
+#endif  // SYSMENU_DEBUGGER_BUILD
+
+	    // UNKNOWNはは動作させない
+		if (running == UNKNOWN)
+		{
+			kamiFontPrintfMain( 2,  9, 3, " Sorry,                     ");
+			kamiFontPrintfMain( 2, 10, 3, " This SystemUpdater can not ");
+			kamiFontPrintfMain( 2, 11, 3, " execute on UNKNOWN CONSOLE.");
+			DrawInvalidConsole();
+		}
+	}
 
 	// （更新可能条件）
 	//  1.ログが存在しない
@@ -495,6 +583,35 @@ static void DrawWaitButtonA(void)
 	OS_WaitVBlankIntr();
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         DrawInvalidConsole
+
+  Description:  コンソール条件による失敗を表示します。
+
+  Arguments:   
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static void DrawInvalidConsole(void)
+{
+	// キャンセルされました
+	CARD_LockRom((u16)sLockId);
+	(void)CARDi_ReadRomIDCoreEx(DEBUGGER_COMMAND_CANCELED);
+	CARD_UnlockRom((u16)sLockId);
+
+	while(1)
+	{
+		G3X_Reset();
+		G3_Identity();
+		G3_PolygonAttr(GX_LIGHTMASK_NONE, GX_POLYGONMODE_DECAL, GX_CULL_NONE, 0, 31, 0);
+
+		DrawQuad( 10,  50, 246, 120, GX_RGB(28, 28, 28));
+
+		G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
+
+	    OS_WaitVBlankIntr();
+	}
+}
 
 /*---------------------------------------------------------------------------*
   Name:         DrawCancel
