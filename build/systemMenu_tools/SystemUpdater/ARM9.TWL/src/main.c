@@ -196,6 +196,10 @@ TwlMain()
 				{
 					running = IS_TWL_DEBUGGER;
 				}
+				else if (type == IS_TOOL_TYPE_ERROR) // TSボードプラス + 旧仕様デバッガ
+				{
+					running = IS_TWL_DEBUGGER;
+				}
 				else if (type == IS_TOOL_TYPE_CAPTURE)
 				{
 					running = IS_TWL_CAPTURE;
