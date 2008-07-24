@@ -69,8 +69,8 @@ Ltdautoload SCRWRAM
 	Library		libnvram_sp$(LIBSUFFIX).a
 	Library		librtc_sp$(LIBSUFFIX).a
 	Library		libfatfs_sp$(LIBSUFFIX).a
-#	Library		libwm_sp$(LIBSUFFIX).a
-#	Library		libnwm_sp$(LIBSUFFIX).a
+	Library		libwm_sp$(LIBSUFFIX).a
+	Library		libnwm_sp$(LIBSUFFIX).a
 	Library		libwvr_sp$(LIBSUFFIX).a
 	Library		libwl_sp$(LIBSUFFIX).a
 	Library		libwpa_sp$(LIBSUFFIX).a

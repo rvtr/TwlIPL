@@ -75,6 +75,7 @@
 static void         PrintDebugInfo(void);
 static OSHeapHandle InitializeAllocateSystem(void);
 static void         InitializeFatfs(void);
+static void         InitializeNwm(OSHeapHandle hh);
 static void			InitializeCardPower(void);
 static void         InitializeCdc(void);
 static void         DummyThread(void* arg);
@@ -130,7 +131,7 @@ TwlSpMain(void)
     FS_Init(FS_DMA_NOT_USE);                    // FS for CARD
     FS_CreateReadServerThread(THREAD_PRIO_FS);  // FS for CARD
     InitializeFatfs();                          // FAT-FS
-//  InitializeNwm(heapHandle);                  // TWL 無線
+    InitializeNwm(heapHandle);                  // TWL 無線
     MCU_InitIrq(THREAD_PRIO_MCU);               // マイコン
 
     if (OSi_IsCodecTwlMode() == TRUE)
@@ -142,7 +143,7 @@ TwlSpMain(void)
     SND_Init(THREAD_PRIO_SND);                  // サウンド
     SNDEX_Init(THREAD_PRIO_SNDEX);              // サウンド拡張
     RTC_Init(THREAD_PRIO_RTC);                  // RTC
-//  WVR_Begin(heapHandle);                      // NITRO 無線
+    WVR_Begin(heapHandle);                      // NITRO 無線
     SPI_Init(THREAD_PRIO_SPI);
 	InitializeCardPower();						// カード電源ON（検査プログラム用）
 
@@ -249,6 +250,34 @@ InitializeFatfs(void)
 
     // ダミースレッド破棄
     OS_KillThread(&thread, NULL);
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         InitializeNwm
+  Description:  NWMライブラリを初期化する。
+  Arguments:    hh  -   利用可能なヒープのハンドルを指定。
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+static void
+InitializeNwm(OSHeapHandle hh)
+{
+    NwmspInit   nwmInit;
+
+    /* [TODO] 確保しているヒープ領域が新無線一式が必要としているメモリ量以上かのチェックが必要 */
+
+    nwmInit.cmdPrio         =   THREAD_PRIO_NWM_COMMAND;
+    nwmInit.evtPrio         =   THREAD_PRIO_NWM_EVENT;
+    nwmInit.sdioPrio        =   THREAD_PRIO_NWM_SDIO;
+
+    nwmInit.dmaNo           =   DMA_NO_NWM;
+    nwmInit.drvHeap.id      =   OS_ARENA_WRAM_SUBPRIV;
+    nwmInit.drvHeap.handle  =   hh;
+
+    nwmInit.wpaPrio         =   THREAD_PRIO_NWM_WPA;
+    nwmInit.wpaHeap.id      =   OS_ARENA_WRAM_SUBPRIV;
+    nwmInit.wpaHeap.handle  =   hh;
+
+    NWMSP_Init(&nwmInit);
 }
 
 /*---------------------------------------------------------------------------*
