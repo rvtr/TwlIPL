@@ -66,7 +66,15 @@ HNHA.tad: $(DS_HASH_TABLE_DATA)
 HNLA.tad: $(SYSMENU_VERSION_DIR)/$(SYSMENU_VERSION_FILE)
 	$(MAKETAD) $(call empath,$<) $(SYSMENU_VERSION_MAKETAD_OPTION) -o $@
 
+ifeq ($(SDK5_0RC_TEMP),TRUE)
+ifeq ($(FIRM_USE_PRODUCT_KEYS),TRUE)
+menu_launcher.nand: ../SDK_5_0_RC_temp/menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).prod.nand
+else
+menu_launcher.nand: ../SDK_5_0_RC_temp/menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).dev.nand
+endif
+else
 menu_launcher.nand: ../../../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nand
+endif
 	cp $< ./$@
 
 #===== End of Makefile =====
