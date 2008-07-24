@@ -198,7 +198,7 @@ BOOL ERRORLOG_Write( u64 errorCode )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ERRORlOG_getNum
+  Name:         ERRORlOG_GetNum
 
   Description:  読み出したエントリ数を取得します。
 
@@ -207,7 +207,7 @@ BOOL ERRORLOG_Write( u64 errorCode )
   Returns:      ログファイルから読み出したエントリ数を返します。
  *---------------------------------------------------------------------------*/
 
-int ERRORLOG_getNum()
+int ERRORLOG_GetNum()
 {
 	return elWork.numEntry < ERRORLOG_NUM_ENTRY ? elWork.numEntry : ERRORLOG_NUM_ENTRY;
 }

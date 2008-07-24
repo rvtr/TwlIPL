@@ -46,7 +46,7 @@ void TwlMain( void )
 	
 	ERRORLOG_Init( Alloc, Free );
 
-	numEntry = ERRORLOG_getNum();
+	numEntry = ERRORLOG_GetNum();
 	OS_TPrintf("API: before numEntry : %d\n", numEntry );
 	
 	ERRORLOG_Write( (u64)0x077777777777LL );
@@ -104,7 +104,7 @@ void TwlMain( void )
 		OS_TPrintf("total Size : %d\n", totalSize);
 	}
 
-	numEntry = ERRORLOG_getNum();
+	numEntry = ERRORLOG_GetNum();
 	OS_TPrintf("API: end numEntry : %d\n", numEntry );
 
 		 
