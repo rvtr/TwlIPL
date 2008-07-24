@@ -16,13 +16,13 @@
 # $Author: 
 #----------------------------------------------------------------------------
 
-TARGET_FIRM			=	SYSTEMMENU
+TARGET_FIRM		=	SYSTEMMENU
 
-SUBDIRS			=	$(ROOT)/build/tools/compBLZ
+SUBDIRS			=	
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-FONT_TIMESTAMP	=	08071200
+FONT_TIMESTAMP	=	08072300
 FONT_DIR		=	WW
 FONTS			=	TBF1_l.NFTR \
 					TBF1_m.NFTR \
