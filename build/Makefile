@@ -21,15 +21,21 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS =	\
-            tools \
-            libraries \
-			libraries_sysmenu\
-			nandfirm \
+ifneq	($(TWL_KEYSDIR),)
+SUBDIRS =	tools
+endif
+
+SUBDIRS +=	libraries_sysmenu \
 			components \
-			systemMenu_RED \
-			systemMenu_tools \
+			systemMenu_RED
+
+
+ifneq	($(TWL_KEYSDIR),)
+SUBDIRS +=	libraries \
+			nandfirm \
 			gcdfirm \
+			systemMenu_tools
+endif
 
 ifdef TWL_IPL_WITH_TESTS
 SUBDIRS +=	tests

@@ -57,7 +57,7 @@ else
 MAKEGCDFIRM_FLAGS	+= -t'$(FIRM_ROOT)/build/tools/makegcdfirm/gcdfirm_header_twlj.template.sbin'
 endif
 
-FIRM_SDEPENDS_BIN	:= $(call eupath,$(MAKEFIRM_RSA_PRVKEY)) \
+FIRM_SDEPENDS_BIN	:= \
 				$(call eupath,$(MAKEFIRM_ARM9)) \
 				$(call eupath,$(MAKEFIRM_ARM7))
 
