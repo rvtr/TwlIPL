@@ -93,7 +93,7 @@ Ltdautoload SCRWRAM
 	Library		libsysmenu_sp$(LIBSUFFIX).a
 	Library		libsysmmcu_sp$(LIBSUFFIX).a
 	Library		libds_sp$(LIBSUFFIX).a
-	Library		libaes_sp.firm.LTD.a
+	Library		libaes_sp$(FIRM_LIBSUFFIX).a
 	Library		libdht_sp$(LIBSUFFIX).a
 
 	Object		* (.wram)

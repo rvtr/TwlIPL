@@ -145,7 +145,7 @@ Autoload WRAM
 				libsysmenu_sp$(LIBSUFFIX).a \
 				libsysmmcu_sp$(LIBSUFFIX).a \
 				libds_sp$(LIBSUFFIX).a \
-				libaes_sp.firm.LTD.a \
+				libaes_sp$(FIRM_LIBSUFFIX).a \
 				libsea_sp$(LIBSUFFIX).a \
 				libcrypto_sp$(LIBSUFFIX).a
 

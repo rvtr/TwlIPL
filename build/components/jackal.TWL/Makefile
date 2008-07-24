@@ -27,6 +27,8 @@ override TWL_PLATFORM		=	TS
 TWL_NO_STD_PCHDR			=	True
 TWL_CODEGEN					?=	ARM
 
+FIRM_LIBSUFFIX	=	.firm$(ARCHGEN_TYPE)$(CODEGEN_ARCH)
+
 #----------------------------------------------------------------------------
 
 SUBDIRS			=	$(SYSMENU_ROOT)/build/libraries/aes \
@@ -65,7 +67,8 @@ MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD -DSDK_SEA \
 
 MAKELCF_FLAGS	+=	-DADDRESS_FLXMAIN='0x02280200' \
 					-DADDRESS_BOOTCORE='0x0380f000' \
-					-DCRT0_O='$(CRT0_O)'
+					-DCRT0_O='$(CRT0_O)' \
+					-DFIRM_LIBSUFFIX='$(FIRM_LIBSUFFIX)'
 
 MAKELCF_FLAGS	+=	-DISDBG_LIBS_TWL='$(if $(ISDBG_LIBS_TWL),$(ISDBG_LIBS_TWL),libstubsistd_sp$(TWL_LIBSUFFIX).a)'	\
 					-DISDBG_LIBS_NITRO='libstubsisd_sp$(TWL_LIBSUFFIX).a'
@@ -103,9 +106,9 @@ SYSMENU_LIBS	+=	\
 endif
 
 SDK_APPEND_LIBS	=	\
-					libwl_sp.TWL.LTD.a \
-					libaes_sp.firm.LTD.a \
-					libsea_sp.TWL.LTD.a \
+					libwl_sp$(TWL_LIBSUFFIX).a \
+					libaes_sp$(FIRM_LIBSUFFIX).a \
+					libsea_sp$(TWL_LIBSUFFIX).a \
 					libreboot_sp$(TWL_LIBSUFFIX).a
 
 LLIBRARIES		+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
