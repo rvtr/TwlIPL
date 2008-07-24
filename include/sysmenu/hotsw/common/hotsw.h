@@ -26,7 +26,7 @@ extern "C" {
 // Define -------------------------------------------------------------------
 #define SYSM_HOTSW_ENABLE_ROMEMU
 #define USE_WRAM_LOAD
-//#define INITIAL_KEYTABLE_PRELOAD
+#define INITIAL_KEYTABLE_PRELOAD
 //#define USE_NEW_DMA
 //#define HOTSW_NO_MESSAGE					// Printf抑制スイッチ
 
@@ -39,8 +39,8 @@ extern "C" {
 		#define HOTSW_PutString				OS_PutString
 	#endif
 #else
-		#define HOTSW_TPrintf( ... )        ((void)0)
-		#define HOTSW_PutString( ... )      ((void)0)
+	#define HOTSW_TPrintf( ... )        	((void)0)
+	#define HOTSW_PutString( ... )      	((void)0)
 #endif
 
 // enum   -------------------------------------------------------------------
@@ -169,6 +169,11 @@ CardDataReadState HOTSW_ReadCardDataOnGameMode(const void* src, void* dest, u32 
 #else
 // 活栓挿抜処理の初期化
 void HOTSW_Init(u32 threadPrio);
+
+#ifdef INITIAL_KEYTABLE_PRELOAD
+// DS互換BlowfishテーブルをWRAM経由でローカルにコピーする
+void HOTSW_CopyInitialKeyTable(void);
+#endif
 
 // カードの存在判定
 BOOL HOTSW_IsCardExist(void);

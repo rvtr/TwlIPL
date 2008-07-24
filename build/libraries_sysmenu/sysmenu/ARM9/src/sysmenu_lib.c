@@ -61,7 +61,7 @@ static TitleProperty s_bootTitleBuf;
 //
 // ============================================================================
 
-#if 0
+#if 1
 // AutoloadDoneCallbackを利用して鍵を引き渡す
 void _start_AutoloadDoneCallback(void* argv[])
 {
@@ -81,7 +81,7 @@ void SYSM_Init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 #endif /* SYSM_DEBUG_ */
 
     // ARM7で使用する分の鍵を渡す
-    SYSMi_SendKeysToARM7();
+    //SYSMi_SendKeysToARM7();
 
     // ランチャーのマウント情報セット
     //SYSMi_SetLauncherMountInfo();
@@ -140,6 +140,10 @@ void SYSMi_SendKeysToARM7( void )
 //    MI_CpuCopyFast( &((OSFromFirm9Buf *)HW_FIRM_FROM_FIRM_BUF)->aes_key[ 0 ], (void *)&GetDeliverBROM9KeyAddr()->aes_key[ 0 ], AES_KEY_SIZE );
     DC_FlushRange( (void *)HW_WRAM_0, sizeof(DeliverBROM9Key) );
     MI_SetWramBank(MI_WRAM_ARM7_ALL);
+
+#ifdef INITIAL_KEYTABLE_PRELOAD
+    SYSMi_GetWork()->flags.hotsw.isKeyTableLoadReady = TRUE;
+#endif
 }
 
 

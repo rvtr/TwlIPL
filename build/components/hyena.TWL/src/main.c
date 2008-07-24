@@ -133,6 +133,10 @@ TwlSpMain(void)
     }
     PMi_SetControl( PMIC_CTL_BKLT1 | PMIC_CTL_BKLT2 );
 
+#ifdef INITIAL_KEYTABLE_PRELOAD
+	HOTSW_CopyInitialKeyTable();
+#endif
+    
     // OS èâä˙âª
     OS_Init();
     PrintDebugInfo();

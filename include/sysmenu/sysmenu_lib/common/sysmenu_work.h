@@ -119,8 +119,9 @@ typedef struct SYSM_work {
             vu16		:0;
             vu8			isCardStateChanged;				// カード状態更新フラグ
             vu8			isBusyHotSW;					// 活線挿抜処理中？
+            vu8			isKeyTableLoadReady;			// Key Tableのロード準備完了？
         }hotsw;
-	}flags; // 8B
+	}flags; // 9B
 
     OSLockWord			lockCardRsc ATTRIBUTE_ALIGN(8);	// カードリソース排他制御用
 	OSLockWord			lockHotSW;						// カードリソース排他制御用
