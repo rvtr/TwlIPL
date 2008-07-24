@@ -158,7 +158,15 @@ $(OUT_DIR)/TWLFontTable.dat: $(SYSMENU_DIR)/sharedFont/TWLFontTable.dat
 #---------------------------
 #NANDÉtÉ@Å[ÉÄ
 #---------------------------
+ifeq ($(SDK5_0RC_TEMP),TRUE)
+ifeq ($(FIRM_USE_PRODUCT_KEYS),TRUE)
+$(OUT_DIR)/menu_launcher-$(TWL_BUILD_TYPE).nand: ../systemMenu_tools/SystemUpdater/SDK_5_0_RC_temp/menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).prod.nand
+else
+$(OUT_DIR)/menu_launcher-$(TWL_BUILD_TYPE).nand: ../systemMenu_tools/SystemUpdater/SDK_5_0_RC_temp/menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).dev.nand
+endif
+else
 $(OUT_DIR)/menu_launcher-$(TWL_BUILD_TYPE).nand: ../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nand
+endif
 	cp $< ./$@
 
 

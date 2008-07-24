@@ -20,6 +20,7 @@
 #include <twl/dsp/common/g711.h>
 #include <twl/camera.h>
 #include <sysmenu/errorLog.h>
+#include <nitro/crypto.h>
 #include "launcher.h"
 #include "misc.h"
 #include "logoDemo.h"
@@ -177,6 +178,9 @@ void TwlMain( void )
     SYSM_Init( Alloc, Free );                       // OS_Initの前でコールする必要あり。
     OS_Init();
     SYSM_SetArena();                                // OS_Initの後でコールする必要あり。
+	
+    // CRYPTOライブラリ初期化---------- 2008.07.24 ESライブラリがCRYPTOを使用するようになったので、この処理が必要。
+	CRYPTO_SetAllocator( Alloc, Free );
 
 	// ColdStart時は、ロゴデモが終わるまでは、HWリセットボタンによるHotBootフラグセットを抑制する。
 	// （「健康と安全」画面を必ず表示するため）
