@@ -22,52 +22,51 @@
 
 # 現在、製品版の証明書を含んだものは生成しない
 
-override TARGET_PLATFORM	:= TWL
-override TWL_ARCHGEN		:= LIMITED
+override TARGET_PLATFORM  := TWL
+override TWL_ARCHGEN    := LIMITED
 
-TARGET_FIRM			=	SYSTEMMENU
-TWL_NANDAPP			=	TRUE
+TARGET_FIRM     = SYSTEMMENU
+TWL_NANDAPP     = TRUE
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include ./commondefs.sysmenuVersion
 
-REGION				?=	A
-DST_DIR				=	dev
+REGION        ?=  A
+DST_DIR       = dev
 
 # タイムスタンプ
-VER_TIMESTAMP		=	08062300
+VER_TIMESTAMP   = 08062300
 
 # システムメニューバージョン
-MAJOR_VERSION		=	0
-MINOR_VERSION		=	1
-STR_VERSION			=	$(MAJOR_VERSION).$(MINOR_VERSION)$(REGION)
+MAJOR_VERSION   = 0
+MINOR_VERSION   = 1
+STR_VERSION     = $(MAJOR_VERSION).$(MINOR_VERSION)$(REGION)
 
 # ユーザー領域サイズ(=128MB)
-USER_AREA_SIZE		=	134217728
+USER_AREA_SIZE    = 134217728
 
 # NUPホストネーム
-NUP_HOSTNAME		=	nus.shop.wii.com:443
+NUP_HOSTNAME    = nus.t.shop.nintendowifi.net:443
 
 # EULAのURL
-EULA_URL			=	https://cfh-test.t.app.nintendowifi.net/eula/	#開発用
-#EULA_URL			=	https://cfh.t.app.nintendowifi.net/eula/		#製品用
+EULA_URL      = https://cfh.t.app.nintendowifi.net/eula/
 
-GEN_VERSION_PARAM	=	$(DST_DIR) $(VER_TIMESTAMP) $(STR_VERSION) $(MAJOR_VERSION) $(MINOR_VERSION) \
-						$(USER_AREA_SIZE) $(NUP_HOSTNAME) $(EULA_URL)
+GEN_VERSION_PARAM = $(DST_DIR) $(VER_TIMESTAMP) $(STR_VERSION) $(MAJOR_VERSION) $(MINOR_VERSION) \
+            $(USER_AREA_SIZE) $(NUP_HOSTNAME) $(EULA_URL)
 
-GEN_VERSION_FILE	=	$(SYSMENU_TOOLSDIR)/bin/genVersion.plx
+GEN_VERSION_FILE  = $(SYSMENU_TOOLSDIR)/bin/genVersion.plx
 
-VERSION_TAD			=	HNL$(REGION).tad
+VERSION_TAD     = HNL$(REGION).tad
 
 ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
-	VERSION_DAT		=	$(SYSMENU_VERSION_FILE)
+  VERSION_DAT   = $(SYSMENU_VERSION_FILE)
 endif
 
-TARGETS				+=	$(VERSION_TAD)
+TARGETS       +=  $(VERSION_TAD)
 
 #----------------------------------------------------------------------------
 
-LDIRT_CLEAN			=	$(VERSION_TAD) properties
+LDIRT_CLEAN     = $(VERSION_TAD) properties
 
 #----------------------------------------------------------------------------
 
@@ -76,9 +75,9 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 do-build :  $(VERSION_TAD)
 
 $(VERSION_DAT): ./Makefile ./commondefs.sysmenuVersion
-	$(GEN_VERSION_FILE) $(GEN_VERSION_PARAM)
+  $(GEN_VERSION_FILE) $(GEN_VERSION_PARAM)
 
 $(VERSION_TAD) : $(SYSMENU_VERSION_FILE)
-	$(MAKETAD) $(call empath,$<) $(SYSMENU_VERSION_MAKETAD_OPTION) -o $@
+  $(MAKETAD) $(call empath,$<) $(SYSMENU_VERSION_MAKETAD_OPTION) -o $@
 
 #===== End of Makefile =====
