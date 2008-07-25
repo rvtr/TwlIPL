@@ -129,7 +129,7 @@ static inline void AESi_ResetAesKeyC( void )
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-#if 0	// rebootライブラリに移動.
+#if 0   // rebootライブラリに移動.
 static inline void AESi_ResetAesKeyD( void )
 {
     AES_Lock();
@@ -153,7 +153,7 @@ static inline void AESi_ResetAesKeyD( void )
 static inline void AESi_InitKeysFIRM( void )
 {
     AESi_InitKeysForApp( (u8*)((ROM_Header_Short*)HW_TWL_ROM_HEADER_BUF)->game_code );
-    AESi_ResetAesKeyC();
+//    AESi_ResetAesKeyC();
 //    AESi_ResetAesKey();
 }
 
