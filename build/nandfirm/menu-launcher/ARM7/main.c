@@ -22,18 +22,18 @@
     利用するためには、main.cかどこかに、u32 profile[256]; u32 pf_cnt = 0; を
     定義する必要があります。
 */
-#define PROFILE_ENABLE
+//#define PROFILE_ENABLE
 
 /*
     デバッグLEDをFINALROMとは別にOn/Offできます。
 */
-#define USE_DEBUG_LED
+//#define USE_DEBUG_LED
 
 /*
     PRINT_MEMORY_ADDR を定義すると、そのアドレスからSPrintfを行います(このファイルのみ)
     FINALROM版でもコードが残るので注意してください。
 */
-#define PRINT_MEMORY_ADDR       0x02FFC8A0
+//#define PRINT_MEMORY_ADDR       0x02FFC8A0
 
 /*
     AES鍵設定API
@@ -208,7 +208,9 @@ void TwlSpMain( void )
     PostInit();
     // 7: after PostInit
     PUSH_PROFILE();
+#ifdef PROFILE_ENABLE
     step = 0x88;
+#endif
     SetDebugLED(step); // 0x88
 
 //    PM_BackLightOn( FALSE );
