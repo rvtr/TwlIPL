@@ -46,11 +46,10 @@ STR_VERSION			=	$(MAJOR_VERSION).$(MINOR_VERSION)$(REGION)
 USER_AREA_SIZE		=	134217728
 
 # NUPホストネーム
-NUP_HOSTNAME		=	nus.shop.wii.com:443
+NUP_HOSTNAME    = nus.t.shop.nintendowifi.net:443
 
 # EULAのURL
-EULA_URL			=	https://cfh-test.t.app.nintendowifi.net/eula/	#開発用
-#EULA_URL			=	https://cfh.t.app.nintendowifi.net/eula/		#製品用
+EULA_URL      = https://cfh.t.app.nintendowifi.net/eula/
 
 GEN_VERSION_PARAM	=	$(DST_DIR) $(VER_TIMESTAMP) $(STR_VERSION) $(MAJOR_VERSION) $(MINOR_VERSION) \
 						$(USER_AREA_SIZE) $(NUP_HOSTNAME) $(EULA_URL)
