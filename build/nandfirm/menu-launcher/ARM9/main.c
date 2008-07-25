@@ -35,9 +35,13 @@ static const u8 rsa_key_launcher[128] =
 };
 #endif
 
-#define RSA_HEAP_SIZE   (4*1024)    // RSA用ヒープサイズ (サイズ調整必要)
+#define RSA_HEAP_SIZE       (4*1024)    // RSA用ヒープサイズ
+#define CRYPTO_HEAP_SIZE    (12*1024)   // CRYPTO用ヒープサイズ
 
-static u8 acHeap[RSA_HEAP_SIZE] __attribute__ ((aligned (32)));
+#define HEAP_SIZE   (RSA_HEAP_SIZE > CRYPTO_HEAP_SIZE ? RSA_HEAP_SIZE : CRYPTO_HEAP_SIZE)
+
+static u8 heap[HEAP_SIZE] ATTRIBUTE_ALIGN(32);
+
 static SVCSignHeapContext acPool;
 
 #define MENU_TITLE_ID_HI    0x00030017ULL
@@ -110,14 +114,12 @@ static void PreInit(void)
 ***************************************************************/
 static void PostInit(void)
 {
-    // アリーナ設定
+    // FS用アリーナ設定
     {
         static u32 arena[ 0x400 / sizeof(u32) ];
         OS_SetMainArenaLo( arena );
         OS_SetMainArenaHi( &arena[ 0x400 / sizeof(u32) ] );
     }
-    // RSA用ヒープ設定
-    SVC_InitSignHeap( &acPool, acHeap, sizeof(acHeap) );
     // FS/FATFS初期化
     FS_InitFIRM();
 }
@@ -135,6 +137,18 @@ static BOOL TryResolveSrl(void)
         MENU_TITLE_ID
     };
     int num;
+
+    // CRYPTO用ヒープ設定 (ESライブラリしか使わないはず)
+    void* lo = OS_InitAlloc( OS_ARENA_MAIN, heap, heap + CRYPTO_HEAP_SIZE, 1);
+    void* hi = heap + CRYPTO_HEAP_SIZE;
+    OSHeapHandle hh = OS_CreateHeap( OS_ARENA_MAIN, lo, hi );
+    if ( hh < 0 )
+    {
+        OS_TPrintf("Failed to allocate heap.\n");
+        return FALSE;
+    }
+    OS_SetCurrentHeap( OS_ARENA_MAIN, hh );
+
     if ( !LCFG_ReadHWSecureInfo() )
     {
         OS_TPrintf("Failed to load HWSecureInfo.\n");
@@ -151,6 +165,9 @@ static BOOL TryResolveSrl(void)
         return FALSE;
     }
     OS_TPrintf("Launcher Title ID: 0x%016llx\n", titleIdList[num]);
+
+    OS_DestroyHeap( OS_ARENA_MAIN, hh );
+
     return TRUE;
 }
 
@@ -282,6 +299,11 @@ void TwlMain( void )
     PXI_NotifyID( FIRM_PXI_ID_SET_PATH );
     // 6: after PXI
     PUSH_PROFILE();
+
+    /* ES (CRYPTO) ライブラリはここまで */
+    /* SVN_RSA はここから*/
+    // RSA用ヒープ設定
+    SVC_InitSignHeap( &acPool, heap, RSA_HEAP_SIZE );
 
     if ( !FS_LoadHeader( &acPool, NULL, NULL, RSA_KEY_ADDR ) || !CheckHeader() )
     {
