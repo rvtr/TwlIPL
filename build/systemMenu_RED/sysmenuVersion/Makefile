@@ -75,9 +75,9 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 do-build :  $(VERSION_TAD)
 
 $(VERSION_DAT): ./Makefile ./commondefs.sysmenuVersion
-  $(GEN_VERSION_FILE) $(GEN_VERSION_PARAM)
+	$(GEN_VERSION_FILE) $(GEN_VERSION_PARAM)
 
 $(VERSION_TAD) : $(SYSMENU_VERSION_FILE)
-  $(MAKETAD) $(call empath,$<) $(SYSMENU_VERSION_MAKETAD_OPTION) -o $@
+	$(MAKETAD) $(call empath,$<) $(SYSMENU_VERSION_MAKETAD_OPTION) -o $@
 
 #===== End of Makefile =====
