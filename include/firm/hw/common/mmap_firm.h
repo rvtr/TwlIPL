@@ -29,7 +29,7 @@ extern "C" {
 //------------------------------------- *_LoadBuffer
 #define HW_FIRM_LOAD_BUFFER_BASE        MI_GetWramMapStart_B()
 #define HW_FIRM_LOAD_BUFFER_UNIT_SIZE   0x8000
-#define HW_FIRM_LOAD_BUFFER_UNIT_NUMS   8
+#define HW_FIRM_LOAD_BUFFER_UNIT_NUMS   7
 #define HW_FIRM_LOAD_BUFFER_SIZE        (HW_FIRM_LOAD_BUFFER_UNIT_SIZE * HW_FIRM_LOAD_BUFFER_UNIT_NUMS)
 #define HW_FIRM_LOAD_BUFFER_END         (HW_FIRM_LOAD_BUFFER_BASE + HW_FIRM_LOAD_BUFFER_SIZE)
 

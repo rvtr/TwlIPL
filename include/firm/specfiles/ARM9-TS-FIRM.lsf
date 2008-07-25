@@ -20,7 +20,8 @@
 
 Static $(TARGET_NAME)
 {
-	Address		0x037c0000
+#	Address		0x037c0000
+	Address		0x037b8000
 	Object		$(OBJS_STATIC)
 	Library		$(LLIBS) $(GLIBS) $(CW_LIBS)
 	Object		*     		 (.itcm)
