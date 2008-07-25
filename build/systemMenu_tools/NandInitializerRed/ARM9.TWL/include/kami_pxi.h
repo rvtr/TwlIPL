@@ -68,6 +68,7 @@ KAMIResult kamiCDC_GoDsMode( void );
 KAMIResult kamiClearNandErrorLog( void );
 KAMIResult kamiGetCameraModuleTypesAsync( CameraModuleTypes *pTypes, KAMICallback callback, void* arg );
 KAMIResult kamiGetCameraModuleTypes( CameraModuleTypes *pTypes );
+KAMIResult kamiGetNandCID( void* buffer );
 
 // (重要)
 // ARM7が読み書きするためリード前はInvalidate、ライト前はフラッシュしてください。

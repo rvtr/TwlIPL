@@ -173,6 +173,8 @@ KAMIResult kamiNandIo(u32 block, void* buffer, u32 count, BOOL is_read)
     u8  data[12];
 	int i;
 
+	MI_CpuClear8( data, sizeof(data));
+
 	// ロック
     enabled = OS_DisableInterrupts();
     if (kamiWork.lock)
@@ -192,7 +194,7 @@ KAMIResult kamiNandIo(u32 block, void* buffer, u32 count, BOOL is_read)
 	KAMI_PACK_U32(&data[4], &buffer);
 	KAMI_PACK_U32(&data[8], &count);
 
-    if (KamiSendPxiCommand(KAMI_NAND_IO, 12, (u8)is_read))
+    if (KamiSendPxiCommand(KAMI_NAND_IO, 13, (u8)is_read))
     {
 	    for (i = 0; i < 12; i+=3) 
 		{
@@ -217,8 +219,10 @@ KAMIResult kamiNandIo(u32 block, void* buffer, u32 count, BOOL is_read)
 KAMIResult kamiMcuWriteFirm(void* buffer )
 {
     OSIntrMode enabled;
-    u8  data[4];
+    u8  data[4+2]; // 3の倍数
 	int i;
+
+	MI_CpuClear8( data, sizeof(data));
 
 	// ロック
     enabled = OS_DisableInterrupts();
@@ -236,7 +240,7 @@ KAMIResult kamiMcuWriteFirm(void* buffer )
 	// データ作成
 	KAMI_PACK_U32(&data[0], &buffer);
 
-    if (KamiSendPxiCommand(KAMI_MCU_WRITE_FIRM, 4, (u8)0))
+    if (KamiSendPxiCommand(KAMI_MCU_WRITE_FIRM, 5, (u8)0))
     {
 	    for (i = 0; i < 4; i+=3) 
 		{
@@ -265,6 +269,8 @@ KAMIResult kamiMcuIo(u32 reg_no, void* buffer, u32 value, BOOL is_read)
     u8  data[12];
 	int i;
 
+	MI_CpuClear8( data, sizeof(data));
+
 	// ロック
     enabled = OS_DisableInterrupts();
     if (kamiWork.lock)
@@ -290,7 +296,7 @@ KAMIResult kamiMcuIo(u32 reg_no, void* buffer, u32 value, BOOL is_read)
 	KAMI_PACK_U32(&data[0], &reg_no);
 	KAMI_PACK_U32(&data[4], &value);
 
-    if (KamiSendPxiCommand(KAMI_MCU_IO, 12, (u8)is_read))
+    if (KamiSendPxiCommand(KAMI_MCU_IO, 13, (u8)is_read))
     {
 	    for (i = 0; i < 12; i+=3) 
 		{
@@ -319,6 +325,8 @@ KAMIResult kamiARM7Io(u32 addr, u32* buffer, u32 value, BOOL is_read)
     u8  data[12];
 	int i;
 
+	MI_CpuClear8( data, sizeof(data));
+
 	// ロック
     enabled = OS_DisableInterrupts();
     if (kamiWork.lock)
@@ -344,7 +352,7 @@ KAMIResult kamiARM7Io(u32 addr, u32* buffer, u32 value, BOOL is_read)
 	KAMI_PACK_U32(&data[0], &addr);
 	KAMI_PACK_U32(&data[4], &value);
 
-    if (KamiSendPxiCommand(KAMI_ARM7_IO, 12, (u8)is_read))
+    if (KamiSendPxiCommand(KAMI_ARM7_IO, 13, (u8)is_read))
     {
 	    for (i = 0; i < 12; i+=3) 
 		{
@@ -503,6 +511,46 @@ KAMIResult kamiGetCameraModuleTypes( CameraModuleTypes *pTypes )
 	    KamiWaitBusy();
 	    return (KAMIResult)kamiWork.result;
     }
+    return KAMI_RESULT_SEND_ERROR;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         kamiGetNandCID
+
+  Description:  NANDのCIDを取得します。
+
+  Arguments:    buffer : 16バイトバッファ
+
+  Returns:      
+ *---------------------------------------------------------------------------*/
+
+KAMIResult kamiGetNandCID(void* buffer )
+{
+    OSIntrMode enabled;
+    u8  data[4+2]; // 3の倍数
+
+	MI_CpuClear8( data, sizeof(data));
+
+	// ロック
+    enabled = OS_DisableInterrupts();
+    if (kamiWork.lock)
+    {
+        (void)OS_RestoreInterrupts(enabled);
+        return KAMI_RESULT_BUSY;
+    }
+    kamiWork.lock = TRUE;
+    (void)OS_RestoreInterrupts(enabled);
+
+    kamiWork.callback = NULL;
+    kamiWork.arg = 0;
+	kamiWork.data = (u8*)buffer;
+
+    if (KamiSendPxiCommand(KAMI_GET_NAND_CID, 0, 0))
+    {
+	    KamiWaitBusy();
+	    return (KAMIResult)kamiWork.result;
+    }
+
     return KAMI_RESULT_SEND_ERROR;
 }
 

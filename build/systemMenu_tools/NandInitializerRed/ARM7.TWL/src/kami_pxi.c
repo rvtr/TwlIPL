@@ -27,14 +27,13 @@
 #include <twl/camera.h>
 #include <twl/camera/ARM7/i2c_sharp.h>
 #include <twl/camera/ARM7/i2c_micron.h>
+#include <twl/sdmc.h>
 
-typedef unsigned char byte;     /* Don't change */
-typedef unsigned short word;    /* Don't change */
-typedef unsigned long dword;    /* Don't change */
 #define BOOLEAN int
 
 extern BOOL FATFSi_nandRtfsIo( int driveno, dword block, void* buffer, word count, BOOLEAN reading);
 extern BOOL sdmcFormatNandLog( BOOL verify_flag);
+extern void sdmcGetCID( SDMC_PORT_NO port, u32* dest);
 
 /*---------------------------------------------------------------------------*
     íËêîíËã`
@@ -134,6 +133,7 @@ static void KamiPxiCallback(PXIFifoTag tag, u32 data, BOOL err)
 		case KAMI_CDC_GO_DSMODE:
 		case KAMI_CLEAR_NAND_ERRORLOG:
 		case KAMI_GET_CAMERA_MODULE_TYPE:
+		case KAMI_GET_NAND_CID:
             if (!OS_SendMessage(&kamiWork.msgQ, NULL, OS_MESSAGE_NOBLOCK))
             {
                 KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_FATAL_ERROR);
@@ -339,6 +339,14 @@ static void KamiThread(void *arg)
                 KamiReturnResultEx(kamiWork.command, KAMI_PXI_RESULT_SUCCESS, sizeof(CameraModuleTypes), (u8*)&types);
             }
             break;
+
+		case KAMI_GET_NAND_CID:
+			{
+				u8 buffer[16];
+				sdmcGetCID( SDMC_PORT_NAND, (u32*)buffer);
+	            KamiReturnResultEx(kamiWork.command, KAMI_PXI_RESULT_SUCCESS, sizeof(buffer), (u8*)buffer );
+			}
+			break;
 
         default:
             KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_INVALID_COMMAND);
