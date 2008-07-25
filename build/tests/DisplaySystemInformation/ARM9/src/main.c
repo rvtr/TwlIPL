@@ -18,6 +18,7 @@
 
 #include <twl.h>
 #include <twl/sea.h>
+#include <nitro/crypto.h>
 #include "misc.h"
 #include "viewSystemInfo.h"
 #include "address.h"
@@ -82,12 +83,10 @@ void TwlMain( void )
 
 	OS_TPrintf("Allocator Initialize...\n");
 	InitAllocator();
+	CRYPTO_SetAllocator( Alloc, Free );
 
-#ifdef SEA_ENABLE
 	OS_TPrintf("NAM Initialize...\n");
 	NAM_Init( Alloc, Free );
-#endif
-
 		
 	InitBG();
 	OS_TPrintf("Initialize Finished\n");

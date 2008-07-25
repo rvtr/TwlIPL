@@ -222,7 +222,14 @@ const char *s_strSystemMenu[] = {
 	"Version (string)",
 	"EULA URL",
 	"NUP Hostname",
-	"Timestamp"
+	"Timestamp",
+	"Sign (nup-cert)" ,
+	"Sign (nup-prvkey)",
+	"Sign (shop-cert)",
+	"Sign (shop-prvkey)",
+	"Sign (NintendoCA)",
+	"Sign (NintendoCA-C2)",
+	"Sign (NintendoCA-G2)"
 };
 
 const char *s_strVersionMenu[] = {
@@ -301,6 +308,12 @@ char *s_strEnable[] = {
 	"DISABLED",
 	"ENABLED"
 };
+
+char *s_strCorrect[] = {
+	"Incorrect",
+	"Correct"
+};
+	
 
 char *s_strBool[] = {
 	"FALSE",

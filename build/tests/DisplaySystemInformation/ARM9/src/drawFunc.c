@@ -19,7 +19,9 @@
 #include <wchar.h>
 #include <string.h>
 #include <twl/os/common/ownerInfoEx_private.h>
+
 #include "drawFunc.h"
+#include "getInformation.h"
 #include "viewSystemInfo.h"
 #include "misc.h"
 #include "strResource.h"

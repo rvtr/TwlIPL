@@ -176,6 +176,7 @@ Property
 	#DSWirelessIcon	FALSE
 	LockSCFG	FALSE
 
+	HwAESSlotA_SSLClientCert	TRUE
 
 	###
 	#### END

@@ -22,6 +22,8 @@
 #include "drawFunc.h"
 #include "address.h"
 
+#define DISPINFO_BUFSIZE 64
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -73,10 +75,6 @@ typedef struct DispInfoEntry
 // 各種本体、ユーザ情報
 extern DispInfoEntry*	gAllInfo[ROOTMENU_SIZE];
 
-extern s32 gNumContents;
-extern OSTitleId *gContentsTitle;
-extern u16 *gContentsVersion;
-
 extern u8 gArm7SCFGReg[DISPINFO_SHARED_SCFG_REG_SIZE];		// ARM7からのデータ取得用バッファ
 extern u8 gArm7SCFGShared[DISPINFO_SHARED_SCFG_WRAM_SIZE];	// ARM7からのデータ取得用バッファ
 
@@ -86,9 +84,6 @@ void displayInfoMain( void );
 void displayInfoInit( void );
 
 ////////////////////////////////
-
-
-
 
 #ifdef __cplusplus
 }

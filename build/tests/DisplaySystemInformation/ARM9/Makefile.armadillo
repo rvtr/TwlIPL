@@ -19,7 +19,7 @@ TARGET_PLATFORM	=	TWL
 TWL_ARCHGEN   = LIMITED
 
 
-MACRO_FLAGS	+=	-DSEA_ENABLE
+MACRO_FLAGS	+=	-DSEA_ENABLE=TRUE
 
 # ï™äÚèåè
 DEFAULT_COMP_ARM7	=	armadillo
@@ -35,7 +35,9 @@ SUBDIRS          =
 MISC_DIR	=	../../../systemMenu_RED/misc
 
 SRCS			=	main.c viewSystemInfo.c drawFunc.c control.c\
-				strResource.c misc.c	\
+				strResource.c misc.c util.c\
+				get_versionData.c get_sysmenu.c get_scfg.c get_owner.c\
+				get_hw.c get_parental.c get_other.c\
 				$(MISC_DIR)/src/cmn.c
 
 LINCLUDES		+=	$(MISC_DIR)/include \

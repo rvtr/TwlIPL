@@ -157,6 +157,15 @@
 #define SYSMENU_EULA_URL		2
 #define SYSMENU_NUP_HOST		3
 #define SYSMENU_TIMESTAMP		4
+#define SYSMENU_SIGN_NUP_CERT	5
+#define SYSMENU_SIGN_NUP_PRV	6
+#define SYSMENU_SIGN_SHOP_CERT	7
+#define SYSMENU_SIGN_SHOP_PRV	8
+#define SYSMENU_SIGN_NINTENDO_CA	9
+#define SYSMENU_SIGN_NINTENDO_CAC2	10
+#define SYSMENU_SIGN_NINTENDO_CAG2	11
+
+#define SYSMENU_SIGN_IDX	5
 
 #define VERSION_WIRELESS	0
 #define VERSION_FONT		1
@@ -171,7 +180,7 @@
 #define SECURE_HW_MENU_SIZE 	6
 #define SCFG_ARM7_MENU_SIZE 	47
 #define SCFG_ARM9_MENU_SIZE 	24
-#define SYSMENU_MENU_SIZE		5
+#define SYSMENU_MENU_SIZE		12
 #define VERSIONMENU_SIZE 		2
 
 
@@ -191,6 +200,7 @@ extern const char *s_strARM9RegisterName[];
 extern const char *s_strSCFGViewMode[];
 extern char *s_strEnable[];
 extern char *s_strJoint[];
+extern char *s_strCorrect[];
 extern char *s_strSupply[];
 extern char *s_strRomMode[];
 extern char *s_strPSRAM[];
