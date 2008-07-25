@@ -36,7 +36,7 @@ static const u8 rsa_key_launcher[128] =
 #endif
 
 #define RSA_HEAP_SIZE       (4*1024)    // RSA用ヒープサイズ
-#define CRYPTO_HEAP_SIZE    (12*1024)   // CRYPTO用ヒープサイズ
+#define CRYPTO_HEAP_SIZE    (11*1024)   // CRYPTO用ヒープサイズ
 
 #define HEAP_SIZE   (RSA_HEAP_SIZE > CRYPTO_HEAP_SIZE ? RSA_HEAP_SIZE : CRYPTO_HEAP_SIZE)
 
