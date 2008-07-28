@@ -1214,12 +1214,20 @@ static void GenVA_VB_VD(void)
     SYSM_work* sw = SYSMi_GetWork();
     u32 dummy = 0;
     MATHRandContext32 rnd;
+    u64 fuse64 = SCFG_ReadFuseData();
+    u32 fuse32[2];
+
+    // 念のためeFuseIDを推測できなくする
+    fuse32[0] = ((u32*)&fuse64)[0];
+    fuse32[1] = ((u32*)&fuse64)[1];
+    EncryptByBlowfish(&s_cbData.keyTable, &fuse32[0], &fuse32[1]);
 
     // 乱数を初期化
-    // チック＆RTC初回ロード値＆ゲームコードを種とする。
+    // チック＆RTC初回ロード値＆ゲームコード＆eFuseIDを種とする。
     // （起動する度に変化するパラメータと組み合わせる。
     //   Vカウンタは2130サイクル変化しないので固定値になりやすい。）
-    MATH_InitRand32(&rnd, OS_GetTick() ^ sw->Rtc1stData.words[0] ^ sw->Rtc1stData.words[1] ^ *(u32*)(s_cbData.pBootSegBuf->rh.s.game_code));
+    // 起動毎、ゲームカード毎、本体毎にスクランブルが変化することになる。
+    MATH_InitRand32(&rnd, OS_GetTick() ^ sw->Rtc1stData.words[0] ^ sw->Rtc1stData.words[1] ^ *(u32*)(s_cbData.pBootSegBuf->rh.s.game_code) ^ fuse32[0] ^ fuse32[1]);
 
     s_cbData.vae = MATH_Rand32(&rnd, 0);
     s_cbData.vbi = MATH_Rand32(&rnd, 0);
