@@ -58,8 +58,10 @@ LINCLUDES		=	$(ROOT)/build/libraries/spi/ARM7/include \
 					$(TWL_IPL_RED_ROOT)/include \
 					../../NandInitializerRed/common/include \
 					../../NandInitializerRed/ARM7.TWL/include \
-					../../common/ARM7/include
-
+					../../common/ARM7/include \
+					$(ROOT)/build/libraries/fatfs/ARM7.TWL/include \
+					$(ROOT)/build/libraries/fatfs/ARM7.TWL/include/fatfs \
+					$(ROOT)/build/libraries/fatfs/ARM7.TWL/include/twl/fatfs/ARM7
 
 SRCDIR		=	../../NandInitializerRed/ARM7.TWL/src \
 				../../common/ARM7/src
