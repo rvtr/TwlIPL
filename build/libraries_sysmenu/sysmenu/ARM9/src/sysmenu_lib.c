@@ -468,18 +468,8 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
 		argument      = 100;		// フラッシュ壊れシーケンス起動
 		isSetArgument = TRUE;
 		isBootMSET    = TRUE;
-	}
-	
-    //-----------------------------------------------------
-    // TWL設定データ未設定時の初回起動シーケンス起動
-    //-----------------------------------------------------
-    else if( !LCFG_TSD_IsFinishedInitialSetting() ) {
-		argument      = 0;
-		isSetArgument = FALSE;
-		isBootMSET    = TRUE;
     }else 
 #endif
-	
     //-----------------------------------------------------
     // L+R+Startボタン押下起動で、本体設定のタッチパネル設定を起動
     //-----------------------------------------------------
@@ -489,7 +479,17 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
 		isSetArgument = TRUE;
 		isBootMSET    = TRUE;
     }
-
+#ifndef DISABLE_INITIAL_SETTINGS
+    //-----------------------------------------------------
+    // TWL設定データ未設定時の初回起動シーケンス起動
+    //-----------------------------------------------------
+    else if( !LCFG_TSD_IsFinishedInitialSetting() ) {
+		argument      = 0;
+		isSetArgument = FALSE;
+		isBootMSET    = TRUE;
+    }
+#endif
+	
     //-----------------------------------------------------
     // ランチャー画面を表示しないバージョンの場合
     // カードがささっていたらカードを起動する
