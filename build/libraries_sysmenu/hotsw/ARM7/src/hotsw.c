@@ -153,7 +153,6 @@ static SYSMRomEmuInfo       s_romEmuInfo;
 static BOOL                 s_debuggerFlg;
 
 static BOOL                 s_isPulledOut = TRUE;
-static BOOL                 s_isHotSwBusy = FALSE;
 static BOOL                 s_pollingThreadSleepFlg = FALSE;
 
 // HMACSHA1の鍵
@@ -343,8 +342,6 @@ static HotSwState LoadCardData(void)
     HotSwState retval = HOTSW_SUCCESS;
     HotSwState state  = HOTSW_SUCCESS;
     u32 romMode = HOTSW_ROM_MODE_NULL;
-
-    s_isHotSwBusy = TRUE;
 
     // カードのロック
     CARD_LockRom(s_CardLockID);
@@ -581,8 +578,6 @@ end:
 
     // カードのロック開放(※ロックIDは開放せずに持ち続ける)
     CARD_UnlockRom(s_CardLockID);
-
-    s_isHotSwBusy = FALSE;
 
     return retval;
 }
@@ -1556,8 +1551,6 @@ static void HotSwThread(void *arg)
 
     HotSwState      		retval;
     HotSwMessageForArm7		*msg;
-
-	static BOOL				card_exist = FALSE;
     
     while(1){
         OS_ReceiveMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
@@ -1613,23 +1606,20 @@ static void HotSwThread(void *arg)
             if(HOTSW_IsCardExist()){
                 if(!s_isPulledOut){
                     if(GetMcSlotMode() == SLOT_STATUS_MODE_10){
-                        if(!card_exist){
-                            card_exist = TRUE;
-                            
-							LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+						LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 
-                        	SYSMi_GetWork()->flags.hotsw.isExistCard         = TRUE;
-                        	SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
-                        	SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = TRUE;
+                        SYSMi_GetWork()->flags.hotsw.isExistCard         = TRUE;
+                        SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
+                        SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = TRUE;
 #ifdef USE_WRAM_LOAD
-                        	SYSMi_GetWork()->flags.hotsw.isCardGameMode      = TRUE;
+                        SYSMi_GetWork()->flags.hotsw.isCardGameMode      = TRUE;
 #endif
-                        	UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+                        UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 #ifdef USE_WRAM_LOAD
-							SendPxiMessage(HOTSW_CHANGE_GAMEMODE);
+						SendPxiMessage(HOTSW_CHANGE_GAMEMODE);
 #endif
-                        	HOTSW_PutString("ok!\n");
-						}
+                        HOTSW_PutString("ok!\n");
+						
                         break;
                     }
                 }
@@ -1653,8 +1643,6 @@ static void HotSwThread(void *arg)
 
             // カードが抜けてたら
             else{
-                card_exist = FALSE;
-                
 #ifdef USE_WRAM_LOAD
 				SendPxiMessage(HOTSW_CARD_PULLOUT);
 #endif
@@ -1665,6 +1653,7 @@ static void HotSwThread(void *arg)
 
                 MI_CpuClearFast(s_pBootSegBuffer, s_BootSegBufSize);
                 MI_CpuClearFast(s_pSecureSegBuffer, s_SecureSegBufSize);
+                MI_CpuClearFast(s_pSecure2SegBuffer, s_Secure2SegBufSize);
                 MI_CpuClearFast((u32 *)SYSM_CARD_BANNER_BUF, sizeof(TWLBannerFile));
 
                 s_isPulledOut = TRUE;
@@ -2006,7 +1995,7 @@ static void MonitorThread(void *arg)
 
             count++;
         }
-        while(s_isHotSwBusy);
+        while( SYSMi_GetWork()->flags.hotsw.isBusyHotSW );
 
         // ポーリングスレッド抑制フラグが上がってたら、スリープ。抑制フラグが下りたら起床。
         if(s_pollingThreadSleepFlg){
