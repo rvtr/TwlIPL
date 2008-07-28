@@ -47,6 +47,8 @@ u16 *gContentsVersion;			// gContentsTitleそれぞれのバージョン情報
 u8 gArm7SCFGReg[DISPINFO_SHARED_SCFG_REG_SIZE];
 u8 gArm7SCFGShared[DISPINFO_SHARED_SCFG_WRAM_SIZE];
 
+// LCFGReadの結果
+BOOL gLCFGAccessible;
 
 /* static data ---------------------------------- */
 
@@ -177,7 +179,7 @@ void displayInfoInit( void )
 	GX_DispOff();
  	GXS_DispOff();
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
-	
+	OS_TPrintf(" size version: %d\n", s_numMenu[MENU_VERSION]);	
 	// 全体情報を持つ配列をセット
 	// 可能なものは用意したstatic文字列へのポインタで対応
 	// 必要なものだけあとでmallocする
@@ -208,11 +210,13 @@ void displayInfoInit( void )
 	// LCFGデータの読み出し
 	bufLCFG = (u8*) Alloc ( LCFG_READ_TEMP );
 	SDK_ASSERT( bufLCFG );
-	LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ]) bufLCFG );
+	gLCFGAccessible = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ]) bufLCFG );
+	
 	
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	GX_DispOn();
 	GXS_DispOn();
+	OS_TPrintf(" size version: %d\n", s_numMenu[MENU_VERSION]);
 }
 
 void printAllInfo ( void )

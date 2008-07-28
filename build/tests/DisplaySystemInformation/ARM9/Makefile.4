@@ -18,12 +18,23 @@ TARGET_FIRM	= SYSTEMMENU
 TARGET_PLATFORM	=	TWL
 TWL_ARCHGEN   = LIMITED
 
-MACRO_FLAGS	+=	-DSEA_ENABLE=FALSE
+######################################
+#
+#  分岐条件はここで設定
 
-# 分岐条件
-DEFAULT_COMP_ARM7	=	racoon
-ROM_SPEC		=	main_racoon_SCFG.rsf
-BINDIR			= ./bin/$(TWL_BUILDTYPE)/racoon_SCFG
+# セキュアアプリかどうか
+IS_SECURE_APP		=	FALSE
+
+# なんどアプリかどうか
+IS_NAND_APP		=	TRUE
+
+# SCFGをロックして見れなくするかどうか
+INVISIBLE_SCFG		=	TRUE
+#
+######################################
+
+
+MACRO_FLAGS	+=	-DNAM_ENABLE=$(IS_SECURE_APP)
 
 
 DISP_INFO	= $(call eupath,$(TWL_IPL_RED_ROOT)/build/tests/DisplaySystemInformation)
@@ -33,7 +44,9 @@ SUBDIRS          =
 MISC_DIR	=	../../../systemMenu_RED/misc
 
 SRCS			=	main.c viewSystemInfo.c drawFunc.c control.c\
-				strResource.c misc.c	\
+				strResource.c misc.c util.c\
+				get_versionData.c get_sysmenu.c get_scfg.c get_owner.c\
+				get_hw.c get_parental.c get_other.c\
 				$(MISC_DIR)/src/cmn.c
 
 LINCLUDES		+=	$(MISC_DIR)/include \
@@ -67,10 +80,48 @@ LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
 TARGET_BIN		=	DisplaySystemInfo.srl
 
+#=============================================================================
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-MAKEROM			=	$(TWL_TOOLSDIR)/bin/makerom.TWL.exe
+
+ifeq ($(IS_SECURE_APP),TRUE)
+	DEFAULT_COMP_ARM7	=	armadillo
+	WRAM_MAP		=	MAP_TS_SCR
+	APPTYPE			=	SYSTEM
+	MAKEROM			=	$(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
+	ROM_SPEC		=	main_secure.rsf
+else
+	WRAM_MAP		=	$(MAKEROM_WRAM_MAPPING)
+	DEFAULT_COMP_ARM7	=	racoon
+	APPTYPE			=	USER
+	ROM_SPEC		=	main_normal.rsf
+endif
+
+ifeq ($(IS_NAND_APP),TRUE)
+	MEDIA		=	NAND
+else
+	MEDIA		=	GAMECARD
+endif
+
+
+ifeq ($(INVISIBLE_SCFG),TRUE)
+	SCFG_SUFFIX	=	LockSCFG
+else
+	SCFG_SUFFIX	=	UnlockSCFG
+endif
+
+BINDIR			= 	./bin/$(TWL_BUILDTYPE)/$(APPTYPE)_$(MEDIA)_$(SCFG_SUFFIX)
+OBJDIR			=	./obj/$(TWL_BUILDTYPE)/$(APPTYPE)_$(MEDIA)_$(SCFG_SUFFIX)
+
+
+MAKEROM_FLAGS		+=	-DDISPINFO_WRAM_MAP=$(WRAM_MAP)	\
+				-DDISPINFO_APPTYPE=$(APPTYPE)	\
+				-DDISPINFO_SECURE=$(IS_SECURE_APP)	\
+				-DDISPINFO_MEDIA=$(MEDIA)	\
+				-DDISPINFO_NANDACCESS=$(IS_NAND_APP)	\
+				-DDISPINFO_LOCKSCFG=$(INVISIBLE_SCFG)
+
 
 DEFAULT_MAKEROM_ARM7_BASE	= ../ARM7_$(DEFAULT_COMP_ARM7)/bin/$(TWL_BUILDTYPE_ARM7)/$(DEFAULT_COMP_ARM7)
 DEFAULT_MAKEROM_ARM7		= $(DEFAULT_MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)

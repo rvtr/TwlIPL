@@ -58,9 +58,9 @@ void getSysmenuInfo( void )
 {
 	u8 *pBuffer = (u8*) Alloc (NA_VERSION_DATA_WORK_SIZE);
 	
-	if( !NA_LoadVersionDataArchive( pBuffer, NA_VERSION_DATA_WORK_SIZE ) ) {
-		return ;
-	}
+	// numLineやallinedの設定が必要なのであえてエラーチェックはしない
+	NA_LoadVersionDataArchive( pBuffer, NA_VERSION_DATA_WORK_SIZE) ;
+	
 	
 	// バージョンの読み出し
     {
@@ -70,20 +70,23 @@ void getSysmenuInfo( void )
 		
         FS_InitFile(&file);
 		
-        if (!FS_OpenFileEx(&file, FILE_VERSION, FS_FILEMODE_R))
+        if ( FS_OpenFileEx(&file, FILE_VERSION, FS_FILEMODE_R))
         {
-            return ;
-        }
-		
-        len = FS_ReadFile(&file, &bufVersion, sizeof(SystemMenuVersion));
-        FS_CloseFile(&file);
-		        
-        gAllInfo[MENU_SYSMENU][SYSMENU_VERSION_NUM].iValue = (int)( bufVersion.major << 16 | bufVersion.minor );
-        gAllInfo[MENU_SYSMENU][SYSMENU_VERSION_NUM].isNumData = TRUE;
-        
-		wcsncpy( gAllInfo[MENU_SYSMENU][SYSMENU_VERSION_STR].str.utf, bufVersion.str, TWL_SYSMENU_VER_STR_LEN );
-		gAllInfo[MENU_SYSMENU][SYSMENU_VERSION_STR].isSjis = FALSE;
-		
+	        len = FS_ReadFile(&file, &bufVersion, sizeof(SystemMenuVersion));
+	        FS_CloseFile(&file);
+			        
+	        gAllInfo[MENU_SYSMENU][SYSMENU_VERSION_NUM].iValue = (int)( bufVersion.major << 16 | bufVersion.minor );
+	        gAllInfo[MENU_SYSMENU][SYSMENU_VERSION_NUM].isNumData = TRUE;
+	        
+			wcsncpy( gAllInfo[MENU_SYSMENU][SYSMENU_VERSION_STR].str.utf, bufVersion.str, TWL_SYSMENU_VER_STR_LEN );
+			gAllInfo[MENU_SYSMENU][SYSMENU_VERSION_STR].isSjis = FALSE;
+		}
+		else
+		{
+			// 成功しなかった場合はデータはN/A
+			gAllInfo[MENU_SYSMENU][SYSMENU_VERSION_STR].str.sjis = s_strNA;
+			gAllInfo[MENU_SYSMENU][SYSMENU_VERSION_STR].isSjis = TRUE;
+		}
     }
 	
 	// EULA URLの読み出し
@@ -93,13 +96,14 @@ void getSysmenuInfo( void )
 		
         FS_InitFile(&file);
 		
-        if (!FS_OpenFileEx(&file, FILE_EULA_URL, FS_FILEMODE_R)) {
-            return;
+        if ( FS_OpenFileEx(&file, FILE_EULA_URL, FS_FILEMODE_R)) {
+	        len = FS_ReadFile(&file, gAllInfo[MENU_SYSMENU][SYSMENU_EULA_URL].str.sjis , TWL_EULA_URL_LEN) ;
+	        FS_CloseFile(&file);
         }
-		
-        len = FS_ReadFile(&file, gAllInfo[MENU_SYSMENU][SYSMENU_EULA_URL].str.sjis , TWL_EULA_URL_LEN) ;
-        FS_CloseFile(&file);
-		
+		else
+		{
+			STD_StrLCpy( gAllInfo[MENU_SYSMENU][SYSMENU_EULA_URL].str.sjis, s_strNA, TWL_EULA_URL_LEN );
+		}
     }
 	
 	// NUP HOST NAME の読み出し
@@ -109,12 +113,14 @@ void getSysmenuInfo( void )
 		
         FS_InitFile(&file);
 		
-        if (!FS_OpenFileEx(&file, FILE_NUP_HOSTNAME, FS_FILEMODE_R)) {
-    		return;
-        }
-		
-        len = FS_ReadFile(&file, gAllInfo[MENU_SYSMENU][SYSMENU_NUP_HOST].str.sjis, TWL_NUP_HOSTNAME_LEN);
-        FS_CloseFile(&file);
+        if ( FS_OpenFileEx(&file, FILE_NUP_HOSTNAME, FS_FILEMODE_R)) {
+			len = FS_ReadFile(&file, gAllInfo[MENU_SYSMENU][SYSMENU_NUP_HOST].str.sjis, TWL_NUP_HOSTNAME_LEN);
+	        FS_CloseFile(&file);
+		}
+		else
+		{
+			STD_StrLCpy( gAllInfo[MENU_SYSMENU][SYSMENU_NUP_HOST].str.sjis, s_strNA , TWL_NUP_HOSTNAME_LEN );
+		}
 		
     }
 	
@@ -125,14 +131,11 @@ void getSysmenuInfo( void )
 		
         FS_InitFile(&file);
 		
-        if (!FS_OpenFileEx(&file, FILE_TIMESTAMP, FS_FILEMODE_R)) {
-            return ;
+        if ( FS_OpenFileEx(&file, FILE_TIMESTAMP, FS_FILEMODE_R)) {
+	        len = FS_ReadFile(&file, &gAllInfo[MENU_SYSMENU][SYSMENU_TIMESTAMP].iValue, sizeof(u32) );
+       		gAllInfo[MENU_SYSMENU][SYSMENU_TIMESTAMP].isNumData = TRUE;
+	        FS_CloseFile(&file);
         }
-		
-        len = FS_ReadFile(&file, &gAllInfo[MENU_SYSMENU][SYSMENU_TIMESTAMP].iValue, sizeof(u32) );
-        FS_CloseFile(&file);
-        
-		gAllInfo[MENU_SYSMENU][SYSMENU_TIMESTAMP].isNumData = TRUE;
     }
     
     // 署名の照合
@@ -141,7 +144,14 @@ void getSysmenuInfo( void )
 		u32 fileLen[NUM_FILE_SIGN], maxFileSize = 0;
 		u8 i;
 		u8 *srcBuf, *dstBuf, digestBuf[MATH_SHA1_DIGEST_SIZE], cmpDigestBuf[MATH_SHA1_DIGEST_SIZE];
-		
+
+		for( i=0 ; i < NUM_FILE_SIGN; i++ )
+		{
+			// 最初にエントリの行数情報を設定しておく
+			gAllInfo[MENU_SYSMENU][i + SYSMENU_SIGN_IDX].numLines = 2;
+			gAllInfo[MENU_SYSMENU][i + SYSMENU_SIGN_IDX].isAligned = FALSE;
+		}
+
 		for( i=0 ; i < NUM_FILE_SIGN; i++ )
 		{
 			FS_InitFile( &file[i] );
@@ -149,6 +159,7 @@ void getSysmenuInfo( void )
 			// 署名されたファイルをそれぞれオープン
 			if( !FS_OpenFileEx( &file[i], s_strSignFilePath[i], FS_FILEMODE_R ) )
 			{
+				// 開けなかったらNANDアクセス禁止状態なので戻る
 				return ;
 			}
 			
@@ -232,5 +243,4 @@ void getSysmenuInfo( void )
 	}
 	
 	Free(pBuffer);
-
 }

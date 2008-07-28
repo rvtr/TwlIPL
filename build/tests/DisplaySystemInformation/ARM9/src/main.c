@@ -85,8 +85,10 @@ void TwlMain( void )
 	InitAllocator();
 	CRYPTO_SetAllocator( Alloc, Free );
 
+#if NAM_ENABLE
 	OS_TPrintf("NAM Initialize...\n");
 	NAM_Init( Alloc, Free );
+#endif
 		
 	InitBG();
 	OS_TPrintf("Initialize Finished\n");

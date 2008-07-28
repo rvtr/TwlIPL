@@ -226,6 +226,13 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 	if( menu == MENU_SECURE_HW && entryLine == SECURE_HW_TITLEID_LO )
 	{
 		char buf[5];
+		
+		if( entry->iValue == 0 )
+		{
+			// 情報が受け取れていない状態
+			PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET * (1 + drawOffset), txtColor, s_strNA );
+		}
+		
 		MI_CpuCopy( &(entry->iValue), buf, 4 );
 		buf[4] = '\0';
 		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET * (1 + drawOffset), txtColor, "%s", buf );
@@ -236,7 +243,7 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 	{
 		// 16文字を8文字の二段組みに変更
 		char buf[9] = {0};
-		STD_StrLCpy( buf, entry->str.sjis , 8 );
+		STD_StrLCpy( buf, entry->str.sjis , 9 );
 		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET * drawOffset, txtColor, "%s", buf );
 		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET * (1+drawOffset), txtColor, "%s", &(entry->str.sjis[8]) );
 		return;
@@ -254,7 +261,7 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 			PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET * ( drawOffset + lineOffset++), txtColor, "%s", buf );
 		}
 		
-		entry->numLines = lineOffset;
+		entry->numLines = lineOffset > 0 ? lineOffset : 1;
 		return;
 	}
 
@@ -270,7 +277,8 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 			PutStringUTF16( VALUE_LEFT, VALUE_UP + LINE_OFFSET * ( drawOffset + lineOffset++), txtColor, buf );
 		}
 		
-		entry->numLines = lineOffset;
+		// 項目が空文字しかないときでも1行表示だけはされるようにする
+		entry->numLines = lineOffset > 0 ? lineOffset : 1;
 		
 		return;
 	}

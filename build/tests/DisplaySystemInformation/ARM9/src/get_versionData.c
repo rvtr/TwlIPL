@@ -18,9 +18,11 @@ void getSharedFontVersion( void );
 
 void getVersions( void )
 {
-	
-	getWirelessVersion();
+#if NAM_ENABLE
 	getContentsVersion();
+#endif
+
+	getWirelessVersion();	
 	getSharedFontVersion();
 
 }
@@ -36,15 +38,21 @@ void getWirelessVersion( void )
 	FS_InitFile( &file );	
 	NAM_GetTitleBootContentPath( filePath , WL_TITLEID); // 無線ファームのファイルパスを取得
 	OS_TPrintf("wireless firm path: %s\n", filePath ) ;
-	res = FS_OpenFileEx( &file, filePath, FS_FILEMODE_R );
 	
-	// バージョン情報の読み取り
-	FS_SeekFile( &file, 0xA0, FS_SEEK_SET ); // ファイルの0xA0から2バイトがバージョン情報
-	res = FS_ReadFile( &file, filebuf, 2 );
-	SDK_ASSERT( res == 2 );
-	
-	snprintf( gAllInfo[MENU_VERSION][VERSION_WIRELESS].str.sjis, DISPINFO_BUFSIZE-1, "%d.%d", filebuf[0], filebuf[1] );
-	gAllInfo[MENU_VERSION][VERSION_WIRELESS].iValue = filebuf[0] *100 + filebuf[1];
+	if( FS_OpenFileEx( &file, filePath, FS_FILEMODE_R ) )
+	{
+		// バージョン情報の読み取り
+		FS_SeekFile( &file, 0xA0, FS_SEEK_SET ); // ファイルの0xA0から2バイトがバージョン情報
+		res = FS_ReadFile( &file, filebuf, 2 );
+		SDK_ASSERT( res == 2 );
+		
+		snprintf( gAllInfo[MENU_VERSION][VERSION_WIRELESS].str.sjis, DISPINFO_BUFSIZE-1, "%d.%d", filebuf[0], filebuf[1] );
+		gAllInfo[MENU_VERSION][VERSION_WIRELESS].iValue = filebuf[0] *100 + filebuf[1];
+	}
+	else
+	{
+		snprintf( gAllInfo[MENU_VERSION][VERSION_WIRELESS].str.sjis, DISPINFO_BUFSIZE-1, s_strNA );
+	}
 
 }
 
@@ -66,6 +74,13 @@ void getContentsVersion( void )
 	int i;
 
 	gNumContents = NAM_GetNumTitles();
+	
+	if( gNumContents < 0 )
+	{
+		// NAMが駄目だとか、NANDアクセスできないだとかの場合は終了
+		return ;
+	}	
+	
 	OS_TPrintf(" numContents: %d\n", gNumContents);	
 	
 	if( gContentsTitle == NULL )

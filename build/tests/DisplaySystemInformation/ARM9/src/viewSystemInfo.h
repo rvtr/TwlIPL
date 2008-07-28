@@ -78,6 +78,8 @@ extern DispInfoEntry*	gAllInfo[ROOTMENU_SIZE];
 extern u8 gArm7SCFGReg[DISPINFO_SHARED_SCFG_REG_SIZE];		// ARM7からのデータ取得用バッファ
 extern u8 gArm7SCFGShared[DISPINFO_SHARED_SCFG_WRAM_SIZE];	// ARM7からのデータ取得用バッファ
 
+extern BOOL gLCFGAccessible;
+
 ////////////////////////////////
 
 void displayInfoMain( void );

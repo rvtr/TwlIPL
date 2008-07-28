@@ -18,8 +18,6 @@ void getHWInfo( void )
 }
 
 
-
-
 void getNormalHWInfo( void )
 {
 	int value;
@@ -94,10 +92,15 @@ void getSecureHWInfo( void )
 							titleIDLo[3] << 8*0 );
 
 		gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].iValue = value;
-		gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].isNumData = TRUE;;
-		gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].isAligned = FALSE;
-		gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].numLines = 2;
-		gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].fromLCFG = TRUE;	
+		gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].isNumData = TRUE;
 	}
+	else
+	{
+		gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].str.sjis = s_strNA;
+	}
+	
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].isAligned = FALSE;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].numLines = 2;
+	gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].fromLCFG = TRUE;
 
 }
