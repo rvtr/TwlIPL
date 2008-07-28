@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlFirm - tools - nandfirm
+  Project:  TwlFirm - tools - norfirm
   File:     wram_regs.c
 
   Copyright 2007 Nintendo.  All rights reserved.
@@ -34,7 +34,8 @@ MIHeader_WramRegs wram_regs_init =
         REG_MI_MBK_B4_FIELD( 1, MI_WRAM_BC_OFFSET_128KB, MI_WRAM_ARM7 ),
         REG_MI_MBK_B5_FIELD( 1, MI_WRAM_BC_OFFSET_160KB, MI_WRAM_ARM7 ),
         REG_MI_MBK_B6_FIELD( 1, MI_WRAM_BC_OFFSET_192KB, MI_WRAM_ARM7 ),
-        REG_MI_MBK_B7_FIELD( 1, MI_WRAM_BC_OFFSET_224KB, MI_WRAM_ARM7 ),
+//        REG_MI_MBK_B7_FIELD( 1, MI_WRAM_BC_OFFSET_224KB, MI_WRAM_ARM7 ),
+        REG_MI_MBK_B7_FIELD( 1, MI_WRAM_BC_OFFSET_224KB, MI_WRAM_ARM9 ),
     },
     {
         REG_MI_MBK_C0_FIELD( 1, MI_WRAM_BC_OFFSET_0KB  , MI_WRAM_ARM7 ),
@@ -50,7 +51,13 @@ MIHeader_WramRegs wram_regs_init =
                         MI_WRAM_IMAGE_256KB,
                         REG_WRAM_MAP_CONV_ADDR( 6, A, SADDR, HW_WRAM_AREA_HALF - HW_WRAM_A_SIZE )
                         ),
+/*
     REG_MI_MBK7_FIELD(  REG_WRAM_MAP_CONV_ADDR( 7, B, EADDR, HW_WRAM_AREA + HW_WRAM_B_SIZE ),
+                        MI_WRAM_IMAGE_256KB,
+                        REG_WRAM_MAP_CONV_ADDR( 7, B, SADDR, HW_WRAM_AREA )
+                        ),
+*/
+    REG_MI_MBK7_FIELD(  REG_WRAM_MAP_CONV_ADDR( 7, B, EADDR, HW_WRAM_AREA_HALF - HW_WRAM_A_SIZE ),  // joint to WRAM-A
                         MI_WRAM_IMAGE_256KB,
                         REG_WRAM_MAP_CONV_ADDR( 7, B, SADDR, HW_WRAM_AREA )
                         ),
