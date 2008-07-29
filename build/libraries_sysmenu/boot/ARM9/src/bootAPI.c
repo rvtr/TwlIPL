@@ -147,6 +147,7 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
     // WRAMの配置
     {
         MIHeader_WramRegs *pWRAMREGS = (MIHeader_WramRegs *)th->s.main_wram_config_data;
+        int i;
         reg_GX_VRAMCNT_C    = pWRAMREGS->main_vrambnk_c;
         reg_GX_VRAMCNT_D    = pWRAMREGS->main_vrambnk_d;
         // WRAM0/1の最終配置はOS_Bootで行う
@@ -158,6 +159,11 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 
         // TWL拡張WRAM
         // ARM7のrebootでクリア
+        for (i=0; i<MI_WRAM_C_MAX_NUM; i++)
+        {
+            MIi_SetWramBankEnable_B(i, MI_WRAM_ENABLE);
+            MIi_SetWramBankEnable_C(i, MI_WRAM_ENABLE);
+        }
         MI_SwitchWram_B(MI_WRAM_DSP,  MI_WRAM_ARM7);
         MI_SwitchWram_B(MI_WRAM_ARM9, MI_WRAM_ARM7);
         MI_SwitchWram_C(MI_WRAM_DSP,  MI_WRAM_ARM7);
