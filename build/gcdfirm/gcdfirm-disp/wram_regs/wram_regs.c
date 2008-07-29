@@ -10,8 +10,8 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Date:: 2008-07-25#$
-  $Rev: 1994 $
+  $Date:: 2008-07-28#$
+  $Rev: 2005 $
   $Author: yutaka $
  *---------------------------------------------------------------------------*/
 #include <twl/mi.h>

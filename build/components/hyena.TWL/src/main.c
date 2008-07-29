@@ -309,15 +309,6 @@ static void ResetRTC( void )
     RTC_ReadStatus1( &stat1 );
     RTC_ReadStatus2( &stat2 );
 
-    // FOUTが32KHz出力でない場合は、32KHz出力に修正設定する。（無線で使用している）
-    {
-        RTCRawFout  fout;
-        RTC_ReadFout(&fout);
-        if( fout.fout != RTC_FOUT_DUTY_32KHZ ) {
-            fout.fout = RTC_FOUT_DUTY_32KHZ;
-            RTC_WriteFout(&fout);
-        }
-    }
     // リセット、電源投入、電源電圧低下、ICテストの各フラグを確認
     if ( stat1.reset || stat1.poc || stat1.bld || stat2.test )
     {
@@ -327,7 +318,17 @@ static void ResetRTC( void )
         sw->flags.common.isResetRTC = TRUE;
     }
 
-    // RTC初回データ読み込み
+    // FOUTが32KHz出力でない場合は、32KHz出力に修正設定する。（無線で使用している）
+    {
+        RTCRawFout  fout;
+        RTC_ReadFout(&fout);
+        if( fout.fout != RTC_FOUT_DUTY_32KHZ ) {
+            fout.fout = RTC_FOUT_DUTY_32KHZ;
+            RTC_WriteFout(&fout);
+        }
+    }
+
+	// RTC初回データ読み込み
     RTC_ReadDateTime(&sw->Rtc1stData);
 
     // NTR-IPL同様にアラーム時間をクリア
