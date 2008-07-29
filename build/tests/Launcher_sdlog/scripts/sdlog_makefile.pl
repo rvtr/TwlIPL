@@ -65,6 +65,7 @@ foreach my $line ( @lines )
 
     if( $line =~ m/^TARGET_BIN[\t ]*=[\t ]*\$\(TITLEID_LO\)\.tad/ )
     {
+        $line =~ s/\.tad/_sdlog\.tad/;
         print OUT <<__SDLOG_DESCRIPTIONS__;
 \# --------------------------------------------------------------
 \# SDLOG
@@ -92,6 +93,7 @@ endif \# SDLOG [ARM7]
 endif \# SDLOG [ARM9]
 
 endif \# FINALROM
+
 __SDLOG_DESCRIPTIONS__
     }
 
