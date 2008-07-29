@@ -160,7 +160,7 @@ BANNERCVTR = $(TWL_TOOLSDIR)/bin/bannercvtr.exe
 
 #----------------------------------------------------------------------------
 
-TARGET_BIN	=	twl_$(GAMECODE).tad
+TARGET_BIN	=	twl_$(GAMECODE).$(TARGET_SUFFIX)
 ROM_SPEC	=	twl_$(GAMECODE).rsf
 
 #SRCDIR		=	# using default

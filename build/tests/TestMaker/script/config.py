@@ -104,6 +104,8 @@ for num in romparam.keys():
         codeparam.write('ROM_SPEC_PARAM   = %s\n' % rsf_opt_str)
         #----- TITLE_VERSION_LO の指定
         codeparam.write('TITLE_VERSION_LO   = %d\n' % (romparam[num][rsfkey]['Version']%256))
+        #----- TARGET_SUFFIX の指定
+        codeparam.write('TARGET_SUFFIX   = %s\n' % ('tad' if romparam[num][rsfkey]['Media'] == 'NAND' else 'srl'))
     finally:
         codeparam.close()
 
