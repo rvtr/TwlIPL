@@ -164,6 +164,8 @@ extern NNSFndAllocator  g_allocator; // メモリアロケータ
 extern NNSG2dFont       gFont;       // フォント
 extern NNSG2dCharCanvas gCanvas;     // CharCanvas
 extern NNSG2dTextCanvas gTextCanvas; // TextCanvas
+extern NNSG2dCharCanvas gCanvasSub;     // CharCanvasSub
+extern NNSG2dTextCanvas gTextCanvasSub; // TextCanvasSub
 
 // function-------------------------------------------------------------
 void InitAllocator( void );

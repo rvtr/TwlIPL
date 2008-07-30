@@ -41,6 +41,8 @@
 #define STRUE FALSE
 #endif
 
+#define TEST_NUM 15
+
 // extern data------------------------------------------
 
 // function's prototype declaration---------------------
@@ -63,7 +65,7 @@ static BOOL s_quiettest = FALSE;
 static char s_testnum = 0;
 
 // const data  -----------------------------------------
-static const BOOL s_answer_data[][15] = 
+static const BOOL s_answer_data[][TEST_NUM] = 
 {
 	{ FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE }, // 0
 	{ FALSE, FALSE, FALSE,  TRUE, STRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE }, // 1
@@ -86,6 +88,25 @@ static const BOOL s_answer_data[][15] =
 	{  TRUE,  TRUE, CTRUE,  TRUE, STRUE,  TRUE, FALSE,  TRUE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }, // i
 	{  TRUE,  TRUE, CTRUE,  TRUE, STRUE,  TRUE, FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }, // j
 	{  TRUE,  TRUE, CTRUE,  TRUE, STRUE,  TRUE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }  // k
+};
+
+static const u16 *s_test_name[TEST_NUM] = 
+{
+	L"nand:",
+	L"nand2:",
+	L"content:",
+	L"shared1:",
+	L"shared2:",
+	L"photo:",
+	L"dataPub:",
+	L"dataPrv:",
+	L"sdmc:",
+	L"nand:/sys",
+	L"nand:/import",
+	L"nand:/tmp",
+	L"nand:/<srl>",
+	L"nand:/<banner>",
+	L"nand:/<tmpjump>"
 };
 
 //======================================================
@@ -321,7 +342,8 @@ static TWLSubBannerFile sbf;
 
 static void TestFSPermission( void )
 {
-	BOOL result[15];
+	BOOL result[TEST_NUM];
+	BOOL test_ok = TRUE;
 	int l;
 	
 	result[0] = RWTest( "nand:" );                // nand:
@@ -332,7 +354,7 @@ static void TestFSPermission( void )
 	result[5] = RWTest( "photo:" );               // photo:
 	result[6] = RWTest( "dataPub:" );             // dataPub:
 	result[7] = RWTest( "dataPrv:" );             // dataPrv:
-	result[8] = RWTest( "sdmc:" );                // sdmc
+	result[8] = RWTest( "sdmc:" );                // sdmc:
 	result[9] = RWTest( "nand:/sys" );            // nand:/sys
 	result[10] = RWTest( "nand:/import" );        // nand:/import
 	result[11] = RWTest( "nand:/tmp" );           // nand:/tmp
@@ -341,26 +363,33 @@ static void TestFSPermission( void )
 	result[14] = TMPJumpTest();                   // nand:/<tmpjump>
 	
 	
-	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
-	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"RomTypeTest");
-	PutStringUTF16( 4 * 8, 8 * 8, TXT_COLOR_BLACK, (const u16 *)L"Push A To Start Test.");
-	PutStringUTF16( 4 * 8, 10 * 8, TXT_COLOR_BLACK, (const u16 *)L"Push X To Start Test Quietly.");
-	
 	OS_TPrintf( "Correct Answer:\n" );
-	for( l=0; l<15; l++ )
+	for( l=0; l<TEST_NUM; l++ )
 	{
 		OS_TPrintf( "%s ", ( s_answer_data[s_testnum][l] ? "›" : "~" ) );
 	}
 	OS_TPrintf( "\n" );
 	OS_TPrintf( "Result:\n" );
-	for( l=0; l<15; l++ )
+	for( l=0; l<TEST_NUM; l++ )
 	{
 		OS_TPrintf( "%s ", ( result[l] ? "›" : "~" ) );
-		PutStringUTF16( 3 * 8 + l*14, 14 * 8, TXT_COLOR_BLACK, (const u16 *)( s_answer_data[s_testnum][l] ? L"›" : L"~" ));
-		PutStringUTF16( 3 * 8 + l*14, 16 * 8, ( result[l]==s_answer_data[s_testnum][l] ? TXT_COLOR_BLUE : TXT_COLOR_RED ),
-		                (const u16 *)( result[l] ? L"›" : L"~" ));
+		test_ok = result[l]==s_answer_data[s_testnum][l] ? test_ok : FALSE;
 	}
 	OS_TPrintf( "\n" );
+	
+    NNS_G2dCharCanvasClear( &gCanvas, test_ok ? TXT_COLOR_BLUE : TXT_COLOR_RED );
+    NNS_G2dCharCanvasClear( &gCanvasSub, test_ok ? TXT_COLOR_BLUE : TXT_COLOR_RED );
+	PrintfSJIS( 1 * 8, 9 * 8, TXT_COLOR_WHITE, "FATFSPermissionCheck %c", (char)((ROM_Header_Short *)(HW_TWL_ROM_HEADER_BUF))->titleID_Lo[1]);
+	PutStringUTF16( 1 * 8, 11 * 8, TXT_COLOR_WHITE,  test_ok ? (const u16 *)L"Test Succeed." : (const u16 *)L"Test Failed..." );
+
+	for( l=0; l<15; l++ )
+	{
+		PutStringUTF16Sub( 8*1, l * 12, TXT_COLOR_WHITE, s_test_name[l]);
+		PutStringUTF16Sub( 8*18 + 8, l * 12, TXT_COLOR_WHITE, (const u16 *)( s_answer_data[s_testnum][l] ? L"TRUE" : L"FALSE" ));
+		PutStringUTF16Sub( 8*18 + 8*7, l * 12, ( result[l]==s_answer_data[s_testnum][l] ? TXT_COLOR_CYAN : TXT_COLOR_YELLOW ),
+		                (const u16 *)( result[l] ? L"TRUE" : L"FALSE" ));
+	}
+	
 }
 
 // ƒeƒXƒgƒvƒƒOƒ‰ƒ€‚Ì‰Šú‰»
@@ -370,10 +399,9 @@ void RomTypeTestInit( void )
  	GXS_DispOff();
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
 	
-	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"RomTypeTest");
-	PutStringUTF16( 4 * 8, 8 * 8, TXT_COLOR_BLACK, (const u16 *)L"Push A To Start Test.");
-	PutStringUTF16( 4 * 8, 10 * 8, TXT_COLOR_BLACK, (const u16 *)L"Push X To Start Test Quietly.");
-	GetAndDrawRTCData( &g_rtcDraw, TRUE );
+	PrintfSJIS( 1 * 8, 9 * 8, TXT_COLOR_BLACK, "FATFSPermissionCheck %c", (char)((ROM_Header_Short *)(HW_TWL_ROM_HEADER_BUF))->titleID_Lo[1]);
+	PutStringUTF16( 1 * 8, 11 * 8, TXT_COLOR_BLACK, (const u16 *)L"Start." );
+	//GetAndDrawRTCData( &g_rtcDraw, TRUE );
 
 	s_testnum = (char)((ROM_Header_Short *)(HW_TWL_ROM_HEADER_BUF))->titleID_Lo[1];
 	if( '0' <= s_testnum && s_testnum <= '9' )
@@ -386,10 +414,14 @@ void RomTypeTestInit( void )
 	{
 		s_testnum = 0;
 	}
-
+	
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	GX_DispOn();
 	GXS_DispOn();
+	
+	s_quiettest = TRUE;
+	TestFSPermission();
+
 }
 
 
@@ -407,20 +439,16 @@ void RomTypeTestMain(void)
 	}
 	
 	if( ( pad.trg & PAD_BUTTON_A ) ) {
-		s_quiettest = FALSE;
-		TestFSPermission();
 	}
 	
 	if( ( pad.trg & PAD_BUTTON_X ) ) {
-		s_quiettest = TRUE;
-		TestFSPermission();
 	}
 	
 	if( ( pad.trg & PAD_BUTTON_B ) || tp_cancel ) {
 //		SYSM_RebootLauncher();
 	}
 	
-	GetAndDrawRTCData( &g_rtcDraw, FALSE );
+	//GetAndDrawRTCData( &g_rtcDraw, FALSE );
 }
 
 
