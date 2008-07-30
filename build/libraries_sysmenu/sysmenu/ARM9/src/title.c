@@ -1636,6 +1636,7 @@ static void SYSMi_FileRecovery( TitleProperty *pBootTitle )
 // SYSM_GetNandTitleListまたはSYSM_GetNandTitleListMakerInfoのどちらかをSYSM_TryToBootTitle前に呼ぶ必要あり
 void SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 {
+	// [TODO:] この内部の処理で失敗した場合にそのままブートしてしまって大丈夫か？
 	
 	if(s_calc_hash)
 	{
