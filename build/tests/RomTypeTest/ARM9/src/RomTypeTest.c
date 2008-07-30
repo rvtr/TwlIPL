@@ -380,7 +380,7 @@ static void TestFSPermission( void )
     NNS_G2dCharCanvasClear( &gCanvas, test_ok ? TXT_COLOR_BLUE : TXT_COLOR_RED );
     NNS_G2dCharCanvasClear( &gCanvasSub, test_ok ? TXT_COLOR_BLUE : TXT_COLOR_RED );
 	PrintfSJIS( 1 * 8, 9 * 8, TXT_COLOR_WHITE, "FATFSPermissionCheck %c", (char)((ROM_Header_Short *)(HW_TWL_ROM_HEADER_BUF))->titleID_Lo[1]);
-	PutStringUTF16( 1 * 8, 11 * 8, TXT_COLOR_WHITE,  test_ok ? (const u16 *)L"Test Succeed." : (const u16 *)L"Test Failed..." );
+	PutStringUTF16( 1 * 8, 11 * 8, TXT_COLOR_WHITE,  test_ok ? (const u16 *)L"Test Succeeded." : (const u16 *)L"Test Failed..." );
 
 	for( l=0; l<15; l++ )
 	{
