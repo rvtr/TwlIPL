@@ -291,6 +291,7 @@ static void KamiThread(void *arg)
 
 		case KAMI_CDC_GO_DSMODE:
 			{
+				CDC_Init();	// IIR‚È‚Ç‚Ìƒpƒ‰ƒ[ƒ^‰Šú‰»‚Ì‚½‚ß
 				CDC_GoDsMode();
 	            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
 			}
