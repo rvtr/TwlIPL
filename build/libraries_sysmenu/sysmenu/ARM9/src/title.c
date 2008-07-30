@@ -320,7 +320,17 @@ TitleProperty *SYSM_GetCardTitleList( BOOL *changed )
 		
 		// タイトル情報フラグのセット
 		pTitleList_Card->flags.bootType = LAUNCHER_BOOTTYPE_ROM;
-		pTitleList_Card->titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
+		
+		if( SYSM_GetCardRomHeader()->platform_code & PLATFORM_CODE_FLAG_TWL ) {
+			// TWLアプリの時は、TitleIDをそのままセット
+			pTitleList_Card->titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
+		}else {
+			// NTRアプリの時は、TitleIDがないので、GameCodeをいじって擬似的にTitleIDとする。
+			pTitleList_Card->titleID = (u64)( ( SYSM_GetCardRomHeader()->game_code[ 3 ] <<  0 ) |
+											  ( SYSM_GetCardRomHeader()->game_code[ 2 ] <<  8 ) |
+											  ( SYSM_GetCardRomHeader()->game_code[ 1 ] << 16 ) |
+											  ( SYSM_GetCardRomHeader()->game_code[ 0 ] << 24 ) );
+		}
 		if(changed) *changed = TRUE;
 	}
 	
