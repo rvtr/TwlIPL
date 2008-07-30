@@ -43,6 +43,11 @@ CARD_REGION				=	ALL
 
 TARGET_BIN				=	$(TITLEID_LO).tad
 
+ROM_HEADER_DIR			=	$(SYSMENU_ROOT)/RomHeader/$(TITLEID_LO)
+SMALL_TITLEID			=	$(shell echo $(TITLEID_LO) | tr '[A-Z]' '[a-z]' )
+ROM_HEADER_TEMPLATE		=	$(ROM_HEADER_DIR)/rom_header_$(SMALL_TITLEID).template.sbin
+LIBSYSCALL				=	$(ROM_HEADER_DIR)/libsyscall.a
+
 ROM_SPEC				=	main.rsf
 
 MISC_DIR				=	../../misc
@@ -61,7 +66,8 @@ LINCLUDES				=	$(MISC_DIR)/include
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
 							-DCARD_REGION='$(CARD_REGION)' \
-							-DDISABLE_DEBUG='$(DISABLE_DEBUG)'
+							-DDISABLE_DEBUG='$(DISABLE_DEBUG)' \
+							-DROM_HEADER_TEMPLATE='$(call empath,$(ROM_HEADER_TEMPLATE))'
 
 MAKETAD_OPTION			+= -s
 
@@ -100,11 +106,12 @@ INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
 
-do-build : $(TARGETS)
+do-build : test $(TARGETS)
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
-
+test:
+	echo $(SMALL_TITLEID)
 #----------------------------------------------------------------------------
 
 #===== End of Makefile =====
