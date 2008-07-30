@@ -93,6 +93,7 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle );
 static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle );
 static void SYSMi_makeTitleIdList( void );
 static BOOL SYSMi_AuthenticateHeader( TitleProperty *pBootTitle, ROM_Header *head );
+static void SYSMi_applyPatchToBandBrothers( void );
 
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
@@ -1676,8 +1677,59 @@ void SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 	// タイトルIDリストの作成
 	SYSMi_makeTitleIdList();
 	
+	// バンブラパッチ
+	// SYSMi_applyPatchToBandBrothers();
+	
 	BOOT_Ready();	// never return.
 	
+}
+
+// バンブラパッチを当てる関数
+static void SYSMi_applyPatchToBandBrothers( void )
+{
+	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
+
+	if( ( 0 == STD_CompareNString( hs->game_code , "AXBJ", 4 ) ) && ( hs->rom_version == 0 ) )
+	{
+		s32 len = 0;
+		s32 llen;
+		FSFile src;
+		void *dest;
+
+		// データ読み込み + パッチ
+		FS_InitFile( &src );
+		if ( !FS_OpenFileEx( &src, "rom:/bandbroth_7flx.bin", FS_FILEMODE_R ) ) return;
+		len = (int)FS_GetFileLength( &src );
+		
+		if( SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC].src != NULL )
+		{
+			// ARM7FLXが再配置の場合
+			dest = (void *)SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC].src;
+		}else
+		{
+			// 再配置なし
+			dest = hs->sub_ram_address;
+		}
+
+		for(llen = 0; llen < len; )
+		{
+			int rd;
+			rd = FS_ReadFile( &src, dest, len );
+			if(rd == -1)
+			{
+				FS_CloseFile( &src );
+				return;
+			}
+			dest = (void *)((u32)dest + rd);
+			llen += rd;
+		}
+		if ( !FS_CloseFile( &src ) ) return;
+		if (len != llen) return;
+		
+		OS_TPrintf("bandbrothers patch : apply succeeded! \n");
+	}
+	
+	return;
 }
 
 // タイトルIDリストの作成
