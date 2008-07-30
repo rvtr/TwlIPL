@@ -42,7 +42,7 @@ SRCS			=	$(HYENA_SRCDIR)/crt0.LTD.c \
 TARGET_NAME		=	jackal
 
 TARGET_NEF		=	$(TARGET_NAME).tef
-LCFILE_SPEC		=	$(TARGET_NAME).lsf
+LCFILE_SPEC		=	$(TARGET_NAME)$(CODEGEN_ARCH).lsf
 LCFILE_TEMPLATE	=	$(TARGET_NAME).lcf.template
 LDRES_TEMPLATE	=	$(ROOT)/build/components/armadillo.TWL/armadillo.response.template
 
