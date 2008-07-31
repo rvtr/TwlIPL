@@ -54,6 +54,12 @@ Property
 	### Settings for FinalROM
 	###
 	#### BEGIN
+
+	#
+	# TITLE NAME: Your product name within 12bytes
+	#
+	_GameCode		$(TITLEID_LO)
+
 	#
 	# TITLE NAME: Your product name within 12bytes
 	#
