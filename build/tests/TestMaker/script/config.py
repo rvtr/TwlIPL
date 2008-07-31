@@ -16,6 +16,7 @@ rsfkey    = 'RSF'
 bnrkey    = 'Banner'
 eulakey   = 'EULA'
 ratingkey = 'Rating'
+optkey    = 'Option'
 
 #----- gamecodes ファイルの生成 ------------------------------------
 try:
@@ -48,6 +49,7 @@ for num in romparam.keys():
         print 'config.py : can not open %s file' % codepath
         continue
     else:
+        romspectemplate = ''
         #----- MAKETAD_OPTION, ROM_SPEC_TEMPLATE の指定
         if romparam[num][rsfkey].get('AppType') == 'SYSTEM':
             #----- MAKEROM の指定
@@ -56,13 +58,16 @@ for num in romparam.keys():
             else:
                 codeparam.write('MAKEROM           := $(TWL_TOOLSDIR)/bin/makerom.TWL.sys.exe\n')
             codeparam.write('MAKETAD_OPTION    += -s\n')
-            codeparam.write('ROM_SPEC_TEMPLATE  = $(ROOT)/include/twl/specfiles/ROM-TS_sys.rsf\n')
+            romspectemplate = '$(ROOT)/include/twl/specfiles/ROM-TS_sys.rsf'
         else:
             # 暫定対処 include/twl/specfiles 以下をきちんと使うように変更する必要がある
             if testtype == 'PARENTAL':
-                codeparam.write('ROM_SPEC_TEMPLATE  = ../config/ROM-TS_nand_forPARENTAL.rsf\n')
+                romspectemplate = '../config/ROM-TS_nand_forPARENTAL.rsf'
             else:
-                codeparam.write('ROM_SPEC_TEMPLATE  = $(ROOT)/include/twl/specfiles/ROM-TS_nand.rsf\n')
+                romspectemplate = '$(ROOT)/include/twl/specfiles/ROM-TS_nand.rsf'
+        if romparam[num].has_key(optkey) and romparam[num][optkey].has_key('RomSpecTemplate'):
+            romspectemplate = romparam[num][optkey].get('RomSpecTemplate')
+        codeparam.write(''.join(['ROM_SPEC_TEMPLATE  = ',romspectemplate,'\n']))
 
         #----- ROM_SPEC_OPTIONS key の抽出
         if romparam[num][rsfkey].get('AppType') == 'SYSTEM':

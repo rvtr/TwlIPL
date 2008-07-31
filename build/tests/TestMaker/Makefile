@@ -98,7 +98,7 @@ SRCDIR	= $(BASEDIR)/src
 INCDIR	= $(BASEDIR)/include
 SRCS	= main.c font.c screen.c
 BANNERSRC := $(wildcard ../banner/dummy/Cell/*.nce)
-
+INSTALL_DIR		= ../roms
 
 TARGET_PLATFORM := TWL
 TWL_ARCHGEN     := LIMITED
@@ -166,7 +166,6 @@ ROM_SPEC	=	twl_$(GAMECODE).rsf
 #SRCDIR		=	# using default
 #LCFILE		=	# using default
 
-INSTALL_DIR		= ../roms
 INSTALL_TARGETS	= $(BINDIR)/$(TARGET_BIN)
 
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs
