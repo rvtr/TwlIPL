@@ -73,7 +73,6 @@
 static void         PrintDebugInfo(void);
 static OSHeapHandle InitializeAllocateSystem(void);
 static void         InitializeFatfs(void);
-static void         InitializeCdc(void);
 static void         DummyThread(void* arg);
 
 static void         ReadUserInfo(void);
@@ -125,12 +124,8 @@ TwlSpMain(void)
     InitializeFatfs();                          // FAT-FS
 //  InitializeNwm(heapHandle);                  // TWL 無線
     MCU_InitIrq(THREAD_PRIO_MCU);               // マイコン
-
-    if (OSi_IsCodecTwlMode() == TRUE)
-    {
-        InitializeCdc();                        // CODEC
-        CAMERA_Init();                          // カメラ
-    }
+    CDC_InitLib();								// CODECライブラリ初期化
+    CAMERA_Init();                          // カメラ
 
     SND_Init(THREAD_PRIO_SND);                  // サウンド
     SNDEX_Init(THREAD_PRIO_SNDEX);              // サウンド拡張
@@ -246,41 +241,6 @@ InitializeFatfs(void)
     }
 
     // ダミースレッド破棄
-    OS_KillThread(&thread, NULL);
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         InitializeCdc
-  Description:  CDCライブラリを初期化する。CDC初期化関数内でスレッド休止する
-                為、休止中動作するダミーのスレッドを立てる。
-  Arguments:    None.
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-static void
-InitializeCdc(void)
-{
-    OSThread    thread;
-    u32         stack[18];
-/*
-	// ランチャー経由で起動した場合はCODECは既に初期化されているため
-	// コンポーネントがCODECを初期化する必要はありません。
-	// 将来的にはバッサリと切る必要がありますが、
-	// 暫定的にI2Sが有効かどうかでCODECが初期化済みかどうかを判定します。
-	if (reg_SND_SMX_CNT & REG_SND_SMX_CNT_E_MASK)
-	{
-		return;
-	}
-*/
-    /* ダミースレッド作成 */
-    OS_CreateThread(&thread, DummyThread, NULL,
-        (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
-    OS_WakeupThreadDirect(&thread);
-
-    /* CODEC 初期化 */
-    CDC_Init();
-    CDC_InitMic();
-
-    /* ダミースレッド破棄 */
     OS_KillThread(&thread, NULL);
 }
 

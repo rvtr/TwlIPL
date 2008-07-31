@@ -99,7 +99,7 @@ static void         VBlankIntr(void);
 static void         InitializeFatfs(void);
 static void         InitializeNwm(OSArenaId drvArenaId, OSHeapHandle drvHeapHandle,
                                   OSArenaId wpaArenaId, OSHeapHandle wpaHeapHandle);
-static void         InitializeCdc(void);
+static void         InitializeCdc(u32 lockId);
 static void         AdjustVolume(void);
 /*---------------------------------------------------------------------------*
     外部シンボル参照
@@ -123,6 +123,7 @@ void
 TwlSpMain(void)
 {
     OSHeapHandle    wramHeapHandle, mainHeapHandle;
+	u32 spiLockId;
 
     // SYSMワークのクリア
     MI_CpuClear32( SYSMi_GetWork(), sizeof(SYSM_work) );
@@ -219,13 +220,20 @@ TwlSpMain(void)
         AdjustVolume();
     }
 
+	// CODECアクセス用のSPIロックIDを取得する（ランチャーのみ 2008/07/31)
+	spiLockId = (u32)OS_GetLockID();
+	if (spiLockId == OS_LOCK_ID_ERROR)
+	{
+        OS_Warning("OS_GetLockID failed.\n");
+	}
+
     if (OSi_IsCodecTwlMode() == TRUE)
     {
         // CODEC 初期化
         // ランチャーのみCDC_InitForFirstBootで実際にCODECの初期化を行う。
 		// アプリ起動時にはCODECは既に初期化されているためmongooseなどでは
 		// 簡易的な初期化CDC_InitLibで良い。 2008/07/14
-        InitializeCdc();
+        InitializeCdc(spiLockId);
 
         // カメラ初期化
         CAMERA_Init();
@@ -279,7 +287,9 @@ TwlSpMain(void)
     HOTSW_Init(THREAD_PRIO_HOTSW);
 
     // 外部デポップ回路を無効にします。（ランチャーのみ 2008/07/14）
+	SPI_Lock(spiLockId);
     CDC_DisableExternalDepop();
+	SPI_Unlock(spiLockId);
 
     while (TRUE)
     {
@@ -465,7 +475,7 @@ InitializeNwm(OSArenaId drvArenaId, OSHeapHandle drvHeapHandle,
   Returns:      None.
  *---------------------------------------------------------------------------*/
 static void
-InitializeCdc(void)
+InitializeCdc(u32 lockId)
 {
     OSThread    thread;
     u32         stack[18];
@@ -475,7 +485,9 @@ InitializeCdc(void)
         (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
     OS_WakeupThreadDirect(&thread);
 
-    CDC_InitForFirstBoot();     // ※ランチャー特殊処理。
+	SPI_Lock(lockId);    		 // CODEC用SPI排他ロック
+    CDC_InitForFirstBoot();      // ※ランチャー特殊処理。
+	SPI_Unlock(lockId);  		 // CODEC用SPI排他ロック
 
     // ダミースレッド破棄
     OS_KillThread(&thread, NULL);
