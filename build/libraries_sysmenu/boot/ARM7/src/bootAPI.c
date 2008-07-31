@@ -28,6 +28,8 @@
 #include "reboot.h"
 #include "internal_api.h"
 
+extern void SPI_Lock(u32 id);
+extern void SPI_Unlock(u32 id);
 
 // define data-------------------------------------------------------
 #define MAINP_SEND_IF		0x2000
@@ -141,6 +143,7 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 		ROM_Header *th = (void*)REBOOTi_GetTwlRomHeaderAddr();
 		ROM_Header *dh = (void*)REBOOTi_GetRomHeaderAddr();
 		BOOL isNtrMode;
+		u32  spiLockId;
 
 		(void)OS_DisableIrq();							// ここで割り込み禁止にしないとダメ。
 		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
@@ -304,6 +307,13 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 			// I2S停止（MCLKは動作継続）
 			reg_SND_SMX_CNT &= ~REG_SND_SMX_CNT_E_MASK;
 
+			spiLockId = (u32)OS_GetLockID();
+			if (spiLockId == OS_LOCK_ID_ERROR)
+			{
+		        OS_Warning("%s: OS_GetLockID failed.\n", __FUNCTION__);
+			}
+			SPI_Lock(spiLockId); // CODEC用SPI排他ロック
+
 			// CODEC再初期化
 			CDC_Init();
 
@@ -317,6 +327,8 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 				}
 				CDC_GoDsMode();
             }
+
+			SPI_Unlock(spiLockId); // CODEC用SPI排他ロック
 
 			// I2S再開
 			// DSサウンド：DSP = 8:0
