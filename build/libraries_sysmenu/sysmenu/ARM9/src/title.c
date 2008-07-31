@@ -1689,7 +1689,7 @@ void SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 	SYSMi_makeTitleIdList();
 	
 	// バンブラパッチ
-	// SYSMi_applyPatchToBandBrothers();
+	SYSMi_applyPatchToBandBrothers();
 	
 	BOOT_Ready();	// never return.
 	
@@ -1702,20 +1702,25 @@ static void SYSMi_applyPatchToBandBrothers( void )
 
 	if( ( 0 == STD_CompareNString( hs->game_code , "AXBJ", 4 ) ) && ( hs->rom_version == 0 ) )
 	{
-		s32 len = 0;
-		s32 llen;
+		u32 len = 0;
+		u32 llen;
 		FSFile src;
 		void *dest;
 
 		// データ読み込み + パッチ
 		FS_InitFile( &src );
-		if ( !FS_OpenFileEx( &src, "rom:/bandbroth_7flx.bin", FS_FILEMODE_R ) ) return;
-		len = (int)FS_GetFileLength( &src );
+		if ( !FS_OpenFileEx( &src, "rom:/data/bandbrothers_arm7flx_patch.sbin", FS_FILEMODE_R ) ) return;
+		len = FS_GetFileLength( &src );
+		
+		// ヘッダ情報のうち、ARM7FLXのサイズを改変する
+		hs->sub_size = len;
 		
 		if( SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC].src != NULL )
 		{
 			// ARM7FLXが再配置の場合
 			dest = (void *)SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC].src;
+			SYSMi_GetWork()->romRelocateInfo[ARM7_STATIC].length = len;
+			OS_TPrintf("bandbrothers patch : relocate info changed! \n");
 		}else
 		{
 			// 再配置なし
@@ -1725,7 +1730,7 @@ static void SYSMi_applyPatchToBandBrothers( void )
 		for(llen = 0; llen < len; )
 		{
 			int rd;
-			rd = FS_ReadFile( &src, dest, len );
+			rd = FS_ReadFile( &src, dest, (s32)len );
 			if(rd == -1)
 			{
 				FS_CloseFile( &src );
