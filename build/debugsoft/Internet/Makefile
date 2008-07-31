@@ -21,9 +21,8 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBDIRS		=	Jpeg	\
-				Wireless	\
-				Internet	\
+SUBDIRS		=	NCFGTest	\
+
 
 #----------------------------------------------------------------------------
 
