@@ -22,7 +22,7 @@ SUBDIRS			=
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-FONT_TIMESTAMP	=	08072300
+FONT_TIMESTAMP	=	08073100
 FONT_DIR		=	WW
 FONTS			=	TBF1_l.NFTR \
 					TBF1_m.NFTR \
