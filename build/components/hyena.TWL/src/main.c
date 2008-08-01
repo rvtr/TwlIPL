@@ -113,6 +113,15 @@ extern void         SDK_STATIC_BSS_END(void);
 
 extern BOOL sdmcGetNandLogFatal( void );
 
+
+// AutoloadDoneCallbackをオーバーロードして、ここでSYSM_workのクリアを行う。
+void _start_AutoloadDoneCallback(void* argv[])
+{
+#pragma unused(argv)
+    // SYSMワークのクリア
+    MI_CpuClear32( SYSMi_GetWork(), sizeof(SYSM_work) );
+}
+
 /*---------------------------------------------------------------------------*
   Name:         TwlSpMain
   Description:  起動ベクタ。
@@ -124,9 +133,6 @@ TwlSpMain(void)
 {
     OSHeapHandle    wramHeapHandle, mainHeapHandle;
 	u32 spiLockId;
-
-    // SYSMワークのクリア
-    MI_CpuClear32( SYSMi_GetWork(), sizeof(SYSM_work) );
 
     // バックライトON
     while ( (reg_GX_DISPSTAT & REG_GX_DISPSTAT_INI_MASK) == FALSE )
