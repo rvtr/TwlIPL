@@ -34,7 +34,7 @@ SUBDIRS					=	\
 
 export DEFAULT_COMP_ARM7	=	jackal
 
-COMPONENT_DIR			=	$(TWL_IPL_RED_ROOT)/build/components/$(DEFAULT_COMP_ARM7).TWL
+COMPONENT_DIR			=	$(call empath,$(TWL_IPL_RED_ROOT))/build/components/$(DEFAULT_COMP_ARM7).TWL
 SUBDIRS					+=	$(COMPONENT_DIR)
 WRAM_MAP_FILE			=	$(COMPONENT_DIR)/wram_regs/wram_regs.rbin
 
