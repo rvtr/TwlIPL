@@ -31,6 +31,7 @@ EULAROMPARAM = ./config/romparam_forEULAtest.yaml
 SHOPROMPARAM = ./config/romparam_forShoptest.yaml
 SAVEROMPARAM = ./config/romparam_forSavetest.yaml
 FATFSPERMISSIONROMPARAM = ./config/romparam_forFATFSPermissiontest.yaml
+BOOTROMPARAM = ./config/romparam_forBoottest.yaml
 ROMPARAM     = ./romparam.yaml
 CODESLIST    = ./codeslist
 
@@ -74,6 +75,11 @@ savetest:
 fatfspermissiontest:
 	cp -f $(FATFSPERMISSIONROMPARAM) $(ROMPARAM)
 	$(CONFIG) $(ROMPARAM) $(CODESLIST) "FATFSPERMISSION"
+
+#---- boottest テスト設定
+boottest:
+	cp -f $(BOOTROMPARAM) $(ROMPARAM)
+	$(CONFIG) $(ROMPARAM) $(CODESLIST) "BOOT"
 
 #---- config
 config:
@@ -175,6 +181,20 @@ MAKEROM_ROMROOT		=	../../../systemMenu_RED/
 MAKEROM_ROMFILES	=	./data/NTR_IPL_font_m.NFTR
 endif
 
+ifeq ($(TEST_TYPE),BOOT)
+TARGET_FIRM				=	SYSTEMMENU
+BASEDIR	= ../../HashCheckTemplate
+SUBDIRS	= $(BASEDIR)
+SRCDIR	= $(BASEDIR)/ARM9/src
+INCDIR	= $(BASEDIR)/ARM9/src $(MISC_DIR)/include
+SRCS	= main.c HashCheckTemplate.c $(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
+BANNERSRC := $(wildcard ../banner/shop/Cell/*.nce)
+INSTALL_DIR	= $(BASEDIR)/test_roms
+USE_IPL_RED_LIB	= TRUE
+MAKEROM_ROMROOT		=	../../../systemMenu_RED/
+MAKEROM_ROMFILES	=	./data/NTR_IPL_font_m.NFTR
+endif
+
 BANNER     = ./banner.bnr
 MAKEBANNER = $(TWL_TOOLSDIR)/bin/makebanner.TWL.exe
 BANNERCVTR = $(TWL_TOOLSDIR)/bin/bannercvtr.exe
@@ -196,6 +216,14 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
 endif
 include $(GAMECODE).param
+
+# boottestの時だけARM7コンポーネントの指定
+# このあたりの指定が苦肉すぎるので妙案募集中
+ifeq ($(TEST_TYPE),BOOT)
+DEFAULT_COMP_ARM7		= racoon_hct
+DEFAULT_MAKEROM_ARM7_BASE	= $(BASEDIR)/ARM7/bin/$(TWL_BUILDTYPE_ARM7)/$(DEFAULT_COMP_ARM7)
+DEFAULT_MAKEROM_ARM7		= $(DEFAULT_MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
+endif
 
 #----------------------------------------------------------------------------
 
