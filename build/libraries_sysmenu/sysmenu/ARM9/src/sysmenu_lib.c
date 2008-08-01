@@ -62,6 +62,8 @@ static TitleProperty s_bootTitleBuf;
 // ============================================================================
 
 #if 1
+#include    <twl/code32.h>
+// AutoloadDoneCallbackは、ARMでないと動作しない。ISデバッガがブレークポイント処理のために上乗りしているが、そこからのリターンが怪しい。
 // AutoloadDoneCallbackを利用して鍵を引き渡す
 void _start_AutoloadDoneCallback(void* argv[])
 {
@@ -69,6 +71,7 @@ void _start_AutoloadDoneCallback(void* argv[])
     // ARM7で使用する分の鍵を渡す
     SYSMi_SendKeysToARM7();
 }
+#include    <twl/codereset.h>
 #endif
 
 
