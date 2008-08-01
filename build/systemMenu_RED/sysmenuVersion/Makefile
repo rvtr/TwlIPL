@@ -31,11 +31,11 @@ TWL_NANDAPP     = TRUE
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include ./commondefs.sysmenuVersion
 
+DST_DIR			=	$(SYSMENU_VERSION_TARGET)
 REGION        ?=  A
-DST_DIR       = dev
 
 # タイムスタンプ
-VER_TIMESTAMP   = 08062300
+VER_TIMESTAMP   = 08073100
 
 # システムメニューバージョン
 MAJOR_VERSION   = 0
@@ -56,7 +56,7 @@ GEN_VERSION_PARAM = $(DST_DIR) $(VER_TIMESTAMP) $(STR_VERSION) $(MAJOR_VERSION) 
 
 GEN_VERSION_FILE  = $(SYSMENU_TOOLSDIR)/bin/genVersion.plx
 
-VERSION_TAD     = HNL$(REGION).tad
+VERSION_TAD     = HNL$(REGION).$(SYSMENU_VERSION_TARGET).tad
 
 ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
   VERSION_DAT   = $(SYSMENU_VERSION_FILE)
@@ -66,7 +66,7 @@ TARGETS       +=  $(VERSION_TAD)
 
 #----------------------------------------------------------------------------
 
-LDIRT_CLEAN     = $(VERSION_TAD) properties
+LDIRT_CLEAN     = $(VERSION_DAT) $(VERSION_TAD) properties
 
 #----------------------------------------------------------------------------
 
@@ -76,6 +76,7 @@ do-build :  $(VERSION_TAD)
 
 $(VERSION_DAT): ./Makefile ./commondefs.sysmenuVersion
 	$(GEN_VERSION_FILE) $(GEN_VERSION_PARAM)
+	mv SysmenuVersion.dat SysmenuVersion.$(SYSMENU_VERSION_TARGET).dat
 
 $(VERSION_TAD) : $(SYSMENU_VERSION_FILE)
 	$(MAKETAD) $(call empath,$<) $(SYSMENU_VERSION_MAKETAD_OPTION) -o $@

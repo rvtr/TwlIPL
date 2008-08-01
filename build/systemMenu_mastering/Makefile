@@ -25,6 +25,7 @@ TWL_ARCHGEN                             =       LIMITED
 TWL_NANDAPP				=	TRUE
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+include $(TWL_IPL_RED_ROOT)/build/systemMenu_RED/sysmenuVersion/commondefs.sysmenuVersion
 
 ifeq ($(TWL_IPL_RED_PRIVATE_ROOT),)
 override DO_MASTERING	=
@@ -138,7 +139,7 @@ endif
 #システムメニューバージョン
 #---------------------------
 # [TODO] TADからバージョンを取得して、バージョン番号でディレクトリを作成する。
-$(OUT_DIR)/HNLA : $(SYSMENU_DIR)/sysmenuVersion/HNLA.tad
+$(OUT_DIR)/HNLA : $(SYSMENU_DIR)/sysmenuVersion/HNLA.$(SYSMENU_VERSION_TARGET).tad
 ifeq ($(DO_MASTERING),TRUE)
 	mkdir -p $(OUT_DIR)/$(notdir $(basename $<))
 	mkdir -p $(OUT_DIR)/$(notdir $(basename $<))/V0
