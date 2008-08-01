@@ -30,6 +30,7 @@ PCROMPARAM   = ./config/twl_parentalcontrol_spec.yaml
 EULAROMPARAM = ./config/romparam_forEULAtest.yaml
 SHOPROMPARAM = ./config/romparam_forShoptest.yaml
 SAVEROMPARAM = ./config/romparam_forSavetest.yaml
+FATFSPERMISSIONROMPARAM = ./config/romparam_forFATFSPermissiontest.yaml
 ROMPARAM     = ./romparam.yaml
 CODESLIST    = ./codeslist
 
@@ -69,6 +70,11 @@ savetest:
 	cp -f $(SAVEROMPARAM) $(ROMPARAM)
 	$(CONFIG) $(ROMPARAM) $(CODESLIST) "SAVE"
 
+#---- fatfspermissiontest テスト設定
+fatfspermissiontest:
+	cp -f $(FATFSPERMISSIONROMPARAM) $(ROMPARAM)
+	$(CONFIG) $(ROMPARAM) $(CODESLIST) "FATFSPERMISSION"
+
 #---- config
 config:
 	$(CONFIG) $(ROMPARAM) $(CODESLIST) "DEFAULT"
@@ -91,6 +97,8 @@ else
 
 SUBDIRS		=
 
+#---- sysm_red_misc
+MISC_DIR	= ../../../systemMenu_RED/misc
 
 #---- default 
 BASEDIR	= $(ROOT)/build/demos/os/consoleType-1
@@ -154,6 +162,19 @@ SRCS	= dataver.c font.c main.c menu.c screen.c
 BANNERSRC := $(wildcard $(BASEDIR)/banner/data/Cell/*.nce)
 endif
 
+ifeq ($(TEST_TYPE),FATFSPERMISSION)
+TARGET_FIRM				=	SYSTEMMENU
+BASEDIR	= ../../RomTypeTest
+SRCDIR	= $(BASEDIR)/ARM9/src
+INCDIR	= $(BASEDIR)/ARM9/src $(MISC_DIR)/include
+SRCS	= main.c RomTypeTest.c $(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
+BANNERSRC := $(wildcard ../banner/shop/Cell/*.nce)
+INSTALL_DIR	= $(BASEDIR)/test_roms
+USE_IPL_RED_LIB	= TRUE
+MAKEROM_ROMROOT		=	../../../systemMenu_RED/
+MAKEROM_ROMFILES	=	./data/NTR_IPL_font_m.NFTR
+endif
+
 BANNER     = ./banner.bnr
 MAKEBANNER = $(TWL_TOOLSDIR)/bin/makebanner.TWL.exe
 BANNERCVTR = $(TWL_TOOLSDIR)/bin/bannercvtr.exe
@@ -168,8 +189,12 @@ ROM_SPEC	=	twl_$(GAMECODE).rsf
 
 INSTALL_TARGETS	= $(BINDIR)/$(TARGET_BIN)
 
+ifeq ($(USE_IPL_RED_LIB),TRUE)
+include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+else
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
+endif
 include $(GAMECODE).param
 
 #----------------------------------------------------------------------------
@@ -184,8 +209,11 @@ $(BANNER): $(BANNER:.bnr=.bin) $(BANNER:.bnr=.bsf)
 $(BANNER:.bnr=.bin): $(BANNERSRC)
 	$(BANNERCVTR) -o $@ $<
 
+ifeq ($(USE_IPL_RED_LIB),TRUE)
+include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+else
 include	$(TWLSDK_ROOT)/build/buildtools/modulerules
-
+endif
 
 # sub make 本体
 #------------------------------------------------------------------------------------
