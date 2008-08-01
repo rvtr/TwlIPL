@@ -382,6 +382,8 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 	if( header->titleID_Lo[3] == '4' )
 	{
 		OS_TPrintf("[Wlan Firm]  This is DEV_UIG_Launcher. Wireless firmware download skipped.\n");
+	    s_isFinished = TRUE;
+		s_result = WLANFIRM_RESULT_SUCCESS;
 		return TRUE;
 	}
 
