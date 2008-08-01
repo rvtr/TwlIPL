@@ -184,7 +184,7 @@ endif
 ifeq ($(TEST_TYPE),BOOT)
 TARGET_FIRM				=	SYSTEMMENU
 BASEDIR	= ../../HashCheckTemplate
-SUBDIRS	= $(BASEDIR)
+SUBDIRS	= $(BASEDIR)/crt $(BASEDIR)/ARM7
 SRCDIR	= $(BASEDIR)/ARM9/src
 INCDIR	= $(BASEDIR)/ARM9/src $(MISC_DIR)/include
 SRCS	= main.c HashCheckTemplate.c $(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
