@@ -28,7 +28,6 @@
 extern void LCFG_VerifyAndRecoveryNTRSettings( void );
 
 // function's prototype-------------------------------------------------------
-void _start_AutoloadDoneCallback(void* argv[]);
 static void SYSMi_CopyLCFGDataHWInfo( u32 dst_addr );
 static void SYSMi_CopyLCFGDataSettings( void );
 static TitleProperty *SYSMi_CheckDebuggerBannerViewModeBoot( void );
@@ -63,6 +62,7 @@ static TitleProperty s_bootTitleBuf;
 
 #if 1
 #include    <twl/code32.h>
+void _start_AutoloadDoneCallback(void* argv[]);
 // AutoloadDoneCallbackは、ARMでないと動作しない。ISデバッガがブレークポイント処理のために上乗りしているが、そこからのリターンが怪しい。
 // AutoloadDoneCallbackを利用して鍵を引き渡す
 void _start_AutoloadDoneCallback(void* argv[])

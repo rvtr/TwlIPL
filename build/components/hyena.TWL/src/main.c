@@ -114,6 +114,8 @@ extern void         SDK_STATIC_BSS_END(void);
 extern BOOL sdmcGetNandLogFatal( void );
 
 
+#include    <twl/code32.h>
+void _start_AutoloadDoneCallback(void* argv[]);
 // AutoloadDoneCallbackをオーバーロードして、ここでSYSM_workのクリアを行う。
 void _start_AutoloadDoneCallback(void* argv[])
 {
@@ -121,6 +123,7 @@ void _start_AutoloadDoneCallback(void* argv[])
     // SYSMワークのクリア
     MI_CpuClear32( SYSMi_GetWork(), sizeof(SYSM_work) );
 }
+#include    <twl/codereset.h>
 
 /*---------------------------------------------------------------------------*
   Name:         TwlSpMain
