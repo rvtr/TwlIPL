@@ -310,12 +310,18 @@ TwlSpMain(void)
                そのため、新無線のファームDL完了通知をmain loopでチェックし、
                完了が通知されたら旧無線初期化を行った後、NWMに確認通知を送る。[twl-dev:0980] */
             WVR_Begin(wramHeapHandle);
+#if 1
+            // [TODO:] RC plus branchでは、NWMSPi_NotifyConfirmation()の返り値がないため、返り値評価を行わない。
+            //         次期リリースで返り値評価を行うよう変更予定。
+            NWMSPi_NotifyConfirmation();
+#else
             if (FALSE == NWMSPi_NotifyConfirmation())
             {
                 // NWMへのConfirmation通知のためのSendMessageにENQできない状態.
                 // (ここに来ることはありえない筈.)
                 OS_Panic("ARM7: Failed to complete wireless firmare install.\n");
             }
+#endif
         }
         BOOT_WaitStart();
     }
