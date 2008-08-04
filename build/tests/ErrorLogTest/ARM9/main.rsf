@@ -94,8 +94,8 @@ Property
 	#
 	# BANNER FILE: generated from Banner Spec File
 	#
-	#BannerFile		./etc/myGameBanner.bnr
-	BannerFile		$(TWLSDK_ROOT)/include/twl/specfiles/default.bnr
+	BannerFile		../banner/banner.bnr
+	
 
 	#
 	# Permit LandingNormalJump: for TWL "ApplicationJump" function [TRUE/FALSE]
@@ -184,12 +184,12 @@ AppendProperty
 	#
 	# Boot allowed Media: [GameCard]
 	#
-	Media					NAND
+	Media					$(ERRLOGTEST_MEDIA)
 
 	#
 	# GameCode for TitleID : Your GameCode in 4 ascii words
 	#
-	#GameCode				ABCJ
+	GameCode				$(ERRLOGTEST_GAMECODE)
 
 	#
 	# Public save data size: [0K/16K/32K/64K/128K/256K/512K/1M/2M/4M]

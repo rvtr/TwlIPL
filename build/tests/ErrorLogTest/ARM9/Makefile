@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlSDK - tests - ErrorLogTest
+# Project:  TwlSDK - demos - simpleShoot-1
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -11,36 +11,22 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date::            $
+# $Date:: $
 # $Rev$
 # $Author$
 #----------------------------------------------------------------------------
-SUBDIRS          = $(TWL_IPL_RED_ROOT)/build/libraries_sysmenu/errorLog
 
-TARGET_FIRM		=	SYSTEMMENU
-TARGET_PLATFORM	=	TWL
-TWL_ARCHGEN		=	LIMITED
+SUBDIRS					=	
+SUBMAKES		=	Makefile.0 Makefile.1
 
-#----------------------------------------------------------------------------
-
-TARGET_BIN       = main.srl
-
-MISC_DIR	=	../../../systemMenu_RED/misc
-LINCLUDES		+=	$(MISC_DIR)/include
-
-SRCS             = ErrorLogTest.c $(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
-
-LLIBRARIES		+=	liberrorlog$(TWL_LIBSUFFIX).a
-
-ROM_SPEC		=	main.rsf
-
-include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
-MAKEROM		 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
+include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-do-build:		$(TARGETS)
+do-build : $(TARGETS)
 
-include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/modulerules
+
+#----------------------------------------------------------------------------
 
 #===== End of Makefile =====
