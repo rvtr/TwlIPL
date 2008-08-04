@@ -203,12 +203,12 @@ AppendProperty
 	#
 	# Public save data size: [0K/16K/32K/64K/128K/256K/512K/1M/2M/4M/8M]
 	#
-	PublicSaveDataSize		32K
+	#PublicSaveDataSize		32K
 
 	#
 	# Private save data size: [0K/16K/32K/64K/128K/256K/512K/1M/2M/4M/8M]
 	#
-	PrivateSaveDataSize		16K
+	#PrivateSaveDataSize		16K
 
 	#
 	# Enable SubBannerFile
