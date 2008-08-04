@@ -57,7 +57,7 @@ Property
 	#
 	# TITLE NAME: Your product name within 12bytes
 	#
-	TitleName		"DispInfo"
+	TitleName		"FatalMaker"
 
 	#
 	# MAKER CODE: Your company ID# in 2 ascii words
@@ -95,7 +95,7 @@ Property
 	# BANNER FILE: generated from Banner Spec File
 	#
 	#BannerFile		./etc/myGameBanner.bnr
-	BannerFile		$(TWLSDK_ROOT)/include/twl/specfiles/default.bnr
+	BannerFile		../banner/banner.bnr
 
 	#
 	# Permit LandingNormalJump: for TWL "ApplicationJump" function [TRUE/FALSE]
@@ -201,7 +201,7 @@ AppendProperty
 	#
 	# Boot allowed Media: [GameCard]
 	#
-	Media					NAND
+	Media					$(FATALMAKER_MEDIA)
 
 	#
 	# Data only title : [TRUE/FALSE]
@@ -216,7 +216,7 @@ AppendProperty
 	#
 	# GameCode for TitleID : Your GameCode in 4 ascii words
 	#
-	GameCode				ABCZ
+	GameCode				$(FATALMAKER_GAMECODE)
 
 	#
 	# Public save data size: [0K/16K/32K/64K/128K/256K/512K/1M/2M/4M]
