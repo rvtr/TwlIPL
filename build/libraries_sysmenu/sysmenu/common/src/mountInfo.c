@@ -47,8 +47,7 @@
 // function's prototype--------------------------------------------------------
 static void SYSMi_SetBootSRLPath( LauncherBootType bootType, NAMTitleId titleID );
 static void SYSMi_SetMountInfoCore( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pSrc, OSMountInfo *pDst );
-static void SYSMi_ModifySaveDataMount( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt );
-static void SYSMi_ModifySaveDataMountForLauncher( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt );
+static void SYSMi_ModifySaveDataMount( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt, ROM_Header_Short *pROMH );
 static void SYSMi_ModifyShared2FileMount( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt );
 
 // global variable-------------------------------------------------------------
@@ -93,9 +92,11 @@ void SYSMi_SetLauncherMountInfo( void )
 	
 	// セーブデータ有無によるマウント情報の編集
 	// ※このタイミングではFSは動かせないので、FSを使わない特別版で対応。
-	SYSMi_ModifySaveDataMountForLauncher( LAUNCHER_BOOTTYPE_NAND,
+	SYSMi_ModifySaveDataMount( LAUNCHER_BOOTTYPE_NAND,
 										  titleID,
-										  &mountListBuffer[ PRV_SAVE_DATA_MOUNT_INDEX ] );
+										  &mountListBuffer[ PRV_SAVE_DATA_MOUNT_INDEX ],
+										  ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF
+										);
 #ifdef USE_SHARED2_FILE_OLD_FORMAT
 	// 2008.06.20 shared2仕様変更に伴い、無効にする
 	// Shared2のアプリ間共有ファイルセット(LAUNCHERで使うかどうかは微妙)
@@ -179,15 +180,11 @@ void SYSMi_SetBootAppMountInfo( TitleProperty *pBootTitle )
 	
 	// セーブデータ有無によるマウント情報の編集
 	// ※ARM7ではNAMは動かせないので、NAMを使わないバージョンで対応。
-	SYSMi_ModifySaveDataMountForLauncher( LAUNCHER_BOOTTYPE_NAND,
+	SYSMi_ModifySaveDataMount( LAUNCHER_BOOTTYPE_NAND,
 										  pBootTitle->titleID,
-										  &mountListBuffer[ PRV_SAVE_DATA_MOUNT_INDEX ] );
-/*
-	// セーブデータ有無によるマウント情報の編集
-	SYSMi_ModifySaveDataMount( (LauncherBootType)pBootTitle->flags.bootType,
-							   pBootTitle->titleID,
-							   &mountListBuffer[ PRV_SAVE_DATA_MOUNT_INDEX ] );
-*/
+										  &mountListBuffer[ PRV_SAVE_DATA_MOUNT_INDEX ],
+										  ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF
+							   );
 
 #if 0
 	// 2008.06.20 shared2仕様変更に伴い、無効にする
@@ -293,52 +290,9 @@ static void SYSMi_ModifyShared2FileMount( LauncherBootType bootType, NAMTitleId 
 }
 #endif
 
-// タイトルIDをもとにセーブデータ有無を判定して、マウント情報を編集する。
-static void SYSMi_ModifySaveDataMount( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt )
-{
-	int i;
-	
-	// ※カードからブートされた場合でも、titleIDが"NANDアプリ"の場合は、セーブデータをマウントするようにしている。
-	
-	// セーブデータ有無を判定して、パスをセット
-	if( ( ( bootType == LAUNCHER_BOOTTYPE_NAND ) &&				// NANDアプリがNANDからブートされた時
-		  ( titleID & TITLEID_MEDIA_NAND_FLAG ) ) ||
-		( ( bootType == LAUNCHER_BOOTTYPE_ROM ) &&				// ISデバッガ上で、NANDアプリがROM からブートされた時
-		  ( titleID & TITLEID_MEDIA_NAND_FLAG ) &&
-		    SYSM_IsRunOnDebugger() )
-		) {
-		char saveFilePath[ 2 ][ FS_ENTRY_LONGNAME_MAX ];
-		u32 saveDataSize[ 2 ];
-		saveDataSize[ 0 ] = (( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF)->private_save_data_size;
-		saveDataSize[ 1 ] = (( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF)->public_save_data_size;
-		
-		// セーブデータのファイルパスを取得
-		NAM_GetTitleSaveFilePath( saveFilePath[ 1 ], saveFilePath[ 0 ], titleID );
-		
-		// "ROMヘッダのNANDセーブファイルサイズ > 0" かつ そのファイルを開ける場合のみマウント情報を登録
-		for( i = 0; i < 2; i++ ) {
-			FSFile  file[1];
-			FS_InitFile( file );
-			if( saveDataSize[ i ] &&
-				FS_OpenFileEx( file, saveFilePath[ i ], FS_FILEMODE_R) ) {
-				FS_CloseFile( file );
-				STD_CopyLStringZeroFill( pMountTgt->path, saveFilePath[ i ], OS_MOUNT_PATH_LEN );
-			}else {
-				pMountTgt->drive[ 0 ] = 0;
-			}
-			pMountTgt++;
-		}
-	}else {
-		// タイトルID指定なしのカードアプリの場合は、セーブデータ無効
-		for( i = 0; i < 2; i++ ) {
-			pMountTgt->drive[ 0 ] = 0;
-		}
-	}
-}
-
 
 // タイトルIDをもとにセーブデータ有無を判定して、マウント情報を編集する。
-static void SYSMi_ModifySaveDataMountForLauncher( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt )
+static void SYSMi_ModifySaveDataMount( LauncherBootType bootType, NAMTitleId titleID, OSMountInfo *pMountTgt, ROM_Header_Short *pROMH )
 {
 	int i;
 	
@@ -353,8 +307,8 @@ static void SYSMi_ModifySaveDataMountForLauncher( LauncherBootType bootType, NAM
 		) {
 		char saveFilePath[ 2 ][ FS_ENTRY_LONGNAME_MAX ];
 		u32 saveDataSize[ 2 ];
-		saveDataSize[ 0 ] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->private_save_data_size;
-		saveDataSize[ 1 ] = (( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->public_save_data_size;
+		saveDataSize[ 0 ] = pROMH->private_save_data_size;
+		saveDataSize[ 1 ] = pROMH->public_save_data_size;
 		
 		// セーブデータのファイルパスを取得
 		STD_TSNPrintf( saveFilePath[ 0 ], FS_ENTRY_LONGNAME_MAX,
@@ -362,9 +316,7 @@ static void SYSMi_ModifySaveDataMountForLauncher( LauncherBootType bootType, NAM
 		STD_TSNPrintf( saveFilePath[ 1 ], FS_ENTRY_LONGNAME_MAX,
 					   "nand:/title/%08x/%08x/data/public.sav", (u32)( titleID >> 32 ), titleID );
 		
-		//[TODO:]実際にファイルを開いてみて、開けるかどうかチェック
-		
-		// "ROMヘッダのNANDセーブファイルサイズ > 0" かつ そのファイルを開ける場合のみマウント情報を登録
+		// "ROMヘッダのNANDセーブファイルサイズ > 0" の場合のみマウント情報を登録
 		for( i = 0; i < 2; i++ ) {
 			if( saveDataSize[ i ] ) {
 				STD_CopyLStringZeroFill( pMountTgt->path, saveFilePath[ i ], OS_MOUNT_PATH_LEN );
