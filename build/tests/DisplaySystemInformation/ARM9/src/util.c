@@ -1,7 +1,7 @@
 #include <twl.h>
 #include "util.h"
 
-u8 ctoh( char c );
+u8 ctoh( const char c );
 
 void putBinary( u8 *src, u32 size )
 {
@@ -14,7 +14,7 @@ void putBinary( u8 *src, u32 size )
 	OS_TPrintf( "\n" );
 }
 
-u8 ctoh( char c )
+u8 ctoh( const char c )
 {
 	if( '0' <= c && c <= '9' )
 	{
@@ -34,7 +34,7 @@ u8 ctoh( char c )
 	return 0;
 }
 
-void strToHexa( char *src, u8 *dst, u32 length )
+void strToHexa( const char *src, u8 *dst, u32 length )
 // 受け取った文字列配列を16進配列へ変換
 // lengthは文字数ではなくバイト数なので注意
 {

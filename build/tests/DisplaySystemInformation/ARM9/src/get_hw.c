@@ -75,32 +75,13 @@ void getSecureHWInfo( void )
 		// fuseRomデータの読み出し
 		// secureなアプリ以外はハード的に切り離されるのでゼロになる
 		buf = SCFG_ReadFuseData();
-		OS_TPrintf("fuse data : %llx\n", buf);
+		OS_TPrintf("fuse data : %016llx\n", buf);
 		snprintf( gAllInfo[MENU_SECURE_HW][SECURE_HW_FUSE].str.sjis ,
 				DISPINFO_BUFSIZE-1, "%016llx", SCFG_ReadFuseData() );
 		gAllInfo[MENU_SECURE_HW][SECURE_HW_FUSE].numLines = 2;
 
 	}
 	
-	// ランチャのタイトルIDLoの取得
-	if( LCFG_ReadHWSecureInfo() )
-	{
-		const u8 *titleIDLo = LCFG_THW_GetLauncherTitleID_LoPtr();
-		value = ( int )(	titleIDLo[0] << 8*3 |
-							titleIDLo[1] << 8*2 |
-							titleIDLo[2] << 8*1 |
-							titleIDLo[3] << 8*0 );
 
-		gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].iValue = value;
-		gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].isNumData = TRUE;
-	}
-	else
-	{
-		gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].str.sjis = s_strNA;
-	}
-	
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].isAligned = FALSE;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].numLines = 2;
-	gAllInfo[MENU_SECURE_HW][SECURE_HW_TITLEID_LO].fromLCFG = TRUE;
 
 }

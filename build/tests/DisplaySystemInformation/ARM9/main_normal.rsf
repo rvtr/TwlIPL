@@ -95,7 +95,8 @@ Property
 	# BANNER FILE: generated from Banner Spec File
 	#
 	#BannerFile		./etc/myGameBanner.bnr
-	BannerFile		$(TWLSDK_ROOT)/include/twl/specfiles/default.bnr
+	#BannerFile		$(TWLSDK_ROOT)/include/twl/specfiles/default.bnr
+	BannerFile		$(DISPINFO_BANNERPATH)
 
 	#
 	# Permit LandingNormalJump: for TWL "ApplicationJump" function [TRUE/FALSE]
@@ -219,21 +220,21 @@ AppendProperty
 	#
 	# GameCode for TitleID : Your GameCode in 4 ascii words
 	#
-	GameCode				ABCZ
+	GameCode				$(DISPINFO_GAMECODE)
 
 	#
 	# Public save data size: [0K/16K/32K/64K/128K/256K/512K/1M/2M/4M]
 	#
-	#PublicSaveDataSize		32K
+	#PublicSaveDataSize		0K
 
 	#
 	# Private save data size: [0K/16K/32K/64K/128K/256K/512K/1M/2M/4M]
 	#
-	#PrivateSaveDataSize	16K
+	#PrivateSaveDataSize	0K
 
 	#
 	# Enable SubBannerFile
-	#SubBannerFile			TRUE
+	#SubBannerFile			FALSE
 
 }
 

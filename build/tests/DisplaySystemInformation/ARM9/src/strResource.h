@@ -19,18 +19,21 @@
 #define __DISPLAY_INFO_RESOURCE__
 
 // メニューID
-#define MENU_ROOT 		11
-#define MENU_OWNER 		0
-#define MENU_PARENTAL 	1
-#define MENU_OTHER		2
-#define MENU_NORMAL_HW	3
-#define MENU_SECURE_HW	4
-#define MENU_SCFG_ARM7	5
-#define MENU_SCFG_ARM9	6
-#define MENU_SYSMENU	7
-#define MENU_VERSION	8
-#define MENU_RESET_INFO	9
-#define MENU_BREAK_DATA	10
+#define MENU_ROOT 			14
+#define MENU_OWNER 			0
+#define MENU_PARENTAL 		1
+#define MENU_SECURE_USER	2
+#define MENU_OTHER			3
+#define MENU_NORMAL_HW		4
+#define MENU_SECURE_HW		5
+#define MENU_SCFG_ARM7		6
+#define MENU_SCFG_ARM9		7
+#define MENU_SYSMENU		8
+#define MENU_FONT			9
+#define MENU_WL				10
+#define MENU_VERSION		11
+#define MENU_RESET_INFO		12
+#define MENU_BREAK_DATA		13
 
 
 // 行番号
@@ -54,17 +57,19 @@
 #define PARENTAL_QUESTION_ID	10
 #define PARENTAL_ANSWER			11
 
+#define SECURE_USER_INITIAL_SETTINGS	0
+#define SECURE_USER_INITIAL_LAUNCHER	1
+#define SECURE_USER_BROKEN_SETTINGS		2
+#define SECURE_USER_INSTALLED_SOFTBOX	3
+#define SECURE_USER_FREE_SOFTBOX		4
+#define SECURE_USER_LASTBOOT_IDX		5
+#define SECURE_USER_LASTBOOT_PLATFORM	6
+#define SECURE_USER_LASTBOOT_ID			7
+#define SECURE_USER_LAUNCHER_ID			8
+
 #define OTHER_AGREE_EULA				0
 #define OTHER_EULA_VERSION				1
 #define OTHER_WIRELESS					2
-#define OTHER_INITIAL_SETTINGS			3
-#define OTHER_INITIAL_LAUNCHER			4
-#define OTHER_BROKEN_SETTINGS			5
-#define OTHER_LCFG_INSTALLED_SOFTBOX	6
-#define OTHER_LCFG_FREE_SOFTBOX			7
-#define OTHER_LCFG_LASTBOOT_IDX			8
-#define OTHER_LCFG_LASTBOOT_PLATFORM	9
-#define OTHER_LCFG_LASTBOOT_ID			10
 
 #define NORMAL_HW_RTC_OFFSET	0
 #define NORMAL_HW_UNIQUE_ID		1
@@ -74,7 +79,6 @@
 #define SECURE_HW_SERIAL		2
 #define SECURE_HW_LANGUAGE		3
 #define SECURE_HW_FUSE			4
-#define SECURE_HW_TITLEID_LO	5
 
 #define SCFG_ARM9_ROM_SEC			0
 #define SCFG_ARM9_ROM_STATE			1
@@ -100,7 +104,6 @@
 #define SCFG_ARM9_EXT_MCB			21
 #define SCFG_ARM9_EXT_WRAM			22
 #define SCFG_ARM9_EXT_CFG			23
-
 
 #define SCFG_ARM7_ROM_ARM9_SEC		0
 #define SCFG_ARM7_ROM_ARM9_RSEL		1
@@ -152,52 +155,66 @@
 
 #define SCFG_ARM7_SHARED_OFFSET		47
 
-#define SYSMENU_VERSION_NUM		0
-#define SYSMENU_VERSION_STR		1
-#define SYSMENU_EULA_URL		2
-#define SYSMENU_NUP_HOST		3
-#define SYSMENU_TIMESTAMP		4
-#define SYSMENU_SIGN_NUP_CERT	5
-#define SYSMENU_SIGN_NUP_PRV	6
-#define SYSMENU_SIGN_SHOP_CERT	7
-#define SYSMENU_SIGN_SHOP_PRV	8
-#define SYSMENU_SIGN_NINTENDO_CA	9
-#define SYSMENU_SIGN_NINTENDO_CAC2	10
-#define SYSMENU_SIGN_NINTENDO_CAG2	11
+#define SYSMENU_TIMESTAMP		0
+#define SYSMENU_VERSION_NUM		1
+#define SYSMENU_VERSION_STR		2
+#define SYSMENU_EULA_URL		3
+#define SYSMENU_NUP_HOST		4
 
-#define SYSMENU_SIGN_IDX	5
+#define SYSMENU_NUP_CERT		5
+#define SYSMENU_NUP_PRV			6
+#define SYSMENU_SHOP_CERT		7
+#define SYSMENU_SHOP_PRV		8
+#define SYSMENU_NINTENDO_CA		9
+#define SYSMENU_NINTENDO_CAC2	10
+#define SYSMENU_NINTENDO_CAG2	11
 
-#define VERSION_WIRELESS	0
-#define VERSION_FONT		1
-#define VERSION_OTHER		2
+#define SYSMENU_HASH_IDX	5
+
+#define FONT_TIMESTAMP		0
+#define FONT_INFO			1
+
+#define WL_VERSION			0
+#define WL_NUM_FW			1
+#define WL_FW_TYPE			2
+
+#define VERSION_OTHER		0
 
 // 各メニューサイズ
-#define ROOTMENU_SIZE 			11
+#define ROOTMENU_SIZE 			14
 #define OWNERMENU_SIZE 			6
 #define PARENTALMENU_SIZE 		12
-#define OTHERMENU_SIZE			11
+#define SECURE_USER_MENU_SIZE	9
+#define OTHERMENU_SIZE			3
 #define NORMAL_HW_MENU_SIZE 	2
-#define SECURE_HW_MENU_SIZE 	6
+#define SECURE_HW_MENU_SIZE 	5
 #define SCFG_ARM7_MENU_SIZE 	47
 #define SCFG_ARM9_MENU_SIZE 	24
 #define SYSMENU_MENU_SIZE		12
-#define VERSIONMENU_SIZE 		2
+#define FONTMENU_SIZE			1
+#define WLMENU_SIZE				3
+#define VERSIONMENU_SIZE 		0
 
 
 extern int s_numMenu[];
 extern const char *s_strRootMenu[];
 extern const char *s_strOwnerMenu[];
 extern const char *s_strParentalMenu[];
+extern const char *s_strSecureUserMenu[];
+extern const char *s_strOtherMenu[];
 extern const char *s_strNormalHWMenu[];
 extern const char *s_strSecureHWMenu[];
 extern const char *s_strSCFGARM7Menu[];
 extern const char *s_strSCFGARM9Menu[];
+extern const char *s_strOtherMenu[];
 extern const char *s_strSystemMenu[];
-extern const char *s_strVersionMenu[];
+extern const char *s_strFontMenu[] ;
+extern const char *s_strWLMenu[];
 extern const char **s_strMetaMenu[];
 extern const char *s_strARM7RegisterName[];
 extern const char *s_strARM9RegisterName[];
 extern const char *s_strSCFGViewMode[];
+
 extern char *s_strEnable[];
 extern char *s_strJoint[];
 extern char *s_strCorrect[];
@@ -205,6 +222,9 @@ extern char *s_strSupply[];
 extern char *s_strRomMode[];
 extern char *s_strPSRAM[];
 extern char *s_strCpuSpeed[];
+extern char *s_strOK[];
+extern char *s_strWLFWType[];
+extern char *s_strResult[];
 extern char *s_strBool[];
 extern char *s_strAccess[];
 extern char *s_strRomApp[];

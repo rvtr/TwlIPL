@@ -43,7 +43,8 @@ extern int gMenuKindOffset[ROOTMENU_SIZE][MAXITEM];
 /* function prototypes ----------------- */
 
 void drawHeader( int menu, int line );
-void drawMenu( int menu, int line, int changeLine, BOOL isChangeMode );
+void drawMenu( int menu, int line, int changeLine, u8 mode );
+void printResult( BOOL res );
 void switchViewMode( void );
 
 #ifdef __cplusplus

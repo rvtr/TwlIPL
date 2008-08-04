@@ -95,7 +95,7 @@ Property
 	# BANNER FILE: generated from Banner Spec File
 	#
 	#BannerFile		./etc/myGameBanner.bnr
-	BannerFile		$(TWLSDK_ROOT)/include/twl/specfiles/default.bnr
+	BannerFile		$(DISPINFO_BANNERPATH)
 
 	#
 	# Permit LandingNormalJump: for TWL "ApplicationJump" function [TRUE/FALSE]
@@ -176,7 +176,7 @@ Property
 	#DSWirelessIcon	FALSE
 
 	LockSCFG	$(DISPINFO_LOCKSCFG)
-	HwAESSlotA_SSLClientCert	TRUE
+	HwAESSlotA_SSLClientCert	$(DISPINFO_AES)
 
 	###
 	#### END
@@ -187,13 +187,13 @@ AppendProperty
 	#
 	# Publisher : "Nintendo"
 	#  don't have to edit
-	Publisher				Nintendo
+	#Publisher				Nintendo
 
 	#
 	# Application type : [USER/SYSTEM]
 	#  don't have to edit
 	AppType					$(DISPINFO_APPTYPE)
-
+#	AppType					SYSTEM
 	#
 	# launch title on the launcher : [TRUE/FALSE]
 	#  don't have to edit
@@ -203,35 +203,35 @@ AppendProperty
 	# Boot allowed Media: [GameCard]
 	#
 	Media					$(DISPINFO_MEDIA)
-
+#	Media					NAND
 	#
 	# Data only title : [TRUE/FALSE]
 	#  don't have to edit
-	#DataOnly				FALSE
+	##DataOnly				FALSE
 
 	#
 	# Secure title : [TRUE/FALSE]
 	#  don't have to edit
 	Secure					$(DISPINFO_SECURE)
-
+#	Secure					TRUE
 	#
 	# GameCode for TitleID : Your GameCode in 4 ascii words
 	#
-	GameCode				ABCZ
+	GameCode				$(DISPINFO_GAMECODE)
 
 	#
 	# Public save data size: [0K/16K/32K/64K/128K/256K/512K/1M/2M/4M]
 	#
-	#PublicSaveDataSize		32K
+	#PublicSaveDataSize		0K
 
 	#
 	# Private save data size: [0K/16K/32K/64K/128K/256K/512K/1M/2M/4M]
 	#
-	#PrivateSaveDataSize	16K
+	#PrivateSaveDataSize	0K
 
 	#
 	# Enable SubBannerFile
-	#SubBannerFile			TRUE
+	#SubBannerFile			FALSE
 
 }
 

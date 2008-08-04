@@ -18,6 +18,7 @@
 
 #include <twl.h>
 #include <twl/sea.h>
+#include <twl/os/common/sharedFont.h>
 #include <nitro/crypto.h>
 #include "misc.h"
 #include "viewSystemInfo.h"
@@ -72,6 +73,7 @@ void TwlMain( void )
 	OS_EnableIrq();
 	OS_EnableInterrupts();
 
+	OS_InitSharedFont();
 	GX_Init();
 
 	OS_SetIrqFunction( OS_IE_V_BLANK, VBlankHandler );

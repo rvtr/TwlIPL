@@ -30,8 +30,9 @@ typedef enum ChangeCotnrolResult{
 	CHANGE_VALUE_CHANGED
 } ChangeCotnrolResult;
 
-ChangeCotnrolResult changeControl( int *menu, int *line, int *changeLine, int *changeMode );
-BOOL control( int *menu, int *line, int *changeLine, int *changeMode );
+BOOL executeControl( int *line, int *changeLine, u8 *mode );
+ChangeCotnrolResult changeControl( int *menu, int *line, int *changeLine, u8 *changeMode );
+BOOL control( int *menu, int *line, int *changeLine, u8 *changeMode );
 
 #ifdef __cplusplus
 }

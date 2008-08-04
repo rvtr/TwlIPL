@@ -24,6 +24,12 @@
 
 #define DISPINFO_BUFSIZE 64
 
+#define MODE_CHANGE_MASK	0x1
+#define MODE_EXECUTE_MASK	0x2
+#define MODE_RESULT_DISPLAY_MASK	0x4
+#define MODE_RESULT_MASK	0x8
+#define MODE_RESULT_SHIFT	3
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -79,6 +85,7 @@ extern u8 gArm7SCFGReg[DISPINFO_SHARED_SCFG_REG_SIZE];		// ARM7Ç©ÇÁÇÃÉfÅ[É^éÊìæó
 extern u8 gArm7SCFGShared[DISPINFO_SHARED_SCFG_WRAM_SIZE];	// ARM7Ç©ÇÁÇÃÉfÅ[É^éÊìæópÉoÉbÉtÉ@
 
 extern BOOL gLCFGAccessible;
+extern u8* gBufLCFG;
 
 ////////////////////////////////
 

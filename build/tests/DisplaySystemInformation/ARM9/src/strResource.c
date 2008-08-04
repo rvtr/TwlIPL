@@ -18,16 +18,19 @@
 #include "drawFunc.h"
 
 
-// VERSION_MENU_SIZEだけコンテンツ数に応じて可変なのでconstではない
+// VERSION_MENU_SIZE、FONTMENU_SIZEだけコンテンツ数に応じて可変なのでconstではない
 int s_numMenu[] = {
 	OWNERMENU_SIZE,
 	PARENTALMENU_SIZE,
+	SECURE_USER_MENU_SIZE,
 	OTHERMENU_SIZE,
 	NORMAL_HW_MENU_SIZE,
 	SECURE_HW_MENU_SIZE,
 	SCFG_ARM7_MENU_SIZE,
 	SCFG_ARM9_MENU_SIZE,
 	SYSMENU_MENU_SIZE,
+	FONTMENU_SIZE,
+	WLMENU_SIZE,
 	VERSIONMENU_SIZE,
 	0,
 	0,
@@ -60,13 +63,16 @@ const char *s_strSCFGViewMode[] = {
 const char *s_strRootMenu[] = {
 	"＜Owner＞",
 	"＜Parental control＞",
+	"＜Secure User Info＞",
 	"＜Other Info＞",
 	"＜Normal Hardware Info＞",
 	"＜Secure Hardware Info＞",
 	"＜SCFG Info (ARM7 side)＞",
 	"＜SCFG Info (ARM9 side)＞",
-	"＜About Sysmenu＞",
-	"＜Content Version＞",
+	"＜SystemMenu Version＞",
+	"＜Shared Font＞",
+	"＜Wireless Firmware＞",
+	"＜Installed Content Version＞",
 	"Reset HW Setting to Default",
 	"break HW Setting"
 };
@@ -95,18 +101,22 @@ const char *s_strParentalMenu[] = {
 	"Answer"
 };
 
-const char *s_strOtherMenu[] = {
-	"Agree EULA",
-	"EULA Version",
-	"Wireless",
-	"Finished Initial Setting",
+const char *s_strSecureUserMenu[] = {
+	"Finished Initial Setting(Setting)",
 	"Finished Initial Setting(Launcher)",
 	"Broken Setting Flag",
 	"Installed Softbox Count",
 	"Free Softbox Count",
 	"Last Boot Soft Index",
 	"Last Boot Soft Platform",
-	"Last Boot Soft ID"	
+	"Last Boot Soft ID",
+	"Launcher TitleID Lo"
+};
+
+const char *s_strOtherMenu[] = {
+	"Agree EULA",
+	"EULA Version",
+	"Wireless"
 };
 
 const char *s_strNormalHWMenu[] = {
@@ -119,8 +129,7 @@ const char *s_strSecureHWMenu[] = {
 	"Region",
 	"Serial No",
 	"Language Bitmap",
-	"Fuse Data",
-	"Launcher TitleID Lo"
+	"Fuse Data"
 };
 
 const char *s_strSCFGArm9Menu[] = {
@@ -218,35 +227,44 @@ const char *s_strSCFGArm7Menu[] = {
 };
 
 const char *s_strSystemMenu[] = {
+	"Timestamp",
 	"Version (numeric)",
 	"Version (string)",
 	"EULA URL",
 	"NUP Hostname",
-	"Timestamp",
-	"Sign (nup-cert)" ,
-	"Sign (nup-prvkey)",
-	"Sign (shop-cert)",
-	"Sign (shop-prvkey)",
-	"Sign (NintendoCA)",
-	"Sign (NintendoCA-C2)",
-	"Sign (NintendoCA-G2)"
+
+	".twl-nup-cert.der" ,
+	".twl-nup-prvkey.der",
+	".twl-shop-cert.der",
+	".twl-shop-prvkey.der",
+	"NintendoCA.der",
+	"NintendoCA-C2.der",
+	"NintendoCA-G2.der"
 };
 
-const char *s_strVersionMenu[] = {
-	"Wireless Firm",
-	"Font(Timestamp)"
+const char *s_strFontMenu[] = {
+	"Timestamp",
+};
+
+const char *s_strWLMenu[] = {
+	"Version",
+	"Num of FW",
+	"FW1 type"
 };
 
 const char **s_strMetaMenu[] = {
 	s_strOwnerMenu,
 	s_strParentalMenu,
+	s_strSecureUserMenu,
 	s_strOtherMenu,
 	s_strNormalHWMenu,
 	s_strSecureHWMenu,
 	s_strSCFGArm7Menu,
 	s_strSCFGArm9Menu,
 	s_strSystemMenu,
-	s_strVersionMenu,
+	s_strFontMenu,
+	s_strWLMenu,
+	NULL,
 	NULL,
 	NULL,
 	s_strRootMenu
@@ -296,8 +314,13 @@ char *s_strRomApp[] = {
 	"PROM Download"
 };
 
+char *s_strWLFWType[] = {
+	"2in1 module 1.1",
+	"2in1 module 2.0",
+	"One Chip (M&M)"
+};
+
 char *s_strMCMode[] = {
-	// !!! あとで項目埋める
 	"00",
 	"01",
 	"10",
@@ -309,6 +332,13 @@ char *s_strEnable[] = {
 	"ENABLED"
 };
 
+char *s_strResult[] = {
+	"Failed.",
+	"Succeeded.",	
+	""
+};
+
+
 char *s_strCorrect[] = {
 	"Incorrect",
 	"Correct"
@@ -318,6 +348,11 @@ char *s_strCorrect[] = {
 char *s_strBool[] = {
 	"FALSE",
 	"TRUE"
+};
+
+char *s_strOK[] = {
+	"CANCEL",
+	"OK"
 };
 
 char *s_strRatingOrg[] = {

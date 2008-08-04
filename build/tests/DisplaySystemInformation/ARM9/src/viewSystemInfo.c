@@ -36,7 +36,6 @@ void getOtherInfo( void );
 /* global variables ----------------------------- */
 
 DispInfoEntry* gAllInfo[ROOTMENU_SIZE]; // それぞれのメニューごとに項目の中身を"文字列で"持つ配列
-u8 *bufLCFG;
 
 // コンテンツタイトル関係
 OSTitleId *gContentsTitle;		// コンテンツタイトルの一覧
@@ -49,6 +48,7 @@ u8 gArm7SCFGShared[DISPINFO_SHARED_SCFG_WRAM_SIZE];
 
 // LCFGReadの結果
 BOOL gLCFGAccessible;
+u8 * gBufLCFG;
 
 /* static data ---------------------------------- */
 
@@ -61,10 +61,15 @@ void displayInfoMain( void )
 	static int line = 0; 		// 現在選択しているページナンバと行
 	static int changeLine = 0;	// changeMode用
 	static BOOL firstCall = TRUE;	// 最初の呼び出しか否か
+	
+	// 0: changemode 1: executemode 2: result on/off 3:(require 2=true) success/failed
+	static u8 modeFlag = 0;
+
 	static BOOL isChangeMode = FALSE;
+	static BOOL executeMode = FALSE;
 	
 	BOOL repaintFlag = FALSE;
-	ChangeCotnrolResult ccResult = CHANGE_NOTHING;
+	ChangeCotnrolResult changeResult = CHANGE_NOTHING;
 	
 	// 初回の呼び出し時は全ての情報を取得しなおす
 	if( firstCall )
@@ -73,30 +78,34 @@ void displayInfoMain( void )
 		getAllInfo();
 	}
 	
-	if( isChangeMode )
+	if( modeFlag & MODE_CHANGE_MASK )
 	{
-		ccResult = changeControl( &menu, &line, &changeLine, &isChangeMode );
+		changeResult = changeControl( &menu, &line, &changeLine, &modeFlag );
+	}
+	else if( modeFlag & MODE_EXECUTE_MASK )
+	{
+		repaintFlag |= executeControl( &line, &changeLine, &modeFlag );
 	}
 	else
 	{
-		repaintFlag = control( &menu, &line, &changeLine, &isChangeMode );
+		repaintFlag |= control( &menu, &line, &changeLine, &modeFlag );
 	}
 
-	if( ccResult == CHANGE_VALUE_CHANGED )
+	if( changeResult == CHANGE_VALUE_CHANGED )
 	{
 		// 値が更新されたときは全部取得しなおす
-		LCFG_WriteTWLSettings( (u8 (*) [LCFG_WRITE_TEMP] ) bufLCFG );
+		LCFG_WriteTWLSettings( (u8 (*) [LCFG_WRITE_TEMP] ) gBufLCFG );
 		getAllInfo();
 	}
 	
 	// パッド情報で選んでる場所とか情報とか更新
-	if(	ccResult == CHANGE_VALUE_CHANGED || ccResult == CHANGE_CONTROL || repaintFlag || firstCall )
+	if(	changeResult == CHANGE_VALUE_CHANGED || changeResult == CHANGE_CONTROL || repaintFlag || firstCall )
 	{
 		// 何か操作があったときはキャンバスクリアして描画しなおし
 	    NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
    	    NNS_G2dCharCanvasClear( &gCanvasSub, TXT_COLOR_WHITE );
 		// 情報一覧を描画する
-		drawMenu( menu, line, changeLine, isChangeMode);
+		drawMenu( menu, line, changeLine, modeFlag );
 
 		firstCall = FALSE;
 	}
@@ -110,15 +119,15 @@ void initInfo( void )
 	
 	// sjis (char)
 	infoAlloc( gAllInfo[MENU_OWNER], OWNER_BIRTHDAY, DISPINFO_BUFSIZE , TRUE );
-	infoAlloc( gAllInfo[MENU_OTHER], OTHER_LCFG_LASTBOOT_ID, DISPINFO_BUFSIZE , TRUE );
+	infoAlloc( gAllInfo[MENU_SECURE_USER], SECURE_USER_LASTBOOT_ID, DISPINFO_BUFSIZE , TRUE );
+	infoAlloc( gAllInfo[MENU_SECURE_USER], SECURE_USER_LAUNCHER_ID, DISPINFO_BUFSIZE, TRUE );
 	infoAlloc( gAllInfo[MENU_NORMAL_HW], NORMAL_HW_UNIQUE_ID, OS_TWL_HWINFO_MOVABLE_UNIQUE_ID_LEN*3 , TRUE );
 	infoAlloc( gAllInfo[MENU_SECURE_HW], SECURE_HW_SERIAL , OS_TWL_HWINFO_SERIALNO_LEN_MAX + 1, TRUE );
 	infoAlloc( gAllInfo[MENU_SECURE_HW], SECURE_HW_LANGUAGE, DISPINFO_BUFSIZE , TRUE );
 	infoAlloc( gAllInfo[MENU_SECURE_HW], SECURE_HW_FUSE, DISPINFO_BUFSIZE , TRUE );
-	infoAlloc( gAllInfo[MENU_SECURE_HW], SECURE_HW_TITLEID_LO, DISPINFO_BUFSIZE, TRUE );
 	infoAlloc( gAllInfo[MENU_SCFG_ARM7], SCFG_ARM7_MI_CC, DISPINFO_BUFSIZE , TRUE );
 	infoAlloc( gAllInfo[MENU_SCFG_ARM7], SCFG_ARM7_MI_CA, DISPINFO_BUFSIZE , TRUE );
-	infoAlloc( gAllInfo[MENU_VERSION], VERSION_WIRELESS, DISPINFO_BUFSIZE, TRUE );
+	infoAlloc( gAllInfo[MENU_WL], WL_VERSION, DISPINFO_BUFSIZE, TRUE );
 	
 	// utf(u16)
 	infoAlloc( gAllInfo[MENU_SYSMENU], SYSMENU_EULA_URL, TWL_EULA_URL_LEN + 1, FALSE );
@@ -161,11 +170,17 @@ void getAllInfo( void )
 		
 	getOwnerInfo();
 	getParentalInfo();
+	getSecureUserInfo();
 	getOtherInfo();
 	getHWInfo();
 	getSCFGInfo();
 	getSysmenuInfo();
-	getVersions();
+	getFontInfo();
+	getWLInfo();
+	
+#if NAM_ENABLE
+	getContentsVersion();
+#endif
 	
 	printAllInfo();
 	OS_TPrintf("reflesh information finished\n");
@@ -208,10 +223,9 @@ void displayInfoInit( void )
 	}
 	
 	// LCFGデータの読み出し
-	bufLCFG = (u8*) Alloc ( LCFG_READ_TEMP );
-	SDK_ASSERT( bufLCFG );
-	gLCFGAccessible = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ]) bufLCFG );
-	
+	gBufLCFG = (u8*) Alloc ( LCFG_READ_TEMP );
+	SDK_ASSERT( gBufLCFG );
+	gLCFGAccessible = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ]) gBufLCFG );
 	
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	GX_DispOn();
@@ -230,10 +244,33 @@ void printAllInfo ( void )
 		{
 			DispInfoEntry *entry;
 			
-			if( loop1 == MENU_VERSION && loop2 >= MENU_OTHER )
+			if( loop1 == MENU_VERSION && VERSION_OTHER <= loop2 )
 			{
-				int idx = loop2 - MENU_OTHER;
+				int idx = loop2 - VERSION_OTHER;
 				OS_TPrintf("%d %d : %x %x\n", loop1, loop2, gContentsTitle[idx], gContentsVersion[idx] );
+				continue;
+			}
+			
+			if( loop1 == MENU_FONT && FONT_INFO <= loop2 )
+			{
+				int infoType = (loop2 - FONT_INFO) % NUM_FONT_INFO;
+				int fontidx = (loop2 - FONT_INFO) / NUM_FONT_INFO;
+				
+				switch( infoType )
+				{
+					case 0:
+					OS_TPrintf("%d %d : %s\n", loop1, loop2, gFontInfo[fontidx].name );
+					break;
+					
+					case 1:
+					OS_TPrintf("%d %d : %d\n", loop1, loop2, gFontInfo[fontidx].size );
+					break;
+					
+					case 2:
+					OS_TPrintf("%d %d : %d\n", loop1, loop2, gFontInfo[fontidx].isHashOK );
+					break;
+				}
+
 				continue;
 			}
 			

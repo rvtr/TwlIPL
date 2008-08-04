@@ -19,23 +19,17 @@ TARGET_PLATFORM	=	TWL
 TWL_ARCHGEN   = LIMITED
 
 ######################################
-#
-#  分岐条件はここで設定
-
-# セキュアアプリかどうか
-IS_SECURE_APP		=	TRUE
-
-# なんどアプリかどうか
-IS_NAND_APP		=	TRUE
-
-# SCFGをロックして見れなくするかどうか
-INVISIBLE_SCFG		=	FALSE
-#
+FILE_IDX	=	1
+IS_SECURE_APP	=	FALSE
+IS_NAND_APP	=	FALSE
+NAND_ACCESS	=	TRUE
+AES_SLOT	=	DONTCARE
+INVISIBLE_SCFG	=	FALSE
+GAMECODE	=	0B1A
 ######################################
 
-
-MACRO_FLAGS	+=	-DNAM_ENABLE=$(IS_SECURE_APP)
-
+MACRO_FLAGS	+=	-DNAM_ENABLE=$(IS_SECURE_APP) -DDISPINFO_BIN_IDX=$(FILE_IDX)
+TWL_NANDAPP	=	$(IS_NAND_APP)
 
 DISP_INFO	= $(call eupath,$(TWL_IPL_RED_ROOT)/build/tests/DisplaySystemInformation)
 
@@ -47,10 +41,13 @@ SRCS			=	main.c viewSystemInfo.c drawFunc.c control.c\
 				strResource.c misc.c util.c\
 				get_versionData.c get_sysmenu.c get_scfg.c get_owner.c\
 				get_hw.c get_parental.c get_other.c\
+				get_secureUser.c get_font.c get_wl.c\
 				$(MISC_DIR)/src/cmn.c
 
 LINCLUDES		+=	$(MISC_DIR)/include \
 				$(DISP_INFO)/common/include
+
+TARGET_BIN		=	DispInfo_$(FILE_IDX).$(FILE_SUFFIX)
 
 SYSMENU_LIBS			=	\
 							liblcfg$(TWL_LIBSUFFIX).a \
@@ -78,7 +75,6 @@ SDK_APPEND_LIBS		=		\
 LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
 
-TARGET_BIN		=	DisplaySystemInfo.srl
 
 #=============================================================================
 
@@ -91,6 +87,7 @@ ifeq ($(IS_SECURE_APP),TRUE)
 	APPTYPE			=	SYSTEM
 	MAKEROM			=	$(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 	ROM_SPEC		=	main_secure.rsf
+	MAKETAD_OPTION		+=	-s
 else
 	WRAM_MAP		=	$(MAKEROM_WRAM_MAPPING)
 	DEFAULT_COMP_ARM7	=	racoon
@@ -100,10 +97,13 @@ endif
 
 ifeq ($(IS_NAND_APP),TRUE)
 	MEDIA		=	NAND
+	FILE_SUFFIX	=	tad
+	BANNARPATH	=	../banner/$(GAMECODE).bnr
 else
 	MEDIA		=	GAMECARD
+	FILE_SUFFIX	=	srl
+	BANNARPATH	=	$(TWLSDK_ROOT)/include/twl/specfiles/default.bnr
 endif
-
 
 ifeq ($(INVISIBLE_SCFG),TRUE)
 	SCFG_SUFFIX	=	LockSCFG
@@ -111,16 +111,19 @@ else
 	SCFG_SUFFIX	=	UnlockSCFG
 endif
 
-BINDIR			= 	./bin/$(TWL_BUILDTYPE)/$(APPTYPE)_$(MEDIA)_$(SCFG_SUFFIX)
-OBJDIR			=	./obj/$(TWL_BUILDTYPE)/$(APPTYPE)_$(MEDIA)_$(SCFG_SUFFIX)
+BINDIR			= 	./bin/$(TWL_BUILDTYPE)/DispInfo_$(FILE_IDX)
+OBJDIR			=	./obj/$(TWL_BUILDTYPE)/DispInfo_$(FILE_IDX)
 
 
 MAKEROM_FLAGS		+=	-DDISPINFO_WRAM_MAP=$(WRAM_MAP)	\
 				-DDISPINFO_APPTYPE=$(APPTYPE)	\
 				-DDISPINFO_SECURE=$(IS_SECURE_APP)	\
 				-DDISPINFO_MEDIA=$(MEDIA)	\
-				-DDISPINFO_NANDACCESS=$(IS_NAND_APP)	\
-				-DDISPINFO_LOCKSCFG=$(INVISIBLE_SCFG)
+				-DDISPINFO_NANDACCESS=$(NAND_ACCESS)	\
+				-DDISPINFO_LOCKSCFG=$(INVISIBLE_SCFG)	\
+				-DDISPINFO_AES=$(AES_SLOT)	\
+				-DDISPINFO_GAMECODE=$(GAMECODE)	\
+				-DDISPINFO_BANNERPATH=$(BANNARPATH)
 
 
 DEFAULT_MAKEROM_ARM7_BASE	= ../ARM7_$(DEFAULT_COMP_ARM7)/bin/$(TWL_BUILDTYPE_ARM7)/$(DEFAULT_COMP_ARM7)

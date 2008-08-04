@@ -42,7 +42,7 @@ static char* s_strSignFilePath[] = {
 	FILE_SIGN_NINTENDO_CAG2,
 };
 
-static char*s_strSignHash[] = {
+static char* s_strSignHash[] = {
 	"01e03e86fe11c5172ba742045c63e65c2f058e99",	
 	"7497940e3a3591d592b46ff99d75ebe102c27550",
 	"cf130c7674bae733f3b106109bb06cc0d6ac1a18",
@@ -148,8 +148,8 @@ void getSysmenuInfo( void )
 		for( i=0 ; i < NUM_FILE_SIGN; i++ )
 		{
 			// 最初にエントリの行数情報を設定しておく
-			gAllInfo[MENU_SYSMENU][i + SYSMENU_SIGN_IDX].numLines = 2;
-			gAllInfo[MENU_SYSMENU][i + SYSMENU_SIGN_IDX].isAligned = FALSE;
+			gAllInfo[MENU_SYSMENU][i + SYSMENU_HASH_IDX].numLines = 2;
+			gAllInfo[MENU_SYSMENU][i + SYSMENU_HASH_IDX].isAligned = FALSE;
 		}
 
 		for( i=0 ; i < NUM_FILE_SIGN; i++ )
@@ -183,7 +183,7 @@ void getSysmenuInfo( void )
 		// それぞれのファイルに対して署名検証を行う
 		for( i=0 ; i < NUM_FILE_SIGN; i++ )
 		{
-			u8 idx = (u8)(SYSMENU_SIGN_IDX + i) ;
+			u8 idx = (u8)(SYSMENU_HASH_IDX + i) ;
 			
 			OS_TPrintf("Checking signature...%s\n", s_strMetaMenu[MENU_SYSMENU][idx] );
 			
@@ -191,11 +191,11 @@ void getSysmenuInfo( void )
 			FS_ReadFile( &file[i], srcBuf, (s32)fileLen[i] );
 			OS_TPrintf("FileSize: %d byte  HeadData: %02x%02x%02x\n", fileLen[i], srcBuf[0], srcBuf[1], srcBuf[2] );
 						
-			if( SYSMENU_SIGN_NUP_CERT <= idx && idx < SYSMENU_SIGN_NINTENDO_CA )
+			if( SYSMENU_NUP_CERT <= idx && idx < SYSMENU_NINTENDO_CA )
 			{
 				s32 result;
 				
-				// SYSMENU_SIGN_NUP_CERTからの4ファイルは暗号化されているので複合化する
+				// SYSMENU_NUP_CERTからの4ファイルは暗号化されているので複合化する
 				result = NA_DecodeVersionData( srcBuf, fileLen[i] , dstBuf, fileLen[i] );
 				
 				if( result < 0 )

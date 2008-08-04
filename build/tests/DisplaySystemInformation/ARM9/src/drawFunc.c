@@ -19,6 +19,7 @@
 #include <wchar.h>
 #include <string.h>
 #include <twl/os/common/ownerInfoEx_private.h>
+#include <twl/os/common/sharedFont.h>
 
 #include "drawFunc.h"
 #include "getInformation.h"
@@ -63,6 +64,8 @@
 #define CHANGE_ALLOW_LEFT		(CHANGE_VALUE_LEFT - 15)
 #define CHANGE_NOW_SETTING_UP	150
 
+#define RESULT_LEFT	CHANGE_ITEMNAME_LEFT
+#define RESULT_UP	CHANGE_NOW_SETTING_UP
 
 
 #define SCROLL_MARGIN 2 							// 画面端何行でスクロールするか
@@ -72,8 +75,8 @@
 
 /* global variables -------------------- */
 
-static int gDrawIdx[ROOTMENU_SIZE];			// 今何項目目から下を描画しているのか
-static int gMenuLineSize[ROOTMENU_SIZE] = {};// 各メニューの全体行数
+static int gDrawIdx[ROOTMENU_SIZE+1] = {0};			// 今何項目目から下を描画しているのか
+static int gMenuLineSize[ROOTMENU_SIZE] = {};		// 各メニューの全体行数
 static const int gRegisterIdx[2][SCFG_ARM7_MENU_SIZE];
 static BOOL gSelectedARM7SCFGReg = TRUE;			// ARM7SCFGでレジスタサイドの描画ならtrue,共有領域ならfalse
 
@@ -87,6 +90,8 @@ void printBinary16( int x, int y, u16 value, int selected, int selectSize );
 void printBinary32( int x, int y, u32 value, int selected, int selectSize );
 void drawRegister( int menu, int selected );
 void drawChangeMode( DispInfoEntry *Entry,  int changeLine );
+void drawExecuteMode( const char *command, int changeLine, u8 mode );
+void drawFontInfo( int idx, int drawLine, int selected );
 void drawVersion( int idx, int drawLine ,int selected );
 void printUniqueID( int drawLineOffset, char *uniqueId );
 int getPageNum( int valueIdx, const int* pageOffset );
@@ -98,7 +103,8 @@ void drawHeader( int menu, int line)
 {
 	u16 buf[256];
 	
-	PutStringUTF16Sub( HEADER_LEFT, HEADER_UP, TXT_COLOR_RED, (const u16 *)L"DisplaySystemInfo");
+	PrintfSJISSub( HEADER_LEFT, HEADER_UP, TXT_COLOR_RED, "%s %d" , "DisplaySystemInfo", DISPINFO_BIN_IDX );
+
 
 	if( menu != MENU_ROOT )
 	{
@@ -133,6 +139,11 @@ void printData( int x, int y, int color, DispInfoEntry *entry )
 	}
 	else if( entry->isSjis )
 	{
+		if( entry->str.sjis == s_strCorrect[0] )
+		{
+			color = TXT_COLOR_RED;
+		}
+		
 		// SJIS文字列
 		PrintfSJIS( x, y, color, "%s", entry->str.sjis );
 	}
@@ -187,7 +198,9 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 		txtColor = TXT_COLOR_BLUE;
 	}
 	
-	// 特殊描画を行う必要がある場合の処理はここ
+	//////////////////////////////////////////////	
+	// 特殊描画を行う必要がある場合の処理はここ //
+	//////////////////////////////////////////////
 	
 	if( menu == MENU_OWNER && entryLine == OWNER_COLOR )
 	{
@@ -217,13 +230,13 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 	}
 	
 	if( ( menu == MENU_SYSMENU && entryLine == SYSMENU_TIMESTAMP )||
-		( menu == MENU_VERSION && entryLine == VERSION_FONT ))
+		( menu == MENU_FONT && entryLine == FONT_TIMESTAMP ))
 	{
 		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawOffset, txtColor, "%08lx", entry->iValue );
 		return;
 	}
 	
-	if( menu == MENU_SECURE_HW && entryLine == SECURE_HW_TITLEID_LO )
+	if( menu == MENU_SECURE_USER && entryLine == SECURE_USER_LAUNCHER_ID )
 	{
 		char buf[5];
 		
@@ -284,9 +297,9 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 	}
 
 
-	
-	
-	// 通常の描画はここ
+	//////////////////////////
+	// 通常の項目描画はここ //
+	//////////////////////////
 	
 	if( entry->isAligned )
 	{
@@ -501,11 +514,36 @@ void drawChangeMode( DispInfoEntry *entry,  int changeLine )
 			
 			PrintfSJIS( CHANGE_VALUE_LEFT, CHANGE_VALUE_UP + i*LINE_OFFSET, kindColor, entry->kindNameList[i] );
 		}
-		
-		return;
 	}
 	
 }
+
+void drawExecuteMode( const char *command, int changeLine, u8 mode )
+{
+	int i;
+	
+	// 項目名
+	PrintfSJIS( CHANGE_ITEMNAME_LEFT, CHANGE_ITEMNAME_UP, TXT_COLOR_RED, command );
+	
+	for( i = 0; i < 2 ; i++ )
+	{
+		int kindColor = TXT_COLOR_BLACK;
+		
+		if( i == changeLine )
+		{
+			kindColor = TXT_COLOR_GREEN;
+			PutStringUTF16( CHANGE_ALLOW_LEFT, CHANGE_VALUE_UP + i*LINE_OFFSET, TXT_COLOR_BLACK, (const u16 *)L"→" );
+		}
+		
+		PrintfSJIS( CHANGE_VALUE_LEFT, CHANGE_VALUE_UP + i*LINE_OFFSET, kindColor, s_strOK[i] );
+	}
+
+	if( mode & MODE_RESULT_DISPLAY_MASK )
+	{
+		PrintfSJIS( RESULT_LEFT, RESULT_UP, TXT_COLOR_BLACK, s_strResult[ (mode & MODE_RESULT_MASK) >> MODE_RESULT_SHIFT ] );
+	}
+	
+}	
 
 void drawVersion( int idx, int drawLine ,int selected )
 {
@@ -540,9 +578,54 @@ void drawVersion( int idx, int drawLine ,int selected )
 	PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawLine , TXT_COLOR_BLACK, "%x", gContentsVersion[idx] );
 }
 
+void drawFontInfo( int idx, int drawLine, int selected )
+{
+	int color = TXT_COLOR_BLACK;
+	int fontIdx = idx / NUM_FONT_INFO;
+	int dataType = idx % NUM_FONT_INFO;
+	
+	static const char* s_strFontDataType[] = {
+		"name",
+		"size",
+		"hash"
+	};
+	
+	// 種類名
+	if( idx == selected)
+	{
+		color = TXT_COLOR_GREEN;
+		PutStringUTF16( ALLOW_LEFT, KIND_UP + LINE_OFFSET*drawLine, TXT_COLOR_BLACK, (const u16 *)L"→");
+	}
+	
+	PrintfSJIS( KIND_LEFT, KIND_UP + LINE_OFFSET*drawLine , color, "font%d %s", fontIdx, s_strFontDataType[dataType] );
+	
+	// 値	
+	switch( dataType )
+	{
+		case 0:
+		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawLine , TXT_COLOR_BLACK, (char*)gFontInfo[fontIdx].name );
+		break;
+		
+		case 1:
+		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawLine , TXT_COLOR_BLACK, "%d byte", gFontInfo[fontIdx].size );
+		break;
+		
+		case 2:
+		if( gFontInfo[fontIdx].isHashOK )
+		{
+			color = TXT_COLOR_BLACK;
+		}
+		else
+		{
+			color = TXT_COLOR_RED;
+		}
+		
+		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawLine , color, s_strCorrect[ gFontInfo[fontIdx].isHashOK ] );
+		break;
+	}
+}
 
-
-void drawMenu( int menu, int line, int changeLine, BOOL isChangeMode )
+void drawMenu( int menu, int line, int changeLine, u8 mode )
 // 情報一覧を描画する
 {
 	int lineNum = 0;
@@ -551,22 +634,16 @@ void drawMenu( int menu, int line, int changeLine, BOOL isChangeMode )
 	drawHeader( menu, line );	
 	drawRegister( menu, line );	
 	
-	if( isChangeMode )
+	if( mode & MODE_CHANGE_MASK )
 	{
 		// 変更モード画面の描画
 		drawChangeMode( &gAllInfo[menu][line], changeLine );
 		return;
 	}
 	
-	
-	if( menu == MENU_ROOT )
+	if( mode & MODE_EXECUTE_MASK )
 	{
-		// ルートメニューは値がないので項目名だけ描画して終わり
-		for( i=0; i<ROOTMENU_SIZE; i++ )
-		{
-			printKindName( menu, i, i,line );
-		}
-		
+		drawExecuteMode( s_strMetaMenu[MENU_ROOT][line] , changeLine, mode );
 		return;
 	}
 	
@@ -575,9 +652,8 @@ void drawMenu( int menu, int line, int changeLine, BOOL isChangeMode )
 	{
 		gDrawIdx[menu] = line - SCROLL_MARGIN >= 0 ? line - SCROLL_MARGIN : 0;
 	}
-	else if( countLinesDown(menu, line) < SCROLL_MARGIN )	
+	else if( countLinesDown(menu, line) < SCROLL_MARGIN )
 	{
-	
 		calibrateDrawIdx( menu, line );
 	}
 	
@@ -587,6 +663,12 @@ void drawMenu( int menu, int line, int changeLine, BOOL isChangeMode )
 		if( menu == MENU_VERSION && VERSION_OTHER <= i )
 		{
 			drawVersion( i - VERSION_OTHER, lineNum++, line - VERSION_OTHER );
+			continue;
+		}
+		
+		if( menu == MENU_FONT && FONT_INFO <= i )
+		{
+			drawFontInfo( i - FONT_INFO, lineNum++, line - FONT_INFO );
 			continue;
 		}
 
@@ -599,13 +681,13 @@ void drawMenu( int menu, int line, int changeLine, BOOL isChangeMode )
 			// ARM7のSCFGで共有領域側の値を表示してるときはオフセットを加える
 			printValue( menu, i, lineNum, &gAllInfo[menu][i + SCFG_ARM7_SHARED_OFFSET] );
 		}
-		else
+		else if( menu != MENU_ROOT )
 		{
 			printValue( menu, i, lineNum, &gAllInfo[menu][i] );
 		}
 		
 		// 描画オフセットの更新
-		lineNum += gAllInfo[menu][i].numLines;
+		lineNum += menu != MENU_ROOT ? gAllInfo[menu][i].numLines : 1;
 	}
 
 	/*
@@ -626,7 +708,10 @@ int countLinesDown( int menu, int idx )
 	
 	for( i = gDrawIdx[menu]; lines < DISP_NUM_LINES && i < s_numMenu[menu] ; i++ )
 	{
-		lines += gAllInfo[menu][i].numLines;
+		lines +=	( menu == MENU_VERSION && VERSION_OTHER <= i )  ||
+					( menu == MENU_FONT && FONT_INFO <= i )  ||
+					( menu == MENU_ROOT ) ? 
+					1 : gAllInfo[menu][i].numLines;
 	}
 	
 	return (i-1) - idx;
@@ -642,15 +727,19 @@ void calibrateDrawIdx( int menu, int idx )
 	// まずは自分と下2項目の行数を探索
 	for( i = 0; i <= 2 && i + idx < s_numMenu[menu] ; i++ )
 	{
-		lines += menu == MENU_VERSION && VERSION_OTHER <= i+idx ?
-								1 : gAllInfo[menu][i + idx].numLines;
+		lines +=	( menu == MENU_VERSION && VERSION_OTHER <= i+idx ) ||
+					( menu == MENU_FONT && FONT_INFO <= i+idx ) || 
+					( menu == MENU_ROOT ) ?
+					1 : gAllInfo[menu][i + idx].numLines;
 	}
 	
 	// 自分より上方向へ探索
 	for( i = 1; 0 <= idx - i && lines < DISP_NUM_LINES ; i++)
 	{
-		lines += menu == MENU_VERSION && VERSION_OTHER <= i+idx ?
-								1 : gAllInfo[menu][idx - i].numLines;
+		lines +=	( menu == MENU_VERSION && VERSION_OTHER <= i+idx ) ||
+					( menu == MENU_FONT && FONT_INFO <= i+idx ) ||
+					( menu == MENU_ROOT ) ?
+					1 : gAllInfo[menu][idx - i].numLines;
 	}
 	
 	// ループが一回余計に回る

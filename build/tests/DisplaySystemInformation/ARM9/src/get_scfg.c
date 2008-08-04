@@ -475,7 +475,6 @@ void getSCFGARM7InfoReg( void )
 		value = (flag & DISP_REG_MI_MC2_CA_MASK ) >> DISP_REG_MI_MC2_CA_SHIFT;
 		;gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_CA].iValue = value;
 		snprintf( gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_CA].str.sjis , DISPINFO_BUFSIZE-1, "%04x", value );
-		
 	}
 	
 	// 旧無線送受信制御レジスタ
@@ -485,9 +484,7 @@ void getSCFGARM7InfoReg( void )
 		value = ( flag & DISP_REG_SCFG_WL_OFFB_MASK ) || 0 ;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_WL_OFFB].iValue = value;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_WL_OFFB].str.sjis = s_strEnable[ value ];
-
 	}
-	
 	
 	// オプション端子読み出しレジスタ
 	{
@@ -501,7 +498,6 @@ void getSCFGARM7InfoReg( void )
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_OP_APP].iValue = (value & 0x1) || 0 ;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_OP_APP].str.sjis = s_strRomApp[ value ];
 	}
-
 }
 
 void getSCFGARM7InfoShared( void )

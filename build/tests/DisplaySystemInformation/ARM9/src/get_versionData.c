@@ -8,64 +8,10 @@
 #include "getInformation.h"
 #include "misc.h"
 
-
-#define WL_TITLEID 0x0003000F484E4341
-
 void getWirelessVersion( void );
 void getContentsVersion( void );
 void getSharedFontVersion( void );
 
-
-void getVersions( void )
-{
-#if NAM_ENABLE
-	getContentsVersion();
-#endif
-
-	getWirelessVersion();	
-	getSharedFontVersion();
-
-}
-
-void getWirelessVersion( void )
-// 無線ファームウェアのバージョンを取得する
-{
-	FSFile file;
-	char filePath[NAM_PATH_LEN+1];
-	char filebuf[2];	// FWバージョンはMajor, Minorそれぞれ1バイトずつ
-	int res;
-
-	FS_InitFile( &file );	
-	NAM_GetTitleBootContentPath( filePath , WL_TITLEID); // 無線ファームのファイルパスを取得
-	OS_TPrintf("wireless firm path: %s\n", filePath ) ;
-	
-	if( FS_OpenFileEx( &file, filePath, FS_FILEMODE_R ) )
-	{
-		// バージョン情報の読み取り
-		FS_SeekFile( &file, 0xA0, FS_SEEK_SET ); // ファイルの0xA0から2バイトがバージョン情報
-		res = FS_ReadFile( &file, filebuf, 2 );
-		SDK_ASSERT( res == 2 );
-		
-		snprintf( gAllInfo[MENU_VERSION][VERSION_WIRELESS].str.sjis, DISPINFO_BUFSIZE-1, "%d.%d", filebuf[0], filebuf[1] );
-		gAllInfo[MENU_VERSION][VERSION_WIRELESS].iValue = filebuf[0] *100 + filebuf[1];
-	}
-	else
-	{
-		snprintf( gAllInfo[MENU_VERSION][VERSION_WIRELESS].str.sjis, DISPINFO_BUFSIZE-1, s_strNA );
-	}
-
-}
-
-void getSharedFontVersion( void )
-{
-	u32 time;
-	
-	OS_InitSharedFont();
-	time = OS_GetSharedFontTimestamp();
-	OS_TPrintf("SharedFont Time Stamp %08lx\n", time );
-	gAllInfo[MENU_VERSION][VERSION_FONT].iValue = (int) time;
-	gAllInfo[MENU_VERSION][VERSION_FONT].isNumData = TRUE;
-}
 
 void getContentsVersion( void )
 // コンテンツリストをもとに各コンテンツのタイトルIDとバージョンを取得
