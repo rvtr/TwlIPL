@@ -152,19 +152,30 @@ static BOOL TryResolveSrl(void)
     if ( !LCFG_ReadHWSecureInfo() )
     {
         OS_TPrintf("Failed to load HWSecureInfo.\n");
-        return FALSE;
-    }
-    LCFG_THW_GetLauncherTitleID_Lo( (u8*)&titleIdList[0] );
-    // 4: after LCFG_ReadHWSecureInfo
-    PUSH_PROFILE();
+        // 4: after LCFG_ReadHWSecureInfo
+        PUSH_PROFILE();
 
-    num = FS_ResolveSrlList( titleIdList, sizeof(titleIdList)/sizeof(titleIdList[0]) );
-    if ( num < 0 )
-    {
-        OS_TPrintf("Failed to call FS_ResolveSrlList().\n");
-        return FALSE;
+        if ( FS_ResolveSrlList( &titleIdList[1], 1 ) < 0 )  // one title ID only
+        {
+            OS_TPrintf("Failed to call FS_ResolveSrlList().\n");
+            return FALSE;
+        }
+        OS_TPrintf("Launcher Title ID: 0x%016llx\n", titleIdList[1]);
     }
-    OS_TPrintf("Launcher Title ID: 0x%016llx\n", titleIdList[num]);
+    else
+    {
+        LCFG_THW_GetLauncherTitleID_Lo( (u8*)&titleIdList[0] );
+        // 4: after LCFG_ReadHWSecureInfo
+        PUSH_PROFILE();
+
+        num = FS_ResolveSrlList( titleIdList, sizeof(titleIdList)/sizeof(titleIdList[0]) );
+        if ( num < 0 )
+        {
+            OS_TPrintf("Failed to call FS_ResolveSrlList().\n");
+            return FALSE;
+        }
+        OS_TPrintf("Launcher Title ID: 0x%016llx\n", titleIdList[num]);
+    }
 
     OS_DestroyHeap( OS_ARENA_MAIN, hh );
 
