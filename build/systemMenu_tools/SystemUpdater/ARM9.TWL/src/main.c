@@ -236,7 +236,7 @@ TwlMain()
 			break;
 		}
 
-#ifdef SYSMENU_DEBUGGER_BUILD
+#ifdef SYSM_BUILD_FOR_DEBUGGER
 		// デバッガ向けSystemUpdaterは実機とキャプチャでは動作させない
 		if (running != IS_TWL_DEBUGGER)
 		{
@@ -254,7 +254,7 @@ TwlMain()
 			kamiFontPrintfMain( 2, 11, 3, " execute on IS-TWL-DEBUGGER.");
 			DrawInvalidConsole();
 		}
-#endif  // SYSMENU_DEBUGGER_BUILD
+#endif  // SYSM_BUILD_FOR_DEBUGGER
 
 	    // UNKNOWNはは動作させない
 		if (running == UNKNOWN)

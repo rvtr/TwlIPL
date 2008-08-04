@@ -38,7 +38,7 @@ MACRO_FLAGS				    +=	-DUSE_WRITE_FONT_DATA
 #MACRO_FLAGS				    +=	-DMARIOCLUB_VERSION
 #============================================================================
 
-DISABLE_DEBUG	=	FALSE
+SYSM_DISABLE_DEBUG	=	FALSE
 
 TARGET_FIRM			= SYSTEMMENU
 TARGET_PLATFORM		= TWL
@@ -109,7 +109,7 @@ endif
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
 							-DPRIVKEY_PATH='$(TWL_KEYSDIR)/rsa' \
 							-DCARD_REGION='$(CARD_REGION)' \
-							-DDISABLE_DEBUG='$(DISABLE_DEBUG)'
+							-DDISABLE_DEBUG='$(SYSM_DISABLE_DEBUG)'
 
 MAKETAD_FLAGS			+=	-s
 

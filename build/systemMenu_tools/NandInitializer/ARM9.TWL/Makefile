@@ -49,9 +49,9 @@ endif
 #============================================================================
 
 ifdef USE_FOR_NIGHTLY_AUTO_TEST
-DISABLE_DEBUG		= FALSE
+SYSM_DISABLE_DEBUG		= FALSE
 else
-DISABLE_DEBUG		= TRUE
+SYSM_DISABLE_DEBUG		= TRUE
 endif
 
 TARGET_FIRM			= SYSTEMMENU
@@ -125,7 +125,7 @@ endif
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
 							-DPRIVKEY_PATH='$(TWL_KEYSDIR)/rsa' \
 							-DCARD_REGION='$(CARD_REGION)' \
-							-DDISABLE_DEBUG='$(DISABLE_DEBUG)'
+							-DDISABLE_DEBUG='$(SYSM_DISABLE_DEBUG)'
 
 MAKETAD_FLAGS			+=	-s
 

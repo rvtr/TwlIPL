@@ -217,8 +217,7 @@ s32 ReadFirmwareBinary(char *path, u32 offset, u8 *buffer, s32 bufSize)
     return flen;
 }
 
-//#define USE_LOCAL_PUBKEY
-#ifdef USE_WLANFIRM_LOCAL_PUBKEY
+#ifdef SYSM_USE_WLANFIRM_LOCAL_PUBKEY
 static const u8 s_pubkey9_1[ 0x80 ] = {
 	0xb6, 0x18, 0xd8, 0x61, 0x28, 0xcb, 0x5c, 0x6f, 0x05, 0xfc, 0xd7, 0x09, 0x18, 0x3f, 0xb2, 0xd0, 
 	0x6b, 0x7d, 0xee, 0xd9, 0x98, 0xdc, 0x4f, 0xdd, 0xc1, 0xa8, 0x59, 0x18, 0xfb, 0xb0, 0x65, 0xbd, 
@@ -229,7 +228,7 @@ static const u8 s_pubkey9_1[ 0x80 ] = {
 	0xd4, 0x31, 0x6a, 0xb2, 0xad, 0xbc, 0x37, 0x06, 0x6a, 0x2e, 0xe9, 0x73, 0x5f, 0x3a, 0x57, 0xc7, 
 	0xd7, 0xf8, 0x8e, 0xc1, 0xb9, 0x3d, 0x3f, 0xd4, 0xe5, 0x27, 0x6f, 0xb4, 0x00, 0x8b, 0xb7, 0x19, 
 };
-#endif
+#endif // SYSM_USE_WLANFIRM_LOCAL_PUBKEY
 
 BOOL VerifyWlanfirmSignature(u8* buffer, u32 length)
 {
@@ -248,7 +247,7 @@ BOOL VerifyWlanfirmSignature(u8* buffer, u32 length)
     OSTick vstart = OS_GetTick();
 #endif
 
-#ifdef USE_WLANFIRM_LOCAL_PUBKEY
+#ifdef SYSM_USE_WLANFIRM_LOCAL_PUBKEY
 	// ランチャー経由でのデバッガ起動では、鍵情報を受け取ることができない。
 	// よってリリースビルドの時は、デバッグ動作を優先して鍵を自分で持つ。
 	pPubkey = (u8 *)s_pubkey9_1;
@@ -280,7 +279,7 @@ BOOL VerifyWlanfirmSignature(u8* buffer, u32 length)
     {
         OS_TPrintf("[Wlan Firm]  !!!! Wlan Firmware authentication has failed !!!!\n");
 
-#ifdef IGNORE_WLFIRM_SIGNCHECK
+#ifdef SYSM_IGNORE_WLFIRM_SIGNCHECK
         OS_TPrintf("[Wlan Firm]  But this failure is ignored.\n");
         if ( 0 )
 #endif
@@ -301,7 +300,7 @@ BOOL VerifyWlanfirmSignature(u8* buffer, u32 length)
     if (FALSE == SVC_CompareSHA1( (const void*)txtDigest, (const void*)signDigest ))
     {
         OS_TPrintf("[Wlan Firm]  !!!! Digest verification failed !!!!\n");
-#ifdef IGNORE_WLFIRM_SIGNCHECK
+#ifdef SYSM_IGNORE_WLFIRM_SIGNCHECK
         OS_TPrintf("[Wlan Firm]  But this failure is ignored.\n");
         if ( 0 )
 #endif
@@ -376,6 +375,10 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
     NVRAMResult nvRes;
     u8 *pSecBuf = NULL;
     u8 *pHdrBuf = NULL;
+
+#if defined(SYSM_DISABLE_WLFIRM_LOAD) || defined(SYSM_BUILD_FOR_PRODUCTION_TEST)
+	return TRUE;
+#endif // SYSM_DISABLE_WLFIRM_LOAD || SYSM_BUILD_FOR_PRODUCTION_TEST
 
 	ROM_Header_Short *header = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
 	
@@ -656,6 +659,10 @@ static BOOL GetWlanFirmwareInstallResult(WLANFirmResult *pResult)
 // 無線ファームロード完了？
 BOOL PollingInstallWlanFirmware( void )
 {
+#if defined(SYSM_DISABLE_WLFIRM_LOAD) || defined(SYSM_BUILD_FOR_PRODUCTION_TEST)
+	return TRUE;
+#endif // SYSM_DISABLE_WLFIRM_LOAD || SYSM_BUILD_FOR_PRODUCTION_TEST
+	
 	if ( !s_isFinished ) {
 		WLANFirmResult result;
 		if( GetWlanFirmwareInstallResult( &result ) ) {

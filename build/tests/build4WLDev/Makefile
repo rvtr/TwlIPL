@@ -19,7 +19,7 @@
 TARGET_FIRM				=	SYSTEMMENU
 
 # force to build for debugger
-export SYSMENU_DEBUGGER_BUILD		=	TRUE
+export SYSM_BUILD_FOR_DEBUGGER	=	TRUE
 
 # SDK configuration for export
 override TWL_ARCHGEN	:= LIMITED
@@ -65,25 +65,25 @@ SUBMAKES +=	./scripts/Makefile											\
 
 # COMPILE SWITCH for build SystemMenu
 
-export UPDATER_RELEASE				=	TRUE
+export SYSM_UPDATER_RELEASE				=	TRUE
 
-export DO_NOT_SHOW_LAUNCHER			=	TRUE
-export DISABLE_WDS_SCAN				=	FALSE
+export SYSM_DO_NOT_SHOW_LAUNCHER		=	TRUE
+export SYSM_DISABLE_WDS_SCAN			=	FALSE
 
 #############################################
 # For Wireless development
 #
 
 # disable signature check
-export IGNORE_WLFIRM_SIGNCHECK		=	TRUE
+export SYSM_IGNORE_WLFIRM_SIGNCHECK		=	TRUE
 
-export DISABLE_WLFIRM_LOAD			=	FALSE
-export DISABLE_INITIAL_SETTINGS		=	TRUE
+export SYSM_DISABLE_WLFIRM_LOAD			=	FALSE
+export SYSM_DISABLE_INITIAL_SETTINGS	=	TRUE
 export SYSM_OUTSIDE_UI				=	TRUE
 
 # MAKEROM SWITCH for build SystemMenu
-export DISABLE_DEBUG				=	TRUE
-export USE_WLANFIRM_LOCAL_PUBKEY	=	FALSE
+export SYSM_DISABLE_DEBUG				=	TRUE
+export SYSM_USE_WLANFIRM_LOCAL_PUBKEY	=	FALSE
 
 DATE_AND_TIME	?= $(shell date +"%y%m%d %H%M")
 

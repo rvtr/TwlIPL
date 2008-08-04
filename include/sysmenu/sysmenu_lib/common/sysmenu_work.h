@@ -212,7 +212,7 @@ typedef struct DeliverBROM9Key {
 // ISデバッガ上で動作しているか？
 static inline BOOL SYSM_IsRunOnDebugger( void )
 {
-#ifdef SYSMENU_DEBUGGER_BUILD
+#ifdef SYSM_BUILD_FOR_DEBUGGER
 	return SYSMi_GetWork()->flags.hotsw.isOnDebugger;
 #else
 	return FALSE;

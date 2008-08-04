@@ -186,13 +186,17 @@ TitleProperty *SYSM_ReadParameters( void )
     //-----------------------------------------------------
     // ノーマル情報リード
     if( !LCFG_ReadHWNormalInfo() ) {
+#ifndef SYSM_IGNORE_RESULT_HWINFO
         OS_TPrintf( "HW Normal Info Broken!\n" );
         UTL_SetFatalError( FATAL_ERROR_HWINFO_NORMAL );
+#endif // SYSM_IGNORE_RESULT_HWINFO
     }
     // セキュア情報リード
     if( !LCFG_ReadHWSecureInfo() ) {
+#ifndef SYSM_IGNORE_RESULT_HWINFO
         OS_TPrintf( "HW Secure Info Broken!\n" );
         UTL_SetFatalError( FATAL_ERROR_HWINFO_SECURE );
+#endif // SYSM_IGNORE_RESULT_HWINFO
     }
 
 	//-----------------------------------------------------
@@ -389,7 +393,7 @@ static void SYSMi_CopyLCFGDataSettings( void )
 
 BOOL SYSM_IsLauncherHidden( void )
 {
-#ifdef DO_NOT_SHOW_LAUNCHER
+#ifdef SYSM_DO_NOT_SHOW_LAUNCHER
 	return TRUE;
 #else
 	return FALSE;
@@ -463,7 +467,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
 	
     MI_CpuClear8( &s_bootTitleBuf, sizeof(TitleProperty) );
 
-#ifndef DISABLE_INITIAL_SETTINGS
+#ifndef SYSM_DISABLE_INITIAL_SETTINGS
     //-----------------------------------------------------
     // TWL設定データ破損時のフラッシュ壊れシーケンス起動
     //-----------------------------------------------------
@@ -482,7 +486,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
 		isSetArgument = TRUE;
 		isBootMSET    = TRUE;
     }
-#ifndef DISABLE_INITIAL_SETTINGS
+#ifndef SYSM_DISABLE_INITIAL_SETTINGS
     //-----------------------------------------------------
     // TWL設定データ未設定時の初回起動シーケンス起動
     //-----------------------------------------------------
@@ -498,7 +502,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
     // カードがささっていたらカードを起動する
     // ささっていない場合は本体設定を起動
     //-----------------------------------------------------
-#ifdef DO_NOT_SHOW_LAUNCHER
+#ifdef SYSM_DO_NOT_SHOW_LAUNCHER
 	else if( SYSM_IsExistCard() )
 	{
         s_bootTitleBuf.flags.isAppRelocate = TRUE;

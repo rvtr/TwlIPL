@@ -355,6 +355,7 @@ void TwlMain( void )
 	
     // 「ダイレクトブートでない」もしくは
     // 「ダイレクトブートだが、ロゴデモ表示」の時、各種リソースのロード------------
+#ifndef SYSM_BUILD_FOR_PRODUCTION_TEST
     if( !pBootTitle ||
         ( pBootTitle && !SYSM_IsLogoDemoSkip() ) ) {
 		u32 timestamp;
@@ -364,6 +365,7 @@ void TwlMain( void )
 		timestamp = OS_GetSharedFontTimestamp();
 		if( timestamp > 0 ) OS_TPrintf( "SharedFont timestamp : %08x\n", timestamp );
 	}
+#endif // SYSM_BUILD_FOR_PRODUCTION_TEST
 	
     // end時間計測6
 	MEASURE_RESULT( start, "GetSharedFont : %dms\n" );
@@ -419,11 +421,9 @@ void TwlMain( void )
     MEASURE_START(start);
 	
     // 無線ファームウェアを無線モジュールにダウンロードする。
-#ifndef DISABLE_WLFIRM_LOAD
     if( FALSE == InstallWlanFirmware( SYSM_IsHotStart() ) ) {
         OS_TPrintf( "ERROR: Wireless firmware download failed!\n" );
     }
-#endif // DISABLE_WLFIRM_LOAD
 	
     // end時間計測8
 	MEASURE_RESULT( start, "Load WlanFirm Time : %dms\n" );
@@ -489,12 +489,10 @@ MAIN_LOOP_START:
             break;
         case LOAD_START:
 			if( IsFinishedLoadSharedFont()						// ダイレクトブートの時は、フォントロード終了をここでチェック
-#ifndef DISABLE_WLFIRM_LOAD										// アプリブート前に無線ファームのロードは完了しておく
                 && PollingInstallWlanFirmware()
-#endif // DISABLE_WLFIRM_LOAD
-#ifndef DISABLE_WDS_SCAN										// アプリブート前にWDSスキャンは終了しておく必要がある
+#ifndef SYSM_DISABLE_WDS_SCAN										// アプリブート前にWDSスキャンは終了しておく必要がある
 			    && ( WDS_WrapperStopScan() != WDSWRAPPER_ERRCODE_OPERATING )
-#endif // DISABLE_WLFIRM_LOAD
+#endif // SYSM_DISABLE_WDS_SCAN
 				) {
 	            SYSM_StartLoadTitle( pBootTitle );
     	        state = LOADING;
@@ -545,23 +543,23 @@ MAIN_LOOP_START:
                     break; // state を STOP にして break し、 Boot させない
                 }
 				
-#ifndef DISABLE_WDS_SCAN
+#ifndef SYSM_DISABLE_WDS_SCAN
 				// Nintendoスポットブート時は、アプリ間パラメータにビーコン情報をセットする。
 				if( STD_CompareNString( (char *)&pBootTitle->titleID + 1, "JNH", 3 ) == 0 )
 				{
 					(void)WDS_WrapperSetArgumentParam();
 				}
-#endif // DISABLE_WDS_SCAN
+#endif // SYSM_DISABLE_WDS_SCAN
 				
 				state = BOOT;
 			}
 			break;
 		case BOOT:
-#ifndef DISABLE_WDS_SCAN
+#ifndef SYSM_DISABLE_WDS_SCAN
 			// アプリブート前にWDSスキャンは終了しておく必要がある
 			if( ( WDS_WrapperCleanup() != WDSWRAPPER_ERRCODE_OPERATING ) &&
 				IsClearnupWDSWrapper() )
-#endif // DISABLE_WDS_SCAN
+#endif // SYSM_DISABLE_WDS_SCAN
 			{
 				SYSM_TryToBootTitle( pBootTitle ); // never return.
             }
@@ -586,7 +584,7 @@ MAIN_LOOP_START:
 			( GetWlanFirmwareInstallFinalResult() == WLANFIRM_RESULT_SUCCESS )			// ロード成功
 			) {
 			// 下記条件を満たすなら、WDSスキャン開始
-#ifndef DISABLE_WDS_SCAN
+#ifndef SYSM_DISABLE_WDS_SCAN
 			if( !isStartScanWDS &&														// WDSスキャン開始済みでない
 				!direct_boot &&															// ダイレクトブートでない
 				!LCFG_THW_IsForceDisableWireless() &&									// 無線強制OFFでない
@@ -595,7 +593,7 @@ MAIN_LOOP_START:
 				InitializeWDS();		// 初期化と動作開始を兼ねている。（失敗しても止まりはしないので、気にしない）
 				isStartScanWDS = TRUE;
 			}
-#endif // DISABLE_WDS_SCAN
+#endif // SYSM_DISABLE_WDS_SCAN
 		}
 
         // コマンドフラッシュ

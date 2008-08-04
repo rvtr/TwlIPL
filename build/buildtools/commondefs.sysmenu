@@ -95,8 +95,8 @@ SDK_NMENU_DATADIR				=  $(ROOT)/build/tools/TwlNMenu/data
 
 #----------------------------------------------------------------------------
 
-ifeq ($(SYSMENU_DEBUGGER_BUILD),TRUE)
-MACRO_FLAGS		+=	-DSYSMENU_DEBUGGER_BUILD
+ifeq ($(SYSM_BUILD_FOR_DEBUGGER),TRUE)
+MACRO_FLAGS		+=	-DSYSM_BUILD_FOR_DEBUGGER
 endif
 
 #----------------------------------------------------------------------------

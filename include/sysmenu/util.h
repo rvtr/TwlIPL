@@ -123,9 +123,8 @@ extern u64  UTL_GetFatalError( void );										// FATALエラー状態の取得（FatalE
 // リージョンチェック
 static inline BOOL UTL_CheckAppRegion( u32 card_region_bitmap )
 {
-#ifdef SYSMENU_DEBUGGER_BUILD
+#ifdef SYSM_BUILD_FOR_DEBUGGER
 #pragma unused(card_region_bitmap)
-	// 2008.07.23 ISデバッガの暫定対応
 	return TRUE;
 #else
 	return ( card_region_bitmap & ( 0x00000001 << OS_GetRegion() ) ) ? TRUE : FALSE;
