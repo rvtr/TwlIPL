@@ -58,7 +58,7 @@ SUBDIRS		=
 
 #----------------------------------------------------------------------------
 TWL_NANDAPP		:= TRUE
-MASTER_NAME		:=		dispver
+MASTER_NAME		:=		SaveDataTest
 APP_NAME        =       $(MASTER_NAME)_$(MODE)
 
 SRCS		=	main.c font.c screen.c menu.c dataver.c

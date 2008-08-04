@@ -25,7 +25,7 @@ TWL_ARCHGEN		:= LIMITED
 TWL_NANDAPP		:= TRUE
 
 SRCS		=	main.c font.c screen.c menu.c dataver.c
-MASTER_NAME	=	dispver
+MASTER_NAME	=	SaveDataTest
 APP_NAME        =	$(MASTER_NAME)_TARGET
 TARGET_BIN	=	$(APP_NAME).tad
 
