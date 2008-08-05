@@ -32,8 +32,9 @@ LINCLUDES		= \
 			  $(ROOT)/build/libraries/fatfs/ARM7.TWL/include \
 			  $(ROOT)/build/libraries/fatfs/ARM7.TWL/include/twl/fatfs/ARM7
 
-SRCS			= fs_firm.c fs_firm_ex.c fs_loader.c
+SRCS			= fs_firm.c fs_firm_ex.c fs_loader.c fs_unicode.c
 
+SRCDIR           	= ./src ../common/src
 
 TARGET_LIB		= libfs_sp$(FIRM_LIBSUFFIX).a
 

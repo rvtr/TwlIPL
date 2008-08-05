@@ -208,6 +208,8 @@ BOOL FS_GetTitleBootContentPathFast(char* buf, OSTitleId titleId)
 
 /*---------------------------------------------------------------------------*
   Name:         SEA_Decrypt
+                SEA_GetCryptoBufferAddr
+                SEA_GetCryptoBufferSize
 
   Description:  stub function
 
@@ -224,6 +226,11 @@ SDK_WEAK_SYMBOL AESResult SEA_Decrypt(const void* src, u32 srcSize, void* dst)
 (void)dst;
     return AES_RESULT_SUCCESS;
 }
+#define SEA_ADDR_WRAM_1         ((u32)0x03004000u)
+u32 SEA_GetCryptoBufferAddr(void);
+SDK_WEAK_SYMBOL u32 SEA_GetCryptoBufferAddr(void) __attribute__((never_inline)) { return SEA_ADDR_WRAM_1; }
+u32 SEA_GetCryptoBufferSize(void);
+SDK_WEAK_SYMBOL u32 SEA_GetCryptoBufferSize(void) __attribute__((never_inline)) { return HW_WRAM_1_SIZE; }
 
 /*---------------------------------------------------------------------------*
   Name:         FS_ResolveSrl

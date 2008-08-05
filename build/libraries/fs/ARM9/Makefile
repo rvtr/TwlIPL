@@ -24,8 +24,9 @@ SUBMAKES	=
 
 LINCLUDES		= $(ES_ROOT)/twl/include
 
-SRCS			= fs_firm.c fs_loader.c
+SRCS			= fs_firm.c fs_loader.c fs_unicode.c
 
+SRCDIR           	= ./src ../common/src
 
 TARGET_LIB		= libfs$(FIRM_LIBSUFFIX).a
 
