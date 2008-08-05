@@ -244,6 +244,7 @@ void DeleteSaveDatas(void)
                 OS_TPrintf("Deleted:%s %s\n", GAMECODE_LIST[i], path);
                 PrintString(0,(short) (24 + k++), 15, "Deleted:%s %s", GAMECODE_LIST[i], path);
             }
+            FS_CreateFile(path, FS_PERMIT_W | FS_PERMIT_R);
             NA_UnloadOtherTitleArchive();
         }
     }
