@@ -422,8 +422,8 @@ void myInit(void)
     GXS_LoadBGPltt(d_PaletteData, 0, sizeof(d_PaletteData));
 
     //---- backdrop
-    *(u16*)HW_PLTT = GX_RGB(0,0,8);
-    *(u16*)HW_DB_PLTT = GX_RGB(0,0,8);
+    *(u16*)HW_PLTT = GX_RGB(0,8,0);
+    *(u16*)HW_DB_PLTT = GX_RGB(0,8,0);
 
     //---- screen
     MI_CpuFillFast((void *)gScreen, 0, sizeof(gScreen));
