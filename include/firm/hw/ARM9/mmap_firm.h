@@ -21,16 +21,21 @@
 extern "C" {
 #endif
 
-//------------------------------------- FIRM
-#define HW_FIRM                         HW_WRAM_EX
-#define HW_FIRM_END                     (HW_FIRM + HW_FIRM_SIZE)
-#define HW_FIRM_SIZE                    HW_WRAM_C_SIZE_MAX
-
 //------------------------------------- FIRM_RESET_BUF
 #define HW_FIRM_RESET_BUF               HW_MAIN_MEM
 #define HW_FIRM_RESET_BUF_END           (HW_FIRM_RESET_BUF + HW_FIRM_RESET_BUF_SIZE)
 //#define HW_FIRM_RESET_BUF_SIZE          0x400  // 12KB
 #define HW_FIRM_RESET_BUF_SIZE          0x800000    // 8MB
+
+//------------------------------------- FIRM_RSA_BUF
+#define HW_FIRM_RSA_BUF                 (HW_FIRM_RSA_BUF_END - HW_FIRM_RSA_BUF_SIZE)
+#define HW_FIRM_RSA_BUF_END             HW_FIRM_ES_BUF
+#define HW_FIRM_RSA_BUF_SIZE            0x3000  // 12KB
+
+//------------------------------------- FIRM_ES_BUF
+#define HW_FIRM_ES_BUF                  (HW_FIRM_ES_BUF_END - HW_FIRM_ES_BUF_SIZE)
+#define HW_FIRM_ES_BUF_END              HW_FIRM_FROM_BROM_BUF
+#define HW_FIRM_ES_BUF_SIZE             0x1000  // 4KB
 
 //------------------------------------- FIRM_FROM_BROM_BUF
 #define HW_FIRM_FROM_BROM_BUF           (HW_FIRM_FROM_BROM_BUF_END - HW_FIRM_FROM_BROM_BUF_SIZE)

@@ -35,13 +35,6 @@ static const u8 rsa_key_launcher[128] =
 };
 #endif
 
-#define RSA_HEAP_SIZE       (4*1024)    // RSA用ヒープサイズ
-#define CRYPTO_HEAP_SIZE    (11*1024)   // CRYPTO用ヒープサイズ
-
-#define HEAP_SIZE   (RSA_HEAP_SIZE > CRYPTO_HEAP_SIZE ? RSA_HEAP_SIZE : CRYPTO_HEAP_SIZE)
-
-static u8 heap[HEAP_SIZE] ATTRIBUTE_ALIGN(32);
-
 static SVCSignHeapContext acPool;
 
 #define MENU_TITLE_ID_HI    0x00030017ULL
@@ -129,6 +122,29 @@ static void PostInit(void)
 
     リストからランチャーSRLを解決する
 ***************************************************************/
+//#define DEBUG_CRYPTO_ALLOCATOR
+#ifdef DEBUG_CRYPTO_ALLOCATOR
+#include <nitro/crypto.h>
+static int allocated=0;
+static void* myAlloc(size_t size)
+{
+    void* ptr = OS_Alloc(size);
+    if (ptr)
+    {
+        OS_TPrintf("Alloc [%d] %d bytes.\n", ++allocated, size);
+    }
+    else
+    {
+        OS_TPrintf("Failed to allocate %d bytes.\n", size);
+    }
+    return ptr;
+}
+static void myFree(void* ptr)
+{
+    OS_TPrintf("Free [%d]\n", --allocated);
+    OS_Free(ptr);
+}
+#endif
 static BOOL TryResolveSrl(void)
 {
     OSTitleId titleIdList[] =
@@ -139,8 +155,8 @@ static BOOL TryResolveSrl(void)
     int num;
 
     // CRYPTO用ヒープ設定 (ESライブラリしか使わないはず)
-    void* lo = OS_InitAlloc( OS_ARENA_MAIN, heap, heap + CRYPTO_HEAP_SIZE, 1);
-    void* hi = heap + CRYPTO_HEAP_SIZE;
+    void* lo = OS_InitAlloc( OS_ARENA_MAIN, (void*)HW_FIRM_RSA_BUF, (void*)HW_FIRM_RSA_BUF_END, 1);
+    void* hi = (void*)HW_FIRM_RSA_BUF_END;
     OSHeapHandle hh = OS_CreateHeap( OS_ARENA_MAIN, lo, hi );
     if ( hh < 0 )
     {
@@ -148,6 +164,10 @@ static BOOL TryResolveSrl(void)
         return FALSE;
     }
     OS_SetCurrentHeap( OS_ARENA_MAIN, hh );
+
+#ifdef DEBUG_CRYPTO_ALLOCATOR
+    CRYPTO_SetAllocator(myAlloc, myFree);
+#endif
 
     if ( !LCFG_ReadHWSecureInfo() )
     {
@@ -314,7 +334,7 @@ void TwlMain( void )
     /* ES (CRYPTO) ライブラリはここまで */
     /* SVN_RSA はここから*/
     // RSA用ヒープ設定
-    SVC_InitSignHeap( &acPool, heap, RSA_HEAP_SIZE );
+    SVC_InitSignHeap( &acPool, (void*)HW_FIRM_RSA_BUF, HW_FIRM_RSA_BUF_SIZE );
 
     if ( !FS_LoadHeader( &acPool, NULL, NULL, RSA_KEY_ADDR ) || !CheckHeader() )
     {

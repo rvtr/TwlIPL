@@ -21,11 +21,6 @@
 extern "C" {
 #endif
 
-//------------------------------------- FIRM
-#define HW_FIRM                         HW_WRAM
-#define HW_FIRM_END                     (HW_FIRM + HW_FIRM_SIZE)
-#define HW_FIRM_SIZE                    (HW_WRAM_0_SIZE + HW_WRAM_1_SIZE + HW_WRAM_A_SIZE_MAX + HW_WRAM_B_SIZE_MAX)
-
 //------------------------------------- FIRM_SVC_STACK
 #define HW_FIRM_SVC_STACK               (HW_FIRM_SVC_STACK_END-HW_FIRM_SVC_STACK_SIZE)
 #define HW_FIRM_SVC_STACK_END           (HW_WRAM_AREA_END - HW_PRV_WRAM_SYSRV_SIZE)
