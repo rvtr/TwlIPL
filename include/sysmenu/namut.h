@@ -77,17 +77,6 @@ BOOL NAMUT_GetSoftBoxCount( u8* installed, u8* free );
 BOOL NAMUT_UpdateSoftBoxCount( void );
 
 /*---------------------------------------------------------------------------*
-  Name:         NAMUT_DrawNandTree
-
-  Description:  NANDのツリー情報をプリント出力します
-
-  Arguments:    ...
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-void NAMUT_DrawNandTree(void);
-
-/*---------------------------------------------------------------------------*
   Name:         NAMUTi_ClearSavedataPublic
 
   Description:  指定したセーブデータファイルに対して

@@ -16,7 +16,6 @@
  *---------------------------------------------------------------------------*/
 
 // Nand Application Management UTility ライブラリ、略してNAMUTライブラリです。
-// レイヤー的にはNAMと重なりますのでNAMに吸収しても良いと思います。
 
 #include <twl.h>
 #include <twl/fatfs.h>
@@ -37,11 +36,7 @@
 // TitleProperty (TitleID 32bit）のビットで指定します。
 // どれか1つでもビットが立っていれば消去の対象から外します。
 #define PROTECT_TITLE_PROPERTY  (TITLE_ID_APP_TYPE_MASK)
-
-#define DIRECTORY_DEPTH_MAX      16  // ディレクトリの深さの最大（NANDの正規構成としては最大6）
-#define TITLE_ID_HI_SIZE          8
-#define TITLE_LIST_MAX          256
-#define CLEAR_DATA_SIZE        4096  // ファイル消去データ用（512の倍数で大きいほど処理が早い）
+#define CLEAR_DATA_SIZE        16384  // ファイル消去データ用（512の倍数で大きいほど処理が早い）
 
 // 本体初期化(NAND初期化)実行時に
 // 指定ディレクトリ以下は全て消去されます。
@@ -73,7 +68,6 @@ static const char* sFillFileList[] =
 static NAMUTAlloc spAllocFunc;
 static NAMUTFree  spFreeFunc;
 static FSDirectoryEntryInfo sEntryInfo;
-static NAMTitleId sTitleIdArray[TITLE_LIST_MAX];
 static char sCurrentFullPath[FS_ENTRY_LONGNAME_MAX];
 static u32 sNCFGAddr;
 
@@ -82,15 +76,13 @@ static u32 sNCFGAddr;
  *---------------------------------------------------------------------------*/
 
 static BOOL NAMUTi_DeleteNonprotectedTitle(void);
-static BOOL NAMUTi_DeleteNonprotectedTitleEntity(const char* path);
 static BOOL NAMUTi_ClearSavedataAll(void);
 static BOOL NAMUTi_InitShareData(void);
 static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arcname);
-static void NAMUTi_DrawNandTree(s32 depth, const char *path);
 static BOOL NAMUTi_RandClearFile(const char* path);
 static void NAMUTi_ClearWiFiSettings( void );
-static void PrintDirectory(s32 depth, const char* path);
-static void PrintFile(s32 depth, const char* path);
+static void* NAMUT_Alloc(u32 size);
+static void NAMUT_Free(void* buffer);
 
 /*---------------------------------------------------------------------------*
   Name:         NAMUT_Init
@@ -271,44 +263,84 @@ BOOL NAMUT_DeleteNandDirectory(const char *path)
 static BOOL NAMUTi_DeleteNonprotectedTitle(void)
 {
     char dirPath[NAM_PATH_LEN];
-	s32 title_num;	
-	NAMTitleInfo namTitleInfo;
+	u32 title_num;				// NAND にインストールされているアプリの数
+	u32 title_num_installed;	// NANDにインストールされたことがあるアプリの数
+	u32 title_num_all;			// 上2つをマージしたアプリの数
+	NAMTitleId* pTitleIdArray;
+	NAMTitleId* pTitleIdArrayInstalled;
     s32 result = TRUE;
-	s32 i;
+	s32 i,j;
 
-	// タイトルリスト取得
-	if (NAM_GetTitleList(sTitleIdArray, TITLE_LIST_MAX) != NAM_OK)
+	// タイトル数取得
+	title_num = (u32)NAM_GetNumTitles();
+	title_num_installed = (u32)NAM_GetNumInstalledTitles();
+
+	// タイトルID配列用メモリ確保
+	pTitleIdArray          = NAMUT_Alloc(sizeof(NAMTitleId)*(title_num + title_num_installed));
+	pTitleIdArrayInstalled = NAMUT_Alloc(sizeof(NAMTitleId)*title_num_installed);
+
+	if (pTitleIdArray == NULL || pTitleIdArrayInstalled == NULL)
 	{
-		OS_TWarning("Fail! NAM_GetTitleList() in %s\n", __func__);
+		OS_TWarning("Allocation failed in %s\n", __func__);
+        NAMUT_Free(pTitleIdArray);
+        NAMUT_Free(pTitleIdArrayInstalled);	
 		return FALSE;
 	}
-	
-	// タイトル数取得
-	title_num = NAM_GetNumTitles();
 
-	for (i=0;i<title_num;i++)
+	// タイトルリスト取得
+	if (NAM_GetTitleList(pTitleIdArray, title_num) != NAM_OK ||
+		NAM_GetInstalledTitleList(pTitleIdArrayInstalled, title_num_installed) != NAM_OK)
 	{
-		// タイトル情報取得
-	    if( NAM_ReadTitleInfo(&namTitleInfo, sTitleIdArray[i]) == NAM_OK )
-	    {
-			// プロテクト対象以外であればtitleId_Hiディレクトリごと消去する
-			if (!(namTitleInfo.titleId & PROTECT_TITLE_PROPERTY))
+		OS_TWarning("Fail! NAM_Get*TitleList() in %s\n", __func__);
+        NAMUT_Free(pTitleIdArray);
+        NAMUT_Free(pTitleIdArrayInstalled);	
+		return FALSE;
+	}
+
+	// NAM_GetTitleListでは削除されているがeTicketのみ存在するタイトルがリストアップされず
+	// NAM_GetInstalledTitleListではSRLはあるがeTicketがないタイトルがリストアップされない。
+	// そのため両者をマージする
+	title_num_all = title_num;
+	for (i=0;i<title_num_installed;i++)
+	{
+		BOOL find = FALSE;
+		for (j=0;j<title_num;j++)
+		{
+			if (pTitleIdArrayInstalled[i] == pTitleIdArray[j]) 
 			{
-				// nand:/title/titleID_Hi/ 以下を消去
-		    	STD_TSNPrintf(dirPath, NAM_PATH_LEN, "nand:/title/%08x", NAM_GetTitleIdHi(namTitleInfo.titleId) );
-				if ( !FS_DeleteDirectoryAuto( dirPath ) )
-				{
-					result = FALSE;
-				}
-				// nand:/ticket/titleID_Hi/ 以下を消去
-		    	STD_TSNPrintf(dirPath, NAM_PATH_LEN, "nand:/ticket/%08x", NAM_GetTitleIdHi(namTitleInfo.titleId) );
-				if ( !FS_DeleteDirectoryAuto( dirPath ) )
-				{
-					result = FALSE;
-				}
+				find = TRUE;
+				break;
+			}
+		}
+		if (find == FALSE)
+		{
+			pTitleIdArray[title_num_all] = pTitleIdArrayInstalled[i];
+			title_num_all++;
+		}
+	}
+
+	for (i=0;i<title_num_all;i++)
+	{
+		// プロテクト対象以外であればtitleId_Hiディレクトリごと消去する
+		if (!(pTitleIdArray[i] & PROTECT_TITLE_PROPERTY))
+		{
+			// nand:/title/titleID_Hi/ 以下を消去
+	    	STD_TSNPrintf(dirPath, NAM_PATH_LEN, "nand:/title/%08x", NAM_GetTitleIdHi(pTitleIdArray[i]) );
+			if ( !FS_DeleteDirectoryAuto( dirPath ) )
+			{
+				result = FALSE;
+			}
+			// nand:/ticket/titleID_Hi/ 以下を消去
+	    	STD_TSNPrintf(dirPath, NAM_PATH_LEN, "nand:/ticket/%08x", NAM_GetTitleIdHi(pTitleIdArray[i]) );
+			if ( !FS_DeleteDirectoryAuto( dirPath ) )
+			{
+				result = FALSE;
 			}
 		}
 	}
+
+    NAMUT_Free(pTitleIdArray);
+    NAMUT_Free(pTitleIdArrayInstalled);	
 
 	return result;
 }
@@ -325,7 +357,8 @@ static BOOL NAMUTi_DeleteNonprotectedTitle(void)
 
 static BOOL NAMUTi_ClearSavedataAll( void )
 {
-	s32 title_num;	
+	u32 title_num;
+	NAMTitleId* pTitleIdArray;
 	NAMTitleInfo namTitleInfo;
 	char savePublicPath[ FS_ENTRY_LONGNAME_MAX ];
 	char savePrivatePath[ FS_ENTRY_LONGNAME_MAX ];
@@ -333,22 +366,32 @@ static BOOL NAMUTi_ClearSavedataAll( void )
 	BOOL ret = TRUE;
 	s32 i;
 
-	// タイトルリスト取得
-	if (NAM_GetTitleList(sTitleIdArray, TITLE_LIST_MAX) != NAM_OK)
+	// タイトル数取得
+	title_num = (u32)NAM_GetNumTitles();
+
+	// タイトルID配列用メモリ確保
+	pTitleIdArray = NAMUT_Alloc(sizeof(NAMTitleId)*title_num);
+	if (pTitleIdArray == NULL)
 	{
+		OS_TWarning("Allocation failed in %s\n", __func__);
 		return FALSE;
 	}
-	
-	// タイトル数取得
-	title_num = NAM_GetNumTitles();
+
+	// タイトルリスト取得
+	if (NAM_GetTitleList(pTitleIdArray, title_num) != NAM_OK)
+	{
+		OS_TWarning("Fail! NAM_GetTitleList() in %s\n", __func__);
+        NAMUT_Free(pTitleIdArray);
+		return FALSE;
+	}
 
 	for (i=0;i<title_num;i++)
 	{
 		// タイトル情報取得
-	    if( NAM_ReadTitleInfo(&namTitleInfo, sTitleIdArray[i]) == NAM_OK )
+	    if( NAM_ReadTitleInfo(&namTitleInfo, pTitleIdArray[i]) == NAM_OK )
 	    {
 			// セーブファイルパス取得
-			if (NAM_GetTitleSaveFilePath(savePublicPath, savePrivatePath, sTitleIdArray[i]) == NAM_OK)
+			if (NAM_GetTitleSaveFilePath(savePublicPath, savePrivatePath, pTitleIdArray[i]) == NAM_OK)
 			{
 				// publicSaveSizeが0以上なら乱数クリア＆フォーマット
 				if (namTitleInfo.publicSaveSize > 0)
@@ -448,13 +491,7 @@ BOOL NAMUTi_DestroySubBanner(const char* path)
 		return TRUE;
 	}
 
-	if ( !spAllocFunc || !spFreeFunc )
-	{
-		OS_Warning("NAMUT_Init should be called previously.");		
-		return FALSE;
-	}
-
-	pBanner = spAllocFunc( sizeof(TWLSubBannerFile) );
+	pBanner = NAMUT_Alloc( sizeof(TWLSubBannerFile) );
 	if (!pBanner)
 	{
         OS_TWarning("Allocation failed. (%d)\n");
@@ -466,7 +503,7 @@ BOOL NAMUTi_DestroySubBanner(const char* path)
 	if ( !FS_OpenFileEx(file, path, FS_FILEMODE_RWL) )
 	{
 		OS_Warning("banner file open failed.\n");
-		spFreeFunc( pBanner );
+		NAMUT_Free( pBanner );
 		return FALSE;
 	}
 
@@ -491,7 +528,7 @@ BOOL NAMUTi_DestroySubBanner(const char* path)
 	}
 	FS_CloseFile(file);
 	
-	spFreeFunc( pBanner );
+	NAMUT_Free( pBanner );
 	return ret;
 }
 
@@ -511,12 +548,7 @@ static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arc
     FSFATFSArchiveWork* pWork;
 	FSResult    result;
 
-	if (!spAllocFunc || !spFreeFunc) 
-	{
-		return FALSE;
-	}
-
-	pWork = spAllocFunc( sizeof(FSFATFSArchiveWork) );
+	pWork = NAMUT_Alloc( sizeof(FSFATFSArchiveWork) );
 	if (!pWork)
 	{
         OS_TWarning("Allocation failed. (%d)\n");
@@ -546,13 +578,11 @@ static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arc
         {
             succeeded = TRUE;
         }
-        // ドライブ情報をダンプ。
-//      DumpArchiveResource(path);
         // アンマウント。
         (void)FSi_MountSpecialArchive(titleID, NULL, pWork);
     }
 
-    spFreeFunc ( pWork );
+    NAMUT_Free ( pWork );
 
     return succeeded;
 }
@@ -575,12 +605,7 @@ static BOOL NAMUTi_InitShareData(void)
 	FSResult    result;
 	int i;
 
-	if (!spAllocFunc || !spFreeFunc) 
-	{
-		return FALSE;
-	}
-
-	pWork = spAllocFunc( sizeof(FSFATFSArchiveWork) );
+	pWork = NAMUT_Alloc( sizeof(FSFATFSArchiveWork) );
 	if (!pWork)
 	{
         OS_TWarning("Allocation failed. (%d)\n");
@@ -624,7 +649,7 @@ static BOOL NAMUTi_InitShareData(void)
 		}
 	}
 
-    spFreeFunc ( pWork );
+    NAMUT_Free( pWork );
 
     return succeeded;
 }
@@ -649,8 +674,8 @@ static BOOL NAMUTi_RandClearFile(const char* path)
 	if (FS_OpenFileEx(&file, path, (FS_FILEMODE_RWL)))
 	{
 		// ファイルをランダムデータでクリア
-		u32 filesize = FS_GetFileLength(&file);
-        u8* pClearData = spAllocFunc( CLEAR_DATA_SIZE );
+		u32 filesize;
+        u8* pClearData = NAMUT_Alloc( CLEAR_DATA_SIZE );
 		if (!pClearData)
 		{
 	        OS_TWarning("Allocation failed. (%d)\n");
@@ -658,18 +683,29 @@ static BOOL NAMUTi_RandClearFile(const char* path)
 			return FALSE;
 		}
 
-		for (; filesize > CLEAR_DATA_SIZE; filesize -= CLEAR_DATA_SIZE)
+		for (filesize = FS_GetFileLength(&file); filesize > CLEAR_DATA_SIZE; filesize -= CLEAR_DATA_SIZE)
 		{
 	        if( AES_Rand(pClearData, CLEAR_DATA_SIZE) != AES_RESULT_SUCCESS )
 	        {
-                spFreeFunc( pClearData );
+				FS_CloseFile(&file);
+                NAMUT_Free( pClearData );
 	            return FALSE;
 	        }
 			FS_WriteFile(&file, pClearData, CLEAR_DATA_SIZE);
 		}
-		FS_WriteFile(&file, pClearData, (s32)filesize);
+
+		if (filesize > 0)
+		{
+	        if( AES_Rand(pClearData, filesize) != AES_RESULT_SUCCESS )
+	        {
+				FS_CloseFile(&file);
+	            NAMUT_Free( pClearData );
+	            return FALSE;
+	        }
+			FS_WriteFile(&file, pClearData, (s32)filesize);
+		}
 		FS_CloseFile(&file);
-        spFreeFunc( pClearData );
+        NAMUT_Free( pClearData );
 	}
 	else
 	{
@@ -735,12 +771,12 @@ BOOL NAMUT_UpdateSoftBoxCount( void )
     LCFG_TSD_SetFreeSoftBoxCount( freeSoftBoxCount );
 
 	// LCFGライブラリの静的変数の値をNANDに反映
-    pBuffer = spAllocFunc( LCFG_WRITE_TEMP );
+    pBuffer = NAMUT_Alloc( LCFG_WRITE_TEMP );
 	if (!pBuffer) { return FALSE; }
 	// ミラーリングデータの両方に書き込みを行う。
 	retval &= LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
 	retval &= LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
-    spFreeFunc( pBuffer );
+    NAMUT_Free( pBuffer );
 
 	return retval;
 }
@@ -775,107 +811,16 @@ BOOL NAMUT_ClearTWLSettings( BOOL doWriteback )
 
 	// LCFGライブラリの静的変数の値をNANDに反映
 	if( doWriteback ) {
-		u8 *pBuffer = spAllocFunc( LCFG_WRITE_TEMP );
+		u8 *pBuffer = NAMUT_Alloc( LCFG_WRITE_TEMP );
 		if (!pBuffer) { return FALSE; }
 		// ミラーリングデータの両方に書き込みを行う。
 	    retval &= LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
 	    retval &= LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
-    	spFreeFunc( pBuffer );
+    	NAMUT_Free( pBuffer );
 	}
 
 	return retval;
 }
-
-/*---------------------------------------------------------------------------*
-  Name:         NAMUT_DrawNandTree
-
-  Description:  NANDのツリー情報をプリント出力します
-
-  Arguments:    ...
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-void NAMUT_DrawNandTree(void)
-{
-	MI_CpuClear8( sCurrentFullPath, sizeof(sCurrentFullPath) );
-	NAMUTi_DrawNandTree(0, "nand:");
-	NAMUTi_DrawNandTree(0, "nand2:");
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         NAMUTi_DrawNandTree
-
-  Description:  指定パスのツリー情報をプリント出力します（再帰関数）
-
-  Arguments:    path : 絶対パス指定(スラッシュを含めない）
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-
-static void NAMUTi_DrawNandTree(s32 depth, const char *path)
-{
-    FSFile  dir;
-	char* pSlash = STD_SearchCharReverse( sCurrentFullPath, '/' );
-
-	if (pSlash != NULL)
-	{
-		PrintDirectory(depth, pSlash);
-	}
-	else
-	{
-		PrintDirectory(depth, path);		
-	}
-
-	// 深さ制限
-	if (depth > DIRECTORY_DEPTH_MAX)
-	{
-		OS_Warning("Fail! Depth is too deep.\n");
-		return;
-	}
-
-	// カレントパスを設定    
-	STD_CopyLString( sCurrentFullPath, path, FS_ENTRY_LONGNAME_MAX );
-
-	FS_InitFile(&dir);
-
-	// 引数で指定されたディレクトリを開く
-	if (!FS_OpenDirectory(&dir, sCurrentFullPath, (FS_FILEMODE_R)))
-	{
-		OS_Warning("%d Fail! FS_OpenDirectory(%s)\n", __LINE__, sCurrentFullPath);
-		return;
-	}
-
-	// ディレクトリの中身を読む
-	while (FS_ReadDirectory(&dir, &sEntryInfo))
-	{
-        if (STD_CompareString(sEntryInfo.longname, ".")  == 0 ||
-            STD_CompareString(sEntryInfo.longname, "..") == 0)
-        {
-            continue;
-        }
-
-		// ディレクトリであれば再帰呼び出し
-		if (!(sEntryInfo.attributes & FS_ATTRIBUTE_IS_DIRECTORY))
-		{
-			PrintFile(depth, sEntryInfo.longname);
-		}
-		else
-		{
-			STD_ConcatenateLString(sCurrentFullPath, "/", FS_ENTRY_LONGNAME_MAX);
-			STD_ConcatenateLString(sCurrentFullPath, sEntryInfo.longname, FS_ENTRY_LONGNAME_MAX);
-			NAMUTi_DrawNandTree(depth + 1, sCurrentFullPath);
-		}
-	}
-
-	// カレントパスを削る
-	if (pSlash != NULL)
-	{
-		*pSlash = '\0';
-	}
-
-	FS_CloseDirectory(&dir);
-}
-
 
 /*---------------------------------------------------------------------------*
   Name:         NAMUTi_ClearWiFiSettings
@@ -892,7 +837,7 @@ static void NAMUTi_ClearWiFiSettings( void )
 #define NTR_WIFI_DATA_SIZE	0x400
 #define TWL_WIFI_DATA_SIZE	0x600
 	u32 total_size = ( NTR_WIFI_DATA_SIZE + TWL_WIFI_DATA_SIZE );
-	u8* pClearData = spAllocFunc( total_size );
+	u8* pClearData = NAMUT_Alloc( total_size );
 	if (!pClearData)
 	{
         OS_TWarning("Allocation failed. (%d)\n");
@@ -911,56 +856,39 @@ static void NAMUTi_ClearWiFiSettings( void )
     DC_FlushRange( pClearData, total_size );
     NVRAMi_Write( sNCFGAddr, total_size , pClearData );
 
-	spFreeFunc( pClearData );
-}
-
-
-/*---------------------------------------------------------------------------*
-  Name:         PrintDirectory
-
-  Description:  ツリー情報をプリント出力します（ディレクトリ用）
-
-  Arguments:    ...
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-static void PrintDirectory(s32 depth, const char* path)
-{
-#ifdef SDK_FINALROM
-#pragma unused(path)
-#endif
-	int i;
-
-	for (i=0; i<depth; i++)
-	{
-		OS_TPrintf("   ");
-	}
-	OS_TPrintf("+");
-	OS_TPrintf("%s/\n", path);
+	NAMUT_Free( pClearData );
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         PrintFile
+  Name:         NAMUT_Alloc
 
-  Description:  ツリー情報をプリント出力します（ファイル用）
+  Description:  メモリの確保を行います
 
-  Arguments:    ...
+  Arguments:    size: サイズバイト
 
-  Returns:      None.
+  Returns:      確保したメモリへのポインタ
  *---------------------------------------------------------------------------*/
-static void PrintFile(s32 depth, const char* filename)
+static void* NAMUT_Alloc(u32 size)
 {
-#ifdef SDK_FINALROM
-#pragma unused(filename)
-#endif
-	int i;
+	const u32 allocSize = MATH_ROUNDUP32(size);
+	SDK_ASSERTMSG( spAllocFunc != NULL, "NAMUT_Init should be called previously.\n");
+	return spAllocFunc(allocSize);
+}
 
-	for (i=0; i<depth+1; i++)
+/*---------------------------------------------------------------------------*
+  Name:         NAMUT_Free
+
+  Description:  メモリの解放を行います
+
+  Arguments:    buffer: 解放バッファ
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+static void NAMUT_Free(void* buffer)
+{
+	SDK_ASSERTMSG( spFreeFunc != NULL, "NAMUT_Init should be called previously.\n");
+	if (buffer)
 	{
-		OS_TPrintf("   ");
+		spFreeFunc(buffer);
 	}
-
-	OS_TPrintf("l-- ");
-
-	OS_TPrintf("%s\n", filename);
 }
