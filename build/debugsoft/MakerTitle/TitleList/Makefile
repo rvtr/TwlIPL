@@ -243,7 +243,8 @@ rmlcf:
 #-------------------------
 #-- SRL を作成する前にバナーが作成されるようにします。
 
-$(BINDIR)/$(TARGET_BIN_BASENAME).$(TWL_ELF_EXT):	$(BANNER) make_dir
+$(BINDIR)/$(TARGET_BIN_BASENAME).$(TWL_ELF_EXT):	make_dir
+#$(BINDIR)/$(TARGET_BIN_BASENAME).$(TWL_ELF_EXT):	$(BANNER) make_dir
 
 #-------------------------
 #-- rom_data/build_time.txt を作成します。
