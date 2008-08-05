@@ -440,8 +440,6 @@ void myInit(void)
     GX_LoadBG0Char(d_CharData, 0, sizeof(d_CharData));
     GX_LoadBGPltt(d_PaletteData, 0, sizeof(d_PaletteData));
 
-
-
     //---- setting 2D for bottom screen
     GX_SetBankForSubBG(GX_VRAM_SUB_BG_128_C);
 
@@ -456,7 +454,6 @@ void myInit(void)
     GXS_LoadBG0Char(d_CharData, 0, sizeof(d_CharData));
     GXS_LoadBGPltt(d_PaletteData, 0, sizeof(d_PaletteData));
 
-
     //---- screen
     MI_CpuFillFast((void *)gScreen, 0, sizeof(gScreen));
     DC_FlushRange(gScreen, sizeof(gScreen));
@@ -464,6 +461,10 @@ void myInit(void)
     // DC_WaitWriteBufferEmpty();
     GX_LoadBG0Scr(gScreen, 0, sizeof(gScreen));
     GXS_LoadBG0Scr(gScreen, 0, sizeof(gScreen));
+
+    //---- backdrop
+    *(u16*)HW_PLTT = GX_RGB(0,0,8);
+    *(u16*)HW_DB_PLTT = GX_RGB(0,0,8);
 
     //---- init interrupt
     OS_SetIrqFunction(OS_IE_V_BLANK, myVBlankIntr);

@@ -407,8 +407,6 @@ void myInit(void)
     GX_LoadBG0Char(d_CharData, 0, sizeof(d_CharData));
     GX_LoadBGPltt(d_PaletteData, 0, sizeof(d_PaletteData));
 
-
-
     //---- setting 2D for bottom screen
     GX_SetBankForSubBG(GX_VRAM_SUB_BG_128_C);
 
@@ -423,6 +421,9 @@ void myInit(void)
     GXS_LoadBG0Char(d_CharData, 0, sizeof(d_CharData));
     GXS_LoadBGPltt(d_PaletteData, 0, sizeof(d_PaletteData));
 
+    //---- backdrop
+    *(u16*)HW_PLTT = GX_RGB(0,0,8);
+    *(u16*)HW_DB_PLTT = GX_RGB(0,0,8);
 
     //---- screen
     MI_CpuFillFast((void *)gScreen, 0, sizeof(gScreen));
