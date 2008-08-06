@@ -186,17 +186,17 @@ TitleProperty *SYSM_ReadParameters( void )
     //-----------------------------------------------------
     // ノーマル情報リード
     if( !LCFG_ReadHWNormalInfo() ) {
-#ifndef SYSM_IGNORE_RESULT_HWINFO
+#ifndef SYSM_BUILD_FOR_PRODUCTION_TEST
         OS_TPrintf( "HW Normal Info Broken!\n" );
         UTL_SetFatalError( FATAL_ERROR_HWINFO_NORMAL );
-#endif // SYSM_IGNORE_RESULT_HWINFO
+#endif // SYSM_BUILD_FOR_PRODUCTION_TEST
     }
     // セキュア情報リード
     if( !LCFG_ReadHWSecureInfo() ) {
-#ifndef SYSM_IGNORE_RESULT_HWINFO
+#ifndef SYSM_BUILD_FOR_PRODUCTION_TEST
         OS_TPrintf( "HW Secure Info Broken!\n" );
         UTL_SetFatalError( FATAL_ERROR_HWINFO_SECURE );
-#endif // SYSM_IGNORE_RESULT_HWINFO
+#endif // SYSM_BUILD_FOR_PRODUCTION_TEST
     }
 
 	//-----------------------------------------------------

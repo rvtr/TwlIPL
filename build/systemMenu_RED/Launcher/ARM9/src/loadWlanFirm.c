@@ -376,12 +376,12 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
     u8 *pSecBuf = NULL;
     u8 *pHdrBuf = NULL;
 
+	ROM_Header_Short *header = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
+	
 #if defined(SYSM_DISABLE_WLFIRM_LOAD) || defined(SYSM_BUILD_FOR_PRODUCTION_TEST)
 	return TRUE;
 #endif // SYSM_DISABLE_WLFIRM_LOAD || SYSM_BUILD_FOR_PRODUCTION_TEST
 
-	ROM_Header_Short *header = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
-	
 	if( header->titleID_Lo[3] == '4' )
 	{
 		OS_TPrintf("[Wlan Firm]  This is DEV_UIG_Launcher. Wireless firmware download skipped.\n");
