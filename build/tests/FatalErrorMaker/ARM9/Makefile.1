@@ -36,7 +36,8 @@ LINCLUDES		+=	$(MISC_DIR)/include
 
 ROM_SPEC	=	main.rsf
 
-
+ROM_HEADER_TEMPLATE		=	$(SYSMENU_ROM_HEADER_DIR)/$(GAMECODE)/rom_header_$(call toLower,$(GAMECODE)).template.sbin
+LIBSYSCALL				=	$(SYSMENU_ROM_HEADER_DIR)/$(GAMECODE)/libsyscall.a
 
 SYSMENU_LIBS			=	\
 							liblcfg$(TWL_LIBSUFFIX).a \
@@ -69,7 +70,8 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 MAKEROM			=	$(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 
 MAKEROM_FLAGS	+=	-DFATALMAKER_GAMECODE=$(GAMECODE)	\
-					-DFATALMAKER_MEDIA=$(MEDIA)
+					-DFATALMAKER_MEDIA=$(MEDIA) \
+					-DROM_HEADER_TEMPLATE='$(call empath,$(ROM_HEADER_TEMPLATE))'
 
 DEFAULT_MAKEROM_ARM7_BASE	= $(TWL_COMPONENTSDIR)/armadillo/$(TWL_BUILDTYPE_ARM7)/armadillo
 DEFAULT_MAKEROM_ARM7		= $(DEFAULT_MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)

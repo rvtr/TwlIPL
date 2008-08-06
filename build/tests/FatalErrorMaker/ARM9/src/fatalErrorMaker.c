@@ -325,6 +325,7 @@ static char* s_strFilePath[] = {
 static void
 DumpBinary(u32 offset, void* data, u32 size)
 {
+#pragma unused(data)
     s32     i;
 
     if (size > 0)

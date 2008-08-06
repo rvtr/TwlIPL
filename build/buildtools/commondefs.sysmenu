@@ -23,6 +23,10 @@ NITRO_NO_STD_PCHDR = TRUE # プリコンパイルヘッダ抑止
 EMPTY	 	?=
 SPACE 		?= $(EMPTY) $(EMPTY)
 
+define toLower
+$(shell echo $(1) | tr '[A-Z]' '[a-z]' )
+endef # toLower
+
 #----------------------------------------------------------------------------
 ### TWL-commondefs
 #
@@ -49,6 +53,9 @@ SYSMENU_INCDIR			:= $(SYSMENU_ROOT)/include \
                            $(ROOT)/build/libraries/mb/common/include
 SYSMENU_TOOLSDIR		:= $(SYSMENU_ROOT)/tools
 SYSMENU_COMPONENTSDIR	:= $(SYSMENU_ROOT)/components
+
+SYSMENU_ROM_HEADER_DIR	= $(SYSMENU_ROOT)/RomHeader/
+
 
 LDEPENDS_LCF			+= $(SYSMENU_BUILDTOOLSDIR)/commondefs.sysmenu
 LDEPENDS_RES			+= $(SYSMENU_BUILDTOOLSDIR)/commondefs.sysmenu
