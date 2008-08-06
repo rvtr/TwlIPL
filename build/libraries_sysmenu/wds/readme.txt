@@ -1,6 +1,6 @@
 ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 ■                                                                          ■
-■  TWLWDSライブラリ                                           2008/7/ 3版  ■
+■  TWLWDSライブラリ                                           2008/8/06版  ■
 ■                                                                          ■
 ■  ネットワーク開発部からのお知らせ                                        ■
 ■                                                                          ■
@@ -8,14 +8,13 @@
 
 ●動作確認バージョン
 ・SDK
-(TwlSDK-5_00fc-080325-1027-branch-5_0fc-TS400_jp)
-(TwlSDK-5_00fc-patch-plus4-080609_jp)
-(TwlSDK-5_00fcplus2-080428-1417-private-crypto-branch-5_0fcplus2_jp)
+(TwlSDK-5_00rc1-080729_jp)
+(TwlSDK-5_00rc1-080729-private-NADK_jp)
 ・コンパイラ
 (CodeWarrior v2.0)
 (20080215_cw_ds_2.0_sp2_Buildtools_Patch2.jpSP1)
 ・デバッグ環境
-(IS-TWL-DEBUGGER Version 0.63.0805.2900)
+(IS-TWL-DEBUGGER Version 0.70.0807.2400)
 
 ●ビルドする際の注意事項
 ・ライブラリのビルドは
@@ -26,8 +25,16 @@
   %make TWLSDK_PLATFORM=TWL
 
 ●変更履歴
+2008/08/06 20080806版
+・WDS_WrapperStopScan関数を使用してビーコン受信を中断した場合、
+中断の直前に呼び出したWDS_WrapperCheckValidBeacon関数ではビーコンが
+受信されていると通知されるにもかかわらず、中断後にはWDSWrapperライブラリの
+状態が、ビーコンが受信されていない状態になる場合があるバグを修正しました。
 
-2008/06/26 20080703版
+2008/07/14 20080714版
+・WDSWrapperTestサンプルにスリープモードに関連する処理を追加しました。
+
+2008/07/03 20080703版
 ・WDSラッパー内部で行っていた排他制御に関連して発生していたフリーズ問題を修正しました。
 
 2008/06/26 20080626版

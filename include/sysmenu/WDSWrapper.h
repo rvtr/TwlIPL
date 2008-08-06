@@ -126,7 +126,9 @@ WDSWrapperErrCode WDS_WrapperCleanup( void );
 WDSWrapperErrCode WDS_WrapperStartScan( void );
 WDSWrapperErrCode WDS_WrapperStopScan( void );
 WDSWrapperErrCode WDS_WrapperCheckValidBeacon( void );
+#ifdef SDK_TWL
 WDSWrapperErrCode WDS_WrapperSetArgumentParam( void );
+#endif
 WDSWrapperErrCode WDS_WrapperCheckThreadRunning( void );
 OSThread *WDS_WrapperGetOSThread( void );
 

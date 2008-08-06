@@ -44,8 +44,10 @@ typedef struct WDSWrapperWork
 	
 	u8							*wdswork;						//!< WDSが使用するワークエリア
 	
-	WDSBriefApInfo				briefapinfo[WDS_APINFO_MAX];	//!< WDSラッパーがWDSを使用した結果を格納する領域
-	int							briefapinfonum;					//!< WDSラッパーがWDSを使用した結果を格納する領域
+	WDSBriefApInfo				briefapinfo[WDS_APINFO_MAX];			//!< WDSラッパーがWDSを使用した結果を格納する領域
+	WDSBriefApInfo				briefapinfo_previous[WDS_APINFO_MAX];	//!< 直前のWDSを使用した結果を格納する領域
+	int							briefapinfonum;							//!< WDSラッパーがWDSを使用した結果を格納する領域
+	int							briefapinfonum_previous;				//!< 直前のWDSを使用した結果を格納する領域
 	
 	WDSWrapperInitializeParam	initparam;						//!< 初期化時パラメータのコピー
 	WDSWrapperStateThreadState	state;							//!< WDSラッパーのステート
@@ -55,7 +57,9 @@ typedef struct WDSWrapperWork
 	BOOL						idle;							//!< 間欠スキャン中断フラグ
 	BOOL						restart;						//!< 間欠スキャン再開フラグ
 	
+#ifdef SDK_TWL
 	OSDeliverArgInfo			deliverinfo;					//!< TWL用アプリ間引数ワークエリア
+#endif
 	
 	BOOL						callingback;					//!< コールバック関数呼び出し中はTRUE
 } WDSWrapperWork;
@@ -106,19 +110,47 @@ static void DumpWDSApInfo( WDSApInfo *apinfo )
 	buf[WDS_APNUM_BUF_SIZE] = 0x00;
 	OS_TPrintf( "APNUM: %s\n", buf );
 	
+	// HOTSPOTID
+	OS_TPrintf( "hotspotid: %d\n", apinfo->hotspotid );
+	
+	// HOTSPOTNAME
+	OS_TPrintf( "hotspotname: " );
+	for( i = 0 ; i < WDS_HOTSPOTNAME_BUF_SIZE ; i++ )
+	{
+		OS_TPrintf( "%02x", apinfo->hotspotname[i] );
+	}
+	OS_TPrintf( "\n" );
+	
+	// WEPKEY
+	OS_TPrintf( "wepkey: " );
+	for( i = 0 ; i < WDS_WEPKEY_BUF_SIZE ; i++ )
+	{
+		OS_TPrintf( "%02x", apinfo->wepkey[i] );
+	}
+	OS_TPrintf( "\n" );
+	
 	// CHANNEL
 	OS_TPrintf( "channel: %d\n", apinfo->channel );
 	
 	// ENCRYPTFLAG
 	OS_TPrintf( "encryptmethod: %d\n", apinfo->encryptflag);
 	
-	// WEPKEY
-	OS_TPrintf( "WEPKEY: " );
-	for( i = 0 ; i < WDS_WEPKEY_BUF_SIZE ; i++ )
+	// INFOFLAG
+	OS_TPrintf( "infoflag: %02d\n", apinfo->infoflag);
+	
+	// RESERVE
+	OS_TPrintf( "reserve: " );
+	for( i = 0 ; i < 5 ; i++ )
 	{
-		OS_TPrintf( "%02x", apinfo->wepkey[i] );
+		OS_TPrintf( "%02x", apinfo->reserve[i] );
 	}
 	OS_TPrintf( "\n" );
+	
+	// MTU
+	OS_TPrintf( "mtu: %d\n", apinfo->mtu);
+	
+	// CRC
+	OS_TPrintf( "crc: %04x\n", apinfo->crc);
 }
 
 //--------------------------------------------------------------------------------
@@ -139,6 +171,9 @@ static void WDS_WrapperBeforeInitState( void )
 		// 連続スキャン開始時間の記録
 		g_wdswrapperwork->tickstart = OS_GetTick();
 		
+		// 現スキャン状態のスキャン結果をクリア
+		g_wdswrapperwork->briefapinfonum = 0;
+		
 		// スキャン開始ステートへ
 		g_wdswrapperwork->state = WDSWRAPPER_STATE_INIT;
 		return;
@@ -158,6 +193,9 @@ static void WDS_WrapperBeforeInitState( void )
 	if( g_wdswrapperwork->tickstart + OS_MilliSecondsToTicks( WDSWRAPPER_WAITPERIOD ) < OS_GetTick() ) {
 		// 連続スキャン開始時間の記録
 		g_wdswrapperwork->tickstart = OS_GetTick();
+		
+		// 現スキャン状態のスキャン結果をクリア
+		g_wdswrapperwork->briefapinfonum = 0;
 		
 		// スキャン開始ステートへ
 		g_wdswrapperwork->state = WDSWRAPPER_STATE_INIT;
@@ -257,7 +295,6 @@ static void WDS_WrapperScanState( void )
 #ifdef WDSWRAPPER_DEBUGPRINT
 		OS_Printf("WDS_StartScan successed\n");
 #endif
-		g_wdswrapperwork->briefapinfonum = 0;
 	}
 	else {
 		// スキャン開始に失敗したのでWDS解放開始ステートへ
@@ -364,10 +401,14 @@ static void WDS_WrapperStartScan_CB( void *arg )
 		// コールバックパラメータの設定
 		param.callback	= WDSWRAPPER_CALLBACK_STARTSCAN2;
 		param.errcode	= WDSWRAPPER_ERRCODE_SUCCESS;
-			
+		
 		// コールバック関数の呼び出し
 		WDS_WrapperCallUserCallback( &param );
 		
+		// これまでのスキャン結果を直前のスキャン結果を保持しておく場所にコピー
+		MI_CpuCopy8( g_wdswrapperwork->briefapinfo, g_wdswrapperwork->briefapinfo_previous, sizeof(g_wdswrapperwork->briefapinfo) );
+		g_wdswrapperwork->briefapinfonum_previous = g_wdswrapperwork->briefapinfonum;
+			
 		// 十分長い時間スキャンしたのでスキャン中断ステートへ
 		g_wdswrapperwork->state = WDSWRAPPER_STATE_ENDSCAN;
 	}
@@ -548,6 +589,14 @@ static void WDS_WrapperIdleState( void )
 	{
 		g_wdswrapperwork->idle = FALSE;
 		g_wdswrapperwork->restart = FALSE;
+
+		// 連続スキャン開始時間の記録
+		g_wdswrapperwork->tickstart = OS_GetTick();
+		
+		// 現スキャン状態のスキャン結果をクリア
+		g_wdswrapperwork->briefapinfonum = 0;
+		
+		// スキャン開始ステートへ
 		g_wdswrapperwork->state = WDSWRAPPER_STATE_INIT;
 	}
 }
@@ -562,7 +611,10 @@ static void WDS_WrapperThreadFunc( void *arg )
 #pragma unused( arg )
 	WDSWrapperCallbackParam param;
 	
-	// ステートの初期化
+	// 間欠受信のビーコン数を初期化
+	g_wdswrapperwork->briefapinfonum = 0;
+	
+	// スキャン開始ステートへ
 	g_wdswrapperwork->state = WDSWRAPPER_STATE_INIT;
 	
 	while( 1 ) {
@@ -801,13 +853,23 @@ WDSWrapperErrCode WDS_WrapperCheckValidBeacon( void )
 	if( g_wdswrapperwork->callingback != TRUE )
 		return WDSWRAPPER_ERRCODE_FAILURE;
 	
+	if( g_wdswrapperwork->briefapinfonum_previous > 0 ) {
+		// 直前のWDSの結果が生きていればまずそれをチェックする
+		for( i = 0; i < g_wdswrapperwork->briefapinfonum_previous; i++ ) {
+			if( g_wdswrapperwork->briefapinfo_previous[i].isvalid == TRUE &&
+				g_wdswrapperwork->briefapinfo_previous[i].apinfo.infoflag & WDS_INFOFLAG_NOTIFY ) {
+				ret = WDSWRAPPER_ERRCODE_SUCCESS;
+				break;
+			}
+		}
+	}
 	if( g_wdswrapperwork->briefapinfonum > 0 ) {
+		// 現在スキャン中のデータもチェックする
 		for( i = 0; i < g_wdswrapperwork->briefapinfonum; i++ ) {
-			if( g_wdswrapperwork->briefapinfo[i].isvalid == TRUE ) {
-				if( g_wdswrapperwork->briefapinfo[i].apinfo.infoflag & WDS_INFOFLAG_NOTIFY ) {
-					ret = WDSWRAPPER_ERRCODE_SUCCESS;
-					break;
-				}
+			if( g_wdswrapperwork->briefapinfo[i].isvalid == TRUE &&
+				g_wdswrapperwork->briefapinfo[i].apinfo.infoflag & WDS_INFOFLAG_NOTIFY ) {
+				ret = WDSWRAPPER_ERRCODE_SUCCESS;
+				break;
 			}
 		}
 	}
@@ -823,6 +885,7 @@ WDSWrapperErrCode WDS_WrapperCheckValidBeacon( void )
 		@return	WDSWRAPPER_ERRCODE_FAILURE: 親機ビーコン情報をArgument領域にセットできなかった
 		@return	WDSWRAPPER_ERRCODE_UNINITIALIZED: WDSラッパーライブラリが初期化されていない
 *///------------------------------------------------------------------------------
+#ifdef SDK_TWL
 WDSWrapperErrCode WDS_WrapperSetArgumentParam( void )
 {
 	int err;
@@ -831,11 +894,15 @@ WDSWrapperErrCode WDS_WrapperSetArgumentParam( void )
 	if( g_wdswrapperwork == NULL )
 		return WDSWRAPPER_ERRCODE_UNINITIALIZED;
 
-	// TWL用のArgumentシステムを初期化
-	OS_InitDeliverArgInfo( &g_wdswrapperwork->deliverinfo, sizeof( g_wdswrapperwork->briefapinfo ) );
+	// TWL用のArgumentシステムに取得したビーコンデータを書き込む
+	if( g_wdswrapperwork->briefapinfonum_previous <= 0 && g_wdswrapperwork->briefapinfonum > 0) {
+		// 直前のスキャンがビーコンなしだが、現在のスキャン結果にビーコンがある場合は現在スキャン中の情報を使う
+		g_wdswrapperwork->briefapinfonum_previous = g_wdswrapperwork->briefapinfonum;
+		MI_CpuCopy8( g_wdswrapperwork->briefapinfo, g_wdswrapperwork->briefapinfo_previous, sizeof( g_wdswrapperwork->briefapinfo ) );
+	}
+	OS_InitDeliverArgInfo( &g_wdswrapperwork->deliverinfo, sizeof( g_wdswrapperwork->briefapinfo_previous ) );
+	err = OS_SetBinaryToDeliverArg( g_wdswrapperwork->briefapinfo_previous, sizeof( g_wdswrapperwork->briefapinfo_previous ) );
 	
-	// Argument領域に書き込み
-	err = OS_SetBinaryToDeliverArg( g_wdswrapperwork->briefapinfo, sizeof( g_wdswrapperwork->briefapinfo ) );
 	if( err != OS_DELIVER_ARG_SUCCESS ) {
 #ifdef WDSWRAPPER_DEBUGPRINT
 		OS_TPrintf( "WDS_WrapperSetArgumentParam: failed %d\n", err );
@@ -858,6 +925,7 @@ WDSWrapperErrCode WDS_WrapperSetArgumentParam( void )
 	
 	return WDSWRAPPER_ERRCODE_SUCCESS;
 }
+#endif
 
 //--------------------------------------------------------------------------------
 /**

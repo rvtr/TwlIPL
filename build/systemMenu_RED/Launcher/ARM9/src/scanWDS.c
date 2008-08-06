@@ -68,6 +68,13 @@ void Callback_WDSWrapper( void *ptr )
 		if( WDS_WrapperCheckValidBeacon() == WDSWRAPPER_ERRCODE_SUCCESS )
 			WDS_PRINTF( "強調表示をつけます" );
 		break;
+	case WDSWRAPPER_CALLBACK_STOPSCAN:
+		if( WDS_WrapperCheckValidBeacon() == WDSWRAPPER_ERRCODE_FAILURE )
+			OS_TPrintf( "強調表示を消します" );
+		else {
+			OS_TPrintf( "強調表示をつけます" );
+		}
+		break;
 	case WDSWRAPPER_CALLBACK_CLEANUP:
 		s_isStarted = FALSE;
 		s_isClearnup = TRUE;
@@ -84,14 +91,22 @@ void Callback_WDSPreSleep( void *ptr )
 	WDS_WrapperCleanup();
 	while ( WDS_WrapperCheckThreadRunning() == WDSWRAPPER_ERRCODE_SUCCESS )
 	{
-		OS_Sleep(1);
+		OS_Sleep( 100 );
 	}
 }
 
 void Callback_WDSPostSleep( void *ptr )
 {
 #pragma unused( ptr )
-	InitializeWDS();
+	WDSWrapperInitializeParam param;
+	
+	// WDSWrapper初期化と動作開始
+	param.threadprio = WDS_THREAD_PRIO;
+	param.dmano      = WDS_DMA_NO;
+	param.callback   = Callback_WDSWrapper;
+	param.alloc      = SYSM_Alloc;
+	param.free       = SYSM_Free;
+	(void)WDS_WrapperInitialize( param );
 }
 
 // 初期化関数

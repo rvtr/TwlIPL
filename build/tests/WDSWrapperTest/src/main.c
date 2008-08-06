@@ -63,34 +63,76 @@ static void Callback_WDSWrapper( void *ptr )
 	WDSWrapperCallbackParam *callback = (WDSWrapperCallbackParam *)ptr;
 	OS_TPrintf("Callback_WDSWrapper: %s %d ", callbackstring[callback->callback], callback->errcode );
 	
-	if( callback->callback == WDSWRAPPER_CALLBACK_STARTSCAN2 ) {
+	switch( callback->callback ) {
+	case WDSWRAPPER_CALLBACK_INITIALIZE:
+		OS_TPrintf( "初期化完了" );
+		break;
+	case WDSWRAPPER_CALLBACK_STARTSCAN2:
 		// n秒間隔のビーコン間欠スキャン一回分が完了
 		// ビーコンを受け取っていないという結果が出た場合、強調表示を消します
 		if( WDS_WrapperCheckValidBeacon() == WDSWRAPPER_ERRCODE_FAILURE )
 			OS_TPrintf( "強調表示を消します" );
 		else {
 			OS_TPrintf( "強調表示をつけます" );
-			if( WDS_WrapperSetArgumentParam() == WDSWRAPPER_ERRCODE_SUCCESS )
-				OS_TPrintf( "\nArgument領域にパラメータを代入\n" );
-			else
-				OS_TPrintf( "\nArgument領域にパラメータを代入失敗\n" );
 		}
-	}
-	else if( callback->callback == WDSWRAPPER_CALLBACK_STARTSCAN ) {
+		// 受信したビーコン情報データをArgument領域に書き込む
+#ifdef SDK_TWL
+		OS_TPrintf( "\n" );
+		WDS_WrapperSetArgumentParam();
+#endif
+		break;
+	case WDSWRAPPER_CALLBACK_STARTSCAN:
 		// n秒間隔のビーコン間欠スキャン一回分が完了
 		// ビーコンを受け取っている場合のみ強調表示を付けます
 		if( WDS_WrapperCheckValidBeacon() == WDSWRAPPER_ERRCODE_SUCCESS )
 			OS_TPrintf( "強調表示をつけます" );
+		break;
+	case WDSWRAPPER_CALLBACK_STOPSCAN:
+		if( WDS_WrapperCheckValidBeacon() == WDSWRAPPER_ERRCODE_FAILURE )
+			OS_TPrintf( "強調表示を消します" );
+		else {
+			OS_TPrintf( "強調表示をつけます" );
+		}
+		break;
+	case WDSWRAPPER_CALLBACK_CLEANUP:
+		OS_TPrintf( "解放完了" );
+		break;
 	}
-	
 	OS_TPrintf( "\n" );
 }
 
+// スリープモードに入る前に呼び出されるコールバック関数
+static void Callback_WDSPreSleep( void *ptr )
+{
+#pragma unused( ptr )
+	WDS_WrapperCleanup();
+	while( WDS_WrapperCheckThreadRunning() == WDSWRAPPER_ERRCODE_SUCCESS )
+		OS_Sleep( 100 );
+}
+
+// スリープモードから復帰する際に呼び出されるコールバック関数
+static void Callback_WDSPostSleep( void *ptr )
+{
+#pragma unused( ptr )
+	WDSWrapperInitializeParam param;
+	
+	// WDSWrapper初期化と動作開始
+	param.threadprio = 20;
+	param.dmano = 1;
+	
+	param.callback = Callback_WDSWrapper;
+	param.alloc = Alloc_WDSWrapper;
+	param.free = Free_WDSWrapper;
+	WDS_WrapperInitialize( param );
+}
+
+// メイン関数
 void NitroMain(void)
 {
 	WDSWrapperInitializeParam param;
 	u16 lastpad = 0x0000;
 	u16 nowpad = 0x0000;
+	PMSleepCallbackInfo presleepcallbackinfo, postsleepcallbackinfo;
 	
 	// 各種初期化処理
 	OS_Init();
@@ -102,7 +144,13 @@ void NitroMain(void)
 	OS_EnableIrqMask(OS_IE_V_BLANK);
 	OS_EnableIrq();
 	GX_VBlankIntr(TRUE);
-
+	
+	//---- power manager callback
+	PM_SetSleepCallbackInfo( &presleepcallbackinfo, Callback_WDSPreSleep, NULL );
+	PM_AppendPreSleepCallback( &presleepcallbackinfo );
+	PM_SetSleepCallbackInfo( &postsleepcallbackinfo, Callback_WDSPostSleep, NULL );
+	PM_AppendPostSleepCallback( &postsleepcallbackinfo );
+	
 	InitializeAllocateSystem();
 	
 	OS_TPrintf( "WDSWrapper Sample\n\n" );
@@ -111,6 +159,7 @@ void NitroMain(void)
 	OS_TPrintf( "Aボタン: スキャンを再開\n" );
 	OS_TPrintf( "Yボタン: スキャンを中断し、WDSラッパーとWDSを解放\n" );
 	OS_TPrintf( "スタートボタン: ヒープをダンプ表示\n" );
+	OS_TPrintf( "セレクトボタン: スリープモードin/out\n" );
 
 	// キー入力で中断・再開・解放をやる
 	while( 1 ) {
@@ -140,7 +189,9 @@ void NitroMain(void)
 			WDS_WrapperCleanup();
 		if( ( lastpad ^ nowpad ) & PAD_BUTTON_START && !( nowpad & PAD_BUTTON_START ) )
 			OS_DumpHeap( OS_ARENA_MAIN, OS_CURRENT_HEAP_HANDLE );
-		
+		if( ( lastpad ^ nowpad ) & PAD_BUTTON_SELECT && !( nowpad & PAD_BUTTON_SELECT ) ) {
+			PM_GoSleepMode( PM_TRIGGER_KEY, PM_PAD_LOGIC_OR, PAD_BUTTON_SELECT );
+		}
 		OS_Sleep( 100 );
 	}
 }
