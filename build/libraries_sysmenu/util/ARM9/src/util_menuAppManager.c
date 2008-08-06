@@ -40,6 +40,8 @@ static void AMN_unlockSubBannerFileBuffer();
 static u32  AMN_getBannerAnimeCRC(const BannerAnime* pAnime);
 static BOOL AMN_checkAndReplaceBannerAnime(s32 index);
 
+static void AMNi_updateFreeBoxCount( u8 count );
+
 static vu8     sThreadStarted;
 static vu8     sReadCancelFlag; // とりあえず無視。
 static vu8     sNandTitleListReady;
@@ -92,24 +94,24 @@ static ROM_Header_Short    s_AllRomHeaderArray[OS_TITLEIDLIST_MAX];
 // see also TwlIPL_RED/build/systemmenu_RED/Launcher/ARM9/src/bannerCounter.h
 inline void AMN_BNC_resetCount( AMNBannerCounter *c )
 {
-	c->count = 0;
-	c->control = 0;
+    c->count = 0;
+    c->control = 0;
 }
     
 inline void AMN_BNC_setBanner( AMNBannerCounter *c, const TWLBannerFile *b)
 {
-	c->banner = b;
+    c->banner = b;
 }
     
 inline void AMN_BNC_initCounter( AMNBannerCounter *c, const TWLBannerFile *b)
 {
-	AMN_BNC_setBanner( c, b );
-	AMN_BNC_resetCount( c );
+    AMN_BNC_setBanner( c, b );
+    AMN_BNC_resetCount( c );
 }
     
 inline const TWLBannerFile* AMN_BNC_getBanner( AMNBannerCounter *c )
 {
-	return c->banner;
+    return c->banner;
 }
 
 static void AMN_BNC_incrementCount( AMNBannerCounter *c );
@@ -163,7 +165,7 @@ static void AMN_Manager( )
  */
 void AMN_init( void *(*pAlloc)(u32), void (*pFree)(void*) )
 {
-	// 元コンストラクタ
+    // 元コンストラクタ
     AMN_Manager();
     // この時点でAMNi_AllocとAMNi_FreeがNULLであるべし
     SDK_ASSERT( AMNi_Alloc == NULL && AMNi_Free == NULL );
@@ -350,18 +352,18 @@ void AMN_destroy()
         OS_Sleep(1);
     }
 
-	if( AMNi_Free != NULL && spSubBannerFileBuffer)
-	{
-		AMNi_Free( spSubBannerFileBuffer );
-	}
-	if( AMNi_Free != NULL && spEmptyBannerFileBuffer)
-	{
-		AMNi_Free( spEmptyBannerFileBuffer );
-	}
-	if( AMNi_Free != NULL && spNandBannerFileArray)
-	{
-		AMNi_Free( spNandBannerFileArray );
-	}
+    if( AMNi_Free != NULL && spSubBannerFileBuffer)
+    {
+        AMNi_Free( spSubBannerFileBuffer );
+    }
+    if( AMNi_Free != NULL && spEmptyBannerFileBuffer)
+    {
+        AMNi_Free( spEmptyBannerFileBuffer );
+    }
+    if( AMNi_Free != NULL && spNandBannerFileArray)
+    {
+        AMNi_Free( spNandBannerFileArray );
+    }
 }
 
 static void AMN_initFlags_()
@@ -384,118 +386,118 @@ static void AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
     // header情報の取得
 
 #if (MEASURE_BANNER_LOAD_TIME == 1)
-	OSTick start;
+    OSTick start;
 #endif
 
-	FSFile  file[1];
-	BOOL bSuccess;
-	char path[FS_ENTRY_LONGNAME_MAX];
-	s32 readLen;
-	u32 offset;
-	
-	s32 rhArrayLen = cNandTitleIndexStart + sNandAppRomHeaderArrayLength;
-	
-	// もう入らない
+    FSFile  file[1];
+    BOOL bSuccess;
+    char path[FS_ENTRY_LONGNAME_MAX];
+    s32 readLen;
+    u32 offset;
+    
+    s32 rhArrayLen = cNandTitleIndexStart + sNandAppRomHeaderArrayLength;
+    
+    // もう入らない
     if (rhArrayLen >= OS_TITLEIDLIST_MAX) {
         return;
     }
     
-	FS_InitFile(file);
-	
+    FS_InitFile(file);
+    
 #if (MEASURE_BANNER_LOAD_TIME == 1)
-	start = OS_GetTick();
+    start = OS_GetTick();
 #endif
 
-	if( (titleID & TITLE_ID_DATA_ONLY_FLAG_MASK) == 0 )
-	{
-		// DataOnlyでない場合
-		readLen = NAM_GetTitleBootContentPathFast( path, titleID );
-		
+    if( (titleID & TITLE_ID_DATA_ONLY_FLAG_MASK) == 0 )
+    {
+        // DataOnlyでない場合
+        readLen = NAM_GetTitleBootContentPathFast( path, titleID );
+        
 #if (MEASURE_BANNER_LOAD_TIME == 1)
-		OS_TPrintf( "NAM_GetTitleBootContentPath : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+        OS_TPrintf( "NAM_GetTitleBootContentPath : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
 #endif
-		
-		// ファイルパスを取得
-		if(readLen != NAM_OK){
-			// error
-			SDK_ASSERT( FALSE );
-			return;
-		}
-		
+        
+        // ファイルパスを取得
+        if(readLen != NAM_OK){
+            // error
+            SDK_ASSERT( FALSE );
+            return;
+        }
+        
 #if (MEASURE_BANNER_LOAD_TIME == 1)
-		start = OS_GetTick();
+        start = OS_GetTick();
 #endif
 
-		// ファイルオープン
-		bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
-		if( ! bSuccess )
-		{
-			// error
-			SDK_ASSERT( FALSE );
-			return;
-		}
-		
+        // ファイルオープン
+        bSuccess = FS_OpenFileEx(file, path, FS_FILEMODE_R);
+        if( ! bSuccess )
+        {
+            // error
+            SDK_ASSERT( FALSE );
+            return;
+        }
+        
 #if (MEASURE_BANNER_LOAD_TIME == 1)
-		OS_TPrintf( "OpenFileEX : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
-		start = OS_GetTick();
+        OS_TPrintf( "OpenFileEX : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+        start = OS_GetTick();
 #endif
-		
-		readLen = FS_ReadFile(file, &s_AllRomHeaderArray[rhArrayLen], sizeof(ROM_Header_Short));
-		if( readLen != sizeof(ROM_Header_Short) )
-		{
-			// error
-			SDK_ASSERT( FALSE );
-			FS_CloseFile(file);
-			return;
-		}
-		
-		offset = s_AllRomHeaderArray[rhArrayLen].banner_offset;
+        
+        readLen = FS_ReadFile(file, &s_AllRomHeaderArray[rhArrayLen], sizeof(ROM_Header_Short));
+        if( readLen != sizeof(ROM_Header_Short) )
+        {
+            // error
+            SDK_ASSERT( FALSE );
+            FS_CloseFile(file);
+            return;
+        }
+        
+        offset = s_AllRomHeaderArray[rhArrayLen].banner_offset;
 
 #if (MEASURE_BANNER_LOAD_TIME == 1)
-		OS_TPrintf( "FS_ReadFile header : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+        OS_TPrintf( "FS_ReadFile header : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
 #endif
-	}
-	else
-	{
-		// DataOnlyの場合
-		int l;
-		NAMTitleInfo naminfo;
-		// この関数で得られる情報は無検証なので改ざんの可能性があるが、メーカーコードのみの判定なので、速度を優先する。(2008.06.20吉岡)
-		// （Fastつけないと一回300msぐらいかかる）
-		NAM_ReadTitleInfoFast( &naminfo, titleID );
-		MI_CpuClear8(&s_AllRomHeaderArray[rhArrayLen], sizeof(ROM_Header_Short) );
-		OS_TPrintf( "0x%0.16llx dataonly-title : makercode = ", titleID );
-		for(l=0;l<MAKER_CODE_MAX;l++)
-		{
-			s_AllRomHeaderArray[rhArrayLen].maker_code[l] = ((char *)&naminfo.companyCode)[l];
-		    OS_TPrintf( "0x%0.2x ", s_AllRomHeaderArray[rhArrayLen].maker_code[l] );
-		}
-		OS_TPrintf( "\n" );
-		s_AllRomHeaderArray[rhArrayLen].titleID = titleID;
-		
-		sNandAppRomHeaderArrayLength++;
-		return;
-	}
+    }
+    else
+    {
+        // DataOnlyの場合
+        int l;
+        NAMTitleInfo naminfo;
+        // この関数で得られる情報は無検証なので改ざんの可能性があるが、メーカーコードのみの判定なので、速度を優先する。(2008.06.20吉岡)
+        // （Fastつけないと一回300msぐらいかかる）
+        NAM_ReadTitleInfoFast( &naminfo, titleID );
+        MI_CpuClear8(&s_AllRomHeaderArray[rhArrayLen], sizeof(ROM_Header_Short) );
+        OS_TPrintf( "0x%0.16llx dataonly-title : makercode = ", titleID );
+        for(l=0;l<MAKER_CODE_MAX;l++)
+        {
+            s_AllRomHeaderArray[rhArrayLen].maker_code[l] = ((char *)&naminfo.companyCode)[l];
+            OS_TPrintf( "0x%0.2x ", s_AllRomHeaderArray[rhArrayLen].maker_code[l] );
+        }
+        OS_TPrintf( "\n" );
+        s_AllRomHeaderArray[rhArrayLen].titleID = titleID;
+        
+        sNandAppRomHeaderArrayLength++;
+        return;
+    }
 
     if(s_AllRomHeaderArray[rhArrayLen].platform_code & PLATFORM_CODE_FLAG_TWL){
-		// ROMヘッダのリージョンチェックとCRCチェックを行い、不正なアプリは無視する。
-		if( !UTL_CheckAppRegion( s_AllRomHeaderArray[rhArrayLen].card_region_bitmap ) ) {
-			OS_TPrintf( "Region Check NG : %llx\n", titleID );
-			FS_CloseFile(file);
-			return;
-		}
+        // ROMヘッダのリージョンチェックとCRCチェックを行い、不正なアプリは無視する。
+        if( !UTL_CheckAppRegion( s_AllRomHeaderArray[rhArrayLen].card_region_bitmap ) ) {
+            OS_TPrintf( "Region Check NG : %llx\n", titleID );
+            FS_CloseFile(file);
+            return;
+        }
     }
-	if( !UTL_CheckAppCRC16( &s_AllRomHeaderArray[rhArrayLen] ) ) {
-		OS_TPrintf( "CRC16  Check NG : %llx\n", titleID );
-		FS_CloseFile(file);
-		return;
-	}
+    if( !UTL_CheckAppCRC16( &s_AllRomHeaderArray[rhArrayLen] ) ) {
+        OS_TPrintf( "CRC16  Check NG : %llx\n", titleID );
+        FS_CloseFile(file);
+        return;
+    }
 
-	sNandAppRomHeaderArrayLength++;
+    sNandAppRomHeaderArrayLength++;
 
-	// もうランチャー表示用情報は数がオーバーしてるか、表示用情報を読まない設定
+    // もうランチャー表示用情報は数がオーバーしてるか、表示用情報を読まない設定
     if ( ( sNandTitleListLengthForLauncher >= cNandTitleArrayMax ) || !readShowData ) {
-		FS_CloseFile(file);
+        FS_CloseFile(file);
         return;
     }
     
@@ -508,72 +510,72 @@ static void AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
     pTitleProp->flags.bootType = LAUNCHER_BOOTTYPE_NAND;
 
     // バナーの取得
-	// バナーが存在する場合のみリード
-	if( offset ) {
-		
+    // バナーが存在する場合のみリード
+    if( offset ) {
+        
 #if (MEASURE_BANNER_LOAD_TIME == 1)
-		start = OS_GetTick();
+        start = OS_GetTick();
 #endif
 
-		bSuccess = FS_SeekFile(file, (s32)offset, FS_SEEK_SET);
-		if( ! bSuccess )
-		{
-			// error
-			SDK_ASSERT( FALSE );
-			FS_CloseFile(file);
-			return;
-		}
+        bSuccess = FS_SeekFile(file, (s32)offset, FS_SEEK_SET);
+        if( ! bSuccess )
+        {
+            // error
+            SDK_ASSERT( FALSE );
+            FS_CloseFile(file);
+            return;
+        }
 
 #if (MEASURE_BANNER_LOAD_TIME == 1)
-		OS_TPrintf( "FS_SeekFile banner: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
-		start = OS_GetTick();
+        OS_TPrintf( "FS_SeekFile banner: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+        start = OS_GetTick();
 #endif
-		
-		readLen = FS_ReadFile( file, pTitleProp->pBanner, (s32)sizeof(TWLBannerFile) );
-		if( readLen != (s32)sizeof(TWLBannerFile) )
-		{
-			// error
-			SDK_ASSERT( FALSE );
-			FS_CloseFile(file);
-			return;
-		}
+        
+        readLen = FS_ReadFile( file, pTitleProp->pBanner, (s32)sizeof(TWLBannerFile) );
+        if( readLen != (s32)sizeof(TWLBannerFile) )
+        {
+            // error
+            SDK_ASSERT( FALSE );
+            FS_CloseFile(file);
+            return;
+        }
 
 #if (MEASURE_BANNER_LOAD_TIME == 1)
-		OS_TPrintf( "FS_ReadFile banner: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
-		start = OS_GetTick();
-#endif
-
-		// バナーチェックリクエスト送信。
-		OS_SendMessage(&sCheckMsgQueue, (OSMessage)(pTitleProp->pBanner), OS_MESSAGE_BLOCK);
-
-#if (MEASURE_BANNER_LOAD_TIME == 1)
-		OS_TPrintf( "check banner: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+        OS_TPrintf( "FS_ReadFile banner: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+        start = OS_GetTick();
 #endif
 
-	}else {
-		// バナーが存在しない場合はバッファクリア
-		MI_CpuClearFast( pTitleProp->pBanner, sizeof(TWLBannerFile) );
-	}
-	
-#if (MEASURE_BANNER_LOAD_TIME == 1)
-	start = OS_GetTick();
-#endif
-
-	FS_CloseFile(file);
-	
-#if (MEASURE_BANNER_LOAD_TIME == 1)
-	OS_TPrintf( "close file : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
-	start = OS_GetTick();
-#endif
-	
-	// サブバナーファイルを読み込んでみる
-	if(s_AllRomHeaderArray[rhArrayLen].exFlags.availableSubBannerFile &&
-	   NAM_OK == NAM_GetTitleBannerFilePath( path, titleID ))
-	{
+        // バナーチェックリクエスト送信。
+        OS_SendMessage(&sCheckMsgQueue, (OSMessage)(pTitleProp->pBanner), OS_MESSAGE_BLOCK);
 
 #if (MEASURE_BANNER_LOAD_TIME == 1)
-		OS_TPrintf( "NAM_GetTitleBannerFilePath : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
-		start = OS_GetTick();
+        OS_TPrintf( "check banner: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+#endif
+
+    }else {
+        // バナーが存在しない場合はバッファクリア
+        MI_CpuClearFast( pTitleProp->pBanner, sizeof(TWLBannerFile) );
+    }
+    
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+    start = OS_GetTick();
+#endif
+
+    FS_CloseFile(file);
+    
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+    OS_TPrintf( "close file : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+    start = OS_GetTick();
+#endif
+    
+    // サブバナーファイルを読み込んでみる
+    if(s_AllRomHeaderArray[rhArrayLen].exFlags.availableSubBannerFile &&
+       NAM_OK == NAM_GetTitleBannerFilePath( path, titleID ))
+    {
+
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+        OS_TPrintf( "NAM_GetTitleBannerFilePath : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+        start = OS_GetTick();
 #endif
         if (FS_OpenFileEx(file, path, FS_FILEMODE_R)) {
             // サブバナーバッファ確保。
@@ -593,9 +595,9 @@ static void AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
         }
 
 #if (MEASURE_BANNER_LOAD_TIME == 1)
-		OS_TPrintf( "open-read-close-check subbanner : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+        OS_TPrintf( "open-read-close-check subbanner : %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
 #endif
-	}
+    }
     
     sNandTitleListLengthForLauncher++;
 }
@@ -609,6 +611,7 @@ static void AMN_initNandTitleList_()
     s32 ret;
     s32 l;
     NAMTitleId* pNandAllTitleIDList = NULL;
+    u8 count_valid_app_for_launcher = 0;
 
     // インポートされているタイトルの取得
     sNandAllTitleListLength = NAM_GetNumTitles();
@@ -646,9 +649,16 @@ static void AMN_initNandTitleList_()
             AMNi_getAndAddNandTitleData( pNandAllTitleIDList[l], TRUE );
     // 本体設定の場合、アプリマネージャ用indexは飛び飛びになったり、ForSetting()が返す値(個数)より大きくなるので
     // getNandTitleListLengthForSetting()は用意しない。
+    
+            // FreeboxCount更新のためのカウンタ
+            count_valid_app_for_launcher++;
         }
     }
+
+    // FreeboxCount更新
+    AMNi_updateFreeBoxCount( count_valid_app_for_launcher );
     
+
     // ローンチ対象でないタイトルの情報の取得
     for (l = 0; l < sNandAllTitleListLength; l++) {
         if (!AMN_isTitleIdValidForLauncher(pNandAllTitleIDList[l])) {
@@ -667,6 +677,7 @@ static void AMN_initNandTitleRomHeaderShortList_()
     s32 ret;
     s32 l;
     NAMTitleId* pNandAllTitleIDList = NULL;
+    u8 count_valid_app_for_launcher = 0;
 
     // インポートされているタイトルの取得
     sNandAllTitleListLength = NAM_GetNumTitles();
@@ -697,7 +708,14 @@ static void AMN_initNandTitleRomHeaderShortList_()
     // タイトルの情報(ヘッダのみ)の取得
     for (l = 0; l < sNandAllTitleListLength; l++) {
         AMNi_getAndAddNandTitleData( pNandAllTitleIDList[l], FALSE );
+        if (AMN_isTitleIdValidForLauncher(pNandAllTitleIDList[l])) {
+            // FreeboxCount更新のためのカウンタ
+            count_valid_app_for_launcher++;
+        }
     }
+    
+    // FreeboxCount更新
+    AMNi_updateFreeBoxCount( count_valid_app_for_launcher );
 
     if (pNandAllTitleIDList) {
         AMNi_Free( pNandAllTitleIDList );
@@ -707,12 +725,12 @@ static void AMN_initNandTitleRomHeaderShortList_()
 // 生データ（TitlePropertyのリスト、HeaderShortリスト）にアクセスできる抜け道関数
 TitleProperty* AMN_getTitlePropertyList( void )
 {
-	return sAllTitlePropertyArray;
+    return sAllTitlePropertyArray;
 }
 
 ROM_Header_Short* AMN_getRomHeaderList( void )
 {
-	return s_AllRomHeaderArray;
+    return s_AllRomHeaderArray;
 }
 
 static void AMN_procRead()
@@ -1036,45 +1054,45 @@ const u16* AMN_getBannerText(s32 index)
 BOOL AMN_checkBannerFile(TWLBannerFile* pBanner)
 {
 typedef struct BannerCheckParam {
-	u8		*pSrc;
-	u32		size;
+    u8      *pSrc;
+    u32     size;
 }BannerCheckParam;
 
-	int i;
-	BOOL retval = TRUE;
-	u16 calc_crc = 0xffff;
-	u16 *pHeaderCRC = (u16 *)&pBanner->h.crc16_v1;
-	BannerCheckParam bannerCheckList[ BANNER_VER_NTR_MAX ];
-	BannerCheckParam *pChk = &bannerCheckList[ 0 ];
-	
-	// NTR互換部分は標準でチェック
-	bannerCheckList[ 0 ].pSrc = (u8 *)&( pBanner->v1 );
-	bannerCheckList[ 0 ].size = sizeof( BannerFileV1 );
-	bannerCheckList[ 1 ].pSrc = (u8 *)&( pBanner->v2 );
-	bannerCheckList[ 1 ].size = sizeof( BannerFileV2 );
-	bannerCheckList[ 2 ].pSrc = (u8 *)&( pBanner->v3 );
-	bannerCheckList[ 2 ].size = sizeof( BannerFileV3 );
-	
-	for( i = 0; i < BANNER_VER_NTR_MAX; i++ ) {
-		if( i < pBanner->h.version ) {
-			calc_crc = SVC_GetCRC16( calc_crc, pChk->pSrc, pChk->size );
-			if( calc_crc != *pHeaderCRC++ ) {
-				retval = FALSE;
-				break;
-			}
-		}else {
-			MI_CpuClear16( pChk->pSrc, pChk->size );
-		}
-		pChk++;
-	}
-	
-	// TWLバナーなら、バナーアニメ部もチェック
-	if( pBanner->h.platform == BANNER_PLATFORM_TWL ) {
+    int i;
+    BOOL retval = TRUE;
+    u16 calc_crc = 0xffff;
+    u16 *pHeaderCRC = (u16 *)&pBanner->h.crc16_v1;
+    BannerCheckParam bannerCheckList[ BANNER_VER_NTR_MAX ];
+    BannerCheckParam *pChk = &bannerCheckList[ 0 ];
+    
+    // NTR互換部分は標準でチェック
+    bannerCheckList[ 0 ].pSrc = (u8 *)&( pBanner->v1 );
+    bannerCheckList[ 0 ].size = sizeof( BannerFileV1 );
+    bannerCheckList[ 1 ].pSrc = (u8 *)&( pBanner->v2 );
+    bannerCheckList[ 1 ].size = sizeof( BannerFileV2 );
+    bannerCheckList[ 2 ].pSrc = (u8 *)&( pBanner->v3 );
+    bannerCheckList[ 2 ].size = sizeof( BannerFileV3 );
+    
+    for( i = 0; i < BANNER_VER_NTR_MAX; i++ ) {
+        if( i < pBanner->h.version ) {
+            calc_crc = SVC_GetCRC16( calc_crc, pChk->pSrc, pChk->size );
+            if( calc_crc != *pHeaderCRC++ ) {
+                retval = FALSE;
+                break;
+            }
+        }else {
+            MI_CpuClear16( pChk->pSrc, pChk->size );
+        }
+        pChk++;
+    }
+    
+    // TWLバナーなら、バナーアニメ部もチェック
+    if( pBanner->h.platform == BANNER_PLATFORM_TWL ) {
             if (pBanner->h.crc16_anime != AMN_getBannerAnimeCRC(&pBanner->anime)) {
                 retval = FALSE;
             }
-	}
-	return retval;
+    }
+    return retval;
 }
 
 // アニメ部CRC算出。
@@ -1109,83 +1127,83 @@ static BOOL AMN_checkAndReplaceBannerAnime(s32 index)
 // see also TwlIPL_RED/build/systemmenu_RED/Launcher/ARM9/src/bannerCounter.c
 void AMN_BNC_incrementCount( AMNBannerCounter *c )
 {
-	// TWLのみカウントインクリメント
-	if( c->banner->h.platform == BANNER_PLATFORM_TWL )
-	{
-		if( c->banner->anime.control[0].frameCount == 0 )
-		{
-			// アニメに終端しか存在しない
-			//OS_TPrintf( "BNC_incrementCount:Only a Terminator!\n" );
-			return;
-		}
-		
-		c->count++;
-		if( c->count >= c->banner->anime.control[c->control].frameCount )
-		{
-			// カウント値がコントロールのフレームカウントを超えたので次のコントロールへ
-			c->control++;
-			c->count = 0;
+    // TWLのみカウントインクリメント
+    if( c->banner->h.platform == BANNER_PLATFORM_TWL )
+    {
+        if( c->banner->anime.control[0].frameCount == 0 )
+        {
+            // アニメに終端しか存在しない
+            //OS_TPrintf( "BNC_incrementCount:Only a Terminator!\n" );
+            return;
+        }
+        
+        c->count++;
+        if( c->count >= c->banner->anime.control[c->control].frameCount )
+        {
+            // カウント値がコントロールのフレームカウントを超えたので次のコントロールへ
+            c->control++;
+            c->count = 0;
 
-			//ループ及び停止の処理
-			if( c->control >= BANNER_ANIME_CONTROL_INFO_NUM )
-			{
-				// コントロールが限界を超えたら無条件でループ
-				AMN_BNC_resetCount( c );
-			}
-			else if( c->banner->anime.control[c->control].frameCount == 0 )
-			{
-				// コントロールのフレームカウントが0なら終端到達
-				if( c->banner->anime.control[c->control].animeType == 0 )
-				{
-					// アニメタイプ0ならループ
-					AMN_BNC_resetCount( c );
-				}
-				else if( c->banner->anime.control[c->control].animeType == 1 )
-				{
-					// アニメタイプ1なら停止（一つ前のコントロールに戻す）
-					c->control--;
-				}
-			}
-		}
-	}
+            //ループ及び停止の処理
+            if( c->control >= BANNER_ANIME_CONTROL_INFO_NUM )
+            {
+                // コントロールが限界を超えたら無条件でループ
+                AMN_BNC_resetCount( c );
+            }
+            else if( c->banner->anime.control[c->control].frameCount == 0 )
+            {
+                // コントロールのフレームカウントが0なら終端到達
+                if( c->banner->anime.control[c->control].animeType == 0 )
+                {
+                    // アニメタイプ0ならループ
+                    AMN_BNC_resetCount( c );
+                }
+                else if( c->banner->anime.control[c->control].animeType == 1 )
+                {
+                    // アニメタイプ1なら停止（一つ前のコントロールに戻す）
+                    c->control--;
+                }
+            }
+        }
+    }
 }
 
 AMNFrameAnimeData AMN_BNC_getFAD( AMNBannerCounter *c )
 {
-	AMNFrameAnimeData ret;
-	if( c->banner->h.platform == BANNER_PLATFORM_NTR )
-	{
-		ret.image = c->banner->v1.image;
-		ret.pltt = c->banner->v1.pltt;
-		ret.hflip = FALSE;
-		ret.vflip = FALSE;
-	}
-	else
-	{
-		if( c->banner->anime.control[0].frameCount == 0 )
-		{
-			// アニメに終端しか存在しない
-			//OS_TPrintf( "BNC_getFAD:Only a Terminator!\n" );
-			ret.image = c->banner->v1.image;
-			ret.pltt = c->banner->v1.pltt;
-			ret.hflip = FALSE;
-			ret.vflip = FALSE;
-			return ret;
-		}
-		// コントロールデータを読んで、現在のフレームに該当するデータを返す
-		ret.image = c->banner->anime.image[ c->banner->anime.control[c->control].normal.cellNo ];
-		ret.pltt = c->banner->anime.pltt[ c->banner->anime.control[c->control].normal.plttNo ];
-		ret.hflip = c->banner->anime.control[c->control].normal.flipType & 0x1;
-		ret.vflip = (c->banner->anime.control[c->control].normal.flipType & 0x2) >> 1;
-	}
-	return ret;
+    AMNFrameAnimeData ret;
+    if( c->banner->h.platform == BANNER_PLATFORM_NTR )
+    {
+        ret.image = c->banner->v1.image;
+        ret.pltt = c->banner->v1.pltt;
+        ret.hflip = FALSE;
+        ret.vflip = FALSE;
+    }
+    else
+    {
+        if( c->banner->anime.control[0].frameCount == 0 )
+        {
+            // アニメに終端しか存在しない
+            //OS_TPrintf( "BNC_getFAD:Only a Terminator!\n" );
+            ret.image = c->banner->v1.image;
+            ret.pltt = c->banner->v1.pltt;
+            ret.hflip = FALSE;
+            ret.vflip = FALSE;
+            return ret;
+        }
+        // コントロールデータを読んで、現在のフレームに該当するデータを返す
+        ret.image = c->banner->anime.image[ c->banner->anime.control[c->control].normal.cellNo ];
+        ret.pltt = c->banner->anime.pltt[ c->banner->anime.control[c->control].normal.plttNo ];
+        ret.hflip = c->banner->anime.control[c->control].normal.flipType & 0x1;
+        ret.vflip = (c->banner->anime.control[c->control].normal.flipType & 0x2) >> 1;
+    }
+    return ret;
 }
 
 AMNFrameAnimeData AMN_BNC_getFADAndIncCount( AMNBannerCounter *c )
 {
-	AMNFrameAnimeData ret = AMN_BNC_getFAD( c );
-	AMN_BNC_incrementCount( c );
-	return ret;
+    AMNFrameAnimeData ret = AMN_BNC_getFAD( c );
+    AMN_BNC_incrementCount( c );
+    return ret;
 }
 
 BOOL AMN_isTitleIdValidForLauncher(NAMTitleId id)
@@ -1205,6 +1223,58 @@ BOOL AMN_isIndexValidForSetting(s32 index)
     return FALSE;
 }
 
+static void AMNi_updateFreeBoxCount( u8 count )
+{
+    u32 installed;
+    u8 free;
+    BOOL changed = FALSE;
+    u8 *pBuffer;
+    BOOL retval = TRUE;
+    
+    installed = LCFG_TSD_GetInstalledSoftBoxCount();
+    free = LCFG_TSD_GetFreeSoftBoxCount();
+    
+    if( count > LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX )
+    {
+        count = LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX;
+    }
+    
+    OS_TPrintf( "AMNi_updateFreeBoxCount : Install:%d, Free:%d, LCFG_Install:%d, LCFG_Free:%d, MAX:%d\n",
+                 count, LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX - count, installed, free, LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX );
+    
+    if( (u8)installed != count )
+    {
+        LCFG_TSD_SetInstalledSoftBoxCount( ( u8 )count );
+        changed = TRUE;
+    }
+    
+    if( LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX - count != free )
+    {
+        LCFG_TSD_SetFreeSoftBoxCount( (u8)( LCFG_TWL_FREE_SOFT_BOX_COUNT_MAX - count ) );
+        changed = TRUE;
+    }
+
+    if(changed)
+    {
+        // LCFGライブラリの静的変数の値をNANDに反映
+        pBuffer = AMNi_Alloc( LCFG_WRITE_TEMP );
+        if (!pBuffer) {
+            OS_TPrintf( "AMNi_updateFreeBoxCount : AMNi_Alloc failed.\n" );
+            return;
+        }
+        retval = LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+        AMNi_Free( pBuffer );
+        if (!retval) {
+            OS_TPrintf( "AMNi_updateFreeBoxCount : LCFG_WriteTWLSettings failed.\n" );
+            return;
+        }
+        OS_TPrintf( "AMNi_updateFreeBoxCount : FreeBoxCount is updated.\n" );
+    }else
+    {
+        OS_TPrintf( "AMNi_updateFreeBoxCount : FreeBoxCount is not updated.\n" );
+    }
+}
+
 /*--------------------------------------------------------------------------------------------------------
 
 // アプリケーションに埋め込むテストコードのサンプル
@@ -1213,48 +1283,48 @@ BOOL AMN_isIndexValidForSetting(s32 index)
 static OSHeapHandle os_heap_handle;
 static void *alloc_tmp(u32 size)
 {
-	return OS_AllocFromHeap( OS_ARENA_MAINEX, os_heap_handle, size);
+    return OS_AllocFromHeap( OS_ARENA_MAINEX, os_heap_handle, size);
 }
 static void free_tmp( void *ptr )
 {
-	OS_FreeToHeap( OS_ARENA_MAINEX, os_heap_handle, ptr );
+    OS_FreeToHeap( OS_ARENA_MAINEX, os_heap_handle, ptr );
 }
 static void test2()
 {
 
-	s32 length;
-	s32 idx;
-	void *nstart;
-	
-	nstart = OS_InitAlloc( OS_ARENA_MAINEX, OS_GetMainExArenaLo(), OS_GetMainExArenaHi(), 1 );
-	OS_SetMainExArenaLo( nstart );
-	
-	os_heap_handle = OS_CreateHeap( OS_ARENA_MAINEX, OS_GetMainExArenaLo(), OS_GetMainExArenaHi() );
-	
-	AMN_init( alloc_tmp, free_tmp );
+    s32 length;
+    s32 idx;
+    void *nstart;
+    
+    nstart = OS_InitAlloc( OS_ARENA_MAINEX, OS_GetMainExArenaLo(), OS_GetMainExArenaHi(), 1 );
+    OS_SetMainExArenaLo( nstart );
+    
+    os_heap_handle = OS_CreateHeap( OS_ARENA_MAINEX, OS_GetMainExArenaLo(), OS_GetMainExArenaHi() );
+    
+    AMN_init( alloc_tmp, free_tmp );
 
-	// 起動直後、自動的にバナーデータ読み込みを行います。
-	// メインスレッドでは、とりあえず完了まで待ちます。
-	while (!AMN_isNandTitleListReady()) {
-	    OS_Sleep(1);
-	}
+    // 起動直後、自動的にバナーデータ読み込みを行います。
+    // メインスレッドでは、とりあえず完了まで待ちます。
+    while (!AMN_isNandTitleListReady()) {
+        OS_Sleep(1);
+    }
 
-	// タイトル一覧をOS_Printfします。
-	// cmn::util::U16toSjisは、STDライブラリの関数を呼び出してUnicodeからShiftJISへ変換します。
-	length = AMN_getNandTitleListLengthForLauncher();
-	for (idx = 0; idx < length; idx++) {
-	    s32 i;
-	    char dst[256];
-	    int dstlen = 256;
-	    i = cNandTitleIndexStart + idx;
-	    MI_CpuClearFast(dst,256);
-	    STD_ConvertStringUnicodeToSjis(dst, &dstlen, AMN_getBannerText(i), NULL, NULL);
-	    OS_TPrintf("title idx=%2d, titleId=%016llx exp=%02x forStg=%d bannerText=%s\n",
-	              i, (u64)AMN_getTitleIdByIndex(i),
-	              AMN_getTitleProperty(i)->expansionFlags,
-	              AMN_isIndexValidForSetting(i),
-	              dst);
-	}
+    // タイトル一覧をOS_Printfします。
+    // cmn::util::U16toSjisは、STDライブラリの関数を呼び出してUnicodeからShiftJISへ変換します。
+    length = AMN_getNandTitleListLengthForLauncher();
+    for (idx = 0; idx < length; idx++) {
+        s32 i;
+        char dst[256];
+        int dstlen = 256;
+        i = cNandTitleIndexStart + idx;
+        MI_CpuClearFast(dst,256);
+        STD_ConvertStringUnicodeToSjis(dst, &dstlen, AMN_getBannerText(i), NULL, NULL);
+        OS_TPrintf("title idx=%2d, titleId=%016llx exp=%02x forStg=%d bannerText=%s\n",
+                  i, (u64)AMN_getTitleIdByIndex(i),
+                  AMN_getTitleProperty(i)->expansionFlags,
+                  AMN_isIndexValidForSetting(i),
+                  dst);
+    }
 
 // タイトルIDからの逆引き
     {
