@@ -90,7 +90,7 @@ void LoadSharedFontThread( void *arg )
 	BOOL retval = TRUE;
 	OSSharedFontIndex i;
 	
-	for( i = OS_SHARED_FONT_WW_S; i < OS_SHARED_FONT_MAX; i++ ) {
+	for( i = OS_SHARED_FONT_WW_L; i < OS_SHARED_FONT_MAX; i++ ) {
 		int size;
 		
 		OS_TPrintf( "%s read.\n", OS_GetSharedFontName( i ) );
