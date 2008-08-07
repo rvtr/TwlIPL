@@ -204,7 +204,7 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 	
 	if( menu == MENU_OWNER && entryLine == OWNER_COLOR )
 	{
-		PrintfSJIS( VALUE_LEFT , VALUE_UP + LINE_OFFSET*drawOffset, TXT_UCOLOR_G0 + entry->iValue , "¡" );
+		PrintfSJIS( VALUE_LEFT , VALUE_UP + LINE_OFFSET*drawOffset, TXT_UCOLOR_GRAY + entry->iValue , "¡" );
 		printData( VALUE_LEFT + LINE_OFFSET , VALUE_UP + LINE_OFFSET*drawOffset, txtColor, entry );
 		return;
 	}
@@ -548,7 +548,8 @@ void drawExecuteMode( const char *command, int changeLine, u8 mode )
 void drawVersion( int idx, int drawLine ,int selected )
 {
 	int kindColor = TXT_COLOR_BLACK;
-			
+	u16 value = gContentsVersion[idx];
+				
 	if( idx == selected)
 	{
 		// ‘I‘ð€–Ú‚Í‚¢‚ë‚©‚¦‚é
@@ -574,8 +575,8 @@ void drawVersion( int idx, int drawLine ,int selected )
 		PrintfSJIS( KIND_LEFT, KIND_UP + LINE_OFFSET*drawLine , kindColor, "%s", buf );
 	}
 	
-	// ’l
-	PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawLine , TXT_COLOR_BLACK, "%x", gContentsVersion[idx] );
+	// ’l	
+	PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawLine , TXT_COLOR_BLACK, "%x.%x", value >> 8, value & 0xFF );
 }
 
 void drawFontInfo( int idx, int drawLine, int selected )

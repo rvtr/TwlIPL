@@ -42,6 +42,7 @@ void getOtherInfo( void );
 void getSecureUserInfo( void );
 void getFontInfo( void );
 void getWLInfo( void );
+void getWhiteListInfo( void );
 void getContentsVersion( void );
 
 #endif

@@ -41,11 +41,12 @@ SRCS			=	main.c viewSystemInfo.c drawFunc.c control.c\
 				strResource.c misc.c util.c\
 				get_versionData.c get_sysmenu.c get_scfg.c get_owner.c\
 				get_hw.c get_parental.c get_other.c\
-				get_secureUser.c get_font.c get_wl.c\
+				get_secureUser.c get_font.c get_wl.c get_whitelist.c\
 				$(MISC_DIR)/src/cmn.c
 
 LINCLUDES		+=	$(MISC_DIR)/include \
-				$(DISP_INFO)/common/include
+					$(DISP_INFO)/common/include	\
+					$(ES_ROOT)/twl/include
 
 TARGET_BIN		=	DispInfo_$(FILE_IDX).$(FILE_SUFFIX)
 
@@ -78,6 +79,7 @@ LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
 #=============================================================================
 
+include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 

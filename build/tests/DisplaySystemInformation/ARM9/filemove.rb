@@ -9,11 +9,11 @@ dirList = Dir::entries "."
 
 for dir in dirList
 
-	puts dir
+	puts "===== #{dir} ====="
 	Dir::chdir "./#{dir}"
 	
 	Dir::glob("./*.{tad,srl}").each {|f|
-		puts #{f}
+		puts "cp #{f} #{dstDir}/"
 		`cp #{f} #{dstDir}/`
 	}
 

@@ -24,11 +24,19 @@ SUBMAKES		=	Makefile.0 Makefile.1 Makefile.2 Makefile.3\
 				Makefile.16 Makefile.17
 #SUBMAKES	=	Makefile.0
 
+
+
 include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-do-build : $(TARGETS)
+rb:
+	ruby makeMakingTest.rb
+
+do-build :
+	
+	$(TARGETS)
+
 
 include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/modulerules
 

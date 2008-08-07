@@ -19,7 +19,7 @@
 #define __DISPLAY_INFO_RESOURCE__
 
 // メニューID
-#define MENU_ROOT 			14
+#define MENU_ROOT 			15
 #define MENU_OWNER 			0
 #define MENU_PARENTAL 		1
 #define MENU_SECURE_USER	2
@@ -31,9 +31,10 @@
 #define MENU_SYSMENU		8
 #define MENU_FONT			9
 #define MENU_WL				10
-#define MENU_VERSION		11
-#define MENU_RESET_INFO		12
-#define MENU_BREAK_DATA		13
+#define MENU_WHITE			11
+#define MENU_VERSION		12
+#define MENU_RESET_INFO		13
+#define MENU_BREAK_DATA		14
 
 
 // 行番号
@@ -165,9 +166,7 @@
 #define SYSMENU_NUP_PRV			6
 #define SYSMENU_SHOP_CERT		7
 #define SYSMENU_SHOP_PRV		8
-#define SYSMENU_NINTENDO_CA		9
-#define SYSMENU_NINTENDO_CAC2	10
-#define SYSMENU_NINTENDO_CAG2	11
+#define SYSMENU_NINTENDO_CAG2	9
 
 #define SYSMENU_HASH_IDX	5
 
@@ -178,10 +177,13 @@
 #define WL_NUM_FW			1
 #define WL_FW_TYPE			2
 
+#define WHITE_NUM			0
+#define WHITE_HASH			1
+
 #define VERSION_OTHER		0
 
 // 各メニューサイズ
-#define ROOTMENU_SIZE 			14
+#define ROOTMENU_SIZE 			15
 #define OWNERMENU_SIZE 			6
 #define PARENTALMENU_SIZE 		12
 #define SECURE_USER_MENU_SIZE	9
@@ -190,9 +192,10 @@
 #define SECURE_HW_MENU_SIZE 	5
 #define SCFG_ARM7_MENU_SIZE 	47
 #define SCFG_ARM9_MENU_SIZE 	24
-#define SYSMENU_MENU_SIZE		12
+#define SYSMENU_MENU_SIZE		10
 #define FONTMENU_SIZE			1
 #define WLMENU_SIZE				3
+#define WHITEMENU_SIZE			2
 #define VERSIONMENU_SIZE 		0
 
 
@@ -210,6 +213,7 @@ extern const char *s_strOtherMenu[];
 extern const char *s_strSystemMenu[];
 extern const char *s_strFontMenu[] ;
 extern const char *s_strWLMenu[];
+extern const char *s_strWhiteMenu[];
 extern const char **s_strMetaMenu[];
 extern const char *s_strARM7RegisterName[];
 extern const char *s_strARM9RegisterName[];

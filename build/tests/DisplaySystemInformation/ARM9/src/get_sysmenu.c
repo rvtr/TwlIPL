@@ -20,10 +20,8 @@
 #define FILE_SIGN_NUP_PRV			"verdata:/.twl-nup-prvkey.der"
 #define FILE_SIGN_SHOP_CERT			"verdata:/.twl-shop-cert.der"
 #define FILE_SIGN_SHOP_PRV			"verdata:/.twl-shop-prvkey.der"
-#define FILE_SIGN_NINTENDO_CA		"verdata:/NintendoCA.der"
-#define FILE_SIGN_NINTENDO_CAC2		"verdata:/NintendoCA-C2.der"
 #define FILE_SIGN_NINTENDO_CAG2		"verdata:/NintendoCA-G2.der"
-#define NUM_FILE_SIGN				7
+#define NUM_FILE_SIGN				5
 
 
 typedef struct SystemMenuVersion {
@@ -37,8 +35,6 @@ static char* s_strSignFilePath[] = {
 	FILE_SIGN_NUP_PRV,
 	FILE_SIGN_SHOP_CERT,
 	FILE_SIGN_SHOP_PRV,	
-	FILE_SIGN_NINTENDO_CA,
-	FILE_SIGN_NINTENDO_CAC2,
 	FILE_SIGN_NINTENDO_CAG2,
 };
 
@@ -47,9 +43,7 @@ static char* s_strSignHash[] = {
 	"7497940e3a3591d592b46ff99d75ebe102c27550",
 	"cf130c7674bae733f3b106109bb06cc0d6ac1a18",
 	"ab38a52a384ab63ea8397de6eae8a96d6c108888",
-	"b5229455dd26c1f53c73060e9089b391389e1f75",
-	"aa8ef66ae0f807edb841c889ee3666a259a28ccc",
-	"c60b2a5cc90f0630cca33040df6b3378239f3bfa"	
+	"c60b2a5cc90f0630cca33040df6b3378239f3bfa"
 };
 
 
@@ -160,6 +154,7 @@ void getSysmenuInfo( void )
 			if( !FS_OpenFileEx( &file[i], s_strSignFilePath[i], FS_FILEMODE_R ) )
 			{
 				// 開けなかったらNANDアクセス禁止状態なので戻る
+				OS_Printf("sysmenu info error: Openfile failed.\n" );
 				return ;
 			}
 			
@@ -191,7 +186,7 @@ void getSysmenuInfo( void )
 			FS_ReadFile( &file[i], srcBuf, (s32)fileLen[i] );
 			OS_TPrintf("FileSize: %d byte  HeadData: %02x%02x%02x\n", fileLen[i], srcBuf[0], srcBuf[1], srcBuf[2] );
 						
-			if( SYSMENU_NUP_CERT <= idx && idx < SYSMENU_NINTENDO_CA )
+			if( SYSMENU_NUP_CERT <= idx && idx < SYSMENU_NINTENDO_CAG2 )
 			{
 				s32 result;
 				

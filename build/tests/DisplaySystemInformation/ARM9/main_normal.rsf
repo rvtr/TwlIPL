@@ -179,7 +179,7 @@ Property
 	LockSCFG	$(DISPINFO_LOCKSCFG)
 
 #	AESSlotフラグはノーマルアプリでは利用できない
-#	HwAESSlotA_SSLClientCert	TRUE
+	HwAESSlotA_SSLClientCert	FALSE
 
 	###
 	#### END

@@ -31,6 +31,7 @@ int s_numMenu[] = {
 	SYSMENU_MENU_SIZE,
 	FONTMENU_SIZE,
 	WLMENU_SIZE,
+	WHITEMENU_SIZE,
 	VERSIONMENU_SIZE,
 	0,
 	0,
@@ -72,6 +73,7 @@ const char *s_strRootMenu[] = {
 	"ÅÉSystemMenu VersionÅÑ",
 	"ÅÉShared FontÅÑ",
 	"ÅÉWireless FirmwareÅÑ",
+	"ÅÉWhitelistÅÑ",
 	"ÅÉInstalled Content VersionÅÑ",
 	"Reset HW Setting to Default",
 	"break HW Setting"
@@ -237,8 +239,6 @@ const char *s_strSystemMenu[] = {
 	".twl-nup-prvkey.der",
 	".twl-shop-cert.der",
 	".twl-shop-prvkey.der",
-	"NintendoCA.der",
-	"NintendoCA-C2.der",
 	"NintendoCA-G2.der"
 };
 
@@ -250,6 +250,11 @@ const char *s_strWLMenu[] = {
 	"Version",
 	"Num of FW",
 	"FW1 type"
+};
+
+const char *s_strWhiteMenu[] = {
+	"Num of Entry",
+	"Tmd Hash"
 };
 
 const char **s_strMetaMenu[] = {
@@ -264,6 +269,7 @@ const char **s_strMetaMenu[] = {
 	s_strSystemMenu,
 	s_strFontMenu,
 	s_strWLMenu,
+	s_strWhiteMenu,
 	NULL,
 	NULL,
 	NULL,

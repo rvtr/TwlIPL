@@ -266,6 +266,7 @@ BOOL control( int *menu, int *line, int *changeLine, u8 *mode )
 				case MENU_SYSMENU:
 				case MENU_FONT:
 				case MENU_WL:
+				case MENU_WHITE:
 				case MENU_VERSION:
 					// ¡‚Ì‰æ–Ê‚Ì‘I‘ğˆÊ’u‚ğ‹L˜^
 					selectLine[ROOTMENU_SIZE] = *line;

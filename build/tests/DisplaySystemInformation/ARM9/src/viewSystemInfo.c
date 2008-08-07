@@ -176,6 +176,7 @@ void getAllInfo( void )
 	getSCFGInfo();
 	getSysmenuInfo();
 	getFontInfo();
+	getWhiteListInfo();
 	getWLInfo();
 	
 #if NAM_ENABLE
