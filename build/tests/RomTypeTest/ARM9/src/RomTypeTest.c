@@ -43,16 +43,24 @@
 
 #define TEST_NUM 15
 
+typedef enum AccessPermission {
+	PERMISSION_NA = 0,
+    PERMISSION_RO,
+    PERMISSION_RW,
+    PERMISSION_ERROR,
+    PERMISSION_MAX
+}
+AccessPermission;
+
 // extern data------------------------------------------
 
 // function's prototype declaration---------------------
-static BOOL ROTestCore( char *path, char *testfile );
-static BOOL RWExTestCore( char *path, char *testfile );
-static BOOL SRLTest( void );
-static BOOL ContentTest( void );
+static AccessPermission RWExTestCore( char *path, char *testfile );
+static AccessPermission SRLTest( void );
+static AccessPermission ContentTest( void );
 static void FinalizeRWTest( FSFile *file, char* filename );
-static BOOL RWTestCore( char *path, char *testfile );
-static BOOL RWTest( char *path );
+static AccessPermission RWTestCore( char *path, char *testfile );
+static AccessPermission RWTest( char *path );
 static void TestFSPermission( void );
 
 // global variable -------------------------------------
@@ -62,32 +70,16 @@ RTCDrawProperty g_rtcDraw = {
 
 // static variable -------------------------------------
 static BOOL s_quiettest = FALSE;
-static char s_testnum = 0;
 
 // const data  -----------------------------------------
-static const BOOL s_answer_data[][TEST_NUM] = 
+static AccessPermission s_answer_data[TEST_NUM];
+
+static const u16 *s_answer_str[PERMISSION_MAX] = 
 {
-	{ FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE }, // 0
-	{ FALSE, FALSE, FALSE,  TRUE, STRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE }, // 1
-	{ FALSE, FALSE, FALSE,  TRUE, STRUE,  TRUE, FALSE, FALSE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE }, // 2
-	{  TRUE,  TRUE, FALSE,  TRUE, STRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE }, // 3
-	{  TRUE,  TRUE, FALSE,  TRUE, STRUE,  TRUE, FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE,  TRUE }, // 4
-	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 5
-	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE, FALSE,  TRUE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 6
-	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 7
-	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 8
-	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE, FALSE, FALSE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // 9
-	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE, FALSE,  TRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // a
-	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE,  TRUE, FALSE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // b
-	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE,  TRUE,  TRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // c
-	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // d
-	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE, FALSE,  TRUE, FALSE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // e
-	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE, FALSE, FALSE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // f
-	{ FALSE, FALSE, CTRUE,  TRUE, STRUE,  TRUE, FALSE,  TRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE }, // g
-	{  TRUE,  TRUE, CTRUE,  TRUE, STRUE,  TRUE, FALSE, FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }, // h
-	{  TRUE,  TRUE, CTRUE,  TRUE, STRUE,  TRUE, FALSE,  TRUE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }, // i
-	{  TRUE,  TRUE, CTRUE,  TRUE, STRUE,  TRUE, FALSE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }, // j
-	{  TRUE,  TRUE, CTRUE,  TRUE, STRUE,  TRUE, FALSE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE,  TRUE }  // k
+	L"NA",
+	L"RO",
+	L"RW",
+	L"×",
 };
 
 static const u16 *s_test_name[TEST_NUM] = 
@@ -113,83 +105,31 @@ static const u16 *s_test_name[TEST_NUM] =
 // テストプログラム
 //======================================================
 
-static BOOL ROTestCore( char *path, char *testfile )
+static AccessPermission RWExistTestCore( char *path, char *testfile )
 {
 	char filename[256];
-	char testfilename[256];
 	int len;
 	char buf[5];
 	FSFile file[1];
+	AccessPermission result = PERMISSION_RW;
 	
 	FS_InitFile( file );
 	STD_TSNPrintf( filename, 256, "%s/%s", path, testfile );
-	STD_TSNPrintf( testfilename, 256, "%s/test.txt", path );
 
-/*
-	if ( FS_CreateFile(testfilename, FS_PERMIT_R | FS_PERMIT_W) )
-	{
-		// ReadOnlyなので、ファイル作成成功したらだめ
-		if( !s_quiettest ) OS_TPrintf("%s:File Create succeed. (ReadOnly) \n",testfilename);
-		FS_DeleteFile( testfilename );
-		//return FALSE;
-	}
-*/
-
-	// ファイルオープン
-	if ( FS_OpenFileEx( file, filename, FS_FILEMODE_RWL ) )
-	{
-		// ReadOnlyなので、Writeのファイルオープン成功したらだめ
-		if( !s_quiettest ) OS_TPrintf("%s:Write mode open succeed. (ReadOnly) \n",filename);
-		FS_CloseFile( file );
-		return FALSE;
-	}
-
-	// ファイルオープン
-	if ( !FS_OpenFileEx( file, filename, FS_FILEMODE_R ) )
-	{
-		// ファイルオープン失敗
-		if( !s_quiettest ) OS_TPrintf("%s:open failed.\n",filename);
-		return FALSE;
-	}
-	// ファイルリード
-	len = FS_ReadFile( file, buf, 3 );
-	if( len != 3 )
-	{
-		// リード失敗
-		if( !s_quiettest ) OS_TPrintf("%s:read failed.\n",filename);
-		FS_CloseFile( file );
-		return FALSE;
-	}
-	// ファイルクローズ
-	if( !FS_CloseFile( file ) )
-	{
-		// クローズ失敗
-		if( !s_quiettest ) OS_TPrintf("%s:close failed.\n",filename);
-		return FALSE;
-	}
-	
-	return TRUE;
-}
-
-static BOOL RWExTestCore( char *path, char *testfile )
-{
-	char filename[256];
-	char testfilename[256];
-	int len;
-	char buf[5];
-	FSFile file[1];
-	
-	FS_InitFile( file );
-	STD_TSNPrintf( filename, 256, "%s/%s", path, testfile );
-	STD_TSNPrintf( testfilename, 256, "%s/test.txt", path );
-
-	// ファイルオープン
+	// RWLモードファイルオープン
 	if ( !FS_OpenFileEx( file, filename, FS_FILEMODE_RWL ) )
 	{
 		// RWLモードファイルオープン失敗
 		if( !s_quiettest ) OS_TPrintf("%s:RWL mode open failed.\n",filename);
 		FS_CloseFile( file );
-		return FALSE;
+		// Rモードファイルオープン
+		if ( !FS_OpenFileEx( file, filename, FS_FILEMODE_R ) )
+		{
+			// Rモードファイルオープン失敗
+			if( !s_quiettest ) OS_TPrintf("%s:R mode open failed.\n",filename);
+			return PERMISSION_NA;
+		}
+		result = PERMISSION_RO;
 	}
 
 	// ファイルリード
@@ -199,41 +139,38 @@ static BOOL RWExTestCore( char *path, char *testfile )
 		// リード失敗
 		if( !s_quiettest ) OS_TPrintf("%s:read failed.\n",filename);
 		FS_CloseFile( file );
-		return FALSE;
+		return PERMISSION_ERROR;
 	}
+
 	// ファイルクローズ
 	if( !FS_CloseFile( file ) )
 	{
 		// クローズ失敗
 		if( !s_quiettest ) OS_TPrintf("%s:close failed.\n",filename);
-		return FALSE;
+		return PERMISSION_ERROR;
 	}
-	
-	return TRUE;
+
+	return result;
 }
 
-static BOOL SRLTest( void )
+static AccessPermission BannerTest( void )
 {
-	if( s_testnum < 17 )
-	{
-		return ROTestCore( "nand:", "<srl>" );
-	}else if( 16 < s_testnum && s_testnum < 21)
-	{
-		return RWExTestCore( "nand:", "<srl>" );
-	}else
-	{
-		return FALSE;
-	}
+	return RWExistTestCore( "nand:", "<banner>" );
 }
 
-static BOOL ContentTest( void )
+static AccessPermission SRLTest( void )
 {
-	return ROTestCore( "content:", "title.tmd" );
+	return RWExistTestCore( "nand:", "<srl>" );
 }
 
-static BOOL Shared1Test( void )
+static AccessPermission ContentTest( void )
 {
-	return ROTestCore( "shared1:", "TWLCFG0.dat" );
+	return RWExistTestCore( "content:", "title.tmd" );
+}
+
+static AccessPermission Shared1Test( void )
+{
+	return RWExistTestCore( "shared1:", "TWLCFG0.dat" );
 }
 
 static void FinalizeRWTest( FSFile *file, char* filename )
@@ -243,7 +180,7 @@ static void FinalizeRWTest( FSFile *file, char* filename )
 }
 
 // パス名は最後にスラッシュを入れない事
-static BOOL RWTestCore( char *path, char *testfile )
+static AccessPermission RWTestCore( char *path, char *testfile )
 {
 	char filename[256];
 	int len;
@@ -265,7 +202,7 @@ static BOOL RWTestCore( char *path, char *testfile )
 			// ファイルオープン失敗
 			if( !s_quiettest ) OS_TPrintf("%s:open failed.\n",filename);
 			FS_DeleteFile( filename );
-			return FALSE;
+			return PERMISSION_ERROR;
 		}
 		// ファイルライト
 		len = FS_WriteFile( file, "test", 5);
@@ -274,7 +211,7 @@ static BOOL RWTestCore( char *path, char *testfile )
 			// ライト失敗
 			if( !s_quiettest ) OS_TPrintf("%s:write failed.\n",filename);
 			FinalizeRWTest( file, filename );
-			return FALSE;
+			return PERMISSION_ERROR;
 		}
 		// ファイルクローズ
 		if( !FS_CloseFile( file ) )
@@ -282,15 +219,16 @@ static BOOL RWTestCore( char *path, char *testfile )
 			// クローズ失敗
 			if( !s_quiettest ) OS_TPrintf("%s:close failed.\n",filename);
 			FinalizeRWTest( file, filename );
-			return FALSE;
+			return PERMISSION_ERROR;
 		}
+
 		// ファイルオープン
 		if ( !FS_OpenFileEx( file, filename, FS_FILEMODE_R ) )
 		{
 			// ファイルオープン失敗
 			if( !s_quiettest ) OS_TPrintf("%s:open failed.\n",filename);
 			FS_DeleteFile( filename );
-			return FALSE;
+			return PERMISSION_ERROR;
 		}
 		// ファイルリード
 		len = FS_ReadFile( file, buf, len );
@@ -299,7 +237,7 @@ static BOOL RWTestCore( char *path, char *testfile )
 			// リード失敗
 			if( !s_quiettest ) OS_TPrintf("%s:read failed.\n",filename);
 			FinalizeRWTest( file, filename );
-			return FALSE;
+			return PERMISSION_ERROR;
 		}
 		// ファイルクローズ
 		if( !FS_CloseFile( file ) )
@@ -307,7 +245,7 @@ static BOOL RWTestCore( char *path, char *testfile )
 			// クローズ失敗
 			if( !s_quiettest ) OS_TPrintf("%s:close failed.\n",filename);
 			FinalizeRWTest( file, filename );
-			return FALSE;
+			return PERMISSION_ERROR;
 		}
 		// ファイルデリート
 		if( !FS_DeleteFile( filename ))
@@ -315,34 +253,51 @@ static BOOL RWTestCore( char *path, char *testfile )
 			// デリート失敗
 			if( !s_quiettest ) OS_TPrintf("%s:delete failed.\n",filename);
 			FinalizeRWTest( file, filename );
-			return FALSE;
+			return PERMISSION_ERROR;
 		}
 	}else
 	{
 		// ファイル作成失敗
+		FSResult fs_result = FS_GetArchiveResultCode( filename );
 		if( !s_quiettest ) OS_TPrintf("%s:cleate failed.\n",filename);
-		return FALSE;
+		OS_TPrintf( "FS_GetArchiveResultCode(%s) : %d\n", filename, fs_result );
+		if( FS_RESULT_ERROR == fs_result )
+		{
+			// 仕様として、マウントしていない状態はパーミッションNAとして扱う
+			return PERMISSION_NA;
+		}else if( FS_RESULT_PERMISSION_DENIED == fs_result )
+		{
+			// PERMISSION_DENIEDを貰った場合、ROでない事を確認する必要がある
+			if ( !FS_OpenFileEx( file, filename, FS_FILEMODE_R ) )
+			{
+				if( FS_RESULT_PERMISSION_DENIED == FS_GetArchiveResultCode( filename ) )
+				{
+					// 架空のファイルをRモードで読み込もうとした結果もDENIEDならパーミッションNA
+					return PERMISSION_NA;
+				}
+			}
+			return PERMISSION_ERROR;
+		}
+		// あとはERROR扱い
+		return PERMISSION_ERROR;
 	}
 	
-	return TRUE;
+	return PERMISSION_RW;
 }
 
-static BOOL RWTest( char *path )
+static AccessPermission RWTest( char *path )
 {
 	return RWTestCore( path, "test.txt" );
 }
 
-static BOOL TMPJumpTest( void )
+static AccessPermission TMPJumpTest( void )
 {
 	return RWTestCore( "nand:", "<tmpjump>" );
 }
 
-u8 tempbuf[ LCFG_TEMP_BUFFER_SIZE * 2 ];
-static TWLSubBannerFile sbf;
-
 static void TestFSPermission( void )
 {
-	BOOL result[TEST_NUM];
+	AccessPermission result[TEST_NUM];
 	BOOL test_ok = TRUE;
 	int l;
 	
@@ -359,23 +314,13 @@ static void TestFSPermission( void )
 	result[10] = RWTest( "nand:/import" );        // nand:/import
 	result[11] = RWTest( "nand:/tmp" );           // nand:/tmp
 	result[12] = SRLTest();                       // nand:/<srl>
-	result[13] = OS_DeleteSubBannerFile(&sbf);    // nand:/<banner>
+	result[13] = BannerTest();                    // nand:/<banner>
 	result[14] = TMPJumpTest();                   // nand:/<tmpjump>
 	
-	
-	OS_TPrintf( "Correct Answer:\n" );
 	for( l=0; l<TEST_NUM; l++ )
 	{
-		OS_TPrintf( "%s ", ( s_answer_data[s_testnum][l] ? "○" : "×" ) );
+		test_ok = result[l]==s_answer_data[l] ? test_ok : FALSE;
 	}
-	OS_TPrintf( "\n" );
-	OS_TPrintf( "Result:\n" );
-	for( l=0; l<TEST_NUM; l++ )
-	{
-		OS_TPrintf( "%s ", ( result[l] ? "○" : "×" ) );
-		test_ok = result[l]==s_answer_data[s_testnum][l] ? test_ok : FALSE;
-	}
-	OS_TPrintf( "\n" );
 	
     NNS_G2dCharCanvasClear( &gCanvas, test_ok ? TXT_COLOR_BLUE : TXT_COLOR_RED );
     NNS_G2dCharCanvasClear( &gCanvasSub, test_ok ? TXT_COLOR_BLUE : TXT_COLOR_RED );
@@ -385,11 +330,39 @@ static void TestFSPermission( void )
 	for( l=0; l<15; l++ )
 	{
 		PutStringUTF16Sub( 8*1, l * 12, TXT_COLOR_WHITE, s_test_name[l]);
-		PutStringUTF16Sub( 8*18 + 8, l * 12, TXT_COLOR_WHITE, (const u16 *)( s_answer_data[s_testnum][l] ? L"TRUE" : L"FALSE" ));
-		PutStringUTF16Sub( 8*18 + 8*7, l * 12, ( result[l]==s_answer_data[s_testnum][l] ? TXT_COLOR_CYAN : TXT_COLOR_YELLOW ),
-		                (const u16 *)( result[l] ? L"TRUE" : L"FALSE" ));
+		PutStringUTF16Sub( 8*18 + 8, l * 12, TXT_COLOR_WHITE, s_answer_str[ s_answer_data[l] ]);
+		PutStringUTF16Sub( 8*18 + 8*7, l * 12, ( result[l]==s_answer_data[l] ? TXT_COLOR_CYAN : TXT_COLOR_YELLOW ), s_answer_str[ result[l] ]);
 	}
 	
+}
+
+static void makeAnswerData( void )
+{
+	ROM_Header_Short *rhs = (ROM_Header_Short *)(HW_TWL_ROM_HEADER_BUF);
+
+	BOOL isNandApp = (rhs->titleID_Hi & TITLE_ID_HI_MEDIA_MASK) ? TRUE : FALSE;
+	BOOL isSecureApp = (rhs->titleID_Hi & TITLE_ID_HI_SECURE_FLAG_MASK) ? TRUE : FALSE;
+	BOOL isNandAccessOn = (rhs->access_control.nand_access) ? TRUE : FALSE;
+	BOOL isSDCardAccessOn = (rhs->access_control.sd_card_access) ? TRUE : FALSE;
+	BOOL isEnablePublicSaveData = ( rhs->public_save_data_size != 0 ) ? TRUE : FALSE;
+	BOOL isEnablePrivateSaveData = ( rhs->private_save_data_size != 0 ) ? TRUE : FALSE;
+
+	// 正しいアクセス設定情報を生成、特筆しない限りは、指定条件下でフルアクセス
+	s_answer_data[0] = ( ( isNandApp || isNandAccessOn ) && isSecureApp ) ? PERMISSION_RW : PERMISSION_NA;	// nand:			（NANDアプリ or NANDアクセスON）and SecureApp
+	s_answer_data[1] = ( ( isNandApp || isNandAccessOn ) && isSecureApp ) ? PERMISSION_RW : PERMISSION_NA;	// nand2:			（NANDアプリ or NANDアクセスON）and SecureApp
+	s_answer_data[2] = ( isNandApp && CTRUE ) ? PERMISSION_RO : PERMISSION_NA;								// content:			現在無効。有効の場合はNANDアプリのみReadOnly
+	s_answer_data[3] = ( isNandApp || isNandAccessOn ) ? PERMISSION_RO : PERMISSION_NA;						// shared1:			（NANDアプリ or NANDアクセスON）でReadOnly
+	s_answer_data[4] = ( ( isNandApp || isNandAccessOn ) && STRUE ) ? PERMISSION_RW : PERMISSION_NA;		// shared2:			現在無効。有効の場合は（NANDアプリ or NANDアクセスON）
+	s_answer_data[5] = ( isNandApp || isNandAccessOn ) ? PERMISSION_RW : PERMISSION_NA;						// photo:			NANDアプリ or NANDアクセスON
+	s_answer_data[6] = ( isNandApp && isEnablePublicSaveData ) ? PERMISSION_RW : PERMISSION_NA;				// dataPub:			NANDアプリ and dataPub サイズ設定あり
+	s_answer_data[7] = ( isNandApp && isEnablePrivateSaveData ) ? PERMISSION_RW : PERMISSION_NA;			// dataPrv:			NANDアプリ and dataPrv サイズ設定あり
+	s_answer_data[8] = isSDCardAccessOn ? PERMISSION_RW : PERMISSION_NA;									// sdmc:			SDアクセス可（SDカードが刺さっていないと失敗）
+	s_answer_data[9] = ( ( isNandApp || isNandAccessOn ) && isSecureApp ) ? PERMISSION_RW : PERMISSION_NA;	// nand:/sys		（NANDアプリ or NANDアクセスON）and SecureApp
+	s_answer_data[10] = ( ( isNandApp || isNandAccessOn ) && isSecureApp ) ? PERMISSION_RW : PERMISSION_NA;	// nand:/import		（NANDアプリ or NANDアクセスON）and SecureApp
+	s_answer_data[11] = ( ( isNandApp || isNandAccessOn ) && isSecureApp ) ? PERMISSION_RW : PERMISSION_NA;	// nand:/tmp		（NANDアプリ or NANDアクセスON）and SecureApp
+	s_answer_data[12] = isNandApp ? ( isSecureApp ? PERMISSION_RW : PERMISSION_RO ) : PERMISSION_NA;		// nand:/<srl>		NANDアプリでReadOnly（Secureの場合はフルアクセス）
+	s_answer_data[13] = isNandApp ? PERMISSION_RW : PERMISSION_NA;											// nand:/<banner>	NANDアプリ
+	s_answer_data[14] = ( isNandApp || isNandAccessOn ) ? PERMISSION_RW : PERMISSION_NA;					// nand:/<tmpjump>	NANDアプリ or NANDアクセスON
 }
 
 // テストプログラムの初期化
@@ -402,24 +375,15 @@ void RomTypeTestInit( void )
 	PrintfSJIS( 1 * 8, 9 * 8, TXT_COLOR_BLACK, "FATFSPermissionCheck %c", (char)((ROM_Header_Short *)(HW_TWL_ROM_HEADER_BUF))->titleID_Lo[1]);
 	PutStringUTF16( 1 * 8, 11 * 8, TXT_COLOR_BLACK, (const u16 *)L"Start." );
 	//GetAndDrawRTCData( &g_rtcDraw, TRUE );
-
-	s_testnum = (char)((ROM_Header_Short *)(HW_TWL_ROM_HEADER_BUF))->titleID_Lo[1];
-	if( '0' <= s_testnum && s_testnum <= '9' )
-	{
-		s_testnum -= '0';
-	}else if( 'a' <= s_testnum && s_testnum <= 'z' )
-	{
-		s_testnum = (char)( s_testnum - 'a' + 10 );
-	}else
-	{
-		s_testnum = 0;
-	}
 	
 	GXS_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	GX_DispOn();
 	GXS_DispOn();
 	
-	s_quiettest = TRUE;
+	s_quiettest = FALSE;
+	
+	makeAnswerData();
+	
 	TestFSPermission();
 
 }
