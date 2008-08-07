@@ -170,7 +170,7 @@ void SYSMi_SetAESKeysForSignJPEG( ROM_Header *pROMH, BOOL *pIsClearSlotB, BOOL *
 		AES_SetKeyC( pAESKey );
 		AES_Unlock();
 		
-	}else {
+	}else if( pROMH->s.access_control.nand_access == TRUE || pROMH->s.access_control.sd_card_access == TRUE ) {
 		// SignJPEG—pAESƒL[
 		if ( pROMH->s.access_control.hw_aes_slot_B_SignJPEGForLauncher == TRUE) {
 			// for Launcher
