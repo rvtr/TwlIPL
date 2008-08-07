@@ -131,7 +131,7 @@ HotSwState HOTSWi_RefreshBadBlock(u32 romMode);
 static void CheckCardInsert(BOOL cardExist);
 static void CheckCardPullOut(BOOL cardExist);
 
-
+static void PulledOutSequence(void);
 
 // Static Values ------------------------------------------------------------
 #include <twl/ltdwram_begin.h>
@@ -148,7 +148,7 @@ static BootSegmentData      *s_pBootSegBuffer;
 static u32                  *s_pSecureSegBuffer;
 static u32                  *s_pSecure2SegBuffer;
 
-static CardBootData         s_cbData;
+static CardBootData         s_cbData ATTRIBUTE_ALIGN(4);
 static SYSMRomEmuInfo       s_romEmuInfo;
 static BOOL                 s_debuggerFlg;
 
@@ -515,22 +515,38 @@ static HotSwState LoadCardData(void)
             // ---------------------- Game Mode ----------------------
             romMode = HOTSW_ROM_MODE_GAME;
 
+            if(retval != HOTSW_SUCCESS || s_cbData.illegalCardFlg){
+                retval = (retval == HOTSW_SUCCESS) ? HOTSW_ILLEGAL_CARD_ERROR : retval;
+
+    	        // 排他制御ここまで
+	            UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+
+                goto finalize;
+            }
+            
             // ID読み込み
             state  = ReadIDGame(&s_cbData);
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
+            // カードIDの比較をして、一致しなければFALSEを返す
+            {
+                u32 secure_ID = (s_cbData.modeType == HOTSW_MODE1) ? s_cbData.id_scr : s_cbData.id_scr2;
+            	if(secure_ID != s_cbData.id_gam){
+					retval = (retval == HOTSW_SUCCESS) ? HOTSW_ID_CHECK_ERROR : retval;
+
+    	        	// 排他制御ここまで
+	            	UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+                
+                	goto finalize;
+            	}
+            }
+            
             // バナーファイルの読み込み
             state  = LoadBannerData();
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
             // 排他制御ここまで(※CRCチェックまでにミスがなかったら、排他制御ここまで)
             UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
-
-            // カードIDの比較をして、一致しなければFALSEを返す
-            if(s_cbData.id_scr != s_cbData.id_gam){
-                retval = (retval == HOTSW_SUCCESS) ? HOTSW_ID_CHECK_ERROR : retval;
-                goto finalize;
-            }
 
             // 認証コード読み込み＆ワーク領域にコピー
             state  = CheckCardAuthCode();
@@ -640,6 +656,8 @@ static HotSwState ReadSecureModeCardData(void)
     HotSwState retval = HOTSW_SUCCESS;
     HotSwState state  = HOTSW_SUCCESS;
 
+    u32 secure_ID;
+
     // PNG設定
     state  = s_funcTable[s_debuggerFlg].SetPNG_S(&s_cbData);
     retval = (retval == HOTSW_SUCCESS) ? state : retval;
@@ -652,9 +670,10 @@ static HotSwState ReadSecureModeCardData(void)
     retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
     // カードIDの比較をして、一致しなければFALSEを返す
-    if(s_cbData.id_nml != s_cbData.id_scr){
-        retval = (retval == HOTSW_SUCCESS) ? HOTSW_ID_CHECK_ERROR : retval;
-    }
+    secure_ID = (s_cbData.modeType == HOTSW_MODE1) ? s_cbData.id_scr : s_cbData.id_scr2;
+   	if(s_cbData.id_nml != secure_ID){
+       	retval = (retval == HOTSW_SUCCESS) ? HOTSW_ID_CHECK_ERROR : retval;
+   	}
 
     if(retval == HOTSW_SUCCESS){
         // Secure領域のSegment読み込み
@@ -1631,36 +1650,16 @@ static void HotSwThread(void *arg)
                 s_isPulledOut = FALSE;
                 
                 // エラー処理
-                if(retval != HOTSW_SUCCESS || s_cbData.illegalCardFlg){
-                    ClearCardFlgs();
-                    McPowerOff();
-
-					s_isPulledOut = TRUE;
-                    
+                if(retval != HOTSW_SUCCESS){
+					McPowerOff();
+					PulledOutSequence();
                     break;
                 }
             }
 
             // カードが抜けてたら
             else{
-#ifdef USE_WRAM_LOAD
-				SendPxiMessage(HOTSW_CARD_PULLOUT);
-#endif
-                
-                ClearCardFlgs();
-
-                MI_CpuClear32(&s_cbData, sizeof(CardBootData));
-
-                MI_CpuClearFast(s_pBootSegBuffer, s_BootSegBufSize);
-                MI_CpuClearFast(s_pSecureSegBuffer, s_SecureSegBufSize);
-                MI_CpuClearFast(s_pSecure2SegBuffer, s_Secure2SegBufSize);
-                MI_CpuClearFast((u32 *)SYSM_CARD_BANNER_BUF, sizeof(TWLBannerFile));
-
-                s_isPulledOut = TRUE;
-
-                // ワンセグのスリープ時シャットダウン対策を戻す
-                MCU_EnableDeepSleepToPowerLine( MCU_PWR_LINE_33, TRUE );
-
+				PulledOutSequence();
                 break;
             }
         } // Card Read while loop
@@ -1668,6 +1667,33 @@ static void HotSwThread(void *arg)
         SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
        	SYSMi_GetWork()->flags.hotsw.isBusyHotSW 	   = FALSE;
     } // while loop
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:        PulledOutSequence
+
+  Description: カード抜け処理
+ *---------------------------------------------------------------------------*/
+static void PulledOutSequence(void)
+{
+#ifdef USE_WRAM_LOAD
+	SendPxiMessage(HOTSW_CARD_PULLOUT);
+#endif
+                
+	ClearCardFlgs();
+
+    MI_CpuClear32(&s_cbData, sizeof(CardBootData));
+
+    MI_CpuClearFast(s_pBootSegBuffer, s_BootSegBufSize);
+    MI_CpuClearFast(s_pSecureSegBuffer, s_SecureSegBufSize);
+    MI_CpuClearFast(s_pSecure2SegBuffer, s_Secure2SegBufSize);
+    MI_CpuClearFast((u32 *)SYSM_CARD_BANNER_BUF, sizeof(TWLBannerFile));
+
+    s_isPulledOut = TRUE;
+    
+    // ワンセグのスリープ時シャットダウン対策を戻す
+    MCU_EnableDeepSleepToPowerLine( MCU_PWR_LINE_33, TRUE );
 }
 
 
