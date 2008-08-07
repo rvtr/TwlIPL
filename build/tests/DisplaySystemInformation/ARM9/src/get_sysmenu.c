@@ -38,7 +38,7 @@ static char* s_strSignFilePath[] = {
 	FILE_SIGN_NINTENDO_CAG2,
 };
 
-static char* s_strSignHash[] = {
+static char* s_strSignHashDev[] = {
 	"01e03e86fe11c5172ba742045c63e65c2f058e99",	
 	"7497940e3a3591d592b46ff99d75ebe102c27550",
 	"cf130c7674bae733f3b106109bb06cc0d6ac1a18",
@@ -46,6 +46,13 @@ static char* s_strSignHash[] = {
 	"c60b2a5cc90f0630cca33040df6b3378239f3bfa"
 };
 
+static char* s_strSignHashProd[] = {
+	"0626f8ac62baaa0b70c543a33962e54507d451d6",
+	"58c198c8099d579500cb5d9007bf81404a3c41fa",
+	"72445f08ab30a41aff9e20a2e64ca7d2b263765e",
+	"43a81069e6b6300dbe08d6fc3583d0c384a37996",
+	"c60b2a5cc90f0630cca33040df6b3378239f3bfa"
+};
 
 
 void getSysmenuInfo( void )
@@ -137,7 +144,8 @@ void getSysmenuInfo( void )
 		FSFile file[NUM_FILE_SIGN];
 		u32 fileLen[NUM_FILE_SIGN], maxFileSize = 0;
 		u8 i;
-		u8 *srcBuf, *dstBuf, digestBuf[MATH_SHA1_DIGEST_SIZE], cmpDigestBuf[MATH_SHA1_DIGEST_SIZE];
+		u8 *srcBuf, *dstBuf, digestBuf[MATH_SHA1_DIGEST_SIZE],
+			 cmpDigestDevBuf[MATH_SHA1_DIGEST_SIZE], cmpDigestProdBuf[MATH_SHA1_DIGEST_SIZE];
 
 		for( i=0 ; i < NUM_FILE_SIGN; i++ )
 		{
@@ -213,16 +221,30 @@ void getSysmenuInfo( void )
 				MATH_CalcSHA1( digestBuf, srcBuf, fileLen[i] );
 			}
 			
-			strToHexa( s_strSignHash[i] , cmpDigestBuf, MATH_SHA1_DIGEST_SIZE );
+			strToHexa( s_strSignHashDev[i] , cmpDigestDevBuf, MATH_SHA1_DIGEST_SIZE );
+			strToHexa( s_strSignHashProd[i], cmpDigestProdBuf, MATH_SHA1_DIGEST_SIZE );
 			
 			// ƒnƒbƒVƒ…’l‚ªˆê’v‚µ‚½‚çcorrect,ˆê’v‚µ‚È‚©‚Á‚½‚çincorrect
-			gAllInfo[MENU_SYSMENU][idx].str.sjis = 
-				s_strCorrect[ MI_CpuComp8( cmpDigestBuf, digestBuf, MATH_SHA1_DIGEST_SIZE ) == 0 ];
-				
+
+			if( MI_CpuComp8( cmpDigestDevBuf, digestBuf, MATH_SHA1_DIGEST_SIZE ) == 0 )
+			{
+				gAllInfo[MENU_SYSMENU][idx].str.sjis = s_strSysMenuKey[1];
+			}
+			else if( MI_CpuComp8( cmpDigestProdBuf, digestBuf, MATH_SHA1_DIGEST_SIZE ) == 0 )
+			{
+				gAllInfo[MENU_SYSMENU][idx].str.sjis = s_strSysMenuKey[2];
+			}
+			else
+			{
+				gAllInfo[MENU_SYSMENU][idx].str.sjis = s_strSysMenuKey[0];
+			}
+			
+			
 			gAllInfo[MENU_SYSMENU][idx].numLines = 2;
 			gAllInfo[MENU_SYSMENU][idx].isAligned = FALSE;
 			
-			putBinary( cmpDigestBuf, MATH_SHA1_DIGEST_SIZE );
+			putBinary( cmpDigestDevBuf, MATH_SHA1_DIGEST_SIZE );
+			putBinary( cmpDigestProdBuf, MATH_SHA1_DIGEST_SIZE );
 			putBinary( digestBuf, MATH_SHA1_DIGEST_SIZE );
 		}
 		

@@ -222,6 +222,7 @@ extern const char *s_strSCFGViewMode[];
 extern char *s_strEnable[];
 extern char *s_strJoint[];
 extern char *s_strCorrect[];
+extern char *s_strSysMenuKey[];
 extern char *s_strSupply[];
 extern char *s_strRomMode[];
 extern char *s_strPSRAM[];

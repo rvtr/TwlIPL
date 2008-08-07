@@ -349,7 +349,12 @@ char *s_strCorrect[] = {
 	"Incorrect",
 	"Correct"
 };
-	
+
+char *s_strSysMenuKey[] = {
+	"Incorrect",
+	"correct: dev",
+	"correct: prod"
+};
 
 char *s_strBool[] = {
 	"FALSE",
