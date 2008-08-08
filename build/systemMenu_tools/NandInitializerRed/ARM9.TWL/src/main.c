@@ -59,6 +59,7 @@ void
 TwlMain()
 {
     OS_Init();
+	OS_InitTick();
     OS_InitArena();
     PXI_Init();
     OS_InitLock();
