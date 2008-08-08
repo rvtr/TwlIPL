@@ -61,18 +61,18 @@ extern CardThreadData HotSwThreadData;
 HotSwState ReadIDSecure_ROMEMU(CardBootData *cbd)
 {
 	GCDCmd64 cndLE;
+	u32	*buf = (cbd->modeType == HOTSW_MODE1) ? &cbd->id_scr : &cbd->id_scr2;
 
     if(!HOTSW_IsCardAccessible()){
 		return HOTSW_PULLED_OUT_ERROR;
     }
 
 #ifdef USE_NEW_DMA
-	// カード割り込みによるDMAコピー
-	HOTSW_NDmaCopy_Card( HOTSW_NDMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_scr, sizeof(cbd->id_scr) );
+    HOTSW_NDmaCopy_Card( HOTSW_NDMA_NO, (u32 *)HOTSW_MCD1, buf, sizeof(buf) );
 #else
-    HOTSW_DmaCopy32_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, &cbd->id_scr, sizeof(cbd->id_scr) );
+    HOTSW_DmaCopy32_Card( HOTSW_DMA_NO, (u32 *)HOTSW_MCD1, buf, sizeof(buf) );
 #endif
-    
+
   	// リトルエンディアンで作って
    	cndLE.dw  = HSWOP_N_OP_RD_ID;
 
