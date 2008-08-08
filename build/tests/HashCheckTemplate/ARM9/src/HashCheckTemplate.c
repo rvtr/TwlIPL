@@ -38,7 +38,7 @@ RTCDrawProperty g_rtcDraw = {
 };
 
 // static variable -------------------------------------
-static BOOL s_switch = FALSE;
+static BOOL s_switch = TRUE;
 
 //static u32 dummy[1024*1024/2]={1,2,3,};//2MB
 
@@ -92,7 +92,7 @@ static void draw()
 {
     NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_WHITE );
 
-	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"HashCheckTemplate");
+	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SelfDigestChecker");
 	PutStringUTF16( 3 * 8, 1 * 12, TXT_COLOR_BLACK,  (const u16 *)L"Press A to Check Digest....");
 	
 	draw_sub1((u8 *)0x02000100, (u8 *)(HW_TWL_ROM_HEADER_BUF + 0x300), 12*2+4 );

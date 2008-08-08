@@ -263,7 +263,7 @@ static AccessPermission RWTestCore( char *path, char *testfile )
 		OS_TPrintf( "FS_GetArchiveResultCode(%s) : %d\n", filename, fs_result );
 		if( FS_RESULT_NO_ENTRY == fs_result )
 		{
-			// ファイル作成に失敗＝存在しないディレクトリの下にファイルを作ろうとしたかマウントされていない
+			// ファイル作成にNO_ENTRY＝存在しないディレクトリの下にファイルを作ろうとしたかマウントされていない
 			// どちらにせよアクセスできないし、ディレクトリの存在を確認する事もできないので、パーミッションNAとして扱う
 			return PERMISSION_NA;
 		}else if( FS_RESULT_PERMISSION_DENIED == fs_result )
