@@ -54,9 +54,9 @@ for num in romparam.keys():
         if romparam[num][rsfkey].get('AppType') == 'SYSTEM':
             #----- MAKEROM の指定
             if romparam[num][rsfkey]['Secure']:
-                codeparam.write('MAKEROM           := $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe\n')
+                codeparam.write('override MAKEROM           = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe\n')
             else:
-                codeparam.write('MAKEROM           := $(TWL_TOOLSDIR)/bin/makerom.TWL.sys.exe\n')
+                codeparam.write('override MAKEROM           = $(TWL_TOOLSDIR)/bin/makerom.TWL.sys.exe\n')
             codeparam.write('MAKETAD_OPTION    += -s\n')
             romspectemplate = '$(ROOT)/include/twl/specfiles/ROM-TS_sys.rsf'
         else:
@@ -68,6 +68,11 @@ for num in romparam.keys():
         if romparam[num].has_key(optkey) and romparam[num][optkey].has_key('RomSpecTemplate'):
             romspectemplate = romparam[num][optkey].get('RomSpecTemplate')
         codeparam.write(''.join(['ROM_SPEC_TEMPLATE  = ',romspectemplate,'\n']))
+
+        #----- ROM_HEADER_TEMPLATEおよびLIBSYSCALLの指定
+        if romparam[num].has_key(optkey) and romparam[num][optkey].has_key('UseFinalHeader'):
+            codeparam.write(''.join(['ROM_HEADER_TEMPLATE = $(SYSMENU_ROM_HEADER_DIR)',gamecode,'/rom_header_$(call toLower,',gamecode,').template.sbin\n']))
+            codeparam.write(''.join(['LIBSYSCALL = $(SYSMENU_ROM_HEADER_DIR)',gamecode,'/libsyscall.a\n']))
 
         #----- ROM_SPEC_OPTIONS key の抽出
         if romparam[num][rsfkey].get('AppType') == 'SYSTEM':
@@ -104,6 +109,9 @@ for num in romparam.keys():
         #----- Rating 関連 ROM_SPEC_OPTIONS
         if romparam[num].has_key(ratingkey):
             rsf_opt.append('%s=%s '%(romparam[num][ratingkey]['Ogn'],str(romparam[num][ratingkey]['Age'])))
+        #----- RomHeaderTemplateの指定
+        if romparam[num].has_key(optkey) and romparam[num][optkey].has_key('UseFinalHeader'):
+            rsf_opt.append('RomHeaderTemplate=$(call empath,$(ROM_HEADER_TEMPLATE)) ')
         #----- ROM_SPEC_OPTIONS の指定
         rsf_opt_str = ''.join(rsf_opt)
         codeparam.write('ROM_SPEC_PARAM   = %s\n' % rsf_opt_str)

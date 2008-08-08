@@ -261,7 +261,7 @@ static AccessPermission RWTestCore( char *path, char *testfile )
 		FSResult fs_result = FS_GetArchiveResultCode( filename );
 		if( !s_quiettest ) OS_TPrintf("%s:cleate failed.\n",filename);
 		OS_TPrintf( "FS_GetArchiveResultCode(%s) : %d\n", filename, fs_result );
-		if( FS_RESULT_NO_ENTRY == fs_result )
+		if( FS_RESULT_ERROR == fs_result )
 		{
 			// ファイル作成にNO_ENTRY＝存在しないディレクトリの下にファイルを作ろうとしたかマウントされていない
 			// どちらにせよアクセスできないし、ディレクトリの存在を確認する事もできないので、パーミッションNAとして扱う

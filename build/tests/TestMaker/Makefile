@@ -209,13 +209,14 @@ ROM_SPEC	=	twl_$(GAMECODE).rsf
 
 INSTALL_TARGETS	= $(BINDIR)/$(TARGET_BIN)
 
+include $(GAMECODE).param
+
 ifeq ($(USE_IPL_RED_LIB),TRUE)
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 else
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
 endif
-include $(GAMECODE).param
 
 # boottestの時だけARM7コンポーネントの指定
 # このあたりの指定が苦肉すぎるので妙案募集中
