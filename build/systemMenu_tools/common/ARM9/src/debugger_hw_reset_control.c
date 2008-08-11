@@ -18,6 +18,8 @@
 #include <twl.h>
 #include "debugger_hw_reset_control.h"
 
+extern u32 CARDi_ReadRomIDCore(void);
+
 /*---------------------------------------------------------------------------*
     型定義
  *---------------------------------------------------------------------------*/
@@ -58,7 +60,7 @@ static void CardAccessThread(void* arg)
     while (!sHwResetEnable)
     {
 		CARD_LockRom((u16)sLockId);
-		(void)CARDi_ReadRomID();
+		(void)CARDi_ReadRomIDCore();
 		CARD_UnlockRom((u16)sLockId);
 
 		// 5秒間スリープ

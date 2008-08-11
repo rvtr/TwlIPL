@@ -107,6 +107,7 @@ void* AutoProcess1(void)
 	{
 	case AUTO_PROCESS_MENU_FORMAT:
 		return FormatProcess0;
+
 	case AUTO_PROCESS_MENU_HARDWARE_INFO:
 		return HWInfoProcess0;
 
@@ -124,6 +125,9 @@ void* AutoProcess1(void)
 	case AUTO_PROCESS_MENU_MCU:
 		return mcuProcess0;
 
+	case AUTO_PROCESS_MENU_MACHINE_INITIALIZE:
+		return FormatProcess0;
+		
 	case AUTO_PROCESS_MENU_NUM:
 		return AutoProcess2;
 	}
@@ -171,16 +175,7 @@ void* AutoProcess2(void)
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    INPORT TAD FROM SD     ");
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    INPORT NANDFIRM FROM SD");
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    WRITE MCU FIRM         ");
-#ifndef AUTO_FORMAT_MODE
-	if (gAutoProcessResult[AUTO_PROCESS_MENU_MCU] == AUTO_PROCESS_RESULT_SKIP)
-	{
-		kamiFontPrintf(3, 22, FONT_COLOR_BLACK, " Button B : return to menu");
-	}
-	else
-	{
-		kamiFontPrintf(3, 22, FONT_COLOR_BLACK, " Please Shut Down");
-	}
-#endif //AUTO_FORMAT_MODE
+	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    MACHINE INITIALIZE     ");
 
 /*
 	for (i=0;i<sMenuSelectNo-1;i++)
@@ -209,13 +204,13 @@ void* AutoProcess2(void)
 	// Ž¸”s‚È‚µ
 	if (totalResult)
 	{
-		kamiFontPrintf(3, 19, FONT_COLOR_BLACK, "   Finished Successfully!");
+		kamiFontPrintf(3, 21, FONT_COLOR_BLACK, "   Finished Successfully!");
 		bg_color = BG_COLOR_GREEN;
 	}
 	// Ž¸”s‚ ‚è
 	else
 	{
-		kamiFontPrintf(3, 19, FONT_COLOR_BLACK, "    Error Occured!");
+		kamiFontPrintf(3, 21, FONT_COLOR_BLACK, "    Error Occured!");
 		bg_color = BG_COLOR_RED;
 	}
 
@@ -225,9 +220,9 @@ void* AutoProcess2(void)
 	kamiFontFillChar( 2, bg_color, BG_COLOR_TRANS );
 
 	// ”wŒi‰º•”
-	kamiFontFillChar(18, BG_COLOR_TRANS, bg_color );
-	kamiFontFillChar(19, bg_color, bg_color );
-	kamiFontFillChar(20, bg_color, BG_COLOR_TRANS );
+	kamiFontFillChar(20, BG_COLOR_TRANS, bg_color );
+	kamiFontFillChar(21, bg_color, bg_color );
+	kamiFontFillChar(22, bg_color, BG_COLOR_TRANS );
 
 	// ƒJ[ƒ\ƒ‹Á‹Ž
 	SetCursorPos((u16)200, (u16)200);

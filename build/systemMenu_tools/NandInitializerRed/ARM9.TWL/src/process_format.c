@@ -70,6 +70,10 @@ static s8 sMenuSelectNo;
 static u8 sLock;
 static u8 sFormatResult;
 
+#ifndef NAND_INITIALIZER_LIMITED_MODE
+static u8 sAutoModeSequence;
+#endif // NAND_INITIALIZER_LIMITED_MODE
+
 /*---------------------------------------------------------------------------*
     内部関数宣言
  *---------------------------------------------------------------------------*/
@@ -153,7 +157,14 @@ void* FormatProcess1(void)
 	// オート実行用
 	if (gAutoFlag)
 	{
-		sMenuSelectNo = MENU_NORMAL_FORMAT;
+		if (sAutoModeSequence == 0)
+		{
+			sMenuSelectNo = MENU_NORMAL_FORMAT;
+		}
+		else
+		{
+			sMenuSelectNo = MENU_CLEAN_UP;
+		}
 		return FormatProcess2;
 	}
 #endif
@@ -252,6 +263,25 @@ void* FormatProcess2(void)
 			}
 			return ForeverLoopProcess;
 #endif //USE_FOR_NIGHTLY_AUTO_TEST
+
+#ifndef NAND_INITIALIZER_LIMITED_MODE
+		// Auto用
+		if (gAutoFlag)
+		{
+			if (result) 
+			{
+				gAutoProcessResult[AUTO_PROCESS_MENU_MACHINE_INITIALIZE] = AUTO_PROCESS_RESULT_SUCCESS; 
+				sAutoModeSequence = 0; 
+				FADE_OUT_RETURN( AutoProcess1 );
+			}
+			else 
+			{
+				gAutoProcessResult[AUTO_PROCESS_MENU_MACHINE_INITIALIZE] = AUTO_PROCESS_RESULT_FAILURE; 
+				sAutoModeSequence = 0; 
+				FADE_OUT_RETURN( AutoProcess2 ); 
+			}
+		}
+#endif
 
 			return FormatProcess1;
 		}
@@ -364,11 +394,13 @@ void* FormatProcess3(void)
 			if (sFormatResult) 
 			{
 				gAutoProcessResult[AUTO_PROCESS_MENU_FORMAT] = AUTO_PROCESS_RESULT_SUCCESS; 
-				FADE_OUT_RETURN( AutoProcess1 ); 
+				sAutoModeSequence = 1; 
+				FADE_OUT_RETURN( AutoProcess1 );
 			}
 			else 
 			{
 				gAutoProcessResult[AUTO_PROCESS_MENU_FORMAT] = AUTO_PROCESS_RESULT_FAILURE; 
+				sAutoModeSequence = 1; 
 				FADE_OUT_RETURN( AutoProcess2 ); 
 			}
 		}

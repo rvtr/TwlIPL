@@ -248,7 +248,7 @@ void* mcuProcess2(void)
 	}
 	else
 	{
-		if (gAutoFlag)	{ FADE_OUT_RETURN( AutoProcess2 ); 		}
+		if (gAutoFlag)	{ FADE_OUT_RETURN( AutoProcess1 ); 		}
 		else 			{ FADE_OUT_RETURN( TopmenuProcess0 );	}
 	}
 
