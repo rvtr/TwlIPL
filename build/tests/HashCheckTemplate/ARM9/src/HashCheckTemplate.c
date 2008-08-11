@@ -48,6 +48,7 @@ static BOOL s_switch = TRUE;
 // 再配置チェッカー（多分ここからやる事は表示のみ）
 //======================================================
 
+/*
 static void draw_sub1(u8 *ram_addr, u8 *header_addr, int y)
 {
 	int l;
@@ -62,6 +63,7 @@ static void draw_sub1(u8 *ram_addr, u8 *header_addr, int y)
 		}
 	}
 }
+*/
 
 static void draw_sub2(u8 *ram_addr, u8 *header_addr, int y, const u16 *str)
 {
@@ -95,8 +97,7 @@ static void draw()
 	PutStringUTF16( 1 * 8, 0 * 8, TXT_COLOR_BLUE,  (const u16 *)L"SelfDigestChecker");
 	PutStringUTF16( 3 * 8, 1 * 12, TXT_COLOR_BLACK,  (const u16 *)L"Press A to Check Digest....");
 	
-	draw_sub1((u8 *)0x02000100, (u8 *)(HW_TWL_ROM_HEADER_BUF + 0x300), 12*2+4 );
-
+	draw_sub2((u8 *)0x02000100, (u8 *)(HW_TWL_ROM_HEADER_BUF + 0x38c), 12*2+4, (const u16 *)L"ARM9FLX :" );
 	draw_sub2((u8 *)0x02000120, (u8 *)(HW_TWL_ROM_HEADER_BUF + 0x314), 12*5+8, (const u16 *)L"ARM7FLX :" );
 	draw_sub2((u8 *)0x02000140, (u8 *)(HW_TWL_ROM_HEADER_BUF + 0x350), 12*8+12, (const u16 *)L"ARM9LTD :" );
 	draw_sub2((u8 *)0x02000160, (u8 *)(HW_TWL_ROM_HEADER_BUF + 0x364), 12*11+16, (const u16 *)L"ARM7LTD :" );
