@@ -33,6 +33,7 @@ endif
 
 ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
 TWL_KEYSDIR	:= $(TWL_IPL_RED_PRIVATE_ROOT)/keys
+TWL_IPL_RED_PRIVATE_TOOLSDIR = $(call eupath,$(TWL_IPL_RED_PRIVATE_ROOT)/tools)
 endif
 
 MAKEROM_FLAGS += -s

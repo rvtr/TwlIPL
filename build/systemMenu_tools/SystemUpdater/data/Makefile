@@ -24,7 +24,7 @@ include $(SYSMENU_ROOT)/build/systemMenu_RED/DSHashTable/commondefs.DSHashTable
 include $(SYSMENU_ROOT)/build/systemMenu_RED/sysmenuVersion/commondefs.sysmenuVersion
 
 # SystemUpdaterでインポートするTADは専用のmaketadでTAD化します。
-MAKETAD			:=	$(SYSMENU_TOOLSDIR)/bin/maketad.updater.exe
+MAKETAD			:=	$(TWL_IPL_RED_PRIVATE_TOOLSDIR)/bin/maketad.updater.exe
 
 MAKETAD_OPTION	+=	-s
 
