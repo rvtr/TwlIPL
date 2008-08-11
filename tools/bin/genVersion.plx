@@ -15,8 +15,8 @@
 use POSIX 'strftime';
 use File::Basename;
 
-if ($#ARGV < 7) {
-    printf STDOUT ("Usage: %s [genVersion] dir timestamp strVersion majorVersion minorVersion userAreaSize NUPHostName EULAURL\n", $0);
+if ($#ARGV < 8) {
+    printf STDOUT ("Usage: %s [genVersion] dir timestamp strVersion majorVersion minorVersion userAreaSize NUPHostName EULAURL outFile\n", $0);
     exit(-1);
 }
 
@@ -39,7 +39,7 @@ my $urlEULAFile               = "$dataDir/eula_url.bin";
 #my $rootCACert4SSLFile6       = "$dataDir/root_ca_cert4ssl6";
 
 # 出力ファイル
-my $outFile          = "SysmenuVersion.dat";
+my $outFile = $ARGV[8];
 
 # 中間ファイル
 my $archiveFile      = "archive.narc";

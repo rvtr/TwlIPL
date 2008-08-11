@@ -16,6 +16,24 @@
 # $Author: 
 #----------------------------------------------------------------------------
 
+#---------------------------------------------------------
+# リージョン共通パラメータ
+
+# ユーザー領域サイズ(=128MB)
+USER_AREA_SIZE		=	134217728
+
+# NUPホストネーム
+NUP_HOSTNAME		=	nus.t.shop.nintendowifi.net:443
+
+# EULAのURL
+EULA_URL			=	https://cfh.t.app.nintendowifi.net/eula/
+
+# バージョン文字列
+STR_VERSION			=	$(SYSMENU_VERSION_MAJOR).$(SYSMENU_VERSION_MAJOR)$(SYSMENU_VERSION_REGION)
+
+#---------------------------------------------------------
+# 外部使用変数
+
 ifeq ($(FIRM_USE_PRODUCT_KEYS),TRUE)
 SYSMENU_VERSION_TARGET           =	prod
 else
@@ -23,6 +41,7 @@ SYSMENU_VERSION_TARGET           =	dev
 endif
 
 SYSMENU_VERSION_DIR				 =	$(SYSMENU_ROOT)/build/systemMenu_RED/sysmenuVersion
-SYSMENU_VERSION_FILE			 =	SysmenuVersion.$(SYSMENU_VERSION_TARGET).dat
+SYSMENU_VERSION_FILE			 =	SysmenuVersion.$(SYSMENU_VERSION_TARGET).$(SYSMENU_VERSION_REGION).dat
 SYSMENU_VERSION_MAKETAD_OPTION	+=	-s -d 0003000F484E4c41 3031 0 SYSM_VERSION -v 0 -p
 
+SYSMENU_VERSION_REGION			?=	A

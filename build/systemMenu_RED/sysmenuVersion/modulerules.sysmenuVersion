@@ -1,7 +1,7 @@
 #! make -f
 #----------------------------------------------------------------------------
 # Project:  TwlIPL
-# File:     Makefile -
+# File:     modulerules.sysmenuVersion
 #
 # Copyright 2007 Nintendo.  All rights reserved.
 #
@@ -16,19 +16,10 @@
 # $Author: 
 #----------------------------------------------------------------------------
 
-# バージョンファイルとTADを生成する
-# TWL_IPL_RED_PRIVATE_ROOTが設定されていない場合は
-# 既存のバージョンファイルからTADのみ生成する
+$(VERSION_DAT): ./Makefile ./commondefs.sysmenuVersion
+	$(GEN_VERSION_FILE) $(GEN_VERSION_PARAM)
 
-# 現在、製品版の証明書を含んだものは生成しない
+$(VERSION_TAD) : $(SYSMENU_VERSION_FILE)
+	mkdir -p $(BINDIR)
+	$(MAKETAD) $(call empath,$<) $(SYSMENU_VERSION_MAKETAD_OPTION) -o $@
 
-
-override TARGET_PLATFORM := TWL
-
-SUBMAKES				=	 Makefile.A Makefile.J Makefile.E Makefile.P Makefile.U
-
-
-include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
-include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
-
-#===== End of Makefile =====

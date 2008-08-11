@@ -16,19 +16,27 @@
 # $Author: 
 #----------------------------------------------------------------------------
 
-# バージョンファイルとTADを生成する
-# TWL_IPL_RED_PRIVATE_ROOTが設定されていない場合は
-# 既存のバージョンファイルからTADのみ生成する
+override TARGET_PLATFORM  := TWL
 
-# 現在、製品版の証明書を含んだものは生成しない
-
-
-override TARGET_PLATFORM := TWL
-
-SUBMAKES				=	 Makefile.A Makefile.J Makefile.E Makefile.P Makefile.U
-
+TARGET_FIRM     = SYSTEMMENU
+TWL_NANDAPP     = TRUE
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+include ./commondefs.sysmenuVersion
+include ./commondefs.sysmenuVersion.local
+
+#---------------------------------------------------------
+# リージョン固有パラメータ
+
+SYSMENU_VERSION_REGION		=	U
+SYSMENU_VERSION_TIMESTAMP	=	08081100
+SYSMENU_VERSION_MAJOR		=	0
+SYSMENU_VERSION_MINOR		=	0
+
+do-build :  $(TARGET_BIN)
+
+#----------------------------------------------------------------------------
 include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+include ./modulerules.sysmenuVersion
 
 #===== End of Makefile =====

@@ -140,7 +140,7 @@ endif
 #---------------------------
 # [TODO] TADからバージョンを取得して、バージョン番号でディレクトリを作成する。
 # FIRM_USE_PRODUCT_KEYS = TRUE の時のみPROD用のシステムメニューバージョンを取得します。
-$(OUT_DIR)/HNLA : $(SYSMENU_DIR)/sysmenuVersion/HNLA.$(SYSMENU_VERSION_TARGET).tad
+$(OUT_DIR)/HNLA : $(SYSMENU_DIR)/sysmenuVersion/$(SYSMENU_VERSION_TARGET).out/HNLA/HNLA.$(SYSMENU_VERSION_TARGET).tad
 ifeq ($(DO_MASTERING),TRUE)
 	mkdir -p $@
 	mkdir -p $@/V0
