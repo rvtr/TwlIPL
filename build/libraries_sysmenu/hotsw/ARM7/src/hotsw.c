@@ -616,7 +616,7 @@ static BOOL isTwlModeLoad(void)
         }
         else{
         	// PlatformCodeがTwl or Hybridの場合
-        	if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
+        	if(s_cbData.pBootSegBuf->rh.s.platform_code & PLATFORM_CODE_FLAG_TWL){
             	return TRUE;
         	}
         	else{
@@ -627,7 +627,7 @@ static BOOL isTwlModeLoad(void)
     // DSカード
     else{
         // PlatformCodeがTwl or Hybridの場合
-		if(s_cbData.pBootSegBuf->rh.s.platform_code & 0x02){
+		if(s_cbData.pBootSegBuf->rh.s.platform_code & PLATFORM_CODE_FLAG_TWL){
             // 製品用本体 (最終的には開発用本体も)
 #ifdef HOTSW_FINAL_VERSION
             if(s_bondingOp == SCFG_OP_PRODUCT || !s_debuggerFlg)
