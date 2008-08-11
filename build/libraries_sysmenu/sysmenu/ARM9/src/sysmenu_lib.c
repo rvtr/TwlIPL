@@ -65,6 +65,7 @@ static TitleProperty s_bootTitleBuf;
 void _start_AutoloadDoneCallback(void* argv[]);
 // AutoloadDoneCallbackは、ARMでないと動作しない。ISデバッガがブレークポイント処理のために上乗りしているが、そこからのリターンが怪しい。
 // AutoloadDoneCallbackを利用して鍵を引き渡す
+// AutoloadDoneCallbackはSTATICセクションの.bssクリア前なのでSDK関数も含めて未初期化変数は使用不可。
 void _start_AutoloadDoneCallback(void* argv[])
 {
 #pragma unused(argv)
