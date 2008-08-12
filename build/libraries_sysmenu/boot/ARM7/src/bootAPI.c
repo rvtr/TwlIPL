@@ -125,8 +125,8 @@ BOOL BOOT_WaitStart( void )
 {
 	if( (reg_PXI_MAINPINTF & 0x000f ) == 0x000f ) {
 		// 最適化されるとポインタを初期化しただけでは何もコードは生成されません
-		ROM_Header *th = (ROM_Header *)SYSM_APP_ROM_HEADER_BUF;          // TWL拡張ROMヘッダ（DSアプリには無い）
-		ROM_Header *dh = (ROM_Header *)(SYSMi_GetWork()->romHeaderNTR);  // DS互換ROMヘッダ
+		ROM_Header *th = (ROM_Header *)SYSM_APP_ROM_HEADER_BUF;          // TWL拡張ROMヘッダ（キャッシュ領域、DSアプリには無い）
+		ROM_Header *dh = (ROM_Header *)(SYSMi_GetWork()->romHeaderNTR);  // DS互換ROMヘッダ（非キャッシュ領域）
 		// リブート
 		REBOOTi_SetTwlRomHeaderAddr( th );
 		REBOOTi_SetRomHeaderAddr( dh );

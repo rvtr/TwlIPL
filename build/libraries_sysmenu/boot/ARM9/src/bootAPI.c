@@ -75,8 +75,8 @@ static void ie_subphandler( void )
 void BOOT_Ready( void )
 {
 	// 最適化されるとポインタを初期化しただけでは何もコードは生成されません
-	ROM_Header *th = (ROM_Header *)SYSM_APP_ROM_HEADER_BUF;         // TWL拡張ROMヘッダ（DSアプリには無い）
-	ROM_Header *dh = (ROM_Header *)(SYSMi_GetWork()->romHeaderNTR);  // DS互換ROMヘッダ
+	ROM_Header *th = (ROM_Header *)SYSM_APP_ROM_HEADER_BUF;          // TWL拡張ROMヘッダ（キャッシュ領域、DSアプリには無い）
+	ROM_Header *dh = (ROM_Header *)(SYSMi_GetWork()->romHeaderNTR);  // DS互換ROMヘッダ（非キャッシュ領域）
 
 	// HOTSW終了処理待ち
 	while( ! HOTSW_isFinalized() ) {
@@ -120,6 +120,7 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
     reg_PXI_SUBPINTF = SUBP_RECV_IF_ENABLE | 0x0f00;        // ARM9ステートを "0x0f" に
                                                             // ※もうFIFOはクリア済みなので、使わない。
     // ARM7からの通知待ち
+    // この時点でARM7によるdhへのNTR-ROMヘッダをコピーが保証される
     OS_WaitIrq( 1, OS_IE_SUBP );
 
     OS_TPrintf( "INTR SUBP passed!!\n" );
@@ -206,7 +207,7 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
             dh->s.game_cmd_param &= ~SCRAMBLE_MASK;
         }
         {
-            // カードROMヘッダは常時設定
+            // カードROMヘッダ（非キャッシュ領域）は常時設定
            	ROM_Header *ch = (void*)HW_CARD_ROM_HEADER;
             ch->s.game_cmd_param = SYSMi_GetWork()->gameCommondParam;
         }
