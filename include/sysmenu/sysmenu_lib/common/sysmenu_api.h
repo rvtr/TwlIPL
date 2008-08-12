@@ -95,12 +95,16 @@ extern void SYSM_MakeNandTitleListAsync( void );								// ”ñ“¯Šú”ÅNANDƒAƒvƒŠƒ^ƒ
 extern void SYSM_MakeNandTitleListMakerInfoAsync( void );						// ”ñ“¯Šú”ÅƒAƒvƒŠˆø‚«“n‚µƒ^ƒCƒgƒ‹ƒŠƒXƒgì¬—pî•ñ‚Ìì¬
 extern BOOL SYSM_isNandTitleListReady( void );									// ”ñ“¯Šú”Å‚ªI—¹‚µ‚½‚©‚Ç‚¤‚©‚Ì”»’è‚Ég‚¤
 extern TitleProperty *SYSM_GetTitlePropertyList( void );						// SYSM_MakeNandTitleListAsync‚Åì¬‚³‚ê‚½ƒAƒvƒŠƒŠƒXƒg‚Ìƒ|ƒCƒ“ƒ^‚ğæ“¾
+extern void SYSM_SetSystemMenuVersionControlData( void );						// SystemMenuVersionƒf[ƒ^ƒAƒNƒZƒX‚Ì‚½‚ß‚Ì§Œäî•ñ‚ÌƒZƒbƒg
 
 // ƒAƒvƒŠ‹N“®
 extern void SYSM_StartLoadTitle( TitleProperty *pBootTitle );					// w’è‚µ‚½TitleProperty‚ğ•ÊƒXƒŒƒbƒh‚Åƒ[ƒhŠJn
 extern BOOL SYSM_IsLoadTitleFinished( void );									// SYSM_StartLoadTitle‚Å‹N“®‚µ‚½ƒXƒŒƒbƒh‚ªI—¹‚µ‚½‚©‚Ç‚¤‚©‚ğŠm”F
+extern BOOL SYSM_IsLoadTitlePaused(void);										// ƒ[ƒfƒBƒ“ƒOƒXƒŒƒbƒh‚ªˆê’â~‚µ‚Ä‚¢‚é‚©H
+extern void SYSM_ResumeLoadingThread( BOOL force );								// ƒ[ƒfƒBƒ“ƒOƒXƒŒƒbƒh‚ªˆê’â~‚µ‚Ä‚¢‚½‚çÄŠJ
 extern void SYSM_StartAuthenticateTitle( TitleProperty *pBootTitle );			// w’è‚µ‚½TitleProperty‚ğ•ÊƒXƒŒƒbƒh‚ÅŒŸØŠJn
 extern BOOL SYSM_IsAuthenticateTitleFinished( void );							// SYSM_StartAuthenticateTitle‚Å‹N“®‚µ‚½ƒXƒŒƒbƒh‚ªI—¹‚µ‚½‚©‚Ç‚¤‚©‚ğŠm”F
+extern s32  SYSMi_getCheckTitleLaunchRightsResult( void );						// CheckTitleLaunchRights‚ÌŒ‹‰Ê‚ğ•Ô‚·iƒfƒoƒO—pj
 extern void SYSM_TryToBootTitle( TitleProperty *pBootTitle );					// pBootTitle‚Åw’è‚µ‚½ƒ^ƒCƒgƒ‹‚ğƒu[ƒgBnever return.
 
 // AES—ÌˆæƒfƒNƒŠƒvƒg
@@ -113,13 +117,7 @@ extern BOOL SYSM_CheckNintendoLogo( u16 *pLogoData );							// NintendoƒƒSƒf[ƒ
 extern void SYSM_LoadNintendoLogo2D( u16 *pLogoData, u16 *pDst, int paletteColorIndex ); // NintendoƒƒSƒf[ƒ^‚ğOBJ_2DŒ`®‚Åƒ[ƒhipTempBuffer‚É‚Í0x700bytes•K—v)
 extern void SYSM_LoadNintendoLogo1D( u16 *pLogoData, u16 *pDst, int paletteColorIndex ); // NintendoƒƒSƒf[ƒ^‚ğOBJ_1DŒ`®‚Åƒ[ƒhi“¯ãj
 
-extern s32 SYSMi_getCheckTitleLaunchRightsResult( void );						// CheckTitleLaunchRights‚ÌŒ‹‰Ê‚ğ•Ô‚·iƒfƒoƒO—pj
 
-extern BOOL SYSM_IsLoadTitlePaused(void);										// ƒ[ƒfƒBƒ“ƒOƒXƒŒƒbƒh‚ªˆê’â~‚µ‚Ä‚¢‚é‚©H
-extern void SYSM_ResumeLoadingThread( BOOL force );								// ƒ[ƒfƒBƒ“ƒOƒXƒŒƒbƒh‚ªˆê’â~‚µ‚Ä‚¢‚½‚çÄŠJ
-
-extern BOOL SYSM_MakeTitleListMakerInfoFromHeader( TitleListMakerInfo *info, ROM_Header_Short *hs);
-																				// ƒAƒvƒŠˆø‚«“n‚µƒ^ƒCƒgƒ‹ƒŠƒXƒgì¬—pî•ñ‚ğƒwƒbƒ_î•ñ‚©‚çì¬
 
 #endif
 

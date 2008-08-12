@@ -29,6 +29,10 @@
 #include "loadSharedFont.h"
 #include "scanWDS.h"
 
+#include <nitro/fs/sysarea.h>
+#include <twl/na.h>
+#include "getSysMenuVersion.h"
+
 // extern data-----------------------------------------------------------------
 
 // define data-----------------------------------------------------------------
@@ -51,6 +55,7 @@ void SYSM_DeleteTempDirectory( TitleProperty *pBootTitle );
 static BOOL IsCommandSelected(void);
 static void PrintPause(void);
 static void PrintError(void);
+static void PrintSystemMenuVersion( void );
 
 // global variable-------------------------------------------------------------
 
@@ -467,6 +472,14 @@ MAIN_LOOP_START:
 				LogoMain() &&
             	SYSM_isNandTitleListReady()						// NANDタイトル取得完了かどうかチェック
 				) {
+				// ::::::::::::::::::::::::::::::::::::::::::::::
+				// SystemMenuバージョンetc.の読み込み
+				// ::::::::::::::::::::::::::::::::::::::::::::::
+				
+				// NANDタイトルリスト取得が完了した時点で、その情報をもとにSystemMenuVersionデータにアクセスするための制御情報をセットする。
+				SYSM_SetSystemMenuVersionControlData();
+				PrintSystemMenuVersion();
+				
 				if( !direct_boot ) {
 					sp_titleList = SYSM_GetTitlePropertyList();// TitlePropertyListの取得
                     state = LAUNCHER_INIT;
@@ -676,6 +689,45 @@ static void PrintError( void )
 	GX_DispOn();
 	GXS_DispOn();
 }
+
+
+// システムメニューバージョンのプリント
+static void PrintSystemMenuVersion( void )
+{
+	u8 *pBuffer = SYSM_Alloc( NA_VERSION_DATA_WORK_SIZE );
+	
+	if( pBuffer &&
+		ReadSystemMenuVersionData( pBuffer, NA_VERSION_DATA_WORK_SIZE ) ) {
+		// リード成功
+	}else {
+		// FATALエラー
+		UTL_SetFatalError( FATAL_ERROR_TWLSETTINGS );
+	}
+	SYSM_Free( pBuffer );
+	
+	// バージョン情報の表示
+	{
+		char str_ver[ TWL_SYSMENU_VER_STR_LEN / sizeof(u16) ];
+		int len = sizeof(str_ver);
+		MI_CpuClear8( str_ver, sizeof(str_ver) );
+		OS_TPrintf( "SystemMenuVersionData\n" );
+		// 文字列
+		if( STD_ConvertStringUnicodeToSjis( str_ver, &len, GetSystemMenuVersionString(), NULL, NULL ) == STD_RESULT_SUCCESS ) {
+			OS_TPrintf( "  Version(str)       : %s\n", str_ver );
+		}
+		// 数値
+		OS_TPrintf( "  Version(num)       : %d.%d\n", GetSystemMenuMajorVersion(), GetSystemMenuMinorVersion() );
+		// ユーザー領域MAXサイズの表示
+		OS_TPrintf( "  TotalUserAreadSize : 0x%08x\n", FSi_GetTotalUserAreaSize() );
+		// EULA URLの表示
+		OS_TPrintf( "  EULA URL           : %s\n", GetEULA_URL() );
+		// NUP HostNameの表示
+		OS_TPrintf( "  NUP HostName       : %s\n", GetNUP_HostName() );
+		// SystemMenuVersion情報のタイムスタンプの取得
+		OS_TPrintf( "  Timestamp          : %08x\n", GetSystemMenuVersionTimeStamp() );
+	}
+}
+
 
 // ============================================================================
 // 割り込み処理

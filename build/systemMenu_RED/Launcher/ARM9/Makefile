@@ -81,13 +81,15 @@ SRCS					=	main.c launcher.c sound.c loadWlanFirm.c \
 							loadSharedFont.c scanWDS.c \
 							$(addprefix $(LOGO_DIR)/, $(SRCS_LOGO)) \
 							$(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c \
-							$(BG_DIR)/BGData_Launcher.c
+							$(BG_DIR)/BGData_Launcher.c \
+							../../MachineSettings/ARM9/src/getSysMenuVersion.c
 
 LINCLUDES				=	$(MISC_DIR)/include \
 							$(SRCDIR)/$(LOGO_DIR) \
 							$(ROOT)/build/libraries/wm/common.TWL/inc \
 							$(ROOT)/build/libraries/wm/ARM9.TWL/nwm/inc \
-							$(ROOT)/build/libraries/reboot/common/include
+							$(ROOT)/build/libraries/reboot/common/include \
+							../../MachineSettings/ARM9/src
 
 SYSMENU_LIBS			=	\
 							liblcfg$(TWL_LIBSUFFIX).a \

@@ -1796,23 +1796,7 @@ static void SYSMi_makeTitleIdList( void )
 		}
 		
 		gamecode = (char *)&(id);
-		// バージョン情報の特殊処理
-		if( ( 0 == STD_CompareNString( &gamecode[1], "LNH", 3 ) ) )
-		{
-			char path[ FS_ENTRY_LONGNAME_MAX ];
-			char *p;
-			NAM_GetTitleBootContentPathFast(path, id);
-			p = STD_SearchString( path, ".app" );
-			if( p == NULL)
-			{
-				// 失敗
-				continue;
-			}
-			MI_CpuCopy8( p-8, (void *)HW_SYSM_VER_INFO_CONTENT_ID, 8 );
-			((char *)HW_SYSM_VER_INFO_CONTENT_ID )[8] = '\0';
-			((char *)HW_SYSM_VER_INFO_CONTENT_ID )[9] = gamecode[0];
-		}
-	
+		
 		// ランチャーはリストに入れない
 		if( ( 0 == STD_CompareNString( &gamecode[1], "ANH", 3 ) )
 #ifdef DEV_UIG_LAUNCHER
@@ -1885,6 +1869,42 @@ static void SYSMi_makeTitleIdList( void )
 	list->num = count;
 	// end時間計測総合
 	OS_TPrintf("SYSMi_makeTitleIdList : total %dms\n",OS_TicksToMilliSeconds(OS_GetTick() - start));
+}
+
+
+// システムメニューバージョン情報制御データのセット
+void SYSM_SetSystemMenuVersionControlData( void )
+{
+	int l;
+	int max = AMN_getRomHeaderListLength();
+	
+	for(l=0;l<max;l++)
+	{
+		char *gamecode;
+		OSTitleId id;
+		ROM_Header_Short *pe_hs;
+
+		pe_hs = &((AMN_getRomHeaderList())[l]);
+		id = pe_hs->titleID;
+		
+		gamecode = (char *)&(id);
+		// バージョン情報の特殊処理
+		if( ( 0 == STD_CompareNString( &gamecode[1], "LNH", 3 ) ) )
+		{
+			char path[ FS_ENTRY_LONGNAME_MAX ];
+			char *p;
+			NAM_GetTitleBootContentPathFast(path, id);
+			p = STD_SearchString( path, ".app" );
+			if( p == NULL)
+			{
+				// 失敗
+				continue;
+			}
+			MI_CpuCopy8( p-8, (void *)HW_SYSM_VER_INFO_CONTENT_ID, 8 );
+			((char *)HW_SYSM_VER_INFO_CONTENT_ID )[8] = '\0';
+			((char *)HW_SYSM_VER_INFO_CONTENT_ID )[9] = gamecode[0];
+		}
+	}
 }
 
 
