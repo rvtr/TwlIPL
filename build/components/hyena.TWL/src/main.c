@@ -71,6 +71,7 @@
 #define THREAD_PRIO_SNDEX   14
 #define THREAD_PRIO_FS      15
 /* OS_THREAD_LAUNCHER_PRIORITY 16 */
+#define THREAD_PRIO_IDEL    (OS_THREAD_PRIORITY_MAX-1)
 
 #define NWM_DMANO                   NWMSP_DMA_NOT_USE // NWMのNDMAは使用しない。
 #define THREAD_PRIO_NWM_COMMMAND    9
@@ -122,6 +123,10 @@ extern BOOL sdmcGetNandLogFatal( void );
 void
 TwlSpMain(void)
 {
+    // 常駐ダミースレッド作成（OS_InitThreadで対応されたら削除）
+    OSThread    thread;
+    u32         stack[18];
+
     OSHeapHandle    wramHeapHandle, mainHeapHandle;
 	u32 spiLockId;
 
@@ -142,6 +147,14 @@ TwlSpMain(void)
     // OS 初期化
     OS_Init();
     PrintDebugInfo();
+
+    // 常駐ダミーアイドルスレッド作成（OS_InitThreadで対応されたら削除）
+    if (OS_IsRunOnTwl() == TRUE)
+    {
+        OS_CreateThread(&thread, DummyThread, NULL,
+            (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, THREAD_PRIO_IDEL);
+        OS_WakeupThreadDirect(&thread);
+    }
 
     // ランチャーバージョンを格納（今のところ、最低でもマウント情報登録前には格納する必要あり）
     *(u8 *)HW_TWL_RED_LAUNCHER_VER = (u8)SYSM_LAUNCHER_VER;
