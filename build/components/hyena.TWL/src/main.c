@@ -113,18 +113,6 @@ extern void         SDK_STATIC_BSS_END(void);
 
 extern BOOL sdmcGetNandLogFatal( void );
 
-
-#include    <twl/code32.h>
-void _start_AutoloadDoneCallback(void* argv[]);
-// AutoloadDoneCallbackをオーバーロードして、ここでSYSM_workのクリアを行う。
-void _start_AutoloadDoneCallback(void* argv[])
-{
-#pragma unused(argv)
-    // SYSMワークのクリア
-    MI_CpuClear32( SYSMi_GetWork(), sizeof(SYSM_work) );
-}
-#include    <twl/codereset.h>
-
 /*---------------------------------------------------------------------------*
   Name:         TwlSpMain
   Description:  起動ベクタ。
@@ -137,6 +125,10 @@ TwlSpMain(void)
     OSHeapHandle    wramHeapHandle, mainHeapHandle;
 	u32 spiLockId;
 
+    // SYSMワークのクリア
+//	MI_CpuClear32( SYSMi_GetWork(), sizeof(SYSM_work) );		// NANDファームでクリアしているので、いらない。
+																// ※もしランチャー上でやるなら、crt0.o内でクリアの記述をしないとAutoloadセグメントに配置されてしまって、うまく動かない点に注意する。
+	
     // バックライトON
     while ( (reg_GX_DISPSTAT & REG_GX_DISPSTAT_INI_MASK) == FALSE )
     {
