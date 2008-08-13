@@ -34,8 +34,8 @@ SUBDIRS			=		reloc_info \
 						dht \
 						wds \
 						errorLog \
-						TwlWireless \
 						nwm \
+#						TwlWireless \
 #						acsign \
 
 #----------------------------------------------------------------------------

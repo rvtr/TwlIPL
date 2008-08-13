@@ -12,8 +12,8 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
 SUBDIRS			=
@@ -21,7 +21,7 @@ SUBDIRS			=
 #----------------------------------------------------------------------------
 
 # build ARM & THUMB libraries
-TWL_CODEGEN_ALL 	?= TRUE
+override TWL_CODEGEN 	= ALL
 
 # Codegen for sub processer
 TWL_PROC		= ARM7

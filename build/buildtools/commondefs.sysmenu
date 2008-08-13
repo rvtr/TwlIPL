@@ -107,5 +107,10 @@ MACRO_FLAGS		+=	-DSYSM_BUILD_FOR_DEBUGGER
 endif
 
 #----------------------------------------------------------------------------
+# ARM7コンポーネントにARMビルドを使用する
+
+TWL_BUILDTYPE_ARM7	:= $(subst $(CODEGEN_ARCH),,$(TWL_BUILDTYPE_ARM7))
+
+#----------------------------------------------------------------------------
 endif	# TWL_SYSMENU_COMMONDEFS_
 #----- End of commondefs -----

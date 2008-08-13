@@ -23,7 +23,7 @@ SUBMAKES	=
 #----------------------------------------------------------------------------
 
 # build ARM & THUMB libraries
-TWL_CODEGEN_ALL 	?= TRUE
+override TWL_CODEGEN 	= ALL
 
 # Codegen for sub processer
 TWL_PROC		= ARM7

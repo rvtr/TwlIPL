@@ -21,7 +21,7 @@ SUBDIRS				=
 #----------------------------------------------------------------------------
 
 # build ARM & THUMB libraries
-TWL_CODEGEN_ALL 	?=	True
+override TWL_CODEGEN 	= ALL
 
 TWL_PROC			=	ARM7
 

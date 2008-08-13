@@ -23,6 +23,7 @@ TARGET_FIRM			=	SYSTEMMENU
 TARGET_PLATFORM		=	TWL
 TWL_ARCHGEN			=	LIMITED
 TWL_PROC	    	=	ARM7
+override TWL_CODEGEN 	= ALL
 
 #----------------------------------------------------------------------------
 

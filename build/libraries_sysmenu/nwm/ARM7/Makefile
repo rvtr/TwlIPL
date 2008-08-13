@@ -27,7 +27,7 @@ override TARGET_PLATFORM = TWL
 TWL_PROC		 = ARM7
 
 # build ARM & THUMB libraries
-TWL_CODEGEN		?= ALL
+override TWL_CODEGEN 	= ALL
 
 MACRO_FLAGS  = -DSDK_SYSMENU_BUILD
 

@@ -25,7 +25,7 @@ override TWL_PROC			=	ARM7
 override TWL_ARCHGEN		=	LIMITED
 override TWL_PLATFORM		=	TS
 TWL_NO_STD_PCHDR			=	True
-TWL_CODEGEN					?=	ARM
+override TWL_CODEGEN 		=	ARM
 
 FIRM_LIBSUFFIX	=	.firm$(ARCHGEN_TYPE)$(CODEGEN_ARCH)
 

@@ -12,12 +12,12 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
 override TARGET_PLATFORM	:= TWL
-override TARGET_CODEGEN		:= ARM
+override TWL_CODEGEN		:= ARM
 override TWL_ARCHGEN		:= LIMITED
 
 override TARGET_FINALROM	:= TRUE
