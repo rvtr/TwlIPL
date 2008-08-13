@@ -321,13 +321,16 @@ BOOL control( int *menu, int *line, int *changeLine, u8 *mode )
 BOOL resetUserData( void )
 // idx(0 or 1)番目のユーザデータをリセットする
 {
+	LCFGTWLTPCalibData calib;
 	// DisplayInitで一回Readしてるからいらんかった
 //	u8 *dataBuf = (u8*) Alloc (LCFG_READ_TEMP);
 	
 //	LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ])dataBuf );
 
 	// バックアップをつぶすために二回書き込む
+	LCFG_TSD_GetTPCalibration( &calib );					// TPキャリブレーションは残す。
 	LCFG_ClearTWLSettings( LCFG_TSD_GetInstalledSoftBoxCount() );
+	LCFG_TSD_SetTPCalibration( &calib );
 	
 	if( ! LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ]) gBufLCFG ) )
 	{
