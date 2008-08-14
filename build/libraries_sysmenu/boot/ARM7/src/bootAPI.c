@@ -27,6 +27,7 @@
 #include <firm/aes/ARM7/aes_init.h>
 #include "reboot.h"
 #include "internal_api.h"
+#include "../../../hotsw/ARM7/include/hotswTypes.h"
 
 extern void SPI_Lock(u32 id);
 extern void SPI_Unlock(u32 id);
@@ -136,12 +137,14 @@ BOOL BOOT_WaitStart( void )
 	return FALSE;
 }
 
+// SDKのFinalize処理後に呼び出される
 static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget* target )
 {
 #pragma unused(entryp)
 		u32* mem_list = mem_list_v;
 		ROM_Header *th = (void*)REBOOTi_GetTwlRomHeaderAddr();
 		ROM_Header *dh = (void*)REBOOTi_GetRomHeaderAddr();
+		ROM_Header *ch = (void*)HW_CARD_ROM_HEADER;
 		BOOL isNtrMode;
 		u32  spiLockId;
 
@@ -153,15 +156,25 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 		MI_CpuCopyFast( th, dh, HW_CARD_ROM_HEADER_SIZE );
 
 		// カードNTR-ROMヘッダをNANDアプリやDSダウンロードプレイのためコピー
-		MI_CpuCopyFast( (void*)SYSM_CARD_ROM_HEADER_BAK, (void*)HW_CARD_ROM_HEADER, HW_CARD_ROM_HEADER_SIZE );
+		MI_CpuCopyFast( (void*)SYSM_CARD_ROM_HEADER_BAK, ch, HW_CARD_ROM_HEADER_SIZE );
 
     	if ( (((ROM_Header *)SYSM_CARD_ROM_HEADER_BAK)->s.platform_code & PLATFORM_CODE_FLAG_TWL) && (dh->s.platform_code & PLATFORM_CODE_FLAG_TWL) ){
 			// カードTWL-ROMヘッダをHW_TWL_CARD_ROM_HEADER_BUFにコピー
 			MI_CpuCopyFast( (void*)SYSM_CARD_ROM_HEADER_BAK, (void*)HW_TWL_CARD_ROM_HEADER_BUF, HW_TWL_CARD_ROM_HEADER_BUF_SIZE );
         }
 
+        // デバッガによるROMエミュレーション時はNTR-ROMヘッダバッファの
+        // ゲームコマンドパラメータをスクランブルOFF設定に書き換える
+        if ( SYSM_IsRunOnDebugger() )
+        {
+            // NitroSDKバグ対策でブートメディア種別に関わらずROMヘッダを常時書き換え
+            dh->s.game_cmd_param &= ~SCRAMBLE_MASK;
+        }
+        // カードROMヘッダ（非キャッシュ領域）は常時設定
+        ch->s.game_cmd_param = SYSMi_GetWork()->gameCommondParam;
+
 		// この処理は、DSダウンロードプレイ側で行う。
-		// MI_CpuCopyFast ( (void *)HW_CARD_ROM_HEADER, (void *)MB_CARD_ROM_HEADER_ADDRESS, 0x160);
+		// MI_CpuCopyFast ( ch, (void *)MB_CARD_ROM_HEADER_ADDRESS, 0x160);
 
 		// ブラックリストをチェックし、起動制限をかける
 		BOOTi_CheckTitleBlackList( (void*)th );

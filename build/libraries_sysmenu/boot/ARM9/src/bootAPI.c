@@ -91,6 +91,7 @@ void BOOT_Ready( void )
 }
 
 // ブート準備をして、ARM7からの通知を待つ。
+// SDKのFinalize処理後に呼び出される
 static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget* target )
 {
 #pragma unused(entryp)
@@ -198,19 +199,6 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 		{
 			*target = REBOOT_TARGET_DS_APP;
 		}
-
-        // デバッガによるROMエミュレーション時はNTR-ROMヘッダバッファの
-        // ゲームコマンドパラメータをスクランブルOFF設定に書き換える
-        if ( SYSM_IsRunOnDebugger() )
-        {
-            // NitroSDKバグ対策でブートメディア種別に関わらずROMヘッダを常時書き換え
-            dh->s.game_cmd_param &= ~SCRAMBLE_MASK;
-        }
-        {
-            // カードROMヘッダ（非キャッシュ領域）は常時設定
-           	ROM_Header *ch = (void*)HW_CARD_ROM_HEADER;
-            ch->s.game_cmd_param = SYSMi_GetWork()->gameCommondParam;
-        }
 
 		// 鍵は不要になるので、消しておく
 		{
