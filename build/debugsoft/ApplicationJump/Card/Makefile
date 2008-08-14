@@ -31,6 +31,13 @@ ROM_SPEC	=	appjumptest_card.rsf
 
 include $(TWLSDK_ROOT)/build/buildtools/commondefs
 
+# インストール指定
+ifneq	($(TWL_IPL_RED_ROOT),)
+INSTALL_DIR	= $(TWL_IPL_RED_ROOT)/debugsoft/ApplicationJumpTest
+INSTALL_TARGETS	= $(BINDIR)/$(TARGET_BIN)
+endif
+
+
 do-build:	$(TARGETS)
 
 #----------------------------------------------------------------------------
