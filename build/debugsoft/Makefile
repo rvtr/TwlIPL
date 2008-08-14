@@ -25,6 +25,7 @@ SUBDIRS		=	Jpeg	\
 				Wireless	\
 				Internet	\
 				ApplicationJump	\
+				TMPJump			\
 
 #----------------------------------------------------------------------------
 
