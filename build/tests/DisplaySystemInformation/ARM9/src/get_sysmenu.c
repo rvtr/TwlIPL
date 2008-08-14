@@ -223,16 +223,24 @@ void getSysmenuInfo( void )
 			
 			strToHexa( s_strSignHashDev[i] , cmpDigestDevBuf, MATH_SHA1_DIGEST_SIZE );
 			strToHexa( s_strSignHashProd[i], cmpDigestProdBuf, MATH_SHA1_DIGEST_SIZE );
-			
-			// ハッシュ値が一致したらcorrect,一致しなかったらincorrect
 
+			gAllInfo[MENU_SYSMENU][idx].numLines = 2;
+			gAllInfo[MENU_SYSMENU][idx].isAligned = FALSE;
+			
+			putBinary( cmpDigestDevBuf, MATH_SHA1_DIGEST_SIZE );
+			putBinary( cmpDigestProdBuf, MATH_SHA1_DIGEST_SIZE );
+			putBinary( digestBuf, MATH_SHA1_DIGEST_SIZE );
+
+			// ハッシュ値が一致したらcorrect,一致しなかったらincorrect
 			if( MI_CpuComp8( cmpDigestDevBuf, digestBuf, MATH_SHA1_DIGEST_SIZE ) == 0 )
 			{
-				gAllInfo[MENU_SYSMENU][idx].str.sjis = s_strSysMenuKey[1];
+				gAllInfo[MENU_SYSMENU][idx].str.sjis = 
+					idx == SYSMENU_NINTENDO_CAG2 ? s_strCorrect[1] : s_strSysMenuKey[1];
 			}
 			else if( MI_CpuComp8( cmpDigestProdBuf, digestBuf, MATH_SHA1_DIGEST_SIZE ) == 0 )
 			{
-				gAllInfo[MENU_SYSMENU][idx].str.sjis = s_strSysMenuKey[2];
+				gAllInfo[MENU_SYSMENU][idx].str.sjis = 
+					idx == SYSMENU_NINTENDO_CAG2 ? s_strCorrect[1] : s_strSysMenuKey[2];
 			}
 			else
 			{
@@ -240,12 +248,6 @@ void getSysmenuInfo( void )
 			}
 			
 			
-			gAllInfo[MENU_SYSMENU][idx].numLines = 2;
-			gAllInfo[MENU_SYSMENU][idx].isAligned = FALSE;
-			
-			putBinary( cmpDigestDevBuf, MATH_SHA1_DIGEST_SIZE );
-			putBinary( cmpDigestProdBuf, MATH_SHA1_DIGEST_SIZE );
-			putBinary( digestBuf, MATH_SHA1_DIGEST_SIZE );
 		}
 		
 		// バッファの開放

@@ -9,6 +9,9 @@
 void getSCFGARM9Info( void );
 void getSCFGARM7InfoReg( void );
 void getSCFGARM7InfoShared( void );
+void setSCFGAccessFlag( BOOL flag );
+void setPsramBoundaryFlag( int idx );
+void setDSPResetFlag( BOOL flag );
 
 void getSCFGInfo( void )
 {
@@ -81,8 +84,9 @@ void getSCFGARM9Info( void )
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].iValue = value;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].str.sjis = s_strBool[ value ];
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].changable = TRUE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].argType = ARG_OTHER;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].argType = ARG_BOOL;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].kindNameList = s_strBool;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].changeFunc.cBool = setDSPResetFlag;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].numKindName = 2;
 
 	// 拡張機能制御レジスタ
@@ -188,9 +192,10 @@ void getSCFGARM9Info( void )
 		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].iValue = idx;
 		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].str.sjis = s_strPSRAM[ idx ];
 		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].changable = TRUE;
-		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].argType = ARG_OTHER;
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].argType = ARG_INT;
 		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].kindNameList = s_strPSRAM;
 		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].numKindName = 3;
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].changeFunc.cInt = setPsramBoundaryFlag;
 	}
 	
 	value = SCFG_IsNDmaAccessible();
@@ -232,8 +237,9 @@ void getSCFGARM9Info( void )
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].iValue = value;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].str.sjis = s_strAccess[ value ];
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].changable = TRUE;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].argType = ARG_OTHER;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].argType = ARG_BOOL;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].kindNameList = s_strAccess;
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].changeFunc.cBool = setSCFGAccessFlag;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].numKindName = 2;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].isAligned = FALSE;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].numLines = 2;
@@ -693,8 +699,54 @@ void getSCFGARM7InfoShared( void )
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_SHARED_OFFSET + SCFG_ARM7_CLK_SND ].iValue = value;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_SHARED_OFFSET + SCFG_ARM7_CLK_SND ].str.sjis = s_strSupply[value] ;
 	}
-	
-	
 }
 
+void setDSPResetFlag( BOOL flag )
+{
+	if( flag )
+	{
+		SCFG_ResetDSP();
+	}
+	else
+	{
+		SCFG_ReleaseResetDSP();
+	}
+}
 
+void setPsramBoundaryFlag( int idx )
+{
+	SCFGPsramBoundary value;
+	
+	if( idx < 0 || 2 < idx )
+	{
+		return;
+	}
+
+	OS_TPrintf("call setPsramBoundary( %d )\n",  idx );
+
+	switch( idx )
+	{	
+		case 0:
+			value = SCFG_PSRAM_BOUNDARY_4MB;
+			break;
+		
+		case 1:
+			value = SCFG_PSRAM_BOUNDARY_16MB;
+			break;
+		
+		case 2:
+			value = SCFG_PSRAM_BOUNDARY_32MB;
+			break;
+	}
+	
+	SCFG_SetPsramBoundary( value );
+}
+
+void setSCFGAccessFlag( BOOL flag )
+{
+	// Inaccessible = falseなのでフラグ反転
+	if( !flag )
+	{
+		SCFG_SetConfigBlockInaccessible();
+	}	
+}
