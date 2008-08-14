@@ -57,7 +57,7 @@ Property
 	#
 	# TITLE NAME: Your product name within 12bytes
 	#
-	TitleName		"AppJmpTestC"
+	TitleName	AppJmpTestN2
 
 	#
 	# MAKER CODE: Your company ID# in 2 ascii words
@@ -88,12 +88,12 @@ Property
 	#
 	# ROM HEADER TEMPLATE: Provided to every product by NINTENDO
 	#
-	RomHeaderTemplate	./430A/rom_header_430a.template.sbin
+	RomHeaderTemplate	./432A/rom_header_432a.template.sbin
 
 	#
 	# BANNER FILE: generated from Banner Spec File
 	#
-	BannerFile		$(TWLSDK_ROOT)/include/twl/specfiles/default.bnr
+	BannerFile	"./banner/banner.bnr"
 
 	#
 	# Permit LandingNormalJump: for TWL "ApplicationJump" function [TRUE/FALSE]
@@ -104,7 +104,7 @@ Property
 	# Permit LandingTmpJump: for TWL "ApplicationJump" function [TRUE/FALSE]
 	#
 	#PermitLandingTmpJump	FALSE
-	
+
 	###
 	### Setting for TWL
 	###
@@ -166,12 +166,12 @@ AppendProperty
 	#
 	# Boot allowed Media: [GameCard]
 	#
-	Media					GameCard
+	Media					NAND
 
 	#
 	# GameCode for TitleID : Your GameCode in 4 ascii words
 	#
-	GameCode	430A
+	GameCode	432A
 
 	#
 	# Public save data size: [0K/16K/32K/64K/128K/256K/512K/1M/2M/4M]
