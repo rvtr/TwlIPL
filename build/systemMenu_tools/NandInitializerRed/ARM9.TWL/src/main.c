@@ -20,6 +20,7 @@
 #include <twl/fatfs.h>
 #include <nitro/card.h>
 #include <twl/nam.h>
+#include <twl/os/common/format_rom.h>
 #include <sysmenu/namut.h>
 #include "kami_font.h"
 #include "process_format.h"
@@ -30,6 +31,8 @@
 #include "sd_event.h"
 #include "process_fade.h"
 #include "hwi.h"
+
+#define SCRAMBLE_MASK 0x00406000
 
 extern void HWInfoWriterInit( void );
 
@@ -58,6 +61,13 @@ static void InitAllocation(void);
 void 
 TwlMain()
 {
+    // 製品ビルドランチャー＆デバッガ上での起動対応
+    if ( OS_GetRunningConsoleType() & OS_CONSOLE_TWLDEBUGGER )
+    {
+        ROM_Header *dh = (void *)HW_ROM_HEADER_BUF;
+        dh->s.game_cmd_param &= ~SCRAMBLE_MASK;
+    }
+
     OS_Init();
 	OS_InitTick();
     OS_InitArena();

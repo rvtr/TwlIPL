@@ -19,6 +19,7 @@
 #include <twl.h>
 #include <nitro/snd.h>
 #include <twl/fatfs.h>
+#include <twl/os/common/format_rom.h>
 #include <sysmenu/namut.h>
 #include <twl/nam.h>
 #include "kami_pxi.h"
@@ -32,6 +33,8 @@
 #include "keypad.h"
 #include "debugger_hw_reset_control.h"
 #include "debugger_card_rom.h"
+
+#define SCRAMBLE_MASK 0x00406000
 
 extern const char *g_strIPLSvnRevision;
 extern const char *g_strSDKSvnRevision;
@@ -120,6 +123,13 @@ TwlMain()
 	BOOL nand_firm_result;
 	int tadNum;
 	int i,j;
+
+    // 製品ビルドランチャー＆デバッガ上での起動対応
+    if ( OS_GetRunningConsoleType() & OS_CONSOLE_TWLDEBUGGER )
+    {
+        ROM_Header *dh = (void *)HW_ROM_HEADER_BUF;
+        dh->s.game_cmd_param &= ~SCRAMBLE_MASK;
+    }
 
     OS_Init();
 	OS_InitThread();
