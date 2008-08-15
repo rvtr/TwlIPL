@@ -76,54 +76,6 @@ namespace MasterEditorTWL
 		property System::String  ^hMail2;
 		property System::String  ^hNTSC2;
 
-		// プログラム自己申告仕様
-		property System::Boolean ^hIsWireless;			// ワイヤレス通信対応
-		property System::Boolean ^hIsTouch;				// タッチスクリーン対応
-		property System::Boolean ^hIsMic;				// マイク対応
-		property System::Boolean ^hIsWiFi;				// Wi-Fi対応
-		property System::Boolean ^hIsGBACartridge;		// GBAカートリッジ対応
-		property System::Boolean ^hIsDSCartridge;			// DSカード対応
-		property System::Boolean ^hIsSoftReset;			// ソフトリセット機能あり
-		property System::Boolean ^hIsPictoChatSearch;	// ピクトチャットサーチあり
-		property System::Boolean ^hIsClock;				// 時計機能使用
-		property System::Boolean ^hIsAutoBackLightOff;	// 自動バックライトOFF機能使用
-		property System::Int32   ^hTimeAutoBackLightOff;// ...................する時間
-		property System::Boolean ^hIsAutoLcdOff;		// 自動LCDOFF機能を使用
-		property System::Int32   ^hTimeAutoLcdOff;		// ................する時間
-		property System::Boolean ^hIsSleepMode;			// スリープモード対応
-		property System::Boolean ^hIsNotSleepClose;		// 本体を閉じてもスリープモードに移行しない場合あり
-		property System::Int32   ^hTimeSleepClose;		// ........................................時間
-		property System::Boolean ^hIsSleepAlarm;		// RTCアラームで復帰する場合あり
-		property System::String  ^hProcSleepAlarm;		// .........................の処理内容
-		property System::Boolean ^hIsIPLUserComment;	// IPLのユーザ名およびコメント使用
-		property System::String  ^hSceneIPLUserComment;	// 上記を使用している場面(文字列で入力)
-		property System::Boolean ^hIsAllIPLFonts;		// IPLで設定可能なフォントをすべて表示できる
-
-		// プログラム自己申告仕様2
-		property System::Boolean ^hIsLangJ;				// ゲーム内での使用言語
-		property System::Boolean ^hIsLangE;
-		property System::Boolean ^hIsLangF;
-		property System::Boolean ^hIsLangG;
-		property System::Boolean ^hIsLangI;
-		property System::Boolean ^hIsLangS;
-		property System::Boolean ^hIsLangC;
-		property System::Boolean ^hIsLangK;
-		property System::Boolean ^hIsLangOther;
-		property System::String  ^hLangOther;
-		property System::Boolean ^hIsIPLLang;			// IPLの言語設定
-
-		// 使用ライセンス
-		property System::Boolean ^hUseLcFont;			// LCフォント(SHARP)
-		property System::Boolean ^hUseVx;				// VX Middleware(Actimagine)
-		property System::Boolean ^hUseAtok;				// ATOK(JUSTSYSTEM)
-		property System::Boolean ^hUseVoiceChat;		// VoiceChat(Abiosso)
-		property System::Boolean ^hUseWiFiLib;			// WiFiライブラリ(NINTENDO)
-		property System::Boolean ^hUseVoiceRecog;		// 音声認識(松下)
-		property System::Boolean ^hUseCharRecog;		// 文字認識(Zi)
-		property System::Boolean ^hUseVoiceCombine;		// 音声合成(SHARP)
-		property System::Boolean ^hUseNetFront;			// NetFront Browser(ACCESS)
-		property System::String  ^hUseOthers;			// その他(文字列で入力)
-
 		// 備考
 		property System::String  ^hCaption;
 

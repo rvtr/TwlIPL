@@ -285,15 +285,16 @@ namespace MasterEditorTWL {
 	private: System::Windows::Forms::RadioButton^  rUsageDst;
 	private: System::Windows::Forms::RadioButton^  rUsageSample;
 	private: System::Windows::Forms::RadioButton^  rUsageSale;
-	private: System::Windows::Forms::Label^  labUsage;
+
 	private: System::Windows::Forms::GroupBox^  gboxSubmitWay;
 	private: System::Windows::Forms::RadioButton^  rSubmitHand;
 	private: System::Windows::Forms::RadioButton^  rSubmitPost;
-	private: System::Windows::Forms::Label^  labSubmitWay;
+
 	private: System::Windows::Forms::Label^  labSubmiteDate;
 	private: System::Windows::Forms::Label^  labReleaseDate;
 	private: System::Windows::Forms::Label^  labProductCode;
 	private: System::Windows::Forms::Label^  labProductName;
+private: System::Windows::Forms::ComboBox^  combRegion;
 
 
 
@@ -312,7 +313,7 @@ namespace MasterEditorTWL {
 
 
 
-private: System::Windows::Forms::ComboBox^  cboxRegion;
+
 private: System::Windows::Forms::Label^  labRegion;
 private: System::Windows::Forms::TabControl^  tabDoc;
 
@@ -330,7 +331,10 @@ private: System::Windows::Forms::TextBox^  tboxProductNameForeign;
 private: System::Windows::Forms::Label^  labProductCode1Foreign;
 private: System::Windows::Forms::TextBox^  tboxProductCode1Foreign;
 private: System::Windows::Forms::Label^  labProductCodeForeign;
-private: System::Windows::Forms::TextBox^  tboxProductCode2Foreign;
+private: System::Windows::Forms::TextBox^  tboxProductCode2Foreign1;
+
+
+
 private: System::Windows::Forms::TabPage^  tabCompanyInfo1;
 private: System::Windows::Forms::TabPage^  tabCompanyInfo2;
 private: System::Windows::Forms::TabPage^  tabCaption;
@@ -365,8 +369,9 @@ private: System::Windows::Forms::Label^  labLib;
 private: System::Windows::Forms::TextBox^  tboxSDK;
 private: System::Windows::Forms::Label^  labSDK;
 private: System::Windows::Forms::TabPage^  tabTWLSpec3;
+private: System::Windows::Forms::GroupBox^  gboxTWLExInfo;
 
-private: System::Windows::Forms::GroupBox^  gboxTWLInfoReadOnly;
+
 private: System::Windows::Forms::Label^  labByte2;
 private: System::Windows::Forms::Label^  labByte1;
 private: System::Windows::Forms::Label^  labHex4;
@@ -411,6 +416,21 @@ private: System::Windows::Forms::TextBox^  tboxCaptionEx;
 private: System::Windows::Forms::TabControl^  tabCheck;
 
 private: System::Windows::Forms::TextBox^  tboxLib;
+private: System::Windows::Forms::TextBox^  tboxProductCode2Foreign3;
+
+private: System::Windows::Forms::TextBox^  tboxProductCode2Foreign2;
+private: System::Windows::Forms::Label^  labMultiForeign1;
+private: System::Windows::Forms::Label^  labMultiForeign2;
+private: System::Windows::Forms::Label^  labCautionInput;
+private: System::Windows::Forms::Label^  labCautionCheck;
+
+
+
+
+
+
+
+
 
 
 
@@ -553,7 +573,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->gboxTWLInfoWritable = (gcnew System::Windows::Forms::GroupBox());
 			this->labRegion = (gcnew System::Windows::Forms::Label());
 			this->cboxIsEULA = (gcnew System::Windows::Forms::CheckBox());
-			this->cboxRegion = (gcnew System::Windows::Forms::ComboBox());
+			this->combRegion = (gcnew System::Windows::Forms::ComboBox());
 			this->cboxIsWiFiIcon = (gcnew System::Windows::Forms::CheckBox());
 			this->labEULA = (gcnew System::Windows::Forms::Label());
 			this->cboxIsWirelessIcon = (gcnew System::Windows::Forms::CheckBox());
@@ -562,6 +582,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->gboxPerson2 = (gcnew System::Windows::Forms::GroupBox());
 			this->labNTSC2Sur = (gcnew System::Windows::Forms::Label());
 			this->tboxNTSC2 = (gcnew System::Windows::Forms::TextBox());
+			this->labFax2 = (gcnew System::Windows::Forms::Label());
 			this->labNTSC2Pre = (gcnew System::Windows::Forms::Label());
 			this->tboxFax2 = (gcnew System::Windows::Forms::TextBox());
 			this->tboxMail2 = (gcnew System::Windows::Forms::TextBox());
@@ -572,13 +593,13 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->labDepart2 = (gcnew System::Windows::Forms::Label());
 			this->tboxCompany2 = (gcnew System::Windows::Forms::TextBox());
 			this->labMail2 = (gcnew System::Windows::Forms::Label());
-			this->labFax2 = (gcnew System::Windows::Forms::Label());
 			this->labTel2 = (gcnew System::Windows::Forms::Label());
 			this->labFurigana2 = (gcnew System::Windows::Forms::Label());
 			this->labPerson2 = (gcnew System::Windows::Forms::Label());
 			this->labCompany2 = (gcnew System::Windows::Forms::Label());
 			this->gboxPerson1 = (gcnew System::Windows::Forms::GroupBox());
 			this->labNTSC1Sur = (gcnew System::Windows::Forms::Label());
+			this->labFax1 = (gcnew System::Windows::Forms::Label());
 			this->labNTSC1Pre = (gcnew System::Windows::Forms::Label());
 			this->tboxNTSC1 = (gcnew System::Windows::Forms::TextBox());
 			this->tboxFax1 = (gcnew System::Windows::Forms::TextBox());
@@ -590,7 +611,6 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->labDepart1 = (gcnew System::Windows::Forms::Label());
 			this->tboxCompany1 = (gcnew System::Windows::Forms::TextBox());
 			this->labMail1 = (gcnew System::Windows::Forms::Label());
-			this->labFax1 = (gcnew System::Windows::Forms::Label());
 			this->labTel1 = (gcnew System::Windows::Forms::Label());
 			this->labFurigana1 = (gcnew System::Windows::Forms::Label());
 			this->labPerson1 = (gcnew System::Windows::Forms::Label());
@@ -608,11 +628,9 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->rUsageDst = (gcnew System::Windows::Forms::RadioButton());
 			this->rUsageSample = (gcnew System::Windows::Forms::RadioButton());
 			this->rUsageSale = (gcnew System::Windows::Forms::RadioButton());
-			this->labUsage = (gcnew System::Windows::Forms::Label());
 			this->gboxSubmitWay = (gcnew System::Windows::Forms::GroupBox());
 			this->rSubmitHand = (gcnew System::Windows::Forms::RadioButton());
 			this->rSubmitPost = (gcnew System::Windows::Forms::RadioButton());
-			this->labSubmitWay = (gcnew System::Windows::Forms::Label());
 			this->labSubmiteDate = (gcnew System::Windows::Forms::Label());
 			this->labReleaseDate = (gcnew System::Windows::Forms::Label());
 			this->labProductCode = (gcnew System::Windows::Forms::Label());
@@ -622,7 +640,12 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->labSubmitVer = (gcnew System::Windows::Forms::Label());
 			this->tabDoc = (gcnew System::Windows::Forms::TabControl());
 			this->tabSubmitInfo = (gcnew System::Windows::Forms::TabPage());
+			this->labCautionInput = (gcnew System::Windows::Forms::Label());
 			this->tabForeignInfo = (gcnew System::Windows::Forms::TabPage());
+			this->labMultiForeign2 = (gcnew System::Windows::Forms::Label());
+			this->labMultiForeign1 = (gcnew System::Windows::Forms::Label());
+			this->tboxProductCode2Foreign3 = (gcnew System::Windows::Forms::TextBox());
+			this->tboxProductCode2Foreign2 = (gcnew System::Windows::Forms::TextBox());
 			this->labProductCode2Foreign = (gcnew System::Windows::Forms::Label());
 			this->cboxReleaseForeign = (gcnew System::Windows::Forms::CheckBox());
 			this->labProductNameForeign = (gcnew System::Windows::Forms::Label());
@@ -630,7 +653,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->labProductCode1Foreign = (gcnew System::Windows::Forms::Label());
 			this->tboxProductCode1Foreign = (gcnew System::Windows::Forms::TextBox());
 			this->labProductCodeForeign = (gcnew System::Windows::Forms::Label());
-			this->tboxProductCode2Foreign = (gcnew System::Windows::Forms::TextBox());
+			this->tboxProductCode2Foreign1 = (gcnew System::Windows::Forms::TextBox());
 			this->tabCompanyInfo1 = (gcnew System::Windows::Forms::TabPage());
 			this->tabCompanyInfo2 = (gcnew System::Windows::Forms::TabPage());
 			this->tabCaption = (gcnew System::Windows::Forms::TabPage());
@@ -661,7 +684,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->tboxSDK = (gcnew System::Windows::Forms::TextBox());
 			this->labSDK = (gcnew System::Windows::Forms::Label());
 			this->tabTWLSpec3 = (gcnew System::Windows::Forms::TabPage());
-			this->gboxTWLInfoReadOnly = (gcnew System::Windows::Forms::GroupBox());
+			this->gboxTWLExInfo = (gcnew System::Windows::Forms::GroupBox());
 			this->labByte2 = (gcnew System::Windows::Forms::Label());
 			this->labByte1 = (gcnew System::Windows::Forms::Label());
 			this->labHex4 = (gcnew System::Windows::Forms::Label());
@@ -689,6 +712,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->cboxIsNAND = (gcnew System::Windows::Forms::CheckBox());
 			this->cboxIsSD = (gcnew System::Windows::Forms::CheckBox());
 			this->tabTWLSpec1 = (gcnew System::Windows::Forms::TabPage());
+			this->labCautionCheck = (gcnew System::Windows::Forms::Label());
 			this->gboxTitleID = (gcnew System::Windows::Forms::GroupBox());
 			this->labHex2 = (gcnew System::Windows::Forms::Label());
 			this->labHex1 = (gcnew System::Windows::Forms::Label());
@@ -722,7 +746,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->gboxShared2Size->SuspendLayout();
 			this->tabSDK->SuspendLayout();
 			this->tabTWLSpec3->SuspendLayout();
-			this->gboxTWLInfoReadOnly->SuspendLayout();
+			this->gboxTWLExInfo->SuspendLayout();
 			this->tabTWLSpec2->SuspendLayout();
 			this->gboxAccess->SuspendLayout();
 			this->tabTWLSpec1->SuspendLayout();
@@ -878,10 +902,10 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// tboxMakerCode
 			// 
 			this->tboxMakerCode->Location = System::Drawing::Point(104, 73);
-			this->tboxMakerCode->MaxLength = 4;
+			this->tboxMakerCode->MaxLength = 2;
 			this->tboxMakerCode->Name = L"tboxMakerCode";
 			this->tboxMakerCode->ReadOnly = true;
-			this->tboxMakerCode->Size = System::Drawing::Size(59, 19);
+			this->tboxMakerCode->Size = System::Drawing::Size(35, 19);
 			this->tboxMakerCode->TabIndex = 2;
 			// 
 			// cboxRemasterVerE
@@ -948,7 +972,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->tboxTitleName->MaxLength = 12;
 			this->tboxTitleName->Name = L"tboxTitleName";
 			this->tboxTitleName->ReadOnly = true;
-			this->tboxTitleName->Size = System::Drawing::Size(121, 19);
+			this->tboxTitleName->Size = System::Drawing::Size(100, 19);
 			this->tboxTitleName->TabIndex = 0;
 			// 
 			// gboxCRC
@@ -1035,9 +1059,9 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->labCaption->AutoSize = true;
 			this->labCaption->Location = System::Drawing::Point(23, 22);
 			this->labCaption->Name = L"labCaption";
-			this->labCaption->Size = System::Drawing::Size(41, 12);
+			this->labCaption->Size = System::Drawing::Size(191, 12);
 			this->labCaption->TabIndex = 8;
-			this->labCaption->Text = L"備考欄";
+			this->labCaption->Text = L"その他連絡事項があればご記入ください";
 			// 
 			// tboxCaption
 			// 
@@ -1387,7 +1411,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			this->gboxTWLInfoWritable->Controls->Add(this->labRegion);
 			this->gboxTWLInfoWritable->Controls->Add(this->cboxIsEULA);
-			this->gboxTWLInfoWritable->Controls->Add(this->cboxRegion);
+			this->gboxTWLInfoWritable->Controls->Add(this->combRegion);
 			this->gboxTWLInfoWritable->Controls->Add(this->labPEGIBBFC2);
 			this->gboxTWLInfoWritable->Controls->Add(this->cboxIsWiFiIcon);
 			this->gboxTWLInfoWritable->Controls->Add(this->labParentalRating);
@@ -1429,7 +1453,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->gboxTWLInfoWritable->Size = System::Drawing::Size(451, 313);
 			this->gboxTWLInfoWritable->TabIndex = 30;
 			this->gboxTWLInfoWritable->TabStop = false;
-			this->gboxTWLInfoWritable->Text = L"ROMデータ編集可能情報";
+			this->gboxTWLInfoWritable->Text = L"ROMデータ編集可能情報(必要がであれば変更してください)";
 			// 
 			// labRegion
 			// 
@@ -1450,14 +1474,15 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->cboxIsEULA->Text = L"EULA同意";
 			this->cboxIsEULA->UseVisualStyleBackColor = true;
 			// 
-			// cboxRegion
+			// combRegion
 			// 
-			this->cboxRegion->FormattingEnabled = true;
-			this->cboxRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"日本のみ", L"米国のみ", L"欧州のみ", L"豪州のみ", L"欧州および豪州"});
-			this->cboxRegion->Location = System::Drawing::Point(97, 78);
-			this->cboxRegion->Name = L"cboxRegion";
-			this->cboxRegion->Size = System::Drawing::Size(216, 20);
-			this->cboxRegion->TabIndex = 36;
+			this->combRegion->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
+			this->combRegion->FormattingEnabled = true;
+			this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"日本のみ", L"米国のみ", L"欧州のみ", L"豪州のみ", L"欧州および豪州"});
+			this->combRegion->Location = System::Drawing::Point(97, 78);
+			this->combRegion->Name = L"combRegion";
+			this->combRegion->Size = System::Drawing::Size(216, 20);
+			this->combRegion->TabIndex = 36;
 			// 
 			// cboxIsWiFiIcon
 			// 
@@ -1500,7 +1525,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// cboxIsInputPerson2
 			// 
 			this->cboxIsInputPerson2->AutoSize = true;
-			this->cboxIsInputPerson2->Location = System::Drawing::Point(36, 16);
+			this->cboxIsInputPerson2->Location = System::Drawing::Point(38, 11);
 			this->cboxIsInputPerson2->Name = L"cboxIsInputPerson2";
 			this->cboxIsInputPerson2->Size = System::Drawing::Size(150, 16);
 			this->cboxIsInputPerson2->TabIndex = 7;
@@ -1512,6 +1537,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			this->gboxPerson2->Controls->Add(this->labNTSC2Sur);
 			this->gboxPerson2->Controls->Add(this->tboxNTSC2);
+			this->gboxPerson2->Controls->Add(this->labFax2);
 			this->gboxPerson2->Controls->Add(this->labNTSC2Pre);
 			this->gboxPerson2->Controls->Add(this->tboxFax2);
 			this->gboxPerson2->Controls->Add(this->tboxMail2);
@@ -1522,13 +1548,12 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->gboxPerson2->Controls->Add(this->labDepart2);
 			this->gboxPerson2->Controls->Add(this->tboxCompany2);
 			this->gboxPerson2->Controls->Add(this->labMail2);
-			this->gboxPerson2->Controls->Add(this->labFax2);
 			this->gboxPerson2->Controls->Add(this->labTel2);
 			this->gboxPerson2->Controls->Add(this->labFurigana2);
 			this->gboxPerson2->Controls->Add(this->labPerson2);
 			this->gboxPerson2->Controls->Add(this->labCompany2);
 			this->gboxPerson2->Enabled = false;
-			this->gboxPerson2->Location = System::Drawing::Point(25, 38);
+			this->gboxPerson2->Location = System::Drawing::Point(27, 35);
 			this->gboxPerson2->Name = L"gboxPerson2";
 			this->gboxPerson2->Size = System::Drawing::Size(304, 210);
 			this->gboxPerson2->TabIndex = 14;
@@ -1538,7 +1563,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labNTSC2Sur
 			// 
 			this->labNTSC2Sur->AutoSize = true;
-			this->labNTSC2Sur->Location = System::Drawing::Point(12, 189);
+			this->labNTSC2Sur->Location = System::Drawing::Point(18, 189);
 			this->labNTSC2Sur->Name = L"labNTSC2Sur";
 			this->labNTSC2Sur->Size = System::Drawing::Size(44, 12);
 			this->labNTSC2Sur->TabIndex = 12;
@@ -1546,15 +1571,24 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			// tboxNTSC2
 			// 
-			this->tboxNTSC2->Location = System::Drawing::Point(66, 177);
+			this->tboxNTSC2->Location = System::Drawing::Point(66, 175);
 			this->tboxNTSC2->Name = L"tboxNTSC2";
 			this->tboxNTSC2->Size = System::Drawing::Size(220, 19);
 			this->tboxNTSC2->TabIndex = 11;
 			// 
+			// labFax2
+			// 
+			this->labFax2->AutoSize = true;
+			this->labFax2->Location = System::Drawing::Point(159, 128);
+			this->labFax2->Name = L"labFax2";
+			this->labFax2->Size = System::Drawing::Size(27, 12);
+			this->labFax2->TabIndex = 4;
+			this->labFax2->Text = L"FAX";
+			// 
 			// labNTSC2Pre
 			// 
 			this->labNTSC2Pre->AutoSize = true;
-			this->labNTSC2Pre->Location = System::Drawing::Point(12, 175);
+			this->labNTSC2Pre->Location = System::Drawing::Point(18, 175);
 			this->labNTSC2Pre->Name = L"labNTSC2Pre";
 			this->labNTSC2Pre->Size = System::Drawing::Size(35, 12);
 			this->labNTSC2Pre->TabIndex = 11;
@@ -1562,9 +1596,9 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			// tboxFax2
 			// 
-			this->tboxFax2->Location = System::Drawing::Point(202, 125);
+			this->tboxFax2->Location = System::Drawing::Point(192, 125);
 			this->tboxFax2->Name = L"tboxFax2";
-			this->tboxFax2->Size = System::Drawing::Size(84, 19);
+			this->tboxFax2->Size = System::Drawing::Size(94, 19);
 			this->tboxFax2->TabIndex = 13;
 			// 
 			// tboxMail2
@@ -1621,25 +1655,16 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labMail2
 			// 
 			this->labMail2->AutoSize = true;
-			this->labMail2->Location = System::Drawing::Point(12, 153);
+			this->labMail2->Location = System::Drawing::Point(18, 153);
 			this->labMail2->Name = L"labMail2";
 			this->labMail2->Size = System::Drawing::Size(38, 12);
 			this->labMail2->TabIndex = 5;
 			this->labMail2->Text = L"e-mail";
 			// 
-			// labFax2
-			// 
-			this->labFax2->AutoSize = true;
-			this->labFax2->Location = System::Drawing::Point(169, 128);
-			this->labFax2->Name = L"labFax2";
-			this->labFax2->Size = System::Drawing::Size(27, 12);
-			this->labFax2->TabIndex = 4;
-			this->labFax2->Text = L"FAX";
-			// 
 			// labTel2
 			// 
 			this->labTel2->AutoSize = true;
-			this->labTel2->Location = System::Drawing::Point(14, 128);
+			this->labTel2->Location = System::Drawing::Point(28, 128);
 			this->labTel2->Name = L"labTel2";
 			this->labTel2->Size = System::Drawing::Size(25, 12);
 			this->labTel2->TabIndex = 3;
@@ -1675,6 +1700,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// gboxPerson1
 			// 
 			this->gboxPerson1->Controls->Add(this->labNTSC1Sur);
+			this->gboxPerson1->Controls->Add(this->labFax1);
 			this->gboxPerson1->Controls->Add(this->labNTSC1Pre);
 			this->gboxPerson1->Controls->Add(this->tboxNTSC1);
 			this->gboxPerson1->Controls->Add(this->tboxFax1);
@@ -1686,12 +1712,11 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->gboxPerson1->Controls->Add(this->labDepart1);
 			this->gboxPerson1->Controls->Add(this->tboxCompany1);
 			this->gboxPerson1->Controls->Add(this->labMail1);
-			this->gboxPerson1->Controls->Add(this->labFax1);
 			this->gboxPerson1->Controls->Add(this->labTel1);
 			this->gboxPerson1->Controls->Add(this->labFurigana1);
 			this->gboxPerson1->Controls->Add(this->labPerson1);
 			this->gboxPerson1->Controls->Add(this->labCompany1);
-			this->gboxPerson1->Location = System::Drawing::Point(27, 27);
+			this->gboxPerson1->Location = System::Drawing::Point(27, 35);
 			this->gboxPerson1->Name = L"gboxPerson1";
 			this->gboxPerson1->Size = System::Drawing::Size(304, 210);
 			this->gboxPerson1->TabIndex = 8;
@@ -1701,16 +1726,25 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labNTSC1Sur
 			// 
 			this->labNTSC1Sur->AutoSize = true;
-			this->labNTSC1Sur->Location = System::Drawing::Point(9, 186);
+			this->labNTSC1Sur->Location = System::Drawing::Point(18, 189);
 			this->labNTSC1Sur->Name = L"labNTSC1Sur";
 			this->labNTSC1Sur->Size = System::Drawing::Size(44, 12);
 			this->labNTSC1Sur->TabIndex = 10;
 			this->labNTSC1Sur->Text = L"User ID";
 			// 
+			// labFax1
+			// 
+			this->labFax1->AutoSize = true;
+			this->labFax1->Location = System::Drawing::Point(159, 128);
+			this->labFax1->Name = L"labFax1";
+			this->labFax1->Size = System::Drawing::Size(27, 12);
+			this->labFax1->TabIndex = 4;
+			this->labFax1->Text = L"FAX";
+			// 
 			// labNTSC1Pre
 			// 
 			this->labNTSC1Pre->AutoSize = true;
-			this->labNTSC1Pre->Location = System::Drawing::Point(9, 172);
+			this->labNTSC1Pre->Location = System::Drawing::Point(18, 175);
 			this->labNTSC1Pre->Name = L"labNTSC1Pre";
 			this->labNTSC1Pre->Size = System::Drawing::Size(35, 12);
 			this->labNTSC1Pre->TabIndex = 9;
@@ -1725,9 +1759,9 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			// tboxFax1
 			// 
-			this->tboxFax1->Location = System::Drawing::Point(198, 125);
+			this->tboxFax1->Location = System::Drawing::Point(192, 125);
 			this->tboxFax1->Name = L"tboxFax1";
-			this->tboxFax1->Size = System::Drawing::Size(88, 19);
+			this->tboxFax1->Size = System::Drawing::Size(94, 19);
 			this->tboxFax1->TabIndex = 5;
 			// 
 			// tboxMail1
@@ -1741,7 +1775,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			this->tboxTel1->Location = System::Drawing::Point(66, 125);
 			this->tboxTel1->Name = L"tboxTel1";
-			this->tboxTel1->Size = System::Drawing::Size(82, 19);
+			this->tboxTel1->Size = System::Drawing::Size(84, 19);
 			this->tboxTel1->TabIndex = 4;
 			// 
 			// tboxFurigana1
@@ -1784,25 +1818,16 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labMail1
 			// 
 			this->labMail1->AutoSize = true;
-			this->labMail1->Location = System::Drawing::Point(12, 153);
+			this->labMail1->Location = System::Drawing::Point(18, 153);
 			this->labMail1->Name = L"labMail1";
 			this->labMail1->Size = System::Drawing::Size(38, 12);
 			this->labMail1->TabIndex = 5;
 			this->labMail1->Text = L"e-mail";
 			// 
-			// labFax1
-			// 
-			this->labFax1->AutoSize = true;
-			this->labFax1->Location = System::Drawing::Point(167, 128);
-			this->labFax1->Name = L"labFax1";
-			this->labFax1->Size = System::Drawing::Size(27, 12);
-			this->labFax1->TabIndex = 4;
-			this->labFax1->Text = L"FAX";
-			// 
 			// labTel1
 			// 
 			this->labTel1->AutoSize = true;
-			this->labTel1->Location = System::Drawing::Point(12, 128);
+			this->labTel1->Location = System::Drawing::Point(28, 128);
 			this->labTel1->Name = L"labTel1";
 			this->labTel1->Size = System::Drawing::Size(25, 12);
 			this->labTel1->TabIndex = 3;
@@ -1811,7 +1836,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labFurigana1
 			// 
 			this->labFurigana1->AutoSize = true;
-			this->labFurigana1->Location = System::Drawing::Point(12, 103);
+			this->labFurigana1->Location = System::Drawing::Point(9, 103);
 			this->labFurigana1->Name = L"labFurigana1";
 			this->labFurigana1->Size = System::Drawing::Size(51, 12);
 			this->labFurigana1->TabIndex = 2;
@@ -1837,21 +1862,23 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			// tboxProductCode2
 			// 
-			this->tboxProductCode2->Location = System::Drawing::Point(166, 80);
+			this->tboxProductCode2->Location = System::Drawing::Point(166, 92);
+			this->tboxProductCode2->MaxLength = 4;
 			this->tboxProductCode2->Name = L"tboxProductCode2";
 			this->tboxProductCode2->Size = System::Drawing::Size(56, 19);
 			this->tboxProductCode2->TabIndex = 2;
 			// 
 			// tboxProductCode1
 			// 
-			this->tboxProductCode1->Location = System::Drawing::Point(131, 80);
+			this->tboxProductCode1->Location = System::Drawing::Point(131, 92);
+			this->tboxProductCode1->MaxLength = 1;
 			this->tboxProductCode1->Name = L"tboxProductCode1";
 			this->tboxProductCode1->Size = System::Drawing::Size(18, 19);
 			this->tboxProductCode1->TabIndex = 1;
 			// 
 			// tboxProductName
 			// 
-			this->tboxProductName->Location = System::Drawing::Point(97, 51);
+			this->tboxProductName->Location = System::Drawing::Point(97, 63);
 			this->tboxProductName->Name = L"tboxProductName";
 			this->tboxProductName->Size = System::Drawing::Size(266, 19);
 			this->tboxProductName->TabIndex = 0;
@@ -1859,7 +1886,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labProductCode2
 			// 
 			this->labProductCode2->AutoSize = true;
-			this->labProductCode2->Location = System::Drawing::Point(155, 83);
+			this->labProductCode2->Location = System::Drawing::Point(155, 95);
 			this->labProductCode2->Name = L"labProductCode2";
 			this->labProductCode2->Size = System::Drawing::Size(11, 12);
 			this->labProductCode2->TabIndex = 33;
@@ -1868,7 +1895,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labProductCode1
 			// 
 			this->labProductCode1->AutoSize = true;
-			this->labProductCode1->Location = System::Drawing::Point(95, 83);
+			this->labProductCode1->Location = System::Drawing::Point(95, 95);
 			this->labProductCode1->Name = L"labProductCode1";
 			this->labProductCode1->Size = System::Drawing::Size(37, 12);
 			this->labProductCode1->TabIndex = 32;
@@ -1877,7 +1904,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// dateSubmit
 			// 
 			this->dateSubmit->Format = System::Windows::Forms::DateTimePickerFormat::Short;
-			this->dateSubmit->Location = System::Drawing::Point(97, 109);
+			this->dateSubmit->Location = System::Drawing::Point(97, 121);
 			this->dateSubmit->MaxDate = System::DateTime(2099, 12, 31, 0, 0, 0, 0);
 			this->dateSubmit->MinDate = System::DateTime(2008, 1, 1, 0, 0, 0, 0);
 			this->dateSubmit->Name = L"dateSubmit";
@@ -1888,7 +1915,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// dateRelease
 			// 
 			this->dateRelease->Format = System::Windows::Forms::DateTimePickerFormat::Short;
-			this->dateRelease->Location = System::Drawing::Point(97, 140);
+			this->dateRelease->Location = System::Drawing::Point(97, 152);
 			this->dateRelease->MaxDate = System::DateTime(2099, 12, 31, 0, 0, 0, 0);
 			this->dateRelease->MinDate = System::DateTime(2008, 1, 1, 0, 0, 0, 0);
 			this->dateRelease->Name = L"dateRelease";
@@ -1908,6 +1935,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->gboxUsage->Size = System::Drawing::Size(364, 74);
 			this->gboxUsage->TabIndex = 6;
 			this->gboxUsage->TabStop = false;
+			this->gboxUsage->Text = L"用途";
 			// 
 			// tboxUsageOther
 			// 
@@ -1960,29 +1988,21 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->rUsageSale->Text = L"一般販売用";
 			this->rUsageSale->UseVisualStyleBackColor = true;
 			// 
-			// labUsage
-			// 
-			this->labUsage->AutoSize = true;
-			this->labUsage->Location = System::Drawing::Point(24, 166);
-			this->labUsage->Name = L"labUsage";
-			this->labUsage->Size = System::Drawing::Size(29, 12);
-			this->labUsage->TabIndex = 14;
-			this->labUsage->Text = L"用途";
-			// 
 			// gboxSubmitWay
 			// 
 			this->gboxSubmitWay->Controls->Add(this->rSubmitHand);
 			this->gboxSubmitWay->Controls->Add(this->rSubmitPost);
-			this->gboxSubmitWay->Location = System::Drawing::Point(244, 109);
+			this->gboxSubmitWay->Location = System::Drawing::Point(244, 114);
 			this->gboxSubmitWay->Name = L"gboxSubmitWay";
-			this->gboxSubmitWay->Size = System::Drawing::Size(94, 56);
+			this->gboxSubmitWay->Size = System::Drawing::Size(94, 63);
 			this->gboxSubmitWay->TabIndex = 5;
 			this->gboxSubmitWay->TabStop = false;
+			this->gboxSubmitWay->Text = L"提出方法";
 			// 
 			// rSubmitHand
 			// 
 			this->rSubmitHand->AutoSize = true;
-			this->rSubmitHand->Location = System::Drawing::Point(6, 34);
+			this->rSubmitHand->Location = System::Drawing::Point(6, 40);
 			this->rSubmitHand->Name = L"rSubmitHand";
 			this->rSubmitHand->Size = System::Drawing::Size(56, 16);
 			this->rSubmitHand->TabIndex = 1;
@@ -1993,7 +2013,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			this->rSubmitPost->AutoSize = true;
 			this->rSubmitPost->Checked = true;
-			this->rSubmitPost->Location = System::Drawing::Point(6, 12);
+			this->rSubmitPost->Location = System::Drawing::Point(6, 18);
 			this->rSubmitPost->Name = L"rSubmitPost";
 			this->rSubmitPost->Size = System::Drawing::Size(47, 16);
 			this->rSubmitPost->TabIndex = 0;
@@ -2001,55 +2021,46 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->rSubmitPost->Text = L"郵送";
 			this->rSubmitPost->UseVisualStyleBackColor = true;
 			// 
-			// labSubmitWay
-			// 
-			this->labSubmitWay->AutoSize = true;
-			this->labSubmitWay->Location = System::Drawing::Point(246, 102);
-			this->labSubmitWay->Name = L"labSubmitWay";
-			this->labSubmitWay->Size = System::Drawing::Size(53, 12);
-			this->labSubmitWay->TabIndex = 12;
-			this->labSubmitWay->Text = L"提出方法";
-			// 
 			// labSubmiteDate
 			// 
-			this->labSubmiteDate->Location = System::Drawing::Point(0, 109);
+			this->labSubmiteDate->AutoSize = true;
+			this->labSubmiteDate->Location = System::Drawing::Point(9, 124);
 			this->labSubmiteDate->Name = L"labSubmiteDate";
-			this->labSubmiteDate->Size = System::Drawing::Size(94, 19);
+			this->labSubmiteDate->Size = System::Drawing::Size(65, 12);
 			this->labSubmiteDate->TabIndex = 11;
-			this->labSubmiteDate->Text = L"提出日";
-			this->labSubmiteDate->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
+			this->labSubmiteDate->Text = L"書類提出日";
 			// 
 			// labReleaseDate
 			// 
-			this->labReleaseDate->Location = System::Drawing::Point(2, 140);
+			this->labReleaseDate->AutoSize = true;
+			this->labReleaseDate->Location = System::Drawing::Point(9, 156);
 			this->labReleaseDate->Name = L"labReleaseDate";
-			this->labReleaseDate->Size = System::Drawing::Size(86, 15);
+			this->labReleaseDate->Size = System::Drawing::Size(65, 12);
 			this->labReleaseDate->TabIndex = 7;
 			this->labReleaseDate->Text = L"発売予定日";
-			this->labReleaseDate->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			// 
 			// labProductCode
 			// 
-			this->labProductCode->Location = System::Drawing::Point(4, 81);
+			this->labProductCode->AutoSize = true;
+			this->labProductCode->Location = System::Drawing::Point(9, 95);
 			this->labProductCode->Name = L"labProductCode";
-			this->labProductCode->Size = System::Drawing::Size(84, 16);
+			this->labProductCode->Size = System::Drawing::Size(56, 12);
 			this->labProductCode->TabIndex = 6;
 			this->labProductCode->Text = L"製品コード";
-			this->labProductCode->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			// 
 			// labProductName
 			// 
-			this->labProductName->Location = System::Drawing::Point(3, 53);
+			this->labProductName->AutoSize = true;
+			this->labProductName->Location = System::Drawing::Point(10, 66);
 			this->labProductName->Name = L"labProductName";
-			this->labProductName->Size = System::Drawing::Size(79, 15);
+			this->labProductName->Size = System::Drawing::Size(41, 12);
 			this->labProductName->TabIndex = 5;
 			this->labProductName->Text = L"製品名";
-			this->labProductName->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			// 
 			// labCapSubmitVer
 			// 
 			this->labCapSubmitVer->AutoSize = true;
-			this->labCapSubmitVer->Location = System::Drawing::Point(145, 22);
+			this->labCapSubmitVer->Location = System::Drawing::Point(138, 37);
 			this->labCapSubmitVer->Name = L"labCapSubmitVer";
 			this->labCapSubmitVer->Size = System::Drawing::Size(233, 12);
 			this->labCapSubmitVer->TabIndex = 26;
@@ -2057,7 +2068,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			// numSubmitVersion
 			// 
-			this->numSubmitVersion->Location = System::Drawing::Point(97, 20);
+			this->numSubmitVersion->Location = System::Drawing::Point(97, 34);
 			this->numSubmitVersion->Name = L"numSubmitVersion";
 			this->numSubmitVersion->Size = System::Drawing::Size(35, 19);
 			this->numSubmitVersion->TabIndex = 9;
@@ -2065,7 +2076,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labSubmitVer
 			// 
 			this->labSubmitVer->AutoSize = true;
-			this->labSubmitVer->Location = System::Drawing::Point(9, 22);
+			this->labSubmitVer->Location = System::Drawing::Point(9, 36);
 			this->labSubmitVer->Name = L"labSubmitVer";
 			this->labSubmitVer->Size = System::Drawing::Size(74, 12);
 			this->labSubmitVer->TabIndex = 24;
@@ -2086,6 +2097,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			// tabSubmitInfo
 			// 
+			this->tabSubmitInfo->Controls->Add(this->labCautionInput);
 			this->tabSubmitInfo->Controls->Add(this->tboxProductCode2);
 			this->tabSubmitInfo->Controls->Add(this->labSubmitVer);
 			this->tabSubmitInfo->Controls->Add(this->tboxProductCode1);
@@ -2100,10 +2112,8 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->tabSubmitInfo->Controls->Add(this->labReleaseDate);
 			this->tabSubmitInfo->Controls->Add(this->dateRelease);
 			this->tabSubmitInfo->Controls->Add(this->labSubmiteDate);
-			this->tabSubmitInfo->Controls->Add(this->labSubmitWay);
 			this->tabSubmitInfo->Controls->Add(this->gboxSubmitWay);
 			this->tabSubmitInfo->Controls->Add(this->gboxUsage);
-			this->tabSubmitInfo->Controls->Add(this->labUsage);
 			this->tabSubmitInfo->Location = System::Drawing::Point(4, 21);
 			this->tabSubmitInfo->Name = L"tabSubmitInfo";
 			this->tabSubmitInfo->Padding = System::Windows::Forms::Padding(3);
@@ -2112,8 +2122,22 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->tabSubmitInfo->Text = L"提出情報";
 			this->tabSubmitInfo->UseVisualStyleBackColor = true;
 			// 
+			// labCautionInput
+			// 
+			this->labCautionInput->AutoSize = true;
+			this->labCautionInput->ForeColor = System::Drawing::SystemColors::ActiveCaption;
+			this->labCautionInput->Location = System::Drawing::Point(9, 8);
+			this->labCautionInput->Name = L"labCautionInput";
+			this->labCautionInput->Size = System::Drawing::Size(312, 12);
+			this->labCautionInput->TabIndex = 34;
+			this->labCautionInput->Text = L"* これらの項目は書類提出に必要な情報です。入力してください。";
+			// 
 			// tabForeignInfo
 			// 
+			this->tabForeignInfo->Controls->Add(this->labMultiForeign2);
+			this->tabForeignInfo->Controls->Add(this->labMultiForeign1);
+			this->tabForeignInfo->Controls->Add(this->tboxProductCode2Foreign3);
+			this->tabForeignInfo->Controls->Add(this->tboxProductCode2Foreign2);
 			this->tabForeignInfo->Controls->Add(this->labProductCode2Foreign);
 			this->tabForeignInfo->Controls->Add(this->cboxReleaseForeign);
 			this->tabForeignInfo->Controls->Add(this->labProductNameForeign);
@@ -2121,7 +2145,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->tabForeignInfo->Controls->Add(this->labProductCode1Foreign);
 			this->tabForeignInfo->Controls->Add(this->tboxProductCode1Foreign);
 			this->tabForeignInfo->Controls->Add(this->labProductCodeForeign);
-			this->tabForeignInfo->Controls->Add(this->tboxProductCode2Foreign);
+			this->tabForeignInfo->Controls->Add(this->tboxProductCode2Foreign1);
 			this->tabForeignInfo->Location = System::Drawing::Point(4, 21);
 			this->tabForeignInfo->Name = L"tabForeignInfo";
 			this->tabForeignInfo->Padding = System::Windows::Forms::Padding(3);
@@ -2130,10 +2154,46 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->tabForeignInfo->Text = L"海外版";
 			this->tabForeignInfo->UseVisualStyleBackColor = true;
 			// 
+			// labMultiForeign2
+			// 
+			this->labMultiForeign2->AutoSize = true;
+			this->labMultiForeign2->Location = System::Drawing::Point(221, 152);
+			this->labMultiForeign2->Name = L"labMultiForeign2";
+			this->labMultiForeign2->Size = System::Drawing::Size(103, 12);
+			this->labMultiForeign2->TabIndex = 45;
+			this->labMultiForeign2->Text = L"* 複数ある場合のみ";
+			// 
+			// labMultiForeign1
+			// 
+			this->labMultiForeign1->AutoSize = true;
+			this->labMultiForeign1->Location = System::Drawing::Point(221, 127);
+			this->labMultiForeign1->Name = L"labMultiForeign1";
+			this->labMultiForeign1->Size = System::Drawing::Size(103, 12);
+			this->labMultiForeign1->TabIndex = 44;
+			this->labMultiForeign1->Text = L"* 複数ある場合のみ";
+			// 
+			// tboxProductCode2Foreign3
+			// 
+			this->tboxProductCode2Foreign3->Enabled = false;
+			this->tboxProductCode2Foreign3->Location = System::Drawing::Point(169, 149);
+			this->tboxProductCode2Foreign3->MaxLength = 4;
+			this->tboxProductCode2Foreign3->Name = L"tboxProductCode2Foreign3";
+			this->tboxProductCode2Foreign3->Size = System::Drawing::Size(46, 19);
+			this->tboxProductCode2Foreign3->TabIndex = 43;
+			// 
+			// tboxProductCode2Foreign2
+			// 
+			this->tboxProductCode2Foreign2->Enabled = false;
+			this->tboxProductCode2Foreign2->Location = System::Drawing::Point(169, 124);
+			this->tboxProductCode2Foreign2->MaxLength = 4;
+			this->tboxProductCode2Foreign2->Name = L"tboxProductCode2Foreign2";
+			this->tboxProductCode2Foreign2->Size = System::Drawing::Size(46, 19);
+			this->tboxProductCode2Foreign2->TabIndex = 42;
+			// 
 			// labProductCode2Foreign
 			// 
 			this->labProductCode2Foreign->AutoSize = true;
-			this->labProductCode2Foreign->Location = System::Drawing::Point(180, 101);
+			this->labProductCode2Foreign->Location = System::Drawing::Point(156, 105);
 			this->labProductCode2Foreign->Name = L"labProductCode2Foreign";
 			this->labProductCode2Foreign->Size = System::Drawing::Size(11, 12);
 			this->labProductCode2Foreign->TabIndex = 41;
@@ -2142,18 +2202,18 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// cboxReleaseForeign
 			// 
 			this->cboxReleaseForeign->AutoSize = true;
-			this->cboxReleaseForeign->Location = System::Drawing::Point(29, 29);
+			this->cboxReleaseForeign->Location = System::Drawing::Point(25, 33);
 			this->cboxReleaseForeign->Name = L"cboxReleaseForeign";
-			this->cboxReleaseForeign->Size = System::Drawing::Size(175, 16);
+			this->cboxReleaseForeign->Size = System::Drawing::Size(144, 16);
 			this->cboxReleaseForeign->TabIndex = 11;
-			this->cboxReleaseForeign->Text = L"海外版を発売する(予定を含む)";
+			this->cboxReleaseForeign->Text = L"海外版を発売する(予定)";
 			this->cboxReleaseForeign->UseVisualStyleBackColor = true;
 			this->cboxReleaseForeign->CheckedChanged += gcnew System::EventHandler(this, &Form1::cboxReleaseForeign_CheckedChanged);
 			// 
 			// labProductNameForeign
 			// 
 			this->labProductNameForeign->AutoSize = true;
-			this->labProductNameForeign->Location = System::Drawing::Point(23, 63);
+			this->labProductNameForeign->Location = System::Drawing::Point(19, 67);
 			this->labProductNameForeign->Name = L"labProductNameForeign";
 			this->labProductNameForeign->Size = System::Drawing::Size(41, 12);
 			this->labProductNameForeign->TabIndex = 37;
@@ -2162,7 +2222,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// tboxProductNameForeign
 			// 
 			this->tboxProductNameForeign->Enabled = false;
-			this->tboxProductNameForeign->Location = System::Drawing::Point(100, 60);
+			this->tboxProductNameForeign->Location = System::Drawing::Point(96, 64);
 			this->tboxProductNameForeign->Name = L"tboxProductNameForeign";
 			this->tboxProductNameForeign->Size = System::Drawing::Size(187, 19);
 			this->tboxProductNameForeign->TabIndex = 12;
@@ -2170,7 +2230,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labProductCode1Foreign
 			// 
 			this->labProductCode1Foreign->AutoSize = true;
-			this->labProductCode1Foreign->Location = System::Drawing::Point(98, 101);
+			this->labProductCode1Foreign->Location = System::Drawing::Point(94, 105);
 			this->labProductCode1Foreign->Name = L"labProductCode1Foreign";
 			this->labProductCode1Foreign->Size = System::Drawing::Size(37, 12);
 			this->labProductCode1Foreign->TabIndex = 40;
@@ -2179,27 +2239,29 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// tboxProductCode1Foreign
 			// 
 			this->tboxProductCode1Foreign->Enabled = false;
-			this->tboxProductCode1Foreign->Location = System::Drawing::Point(141, 98);
+			this->tboxProductCode1Foreign->Location = System::Drawing::Point(133, 100);
+			this->tboxProductCode1Foreign->MaxLength = 1;
 			this->tboxProductCode1Foreign->Name = L"tboxProductCode1Foreign";
-			this->tboxProductCode1Foreign->Size = System::Drawing::Size(33, 19);
+			this->tboxProductCode1Foreign->Size = System::Drawing::Size(18, 19);
 			this->tboxProductCode1Foreign->TabIndex = 13;
 			// 
 			// labProductCodeForeign
 			// 
 			this->labProductCodeForeign->AutoSize = true;
-			this->labProductCodeForeign->Location = System::Drawing::Point(23, 101);
+			this->labProductCodeForeign->Location = System::Drawing::Point(19, 105);
 			this->labProductCodeForeign->Name = L"labProductCodeForeign";
 			this->labProductCodeForeign->Size = System::Drawing::Size(56, 12);
 			this->labProductCodeForeign->TabIndex = 38;
 			this->labProductCodeForeign->Text = L"製品コード";
 			// 
-			// tboxProductCode2Foreign
+			// tboxProductCode2Foreign1
 			// 
-			this->tboxProductCode2Foreign->Enabled = false;
-			this->tboxProductCode2Foreign->Location = System::Drawing::Point(197, 98);
-			this->tboxProductCode2Foreign->Name = L"tboxProductCode2Foreign";
-			this->tboxProductCode2Foreign->Size = System::Drawing::Size(90, 19);
-			this->tboxProductCode2Foreign->TabIndex = 14;
+			this->tboxProductCode2Foreign1->Enabled = false;
+			this->tboxProductCode2Foreign1->Location = System::Drawing::Point(169, 99);
+			this->tboxProductCode2Foreign1->MaxLength = 4;
+			this->tboxProductCode2Foreign1->Name = L"tboxProductCode2Foreign1";
+			this->tboxProductCode2Foreign1->Size = System::Drawing::Size(46, 19);
+			this->tboxProductCode2Foreign1->TabIndex = 14;
 			// 
 			// tabCompanyInfo1
 			// 
@@ -2471,7 +2533,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labLib
 			// 
 			this->labLib->AutoSize = true;
-			this->labLib->Location = System::Drawing::Point(19, 127);
+			this->labLib->Location = System::Drawing::Point(19, 134);
 			this->labLib->Name = L"labLib";
 			this->labLib->Size = System::Drawing::Size(70, 12);
 			this->labLib->TabIndex = 31;
@@ -2489,7 +2551,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labSDK
 			// 
 			this->labSDK->AutoSize = true;
-			this->labSDK->Location = System::Drawing::Point(19, 15);
+			this->labSDK->Location = System::Drawing::Point(19, 26);
 			this->labSDK->Name = L"labSDK";
 			this->labSDK->Size = System::Drawing::Size(72, 12);
 			this->labSDK->TabIndex = 30;
@@ -2497,7 +2559,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			// tabTWLSpec3
 			// 
-			this->tabTWLSpec3->Controls->Add(this->gboxTWLInfoReadOnly);
+			this->tabTWLSpec3->Controls->Add(this->gboxTWLExInfo);
 			this->tabTWLSpec3->Location = System::Drawing::Point(4, 21);
 			this->tabTWLSpec3->Name = L"tabTWLSpec3";
 			this->tabTWLSpec3->Size = System::Drawing::Size(391, 263);
@@ -2505,32 +2567,32 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->tabTWLSpec3->Text = L"TWL仕様3";
 			this->tabTWLSpec3->UseVisualStyleBackColor = true;
 			// 
-			// gboxTWLInfoReadOnly
+			// gboxTWLExInfo
 			// 
-			this->gboxTWLInfoReadOnly->Controls->Add(this->labByte2);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->labByte1);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->labHex4);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->labHex3);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->tboxIsCodec);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->labIsCodec);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->labNormalRomOffset);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->tboxNormalRomOffset);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->cboxIsSubBanner);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->labKeyTableRomOffset);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->cboxIsWL);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->tboxPrivateSize);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->labPrivateSize);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->tboxKeyTableRomOffset);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->cboxIsNormalJump);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->cboxIsTmpJump);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->labPublicSize);
-			this->gboxTWLInfoReadOnly->Controls->Add(this->tboxPublicSize);
-			this->gboxTWLInfoReadOnly->Location = System::Drawing::Point(16, 17);
-			this->gboxTWLInfoReadOnly->Name = L"gboxTWLInfoReadOnly";
-			this->gboxTWLInfoReadOnly->Size = System::Drawing::Size(359, 225);
-			this->gboxTWLInfoReadOnly->TabIndex = 24;
-			this->gboxTWLInfoReadOnly->TabStop = false;
-			this->gboxTWLInfoReadOnly->Text = L"TWL拡張情報";
+			this->gboxTWLExInfo->Controls->Add(this->labByte2);
+			this->gboxTWLExInfo->Controls->Add(this->labByte1);
+			this->gboxTWLExInfo->Controls->Add(this->labHex4);
+			this->gboxTWLExInfo->Controls->Add(this->labHex3);
+			this->gboxTWLExInfo->Controls->Add(this->tboxIsCodec);
+			this->gboxTWLExInfo->Controls->Add(this->labIsCodec);
+			this->gboxTWLExInfo->Controls->Add(this->labNormalRomOffset);
+			this->gboxTWLExInfo->Controls->Add(this->tboxNormalRomOffset);
+			this->gboxTWLExInfo->Controls->Add(this->cboxIsSubBanner);
+			this->gboxTWLExInfo->Controls->Add(this->labKeyTableRomOffset);
+			this->gboxTWLExInfo->Controls->Add(this->cboxIsWL);
+			this->gboxTWLExInfo->Controls->Add(this->tboxPrivateSize);
+			this->gboxTWLExInfo->Controls->Add(this->labPrivateSize);
+			this->gboxTWLExInfo->Controls->Add(this->tboxKeyTableRomOffset);
+			this->gboxTWLExInfo->Controls->Add(this->cboxIsNormalJump);
+			this->gboxTWLExInfo->Controls->Add(this->cboxIsTmpJump);
+			this->gboxTWLExInfo->Controls->Add(this->labPublicSize);
+			this->gboxTWLExInfo->Controls->Add(this->tboxPublicSize);
+			this->gboxTWLExInfo->Location = System::Drawing::Point(16, 17);
+			this->gboxTWLExInfo->Name = L"gboxTWLExInfo";
+			this->gboxTWLExInfo->Size = System::Drawing::Size(359, 225);
+			this->gboxTWLExInfo->TabIndex = 24;
+			this->gboxTWLExInfo->TabStop = false;
+			this->gboxTWLExInfo->Text = L"TWL拡張情報";
 			// 
 			// labByte2
 			// 
@@ -2579,7 +2641,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labIsCodec
 			// 
 			this->labIsCodec->AutoSize = true;
-			this->labIsCodec->Location = System::Drawing::Point(63, 129);
+			this->labIsCodec->Location = System::Drawing::Point(60, 129);
 			this->labIsCodec->Name = L"labIsCodec";
 			this->labIsCodec->Size = System::Drawing::Size(75, 12);
 			this->labIsCodec->TabIndex = 27;
@@ -2646,7 +2708,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labPrivateSize
 			// 
 			this->labPrivateSize->AutoSize = true;
-			this->labPrivateSize->Location = System::Drawing::Point(15, 104);
+			this->labPrivateSize->Location = System::Drawing::Point(36, 104);
 			this->labPrivateSize->Name = L"labPrivateSize";
 			this->labPrivateSize->Size = System::Drawing::Size(123, 12);
 			this->labPrivateSize->TabIndex = 15;
@@ -2686,7 +2748,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labPublicSize
 			// 
 			this->labPublicSize->AutoSize = true;
-			this->labPublicSize->Location = System::Drawing::Point(12, 79);
+			this->labPublicSize->Location = System::Drawing::Point(36, 79);
 			this->labPublicSize->Name = L"labPublicSize";
 			this->labPublicSize->Size = System::Drawing::Size(118, 12);
 			this->labPublicSize->TabIndex = 14;
@@ -2729,7 +2791,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labAccessOther
 			// 
 			this->labAccessOther->AutoSize = true;
-			this->labAccessOther->Location = System::Drawing::Point(24, 82);
+			this->labAccessOther->Location = System::Drawing::Point(24, 89);
 			this->labAccessOther->Name = L"labAccessOther";
 			this->labAccessOther->Size = System::Drawing::Size(36, 12);
 			this->labAccessOther->TabIndex = 5;
@@ -2737,7 +2799,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			// tboxAccessOther
 			// 
-			this->tboxAccessOther->Location = System::Drawing::Point(26, 97);
+			this->tboxAccessOther->Location = System::Drawing::Point(26, 104);
 			this->tboxAccessOther->Multiline = true;
 			this->tboxAccessOther->Name = L"tboxAccessOther";
 			this->tboxAccessOther->ReadOnly = true;
@@ -2785,6 +2847,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			// tabTWLSpec1
 			// 
+			this->tabTWLSpec1->Controls->Add(this->labCautionCheck);
 			this->tabTWLSpec1->Controls->Add(this->gboxTitleID);
 			this->tabTWLSpec1->Controls->Add(this->labCaptionEx);
 			this->tabTWLSpec1->Controls->Add(this->tboxCaptionEx);
@@ -2794,6 +2857,16 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->tabTWLSpec1->TabIndex = 8;
 			this->tabTWLSpec1->Text = L"TWL仕様1";
 			this->tabTWLSpec1->UseVisualStyleBackColor = true;
+			// 
+			// labCautionCheck
+			// 
+			this->labCautionCheck->AutoSize = true;
+			this->labCautionCheck->ForeColor = System::Drawing::SystemColors::ActiveCaption;
+			this->labCautionCheck->Location = System::Drawing::Point(16, 8);
+			this->labCautionCheck->Name = L"labCautionCheck";
+			this->labCautionCheck->Size = System::Drawing::Size(336, 12);
+			this->labCautionCheck->TabIndex = 35;
+			this->labCautionCheck->Text = L"* これらの項目はROMデータの確認用です。入力の必要はありません。";
 			// 
 			// gboxTitleID
 			// 
@@ -2805,9 +2878,9 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->gboxTitleID->Controls->Add(this->tboxTitleIDHi);
 			this->gboxTitleID->Controls->Add(this->tboxAppType);
 			this->gboxTitleID->Controls->Add(this->labAppType);
-			this->gboxTitleID->Location = System::Drawing::Point(16, 11);
+			this->gboxTitleID->Location = System::Drawing::Point(17, 37);
 			this->gboxTitleID->Name = L"gboxTitleID";
-			this->gboxTitleID->Size = System::Drawing::Size(348, 167);
+			this->gboxTitleID->Size = System::Drawing::Size(348, 151);
 			this->gboxTitleID->TabIndex = 23;
 			this->gboxTitleID->TabStop = false;
 			this->gboxTitleID->Text = L"TitleID";
@@ -2815,7 +2888,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labHex2
 			// 
 			this->labHex2->AutoSize = true;
-			this->labHex2->Location = System::Drawing::Point(209, 61);
+			this->labHex2->Location = System::Drawing::Point(209, 51);
 			this->labHex2->Name = L"labHex2";
 			this->labHex2->Size = System::Drawing::Size(11, 12);
 			this->labHex2->TabIndex = 7;
@@ -2824,7 +2897,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labHex1
 			// 
 			this->labHex1->AutoSize = true;
-			this->labHex1->Location = System::Drawing::Point(209, 33);
+			this->labHex1->Location = System::Drawing::Point(209, 23);
 			this->labHex1->Name = L"labHex1";
 			this->labHex1->Size = System::Drawing::Size(11, 12);
 			this->labHex1->TabIndex = 6;
@@ -2832,7 +2905,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			// tboxTitleIDLo
 			// 
-			this->tboxTitleIDLo->Location = System::Drawing::Point(84, 30);
+			this->tboxTitleIDLo->Location = System::Drawing::Point(83, 20);
 			this->tboxTitleIDLo->Name = L"tboxTitleIDLo";
 			this->tboxTitleIDLo->ReadOnly = true;
 			this->tboxTitleIDLo->Size = System::Drawing::Size(121, 19);
@@ -2842,7 +2915,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labTitleIDLo
 			// 
 			this->labTitleIDLo->AutoSize = true;
-			this->labTitleIDLo->Location = System::Drawing::Point(12, 33);
+			this->labTitleIDLo->Location = System::Drawing::Point(11, 23);
 			this->labTitleIDLo->Name = L"labTitleIDLo";
 			this->labTitleIDLo->Size = System::Drawing::Size(63, 12);
 			this->labTitleIDLo->TabIndex = 0;
@@ -2851,7 +2924,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labTitleIDHi
 			// 
 			this->labTitleIDHi->AutoSize = true;
-			this->labTitleIDHi->Location = System::Drawing::Point(12, 61);
+			this->labTitleIDHi->Location = System::Drawing::Point(11, 51);
 			this->labTitleIDHi->Name = L"labTitleIDHi";
 			this->labTitleIDHi->Size = System::Drawing::Size(66, 12);
 			this->labTitleIDHi->TabIndex = 2;
@@ -2859,7 +2932,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			// tboxTitleIDHi
 			// 
-			this->tboxTitleIDHi->Location = System::Drawing::Point(84, 58);
+			this->tboxTitleIDHi->Location = System::Drawing::Point(83, 48);
 			this->tboxTitleIDHi->Name = L"tboxTitleIDHi";
 			this->tboxTitleIDHi->ReadOnly = true;
 			this->tboxTitleIDHi->Size = System::Drawing::Size(121, 19);
@@ -2868,7 +2941,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			// tboxAppType
 			// 
-			this->tboxAppType->Location = System::Drawing::Point(14, 106);
+			this->tboxAppType->Location = System::Drawing::Point(13, 96);
 			this->tboxAppType->Multiline = true;
 			this->tboxAppType->Name = L"tboxAppType";
 			this->tboxAppType->ReadOnly = true;
@@ -2878,7 +2951,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labAppType
 			// 
 			this->labAppType->AutoSize = true;
-			this->labAppType->Location = System::Drawing::Point(15, 91);
+			this->labAppType->Location = System::Drawing::Point(12, 81);
 			this->labAppType->Name = L"labAppType";
 			this->labAppType->Size = System::Drawing::Size(91, 12);
 			this->labAppType->TabIndex = 5;
@@ -2887,7 +2960,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// labCaptionEx
 			// 
 			this->labCaptionEx->AutoSize = true;
-			this->labCaptionEx->Location = System::Drawing::Point(28, 185);
+			this->labCaptionEx->Location = System::Drawing::Point(28, 195);
 			this->labCaptionEx->Name = L"labCaptionEx";
 			this->labCaptionEx->Size = System::Drawing::Size(53, 12);
 			this->labCaptionEx->TabIndex = 11;
@@ -2895,7 +2968,7 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			// 
 			// tboxCaptionEx
 			// 
-			this->tboxCaptionEx->Location = System::Drawing::Point(30, 200);
+			this->tboxCaptionEx->Location = System::Drawing::Point(30, 210);
 			this->tboxCaptionEx->Multiline = true;
 			this->tboxCaptionEx->Name = L"tboxCaptionEx";
 			this->tboxCaptionEx->ReadOnly = true;
@@ -2967,8 +3040,8 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			this->tabSDK->ResumeLayout(false);
 			this->tabSDK->PerformLayout();
 			this->tabTWLSpec3->ResumeLayout(false);
-			this->gboxTWLInfoReadOnly->ResumeLayout(false);
-			this->gboxTWLInfoReadOnly->PerformLayout();
+			this->gboxTWLExInfo->ResumeLayout(false);
+			this->gboxTWLExInfo->PerformLayout();
 			this->tabTWLSpec2->ResumeLayout(false);
 			this->gboxAccess->ResumeLayout(false);
 			this->gboxAccess->PerformLayout();
@@ -3636,7 +3709,16 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 			{
 				this->hDeliv->hProductNameForeign  = this->tboxProductNameForeign->Text;
 				this->hDeliv->hProductCode1Foreign = this->tboxProductCode1Foreign->Text;
-				this->hDeliv->hProductCode2Foreign = this->tboxProductCode2Foreign->Text;
+				this->hDeliv->hProductCode2Foreign = gcnew System::String("");
+				this->hDeliv->hProductCode2Foreign = this->tboxProductCode2Foreign1->Text;
+				if( !System::String::IsNullOrEmpty( this->tboxProductCode2Foreign2->Text ) )
+				{
+					this->hDeliv->hProductCode2Foreign += ("/" + this->tboxProductCode2Foreign2->Text);
+				}
+				if( !System::String::IsNullOrEmpty( this->tboxProductCode2Foreign2->Text ) )
+				{
+					this->hDeliv->hProductCode2Foreign += ("/" + this->tboxProductCode2Foreign2->Text);
+				}
 			}
 			else
 			{
@@ -3779,13 +3861,13 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 					return false;
 				if( this->checkTextForm( this->tboxProductCode1Foreign->Text, this->labProductCodeForeign->Text ) == false )
 					return false;
-				if( this->checkTextForm( this->tboxProductCode2Foreign->Text, this->labProductCodeForeign->Text ) == false )
+				if( this->checkTextForm( this->tboxProductCode2Foreign1->Text, this->labProductCodeForeign->Text ) == false )
 					return false;
 			}
 			if( this->rUsageOther->Checked == true )
 			{
 				if( this->checkTextForm( this->tboxUsageOther->Text, 
-					this->labUsage->Text + "(" + this->rUsageOther->Text + ")" ) == false )
+					this->gboxUsage->Text + "(" + this->rUsageOther->Text + ")" ) == false )
 					return false;
 			}
 			if( this->checkTextForm( this->tboxSDK->Text, this->labSDK->Text ) == false )
@@ -3934,401 +4016,330 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 	private:
 		void changeJapanese(void)
 		{
-			//System::Int32 index;
+			System::Int32 index;
 
 			// フロントパネル上部
-			//this->gboxSrl->Text       = gcnew System::String( "ROMデータ情報" ); 
-			//this->labTitleName->Text  = gcnew System::String( "ソフトタイトル" );
-			//this->labGameCode->Text   = gcnew System::String( "イニシャルコード" );
-			//this->labMakerCode->Text  = gcnew System::String( "メーカコード" );
-			//this->labPlatform->Text   = gcnew System::String( "プラットフォーム" );
-			//this->labRomType->Text    = gcnew System::String( "ROMタイプ設定" );
-			//this->labRomSize->Text    = gcnew System::String( "ROM容量" );
-			//this->labBackup->Text     = gcnew System::String( "バックアップメモリ" );
-			//this->labHeaderCRC->Text  = gcnew System::String( "ヘッダCRC" );
-			//this->labRomCRC->Text     = gcnew System::String( "全体のCRC" );
-			//this->labCaption->Text    = gcnew System::String( "備考欄" );
-			//index = this->combBackup->SelectedIndex;
-			//this->combBackup->Items->Clear();
-			//this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
-			//	L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"なし", L"その他"});
-			//this->combBackup->SelectedIndex = index;
+			this->gboxSrl->Text       = gcnew System::String( "ROMデータ情報" ); 
+			this->labTitleName->Text  = gcnew System::String( "ソフトタイトル" );
+			this->labGameCode->Text   = gcnew System::String( "イニシャルコード" );
+			this->labMakerCode->Text  = gcnew System::String( "メーカコード" );
+			this->labPlatform->Text   = gcnew System::String( "プラットフォーム" );
+			this->labRomType->Text    = gcnew System::String( "ROMタイプ設定" );
+			this->labRomSize->Text    = gcnew System::String( "ROM容量" );
+			this->labRemasterVer->Text = gcnew System::String( "リマスターバージョン" );
+			this->cboxRemasterVerE->Text = gcnew System::String( "E(準備版)" );
+			this->labBackup->Text     = gcnew System::String( "バックアップメモリ" );
+			this->labHeaderCRC->Text  = gcnew System::String( "ヘッダCRC" );
+			this->labRomCRC->Text     = gcnew System::String( "全体のCRC" );
+			index = this->combBackup->SelectedIndex;
+			this->combBackup->Items->Clear();
+			this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
+				L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"なし", L"その他"});
+			this->combBackup->SelectedIndex = index;
 
-			//// フロントパネル下部
-			//this->gboxFileOpen->Text  = gcnew System::String( "ROMデータファイルの入出力" );
-			//this->butOpen->Text       = gcnew System::String( "ROMデータを開く" );
-			//this->butSaveAs->Text     = gcnew System::String( "入力情報を反映させて保存" );
-			//this->butMakeMaster->Text = gcnew System::String( "マスタ提出書類を作成" );
+			// フロントパネル下部
+			this->gboxFileOpen->Text  = gcnew System::String( "ROMデータファイルの入出力" );
+			this->butOpen->Text       = gcnew System::String( "ROMデータを開く" );
+			this->butSaveAs->Text     = gcnew System::String( "入力情報を反映させて保存" );
+			this->butMakeMaster->Text = gcnew System::String( "マスタ提出書類を作成" );
 
-			//// 提出情報タブ
-			//this->tabSubmitInfo->Text  = gcnew System::String( "提出情報" );
-			//this->labProductName->Text = gcnew System::String( "製品名" );
-			//this->labProductCode->Text = gcnew System::String( "製品コード" );
-			//this->gboxForeign->Text    = gcnew System::String( "海外版" );
-			//this->labProductNameForeign->Text = gcnew System::String( "製品名" );
-			//this->labProductCodeForeign->Text = gcnew System::String( "製品コード" );
-			//this->cboxReleaseForeign->Text    = gcnew System::String( "発売する(予定を含む)" );
-			//this->labReleaseDate->Text = gcnew System::String( "発売予定日" );
-			//this->labSubmiteDate->Text = gcnew System::String( "提出日" );
-			//this->labSubmitWay->Text   = gcnew System::String( "提出方法" );
-			//this->rSubmitPost->Text    = gcnew System::String( "郵送" );
-			//this->rSubmitHand->Text    = gcnew System::String( "手渡し" );
-			//this->labUsage->Text       = gcnew System::String( "用途" );
-			//this->rUsageSale->Text     = gcnew System::String( "一般販売用" );
-			//this->rUsageSample->Text   = gcnew System::String( "試遊台用" );
-			//this->rUsageDst->Text      = gcnew System::String( "データ配信用" );
-			//this->rUsageOther->Text    = gcnew System::String( "その他" );
-			//this->labRemasterVer->Text = gcnew System::String( "リマスターバージョン" );
-			//this->cboxRemasterVerE->Text = gcnew System::String( "E(事前版)" );
-			//this->labSubmitVer->Text     = gcnew System::String( "提出バージョン" );
-			//this->labCapSubmitVer->Text  = gcnew System::String( "* リマスターバージョンが上がると再び0からカウントとなります。" );
-			//this->labSDK->Text         = gcnew System::String( "SDKバージョン" );
+			// 提出情報タブ
+			this->tabSubmitInfo->Text  = gcnew System::String( "提出情報" );
+			this->labProductName->Text = gcnew System::String( "製品名" );
+			this->labProductCode->Text = gcnew System::String( "製品コード" );
+			this->labReleaseDate->Text = gcnew System::String( "発売予定日" );
+			this->labSubmiteDate->Text = gcnew System::String( "書類提出日" );
+			this->gboxSubmitWay->Text  = gcnew System::String( "提出方法" );
+			this->rSubmitPost->Text    = gcnew System::String( "郵送" );
+			this->rSubmitHand->Text    = gcnew System::String( "手渡し" );
+			this->gboxUsage->Text      = gcnew System::String( "用途" );
+			this->rUsageSale->Text     = gcnew System::String( "一般販売用" );
+			this->rUsageSample->Text   = gcnew System::String( "試遊台用" );
+			this->rUsageDst->Text      = gcnew System::String( "データ配信用" );
+			this->rUsageOther->Text    = gcnew System::String( "その他" );
+			this->labSubmitVer->Text     = gcnew System::String( "提出バージョン" );
+			this->labCapSubmitVer->Text  = gcnew System::String( "* リマスターバージョンが上がると再び0からカウント" );
+			// 海外版タブ
+			this->tabForeignInfo->Text = gcnew System::String( "海外版" );
+			this->labProductNameForeign->Text = gcnew System::String( "製品名" );
+			this->labProductCodeForeign->Text = gcnew System::String( "製品コード" );
+			this->cboxReleaseForeign->Text    = gcnew System::String( "海外版を発売する(予定)" );
+			this->labMultiForeign1->Text      = gcnew System::String( "* 複数ある場合のみ" );
+			this->labMultiForeign2->Text      = gcnew System::String( "* 複数ある場合のみ" );
+			// 会社情報タブ
+			this->tabCompanyInfo1->Text = gcnew System::String( "会社情報1" );
+			this->tabCompanyInfo2->Text = gcnew System::String( "会社情報2" );
+			this->gboxPerson1->Text    = gcnew System::String( "担当者1" );
+			this->gboxPerson2->Text    = gcnew System::String( "担当者2" );
+			this->cboxIsInputPerson2->Text = gcnew System::String( "担当者2を入力する" );
+			this->labCompany1->Text    = gcnew System::String( "貴社名" );
+			this->labDepart1->Text     = gcnew System::String( "部署名" );
+			this->labPerson1->Text     = gcnew System::String( "ご氏名" );
+			this->labCompany2->Text    = gcnew System::String( "貴社名" );
+			this->labDepart2->Text     = gcnew System::String( "部署名" );
+			this->labPerson2->Text     = gcnew System::String( "ご氏名" );
+			// ふりがな情報を有効にする
+			this->tboxFurigana1->Enabled = true;
+			this->labFurigana1->Text = gcnew System::String("ふりがな");
+			this->tboxFurigana2->Enabled = true;
+			this->labFurigana2->Text = gcnew System::String("ふりがな");
+			// 備考タブ
+			this->tabCaption->Text    = gcnew System::String( "備考" );
+			this->labCaption->Text    = gcnew System::String( "その他連絡事項があればご記入ください" );
 
-			//// 会社情報タブ
-			//this->tabCompanyInfo->Text = gcnew System::String( "会社情報" );
-			//this->gboxPerson1->Text    = gcnew System::String( "担当者1" );
-			//this->gboxPerson2->Text    = gcnew System::String( "担当者2" );
-			//this->cboxIsInputPerson2->Text = gcnew System::String( "担当者2を入力する(任意)" );
-			//this->labCompany1->Text    = gcnew System::String( "貴社名" );
-			//this->labDepart1->Text     = gcnew System::String( "部署名" );
-			//this->labPerson1->Text     = gcnew System::String( "ご氏名" );
-			//this->labCompany2->Text    = gcnew System::String( "貴社名" );
-			//this->labDepart2->Text     = gcnew System::String( "部署名" );
-			//this->labPerson2->Text     = gcnew System::String( "ご氏名" );
+			// タブの注意書き
+			this->labCautionInput->Text = gcnew System::String( "* これらの項目は書類提出に必要な情報です。入力してください。" );
+			this->labCautionCheck->Text = gcnew System::String( "* これらの項目はROMデータの確認用です。入力の必要はありません。" );
 
-			//// ふりがな情報を削除
-			//this->tboxFurigana1->Enabled = true;
-			//this->labFurigana1->Text = gcnew System::String("ふりがな");
-			//this->tboxFurigana2->Enabled = true;
-			//this->labFurigana2->Text = gcnew System::String("ふりがな");
+			// TWL仕様
+			this->tabTWLSpec1->Text           = gcnew System::String( "TWL仕様1" );
+			this->tabTWLSpec2->Text           = gcnew System::String( "TWL仕様2" );
+			this->tabTWLSpec3->Text           = gcnew System::String( "TWL仕様3" );
+			this->tabTWLSpec4->Text           = gcnew System::String( "TWL仕様4" );
+			this->tabSDK->Text                = gcnew System::String( "SDK" );
+			this->gboxTWLExInfo->Text         = gcnew System::String( "TWL拡張情報" );
+			this->labNormalRomOffset->Text    = gcnew System::String( "TWLノーマル領域ROMオフセット" );
+			this->labKeyTableRomOffset->Text  = gcnew System::String( "TWL専用領域ROMオフセット" );
+			this->cboxIsNormalJump->Text      = gcnew System::String( "ノーマルジャンプ許可" );
+			this->cboxIsTmpJump->Text         = gcnew System::String( "tmpジャンプ許可" );
+			this->cboxIsSubBanner->Text       = gcnew System::String( "サブバナーファイル有効" );
+			this->cboxIsWL->Text              = gcnew System::String( "NTRホワイトリスト署名有効" );
+			this->gboxAccess->Text            = gcnew System::String( "アクセスコントロール情報" );
+			this->cboxIsSD->Text              = gcnew System::String( "SDカード" );
+			this->cboxIsNAND->Text            = gcnew System::String( "NANDフラッシュメモリ" );
+			this->labIsGameCardOn->Text       = gcnew System::String( "ゲームカード電源" );
+			this->labAccessOther->Text        = gcnew System::String( "その他" );
+			this->gboxShared2Size->Text       = gcnew System::String( "Shared2ファイルサイズ" );
+			this->cboxIsShared2->Text         = gcnew System::String( "Shared2ファイル使用" );
+			this->labSDK->Text                = gcnew System::String( "SDKバージョン" );
+			this->labLib->Text                = gcnew System::String( "使用ライブラリ" );
+			this->labCaptionEx->Text          = gcnew System::String( "特記事項" );
 
-			//// プログラム仕様
-			//this->tabSpecInfo->Text             = gcnew System::String( "追加情報1" );
-			//this->cboxIsWireless->Text          = gcnew System::String( "DSワイヤレス通信対応" );
-			//this->cboxIsTouch->Text             = gcnew System::String( "タッチスクリーン対応" );
-			//this->cboxIsMic->Text               = gcnew System::String( "マイク対応" );
-			//this->cboxIsGBACartridge->Text      = gcnew System::String( "GBAカートリッジ対応" );
-			//this->cboxIsDSCartridge->Text       = gcnew System::String( "DSカートリッジ対応" );
-			//this->cboxIsWiFi->Text              = gcnew System::String( "Wi-Fiコネクション対応" );
-			//this->cboxIsClock->Text             = gcnew System::String( "時計機能あり" );
-			//this->cboxIsSoftReset->Text         = gcnew System::String( "ソフトリセット機能あり" );
-			//this->cboxIsPictoChatSearch->Text   = gcnew System::String( "ピクトチャットサーチあり" );
-			//this->cboxIsAutoBackLightOff->Text  = gcnew System::String( "自動バックライトOFF" );
-			//this->labTimeAutoBackLightOff->Text = gcnew System::String( "分" );
-			//this->cboxIsAutoLcdOff->Text        = gcnew System::String( "自動LCD OFF" );
-			//this->labTimeAutoLcdOff->Text       = gcnew System::String( "分" );
-			//this->cboxIsSleep->Text             = gcnew System::String( "スリープモード対応" );
-			//this->cboxIsNotSleepClose->Text     = gcnew System::String( "本体を閉じてもスリープモードに遷移しない場合がある" );
-			//this->cboxIsSleepAlarm->Text        = gcnew System::String( "RTCアラームで復帰する場合がある" );
-			//this->labTimeSleepClose2->Text      = gcnew System::String( "分" );
-			//this->labSleepAlarmProc->Text       = gcnew System::String( "→ 復帰した場合の処理内容" );
-			//this->cboxIsIPLUserComment->Text    = gcnew System::String( "IPLのユーザネーム・コメントの利用" );
-			//this->labIsIPLUserCommentScene->Text= gcnew System::String( "→ 利用している場面" );
-			//this->cboxIsAllIPLFonts->Text       = gcnew System::String( "IPLで設定可能なフォントをすべて表示できる" );
+			// ROMデータ編集可能情報
+			this->gboxTWLInfoWritable->Text   = gcnew System::String( "ROM編集可能情報(必要であれば変更してください)" );
+			this->labEULA->Text               = gcnew System::String( "EULA同意バージョン" );
+			this->cboxIsEULA->Text            = gcnew System::String( "EULA同意" );
+			this->cboxIsWirelessIcon->Text    = gcnew System::String( "DSワイヤレス通信アイコン表示" );
+			this->cboxIsWiFiIcon->Text        = gcnew System::String( "Wi-Fi通信アイコン表示" );
+			this->labRegion->Text             = gcnew System::String( "カードリージョン" );
+			this->combRegion->Items->Clear();
+			this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5)
+				{L"日本のみ", L"米国のみ", L"欧州のみ", L"豪州のみ", L"欧州および豪州"});
 
-			//// プログラム仕様2
-			//this->tabSpecInfo2->Text  = gcnew System::String( "追加情報2" ); 
-			//this->labIsLang->Text     = gcnew System::String( "ゲーム内での使用言語" );
-			//this->cboxIsLangJ->Text   = gcnew System::String( "日本語" );
-			//this->cboxIsLangE->Text   = gcnew System::String( "英語" );
-			//this->cboxIsLangF->Text   = gcnew System::String( "フランス語" );
-			//this->cboxIsLangG->Text   = gcnew System::String( "ドイツ語" );
-			//this->cboxIsLangI->Text   = gcnew System::String( "イタリア語" );
-			//this->cboxIsLangS->Text   = gcnew System::String( "スペイン語" );
-			//this->cboxIsLangC->Text   = gcnew System::String( "中国語" );
-			//this->cboxIsLangK->Text   = gcnew System::String( "韓国語" );
-			//this->cboxIsLangOther->Text = gcnew System::String( "その他" );
-			//this->labIsIPLLang->Text  = gcnew System::String( "IPLの言語設定" );
-			//this->rIsIPLLang->Text    = gcnew System::String( "参照している" );
-			//this->rIsNotIPLLang->Text = gcnew System::String( "参照していない" );
+			// ペアレンタルコントロール
+			this->labParentalRating->Text      = gcnew System::String( "レーティング" );
+			this->labParentalEnable->Text      = gcnew System::String( "制限を有効" );
+			this->labParentalForceEnable->Text = gcnew System::String( "Rating Pending" );
 
-			//// TWL拡張仕様1
-			//this->tabTWLInfo->Text            = gcnew System::String( "TWL拡張仕様1" );
-			//this->gboxTWLInfoReadOnly->Text   = gcnew System::String( "TWL拡張情報(編集不可)" );
-			//this->labNormalRomOffset->Text    = gcnew System::String( "TWLノーマル領域ROMオフセット" );
-			//this->labKeyTableRomOffset->Text  = gcnew System::String( "TWL専用領域ROMオフセット" );
-			//this->cboxIsNormalJump->Text      = gcnew System::String( "ノーマルジャンプ許可" );
-			//this->cboxIsTmpJump->Text         = gcnew System::String( "tmpジャンプ許可" );
-			//this->cboxIsSubBanner->Text       = gcnew System::String( "サブバナーファイル有効" );
-			//this->cboxIsWL->Text              = gcnew System::String( "NTRホワイトリスト署名有効" );
-			//this->gboxTWLInfoWritable->Text   = gcnew System::String( "TWL拡張情報(編集可)" );
-			//this->labEULA->Text               = gcnew System::String( "EULA同意バージョン" );
-			//this->cboxIsEULA->Text            = gcnew System::String( "EULA同意" );
-			//this->cboxIsWirelessIcon->Text    = gcnew System::String( "DSワイヤレス通信アイコン表示" );
-			//this->cboxIsWiFiIcon->Text        = gcnew System::String( "Wi-Fi通信アイコン表示" );
+			index = this->combCERO->SelectedIndex;	// いったんclearすると現在のindexに意味がなくなるので退避
+			this->combCERO->Items->Clear();
+			this->combCERO->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"A (全年齢)", L"B (12歳以上)", L"C (15歳以上)", L"D (17歳以上)", 
+				L"Z (18歳以上)", L"未審査"});
+			this->combCERO->SelectedIndex = index;
 
-			//// TWL拡張仕様2
-			//this->tabTWLInfo2->Text     = gcnew System::String( "TWL拡張仕様2" );
-			//this->gboxAccess->Text      = gcnew System::String( "アクセスコントロール情報" );
-			//this->cboxIsSD->Text        = gcnew System::String( "SDカード" );
-			//this->cboxIsNAND->Text      = gcnew System::String( "NANDフラッシュメモリ" );
-			//this->labIsGameCardOn->Text = gcnew System::String( "ゲームカード電源" );
-			//this->labAccessOther->Text  = gcnew System::String( "その他" );
-			//this->gboxShared2Size->Text = gcnew System::String( "Shared2ファイルサイズ" );
-			//this->cboxIsShared2->Text   = gcnew System::String( "Shared2ファイル使用" );
+			index = this->combESRB->SelectedIndex;
+			this->combESRB->Items->Clear();
+			this->combESRB->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"EC (3歳以上)", L"E (6歳以上)", L"E10+ (10歳以上)", L"T (13歳以上)", 
+				L"M (17歳以上)", L"未審査"});
+			this->combESRB->SelectedIndex = index;
 
-			//// 使用ライセンス
-			//this->tabLicenseInfo->Text      = gcnew System::String( "使用ライセンス" );
-			//this->cboxUseLc->Text           = gcnew System::String( "LCフォント (SHARP)" );
-			//this->cboxUseAtok->Text         = gcnew System::String( "ATOKライブラリ (JUSTSYSTEM)" );
-			//this->cboxUseVoiceChat->Text    = gcnew System::String( "VoiceChatライブラリ (Abiosso)" );
-			//this->cboxUseWiFiLib->Text      = gcnew System::String( "NITRO-WiFiライブラリ (NINTENDO)" );
-			//this->cboxUseVoiceRecog->Text   = gcnew System::String( "音声認識 (松下)" );
-			//this->cboxUseCharRecog->Text    = gcnew System::String( "Decuma手書き文字認識ライブラリ (Zi)" );
-			//this->cboxUseVoiceCombine->Text = gcnew System::String( "音声合成 (SHARP)" );
-			//this->cboxUseNetFront->Text     = gcnew System::String( "NetFront Browser (ACCESS)" );
-			//this->cboxUseOthers->Text       = gcnew System::String( "その他" );
+			index = this->combUSK->SelectedIndex;
+			this->combUSK->Items->Clear();
+			this->combUSK->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"年齢制限なし", L"6歳以上", L"12歳以上", L"16歳以上", L"青少年には不適切", 
+				L"未審査"});
+			this->combUSK->SelectedIndex = index;
 
-			//// ペアレンタルコントロール
-			//this->tabParental->Text = gcnew System::String( "ペアレンタルコントロール" );
-			//this->labParentalRating->Text      = gcnew System::String( "レーティング" );
-			//this->labParentalEnable->Text      = gcnew System::String( "制限を有効" );
-			//this->labParentalForceEnable->Text = gcnew System::String( "Rating Pending" );
+			index = this->combPEGI->SelectedIndex;
+			this->combPEGI->Items->Clear();
+			this->combPEGI->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"3歳以上", L"7歳以上", L"12歳以上", L"16歳以上", L"18歳以上", 
+				L"未審査"});
+			this->combPEGI->SelectedIndex = index;
 
-			//index = this->combCERO->SelectedIndex;	// いったんclearすると現在のindexに意味がなくなるので退避
-			//this->combCERO->Items->Clear();
-			//this->combCERO->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"A (全年齢)", L"B (12歳以上)", L"C (15歳以上)", L"D (17歳以上)", 
-			//	L"Z (18歳以上)", L"未審査"});
-			//this->combCERO->SelectedIndex = index;
+			index = this->combPEGIPRT->SelectedIndex;
+			this->combPEGIPRT->Items->Clear();
+			this->combPEGIPRT->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"4歳以上", L"6歳以上", L"12歳以上", L"16歳以上", L"18歳以上", 
+				L"未審査"});
+			this->combPEGIPRT->SelectedIndex = index;
 
-			//index = this->combESRB->SelectedIndex;
-			//this->combESRB->Items->Clear();
-			//this->combESRB->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"EC (3歳以上)", L"E (6歳以上)", L"E10+ (10歳以上)", L"T (13歳以上)", 
-			//	L"M (17歳以上)", L"未審査"});
-			//this->combESRB->SelectedIndex = index;
+			index = this->combPEGIBBFC->SelectedIndex;
+			this->combPEGIBBFC->Items->Clear();
+			this->combPEGIBBFC->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"3歳以上", L"4歳以上推奨", L"7歳以上", L"8歳以上推奨", L"12歳以上", 
+				L"15歳以上", L"16歳以上", L"18歳以上", L"未審査"});
+			this->combPEGIBBFC->SelectedIndex = index;
 
-			//index = this->combUSK->SelectedIndex;
-			//this->combUSK->Items->Clear();
-			//this->combUSK->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"年齢制限なし", L"6歳以上", L"12歳以上", L"16歳以上", L"青少年には不適切", 
-			//	L"未審査"});
-			//this->combUSK->SelectedIndex = index;
+			index = this->combOFLC->SelectedIndex;
+			this->combOFLC->Items->Clear();
+			this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"G", L"PG", L"M", L"MA15+", L"未審査"});
+			this->combOFLC->SelectedIndex = index;
 
-			//index = this->combPEGI->SelectedIndex;
-			//this->combPEGI->Items->Clear();
-			//this->combPEGI->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"3歳以上", L"7歳以上", L"12歳以上", L"16歳以上", L"18歳以上", 
-			//	L"未審査"});
-			//this->combPEGI->SelectedIndex = index;
-
-			//index = this->combPEGIPRT->SelectedIndex;
-			//this->combPEGIPRT->Items->Clear();
-			//this->combPEGIPRT->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"4歳以上", L"6歳以上", L"12歳以上", L"16歳以上", L"18歳以上", 
-			//	L"未審査"});
-			//this->combPEGIPRT->SelectedIndex = index;
-
-			//index = this->combPEGIBBFC->SelectedIndex;
-			//this->combPEGIBBFC->Items->Clear();
-			//this->combPEGIBBFC->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"3歳以上", L"4歳以上推奨", L"7歳以上", L"8歳以上推奨", L"12歳以上", 
-			//	L"15歳以上", L"16歳以上", L"18歳以上", L"未審査"});
-			//this->combPEGIBBFC->SelectedIndex = index;
-
-			//index = this->combOFLC->SelectedIndex;
-			//this->combOFLC->Items->Clear();
-			//this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"G", L"PG", L"M", L"MA15+", L"未審査"});
-			//this->combOFLC->SelectedIndex = index;
-
-			//// 特殊な設定用のテキストボックスの表記を変更
-			//this->setSrlFormsCaptionEx();
+			// 特殊な設定用のテキストボックスの表記を変更
+			this->setSrlFormsCaptionEx();
 		}
 
 	private:
 		void changeEnglish(void)
 		{
-			//System::Int32 index;
+			System::Int32 index;
 
-			//// フロントパネル上部
-			//this->gboxSrl->Text       = gcnew System::String( "ROM Info." ); 
-			//this->labTitleName->Text  = gcnew System::String( "Title name" );
-			//this->labGameCode->Text   = gcnew System::String( "Game code" );
-			//this->labMakerCode->Text  = gcnew System::String( "Maker code" );
-			//this->labPlatform->Text   = gcnew System::String( "Platform" );
-			//this->labRomType->Text    = gcnew System::String( "ROM type" );
-			//this->labRomSize->Text    = gcnew System::String( "ROM size" );
-			//this->labBackup->Text     = gcnew System::String( "Backup memory" );
-			//this->labHeaderCRC->Text  = gcnew System::String( "Header CRC" );
-			//this->labRomCRC->Text     = gcnew System::String( "ROM CRC" );
-			//this->labCaption->Text    = gcnew System::String( "Remarks culumn" );
-			//index = this->combBackup->SelectedIndex;
-			//this->combBackup->Items->Clear();
-			//this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
-			//	L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"Nothing", L"Other"});
-			//this->combBackup->SelectedIndex = index;
+			// フロントパネル上部
+			this->gboxSrl->Text       = gcnew System::String( "ROM Info." ); 
+			this->labTitleName->Text  = gcnew System::String( "Game title" );
+			this->labGameCode->Text   = gcnew System::String( "Game code" );
+			this->labMakerCode->Text  = gcnew System::String( "Maker code" );
+			this->labPlatform->Text   = gcnew System::String( "Platform" );
+			this->labRomType->Text    = gcnew System::String( "ROM type" );
+			this->labRomSize->Text    = gcnew System::String( "ROM size" );
+			this->labRemasterVer->Text = gcnew System::String( "Release ver." );
+			this->cboxRemasterVerE->Text = gcnew System::String( "E(Preliminary ver.)" );
+			this->labBackup->Text     = gcnew System::String( "Backup memory" );
+			this->labHeaderCRC->Text  = gcnew System::String( "Header CRC" );
+			this->labRomCRC->Text     = gcnew System::String( "ROM CRC" );
+			index = this->combBackup->SelectedIndex;
+			this->combBackup->Items->Clear();
+			this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
+				L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"Nothing", L"Other"});
+			this->combBackup->SelectedIndex = index;
 
-			//// フロントパネル下部
-			//this->gboxFileOpen->Text  = gcnew System::String( "ROM file I/O" );
-			//this->butOpen->Text       = gcnew System::String( "Open a ROM file" );
-			//this->butSaveAs->Text     = gcnew System::String( "Save a ROM file" );
-			//this->butMakeMaster->Text = gcnew System::String( "Make a submission sheet" );
+			// フロントパネル下部
+			this->gboxFileOpen->Text  = gcnew System::String( "ROM file I/O" );
+			this->butOpen->Text       = gcnew System::String( "Open a ROM file" );
+			this->butSaveAs->Text     = gcnew System::String( "Save a ROM file" );
+			this->butMakeMaster->Text = gcnew System::String( "Make a submission sheet" );
 
-			//// 提出情報タブ
+			// 提出情報タブ
 			this->tabSubmitInfo->Text  = gcnew System::String( "Submission Info." );
 			this->labProductName->Text = gcnew System::String( "Product name" );
 			this->labProductCode->Text = gcnew System::String( "Product code" );
-			this->labProductNameForeign->Text = gcnew System::String( "Product name" );
-			this->labProductCodeForeign->Text = gcnew System::String( "Product code" );
-			this->cboxReleaseForeign->Text    = gcnew System::String( "Is scheduled to go on sale" );
 			this->labReleaseDate->Text = gcnew System::String( "Release date" );
 			this->labSubmiteDate->Text = gcnew System::String( "Submission date" );
-			this->labSubmitWay->Text   = gcnew System::String( "How to submit" );
+			this->gboxSubmitWay->Text  = gcnew System::String( "How to submit" );
 			this->rSubmitPost->Text    = gcnew System::String( "Mail" );
 			this->rSubmitHand->Text    = gcnew System::String( "Handover" );
-			this->labUsage->Text       = gcnew System::String( "Purpose" );
+			this->gboxUsage->Text      = gcnew System::String( "Purpose" );
 			this->rUsageSale->Text     = gcnew System::String( "For Sale" );
 			this->rUsageSample->Text   = gcnew System::String( "For Trial" );
 			this->rUsageDst->Text      = gcnew System::String( "For Network distribution" );
 			this->rUsageOther->Text    = gcnew System::String( "Other" );
-			this->labRemasterVer->Text = gcnew System::String( "Remaster ver." );
-			this->cboxRemasterVerE->Text = gcnew System::String( "E(Preliminary ver.)" );
-			this->labSubmitVer->Text   = gcnew System::String( "Submittion ver." );
-			this->labCapSubmitVer->Text  = gcnew System::String( "* return to 0 when remaster ver. is updated." );
-			this->labSDK->Text         = gcnew System::String( "SDK ver." );
+			this->labSubmitVer->Text     = gcnew System::String( "Submission ver." );
+			this->labCapSubmitVer->Text  = gcnew System::String( "* return to 0 when release ver. is updated." );
+			// 海外版タブ
+			this->tabForeignInfo->Text = gcnew System::String( "Foreign ver." );
+			this->labProductNameForeign->Text = gcnew System::String( "Product name" );
+			this->labProductCodeForeign->Text = gcnew System::String( "Product code" );
+			this->cboxReleaseForeign->Text    = gcnew System::String( "Foreign ver. is scheduled to go on sale" );
+			this->labMultiForeign1->Text      = gcnew System::String( "* Only release multi ver." );
+			this->labMultiForeign2->Text      = gcnew System::String( "* Only release multi ver." );
+			// 会社情報タブ
+			this->tabCompanyInfo1->Text = gcnew System::String( "Campany1" );
+			this->tabCompanyInfo2->Text = gcnew System::String( "Campany2" );
+			this->gboxPerson1->Text    = gcnew System::String( "Account1" );
+			this->gboxPerson2->Text    = gcnew System::String( "Account2" );
+			this->cboxIsInputPerson2->Text = gcnew System::String( "Input Account2" );
+			this->labCompany1->Text    = gcnew System::String( "Company" );
+			this->labDepart1->Text     = gcnew System::String( "Dept." );
+			this->labPerson1->Text     = gcnew System::String( "Name" );
+			this->labCompany2->Text    = gcnew System::String( "Company" );
+			this->labDepart2->Text     = gcnew System::String( "Dept." );
+			this->labPerson2->Text     = gcnew System::String( "Name" );
+			// ふりがな情報を削除
+			this->tboxFurigana1->Clear();
+			this->tboxFurigana1->Enabled = false;
+			this->labFurigana1->Text = gcnew System::String("");
+			this->tboxFurigana2->Clear();
+			this->tboxFurigana2->Enabled = false;
+			this->labFurigana2->Text = gcnew System::String("");
+			// 備考タブ
+			this->tabCaption->Text    = gcnew System::String( "Remarks" );
+			this->labCaption->Text    = gcnew System::String( "Please write further information." );
 
-			//// 会社情報タブ
-			//this->tabCompanyInfo->Text = gcnew System::String( "Campany Info." );
-			//this->gboxPerson1->Text    = gcnew System::String( "Account1" );
-			//this->gboxPerson2->Text    = gcnew System::String( "Account2" );
-			//this->cboxIsInputPerson2->Text = gcnew System::String( "Input Account2" );
-			//this->labCompany1->Text    = gcnew System::String( "Company" );
-			//this->labDepart1->Text     = gcnew System::String( "Dept." );
-			//this->labPerson1->Text     = gcnew System::String( "Name" );
-			//this->labCompany2->Text    = gcnew System::String( "Company" );
-			//this->labDepart2->Text     = gcnew System::String( "Dept." );
-			//this->labPerson2->Text     = gcnew System::String( "Name" );
+			// タブの注意書き
+			this->labCautionInput->Text = gcnew System::String( "* These items are necesarry for submission. Please input." );
+			this->labCautionCheck->Text = gcnew System::String( "* These items are used for checking ROM data. They are read only." );
 
-			//// ふりがな情報を削除
-			//this->tboxFurigana1->Clear();
-			//this->tboxFurigana1->Enabled = false;
-			//this->labFurigana1->Text = gcnew System::String("");
-			//this->tboxFurigana2->Clear();
-			//this->tboxFurigana2->Enabled = false;
-			//this->labFurigana2->Text = gcnew System::String("");
+			// TWL仕様
+			this->tabTWLSpec1->Text           = gcnew System::String( "TWL Spec.1" );
+			this->tabTWLSpec2->Text           = gcnew System::String( "TWL Spec.2" );
+			this->tabTWLSpec3->Text           = gcnew System::String( "TWL Spec.3" );
+			this->tabTWLSpec4->Text           = gcnew System::String( "TWL Spec.4" );
+			this->tabSDK->Text                = gcnew System::String( "SDK" );
+			this->gboxTWLExInfo->Text         = gcnew System::String( "TWL Extended Info" );
+			this->labNormalRomOffset->Text    = gcnew System::String( "TWL normal area ROM offset" );
+			this->labKeyTableRomOffset->Text  = gcnew System::String( "TWL secure area ROM offset" );
+			this->cboxIsNormalJump->Text      = gcnew System::String( "Enable Normal app. jump" );
+			this->cboxIsTmpJump->Text         = gcnew System::String( "Enable Temp. app. jump" );
+			this->cboxIsSubBanner->Text       = gcnew System::String( "Enable SubBanner file" );
+			this->cboxIsWL->Text              = gcnew System::String( "Enable NTR WhiteList signature" );
+			this->gboxAccess->Text            = gcnew System::String( "Access Control" );
+			this->cboxIsSD->Text              = gcnew System::String( "SD Card" );
+			this->cboxIsNAND->Text            = gcnew System::String( "NAND Flash Memory" );
+			this->labIsGameCardOn->Text       = gcnew System::String( "Card Power" );
+			this->labAccessOther->Text        = gcnew System::String( "Others" );
+			this->gboxShared2Size->Text       = gcnew System::String( "Size of Shared2 Files" );
+			this->cboxIsShared2->Text         = gcnew System::String( "Use Shared2 files" );
+			this->labSDK->Text                = gcnew System::String( "SDK ver." );
+			this->labLib->Text                = gcnew System::String( "Libraries used by the program" );
+			this->labCaptionEx->Text          = gcnew System::String( "Special note" );
 
-			//// プログラム仕様
-			//this->tabSpecInfo->Text             = gcnew System::String( "Add.Info.1" );
-			//this->cboxIsWireless->Text          = gcnew System::String( "DS Wireless support" );
-			//this->cboxIsTouch->Text             = gcnew System::String( "Touch screen support" );
-			//this->cboxIsMic->Text               = gcnew System::String( "Mic Support" );
-			//this->cboxIsGBACartridge->Text      = gcnew System::String( "GBA Cartridge support" );
-			//this->cboxIsDSCartridge->Text       = gcnew System::String( "DS Cartridge support" );
-			//this->cboxIsWiFi->Text              = gcnew System::String( "Wi-Fi support" );
-			//this->cboxIsClock->Text             = gcnew System::String( "Clock function" );
-			//this->cboxIsSoftReset->Text         = gcnew System::String( "Soft Reset function" );
-			//this->cboxIsPictoChatSearch->Text   = gcnew System::String( "PictoChat search function" );
-			//this->cboxIsAutoBackLightOff->Text  = gcnew System::String( "Auto BackLight Off" );
-			//this->labTimeAutoBackLightOff->Text = gcnew System::String( "min." );
-			//this->cboxIsAutoLcdOff->Text        = gcnew System::String( "Auto LCD Off" );
-			//this->labTimeAutoLcdOff->Text       = gcnew System::String( "min." );
-			//this->cboxIsSleep->Text             = gcnew System::String( "Sleep mode support" );
-			//this->cboxIsNotSleepClose->Text     = gcnew System::String( "May not transit to sleep mode when the housing closed" );
-			//this->cboxIsSleepAlarm->Text        = gcnew System::String( "Return from sleep mode when the RTC alarm fired" );
-			//this->labTimeSleepClose2->Text      = gcnew System::String( "min." );
-			//this->labSleepAlarmProc->Text       = gcnew System::String( "→In that case, what to process" );
-			//this->cboxIsIPLUserComment->Text    = gcnew System::String( "Avail the user name or comments included the IPL" );
-			//this->labIsIPLUserCommentScene->Text= gcnew System::String( "→That scene" );
-			//this->cboxIsAllIPLFonts->Text       = gcnew System::String( "Can display all fonts set by users" );
+			// ROMデータ編集可能情報
+			this->gboxTWLInfoWritable->Text   = gcnew System::String( "ROM Writable Info.(Please Change if necesarry.)" );
+			this->labEULA->Text               = gcnew System::String( "EULA agreement ver." );
+			this->cboxIsEULA->Text            = gcnew System::String( "Agree EULA" );
+			this->cboxIsWirelessIcon->Text    = gcnew System::String( "Display an Icon of DS Wireless" );
+			this->cboxIsWiFiIcon->Text        = gcnew System::String( "Display an Icon of Wi-Fi connection" );
+			this->labRegion->Text             = gcnew System::String( "Card Region" );
+			this->combRegion->Items->Clear();
+			this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5)
+				{L"Japan Only", L"USA Only", L"Europe Only", L"Australia only", L"Europe and Australia"});
 
-			//// プログラム仕様2
-			//this->tabSpecInfo2->Text  = gcnew System::String( "Add.Info.2" ); 
-			//this->labIsLang->Text     = gcnew System::String( "Used languages" );
-			//this->cboxIsLangJ->Text   = gcnew System::String( "Japanese" );
-			//this->cboxIsLangE->Text   = gcnew System::String( "English" );
-			//this->cboxIsLangF->Text   = gcnew System::String( "French" );
-			//this->cboxIsLangG->Text   = gcnew System::String( "German" );
-			//this->cboxIsLangI->Text   = gcnew System::String( "Italian" );
-			//this->cboxIsLangS->Text   = gcnew System::String( "Espanol" );
-			//this->cboxIsLangC->Text   = gcnew System::String( "Chinese" );
-			//this->cboxIsLangK->Text   = gcnew System::String( "Korean" );
-			//this->cboxIsLangOther->Text = gcnew System::String( "Other" );
-			//this->labIsIPLLang->Text  = gcnew System::String( "IPL Language Setting" );
-			//this->rIsIPLLang->Text    = gcnew System::String( "Refered" );
-			//this->rIsNotIPLLang->Text = gcnew System::String( "NOT Refered" );
+			// ペアレンタルコントロール
+			this->labParentalRating->Text      = gcnew System::String( "Rating" );
+			this->labParentalEnable->Text      = gcnew System::String( "Enable Control" );
+			this->labParentalForceEnable->Text = gcnew System::String( "Rating Pending" );
 
-			//// TWL拡張仕様1
-			//this->tabTWLInfo->Text            = gcnew System::String( "TWL Ext. Info.1" );
-			//this->gboxTWLInfoReadOnly->Text   = gcnew System::String( "TWL Info (Read Only)" );
-			//this->labNormalRomOffset->Text    = gcnew System::String( "TWL normal area ROM offset" );
-			//this->labKeyTableRomOffset->Text  = gcnew System::String( "TWL secure area ROM offset" );
-			//this->cboxIsNormalJump->Text      = gcnew System::String( "Enable Normal app. jump" );
-			//this->cboxIsTmpJump->Text         = gcnew System::String( "Enable Temp. app. jump" );
-			//this->cboxIsSubBanner->Text       = gcnew System::String( "Enable SubBanner file" );
-			//this->cboxIsWL->Text              = gcnew System::String( "Enable NTR WhiteList signature" );
-			//this->gboxTWLInfoWritable->Text   = gcnew System::String( "TWL Info (Writable)" );
-			//this->labEULA->Text               = gcnew System::String( "EULA agreement ver." );
-			//this->cboxIsEULA->Text            = gcnew System::String( "Agree EULA" );
-			//this->cboxIsWirelessIcon->Text    = gcnew System::String( "Display an Icon of DS Wireless" );
-			//this->cboxIsWiFiIcon->Text        = gcnew System::String( "Display an Icon of Wi-Fi connection" );
+			index = this->combCERO->SelectedIndex;	// いったんclearすると現在のindexに意味がなくなるので退避
+			this->combCERO->Items->Clear();
+			this->combCERO->Items->AddRange(gcnew cli::array< System::Object^  >(6)
+				{ L"A (All ages)", L"B (aged 12 or older)", L"C (aged 15 or older)", L"D (aged 17 or older)", L"Z (aged 18 or older)", L"Unexamined"});
+			this->combCERO->SelectedIndex = index;
 
-			//// TWL拡張仕様2
-			//this->tabTWLInfo2->Text     = gcnew System::String( "TWL Ext. Info.2" );
-			//this->gboxAccess->Text      = gcnew System::String( "Access Control" );
-			//this->cboxIsSD->Text        = gcnew System::String( "SD Card" );
-			//this->cboxIsNAND->Text      = gcnew System::String( "NAND Flash Memory" );
-			//this->labIsGameCardOn->Text = gcnew System::String( "Card Power" );
-			//this->labAccessOther->Text  = gcnew System::String( "Others" );
-			//this->gboxShared2Size->Text = gcnew System::String( "Size of Shared2 Files" );
-			//this->cboxIsShared2->Text   = gcnew System::String( "Use Shared2 files" );
+			index = this->combESRB->SelectedIndex;
+			this->combESRB->Items->Clear();
+			this->combESRB->Items->AddRange(gcnew cli::array< System::Object^  >(6)
+				{L"EC (aged 3 or older)", L"E (aged 6 or older)", L"E10+ (aged 10 or older)", L"T (aged 13 or older)",	L"M (aged 17 or older)", L"Unexamined"});
+			this->combESRB->SelectedIndex = index;
 
-			//// 使用ライセンス
-			//this->tabLicenseInfo->Text      = gcnew System::String( "Licenses" );
-			//this->cboxUseLc->Text           = gcnew System::String( "LC Font (SHARP)" );
-			//this->cboxUseAtok->Text         = gcnew System::String( "ATOK Library (JUSTSYSTEM)" );
-			//this->cboxUseVoiceChat->Text    = gcnew System::String( "VoiceChat Library (Abiosso)" );
-			//this->cboxUseWiFiLib->Text      = gcnew System::String( "NITRO-WiFi Library (NINTENDO)" );
-			//this->cboxUseVoiceRecog->Text   = gcnew System::String( "Voice Recognition (Panasonic)" );
-			//this->cboxUseCharRecog->Text    = gcnew System::String( "Decuma Handwriting Recognition (Zi)" );
-			//this->cboxUseVoiceCombine->Text = gcnew System::String( "Speech synthesis (SHARP)" );
-			//this->cboxUseNetFront->Text     = gcnew System::String( "NetFront Browser (ACCESS)" );
-			//this->cboxUseOthers->Text       = gcnew System::String( "Others" );
+			index = this->combUSK->SelectedIndex;
+			this->combUSK->Items->Clear();
+			this->combUSK->Items->AddRange(gcnew cli::array< System::Object^  >(6)
+				{L"All ages", L"aged 6 or older", L"aged 12 or older", L"aged 16 or older", L"Inadequent for young", L"Unexamined"});
+			this->combUSK->SelectedIndex = index;
 
-			//// ペアレンタルコントロール
-			//this->tabParental->Text = gcnew System::String( "Parental Control" );
-			//this->labParentalRating->Text      = gcnew System::String( "Rating" );
-			//this->labParentalEnable->Text      = gcnew System::String( "Enable Control" );
-			//this->labParentalForceEnable->Text = gcnew System::String( "Rating Pending" );
+			index = this->combPEGI->SelectedIndex;
+			this->combPEGI->Items->Clear();
+			this->combPEGI->Items->AddRange(gcnew cli::array< System::Object^  >(6)
+				{L"aged 3 or older", L"aged 7 or older", L"aged 12 or older", L"aged 16 or older", L"aged 18 or older", L"Unexamined"});
+			this->combPEGI->SelectedIndex = index;
 
-			//index = this->combCERO->SelectedIndex;	// いったんclearすると現在のindexに意味がなくなるので退避
-			//this->combCERO->Items->Clear();
-			//this->combCERO->Items->AddRange(gcnew cli::array< System::Object^  >(6)
-			//	{ L"A (All ages)", L"B (aged 12 or older)", L"C (aged 15 or older)", L"D (aged 17 or older)", L"Z (aged 18 or older)", L"Unexamined"});
-			//this->combCERO->SelectedIndex = index;
+			index = this->combPEGIPRT->SelectedIndex;
+			this->combPEGIPRT->Items->Clear();
+			this->combPEGIPRT->Items->AddRange(gcnew cli::array< System::Object^  >(6)
+				{L"aged 4 or older", L"aged 6 or older", L"aged 12 or older", L"aged 16 or older", L"aged 18 or older", L"Unexamined"});
+			this->combPEGIPRT->SelectedIndex = index;
 
-			//index = this->combESRB->SelectedIndex;
-			//this->combESRB->Items->Clear();
-			//this->combESRB->Items->AddRange(gcnew cli::array< System::Object^  >(6)
-			//	{L"EC (aged 3 or older)", L"E (aged 6 or older)", L"E10+ (aged 10 or older)", L"T (aged 13 or older)",	L"M (aged 17 or older)", L"Unexamined"});
-			//this->combESRB->SelectedIndex = index;
+			index = this->combPEGIBBFC->SelectedIndex;
+			this->combPEGIBBFC->Items->Clear();
+			this->combPEGIBBFC->Items->AddRange(gcnew cli::array< System::Object^  >(9)
+				{L"aged 3 or older", L"aged 4 or older recommended", L"aged 7 or older", L"aged 8 or older recommended",
+				 L"aged 12 or older", L"aged 15 or older", L"aged 16 or older", L"aged 18 or older", L"Unexamined"});
+			this->combPEGIBBFC->SelectedIndex = index;
 
-			//index = this->combUSK->SelectedIndex;
-			//this->combUSK->Items->Clear();
-			//this->combUSK->Items->AddRange(gcnew cli::array< System::Object^  >(6)
-			//	{L"All ages", L"aged 6 or older", L"aged 12 or older", L"aged 16 or older", L"Inadequent for young", L"Unexamined"});
-			//this->combUSK->SelectedIndex = index;
+			index = this->combOFLC->SelectedIndex;
+			this->combOFLC->Items->Clear();
+			this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"G", L"PG", L"M", L"MA15+", L"Unexamined"});
+			this->combOFLC->SelectedIndex = index;
 
-			//index = this->combPEGI->SelectedIndex;
-			//this->combPEGI->Items->Clear();
-			//this->combPEGI->Items->AddRange(gcnew cli::array< System::Object^  >(6)
-			//	{L"aged 3 or older", L"aged 7 or older", L"aged 12 or older", L"aged 16 or older", L"aged 18 or older", L"Unexamined"});
-			//this->combPEGI->SelectedIndex = index;
-
-			//index = this->combPEGIPRT->SelectedIndex;
-			//this->combPEGIPRT->Items->Clear();
-			//this->combPEGIPRT->Items->AddRange(gcnew cli::array< System::Object^  >(6)
-			//	{L"aged 4 or older", L"aged 6 or older", L"aged 12 or older", L"aged 16 or older", L"aged 18 or older", L"Unexamined"});
-			//this->combPEGIPRT->SelectedIndex = index;
-
-			//index = this->combPEGIBBFC->SelectedIndex;
-			//this->combPEGIBBFC->Items->Clear();
-			//this->combPEGIBBFC->Items->AddRange(gcnew cli::array< System::Object^  >(9)
-			//	{L"aged 3 or older", L"aged 4 or older recommended", L"aged 7 or older", L"aged 8 or older recommended",
-			//	 L"aged 12 or older", L"aged 15 or older", L"aged 16 or older", L"aged 18 or older", L"Unexamined"});
-			//this->combPEGIBBFC->SelectedIndex = index;
-
-			//index = this->combOFLC->SelectedIndex;
-			//this->combOFLC->Items->Clear();
-			//this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"G", L"PG", L"M", L"MA15+", L"Unexamined"});
-			//this->combOFLC->SelectedIndex = index;
-
-			//// 特殊な設定用のテキストボックスの表記を変更
-			//this->setSrlFormsCaptionEx();
+			// 特殊な設定用のテキストボックスの表記を変更
+			this->setSrlFormsCaptionEx();
 		}
 
 	private:
@@ -4702,16 +4713,22 @@ private: System::Windows::Forms::TextBox^  tboxLib;
 	private:
 		System::Void cboxReleaseForeign_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
 		{
-			this->tboxProductNameForeign->Enabled  = this->cboxReleaseForeign->Checked;
-			this->tboxProductCode1Foreign->Enabled = this->cboxReleaseForeign->Checked;
-			this->tboxProductCode2Foreign->Enabled = this->cboxReleaseForeign->Checked;
+			this->tboxProductNameForeign->Enabled   = this->cboxReleaseForeign->Checked;
+			this->tboxProductCode1Foreign->Enabled  = this->cboxReleaseForeign->Checked;
+			this->tboxProductCode2Foreign1->Enabled = this->cboxReleaseForeign->Checked;
+			this->tboxProductCode2Foreign2->Enabled = this->cboxReleaseForeign->Checked;
+			this->tboxProductCode2Foreign3->Enabled = this->cboxReleaseForeign->Checked;
 			if( this->cboxReleaseForeign->Checked == false )
 			{
 				this->tboxProductNameForeign->Clear();
 				this->tboxProductCode1Foreign->Clear();
-				this->tboxProductCode2Foreign->Clear();
+				this->tboxProductCode2Foreign1->Clear();
+				this->tboxProductCode2Foreign2->Clear();
+				this->tboxProductCode2Foreign3->Clear();
 			}
 		}
+
+
 
 }; // enf of ref class Form1
 
