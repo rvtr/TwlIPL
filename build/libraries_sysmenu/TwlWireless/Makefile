@@ -22,8 +22,8 @@ export TWL_CODEGEN
 export TWL_ARCHGEN
 TWL_PROC					:= ARM7
 
-# always build only ARM codes under sub processes
-SUBDIR_FLAGS				= TWL_CODEGEN=$(TWL_CODEGEN)
+# always build overridden targets under sub processes
+SUBDIR_FLAGS				= TWL_CODEGEN=$(TWL_CODEGEN) TWL_ARCHGEN=$(TWL_ARCHGEN)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
