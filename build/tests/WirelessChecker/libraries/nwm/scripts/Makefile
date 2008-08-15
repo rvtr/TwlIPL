@@ -16,7 +16,7 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-override TWL_CODEGEN		:= ARM
+override TARGET_CODEGEN		:= ARM
 override TWL_ARCHGEN		:= LIMITED
 
 NWM_ORG					=	$(ROOT)/build/libraries/wm/common.TWL/src/nwm_installfirm.c

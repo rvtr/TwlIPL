@@ -21,7 +21,7 @@ override TWL_PROC			=	ARM7
 override TWL_ARCHGEN		=	LIMITED
 override TWL_PLATFORM		=	TS
 TWL_NO_STD_PCHDR			=	True
-TWL_CODEGEN					?=	ALL
+TARGET_CODEGEN					?=	ALL
 
 #----------------------------------------------------------------------------
 DISP_INFO	= $(TWL_IPL_RED_ROOT)/build/tests/DisplaySystemInformation

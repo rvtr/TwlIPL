@@ -12,8 +12,8 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
 SUBDIRS				=	
@@ -23,7 +23,7 @@ SUBMAKES			=
 #----------------------------------------------------------------------------
 
 # build ARM & THUMB libraries
-TWL_CODEGEN_ALL	?=	TRUE
+TARGET_CODEGEN_ALL	?=	TRUE
 
 SRCDIR				=	. ../common
 

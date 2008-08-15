@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - build
+# Project:  TwlIPL - build
 # File:     Makefile.full
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -21,15 +21,8 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 
 #----------------------------------------------------------------------------
-export TWL_ARCHGEN = ALL
-export NITRO_WITHOUT_DEMOS = TRUE
 
-SUBDIRS =	\
-			$(ROOT)/build/libraries/reboot \
-			$(ROOT)/build/demos/gx/UnitTours/DEMOLib \
-			$(NITROSYSTEM_ROOT) \
-			build
-
+SUBMAKES	=	Makefile.twlSDK Makefile.nitroSystem.LTD Makefile.nitroSystem.HYB Makefile
 
 #----------------------------------------------------------------------------
 

@@ -32,6 +32,9 @@ DS_HASH_TABLE_SRL_ROOT	?= D:/SRL
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
+LLIBRARIES			+=	libdht$(TWL_LIBSUFFIX).a
+
+
 MAKEROM_FLAGS		+= -DMAKEROM_SRL_ROOT=$(DS_HASH_TABLE_SRL_ROOT)
 
 

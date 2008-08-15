@@ -24,7 +24,7 @@ SUBDIRS			=
 TWL_NO_STD_PCHDR        =	True
 
 # Avoid to build THUMB version object
-override TWL_CODEGEN	= 	ARM
+override TARGET_CODEGEN	= 	ARM
 
 SRCDIR			=	. ../common
 SRCS			= 	crt0_firm.c \

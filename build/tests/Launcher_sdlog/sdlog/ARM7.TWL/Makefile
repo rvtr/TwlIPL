@@ -21,7 +21,7 @@ SUBDIRS			=
 #----------------------------------------------------------------------------
 override TARGET_PLATFORM = TWL
 
-TWL_CODEGEN		?= ARM
+TARGET_CODEGEN		?= ARM
 TWL_ARCHGEN		?= LIMITED
 TWL_PROC		 = ARM7
 

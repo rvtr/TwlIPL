@@ -21,7 +21,7 @@ override TWL_PROC			=	ARM7
 override TWL_ARCHGEN		=	LIMITED
 ##override TWL_PLATFORM		=	TS
 TWL_NO_STD_PCHDR			=	True
-override TWL_CODEGEN		=	ARM
+override TARGET_CODEGEN		=	ARM
 
 ifndef	TWLSDK_NOCRYPTO
 #----------------------------------------------------------------------------

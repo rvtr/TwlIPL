@@ -31,7 +31,7 @@ SYSM_DISABLE_DEBUG		?=	FALSE
 
 TARGET_FIRM				=	SYSTEMMENU
 TARGET_PLATFORM			=	TWL
-TWL_CODEGEN				?=	THUMB
+TARGET_CODEGEN			?=	THUMB
 TWL_ARCHGEN				=	LIMITED
 TWL_NANDAPP				=	TRUE
 
@@ -107,12 +107,10 @@ INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
 
-do-build : test $(TARGETS)
+do-build : $(TARGETS)
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
-test:
-	echo $(SMALL_TITLEID)
 #----------------------------------------------------------------------------
 
 #===== End of Makefile =====

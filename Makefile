@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - build
+# Project:  TwlIPL - build
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -21,7 +21,6 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 
 #----------------------------------------------------------------------------
-export TWL_ARCHGEN = ALL
 
 SUBDIRS =	\
 			build

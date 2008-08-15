@@ -22,7 +22,7 @@ override TARGET_PLATFORM    =   TWL
 override TWL_PROC           =   ARM9
 
 # Avoid to build THUMB version object
-override TWL_CODEGEN    =   ARM
+override TARGET_CODEGEN    =   ARM
 
 # Avoid to build LIMITED version object
 override TWL_ARCHGEN    =   HYBRID
@@ -31,7 +31,7 @@ override TWL_ARCHGEN    =   HYBRID
 TWL_NO_STD_PCHDR            =   True
 
 # build ARM & THUMB libraries
-TWL_CODEGEN                 ?=  ALL
+TARGET_CODEGEN                 ?=  ALL
 
 SRCDIR          =   ../common/src src
 INCDIR          =   ../common/include

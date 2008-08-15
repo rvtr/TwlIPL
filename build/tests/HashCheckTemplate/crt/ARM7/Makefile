@@ -25,7 +25,7 @@ override TWL_PROC           =   ARM7
 TWL_NO_STD_PCHDR            =   True
 
 # Avoid to build THUMB version object
-override TWL_CODEGEN        =   ARM
+override TARGET_CODEGEN        =   ARM
 
 # Avoid to build HYBRID version object
 override TWL_ARCHGEN		=   LIMITED

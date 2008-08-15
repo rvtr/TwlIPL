@@ -20,6 +20,30 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
+SUBDIRS_P	=	\
+				CheckDSHashTable \
+				FatalErrorMaker \
+				RomTypeTest \
+				WirelessChecker \
+				CheckPreloadParameters \
+				FileRecoveryTest \
+				Shared2File \
+				build4WLDev \
+				CheckSharedFont \
+				HashCheckTemplate \
+				SimpleBenchmark \
+				compressSharedFontLoad/compSharedFont \
+				compressSharedFontLoad/testLoadSpeed \
+				DisplaySystemInformation \
+				Launcher_sdlog \
+				TestMaker \
+				yuv2rgb \
+				ErrorLogTest \
+				Makefile \
+				WDSTest \
+				FatalErrorChecker \
+				RelocateChecker \
+				WDSWrapperTest \
 
 
 #----------------------------------------------------------------------------

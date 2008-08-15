@@ -21,7 +21,7 @@ override TARGET_PLATFORM = TWL
 
 # Codegen for sub processer
 TWL_PROC		 =  ARM9
-TWL_CODEGEN		?= ALL
+TARGET_CODEGEN		?= ALL
 
 MACRO_FLAGS  = -DNWM_WRACK_FIRMWARE
 

@@ -20,7 +20,7 @@ override TARGET_PLATFORM	 =	TWL
 override TWL_PROC			 =	ARM7
 override TWL_ARCHGEN		 =	LIMITED
 TWL_NO_STD_PCHDR			 =	True
-TWL_CODEGEN					?=	ALL
+TARGET_CODEGEN					?=	ALL
 
 #----------------------------------------------------------------------------
 

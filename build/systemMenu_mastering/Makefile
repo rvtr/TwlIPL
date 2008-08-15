@@ -20,7 +20,7 @@
 
 TARGET_FIRM				=	SYSTEMMENU
 
-TWL_CODEGEN                             =       ARM
+TARGET_CODEGEN                             =       ARM
 TWL_ARCHGEN                             =       LIMITED
 TWL_NANDAPP				=	TRUE
 

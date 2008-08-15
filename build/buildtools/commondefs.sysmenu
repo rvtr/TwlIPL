@@ -27,6 +27,9 @@ define toLower
 $(shell echo $(1) | tr '[A-Z]' '[a-z]' )
 endef # toLower
 
+# デフォルトのCODEGENを指定（他のcommondefsの前で指定しておかないとダメ）
+TARGET_CODEGEN ?= THUMB
+
 #----------------------------------------------------------------------------
 ### TWL-commondefs
 #
