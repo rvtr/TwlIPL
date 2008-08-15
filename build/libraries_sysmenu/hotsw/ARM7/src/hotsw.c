@@ -150,6 +150,7 @@ static u32                  *s_pSecure2SegBuffer;
 
 static CardBootData         s_cbData ATTRIBUTE_ALIGN(4);
 static SYSMRomEmuInfo       s_romEmuInfo;
+static BOOL                 s_isRomEmu;
 static BOOL                 s_debuggerFlg;
 
 static BOOL                 s_isPulledOut = TRUE;
@@ -413,7 +414,9 @@ static HotSwState LoadCardData(void)
 			//   よって、ROMエミュレーション情報リード部分をデバッガビルド時以外に切ることはできない。
 
             // 初回のRomエミュレーション情報を使用
+            s_isRomEmu = FALSE;
             if(HOTSWi_IsRomEmulation()){
+                s_isRomEmu = TRUE;
                 HOTSW_PutString("Read Emulation ROM\n");
                 s_cbData.cardType = ROM_EMULATION;
                 s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
@@ -509,7 +512,7 @@ static HotSwState LoadCardData(void)
             }
 
             // ゲームモードに移行
-            state  = s_funcTable[s_debuggerFlg].ChangeMode_S(&s_cbData);
+            state  = s_funcTable[s_isRomEmu].ChangeMode_S(&s_cbData);
             retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
             // ---------------------- Game Mode ----------------------
@@ -659,14 +662,14 @@ static HotSwState ReadSecureModeCardData(void)
     u32 secure_ID;
 
     // PNG設定
-    state  = s_funcTable[s_debuggerFlg].SetPNG_S(&s_cbData);
+    state  = s_funcTable[s_isRomEmu].SetPNG_S(&s_cbData);
     retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
     // DS側符号生成回路初期値設定 (レジスタ設定)
     SetMCSCR();
 
     // ID読み込み
-    state  = s_funcTable[s_debuggerFlg].ReadID_S(&s_cbData);
+    state  = s_funcTable[s_isRomEmu].ReadID_S(&s_cbData);
     retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
     // カードIDの比較をして、一致しなければFALSEを返す
@@ -677,7 +680,7 @@ static HotSwState ReadSecureModeCardData(void)
 
     if(retval == HOTSW_SUCCESS){
         // Secure領域のSegment読み込み
-        state  = s_funcTable[s_debuggerFlg].ReadSegment_S(&s_cbData);
+        state  = s_funcTable[s_isRomEmu].ReadSegment_S(&s_cbData);
         retval = (retval == HOTSW_SUCCESS) ? state : retval;
     }
 
@@ -1864,7 +1867,7 @@ static BOOL ChangeGameMode(void)
     state = ReadIDNormal(&s_cbData);
     state = ReadBootSegNormal(&s_cbData);
 
-    if(s_debuggerFlg){
+    if(s_isRomEmu){
         s_cbData.cardType = ROM_EMULATION;
         s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
     }
@@ -1882,9 +1885,9 @@ static BOOL ChangeGameMode(void)
     state = ChangeModeNormal(&s_cbData);
 
     // ---------------------- Secure Mode ----------------------
-    state = s_funcTable[s_debuggerFlg].SetPNG_S(&s_cbData);
+    state = s_funcTable[s_isRomEmu].SetPNG_S(&s_cbData);
     SetMCSCR();
-    state = s_funcTable[s_debuggerFlg].ChangeMode_S(&s_cbData);
+    state = s_funcTable[s_isRomEmu].ChangeMode_S(&s_cbData);
 
     // ---------------------- Game Mode ----------------------
     state = ReadIDGame(&s_cbData);
