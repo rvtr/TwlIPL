@@ -1483,6 +1483,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->combRegion->Name = L"combRegion";
 			this->combRegion->Size = System::Drawing::Size(216, 20);
 			this->combRegion->TabIndex = 36;
+			this->combRegion->SelectedIndexChanged += gcnew System::EventHandler(this, &Form1::combRegion_SelectedIndexChanged);
 			// 
 			// cboxIsWiFiIcon
 			// 
@@ -4695,6 +4696,101 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 				this->tboxBackupOther->Clear();
 			}
 		}
+	private:
+		// ペアレンタルコントロール情報をクリアする
+		void clearParental( System::Windows::Forms::ComboBox ^comb, 
+			                System::Windows::Forms::CheckBox ^enable, 
+							System::Windows::Forms::CheckBox ^rp )
+		{
+			comb->SelectedIndex = comb->Items->Count - 1;	// 「未審査」にする
+			enable->Checked = false;
+			rp->Checked = false;
+		}
+	private:
+		// ペアレンタルコントロール情報を編集できるようにする
+		void enableParental( System::Windows::Forms::ComboBox ^comb, 
+	                         System::Windows::Forms::CheckBox ^enable, 
+					         System::Windows::Forms::CheckBox ^rp )
+		{
+			comb->Enabled = true;
+			enable->Enabled = true;
+			rp->Enabled = true;
+		}
+		// ペアレンタルコントロール情報を編集できなくする
+		void disableParental( System::Windows::Forms::ComboBox ^comb, 
+	                          System::Windows::Forms::CheckBox ^enable, 
+					          System::Windows::Forms::CheckBox ^rp )
+		{
+			this->clearParental( comb, enable, rp );
+			comb->Enabled = false;
+			enable->Enabled = false;
+			rp->Enabled = false;
+		}
+	private:
+		System::Void combRegion_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e)
+		{
+			switch( this->combRegion->SelectedIndex )
+			{
+				case 0:
+					// 日本
+					this->enableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
+
+					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
+					this->disableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
+					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
+					this->disableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
+					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
+					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+				break;
+
+				case 1:
+					// 米国
+					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
+					this->enableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
+					this->disableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
+					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
+					this->disableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
+					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
+					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+				break;
+
+				case 2:
+					// 欧州
+					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
+					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
+					this->enableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
+					this->enableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
+					this->enableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
+					this->enableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
+					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+				break;
+
+				case 3:
+					// 豪州
+					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
+					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
+					this->disableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
+					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
+					this->disableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
+					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
+					this->enableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+				break;
+
+				case 4:
+					// 欧州と豪州
+					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
+					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
+					this->enableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
+					this->enableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
+					this->enableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
+					this->enableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
+					this->enableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+				break;
+
+				default:
+				break;
+			}
+		}
 
 	private:
 		// 日本語版への切り替え
@@ -4727,8 +4823,6 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 				this->tboxProductCode2Foreign3->Clear();
 			}
 		}
-
-
 
 }; // enf of ref class Form1
 

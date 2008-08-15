@@ -306,6 +306,22 @@ ECSrlResult RCSrl::setRomHeader(void)
 	this->pRomHeader->s.exFlags.WiFiConnectionIcon = (*(this->hIsWiFiIcon) == true)?1:0;
 	this->pRomHeader->s.exFlags.DSWirelessIcon     = (*(this->hIsWirelessIcon) == true)?1:0;
 
+	// レーティング
+	const u32  maskJapan     = 0x00000001;
+	const u32  maskAmerica   = 0x00000002;
+	const u32  maskEurope    = 0x00000004;
+	const u32  maskAustralia = 0x00000008;
+	//const u32  maskChina     = 0x00000010;
+	//const u32  maskKorea     = 0x00000020;
+	u32  map = 0;
+	if( *(this->hIsRegionJapan)   == true )  { map |= maskJapan; }
+	if( *(this->hIsRegionAmerica) == true )  { map |= maskAmerica; }
+	if( *(this->hIsRegionEurope)  == true )  { map |= maskEurope; }
+	if( *(this->hIsRegionAustralia) == true ){ map |= maskAustralia; }
+	//if( *(this->hIsRegionChina)   == true )  { map |= maskChina; }
+	//if( *(this->hIsRegionKorea)   == true )  { map |= maskKorea; }
+	this->pRomHeader->s.card_region_bitmap = map;
+
 	// ペアレンタルコントロール
 	for( i=0; i < PARENTAL_CONTROL_INFO_SIZE; i++ )
 	{
