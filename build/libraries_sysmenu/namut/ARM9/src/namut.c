@@ -54,7 +54,8 @@ static const char* sDeleteDirectoryList[] =
 static const char* sFillFileList[] =
 {
 	"nand:/shared1/TWLCFG0.dat",
-	"nand:/shared1/TWLCFG1.dat"
+	"nand:/shared1/TWLCFG1.dat",
+	"nand:/shared2/launcher/wrap.bin"
 };
 
 #define VOLUME_INITIAL_VALUE     5		// 本体初期化時に設定する本体ボリューム値

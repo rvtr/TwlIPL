@@ -56,6 +56,7 @@ static BOOL IsCommandSelected(void);
 static void PrintPause(void);
 static void PrintError(void);
 static void PrintSystemMenuVersion( void );
+static void CreateDummyWrapFile( void );
 
 // global variable-------------------------------------------------------------
 
@@ -325,6 +326,9 @@ void TwlMain( void )
 	
 	// TMPフォルダのクリーン
 	SYSM_DeleteTmpDirectory( pBootTitle );
+	
+	// ダミーのDSメニューラッピング用ファイル作成（UIGランチャーが作っているもの）
+	CreateDummyWrapFile();
 	
     // end時間計測3
 	MEASURE_RESULT( start, "TmpClean : %dms\n" );
@@ -725,6 +729,21 @@ static void PrintSystemMenuVersion( void )
 		OS_TPrintf( "  NUP HostName       : %s\n", GetNUP_HostName() );
 		// SystemMenuVersion情報のタイムスタンプの取得
 		OS_TPrintf( "  Timestamp          : %08x\n", GetSystemMenuVersionTimeStamp() );
+	}
+}
+
+
+// ダミーのDSメニューラッピング用ファイル作成（UIGランチャーが作っているもの）
+static void CreateDummyWrapFile( void )
+{
+	const char *path = "nand:/shared2/launcher/wrap.bin";
+	
+	if( FS_CreateFileAuto( path, FS_PERMIT_R | FS_PERMIT_W ) ) {
+		FSFile file;
+		if( FS_OpenFileEx( &file, path, FS_FILEMODE_RW ) ) {
+			(void)FS_SetFileLength( &file, 16 * 1024 );
+			FS_CloseFile( &file );
+		}
 	}
 }
 
