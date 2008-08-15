@@ -90,6 +90,11 @@ void SYSMi_SetLauncherMountInfo( void )
 	
 	// bootSRLパスの設定は、ランチャーが自分で設定するのは厄介なので、NANDファームから引き渡してもらう
 	
+	// SDカードアクセス要求がない場合は、sdmcをマウントしない。
+	if( header->access_control.sd_card_access == 0 ) {
+		mountListBuffer[ SDMC_MOUNT_INDEX ].drive[ 0 ] = 0;
+	}
+	
 	// セーブデータ有無によるマウント情報の編集
 	// ※このタイミングではFSは動かせないので、FSを使わない特別版で対応。
 	SYSMi_ModifySaveDataMount( LAUNCHER_BOOTTYPE_NAND,
