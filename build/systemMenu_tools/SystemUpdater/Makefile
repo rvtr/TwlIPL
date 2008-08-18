@@ -29,6 +29,10 @@ DS_HASH_TABLE				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/DSHashTable
 SHARED_FONT_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/sharedFont
 NANDFIRM_DIR                =   $(TWL_IPL_RED_ROOT)/build/nandfirm/menu-launcher
 
+# 既存データを使用する場合はTRUEを指定
+SKIP_CREATE_DATA = FALSE
+
+ifeq ($(SKIP_CREATE_DATA),FALSE)
 SUBDIRS =	$(LAUNCHER_DIR) \
 			$(MACHINESETTINGS_DIR) \
 			$(WLANFIRM_DIR) \
@@ -39,6 +43,11 @@ SUBDIRS =	$(LAUNCHER_DIR) \
 			banner \
 			ARM7.TWL \
 			ARM9.TWL
+else
+SUBDIRS =	banner \
+			ARM7.TWL \
+			ARM9.TWL
+endif
 
 # COMPILE SWITCH for build SystemMenu
 
