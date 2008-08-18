@@ -71,8 +71,8 @@ for num in romparam.keys():
 
         #----- ROM_HEADER_TEMPLATEおよびLIBSYSCALLの指定
         if romparam[num].has_key(optkey) and romparam[num][optkey].has_key('UseFinalHeader'):
-            codeparam.write(''.join(['ROM_HEADER_TEMPLATE = $(SYSMENU_ROM_HEADER_DIR)',gamecode,'/rom_header_$(call toLower,',gamecode,').template.sbin\n']))
-            codeparam.write(''.join(['LIBSYSCALL = $(SYSMENU_ROM_HEADER_DIR)',gamecode,'/libsyscall.a\n']))
+            codeparam.write(''.join(['ROM_HEADER_TEMPLATE = $(SYSMENU_ROM_HEADER_DIR)/',gamecode,'/rom_header_$(call toLower,',gamecode,').template.sbin\n']))
+            codeparam.write(''.join(['LIBSYSCALL = $(SYSMENU_ROM_HEADER_DIR)/',gamecode,'/libsyscall.a\n']))
 
         #----- ROM_SPEC_OPTIONS key の抽出
         if romparam[num][rsfkey].get('AppType') == 'SYSTEM':
