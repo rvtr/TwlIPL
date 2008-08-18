@@ -51,15 +51,20 @@ for num in romparam.keys():
     else:
         romspectemplate = ''
         #----- MAKETAD_OPTION, ROM_SPEC_TEMPLATE の指定
+        debugmakerom = ''
+        if romparam[num].has_key(optkey) and romparam[num][optkey].has_key('SysmenuDebug') and romparam[num][optkey]['SysmenuDebug']:
+            debugmakerom = '.DEBUG'
         if romparam[num][rsfkey].get('AppType') == 'SYSTEM':
             #----- MAKEROM の指定
             if romparam[num][rsfkey]['Secure']:
-                codeparam.write('override MAKEROM           = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe\n')
+                codeparam.write(''.join(['override MAKEROM           = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure', debugmakerom, '.exe\n']))
             else:
-                codeparam.write('override MAKEROM           = $(TWL_TOOLSDIR)/bin/makerom.TWL.sys.exe\n')
+                codeparam.write(''.join(['override MAKEROM           = $(TWL_TOOLSDIR)/bin/makerom.TWL.sys', debugmakerom, '.exe\n']))
             codeparam.write('MAKETAD_OPTION    += -s\n')
             romspectemplate = '$(ROOT)/include/twl/specfiles/ROM-TS_sys.rsf'
         else:
+            if debugmakerom == '.DEBUG':
+                codeparam.write('override MAKEROM           = $(TWL_TOOLSDIR)/bin/makerom.TWL.DEBUG.exe\n')
             # 暫定対処 include/twl/specfiles 以下をきちんと使うように変更する必要がある
             if testtype == 'PARENTAL':
                 romspectemplate = '../config/ROM-TS_nand_forPARENTAL.rsf'
@@ -70,10 +75,11 @@ for num in romparam.keys():
         codeparam.write(''.join(['ROM_SPEC_TEMPLATE  = ',romspectemplate,'\n']))
 
         #----- ROM_HEADER_TEMPLATEおよびLIBSYSCALLの指定
-        if romparam[num].has_key(optkey) and romparam[num][optkey].has_key('UseFinalHeader'):
+        if romparam[num].has_key(optkey) and romparam[num][optkey].has_key('UseFinalHeader') and romparam[num][optkey]['UseFinalHeader']:
             codeparam.write(''.join(['ROM_HEADER_TEMPLATE = $(SYSMENU_ROM_HEADER_DIR)/',gamecode,'/rom_header_$(call toLower,',gamecode,').template.sbin\n']))
             codeparam.write(''.join(['LIBSYSCALL = $(SYSMENU_ROM_HEADER_DIR)/',gamecode,'/libsyscall.a\n']))
-
+            if debugmakerom == '.DEBUG':
+                codeparam.write('MAKEROM_FLAGS += -DSYSCALL_C=\'$(call empath,$(LIBSYSCALL:.a=_c.bin))\'\n')
         #----- ROM_SPEC_OPTIONS key の抽出
         if romparam[num][rsfkey].get('AppType') == 'SYSTEM':
             keys = [key for key in romparam[num][rsfkey].keys() if key != 'TitleType' and key != 'eTicket' ]
@@ -110,7 +116,7 @@ for num in romparam.keys():
         if romparam[num].has_key(ratingkey):
             rsf_opt.append('%s=%s '%(romparam[num][ratingkey]['Ogn'],str(romparam[num][ratingkey]['Age'])))
         #----- RomHeaderTemplateの指定
-        if romparam[num].has_key(optkey) and romparam[num][optkey].has_key('UseFinalHeader'):
+        if romparam[num].has_key(optkey) and romparam[num][optkey].has_key('UseFinalHeader') and romparam[num][optkey]['UseFinalHeader']:
             rsf_opt.append('RomHeaderTemplate=$(call empath,$(ROM_HEADER_TEMPLATE)) ')
         #----- ROM_SPEC_OPTIONS の指定
         rsf_opt_str = ''.join(rsf_opt)
