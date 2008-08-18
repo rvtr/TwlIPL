@@ -45,20 +45,47 @@ u32 pf_cnt = 0;
 #define PUSH_PROFILE()  ((void)0)
 #endif
 
-#ifdef USE_DEBUG_LED
-static u8 step = 0x80;
-#define InitDebugLED()          I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x03, 0x00)
-#define SetDebugLED(pattern)    I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x01, (pattern));
-#else
-#define InitDebugLED()          ((void)0)
-#define SetDebugLED(pattern)    ((void)0)
-#endif
-
 #ifdef PRINT_MEMORY_ADDR
 static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
 #undef OS_TPrintf
 //#define OS_TPrintf(...) (debugPtr = (char*)((u32)(debugPtr + STD_TSPrintf(debugPtr, __VA_ARGS__) + 0xf) & ~0xf))
 #define OS_TPrintf(...) (debugPtr += STD_TSPrintf(debugPtr, __VA_ARGS__))
+#endif
+
+#ifdef USE_DEBUG_LED
+static u8 step = 0x80;
+#define InitDebugLED()          I2Ci_WriteRegister(I2C_SLAVE_DEBUG_LED, 0x03, 0x00)
+static BOOL SetDebugLED(u8 pattern)
+{
+    I2Ci_Wait();
+    reg_OS_I2C_DAT = I2C_ADDR_DEBUG_LED;
+    reg_OS_I2C_CNT = (u8)((1 << REG_OS_I2C_CNT_E_SHIFT) |
+                          (1 << REG_OS_I2C_CNT_I_SHIFT) |   // Š„‚èž‚Ý‹ÖŽ~‚Í IE ‚É‚Äs‚¤‚±‚Æ‚ÅŽd—l“ˆê
+                          (I2C_WRITE << REG_OS_I2C_CNT_RW_SHIFT) |
+                          (0 << REG_OS_I2C_CNT_ACK_SHIFT) |
+                          (1 << REG_OS_I2C_CNT_START_SHIFT));
+    I2Ci_Wait();
+    reg_OS_I2C_DAT = 0x01;
+    reg_OS_I2C_CNT = (u8)((1 << REG_OS_I2C_CNT_E_SHIFT) |
+                          (1 << REG_OS_I2C_CNT_I_SHIFT) |
+                          (I2C_WRITE << REG_OS_I2C_CNT_RW_SHIFT) |
+                          (I2C_WRITE << REG_OS_I2C_CNT_ACK_SHIFT));
+    I2Ci_Wait();
+    reg_OS_I2C_DAT = pattern;
+    reg_OS_I2C_CNT = (u8)((1 << REG_OS_I2C_CNT_E_SHIFT) |
+                          (1 << REG_OS_I2C_CNT_I_SHIFT) |
+                          (I2C_WRITE << REG_OS_I2C_CNT_RW_SHIFT) |
+                          (0 << REG_OS_I2C_CNT_ACK_SHIFT) |
+                          (1 << REG_OS_I2C_CNT_STOP_SHIFT));
+    I2Ci_Wait();
+#ifdef PRINT_MEMORY_ADDR
+    OS_TPrintf("%02X.%02X.%02X.\n", I2C_ADDR_DEBUG_LED, 0x01, pattern);
+#endif
+    return (BOOL)((reg_OS_I2C_CNT & REG_OS_I2C_CNT_ACK_MASK) >> REG_OS_I2C_CNT_ACK_SHIFT);
+}
+#else
+#define InitDebugLED()          ((void)0)
+#define SetDebugLED(pattern)    ((void)0)
 #endif
 
 #define THREAD_PRIO_FATFS   8
