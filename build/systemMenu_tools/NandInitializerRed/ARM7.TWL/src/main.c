@@ -78,7 +78,6 @@ static void         InitializeFatfs(void);
 static void         InitializeNwm(OSHeapHandle hh);
 static void			InitializeCardPower(void);
 static void         InitializeCdc(void);
-static void         DummyThread(void* arg);
 
 static void         ReadUserInfo(void);
 #ifdef  NVRAM_CONFIG_DATA_EX_VERSION
@@ -225,31 +224,18 @@ InitializeAllocateSystem(void)
 
 /*---------------------------------------------------------------------------*
   Name:         InitializeFatfs
-  Description:  FATFSライブラリを初期化する。FATFS初期化関数内でスレッド休止
-                する為、休止中動作するダミーのスレッドを立てる。
+  Description:  FATFSライブラリを初期化する。
   Arguments:    None.
   Returns:      None.
  *---------------------------------------------------------------------------*/
 static void
 InitializeFatfs(void)
 {
-    OSThread    thread;
-    u32         stack[18];
-
-    // ダミースレッド作成
-    OS_CreateThread(&thread, DummyThread, NULL,
-        (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
-    OS_WakeupThreadDirect(&thread);
-
-
     // FATFSライブラリの初期化
     if(!FATFS_Init( FATFS_DMA_4, FATFS_DMA_5, THREAD_PRIO_FATFS))
     {
         // do nothing
     }
-
-    // ダミースレッド破棄
-    OS_KillThread(&thread, NULL);
 }
 
 /*---------------------------------------------------------------------------*
@@ -289,14 +275,6 @@ InitializeNwm(OSHeapHandle hh)
 static void
 InitializeCardPower(void)
 {
-    OSThread    thread;
-    u32         stack[18];
-
-    /* ダミースレッド作成 */
-    OS_CreateThread(&thread, DummyThread, NULL,
-        (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
-    OS_WakeupThreadDirect(&thread);
-
     // チャッタリングカウンタの値を設定
     reg_MI_MC1 = (u32)((reg_MI_MC1 & ~REG_MI_MC1_CC_MASK) |
                        (CHATTERING_COUNTER << REG_MI_MC1_CC_SHIFT));
@@ -306,23 +284,17 @@ InitializeCardPower(void)
 
 	// カードスロット１電源ON
 	HOTSWi_TurnCardPowerOn(1);
-
-    /* ダミースレッド破棄 */
-    OS_KillThread(&thread, NULL);
 }
 
 /*---------------------------------------------------------------------------*
   Name:         InitializeCdc
-  Description:  CDCライブラリを初期化する。CDC初期化関数内でスレッド休止する
-                為、休止中動作するダミーのスレッドを立てる。
+  Description:  CDCライブラリを初期化する。
   Arguments:    None.
   Returns:      None.
  *---------------------------------------------------------------------------*/
 static void
 InitializeCdc(void)
 {
-    OSThread    thread;
-    u32         stack[18];
 	u32 spiLockId;
 
 	spiLockId = (u32)OS_GetLockID();
@@ -331,34 +303,10 @@ InitializeCdc(void)
         OS_Warning("OS_GetLockID failed.\n");
 	}
 
-    /* ダミースレッド作成 */
-    OS_CreateThread(&thread, DummyThread, NULL,
-        (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
-    OS_WakeupThreadDirect(&thread);
-
     /* CODEC 初期化 */
 	SPI_Lock(spiLockId);
     CDC_Init();
 	SPI_Unlock(spiLockId);
-
-    /* ダミースレッド破棄 */
-    OS_KillThread(&thread, NULL);
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         DummyThread
-  Description:  FATFSライブラリ、CDCライブラリを初期化する際に立てるダミーの
-                スレッド。
-  Arguments:    arg -   使用しない。
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-static void
-DummyThread(void* arg)
-{
-#pragma unused(arg)
-    while (TRUE)
-    {
-    }
 }
 
 //#ifdef  WM_PRECALC_ALLOWEDCHANNEL

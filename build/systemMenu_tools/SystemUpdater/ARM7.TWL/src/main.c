@@ -73,7 +73,6 @@
 static void         PrintDebugInfo(void);
 static OSHeapHandle InitializeAllocateSystem(void);
 static void         InitializeFatfs(void);
-static void         DummyThread(void* arg);
 
 static void         ReadUserInfo(void);
 #ifdef  NVRAM_CONFIG_DATA_EX_VERSION
@@ -125,7 +124,7 @@ TwlSpMain(void)
 //  InitializeNwm(heapHandle);                  // TWL 無線
     MCU_InitIrq(THREAD_PRIO_MCU);               // マイコン
     CDC_InitLib();								// CODECライブラリ初期化
-    CAMERA_Init();                          // カメラ
+    CAMERA_Init();                          	// カメラ
 
     SND_Init(THREAD_PRIO_SND);                  // サウンド
     SNDEX_Init(THREAD_PRIO_SNDEX);              // サウンド拡張
@@ -225,38 +224,10 @@ InitializeAllocateSystem(void)
 static void
 InitializeFatfs(void)
 {
-    OSThread    thread;
-    u32         stack[18];
-
-    // ダミースレッド作成
-    OS_CreateThread(&thread, DummyThread, NULL,
-        (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
-    OS_WakeupThreadDirect(&thread);
-
-
     // FATFSライブラリの初期化
     if(!FATFS_Init( FATFS_DMA_4, FATFS_DMA_5, THREAD_PRIO_FATFS))
     {
         // do nothing
-    }
-
-    // ダミースレッド破棄
-    OS_KillThread(&thread, NULL);
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         DummyThread
-  Description:  FATFSライブラリ、CDCライブラリを初期化する際に立てるダミーの
-                スレッド。
-  Arguments:    arg -   使用しない。
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-static void
-DummyThread(void* arg)
-{
-#pragma unused(arg)
-    while (TRUE)
-    {
     }
 }
 

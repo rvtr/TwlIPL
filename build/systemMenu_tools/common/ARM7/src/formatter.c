@@ -44,15 +44,16 @@ typedef struct FileProperty {
 #define ERROR_RETURN()  { OS_TPrintf("FATAL ERROR OCCURED %s %s\n", __FILE__, __LINE__); return 0; }
 
 //------- 重要 --------
-#define NAND_SIZE				239
-#define PARTITION_RAW_SIZE		1
-#define PARTITION_0_SIZE		206
-#define PARTITION_1_SIZE		32
-#define NAND_FAT_PARTITION_NUM	2		// FATパーティション数（RAWパーティションを除く）
-		
+#define PARTITION_RAW_SIZE		1024		// 1*1024
+#define PARTITION_0_SIZE		210944		// 206*1024
+#define PARTITION_1_SIZE		33536		// 32.75*1024
+#define NAND_FAT_PARTITION_NUM	3			// FATパーティション数（RAWパーティションを除く）
+											// 実際には PARTITION 0&1 の2つだけですが3を指定します。
+											// 最終PARTISIONのサイズ指定は無視され残りサイズが適用されるためです。
+											// PARTISION2 には残りサイズが適用されますが使用しないため
+											// フォーマットは行いません。
 
 // const data--------------------------------------------------------
-//#define NAND_SEPARATE_READ
 #define FS_READ_BLOCK_SIZE			(  2 * 1024 )
 #define FATFS_CLUSTER_SIZE			( 16 * 1024 )
 
@@ -62,14 +63,20 @@ static const char *s_pDirList0[] = {
 	(const char *)"nand:/ticket",
 	(const char *)"nand:/shared1",
 	(const char *)"nand:/shared2",
+	(const char *)"nand:/shared2/launcher",
 	(const char *)"nand:/import",
 	(const char *)"nand:/tmp",
 	NULL,
-	};
+};
 
 static const char *s_pDirList1[] = {
 	(const char *)"nand2:/photo",
 	NULL,
+};
+
+static const FileProperty s_fileList[] = {
+	{  FATFS_CLUSTER_SIZE, "nand:/shared2/launcher/wrap.bin" },
+	{  0, NULL }
 };
 
 /*---------------------------------------------------------------------------*
@@ -95,19 +102,19 @@ BOOL
 ExeFormat(FormatMode format_mode)
 {
 	u32 *init_datbuf;
+	const int INIT_DATA_BUFFER_SIZE = 512*16;
     int     nand_fat_partition_num;
 
-	init_datbuf = OS_AllocFromSubPrivWram( 512*16 );
+	init_datbuf = OS_AllocFromSubPrivWram( INIT_DATA_BUFFER_SIZE );
 	if( init_datbuf == NULL ) {
 		OS_TPrintf( "memory allocate error.\n" );
 		ERROR_RETURN();
 	}
 
-    MI_CpuFill8( init_datbuf, 0xFF, 512*16);
+    MI_CpuFill8( init_datbuf, 0xFF, INIT_DATA_BUFFER_SIZE);
 
     // NANDをフォーマット
     {
-        int     i;
 		u8 drive_nand;
 		u8 drive_nand2;
 		char drive_nand_path[4];
@@ -158,7 +165,7 @@ ExeFormat(FormatMode format_mode)
 		// NANDのパーティションを指定
         // sizeInMB : パーティションサイズをメガバイト単位で格納した配列
         // partitions : パーティション総数
-        if (FATFSi_SetNANDPartitions(partition_MB_size, nand_fat_partition_num))
+        if (FATFSi_SetNANDPartitionsKiroBytes(partition_MB_size, nand_fat_partition_num))
         {
             // マウント
             if (FATFS_MountDrive(drive_nand_path, FATFS_MEDIA_TYPE_NAND, 0))
@@ -174,7 +181,7 @@ ExeFormat(FormatMode format_mode)
                     return FALSE;
                 }
 				// パーティション内を指定バッファの内容でフィルする
-                else if (format_mode == FORMAT_MODE_FULL && !FATFSi_nandFillPartition( 0, init_datbuf, 16))
+                else if (format_mode == FORMAT_MODE_FULL && !FATFSi_nandFillPartition( 0, init_datbuf, INIT_DATA_BUFFER_SIZE))
                 {
                     return FALSE;
                 }
@@ -186,23 +193,17 @@ ExeFormat(FormatMode format_mode)
                 else
                 {
 					// FAT1パーティションの初期化
-                    for (i = 1; i < nand_fat_partition_num; ++i)
+                    if(!FATFS_MountDrive(drive_nand2_path, FATFS_MEDIA_TYPE_NAND, (u32)1))
                     {
-                        if(!FATFS_MountDrive(drive_nand2_path, FATFS_MEDIA_TYPE_NAND, (u32)i))
-                        {
-							return FALSE;
-                        }
+						return FALSE;
                     }
-                    for (i = 1; i < nand_fat_partition_num; ++i)
+                    if (format_mode == FORMAT_MODE_FULL && !FATFSi_nandFillPartition( 1, init_datbuf, INIT_DATA_BUFFER_SIZE))
                     {
-                        if (format_mode == FORMAT_MODE_FULL && !FATFSi_nandFillPartition( i, init_datbuf, 16))
-                        {
-                            return FALSE;
-                        }
-                        else if (!FATFS_FormatDrive(drive_nand2_path))
-                        {
-							return FALSE;
-                        }
+                        return FALSE;
+                    }
+                    else if (!FATFS_FormatDrive(drive_nand2_path))
+                    {
+						return FALSE;
                     }
                 }
             }
@@ -219,8 +220,8 @@ ExeFormat(FormatMode format_mode)
 	if (!CheckDirectory ( "nand2:", s_pDirList1 )) { return FALSE; }
 	
 	// ファイル生成＆チェック
-//	if (!CreateFile( &s_fileList[0] )) { return FALSE; }
-//	if (!CheckFile ( &s_fileList[0] )) { return FALSE; }
+	if (!CreateFile( &s_fileList[0] )) { return FALSE; }
+	if (!CheckFile ( &s_fileList[0] )) { return FALSE; }
 
 	// 成功
 	return TRUE;
@@ -307,7 +308,7 @@ static BOOL CreateFile( const FileProperty *pFileList )
 		
 		OS_TPrintf( "  %s, %dbytes...", pFileList->path, pFileList->length );
 		// ファイル生成
-		if( !FATFS_CreateFile( pFileList->path, TRUE, "rwxrwxrwx" ) ) {
+		if( !FATFS_CreateFile( pFileList->path, TRUE, "rw\0rw\0rw\0" ) ) {
 			OS_TPrintf( "ng.\n" );
 			ERROR_RETURN();
 		}
@@ -350,7 +351,6 @@ static BOOL CheckFile( const FileProperty *pFileList )
 		FATFSFileHandle file;
 		u32 *pBuffer;
 		int i;
-		OSTick start;
 		
 		OS_TPrintf( "  %s, %dbytes...", pFileList->path, pFileList->length );
 		// ファイルオープン
@@ -370,20 +370,13 @@ static BOOL CheckFile( const FileProperty *pFileList )
 			OS_TPrintf( "memory allocate error.\n" );
 			ERROR_RETURN();
 		}
-		start = OS_GetTick();
 		// ファイル読み込み
 		if(
-#ifdef NAND_SEPARATE_READ
-			MY_ReadFile( file, pBuffer, (int)pFileList->length )
-#else
 			FATFS_ReadFile( file, pBuffer, (int)pFileList->length )
-#endif
 			!= pFileList->length ) {
 			OS_TPrintf( "ng.\n" );
 			ERROR_RETURN();
 		}
-		OS_TPrintf( " [ReadTime : %dms] ", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
-		start = OS_GetTick();
 		// ファイルベリファイ
 		for( i = 0; i < pFileList->length / sizeof(u32); i++ ) {
 			if( pBuffer[ i ] != 0 ) {
@@ -391,7 +384,6 @@ static BOOL CheckFile( const FileProperty *pFileList )
 				ERROR_RETURN();
 			}
 		}
-		OS_TPrintf( " [VerifyTime : %dms] ", OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 		// メモリ解放
 		OS_FreeToSubPrivWram( pBuffer );
 		// ファイルクローズ
@@ -402,21 +394,3 @@ static BOOL CheckFile( const FileProperty *pFileList )
 
 	return TRUE;
 }
-
-#ifdef NAND_SEPARATE_READ
-// NAND不具合をARM7側のFSは吸収しきれいていないので、自前で2KB単位に分割してリード
-static int MY_ReadFile( FATFSFileHandle file, void *pBuffer, int length )
-{
-	int length_bak = length;
-	while( length ) {
-		int rdLength = ( length > FS_READ_BLOCK_SIZE ) ? FS_READ_BLOCK_SIZE : length;
-		
-		if( FATFS_ReadFile( file, pBuffer, rdLength ) != rdLength ) {
-			return -1;
-		}
-		pBuffer  = (u8 *)pBuffer + rdLength;
-		length  -= rdLength;
-	}
-	return length_bak;
-}
-#endif

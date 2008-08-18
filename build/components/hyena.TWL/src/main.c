@@ -71,7 +71,6 @@
 #define THREAD_PRIO_SNDEX   14
 #define THREAD_PRIO_FS      15
 /* OS_THREAD_LAUNCHER_PRIORITY 16 */
-#define THREAD_PRIO_IDEL    (OS_THREAD_PRIORITY_MAX-1)
 
 #define NWM_DMANO                   NWMSP_DMA_NOT_USE // NWMのNDMAは使用しない。
 #define THREAD_PRIO_NWM_COMMMAND    9
@@ -123,10 +122,6 @@ extern BOOL sdmcGetNandLogFatal( void );
 void
 TwlSpMain(void)
 {
-    // 常駐ダミースレッド作成（OS_InitThreadで対応されたら削除）
-    OSThread    thread;
-    u32         stack[18];
-
     OSHeapHandle    wramHeapHandle, mainHeapHandle;
 	u32 spiLockId;
 
@@ -147,14 +142,6 @@ TwlSpMain(void)
     // OS 初期化
     OS_Init();
     PrintDebugInfo();
-
-    // 常駐ダミーアイドルスレッド作成（OS_InitThreadで対応されたら削除）
-    if (OS_IsRunOnTwl() == TRUE)
-    {
-        OS_CreateThread(&thread, DummyThread, NULL,
-            (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, THREAD_PRIO_IDEL);
-        OS_WakeupThreadDirect(&thread);
-    }
 
     // ランチャーバージョンを格納（今のところ、最低でもマウント情報登録前には格納する必要あり）
     *(u8 *)HW_TWL_RED_LAUNCHER_VER = (u8)SYSM_LAUNCHER_VER;
@@ -433,31 +420,18 @@ PrintDebugInfo(void)
 #include    <twl/ltdwram_begin.h>
 /*---------------------------------------------------------------------------*
   Name:         InitializeFatfs
-  Description:  FATFSライブラリを初期化する。FATFS初期化関数内でスレッド休止
-                する為、休止中動作するダミーのスレッドを立てる。
+  Description:  FATFSライブラリを初期化する。
   Arguments:    None.
   Returns:      None.
  *---------------------------------------------------------------------------*/
 static void
 InitializeFatfs(void)
 {
-    OSThread    thread;
-    u32         stack[18];
-
-    // ダミースレッド作成
-    OS_CreateThread(&thread, DummyThread, NULL,
-        (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
-    OS_WakeupThreadDirect(&thread);
-
-
     // FATFSライブラリの初期化
     if(!FATFS_Init( FATFS_DMA_4, FATFS_DMA_5, THREAD_PRIO_FATFS))
     {
         // do nothing
     }
-
-    // ダミースレッド破棄
-    OS_KillThread(&thread, NULL);
 }
 #include    <twl/ltdwram_end.h>
 
@@ -494,44 +468,16 @@ InitializeNwm(OSArenaId drvArenaId, OSHeapHandle drvHeapHandle,
 #include    <twl/ltdwram_begin.h>
 /*---------------------------------------------------------------------------*
   Name:         InitializeCdc
-  Description:  CDCライブラリを初期化する。CDC初期化関数内でスレッド休止する
-                為、休止中動作するダミーのスレッドを立てる。
+  Description:  CDCライブラリを初期化する。
   Arguments:    None.
   Returns:      None.
  *---------------------------------------------------------------------------*/
 static void
 InitializeCdc(u32 lockId)
 {
-    OSThread    thread;
-    u32         stack[18];
-
-    // ダミースレッド作成
-    OS_CreateThread(&thread, DummyThread, NULL,
-        (void*)((u32)stack + (sizeof(u32) * 18)), sizeof(u32) * 18, OS_THREAD_PRIORITY_MAX);
-    OS_WakeupThreadDirect(&thread);
-
 	SPI_Lock(lockId);    		 // CODEC用SPI排他ロック
     CDC_InitForFirstBoot();      // ※ランチャー特殊処理。
 	SPI_Unlock(lockId);  		 // CODEC用SPI排他ロック
-
-    // ダミースレッド破棄
-    OS_KillThread(&thread, NULL);
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         DummyThread
-  Description:  FATFSライブラリ、CDCライブラリを初期化する際に立てるダミーの
-                スレッド。
-  Arguments:    arg -   使用しない。
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-static void
-DummyThread(void* arg)
-{
-#pragma unused(arg)
-    while (TRUE)
-    {
-    }
 }
 #include    <twl/ltdwram_end.h>
 

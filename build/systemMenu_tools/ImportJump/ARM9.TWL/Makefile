@@ -60,7 +60,6 @@ SRCDIR		=	src \
 #----------------------------------------------------------------------------
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
-include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
 
 
 ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
