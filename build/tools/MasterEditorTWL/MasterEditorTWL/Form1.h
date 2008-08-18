@@ -338,6 +338,8 @@ private: System::Windows::Forms::TextBox^  tboxProductCode2Foreign1;
 private: System::Windows::Forms::TabPage^  tabCompanyInfo1;
 private: System::Windows::Forms::TabPage^  tabCompanyInfo2;
 private: System::Windows::Forms::TabPage^  tabCaption;
+
+
 private: System::Windows::Forms::TabPage^  tabTWLSpec4;
 
 
@@ -423,6 +425,8 @@ private: System::Windows::Forms::Label^  labMultiForeign1;
 private: System::Windows::Forms::Label^  labMultiForeign2;
 private: System::Windows::Forms::Label^  labCautionInput;
 private: System::Windows::Forms::Label^  labCautionCheck;
+private: System::Windows::Forms::GroupBox^  gboxProd;
+
 
 
 
@@ -507,9 +511,6 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->butOpen = (gcnew System::Windows::Forms::Button());
 			this->tboxMsg = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
-			this->labBackup = (gcnew System::Windows::Forms::Label());
-			this->combBackup = (gcnew System::Windows::Forms::ComboBox());
-			this->tboxBackupOther = (gcnew System::Windows::Forms::TextBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
 			this->tboxRomSize = (gcnew System::Windows::Forms::TextBox());
 			this->tboxPlatform = (gcnew System::Windows::Forms::TextBox());
@@ -525,6 +526,9 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->labTitleName = (gcnew System::Windows::Forms::Label());
 			this->labRemasterVer = (gcnew System::Windows::Forms::Label());
 			this->tboxTitleName = (gcnew System::Windows::Forms::TextBox());
+			this->labBackup = (gcnew System::Windows::Forms::Label());
+			this->combBackup = (gcnew System::Windows::Forms::ComboBox());
+			this->tboxBackupOther = (gcnew System::Windows::Forms::TextBox());
 			this->gboxCRC = (gcnew System::Windows::Forms::GroupBox());
 			this->labRomCRC = (gcnew System::Windows::Forms::Label());
 			this->labHeaderCRC = (gcnew System::Windows::Forms::Label());
@@ -725,6 +729,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->labCaptionEx = (gcnew System::Windows::Forms::Label());
 			this->tboxCaptionEx = (gcnew System::Windows::Forms::TextBox());
 			this->tabCheck = (gcnew System::Windows::Forms::TabControl());
+			this->gboxProd = (gcnew System::Windows::Forms::GroupBox());
 			this->gboxSrl->SuspendLayout();
 			this->gboxCRC->SuspendLayout();
 			this->gboxFileOpen->SuspendLayout();
@@ -752,6 +757,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->tabTWLSpec1->SuspendLayout();
 			this->gboxTitleID->SuspendLayout();
 			this->tabCheck->SuspendLayout();
+			this->gboxProd->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// tboxFile
@@ -785,9 +791,6 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			// 
 			// gboxSrl
 			// 
-			this->gboxSrl->Controls->Add(this->labBackup);
-			this->gboxSrl->Controls->Add(this->combBackup);
-			this->gboxSrl->Controls->Add(this->tboxBackupOther);
 			this->gboxSrl->Controls->Add(this->tboxRemasterVer);
 			this->gboxSrl->Controls->Add(this->tboxRomSize);
 			this->gboxSrl->Controls->Add(this->tboxPlatform);
@@ -805,44 +808,14 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->gboxSrl->Controls->Add(this->tboxTitleName);
 			this->gboxSrl->Location = System::Drawing::Point(12, 90);
 			this->gboxSrl->Name = L"gboxSrl";
-			this->gboxSrl->Size = System::Drawing::Size(326, 235);
+			this->gboxSrl->Size = System::Drawing::Size(326, 171);
 			this->gboxSrl->TabIndex = 3;
 			this->gboxSrl->TabStop = false;
 			this->gboxSrl->Text = L"ROMデータ情報";
 			// 
-			// labBackup
-			// 
-			this->labBackup->AutoSize = true;
-			this->labBackup->Location = System::Drawing::Point(13, 207);
-			this->labBackup->Name = L"labBackup";
-			this->labBackup->Size = System::Drawing::Size(79, 12);
-			this->labBackup->TabIndex = 12;
-			this->labBackup->Text = L"バックアップメモリ";
-			// 
-			// combBackup
-			// 
-			this->combBackup->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
-			this->combBackup->FormattingEnabled = true;
-			this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
-				L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"なし", L"その他"});
-			this->combBackup->Location = System::Drawing::Point(104, 203);
-			this->combBackup->MaxDropDownItems = 9;
-			this->combBackup->Name = L"combBackup";
-			this->combBackup->Size = System::Drawing::Size(100, 20);
-			this->combBackup->TabIndex = 5;
-			this->combBackup->SelectedIndexChanged += gcnew System::EventHandler(this, &Form1::combBackup_SelectedIndexChanged);
-			// 
-			// tboxBackupOther
-			// 
-			this->tboxBackupOther->Enabled = false;
-			this->tboxBackupOther->Location = System::Drawing::Point(210, 204);
-			this->tboxBackupOther->Name = L"tboxBackupOther";
-			this->tboxBackupOther->Size = System::Drawing::Size(72, 19);
-			this->tboxBackupOther->TabIndex = 6;
-			// 
 			// tboxRemasterVer
 			// 
-			this->tboxRemasterVer->Location = System::Drawing::Point(104, 175);
+			this->tboxRemasterVer->Location = System::Drawing::Point(104, 146);
 			this->tboxRemasterVer->Name = L"tboxRemasterVer";
 			this->tboxRemasterVer->ReadOnly = true;
 			this->tboxRemasterVer->Size = System::Drawing::Size(35, 19);
@@ -850,7 +823,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			// 
 			// tboxRomSize
 			// 
-			this->tboxRomSize->Location = System::Drawing::Point(104, 150);
+			this->tboxRomSize->Location = System::Drawing::Point(104, 121);
 			this->tboxRomSize->Name = L"tboxRomSize";
 			this->tboxRomSize->ReadOnly = true;
 			this->tboxRomSize->Size = System::Drawing::Size(100, 19);
@@ -858,7 +831,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			// 
 			// tboxPlatform
 			// 
-			this->tboxPlatform->Location = System::Drawing::Point(104, 100);
+			this->tboxPlatform->Location = System::Drawing::Point(104, 71);
 			this->tboxPlatform->Name = L"tboxPlatform";
 			this->tboxPlatform->ReadOnly = true;
 			this->tboxPlatform->Size = System::Drawing::Size(100, 19);
@@ -867,7 +840,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			// labPlatform
 			// 
 			this->labPlatform->AutoSize = true;
-			this->labPlatform->Location = System::Drawing::Point(14, 102);
+			this->labPlatform->Location = System::Drawing::Point(14, 73);
 			this->labPlatform->Name = L"labPlatform";
 			this->labPlatform->Size = System::Drawing::Size(73, 12);
 			this->labPlatform->TabIndex = 13;
@@ -875,7 +848,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			// 
 			// tboxRomLatency
 			// 
-			this->tboxRomLatency->Location = System::Drawing::Point(104, 125);
+			this->tboxRomLatency->Location = System::Drawing::Point(104, 96);
 			this->tboxRomLatency->Name = L"tboxRomLatency";
 			this->tboxRomLatency->ReadOnly = true;
 			this->tboxRomLatency->Size = System::Drawing::Size(100, 19);
@@ -884,7 +857,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			// labRomSize
 			// 
 			this->labRomSize->AutoSize = true;
-			this->labRomSize->Location = System::Drawing::Point(14, 153);
+			this->labRomSize->Location = System::Drawing::Point(14, 124);
 			this->labRomSize->Name = L"labRomSize";
 			this->labRomSize->Size = System::Drawing::Size(54, 12);
 			this->labRomSize->TabIndex = 9;
@@ -893,7 +866,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			// labRomType
 			// 
 			this->labRomType->AutoSize = true;
-			this->labRomType->Location = System::Drawing::Point(14, 128);
+			this->labRomType->Location = System::Drawing::Point(14, 99);
 			this->labRomType->Name = L"labRomType";
 			this->labRomType->Size = System::Drawing::Size(80, 12);
 			this->labRomType->TabIndex = 7;
@@ -901,7 +874,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			// 
 			// tboxMakerCode
 			// 
-			this->tboxMakerCode->Location = System::Drawing::Point(104, 73);
+			this->tboxMakerCode->Location = System::Drawing::Point(248, 45);
 			this->tboxMakerCode->MaxLength = 2;
 			this->tboxMakerCode->Name = L"tboxMakerCode";
 			this->tboxMakerCode->ReadOnly = true;
@@ -912,7 +885,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			// 
 			this->cboxRemasterVerE->AutoSize = true;
 			this->cboxRemasterVerE->Enabled = false;
-			this->cboxRemasterVerE->Location = System::Drawing::Point(145, 176);
+			this->cboxRemasterVerE->Location = System::Drawing::Point(145, 148);
 			this->cboxRemasterVerE->Name = L"cboxRemasterVerE";
 			this->cboxRemasterVerE->Size = System::Drawing::Size(75, 16);
 			this->cboxRemasterVerE->TabIndex = 8;
@@ -923,7 +896,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			// labMakerCode
 			// 
 			this->labMakerCode->AutoSize = true;
-			this->labMakerCode->Location = System::Drawing::Point(14, 76);
+			this->labMakerCode->Location = System::Drawing::Point(178, 48);
 			this->labMakerCode->Name = L"labMakerCode";
 			this->labMakerCode->Size = System::Drawing::Size(59, 12);
 			this->labMakerCode->TabIndex = 4;
@@ -959,7 +932,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			// labRemasterVer
 			// 
 			this->labRemasterVer->AutoSize = true;
-			this->labRemasterVer->Location = System::Drawing::Point(5, 178);
+			this->labRemasterVer->Location = System::Drawing::Point(5, 149);
 			this->labRemasterVer->Name = L"labRemasterVer";
 			this->labRemasterVer->Size = System::Drawing::Size(93, 12);
 			this->labRemasterVer->TabIndex = 22;
@@ -974,6 +947,36 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->tboxTitleName->ReadOnly = true;
 			this->tboxTitleName->Size = System::Drawing::Size(100, 19);
 			this->tboxTitleName->TabIndex = 0;
+			// 
+			// labBackup
+			// 
+			this->labBackup->AutoSize = true;
+			this->labBackup->Location = System::Drawing::Point(6, 21);
+			this->labBackup->Name = L"labBackup";
+			this->labBackup->Size = System::Drawing::Size(79, 12);
+			this->labBackup->TabIndex = 12;
+			this->labBackup->Text = L"バックアップメモリ";
+			// 
+			// combBackup
+			// 
+			this->combBackup->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
+			this->combBackup->FormattingEnabled = true;
+			this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
+				L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"なし", L"その他"});
+			this->combBackup->Location = System::Drawing::Point(105, 18);
+			this->combBackup->MaxDropDownItems = 9;
+			this->combBackup->Name = L"combBackup";
+			this->combBackup->Size = System::Drawing::Size(100, 20);
+			this->combBackup->TabIndex = 5;
+			this->combBackup->SelectedIndexChanged += gcnew System::EventHandler(this, &Form1::combBackup_SelectedIndexChanged);
+			// 
+			// tboxBackupOther
+			// 
+			this->tboxBackupOther->Enabled = false;
+			this->tboxBackupOther->Location = System::Drawing::Point(211, 19);
+			this->tboxBackupOther->Name = L"tboxBackupOther";
+			this->tboxBackupOther->Size = System::Drawing::Size(93, 19);
+			this->tboxBackupOther->TabIndex = 6;
 			// 
 			// gboxCRC
 			// 
@@ -1057,18 +1060,18 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			// labCaption
 			// 
 			this->labCaption->AutoSize = true;
-			this->labCaption->Location = System::Drawing::Point(23, 22);
+			this->labCaption->Location = System::Drawing::Point(23, 42);
 			this->labCaption->Name = L"labCaption";
-			this->labCaption->Size = System::Drawing::Size(191, 12);
+			this->labCaption->Size = System::Drawing::Size(241, 12);
 			this->labCaption->TabIndex = 8;
-			this->labCaption->Text = L"その他連絡事項があればご記入ください";
+			this->labCaption->Text = L"備考欄 - その他連絡事項があればご記入ください";
 			// 
 			// tboxCaption
 			// 
-			this->tboxCaption->Location = System::Drawing::Point(25, 37);
+			this->tboxCaption->Location = System::Drawing::Point(25, 57);
 			this->tboxCaption->Multiline = true;
 			this->tboxCaption->Name = L"tboxCaption";
-			this->tboxCaption->Size = System::Drawing::Size(328, 181);
+			this->tboxCaption->Size = System::Drawing::Size(328, 120);
 			this->tboxCaption->TabIndex = 8;
 			// 
 			// gboxSelectLang
@@ -1519,7 +1522,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->numEULA->Location = System::Drawing::Point(131, 44);
 			this->numEULA->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) {255, 0, 0, 0});
 			this->numEULA->Name = L"numEULA";
-			this->numEULA->Size = System::Drawing::Size(68, 19);
+			this->numEULA->Size = System::Drawing::Size(45, 19);
 			this->numEULA->TabIndex = 1;
 			this->numEULA->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
@@ -2071,7 +2074,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			// 
 			this->numSubmitVersion->Location = System::Drawing::Point(97, 34);
 			this->numSubmitVersion->Name = L"numSubmitVersion";
-			this->numSubmitVersion->Size = System::Drawing::Size(35, 19);
+			this->numSubmitVersion->Size = System::Drawing::Size(38, 19);
 			this->numSubmitVersion->TabIndex = 9;
 			// 
 			// labSubmitVer
@@ -2946,7 +2949,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->tboxAppType->Multiline = true;
 			this->tboxAppType->Name = L"tboxAppType";
 			this->tboxAppType->ReadOnly = true;
-			this->tboxAppType->Size = System::Drawing::Size(304, 47);
+			this->tboxAppType->Size = System::Drawing::Size(304, 44);
 			this->tboxAppType->TabIndex = 4;
 			// 
 			// labAppType
@@ -2989,11 +2992,24 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->tabCheck->Size = System::Drawing::Size(399, 288);
 			this->tabCheck->TabIndex = 6;
 			// 
+			// gboxProd
+			// 
+			this->gboxProd->Controls->Add(this->combBackup);
+			this->gboxProd->Controls->Add(this->labBackup);
+			this->gboxProd->Controls->Add(this->tboxBackupOther);
+			this->gboxProd->Location = System::Drawing::Point(11, 270);
+			this->gboxProd->Name = L"gboxProd";
+			this->gboxProd->Size = System::Drawing::Size(327, 50);
+			this->gboxProd->TabIndex = 13;
+			this->gboxProd->TabStop = false;
+			this->gboxProd->Text = L"ROM生産情報(必ず入力してください)";
+			// 
 			// Form1
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 12);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(825, 701);
+			this->Controls->Add(this->gboxProd);
 			this->Controls->Add(this->tabDoc);
 			this->Controls->Add(this->gboxSelectLang);
 			this->Controls->Add(this->gboxTWLInfoWritable);
@@ -3051,6 +3067,8 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->gboxTitleID->ResumeLayout(false);
 			this->gboxTitleID->PerformLayout();
 			this->tabCheck->ResumeLayout(false);
+			this->gboxProd->ResumeLayout(false);
+			this->gboxProd->PerformLayout();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -4033,6 +4051,8 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->labHeaderCRC->Text  = gcnew System::String( "ヘッダCRC" );
 			this->labRomCRC->Text     = gcnew System::String( "全体のCRC" );
 			index = this->combBackup->SelectedIndex;
+			// バックアップメモリ
+			this->gboxProd->Text = gcnew System::String( "ROM生産情報(必ず入力してください)" );
 			this->combBackup->Items->Clear();
 			this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
 				L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"なし", L"その他"});
@@ -4086,7 +4106,7 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->labFurigana2->Text = gcnew System::String("ふりがな");
 			// 備考タブ
 			this->tabCaption->Text    = gcnew System::String( "備考" );
-			this->labCaption->Text    = gcnew System::String( "その他連絡事項があればご記入ください" );
+			this->labCaption->Text    = gcnew System::String( "備考欄 - その他連絡事項があればご記入ください" );
 
 			// タブの注意書き
 			this->labCautionInput->Text = gcnew System::String( "* これらの項目は書類提出に必要な情報です。入力してください。" );
@@ -4123,9 +4143,11 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->cboxIsWirelessIcon->Text    = gcnew System::String( "DSワイヤレス通信アイコン表示" );
 			this->cboxIsWiFiIcon->Text        = gcnew System::String( "Wi-Fi通信アイコン表示" );
 			this->labRegion->Text             = gcnew System::String( "カードリージョン" );
+			index = this->combRegion->SelectedIndex;
 			this->combRegion->Items->Clear();
 			this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5)
 				{L"日本のみ", L"米国のみ", L"欧州のみ", L"豪州のみ", L"欧州および豪州"});
+			this->combRegion->SelectedIndex = index;
 
 			// ペアレンタルコントロール
 			this->labParentalRating->Text      = gcnew System::String( "レーティング" );
@@ -4196,6 +4218,8 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->labHeaderCRC->Text  = gcnew System::String( "Header CRC" );
 			this->labRomCRC->Text     = gcnew System::String( "ROM CRC" );
 			index = this->combBackup->SelectedIndex;
+			// バックアップメモリ
+			this->gboxProd->Text = gcnew System::String( "ROM Production Info.(Please Input certainly)" );
 			this->combBackup->Items->Clear();
 			this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
 				L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"Nothing", L"Other"});
@@ -4251,10 +4275,10 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->labFurigana2->Text = gcnew System::String("");
 			// 備考タブ
 			this->tabCaption->Text    = gcnew System::String( "Remarks" );
-			this->labCaption->Text    = gcnew System::String( "Please write further information." );
+			this->labCaption->Text    = gcnew System::String( "Remarks item - Please write further information." );
 
 			// タブの注意書き
-			this->labCautionInput->Text = gcnew System::String( "* These items are necesarry for submission. Please input." );
+			this->labCautionInput->Text = gcnew System::String( "* These items are necessary for submission. Please input." );
 			this->labCautionCheck->Text = gcnew System::String( "* These items are used for checking ROM data. They are read only." );
 
 			// TWL仕様
@@ -4282,15 +4306,17 @@ private: System::Windows::Forms::Label^  labCautionCheck;
 			this->labCaptionEx->Text          = gcnew System::String( "Special note" );
 
 			// ROMデータ編集可能情報
-			this->gboxTWLInfoWritable->Text   = gcnew System::String( "ROM Writable Info.(Please Change if necesarry.)" );
+			this->gboxTWLInfoWritable->Text   = gcnew System::String( "ROM Writable Info.(Please change if necessary.)" );
 			this->labEULA->Text               = gcnew System::String( "EULA agreement ver." );
 			this->cboxIsEULA->Text            = gcnew System::String( "Agree EULA" );
 			this->cboxIsWirelessIcon->Text    = gcnew System::String( "Display an Icon of DS Wireless" );
 			this->cboxIsWiFiIcon->Text        = gcnew System::String( "Display an Icon of Wi-Fi connection" );
 			this->labRegion->Text             = gcnew System::String( "Card Region" );
+			index = this->combRegion->SelectedIndex;
 			this->combRegion->Items->Clear();
 			this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5)
 				{L"Japan Only", L"USA Only", L"Europe Only", L"Australia only", L"Europe and Australia"});
+			this->combRegion->SelectedIndex = index;
 
 			// ペアレンタルコントロール
 			this->labParentalRating->Text      = gcnew System::String( "Rating" );
