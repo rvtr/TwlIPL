@@ -9,24 +9,27 @@ tmpjumpTest
 ---------------------------------------------------------
 address							| GameCode	| Media		| 
 --------------------------------+-----------+-----------+
-data/TestApp.srl				| 433A		| GameCard	|
-data/TestApp_HYBRID.srl			| 434A		| GameCard	|
-data/TestApp_LIMITED.srl		| 435A		| GameCard	|
-bin/.../tmpjumpTest.srl			| 436A		| GameCard	|
-bin/.../tmpjumpTest.nand.tad	| 437A		| NAND		|
+(TestApp.srl)					| 433A		| GameCard	|
+(TestApp_HYBRID.srl)			| 434A		| GameCard	|
+(TestApp_LIMITED.srl)			| 435A		| GameCard	|
+tmpjumpTest.srl					| 436A		| GameCard	|
+tmpjumpTest.nand.tad			| 437A		| NAND		|
 ---------------------------------------------------------
+() 内の srl は、436A, 437A に含まれています。
 
 ＜使い方＞ =============================================
 
 まず、フラッシュカードに書き込んだ 436A または インポートした 437A を起動します。
 
-436A, 437A では、選択したアプリを NAND の /tmp 以下へコピーし、TMPジャンプを実行します。
-TMP ジャンプ先のアプリからは、NITRO モードでビルドされている 433A を除く全てのアプリは
+436A, 437A は、433A～435Aの中から選択したアプリを NAND の /tmp 以下へコピーし、TMPジャンプを実行します。
+TMP ジャンプ先のアプリからは、NITRO モードでビルドされている 433A を除いて
 ジャンプ元のアプリへ戻ってくることができます。
 
 ========================================================
 なにか問題がありましたら、環境制作部 西本まで。
 nishimoto_takashi@nintendo.co.jp
 
+
 ＜更新履歴＞============================================
+2008/08/18		＜概要＞＜使い方＞を補足
 2008/08/12		新規追加
