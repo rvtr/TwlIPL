@@ -184,8 +184,19 @@ static void WDS_WrapperBeforeInitState( void )
 		return;
 	}
 	else if( g_wdswrapperwork->idle == TRUE ) {
-		// すでにWDSが解放されているので直接ステートを変化させる
+		WDSWrapperCallbackParam param;
+		
+		// すでにWDSが解放されているのでコールバックを呼び出し、直接ステートを変化させる
+		g_wdswrapperwork->idle = FALSE;
 		g_wdswrapperwork->state = WDSWRAPPER_STATE_IDLE;
+		
+		// コールバックパラメータの設定
+		param.callback	= WDSWRAPPER_CALLBACK_STOPSCAN;
+		param.errcode	= WDSWRAPPER_ERRCODE_SUCCESS;
+		
+		// コールバック関数の呼び出し(このコールバックのスレッド優先度はWMスレッドの優先度ではない)
+		WDS_WrapperCallUserCallback( &param );
+		
 		return;
 	}
 	
@@ -556,9 +567,11 @@ static void WDS_WrapperEnd_CB( void *arg )
 	
 	// WDS_End後のステートを各種フラグに基づいて変更
 	if( g_wdswrapperwork->terminate == TRUE ) {
+		g_wdswrapperwork->terminate = FALSE;
 		g_wdswrapperwork->state = WDSWRAPPER_STATE_TERMINATE;
 	}
 	else if( g_wdswrapperwork->idle == TRUE ) {
+		g_wdswrapperwork->idle = FALSE;
 		g_wdswrapperwork->state = WDSWRAPPER_STATE_IDLE;
 		
 		// コールバックパラメータの設定
@@ -582,8 +595,22 @@ static void WDS_WrapperEnd_CB( void *arg )
 *///------------------------------------------------------------------------------
 static void WDS_WrapperIdleState( void )
 {
+	WDSWrapperCallbackParam	param;
+	
 	if( g_wdswrapperwork->terminate == TRUE ) {
 		g_wdswrapperwork->state = WDSWRAPPER_STATE_TERMINATE;
+	}
+	else if( g_wdswrapperwork->idle == TRUE ) {
+		// すでにIDLE状態のため、成功コールバックを返す
+		g_wdswrapperwork->idle = FALSE;
+		g_wdswrapperwork->state = WDSWRAPPER_STATE_IDLE;
+		
+		// コールバックパラメータの設定
+		param.callback	= WDSWRAPPER_CALLBACK_STOPSCAN;
+		param.errcode	= WDSWRAPPER_ERRCODE_SUCCESS;
+		
+		// コールバック関数の呼び出し
+		WDS_WrapperCallUserCallback( &param );
 	}
 	else if( g_wdswrapperwork->restart == TRUE )
 	{
