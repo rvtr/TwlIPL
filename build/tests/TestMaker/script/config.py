@@ -76,10 +76,20 @@ for num in romparam.keys():
 
         #----- ROM_HEADER_TEMPLATEおよびLIBSYSCALLの指定
         if romparam[num].has_key(optkey) and romparam[num][optkey].has_key('UseFinalHeader') and romparam[num][optkey]['UseFinalHeader']:
-            codeparam.write(''.join(['ROM_HEADER_TEMPLATE = $(SYSMENU_ROM_HEADER_DIR)/',gamecode,'/rom_header_$(call toLower,',gamecode,').template.sbin\n']))
+            codeparam.write(''.join(['ROM_HEADER_TEMPLATE = $(SYSMENU_ROM_HEADER_DIR)/',gamecode,'/rom_header_', gamecode.lower(), '.template.sbin\n']))
             codeparam.write(''.join(['LIBSYSCALL = $(SYSMENU_ROM_HEADER_DIR)/',gamecode,'/libsyscall.a\n']))
             if debugmakerom == '.DEBUG':
                 codeparam.write('MAKEROM_FLAGS += -DSYSCALL_C=\'$(call empath,$(LIBSYSCALL:.a=_c.bin))\'\n')
+        #----- サイズ拡張
+        if romparam[num].has_key(optkey) and debugmakerom == '.DEBUG':
+            if romparam[num][optkey].has_key('ARM9FLXExpand'):
+                codeparam.write(''.join(['MAKEROM_FLAGS += -DARM9FLX_EXPAND=', hex(romparam[num][optkey]['ARM9FLXExpand']), '\n']))
+            if romparam[num][optkey].has_key('ARM7FLXExpand'):
+                codeparam.write(''.join(['MAKEROM_FLAGS += -DARM7FLX_EXPAND=', hex(romparam[num][optkey]['ARM7FLXExpand']), '\n']))
+            if romparam[num][optkey].has_key('ARM9LTDExpand'):
+                codeparam.write(''.join(['MAKEROM_FLAGS += -DARM9LTD_EXPAND=', hex(romparam[num][optkey]['ARM9LTDExpand']), '\n']))
+            if romparam[num][optkey].has_key('ARM7LTDExpand'):
+                codeparam.write(''.join(['MAKEROM_FLAGS += -DARM7LTD_EXPAND=', hex(romparam[num][optkey]['ARM7LTDExpand']), '\n']))
         #----- ROM_SPEC_OPTIONS key の抽出
         if romparam[num][rsfkey].get('AppType') == 'SYSTEM':
             keys = [key for key in romparam[num][rsfkey].keys() if key != 'TitleType' and key != 'eTicket' ]
