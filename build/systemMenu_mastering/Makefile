@@ -20,8 +20,8 @@
 
 TARGET_FIRM				=	SYSTEMMENU
 
-TARGET_CODEGEN                             =       ARM
-TWL_ARCHGEN                             =       LIMITED
+TARGET_PLATFORM			=	TWL
+TWL_ARCHGEN				=	LIMITED
 TWL_NANDAPP				=	TRUE
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
@@ -74,7 +74,7 @@ MASTERING_FLAGS	=	-t
 #---------------------------
 #ランチャー
 #---------------------------
-$(OUT_DIR)/HNAA : $(SYSMENU_DIR)/Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNAA.nand.srl
+$(OUT_DIR)/HNAA : $(SYSMENU_DIR)/Launcher/ARM9/bin/$(TWL_BUILDTYPE)/HNAA.nand.srl
 ifneq ($(DO_MASTERING),)
 	$(MASTERING) $(MASTERING_FLAGS) $< $(OUT_DIR)/$(SRL_DIR)/$(notdir $<)
 else
@@ -92,7 +92,7 @@ endif
 #---------------------------
 #本体設定
 #---------------------------
-$(OUT_DIR)/HNBA : $(SYSMENU_DIR)/MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNBA.nand.srl
+$(OUT_DIR)/HNBA : $(SYSMENU_DIR)/MachineSettings/ARM9/bin/$(TWL_BUILDTYPE)/HNBA.nand.srl
 ifneq ($(DO_MASTERING),)
 	$(MASTERING) $(MASTERING_FLAGS) $< $(OUT_DIR)/$(SRL_DIR)/$(notdir $<)
 else
@@ -160,14 +160,14 @@ $(OUT_DIR)/TWLFontTable.dat: $(SYSMENU_DIR)/sharedFont/TWLFontTable.dat
 #---------------------------
 #NANDファーム
 #---------------------------
-$(OUT_DIR)/menu_launcher-$(TWL_BUILD_TYPE).nand: ../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nand
+$(OUT_DIR)/menu_launcher-$(TWL_BUILD_TYPE).nand: ../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE).nand
 	cp $< ./$@
 
 
 #---------------------------
 #NandInitializerProduction
 #---------------------------
-$(OUT_DIR)/$(NAND_INITIALIZER_NAME)-$(TWL_BUILD_TYPE)$(MASTER).srl: ../systemMenu_tools/$(NAND_INITIALIZER_NAME)/ARM9.TWL/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/$(NAND_INITIALIZER_NAME).srl
+$(OUT_DIR)/$(NAND_INITIALIZER_NAME)-$(TWL_BUILD_TYPE)$(MASTER).srl: ../systemMenu_tools/$(NAND_INITIALIZER_NAME)/ARM9.TWL/bin/$(TWL_BUILDTYPE)/$(NAND_INITIALIZER_NAME).srl
 ifneq ($(DO_MASTERING),)
 	$(MASTERING) -s $(MASTERING_FLAGS) $< $@
 else
