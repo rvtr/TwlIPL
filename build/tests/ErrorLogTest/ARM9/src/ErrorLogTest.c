@@ -30,7 +30,6 @@ void VBlankIntr(void);
 void TwlMain( void )
 {	
 	int numEntry;
-	const ErrorLogEntry *pEntry;
 	
 	OS_Init();
 	RTC_Init();
@@ -43,15 +42,23 @@ void TwlMain( void )
 	
 	FS_Init( FS_DMA_NOT_USE );
 	InitAllocator();
+//	FS_DeleteFile("nand:/sys/log/sysmenu.log");
 	
 	ERRORLOG_Init( Alloc, Free );
 
 	numEntry = ERRORLOG_GetNum();
 	OS_TPrintf("API: before numEntry : %d\n", numEntry );
 	
-	ERRORLOG_Write( (u64)0x077777777777LL );
+	ERRORLOG_Write( (u64)0x0200040051LL );
+	ERRORLOG_Printf( "%d hyoooo nyoronyoro\naboooon dogaaaaaaaan", 2+5 );
+	ERRORLOG_Printf( "this is overflow message!\nthis is overflow message!\nthis is overflow message!\n"
+						"this is overflow message!\nthis is overflow message!\nthis is overflow message!\n"
+						"this is overflow message!\nthis is overflow message!\nthis is overflow message!\n"
+						"this is overflow message!\nthis is overflow message!\nthis is overflow message!\n"
+						"this is overflow message!\nthis is overflow message!\nthis is overflow message!\n"
+						"this is overflow message!\nthis is overflow message!\nthis is overflow message!\n" );
 
-	
+/*	
 	if( numEntry > 2 )
 	{
 		pEntry = ERRORLOG_Read(1);
@@ -64,7 +71,7 @@ void TwlMain( void )
 					pEntry->second,
 					pEntry->errorCode);
 	}
-
+*/
 	OS_TPrintf( "*** log file data\n" );
 	
 	{
@@ -100,7 +107,7 @@ void TwlMain( void )
 		
 		totalSize += nowSize;
 		
-		OS_TPrintf("count: numEntry : %d\n", numEntry );
+		OS_TPrintf("count: \'#\' count : %d\n", numEntry );
 		OS_TPrintf("total Size : %d\n", totalSize);
 	}
 
