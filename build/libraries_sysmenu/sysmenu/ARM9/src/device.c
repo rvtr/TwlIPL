@@ -49,12 +49,12 @@ void SYSMi_CheckRTC( void )
 	RTCDate date;
 	RTCTime	time;
 	
-	// RTCのリセット or おかしい値を検出した場合は初回起動シーケンスへ。
+	// RTCのリセット or おかしい値を検出した場合はRTCオフセット値をクリアする。
 	( void )RTC_GetDateTime( &date, &time );
 	if( !UTL_CheckRTCDate( &date ) ||
 	    !UTL_CheckRTCTime( &time ) ||
 		SYSMi_GetWork()->flags.common.isResetRTC
-		) {							// RTCの異常を検出したら、rtc入力フラグ＆rtcOffsetを0にしてNVRAMに書き込み。
+		) {
 		OS_TPrintf("\"RTC reset\" or \"Illegal RTC data\" detect!\n");
 		LCFG_TSD_SetRTCOffset( 0 );
 		LCFG_TSD_SetRTCLastSetYear( 0 );
