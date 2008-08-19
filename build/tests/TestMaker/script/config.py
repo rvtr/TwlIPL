@@ -91,9 +91,8 @@ for num in romparam.keys():
             if romparam[num][optkey].has_key('ARM7LTDExpand'):
                 codeparam.write(''.join(['MAKEROM_FLAGS += -DARM7LTD_EXPAND=', hex(romparam[num][optkey]['ARM7LTDExpand']), '\n']))
         #----- モジュールオフセット
-#        if romparam[num].has_key(optkey):
-#            if romparam[num][optkey].has_key('ARM9FLXOffset'):
-#            if romparam[num][optkey].has_key('ARM7FLXOffset'):
+        if romparam[num].has_key(optkey) and romparam[num][optkey].has_key('ARM9FLXAddr'):
+            codeparam.write(''.join(['ADDRESS_STATIC	= ', hex(romparam[num][optkey]['ARM9FLXAddr']), '\n']))
         #----- ARCHGEN
         if romparam[num].has_key(optkey) and romparam[num][optkey].has_key('ArchGen'):
             codeparam.write(''.join(['override TWL_ARCHGEN     = ', romparam[num][optkey].get('ArchGen'), '\n']))

@@ -20,7 +20,7 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-SUBMAKES	=	Makefile_ltd Makefile_hyb
+SUBMAKES	=	Makefile_ltd Makefile_hyb Makefile_ltd_offset
 
 #----------------------------------------------------------------------------
 

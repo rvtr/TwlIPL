@@ -20,7 +20,7 @@
 #--------
 Static $(TARGET_NAME)
 {
-	Address		0x02380000
+	Address		$(ADDRESS_FLXMAIN)
 	Library		$(CRT0_O) \
 				libos_sp$(LIBSUFFIX).a		\
 				libsyscall_sp.twl.a				\
