@@ -27,10 +27,16 @@ extern "C" {
 #ifdef SDK_ARM9
 
 /*-- type definition ----------------------------*/
-
+// 日付データとかを除いた、自由フォーマットで書き込めるサイズ
+// このサイズを超えた文字列は切り捨てられます
+#define ERRORLOG_STR_LENGTH		204				
 
 // 既に書き込まれたエラーログを表現するためのエントリ
 typedef struct ErrorLogEntry{
+	// ランチャからの呼び出しかどうか
+	BOOL isBroken;
+	BOOL isLauncherError;
+	
 	// エラーのタイムスタンプ
 	int year;
 	int month;
@@ -39,8 +45,13 @@ typedef struct ErrorLogEntry{
 	int hour;
 	int minute;
 	int second;
+	
+	// ---- isLauncherError = TRUEの時のデータ ----
 	// エラーコード
 	int errorCode;
+	
+	// ---- isLauncherError = FALSEの時のデータ ----
+	char *errorStr;
 } ErrorLogEntry;
 
 typedef struct ErrorLogWork{
@@ -58,14 +69,11 @@ typedef struct ErrorLogWork{
 
 /*-- function prototype -------------------------*/
 extern BOOL ERRORLOG_Write( u64 errorCode );
+extern BOOL ERRORLOG_Printf( const char *fmt, ... );
 extern BOOL ERRORLOG_Init( void* (*AllocFunc) (u32) , void (*FreeFunc) (void*)  );
 extern void ERRORLOG_End( void );
 extern int ERRORLOG_GetNum() ;
 extern const ErrorLogEntry* ERRORLOG_Read( int idx );
-
-
-	
-
 
 #endif // SDK_ARM9
 
@@ -73,6 +81,4 @@ extern const ErrorLogEntry* ERRORLOG_Read( int idx );
 } /* extern "C" */
 #endif
 
- 
- 
 #endif

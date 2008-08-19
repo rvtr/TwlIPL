@@ -28,14 +28,19 @@
 
 #define ERRORLOG_DIRECTORYPATH	"nand:/sys/log"
 #define ERRORLOG_FILEPATH		"nand:/sys/log/sysmenu.log"
-#define ERRORLOG_BAR			"======================"
-#define ERRORLOG_WRITE_FORMAT	"#%02u-%02u-%02u[%3s] %02u:%02u:%02u  ErrorCode: %u\n%s \n"ERRORLOG_BAR"\n\0"
-#define ERRORLOG_READ_FORMAT	"#%d-%d-%d[%3s] %d:%d:%d  ErrorCode: %u\n%*s \n"ERRORLOG_BAR"\n\0"
+
+#define ERRORLOG_BAR			"===================="
+#define ERRORLOG_BAR_LENGTH		20
+#define ERRORLOG_WRITE_FORMAT_RED	ERRORLOG_BAR"\n#RED %02u-%02u-%02u[%3s] %02u:%02u:%02u  ErrorCode: %u\n%s \n\0"
+#define ERRORLOG_WRITE_FORMAT		ERRORLOG_BAR"\n#FFT %02u-%02u-%02u[%3s] %02u:%02u:%02u  \n%s \n\0"
+#define ERRORLOG_READ_FORMAT_RED	ERRORLOG_BAR"\n#RED %d-%d-%d[%3s] %d:%d:%d  ErrorCode: %u\n%*s \n\0"
+#define ERRORLOG_READ_FORMAT		ERRORLOG_BAR"\n#FFT %d-%d-%d[%3s] %d:%d:%d  \n%s \n\0"
+#define ERRORLOG_NUM_ARGS			8
 
 #define ERRORLOG_SIZE			( 16 * 1024 )	// ファイルは16KBサイズ固定
-#define ERRORLOG_BUFSIZE		128				// 一番長い名前のエラーでも128字以内に収まる
+#define ERRORLOG_BUFSIZE		256				// 1エントリあたりのサイズ
+#define ERRORLOG_STR_OFFSET		51
 #define ERRORLOG_NUM_ENTRY		( ERRORLOG_SIZE / ERRORLOG_BUFSIZE ) // ログに書き込まれるエントリの最大数
-
 
 
 // 内部関数SYSMi_CheckAndCreateDirectoryのエラーチェッカ
@@ -55,14 +60,15 @@ CheckStatus ERRORLOGi_CheckAndCreateDirectory( const char *path );
 CheckStatus ERRORLOGi_CheckAndCreateFile( const char *path );
 int ERRORLOGi_ReadEntry( void );
 BOOL ERRORLOGi_SetString( char *buf, ErrorLogEntry *entry );
-BOOL ERRORLOGi_addNewEntry( int idx, int errorCode, RTCDate *date, RTCTime *time );
+BOOL ERRORLOGi_addNewEntryRED( int idx, RTCDate *date, RTCTime *time, int errorCode );
+void ERRORLOGi_addNewEntry( int idx, RTCDate *date, RTCTime *time, const char *fmt, va_list arglist );
 void ERRORLOGi_WriteLogToBuf( char *buf );
 BOOL ERRORLOGi_WriteLogToFile( char *buf );
 void ERRORLOGi_fillSpace( char *buf, int bufsize );
+BOOL ERRORLOGi_WriteCommon( BOOL isLauncherError, u64 errorCode, const char *fmt, va_list arglist );
 
 static char *s_strWeek[7];
 static char *s_strError[FATAL_ERROR_MAX];
-
 
 
 /*---------------------------------------------------------------------------*
@@ -86,6 +92,7 @@ BOOL ERRORLOG_Init( void* (*AllocFunc) (u32) , void (*FreeFunc) (void*)  )
 	
 	// ログ読み出し用のバッファを確保
 	elWork.entry = (ErrorLogEntry*) elWork.Alloc ( sizeof (ErrorLogEntry) * ERRORLOG_NUM_ENTRY );
+	MI_CpuClear8( elWork.entry, sizeof (ErrorLogEntry) * ERRORLOG_NUM_ENTRY);
 	
 	if( !FS_IsAvailable() )
 	{
@@ -139,18 +146,55 @@ void ERRORLOG_End( void )
 		OS_TPrintf("EL Error: FS_CloseFile() failed.\n" );
 	}
 }
+
+/*---------------------------------------------------------------------------*
+  Name:         ERRORLOG_Printf
+
+  Description:  nand:/sys/log/sysmenu.logにエラーログをフリーな形式で書き込みます。
+  
+  Arguments:    :	printfに準拠
+
+  Returns:      書き込みに成功したときはTRUEを、失敗したときはFALSEを返します。
+ *---------------------------------------------------------------------------*/
+BOOL ERRORLOG_Printf( const char *fmt, ... )
+{
+	BOOL result = TRUE;
+	va_list arglist;
+	va_start( arglist, fmt );
+	result = ERRORLOGi_WriteCommon( FALSE, 0, fmt, arglist );
+	va_end( arglist );
 	
+	return result;
+}
+
 /*---------------------------------------------------------------------------*
   Name:         ERRORLOG_Write
 
   Description:  nand:/sys/log/sysmenu.logにエラーログを出力します。
   
-
   Arguments:    errorCode:	発生したエラーのエラーコード
 
   Returns:      書き込みに成功したときはTRUEを、失敗したときはFALSEを返します。
  *---------------------------------------------------------------------------*/
 BOOL ERRORLOG_Write( u64 errorCode )
+{
+	return ERRORLOGi_WriteCommon( TRUE, errorCode, NULL, NULL );
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         ERRORLOGi_WriteCommon
+
+  Description:  
+  
+  Arguments:	isLauncherError: ERRORLOG_Writeから呼ばれた場合はTRUE、
+  								 ERRORLOG_Printfから呼ばれた場合はFALSEとなります。
+  				errorCode:	isLauncherErrorがTRUEな時に書き込まれるエラーコード
+  				fmt, ...:		isLauncherErrorがFALSEな時に書き込まれる文字列と引数
+
+  Returns:      書き込みに成功したときはTRUEを、失敗したときはFALSEを返します。
+ *---------------------------------------------------------------------------*/
+ 
+BOOL ERRORLOGi_WriteCommon( BOOL isLauncherError, u64 errorCode, const char *fmt, va_list arglist )
 {
 	int bufBeginPoint = 0; 	// リングバッファの開始点
 	int numEntry = 0;
@@ -165,23 +209,29 @@ BOOL ERRORLOG_Write( u64 errorCode )
 	writeBuf = (char*) elWork.Alloc( ERRORLOG_SIZE );
 
 	// 新しいログエントリを書き込むためのRTC
-	if( ( rtcRes = RTC_GetDateTime( &date, &time )) != RTC_RESULT_SUCCESS)
+	if( ( rtcRes = RTC_GetDateTime( &date, &time )) != RTC_RESULT_SUCCESS )
 	{
 		OS_TPrintf("EL Error: RTC getDateTime() Failed!  Status:%d\n", rtcRes);
 		return FALSE;
 	}
 
-	
-	for(counter = 0; counter < FATAL_ERROR_MAX; counter++ )
+	if( isLauncherError )
 	{
-		if( ( errorCode >> counter ) & 0x1LL )
+		for(counter = 0; counter < FATAL_ERROR_MAX; counter++ )
 		{
-			// 末尾のビットが立っていたらエントリに入れてバッファ開始点を進める
-			ERRORLOGi_addNewEntry( elWork.numEntry % ERRORLOG_NUM_ENTRY , counter , &date, &time );
-			elWork.numEntry++;
+			if( ( errorCode >> counter ) & 0x1LL )
+			{
+				// 末尾のビットが立っていたらエントリに入れてバッファ開始点を進める
+				ERRORLOGi_addNewEntryRED( elWork.numEntry % ERRORLOG_NUM_ENTRY , &date, &time, counter );
+				elWork.numEntry++;
+			}
 		}
 	}
-	
+	else
+	{
+		ERRORLOGi_addNewEntry( elWork.numEntry % ERRORLOG_NUM_ENTRY, &date, &time, fmt, arglist );
+		elWork.numEntry++;
+	}
 	
 	// まずエントリをもとにバッファに書き込む
 	ERRORLOGi_WriteLogToBuf( writeBuf );
@@ -198,7 +248,7 @@ BOOL ERRORLOG_Write( u64 errorCode )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ERRORlOG_GetNum
+  Name:         ERRORLOG_GetNum
 
   Description:  読み出したエントリ数を取得します。
 
@@ -236,21 +286,21 @@ const ErrorLogEntry* ERRORLOG_Read( int idx )
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         ERRORLOGi_addNewEntry
+  Name:         ERRORLOGi_addNewEntryRED
 
   Description:  エラーコードとRTCデータをエラーログのエントリに追加します。
 
   Arguments:    int:		エントリを挿入するインデクス
-  				errorCode:	エラーコード
   				date:		日付データ
   				time:		時刻データ
+  				errorCode:	エラーコード
 
   Returns:      FATAL_ERROR_MAXを超えるエラーコードが渡された場合はFALSEを、
   				それ以外のときはTRUEを返します。
  *---------------------------------------------------------------------------*/
 
 
-BOOL ERRORLOGi_addNewEntry( int idx, int errorCode, RTCDate *date, RTCTime *time )
+BOOL ERRORLOGi_addNewEntryRED( int idx, RTCDate *date, RTCTime *time, int errorCode )
 {
 
 	if( errorCode >= FATAL_ERROR_MAX )
@@ -259,7 +309,9 @@ BOOL ERRORLOGi_addNewEntry( int idx, int errorCode, RTCDate *date, RTCTime *time
 		OS_TPrintf("EL Error: Illigal error code (%d)\n", errorCode);
 		return FALSE;
 	}
-	
+
+	elWork.entry[idx].isLauncherError = TRUE;
+	elWork.entry[idx].isBroken = FALSE;
 	elWork.entry[idx].year = (int)date->year;
 	elWork.entry[idx].month = (int)date->month;
 	elWork.entry[idx].day = (int)date->day;
@@ -269,9 +321,53 @@ BOOL ERRORLOGi_addNewEntry( int idx, int errorCode, RTCDate *date, RTCTime *time
 	elWork.entry[idx].second = (int)time->second;
 	elWork.entry[idx].errorCode = (int)errorCode;
 	
+	if( elWork.entry[idx].errorStr != NULL )
+	{
+		// 上書きされる前がUIG側のエラーだった場合はstr用のバッファを開放しておく
+		elWork.Free( elWork.entry[idx].errorStr );
+	}
+	
 	return TRUE;
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         ERRORLOGi_addNewEntry
+
+  Description:  自由な文字列とRTCデータをエラーログエントリに追加します。
+
+  Arguments:    int:		エントリを挿入するインデクス
+  				date:		日付データ
+  				time:		時刻データ
+  				fmt:		エラーログに書き込まれる文字列のフォーマット
+  				arglist:	fmtに対する引数
+  				
+
+  Returns:      なし。
+ *---------------------------------------------------------------------------*/
+
+
+void ERRORLOGi_addNewEntry( int idx, RTCDate *date, RTCTime *time, const char *fmt, va_list arglist )
+{
+
+	elWork.entry[idx].isLauncherError = FALSE;
+	elWork.entry[idx].isBroken = FALSE;
+	elWork.entry[idx].year = (int)date->year;
+	elWork.entry[idx].month = (int)date->month;
+	elWork.entry[idx].day = (int)date->day;
+	STD_CopyLStringZeroFill( elWork.entry[idx].week, s_strWeek[ date->week ], 4 );
+	elWork.entry[idx].hour = (int)time->hour;
+	elWork.entry[idx].minute = (int)time->minute;
+	elWork.entry[idx].second = (int)time->second;
+	
+	if( elWork.entry[idx].errorStr == NULL )
+	{
+		// str用の領域があたってなければ確保する
+		elWork.entry[idx].errorStr = elWork.Alloc( ERRORLOG_BUFSIZE+1 );
+		MI_CpuClear8( elWork.entry[idx].errorStr, ERRORLOG_BUFSIZE+1 );	
+	}
+	
+	STD_TVSNPrintf( elWork.entry[idx].errorStr, ERRORLOG_BUFSIZE, fmt, arglist );
+}
 
 /*---------------------------------------------------------------------------*
   Name:         ERRORLOGi_CheckAndCreateDirectory
@@ -408,18 +504,65 @@ int ERRORLOGi_ReadEntry( void )
 	readSize = FS_ReadFile( &elWork.file, buf, ERRORLOG_BUFSIZE );
 
 	// エントリの頭には必ず'#'が書き込まれているのでそれで判定	
-	while( readSize == ERRORLOG_BUFSIZE && buf[0] == '#')
+	while( readSize == ERRORLOG_BUFSIZE && numEntry < ERRORLOG_NUM_ENTRY)
 	{
+		int numArgs = 0;
+		
 		// 決められたファイルフォーマットからエントリに読み込む
-		STD_TSScanf( buf, ERRORLOG_READ_FORMAT, 
-					&(elWork.entry[numEntry].year) ,
-					&(elWork.entry[numEntry].month) ,
-					&(elWork.entry[numEntry].day) ,
-					&(elWork.entry[numEntry].week) ,
-					&(elWork.entry[numEntry].hour) ,
-					&(elWork.entry[numEntry].minute) ,
-					&(elWork.entry[numEntry].second) ,
-					&(elWork.entry[numEntry].errorCode)  );
+		if( ! STD_StrNCmp( "#RED", &buf[ERRORLOG_BAR_LENGTH + 1], 4 ) )
+		{
+			// ランチャから書き込まれたエラーの場合
+
+			
+			elWork.entry[numEntry].isLauncherError = TRUE;
+			elWork.entry[numEntry].isBroken = FALSE;
+			numArgs = STD_TSScanf( buf, ERRORLOG_READ_FORMAT_RED, 
+						&(elWork.entry[numEntry].year) ,
+						&(elWork.entry[numEntry].month) ,
+						&(elWork.entry[numEntry].day) ,
+						&(elWork.entry[numEntry].week) ,
+						&(elWork.entry[numEntry].hour) ,
+						&(elWork.entry[numEntry].minute) ,
+						&(elWork.entry[numEntry].second) ,
+						&(elWork.entry[numEntry].errorCode)  );
+			
+		}
+		else if( !STD_StrNCmp( "#FFT", &buf[ERRORLOG_BAR_LENGTH + 1], 4 ) )
+		{
+			// フリーフォーマットで書き込まれたエラーの場合
+			if( elWork.entry[numEntry].errorStr == NULL )
+			{
+				elWork.entry[numEntry].errorStr = elWork.Alloc( ERRORLOG_BUFSIZE+1 );
+			}
+			
+			elWork.entry[numEntry].isLauncherError = FALSE;
+			elWork.entry[numEntry].isBroken = FALSE;
+			numArgs = STD_TSScanf( buf, ERRORLOG_READ_FORMAT, 
+						&(elWork.entry[numEntry].year) ,
+						&(elWork.entry[numEntry].month) ,
+						&(elWork.entry[numEntry].day) ,
+						&(elWork.entry[numEntry].week) ,
+						&(elWork.entry[numEntry].hour) ,
+						&(elWork.entry[numEntry].minute) ,
+						&(elWork.entry[numEntry].second) ,
+						elWork.entry[numEntry].errorStr ); // 最後の一つは引数数のつじつまを合わせるため
+						
+			STD_CopyLStringZeroFill( elWork.entry[numEntry].errorStr, &buf[ERRORLOG_STR_OFFSET], ERRORLOG_STR_LENGTH + 1);
+
+		}
+		
+		if ( numArgs != ERRORLOG_NUM_ARGS )
+		{
+			// エラーログが壊れていて解析できなかった場合の処理
+			// もしくは古いログで上記の接頭辞がないログの場合の処理
+			if( elWork.entry[numEntry].errorStr == NULL )
+			{
+				elWork.entry[numEntry].errorStr = elWork.Alloc( ERRORLOG_BUFSIZE+1 );
+			}
+			
+			elWork.entry[numEntry].isBroken = TRUE;
+			STD_CopyLStringZeroFill( elWork.entry[numEntry].errorStr, buf, ERRORLOG_BUFSIZE+1 );
+		}
 
 		numEntry++;
 		readSize = FS_ReadFile( &elWork.file, buf, ERRORLOG_BUFSIZE );
@@ -443,11 +586,24 @@ int ERRORLOGi_ReadEntry( void )
 
 BOOL ERRORLOGi_SetString( char *buf, ErrorLogEntry *entry )
 {
-	STD_TSNPrintf(buf, ERRORLOG_BUFSIZE, ERRORLOG_WRITE_FORMAT, 
-					entry->year, entry->month, entry->day, entry->week,
-					entry->hour, entry->minute, entry->second,
-				    entry->errorCode, s_strError[entry->errorCode] ? s_strError[entry->errorCode] : "" );
-	
+	if( entry->isBroken )
+	{
+		STD_CopyLString( buf, entry->errorStr, ERRORLOG_BUFSIZE );
+	}
+	else if ( entry->isLauncherError )
+	{
+		STD_TSNPrintf(buf, ERRORLOG_BUFSIZE, ERRORLOG_WRITE_FORMAT_RED, 
+						entry->year, entry->month, entry->day, entry->week,
+						entry->hour, entry->minute, entry->second, entry->errorCode,
+						s_strError[entry->errorCode] ? s_strError[entry->errorCode] : "" );
+	}
+	else
+	{
+		STD_TSNPrintf(buf, ERRORLOG_BUFSIZE, ERRORLOG_WRITE_FORMAT,
+						entry->year, entry->month, entry->day, entry->week,
+						entry->hour, entry->minute, entry->second, entry->errorStr );
+	}
+					    
 	// 余りをスペースで埋めて、改行で終端する
 	ERRORLOGi_fillSpace( buf, ERRORLOG_BUFSIZE );
 	buf[ ERRORLOG_BUFSIZE-1 ] = '\n';
@@ -461,8 +617,6 @@ BOOL ERRORLOGi_SetString( char *buf, ErrorLogEntry *entry )
   Description:  受け取ったエントリの中身をバッファへ書き出します。
 
   Arguments:    buf:		16KB長バッファへのポインタ
-  				entry:		エラー内容のエントリの配列ポインタ
-  				numEntry:	合計エントリ数
 
   Returns:      なし。
  *---------------------------------------------------------------------------*/
@@ -524,7 +678,7 @@ BOOL ERRORLOGi_WriteLogToFile( char *buf )
 /*---------------------------------------------------------------------------*
   Name:         ERRORLOGi_fillSpace
 
-  Description:  受け取ったエントリの余りの部分を0で埋めます。
+  Description:  受け取ったエントリの余りの部分をスペースで埋めます。
 
   Arguments:    buf:		書き込み内容の格納されたバッファへのポインタ
   				bufsize:	エントリ全体のサイズ
