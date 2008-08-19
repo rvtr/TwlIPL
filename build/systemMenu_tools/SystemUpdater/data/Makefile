@@ -16,7 +16,8 @@
 # $Author: 
 #----------------------------------------------------------------------------
 
-TARGET_FIRM				=	SYSTEMMENU
+TARGET_FIRM		=	SYSTEMMENU
+TWL_ARCHGEN    	= LIMITED
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include $(SYSMENU_ROOT)/build/systemMenu_RED/wlanfirm/commondefs.wlanfirm
@@ -51,10 +52,10 @@ do-build :	HNAA.tad \
 
 # maketad.updaterで作られたTADが他のフォルダに残らないように、ここでTAD化処理する。
 
-HNAA.tad: ../../../systemMenu_RED/Launcher/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNAA.nand.srl
+HNAA.tad: ../../../systemMenu_RED/Launcher/ARM9/bin/$(TWL_BUILDARCH_ARM9)/$(TWL_BUILD_DIR)/HNAA.nand.srl
 	$(MAKETAD) $< $(MAKETAD_OPTION) -o $@
 
-HNBA.tad: ../../../systemMenu_RED/MachineSettings/ARM9/bin/ARM9-TS.LTD/$(TWL_BUILD_DIR)/HNBA.nand.srl
+HNBA.tad: ../../../systemMenu_RED/MachineSettings/ARM9/bin/$(TWL_BUILDARCH_ARM9)/$(TWL_BUILD_DIR)/HNBA.nand.srl
 	$(MAKETAD) $< $(MAKETAD_OPTION) -o $@
 
 HNCA.tad: $(MY_WLANFIRM)
@@ -66,7 +67,7 @@ HNHA.tad: $(DS_HASH_TABLE_DATA)
 HNLA.tad: $(SYSMENU_VERSION_DIR)/$(SYSMENU_VERSION_FILE)
 	$(MAKETAD) $(call empath,$<) $(SYSMENU_VERSION_MAKETAD_OPTION) -o $@
 
-menu_launcher.nand: ../../../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nand
+menu_launcher.nand: ../../../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE).nand
 	cp $< ./$@
 
 #===== End of Makefile =====
