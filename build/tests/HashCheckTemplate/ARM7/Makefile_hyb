@@ -1,0 +1,88 @@
+#! make -f
+#----------------------------------------------------------------------------
+# Project:  TwlSDK - components - mongoose.TWL
+# File:     Makefile
+#
+# Copyright 2007 Nintendo.  All rights reserved.
+#
+# These coded instructions, statements, and computer programs contain
+# proprietary information of Nintendo of America Inc. and/or Nintendo
+# Company Ltd., and are protected by Federal copyright law.  They may
+# not be disclosed to third parties or copied or duplicated in any form,
+# in whole or in part, without the prior written consent of Nintendo.
+#
+# $Date::            $
+# $Rev$
+# $Author$
+#----------------------------------------------------------------------------
+
+override TARGET_PLATFORM	 =	TWL
+override TWL_PROC			 =	ARM7
+override TWL_ARCHGEN		 =	HYBRID
+TWL_NO_STD_PCHDR			 =	True
+TWL_CODEGEN					?=	ALL
+
+#----------------------------------------------------------------------------
+
+SRCDIR			+=	$(ROOT)/build/components/mongoose.TWL/src
+
+SRCS			 =	main.c initScfg.c
+
+TARGET_NAME		 =	mongoose_hct
+
+TARGET_NEF		 =	$(TARGET_NAME).tef
+LCFILE_SPEC		 =	mongoose_hct.lsf
+LCFILE_TEMPLATE	 =	$(ROOT)/build/components/mongoose.TWL/mongoose.lcf.template
+LDRES_TEMPLATE	 =	$(ROOT)/build/components/mongoose.TWL/mongoose.response.template
+
+LLIBRARY_DIRS	 +=	../crt/ARM7/obj/ARM7-TS.HYB/$(TWL_BUILD_DIR)
+CRT0_O			 =	crt0_hct.HYB.TWL.o
+
+# スタック不足防止の為、インライン展開せずにコンパイルする
+CCFLAGS_OPT		=	-O4 -inline off
+
+# If THUMB, use ARM libraries
+# CODEGEN が THUMB の場合、ARM でビルドしたものを THUMB として装います。
+ifeq ($(TARGET_CODEGEN),THUMB)
+TWL_LIBSUFFIX           = .TWL$(ARCHGEN_TYPE)
+CODEGEN_CC              = ARM
+endif
+
+#----------------------------------------------------------------------------
+include	$(TWLSDK_ROOT)/build/buildtools/commondefs
+
+MAKELCF_FLAGS	+=	-DISDBG_LIBS_TWL='$(if $(ISDBG_LIBS_TWL),$(ISDBG_LIBS_TWL),libstubsistd_sp$(TWL_LIBSUFFIX).a)'		\
+					-DISDBG_LIBS_NITRO='$(if $(ISDBG_LIBS_NITRO),$(ISDBG_LIBS_NITRO),libstubsisd_sp$(TWL_LIBSUFFIX).a)'
+
+#--------------------------------
+#   install target
+#--------------------------------
+INSTALL_TARGETS	 =	$(BINDIR)/$(TARGET_NAME).tef				\
+					$(BINDIR)/$(TARGET_NAME).TWL.FLX.sbin		\
+					$(BINDIR)/$(TARGET_NAME)_defs.TWL.FLX.sbin	\
+					$(BINDIR)/$(TARGET_NAME).TWL.LTD.sbin		\
+					$(BINDIR)/$(TARGET_NAME)_defs.TWL.LTD.sbin
+
+INSTALL_DIR		 =	$(TWL_INSTALL_COMPONENTSDIR)/$(TARGET_NAME)/$(TWL_BUILDTYPE)
+
+LINCLUDES		 = $(ROOT)/build/libraries/spi/ARM7/include
+
+#LLIBRARIES		+=	libwl_sp$(TWL_LIBSUFFIX).a			\
+#					libcdc_sp$(TWL_LIBSUFFIX).a			\
+#					libtpex_sp$(TWL_LIBSUFFIX).a		\
+#					libmicex_sp$(TWL_LIBSUFFIX).a		\
+#					libsdio_hcd_twl$(TWL_LIBSUFFIX).a	\
+#					libsdio_busdriver$(TWL_LIBSUFFIX).a	\
+#					libsdio_lib$(TWL_LIBSUFFIX).a		\
+#					librompatch_sp$(TWL_LIBSUFFIX).a	\
+#					libARM7athdrv$(TWL_LIBSUFFIX).a		\
+
+
+LDEPENDS_NEF	 = $(TWL_LIBS) $(LLIBRARIES)
+
+do-build:	$(TARGETS)
+
+#----------------------------------------------------------------------------
+include	$(TWLSDK_ROOT)/build/buildtools/modulerules
+
+#===== End of Makefile =====

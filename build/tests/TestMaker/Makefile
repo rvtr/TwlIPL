@@ -193,11 +193,6 @@ INSTALL_DIR	= $(BASEDIR)/test_roms
 USE_IPL_RED_LIB	= TRUE
 MAKEROM_ROMROOT		=	../../../systemMenu_RED/
 MAKEROM_ROMFILES	=	./data/NTR_IPL_font_m.NFTR
-# boottestの時だけARM7コンポーネントの指定
-# このあたりの指定が苦肉すぎるので妙案募集中
-override DEFAULT_COMP_ARM7		= racoon_hct
-override DEFAULT_MAKEROM_ARM7_BASE	= $(BASEDIR)/ARM7/bin/$(TWL_BUILDTYPE_ARM7)/$(DEFAULT_COMP_ARM7)
-override DEFAULT_MAKEROM_ARM7		= $(DEFAULT_MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
 endif
 
 BANNER     = ./banner.bnr

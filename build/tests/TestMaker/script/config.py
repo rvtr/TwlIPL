@@ -80,7 +80,7 @@ for num in romparam.keys():
             codeparam.write(''.join(['LIBSYSCALL = $(SYSMENU_ROM_HEADER_DIR)/',gamecode,'/libsyscall.a\n']))
             if debugmakerom == '.DEBUG':
                 codeparam.write('MAKEROM_FLAGS += -DSYSCALL_C=\'$(call empath,$(LIBSYSCALL:.a=_c.bin))\'\n')
-        #----- サイズ拡張
+        #----- モジュールサイズ拡張
         if romparam[num].has_key(optkey) and debugmakerom == '.DEBUG':
             if romparam[num][optkey].has_key('ARM9FLXExpand'):
                 codeparam.write(''.join(['MAKEROM_FLAGS += -DARM9FLX_EXPAND=', hex(romparam[num][optkey]['ARM9FLXExpand']), '\n']))
@@ -90,6 +90,17 @@ for num in romparam.keys():
                 codeparam.write(''.join(['MAKEROM_FLAGS += -DARM9LTD_EXPAND=', hex(romparam[num][optkey]['ARM9LTDExpand']), '\n']))
             if romparam[num][optkey].has_key('ARM7LTDExpand'):
                 codeparam.write(''.join(['MAKEROM_FLAGS += -DARM7LTD_EXPAND=', hex(romparam[num][optkey]['ARM7LTDExpand']), '\n']))
+        #----- モジュールオフセット
+#        if romparam[num].has_key(optkey):
+#            if romparam[num][optkey].has_key('ARM9FLXOffset'):
+#            if romparam[num][optkey].has_key('ARM7FLXOffset'):
+        #----- ARCHGEN
+        if romparam[num].has_key(optkey) and romparam[num][optkey].has_key('ArchGen'):
+            codeparam.write(''.join(['override TWL_ARCHGEN     = ', romparam[num][optkey].get('ArchGen'), '\n']))
+        #----- ARM7コンポーネント指定
+        if romparam[num].has_key(optkey) and romparam[num][optkey].has_key('ARM7Base'):
+            codeparam.write(''.join(['MAKEROM_ARM7_BASE	= ', romparam[num][optkey].get('ARM7Base'), '\n']))
+            codeparam.write('MAKEROM_ARM7		= $(MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)\n')
         #----- ROM_SPEC_OPTIONS key の抽出
         if romparam[num][rsfkey].get('AppType') == 'SYSTEM':
             keys = [key for key in romparam[num][rsfkey].keys() if key != 'TitleType' and key != 'eTicket' ]
