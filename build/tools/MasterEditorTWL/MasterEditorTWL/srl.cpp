@@ -54,13 +54,14 @@ ECSrlResult RCSrl::readFromFile( System::String ^filename )
 	}
 	// ファイルを閉じる前にROMヘッダ以外の領域から設定を取り出す
 	{
-		//ECSrlResult      r;
+		ECSrlResult      r;
 		(void)this->hasDSDLPlaySign( fp );
-		//if( r != ECSrlResult::NOERROR )
-		//{
-		//	(void)fclose(fp);
-		//	return r;
-		//}
+		r = this->searchSDKVersion( fp );
+		if( r != ECSrlResult::NOERROR )
+		{
+			(void)fclose(fp);
+			return r;
+		}
 	}
 	(void)fclose( fp );
 
@@ -473,4 +474,66 @@ ECSrlResult RCSrl::hasDSDLPlaySign( FILE *fp )
 		this->hHasDSDLPlaySign = gcnew System::Boolean( false );
 	}
 	return (ECSrlResult::NOERROR);
+}
+
+//
+// SDKバージョンを取得する
+//
+ECSrlResult RCSrl::searchSDKVersion( FILE *fp )
+{
+	const u8  pattern[8] = {0x21, 0x06, 0xc0, 0xde, 0xde, 0xc0, 0x06, 0x21};
+	System::Collections::Generic::List<u32> ^list;
+	this->hSDKList = gcnew System::Collections::Generic::List<System::String ^>;
+	this->hSDKList->Clear();
+
+	list = MasterEditorTWL::patternMatch( fp, pattern , 8 );
+	if( list == nullptr )
+	{
+		System::Diagnostics::Debug::WriteLine( "no list" );
+		return ECSrlResult::ERROR_SDK;
+	}
+	for each( u32 item in list )
+	{
+		// マジックコードのオフセットの手前4バイトがSDKバージョン
+		if( item >= 4 )
+		{
+			u32       offset;
+			u32       sdkcode;
+
+			offset = item - 4;
+			fseek( fp, offset, SEEK_SET );
+			if( 4 != fread( (void*)&sdkcode, 1, 4, fp ) )
+			{
+				return ECSrlResult::ERROR_SDK;
+			}
+
+			// 解読
+			System::Byte   major = (System::Byte)(0xff & (sdkcode >> 24));
+			System::Byte   minor = (System::Byte)(0xff & (sdkcode >> 16));
+			System::UInt16 relstep = (System::UInt16)(0xffff & sdkcode);
+			System::String ^str = nullptr;
+			str += (major.ToString() + "." + minor.ToString() + " ");
+
+			// RELSTEPの解釈
+			//   PR1=10100 PR2=10200 ...
+			//   RC1=20100 RC2=20200 ...
+			//   RELEASE=30000
+			System::UInt16 patch = relstep;
+			while( patch > 10000 )
+			{
+				patch -= 10000;
+			}
+			patch = patch / 100;
+			switch( relstep / 10000 )
+			{
+				case 1: str += ("PR " + patch.ToString()); break;
+				case 2: str += ("RC " + patch.ToString()); break;
+				case 3: str += ("RELEASE " + patch.ToString()); break;
+				default: break;
+			}
+			this->hSDKList->Add( str );
+			//System::Diagnostics::Debug::WriteLine( "SDK " + str );
+		}
+	}
+	return ECSrlResult::NOERROR;
 }

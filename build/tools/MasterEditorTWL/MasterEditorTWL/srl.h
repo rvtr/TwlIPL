@@ -29,6 +29,8 @@ namespace MasterEditorTWL
 		ERROR_SIGN_DECRYPT,
 		// CRC算出でのエラー
 		ERROR_SIGN_CRC,
+		// SDKバージョン取得でのエラー
+		ERROR_SDK,
 	};
 
 	// -------------------------------------------------------------------
@@ -123,6 +125,9 @@ namespace MasterEditorTWL
 		//property System::Boolean ^hRegionChina;
 		//property System::Boolean ^hRegionKorea;
 
+		// SDKバージョンリスト
+		property System::Collections::Generic::List<System::String^> ^hSDKList;
+
 		// constructor and destructor
 	public:
 		RCSrl();
@@ -152,7 +157,10 @@ namespace MasterEditorTWL
 		// SRLバイナリから特殊な設定を調べる
 		ECSrlResult hasDSDLPlaySign( FILE *fp );
 				// DSダウンロード署名がSRLに格納されているか調べる
-				// @arg [in]  入力ファイルのFP (->SRL読み込み時に実行されるべき)
+				// @arg [in]  入力ファイルのFP (->SRL読み込み時に実行されるべき)]
+
+		// SRLバイナリ中のSDKバージョンを取得する
+		ECSrlResult searchSDKVersion( FILE *fp );
 
 	}; // end of ref class RCSrl
 

@@ -279,4 +279,152 @@ System::String^ MasterEditorTWL::transRatingToString( System::Byte ogn, System::
 	}
 
 	return str;
+} // MasterEditorTWL::transRatingToString
+
+//
+// バイト列に特定のパターンが含まれるかどうかマッチングする
+//
+// @arg [in] テキスト
+//      [in] テキストの長さ
+//      [in] パターン
+//      [in] パターンの長さ
+//      [in] テキストの終端まで調べた時点でテキストが途中までマッチしていた場合を成功とみなすか
+//
+// @ret マッチしたテキストのオフセットをリストで返す。
+//
+System::Collections::Generic::List<u32>^ MasterEditorTWL::patternMatch( 
+	const u8 *text, const u32 textLen, const u8 *pattern, const u32 patternLen, const System::Boolean enableLast )
+{
+	// ひとまずシンプルな方法で実装する
+	u32  first;
+	u32  len;
+	System::Collections::Generic::List<u32> ^list = gcnew System::Collections::Generic::List<u32>();
+	list->Clear();
+
+	// パターンを1文字ずつずらしながらマッチング
+	for( first=0; first < textLen; first++ )
+	{
+		len = (patternLen < (textLen-first))?patternLen:(textLen-first);	// 最後のほうは途中までしかマッチングしない
+		if( memcmp( text+first, pattern, len ) == 0 )
+		{
+			if( (enableLast == true) )
+			{
+				list->Add( first );
+			}
+			else if( len == patternLen )	// 完全一致しないとダメ
+			{
+				list->Add( first );
+			}
+		}
+	}
+	return list;
+} // MasterEditorTWL::patternMatch
+
+//
+// ファイルにバイト列のパターンが含まれるかどうかマッチングする
+//
+// @arg [in] マッチ対象となるファイルポインタ
+// @arg [in] パターン
+// @arg [in] パターンの長さ(PATTERN_MATCH_LEN_MAX以下でなければならない)
+//
+// @ret マッチしたテキストのオフセットをリストで返す。
+//      最後までマッチした場合のみ成功したとみなす。
+//
+#define PATTERN_MATCH_LEN_MAX	(10*1024)
+System::Collections::Generic::List<u32>^ MasterEditorTWL::patternMatch( FILE *fp, const u8 *pattern, const u32 patternLen )
+{
+	u8  text[ 2 * PATTERN_MATCH_LEN_MAX ];		// バッファの切れ目を探索するため多めに読み込むので最大でパターンの2倍だけバッファが必要になる
+	u32 cur;
+	u32 filesize;
+	u32 len;
+	u32 extra;
+	System::Collections::Generic::List<u32> ^tmplist;
+	System::Collections::Generic::List<u32> ^list = gcnew System::Collections::Generic::List<u32>;
+	list->Clear();
+
+	if( patternLen > PATTERN_MATCH_LEN_MAX )
+		return nullptr;
+
+	fseek( fp, 0, SEEK_END );
+	filesize = ftell( fp );
+
+	cur = 0;
+	while( cur < filesize )
+	{
+		// バッファの切れ目を調べたいため実際には(パターンの長さ-1)だけ多めにリードする
+		len   = ((filesize - cur) < PATTERN_MATCH_LEN_MAX)?(filesize - cur):PATTERN_MATCH_LEN_MAX;
+		extra = (len < PATTERN_MATCH_LEN_MAX)?0:(patternLen-1);
+		fseek( fp, cur, SEEK_SET );
+		if( (len + extra) != fread( text, 1, len + extra, fp ) )
+		{
+			return nullptr;
+		}
+
+		// テキスト終端に途中までマッチングしたときは失敗とみなす
+		tmplist = MasterEditorTWL::patternMatch( text, len+extra, pattern, patternLen, false );
+		if( tmplist != nullptr )
+		{
+			for each( u32 tmpval in tmplist )
+			{
+				list->Add( tmpval + cur );	// 実際のオフセットはファイルオフセットを加えた値
+			}
+		}
+
+		// 次のSEEK位置:多めにリードしたはずらす
+		cur += len;
+	}
+	return list;
 }
+
+void MasterEditorTWL::debugPatternMatch( System::String ^filename )
+{
+	FILE *fp = NULL;
+	u32   i;
+	const u8  pattern[8] = {0x21, 0x06, 0xc0, 0xde, 0xde, 0xc0, 0x06, 0x21};
+	System::Collections::Generic::List<u32> ^list;
+	const char *pchFilename = 
+		(const char*)System::Runtime::InteropServices::Marshal::StringToHGlobalAnsi( filename ).ToPointer();
+
+	// ファイルを開いてROMヘッダのみ読み出す
+	if( fopen_s( &fp, pchFilename, "rb" ) != NULL )
+	{
+		System::Diagnostics::Debug::WriteLine( "f_open failed" );
+		return;
+	}
+
+	list = MasterEditorTWL::patternMatch( fp, pattern , 8 );
+	fclose( fp );
+
+	i=0;
+	if( list == nullptr )
+	{
+		System::Diagnostics::Debug::WriteLine( "no list" );
+		return;
+	}
+	for each( u32 item in list )
+	{
+		System::Diagnostics::Debug::WriteLine( "item " + i.ToString() + " = 0x" + item.ToString("X") );
+		i++;
+	}
+
+	//u8  buf[ 512 ];
+	//u32 i;
+	//u8  pattern[8] = {0xfe, 0xff, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
+	//System::Collections::Generic::List<u32> ^list;
+
+	//for( i=0; i < 512; i++ )
+	//{
+	//	buf[i] = i % 256;
+	//}
+
+	//list = MasterEditorTWL::patternMatch( buf, 512, pattern, 8, true );
+
+	//i = 0;
+	//System::Diagnostics::Debug::WriteLine( "pattern match" );
+	//for each( u32 item in list )
+	//{
+	//	System::Diagnostics::Debug::WriteLine( "item " + i + " = " + item );
+	//	i++;
+	//}
+}
+		

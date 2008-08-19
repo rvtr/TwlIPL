@@ -3,6 +3,7 @@
 #include "srl.h"
 #include "deliverable.h"
 #include "crc_whole.h"
+#include "utility.h"
 
 namespace MasterEditorTWL {
 
@@ -426,6 +427,7 @@ private: System::Windows::Forms::Label^  labMultiForeign2;
 private: System::Windows::Forms::Label^  labCautionInput;
 private: System::Windows::Forms::Label^  labCautionCheck;
 private: System::Windows::Forms::GroupBox^  gboxProd;
+
 
 
 
@@ -3343,6 +3345,16 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			// 特殊な設定をテキストボックスに反映
 			this->setSrlFormsCaptionEx();
 
+			// SDKバージョンとライブラリ
+			if( this->hSrl->hSDKList != nullptr )
+			{
+				this->tboxSDK->Clear();
+				for each( System::String ^str in this->hSrl->hSDKList )
+				{
+					this->tboxSDK->Text += str + "\r\n";
+				}
+			}
+
 			// ペアレンタルコントロール関連
 			this->setParentalForms();
 		}
@@ -4031,8 +4043,8 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			MessageBox::Show( str, "Error", MessageBoxButtons::OK, MessageBoxIcon::Error );
 		}
 
-	// 言語切り替え
 	private:
+		// 日本語版への切り替え
 		void changeJapanese(void)
 		{
 			System::Int32 index;
@@ -4200,6 +4212,7 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 		}
 
 	private:
+		// 英語版への切り替え
 		void changeEnglish(void)
 		{
 			System::Int32 index;

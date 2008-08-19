@@ -3,6 +3,8 @@
 // 共用ライブラリ・クラスの宣言
 
 #include <twl/types.h>
+#include <cstring>
+#include <cstdio>
 
 namespace MasterEditorTWL
 {
@@ -41,5 +43,33 @@ namespace MasterEditorTWL
 	// @ret レーティングの文字列(団体がおかしいときnullptr)
 	//
 	System::String^ transRatingToString( System::Byte ogn, System::Boolean enable, System::Byte rating, System::Boolean english ); 
+
+	//
+	// バイト列に特定のパターンが含まれるかどうかマッチングする
+	//
+	// @arg [in] テキスト
+	//      [in] テキストの長さ
+	//      [in] パターン
+	//      [in] パターンの長さ
+	//      [in] テキストの終端まで調べた時点でテキストが途中までマッチしていた場合を成功とみなすか
+	//
+	// @ret マッチしたテキストのインデックスをリストで返す。
+	//
+	System::Collections::Generic::List<u32>^ patternMatch( 
+		const u8 *text, const u32 textLen, const u8 *pattern, const u32 patternLen, const System::Boolean enableLast );
+
+	//
+	// ファイルにバイト列のパターンが含まれるかどうかマッチングする
+	//
+	// @arg [in] マッチ対象となるファイルポインタ
+	// @arg [in] パターン
+	// @arg [in] パターンの長さ
+	//
+	// @ret マッチしたテキストのインデックスをリストで返す。
+	//      最後までマッチした場合のみ成功したとみなす。
+	//
+	System::Collections::Generic::List<u32>^ patternMatch( FILE *fp, const u8 *pattern, const u32 patternLen );
+
+	void debugPatternMatch( System::String ^filename );
 
 } // end of namespace MasterEditorTWL
