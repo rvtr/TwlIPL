@@ -73,23 +73,6 @@ static char* debugPtr = (char*)PRINT_MEMORY_ADDR;
 
 static ROM_Header* const rh= (ROM_Header*)HW_TWL_ROM_HEADER_BUF;
 
-static OSThread idleThread;
-static u64 idleStack[32];
-static void IdleThread(void* arg)
-{
-#pragma unused(arg)
-    OS_EnableInterrupts();
-    while (1)
-    {
-        OS_Halt();
-    }
-}
-static void CreateIdleThread(void)
-{
-    OS_CreateThread(&idleThread, IdleThread, NULL, &idleStack[32], sizeof(idleStack), OS_THREAD_PRIORITY_MAX);
-    OS_WakeupThreadDirect(&idleThread);
-}
-
 /***************************************************************
     PreInit
 
@@ -134,8 +117,6 @@ static void PostInit(void)
 
     // マウント情報の初期化
     FS_InitMountInfo(TRUE, FALSE);
-    // アイドルスレッドの作成
-    CreateIdleThread();
     // 5: after CreateIdleThread
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x86

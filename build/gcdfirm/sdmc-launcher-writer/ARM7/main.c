@@ -51,23 +51,6 @@ static u8 step = 0x00;
 static u8* const nor = (u8*)HW_TWL_MAIN_MEM;
 static u8* const nand = (u8*)HW_TWL_MAIN_MEM + offsetof(NANDHeader,l);
 
-static OSThread idleThread;
-static u64 idleStack[32];
-static void IdleThread(void* arg)
-{
-#pragma unused(arg)
-    OS_EnableInterrupts();
-    while (1)
-    {
-        OS_Halt();
-    }
-}
-static void CreateIdleThread(void)
-{
-    OS_CreateThread(&idleThread, IdleThread, NULL, &idleStack[32], sizeof(idleStack), OS_THREAD_PRIORITY_MAX);
-    OS_WakeupThreadDirect(&idleThread);
-}
-
 /***************************************************************
     PreInit
 
@@ -93,8 +76,6 @@ static void PostInit(void)
 {
     MCUi_WriteRegister( MCU_REG_BL_ADDR, MCU_REG_BL_BRIGHTNESS_MASK );
     PM_BackLightOn( TRUE );
-    // アイドルスレッドの作成
-    CreateIdleThread();
     // XYボタン通知
     PAD_InitXYButton();
     /*
