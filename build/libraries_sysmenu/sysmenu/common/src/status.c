@@ -115,7 +115,7 @@ BOOL SYSM_IsNTRCard( void )
 // エントリアドレスの正当性チェック
 BOOL SYSMi_CheckEntryAddress( void )
 {
-	// エントリアドレスがROM内登録エリアかAGBカートリッジエリアなら、無限ループに入る。
+	// エントリアドレスがMMEMもしくはWRAMのロード可能領域外なら、不正と判定。
 	if( !( ( (u32)SYSM_GetCardRomHeader()->main_entry_address >= HW_MAIN_MEM ) &&
 		   ( (u32)SYSM_GetCardRomHeader()->main_entry_address <  HW_TWL_MAIN_MEM_SHARED )
 		 ) ||
@@ -123,6 +123,12 @@ BOOL SYSMi_CheckEntryAddress( void )
 			 ( (u32)SYSM_GetCardRomHeader()->sub_entry_address  <  HW_TWL_MAIN_MEM_SHARED ) ) ||
 		   ( ( (u32)SYSM_GetCardRomHeader()->sub_entry_address  >= HW_WRAM_BASE ) &&
 			 ( (u32)SYSM_GetCardRomHeader()->sub_entry_address  <  SYSM_NTR_ARM7_LOAD_WRAM_END ) )
+		 ) ||
+	    !( ( (u32)SYSM_GetCardRomHeader()->main_entry_address >= (u32)SYSM_GetCardRomHeader()->main_ram_address ) &&
+		   ( (u32)SYSM_GetCardRomHeader()->main_entry_address <  (u32)SYSM_GetCardRomHeader()->main_ram_address + SYSM_GetCardRomHeader()->main_size )
+		 ) ||
+	    !( ( (u32)SYSM_GetCardRomHeader()->sub_entry_address >= (u32)SYSM_GetCardRomHeader()->sub_ram_address ) &&
+		   ( (u32)SYSM_GetCardRomHeader()->sub_entry_address <  (u32)SYSM_GetCardRomHeader()->sub_ram_address + SYSM_GetCardRomHeader()->sub_size )
 		 )
 	 ) {
 		OS_TPrintf("entry address invalid.\n");

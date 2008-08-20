@@ -1518,13 +1518,11 @@ static void SYSMi_AuthenticateTitleThreadFunc( TitleProperty *pBootTitle )
 		UTL_SetFatalError(FATAL_ERROR_TITLE_POINTER_ERROR);
 		return;
 	}
-#if 0
 	// エントリアドレスの正当性をチェック
 	if( !SYSMi_CheckEntryAddress() ) {
 		UTL_SetFatalError(FATAL_ERROR_ENTRY_ADDRESS_ERROR);
 		return;
 	}
-#endif
 	
 	// BOOTTYPE_MEMORYでNTRモードのFSありでブートすると、旧NitroSDKでビルドされたアプリの場合、
 	// ROMアーカイブにカードが割り当てられて、FSで関係ないカードにアクセスにいってしまうので、それを防止する。
