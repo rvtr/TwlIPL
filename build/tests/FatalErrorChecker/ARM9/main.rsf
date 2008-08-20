@@ -151,7 +151,7 @@ Property
 	#
 	# SDCardAccess: sd card access control [TRUE/FALSE]
 	#
-	#SDCardAccess	FALSE
+	SDCardAccess	TRUE
 
 	#
 	# NANDAccess: NAND access control [TRUE/FALSE]
@@ -201,7 +201,7 @@ AppendProperty
 	#
 	# Boot allowed Media: [GameCard]
 	#
-	Media					NAND
+	Media					gamecard
 
 	#
 	# Data only title : [TRUE/FALSE]

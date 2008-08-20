@@ -17,6 +17,7 @@
 TARGET_FIRM	= SYSTEMMENU
 TARGET_PLATFORM	=	TWL
 TWL_ARCHGEN   = LIMITED
+TWL_NANDAPP	=	TRUE
 
 SUBDIRS          =
 
@@ -34,7 +35,7 @@ TARGET_BIN		=	menu.srl
 
 LLIBRARIES		+=	liberrorlog$(TWL_LIBSUFFIX).a
 
-
+MAKETAD_OPTION	+= -s
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
