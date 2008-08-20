@@ -27,7 +27,7 @@ extern "C" {
 #define HW_FIRM_ROUNDUP32(x)    ( ((x) + 31) & -32 )
 
 //------------------------------------- *_LoadBuffer
-#define HW_FIRM_LOAD_BUFFER_BASE        MI_GetWramMapStart_B()
+#define HW_FIRM_LOAD_BUFFER_BASE        HW_WRAM_AREA
 #define HW_FIRM_LOAD_BUFFER_UNIT_SIZE   0x8000
 #define HW_FIRM_LOAD_BUFFER_UNIT_NUMS   7
 #define HW_FIRM_LOAD_BUFFER_SIZE        (HW_FIRM_LOAD_BUFFER_UNIT_SIZE * HW_FIRM_LOAD_BUFFER_UNIT_NUMS)
