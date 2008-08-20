@@ -29,7 +29,8 @@ extern "C" {
 /*-- type definition ----------------------------*/
 // 日付データとかを除いた、自由フォーマットで書き込めるサイズ
 // このサイズを超えた文字列は切り捨てられます
-#define ERRORLOG_STR_LENGTH		204				
+// ERRORLOG_STR_LENGTH = ERRORLOG_BUFSIZE - ERRORLOG_STR_OFFSET - 1
+#define ERRORLOG_STR_LENGTH		194
 
 // 既に書き込まれたエラーログを表現するためのエントリ
 typedef struct ErrorLogEntry{
@@ -45,6 +46,9 @@ typedef struct ErrorLogEntry{
 	int hour;
 	int minute;
 	int second;
+	
+	// u32だけど実態は4byteの文字列
+	u32 titleId;
 	
 	// ---- isLauncherError = TRUEの時のデータ ----
 	// エラーコード
@@ -68,12 +72,15 @@ typedef struct ErrorLogWork{
 
 
 /*-- function prototype -------------------------*/
-extern BOOL ERRORLOG_Write( u64 errorCode );
 extern BOOL ERRORLOG_Printf( const char *fmt, ... );
 extern BOOL ERRORLOG_Init( void* (*AllocFunc) (u32) , void (*FreeFunc) (void*)  );
 extern void ERRORLOG_End( void );
 extern int ERRORLOG_GetNum() ;
 extern const ErrorLogEntry* ERRORLOG_Read( int idx );
+
+
+// for RED Launcher
+extern BOOL ERRORLOG_Write( u64 errorCode );
 
 #endif // SDK_ARM9
 

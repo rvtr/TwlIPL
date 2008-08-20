@@ -16,7 +16,6 @@
  *---------------------------------------------------------------------------*/
 
 // Fatal error発生時に"nand:/sys/log/sysmenu.log"にログを吐くためのライブラリ
-//
 
 
 #include <twl.h>
@@ -31,15 +30,25 @@
 
 #define ERRORLOG_BAR			"===================="
 #define ERRORLOG_BAR_LENGTH		20
-#define ERRORLOG_WRITE_FORMAT_RED	ERRORLOG_BAR"\n#RED %02u-%02u-%02u[%3s] %02u:%02u:%02u  ErrorCode: %u\n%s \n\0"
-#define ERRORLOG_WRITE_FORMAT		ERRORLOG_BAR"\n#FFT %02u-%02u-%02u[%3s] %02u:%02u:%02u  \n%s \n\0"
-#define ERRORLOG_READ_FORMAT_RED	ERRORLOG_BAR"\n#RED %d-%d-%d[%3s] %d:%d:%d  ErrorCode: %u\n%*s \n\0"
-#define ERRORLOG_READ_FORMAT		ERRORLOG_BAR"\n#FFT %d-%d-%d[%3s] %d:%d:%d  \n%s \n\0"
-#define ERRORLOG_NUM_ARGS			8
+#define ERRORLOG_WRITE_FORMAT_RED1	ERRORLOG_BAR"\n#RED %02u-%02u-%02u[%3s] %02u:%02u:%02u\n"
+#define ERRORLOG_WRITE_FORMAT_RED2	"title: %04s ErrorCode: %u\n%s"
+#define ERRORLOG_WRITE_FORMAT1		ERRORLOG_BAR"\n#FFT %02u-%02u-%02u[%3s] %02u:%02u:%02u\n"
+#define ERRORLOG_WRITE_FORMAT2		"title: %04s\n%s"
+#define ERRORLOG_READ_FORMAT_RED1	ERRORLOG_BAR"\n#RED %d-%d-%d[%3s] %d:%d:%d\n"
+#define ERRORLOG_READ_FORMAT_RED2	"title: %4s ErrorCode: %u\n%*s"
+#define ERRORLOG_READ_FORMAT1		ERRORLOG_BAR"\n#FFT %d-%d-%d[%3s] %d:%d:%d\n"
+#define ERRORLOG_READ_FORMAT2		"title: %4s\n%s"
+
+#define ERRORLOG_WRITE_FORMAT		ERRORLOG_WRITE_FORMAT1 ERRORLOG_WRITE_FORMAT2
+#define ERRORLOG_WRITE_FORMAT_RED	ERRORLOG_WRITE_FORMAT_RED1 ERRORLOG_WRITE_FORMAT_RED2
+#define ERRORLOG_READ_FORMAT		ERRORLOG_READ_FORMAT1 ERRORLOG_READ_FORMAT2
+#define ERRORLOG_READ_FORMAT_RED	ERRORLOG_READ_FORMAT_RED1 ERRORLOG_READ_FORMAT_RED2
+
+#define ERRORLOG_NUM_ARGS			9
 
 #define ERRORLOG_SIZE			( 16 * 1024 )	// ファイルは16KBサイズ固定
 #define ERRORLOG_BUFSIZE		256				// 1エントリあたりのサイズ
-#define ERRORLOG_STR_OFFSET		51
+#define ERRORLOG_STR_OFFSET		61
 #define ERRORLOG_NUM_ENTRY		( ERRORLOG_SIZE / ERRORLOG_BUFSIZE ) // ログに書き込まれるエントリの最大数
 
 
@@ -66,6 +75,7 @@ void ERRORLOGi_WriteLogToBuf( char *buf );
 BOOL ERRORLOGi_WriteLogToFile( char *buf );
 void ERRORLOGi_fillSpace( char *buf, int bufsize );
 BOOL ERRORLOGi_WriteCommon( BOOL isLauncherError, u64 errorCode, const char *fmt, va_list arglist );
+u32 ERRORLOGi_getTitleId( void );
 
 static char *s_strWeek[7];
 static char *s_strError[FATAL_ERROR_MAX];
@@ -139,6 +149,16 @@ BOOL ERRORLOG_Init( void* (*AllocFunc) (u32) , void (*FreeFunc) (void*)  )
  *---------------------------------------------------------------------------*/
 void ERRORLOG_End( void )
 {
+	int idx;
+
+	for( idx = 0; idx < ERRORLOG_NUM_ENTRY ; idx++ )
+	{
+		if( elWork.entry[idx].errorStr != NULL )
+		{
+			elWork.Free( elWork.entry[idx].errorStr );
+		}
+	}
+	
 	elWork.Free( elWork.entry );
 
 	if( !FS_CloseFile( &elWork.file ) )
@@ -207,10 +227,12 @@ BOOL ERRORLOGi_WriteCommon( BOOL isLauncherError, u64 errorCode, const char *fmt
 	char *writeBuf;
 	
 	writeBuf = (char*) elWork.Alloc( ERRORLOG_SIZE );
+	SDK_ASSERT( writeBuf );
 
 	// 新しいログエントリを書き込むためのRTC
 	if( ( rtcRes = RTC_GetDateTime( &date, &time )) != RTC_RESULT_SUCCESS )
 	{
+		elWork.Free( writeBuf );
 		OS_TPrintf("EL Error: RTC getDateTime() Failed!  Status:%d\n", rtcRes);
 		return FALSE;
 	}
@@ -239,11 +261,11 @@ BOOL ERRORLOGi_WriteCommon( BOOL isLauncherError, u64 errorCode, const char *fmt
 	// 最終的にファイルを書き込む
 	if( !ERRORLOGi_WriteLogToFile( writeBuf ) )
 	{
+		elWork.Free( writeBuf );
 		return FALSE;
 	}
 	
 	elWork.Free( writeBuf );
-	
 	return TRUE;
 }
 
@@ -320,6 +342,7 @@ BOOL ERRORLOGi_addNewEntryRED( int idx, RTCDate *date, RTCTime *time, int errorC
 	elWork.entry[idx].minute = (int)time->minute;
 	elWork.entry[idx].second = (int)time->second;
 	elWork.entry[idx].errorCode = (int)errorCode;
+	elWork.entry[idx].titleId = ERRORLOGi_getTitleId();
 	
 	if( elWork.entry[idx].errorStr != NULL )
 	{
@@ -358,6 +381,7 @@ void ERRORLOGi_addNewEntry( int idx, RTCDate *date, RTCTime *time, const char *f
 	elWork.entry[idx].hour = (int)time->hour;
 	elWork.entry[idx].minute = (int)time->minute;
 	elWork.entry[idx].second = (int)time->second;
+	elWork.entry[idx].titleId = ERRORLOGi_getTitleId();
 	
 	if( elWork.entry[idx].errorStr == NULL )
 	{
@@ -397,7 +421,7 @@ CheckStatus ERRORLOGi_CheckAndCreateDirectory( const char *path )
 	}
 
 	// ディレクトリが存在しないのでディレクトリを作成
-	if( ! FS_CreateDirectory( path, FS_PERMIT_R | FS_PERMIT_W ) )
+	if( ! FS_CreateDirectoryAuto( path, FS_PERMIT_R | FS_PERMIT_W ) )
 	{
 		OS_TPrintf("EL Error: FS_CreateDirectory() failed. FSResult: %d\n", FS_GetArchiveResultCode(path) );
 		// ディレクトリ作成に失敗
@@ -495,6 +519,7 @@ CheckStatus ERRORLOGi_CheckAndCreateFile( const char *path )
 int ERRORLOGi_ReadEntry( void )
 {
 	char buf[ERRORLOG_BUFSIZE+1];
+	char titlebuf[5];
 	int numEntry = 0;
 	int readSize = 0;
 	
@@ -524,7 +549,11 @@ int ERRORLOGi_ReadEntry( void )
 						&(elWork.entry[numEntry].hour) ,
 						&(elWork.entry[numEntry].minute) ,
 						&(elWork.entry[numEntry].second) ,
+						titlebuf ,
 						&(elWork.entry[numEntry].errorCode)  );
+			
+			elWork.entry[numEntry].titleId = MI_LoadLE32( titlebuf );
+			OS_TPrintf("reading titleid: %4x\n", elWork.entry[numEntry].titleId);
 			
 		}
 		else if( !STD_StrNCmp( "#FFT", &buf[ERRORLOG_BAR_LENGTH + 1], 4 ) )
@@ -545,8 +574,10 @@ int ERRORLOGi_ReadEntry( void )
 						&(elWork.entry[numEntry].hour) ,
 						&(elWork.entry[numEntry].minute) ,
 						&(elWork.entry[numEntry].second) ,
+						titlebuf ,
 						elWork.entry[numEntry].errorStr ); // 最後の一つは引数数のつじつまを合わせるため
-						
+			
+			elWork.entry[numEntry].titleId = MI_LoadLE32( titlebuf );
 			STD_CopyLStringZeroFill( elWork.entry[numEntry].errorStr, &buf[ERRORLOG_STR_OFFSET], ERRORLOG_STR_LENGTH + 1);
 
 		}
@@ -586,22 +617,31 @@ int ERRORLOGi_ReadEntry( void )
 
 BOOL ERRORLOGi_SetString( char *buf, ErrorLogEntry *entry )
 {
+	char titlebuf[5];
+	
 	if( entry->isBroken )
 	{
 		STD_CopyLString( buf, entry->errorStr, ERRORLOG_BUFSIZE );
+		return TRUE;
 	}
-	else if ( entry->isLauncherError )
+	
+	// 壊れてない場合はtitleIDを書き込む必要があるので、u32を文字列化する
+	STD_CopyLStringZeroFill( titlebuf, (char*)&entry->titleId, 5);
+	
+	if ( entry->isLauncherError )
 	{
 		STD_TSNPrintf(buf, ERRORLOG_BUFSIZE, ERRORLOG_WRITE_FORMAT_RED, 
 						entry->year, entry->month, entry->day, entry->week,
-						entry->hour, entry->minute, entry->second, entry->errorCode,
+						entry->hour, entry->minute, entry->second,
+						titlebuf, entry->errorCode,
 						s_strError[entry->errorCode] ? s_strError[entry->errorCode] : "" );
 	}
 	else
 	{
 		STD_TSNPrintf(buf, ERRORLOG_BUFSIZE, ERRORLOG_WRITE_FORMAT,
 						entry->year, entry->month, entry->day, entry->week,
-						entry->hour, entry->minute, entry->second, entry->errorStr );
+						entry->hour, entry->minute, entry->second,
+						titlebuf, entry->errorStr );
 	}
 					    
 	// 余りをスペースで埋めて、改行で終端する
@@ -690,6 +730,22 @@ void ERRORLOGi_fillSpace( char *buf, int bufsize )
 {
 	u32 length = strlen( buf );
 	MI_CpuFill8( &buf[length], ' ', bufsize - length );	
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         ERRORLOGi_getTitleId
+
+  Description:  起動しているアプリのtitleIdを取得
+
+  Arguments:    
+
+  Returns:      起動しているアプリのtitleID_Lo
+ *---------------------------------------------------------------------------*/
+
+u32 ERRORLOGi_getTitleId( void )
+{
+	return MI_LoadBE32( (void*)(HW_TWL_ROM_HEADER_BUF + 0x230) );
+
 }
 
 static char *s_strWeek[] = {
