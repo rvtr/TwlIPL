@@ -71,10 +71,10 @@ BOOL kamiCopyFile(char* srcPath, char* dstPath)
 	FS_CloseFile(&file);
 
 	// 一旦対象データを削除する
-	(void)FS_DeleteFile(dstPath);
+//	(void)FS_DeleteFile(dstPath);
 
 	// ターゲットファイル作成
-    if (!FS_CreateFile(dstPath, FS_PERMIT_R | FS_PERMIT_W))
+    if (!FS_CreateFileAuto(dstPath, FS_PERMIT_R | FS_PERMIT_W))
     {
         kamiFontPrintfConsoleEx(CONSOLE_RED, "FS_CreateFile(%s) failed.\n", dstPath);
 		result = FALSE;
@@ -89,7 +89,7 @@ BOOL kamiCopyFile(char* srcPath, char* dstPath)
             kamiFontPrintfConsoleEx(CONSOLE_RED, "FS_OpenFile(%s) failed.\n", dstPath);
 			result = FALSE;
         }
-		// nand:sys/TWLFontTable.dat書き込み
+		// ターゲットファイルへ書き込み
         else if (FS_WriteFile(&file, pTempBuf, (s32)file_size) == -1)
         {
             kamiFontPrintfConsoleEx(CONSOLE_RED, "FS_WritFile() failed.\n");
@@ -103,3 +103,33 @@ BOOL kamiCopyFile(char* srcPath, char* dstPath)
 	return result;
 }
 
+// ダミーのDSメニューラッピング用ファイル作成（UIGランチャーが作っているもの）
+BOOL kamiWriteWrapData(void)
+{
+    FSFile  file;	
+    BOOL    open_is_ok;
+	const int  FATFS_CLUSTER_SIZE = 16 * 1024;
+
+	// 既に存在するなら何もしない
+    FS_InitFile(&file);
+    open_is_ok = FS_OpenFile(&file, WRAP_DATA_FILE_PATH_IN_NAND);
+	if (open_is_ok)
+	{
+		FS_CloseFile(&file);
+    	OS_Printf("%s is already exist.\n", WRAP_DATA_FILE_PATH_IN_NAND);
+		return TRUE;
+	}
+
+	if( FS_CreateFileAuto( WRAP_DATA_FILE_PATH_IN_NAND, FS_PERMIT_R | FS_PERMIT_W ) ) 
+	{
+		FSFile file;
+		if( FS_OpenFileEx( &file, WRAP_DATA_FILE_PATH_IN_NAND, FS_FILEMODE_RW ) ) 
+		{
+			(void)FS_SetFileLength( &file, FATFS_CLUSTER_SIZE );
+			FS_CloseFile( &file );
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}

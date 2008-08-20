@@ -26,7 +26,10 @@ extern "C" {
 
 #include <twl.h>
 
+#define WRAP_DATA_FILE_PATH_IN_NAND   "nand:/shared2/launcher/wrap.bin"
+
 BOOL kamiCopyFile(char* srcPath, char* dstPath);
+BOOL kamiWriteWrapData(void);
 
 /*===========================================================================*/
 

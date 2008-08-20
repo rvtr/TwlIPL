@@ -223,7 +223,7 @@ RomSpec
 	HostRoot	../data
 	Root		/data
 	File		HNAA.tad HNBA.tad HNCA.tad HNHA.tad HNLA.tad \
-                menu_launcher.nand TWLFontTable.dat
+                menu_launcher.nand TWLFontTable.dat cert.sys
 	HostRoot	$(PRIVKEY_PATH)
 	Root		/key
 	File		$(HWINFO_PRIVKEY) $(HWID_PRIVKEY)

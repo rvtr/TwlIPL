@@ -80,7 +80,8 @@ static const char* ImportTadFileList[] =
 
 static const CopyFileList sCopyFileList[] =
 {
-	{ "rom:/data/TWLFontTable.dat", "nand:sys/TWLFontTable.dat" }
+	{ "rom:/data/TWLFontTable.dat", "nand:sys/TWLFontTable.dat" },
+	{ "rom:/data/cert.sys",         "nand:/sys/cert.sys"        }
 };
 
 /*---------------------------------------------------------------------------*
@@ -401,6 +402,9 @@ TwlMain()
 			kamiFontPrintf( 0, printLine++, FONT_COLOR_RED, "Write Data File %d Failure!", i);
 		}
 	}
+
+	// ダミーのラッピングデータ書き込み
+	result &= kamiWriteWrapData();
 
 	// TADのインポート開始
 	tadNum = sizeof(ImportTadFileList)/sizeof(ImportTadFileList[0]);
