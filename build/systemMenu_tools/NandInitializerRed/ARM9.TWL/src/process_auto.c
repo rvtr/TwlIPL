@@ -21,7 +21,7 @@
 #include "process_format.h"
 #include "process_hw_info.h"
 #include "process_import.h"
-#include "process_font.h"
+#include "process_write_data.h"
 #include "process_nandfirm.h"
 #include "process_norfirm.h"
 #include "process_auto.h"
@@ -111,10 +111,10 @@ void* AutoProcess1(void)
 	case AUTO_PROCESS_MENU_HARDWARE_INFO:
 		return HWInfoProcess0;
 
-#ifdef    USE_WRITE_FONT_DATA
-	case AUTO_PROCESS_MENU_FONT_DATA:
-		return fontProcess0;	
-#endif // USE_WRITE_FONT_DATA
+#ifdef    USE_WRITE_VARIOUS_DATA
+	case AUTO_PROCESS_MENU_VARIOUS_DATA:
+		return WriteDataProcess0;	
+#endif // USE_WRITE_VARIOUS_DATA
 
 	case AUTO_PROCESS_MENU_IMPORT_TAD:
 		return ImportProcess0;
@@ -125,8 +125,10 @@ void* AutoProcess1(void)
 	case AUTO_PROCESS_MENU_MCU:
 		return mcuProcess0;
 
+#ifdef    MARIOCLUB_VERSION
 	case AUTO_PROCESS_MENU_MACHINE_INITIALIZE:
 		return FormatProcess0;
+#endif // MARIOCLUB_VERSION
 		
 	case AUTO_PROCESS_MENU_NUM:
 		return AutoProcess2;
@@ -149,7 +151,7 @@ void* AutoProcess1(void)
 void* AutoProcess2(void)
 {
 	int i;
-	s8 line = 5;
+	s8 line = 3;
 	u8 bg_color;
 	BOOL totalResult = TRUE;
 
@@ -169,13 +171,15 @@ void* AutoProcess2(void)
 	// ÉÅÉjÉÖÅ[àÍóó
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    FORMAT NAND            "); 
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    WRITE HARDWARE INFO    ");
-#ifdef    USE_WRITE_FONT_DATA
-	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    WRITE FONT DATA        ");
-#endif // USE_WRITE_FONT_DATA
+#ifdef    USE_WRITE_VARIOUS_DATA
+	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    WRITE VARIOUS DATA     ");
+#endif // USE_WRITE_VARIOUS_DATA
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    INPORT TAD FROM SD     ");
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    INPORT NANDFIRM FROM SD");
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    WRITE MCU FIRM         ");
+#ifdef    MARIOCLUB_VERSION
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    MACHINE INITIALIZE     ");
+#endif // MARIOCLUB_VERSION
 
 /*
 	for (i=0;i<sMenuSelectNo-1;i++)
@@ -189,14 +193,14 @@ void* AutoProcess2(void)
 		switch (gAutoProcessResult[i])
 		{
 			case AUTO_PROCESS_RESULT_SUCCESS:
-				kamiFontPrintf(3, (s16)(7+2*i), FONT_COLOR_GREEN, "OK");
+				kamiFontPrintf(3, (s16)(5+2*i), FONT_COLOR_GREEN, "OK");
 				break;
 			case AUTO_PROCESS_RESULT_FAILURE:
 				totalResult = FALSE;
-				kamiFontPrintf(3, (s16)(7+2*i), FONT_COLOR_RED, "NG");
+				kamiFontPrintf(3, (s16)(5+2*i), FONT_COLOR_RED, "NG");
 				break;
 			case AUTO_PROCESS_RESULT_SKIP:
-				kamiFontPrintf(2, (s16)(7+2*i), FONT_COLOR_PURPLE, "SKIP");
+				kamiFontPrintf(2, (s16)(5+2*i), FONT_COLOR_PURPLE, "SKIP");
 				break;				
 		}
 	}

@@ -26,7 +26,7 @@
 #include "process_auto.h"
 #include "process_fade.h"
 #include "process_wireless_setting.h"
-#include "process_font.h"
+#include "process_write_data.h"
 #include "process_mcu.h"
 #include "cursor.h"
 #include "keypad.h"
@@ -43,9 +43,9 @@ enum {
 	MENU_WIRELESS_SETTING,
 #endif // USE_WIRELESS_FORCE_DISABLE_SETTING
 
-#ifdef    USE_WRITE_FONT_DATA
-	MENU_FONT_DATA,
-#endif // USE_WRITE_FONT_DATA
+#ifdef    USE_WRITE_VARIOUS_DATA
+	MENU_WRITE_DATA,
+#endif // USE_WRITE_VARIOUS_DATA
 
 #ifndef   NAND_INITIALIZER_LIMITED_MODE
 	MENU_IMPORT_TAD,
@@ -81,9 +81,9 @@ static const MenuAndColor sMenuArray[] =
 	{"    WIRELESS FORCE SETTING ", BG_COLOR_YELLOW },
 #endif // USE_WIRELESS_FORCE_DISABLE_SETTING
 
-#ifdef    USE_WRITE_FONT_DATA
-	{"    WRITE FONT DATA        ", BG_COLOR_BROWN  },
-#endif // USE_WRITE_FONT_DATA
+#ifdef    USE_WRITE_VARIOUS_DATA
+	{"    WRITE VARIOUS DATA     ", BG_COLOR_BROWN  },
+#endif // USE_WRITE_VARIOUS_DATA
 
 #ifndef   NAND_INITIALIZER_LIMITED_MODE
 	{"    IMPORT TAD FROM SD     ", BG_COLOR_PINK   },
@@ -229,10 +229,10 @@ void* TopmenuProcess2(void)
 		FADE_OUT_RETURN( WirelessSettingProcess0 );
 #endif // USE_WIRELESS_FORCE_DISABLE_SETTING
 
-#ifdef    USE_WRITE_FONT_DATA
-	case MENU_FONT_DATA:
-		FADE_OUT_RETURN( fontProcess0 );
-#endif // USE_WRITE_FONT_DATA
+#ifdef    USE_WRITE_VARIOUS_DATA
+	case MENU_WRITE_DATA:
+		FADE_OUT_RETURN( WriteDataProcess0 );
+#endif // USE_WRITE_VARIOUS_DATA
 
 #ifndef   NAND_INITIALIZER_LIMITED_MODE
 	case MENU_IMPORT_TAD:

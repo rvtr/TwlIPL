@@ -265,6 +265,8 @@ void* FormatProcess2(void)
 #endif //USE_FOR_NIGHTLY_AUTO_TEST
 
 #ifndef NAND_INITIALIZER_LIMITED_MODE
+#ifdef    MARIOCLUB_VERSION
+
 		// Auto—p
 		if (gAutoFlag)
 		{
@@ -281,6 +283,7 @@ void* FormatProcess2(void)
 				FADE_OUT_RETURN( AutoProcess2 ); 
 			}
 		}
+#endif // MARIOCLUB_VERSION
 #endif
 
 			return FormatProcess1;

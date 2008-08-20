@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK - NandInitializer
-  File:     process_font.c
+  File:     process_write_data.c
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -15,8 +15,6 @@
   $Author$
  *---------------------------------------------------------------------------*/
 
-#ifdef USE_WRITE_FONT_DATA
-
 #include <twl.h>
 #include <nitro/snd.h>
 #include <twl/fatfs.h>
@@ -24,7 +22,7 @@
 #include "kami_font.h"
 #include "kami_pxi.h"
 #include "process_topmenu.h"
-#include "process_font.h"
+#include "process_write_data.h"
 #include "process_auto.h"
 #include "process_fade.h"
 #include "cursor.h"
@@ -34,14 +32,22 @@
     型定義
  *---------------------------------------------------------------------------*/
 
+enum {
+	MENU_FONT=0,
+	MENU_WRAP,
+	MENU_CERT,
+	MENU_RETURN,
+	NUM_OF_MENU_SELECT
+};
+
 /*---------------------------------------------------------------------------*
     定数定義
  *---------------------------------------------------------------------------*/
 
-#define NUM_OF_MENU_SELECT    2
 #define DOT_OF_MENU_SPACE    16
 #define CURSOR_ORIGIN_X      32
 #define CURSOR_ORIGIN_Y      56
+#define CHAR_OF_MENU_SPACE    2
 
 #define ROUND_UP(value, alignment) \
     (((u32)(value) + (alignment-1)) & ~(alignment-1))
@@ -57,13 +63,15 @@ static s8 sMenuSelectNo;
  *---------------------------------------------------------------------------*/
 
 static BOOL WriteFontData(void);
+static BOOL WriteWrapData(void);
+static BOOL WriteCertData(void);
 
 /*---------------------------------------------------------------------------*
     プロセス関数定義
  *---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*
-  Name:         font プロセス０
+  Name:         WriteData プロセス０
 
   Description:  
 
@@ -72,7 +80,7 @@ static BOOL WriteFontData(void);
   Returns:      next sequence
  *---------------------------------------------------------------------------*/
 
-void* fontProcess0(void)
+void* WriteDataProcess0(void)
 {
 	int i;
 
@@ -80,15 +88,19 @@ void* fontProcess0(void)
 	kamiFontClear();
 
 	// バージョン表示
-	kamiFontPrintf(2, 1, FONT_COLOR_BLACK, "Write Font Data");
+	kamiFontPrintf(2, 1, FONT_COLOR_BLACK, "Write Various Data");
 	kamiFontPrintf(0, 2, FONT_COLOR_BLACK, "--------------------------------");
 
 	// メニュー一覧
 	kamiFontPrintf(3,  6, FONT_COLOR_BLACK, "+-------------------+-----+");
 	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "l   WRITE FONT DATA l     l");
 	kamiFontPrintf(3,  8, FONT_COLOR_BLACK, "+-------------------+-----+");
-	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "l   RETURN          l     l");
+	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "l   WRITE WRAP DATA l     l");
 	kamiFontPrintf(3, 10, FONT_COLOR_BLACK, "+-------------------+-----+");
+	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "l   WRITE CERT.SYS  l     l");
+	kamiFontPrintf(3, 12, FONT_COLOR_BLACK, "+-------------------+-----+");
+	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "l   RETURN          l     l");
+	kamiFontPrintf(3, 14, FONT_COLOR_BLACK, "+-------------------+-----+");
 
 	// 背景全クリア
 	for (i=0;i<24;i++)
@@ -104,11 +116,11 @@ void* fontProcess0(void)
 	// カーソル消去
 	SetCursorPos((u16)200, (u16)200);
 
-	FADE_IN_RETURN( fontProcess1 );
+	FADE_IN_RETURN( WriteDataProcess1 );
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         font プロセス１
+  Name:         WriteData プロセス１
 
   Description:  
 
@@ -117,14 +129,14 @@ void* fontProcess0(void)
   Returns:      next sequence
  *---------------------------------------------------------------------------*/
 
-void* fontProcess1(void)
+void* WriteDataProcess1(void)
 {
 #ifndef NAND_INITIALIZER_LIMITED_MODE
 	// オート実行用
 	if (gAutoFlag)
 	{
-		sMenuSelectNo = 0;
-		return fontProcess2;
+		sMenuSelectNo = MENU_FONT;
+		return WriteDataProcess2;
 	}
 #endif
 
@@ -144,7 +156,7 @@ void* fontProcess1(void)
 	// 決定
     if (kamiPadIsTrigger(PAD_BUTTON_A))
 	{
-		return fontProcess2;
+		return WriteDataProcess2;
 	}
 	// トップメニューへ戻る
     else if (kamiPadIsTrigger(PAD_BUTTON_B))
@@ -152,11 +164,11 @@ void* fontProcess1(void)
 		FADE_OUT_RETURN( TopmenuProcess0 );
 	}
 
-	return fontProcess1;
+	return WriteDataProcess1;
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         font プロセス２
+  Name:         WriteData プロセス２
 
   Description:  
 
@@ -165,45 +177,66 @@ void* fontProcess1(void)
   Returns:      next sequence
  *---------------------------------------------------------------------------*/
 
-void* fontProcess2(void)
+void* WriteDataProcess2(void)
 {
 	BOOL result;
+	s16 y_pos = (s16)(7 + sMenuSelectNo * CHAR_OF_MENU_SPACE);
 
 	switch( sMenuSelectNo )
 	{
-	case 0:
+	case MENU_FONT:
 		result = WriteFontData();
-		if (result)
-		{
-			kamiFontPrintf(25, 7, FONT_COLOR_GREEN, "OK");
-		}
-		else
-		{
-			kamiFontPrintf(25, 7, FONT_COLOR_RED, "NG");
-		}
 		break;
-	case 1:
+	case MENU_WRAP:
+		result = WriteWrapData();
+		break;
+	case MENU_CERT:
+		result = WriteCertData();
+		break;
+	case MENU_RETURN:
 		FADE_OUT_RETURN( TopmenuProcess0 );
+	}
+
+	if (result)
+	{
+		kamiFontPrintf(25, y_pos, FONT_COLOR_GREEN, "OK");
+	}
+	else
+	{
+		kamiFontPrintf(25, y_pos, FONT_COLOR_RED, "NG");
 	}
 
 #ifndef NAND_INITIALIZER_LIMITED_MODE
 	// Auto用
 	if (gAutoFlag)
 	{
-		if (result) 
-		{ 
-			gAutoProcessResult[AUTO_PROCESS_MENU_FONT_DATA] = AUTO_PROCESS_RESULT_SUCCESS; 
-			FADE_OUT_RETURN( AutoProcess1 ); 
-		}
-		else 
-		{ 
-			gAutoProcessResult[AUTO_PROCESS_MENU_FONT_DATA] = AUTO_PROCESS_RESULT_FAILURE; 
-			FADE_OUT_RETURN( AutoProcess2); 
+		static BOOL total_result = TRUE;
+		total_result &= result;
+
+		switch(sMenuSelectNo)
+		{
+		case MENU_FONT:
+		case MENU_WRAP:
+#ifdef    MARIOCLUB_VERSION
+			sMenuSelectNo++;
+			return WriteDataProcess2;
+#endif // MARIOCLUB_VERSION
+		case MENU_CERT:
+			if (total_result) 
+			{ 
+				gAutoProcessResult[AUTO_PROCESS_MENU_VARIOUS_DATA] = AUTO_PROCESS_RESULT_SUCCESS; 
+				FADE_OUT_RETURN( AutoProcess1 ); 
+			}
+			else 
+			{ 
+				gAutoProcessResult[AUTO_PROCESS_MENU_VARIOUS_DATA] = AUTO_PROCESS_RESULT_FAILURE; 
+				FADE_OUT_RETURN( AutoProcess2); 
+			}
 		}
 	}
 #endif
 
-	return fontProcess1;
+	return WriteDataProcess1;
 }
 
 /*---------------------------------------------------------------------------*
@@ -280,4 +313,110 @@ static BOOL WriteFontData(void)
 	return result;
 }
 
-#endif // USE_WRITE_FONT_DATA
+// ダミーのDSメニューラッピング用ファイル作成（UIGランチャーが作っているもの）
+static BOOL WriteWrapData(void)
+{
+    FSFile  file;	
+    BOOL    open_is_ok;
+	const int  FATFS_CLUSTER_SIZE = 16 * 1024;
+
+	// 既に存在するなら何もしない
+    FS_InitFile(&file);
+    open_is_ok = FS_OpenFile(&file, WRAP_DATA_FILE_PATH_IN_NAND);
+	if (open_is_ok)
+	{
+		FS_CloseFile(&file);
+    	OS_Printf("%s is already exist.\n", WRAP_DATA_FILE_PATH_IN_NAND);
+		return TRUE;
+	}
+
+	if( FS_CreateFileAuto( WRAP_DATA_FILE_PATH_IN_NAND, FS_PERMIT_R | FS_PERMIT_W ) ) 
+	{
+		FSFile file;
+		if( FS_OpenFileEx( &file, WRAP_DATA_FILE_PATH_IN_NAND, FS_FILEMODE_RW ) ) 
+		{
+			(void)FS_SetFileLength( &file, FATFS_CLUSTER_SIZE );
+			FS_CloseFile( &file );
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+static BOOL WriteCertData(void)
+{
+    FSFile  file;	
+    BOOL    open_is_ok;
+	BOOL    read_is_ok;
+	void* pTempBuf;
+	u32 file_size;
+	u32 alloc_size;
+	BOOL result = TRUE;
+
+	// nand:/sys/cert.sysが既に存在するなら何もしない
+    FS_InitFile(&file);
+    open_is_ok = FS_OpenFile(&file, CERT_DATA_FILE_PATH_IN_NAND);
+	if (open_is_ok)
+	{
+		FS_CloseFile(&file);
+    	OS_Printf("%s is already exist.\n", CERT_DATA_FILE_PATH_IN_NAND);
+		return TRUE;
+	}
+
+	// ROMファイルオープン
+    FS_InitFile(&file);
+    open_is_ok = FS_OpenFile(&file, CERT_DATA_FILE_PATH_IN_ROM);
+	if (!open_is_ok)
+	{
+    	OS_Printf("FS_OpenFile(\"%s\") ... ERROR!\n", CERT_DATA_FILE_PATH_IN_ROM);
+		return FALSE;
+	}
+
+	// ROMファイルリード
+	file_size  = FS_GetFileLength(&file) ;
+	alloc_size = ROUND_UP(file_size, 32) ;
+	pTempBuf = OS_Alloc( alloc_size );
+	SDK_NULL_ASSERT(pTempBuf);
+	DC_InvalidateRange(pTempBuf, alloc_size);
+	read_is_ok = FS_ReadFile( &file, pTempBuf, (s32)file_size );
+	if (!read_is_ok)
+	{
+	    kamiFontPrintfConsoleEx(CONSOLE_RED, "FS_ReadFile(\"%s\") ... ERROR!\n", CERT_DATA_FILE_PATH_IN_ROM);
+		FS_CloseFile(&file);
+		OS_Free(pTempBuf);
+		return FALSE;
+	}
+
+	// ROMファイルクローズ
+	FS_CloseFile(&file);
+
+	// nand:sys/cert.sys作成
+    if (!FS_CreateFile(CERT_DATA_FILE_PATH_IN_NAND, FS_PERMIT_R | FS_PERMIT_W))
+    {
+        kamiFontPrintfConsoleEx(CONSOLE_RED, "FS_CreateFile(%s) failed.\n", CERT_DATA_FILE_PATH_IN_NAND);
+		result = FALSE;
+    }
+    else
+    {
+		// nand:sys/cert.sysオープン
+		FS_InitFile(&file);
+        open_is_ok = FS_OpenFileEx(&file, CERT_DATA_FILE_PATH_IN_NAND, FS_FILEMODE_W);
+        if (!open_is_ok)
+        {
+            kamiFontPrintfConsoleEx(CONSOLE_RED, "FS_OpenFile(%s) failed.\n", CERT_DATA_FILE_PATH_IN_NAND);
+			result = FALSE;
+        }
+		// nand:sys/cert.sys書き込み
+        else if (FS_WriteFile(&file, pTempBuf, (s32)file_size) == -1)
+        {
+            kamiFontPrintfConsoleEx(CONSOLE_RED, "FS_WritFile() failed.\n");
+			result = FALSE;
+        }
+        (void)FS_CloseFile(&file);
+    }
+
+	OS_Free(pTempBuf);
+
+	return result;
+}

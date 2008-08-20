@@ -63,7 +63,6 @@ static const char *s_pDirList0[] = {
 	(const char *)"nand:/ticket",
 	(const char *)"nand:/shared1",
 	(const char *)"nand:/shared2",
-	(const char *)"nand:/shared2/launcher",
 	(const char *)"nand:/import",
 	(const char *)"nand:/tmp",
 	NULL,
@@ -72,11 +71,6 @@ static const char *s_pDirList0[] = {
 static const char *s_pDirList1[] = {
 	(const char *)"nand2:/photo",
 	NULL,
-};
-
-static const FileProperty s_fileList[] = {
-	{  FATFS_CLUSTER_SIZE, "nand:/shared2/launcher/wrap.bin" },
-	{  0, NULL }
 };
 
 /*---------------------------------------------------------------------------*
@@ -220,8 +214,8 @@ ExeFormat(FormatMode format_mode)
 	if (!CheckDirectory ( "nand2:", s_pDirList1 )) { return FALSE; }
 	
 	// ファイル生成＆チェック
-	if (!CreateFile( &s_fileList[0] )) { return FALSE; }
-	if (!CheckFile ( &s_fileList[0] )) { return FALSE; }
+//	if (!CreateFile( &s_fileList[0] )) { return FALSE; }
+//	if (!CheckFile ( &s_fileList[0] )) { return FALSE; }
 
 	// 成功
 	return TRUE;

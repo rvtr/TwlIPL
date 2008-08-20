@@ -30,12 +30,16 @@ MACRO_FLAGS				+=	-DAUTO_FORMAT_MODE
 MACRO_FLAGS				+=	-DUSE_WIRELESS_FORCE_DISABLE_SETTING
 #============================================================================
 #============================================================================
-# フォントデータを書き込み可能にする場合定義します。（要:Make Clean）
-MACRO_FLAGS				    +=	-DUSE_WRITE_FONT_DATA
+# 各種データを書き込み可能にする場合定義します。（要:Make Clean）
+# 具体的には TWLFontTable.dat wrap.bin cert.sys の3つです。
+MACRO_FLAGS				+=	-DUSE_WRITE_VARIOUS_DATA
 #============================================================================
 #============================================================================
-# マリクラデバッグ用に製品本体での起動を抑制する場合定義します。（要:Make Clean）
-#MACRO_FLAGS				    +=	-DMARIOCLUB_VERSION
+# マリクラデバッグ用として作成する場合定義します。（要:Make Clean）
+# ・自動処理において"nand:/shared2/launcher/wrap.bin"を作成します。
+# ・自動処理において開発用CLSの証明書(cert.sys)を書き込みます。
+# ・自動処理の最後に本体初期化を行います。
+MACRO_FLAGS				+=	-DMARIOCLUB_VERSION
 #============================================================================
 
 SYSM_DISABLE_DEBUG	=	FALSE
@@ -73,7 +77,7 @@ SRCS		=	main.c \
 				process_norfirm.c \
 				process_auto.c \
 				process_fade.c \
-				process_font.c \
+				process_write_data.c \
 				process_mcu.c \
 				process_wireless_setting.c \
 				sd_event.c \

@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  TwlSDK - NandInitializer
-  File:     process_font.h
+  File:     process_write_data.h
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -15,8 +15,8 @@
   $Author$
  *---------------------------------------------------------------------------*/
 
-#ifndef PROCESS_FONT_H_
-#define PROCESS_FONT_H_
+#ifndef PROCESS_WRITE_DATA_H_
+#define PROCESS_WRITE_DATA_H_
 
 #ifdef	__cplusplus
 extern "C" {
@@ -31,16 +31,19 @@ extern "C" {
  *---------------------------------------------------------------------------*/
 #define FONT_DATA_FILE_PATH_IN_SDMC   "sdmc:/TWLFontTable.dat"
 #define FONT_DATA_FILE_PATH_IN_NAND   "nand:sys/TWLFontTable.dat"
+#define WRAP_DATA_FILE_PATH_IN_NAND   "nand:/shared2/launcher/wrap.bin"
+#define CERT_DATA_FILE_PATH_IN_ROM    "rom:/data/cert.sys"
+#define CERT_DATA_FILE_PATH_IN_NAND   "nand:/sys/cert.sys"
 
 /*---------------------------------------------------------------------------*
     ä÷êîíËã`
  *---------------------------------------------------------------------------*/
 
-void* fontProcess0(void);
-void* fontProcess1(void);
-void* fontProcess2(void);
-void* fontProcess3(void);
-void* fontProcess4(void);
+void* WriteDataProcess0(void);
+void* WriteDataProcess1(void);
+void* WriteDataProcess2(void);
+void* WriteDataProcess3(void);
+void* WriteDataProcess4(void);
 
 /*===========================================================================*/
 
@@ -48,7 +51,7 @@ void* fontProcess4(void);
 }          /* extern "C" */
 #endif
 
-#endif /* PROCESS_FONT_H_ */
+#endif /* PROCESS_WRITE_DATA_H_ */
 
 /*---------------------------------------------------------------------------*
   End of file
