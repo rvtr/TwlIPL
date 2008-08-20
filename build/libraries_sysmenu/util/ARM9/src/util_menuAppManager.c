@@ -612,6 +612,7 @@ static void AMN_initNandTitleList_()
     s32 l;
     NAMTitleId* pNandAllTitleIDList = NULL;
     u8 count_valid_app_for_launcher = 0;
+    int finger = 0;
 
     // インポートされているタイトルの取得
     sNandAllTitleListLength = NAM_GetNumTitles();
@@ -638,6 +639,39 @@ static void AMN_initNandTitleList_()
             }
         }
     }
+    
+    // まず、タイトルを重要な順に選択ソートする。
+    // HNB*を先頭に、システムアプリ、ユーザアプリの順序
+    // 非表示タイトルも移動してしまっているが、あまり関係ない
+    for( l = 0; l < sNandAllTitleListLength; l++ )
+    {
+		// HNB*
+		char *code = ((char *)&pNandAllTitleIDList[l]) + 1;
+		if( 0 == STD_CompareNString( code, "BNH", 3 ) )
+		{
+			if( l != finger)
+			{
+				NAMTitleId temp = pNandAllTitleIDList[finger];
+				pNandAllTitleIDList[finger] = pNandAllTitleIDList[l];
+				pNandAllTitleIDList[l] = temp;
+			}
+			finger++;
+		}
+	}
+    for( l = finger; l < sNandAllTitleListLength; l++ )
+    {
+		// システムアプリ
+		if( pNandAllTitleIDList[l] & TITLE_ID_APP_TYPE_MASK )
+		{
+			if( l != finger)
+			{
+				NAMTitleId temp = pNandAllTitleIDList[finger];
+				pNandAllTitleIDList[finger] = pNandAllTitleIDList[l];
+				pNandAllTitleIDList[l] = temp;
+			}
+			finger++;
+		}
+	}
 
     // メモリの確保と解放を同じ関数内で行いたいので、
     // 取得したタイトルがローンチ対象かどうかをチェック
