@@ -305,15 +305,18 @@ System::Collections::Generic::List<u32>^ MasterEditorTWL::patternMatch(
 	for( first=0; first < textLen; first++ )
 	{
 		len = (patternLen < (textLen-first))?patternLen:(textLen-first);	// 最後のほうは途中までしかマッチングしない
-		if( memcmp( text+first, pattern, len ) == 0 )
+		if( *(text+first) == pattern[0] )		// 高速化のため最初の文字が一致したときのみ全文マッチング
 		{
-			if( (enableLast == true) )
+			if( memcmp( text+first, pattern, len ) == 0 )
 			{
-				list->Add( first );
-			}
-			else if( len == patternLen )	// 完全一致しないとダメ
-			{
-				list->Add( first );
+				if( (enableLast == true) )
+				{
+					list->Add( first );
+				}
+				else if( len == patternLen )	// 完全一致しないとダメ
+				{
+					list->Add( first );
+				}
 			}
 		}
 	}

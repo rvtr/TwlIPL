@@ -925,7 +925,7 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			// labTitleName
 			// 
 			this->labTitleName->AutoSize = true;
-			this->labTitleName->Location = System::Drawing::Point(16, 24);
+			this->labTitleName->Location = System::Drawing::Point(14, 24);
 			this->labTitleName->Name = L"labTitleName";
 			this->labTitleName->Size = System::Drawing::Size(65, 12);
 			this->labTitleName->TabIndex = 1;
@@ -965,19 +965,19 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->combBackup->FormattingEnabled = true;
 			this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
 				L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"なし", L"その他"});
-			this->combBackup->Location = System::Drawing::Point(105, 18);
+			this->combBackup->Location = System::Drawing::Point(105, 17);
 			this->combBackup->MaxDropDownItems = 9;
 			this->combBackup->Name = L"combBackup";
-			this->combBackup->Size = System::Drawing::Size(100, 20);
+			this->combBackup->Size = System::Drawing::Size(113, 20);
 			this->combBackup->TabIndex = 5;
 			this->combBackup->SelectedIndexChanged += gcnew System::EventHandler(this, &Form1::combBackup_SelectedIndexChanged);
 			// 
 			// tboxBackupOther
 			// 
 			this->tboxBackupOther->Enabled = false;
-			this->tboxBackupOther->Location = System::Drawing::Point(211, 19);
+			this->tboxBackupOther->Location = System::Drawing::Point(224, 17);
 			this->tboxBackupOther->Name = L"tboxBackupOther";
-			this->tboxBackupOther->Size = System::Drawing::Size(93, 19);
+			this->tboxBackupOther->Size = System::Drawing::Size(97, 19);
 			this->tboxBackupOther->TabIndex = 6;
 			// 
 			// gboxCRC
@@ -1458,7 +1458,7 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->gboxTWLInfoWritable->Size = System::Drawing::Size(451, 313);
 			this->gboxTWLInfoWritable->TabIndex = 30;
 			this->gboxTWLInfoWritable->TabStop = false;
-			this->gboxTWLInfoWritable->Text = L"ROMデータ編集可能情報(必要がであれば変更してください)";
+			this->gboxTWLInfoWritable->Text = L"ROMデータ編集可能情報(必要があれば変更してください)";
 			// 
 			// labRegion
 			// 
@@ -2533,7 +2533,8 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->tboxLib->Multiline = true;
 			this->tboxLib->Name = L"tboxLib";
 			this->tboxLib->ReadOnly = true;
-			this->tboxLib->Size = System::Drawing::Size(337, 80);
+			this->tboxLib->ScrollBars = System::Windows::Forms::ScrollBars::Both;
+			this->tboxLib->Size = System::Drawing::Size(337, 91);
 			this->tboxLib->TabIndex = 32;
 			// 
 			// labLib
@@ -2551,6 +2552,7 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->tboxSDK->Multiline = true;
 			this->tboxSDK->Name = L"tboxSDK";
 			this->tboxSDK->ReadOnly = true;
+			this->tboxSDK->ScrollBars = System::Windows::Forms::ScrollBars::Both;
 			this->tboxSDK->Size = System::Drawing::Size(337, 65);
 			this->tboxSDK->TabIndex = 10;
 			// 
@@ -2884,7 +2886,7 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->gboxTitleID->Controls->Add(this->tboxTitleIDHi);
 			this->gboxTitleID->Controls->Add(this->tboxAppType);
 			this->gboxTitleID->Controls->Add(this->labAppType);
-			this->gboxTitleID->Location = System::Drawing::Point(17, 37);
+			this->gboxTitleID->Location = System::Drawing::Point(18, 34);
 			this->gboxTitleID->Name = L"gboxTitleID";
 			this->gboxTitleID->Size = System::Drawing::Size(348, 151);
 			this->gboxTitleID->TabIndex = 23;
@@ -2894,7 +2896,7 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			// labHex2
 			// 
 			this->labHex2->AutoSize = true;
-			this->labHex2->Location = System::Drawing::Point(209, 51);
+			this->labHex2->Location = System::Drawing::Point(206, 51);
 			this->labHex2->Name = L"labHex2";
 			this->labHex2->Size = System::Drawing::Size(11, 12);
 			this->labHex2->TabIndex = 7;
@@ -2903,7 +2905,7 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			// labHex1
 			// 
 			this->labHex1->AutoSize = true;
-			this->labHex1->Location = System::Drawing::Point(209, 23);
+			this->labHex1->Location = System::Drawing::Point(206, 23);
 			this->labHex1->Name = L"labHex1";
 			this->labHex1->Size = System::Drawing::Size(11, 12);
 			this->labHex1->TabIndex = 6;
@@ -2966,7 +2968,7 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			// labCaptionEx
 			// 
 			this->labCaptionEx->AutoSize = true;
-			this->labCaptionEx->Location = System::Drawing::Point(28, 195);
+			this->labCaptionEx->Location = System::Drawing::Point(29, 195);
 			this->labCaptionEx->Name = L"labCaptionEx";
 			this->labCaptionEx->Size = System::Drawing::Size(53, 12);
 			this->labCaptionEx->TabIndex = 11;
@@ -3349,9 +3351,20 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			if( this->hSrl->hSDKList != nullptr )
 			{
 				this->tboxSDK->Clear();
-				for each( System::String ^str in this->hSrl->hSDKList )
+				for each( RCSDKVersion ^ver in this->hSrl->hSDKList )
 				{
-					this->tboxSDK->Text += str + "\r\n";
+					if( ver->IsStatic )
+						this->tboxSDK->Text += ver->Version + " (main static)\r\n";
+					else
+						this->tboxSDK->Text += ver->Version + "\r\n";
+				}
+			}
+			if( this->hSrl->hLicenseList != nullptr )
+			{
+				this->tboxLib->Clear();
+				for each( RCLicense ^lic in this->hSrl->hLicenseList )
+				{
+					this->tboxLib->Text += lic->Publisher + " " + lic->Name + "\r\n";
 				}
 			}
 
@@ -3363,18 +3376,22 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 		System::Boolean checkSrlForms(void)
 		{
 			// 不正な場合はダイアログで注意してreturn
-			if( this->checkTextForm( this->tboxTitleName->Text, this->labTitleName->Text ) == false )
-				return false;
-			if( this->checkTextForm( this->tboxGameCode->Text, this->labGameCode->Text ) == false )
-				return false;
-			if( this->checkTextForm( this->tboxMakerCode->Text, this->labMakerCode->Text ) == false )
-				return false;
-			if( this->checkTextForm( this->tboxPlatform->Text, this->labPlatform->Text ) == false )
-				return false;
-			if( this->checkTextForm( this->tboxRomSize->Text, this->labPlatform->Text ) == false )
+			//if( this->checkTextForm( this->tboxTitleName->Text, this->labTitleName->Text ) == false )
+			//	return false;
+			//if( this->checkTextForm( this->tboxGameCode->Text, this->labGameCode->Text ) == false )
+			//	return false;
+			//if( this->checkTextForm( this->tboxMakerCode->Text, this->labMakerCode->Text ) == false )
+			//	return false;
+			//if( this->checkTextForm( this->tboxPlatform->Text, this->labPlatform->Text ) == false )
+			//	return false;
+			//if( this->checkTextForm( this->tboxRomSize->Text, this->labPlatform->Text ) == false )
+			//	return false;
+
+			// リージョン
+			if( this->checkBoxIndex( this->combRegion, this->labRegion->Text ) == false )
 				return false;
 
-			// 反映する前にフォームが正しいかどうかチェック
+			// ペアレンタルコントロール
 			if( this->checkParentalForms( this->combCERO, this->cboxCERO, this->labCERO->Text ) == false )
 				return false;
 			if( this->checkParentalForms( this->combESRB, this->cboxESRB, this->labESRB->Text ) == false)
@@ -3412,6 +3429,34 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 		// ペアレンタルコントロール関連の情報をフォームから取得してSRLに反映させる
 		void setParentalSrlPropaties(void)
 		{
+			// リージョン
+			this->hSrl->hIsRegionJapan     = gcnew System::Boolean(false);
+			this->hSrl->hIsRegionAmerica   = gcnew System::Boolean(false);
+			this->hSrl->hIsRegionEurope    = gcnew System::Boolean(false);
+			this->hSrl->hIsRegionAustralia = gcnew System::Boolean(false);
+			switch( this->combRegion->SelectedIndex )
+			{
+				case 0:
+					this->hSrl->hIsRegionJapan = gcnew System::Boolean(true);
+				break;
+
+				case 1:
+					this->hSrl->hIsRegionAmerica = gcnew System::Boolean(true);
+				break;
+
+				case 2:
+					this->hSrl->hIsRegionEurope = gcnew System::Boolean(true);
+				break;
+
+				case 4:
+					this->hSrl->hIsRegionEurope    = gcnew System::Boolean(true);
+					this->hSrl->hIsRegionAustralia = gcnew System::Boolean(true);
+				break;
+
+				default:
+				break;
+			}
+
 			System::Byte rating;
 			// CERO
 			switch( this->combCERO->SelectedIndex )
@@ -3551,6 +3596,24 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 		{
 			System::Int32  index;
 
+			// リージョン
+			System::Boolean isJapan   = *(this->hSrl->hIsRegionJapan);
+			System::Boolean isAmerica = *(this->hSrl->hIsRegionAmerica);
+			System::Boolean isEurope  = *(this->hSrl->hIsRegionEurope);
+			System::Boolean isAustralia = *(this->hSrl->hIsRegionAustralia);
+			if( isJapan && !isAmerica && !isEurope && !isAustralia )
+				index = 0;
+			else if( !isJapan && isAmerica && !isEurope && !isAustralia )
+				index = 1;
+			else if( !isJapan && !isAmerica && isEurope && !isAustralia )
+				index = 2;
+			else if( !isJapan && !isAmerica && isEurope && isAustralia )
+				index = 3;
+			else
+				index = -1;	// 不正
+			this->combRegion->SelectedIndex = index;
+			this->maskParentalForms();
+
 			// CERO
 			switch( *(hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_CERO ]) )
 			{
@@ -3686,6 +3749,79 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->cboxAlwaysOFLC->Checked = *(hSrl->hArrayParentalAlways[ OS_TWL_PCTL_OGN_OFLC ]);
 		}
 
+		// リージョン情報からペアレンタルコントロールの編集可能団体をマスクする
+		void maskParentalForms(void)
+		{
+			this->enableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
+			this->enableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
+			this->enableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
+			this->enableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
+			this->enableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
+			this->enableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
+			this->enableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+			switch( this->combRegion->SelectedIndex )
+			{
+				case 0:
+					// 日本
+					this->enableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
+
+					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
+					this->disableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
+					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
+					this->disableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
+					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
+					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+				break;
+
+				case 1:
+					// 米国
+					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
+					this->enableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
+					this->disableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
+					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
+					this->disableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
+					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
+					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+				break;
+
+				case 2:
+					// 欧州
+					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
+					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
+					this->enableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
+					this->enableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
+					this->enableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
+					this->enableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
+					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+				break;
+
+				case 3:
+					// 豪州
+					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
+					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
+					this->disableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
+					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
+					this->disableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
+					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
+					this->enableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+				break;
+
+				case 4:
+					// 欧州と豪州
+					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
+					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
+					this->enableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
+					this->enableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
+					this->enableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
+					this->enableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
+					this->enableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+				break;
+
+				default:
+				break;
+			}
+		}
+
 		// ペアレンタルコントロール関連情報専用のダイアログメッセージ
 		void parentalMsg( const System::Int32 type, const System::String ^msg )
 		{
@@ -3748,7 +3884,7 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 				}
 				if( !System::String::IsNullOrEmpty( this->tboxProductCode2Foreign2->Text ) )
 				{
-					this->hDeliv->hProductCode2Foreign += ("/" + this->tboxProductCode2Foreign2->Text);
+					this->hDeliv->hProductCode2Foreign += ("/" + this->tboxProductCode2Foreign3->Text);
 				}
 			}
 			else
@@ -3764,7 +3900,20 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->hDeliv->hSubmitMonth   = gcnew System::Int32( this->dateSubmit->Value.Month  );
 			this->hDeliv->hSubmitDay     = gcnew System::Int32( this->dateSubmit->Value.Day    );
 			this->hDeliv->hSubmitVersion = gcnew System::Int32( System::Decimal::ToInt32( this->numSubmitVersion->Value ) );
-			this->hDeliv->hSDK           = this->tboxSDK->Text;
+			// SDK
+			this->hDeliv->hSDK = nullptr;
+			if( this->hSrl->hSDKList )
+			{
+				for each( RCSDKVersion ^sdk in this->hSrl->hSDKList )	// 書類には ARM9 static のバージョン情報を記入する
+				{
+					if( sdk->IsStatic )
+						this->hDeliv->hSDK = sdk->Version;
+				}
+			}
+			if( this->hDeliv->hSDK == nullptr )
+			{
+				this->hDeliv->hSDK = gcnew System::String( "Undefined" );
+			}
 			// 提出方法
 			if( this->rSubmitPost->Checked == true )
 			{
@@ -4149,7 +4298,7 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->labCaptionEx->Text          = gcnew System::String( "特記事項" );
 
 			// ROMデータ編集可能情報
-			this->gboxTWLInfoWritable->Text   = gcnew System::String( "ROM編集可能情報(必要であれば変更してください)" );
+			this->gboxTWLInfoWritable->Text   = gcnew System::String( "ROM編集可能情報(必要があれば変更してください)" );
 			this->labEULA->Text               = gcnew System::String( "EULA同意バージョン" );
 			this->cboxIsEULA->Text            = gcnew System::String( "EULA同意" );
 			this->cboxIsWirelessIcon->Text    = gcnew System::String( "DSワイヤレス通信アイコン表示" );
@@ -4423,12 +4572,6 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 		// SRLの保存
 		System::Void saveSrl( System::String ^filename )
 		{
-			// SRL関連フォーム入力をチェックする
-			if( this->checkSrlForms() == false )
-			{
-				return;
-			}
-
 			// ROM情報をフォームから取得してSRLバイナリに反映させる
 			this->setSrlPropaties();
 			// マスタ書類情報をフォームから取得して書類に反映させる -> 必要なし
@@ -4498,6 +4641,22 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 		{
 			System::String^ filename;
 
+			// SRLが読み込まれていないときにはリードさせない
+			if( System::String::IsNullOrEmpty( this->tboxFile->Text ) )
+			{
+				if( this->rSelectJ->Checked == true )
+					this->errMsg( "ROMデータファイルがオープンされていません。" );
+				else
+					this->errMsg( "ROM file has not opened yet." );
+				return;
+			}
+
+			// SRL関連フォーム入力をチェックする
+			if( this->checkSrlForms() == false )
+			{
+				return;
+			}
+
 			// ダイアログで決めたファイルにSRLを保存
 			{
 				System::Windows::Forms::SaveFileDialog ^dlg = gcnew (SaveFileDialog);
@@ -4562,6 +4721,16 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			System::String ^srlfile;
 			System::UInt16 ^hcrc;
 			cli::array<System::String^> ^paths;
+
+			// SRLが読み込まれていないときにはリードさせない
+			if( System::String::IsNullOrEmpty( this->tboxFile->Text ) )
+			{
+				if( this->rSelectJ->Checked == true )
+					this->errMsg( "ROMデータファイルがオープンされていません。" );
+				else
+					this->errMsg( "ROM file has not opened yet." );
+				return;
+			}
 
 			// SRLと書類の両方のフォーム入力をチェックする
 			if( this->checkSrlForms() == false )
@@ -4768,67 +4937,7 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 	private:
 		System::Void combRegion_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e)
 		{
-			switch( this->combRegion->SelectedIndex )
-			{
-				case 0:
-					// 日本
-					this->enableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
-
-					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
-					this->disableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
-					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
-					this->disableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
-					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
-					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
-				break;
-
-				case 1:
-					// 米国
-					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
-					this->enableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
-					this->disableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
-					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
-					this->disableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
-					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
-					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
-				break;
-
-				case 2:
-					// 欧州
-					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
-					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
-					this->enableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
-					this->enableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
-					this->enableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
-					this->enableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
-					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
-				break;
-
-				case 3:
-					// 豪州
-					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
-					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
-					this->disableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
-					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
-					this->disableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
-					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
-					this->enableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
-				break;
-
-				case 4:
-					// 欧州と豪州
-					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
-					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
-					this->enableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
-					this->enableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
-					this->enableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
-					this->enableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
-					this->enableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
-				break;
-
-				default:
-				break;
-			}
+			this->maskParentalForms();
 		}
 
 	private:

@@ -35,6 +35,82 @@ namespace MasterEditorTWL
 
 	// -------------------------------------------------------------------
 	// Type : ref class
+	// Name : RCSDKVersion
+	//
+	// Description : RCSrlクラスに持たせるSDKバージョン情報クラス
+	// 
+	// Role : 構造体としてデータをまとめておく
+	// -------------------------------------------------------------------
+	ref class RCSDKVersion
+	{
+	private:
+		System::String  ^hVersion;
+		System::Boolean ^hIsStatic;
+	private:
+		RCSDKVersion(){}	// 封じる
+	public:
+		RCSDKVersion( System::String ^ver, System::Boolean isStatic )	// 生成時にのみフィールドを設定可能
+		{
+			if( ver == nullptr )
+				this->hVersion = gcnew System::String("");	// NULL参照バグを避ける
+			else
+				this->hVersion  = ver;
+			this->hIsStatic = gcnew System::Boolean( isStatic );
+		}
+	public:
+		property System::String ^Version	// 生成後にはフィールドはRead Only
+		{
+			System::String^ get(){ return this->hVersion; }
+		}
+	public:
+		property System::Boolean IsStatic
+		{
+			System::Boolean get(){ return *(this->hIsStatic); }
+		}
+	};
+
+	// -------------------------------------------------------------------
+	// Type : ref class
+	// Name : RCLicense
+	//
+	// Description : RCSrlクラスに持たせるライセンス情報クラス
+	// 
+	// Role : 構造体としてデータをまとめておく
+	// -------------------------------------------------------------------
+	ref class RCLicense
+	{
+	private:
+		System::String ^hPublisher;
+		System::String ^hName;
+	private:
+		RCLicense(){}	// 封じる
+	public:
+		RCLicense( System::String ^pub, System::String ^name )	// 生成時にのみフィールドを設定可能
+		{
+			if( pub == nullptr )
+				this->hPublisher = gcnew System::String("");
+			else
+				this->hPublisher = pub;
+
+			if( name == nullptr )
+				this->hName = gcnew System::String("");
+			else
+				this->hName = name;
+		}
+	public:
+		property System::String ^Name	// 生成後にはフィールドはRead Only
+		{
+			System::String^ get(){ return this->hName; }
+		}
+	public:
+		property System::String ^Publisher
+		{
+			System::String^ get(){ return this->hPublisher; }
+		}
+	};
+
+	// -------------------------------------------------------------------
+	// Type : ref class
 	// Name : RCSrl
 	//
 	// Description : ROMデータ(SRL)の設定情報クラス
@@ -126,7 +202,8 @@ namespace MasterEditorTWL
 		//property System::Boolean ^hRegionKorea;
 
 		// SDKバージョンリスト
-		property System::Collections::Generic::List<System::String^> ^hSDKList;
+		property System::Collections::Generic::List<RCSDKVersion^> ^hSDKList;
+		property System::Collections::Generic::List<RCLicense^> ^hLicenseList;
 
 		// constructor and destructor
 	public:
@@ -158,9 +235,8 @@ namespace MasterEditorTWL
 		ECSrlResult hasDSDLPlaySign( FILE *fp );
 				// DSダウンロード署名がSRLに格納されているか調べる
 				// @arg [in]  入力ファイルのFP (->SRL読み込み時に実行されるべき)]
-
-		// SRLバイナリ中のSDKバージョンを取得する
-		ECSrlResult searchSDKVersion( FILE *fp );
+		ECSrlResult searchSDKVersion( FILE *fp );		// SDKバージョンを取得する
+		ECSrlResult searchLicenses( FILE *fp );			// 使用ライセンスを取得する
 
 	}; // end of ref class RCSrl
 

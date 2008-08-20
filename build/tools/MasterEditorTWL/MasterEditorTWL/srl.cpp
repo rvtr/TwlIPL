@@ -62,6 +62,12 @@ ECSrlResult RCSrl::readFromFile( System::String ^filename )
 			(void)fclose(fp);
 			return r;
 		}
+		r = this->searchLicenses( fp );
+		if( r != ECSrlResult::NOERROR )
+		{
+			(void)fclose(fp);
+			return r;
+		}
 	}
 	(void)fclose( fp );
 
@@ -481,15 +487,17 @@ ECSrlResult RCSrl::hasDSDLPlaySign( FILE *fp )
 //
 ECSrlResult RCSrl::searchSDKVersion( FILE *fp )
 {
+	// SDKバージョンはSRLバイナリ中に以下のマジックナンバとともに埋められている
 	const u8  pattern[8] = {0x21, 0x06, 0xc0, 0xde, 0xde, 0xc0, 0x06, 0x21};
 	System::Collections::Generic::List<u32> ^list;
-	this->hSDKList = gcnew System::Collections::Generic::List<System::String ^>;
+
+	this->hSDKList = gcnew System::Collections::Generic::List<RCSDKVersion ^>;
 	this->hSDKList->Clear();
 
 	list = MasterEditorTWL::patternMatch( fp, pattern , 8 );
 	if( list == nullptr )
 	{
-		System::Diagnostics::Debug::WriteLine( "no list" );
+		//System::Diagnostics::Debug::WriteLine( "no list" );
 		return ECSrlResult::ERROR_SDK;
 	}
 	for each( u32 item in list )
@@ -531,9 +539,63 @@ ECSrlResult RCSrl::searchSDKVersion( FILE *fp )
 				case 3: str += ("RELEASE " + patch.ToString()); break;
 				default: break;
 			}
-			this->hSDKList->Add( str );
+			u32 statbegin = this->pRomHeader->s.main_rom_offset;
+			u32 statend   = this->pRomHeader->s.main_rom_offset + this->pRomHeader->s.main_size - 1;
+			System::Boolean isstat = ((statbegin <= offset) && (offset <= statend))?true:false;
+			this->hSDKList->Add( gcnew RCSDKVersion(str, isstat) );
 			//System::Diagnostics::Debug::WriteLine( "SDK " + str );
 		}
 	}
+	return ECSrlResult::NOERROR;
+}
+
+//
+// 使用ライセンスを取得する
+//
+#define  LICENSE_LEN_MAX   1024		// これよりもライセンスの文字列が長いとき正しく取得できない
+ECSrlResult RCSrl::searchLicenses(FILE *fp)
+{
+	// ライセンスはSRLバイナリ中に[SDK+(配布元):(ライブラリ名)]のフォーマットで埋められている
+	const u8 pattern[5] = { '[', 'S', 'D', 'K', '+' };
+	System::Collections::Generic::List<u32> ^list;
+
+	this->hLicenseList = gcnew System::Collections::Generic::List<RCLicense ^>;
+	this->hLicenseList->Clear();
+	
+	fseek( fp, 0, SEEK_END );
+	const u32 filesize = ftell( fp );
+
+	list = MasterEditorTWL::patternMatch( fp, pattern, 5 );
+	if( list == nullptr )
+	{
+		return ECSrlResult::NOERROR;	// ライセンスがない場合も存在するのでOKとする
+	}
+	for each( u32 item in list )
+	{
+		char  buf[ LICENSE_LEN_MAX + 1 ];	// '\0'の分だけ多めにとっておく
+		u32   offset = item + 5;			// "[SDK+"の後からリードする
+		u32   len = ((filesize - offset) < LICENSE_LEN_MAX)?(filesize - offset):LICENSE_LEN_MAX;
+
+		// "(配布元):(ライブラリ名)]"を余分な部分を含めてひとまずバッファに格納
+		fseek( fp, offset, SEEK_SET );
+		if( len != fread( buf, 1, len, fp ) )
+		{
+			return ECSrlResult::ERROR;
+		}
+		buf[ len ] = '\0';	// 後のstrlenの成功を保証するため
+
+		// "(配布元):(ライブラリ名)]"を取り出してから(配布元)と(ライブラリ名)に分割
+		System::Text::UTF8Encoding^ utf8 = gcnew System::Text::UTF8Encoding( true );	// char->String変換に必要
+		System::String ^str = gcnew System::String( buf, 0, strlen(buf), utf8 );		// 探索や分割はStringメソッドに用意されている
+		str = (str->Split( ']' ))[0];							// ']'よりも前を取り出す
+		cli::array<System::String^> ^spl = str->Split( ':' );	// (配布元):(ライブラリ名)を分割する
+
+		if( spl->Length >= 2  )		// 念のため
+		{
+			this->hLicenseList->Add( gcnew RCLicense( spl[0], spl[1] ) );
+			//System::Diagnostics::Debug::WriteLine( "license " + spl[0] + " " + spl[1] );
+		}
+	}
+
 	return ECSrlResult::NOERROR;
 }
