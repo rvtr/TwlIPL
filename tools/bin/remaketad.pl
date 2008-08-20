@@ -136,7 +136,7 @@ sub read_content_info
 sub maketad
 {	my( $tad, $cfg ) = @_;
 
-	my $maketad = "$ENV{TWL_IPL_RED_PRIVATE_ROOT}/tools/maketad.updater.exe";
+	my $maketad = "$ENV{TWL_IPL_RED_PRIVATE_ROOT}/tools/bin/maketad.updater.exe";
 	$tad =~ s/tad/updater.tad/;
 
 	my $option = "";
