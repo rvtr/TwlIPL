@@ -553,7 +553,6 @@ int ERRORLOGi_ReadEntry( void )
 						&(elWork.entry[numEntry].errorCode)  );
 			
 			elWork.entry[numEntry].titleId = MI_LoadLE32( titlebuf );
-			OS_TPrintf("reading titleid: %4x\n", elWork.entry[numEntry].titleId);
 			
 		}
 		else if( !STD_StrNCmp( "#FFT", &buf[ERRORLOG_BAR_LENGTH + 1], 4 ) )
