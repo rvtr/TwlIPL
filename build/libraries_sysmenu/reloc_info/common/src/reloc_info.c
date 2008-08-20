@@ -16,6 +16,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sysmenu/sysmenu_lib.h>
+#include "reboot.h"
 
 // const data------------------------------------------------------------------
 
@@ -72,7 +73,10 @@ static BOOL SYSMi_CheckLoadRegionAndSetRelocateInfoEx
 ( u32 *dest, u32 length, RomSegmentRange default_region, u32 *check_dest, Relocate_Info *info )
 {
 	u32 ori_len = length;
-	length = MATH_ROUNDUP( length, SYSM_ALIGNMENT_LOAD_MODULE );// AES暗号化領域の関係で、再配置必要性のチェックに使うlengthは32バイトアライメントに補正
+
+	// AES暗号化領域の関係で、再配置必要性およびサイズオーバーのチェックに使うlengthは32バイトアライメントに補正
+	// （そうでないと、デフォルトロード領域の後ろ数バイトまでAES暗号解除処理されてしまう可能性があるため）
+	length = MATH_ROUNDUP( length, SYSM_ALIGNMENT_LOAD_MODULE );
 	MI_CpuClearFast( info, sizeof(Relocate_Info) );
 	if( default_region.end - default_region.start < length ) return FALSE;// サイズオーバー
 	if( !( default_region.start <= *dest && *dest + length <= default_region.end ) )
@@ -138,5 +142,24 @@ BOOL SYSM_CheckLoadRegionAndSetRelocateInfo( RomSegmentName seg, u32 *dest, u32 
 		//NTR専用
 		rsr = romSegmentRangeNitro;
 	}
+
+	// *dest から *dest+length がアプリロード禁止領域（Launcher最終ブートコード及びエントリポイント不可領域）に被っていないかどうか判定
+	if( (
+		  ( seg == ARM9_STATIC || seg == ARM9_LTD_STATIC ) &&
+		 !( ( *dest >= HW_MAIN_MEM ) && ( *dest + length <  HW_TWL_MAIN_MEM_SHARED ) )
+		) ||
+		( ( seg == ARM7_STATIC || seg == ARM7_LTD_STATIC ) &&
+		 !( ( ( *dest  >= HW_MAIN_MEM ) &&
+			  ( *dest + length  <  HW_TWL_MAIN_MEM_SHARED ) ) ||
+		    ( ( *dest  >= HW_WRAM_BASE ) &&
+			  ( *dest + length  <  SYSM_NTR_ARM7_LOAD_WRAM_END ) ) )
+		) ||
+		!( ( *dest + length < OS_BOOT_A9CODE_BUF ) || ( *dest >= OS_BOOT_A9CODE_BUF + OS_BOOT_CODE_SIZE ) ) ||
+		!( ( *dest + length < OS_BOOT_A7CODE_BUF ) || ( *dest >= OS_BOOT_A7CODE_BUF + OS_BOOT_CODE_SIZE ) )
+	 ) {
+		OS_TPrintf("load address invalid.\n");
+		return FALSE;
+	}
+
 	return SYSMi_CheckLoadRegionAndSetRelocateInfoEx(dest, length, rsr[seg], load_region_check_list[seg], info);
 }

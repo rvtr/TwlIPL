@@ -35,6 +35,7 @@ TARGET_LIB			=	libreloc_info_sp$(TWL_LIBSUFFIX).a
 
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+include	$(TWLSDK_ROOT)/build/libraries/reboot/commondefs.reboot
 
 INSTALL_TARGETS		=	$(TARGETS)
 INSTALL_DIR			=	$(SYSMENU_INSTALL_LIBDIR)
