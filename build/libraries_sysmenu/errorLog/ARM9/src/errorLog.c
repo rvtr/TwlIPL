@@ -46,10 +46,8 @@
 
 #define ERRORLOG_NUM_ARGS			9
 
-#define ERRORLOG_SIZE			( 16 * 1024 )	// ファイルは16KBサイズ固定
-#define ERRORLOG_BUFSIZE		256				// 1エントリあたりのサイズ
 #define ERRORLOG_STR_OFFSET		61
-#define ERRORLOG_NUM_ENTRY		( ERRORLOG_SIZE / ERRORLOG_BUFSIZE ) // ログに書き込まれるエントリの最大数
+
 
 
 // 内部関数SYSMi_CheckAndCreateDirectoryのエラーチェッカ
@@ -745,6 +743,11 @@ u32 ERRORLOGi_getTitleId( void )
 {
 	return MI_LoadBE32( (void*)(HW_TWL_ROM_HEADER_BUF + 0x230) );
 
+}
+
+FSFile ERRORLOGi_getLogFilePt( void )
+{
+	return elWork.file;
 }
 
 static char *s_strWeek[] = {

@@ -31,6 +31,9 @@ extern "C" {
 // このサイズを超えた文字列は切り捨てられます
 // ERRORLOG_STR_LENGTH = ERRORLOG_BUFSIZE - ERRORLOG_STR_OFFSET - 1
 #define ERRORLOG_STR_LENGTH		194
+#define ERRORLOG_SIZE			( 16 * 1024 )	// ファイルは16KBサイズ固定
+#define ERRORLOG_BUFSIZE		256				// 1エントリあたりのサイズ
+#define ERRORLOG_NUM_ENTRY		( ERRORLOG_SIZE / ERRORLOG_BUFSIZE ) // ログに書き込まれるエントリの最大数
 
 // 既に書き込まれたエラーログを表現するためのエントリ
 typedef struct ErrorLogEntry{
@@ -81,6 +84,8 @@ extern const ErrorLogEntry* ERRORLOG_Read( int idx );
 
 // for RED Launcher
 extern BOOL ERRORLOG_Write( u64 errorCode );
+
+extern FSFile ERRORLOGi_getLogFilePt( void );
 
 #endif // SDK_ARM9
 
