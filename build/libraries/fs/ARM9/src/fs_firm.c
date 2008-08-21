@@ -226,8 +226,6 @@ SDK_WEAK_SYMBOL AESResult SEA_Decrypt(const void* src, u32 srcSize, void* dst)
 (void)dst;
     return AES_RESULT_SUCCESS;
 }
-#define CRYPTO_BUFFER_ADDR  0x1ffb000
-#define CRYPTO_BUFFER_SIZE  0x1000
 u32 SEA_GetCryptoBufferAddr(void);
 SDK_WEAK_SYMBOL u32 SEA_GetCryptoBufferAddr(void) __attribute__((never_inline)) { return HW_FIRM_ES_BUF; }
 u32 SEA_GetCryptoBufferSize(void);
@@ -277,10 +275,16 @@ int FS_ResolveSrlList( const OSTitleId* titleIdList, u32 nums )
 #ifdef PROFILE_ES
     tick[1] = OS_GetTick();
 #endif
+/*
+    ES_InitLib()では、SEA_GetCryptoBuffer[Addr|Size]()で渡されるメモリを使用する。
+    (SEA_Decrypt()も呼び出すがファームでは結果を使わない)
+    また、CRYPTOライブラリ経由で、ES_GetContentPath()で消費するのと同じサイズだけ
+    メモリの動的確保をする可能性がある。
+*/
     if ( !titleIdList || !nums || ES_ERR_OK != ES_InitLib() )
     {
         return FALSE;
-    }OS_TPrintf("InitLib\n");
+    }
     for ( i = 0; i < nums; i++ )
     {
 #ifdef PROFILE_ES
