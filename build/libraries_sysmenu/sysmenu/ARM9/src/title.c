@@ -1658,6 +1658,11 @@ void SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 		s_calc_hash = NULL;
 	}
 	
+	// ダイレクトブート時など、まだSystemMenuVersionのデータがセットされていない場合は、ここでセットする。
+	if( *(u8 *)HW_SYSM_VER_INFO_CONTENT_LAST_INITIAL_CODE == 0 ) {
+		SYSM_SetSystemMenuVersionControlData();
+	}
+	
 	// デバッガ接続中以外の時のみTWL設定データにブートするタイトルのTitleIDとplatformCodeを保存。
     if( !SYSM_IsRunOnDebugger() ||                          // スタンドアロン
         (OSi_DetectDebugger() & OS_CONSOLE_TWLDEBUGGER) ) // デバッグ時
