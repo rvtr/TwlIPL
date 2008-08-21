@@ -111,6 +111,67 @@ namespace MasterEditorTWL
 
 	// -------------------------------------------------------------------
 	// Type : ref class
+	// Name : RCMRCError
+	//
+	// Description : RCSrlクラスに持たせるMRCエラー情報クラス
+	// 
+	// Role : 構造体としてデータをまとめておく
+	// -------------------------------------------------------------------
+	public ref class RCMRCError
+	{
+	private:
+		System::String  ^hName;		// 項目名
+		System::UInt32  ^hBegin;	// 開始アドレス
+		System::UInt32  ^hEnd;		// 終了アドレス
+		System::String  ^hMsg;		// エラーメッセージ
+		System::String  ^hNameE;	// 英語版
+		System::String  ^hMsgE;
+		System::Boolean ^hEnableModify;	// マスタエディタで修正可能かどうか
+	private:
+		RCMRCError(){}		// 封じる
+	public:
+		RCMRCError( 
+			System::String ^name,  System::UInt32 beg,   System::UInt32 end, System::String ^msg, 
+			System::String ^nameE, System::String ^msgE, System::Boolean enableModify )
+		{
+			if( name == nullptr )
+				this->hName = gcnew System::String("");
+			else
+				this->hName = name;
+
+			if( nameE == nullptr )
+				this->hNameE = gcnew System::String("");
+			else
+				this->hNameE = nameE;
+
+			this->hBegin = gcnew System::UInt32( beg );
+			this->hEnd   = gcnew System::UInt32( end );
+
+			if( msg == nullptr )
+				this->hMsg = gcnew System::String("");
+			else
+				this->hMsg = msg;
+
+			if( msgE == nullptr )
+				this->hMsgE = gcnew System::String("");
+			else
+				this->hMsgE = msgE;
+
+			this->hEnableModify = gcnew System::Boolean( enableModify );
+		}
+	public:
+		// gridViewの表示形式にあわせる
+		cli::array<System::Object^>^ getAll( System::Boolean isJapanese )
+		{
+			if( isJapanese )
+				return (gcnew array<System::Object^>{this->hName,  this->hBegin->ToString("X04")+"h", this->hEnd->ToString("X04")+"h", this->hMsg});
+			else
+				return (gcnew array<System::Object^>{this->hNameE, this->hBegin->ToString("X04")+"h", this->hEnd->ToString("X04")+"h", this->hMsgE});
+		}
+	};
+
+	// -------------------------------------------------------------------
+	// Type : ref class
 	// Name : RCSrl
 	//
 	// Description : ROMデータ(SRL)の設定情報クラス
@@ -201,9 +262,13 @@ namespace MasterEditorTWL
 		//property System::Boolean ^hRegionChina;
 		//property System::Boolean ^hRegionKorea;
 
-		// SDKバージョンリスト
+		// SDKバージョンと使用ライブラリのリスト
 		property System::Collections::Generic::List<RCSDKVersion^> ^hSDKList;
 		property System::Collections::Generic::List<RCLicense^> ^hLicenseList;
+
+		// MRC機能でチェックされたエラー情報のリスト
+		property System::Collections::Generic::List<RCMRCError^> ^hErrorList;
+		property System::Collections::Generic::List<RCMRCError^> ^hWarnList;
 
 		// constructor and destructor
 	public:
@@ -237,6 +302,11 @@ namespace MasterEditorTWL
 				// @arg [in]  入力ファイルのFP (->SRL読み込み時に実行されるべき)]
 		ECSrlResult searchSDKVersion( FILE *fp );		// SDKバージョンを取得する
 		ECSrlResult searchLicenses( FILE *fp );			// 使用ライセンスを取得する
+
+		// MRC(Master ROM Checker)機能
+		ECSrlResult mrc( FILE *fp );
+		//ECSrlResult mrcNTR( FILE *fp );
+		//ECSrlResult mrcTWL( FILE *fp );
 
 	}; // end of ref class RCSrl
 

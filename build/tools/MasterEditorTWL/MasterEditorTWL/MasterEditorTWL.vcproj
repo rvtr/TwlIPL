@@ -272,6 +272,20 @@
 				</File>
 			</File>
 			<File
+				RelativePath=".\FormError.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FormError.h"
+				FileType="3"
+				>
+				<File
+					RelativePath=".\FormError.resx"
+					SubType="Designer"
+					>
+				</File>
+			</File>
+			<File
 				RelativePath=".\keys.h"
 				>
 			</File>

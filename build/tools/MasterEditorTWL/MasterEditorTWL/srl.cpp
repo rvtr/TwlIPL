@@ -68,6 +68,12 @@ ECSrlResult RCSrl::readFromFile( System::String ^filename )
 			(void)fclose(fp);
 			return r;
 		}
+		r = this->mrc( fp );
+		if( r != ECSrlResult::NOERROR )
+		{
+			(void)fclose(fp);
+			return r;
+		}
 	}
 	(void)fclose( fp );
 
@@ -596,6 +602,23 @@ ECSrlResult RCSrl::searchLicenses(FILE *fp)
 			//System::Diagnostics::Debug::WriteLine( "license " + spl[0] + " " + spl[1] );
 		}
 	}
+
+	return ECSrlResult::NOERROR;
+}
+
+//
+// MRC
+//
+ECSrlResult RCSrl::mrc( FILE *fp )
+{
+	this->hErrorList = gcnew System::Collections::Generic::List<RCMRCError^>;
+	this->hWarnList  = gcnew System::Collections::Generic::List<RCMRCError^>;
+
+	this->hErrorList->Clear();
+	this->hWarnList->Clear();
+
+	//this->hErrorList->Add( gcnew RCMRCError( "テスト", 0x01, 0xfe, "テスト要因", "test", "reason", false ) );
+	//this->hWarnList->Add( gcnew RCMRCError( "テスト2", 0x01, 0xfe, "テスト要因2", "test2", "reason2", false ) );
 
 	return ECSrlResult::NOERROR;
 }

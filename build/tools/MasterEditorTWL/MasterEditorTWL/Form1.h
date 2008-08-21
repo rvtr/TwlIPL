@@ -4,6 +4,7 @@
 #include "deliverable.h"
 #include "crc_whole.h"
 #include "utility.h"
+#include "FormError.h"
 
 namespace MasterEditorTWL {
 
@@ -36,10 +37,13 @@ namespace MasterEditorTWL {
 		// 書類出力モード(ノーマルXML or XML Spread Sheet)
 		System::Boolean ^hIsSpreadSheet;
 
+		// エラーウインドウ
+		FormError ^hErrorWindowR;
+
 	// VC自動追加フィールド
 	private: System::Windows::Forms::GroupBox^  gboxCRC;
 	private: System::Windows::Forms::TextBox^  tboxWholeCRC;
-	private: System::Windows::Forms::Button^  butMakeMaster;
+
 	private: System::Windows::Forms::Label^  labTitleName;
 	private: System::Windows::Forms::Label^  labGameCode;
 	private: System::Windows::Forms::TextBox^  tboxGameCode;
@@ -427,6 +431,12 @@ private: System::Windows::Forms::Label^  labMultiForeign2;
 private: System::Windows::Forms::Label^  labCautionInput;
 private: System::Windows::Forms::Label^  labCautionCheck;
 private: System::Windows::Forms::GroupBox^  gboxProd;
+private: System::Windows::Forms::Button^  butErrorWindow;
+private: System::Windows::Forms::Button^  butMakeMaster;
+private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
+
+
+
 
 
 
@@ -467,6 +477,7 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			//
 			this->hSrl   = gcnew (RCSrl);
 			this->hDeliv = gcnew (RCDeliverable);
+			this->hErrorWindowR = gcnew (FormError);
 
 			// デフォルト値
 			this->hIsSpreadSheet = gcnew System::Boolean( true );
@@ -538,7 +549,6 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->tboxWholeCRC = (gcnew System::Windows::Forms::TextBox());
 			this->gboxFileOpen = (gcnew System::Windows::Forms::GroupBox());
 			this->butSaveAs = (gcnew System::Windows::Forms::Button());
-			this->butMakeMaster = (gcnew System::Windows::Forms::Button());
 			this->labCaption = (gcnew System::Windows::Forms::Label());
 			this->tboxCaption = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSelectLang = (gcnew System::Windows::Forms::GroupBox());
@@ -732,6 +742,9 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->tboxCaptionEx = (gcnew System::Windows::Forms::TextBox());
 			this->tabCheck = (gcnew System::Windows::Forms::TabControl());
 			this->gboxProd = (gcnew System::Windows::Forms::GroupBox());
+			this->butErrorWindow = (gcnew System::Windows::Forms::Button());
+			this->butMakeMaster = (gcnew System::Windows::Forms::Button());
+			this->gboxMakeMaster = (gcnew System::Windows::Forms::GroupBox());
 			this->gboxSrl->SuspendLayout();
 			this->gboxCRC->SuspendLayout();
 			this->gboxFileOpen->SuspendLayout();
@@ -760,6 +773,7 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->gboxTitleID->SuspendLayout();
 			this->tabCheck->SuspendLayout();
 			this->gboxProd->SuspendLayout();
+			this->gboxMakeMaster->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// tboxFile
@@ -788,7 +802,7 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->tboxMsg->Location = System::Drawing::Point(12, 678);
 			this->tboxMsg->Name = L"tboxMsg";
 			this->tboxMsg->ReadOnly = true;
-			this->tboxMsg->Size = System::Drawing::Size(797, 19);
+			this->tboxMsg->Size = System::Drawing::Size(622, 19);
 			this->tboxMsg->TabIndex = 2;
 			// 
 			// gboxSrl
@@ -1048,16 +1062,6 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->butSaveAs->Text = L"入力情報を反映させて保存";
 			this->butSaveAs->UseVisualStyleBackColor = true;
 			this->butSaveAs->Click += gcnew System::EventHandler(this, &Form1::butSaveAs_Click);
-			// 
-			// butMakeMaster
-			// 
-			this->butMakeMaster->Location = System::Drawing::Point(656, 641);
-			this->butMakeMaster->Name = L"butMakeMaster";
-			this->butMakeMaster->Size = System::Drawing::Size(149, 23);
-			this->butMakeMaster->TabIndex = 7;
-			this->butMakeMaster->Text = L"マスタ提出書類を作成";
-			this->butMakeMaster->UseVisualStyleBackColor = true;
-			this->butMakeMaster->Click += gcnew System::EventHandler(this, &Form1::butMakeMaster_Click);
 			// 
 			// labCaption
 			// 
@@ -3008,16 +3012,46 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->gboxProd->TabStop = false;
 			this->gboxProd->Text = L"ROM生産情報(必ず入力してください)";
 			// 
+			// butErrorWindow
+			// 
+			this->butErrorWindow->Location = System::Drawing::Point(652, 676);
+			this->butErrorWindow->Name = L"butErrorWindow";
+			this->butErrorWindow->Size = System::Drawing::Size(149, 23);
+			this->butErrorWindow->TabIndex = 23;
+			this->butErrorWindow->Text = L"ROMチェック結果を表示";
+			this->butErrorWindow->UseVisualStyleBackColor = true;
+			this->butErrorWindow->Click += gcnew System::EventHandler(this, &Form1::butErrorWindow_Click);
+			// 
+			// butMakeMaster
+			// 
+			this->butMakeMaster->Location = System::Drawing::Point(6, 16);
+			this->butMakeMaster->Name = L"butMakeMaster";
+			this->butMakeMaster->Size = System::Drawing::Size(149, 23);
+			this->butMakeMaster->TabIndex = 7;
+			this->butMakeMaster->Text = L"マスタ提出書類を作成";
+			this->butMakeMaster->UseVisualStyleBackColor = true;
+			this->butMakeMaster->Click += gcnew System::EventHandler(this, &Form1::butMakeMaster_Click);
+			// 
+			// gboxMakeMaster
+			// 
+			this->gboxMakeMaster->Controls->Add(this->butMakeMaster);
+			this->gboxMakeMaster->Location = System::Drawing::Point(646, 625);
+			this->gboxMakeMaster->Name = L"gboxMakeMaster";
+			this->gboxMakeMaster->Size = System::Drawing::Size(163, 47);
+			this->gboxMakeMaster->TabIndex = 32;
+			this->gboxMakeMaster->TabStop = false;
+			// 
 			// Form1
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 12);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
-			this->ClientSize = System::Drawing::Size(825, 701);
+			this->ClientSize = System::Drawing::Size(825, 702);
+			this->Controls->Add(this->gboxMakeMaster);
+			this->Controls->Add(this->butErrorWindow);
 			this->Controls->Add(this->gboxProd);
 			this->Controls->Add(this->tabDoc);
 			this->Controls->Add(this->gboxSelectLang);
 			this->Controls->Add(this->gboxTWLInfoWritable);
-			this->Controls->Add(this->butMakeMaster);
 			this->Controls->Add(this->tabCheck);
 			this->Controls->Add(this->gboxFileOpen);
 			this->Controls->Add(this->gboxCRC);
@@ -3073,6 +3107,7 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->tabCheck->ResumeLayout(false);
 			this->gboxProd->ResumeLayout(false);
 			this->gboxProd->PerformLayout();
+			this->gboxMakeMaster->ResumeLayout(false);
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -3083,6 +3118,10 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 	// 内部メソッド
 	/////////////////////////////////////////////
 	private:
+		// ----------------------------------------------
+		// ファイルのR/W
+		// ----------------------------------------------
+
 		// 設定ファイルの読み込み
 		void loadInit(void)
 		{
@@ -3144,7 +3183,107 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->tboxMsg->Text = msg;
 		}
 
-		// 設定可能なフォームをすべて disable にする
+	private:
+		// SRLのオープン
+		System::Void loadSrl( System::String ^filename )
+		{
+			if( this->hSrl->readFromFile( filename ) != ECSrlResult::NOERROR )
+			{
+				if( this->rSelectJ->Checked == true )
+					this->errMsg( "リードに失敗しました。" );
+				else
+					this->errMsg( "Reading the file failed." );
+				return;							// 前のファイルが正常である保証なしなので前のファイルも上書き保存できないようにする
+			}
+			this->tboxFile->Text = filename;
+
+			// GUIにROM情報を格納
+			this->setSrlForms();
+
+			// 全体のCRCを算出
+			u16  crc;
+			if( !getWholeCRCInFile( filename, &crc ) )
+			{
+				if( this->rSelectJ->Checked == true )
+					this->errMsg( "CRCの計算に失敗しました。" );
+				else
+					this->errMsg( "Calc CRC failed." );
+				return;
+			}
+			System::UInt16 ^hcrc = gcnew System::UInt16( crc );
+			this->tboxWholeCRC->Clear();
+			this->tboxWholeCRC->AppendText( "0x" );
+			this->tboxWholeCRC->AppendText( hcrc->ToString("X") );
+
+			if( this->rSelectJ->Checked == true )
+				this->tboxMsg->Text  = "ファイルオープンに成功しました。";
+			else
+				this->tboxMsg->Text  = "Opening the file succeeded.";
+		} // openSrl
+
+	private:
+		// SRLの保存
+		System::Void saveSrl( System::String ^filename )
+		{
+			// ROM情報をフォームから取得してSRLバイナリに反映させる
+			this->setSrlPropaties();
+			// マスタ書類情報をフォームから取得して書類に反映させる -> 必要なし
+			//this->setDeliverablePropaties();
+
+			// ファイルをコピー
+			if( !(filename->Equals( this->tboxFile->Text )) )
+			{
+				System::IO::File::Copy( this->tboxFile->Text, filename, true );
+			}
+
+			// コピーしたファイルにROMヘッダを上書き
+			if( this->hSrl->writeToFile( filename ) != ECSrlResult::NOERROR )
+			{
+				if( this->rSelectJ->Checked == true )
+					this->errMsg( "保存に失敗しました。" );
+				else
+					this->errMsg( "Saving the file failed." );
+				return;
+			}
+			if( this->rSelectJ->Checked == true )
+				this->tboxMsg->Text = "保存が成功しました。";
+			else
+				this->tboxMsg->Text = "Saving the file succeeded.";
+			this->tboxFile->Text = filename;
+
+			// 再リード
+			this->loadSrl( filename );
+		}
+
+	private:
+		// エラー専用ウィンドウを開いてMRCエラーと入力エラーを表示
+		void openErrorWindow(void)
+		{
+			// ウインドウを新たに開く
+			if( this->hErrorWindowR->IsDisposed )
+			{
+				this->hErrorWindowR = gcnew FormError;	// 閉じられたときだけ再度作成する
+			}
+			this->hErrorWindowR->Show();
+			this->hErrorWindowR->Select();
+
+			// 言語設定はメインウィンドウにあわせる
+			if( this->rSelectJ->Checked == true )
+				this->hErrorWindowR->changeJapanese();
+			else
+				this->hErrorWindowR->changeEnglish();
+
+			// エラー項目をgridViewに追記していく
+			this->hErrorWindowR->setGridError( this->hSrl->hErrorList, this->rSelectJ->Checked );
+			this->hErrorWindowR->setGridWarn( this->hSrl->hWarnList, this->rSelectJ->Checked );
+		}
+
+	private:
+		// ----------------------------------------------
+		// フォームの初期設定
+		// ----------------------------------------------
+
+		// 設定/選択可能なフォームをすべて disable にする
 		void disableForms( void )
 		{
 			this->cboxIsEULA->Enabled = false;
@@ -3176,6 +3315,10 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 		}
 
 	private:
+		// ----------------------------------------------
+		// フォームとSRL内情報を矛盾なく一致させる
+		// ----------------------------------------------
+
 		// ROM情報をフォームから取得してSRLクラスのプロパティに反映させる
 		// (ROMヘッダへの反映やCRCと署名の再計算をしない)
 		void setSrlPropaties(void)
@@ -4109,6 +4252,10 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			return true;
 		}
 
+		// ----------------------------------------------
+		// エラーメッセージの一元化
+		// ----------------------------------------------
+
 		// テキスト入力がされているかチェック
 		System::Boolean checkTextForm( System::String ^formtext, System::String ^label )
 		{
@@ -4193,6 +4340,10 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 		}
 
 	private:
+		// ----------------------------------------------
+		// 日英両対応
+		// ----------------------------------------------
+
 		// 日本語版への切り替え
 		void changeJapanese(void)
 		{
@@ -4220,10 +4371,11 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->combBackup->SelectedIndex = index;
 
 			// フロントパネル下部
-			this->gboxFileOpen->Text  = gcnew System::String( "ROMデータファイルの入出力" );
-			this->butOpen->Text       = gcnew System::String( "ROMデータを開く" );
-			this->butSaveAs->Text     = gcnew System::String( "入力情報を反映させて保存" );
-			this->butMakeMaster->Text = gcnew System::String( "マスタ提出書類を作成" );
+			this->gboxFileOpen->Text   = gcnew System::String( "ROMデータファイルの入出力" );
+			this->butOpen->Text        = gcnew System::String( "ROMデータを開く" );
+			this->butSaveAs->Text      = gcnew System::String( "入力情報を反映させて保存" );
+			this->butMakeMaster->Text  = gcnew System::String( "マスタ提出書類を作成" );
+			this->butErrorWindow->Text = gcnew System::String( "ROMチェック結果を表示" );
 
 			// 提出情報タブ
 			this->tabSubmitInfo->Text  = gcnew System::String( "提出情報" );
@@ -4381,17 +4533,18 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 			this->labRomCRC->Text     = gcnew System::String( "ROM CRC" );
 			index = this->combBackup->SelectedIndex;
 			// バックアップメモリ
-			this->gboxProd->Text = gcnew System::String( "ROM Production Info.(Please Input certainly)" );
+			this->gboxProd->Text = gcnew System::String( "ROM Production Info.(Please input certainly)" );
 			this->combBackup->Items->Clear();
 			this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
 				L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"Nothing", L"Other"});
 			this->combBackup->SelectedIndex = index;
 
 			// フロントパネル下部
-			this->gboxFileOpen->Text  = gcnew System::String( "ROM file I/O" );
-			this->butOpen->Text       = gcnew System::String( "Open a ROM file" );
-			this->butSaveAs->Text     = gcnew System::String( "Save a ROM file" );
-			this->butMakeMaster->Text = gcnew System::String( "Make a submission sheet" );
+			this->gboxFileOpen->Text   = gcnew System::String( "ROM file I/O" );
+			this->butOpen->Text        = gcnew System::String( "Open a ROM file" );
+			this->butSaveAs->Text      = gcnew System::String( "Save a ROM file" );
+			this->butMakeMaster->Text  = gcnew System::String( "Make a submission sheet" );
+			this->butErrorWindow->Text = gcnew System::String( "See results of ROM check" );
 
 			// 提出情報タブ
 			this->tabSubmitInfo->Text  = gcnew System::String( "Submission Info." );
@@ -4529,77 +4682,6 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 
 			// 特殊な設定用のテキストボックスの表記を変更
 			this->setSrlFormsCaptionEx();
-		}
-
-	private:
-		// SRLのオープン
-		System::Void loadSrl( System::String ^filename )
-		{
-			if( this->hSrl->readFromFile( filename ) != ECSrlResult::NOERROR )
-			{
-				if( this->rSelectJ->Checked == true )
-					this->errMsg( "リードに失敗しました。" );
-				else
-					this->errMsg( "Reading the file failed." );
-				return;							// 前のファイルが正常である保証なしなので前のファイルも上書き保存できないようにする
-			}
-			this->tboxFile->Text = filename;
-
-			// GUIにROM情報を格納
-			this->setSrlForms();
-
-			// 全体のCRCを算出
-			u16  crc;
-			if( !getWholeCRCInFile( filename, &crc ) )
-			{
-				if( this->rSelectJ->Checked == true )
-					this->errMsg( "CRCの計算に失敗しました。" );
-				else
-					this->errMsg( "Calc CRC failed." );
-				return;
-			}
-			System::UInt16 ^hcrc = gcnew System::UInt16( crc );
-			this->tboxWholeCRC->Clear();
-			this->tboxWholeCRC->AppendText( "0x" );
-			this->tboxWholeCRC->AppendText( hcrc->ToString("X") );
-
-			if( this->rSelectJ->Checked == true )
-				this->tboxMsg->Text  = "ファイルオープンに成功しました。";
-			else
-				this->tboxMsg->Text  = "Opening the file succeeded.";
-		} // openSrl
-
-		// SRLの保存
-		System::Void saveSrl( System::String ^filename )
-		{
-			// ROM情報をフォームから取得してSRLバイナリに反映させる
-			this->setSrlPropaties();
-			// マスタ書類情報をフォームから取得して書類に反映させる -> 必要なし
-			//this->setDeliverablePropaties();
-
-			// ファイルをコピー
-			if( !(filename->Equals( this->tboxFile->Text )) )
-			{
-				System::IO::File::Copy( this->tboxFile->Text, filename, true );
-			}
-
-			// コピーしたファイルにROMヘッダを上書き
-			if( this->hSrl->writeToFile( filename ) != ECSrlResult::NOERROR )
-			{
-				if( this->rSelectJ->Checked == true )
-					this->errMsg( "保存に失敗しました。" );
-				else
-					this->errMsg( "Saving the file failed." );
-				return;
-			}
-			if( this->rSelectJ->Checked == true )
-				this->tboxMsg->Text = "保存が成功しました。";
-			else
-				this->tboxMsg->Text = "Saving the file succeeded.";
-			this->tboxFile->Text = filename;
-
-			// 再リード
-			this->loadSrl( filename );
 		}
 
 	/////////////////////////////////////////////
@@ -4970,6 +5052,12 @@ private: System::Windows::Forms::GroupBox^  gboxProd;
 				this->tboxProductCode2Foreign2->Clear();
 				this->tboxProductCode2Foreign3->Clear();
 			}
+		}
+
+	private:
+		System::Void butErrorWindow_Click(System::Object^  sender, System::EventArgs^  e)
+		{
+			this->openErrorWindow();
 		}
 
 }; // enf of ref class Form1
