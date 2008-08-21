@@ -18,11 +18,6 @@
 #include  "font.h"
 #include  "screen.h"
 
-/*
-    SRL選択機能
-*/
-//#define SUPPORT_SRL_SELECT
-
 #ifdef FIRM_USE_PRODUCT_KEYS
 static const u8* const rsa_key_user = NULL;   // not acceptable
 static const u8* const rsa_key_sys = NULL;    // not acceptable
@@ -78,18 +73,7 @@ static const u8 rsa_key_secure[128] =
 };
 #endif
 
-#define RSA_HEAP_SIZE   (4*1024)    // RSA用ヒープサイズ (サイズ調整必要)
-
-static u8 acHeap[RSA_HEAP_SIZE] __attribute__ ((aligned (32)));
 static SVCSignHeapContext acPool;
-
-#define MENU_FILE       "sdmc:/menu.srl"
-#ifdef SUPPORT_SRL_SELECT
-#define MENU_FILE_A     "sdmc:/menu_a.srl"
-#define MENU_FILE_B     "sdmc:/menu_b.srl"
-#define MENU_FILE_L     "sdmc:/menu_l.srl"
-#define MENU_FILE_R     "sdmc:/menu_r.srl"
-#endif
 
 /*
     PROFILE_ENABLE を定義するとある程度のパフォーマンスチェックができます。
@@ -166,9 +150,64 @@ static void PostInit(void)
         OS_SetMainArenaHi( &arena[ 0x400 / sizeof(u32) ] );
     }
     // RSA用ヒープ設定
-    SVC_InitSignHeap( &acPool, acHeap, sizeof(acHeap) );
+    SVC_InitSignHeap( &acPool, (void*)HW_FIRM_RSA_BUF, HW_FIRM_RSA_BUF_SIZE );
     // FS/FATFS初期化
     FS_InitFIRM();
+}
+
+/***************************************************************
+    TryResolveSrl
+
+    ランチャーSRLを解決する
+    1) sdmc:/menu.srl があればそれを選択
+    2) 最初に見つかった sdmc:/***.srl を選択
+    3) 失敗
+***************************************************************/
+#define MENU_FILE           "sdmc:/menu.srl"
+#define MENU_DIR            "sdmc:/"
+static BOOL TryResolveSrl(void)
+{
+    FSPathInfo info;
+    FSFile dir;
+    FSDirectoryEntryInfo entry;
+
+    MI_CpuClearFast( (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, HW_FIRM_FS_BOOT_SRL_PATH_BUF_SIZE );
+
+    // 1) sdmc:/menu.srl があればそれを選択
+    if ( FS_GetPathInfo( MENU_FILE, &info ) && (info.attributes & FS_ATTRIBUTE_IS_DIRECTORY) == 0 )
+    {
+        STD_CopyString( (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE );
+        return TRUE;
+    }
+
+    // 2) 最初に見つかった sdmc:/***.srl を選択
+    FS_InitFile( &dir );
+    if ( FS_OpenDirectory( &dir, MENU_DIR, 0 ) )
+    {
+        while ( FS_ReadDirectory( &dir, &entry ) )
+        {
+            u32 len = entry.longname_length;
+            if ( (entry.attributes & FS_ATTRIBUTE_IS_DIRECTORY) == 0
+              &&  len < HW_FIRM_FS_BOOT_SRL_PATH_BUF_SIZE - STD_GetStringLength( MENU_DIR )
+              &&  len > 4
+              // postfix
+              &&  entry.longname[len-4] == '.'
+              && (entry.longname[len-3] == 's' || entry.longname[len-3] == 'S')
+              && (entry.longname[len-2] == 'r' || entry.longname[len-2] == 'R')
+              && (entry.longname[len-1] == 'l' || entry.longname[len-1] == 'L'))
+            {
+                int offset;
+                FS_CloseDirectory( &dir );
+                offset  = STD_CopyLString( (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_DIR, HW_FIRM_FS_BOOT_SRL_PATH_BUF_SIZE );
+                offset += STD_CopyLString( (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF + offset, entry.longname, HW_FIRM_FS_BOOT_SRL_PATH_BUF_SIZE - offset );
+                return TRUE;
+            }
+        }
+        FS_CloseDirectory( &dir );
+    }
+
+    // 3) 失敗
+    return FALSE;
 }
 
 /***************************************************************
@@ -292,31 +331,16 @@ void TwlMain( void )
     OS_WaitVBlankIntr();
     y++;
 
-#ifdef SUPPORT_SRL_SELECT
-    switch ( PAD_Read() & PAD_KEYPORT_MASK )
+    PrintString( X_OFF, y++, FONT_WHITE, "Initialized." );
+    y++;
+    PrintString( X_OFF, y++, FONT_WHITE, "Finding SRL..." );
+    OS_WaitVBlankIntr();
+
+    if ( !TryResolveSrl() )
     {
-    case 0:
-#endif
-        STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE);
-#ifdef SUPPORT_SRL_SELECT
-        break;
-    case PAD_BUTTON_A:
-        STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE_A);
-        break;
-    case PAD_BUTTON_B:
-        STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE_B);
-        break;
-    case PAD_BUTTON_L:
-        STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE_L);
-        break;
-    case PAD_BUTTON_R:
-        STD_CopyString((char*)HW_TWL_FS_BOOT_SRL_PATH_BUF, MENU_FILE_R);
-        break;
-    default:
-        OS_TPrintf("Unknown pad pattern (%X).\n", PAD_Read() & PAD_KEYPORT_MASK);
         goto end;
     }
-#endif
+    PrintString( 0, y++, FONT_GREEN, "%30.32s", (char*)HW_TWL_FS_BOOT_SRL_PATH_BUF + STD_GetStringLength( MENU_DIR ) );
     // 4: after FS_ResolveSrl
     PUSH_PROFILE();
 
@@ -324,8 +348,6 @@ void TwlMain( void )
     // 5: after PXI
     PUSH_PROFILE();
 
-    PrintString( X_OFF, y++, FONT_WHITE, "Initialized." );
-    y++;
     PrintString( X_OFF, y++, FONT_WHITE, "Loading header..." );
     OS_WaitVBlankIntr();
 
