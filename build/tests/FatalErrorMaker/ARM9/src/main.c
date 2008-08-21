@@ -18,6 +18,8 @@
 #include <twl.h>
 #include <twl/nam.h>
 #include <nitro/nvram/nvram.h>
+#include <nitro/crypto.h>
+
 
 #include "misc.h"
 #include "fatalErrorMaker.h"
@@ -70,7 +72,9 @@ void TwlMain( void )
 
 	NVRAMi_Init();
 	FS_Init( FS_DMA_NOT_USE );
+	CRYPTO_SetAllocator( Alloc, Free );
 	NAM_Init( Alloc, Free );
+	
 
 	fatalMakerInit();
 	OS_TPrintf("begin mainloop\n");
