@@ -288,6 +288,7 @@ TitleProperty *SYSM_GetCardTitleList( BOOL *changed )
 	
 	if( SYSMi_GetWork()->flags.hotsw.isCardStateChanged ) {
 		u16 id = (u16)OS_GetLockID();
+		const ROM_Header_Short *pROMH_bak = (ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BAK;
 		
 		MI_CpuClear32( pTitleList_Card, sizeof(TitleProperty) );
 		
@@ -295,23 +296,27 @@ TitleProperty *SYSM_GetCardTitleList( BOOL *changed )
 		
 		// ROMヘッダバッファのコピー
 		if( SYSM_IsExistCard() ) {
-			
-			// ROMヘッダのリード
-			(void)SYSMi_CopyCardRomHeader();
-			// バナーデータのリード
-			(void)SYSMi_CopyCardBanner();
-			
-			pTitleList_Card->pBanner = &s_card_bannerBuf;
-			AMN_stepBannerAnime(0, TRUE); // バナーカウンタセットしなおし
-			pTitleList_Card->flags.isValid = TRUE;
-			pTitleList_Card->flags.isAppLoadCompleted = FALSE;
-			pTitleList_Card->flags.isAppRelocate = TRUE;
-			MI_CpuCopy8( SYSM_GetCardRomHeader(), AMN_getRomHeaderList(), sizeof(ROM_Header_Short) );
+			if( ( pROMH_bak->platform_code & PLATFORM_CODE_FLAG_TWL ) && !UTL_CheckAppRegion( pROMH_bak->card_region_bitmap ) ) {
+				// TWLアプリでカードリージョンが本体と一致しないものは、カードを認識しない。
+	            OS_TPrintf( "Region Check NG : %llx\n", pROMH_bak->titleID );
+				MI_CpuClearFast( (void *)SYSM_APP_ROM_HEADER_BUF, SYSM_APP_ROM_HEADER_SIZE );	// ROMヘッダのクリア
+				MI_CpuClearFast( &s_card_bannerBuf, sizeof(TWLBannerFile) );					// バナーデータのクリア
+			}else {
+				// ROMヘッダのリード
+				(void)SYSMi_CopyCardRomHeader();
+				// バナーデータのリード
+				(void)SYSMi_CopyCardBanner();
+				
+				pTitleList_Card->pBanner = &s_card_bannerBuf;
+				AMN_stepBannerAnime(0, TRUE); // バナーカウンタセットしなおし
+				pTitleList_Card->flags.isValid = TRUE;
+				pTitleList_Card->flags.isAppLoadCompleted = FALSE;
+				pTitleList_Card->flags.isAppRelocate = TRUE;
+				MI_CpuCopy8( SYSM_GetCardRomHeader(), AMN_getRomHeaderList(), sizeof(ROM_Header_Short) );
+			}
 		}else {
-			// ROMヘッダのクリア
-			MI_CpuClearFast( (void *)SYSM_APP_ROM_HEADER_BUF, SYSM_APP_ROM_HEADER_SIZE );
-			// バナーデータのクリア
-			MI_CpuClearFast( &s_card_bannerBuf, sizeof(TWLBannerFile) );
+			MI_CpuClearFast( (void *)SYSM_APP_ROM_HEADER_BUF, SYSM_APP_ROM_HEADER_SIZE );	// ROMヘッダのクリア
+			MI_CpuClearFast( &s_card_bannerBuf, sizeof(TWLBannerFile) );					// バナーデータのクリア
 		}
 		
 		SYSMi_GetWork()->flags.hotsw.isCardStateChanged = FALSE;							// カード情報更新フラグを落とす

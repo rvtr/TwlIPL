@@ -433,16 +433,6 @@ static HotSwState LoadCardData(void)
 			}
 
             if(s_cbData.pBootSegBuf->rh.s.platform_code & PLATFORM_CODE_FLAG_TWL){
-                // デバッガでリージョン違いのアプリを読んだ場合、正常に動作しなくなるのを回避するため
-				u64 card_title_id = s_cbData.pBootSegBuf->rh.s.titleID;
-				u64 my_title_id   = ((ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF)->titleID;
-				if(!s_debuggerFlg || card_title_id != my_title_id){
-          		// リージョンチェック
-					if( !UTL_CheckAppRegion( s_cbData.pBootSegBuf->rh.s.card_region_bitmap ) ) {
-						retval = (retval == HOTSW_SUCCESS) ? HOWSW_REGION_CHECK_ERROR : retval;
-					}
-				}
-
                 s_cbData.twlFlg = TRUE;
             }
 			

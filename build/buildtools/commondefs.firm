@@ -28,6 +28,7 @@ TARGET_BIN		?=	$(TARGET_FIRM_BIN)
 #
 override TARGET_PLATFORM	:= TWL
 override TWL_ARCHGEN		:= LIMITED
+override TWL_CODEGEN		:= ARM
 override TWL_MEMSIZE		:= 16M
 
 #----------------------------------------------------------------------------
