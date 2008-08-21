@@ -956,7 +956,7 @@ static BOOL SYSMi_AuthenticateHeaderWithSign( TitleProperty *pBootTitle, ROM_Hea
 	{
 		// 注：デバグ用コード。
 		// 開発用TSボードで開発版ROMおよび製品版ROMの署名チェックとAESデクリプトをデバグするためのコード
-		if( head->s.developer_encrypt )
+		if( head->s.developer_encrypt_old || head->s.exFlags.developer_encrypt )
 		{
 			// 開発版鍵取得
 			key = g_devPubKey[keynum];

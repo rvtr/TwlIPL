@@ -176,7 +176,7 @@ static BOOL CheckHeader(void)
     OS_TPrintf("AES Encryption      : %s\n", rhs->enable_aes ? "AVAILABLE" : "NOT AVAILABLE");
     if ( rhs->enable_aes )
     {
-        OS_TPrintf("AES Key Type        : %s\n", rhs->developer_encrypt ? "FOR DEVELOPMENT" : "FOR PRODUCT");
+        OS_TPrintf("AES Key Type        : %s\n", rhs->developer_encrypt_old || rhs->exFlags.developer_encrypt ? "FOR DEVELOPMENT" : "FOR PRODUCT");
     }
     // エントリポイント
     OS_TPrintf("ARM9 Entry point    : %08X\n", rhs->main_entry_address);

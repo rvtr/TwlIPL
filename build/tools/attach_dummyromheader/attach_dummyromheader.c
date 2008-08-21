@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
 
   // rom_header.s.enable_signature:1;        // enable ROM Header signature
   // rom_header.s.enable_aes:1;              // enable AES encryption
-  // rom_header.s.developer_encrypt:1;       // 開発用セキュリティがかかっている場合に"1"。製品版では"0"
+  // rom_header.s.developer_encrypt_old:1;       // 開発用セキュリティがかかっている場合に"1"。製品版では"0"
 
   //        u32     arm7_scfg_ext;                  // SCFG-EXT
   //        u8      arm7_scfg_clk;                  // SCFG-CLK

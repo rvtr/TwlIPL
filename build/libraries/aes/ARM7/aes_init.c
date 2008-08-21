@@ -102,7 +102,7 @@ void AESi_InitSeedWithRomHeader( ROM_Header* rom_header )
     {
         return;
     }
-    if ( rom_header->s.developer_encrypt )
+    if ( rom_header->s.developer_encrypt_old || rom_header->s.exFlags.developer_encrypt )
     {
         AES_SetKeyA( (AESKey*)rom_header->s.title_name );
     }

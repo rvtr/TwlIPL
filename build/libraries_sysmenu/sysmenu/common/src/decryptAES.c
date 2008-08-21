@@ -138,14 +138,14 @@ BOOL SYSM_InitDecryptAESRegion_W( ROM_Header_Short *hs )
 	}
 
 	// Workに開発/製品情報を格納
-	SYSMi_GetWork()->isDeveloperAESMode = ( hs->developer_encrypt ? TRUE : FALSE );
+	SYSMi_GetWork()->isDeveloperAESMode = ( hs->developer_encrypt_old || hs->exFlags.developer_encrypt ) ? TRUE : FALSE;
 	
 	// カウンタの初期値記録
 	MI_CpuCopy8( hs->main_static_digest, s_initCounterAES[0], AES_BLOCK_SIZE );	// 領域1初期値
 	MI_CpuCopy8( hs->sub_static_digest, s_initCounterAES[1], AES_BLOCK_SIZE );	// 領域2初期値
 
 	// Workに「鍵」or「シードとゲームコード」をセット
-	if( hs->developer_encrypt )
+	if( hs->developer_encrypt_old || hs->exFlags.developer_encrypt )
 	{
 		MI_CpuCopy8( hs->title_name, SYSMi_GetWork()->keyAES, AES_KEY_SIZE );
 	}else
@@ -307,14 +307,14 @@ void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs )
 	}
 
 	// Workに開発/製品情報を格納
-	SYSMi_GetWork()->isDeveloperAESMode = ( hs->developer_encrypt ? TRUE : FALSE );
+	SYSMi_GetWork()->isDeveloperAESMode = ( hs->developer_encrypt_old || hs->exFlags.developer_encrypt ) ? TRUE : FALSE;
 
 	// Workにカウンタの初期値セット
 	MI_CpuCopy8( hs->main_static_digest, SYSMi_GetWork()->counterAES[0], AES_BLOCK_SIZE );	// 領域1初期値
 	MI_CpuCopy8( hs->sub_static_digest, SYSMi_GetWork()->counterAES[1], AES_BLOCK_SIZE );	// 領域2初期値
 
 	// Workに「鍵」or「シードとゲームコード」をセット
-	if( hs->developer_encrypt )
+	if( hs->developer_encrypt_old || hs->exFlags.developer_encrypt )
 	{
 		MI_CpuCopy8( hs->title_name, SYSMi_GetWork()->keyAES, AES_KEY_SIZE );
 	}else
