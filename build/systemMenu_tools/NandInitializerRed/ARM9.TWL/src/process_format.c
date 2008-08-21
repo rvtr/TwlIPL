@@ -270,16 +270,16 @@ void* FormatProcess2(void)
 		// Auto—p
 		if (gAutoFlag)
 		{
+			sAutoModeSequence = 0; 
+
 			if (result) 
 			{
 				gAutoProcessResult[AUTO_PROCESS_MENU_MACHINE_INITIALIZE] = AUTO_PROCESS_RESULT_SUCCESS; 
-				sAutoModeSequence = 0; 
 				FADE_OUT_RETURN( AutoProcess1 );
 			}
 			else 
 			{
 				gAutoProcessResult[AUTO_PROCESS_MENU_MACHINE_INITIALIZE] = AUTO_PROCESS_RESULT_FAILURE; 
-				sAutoModeSequence = 0; 
 				FADE_OUT_RETURN( AutoProcess2 ); 
 			}
 		}
@@ -394,16 +394,18 @@ void* FormatProcess3(void)
 		// Auto—p
 		if (gAutoFlag)
 		{
+#ifdef    MARIOCLUB_VERSION
+			sAutoModeSequence = 1;			
+#endif // MARIOCLUB_VERSION
+
 			if (sFormatResult) 
 			{
 				gAutoProcessResult[AUTO_PROCESS_MENU_FORMAT] = AUTO_PROCESS_RESULT_SUCCESS; 
-				sAutoModeSequence = 1; 
 				FADE_OUT_RETURN( AutoProcess1 );
 			}
 			else 
 			{
 				gAutoProcessResult[AUTO_PROCESS_MENU_FORMAT] = AUTO_PROCESS_RESULT_FAILURE; 
-				sAutoModeSequence = 1; 
 				FADE_OUT_RETURN( AutoProcess2 ); 
 			}
 		}
