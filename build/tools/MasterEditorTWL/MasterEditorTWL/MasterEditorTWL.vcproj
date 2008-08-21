@@ -6,7 +6,7 @@
 	ProjectGUID="{F8A4F8F7-A3BD-4DCA-B054-5FF8A09082F5}"
 	RootNamespace="MasterEditorTWL"
 	Keyword="ManagedCProj"
-	TargetFrameworkVersion="196613"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
