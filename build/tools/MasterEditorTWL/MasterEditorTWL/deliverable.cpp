@@ -107,6 +107,16 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 		access += "commonClientKey(Debug). ";
 	}
 
+	// 使用ライセンス
+	System::String ^lib = gcnew System::String("");
+	if( hSrl->hLicenseList != nullptr )
+	{
+		for each( RCLicense ^lic in hSrl->hLicenseList )
+		{
+			lib += lic->Publisher + " " + lic->Name + ". ";
+		}
+	}
+
 	// 書類テンプレートの各タグを入力情報に置き換え
 	System::Xml::XmlNodeList ^list;
 	list = root->GetElementsByTagName( "Data" );
@@ -223,6 +233,10 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 			if( node->FirstChild->Value->Equals( "TagSDK" ) )
 			{
 				node->FirstChild->Value = this->hSDK;
+			}
+			if( node->FirstChild->Value->Equals( "TagLibrary" ) )
+			{
+				node->FirstChild->Value = lib;
 			}
 			// ROM情報 (TWL拡張情報)
 			if( node->FirstChild->Value->Equals( "TagEULAVersion" ) )
