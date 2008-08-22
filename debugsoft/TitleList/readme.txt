@@ -54,6 +54,10 @@ TitleList
 　③ ロムAから順番に書き込みテストを実行して、ROMset.xlsのデータと比較する
 　③ 再度ロムAから起動して、読み込みテストを行い、ROMset.xlsのデータと比較する
 
+　※SPECIALからNORMALを切り替える際に、TwlNmenu等で4KAA, 4KBAを消さないと、正しく検証できません。
+　　（読み込みテストで、Aロム、Bロムに対してFile Not Foundが出なくなる）
+　　
+
 【ロムセットの内容とチェックリスト】
 　　ROMset.xlsを参照してください。
 
