@@ -581,6 +581,15 @@ int ERRORLOGi_ReadEntry( void )
 		
 		if ( numArgs != ERRORLOG_NUM_ARGS )
 		{
+			char cmpBuf[ERRORLOG_BUFSIZE+1];
+			MI_CpuClear8( cmpBuf, ERRORLOG_BUFSIZE+1 );
+			if( ! MI_CpuComp8( cmpBuf, buf, ERRORLOG_BUFSIZE+1 ) )
+			{
+				// 全部ヌル文字だったらそのエントリは書き込まれていないだけ
+				readSize = FS_ReadFile( &elWork.file, buf, ERRORLOG_BUFSIZE );
+				continue;
+			}
+			
 			// エラーログが壊れていて解析できなかった場合の処理
 			// もしくは古いログで上記の接頭辞がないログの場合の処理
 			if( elWork.entry[numEntry].errorStr == NULL )
