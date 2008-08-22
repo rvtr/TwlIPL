@@ -23,6 +23,9 @@ Static $(TARGET_NAME)
 	Address		0x02680200
 	Object		$(OBJS_STATIC)
 	Library		$(LLIBS) $(GLIBS) $(CW_LIBS)
+	Object		* (.ltdmain)
+	Object		$(OBJS_LTDAUTOLOAD)
+	Library		$(LLIBS_EX) $(GLIBS_EX)
 }
 
 Autoload ITCM
@@ -43,11 +46,3 @@ Autoload DTCM
 	Object		$(OBJS_AUTOLOAD) (.sbss)
 }
 
-Ltdautoload LTDMAIN
-{
-	# NITRO/TWL 共有のオーバーレイが在る場合は、さらにその後ろに配置する必要があります。
-	After		$(TARGET_NAME)
-	Object		* (.ltdmain)
-	Object		$(OBJS_LTDAUTOLOAD)
-	Library		$(LLIBS_EX) $(GLIBS_EX)
-}
