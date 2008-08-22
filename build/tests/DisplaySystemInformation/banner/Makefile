@@ -16,21 +16,24 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-SUBDIRS					=	
-SUBMAKES		=	Makefile.020A Makefile.021A Makefile.022A Makefile.023A \
-					Makefile.024A Makefile.025A Makefile.0B0A Makefile.0B1A \
-					Makefile.0B2A Makefile.0B3A Makefile.0B4A Makefile.0B5A \
-					Makefile.0B6A Makefile.0B7A Makefile.0B8A Makefile.0B9A \
-					Makefile.0BAA Makefile.0BBA
-include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/commondefs
+SUBDIRS			=	
+SUBMAKES		=	\
+	Makefile.0B0A	Makefile.0B1A	Makefile.0B2A	Makefile.0B3A	\
+	Makefile.020A	Makefile.021A	Makefile.0B4A	Makefile.0B5A	\
+	Makefile.0B6A	Makefile.0B7A	Makefile.0B8A	Makefile.0B9A	\
+	Makefile.0BAA	Makefile.0BBA	Makefile.022A	Makefile.023A	\
+	Makefile.024A	Makefile.025A	
+
+
+include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
 do-build : $(TARGETS)
 
-include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/modulerules
+
+include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 #----------------------------------------------------------------------------
 
 #===== End of Makefile =====
-

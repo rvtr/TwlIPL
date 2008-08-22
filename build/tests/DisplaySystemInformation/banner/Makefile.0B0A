@@ -22,7 +22,7 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 ICON_DIR			= ./icon
 
 BANNER_ICON			= $(ICON_DIR)/$(GAMECODE).bmp
-BANNER_SPEC			= banner_v3.bsf
+BANNER_SPEC			= banner$(GAMECODE)_v3.bsf
 
 TARGETS				= $(GAMECODE).bnr
 INSTALL_DIR			= ./

@@ -106,13 +106,12 @@ const char *s_strParentalMenu[] = {
 const char *s_strSecureUserMenu[] = {
 	"Finished Initial Setting(Setting)",
 	"Finished Initial Setting(Launcher)",
-	"Broken Setting Flag",
+	"Finished Broken Setting Sequence",
 	"Installed Softbox Count",
 	"Free Softbox Count",
 	"Last Boot Soft Index",
 	"Last Boot Soft Platform",
-	"Last Boot Soft ID",
-	"Launcher TitleID Lo"
+	"Last Boot Soft ID"
 };
 
 const char *s_strOtherMenu[] = {
@@ -131,7 +130,8 @@ const char *s_strSecureHWMenu[] = {
 	"Region",
 	"Serial No",
 	"Language Bitmap",
-	"Fuse Data"
+	"Fuse Data",
+	"Launcher TitleID Lo"
 };
 
 const char *s_strSCFGArm9Menu[] = {

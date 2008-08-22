@@ -236,7 +236,7 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 		return;
 	}
 	
-	if( menu == MENU_SECURE_USER && entryLine == SECURE_USER_LAUNCHER_ID )
+	if( menu == MENU_SECURE_HW && entryLine == SECURE_HW_LAUNCHER_ID )
 	{
 		char buf[5];
 		

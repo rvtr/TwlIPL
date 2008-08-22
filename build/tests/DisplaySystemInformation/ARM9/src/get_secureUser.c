@@ -108,24 +108,5 @@ void getSecureUserInfo( void )
 		}
 	}
 	
-	// ランチャのタイトルIDLoの取得
-	if( LCFG_ReadHWSecureInfo() )
-	{
-		const u8 *titleIDLo = LCFG_THW_GetLauncherTitleID_LoPtr();
-		value = ( int )(	titleIDLo[0] << 8*3 |
-							titleIDLo[1] << 8*2 |
-							titleIDLo[2] << 8*1 |
-							titleIDLo[3] << 8*0 );
 
-		gAllInfo[MENU_SECURE_USER][SECURE_USER_LAUNCHER_ID].iValue = value;
-		gAllInfo[MENU_SECURE_USER][SECURE_USER_LAUNCHER_ID].isNumData = TRUE;
-	}
-	else
-	{
-		gAllInfo[MENU_SECURE_USER][SECURE_USER_LAUNCHER_ID].str.sjis = s_strNA;
-	}
-	
-	gAllInfo[MENU_SECURE_USER][SECURE_USER_LAUNCHER_ID].isAligned = FALSE;
-	gAllInfo[MENU_SECURE_USER][SECURE_USER_LAUNCHER_ID].numLines = 2;
-	gAllInfo[MENU_SECURE_USER][SECURE_USER_LAUNCHER_ID].fromLCFG = TRUE;
 }

@@ -31,10 +31,9 @@ include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/commondefs
 #----------------------------------------------------------------------------
 
 rb:
-	ruby makeMakingTest.rb
+	ruby makeMaking.rb
 
 do-build :
-	
 	$(TARGETS)
 
 

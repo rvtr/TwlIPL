@@ -34,11 +34,9 @@ while l = fCond.gets
 		strVal = "DONTCARE" if value == "D"
 
 		if argList[argIdx] == "GAMECODE" || argList[argIdx] == "FILE_IDX"
-			argSet = argList[argIdx] + "\t=\t"
-			argSet += value
+			argSet = "#{argList[argIdx]}\t=\t#{value}"
 		else
-			argSet = argList[argIdx].to_s + "\t=\t"
-			argSet += strVal
+			argSet = "#{argList[argIdx]}\t=\t#{strVal}"
 		end
 
 		f.puts argSet
@@ -52,3 +50,5 @@ while l = fCond.gets
 end
 
 fCond.close
+
+(0...fileIdx).each{ |i| print "Makefile.#{i} "}
