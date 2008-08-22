@@ -31,6 +31,19 @@ static char* GAMECODE_LIST[] = {
 
 static const u32 TITLE_COUNT = sizeof(GAMECODE_LIST) / sizeof(char*);
 
+static u64 TITLE_ID_HIGH[] = {
+    0x00030015ull,
+    0x00030005ull,
+    0x00030004ull,
+    0x00030004ull,
+    0x00030004ull,
+    0x00030004ull,
+    0x00030004ull,
+    0x00030004ull,
+    0x00030004ull,
+    0x00030004ull,   
+};
+
 // Public‚ÆPrivate‚Ì—L–³
 static BOOL DATA_EXIST[TITLE_COUNT][2] = {
     {TRUE, TRUE},   //  A

@@ -29,6 +29,8 @@ BOOL WriteFile(const char* arc_name, const char* file_name);
 BOOL ReadFile(const char* arc_name, const char* file_name, char* out, int len);
 void PrintResult(int x, int y, char* text);
 
+static FSFATFSArchiveWork archiveWork ATTRIBUTE_ALIGN(32);
+
 const char* ARC_NAME[2] = {
     "otherPub:/",
     "otherPrv:/",
@@ -44,14 +46,33 @@ const char* FILE_NAME = "save.dat";
 
 BOOL TestWriting(const char* code, BOOL out_results[2])
 {
+    s32 i = 0;
+    
+#ifndef USE_SPECIAL
     const NATitleArchive arc[2] = {
         NA_TITLE_ARCHIVE_DATAPUB,
         NA_TITLE_ARCHIVE_DATAPRV,
     };
-    s32 i = 0;
+#else
+    const char* arc[2] = {
+        "otherPub",
+        "otherPrv",
+    };
+    u32 lo = 0; 
+    OSTitleId TitleID;
+    lo = MI_LoadBE32(code);
+    TitleID = (TITLE_ID_HIGH[code[2] - 'A'] << 32) | lo;
+
+#endif
+
+
     for(i = 0; i < 2; ++i)
     {
+#ifndef USE_SPECIAL
         FSResult res = NA_LoadOtherTitleArchive(code, arc[i]);
+#else
+        FSResult res = FSi_MountSpecialArchive(TitleID, arc[i], &archiveWork);
+#endif        
         out_results[i] = (res != FS_RESULT_SUCCESS) ? FALSE : TRUE;
         if(res != FS_RESULT_SUCCESS)
         {
@@ -61,8 +82,12 @@ BOOL TestWriting(const char* code, BOOL out_results[2])
         }
         
         WriteFile(ARC_NAME[i], FILE_NAME);
-        
+
+#ifndef USE_SPECIAL
         NA_UnloadOtherTitleArchive();
+#else
+        FSi_MountSpecialArchive(TitleID, NULL, &archiveWork);
+#endif        
     }
     
     return out_results[0] | out_results[1];
