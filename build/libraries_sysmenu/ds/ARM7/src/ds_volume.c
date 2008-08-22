@@ -213,8 +213,8 @@ void DS_SetSpeakerVolume( void* romHeaderNTR )
 	if (hit)
 	{
 		// NTR並のSP音量(マイク入力問題のあるDSタイトル）
-		CDC_WriteSpiRegisterEx( 1, REG_CDC1_SP_ANGVOL_L_ADDR, (u8)(CDC1_ANGVOL_E | CDC1_ANGVOL_GAIN_NTR_SP) );
-		CDC_WriteSpiRegisterEx( 1, REG_CDC1_SP_ANGVOL_R_ADDR, (u8)(CDC1_ANGVOL_E | CDC1_ANGVOL_GAIN_NTR_SP) );
+		CDC_WriteSpiRegisterEx( 1, REG_CDC1_SP_ANGVOL_L_ADDR, (u8)(CDC1_ANGVOL_E | DS_ANGVOL_GAIN_SP_SPECIAL) );
+		CDC_WriteSpiRegisterEx( 1, REG_CDC1_SP_ANGVOL_R_ADDR, (u8)(CDC1_ANGVOL_E | DS_ANGVOL_GAIN_SP_SPECIAL) );
 	}
 	else
 	{
