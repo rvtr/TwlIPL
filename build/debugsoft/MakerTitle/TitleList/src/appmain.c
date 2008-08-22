@@ -187,7 +187,18 @@ BOOL ReadFile(const char* arc_name, const char* file_name, char* out, int len)
         res = FS_GetArchiveResultCode(buf);
         OS_TPrintf("Code:%d\n", res);
         OS_TPrintf("Open Fail:%s\n", buf);
-        STD_TSPrintf(out,"Error:%d\n%s Open Failed\n", res, buf);
+        if(res == FS_RESULT_ERROR)
+        {
+            STD_TSPrintf(out, "None.\n");
+        }
+        else if(res == FS_RESULT_NO_ENTRY)
+        {
+            STD_TSPrintf(out, "File not found.\n");
+        }
+        else
+        {
+            STD_TSPrintf(out,"Error:%d\n%s Open Failed\n", res, buf);
+        }
         return FALSE;
     }
     
