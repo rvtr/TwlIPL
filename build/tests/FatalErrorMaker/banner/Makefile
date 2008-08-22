@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlIPL
+# Project:  TwlSDK - demos - simpleShoot-1
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -11,39 +11,25 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date::            $
+# $Date:: $
 # $Rev$
 # $Author$
 #----------------------------------------------------------------------------
 
+SUBDIRS			=	
+SUBMAKES		=	\
+	Makefile.012A	Makefile.0G4A	
+
+
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-ICON_DIR			= ./icon
+#----------------------------------------------------------------------------
 
-BANNER_ICON			= $(ICON_DIR)/gameIcon.bmp
-BANNER_SPEC			= banner_v3.bsf
+do-build : $(TARGETS)
 
-TARGETS				= banner.bnr
-INSTALL_DIR			= ./
-INSTALL_TARGETS		= $(TARGETS)
-
-BANNER_ICON_NAME	= $(basename $(BANNER_ICON))
-
-LDIRT_CLEAN			= $(TARGETS) \
-					  $(BANNER_ICON_NAME).nbfs \
-					  $(BANNER_ICON_NAME).nbfc \
-					  $(BANNER_ICON_NAME).nbfp \
-					  $(TARGETS:.bnr=.srl)
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 #----------------------------------------------------------------------------
-#  build
-#----------------------------------------------------------------------------
-do-build:		$(TARGETS)
 
-$(TARGETS):		$(BANNER_SPEC) $(BANNER_ICON)
-				$(NTEXCONV) -no -bg -bgb -bgnc $(BANNER_ICON) >/dev/null && \
-				$(MAKEBANNER) -N $(BANNER_ICON_NAME) $(BANNER_SPEC) $(TARGETS)
-
-#
+#===== End of Makefile =====
