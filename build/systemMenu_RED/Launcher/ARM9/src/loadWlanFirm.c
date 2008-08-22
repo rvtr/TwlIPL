@@ -374,7 +374,6 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 {
     NWMRetCode err;
     NWMFirmDataParam *pFdParam = (NWMFirmDataParam *)NWM_PARAM_FWDATA_ADDRESS;
-    NVRAMResult nvRes;
     u8 *pSecBuf = NULL;
     u8 *pHdrBuf = NULL;
 
@@ -398,13 +397,10 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 
     OS_InitMessageQueue(&mesq, mesAry, sizeof(mesAry)/sizeof(mesAry[0]));
 
-    /* Read FW type from NVRAM */
-    nvRes = NVRAMi_Read(NWM_NVR_FWTYPE_OFFSET_ADDRESS, 1, &fwType );
-
-    if (nvRes != NVRAM_RESULT_SUCCESS)
+    /* Read FW type from NVRAM (retry till success) */
+    while (NVRAM_RESULT_SUCCESS != NVRAMi_Read(NWM_NVR_FWTYPE_OFFSET_ADDRESS, sizeof(fwType), &fwType ))
     {
-        OS_TWarning("Error: Couldn't access NVRAM.\n");
-        goto instfirm_error;
+        OS_SpinWait( 256 );
     }
 
     if (fwType == 0xFF)
