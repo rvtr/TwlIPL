@@ -412,6 +412,14 @@ void TwlMain( void )
         }
     }
 
+#ifdef SYSM_BUILD_FOR_PRODUCTION_TEST
+    if( !pBootTitle ||
+        ( pBootTitle && ( pBootTitle->flags.bootType != LAUNCHER_BOOTTYPE_ROM ) )
+	) {
+		state = STOP;
+	}
+#endif // SYSM_BUILD_FOR_PRODUCTION_TEST
+
     // チャンネルをロックする
     SND_LockChannel((1 << L_CHANNEL) | (1 << R_CHANNEL), 0);
 

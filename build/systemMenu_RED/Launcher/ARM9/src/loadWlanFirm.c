@@ -118,7 +118,9 @@ void InstallFirmCallback(void* arg)
     if (FALSE == OS_SendMessage(&mesq, (OSMessage)result, OS_MESSAGE_NOBLOCK))
     {
         // queue溢れはありえないハズだが、発生した場合は無線の不具合とみなしFATALにする。
+#ifndef SYSM_BUILD_FOR_PRODUCTION_TEST
         UTL_SetFatalError( FATAL_ERROR_WLANFIRM_LOAD );
+#endif // SYSM_BUILD_FOR_PRODUCTION_TEST
         s_isFinished = TRUE;
     }
 
@@ -378,9 +380,9 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 
 	ROM_Header_Short *header = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
 	
-#if defined(SYSM_DISABLE_WLFIRM_LOAD) || defined(SYSM_BUILD_FOR_PRODUCTION_TEST)
+#if defined(SYSM_DISABLE_WLFIRM_LOAD)
 	return TRUE;
-#endif // SYSM_DISABLE_WLFIRM_LOAD || SYSM_BUILD_FOR_PRODUCTION_TEST
+#endif // SYSM_DISABLE_WLFIRM_LOAD
 
 	if( header->titleID_Lo[3] == '4' )
 	{
@@ -639,8 +641,10 @@ instfirm_error:
     PMi_SetWirelessLED( PM_WIRELESS_LED_OFF );
 #endif
     s_isFinished = TRUE;
+	
+#ifndef SYSM_BUILD_FOR_PRODUCTION_TEST
     UTL_SetFatalError( FATAL_ERROR_WLANFIRM_AUTH );
-
+#endif // SYSM_BUILD_FOR_PRODUCTION_TEST
     return FALSE;
 }
 
@@ -659,9 +663,9 @@ static BOOL GetWlanFirmwareInstallResult(WLANFirmResult *pResult)
 // 無線ファームロード完了？
 BOOL PollingInstallWlanFirmware( void )
 {
-#if defined(SYSM_DISABLE_WLFIRM_LOAD) || defined(SYSM_BUILD_FOR_PRODUCTION_TEST)
+#if defined(SYSM_DISABLE_WLFIRM_LOAD)
 	return TRUE;
-#endif // SYSM_DISABLE_WLFIRM_LOAD || SYSM_BUILD_FOR_PRODUCTION_TEST
+#endif // SYSM_DISABLE_WLFIRM_LOAD
 	
 	if ( !s_isFinished ) {
 		WLANFirmResult result;
@@ -674,7 +678,9 @@ BOOL PollingInstallWlanFirmware( void )
 				// ロード失敗
 				if( !s_isHotStartWLFirm ) {
 					// ColdStartの無線ファームロードなら、FATALエラー
+#ifndef SYSM_BUILD_FOR_PRODUCTION_TEST
 			        UTL_SetFatalError( FATAL_ERROR_WLANFIRM_LOAD );
+#endif // SYSM_BUILD_FOR_PRODUCTION_TEST
 #ifdef SDK_RELEASE	
 					PMi_SetWirelessLED( PM_WIRELESS_LED_OFF );
 #endif
