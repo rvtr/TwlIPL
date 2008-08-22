@@ -222,7 +222,7 @@ RomSpec
 	Segment		ALL
 	HostRoot	../data
 	Root		/data
-	File		HNAA.tad HNBA.tad HNCA.tad HNLA.tad HNHA.tad TWLFontTable.dat menu_launcher.nand
+	File		hnaj-v0.tad hnbj-v0.tad hnca-v0.tad hnda-v0.tad hnea-v0.tad hnfj-v0.tad HNGJ-261.tad hnha-v0.tad hnij-v0.tad hnjj-v0.tad hnkj-v0.tad hnla-v0.tad TWLFontTable.dat nandfirm_rcplus.nand
 	HostRoot	$(PRIVKEY_PATH)
 	Root		/key
 	File		$(HWINFO_PRIVKEY) $(HWID_PRIVKEY)

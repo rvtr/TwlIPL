@@ -7,3 +7,4 @@
 :TadFiles: 
 :SRC: ARM9.TWL/src/main.c
 :FontFile: TWLFontTable.dat
+:Region: EUR

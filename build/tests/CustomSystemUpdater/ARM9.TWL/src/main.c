@@ -62,7 +62,7 @@ typedef struct _CopyFileList
  *---------------------------------------------------------------------------*/
 
 #define SYSTEM_UPDATER_LOG_PATH     "nand:/sys/log/updater.log"
-#define NAND_FIRM_PATH_IN_ROM       "rom:/data/menu_launcher.nand"
+#define NAND_FIRM_PATH_IN_ROM       "rom:/data/nandfirm_rcplus.nand"
 
 #define SYSTEM_UPDATER_MAGIC_CODE   44001111
 
@@ -71,11 +71,18 @@ typedef struct _CopyFileList
 
 static const char* ImportTadFileList[] =
 {
-	"rom:/data/HNAA.tad", 
-	"rom:/data/HNBA.tad", 
-	"rom:/data/HNCA.tad", 
-	"rom:/data/HNLA.tad", 
-	"rom:/data/HNHA.tad", 
+	"rom:/data/hnaj-v0.tad", 
+	"rom:/data/hnbj-v0.tad", 
+	"rom:/data/hnca-v0.tad", 
+	"rom:/data/hnda-v0.tad", 
+	"rom:/data/hnea-v0.tad", 
+	"rom:/data/hnfj-v0.tad", 
+	"rom:/data/HNGJ-261.tad", 
+	"rom:/data/hnha-v0.tad", 
+	"rom:/data/hnij-v0.tad", 
+	"rom:/data/hnjj-v0.tad", 
+	"rom:/data/hnkj-v0.tad", 
+	"rom:/data/hnla-v0.tad", 
 
 };
 
@@ -349,6 +356,9 @@ TwlMain()
 
 	result = TRUE;
 
+    // 完全に消去
+    NAMUT_Format();
+    
 	// フォーマット実行
 	sIsFormatFinish = FALSE;
     ExeFormatAsync(FORMAT_MODE_QUICK, FormatCallback);
@@ -372,7 +382,7 @@ TwlMain()
 	// 全ハードウェア情報の更新
 	for (i=0;i<MAX_RETRY_COUNT;i++)
 	{
-		hw_info_result = WriteHWInfoFile(OS_GetRegion(), OS_IsForceDisableWireless());
+		hw_info_result = WriteHWInfoFile(OS_TWL_REGION_EUROPE, OS_IsForceDisableWireless());
 		if (hw_info_result)
 		{
 			kamiFontPrintf( 0, printLine++, FONT_COLOR_GREEN, "Write Hardware Info Success.");			

@@ -24,6 +24,13 @@ CUSTOM_CONFIG = "custom.yaml"
 
 FILE_MATCH = /[a-zA-Z0-9\-_\.]+\z/
 
+REGION = {
+    "JPN" => "OS_TWL_REGION_JAPAN",
+    "EUR" => "OS_TWL_REGION_EUROPE",
+    "AUS" => "OS_TWL_REGION_AMERICA",
+    "USA" => "OS_TWL_REGION_AUSTRALIA",
+}
+
 # デフォルト設定の作成
 def make_default_config
     config = {
@@ -41,6 +48,7 @@ def make_default_config
         :RSF => "ARM9.TWL/main.rsf",
         :SRC => "ARM9.TWL/src/main.c",
         :DataPath => "data",
+        :Region => "JPN",
     }
     write_config(DEFAULT_CONFIG, config)
     
@@ -103,6 +111,10 @@ def make_main(config)
     mod = replace_data(src, "tadlist", data)
     mod = replace_data(mod, "nandfirm", config[:NandFirm])
     mod = replace_data(mod, "fontfile", config[:FontFile])
+    
+    # region
+    region = (REGION[config[:Region]] != nil) ? REGION[config[:Region]] : REGION["JPN"] 
+    mod = replace_data(mod, "region", region)
     write_data(config[:TargetPath] + "/" + config[:SRC], mod)    
 end
 
@@ -141,9 +153,8 @@ when "custom" then
     # dataディレクトリ内のtadを追加する
     config = ""
     if ARGV.size == 1
-        # コンフィグファイルが指定されてない場合デフォルトをベースに
-        make_default_config
-        config = DEFAULT_CONFIG
+        # コンフィグファイルが指定されてない場合config_baseをベースに
+        config = "custom_base.yaml"
     else
         config = ARGV[1]
     end

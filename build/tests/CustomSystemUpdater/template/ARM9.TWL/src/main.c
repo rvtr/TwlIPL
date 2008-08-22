@@ -344,6 +344,9 @@ TwlMain()
 
 	result = TRUE;
 
+    // 完全に消去
+    NAMUT_Format();
+    
 	// フォーマット実行
 	sIsFormatFinish = FALSE;
     ExeFormatAsync(FORMAT_MODE_QUICK, FormatCallback);
@@ -367,7 +370,7 @@ TwlMain()
 	// 全ハードウェア情報の更新
 	for (i=0;i<MAX_RETRY_COUNT;i++)
 	{
-		hw_info_result = WriteHWInfoFile(OS_GetRegion(), OS_IsForceDisableWireless());
+		hw_info_result = WriteHWInfoFile(%region%, OS_IsForceDisableWireless());
 		if (hw_info_result)
 		{
 			kamiFontPrintf( 0, printLine++, FONT_COLOR_GREEN, "Write Hardware Info Success.");			
