@@ -686,6 +686,8 @@ static void PrintError( void )
 	GX_SetVisiblePlane( GX_PLANEMASK_BG0 );
 	NNS_G2dCharCanvasClear( &gCanvas, TXT_COLOR_NULL );
 	G2_ChangeBlendAlpha( 0, 31 );
+	PrintfSJIS( 128,  0, TXT_COLOR_BLUE, "IPL:%s", g_strIPLSvnRevision );
+	PrintfSJIS( 128, 12, TXT_COLOR_BLUE, "SDK:%s", g_strSDKSvnRevision );
 	error_code = UTL_GetFatalError();
 	PrintfSJIS( 2, 25, TXT_COLOR_RED,"ERROR! - 0x%0.16x\n", error_code );
 	ERRORLOG_Write(error_code);
