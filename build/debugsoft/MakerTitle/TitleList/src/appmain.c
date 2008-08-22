@@ -72,6 +72,8 @@ BOOL TestWriting(const char* code, BOOL out_results[2])
         FSResult res = NA_LoadOtherTitleArchive(code, arc[i]);
 #else
         FSResult res = FSi_MountSpecialArchive(TitleID, arc[i], &archiveWork);
+        OS_TPrintf("%llu \n", TitleID); 
+        OS_TPrintf("%lu lu\n", TitleID >> 32, TitleID); 
 #endif        
         out_results[i] = (res != FS_RESULT_SUCCESS) ? FALSE : TRUE;
         if(res != FS_RESULT_SUCCESS)
@@ -251,18 +253,36 @@ void PrintResult(int x, int y, char* text)
 
 void DeleteSaveDatas(void)
 {
+    int i = 0, j = 0, k = 0;
+#ifndef USE_SPECIAL
     const NATitleArchive arc[2] = {
         NA_TITLE_ARCHIVE_DATAPUB,
         NA_TITLE_ARCHIVE_DATAPRV,
     };
-    int i = 0, j = 0, k = 0;
+#else
+    const char* arc[2] = {
+        "otherPub",
+        "otherPrv",
+    };
+    u32 lo = 0; 
+    OSTitleId TitleID;
+#endif
+
+
     ClearSubScreen();
     for(i = 0; i < TITLE_COUNT; ++i)
     {
         for(j = 0; j < 2; ++j)
         {
             char    path[256];
-            FSResult res = NA_LoadOtherTitleArchive(GAMECODE_LIST[i], arc[j]);
+            FSResult res;
+#ifndef USE_SPECIAL
+            res = NA_LoadOtherTitleArchive(GAMECODE_LIST[i], arc[j]);
+#else
+            lo = MI_LoadBE32(GAMECODE_LIST[i]);
+            TitleID = (TITLE_ID_HIGH[i] << 32) | lo;
+            res = FSi_MountSpecialArchive(TitleID, arc[j], &archiveWork);
+#endif
             if(res != FS_RESULT_SUCCESS)
             {
                 OS_TPrintf("Mount Failed:%s\n", GAMECODE_LIST[i]);
@@ -281,7 +301,12 @@ void DeleteSaveDatas(void)
                 PrintString(0,(short) (24 + k++), 15, "Deleted:%s %s", GAMECODE_LIST[i], path);
             }
             FS_CreateFile(path, FS_PERMIT_W | FS_PERMIT_R);
+
+#ifndef USE_SPECIAL
             NA_UnloadOtherTitleArchive();
+#else
+            FSi_MountSpecialArchive(TitleID, NULL, &archiveWork);
+#endif
         }
     }
 }
