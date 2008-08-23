@@ -35,7 +35,7 @@ TWL_ARCHGEN    	= LIMITED
 TITLEID_LO		=	0SUA
 #TARGET_TAD		=
 
-TARGET_BIN		= CustomSystemUpdater.srl
+TARGET_BIN		= CustomSystemUpdater_$(SYSM_REGION).srl
 LCFILE_SPEC		= ARM9-TS.lsf
 ROM_SPEC		= main.rsf
 
@@ -113,6 +113,7 @@ MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 #LDIRT_CLEAN			=
 #INSTALL_TARGETS		=
 INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
+#INSTALL_DIR				=	$(TWL_IPL_RED_ROOT)/build/tests/CustomSystemUpdater/bin
 
 #----------------------------------------------------------------------------
 

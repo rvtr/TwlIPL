@@ -220,7 +220,7 @@ RomSpec
 {
 	Offset		0x00000000
 	Segment		ALL
-	HostRoot	../data
+	HostRoot	../%datapath%
 	Root		/data
 	File		%filelist%
 	HostRoot	$(PRIVKEY_PATH)

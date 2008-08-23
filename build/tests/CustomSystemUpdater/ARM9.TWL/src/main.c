@@ -71,17 +71,16 @@ typedef struct _CopyFileList
 
 static const char* ImportTadFileList[] =
 {
-	"rom:/data/hnaj-v0.tad", 
-	"rom:/data/hnbj-v0.tad", 
+	"rom:/data/hnap-v0.tad", 
+	"rom:/data/hnbp-v0.tad", 
 	"rom:/data/hnca-v0.tad", 
 	"rom:/data/hnda-v0.tad", 
 	"rom:/data/hnea-v0.tad", 
-	"rom:/data/hnfj-v0.tad", 
-	"rom:/data/HNGJ-261.tad", 
+	"rom:/data/hnfp-v0.tad", 
 	"rom:/data/hnha-v0.tad", 
-	"rom:/data/hnij-v0.tad", 
-	"rom:/data/hnjj-v0.tad", 
-	"rom:/data/hnkj-v0.tad", 
+	"rom:/data/hnip-v0.tad", 
+	"rom:/data/hnjp-v0.tad", 
+	"rom:/data/hnkp-v0.tad", 
 	"rom:/data/hnla-v0.tad", 
 
 };

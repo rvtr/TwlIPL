@@ -31,6 +31,13 @@ REGION = {
     "USA" => "OS_TWL_REGION_AUSTRALIA",
 }
 
+REGION_PATH = {
+    "JPN" => "jp",
+    "EUR" => "euro",
+    "AUS" => "aus",
+    "USA" => "usa",
+}
+
 # デフォルト設定の作成
 def make_default_config
     config = {
@@ -66,13 +73,6 @@ def write_config(filename, data)
     }
 end
 
-
-# ファイル内の文字列を置き換える
-#def replace_data(filename, mark, data)
-    #file = File.read(filename)
-    #file.sub(/%#{mark}%/, data)
-#end
-
 # データ内の文字列を置き換える
 def replace_data(src, mark, data)
     while src.index(/%#{mark}%/) != nil do
@@ -96,6 +96,7 @@ def make_rsf(config)
     tadlist << config[:FontFile] << config[:NandFirm]
     tadlist = tadlist.join(" ")
     src = File.read(config[:TemplatePath] + "/" + config[:RSF])
+    src = replace_data(src, "datapath", config[:DataPath])
     write_data(config[:TargetPath] + "/" + config[:RSF], replace_data(src, "filelist", tadlist))
 end
 
@@ -118,7 +119,7 @@ def make_main(config)
     write_data(config[:TargetPath] + "/" + config[:SRC], mod)    
 end
 
-# SystemUpdaterの設定を変更する
+# SystemUpdaterを作成する
 def make_updater(filename)
     config = read_config(filename)  
     make_rsf(config)
@@ -126,7 +127,7 @@ def make_updater(filename)
 end
 
 # ディレクトリ内のtadを検索
-def pickup_tad(target_dir, name)
+def pickup_files(target_dir, name)
     Dir.glob(target_dir + name)
 end
 
@@ -148,32 +149,31 @@ when "default" then
     make_default_config
     make_updater(DEFAULT_CONFIG)
 when "custom" then
-    # カスタム設定で作成
-    # 指定したコンフィグファイルをベースに
-    # dataディレクトリ内のtadを追加する
-    config = ""
-    if ARGV.size == 1
-        # コンフィグファイルが指定されてない場合config_baseをベースに
-        config = "custom_base.yaml"
-    else
-        config = ARGV[1]
+    if ARGV.size < 3 
+        p "Usage: sumaker custom target_dir region"
+        exit
     end
+    # カスタム設定で作成
+    config = "custom_base.yaml"
+    region = ARGV[2]
 
     # ベースコンフィグに、dataディレクトリ内のtadとnandを追加
     config = read_config(config)
     if config[:TadFiles] == nil
         config[:TadFiles] = []
     end
-    tads = pickup_tad(config[:DataPath], "/*.tad")
-    nand = pickup_tad(config[:DataPath], "/*.nand")
-    font = pickup_tad(config[:DataPath], "/*.dat")
+    
+    config[:DataPath] += "/#{ARGV[1]}/#{REGION_PATH[region]}"
+    config[:Region] = region
+    tads = pickup_files(config[:DataPath], "/*.tad")
+    nand = pickup_files(config[:DataPath], "/*.nand")
+    font = pickup_files(config[:DataPath], "/*.dat")
     if nand.size > 0 
         config[:NandFirm] = nand[0].slice(FILE_MATCH)
     end
     if font.size > 0 
         config[:FontFile] = font[0].slice(FILE_MATCH)
     end
-    p tads
     for tad in tads do
         tad = tad.slice(FILE_MATCH)
         config[:TadFiles] << tad

@@ -16,6 +16,7 @@
 # $Author$
 #----------------------------------------------------------------------------
 
+
 TARGET_FIRM				=	SYSTEMMENU
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
@@ -28,6 +29,12 @@ WLANFIRM_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/wlanfirm
 DS_HASH_TABLE				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/DSHashTable
 SHARED_FONT_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/sharedFont
 NANDFIRM_DIR                =   $(TWL_IPL_RED_ROOT)/build/nandfirm/menu-launcher
+
+# リージョンが指定されてなかったら日本
+ifeq	($(REGION),)
+REGION	=	JPN
+endif
+
 
 # 既存データを使用する場合はTRUEを指定
 SKIP_CREATE_DATA = TRUE
@@ -48,6 +55,9 @@ SUBDIRS =	banner \
 			ARM7.TWL \
 			ARM9.TWL
 endif
+
+# CustomRegion
+export SYSM_REGION						=	$(REGION)
 
 # COMPILE SWITCH for build SystemMenu
 

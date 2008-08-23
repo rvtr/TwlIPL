@@ -220,9 +220,9 @@ RomSpec
 {
 	Offset		0x00000000
 	Segment		ALL
-	HostRoot	../data
+	HostRoot	../data/test_forcsu/euro
 	Root		/data
-	File		hnaj-v0.tad hnbj-v0.tad hnca-v0.tad hnda-v0.tad hnea-v0.tad hnfj-v0.tad HNGJ-261.tad hnha-v0.tad hnij-v0.tad hnjj-v0.tad hnkj-v0.tad hnla-v0.tad TWLFontTable.dat nandfirm_rcplus.nand
+	File		hnap-v0.tad hnbp-v0.tad hnca-v0.tad hnda-v0.tad hnea-v0.tad hnfp-v0.tad hnha-v0.tad hnip-v0.tad hnjp-v0.tad hnkp-v0.tad hnla-v0.tad TWLFontTable.dat nandfirm_rcplus.nand
 	HostRoot	$(PRIVKEY_PATH)
 	Root		/key
 	File		$(HWINFO_PRIVKEY) $(HWID_PRIVKEY)
