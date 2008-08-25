@@ -58,7 +58,7 @@ BOOL NAMUT_Format(void);
                 指定された変数に格納します。
 
   Arguments:    installed : installedカウント格納変数
-				free      : freeカウント格納変数
+                free      : freeカウント格納変数
 
   Returns:      成功ならTRUE
  *---------------------------------------------------------------------------*/
@@ -68,7 +68,7 @@ BOOL NAMUT_GetSoftBoxCount( u8* installed, u8* free );
   Name:         NAMUT_UpdateSoftBoxCount
 
   Description:  InstalledSoftBoxCount, FreeSoftBoxCount の値を
-				現在のNANDの状態に合わせて更新します。
+                現在のNANDの状態に合わせて更新します。
 
   Arguments:    None.
 
@@ -80,7 +80,7 @@ BOOL NAMUT_UpdateSoftBoxCount( void );
   Name:         NAMUTi_ClearSavedataPublic
 
   Description:  指定したセーブデータファイルに対して
-				ＦＦクリア＆フォーマットを行います。
+                ＦＦクリア＆フォーマットを行います。
 
   Arguments:    None
 
@@ -92,7 +92,7 @@ BOOL NAMUTi_ClearSavedataPublic(const char* path, u64 titleID);
   Name:         NAMUTi_ClearSavedataPrivate
 
   Description:  指定したセーブデータファイルに対して
-				ＦＦクリア＆フォーマットを行います。
+                ＦＦクリア＆フォーマットを行います。
 
   Arguments:    None
 
@@ -104,8 +104,8 @@ BOOL NAMUTi_ClearSavedataPrivate(const char* path, u64 titleID);
   Name:         NAMUTi_DestroySubBanner
 
   Description:  指定したサブバナーのCRC破壊を試みます。
-				指定したサブバナーが存在しない可能性もありますが
-				その場合でもTRUEを返します。（コードはOS_DeleteSubBannerFileのパクリ）
+                指定したサブバナーが存在しない可能性もありますが
+                その場合でもTRUEを返します。（コードはOS_DeleteSubBannerFileのパクリ）
 
   Arguments:    None
 
@@ -125,6 +125,17 @@ BOOL NAMUTi_DestroySubBanner(const char* path);
  *---------------------------------------------------------------------------*/
 BOOL NAMUT_DeleteNandDirectory(const char *path);
 
+/*---------------------------------------------------------------------------*
+  Name:         NAMUT_DeleteNandTmpDirectory
+
+  Description:  "nand:/tmp" ディレクトリ以下を消去します。
+                例外として、"nand:/tmp/es" 以下を残します。
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL NAMUT_DeleteNandTmpDirectory(void);
 
 /*---------------------------------------------------------------------------*
   Name:         NAMUT_ClearTWLSettings
@@ -132,7 +143,7 @@ BOOL NAMUT_DeleteNandDirectory(const char *path);
   Description:  TWL本体設定データのクリアを行います。
 
   Arguments:    TRUE : クリアした値をNANDにライトバックします。
-				FALSE: NANDへのライトバックは行いません。
+                FALSE: NANDへのライトバックは行いません。
 
   Returns:      成功ならTRUE
  *---------------------------------------------------------------------------*/
@@ -146,4 +157,4 @@ BOOL NAMUT_ClearTWLSettings( BOOL doWriteback );
 #endif
 
 
-#endif	/* NAM_UTILITY_H_ */
+#endif  /* NAM_UTILITY_H_ */
