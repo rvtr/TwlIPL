@@ -1,0 +1,22 @@
+NotLaunch
+
+ランチャー上に表示されないシステムNANDアプリです。
+===================================================================
+
+各リージョン版を用意しています。
+
+NotLaunch_SYSTEM_ALL.tad			457A
+NotLaunch_SYSTEM_Japan.tad			457J
+NotLaunch_SYSTEM_America.tad		457E
+NotLaunch_SYSTEM_Europe.tad			457P
+NotLaunch_SYSTEM_Austraila.tad		457U
+
+
+
+========================================================
+なにか問題がありましたら、環境制作部 西本まで。
+nishimoto_takashi@nintendo.co.jp
+
+========================================================
+2008/08/25	新規追加
+
