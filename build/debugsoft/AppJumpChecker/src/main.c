@@ -11,8 +11,8 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev:$
-  $Author:$
+  $Rev$
+  $Author$
  *---------------------------------------------------------------------------*/
 #include <twl/nam.h>
 #include <twl/os/common/format_rom.h>
@@ -232,35 +232,44 @@ static BOOL GetDataStruct(DataStruct* list)
 			break;
 		}
 		
-		// TitleID の格納
+	// TitleID の格納
 		list->id = titleIdList[i];
 		
-		// ノーマルジャンプをされるのを許可するかを表すフラグの取得
-		// アプリ本体へのパスを取得
-		if ( NAM_GetTitleBootContentPath(pathbuf, list->id) != NAM_OK )
+	// ノーマルジャンプをされるのを許可するかを表すフラグの取得
+		// TitleID を見て、タイトル種別がデータタイトルならば
+		// そもそも ROMヘッダが存在しない、アプリジャンプをする必要もない
+		if ( !NAM_IsDataTitle(list->id) )
 		{
-			PrintErrMsg("GetContentPath failed.");
-			return FALSE;
-		}
+			// アプリ本体へのパスを取得
+			if ( NAM_GetTitleBootContentPath(pathbuf, list->id) != NAM_OK )
+			{
+				PrintErrMsg("GetContentPath failed.");
+				return FALSE;
+			}
 		
-		// アプリのファイルオープン
-		FS_InitFile(&fp);
-		if ( !FS_OpenFileEx(&fp, pathbuf, FS_FILEMODE_R) )
+			// アプリのファイルオープン
+			FS_InitFile(&fp);
+			if ( !FS_OpenFileEx(&fp, pathbuf, FS_FILEMODE_R) )
+			{
+				// 失敗時はエラーコード出力で終了
+				PrintErrMsg("FS_OpenFileEx failed.");
+				return FALSE;
+			}
+			
+			if ( -1 == FS_ReadFile(&fp, &rh, sizeof(ROM_Header_Short) ))
+			{
+				PrintErrMsg("FS_ReadFile failed.");
+				return FALSE;
+			}
+			
+			list->normaljmp_flag = rh.permit_landing_normal_jump;
+			
+			FS_CloseFile(&fp);
+		}
+		else
 		{
-			// 失敗時はエラーコード出力で終了
-			PrintErrMsg("FS_OpenFileEx failed.");
-			return FALSE;
+			list->normaljmp_flag = FALSE;
 		}
-		
-		if ( -1 == FS_ReadFile(&fp, &rh, sizeof(ROM_Header_Short) ))
-		{
-			PrintErrMsg("FS_ReadFile failed.");
-			return FALSE;
-		}
-		
-		list->normaljmp_flag = rh.permit_landing_normal_jump;
-		
-		FS_CloseFile(&fp);
 	}
 	
 	PrintErrMsg(" ");
