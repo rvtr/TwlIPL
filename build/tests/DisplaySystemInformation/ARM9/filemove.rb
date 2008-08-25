@@ -1,6 +1,6 @@
 #! ruby -Ks
-startDir = "/cygdrive/c/home/TWL_IPL/build/tests/DisplaySystemInformation/ARM9/bin/ARM9-TS.LTD/Rom"
-dstDir = "/cygdrive/c/home/TWL_IPL/build/tests/DisplaySystemInformation/ARM9/bin/ARM9-TS.LTD/roms"
+startDir = "/cygdrive/c/home/TWL_IPL/build/tests/DisplaySystemInformation/ARM9/bin/ARM9-TS.LTD.thumb/Rom"
+dstDir = "/cygdrive/c/home/TWL_IPL/build/tests/DisplaySystemInformation/ARM9/bin/ARM9-TS.LTD.thumb/roms"
 
 Dir::chdir startDir
 

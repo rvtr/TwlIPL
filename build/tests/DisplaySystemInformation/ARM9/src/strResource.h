@@ -105,6 +105,9 @@
 #define SCFG_ARM9_EXT_MCB			21
 #define SCFG_ARM9_EXT_WRAM			22
 #define SCFG_ARM9_EXT_CFG			23
+#define SCFG_ARM9_TOTAL_CHECK		24
+#define SCFG_ARM9_CHECK_ERROR7		25
+#define SCFG_ARM9_CHECK_ERROR9		26
 
 #define SCFG_ARM7_ROM_ARM9_SEC		0
 #define SCFG_ARM7_ROM_ARM9_RSEL		1
@@ -191,13 +194,12 @@
 #define NORMAL_HW_MENU_SIZE 	2
 #define SECURE_HW_MENU_SIZE 	6
 #define SCFG_ARM7_MENU_SIZE 	47
-#define SCFG_ARM9_MENU_SIZE 	24
+#define SCFG_ARM9_MENU_SIZE 	27
 #define SYSMENU_MENU_SIZE		10
 #define FONTMENU_SIZE			1
 #define WLMENU_SIZE				3
 #define WHITEMENU_SIZE			2
 #define VERSIONMENU_SIZE 		0
-
 
 extern int s_numMenu[];
 extern const char *s_strRootMenu[];

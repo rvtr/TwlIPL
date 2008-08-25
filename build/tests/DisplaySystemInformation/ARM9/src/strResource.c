@@ -161,7 +161,10 @@ const char *s_strSCFGArm9Menu[] = {
 	"DSP Access",
 	"MemoryCard I/F",
 	"WRAM Access",
-	"CFG Block Access"
+	"CFG Block Access",
+	"All SCFG Check",
+	"SCFG Check Err7",
+	"SCFG Check Err9"
 };
 
 const char *s_strSCFGArm7Menu[] = {

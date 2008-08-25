@@ -44,7 +44,7 @@ void getWhiteListInfo( void )
 
 void getWhitelistHash( void )
 {
-	u32 tmdSize, fileSize;
+	u32 tmdSize=0, fileSize;
 	ESTitleMeta *tmd;
 
 	FSFile file;

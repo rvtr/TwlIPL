@@ -12,12 +12,17 @@ void getSCFGARM7InfoShared( void );
 void setSCFGAccessFlag( BOOL flag );
 void setPsramBoundaryFlag( int idx );
 void setDSPResetFlag( BOOL flag );
+BOOL scfgTotalCheck( void );
+void getTotalCheckResult( void );
+u64 getArm7CheckData( BOOL isSecure, BOOL isNandAccessable, BOOL isVisibleSCFG, BOOL isDebugger );
+u32 getArm9CheckData( void );
 
 void getSCFGInfo( void )
 {
 	getSCFGARM9Info();
 	getSCFGARM7InfoReg();
 	getSCFGARM7InfoShared();
+	getTotalCheckResult();
 }	
 
 void getSCFGARM9Info( void )
@@ -29,7 +34,7 @@ void getSCFGARM9Info( void )
 	// ROM制御レジスタ	
 	
 	// IsSecureRomAccessibleの返り値はレジスタビットが反転
-	value = ! SCFG_IsSecureRomAccessible();
+	value = !SCFG_IsSecureRomAccessible();
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_ROM_SEC].iValue = value;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_ROM_SEC].str.sjis = s_strJoint[ value ];
 	
@@ -80,9 +85,9 @@ void getSCFGARM9Info( void )
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM_CKI].numKindName = 2;
 
 	// 新規ブロック制御レジスタ
-	value = SCFG_IsDSPReset();
+	value = ! SCFG_IsDSPReset();
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].iValue = value;
-	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].str.sjis = s_strBool[ value ];
+	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].str.sjis = s_strBool[ !value ];
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].changable = TRUE;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].argType = ARG_BOOL;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].kindNameList = s_strBool;
@@ -243,6 +248,7 @@ void getSCFGARM9Info( void )
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].numKindName = 2;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].isAligned = FALSE;
 	gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].numLines = 2;
+	
 }
 
 void getSCFGARM7InfoReg( void )
@@ -640,7 +646,7 @@ void getSCFGARM7InfoShared( void )
 		// rom制御
 		value = ( regData & HWi_WSYS08_ROM_ARM9SEC_MASK ) || 0;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_SHARED_OFFSET + SCFG_ARM7_ROM_ARM9_SEC ].iValue = value;
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_SHARED_OFFSET + SCFG_ARM7_ROM_ARM9_SEC ].str.sjis = s_strAccess[ !value ] ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_SHARED_OFFSET + SCFG_ARM7_ROM_ARM9_SEC ].str.sjis = s_strJoint[ value ] ;
 		
 		value = ( regData & HWi_WSYS08_ROM_ARM9RSEL_MASK ) || 0;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_SHARED_OFFSET + SCFG_ARM7_ROM_ARM9_RSEL ].iValue = value;
@@ -652,7 +658,7 @@ void getSCFGARM7InfoShared( void )
 		
 		value = ( regData & HWi_WSYS08_ROM_ARM7FUSE_MASK ) || 0;
 		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_SHARED_OFFSET + SCFG_ARM7_ROM_ARM7_FUSE ].iValue = value;
-		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_SHARED_OFFSET + SCFG_ARM7_ROM_ARM7_FUSE ].str.sjis = s_strAccess[ !value ] ;
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_SHARED_OFFSET + SCFG_ARM7_ROM_ARM7_FUSE ].str.sjis = s_strJoint[ value ] ;
 		
 		// 
 		value = ( regData & HWi_WSYS08_WL_OFFB_MASK ) || 0;
@@ -750,3 +756,382 @@ void setSCFGAccessFlag( BOOL flag )
 		SCFG_SetConfigBlockInaccessible();
 	}	
 }
+
+void getTotalCheckResult( void )
+{
+	BOOL isSecure;
+	BOOL isNandAccessable;
+	BOOL isVisibleSCFG;
+	BOOL isDebugger;
+	u64 arm7res;
+	u32 arm9res;
+
+	isDebugger = ( OS_GetRunningConsoleType() & OS_CONSOLE_TWLDEBUGGER ) || 0;
+
+	switch( DISPINFO_BIN_IDX )
+	{
+		case 0:
+		case 4:
+			isSecure = FALSE;
+			isNandAccessable = TRUE;
+			isVisibleSCFG = FALSE;
+			break;
+			
+		case 1:
+		case 5:
+			isSecure = FALSE;
+			isNandAccessable = TRUE;
+			isVisibleSCFG = TRUE;
+			break;
+		case 2:
+			isSecure = FALSE;
+			isNandAccessable = FALSE;
+			isVisibleSCFG = FALSE;
+			break;
+		case 3:
+			isSecure = FALSE;
+			isNandAccessable = FALSE;
+			isVisibleSCFG = TRUE;
+			break;
+		case 6:
+		case 8:
+		case 14:
+		case 16:
+			isSecure = TRUE;
+			isNandAccessable = TRUE;
+			isVisibleSCFG = FALSE;
+			break;
+
+		case 7:
+		case 9:
+		case 15:
+		case 17:
+			isSecure = TRUE;
+			isNandAccessable = TRUE;
+			isVisibleSCFG = TRUE;
+			break;
+
+		case 10:
+		case 12:
+			isSecure = TRUE;
+			isNandAccessable = FALSE;
+			isVisibleSCFG = FALSE;
+			break;
+
+		case 11:
+		case 13:
+			isSecure = TRUE;
+			isNandAccessable = FALSE;
+			isVisibleSCFG = TRUE;
+			break;
+			
+		default:
+			// mast not come here
+			return;
+	}
+	
+	// SCFGデータの検証
+	arm7res = getArm7CheckData( isSecure, isNandAccessable, isVisibleSCFG, isDebugger );
+	arm9res = getArm9CheckData(  );
+	
+	
+	// 両方とも0が返ってくれば正解
+	if( !arm7res && !arm9res )
+	{
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_TOTAL_CHECK].str.sjis = s_strCorrect[TRUE];
+		STD_StrLCpy( gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CHECK_ERROR7].str.sjis, s_strNA, DISPINFO_BUFSIZE );
+		STD_StrLCpy( gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CHECK_ERROR9].str.sjis, s_strNA, DISPINFO_BUFSIZE );
+	}
+	else
+	{
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_TOTAL_CHECK].str.sjis = s_strCorrect[FALSE];
+		STD_TSNPrintf( gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CHECK_ERROR7].str.sjis, 
+						DISPINFO_BUFSIZE, "%012llx", arm7res );
+		STD_TSNPrintf( gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CHECK_ERROR9].str.sjis, 
+						DISPINFO_BUFSIZE, "%08x", arm9res );
+
+	}
+}
+/*
+BOOL scfgTotalCheck( BOOL isSecure, BOOL isNandAccessable, BOOL isVisibleSCFG, BOOL isDebugger  )
+{
+	// ARM7 check
+
+	if( isVisibleSCFG &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_SEC].iValue &&
+		! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_RSEL].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_SEC].iValue &&
+		! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_RSEL].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_FUSE].iValue != isSecure &&
+		! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_WE].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SD1].iValue == isNandAccessable &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SD2].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_AES].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_WRAM].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SND].iValue &&
+		! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DMA].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SDMA].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SND].iValue &&
+		! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MC].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_INTC].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SPI].iValue &&
+		! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DSEL].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SIO].iValue && 
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_LCDC].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_VRAM].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_PS].iValue == 3 &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DMAC].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_AES].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SD1].iValue == isNandAccessable &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SD2].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MIC].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_I2S].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_I2C].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_GPIO].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MCB].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_WRAM].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_PU].iValue &&
+		gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_CFG].iValue )
+	{
+		arm7res = TRUE;
+	}
+	else if( !isVisibleSCFG &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_SEC].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_RSEL].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_SEC].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_RSEL].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_FUSE].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_WE].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SD1].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SD2].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_AES].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_WRAM].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SND].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DMA].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SDMA].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SND].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MC].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_INTC].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SPI].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DSEL].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SIO].iValue && 
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_LCDC].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_VRAM].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_PS].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DMAC].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_AES].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SD1].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SD2].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MIC].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_I2S].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_I2C].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_GPIO].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MCB].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_WRAM].iValue &&
+			! gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_PU].iValue &&
+			!gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_CFG].iValue )
+	{
+		arm7res = TRUE;
+	}
+	else
+	{
+		arm7res = FALSE;
+	}
+	
+	
+	// arm9 check
+	// こっちはSCFGLockでも見える
+	if( gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_ROM_SEC].iValue &&
+		! gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_ROM_STATE].iValue &&
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CPU].iValue &&
+		! gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_DSP].iValue &&
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM].iValue &&
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_WRAM].iValue &&
+		! gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_CLK_CAM_CKI].iValue &&
+		! gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_RST_DSP].iValue &&
+		! gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMA].iValue &&
+		! gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_GEO].iValue &&
+		! gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_REN].iValue &&
+		! gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_2DE].iValue &&
+		! gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DIV].iValue &&
+		! gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_MC].iValue &&
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_INTC].iValue &&
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_LCDC].iValue &&
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_VRAM].iValue &&
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_PS].iValue == 2 &&
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DMAC].iValue &&
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CAM].iValue &&
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_DSP].iValue &&
+		gAllInfo[MENU_SCFG_ARM9][SCFG_ARM9_EXT_CFG].iValue )
+	{
+		arm9res = TRUE;
+	}
+	else
+	{
+		arm9res = FALSE;
+	}
+	
+	return arm9res && arm7res;
+}*/
+
+u64 getArm7CheckData( BOOL isSecure, BOOL isNandAccessable, BOOL isVisibleSCFG, BOOL isDebugger  )
+{
+	// 規定値に全て一致していればゼロが帰る
+	// 一致していなければ、一致していない項目に対応したビットが立ったデータが帰る
+	
+	u64 result = 0;
+	
+	int correctValue[SCFG_ARM7_MENU_SIZE] = {
+		// ROM status
+		TRUE, FALSE, TRUE, FALSE, 0, FALSE,
+		// CLK
+		0, TRUE, TRUE, TRUE, TRUE,
+		// JTAG
+		0, 0, 0,
+		// EXP
+		FALSE, TRUE, TRUE, FALSE, TRUE, TRUE, FALSE,
+		TRUE, TRUE, TRUE, 3, TRUE, TRUE, 0, TRUE,
+		TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, 0,
+		// MI
+		FALSE, 2, 0, FALSE, FALSE, 0x1998, 0x264c,
+		// old wireless
+		TRUE
+		// Bonding opは不定
+	};
+
+	correctValue[SCFG_ARM7_ROM_ARM7_FUSE] = !isSecure;
+	correctValue[SCFG_ARM7_CLK_SD1] = isNandAccessable;
+	correctValue[SCFG_ARM7_JTAG_CPU] = isDebugger;
+	correctValue[SCFG_ARM7_JTAG_DSP] = isDebugger;
+	correctValue[SCFG_ARM7_JTAG_A7] = isDebugger;
+	correctValue[SCFG_ARM7_EXT_SD1] = isNandAccessable;
+	correctValue[SCFG_ARM7_EXT_CFG] = isVisibleSCFG;
+	correctValue[SCFG_ARM7_MI_SC2_CDET] = !isDebugger;
+
+	if( isVisibleSCFG )
+	{
+/*		result = 
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_SEC].iValue 	<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_ROM_ARM9_SEC) |
+			(!gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM9_RSEL].iValue) << (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_ROM_ARM9_RSEL ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_SEC].iValue 	<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_ROM_ARM7_SEC ) |
+			(!gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_RSEL].iValue)	<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_ROM_ARM7_RSEL ) |
+			(gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_ARM7_FUSE].iValue != isSecure)
+																		<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_ROM_ARM7_FUSE ) |
+			(!gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_ROM_WE].iValue)		<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_ROM_WE ) |
+			
+			(gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SD1].iValue == isNandAccessable)
+																		<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_CLK_SD1 ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SD2].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_CLK_SD2 ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_AES].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_CLK_AES ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_WRAM].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_CLK_WRAM ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_CLK_SND].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_CLK_SND ) |
+			
+			(gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_JTAG_CPU].iValue == isDebugger)
+																		<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_JTAG_CPU ) |
+			(gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_JTAG_DSP].iValue == isDebugger )
+																		<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_JTAG_DSP ) |
+			(gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_JTAG_A7].iValue == isDebugger )
+																		<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_JTAG_A7 ) |
+
+			(!gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DMA].iValue)		<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_DMA ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SDMA].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_SDMA ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SND].iValue 			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_SND ) |
+			(!gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MC].iValue)		<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_MC ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_INTC].iValue 		<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_INTC ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SPI].iValue 			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_SPI ) |
+			(!gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DSEL].iValue)		<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_DSEL ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SIO].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_SIO ) | 
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_LCDC].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_LCDC ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_VRAM].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_VRAM ) |
+			(gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_PS].iValue == 3)	<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_PS ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_DMAC].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_DMAC ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_AES].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_AES ) |
+			(gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SD1].iValue == isNandAccessable)
+																		<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_SD1 ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_SD2].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_SD2 ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MIC].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_MIC ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_I2S].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_I2S ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_I2C].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_I2C ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_GPIO].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_GPIO ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_MCB].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_MCB ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_WRAM].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_WRAM ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_PU].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_PU ) |
+			gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_EXT_CFG].iValue			<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_EXT_CFG ) |
+			
+			(!gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC1_CDET].iValue)	<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_MI_SC1_CDET) |
+			(gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC1_MODE].iValue	== 2)
+																		<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_MI_SC1_MODE) |
+			(gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC2_CDET].iValue != isDebugger )
+																		<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_MI_SC2_CDET) |
+			(!gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SC2_MODE].iValue)	<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_MI_SC2_MODE) |
+			(!gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_SWP].iValue)	<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_MI_SWP) |
+			(gAllInfo[MENU_SCFG_ARM7][SCFG_ARM7_MI_CC].iValue) == 0x1988)
+																	<< (SCFG_ARM7_MENU_SIZE - SCFG_ARM7_MI_SWP) |
+			;*/
+		int index;
+		
+		for( index = 0; index < SCFG_ARM7_MENU_SIZE ; index++ )
+		{
+			if(SCFG_ARM7_OP_FORM <= index)
+			{
+				// この辺の値は開発機か量産機かで変わるので目視で判断
+				//result |= 0 << index;
+				continue;
+			}
+			
+			OS_TPrintf("%d:%d:%d ", index, gAllInfo[MENU_SCFG_ARM7][index].iValue ,correctValue[index] );
+			result |= ( gAllInfo[MENU_SCFG_ARM7][index].iValue != correctValue[index] ) << index;
+		}
+		
+		return result;
+	}
+	else
+	{
+		int index;
+		result = 0;
+		
+		for( index = 0; index < SCFG_ARM7_MENU_SIZE ; index++ )
+		{
+			result |= ( gAllInfo[MENU_SCFG_ARM7][index].iValue ) << index;
+		}
+		
+		return result;
+	}
+
+}
+
+u32 getArm9CheckData( void  )
+{
+	u32 result = 0;
+	int index; 
+	
+	int correctValue[SCFG_ARM9_MENU_SIZE] = {
+		// ROM status
+		TRUE, FALSE,
+		// CLK
+		TRUE, FALSE, TRUE, TRUE, FALSE,
+		// RST
+		FALSE,
+		// EXT
+		FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
+		TRUE, TRUE, TRUE, 2, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE
+	};
+		
+	for( index = 0; index < SCFG_ARM9_MENU_SIZE ; index++ )
+	{
+		if( SCFG_ARM9_TOTAL_CHECK <= index)
+		{
+			//result |= 0 << index;
+			continue;
+		}
+	
+		OS_TPrintf("%d:%d  ",gAllInfo[MENU_SCFG_ARM9][index].iValue ,correctValue[index]  );
+		result |= ( gAllInfo[MENU_SCFG_ARM9][index].iValue != correctValue[index] ) << index;
+	}
+		
+	OS_TPrintf("\nresult: %d\n", result);
+	return result;
+	
+}
+
+	

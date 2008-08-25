@@ -84,7 +84,7 @@ void getWLInfo( void )
 	else
 	{
 		// ì«Ç›çûÇﬂÇ»Ç©Ç¡ÇΩÇÁÇ∆ÇËÇ†Ç¶Ç∏N/AÇ¡Çƒì¸ÇÍÇƒÇ®Ç≠
-		snprintf( gAllInfo[MENU_WL][WL_VERSION].str.sjis, DISPINFO_BUFSIZE-1, s_strNA );
+		STD_StrLCpy( gAllInfo[MENU_WL][WL_VERSION].str.sjis, s_strNA, DISPINFO_BUFSIZE );
 	}
 
 }
