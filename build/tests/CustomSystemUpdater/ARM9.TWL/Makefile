@@ -68,6 +68,11 @@ SRCDIR		=	src \
 
 #LCFILE		=	# using default
 
+DATA_ROOT	=	../data
+ROMSET_FILE	=	../romset
+ROM_CHECKER	=	ruby ../romchecker.rb
+
+SUMAKER	=	ruby ../sumaker.rb custom 
 #----------------------------------------------------------------------------
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
@@ -117,13 +122,21 @@ INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
 
-.PHONY: build_time
+
+#include $(ROMSET_FILE)
+
+.PHONY: build_time check_rom sumaker
+
+check_rom:
+	$(ROM_CHECKER) $(DATA_ROOT)/$(ROMSET)
 
 build_time:
 	echo -n "#define BUILD_TIME \"`date \"+%Y/%m/%d %H:%M:%S\"`\"" > include/build_time.h
 
+sumaker:
+	$(SUMAKER) $(ROMSET) $(SYSM_REGION)
 
-do-build:		build_time $(TARGETS)
+do-build:		sumaker check_rom build_time $(TARGETS)
 
 #include	$(TWLSDK_ROOT)/build/buildtools/modulerules
 include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules

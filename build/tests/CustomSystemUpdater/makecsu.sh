@@ -17,8 +17,8 @@
 #----------------------------------------------------------------------------
 
 gen_updater(){
-ruby sumaker.rb custom $1 $2
-make REGION=$2
+#ruby sumaker.rb custom $1 $2
+make ROMSET=$1 REGION=$2
 rm `find . -name "*autogen*"`
 }
 

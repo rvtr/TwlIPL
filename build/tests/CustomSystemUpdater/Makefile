@@ -16,12 +16,52 @@
 # $Author$
 #----------------------------------------------------------------------------
 
+override TARGET_PLATFORM	= TWL
+override TARGET_CODEGEN		= THUMB
+override TWL_ARCHGEN		= LIMITED
+
 
 TARGET_FIRM				=	SYSTEMMENU
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
+
+#.PHONY: no_rom_set
+#no_rom_set:
+#	echo "Usage: make ROMSET=dirname"
+#
+#ifeq	($(ROMSET),)
+#	no_rom_set
+#endif
+#
+
+# リージョンが指定されてなかったら全部やる
+ifeq	($(REGION),)
+
+include	$(TWLSDK_ROOT)/build/buildtools/commondefs
+
+do-build:	do-something
+clean:		do-something
+clobber:	do-something
+install:	do-something
+do-build:	MY_GOAL=
+clean:		MY_GOAL=clean
+clobber:	MY_GOAL=clobber
+install:	MY_GOAL=install
+
+do-something:
+	+$(REMAKE) TWLSDK_PLATFORM=TWL REGION=JPN ROMSET=$(ROMSET) SKIP_SUBDIR=FALSE $(MY_GOAL)
+	-rm `find . -name "*autogen*"`
+	+$(REMAKE) TWLSDK_PLATFORM=TWL REGION=AUS ROMSET=$(ROMSET) SKIP_SUBDIR=FALSE $(MY_GOAL)
+	-rm `find . -name "*autogen*"`
+	+$(REMAKE) TWLSDK_PLATFORM=TWL REGION=USA ROMSET=$(ROMSET) SKIP_SUBDIR=FALSE $(MY_GOAL)
+	-rm `find . -name "*autogen*"`
+	+$(REMAKE) TWLSDK_PLATFORM=TWL REGION=EUR ROMSET=$(ROMSET) SKIP_SUBDIR=FALSE $(MY_GOAL)
+
+include	$(TWLSDK_ROOT)/build/buildtools/modulerules
+
+else
 
 LAUNCHER_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/Launcher
 MACHINESETTINGS_DIR			=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/MachineSettings
@@ -30,10 +70,6 @@ DS_HASH_TABLE				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/DSHashTable
 SHARED_FONT_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/sharedFont
 NANDFIRM_DIR                =   $(TWL_IPL_RED_ROOT)/build/nandfirm/menu-launcher
 
-# リージョンが指定されてなかったら日本
-ifeq	($(REGION),)
-REGION	=	JPN
-endif
 
 
 # 既存データを使用する場合はTRUEを指定
@@ -58,6 +94,7 @@ endif
 
 # CustomRegion
 export SYSM_REGION						=	$(REGION)
+export ROMSET	:=	$(ROMSET)
 
 # COMPILE SWITCH for build SystemMenu
 
@@ -80,5 +117,7 @@ export SYSM_USE_WLANFIRM_LOCAL_PUBKEY	=	FALSE
 #----------------------------------------------------------------------------
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+
+endif
 
 #===== End of Makefile =====

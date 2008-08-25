@@ -61,14 +61,20 @@ def make_default_config
     
 end
 
+# ファイル名にスクリプトを置いてあるディレクトリをくっつける
+def calc_path(filename)
+#    File.join(File.dirname(File.expand_path(__FILE__)), filename)
+filename
+end
+
 # コンフィグファイルを読んで展開
 def read_config(filename)
-    YAML.load(File.read(filename))
+    YAML.load(File.read(calc_path(filename)))
 end
 
 # コンフィグのライト
 def write_config(filename, data)
-    File.open(filename, "w") {|file|
+    File.open(calc_path(filename), "w") {|file|
         file.write data.to_yaml
     }
 end
@@ -87,7 +93,7 @@ def write_data(filename, data)
     temp = Tempfile.new("temp")
     temp.puts data
     temp.close
-    FileUtils.cp(temp.path, filename)
+    FileUtils.cp(temp.path, calc_path(filename))
 end
 
 # main.rsfの書き換え
@@ -154,11 +160,15 @@ when "default" then
 when "custom" then
     if ARGV.size < 3 
         p "Usage: sumaker custom target_dir region"
-        exit
+        exit -1
     end
     # カスタム設定で作成
     config = "custom_base.yaml"
     region = ARGV[2]
+    
+    # カレントディレクトリ変更
+    Dir.chdir(File.dirname(File.expand_path(__FILE__)))
+
 
     # ベースコンフィグに、dataディレクトリ内のtadとnandを追加
     config = read_config(config)
@@ -184,5 +194,7 @@ when "custom" then
     config[:TadFiles] = config[:TadFiles].uniq
     write_config(CUSTOM_CONFIG, config)
     make_updater(CUSTOM_CONFIG)
+    
+    exit 0
 end
 

@@ -75,7 +75,14 @@ static const char* ImportTadFileList[] =
 	"rom:/data/hnap-v0.tad", 
 	"rom:/data/hnbp-v0.tad", 
 	"rom:/data/hnca-v0.tad", 
+	"rom:/data/hnda-v0.tad", 
+	"rom:/data/hnea-v0.tad", 
+	"rom:/data/hnfp-v0.tad", 
+	"rom:/data/hngp-v0.tad", 
 	"rom:/data/hnha-v0.tad", 
+	"rom:/data/hnip-v0.tad", 
+	"rom:/data/hnjp-v0.tad", 
+	"rom:/data/hnkp-v0.tad", 
 	"rom:/data/hnlp-v0.tad", 
 
 };
@@ -564,7 +571,7 @@ static void DrawWaitButtonA(void)
 
 	kamiFontPrintfMain( 5,  3, 8, "    System Updater [EUR]");
 	kamiFontPrintfMain( 4,  5, 8, " --- ver %s %s ---", g_strSDKSvnRevision, g_strIPLSvnRevision );
-	kamiFontPrintfMain( 1,  6, 8, " Build time:%s", BUILD_TIME );
+	kamiFontPrintfMain( 1,  6, 8, "Build time:%s", BUILD_TIME );
 
 	kamiFontPrintfMain( 5,  9, 3, " A Button: Start  Update ");
 	kamiFontPrintfMain( 5, 10, 3, " B Button: Cancel Update ");
