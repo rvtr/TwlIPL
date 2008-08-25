@@ -117,7 +117,13 @@ INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
 
-do-build:		$(TARGETS)
+.PHONY: build_time
+
+build_time:
+	echo -n "#define BUILD_TIME \"`date \"+%Y/%m/%d %H:%M:%S\"`\"" > include/build_time.h
+
+
+do-build:		build_time $(TARGETS)
 
 #include	$(TWLSDK_ROOT)/build/buildtools/modulerules
 include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules

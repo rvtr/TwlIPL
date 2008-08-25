@@ -33,6 +33,7 @@
 #include "keypad.h"
 #include "debugger_hw_reset_control.h"
 #include "debugger_card_rom.h"
+#include "build_time.h"
 
 #define SCRAMBLE_MASK 0x00406000
 
@@ -556,8 +557,9 @@ static void DrawWaitButtonA(void)
 	(void)CARDi_ReadRomIDCoreEx(DEBUGGER_COMMAND_LOOK_SCREEN);
 	CARD_UnlockRom((u16)sLockId);
 
-	kamiFontPrintfMain( 5,  3, 8, "    System Updater    ");
+	kamiFontPrintfMain( 5,  3, 8, "    System Updater [%regionname%]");
 	kamiFontPrintfMain( 4,  5, 8, " --- ver %s %s ---", g_strSDKSvnRevision, g_strIPLSvnRevision );
+	kamiFontPrintfMain( 1,  6, 8, "Build time:%s", BUILD_TIME );
 
 	kamiFontPrintfMain( 5,  9, 3, " A Button: Start  Update ");
 	kamiFontPrintfMain( 5, 10, 3, " B Button: Cancel Update ");

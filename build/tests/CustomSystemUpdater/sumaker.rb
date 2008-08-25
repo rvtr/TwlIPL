@@ -97,6 +97,7 @@ def make_rsf(config)
     tadlist = tadlist.join(" ")
     src = File.read(config[:TemplatePath] + "/" + config[:RSF])
     src = replace_data(src, "datapath", config[:DataPath])
+    src = replace_data(src, "regionname", config[:Region])
     write_data(config[:TargetPath] + "/" + config[:RSF], replace_data(src, "filelist", tadlist))
 end
 
@@ -114,8 +115,10 @@ def make_main(config)
     mod = replace_data(mod, "fontfile", config[:FontFile])
     
     # region
-    region = (REGION[config[:Region]] != nil) ? REGION[config[:Region]] : REGION["JPN"] 
+	region_name = (config[:Region] != nil) ? config[:Region] : "JPN" 
+    region = (REGION[region_name] != nil) ? REGION[region_name] : REGION["JPN"] 
     mod = replace_data(mod, "region", region)
+    mod = replace_data(mod, "regionname", region_name)
     write_data(config[:TargetPath] + "/" + config[:SRC], mod)    
 end
 
