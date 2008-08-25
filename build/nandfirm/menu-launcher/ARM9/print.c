@@ -586,7 +586,7 @@ void PrintError(char *text, ...)
 
     // draw string
     va_start(vlist, text);
-    (void)vsnprintf(temp, 33, text, vlist);
+    (void)STD_TVSNPrintf(temp, 33, text, vlist);
     va_end(vlist);
 
     MI_CpuClearFast(gScreen, sizeof(gScreen));
