@@ -27,7 +27,7 @@ extern "C" {
 #define DS_REDRSV_PATCH_FUNC_ADDR			( HW_RED_RESERVED + 0x1c )
 #define DS_WLPATCH_SIZE						(5*4)
 #define DS_WLPATCH_COPYCODE_SIZE			(10*4)
-#define DS_ANGVOL_GAIN_SP_SPECIAL           0x2A  		// -21.1dB
+#define DS_ANGVOL_GAIN_SP_SPECIAL           0x2C
 
 void DS_InsertWLPatch( void* romHeaderNTR );
 void DS_SetSpeakerVolume( void* romHeaderNTR );
