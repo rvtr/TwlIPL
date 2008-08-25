@@ -77,11 +77,12 @@ static const char* ImportTadFileList[] =
 	"rom:/data/hnda-v0.tad", 
 	"rom:/data/hnea-v0.tad", 
 	"rom:/data/hnfp-v0.tad", 
+	"rom:/data/hngp-v0.tad", 
 	"rom:/data/hnha-v0.tad", 
 	"rom:/data/hnip-v0.tad", 
 	"rom:/data/hnjp-v0.tad", 
 	"rom:/data/hnkp-v0.tad", 
-	"rom:/data/hnla-v0.tad", 
+	"rom:/data/hnlp-v0.tad", 
 
 };
 
