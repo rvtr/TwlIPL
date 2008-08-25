@@ -46,9 +46,9 @@ SYSM_work       *pSysm;                                         // デバッガでのS
 ROM_Header_Short *pRomHeader;
 #endif
 // static variable-------------------------------------------------------------
-static u8 s_lcfgBuffer[ HW_PARAM_TWL_SETTINGS_DATA_SIZE								// 0x01fc
-					  + HW_PARAM_WIRELESS_FIRMWARE_DATA_SIZE						// 0x0004
-					  + HW_PARAM_TWL_HW_NORMAL_INFO_SIZE ] ATTRIBUTE_ALIGN(32);		// 0x1000
+static u8 s_lcfgBuffer[ HW_PARAM_TWL_SETTINGS_DATA_SIZE                             // 0x01fc
+                      + HW_PARAM_WIRELESS_FIRMWARE_DATA_SIZE                        // 0x0004
+                      + HW_PARAM_TWL_HW_NORMAL_INFO_SIZE ] ATTRIBUTE_ALIGN(32);     // 0x1000
 
 static TitleProperty s_bootTitleBuf;
 
@@ -155,13 +155,13 @@ void SYSMi_SendKeysToARM7( void )
 void SYSM_DeleteTmpDirectory( TitleProperty *pBootTitle )
 {
     // bootTypeがLAUNCHER_BOOTTYPE_TEMPでない場合、tmpフォルダ内のデータを消す
-	if( !pBootTitle || pBootTitle->flags.bootType != LAUNCHER_BOOTTYPE_TEMP ) {
-		if( NAMUT_DeleteNandDirectory( "nand:/tmp" ) ) {
-	        OS_TPrintf( "\"nand:/tmp\" delete succeeded.\n" );
-		}else {
-	        OS_TPrintf( "\"nand:/tmp\" delete failed.\n" );
-		}
-	}
+    if( !pBootTitle || pBootTitle->flags.bootType != LAUNCHER_BOOTTYPE_TEMP ) {
+        if( NAMUT_DeleteNandTmpDirectory() ) {
+            OS_TPrintf( "\"nand:/tmp\" delete succeeded.\n" );
+        }else {
+            OS_TPrintf( "\"nand:/tmp\" delete failed.\n" );
+        }
+    }
 }
 
 // ============================================================================
@@ -174,13 +174,13 @@ void SYSM_DeleteTmpDirectory( TitleProperty *pBootTitle )
 TitleProperty *SYSM_ReadParameters( void )
 {
     TitleProperty *pBootTitle = NULL;
-	
+    
     //-----------------------------------------------------
     // FATALエラーチェック
     //-----------------------------------------------------
-	if( SYSMi_GetWork()->flags.common.isNANDFatalError ) {
-		UTL_SetFatalError( FATAL_ERROR_NAND );
-	}
+    if( SYSMi_GetWork()->flags.common.isNANDFatalError ) {
+        UTL_SetFatalError( FATAL_ERROR_NAND );
+    }
 
     //-----------------------------------------------------
     // HW情報のリード
@@ -200,63 +200,63 @@ TitleProperty *SYSM_ReadParameters( void )
 #endif // SYSM_BUILD_FOR_PRODUCTION_TEST
     }
 
-	//-----------------------------------------------------
+    //-----------------------------------------------------
     // システム領域にHWInfoをコピー
     //-----------------------------------------------------
-	// NTRカードアプリARM9コードのロード領域とメモリがかち合うが、先頭0x4000はセキュア領域で別バッファに格納されるので、
-	// ここでこれらのパラメータをロードしても大丈夫。
-	SYSMi_CopyLCFGDataHWInfo( (u32)s_lcfgBuffer );
-	
-	//-----------------------------------------------------
+    // NTRカードアプリARM9コードのロード領域とメモリがかち合うが、先頭0x4000はセキュア領域で別バッファに格納されるので、
+    // ここでこれらのパラメータをロードしても大丈夫。
+    SYSMi_CopyLCFGDataHWInfo( (u32)s_lcfgBuffer );
+    
+    //-----------------------------------------------------
     // 本体設定データのリード（※必ずHWSecureInforリード後に実行すること。LanguageBitmapを判定に使うため）
     //-----------------------------------------------------
     {
         u8 *pBuffer = SYSM_Alloc( LCFG_READ_TEMP );
         if( pBuffer ) {
-			// NANDからTWL本体設定データをリード
-			BOOL isRead = LCFG_ReadTWLSettings( (u8 (*)[LCFG_READ_TEMP])pBuffer );
-			
-			// リード失敗ファイルが存在する場合は、ファイルをリカバリ
-			if( LCFG_RecoveryTWLSettings() ) {
-				if( isRead ) {
-					// ミラーデータのうち、一方がリードできていたなら何もしない。
-				}else {
-					// リードに完全に失敗していた場合は、フラッシュ壊れシーケンスへ。
-					LCFG_TSD_SetFlagFinishedBrokenTWLSettings( FALSE );
-					(void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );	// LCFG_READ_TEMP > LCFG_WRITE_TEMP なので、pBufferをそのまま流用
-				}
-			}else {
-				// リカバリ失敗時は、FALTALエラー
-		        UTL_SetFatalError( FATAL_ERROR_TWLSETTINGS );
-			}
+            // NANDからTWL本体設定データをリード
+            BOOL isRead = LCFG_ReadTWLSettings( (u8 (*)[LCFG_READ_TEMP])pBuffer );
+            
+            // リード失敗ファイルが存在する場合は、ファイルをリカバリ
+            if( LCFG_RecoveryTWLSettings() ) {
+                if( isRead ) {
+                    // ミラーデータのうち、一方がリードできていたなら何もしない。
+                }else {
+                    // リードに完全に失敗していた場合は、フラッシュ壊れシーケンスへ。
+                    LCFG_TSD_SetFlagFinishedBrokenTWLSettings( FALSE );
+                    (void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer ); // LCFG_READ_TEMP > LCFG_WRITE_TEMP なので、pBufferをそのまま流用
+                }
+            }else {
+                // リカバリ失敗時は、FALTALエラー
+                UTL_SetFatalError( FATAL_ERROR_TWLSETTINGS );
+            }
             SYSM_Free( pBuffer );
         }else {
-			// メモリ確保ができなかった時は、FATALエラー
-	        UTL_SetFatalError( FATAL_ERROR_TWLSETTINGS );
-		}
-	    LCFG_VerifyAndRecoveryNTRSettings();  		                          	// NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
+            // メモリ確保ができなかった時は、FATALエラー
+            UTL_SetFatalError( FATAL_ERROR_TWLSETTINGS );
+        }
+        LCFG_VerifyAndRecoveryNTRSettings();                                    // NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
     }
-	
-	//-----------------------------------------------------
+    
+    //-----------------------------------------------------
     // システム領域に本体設定をコピー
     //-----------------------------------------------------
-	// NTRカードアプリARM9コードのロード領域とメモリがかち合うが、先頭0x4000はセキュア領域で別バッファに格納されるので、
-	// ここでこれらのパラメータをロードしても大丈夫。
-	SYSMi_CopyLCFGDataSettings();
-	
+    // NTRカードアプリARM9コードのロード領域とメモリがかち合うが、先頭0x4000はセキュア領域で別バッファに格納されるので、
+    // ここでこれらのパラメータをロードしても大丈夫。
+    SYSMi_CopyLCFGDataSettings();
+    
     //-----------------------------------------------------
     // 無線ON/OFFフラグをもとに、LEDを設定する。
     //-----------------------------------------------------
-	{
-		PMWirelessLEDStatus enable;
-		if( LCFG_THW_IsForceDisableWireless() ) {
-			enable = PM_WIRELESS_LED_OFF;
-		}else {
-			enable = LCFG_TSD_IsAvailableWireless() ? PM_WIRELESS_LED_ON : PM_WIRELESS_LED_OFF;
-		}
-		PMi_SetWirelessLED( enable );
-	}
-	
+    {
+        PMWirelessLEDStatus enable;
+        if( LCFG_THW_IsForceDisableWireless() ) {
+            enable = PM_WIRELESS_LED_OFF;
+        }else {
+            enable = LCFG_TSD_IsAvailableWireless() ? PM_WIRELESS_LED_ON : PM_WIRELESS_LED_OFF;
+        }
+        PMi_SetWirelessLED( enable );
+    }
+    
     //-----------------------------------------------------
     // 各種デバイス設定
     //-----------------------------------------------------
@@ -268,16 +268,16 @@ TitleProperty *SYSM_ReadParameters( void )
         SYSM_SetBackLightBrightness( LCFG_TWL_BACKLIGHT_LEVEL_MAX );
     }
 #endif // SDK_SUPPORT_PMIC_2
-	
+    
     // RTC補正
     SYSMi_WriteAdjustRTC();
     // RTC値のチェック
     SYSMi_CheckRTC();
 
     //-----------------------------------------------------
-	// ARM7の処理待ち
+    // ARM7の処理待ち
     //-----------------------------------------------------
-	
+    
     // ARM7のランチャーパラメータ取得が完了するのを待つ
     while( !SYSMi_GetWork()->flags.common.isARM9Start ) {
         SVC_WaitByLoop( 0x1000 );
@@ -290,47 +290,47 @@ TitleProperty *SYSM_ReadParameters( void )
 //#endif
 
 
-	//-----------------------------------------------------
+    //-----------------------------------------------------
     // ランチャーパラメータの判定
     //-----------------------------------------------------
-	if( SYSM_IsHotStart() ) {
-		// ホットスタート時は、基本ロゴデモスキップ
-		SYSM_SetLogoDemoSkip( TRUE );
-		
-		if( !SYSM_IsRunOnDebugger() && LCFG_TSD_GetLastTimeBootSoftPlatform() == PLATFORM_CODE_NTR ) {
-		    // 前回ブートがNTRなら、ランチャーパラメータ無効
-			SYSMi_GetWork()->flags.common.isValidLauncherParam = 0;
-			MI_CpuClear32( &SYSMi_GetWork()->launcherParam, sizeof(LauncherParam) );
-		}
-		
-		if( SYSMi_GetWork()->flags.common.isValidLauncherParam ) {
-		    // ロゴデモスキップ無効？
-			if( !SYSM_GetLauncherParamBody()->v1.flags.isLogoSkip ) {
-	            SYSM_SetLogoDemoSkip( FALSE );
-	        }
-			
-	        // アプリ直接起動の指定があったらロゴデモを飛ばして指定アプリ起動
-			if( SYSM_GetLauncherParamBody()->v1.bootTitleID ) {
-	            s_bootTitleBuf.titleID = SYSM_GetLauncherParamBody()->v1.bootTitleID;
-	            s_bootTitleBuf.flags = SYSM_GetLauncherParamBody()->v1.flags;
-	            s_bootTitleBuf.pBanner = (TWLBannerFile *)(*(TWLBannerFile **)(SYSM_GetLauncherParamBody()->v1.rsv));
-	            pBootTitle = &s_bootTitleBuf;
-	        }
-		}
-	}
-	
+    if( SYSM_IsHotStart() ) {
+        // ホットスタート時は、基本ロゴデモスキップ
+        SYSM_SetLogoDemoSkip( TRUE );
+        
+        if( !SYSM_IsRunOnDebugger() && LCFG_TSD_GetLastTimeBootSoftPlatform() == PLATFORM_CODE_NTR ) {
+            // 前回ブートがNTRなら、ランチャーパラメータ無効
+            SYSMi_GetWork()->flags.common.isValidLauncherParam = 0;
+            MI_CpuClear32( &SYSMi_GetWork()->launcherParam, sizeof(LauncherParam) );
+        }
+        
+        if( SYSMi_GetWork()->flags.common.isValidLauncherParam ) {
+            // ロゴデモスキップ無効？
+            if( !SYSM_GetLauncherParamBody()->v1.flags.isLogoSkip ) {
+                SYSM_SetLogoDemoSkip( FALSE );
+            }
+            
+            // アプリ直接起動の指定があったらロゴデモを飛ばして指定アプリ起動
+            if( SYSM_GetLauncherParamBody()->v1.bootTitleID ) {
+                s_bootTitleBuf.titleID = SYSM_GetLauncherParamBody()->v1.bootTitleID;
+                s_bootTitleBuf.flags = SYSM_GetLauncherParamBody()->v1.flags;
+                s_bootTitleBuf.pBanner = (TWLBannerFile *)(*(TWLBannerFile **)(SYSM_GetLauncherParamBody()->v1.rsv));
+                pBootTitle = &s_bootTitleBuf;
+            }
+        }
+    }
+    
     // アプリジャンプでないときには、アプリ間パラメタをクリア
     // ※あらかじめNTRカードのセキュア領域を退避せずに直接0x2000000からロードしている場合も容赦なく消すので注意
     if( !pBootTitle )
     {
-    	MI_CpuClearFast((void *)HW_PARAM_DELIVER_ARG, HW_PARAM_DELIVER_ARG_SIZE);
-	}
+        MI_CpuClearFast((void *)HW_PARAM_DELIVER_ARG, HW_PARAM_DELIVER_ARG_SIZE);
+    }
 
     //-----------------------------------------------------
     // ISデバッガバナーViewモード起動
     //-----------------------------------------------------
     if( pBootTitle == NULL ) {
-		// ランチャーパラメータによるダイレクトブートがない場合のみ判定
+        // ランチャーパラメータによるダイレクトブートがない場合のみ判定
         pBootTitle = SYSMi_CheckDebuggerBannerViewModeBoot();
     }
     
@@ -339,7 +339,7 @@ TitleProperty *SYSM_ReadParameters( void )
     // 検査カード起動
     //-----------------------------------------------------
     if( pBootTitle == NULL ) {
-		// ココまでダイレクトブートが設定されていない場合のみ判定
+        // ココまでダイレクトブートが設定されていない場合のみ判定
         pBootTitle = SYSMi_CheckShortcutBoot1();
     }
     
@@ -347,7 +347,7 @@ TitleProperty *SYSM_ReadParameters( void )
     // その他のショートカット起動
     //-----------------------------------------------------
     if( pBootTitle == NULL ) {
-		// ココまでダイレクトブートが設定されていない場合のみ判定
+        // ココまでダイレクトブートが設定されていない場合のみ判定
         pBootTitle = SYSMi_CheckShortcutBoot2();
     }
 
@@ -358,36 +358,36 @@ TitleProperty *SYSM_ReadParameters( void )
 // HWInfoのメモリ展開。
 static void SYSMi_CopyLCFGDataHWInfo( u32 dst_addr )
 {
-	// HotStart時にも保持する必要のあるデータをランチャー用に移動するプリロードパラメータバッファにコピー。
-	MI_CpuCopy8( (void *)HW_PARAM_WIRELESS_FIRMWARE_DATA, (void *)(dst_addr + HW_PARAM_TWL_SETTINGS_DATA_SIZE),
-                 HW_PARAM_WIRELESS_FIRMWARE_DATA_SIZE );	// 無線ファーム用
-	
-	// プリロードパラメータアドレスをランチャー向けに変更。
-	*(u32 *)HW_PRELOAD_PARAMETER_ADDR = dst_addr;
-	
-	// HWノーマル情報、HWセキュア情報をメモリに展開しておく
-	MI_CpuCopyFast( LCFGi_GetHWN(), (void *)HW_PARAM_TWL_HW_NORMAL_INFO, sizeof(LCFGTWLHWNormalInfo) );
-	MI_CpuCopyFast( LCFGi_GetHWS(), (void *)HW_HW_SECURE_INFO, HW_HW_SECURE_INFO_END - HW_HW_SECURE_INFO );
+    // HotStart時にも保持する必要のあるデータをランチャー用に移動するプリロードパラメータバッファにコピー。
+    MI_CpuCopy8( (void *)HW_PARAM_WIRELESS_FIRMWARE_DATA, (void *)(dst_addr + HW_PARAM_TWL_SETTINGS_DATA_SIZE),
+                 HW_PARAM_WIRELESS_FIRMWARE_DATA_SIZE );    // 無線ファーム用
+    
+    // プリロードパラメータアドレスをランチャー向けに変更。
+    *(u32 *)HW_PRELOAD_PARAMETER_ADDR = dst_addr;
+    
+    // HWノーマル情報、HWセキュア情報をメモリに展開しておく
+    MI_CpuCopyFast( LCFGi_GetHWN(), (void *)HW_PARAM_TWL_HW_NORMAL_INFO, sizeof(LCFGTWLHWNormalInfo) );
+    MI_CpuCopyFast( LCFGi_GetHWS(), (void *)HW_HW_SECURE_INFO, HW_HW_SECURE_INFO_END - HW_HW_SECURE_INFO );
 }
 
 
 // 本体設定データのメモリ展開。
 static void SYSMi_CopyLCFGDataSettings( void )
 {
-	// 本体設定データ
-	MI_CpuCopyFast( LCFGi_GetTSD(), (void *)HW_PARAM_TWL_SETTINGS_DATA, sizeof(LCFGTWLSettingsData) );
-	
-	// 本体設定データのLauncherStatus部分をクリアしておく
-	{
-		LCFGTWLSettingsData *pSettings = (LCFGTWLSettingsData *)HW_PARAM_TWL_SETTINGS_DATA;
-		MI_CpuClear32( &pSettings->launcherStatus, sizeof(LCFGTWLLauncherStatus) );
-	}
-	
-	// NTR本体設定データをメモリに展開しておく
-	{
-		LCFG_NSD_SetLanguage( LCFG_NSD_GetLanguageEx() );
-		MI_CpuCopy8( LCFGi_GetNSD(), OS_GetSystemWork()->nvramUserInfo, sizeof(LCFGNTRSettingsData) );
-	}
+    // 本体設定データ
+    MI_CpuCopyFast( LCFGi_GetTSD(), (void *)HW_PARAM_TWL_SETTINGS_DATA, sizeof(LCFGTWLSettingsData) );
+    
+    // 本体設定データのLauncherStatus部分をクリアしておく
+    {
+        LCFGTWLSettingsData *pSettings = (LCFGTWLSettingsData *)HW_PARAM_TWL_SETTINGS_DATA;
+        MI_CpuClear32( &pSettings->launcherStatus, sizeof(LCFGTWLLauncherStatus) );
+    }
+    
+    // NTR本体設定データをメモリに展開しておく
+    {
+        LCFG_NSD_SetLanguage( LCFG_NSD_GetLanguageEx() );
+        MI_CpuCopy8( LCFGi_GetNSD(), OS_GetSystemWork()->nvramUserInfo, sizeof(LCFGNTRSettingsData) );
+    }
 }
 
 
@@ -395,9 +395,9 @@ static void SYSMi_CopyLCFGDataSettings( void )
 BOOL SYSM_IsLauncherHidden( void )
 {
 #ifdef SYSM_DO_NOT_SHOW_LAUNCHER
-	return TRUE;
+    return TRUE;
 #else
-	return FALSE;
+    return FALSE;
 #endif
 }
 
@@ -409,21 +409,21 @@ static TitleProperty *SYSMi_CheckDebuggerBannerViewModeBoot( void )
     //-----------------------------------------------------
     // ISデバッガバナーViewモード起動
     //-----------------------------------------------------
-	//[TODO]未実装
+    //[TODO]未実装
 #if 0
-	if( SYSMi_IsDebuggerBannerViewMode() ) {
-		return NULL;
-	}
+    if( SYSMi_IsDebuggerBannerViewMode() ) {
+        return NULL;
+    }
 #endif
 
-	return NULL;
+    return NULL;
 }
 
 // ショートカット起動のチェックその１
 static TitleProperty *SYSMi_CheckShortcutBoot1( void )
 {
     MI_CpuClear8( &s_bootTitleBuf, sizeof(TitleProperty) );
-	
+    
     //-----------------------------------------------------
     // ISデバッガ起動 or
     // 量産工程用ショートカットキー or
@@ -462,50 +462,50 @@ static TitleProperty *SYSMi_CheckShortcutBoot1( void )
 // ショートカット起動のチェックその２
 static TitleProperty *SYSMi_CheckShortcutBoot2( void )
 {
-	BOOL isSetArgument = FALSE;
-	BOOL isBootMSET = FALSE;
-	u16 argument = 0;
-	
+    BOOL isSetArgument = FALSE;
+    BOOL isBootMSET = FALSE;
+    u16 argument = 0;
+    
     MI_CpuClear8( &s_bootTitleBuf, sizeof(TitleProperty) );
 
 #ifndef SYSM_DISABLE_INITIAL_SETTINGS
     //-----------------------------------------------------
     // TWL設定データ破損時のフラッシュ壊れシーケンス起動
     //-----------------------------------------------------
-	if( !LCFG_TSD_IsFinishedBrokenTWLSettings() ) {
-		argument      = 100;		// フラッシュ壊れシーケンス起動
-		isSetArgument = TRUE;
-		isBootMSET    = TRUE;
+    if( !LCFG_TSD_IsFinishedBrokenTWLSettings() ) {
+        argument      = 100;        // フラッシュ壊れシーケンス起動
+        isSetArgument = TRUE;
+        isBootMSET    = TRUE;
     }else 
 #endif
     //-----------------------------------------------------
     // L+R+Startボタン押下起動で、本体設定のタッチパネル設定を起動
     //-----------------------------------------------------
     if( ( PAD_Read() & SYSM_PAD_SHORTCUT_TP_CALIBRATION ) ==
-		SYSM_PAD_SHORTCUT_TP_CALIBRATION ) {
-		argument      = 101;
-		isSetArgument = TRUE;
-		isBootMSET    = TRUE;
+        SYSM_PAD_SHORTCUT_TP_CALIBRATION ) {
+        argument      = 101;
+        isSetArgument = TRUE;
+        isBootMSET    = TRUE;
     }
 #ifndef SYSM_DISABLE_INITIAL_SETTINGS
     //-----------------------------------------------------
     // TWL設定データ未設定時の初回起動シーケンス起動
     //-----------------------------------------------------
     else if( !LCFG_TSD_IsFinishedInitialSetting() ) {
-		argument      = 0;
-		isSetArgument = FALSE;
-		isBootMSET    = TRUE;
+        argument      = 0;
+        isSetArgument = FALSE;
+        isBootMSET    = TRUE;
     }
 #endif
-	
+    
     //-----------------------------------------------------
     // ランチャー画面を表示しないバージョンの場合
     // カードがささっていたらカードを起動する
     // ささっていない場合は本体設定を起動
     //-----------------------------------------------------
 #ifdef SYSM_DO_NOT_SHOW_LAUNCHER
-	else if( SYSM_IsExistCard() )
-	{
+    else if( SYSM_IsExistCard() )
+    {
         s_bootTitleBuf.flags.isAppRelocate = TRUE;
         s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
         s_bootTitleBuf.flags.isInitialShortcutSkip = TRUE;         // 初回起動シーケンスを飛ばす
@@ -523,19 +523,19 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
         s_bootTitleBuf.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
         SYSM_SetLogoDemoSkip( s_bootTitleBuf.flags.isLogoSkip );
         return &s_bootTitleBuf;
-	}else
-	{
-		argument      = 0;
-		isSetArgument = FALSE;
-		isBootMSET    = TRUE;
-	}
+    }else
+    {
+        argument      = 0;
+        isSetArgument = FALSE;
+        isBootMSET    = TRUE;
+    }
 #endif
 
-	// 「アプリ間パラメータセット」有効時は、パラメータをセット
-	if( isSetArgument ) {
+    // 「アプリ間パラメータセット」有効時は、パラメータをセット
+    if( isSetArgument ) {
         OSDeliverArgInfo argInfo;
         int result;
-		
+        
         OS_InitDeliverArgInfo(&argInfo, 0);
         OS_DecodeDeliverArg();
         OSi_SetDeliverArgState( OS_DELIVER_ARG_BUF_ACCESSIBLE | OS_DELIVER_ARG_BUF_WRITABLE );
@@ -548,21 +548,21 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
         }
         OS_EncodeDeliverArg();
     }
-	
-	// 「本体設定ブート」有効時は、本体設定プート決定
-	if( isBootMSET ) {
+    
+    // 「本体設定ブート」有効時は、本体設定プート決定
+    if( isBootMSET ) {
         s_bootTitleBuf.titleID = SYSMi_getTitleIdOfMachineSettings();
         if(s_bootTitleBuf.titleID != 0)
-		{
+        {
             s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // 本体設定を起動できる時だけロゴデモを飛ばす
-		}
+        }
         s_bootTitleBuf.flags.bootType = LAUNCHER_BOOTTYPE_NAND;
         s_bootTitleBuf.flags.isValid = TRUE;
         s_bootTitleBuf.flags.isAppRelocate = FALSE;
         s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
         return &s_bootTitleBuf;
-	}
-	
+    }
+    
     return NULL;                                                    // 「ブート内容未定」でリターン
 }
 
@@ -571,34 +571,34 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
 // それらしきものがインストールされていない場合は0（NULL）をリターン
 static OSTitleId SYSMi_getTitleIdOfMachineSettings( void )
 {
-	OSTitleId ret = NULL;
-	int l;
-	int getNum;
-	int validNum = 0;
-	NAMTitleId *pTitleIDList = NULL;
-	ROM_Header_Short *header = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
-	
-	// インストールされているタイトルの取得
-	getNum = NAM_GetNumTitles();
-	pTitleIDList = SYSM_Alloc( sizeof(NAMTitleId) * getNum );
-	if( pTitleIDList == NULL ) {
-		OS_TPrintf( "%s: alloc error.\n", __FUNCTION__ );
-		return 0;
-	}
-	(void)NAM_GetTitleList( pTitleIDList, (u32)getNum );
-	
-	// 取得したタイトルに本体情報のIDがあるかチェック
-	for( l = 0; l < getNum; l++ ) {
-		char *code = ((char *)&pTitleIDList[l]) + 1;
-		if( 0 == STD_CompareNString( code, "BNH", 3 ) )
-		{
-			ret = (OSTitleId)pTitleIDList[l];
-			break;
-		}
-	}
-	SYSM_Free( pTitleIDList );
+    OSTitleId ret = NULL;
+    int l;
+    int getNum;
+    int validNum = 0;
+    NAMTitleId *pTitleIDList = NULL;
+    ROM_Header_Short *header = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
+    
+    // インストールされているタイトルの取得
+    getNum = NAM_GetNumTitles();
+    pTitleIDList = SYSM_Alloc( sizeof(NAMTitleId) * getNum );
+    if( pTitleIDList == NULL ) {
+        OS_TPrintf( "%s: alloc error.\n", __FUNCTION__ );
+        return 0;
+    }
+    (void)NAM_GetTitleList( pTitleIDList, (u32)getNum );
+    
+    // 取得したタイトルに本体情報のIDがあるかチェック
+    for( l = 0; l < getNum; l++ ) {
+        char *code = ((char *)&pTitleIDList[l]) + 1;
+        if( 0 == STD_CompareNString( code, "BNH", 3 ) )
+        {
+            ret = (OSTitleId)pTitleIDList[l];
+            break;
+        }
+    }
+    SYSM_Free( pTitleIDList );
 
-	return ret;
+    return ret;
 }
 
 //======================================================================
