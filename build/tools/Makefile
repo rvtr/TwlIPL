@@ -23,6 +23,7 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 SUBDIRS		= \
 		  attach_dummyromheader \
+		  rombreaker \
 
 
 #----------------------------------------------------------------------------
