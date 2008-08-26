@@ -81,7 +81,7 @@ static BOOL NAMUTi_ClearSavedataAll(void);
 static BOOL NAMUTi_InitShareData(void);
 static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arcname);
 static BOOL NAMUTi_RandClearFile(const char* path);
-static void NAMUTi_ClearWiFiSettings( void );
+static BOOL NAMUTi_ClearWiFiSettings( void );
 static void* NAMUT_Alloc(u32 size);
 static void NAMUT_Free(void* buffer);
 
@@ -164,7 +164,7 @@ BOOL NAMUT_Format(void)
     }
 
     // WiFi設定データをクリアします
-    NAMUTi_ClearWiFiSettings();
+	ret &= NAMUTi_ClearWiFiSettings();
 
     // 本体設定データのクリア
     ret &= NAMUT_ClearTWLSettings( TRUE );
@@ -904,32 +904,66 @@ BOOL NAMUT_ClearTWLSettings( BOOL doWriteback )
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
-static void NAMUTi_ClearWiFiSettings( void )
+static BOOL NAMUTi_ClearWiFiSettings( void )
 {
-#define NCFG_ADDR           0x20
-#define NTR_WIFI_DATA_SIZE  0x400
-#define TWL_WIFI_DATA_SIZE  0x600
-    u32 total_size = ( NTR_WIFI_DATA_SIZE + TWL_WIFI_DATA_SIZE );
-    u8* pClearData = NAMUT_Alloc( total_size );
-    if (!pClearData)
-    {
+#define NCFG_ADDR			0x20
+#define NTR_WIFI_DATA_SIZE	0x400
+#define TWL_WIFI_DATA_SIZE	0x600
+	const s32 RetryCount = 5;
+	s32 i;
+	BOOL readSuccess  = FALSE;
+	BOOL writeSuccess = FALSE;
+	u32 total_size = ( NTR_WIFI_DATA_SIZE + TWL_WIFI_DATA_SIZE );
+	u8* pClearData = NAMUT_Alloc( total_size );
+
+	if (!pClearData)
+	{
         OS_TWarning("Allocation failed. (%d)\n");
-        return;
-    }
+		return FALSE;
+	}
 
     if (!NVRAMi_IsInitialized()) {
         NVRAMi_Init();
     }
     DC_FlushRange( &sNCFGAddr, 2 );
-    sNCFGAddr = 0;
-    NVRAMi_Read( NCFG_ADDR, 2, (u8 *)&sNCFGAddr);
-    sNCFGAddr = (u32)( ( sNCFGAddr << 3 ) - ( NTR_WIFI_DATA_SIZE + TWL_WIFI_DATA_SIZE ) );
-    
-    MI_CpuFillFast( pClearData, 0xffffffff, total_size);
-    DC_FlushRange( pClearData, total_size );
-    NVRAMi_Write( sNCFGAddr, total_size , pClearData );
+	sNCFGAddr = 0;
+	for (i=0;i<RetryCount;i++)
+	{
+		if (NVRAMi_Read( NCFG_ADDR, 2, (u8 *)&sNCFGAddr) == NVRAM_RESULT_SUCCESS)
+		{
+			readSuccess = TRUE;
+			break;
+		}
+	}
 
-    NAMUT_Free( pClearData );
+	if (!readSuccess)
+	{
+		NAMUT_Free( pClearData );
+		return FALSE;
+	}
+
+	sNCFGAddr = (u32)( ( sNCFGAddr << 3 ) - ( NTR_WIFI_DATA_SIZE + TWL_WIFI_DATA_SIZE ) );
+	
+	MI_CpuFillFast( pClearData, 0xffffffff, total_size);
+    DC_FlushRange( pClearData, total_size );
+
+	for (i=0;i<RetryCount;i++)
+	{
+    	if (NVRAMi_Write( sNCFGAddr, total_size , pClearData ) == NVRAM_RESULT_SUCCESS)
+		{
+			writeSuccess = TRUE;
+			break;
+		}
+	}
+
+	NAMUT_Free( pClearData );
+
+	if (!writeSuccess)
+	{
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 /*---------------------------------------------------------------------------*
