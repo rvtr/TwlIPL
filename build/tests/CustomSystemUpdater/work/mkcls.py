@@ -106,9 +106,26 @@ def main():
     #--- make directory for cls
     tadpath  = os.path.dirname(tadfile)
     gamecode = binascii.unhexlify('%x'%titleId_L)
-    #clsdir  = ''.join([tadpath,'/',gamecode])
-    clsdir  = ''.join(['./',gamecode])
+    keycode  = gamecode[:3]
+    sysdic  = { 'HNA':'menu',
+                'HNB':'setting',
+                'HNC':'wfirm',
+                'HND':'dlplay',
+                'HNE':'pchat',
+                'HNF':'shop',
+                'HNG':'browser',
+                'HNH':'whlist',
+                'HNI':'photo',
+                'HNJ':'nzv',
+                'HNK':'sound',
+                'HNL':'verdata',
+                }
     try:
+        suffix = sysdic.get(keycode)
+        if suffix:
+            clsdir  = ''.join(['./',gamecode,'-',suffix])
+        else:
+            clsdir  = ''.join(['./',gamecode])
         os.mkdir(clsdir)
     except:
         print '%s : can not create dir %s' % (sys.argv[0],clsdir)
