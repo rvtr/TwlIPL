@@ -69,7 +69,7 @@ def check(target_dir)
     REGION_DIRS.each{|region_dir, region_code|
         ALL_REGION.each{|app_code|
             # オールリージョンのロムが含まれているかのチェック
-            search_path = "#{target_dir}/#{region_dir}/#{HEADER}#{app_code}a*.tad"
+            search_path = "#{target_dir}/#{region_dir}/#{HEADER}#{app_code}A*.tad"
             ret &= check_pickuped(search_path, false)
         }
         FIX_REGION.each{|app_code|
