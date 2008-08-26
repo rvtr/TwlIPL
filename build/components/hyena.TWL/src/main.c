@@ -99,7 +99,7 @@ static void         VBlankIntr(void);
 static void         InitializeFatfs(void);
 static void         InitializeNwm(OSArenaId drvArenaId, OSHeapHandle drvHeapHandle,
                                   OSArenaId wpaArenaId, OSHeapHandle wpaHeapHandle);
-static void         InitializeCdc(u32 lockId);
+static void         InitializeCdc();
 static void         AdjustVolume(void);
 /*---------------------------------------------------------------------------*
     外部シンボル参照
@@ -123,7 +123,6 @@ void
 TwlSpMain(void)
 {
     OSHeapHandle    wramHeapHandle, mainHeapHandle;
-	u32 spiLockId;
 
     // SYSMワークのクリア
 //	MI_CpuClear32( SYSMi_GetWork(), sizeof(SYSM_work) );		// NANDファームでクリアしているので、いらない。
@@ -221,20 +220,13 @@ TwlSpMain(void)
         AdjustVolume();
     }
 
-	// CODECアクセス用のSPIロックIDを取得する（ランチャーのみ 2008/07/31)
-	spiLockId = (u32)OS_GetLockID();
-	if (spiLockId == OS_LOCK_ID_ERROR)
-	{
-        OS_Warning("OS_GetLockID failed.\n");
-	}
-
     if (OSi_IsCodecTwlMode() == TRUE)
     {
         // CODEC 初期化
         // ランチャーのみCDC_InitForFirstBootで実際にCODECの初期化を行う。
 		// アプリ起動時にはCODECは既に初期化されているためmongooseなどでは
 		// 簡易的な初期化CDC_InitLibで良い。 2008/07/14
-        InitializeCdc(spiLockId);
+        InitializeCdc();
 
         // カメラ初期化
         CAMERA_Init();
@@ -286,11 +278,6 @@ TwlSpMain(void)
 #endif
 
     HOTSW_Init(THREAD_PRIO_HOTSW);
-
-    // 外部デポップ回路を無効にします。（ランチャーのみ 2008/07/14）
-	SPI_Lock(spiLockId);
-    CDC_DisableExternalDepop();
-	SPI_Unlock(spiLockId);
 
     while (TRUE)
     {
@@ -473,11 +460,26 @@ InitializeNwm(OSArenaId drvArenaId, OSHeapHandle drvHeapHandle,
   Returns:      None.
  *---------------------------------------------------------------------------*/
 static void
-InitializeCdc(u32 lockId)
+InitializeCdc(void)
 {
-	SPI_Lock(lockId);    		 // CODEC用SPI排他ロック
-    CDC_InitForFirstBoot();      // ※ランチャー特殊処理。
-	SPI_Unlock(lockId);  		 // CODEC用SPI排他ロック
+	u32 spiLockId;
+
+	// CODECアクセス用のSPIロックIDを取得する
+	spiLockId = (u32)OS_GetLockID();
+	if (spiLockId == OS_LOCK_ID_ERROR)
+	{
+        OS_Warning("OS_GetLockID failed.\n");
+	}
+
+	SPI_Lock(spiLockId);    	// CODEC用SPI排他ロック
+    CDC_InitForFirstBoot();     // ※ランチャー特殊処理。
+	SPI_Unlock(spiLockId);  	// CODEC用SPI排他ロック
+
+	OS_Sleep(30);				// CDC_InitForFirstBootでのPowerOnTime+デポップ期間
+
+	SPI_Lock(spiLockId);    	// CODEC用SPI排他ロック
+    CDC_DisableExternalDepop(); // 外部デポップ回路を無効にします
+	SPI_Unlock(spiLockId);  	// CODEC用SPI排他ロック
 }
 #include    <twl/ltdwram_end.h>
 
