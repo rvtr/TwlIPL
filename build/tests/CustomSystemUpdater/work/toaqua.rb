@@ -18,11 +18,11 @@ require "find"
 require "fileutils"
 
 REGION_DIR = {
-    "u" => ["aus"],
-    "e" => ["usa"],
-    "j" => ["jp"],
-    "p" => ["euro"],
-    "a" => ["aus", "usa", "jp", "euro"],
+    "U" => ["aus"],
+    "E" => ["usa"],
+    "J" => ["jp"],
+    "P" => ["euro"],
+    "A" => ["aus", "usa", "jp", "euro"],
 }
 
 def proc(target_dir, output_dir)

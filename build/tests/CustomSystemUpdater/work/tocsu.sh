@@ -40,10 +40,10 @@ mkdir $tmp
 
 find ../$1 -name "*.out" -exec cp {} $tmp \;
 
-find $tmp -name "*[ja]-v0*.out" | gawk -F/ '{printf("cp %s jp/%s\n",$0, $2)}' | sed -e 's/\.out$//g' > jp.sh
-find $tmp -name "*[ua]-v0*.out" | gawk -F/ '{printf("cp %s aus/%s\n",$0, $2)}' | sed -e 's/\.out$//g' > aus.sh
-find $tmp -name "*[pa]-v0*.out" | gawk -F/ '{printf("cp %s euro/%s\n",$0, $2)}' | sed -e 's/\.out$//g' > euro.sh
-find $tmp -name "*[ea]-v0*.out" | gawk -F/ '{printf("cp %s usa/%s\n",$0, $2)}' | sed -e 's/\.out$//g' > usa.sh
+find $tmp -name "*[jaJA]-v0*.out" | gawk -F/ '{printf("cp %s jp/%s\n",$0, $2)}' | sed -e 's/\.out$//g' > jp.sh
+find $tmp -name "*[uaUA]-v0*.out" | gawk -F/ '{printf("cp %s aus/%s\n",$0, $2)}' | sed -e 's/\.out$//g' > aus.sh
+find $tmp -name "*[paPA]-v0*.out" | gawk -F/ '{printf("cp %s euro/%s\n",$0, $2)}' | sed -e 's/\.out$//g' > euro.sh
+find $tmp -name "*[eaEA]-v0*.out" | gawk -F/ '{printf("cp %s usa/%s\n",$0, $2)}' | sed -e 's/\.out$//g' > usa.sh
 
 ./jp.sh
 ./aus.sh
