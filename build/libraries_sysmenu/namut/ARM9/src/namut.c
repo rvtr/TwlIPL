@@ -62,6 +62,9 @@ static const char* sFillFileList[] =
 #define BACKLIGHT_INITIAL_VALUE  3      // 本体初期化時に設定するバックライト輝度
 #define NAMUT_SHARE_ARCHIVE_MAX  6      // shareデータ個数
 
+#define SHOP_TITLE_ID         		0x00030015484E4600	// ショップのTitleID（リージョン除く）
+#define TITLE_ID_MASK_EXCEPT_REGION 0xFFFFFFFFFFFFFF00	// TitleIDのマスク（リージョン除く）
+
 /*---------------------------------------------------------------------------*
     内部変数定義
  *---------------------------------------------------------------------------*/
@@ -82,6 +85,7 @@ static BOOL NAMUTi_InitShareData(void);
 static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arcname);
 static BOOL NAMUTi_RandClearFile(const char* path);
 static BOOL NAMUTi_ClearWiFiSettings( void );
+static BOOL NAMUTi_DeleteShopAccount( void );
 static void* NAMUT_Alloc(u32 size);
 static void NAMUT_Free(void* buffer);
 
@@ -128,6 +132,13 @@ BOOL NAMUT_Format(void)
         OS_TWarning("Fail! NAMUTi_DeleteNonprotectedTitle()\n");
     }
 
+	// ショップアカウント情報を削除します
+	if (!NAMUTi_DeleteShopAccount())
+	{
+		ret = FALSE;
+        OS_TWarning("Fail! NAMUTi_DeleteShopAccount()\n");
+	}
+
     // プロテクトタイトルのセーブデータを初期化します
     if (!NAMUTi_ClearSavedataAll())
     {
@@ -164,10 +175,18 @@ BOOL NAMUT_Format(void)
     }
 
     // WiFi設定データをクリアします
-	ret &= NAMUTi_ClearWiFiSettings();
+	if (!NAMUTi_ClearWiFiSettings())
+	{
+		ret = FALSE;
+        OS_TWarning("Fail! NAMUTi_ClearWiFiSettings()\n");
+	}
 
     // 本体設定データのクリア
-    ret &= NAMUT_ClearTWLSettings( TRUE );
+	if (!NAMUT_ClearTWLSettings( TRUE ))
+	{
+		ret = FALSE;
+        OS_TWarning("Fail! NAMUT_ClearTWLSettings()\n");
+	}
 
     // RTCのクリアは必要ない。2008.06.25 小野沢確認。
     // 本体初期化後の初回起動シーケンス起動時にRTCをクリアするため。
@@ -332,7 +351,6 @@ BOOL NAMUT_DeleteNandTmpDirectory(void)
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-
 static BOOL NAMUTi_DeleteNonprotectedTitle(void)
 {
     char dirPath[NAM_PATH_LEN];
@@ -427,7 +445,6 @@ static BOOL NAMUTi_DeleteNonprotectedTitle(void)
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-
 static BOOL NAMUTi_ClearSavedataAll( void )
 {
     u32 title_num;
@@ -488,6 +505,8 @@ static BOOL NAMUTi_ClearSavedataAll( void )
         }
         else { ret = FALSE; }
     }
+
+    NAMUT_Free(pTitleIdArray);
 
     return ret;
 }
@@ -964,6 +983,66 @@ static BOOL NAMUTi_ClearWiFiSettings( void )
 	}
 
 	return TRUE;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         NAMUTi_DeleteShopAccount
+
+  Description:  ショップのアカウント情報を消去します。
+
+  Arguments:    None
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+static BOOL NAMUTi_DeleteShopAccount( void )
+{
+    u32 title_num;
+    NAMTitleId* pTitleIdArray;
+	char path[ FS_ENTRY_LONGNAME_MAX ];
+    BOOL ret = TRUE;
+    s32 i;
+
+    // タイトル数取得
+    title_num = (u32)NAM_GetNumTitles();
+
+    // タイトルID配列用メモリ確保
+    pTitleIdArray = NAMUT_Alloc(sizeof(NAMTitleId)*title_num);
+    if (pTitleIdArray == NULL)
+    {
+        OS_TWarning("Allocation failed in %s\n", __func__);
+        return FALSE;
+    }
+
+    // タイトルリスト取得
+    if (NAM_GetTitleList(pTitleIdArray, title_num) != NAM_OK)
+    {
+        OS_TWarning("Fail! NAM_GetTitleList() in %s\n", __func__);
+        NAMUT_Free(pTitleIdArray);
+        return FALSE;
+    }
+
+	// ショップを検索する
+    for (i=0;i<title_num;i++)
+    {
+		if ((pTitleIdArray[i] & TITLE_ID_MASK_EXCEPT_REGION) == SHOP_TITLE_ID)
+		{
+            STD_TSNPrintf(path, FS_ENTRY_LONGNAME_MAX, "nand:/title/%08x/%08x/data/ec.cfg", 
+				NAM_GetTitleIdHi(pTitleIdArray[i]), NAM_GetTitleIdLo(pTitleIdArray[i]) );
+			
+            if ( !FS_DeleteFile( path ) )
+			{
+				FSResult fsResult = FS_GetArchiveResultCode(path);
+
+				if ((fsResult != FS_RESULT_ALREADY_DONE) && (fsResult != FS_RESULT_NO_ENTRY))
+				{
+					ret = FALSE;
+				}
+			}
+		}
+    }
+
+    NAMUT_Free(pTitleIdArray);
+    return ret;
 }
 
 /*---------------------------------------------------------------------------*
