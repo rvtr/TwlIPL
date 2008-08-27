@@ -20,7 +20,7 @@
 move_data_to_tmp() {
 	tmp=tmp/$1
 	install -d $tmp
-	for src in `find $1 -name v*`
+	for src in `find $1 -name v* -type d`
 	do
 		mv $src $tmp
 	done
@@ -28,7 +28,7 @@ move_data_to_tmp() {
 
 do_cls() {
 	tmp=tmp/$1
-	for target in `find $tmp -name v*`
+	for target in `find $tmp -name v* -type d | sort -t "v" -g -k 2`
 	do
 		cp -rp $target $1
 		echo "$target"
@@ -42,5 +42,6 @@ do
 	move_data_to_tmp $name
 	do_cls $name
 done
+
 
 rm -rf tmp
