@@ -1626,11 +1626,13 @@ static void HotSwThread(void *arg)
                     if(GetMcSlotMode() == SLOT_STATUS_MODE_10){
 						LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 
-                        if( s_cbData.pBootSegBuf->rh.s.banner_offset ){
-							SYSMi_GetWork()->flags.hotsw.isValidCardBanner = TRUE;
+                        if( msg->ctrl && msg->value ){
+                            SYSMi_GetWork()->flags.hotsw.isExistCard 		= TRUE;
+                            SYSMi_GetWork()->flags.hotsw.isCardStateChanged = TRUE;
+                            if( s_cbData.pBootSegBuf->rh.s.banner_offset ){
+                            	SYSMi_GetWork()->flags.hotsw.isValidCardBanner = TRUE;
+                            }
                         }
-                        SYSMi_GetWork()->flags.hotsw.isExistCard         = TRUE;
-                        SYSMi_GetWork()->flags.hotsw.isCardStateChanged  = TRUE;
                         SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted = TRUE;
 #ifdef USE_WRAM_LOAD
                         SYSMi_GetWork()->flags.hotsw.isCardGameMode      = TRUE;
