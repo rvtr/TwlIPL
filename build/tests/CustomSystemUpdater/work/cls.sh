@@ -28,7 +28,7 @@ move_data_to_tmp() {
 
 do_cls() {
 	tmp=tmp/$1
-	for target in `find $tmp -name v* -type d | sort -t "v" -g -k 2`
+	for target in `find $tmp -name v* -type d | sort -t / -n -k 3.2`
 	do
 		cp -rp $target $1
 		echo "$target"
