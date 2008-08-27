@@ -364,8 +364,9 @@ static int InputRtcDateTimeMain( void )
 			RTCDate date;			// +-2000を処理するのが面倒なので、別バッファにコピーして処理
 			MI_CpuCopy32( &s_pWork->dtp.Date, &date, sizeof(RTCDate) );
 			date.year -= 2000;
-			(void)RTC_SetDateTime( &date, &s_pWork->dtp.Time );
+			// オフセット計算→日付のセットの順で実行する。
 			LCFG_TSD_SetRTCOffset( UTL_CalcRTCOffset( &date, &s_pWork->dtp.Time ) );
+			(void)RTC_SetDateTime( &date, &s_pWork->dtp.Time );
 		}
 		
 		// ::::::::::::::::::::::::::::::::::::::::::::::
