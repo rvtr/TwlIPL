@@ -27,17 +27,24 @@ REGION_DIR = {
 
 def proc(target_dir, output_dir)
     Find.find(target_dir){ |path|
-        next unless File.file?(path) && (/[a-z0-9A-Z]{4}-v[0-9]+\.tad\.out/ =~ path) != nil
+        next unless File.file?(path) && (/[a-z0-9A-Z]{4}-.*v[0-9]+\.tad\.out/ =~ path) != nil
 #        p path
         src = path
 
         # ディレクトリ内のtadファイルの.tadより前を取り出す
         dest = ""
+        version = ""
         Find.find(File.split(src)[0]){|tad|
-            next unless (/.*\.tad\z/ =~ tad) != nil
-            #p tad
-            dest = File.split(tad)[1]
+            # .tad が見つかった
+            if (/.*\.tad\z/ =~ tad) != nil 
+                dest = File.split(tad)[1]
+            end
+            if (/.*\.cls\z/ =~ tad) != nil
+                p tad
+                version = tad.slice(/v[0-9]+/)
+            end
         }
+        dest = /\.tad/.match(dest).pre_match + "-" + version + ".tad"
         # リージョンを判別してコピー
         regions = REGION_DIR[File.split(src)[1][3..3]]
         for region in regions do
