@@ -475,7 +475,7 @@ InitializeCdc(void)
     CDC_InitForFirstBoot();     // ※ランチャー特殊処理。
 	SPI_Unlock(spiLockId);  	// CODEC用SPI排他ロック
 
-	OS_Sleep(30);				// CDC_InitForFirstBootでのPowerOnTime+デポップ期間
+	OS_Sleep(50);				// CDC_InitForFirstBootでのPowerOnTime+デポップ期間
 
 	SPI_Lock(spiLockId);    	// CODEC用SPI排他ロック
     CDC_DisableExternalDepop(); // 外部デポップ回路を無効にします
