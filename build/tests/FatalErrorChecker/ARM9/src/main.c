@@ -421,8 +421,8 @@ static void drawMenu( void )
 	kamiFontClearMain();
 	kamiFontPrintfMain( 0, line++, CONSOLE_ORANGE, "How to");
 	kamiFontPrintfMain( 0, line++, CONSOLE_ORANGE, "+-----------------------------+");
-	kamiFontPrintfMain( 0, line++, CONSOLE_ORANGE, "l U/D Key  : Line Scroll      l");
-	kamiFontPrintfMain( 0, line++, CONSOLE_ORANGE, "l L/R Key  : Page Scroll      l");
+	kamiFontPrintfMain( 0, line++, CONSOLE_ORANGE, "l U/D Key  : Scroll Line      l");
+	kamiFontPrintfMain( 0, line++, CONSOLE_ORANGE, "l L/R Key  : Scroll Page      l");
 	kamiFontPrintfMain( 0, line++, CONSOLE_ORANGE, "l A Button : Switch View Mode l");
 	kamiFontPrintfMain( 0, line++, CONSOLE_ORANGE, "l X Button : Copy to SDCard   l");
 	kamiFontPrintfMain( 0, line++, CONSOLE_ORANGE, "+-----------------------------+");
