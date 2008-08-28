@@ -61,7 +61,7 @@ typedef enum CheckStatus {
 /*-- global variables ----------------------*/
 
 ErrorLogWork elWork;
-
+static BOOL isInitialized = FALSE;
 /*-- function prototype ----------------------*/
 CheckStatus ERRORLOGi_CheckAndCreateDirectory( const char *path );
 CheckStatus ERRORLOGi_CheckAndCreateFile( const char *path );
@@ -92,15 +92,28 @@ static char *s_strError[FATAL_ERROR_MAX];
  *---------------------------------------------------------------------------*/
 BOOL ERRORLOG_Init( void* (*AllocFunc) (u32) , void (*FreeFunc) (void*)  )
 {
+	if( isInitialized )
+	{
+		return FALSE ;
+	}
+	
 	SDK_POINTER_ASSERT(AllocFunc);
     SDK_POINTER_ASSERT(FreeFunc);
 
 	elWork.Alloc = AllocFunc;
 	elWork.Free = FreeFunc;
 	
+	OS_InitMutex( &elWork.mutex );
+	OS_LockMutex( &elWork.mutex );
+
 	// ログ読み出し用のバッファを確保
-	elWork.entry = (ErrorLogEntry*) elWork.Alloc ( sizeof (ErrorLogEntry) * ERRORLOG_NUM_ENTRY );
-	MI_CpuClear8( elWork.entry, sizeof (ErrorLogEntry) * ERRORLOG_NUM_ENTRY);
+	if( elWork.entry == NULL )
+	{
+		elWork.entry = (ErrorLogEntry*) elWork.Alloc ( sizeof (ErrorLogEntry) * ERRORLOG_NUM_ENTRY );
+		MI_CpuClear8( elWork.entry, sizeof (ErrorLogEntry) * ERRORLOG_NUM_ENTRY);
+	}
+	
+	SDK_ASSERT( elWork.entry );
 	
 	if( !FS_IsAvailable() )
 	{
@@ -113,12 +126,15 @@ BOOL ERRORLOG_Init( void* (*AllocFunc) (u32) , void (*FreeFunc) (void*)  )
 	// ファイルの存在確認
 	if( ERRORLOGi_CheckAndCreateDirectory( ERRORLOG_DIRECTORYPATH ) == CHECK_FAILED )
 	{
+		OS_UnlockMutex( &elWork.mutex );
 		return FALSE;
 	}
 	
+	// ファイルの存在を確認、ついでに中でオープンしてエントリの読み込み
 	switch ( ERRORLOGi_CheckAndCreateFile( ERRORLOG_FILEPATH ) )
 	{
 		case CHECK_FAILED:
+			OS_UnlockMutex( &elWork.mutex );
 			return FALSE;
 			break;
 			
@@ -131,6 +147,10 @@ BOOL ERRORLOG_Init( void* (*AllocFunc) (u32) , void (*FreeFunc) (void*)  )
 			// 新規にファイルが作られたなら何もしなくていい
 			break;
 	}
+
+	FS_CloseFile( &elWork.file );
+	OS_UnlockMutex( &elWork.mutex );
+	isInitialized = TRUE;
 
 	return TRUE;
 }
@@ -159,10 +179,7 @@ void ERRORLOG_End( void )
 	
 	elWork.Free( elWork.entry );
 
-	if( !FS_CloseFile( &elWork.file ) )
-	{
-		OS_TPrintf("EL Error: FS_CloseFile() failed.\n" );
-	}
+	isInitialized = FALSE;
 }
 
 /*---------------------------------------------------------------------------*
@@ -178,10 +195,18 @@ BOOL ERRORLOG_Printf( const char *fmt, ... )
 {
 	BOOL result = TRUE;
 	va_list arglist;
+	
+	if( !isInitialized )
+	{
+		return FALSE;
+	}
+	
+	OS_LockMutex( &elWork.mutex );
 	va_start( arglist, fmt );
 	result = ERRORLOGi_WriteCommon( FALSE, 0, fmt, arglist );
 	va_end( arglist );
-	
+	OS_UnlockMutex( &elWork.mutex );
+
 	return result;
 }
 
@@ -196,7 +221,18 @@ BOOL ERRORLOG_Printf( const char *fmt, ... )
  *---------------------------------------------------------------------------*/
 BOOL ERRORLOG_Write( u64 errorCode )
 {
-	return ERRORLOGi_WriteCommon( TRUE, errorCode, NULL, NULL );
+	BOOL res;
+	
+	if( !isInitialized )
+	{
+		return FALSE;
+	}
+	
+	OS_LockMutex( &elWork.mutex );
+	res = ERRORLOGi_WriteCommon( TRUE, errorCode, NULL, NULL );
+	OS_UnlockMutex( &elWork.mutex );
+	
+	return res;
 }
 
 /*---------------------------------------------------------------------------*
@@ -673,9 +709,6 @@ void ERRORLOGi_WriteLogToBuf( char *buf )
 	int counter;
 	int counterMax = elWork.numEntry <= ERRORLOG_NUM_ENTRY ? elWork.numEntry : ERRORLOG_NUM_ENTRY ;
 	
-	// ファイルの頭に戻って書き込みなおす
-	FS_SeekFileToBegin( &elWork.file );
-	
 	for( counter = 0; counter < counterMax ; counter++ )
 	{
 		// bufに一エントリずつ文字列化して詰めていく
@@ -704,20 +737,23 @@ void ERRORLOGi_WriteLogToBuf( char *buf )
 
 BOOL ERRORLOGi_WriteLogToFile( char *buf )
 {
-	FSResult res;
-	
+	// ファイルの頭に戻って書き込みなおす
+	FS_OpenFileEx( &elWork.file, ERRORLOG_FILEPATH, FS_FILEMODE_W );
 	FS_SeekFileToBegin( &elWork.file );
+	
 	if( FS_WriteFile( &elWork.file, buf, ERRORLOG_SIZE ) != ERRORLOG_SIZE )
 	{
 		OS_TPrintf("EL Error: FS_WriteFile() failed.\n");
+		FS_CloseFile( &elWork.file );
 		return FALSE;
 	}
 	
-	if( ( res = FS_FlushFile( &elWork.file )) != FS_RESULT_SUCCESS )
+	if( ! FS_CloseFile( &elWork.file ) )
 	{
-		OS_TPrintf("EL Error: FS_FlushFile() failed. FSResult: %d\n", res);
+		OS_TPrintf("EL Error: FS_CloseFile() in WriteLogToFile() failed.");
 		return FALSE;
 	}
+	
 	return TRUE;
 }
 

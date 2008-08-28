@@ -65,12 +65,19 @@ typedef struct ErrorLogWork{
 	// メモリ確保用関数
 	void* (*Alloc) ( u32 )  ;
 	void (*Free) ( void* )  ;
+
 	// エラーログエントリ保持用変数	
 	ErrorLogEntry *entry;
+
 	// エラーログのエントリ数
 	int numEntry;
+
 	// エラーログのファイルポインタ
 	FSFile file;
+
+	// 排他制御用Mutex
+	OSMutex mutex;
+	
 } ErrorLogWork;
 
 
