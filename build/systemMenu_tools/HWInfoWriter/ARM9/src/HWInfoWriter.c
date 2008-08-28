@@ -128,11 +128,11 @@ void HWInfoWriterInit( void )
 	}
 	
 	// ñ≥ê¸ã≠êßON/OFFèÓïÒÇÃï\é¶
-	s_isDisableWireless = LCFG_THW_IsForceDisableWireless();
+	s_isDisableWireless = OS_IsForceDisableWireless();
 	PrintfSJIS( 3 * 8, 2 * 8, TXT_COLOR_BLACK, pWireless[ s_isDisableWireless ] );
 	
-	OS_TPrintf( "region = %d\n", LCFG_THW_GetRegion() );
-	PrintfSJISSub( 2 * 8, 16 * 8, TXT_COLOR_BLACK, "Region   = %s", strRegion[ LCFG_THW_GetRegion() ] );
+	OS_TPrintf( "region = %d\n", OS_GetRegion() );
+	PrintfSJISSub( 2 * 8, 16 * 8, TXT_COLOR_BLACK, "Region   = %s", strRegion[ OS_GetRegion() ] );
 	PrintfSJISSub( 2 * 8, 18 * 8, TXT_COLOR_BLACK, "SerialNo = %s", LCFG_THW_GetSerialNoPtr() );
 	if ( 1 )
 	{
@@ -143,7 +143,7 @@ void HWInfoWriterInit( void )
 		for( i = 0; i < 4; i++ ) gameCode[ i ] = titleID_Lo[ 4 - i - 1 ];
 		PrintfSJISSub( 2 * 8, 20 * 8, TXT_COLOR_BLACK, "LauncherTitleID_Lo = %s", gameCode );
 	}
-	s_region_old = LCFG_THW_GetRegion();
+	s_region_old = OS_GetRegion();
 	s_csr = 0;
 	DrawMenu( s_csr, &s_writerParam );
 	

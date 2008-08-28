@@ -384,7 +384,7 @@ BOOL HWI_WriteHWNormalInfoFile( void )
 		u8 serialNo[ LCFG_TWL_HWINFO_MOVABLE_UNIQUE_ID_LEN ];
 		
 		MI_CpuClear8( serialNo, LCFG_TWL_HWINFO_MOVABLE_UNIQUE_ID_LEN );
-		LCFG_THW_GetSerialNo( serialNo );
+		OS_GetSerialNo( serialNo );
 		
 		for( i = 0; i < LCFG_TWL_HWINFO_MOVABLE_UNIQUE_ID_LEN; i++ ) {
 			Info.movableUniqueID[ i ] = (u8)( serialNo[ i ] ^ s_serialNo_mask[ i ] );
@@ -432,7 +432,7 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
     LCFG_THW_SetFlagForceDisableWireless( isDisableWireless );
 
 	// 旧リージョンを保存
-	old_region = LCFG_THW_GetRegion();
+	old_region = OS_GetRegion();
 
     // リージョンのセット
     LCFG_THW_SetRegion( region );
@@ -463,7 +463,7 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
 		}
 
 		// 現在のシリアルNo取得
-		LCFG_THW_GetSerialNo( serialNoOld );
+		OS_GetSerialNo( serialNoOld );
 
 		// 新しいシリアルNoをクリアしておく
 		MI_CpuClear8( serialNoNew, sizeof(serialNoNew) );
