@@ -1616,8 +1616,7 @@ static void HotSwThread(void *arg)
         
         while(1){
             if( !SYSMi_GetWork()->flags.hotsw.isEnableHotSW ) {
-                SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
-                HOTSW_PutString("### HotSw is restrained...\n");
+				HOTSW_PutString("### HotSw is restrained...\n");
                 break;
             }
 
@@ -1667,8 +1666,13 @@ static void HotSwThread(void *arg)
                 break;
             }
         } // Card Read while loop
+
+        if( !SYSMi_GetWork()->flags.hotsw.is1stCardChecked ){
+			LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+            SYSMi_GetWork()->flags.hotsw.is1stCardChecked = TRUE;
+            UnlockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
+        }
         
-        SYSMi_GetWork()->flags.hotsw.is1stCardChecked  = TRUE;
        	SYSMi_GetWork()->flags.hotsw.isBusyHotSW 	   = FALSE;
     } // while loop
 }
