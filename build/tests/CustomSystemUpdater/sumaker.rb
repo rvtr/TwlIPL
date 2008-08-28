@@ -54,7 +54,7 @@ def make_default_config
         :TemplatePath => "template",
         :RSF => "ARM9.TWL/main.rsf",
         :SRC => "ARM9.TWL/src/main.c",
-        :DataPath => "data",
+        :DataPath => ".",
         :Region => "JPN",
     }
     write_config(DEFAULT_CONFIG, config)
@@ -101,10 +101,12 @@ def make_rsf(config)
     tadlist = config[:TadFiles].dup
     tadlist << config[:FontFile] << config[:NandFirm]
     tadlist = tadlist.join(" ")
-    src = File.read(config[:TemplatePath] + "/" + config[:RSF])
+    src = File.read(File.join(config[:TemplatePath], config[:RSF]))
+    #src = File.read(config[:TemplatePath] + "/" + config[:RSF])
     src = replace_data(src, "datapath", config[:DataPath])
     src = replace_data(src, "regionname", config[:Region])
-    write_data(config[:TargetPath] + "/" + config[:RSF], replace_data(src, "filelist", tadlist))
+    write_data(File.join(config[:TargetPath], config[:RSF]), replace_data(src, "filelist", tadlist))
+    #write_data(config[:TargetPath] + "/" + config[:RSF], replace_data(src, "filelist", tadlist))
 end
 
 # main.c ‚Ì‘‚«Š·‚¦
@@ -115,7 +117,8 @@ def make_main(config)
         data.push("\t\"rom:/data/" + t + "\", \n")
     end
     data = data.join
-    src = File.read(config[:TemplatePath] + "/" + config[:SRC])
+    #src = File.read(config[:TemplatePath] + "/" + config[:SRC])
+    src = File.read(File.join(config[:TemplatePath], config[:SRC]))
     mod = replace_data(src, "tadlist", data)
     mod = replace_data(mod, "nandfirm", config[:NandFirm])
     mod = replace_data(mod, "fontfile", config[:FontFile])
@@ -125,7 +128,9 @@ def make_main(config)
     region = (REGION[region_name] != nil) ? REGION[region_name] : REGION["JPN"] 
     mod = replace_data(mod, "region", region)
     mod = replace_data(mod, "regionname", region_name)
-    write_data(config[:TargetPath] + "/" + config[:SRC], mod)    
+    #write_data(config[:TargetPath] + "/" + config[:SRC], mod)    
+    write_data(File.join(config[:TargetPath], config[:SRC]), mod)    
+
 end
 
 # SystemUpdater‚ðì¬‚·‚é
@@ -176,7 +181,9 @@ when "custom" then
         config[:TadFiles] = []
     end
     
-    config[:DataPath] += "/#{ARGV[1]}/#{REGION_PATH[region]}"
+    
+    #config[:DataPath] += "/#{ARGV[1]}/#{REGION_PATH[region]}"
+    config[:DataPath] = File.join(config[:DataPath], ARGV[1], REGION_PATH[region])
     config[:Region] = region
     tads = pickup_files(config[:DataPath], "/*.tad")
     nand = pickup_files(config[:DataPath], "/*.nand")

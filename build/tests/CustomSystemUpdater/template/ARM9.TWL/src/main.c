@@ -455,7 +455,12 @@ TwlMain()
 	}
 
 	// 更新ログを作成して再実行を防ぐ
-	if (result)
+	    
+#ifdef IGNORE_VERSION_CHECK
+	if( 0 )
+#else
+    if (result)
+#endif
 	{
 		SystemUpdaterLog log;
 

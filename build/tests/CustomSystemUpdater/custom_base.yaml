@@ -1,5 +1,5 @@
 --- 
-:DataPath: data
+:DataPath: .
 :NandFirm: nandfirm_rcplus.nand
 :TargetPath: .
 :TemplatePath: template

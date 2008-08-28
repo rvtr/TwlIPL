@@ -116,9 +116,9 @@ LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 
 #LDIRT_CLEAN			=
-#INSTALL_TARGETS		=
-INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
-#INSTALL_DIR				=	$(TWL_IPL_RED_ROOT)/build/tests/CustomSystemUpdater/bin
+INSTALL_TARGETS		=	$(BINDIR)/$(TARGET_BIN) 
+#INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
+INSTALL_DIR				=	../bin
 
 #----------------------------------------------------------------------------
 
@@ -128,7 +128,12 @@ INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
 .PHONY: build_time check_rom sumaker
 
 check_rom:
-	$(ROM_CHECKER) $(DATA_ROOT)/$(ROMSET)
+ifeq	($(DISABLE_ROMCHECK),)
+	$(ROM_CHECKER) $(ROMSET)
+endif
+#ifeq	($(DISABLE_ROMCHECK),)
+#	$(ROM_CHECKER) $(DATA_ROOT)/$(ROMSET)
+#endif
 
 build_time:
 	echo -n "#define BUILD_TIME \"`date \"+%Y/%m/%d %H:%M:%S\"`\"" > include/build_time.h

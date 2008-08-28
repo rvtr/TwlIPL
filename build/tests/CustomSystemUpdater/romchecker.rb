@@ -46,6 +46,7 @@ def check_pickuped(path, print_success)
     ret = true
     files = Dir.glob(path)
     p_path = path.slice(REG_PATH)
+    #p files
     case 
     when files.size == 0
         $stdout.printf( "NG:#{p_path} -- #{p_path} is not included ***********\n")
@@ -69,25 +70,26 @@ def check(target_dir)
     REGION_DIRS.each{|region_dir, region_code|
         ALL_REGION.each{|app_code|
             # オールリージョンのロムが含まれているかのチェック
-            search_path = "#{target_dir}/#{region_dir}/#{HEADER}#{app_code}A*.tad"
+            search_path = File.join(target_dir, region_dir, "#{HEADER}#{app_code}A*.tad")
+            #p search_path
             ret &= check_pickuped(search_path, false)
         }
         FIX_REGION.each{|app_code|
             # 各リージョン固有のロムが含まれているかのチェック
-            search_path = "#{target_dir}/#{region_dir}/#{HEADER}#{app_code}#{region_code}*.tad"
+            search_path = File.join(target_dir, region_dir, "#{HEADER}#{app_code}#{region_code}*.tad")
             ret &= check_pickuped(search_path, false)
         }
         (ALL_REGION + FIX_REGION).each{|app_code|
             # HNxy が 各リージョンごと1つだけ存在するかのチェック
             # HNxA と HNxU など、aとuが混在していたりするとここでひっかかる
-            search_path = "#{target_dir}/#{region_dir}/#{HEADER}#{app_code}*.tad"
+            search_path = File.join(target_dir, region_dir, "#{HEADER}#{app_code}*.tad")
             ret &= check_pickuped(search_path, false)
         }
         
         # nand firm, font のチェック
-        search_path = "#{target_dir}/#{region_dir}/#{NAND_FIRM}"
+        search_path = File.join(target_dir, region_dir, NAND_FIRM)
         ret &= check_pickuped(search_path, false)
-        search_path = "#{target_dir}/#{region_dir}/#{FONT_DATA}"
+        search_path = File.join(target_dir, region_dir, FONT_DATA)
         ret &= check_pickuped(search_path, false)
 
         $stdout.printf("\n")
@@ -101,6 +103,10 @@ if ARGV.size < 1
     p "Usage: #{__FILE__} targetdir"
     exit -1
 end
+
+# カレントディレクトリの変更
+Dir.chdir(File.dirname(File.expand_path(__FILE__)))
+
 
 target = ARGV[0]
 
