@@ -30,6 +30,8 @@
 #define ASK_LINE_OFFSET		8
 #define RESULT_LINE_OFFSET	10
 
+#define SCREEN_WIDTH		32
+
 #define DST_LOGFILE_PATH	"sdmc:/sysmenu.log"
 
 /*---------------------------------------------------------------------------*
@@ -51,6 +53,7 @@ static void control();
 static void removeLC( char *dst, const char *src );
 static void drawMessage( void );
 static void kamiFontPrintfWrap( s16 x, s16 y, u8 color, char *fmt, ... );
+static s16 kamiFontPrintfWrapSub( s16 x, s16 y, u8 color, char *str );
 static BOOL copyLogToSD( void );
 static void drawMenu( void );
 /*---------------------------------------------------------------------------*
@@ -170,7 +173,7 @@ static void drawMessage( void )
 		kamiFontPrintf( 0, 1, FONT_COLOR_BLACK, "titleID: %s errorCode: %d",
 						 titlebuf, entry->errorCode );
 		
-		kamiFontPrintf( 0, 3, FONT_COLOR_BLACK, s_strError[entry->errorCode] );
+		kamiFontPrintfWrap( 0, 3, FONT_COLOR_BLACK, s_strError[entry->errorCode] );
 		
 	}
 	else{
@@ -191,50 +194,52 @@ static void drawMessage( void )
 static void drawErrorLog( void )
 {
 	char titlebuf[5];
-	u16 i;
+	s16 i;
 	
 	kamiFontClear();
 
 	for( i = 0; i < NUM_ENTRY_PER_PAGE && i+drawIndex < numEntry ; i++ )
 	{
 		u8 color = (i == 0) ? (u8)FONT_COLOR_BLUE : (u8)FONT_COLOR_BLACK;
+		s16 posY = (s16)(i * NUM_LINE_PER_ENTRY);
 		const ErrorLogEntry *entry = ERRORLOG_Read( i + drawIndex );
-		char drawBuf[257];
+		char drawBuf[256 + 1];
 		
 		if( entry->isBroken )
 		{
-			kamiFontPrintf( 0, i * NUM_LINE_PER_ENTRY , color, "%02d: Broken Entry", i + drawIndex);
+//			kamiFontPrintf( 0, posY , color, "%02d: Broken Entry", i + drawIndex);
+			kamiFontPrintf( 0, posY , color, "%02d: Broken Entry", i + drawIndex);
 			
 			// 改行を取り除いてから表示
 			removeLC( drawBuf, entry->errorStr );
-			kamiFontPrintf( 0, ( i * NUM_LINE_PER_ENTRY ) + 1, color, drawBuf );
+			kamiFontPrintf( 0, (s16)( posY + 1), color, drawBuf );
 
 		}
 		else if( entry->isLauncherError )
 		{
 			STD_CopyLStringZeroFill( titlebuf, (char*)&entry->titleId, 5);
 			
-			kamiFontPrintf( 0, i * NUM_LINE_PER_ENTRY , color, "%02d: RED %02d/%02d/%02d %02d:%02d:%02d" ,
+			kamiFontPrintf( 0, posY , color, "%02d: RED %02d/%02d/%02d %02d:%02d:%02d" ,
 							i + drawIndex , entry->year, entry->month, entry->day,
 							entry->hour, entry->minute, entry->second );
 							
-			kamiFontPrintf( 0, ( i * NUM_LINE_PER_ENTRY ) + 1, color, "titleID: %s errorCode: %d",
+			kamiFontPrintf( 0, (s16)( posY + 1), color, "titleID: %s errorCode: %d",
 							 titlebuf, entry->errorCode );
 			
-			kamiFontPrintf( 0, ( i * NUM_LINE_PER_ENTRY ) + 2, color, s_strError[entry->errorCode] );
+			kamiFontPrintf( 0, (s16)( posY + 2), color, s_strError[entry->errorCode] );
 		}
 		else{
 			STD_CopyLStringZeroFill( titlebuf, (char*)&entry->titleId, 5);
 			
-			kamiFontPrintf( 0, i * NUM_LINE_PER_ENTRY , color, "%02d: FFT %02d/%02d/%02d %02d:%02d:%02d" ,
+			kamiFontPrintf( 0, posY , color, "%02d: FFT %02d/%02d/%02d %02d:%02d:%02d" ,
 							i + drawIndex , entry->year, entry->month, entry->day,
 							entry->hour, entry->minute, entry->second );
 
-			kamiFontPrintf( 0, ( i * NUM_LINE_PER_ENTRY ) + 1, color, "titleID: %s", titlebuf );
+			kamiFontPrintf( 0, (s16)( posY + 1), color, "titleID: %s", titlebuf );
 			
 			// 改行を取り除いてから表示
 			removeLC( drawBuf, entry->errorStr );
-			kamiFontPrintf( 0, ( i * NUM_LINE_PER_ENTRY ) + 2, color, drawBuf );
+			kamiFontPrintf( 0, (s16)( posY + 2), color, drawBuf );
 			
 		}
 	}
@@ -329,16 +334,37 @@ static void kamiFontPrintfWrap( s16 x, s16 y, u8 color, char *fmt, ... )
     
     // 自前でctok的な事をして改行を別々に出力する
     tail = STD_StrChr( temp, '\n' );
-	do
-	{
+    while( tail != NULL )
+    {
 		*tail = '\0';
-		kamiFontPrintf( x, y, color, head );
+		y += kamiFontPrintfWrapSub( x, y, color, head );
 		head = tail+1;
 		tail = STD_StrChr( head, '\n' );
-		y++;
-    } while ( tail != NULL );
+	}
     
-    kamiFontPrintf( x, y, color, head );
+    kamiFontPrintfWrapSub( x, y, color, head );
+}
+
+// 表示可能文字数で自動折り返し
+// 返り値は描画に利用した行数
+static s16 kamiFontPrintfWrapSub( s16 x, s16 y, u8 color, char *str )
+{
+	char *head = str;
+	char buf[SCREEN_WIDTH+1];
+	s16 linecount = 0;
+	int length;
+	
+	while( SCREEN_WIDTH <= ( length = STD_StrLen( head )) )
+	{
+		STD_StrLCpy( buf, head, SCREEN_WIDTH+1 );
+		kamiFontPrintf( x, (s16)(y + linecount++), color, buf );
+		head += SCREEN_WIDTH;
+	}
+	
+	kamiFontPrintf( x, (s16)(y + linecount++), color, head );
+	
+	return linecount;
+	
 }
 
 
@@ -419,13 +445,13 @@ static void drawMenu( void )
 	int line = 0;
 	
 	kamiFontClearMain();
-	kamiFontPrintfMain( 0, line++, CONSOLE_ORANGE, "How to");
-	kamiFontPrintfMain( 0, line++, CONSOLE_ORANGE, "+-----------------------------+");
-	kamiFontPrintfMain( 0, line++, CONSOLE_ORANGE, "l U/D Key  : Scroll Line      l");
-	kamiFontPrintfMain( 0, line++, CONSOLE_ORANGE, "l L/R Key  : Scroll Page      l");
-	kamiFontPrintfMain( 0, line++, CONSOLE_ORANGE, "l A Button : Switch View Mode l");
-	kamiFontPrintfMain( 0, line++, CONSOLE_ORANGE, "l X Button : Copy to SDCard   l");
-	kamiFontPrintfMain( 0, line++, CONSOLE_ORANGE, "+-----------------------------+");
+	kamiFontPrintfMain( 0, (s16)(line++), CONSOLE_ORANGE, "How to");
+	kamiFontPrintfMain( 0, (s16)(line++), CONSOLE_ORANGE, "+-----------------------------+");
+	kamiFontPrintfMain( 0, (s16)(line++), CONSOLE_ORANGE, "l U/D Key  : Scroll Line      l");
+	kamiFontPrintfMain( 0, (s16)(line++), CONSOLE_ORANGE, "l L/R Key  : Scroll Page      l");
+	kamiFontPrintfMain( 0, (s16)(line++), CONSOLE_ORANGE, "l A Button : Switch View Mode l");
+	kamiFontPrintfMain( 0, (s16)(line++), CONSOLE_ORANGE, "l X Button : Copy to SDCard   l");
+	kamiFontPrintfMain( 0, (s16)(line++), CONSOLE_ORANGE, "+-----------------------------+");
 }
 
 /*---------------------------------------------------------------------------*
