@@ -897,8 +897,144 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		}
 #endif
 	}
+	{
+		u32  idH;
+		u8   idL[4];
+		int  apptype;
+		const int appUser     = 0;
+		const int appSystem   = 1;
+		const int appSecure   = 2;
+		const int appLauncher = 3;
+
+		idH = this->pRomHeader->s.titleID_Hi;
+		memcpy( idL, &(this->pRomHeader->s.titleID_Lo[0]), 4 );
+
+		if( (idL[3]=='H') && (idL[2]=='N') && (idL[1]=='A') )   // ランチャアプリかどうかはTitleID_Loの値で決定
+		{
+			apptype = appLauncher;
+		}
+		else if( idH & TITLE_ID_HI_SECURE_FLAG_MASK )           // 立ってたらセキュアアプリ
+		{
+			apptype = appSecure;
+		}
+		else if( (idH & TITLE_ID_HI_APP_TYPE_MASK) == 1 )       // 立ってたらシステムアプリ
+		{
+			apptype = appSystem;
+		}
+		else if( (idH & TITLE_ID_HI_APP_TYPE_MASK) == 0 )       // 残るはユーザアプリ
+		{
+			apptype = appUser;
+		}
+		else
+		{
+			apptype = -1;
+		}
+
+		if( apptype < 0 )
+		{
+			this->hWarnList->Add( gcnew RCMRCError( 
+				"アプリ種別", 0x230, 0x237, "不正な値です。",
+				"Application Type", "Illigal type.", false ) );
+		}
+#ifdef METWL_VER_APPTYPE_USER
+		if( apptype != appUser )
+		{
+			this->hWarnList->Add( gcnew RCMRCError( 
+				"アプリ種別", 0x230, 0x237, "ユーザアプリではありません。",
+				"Application Type", "Not USER application.", false ) );
+		}
+#endif
+#ifdef METWL_VER_APPTYPE_SYSTEM
+		if( apptype != appSystem )
+		{
+			this->hWarnList->Add( gcnew RCMRCError( 
+				"アプリ種別", 0x230, 0x237, "システムアプリではありません。",
+				"Application Type", "Not SYSTEM application.", false ) );
+		}
+#endif
+#ifdef METWL_VER_APPTYPE_SECURE
+		if( apptype != appSecure )
+		{
+			this->hWarnList->Add( gcnew RCMRCError( 
+				"アプリ種別", 0x230, 0x237, "セキュアアプリではありません。",
+				"Application Type", "Not SECURE application.", false ) );
+		}
+#endif
+#ifdef METWL_VER_APPTYPE_LAUNCHER
+		if( apptype != appLauncher )
+		{
+			this->hWarnList->Add( gcnew RCMRCError( 
+				"アプリ種別", 0x230, 0x237, "ランチャーアプリではありません。",
+				"Application Type", "Not LAUNCHER application.", false ) );
+		}
+#endif
+	} // アプリ種別のチェック
+
+	if( (this->pRomHeader->s.access_control.game_card_on != 0) &&
+		(this->pRomHeader->s.access_control.game_card_nitro_mode != 0) )
+	{
+		this->hErrorList->Add( gcnew RCMRCError( 
+			"アクセスコントロール情報", 0x1b4, 0x1b7, "ゲームカード電源設定にノーマルモードとNTRモードの両方を設定することはできません。",
+			"Access Control Info.", "Game card power setting is either normal mode or NTR mode.", true ) );
+	}
+	if( ((this->pRomHeader->s.titleID_Hi & TITLE_ID_HI_MEDIA_MASK) == 0) &&		// カードアプリ
+		((this->pRomHeader->s.access_control.game_card_on != 0) || (this->pRomHeader->s.access_control.game_card_nitro_mode != 0)) )
+	{
+		this->hErrorList->Add( gcnew RCMRCError( 
+			"アクセスコントロール情報", 0x1b4, 0x1b7, "ゲームカード用ソフトに対してゲームカード電源設定をすることはできません。",
+			"Access Control Info.", "Game card power setting is not for Game Card Soft.", true ) );
+	}
+	if( this->pRomHeader->s.access_control.shared2_file == 0 )
+	{
+		if( (this->pRomHeader->s.shared2_file0_size != 0) || (this->pRomHeader->s.shared2_file1_size != 0) ||
+			(this->pRomHeader->s.shared2_file2_size != 0) || (this->pRomHeader->s.shared2_file3_size != 0) ||
+			(this->pRomHeader->s.shared2_file4_size != 0) || (this->pRomHeader->s.shared2_file5_size != 0) )
+		{
+			this->hErrorList->Add( gcnew RCMRCError( 
+				"アクセスコントロール情報", 0x1b4, 0x1b7, "Shared2ファイルのサイズが設定されているにもかかわらず不使用設定になっています。",
+				"Access Control Info.", "Sizes of shared2 files is setting, but using them is not enabled.", true ) );
+		}
+	}
+
+	if( (this->pRomHeader->s.arm7_scfg_ext >> 31) != 0 )
+	{
+		this->hWarnList->Add( gcnew RCMRCError( 
+			"SCFG設定", 0x1b8, 0x1bb, "SCFGレジスタへアクセス可能になっています。",
+			"SCFG Setting", "In this setting, SCFG register is accessible.", true ) );
+	}
+
+	if( (this->pRomHeader->s.titleID_Lo[0] != this->pRomHeader->s.game_code[3]) ||
+		(this->pRomHeader->s.titleID_Lo[1] != this->pRomHeader->s.game_code[2]) ||
+		(this->pRomHeader->s.titleID_Lo[2] != this->pRomHeader->s.game_code[1]) ||
+		(this->pRomHeader->s.titleID_Lo[3] != this->pRomHeader->s.game_code[0]) )
+	{
+		this->hWarnList->Add( gcnew RCMRCError( 
+			"タイトルID", 0x230, 0x233, "下位4バイトがイニシャルコードと一致しません。",
+			"Title ID", "Lower 4 bytes don't match ones of Game Code.", true ) );
+	}
+
+	for( i=0; i < (0x2f0 - 0x240); i++ )
+	{
+		if( this->pRomHeader->s.reserved_ltd_F[i] != 0 )
+		{
+			this->hErrorList->Add( gcnew RCMRCError( 
+				"予約領域F", 0x240, 0x2ef, "不正な値が含まれています。この領域をすべて0で埋めてください。",
+				"Reserved Area F", "Invalid data is included. Please set 0 into this area.", false ) );
+		}
+	}
+
+	for( i=0; i < (0xf80 - 0x378); i++ )
+	{
+		u8 *p = (u8*)this->pRomHeader;
+		if( p[ 0x378 + i ] != 0 )
+		{
+			this->hErrorList->Add( gcnew RCMRCError( 
+				"予約領域D", 0x378, 0xf7f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
+				"Reserved Area D", "Invalid data is included. Please set 0 into this area.", false ) );
+		}
+	}
 
 	// ROMヘッダ以外の領域のチェック
 
 	return ECSrlResult::NOERROR;
-}
+} // mrcTWL()

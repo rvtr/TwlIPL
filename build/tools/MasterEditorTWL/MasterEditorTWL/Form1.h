@@ -483,7 +483,20 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 			this->hIsSpreadSheet = gcnew System::Boolean( true );
 			this->dateRelease->Value = System::DateTime::Now;
 			this->dateSubmit->Value  = System::DateTime::Now;
+#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
+			this->combRegion->Items->Add( gcnew System::String( L"全リージョン" ) );
+#endif
 
+			// アプリ種別をつける
+#ifdef METWL_VER_APPTYPE_SYSTEM
+			this->Text += " [FOR SYSTEM APPLICATION]";
+#endif
+#ifdef METWL_VER_APPTYPE_SECURE
+			this->Text += " [FOR SECURE APPLICATION]";
+#endif
+#ifdef METWL_VER_APPTYPE_LAUNCHER
+			this->Text += " [FOR LAUNCHER APPLICATION]";
+#endif
 			this->loadInit();	// 設定ファイルの読み込み
 		}
 
@@ -3239,9 +3252,9 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 		System::Void saveSrl( System::String ^filename )
 		{
 			// ROM情報をフォームから取得してSRLバイナリに反映させる
-			this->setSrlPropaties();
+			this->setSrlProperties();
 			// マスタ書類情報をフォームから取得して書類に反映させる -> 必要なし
-			//this->setDeliverablePropaties();
+			//this->setDeliverableProperties();
 
 			// ファイルをコピー
 			if( !(filename->Equals( this->tboxFile->Text )) )
@@ -3334,7 +3347,7 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 
 		// ROM情報をフォームから取得してSRLクラスのプロパティに反映させる
 		// (ROMヘッダへの反映やCRCと署名の再計算をしない)
-		void setSrlPropaties(void)
+		void setSrlProperties(void)
 		{
 			// ROMヘッダの[0,0x160)の領域はRead Onlyで変更しない
 
@@ -3345,7 +3358,7 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 			this->hSrl->hIsWirelessIcon = this->cboxIsWirelessIcon->Checked;
 
 			// Srlクラスのプロパティへの反映
-			this->setParentalSrlPropaties();
+			this->setParentalSrlProperties();
 		}
 
 		// SRLのROM情報をフォームに反映させる(ファイルが読み込まれていることが前提)
@@ -3577,7 +3590,7 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 		// ペアレンタルコントロール情報はSRL内にあるが設定が大変なので切り出す
 
 		// ペアレンタルコントロール関連の情報をフォームから取得してSRLに反映させる
-		void setParentalSrlPropaties(void)
+		void setParentalSrlProperties(void)
 		{
 			// リージョン
 			this->hSrl->hIsRegionJapan     = gcnew System::Boolean(false);
@@ -3598,11 +3611,23 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 					this->hSrl->hIsRegionEurope = gcnew System::Boolean(true);
 				break;
 
+				case 3:
+					this->hSrl->hIsRegionAustralia = gcnew System::Boolean(true);
+				break;
+
 				case 4:
 					this->hSrl->hIsRegionEurope    = gcnew System::Boolean(true);
 					this->hSrl->hIsRegionAustralia = gcnew System::Boolean(true);
 				break;
 
+#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
+				case 5:
+					this->hSrl->hIsRegionJapan     = gcnew System::Boolean(true);
+					this->hSrl->hIsRegionAmerica   = gcnew System::Boolean(true);
+					this->hSrl->hIsRegionEurope    = gcnew System::Boolean(true);
+					this->hSrl->hIsRegionAustralia = gcnew System::Boolean(true);
+				break;
+#endif
 				default:
 				break;
 			}
@@ -3757,10 +3782,16 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 				index = 1;
 			else if( !isJapan && !isAmerica && isEurope && !isAustralia )
 				index = 2;
-			else if( !isJapan && !isAmerica && isEurope && isAustralia )
+			else if( !isJapan && !isAmerica && !isEurope && isAustralia )
 				index = 3;
+			else if( !isJapan && !isAmerica && isEurope && isAustralia )
+				index = 4;
 			else
 				index = -1;	// 不正
+#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
+			if( isJapan && isAmerica && isEurope && isAustralia )
+				index = 5;
+#endif
 			this->combRegion->SelectedIndex = index;
 			this->maskParentalForms();
 
@@ -4015,7 +4046,7 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 		}
 
 		// マスタ書類情報をフォームから取得して書類に反映させる
-		void setDeliverablePropaties(void)
+		void setDeliverableProperties(void)
 		{
 			// 提出情報
 			this->hDeliv->hProductName    = this->tboxProductName->Text;
@@ -4467,6 +4498,9 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 			this->combRegion->Items->Clear();
 			this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5)
 				{L"日本のみ", L"米国のみ", L"欧州のみ", L"豪州のみ", L"欧州および豪州"});
+#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
+			this->combRegion->Items->Add( gcnew System::String( L"全リージョン" ) );
+#endif
 			this->combRegion->SelectedIndex = index;
 
 			// ペアレンタルコントロール
@@ -4637,7 +4671,10 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 			index = this->combRegion->SelectedIndex;
 			this->combRegion->Items->Clear();
 			this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5)
-				{L"Japan Only", L"USA Only", L"Europe Only", L"Australia only", L"Europe and Australia"});
+				{L"Japan Only", L"USA Only", L"Europe Only", L"Australia Only", L"Europe and Australia"});
+#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
+			this->combRegion->Items->Add( gcnew System::String( L"All Region" ) );
+#endif
 			this->combRegion->SelectedIndex = index;
 
 			// ペアレンタルコントロール
@@ -4865,8 +4902,8 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 			}
 
 			// マスタ提出書類に必要な情報をフォームから取得して更新
-			this->setSrlPropaties();	// 先にSrlを更新しておく
-			this->setDeliverablePropaties();
+			this->setSrlProperties();	// 先にSrlを更新しておく
+			this->setDeliverableProperties();
 
 			// 注意書き 
 			{
