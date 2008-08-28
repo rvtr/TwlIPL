@@ -6,9 +6,7 @@
 
 namespace MasterEditorTWL
 {
-
-	// 開発アプリROMヘッダ署名用秘密鍵
-
+	// 開発機用ROMヘッダ署名鍵
 	extern const u8 g_devPubKey_DER[ 0xa2 ];
 	extern const u8 g_devPrivKey_DER[ 0x263 ];
 

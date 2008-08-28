@@ -6,11 +6,6 @@
 #include <twl/os/common/format_rom.h>
 #include <twl/os/common/ownerInfoEx.h>
 
-// 宣言
-#define   METWL_ERRLIST_NORANGE		0	// エラーのアドレス範囲を指定しないことを表す特別な値
-#define   METWL_ROMSIZE_MIN       256	// 最小のデバイス容量 256Mbit
-#define   METWL_ROMSIZE_MAX      4096	// 最大の..           4Gbit
-
 namespace MasterEditorTWL
 {
 	// -------------------------------------------------------------------
@@ -36,6 +31,8 @@ namespace MasterEditorTWL
 		ERROR_SIGN_CRC,
 		// SDKバージョン取得でのエラー
 		ERROR_SDK,
+		// プラットフォームがNTR専用 or 不正バイナリ
+		ERROR_PLATFORM,
 	};
 
 	// -------------------------------------------------------------------
@@ -264,8 +261,6 @@ namespace MasterEditorTWL
 		property System::Boolean ^hIsRegionAmerica;
 		property System::Boolean ^hIsRegionEurope;
 		property System::Boolean ^hIsRegionAustralia;
-		//property System::Boolean ^hRegionChina;
-		//property System::Boolean ^hRegionKorea;
 
 		// SDKバージョンと使用ライブラリのリスト
 		property System::Collections::Generic::List<RCSDKVersion^> ^hSDKList;

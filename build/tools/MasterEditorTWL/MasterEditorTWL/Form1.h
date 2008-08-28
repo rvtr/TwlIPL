@@ -3187,12 +3187,25 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 		// SRLのオープン
 		System::Void loadSrl( System::String ^filename )
 		{
-			if( this->hSrl->readFromFile( filename ) != ECSrlResult::NOERROR )
+			ECSrlResult result = this->hSrl->readFromFile( filename );
+			if( result != ECSrlResult::NOERROR )
 			{
-				if( this->rSelectJ->Checked == true )
-					this->errMsg( "リードに失敗しました。" );
-				else
-					this->errMsg( "Reading the file failed." );
+				switch( result )
+				{
+					case ECSrlResult::ERROR_PLATFORM:
+						if( this->rSelectJ->Checked == true )
+							this->errMsg( "本ツールはTWL対応ROM専用です。NTR専用ROMなどのTWL対応ROM以外を読み込むことはできません。" );
+						else
+							this->errMsg( "This tool can only read TWL ROM. This can't read Other data e.g. NTR limited ROM." );
+					break;
+
+					default:
+						if( this->rSelectJ->Checked == true )
+							this->errMsg( "リードに失敗しました。" );
+						else
+							this->errMsg( "Reading the file failed." );
+					break;
+				}
 				return;							// 前のファイルが正常である保証なしなので前のファイルも上書き保存できないようにする
 			}
 			this->tboxFile->Text = filename;
@@ -3391,12 +3404,6 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 			{
 				this->tboxIsCodec->Text = gcnew System::String( "NTR" );
 			}
-			//this->cboxIsRegionJapan->Checked     = *(this->hSrl->hIsRegionJapan);
-			//this->cboxIsRegionAmerica->Checked   = *(this->hSrl->hIsRegionAmerica);
-			//this->cboxIsRegionEurope->Checked    = *(this->hSrl->hIsRegionEurope);
-			//this->cboxIsRegionAustralia->Checked = *(this->hSrl->hIsRegionAustralia);
-			//this->cboxIsRegionChina->Checked     = *(this->hSrl->hIsRegionChina);
-			//this->cboxIsRegionKorea->Checked     = *(this->hSrl->hIsRegionKorea);
 			this->cboxIsSD->Checked   = *(this->hSrl->hIsSD);
 			this->cboxIsNAND->Checked = *(this->hSrl->hIsNAND);
 			if( *(this->hSrl->hIsGameCardNitro) == true )

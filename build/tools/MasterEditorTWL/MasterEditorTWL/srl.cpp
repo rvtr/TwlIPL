@@ -286,19 +286,11 @@ ECSrlResult RCSrl::setRomInfo(void)
 	}
 
 	// カードリージョン
-	const u32  maskJapan     = 0x00000001;
-	const u32  maskAmerica   = 0x00000002;
-	const u32  maskEurope    = 0x00000004;
-	const u32  maskAustralia = 0x00000008;
-	const u32  maskChina     = 0x00000010;
-	const u32  maskKorea     = 0x00000020;
 	const u32  map           = this->pRomHeader->s.card_region_bitmap;
-	this->hIsRegionJapan     = gcnew System::Boolean( ((map & maskJapan)     != 0)?true:false );
-	this->hIsRegionAmerica   = gcnew System::Boolean( ((map & maskAmerica)   != 0)?true:false );
-	this->hIsRegionEurope    = gcnew System::Boolean( ((map & maskEurope)    != 0)?true:false );
-	this->hIsRegionAustralia = gcnew System::Boolean( ((map & maskAustralia) != 0)?true:false );
-	//this->hIsRegionChina     = gcnew System::Boolean( ((map & maskChina)     != 0)?true:false );
-	//this->hIsRegionKorea     = gcnew System::Boolean( ((map & maskKorea)     != 0)?true:false );
+	this->hIsRegionJapan     = gcnew System::Boolean( ((map & METWL_MASK_REGION_JAPAN)     != 0)?true:false );
+	this->hIsRegionAmerica   = gcnew System::Boolean( ((map & METWL_MASK_REGION_AMERICA)   != 0)?true:false );
+	this->hIsRegionEurope    = gcnew System::Boolean( ((map & METWL_MASK_REGION_EUROPE)    != 0)?true:false );
+	this->hIsRegionAustralia = gcnew System::Boolean( ((map & METWL_MASK_REGION_AUSTRALIA) != 0)?true:false );
 
 	return ECSrlResult::NOERROR;
 } // ECSrlResult RCSrl::setRomInfo(void)
@@ -320,19 +312,19 @@ ECSrlResult RCSrl::setRomHeader(void)
 	this->pRomHeader->s.exFlags.DSWirelessIcon     = (*(this->hIsWirelessIcon) == true)?1:0;
 
 	// レーティング
-	const u32  maskJapan     = 0x00000001;
-	const u32  maskAmerica   = 0x00000002;
-	const u32  maskEurope    = 0x00000004;
-	const u32  maskAustralia = 0x00000008;
-	//const u32  maskChina     = 0x00000010;
-	//const u32  maskKorea     = 0x00000020;
 	u32  map = 0;
-	if( *(this->hIsRegionJapan)   == true )  { map |= maskJapan; }
-	if( *(this->hIsRegionAmerica) == true )  { map |= maskAmerica; }
-	if( *(this->hIsRegionEurope)  == true )  { map |= maskEurope; }
-	if( *(this->hIsRegionAustralia) == true ){ map |= maskAustralia; }
-	//if( *(this->hIsRegionChina)   == true )  { map |= maskChina; }
-	//if( *(this->hIsRegionKorea)   == true )  { map |= maskKorea; }
+	if( *(this->hIsRegionJapan)   == true )  { map |= METWL_MASK_REGION_JAPAN; }
+	if( *(this->hIsRegionAmerica) == true )  { map |= METWL_MASK_REGION_AMERICA; }
+	if( *(this->hIsRegionEurope)  == true )  { map |= METWL_MASK_REGION_EUROPE; }
+	if( *(this->hIsRegionAustralia) == true ){ map |= METWL_MASK_REGION_AUSTRALIA; }
+#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
+	if( (*(this->hIsRegionJapan) == true ) && (*(this->hIsRegionAmerica) == true)
+		&& (*(this->hIsRegionEurope) == true ) && (*(this->hIsRegionAustralia) == true)
+	  )
+	{
+		map |= METWL_MASK_REGION_ALL;	// オールリージョンを許す
+	}
+#endif
 	this->pRomHeader->s.card_region_bitmap = map;
 
 	// ペアレンタルコントロール
@@ -835,7 +827,16 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 {
 	System::Int32 i;
 
-	// ROMヘッダのチェック
+	// ROMヘッダのチェック (NTR互換領域)
+
+#ifdef METWL_WHETHER_PLATFORM_CHECK
+	// プラットフォームのチェック
+	if( (this->pRomHeader->s.platform_code != PLATFORM_CODE_TWL_HYBLID) && 
+		(this->pRomHeader->s.platform_code != PLATFORM_CODE_TWL_LIMITED) )
+	{
+		return ECSrlResult::ERROR_PLATFORM;
+	}
+#endif
 
 	// 値チェック
 	u32  romsize = 1 << (this->pRomHeader->s.rom_size);	// ROM容量
@@ -844,6 +845,12 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		this->hErrorList->Add( gcnew RCMRCError( 
 			"デバイス容量", 0x14, 0x14, "指定可能な容量ではありません。",
 			"Device Capacity", "Invalid capacity.", false ) );
+	}
+	if( (this->pRomHeader->s.game_cmd_param & CARD_LATENCY_MASK) != CARD_1TROM_GAME_LATENCY )
+	{
+		this->hErrorList->Add( gcnew RCMRCError( 
+			"ROMコントロール情報", 0x60, 0x67, "TWLではマスクROMは用意されていません。ワンタイムPROM設定にしてください。",
+			"ROM Control Info.", "Mask ROM can be set. Please set One-time PROM.", false ) );
 	}
 
 	// 予約領域
@@ -855,6 +862,40 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 				"予約領域A", 0x015, 0x01b, "不正な値が含まれています。この領域をすべて0で埋めてください。",
 				"Reserved Area A", "Invalid data is included. Please set 0 into this area.", false ) );
 		}
+	}
+	for( i=0; i < 39; i++ )
+	{
+		if( this->pRomHeader->s.reserved_B[i] != 0 )
+		{
+			this->hErrorList->Add( gcnew RCMRCError( 
+				"予約領域B", 0x099, 0x0bf, "不正な値が含まれています。この領域をすべて0で埋めてください。",
+				"Reserved Area B", "Invalid data is included. Please set 0 into this area.", false ) );
+		}
+	}
+
+	// ROMヘッダのチェック (TWL専用領域)
+
+	// 値チェック
+	u32 region = this->pRomHeader->s.card_region_bitmap;
+	if( (region != METWL_MASK_REGION_JAPAN) &&
+		(region != METWL_MASK_REGION_AMERICA) &&
+		(region != METWL_MASK_REGION_EUROPE) &&
+		(region != (METWL_MASK_REGION_EUROPE | METWL_MASK_REGION_AUSTRALIA)) )
+	{
+#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
+		if( region != METWL_MASK_REGION_ALL )	// オールリージョンを許す
+		{
+			this->hErrorList->Add( gcnew RCMRCError( 
+				"カードリージョン", 0x1b0, 0x1b3, "仕向地の組み合わせが不正です。本ツールを用いて修正できます。",
+				"Card Region", "Illigal Region. This tool can modify this information.", true ) );
+		}
+#else
+		{
+			this->hErrorList->Add( gcnew RCMRCError( 
+				"カードリージョン", 0x1b0, 0x1b3, "仕向地の組み合わせが不正です。本ツールを用いて修正できます。",
+				"Card Region", "Illigal Region. This tool can modify this information.", true ) );
+		}
+#endif
 	}
 
 	// ROMヘッダ以外の領域のチェック
