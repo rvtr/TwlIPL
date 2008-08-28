@@ -23,6 +23,7 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include $(SYSMENU_ROOT)/build/systemMenu_RED/wlanfirm/commondefs.wlanfirm
 include $(SYSMENU_ROOT)/build/systemMenu_RED/DSHashTable/commondefs.DSHashTable
 include $(SYSMENU_ROOT)/build/systemMenu_RED/sysmenuVersion/commondefs.sysmenuVersion
+include $(SYSMENU_ROOT)/build/systemMenu_RED/sysmenuVersion/defs.sysmenuVersion.A
 
 # SystemUpdaterでインポートするTADは専用のmaketadでTAD化します。
 MAKETAD			:=	$(TWL_IPL_RED_PRIVATE_TOOLSDIR)/bin/maketad.updater.exe

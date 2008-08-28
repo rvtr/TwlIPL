@@ -28,11 +28,8 @@ include ./commondefs.sysmenuVersion.local
 #---------------------------------------------------------
 # リージョン固有パラメータ
 
-SYSMENU_VERSION_REGION		=	E
-SYSMENU_VERSION_STRING_REGION	=	U
-SYSMENU_VERSION_TIMESTAMP	=	08082200
-SYSMENU_VERSION_MAJOR		=	0
-SYSMENU_VERSION_MINOR		=	0
+include ./defs.sysmenuVersion.E
+
 
 do-build :  $(TARGET_BIN)
 
