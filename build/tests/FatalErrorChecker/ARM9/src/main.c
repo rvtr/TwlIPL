@@ -27,8 +27,8 @@
 #define SKIP_SPAN			5
 #define FOOTER_Y			22
 
-#define ASK_LINE_OFFSET		8
-#define RESULT_LINE_OFFSET	12
+#define ASK_LINE_OFFSET		9
+#define RESULT_LINE_OFFSET	13
 
 #define SCREEN_WIDTH		32
 
@@ -40,7 +40,8 @@
  *---------------------------------------------------------------------------*/
 static char *s_strError[ FATAL_ERROR_MAX ];
 static BOOL nowEntryView;
-static BOOL nowAsking;
+static BOOL nowAskingCopy;
+static BOOL nowAskingDelete;
 static BOOL resetConsoleFlag;
 static int drawIndex = 0;
 static int numEntry;
@@ -50,6 +51,7 @@ static int numEntry;
 static void VBlankIntr(void);
 static void InitAllocation(void);
 static void drawErrorLog( void );
+static BOOL deleteLogfile();
 static void control();
 static void removeLC( char *dst, const char *src );
 static void drawMessage( void );
@@ -114,7 +116,8 @@ TwlMain()
 
 	numEntry = ERRORLOG_GetNum();
 	nowEntryView = FALSE;
-	nowAsking = FALSE;
+	nowAskingCopy = FALSE;
+	nowAskingDelete = FALSE;
 	resetConsoleFlag = TRUE;
 
     while (1)
@@ -250,7 +253,7 @@ static void drawErrorLog( void )
 
 static void control()
 {
-	if( nowAsking )
+	if( nowAskingCopy )
 	{
 		// 本当にやるの？って聞いてる最中
 		if( kamiPadIsTrigger( PAD_BUTTON_A ))
@@ -258,18 +261,37 @@ static void control()
 			BOOL result;
 			kamiFontPrintfMain( 0, ASK_LINE_OFFSET+2, CONSOLE_ORANGE, "now copying...");
 			result = copyLogToSD();
-			nowAsking = FALSE;
+			nowAskingCopy = FALSE;
 		}
 		
 		if( kamiPadIsTrigger( PAD_BUTTON_B ))
 		{
 			drawMenu();
-			nowAsking = FALSE;
+			nowAskingCopy = FALSE;
 		}
 		
 		return;
 	}
 	
+	if( nowAskingDelete )
+	{
+		// 本当にやるの？って聞いてる最中
+		if( kamiPadIsTrigger( PAD_BUTTON_A ))
+		{
+			BOOL result;
+			kamiFontPrintfMain( 0, ASK_LINE_OFFSET+2, CONSOLE_ORANGE, "now deleting...");
+			result = deleteLogfile();
+			nowAskingDelete = FALSE;
+		}
+		
+		if( kamiPadIsTrigger( PAD_BUTTON_B ))
+		{
+			drawMenu();
+			nowAskingDelete = FALSE;
+		}
+		
+		return;
+	}
 	
 	if( kamiPadIsTrigger( PAD_KEY_UP ) )
 	{
@@ -291,16 +313,27 @@ static void control()
 	
 	if( kamiPadIsTrigger( PAD_BUTTON_A ) )
 	{
-		nowEntryView = !nowEntryView ;
+		if( 0 < numEntry )
+		{
+			nowEntryView = !nowEntryView ;
+		}
 	}
 	else if( kamiPadIsTrigger( PAD_BUTTON_X ) )
 	{
 		drawMenu();
-		kamiFontPrintfMain( 0, ASK_LINE_OFFSET, CONSOLE_ORANGE, "Copying Logfile to SD. OK ?");
+		kamiFontPrintfMain( 0, ASK_LINE_OFFSET, CONSOLE_ORANGE, "Copy Logfile to SD. OK ?");
 		kamiFontPrintfMain( 0, ASK_LINE_OFFSET + 1, CONSOLE_ORANGE, "A: Decide  B: Cancel");
 
-		nowAsking = TRUE;
-	}	
+		nowAskingCopy = TRUE;
+	}
+	else if ( kamiPadIsTrigger( PAD_BUTTON_Y ) )
+	{
+		drawMenu();
+		kamiFontPrintfMain( 0, ASK_LINE_OFFSET, CONSOLE_ORANGE, "Delete Logfile From NAND. OK ?");
+		kamiFontPrintfMain( 0, ASK_LINE_OFFSET + 1, CONSOLE_ORANGE, "A: Decide  B: Cancel");
+
+		nowAskingDelete = TRUE;
+	}
 	
 	// 操作の結果、描画インデクスがはみ出しそうだったら修正
 	drawIndex = numEntry-1 < drawIndex ? numEntry-1 : drawIndex ;
@@ -370,6 +403,23 @@ static s16 kamiFontPrintfWrapSub( s16 x, s16 y, u8 color, char *str )
 	
 }
 
+
+static BOOL deleteLogfile( void )
+{
+	
+	if( !FS_DeleteFile( ERRORLOG_LOGFILE_PATH ) )
+	{
+		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET, CONSOLE_ORANGE, "Delete Failed!") ;
+		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET+1, CONSOLE_ORANGE, "func: FS_DeleteFile" );
+		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET+2, CONSOLE_ORANGE,
+			"errorCode : %d", FS_GetArchiveResultCode( ERRORLOG_LOGFILE_PATH ) );
+		
+		return FALSE;
+	}
+	
+	kamiFontPrintfMain( 0, RESULT_LINE_OFFSET, CONSOLE_ORANGE, "Delete Succeeded!") ;
+	return TRUE;
+}
 
 static BOOL copyLogToSD( void )
 {
@@ -459,6 +509,7 @@ static void drawMenu( void )
 	kamiFontPrintfMain( 0, (s16)(line++), CONSOLE_ORANGE, "l L/R Key  : Scroll Page      l");
 	kamiFontPrintfMain( 0, (s16)(line++), CONSOLE_ORANGE, "l A Button : Switch View Mode l");
 	kamiFontPrintfMain( 0, (s16)(line++), CONSOLE_ORANGE, "l X Button : Copy to SDCard   l");
+	kamiFontPrintfMain( 0, (s16)(line++), CONSOLE_ORANGE, "l Y Button : Delete Logfile   l");
 	kamiFontPrintfMain( 0, (s16)(line++), CONSOLE_ORANGE, "+-----------------------------+");
 }
 
