@@ -380,7 +380,17 @@ static void AMN_initCardTitleList_()
 {
 }
 
-static void AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
+// 指定されたtitleIDのタイトルツリーを消去
+#define TITLE_TREE_PATH_LENGTH 12+8+1+8+1
+static void AMNi_deleteTitleTree( NAMTitleId titleID )
+{
+	char path[TITLE_TREE_PATH_LENGTH];// "nand:/title/" + "%08x" + "/" + "%08x" + "\0"
+	STD_TSNPrintf( path, TITLE_TREE_PATH_LENGTH, "nand:/title/%08x/%08x", (u32)( titleID >> 32 ), (u32)titleID );
+	(void)FS_DeleteDirectoryAuto( path );
+	OS_TPrintf( "AMNi_deleteTitleTree : delete %s\n", path );
+}
+
+static BOOL AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
 {
     TitleProperty* pTitleProp;
     // header情報の取得
@@ -394,12 +404,13 @@ static void AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
     char path[FS_ENTRY_LONGNAME_MAX];
     s32 readLen;
     u32 offset;
+    BOOL isBannerExist = FALSE;
     
     s32 rhArrayLen = cNandTitleIndexStart + sNandAppRomHeaderArrayLength;
     
     // もう入らない
     if (rhArrayLen >= OS_TITLEIDLIST_MAX) {
-        return;
+        return FALSE;
     }
     
     FS_InitFile(file);
@@ -421,7 +432,9 @@ static void AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
         if(readLen != NAM_OK){
             // error
             SDK_ASSERT( FALSE );
-            return;
+            // タイトル消去
+            AMNi_deleteTitleTree( titleID );
+            return FALSE;
         }
         
 #if (MEASURE_BANNER_LOAD_TIME == 1)
@@ -434,7 +447,9 @@ static void AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
         {
             // error
             SDK_ASSERT( FALSE );
-            return;
+            // タイトル消去
+            AMNi_deleteTitleTree( titleID );
+            return FALSE;
         }
         
 #if (MEASURE_BANNER_LOAD_TIME == 1)
@@ -448,7 +463,9 @@ static void AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
             // error
             SDK_ASSERT( FALSE );
             FS_CloseFile(file);
-            return;
+            // タイトル消去
+            AMNi_deleteTitleTree( titleID );
+            return FALSE;
         }
         
         offset = s_AllRomHeaderArray[rhArrayLen].banner_offset;
@@ -476,7 +493,7 @@ static void AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
         s_AllRomHeaderArray[rhArrayLen].titleID = titleID;
         
         sNandAppRomHeaderArrayLength++;
-        return;
+        return FALSE;
     }
 
     if(s_AllRomHeaderArray[rhArrayLen].platform_code & PLATFORM_CODE_FLAG_TWL){
@@ -484,13 +501,13 @@ static void AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
         if( !UTL_CheckAppRegion( s_AllRomHeaderArray[rhArrayLen].card_region_bitmap ) ) {
             OS_TPrintf( "Region Check NG : %llx\n", titleID );
             FS_CloseFile(file);
-            return;
+            return FALSE;
         }
     }
     if( !UTL_CheckAppCRC16( &s_AllRomHeaderArray[rhArrayLen] ) ) {
         OS_TPrintf( "CRC16  Check NG : %llx\n", titleID );
         FS_CloseFile(file);
-        return;
+        return FALSE;
     }
 
     sNandAppRomHeaderArrayLength++;
@@ -498,7 +515,7 @@ static void AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
     // もうランチャー表示用情報は数がオーバーしてるか、表示用情報を読まない設定
     if ( ( sNandTitleListLengthForLauncher >= cNandTitleArrayMax ) || !readShowData ) {
         FS_CloseFile(file);
-        return;
+        return FALSE;
     }
     
     // 以下は表示するアプリのみ（現在リストにあるデータ数がNandタイトル数の最大を超えていない場合）の処理
@@ -511,6 +528,7 @@ static void AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
 
     // バナーの取得
     // バナーが存在する場合のみリード
+
     if( offset ) {
         
 #if (MEASURE_BANNER_LOAD_TIME == 1)
@@ -518,44 +536,38 @@ static void AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
 #endif
 
         bSuccess = FS_SeekFile(file, (s32)offset, FS_SEEK_SET);
-        if( ! bSuccess )
+        if( bSuccess )
         {
-            // error
-            SDK_ASSERT( FALSE );
-            FS_CloseFile(file);
-            return;
-        }
-
 #if (MEASURE_BANNER_LOAD_TIME == 1)
-        OS_TPrintf( "FS_SeekFile banner: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
-        start = OS_GetTick();
+	        OS_TPrintf( "FS_SeekFile banner: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+	        start = OS_GetTick();
 #endif
         
-        readLen = FS_ReadFile( file, pTitleProp->pBanner, (s32)sizeof(TWLBannerFile) );
-        if( readLen != (s32)sizeof(TWLBannerFile) )
-        {
-            // error
-            SDK_ASSERT( FALSE );
-            FS_CloseFile(file);
-            return;
+            readLen = FS_ReadFile( file, pTitleProp->pBanner, (s32)sizeof(TWLBannerFile) );
+            if( readLen == (s32)sizeof(TWLBannerFile) )
+            {
+
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+	            OS_TPrintf( "FS_ReadFile banner: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+	            start = OS_GetTick();
+#endif
+
+	            // バナーチェックリクエスト送信。
+	            OS_SendMessage(&sCheckMsgQueue, (OSMessage)(pTitleProp->pBanner), OS_MESSAGE_BLOCK);
+
+#if (MEASURE_BANNER_LOAD_TIME == 1)
+	            OS_TPrintf( "check banner: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
+#endif
+                isBannerExist = TRUE;
+            }
         }
+    }
 
-#if (MEASURE_BANNER_LOAD_TIME == 1)
-        OS_TPrintf( "FS_ReadFile banner: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
-        start = OS_GetTick();
-#endif
-
-        // バナーチェックリクエスト送信。
-        OS_SendMessage(&sCheckMsgQueue, (OSMessage)(pTitleProp->pBanner), OS_MESSAGE_BLOCK);
-
-#if (MEASURE_BANNER_LOAD_TIME == 1)
-        OS_TPrintf( "check banner: %dus\n", OS_TicksToMicroSeconds( OS_GetTick() - start ) );
-#endif
-
-    }else {
+    if( !isBannerExist )
+    {
         // バナーが存在しない場合はバッファクリア
         MI_CpuClearFast( pTitleProp->pBanner, sizeof(TWLBannerFile) );
-    }
+	}
     
 #if (MEASURE_BANNER_LOAD_TIME == 1)
     start = OS_GetTick();
@@ -600,6 +612,8 @@ static void AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
     }
     
     sNandTitleListLengthForLauncher++;
+    
+    return TRUE;
 }
 
 /*!
@@ -680,12 +694,13 @@ static void AMN_initNandTitleList_()
 
     for (l = 0; l < sNandAllTitleListLength; l++) {
         if (AMN_isTitleIdValidForLauncher(pNandAllTitleIDList[l])) {
-            AMNi_getAndAddNandTitleData( pNandAllTitleIDList[l], TRUE );
     // 本体設定の場合、アプリマネージャ用indexは飛び飛びになったり、ForSetting()が返す値(個数)より大きくなるので
     // getNandTitleListLengthForSetting()は用意しない。
-    
-            // FreeboxCount更新のためのカウンタ
-            count_valid_app_for_launcher++;
+            if( AMNi_getAndAddNandTitleData( pNandAllTitleIDList[l], TRUE ) )
+            {
+                // FreeboxCount更新のためのカウンタ
+                count_valid_app_for_launcher++;
+            }
         }
     }
 
@@ -696,7 +711,7 @@ static void AMN_initNandTitleList_()
     // ローンチ対象でないタイトルの情報の取得
     for (l = 0; l < sNandAllTitleListLength; l++) {
         if (!AMN_isTitleIdValidForLauncher(pNandAllTitleIDList[l])) {
-            AMNi_getAndAddNandTitleData( pNandAllTitleIDList[l], FALSE );
+            (void)AMNi_getAndAddNandTitleData( pNandAllTitleIDList[l], FALSE );
         }
     }
 
@@ -711,7 +726,6 @@ static void AMN_initNandTitleRomHeaderShortList_()
     s32 ret;
     s32 l;
     NAMTitleId* pNandAllTitleIDList = NULL;
-    u8 count_valid_app_for_launcher = 0;
 
     // インポートされているタイトルの取得
     sNandAllTitleListLength = NAM_GetNumTitles();
@@ -741,15 +755,11 @@ static void AMN_initNandTitleRomHeaderShortList_()
 
     // タイトルの情報(ヘッダのみ)の取得
     for (l = 0; l < sNandAllTitleListLength; l++) {
-        AMNi_getAndAddNandTitleData( pNandAllTitleIDList[l], FALSE );
-        if (AMN_isTitleIdValidForLauncher(pNandAllTitleIDList[l])) {
-            // FreeboxCount更新のためのカウンタ
-            count_valid_app_for_launcher++;
-        }
+        (void)AMNi_getAndAddNandTitleData( pNandAllTitleIDList[l], FALSE );
     }
     
-    // FreeboxCount更新
-    AMNi_updateFreeBoxCount( count_valid_app_for_launcher );
+    // バナー表示しない場合、FreeboxCount更新は必要ない
+    // （怖いのは表示とカウントが食い違う事なので）
 
     if (pNandAllTitleIDList) {
         AMNi_Free( pNandAllTitleIDList );
