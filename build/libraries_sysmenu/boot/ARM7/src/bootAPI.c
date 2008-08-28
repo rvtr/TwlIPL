@@ -87,10 +87,9 @@ static u32 mem_list[PRE_CLEAR_NUM_MAX + 1 + COPY_NUM_MAX + COPY_HEADER_NUM_MAX +
 
 static u32 twl_post_clear_list[POST_CLEAR_NUM_MAX + 1] = 
 {
-	HW_MAIN_MEM_PARAMETER_BUF_END, SYSM_OWN_ARM7_MMEM_ADDR,
-	SYSM_OWN_ARM7_MMEM_ADDR_END, OS_BOOT_A9CODE_BUF,
-	OS_BOOT_A9CODE_BUF + OS_BOOT_CODE_SIZE, SYSM_OWN_ARM9_MMEM_ADDR,
-	SYSM_OWN_ARM9_MMEM_ADDR_END, SYSM_TWL_MOUNT_INFO_TMP_BUFFER + SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN,
+	SYSM_TWL_ARM7_LOAD_MMEM_END, OS_BOOT_A9CODE_BUF,
+	OS_BOOT_A9CODE_BUF + OS_BOOT_CODE_SIZE, SYSM_TWL_ARM9_LTD_LOAD_MMEM,
+	SYSM_TWL_ARM7_LTD_LOAD_MMEM_END, SYSM_TWL_MOUNT_INFO_TMP_BUFFER + SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN,
 	HW_EXCP_VECTOR_MAIN, HW_EXCP_VECTOR_MAIN + 4, // ARM9例外ベクタ
 	HW_EXCP_VECTOR_BUF,  HW_EXCP_VECTOR_BUF  + 4, // ARM7例外ベクタ
 	NULL,
@@ -98,10 +97,9 @@ static u32 twl_post_clear_list[POST_CLEAR_NUM_MAX + 1] =
 
 static u32 nitro_post_clear_list[POST_CLEAR_NUM_MAX + 1] = 
 {
-	HW_MAIN_MEM_PARAMETER_BUF, SYSM_OWN_ARM7_MMEM_ADDR,
-	SYSM_OWN_ARM7_MMEM_ADDR_END, OS_BOOT_A9CODE_BUF,
-	SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_DBG_NTR_SYSTEM_BUF,
-	SYSM_OWN_ARM9_MMEM_ADDR_END, SYSM_TWL_MOUNT_INFO_TMP_BUFFER + SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN,
+	SYSM_NTR_ARM7_LOAD_MMEM_END, OS_BOOT_A9CODE_BUF,
+	SYSM_TWL_ARM9_LTD_LOAD_MMEM_END, SYSM_DBG_NTR_SYSTEM_BUF,
+	SYSM_TWL_ARM7_LTD_LOAD_MMEM_END, SYSM_TWL_MOUNT_INFO_TMP_BUFFER + SYSM_MOUNT_INFO_SIZE + OS_MOUNT_PATH_LEN,
 	HW_EXCP_VECTOR_MAIN, HW_EXCP_VECTOR_MAIN + 4, // ARM9例外ベクタ
 	HW_EXCP_VECTOR_BUF,  HW_EXCP_VECTOR_BUF  + 4, // ARM7例外ベクタ
 	NULL,
@@ -276,6 +274,7 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 			{
 				post_clear_list = nitro_post_clear_list;
 				// NTR-IPLと同様にシステム領域直前をクリアしておく
+				// [TODO:] すでにpost_clear_listに含まれている気がする。要確認
 				mem_list[list_count++] = 0x02800000 - OS_BOOT_SYS_CLR_SIZE;
 				mem_list[list_count++] = OS_BOOT_SYS_CLR_SIZE - HW_MAIN_MEM_SHARED_SIZE;
 			}
@@ -376,7 +375,7 @@ static void BOOTi_ClearREG_RAM( void )
 }
 
 // 単純リスト要素削除
-static void BOOTi_DeliteElementFromList( u32 *list, u32 index )
+static void BOOTi_DeleteElementFromList( u32 *list, u32 index )
 {
 	int l;
 	for( l=(int)index; list[l]!=NULL; l++ )
@@ -442,7 +441,7 @@ static void BOOTi_CutAwayRegionList( u32 *regionlist, u32 start, u32 end )
 	// regionlist[l]からregionlist[m-1]までの要素を消す
 	for( n=l; l<m; l++ )
 	{
-		BOOTi_DeliteElementFromList( regionlist, (u32)n );
+		BOOTi_DeleteElementFromList( regionlist, (u32)n );
 	}
 }
 

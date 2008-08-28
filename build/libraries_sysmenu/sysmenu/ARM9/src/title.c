@@ -94,6 +94,9 @@ static BOOL SYSMi_CheckTitlePointer( TitleProperty *pBootTitle );
 static void SYSMi_makeTitleIdList( void );
 static BOOL SYSMi_AuthenticateHeader( TitleProperty *pBootTitle, ROM_Header *head );
 static void SYSMi_applyPatchToBandBrothers( void );
+static void SYSMi_ClearRomLoadSegment( ROM_Header_Short *rhs );
+static void SYSMi_CutAwayRegionList( u32 *regionlist, u32 start, u32 end );
+static void SYSMi_CpuClearFast( void *dest, u32 size );
 
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
@@ -836,8 +839,12 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 		{
 	        (void)FS_CloseFile(file);
         }
-
     }
+    
+    // モジュール最終ロード先領域のうち、現在空いている場所をクリア
+    // [TODO:]とりあえずベタ書き。余裕があればスレッド化する。
+    SYSMi_ClearRomLoadSegment( (ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF );
+    
 	SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
 	return;
 	
@@ -848,6 +855,86 @@ ERROR:
     }
 }
 
+// モジュール最終ロード先領域のうち、現在空いている場所をクリア
+#define CLEAR_LIST_LENGTH (8 + 1 + RELOCATE_INFO_NUM * 2)
+static void SYSMi_ClearRomLoadSegment( ROM_Header_Short *rhs )
+{
+	int l;
+	u32 twl_clear_list[CLEAR_LIST_LENGTH] = {
+		SYSM_TWL_ARM9_LOAD_MMEM,     SYSM_TWL_ARM9_LOAD_MMEM_END,
+		SYSM_TWL_ARM7_LOAD_MMEM,     SYSM_TWL_ARM7_LOAD_MMEM_END,
+		SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_TWL_ARM9_LTD_LOAD_MMEM_END,
+		SYSM_TWL_ARM7_LTD_LOAD_MMEM, SYSM_TWL_ARM7_LTD_LOAD_MMEM_END,
+		NULL,
+	};
+	u32 nitro_clear_list[CLEAR_LIST_LENGTH] = {
+		SYSM_NTR_ARM9_LOAD_MMEM,     SYSM_NTR_ARM9_LOAD_MMEM_END,
+		SYSM_NTR_ARM7_LOAD_MMEM,     SYSM_NTR_ARM7_LOAD_MMEM_END,
+		SYSM_TWL_ARM9_LTD_LOAD_MMEM, SYSM_TWL_ARM9_LTD_LOAD_MMEM_END,
+		SYSM_TWL_ARM7_LTD_LOAD_MMEM, SYSM_TWL_ARM7_LTD_LOAD_MMEM_END,
+		NULL,
+	};
+	u32 *clear_list;
+	u32 length[RELOCATE_INFO_NUM];
+	u32 dataExistAddr[RELOCATE_INFO_NUM];
+	
+    length       [0] = rhs->main_size;
+    dataExistAddr[0] = (u32)rhs->main_ram_address;
+	
+    length       [1] = rhs->sub_size;
+    dataExistAddr[1] = (u32)rhs->sub_ram_address;
+    
+	if( !(rhs->platform_code & PLATFORM_CODE_FLAG_TWL) )
+	{
+		clear_list = nitro_clear_list;
+	}
+	else
+	{
+		clear_list = twl_clear_list;
+        length       [2] = rhs->main_ltd_size;
+        dataExistAddr[2] = (u32)rhs->main_ltd_ram_address;
+
+        length       [3] = rhs->sub_ltd_size;
+        dataExistAddr[3] = (u32)rhs->sub_ltd_ram_address;
+	}
+
+	for( l=0; l<RELOCATE_INFO_NUM ; l++ )
+	{
+		if( !(rhs->platform_code & PLATFORM_CODE_FLAG_TWL) && l==2 )
+		{
+			break;
+		}
+		// 再配置情報があればそちらの情報を取得
+		if( SYSMi_GetWork()->romRelocateInfo[l].src != NULL )
+		{
+			length[l] = SYSMi_GetWork()->romRelocateInfo[l].length;
+			dataExistAddr[l] = SYSMi_GetWork()->romRelocateInfo[l].src;
+		}
+		
+		// 領域の切り取り
+		SYSMi_CutAwayRegionList( clear_list, dataExistAddr[l], dataExistAddr[l] + length[l] );
+	}
+	
+	// リストに従って消す
+	for( l=0; l<CLEAR_LIST_LENGTH; l+=2 )
+	{
+		if( clear_list[l] == NULL ) break;
+		SYSMi_CpuClearFast( (void *)clear_list[l], clear_list[l+1] - clear_list[l] );
+		OS_TPrintf("ClearRomLoadSegment: %x-%x\n", clear_list[l], clear_list[l+1] );
+	}
+}
+
+static void SYSMi_CpuClearFast( void *dest, u32 size )
+{
+	u32 align_dest = MATH_ROUNDUP( (u32)dest, 4 );
+	u32 align_offset = align_dest - (u32)dest;
+	u32 align_size = MATH_ROUNDDOWN( size - align_offset, 4);
+	u32 align_size_offset = size - align_offset - align_size;
+	
+	MI_CpuClear8( dest, align_offset );
+	MI_CpuClearFast( (void *)align_dest, align_size );
+	MI_CpuClear8( (void *)(align_dest + align_size), align_size_offset );
+}
 
 // 指定タイトルを別スレッドでロード開始する
 void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
@@ -1936,3 +2023,72 @@ void CheckDigest( void )
 	}
 }
 #endif
+
+// 単純リスト要素削除
+static void SYSMi_DeleteElementFromList( u32 *list, u32 index )
+{
+	int l;
+	for( l=(int)index; list[l]!=NULL; l++ )
+	{
+		list[l] = list[l+1];
+	}
+}
+// 単純リスト要素追加
+static void SYSMi_InsertElementToList( u32 *list, u32 index, u32 value )
+{
+	int l = (int)index;
+	while(list[l]!=NULL)
+	{
+		l++;
+	}
+	list[l+1] = NULL;
+	for( ; index<l; l-- )
+	{
+		list[l] = list[l-1];
+	}
+	list[l] = value;
+}
+// {first1, last1, first2, last2, ... , NULL}という形式の領域リストから
+// {start, end}の領域を切り取ったリストを返す関数
+// 引数に与えるリストは要素が最大2追加されるため、十分な大きさが必要
+// また、領域リストの要素は、最後尾のNULL以外昇順に並んでいる必要がある。
+static void SYSMi_CutAwayRegionList( u32 *regionlist, u32 start, u32 end )
+{
+	int l, m, n;
+	if( end <= start ) return;
+	for( l=0; regionlist[l]!=NULL; l++ )
+	{
+		if( regionlist[l] >= start )
+		{
+			break;
+		}
+	}
+	for( m=l; regionlist[m]!=NULL; m++ )
+	{
+		if( regionlist[m] > end )
+		{
+			break;
+		}
+	}
+	// この時点でregionlist[l]およびregionlist[m]は、start <= regionlist[l], end < regionlist[m]で、且つ最も小さな値
+	
+	if( m % 2 == 1 )
+	{
+		SYSMi_InsertElementToList( regionlist, (u32)m, end );
+		// endをリストに追加した場合、mは追加した要素を指すように
+	}
+	if( l % 2 == 1 )
+	{
+		SYSMi_InsertElementToList( regionlist, (u32)l, start );
+		m++;
+		// startをリストに追加した場合、mは1増える
+		l++;
+		// startをリストに追加した場合、lは追加した要素の次の要素を指すように
+	}
+	
+	// regionlist[l]からregionlist[m-1]までの要素を消す
+	for( n=l; l<m; l++ )
+	{
+		SYSMi_DeleteElementFromList( regionlist, (u32)n );
+	}
+}
