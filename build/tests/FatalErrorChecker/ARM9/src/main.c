@@ -28,11 +28,12 @@
 #define FOOTER_Y			22
 
 #define ASK_LINE_OFFSET		8
-#define RESULT_LINE_OFFSET	10
+#define RESULT_LINE_OFFSET	12
 
 #define SCREEN_WIDTH		32
 
 #define DST_LOGFILE_PATH	"sdmc:/sysmenu.log"
+#define ERRORLOG_LOGFILE_PATH	"nand:/sys/log/sysmenu.log"
 
 /*---------------------------------------------------------------------------*
     ì‡ïîïœêîíËã`
@@ -254,7 +255,9 @@ static void control()
 		// ñ{ìñÇ…Ç‚ÇÈÇÃÅHÇ¡Çƒï∑Ç¢ÇƒÇÈç≈íÜ
 		if( kamiPadIsTrigger( PAD_BUTTON_A ))
 		{
-			BOOL result = copyLogToSD();
+			BOOL result;
+			kamiFontPrintfMain( 0, ASK_LINE_OFFSET+2, CONSOLE_ORANGE, "now copying...");
+			result = copyLogToSD();
 			nowAsking = FALSE;
 		}
 		
@@ -405,12 +408,17 @@ static BOOL copyLogToSD( void )
 	if( !FS_OpenFileEx( &dst, DST_LOGFILE_PATH, FS_FILEMODE_RWL ) )
 	{
 		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET, CONSOLE_ORANGE, "Copy Failed!") ;
-		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET+1, CONSOLE_ORANGE, "func: FS_OpenFile" );
+		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET+1, CONSOLE_ORANGE, "func: FS_OpenFile dst" );
 		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET+2, CONSOLE_ORANGE, "errorCode : %d", FS_GetArchiveResultCode( DST_LOGFILE_PATH ) );
 		return FALSE;
 	}
 	
-	src = ERRORLOGi_getLogFilePt();
+	if( !FS_OpenFileEx( &src, ERRORLOG_LOGFILE_PATH, FS_FILEMODE_R ) )
+	{
+		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET, CONSOLE_ORANGE, "Copy Failed!") ;
+		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET+1, CONSOLE_ORANGE, "func: FS_OpenFile src" );
+		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET+2, CONSOLE_ORANGE, "errorCode : %d", FS_GetArchiveResultCode( DST_LOGFILE_PATH ) );
+	}
 	
 	if( !FS_SeekFileToBegin( &src ))
 	{
