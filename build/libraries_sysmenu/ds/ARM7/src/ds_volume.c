@@ -98,7 +98,7 @@ static DsMicProblemTitle sList[NUM_OF_MIC_PROBLEM_TITLE] ATTRIBUTE_ALIGN(32) =
     "AV4",
     "AV5",
     "AV6",
-    "000",
+    "YNZ",
     "000",
     "000",
     "000",
