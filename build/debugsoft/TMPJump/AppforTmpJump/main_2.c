@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlSDK - tests - tmpjumpTest
+  Project:  TwlSDK - tests - tmpjumpTest - AppforTmpJump
   File:     main.c
 
   Copyright 2008 Nintendo.  All rights reserved.
@@ -11,19 +11,20 @@
   in whole or in part, without the prior written consent of Nintendo.
 
   $Date::            $
-  $Rev$
-  $Author$
+  $Rev:$
+  $Author:$
  *---------------------------------------------------------------------------*/
 
+#ifdef SDK_TWL
 #include <twl.h>
+#else
+#include <nitro.h>
+#endif
+
 #include "common.h"
 #include "screen.h"
 
-/*---------------------------------------------------------------------------*
-    定数 定義
- *---------------------------------------------------------------------------*/
-#define DMA_NO_FS	1
-#define APP_NUM		5		// TMP ジャンプ先ロム数
+#define DMA_NO_FS			1
 
 /*---------------------------------------------------------------------------*
     変数 定義
@@ -31,25 +32,8 @@
 // キー入力
 static KeyInfo  gKey;
 
-// tmp へコピーする srl
-static u8 gSrlNumber = 0;
-
-// 各 srl の TitleID
-static u64 gRomTitleIDList[APP_NUM] = 
-{
-	0x0003000434333341,		// NTR		GameCode 433A
-	0x0003000434333441,		// TWL-HYB	GameCode 434A
-	0x0003000434333541,		// TWL-LTD	GameCode 435A
-	0x0003000434353841,		// NTR (don't permit TMP jump) GameCode 458A
-	0x0003000434353941		// TWL (don't permit TMP jump) GameCode 459A
-};
-
-// 各 srl の場所
-static const char gRomPath[APP_NUM][32] = 
-{
-	"rom:/TestApp.srl", "rom:/TestApp_HYBRID.srl", "rom:/TestApp_LIMITED.srl",
-	"rom:/Test_NITROfail.srl", "rom:/Test_TWLfail.srl"
-};
+static const char gRomPath[32] = "rom:/dummy.srl";
+static u64 gTargetId = 0x0003000434333441;
 
 /*---------------------------------------------------------------------------*
    Prototype
@@ -57,7 +41,11 @@ static const char gRomPath[APP_NUM][32] =
 static void DrawMainScene(void);
 void VBlankIntr(void);
 
+#ifdef SDK_TWL
 void TwlMain(void)
+#else
+void NitroMain(void)
+#endif
 {
 	InitCommon();
 	InitScreen();
@@ -78,6 +66,7 @@ void TwlMain(void)
 		
 		if (gKey.trg & PAD_BUTTON_A)
 		{
+#ifdef SDK_TWL
 			BOOL success = TRUE;
 			FSFile src, dest;
 			void *buf;
@@ -88,7 +77,7 @@ void TwlMain(void)
 			FS_CreateFile(OS_TMP_APP_PATH, FS_PERMIT_R | FS_PERMIT_W);
 			FS_InitFile( &src );
 			FS_InitFile( &dest );
-			if ( !FS_OpenFileEx( &src, gRomPath[gSrlNumber], FS_FILEMODE_R ) ) success = FALSE;
+			if ( !FS_OpenFileEx( &src, gRomPath, FS_FILEMODE_R ) ) success = FALSE;
 			len = (s32)FS_GetFileLength( &src );
 			
 			buf = OS_AllocFromMain((u32)len);
@@ -112,40 +101,27 @@ void TwlMain(void)
 			
 			if ( !success ) break;
 			
-			// アプリジャンプ
-			OS_DoApplicationJump( gRomTitleIDList[gSrlNumber], OS_APP_JUMP_TMP );
-			// 失敗時にはエラーを下画面に出力して終了
-			PutSubScreen(1, 10, 0xf1, "ERROR: TMP Jump failed!");
+			// TMP ジャンプを試みる
+			if ( !OS_DoApplicationJump( gTargetId, OS_APP_JUMP_TMP) )
+			{
+				PutSubScreen(1, 10, 0xf1, "ERROR!: Failed to TMP jump");
+			}
 			break;
+#endif
 		}
 		
 		if (gKey.trg & PAD_BUTTON_B)
 		{
-			// リターンジャンプを試みる
-			if(!OS_ReturnToPrevApplication())
+#ifdef SDK_TWL
+			// メインアプリへ戻る
+			if ( !OS_ReturnToPrevApplication() )
 			{
-				// 失敗時にはメッセージを表示
-				PutSubScreen(1, 10, 0xf1, "ERROR: Return Jump failed!");
-				break;
+				PutSubScreen(1, 10, 0xf1, "ERROR!: Failed to return jump");
 			}
+			break;
+#endif
 		}
 		
-		// 方向キー上下で、OS_TMP_APP_PATH へコピーする srl を選択
-		if (gKey.trg & PAD_KEY_DOWN)
-		{
-			gSrlNumber++;
-			if (gSrlNumber > APP_NUM - 1)
-				gSrlNumber = 0;
-		}
-		else if (gKey.trg & PAD_KEY_UP)
-		{
-			if (gSrlNumber == 0)
-				gSrlNumber = APP_NUM -1;
-			else
-				gSrlNumber--;
-		}
-		
-		ClearScreen();
 		DrawMainScene();
 		
 		OS_WaitVBlankIntr();
@@ -155,21 +131,15 @@ void TwlMain(void)
 	OS_Terminate();
 }
 
-
 static void DrawMainScene(void)
 {
-	PutMainScreen(1,  1, 0xf2, "Application (Main)");
-	PutMainScreen(2,  4, 0xff, "B BUTTON: try return jump");
-	
-	PutMainScreen(3, 12, 0xff, "Tmp jump to NITRO   rom");
-	PutMainScreen(3, 14, 0xff, "Tmp jump to TWL-HYB rom");
-	PutMainScreen(3, 16, 0xff, "Tmp jump to TWL-LTD rom");
-	
-	PutMainScreen(3, 18, 0xfe, "Tmp jump to NITRO x rom");
-	PutMainScreen(3, 20, 0xfe, "Tmp jump to TWL   x rom");
-	
-	// 選択中を示すカーソル描画
-	PutMainScreen(1, gSrlNumber * 2 + 12, 0xf4, "*");
+	PutMainScreen(1, 1, 0xf2, "Application on tmp dir");
+#ifdef SDK_TWL
+	PutMainScreen(1, 18, 0xff, "A : try TMP jump");
+	PutMainScreen(1, 20, 0xff, "B : Return to Main App");
+#else
+	PutMainScreen(1, 20, 0xf8, "Can not return to Main (OK)");
+#endif
 }
 
 /*---------------------------------------------------------------------------*
@@ -189,3 +159,4 @@ void VBlankIntr(void)
     // IRQ チェックフラグをセット
     OS_SetIrqCheckFlag(OS_IE_V_BLANK);
 }
+

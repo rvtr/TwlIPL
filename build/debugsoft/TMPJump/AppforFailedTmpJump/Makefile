@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlSDK - tests - tmpjumpTest - AppforTmpJump
+# Project:  TwlSDK - tests - tmpjumpTest - AppforFailedTmpJump
 # File:     Makefile
 #
 
@@ -13,20 +13,20 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev$
-# $Author$
+# $Rev:$
+# $Author:$
 #----------------------------------------------------------------------------
 
 override TARGET_CODEGEN		=		ARM
-TWL_ARCHGEN					=		ALL
+TWL_ARCHGEN					=		LIMITED
 
 TWL_NANDAPP		=	TRUE
 
-TARGET_BIN		=	TestApp$(TEST_ARCH).srl
+TARGET_BIN		=	Test_$(TARGET_PLATFORM)fail.srl
 
 INCDIR	=	../include
-SRCDIR	=	./ ../src
-SRCS	=	common.c font.c screen.c main_2.c
+SRCDIR	=	../src
+SRCS	=	common.c font.c screen.c main_f.c
 
 MAKEROM_ROMROOT		=	../data
 MAKEROM_ROMFILES	=	dummy.srl
@@ -35,27 +35,14 @@ MAKEROM_ROMFILES	=	dummy.srl
 include $(TWLSDK_ROOT)/build/buildtools/commondefs
 
 ifeq ($(TARGET_PLATFORM),TWL)
-TEST_ARCH			=	_$(TWL_ARCHGEN)
+ROM_SPEC			=	main_459a.rsf
+# LIBSYSCALL			=	../459A/libsyscall.a
 
-ifeq ($(TWL_ARCHGEN),HYBRID)
-
-ROM_SPEC			=	main_434a.rsf
-LIBSYSCALL			=	../434A/libsyscall.a
-
-else
-
-ROM_SPEC			=	main_435a.rsf
-LIBSYSCALL			=	../435A/libsyscall.a
-
-endif
-# TARGET_PLATFORM = NITRO
 endif
 
 ifeq ($(TARGET_PLATFORM),NITRO)
-
-TEST_ARCH			=	
-ROM_SPEC			=	main_433a.rsf
-LIBSYSCALL			=	../433A/libsyscall.a
+ROM_SPEC			=	main_458a.rsf
+# LIBSYSCALL			=	../458A/libsyscall.a
 
 endif
 

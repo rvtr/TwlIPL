@@ -68,7 +68,9 @@ SRCS		=	main.c common.c screen.c font.c
 MAKEROM_ROMROOT		=	./data
 MAKEROM_ROMFILES	=	TestApp.srl			\
 						TestApp_HYBRID.srl	\
-						TestApp_LIMITED.srl
+						TestApp_LIMITED.srl	\
+						Test_NITROfail.srl		\
+						Test_TWLfail.srl
 
 #----------------------------------------------------------------------------
 include $(TWLSDK_ROOT)/build/buildtools/commondefs
