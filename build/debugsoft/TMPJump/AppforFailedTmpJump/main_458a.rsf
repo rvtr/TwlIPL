@@ -11,8 +11,8 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 #
 #  Nitro ROM SPEC FILE
@@ -75,7 +75,7 @@ Property
 	#
 	# ROM HEADER TEMPLATE: Provided to every product by NINTENDO
 	#
-#	RomHeaderTemplate	../458A/rom_header_458a.template.sbin
+	RomHeaderTemplate	../458A/rom_header_458a.template.sbin
 
 	#
 	# BANNER FILE: generated from Banner Spec File

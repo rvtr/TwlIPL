@@ -36,13 +36,13 @@ include $(TWLSDK_ROOT)/build/buildtools/commondefs
 
 ifeq ($(TARGET_PLATFORM),TWL)
 ROM_SPEC			=	main_459a.rsf
-# LIBSYSCALL			=	../459A/libsyscall.a
+LIBSYSCALL			=	../459A/libsyscall.a
 
 endif
 
 ifeq ($(TARGET_PLATFORM),NITRO)
 ROM_SPEC			=	main_458a.rsf
-# LIBSYSCALL			=	../458A/libsyscall.a
+LIBSYSCALL			=	../458A/libsyscall.a
 
 endif
 
