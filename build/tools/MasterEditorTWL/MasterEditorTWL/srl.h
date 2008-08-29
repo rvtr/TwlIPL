@@ -311,6 +311,9 @@ namespace MasterEditorTWL
 		ECSrlResult mrcNTR( FILE *fp );
 		ECSrlResult mrcTWL( FILE *fp );
 		ECSrlResult mrcTWLParentalControl(void);
+		System::Boolean mrcRegion( System::UInt32 region );		// @ret ÉäÅ[ÉWÉáÉìÇ™ê≥ÇµÇ¢Ç©Ç«Ç§Ç©
+		void mrcRegionOrganization( System::UInt32 region );
+		void mrcRating( System::Byte ogn );
 
 		// utility
 		void clearParentalControl( System::Byte ogn );

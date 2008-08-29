@@ -1031,13 +1031,66 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 // PCTL専用
 ECSrlResult RCSrl::mrcTWLParentalControl(void)
 {
-	// リージョン
-	System::Boolean bRegionResult = true;	// リージョン設定が正常であるか
+	// リージョンが正常か
 	u32 region = this->pRomHeader->s.card_region_bitmap;
-	if( (region != METWL_MASK_REGION_JAPAN) &&
-		(region != METWL_MASK_REGION_AMERICA) &&
-		(region != METWL_MASK_REGION_EUROPE) &&
-		(region != METWL_MASK_REGION_AUSTRALIA) &&
+	if( !this->mrcRegion( region ) )
+	{
+		return ECSrlResult::NOERROR;	// これ以上チェックしない
+	}
+
+	// リージョンに含まれている団体/含まれていない団体の設定をチェック
+	this->mrcRegionOrganization( region );
+
+	// リージョンに含まれている団体の設定が正しいかどうか
+	if( region == METWL_MASK_REGION_JAPAN )
+	{
+		this->mrcRating( OS_TWL_PCTL_OGN_CERO );
+	}
+	if( region == METWL_MASK_REGION_AMERICA )
+	{
+		this->mrcRating( OS_TWL_PCTL_OGN_ESRB );
+	}
+	if( region == METWL_MASK_REGION_EUROPE )
+	{
+		this->mrcRating( OS_TWL_PCTL_OGN_USK );
+		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_GEN );
+		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_PRT );
+		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_BBFC );
+	}
+	if( region == METWL_MASK_REGION_AUSTRALIA )
+	{
+		this->mrcRating( OS_TWL_PCTL_OGN_OFLC );
+	}
+	if( region == (METWL_MASK_REGION_EUROPE | METWL_MASK_REGION_AUSTRALIA) )
+	{
+		this->mrcRating( OS_TWL_PCTL_OGN_USK );
+		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_GEN );
+		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_PRT );
+		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_BBFC );
+		this->mrcRating( OS_TWL_PCTL_OGN_OFLC );
+	}
+#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
+	if( region == METWL_MASK_REGION_ALL )
+	{
+		this->mrcRating( OS_TWL_PCTL_OGN_CERO );
+		this->mrcRating( OS_TWL_PCTL_OGN_ESRB );
+		this->mrcRating( OS_TWL_PCTL_OGN_USK );
+		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_GEN );
+		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_PRT );
+		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_BBFC );
+		this->mrcRating( OS_TWL_PCTL_OGN_OFLC );
+	}
+#endif //#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
+
+	return ECSrlResult::NOERROR;
+} //mrcParentalControl()
+
+// PCTLチェックの一部 リージョンが正常かチェック
+System::Boolean RCSrl::mrcRegion( System::UInt32 region )
+{
+	System::Boolean bRegionResult = true;	// リージョン設定が正常であるか
+	if( (region != METWL_MASK_REGION_JAPAN)  && (region != METWL_MASK_REGION_AMERICA) &&
+		(region != METWL_MASK_REGION_EUROPE) &&	(region != METWL_MASK_REGION_AUSTRALIA) &&
 		(region != (METWL_MASK_REGION_EUROPE | METWL_MASK_REGION_AUSTRALIA)) )
 	{
 #if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
@@ -1068,247 +1121,222 @@ ECSrlResult RCSrl::mrcTWLParentalControl(void)
 		this->hWarnList->Add( gcnew RCMRCError( 
 			"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "仕向地の設定が不正のため、ROMデータ内のすべてのレーティング団体の情報を無視して読み込みました。本ツールを用いて修正してください。",
 			"Parental Control", "Illigal region. In reading, therefore, settings for all rating organizations are ignored. Please set this infomation using this tool.", true ) );
-		return ECSrlResult::NOERROR;	// もうこれ以上チェックしない
 	}
+	return bRegionResult;
+}
 
-	// リージョンに含まれていない団体の設定がされていたらダメ
+// PCTLチェックの一部 リージョンに含まれる団体/含まれない団体の設定をチェック
+void RCSrl::mrcRegionOrganization( System::UInt32 region )
+{
+	// 表示用の団体ラベル
+	cli::array<System::String^> ^ognArray = gcnew cli::array<System::String^>(PARENTAL_CONTROL_INFO_SIZE);
+	System::Int32 i;
+	for( i=0; i < PARENTAL_CONTROL_INFO_SIZE; i++ )
+	{
+		switch(i)
+		{
+			case OS_TWL_PCTL_OGN_CERO:
+				ognArray[i] = gcnew System::String( "CERO: " );
+			break;
+			case OS_TWL_PCTL_OGN_ESRB:
+				ognArray[i] = gcnew System::String( "ESRB: " );
+			break;
+			case OS_TWL_PCTL_OGN_USK:
+				ognArray[i] = gcnew System::String( "USK: " );
+			break;
+			case OS_TWL_PCTL_OGN_PEGI_GEN:
+				ognArray[i] = gcnew System::String( "PEGI(General): " );
+			break;
+			case OS_TWL_PCTL_OGN_PEGI_PRT:
+				ognArray[i] = gcnew System::String( "PEGI(Portugal): " );
+			break;
+			case OS_TWL_PCTL_OGN_PEGI_BBFC:
+				ognArray[i] = gcnew System::String( "PEGI and BBFC: " );
+			break;
+			case OS_TWL_PCTL_OGN_OFLC:
+				ognArray[i] = gcnew System::String( "OFLC: " );
+			break;
+		}
+	}
 	System::String ^warnEmptyJ = gcnew System::String( "レーティング審査の必要がないソフトだとみなします。審査が必要である場合には、本ツールを用いて修正してください。" );
 	System::String ^warnEmptyE = gcnew System::String( "This ROM is not necessary for CERO rating. If necessary, please set this infomation using this tool." );
 	System::String ^warnFillJ  = gcnew System::String( "リージョンに含まれない団体の情報が設定されていたため、これらの団体の情報を無視して読み込みました。本ツールを用いて修正してください。" );
 	System::String ^warnFillE  = gcnew System::String( "Some organizations is not include in the region. In reading, therefore, settings for all rating organizations are ignored. Please set this infomation using this tool." );
-	if( region == METWL_MASK_REGION_JAPAN )
+
+	// リージョンに含まれる団体と含まれない団体をリスト化する
+	System::Collections::Generic::List<System::Byte> ^inList = gcnew System::Collections::Generic::List<System::Byte>();
+	inList->Clear();
+	System::Collections::Generic::List<System::Byte> ^exList = gcnew System::Collections::Generic::List<System::Byte>();
+	exList->Clear();
+
+	switch( region )
 	{
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_CERO ] == 0 )
+		case METWL_MASK_REGION_JAPAN:
+			inList->Add( OS_TWL_PCTL_OGN_CERO );	// 含まれるリスト
+			exList->Add( OS_TWL_PCTL_OGN_ESRB );	// 含まれないリスト
+			exList->Add( OS_TWL_PCTL_OGN_USK );
+			exList->Add( OS_TWL_PCTL_OGN_PEGI_GEN );
+			exList->Add( OS_TWL_PCTL_OGN_PEGI_PRT );
+			exList->Add( OS_TWL_PCTL_OGN_PEGI_BBFC );
+			exList->Add( OS_TWL_PCTL_OGN_OFLC );
+		break;
+
+		case METWL_MASK_REGION_AMERICA:
+			exList->Add( OS_TWL_PCTL_OGN_CERO );
+			inList->Add( OS_TWL_PCTL_OGN_ESRB );
+			exList->Add( OS_TWL_PCTL_OGN_USK );
+			exList->Add( OS_TWL_PCTL_OGN_PEGI_GEN );
+			exList->Add( OS_TWL_PCTL_OGN_PEGI_PRT );
+			exList->Add( OS_TWL_PCTL_OGN_PEGI_BBFC );
+			exList->Add( OS_TWL_PCTL_OGN_OFLC );
+		break;
+
+		case METWL_MASK_REGION_EUROPE:
+			exList->Add( OS_TWL_PCTL_OGN_CERO );
+			exList->Add( OS_TWL_PCTL_OGN_ESRB );
+			inList->Add( OS_TWL_PCTL_OGN_USK );
+			inList->Add( OS_TWL_PCTL_OGN_PEGI_GEN );
+			inList->Add( OS_TWL_PCTL_OGN_PEGI_PRT );
+			inList->Add( OS_TWL_PCTL_OGN_PEGI_BBFC );
+			exList->Add( OS_TWL_PCTL_OGN_OFLC );
+		break;
+
+		case METWL_MASK_REGION_AUSTRALIA:
+			exList->Add( OS_TWL_PCTL_OGN_CERO );
+			exList->Add( OS_TWL_PCTL_OGN_ESRB );
+			exList->Add( OS_TWL_PCTL_OGN_USK );
+			exList->Add( OS_TWL_PCTL_OGN_PEGI_GEN );
+			exList->Add( OS_TWL_PCTL_OGN_PEGI_PRT );
+			exList->Add( OS_TWL_PCTL_OGN_PEGI_BBFC );
+			inList->Add( OS_TWL_PCTL_OGN_OFLC );
+		break;
+
+		case (METWL_MASK_REGION_EUROPE|METWL_MASK_REGION_AUSTRALIA):
+			exList->Add( OS_TWL_PCTL_OGN_CERO );
+			exList->Add( OS_TWL_PCTL_OGN_ESRB );
+			inList->Add( OS_TWL_PCTL_OGN_USK );
+			inList->Add( OS_TWL_PCTL_OGN_PEGI_GEN );
+			inList->Add( OS_TWL_PCTL_OGN_PEGI_PRT );
+			inList->Add( OS_TWL_PCTL_OGN_PEGI_BBFC );
+			inList->Add( OS_TWL_PCTL_OGN_OFLC );
+		break;
+
+#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
+		case METWL_MASK_REGION_ALL:
+			inList->Add( OS_TWL_PCTL_OGN_CERO );
+			inList->Add( OS_TWL_PCTL_OGN_ESRB );
+			inList->Add( OS_TWL_PCTL_OGN_USK );
+			inList->Add( OS_TWL_PCTL_OGN_PEGI_GEN );
+			inList->Add( OS_TWL_PCTL_OGN_PEGI_PRT );
+			inList->Add( OS_TWL_PCTL_OGN_PEGI_BBFC );
+			inList->Add( OS_TWL_PCTL_OGN_OFLC );
+		break;
+#endif //#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
+	}
+
+	// リージョンに含まれる団体に何も設定されていないときダメ
+	for each ( System::Byte ogn in inList )
+	{
+		if( this->pRomHeader->s.parental_control_rating_info[ ogn ] == 0 )
 		{
 			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "CERO: " + warnEmptyJ,
-				"Parental Control", "CERO: " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_CERO );
-		}
-		if( (this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_ESRB ] != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_USK ]  != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_GEN ] != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_PRT ]  != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_BBFC ] != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_OFLC ] != 0) )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, warnFillJ,
-				"Parental Control", warnFillE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_ESRB );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_USK );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_GEN );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_PRT );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_BBFC );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_OFLC );
+				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, ognArray[ogn] + warnEmptyJ,
+				"Parental Control", ognArray[ogn] + warnEmptyE, true ) );
+			this->clearParentalControl( ogn );
 		}
 	}
-	if( region == METWL_MASK_REGION_AMERICA )
+	// リージョンに含まれない団体に何か設定されていたらダメ
+	System::Boolean bSet = false;
+	for each ( System::Byte ogn in exList )
 	{
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_ESRB ] == 0 )
+		if( this->pRomHeader->s.parental_control_rating_info[ ogn ] != 0 )
 		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "ESRB: " + warnEmptyJ,
-				"Parental Control", "ESRB: " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_ESRB );
-		}
-		if( (this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_CERO ] != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_USK ]  != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_GEN ] != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_PRT ]  != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_BBFC ] != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_OFLC ] != 0) )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, warnFillJ,
-				"Parental Control", warnFillE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_CERO );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_USK );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_GEN );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_PRT );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_BBFC );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_OFLC );
+			bSet = true;
+			this->clearParentalControl( ogn );
 		}
 	}
-	if( region == METWL_MASK_REGION_EUROPE )
+	if( bSet )
 	{
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_USK ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "USK: " + warnEmptyJ,
-				"Parental Control", "USK: " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_USK );
-		}
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_GEN ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "PEGI(General): " + warnEmptyJ,
-				"Parental Control", "PEGI(General): " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_GEN );
-		}
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_PRT ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "PEGI(Portugal): " + warnEmptyJ,
-				"Parental Control", "PEGI(Portugal): " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_PRT );
-		}
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_BBFC ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "PEGI and BBFC: " + warnEmptyJ,
-				"Parental Control", "PEGI and BBFC: " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_BBFC );
-		}
-		if( (this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_CERO ] != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_ESRB ] != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_OFLC ] != 0) )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, warnFillJ,
-				"Parental Control", warnFillE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_CERO );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_ESRB );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_OFLC );
-		}
+		this->hWarnList->Add( gcnew RCMRCError( 
+			"ペアレンタルコントロール情報", 0x2f0, 0x2ff, warnFillJ,
+			"Parental Control", warnFillE, true ) );
 	}
-	if( region == METWL_MASK_REGION_AUSTRALIA )
+} //mrcRegion
+
+// レーティング値が正常かどうかチェック
+void RCSrl::mrcRating( System::Byte ogn )
+{
+	System::String ^warnDisableJ = gcnew System::String( "制限が無効であるにもかかわらずレーティングが設定されていため、レーティングを無視して読み込みました。本ツールを用いて修正してください。" );
+	System::String ^warnDisableE = gcnew System::String( "Rating can't be set when control isn't enable. rating setting is ignored. Please set this infomation using this tool." );
+	System::String ^warnIllegalJ = gcnew System::String( "レーティング情報が不正であるため、無視して読み込みました。本ツールを用いて修正してください。" );
+	System::String ^warnIllegalE = gcnew System::String( "Illegal rating. rating setting is ignored. Please set this information using this tool." );
+	System::String ^warnPendingJ = gcnew System::String( "Rating Pendingが指定されています。この指定とレーティング値は同時に設定できないため、レーティング値を無視して読み込みました。" );
+	System::String ^warnPendingE = gcnew System::String( "Rating Pending is setting. It is exclusive a rating age. The age is ignored." );
+
+	cli::array<System::String^> ^ognArray = gcnew cli::array<System::String^>(PARENTAL_CONTROL_INFO_SIZE);
+	System::Int32 i;
+	for( i=0; i < PARENTAL_CONTROL_INFO_SIZE; i++ )
 	{
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_OFLC ] == 0 )
+		switch(i)
 		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "OFLC: " + warnEmptyJ,
-				"Parental Control", "OFLC: " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_OFLC );
-		}
-		if( (this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_CERO ] != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_ESRB ] != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_USK ]  != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_GEN ] != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_PRT ]  != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_BBFC ] != 0) )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, warnFillJ,
-				"Parental Control", warnFillE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_CERO );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_ESRB );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_USK );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_GEN );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_PRT );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_BBFC );
-		}
-	}
-	if( region == (METWL_MASK_REGION_EUROPE | METWL_MASK_REGION_AUSTRALIA) )
-	{
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_USK ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "USK: " + warnEmptyJ,
-				"Parental Control", "USK: " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_USK );
-		}
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_GEN ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "PEGI(General): " + warnEmptyJ,
-				"Parental Control", "PEGI(General): " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_GEN );
-		}
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_PRT ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "PEGI(Portugal): " + warnEmptyJ,
-				"Parental Control", "PEGI(Portugal): " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_PRT );
-		}
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_BBFC ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "PEGI and BBFC: " + warnEmptyJ,
-				"Parental Control", "PEGI and BBFC: " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_BBFC );
-		}
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_OFLC ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "OFLC: " + warnEmptyJ,
-				"Parental Control", "OFLC: " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_OFLC );
-		}
-		if( (this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_CERO ] != 0) ||
-			(this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_ESRB ] != 0) )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, warnFillJ,
-				"Parental Control", warnFillE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_CERO );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_ESRB );
-		}
-	}
-	if( region == METWL_MASK_REGION_ALL )
-	{
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_CERO ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "CERO: " + warnEmptyJ,
-				"Parental Control", "CERO: " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_CERO );
-		}
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_ESRB ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "ESRB: " + warnEmptyJ,
-				"Parental Control", "ESRB: " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_ESRB );
-		}
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_USK ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "USK: " + warnEmptyJ,
-				"Parental Control", "USK: " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_USK );
-		}
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_GEN ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "PEGI(General): " + warnEmptyJ,
-				"Parental Control", "PEGI(General): " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_GEN );
-		}
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_PRT ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "PEGI(Portugal): " + warnEmptyJ,
-				"Parental Control", "PEGI(Portugal): " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_PRT );
-		}
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_PEGI_BBFC ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "PEGI and BBFC: " + warnEmptyJ,
-				"Parental Control", "PEGI and BBFC: " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_PEGI_BBFC );
-		}
-		if( this->pRomHeader->s.parental_control_rating_info[ OS_TWL_PCTL_OGN_OFLC ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMRCError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "OFLC: " + warnEmptyJ,
-				"Parental Control", "OFLC: " + warnEmptyE, true ) );
-			this->clearParentalControl( OS_TWL_PCTL_OGN_OFLC );
+			case OS_TWL_PCTL_OGN_CERO:
+				ognArray[i] = gcnew System::String( "CERO: " );
+			break;
+			case OS_TWL_PCTL_OGN_ESRB:
+				ognArray[i] = gcnew System::String( "ESRB: " );
+			break;
+			case OS_TWL_PCTL_OGN_USK:
+				ognArray[i] = gcnew System::String( "USK: " );
+			break;
+			case OS_TWL_PCTL_OGN_PEGI_GEN:
+				ognArray[i] = gcnew System::String( "PEGI(General): " );
+			break;
+			case OS_TWL_PCTL_OGN_PEGI_PRT:
+				ognArray[i] = gcnew System::String( "PEGI(Portugal): " );
+			break;
+			case OS_TWL_PCTL_OGN_PEGI_BBFC:
+				ognArray[i] = gcnew System::String( "PEGI and BBFC: " );
+			break;
+			case OS_TWL_PCTL_OGN_OFLC:
+				ognArray[i] = gcnew System::String( "OFLC: " );
+			break;
 		}
 	}
 
-	// リージョンに含まれている団体の設定が正しいかどうか
-	if( region == METWL_MASK_REGION_JAPAN )
+	if( *(this->hArrayParentalEffect[ ogn ]) == false )
 	{
-		if( *(this->hArrayParentalEffect[ OS_TWL_PCTL_OGN_CERO ]) == false )
+		this->hWarnList->Add( gcnew RCMRCError( 
+			"ペアレンタルコントロール情報", 0x2f0, 0x2ff, ognArray[ ogn ] + warnDisableJ,
+			"Parental Control", ognArray[ ogn ] + warnDisableE, true ) );
+		this->clearParentalControl( ogn );
+	}
+	else
+	{
+		// 間違っていたら"未審査"が返ってくる
+		System::String ^str = MasterEditorTWL::transRatingToString( 
+			ogn, true, *(this->hArrayParentalRating[ogn]), false );
+
+		if( *(this->hArrayParentalAlways[ogn]) == false )
 		{
+			// RPが立っていないときRPとレーティング値が競合していたらダメ
+			if( (str != nullptr) && str->Equals( L"未審査" ) )
+			{
+				this->hWarnList->Add( gcnew RCMRCError( 
+					"ペアレンタルコントロール情報", 0x2f0, 0x2ff, ognArray[ ogn ] + warnIllegalJ,
+					"Parental Control", ognArray[ ogn ] + warnIllegalE, true ) );
+				this->clearParentalControl( ogn );
+			}
+		}
+		else
+		{
+			// RPが立っていたら問答無用に警告
+			this->hWarnList->Add( gcnew RCMRCError( 
+				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, ognArray[ ogn ] + warnPendingJ,
+				"Parental Control", ognArray[ ogn ] + warnPendingE, true ) );
+			this->clearParentalControl( ogn );
 		}
 	}
-
-	return ECSrlResult::NOERROR;
-}
+} //mrcRating()
 
 // ペアレンタルコントロールのクリア
 void RCSrl::clearParentalControl( System::Byte ogn )
