@@ -310,6 +310,10 @@ namespace MasterEditorTWL
 		ECSrlResult mrc( FILE *fp );
 		ECSrlResult mrcNTR( FILE *fp );
 		ECSrlResult mrcTWL( FILE *fp );
+		ECSrlResult mrcTWLParentalControl(void);
+
+		// utility
+		void clearParentalControl( System::Byte ogn );
 
 	}; // end of ref class RCSrl
 

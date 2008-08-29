@@ -3071,7 +3071,7 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 			this->Controls->Add(this->gboxSrl);
 			this->Controls->Add(this->tboxMsg);
 			this->Name = L"Form1";
-			this->Text = L"MasterEditor for TWL";
+			this->Text = L"TWL MasterEditor";
 			this->gboxSrl->ResumeLayout(false);
 			this->gboxSrl->PerformLayout();
 			this->gboxCRC->ResumeLayout(false);

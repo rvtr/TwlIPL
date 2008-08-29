@@ -70,6 +70,4 @@ namespace MasterEditorTWL
 	//
 	System::Collections::Generic::List<u32>^ patternMatch( FILE *fp, const u8 *pattern, const u32 patternLen );
 
-	void debugPatternMatch( System::String ^filename );
-
 } // end of namespace MasterEditorTWL
