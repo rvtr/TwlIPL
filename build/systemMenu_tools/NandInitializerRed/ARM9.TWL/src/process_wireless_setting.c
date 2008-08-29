@@ -175,7 +175,7 @@ void* WirelessSettingProcess2(void)
 	switch( sMenuSelectNo )
 	{
 	case MENU_WIRELESS_ENABLE:
-		result = WriteHWInfoFile( LCFG_THW_GetRegion(), FALSE );
+		result = WriteHWInfoFile( OS_GetRegion(), FALSE );
 		if ( result == TRUE )
 		{
 			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_ENABLE*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "OK ");
@@ -189,7 +189,7 @@ void* WirelessSettingProcess2(void)
 		break;
 
 	case MENU_WIRELESS_FORCE_OFF:
-		result = WriteHWInfoFile( LCFG_THW_GetRegion(), TRUE );
+		result = WriteHWInfoFile( OS_GetRegion(), TRUE );
 		if ( result == TRUE )
 		{
 			kamiFontPrintf(26,  (s16)(MENU_TOP_LINE+MENU_WIRELESS_ENABLE*CHAR_OF_MENU_SPACE), FONT_COLOR_GREEN, "   ");

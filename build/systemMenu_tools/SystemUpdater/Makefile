@@ -29,8 +29,10 @@ DS_HASH_TABLE				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/DSHashTable
 SHARED_FONT_DIR				=	$(TWL_IPL_RED_ROOT)/build/systemMenu_RED/sharedFont
 NANDFIRM_DIR                =   $(TWL_IPL_RED_ROOT)/build/nandfirm/menu-launcher
 
-# 既存データを使用する場合はTRUEを指定
+# systemMenuデータの作成をスキップする場合はTRUEを指定
 SKIP_CREATE_DATA = FALSE
+# 実際に書き込みたいファイルの置かれているdataフォルダを指定
+export UPDATER_HOST_ROOT_DIR = data
 
 ifeq ($(SKIP_CREATE_DATA),FALSE)
 SUBDIRS =	$(LAUNCHER_DIR) \

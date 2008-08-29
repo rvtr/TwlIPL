@@ -124,7 +124,7 @@ void* HWInfoProcess0(void)
 	kamiFontPrintf(3, 18, FONT_COLOR_BLACK, "+--------------------+----+");
 
 	// 現在のリージョンに"now"と表示
-	kamiFontPrintf(26, (s16)(MENU_TOP_LINE+LCFG_THW_GetRegion()*CHAR_OF_MENU_SPACE), FONT_COLOR_BLACK, "now");
+	kamiFontPrintf(26, (s16)(MENU_TOP_LINE+OS_GetRegion()*CHAR_OF_MENU_SPACE), FONT_COLOR_BLACK, "now");
 
 	// 背景全クリア
 	for (i=0;i<24;i++)

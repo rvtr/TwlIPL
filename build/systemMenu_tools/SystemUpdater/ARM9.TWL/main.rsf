@@ -220,7 +220,7 @@ RomSpec
 {
 	Offset		0x00000000
 	Segment		ALL
-	HostRoot	../data
+	HostRoot	../$(UPDATER_HOST_ROOT_DIR)
 	Root		/data
 	File		HNAA.tad HNBA.tad HNCA.tad HNHA.tad HNLA.tad \
                 menu_launcher.nand TWLFontTable.dat cert.sys
