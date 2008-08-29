@@ -67,7 +67,7 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 do-build :	$(TARGETS)
 
-MASTERING =	$(TWL_IPL_RED_PRIVATE_ROOT)/build/tools/mastering.TWL/mastering.TWL.exe
+MASTERING =	$(TWL_IPL_RED_PRIVATE_ROOT)/tools/bin/mastering.TWL.exe
 
 MASTERING_FLAGS	=	-t
 

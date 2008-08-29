@@ -113,6 +113,9 @@ INCDIR	= $(BASEDIR)/include
 SRCS	= main.c font.c screen.c
 BANNERSRC := $(wildcard ../banner/dummy/Cell/*.nce)
 INSTALL_DIR		= ../roms
+MY_COMMONDEFS = $(TWLSDK_ROOT)/build/buildtools/commondefs \
+                $(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
+MY_MODULERULES = $(TWLSDK_ROOT)/build/buildtools/modulerules
 
 TARGET_PLATFORM := TWL
 TWL_ARCHGEN     := LIMITED
@@ -176,9 +179,11 @@ INCDIR	= $(BASEDIR)/ARM9/src $(MISC_DIR)/include
 SRCS	= main.c RomTypeTest.c $(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
 BANNERSRC := $(wildcard ../banner/shop/Cell/*.nce)
 INSTALL_DIR	= $(BASEDIR)/test_roms
-USE_IPL_RED_LIB	= TRUE
+INSTALL_TARGETS += $(BINDIR)/twl_$(GAMECODE).$(INT_ROM_EXT)
 MAKEROM_ROMROOT		=	../../../systemMenu_RED/
 MAKEROM_ROMFILES	=	./data/NTR_IPL_font_m.NFTR
+MY_COMMONDEFS = $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+MY_MODULERULES = $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 endif
 
 ifeq ($(TEST_TYPE),BOOT)
@@ -190,9 +195,11 @@ INCDIR	= $(BASEDIR)/ARM9/src $(MISC_DIR)/include
 SRCS	= main.c HashCheckTemplate.c $(MISC_DIR)/src/misc.c $(MISC_DIR)/src/cmn.c
 BANNERSRC := $(wildcard ../banner/shop/Cell/*.nce)
 INSTALL_DIR	= $(BASEDIR)/test_roms
-USE_IPL_RED_LIB	= TRUE
+INSTALL_TARGETS += $(BINDIR)/twl_$(GAMECODE).$(INT_ROM_EXT)
 MAKEROM_ROMROOT		=	../../../systemMenu_RED/
 MAKEROM_ROMFILES	=	./data/NTR_IPL_font_m.NFTR
+MY_COMMONDEFS = $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+MY_MODULERULES = $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 endif
 
 BANNER     = ./banner.bnr
@@ -207,16 +214,11 @@ ROM_SPEC	=	twl_$(GAMECODE).rsf
 #SRCDIR		=	# using default
 #LCFILE		=	# using default
 
-INSTALL_TARGETS	= $(BINDIR)/$(TARGET_BIN)
+INSTALL_TARGETS	+= $(BINDIR)/$(TARGET_BIN)
 
 include $(GAMECODE).param
 
-ifeq ($(USE_IPL_RED_LIB),TRUE)
-include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
-else
-include	$(TWLSDK_ROOT)/build/buildtools/commondefs
-include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
-endif
+include $(MY_COMMONDEFS)
 
 #----------------------------------------------------------------------------
 
@@ -230,11 +232,7 @@ $(BANNER): $(BANNER:.bnr=.bin) $(BANNER:.bnr=.bsf)
 $(BANNER:.bnr=.bin): $(BANNERSRC)
 	$(BANNERCVTR) -o $@ $<
 
-ifeq ($(USE_IPL_RED_LIB),TRUE)
-include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
-else
-include	$(TWLSDK_ROOT)/build/buildtools/modulerules
-endif
+include $(MY_MODULERULES)
 
 # sub make –{‘Ì
 #------------------------------------------------------------------------------------
