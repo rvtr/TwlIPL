@@ -24,6 +24,8 @@
 #include "internal_api.h"
 
 // define data-----------------------------------------------------------------
+#define SYSM_PM_RETRY_NUM                5   // PMƒŠƒgƒ‰ƒC‰ñ”
+
 // extern data-----------------------------------------------------------------
 extern void LCFG_VerifyAndRecoveryNTRSettings( void );
 
@@ -249,12 +251,18 @@ TitleProperty *SYSM_ReadParameters( void )
     //-----------------------------------------------------
     {
         PMWirelessLEDStatus enable;
+        int retry = SYSM_PM_RETRY_NUM;
         if( LCFG_THW_IsForceDisableWireless() ) {
             enable = PM_WIRELESS_LED_OFF;
         }else {
             enable = LCFG_TSD_IsAvailableWireless() ? PM_WIRELESS_LED_ON : PM_WIRELESS_LED_OFF;
         }
-        PMi_SetWirelessLED( enable );
+        while( retry-- > 0 ) {
+            if ( PMi_SetWirelessLED( enable ) == PM_RESULT_SUCCESS ) {
+                break;
+            }
+            OS_Sleep(1);
+        }
     }
     
     //-----------------------------------------------------
