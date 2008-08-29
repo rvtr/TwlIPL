@@ -162,6 +162,11 @@ namespace MasterEditorTWL
 			this->hEnableModify = gcnew System::Boolean( enableModify );
 		}
 	public:
+		property System::Boolean EnableModify
+		{
+			System::Boolean get(){ return *(this->hEnableModify); }
+		}
+	public:
 		// gridView‚Ì•\Ž¦Œ`Ž®‚É‚ ‚í‚¹‚é
 		cli::array<System::Object^>^ getAll( System::Boolean isJapanese )
 		{

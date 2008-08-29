@@ -279,6 +279,55 @@ namespace MasterEditorTWL {
 		}
 
 		// --------------------------------------------------------
+		// エラー情報の重ね合わせ
+		// --------------------------------------------------------
+	public:
+		void overloadGridError( 
+			System::Collections::Generic::List<RCMRCError ^> ^listLo,
+			System::Collections::Generic::List<RCMRCError ^> ^listHi, System::Boolean isJapanese )
+		{
+			// listLoの修正可能な情報をlistHiで上書きする(listHiは修正可能な情報のみであることが前提)
+			this->gridError->Rows->Clear();
+			if( listLo != nullptr )
+			{
+				for each( RCMRCError ^err in listLo )
+				{
+					if( !err->EnableModify )	// 修正可能な情報は表示しない
+						this->gridError->Rows->Add( err->getAll( isJapanese ) );
+				}
+			}
+			if( listHi != nullptr )
+			{
+				for each( RCMRCError ^err in listHi )
+				{
+					this->gridError->Rows->Add( err->getAll( isJapanese ) );
+				}
+			}
+		}
+		void overloadGridWarn( 
+			System::Collections::Generic::List<RCMRCError ^> ^listLo,
+			System::Collections::Generic::List<RCMRCError ^> ^listHi, System::Boolean isJapanese )
+		{
+			// listLoの修正可能な情報をlistHiで上書きする(listHiは修正可能な情報のみであることが前提)
+			this->gridWarn->Rows->Clear();
+			if( listLo != nullptr )
+			{
+				for each( RCMRCError ^err in listLo )
+				{
+					if( !err->EnableModify )	// 修正可能な情報は表示しない
+						this->gridWarn->Rows->Add( err->getAll( isJapanese ) );
+				}
+			}
+			if( listHi != nullptr )
+			{
+				for each( RCMRCError ^err in listHi )
+				{
+					this->gridWarn->Rows->Add( err->getAll( isJapanese ) );
+				}
+			}
+		}
+
+		// --------------------------------------------------------
 		// 言語対応
 		// --------------------------------------------------------
 	public:

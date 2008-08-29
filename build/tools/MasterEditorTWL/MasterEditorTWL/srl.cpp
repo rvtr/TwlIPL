@@ -1119,8 +1119,10 @@ System::Boolean RCSrl::mrcRegion( System::UInt32 region )
 			this->clearParentalControl( i );
 		}
 		this->hWarnList->Add( gcnew RCMRCError( 
-			"ペアレンタルコントロール情報", 0x2f0, 0x2ff, "仕向地の設定が不正のため、ROMデータ内のすべてのレーティング団体の情報を無視して読み込みました。本ツールを用いて修正してください。",
-			"Parental Control", "Illigal region. In reading, therefore, settings for all rating organizations are ignored. Please set this infomation using this tool.", true ) );
+			"ペアレンタルコントロール情報", 0x2f0, 0x2ff, 
+			"仕向地の設定が不正のため、ROMデータ内のすべてのレーティング団体の情報を無視して読み込みました。本ツールを用いて修正してください。",
+			"Parental Control", "Illigal region. In reading, therefore, settings for all rating organizations are ignored. Please set this infomation using this tool.", 
+			true ) );
 	}
 	return bRegionResult;
 }

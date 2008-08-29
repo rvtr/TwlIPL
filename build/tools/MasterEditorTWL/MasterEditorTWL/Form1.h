@@ -39,6 +39,12 @@ namespace MasterEditorTWL {
 
 		// エラーウインドウ
 		FormError ^hErrorWindowR;
+		FormError ^hErrorWindowW;
+
+		// 入力エラー情報
+		System::Collections::Generic::List<RCMRCError ^> ^hErrorList;
+		System::Collections::Generic::List<RCMRCError ^> ^hWarnList;
+
 
 	// VC自動追加フィールド
 	private: System::Windows::Forms::GroupBox^  gboxCRC;
@@ -478,6 +484,11 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 			this->hSrl   = gcnew (RCSrl);
 			this->hDeliv = gcnew (RCDeliverable);
 			this->hErrorWindowR = gcnew (FormError);
+			this->hErrorWindowW = gcnew (FormError);
+			this->hErrorList = gcnew System::Collections::Generic::List<RCMRCError^>();
+			this->hErrorList->Clear();
+			this->hWarnList = gcnew System::Collections::Generic::List<RCMRCError^>();
+			this->hWarnList->Clear();
 
 			// デフォルト値
 			this->hIsSpreadSheet = gcnew System::Boolean( true );
@@ -3283,7 +3294,7 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 
 	private:
 		// エラー専用ウィンドウを開いてMRCエラーと入力エラーを表示
-		void openErrorWindow(void)
+		void openErrorWindowR(void)
 		{
 			// ウインドウを新たに開く
 			if( this->hErrorWindowR->IsDisposed )
@@ -3554,23 +3565,53 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 			if( this->checkBoxIndex( this->combRegion, this->labRegion->Text ) == false )
 				return false;
 
-			// ペアレンタルコントロール
-			if( this->checkParentalForms( this->combCERO, this->cboxCERO, this->labCERO->Text ) == false )
-				return false;
-			if( this->checkParentalForms( this->combESRB, this->cboxESRB, this->labESRB->Text ) == false)
-				return false;
-			if( this->checkParentalForms( this->combUSK, this->cboxUSK, this->labUSK->Text ) == false )
-				return false;
-			if( this->checkParentalForms( this->combPEGI, this->cboxPEGI, this->labPEGI->Text ) == false )
-				return false;
-			if( this->checkParentalForms( this->combPEGIPRT, this->cboxPEGIPRT, this->labPEGIPRT->Text ) == false )
-				return false;
-			if( this->checkParentalForms( this->combPEGIBBFC, this->cboxPEGIBBFC, this->labPEGIBBFC->Text ) == false )
-				return false;
-			if( this->checkParentalForms( this->combOFLC, this->cboxOFLC, this->labOFLC->Text ) == false )
-				return false;
+			// リージョンを決める
+			System::Boolean bJapan     = false;
+			System::Boolean bAmerica   = false;
+			System::Boolean bEurope    = false;
+			System::Boolean bAustralia = false;
+			switch( this->combRegion->SelectedIndex )
+			{
+				case 0:
+					bJapan = true;
+				break;
+				case 1:
+					bAmerica = true;
+				break;
+				case 2:
+					bEurope = true;
+				break;
+				case 3:
+					bAustralia = true;
+				break;
+				case 4:
+					bEurope    = true;
+					bAustralia = true;
+				break;
 
-			return true;
+#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
+				case 5:
+					bJapan = true;
+					bAmerica = true;
+					bEurope = true;
+					bAustralia = true;
+				break;
+#endif
+				default:
+				break;
+			}
+
+			// ペアレンタルコントロール
+			this->checkParentalForms( bJapan, this->combCERO, this->cboxCERO, this->cboxAlwaysCERO, this->labCERO->Text );
+			this->checkParentalForms( bAmerica, this->combESRB, this->cboxESRB, this->cboxAlwaysESRB, this->labESRB->Text );
+			this->checkParentalForms( bEurope, this->combUSK, this->cboxUSK, this->cboxAlwaysUSK, this->labUSK->Text );
+			this->checkParentalForms( bEurope, this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI, this->labPEGI->Text );
+			this->checkParentalForms( bEurope, this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT, this->labPEGIPRT->Text );
+			this->checkParentalForms( bEurope, this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC, 
+									  this->labPEGIBBFC->Text + " " + this->labPEGIBBFC2->Text );
+			this->checkParentalForms( bAustralia, this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC->Text );
+
+			return (this->hErrorList->Count > 0);
 		}
 
 		// SRLの特殊な設定をフォームにセットする(言語切り替えで表示を変えたいので独立させる)
@@ -3749,22 +3790,57 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 		}
 
 		// ペアレンタルコントロール関連のフォーム入力が正しいか書き込み前チェック
-		System::Boolean checkParentalForms( System::Windows::Forms::ComboBox ^comb, System::Windows::Forms::CheckBox ^enable, System::String ^msg )
+		void checkParentalForms( 
+			System::Boolean inRegion, System::Windows::Forms::ComboBox ^comb, 
+			System::Windows::Forms::CheckBox ^enable, System::Windows::Forms::CheckBox ^always, System::String ^msg )
 		{
-			// レーティングが設定されているのに有効フラグが立っていない
-			if( (comb->SelectedIndex != (comb->Items->Count - 1)) && !(enable->Checked) )
+			// リージョンに含まれていないとき: 0クリアが保証されるのでチェック必要なし
+			if( !inRegion )
+				return;
+
+			if( !enable->Checked )	// 有効フラグが立っていないとき
 			{
-				this->parentalMsg( 1, msg );
-				return false;
+				// 何も設定されていない
+				if( !always->Checked && (comb->SelectedIndex == (comb->Items->Count - 1)) )
+				{
+					this->hWarnList->Add( gcnew RCMRCError( 
+						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
+						msg + ": レーティング審査を必要としないソフトであるとみなしてデータを保存します。",
+						"Parental Control", msg + ": Save ROM data as Game soft which needs rating examinination.", true ) );
+				}
+				else
+				{
+					this->hErrorList->Add( gcnew RCMRCError( 
+						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
+						msg + ": 制限が無効であるにもかかわらずレーティング情報が設定されています。",
+						"Parental Control", msg + "Rating can be set only when control is enable.", true ) );
+				}
 			}
-			// 未審査なのに有効フラグが立っている
-			if( (comb->SelectedIndex == (comb->Items->Count - 1)) && enable->Checked )
+			else	// 有効フラグが立っているとき
 			{
-				this->parentalMsg( 2, msg );
-				return false;
+				if( !always->Checked && (comb->SelectedIndex == (comb->Items->Count - 1)) )
+				{
+					this->hErrorList->Add( gcnew RCMRCError( 
+						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
+						msg + ": 制限が有効であるにもかかわらずレーティング情報が設定されていません。",
+						"Parental Control", msg + ": Rating must be set when control is enable.", true ) );
+				}
+				else if( always->Checked )
+				{
+					this->hWarnList->Add( gcnew RCMRCError( 
+						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
+						msg + ": Rating Pendingが指定されています。レーティング年齢が審査されしだい、再度、ROMを提出してください。",
+						"Parental Control", ": Rating Pending is setting. When rating age is examined, Please submit again.", true ) );
+				}
+				else if( comb->SelectedIndex == (comb->Items->Count - 1) )
+				{
+					this->hErrorList->Add( gcnew RCMRCError( 
+						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
+						": Rating Pending指定とレーティング年齢を同時に指定することはできません。",
+						"Parental Control", ": Rating setting is either rating pending or rating age.", true ) );
+				}
 			}
-			return true;
-		}
+		} //checkParentalForms()
 
 		// SRL内のペアレンタルコントロール情報を抜き出してフォームに反映させる
 		void setParentalForms(void)
@@ -4352,21 +4428,13 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 		// コンボボックスをチェック
 		System::Boolean checkBoxIndex( System::Windows::Forms::ComboBox ^box, System::String ^label )
 		{
-			System::String ^msg;
+			System::String ^msgJ = gcnew System::String( "選択されていません。やり直してください。" );
+			System::String ^msgE = gcnew System::String( "Not selected. Please retry." );
 			
-			if( this->rSelectJ->Checked == true )
-			{
-				msg = gcnew System::String( "が選択されていません。やり直してください。" );
-			}
-			else
-			{
-				msg = gcnew System::String( " is not selected. Please retry." );
-			}
-
 			if( box->SelectedIndex < 0 )
 			{
-				this->errMsg( label + msg );
-				return false;
+				this->hWarnList->Add( gcnew RCMRCError( 
+					label, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, label, msgE, true ) );
 			}
 			return true;
 		}
@@ -5101,7 +5169,7 @@ private: System::Windows::Forms::GroupBox^  gboxMakeMaster;
 	private:
 		System::Void butErrorWindow_Click(System::Object^  sender, System::EventArgs^  e)
 		{
-			this->openErrorWindow();
+			this->openErrorWindowR();
 		}
 
 }; // enf of ref class Form1
