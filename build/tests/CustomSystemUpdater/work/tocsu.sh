@@ -31,6 +31,11 @@ tmp=$1_tmp
 mkdir $target
 cd $target
 
+mkdir jp
+mkdir aus
+mkdir usa
+mkdir euro
+
 cp -rf ../$1/jp .
 cp -rf ../$1/aus .
 cp -rf ../$1/usa .

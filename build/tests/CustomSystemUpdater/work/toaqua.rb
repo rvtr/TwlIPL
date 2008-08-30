@@ -74,17 +74,18 @@ end
 src = ARGV[0]
 out = "#{src}_foraqua"
 system("mkdir #{out}")
+system("mkdir #{out}/aus")
+system("mkdir #{out}/usa")
+system("mkdir #{out}/euro")
+system("mkdir #{out}/jp")
+system("mkdir #{out}/#{VERUP_DIR}")
+system("mkdir #{out}/#{VERUP_CLS}")
+system("mkdir #{out}/#{VERUP_TAD}")
+
 system("cp -rf #{src}/aus #{out}")
 system("cp -rf #{src}/usa #{out}")
 system("cp -rf #{src}/euro #{out}")
 system("cp -rf #{src}/jp #{out}")
-#system("mkdir #{out}/aus")
-#system("mkdir #{out}/usa")
-#system("mkdir #{out}/euro")
-#system("mkdir #{out}/jp")
-system("mkdir #{out}/#{VERUP_DIR}")
-system("mkdir #{out}/#{VERUP_CLS}")
-system("mkdir #{out}/#{VERUP_TAD}")
 
 proc(src, out)
 
