@@ -58,6 +58,7 @@ static void PrintErrMsg(const char* msg);
 static BOOL GetDataStruct(DataStruct* list);
 static void DrawScene(DataStruct* list);
 
+static void ConvertTitleIdLo(u8* code, u8* titleid_lo);
 static void ConvertGameCode(u8* code, u32 game_code);
 static void ConvertInitialCode(u8* code, u32 titleid_lo);
 
@@ -168,6 +169,11 @@ void TwlMain(void)
 			OS_DoApplicationJump(dataList[gCurPos].id, OS_APP_JUMP_NORMAL);
 			// 成功時はここ以降は実行されない
 			PrintErrMsg("Failed to App Jump.");
+		}
+		// 内部関数を使用したアプリジャンプの実行
+		if (gKey.trg & PAD_BUTTON_B)
+		{
+			
 		}
 		
 		// カードアプリへのアプリジャンプ試行
@@ -322,7 +328,7 @@ static void DrawScene(DataStruct* list)
 		}
 	}
 	
-		// カードアプリ
+		// カードアプリチェック
 	PutSubScreen(  0, 2 + TITLE_NUM_CUL + 1, 0xf4, " CARD");
 	{
 		CARDRomHeader* rh;	
@@ -330,7 +336,28 @@ static void DrawScene(DataStruct* list)
 		
 		if ( rh->game_code != 0 )
 		{
-			ConvertGameCode(init_code, rh->game_code);
+			// イニシャルコードの取得
+			if ( rh->product_id & 0x03 || rh->product_id & 0x02 )	// 刺さっているカードのロムが TWLアプリ
+			{
+				ROM_Header_Short* rhs;
+				rhs = (ROM_Header_Short*)HW_TWL_CARD_ROM_HEADER_BUF;  // CARD_GetRomHeader();
+
+//				rh = (CARDRomHeader*)HW_TWL_CARD_ROM_HEADER_BUF;
+				
+				// ROM ヘッダの拡張領域までイニシャルコードを見に行く
+				// 未マスタリング状態のロムでは、ROM ヘッダ（共通部）のイニシャルコードへ
+				// 設定が反映されない
+				ConvertTitleIdLo(init_code, rhs->titleID_Lo);
+//				ConvertGameCode(init_code, rh->game_code);
+			}
+			else	// 刺さっているカードのロムが NTRアプリ
+			{
+				// 未マスタリング状態のロムでは、ROM ヘッダ（共通部）のイニシャルコードへ
+				// 設定が反映されない
+				ConvertGameCode(init_code, rh->game_code);
+			}
+			
+			// ノーマルジャンプを許可しているかどうかを取得
 			if ( rh->reserved_A[8] & 0x80 )
 			{
 				PutSubScreen( 0, 2 + TITLE_NUM_CUL + 2, 0xf2, "   %s : o", init_code );
@@ -344,11 +371,33 @@ static void DrawScene(DataStruct* list)
 		{
 			PutSubScreen( 0, 2 + TITLE_NUM_CUL + 2, 0xfe, "   not exist");
 		}
+		
+		ConvertGameCode(init_code, rh->game_code);
 	}
 	
 	
 	// カーソル描画
 	PutSubScreen( 1 + (gCurPos >= TITLE_NUM_CUL ? 18 : 0), 2 + (gCurPos >= TITLE_NUM_CUL ? gCurPos - 18 : gCurPos), 0xf4, "*");
+}
+
+static void ConvertTitleIdLo(u8* code, u8* titleid_lo)
+{
+	u8 tmp[5];
+	s32 i;
+	
+//	for ( titleid_lo += 3, i=0 ; i<4; i++, code++, titleid_lo--)
+	for ( i=3; i>=0; i--, titleid_lo++ )
+	{
+		tmp[i] = *titleid_lo;
+		*code = tmp[i];
+		
+//		*code = *titleid_lo;
+	}
+	
+//	*code = tmp;
+	
+	// NULL 終端
+	*code = 0x00;
 }
 
 static void ConvertGameCode(u8* code, u32 game_code)

@@ -155,10 +155,10 @@ void TwlMain(void)
 			PutSubScreen(0, 4, 0xff, " AUTO JUMP TEST: OFF");
 		}
         
-        PutSubScreen(0, 14, 0xf4, " ------------------------------- ");
-        PutSubScreen(0, 16, 0xff, "   A: JUMP TO NAND-1 APP");
-        PutSubScreen(0, 17, 0xff, "   Y: JUMP TO NAND-2 APP");
-        PutSubScreen(0, 18, 0xff, "   X: JUMP TO SELF");
+        PutSubScreen(0, 13, 0xf4, " ------------------------------- ");
+        PutSubScreen(0, 15, 0xff, "   A: JUMP TO NAND-1 APP");
+        PutSubScreen(0, 16, 0xff, "   Y: JUMP TO NAND-2 APP");
+        PutSubScreen(0, 17, 0xff, "   X: JUMP TO SELF");
         switch (gJumpTypeForB)
         {
 		case JUMPTYPE_RETURN:
