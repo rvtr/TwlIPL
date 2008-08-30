@@ -23,6 +23,8 @@
 // キー入力
 static KeyInfo  gKey;
 
+// B ボタンジャンプ先の切りかえフラグ
+static u8 gJumpTypeForB = JUMPTYPE_RETURN;
 // アプリ間パラメータ
 static AppParam gAppParam;
 // アプリ間パラメータとして文字列をセットするかどうか
@@ -157,16 +159,37 @@ void TwlMain(void)
         PutSubScreen(0, 16, 0xff, "   A: JUMP TO NAND-1 APP");
         PutSubScreen(0, 17, 0xff, "   Y: JUMP TO NAND-2 APP");
         PutSubScreen(0, 18, 0xff, "   X: JUMP TO SELF");
-        PutSubScreen(0, 19, 0xff, "   B: RETURN JUMP");
+        switch (gJumpTypeForB)
+        {
+		case JUMPTYPE_RETURN:
+	        PutSubScreen(0, 18, 0xff, "   B: RETURN JUMP");
+	    break;
+	    case JUMPTYPE_ANOTHER_CARD:
+	    break;
+	    case JUMPTYPE_SYSMENU:
+	    	PutSubScreen(0, 18, 0xff, "   B: JUMP TO SYSMENU)";
+	    break;
+	    }
 
+		PutSubScreen(0, 20, 0xff, " UP DOWN: SWITCH JUMP TYPE (B) ");
         PutSubScreen(0, 21, 0xff, " L R: SWITCH DELIVER ARG ON/OFF");
         PutSubScreen(0, 22, 0xff, " STR: SWITCH AUTO TEST ON/OFF");
         
         if (gKey.trg & PAD_KEY_DOWN)
         {
+			if ( gJumpTypeForB == JUMPTYPE_RETURN )
+			{
+				gJumpTypeForB = JUMPTYPE_NUM - 1;
+			}
+			else
+				gJumpTypeForB--;
         }
         else if (gKey.trg & PAD_KEY_UP)
         {
+			if ( ++gJumpTypeForB >= JUMPTYPE_NUM )
+			{
+				gJumpTypeForB = JUMPTYPE_RETURN;
+			}
         }
         
         if (gKey.trg & PAD_BUTTON_START)
@@ -212,13 +235,21 @@ void TwlMain(void)
         if (gKey.trg & PAD_BUTTON_B)
         {
 			AddDeliverArg(&argInfo, TRUE);
-            // ジャンプ元のアプリへ戻る
-            if ( !OS_ReturnToPrevApplication() )
-            {
-	            OS_TPrintf("Failed to Return Jump.\n");
-	            PutMainScreen(1, 16, 0xf1, "ERROR!: Failed to Return Jump.");
+			switch (gJumpTypeForB)
+			{
+			case JUMPTYPE_RETURN:
+	            if ( !OS_ReturnToPrevApplication() )
+	            {
+					OS_TPrintf("Failed to Return Jump.\n");
+					PutMainScreen(1, 16, 0xf1, "ERROR!: Failed to Return Jump.");
+				}
+	            break;
+	        case JUMPTYPE_ANOTHER_CARD:
+	        	break;
+	        case JUMPTYPE_SYSMENU:
+	        	OS_JumpToSystemMenu();
+	        break;
 	        }
-            break;
         }
         
         if (gKey.trg & PAD_BUTTON_L || gKey.trg & PAD_BUTTON_R)

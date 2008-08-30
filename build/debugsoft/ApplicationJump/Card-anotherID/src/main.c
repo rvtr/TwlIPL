@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlSDK - tests - appjumpTest - Nand-2
+  Project:  TwlSDK - tests - appjumpTest - Card
   File:     main.c
 
   Copyright 2008 Nintendo.  All rights reserved.
@@ -20,18 +20,14 @@
 /*---------------------------------------------------------------------------*
     変数 定義
  *---------------------------------------------------------------------------*/
-
 // キー入力
 static KeyInfo  gKey;
 
-
-// B ボタンジャンプ先の切りかえフラグ
-static u8 gJumpTypeForB = JUMPTYPE_RETURN;
 // アプリ間パラメータ
 static AppParam gAppParam;
 // アプリ間パラメータとして文字列をセットするかどうか
 static BOOL gIsSetDelArg = TRUE;
-// アプリ間パラメータとして引き渡された文字列を格納するバッファ（6つまで）
+// アプリ間パラメータとして引き渡された文字列を格納するバッファ（6つまで)
 static char gStrAppParam[6][APPJUMP_STRING_LENGTH + 1] ATTRIBUTE_ALIGN(32);
 // アプリ間パラメータとして引き渡された文字列の個数
 static int gArgc;
@@ -50,9 +46,9 @@ void TwlMain(void)
     int result;
     int argSize =sizeof(u32);
 
-	InitCommon();
+    InitCommon();
     InitScreen();
-
+    
     GX_DispOn();
     GXS_DispOn();
 
@@ -62,8 +58,8 @@ void TwlMain(void)
     ReadKey(&gKey);
 
     OS_InitDeliverArgInfo(&argInfo, sizeof(AppParam));
-    OS_DecodeDeliverArg();
-
+	OS_DecodeDeliverArg();
+	
 	/* アプリ間パラメータ（バイナリデータの取得） */
     if ( OS_DELIVER_ARG_SUCCESS  != (result = OS_GetBinaryFromDeliverArg( &gAppParam, &argSize, sizeof(AppParam))) )
     {
@@ -77,9 +73,9 @@ void TwlMain(void)
     if ((gArgc = OS_GetDeliverArgc()) > 0)
     {
 		int i;
-
+		
 		OS_TPrintf("argc = %d\n", gArgc);
-
+		
 		for (i=0; i < gArgc && i < 6; i++)
 		{
 			STD_StrLCpy(gStrAppParam[i], (const char*)OS_GetDeliverArgv(i + 1), APPJUMP_STRING_LENGTH);
@@ -120,7 +116,7 @@ void TwlMain(void)
         ClearScreen();
         
         // メイン画面描画
-        PutMainScreen(0,  2, 0xf6, " ***** This APP is NAND-2 ***** ");
+        PutMainScreen(0,  2, 0xf4, " ****** This APP is CARD ****** ");
         PutMainScreen(0,  5, 0xff, " APP JUMP : %u times ", gAppParam.jumpCount);
         PutMainScreen(0,  7, 0xff, " DELIVERED PARAM (recent 6 app)");
         
@@ -137,17 +133,17 @@ void TwlMain(void)
         }
         
         // サブ画面描画
-        PutSubScreen(0,  0, 0xf6, " ------- APP JUMP TEST -------- ");
+        PutSubScreen(0,  0, 0xf4, " ------- APP JUMP TEST -------- ");
 
 		if (gIsSetDelArg)
 		{
-			PutSubScreen(0, 2, 0xf8, " DELIVER ARG   : ON");
+			PutSubScreen(0, 2, 0xf8, " DELIVER ARG: ON");
 		}
 		else
 		{
-			PutSubScreen(0, 2, 0xff, " DELIVER ARG   : OFF");
+			PutSubScreen(0, 2, 0xff, " DELIVER ARG: OFF");
 		}
-		
+        
 		if (gAppParam.isAutoJump)
 		{
 			PutSubScreen(0, 4, 0xf8, " AUTO JUMP TEST: ON");
@@ -157,43 +153,20 @@ void TwlMain(void)
 			PutSubScreen(0, 4, 0xff, " AUTO JUMP TEST: OFF");
 		}
         
-        PutSubScreen(0, 14, 0xf6, " ------------------------------- ");
-        PutSubScreen(0, 16, 0xff, "   A: JUMP TO CARD APP");
-        PutSubScreen(0, 17, 0xff, "   Y: JUMP TO NAND-1 APP");
+        PutSubScreen(0, 14, 0xf4, " ------------------------------- ");
+        PutSubScreen(0, 16, 0xff, "   A: JUMP TO NAND-1 APP");
+        PutSubScreen(0, 17, 0xff, "   Y: JUMP TO NAND-2 APP");
         PutSubScreen(0, 18, 0xff, "   X: JUMP TO SELF");
-        
-        switch (gJumpTypeForB)
-        {
-		case JUMPTYPE_RETURN:
-	        PutSubScreen(0, 18, 0xff, "   B: RETURN JUMP");
-	    break;
-	    case JUMPTYPE_ANOTHER_CARD:
-	    	PutSubScreen(0, 18, 0xfe, "   B: JUMP TO CARD APP");
-	    break;
-	    case JUMPTYPE_SYSMENU:
-	    	PutSubScreen(0, 18, 0xff, "   B: JUMP TO SYSMENU)";
-	    break;
-	    }
+        PutSubScreen(0, 19, 0xff, "   B: RETURN JUMP");
 
-		PutSubScreen(0, 20, 0xff, " UP DOWN: SWITCH JUMP TYPE (B) ");
         PutSubScreen(0, 21, 0xff, " L R: SWITCH DELIVER ARG ON/OFF");
         PutSubScreen(0, 22, 0xff, " STR: SWITCH AUTO TEST ON/OFF");
         
         if (gKey.trg & PAD_KEY_DOWN)
         {
-			if ( gJumpTypeForB == JUMPTYPE_RETURN )
-			{
-				gJumpTypeForB = JUMPTYPE_NUM - 1;
-			}
-			else
-				gJumpTypeForB--;
         }
         else if (gKey.trg & PAD_KEY_UP)
         {
-			if ( ++gJumpTypeForB >= JUMPTYPE_NUM )
-			{
-				gJumpTypeForB = JUMPTYPE_RETURN;
-			}
         }
         
         if (gKey.trg & PAD_BUTTON_START)
@@ -205,21 +178,20 @@ void TwlMain(void)
         if (gKey.trg & PAD_BUTTON_A)
         {
 			AddDeliverArg(&argInfo, FALSE);
-			// カードアプリへジャンプ
-			if( !OS_DoApplicationJump( CARDAPP_TITLEID, OS_APP_JUMP_NORMAL ))
+			// NAND-1 アプリへジャンプ
+			if( !OS_DoApplicationJump( NANDAPP1_TITLEID, OS_APP_JUMP_NORMAL ))
 			{
 				OS_TPrintf("Failed to Jump.\n");
 				PutMainScreen(1, 16, 0xf1, "ERROR!: Failed to Jump.");
 			}
             break;
         }
-		
         if (gKey.trg & PAD_BUTTON_Y)
         {
 			AddDeliverArg(&argInfo, FALSE);
 			
-			// もう一方の NAND アプリへジャンプ
-			if ( !OS_DoApplicationJump( NANDAPP1_TITLEID, OS_APP_JUMP_NORMAL ))
+			// NAND-2 アプリへジャンプ
+			if ( !OS_DoApplicationJump( NANDAPP2_TITLEID, OS_APP_JUMP_NORMAL ))
 			{
 				OS_TPrintf("Failed to Jump.\n");
 				PutMainScreen(1, 16, 0xf1, "ERROR!: Failed to Jump.");
@@ -240,30 +212,18 @@ void TwlMain(void)
         if (gKey.trg & PAD_BUTTON_B)
         {
 			AddDeliverArg(&argInfo, TRUE);
-			switch (gJumpTypeForB)
-			{
-			case JUMPTYPE_RETURN:
-	            if ( !OS_ReturnToPrevApplication() )
-	            {
-					OS_TPrintf("Failed to Return Jump.\n");
-					PutMainScreen(1, 16, 0xf1, "ERROR!: Failed to Return Jump.");
-				}
-	            break;
-	        case JUMPTYPE_ANOTHER_CARD:
-	        	if ( !OS_DoApplicationJump(CARDAPP_ANO_TITLEID, OS_APP_JUMP_NORMAL) )
-	        	{
-					OS_TPrintf("Failed to Jump.\n");
-					PutMainScreen(1, 16, 0xf1, "ERROR!: Failed to Jump.");
-				}
-	        	break;
-	        case JUMPTYPE_SYSMENU:
-	        	OS_JumpToSystemMenu();
-	        break;
+            // ジャンプ元のアプリへ戻る
+            if ( !OS_ReturnToPrevApplication() )
+            {
+	            OS_TPrintf("Failed to Return Jump.\n");
+	            PutMainScreen(1, 16, 0xf1, "ERROR!: Failed to Return Jump.");
 	        }
+            break;
         }
         
         if (gKey.trg & PAD_BUTTON_L || gKey.trg & PAD_BUTTON_R)
         {
+			// アプリ間パラメータとして文字列を引き渡すかどうかのフラグを ON/OFF する
 			gIsSetDelArg = !gIsSetDelArg;
 		}
         
@@ -310,16 +270,15 @@ static void AddDeliverArg(OSDeliverArgInfo *argInfo, BOOL isReturn)
     	MI_CpuClear8(argument, APPJUMP_STRING_LENGTH + 1);
     	if (isReturn)
     	{
-			STD_TSPrintf(argument, "Returned from NAND-2");
+			STD_TSPrintf(argument, "Returned from CARD");
 		}
 		else
 		{
-	    	STD_TSPrintf(argument, "Jumped   from NAND-2");
+	    	STD_TSPrintf(argument, "Jumped   from CARD");
 	    }
-	    
     	OS_SetStringToDeliverArg(argument);
     	
-		// 今まで引き渡されたパラメータ文字列を引き継がせる
+    	// 今まで引き渡されたパラメータ文字列を引き継がせる
 		for (i=0; i <= 4 && i < gArgc; i++)
 		{
 			MI_CpuClear8(argument, APPJUMP_STRING_LENGTH + 1);

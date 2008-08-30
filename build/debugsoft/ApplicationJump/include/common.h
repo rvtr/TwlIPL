@@ -31,6 +31,8 @@ extern "C" {
 
 /* TitleID */
 #define CARDAPP_TITLEID		(u64)(0x0003000034333041)	// 430A
+#define CARDAPP_ANO_TITLEID	(u64)(0x0003000034363041)	// 460A
+
 #define NANDAPP1_TITLEID	(u64)(0x0003000434333141)	// 431A
 #define NANDAPP2_TITLEID	(u64)(0x0003000434333241)	// 432A
 
@@ -43,6 +45,15 @@ extern "C" {
 /*---------------------------------------------------------------------------*
     構造体 定義
  *---------------------------------------------------------------------------*/
+
+typedef enum JumpTypeForB
+{
+	JUMPTYPE_RETURN = 0,
+	JUMPTYPE_ANOTHER_CARD,
+	JUMPTYPE_SYSMENU,
+	
+	JUMPTYPE_NUM
+} JumpTypeForB;
 
 // キー入力情報
 typedef struct KeyInfo

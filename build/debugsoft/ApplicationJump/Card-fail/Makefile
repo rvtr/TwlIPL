@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlSDK - debugsoft - ApplicationJump
+# Project:  TwlSDK - tests - appjumpTest - Card
 # File:     Makefile
 #
 # Copyright 2008 Nintendo.  All rights reserved.
@@ -15,24 +15,33 @@
 # $Rev$
 # $Author$
 #----------------------------------------------------------------------------
-TARGET_PLATFORM	=	TWL
 
-include	$(TWLSDK_ROOT)/build/buildtools/commondefs
+TARGET_PLATFORM := TWL
+
+TARGET_BIN	= appjumpTestForCard_Fail.srl
+INCDIR		= ../include
+SRCDIR		= ./src ../src
+SRCS		= main.c screen.c font.c common.c
+
+ROM_SPEC	=	appjumptest_card.rsf
+
+#----------------------------------------------------------------------------
+
+include $(TWLSDK_ROOT)/build/buildtools/commondefs
+
+# インストール指定
+ifneq	($(TWL_IPL_RED_ROOT),)
+INSTALL_DIR	= $(TWL_IPL_RED_ROOT)/debugsoft/ApplicationJumpTest
+INSTALL_TARGETS	= $(BINDIR)/$(TARGET_BIN)
+endif
+
+
+do-build:	$(TARGETS)
 
 #----------------------------------------------------------------------------
 
-SUBDIRS		=	Card	\
-				Nand-1	\
-				Nand-2	
-#				Card-fail	\
-#				Card-anotherID
-
-#----------------------------------------------------------------------------
+LIBSYSCALL			 = ./460A/libsyscall.a
 
 include	$(TWLSDK_ROOT)/build/buildtools/modulerules
 
-#----------------------------------------------------------------------------
-
 #===== End of Makefile =====
-
-
