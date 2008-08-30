@@ -287,7 +287,9 @@ BOOL UTL_CheckNintendoLogoData( ROM_Header_Short *rh )
 // FATALエラーをセット
 void UTL_SetFatalError( FatalErrorCode error )
 {
+	OSIntrMode enable = OS_DisableInterrupts();
 	s_fatalError |= (u64)1 << error;
+	OS_RestoreInterrupts( enable );
 }
 
 
