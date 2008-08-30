@@ -167,7 +167,7 @@ void TwlMain(void)
 	    case JUMPTYPE_ANOTHER_CARD:
 	    break;
 	    case JUMPTYPE_SYSMENU:
-	    	PutSubScreen(0, 18, 0xff, "   B: JUMP TO SYSMENU)";
+	    	PutSubScreen(0, 18, 0xff, "   B: JUMP TO SYSMENU");
 	    break;
 	    }
 
