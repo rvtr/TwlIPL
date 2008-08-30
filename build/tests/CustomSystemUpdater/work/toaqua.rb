@@ -71,7 +71,7 @@ if ARGV.size < 1
     $stdout.printf("Usage:#{__FILE__} target_clsed_dir output_dir")
     exit -1
 end
-src = ARGV[0]
+src = ARGV[0].sub(/\/\z/, "")
 out = "#{src}_foraqua"
 system("mkdir #{out}")
 system("mkdir #{out}/aus")

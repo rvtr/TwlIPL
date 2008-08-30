@@ -24,7 +24,10 @@ then
 	exit
 fi
 
-target=$1_forcls
+target=`echo $1 | sed -e 's/\/$//'`
+target=$target"_forcls"
+echo $target
+
 mkdir $target
 cd $target
 find ../$1 -name "*.tad" -exec ../mkcls.py {} \; 

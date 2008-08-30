@@ -26,8 +26,12 @@ then
 fi
 
 
-target=$1_forcsu
-tmp=$1_tmp
+target=`echo $1 | sed -e 's/\/$//'`
+target=$target"_forcsu"
+echo $target
+
+
+tmp=`echo $1 | sed -e 's/\/$//'`_tmp
 mkdir $target
 cd $target
 
