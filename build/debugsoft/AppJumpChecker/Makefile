@@ -12,8 +12,8 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 override TARGET_PLATFORM	=	TWL
 override TARGET_CODEGEN		=	ARM
@@ -22,7 +22,7 @@ override TWL_ARCHGEN		=	LIMITED
 TWL_NANDAPP		=	TRUE
 TARGET_BIN		=	appJumpChecker.tad
 
-INCDIR			=	./include
+INCDIR			=	./include $(ROOT)/build/libraries/os/common/include
 SRCDIR			=	./src
 
 SRCS			=	main.c screen.c font.c common.c
@@ -50,6 +50,7 @@ ROM_SPEC_PARAM		=	MakerCode=01					\
 						NANDAccess=TRUE					\
 						Media=NAND						\
 						Secure=TRUE						\
+						BannerFile=appjumpchecker.bnr	\
 						PermitLandingNormalJump=TRUE	\
 						WramMapping=MAP_TS_SCR
 

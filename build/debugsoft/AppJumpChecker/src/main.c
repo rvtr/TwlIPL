@@ -17,6 +17,7 @@
 #include <twl/nam.h>
 #include <twl/os/common/format_rom.h>
 
+#include "application_jump_private.h"
 #include "common.h"
 #include "screen.h"
 
@@ -173,7 +174,18 @@ void TwlMain(void)
 		// 内部関数を使用したアプリジャンプの実行
 		if (gKey.trg & PAD_BUTTON_B)
 		{
+			LauncherBootFlags flag;
 			
+			flag.bootType = LAUNCHER_BOOTTYPE_NAND;
+			flag.isValid = TRUE;
+			flag.isLogoSkip = TRUE;
+			flag.isInitialShortcutSkip = FALSE;
+			flag.isAppLoadCompleted = FALSE;
+			flag.isAppRelocate = FALSE;
+			flag.rsv = 0;
+			OS_SetLauncherParamAndResetHardware(dataList[gCurPos].id, &flag);
+			// 成功時はここ以降は実行されない
+			PrintErrMsg("Failed to App Jump(force).");
 		}
 		
 		// カードアプリへのアプリジャンプ試行
@@ -285,7 +297,7 @@ static BOOL GetDataStruct(DataStruct* list)
 static void DrawScene(DataStruct* list)
 {
 	s32 i;
-	u8 init_code[5];
+	u8 init_code[5], titleid_lo[5];
 	
 	// 上画面
 	PutMainScreen( 0,  1, 0xff, " ------ App Jump Checker ------ ");
@@ -295,12 +307,13 @@ static void DrawScene(DataStruct* list)
 	PutMainScreen( 0,  5, 0xff, " ------------------------------ ");
 	
 	PutMainScreen( 0,  7, 0xff, "   A : try App Jump (to NAND)"   );
-	PutMainScreen( 0,  8, 0xff, "   Y : try App Jump (to CARD)"   );
-	PutMainScreen( 0, 10, 0xff, "   UP ,DOWN ,LEFT ,RIGHT KEY :"  );
-	PutMainScreen( 0, 11, 0xff, "                move * (cursor) ");
-	PutMainScreen( 0, 13, 0xff, " ------------------------------ ");
+	PutMainScreen( 0,  8, 0xfe, "   B : try App Jump (force)  "   );
+	PutMainScreen( 0,  9, 0xff, "   Y : try App Jump (to CARD)"   );
+	PutMainScreen( 0, 11, 0xff, "   UP ,DOWN ,LEFT ,RIGHT KEY :"  );
+	PutMainScreen( 0, 12, 0xff, "                move * (cursor) ");
+	PutMainScreen( 0, 14, 0xff, " ------------------------------ ");
 	
-	PutMainScreen( 0, 15, 0xf1, "%s", gErrBuf);
+	PutMainScreen( 0, 16, 0xf1, "%s", gErrBuf);
 	
 	// 下画面
 	PutSubScreen(  0, 0, 0xf4, " NAND ( max 36 )");
@@ -329,7 +342,7 @@ static void DrawScene(DataStruct* list)
 	}
 	
 		// カードアプリチェック
-	PutSubScreen(  0, 2 + TITLE_NUM_CUL + 1, 0xf4, " CARD");
+	PutSubScreen(  0, 2 + TITLE_NUM_CUL + 1, 0xf4, " CARD: Init. Code, TitleID_Lo");
 	{
 		CARDRomHeader* rh;	
 		rh = (CARDRomHeader*)CARD_GetRomHeader();
@@ -339,32 +352,36 @@ static void DrawScene(DataStruct* list)
 			// イニシャルコードの取得
 			if ( rh->product_id & 0x03 || rh->product_id & 0x02 )	// 刺さっているカードのロムが TWLアプリ
 			{
-				ROM_Header_Short* rhs;
-				rhs = (ROM_Header_Short*)HW_TWL_CARD_ROM_HEADER_BUF;  // CARD_GetRomHeader();
-
-//				rh = (CARDRomHeader*)HW_TWL_CARD_ROM_HEADER_BUF;
+				ROM_Header* rh2;
+				rh2 = (ROM_Header*)HW_TWL_CARD_ROM_HEADER_BUF;
 				
-				// ROM ヘッダの拡張領域までイニシャルコードを見に行く
-				// 未マスタリング状態のロムでは、ROM ヘッダ（共通部）のイニシャルコードへ
-				// 設定が反映されない
-				ConvertTitleIdLo(init_code, rhs->titleID_Lo);
-//				ConvertGameCode(init_code, rh->game_code);
+				// ROM ヘッダの拡張領域まで TitleID_Lo を見に行く
+				// ROM ヘッダ（共通部）のイニシャルコードは基本的に製品版に入れられる
+//				ConvertTitleIdLo(titleid_lo, rh2->s.titleID_Lo);
+				MI_CpuCopy8( rh2->s.titleID_Lo, titleid_lo, 4 );
+				titleid_lo[4] = 0x00;
+				MI_CpuCopy8( rh2->s.game_code, init_code, 4 );
 			}
 			else	// 刺さっているカードのロムが NTRアプリ
 			{
 				// 未マスタリング状態のロムでは、ROM ヘッダ（共通部）のイニシャルコードへ
 				// 設定が反映されない
+				
+				// 特別に設定された NTRアプリなら TitleID_Lo が設定されている可能性があるので読み込んでみる
+				MI_CpuClear8( titleid_lo, 5 );
+				MI_CpuCopy8( ((ROM_Header*)rh)->s.titleID_Lo, titleid_lo, 4 );
+				titleid_lo[4] = 0x00;
 				ConvertGameCode(init_code, rh->game_code);
 			}
 			
 			// ノーマルジャンプを許可しているかどうかを取得
 			if ( rh->reserved_A[8] & 0x80 )
 			{
-				PutSubScreen( 0, 2 + TITLE_NUM_CUL + 2, 0xf2, "   %s : o", init_code );
+				PutSubScreen( 0, 2 + TITLE_NUM_CUL + 2, 0xf2, "   %s, %s : o", init_code, titleid_lo );
 			}
 			else
 			{
-				PutSubScreen( 0, 2 + TITLE_NUM_CUL + 2, 0xff, "   %s : -", init_code );
+				PutSubScreen( 0, 2 + TITLE_NUM_CUL + 2, 0xff, "   %s, %s : -", init_code, titleid_lo );
 			}
 		}
 		else
@@ -390,8 +407,6 @@ static void ConvertTitleIdLo(u8* code, u8* titleid_lo)
 	{
 		tmp[i] = *titleid_lo;
 		*code = tmp[i];
-		
-//		*code = *titleid_lo;
 	}
 	
 //	*code = tmp;
