@@ -23,9 +23,9 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 SUBDIRS		=	Card	\
 				Nand-1	\
-				Nand-2	
-#				Card-fail	\
-#				Card-anotherID
+				Nand-2	\
+				Card-fail	\
+				Card-anotherID
 
 #----------------------------------------------------------------------------
 
