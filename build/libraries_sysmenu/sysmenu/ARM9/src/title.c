@@ -23,6 +23,7 @@
 #include <sysmenu/util_recoveryFile.h>
 #include "internal_api.h"
 #include "fs_wram.h"
+#include <sysmenu/errorLog.h>
 
 // define data-----------------------------------------------------------------
 
@@ -848,6 +849,15 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
     SYSMi_ClearRomLoadSegment( (ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF );
     
 	SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
+	
+	// ここでスタック壊れていないかチェック
+	if( OS_STACK_NO_ERROR != OS_GetStackStatus( &s_thread ) )
+	{
+		OS_TPrintf("RebootSystem warning: stack was broken!\n");
+		// デバグ用。ERRORLOG_Init()がすでに呼ばれている事前提
+		ERRORLOG_Printf( "SYSMi_LoadTitleThreadFunc: stack was broken! %d\n", OS_GetStackStatus( &s_thread ) );
+	}
+	
 	return;
 	
 ERROR:
@@ -1639,6 +1649,14 @@ static void SYSMi_AuthenticateTitleThreadFunc( TitleProperty *pBootTitle )
 	
 	// 認証
 	(void)SYSMi_AuthenticateTitleCore( pBootTitle );
+	
+	// ここでスタック壊れていないかチェック
+	if( OS_STACK_NO_ERROR != OS_GetStackStatus( &s_auth_thread ) )
+	{
+		OS_TPrintf("RebootSystem warning: stack was broken!\n");
+		// デバグ用。ERRORLOG_Init()がすでに呼ばれている事前提
+		ERRORLOG_Printf( "SYSMi_AuthenticateTitleThreadFunc: stack was broken! %d\n", OS_GetStackStatus( &s_auth_thread ) );
+	}
 }
 
 
