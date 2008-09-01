@@ -555,6 +555,7 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
 		break;
 	default:
 		// unknown
+		UTL_SetFatalError(FATAL_ERROR_LOAD_UNKNOWN_BOOTTYPE);
 		return;
 	}
 
@@ -693,6 +694,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 		// ※ROMヘッダ認証
 		if( !SYSMi_AuthenticateHeader( pBootTitle, head ) )
 		{
+			UTL_SetFatalError(FATAL_ERROR_LOAD_AUTH_HEADER_FAILED);
 			goto ERROR;
 		}
 		
@@ -1360,7 +1362,8 @@ static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_H
 {
 	BOOL ret = TRUE;
 	
-#define DEV_WHITELIST_CHECK_SKIP
+// 一時的に開発版でもハッシュチェックを行うように変更2008/09/01
+//#define DEV_WHITELIST_CHECK_SKIP
 #ifdef DEV_WHITELIST_CHECK_SKIP
 	// 開発版ではハッシュチェックスルーフラグを立てる
 	if( SCFG_GetBondingOption() != 0 )
@@ -1441,7 +1444,7 @@ static BOOL SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 	{
 		OS_TPrintf("DHT Phase1 failed: hash calc failed.\n");
 		if(!s_b_dev) {
-			UTL_SetFatalError(FATAL_ERROR_DHT_PHASE1_FAILED);
+			UTL_SetFatalError(FATAL_ERROR_DHT_PHASE1_CALC_FAILED);
 			return FALSE;
 		}
 	}
@@ -1594,6 +1597,14 @@ static BOOL SYSMi_AuthenticateTitleCore( TitleProperty *pBootTitle)
 // 認証処理のスレッド
 static void SYSMi_AuthenticateTitleThreadFunc( TitleProperty *pBootTitle )
 {
+	
+	// ロード開始してませんよ
+	if( !s_loadstart )
+	{
+		UTL_SetFatalError(FATAL_ERROR_LOAD_NEVER_STARTED);
+		return;
+	}
+	
 	// ロード中
 	if( !SYSM_IsLoadTitleFinished() ) {
 		UTL_SetFatalError(FATAL_ERROR_LOAD_UNFINISHED);
