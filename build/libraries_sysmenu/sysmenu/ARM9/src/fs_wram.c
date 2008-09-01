@@ -399,7 +399,7 @@ BOOL HOTSW_ReadCardViaWram( void *src, void *dst, s32 len, MIWramPos wram, s32 s
         return FALSE;
     }
     // cash care
-    DC_InvalidateRange((void *)FSiWramWork.base, size);
+    DC_InvalidateRange((void *)FSiWramWork.base, (u32)(size << 15));
 
 
     // パラメータ設定
@@ -456,7 +456,7 @@ BOOL FS_ReadFileViaWram( FSFile *p_file, void *dst, s32 len, MIWramPos wram, s32
         return FALSE;
     }
     // cash care
-    DC_InvalidateRange((void *)FSiWramWork.base, size);
+    DC_InvalidateRange((void *)FSiWramWork.base, (u32)(size << 15));
 
 
     // パラメータ設定
