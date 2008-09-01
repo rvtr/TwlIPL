@@ -1754,17 +1754,11 @@ void SYSM_TryToBootTitle( TitleProperty *pBootTitle )
     if( !SYSM_IsRunOnDebugger() ||                          // スタンドアロン
         (OSi_DetectDebugger() & OS_CONSOLE_TWLDEBUGGER) ) // デバッグ時
     {
-        // NANDフラッシュ延命のためブートタイトルが変更された時のみ保存
-        // LCFGはSYSM_ReadParametersでリード済み
-        if( (pBootTitle->titleID != LCFG_TSD_GetLastTimeBootSoftTitleID()) ||
-            ((u8)SYSM_GetAppRomHeader()->platform_code != LCFG_TSD_GetLastTimeBootSoftPlatform()) )
-        {
-			u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
-			if( pBuffer != NULL ) {
-				LCFG_TSD_SetLastTimeBootSoftPlatform( (u8)SYSM_GetAppRomHeader()->platform_code );
-				(void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
-				SYSM_Free( pBuffer );
-			}
+		u8 *pBuffer = SYSM_Alloc( LCFG_WRITE_TEMP );
+		if( pBuffer != NULL ) {
+			LCFG_TSD_SetLastTimeBootSoftPlatform( (u8)SYSM_GetAppRomHeader()->platform_code );
+			(void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+			SYSM_Free( pBuffer );
 		}
 	}
 	
