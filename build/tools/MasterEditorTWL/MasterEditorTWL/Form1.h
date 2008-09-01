@@ -4,6 +4,7 @@
 #include "deliverable.h"
 #include "crc_whole.h"
 #include "utility.h"
+#include "lang.h"
 #include "FormError.h"
 
 namespace MasterEditorTWL {
@@ -505,14 +506,18 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnName;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnBegin;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnEnd;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnCause;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorName;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorBegin;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorEnd;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
+
+
+
+
 private: System::Windows::Forms::Label^  labMultiForeign2;
 private: System::Windows::Forms::DataGridView^  gridLibrary;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibPublisher;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorName;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorBegin;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorEnd;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 
 
 
@@ -886,11 +891,11 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			this->colWarnEnd = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->colWarnCause = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->gridError = (gcnew System::Windows::Forms::DataGridView());
-			this->colErrorName = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
-			this->colErrorBegin = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
-			this->colErrorEnd = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
-			this->colErrorCause = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->labFile = (gcnew System::Windows::Forms::Label());
+			this->colErrorCause = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->colErrorEnd = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->colErrorBegin = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->colErrorName = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->gboxSrl->SuspendLayout();
 			this->gboxCRC->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->numEULA))->BeginInit();
@@ -1595,9 +1600,9 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			this->gboxPerson2->Controls->Add(this->labPerson2);
 			this->gboxPerson2->Controls->Add(this->labCompany2);
 			this->gboxPerson2->Enabled = false;
-			this->gboxPerson2->Location = System::Drawing::Point(392, 88);
+			this->gboxPerson2->Location = System::Drawing::Point(377, 88);
 			this->gboxPerson2->Name = L"gboxPerson2";
-			this->gboxPerson2->Size = System::Drawing::Size(304, 234);
+			this->gboxPerson2->Size = System::Drawing::Size(347, 234);
 			this->gboxPerson2->TabIndex = 14;
 			this->gboxPerson2->TabStop = false;
 			this->gboxPerson2->Text = L"担当者2";
@@ -1614,8 +1619,9 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			// tboxNTSC2
 			// 
 			this->tboxNTSC2->Location = System::Drawing::Point(66, 200);
+			this->tboxNTSC2->MaxLength = 50;
 			this->tboxNTSC2->Name = L"tboxNTSC2";
-			this->tboxNTSC2->Size = System::Drawing::Size(220, 19);
+			this->tboxNTSC2->Size = System::Drawing::Size(268, 19);
 			this->tboxNTSC2->TabIndex = 11;
 			// 
 			// labFax2
@@ -1639,43 +1645,49 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			// tboxFax2
 			// 
 			this->tboxFax2->Location = System::Drawing::Point(66, 149);
+			this->tboxFax2->MaxLength = 20;
 			this->tboxFax2->Name = L"tboxFax2";
-			this->tboxFax2->Size = System::Drawing::Size(94, 19);
+			this->tboxFax2->Size = System::Drawing::Size(140, 19);
 			this->tboxFax2->TabIndex = 13;
 			// 
 			// tboxMail2
 			// 
 			this->tboxMail2->Location = System::Drawing::Point(66, 175);
+			this->tboxMail2->MaxLength = 50;
 			this->tboxMail2->Name = L"tboxMail2";
-			this->tboxMail2->Size = System::Drawing::Size(220, 19);
+			this->tboxMail2->Size = System::Drawing::Size(268, 19);
 			this->tboxMail2->TabIndex = 14;
 			// 
 			// tboxTel2
 			// 
 			this->tboxTel2->Location = System::Drawing::Point(66, 125);
+			this->tboxTel2->MaxLength = 20;
 			this->tboxTel2->Name = L"tboxTel2";
-			this->tboxTel2->Size = System::Drawing::Size(94, 19);
+			this->tboxTel2->Size = System::Drawing::Size(140, 19);
 			this->tboxTel2->TabIndex = 12;
 			// 
 			// tboxFurigana2
 			// 
 			this->tboxFurigana2->Location = System::Drawing::Point(66, 100);
+			this->tboxFurigana2->MaxLength = 50;
 			this->tboxFurigana2->Name = L"tboxFurigana2";
-			this->tboxFurigana2->Size = System::Drawing::Size(220, 19);
+			this->tboxFurigana2->Size = System::Drawing::Size(268, 19);
 			this->tboxFurigana2->TabIndex = 11;
 			// 
 			// tboxPerson2
 			// 
 			this->tboxPerson2->Location = System::Drawing::Point(66, 75);
+			this->tboxPerson2->MaxLength = 50;
 			this->tboxPerson2->Name = L"tboxPerson2";
-			this->tboxPerson2->Size = System::Drawing::Size(220, 19);
+			this->tboxPerson2->Size = System::Drawing::Size(268, 19);
 			this->tboxPerson2->TabIndex = 10;
 			// 
 			// tboxDepart2
 			// 
 			this->tboxDepart2->Location = System::Drawing::Point(66, 50);
+			this->tboxDepart2->MaxLength = 50;
 			this->tboxDepart2->Name = L"tboxDepart2";
-			this->tboxDepart2->Size = System::Drawing::Size(220, 19);
+			this->tboxDepart2->Size = System::Drawing::Size(268, 19);
 			this->tboxDepart2->TabIndex = 9;
 			// 
 			// labDepart2
@@ -1690,8 +1702,9 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			// tboxCompany2
 			// 
 			this->tboxCompany2->Location = System::Drawing::Point(66, 25);
+			this->tboxCompany2->MaxLength = 50;
 			this->tboxCompany2->Name = L"tboxCompany2";
-			this->tboxCompany2->Size = System::Drawing::Size(220, 19);
+			this->tboxCompany2->Size = System::Drawing::Size(268, 19);
 			this->tboxCompany2->TabIndex = 8;
 			// 
 			// labMail2
@@ -1758,9 +1771,9 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			this->gboxPerson1->Controls->Add(this->labFurigana1);
 			this->gboxPerson1->Controls->Add(this->labPerson1);
 			this->gboxPerson1->Controls->Add(this->labCompany1);
-			this->gboxPerson1->Location = System::Drawing::Point(38, 88);
+			this->gboxPerson1->Location = System::Drawing::Point(17, 88);
 			this->gboxPerson1->Name = L"gboxPerson1";
-			this->gboxPerson1->Size = System::Drawing::Size(304, 234);
+			this->gboxPerson1->Size = System::Drawing::Size(344, 234);
 			this->gboxPerson1->TabIndex = 8;
 			this->gboxPerson1->TabStop = false;
 			this->gboxPerson1->Text = L"担当者1";
@@ -1795,50 +1808,57 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			// tboxNTSC1
 			// 
 			this->tboxNTSC1->Location = System::Drawing::Point(66, 200);
+			this->tboxNTSC1->MaxLength = 50;
 			this->tboxNTSC1->Name = L"tboxNTSC1";
-			this->tboxNTSC1->Size = System::Drawing::Size(220, 19);
+			this->tboxNTSC1->Size = System::Drawing::Size(261, 19);
 			this->tboxNTSC1->TabIndex = 8;
 			// 
 			// tboxFax1
 			// 
 			this->tboxFax1->Location = System::Drawing::Point(66, 149);
+			this->tboxFax1->MaxLength = 20;
 			this->tboxFax1->Name = L"tboxFax1";
-			this->tboxFax1->Size = System::Drawing::Size(94, 19);
+			this->tboxFax1->Size = System::Drawing::Size(131, 19);
 			this->tboxFax1->TabIndex = 5;
 			// 
 			// tboxMail1
 			// 
 			this->tboxMail1->Location = System::Drawing::Point(66, 175);
+			this->tboxMail1->MaxLength = 50;
 			this->tboxMail1->Name = L"tboxMail1";
-			this->tboxMail1->Size = System::Drawing::Size(220, 19);
+			this->tboxMail1->Size = System::Drawing::Size(261, 19);
 			this->tboxMail1->TabIndex = 6;
 			// 
 			// tboxTel1
 			// 
 			this->tboxTel1->Location = System::Drawing::Point(66, 125);
+			this->tboxTel1->MaxLength = 20;
 			this->tboxTel1->Name = L"tboxTel1";
-			this->tboxTel1->Size = System::Drawing::Size(94, 19);
+			this->tboxTel1->Size = System::Drawing::Size(131, 19);
 			this->tboxTel1->TabIndex = 4;
 			// 
 			// tboxFurigana1
 			// 
 			this->tboxFurigana1->Location = System::Drawing::Point(66, 100);
+			this->tboxFurigana1->MaxLength = 50;
 			this->tboxFurigana1->Name = L"tboxFurigana1";
-			this->tboxFurigana1->Size = System::Drawing::Size(220, 19);
+			this->tboxFurigana1->Size = System::Drawing::Size(261, 19);
 			this->tboxFurigana1->TabIndex = 3;
 			// 
 			// tboxPerson1
 			// 
 			this->tboxPerson1->Location = System::Drawing::Point(66, 75);
+			this->tboxPerson1->MaxLength = 50;
 			this->tboxPerson1->Name = L"tboxPerson1";
-			this->tboxPerson1->Size = System::Drawing::Size(220, 19);
+			this->tboxPerson1->Size = System::Drawing::Size(261, 19);
 			this->tboxPerson1->TabIndex = 2;
 			// 
 			// tboxDepart1
 			// 
 			this->tboxDepart1->Location = System::Drawing::Point(66, 50);
+			this->tboxDepart1->MaxLength = 50;
 			this->tboxDepart1->Name = L"tboxDepart1";
-			this->tboxDepart1->Size = System::Drawing::Size(220, 19);
+			this->tboxDepart1->Size = System::Drawing::Size(261, 19);
 			this->tboxDepart1->TabIndex = 1;
 			// 
 			// labDepart1
@@ -1853,8 +1873,9 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			// tboxCompany1
 			// 
 			this->tboxCompany1->Location = System::Drawing::Point(66, 25);
+			this->tboxCompany1->MaxLength = 50;
 			this->tboxCompany1->Name = L"tboxCompany1";
-			this->tboxCompany1->Size = System::Drawing::Size(220, 19);
+			this->tboxCompany1->Size = System::Drawing::Size(261, 19);
 			this->tboxCompany1->TabIndex = 0;
 			// 
 			// labMail1
@@ -3379,34 +3400,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			this->gridError->Size = System::Drawing::Size(699, 103);
 			this->gridError->TabIndex = 37;
 			// 
-			// colErrorName
-			// 
-			this->colErrorName->HeaderText = L"項目名";
-			this->colErrorName->Name = L"colErrorName";
-			this->colErrorName->ReadOnly = true;
-			this->colErrorName->Width = 120;
-			// 
-			// colErrorBegin
-			// 
-			this->colErrorBegin->HeaderText = L"開始";
-			this->colErrorBegin->Name = L"colErrorBegin";
-			this->colErrorBegin->ReadOnly = true;
-			this->colErrorBegin->Width = 60;
-			// 
-			// colErrorEnd
-			// 
-			this->colErrorEnd->HeaderText = L"終了";
-			this->colErrorEnd->Name = L"colErrorEnd";
-			this->colErrorEnd->ReadOnly = true;
-			this->colErrorEnd->Width = 60;
-			// 
-			// colErrorCause
-			// 
-			this->colErrorCause->AutoSizeMode = System::Windows::Forms::DataGridViewAutoSizeColumnMode::Fill;
-			this->colErrorCause->HeaderText = L"要因";
-			this->colErrorCause->Name = L"colErrorCause";
-			this->colErrorCause->ReadOnly = true;
-			// 
 			// labFile
 			// 
 			this->labFile->AutoSize = true;
@@ -3415,6 +3408,34 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			this->labFile->Size = System::Drawing::Size(92, 12);
 			this->labFile->TabIndex = 36;
 			this->labFile->Text = L"ROMデータファイル";
+			// 
+			// colErrorCause
+			// 
+			this->colErrorCause->AutoSizeMode = System::Windows::Forms::DataGridViewAutoSizeColumnMode::Fill;
+			this->colErrorCause->HeaderText = L"要因";
+			this->colErrorCause->Name = L"colErrorCause";
+			this->colErrorCause->ReadOnly = true;
+			// 
+			// colErrorEnd
+			// 
+			this->colErrorEnd->HeaderText = L"終了";
+			this->colErrorEnd->Name = L"colErrorEnd";
+			this->colErrorEnd->ReadOnly = true;
+			this->colErrorEnd->Width = 60;
+			// 
+			// colErrorBegin
+			// 
+			this->colErrorBegin->HeaderText = L"開始";
+			this->colErrorBegin->Name = L"colErrorBegin";
+			this->colErrorBegin->ReadOnly = true;
+			this->colErrorBegin->Width = 60;
+			// 
+			// colErrorName
+			// 
+			this->colErrorName->HeaderText = L"項目名";
+			this->colErrorName->Name = L"colErrorName";
+			this->colErrorName->ReadOnly = true;
+			this->colErrorName->Width = 120;
 			// 
 			// Form1
 			// 
@@ -3873,74 +3894,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			this->setParentalForms();
 		}
 
-		// フォームの入力をチェックする
-		System::Boolean checkSrlForms(void)
-		{
-			// 不正な場合はダイアログで注意してreturn
-			//if( this->checkTextForm( this->tboxTitleName->Text, this->labTitleName->Text ) == false )
-			//	return false;
-			//if( this->checkTextForm( this->tboxGameCode->Text, this->labGameCode->Text ) == false )
-			//	return false;
-			//if( this->checkTextForm( this->tboxMakerCode->Text, this->labMakerCode->Text ) == false )
-			//	return false;
-			//if( this->checkTextForm( this->tboxPlatform->Text, this->labPlatform->Text ) == false )
-			//	return false;
-			//if( this->checkTextForm( this->tboxRomSize->Text, this->labPlatform->Text ) == false )
-			//	return false;
-
-			// リージョン
-			if( this->checkBoxIndex( this->combRegion, this->labRegion->Text ) == false )
-				return false;
-
-			// リージョンを決める
-			System::Boolean bJapan     = false;
-			System::Boolean bAmerica   = false;
-			System::Boolean bEurope    = false;
-			System::Boolean bAustralia = false;
-			switch( this->combRegion->SelectedIndex )
-			{
-				case 0:
-					bJapan = true;
-				break;
-				case 1:
-					bAmerica = true;
-				break;
-				case 2:
-					bEurope = true;
-				break;
-				case 3:
-					bAustralia = true;
-				break;
-				case 4:
-					bEurope    = true;
-					bAustralia = true;
-				break;
-
-#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
-				case 5:
-					bJapan = true;
-					bAmerica = true;
-					bEurope = true;
-					bAustralia = true;
-				break;
-#endif
-				default:
-				break;
-			}
-
-			// ペアレンタルコントロール
-			this->checkParentalForms( bJapan, this->combCERO, this->cboxCERO, this->cboxAlwaysCERO, this->labCERO->Text );
-			this->checkParentalForms( bAmerica, this->combESRB, this->cboxESRB, this->cboxAlwaysESRB, this->labESRB->Text );
-			this->checkParentalForms( bEurope, this->combUSK, this->cboxUSK, this->cboxAlwaysUSK, this->labUSK->Text );
-			this->checkParentalForms( bEurope, this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI, this->labPEGI->Text );
-			this->checkParentalForms( bEurope, this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT, this->labPEGIPRT->Text );
-			this->checkParentalForms( bEurope, this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC, 
-									  this->labPEGIBBFC->Text + " " + this->labPEGIBBFC2->Text );
-			this->checkParentalForms( bAustralia, this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC->Text );
-
-			return (this->hErrorList->Count > 0);
-		}
-
 		// SRLの特殊な設定をフォームにセットする(言語切り替えで表示を変えたいので独立させる)
 		void setSrlFormsCaptionEx()
 		{
@@ -4116,59 +4069,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			this->hSrl->hArrayParentalAlways[OS_TWL_PCTL_OGN_OFLC] = gcnew System::Boolean( this->cboxAlwaysOFLC->Checked );
 		}
 
-		// ペアレンタルコントロール関連のフォーム入力が正しいか書き込み前チェック
-		void checkParentalForms( 
-			System::Boolean inRegion, System::Windows::Forms::ComboBox ^comb, 
-			System::Windows::Forms::CheckBox ^enable, System::Windows::Forms::CheckBox ^always, System::String ^msg )
-		{
-			// リージョンに含まれていないとき: 0クリアが保証されるのでチェック必要なし
-			if( !inRegion )
-				return;
-
-			if( !enable->Checked )	// 有効フラグが立っていないとき
-			{
-				// 何も設定されていない
-				if( !always->Checked && (comb->SelectedIndex == (comb->Items->Count - 1)) )
-				{
-					this->hWarnList->Add( gcnew RCMRCError( 
-						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
-						msg + ": レーティング審査を必要としないソフトであるとみなしてデータを保存します。",
-						"Parental Control", msg + ": Save ROM data as Game soft which needs rating examinination.", true ) );
-				}
-				else
-				{
-					this->hErrorList->Add( gcnew RCMRCError( 
-						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
-						msg + ": 制限が無効であるにもかかわらずレーティング情報が設定されています。",
-						"Parental Control", msg + "Rating can be set only when control is enable.", true ) );
-				}
-			}
-			else	// 有効フラグが立っているとき
-			{
-				if( !always->Checked && (comb->SelectedIndex == (comb->Items->Count - 1)) )
-				{
-					this->hErrorList->Add( gcnew RCMRCError( 
-						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
-						msg + ": 制限が有効であるにもかかわらずレーティング情報が設定されていません。",
-						"Parental Control", msg + ": Rating must be set when control is enable.", true ) );
-				}
-				else if( always->Checked )
-				{
-					this->hWarnList->Add( gcnew RCMRCError( 
-						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
-						msg + ": Rating Pendingが指定されています。レーティング年齢が審査されしだい、再度、ROMを提出してください。",
-						"Parental Control", ": Rating Pending is setting. When rating age is examined, Please submit again.", true ) );
-				}
-				else if( comb->SelectedIndex == (comb->Items->Count - 1) )
-				{
-					this->hErrorList->Add( gcnew RCMRCError( 
-						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
-						": Rating Pending指定とレーティング年齢を同時に指定することはできません。",
-						"Parental Control", ": Rating setting is either rating pending or rating age.", true ) );
-				}
-			}
-		} //checkParentalForms()
-
 		// SRL内のペアレンタルコントロール情報を抜き出してフォームに反映させる
 		void setParentalForms(void)
 		{
@@ -4212,8 +4112,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 				case 17: index = 3; break;
 				case 18: index = 4; break;
 				default:
-					index = 5;
-					this->parentalMsg( 0, this->labCERO->Text );
+					index = 5;		// リード時のチェックがあるため起こり得ない
 				break;
 			}
 			this->combCERO->SelectedIndex = index;
@@ -4230,7 +4129,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 				case 0:  index = 5; break; // 0はデフォルト値なのでエラーメッセージを出さない(自動的に未審査扱い)
 				default:
 					index = 5;
-					this->parentalMsg( 0, this->labESRB->Text );
 				break;
 			}
 			this->combESRB->SelectedIndex = index;
@@ -4251,7 +4149,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 				case 18: index = 4; break;
 				default:
 					index = 5;
-					this->parentalMsg( 0, this->labUSK->Text );
 				break;
 			}
 			this->combUSK->SelectedIndex = index;
@@ -4268,7 +4165,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 				case 0:  index = 5; break;
 				default:
 					index = 5;
-					this->parentalMsg( 0, this->labPEGI->Text );
 				break;
 			}
 			this->combPEGI->SelectedIndex = index;
@@ -4285,7 +4181,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 				case 0:  index = 5; break;
 				default:
 					index = 5;
-					this->parentalMsg( 0, this->labPEGIPRT->Text );
 				break;
 			}
 			this->combPEGIPRT->SelectedIndex = index;
@@ -4305,7 +4200,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 				case 0:  index = 8; break;
 				default:
 					index = 8;
-					this->parentalMsg( 0, this->labPEGIBBFC->Text + this->labPEGIBBFC2->Text );
 				break;
 			}
 			this->combPEGIBBFC->SelectedIndex = index;
@@ -4325,7 +4219,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 				case 15: index = 3; break;
 				default:
 					index = 4; break;
-					this->parentalMsg( 0, this->labOFLC->Text );
 				break;
 			}
 			this->combOFLC->SelectedIndex = index;
@@ -4406,49 +4299,177 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			}
 		}
 
-		// ペアレンタルコントロール関連情報専用のダイアログメッセージ
-		void parentalMsg( const System::Int32 type, const System::String ^msg )
+		// ----------------------------------------------
+		// SRL関連のフォームのチェック
+		// ----------------------------------------------
+
+		// テキスト入力がされているかチェック
+		System::Boolean checkTextForm( System::String ^formtext, System::String ^labelJ, System::String ^labelE )
 		{
-			System::String ^prefix;
-			System::String ^suffix;
+			System::String ^msgJ = gcnew System::String( "入力されていません。" );
+			System::String ^msgE = gcnew System::String( "No setting. Please retry to input." );
 
-			if( this->stripItemJapanese->Checked == true )
+			System::String ^tmp = formtext->Replace( " ", "" );		// スペースのみの文字列もエラー
+			if( (formtext == nullptr) || formtext->Equals("") || tmp->Equals("") )
 			{
-				prefix = gcnew System::String( "ペアレンタルコントロール情報の " );
+				this->hErrorList->Add( gcnew RCMRCError( labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true ) );
+				return false;
 			}
-			else
-			{
-				prefix = gcnew System::String( "Parental Control Info. " );
-			}
+			return true;
+		}
+		// 数値入力が正常かどうかチェック
+		System::Boolean checkNumRange( System::Int32 val, System::Int32 min, System::Int32 max, System::String ^labelJ, System::String ^labelE )
+		{
+			System::String ^msgJ = gcnew System::String( "値の範囲が不正です。やり直してください。" );
+			System::String ^msgE = gcnew System::String( "Invalidate range of value. Please retry." );
 
-			// 0: 読み込み時チェック
-			// 1: 書き込み時チェック(レーティングが設定されているのにフラグが有効になっていない)
-			// 2: 書き込み時チェック(レーティングが未審査なのにフラグが有効になっている)
-			if( type == 0 )
+			if( (val < min) || (max < val) )
 			{
-				if( this->stripItemJapanese->Checked == true )
-					suffix = gcnew System::String( " のレーティング値が不正です。ひとまず「未審査」にしますので、正しい値を設定してください。" );
-				else
-					suffix = gcnew System::String( " : Illegal Rating. The value is set to \"Unexamined\" temporarily. Please set the value." );
+				this->hErrorList->Add( gcnew RCMRCError( labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true ) );
+				return false;
 			}
-			else if( type == 1 )
+			return true;
+		}
+		System::Boolean checkNumRange( System::String ^strval, System::Int32 min, System::Int32 max, System::String ^labelJ, System::String ^labelE )
+		{
+			try
 			{
-				if( this->stripItemJapanese->Checked == true )
-					suffix = gcnew System::String( " のレーティング値が設定されているのに有効フラグが立っていません。設定を確認してください。" );
-				else
-					suffix = gcnew System::String( " : The rating control flag is NOT enabled, but rating is set. Please retry settings." );
+				System::Int32  i = System::Int32::Parse(strval);
+				return (this->checkNumRange( i, min, max, labelJ, labelE ));
 			}
-			else if( type == 2 )
+			catch ( System::FormatException ^ex )
 			{
-				if( this->stripItemJapanese->Checked == true )
-					suffix = gcnew System::String( " のレーティングが未審査なのに有効フラグが立っています。設定を確認してください。" );
-				else
-					suffix = gcnew System::String( " : The rating control flag is enabled, but rating is NOT set. Please retry settings." );
+				(void)ex;
+				return (this->checkNumRange( max+1, min, max, labelJ, labelE ));
 			}
-			this->errMsg( prefix + msg + suffix );
+		}
+		// コンボボックスをチェック
+		System::Boolean checkBoxIndex( System::Windows::Forms::ComboBox ^box, System::String ^labelJ, System::String ^labelE )
+		{
+			System::String ^msgJ = gcnew System::String( "選択されていません。やり直してください。" );
+			System::String ^msgE = gcnew System::String( "Not selected. Please retry." );
+			
+			if( box->SelectedIndex < 0 )
+			{
+				this->hWarnList->Add( gcnew RCMRCError( 
+					labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true ) );
+			}
+			return true;
 		}
 
-		// マスタ書類情報をフォームから取得して書類に反映させる
+		// フォームの入力をチェックする
+		System::Boolean checkSrlForms(void)
+		{
+			// リージョン
+			if( this->checkBoxIndex( this->combRegion, LANG_REGION_J, LANG_REGION_E ) == false )
+				return false;
+
+			// リージョンを決める
+			System::Boolean bJapan     = false;
+			System::Boolean bAmerica   = false;
+			System::Boolean bEurope    = false;
+			System::Boolean bAustralia = false;
+			switch( this->combRegion->SelectedIndex )
+			{
+				case 0:
+					bJapan = true;
+				break;
+				case 1:
+					bAmerica = true;
+				break;
+				case 2:
+					bEurope = true;
+				break;
+				case 3:
+					bAustralia = true;
+				break;
+				case 4:
+					bEurope    = true;
+					bAustralia = true;
+				break;
+
+#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
+				case 5:
+					bJapan = true;
+					bAmerica = true;
+					bEurope = true;
+					bAustralia = true;
+				break;
+#endif
+				default:
+				break;
+			}
+
+			// ペアレンタルコントロール
+			this->checkParentalForms( bJapan, this->combCERO, this->cboxCERO, this->cboxAlwaysCERO, this->labCERO->Text );
+			this->checkParentalForms( bAmerica, this->combESRB, this->cboxESRB, this->cboxAlwaysESRB, this->labESRB->Text );
+			this->checkParentalForms( bEurope, this->combUSK, this->cboxUSK, this->cboxAlwaysUSK, this->labUSK->Text );
+			this->checkParentalForms( bEurope, this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI, this->labPEGI->Text );
+			this->checkParentalForms( bEurope, this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT, this->labPEGIPRT->Text );
+			this->checkParentalForms( bEurope, this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC, 
+									  this->labPEGIBBFC->Text + " " + this->labPEGIBBFC2->Text );
+			this->checkParentalForms( bAustralia, this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC->Text );
+
+			return (this->hErrorList->Count > 0);
+		}
+
+		// ペアレンタルコントロール関連のフォーム入力が正しいか書き込み前チェック
+		void checkParentalForms( 
+			System::Boolean inRegion, System::Windows::Forms::ComboBox ^comb, 
+			System::Windows::Forms::CheckBox ^enable, System::Windows::Forms::CheckBox ^always, System::String ^msg )
+		{
+			// リージョンに含まれていないとき: 0クリアが保証されるのでチェック必要なし
+			if( !inRegion )
+				return;
+
+			if( !enable->Checked )	// 有効フラグが立っていないとき
+			{
+				// 何も設定されていない
+				if( !always->Checked && (comb->SelectedIndex == (comb->Items->Count - 1)) )
+				{
+					this->hWarnList->Add( gcnew RCMRCError( 
+						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
+						msg + ": レーティング審査を必要としないソフトであるとみなしてデータを保存します。",
+						"Parental Control", msg + ": Save ROM data as Game soft which needs rating examinination.", true ) );
+				}
+				else
+				{
+					this->hErrorList->Add( gcnew RCMRCError( 
+						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
+						msg + ": 制限が無効であるにもかかわらずレーティング情報が設定されています。",
+						"Parental Control", msg + "Rating can be set only when control is enable.", true ) );
+				}
+			}
+			else	// 有効フラグが立っているとき
+			{
+				if( !always->Checked && (comb->SelectedIndex == (comb->Items->Count - 1)) )
+				{
+					this->hErrorList->Add( gcnew RCMRCError( 
+						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
+						msg + ": 制限が有効であるにもかかわらずレーティング情報が設定されていません。",
+						"Parental Control", msg + ": Rating must be set when control is enable.", true ) );
+				}
+				else if( always->Checked )
+				{
+					this->hWarnList->Add( gcnew RCMRCError( 
+						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
+						msg + ": Rating Pendingが指定されています。レーティング年齢が審査されしだい、再度、ROMを提出してください。",
+						"Parental Control", ": Rating Pending is setting. When rating age is examined, Please submit again.", true ) );
+				}
+				else if( comb->SelectedIndex == (comb->Items->Count - 1) )
+				{
+					this->hErrorList->Add( gcnew RCMRCError( 
+						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
+						": Rating Pending指定とレーティング年齢を同時に指定することはできません。",
+						"Parental Control", ": Rating setting is either rating pending or rating age.", true ) );
+				}
+			}
+		} //checkParentalForms()
+
+		// ----------------------------------------------
+		// マスタ書類情報をフォームから取得
+		// ----------------------------------------------
+
 		void setDeliverableProperties(void)
 		{
 			// 提出情報
@@ -4603,9 +4624,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 				this->hDeliv->hBackupMemory = this->tboxBackupOther->Text;
 			}
 		}
-		void setDeliverableForms(void)
-		{
-		}
 
 		// フォームの入力をチェックする
 		System::Boolean checkDeliverableForms(void)
@@ -4613,158 +4631,67 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			// 不正な場合はダイアログで注意してreturn
 
 			// 提出情報
-			if( this->checkTextForm( this->tboxProductName->Text, this->labProductName->Text ) == false )
-				return false;
-			if( this->checkTextForm( this->tboxProductCode1->Text, this->labProductCode->Text ) == false )
-				return false;
-			if( this->checkTextForm( this->tboxProductCode2->Text, this->labProductCode->Text ) == false )
-				return false;
+			this->checkTextForm( this->tboxProductName->Text, LANG_PRODUCT_NAME_J, LANG_PRODUCT_NAME_E );
+			this->checkTextForm( this->tboxProductCode1->Text, LANG_PRODUCT_CODE_J, LANG_PRODUCT_CODE_E );
+			this->checkTextForm( this->tboxProductCode2->Text, LANG_PRODUCT_CODE_J, LANG_PRODUCT_CODE_E );
 			if( this->cboxReleaseForeign->Checked == true )
 			{
-				if( this->checkTextForm( this->tboxProductNameForeign->Text, this->labProductNameForeign->Text ) == false )
-					return false;
-				if( this->checkTextForm( this->tboxProductCode1Foreign->Text, this->labProductCodeForeign->Text ) == false )
-					return false;
-				if( this->checkTextForm( this->tboxProductCode2Foreign1->Text, this->labProductCodeForeign->Text ) == false )
-					return false;
+				this->checkTextForm( this->tboxProductNameForeign->Text, LANG_PRODUCT_NAME_F_J, LANG_PRODUCT_NAME_F_E );
+				this->checkTextForm( this->tboxProductCode1Foreign->Text, LANG_PRODUCT_CODE_F_J, LANG_PRODUCT_CODE_F_E );
+				this->checkTextForm( this->tboxProductCode2Foreign1->Text, LANG_PRODUCT_CODE_F_J, LANG_PRODUCT_CODE_F_E );
 			}
 			if( this->rUsageOther->Checked == true )
 			{
-				if( this->checkTextForm( this->tboxUsageOther->Text, 
-					this->gboxUsage->Text + "(" + this->rUsageOther->Text + ")" ) == false )
-					return false;
+				this->checkTextForm( this->tboxUsageOther->Text, LANG_USAGE_J, LANG_USAGE_E );
 			}
-			if( this->checkTextForm( this->tboxSDK->Text, this->labSDK->Text ) == false )
-				return false;
 
 			// 会社情報
-			if( this->checkTextForm( this->tboxPerson1->Text, this->labPerson1->Text ) == false )
-				return false;
-			if( this->checkTextForm( this->tboxCompany1->Text, this->labCompany1->Text ) == false )
-				return false;
-			if( this->checkTextForm( this->tboxDepart1->Text, this->labDepart1->Text ) == false )
-				return false;
+			this->checkTextForm( this->tboxPerson1->Text, LANG_PERSON_1_J, LANG_PERSON_1_E );
+			this->checkTextForm( this->tboxCompany1->Text, LANG_COMPANY_J, LANG_COMPANY_E );
+			this->checkTextForm( this->tboxDepart1->Text, LANG_DEPART_J, LANG_DEPART_E );
 			if( this->stripItemJapanese->Checked == true )
 			{
-				if( this->checkTextForm( this->tboxFurigana1->Text, this->labFurigana1->Text ) == false )
-					return false;
+				this->checkTextForm( this->tboxFurigana1->Text, LANG_FURIGANA_J, LANG_FURIGANA_J );
 			}
-			if( this->checkTextForm( this->tboxTel1->Text, this->labTel1->Text ) == false )
-				return false;
-			if( this->checkTextForm( this->tboxFax1->Text, this->labFax1->Text ) == false )
-				return false;
-			if( this->checkTextForm( this->tboxMail1->Text, this->labMail1->Text ) == false )
-				return false;
-			if( this->checkTextForm( this->tboxNTSC1->Text, this->labNTSC1Pre->Text + " " + this->labNTSC1Sur->Text ) == false )
-				return false;
+			this->checkTextForm( this->tboxTel1->Text, LANG_TEL_J, LANG_TEL_E );
+			this->checkTextForm( this->tboxFax1->Text, LANG_FAX_J, LANG_FAX_E );
+			this->checkTextForm( this->tboxMail1->Text, LANG_MAIL_J, LANG_MAIL_E );
+			if( this->stripItemJapanese->Checked == true )
+			{
+				this->checkTextForm( this->tboxNTSC1->Text, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, LANG_NTSC_1_J + " " + LANG_NTSC_2_J );
+			}
 
 			if( this->cboxIsInputPerson2->Checked == true )
 			{
-				if( this->checkTextForm( this->tboxPerson2->Text, this->labPerson2->Text ) == false )
-					return false;
-				if( this->checkTextForm( this->tboxCompany2->Text, this->labCompany2->Text ) == false )
-					return false;
-				if( this->checkTextForm( this->tboxDepart2->Text, this->labDepart2->Text ) == false )
-					return false;
+				this->checkTextForm( this->tboxPerson2->Text, LANG_PERSON_2_J, LANG_PERSON_2_E );
+				this->checkTextForm( this->tboxCompany2->Text, LANG_COMPANY_J, LANG_COMPANY_E );
+				this->checkTextForm( this->tboxDepart2->Text, LANG_DEPART_J, LANG_DEPART_E );
 				if( this->stripItemJapanese->Checked == true )
 				{
-					if( this->checkTextForm( this->tboxFurigana2->Text, this->labFurigana2->Text ) == false )
-						return false;
+					this->checkTextForm( this->tboxFurigana2->Text, LANG_FURIGANA_J, LANG_FURIGANA_J );
 				}
-				if( this->checkTextForm( this->tboxTel2->Text, this->labTel2->Text ) == false )
-					return false;
-				if( this->checkTextForm( this->tboxFax2->Text, this->labFax2->Text ) == false )
-					return false;
-				if( this->checkTextForm( this->tboxMail2->Text, this->labMail2->Text ) == false )
-					return false;
-				if( this->checkTextForm( this->tboxNTSC2->Text, this->labNTSC2Pre->Text + " " + this->labNTSC2Sur->Text ) == false )
-					return false;
+				this->checkTextForm( this->tboxTel2->Text, LANG_TEL_J, LANG_TEL_E );
+				this->checkTextForm( this->tboxFax2->Text, LANG_FAX_J, LANG_FAX_E );
+				this->checkTextForm( this->tboxMail2->Text, LANG_MAIL_J, LANG_MAIL_E );
+				if( this->stripItemJapanese->Checked == true )
+				{
+					this->checkTextForm( this->tboxNTSC2->Text, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, LANG_NTSC_1_J + " " + LANG_NTSC_2_J );
+				}
 			}
 
 			// 一部のROM情報(SRLバイナリに反映されない情報)をここでチェックする
-			if( this->checkBoxIndex( this->combBackup, this->labBackup->Text ) == false )
-				return false;
+			this->checkBoxIndex( this->combBackup, LANG_BACKUP_J, LANG_BACKUP_E );
 			if( this->combBackup->SelectedIndex == (this->combBackup->Items->Count - 1) )
 			{
-				if( this->checkTextForm( this->tboxBackupOther->Text, this->labBackup->Text ) == false )
-					return false;
+				this->checkTextForm( this->tboxBackupOther->Text, LANG_BACKUP_J, LANG_BACKUP_E );
 			}
 
-			return true;
+			return (this->hErrorList->Count > 0);
 		}
 
 		// ----------------------------------------------
-		// エラーメッセージの一元化
+		// エラー処理
 		// ----------------------------------------------
-
-		// テキスト入力がされているかチェック
-		System::Boolean checkTextForm( System::String ^formtext, System::String ^label )
-		{
-			System::String ^msg;
-			
-			if( this->stripItemJapanese->Checked == true )
-				msg = gcnew System::String( "が入力されていません。やり直してください。" );
-			else
-				msg = gcnew System::String( " is not set. Please retry setting." );
-
-			if( formtext == nullptr )
-			{
-				this->errMsg( label + msg );
-				return false;
-			}
-			System::String ^tmp = formtext->Replace( " ", "" );		// スペースのみの文字列もエラー
-			if( formtext->Equals("") || tmp->Equals("") )
-			{
-				this->errMsg( label + msg );
-				return false;
-			}
-			return true;
-		}
-
-		// 数値入力が正常かどうかチェック
-		System::Boolean checkNumRange( System::Int32 val, System::Int32 min, System::Int32 max, System::String ^label )
-		{
-			System::String ^msg;
-			
-			if( this->stripItemJapanese->Checked == true )
-				msg = gcnew System::String( "の値の範囲が不正です。やり直してください。" );
-			else
-				msg = gcnew System::String( ": Invalidate range of value. Please retry." );
-
-			if( (val < min) || (max < val) )
-			{
-				this->errMsg( label + msg );
-				return false;
-			}
-			return true;
-		}
-		System::Boolean checkNumRange( System::String ^strval, System::Int32 min, System::Int32 max, System::String ^label )
-		{
-			try
-			{
-				System::Int32  i = System::Int32::Parse(strval);
-				return (this->checkNumRange( i, min, max, label ));
-			}
-			catch ( System::FormatException ^ex )
-			{
-				(void)ex;
-				return (this->checkNumRange( max+1, min, max, label ));		// 必ず例外を発生させる
-			}
-		}
-
-		// コンボボックスをチェック
-		System::Boolean checkBoxIndex( System::Windows::Forms::ComboBox ^box, System::String ^label )
-		{
-			System::String ^msgJ = gcnew System::String( "選択されていません。やり直してください。" );
-			System::String ^msgE = gcnew System::String( "Not selected. Please retry." );
-			
-			if( box->SelectedIndex < 0 )
-			{
-				this->hWarnList->Add( gcnew RCMRCError( 
-					label, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, label, msgE, true ) );
-			}
-			return true;
-		}
 
 		// エラーメッセージを出力
 		void errMsg( System::String ^str )
@@ -5109,7 +5036,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 	public:
 		void overloadGridError( void )
 		{
-			// listLoの修正可能な情報をlistHiで上書きする(listHiは修正可能な情報のみであることが前提)
 			this->gridError->Rows->Clear();
 			if( this->hSrl->hErrorList != nullptr )
 			{
@@ -5129,13 +5055,12 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 		}
 		void overloadGridWarn( void )
 		{
-			// listLoの修正可能な情報をlistHiで上書きする(listHiは修正可能な情報のみであることが前提)
 			this->gridWarn->Rows->Clear();
 			if( this->hSrl->hWarnList != nullptr )
 			{
 				for each( RCMRCError ^err in this->hSrl->hWarnList )
 				{
-					if( !err->EnableModify )	// 修正可能な情報は表示しない
+					if( !err->EnableModify )
 						this->gridWarn->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
 				}
 			}
@@ -5416,10 +5341,18 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			// SRLと書類の両方のフォーム入力をチェックする
 			if( this->checkSrlForms() == false )
 			{
+				if( this->stripItemJapanese->Checked == true )
+					this->errMsg( "ROMデータに不正な設定があるためROMデータを保存できません。" );
+				else
+					this->errMsg( "This ROM data can't be saved, since it has illegal info." );
 				return;
 			}
 			if( this->checkDeliverableForms() == false )
 			{
+				if( this->stripItemJapanese->Checked == true )
+					this->errMsg( "入力情報に不正な設定があるため提出書類を作成できません。" );
+				else
+					this->errMsg( "Making a submission sheet can't be done, since input data is illegal." );
 				return;
 			}
 
@@ -5535,6 +5468,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 	private:
 		System::Void rErrorCurrent_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
 		{
+			this->hErrorList->Clear();
+			this->hWarnList->Clear();
 			this->checkSrlForms();
 			this->checkDeliverableForms();
 			this->overloadGridError();
@@ -5552,6 +5487,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			}
 			else
 			{
+				this->hErrorList->Clear();
+				this->hWarnList->Clear();
 				this->checkSrlForms();
 				this->checkDeliverableForms();
 				this->overloadGridError();

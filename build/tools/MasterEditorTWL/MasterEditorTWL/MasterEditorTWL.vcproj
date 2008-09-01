@@ -290,6 +290,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\lang.h"
+				>
+			</File>
+			<File
 				RelativePath=".\resource.h"
 				>
 			</File>

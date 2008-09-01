@@ -1320,7 +1320,7 @@ void RCSrl::mrcRating( System::Byte ogn )
 
 		if( *(this->hArrayParentalAlways[ogn]) == false )
 		{
-			// RPが立っていないときRPとレーティング値が競合していたらダメ
+			// RPが立っていないときレーティング値が設定されていなかったらダメ
 			if( (str != nullptr) && str->Equals( L"未審査" ) )
 			{
 				this->hWarnList->Add( gcnew RCMRCError( 
