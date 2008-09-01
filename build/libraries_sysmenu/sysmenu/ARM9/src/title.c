@@ -557,6 +557,11 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
 	default:
 		// unknown
 		UTL_SetFatalError(FATAL_ERROR_LOAD_UNKNOWN_BOOTTYPE);
+		// デバグ用。ERRORLOG_Init()がすでに呼ばれている事前提
+		ERRORLOG_Printf( "TitleID        : %016llx \n", pBootTitle->titleID );
+		ERRORLOG_Printf( "flags.isValid  : %d\n", pBootTitle->flags.isValid );
+		ERRORLOG_Printf( "flags.bootType : %d\n", pBootTitle->flags.bootType );
+		ERRORLOG_Printf( "isAppLoadCompl : %d\n", pBootTitle->flags.isAppLoadCompleted );
 		return;
 	}
 
