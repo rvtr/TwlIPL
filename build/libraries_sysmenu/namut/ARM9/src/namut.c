@@ -84,6 +84,7 @@ static BOOL NAMUTi_ClearSavedataAll(void);
 static BOOL NAMUTi_InitShareData(void);
 static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arcname);
 static BOOL NAMUTi_RandClearFile(const char* path);
+static BOOL NAMUTi_CheckExistenceFile(const char* path);
 static BOOL NAMUTi_ClearWiFiSettings( void );
 static BOOL NAMUTi_DeleteShopAccount( void );
 static void* NAMUT_Alloc(u32 size);
@@ -450,8 +451,6 @@ static BOOL NAMUTi_ClearSavedataAll( void )
     u32 title_num;
     NAMTitleId* pTitleIdArray;
     NAMTitleInfo namTitleInfo;
-    char savePublicPath[ FS_ENTRY_LONGNAME_MAX ];
-    char savePrivatePath[ FS_ENTRY_LONGNAME_MAX ];
     char subBannerPath[ FS_ENTRY_LONGNAME_MAX ];
     BOOL ret = TRUE;
     s32 i;
@@ -480,21 +479,16 @@ static BOOL NAMUTi_ClearSavedataAll( void )
         // タイトル情報取得
         if( NAM_ReadTitleInfo(&namTitleInfo, pTitleIdArray[i]) == NAM_OK )
         {
-            // セーブファイルパス取得
-            if (NAM_GetTitleSaveFilePath(savePublicPath, savePrivatePath, pTitleIdArray[i]) == NAM_OK)
+            // publicSaveSizeが0以上ならフォーマット
+            if (namTitleInfo.publicSaveSize > 0)
             {
-                // publicSaveSizeが0以上なら乱数クリア＆フォーマット
-                if (namTitleInfo.publicSaveSize > 0)
-                {
-                    ret &= NAMUTi_ClearSavedataPublic(savePublicPath, namTitleInfo.titleId);
-                }
-                // privateSaveSizeが0以上なら乱数クリア＆フォーマット
-                if (namTitleInfo.privateSaveSize > 0)
-                {
-                    ret &= NAMUTi_ClearSavedataPrivate(savePrivatePath, namTitleInfo.titleId);
-                }
+                ret &= NAMUTi_MountAndFormatOtherTitleSaveData(namTitleInfo.titleId, "otherPub");
             }
-            else { ret = FALSE; }
+            // privateSaveSizeが0以上ならフォーマット
+            if (namTitleInfo.privateSaveSize > 0)
+            {
+                ret &= NAMUTi_MountAndFormatOtherTitleSaveData(namTitleInfo.titleId, "otherPrv");
+            }
 
             // サブバナーファイルパス取得
             if (NAM_GetTitleBannerFilePath( subBannerPath, namTitleInfo.titleId) == NAM_OK)
@@ -706,9 +700,9 @@ static BOOL NAMUTi_InitShareData(void)
 
     for (i=0;i<NAMUT_SHARE_ARCHIVE_MAX;i++)
     {
-        // 乱数クリア
+        // ファイルの存在を確認
         STD_TSNPrintf(path, NAM_PATH_LEN, "nand:/shared2/000%d", i);
-        if (NAMUTi_RandClearFile(path) == FALSE)
+        if (NAMUTi_CheckExistenceFile(path) == FALSE)
         {
             // ファイルが存在しないものとみなす
             OS_TPrintf("%s is not exist\n", path);
@@ -804,6 +798,30 @@ static BOOL NAMUTi_RandClearFile(const char* path)
         return FALSE;
     }
     return TRUE;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         NAMUTi_CheckExistenceFile
+
+  Description:  指定したファイルが存在するかどうかを判定します。
+
+  Arguments:    path
+
+  Returns:      存在するならTRUE
+ *---------------------------------------------------------------------------*/
+static BOOL NAMUTi_CheckExistenceFile(const char* path)
+{
+    FSFile file;
+
+    FS_InitFile(&file);
+
+    if (!FS_OpenFileEx(&file, path, FS_FILEMODE_R))
+    {
+		return FALSE;
+ 	}
+
+    FS_CloseFile(&file);
+	return TRUE;
 }
 
 /*---------------------------------------------------------------------------*
