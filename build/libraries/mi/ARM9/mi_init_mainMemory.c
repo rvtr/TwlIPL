@@ -85,7 +85,7 @@ asm void  MIi_InitMainMemCR( BOOL setCR )
 
         // メインメモリが同期モード時（ハードリセット時）に
         // 非同期モード（CLK固定）でコマンド発行しても大丈夫
-        ldr     r3,  =HW_WRAM_AREA - 2
+        ldr     r3,  =HW_TWL_MAIN_MEM_END - 2
         bl      MIi_InitMainMemCRCore
 #ifdef SDK_TS
         ldr     r3,  =HW_TWL_MAIN_MEM_EX_END - 2
@@ -105,6 +105,17 @@ asm void  MIi_InitMainMemCR( BOOL setCR )
                       (MI_CTRDG_ROMCYCLE2_6  << REG_MI_EXMEMCNT_ROM2nd_SHIFT) | \
                       (MI_CTRDG_RAMCYCLE_10  << REG_MI_EXMEMCNT_RAM_SHIFT)
         strh    r1, [r3]
+
+        mov     r0, #0x1000        // 0.12ms
+        bl      OS_SpinWaitCpuCycles
+
+        // 同期モードでコマンド再発行
+        ldr     r3,  =HW_TWL_MAIN_MEM_END - 2
+        bl      MIi_InitMainMemCRCore
+#ifdef SDK_TS
+        ldr     r3,  =HW_TWL_MAIN_MEM_EX_END - 2
+        bl      MIi_InitMainMemCRCore
+#endif // SDK_TS
 
         bx      r12
 }
