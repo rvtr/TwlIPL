@@ -76,6 +76,7 @@ MIMmemCR;
 
 // CR1
 #define MMEM_TCR1_PARTIAL_REFRESH_8MB   0x0002      // パーシャルリフレッシュ先頭８ＭＢ
+#define MMEM_TCR1_PARTIAL_REFRESH_NONE  0x0003      // パーシャルリフレッシュなし（DSモード時）
 #define MMEM_TCR1_BURST_CONTINUOUS      0x001c      // 連続バースト（２２４バイト）
 #define MMEM_TCR1_BURST_MODE            0x0000      // バーストモード
 #define MMEM_TCR1_DRV_SZ_CENTER         0x00c0      // ドライバーサイズ＝中心
@@ -86,6 +87,9 @@ MIMmemCR;
                                          MMEM_TCR1_BURST_MODE | \
                                          MMEM_TCR1_DRV_SZ_CENTER | \
                                          MMEM_TCR1_SB1)  // 0xFFDE
+
+#define MMEM_TCR1_DS                    (MMEM_TCR1 | MMEM_TCR1_PARTIAL_REFRESH_NONE)  // 0xFFDF
+
 // CR2
 #define MMEM_TCR2_1ST_R4_W3             0x0002      // １ｓｔＲ／Ｗ ＝ ４／３
 #define MMEM_TCR2_REMAIN_PRV_MODE       0x0040      // 前モード保持
