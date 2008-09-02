@@ -155,6 +155,12 @@ SDK_WEAK_SYMBOL asm void _start( void )
 #endif // !FIRM_DISABLE_CR_AT_WARMBOOT
 #endif // SDK_TS
 
+        /* システム制御コプロセッサ初期化 */
+        bl              INITi_InitCoprocessor
+
+        /* リージョン初期設定 */
+        bl              INITi_InitRegion
+
         //---- notify main memory mode into burst mode
         mov             r0, #FIRM_PXI_ID_INIT_MMEM
         bl              PXIi_SendIDByIntf
@@ -162,12 +168,6 @@ SDK_WEAK_SYMBOL asm void _start( void )
         //---- wait to clear HW_MAIN_MEM_SHARED
         mov             r0, #FIRM_PXI_ID_INIT_MMEM
         bl              PXIi_WaitIDByIntf
-
-        /* システム制御コプロセッサ初期化 */
-        bl              INITi_InitCoprocessor
-
-        /* リージョン初期設定 */
-        bl              INITi_InitRegion
 
         //---- clear memory
         // DTCM (16KB)
