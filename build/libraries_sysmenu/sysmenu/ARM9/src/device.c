@@ -53,7 +53,7 @@ void SYSMi_CheckRTC( void )
 	( void )RTC_GetDateTime( &date, &time );
 	if( !UTL_CheckRTCDate( &date ) ||
 	    !UTL_CheckRTCTime( &time ) ||
-		SYSMi_GetWork()->flags.common.isResetRTC
+		SYSMi_GetWork()->flags.arm7.isResetRTC
 		) {
 		OS_TPrintf("\"RTC reset\" or \"Illegal RTC data\" detect!\n");
 		LCFG_TSD_SetRTCOffset( 0 );

@@ -185,7 +185,7 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 		MI_CpuClearFast((char *)HW_TWL_FS_BOOT_SRL_PATH_BUF, OS_MOUNT_PATH_LEN);
 		
 		// NAND/TMPƒAƒvƒŠ—pKeyTable‚Ì¶¬
-		if( ! SYSMi_GetWork()->flags.common.isCardBoot )
+		if( ! SYSMi_GetWork()->flags.arm9.isCardBoot )
 		{
 			HOTSWi_MakeBlowfishTableDSForNAND();
 		}

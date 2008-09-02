@@ -180,7 +180,7 @@ TitleProperty *SYSM_ReadParameters( void )
     //-----------------------------------------------------
     // FATALエラーチェック
     //-----------------------------------------------------
-    if( SYSMi_GetWork()->flags.common.isNANDFatalError ) {
+    if( SYSMi_GetWork()->flags.arm7.isNANDFatalError ) {
         UTL_SetFatalError( FATAL_ERROR_NAND );
     }
 
@@ -287,7 +287,7 @@ TitleProperty *SYSM_ReadParameters( void )
     //-----------------------------------------------------
     
     // ARM7のランチャーパラメータ取得が完了するのを待つ
-    while( !SYSMi_GetWork()->flags.common.isARM9Start ) {
+    while( !SYSMi_GetWork()->flags.arm7.isARM9Start ) {
         SVC_WaitByLoop( 0x1000 );
     }
 //#ifdef DEBUG_USED_CARD_SLOT_B_
@@ -307,11 +307,11 @@ TitleProperty *SYSM_ReadParameters( void )
         
         if( !SYSM_IsRunOnDebugger() && LCFG_TSD_GetLastTimeBootSoftPlatform() == PLATFORM_CODE_NTR ) {
             // 前回ブートがNTRなら、ランチャーパラメータ無効
-            SYSMi_GetWork()->flags.common.isValidLauncherParam = 0;
+            SYSMi_GetWork()->flags.arm7.isValidLauncherParam = 0;
             MI_CpuClear32( &SYSMi_GetWork()->launcherParam, sizeof(LauncherParam) );
         }
         
-        if( SYSMi_GetWork()->flags.common.isValidLauncherParam ) {
+        if( SYSMi_GetWork()->flags.arm7.isValidLauncherParam ) {
             // ロゴデモスキップ無効？
             if( !SYSM_GetLauncherParamBody()->v1.flags.isLogoSkip ) {
                 SYSM_SetLogoDemoSkip( FALSE );

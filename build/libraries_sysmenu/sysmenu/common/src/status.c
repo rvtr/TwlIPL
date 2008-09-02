@@ -33,27 +33,102 @@ const LauncherParamBody *SYSM_GetLauncherParamBody( void )
 	return (const LauncherParamBody *)&SYSMi_GetWork()->launcherParam.body;
 }
 
-
-// ホットスタートか？
-BOOL SYSM_IsHotStart( void )
+/*** フラグセット、割り込み禁止つき arm9 ****/
+void SYSM_SetHeaderLoadCompleted( BOOL comp )
 {
-	return (BOOL)SYSMi_GetWork()->flags.common.isHotStart;
+	OSIntrMode mode = OS_DisableInterrupts();
+	SYSMi_GetWork()->flags.arm9.isHeaderLoadCompleted = comp;
+	OS_RestoreInterrupts( mode );
 }
 
+void SYSM_SetLoadFinished( BOOL finish )
+{
+	OSIntrMode mode = OS_DisableInterrupts();
+	SYSMi_GetWork()->flags.arm9.isLoadFinished = finish;
+	OS_RestoreInterrupts( mode );
+}
+
+void SYSM_SetLoadSucceeded( BOOL succeed )
+{
+	OSIntrMode mode = OS_DisableInterrupts();
+	SYSMi_GetWork()->flags.arm9.isLoadSucceeded = succeed;
+	OS_RestoreInterrupts( mode );
+}
+
+void SYSM_SetCardBoot( BOOL card )
+{
+	OSIntrMode mode = OS_DisableInterrupts();
+	SYSMi_GetWork()->flags.arm9.isCardBoot = card;
+	OS_RestoreInterrupts( mode );
+}
 
 // ロゴデモスキップかどうかをセット
 void SYSM_SetLogoDemoSkip( BOOL skip )
 {
-	SYSMi_GetWork()->flags.common.isLogoSkip = skip;
+	OSIntrMode mode = OS_DisableInterrupts();
+	SYSMi_GetWork()->flags.arm9.isLogoSkip = skip;
+	OS_RestoreInterrupts( mode );
 }
 
+// TSD有効/無効をセット
+void SYSM_SetValidTSD( BOOL valid )
+{
+	OSIntrMode mode = OS_DisableInterrupts();
+	SYSMi_GetWork()->flags.arm9.isValidTSD = valid;
+	OS_RestoreInterrupts( mode );
+}
+
+/*** フラグセット、割り込み禁止つき arm7 ****/
+// 必要なさげ
+
+void SYSM_SetHotStart( BOOL hot )
+{
+	OSIntrMode mode = OS_DisableInterrupts();
+	SYSMi_GetWork()->flags.arm7.isHotStart = hot;
+	OS_RestoreInterrupts( mode );
+}
+
+void SYSM_SetValidLauncherParam( BOOL valid )
+{
+	OSIntrMode mode = OS_DisableInterrupts();
+	SYSMi_GetWork()->flags.arm7.isValidLauncherParam = valid;
+	OS_RestoreInterrupts( mode );
+}
+
+void SYSM_SetResetRTC( BOOL reset )
+{
+	OSIntrMode mode = OS_DisableInterrupts();
+	SYSMi_GetWork()->flags.arm7.isResetRTC = reset;
+	OS_RestoreInterrupts( mode );
+}
+
+void SYSM_SetNANDFatalError( BOOL fatal )
+{
+	OSIntrMode mode = OS_DisableInterrupts();
+	SYSMi_GetWork()->flags.arm7.isNANDFatalError = fatal;
+	OS_RestoreInterrupts( mode );
+}
+
+void SYSM_SetARM9Start( BOOL start )
+{
+	OSIntrMode mode = OS_DisableInterrupts();
+	SYSMi_GetWork()->flags.arm7.isARM9Start = start;
+	OS_RestoreInterrupts( mode );
+}
+
+/*** ここまで フラグセット関数 ***/
+
+// ホットスタートか？
+BOOL SYSM_IsHotStart( void )
+{
+	return (BOOL)SYSMi_GetWork()->flags.arm7.isHotStart;
+}
 
 // ロゴデモスキップか？
 BOOL SYSM_IsLogoDemoSkip( void )
 {
-	return (BOOL)SYSMi_GetWork()->flags.common.isLogoSkip;
+	return (BOOL)SYSMi_GetWork()->flags.arm9.isLogoSkip;
 }
-
 
 // ISデバッガのバナービューモード起動かどうか？
 BOOL SYSMi_IsDebuggerBannerViewMode( void )
@@ -67,18 +142,10 @@ BOOL SYSMi_IsDebuggerBannerViewMode( void )
 #endif
 }
 
-
-// TSD有効/無効をセット
-void SYSM_SetValidTSD( BOOL valid )
-{
-	SYSMi_GetWork()->flags.common.isValidTSD = valid;
-}
-
-
 // TSD有効？
 BOOL SYSM_IsValidTSD( void )
 {
-	return (BOOL)SYSMi_GetWork()->flags.common.isValidTSD;
+	return (BOOL)SYSMi_GetWork()->flags.arm9.isValidTSD;
 }
 
 

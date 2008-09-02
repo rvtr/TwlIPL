@@ -160,10 +160,10 @@ TwlSpMain(void)
     // NANDのFATALエラー検出
     if( sdmcGetNandLogFatal() != FALSE) {
         /* 故障扱い処理 */
-        SYSMi_GetWork()->flags.common.isNANDFatalError = TRUE;
+        SYSMi_GetWork()->flags.arm7.isNANDFatalError = TRUE;
     }
 
-    SYSMi_GetWork()->flags.common.isARM9Start = TRUE;
+    SYSMi_GetWork()->flags.arm7.isARM9Start = TRUE;
 
     // ヒープ領域設定
 #ifndef USE_HYENA_COMPONENT
@@ -324,7 +324,7 @@ static void ResetRTC( void )
         // リセット実行
         stat1.reset = 1;
         RTC_WriteStatus1( &stat1 );
-        sw->flags.common.isResetRTC = TRUE;
+        sw->flags.arm7.isResetRTC = TRUE;
     }
 
     // FOUTが32KHz出力でない場合は、32KHz出力に修正設定する。（無線で使用している）
@@ -369,8 +369,8 @@ static void ResetRTC( void )
 void ReadLauncherParameter( void )
 {
     BOOL hot;
-    SYSMi_GetWork()->flags.common.isValidLauncherParam = OS_ReadLauncherParameter( (LauncherParam *)&(SYSMi_GetWork()->launcherParam), &hot );
-    SYSMi_GetWork()->flags.common.isHotStart = hot;
+    SYSMi_GetWork()->flags.arm7.isValidLauncherParam = OS_ReadLauncherParameter( (LauncherParam *)&(SYSMi_GetWork()->launcherParam), &hot );
+    SYSMi_GetWork()->flags.arm7.isHotStart = hot;
     // メインメモリのランチャーパラメータをクリアしておく
     MI_CpuClearFast( (void*)HW_PARAM_LAUNCH_PARAM, HW_PARAM_LAUNCH_PARAM_SIZE );
     // Coldスタート時はアプリパラメータもクリア

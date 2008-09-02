@@ -130,6 +130,15 @@ extern void SYSM_SetLogoDemoSkip( BOOL skip );									// ロゴデモ飛ばし状態フラ
 extern BOOL SYSM_IsValidTSD( void );											// TWL設定データは有効か？
 extern void SYSM_SetValidTSD( BOOL valid );										// TWL設定データの有効／無効フラグを設定する。
 extern const LauncherParamBody *SYSM_GetLauncherParamBody( void );				// ランチャーパラメータの取得
+extern void SYSM_SetHeaderLoadCompleted( BOOL comp );							// ヘッダロード完了フラグ設定
+extern void SYSM_SetLoadFinished( BOOL finish );								// アプリロード完了フラグ設定
+extern void SYSM_SetLoadSucceeded( BOOL succeed );								// アプリロード成功フラグ設定
+extern void SYSM_SetCardBoot( BOOL card );										// カードブートフラグ設定
+extern void SYSM_SetHotStart( BOOL hot );										// ホットスタートフラグ設定
+extern void SYSM_SetValidLauncherParam( BOOL valid );							// ランチャーパラメータ有効フラグ設定
+extern void SYSM_SetResetRTC( BOOL reset );										// リセットRTCフラグ設定
+extern void SYSM_SetNANDFatalError( BOOL fatal );								// NANDFatalエラーフラグ設定
+extern void SYSM_SetARM9Start( BOOL start );									// ARM9開始可能フラグ設定
 
 extern BOOL SYSM_IsLauncherHidden( void );										// ランチャーの画面を表示しないバージョンか？
 

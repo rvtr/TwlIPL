@@ -42,7 +42,6 @@ SUBDIRS_P	=	\
 				Makefile \
 				WDSTest \
 				FatalErrorChecker \
-				RelocateChecker \
 				WDSWrapperTest \
 
 

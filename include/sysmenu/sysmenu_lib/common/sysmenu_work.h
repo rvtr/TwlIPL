@@ -92,19 +92,24 @@ typedef struct SYSM_work {
 	Relocate_Info		romRelocateInfo[RELOCATE_INFO_NUM];	// ROM再配置情報（arm9,arm7それぞれltdとflxで最大4つ）
 	struct {
 		struct {
-			vu32		isARM9Start :1;					// ARM9スタートフラグ
-			vu32		isHotStart :1;					// Hot/Coldスタート判定
-			vu32		isValidLauncherParam :1;		// ランチャーパラメータ有効
-			vu32		isValidTSD :1;					// NITRO設定データ無効フラグ
-			vu32		isLogoSkip :1;					// ロゴデモスキップ
-            vu32		isHeaderLoadCompleted :1;		// アプリヘッダロード完了？
-			vu32		isLoadFinished :1;				// アプリロード完了？
-			vu32		isLoadSucceeded :1;				// アプリロード成功？
-			vu32		isCardBoot :1;					// カードブートか？
-			vu32		isResetRTC :1;					// RTCリセット発生
-			vu32		isNANDFatalError :1;			// NANDFATALエラー発生
-			vu32		:0;
-		}common;
+			vu8			isHotStart :1;					// Hot/Coldスタート判定
+			vu8			isValidLauncherParam :1;		// ランチャーパラメータ有効
+			vu8			isResetRTC :1;					// RTCリセット発生
+			vu8			isNANDFatalError :1;			// NANDFATALエラー発生
+			vu8			isARM9Start :1;					// ARM9スタートフラグ
+			vu8			:0;
+		}arm7;
+
+		struct {
+			vu8			isValidTSD :1;					// NITRO設定データ無効フラグ
+			vu8			isLogoSkip :1;					// ロゴデモスキップ
+		    vu8			isHeaderLoadCompleted :1;		// アプリヘッダロード完了？
+			vu8			isLoadFinished :1;				// アプリロード完了？
+			vu8			isLoadSucceeded :1;				// アプリロード成功？
+			vu8			isCardBoot :1;					// カードブートか？
+			vu8			:0;
+		}arm9;
+
         struct {
             vu16		isExistCard :1;					// 有効なNTR/TWLカードが存在するか？
 			vu16		isInspectCard :1;				// 検査カードか？

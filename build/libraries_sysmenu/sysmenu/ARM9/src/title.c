@@ -715,7 +715,8 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 		
 		// ヘッダ読み込み完了直後の処理
 		// ヘッダ読み込み完了フラグを立てる
-		SYSMi_GetWork()->flags.common.isHeaderLoadCompleted = TRUE;
+		SYSM_SetHeaderLoadCompleted(TRUE);
+		
 		// HOTSW終了処理有効化
 		SYSMi_FinalizeHotSWAsync( pBootTitle, (void*)SYSM_APP_ROM_HEADER_BUF );
 		
@@ -853,7 +854,7 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
     // [TODO:]とりあえずベタ書き。余裕があればスレッド化する。
     SYSMi_ClearRomLoadSegment( (ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF );
     
-	SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
+	SYSM_SetLoadSucceeded(TRUE);
 	
 	// ここでスタック壊れていないかチェック
 	if( OS_STACK_NO_ERROR != OS_GetStackStatus( &s_thread ) )
@@ -987,21 +988,20 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 
 	// アプリ未ロード状態なら、ロード開始
 	if( !pBootTitle->flags.isAppLoadCompleted ) {
-		SYSMi_GetWork()->flags.common.isLoadFinished  = FALSE;
-		
-		SYSMi_GetWork()->flags.common.isLoadSucceeded = FALSE;
+		SYSM_SetLoadFinished(FALSE);
+		SYSM_SetLoadSucceeded(FALSE);
 		OS_InitThread();
 		OS_CreateThread( &s_thread, (void (*)(void *))SYSMi_LoadTitleThreadFunc, (void*)pBootTitle, stack+STACK_SIZE/sizeof(u64), STACK_SIZE,THREAD_PRIO );
 		OS_WakeupThreadDirect( &s_thread );
 
 	}else {
 		// アプリロード済み
-		SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
-		SYSMi_GetWork()->flags.common.isLoadFinished  = TRUE;
+		SYSM_SetLoadSucceeded(TRUE);
+		SYSM_SetLoadFinished(TRUE);
 	}
 	
 	if( pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM ) {
-		SYSMi_GetWork()->flags.common.isCardBoot = TRUE;
+		SYSM_SetCardBoot(TRUE);
 	}else if(pBootTitle->flags.isAppLoadCompleted)
 	{
 		// カードブートでなく、ロード済みの場合は今のところ何もしない
@@ -1012,18 +1012,11 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 BOOL SYSM_IsLoadTitleFinished( void )
 {
 	// ロード済みの時は、常にTRUE
-	if( !SYSMi_GetWork()->flags.common.isLoadFinished ) {
-		/*
-		if( SYSMi_GetWork()->flags.common.isCardBoot ) {
-			// カードブートの時は、HOTSWライブラリのロード完了をチェック。
-			SYSMi_GetWork()->flags.common.isLoadFinished  = SYSMi_GetWork()->flags.hotsw.isCardLoadCompleted;
-			SYSMi_GetWork()->flags.common.isLoadSucceeded = TRUE;
-		}else {
-		*/
-		// NANDブートの時は、ロードスレッドの完了をチェック。
-		SYSMi_GetWork()->flags.common.isLoadFinished = OS_IsThreadTerminated( &s_thread );
+	if( !SYSMi_GetWork()->flags.arm9.isLoadFinished ) {
+		// ロードスレッドの完了をチェック。
+		SYSM_SetLoadFinished(OS_IsThreadTerminated( &s_thread ));
 	}
-	return SYSMi_GetWork()->flags.common.isLoadFinished ? TRUE : FALSE;
+	return SYSMi_GetWork()->flags.arm9.isLoadFinished ? TRUE : FALSE;
 }
 
 
@@ -1633,7 +1626,7 @@ static void SYSMi_AuthenticateTitleThreadFunc( TitleProperty *pBootTitle )
 		return;
 	}
 	// ロード成功？
-	if( SYSMi_GetWork()->flags.common.isLoadSucceeded == FALSE )
+	if( SYSMi_GetWork()->flags.arm9.isLoadSucceeded == FALSE )
 	{
 		UTL_SetFatalError(FATAL_ERROR_TITLE_LOAD_FAILED);
 		// デバグ用。ERRORLOG_Init()がすでに呼ばれている事前提
@@ -1949,7 +1942,7 @@ static void SYSMi_makeTitleIdList( void )
 		
 		// ジャンプ可能フラグON or ブートアプリ自身 or ジャンプ元アプリ ならばジャンプ可能
 		if( pe_hs->permit_landing_normal_jump || hs->titleID == id ||
-			( SYSMi_GetWork()->flags.common.isValidLauncherParam && SYSM_GetLauncherParamBody()->v1.bootTitleID && ( SYSM_GetLauncherParamBody()->v1.prevTitleID == id ) )
+			( SYSMi_GetWork()->flags.arm7.isValidLauncherParam && SYSM_GetLauncherParamBody()->v1.bootTitleID && ( SYSM_GetLauncherParamBody()->v1.prevTitleID == id ) )
 		  )
 		{
 			// リストに追加してジャンプ可能フラグON
