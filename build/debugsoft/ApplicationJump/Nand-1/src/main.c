@@ -78,9 +78,9 @@ void TwlMain(void)
 		
 		OS_TPrintf("argc = %d\n", gArgc);
 		
-		for (i=0; i < gArgc && i < 6; i++)
+		for (i=0; i < gArgc-1 && i < 6; i++)
 		{
-			STD_StrLCpy(gStrAppParam[i], (const char*)OS_GetDeliverArgv(i + 1), APPJUMP_STRING_LENGTH);
+			STD_StrLCpy(gStrAppParam[i], (const char*)OS_GetDeliverArgv(i+1), APPJUMP_STRING_LENGTH);
 			gStrAppParam[i][APPJUMP_STRING_LENGTH] = '\0';
 		}
 	}
@@ -122,7 +122,7 @@ void TwlMain(void)
         PutMainScreen(0,  5, 0xff, " APP JUMP : %u times ", gAppParam.jumpCount);
         PutMainScreen(0,  7, 0xff, " DELIVERED PARAM (recent 6 app)");
         
-        for (i=0; i<gArgc; i++)
+        for (i=0; i<gArgc-1; i++)
         {
 			if ( i==0 )
 			{
