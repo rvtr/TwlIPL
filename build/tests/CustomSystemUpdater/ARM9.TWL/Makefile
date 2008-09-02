@@ -70,9 +70,9 @@ SRCDIR		=	src \
 
 DATA_ROOT	=	../data
 ROMSET_FILE	=	../romset
-ROM_CHECKER	=	ruby ../romchecker.rb
+ROM_CHECKER	=	../romchecker.rb
 
-SUMAKER	=	ruby ../sumaker.rb custom 
+SUMAKER	=	../sumaker.rb custom 
 #----------------------------------------------------------------------------
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
@@ -129,7 +129,8 @@ INSTALL_DIR				=	../bin
 
 check_rom:
 ifeq	($(DISABLE_ROMCHECK),)
-	$(ROM_CHECKER) $(ROMSET)
+	$(ROM_CHECKER) $(ROMSET) $(SYSM_REGION)
+	$(ROM_CHECKER) $(ROMSET) VERUP
 endif
 #ifeq	($(DISABLE_ROMCHECK),)
 #	$(ROM_CHECKER) $(DATA_ROOT)/$(ROMSET)

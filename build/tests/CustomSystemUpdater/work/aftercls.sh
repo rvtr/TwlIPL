@@ -26,4 +26,4 @@ then
 fi
 
 ./tocsu.sh $1
-ruby toaqua.rb $1
+./toaqua.rb $1
