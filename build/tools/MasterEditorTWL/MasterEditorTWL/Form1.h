@@ -456,14 +456,16 @@ private: System::Windows::Forms::TabPage^  tabRomInfo;
 
 private: System::Windows::Forms::TabPage^  tabTWLInfo;
 private: System::Windows::Forms::TabPage^  tabRomEditInfo;
+private: System::Windows::Forms::TabPage^  tabSubmitInfo;
 
 
 
 
 
 
-private: System::Windows::Forms::TabPage^  tabPage4;
-private: System::Windows::Forms::TabPage^  tabPage5;
+
+private: System::Windows::Forms::TabPage^  tabCompanyInfo;
+
 private: System::Windows::Forms::GroupBox^  gboxForeign;
 private: System::Windows::Forms::GroupBox^  gboxExFlags;
 private: System::Windows::Forms::Label^  labByte3;
@@ -472,30 +474,42 @@ private: System::Windows::Forms::Label^  labByte4;
 private: System::Windows::Forms::GroupBox^  gboxEULA;
 private: System::Windows::Forms::GroupBox^  gboxIcon;
 private: System::Windows::Forms::GroupBox^  gboxParental;
-private: System::Windows::Forms::TextBox^  textBox1;
+private: System::Windows::Forms::TextBox^  tboxGuideRomInfo;
+private: System::Windows::Forms::TextBox^  tboxGuideTWLInfo;
+private: System::Windows::Forms::TextBox^  tboxGuideRomEditInfo;
+private: System::Windows::Forms::TextBox^  tboxGuideSubmitInfo;
+private: System::Windows::Forms::TextBox^  tboxGuideCompanyInfo;
 
 
-private: System::Windows::Forms::TextBox^  textBox2;
-private: System::Windows::Forms::TextBox^  textBox3;
-private: System::Windows::Forms::TextBox^  textBox4;
-private: System::Windows::Forms::TextBox^  textBox5;
+
+
+
+
+
+
+
+
 private: System::Windows::Forms::Label^  labFile;
 public: System::Windows::Forms::DataGridView^  gridError;
+private: System::Windows::Forms::TabPage^  tabErrorInfo;
+public: 
 private: 
 
 public: 
 
 
 
-private: System::Windows::Forms::TabPage^  tabError;
+
 public: System::Windows::Forms::DataGridView^  gridWarn;
+private: System::Windows::Forms::TextBox^  tboxGuideErrorInfo;
+public: 
 private: 
 
 public: 
 
 
 
-private: System::Windows::Forms::TextBox^  textBox6;
+
 private: System::Windows::Forms::GroupBox^  gboxErrorTiming;
 private: System::Windows::Forms::Label^  labWarn;
 private: System::Windows::Forms::Label^  labError;
@@ -609,6 +623,12 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 #ifdef METWL_VER_APPTYPE_LAUNCHER
 			this->Text += " [FOR LAUNCHER APPLICATION]";
 #endif
+			// 複数行表示したいが初期値で設定できないのでここで設定
+			this->tboxGuideErrorInfo->Text  = "このタブには読み込んだROMデータの問題と本プログラムでの入力ミスが列挙されます。";
+			this->tboxGuideErrorInfo->Text += "\r\n赤文字の項目は、本プログラムで修正不可です。ROMデータ作成時の設定をご確認ください。";
+			this->tboxGuideErrorInfo->Text += "\r\n青文字の項目は、本プログラムで修正できますが、修正によってROMデータが変更されます。";
+			this->tboxGuideErrorInfo->Text += "\r\n黒文字の項目は、提出書類にのみ反映され、ROMデータは変更されません。";
+
 			this->loadInit();	// 設定ファイルの読み込み
 		}
 
@@ -645,6 +665,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 		/// </summary>
 		void InitializeComponent(void)
 		{
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle1 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -852,8 +873,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->stripItemSaveTemp = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemLoadTemp = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripMaster = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->stripItemMasterRom = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemSheet = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->stripItemMasterRom = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripLang = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemEnglish = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemJapanese = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -862,23 +883,23 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->gridLibrary = (gcnew System::Windows::Forms::DataGridView());
 			this->colLibPublisher = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->colLibName = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
-			this->textBox1 = (gcnew System::Windows::Forms::TextBox());
+			this->tboxGuideRomInfo = (gcnew System::Windows::Forms::TextBox());
 			this->tabTWLInfo = (gcnew System::Windows::Forms::TabPage());
-			this->textBox2 = (gcnew System::Windows::Forms::TextBox());
+			this->tboxGuideTWLInfo = (gcnew System::Windows::Forms::TextBox());
 			this->gboxExFlags = (gcnew System::Windows::Forms::GroupBox());
 			this->tabRomEditInfo = (gcnew System::Windows::Forms::TabPage());
-			this->textBox3 = (gcnew System::Windows::Forms::TextBox());
+			this->tboxGuideRomEditInfo = (gcnew System::Windows::Forms::TextBox());
 			this->gboxParental = (gcnew System::Windows::Forms::GroupBox());
 			this->gboxIcon = (gcnew System::Windows::Forms::GroupBox());
 			this->gboxEULA = (gcnew System::Windows::Forms::GroupBox());
-			this->tabPage4 = (gcnew System::Windows::Forms::TabPage());
-			this->textBox4 = (gcnew System::Windows::Forms::TextBox());
+			this->tabSubmitInfo = (gcnew System::Windows::Forms::TabPage());
+			this->tboxGuideSubmitInfo = (gcnew System::Windows::Forms::TextBox());
 			this->gboxForeign = (gcnew System::Windows::Forms::GroupBox());
 			this->labMultiForeign2 = (gcnew System::Windows::Forms::Label());
-			this->tabPage5 = (gcnew System::Windows::Forms::TabPage());
-			this->textBox5 = (gcnew System::Windows::Forms::TextBox());
-			this->tabError = (gcnew System::Windows::Forms::TabPage());
-			this->textBox6 = (gcnew System::Windows::Forms::TextBox());
+			this->tabCompanyInfo = (gcnew System::Windows::Forms::TabPage());
+			this->tboxGuideCompanyInfo = (gcnew System::Windows::Forms::TextBox());
+			this->tabErrorInfo = (gcnew System::Windows::Forms::TabPage());
+			this->tboxGuideErrorInfo = (gcnew System::Windows::Forms::TextBox());
 			this->gboxErrorTiming = (gcnew System::Windows::Forms::GroupBox());
 			this->rErrorCurrent = (gcnew System::Windows::Forms::RadioButton());
 			this->rErrorReading = (gcnew System::Windows::Forms::RadioButton());
@@ -918,10 +939,10 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->gboxParental->SuspendLayout();
 			this->gboxIcon->SuspendLayout();
 			this->gboxEULA->SuspendLayout();
-			this->tabPage4->SuspendLayout();
+			this->tabSubmitInfo->SuspendLayout();
 			this->gboxForeign->SuspendLayout();
-			this->tabPage5->SuspendLayout();
-			this->tabError->SuspendLayout();
+			this->tabCompanyInfo->SuspendLayout();
+			this->tabErrorInfo->SuspendLayout();
 			this->gboxErrorTiming->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->gridWarn))->BeginInit();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->gridError))->BeginInit();
@@ -2924,19 +2945,19 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->stripMaster->Size = System::Drawing::Size(53, 20);
 			this->stripMaster->Text = L"マスター";
 			// 
-			// stripItemMasterRom
-			// 
-			this->stripItemMasterRom->Name = L"stripItemMasterRom";
-			this->stripItemMasterRom->Size = System::Drawing::Size(220, 22);
-			this->stripItemMasterRom->Text = L"マスターROMのみを作成";
-			this->stripItemMasterRom->Click += gcnew System::EventHandler(this, &Form1::stripItemMasterRom_Click);
-			// 
 			// stripItemSheet
 			// 
 			this->stripItemSheet->Name = L"stripItemSheet";
 			this->stripItemSheet->Size = System::Drawing::Size(220, 22);
 			this->stripItemSheet->Text = L"提出書類とマスターROMを作成";
 			this->stripItemSheet->Click += gcnew System::EventHandler(this, &Form1::stripItemSheet_Click);
+			// 
+			// stripItemMasterRom
+			// 
+			this->stripItemMasterRom->Name = L"stripItemMasterRom";
+			this->stripItemMasterRom->Size = System::Drawing::Size(220, 22);
+			this->stripItemMasterRom->Text = L"マスターROMのみを作成";
+			this->stripItemMasterRom->Click += gcnew System::EventHandler(this, &Form1::stripItemMasterRom_Click);
 			// 
 			// stripLang
 			// 
@@ -2949,7 +2970,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// stripItemEnglish
 			// 
 			this->stripItemEnglish->Name = L"stripItemEnglish";
-			this->stripItemEnglish->Size = System::Drawing::Size(152, 22);
+			this->stripItemEnglish->Size = System::Drawing::Size(119, 22);
 			this->stripItemEnglish->Text = L"English";
 			this->stripItemEnglish->Click += gcnew System::EventHandler(this, &Form1::stripItemEnglish_Click);
 			// 
@@ -2958,7 +2979,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->stripItemJapanese->Checked = true;
 			this->stripItemJapanese->CheckState = System::Windows::Forms::CheckState::Checked;
 			this->stripItemJapanese->Name = L"stripItemJapanese";
-			this->stripItemJapanese->Size = System::Drawing::Size(152, 22);
+			this->stripItemJapanese->Size = System::Drawing::Size(119, 22);
 			this->stripItemJapanese->Text = L"Japanese";
 			this->stripItemJapanese->Click += gcnew System::EventHandler(this, &Form1::stripItemJapanese_Click);
 			// 
@@ -2967,19 +2988,20 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->tabMain->Controls->Add(this->tabRomInfo);
 			this->tabMain->Controls->Add(this->tabTWLInfo);
 			this->tabMain->Controls->Add(this->tabRomEditInfo);
-			this->tabMain->Controls->Add(this->tabPage4);
-			this->tabMain->Controls->Add(this->tabPage5);
-			this->tabMain->Controls->Add(this->tabError);
+			this->tabMain->Controls->Add(this->tabSubmitInfo);
+			this->tabMain->Controls->Add(this->tabCompanyInfo);
+			this->tabMain->Controls->Add(this->tabErrorInfo);
 			this->tabMain->Location = System::Drawing::Point(12, 93);
 			this->tabMain->Name = L"tabMain";
 			this->tabMain->SelectedIndex = 0;
 			this->tabMain->Size = System::Drawing::Size(749, 377);
 			this->tabMain->TabIndex = 34;
+			this->tabMain->SelectedIndexChanged += gcnew System::EventHandler(this, &Form1::tabMain_SelectedIndexChanged);
 			// 
 			// tabRomInfo
 			// 
 			this->tabRomInfo->Controls->Add(this->gridLibrary);
-			this->tabRomInfo->Controls->Add(this->textBox1);
+			this->tabRomInfo->Controls->Add(this->tboxGuideRomInfo);
 			this->tabRomInfo->Controls->Add(this->gboxSrl);
 			this->tabRomInfo->Controls->Add(this->labLib);
 			this->tabRomInfo->Controls->Add(this->labCaptionEx);
@@ -3020,19 +3042,19 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->colLibName->Name = L"colLibName";
 			this->colLibName->ReadOnly = true;
 			// 
-			// textBox1
+			// tboxGuideRomInfo
 			// 
-			this->textBox1->BackColor = System::Drawing::SystemColors::Info;
-			this->textBox1->Location = System::Drawing::Point(24, 17);
-			this->textBox1->Name = L"textBox1";
-			this->textBox1->ReadOnly = true;
-			this->textBox1->Size = System::Drawing::Size(687, 19);
-			this->textBox1->TabIndex = 35;
-			this->textBox1->Text = L"このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。";
+			this->tboxGuideRomInfo->BackColor = System::Drawing::SystemColors::Info;
+			this->tboxGuideRomInfo->Location = System::Drawing::Point(24, 17);
+			this->tboxGuideRomInfo->Name = L"tboxGuideRomInfo";
+			this->tboxGuideRomInfo->ReadOnly = true;
+			this->tboxGuideRomInfo->Size = System::Drawing::Size(687, 19);
+			this->tboxGuideRomInfo->TabIndex = 35;
+			this->tboxGuideRomInfo->Text = L"このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。";
 			// 
 			// tabTWLInfo
 			// 
-			this->tabTWLInfo->Controls->Add(this->textBox2);
+			this->tabTWLInfo->Controls->Add(this->tboxGuideTWLInfo);
 			this->tabTWLInfo->Controls->Add(this->gboxExFlags);
 			this->tabTWLInfo->Controls->Add(this->gboxShared2Size);
 			this->tabTWLInfo->Controls->Add(this->gboxTWLExInfo);
@@ -3046,15 +3068,15 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->tabTWLInfo->Text = L"TWL拡張情報(確認用)";
 			this->tabTWLInfo->UseVisualStyleBackColor = true;
 			// 
-			// textBox2
+			// tboxGuideTWLInfo
 			// 
-			this->textBox2->BackColor = System::Drawing::SystemColors::Info;
-			this->textBox2->Location = System::Drawing::Point(22, 18);
-			this->textBox2->Name = L"textBox2";
-			this->textBox2->ReadOnly = true;
-			this->textBox2->Size = System::Drawing::Size(687, 19);
-			this->textBox2->TabIndex = 36;
-			this->textBox2->Text = L"このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。";
+			this->tboxGuideTWLInfo->BackColor = System::Drawing::SystemColors::Info;
+			this->tboxGuideTWLInfo->Location = System::Drawing::Point(22, 18);
+			this->tboxGuideTWLInfo->Name = L"tboxGuideTWLInfo";
+			this->tboxGuideTWLInfo->ReadOnly = true;
+			this->tboxGuideTWLInfo->Size = System::Drawing::Size(687, 19);
+			this->tboxGuideTWLInfo->TabIndex = 36;
+			this->tboxGuideTWLInfo->Text = L"このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。";
 			// 
 			// gboxExFlags
 			// 
@@ -3071,7 +3093,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			// tabRomEditInfo
 			// 
-			this->tabRomEditInfo->Controls->Add(this->textBox3);
+			this->tabRomEditInfo->Controls->Add(this->tboxGuideRomEditInfo);
 			this->tabRomEditInfo->Controls->Add(this->gboxParental);
 			this->tabRomEditInfo->Controls->Add(this->gboxIcon);
 			this->tabRomEditInfo->Controls->Add(this->gboxEULA);
@@ -3082,15 +3104,15 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->tabRomEditInfo->Text = L"ROM登録情報(編集可)";
 			this->tabRomEditInfo->UseVisualStyleBackColor = true;
 			// 
-			// textBox3
+			// tboxGuideRomEditInfo
 			// 
-			this->textBox3->BackColor = System::Drawing::SystemColors::Info;
-			this->textBox3->Location = System::Drawing::Point(25, 19);
-			this->textBox3->Name = L"textBox3";
-			this->textBox3->ReadOnly = true;
-			this->textBox3->Size = System::Drawing::Size(687, 19);
-			this->textBox3->TabIndex = 37;
-			this->textBox3->Text = L"このタブの情報は、マスターROMの作成に必要です。適宜、変更してください。";
+			this->tboxGuideRomEditInfo->BackColor = System::Drawing::SystemColors::Info;
+			this->tboxGuideRomEditInfo->Location = System::Drawing::Point(25, 19);
+			this->tboxGuideRomEditInfo->Name = L"tboxGuideRomEditInfo";
+			this->tboxGuideRomEditInfo->ReadOnly = true;
+			this->tboxGuideRomEditInfo->Size = System::Drawing::Size(687, 19);
+			this->tboxGuideRomEditInfo->TabIndex = 37;
+			this->tboxGuideRomEditInfo->Text = L"このタブの情報は、マスターROMの作成に必要です。適宜、変更してください。";
 			// 
 			// gboxParental
 			// 
@@ -3158,45 +3180,45 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->gboxEULA->TabStop = false;
 			this->gboxEULA->Text = L"EULA";
 			// 
-			// tabPage4
+			// tabSubmitInfo
 			// 
-			this->tabPage4->Controls->Add(this->textBox4);
-			this->tabPage4->Controls->Add(this->gboxForeign);
-			this->tabPage4->Controls->Add(this->tboxCaption);
-			this->tabPage4->Controls->Add(this->labSubmitVer);
-			this->tabPage4->Controls->Add(this->labCaption);
-			this->tabPage4->Controls->Add(this->tboxProductCode2);
-			this->tabPage4->Controls->Add(this->labCapSubmitVer);
-			this->tabPage4->Controls->Add(this->gboxUsage);
-			this->tabPage4->Controls->Add(this->numSubmitVersion);
-			this->tabPage4->Controls->Add(this->gboxProd);
-			this->tabPage4->Controls->Add(this->gboxSubmitWay);
-			this->tabPage4->Controls->Add(this->tboxProductCode1);
-			this->tabPage4->Controls->Add(this->labSubmiteDate);
-			this->tabPage4->Controls->Add(this->dateRelease);
-			this->tabPage4->Controls->Add(this->tboxProductName);
-			this->tabPage4->Controls->Add(this->labReleaseDate);
-			this->tabPage4->Controls->Add(this->dateSubmit);
-			this->tabPage4->Controls->Add(this->labProductCode2);
-			this->tabPage4->Controls->Add(this->labProductCode);
-			this->tabPage4->Controls->Add(this->labProductName);
-			this->tabPage4->Controls->Add(this->labProductCode1);
-			this->tabPage4->Location = System::Drawing::Point(4, 21);
-			this->tabPage4->Name = L"tabPage4";
-			this->tabPage4->Size = System::Drawing::Size(741, 352);
-			this->tabPage4->TabIndex = 3;
-			this->tabPage4->Text = L"提出情報(編集可)";
-			this->tabPage4->UseVisualStyleBackColor = true;
+			this->tabSubmitInfo->Controls->Add(this->tboxGuideSubmitInfo);
+			this->tabSubmitInfo->Controls->Add(this->gboxForeign);
+			this->tabSubmitInfo->Controls->Add(this->tboxCaption);
+			this->tabSubmitInfo->Controls->Add(this->labSubmitVer);
+			this->tabSubmitInfo->Controls->Add(this->labCaption);
+			this->tabSubmitInfo->Controls->Add(this->tboxProductCode2);
+			this->tabSubmitInfo->Controls->Add(this->labCapSubmitVer);
+			this->tabSubmitInfo->Controls->Add(this->gboxUsage);
+			this->tabSubmitInfo->Controls->Add(this->numSubmitVersion);
+			this->tabSubmitInfo->Controls->Add(this->gboxProd);
+			this->tabSubmitInfo->Controls->Add(this->gboxSubmitWay);
+			this->tabSubmitInfo->Controls->Add(this->tboxProductCode1);
+			this->tabSubmitInfo->Controls->Add(this->labSubmiteDate);
+			this->tabSubmitInfo->Controls->Add(this->dateRelease);
+			this->tabSubmitInfo->Controls->Add(this->tboxProductName);
+			this->tabSubmitInfo->Controls->Add(this->labReleaseDate);
+			this->tabSubmitInfo->Controls->Add(this->dateSubmit);
+			this->tabSubmitInfo->Controls->Add(this->labProductCode2);
+			this->tabSubmitInfo->Controls->Add(this->labProductCode);
+			this->tabSubmitInfo->Controls->Add(this->labProductName);
+			this->tabSubmitInfo->Controls->Add(this->labProductCode1);
+			this->tabSubmitInfo->Location = System::Drawing::Point(4, 21);
+			this->tabSubmitInfo->Name = L"tabSubmitInfo";
+			this->tabSubmitInfo->Size = System::Drawing::Size(741, 352);
+			this->tabSubmitInfo->TabIndex = 3;
+			this->tabSubmitInfo->Text = L"提出情報(編集可)";
+			this->tabSubmitInfo->UseVisualStyleBackColor = true;
 			// 
-			// textBox4
+			// tboxGuideSubmitInfo
 			// 
-			this->textBox4->BackColor = System::Drawing::SystemColors::Info;
-			this->textBox4->Location = System::Drawing::Point(24, 19);
-			this->textBox4->Name = L"textBox4";
-			this->textBox4->ReadOnly = true;
-			this->textBox4->Size = System::Drawing::Size(687, 19);
-			this->textBox4->TabIndex = 38;
-			this->textBox4->Text = L"このタブの情報は提出書類の作成に必要です。入力してください。";
+			this->tboxGuideSubmitInfo->BackColor = System::Drawing::SystemColors::Info;
+			this->tboxGuideSubmitInfo->Location = System::Drawing::Point(24, 19);
+			this->tboxGuideSubmitInfo->Name = L"tboxGuideSubmitInfo";
+			this->tboxGuideSubmitInfo->ReadOnly = true;
+			this->tboxGuideSubmitInfo->Size = System::Drawing::Size(687, 19);
+			this->tboxGuideSubmitInfo->TabIndex = 38;
+			this->tboxGuideSubmitInfo->Text = L"このタブの情報は提出書類の作成に必要です。入力してください。";
 			// 
 			// gboxForeign
 			// 
@@ -3228,54 +3250,53 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->labMultiForeign2->TabIndex = 45;
 			this->labMultiForeign2->Text = L"(複数ある場合のみ)";
 			// 
-			// tabPage5
+			// tabCompanyInfo
 			// 
-			this->tabPage5->Controls->Add(this->textBox5);
-			this->tabPage5->Controls->Add(this->cboxIsInputPerson2);
-			this->tabPage5->Controls->Add(this->gboxPerson1);
-			this->tabPage5->Controls->Add(this->gboxPerson2);
-			this->tabPage5->Location = System::Drawing::Point(4, 21);
-			this->tabPage5->Name = L"tabPage5";
-			this->tabPage5->Size = System::Drawing::Size(741, 352);
-			this->tabPage5->TabIndex = 4;
-			this->tabPage5->Text = L"会社情報(編集可)";
-			this->tabPage5->UseVisualStyleBackColor = true;
+			this->tabCompanyInfo->Controls->Add(this->tboxGuideCompanyInfo);
+			this->tabCompanyInfo->Controls->Add(this->cboxIsInputPerson2);
+			this->tabCompanyInfo->Controls->Add(this->gboxPerson1);
+			this->tabCompanyInfo->Controls->Add(this->gboxPerson2);
+			this->tabCompanyInfo->Location = System::Drawing::Point(4, 21);
+			this->tabCompanyInfo->Name = L"tabCompanyInfo";
+			this->tabCompanyInfo->Size = System::Drawing::Size(741, 352);
+			this->tabCompanyInfo->TabIndex = 4;
+			this->tabCompanyInfo->Text = L"会社情報(編集可)";
+			this->tabCompanyInfo->UseVisualStyleBackColor = true;
 			// 
-			// textBox5
+			// tboxGuideCompanyInfo
 			// 
-			this->textBox5->BackColor = System::Drawing::SystemColors::Info;
-			this->textBox5->Location = System::Drawing::Point(26, 21);
-			this->textBox5->Name = L"textBox5";
-			this->textBox5->ReadOnly = true;
-			this->textBox5->Size = System::Drawing::Size(687, 19);
-			this->textBox5->TabIndex = 39;
-			this->textBox5->Text = L"このタブの情報は提出書類の作成に必要です。入力してください。";
+			this->tboxGuideCompanyInfo->BackColor = System::Drawing::SystemColors::Info;
+			this->tboxGuideCompanyInfo->Location = System::Drawing::Point(26, 21);
+			this->tboxGuideCompanyInfo->Name = L"tboxGuideCompanyInfo";
+			this->tboxGuideCompanyInfo->ReadOnly = true;
+			this->tboxGuideCompanyInfo->Size = System::Drawing::Size(687, 19);
+			this->tboxGuideCompanyInfo->TabIndex = 39;
+			this->tboxGuideCompanyInfo->Text = L"このタブの情報は提出書類の作成に必要です。入力してください。";
 			// 
-			// tabError
+			// tabErrorInfo
 			// 
-			this->tabError->Controls->Add(this->textBox6);
-			this->tabError->Controls->Add(this->gboxErrorTiming);
-			this->tabError->Controls->Add(this->labWarn);
-			this->tabError->Controls->Add(this->labError);
-			this->tabError->Controls->Add(this->gridWarn);
-			this->tabError->Controls->Add(this->gridError);
-			this->tabError->Location = System::Drawing::Point(4, 21);
-			this->tabError->Name = L"tabError";
-			this->tabError->Size = System::Drawing::Size(741, 352);
-			this->tabError->TabIndex = 5;
-			this->tabError->Text = L"エラー情報(要修正)";
-			this->tabError->UseVisualStyleBackColor = true;
-			this->tabError->Click += gcnew System::EventHandler(this, &Form1::tabError_Click);
+			this->tabErrorInfo->Controls->Add(this->tboxGuideErrorInfo);
+			this->tabErrorInfo->Controls->Add(this->gboxErrorTiming);
+			this->tabErrorInfo->Controls->Add(this->labWarn);
+			this->tabErrorInfo->Controls->Add(this->labError);
+			this->tabErrorInfo->Controls->Add(this->gridWarn);
+			this->tabErrorInfo->Controls->Add(this->gridError);
+			this->tabErrorInfo->Location = System::Drawing::Point(4, 21);
+			this->tabErrorInfo->Name = L"tabErrorInfo";
+			this->tabErrorInfo->Size = System::Drawing::Size(741, 352);
+			this->tabErrorInfo->TabIndex = 5;
+			this->tabErrorInfo->Text = L"エラー情報(要修正)";
+			this->tabErrorInfo->UseVisualStyleBackColor = true;
 			// 
-			// textBox6
+			// tboxGuideErrorInfo
 			// 
-			this->textBox6->BackColor = System::Drawing::SystemColors::Info;
-			this->textBox6->Location = System::Drawing::Point(24, 24);
-			this->textBox6->Name = L"textBox6";
-			this->textBox6->ReadOnly = true;
-			this->textBox6->Size = System::Drawing::Size(533, 19);
-			this->textBox6->TabIndex = 40;
-			this->textBox6->Text = L"このタブの各項目はROMデータの問題と入力の誤りを表しています。";
+			this->tboxGuideErrorInfo->BackColor = System::Drawing::SystemColors::Info;
+			this->tboxGuideErrorInfo->Location = System::Drawing::Point(24, 11);
+			this->tboxGuideErrorInfo->Multiline = true;
+			this->tboxGuideErrorInfo->Name = L"tboxGuideErrorInfo";
+			this->tboxGuideErrorInfo->ReadOnly = true;
+			this->tboxGuideErrorInfo->Size = System::Drawing::Size(533, 61);
+			this->tboxGuideErrorInfo->TabIndex = 40;
 			// 
 			// gboxErrorTiming
 			// 
@@ -3327,7 +3348,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			this->labError->AutoSize = true;
 			this->labError->ForeColor = System::Drawing::SystemColors::ActiveCaption;
-			this->labError->Location = System::Drawing::Point(22, 78);
+			this->labError->Location = System::Drawing::Point(22, 84);
 			this->labError->Name = L"labError";
 			this->labError->Size = System::Drawing::Size(137, 12);
 			this->labError->TabIndex = 39;
@@ -3378,12 +3399,14 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			// gridError
 			// 
+			dataGridViewCellStyle1->BackColor = System::Drawing::Color::White;
+			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
 				this->colErrorBegin, this->colErrorEnd, this->colErrorCause});
 			this->gridError->GridColor = System::Drawing::SystemColors::Control;
-			this->gridError->Location = System::Drawing::Point(24, 93);
+			this->gridError->Location = System::Drawing::Point(24, 99);
 			this->gridError->Name = L"gridError";
 			this->gridError->ReadOnly = true;
 			this->gridError->RowHeadersVisible = false;
@@ -3482,14 +3505,14 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->gboxIcon->PerformLayout();
 			this->gboxEULA->ResumeLayout(false);
 			this->gboxEULA->PerformLayout();
-			this->tabPage4->ResumeLayout(false);
-			this->tabPage4->PerformLayout();
+			this->tabSubmitInfo->ResumeLayout(false);
+			this->tabSubmitInfo->PerformLayout();
 			this->gboxForeign->ResumeLayout(false);
 			this->gboxForeign->PerformLayout();
-			this->tabPage5->ResumeLayout(false);
-			this->tabPage5->PerformLayout();
-			this->tabError->ResumeLayout(false);
-			this->tabError->PerformLayout();
+			this->tabCompanyInfo->ResumeLayout(false);
+			this->tabCompanyInfo->PerformLayout();
+			this->tabErrorInfo->ResumeLayout(false);
+			this->tabErrorInfo->PerformLayout();
 			this->gboxErrorTiming->ResumeLayout(false);
 			this->gboxErrorTiming->PerformLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->gridWarn))->EndInit();
@@ -5051,8 +5074,10 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 		}
 
 		// --------------------------------------------------------
-		// 読み込み時エラー情報の登録
+		// エラー情報の登録
 		// --------------------------------------------------------
+
+		// 読み込み時エラーの登録
 	public:
 		void setGridError( void )
 		{
@@ -5062,6 +5087,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				for each( RCMRCError ^err in this->hSrl->hErrorList )
 				{
 					this->gridError->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
+					this->colorGridError( err );
 				}
 			}
 		}
@@ -5074,13 +5100,12 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				for each( RCMRCError ^err in this->hSrl->hWarnList )
 				{
 					this->gridWarn->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
+					this->colorGridWarn( err );
 				}
 			}
 		}
 
-		// --------------------------------------------------------
-		// 読み込み時に修正可能なエラーに現在の入力を重ね合わせ
-		// --------------------------------------------------------
+		// 読み込み時に検出した修正可能エラーに現在の入力を反映
 	public:
 		void overloadGridError( void )
 		{
@@ -5090,7 +5115,10 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				for each( RCMRCError ^err in this->hSrl->hErrorList )
 				{
 					if( !err->EnableModify )	// 修正可能な情報は表示しない
+					{
 						this->gridError->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
+						this->colorGridError( err );
+					}
 				}
 			}
 			if( this->hErrorList != nullptr )
@@ -5098,6 +5126,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				for each( RCMRCError ^err in this->hErrorList )
 				{
 					this->gridError->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
+					this->colorGridError( err );
 				}
 			}
 		}
@@ -5109,7 +5138,10 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				for each( RCMRCError ^err in this->hSrl->hWarnList )
 				{
 					if( !err->EnableModify )
+					{
 						this->gridWarn->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
+						this->colorGridWarn( err );
+					}
 				}
 			}
 			if( this->hWarnList != nullptr )
@@ -5117,7 +5149,37 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				for each( RCMRCError ^err in this->hWarnList )
 				{
 					this->gridWarn->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
+					this->colorGridWarn( err );
 				}
+			}
+		}
+
+		// セルの色を変える
+	public:
+		void colorGridError( RCMRCError ^err )
+		{
+			if( err->AffectRom && !err->EnableModify )		// SRLに関係ありで修正不可
+			{
+				System::Int32 last = this->gridError->Rows->Count - 2;	// 追加直後の行
+				this->gridError->Rows[ last ]->DefaultCellStyle->ForeColor = System::Drawing::Color::Red;
+			}
+			else if( err->AffectRom && err->EnableModify )	// SRLに関係ありで修正可
+			{
+				System::Int32 last = this->gridError->Rows->Count - 2;
+				this->gridError->Rows[ last ]->DefaultCellStyle->ForeColor = System::Drawing::Color::Blue;
+			}
+		}
+		void colorGridWarn( RCMRCError ^err )
+		{
+			if( err->AffectRom && !err->EnableModify )
+			{
+				System::Int32 last = this->gridWarn->Rows->Count - 2;
+				this->gridWarn->Rows[ last ]->DefaultCellStyle->ForeColor = System::Drawing::Color::Red;
+			}
+			else if( err->AffectRom && err->EnableModify )
+			{
+				System::Int32 last = this->gridWarn->Rows->Count - 2;
+				this->gridWarn->Rows[ last ]->DefaultCellStyle->ForeColor = System::Drawing::Color::Blue;
 			}
 		}
 
@@ -5501,24 +5563,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 	private:
 		System::Void rErrorCurrent_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
 		{
-			this->hErrorList->Clear();
-			this->hWarnList->Clear();
-			this->checkSrlForms();
-			this->checkDeliverableForms();
-			this->overloadGridError();
-			this->overloadGridWarn();
-		}
-
-	private:
-		System::Void tabError_Click(System::Object^  sender, System::EventArgs^  e)
-		{
-			// 常に最新情報に更新
-			if( this->rErrorReading->Checked == true )
-			{
-				this->setGridError();
-				this->setGridWarn();
-			}
-			else
+			if( !System::String::IsNullOrEmpty(this->tboxFile->Text) )
 			{
 				this->hErrorList->Clear();
 				this->hWarnList->Clear();
@@ -5526,6 +5571,29 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				this->checkDeliverableForms();
 				this->overloadGridError();
 				this->overloadGridWarn();
+			}
+		}
+
+	private:
+		System::Void tabMain_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e)
+		{
+			// エラータブを最新情報に更新
+			if( tabMain->SelectedIndex == 5 )
+			{
+				if( this->rErrorReading->Checked == true )
+				{
+					this->setGridError();
+					this->setGridWarn();
+				}
+				else
+				{
+					this->hErrorList->Clear();
+					this->hWarnList->Clear();
+					this->checkSrlForms();
+					this->checkDeliverableForms();
+					this->overloadGridError();
+					this->overloadGridWarn();
+				}
 			}
 		}
 }; // enf of ref class Form1
