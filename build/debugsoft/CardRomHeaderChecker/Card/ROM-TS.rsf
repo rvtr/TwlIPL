@@ -88,7 +88,7 @@ Property
 	#
 	# ROM HEADER TEMPLATE: Provided to every product by NINTENDO
 	#
-	RomHeaderTemplate	../common/0CAA/rom_header_0caa.template.sbin
+	RomHeaderTemplate	../common/0CZA/rom_header_0cza.template.sbin
 
 	#
 	# BANNER FILE: generated from Banner Spec File

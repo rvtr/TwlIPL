@@ -45,7 +45,7 @@ do-build:	$(TARGETS)
 
 #----------------------------------------------------------------------------
 
-LIBSYSCALL			 = ../common/0CAA/libsyscall.a
+LIBSYSCALL			 = ../common/0CZA/libsyscall.a
 
 include	$(TWLSDK_ROOT)/build/buildtools/modulerules
 
