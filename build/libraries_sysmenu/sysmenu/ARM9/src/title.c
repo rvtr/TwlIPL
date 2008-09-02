@@ -870,6 +870,8 @@ ERROR:
 	{
         (void)FS_CloseFile(file);
     }
+	// デバグ用。ERRORLOG_Init()がすでに呼ばれている事前提
+	ERRORLOG_Printf( "SYSMi_LoadTitleThreadFunc: some error has occurred.\n");
 }
 
 // モジュール最終ロード先領域のうち、現在空いている場所をクリア
@@ -953,6 +955,9 @@ static void SYSMi_CpuClearFast( void *dest, u32 size )
 	MI_CpuClear8( (void *)(align_dest + align_size), align_size_offset );
 }
 
+// debug
+int s_loadTimes = 0;
+
 // 指定タイトルを別スレッドでロード開始する
 void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 {
@@ -974,6 +979,8 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 	}
     
 	s_loadstart = TRUE;
+	s_loadTimes++; // ロード回数のチェック用、二回目以降は非対応の実装なので
+	
 	// このあとCardRomヘッダバッファにROMヘッダを上書きで読み込むので
 	// この時点でHotSWが止まっていないと、さらにカードのROMヘッダ
 	// を上書きしてしまう可能性がある
@@ -1629,6 +1636,8 @@ static void SYSMi_AuthenticateTitleThreadFunc( TitleProperty *pBootTitle )
 	if( SYSMi_GetWork()->flags.common.isLoadSucceeded == FALSE )
 	{
 		UTL_SetFatalError(FATAL_ERROR_TITLE_LOAD_FAILED);
+		// デバグ用。ERRORLOG_Init()がすでに呼ばれている事前提
+		ERRORLOG_Printf( "SYSMi_AuthenticateTitleThreadFunc: loaded %d times.\n", s_loadTimes );
 		return;
 	}
 	// パラメータチェック
