@@ -13,8 +13,8 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 
 override TARGET_CODEGEN		=		ARM
@@ -28,8 +28,14 @@ INCDIR	=	../include
 SRCDIR	=	../src
 SRCS	=	common.c font.c screen.c main_f.c
 
+ifeq ($(ROMTYPE),MASTER)
+MAKEROM_ROMROOT		=	../mas_data
+else
 MAKEROM_ROMROOT		=	../data
+endif
+
 MAKEROM_ROMFILES	=	dummy.srl
+
 
 #----------------------------------------------------------------------------
 include $(TWLSDK_ROOT)/build/buildtools/commondefs
@@ -47,8 +53,12 @@ LIBSYSCALL			=	../458A/libsyscall.a
 endif
 
 INSTALL_TARGETS		=	$(BINDIR)/$(TARGET_BIN)
-INSTALL_DIR			=	../data
 
+ifeq ($(ROMTYPE),MASTER)
+INSTALL_DIR			=	../mas_data
+else
+INSTALL_DIR			=	../data
+endif
 #----------------------------------------------------------------------------
 
 do-build:	$(TARGETS)

@@ -28,7 +28,11 @@ INCDIR	=	../include
 SRCDIR	=	./ ../src
 SRCS	=	common.c font.c screen.c main_2.c
 
+ifeq ($(ROMTYPE),MASTER)
+MAKEROM_ROMROOT		=	../mas_data
+else
 MAKEROM_ROMROOT		=	../data
+endif
 MAKEROM_ROMFILES	=	dummy.srl
 
 #----------------------------------------------------------------------------
@@ -60,8 +64,12 @@ LIBSYSCALL			=	../433A/libsyscall.a
 endif
 
 INSTALL_TARGETS		=	$(BINDIR)/$(TARGET_BIN)
-INSTALL_DIR			=	../data
 
+ifeq ($(ROMTYPE),MASTER)
+INSTALL_DIR		=	../mas_data
+else
+INSTALL_DIR			=	../data
+endif
 #----------------------------------------------------------------------------
 
 do-build:	$(TARGETS)

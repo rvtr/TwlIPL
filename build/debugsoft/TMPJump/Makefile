@@ -46,7 +46,7 @@ include	$(TWLSDK_ROOT)/build/buildtools/modulerules
 else		# ifndef APP_TYPE
 
 TWL_NANDAPP		=	TRUE
-TARGET_NAME		= tmpjumpTest
+TARGET_NAME		= tmpjumpTest$(ROMTYPE)
 
 ifeq ($(APP_TYPE),NAND)
 TARGET_BIN	=	$(TARGET_NAME).tad
@@ -64,12 +64,16 @@ SRCDIR		=	./src
 
 SRCS		=	main.c common.c screen.c font.c
 
-
+ifeq ($(ROMTYPE),MASTER)
+MAKEROM_ROMROOT		=	./mas_data
+else
 MAKEROM_ROMROOT		=	./data
+endif
+
 MAKEROM_ROMFILES	=	TestApp.srl			\
 						TestApp_HYBRID.srl	\
 						TestApp_LIMITED.srl	\
-						Test_NITROfail.srl		\
+						Test_NITROfail.srl	\
 						Test_TWLfail.srl
 
 #----------------------------------------------------------------------------

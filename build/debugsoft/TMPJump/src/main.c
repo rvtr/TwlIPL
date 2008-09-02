@@ -83,6 +83,9 @@ void TwlMain(void)
 			void *buf;
 			s32 len = 0;
 			
+			PutSubScreen(1, 8, 0xff, "now writing tmp app...");
+			OS_WaitVBlankIntr();
+			
 			// srl Ç NAND è„ÇÃ OS_TMP_APP_PATH Ç÷ÉRÉsÅ[
 			FS_DeleteFile(OS_TMP_APP_PATH);
 			FS_CreateFile(OS_TMP_APP_PATH, FS_PERMIT_R | FS_PERMIT_W);
