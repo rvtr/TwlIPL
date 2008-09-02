@@ -99,7 +99,6 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 	ROM_Header *th = (void*)REBOOTi_GetTwlRomHeaderAddr();
 	ROM_Header *dh = (void*)REBOOTi_GetRomHeaderAddr();
     BOOL isNtrMode;
-    int i;
 
     // エントリアドレスの正当性をチェックし、無効な場合は無限ループに入る。
 //  SYSMi_CheckEntryAddress();
@@ -109,10 +108,8 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
     (void)GX_VBlankIntr( FALSE );
 	DC_StoreAll();
 
-    for( i = 0; i <= MI_DMA_MAX_NUM; i++ ) {                // 割り込み禁止状態でDMA停止
-        MI_StopDma( (u16)i );
-        MI_StopNDma( (u16)i );
-    }
+    MI_StopAllDma();                                        // 割り込み禁止状態でDMA停止
+    MI_StopAllNDma();
 
     (void)OS_SetIrqFunction( OS_IE_SUBP, ie_subphandler );
     OS_EnableInterrupts();
@@ -122,7 +119,7 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
                                                             // ※もうFIFOはクリア済みなので、使わない。
     // ARM7からの通知待ち
     // この時点でARM7によるdhへのNTR-ROMヘッダをコピーが保証される
-    OS_WaitIrq( 1, OS_IE_SUBP );
+    OS_WaitInterrupt( 1, OS_IE_SUBP );
 
     OS_TPrintf( "INTR SUBP passed!!\n" );
 

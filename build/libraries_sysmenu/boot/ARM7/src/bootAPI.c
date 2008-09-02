@@ -23,6 +23,7 @@
 #include <sysmenu/hotsw.h>
 #include <sysmenu/ds.h>
 #include <firm/hw/ARM7/mmap_firm.h>
+#include <firm/mi/mainMemory.h>
 #include <firm/format/from_firm.h>
 #include <firm/aes/ARM7/aes_init.h>
 #include "reboot.h"
@@ -59,6 +60,8 @@ static void BOOTi_ClearREG_RAM( void );
 static void BOOTi_CutAwayRegionList( u32 *regionlist, u32 start, u32 end );
 static void BOOTi_CheckTitleBlackList( ROM_Header_Short *pROMH );
 static void BOOTi_RebootCallback( void** entryp, void* mem_list, REBOOTTarget* target );
+static void BOOTi_SetMainMemModeForNTR( void );
+void BOOTi_SetMainMemModeForNTRCore( u32 addr );
 
 // global variables--------------------------------------------------
 
@@ -150,6 +153,9 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 		(void)OS_SetIrqMask(0);							// SDKバージョンのサーチに時間がかかると、ARM9がHALTにかかってしまい、ARM7のサウンドスレッドがARM9にFIFOでデータ送信しようとしてもFIFOが一杯で送信できない状態で無限ループに入ってしまう。
 		(void)OS_SetIrqMaskEx(0);
 
+		MI_StopAllDma();                                // 割り込み禁止状態でDMA停止
+		MI_StopAllNDma();
+
 		// 起動アプリNTR-ROMヘッダへのパッチ処理のためコピー
 		MI_CpuCopyFast( th, dh, HW_CARD_ROM_HEADER_SIZE );
 
@@ -197,10 +203,6 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 			HOTSW_DecryptObjectFile( addr );
 		}
 		
-		BOOTi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。
-		reg_MI_MBK9 = 0;								// 全WRAMのロック解除
-		reg_PXI_MAINPINTF = MAINP_SEND_IF | 0x0100;		// ARM9に対してブートするようIRQで要求＋ARM7のステートを１にする。
-		
         // TWL/NTRモード判定
         if ( ! dh->s.platform_code ||
              (SYSM_IsRunOnDebugger() && ((SYSMRomEmuInfo*)HOTSW_GetRomEmulationBuffer())->isForceNTRMode) )
@@ -211,6 +213,18 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
         {
             isNtrMode = FALSE;
         }
+		
+		// NTRモード時にはARM9やDMAがメインメモリをアクセスしていないタイミングでデータ非保持モードへ切り替え（フリーズ対策）
+		if ( isNtrMode )
+		{
+            // ARM9がOS_Haltに達するまで待つ（0.1msec）
+            OS_SpinWait(HW_CPU_CLOCK_ARM7 / 10000);
+			BOOTi_SetMainMemModeForNTR();
+		}
+		
+		BOOTi_ClearREG_RAM();							// ARM7側のメモリ＆レジスタクリア。
+		reg_MI_MBK9 = 0;								// 全WRAMのロック解除
+		reg_PXI_MAINPINTF = MAINP_SEND_IF | 0x0100;		// ARM9に対してブートするようIRQで要求＋ARM7のステートを１にする。
 		
 		// 鍵情報の引渡しを行う。
 		// ブートアプリのROMヘッダのaccessKeyControl情報を見て判定
@@ -355,6 +369,26 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
                 DS_InsertWLPatch( dh );
             }
 		}
+}
+
+static void BOOTi_SetMainMemModeForNTR( void )
+{
+    BOOTi_SetMainMemModeForNTRCore(HW_TWL_MAIN_MEM_END - 2);
+    BOOTi_SetMainMemModeForNTRCore(HW_TWL_MAIN_MEM_EX_END - 2);
+}
+
+asm void BOOTi_SetMainMemModeForNTRCore( u32 addr )
+{
+        ldr     r1,  =MMEM_TCR0
+        ldr     r2,  =MMEM_TCR1_DS
+        ldrh    r3, [r0]
+        strh    r3, [r0]
+        strh    r3, [r0]
+        ldr     r3,  =MMEM_TCR2
+        strh    r1, [r0]
+        strh    r2, [r0]
+        strh    r3, [r0]
+        bx      lr
 }
 
 static void BOOTi_ClearREG_RAM( void )
