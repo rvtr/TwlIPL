@@ -635,45 +635,63 @@ ECSrlResult RCSrl::mrc( FILE *fp )
 ECSrlResult RCSrl::mrcNTR( FILE *fp )
 {
 	System::Int32  i;
+	System::Boolean result;
 
 	// ROMヘッダのチェック
 
 	// 文字コードチェック
+	result = true;
 	for( i=0; i < TITLE_NAME_MAX; i++ )
 	{
 		char c = this->pRomHeader->s.title_name[i];
 		if( ((c < 0x20) || (0x5f < c)) && (c != 0x00) )
 		{
-			this->hErrorList->Add( gcnew RCMRCError( 
-				"ソフトタイトル", 0x0, 0xb, "使用不可のASCIIコードが使用されています。",
-				"Game Title", "Unusable ASCII code is used.", false ) );
+			result = false;
 		}
 	}
+	if( !result )
+	{
+		this->hErrorList->Add( gcnew RCMRCError( 
+			"ソフトタイトル", 0x0, 0xb, "使用不可のASCIIコードが使用されています。",
+			"Game Title", "Unusable ASCII code is used.", false, true ) );
+	}
+
+	result = true;
 	for( i=0; i < GAME_CODE_MAX; i++ )
 	{
 		char c = this->pRomHeader->s.game_code[i];
-		if( (c < 0x20) || (0x5f < c) )
+		if( ((c < 0x20) || (0x5f < c)) && (c != 0x00) )
 		{
-			this->hErrorList->Add( gcnew RCMRCError( 
-				"イニシャルコード", 0xc, 0xf, "使用不可のASCIIコードが使用されています。",
-				"Game Code", "Unusable ASCII code is used.", false ) );
+			result = false;
 		}
+	}
+	if( !result )
+	{
+		this->hErrorList->Add( gcnew RCMRCError( 
+			"イニシャルコード", 0xc, 0xf, "使用不可のASCIIコードが使用されています。",
+			"Game Code", "Unusable ASCII code is used.", false, true ) );
 	}
 	if( memcmp( this->pRomHeader->s.game_code, "NTRJ", GAME_CODE_MAX ) == 0 )
 	{
 		this->hErrorList->Add( gcnew RCMRCError( 
 			"イニシャルコード", 0xc, 0xf, "SDKデフォルトのコード(NTRJ)が使用されています。",
-			"Game Code", "SDK default code(NTRJ) is used.", false ) );
+			"Game Code", "SDK default code(NTRJ) is used.", false, true ) );
 	}
+
+	result = true;
 	for( i=0; i < MAKER_CODE_MAX; i++ )
 	{
 		char c = this->pRomHeader->s.maker_code[i];
-		if( (c < 0x20) || (0x5f < c) )
+		if( ((c < 0x20) || (0x5f < c)) && (c != 0x00) )
 		{
-			this->hErrorList->Add( gcnew RCMRCError(
-				"メーカーコード", 0x10, 0x11, "使用不可のASCIIコードが使用されています。",
-				"Maker Code", "Unusable ASCII code is used.", false ) );
+			result = false;
 		}
+	}
+	if( !result )
+	{
+		this->hErrorList->Add( gcnew RCMRCError(
+			"メーカーコード", 0x10, 0x11, "使用不可のASCIIコードが使用されています。",
+			"Maker Code", "Unusable ASCII code is used.", false, true ) );
 	}
 
 	// 値チェック
@@ -681,7 +699,7 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 	{
 		this->hErrorList->Add( gcnew RCMRCError( 
 			"デバイスタイプ", 0x13, 0x13, "不正な値です。00hを設定してください。",
-			"Device Type", "Invalid data. Please set 00h.", false ) );
+			"Device Type", "Invalid data. Please set 00h.", false, true ) );
 	}
 	fseek( fp, 0, SEEK_END );
 	u32  filesize = ftell(fp);	// 実ファイルサイズ(単位Mbit)
@@ -690,44 +708,38 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 	{
 		this->hErrorList->Add( gcnew RCMRCError( 
 			"デバイス容量", 0x14, 0x14, "実ファイルサイズよりも小さい値が指定されています。",
-			"Device Capacity", "Setting data is less than the actual file size.", false ) );
+			"Device Capacity", "Setting data is less than the actual file size.", false, true ) );
 	}
 	else if( filesize < (romsize*1024*1024/8) )
 	{
 		this->hWarnList->Add( gcnew RCMRCError(		// 警告
 			"デバイス容量", 0x14, 0x14, "実ファイルサイズに比べて無駄のある値が設定されています。",
-			"Device Capacity", "Setting data is larger than the actual file size.", false ) );
+			"Device Capacity", "Setting data is larger than the actual file size.", false, true ) );
 	}
 	if( (filesize % 2) != 0 )
 	{
 		this->hErrorList->Add( gcnew RCMRCError( 
 			"実ファイルサイズ", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, "中途半端な値です。通常では2のべき乗の値です。",
-			"Actual File Size", "Invalid size. This size is usually power of 2.", false ) );
+			"Actual File Size", "Invalid size. This size is usually power of 2.", false, true ) );
 	}
 	u8 romver = this->pRomHeader->s.rom_version;
 	if( ((romver < 0x00) || (0x09 < romver)) && (romver != 0xE0) )
 	{
 		this->hErrorList->Add( gcnew RCMRCError( 
 			"リマスターバージョン", 0x1e, 0x1e, "不正な値です。正式版では01h-09hのいずれかの値、事前版ではE0hです。",
-			"Release Ver.", "Invalid data. Please set either one of 01h-09h(Regular ver.), or E0h(Preliminary ver.)", false ) );
-	}
-	if( this->pRomHeader->s.warning_no_spec_rom_speed != 0 )
-	{
-		this->hErrorList->Add( gcnew RCMRCError( 
-			"諸フラグ", 0x1f, 0x1f, "rsfファイルでROMSpeedTypeが設定されていません。",
-			"Setting Flags", "In a RSF file, the item \"ROMSpeedType\" is not set.", false ) );
+			"Release Ver.", "Invalid data. Please set either one of 01h-09h(Regular ver.), or E0h(Preliminary ver.)", false, true ) );
 	}
 	if( this->pRomHeader->s.banner_offset == 0 )
 	{
 		this->hErrorList->Add( gcnew RCMRCError( 
 			"バナーオフセット", 0x68, 0x6b, "バナーデータが設定されていません。",
-			"Banner Offset.", "Banner data is not set.", false ) );
+			"Banner Offset.", "Banner data is not set.", false, true ) );
 	}
 	if( this->pRomHeader->s.rom_valid_size == 0 )
 	{
 		this->hErrorList->Add( gcnew RCMRCError( 
 			"ROM実効サイズ", 0x80, 0x83, "値が設定されていません。",
-			"ROM Valid Size.", "Data is not set.", false ) );
+			"ROM Valid Size.", "Data is not set.", false, true ) );
 	}
 
 	// CRC
@@ -745,7 +757,7 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 		{
 			this->hErrorList->Add( gcnew RCMRCError( 
 				"セキュア領域CRC", 0x15e, 0x15f, "セキュア領域のアドレス指定が不正です。",
-				"Secure Area CRC.", "Illegal address of secure area.", false ) );
+				"Secure Area CRC.", "Illegal address of secure area.", false, true ) );
 		}
 		secures = new u8[secure_size];      // never return if not allocated
 		fseek( fp, (u32)this->pRomHeader->s.main_rom_offset, SEEK_SET );
@@ -760,7 +772,7 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 		{
 			this->hErrorList->Add( gcnew RCMRCError( 
 				"セキュア領域CRC", 0x07c, 0x07d, "計算結果と一致しません。セキュア領域が改ざんされた可能性があります。",
-				"Secure Area CRC.", "Calclated CRC is different from Registered one.", false ) );
+				"Secure Area CRC.", "Calclated CRC is different from Registered one.", false, true ) );
 		}
 	}
 
@@ -770,7 +782,7 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 	{
 		this->hErrorList->Add( gcnew RCMRCError( 
 			"キャラクターデータCRC", 0x15c, 0x15d, "計算結果と一致しません。キャラクターデータが改ざんされた可能性があります。",
-			"Charactor Data CRC.", "Calclated CRC is different from Registered one.", false ) );
+			"Charactor Data CRC.", "Calclated CRC is different from Registered one.", false, true ) );
 	}
 
 	// ヘッダCRC
@@ -779,7 +791,7 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 	{
 		this->hErrorList->Add( gcnew RCMRCError( 
 			"ROMヘッダCRC", 0x15e, 0x15f, "計算結果と一致しません。ROMヘッダが改ざんされた可能性があります。",
-			"ROM Header CRC.", "Calclated CRC is different from Registered one.", false ) );
+			"ROM Header CRC.", "Calclated CRC is different from Registered one.", false, true ) );
 	}
 
 	// 予約領域
@@ -789,7 +801,7 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 		{
 			this->hErrorList->Add( gcnew RCMRCError( 
 				"ROM情報予約領域", 0x078, 0x07f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-				"Reserved Area for ROM Info.", "Invalid data is included. Please set 0 into this area.", false ) );
+				"Reserved Area for ROM Info.", "Invalid data is included. Please set 0 into this area.", false, true ) );
 		}
 	}
 	for( i=0; i < 32; i++ )
@@ -798,7 +810,7 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 		{
 			this->hErrorList->Add( gcnew RCMRCError( 
 				"予約領域C", 0x078, 0x07f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-				"Reserved Area C", "Invalid data is included. Please set 0 into this area.", false ) );
+				"Reserved Area C", "Invalid data is included. Please set 0 into this area.", false, true ) );
 		}
 	}
 
@@ -821,7 +833,7 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 	{
 		this->hErrorList->Add( gcnew RCMRCError( 
 			"システムコールライブラリ", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, "SDKデフォルトです。",
-			"System-Call Library", "This Library is SDK default one.", false ) );
+			"System-Call Library", "This Library is SDK default one.", false, true ) );
 	}
 
 	return ECSrlResult::NOERROR;
@@ -848,13 +860,19 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 	{
 		this->hErrorList->Add( gcnew RCMRCError( 
 			"デバイス容量", 0x14, 0x14, "指定可能な容量ではありません。",
-			"Device Capacity", "Invalid capacity.", false ) );
+			"Device Capacity", "Invalid capacity.", false, true ) );
+	}
+	if( this->pRomHeader->s.warning_no_spec_rom_speed != 0 )
+	{
+		this->hWarnList->Add( gcnew RCMRCError( 
+			"諸フラグ", 0x1f, 0x1f, "rsfファイルでROMSpeedTypeが設定されていません。",
+			"Setting Flags", "In a RSF file, the item \"ROMSpeedType\" is not set.", false, true ) );
 	}
 	if( (this->pRomHeader->s.game_cmd_param & CARD_LATENCY_MASK) != CARD_1TROM_GAME_LATENCY )
 	{
 		this->hErrorList->Add( gcnew RCMRCError( 
 			"ROMコントロール情報", 0x60, 0x67, "TWLではマスクROMは用意されていません。ワンタイムPROM設定にしてください。",
-			"ROM Control Info.", "Mask ROM can be set. Please set One-time PROM.", false ) );
+			"ROM Control Info.", "Mask ROM can be set. Please set One-time PROM.", false, true ) );
 	}
 
 	// 予約領域
@@ -864,7 +882,7 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		{
 			this->hErrorList->Add( gcnew RCMRCError( 
 				"予約領域A", 0x015, 0x01b, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-				"Reserved Area A", "Invalid data is included. Please set 0 into this area.", false ) );
+				"Reserved Area A", "Invalid data is included. Please set 0 into this area.", false, true ) );
 		}
 	}
 	for( i=0; i < 39; i++ )
@@ -873,7 +891,7 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		{
 			this->hErrorList->Add( gcnew RCMRCError( 
 				"予約領域B", 0x099, 0x0bf, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-				"Reserved Area B", "Invalid data is included. Please set 0 into this area.", false ) );
+				"Reserved Area B", "Invalid data is included. Please set 0 into this area.", false, true ) );
 		}
 	}
 
@@ -917,14 +935,14 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		{
 			this->hWarnList->Add( gcnew RCMRCError( 
 				"アプリ種別", 0x230, 0x237, "不正な値です。",
-				"Application Type", "Illigal type.", false ) );
+				"Application Type", "Illigal type.", false, true ) );
 		}
 #ifdef METWL_VER_APPTYPE_USER
 		if( apptype != appUser )
 		{
 			this->hWarnList->Add( gcnew RCMRCError( 
 				"アプリ種別", 0x230, 0x237, "ユーザアプリではありません。",
-				"Application Type", "Not USER application.", false ) );
+				"Application Type", "Not USER application.", false, true ) );
 		}
 #endif
 #ifdef METWL_VER_APPTYPE_SYSTEM
@@ -958,14 +976,14 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 	{
 		this->hErrorList->Add( gcnew RCMRCError( 
 			"アクセスコントロール情報", 0x1b4, 0x1b7, "ゲームカード電源設定にノーマルモードとNTRモードの両方を設定することはできません。",
-			"Access Control Info.", "Game card power setting is either normal mode or NTR mode.", false ) );
+			"Access Control Info.", "Game card power setting is either normal mode or NTR mode.", false, true ) );
 	}
 	if( ((this->pRomHeader->s.titleID_Hi & TITLE_ID_HI_MEDIA_MASK) == 0) &&		// カードアプリ
 		((this->pRomHeader->s.access_control.game_card_on != 0) || (this->pRomHeader->s.access_control.game_card_nitro_mode != 0)) )
 	{
 		this->hErrorList->Add( gcnew RCMRCError( 
 			"アクセスコントロール情報", 0x1b4, 0x1b7, "ゲームカード用ソフトに対してゲームカード電源設定をすることはできません。",
-			"Access Control Info.", "Game card power setting is not for Game Card Soft.", false ) );
+			"Access Control Info.", "Game card power setting is not for Game Card Soft.", false, true ) );
 	}
 	if( this->pRomHeader->s.access_control.shared2_file == 0 )
 	{
@@ -975,7 +993,7 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		{
 			this->hErrorList->Add( gcnew RCMRCError( 
 				"アクセスコントロール情報", 0x1b4, 0x1b7, "Shared2ファイルのサイズが設定されているにもかかわらず不使用設定になっています。",
-				"Access Control Info.", "Sizes of shared2 files is setting, but using them is not enabled.", false ) );
+				"Access Control Info.", "Sizes of shared2 files is setting, but using them is not enabled.", false, true ) );
 		}
 	}
 
@@ -983,7 +1001,7 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 	{
 		this->hWarnList->Add( gcnew RCMRCError( 
 			"SCFG設定", 0x1b8, 0x1bb, "SCFGレジスタへアクセス可能になっています。",
-			"SCFG Setting", "In this setting, SCFG register is accessible.", false ) );
+			"SCFG Setting", "In this setting, SCFG register is accessible.", false, true ) );
 	}
 
 	if( (this->pRomHeader->s.titleID_Lo[0] != this->pRomHeader->s.game_code[3]) ||
@@ -993,7 +1011,7 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 	{
 		this->hWarnList->Add( gcnew RCMRCError( 
 			"タイトルID", 0x230, 0x233, "下位4バイトがイニシャルコードと一致しません。",
-			"Title ID", "Lower 4 bytes don't match ones of Game Code.", false ) );
+			"Title ID", "Lower 4 bytes don't match ones of Game Code.", false, true ) );
 	}
 
 	for( i=0; i < (0x2f0 - 0x240); i++ )
@@ -1002,7 +1020,7 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		{
 			this->hErrorList->Add( gcnew RCMRCError( 
 				"予約領域F", 0x240, 0x2ef, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-				"Reserved Area F", "Invalid data is included. Please set 0 into this area.", false ) );
+				"Reserved Area F", "Invalid data is included. Please set 0 into this area.", false, true ) );
 		}
 	}
 
@@ -1013,7 +1031,7 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		{
 			this->hErrorList->Add( gcnew RCMRCError( 
 				"予約領域D", 0x378, 0xf7f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-				"Reserved Area D", "Invalid data is included. Please set 0 into this area.", false ) );
+				"Reserved Area D", "Invalid data is included. Please set 0 into this area.", false, true ) );
 		}
 	}
 
@@ -1105,7 +1123,7 @@ System::Boolean RCSrl::mrcRegion( System::UInt32 region )
 		{
 			this->hErrorList->Add( gcnew RCMRCError( 
 				"カードリージョン", 0x1b0, 0x1b3, "仕向地の組み合わせが不正です。本ツールを用いて修正してください。",
-				"Card Region", "Illigal Region. Please modify this information using this tool.", true ) );
+				"Card Region", "Illigal Region. Please modify this information using this tool.", true, true ) );
 			bRegionResult = false;
 		}
 #endif
@@ -1121,8 +1139,9 @@ System::Boolean RCSrl::mrcRegion( System::UInt32 region )
 		this->hWarnList->Add( gcnew RCMRCError( 
 			"ペアレンタルコントロール情報", 0x2f0, 0x2ff, 
 			"仕向地の設定が不正のため、ROMデータ内のすべてのレーティング団体の情報を無視して読み込みました。本ツールを用いて修正してください。",
-			"Parental Control", "Illigal region. In reading, therefore, settings for all rating organizations are ignored. Please set this infomation using this tool.", 
-			true ) );
+			"Parental Control", 
+			"Illigal region. In reading, therefore, settings for all rating organizations are ignored. Please set this infomation using this tool.", 
+			true, true ) );
 	}
 	return bRegionResult;
 }
@@ -1243,7 +1262,7 @@ void RCSrl::mrcRegionOrganization( System::UInt32 region )
 		{
 			this->hWarnList->Add( gcnew RCMRCError( 
 				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, ognArray[ogn] + warnEmptyJ,
-				"Parental Control", ognArray[ogn] + warnEmptyE, true ) );
+				"Parental Control", ognArray[ogn] + warnEmptyE, true, true ) );
 			this->clearParentalControl( ogn );
 		}
 	}
@@ -1261,7 +1280,7 @@ void RCSrl::mrcRegionOrganization( System::UInt32 region )
 	{
 		this->hWarnList->Add( gcnew RCMRCError( 
 			"ペアレンタルコントロール情報", 0x2f0, 0x2ff, warnFillJ,
-			"Parental Control", warnFillE, true ) );
+			"Parental Control", warnFillE, true, true ) );
 	}
 } //mrcRegion
 
@@ -1309,7 +1328,7 @@ void RCSrl::mrcRating( System::Byte ogn )
 	{
 		this->hWarnList->Add( gcnew RCMRCError( 
 			"ペアレンタルコントロール情報", 0x2f0, 0x2ff, ognArray[ ogn ] + warnDisableJ,
-			"Parental Control", ognArray[ ogn ] + warnDisableE, true ) );
+			"Parental Control", ognArray[ ogn ] + warnDisableE, true, true ) );
 		this->clearParentalControl( ogn );
 	}
 	else
@@ -1325,7 +1344,7 @@ void RCSrl::mrcRating( System::Byte ogn )
 			{
 				this->hWarnList->Add( gcnew RCMRCError( 
 					"ペアレンタルコントロール情報", 0x2f0, 0x2ff, ognArray[ ogn ] + warnIllegalJ,
-					"Parental Control", ognArray[ ogn ] + warnIllegalE, true ) );
+					"Parental Control", ognArray[ ogn ] + warnIllegalE, true, true ) );
 				this->clearParentalControl( ogn );
 			}
 		}
@@ -1334,7 +1353,7 @@ void RCSrl::mrcRating( System::Byte ogn )
 			// RPが立っていたら問答無用に警告
 			this->hWarnList->Add( gcnew RCMRCError( 
 				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, ognArray[ ogn ] + warnPendingJ,
-				"Parental Control", ognArray[ ogn ] + warnPendingE, true ) );
+				"Parental Control", ognArray[ ogn ] + warnPendingE, true, true ) );
 			this->clearParentalControl( ogn );
 		}
 	}

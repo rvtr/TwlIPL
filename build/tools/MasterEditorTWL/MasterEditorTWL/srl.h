@@ -129,12 +129,13 @@ namespace MasterEditorTWL
 		System::String  ^hNameE;	// 英語版
 		System::String  ^hMsgE;
 		System::Boolean ^hEnableModify;	// マスタエディタで修正可能かどうか
+		System::Boolean ^hAffectRom;	// 変更するとSRL(ROMバイナリ)が変更されるか
 	private:
 		RCMRCError(){}		// 封じる
 	public:
 		RCMRCError( 
 			System::String ^name,  System::UInt32 beg,   System::UInt32 end, System::String ^msg, 
-			System::String ^nameE, System::String ^msgE, System::Boolean enableModify )
+			System::String ^nameE, System::String ^msgE, System::Boolean enableModify, System::Boolean affectRom )
 		{
 			if( name == nullptr )
 				this->hName = gcnew System::String("");
@@ -160,11 +161,16 @@ namespace MasterEditorTWL
 				this->hMsgE = msgE;
 
 			this->hEnableModify = gcnew System::Boolean( enableModify );
+			this->hAffectRom    = gcnew System::Boolean( affectRom );
 		}
 	public:
 		property System::Boolean EnableModify
 		{
-			System::Boolean get(){ return *(this->hEnableModify); }
+			System::Boolean get(){ return *(this->hEnableModify); }		// Read Only
+		}
+		property System::Boolean AffectRom
+		{
+			System::Boolean get(){ return *(this->hAffectRom); }
 		}
 	public:
 		// gridViewの表示形式にあわせる

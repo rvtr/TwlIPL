@@ -626,7 +626,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 	private: System::Windows::Forms::TextBox^  tboxFile;
 	protected: 
 
-	private: System::Windows::Forms::TextBox^  tboxMsg;
+
 	private: System::Windows::Forms::GroupBox^  gboxSrl;
 	private: System::Windows::Forms::TextBox^  tboxTitleName;
 
@@ -646,7 +646,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 		void InitializeComponent(void)
 		{
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
-			this->tboxMsg = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
 			this->tboxRomSize = (gcnew System::Windows::Forms::TextBox());
@@ -891,11 +890,11 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->colWarnEnd = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->colWarnCause = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->gridError = (gcnew System::Windows::Forms::DataGridView());
-			this->labFile = (gcnew System::Windows::Forms::Label());
-			this->colErrorCause = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
-			this->colErrorEnd = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
-			this->colErrorBegin = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->colErrorName = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->colErrorBegin = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->colErrorEnd = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->colErrorCause = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->labFile = (gcnew System::Windows::Forms::Label());
 			this->gboxSrl->SuspendLayout();
 			this->gboxCRC->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->numEULA))->BeginInit();
@@ -938,14 +937,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->tboxFile->TabIndex = 0;
 			this->tboxFile->DragDrop += gcnew System::Windows::Forms::DragEventHandler(this, &Form1::tboxFile_DragDrop);
 			this->tboxFile->DragEnter += gcnew System::Windows::Forms::DragEventHandler(this, &Form1::tboxFile_DragEnter);
-			// 
-			// tboxMsg
-			// 
-			this->tboxMsg->Location = System::Drawing::Point(12, 486);
-			this->tboxMsg->Name = L"tboxMsg";
-			this->tboxMsg->ReadOnly = true;
-			this->tboxMsg->Size = System::Drawing::Size(745, 19);
-			this->tboxMsg->TabIndex = 2;
 			// 
 			// gboxSrl
 			// 
@@ -3272,7 +3263,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->tabError->Name = L"tabError";
 			this->tabError->Size = System::Drawing::Size(741, 352);
 			this->tabError->TabIndex = 5;
-			this->tabError->Text = L"エラー(要修正)";
+			this->tabError->Text = L"エラー情報(要修正)";
 			this->tabError->UseVisualStyleBackColor = true;
 			this->tabError->Click += gcnew System::EventHandler(this, &Form1::tabError_Click);
 			// 
@@ -3400,6 +3391,34 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->gridError->Size = System::Drawing::Size(699, 103);
 			this->gridError->TabIndex = 37;
 			// 
+			// colErrorName
+			// 
+			this->colErrorName->HeaderText = L"項目名";
+			this->colErrorName->Name = L"colErrorName";
+			this->colErrorName->ReadOnly = true;
+			this->colErrorName->Width = 120;
+			// 
+			// colErrorBegin
+			// 
+			this->colErrorBegin->HeaderText = L"開始";
+			this->colErrorBegin->Name = L"colErrorBegin";
+			this->colErrorBegin->ReadOnly = true;
+			this->colErrorBegin->Width = 60;
+			// 
+			// colErrorEnd
+			// 
+			this->colErrorEnd->HeaderText = L"終了";
+			this->colErrorEnd->Name = L"colErrorEnd";
+			this->colErrorEnd->ReadOnly = true;
+			this->colErrorEnd->Width = 60;
+			// 
+			// colErrorCause
+			// 
+			this->colErrorCause->AutoSizeMode = System::Windows::Forms::DataGridViewAutoSizeColumnMode::Fill;
+			this->colErrorCause->HeaderText = L"要因";
+			this->colErrorCause->Name = L"colErrorCause";
+			this->colErrorCause->ReadOnly = true;
+			// 
 			// labFile
 			// 
 			this->labFile->AutoSize = true;
@@ -3409,43 +3428,14 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->labFile->TabIndex = 36;
 			this->labFile->Text = L"ROMデータファイル";
 			// 
-			// colErrorCause
-			// 
-			this->colErrorCause->AutoSizeMode = System::Windows::Forms::DataGridViewAutoSizeColumnMode::Fill;
-			this->colErrorCause->HeaderText = L"要因";
-			this->colErrorCause->Name = L"colErrorCause";
-			this->colErrorCause->ReadOnly = true;
-			// 
-			// colErrorEnd
-			// 
-			this->colErrorEnd->HeaderText = L"終了";
-			this->colErrorEnd->Name = L"colErrorEnd";
-			this->colErrorEnd->ReadOnly = true;
-			this->colErrorEnd->Width = 60;
-			// 
-			// colErrorBegin
-			// 
-			this->colErrorBegin->HeaderText = L"開始";
-			this->colErrorBegin->Name = L"colErrorBegin";
-			this->colErrorBegin->ReadOnly = true;
-			this->colErrorBegin->Width = 60;
-			// 
-			// colErrorName
-			// 
-			this->colErrorName->HeaderText = L"項目名";
-			this->colErrorName->Name = L"colErrorName";
-			this->colErrorName->ReadOnly = true;
-			this->colErrorName->Width = 120;
-			// 
 			// Form1
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 12);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
-			this->ClientSize = System::Drawing::Size(777, 519);
+			this->ClientSize = System::Drawing::Size(777, 482);
 			this->Controls->Add(this->labFile);
 			this->Controls->Add(this->tabMain);
 			this->Controls->Add(this->tboxFile);
-			this->Controls->Add(this->tboxMsg);
 			this->Controls->Add(this->menuStripAbove);
 			this->MainMenuStrip = this->menuStripAbove;
 			this->Name = L"Form1";
@@ -3531,32 +3521,29 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			catch( System::IO::FileNotFoundException ^s )
 			{
 				(void)s;
-				this->tboxMsg->Text = "設定ファイルを開くことができませんでした。";
+				this->sucMsg( "設定ファイルを開くことができませんでした。", "Setting file can't be opened." );
 				return;
 			}
 
 			// <init>タグ : ルート
 			System::Xml::XmlElement ^root = doc->DocumentElement;
-			System::String ^msg = gcnew System::String("");
 
 			// <rw>タグ
+			System::Boolean bReadOnly = false;
 			System::Xml::XmlNodeList ^rwlist = root->GetElementsByTagName( "rw" );
 			if( rwlist != nullptr )
 			{
 				System::Xml::XmlNode     ^rw = rwlist->Item(0);
 				if( rw->FirstChild->Value->Equals( "r" ) )
 				{
-					// リードオンリモード
-					this->disableForms();
-					if( !System::String::IsNullOrEmpty(msg) )
-					{
-						msg += "・";
-					}
-					msg += "リードオンリモード";
+					// リードオンリーモード
+					this->readOnly();
+					bReadOnly = true;
 				}
 			}
 
 			// <output>タグ
+			System::Boolean bXML = false;
 			System::Xml::XmlNodeList ^outlist = root->GetElementsByTagName( "output" );
 			if( outlist != nullptr )
 			{
@@ -3564,19 +3551,26 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				if( out->FirstChild->Value->Equals( "XML" ) )
 				{
 					// ノーマルXML出力モード
-					this->disableForms();
-					if( !System::String::IsNullOrEmpty(msg) )
-					{
-						msg += "・";
-					}
-					msg += "XML文書出力モード";
+					bXML = true;
 				}
 			}
-			if( !System::String::IsNullOrEmpty(msg) )
+
+			if( bReadOnly || bXML )
 			{
-				msg += "で動作しています。";
+				System::String ^msgJ = gcnew System::String("動作モード:");
+				System::String ^msgE = gcnew System::String("Processing Mode:");
+				if( bReadOnly )
+				{
+					msgJ += "\n  リードオンリーモード";
+					msgE += "\n  Read Only Mode";
+				}
+				if( bXML )
+				{
+					msgJ += "\n  XML出力モード";
+					msgE += "\n  XML Output Mode";
+				}
+				this->sucMsg( msgJ, msgE );
 			}
-			this->tboxMsg->Text = msg;
 		}
 
 	private:
@@ -3589,17 +3583,12 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				switch( result )
 				{
 					case ECSrlResult::ERROR_PLATFORM:
-						if( this->stripItemJapanese->Checked == true )
-							this->errMsg( "本ツールはTWL対応ROM専用です。NTR専用ROMなどのTWL対応ROM以外を読み込むことはできません。" );
-						else
-							this->errMsg( "This tool can only read TWL ROM. This can't read Other data e.g. NTR limited ROM." );
+						this->errMsg( "本ツールはTWL対応ROM専用です。NTR専用ROMなどのTWL非対応ROMを読み込むことはできません。",
+									  "This tool can only read TWL ROM. This can't read Other data e.g. NTR limited ROM." );
 					break;
 
 					default:
-						if( this->stripItemJapanese->Checked == true )
-							this->errMsg( "リードに失敗しました。" );
-						else
-							this->errMsg( "Reading the file failed." );
+						this->errMsg( "ROMデータファイルの読み込みに失敗しました。", "Reading the ROM data file failed." );
 					break;
 				}
 				return;							// 前のファイルが正常である保証なしなので前のファイルも上書き保存できないようにする
@@ -3613,21 +3602,15 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			u16  crc;
 			if( !getWholeCRCInFile( filename, &crc ) )
 			{
-				if( this->stripItemJapanese->Checked == true )
-					this->errMsg( "CRCの計算に失敗しました。" );
-				else
-					this->errMsg( "Calc CRC failed." );
+				this->errMsg( "ROMデータのCRC計算に失敗しました。ROMデータの読み込みはキャンセルされました。",
+					          "Calculating CRC of the ROM data failed. Therefore reading ROM data is canceled." );
 				return;
 			}
 			System::UInt16 ^hcrc = gcnew System::UInt16( crc );
 			this->tboxWholeCRC->Clear();
 			this->tboxWholeCRC->AppendText( "0x" );
 			this->tboxWholeCRC->AppendText( hcrc->ToString("X") );
-
-			if( this->stripItemJapanese->Checked == true )
-				this->tboxMsg->Text  = "ファイルオープンに成功しました。";
-			else
-				this->tboxMsg->Text  = "Opening the file succeeded.";
+			this->sucMsg( "ROMデータファイルのオープンに成功しました。", "The ROM data file is opened successfully." );
 		} // openSrl
 
 	private:
@@ -3648,16 +3631,10 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// コピーしたファイルにROMヘッダを上書き
 			if( this->hSrl->writeToFile( filename ) != ECSrlResult::NOERROR )
 			{
-				if( this->stripItemJapanese->Checked == true )
-					this->errMsg( "保存に失敗しました。" );
-				else
-					this->errMsg( "Saving the file failed." );
+				this->errMsg( "ROMデータの保存に失敗しました。", "Saving the ROM data file failed." );
 				return;
 			}
-			if( this->stripItemJapanese->Checked == true )
-				this->tboxMsg->Text = "保存が成功しました。";
-			else
-				this->tboxMsg->Text = "Saving the file succeeded.";
+			this->sucMsg( "ROMデータの保存が成功しました。", "Saving the ROM data file succeeded." );
 			this->tboxFile->Text = filename;
 
 			// 再リード
@@ -3670,7 +3647,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 		// ----------------------------------------------
 
 		// 設定/選択可能なフォームをすべて disable にする
-		void disableForms( void )
+		void readOnly( void )
 		{
 			this->cboxIsEULA->Enabled = false;
 			this->numEULA->Enabled    = false;
@@ -3748,10 +3725,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 
 			if( this->hSrl->hPlatform == nullptr )
 			{
-				if( this->stripItemJapanese->Checked == true )
-					this->errMsg( "プラットホーム指定が不正です。ROMデータのビルド設定を見直してください。" );
-				else
-					this->errMsg( "Illegal Platform: Please check build settings of the ROM data." );
+				this->errMsg( "プラットホーム指定が不正です。ROMデータのビルド設定を見直してください。",
+							  "Illegal Platform: Please check build settings of the ROM data.");
 			}
 
 			// TWL拡張情報
@@ -4304,7 +4279,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 		// ----------------------------------------------
 
 		// テキスト入力がされているかチェック
-		System::Boolean checkTextForm( System::String ^formtext, System::String ^labelJ, System::String ^labelE )
+		System::Boolean checkTextForm( System::String ^formtext, System::String ^labelJ, System::String ^labelE, System::Boolean affectRom )
 		{
 			System::String ^msgJ = gcnew System::String( "入力されていません。" );
 			System::String ^msgE = gcnew System::String( "No setting. Please retry to input." );
@@ -4312,39 +4287,41 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			System::String ^tmp = formtext->Replace( " ", "" );		// スペースのみの文字列もエラー
 			if( (formtext == nullptr) || formtext->Equals("") || tmp->Equals("") )
 			{
-				this->hErrorList->Add( gcnew RCMRCError( labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true ) );
+				this->hErrorList->Add( gcnew RCMRCError( labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true, affectRom ) );
 				return false;
 			}
 			return true;
 		}
 		// 数値入力が正常かどうかチェック
-		System::Boolean checkNumRange( System::Int32 val, System::Int32 min, System::Int32 max, System::String ^labelJ, System::String ^labelE )
+		System::Boolean checkNumRange( 
+			System::Int32 val, System::Int32 min, System::Int32 max, System::String ^labelJ, System::String ^labelE, System::Boolean affectRom )
 		{
 			System::String ^msgJ = gcnew System::String( "値の範囲が不正です。やり直してください。" );
 			System::String ^msgE = gcnew System::String( "Invalidate range of value. Please retry." );
 
 			if( (val < min) || (max < val) )
 			{
-				this->hErrorList->Add( gcnew RCMRCError( labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true ) );
+				this->hErrorList->Add( gcnew RCMRCError( labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true, affectRom ) );
 				return false;
 			}
 			return true;
 		}
-		System::Boolean checkNumRange( System::String ^strval, System::Int32 min, System::Int32 max, System::String ^labelJ, System::String ^labelE )
+		System::Boolean checkNumRange( System::String ^strval, System::Int32 min, System::Int32 max, 
+									   System::String ^labelJ, System::String ^labelE, System::Boolean affectRom )
 		{
 			try
 			{
 				System::Int32  i = System::Int32::Parse(strval);
-				return (this->checkNumRange( i, min, max, labelJ, labelE ));
+				return (this->checkNumRange( i, min, max, labelJ, labelE, affectRom ));
 			}
 			catch ( System::FormatException ^ex )
 			{
 				(void)ex;
-				return (this->checkNumRange( max+1, min, max, labelJ, labelE ));
+				return (this->checkNumRange( max+1, min, max, labelJ, labelE, affectRom ));		// 必ず失敗するように max+1 を検査
 			}
 		}
 		// コンボボックスをチェック
-		System::Boolean checkBoxIndex( System::Windows::Forms::ComboBox ^box, System::String ^labelJ, System::String ^labelE )
+		System::Boolean checkBoxIndex( System::Windows::Forms::ComboBox ^box, System::String ^labelJ, System::String ^labelE, System::Boolean affectRom )
 		{
 			System::String ^msgJ = gcnew System::String( "選択されていません。やり直してください。" );
 			System::String ^msgE = gcnew System::String( "Not selected. Please retry." );
@@ -4352,7 +4329,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			if( box->SelectedIndex < 0 )
 			{
 				this->hWarnList->Add( gcnew RCMRCError( 
-					labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true ) );
+					labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true, affectRom ) );
 			}
 			return true;
 		}
@@ -4361,7 +4338,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 		System::Boolean checkSrlForms(void)
 		{
 			// リージョン
-			if( this->checkBoxIndex( this->combRegion, LANG_REGION_J, LANG_REGION_E ) == false )
+			if( this->checkBoxIndex( this->combRegion, LANG_REGION_J, LANG_REGION_E, true ) == false )
 				return false;
 
 			// リージョンを決める
@@ -4410,7 +4387,9 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 									  this->labPEGIBBFC->Text + " " + this->labPEGIBBFC2->Text );
 			this->checkParentalForms( bAustralia, this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC->Text );
 
-			return (this->hErrorList->Count > 0);
+			// ひととおりエラー登録をした後で
+			// SRLバイナリに影響を与えるエラーが存在するかチェック
+			return this->isErrorAffectRom();
 		}
 
 		// ペアレンタルコントロール関連のフォーム入力が正しいか書き込み前チェック
@@ -4430,14 +4409,14 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 					this->hWarnList->Add( gcnew RCMRCError( 
 						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
 						msg + ": レーティング審査を必要としないソフトであるとみなしてデータを保存します。",
-						"Parental Control", msg + ": Save ROM data as Game soft which needs rating examinination.", true ) );
+						"Parental Control", msg + ": Save ROM data as Game soft which needs rating examinination.", true, true ) );
 				}
 				else
 				{
 					this->hErrorList->Add( gcnew RCMRCError( 
 						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
 						msg + ": 制限が無効であるにもかかわらずレーティング情報が設定されています。",
-						"Parental Control", msg + "Rating can be set only when control is enable.", true ) );
+						"Parental Control", msg + "Rating can be set only when control is enable.", true, true ) );
 				}
 			}
 			else	// 有効フラグが立っているとき
@@ -4447,27 +4426,27 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 					this->hErrorList->Add( gcnew RCMRCError( 
 						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
 						msg + ": 制限が有効であるにもかかわらずレーティング情報が設定されていません。",
-						"Parental Control", msg + ": Rating must be set when control is enable.", true ) );
+						"Parental Control", msg + ": Rating must be set when control is enable.", true, true ) );
 				}
 				else if( always->Checked )
 				{
 					this->hWarnList->Add( gcnew RCMRCError( 
 						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
 						msg + ": Rating Pendingが指定されています。レーティング年齢が審査されしだい、再度、ROMを提出してください。",
-						"Parental Control", ": Rating Pending is setting. When rating age is examined, Please submit again.", true ) );
+						"Parental Control", ": Rating Pending is setting. When rating age is examined, Please submit again.", true, true ) );
 				}
 				else if( comb->SelectedIndex == (comb->Items->Count - 1) )
 				{
 					this->hErrorList->Add( gcnew RCMRCError( 
 						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
 						": Rating Pending指定とレーティング年齢を同時に指定することはできません。",
-						"Parental Control", ": Rating setting is either rating pending or rating age.", true ) );
+						"Parental Control", ": Rating setting is either rating pending or rating age.", true, true ) );
 				}
 			}
 		} //checkParentalForms()
 
 		// ----------------------------------------------
-		// マスタ書類情報をフォームから取得
+		// マスタ書類情報(SRL影響なし)をフォームから取得
 		// ----------------------------------------------
 
 		void setDeliverableProperties(void)
@@ -4625,78 +4604,137 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			}
 		}
 
-		// フォームの入力をチェックする
+		// ----------------------------------------------
+		// マスタ書類情報(SRL影響なし)のフォームチェック
+		// ----------------------------------------------
+
 		System::Boolean checkDeliverableForms(void)
 		{
 			// 不正な場合はダイアログで注意してreturn
 
 			// 提出情報
-			this->checkTextForm( this->tboxProductName->Text, LANG_PRODUCT_NAME_J, LANG_PRODUCT_NAME_E );
-			this->checkTextForm( this->tboxProductCode1->Text, LANG_PRODUCT_CODE_J, LANG_PRODUCT_CODE_E );
-			this->checkTextForm( this->tboxProductCode2->Text, LANG_PRODUCT_CODE_J, LANG_PRODUCT_CODE_E );
+			this->checkTextForm( this->tboxProductName->Text, LANG_PRODUCT_NAME_J, LANG_PRODUCT_NAME_E, false );	// SRL作成には問題のないエラー
+			this->checkTextForm( this->tboxProductCode1->Text, LANG_PRODUCT_CODE_J, LANG_PRODUCT_CODE_E, false );
+			this->checkTextForm( this->tboxProductCode2->Text, LANG_PRODUCT_CODE_J, LANG_PRODUCT_CODE_E, false );
 			if( this->cboxReleaseForeign->Checked == true )
 			{
-				this->checkTextForm( this->tboxProductNameForeign->Text, LANG_PRODUCT_NAME_F_J, LANG_PRODUCT_NAME_F_E );
-				this->checkTextForm( this->tboxProductCode1Foreign->Text, LANG_PRODUCT_CODE_F_J, LANG_PRODUCT_CODE_F_E );
-				this->checkTextForm( this->tboxProductCode2Foreign1->Text, LANG_PRODUCT_CODE_F_J, LANG_PRODUCT_CODE_F_E );
+				this->checkTextForm( this->tboxProductNameForeign->Text, LANG_PRODUCT_NAME_F_J, LANG_PRODUCT_NAME_F_E, false );
+				this->checkTextForm( this->tboxProductCode1Foreign->Text, LANG_PRODUCT_CODE_F_J, LANG_PRODUCT_CODE_F_E, false );
+				this->checkTextForm( this->tboxProductCode2Foreign1->Text, LANG_PRODUCT_CODE_F_J, LANG_PRODUCT_CODE_F_E, false );
 			}
 			if( this->rUsageOther->Checked == true )
 			{
-				this->checkTextForm( this->tboxUsageOther->Text, LANG_USAGE_J, LANG_USAGE_E );
+				this->checkTextForm( this->tboxUsageOther->Text, LANG_USAGE_J, LANG_USAGE_E, false );
 			}
 
 			// 会社情報
-			this->checkTextForm( this->tboxPerson1->Text, LANG_PERSON_1_J, LANG_PERSON_1_E );
-			this->checkTextForm( this->tboxCompany1->Text, LANG_COMPANY_J, LANG_COMPANY_E );
-			this->checkTextForm( this->tboxDepart1->Text, LANG_DEPART_J, LANG_DEPART_E );
+			this->checkTextForm( this->tboxPerson1->Text, LANG_PERSON_1_J, LANG_PERSON_1_E, false );
+			this->checkTextForm( this->tboxCompany1->Text, LANG_COMPANY_J, LANG_COMPANY_E, false );
+			this->checkTextForm( this->tboxDepart1->Text, LANG_DEPART_J, LANG_DEPART_E, false );
 			if( this->stripItemJapanese->Checked == true )
 			{
-				this->checkTextForm( this->tboxFurigana1->Text, LANG_FURIGANA_J, LANG_FURIGANA_J );
+				this->checkTextForm( this->tboxFurigana1->Text, LANG_FURIGANA_J, LANG_FURIGANA_J, false );
 			}
-			this->checkTextForm( this->tboxTel1->Text, LANG_TEL_J, LANG_TEL_E );
-			this->checkTextForm( this->tboxFax1->Text, LANG_FAX_J, LANG_FAX_E );
-			this->checkTextForm( this->tboxMail1->Text, LANG_MAIL_J, LANG_MAIL_E );
+			this->checkTextForm( this->tboxTel1->Text, LANG_TEL_J, LANG_TEL_E, false );
+			this->checkTextForm( this->tboxFax1->Text, LANG_FAX_J, LANG_FAX_E, false );
+			this->checkTextForm( this->tboxMail1->Text, LANG_MAIL_J, LANG_MAIL_E, false );
 			if( this->stripItemJapanese->Checked == true )
 			{
-				this->checkTextForm( this->tboxNTSC1->Text, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, LANG_NTSC_1_J + " " + LANG_NTSC_2_J );
+				this->checkTextForm( this->tboxNTSC1->Text, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, false );
 			}
 
 			if( this->cboxIsInputPerson2->Checked == true )
 			{
-				this->checkTextForm( this->tboxPerson2->Text, LANG_PERSON_2_J, LANG_PERSON_2_E );
-				this->checkTextForm( this->tboxCompany2->Text, LANG_COMPANY_J, LANG_COMPANY_E );
-				this->checkTextForm( this->tboxDepart2->Text, LANG_DEPART_J, LANG_DEPART_E );
+				this->checkTextForm( this->tboxPerson2->Text, LANG_PERSON_2_J, LANG_PERSON_2_E, false );
+				this->checkTextForm( this->tboxCompany2->Text, LANG_COMPANY_J, LANG_COMPANY_E, false );
+				this->checkTextForm( this->tboxDepart2->Text, LANG_DEPART_J, LANG_DEPART_E, false );
 				if( this->stripItemJapanese->Checked == true )
 				{
-					this->checkTextForm( this->tboxFurigana2->Text, LANG_FURIGANA_J, LANG_FURIGANA_J );
+					this->checkTextForm( this->tboxFurigana2->Text, LANG_FURIGANA_J, LANG_FURIGANA_J, false );
 				}
-				this->checkTextForm( this->tboxTel2->Text, LANG_TEL_J, LANG_TEL_E );
-				this->checkTextForm( this->tboxFax2->Text, LANG_FAX_J, LANG_FAX_E );
-				this->checkTextForm( this->tboxMail2->Text, LANG_MAIL_J, LANG_MAIL_E );
+				this->checkTextForm( this->tboxTel2->Text, LANG_TEL_J, LANG_TEL_E, false );
+				this->checkTextForm( this->tboxFax2->Text, LANG_FAX_J, LANG_FAX_E, false );
+				this->checkTextForm( this->tboxMail2->Text, LANG_MAIL_J, LANG_MAIL_E, false );
 				if( this->stripItemJapanese->Checked == true )
 				{
-					this->checkTextForm( this->tboxNTSC2->Text, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, LANG_NTSC_1_J + " " + LANG_NTSC_2_J );
+					this->checkTextForm( this->tboxNTSC2->Text, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, false );
 				}
 			}
 
 			// 一部のROM情報(SRLバイナリに反映されない情報)をここでチェックする
-			this->checkBoxIndex( this->combBackup, LANG_BACKUP_J, LANG_BACKUP_E );
+			this->checkBoxIndex( this->combBackup, LANG_BACKUP_J, LANG_BACKUP_E, false );
 			if( this->combBackup->SelectedIndex == (this->combBackup->Items->Count - 1) )
 			{
-				this->checkTextForm( this->tboxBackupOther->Text, LANG_BACKUP_J, LANG_BACKUP_E );
+				this->checkTextForm( this->tboxBackupOther->Text, LANG_BACKUP_J, LANG_BACKUP_E, false );
 			}
 
-			return (this->hErrorList->Count > 0);
+			// ひととおりエラー登録をした後で
+			// 書類上のエラー(SRLバイナリには影響しない)が存在するかチェック
+			return this->isErrorOnlyDeliverable();
 		}
 
 		// ----------------------------------------------
 		// エラー処理
 		// ----------------------------------------------
 
-		// エラーメッセージを出力
-		void errMsg( System::String ^str )
+		// SRLには関係しない書類上のエラーをチェック
+		System::Boolean isErrorOnlyDeliverable(void)
 		{
-			MessageBox::Show( str, "Error", MessageBoxButtons::OK, MessageBoxIcon::Error );
+			System::Int32 count = 0;
+
+			// SRLクラスのエラーリストはすべてSRLに関係するのでチェックしない
+			// -> 入力エラーのみのチェックでよい
+			for each( RCMRCError ^err in this->hErrorList )
+			{
+				if( !err->AffectRom )
+					count++;
+			}
+			return (count > 0);
+		}
+
+		// SRLのバイナリに影響する項目にエラーがあるかチェック
+		System::Boolean isErrorAffectRom(void)
+		{
+			System::Int32 count = 0;
+
+			// SRLクラスの修正不可エラーをカウント
+			// (修正可エラーは入力によって修正されてるかもしれないのでチェックしない)
+			for each( RCMRCError ^err in this->hSrl->hErrorList )
+			{
+				if( !err->EnableModify )	// すべてSRLバイナリに影響する
+					count++;
+			}
+
+			// SRLバイナリに影響するエラーの中で
+			// 修正可エラーがフォーム入力によって修正されているかカウント
+			// (エラーリストが更新されていることが前提)
+			for each( RCMRCError ^err in this->hErrorList )
+			{
+				if( err->AffectRom )		// 修正不可エラーは存在しない
+					count++;
+			}
+			return (count > 0);
+		}
+
+		// ----------------------------------------------
+		// ダイアログ
+		// ----------------------------------------------
+
+		void sucMsg( System::String ^msgJ, System::String ^msgE )
+		{
+			if( this->stripItemJapanese->Checked )
+				MessageBox::Show( msgJ, "Information", MessageBoxButtons::OK, MessageBoxIcon::None );
+			else
+				MessageBox::Show( msgE, "Information", MessageBoxButtons::OK, MessageBoxIcon::None );
+		}
+
+		// エラーメッセージを出力
+		void errMsg( System::String ^msgJ, System::String ^msgE )
+		{
+			if( this->stripItemJapanese->Checked )
+				MessageBox::Show( msgJ, "Error", MessageBoxButtons::OK, MessageBoxIcon::Error );
+			else
+				MessageBox::Show( msgE, "Error", MessageBoxButtons::OK, MessageBoxIcon::Error );
 		}
 
 	private:
@@ -5095,10 +5133,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 
 			if( System::IO::File::Exists(filename) == false )
 			{
-				if( this->stripItemJapanese->Checked == true )
-					this->errMsg( "ファイルが存在しませんので開くことができません。" );
-				else
-					this->errMsg( "The file is not found, therefore the file can not be opened." );
+				this->errMsg( "ROMデータファイルが存在しませんので開くことができません。", 
+							  "The ROM data file is not found. Therefore the file can not be opened." );
 				return;
 			}
 			this->loadSrl( filename );			// ドラッグアンドドロップの時点でボタンを押さなくてもファイルを開く
@@ -5255,10 +5291,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 
 				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
 				{
-					if( this->stripItemJapanese->Checked == true )
-						this->errMsg( "ファイルオープンがキャンセルされました。" );
-					else
-						this->errMsg( "Opening the file is canceled." );
+					this->errMsg( "ROMデータファイルのオープンがキャンセルされました。", "Opening the ROM data file is canceled by user." );
 					return;
 				}
 				filename = dlg->FileName;
@@ -5269,6 +5302,11 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->rErrorReading->Checked = true;
 			this->setGridError();
 			this->setGridWarn();
+			if( this->hSrl->hErrorList->Count > 0 )
+			{
+				this->errMsg( "ROMデータにエラーがあります。「エラー情報」タブをご確認ください。",
+							  "ROM data include error. Please look the tab \"Error\"." );
+			}
 		} //stripItemOpenRom_Click()
 
 	private:
@@ -5279,10 +5317,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// SRLが読み込まれていないときにはリードさせない
 			if( System::String::IsNullOrEmpty( this->tboxFile->Text ) )
 			{
-				if( this->stripItemJapanese->Checked == true )
-					this->errMsg( "ROMデータファイルがオープンされていません。" );
-				else
-					this->errMsg( "ROM file has not opened yet." );
+				this->errMsg( "ROMデータファイルがオープンされていませんので、提出書類の作成ができません。", 
+							  "ROM data file has not opened yet. Therefore a submission sheet can't be made." );
 				return;
 			}
 
@@ -5304,10 +5340,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 
 				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
 				{
-					if( this->stripItemJapanese->Checked == true )
-						this->errMsg( "保存がキャンセルされましたのでROMファイルデータは作成(更新)されません。" );
-					else
-						this->errMsg( "ROM file is not updated since saving the file is canceled." );
+					this->errMsg( "保存がキャンセルされましたのでROMファイルデータおよび提出書類は作成されません。",
+								  "A ROM data file and a submission sheet are not updated, since saving the file is canceled." );
 					return;
 				}
 				filename = dlg->FileName;
@@ -5331,39 +5365,30 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// SRLが読み込まれていないときにはリードさせない
 			if( System::String::IsNullOrEmpty( this->tboxFile->Text ) )
 			{
-				if( this->stripItemJapanese->Checked == true )
-					this->errMsg( "ROMデータファイルがオープンされていません。" );
-				else
-					this->errMsg( "ROM file has not opened yet." );
+				this->errMsg( "ROMデータファイルがオープンされていません。", "ROM file has not opened yet." );
 				return;
 			}
 
 			// SRLと書類の両方のフォーム入力をチェックする
 			if( this->checkSrlForms() == false )
 			{
-				if( this->stripItemJapanese->Checked == true )
-					this->errMsg( "ROMデータに不正な設定があるためROMデータを保存できません。" );
-				else
-					this->errMsg( "This ROM data can't be saved, since it has illegal info." );
+				this->errMsg( "ROMデータに不正な設定があるためROMデータの保存および提出書類の作成ができません。",
+							  "A ROM data and a submission sheet can't be saved, since it has illegal info." );
 				return;
 			}
 			if( this->checkDeliverableForms() == false )
 			{
-				if( this->stripItemJapanese->Checked == true )
-					this->errMsg( "入力情報に不正な設定があるため提出書類を作成できません。" );
-				else
-					this->errMsg( "Making a submission sheet can't be done, since input data is illegal." );
+				this->errMsg( "入力情報に不正な設定があるため提出書類を作成できません。",
+							  "Making a submission sheet can't be done, since input data is illegal." );
 				return;
 			}
 
 			// 注意書き 
 			{
-				System::String ^stmp;
-				if( this->stripItemJapanese->Checked == true )
-					stmp = "Step1/2: ROMデータファイル(SRL)と提出書類の情報を一致させるため、まず、入力情報を反映させたSRLを作成します。\n(キャンセルされたとき、SRLおよび提出書類は作成されません。)";
-				else
-					stmp = "Step1/2: Firstly, We save ROM file(SRL) because several information in a submission sheet are match those in the SRL.\n(When it is canceled, both the SRL and a submission sheet are not made.)";
-				MessageBox::Show( stmp, "Caution", MessageBoxButtons::OK, MessageBoxIcon::Information );
+				this->sucMsg( 
+					"Step1/2: ROMデータファイル(SRL)と提出書類の情報を一致させるため、まず、入力情報を反映させたSRLを作成します。\n(キャンセルされたとき、SRLおよび提出書類は作成されません。)",
+					"Step1/2: Firstly, We save ROM file(SRL) because several information in a submission sheet are match those in the SRL.\n(When it is canceled, both the SRL and a submission sheet are not made.)"
+				);
 			}
 			// ダイアログからSrl名を取得する
 			{
@@ -5376,10 +5401,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 
 				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
 				{
-					if( this->stripItemJapanese->Checked == true )
-						this->errMsg( "SRLの保存がキャンセルされましたので提出書類は作成されません。");
-					else
-						this->errMsg( "A submission sheet can not be made, since saving SRL is canceled." );
+					this->errMsg( "SRLの保存がキャンセルされましたので提出書類は作成されません。", 
+								  "A submission sheet can not be made, since saving SRL is canceled." );
 					return;
 				}
 				srlfile = dlg->FileName;
@@ -5395,12 +5418,10 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 
 			// 注意書き 
 			{
-				System::String ^stmp;
-				if( this->stripItemJapanese->Checked == true )
-					stmp = "Step2/2: 続いて提出書類を作成します。\nここでキャンセルされたとき、提出書類はもとよりSRLも作成(更新)されませんのでご注意ください。";
-				else
-					stmp = "Step2/2: Secondly, We should make a submission sheet. \n(CAUTION: When it is canceled, not only a submission sheet is not made, but also the SRL is selected previously.)";
-				MessageBox::Show( stmp, "Caution", MessageBoxButtons::OK, MessageBoxIcon::Information );
+				this->sucMsg( 
+					"Step2/2: 続いて提出書類を作成します。\nここでキャンセルされたとき、提出書類はもとよりSRLも作成(更新)されませんのでご注意ください。",
+					"Step2/2: Secondly, We should make a submission sheet. \n(CAUTION: When it is canceled, not only a submission sheet is not made, but also the SRL is selected previously.)"
+				);
 			}
 			// ダイアログでファイルパスを決定
 			{
@@ -5413,10 +5434,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 
 				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
 				{
-					if( this->stripItemJapanese->Checked == true )
-						this->errMsg( "提出書類の作成がキャンセルされました。" );
-					else
-						this->errMsg( "Making a submission sheet is canceled." );
+					this->errMsg( "提出書類の作成がキャンセルされました。", "Making a submission sheet is canceled." );
 					return;
 				}
 				delivfile = dlg->FileName;
@@ -5431,10 +5449,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			u16  crc;			// SRL全体のCRCを計算する(書類に記述するため)
 			if( !getWholeCRCInFile( srlfile, &crc ) )
 			{
-				if( this->stripItemJapanese->Checked == true )
-					this->errMsg( "CRCの計算に失敗しました。提出書類の作成をキャンセルします。" );
-				else
-					this->errMsg( "Calc CRC is failed. Therefore, Making a submission sheet is canceled." );
+				this->errMsg( "CRCの計算に失敗しました。提出書類の作成はキャンセルされます。", 
+							  "Calc CRC is failed. Therefore, Making a submission sheet is canceled." );
 				return;
 			}
 			hcrc = gcnew System::UInt16( crc );
@@ -5449,13 +5465,10 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			result = this->hDeliv->writeSpreadsheet( delivfile, this->hSrl, hcrc, srlfile, !(this->stripItemJapanese->Checked) );
 			if( result != ECDeliverableResult::NOERROR )
 			{
-				if( this->stripItemJapanese->Checked == true )
-					this->errMsg( "書類の作成に失敗しました。" );
-				else
-					this->errMsg( "Making a submission sheet is failed." );
+				this->errMsg( "提出書類の作成に失敗しました。", "Making the submission sheet is failed." );
 				return;
 			}
-			this->tboxMsg->Text = "書類の作成に成功しました。";
+			this->sucMsg( "提出書類の作成に成功しました。", "The submission sheet is made successfully." );
 		} //stripItemSheet_Click()
 
 	private:
