@@ -177,7 +177,12 @@ namespace MasterEditorTWL
 		cli::array<System::Object^>^ getAll( System::Boolean isJapanese )
 		{
 			if( (*this->hBegin == METWL_ERRLIST_NORANGE) && (*this->hEnd == METWL_ERRLIST_NORANGE) )
-				return (gcnew array<System::Object^>{this->hName,  "-", "-", this->hMsg});
+			{
+				if( isJapanese )
+					return (gcnew array<System::Object^>{this->hName,  "-", "-", this->hMsg});
+				else
+					return (gcnew array<System::Object^>{this->hNameE,  "-", "-", this->hMsgE});
+			}
 
 			if( isJapanese )
 				return (gcnew array<System::Object^>{this->hName,  this->hBegin->ToString("X04")+"h", this->hEnd->ToString("X04")+"h", this->hMsg});

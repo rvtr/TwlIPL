@@ -516,10 +516,10 @@ private: System::Windows::Forms::Label^  labError;
 private: System::Windows::Forms::RadioButton^  rErrorCurrent;
 
 private: System::Windows::Forms::RadioButton^  rErrorReading;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnName;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnBegin;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnEnd;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnCause;
+
+
+
+
 
 
 
@@ -528,10 +528,18 @@ private: System::Windows::Forms::Label^  labMultiForeign2;
 private: System::Windows::Forms::DataGridView^  gridLibrary;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibPublisher;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnName;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnBegin;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnEnd;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnCause;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorName;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorBegin;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorEnd;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
+
+
+
+
 
 
 
@@ -626,8 +634,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 複数行表示したいが初期値で設定できないのでここで設定
 			this->tboxGuideErrorInfo->Text  = "このタブには読み込んだROMデータの問題と本プログラムでの入力ミスが列挙されます。";
 			this->tboxGuideErrorInfo->Text += "\r\n赤文字の項目は、本プログラムで修正不可です。ROMデータ作成時の設定をご確認ください。";
-			this->tboxGuideErrorInfo->Text += "\r\n青文字の項目は、本プログラムで修正できますが、修正によってROMデータが変更されます。";
-			this->tboxGuideErrorInfo->Text += "\r\n黒文字の項目は、提出書類にのみ反映され、ROMデータは変更されません。";
+			this->tboxGuideErrorInfo->Text += "\r\n青文字の項目は、本プログラムで修正できますが、修正がマスターROMに反映されます。";
+			this->tboxGuideErrorInfo->Text += "\r\n黒文字の項目は、提出確認書にのみ反映され、マスターROMには反映されません。";
 
 			this->loadInit();	// 設定ファイルの読み込み
 		}
@@ -665,7 +673,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 		/// </summary>
 		void InitializeComponent(void)
 		{
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle1 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle4 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -1198,7 +1206,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// labCaption
 			// 
 			this->labCaption->AutoSize = true;
-			this->labCaption->Location = System::Drawing::Point(367, 263);
+			this->labCaption->Location = System::Drawing::Point(379, 245);
 			this->labCaption->Name = L"labCaption";
 			this->labCaption->Size = System::Drawing::Size(241, 12);
 			this->labCaption->TabIndex = 8;
@@ -1206,10 +1214,10 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			// tboxCaption
 			// 
-			this->tboxCaption->Location = System::Drawing::Point(366, 280);
+			this->tboxCaption->Location = System::Drawing::Point(378, 263);
 			this->tboxCaption->Multiline = true;
 			this->tboxCaption->Name = L"tboxCaption";
-			this->tboxCaption->Size = System::Drawing::Size(345, 57);
+			this->tboxCaption->Size = System::Drawing::Size(345, 74);
 			this->tboxCaption->TabIndex = 8;
 			// 
 			// labPEGIBBFC2
@@ -1937,7 +1945,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			// tboxProductCode2
 			// 
-			this->tboxProductCode2->Location = System::Drawing::Point(177, 86);
+			this->tboxProductCode2->Location = System::Drawing::Point(175, 81);
 			this->tboxProductCode2->MaxLength = 4;
 			this->tboxProductCode2->Name = L"tboxProductCode2";
 			this->tboxProductCode2->Size = System::Drawing::Size(56, 19);
@@ -1945,7 +1953,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			// tboxProductCode1
 			// 
-			this->tboxProductCode1->Location = System::Drawing::Point(142, 86);
+			this->tboxProductCode1->Location = System::Drawing::Point(140, 81);
 			this->tboxProductCode1->MaxLength = 1;
 			this->tboxProductCode1->Name = L"tboxProductCode1";
 			this->tboxProductCode1->Size = System::Drawing::Size(18, 19);
@@ -1953,7 +1961,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			// tboxProductName
 			// 
-			this->tboxProductName->Location = System::Drawing::Point(106, 58);
+			this->tboxProductName->Location = System::Drawing::Point(106, 53);
 			this->tboxProductName->Name = L"tboxProductName";
 			this->tboxProductName->Size = System::Drawing::Size(225, 19);
 			this->tboxProductName->TabIndex = 0;
@@ -1961,7 +1969,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// labProductCode2
 			// 
 			this->labProductCode2->AutoSize = true;
-			this->labProductCode2->Location = System::Drawing::Point(166, 89);
+			this->labProductCode2->Location = System::Drawing::Point(164, 84);
 			this->labProductCode2->Name = L"labProductCode2";
 			this->labProductCode2->Size = System::Drawing::Size(11, 12);
 			this->labProductCode2->TabIndex = 33;
@@ -1970,7 +1978,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// labProductCode1
 			// 
 			this->labProductCode1->AutoSize = true;
-			this->labProductCode1->Location = System::Drawing::Point(106, 89);
+			this->labProductCode1->Location = System::Drawing::Point(104, 84);
 			this->labProductCode1->Name = L"labProductCode1";
 			this->labProductCode1->Size = System::Drawing::Size(37, 12);
 			this->labProductCode1->TabIndex = 32;
@@ -1979,7 +1987,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// dateSubmit
 			// 
 			this->dateSubmit->Format = System::Windows::Forms::DateTimePickerFormat::Short;
-			this->dateSubmit->Location = System::Drawing::Point(108, 145);
+			this->dateSubmit->Location = System::Drawing::Point(106, 140);
 			this->dateSubmit->MaxDate = System::DateTime(2099, 12, 31, 0, 0, 0, 0);
 			this->dateSubmit->MinDate = System::DateTime(2008, 1, 1, 0, 0, 0, 0);
 			this->dateSubmit->Name = L"dateSubmit";
@@ -1990,7 +1998,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// dateRelease
 			// 
 			this->dateRelease->Format = System::Windows::Forms::DateTimePickerFormat::Short;
-			this->dateRelease->Location = System::Drawing::Point(108, 116);
+			this->dateRelease->Location = System::Drawing::Point(106, 111);
 			this->dateRelease->MaxDate = System::DateTime(2099, 12, 31, 0, 0, 0, 0);
 			this->dateRelease->MinDate = System::DateTime(2008, 1, 1, 0, 0, 0, 0);
 			this->dateRelease->Name = L"dateRelease";
@@ -2005,9 +2013,9 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->gboxUsage->Controls->Add(this->rUsageDst);
 			this->gboxUsage->Controls->Add(this->rUsageSample);
 			this->gboxUsage->Controls->Add(this->rUsageSale);
-			this->gboxUsage->Location = System::Drawing::Point(18, 263);
+			this->gboxUsage->Location = System::Drawing::Point(16, 258);
 			this->gboxUsage->Name = L"gboxUsage";
-			this->gboxUsage->Size = System::Drawing::Size(310, 74);
+			this->gboxUsage->Size = System::Drawing::Size(346, 68);
 			this->gboxUsage->TabIndex = 6;
 			this->gboxUsage->TabStop = false;
 			this->gboxUsage->Text = L"用途";
@@ -2067,7 +2075,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			this->gboxSubmitWay->Controls->Add(this->rSubmitHand);
 			this->gboxSubmitWay->Controls->Add(this->rSubmitPost);
-			this->gboxSubmitWay->Location = System::Drawing::Point(18, 212);
+			this->gboxSubmitWay->Location = System::Drawing::Point(16, 207);
 			this->gboxSubmitWay->Name = L"gboxSubmitWay";
 			this->gboxSubmitWay->Size = System::Drawing::Size(155, 45);
 			this->gboxSubmitWay->TabIndex = 5;
@@ -2099,7 +2107,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// labSubmiteDate
 			// 
 			this->labSubmiteDate->AutoSize = true;
-			this->labSubmiteDate->Location = System::Drawing::Point(16, 148);
+			this->labSubmiteDate->Location = System::Drawing::Point(14, 143);
 			this->labSubmiteDate->Name = L"labSubmiteDate";
 			this->labSubmiteDate->Size = System::Drawing::Size(65, 12);
 			this->labSubmiteDate->TabIndex = 11;
@@ -2108,7 +2116,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// labReleaseDate
 			// 
 			this->labReleaseDate->AutoSize = true;
-			this->labReleaseDate->Location = System::Drawing::Point(17, 119);
+			this->labReleaseDate->Location = System::Drawing::Point(15, 114);
 			this->labReleaseDate->Name = L"labReleaseDate";
 			this->labReleaseDate->Size = System::Drawing::Size(65, 12);
 			this->labReleaseDate->TabIndex = 7;
@@ -2117,7 +2125,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// labProductCode
 			// 
 			this->labProductCode->AutoSize = true;
-			this->labProductCode->Location = System::Drawing::Point(16, 89);
+			this->labProductCode->Location = System::Drawing::Point(14, 84);
 			this->labProductCode->Name = L"labProductCode";
 			this->labProductCode->Size = System::Drawing::Size(56, 12);
 			this->labProductCode->TabIndex = 6;
@@ -2126,7 +2134,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// labProductName
 			// 
 			this->labProductName->AutoSize = true;
-			this->labProductName->Location = System::Drawing::Point(16, 58);
+			this->labProductName->Location = System::Drawing::Point(15, 56);
 			this->labProductName->Name = L"labProductName";
 			this->labProductName->Size = System::Drawing::Size(41, 12);
 			this->labProductName->TabIndex = 5;
@@ -2135,7 +2143,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// labCapSubmitVer
 			// 
 			this->labCapSubmitVer->AutoSize = true;
-			this->labCapSubmitVer->Location = System::Drawing::Point(106, 199);
+			this->labCapSubmitVer->Location = System::Drawing::Point(104, 194);
 			this->labCapSubmitVer->Name = L"labCapSubmitVer";
 			this->labCapSubmitVer->Size = System::Drawing::Size(233, 12);
 			this->labCapSubmitVer->TabIndex = 26;
@@ -2143,7 +2151,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			// numSubmitVersion
 			// 
-			this->numSubmitVersion->Location = System::Drawing::Point(108, 177);
+			this->numSubmitVersion->Location = System::Drawing::Point(106, 172);
 			this->numSubmitVersion->Name = L"numSubmitVersion";
 			this->numSubmitVersion->Size = System::Drawing::Size(38, 19);
 			this->numSubmitVersion->TabIndex = 9;
@@ -2151,7 +2159,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// labSubmitVer
 			// 
 			this->labSubmitVer->AutoSize = true;
-			this->labSubmitVer->Location = System::Drawing::Point(17, 179);
+			this->labSubmitVer->Location = System::Drawing::Point(15, 174);
 			this->labSubmitVer->Name = L"labSubmitVer";
 			this->labSubmitVer->Size = System::Drawing::Size(74, 12);
 			this->labSubmitVer->TabIndex = 24;
@@ -2893,9 +2901,9 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->gboxProd->Controls->Add(this->combBackup);
 			this->gboxProd->Controls->Add(this->labBackup);
 			this->gboxProd->Controls->Add(this->tboxBackupOther);
-			this->gboxProd->Location = System::Drawing::Point(361, 51);
+			this->gboxProd->Location = System::Drawing::Point(367, 36);
 			this->gboxProd->Name = L"gboxProd";
-			this->gboxProd->Size = System::Drawing::Size(350, 50);
+			this->gboxProd->Size = System::Drawing::Size(356, 50);
 			this->gboxProd->TabIndex = 13;
 			this->gboxProd->TabStop = false;
 			this->gboxProd->Text = L"ROM生産情報";
@@ -2948,14 +2956,14 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// stripItemSheet
 			// 
 			this->stripItemSheet->Name = L"stripItemSheet";
-			this->stripItemSheet->Size = System::Drawing::Size(220, 22);
-			this->stripItemSheet->Text = L"提出書類とマスターROMを作成";
+			this->stripItemSheet->Size = System::Drawing::Size(232, 22);
+			this->stripItemSheet->Text = L"提出確認書とマスターROMを作成";
 			this->stripItemSheet->Click += gcnew System::EventHandler(this, &Form1::stripItemSheet_Click);
 			// 
 			// stripItemMasterRom
 			// 
 			this->stripItemMasterRom->Name = L"stripItemMasterRom";
-			this->stripItemMasterRom->Size = System::Drawing::Size(220, 22);
+			this->stripItemMasterRom->Size = System::Drawing::Size(232, 22);
 			this->stripItemMasterRom->Text = L"マスターROMのみを作成";
 			this->stripItemMasterRom->Click += gcnew System::EventHandler(this, &Form1::stripItemMasterRom_Click);
 			// 
@@ -3045,7 +3053,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// tboxGuideRomInfo
 			// 
 			this->tboxGuideRomInfo->BackColor = System::Drawing::SystemColors::Info;
-			this->tboxGuideRomInfo->Location = System::Drawing::Point(24, 17);
+			this->tboxGuideRomInfo->Location = System::Drawing::Point(24, 11);
 			this->tboxGuideRomInfo->Name = L"tboxGuideRomInfo";
 			this->tboxGuideRomInfo->ReadOnly = true;
 			this->tboxGuideRomInfo->Size = System::Drawing::Size(687, 19);
@@ -3071,7 +3079,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// tboxGuideTWLInfo
 			// 
 			this->tboxGuideTWLInfo->BackColor = System::Drawing::SystemColors::Info;
-			this->tboxGuideTWLInfo->Location = System::Drawing::Point(22, 18);
+			this->tboxGuideTWLInfo->Location = System::Drawing::Point(24, 11);
 			this->tboxGuideTWLInfo->Name = L"tboxGuideTWLInfo";
 			this->tboxGuideTWLInfo->ReadOnly = true;
 			this->tboxGuideTWLInfo->Size = System::Drawing::Size(687, 19);
@@ -3107,12 +3115,12 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// tboxGuideRomEditInfo
 			// 
 			this->tboxGuideRomEditInfo->BackColor = System::Drawing::SystemColors::Info;
-			this->tboxGuideRomEditInfo->Location = System::Drawing::Point(25, 19);
+			this->tboxGuideRomEditInfo->Location = System::Drawing::Point(24, 11);
 			this->tboxGuideRomEditInfo->Name = L"tboxGuideRomEditInfo";
 			this->tboxGuideRomEditInfo->ReadOnly = true;
 			this->tboxGuideRomEditInfo->Size = System::Drawing::Size(687, 19);
 			this->tboxGuideRomEditInfo->TabIndex = 37;
-			this->tboxGuideRomEditInfo->Text = L"このタブの情報は、マスターROMの作成に必要です。適宜、変更してください。";
+			this->tboxGuideRomEditInfo->Text = L"このタブの情報は、提出確認書およびマスターROMの作成に必要です。編集してください。";
 			// 
 			// gboxParental
 			// 
@@ -3213,12 +3221,12 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// tboxGuideSubmitInfo
 			// 
 			this->tboxGuideSubmitInfo->BackColor = System::Drawing::SystemColors::Info;
-			this->tboxGuideSubmitInfo->Location = System::Drawing::Point(24, 19);
+			this->tboxGuideSubmitInfo->Location = System::Drawing::Point(24, 11);
 			this->tboxGuideSubmitInfo->Name = L"tboxGuideSubmitInfo";
 			this->tboxGuideSubmitInfo->ReadOnly = true;
 			this->tboxGuideSubmitInfo->Size = System::Drawing::Size(687, 19);
 			this->tboxGuideSubmitInfo->TabIndex = 38;
-			this->tboxGuideSubmitInfo->Text = L"このタブの情報は提出書類の作成に必要です。入力してください。";
+			this->tboxGuideSubmitInfo->Text = L"このタブの情報は提出確認書の作成に必要です。入力してください。";
 			// 
 			// gboxForeign
 			// 
@@ -3234,9 +3242,9 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->gboxForeign->Controls->Add(this->labProductCode1Foreign);
 			this->gboxForeign->Controls->Add(this->tboxProductNameForeign);
 			this->gboxForeign->Controls->Add(this->labProductNameForeign);
-			this->gboxForeign->Location = System::Drawing::Point(362, 107);
+			this->gboxForeign->Location = System::Drawing::Point(368, 92);
 			this->gboxForeign->Name = L"gboxForeign";
-			this->gboxForeign->Size = System::Drawing::Size(349, 141);
+			this->gboxForeign->Size = System::Drawing::Size(355, 141);
 			this->gboxForeign->TabIndex = 35;
 			this->gboxForeign->TabStop = false;
 			this->gboxForeign->Text = L"海外版";
@@ -3266,12 +3274,12 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// tboxGuideCompanyInfo
 			// 
 			this->tboxGuideCompanyInfo->BackColor = System::Drawing::SystemColors::Info;
-			this->tboxGuideCompanyInfo->Location = System::Drawing::Point(26, 21);
+			this->tboxGuideCompanyInfo->Location = System::Drawing::Point(24, 11);
 			this->tboxGuideCompanyInfo->Name = L"tboxGuideCompanyInfo";
 			this->tboxGuideCompanyInfo->ReadOnly = true;
 			this->tboxGuideCompanyInfo->Size = System::Drawing::Size(687, 19);
 			this->tboxGuideCompanyInfo->TabIndex = 39;
-			this->tboxGuideCompanyInfo->Text = L"このタブの情報は提出書類の作成に必要です。入力してください。";
+			this->tboxGuideCompanyInfo->Text = L"このタブの情報は提出確認書の作成に必要です。入力してください。";
 			// 
 			// tabErrorInfo
 			// 
@@ -3295,16 +3303,16 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->tboxGuideErrorInfo->Multiline = true;
 			this->tboxGuideErrorInfo->Name = L"tboxGuideErrorInfo";
 			this->tboxGuideErrorInfo->ReadOnly = true;
-			this->tboxGuideErrorInfo->Size = System::Drawing::Size(533, 61);
+			this->tboxGuideErrorInfo->Size = System::Drawing::Size(511, 61);
 			this->tboxGuideErrorInfo->TabIndex = 40;
 			// 
 			// gboxErrorTiming
 			// 
 			this->gboxErrorTiming->Controls->Add(this->rErrorCurrent);
 			this->gboxErrorTiming->Controls->Add(this->rErrorReading);
-			this->gboxErrorTiming->Location = System::Drawing::Point(573, 11);
+			this->gboxErrorTiming->Location = System::Drawing::Point(551, 11);
 			this->gboxErrorTiming->Name = L"gboxErrorTiming";
-			this->gboxErrorTiming->Size = System::Drawing::Size(148, 71);
+			this->gboxErrorTiming->Size = System::Drawing::Size(172, 71);
 			this->gboxErrorTiming->TabIndex = 41;
 			this->gboxErrorTiming->TabStop = false;
 			this->gboxErrorTiming->Text = L"いつの情報を表示するか";
@@ -3340,9 +3348,9 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->labWarn->ForeColor = System::Drawing::SystemColors::ActiveCaption;
 			this->labWarn->Location = System::Drawing::Point(22, 213);
 			this->labWarn->Name = L"labWarn";
-			this->labWarn->Size = System::Drawing::Size(331, 12);
+			this->labWarn->Size = System::Drawing::Size(339, 12);
 			this->labWarn->TabIndex = 40;
-			this->labWarn->Text = L"警告(修正は必須ではありませんが情報に誤りがないかご確認ください)";
+			this->labWarn->Text = L"警告(修正は必須ではありませんが情報に誤りがないかご確認ください。)";
 			// 
 			// labError
 			// 
@@ -3350,9 +3358,9 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->labError->ForeColor = System::Drawing::SystemColors::ActiveCaption;
 			this->labError->Location = System::Drawing::Point(22, 84);
 			this->labError->Name = L"labError";
-			this->labError->Size = System::Drawing::Size(137, 12);
+			this->labError->Size = System::Drawing::Size(145, 12);
 			this->labError->TabIndex = 39;
-			this->labError->Text = L"エラー(必ず修正してください)";
+			this->labError->Text = L"エラー(必ず修正してください。)";
 			// 
 			// gridWarn
 			// 
@@ -3374,7 +3382,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->colWarnName->HeaderText = L"項目名";
 			this->colWarnName->Name = L"colWarnName";
 			this->colWarnName->ReadOnly = true;
-			this->colWarnName->Width = 120;
+			this->colWarnName->Width = 150;
 			// 
 			// colWarnBegin
 			// 
@@ -3399,8 +3407,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			// gridError
 			// 
-			dataGridViewCellStyle1->BackColor = System::Drawing::Color::White;
-			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
+			dataGridViewCellStyle4->BackColor = System::Drawing::Color::White;
+			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle4;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
@@ -3419,7 +3427,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->colErrorName->HeaderText = L"項目名";
 			this->colErrorName->Name = L"colErrorName";
 			this->colErrorName->ReadOnly = true;
-			this->colErrorName->Width = 120;
+			this->colErrorName->Width = 150;
 			// 
 			// colErrorBegin
 			// 
@@ -3641,7 +3649,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			if( this->hSrl->hErrorList->Count > 0 )
 			{
 				this->errMsg( "ROMデータにエラーがあります。「エラー情報」タブをご確認ください。",
-							  "ROM data include error. Please look the tab \"Error\"." );
+							  "ROM data include error. Please look the tab \"Setting Error\"." );
 				return;
 			}
 		} // openSrl
@@ -4315,7 +4323,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 		System::Boolean checkTextForm( System::String ^formtext, System::String ^labelJ, System::String ^labelE, System::Boolean affectRom )
 		{
 			System::String ^msgJ = gcnew System::String( "入力されていません。" );
-			System::String ^msgE = gcnew System::String( "No setting. Please retry to input." );
+			System::String ^msgE = gcnew System::String( "No item is set. Please retry to input." );
 
 			System::String ^tmp = formtext->Replace( " ", "" );		// スペースのみの文字列もエラー
 			if( (formtext == nullptr) || formtext->Equals("") || tmp->Equals("") )
@@ -4356,8 +4364,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 		// コンボボックスをチェック
 		System::Boolean checkBoxIndex( System::Windows::Forms::ComboBox ^box, System::String ^labelJ, System::String ^labelE, System::Boolean affectRom )
 		{
-			System::String ^msgJ = gcnew System::String( "選択されていません。やり直してください。" );
-			System::String ^msgE = gcnew System::String( "Not selected. Please retry." );
+			System::String ^msgJ = gcnew System::String( "選択されていません。" );
+			System::String ^msgE = gcnew System::String( "One item is not selected." );
 			
 			if( box->SelectedIndex < 0 )
 			{
@@ -4780,7 +4788,39 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 		{
 			System::Int32 index;
 
-			// フロントパネル上部
+			// タイトルバー
+			this->stripFile->Text          = gcnew System::String( "ファイル" );
+			this->stripItemOpenRom->Text   = gcnew System::String( "ROMデータを開く" );
+			this->stripItemSaveTemp->Text  = gcnew System::String( "提出情報を一時保存する" );
+			this->stripItemLoadTemp->Text  = gcnew System::String( "一時保存した提出情報を読み込む" );
+			this->stripMaster->Text        = gcnew System::String( "マスター" );
+			this->stripItemSheet->Text     = gcnew System::String( "提出確認書とマスターROMを作成する" );
+			this->stripItemMasterRom->Text = gcnew System::String( "マスターROMのみを作成する" );
+
+			// 入力ファイル
+			this->labFile->Text = gcnew System::String( "ROMデータファイル" );
+
+			// タブ
+			this->tabRomInfo->Text     = gcnew System::String( "ROM基本情報(確認用)" );
+			this->tabTWLInfo->Text     = gcnew System::String( "TWL拡張情報(確認用)" );
+			this->tabRomEditInfo->Text = gcnew System::String( "ROM登録情報(編集可)" );
+			this->tabSubmitInfo->Text  = gcnew System::String( "提出情報(編集可)" );
+			this->tabCompanyInfo->Text = gcnew System::String( "会社情報(編集可)" );
+			this->tabErrorInfo->Text   = gcnew System::String( "エラー情報(要修正)" );
+
+			// ガイド
+			this->tboxGuideRomInfo->Text = gcnew System::String( "このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。" );
+			this->tboxGuideTWLInfo->Text = gcnew System::String( "このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。" );
+			this->tboxGuideRomEditInfo->Text = gcnew System::String( "このタブの情報は、提出確認書およびマスターROMの作成に必要です。編集してください。" );
+			this->tboxGuideSubmitInfo->Text  = gcnew System::String( "このタブの情報は提出確認書の作成に必要です。入力してください。" );
+			this->tboxGuideCompanyInfo->Text = gcnew System::String( "このタブの情報は提出確認書の作成に必要です。入力してください。" );
+			this->tboxGuideErrorInfo->Text   = gcnew System::String( "" );
+			this->tboxGuideErrorInfo->Text  += "このタブには読み込んだROMデータの問題と本プログラムでの入力ミスが列挙されます。";
+			this->tboxGuideErrorInfo->Text  += "\r\n赤文字の項目は、本プログラムで修正不可です。ROMデータ作成時の設定をご確認ください。";
+			this->tboxGuideErrorInfo->Text  += "\r\n青文字の項目は、本プログラムで修正できますが、修正がマスターROMに反映されます。";
+			this->tboxGuideErrorInfo->Text  += "\r\n黒文字の項目は、提出確認書にのみ反映され、マスターROMには反映されません。";
+
+			// SRL情報
 			this->gboxSrl->Text       = gcnew System::String( "ROMデータ情報" ); 
 			this->labTitleName->Text  = gcnew System::String( "ソフトタイトル" );
 			this->labGameCode->Text   = gcnew System::String( "イニシャルコード" );
@@ -4788,55 +4828,58 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->labPlatform->Text   = gcnew System::String( "プラットフォーム" );
 			this->labRomType->Text    = gcnew System::String( "ROMタイプ設定" );
 			this->labRomSize->Text    = gcnew System::String( "ROM容量" );
-			this->labRemasterVer->Text = gcnew System::String( "リマスターバージョン" );
+			this->labRemasterVer->Text   = gcnew System::String( "リマスターバージョン" );
 			this->cboxRemasterVerE->Text = gcnew System::String( "E(準備版)" );
-			this->labBackup->Text     = gcnew System::String( "バックアップメモリ" );
 			this->labHeaderCRC->Text  = gcnew System::String( "ヘッダCRC" );
 			this->labRomCRC->Text     = gcnew System::String( "全体のCRC" );
 			index = this->combBackup->SelectedIndex;
+
 			// バックアップメモリ
-			this->gboxProd->Text = gcnew System::String( "ROM生産情報(必ず入力してください)" );
+			this->gboxProd->Text	= gcnew System::String( "ROM生産情報(必ず入力してください)" );
+			this->labBackup->Text   = gcnew System::String( LANG_BACKUP_J );
 			this->combBackup->Items->Clear();
 			this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
 				L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"なし", L"その他"});
 			this->combBackup->SelectedIndex = index;
 
-			// 提出情報タブ
-			this->labProductName->Text = gcnew System::String( "製品名" );
-			this->labProductCode->Text = gcnew System::String( "製品コード" );
-			this->labReleaseDate->Text = gcnew System::String( "発売予定日" );
-			this->labSubmiteDate->Text = gcnew System::String( "書類提出日" );
-			this->gboxSubmitWay->Text  = gcnew System::String( "提出方法" );
-			this->rSubmitPost->Text    = gcnew System::String( "郵送" );
-			this->rSubmitHand->Text    = gcnew System::String( "手渡し" );
-			this->gboxUsage->Text      = gcnew System::String( "用途" );
-			this->rUsageSale->Text     = gcnew System::String( "一般販売用" );
-			this->rUsageSample->Text   = gcnew System::String( "試遊台用" );
-			this->rUsageDst->Text      = gcnew System::String( "データ配信用" );
-			this->rUsageOther->Text    = gcnew System::String( "その他" );
-			this->labSubmitVer->Text     = gcnew System::String( "提出バージョン" );
-			this->labCapSubmitVer->Text  = gcnew System::String( "* リマスターバージョンが上がると再び0からカウント" );
-			this->labProductNameForeign->Text = gcnew System::String( "製品名" );
-			this->labProductCodeForeign->Text = gcnew System::String( "製品コード" );
-			this->cboxReleaseForeign->Text    = gcnew System::String( "海外版を発売する(予定)" );
-			this->labMultiForeign1->Text      = gcnew System::String( "* 複数ある場合のみ" );
-			this->labMultiForeign2->Text      = gcnew System::String( "* 複数ある場合のみ" );
-			this->labCaption->Text    = gcnew System::String( "備考欄 - その他連絡事項があればご記入ください" );
-			// 会社情報タブ
-			this->gboxPerson1->Text    = gcnew System::String( "担当者1" );
-			this->gboxPerson2->Text    = gcnew System::String( "担当者2" );
-			this->cboxIsInputPerson2->Text = gcnew System::String( "担当者2を入力する" );
-			this->labCompany1->Text    = gcnew System::String( "貴社名" );
-			this->labDepart1->Text     = gcnew System::String( "部署名" );
-			this->labPerson1->Text     = gcnew System::String( "ご氏名" );
-			this->labCompany2->Text    = gcnew System::String( "貴社名" );
-			this->labDepart2->Text     = gcnew System::String( "部署名" );
-			this->labPerson2->Text     = gcnew System::String( "ご氏名" );
+			// 提出情報
+			this->labProductName->Text = gcnew System::String( LANG_PRODUCT_NAME_J );
+			this->labProductCode->Text = gcnew System::String( LANG_PRODUCT_CODE_J );
+			this->labReleaseDate->Text = gcnew System::String( LANG_RELEASE_DATE_J );
+			this->labSubmiteDate->Text = gcnew System::String( LANG_SUBMIT_DATE_J );
+			this->gboxSubmitWay->Text  = gcnew System::String( LANG_SUBMIT_WAY_J );
+			this->rSubmitPost->Text    = gcnew System::String( LANG_SUBMIT_POST_J );
+			this->rSubmitHand->Text    = gcnew System::String( LANG_SUBMIT_HAND_J );
+			this->gboxUsage->Text      = gcnew System::String( LANG_USAGE_J );
+			this->rUsageSale->Text     = gcnew System::String( LANG_USAGE_SALE_J );
+			this->rUsageSample->Text   = gcnew System::String( LANG_USAGE_SAMPLE_J );
+			this->rUsageDst->Text      = gcnew System::String( LANG_USAGE_DST_J );
+			this->rUsageOther->Text    = gcnew System::String( LANG_USAGE_OTHER_J );
+			this->labSubmitVer->Text     = gcnew System::String( LANG_SUBMIT_VER_J );
+			this->labCapSubmitVer->Text  = gcnew System::String( LANG_SUBMIT_VER_CAP_J );
+			this->gboxForeign->Text      = gcnew System::String( LANG_F_J );
+			this->labProductNameForeign->Text = gcnew System::String( LANG_PRODUCT_NAME_F_J );
+			this->labProductCodeForeign->Text = gcnew System::String( LANG_PRODUCT_CODE_F_J );
+			this->cboxReleaseForeign->Text    = gcnew System::String( LANG_RELEASE_F_J );
+			this->labMultiForeign1->Text      = gcnew System::String( LANG_MULTI_F_J );
+			this->labMultiForeign2->Text      = gcnew System::String( LANG_MULTI_F_J );
+			this->labCaption->Text    = gcnew System::String( LANG_CAPTION_J );
+
+			// 会社情報
+			this->gboxPerson1->Text    = gcnew System::String( LANG_PERSON_1_J );
+			this->gboxPerson2->Text    = gcnew System::String( LANG_PERSON_2_J );
+			this->cboxIsInputPerson2->Text = gcnew System::String( LANG_INPUT_PERSON_2_J );
+			this->labCompany1->Text    = gcnew System::String( LANG_COMPANY_J );
+			this->labDepart1->Text     = gcnew System::String( LANG_DEPART_J );
+			this->labPerson1->Text     = gcnew System::String( LANG_PERSON_J );
+			this->labCompany2->Text    = gcnew System::String( LANG_COMPANY_J );
+			this->labDepart2->Text     = gcnew System::String( LANG_DEPART_J );
+			this->labPerson2->Text     = gcnew System::String( LANG_PERSON_J );
 			// ふりがな情報を有効にする
 			this->tboxFurigana1->Enabled = true;
-			this->labFurigana1->Text = gcnew System::String("ふりがな");
+			this->labFurigana1->Text = gcnew System::String( LANG_FURIGANA_J );
 			this->tboxFurigana2->Enabled = true;
-			this->labFurigana2->Text = gcnew System::String("ふりがな");
+			this->labFurigana2->Text = gcnew System::String( LANG_FURIGANA_J );
 
 			// TWL仕様
 			this->gboxTWLExInfo->Text         = gcnew System::String( "TWL拡張情報" );
@@ -4857,12 +4900,15 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->labLib->Text                = gcnew System::String( "使用ライブラリ" );
 			this->labCaptionEx->Text          = gcnew System::String( "特記事項" );
 
-			// ROMデータ編集可能情報
-			this->labEULA->Text               = gcnew System::String( "EULA同意バージョン" );
-			this->cboxIsEULA->Text            = gcnew System::String( "EULA同意" );
-			this->cboxIsWirelessIcon->Text    = gcnew System::String( "DSワイヤレス通信アイコン表示" );
-			this->cboxIsWiFiIcon->Text        = gcnew System::String( "Wi-Fi通信アイコン表示" );
-			this->labRegion->Text             = gcnew System::String( "カードリージョン" );
+			// SRL編集可能情報
+			this->labEULA->Text               = gcnew System::String( LANG_EULA_VER_J );
+			this->cboxIsEULA->Text            = gcnew System::String( LANG_EULA_J );
+			this->gboxIcon->Text              = gcnew System::String( LANG_ICON_J );
+			this->cboxIsWirelessIcon->Text    = gcnew System::String( LANG_WIRELESS_ICON_J );
+			this->cboxIsWiFiIcon->Text        = gcnew System::String( LANG_WIFI_ICON_J );
+			this->labRegion->Text             = gcnew System::String( LANG_REGION_J );
+
+			// リージョン
 			index = this->combRegion->SelectedIndex;
 			this->combRegion->Items->Clear();
 			this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5)
@@ -4873,9 +4919,10 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->combRegion->SelectedIndex = index;
 
 			// ペアレンタルコントロール
-			this->labParentalRating->Text      = gcnew System::String( "レーティング" );
-			this->labParentalEnable->Text      = gcnew System::String( "制限を有効" );
-			this->labParentalForceEnable->Text = gcnew System::String( "Rating Pending" );
+			this->gboxParental->Text           = gcnew System::String( LANG_REGION_PCTL_J );
+			this->labParentalRating->Text      = gcnew System::String( LANG_PCTL_RATING_J );
+			this->labParentalEnable->Text      = gcnew System::String( LANG_PCTL_ENABLE_J );
+			this->labParentalForceEnable->Text = gcnew System::String( LANG_PCTL_ALWAYS_J );
 
 			index = this->combCERO->SelectedIndex;	// いったんclearすると現在のindexに意味がなくなるので退避
 			this->combCERO->Items->Clear();
@@ -4918,6 +4965,23 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"G", L"PG", L"M", L"MA15+", L"未審査"});
 			this->combOFLC->SelectedIndex = index;
 
+			// エラー情報
+			this->labError->Text = gcnew System::String( "エラー(必ず修正してください。)" );
+			this->colErrorName->HeaderText  = gcnew System::String( "項目名" );
+			this->colErrorBegin->HeaderText = gcnew System::String( "開始" );
+			this->colErrorEnd->HeaderText   = gcnew System::String( "終了" );
+			this->colErrorCause->HeaderText = gcnew System::String( "要因" );
+
+			this->labWarn->Text  = gcnew System::String( "警告(修正は必須ではありませんが情報に誤りがないかご確認ください。)" );
+			this->colWarnName->HeaderText  = gcnew System::String( "項目名" );
+			this->colWarnBegin->HeaderText = gcnew System::String( "開始" );
+			this->colWarnEnd->HeaderText   = gcnew System::String( "終了" );
+			this->colWarnCause->HeaderText = gcnew System::String( "要因" );
+
+			this->gboxErrorTiming->Text = gcnew System::String( "いつの情報を表示するか" );
+			this->rErrorReading->Text   = gcnew System::String( "ROMデータ読み込み時" );
+			this->rErrorCurrent->Text   = gcnew System::String( "現在の入力を反映" );
+
 			// 特殊な設定用のテキストボックスの表記を変更
 			this->setSrlFormsCaptionEx();
 		}
@@ -4928,58 +4992,92 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 		{
 			System::Int32 index;
 
-			// フロントパネル上部
+			// タイトルバー
+			this->stripFile->Text          = gcnew System::String( "File" );
+			this->stripItemOpenRom->Text   = gcnew System::String( "Open a ROM data file" );
+			this->stripItemSaveTemp->Text  = gcnew System::String( "Save a temporary info." );
+			this->stripItemLoadTemp->Text  = gcnew System::String( "Load a temporary info. saved previously" );
+			this->stripMaster->Text        = gcnew System::String( "Master" );
+			this->stripItemSheet->Text     = gcnew System::String( "Make a submission sheet and a master ROM data file" );
+			this->stripItemMasterRom->Text = gcnew System::String( "Make a master ROM data file only" );
+
+			// 入力ファイル
+			this->labFile->Text = gcnew System::String( "ROM Data File" );
+
+			// タブ
+			this->tabRomInfo->Text     = gcnew System::String( "ROM Info.(Read Only)" );
+			this->tabTWLInfo->Text     = gcnew System::String( "TWL Info.(Read Only)" );
+			this->tabRomEditInfo->Text = gcnew System::String( "ROM Settings(Editable)" );
+			this->tabSubmitInfo->Text  = gcnew System::String( "Submission Info.(Editable)" );
+			this->tabCompanyInfo->Text = gcnew System::String( "Company Info.(Editable)" );
+			this->tabErrorInfo->Text   = gcnew System::String( "Setting Error" );
+
+			// ガイド
+			this->tboxGuideRomInfo->Text = gcnew System::String( "This tab is for checking ROM data. When ROM data is illegal, please check settings of building ROM data" );
+			this->tboxGuideTWLInfo->Text = gcnew System::String( "This tab is for checking ROM data. When ROM data is illegal, please check settings of building ROM data" );
+			this->tboxGuideRomEditInfo->Text = gcnew System::String( "These informations will be registered in a master ROM data and a submission sheet. Please edit certainly." );
+			this->tboxGuideSubmitInfo->Text  = gcnew System::String( "These informations are necessary for making a submission sheet. Please input." );
+			this->tboxGuideCompanyInfo->Text = gcnew System::String( "These informations are necessary for making a submission sheet. Please input." );
+			this->tboxGuideErrorInfo->Text   = gcnew System::String( "" );
+			this->tboxGuideErrorInfo->Text  += "This tab discribes errors in the ROM data file and edit mistakes.";
+			this->tboxGuideErrorInfo->Text  += "\r\nItems highlighted by Red can't be modified by this program. Please modify build settings.";
+			this->tboxGuideErrorInfo->Text  += "\r\nItems highlighted by Blue can be modified by this program and will register in a master ROM.";
+			this->tboxGuideErrorInfo->Text  += "\r\nItems highlighted by Black are discribed in a submission sheet and aren't affect a master ROM.";
+
+			// SRL情報
 			this->gboxSrl->Text       = gcnew System::String( "ROM Info." ); 
-			this->labTitleName->Text  = gcnew System::String( "Game title" );
-			this->labGameCode->Text   = gcnew System::String( "Game code" );
-			this->labMakerCode->Text  = gcnew System::String( "Maker code" );
+			this->labTitleName->Text  = gcnew System::String( "Game Title" );
+			this->labGameCode->Text   = gcnew System::String( "Game Code" );
+			this->labMakerCode->Text  = gcnew System::String( "Maker Code" );
 			this->labPlatform->Text   = gcnew System::String( "Platform" );
-			this->labRomType->Text    = gcnew System::String( "ROM type" );
-			this->labRomSize->Text    = gcnew System::String( "ROM size" );
-			this->labRemasterVer->Text = gcnew System::String( "Release ver." );
-			this->cboxRemasterVerE->Text = gcnew System::String( "E(Preliminary ver.)" );
-			this->labBackup->Text     = gcnew System::String( "Backup memory" );
+			this->labRomType->Text    = gcnew System::String( "ROM Type" );
+			this->labRomSize->Text    = gcnew System::String( "ROM Size" );
+			this->labRemasterVer->Text   = gcnew System::String( "Release Ver." );
+			this->cboxRemasterVerE->Text = gcnew System::String( "E(Preliminary Ver.)" );
 			this->labHeaderCRC->Text  = gcnew System::String( "Header CRC" );
 			this->labRomCRC->Text     = gcnew System::String( "ROM CRC" );
 			index = this->combBackup->SelectedIndex;
 			// バックアップメモリ
-			this->gboxProd->Text = gcnew System::String( "ROM Production Info.(Please input certainly)" );
+			this->gboxProd->Text   = gcnew System::String( "ROM Production Info." );
+			this->labBackup->Text  = gcnew System::String( LANG_BACKUP_E );
 			this->combBackup->Items->Clear();
 			this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
 				L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"Nothing", L"Other"});
 			this->combBackup->SelectedIndex = index;
 
-			// 提出情報タブ
-			this->labProductName->Text = gcnew System::String( "Product name" );
-			this->labProductCode->Text = gcnew System::String( "Product code" );
-			this->labReleaseDate->Text = gcnew System::String( "Release date" );
-			this->labSubmiteDate->Text = gcnew System::String( "Submission date" );
-			this->gboxSubmitWay->Text  = gcnew System::String( "How to submit" );
-			this->rSubmitPost->Text    = gcnew System::String( "Mail" );
-			this->rSubmitHand->Text    = gcnew System::String( "Handover" );
-			this->gboxUsage->Text      = gcnew System::String( "Purpose" );
-			this->rUsageSale->Text     = gcnew System::String( "For Sale" );
-			this->rUsageSample->Text   = gcnew System::String( "For Trial" );
-			this->rUsageDst->Text      = gcnew System::String( "For Network distribution" );
-			this->rUsageOther->Text    = gcnew System::String( "Other" );
-			this->labSubmitVer->Text     = gcnew System::String( "Submission ver." );
-			this->labCapSubmitVer->Text  = gcnew System::String( "* return to 0 when release ver. is updated." );
-			this->labProductNameForeign->Text = gcnew System::String( "Product name" );
-			this->labProductCodeForeign->Text = gcnew System::String( "Product code" );
-			this->cboxReleaseForeign->Text    = gcnew System::String( "Foreign ver. is scheduled to go on sale" );
-			this->labMultiForeign1->Text      = gcnew System::String( "* Only release multi ver." );
-			this->labMultiForeign2->Text      = gcnew System::String( "* Only release multi ver." );
-			this->labCaption->Text    = gcnew System::String( "Remarks item - Please write further information." );
-			// 会社情報タブ
-			this->gboxPerson1->Text    = gcnew System::String( "Account1" );
-			this->gboxPerson2->Text    = gcnew System::String( "Account2" );
-			this->cboxIsInputPerson2->Text = gcnew System::String( "Input Account2" );
-			this->labCompany1->Text    = gcnew System::String( "Company" );
-			this->labDepart1->Text     = gcnew System::String( "Dept." );
-			this->labPerson1->Text     = gcnew System::String( "Name" );
-			this->labCompany2->Text    = gcnew System::String( "Company" );
-			this->labDepart2->Text     = gcnew System::String( "Dept." );
-			this->labPerson2->Text     = gcnew System::String( "Name" );
+			// 提出情報
+			this->labProductName->Text = gcnew System::String( LANG_PRODUCT_NAME_E );
+			this->labProductCode->Text = gcnew System::String( LANG_PRODUCT_CODE_E );
+			this->labReleaseDate->Text = gcnew System::String( LANG_RELEASE_DATE_E );
+			this->labSubmiteDate->Text = gcnew System::String( LANG_SUBMIT_DATE_E );
+			this->gboxSubmitWay->Text  = gcnew System::String( LANG_SUBMIT_WAY_E );
+			this->rSubmitPost->Text    = gcnew System::String( LANG_SUBMIT_POST_E );
+			this->rSubmitHand->Text    = gcnew System::String( LANG_SUBMIT_HAND_E );
+			this->gboxUsage->Text      = gcnew System::String( LANG_USAGE_E );
+			this->rUsageSale->Text     = gcnew System::String( LANG_USAGE_SALE_E );
+			this->rUsageSample->Text   = gcnew System::String( LANG_USAGE_SAMPLE_E );
+			this->rUsageDst->Text      = gcnew System::String( LANG_USAGE_DST_E );
+			this->rUsageOther->Text    = gcnew System::String( LANG_USAGE_OTHER_E );
+			this->labSubmitVer->Text     = gcnew System::String( LANG_SUBMIT_VER_E );
+			this->labCapSubmitVer->Text  = gcnew System::String( LANG_SUBMIT_VER_CAP_E );
+			this->gboxForeign->Text      = gcnew System::String( LANG_F_E );
+			this->labProductNameForeign->Text = gcnew System::String( LANG_PRODUCT_NAME_F_E );
+			this->labProductCodeForeign->Text = gcnew System::String( LANG_PRODUCT_CODE_F_E );
+			this->cboxReleaseForeign->Text    = gcnew System::String( LANG_RELEASE_F_E );
+			this->labMultiForeign1->Text      = gcnew System::String( LANG_MULTI_F_E );
+			this->labMultiForeign2->Text      = gcnew System::String( LANG_MULTI_F_E );
+			this->labCaption->Text    = gcnew System::String( LANG_CAPTION_E );
+
+			// 会社情報
+			this->gboxPerson1->Text    = gcnew System::String( LANG_PERSON_1_E );
+			this->gboxPerson2->Text    = gcnew System::String( LANG_PERSON_2_E );
+			this->cboxIsInputPerson2->Text = gcnew System::String( LANG_INPUT_PERSON_2_E );
+			this->labCompany1->Text    = gcnew System::String( LANG_COMPANY_E );
+			this->labDepart1->Text     = gcnew System::String( LANG_DEPART_E );
+			this->labPerson1->Text     = gcnew System::String( LANG_PERSON_E );
+			this->labCompany2->Text    = gcnew System::String( LANG_COMPANY_E );
+			this->labDepart2->Text     = gcnew System::String( LANG_DEPART_E );
+			this->labPerson2->Text     = gcnew System::String( LANG_PERSON_E );
 			// ふりがな情報を削除
 			this->tboxFurigana1->Clear();
 			this->tboxFurigana1->Enabled = false;
@@ -4990,29 +5088,32 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 
 			// TWL仕様
 			this->gboxTWLExInfo->Text         = gcnew System::String( "TWL Extended Info" );
-			this->labNormalRomOffset->Text    = gcnew System::String( "TWL normal area ROM offset" );
-			this->labKeyTableRomOffset->Text  = gcnew System::String( "TWL secure area ROM offset" );
-			this->cboxIsNormalJump->Text      = gcnew System::String( "Enable Normal app. jump" );
-			this->cboxIsTmpJump->Text         = gcnew System::String( "Enable Temp. app. jump" );
-			this->cboxIsSubBanner->Text       = gcnew System::String( "Enable SubBanner file" );
-			this->cboxIsWL->Text              = gcnew System::String( "Enable NTR WhiteList signature" );
+			this->labNormalRomOffset->Text    = gcnew System::String( "TWL Normal Area ROM Offset" );
+			this->labKeyTableRomOffset->Text  = gcnew System::String( "TWL Secure Area ROM Offset" );
+			this->cboxIsNormalJump->Text      = gcnew System::String( "Enable Normal App. Jump" );
+			this->cboxIsTmpJump->Text         = gcnew System::String( "Enable Temp. App. Jump" );
+			this->cboxIsSubBanner->Text       = gcnew System::String( "Enable SubBanner File" );
+			this->cboxIsWL->Text              = gcnew System::String( "Enable NTR WhiteList Signature" );
 			this->gboxAccess->Text            = gcnew System::String( "Access Control" );
 			this->cboxIsSD->Text              = gcnew System::String( "SD Card" );
 			this->cboxIsNAND->Text            = gcnew System::String( "NAND Flash Memory" );
 			this->labIsGameCardOn->Text       = gcnew System::String( "Card Power" );
 			this->labAccessOther->Text        = gcnew System::String( "Others" );
 			this->gboxShared2Size->Text       = gcnew System::String( "Size of Shared2 Files" );
-			this->cboxIsShared2->Text         = gcnew System::String( "Use Shared2 files" );
-			this->labSDK->Text                = gcnew System::String( "SDK ver." );
+			this->cboxIsShared2->Text         = gcnew System::String( "Use Shared2 Files" );
+			this->labSDK->Text                = gcnew System::String( "SDK Ver." );
 			this->labLib->Text                = gcnew System::String( "Libraries used by the program" );
-			this->labCaptionEx->Text          = gcnew System::String( "Special note" );
+			this->labCaptionEx->Text          = gcnew System::String( "Special Note" );
 
-			// ROMデータ編集可能情報
-			this->labEULA->Text               = gcnew System::String( "EULA agreement ver." );
-			this->cboxIsEULA->Text            = gcnew System::String( "Agree EULA" );
-			this->cboxIsWirelessIcon->Text    = gcnew System::String( "Display an Icon of DS Wireless" );
-			this->cboxIsWiFiIcon->Text        = gcnew System::String( "Display an Icon of Wi-Fi connection" );
-			this->labRegion->Text             = gcnew System::String( "Card Region" );
+			// SRL編集可能情報
+			this->labEULA->Text               = gcnew System::String( LANG_EULA_VER_E );
+			this->cboxIsEULA->Text            = gcnew System::String( LANG_EULA_E );
+			this->gboxIcon->Text              = gcnew System::String( LANG_ICON_E );
+			this->cboxIsWirelessIcon->Text    = gcnew System::String( LANG_WIRELESS_ICON_E );
+			this->cboxIsWiFiIcon->Text        = gcnew System::String( LANG_WIFI_ICON_E );
+			this->labRegion->Text             = gcnew System::String( LANG_REGION_E );
+
+			// リージョン
 			index = this->combRegion->SelectedIndex;
 			this->combRegion->Items->Clear();
 			this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5)
@@ -5023,9 +5124,10 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->combRegion->SelectedIndex = index;
 
 			// ペアレンタルコントロール
-			this->labParentalRating->Text      = gcnew System::String( "Rating" );
-			this->labParentalEnable->Text      = gcnew System::String( "Enable Control" );
-			this->labParentalForceEnable->Text = gcnew System::String( "Rating Pending" );
+			this->gboxParental->Text           = gcnew System::String( LANG_REGION_PCTL_E );
+			this->labParentalRating->Text      = gcnew System::String( LANG_PCTL_RATING_E );
+			this->labParentalEnable->Text      = gcnew System::String( LANG_PCTL_ENABLE_E );
+			this->labParentalForceEnable->Text = gcnew System::String( LANG_PCTL_ALWAYS_E );
 
 			index = this->combCERO->SelectedIndex;	// いったんclearすると現在のindexに意味がなくなるので退避
 			this->combCERO->Items->Clear();
@@ -5068,6 +5170,23 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->combOFLC->Items->Clear();
 			this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"G", L"PG", L"M", L"MA15+", L"Unexamined"});
 			this->combOFLC->SelectedIndex = index;
+
+			// エラー情報
+			this->labError->Text = gcnew System::String( "Error Information(Modification is necessary.)" );
+			this->colErrorName->HeaderText  = gcnew System::String( "Name" );
+			this->colErrorBegin->HeaderText = gcnew System::String( "Begin" );
+			this->colErrorEnd->HeaderText   = gcnew System::String( "End" );
+			this->colErrorCause->HeaderText = gcnew System::String( "Reason" );
+
+			this->labWarn->Text  = gcnew System::String( "Warning(Modification is not necessary. Please check validity of these information.)" );
+			this->colWarnName->HeaderText  = gcnew System::String( "Name" );
+			this->colWarnBegin->HeaderText = gcnew System::String( "Begin" );
+			this->colWarnEnd->HeaderText   = gcnew System::String( "End" );
+			this->colWarnCause->HeaderText = gcnew System::String( "Reason" );
+
+			this->gboxErrorTiming->Text = gcnew System::String( "Error Of Timing" );
+			this->rErrorReading->Text   = gcnew System::String( "When ROM data was read" );
+			this->rErrorCurrent->Text   = gcnew System::String( "In current settings" );
 
 			// 特殊な設定用のテキストボックスの表記を変更
 			this->setSrlFormsCaptionEx();
@@ -5180,6 +5299,29 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			{
 				System::Int32 last = this->gridWarn->Rows->Count - 2;
 				this->gridWarn->Rows[ last ]->DefaultCellStyle->ForeColor = System::Drawing::Color::Blue;
+			}
+		}
+
+		// まとめて更新
+	public:
+		void updateGrid(void)
+		{
+			if( this->rErrorReading->Checked == true )
+			{
+				this->setGridError();
+				this->setGridWarn();
+			}
+			else
+			{
+				if( !System::String::IsNullOrEmpty(this->tboxFile->Text) )
+				{
+					this->hErrorList->Clear();
+					this->hWarnList->Clear();
+					this->checkSrlForms();
+					this->checkDeliverableForms();
+					this->overloadGridError();
+					this->overloadGridWarn();
+				}
 			}
 		}
 
@@ -5337,6 +5479,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->changeEnglish();
 			this->stripItemEnglish->Checked  = true;
 			this->stripItemJapanese->Checked = false;
+			this->updateGrid();
 		}
 
 	private:
@@ -5345,6 +5488,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->changeJapanese();
 			this->stripItemEnglish->Checked  = false;
 			this->stripItemJapanese->Checked = true;
+			this->updateGrid();
 		}
 
 	private:
@@ -5381,7 +5525,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// SRLが読み込まれていないときにはリードさせない
 			if( System::String::IsNullOrEmpty( this->tboxFile->Text ) )
 			{
-				this->errMsg( "ROMデータファイルがオープンされていませんので、提出書類の作成ができません。", 
+				this->errMsg( "ROMデータファイルがオープンされていませんので、提出確認書の作成ができません。", 
 							  "ROM data file has not opened yet. Therefore a submission sheet can't be made." );
 				return;
 			}
@@ -5412,7 +5556,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 
 				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
 				{
-					this->errMsg( "フォルダの選択がキャンセルされましたので提出書類は作成されません。", 
+					this->errMsg( "フォルダの選択がキャンセルされましたので提出確認書は作成されません。", 
 								  "A submission sheet can not be made, since selecting folder is canceled." );
 					return;
 				}
@@ -5443,13 +5587,13 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// SRLと書類の両方のフォーム入力をチェックする
 			if( this->checkSrlForms() == false )
 			{
-				this->errMsg( "ROMデータに不正な設定があるためROMデータの保存および提出書類の作成ができません。",
+				this->errMsg( "ROMデータに不正な設定があるためROMデータの保存および提出確認書の作成ができません。",
 							  "A ROM data and a submission sheet can't be saved, since it has illegal info." );
 				return;
 			}
 			if( this->checkDeliverableForms() == false )
 			{
-				this->errMsg( "入力情報に不正な設定があるため提出書類を作成できません。",
+				this->errMsg( "入力情報に不正な設定があるため提出確認書を作成できません。",
 							  "Making a submission sheet can't be done, since input data is illegal." );
 				return;
 			}
@@ -5471,7 +5615,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 注意書き 
 			{
 				this->sucMsg( 
-					"Step1/2: ROMデータファイル(SRL)と提出書類の情報を一致させるため、まず、入力情報を反映させたROMデータファイルを作成します。\n(キャンセルされたとき、SRLおよび提出書類は作成されません。)\n"
+					"Step1/2: ROMデータファイル(SRL)と提出確認書の情報を一致させるため、まず、入力情報を反映させたROMデータファイルを作成します。\n(キャンセルされたとき、SRLおよび提出確認書は作成されません。)\n"
 					+ "\n  ROMデータファイル名は \"" + srlfile + "\"となります。\n" + "\nROMデータファイルを保存するフォルダを選択してください。",
 					"Step1/2: Firstly, We save ROM file(SRL) because several information in a submission sheet are match those in the ROM data file.\n(When it is canceled, both the SRL and a submission sheet are not made.)"
 					+ "\n  ROM data file name is \"" + srlfile + "\".\n" + "\nPlease select a folder in which the ROM data is saved."
@@ -5484,7 +5628,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 
 				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
 				{
-					this->errMsg( "フォルダの選択がキャンセルされましたので提出書類は作成されません。", 
+					this->errMsg( "フォルダの選択がキャンセルされましたので提出確認書は作成されません。", 
 								  "A submission sheet can not be made, since selecting folder is canceled." );
 					return;
 				}
@@ -5497,7 +5641,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 注意書き 
 			{
 				this->sucMsg( 
-					"Step2/2: 続いて提出書類を作成します。\nここでキャンセルされたとき、提出書類はもとよりROMデータファイルも作成されませんのでご注意ください。",
+					"Step2/2: 続いて提出確認書を作成します。\nここでキャンセルされたとき、提出確認書はもとよりROMデータファイルも作成されませんのでご注意ください。",
 					"Step2/2: Secondly, We should make a submission sheet. \n(CAUTION: When it is canceled, not only a submission sheet is not made, but also the ROM data file is selected previously.)"
 				);
 			}
@@ -5512,7 +5656,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 
 				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
 				{
-					this->errMsg( "提出書類の作成がキャンセルされました。", "Making a submission sheet is canceled." );
+					this->errMsg( "提出確認書の作成がキャンセルされました。", "Making a submission sheet is canceled." );
 					return;
 				}
 				delivfile = dlg->FileName;
@@ -5522,7 +5666,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				}
 			}
 
-			// マスタ提出書類に必要な情報をフォームから取得して更新
+			// マスタ提出確認書に必要な情報をフォームから取得して更新
 			this->setSrlProperties();	// 先にSrlを更新しておく
 			this->setDeliverableProperties();
 
@@ -5531,7 +5675,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			u16  crc;			// SRL全体のCRCを計算する(書類に記述するため)
 			if( !getWholeCRCInFile( srlfile, &crc ) )
 			{
-				this->errMsg( "CRCの計算に失敗しました。提出書類の作成はキャンセルされます。", 
+				this->errMsg( "CRCの計算に失敗しました。提出確認書の作成はキャンセルされます。", 
 							  "Calc CRC is failed. Therefore, Making a submission sheet is canceled." );
 				return;
 			}
@@ -5547,31 +5691,22 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			result = this->hDeliv->writeSpreadsheet( delivfile, this->hSrl, hcrc, srlfile, !(this->stripItemJapanese->Checked) );
 			if( result != ECDeliverableResult::NOERROR )
 			{
-				this->errMsg( "提出書類の作成に失敗しました。", "Making the submission sheet is failed." );
+				this->errMsg( "提出確認書の作成に失敗しました。", "Making the submission sheet is failed." );
 				return;
 			}
-			this->sucMsg( "提出書類の作成に成功しました。", "The submission sheet is made successfully." );
+			this->sucMsg( "提出確認書の作成に成功しました。", "The submission sheet is made successfully." );
 		} //stripItemSheet_Click()
 
 	private:
 		System::Void rErrorReading_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
 		{
-			this->setGridError();
-			this->setGridWarn();
+			this->updateGrid();
 		}
 
 	private:
 		System::Void rErrorCurrent_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
 		{
-			if( !System::String::IsNullOrEmpty(this->tboxFile->Text) )
-			{
-				this->hErrorList->Clear();
-				this->hWarnList->Clear();
-				this->checkSrlForms();
-				this->checkDeliverableForms();
-				this->overloadGridError();
-				this->overloadGridWarn();
-			}
+			this->updateGrid();
 		}
 
 	private:
@@ -5580,22 +5715,10 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// エラータブを最新情報に更新
 			if( tabMain->SelectedIndex == 5 )
 			{
-				if( this->rErrorReading->Checked == true )
-				{
-					this->setGridError();
-					this->setGridWarn();
-				}
-				else
-				{
-					this->hErrorList->Clear();
-					this->hWarnList->Clear();
-					this->checkSrlForms();
-					this->checkDeliverableForms();
-					this->overloadGridError();
-					this->overloadGridWarn();
-				}
+				this->updateGrid();
 			}
 		}
+
 }; // enf of ref class Form1
 
 } // end of namespace MasterEditorTWL

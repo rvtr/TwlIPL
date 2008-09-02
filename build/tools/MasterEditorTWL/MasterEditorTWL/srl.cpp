@@ -614,6 +614,7 @@ ECSrlResult RCSrl::mrc( FILE *fp )
 	this->hErrorList->Clear();
 	this->hWarnList->Clear();
 
+#ifdef METWL_WHETHER_MRC
 	ECSrlResult result;
 	result = this->mrcNTR( fp );
 	if( result != ECSrlResult::NOERROR )
@@ -625,6 +626,7 @@ ECSrlResult RCSrl::mrc( FILE *fp )
 	{
 		return result;
 	}
+#endif
 	return ECSrlResult::NOERROR;
 }
 

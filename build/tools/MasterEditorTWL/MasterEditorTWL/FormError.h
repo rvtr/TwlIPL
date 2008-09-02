@@ -333,13 +333,13 @@ namespace MasterEditorTWL {
 	public:
 		void changeJapanese(void)
 		{
-			this->labError->Text = gcnew System::String( "エラー(必ず修正してください)" );
+			this->labError->Text = gcnew System::String( "エラー(必ず修正してください。)" );
 			this->colErrorName->HeaderText  = gcnew System::String( "項目名" );
 			this->colErrorBegin->HeaderText = gcnew System::String( "開始" );
 			this->colErrorEnd->HeaderText   = gcnew System::String( "終了" );
 			this->colErrorCause->HeaderText = gcnew System::String( "要因" );
 
-			this->labWarn->Text  = gcnew System::String( "警告(修正は必須ではありませんが情報に誤りがないかご確認ください)" );
+			this->labWarn->Text  = gcnew System::String( "警告(修正は必須ではありませんが情報に誤りがないかご確認ください。)" );
 			this->colWarnName->HeaderText  = gcnew System::String( "項目名" );
 			this->colWarnBegin->HeaderText = gcnew System::String( "開始" );
 			this->colWarnEnd->HeaderText   = gcnew System::String( "終了" );
