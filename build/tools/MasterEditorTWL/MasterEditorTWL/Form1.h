@@ -2918,8 +2918,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			// stripMaster
 			// 
-			this->stripMaster->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {this->stripItemMasterRom, 
-				this->stripItemSheet});
+			this->stripMaster->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {this->stripItemSheet, 
+				this->stripItemMasterRom});
 			this->stripMaster->Name = L"stripMaster";
 			this->stripMaster->Size = System::Drawing::Size(53, 20);
 			this->stripMaster->Text = L"マスター";
@@ -2927,15 +2927,15 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// stripItemMasterRom
 			// 
 			this->stripItemMasterRom->Name = L"stripItemMasterRom";
-			this->stripItemMasterRom->Size = System::Drawing::Size(165, 22);
-			this->stripItemMasterRom->Text = L"マスターROMの作成";
+			this->stripItemMasterRom->Size = System::Drawing::Size(220, 22);
+			this->stripItemMasterRom->Text = L"マスターROMのみを作成";
 			this->stripItemMasterRom->Click += gcnew System::EventHandler(this, &Form1::stripItemMasterRom_Click);
 			// 
 			// stripItemSheet
 			// 
 			this->stripItemSheet->Name = L"stripItemSheet";
-			this->stripItemSheet->Size = System::Drawing::Size(165, 22);
-			this->stripItemSheet->Text = L"提出書類の作成";
+			this->stripItemSheet->Size = System::Drawing::Size(220, 22);
+			this->stripItemSheet->Text = L"提出書類とマスターROMを作成";
 			this->stripItemSheet->Click += gcnew System::EventHandler(this, &Form1::stripItemSheet_Click);
 			// 
 			// stripLang
@@ -2949,7 +2949,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// stripItemEnglish
 			// 
 			this->stripItemEnglish->Name = L"stripItemEnglish";
-			this->stripItemEnglish->Size = System::Drawing::Size(119, 22);
+			this->stripItemEnglish->Size = System::Drawing::Size(152, 22);
 			this->stripItemEnglish->Text = L"English";
 			this->stripItemEnglish->Click += gcnew System::EventHandler(this, &Form1::stripItemEnglish_Click);
 			// 
@@ -2958,7 +2958,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->stripItemJapanese->Checked = true;
 			this->stripItemJapanese->CheckState = System::Windows::Forms::CheckState::Checked;
 			this->stripItemJapanese->Name = L"stripItemJapanese";
-			this->stripItemJapanese->Size = System::Drawing::Size(119, 22);
+			this->stripItemJapanese->Size = System::Drawing::Size(152, 22);
 			this->stripItemJapanese->Text = L"Japanese";
 			this->stripItemJapanese->Click += gcnew System::EventHandler(this, &Form1::stripItemJapanese_Click);
 			// 
@@ -3610,7 +3610,17 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->tboxWholeCRC->Clear();
 			this->tboxWholeCRC->AppendText( "0x" );
 			this->tboxWholeCRC->AppendText( hcrc->ToString("X") );
-			this->sucMsg( "ROMデータファイルのオープンに成功しました。", "The ROM data file is opened successfully." );
+
+			// 読み込み時エラーを登録する
+			this->rErrorReading->Checked = true;
+			this->setGridError();
+			this->setGridWarn();
+			if( this->hSrl->hErrorList->Count > 0 )
+			{
+				this->errMsg( "ROMデータにエラーがあります。「エラー情報」タブをご確認ください。",
+							  "ROM data include error. Please look the tab \"Error\"." );
+				return;
+			}
 		} // openSrl
 
 	private:
@@ -4328,7 +4338,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			
 			if( box->SelectedIndex < 0 )
 			{
-				this->hWarnList->Add( gcnew RCMRCError( 
+				this->hErrorList->Add( gcnew RCMRCError( 
 					labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true, affectRom ) );
 			}
 			return true;
@@ -4389,7 +4399,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 
 			// ひととおりエラー登録をした後で
 			// SRLバイナリに影響を与えるエラーが存在するかチェック
-			return this->isErrorAffectRom();
+			return this->isValidAffectRom();
 		}
 
 		// ペアレンタルコントロール関連のフォーム入力が正しいか書き込み前チェック
@@ -4670,7 +4680,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 
 			// ひととおりエラー登録をした後で
 			// 書類上のエラー(SRLバイナリには影響しない)が存在するかチェック
-			return this->isErrorOnlyDeliverable();
+			return this->isValidOnlyDeliverable();
 		}
 
 		// ----------------------------------------------
@@ -4678,7 +4688,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 		// ----------------------------------------------
 
 		// SRLには関係しない書類上のエラーをチェック
-		System::Boolean isErrorOnlyDeliverable(void)
+		System::Boolean isValidOnlyDeliverable(void)
 		{
 			System::Int32 count = 0;
 
@@ -4689,11 +4699,11 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				if( !err->AffectRom )
 					count++;
 			}
-			return (count > 0);
+			return (count == 0);
 		}
 
 		// SRLのバイナリに影響する項目にエラーがあるかチェック
-		System::Boolean isErrorAffectRom(void)
+		System::Boolean isValidAffectRom(void)
 		{
 			System::Int32 count = 0;
 
@@ -4713,7 +4723,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				if( err->AffectRom )		// 修正不可エラーは存在しない
 					count++;
 			}
-			return (count > 0);
+			return (count == 0);
 		}
 
 		// ----------------------------------------------
@@ -5139,6 +5149,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			}
 			this->loadSrl( filename );			// ドラッグアンドドロップの時点でボタンを押さなくてもファイルを開く
 			this->tboxFile->Text = filename;
+			//this->sucMsg( "ROMデータファイルのオープンに成功しました。", "The ROM data file is opened successfully." );
 		}
 
 	// チェックボタンを押したときに他のフォームを有効にする
@@ -5297,16 +5308,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				filename = dlg->FileName;
 			}
 			this->loadSrl( filename );
-
-			// 読み込み時エラーを登録する
-			this->rErrorReading->Checked = true;
-			this->setGridError();
-			this->setGridWarn();
-			if( this->hSrl->hErrorList->Count > 0 )
-			{
-				this->errMsg( "ROMデータにエラーがあります。「エラー情報」タブをご確認ください。",
-							  "ROM data include error. Please look the tab \"Error\"." );
-			}
+			//this->sucMsg( "ROMデータファイルのオープンに成功しました。", "The ROM data file is opened successfully." );
 		} //stripItemOpenRom_Click()
 
 	private:
@@ -5328,26 +5330,33 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				return;
 			}
 
-			// ダイアログで決めたファイルにSRLを保存
+			// SRL名を提出手順書に従わせる
 			{
-				System::Windows::Forms::SaveFileDialog ^dlg = gcnew (SaveFileDialog);
+				filename = gcnew System::String("");
 
-				dlg->InitialDirectory = "c:\\";
-				dlg->Filter      = (this->stripItemJapanese->Checked == true)?"srl形式 (*.srl)|*.srl"
-																	:"srl format (*.srl)|*.srl";
-				dlg->FilterIndex = 1;
-				dlg->RestoreDirectory = true;
+				if( this->cboxRemasterVerE->Checked == true )
+				{
+					filename = "T" + this->hSrl->hGameCode + "E" + this->numSubmitVersion->Value.ToString() + ".SRL";
+				}
+				else
+				{
+					filename = "T" + this->hSrl->hGameCode + this->hSrl->hRomVersion->ToString() + this->numSubmitVersion->Value.ToString() + ".SRL";
+				}
+			}
+
+			// ダイアログからSRLを保存するディレクトリを取得する
+			{
+				System::Windows::Forms::FolderBrowserDialog ^dlg = gcnew (System::Windows::Forms::FolderBrowserDialog);
 
 				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
 				{
-					this->errMsg( "保存がキャンセルされましたのでROMファイルデータおよび提出書類は作成されません。",
-								  "A ROM data file and a submission sheet are not updated, since saving the file is canceled." );
+					this->errMsg( "フォルダの選択がキャンセルされましたので提出書類は作成されません。", 
+								  "A submission sheet can not be made, since selecting folder is canceled." );
 					return;
 				}
-				filename = dlg->FileName;
-				if( !(dlg->FileName->EndsWith( ".srl" )) )
+				else
 				{
-					filename += ".srl";
+					filename = dlg->SelectedPath + filename;
 				}
 			}
 			this->saveSrl( filename );
@@ -5383,44 +5392,51 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				return;
 			}
 
+			// SRL名を提出手順書に従わせる
+			{
+				srlfile = gcnew System::String("");
+
+				if( this->cboxRemasterVerE->Checked == true )
+				{
+					srlfile = "T" + this->hSrl->hGameCode + "E" + this->numSubmitVersion->Value.ToString() + ".SRL";
+				}
+				else
+				{
+					srlfile = "T" + this->hSrl->hGameCode + this->hSrl->hRomVersion->ToString() + this->numSubmitVersion->Value.ToString() + ".SRL";
+				}
+			}
+
 			// 注意書き 
 			{
 				this->sucMsg( 
-					"Step1/2: ROMデータファイル(SRL)と提出書類の情報を一致させるため、まず、入力情報を反映させたSRLを作成します。\n(キャンセルされたとき、SRLおよび提出書類は作成されません。)",
-					"Step1/2: Firstly, We save ROM file(SRL) because several information in a submission sheet are match those in the SRL.\n(When it is canceled, both the SRL and a submission sheet are not made.)"
+					"Step1/2: ROMデータファイル(SRL)と提出書類の情報を一致させるため、まず、入力情報を反映させたROMデータファイルを作成します。\n(キャンセルされたとき、SRLおよび提出書類は作成されません。)\n"
+					+ "\n  ROMデータファイル名は \"" + srlfile + "\"となります。\n" + "\nROMデータファイルを保存するフォルダを選択してください。",
+					"Step1/2: Firstly, We save ROM file(SRL) because several information in a submission sheet are match those in the ROM data file.\n(When it is canceled, both the SRL and a submission sheet are not made.)"
+					+ "\n  ROM data file name is \"" + srlfile + "\".\n" + "\nPlease select a folder in which the ROM data is saved."
 				);
 			}
-			// ダイアログからSrl名を取得する
-			{
-				System::Windows::Forms::SaveFileDialog ^dlg = gcnew (SaveFileDialog);
 
-				dlg->InitialDirectory = "c:\\";
-				dlg->Filter      = "srl形式 (*.srl)|*.srl";
-				dlg->FilterIndex = 1;
-				dlg->RestoreDirectory = true;
+			// ダイアログからSRLを保存するディレクトリを取得する
+			{
+				System::Windows::Forms::FolderBrowserDialog ^dlg = gcnew (System::Windows::Forms::FolderBrowserDialog);
 
 				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
 				{
-					this->errMsg( "SRLの保存がキャンセルされましたので提出書類は作成されません。", 
-								  "A submission sheet can not be made, since saving SRL is canceled." );
+					this->errMsg( "フォルダの選択がキャンセルされましたので提出書類は作成されません。", 
+								  "A submission sheet can not be made, since selecting folder is canceled." );
 					return;
 				}
-				srlfile = dlg->FileName;
-				if( !(dlg->FileName->EndsWith( ".srl" )) )
+				else
 				{
-					srlfile += ".srl";
+					srlfile = dlg->SelectedPath + srlfile;
 				}
 			}
-
-			// マスタ提出書類に必要な情報をフォームから取得して更新
-			this->setSrlProperties();	// 先にSrlを更新しておく
-			this->setDeliverableProperties();
 
 			// 注意書き 
 			{
 				this->sucMsg( 
-					"Step2/2: 続いて提出書類を作成します。\nここでキャンセルされたとき、提出書類はもとよりSRLも作成(更新)されませんのでご注意ください。",
-					"Step2/2: Secondly, We should make a submission sheet. \n(CAUTION: When it is canceled, not only a submission sheet is not made, but also the SRL is selected previously.)"
+					"Step2/2: 続いて提出書類を作成します。\nここでキャンセルされたとき、提出書類はもとよりROMデータファイルも作成されませんのでご注意ください。",
+					"Step2/2: Secondly, We should make a submission sheet. \n(CAUTION: When it is canceled, not only a submission sheet is not made, but also the ROM data file is selected previously.)"
 				);
 			}
 			// ダイアログでファイルパスを決定
@@ -5443,6 +5459,10 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 					delivfile += ".xml";
 				}
 			}
+
+			// マスタ提出書類に必要な情報をフォームから取得して更新
+			this->setSrlProperties();	// 先にSrlを更新しておく
+			this->setDeliverableProperties();
 
 			// SRLを更新
 			this->saveSrl( srlfile );

@@ -625,9 +625,6 @@ ECSrlResult RCSrl::mrc( FILE *fp )
 	{
 		return result;
 	}
-	//this->hErrorList->Add( gcnew RCMRCError( "テスト", 0x01, 0xfe, "テスト要因", "test", "reason", false ) );
-	//this->hWarnList->Add( gcnew RCMRCError( "テスト2", 0x01, 0xfe, "テスト要因2", "test2", "reason2", false ) );
-
 	return ECSrlResult::NOERROR;
 }
 
@@ -660,7 +657,7 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 	for( i=0; i < GAME_CODE_MAX; i++ )
 	{
 		char c = this->pRomHeader->s.game_code[i];
-		if( ((c < 0x20) || (0x5f < c)) && (c != 0x00) )
+		if( (c < 0x20) || (0x5f < c) )
 		{
 			result = false;
 		}
