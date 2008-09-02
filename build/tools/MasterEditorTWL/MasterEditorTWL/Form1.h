@@ -5533,6 +5533,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// SRL関連フォーム入力をチェックする
 			if( this->checkSrlForms() == false )
 			{
+				this->errMsg( "ROMデータに不正な設定があるためROMデータの保存ができません。",
+							  "A ROM data and a submission sheet can't be saved, since it has illegal info." );
 				return;
 			}
 
