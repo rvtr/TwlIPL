@@ -307,7 +307,7 @@ TitleProperty *SYSM_ReadParameters( void )
         
         if( !SYSM_IsRunOnDebugger() && LCFG_TSD_GetLastTimeBootSoftPlatform() == PLATFORM_CODE_NTR ) {
             // 前回ブートがNTRなら、ランチャーパラメータ無効
-            SYSMi_GetWork()->flags.arm7.isValidLauncherParam = 0;
+            SYSM_SetValidLauncherParam(FALSE);
             MI_CpuClear32( &SYSMi_GetWork()->launcherParam, sizeof(LauncherParam) );
         }
         
