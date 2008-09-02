@@ -694,7 +694,7 @@ static void PrintError( void )
 	PrintfSJIS( 128,  0, TXT_COLOR_BLUE, "IPL:%s", g_strIPLSvnRevision );
 	PrintfSJIS( 128, 12, TXT_COLOR_BLUE, "SDK:%s", g_strSDKSvnRevision );
 	error_code = UTL_GetFatalError();
-	PrintfSJIS( 2, 25, TXT_COLOR_RED,"ERROR! - 0x%0.16x\n", error_code );
+	PrintfSJIS( 2, 25, TXT_COLOR_RED,"ERROR! - 0x%016llx\n", error_code );
 	ERRORLOG_Write(error_code);
 	for(l=0;l<64;l++)
 	{
