@@ -43,6 +43,9 @@ NANDFIRM_DIR                =   $(SYSMENU_ROOT)/build/nandfirm/menu-launcher
 
 SYSTEMUPDATER_DIR			=	$(SYSMENU_ROOT)/build/systemMenu_tools/SystemUpdater
 
+# 実際に書き込みたいファイルの置かれているdataフォルダを指定
+export UPDATER_HOST_ROOT_DIR = $(call empath,$(SYSTEMUPDATER_DIR)/data)
+
 ifdef BUILD_TWLSDK
 SUBMAKES +=	Makefile_environment
 endif
