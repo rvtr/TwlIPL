@@ -441,13 +441,18 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
     LCFG_THW_SetValidLanguageBitmap( s_langBitmapList[ region ] );
 
     // シリアルNo.のセット
-    if( pSerialNo == NULL ) {
+    if( pSerialNo != NULL ) 
+	{
+        LCFG_THW_SetSerialNo( pSerialNo );
+    }
+	else
+	{
         // 量産工程でないとシリアルNo.は用意できないので、ここではMACアドレスをもとに適当な値をセットする。
         u8 buffer[ 12 ] = "SERIAL";     // 適当な文字列をMACアドレスと結合してSHA1を取り、仮SerialNoとする。
         u8 serialNoOld[ SVC_SHA1_DIGEST_SIZE ];
 		u8 serialNoNew[ SVC_SHA1_DIGEST_SIZE ];
 		u8 sha1_buffer[ SVC_SHA1_DIGEST_SIZE ];
-        int i;
+        int i,j;
         int len;
 		int offset;
 
@@ -468,11 +473,18 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
 		// 新しいシリアルNoをクリアしておく
 		MI_CpuClear8( serialNoNew, sizeof(serialNoNew) );
 
-		// シリアルNoの先頭が'T'でなければ不正なので仮のシリアルNo.を作成する
-		if ( serialNoOld[0] != 'T')
+		// シリアルNoの先頭が'T'(量産用)または'V'(開発用)でなければ不正なので仮のシリアルNo.を作成する
+		if ( serialNoOld[0] != 'T' && serialNoOld[0] != 'V')
 		{
-			// 1バイト目はTWLの'T'
-			serialNoNew[0] = 'T';
+			// 1バイト目は量産用なら'T'、その他なら'V'
+			if (SCFG_ReadBondingOption() == SCFG_OP_PRODUCT)
+			{
+				serialNoNew[0] = 'T';
+			}
+			else
+			{
+				serialNoNew[0] = 'V';
+			}
 			// 2バイト目はリージョン別ASCII
 			serialNoNew[1] = (u8)regionAsciiForSerialNo[region];			
 			// 米国リージョン以外は3バイト目にEMS（仮シリアルNo.なので任天堂の'N'）
@@ -484,8 +496,8 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
 			// 数字8桁
 	        OS_GetMacAddress( buffer + 6 );
 	        SVC_CalcSHA1( sha1_buffer, buffer, sizeof(buffer) );
-	        for( i = offset; i < len-1; i++ ) {
-	            serialNoNew[ i ] = (u8)( ( sha1_buffer[ i ] % 10 ) + 0x30 );
+	        for( i=offset,j=0; i < len-1; i++,j++ ) {
+	            serialNoNew[ i ] = (u8)( ( sha1_buffer[ j ] % 10 ) + 0x30 );
 	        }
 
 			// チェックコード取得
@@ -494,11 +506,18 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
 			// 仮シリアルNo.であることの印として14バイト目を'K'とする
 			serialNoNew[13] = 'K';
 		}
-		// シリアルNoの先頭が'T'である場合ユニーク数字８桁はそのままで他を変更する
+		// シリアルNoの先頭が'T'(量産用)または'V'(開発用)である場合ユニーク数字８桁はそのままで他を変更する
 		else
 		{
-			// 1バイト目はTWLの'T'
-			serialNoNew[0] = 'T';
+			// 1バイト目は量産用なら'T'、その他なら'V'
+			if (SCFG_ReadBondingOption() == SCFG_OP_PRODUCT)
+			{
+				serialNoNew[0] = 'T';
+			}
+			else
+			{
+				serialNoNew[0] = 'V';
+			}
 			// 2バイト目はリージョン別ASCII
 			serialNoNew[1] = (u8)regionAsciiForSerialNo[region];
 			// 米国リージョン以外は3バイト目にEMS
@@ -536,8 +555,6 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
      	OS_TPrintf( "serialNo : %s\n", serialNoNew );
 
         LCFG_THW_SetSerialNo( serialNoNew );
-    }else {
-        LCFG_THW_SetSerialNo( pSerialNo );
     }
 
     // ランチャーTitleID_Loのセット
