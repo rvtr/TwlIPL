@@ -20,6 +20,7 @@
 #include <twl/fatfs.h>
 #include <nitro/card.h>
 #include <twl/nam.h>
+#include <twl/lcfg.h>
 #include <twl/os/common/format_rom.h>
 #include <sysmenu/namut.h>
 
@@ -135,6 +136,13 @@ TwlMain()
 	case HWI_INIT_SUCCESS_NO_SIGNATRUE_MODE:
 		break;
 	}
+
+	// 前回起動したソフトのplatformCodeがNITROだとアプリジャンプに失敗する。
+	// デバッガ動作時はランチャーが前回起動したソフトのplatformCode & TitleID を
+	// 更新しないためImportJump自身が更新しておく。NANDへの反映はkamiImportTad()
+	// の中で行われる。
+	LCFG_TSD_SetLastTimeBootSoftPlatform( PLATFORM_CODE_TWL_LIMITED );
+	LCFG_TSD_SetLastTimeBootSoftTitleID( OS_GetTitleId() );
 
 	// TADのインポート開始
 	if (kamiImportTad(&titleID))
