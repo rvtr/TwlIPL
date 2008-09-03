@@ -168,10 +168,13 @@ void TwlMain(void)
 	        PutSubScreen(0, 18, 0xff, "   B: RETURN JUMP");
 	    break;
 	    case JUMPTYPE_ANOTHER_CARD:
-	    	PutSubScreen(0, 18, 0xfe, "   B: JUMP TO CARD APP");
+	    	PutSubScreen(0, 18, 0xfe, "   B: JUMP TO CARD APP (ANO)");
 	    break;
 	    case JUMPTYPE_SYSMENU:
 	    	PutSubScreen(0, 18, 0xff, "   B: JUMP TO SYSMENU");
+	    break;
+	    case JUMPTYPE_FAIL_CARD:
+	    	PutSubScreen(0, 18, 0xfe, "   B: JUMP TO CARD APP (FAIL)");
 	    break;
 	    }
 
@@ -258,7 +261,14 @@ void TwlMain(void)
 	        	break;
 	        case JUMPTYPE_SYSMENU:
 	        	OS_JumpToSystemMenu();
-	        break;
+	    	    break;
+	        case JUMPTYPE_FAIL_CARD:
+	        	if ( !OS_DoApplicationJump(CARDAPP_FAIL_TITLEID, OS_APP_JUMP_NORMAL) )
+	        	{
+					OS_TPrintf("Failed to Jump.\n");
+					PutMainScreen(1, 16, 0xf1, "ERROR!: Failed to Jump.");
+				}
+				break;
 	        }
         }
         
