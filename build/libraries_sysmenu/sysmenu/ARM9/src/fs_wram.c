@@ -179,6 +179,7 @@ static void FSi_WramThread(void* arg)
 #pragma unused(arg)
     while (1)
     {
+		CardDataReadState card_read_state;
         FSWramCommandParam  *cmd;
         int                 result;
         OS_ReceiveMessage(&FSiWramWork.msgQ4task, (OSMessage*)&cmd, OS_MESSAGE_BLOCK);
@@ -195,9 +196,9 @@ static void FSi_WramThread(void* arg)
 				result = 0;
 				break;
 			}
-            HOTSW_ReadCardData( FSiWramWork.card_src, cmd->addr, (u32)cmd->length);
+            card_read_state = HOTSW_ReadCardData( FSiWramWork.card_src, cmd->addr, (u32)cmd->length);
             FSiWramWork.card_src = (void *)((u32)FSiWramWork.card_src + (u32)cmd->length);
-            result = cmd->length;//Žb’è
+            result = (card_read_state == CARD_READ_SUCCESS) ? cmd->length : 0;
             break;
         case FS_WRAM_COMMAND_WRITE:
             result = FS_WriteFile( FSiWramWork.p_file, cmd->addr, cmd->length );
