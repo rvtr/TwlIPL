@@ -192,14 +192,20 @@ void TwlMain(void)
 		if (gKey.trg & PAD_BUTTON_Y)
 		{
 			CARDRomHeader* rh;
-			u64 titleId;
+//			u64 titleId;
 			rh = (CARDRomHeader*)CARD_GetRomHeader();
 			
-			if ( rh->game_code != 0)
+			// TWL アプリの場合
+			if ( rh->product_id & 0x03 || rh->product_id & 0x02 )	// 刺さっているカードのロムが TWLアプリ
 			{
-				titleId = (0x00030000 << 32) | rh->game_code;
-				OS_DoApplicationJump( titleId, OS_APP_JUMP_NORMAL);
+				ROM_Header* rh2;
+				rh2 = (ROM_Header*)HW_TWL_CARD_ROM_HEADER_BUF;
+				
+				OS_DoApplicationJump( rh2->s.titleID, OS_APP_JUMP_NORMAL);
 			}
+			
+//			titleId = (0x00030000 << 32) | rh->game_code;
+			// NITRO カードアプリなら失敗（特殊なものでない限り TitleID が設定されていないため）
 
 			PrintErrMsg("Failed to App Jump.");
 		}
@@ -375,7 +381,7 @@ static void DrawScene(DataStruct* list)
 			}
 			
 			// ノーマルジャンプを許可しているかどうかを取得
-			if ( rh->reserved_A[8] & 0x80 )
+			if ( rh->reserved_A[8] & 0x01 )
 			{
 				PutSubScreen( 0, 2 + TITLE_NUM_CUL + 2, 0xf2, "   %s, %s : o", init_code, titleid_lo );
 			}
