@@ -80,14 +80,14 @@ def check_pickuped(path, print_success)
     ret
 end
 
-def add_rom_list(rom_list, code, region, version)
-    rom_list << [code, region, version]
+def add_rom_list(rom_list, code, region, version, size)
+    rom_list << [code, region, version, size]
 end
 
 def make_rom_list(target_dir, region)
     region_dir = REGION_DIRS[region][0]
     region_codes = (REGION_DIRS[region][1] + "A").unpack("A" * (REGION_DIRS[region][1].size + 1))
-    p region_codes
+    #p region_codes
     # 出力用リスト
     rom_list = []
     
@@ -96,7 +96,7 @@ def make_rom_list(target_dir, region)
             search_path = File.join(target_dir, region_dir, "#{HEADER}#{app_code}#{region_code}*.tad")
             files = Dir.glob(search_path)
             files.each{|tad|
-                add_rom_list(rom_list, "#{HEADER}#{app_code}", region_code, get_rom_version(tad))
+                add_rom_list(rom_list, "#{HEADER}#{app_code}", region_code, get_rom_version(tad), File.stat(tad).size)
             }
         }
     }
@@ -108,20 +108,21 @@ def write_rom_list(rom_list, file_name)
         "A" => "ALL", "E" => "USA", "U" => "AUS", "J" => "JPN", "P" => "EUR"
     }
     out = ""
-    sp = [8, 20, 10, 17, 10]
+    sp = [8, 20, 10, 17, 10, 14]
     line = ""
     sp.each{|s|
         line += "+#{"-" * s}"
     }
     line += "+\n"
     out += line
-    out += sprintf("|%#{sp[0]}s|%-#{sp[1]}s|%#{sp[2]}s|%-#{sp[3]}s|%#{sp[4]}s|\n", 
-                        "コード", "名前", "リージョン", "タイトルID", "バージョン") 
+    out += sprintf("|%#{sp[0]}s|%-#{sp[1]}s|%#{sp[2]}s|%-#{sp[3]}s|%#{sp[4]}s|%#{sp[5]}s|\n", 
+                        "コード", "名前", "リージョン", "タイトルID", "バージョン", "ファイルサイズ") 
     out += line
     rom_list.each{|rom|
         rom_data = ROM_DATA[rom[0]]
-        out += sprintf("|%#{sp[0]}s|%-#{sp[1]}s|%-#{sp[2]}s|%8s %8x|%#{sp[4]}s|\n", 
-            rom[0] + rom[1], rom_data[0],region_name[rom[1]], rom_data[1], (rom[0] + rom[1]).unpack("N")[0], rom[2]);
+        size = (rom[3].to_s).reverse.scan(/.{1,3}/).join(",").reverse
+        out += sprintf("|%#{sp[0]}s|%-#{sp[1]}s|%-#{sp[2]}s|%8s %8x|%#{sp[4]}s|%#{sp[5]}s|\n", 
+            rom[0] + rom[1], rom_data[0],region_name[rom[1]], rom_data[1], (rom[0] + rom[1]).unpack("N")[0], rom[2], size);
     }
     out += line
     File.open(file_name, "w") {|file|
@@ -149,16 +150,18 @@ def check(target_dir, region)
     ALL_REGION.each{|app_code|
         # オールリージョンのロムが含まれているかのチェック
         search_path = File.join(target_dir, region_dir, "#{HEADER}#{app_code}A*.tad")
-        if ret &= check_pickuped(search_path, false)
-            add_rom_list(rom_list, "#{HEADER}#{app_code}", "A", get_rom_version(search_path))
-        end
+        #if ret &= check_pickuped(search_path, false)
+            #add_rom_list(rom_list, "#{HEADER}#{app_code}", "A", get_rom_version(search_path))
+        #end
+        check_pickuped(search_path, false)
     }
     FIX_REGION.each{|app_code|
         # 各リージョン固有のロムが含まれているかのチェック
         search_path = File.join(target_dir, region_dir, "#{HEADER}#{app_code}#{region_code}*.tad")
-        if ret &= check_pickuped(search_path, false)
-            add_rom_list(rom_list, "#{HEADER}#{app_code}", region_code, get_rom_version(search_path))
-        end
+        #if ret &= check_pickuped(search_path, false)
+            #add_rom_list(rom_list, "#{HEADER}#{app_code}", region_code, get_rom_version(search_path))
+        #end
+        ret &= check_pickuped(search_path, false)
     }
     (ALL_REGION + FIX_REGION).each{|app_code|
         # HNxy が 各リージョンごと1つだけ存在するかのチェック
