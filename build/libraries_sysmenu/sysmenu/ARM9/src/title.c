@@ -1377,8 +1377,6 @@ static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_H
 {
 	BOOL ret = TRUE;
 	
-// 一時的に開発版でもハッシュチェックを行うように変更2008/09/01
-//#define DEV_WHITELIST_CHECK_SKIP
 #ifdef DEV_WHITELIST_CHECK_SKIP
 	// 開発版ではハッシュチェックスルーフラグを立てる
 	if( SCFG_GetBondingOption() != 0 )
