@@ -19,13 +19,13 @@
 SUBDIRS					=	
 SUBMAKES		=	Makefile.0 Makefile.1
 
-include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/commondefs
+include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
 do-build : $(TARGETS)
 
-include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/modulerules
+include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 #----------------------------------------------------------------------------
 

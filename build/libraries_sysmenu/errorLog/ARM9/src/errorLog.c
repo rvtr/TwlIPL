@@ -28,15 +28,14 @@
 #define ERRORLOG_DIRECTORYPATH	"nand:/sys/log"
 #define ERRORLOG_FILEPATH		"nand:/sys/log/sysmenu.log"
 
-#define ERRORLOG_BAR			"===================="
-#define ERRORLOG_BAR_LENGTH		20
-#define ERRORLOG_WRITE_FORMAT_RED1	ERRORLOG_BAR"\n#RED %02u-%02u-%02u[%3s] %02u:%02u:%02u\n"
+#define ERRORLOG_HEADER_SIZE		6
+#define ERRORLOG_WRITE_FORMAT_RED1	"\n\n#RED %02u-%02u-%02u[%3s] %02u:%02u:%02u\n"
 #define ERRORLOG_WRITE_FORMAT_RED2	"title: %04s ErrorCode: %u\n%s"
-#define ERRORLOG_WRITE_FORMAT1		ERRORLOG_BAR"\n#FFT %02u-%02u-%02u[%3s] %02u:%02u:%02u\n"
+#define ERRORLOG_WRITE_FORMAT1		"\n\n#FFT %02u-%02u-%02u[%3s] %02u:%02u:%02u\n"
 #define ERRORLOG_WRITE_FORMAT2		"title: %04s\n%s"
-#define ERRORLOG_READ_FORMAT_RED1	ERRORLOG_BAR"\n#RED %d-%d-%d[%3s] %d:%d:%d\n"
+#define ERRORLOG_READ_FORMAT_RED1	"\n\n#RED %d-%d-%d[%3s] %d:%d:%d\n"
 #define ERRORLOG_READ_FORMAT_RED2	"title: %4s ErrorCode: %u\n%*s"
-#define ERRORLOG_READ_FORMAT1		ERRORLOG_BAR"\n#FFT %d-%d-%d[%3s] %d:%d:%d\n"
+#define ERRORLOG_READ_FORMAT1		"\n\n#FFT %d-%d-%d[%3s] %d:%d:%d\n"
 #define ERRORLOG_READ_FORMAT2		"title: %4s\n%s"
 
 #define ERRORLOG_WRITE_FORMAT		ERRORLOG_WRITE_FORMAT1 ERRORLOG_WRITE_FORMAT2
@@ -46,7 +45,7 @@
 
 #define ERRORLOG_NUM_ARGS			9
 
-#define ERRORLOG_STR_OFFSET		61
+#define ERRORLOG_STR_OFFSET		42
 
 
 
@@ -62,6 +61,7 @@ typedef enum CheckStatus {
 
 ErrorLogWork elWork;
 static BOOL isInitialized = FALSE;
+
 /*-- function prototype ----------------------*/
 CheckStatus ERRORLOGi_CheckAndCreateDirectory( const char *path );
 CheckStatus ERRORLOGi_CheckAndCreateFile( const char *path );
@@ -568,7 +568,7 @@ int ERRORLOGi_ReadEntry( void )
 		int numArgs = 0;
 		
 		// 決められたファイルフォーマットからエントリに読み込む
-		if( ! STD_StrNCmp( "#RED", &buf[ERRORLOG_BAR_LENGTH + 1], 4 ) )
+		if( ! STD_StrNCmp( "\n\n#RED", buf, ERRORLOG_HEADER_SIZE ) )
 		{
 			// ランチャから書き込まれたエラーの場合
 
@@ -589,7 +589,7 @@ int ERRORLOGi_ReadEntry( void )
 			elWork.entry[numEntry].titleId = MI_LoadLE32( titlebuf );
 			
 		}
-		else if( !STD_StrNCmp( "#FFT", &buf[ERRORLOG_BAR_LENGTH + 1], 4 ) )
+		else if( !STD_StrNCmp( "\n\n#FFT", buf, ERRORLOG_HEADER_SIZE ) )
 		{
 			// フリーフォーマットで書き込まれたエラーの場合
 			if( elWork.entry[numEntry].errorStr == NULL )
@@ -635,6 +635,7 @@ int ERRORLOGi_ReadEntry( void )
 			
 			elWork.entry[numEntry].isBroken = TRUE;
 			STD_CopyLStringZeroFill( elWork.entry[numEntry].errorStr, buf, ERRORLOG_BUFSIZE+1 );
+			
 		}
 
 		numEntry++;
@@ -664,6 +665,7 @@ BOOL ERRORLOGi_SetString( char *buf, ErrorLogEntry *entry )
 	if( entry->isBroken )
 	{
 		STD_CopyLString( buf, entry->errorStr, ERRORLOG_BUFSIZE );
+		buf[ ERRORLOG_BUFSIZE-1 ] = '\n';
 		return TRUE;
 	}
 	

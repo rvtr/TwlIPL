@@ -48,16 +48,26 @@ void TwlMain( void )
 
 	numEntry = ERRORLOG_GetNum();
 	OS_TPrintf("API: before numEntry : %d\n", numEntry );
-	
-	ERRORLOG_Write( (u64)0x0200040051LL );
-	ERRORLOG_Printf( "%d hyoooo nyoronyoro\naboooon dogaaaaaaaan", 2+5 );
+	ERRORLOG_Write( 0x80000 );
 	ERRORLOG_Printf( "this is overflow message!\nthis is overflow message!\nthis is overflow message!\n"
 						"this is overflow message!\nthis is overflow message!\nthis is overflow message!\n"
 						"this is overflow message!\nthis is overflow message!\nthis is overflow message!\n"
 						"this is overflow message!\nthis is overflow message!\nthis is overflow message!\n"
 						"this is overflow message!\nthis is overflow message!\nthis is overflow message!\n"
 						"this is overflow message!\nthis is overflow message!\nthis is overflow message!\n" );
+							
+/*	
+	ERRORLOG_Write( (u64)0x77700040051LL );
+	ERRORLOG_Printf( "%d hyoooo nyoronyoro\naboooon dogaaaaaaaan", 2+5 );
+	
 
+	ERRORLOG_Printf( "menuRedIplManager.cpp [l.73] RED FATAL 0" );
+	ERRORLOG_Printf( "this is too long long long long long long long long long long long long string.\n"
+						"this is too long long long long long long long long long long long long string.\n"
+						"this is too long long long long long long long long long long long long string.\n"
+						"this is too long long long long long long long long long long long long string.\n" );
+						*/
+						
 /*	
 	if( numEntry > 2 )
 	{
