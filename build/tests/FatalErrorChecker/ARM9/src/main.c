@@ -458,9 +458,10 @@ static BOOL copyLogToSD( void )
 	}
 	
 	// サイズ変更が終わったら、念のためファイルサイズ変更不可なRWLモードで開きなおしておく
+	// →ファイルサイズ可変長に変更
 	FS_CloseFile( &dst );
 
-	if( !FS_OpenFileEx( &dst, DST_LOGFILE_PATH, FS_FILEMODE_RWL ) )
+	if( !FS_OpenFileEx( &dst, DST_LOGFILE_PATH, FS_FILEMODE_RW ) )
 	{
 		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET, CONSOLE_ORANGE, "Copy Failed!") ;
 		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET+1, CONSOLE_ORANGE, "func: FS_OpenFile dst" );
