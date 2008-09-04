@@ -62,7 +62,7 @@ void TwlMain(void)
 	
     GX_Init();
 	GX_SetPower(GX_POWER_ALL);										// 各ロジック パワーON
-	FS_Init( 3 );
+	FS_Init( FS_DMA_NOT_USE );
 	
 	SND_Init();
 	SNDEX_Init();
