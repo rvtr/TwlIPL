@@ -537,6 +537,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorName;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorBegin;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorEnd;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
+private: System::Windows::Forms::Label^  labAssemblyVersion;
+
 
 
 
@@ -614,6 +616,11 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->hWarnList = gcnew System::Collections::Generic::List<RCMRCError^>();
 			this->hWarnList->Clear();
 
+			// バージョン情報を表示
+			//this->labAssemblyVersion->Text = System::Windows::Forms::Application::ProductVersion;
+			System::Reflection::Assembly ^ass = System::Reflection::Assembly::GetEntryAssembly();
+			this->labAssemblyVersion->Text = "ver." + ass->GetName()->Version->ToString();
+
 			// デフォルト値
 			this->hIsSpreadSheet = gcnew System::Boolean( true );
 			this->dateRelease->Value = System::DateTime::Now;
@@ -674,7 +681,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 		/// </summary>
 		void InitializeComponent(void)
 		{
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle4 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle2 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -925,6 +932,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->colErrorEnd = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->colErrorCause = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->labFile = (gcnew System::Windows::Forms::Label());
+			this->labAssemblyVersion = (gcnew System::Windows::Forms::Label());
 			this->gboxSrl->SuspendLayout();
 			this->gboxCRC->SuspendLayout();
 			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->numEULA))->BeginInit();
@@ -3408,8 +3416,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			// gridError
 			// 
-			dataGridViewCellStyle4->BackColor = System::Drawing::Color::White;
-			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle4;
+			dataGridViewCellStyle2->BackColor = System::Drawing::Color::White;
+			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle2;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
@@ -3460,11 +3468,22 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->labFile->TabIndex = 36;
 			this->labFile->Text = L"ROMデータファイル";
 			// 
+			// labAssemblyVersion
+			// 
+			this->labAssemblyVersion->AutoSize = true;
+			this->labAssemblyVersion->ForeColor = System::Drawing::SystemColors::ControlText;
+			this->labAssemblyVersion->Location = System::Drawing::Point(664, 24);
+			this->labAssemblyVersion->Name = L"labAssemblyVersion";
+			this->labAssemblyVersion->Size = System::Drawing::Size(101, 12);
+			this->labAssemblyVersion->TabIndex = 37;
+			this->labAssemblyVersion->Text = L"ver.0.0.00000.00000";
+			// 
 			// Form1
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 12);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(777, 482);
+			this->Controls->Add(this->labAssemblyVersion);
 			this->Controls->Add(this->labFile);
 			this->Controls->Add(this->tabMain);
 			this->Controls->Add(this->tboxFile);
