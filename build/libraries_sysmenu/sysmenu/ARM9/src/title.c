@@ -1441,7 +1441,7 @@ static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_H
 static BOOL SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 {
 #pragma unused(pBootTitle)
-	DHTPhase2Work* p2work;
+	DHTPhase2Work* p2work = NULL;
 	ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
 
 	// phase1最終検証
@@ -1452,6 +1452,8 @@ static BOOL SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 	    {
 			OS_TPrintf("DHT Phase1 failed: hash check failed.\n");
 			if(!s_b_dev) {
+				// デバグ用。ERRORLOG_Init()がすでに呼ばれている事前提
+				ERRORLOG_Printf( "DHT_PAHSE1_FAILED (sub info): hash0Addr-%08x\n", hash0 );
 				UTL_SetFatalError(FATAL_ERROR_DHT_PHASE1_FAILED);
 				return FALSE;
 			}
@@ -1471,16 +1473,18 @@ static BOOL SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 	// DHTチェックphase2
 	OS_TPrintf("DHT Phase2...");
 	p2work = SYSM_Alloc( sizeof(DHTPhase2Work) );
-	if ( !hash1 || !DHT_CheckHashPhase2(hash1, hs, p2work, WrapperFunc_ReadCardData, NULL) )
+	if ( !p2work || !hash1 || !DHT_CheckHashPhase2(hash1, hs, p2work, WrapperFunc_ReadCardData, NULL) )
 	{
 	    OS_TPrintf(" DHT Phase2 : Failed.\n");
 	    if(!s_b_dev){
-		    SYSM_Free(p2work);
+			// デバグ用。ERRORLOG_Init()がすでに呼ばれている事前提
+			ERRORLOG_Printf( "DHT_PAHSE2_FAILED (sub info): p2workAddr-%08x hash1Addr-%08x\n", p2work, hash1 );
+		    if( p2work ) SYSM_Free(p2work);
 			UTL_SetFatalError(FATAL_ERROR_DHT_PHASE2_FAILED);
 			return FALSE;
 		}
 	}
-	SYSM_Free(p2work);
+	if( p2work ) SYSM_Free(p2work);
 
 	return TRUE;
 }
