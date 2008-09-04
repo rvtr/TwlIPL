@@ -53,8 +53,6 @@ static const char* sDeleteDirectoryList[] =
 // 指定ファイルはランダムデータでFillされます。
 static const char* sFillFileList[] =
 {
-    "nand:/shared1/TWLCFG0.dat",
-    "nand:/shared1/TWLCFG1.dat",
     "nand:/shared2/launcher/wrap.bin"
 };
 
@@ -676,7 +674,7 @@ static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arc
 /*---------------------------------------------------------------------------*
   Name:         NAMUTi_InitShareData
 
-  Description:  全Shareデータファイルを乱数クリア＆フォーマット。
+  Description:  全Shareデータファイルをフォーマット。
                 この関数実行前にShare:/がマウントされていてはいけない。
 
   Arguments:    None

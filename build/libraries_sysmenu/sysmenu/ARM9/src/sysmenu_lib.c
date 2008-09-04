@@ -221,7 +221,8 @@ TitleProperty *SYSM_ReadParameters( void )
             // リード失敗ファイルが存在する場合は、ファイルをリカバリ
             if( LCFG_RecoveryTWLSettings() ) {
                 if( isRead ) {
-                    // ミラーデータのうち、一方がリードできていたなら何もしない。
+                    // ミラーデータのうち、一方がリードできていたなら、そのデータをもう片方に反映。
+                    (void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer ); // LCFG_READ_TEMP > LCFG_WRITE_TEMP なので、pBufferをそのまま流用
                 }else {
                     // リードに完全に失敗していた場合は、フラッシュ壊れシーケンスへ。
                     LCFG_TSD_SetFlagFinishedBrokenTWLSettings( FALSE );
