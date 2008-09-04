@@ -840,6 +840,8 @@ OS_TPrintf("RebootSystem : Load VIA WRAM %d.\n", i);
 			{
 OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 				UTL_SetFatalError(FATAL_ERROR_LOAD_READMODULE_FAILED);
+				// デバグ用。ERRORLOG_Init()がすでに呼ばれている事前提
+				ERRORLOG_Printf( "LOAD_READMODULE_FAILED (sub info): region %d read failed.\n", i );
 				goto ERROR;
 			}
         }
@@ -1251,6 +1253,8 @@ static BOOL SYSMi_AuthenticateTWLTitle( TitleProperty *pBootTitle )
 					OS_TPrintf("Authenticate failed: %s module hash check failed.\n", str[l]);
 					if(!s_b_dev) {
 						UTL_SetFatalError(FATAL_ERROR_MODULE_HASH_CHECK_FAILED);
+						// デバグ用。ERRORLOG_Init()がすでに呼ばれている事前提
+						ERRORLOG_Printf( "MODULE_HASH_CHECK_FAILED (sub info): %s module check failed.\n", str[l] );
 						return FALSE;
 					}
 				}else
