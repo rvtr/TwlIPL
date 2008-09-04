@@ -21,7 +21,7 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 
 
-TARGETS			=	fakeRomHeader.exe
+TARGETS			=	FakeRomHeader.exe
 
 SOURCES_C		=	main.c keys.c
 

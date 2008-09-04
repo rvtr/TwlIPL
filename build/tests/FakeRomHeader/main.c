@@ -60,6 +60,7 @@ typedef struct _SContext
     // オプション
     BOOL bPlatform;
     BOOL bSignFlag;
+    BOOL bDevFlag;
 
     FILE *ifp;
     FILE *ofp;
@@ -99,6 +100,7 @@ void usage()
     printf( "-h   : print help only.\n" );
     printf( "-p   : write invalid platform code in a ROM Header.\n" );
     printf( "-s   : negate flag for the signature in a ROM Header.\n" );
+    printf( "-d   : negate a new developer encrypt flag, and assert an old one.\n" );
     printf( "-----------------------------------------------------------------------------\n" );
 }
 
@@ -120,7 +122,7 @@ int main(int argc, char *argv[])
     memset( &context, 0, sizeof(SContext) );
 
     // オプション
-    while( (opt = getopt(argc, argv, "hps")) >= 0 )
+    while( (opt = getopt(argc, argv, "hpsd")) >= 0 )
     {
         switch( opt )
         {
@@ -135,6 +137,10 @@ int main(int argc, char *argv[])
 
             case 's':
                 context.bSignFlag = TRUE;
+            break;
+            
+            case 'd':
+                context.bDevFlag = TRUE;
             break;
 
             default:            // オプション引数が指定されていないときにも実行される
@@ -163,6 +169,13 @@ int main(int argc, char *argv[])
     printf( "input_file:  %s\n", pSrc );
     printf( "output_file: %s\n", pDst );
     printf( "\n" );
+
+    // 入力ファイルと出力ファイル名が同じならダメ
+    if( (strlen(pSrc) == strlen(pDst)) && (memcmp(pSrc, pDst, strlen(pSrc)) == 0) )
+    {
+        printf( "The name of output_file must be different from the one of input_file\n" );
+        exit(1);
+    }
 
     // 出力ファイルが存在するとき上書きするかどうかを確認する
     if( stat( pDst, &st )==0 )
@@ -247,6 +260,14 @@ static BOOL iMain( SContext *pContext )
         {
             printf( "enable_signature: 0x%02x -> 0x00\n", rh.s.enable_signature );
             rh.s.enable_signature = 0x0;
+        }
+        
+        if( pContext->bDevFlag )
+        {
+            printf( "old dev. encrypt: 0x%02x -> 0x01x\n", rh.s.developer_encrypt_old );
+            printf( "new dev. encrypt: 0x%02x -> 0x00x\n", rh.s.exFlags.developer_encrypt );
+            rh.s.developer_encrypt_old     = 0x1;
+            rh.s.exFlags.developer_encrypt = 0x0;
         }
     }
     
