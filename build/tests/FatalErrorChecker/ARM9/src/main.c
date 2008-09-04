@@ -21,6 +21,8 @@
 #include "graphics.h"
 #include "keypad.h"
 
+#define BUFSIZE 256
+
 #define FATAL_ERROR_MAX		49
 #define NUM_ENTRY_PER_PAGE	5
 #define NUM_LINE_PER_ENTRY	4
@@ -58,6 +60,7 @@ static void drawMessage( void );
 static void kamiFontPrintfWrap( s16 x, s16 y, u8 color, char *fmt, ... );
 static s16 kamiFontPrintfWrapSub( s16 x, s16 y, u8 color, char *str );
 static BOOL copyLogToSD( void );
+int convertLF( char *dst, char *src );
 static void drawMenu( void );
 /*---------------------------------------------------------------------------*
   Name:         TwlMain
@@ -356,17 +359,17 @@ static void removeLC( char *dst, const char *src )
 static void kamiFontPrintfWrap( s16 x, s16 y, u8 color, char *fmt, ... )
 {
     va_list vlist;
-    char    temp[256 + 2];
+    char    temp[BUFSIZE + 1];
     char	*head, *tail;
 
     va_start(vlist, fmt);
-    (void)vsnprintf(temp, 256, fmt, vlist);
+    (void)vsnprintf(temp, BUFSIZE+1, fmt, vlist);
     va_end(vlist);
     
     head = temp;
     
    	// 終端追加
-    temp[256] = '\0';
+    temp[BUFSIZE] = '\0';
     
     // 自前でctok的な事をして改行を別々に出力する
     tail = STD_StrChr( temp, '\n' );
@@ -424,7 +427,9 @@ static BOOL deleteLogfile( void )
 static BOOL copyLogToSD( void )
 {
 	FSFile src, dst;
-	char buf[256 + 1];
+	// 最悪で読み込んだサイズの倍の文字列になる可能性がある
+	char buf[BUFSIZE + 1];
+	char winbuf[BUFSIZE*2 +1];
 	s32 readSize;
 	
 	buf[256] = '\0';
@@ -479,7 +484,10 @@ static BOOL copyLogToSD( void )
 	
 	while( ( readSize = FS_ReadFile( &src, buf, 256 )) > 0 )
 	{
-		if( FS_WriteFile( &dst, buf, readSize ) < 0 )
+		int size;
+		size = convertLF( winbuf, buf );
+		
+		if( FS_WriteFile( &dst, winbuf, size ) < 0 )
 		{
 			kamiFontPrintfMain( 0, RESULT_LINE_OFFSET, CONSOLE_ORANGE, "Copy Failed!") ;
 			kamiFontPrintfMain( 0, RESULT_LINE_OFFSET+1, CONSOLE_ORANGE, "func: FS_WriteFile" );
@@ -511,6 +519,32 @@ static void drawMenu( void )
 	kamiFontPrintfMain( 0, (s16)(line++), CONSOLE_ORANGE, "l X Button : Copy to SDCard   l");
 	kamiFontPrintfMain( 0, (s16)(line++), CONSOLE_ORANGE, "l Y Button : Delete Logfile   l");
 	kamiFontPrintfMain( 0, (s16)(line++), CONSOLE_ORANGE, "+-----------------------------+");
+}
+
+// LFをLFCRに置換して書き戻す
+// dstは最悪時でsrcの二倍の領域が必要
+int convertLF( char *dst, char *src )
+{
+	char *head = src, *tail;
+	int writesize = 0;
+	
+    tail = STD_StrChr( src, '\n' );
+    
+    while( tail != NULL )
+    {
+		*tail = '\0';
+		writesize += STD_StrLCpy( &dst[writesize], head,BUFSIZE );
+		dst[writesize] = 0x0d;
+		dst[writesize+1] = 0x0a;
+		writesize += 2;
+		
+		head = tail + 1;
+	    tail = STD_StrChr( head, '\n' );
+	}
+	
+	writesize += STD_StrLCpy( &dst[writesize], head, BUFSIZE );
+	
+	return writesize;
 }
 
 /*---------------------------------------------------------------------------*
@@ -554,53 +588,53 @@ static void InitAllocation(void)
 
 
 static char *s_strError[ FATAL_ERROR_MAX ] = {
-	"FATAL_ERROR_UNDEFINED",
-	"FATAL_ERROR_NAND",
-	"FATAL_ERROR_HWINFO_NORMAL",
-	"FATAL_ERROR_HWINFO_SECURE",
-	"FATAL_ERROR_TWLSETTINGS",
-	"FATAL_ERROR_SHARED_FONT",
-	"FATAL_ERROR_WLANFIRM_AUTH",
-	"FATAL_ERROR_WLANFIRM_LOAD",
-	"FATAL_ERROR_TITLE_LOAD_FAILED",
-	"FATAL_ERROR_TITLE_POINTER_ERROR",
-	"FATAL_ERROR_AUTHENTICATE_FAILED",
-	"FATAL_ERROR_ENTRY_ADDRESS_ERROR",
-	"FATAL_ERROR_TITLE_BOOTTYPE_ERROR",
-	"FATAL_ERROR_SIGN_DECRYPTION_FAILED",
-	"FATAL_ERROR_SIGN_COMPARE_FAILED",
-	"FATAL_ERROR_HEADER_HASH_CALC_FAILED",
-	"FATAL_ERROR_TITLEID_COMPARE_FAILED",
-	"FATAL_ERROR_VALID_SIGN_FLAG_OFF",
-	"FATAL_ERROR_CHECK_TITLE_LAUNCH_RIGHTS_FAILED",
-	"FATAL_ERROR_MODULE_HASH_CHECK_FAILED",
-	"FATAL_ERROR_MODULE_HASH_CALC_FAILED",
-	"FATAL_ERROR_MEDIA_CHECK_FAILED",
-	"FATAL_ERROR_DL_MAGICCODE_CHECK_FAILED",
-	"FATAL_ERROR_DL_SIGN_DECRYPTION_FAILED",
-	"FATAL_ERROR_DL_HASH_CALC_FAILED",
-	"FATAL_ERROR_DL_SIGN_COMPARE_FAILED",
-	"FATAL_ERROR_WHITELIST_INITDB_FAILED",
-	"FATAL_ERROR_WHITELIST_NOTFOUND",
-	"FATAL_ERROR_DHT_PHASE1_FAILED",
-	"FATAL_ERROR_DHT_PHASE2_FAILED",
-	"FATAL_ERROR_LANDING_TMP_JUMP_FLAG_OFF",
-	"FATAL_ERROR_TWL_BOOTTYPE_UNKNOWN",
-	"FATAL_ERROR_NTR_BOOTTYPE_UNKNOWN",
-	"FATAL_ERROR_PLATFORM_UNKNOWN",
-	"FATAL_ERROR_LOAD_UNFINISHED",
-	"FATAL_ERROR_LOAD_OPENFILE_FAILED",
-	"FATAL_ERROR_LOAD_MEMALLOC_FAILED",
-	"FATAL_ERROR_LOAD_SEEKFILE_FAILED",
-	"FATAL_ERROR_LOAD_READHEADER_FAILED",
-	"FATAL_ERROR_LOAD_LOGOCRC_ERROR = 39",
-	"FATAL_ERROR_LOAD_READDLSIGN_FAILED",
-	"FATAL_ERROR_LOAD_RELOCATEINFO_FAILED",
-	"FATAL_ERROR_LOAD_READMODULE_FAILED",
-    "FATAL_ERROR_NINTENDO_LOGO_CHECK_FAILED",
-    "FATAL_ERROR_SYSMENU_VERSION",
-    "FATAL_ERROR_DHT_PHASE1_CALC_FAILED",
-    "FATAL_ERROR_LOAD_UNKNOWN_BOOTTYPE",
-    "FATAL_ERROR_LOAD_AUTH_HEADER_FAILED",
-    "FATAL_ERROR_LOAD_NEVER_STARTED",
+	"UNDEFINED",
+	"NAND",
+	"HWINFO_NORMAL",
+	"HWINFO_SECURE",
+	"TWLSETTINGS",
+	"SHARED_FONT",
+	"WLANFIRM_AUTH",
+	"WLANFIRM_LOAD",
+	"TITLE_LOAD_FAILED",
+	"TITLE_POINTER_ERROR",
+	"AUTHENTICATE_FAILED",
+	"ENTRY_ADDRESS_ERROR",
+	"TITLE_BOOTTYPE_ERROR",
+	"SIGN_DECRYPTION_FAILED",
+	"SIGN_COMPARE_FAILED",
+	"HEADER_HASH_CALC_FAILED",
+	"TITLEID_COMPARE_FAILED",
+	"VALID_SIGN_FLAG_OFF",
+	"CHECK_TITLE_LAUNCH_RIGHTS_FAILED",
+	"MODULE_HASH_CHECK_FAILED",
+	"MODULE_HASH_CALC_FAILED",
+	"MEDIA_CHECK_FAILED",
+	"DL_MAGICCODE_CHECK_FAILED",
+	"DL_SIGN_DECRYPTION_FAILED",
+	"DL_HASH_CALC_FAILED",
+	"DL_SIGN_COMPARE_FAILED",
+	"WHITELIST_INITDB_FAILED",
+	"WHITELIST_NOTFOUND",
+	"DHT_PHASE1_FAILED",
+	"DHT_PHASE2_FAILED",
+	"LANDING_TMP_JUMP_FLAG_OFF",
+	"TWL_BOOTTYPE_UNKNOWN",
+	"NTR_BOOTTYPE_UNKNOWN",
+	"PLATFORM_UNKNOWN",
+	"LOAD_UNFINISHED",
+	"LOAD_OPENFILE_FAILED",
+	"LOAD_MEMALLOC_FAILED",
+	"LOAD_SEEKFILE_FAILED",
+	"LOAD_READHEADER_FAILED",
+	"LOAD_LOGOCRC_ERROR = 39",
+	"LOAD_READDLSIGN_FAILED",
+	"LOAD_RELOCATEINFO_FAILED",
+	"LOAD_READMODULE_FAILED",
+    "NINTENDO_LOGO_CHECK_FAILED",
+    "SYSMENU_VERSION",
+    "DHT_PHASE1_CALC_FAILED",
+    "LOAD_UNKNOWN_BOOTTYPE",
+    "LOAD_AUTH_HEADER_FAILED",
+    "LOAD_NEVER_STARTED"
 };
