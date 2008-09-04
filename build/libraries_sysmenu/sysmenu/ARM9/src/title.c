@@ -984,6 +984,14 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 		OS_TPrintf("SYSM_StartLoadTitle failed: This App has Data_Only flag.\n");
 		return;
 	}
+	
+	// 最後、カード抜き挿しが発生してからSYSM_GetCardTitleListが呼ばれていない状態
+	// （画面表示やリストに変更が通知されていない）だったらFATAL
+	// ただし、カード起動のときのみ
+	if( SYSMi_GetWork()->flags.hotsw.isCardStateChanged && pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM )
+	{
+		UTL_SetFatalError(FATAL_ERROR_EJECT_CARD_AFTER_LOAD_START);
+	}
     
 	s_loadstart = TRUE;
 	s_loadTimes++; // ロード回数のチェック用、二回目以降は非対応の実装なので
@@ -1382,6 +1390,7 @@ void SYSM_ResumeLoadingThread( BOOL force )
 static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_Header *head )
 {
 	BOOL ret = TRUE;
+	OSTitleId ntr_fake_titleID;
 	
 #ifdef DEV_WHITELIST_CHECK_SKIP
 	// 開発版ではハッシュチェックスルーフラグを立てる
@@ -1390,6 +1399,24 @@ static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_H
 		s_b_dev = TRUE;
 	}
 #endif
+
+	// pBootTitle->titleIDとROMヘッダのゲームコードの一致確認をする。
+	ntr_fake_titleID =  (u64)( ( head->s.game_code[ 3 ] <<  0 ) |
+						( head->s.game_code[ 2 ] <<  8 ) |
+						( head->s.game_code[ 1 ] << 16 ) |
+						( head->s.game_code[ 0 ] << 24 ) );
+	if( pBootTitle->titleID != ntr_fake_titleID )
+	{
+		// ヘッダから作成した擬似titleIDが起動指定されたタイトルに格納されている擬似IDと違う
+		OS_TPrintf( "SYSMi_AuthenticateNTRCardAppHeader failed: header TitleID error\n" );
+		OS_TPrintf( "SYSMi_AuthenticateNTRCardAppHeader failed: selectedTitleID=%.16llx\n", pBootTitle->titleID );
+		OS_TPrintf( "SYSMi_AuthenticateNTRCardAppHeader failed: headerTitleID=%.16llx\n", ntr_fake_titleID );
+		UTL_SetFatalError(FATAL_ERROR_TITLEID_COMPARE_FAILED_NTR);
+		return FALSE;
+	}else
+	{
+		OS_TPrintf( "Authenticate_Header : header TitleID check succeed.\n" );
+	}
 	
 	if( head->s.exFlags.enable_nitro_whitelist_signature )
 	{
