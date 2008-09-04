@@ -909,6 +909,10 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
         state = HOTSW_MODE_ERROR;
     }
 
+    if(SYSMi_GetWork()->flags.hotsw.isCardStateChanged){
+        state = HOTSW_PULLED_OUT_ERROR;
+    }
+    
     // カードのロック
     CARD_LockRom(s_CardLockID);
 
