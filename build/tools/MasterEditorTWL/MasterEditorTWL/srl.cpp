@@ -1,6 +1,7 @@
 // srl.h のクラス実装
 
 #include "stdafx.h"
+#include "common.h"
 #include "srl.h"
 #include "utility.h"
 #include "keys.h"
@@ -949,7 +950,7 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		{
 			this->hWarnList->Add( gcnew RCMRCError( 
 				"アプリ種別", 0x230, 0x237, "システムアプリではありません。",
-				"Application Type", "Not SYSTEM application.", false ) );
+				"Application Type", "Not SYSTEM application.", false, true ) );
 		}
 #endif
 #ifdef METWL_VER_APPTYPE_SECURE
@@ -957,7 +958,7 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		{
 			this->hWarnList->Add( gcnew RCMRCError( 
 				"アプリ種別", 0x230, 0x237, "セキュアアプリではありません。",
-				"Application Type", "Not SECURE application.", false ) );
+				"Application Type", "Not SECURE application.", false, true ) );
 		}
 #endif
 #ifdef METWL_VER_APPTYPE_LAUNCHER
@@ -965,7 +966,7 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		{
 			this->hWarnList->Add( gcnew RCMRCError( 
 				"アプリ種別", 0x230, 0x237, "ランチャーアプリではありません。",
-				"Application Type", "Not LAUNCHER application.", false ) );
+				"Application Type", "Not LAUNCHER application.", false, true ) );
 		}
 #endif
 	} // アプリ種別のチェック
@@ -1115,7 +1116,7 @@ System::Boolean RCSrl::mrcRegion( System::UInt32 region )
 		{
 			this->hErrorList->Add( gcnew RCMRCError( 
 				"カードリージョン", 0x1b0, 0x1b3, "仕向地の組み合わせが不正です。本ツールを用いて修正できます。",
-				"Card Region", "Illigal Region. This tool can modify this information.", true ) );
+				"Card Region", "Illigal Region. This tool can modify this information.", true, true ) );
 			bRegionResult = false;
 		}
 #else

@@ -1,5 +1,11 @@
+#pragma once
+
+// ‘—ŞƒNƒ‰ƒX‚ÌéŒ¾
+
+#include "common.h"
 #include <twl/types.h>
 #include <twl/os/common/format_rom.h>
+#include "common.h"
 #include "srl.h"
 
 namespace MasterEditorTWL

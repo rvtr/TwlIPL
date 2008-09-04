@@ -2,6 +2,7 @@
 
 #include "stdafx.h"
 #include <twl/types.h>
+#include "common.h"
 #include "keys.h"
 
 namespace MasterEditorTWL

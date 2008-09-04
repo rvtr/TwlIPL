@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common.h"
 #include "srl.h"
 
 using namespace System;

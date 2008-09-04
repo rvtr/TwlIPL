@@ -2,6 +2,7 @@
 
 // ROMデータ(SRL)クラスと関連クラスの宣言
 
+#include "common.h"
 #include <twl/types.h>
 #include <twl/os/common/format_rom.h>
 #include <twl/os/common/ownerInfoEx.h>

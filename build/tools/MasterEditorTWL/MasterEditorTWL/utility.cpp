@@ -1,6 +1,7 @@
 // utility.h ‚ÌŽÀ‘•
 
 #include "stdafx.h"
+#include "common.h"
 #include "utility.h"
 #include <cstring>
 #include <cstdio>
