@@ -40,8 +40,8 @@ namespace MasterEditorTWL {
 		System::Boolean ^hIsSpreadSheet;
 
 		// 入力エラー情報
-		System::Collections::Generic::List<RCMRCError ^> ^hErrorList;
-		System::Collections::Generic::List<RCMRCError ^> ^hWarnList;
+		System::Collections::Generic::List<RCMrcError ^> ^hErrorList;
+		System::Collections::Generic::List<RCMrcError ^> ^hWarnList;
 
 
 	// VC自動追加フィールド
@@ -611,9 +611,9 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			//
 			this->hSrl   = gcnew (RCSrl);
 			this->hDeliv = gcnew (RCDeliverable);
-			this->hErrorList = gcnew System::Collections::Generic::List<RCMRCError^>();
+			this->hErrorList = gcnew System::Collections::Generic::List<RCMrcError^>();
 			this->hErrorList->Clear();
-			this->hWarnList = gcnew System::Collections::Generic::List<RCMRCError^>();
+			this->hWarnList = gcnew System::Collections::Generic::List<RCMrcError^>();
 			this->hWarnList->Clear();
 
 			// バージョン情報を表示
@@ -3580,45 +3580,95 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			System::Xml::XmlElement ^root = doc->DocumentElement;
 
 			// <rw>タグ
-			System::Boolean bReadOnly = false;
-			System::Xml::XmlNodeList ^rwlist = root->GetElementsByTagName( "rw" );
-			if( rwlist != nullptr )
+			System::Boolean bReadOnly = MasterEditorTWL::isXmlEqual( root, "rw", "r" );
+			if( bReadOnly )
 			{
-				System::Xml::XmlNode     ^rw = rwlist->Item(0);
-				if( rw->FirstChild->Value->Equals( "r" ) )
-				{
-					// リードオンリーモード
-					this->readOnly();
-					bReadOnly = true;
-				}
+				this->readOnly();
 			}
 
 			// <output>タグ
-			System::Boolean bXML = false;
-			System::Xml::XmlNodeList ^outlist = root->GetElementsByTagName( "output" );
-			if( outlist != nullptr )
-			{
-				System::Xml::XmlNode     ^out = outlist->Item(0);
-				if( out->FirstChild->Value->Equals( "XML" ) )
-				{
-					// ノーマルXML出力モード
-					bXML = true;
-				}
-			}
+			System::Boolean bXML = MasterEditorTWL::isXmlEqual( root, "output", "XML" );
 
-			if( bReadOnly || bXML )
+			// <spcheck>タグ
+			System::Boolean bCheck = MasterEditorTWL::isXmlEqual( root, "spcheck", "ON" );
+
+			if( bCheck )	// チェックするときのみ追加チェック項目を設定
+			{
+				// チェックするかどうか
+				this->hSrl->hMrcSpecialList->hIsCheck = gcnew System::Boolean( true );
+
+				// SDK
+				try
+				{
+					u32 major   = System::UInt32::Parse( MasterEditorTWL::getXpathText( root, "/init/sdk/major" ) );
+					u32 minor   = System::UInt32::Parse( MasterEditorTWL::getXpathText( root, "/init/sdk/minor" ) );
+					u32 relstep = System::UInt32::Parse( MasterEditorTWL::getXpathText( root, "/init/sdk/relstep" ) );
+					u32 sdkver  = (major << 24) | (minor << 16) | (relstep & 0xFFFF);
+					this->hSrl->hMrcSpecialList->hSDKVer = gcnew System::UInt32( sdkver );
+				}
+				catch ( System::Exception ^ex )
+				{
+					(void)ex;
+					this->errMsg( "設定ファイル中のSDKバージョンが読み込めませんでした。バージョンは0とみなされます。", 
+						          "SDK ver. can't be read from setting file. Therefore it is set by 0." );
+					this->hSrl->hMrcSpecialList->hSDKVer = gcnew System::UInt32( 0 );
+				}
+
+				// EULA
+				try
+				{
+					u8 eula = System::Byte::Parse( MasterEditorTWL::getXpathText( root, "/init/eula" ) );
+					this->hSrl->hMrcSpecialList->hEULAVer = gcnew System::Byte( eula );
+				}
+				catch ( System::Exception ^ex )
+				{
+					(void)ex;
+					this->errMsg( "設定ファイル中のEULAバージョンが読み込めませんでした。バージョンは0とみなされます。", 
+						          "EULA ver. can't be read from setting file. Therefore it is set by 0." );
+					this->hSrl->hMrcSpecialList->hEULAVer = gcnew System::Byte( 0 );
+				}
+
+				// Shared2File
+				try
+				{
+					System::Int32 i;
+					for( i=0; i < METWL_NUMOF_SHARED2FILES; i++ )
+					{
+						u8 size = System::UInt32::Parse( MasterEditorTWL::getXpathText( root, "/init/shared2/size" + i.ToString() ) );
+						this->hSrl->hMrcSpecialList->hShared2SizeArray[i] = gcnew System::UInt32( size );
+					}
+				}
+				catch ( System::Exception ^ex )
+				{
+					(void)ex;
+					this->errMsg( "設定ファイル中のShared2ファイルサイズが読み込めませんでした。サイズはすべて0とみなされます。", 
+						          "One of shared2 file sizes can't be read from setting file. Therefore they are set by 0." );
+					System::Int32 i;
+					for( i=0; i < METWL_NUMOF_SHARED2FILES; i++ )
+					{
+						this->hSrl->hMrcSpecialList->hShared2SizeArray[i] = gcnew System::UInt32( 0 );
+					}
+				}
+			} //if( bCheck )
+
+			if( bReadOnly || bXML | bCheck )
 			{
 				System::String ^msgJ = gcnew System::String("動作モード:");
 				System::String ^msgE = gcnew System::String("Processing Mode:");
 				if( bReadOnly )
 				{
-					msgJ += "\n  リードオンリーモード";
-					msgE += "\n  Read Only Mode";
+					msgJ += "\nリードオンリーモード";
+					msgE += "\nRead Only Mode";
 				}
 				if( bXML )
 				{
-					msgJ += "\n  XML出力モード";
-					msgE += "\n  XML Output Mode";
+					msgJ += "\nXML出力モード";
+					msgE += "\nXML Output Mode";
+				}
+				if( bCheck )
+				{
+					msgJ += "\n追加チェックモード";
+					msgE += "\nExtra Check Mode";
 				}
 				this->sucMsg( msgJ, msgE );
 			}
@@ -3828,12 +3878,12 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 				this->tboxIsGameCardOn->Text = gcnew System::String( "OFF" );
 			}
 			this->cboxIsShared2->Checked = *(this->hSrl->hIsShared2);
-			this->tboxShared2Size0->Text = this->hSrl->hShared2Size0->ToString();
-			this->tboxShared2Size1->Text = this->hSrl->hShared2Size1->ToString();
-			this->tboxShared2Size2->Text = this->hSrl->hShared2Size2->ToString();
-			this->tboxShared2Size3->Text = this->hSrl->hShared2Size3->ToString();
-			this->tboxShared2Size4->Text = this->hSrl->hShared2Size4->ToString();
-			this->tboxShared2Size5->Text = this->hSrl->hShared2Size5->ToString();
+			this->tboxShared2Size0->Text = this->hSrl->hShared2SizeArray[0]->ToString();
+			this->tboxShared2Size1->Text = this->hSrl->hShared2SizeArray[1]->ToString();
+			this->tboxShared2Size2->Text = this->hSrl->hShared2SizeArray[2]->ToString();
+			this->tboxShared2Size3->Text = this->hSrl->hShared2SizeArray[3]->ToString();
+			this->tboxShared2Size4->Text = this->hSrl->hShared2SizeArray[4]->ToString();
+			this->tboxShared2Size5->Text = this->hSrl->hShared2SizeArray[5]->ToString();
 
 			// アプリ種別
 			System::String ^app = gcnew System::String("");
@@ -4348,7 +4398,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			System::String ^tmp = formtext->Replace( " ", "" );		// スペースのみの文字列もエラー
 			if( (formtext == nullptr) || formtext->Equals("") || tmp->Equals("") )
 			{
-				this->hErrorList->Add( gcnew RCMRCError( labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true, affectRom ) );
+				this->hErrorList->Add( gcnew RCMrcError( labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true, affectRom ) );
 				return false;
 			}
 			return true;
@@ -4362,7 +4412,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 
 			if( (val < min) || (max < val) )
 			{
-				this->hErrorList->Add( gcnew RCMRCError( labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true, affectRom ) );
+				this->hErrorList->Add( gcnew RCMrcError( labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true, affectRom ) );
 				return false;
 			}
 			return true;
@@ -4389,7 +4439,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			
 			if( box->SelectedIndex < 0 )
 			{
-				this->hErrorList->Add( gcnew RCMRCError( 
+				this->hErrorList->Add( gcnew RCMrcError( 
 					labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true, affectRom ) );
 			}
 			return true;
@@ -4467,14 +4517,14 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 				// 何も設定されていない
 				if( !always->Checked && (comb->SelectedIndex == (comb->Items->Count - 1)) )
 				{
-					this->hWarnList->Add( gcnew RCMRCError( 
+					this->hWarnList->Add( gcnew RCMrcError( 
 						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
 						msg + ": レーティング審査を必要としないソフトであるとみなしてデータを保存します。",
 						"Parental Control", msg + ": Save ROM data as Game soft which needs rating examinination.", true, true ) );
 				}
 				else
 				{
-					this->hErrorList->Add( gcnew RCMRCError( 
+					this->hErrorList->Add( gcnew RCMrcError( 
 						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
 						msg + ": 制限が無効であるにもかかわらずレーティング情報が設定されています。",
 						"Parental Control", msg + "Rating can be set only when control is enable.", true, true ) );
@@ -4484,21 +4534,21 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			{
 				if( !always->Checked && (comb->SelectedIndex == (comb->Items->Count - 1)) )
 				{
-					this->hErrorList->Add( gcnew RCMRCError( 
+					this->hErrorList->Add( gcnew RCMrcError( 
 						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
 						msg + ": 制限が有効であるにもかかわらずレーティング情報が設定されていません。",
 						"Parental Control", msg + ": Rating must be set when control is enable.", true, true ) );
 				}
 				else if( always->Checked )
 				{
-					this->hWarnList->Add( gcnew RCMRCError( 
+					this->hWarnList->Add( gcnew RCMrcError( 
 						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
 						msg + ": Rating Pendingが指定されています。レーティング年齢が審査されしだい、再度、ROMを提出してください。",
 						"Parental Control", ": Rating Pending is setting. When rating age is examined, Please submit again.", true, true ) );
 				}
 				else if( comb->SelectedIndex == (comb->Items->Count - 1) )
 				{
-					this->hErrorList->Add( gcnew RCMRCError( 
+					this->hErrorList->Add( gcnew RCMrcError( 
 						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
 						": Rating Pending指定とレーティング年齢を同時に指定することはできません。",
 						"Parental Control", ": Rating setting is either rating pending or rating age.", true, true ) );
@@ -4745,7 +4795,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 
 			// SRLクラスのエラーリストはすべてSRLに関係するのでチェックしない
 			// -> 入力エラーのみのチェックでよい
-			for each( RCMRCError ^err in this->hErrorList )
+			for each( RCMrcError ^err in this->hErrorList )
 			{
 				if( !err->AffectRom )
 					count++;
@@ -4760,7 +4810,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 
 			// SRLクラスの修正不可エラーをカウント
 			// (修正可エラーは入力によって修正されてるかもしれないのでチェックしない)
-			for each( RCMRCError ^err in this->hSrl->hErrorList )
+			for each( RCMrcError ^err in this->hSrl->hErrorList )
 			{
 				if( !err->EnableModify )	// すべてSRLバイナリに影響する
 					count++;
@@ -4769,7 +4819,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			// SRLバイナリに影響するエラーの中で
 			// 修正可エラーがフォーム入力によって修正されているかカウント
 			// (エラーリストが更新されていることが前提)
-			for each( RCMRCError ^err in this->hErrorList )
+			for each( RCMrcError ^err in this->hErrorList )
 			{
 				if( err->AffectRom )		// 修正不可エラーは存在しない
 					count++;
@@ -5223,7 +5273,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->gridError->Rows->Clear();
 			if( this->hSrl->hErrorList != nullptr )
 			{
-				for each( RCMRCError ^err in this->hSrl->hErrorList )
+				for each( RCMrcError ^err in this->hSrl->hErrorList )
 				{
 					this->gridError->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
 					this->colorGridError( err );
@@ -5236,7 +5286,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->gridWarn->Rows->Clear();
 			if( this->hSrl->hWarnList != nullptr )
 			{
-				for each( RCMRCError ^err in this->hSrl->hWarnList )
+				for each( RCMrcError ^err in this->hSrl->hWarnList )
 				{
 					this->gridWarn->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
 					this->colorGridWarn( err );
@@ -5251,7 +5301,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->gridError->Rows->Clear();
 			if( this->hSrl->hErrorList != nullptr )
 			{
-				for each( RCMRCError ^err in this->hSrl->hErrorList )
+				for each( RCMrcError ^err in this->hSrl->hErrorList )
 				{
 					if( !err->EnableModify )	// 修正可能な情報は表示しない
 					{
@@ -5262,7 +5312,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			}
 			if( this->hErrorList != nullptr )
 			{
-				for each( RCMRCError ^err in this->hErrorList )
+				for each( RCMrcError ^err in this->hErrorList )
 				{
 					this->gridError->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
 					this->colorGridError( err );
@@ -5274,7 +5324,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->gridWarn->Rows->Clear();
 			if( this->hSrl->hWarnList != nullptr )
 			{
-				for each( RCMRCError ^err in this->hSrl->hWarnList )
+				for each( RCMrcError ^err in this->hSrl->hWarnList )
 				{
 					if( !err->EnableModify )
 					{
@@ -5285,7 +5335,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			}
 			if( this->hWarnList != nullptr )
 			{
-				for each( RCMRCError ^err in this->hWarnList )
+				for each( RCMrcError ^err in this->hWarnList )
 				{
 					this->gridWarn->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
 					this->colorGridWarn( err );
@@ -5295,7 +5345,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 
 		// セルの色を変える
 	public:
-		void colorGridError( RCMRCError ^err )
+		void colorGridError( RCMrcError ^err )
 		{
 			if( err->AffectRom && !err->EnableModify )		// SRLに関係ありで修正不可
 			{
@@ -5308,7 +5358,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 				this->gridError->Rows[ last ]->DefaultCellStyle->ForeColor = System::Drawing::Color::Blue;
 			}
 		}
-		void colorGridWarn( RCMRCError ^err )
+		void colorGridWarn( RCMrcError ^err )
 		{
 			if( err->AffectRom && !err->EnableModify )
 			{

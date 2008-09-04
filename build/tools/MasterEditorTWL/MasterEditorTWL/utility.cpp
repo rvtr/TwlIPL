@@ -379,3 +379,60 @@ System::Collections::Generic::List<u32>^ MasterEditorTWL::patternMatch( FILE *fp
 	}
 	return list;
 }
+
+//
+// XMLのルートノードから指定した名前のタグを検索して返す
+//
+// @arg [in] XMLのルートノード
+// @arg [in] タグ名
+//
+// @ret 検索でマッチしたときノードを返す。ないときは nullptr。
+//      ただし、最初にマッチしたもののみ返す
+//
+System::Xml::XmlNode^ MasterEditorTWL::searchXmlNode( System::Xml::XmlElement ^root, System::String ^tag )
+{
+	System::Xml::XmlNodeList ^list = root->GetElementsByTagName( tag );
+	System::Xml::XmlNode ^item = nullptr;
+	if( list != nullptr )
+	{
+		item = list->Item(0);
+	}
+	return item;
+}
+
+//
+// タグを検索してそのテキストが指定したテキストと一致するか調べる
+//
+// @arg [in] XMLのルートノード
+// @arg [in] タグ名
+// @arg [in] 値
+//
+// @ret 一致するときtrue。一致しないとき、タグが存在しないときはfalse。
+//
+System::Boolean MasterEditorTWL::isXmlEqual( System::Xml::XmlElement ^root, System::String ^tag, System::String ^val )
+{
+	System::Xml::XmlNode ^item = MasterEditorTWL::searchXmlNode( root, tag );
+	if( (item != nullptr) && (item->FirstChild != nullptr) && (item->FirstChild->Value->Equals( val )) )
+	{
+		return true;
+	}
+	return false;
+}
+
+//
+// タグを検索してそのテキストを返す
+//
+// @arg [in] XMLのルートノード
+// @arg [in] タグのXPath
+//
+// @ret テキストが存在するときそのテキストを返す。存在しないときnullptr。
+//
+System::String^ MasterEditorTWL::getXpathText( System::Xml::XmlElement ^root, System::String ^xpath )
+{
+	System::Xml::XmlNode ^tmp = root->SelectSingleNode( xpath );
+	if( tmp && tmp->FirstChild && tmp->FirstChild->Value )
+	{
+		return tmp->FirstChild->Value;
+	}
+	return nullptr;
+}

@@ -48,16 +48,18 @@ namespace MasterEditorTWL
 	{
 	private:
 		System::String  ^hVersion;
+		System::UInt32  ^hCode;
 		System::Boolean ^hIsStatic;
 	private:
 		RCSDKVersion(){}	// 封じる
 	public:
-		RCSDKVersion( System::String ^ver, System::Boolean isStatic )	// 生成時にのみフィールドを設定可能
+		RCSDKVersion( System::String ^ver, System::UInt32 code, System::Boolean isStatic )	// 生成時にのみフィールドを設定可能
 		{
 			if( ver == nullptr )
 				this->hVersion = gcnew System::String("");	// NULL参照バグを避ける
 			else
 				this->hVersion  = ver;
+			this->hCode     = gcnew System::UInt32( code );
 			this->hIsStatic = gcnew System::Boolean( isStatic );
 		}
 	public:
@@ -69,6 +71,11 @@ namespace MasterEditorTWL
 		property System::Boolean IsStatic
 		{
 			System::Boolean get(){ return *(this->hIsStatic); }
+		}
+	public:
+		property System::UInt32 Code
+		{
+			System::UInt32 get(){ return *(this->hCode); }
 		}
 	};
 
@@ -114,13 +121,13 @@ namespace MasterEditorTWL
 
 	// -------------------------------------------------------------------
 	// Type : ref class
-	// Name : RCMRCError
+	// Name : RCMrcError
 	//
 	// Description : RCSrlクラスに持たせるMRCエラー情報クラス
 	// 
 	// Role : 構造体としてデータをまとめておく
 	// -------------------------------------------------------------------
-	public ref class RCMRCError
+	public ref class RCMrcError
 	{
 	private:
 		System::String  ^hName;		// 項目名
@@ -132,9 +139,9 @@ namespace MasterEditorTWL
 		System::Boolean ^hEnableModify;	// マスタエディタで修正可能かどうか
 		System::Boolean ^hAffectRom;	// 変更するとSRL(ROMバイナリ)が変更されるか
 	private:
-		RCMRCError(){}		// 封じる
+		RCMrcError(){}		// 封じる
 	public:
-		RCMRCError( 
+		RCMrcError( 
 			System::String ^name,  System::UInt32 beg,   System::UInt32 end, System::String ^msg, 
 			System::String ^nameE, System::String ^msgE, System::Boolean enableModify, System::Boolean affectRom )
 		{
@@ -189,6 +196,36 @@ namespace MasterEditorTWL
 				return (gcnew array<System::Object^>{this->hName,  this->hBegin->ToString("X04")+"h", this->hEnd->ToString("X04")+"h", this->hMsg});
 			else
 				return (gcnew array<System::Object^>{this->hNameE, this->hBegin->ToString("X04")+"h", this->hEnd->ToString("X04")+"h", this->hMsgE});
+		}
+	};
+
+	// -------------------------------------------------------------------
+	// Type : ref class
+	// Name : RCMrcSpecialList
+	//
+	// Description : MRCの追加エラー項目クラス
+	// 
+	// Role : 構造体としてデータをまとめておく
+	// -------------------------------------------------------------------
+	ref class RCMrcSpecialList
+	{
+	public:
+		property System::Boolean ^hIsCheck;
+		property System::UInt32  ^hSDKVer;
+		property System::Byte    ^hEULAVer;
+		property cli::array<System::UInt32^> ^hShared2SizeArray;
+	public:
+		RCMrcSpecialList()
+		{
+			this->hIsCheck = gcnew System::Boolean( false );
+			this->hSDKVer  = gcnew System::UInt32( 0 );
+			this->hEULAVer = gcnew System::Byte( 0 );
+			this->hShared2SizeArray = gcnew cli::array<System::UInt32^>(METWL_NUMOF_SHARED2FILES);	// ファイルサイズの数に合わせる
+			System::Int32 i;
+			for( i=0; i < METWL_NUMOF_SHARED2FILES; i++ )
+			{
+				this->hShared2SizeArray[i] = gcnew System::UInt32( 0 );
+			}
 		}
 	};
 
@@ -269,12 +306,13 @@ namespace MasterEditorTWL
 		property System::Boolean ^hIsCommonClientKeyForDebugger;
 
 		// Shared2ファイルサイズ Read Only
-		property System::UInt32  ^hShared2Size0;
-		property System::UInt32  ^hShared2Size1;
-		property System::UInt32  ^hShared2Size2;
-		property System::UInt32  ^hShared2Size3;
-		property System::UInt32  ^hShared2Size4;
-		property System::UInt32  ^hShared2Size5;
+		//property System::UInt32  ^hShared2Size0;
+		//property System::UInt32  ^hShared2Size1;
+		//property System::UInt32  ^hShared2Size2;
+		//property System::UInt32  ^hShared2Size3;
+		//property System::UInt32  ^hShared2Size4;
+		//property System::UInt32  ^hShared2Size5;
+		property cli::array<System::UInt32^> ^hShared2SizeArray;
 
 		// カードリージョン Read Only
 		property System::Boolean ^hIsRegionJapan;
@@ -287,8 +325,11 @@ namespace MasterEditorTWL
 		property System::Collections::Generic::List<RCLicense^> ^hLicenseList;
 
 		// MRC機能でチェックされたエラー情報のリスト
-		property System::Collections::Generic::List<RCMRCError^> ^hErrorList;
-		property System::Collections::Generic::List<RCMRCError^> ^hWarnList;
+		property System::Collections::Generic::List<RCMrcError^> ^hErrorList;
+		property System::Collections::Generic::List<RCMrcError^> ^hWarnList;
+
+		// MRC追加項目
+		property RCMrcSpecialList ^hMrcSpecialList;
 
 		// constructor and destructor
 	public:

@@ -406,27 +406,27 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 			}
 			if( node->FirstChild->Value->Equals( "TagShared2Size0" ) )
 			{
-				node->FirstChild->Value = hSrl->hShared2Size0->ToString() + "KB";
+				node->FirstChild->Value = hSrl->hShared2SizeArray[0]->ToString() + "KB";
 			}
 			if( node->FirstChild->Value->Equals( "TagShared2Size1" ) )
 			{
-				node->FirstChild->Value = hSrl->hShared2Size1->ToString() + "KB";
+				node->FirstChild->Value = hSrl->hShared2SizeArray[1]->ToString() + "KB";
 			}
 			if( node->FirstChild->Value->Equals( "TagShared2Size2" ) )
 			{
-				node->FirstChild->Value = hSrl->hShared2Size2->ToString() + "KB";
+				node->FirstChild->Value = hSrl->hShared2SizeArray[2]->ToString() + "KB";
 			}
 			if( node->FirstChild->Value->Equals( "TagShared2Size3" ) )
 			{
-				node->FirstChild->Value = hSrl->hShared2Size3->ToString() + "KB";
+				node->FirstChild->Value = hSrl->hShared2SizeArray[3]->ToString() + "KB";
 			}
 			if( node->FirstChild->Value->Equals( "TagShared2Size4" ) )
 			{
-				node->FirstChild->Value = hSrl->hShared2Size4->ToString() + "KB";
+				node->FirstChild->Value = hSrl->hShared2SizeArray[4]->ToString() + "KB";
 			}
 			if( node->FirstChild->Value->Equals( "TagShared2Size5" ) )
 			{
-				node->FirstChild->Value = hSrl->hShared2Size5->ToString() + "KB";
+				node->FirstChild->Value = hSrl->hShared2SizeArray[5]->ToString() + "KB";
 			}
 
 			// ‰ïŽÐî•ñ

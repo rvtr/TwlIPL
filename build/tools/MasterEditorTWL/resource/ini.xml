@@ -2,5 +2,19 @@
 <init>
 	<rw>w</rw>
 	<output>Sheet</output>
-	<sdk>RC</sdk>
+	<spcheck>OFF</spcheck>
+	<sdk>
+		<major>5</major>
+		<minor>0</minor>
+		<relstep>20200</relstep>
+	</sdk>
+	<eula>0</eula>
+	<shared2>
+		<size0>0</size0>
+		<size1>0</size1>
+		<size2>0</size2>
+		<size3>0</size3>
+		<size4>0</size4>
+		<size5>0</size5>
+	</shared2>
 </init>

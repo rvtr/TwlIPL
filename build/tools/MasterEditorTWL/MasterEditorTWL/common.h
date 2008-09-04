@@ -21,3 +21,4 @@
 #define   METWL_MASK_REGION_CHINA       0x00000010
 #define   METWL_MASK_REGION_KOREA       0x00000020
 #define   METWL_MASK_REGION_ALL         0xffffffff
+#define   METWL_NUMOF_SHARED2FILES		6

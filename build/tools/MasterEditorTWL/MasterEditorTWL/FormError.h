@@ -255,24 +255,24 @@ namespace MasterEditorTWL {
 		// ÉGÉâÅ[èÓïÒÇÃìoò^
 		// --------------------------------------------------------
 	public:
-		void setGridError( System::Collections::Generic::List<RCMRCError ^> ^list, System::Boolean isJapanese )
+		void setGridError( System::Collections::Generic::List<RCMrcError ^> ^list, System::Boolean isJapanese )
 		{
 			this->gridError->Rows->Clear();
 			if( list != nullptr )
 			{
-				for each( RCMRCError ^err in list )
+				for each( RCMrcError ^err in list )
 				{
 					this->gridError->Rows->Add( err->getAll( isJapanese ) );
 				}
 			}
 		}
 
-		void setGridWarn( System::Collections::Generic::List<RCMRCError ^> ^list, System::Boolean isJapanese )
+		void setGridWarn( System::Collections::Generic::List<RCMrcError ^> ^list, System::Boolean isJapanese )
 		{
 			this->gridWarn->Rows->Clear();
 			if( list != nullptr )
 			{
-				for each( RCMRCError ^err in list )
+				for each( RCMrcError ^err in list )
 				{
 					this->gridWarn->Rows->Add( err->getAll( isJapanese ) );
 				}
@@ -284,14 +284,14 @@ namespace MasterEditorTWL {
 		// --------------------------------------------------------
 	public:
 		void overloadGridError( 
-			System::Collections::Generic::List<RCMRCError ^> ^listLo,
-			System::Collections::Generic::List<RCMRCError ^> ^listHi, System::Boolean isJapanese )
+			System::Collections::Generic::List<RCMrcError ^> ^listLo,
+			System::Collections::Generic::List<RCMrcError ^> ^listHi, System::Boolean isJapanese )
 		{
 			// listLoÇÃèCê≥â¬î\Ç»èÓïÒÇlistHiÇ≈è„èëÇ´Ç∑ÇÈ(listHiÇÕèCê≥â¬î\Ç»èÓïÒÇÃÇ›Ç≈Ç†ÇÈÇ±Ç∆Ç™ëOíÒ)
 			this->gridError->Rows->Clear();
 			if( listLo != nullptr )
 			{
-				for each( RCMRCError ^err in listLo )
+				for each( RCMrcError ^err in listLo )
 				{
 					if( !err->EnableModify )	// èCê≥â¬î\Ç»èÓïÒÇÕï\é¶ÇµÇ»Ç¢
 						this->gridError->Rows->Add( err->getAll( isJapanese ) );
@@ -299,21 +299,21 @@ namespace MasterEditorTWL {
 			}
 			if( listHi != nullptr )
 			{
-				for each( RCMRCError ^err in listHi )
+				for each( RCMrcError ^err in listHi )
 				{
 					this->gridError->Rows->Add( err->getAll( isJapanese ) );
 				}
 			}
 		}
 		void overloadGridWarn( 
-			System::Collections::Generic::List<RCMRCError ^> ^listLo,
-			System::Collections::Generic::List<RCMRCError ^> ^listHi, System::Boolean isJapanese )
+			System::Collections::Generic::List<RCMrcError ^> ^listLo,
+			System::Collections::Generic::List<RCMrcError ^> ^listHi, System::Boolean isJapanese )
 		{
 			// listLoÇÃèCê≥â¬î\Ç»èÓïÒÇlistHiÇ≈è„èëÇ´Ç∑ÇÈ(listHiÇÕèCê≥â¬î\Ç»èÓïÒÇÃÇ›Ç≈Ç†ÇÈÇ±Ç∆Ç™ëOíÒ)
 			this->gridWarn->Rows->Clear();
 			if( listLo != nullptr )
 			{
-				for each( RCMRCError ^err in listLo )
+				for each( RCMrcError ^err in listLo )
 				{
 					if( !err->EnableModify )	// èCê≥â¬î\Ç»èÓïÒÇÕï\é¶ÇµÇ»Ç¢
 						this->gridWarn->Rows->Add( err->getAll( isJapanese ) );
@@ -321,7 +321,7 @@ namespace MasterEditorTWL {
 			}
 			if( listHi != nullptr )
 			{
-				for each( RCMRCError ^err in listHi )
+				for each( RCMrcError ^err in listHi )
 				{
 					this->gridWarn->Rows->Add( err->getAll( isJapanese ) );
 				}

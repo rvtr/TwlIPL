@@ -70,4 +70,36 @@ namespace MasterEditorTWL
 	//
 	System::Collections::Generic::List<u32>^ patternMatch( FILE *fp, const u8 *pattern, const u32 patternLen );
 
+	//
+	// XMLのルートノードから指定した名前のタグを検索して返す
+	//
+	// @arg [in] XMLのルートノード
+	// @arg [in] タグ名
+	//
+	// @ret 検索でマッチしたときノードを返す。ないときは nullptr。
+	//      ただし、最初にマッチしたもののみ返す
+	//
+	System::Xml::XmlNode^ searchXmlNode( System::Xml::XmlElement ^root, System::String ^tag );
+
+	//
+	// タグを検索してそのテキストが指定したテキストと一致するか調べる
+	//
+	// @arg [in] XMLのルートノード
+	// @arg [in] タグ名
+	// @arg [in] 値
+	//
+	// @ret 一致するときtrue。一致しないとき、タグが存在しないときはfalse。
+	//
+	System::Boolean isXmlEqual( System::Xml::XmlElement ^root, System::String ^tag, System::String ^val );
+
+	//
+	// タグを検索してそのテキストを返す
+	//
+	// @arg [in] XMLのルートノード
+	// @arg [in] タグのXPath
+	//
+	// @ret テキストが存在するときそのテキストを返す。存在しないときnullptr。
+	//
+	System::String^ getXpathText( System::Xml::XmlElement ^root, System::String ^xpath );
+
 } // end of namespace MasterEditorTWL
