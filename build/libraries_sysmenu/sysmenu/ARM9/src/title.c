@@ -120,8 +120,7 @@ static u8 *s_calc_hash = NULL;
 static BOOL s_b_dev = FALSE;
 static BOOL s_result_phase1 = FALSE;
 
-static u8 dht_buffer[DS_HASH_TABLE_SIZE] ATTRIBUTE_ALIGN(256);
-static DHTFile *const dht = (DHTFile*)dht_buffer;
+static DHTFile *dht = NULL;
 static const u8* hash0 = NULL;
 static const u8* hash1 = NULL;
 
@@ -231,16 +230,23 @@ static void PrepareDHTDatabase(void)
             if ( FS_SeekFile(&file, sizeof(ROM_Header), FS_SEEK_SET) )
 #endif
             {
-                DHT_PrepareDatabase(dht, &file);
-                DC_FlushRange(dht, DHT_GetDatabaseLength(dht));
+                dht = SYSM_Alloc( DS_HASH_TABLE_SIZE );
+                if( dht != NULL )
+                {
+                    if( DHT_PrepareDatabase(dht, &file) )
+                    {
+                        DC_FlushRange(dht, DHT_GetDatabaseLength(dht));
+                        FS_CloseFile(&file);
+                        return;
+                    }
+                }
             }
             FS_CloseFile(&file);
         }
     }
-    else
-    {
-        MI_CpuClear8(dht, sizeof(DHTHeader));
-    }
+    
+    MI_CpuClear8(dht, sizeof(DHTHeader));
+    dht = NULL;
 }
 
 static BOOL WrapperFunc_ReadCardData(void* dest, s32 offset, s32 length, void* arg)
@@ -1777,6 +1783,13 @@ void SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 		// ハッシュ値保存領域解放
 		SYSM_Free( s_calc_hash );
 		s_calc_hash = NULL;
+	}
+	
+	if(dht)
+	{
+		// dht用バッファが確保されていたら解放
+		SYSM_Free( dht );
+		dht = NULL;
 	}
 	
 	// ダイレクトブート時など、まだSystemMenuVersionのデータがセットされていない場合は、ここでセットする。
