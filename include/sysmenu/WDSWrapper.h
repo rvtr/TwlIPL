@@ -27,7 +27,7 @@ extern "C" {
 #define WDSWRAPPER_SCANPERIOD	3000	///< WDSラッパーがスキャンを継続する時間[msec]
 #define WDSWRAPPER_WAITPERIOD	3000	///< WDSラッパーがスキャンを中断する時間[msec]
 
-//#define WDSWRAPPER_DEBUGPRINT	///< デバッグ表示フラグ
+#define WDSWRAPPER_DEBUGPRINT	///< デバッグ表示フラグ
 
 //-----------------------------------------------------
 //	Types of WDS Wrapper Library

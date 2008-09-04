@@ -667,6 +667,18 @@ static void WDS_WrapperThreadFunc( void *arg )
 		}
 	}
 	
+	// スキャン停止要求を受けたが、その後WDSWrapper解放要求を受け、スキャン停止コールバックが発生せずにここにきた場合の対策コード
+	if( g_wdswrapperwork->idle == TRUE ) {
+		g_wdswrapperwork->idle = FALSE;
+		
+		// コールバックパラメータの設定
+		param.callback	= WDSWRAPPER_CALLBACK_STOPSCAN;
+		param.errcode	= WDSWRAPPER_ERRCODE_SUCCESS;
+		
+		// コールバック関数の呼び出し
+		WDS_WrapperCallUserCallback( &param );
+	}
+	
 	// コールバックパラメータの設定
 	param.callback	= WDSWRAPPER_CALLBACK_CLEANUP;
 	param.errcode	= WDSWRAPPER_ERRCODE_SUCCESS;

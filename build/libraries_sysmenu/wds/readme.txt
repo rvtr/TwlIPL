@@ -1,6 +1,6 @@
 ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
 ■                                                                          ■
-■  TWLWDSライブラリ                                           2008/8/06版  ■
+■  TWLWDSライブラリ                                           2008/8/16版  ■
 ■                                                                          ■
 ■  ネットワーク開発部からのお知らせ                                        ■
 ■                                                                          ■
@@ -8,8 +8,8 @@
 
 ●動作確認バージョン
 ・SDK
-(TwlSDK-5_00rc1-080729_jp)
-(TwlSDK-5_00rc1-080729-private-NADK_jp)
+(TwlSDK-5_00rc1-patch-plus-080805)
+(TwlNADK-080725)
 ・コンパイラ
 (CodeWarrior v2.0)
 (20080215_cw_ds_2.0_sp2_Buildtools_Patch2.jpSP1)
@@ -25,6 +25,16 @@
   %make TWLSDK_PLATFORM=TWL
 
 ●変更履歴
+2008/09/04 20080904版
+・WDS_WrapperStopScan関数を呼び出した直後にWDS_WrapperCleanup関数を呼び出すと、
+WDS_WrapperStopScanに関するコールバックが呼び出されず、WDS_WrapperCleanupに関する
+コールバックのみが呼び出される問題を修正しました。
+
+2008/08/16 20080816版
+・WDSWrapperがビーコンの間欠受信を停止している状態、あるいは間欠受信中でも
+次の受信開始を待っている状態のいずれかでWDS_WrapperStopScan関数を使用した場合、
+間欠受信停止のコールバックが呼び出されない問題を修正しました。
+
 2008/08/06 20080806版
 ・WDS_WrapperStopScan関数を使用してビーコン受信を中断した場合、
 中断の直前に呼び出したWDS_WrapperCheckValidBeacon関数ではビーコンが
