@@ -25,6 +25,7 @@ SUBDIRS =	\
             ARM9 \
 
 TARGET_FIRM_BIN		=	menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nand
+TARGET_FIRM_VERSION_BIN	=	menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH)-with-version.nand
 BINDIR			=	.
 MAKEFIRM_ARM9		=	ARM9/bin/$(TWL_BUILDTYPE_ARM9)/menu_launcher9.tef
 MAKEFIRM_ARM7		=	ARM7/bin/$(TWL_BUILDTYPE_ARM7)/menu_launcher7.tef
@@ -34,6 +35,8 @@ LDEPENDS_BIN		+=	wram_regs/wram_regs.rbin
 #MAKEFIRM_FLAGS		+=	-p
 FIRM_SPEC		=	nandfirm.nandsf
 
+MY_APPEND			=	revision.bin
+
 LDIRT_CLEAN		+=	$(wildcard *.nand) \
 				rsa_public.sbin \
 
@@ -41,8 +44,24 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-do-build:	$(TARGET_BIN)
+do-build:	$(TARGET_FIRM_VERSION_BIN)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+
+$(TARGET_FIRM_VERSION_BIN):	$(TARGET_BIN) $(MY_APPEND)
+	cat $(TARGET_BIN) $(MY_APPEND) > $@
+
+
+$(MY_APPEND)::
+	@if test -e $(FIRM_ROOT)/.svn; then \
+		LANG=C svn info $(call empath,$(FIRM_ROOT)) | grep 'Revision' | sed s/[^0-9]//g > $(MY_APPEND); \
+	else \
+		date > $(MY_APPEND); \
+	fi
+	@if test -e $(ROOT)/.svn; then \
+		LANG=C svn info $(call empath,$(ROOT)) | grep 'Revision' | sed s/[^0-9]//g >> $(MY_APPEND); \
+	else \
+		echo "" >> $(MY_APPEND); \
+	fi
 
 #===== End of Makefile =====
