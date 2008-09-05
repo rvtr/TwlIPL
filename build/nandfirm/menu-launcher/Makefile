@@ -44,7 +44,8 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-do-build:	$(TARGET_FIRM_VERSION_BIN)
+do-build:	$(TARGET_BIN) $(MY_APPEND)
+	cat $(MY_APPEND) >> $(TARGET_BIN)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
