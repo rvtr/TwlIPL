@@ -935,7 +935,7 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 				"デバイス容量", 0x14, 0x14, "NANDアプリに対して指定可能な容量ではありません。",
 				"Device Capacity", "Invalid capacity.", false, true ) );
 		}
-		u32  allsizeMB = (filesize*1024*1024/8) + this->pRomHeader->s.public_save_data_size + this->pRomHeader->s.private_save_data_size;
+		u32  allsizeMB = filesize + this->pRomHeader->s.public_save_data_size + this->pRomHeader->s.private_save_data_size;
 		if( allsizeMB > METWL_ALLSIZE_MAX_NAND )
 		{
 			this->hErrorList->Add( gcnew RCMrcError( 
