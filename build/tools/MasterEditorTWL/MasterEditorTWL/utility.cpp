@@ -57,6 +57,63 @@ System::String^ MasterEditorTWL::transRomSizeToString( System::Byte ^byte )
 }
 
 //
+// サイズから単位つきの文字列を取得
+//
+// @arg [in] バイト数
+//
+// @ret 文字列(単位つき)
+//
+System::String^ MasterEditorTWL::transSizeToString( System::UInt32 ^size )
+{
+	if( size == nullptr )
+	{
+		return (gcnew System::String(""));
+	}
+
+	System::UInt32  val = *size;
+
+	// Byte単位
+	if( val == 0 )
+	{
+		return val.ToString();
+	}
+	if( val < 1024 )
+	{
+		return (val.ToString() + " Byte");
+	}
+
+	// KB単位に変換
+	if( (val % 1024) != 0 )
+	{
+		return (val.ToString() + " Byte");	// 端数のときは単位変換しない
+	}
+	val = val / 1024;
+	if( val < 1024 )
+	{
+		return (val.ToString() + " KB");
+	}
+	
+	// MB単位に変換
+	if( (val % 1024) != 0 )
+	{
+		return (val.ToString() + " KB");
+	}
+	val = val / 1024;
+	if( val < 1024)
+	{
+		return (val.ToString() + " MB");
+	}
+
+	// GB単位に変換
+	if( (val % 1024) != 0 )
+	{
+		return (val.ToString() + " MB");
+	}
+	val = val / 1024;
+	return (val.ToString() + " GB");
+}
+
+//
 // ペアレンタルコントロールのレーティング値から文字列を取得
 //
 // @arg [in] 団体

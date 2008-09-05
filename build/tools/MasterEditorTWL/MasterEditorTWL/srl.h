@@ -26,8 +26,9 @@ namespace MasterEditorTWL
 		ERROR_FILE_READ,
 		ERROR_FILE_WRITE,
 		// 署名でのエラー
-		ERROR_SIGN_ENCRYPT,
-		ERROR_SIGN_DECRYPT,
+		ERROR_SIGN_ENCRYPT,	// 署名できない
+		ERROR_SIGN_DECRYPT,	// 署名解除できない
+		ERROR_SIGN_VERIFY,	// 署名解除した後のダイジェストが合わない
 		// CRC算出でのエラー
 		ERROR_SIGN_CRC,
 		// SDKバージョン取得でのエラー
@@ -356,6 +357,7 @@ namespace MasterEditorTWL
 		// ROMヘッダの更新
 		ECSrlResult calcRomHeaderCRC(void);	// ROMヘッダのCRCを再計算
 		ECSrlResult signRomHeader(void);	// ROMヘッダ更新後の再署名
+		ECSrlResult decryptRomHeader(void);	// ROMヘッダの署名を外す
 
 		// SRLバイナリから特殊な設定を調べる
 		ECSrlResult hasDSDLPlaySign( FILE *fp );

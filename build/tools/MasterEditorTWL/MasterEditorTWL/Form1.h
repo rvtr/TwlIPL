@@ -362,12 +362,12 @@ private: System::Windows::Forms::Label^  labShared2Size3;
 private: System::Windows::Forms::Label^  labShared2Size2;
 private: System::Windows::Forms::Label^  labShared2Size1;
 private: System::Windows::Forms::Label^  labShared2Size0;
-private: System::Windows::Forms::Label^  labKB5;
-private: System::Windows::Forms::Label^  labKB4;
-private: System::Windows::Forms::Label^  labKB3;
-private: System::Windows::Forms::Label^  labKB2;
-private: System::Windows::Forms::Label^  labKB1;
-private: System::Windows::Forms::Label^  labKB0;
+
+
+
+
+
+
 private: System::Windows::Forms::TextBox^  tboxShared2Size5;
 private: System::Windows::Forms::TextBox^  tboxShared2Size4;
 private: System::Windows::Forms::TextBox^  tboxShared2Size3;
@@ -383,7 +383,7 @@ private: System::Windows::Forms::Label^  labSDK;
 private: System::Windows::Forms::GroupBox^  gboxTWLExInfo;
 
 
-private: System::Windows::Forms::Label^  labByte2;
+
 private: System::Windows::Forms::Label^  labByte1;
 private: System::Windows::Forms::Label^  labHex4;
 private: System::Windows::Forms::Label^  labHex3;
@@ -469,9 +469,9 @@ private: System::Windows::Forms::TabPage^  tabCompanyInfo;
 
 private: System::Windows::Forms::GroupBox^  gboxForeign;
 private: System::Windows::Forms::GroupBox^  gboxExFlags;
-private: System::Windows::Forms::Label^  labByte3;
-private: System::Windows::Forms::Label^  labByte5;
-private: System::Windows::Forms::Label^  labByte4;
+
+
+
 private: System::Windows::Forms::GroupBox^  gboxEULA;
 private: System::Windows::Forms::GroupBox^  gboxIcon;
 private: System::Windows::Forms::GroupBox^  gboxParental;
@@ -538,6 +538,10 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorBegin;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorEnd;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 private: System::Windows::Forms::Label^  labAssemblyVersion;
+private: System::Windows::Forms::Label^  labArbit4;
+private: System::Windows::Forms::Label^  labArbit3;
+private: System::Windows::Forms::Label^  labArbit2;
+private: System::Windows::Forms::Label^  labArbit1;
 
 
 
@@ -681,7 +685,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 		/// </summary>
 		void InitializeComponent(void)
 		{
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle2 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle1 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -750,6 +754,8 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->numEULA = (gcnew System::Windows::Forms::NumericUpDown());
 			this->cboxIsInputPerson2 = (gcnew System::Windows::Forms::CheckBox());
 			this->gboxPerson2 = (gcnew System::Windows::Forms::GroupBox());
+			this->labArbit4 = (gcnew System::Windows::Forms::Label());
+			this->labArbit3 = (gcnew System::Windows::Forms::Label());
 			this->labNTSC2Sur = (gcnew System::Windows::Forms::Label());
 			this->tboxNTSC2 = (gcnew System::Windows::Forms::TextBox());
 			this->labFax2 = (gcnew System::Windows::Forms::Label());
@@ -768,6 +774,8 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->labPerson2 = (gcnew System::Windows::Forms::Label());
 			this->labCompany2 = (gcnew System::Windows::Forms::Label());
 			this->gboxPerson1 = (gcnew System::Windows::Forms::GroupBox());
+			this->labArbit2 = (gcnew System::Windows::Forms::Label());
+			this->labArbit1 = (gcnew System::Windows::Forms::Label());
 			this->labNTSC1Sur = (gcnew System::Windows::Forms::Label());
 			this->labFax1 = (gcnew System::Windows::Forms::Label());
 			this->labNTSC1Pre = (gcnew System::Windows::Forms::Label());
@@ -826,12 +834,6 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->labShared2Size2 = (gcnew System::Windows::Forms::Label());
 			this->labShared2Size1 = (gcnew System::Windows::Forms::Label());
 			this->labShared2Size0 = (gcnew System::Windows::Forms::Label());
-			this->labKB5 = (gcnew System::Windows::Forms::Label());
-			this->labKB4 = (gcnew System::Windows::Forms::Label());
-			this->labKB3 = (gcnew System::Windows::Forms::Label());
-			this->labKB2 = (gcnew System::Windows::Forms::Label());
-			this->labKB1 = (gcnew System::Windows::Forms::Label());
-			this->labKB0 = (gcnew System::Windows::Forms::Label());
 			this->tboxShared2Size5 = (gcnew System::Windows::Forms::TextBox());
 			this->tboxShared2Size4 = (gcnew System::Windows::Forms::TextBox());
 			this->tboxShared2Size3 = (gcnew System::Windows::Forms::TextBox());
@@ -843,10 +845,6 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->tboxSDK = (gcnew System::Windows::Forms::TextBox());
 			this->labSDK = (gcnew System::Windows::Forms::Label());
 			this->gboxTWLExInfo = (gcnew System::Windows::Forms::GroupBox());
-			this->labByte5 = (gcnew System::Windows::Forms::Label());
-			this->labByte4 = (gcnew System::Windows::Forms::Label());
-			this->labByte3 = (gcnew System::Windows::Forms::Label());
-			this->labByte2 = (gcnew System::Windows::Forms::Label());
 			this->labByte1 = (gcnew System::Windows::Forms::Label());
 			this->labHex4 = (gcnew System::Windows::Forms::Label());
 			this->labHex3 = (gcnew System::Windows::Forms::Label());
@@ -1611,6 +1609,8 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			// 
 			// gboxPerson2
 			// 
+			this->gboxPerson2->Controls->Add(this->labArbit4);
+			this->gboxPerson2->Controls->Add(this->labArbit3);
 			this->gboxPerson2->Controls->Add(this->labNTSC2Sur);
 			this->gboxPerson2->Controls->Add(this->tboxNTSC2);
 			this->gboxPerson2->Controls->Add(this->labFax2);
@@ -1636,6 +1636,24 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->gboxPerson2->TabStop = false;
 			this->gboxPerson2->Text = L"担当者2";
 			// 
+			// labArbit4
+			// 
+			this->labArbit4->AutoSize = true;
+			this->labArbit4->Location = System::Drawing::Point(209, 207);
+			this->labArbit4->Name = L"labArbit4";
+			this->labArbit4->Size = System::Drawing::Size(37, 12);
+			this->labArbit4->TabIndex = 15;
+			this->labArbit4->Text = L"(任意)";
+			// 
+			// labArbit3
+			// 
+			this->labArbit3->AutoSize = true;
+			this->labArbit3->Location = System::Drawing::Point(210, 156);
+			this->labArbit3->Name = L"labArbit3";
+			this->labArbit3->Size = System::Drawing::Size(37, 12);
+			this->labArbit3->TabIndex = 13;
+			this->labArbit3->Text = L"(任意)";
+			// 
 			// labNTSC2Sur
 			// 
 			this->labNTSC2Sur->AutoSize = true;
@@ -1650,7 +1668,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->tboxNTSC2->Location = System::Drawing::Point(66, 200);
 			this->tboxNTSC2->MaxLength = 50;
 			this->tboxNTSC2->Name = L"tboxNTSC2";
-			this->tboxNTSC2->Size = System::Drawing::Size(268, 19);
+			this->tboxNTSC2->Size = System::Drawing::Size(140, 19);
 			this->tboxNTSC2->TabIndex = 11;
 			// 
 			// labFax2
@@ -1783,6 +1801,8 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			// 
 			// gboxPerson1
 			// 
+			this->gboxPerson1->Controls->Add(this->labArbit2);
+			this->gboxPerson1->Controls->Add(this->labArbit1);
 			this->gboxPerson1->Controls->Add(this->labNTSC1Sur);
 			this->gboxPerson1->Controls->Add(this->labFax1);
 			this->gboxPerson1->Controls->Add(this->labNTSC1Pre);
@@ -1806,6 +1826,24 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->gboxPerson1->TabIndex = 8;
 			this->gboxPerson1->TabStop = false;
 			this->gboxPerson1->Text = L"担当者1";
+			// 
+			// labArbit2
+			// 
+			this->labArbit2->AutoSize = true;
+			this->labArbit2->Location = System::Drawing::Point(201, 207);
+			this->labArbit2->Name = L"labArbit2";
+			this->labArbit2->Size = System::Drawing::Size(37, 12);
+			this->labArbit2->TabIndex = 12;
+			this->labArbit2->Text = L"(任意)";
+			// 
+			// labArbit1
+			// 
+			this->labArbit1->AutoSize = true;
+			this->labArbit1->Location = System::Drawing::Point(201, 156);
+			this->labArbit1->Name = L"labArbit1";
+			this->labArbit1->Size = System::Drawing::Size(37, 12);
+			this->labArbit1->TabIndex = 11;
+			this->labArbit1->Text = L"(任意)";
 			// 
 			// labNTSC1Sur
 			// 
@@ -1839,7 +1877,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->tboxNTSC1->Location = System::Drawing::Point(66, 200);
 			this->tboxNTSC1->MaxLength = 50;
 			this->tboxNTSC1->Name = L"tboxNTSC1";
-			this->tboxNTSC1->Size = System::Drawing::Size(261, 19);
+			this->tboxNTSC1->Size = System::Drawing::Size(131, 19);
 			this->tboxNTSC1->TabIndex = 8;
 			// 
 			// tboxFax1
@@ -2282,12 +2320,6 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->gboxShared2Size->Controls->Add(this->labShared2Size2);
 			this->gboxShared2Size->Controls->Add(this->labShared2Size1);
 			this->gboxShared2Size->Controls->Add(this->labShared2Size0);
-			this->gboxShared2Size->Controls->Add(this->labKB5);
-			this->gboxShared2Size->Controls->Add(this->labKB4);
-			this->gboxShared2Size->Controls->Add(this->labKB3);
-			this->gboxShared2Size->Controls->Add(this->labKB2);
-			this->gboxShared2Size->Controls->Add(this->labKB1);
-			this->gboxShared2Size->Controls->Add(this->labKB0);
 			this->gboxShared2Size->Controls->Add(this->tboxShared2Size5);
 			this->gboxShared2Size->Controls->Add(this->tboxShared2Size4);
 			this->gboxShared2Size->Controls->Add(this->tboxShared2Size3);
@@ -2297,7 +2329,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->gboxShared2Size->Controls->Add(this->cboxIsShared2);
 			this->gboxShared2Size->Location = System::Drawing::Point(547, 54);
 			this->gboxShared2Size->Name = L"gboxShared2Size";
-			this->gboxShared2Size->Size = System::Drawing::Size(175, 220);
+			this->gboxShared2Size->Size = System::Drawing::Size(164, 220);
 			this->gboxShared2Size->TabIndex = 1;
 			this->gboxShared2Size->TabStop = false;
 			this->gboxShared2Size->Text = L"Shared2ファイルサイズ";
@@ -2355,60 +2387,6 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->labShared2Size0->Size = System::Drawing::Size(34, 12);
 			this->labShared2Size0->TabIndex = 15;
 			this->labShared2Size0->Text = L"File 0";
-			// 
-			// labKB5
-			// 
-			this->labKB5->AutoSize = true;
-			this->labKB5->Location = System::Drawing::Point(142, 180);
-			this->labKB5->Name = L"labKB5";
-			this->labKB5->Size = System::Drawing::Size(20, 12);
-			this->labKB5->TabIndex = 14;
-			this->labKB5->Text = L"KB";
-			// 
-			// labKB4
-			// 
-			this->labKB4->AutoSize = true;
-			this->labKB4->Location = System::Drawing::Point(142, 155);
-			this->labKB4->Name = L"labKB4";
-			this->labKB4->Size = System::Drawing::Size(20, 12);
-			this->labKB4->TabIndex = 13;
-			this->labKB4->Text = L"KB";
-			// 
-			// labKB3
-			// 
-			this->labKB3->AutoSize = true;
-			this->labKB3->Location = System::Drawing::Point(142, 130);
-			this->labKB3->Name = L"labKB3";
-			this->labKB3->Size = System::Drawing::Size(20, 12);
-			this->labKB3->TabIndex = 12;
-			this->labKB3->Text = L"KB";
-			// 
-			// labKB2
-			// 
-			this->labKB2->AutoSize = true;
-			this->labKB2->Location = System::Drawing::Point(142, 105);
-			this->labKB2->Name = L"labKB2";
-			this->labKB2->Size = System::Drawing::Size(20, 12);
-			this->labKB2->TabIndex = 11;
-			this->labKB2->Text = L"KB";
-			// 
-			// labKB1
-			// 
-			this->labKB1->AutoSize = true;
-			this->labKB1->Location = System::Drawing::Point(142, 80);
-			this->labKB1->Name = L"labKB1";
-			this->labKB1->Size = System::Drawing::Size(20, 12);
-			this->labKB1->TabIndex = 10;
-			this->labKB1->Text = L"KB";
-			// 
-			// labKB0
-			// 
-			this->labKB0->AutoSize = true;
-			this->labKB0->Location = System::Drawing::Point(142, 55);
-			this->labKB0->Name = L"labKB0";
-			this->labKB0->Size = System::Drawing::Size(20, 12);
-			this->labKB0->TabIndex = 9;
-			this->labKB0->Text = L"KB";
 			// 
 			// tboxShared2Size5
 			// 
@@ -2505,10 +2483,6 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			// 
 			// gboxTWLExInfo
 			// 
-			this->gboxTWLExInfo->Controls->Add(this->labByte5);
-			this->gboxTWLExInfo->Controls->Add(this->labByte4);
-			this->gboxTWLExInfo->Controls->Add(this->labByte3);
-			this->gboxTWLExInfo->Controls->Add(this->labByte2);
 			this->gboxTWLExInfo->Controls->Add(this->labByte1);
 			this->gboxTWLExInfo->Controls->Add(this->labHex4);
 			this->gboxTWLExInfo->Controls->Add(this->labHex3);
@@ -2528,42 +2502,6 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->gboxTWLExInfo->TabIndex = 24;
 			this->gboxTWLExInfo->TabStop = false;
 			this->gboxTWLExInfo->Text = L"TWL拡張情報";
-			// 
-			// labByte5
-			// 
-			this->labByte5->AutoSize = true;
-			this->labByte5->Location = System::Drawing::Point(261, 121);
-			this->labByte5->Name = L"labByte5";
-			this->labByte5->Size = System::Drawing::Size(29, 12);
-			this->labByte5->TabIndex = 34;
-			this->labByte5->Text = L"Byte";
-			// 
-			// labByte4
-			// 
-			this->labByte4->AutoSize = true;
-			this->labByte4->Location = System::Drawing::Point(261, 96);
-			this->labByte4->Name = L"labByte4";
-			this->labByte4->Size = System::Drawing::Size(29, 12);
-			this->labByte4->TabIndex = 33;
-			this->labByte4->Text = L"Byte";
-			// 
-			// labByte3
-			// 
-			this->labByte3->AutoSize = true;
-			this->labByte3->Location = System::Drawing::Point(261, 71);
-			this->labByte3->Name = L"labByte3";
-			this->labByte3->Size = System::Drawing::Size(29, 12);
-			this->labByte3->TabIndex = 32;
-			this->labByte3->Text = L"Byte";
-			// 
-			// labByte2
-			// 
-			this->labByte2->AutoSize = true;
-			this->labByte2->Location = System::Drawing::Point(585, 54);
-			this->labByte2->Name = L"labByte2";
-			this->labByte2->Size = System::Drawing::Size(29, 12);
-			this->labByte2->TabIndex = 31;
-			this->labByte2->Text = L"Byte";
 			// 
 			// labByte1
 			// 
@@ -2599,6 +2537,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->tboxIsCodec->ReadOnly = true;
 			this->tboxIsCodec->Size = System::Drawing::Size(87, 19);
 			this->tboxIsCodec->TabIndex = 28;
+			this->tboxIsCodec->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// labIsCodec
 			// 
@@ -2779,7 +2718,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			// 
 			this->cboxIsNAND->AutoSize = true;
 			this->cboxIsNAND->Enabled = false;
-			this->cboxIsNAND->Location = System::Drawing::Point(8, 48);
+			this->cboxIsNAND->Location = System::Drawing::Point(9, 47);
 			this->cboxIsNAND->Name = L"cboxIsNAND";
 			this->cboxIsNAND->Size = System::Drawing::Size(121, 16);
 			this->cboxIsNAND->TabIndex = 1;
@@ -3416,8 +3355,8 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			// 
 			// gridError
 			// 
-			dataGridViewCellStyle2->BackColor = System::Drawing::Color::White;
-			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle2;
+			dataGridViewCellStyle1->BackColor = System::Drawing::Color::White;
+			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
@@ -3685,8 +3624,13 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 				{
 					case ECSrlResult::ERROR_PLATFORM:
 						this->errMsg( "本ツールはTWL対応ROM専用です。NTR専用ROMなどのTWL非対応ROMを読み込むことはできません。",
-									  "This tool can only read TWL ROM. This can't read Other data e.g. NTR limited ROM." );
+									  "This tool can only read TWL ROM. This can't read an other data e.g. NTR limited ROM." );
 					break;
+
+					case ECSrlResult::ERROR_SIGN_DECRYPT:
+					case ECSrlResult::ERROR_SIGN_VERIFY:
+						this->errMsg( "本ツールはTWL対応ROM専用です。不正なデータを読み込むことはできません。",
+									  "This tool can only read TWL ROM. This can't read an illegal data." );
 
 					default:
 						this->errMsg( "ROMデータファイルの読み込みに失敗しました。", "Reading the ROM data file failed." );
@@ -3845,8 +3789,8 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->tboxTitleIDHi->Text = this->hSrl->hTitleIDHi->ToString("X8");
 			this->tboxNormalRomOffset->Text   = this->hSrl->hNormalRomOffset->ToString("X8");
 			this->tboxKeyTableRomOffset->Text = this->hSrl->hKeyTableRomOffset->ToString("X8");
-			this->tboxPublicSize->Text  = this->hSrl->hPublicSize->ToString();
-			this->tboxPrivateSize->Text = this->hSrl->hPrivateSize->ToString();
+			this->tboxPublicSize->Text  = MasterEditorTWL::transSizeToString( this->hSrl->hPublicSize );
+			this->tboxPrivateSize->Text = MasterEditorTWL::transSizeToString( this->hSrl->hPrivateSize );
 			this->cboxIsNormalJump->Checked = *(this->hSrl->hIsNormalJump);
 			this->cboxIsTmpJump->Checked    = *(this->hSrl->hIsTmpJump);
 			this->cboxIsSubBanner->Checked  = *(this->hSrl->hIsSubBanner);
@@ -3878,12 +3822,12 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 				this->tboxIsGameCardOn->Text = gcnew System::String( "OFF" );
 			}
 			this->cboxIsShared2->Checked = *(this->hSrl->hIsShared2);
-			this->tboxShared2Size0->Text = this->hSrl->hShared2SizeArray[0]->ToString();
-			this->tboxShared2Size1->Text = this->hSrl->hShared2SizeArray[1]->ToString();
-			this->tboxShared2Size2->Text = this->hSrl->hShared2SizeArray[2]->ToString();
-			this->tboxShared2Size3->Text = this->hSrl->hShared2SizeArray[3]->ToString();
-			this->tboxShared2Size4->Text = this->hSrl->hShared2SizeArray[4]->ToString();
-			this->tboxShared2Size5->Text = this->hSrl->hShared2SizeArray[5]->ToString();
+			this->tboxShared2Size0->Text = MasterEditorTWL::transSizeToString( this->hSrl->hShared2SizeArray[0] );
+			this->tboxShared2Size1->Text = MasterEditorTWL::transSizeToString( this->hSrl->hShared2SizeArray[1] );
+			this->tboxShared2Size2->Text = MasterEditorTWL::transSizeToString( this->hSrl->hShared2SizeArray[2] );
+			this->tboxShared2Size3->Text = MasterEditorTWL::transSizeToString( this->hSrl->hShared2SizeArray[3] );
+			this->tboxShared2Size4->Text = MasterEditorTWL::transSizeToString( this->hSrl->hShared2SizeArray[4] );
+			this->tboxShared2Size5->Text = MasterEditorTWL::transSizeToString( this->hSrl->hShared2SizeArray[5] );
 
 			// アプリ種別
 			System::String ^app = gcnew System::String("");
@@ -3968,6 +3912,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 						this->tboxSDK->Text += ver->Version + "\r\n";
 				}
 			}
+			this->gridLibrary->Rows->Clear();
 			if( this->hSrl->hLicenseList != nullptr )
 			{
 				for each( RCLicense ^lic in this->hSrl->hLicenseList )
@@ -3978,7 +3923,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 
 			// ペアレンタルコントロール関連
 			this->setParentalForms();
-		}
+		} //setSrlForms()
 
 		// SRLの特殊な設定をフォームにセットする(言語切り替えで表示を変えたいので独立させる)
 		void setSrlFormsCaptionEx()
@@ -4153,7 +4098,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->hSrl->hArrayParentalRating[OS_TWL_PCTL_OGN_OFLC] = gcnew System::Byte( rating );
 			this->hSrl->hArrayParentalEffect[OS_TWL_PCTL_OGN_OFLC] = gcnew System::Boolean( this->cboxOFLC->Checked );
 			this->hSrl->hArrayParentalAlways[OS_TWL_PCTL_OGN_OFLC] = gcnew System::Boolean( this->cboxAlwaysOFLC->Checked );
-		}
+		} //setParentalSrlProperties()
 
 		// SRL内のペアレンタルコントロール情報を抜き出してフォームに反映させる
 		void setParentalForms(void)
@@ -4310,7 +4255,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->combOFLC->SelectedIndex = index;
 			this->cboxOFLC->Checked       = *(hSrl->hArrayParentalEffect[ OS_TWL_PCTL_OGN_OFLC ]);
 			this->cboxAlwaysOFLC->Checked = *(hSrl->hArrayParentalAlways[ OS_TWL_PCTL_OGN_OFLC ]);
-		}
+		} //setParentalForms()
 
 		// リージョン情報からペアレンタルコントロールの編集可能団体をマスクする
 		void maskParentalForms(void)
@@ -4383,7 +4328,7 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 				default:
 				break;
 			}
-		}
+		} //maskParentalForms()
 
 		// ----------------------------------------------
 		// SRL関連のフォームのチェック
@@ -4945,11 +4890,22 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->labCompany2->Text    = gcnew System::String( LANG_COMPANY_J );
 			this->labDepart2->Text     = gcnew System::String( LANG_DEPART_J );
 			this->labPerson2->Text     = gcnew System::String( LANG_PERSON_J );
+			this->labArbit1->Text      = gcnew System::String( "(任意)" );
+			this->labArbit2->Text      = gcnew System::String( "(任意)" );
+			this->labArbit3->Text      = gcnew System::String( "(任意)" );
+			this->labArbit4->Text      = gcnew System::String( "(任意)" );
 			// ふりがな情報を有効にする
 			this->tboxFurigana1->Enabled = true;
 			this->labFurigana1->Text = gcnew System::String( LANG_FURIGANA_J );
 			this->tboxFurigana2->Enabled = true;
 			this->labFurigana2->Text = gcnew System::String( LANG_FURIGANA_J );
+			// NTSC-UserIDも日本語版のみ
+			this->tboxNTSC1->Enabled = true;
+			this->tboxNTSC2->Enabled = true;
+			this->labNTSC1Pre->Text  = gcnew System::String( LANG_NTSC_1_J );
+			this->labNTSC1Sur->Text  = gcnew System::String( LANG_NTSC_2_J );
+			this->labNTSC2Pre->Text  = gcnew System::String( LANG_NTSC_1_J );
+			this->labNTSC2Sur->Text  = gcnew System::String( LANG_NTSC_2_J );
 
 			// TWL仕様
 			this->gboxTWLExInfo->Text         = gcnew System::String( "TWL拡張情報" );
@@ -5148,13 +5104,25 @@ private: System::Windows::Forms::Label^  labAssemblyVersion;
 			this->labCompany2->Text    = gcnew System::String( LANG_COMPANY_E );
 			this->labDepart2->Text     = gcnew System::String( LANG_DEPART_E );
 			this->labPerson2->Text     = gcnew System::String( LANG_PERSON_E );
+			this->labArbit1->Text      = gcnew System::String( "(Arbitrary)" );
+			this->labArbit2->Text      = gcnew System::String( "(Arbitrary)" );
+			this->labArbit3->Text      = gcnew System::String( "(Arbitrary)" );
+			this->labArbit4->Text      = gcnew System::String( "(Arbitrary)" );
 			// ふりがな情報を削除
 			this->tboxFurigana1->Clear();
 			this->tboxFurigana1->Enabled = false;
-			this->labFurigana1->Text = gcnew System::String("");
+			this->labFurigana1->Text = gcnew System::String( LANG_FURIGANA_E );
 			this->tboxFurigana2->Clear();
 			this->tboxFurigana2->Enabled = false;
-			this->labFurigana2->Text = gcnew System::String("");
+			this->labFurigana2->Text = gcnew System::String( LANG_FURIGANA_E );
+			this->tboxNTSC1->Enabled = false;
+			this->tboxNTSC1->Text    = gcnew System::String("");
+			this->tboxNTSC2->Enabled = false;
+			this->tboxNTSC2->Text    = gcnew System::String("");
+			this->labNTSC1Pre->Text  = gcnew System::String( LANG_NTSC_1_E );
+			this->labNTSC1Sur->Text  = gcnew System::String( LANG_NTSC_2_E );
+			this->labNTSC2Pre->Text  = gcnew System::String( LANG_NTSC_1_E );
+			this->labNTSC2Sur->Text  = gcnew System::String( LANG_NTSC_2_E );
 
 			// TWL仕様
 			this->gboxTWLExInfo->Text         = gcnew System::String( "TWL Extended Info" );

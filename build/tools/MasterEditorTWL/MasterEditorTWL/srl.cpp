@@ -55,9 +55,20 @@ ECSrlResult RCSrl::readFromFile( System::String ^filename )
 	{
 		return (ECSrlResult::ERROR_FILE_READ);
 	}
-	// ファイルを閉じる前にROMヘッダ以外の領域から設定を取り出す
 	{
 		ECSrlResult      r;
+
+#ifdef METWL_WHETHER_SIGN_DECRYPT
+		// 署名チェック
+		r = this->decryptRomHeader();
+		if( r != ECSrlResult::NOERROR )
+		{
+			(void)fclose(fp);
+			return r;
+		}
+#endif //#ifdef METWL_WHETHER_SIGN_DECRYPT
+
+		// ファイルを閉じる前にROMヘッダ以外の領域から設定を取り出す
 		(void)this->hasDSDLPlaySign( fp );
 		r = this->searchSDKVersion( fp );
 		if( r != ECSrlResult::NOERROR )
@@ -454,6 +465,45 @@ ECSrlResult RCSrl::signRomHeader(void)
 } // ECSrlResult RCSrl::signRomHeader(void)
 
 //
+// ROMヘッダの署名を外す
+//
+ECSrlResult RCSrl::decryptRomHeader(void)
+{
+	u8     original[ RSA_KEY_LENGTH ];	// 署名外した後のデータ格納先
+	s32    pos = 0;						// ブロックの先頭アドレス
+	u8     digest[ DIGEST_SIZE_SHA1 ];	// ROMヘッダのダイジェスト
+	ROM_Header rh;
+
+	// <データの流れ>
+	// (1) 公開鍵で復号した結果(ブロック)をローカル変数(original)に格納
+	// (2) ブロックから余分な部分を取り除いて引数(pDst)にコピー
+
+	// 署名の解除 = 公開鍵で復号
+	if( !ACSign_Decrypto( original, g_devPubKey_DER, this->pRomHeader->signature, RSA_KEY_LENGTH ) )
+	{
+		return ECSrlResult::ERROR_SIGN_DECRYPT;
+	}
+	// 署名前データを復号後ブロックからゲット
+	for( pos=0; pos < (RSA_KEY_LENGTH-2); pos++ )   // 本来ブロックの先頭は0x00だが復号化の内部処理によって消える仕様
+	{
+		// 暗号ブロック形式 = 0x00, BlockType, Padding, 0x00, 実データ
+		if( original[pos] == 0x00 )                               // 実データの直前の0x00をサーチ
+		{
+			break;
+		}
+	}
+	// ベリファイ
+	// ROMヘッダのダイジェストを算出(先頭から証明書領域の直前までが対象)
+	ACSign_DigestUnit( digest,	this->pRomHeader, (u32)&(rh.certificate) - (u32)&(rh) );
+		// this->pRomHeader はマネージヒープ上にあるので実アドレスを取得できない
+	if( memcmp( &(original[pos+1]), digest, DIGEST_SIZE_SHA1 ) != 0 )
+	{
+		return ECSrlResult::ERROR_SIGN_VERIFY;
+	}
+	return (ECSrlResult::NOERROR);
+}
+
+//
 // DSダウンロード署名がSRLに格納されているか調べる
 //
 ECSrlResult RCSrl::hasDSDLPlaySign( FILE *fp )
@@ -611,9 +661,8 @@ ECSrlResult RCSrl::searchLicenses(FILE *fp)
 			//System::Diagnostics::Debug::WriteLine( "license " + spl[0] + " " + spl[1] );
 		}
 	}
-
 	return ECSrlResult::NOERROR;
-}
+} //RCSrl::searchLicenses
 
 //
 // MRC
@@ -706,33 +755,14 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 	}
 
 	// 値チェック
+
 	if( this->pRomHeader->s.rom_type != 0x00 )
 	{
 		this->hErrorList->Add( gcnew RCMrcError( 
 			"デバイスタイプ", 0x13, 0x13, "不正な値です。00hを設定してください。",
 			"Device Type", "Invalid data. Please set 00h.", false, true ) );
 	}
-	fseek( fp, 0, SEEK_END );
-	u32  filesize = ftell(fp);	// 実ファイルサイズ(単位Mbit)
-	u32  romsize = 1 << (this->pRomHeader->s.rom_size);	// ROM容量
-	if( (romsize*1024*1024/8) < filesize )
-	{
-		this->hErrorList->Add( gcnew RCMrcError( 
-			"デバイス容量", 0x14, 0x14, "実ファイルサイズよりも小さい値が指定されています。",
-			"Device Capacity", "Setting data is less than the actual file size.", false, true ) );
-	}
-	else if( filesize < (romsize*1024*1024/8) )
-	{
-		this->hWarnList->Add( gcnew RCMrcError(		// 警告
-			"デバイス容量", 0x14, 0x14, "実ファイルサイズに比べて無駄のある値が設定されています。",
-			"Device Capacity", "Setting data is larger than the actual file size.", false, true ) );
-	}
-	if( (filesize % 2) != 0 )
-	{
-		this->hErrorList->Add( gcnew RCMrcError( 
-			"実ファイルサイズ", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, "中途半端な値です。通常では2のべき乗の値です。",
-			"Actual File Size", "Invalid size. This size is usually power of 2.", false, true ) );
-	}
+
 	u8 romver = this->pRomHeader->s.rom_version;
 	if( ((romver < 0x00) || (0x09 < romver)) && (romver != 0xE0) )
 	{
@@ -866,13 +896,56 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 #endif
 
 	// 値チェック
+
+	fseek( fp, 0, SEEK_END );
+	u32  filesize = ftell(fp);	// 実ファイルサイズ(単位Mbit)
 	u32  romsize = 1 << (this->pRomHeader->s.rom_size);	// ROM容量
-	if( (romsize < METWL_ROMSIZE_MIN) || (METWL_ROMSIZE_MAX < romsize) )
+	if( *(this->hIsMediaNand) == false )		// カードアプリのときのみのチェック
 	{
-		this->hErrorList->Add( gcnew RCMrcError( 
-			"デバイス容量", 0x14, 0x14, "指定可能な容量ではありません。",
-			"Device Capacity", "Invalid capacity.", false, true ) );
+		if( (romsize*1024*1024/8) < filesize )
+		{
+			this->hErrorList->Add( gcnew RCMrcError( 
+				"デバイス容量", 0x14, 0x14, "実ファイルサイズよりも小さい値が指定されています。",
+				"Device Capacity", "Setting data is less than the actual file size.", false, true ) );
+		}
+		else if( filesize < (romsize*1024*1024/8) )
+		{
+			this->hWarnList->Add( gcnew RCMrcError(		// 警告
+				"デバイス容量", 0x14, 0x14, "実ファイルサイズに比べて無駄のある値が設定されています。",
+				"Device Capacity", "Setting data is larger than the actual file size.", false, true ) );
+		}
+		if( (romsize < METWL_ROMSIZE_MIN) || (METWL_ROMSIZE_MAX < romsize) )
+		{
+			this->hErrorList->Add( gcnew RCMrcError( 
+				"デバイス容量", 0x14, 0x14, "指定可能な容量ではありません。",
+				"Device Capacity", "Invalid capacity.", false, true ) );
+		}
+		if( (filesize % 2) != 0 )
+		{
+			this->hErrorList->Add( gcnew RCMrcError( 
+				"実ファイルサイズ", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, "中途半端な値です。通常では2のべき乗の値です。",
+				"Actual File Size", "Invalid size. This size is usually power of 2.", false, true ) );
+		}
+	} //if( *(this->hIsNAND) == false )
+	else
+	{
+		if( (romsize < METWL_ROMSIZE_MIN_NAND) || (METWL_ROMSIZE_MAX_NAND < romsize) )
+		{
+			this->hErrorList->Add( gcnew RCMrcError( 
+				"デバイス容量", 0x14, 0x14, "NANDアプリに対して指定可能な容量ではありません。",
+				"Device Capacity", "Invalid capacity.", false, true ) );
+		}
+		u32  allsizeMB = (filesize*1024*1024/8) + this->pRomHeader->s.public_save_data_size + this->pRomHeader->s.private_save_data_size;
+		if( allsizeMB > METWL_ALLSIZE_MAX_NAND )
+		{
+			this->hErrorList->Add( gcnew RCMrcError( 
+				"実ファイルサイズ", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
+				"ROMデータの実ファイルサイズとPublicセーブデータおよびPrivateセーブデータのサイズの総和が32MByteを超えています。",
+				"Actual File Size", 
+				"The sum of this size, the public save data size and private save data size exceed 32MByte.", false, true ) );
+		}
 	}
+
 	if( this->pRomHeader->s.warning_no_spec_rom_speed != 0 )
 	{
 		this->hWarnList->Add( gcnew RCMrcError( 

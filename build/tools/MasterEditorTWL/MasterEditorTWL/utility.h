@@ -33,6 +33,15 @@ namespace MasterEditorTWL
 	System::String^ transRomSizeToString( System::Byte ^byte );
 
 	//
+	// サイズから単位つきの文字列を取得
+	//
+	// @arg [in] バイト数
+	//
+	// @ret 文字列(単位つき)
+	//
+	System::String^ transSizeToString( System::UInt32 ^size );
+
+	//
 	// ペアレンタルコントロールのレーティング値から文字列を取得
 	//
 	// @arg [in] 団体
