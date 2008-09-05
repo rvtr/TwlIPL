@@ -1210,6 +1210,18 @@ static BOOL SYSMi_AuthenticateTWLTitle( TitleProperty *pBootTitle )
 		}
 	}
 
+	// デバッガ動作以外の時はNANDアプリはNAND、カードアプリはカードからのみブート許可
+	if ( ! SYSM_IsRunOnDebugger() )
+	{
+		if ( ( (pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_NAND ||
+				pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_TEMP)  && !(head->s.titleID_Hi & TITLE_ID_HI_MEDIA_MASK) ) ||
+			   (pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM    &&  (head->s.titleID_Hi & TITLE_ID_HI_MEDIA_MASK) ) )
+		{
+			UTL_SetFatalError(FATAL_ERROR_MEDIA_CHECK_FAILED);
+			return FALSE;
+		}
+	}
+
 	// ハッシュ比較
     {
 		int l;
@@ -1272,18 +1284,6 @@ static BOOL SYSMi_AuthenticateTWLTitle( TitleProperty *pBootTitle )
 		}
 	}
 	OS_TPrintf("Authenticate : total %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
-
-	// デバッガ動作以外の時はNANDアプリはNAND、カードアプリはカードからのみブート許可
-	if ( ! SYSM_IsRunOnDebugger() )
-	{
-		if ( ( (pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_NAND ||
-				pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_TEMP)  && !(head->s.titleID_Hi & TITLE_ID_HI_MEDIA_MASK) ) ||
-			   (pBootTitle->flags.bootType == LAUNCHER_BOOTTYPE_ROM    &&  (head->s.titleID_Hi & TITLE_ID_HI_MEDIA_MASK) ) )
-		{
-			UTL_SetFatalError(FATAL_ERROR_MEDIA_CHECK_FAILED);
-			return FALSE;
-		}
-	}
 
 	return TRUE;
 }
