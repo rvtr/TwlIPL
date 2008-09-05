@@ -50,8 +50,7 @@ ifdef BUILD_TWLSDK
 SUBMAKES +=	Makefile_environment
 endif
 
-SUBMAKES +=	./scripts/Makefile											\
-			$(SYSMENU_ROOT)/build/tools/Makefile						\
+SUBMAKES +=	$(SYSMENU_ROOT)/build/tools/Makefile						\
 			$(SYSMENU_ROOT)/build/libraries/Makefile					\
 			$(SYSMENU_ROOT)/build/libraries_sysmenu/Makefile_autogen	\
 																		\
@@ -105,6 +104,28 @@ GDIRT_INSTALLED	+= ./$(notdir $(subst .srl,_WL_$(DATE)_*.srl,$(INSTALL_TARGETS))
 
 #----------------------------------------------------------------------------
 
+SKIP_SUBDIR ?= TRUE
+
+do-build:	do-core
+clean:		cl-core
+clobber:	cl-core
+
+do-build:	MY_TARGET=default
+clean:		MY_TARGET=clean
+clobber:	MY_TARGET=clobber
+
+do-core:
+ifeq ($(SKIP_SUBDIR),TRUE)
+	+$(REMAKE) -C ./scripts SKIP_SUBDIR=FALSE $(MY_TARGET)
+	+$(REMAKE) SKIP_SUBDIR=FALSE $(MY_TARGET)
+endif
+
+cl-core:
+ifeq ($(SKIP_SUBDIR),TRUE)
+	+$(REMAKE) SKIP_SUBDIR=FALSE $(MY_TARGET)
+	+$(REMAKE) -C ./scripts SKIP_SUBDIR=FALSE $(MY_TARGET)
+endif
+
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 # Override generic DO_INSTALL
@@ -119,7 +140,5 @@ define DO_INSTALL
 		fi $(AND) ) $(TRUE)
 endef
 
-test:
-	@echo $(GDIRT_INSTALLED)
 
 #===== End of Makefile =====
