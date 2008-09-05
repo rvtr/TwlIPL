@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlIPL
+# Project:  TwlSDK - tests - camera
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -18,15 +18,13 @@
 
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
+
 #----------------------------------------------------------------------------
 
-SUBDIRS_P	=	\
-				HWInfoWriter \
-				NandInitializerRed \
-				NandInitializerProduction \
-				NandInitializer \
-				ImportJump \
-                nandfirmVersionChecker
+SUBDIRS =	\
+            banner \
+			ARM7.TWL \
+            ARM9.TWL \
 
 #----------------------------------------------------------------------------
 

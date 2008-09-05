@@ -40,8 +40,9 @@
     定数定義
  *---------------------------------------------------------------------------*/
 
-#define NAND_BLOCK_BYTE 			0x200
-#define NAND_FIRM_START_OFFSET    	0x200
+#define NAND_BLOCK_BYTE 			       0x200
+#define NAND_FIRM_START_OFFSET    	       0x200
+#define NAND_FIRM_START_OFFSET_IN_FILE     0x200
 
 #define NVRAM_PAGE_SIZE 0x100
 #define NVRAM_NORFIRM_RESERVED_ADDRESS     0x200
@@ -74,8 +75,9 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	BOOL    read_is_ok;
 	u8* pTempBuf;
 	u32 file_size;
+	u32 nandfirm_size;
 	u32 alloc_size;
-	u32 write_size;
+	u32 write_block;
 	BOOL result = TRUE;
 	u16 crc_w1, crc_w2;
 	u16 crc_r1, crc_r2;
@@ -102,8 +104,12 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 		return FALSE;
 	}
 
+	nandfirm_size = file_size - NAND_FIRM_START_OFFSET_IN_FILE;
+
 	// バッファ確保
-	alloc_size = ROUND_UP(file_size, 32) ;
+	// 書き込みがブロック単位(512byte)であることを考慮し+512
+	// さらにDC_Flushのケアとして32byteアライメントを考慮
+	alloc_size = ROUND_UP(file_size + 512, 32) ;
 	pTempBuf = allocFunc( alloc_size );
 	if (pTempBuf == NULL)
 	{
@@ -112,10 +118,12 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 		return FALSE;		
 	}
 
+	MI_CpuClear8( pTempBuf, alloc_size );
+
 	// .nandファイルリード
-	DC_InvalidateRange(pTempBuf, alloc_size);
+	DC_FlushRange(pTempBuf, alloc_size);
 	read_is_ok = FS_ReadFile( &file, pTempBuf, (s32)file_size );
-	DC_StoreRange(pTempBuf, file_size);
+	DC_FlushRange(pTempBuf, file_size);
 	if (!read_is_ok)
 	{
 		kamiFontPrintfConsoleEx(1, "Fail FS_ReadFile!\n");
@@ -129,7 +137,7 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 
 	// 書き込み前のCRCを計算
 	crc_w1 = SVC_GetCRC16( 0xffff, pTempBuf, sizeof(NORHeaderDS) );
-	crc_w2 = SVC_GetCRC16( 0xffff, pTempBuf+512, file_size-512 );
+	crc_w2 = SVC_GetCRC16( 0xffff, pTempBuf+NAND_FIRM_START_OFFSET_IN_FILE, nandfirm_size );
 
 	// まずNORHeaderDS領域を書き込む（40byte?）
 	if (NVRAMi_Write(0, sizeof(NORHeaderDS), (void*)pTempBuf) != NVRAM_RESULT_SUCCESS)
@@ -147,7 +155,7 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	{
 	    kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Read()!\n");
 	}
-	DC_StoreRange(pTempBuf, sizeof(NORHeaderDS));
+	DC_FlushRange(pTempBuf, sizeof(NORHeaderDS));
 
 	// 書き込み後のCRCを計算
 	crc_r1 = SVC_GetCRC16( 0xffff, pTempBuf, sizeof(NORHeaderDS) );
@@ -187,7 +195,7 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	}
 
 	// 書き込み後のCRCを計算
-	DC_StoreRange(sNvramPageSizeBuffer, NVRAM_PAGE_SIZE);
+	DC_FlushRange(sNvramPageSizeBuffer, NVRAM_PAGE_SIZE);
 	crc_norfirm_reserved_area_r = SVC_GetCRC16( 0xffff, sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
 
 	// NORファームリザーブ領域のCRC比較
@@ -260,25 +268,25 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 //	kamiFontPrintfConsoleEx(0, "NAND Firm Import Start!\n");
 
 	// NAND書き込み
-	write_size = file_size/NAND_BLOCK_BYTE + (file_size % NAND_BLOCK_BYTE != 0);
-	kamiNandWrite( NAND_FIRM_START_OFFSET/NAND_BLOCK_BYTE, pTempBuf+NAND_FIRM_START_OFFSET, write_size );	// ブロック単位、バイト単位、ブロック単位
+	write_block = nandfirm_size/NAND_BLOCK_BYTE + (nandfirm_size % NAND_BLOCK_BYTE != 0);
+	kamiNandWrite( NAND_FIRM_START_OFFSET/NAND_BLOCK_BYTE, pTempBuf+NAND_FIRM_START_OFFSET, write_block );	// ブロック単位、バイト単位、ブロック単位
 
 //	kamiFontPrintfConsoleEx(0, "Start CRC check\n");
 	kamiFontLoadScreenData();
 	
 	// CRCを計算するので念のためにクリアしてからリードする
-	MI_CpuClear8( pTempBuf, file_size );
-	DC_FlushRange(pTempBuf, file_size);
+	MI_CpuClear8( pTempBuf, nandfirm_size );
+	DC_FlushRange(pTempBuf, nandfirm_size);
 
 	// CRCチェックのためNandからリード
-	if (kamiNandRead(0, pTempBuf, file_size/512 ) == KAMI_RESULT_SEND_ERROR)
+	if (kamiNandRead(NAND_FIRM_START_OFFSET/NAND_BLOCK_BYTE, pTempBuf, write_block ) == KAMI_RESULT_SEND_ERROR)
 	{
 	    kamiFontPrintfConsoleEx(1, "kamiNandRead ... %s!\n", "ERROR");
 	}
-	DC_StoreRange(pTempBuf, file_size);
+	DC_FlushRange(pTempBuf, nandfirm_size);
 
 	// 書き込み後のCRCを計算
-	crc_r2 = SVC_GetCRC16( 0xffff, pTempBuf+512, file_size-512 );
+	crc_r2 = SVC_GetCRC16( 0xffff, pTempBuf, nandfirm_size );
 
 	// NAND部分についてのCRCチェック
 	if (crc_w2 == crc_r2)
