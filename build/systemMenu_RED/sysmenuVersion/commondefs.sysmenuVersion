@@ -29,7 +29,7 @@ NUP_HOSTNAME		=	nus.t.shop.nintendowifi.net:443
 EULA_URL			=	https://cfh.t.app.nintendowifi.net/eula/
 
 # バージョン文字列
-STR_VERSION			=	$(SYSMENU_VERSION_MAJOR).$(SYSMENU_VERSION_MAJOR)$(SYSMENU_VERSION_STRING_REGION)
+STR_VERSION			=	$(SYSMENU_VERSION_MAJOR).$(SYSMENU_VERSION_MINOR)$(SYSMENU_VERSION_STRING_REGION)
 
 #---------------------------------------------------------
 # 外部使用変数
