@@ -253,22 +253,30 @@ BOOL ERRORLOGi_WriteCommon( BOOL isLauncherError, u64 errorCode, const char *fmt
 	int bufBeginPoint = 0; 	// リングバッファの開始点
 	int numEntry = 0;
 	int counter = 0;
-
+	int retry = 3;
+	
 	RTCDate date;
 	RTCTime time;
-	RTCResult rtcRes;
 	
 	char *writeBuf;
 	
 	writeBuf = (char*) elWork.Alloc( ERRORLOG_SIZE );
 	SDK_ASSERT( writeBuf );
 
-	// 新しいログエントリを書き込むためのRTC
-	if( ( rtcRes = RTC_GetDateTime( &date, &time )) != RTC_RESULT_SUCCESS )
-	{
-		elWork.Free( writeBuf );
-		OS_TPrintf("EL Error: RTC getDateTime() Failed!  Status:%d\n", rtcRes);
-		return FALSE;
+	// RTCが初期化されていない場合の保険
+	RTC_Init();
+	
+	// 新しいログエントリを書き込むためのRTCリード
+	while( retry-- > 0 ) {
+		if( RTC_GetDateTime( &date, &time ) == RTC_RESULT_SUCCESS ) {
+			break;
+		}
+		OS_Sleep(1);
+	}
+	if( retry < 0 ) {
+		// RTCリードに失敗した場合でも、オール０の値をセットして続行（マルチスレッド動作時にRTCアクセスは失敗する可能性がある）
+		MI_CpuClear8( &date, sizeof(RTCDate) );
+		MI_CpuClear8( &time, sizeof(RTCTime) );
 	}
 
 	if( isLauncherError )
