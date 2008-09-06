@@ -21,7 +21,7 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 
 
-TARGETS			=	FakeRomHeader.exe
+TARGETS			=	FakeRomHeader$(SUFFIX).exe
 
 SOURCES_C		=	main.c keys.c
 
@@ -46,14 +46,18 @@ LIBDIGEST			=	$(ROOT)/build/tools/makerom.TWL/digest/lib/X86/libdigest_x86.a
 
 ifeq ($(KEY_LAUNCHER),TRUE)
 MACROS			+= -DKEY_LAUNCHER
+SUFFIX			=  .launcher
 else
 ifeq ($(KEY_SECURE),TRUE)
 MACROS			+= -DKEY_SECURE
+SUFFIX			=  .secure
 else
 ifeq ($(KEY_SYSTEM),TRUE)
 MACROS			+= -DKEY_SYSTEM
+SUFFIX			=  .sys
 else
 MACROS			+= -DKEY_USER
+SUFFIX			=  .user
 endif
 endif
 endif
