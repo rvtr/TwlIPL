@@ -34,6 +34,7 @@ FONT_ORG_RSC	=	$(addprefix $(FONT_ORG_DIR)/, $(FONTS))
 
 ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
 FONT_TABLE		=	TWLFontTable.dat
+FONT_TABLE_WITH_TIMESTAMP = TWLFontTable_$(FONT_TIMESTAMP).dat
 endif
 
 GEN_FONT_TABLE	=	$(SYSMENU_TOOLSDIR)/bin/genFontTable.plx
@@ -42,16 +43,18 @@ GEN_FONT_TABLE	=	$(SYSMENU_TOOLSDIR)/bin/genFontTable.plx
 INSTALL_TARGETS	=	$(FONT_TABLE)
 INSTALL_DIR		=	$(TWL_IPL_RED_ROOT)/build/systemMenu_tools/SystemUpdater/data
 
-LDIRT_CLEAN		=	
+LDIRT_CLEAN		=	$(FONT_TABLE_WITH_TIMESTAMP)
 
 #----------------------------------------------------------------------------
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
-do-build : $(FONT_TABLE)
+do-build : $(FONT_TABLE) $(FONT_TABLE_WITH_TIMESTAMP)
 
 # compress sharedFonts and them in local directory
 $(FONT_TABLE): $(FONT_RSC) $(GEN_FONT_TABLE)
 	$(GEN_FONT_TABLE) $(FONT_TIMESTAMP) $(FONT_RSC)
 
+$(FONT_TABLE_WITH_TIMESTAMP): $(FONT_TABLE)
+	cp $< $@
 #===== End of Makefile =====
