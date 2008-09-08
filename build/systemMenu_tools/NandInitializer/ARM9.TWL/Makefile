@@ -79,7 +79,6 @@ SRCS		=	main.c \
 				process_hw_info.c \
 				process_wireless_setting.c \
 				process_fade.c \
-				sd_event.c \
 				hwi.c \
 				debugger_hw_reset_control.c
 

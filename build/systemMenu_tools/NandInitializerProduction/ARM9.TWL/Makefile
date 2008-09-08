@@ -80,7 +80,6 @@ SRCS		=	main.c \
 				process_write_data.c \
 				process_mcu.c \
 				process_wireless_setting.c \
-				sd_event.c \
 				hwi.c \
 				debugger_hw_reset_control.c
 

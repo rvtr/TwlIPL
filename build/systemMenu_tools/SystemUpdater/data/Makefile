@@ -37,7 +37,9 @@ LDIRT_CLEAN		=	HNAA.tad \
 					HNCA.tad \
 					HNHA.tad \
 					HNLA.tad \
-					menu_launcher.nand
+					menu_launcher.nand \
+					TWLFontTable.dat \
+					properties
 
 #----------------------------------------------------------------------------
 
@@ -51,8 +53,8 @@ do-build :	HNAA.tad \
 			HNCA.tad \
 			HNHA.tad \
 			HNLA.tad \
-			menu_launcher.nand
-
+			menu_launcher.nand \
+			TWLFontTable.dat
 
 # maketad.updaterで作られたTADが他のフォルダに残らないように、ここでTAD化処理する。
 
@@ -72,6 +74,9 @@ HNLA.tad: $(SYSMENU_VERSION_DIR)/$(SYSMENU_VERSION_FILE)
 	$(MAKETAD) $(call empath,$<) $(SYSMENU_VERSION_MAKETAD_OPTION) -o $@
 
 menu_launcher.nand: ../../../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE)-$(IPL_REVISION)-$(SDK_REVISION).nand
+	cp $< ./$@
+
+TWLFontTable.dat: ../../../systemMenu_RED/sharedFont/TWLFontTable_????????.dat
 	cp $< ./$@
 
 #===== End of Makefile =====

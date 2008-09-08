@@ -27,8 +27,7 @@
 #include "process_fade.h"
 #include "cursor.h"
 #include "keypad.h"
-
-extern void MakeFullPathForSD(char* file_name, char* full_path);
+#include "common_utility.h"
 
 /*---------------------------------------------------------------------------*
     É}ÉNÉçíËã`

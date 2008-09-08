@@ -27,6 +27,7 @@
 #include "process_fade.h"
 #include "cursor.h"
 #include "keypad.h"
+#include "common_utility.h"
 
 /*---------------------------------------------------------------------------*
     型定義
@@ -245,20 +246,57 @@ void* WriteDataProcess2(void)
 
 static BOOL WriteFontData(void)
 {
-    FSFile  file;	
+    FSFile  dir, file;	
     BOOL    open_is_ok;
 	BOOL    read_is_ok;
 	void* pTempBuf;
 	u32 file_size;
 	u32 alloc_size;
 	BOOL result = TRUE;
+	char full_path[FS_ENTRY_LONGNAME_MAX+6];
+
+	FS_InitFile(&dir);
+
+    // SDカードのルートディレクトリを検索
+    if ( !FS_OpenDirectory(&dir, "sdmc:/", FS_FILEMODE_R) )
+    {
+		kamiFontPrintfConsole(CONSOLE_RED, "Error FS_OpenDirectory(sdmc:/)");
+    }
+    else
+    {
+        FSDirectoryEntryInfo   info[1];
+
+		// .dat を探す
+        while (FS_ReadDirectory(&dir, info))
+        {
+            if ((info->attributes & (FS_ATTRIBUTE_DOS_DIRECTORY | FS_ATTRIBUTE_IS_DIRECTORY)) == 0)
+            {
+				char* pExtension;
+
+				// 拡張子のチェック
+				pExtension = STD_SearchCharReverse( info->longname, '.');
+				if (pExtension)
+				{
+					if (!STD_CompareString( pExtension, ".dat") || !STD_CompareString( pExtension, ".DAT"))
+					{
+						if (!STD_CompareNString(info->longname, "TWLFontTable", STD_GetStringLength("TWLFontTable")))
+						{
+							MakeFullPathForSD(info->longname, full_path);
+							break;
+						}
+					}
+				}
+            }
+        }
+        (void)FS_CloseDirectory(&dir);
+    }
 
 	// ROMファイルオープン
     FS_InitFile(&file);
-    open_is_ok = FS_OpenFile(&file, FONT_DATA_FILE_PATH_IN_SDMC);
+    open_is_ok = FS_OpenFile(&file, full_path);
 	if (!open_is_ok)
 	{
-    	OS_Printf("FS_OpenFile(\"%s\") ... ERROR!\n", FONT_DATA_FILE_PATH_IN_SDMC);
+    	kamiFontPrintfConsoleEx(CONSOLE_RED, "FS_OpenFile(\"%s\") ... ERROR!\n", full_path);
 		return FALSE;
 	}
 
@@ -271,7 +309,7 @@ static BOOL WriteFontData(void)
 	read_is_ok = FS_ReadFile( &file, pTempBuf, (s32)file_size );
 	if (!read_is_ok)
 	{
-	    kamiFontPrintfConsoleEx(CONSOLE_RED, "FS_ReadFile(\"%s\") ... ERROR!\n", FONT_DATA_FILE_PATH_IN_SDMC);
+	    kamiFontPrintfConsoleEx(CONSOLE_RED, "FS_ReadFile(\"%s\") ... ERROR!\n", full_path);
 		FS_CloseFile(&file);
 		OS_Free(pTempBuf);
 		return FALSE;

@@ -30,6 +30,7 @@
 #include "cursor.h"
 #include "keypad.h"
 #include "kami_write_nandfirm.h"
+#include "common_utility.h"
 
 #include "TWLHWInfo_api.h"
 #include <firm/format/firm_common.h>
@@ -113,8 +114,7 @@ void* NandfirmProcess0(void)
     // SDカードのルートディレクトリを検索
     if ( !FS_OpenDirectory(&dir, "sdmc:/", FS_FILEMODE_R | FS_FILEMODE_W) )
     {
-        OS_Printf("Error FS_OpenDirectory(sdmc:/)\n");
-		kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "Error FS_OpenDirectory(sdmc:/)");
+		kamiFontPrintfConsole(CONSOLE_RED, "Error FS_OpenDirectory(sdmc:/)");
     }
     else
     {
@@ -278,24 +278,4 @@ void* NandfirmProcess2(void)
 	}
 
 	return NandfirmProcess1;
-}
-
-/*---------------------------------------------------------------------------*
-    処理関数定義
- *---------------------------------------------------------------------------*/
-
-/*---------------------------------------------------------------------------*
-  Name:         MakeFullPathForSD
-
-  Description:  
-
-  Arguments:    no
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-void MakeFullPathForSD(char* file_name, char* full_path)
-{
-	// フルパスを作成
-	STD_CopyString( full_path, "sdmc:/" );
-	STD_ConcatenateString( full_path, file_name );
 }

@@ -32,7 +32,7 @@
 #include "process_fade.h"
 #include "cursor.h"
 #include "keypad.h"
-
+#include "common_utility.h"
 #include "TWLHWInfo_api.h"
 
 /*---------------------------------------------------------------------------*
@@ -100,7 +100,6 @@ static void ProgressThread(void* arg);
 static void Destructor(void* arg);
 static void ShowTadList(void);
 static void DumpTadInfo(void);
-static void MakeFullPathForSD(char* file_name, char* full_path);
 static void ShowTitleinfoDifference( NAMTitleInfo* titleInfoNand, NAMTitleInfo* titleInfoSd);
 void ProgessInit(void);
 void ProgressDraw(f32 ratio);
@@ -839,22 +838,6 @@ static void DumpTadInfo(void)
 			kamiFontPrintfConsole(CONSOLE_ORANGE, "--------------------------\n");
 		}
 	}
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         MakeFullPathForSD
-
-  Description:  
-
-  Arguments:    no
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-static void MakeFullPathForSD(char* file_name, char* full_path)
-{
-	// ÉtÉãÉpÉXÇçÏê¨
-	STD_CopyString( full_path, "sdmc:/" );
-	STD_ConcatenateString( full_path, file_name );
 }
 
 /*---------------------------------------------------------------------------*

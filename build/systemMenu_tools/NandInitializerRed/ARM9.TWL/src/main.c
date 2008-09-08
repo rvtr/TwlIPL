@@ -28,7 +28,6 @@
 #include "graphics.h"
 #include "keypad.h"
 #include "kami_pxi.h"
-#include "sd_event.h"
 #include "process_fade.h"
 #include "hwi.h"
 

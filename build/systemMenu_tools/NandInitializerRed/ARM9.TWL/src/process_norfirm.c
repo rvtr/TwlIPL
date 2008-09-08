@@ -30,7 +30,7 @@
 #include "process_fade.h"
 #include "cursor.h"
 #include "keypad.h"
-
+#include "common_utility.h"
 #include "TWLHWInfo_api.h"
 
 #include <firm/format/firm_common.h>
@@ -68,7 +68,6 @@ static u8 sFileNum;
     ì‡ïîä÷êîêÈåæ
  *---------------------------------------------------------------------------*/
 
-static void MakeFullPathForSD(char* file_name, char* full_path);
 static BOOL WriteNorfirm(char* file_name);
 
 /*---------------------------------------------------------------------------*
@@ -264,27 +263,11 @@ void* NorfirmProcess2(void)
  *---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*
-  Name:         MakeFullPathForSD
+  Name:         WriteNorfirm
 
   Description:  
 
-  Arguments:    no
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-static void MakeFullPathForSD(char* file_name, char* full_path)
-{
-	// ÉtÉãÉpÉXÇçÏê¨
-	STD_CopyString( full_path, "sdmc:/" );
-	STD_ConcatenateString( full_path, file_name );
-}
-
-/*---------------------------------------------------------------------------*
-  Name:         MakeFullPathForSD
-
-  Description:  
-
-  Arguments:    no
+  Arguments:    
 
   Returns:      None.
  *---------------------------------------------------------------------------*/

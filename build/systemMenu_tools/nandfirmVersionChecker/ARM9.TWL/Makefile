@@ -40,8 +40,7 @@ SRCS		=	main.c \
 				font_data.c \
 				graphics.c \
 				keypad.c \
-				kami_font.c \
-				sd_event.c \
+				kami_font.c
 
 LINCLUDES	=	../../NandInitializerRed/common/include \
 				../../NandInitializerRed/ARM9.TWL/include
