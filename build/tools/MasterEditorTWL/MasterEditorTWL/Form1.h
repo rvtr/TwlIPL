@@ -542,6 +542,8 @@ private: System::Windows::Forms::Label^  labArbit4;
 private: System::Windows::Forms::Label^  labArbit3;
 private: System::Windows::Forms::Label^  labArbit2;
 private: System::Windows::Forms::Label^  labArbit1;
+private: System::Windows::Forms::Button^  butSetBack;
+
 
 
 
@@ -902,6 +904,7 @@ private: System::Windows::Forms::Label^  labArbit1;
 			this->tboxGuideTWLInfo = (gcnew System::Windows::Forms::TextBox());
 			this->gboxExFlags = (gcnew System::Windows::Forms::GroupBox());
 			this->tabRomEditInfo = (gcnew System::Windows::Forms::TabPage());
+			this->butSetBack = (gcnew System::Windows::Forms::Button());
 			this->tboxGuideRomEditInfo = (gcnew System::Windows::Forms::TextBox());
 			this->gboxParental = (gcnew System::Windows::Forms::GroupBox());
 			this->gboxIcon = (gcnew System::Windows::Forms::GroupBox());
@@ -1554,7 +1557,7 @@ private: System::Windows::Forms::Label^  labArbit1;
 			this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"日本のみ", L"米国のみ", L"欧州のみ", L"豪州のみ", L"欧州および豪州"});
 			this->combRegion->Location = System::Drawing::Point(95, 21);
 			this->combRegion->Name = L"combRegion";
-			this->combRegion->Size = System::Drawing::Size(216, 20);
+			this->combRegion->Size = System::Drawing::Size(164, 20);
 			this->combRegion->TabIndex = 36;
 			this->combRegion->SelectedIndexChanged += gcnew System::EventHandler(this, &Form1::combRegion_SelectedIndexChanged);
 			// 
@@ -2886,12 +2889,14 @@ private: System::Windows::Forms::Label^  labArbit1;
 			this->stripItemSaveTemp->Name = L"stripItemSaveTemp";
 			this->stripItemSaveTemp->Size = System::Drawing::Size(211, 22);
 			this->stripItemSaveTemp->Text = L"提出情報を一時保存する";
+			this->stripItemSaveTemp->Click += gcnew System::EventHandler(this, &Form1::stripItemSaveTemp_Click);
 			// 
 			// stripItemLoadTemp
 			// 
 			this->stripItemLoadTemp->Name = L"stripItemLoadTemp";
 			this->stripItemLoadTemp->Size = System::Drawing::Size(211, 22);
 			this->stripItemLoadTemp->Text = L"一時保存した提出情報を開く";
+			this->stripItemLoadTemp->Click += gcnew System::EventHandler(this, &Form1::stripItemLoadTemp_Click);
 			// 
 			// stripMaster
 			// 
@@ -3049,6 +3054,7 @@ private: System::Windows::Forms::Label^  labArbit1;
 			// 
 			// tabRomEditInfo
 			// 
+			this->tabRomEditInfo->Controls->Add(this->butSetBack);
 			this->tabRomEditInfo->Controls->Add(this->tboxGuideRomEditInfo);
 			this->tabRomEditInfo->Controls->Add(this->gboxParental);
 			this->tabRomEditInfo->Controls->Add(this->gboxIcon);
@@ -3059,6 +3065,16 @@ private: System::Windows::Forms::Label^  labArbit1;
 			this->tabRomEditInfo->TabIndex = 2;
 			this->tabRomEditInfo->Text = L"ROM登録情報(編集可)";
 			this->tabRomEditInfo->UseVisualStyleBackColor = true;
+			// 
+			// butSetBack
+			// 
+			this->butSetBack->Location = System::Drawing::Point(43, 289);
+			this->butSetBack->Name = L"butSetBack";
+			this->butSetBack->Size = System::Drawing::Size(151, 23);
+			this->butSetBack->TabIndex = 38;
+			this->butSetBack->Text = L"読み込み時の設定に戻す";
+			this->butSetBack->UseVisualStyleBackColor = true;
+			this->butSetBack->Click += gcnew System::EventHandler(this, &Form1::butSetBack_Click);
 			// 
 			// tboxGuideRomEditInfo
 			// 
@@ -3539,9 +3555,9 @@ private: System::Windows::Forms::Label^  labArbit1;
 				// SDK
 				try
 				{
-					u32 major   = System::UInt32::Parse( MasterEditorTWL::getXpathText( root, "/init/sdk/major" ) );
-					u32 minor   = System::UInt32::Parse( MasterEditorTWL::getXpathText( root, "/init/sdk/minor" ) );
-					u32 relstep = System::UInt32::Parse( MasterEditorTWL::getXpathText( root, "/init/sdk/relstep" ) );
+					u32 major   = System::UInt32::Parse( MasterEditorTWL::getXPathText( root, "/init/sdk/major" ) );
+					u32 minor   = System::UInt32::Parse( MasterEditorTWL::getXPathText( root, "/init/sdk/minor" ) );
+					u32 relstep = System::UInt32::Parse( MasterEditorTWL::getXPathText( root, "/init/sdk/relstep" ) );
 					u32 sdkver  = (major << 24) | (minor << 16) | (relstep & 0xFFFF);
 					this->hSrl->hMrcSpecialList->hSDKVer = gcnew System::UInt32( sdkver );
 				}
@@ -3556,7 +3572,7 @@ private: System::Windows::Forms::Label^  labArbit1;
 				// EULA
 				try
 				{
-					u8 eula = System::Byte::Parse( MasterEditorTWL::getXpathText( root, "/init/eula" ) );
+					u8 eula = System::Byte::Parse( MasterEditorTWL::getXPathText( root, "/init/eula" ) );
 					this->hSrl->hMrcSpecialList->hEULAVer = gcnew System::Byte( eula );
 				}
 				catch ( System::Exception ^ex )
@@ -3573,7 +3589,7 @@ private: System::Windows::Forms::Label^  labArbit1;
 					System::Int32 i;
 					for( i=0; i < METWL_NUMOF_SHARED2FILES; i++ )
 					{
-						u8 size = System::UInt32::Parse( MasterEditorTWL::getXpathText( root, "/init/shared2/size" + i.ToString() ) );
+						u8 size = System::UInt32::Parse( MasterEditorTWL::getXPathText( root, "/init/shared2/size" + i.ToString() ) );
 						this->hSrl->hMrcSpecialList->hShared2SizeArray[i] = gcnew System::UInt32( size );
 					}
 				}
@@ -3615,7 +3631,7 @@ private: System::Windows::Forms::Label^  labArbit1;
 
 	private:
 		// SRLのオープン
-		System::Void loadSrl( System::String ^filename )
+		System::Boolean loadSrl( System::String ^filename )
 		{
 			ECSrlResult result = this->hSrl->readFromFile( filename );
 			if( result != ECSrlResult::NOERROR )
@@ -3633,10 +3649,11 @@ private: System::Windows::Forms::Label^  labArbit1;
 									  "This tool can only read TWL ROM. This can't read an illegal data." );
 
 					default:
-						this->errMsg( "ROMデータファイルの読み込みに失敗しました。", "Reading the ROM data file failed." );
+						this->errMsg( "ROMデータファイルの読み込みに失敗しました。\n再度「ROMデータを開く」を選択してROMデータを読み出してください。", 
+							          "Reading the ROM data file failed. \nPlease read a ROM data file again, with \"Open a ROM data file\"" );
 					break;
 				}
-				return;							// 前のファイルが正常である保証なしなので前のファイルも上書き保存できないようにする
+				return false;
 			}
 			this->tboxFile->Text = filename;
 
@@ -3649,7 +3666,7 @@ private: System::Windows::Forms::Label^  labArbit1;
 			{
 				this->errMsg( "ROMデータのCRC計算に失敗しました。ROMデータの読み込みはキャンセルされました。",
 					          "Calculating CRC of the ROM data failed. Therefore reading ROM data is canceled." );
-				return;
+				return false;
 			}
 			System::UInt16 ^hcrc = gcnew System::UInt16( crc );
 			this->tboxWholeCRC->Clear();
@@ -3664,8 +3681,9 @@ private: System::Windows::Forms::Label^  labArbit1;
 			{
 				this->errMsg( "ROMデータにエラーがあります。「エラー情報」タブをご確認ください。",
 							  "ROM data include error. Please look the tab \"Setting Error\"." );
-				return;
+				return false;
 			}
+			return true;
 		} // openSrl
 
 	private:
@@ -3694,6 +3712,351 @@ private: System::Windows::Forms::Label^  labArbit1;
 
 			// 再リード
 			this->loadSrl( filename );
+		}
+
+	private:
+		// 一時保存
+		System::Void saveTmp( System::String ^filename )
+		{
+			System::Xml::XmlDocument ^doc = gcnew System::Xml::XmlDocument();
+
+			doc->AppendChild( doc->CreateXmlDeclaration("1.0","UTF-8",nullptr) );
+			System::Xml::XmlElement ^root = doc->CreateElement( "MasterEditorTWL" );
+			doc->AppendChild( root );
+
+			// SRLのパス
+			MasterEditorTWL::appendXmlTag( doc, root, "Srl", this->tboxFile->Text );
+
+			// 言語
+			MasterEditorTWL::appendXmlTag( doc, root, "Lang", (this->stripItemJapanese->Checked)?"J":"E" );
+
+			// フォーム
+			System::Xml::XmlElement ^form = doc->CreateElement( "Form" );
+			root->AppendChild( form );
+
+			MasterEditorTWL::appendXmlTag( doc, form, "ProductName", this->tboxProductName->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "ProductCode1", this->tboxProductCode1->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "ProductCode2", this->tboxProductCode2->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "ProductNameForeign", this->tboxProductNameForeign->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "ProductCode1Foreign", this->tboxProductCode1Foreign->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "ProductCode2Foreign1", this->tboxProductCode2Foreign1->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "ProductCode2Foreign2", this->tboxProductCode2Foreign2->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "ProductCode2Foreign3", this->tboxProductCode2Foreign3->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "SubmitVersion", this->numSubmitVersion->Value.ToString() );
+			MasterEditorTWL::appendXmlTag( doc, form, "Backup", this->combBackup->SelectedIndex.ToString() );
+			MasterEditorTWL::appendXmlTag( doc, form, "BackupOther", this->tboxBackupOther->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "ReleaseForeign", (this->cboxReleaseForeign->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "Remarks", this->tboxCaption->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "SubmitWay", (this->rSubmitHand->Checked)?"Hand":"Mail" );
+			if( this->rUsageSale->Checked )
+				MasterEditorTWL::appendXmlTag( doc, form, "Purpose", "Sale" );
+			else if( this->rUsageSample->Checked )
+				MasterEditorTWL::appendXmlTag( doc, form, "Purpose", "Sample" );
+			else if( this->rUsageDst->Checked )
+				MasterEditorTWL::appendXmlTag( doc, form, "Purpose", "Dst" );
+			else if( this->rUsageOther->Checked )
+				MasterEditorTWL::appendXmlTag( doc, form, "Purpose", "Other" );
+			MasterEditorTWL::appendXmlTag( doc, form, "PurposeOther", this->tboxUsageOther->Text );
+
+			MasterEditorTWL::appendXmlTag( doc, form, "Company1", this->tboxCompany1->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "Depart1", this->tboxDepart1->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "Name1", this->tboxPerson1->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "Furigana1", this->tboxFurigana1->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "Tel1", this->tboxTel1->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "Fax1", this->tboxFax1->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "Mail1", this->tboxMail1->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "NTSC1", this->tboxNTSC1->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "InputPerson2", (this->cboxIsInputPerson2->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "Company2", this->tboxCompany2->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "Depart2", this->tboxDepart2->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "Name2", this->tboxPerson2->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "Furigana2", this->tboxFurigana2->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "Tel2", this->tboxTel2->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "Fax2", this->tboxFax2->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "Mail2", this->tboxMail2->Text );
+			MasterEditorTWL::appendXmlTag( doc, form, "NTSC2", this->tboxNTSC2->Text );
+
+			MasterEditorTWL::appendXmlTag( doc, form, "IsEULA", (this->cboxIsEULA->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "EULAVersion", this->numEULA->Value.ToString() );
+			MasterEditorTWL::appendXmlTag( doc, form, "IsWirelessIcon", (this->cboxIsWirelessIcon->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "IsWiFiIcon", (this->cboxIsWiFiIcon->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "Region", this->combRegion->SelectedIndex.ToString() );
+			MasterEditorTWL::appendXmlTag( doc, form, "RatingCERO", this->combCERO->SelectedIndex.ToString() );
+			MasterEditorTWL::appendXmlTag( doc, form, "RpCERO", (this->cboxAlwaysCERO->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "EnableCERO", (this->cboxCERO->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "RatingESRB", this->combESRB->SelectedIndex.ToString() );
+			MasterEditorTWL::appendXmlTag( doc, form, "RpESRB", (this->cboxAlwaysESRB->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "EnableESRB", (this->cboxESRB->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "RatingUSK", this->combUSK->SelectedIndex.ToString() );
+			MasterEditorTWL::appendXmlTag( doc, form, "RpUSK", (this->cboxAlwaysUSK->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "EnableUSK", (this->cboxUSK->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "RatingPEGI", this->combPEGI->SelectedIndex.ToString() );
+			MasterEditorTWL::appendXmlTag( doc, form, "RpPEGI", (this->cboxAlwaysPEGI->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "EnablePEGI", (this->cboxPEGI->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "RatingPEGIPRT", this->combPEGIPRT->SelectedIndex.ToString() );
+			MasterEditorTWL::appendXmlTag( doc, form, "RpPEGIPRT", (this->cboxAlwaysPEGIPRT->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "EnablePEGIPRT", (this->cboxPEGIPRT->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "RatingPEGIBBFC", this->combPEGIBBFC->SelectedIndex.ToString() );
+			MasterEditorTWL::appendXmlTag( doc, form, "RpPEGIBBFC", (this->cboxAlwaysPEGIBBFC->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "EnablePEGIBBFC", (this->cboxPEGIBBFC->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "RatingOFLC", this->combOFLC->SelectedIndex.ToString() );
+			MasterEditorTWL::appendXmlTag( doc, form, "RpOFLC", (this->cboxAlwaysOFLC->Checked)?"Y":"N" );
+			MasterEditorTWL::appendXmlTag( doc, form, "EnableOFLC", (this->cboxOFLC->Checked)?"Y":"N" );
+
+			doc->Save( filename );
+		} //saveTmp()
+
+	private:
+		void loadTmp( System::String ^filename )
+		{
+			System::Xml::XmlDocument ^doc = gcnew System::Xml::XmlDocument;
+			doc->Load( filename );
+			System::Xml::XmlElement  ^root = doc->DocumentElement;
+			System::String ^text;
+
+			// SRL
+			text = MasterEditorTWL::getXPathText( root, "/MasterEditorTWL/Srl" );
+			if( !System::String::IsNullOrEmpty(text) )		// SRLファイル名がないときはスルー
+			{
+				this->loadSrl(text);
+			}
+
+			// 言語
+			text = MasterEditorTWL::getXPathText( root, "/MasterEditorTWL/Lang" );
+			if( !System::String::IsNullOrEmpty(text) && text->Equals("E") )
+			{
+				this->stripItemEnglish->Checked  = true;
+				this->stripItemJapanese->Checked = false;
+				this->changeEnglish();
+			}
+			else
+			{
+				this->stripItemEnglish->Checked  = false;
+				this->stripItemJapanese->Checked = true;
+				this->changeJapanese();
+			}
+
+			// フォーム
+			this->parseTmp( root, "/MasterEditorTWL/Form/ProductName", this->tboxProductName );
+			this->parseTmp( root, "/MasterEditorTWL/Form/ProductCode1", this->tboxProductCode1 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/ProductCode2", this->tboxProductCode2 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/SubmitVersion", this->numSubmitVersion );
+			this->parseTmp( root, "/MasterEditorTWL/Form/Backup", this->combBackup );
+
+			this->tboxBackupOther->Enabled = false;
+			this->tboxBackupOther->Clear();
+			if( this->combBackup->SelectedIndex == (this->combBackup->Items->Count - 1) )
+			{
+				this->parseTmp( root, "/MasterEditorTWL/Form/BackupOther", this->tboxBackupOther );
+				this->tboxBackupOther->Enabled = true;
+			}
+
+			cli::array<System::Windows::Forms::RadioButton^> ^rbuts;
+			cli::array<System::String^> ^strs;
+
+			rbuts = gcnew cli::array<System::Windows::Forms::RadioButton^>{this->rSubmitHand, this->rSubmitPost};
+			strs  = gcnew cli::array<System::String^>{"Hand","Mail"};
+			this->parseTmp( root, "/MasterEditorTWL/Form/SubmitWay", rbuts, strs );
+
+			rbuts = gcnew cli::array<System::Windows::Forms::RadioButton^>{this->rUsageSale, this->rUsageSample, this->rUsageDst, this->rUsageOther};
+			strs  = gcnew cli::array<System::String^>{"Sale","Sample","Dst","Other"};
+			this->parseTmp( root, "/MasterEditorTWL/Form/Purpose", rbuts, strs );
+			this->tboxUsageOther->Enabled = false;
+			this->tboxUsageOther->Clear();
+			if( this->rUsageOther->Checked )
+			{
+				this->tboxUsageOther->Enabled = true;
+				this->parseTmp( root, "/MasterEditorTWL/Form/PurposeOther", this->tboxUsageOther );
+			}
+
+			this->parseTmp( root, "/MasterEditorTWL/Form/ReleaseForeign", this->cboxReleaseForeign );
+			this->tboxProductNameForeign->Enabled   = false;
+			this->tboxProductCode1Foreign->Enabled  = false;
+			this->tboxProductCode2Foreign1->Enabled = false;
+			this->tboxProductCode2Foreign2->Enabled = false;
+			this->tboxProductCode2Foreign3->Enabled = false;
+			this->tboxProductNameForeign->Clear();
+			this->tboxProductCode1Foreign->Clear();
+			this->tboxProductCode2Foreign1->Clear();
+			this->tboxProductCode2Foreign2->Clear();
+			this->tboxProductCode2Foreign3->Clear();
+			if( this->cboxReleaseForeign->Checked )
+			{
+				this->tboxProductNameForeign->Enabled   = true;
+				this->tboxProductCode1Foreign->Enabled  = true;
+				this->tboxProductCode2Foreign1->Enabled = true;
+				this->tboxProductCode2Foreign2->Enabled = true;
+				this->tboxProductCode2Foreign3->Enabled = true;
+				this->parseTmp( root, "/MasterEditorTWL/Form/ProductNameForeign", this->tboxProductNameForeign );
+				this->parseTmp( root, "/MasterEditorTWL/Form/ProductCode1Foreign", this->tboxProductCode1Foreign );
+				this->parseTmp( root, "/MasterEditorTWL/Form/ProductCode2Foreign1", this->tboxProductCode2Foreign1 );
+				this->parseTmp( root, "/MasterEditorTWL/Form/ProductCode2Foreign2", this->tboxProductCode2Foreign2 );
+				this->parseTmp( root, "/MasterEditorTWL/Form/ProductCode2Foreign3", this->tboxProductCode2Foreign3 );
+			}
+			this->parseTmp( root, "/MasterEditorTWL/Form/Remarks", this->tboxCaption );
+
+			this->parseTmp( root, "/MasterEditorTWL/Form/Company1", this->tboxCompany1 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/Depart1", this->tboxDepart1 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/Name1", this->tboxPerson1 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/Furigana1", this->tboxFurigana1 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/Tel1", this->tboxTel1 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/Fax1", this->tboxFax1 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/Mail1", this->tboxMail1 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/NTSC1", this->tboxNTSC1 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/InputPerson2", this->cboxIsInputPerson2 );
+
+			this->parseTmp( root, "/MasterEditorTWL/Form/Company2", this->tboxCompany2 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/Depart2", this->tboxDepart2 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/Name2", this->tboxPerson2 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/Furigana2", this->tboxFurigana2 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/Tel2", this->tboxTel2 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/Fax2", this->tboxFax2 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/Mail2", this->tboxMail2 );
+			this->parseTmp( root, "/MasterEditorTWL/Form/NTSC2", this->tboxNTSC2 );
+
+			this->parseTmp( root, "/MasterEditorTWL/Form/IsEULA", this->cboxIsEULA );
+			this->parseTmp( root, "/MasterEditorTWL/Form/EULAVersion", this->numEULA );
+			this->parseTmp( root, "/MasterEditorTWL/Form/IsWirelessIcon", this->cboxIsWirelessIcon );
+			this->parseTmp( root, "/MasterEditorTWL/Form/IsWiFiIcon", this->cboxIsWiFiIcon );
+			this->parseTmp( root, "/MasterEditorTWL/Form/Region", this->combRegion );
+			this->parseTmp( root, "/MasterEditorTWL/Form/RatingCERO", this->combCERO );
+			this->parseTmp( root, "/MasterEditorTWL/Form/RpCERO", this->cboxAlwaysCERO );
+			this->parseTmp( root, "/MasterEditorTWL/Form/EnableCERO", this->cboxCERO );
+			this->parseTmp( root, "/MasterEditorTWL/Form/RatingESRB", this->combESRB );
+			this->parseTmp( root, "/MasterEditorTWL/Form/RpESRB", this->cboxAlwaysESRB );
+			this->parseTmp( root, "/MasterEditorTWL/Form/EnableESRB", this->cboxESRB );
+			this->parseTmp( root, "/MasterEditorTWL/Form/RatingUSK", this->combUSK );
+			this->parseTmp( root, "/MasterEditorTWL/Form/RpUSK", this->cboxAlwaysUSK );
+			this->parseTmp( root, "/MasterEditorTWL/Form/EnableUSK", this->cboxUSK );
+			this->parseTmp( root, "/MasterEditorTWL/Form/RatingPEGI", this->combPEGI );
+			this->parseTmp( root, "/MasterEditorTWL/Form/RpPEGI", this->cboxAlwaysPEGI );
+			this->parseTmp( root, "/MasterEditorTWL/Form/EnablePEGI", this->cboxPEGI );
+			this->parseTmp( root, "/MasterEditorTWL/Form/RatingPEGIPRT", this->combPEGIPRT );
+			this->parseTmp( root, "/MasterEditorTWL/Form/RpPEGIPRT", this->cboxAlwaysPEGIPRT );
+			this->parseTmp( root, "/MasterEditorTWL/Form/EnablePEGIPRT", this->cboxPEGIPRT );
+			this->parseTmp( root, "/MasterEditorTWL/Form/RatingPEGIBBFC", this->combPEGIBBFC );
+			this->parseTmp( root, "/MasterEditorTWL/Form/RpPEGIBBFC", this->cboxAlwaysPEGIBBFC );
+			this->parseTmp( root, "/MasterEditorTWL/Form/EnablePEGIBBFC", this->cboxPEGIBBFC );
+			this->parseTmp( root, "/MasterEditorTWL/Form/RatingOFLC", this->combOFLC );
+			this->parseTmp( root, "/MasterEditorTWL/Form/RpOFLC", this->cboxAlwaysOFLC );
+			this->parseTmp( root, "/MasterEditorTWL/Form/EnableOFLC", this->cboxOFLC );
+
+			this->maskParentalForms();	// ペアレンタルコントロール情報をリージョンに合わせる
+
+		} //loadTmp()
+
+	private:
+		// 一時保存情報をフォーム情報に変換
+		System::Boolean parseTmp( System::Xml::XmlElement ^root, System::String ^xpath, System::Windows::Forms::ComboBox ^comb )
+		{
+			// コンボボックスの保存情報 - インデックスの範囲に含まれるか調べる(含まれない場合は-1)
+			System::String ^text = MasterEditorTWL::getXPathText( root, xpath );
+			if( System::String::IsNullOrEmpty( text ) )
+				return false;
+
+			try
+			{
+				System::Int32 index = System::Int32::Parse( text );	// テキストにはインデックスが保存されている
+				if( (0 <= index) && (index < comb->Items->Count) )
+				{
+					comb->SelectedIndex = index;
+					return true;
+				}
+				else
+				{
+					comb->SelectedIndex = -1;
+					return false;
+				}
+			}
+			catch ( System::Exception ^ex )	// 改ざんされていたとき
+			{
+				(void)ex;
+				comb->SelectedIndex = -1;
+				return false;
+			}
+			return false;
+		}
+		System::Boolean parseTmp( System::Xml::XmlElement ^root, System::String ^xpath, System::Windows::Forms::NumericUpDown ^num )
+		{
+			// テキストボックスの保存情報 - そのまま代入(ただし最大を超える場合は0にする)
+			System::String ^text = MasterEditorTWL::getXPathText( root, xpath );
+			if( System::String::IsNullOrEmpty( text ) )
+				return false;
+
+			try
+			{
+				System::Int32 val = System::Int32::Parse( text );	// テキストには値が保存されている
+				if( (0 <= val) && (val <= num->Maximum) )
+				{
+					num->Value = val;
+					return true;
+				}
+				else
+				{
+					num->Value = 0;
+					return false;
+				}
+			}
+			catch ( System::Exception ^ex )	// 改ざんされていたとき
+			{
+				(void)ex;
+				num->Value = 0;
+				return false;
+			}
+			return false;
+		}
+		System::Boolean parseTmp( System::Xml::XmlElement ^root, System::String ^xpath, 
+								  cli::array<System::Windows::Forms::RadioButton^>^rbuts, cli::array<System::String ^>^textCands )
+		{
+			// ラジオボタンの保存情報 - テキスト候補に合致するか調べる(合致しない場合は先頭のラジオボタンをチェック)
+			System::String ^text = MasterEditorTWL::getXPathText( root, xpath );
+			if( System::String::IsNullOrEmpty( text ) )
+				return false;
+
+			System::Int32 i;
+			System::Boolean bSearch = false;
+			for( i=0; i < rbuts->Length; i++ )	// XML中のテキストがどのラジオボタンのテキストに合致するかチェック
+			{
+				rbuts[i]->Checked = false;
+				if( textCands[i]->Equals( text ) )
+				{
+					rbuts[i]->Checked = true;
+					bSearch = true;
+				}
+			}
+			if( !bSearch )	// 合致しない場合は最初のラジオボタンをチェック
+			{
+				rbuts[0]->Checked = true;
+			}
+			return bSearch;
+		}
+		System::Boolean parseTmp( System::Xml::XmlElement ^root, System::String ^xpath, System::Windows::Forms::CheckBox ^cbox )
+		{
+			// チェックボタンの保存情報 - Y/Nを調べる(それ以外の場合にはチェックしない)
+			System::String ^text = MasterEditorTWL::getXPathText( root, xpath );
+			if( System::String::IsNullOrEmpty( text ) )
+				return false;
+
+			if( text->Equals("Y") )
+				cbox->Checked = true;
+			else
+				cbox->Checked = false;	// 不正な値も含む
+			return cbox->Checked;
+		}
+		System::Boolean parseTmp( System::Xml::XmlElement ^root, System::String ^xpath, System::Windows::Forms::TextBox ^tbox )
+		{
+			// テキストボックスの保存情報 - そのまま代入(ただし長さが合わない場合は空白にする)
+			System::String ^text = MasterEditorTWL::getXPathText( root, xpath );
+			if( System::String::IsNullOrEmpty( text ) )
+				return false;
+
+			if( text->Length > tbox->MaxLength )
+			{
+				tbox->Text = gcnew System::String("");
+				return false;
+			}
+			tbox->Text = text;
+			return true;
 		}
 
 	private:
@@ -3795,10 +4158,6 @@ private: System::Windows::Forms::Label^  labArbit1;
 			this->cboxIsTmpJump->Checked    = *(this->hSrl->hIsTmpJump);
 			this->cboxIsSubBanner->Checked  = *(this->hSrl->hIsSubBanner);
 			this->cboxIsWL->Checked         = *(this->hSrl->hIsWL);
-			this->cboxIsEULA->Checked       = *(this->hSrl->hIsEULA);
-			this->numEULA->Value            = *(this->hSrl->hEULAVersion);
-			this->cboxIsWiFiIcon->Checked   = *(this->hSrl->hIsWiFiIcon);
-			this->cboxIsWirelessIcon->Checked = *(this->hSrl->hIsWirelessIcon);
 			if( *(this->hSrl->hIsCodecTWL) == true )
 			{
 				this->tboxIsCodec->Text = gcnew System::String( "TWL" );
@@ -3901,9 +4260,9 @@ private: System::Windows::Forms::Label^  labArbit1;
 			this->setSrlFormsCaptionEx();
 
 			// SDKバージョンとライブラリ
+			this->tboxSDK->Clear();
 			if( this->hSrl->hSDKList != nullptr )
 			{
-				this->tboxSDK->Clear();
 				for each( RCSDKVersion ^ver in this->hSrl->hSDKList )
 				{
 					if( ver->IsStatic )
@@ -3921,8 +4280,12 @@ private: System::Windows::Forms::Label^  labArbit1;
 				}
 			}
 
-			// ペアレンタルコントロール関連
-			this->setParentalForms();
+			// 編集可能情報
+			this->cboxIsEULA->Checked       = *(this->hSrl->hIsEULA);
+			this->numEULA->Value            = *(this->hSrl->hEULAVersion);
+			this->cboxIsWiFiIcon->Checked   = *(this->hSrl->hIsWiFiIcon);
+			this->cboxIsWirelessIcon->Checked = *(this->hSrl->hIsWirelessIcon);
+			this->setParentalForms();			// ペアレンタルコントロール関連
 		} //setSrlForms()
 
 		// SRLの特殊な設定をフォームにセットする(言語切り替えで表示を変えたいので独立させる)
@@ -5546,7 +5909,7 @@ private: System::Windows::Forms::Label^  labArbit1;
 
 				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
 				{
-					this->errMsg( "ROMデータファイルのオープンがキャンセルされました。", "Opening the ROM data file is canceled by user." );
+					//this->errMsg( "ROMデータファイルのオープンがキャンセルされました。", "Opening the ROM data file is canceled by user." );
 					return;
 				}
 				filename = dlg->FileName;
@@ -5738,6 +6101,60 @@ private: System::Windows::Forms::Label^  labArbit1;
 		} //stripItemSheet_Click()
 
 	private:
+		System::Void stripItemSaveTemp_Click(System::Object^  sender, System::EventArgs^  e)
+		{
+			System::String ^filename = gcnew System::String("");
+
+			// ダイアログでファイルパスを決定
+			{
+				System::Windows::Forms::SaveFileDialog ^dlg = gcnew (SaveFileDialog);
+
+				dlg->InitialDirectory = "c:\\";
+				dlg->Filter      = "xml形式 (*.xml)|*.xml";
+				dlg->FilterIndex = 1;
+				dlg->RestoreDirectory = true;
+
+				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
+				{
+					return;
+				}
+				filename = dlg->FileName;
+				if( !(dlg->FileName->EndsWith( ".xml" )) )
+				{
+					filename += ".xml";
+				}
+			}
+			this->saveTmp( filename );
+		} //stripItemSaveTemp_Click()
+
+	private:
+		System::Void stripItemLoadTemp_Click(System::Object^  sender, System::EventArgs^  e)
+		{
+			System::String ^filename = gcnew System::String("");
+
+			// ダイアログでファイルパスを決定
+			{
+				System::Windows::Forms::OpenFileDialog ^dlg = gcnew (OpenFileDialog);
+
+				dlg->InitialDirectory = "c:\\";
+				dlg->Filter      = "xml形式 (*.xml)|*.xml";
+				dlg->FilterIndex = 1;
+				dlg->RestoreDirectory = true;
+
+				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
+				{
+					return;
+				}
+				filename = dlg->FileName;
+				if( !(dlg->FileName->EndsWith( ".xml" )) )
+				{
+					filename += ".xml";
+				}
+			}
+			this->loadTmp( filename );
+		} //stripItemLoadTemp_Click()
+
+	private:
 		System::Void rErrorReading_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
 		{
 			this->updateGrid();
@@ -5757,6 +6174,20 @@ private: System::Windows::Forms::Label^  labArbit1;
 			{
 				this->updateGrid();
 			}
+		}
+
+	private:
+		System::Void butSetBack_Click(System::Object^  sender, System::EventArgs^  e)
+		{
+			if( System::String::IsNullOrEmpty( this->tboxFile->Text ) )
+				return;
+
+			// 編集可能情報を読み込み時の設定に戻す
+			this->cboxIsEULA->Checked       = *(this->hSrl->hIsEULA);
+			this->numEULA->Value            = *(this->hSrl->hEULAVersion);
+			this->cboxIsWiFiIcon->Checked   = *(this->hSrl->hIsWiFiIcon);
+			this->cboxIsWirelessIcon->Checked = *(this->hSrl->hIsWirelessIcon);
+			this->setParentalForms();			// ペアレンタルコントロール関連
 		}
 
 }; // enf of ref class Form1

@@ -484,7 +484,7 @@ System::Boolean MasterEditorTWL::isXmlEqual( System::Xml::XmlElement ^root, Syst
 //
 // @ret テキストが存在するときそのテキストを返す。存在しないときnullptr。
 //
-System::String^ MasterEditorTWL::getXpathText( System::Xml::XmlElement ^root, System::String ^xpath )
+System::String^ MasterEditorTWL::getXPathText( System::Xml::XmlElement ^root, System::String ^xpath )
 {
 	System::Xml::XmlNode ^tmp = root->SelectSingleNode( xpath );
 	if( tmp && tmp->FirstChild && tmp->FirstChild->Value )
@@ -492,4 +492,23 @@ System::String^ MasterEditorTWL::getXpathText( System::Xml::XmlElement ^root, Sy
 		return tmp->FirstChild->Value;
 	}
 	return nullptr;
+}
+
+//
+// XMLにタグを追加する
+//
+// @arg [in] XMLドキュメント
+// @arg [in] 親ノード
+// @arg [in] タグ名
+// @arg [in] テキスト
+//
+void MasterEditorTWL::appendXmlTag( System::Xml::XmlDocument ^doc, System::Xml::XmlElement ^parent,
+									System::String ^tag, System::String ^text )
+{
+	if( System::String::IsNullOrEmpty( text ) )
+		return;
+
+	System::Xml::XmlElement ^node = doc->CreateElement( tag );
+	node->AppendChild( doc->CreateTextNode( text ) );
+	parent->AppendChild( node );
 }

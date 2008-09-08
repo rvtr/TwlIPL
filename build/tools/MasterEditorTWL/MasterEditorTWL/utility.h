@@ -109,6 +109,17 @@ namespace MasterEditorTWL
 	//
 	// @ret テキストが存在するときそのテキストを返す。存在しないときnullptr。
 	//
-	System::String^ getXpathText( System::Xml::XmlElement ^root, System::String ^xpath );
+	System::String^ getXPathText( System::Xml::XmlElement ^root, System::String ^xpath );
+
+	//
+	// XMLにタグを追加する
+	//
+	// @arg [in] XMLドキュメント
+	// @arg [in] 親ノード
+	// @arg [in] タグ名
+	// @arg [in] テキスト
+	//
+	void appendXmlTag( System::Xml::XmlDocument ^doc, System::Xml::XmlElement ^parent,
+					   System::String ^tag, System::String ^text );
 
 } // end of namespace MasterEditorTWL
