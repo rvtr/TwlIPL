@@ -33,7 +33,7 @@ MY_DATA2			=	data.bin
 MY_TITLE			=	$(DS_HASH_TABLE_TITLE)
 
 #----------------------------------------------------------------------------
-MY_TAD				=	$(MY_TITLE).tad
+MY_TAD				=	$(MY_TITLE)-$(DS_HASH_TABLE_VERSION).tad
 
 #INSTALL_TARGETS	=	$(MY_TAD)
 #INSTALL_DIR		=
