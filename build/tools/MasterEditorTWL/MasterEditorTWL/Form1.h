@@ -5259,7 +5259,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// ガイド
 			this->tboxGuideRomInfo->Text = gcnew System::String( "このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。" );
 			this->tboxGuideTWLInfo->Text = gcnew System::String( "このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。" );
-			this->tboxGuideRomEditInfo->Text = gcnew System::String( "このタブの情報は、提出確認書およびマスターROMの作成に必要です。編集してください。" );
+			this->tboxGuideRomEditInfo->Text = gcnew System::String( "このタブの情報は提出確認書およびマスターROMの作成に必要です。編集してください。" );
 			this->tboxGuideSubmitInfo->Text  = gcnew System::String( "このタブの情報は提出確認書の作成に必要です。入力してください。" );
 			this->tboxGuideCompanyInfo->Text = gcnew System::String( "このタブの情報は提出確認書の作成に必要です。入力してください。" );
 			this->tboxGuideErrorInfo->Text   = gcnew System::String( "" );
@@ -6002,6 +6002,8 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			}
 
 			// SRL関連フォーム入力をチェックする
+			this->hErrorList->Clear();
+			this->hWarnList->Clear();
 			if( this->checkSrlForms() == false )
 			{
 				this->errMsg( "ROMデータに不正な設定があるためROMデータの保存ができません。",
@@ -6058,6 +6060,8 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			}
 
 			// SRLと書類の両方のフォーム入力をチェックする
+			this->hErrorList->Clear();
+			this->hWarnList->Clear();
 			if( this->checkSrlForms() == false )
 			{
 				this->errMsg( "ROMデータに不正な設定があるためROMデータの保存および提出確認書の作成ができません。",
