@@ -131,7 +131,14 @@ TwlMain()
 		}
 		DC_FlushRange(tempBuf, NAND_BLOCK_SIZE);
 
-		kamiFontPrintfConsole( CONSOLE_ORANGE, "%s\n", tempBuf);
+		if (tempBuf[0] != 0)
+		{
+			kamiFontPrintfConsole( CONSOLE_ORANGE, "%s\n", tempBuf);
+		}
+		else
+		{
+			kamiFontPrintfConsole( CONSOLE_ORANGE, "OLD Version\n");
+		}
 	}
 
     while (1)

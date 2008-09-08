@@ -33,9 +33,6 @@
 // NANDファーム書き込みの際にNVRAMの未割り当て領域＋予約領域を０クリアする場合は定義します（開発用）
 //#define CLEAR_NON_ASIGNED_AREA_AND_RESERVED_AREA_ALL
 
-#define ROUND_UP(value, alignment) \
-    (((u32)(value) + (alignment-1)) & ~(alignment-1))
-
 /*---------------------------------------------------------------------------*
     定数定義
  *---------------------------------------------------------------------------*/
@@ -57,6 +54,12 @@
 
 static u8 sNvramPageSizeBuffer[NVRAM_PAGE_SIZE] ATTRIBUTE_ALIGN(32);	// ARM7からアクセスするためスタックでは駄目
 static u32 sReservedAreaEndAddress;
+
+/*---------------------------------------------------------------------------*
+    内部関数定義
+ *---------------------------------------------------------------------------*/
+
+void kamiEraseNandfirmVersion( u32 nandfirmsize );
 
 /*---------------------------------------------------------------------------*
   Name:         kamiWriteNandfirm
@@ -82,9 +85,9 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	u16 crc_w1, crc_w2;
 	u16 crc_r1, crc_r2;
 	u16 crc_norfirm_reserved_area_w, crc_norfirm_reserved_area_r;
-#ifdef CLEAR_NON_ASIGNED_AREA_AND_RESERVED_AREA_ALL
+#ifdef    CLEAR_NON_ASIGNED_AREA_AND_RESERVED_AREA_ALL
 	u32 write_offset;
-#endif
+#endif // CLEAR_NON_ASIGNED_AREA_AND_RESERVED_AREA_ALL
 
 	// .nandファイルオープン
     FS_InitFile(&file);
@@ -107,9 +110,8 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	nandfirm_size = file_size - NAND_FIRM_START_OFFSET_IN_FILE;
 
 	// バッファ確保
-	// 書き込みがブロック単位(512byte)であることを考慮し+512
-	// さらにDC_Flushのケアとして32byteアライメントを考慮
-	alloc_size = ROUND_UP(file_size + 512, 32) ;
+	// 書き込みがブロック単位(512byte)であることを考慮し512アライメントを確保
+	alloc_size = MATH_ROUNDUP(file_size, 512);
 	pTempBuf = allocFunc( alloc_size );
 	if (pTempBuf == NULL)
 	{
@@ -147,7 +149,7 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	}
 
 	// CRCを計算するので念のためにクリアしてからリードする
-	MI_CpuFill8( pTempBuf, 0xee, sizeof(NORHeaderDS) );
+	MI_CpuClear8( pTempBuf, sizeof(NORHeaderDS) );
 	DC_FlushRange(pTempBuf, sizeof(NORHeaderDS));
 
 	// CRCチェックのためNvramからリード
@@ -183,7 +185,7 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	}
 
 	// CRCを計算するので念のためにクリアしてからリードする
-	MI_CpuFill8( sNvramPageSizeBuffer, 0xee, NVRAM_PAGE_SIZE );
+	MI_CpuClear8( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
 
 	// 読み込みはARM7が直接メモリに書き出すため
 	DC_FlushRange(sNvramPageSizeBuffer, NVRAM_PAGE_SIZE);
@@ -265,13 +267,14 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 		result = FALSE;		
 	}
 
+	// nandfirmバージョンの消去（デバッグ用）
+	kamiEraseNandfirmVersion(nandfirm_size);
+
 //	kamiFontPrintfConsoleEx(0, "NAND Firm Import Start!\n");
 
 	// NAND書き込み
 	write_block = nandfirm_size/NAND_BLOCK_BYTE + (nandfirm_size % NAND_BLOCK_BYTE != 0);
 	kamiNandWrite( NAND_FIRM_START_OFFSET/NAND_BLOCK_BYTE, pTempBuf+NAND_FIRM_START_OFFSET, write_block );	// ブロック単位、バイト単位、ブロック単位
-
-//	kamiFontPrintfConsoleEx(0, "Start CRC check\n");
 	kamiFontLoadScreenData();
 	
 	// CRCを計算するので念のためにクリアしてからリードする
@@ -305,5 +308,25 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	return result;
 }
 
+/*---------------------------------------------------------------------------*
+  Name:         kamiEraseNandfirmVersion
 
+  Description:  nandfirmのバージョン情報を消去します。（デバッグ用）
 
+  Arguments:    no
+
+  Returns:      None.
+ *---------------------------------------------------------------------------*/
+void kamiEraseNandfirmVersion( u32 nandfirmsize )
+{
+	u8 buffer[NAND_BLOCK_BYTE];
+	u32 blockNo;
+
+	if ((nandfirmsize % NAND_BLOCK_BYTE)==0)
+	{
+		blockNo = NAND_FIRM_START_OFFSET/NAND_BLOCK_BYTE + nandfirmsize/NAND_BLOCK_BYTE;
+		MI_CpuClear8( buffer, NAND_BLOCK_BYTE );
+		DC_FlushRange(buffer, NAND_BLOCK_BYTE);
+		kamiNandWrite( blockNo, buffer, 1 );	// ブロック単位、バイト単位、ブロック単位
+	}
+}
