@@ -64,7 +64,6 @@ namespace MasterEditorTWL
 
 		// 担当者(1人目)
 		property System::String  ^hCompany1;		// 会社名
-		property System::String  ^hDepart1;			// 部署名
 		property System::String  ^hPerson1;			// 名前
 		property System::String  ^hFurigana1;		// ふりがな
 		property System::String  ^hTel1;			// 電話番号
@@ -72,9 +71,7 @@ namespace MasterEditorTWL
 		property System::String  ^hMail1;			// メアド
 		property System::String  ^hNTSC1;			// NTSC User ID
 		// 担当者(2人目)
-		property System::Boolean ^hIsPerson2;		// 2人目情報を入力したか
 		property System::String  ^hCompany2;
-		property System::String  ^hDepart2;
 		property System::String  ^hPerson2;
 		property System::String  ^hFurigana2;
 		property System::String  ^hTel2;

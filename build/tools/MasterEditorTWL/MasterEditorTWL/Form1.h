@@ -420,8 +420,10 @@ private: System::Windows::Forms::TextBox^  tboxTitleIDLo;
 private: System::Windows::Forms::Label^  labTitleIDLo;
 private: System::Windows::Forms::Label^  labTitleIDHi;
 private: System::Windows::Forms::TextBox^  tboxTitleIDHi;
-private: System::Windows::Forms::TextBox^  tboxAppType;
-private: System::Windows::Forms::Label^  labAppType;
+private: System::Windows::Forms::TextBox^  tboxAppTypeOther;
+
+private: System::Windows::Forms::Label^  labAppTypeOther;
+
 private: System::Windows::Forms::Label^  labCaptionEx;
 private: System::Windows::Forms::TextBox^  tboxCaptionEx;
 
@@ -543,6 +545,13 @@ private: System::Windows::Forms::Label^  labArbit3;
 private: System::Windows::Forms::Label^  labArbit2;
 private: System::Windows::Forms::Label^  labArbit1;
 private: System::Windows::Forms::Button^  butSetBack;
+private: System::Windows::Forms::Label^  labAppType;
+
+private: System::Windows::Forms::Label^  labMedia;
+private: System::Windows::Forms::TextBox^  tboxAppType;
+
+private: System::Windows::Forms::TextBox^  tboxMedia;
+
 
 
 
@@ -687,7 +696,7 @@ private: System::Windows::Forms::Button^  butSetBack;
 		/// </summary>
 		void InitializeComponent(void)
 		{
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle1 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle4 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -872,14 +881,18 @@ private: System::Windows::Forms::Button^  butSetBack;
 			this->cboxIsNAND = (gcnew System::Windows::Forms::CheckBox());
 			this->cboxIsSD = (gcnew System::Windows::Forms::CheckBox());
 			this->gboxTitleID = (gcnew System::Windows::Forms::GroupBox());
+			this->labAppType = (gcnew System::Windows::Forms::Label());
+			this->labMedia = (gcnew System::Windows::Forms::Label());
+			this->tboxAppType = (gcnew System::Windows::Forms::TextBox());
+			this->tboxMedia = (gcnew System::Windows::Forms::TextBox());
 			this->labHex2 = (gcnew System::Windows::Forms::Label());
 			this->labHex1 = (gcnew System::Windows::Forms::Label());
 			this->tboxTitleIDLo = (gcnew System::Windows::Forms::TextBox());
 			this->labTitleIDLo = (gcnew System::Windows::Forms::Label());
 			this->labTitleIDHi = (gcnew System::Windows::Forms::Label());
 			this->tboxTitleIDHi = (gcnew System::Windows::Forms::TextBox());
-			this->tboxAppType = (gcnew System::Windows::Forms::TextBox());
-			this->labAppType = (gcnew System::Windows::Forms::Label());
+			this->tboxAppTypeOther = (gcnew System::Windows::Forms::TextBox());
+			this->labAppTypeOther = (gcnew System::Windows::Forms::Label());
 			this->labCaptionEx = (gcnew System::Windows::Forms::Label());
 			this->tboxCaptionEx = (gcnew System::Windows::Forms::TextBox());
 			this->gboxProd = (gcnew System::Windows::Forms::GroupBox());
@@ -2202,6 +2215,7 @@ private: System::Windows::Forms::Button^  butSetBack;
 			// numSubmitVersion
 			// 
 			this->numSubmitVersion->Location = System::Drawing::Point(106, 172);
+			this->numSubmitVersion->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) {9, 0, 0, 0});
 			this->numSubmitVersion->Name = L"numSubmitVersion";
 			this->numSubmitVersion->Size = System::Drawing::Size(38, 19);
 			this->numSubmitVersion->TabIndex = 9;
@@ -2501,7 +2515,7 @@ private: System::Windows::Forms::Button^  butSetBack;
 			this->gboxTWLExInfo->Controls->Add(this->tboxPublicSize);
 			this->gboxTWLExInfo->Location = System::Drawing::Point(231, 54);
 			this->gboxTWLExInfo->Name = L"gboxTWLExInfo";
-			this->gboxTWLExInfo->Size = System::Drawing::Size(298, 146);
+			this->gboxTWLExInfo->Size = System::Drawing::Size(300, 146);
 			this->gboxTWLExInfo->TabIndex = 24;
 			this->gboxTWLExInfo->TabStop = false;
 			this->gboxTWLExInfo->Text = L"TWL拡張情報";
@@ -2677,7 +2691,7 @@ private: System::Windows::Forms::Button^  butSetBack;
 			this->gboxAccess->Controls->Add(this->cboxIsSD);
 			this->gboxAccess->Location = System::Drawing::Point(231, 211);
 			this->gboxAccess->Name = L"gboxAccess";
-			this->gboxAccess->Size = System::Drawing::Size(298, 133);
+			this->gboxAccess->Size = System::Drawing::Size(300, 133);
 			this->gboxAccess->TabIndex = 0;
 			this->gboxAccess->TabStop = false;
 			this->gboxAccess->Text = L"アクセスコントロール情報";
@@ -2685,7 +2699,7 @@ private: System::Windows::Forms::Button^  butSetBack;
 			// labAccessOther
 			// 
 			this->labAccessOther->AutoSize = true;
-			this->labAccessOther->Location = System::Drawing::Point(152, 21);
+			this->labAccessOther->Location = System::Drawing::Point(139, 20);
 			this->labAccessOther->Name = L"labAccessOther";
 			this->labAccessOther->Size = System::Drawing::Size(36, 12);
 			this->labAccessOther->TabIndex = 5;
@@ -2693,11 +2707,11 @@ private: System::Windows::Forms::Button^  butSetBack;
 			// 
 			// tboxAccessOther
 			// 
-			this->tboxAccessOther->Location = System::Drawing::Point(154, 36);
+			this->tboxAccessOther->Location = System::Drawing::Point(141, 36);
 			this->tboxAccessOther->Multiline = true;
 			this->tboxAccessOther->Name = L"tboxAccessOther";
 			this->tboxAccessOther->ReadOnly = true;
-			this->tboxAccessOther->Size = System::Drawing::Size(118, 85);
+			this->tboxAccessOther->Size = System::Drawing::Size(142, 85);
 			this->tboxAccessOther->TabIndex = 4;
 			// 
 			// tboxIsGameCardOn
@@ -2707,11 +2721,12 @@ private: System::Windows::Forms::Button^  butSetBack;
 			this->tboxIsGameCardOn->ReadOnly = true;
 			this->tboxIsGameCardOn->Size = System::Drawing::Size(122, 19);
 			this->tboxIsGameCardOn->TabIndex = 3;
+			this->tboxIsGameCardOn->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// labIsGameCardOn
 			// 
 			this->labIsGameCardOn->AutoSize = true;
-			this->labIsGameCardOn->Location = System::Drawing::Point(7, 83);
+			this->labIsGameCardOn->Location = System::Drawing::Point(7, 87);
 			this->labIsGameCardOn->Name = L"labIsGameCardOn";
 			this->labIsGameCardOn->Size = System::Drawing::Size(87, 12);
 			this->labIsGameCardOn->TabIndex = 2;
@@ -2741,14 +2756,18 @@ private: System::Windows::Forms::Button^  butSetBack;
 			// 
 			// gboxTitleID
 			// 
+			this->gboxTitleID->Controls->Add(this->labAppType);
+			this->gboxTitleID->Controls->Add(this->labMedia);
+			this->gboxTitleID->Controls->Add(this->tboxAppType);
+			this->gboxTitleID->Controls->Add(this->tboxMedia);
 			this->gboxTitleID->Controls->Add(this->labHex2);
 			this->gboxTitleID->Controls->Add(this->labHex1);
 			this->gboxTitleID->Controls->Add(this->tboxTitleIDLo);
 			this->gboxTitleID->Controls->Add(this->labTitleIDLo);
 			this->gboxTitleID->Controls->Add(this->labTitleIDHi);
 			this->gboxTitleID->Controls->Add(this->tboxTitleIDHi);
-			this->gboxTitleID->Controls->Add(this->tboxAppType);
-			this->gboxTitleID->Controls->Add(this->labAppType);
+			this->gboxTitleID->Controls->Add(this->tboxAppTypeOther);
+			this->gboxTitleID->Controls->Add(this->labAppTypeOther);
 			this->gboxTitleID->Location = System::Drawing::Point(12, 54);
 			this->gboxTitleID->Name = L"gboxTitleID";
 			this->gboxTitleID->Size = System::Drawing::Size(198, 174);
@@ -2756,10 +2775,46 @@ private: System::Windows::Forms::Button^  butSetBack;
 			this->gboxTitleID->TabStop = false;
 			this->gboxTitleID->Text = L"TitleID";
 			// 
+			// labAppType
+			// 
+			this->labAppType->AutoSize = true;
+			this->labAppType->Location = System::Drawing::Point(21, 98);
+			this->labAppType->Name = L"labAppType";
+			this->labAppType->Size = System::Drawing::Size(56, 12);
+			this->labAppType->TabIndex = 11;
+			this->labAppType->Text = L"App. Type";
+			// 
+			// labMedia
+			// 
+			this->labMedia->AutoSize = true;
+			this->labMedia->Location = System::Drawing::Point(39, 73);
+			this->labMedia->Name = L"labMedia";
+			this->labMedia->Size = System::Drawing::Size(35, 12);
+			this->labMedia->TabIndex = 10;
+			this->labMedia->Text = L"Media";
+			// 
+			// tboxAppType
+			// 
+			this->tboxAppType->Location = System::Drawing::Point(83, 95);
+			this->tboxAppType->Name = L"tboxAppType";
+			this->tboxAppType->ReadOnly = true;
+			this->tboxAppType->Size = System::Drawing::Size(71, 19);
+			this->tboxAppType->TabIndex = 9;
+			this->tboxAppType->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
+			// 
+			// tboxMedia
+			// 
+			this->tboxMedia->Location = System::Drawing::Point(83, 70);
+			this->tboxMedia->Name = L"tboxMedia";
+			this->tboxMedia->ReadOnly = true;
+			this->tboxMedia->Size = System::Drawing::Size(71, 19);
+			this->tboxMedia->TabIndex = 8;
+			this->tboxMedia->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
+			// 
 			// labHex2
 			// 
 			this->labHex2->AutoSize = true;
-			this->labHex2->Location = System::Drawing::Point(160, 52);
+			this->labHex2->Location = System::Drawing::Point(160, 48);
 			this->labHex2->Name = L"labHex2";
 			this->labHex2->Size = System::Drawing::Size(11, 12);
 			this->labHex2->TabIndex = 7;
@@ -2795,7 +2850,7 @@ private: System::Windows::Forms::Button^  butSetBack;
 			// labTitleIDHi
 			// 
 			this->labTitleIDHi->AutoSize = true;
-			this->labTitleIDHi->Location = System::Drawing::Point(11, 51);
+			this->labTitleIDHi->Location = System::Drawing::Point(11, 48);
 			this->labTitleIDHi->Name = L"labTitleIDHi";
 			this->labTitleIDHi->Size = System::Drawing::Size(66, 12);
 			this->labTitleIDHi->TabIndex = 2;
@@ -2803,30 +2858,30 @@ private: System::Windows::Forms::Button^  butSetBack;
 			// 
 			// tboxTitleIDHi
 			// 
-			this->tboxTitleIDHi->Location = System::Drawing::Point(83, 48);
+			this->tboxTitleIDHi->Location = System::Drawing::Point(83, 45);
 			this->tboxTitleIDHi->Name = L"tboxTitleIDHi";
 			this->tboxTitleIDHi->ReadOnly = true;
 			this->tboxTitleIDHi->Size = System::Drawing::Size(71, 19);
 			this->tboxTitleIDHi->TabIndex = 3;
 			this->tboxTitleIDHi->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
-			// tboxAppType
+			// tboxAppTypeOther
 			// 
-			this->tboxAppType->Location = System::Drawing::Point(13, 89);
-			this->tboxAppType->Multiline = true;
-			this->tboxAppType->Name = L"tboxAppType";
-			this->tboxAppType->ReadOnly = true;
-			this->tboxAppType->Size = System::Drawing::Size(158, 72);
-			this->tboxAppType->TabIndex = 4;
+			this->tboxAppTypeOther->Location = System::Drawing::Point(14, 134);
+			this->tboxAppTypeOther->Multiline = true;
+			this->tboxAppTypeOther->Name = L"tboxAppTypeOther";
+			this->tboxAppTypeOther->ReadOnly = true;
+			this->tboxAppTypeOther->Size = System::Drawing::Size(170, 34);
+			this->tboxAppTypeOther->TabIndex = 4;
 			// 
-			// labAppType
+			// labAppTypeOther
 			// 
-			this->labAppType->AutoSize = true;
-			this->labAppType->Location = System::Drawing::Point(12, 74);
-			this->labAppType->Name = L"labAppType";
-			this->labAppType->Size = System::Drawing::Size(91, 12);
-			this->labAppType->TabIndex = 5;
-			this->labAppType->Text = L"Application Type";
+			this->labAppTypeOther->AutoSize = true;
+			this->labAppTypeOther->Location = System::Drawing::Point(12, 122);
+			this->labAppTypeOther->Name = L"labAppTypeOther";
+			this->labAppTypeOther->Size = System::Drawing::Size(58, 12);
+			this->labAppTypeOther->TabIndex = 5;
+			this->labAppTypeOther->Text = L"Other Info.";
 			// 
 			// labCaptionEx
 			// 
@@ -3084,7 +3139,7 @@ private: System::Windows::Forms::Button^  butSetBack;
 			this->tboxGuideRomEditInfo->ReadOnly = true;
 			this->tboxGuideRomEditInfo->Size = System::Drawing::Size(687, 19);
 			this->tboxGuideRomEditInfo->TabIndex = 37;
-			this->tboxGuideRomEditInfo->Text = L"このタブの情報は、提出確認書およびマスターROMの作成に必要です。編集してください。";
+			this->tboxGuideRomEditInfo->Text = L"このタブの情報は提出確認書およびマスターROMの作成に必要です。編集してください。";
 			// 
 			// gboxParental
 			// 
@@ -3371,8 +3426,8 @@ private: System::Windows::Forms::Button^  butSetBack;
 			// 
 			// gridError
 			// 
-			dataGridViewCellStyle1->BackColor = System::Drawing::Color::White;
-			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
+			dataGridViewCellStyle4->BackColor = System::Drawing::Color::White;
+			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle4;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
@@ -3631,7 +3686,7 @@ private: System::Windows::Forms::Button^  butSetBack;
 
 	private:
 		// SRLのオープン
-		System::Boolean loadSrl( System::String ^filename )
+		System::Void loadSrl( System::String ^filename )
 		{
 			ECSrlResult result = this->hSrl->readFromFile( filename );
 			if( result != ECSrlResult::NOERROR )
@@ -3653,7 +3708,7 @@ private: System::Windows::Forms::Button^  butSetBack;
 							          "Reading the ROM data file failed. \nPlease read a ROM data file again, with \"Open a ROM data file\"" );
 					break;
 				}
-				return false;
+				return;
 			}
 			this->tboxFile->Text = filename;
 
@@ -3666,7 +3721,7 @@ private: System::Windows::Forms::Button^  butSetBack;
 			{
 				this->errMsg( "ROMデータのCRC計算に失敗しました。ROMデータの読み込みはキャンセルされました。",
 					          "Calculating CRC of the ROM data failed. Therefore reading ROM data is canceled." );
-				return false;
+				return;
 			}
 			System::UInt16 ^hcrc = gcnew System::UInt16( crc );
 			this->tboxWholeCRC->Clear();
@@ -3677,13 +3732,13 @@ private: System::Windows::Forms::Button^  butSetBack;
 			this->rErrorReading->Checked = true;
 			this->setGridError();
 			this->setGridWarn();
-			if( this->hSrl->hErrorList->Count > 0 )
-			{
-				this->errMsg( "ROMデータにエラーがあります。「エラー情報」タブをご確認ください。",
-							  "ROM data include error. Please look the tab \"Setting Error\"." );
-				return false;
-			}
-			return true;
+			//if( this->hSrl->hErrorList->Count > 0 )
+			//{
+			//	this->errMsg( "ROMデータにエラーがあります。「エラー情報」タブをご確認ください。",
+			//				  "ROM data include error. Please look the tab \"Setting Error\"." );
+			//	return;
+			//}
+			return;
 		} // openSrl
 
 	private:
@@ -4189,70 +4244,69 @@ private: System::Windows::Forms::Button^  butSetBack;
 			this->tboxShared2Size5->Text = MasterEditorTWL::transSizeToString( this->hSrl->hShared2SizeArray[5] );
 
 			// アプリ種別
-			System::String ^app = gcnew System::String("");
-			if( *(this->hSrl->hIsAppUser) == true )
+			if( *this->hSrl->hIsMediaNand )
 			{
-				app += "Type:User. ";
+				this->tboxMedia->Text = gcnew System::String( "NAND" );
 			}
-			if( *(this->hSrl->hIsAppSystem) == true )
+			else
 			{
-				app += "Type:System. ";
+				this->tboxMedia->Text = gcnew System::String( "Game Card" );
 			}
+
+
 			if( *(this->hSrl->hIsAppLauncher) == true )
 			{
-				app += "Type:Launcher. ";
+				this->tboxAppType->Text = gcnew System::String( "Launcher" );
 			}
 			if( *(this->hSrl->hIsAppSecure) == true )
 			{
-				app += "Type:Secure. ";
+				this->tboxAppType->Text = gcnew System::String( "Secure" );
 			}
-			if( *(this->hSrl->hIsMediaNand) == true )
+			if( *(this->hSrl->hIsAppSystem) == true )
 			{
-				app += "Media:NAND. ";
+				this->tboxAppType->Text = gcnew System::String( "System" );
 			}
-			else
+			if( *(this->hSrl->hIsAppUser) == true )
 			{
-				app += "Media:Card. ";
+				this->tboxAppType->Text = gcnew System::String( "User" );
 			}
-			if( *(this->hSrl->hIsLaunch) == true )
+
+			System::String ^appother = gcnew System::String("");
+			if( *(this->hSrl->hIsLaunch) == false )
 			{
-				app += "Launch. ";
-			}
-			else
-			{
-				app += "Not-Launch. ";
+				appother += "Not-Launch.\r\n";
 			}
 			if( *(this->hSrl->hIsDataOnly) == true )
 			{
-				app += "DataOnly. ";
+				appother += "DataOnly.\r\n";
 			}
-			this->tboxAppType->Text = app;
+			this->tboxAppTypeOther->Text = appother;
 
 			// アクセスコントロール その他
 			System::String ^acc = gcnew System::String("");
 			if( *(this->hSrl->hIsCommonClientKey) == true )
 			{
-				acc += "commonClientKey. ";
+				acc += "commonClientKey.\r\n";
 			}
 			if( *(this->hSrl->hIsAesSlotBForES) == true )
 			{
-				acc += "AES-SlotB(ES). ";
+				acc += "AES-SlotB(ES).\r\n";
 			}
 			if( *(this->hSrl->hIsAesSlotCForNAM) == true )
 			{
-				acc += "AES-SlotC(NAM). ";
+				acc += "AES-SlotC(NAM).\r\n";
 			}
 			if( *(this->hSrl->hIsAesSlotBForJpegEnc) == true )
 			{
-				acc += "AES-SlotB(JpegEnc.). ";
+				acc += "AES-SlotB(JpegEnc.).\r\n";
 			}
 			if( *(this->hSrl->hIsAesSlotAForSSL) == true )
 			{
-				acc += "AES-SlotA(SSL). ";
+				acc += "AES-SlotA(SSL).\r\n";
 			}
 			if( *(this->hSrl->hIsCommonClientKeyForDebugger) == true )
 			{
-				acc += "commonClientKey(Debug.). ";
+				acc += "commonClientKey(Debug.).\r\n";
 			}
 			this->tboxAccessOther->Text = acc;
 
@@ -4808,7 +4862,8 @@ private: System::Windows::Forms::Button^  butSetBack;
 
 			// ひととおりエラー登録をした後で
 			// SRLバイナリに影響を与えるエラーが存在するかチェック
-			return this->isValidAffectRom();
+			//return this->isValidAffectRom();
+			return this->isValidAffectRomModified();
 		}
 
 		// ペアレンタルコントロール関連のフォーム入力が正しいか書き込み前チェック
@@ -4949,8 +5004,7 @@ private: System::Windows::Forms::Button^  butSetBack;
 			}
 
 			// 会社情報
-			this->hDeliv->hCompany1    = this->tboxCompany1->Text;
-			this->hDeliv->hDepart1     = this->tboxDepart1->Text;
+			this->hDeliv->hCompany1    = this->tboxCompany1->Text + " " + this->tboxDepart1->Text;
 			this->hDeliv->hPerson1     = this->tboxPerson1->Text;
 			if( this->stripItemJapanese->Checked == true )
 			{
@@ -4964,11 +5018,9 @@ private: System::Windows::Forms::Button^  butSetBack;
 			this->hDeliv->hFax1        = this->tboxFax1->Text;
 			this->hDeliv->hMail1       = this->tboxMail1->Text;
 			this->hDeliv->hNTSC1       = this->tboxNTSC1->Text;
-			this->hDeliv->hIsPerson2   = gcnew System::Boolean( this->cboxIsInputPerson2->Checked );
 			if( this->cboxIsInputPerson2->Checked == true )
 			{
-				this->hDeliv->hCompany2    = this->tboxCompany2->Text;
-				this->hDeliv->hDepart2	   = this->tboxDepart2->Text;
+				this->hDeliv->hCompany2    = this->tboxCompany2->Text + " " + this->tboxDepart2->Text;
 				this->hDeliv->hPerson2     = this->tboxPerson2->Text;
 				if( this->stripItemJapanese->Checked == true )
 				{
@@ -4986,7 +5038,6 @@ private: System::Windows::Forms::Button^  butSetBack;
 			else
 			{
 				this->hDeliv->hCompany2    = nullptr;
-				this->hDeliv->hDepart2	   = nullptr;
 				this->hDeliv->hPerson2     = nullptr;
 				this->hDeliv->hFurigana2   = nullptr;
 				this->hDeliv->hTel2        = nullptr;
@@ -5015,7 +5066,14 @@ private: System::Windows::Forms::Button^  butSetBack;
 			// 一部のROM情報を登録
 			if( this->combBackup->SelectedIndex != (this->combBackup->Items->Count - 1) )
 			{
-				this->hDeliv->hBackupMemory = this->combBackup->SelectedItem->ToString();
+				if( this->combBackup->SelectedIndex > 0 )
+				{
+					this->hDeliv->hBackupMemory = this->combBackup->SelectedItem->ToString();
+				}
+				else
+				{
+					this->hDeliv->hBackupMemory = gcnew System::String("");
+				}
 			}
 			else
 			{
@@ -5047,7 +5105,7 @@ private: System::Windows::Forms::Button^  butSetBack;
 			}
 
 			// 会社情報
-			this->checkTextForm( this->tboxPerson1->Text, LANG_PERSON_1_J, LANG_PERSON_1_E, false );
+			this->checkTextForm( this->tboxPerson1->Text, LANG_PERSON_J, LANG_PERSON_E, false );
 			this->checkTextForm( this->tboxCompany1->Text, LANG_COMPANY_J, LANG_COMPANY_E, false );
 			this->checkTextForm( this->tboxDepart1->Text, LANG_DEPART_J, LANG_DEPART_E, false );
 			if( this->stripItemJapanese->Checked == true )
@@ -5055,16 +5113,16 @@ private: System::Windows::Forms::Button^  butSetBack;
 				this->checkTextForm( this->tboxFurigana1->Text, LANG_FURIGANA_J, LANG_FURIGANA_J, false );
 			}
 			this->checkTextForm( this->tboxTel1->Text, LANG_TEL_J, LANG_TEL_E, false );
-			this->checkTextForm( this->tboxFax1->Text, LANG_FAX_J, LANG_FAX_E, false );
+			//this->checkTextForm( this->tboxFax1->Text, LANG_FAX_J, LANG_FAX_E, false );
 			this->checkTextForm( this->tboxMail1->Text, LANG_MAIL_J, LANG_MAIL_E, false );
-			if( this->stripItemJapanese->Checked == true )
-			{
-				this->checkTextForm( this->tboxNTSC1->Text, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, false );
-			}
+			//if( this->stripItemJapanese->Checked == true )
+			//{
+			//	this->checkTextForm( this->tboxNTSC1->Text, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, false );
+			//}
 
 			if( this->cboxIsInputPerson2->Checked == true )
 			{
-				this->checkTextForm( this->tboxPerson2->Text, LANG_PERSON_2_J, LANG_PERSON_2_E, false );
+				this->checkTextForm( this->tboxPerson2->Text, LANG_PERSON_J, LANG_PERSON_E, false );
 				this->checkTextForm( this->tboxCompany2->Text, LANG_COMPANY_J, LANG_COMPANY_E, false );
 				this->checkTextForm( this->tboxDepart2->Text, LANG_DEPART_J, LANG_DEPART_E, false );
 				if( this->stripItemJapanese->Checked == true )
@@ -5072,12 +5130,12 @@ private: System::Windows::Forms::Button^  butSetBack;
 					this->checkTextForm( this->tboxFurigana2->Text, LANG_FURIGANA_J, LANG_FURIGANA_J, false );
 				}
 				this->checkTextForm( this->tboxTel2->Text, LANG_TEL_J, LANG_TEL_E, false );
-				this->checkTextForm( this->tboxFax2->Text, LANG_FAX_J, LANG_FAX_E, false );
+				//this->checkTextForm( this->tboxFax2->Text, LANG_FAX_J, LANG_FAX_E, false );
 				this->checkTextForm( this->tboxMail2->Text, LANG_MAIL_J, LANG_MAIL_E, false );
-				if( this->stripItemJapanese->Checked == true )
-				{
-					this->checkTextForm( this->tboxNTSC2->Text, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, false );
-				}
+				//if( this->stripItemJapanese->Checked == true )
+				//{
+				//	this->checkTextForm( this->tboxNTSC2->Text, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, false );
+				//}
 			}
 
 			// 一部のROM情報(SRLバイナリに反映されない情報)をここでチェックする
@@ -5127,6 +5185,18 @@ private: System::Windows::Forms::Button^  butSetBack;
 			// SRLバイナリに影響するエラーの中で
 			// 修正可エラーがフォーム入力によって修正されているかカウント
 			// (エラーリストが更新されていることが前提)
+			for each( RCMrcError ^err in this->hErrorList )
+			{
+				if( err->AffectRom )		// 修正不可エラーは存在しない
+					count++;
+			}
+			return (count == 0);
+		}
+
+		// SRLのバイナリに影響する項目の中で修正可能なエラーだけをチェック
+		System::Boolean isValidAffectRomModified(void)
+		{
+			System::Int32 count = 0;
 			for each( RCMrcError ^err in this->hErrorList )
 			{
 				if( err->AffectRom )		// 修正不可エラーは存在しない
@@ -5996,8 +6066,8 @@ private: System::Windows::Forms::Button^  butSetBack;
 			}
 			if( this->checkDeliverableForms() == false )
 			{
-				this->errMsg( "入力情報に不正な設定があるため提出確認書を作成できません。",
-							  "Making a submission sheet can't be done, since input data is illegal." );
+				this->errMsg( "入力情報に不足があるため提出確認書を作成できません。",
+							  "Making a submission sheet can't be done, since your input is not enough." );
 				return;
 			}
 

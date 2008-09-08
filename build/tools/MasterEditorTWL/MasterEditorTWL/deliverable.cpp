@@ -44,41 +44,39 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 
 	// アプリ種別
 	System::String ^apptype = gcnew System::String("");
-	if( *(hSrl->hIsAppUser) == true )
+	if( *hSrl->hIsAppLauncher )
 	{
-		apptype += "Type:User. ";
+		apptype = gcnew System::String( "Launcher" );
 	}
-	if( *(hSrl->hIsAppSystem) == true )
+	else if( *hSrl->hIsAppSecure )
 	{
-		apptype += "Type:System. ";
+		apptype = gcnew System::String( "Secure" );
 	}
-	if( *(hSrl->hIsAppLauncher) == true )
+	else if( *hSrl->hIsAppSystem )
 	{
-		apptype += "Type:Launcher. ";
+		apptype = gcnew System::String( "System" );
 	}
-	if( *(hSrl->hIsAppSecure) == true )
+	else if( *hSrl->hIsAppUser )
 	{
-		apptype += "Type:Secure. ";
+		apptype = gcnew System::String( "User" );
 	}
-	if( *(hSrl->hIsMediaNand) == true )
+	System::String ^media = gcnew System::String("");
+	if( *hSrl->hIsMediaNand )
 	{
-		apptype += "Media:NAND. ";
-	}
-	else
-	{
-		apptype += "Media:Card. ";
-	}
-	if( *(hSrl->hIsLaunch) == true )
-	{
-		apptype += "Launch. ";
+		media = gcnew System::String( "NAND" );
 	}
 	else
 	{
-		apptype += "Not-Launch. ";
+		media = gcnew System::String( "Game Card" );
+	}
+	System::String ^appother = gcnew System::String("");
+	if( *(hSrl->hIsLaunch) == false )
+	{
+		appother += "ランチャー非表示.";
 	}
 	if( *(hSrl->hIsDataOnly) == true )
 	{
-		apptype += "DataOnly. ";
+		apptype += "データ専用.";
 	}
 
 	// アクセスコントロール その他
@@ -256,6 +254,14 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 			{
 				node->FirstChild->Value = apptype;
 			}
+			if( node->FirstChild->Value->Equals( "TagMedia" ) )
+			{
+				node->FirstChild->Value = media;
+			}
+			if( node->FirstChild->Value->Equals( "TagAppTypeOther" ) )
+			{
+				node->FirstChild->Value = appother;
+			}
 			if( node->FirstChild->Value->Equals( "TagIsNormalJump" ) )
 			{
 				if( *(hSrl->hIsNormalJump) == true )
@@ -280,11 +286,11 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 			}
 			if( node->FirstChild->Value->Equals( "TagPublicSize" ) )
 			{
-				node->FirstChild->Value = hSrl->hPublicSize->ToString() + "Byte";
+				node->FirstChild->Value = MasterEditorTWL::transSizeToString( hSrl->hPublicSize );
 			}
 			if( node->FirstChild->Value->Equals( "TagPrivateSize" ) )
 			{
-				node->FirstChild->Value = hSrl->hPrivateSize->ToString() + "Byte";
+				node->FirstChild->Value = MasterEditorTWL::transSizeToString( hSrl->hPrivateSize );
 			}
 			if( node->FirstChild->Value->Equals( "TagIsRegionJapan" ) )
 			{
@@ -314,20 +320,6 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 				else
 					node->FirstChild->Value = nullptr;
 			}
-			//if( node->FirstChild->Value->Equals( "TagIsRegionChina" ) )
-			//{
-			//	if( *(hSrl->hIsRegionChina) == true )
-			//		node->FirstChild->Value = gcnew System::String("○");
-			//	else
-			//		node->FirstChild->Value = nullptr;
-			//}
-			//if( node->FirstChild->Value->Equals( "TagIsRegionKorea" ) )
-			//{
-			//	if( *(hSrl->hIsRegionKorea) == true )
-			//		node->FirstChild->Value = gcnew System::String("○");
-			//	else
-			//		node->FirstChild->Value = nullptr;
-			//}
 			if( node->FirstChild->Value->Equals( "TagIsCodec" ) )
 			{
 				if( *(hSrl->hIsCodecTWL) == true )
@@ -406,37 +398,33 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 			}
 			if( node->FirstChild->Value->Equals( "TagShared2Size0" ) )
 			{
-				node->FirstChild->Value = hSrl->hShared2SizeArray[0]->ToString() + "KB";
+				node->FirstChild->Value = MasterEditorTWL::transSizeToString( hSrl->hShared2SizeArray[0] );
 			}
 			if( node->FirstChild->Value->Equals( "TagShared2Size1" ) )
 			{
-				node->FirstChild->Value = hSrl->hShared2SizeArray[1]->ToString() + "KB";
+				node->FirstChild->Value = MasterEditorTWL::transSizeToString( hSrl->hShared2SizeArray[1] );
 			}
 			if( node->FirstChild->Value->Equals( "TagShared2Size2" ) )
 			{
-				node->FirstChild->Value = hSrl->hShared2SizeArray[2]->ToString() + "KB";
+				node->FirstChild->Value = MasterEditorTWL::transSizeToString( hSrl->hShared2SizeArray[2] );
 			}
 			if( node->FirstChild->Value->Equals( "TagShared2Size3" ) )
 			{
-				node->FirstChild->Value = hSrl->hShared2SizeArray[3]->ToString() + "KB";
+				node->FirstChild->Value = MasterEditorTWL::transSizeToString( hSrl->hShared2SizeArray[3] );
 			}
 			if( node->FirstChild->Value->Equals( "TagShared2Size4" ) )
 			{
-				node->FirstChild->Value = hSrl->hShared2SizeArray[4]->ToString() + "KB";
+				node->FirstChild->Value = MasterEditorTWL::transSizeToString( hSrl->hShared2SizeArray[4] );
 			}
 			if( node->FirstChild->Value->Equals( "TagShared2Size5" ) )
 			{
-				node->FirstChild->Value = hSrl->hShared2SizeArray[5]->ToString() + "KB";
+				node->FirstChild->Value = MasterEditorTWL::transSizeToString( hSrl->hShared2SizeArray[5] );
 			}
 
 			// 会社情報
 			if( node->FirstChild->Value->Equals( "TagCompany1" ) )
 			{
 				node->FirstChild->Value = this->hCompany1;
-			}
-			if( node->FirstChild->Value->Equals( "TagDepart1" ) )
-			{
-				node->FirstChild->Value = this->hDepart1;
 			}
 			if( node->FirstChild->Value->Equals( "TagPerson1" ) )
 			{
@@ -465,10 +453,6 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 			if( node->FirstChild->Value->Equals( "TagCompany2" ) )
 			{
 				node->FirstChild->Value = this->hCompany2;
-			}
-			if( node->FirstChild->Value->Equals( "TagDepart2" ) )
-			{
-				node->FirstChild->Value = this->hDepart2;
 			}
 			if( node->FirstChild->Value->Equals( "TagPerson2" ) )
 			{
@@ -717,45 +701,13 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 					node->FirstChild->Value = title_name[byte].ToString("X2");
 				}
 			}
-			for( byte=0; byte < GAME_CODE_MAX; byte++ )
+			if( node->FirstChild->Value->Equals( "TagGameCode" ) )
 			{
-				if( node->FirstChild->Value->Equals( "TagGameCode" + byte.ToString() ) )
-				{
-					System::String ^bstr = hSrl->hGameCode[byte].ToString();
-					if( bstr == nullptr )
-						node->FirstChild->Value = gcnew System::String( "null" );
-					else if( bstr->Equals( "\0" ) )
-						node->FirstChild->Value = gcnew System::String( "\\0" );
-					else if( bstr->Equals( " " ) )
-						node->FirstChild->Value = gcnew System::String( "\\s" );
-					else
-						node->FirstChild->Value = gcnew System::String( bstr );
-					//node->FirstChild->Value = gcnew System::String( hSrl->hGameCode[byte].ToString() );
-				}
-				else if( node->FirstChild->Value->Equals( "TagGameCodeHex" + byte.ToString() ) )
-				{
-					node->FirstChild->Value = game_code[byte].ToString("X2");
-				}
+				node->FirstChild->Value = hSrl->hGameCode;
 			}
-			for( byte=0; byte < MAKER_CODE_MAX; byte++ )
+			if( node->FirstChild->Value->Equals( "TagMakerCode" ) )
 			{
-				if( node->FirstChild->Value->Equals( "TagMakerCode" + byte.ToString() ) )
-				{
-					System::String ^bstr = hSrl->hMakerCode[byte].ToString();
-					if( bstr == nullptr )
-						node->FirstChild->Value = gcnew System::String( "null" );
-					else if( bstr->Equals( "\0" ) )
-						node->FirstChild->Value = gcnew System::String( "\\0" );
-					else if( bstr->Equals( " " ) )
-						node->FirstChild->Value = gcnew System::String( "\\s" );
-					else
-						node->FirstChild->Value = gcnew System::String( bstr );
-					//node->FirstChild->Value = gcnew System::String( hSrl->hMakerCode[byte].ToString() );
-				}
-				else if( node->FirstChild->Value->Equals( "TagMakerCodeHex" + byte.ToString() ) )
-				{
-					node->FirstChild->Value = maker_code[byte].ToString("X2");
-				}
+				node->FirstChild->Value = hSrl->hMakerCode;
 			}
 
 		} // if( (node->FirstChild != nullptr) && (node->FirstChild->Value != nullptr) )
