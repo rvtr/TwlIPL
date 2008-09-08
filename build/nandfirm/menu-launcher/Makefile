@@ -24,7 +24,7 @@ SUBDIRS =	\
             ARM7 \
             ARM9 \
 
-TARGET_FIRM_BIN		=	menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH)-$(IPL_REVISION)-$(SDK_REVISION).nand
+TARGET_FIRM_BIN		=	menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH)-$(IPL_REVISION)-$(SDK_REVISION).$(FIRM_MODE).nand
 BINDIR			=	.
 MAKEFIRM_ARM9		=	ARM9/bin/$(TWL_BUILDTYPE_ARM9)/menu_launcher9.tef
 MAKEFIRM_ARM7		=	ARM7/bin/$(TWL_BUILDTYPE_ARM7)/menu_launcher7.tef
@@ -40,6 +40,12 @@ LDIRT_CLEAN		+=	$(wildcard *.nand) \
 				rsa_public.sbin \
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+
+ifeq ($(FIRM_USE_PRODUCT_KEYS),TRUE)
+FIRM_MODE			=	prod
+else
+FIRM_MODE			=	dev
+endif
 
 IPL_REVISION 		:=	$(shell LANG=C svn info $(call empath,$(FIRM_ROOT)) | grep 'Revision' | sed s/[^0-9]//g)
 SDK_REVISION		:=	$(shell LANG=C svn info $(call empath,$(ROOT)) | grep 'Revision' | sed s/[^0-9]//g)
