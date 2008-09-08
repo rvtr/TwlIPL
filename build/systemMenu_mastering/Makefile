@@ -71,7 +71,8 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 do-build :	$(TARGETS)
 
-MASTERING =	$(TWL_IPL_RED_PRIVATE_ROOT)/tools/bin/mastering.TWL.exe
+#MASTERING =	$(TWL_IPL_RED_PRIVATE_ROOT)/tools/bin/mastering.TWL.exe
+MASTERING =	$(TWL_IPL_RED_PRIVATE_ROOT)/build/tools/mastering.TWL/mastering.TWL.exe
 
 MASTERING_FLAGS	=	-t
 
@@ -115,10 +116,10 @@ endif
 #無線ファーム
 #---------------------------
 # [TODO] 無線ファームからバージョンを取得して、バージョン番号でディレクトリを作成する。
-$(OUT_DIR)/HNCA : $(SYSMENU_DIR)/wlanfirm/HNCA.tad
+$(OUT_DIR)/HNCA : $(call eupath,$(shell find $(SYSMENU_DIR)/wlanfirm -name 'HNCA*.tad' -type f))
 ifeq ($(DO_MASTERING),TRUE)
-	mkdir -p $(OUT_DIR)/$(notdir $(basename $<))
-	mkdir -p $(OUT_DIR)/$(notdir $(basename $<))/V0
+	mkdir -p $(OUT_DIR)/$(notdir $(basename $@))
+	mkdir -p $(OUT_DIR)/$(notdir $(basename $@))/V0
 	cp $< ./$@/V0/
 	cp $(dir $<)/properties ./$@
 else
@@ -129,10 +130,10 @@ endif
 #ホワイトリスト
 #---------------------------
 # [TODO] TADからバージョンを取得して、バージョン番号でディレクトリを作成する。
-$(OUT_DIR)/HNHA : $(SYSMENU_DIR)/DSHashTable/HNHA.tad
+$(OUT_DIR)/HNHA : $(call eupath,$(shell find $(SYSMENU_DIR)/DSHashTable/ -name 'HNHA*.tad' -type f))
 ifeq ($(DO_MASTERING),TRUE)
-	mkdir -p $(OUT_DIR)/$(notdir $(basename $<))
-	mkdir -p $(OUT_DIR)/$(notdir $(basename $<))/V0
+	mkdir -p $(OUT_DIR)/$(notdir $(basename $@))
+	mkdir -p $(OUT_DIR)/$(notdir $(basename $@))/V0
 	cp $< ./$@/V0/
 	cp $(dir $<)/properties ./$@
 else
@@ -144,7 +145,7 @@ endif
 #---------------------------
 # [TODO] TADからバージョンを取得して、バージョン番号でディレクトリを作成する。
 # FIRM_USE_PRODUCT_KEYS = TRUE の時のみPROD用のシステムメニューバージョンを取得します。
-$(OUT_DIR)/HNLA : $(call eupath,$(shell find $(SYSMENU_DIR)/sysmenuVersion/$(SYSMENU_VERSION_TARGET).out/HNLA -name 'HNL*.tad' -type f))
+$(OUT_DIR)/HNLA : $(call eupath,$(shell find $(SYSMENU_DIR)/sysmenuVersion/$(OUT_DIR).out/HNLA -name 'HNL*.tad' -type f))
 ifeq ($(DO_MASTERING),TRUE)
 	mkdir -p $@
 	mkdir -p $@/V0
@@ -154,7 +155,7 @@ else
 	cp $< $(OUT_DIR)
 endif
 
-$(OUT_DIR)/HNLJ : $(call eupath,$(shell find $(SYSMENU_DIR)/sysmenuVersion/$(SYSMENU_VERSION_TARGET).out/HNLJ -name 'HNL*.tad' -type f))
+$(OUT_DIR)/HNLJ : $(call eupath,$(shell find $(SYSMENU_DIR)/sysmenuVersion/$(OUT_DIR).out/HNLJ -name 'HNL*.tad' -type f))
 ifeq ($(DO_MASTERING),TRUE)
 	mkdir -p $@
 	mkdir -p $@/V0
@@ -164,7 +165,7 @@ else
 	cp $< $(OUT_DIR)
 endif
 
-$(OUT_DIR)/HNLE : $(call eupath,$(shell find $(SYSMENU_DIR)/sysmenuVersion/$(SYSMENU_VERSION_TARGET).out/HNLE -name 'HNL*.tad' -type f))
+$(OUT_DIR)/HNLE : $(call eupath,$(shell find $(SYSMENU_DIR)/sysmenuVersion/$(OUT_DIR).out/HNLE -name 'HNL*.tad' -type f))
 ifeq ($(DO_MASTERING),TRUE)
 	mkdir -p $@
 	mkdir -p $@/V0
@@ -174,7 +175,7 @@ else
 	cp $< $(OUT_DIR)
 endif
 
-$(OUT_DIR)/HNLP : $(call eupath,$(shell find $(SYSMENU_DIR)/sysmenuVersion/$(SYSMENU_VERSION_TARGET).out/HNLP -name 'HNL*.tad' -type f))
+$(OUT_DIR)/HNLP : $(call eupath,$(shell find $(SYSMENU_DIR)/sysmenuVersion/$(OUT_DIR).out/HNLP -name 'HNL*.tad' -type f))
 ifeq ($(DO_MASTERING),TRUE)
 	mkdir -p $@
 	mkdir -p $@/V0
@@ -184,7 +185,7 @@ else
 	cp $< $(OUT_DIR)
 endif
 
-$(OUT_DIR)/HNLU : $(call eupath,$(shell find $(SYSMENU_DIR)/sysmenuVersion/$(SYSMENU_VERSION_TARGET).out/HNLU -name 'HNL*.tad' -type f))
+$(OUT_DIR)/HNLU : $(call eupath,$(shell find $(SYSMENU_DIR)/sysmenuVersion/$(OUT_DIR).out/HNLU -name 'HNL*.tad' -type f))
 ifeq ($(DO_MASTERING),TRUE)
 	mkdir -p $@
 	mkdir -p $@/V0
@@ -197,15 +198,15 @@ endif
 #---------------------------
 #共有フォント
 #---------------------------
-$(OUT_DIR)/TWLFontTable.dat: $(SYSMENU_DIR)/sharedFont/TWLFontTable.dat
-	cp $< ./$@
+$(OUT_DIR)/TWLFontTable.dat: $(call eupath,$(shell find $(SYSMENU_DIR)/sharedFont -name 'TWLFontTable_*.dat' -type f))
+	cp $< ./$(OUT_DIR)/
 
 
 #---------------------------
 #NANDファーム
 #---------------------------
-$(OUT_DIR)/menu_launcher-$(TWL_BUILD_TYPE).nand: ../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE).nand
-	cp $< ./$@
+$(OUT_DIR)/menu_launcher-$(TWL_BUILD_TYPE).nand: $(call eupath,$(shell find ../nandfirm/menu-launcher -name 'menu_launcher-$(TWL_BUILD_TYPE)*.nand' -type f))
+	cp $< ./$(OUT_DIR)/
 
 
 #---------------------------
