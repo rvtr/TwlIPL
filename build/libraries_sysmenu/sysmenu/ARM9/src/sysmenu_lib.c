@@ -428,6 +428,35 @@ static TitleProperty *SYSMi_CheckDebuggerBannerViewModeBoot( void )
     return NULL;
 }
 
+static TitleProperty * SYSMi_ShortcutCardBootSub( void )
+{
+    s_bootTitleBuf.flags.isAppRelocate = TRUE;
+    s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
+    s_bootTitleBuf.flags.isInitialShortcutSkip = TRUE;         // 初回起動シーケンスを飛ばす
+    s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
+    s_bootTitleBuf.flags.bootType = LAUNCHER_BOOTTYPE_ROM;
+    s_bootTitleBuf.flags.isValid = TRUE;
+    // ROMヘッダバッファのコピー
+    {
+        u16 id = (u16)OS_GetLockID();
+        (void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );     // ARM7と排他制御する
+        (void)SYSMi_CopyCardRomHeader();
+        (void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );   // ARM7と排他制御する
+        OS_ReleaseLockID( id );
+    }
+    if( SYSM_GetCardRomHeader()->platform_code & PLATFORM_CODE_FLAG_TWL ) {
+        s_bootTitleBuf.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
+    }else{
+        // NTRアプリの時は、TitleIDがないので、GameCodeをいじって擬似的にTitleIDとする。
+        s_bootTitleBuf.titleID = (u64)( ( SYSM_GetCardRomHeader()->game_code[ 3 ] <<  0 ) |
+                                        ( SYSM_GetCardRomHeader()->game_code[ 2 ] <<  8 ) |
+                                        ( SYSM_GetCardRomHeader()->game_code[ 1 ] << 16 ) |
+                                        ( SYSM_GetCardRomHeader()->game_code[ 0 ] << 24 ) );
+    }
+    SYSM_SetLogoDemoSkip( s_bootTitleBuf.flags.isLogoSkip );
+    return &s_bootTitleBuf;
+}
+
 // ショートカット起動のチェックその１
 static TitleProperty *SYSMi_CheckShortcutBoot1( void )
 {
@@ -445,31 +474,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot1( void )
             ( ( PAD_Read() == SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) && 
               ( !LCFG_TSD_IsFinishedBrokenTWLSettings() || !LCFG_TSD_IsFinishedInitialSetting() || !LCFG_TSD_IsFinishedInitialSetting_Launcher() ) )
             ){
-            s_bootTitleBuf.flags.isAppRelocate = TRUE;
-            s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
-            s_bootTitleBuf.flags.isInitialShortcutSkip = TRUE;         // 初回起動シーケンスを飛ばす
-            s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
-            s_bootTitleBuf.flags.bootType = LAUNCHER_BOOTTYPE_ROM;
-            s_bootTitleBuf.flags.isValid = TRUE;
-            // ROMヘッダバッファのコピー
-            {
-                u16 id = (u16)OS_GetLockID();
-                (void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );     // ARM7と排他制御する
-                (void)SYSMi_CopyCardRomHeader();
-                (void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );   // ARM7と排他制御する
-                OS_ReleaseLockID( id );
-            }
-            if( SYSM_GetCardRomHeader()->platform_code & PLATFORM_CODE_FLAG_TWL ) {
-                s_bootTitleBuf.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
-            }else{
-                // NTRアプリの時は、TitleIDがないので、GameCodeをいじって擬似的にTitleIDとする。
-                s_bootTitleBuf.titleID = (u64)( ( SYSM_GetCardRomHeader()->game_code[ 3 ] <<  0 ) |
-                                                ( SYSM_GetCardRomHeader()->game_code[ 2 ] <<  8 ) |
-                                                ( SYSM_GetCardRomHeader()->game_code[ 1 ] << 16 ) |
-                                                ( SYSM_GetCardRomHeader()->game_code[ 0 ] << 24 ) );
-            }
-            SYSM_SetLogoDemoSkip( s_bootTitleBuf.flags.isLogoSkip );
-            return &s_bootTitleBuf;
+            return SYSMi_ShortcutCardBootSub();
         }
     }
 
@@ -523,31 +528,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
 #ifdef SYSM_DO_NOT_SHOW_LAUNCHER
     else if( SYSM_IsExistCard() )
     {
-        s_bootTitleBuf.flags.isAppRelocate = TRUE;
-        s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
-        s_bootTitleBuf.flags.isInitialShortcutSkip = TRUE;         // 初回起動シーケンスを飛ばす
-        s_bootTitleBuf.flags.isLogoSkip = TRUE;                    // ロゴデモを飛ばす
-        s_bootTitleBuf.flags.bootType = LAUNCHER_BOOTTYPE_ROM;
-        s_bootTitleBuf.flags.isValid = TRUE;
-        // ROMヘッダバッファのコピー
-        {
-            u16 id = (u16)OS_GetLockID();
-            (void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );     // ARM7と排他制御する
-            (void)SYSMi_CopyCardRomHeader();
-            (void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );   // ARM7と排他制御する
-            OS_ReleaseLockID( id );
-        }
-        if( SYSM_GetCardRomHeader()->platform_code & PLATFORM_CODE_FLAG_TWL ) {
-            s_bootTitleBuf.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
-        }else{
-            // NTRアプリの時は、TitleIDがないので、GameCodeをいじって擬似的にTitleIDとする。
-            s_bootTitleBuf.titleID = (u64)( ( SYSM_GetCardRomHeader()->game_code[ 3 ] <<  0 ) |
-                                            ( SYSM_GetCardRomHeader()->game_code[ 2 ] <<  8 ) |
-                                            ( SYSM_GetCardRomHeader()->game_code[ 1 ] << 16 ) |
-                                            ( SYSM_GetCardRomHeader()->game_code[ 0 ] << 24 ) );
-        }
-        SYSM_SetLogoDemoSkip( s_bootTitleBuf.flags.isLogoSkip );
-        return &s_bootTitleBuf;
+        return SYSMi_ShortcutCardBootSub();
     }else
     {
         argument      = 0;
