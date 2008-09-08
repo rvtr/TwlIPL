@@ -189,6 +189,10 @@ when "custom" then
     tads = pickup_files(config[:DataPath], "/*.tad")
     nand = pickup_files(config[:DataPath], "/*.nand")
     font = pickup_files(config[:DataPath], "/*.dat")
+# フォントファイル名変更
+	system("mv #{font} #{File.join(config[:DataPath], "TWLFontTable")}.dat")
+    font = pickup_files(config[:DataPath], "/*.dat")
+
     if nand.size > 0 
         config[:NandFirm] = nand[0].slice(FILE_MATCH)
     end
