@@ -431,6 +431,7 @@ static BOOL copyLogToSD( void )
 	char buf[BUFSIZE + 1];
 	char winbuf[BUFSIZE*2 +1];
 	s32 readSize;
+	s32 writeSize = 0;
 	
 	buf[256] = '\0';
 	FS_InitFile( &dst );
@@ -447,8 +448,7 @@ static BOOL copyLogToSD( void )
 	}
 	
 	// ファイル作成に成功
-	if( !( FS_OpenFileEx( &dst , DST_LOGFILE_PATH, FS_FILEMODE_RW ) &&
-		 ( FS_SetFileLength( &dst, ERRORLOG_SIZE ) == FS_RESULT_SUCCESS ) ) )
+	if( !FS_OpenFileEx( &dst , DST_LOGFILE_PATH, FS_FILEMODE_RW ))
 	{
 		// 作成したファイルをopenできなかった場合
 		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET, CONSOLE_ORANGE, "Copy Failed!") ;
@@ -494,12 +494,21 @@ static BOOL copyLogToSD( void )
 			kamiFontPrintfMain( 0, RESULT_LINE_OFFSET+1, CONSOLE_ORANGE, "func: FS_WriteFile" );
 			return FALSE;
 		}
+		
 	}
 
+
+	if( !FS_CloseFile( &src ))
+	{
+		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET, CONSOLE_ORANGE, "Copy Failed!") ;
+		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET+1, CONSOLE_ORANGE, "func: FS_CloseFile(src)" );
+	}
+
+	
 	if( !FS_CloseFile( &dst ))
 	{
 		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET, CONSOLE_ORANGE, "Copy Failed!") ;
-		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET+1, CONSOLE_ORANGE, "func: FS_CloseFile" );
+		kamiFontPrintfMain( 0, RESULT_LINE_OFFSET+1, CONSOLE_ORANGE, "func: FS_CloseFile(dst)" );
 	}
 	kamiFontPrintfMain( 0, RESULT_LINE_OFFSET, CONSOLE_ORANGE, "Copy Succeeded!") ;
 
