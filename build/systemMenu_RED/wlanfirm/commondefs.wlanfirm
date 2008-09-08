@@ -25,5 +25,26 @@ MY_WLANFIRM					=	$(MY_WLANFIRM_ROOT_CYG)/nwm_firm.bin
 MY_WLANFIRM_VERSION_MAJOR	=	$(shell perl -e "open(IN,'$(MY_WLANFIRM)');binmode(IN);seek(IN, 160 + 0, 0);read(IN, \$$buf, 1);print unpack("C", \$$buf);close(IN);")
 MY_WLANFIRM_VERSION_MINOR	=	$(shell perl -e "open(IN,'$(MY_WLANFIRM)');binmode(IN);seek(IN, 160 + 1, 0);read(IN, \$$buf, 1);print unpack("C", \$$buf);close(IN);")
 
+MY_FW_VERSION				=	$(shell perl -e										\
+									"open(IN,'$(MY_WLANFIRM)');						\
+									 binmode(IN);									\
+									 seek(IN, 160 + 4, 0);							\
+									 read(IN, \$$tmp, 4);							\
+									 \$$fwofs = unpack(\"I1\", \$$tmp);				\
+									 seek(IN, \$$fwofs + 1, 0);						\
+									 read(IN, \$$tmp, 1);							\
+									 \$$hwnum = unpack(\"C1\", \$$tmp);				\
+									 seek(IN, \$$fwofs + 2, 0);						\
+									 read(IN, \$$tmp, 2);							\
+									 \$$hwofs = unpack(\"S1\", \$$tmp);				\
+									 seek(IN, \$$fwofs + \$$hwofs + \$$hwnum*8, 0);	\
+									 read(IN, \$$tmp, 4);							\
+									 \$$tmp = unpack(\"N\", \$$tmp);				\
+									 \$$tmp = pack(\"V\", \$$tmp);					\
+									 \$$fwver = unpack(\"H8\", \$$tmp);				\
+									 print \$$fwver;								\
+									 close(IN);"									\
+								)
+
 WLANFIRM_MAKETAD_OPTION		+=	-s -d 0003000F484E4341 3031 $(MY_WLANFIRM_VERSION_MAJOR) WIRELESS_FW -v $(MY_WLANFIRM_VERSION_MINOR) -p
 

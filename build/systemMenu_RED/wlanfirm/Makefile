@@ -28,7 +28,7 @@ include ./commondefs.wlanfirm
 MY_TITLE		=	HNCA
 
 #----------------------------------------------------------------------------
-MY_TAD			=	$(MY_TITLE).tad
+MY_TAD			=	$(MY_TITLE)_v$(MY_WLANFIRM_VERSION_MAJOR)_$(MY_WLANFIRM_VERSION_MINOR)_fw$(MY_FW_VERSION).tad
 
 #INSTALL_TARGETS	=
 #INSTALL_DIR		=
