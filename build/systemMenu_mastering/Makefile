@@ -50,6 +50,10 @@ TARGETS			=	$(OUT_DIR)/HNAA \
 					$(OUT_DIR)/HNCA \
 					$(OUT_DIR)/HNHA \
 					$(OUT_DIR)/HNLA \
+					$(OUT_DIR)/HNLJ \
+					$(OUT_DIR)/HNLE \
+					$(OUT_DIR)/HNLP \
+					$(OUT_DIR)/HNLU \
 					$(OUT_DIR)/TWLFontTable.dat \
 					$(OUT_DIR)/menu_launcher-$(TWL_BUILD_TYPE).nand \
 					$(OUT_DIR)/$(NAND_INITIALIZER_NAME)-$(TWL_BUILD_TYPE)$(MASTER).srl
@@ -140,7 +144,47 @@ endif
 #---------------------------
 # [TODO] TADからバージョンを取得して、バージョン番号でディレクトリを作成する。
 # FIRM_USE_PRODUCT_KEYS = TRUE の時のみPROD用のシステムメニューバージョンを取得します。
-$(OUT_DIR)/HNLA : $(SYSMENU_DIR)/sysmenuVersion/$(SYSMENU_VERSION_TARGET).out/HNLA/HNLA.$(SYSMENU_VERSION_TARGET).tad
+$(OUT_DIR)/HNLA : $(call eupath,$(shell find $(SYSMENU_DIR)/sysmenuVersion/$(SYSMENU_VERSION_TARGET).out/HNLA -name 'HNL*.tad' -type f))
+ifeq ($(DO_MASTERING),TRUE)
+	mkdir -p $@
+	mkdir -p $@/V0
+	cp $< ./$@/V0/
+	cp $(dir $<)/properties ./$@
+else
+	cp $< $(OUT_DIR)
+endif
+
+$(OUT_DIR)/HNLJ : $(call eupath,$(shell find $(SYSMENU_DIR)/sysmenuVersion/$(SYSMENU_VERSION_TARGET).out/HNLJ -name 'HNL*.tad' -type f))
+ifeq ($(DO_MASTERING),TRUE)
+	mkdir -p $@
+	mkdir -p $@/V0
+	cp $< ./$@/V0/
+	cp $(dir $<)/properties ./$@
+else
+	cp $< $(OUT_DIR)
+endif
+
+$(OUT_DIR)/HNLE : $(call eupath,$(shell find $(SYSMENU_DIR)/sysmenuVersion/$(SYSMENU_VERSION_TARGET).out/HNLE -name 'HNL*.tad' -type f))
+ifeq ($(DO_MASTERING),TRUE)
+	mkdir -p $@
+	mkdir -p $@/V0
+	cp $< ./$@/V0/
+	cp $(dir $<)/properties ./$@
+else
+	cp $< $(OUT_DIR)
+endif
+
+$(OUT_DIR)/HNLP : $(call eupath,$(shell find $(SYSMENU_DIR)/sysmenuVersion/$(SYSMENU_VERSION_TARGET).out/HNLP -name 'HNL*.tad' -type f))
+ifeq ($(DO_MASTERING),TRUE)
+	mkdir -p $@
+	mkdir -p $@/V0
+	cp $< ./$@/V0/
+	cp $(dir $<)/properties ./$@
+else
+	cp $< $(OUT_DIR)
+endif
+
+$(OUT_DIR)/HNLU : $(call eupath,$(shell find $(SYSMENU_DIR)/sysmenuVersion/$(SYSMENU_VERSION_TARGET).out/HNLU -name 'HNL*.tad' -type f))
 ifeq ($(DO_MASTERING),TRUE)
 	mkdir -p $@
 	mkdir -p $@/V0
