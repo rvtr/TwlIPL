@@ -24,8 +24,7 @@ SUBDIRS =	\
             ARM7 \
             ARM9 \
 
-TARGET_FIRM_BIN		=	menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH).nand
-TARGET_FIRM_VERSION_BIN	=	menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH)-with-version.nand
+TARGET_FIRM_BIN		=	menu_launcher-$(TWL_BUILD_TYPE)$(CODEGEN_ARCH)-$(IPL_REVISION)-$(SDK_REVISION).nand
 BINDIR			=	.
 MAKEFIRM_ARM9		=	ARM9/bin/$(TWL_BUILDTYPE_ARM9)/menu_launcher9.tef
 MAKEFIRM_ARM7		=	ARM7/bin/$(TWL_BUILDTYPE_ARM7)/menu_launcher7.tef
@@ -42,6 +41,16 @@ LDIRT_CLEAN		+=	$(wildcard *.nand) \
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
+IPL_REVISION 		:=	$(shell LANG=C svn info $(call empath,$(FIRM_ROOT)) | grep 'Revision' | sed s/[^0-9]//g)
+SDK_REVISION		:=	$(shell LANG=C svn info $(call empath,$(ROOT)) | grep 'Revision' | sed s/[^0-9]//g)
+
+ifeq ($(IPL_REVISION),)
+IPL_REVISION		:=	$(shell date +%Y%m%d)
+endif
+ifeq ($(SDK_REVISION),)
+SDK_REVISION		:=	$(shell date +%H%M%S)
+endif
+
 #----------------------------------------------------------------------------
 
 do-build:	$(TARGET_BIN) $(MY_APPEND)
@@ -49,20 +58,12 @@ do-build:	$(TARGET_BIN) $(MY_APPEND)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
-$(TARGET_FIRM_VERSION_BIN):	$(TARGET_BIN) $(MY_APPEND)
-	cat $(TARGET_BIN) $(MY_APPEND) > $@
-
-
 $(MY_APPEND)::
-	@if test -e $(FIRM_ROOT)/.svn; then \
-		LANG=C svn info $(call empath,$(FIRM_ROOT)) | grep 'Revision' | sed s/[^0-9]//g > $(MY_APPEND); \
-	else \
-		date > $(MY_APPEND); \
-	fi
-	@if test -e $(ROOT)/.svn; then \
-		LANG=C svn info $(call empath,$(ROOT)) | grep 'Revision' | sed s/[^0-9]//g >> $(MY_APPEND); \
-	else \
-		echo "" >> $(MY_APPEND); \
-	fi
+	echo $(IPL_REVISION) > $(MY_APPEND)
+	echo $(SDK_REVISION) >> $(MY_APPEND)
+
+test::
+	echo IPL_REVISION=$(IPL_REVISION)
+
 
 #===== End of Makefile =====
