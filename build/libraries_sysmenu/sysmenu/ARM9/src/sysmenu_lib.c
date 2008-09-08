@@ -459,7 +459,15 @@ static TitleProperty *SYSMi_CheckShortcutBoot1( void )
                 (void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );   // ARM7と排他制御する
                 OS_ReleaseLockID( id );
             }
-            s_bootTitleBuf.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
+            if( SYSM_GetCardRomHeader()->platform_code & PLATFORM_CODE_FLAG_TWL ) {
+                s_bootTitleBuf.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
+            }else{
+                // NTRアプリの時は、TitleIDがないので、GameCodeをいじって擬似的にTitleIDとする。
+                s_bootTitleBuf.titleID = (u64)( ( SYSM_GetCardRomHeader()->game_code[ 3 ] <<  0 ) |
+                                                ( SYSM_GetCardRomHeader()->game_code[ 2 ] <<  8 ) |
+                                                ( SYSM_GetCardRomHeader()->game_code[ 1 ] << 16 ) |
+                                                ( SYSM_GetCardRomHeader()->game_code[ 0 ] << 24 ) );
+            }
             SYSM_SetLogoDemoSkip( s_bootTitleBuf.flags.isLogoSkip );
             return &s_bootTitleBuf;
         }
@@ -529,7 +537,15 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
             (void)OS_UnlockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );   // ARM7と排他制御する
             OS_ReleaseLockID( id );
         }
-        s_bootTitleBuf.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
+        if( SYSM_GetCardRomHeader()->platform_code & PLATFORM_CODE_FLAG_TWL ) {
+            s_bootTitleBuf.titleID = *(u64 *)( &SYSM_GetCardRomHeader()->titleID_Lo );
+        }else{
+            // NTRアプリの時は、TitleIDがないので、GameCodeをいじって擬似的にTitleIDとする。
+            s_bootTitleBuf.titleID = (u64)( ( SYSM_GetCardRomHeader()->game_code[ 3 ] <<  0 ) |
+                                            ( SYSM_GetCardRomHeader()->game_code[ 2 ] <<  8 ) |
+                                            ( SYSM_GetCardRomHeader()->game_code[ 1 ] << 16 ) |
+                                            ( SYSM_GetCardRomHeader()->game_code[ 0 ] << 24 ) );
+        }
         SYSM_SetLogoDemoSkip( s_bootTitleBuf.flags.isLogoSkip );
         return &s_bootTitleBuf;
     }else
