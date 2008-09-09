@@ -139,6 +139,9 @@ s64 UTL_CalcRTCOffset( RTCDate *newDatep, RTCTime *newTimep )
 	s64		offset0;
 	s64		offset1;
 	s64		offset;
+	u32		second_bak = newTimep->second;
+	
+	newTimep->second = 0;
 	
 	// RTCへの新しい値の設定
 	(void)RTC_GetDateTime( &oldDate, &oldTime );					// ライト直前に現在のRTC値を取得する。
@@ -163,6 +166,8 @@ s64 UTL_CalcRTCOffset( RTCDate *newDatep, RTCTime *newTimep )
 	OS_Printf ("offset[0] = %x\n", offset0 );
 	OS_Printf ("offset[1] = %x\n", offset1 );
 	OS_Printf ("rtcOffset = %x\n", offset );
+	
+	newTimep->second = second_bak;
 	
 	return offset;
 }
