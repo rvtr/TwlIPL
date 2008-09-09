@@ -204,9 +204,10 @@ ECSrlResult RCSrl::setRomInfo(void)
 
 	u8  *idL = this->pRomHeader->s.titleID_Lo;
 	u32  idH = this->pRomHeader->s.titleID_Hi;
-	u32  val;
-	val = ((u32)(idL[0]) << 24) | ((u32)(idL[1]) << 16) | ((u32)(idL[2]) << 8) | ((u32)(idL[3]));	// ビッグエンディアン
-	this->hTitleIDLo   = gcnew System::UInt32( val );
+	//u32  val;
+	//val = ((u32)(idL[0]) << 24) | ((u32)(idL[1]) << 16) | ((u32)(idL[2]) << 8) | ((u32)(idL[3]));	// ビッグエンディアン
+	//this->hTitleIDLo   = gcnew System::UInt32( val );
+	this->hTitleIDLo   = gcnew System::String( (char*)idL, 0, 4, utf8 );
 	this->hTitleIDHi   = gcnew System::UInt32( idH );
 
 	// TitleIDからわかる情報
@@ -221,9 +222,17 @@ ECSrlResult RCSrl::setRomInfo(void)
     {
 		*(this->hIsAppLauncher) = true;
     }
-    if( idH & TITLE_ID_HI_SECURE_FLAG_MASK )				// 各ビットは排他的とは限らないのでelse ifにはならない
+    else if( idH & TITLE_ID_HI_SECURE_FLAG_MASK )				// 各ビットは排他的とは限らないのでelse ifにはならない
     {
 		*(this->hIsAppSecure) = true;
+    }
+    else if( (idH & TITLE_ID_HI_APP_TYPE_MASK) == 1 )
+    {
+		*(this->hIsAppSystem) = true;
+    }
+    else if( (idH & TITLE_ID_HI_APP_TYPE_MASK) == 0 )
+    {
+		*(this->hIsAppUser) = true;
     }
 	if( idH & TITLE_ID_HI_DATA_ONLY_FLAG_MASK )
 	{
@@ -237,14 +246,6 @@ ECSrlResult RCSrl::setRomInfo(void)
 	{
 		*(this->hIsLaunch) = true;
 	}
-    if( (idH & TITLE_ID_HI_APP_TYPE_MASK) == 1 )
-    {
-		*(this->hIsAppSystem) = true;
-    }
-    if( (idH & TITLE_ID_HI_APP_TYPE_MASK) == 0 )
-    {
-		*(this->hIsAppUser) = true;
-    }
 	u16 pub = (u16)((idH & TITLE_ID_HI_PUBLISHER_CODE_MASK) >> TITLE_ID_HI_PUBLISHER_CODE_SHIFT);
 	this->hPublisherCode = gcnew System::UInt16( pub );
 

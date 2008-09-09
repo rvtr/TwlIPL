@@ -414,10 +414,13 @@ System::Collections::Generic::List<u32>^ MasterEditorTWL::patternMatch( FILE *fp
 	{
 		// バッファの切れ目を調べたいため実際には(パターンの長さ-1)だけ多めにリードする
 		len   = ((filesize - cur) < PATTERN_MATCH_LEN_MAX)?(filesize - cur):PATTERN_MATCH_LEN_MAX;
-		extra = (len < PATTERN_MATCH_LEN_MAX)?0:(patternLen-1);
+		extra = (len <= PATTERN_MATCH_LEN_MAX)?0:(patternLen-1);	// 最後までいったときには余分にリードしてはいけない
 		fseek( fp, cur, SEEK_SET );
-		if( (len + extra) != fread( text, 1, len + extra, fp ) )
+		u32 readlen = fread( text, 1, len + extra, fp );
+		if( (len + extra) != readlen )
 		{
+			//System::Diagnostics::Debug::WriteLine( "actual len = " + readlen.ToString() );
+			//System::Diagnostics::Debug::WriteLine( "expect len = " + (len + extra).ToString() );
 			return nullptr;
 		}
 

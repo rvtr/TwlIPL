@@ -415,7 +415,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsSD;
 
 private: System::Windows::Forms::GroupBox^  gboxTitleID;
 private: System::Windows::Forms::Label^  labHex2;
-private: System::Windows::Forms::Label^  labHex1;
+
 private: System::Windows::Forms::TextBox^  tboxTitleIDLo;
 private: System::Windows::Forms::Label^  labTitleIDLo;
 private: System::Windows::Forms::Label^  labTitleIDHi;
@@ -696,7 +696,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 		/// </summary>
 		void InitializeComponent(void)
 		{
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle4 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle2 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -886,7 +886,6 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->tboxAppType = (gcnew System::Windows::Forms::TextBox());
 			this->tboxMedia = (gcnew System::Windows::Forms::TextBox());
 			this->labHex2 = (gcnew System::Windows::Forms::Label());
-			this->labHex1 = (gcnew System::Windows::Forms::Label());
 			this->tboxTitleIDLo = (gcnew System::Windows::Forms::TextBox());
 			this->labTitleIDLo = (gcnew System::Windows::Forms::Label());
 			this->labTitleIDHi = (gcnew System::Windows::Forms::Label());
@@ -2761,7 +2760,6 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->gboxTitleID->Controls->Add(this->tboxAppType);
 			this->gboxTitleID->Controls->Add(this->tboxMedia);
 			this->gboxTitleID->Controls->Add(this->labHex2);
-			this->gboxTitleID->Controls->Add(this->labHex1);
 			this->gboxTitleID->Controls->Add(this->tboxTitleIDLo);
 			this->gboxTitleID->Controls->Add(this->labTitleIDLo);
 			this->gboxTitleID->Controls->Add(this->labTitleIDHi);
@@ -2814,20 +2812,11 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// labHex2
 			// 
 			this->labHex2->AutoSize = true;
-			this->labHex2->Location = System::Drawing::Point(160, 48);
+			this->labHex2->Location = System::Drawing::Point(157, 48);
 			this->labHex2->Name = L"labHex2";
 			this->labHex2->Size = System::Drawing::Size(11, 12);
 			this->labHex2->TabIndex = 7;
 			this->labHex2->Text = L"h";
-			// 
-			// labHex1
-			// 
-			this->labHex1->AutoSize = true;
-			this->labHex1->Location = System::Drawing::Point(160, 23);
-			this->labHex1->Name = L"labHex1";
-			this->labHex1->Size = System::Drawing::Size(11, 12);
-			this->labHex1->TabIndex = 6;
-			this->labHex1->Text = L"h";
 			// 
 			// tboxTitleIDLo
 			// 
@@ -3426,8 +3415,8 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// 
 			// gridError
 			// 
-			dataGridViewCellStyle4->BackColor = System::Drawing::Color::White;
-			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle4;
+			dataGridViewCellStyle2->BackColor = System::Drawing::Color::White;
+			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle2;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
@@ -4203,7 +4192,8 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			}
 
 			// TWLŠg’£î•ñ
-			this->tboxTitleIDLo->Text = this->hSrl->hTitleIDLo->ToString("X8");
+			//this->tboxTitleIDLo->Text = this->hSrl->hTitleIDLo->ToString("X8");
+			this->tboxTitleIDLo->Text = this->hSrl->hTitleIDLo;
 			this->tboxTitleIDHi->Text = this->hSrl->hTitleIDHi->ToString("X8");
 			this->tboxNormalRomOffset->Text   = this->hSrl->hNormalRomOffset->ToString("X8");
 			this->tboxKeyTableRomOffset->Text = this->hSrl->hKeyTableRomOffset->ToString("X8");
@@ -4258,17 +4248,21 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			{
 				this->tboxAppType->Text = gcnew System::String( "Launcher" );
 			}
-			if( *(this->hSrl->hIsAppSecure) == true )
+			else if( *(this->hSrl->hIsAppSecure) == true )
 			{
 				this->tboxAppType->Text = gcnew System::String( "Secure" );
 			}
-			if( *(this->hSrl->hIsAppSystem) == true )
+			else if( *(this->hSrl->hIsAppSystem) == true )
 			{
 				this->tboxAppType->Text = gcnew System::String( "System" );
 			}
-			if( *(this->hSrl->hIsAppUser) == true )
+			else if( *(this->hSrl->hIsAppUser) == true )
 			{
 				this->tboxAppType->Text = gcnew System::String( "User" );
+			}
+			else
+			{
+				this->tboxAppType->Text = gcnew System::String( "UNKNOWN" );
 			}
 
 			System::String ^appother = gcnew System::String("");

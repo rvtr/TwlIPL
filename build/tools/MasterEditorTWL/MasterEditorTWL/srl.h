@@ -269,7 +269,8 @@ namespace MasterEditorTWL
 		property System::UInt32  ^hNormalRomOffset;
 		property System::UInt32  ^hKeyTableRomOffset;
 		property System::Byte    ^hEULAVersion;		// 編集可能
-		property System::UInt32  ^hTitleIDLo;
+		//property System::UInt32  ^hTitleIDLo;
+		property System::String  ^hTitleIDLo;
 		property System::UInt32  ^hTitleIDHi;
 		property System::Boolean ^hIsAppLauncher;	// TitleIDLoからわかるアプリ種別
 		property System::Boolean ^hIsAppUser;		// TitleIDHiからわかるアプリ種別
