@@ -78,7 +78,7 @@ Property
 	#
 	# ROM SIZE: in bit [64M/128M/256M/512M/1G/2G]
 	#
-	RomSize			64M
+	#RomSize			64M
 
 	#
 	# ROM PADDING: TRUE if finalrom
