@@ -23,11 +23,10 @@ void getOtherInfo( void )
 	gAllInfo[MENU_OTHER][OTHER_WIRELESS].iValue = value;
 	gAllInfo[MENU_OTHER][OTHER_WIRELESS].str.sjis = s_strEnable[value];
 
-	rtcoffset = LCFG_TSD_GetRTCOffset();
+	rtcoffset = OS_GetOwnerRtcOffset();
 	snprintf( gAllInfo[MENU_OTHER][OTHER_RTC_OFFSET].str.sjis,
 				DISPINFO_BUFSIZE-1, "%016llx", rtcoffset );
 	gAllInfo[MENU_OTHER][OTHER_RTC_OFFSET].numLines = 2;
-	gAllInfo[MENU_OTHER][OTHER_RTC_OFFSET].fromLCFG = TRUE;
 		
 	LCFG_TSD_GetTPCalibration( &tpdata );
 	gAllInfo[MENU_OTHER][OTHER_TP_RAWX1].iValue = tpdata.data.raw_x1;
@@ -61,11 +60,10 @@ void getOtherInfo( void )
 	gAllInfo[MENU_OTHER][OTHER_TP_DY2].iValue = tpdata.data.dy2;
 	gAllInfo[MENU_OTHER][OTHER_TP_DY2].isNumData = TRUE;
 	gAllInfo[MENU_OTHER][OTHER_TP_DY2].fromLCFG = TRUE;
-/*
+
 	snprintf( gAllInfo[MENU_OTHER][OTHER_TP_RSV].str.sjis,
 			DISPINFO_BUFSIZE, "%016llx", MI_LoadLE64( tpdata.rsv ) );
-	gAllInfo[MENU_OTHER][OTHER_TP_RSV].fromLCFG = TRUE;
-*/	
+	gAllInfo[MENU_OTHER][OTHER_TP_RSV].fromLCFG = TRUE;	
 	
 
 }

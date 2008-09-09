@@ -22,9 +22,11 @@ void getNormalHWInfo( void )
 {
 	int value;
 
-	value = (int) OS_GetOwnerRtcOffset();
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_ADJUST].iValue = (int) value;
+	
+	value = (int)LCFG_NSD_GetRTCClockAdjust();
+	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_ADJUST].iValue = value;
 	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_ADJUST].isNumData = TRUE;
+	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_ADJUST].fromLCFG = TRUE;
 
 	{
 		int i;
