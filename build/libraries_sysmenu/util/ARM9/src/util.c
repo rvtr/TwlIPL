@@ -140,12 +140,24 @@ s64 UTL_CalcRTCOffset( RTCDate *newDatep, RTCTime *newTimep )
 	s64		offset1;
 	s64		offset;
 	u32		second_bak = newTimep->second;
+	int     retry = 3;
 	
 	newTimep->second = 0;
 	
-	// RTCへの新しい値の設定
-	(void)RTC_GetDateTime( &oldDate, &oldTime );					// ライト直前に現在のRTC値を取得する。
-	oldTime.second = 0;
+	// ライト直前に現在のRTC値を取得する。
+	while( retry > 0 ) {
+		if( RTC_RESULT_SUCCESS == RTC_GetDateTime( &oldDate, &oldTime ) ) {
+			oldTime.second = 0;
+			break;
+		}
+		OS_Sleep(1);
+		retry--;
+	}
+	if( retry == 0 ) {
+		// 現在時刻の取得に失敗した時は、新しいセット値を古い値にも使う
+		MI_CpuCopy8( newDatep, &oldDate, sizeof(RTCDate) );
+		MI_CpuCopy8( newTimep, &oldTime, sizeof(RTCTime) );
+	}
 	
 	// RTC設定時は、今回の設定でどれだけRTC値が変化したか（秒オフセット単位）を算出。
 	if( ( oldDate.year < LCFG_TSD_GetRTCLastSetYear() ) && ( LCFG_TSD_IsFinishedInitialSetting() ) ) {
