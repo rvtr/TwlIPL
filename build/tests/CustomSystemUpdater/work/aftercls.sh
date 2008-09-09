@@ -17,6 +17,9 @@
 # $Author$
 #----------------------------------------------------------------------------
 
+AQUA=//10.116.1.5/
+CLSED_PATH=${AQUA}/TWL_debug/sysmenu/rom/debug_rom/CLS_processed
+DAILY_CLSED_DIR=`date +'%Y%m%d'`_cls_test
 
 
 if [ $# -lt 1 ];
@@ -25,5 +28,13 @@ then
 	exit
 fi
 
+echo "tocsu.sh"
 ./tocsu.sh $1
+
+echo "toaqua.rb"
 ./toaqua.rb $1
+
+# AquaÇ÷ÉRÉsÅ[
+echo "Copying to Aqua"
+cp -r $1_foraqua ${CLSED_PATH}/${DAILY_CLSED_DIR}
+
