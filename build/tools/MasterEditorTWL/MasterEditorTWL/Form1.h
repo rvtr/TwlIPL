@@ -551,6 +551,9 @@ private: System::Windows::Forms::Label^  labMedia;
 private: System::Windows::Forms::TextBox^  tboxAppType;
 
 private: System::Windows::Forms::TextBox^  tboxMedia;
+private: System::Windows::Forms::Label^  labProductNameLimit;
+private: System::Windows::Forms::Label^  labProductNameLimitForeign;
+
 
 
 
@@ -655,6 +658,9 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->Text += " [FOR LAUNCHER APPLICATION]";
 #endif
 			// 複数行表示したいが初期値で設定できないのでここで設定
+			this->tboxGuideRomEditInfo->Text  = "このタブの情報は提出確認書およびマスターROMの作成に必要です。編集してください。";
+			this->tboxGuideRomEditInfo->Text += "\r\nこれらの情報はマスターROMの作成時にROMデータの中に登録されます。";
+
 			this->tboxGuideErrorInfo->Text  = "このタブには読み込んだROMデータの問題と本プログラムでの入力ミスが列挙されます。";
 			this->tboxGuideErrorInfo->Text += "\r\n赤文字の項目は、本プログラムで修正不可です。ROMデータ作成時の設定をご確認ください。";
 			this->tboxGuideErrorInfo->Text += "\r\n青文字の項目は、本プログラムで修正できますが、修正がマスターROMに反映されます。";
@@ -922,8 +928,10 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->gboxIcon = (gcnew System::Windows::Forms::GroupBox());
 			this->gboxEULA = (gcnew System::Windows::Forms::GroupBox());
 			this->tabSubmitInfo = (gcnew System::Windows::Forms::TabPage());
+			this->labProductNameLimit = (gcnew System::Windows::Forms::Label());
 			this->tboxGuideSubmitInfo = (gcnew System::Windows::Forms::TextBox());
 			this->gboxForeign = (gcnew System::Windows::Forms::GroupBox());
+			this->labProductNameLimitForeign = (gcnew System::Windows::Forms::Label());
 			this->labMultiForeign2 = (gcnew System::Windows::Forms::Label());
 			this->tabCompanyInfo = (gcnew System::Windows::Forms::TabPage());
 			this->tboxGuideCompanyInfo = (gcnew System::Windows::Forms::TextBox());
@@ -1174,8 +1182,9 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// 
 			this->tboxBackupOther->Enabled = false;
 			this->tboxBackupOther->Location = System::Drawing::Point(224, 17);
+			this->tboxBackupOther->MaxLength = 20;
 			this->tboxBackupOther->Name = L"tboxBackupOther";
-			this->tboxBackupOther->Size = System::Drawing::Size(120, 19);
+			this->tboxBackupOther->Size = System::Drawing::Size(125, 19);
 			this->tboxBackupOther->TabIndex = 6;
 			// 
 			// gboxCRC
@@ -1237,9 +1246,10 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// tboxCaption
 			// 
 			this->tboxCaption->Location = System::Drawing::Point(378, 263);
+			this->tboxCaption->MaxLength = 300;
 			this->tboxCaption->Multiline = true;
 			this->tboxCaption->Name = L"tboxCaption";
-			this->tboxCaption->Size = System::Drawing::Size(345, 74);
+			this->tboxCaption->Size = System::Drawing::Size(349, 74);
 			this->tboxCaption->TabIndex = 8;
 			// 
 			// labPEGIBBFC2
@@ -1519,11 +1529,11 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// labParentalForceEnable
 			// 
 			this->labParentalForceEnable->AutoSize = true;
-			this->labParentalForceEnable->Location = System::Drawing::Point(347, 59);
+			this->labParentalForceEnable->Location = System::Drawing::Point(359, 59);
 			this->labParentalForceEnable->Name = L"labParentalForceEnable";
-			this->labParentalForceEnable->Size = System::Drawing::Size(82, 12);
+			this->labParentalForceEnable->Size = System::Drawing::Size(41, 12);
 			this->labParentalForceEnable->TabIndex = 0;
-			this->labParentalForceEnable->Text = L"Rating Pending";
+			this->labParentalForceEnable->Text = L"審査中";
 			// 
 			// labParentalRating
 			// 
@@ -1537,7 +1547,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// labParentalEnable
 			// 
 			this->labParentalEnable->AutoSize = true;
-			this->labParentalEnable->Location = System::Drawing::Point(263, 59);
+			this->labParentalEnable->Location = System::Drawing::Point(273, 59);
 			this->labParentalEnable->Name = L"labParentalEnable";
 			this->labParentalEnable->Size = System::Drawing::Size(62, 12);
 			this->labParentalEnable->TabIndex = 1;
@@ -1654,7 +1664,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// labArbit4
 			// 
 			this->labArbit4->AutoSize = true;
-			this->labArbit4->Location = System::Drawing::Point(209, 207);
+			this->labArbit4->Location = System::Drawing::Point(230, 207);
 			this->labArbit4->Name = L"labArbit4";
 			this->labArbit4->Size = System::Drawing::Size(37, 12);
 			this->labArbit4->TabIndex = 15;
@@ -1663,7 +1673,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// labArbit3
 			// 
 			this->labArbit3->AutoSize = true;
-			this->labArbit3->Location = System::Drawing::Point(210, 156);
+			this->labArbit3->Location = System::Drawing::Point(230, 156);
 			this->labArbit3->Name = L"labArbit3";
 			this->labArbit3->Size = System::Drawing::Size(37, 12);
 			this->labArbit3->TabIndex = 13;
@@ -1683,13 +1693,13 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->tboxNTSC2->Location = System::Drawing::Point(66, 200);
 			this->tboxNTSC2->MaxLength = 50;
 			this->tboxNTSC2->Name = L"tboxNTSC2";
-			this->tboxNTSC2->Size = System::Drawing::Size(140, 19);
+			this->tboxNTSC2->Size = System::Drawing::Size(158, 19);
 			this->tboxNTSC2->TabIndex = 11;
 			// 
 			// labFax2
 			// 
 			this->labFax2->AutoSize = true;
-			this->labFax2->Location = System::Drawing::Point(26, 152);
+			this->labFax2->Location = System::Drawing::Point(23, 152);
 			this->labFax2->Name = L"labFax2";
 			this->labFax2->Size = System::Drawing::Size(27, 12);
 			this->labFax2->TabIndex = 4;
@@ -1709,7 +1719,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->tboxFax2->Location = System::Drawing::Point(66, 149);
 			this->tboxFax2->MaxLength = 20;
 			this->tboxFax2->Name = L"tboxFax2";
-			this->tboxFax2->Size = System::Drawing::Size(140, 19);
+			this->tboxFax2->Size = System::Drawing::Size(158, 19);
 			this->tboxFax2->TabIndex = 13;
 			// 
 			// tboxMail2
@@ -1725,7 +1735,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->tboxTel2->Location = System::Drawing::Point(66, 125);
 			this->tboxTel2->MaxLength = 20;
 			this->tboxTel2->Name = L"tboxTel2";
-			this->tboxTel2->Size = System::Drawing::Size(140, 19);
+			this->tboxTel2->Size = System::Drawing::Size(158, 19);
 			this->tboxTel2->TabIndex = 12;
 			// 
 			// tboxFurigana2
@@ -1781,7 +1791,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// labTel2
 			// 
 			this->labTel2->AutoSize = true;
-			this->labTel2->Location = System::Drawing::Point(28, 128);
+			this->labTel2->Location = System::Drawing::Point(23, 128);
 			this->labTel2->Name = L"labTel2";
 			this->labTel2->Size = System::Drawing::Size(25, 12);
 			this->labTel2->TabIndex = 3;
@@ -1845,7 +1855,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// labArbit2
 			// 
 			this->labArbit2->AutoSize = true;
-			this->labArbit2->Location = System::Drawing::Point(201, 207);
+			this->labArbit2->Location = System::Drawing::Point(219, 207);
 			this->labArbit2->Name = L"labArbit2";
 			this->labArbit2->Size = System::Drawing::Size(37, 12);
 			this->labArbit2->TabIndex = 12;
@@ -1854,7 +1864,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// labArbit1
 			// 
 			this->labArbit1->AutoSize = true;
-			this->labArbit1->Location = System::Drawing::Point(201, 156);
+			this->labArbit1->Location = System::Drawing::Point(219, 156);
 			this->labArbit1->Name = L"labArbit1";
 			this->labArbit1->Size = System::Drawing::Size(37, 12);
 			this->labArbit1->TabIndex = 11;
@@ -1872,7 +1882,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// labFax1
 			// 
 			this->labFax1->AutoSize = true;
-			this->labFax1->Location = System::Drawing::Point(26, 152);
+			this->labFax1->Location = System::Drawing::Point(23, 152);
 			this->labFax1->Name = L"labFax1";
 			this->labFax1->Size = System::Drawing::Size(27, 12);
 			this->labFax1->TabIndex = 4;
@@ -1890,17 +1900,17 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// tboxNTSC1
 			// 
 			this->tboxNTSC1->Location = System::Drawing::Point(66, 200);
-			this->tboxNTSC1->MaxLength = 50;
+			this->tboxNTSC1->MaxLength = 30;
 			this->tboxNTSC1->Name = L"tboxNTSC1";
-			this->tboxNTSC1->Size = System::Drawing::Size(131, 19);
+			this->tboxNTSC1->Size = System::Drawing::Size(147, 19);
 			this->tboxNTSC1->TabIndex = 8;
 			// 
 			// tboxFax1
 			// 
 			this->tboxFax1->Location = System::Drawing::Point(66, 149);
-			this->tboxFax1->MaxLength = 20;
+			this->tboxFax1->MaxLength = 15;
 			this->tboxFax1->Name = L"tboxFax1";
-			this->tboxFax1->Size = System::Drawing::Size(131, 19);
+			this->tboxFax1->Size = System::Drawing::Size(147, 19);
 			this->tboxFax1->TabIndex = 5;
 			// 
 			// tboxMail1
@@ -1914,15 +1924,15 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// tboxTel1
 			// 
 			this->tboxTel1->Location = System::Drawing::Point(66, 125);
-			this->tboxTel1->MaxLength = 20;
+			this->tboxTel1->MaxLength = 15;
 			this->tboxTel1->Name = L"tboxTel1";
-			this->tboxTel1->Size = System::Drawing::Size(131, 19);
+			this->tboxTel1->Size = System::Drawing::Size(147, 19);
 			this->tboxTel1->TabIndex = 4;
 			// 
 			// tboxFurigana1
 			// 
 			this->tboxFurigana1->Location = System::Drawing::Point(66, 100);
-			this->tboxFurigana1->MaxLength = 50;
+			this->tboxFurigana1->MaxLength = 15;
 			this->tboxFurigana1->Name = L"tboxFurigana1";
 			this->tboxFurigana1->Size = System::Drawing::Size(261, 19);
 			this->tboxFurigana1->TabIndex = 3;
@@ -1930,7 +1940,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// tboxPerson1
 			// 
 			this->tboxPerson1->Location = System::Drawing::Point(66, 75);
-			this->tboxPerson1->MaxLength = 50;
+			this->tboxPerson1->MaxLength = 15;
 			this->tboxPerson1->Name = L"tboxPerson1";
 			this->tboxPerson1->Size = System::Drawing::Size(261, 19);
 			this->tboxPerson1->TabIndex = 2;
@@ -1938,7 +1948,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// tboxDepart1
 			// 
 			this->tboxDepart1->Location = System::Drawing::Point(66, 50);
-			this->tboxDepart1->MaxLength = 50;
+			this->tboxDepart1->MaxLength = 25;
 			this->tboxDepart1->Name = L"tboxDepart1";
 			this->tboxDepart1->Size = System::Drawing::Size(261, 19);
 			this->tboxDepart1->TabIndex = 1;
@@ -1955,7 +1965,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// tboxCompany1
 			// 
 			this->tboxCompany1->Location = System::Drawing::Point(66, 25);
-			this->tboxCompany1->MaxLength = 50;
+			this->tboxCompany1->MaxLength = 25;
 			this->tboxCompany1->Name = L"tboxCompany1";
 			this->tboxCompany1->Size = System::Drawing::Size(261, 19);
 			this->tboxCompany1->TabIndex = 0;
@@ -1972,7 +1982,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// labTel1
 			// 
 			this->labTel1->AutoSize = true;
-			this->labTel1->Location = System::Drawing::Point(28, 128);
+			this->labTel1->Location = System::Drawing::Point(23, 128);
 			this->labTel1->Name = L"labTel1";
 			this->labTel1->Size = System::Drawing::Size(25, 12);
 			this->labTel1->TabIndex = 3;
@@ -2010,7 +2020,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->tboxProductCode2->Location = System::Drawing::Point(175, 81);
 			this->tboxProductCode2->MaxLength = 4;
 			this->tboxProductCode2->Name = L"tboxProductCode2";
-			this->tboxProductCode2->Size = System::Drawing::Size(56, 19);
+			this->tboxProductCode2->Size = System::Drawing::Size(45, 19);
 			this->tboxProductCode2->TabIndex = 2;
 			// 
 			// tboxProductCode1
@@ -2023,9 +2033,11 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// 
 			// tboxProductName
 			// 
+			this->tboxProductName->ImeMode = System::Windows::Forms::ImeMode::NoControl;
 			this->tboxProductName->Location = System::Drawing::Point(106, 53);
+			this->tboxProductName->MaxLength = 30;
 			this->tboxProductName->Name = L"tboxProductName";
-			this->tboxProductName->Size = System::Drawing::Size(225, 19);
+			this->tboxProductName->Size = System::Drawing::Size(256, 19);
 			this->tboxProductName->TabIndex = 0;
 			// 
 			// labProductCode2
@@ -2077,7 +2089,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->gboxUsage->Controls->Add(this->rUsageSale);
 			this->gboxUsage->Location = System::Drawing::Point(16, 258);
 			this->gboxUsage->Name = L"gboxUsage";
-			this->gboxUsage->Size = System::Drawing::Size(346, 68);
+			this->gboxUsage->Size = System::Drawing::Size(346, 79);
 			this->gboxUsage->TabIndex = 6;
 			this->gboxUsage->TabStop = false;
 			this->gboxUsage->Text = L"用途";
@@ -2085,15 +2097,16 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// tboxUsageOther
 			// 
 			this->tboxUsageOther->Enabled = false;
-			this->tboxUsageOther->Location = System::Drawing::Point(71, 42);
+			this->tboxUsageOther->Location = System::Drawing::Point(71, 47);
+			this->tboxUsageOther->MaxLength = 25;
 			this->tboxUsageOther->Name = L"tboxUsageOther";
-			this->tboxUsageOther->Size = System::Drawing::Size(214, 19);
+			this->tboxUsageOther->Size = System::Drawing::Size(250, 19);
 			this->tboxUsageOther->TabIndex = 4;
 			// 
 			// rUsageOther
 			// 
 			this->rUsageOther->AutoSize = true;
-			this->rUsageOther->Location = System::Drawing::Point(6, 43);
+			this->rUsageOther->Location = System::Drawing::Point(6, 48);
 			this->rUsageOther->Name = L"rUsageOther";
 			this->rUsageOther->Size = System::Drawing::Size(54, 16);
 			this->rUsageOther->TabIndex = 3;
@@ -2104,7 +2117,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// rUsageDst
 			// 
 			this->rUsageDst->AutoSize = true;
-			this->rUsageDst->Location = System::Drawing::Point(198, 17);
+			this->rUsageDst->Location = System::Drawing::Point(198, 18);
 			this->rUsageDst->Name = L"rUsageDst";
 			this->rUsageDst->Size = System::Drawing::Size(87, 16);
 			this->rUsageDst->TabIndex = 2;
@@ -2114,7 +2127,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// rUsageSample
 			// 
 			this->rUsageSample->AutoSize = true;
-			this->rUsageSample->Location = System::Drawing::Point(106, 17);
+			this->rUsageSample->Location = System::Drawing::Point(104, 18);
 			this->rUsageSample->Name = L"rUsageSample";
 			this->rUsageSample->Size = System::Drawing::Size(71, 16);
 			this->rUsageSample->TabIndex = 1;
@@ -2125,7 +2138,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// 
 			this->rUsageSale->AutoSize = true;
 			this->rUsageSale->Checked = true;
-			this->rUsageSale->Location = System::Drawing::Point(6, 17);
+			this->rUsageSale->Location = System::Drawing::Point(6, 18);
 			this->rUsageSale->Name = L"rUsageSale";
 			this->rUsageSale->Size = System::Drawing::Size(83, 16);
 			this->rUsageSale->TabIndex = 0;
@@ -2187,7 +2200,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// labProductCode
 			// 
 			this->labProductCode->AutoSize = true;
-			this->labProductCode->Location = System::Drawing::Point(14, 84);
+			this->labProductCode->Location = System::Drawing::Point(22, 84);
 			this->labProductCode->Name = L"labProductCode";
 			this->labProductCode->Size = System::Drawing::Size(56, 12);
 			this->labProductCode->TabIndex = 6;
@@ -2196,7 +2209,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// labProductName
 			// 
 			this->labProductName->AutoSize = true;
-			this->labProductName->Location = System::Drawing::Point(15, 56);
+			this->labProductName->Location = System::Drawing::Point(22, 56);
 			this->labProductName->Name = L"labProductName";
 			this->labProductName->Size = System::Drawing::Size(41, 12);
 			this->labProductName->TabIndex = 5;
@@ -2288,8 +2301,9 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// 
 			this->tboxProductNameForeign->Enabled = false;
 			this->tboxProductNameForeign->Location = System::Drawing::Point(92, 40);
+			this->tboxProductNameForeign->MaxLength = 30;
 			this->tboxProductNameForeign->Name = L"tboxProductNameForeign";
-			this->tboxProductNameForeign->Size = System::Drawing::Size(240, 19);
+			this->tboxProductNameForeign->Size = System::Drawing::Size(257, 19);
 			this->tboxProductNameForeign->TabIndex = 12;
 			// 
 			// labProductCode1Foreign
@@ -2896,7 +2910,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->gboxProd->Controls->Add(this->combBackup);
 			this->gboxProd->Controls->Add(this->labBackup);
 			this->gboxProd->Controls->Add(this->tboxBackupOther);
-			this->gboxProd->Location = System::Drawing::Point(367, 36);
+			this->gboxProd->Location = System::Drawing::Point(378, 36);
 			this->gboxProd->Name = L"gboxProd";
 			this->gboxProd->Size = System::Drawing::Size(356, 50);
 			this->gboxProd->TabIndex = 13;
@@ -2975,7 +2989,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// stripItemEnglish
 			// 
 			this->stripItemEnglish->Name = L"stripItemEnglish";
-			this->stripItemEnglish->Size = System::Drawing::Size(119, 22);
+			this->stripItemEnglish->Size = System::Drawing::Size(152, 22);
 			this->stripItemEnglish->Text = L"English";
 			this->stripItemEnglish->Click += gcnew System::EventHandler(this, &Form1::stripItemEnglish_Click);
 			// 
@@ -2984,7 +2998,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->stripItemJapanese->Checked = true;
 			this->stripItemJapanese->CheckState = System::Windows::Forms::CheckState::Checked;
 			this->stripItemJapanese->Name = L"stripItemJapanese";
-			this->stripItemJapanese->Size = System::Drawing::Size(119, 22);
+			this->stripItemJapanese->Size = System::Drawing::Size(152, 22);
 			this->stripItemJapanese->Text = L"Japanese";
 			this->stripItemJapanese->Click += gcnew System::EventHandler(this, &Form1::stripItemJapanese_Click);
 			// 
@@ -2999,7 +3013,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->tabMain->Location = System::Drawing::Point(12, 93);
 			this->tabMain->Name = L"tabMain";
 			this->tabMain->SelectedIndex = 0;
-			this->tabMain->Size = System::Drawing::Size(749, 377);
+			this->tabMain->Size = System::Drawing::Size(753, 377);
 			this->tabMain->TabIndex = 34;
 			this->tabMain->SelectedIndexChanged += gcnew System::EventHandler(this, &Form1::tabMain_SelectedIndexChanged);
 			// 
@@ -3017,7 +3031,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->tabRomInfo->Location = System::Drawing::Point(4, 21);
 			this->tabRomInfo->Name = L"tabRomInfo";
 			this->tabRomInfo->Padding = System::Windows::Forms::Padding(3);
-			this->tabRomInfo->Size = System::Drawing::Size(741, 352);
+			this->tabRomInfo->Size = System::Drawing::Size(745, 352);
 			this->tabRomInfo->TabIndex = 0;
 			this->tabRomInfo->Text = L"ROM基本情報(確認用)";
 			this->tabRomInfo->UseVisualStyleBackColor = true;
@@ -3068,7 +3082,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->tabTWLInfo->Location = System::Drawing::Point(4, 21);
 			this->tabTWLInfo->Name = L"tabTWLInfo";
 			this->tabTWLInfo->Padding = System::Windows::Forms::Padding(3);
-			this->tabTWLInfo->Size = System::Drawing::Size(741, 352);
+			this->tabTWLInfo->Size = System::Drawing::Size(745, 352);
 			this->tabTWLInfo->TabIndex = 1;
 			this->tabTWLInfo->Text = L"TWL拡張情報(確認用)";
 			this->tabTWLInfo->UseVisualStyleBackColor = true;
@@ -3105,7 +3119,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->tabRomEditInfo->Controls->Add(this->gboxEULA);
 			this->tabRomEditInfo->Location = System::Drawing::Point(4, 21);
 			this->tabRomEditInfo->Name = L"tabRomEditInfo";
-			this->tabRomEditInfo->Size = System::Drawing::Size(741, 352);
+			this->tabRomEditInfo->Size = System::Drawing::Size(745, 352);
 			this->tabRomEditInfo->TabIndex = 2;
 			this->tabRomEditInfo->Text = L"ROM登録情報(編集可)";
 			this->tabRomEditInfo->UseVisualStyleBackColor = true;
@@ -3124,11 +3138,11 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// 
 			this->tboxGuideRomEditInfo->BackColor = System::Drawing::SystemColors::Info;
 			this->tboxGuideRomEditInfo->Location = System::Drawing::Point(24, 11);
+			this->tboxGuideRomEditInfo->Multiline = true;
 			this->tboxGuideRomEditInfo->Name = L"tboxGuideRomEditInfo";
 			this->tboxGuideRomEditInfo->ReadOnly = true;
-			this->tboxGuideRomEditInfo->Size = System::Drawing::Size(687, 19);
+			this->tboxGuideRomEditInfo->Size = System::Drawing::Size(687, 34);
 			this->tboxGuideRomEditInfo->TabIndex = 37;
-			this->tboxGuideRomEditInfo->Text = L"このタブの情報は提出確認書およびマスターROMの作成に必要です。編集してください。";
 			// 
 			// gboxParental
 			// 
@@ -3168,7 +3182,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->gboxParental->Controls->Add(this->cboxAlwaysESRB);
 			this->gboxParental->Location = System::Drawing::Point(252, 60);
 			this->gboxParental->Name = L"gboxParental";
-			this->gboxParental->Size = System::Drawing::Size(440, 272);
+			this->gboxParental->Size = System::Drawing::Size(459, 272);
 			this->gboxParental->TabIndex = 33;
 			this->gboxParental->TabStop = false;
 			this->gboxParental->Text = L"リージョンとペアレンタルコントロール";
@@ -3198,6 +3212,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// 
 			// tabSubmitInfo
 			// 
+			this->tabSubmitInfo->Controls->Add(this->labProductNameLimit);
 			this->tabSubmitInfo->Controls->Add(this->tboxGuideSubmitInfo);
 			this->tabSubmitInfo->Controls->Add(this->gboxForeign);
 			this->tabSubmitInfo->Controls->Add(this->tboxCaption);
@@ -3221,10 +3236,19 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->tabSubmitInfo->Controls->Add(this->labProductCode1);
 			this->tabSubmitInfo->Location = System::Drawing::Point(4, 21);
 			this->tabSubmitInfo->Name = L"tabSubmitInfo";
-			this->tabSubmitInfo->Size = System::Drawing::Size(741, 352);
+			this->tabSubmitInfo->Size = System::Drawing::Size(745, 352);
 			this->tabSubmitInfo->TabIndex = 3;
 			this->tabSubmitInfo->Text = L"提出情報(編集可)";
 			this->tabSubmitInfo->UseVisualStyleBackColor = true;
+			// 
+			// labProductNameLimit
+			// 
+			this->labProductNameLimit->Location = System::Drawing::Point(237, 75);
+			this->labProductNameLimit->Name = L"labProductNameLimit";
+			this->labProductNameLimit->Size = System::Drawing::Size(124, 11);
+			this->labProductNameLimit->TabIndex = 39;
+			this->labProductNameLimit->Text = L"(30文字以内)";
+			this->labProductNameLimit->TextAlign = System::Drawing::ContentAlignment::TopRight;
 			// 
 			// tboxGuideSubmitInfo
 			// 
@@ -3238,6 +3262,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// 
 			// gboxForeign
 			// 
+			this->gboxForeign->Controls->Add(this->labProductNameLimitForeign);
 			this->gboxForeign->Controls->Add(this->labMultiForeign2);
 			this->gboxForeign->Controls->Add(this->cboxReleaseForeign);
 			this->gboxForeign->Controls->Add(this->labMultiForeign1);
@@ -3250,12 +3275,21 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->gboxForeign->Controls->Add(this->labProductCode1Foreign);
 			this->gboxForeign->Controls->Add(this->tboxProductNameForeign);
 			this->gboxForeign->Controls->Add(this->labProductNameForeign);
-			this->gboxForeign->Location = System::Drawing::Point(368, 92);
+			this->gboxForeign->Location = System::Drawing::Point(378, 91);
 			this->gboxForeign->Name = L"gboxForeign";
-			this->gboxForeign->Size = System::Drawing::Size(355, 141);
+			this->gboxForeign->Size = System::Drawing::Size(355, 144);
 			this->gboxForeign->TabIndex = 35;
 			this->gboxForeign->TabStop = false;
 			this->gboxForeign->Text = L"海外版";
+			// 
+			// labProductNameLimitForeign
+			// 
+			this->labProductNameLimitForeign->Location = System::Drawing::Point(225, 62);
+			this->labProductNameLimitForeign->Name = L"labProductNameLimitForeign";
+			this->labProductNameLimitForeign->Size = System::Drawing::Size(124, 11);
+			this->labProductNameLimitForeign->TabIndex = 40;
+			this->labProductNameLimitForeign->Text = L"(30文字以内)";
+			this->labProductNameLimitForeign->TextAlign = System::Drawing::ContentAlignment::TopRight;
 			// 
 			// labMultiForeign2
 			// 
@@ -3274,7 +3308,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->tabCompanyInfo->Controls->Add(this->gboxPerson2);
 			this->tabCompanyInfo->Location = System::Drawing::Point(4, 21);
 			this->tabCompanyInfo->Name = L"tabCompanyInfo";
-			this->tabCompanyInfo->Size = System::Drawing::Size(741, 352);
+			this->tabCompanyInfo->Size = System::Drawing::Size(745, 352);
 			this->tabCompanyInfo->TabIndex = 4;
 			this->tabCompanyInfo->Text = L"会社情報(編集可)";
 			this->tabCompanyInfo->UseVisualStyleBackColor = true;
@@ -3299,7 +3333,7 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->tabErrorInfo->Controls->Add(this->gridError);
 			this->tabErrorInfo->Location = System::Drawing::Point(4, 21);
 			this->tabErrorInfo->Name = L"tabErrorInfo";
-			this->tabErrorInfo->Size = System::Drawing::Size(741, 352);
+			this->tabErrorInfo->Size = System::Drawing::Size(745, 352);
 			this->tabErrorInfo->TabIndex = 5;
 			this->tabErrorInfo->Text = L"エラー情報(要修正)";
 			this->tabErrorInfo->UseVisualStyleBackColor = true;
@@ -5224,10 +5258,24 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 		// 日英両対応
 		// ----------------------------------------------
 
+		// 日本語版と英語版でテキストボックスの文字列制限が変わる
+		void changeMaxLength( System::Windows::Forms::TextBox ^tbox, System::Int32 maxlen )
+		{
+			if( tbox->Text->Length > maxlen )
+				tbox->Text = "";
+
+			tbox->MaxLength = maxlen;
+		}
+
 		// 日本語版への切り替え
 		void changeJapanese(void)
 		{
 			System::Int32 index;
+
+			// 入力文字数制限を変更する
+			this->changeMaxLength( this->tboxCompany1, 25 );
+			this->changeMaxLength( this->tboxDepart1,  25 );
+			this->changeMaxLength( this->tboxPerson1,  15 );
 
 			// タイトルバー
 			this->stripFile->Text          = gcnew System::String( "ファイル" );
@@ -5252,7 +5300,9 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// ガイド
 			this->tboxGuideRomInfo->Text = gcnew System::String( "このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。" );
 			this->tboxGuideTWLInfo->Text = gcnew System::String( "このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。" );
-			this->tboxGuideRomEditInfo->Text = gcnew System::String( "このタブの情報は提出確認書およびマスターROMの作成に必要です。編集してください。" );
+			this->tboxGuideRomEditInfo->Text  = gcnew System::String( "" );
+			this->tboxGuideRomEditInfo->Text += "このタブの情報は提出確認書およびマスターROMの作成に必要です。編集してください。";
+			this->tboxGuideRomEditInfo->Text += "\r\nこれらの情報はマスターROMの作成時にROMデータの中に登録されます。";
 			this->tboxGuideSubmitInfo->Text  = gcnew System::String( "このタブの情報は提出確認書の作成に必要です。入力してください。" );
 			this->tboxGuideCompanyInfo->Text = gcnew System::String( "このタブの情報は提出確認書の作成に必要です。入力してください。" );
 			this->tboxGuideErrorInfo->Text   = gcnew System::String( "" );
@@ -5305,6 +5355,8 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->labMultiForeign1->Text      = gcnew System::String( LANG_MULTI_F_J );
 			this->labMultiForeign2->Text      = gcnew System::String( LANG_MULTI_F_J );
 			this->labCaption->Text    = gcnew System::String( LANG_CAPTION_J );
+			this->labProductNameLimit->Text = gcnew System::String( LANG_PRODUCT_LIMIT_J );
+			this->labProductNameLimitForeign->Text = gcnew System::String( LANG_PRODUCT_LIMIT_J );
 
 			// 会社情報
 			this->gboxPerson1->Text    = gcnew System::String( LANG_PERSON_1_J );
@@ -5444,6 +5496,11 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 		{
 			System::Int32 index;
 
+			// 入力文字数制限を変更する
+			this->changeMaxLength( this->tboxCompany1, 40 );
+			this->changeMaxLength( this->tboxDepart1,  40 );
+			this->changeMaxLength( this->tboxPerson1,  30 );
+
 			// タイトルバー
 			this->stripFile->Text          = gcnew System::String( "File" );
 			this->stripItemOpenRom->Text   = gcnew System::String( "Open a ROM data file" );
@@ -5467,9 +5524,11 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			// ガイド
 			this->tboxGuideRomInfo->Text = gcnew System::String( "This tab is for checking ROM data. When ROM data is illegal, please check settings of building ROM data" );
 			this->tboxGuideTWLInfo->Text = gcnew System::String( "This tab is for checking ROM data. When ROM data is illegal, please check settings of building ROM data" );
-			this->tboxGuideRomEditInfo->Text = gcnew System::String( "These informations will be registered in a master ROM data and a submission sheet. Please edit certainly." );
-			this->tboxGuideSubmitInfo->Text  = gcnew System::String( "These informations are necessary for making a submission sheet. Please input." );
-			this->tboxGuideCompanyInfo->Text = gcnew System::String( "These informations are necessary for making a submission sheet. Please input." );
+			this->tboxGuideRomEditInfo->Text  = gcnew System::String( "" );
+			this->tboxGuideRomEditInfo->Text += "In making a master ROM data, these items will be registered in a master ROM data and a submission sheet.";
+			this->tboxGuideRomEditInfo->Text += "\r\nPlease edit certainly.";
+			this->tboxGuideSubmitInfo->Text  = gcnew System::String( "These items are necessary for making a submission sheet. Please input." );
+			this->tboxGuideCompanyInfo->Text = gcnew System::String( "These items are necessary for making a submission sheet. Please input." );
 			this->tboxGuideErrorInfo->Text   = gcnew System::String( "" );
 			this->tboxGuideErrorInfo->Text  += "This tab discribes errors in the ROM data file and edit mistakes.";
 			this->tboxGuideErrorInfo->Text  += "\r\nItems highlighted by Red can't be modified by this program. Please modify build settings.";
@@ -5519,6 +5578,8 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->labMultiForeign1->Text      = gcnew System::String( LANG_MULTI_F_E );
 			this->labMultiForeign2->Text      = gcnew System::String( LANG_MULTI_F_E );
 			this->labCaption->Text    = gcnew System::String( LANG_CAPTION_E );
+			this->labProductNameLimit->Text = gcnew System::String( LANG_PRODUCT_LIMIT_E );
+			this->labProductNameLimitForeign->Text = gcnew System::String( LANG_PRODUCT_LIMIT_E );
 
 			// 会社情報
 			this->gboxPerson1->Text    = gcnew System::String( LANG_PERSON_1_E );
@@ -6256,6 +6317,11 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			this->cboxIsWirelessIcon->Checked = *(this->hSrl->hIsWirelessIcon);
 			this->setParentalForms();			// ペアレンタルコントロール関連
 		}
+
+
+
+
+
 
 }; // enf of ref class Form1
 
