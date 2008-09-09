@@ -4192,7 +4192,6 @@ private: System::Windows::Forms::TextBox^  tboxMedia;
 			}
 
 			// TWLŠg’£î•ñ
-			//this->tboxTitleIDLo->Text = this->hSrl->hTitleIDLo->ToString("X8");
 			this->tboxTitleIDLo->Text = this->hSrl->hTitleIDLo;
 			this->tboxTitleIDHi->Text = this->hSrl->hTitleIDHi->ToString("X8");
 			this->tboxNormalRomOffset->Text   = this->hSrl->hNormalRomOffset->ToString("X8");

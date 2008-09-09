@@ -1455,10 +1455,13 @@ void RCSrl::mrcRating( System::Byte ogn )
 
 	if( *(this->hArrayParentalEffect[ ogn ]) == false )
 	{
-		this->hWarnList->Add( gcnew RCMrcError( 
-			"ペアレンタルコントロール情報", 0x2f0, 0x2ff, ognArray[ ogn ] + warnDisableJ,
-			"Parental Control", ognArray[ ogn ] + warnDisableE, true, true ) );
-		this->clearParentalControl( ogn );
+		if( *this->hArrayParentalAlways[ ogn ] || (*this->hArrayParentalRating[ ogn ] != 0 ) )
+		{
+			this->hWarnList->Add( gcnew RCMrcError( 
+				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, ognArray[ ogn ] + warnDisableJ,
+				"Parental Control", ognArray[ ogn ] + warnDisableE, true, true ) );
+			this->clearParentalControl( ogn );
+		}
 	}
 	else
 	{

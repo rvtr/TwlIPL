@@ -244,7 +244,6 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 			}
 			if( node->FirstChild->Value->Equals( "TagTitleIDLo" ) )
 			{
-				//node->FirstChild->Value = "0x" + hSrl->hTitleIDLo->ToString("X8");
 				node->FirstChild->Value = hSrl->hTitleIDLo;
 			}
 			if( node->FirstChild->Value->Equals( "TagTitleIDHi" ) )

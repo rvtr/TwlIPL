@@ -254,8 +254,6 @@ namespace MasterEditorTWL
 		property System::String  ^hMakerCode;
 		property System::String  ^hPlatform;
 		property System::String  ^hRomSize;
-		//property System::Byte    ^hForKorea;
-		//property System::Byte    ^hForChina;
 		property System::Byte    ^hRomVersion;
 		property System::UInt16  ^hHeaderCRC;
 		property System::String  ^hLatency;		// MROM/1TROM/Illegal
@@ -269,7 +267,6 @@ namespace MasterEditorTWL
 		property System::UInt32  ^hNormalRomOffset;
 		property System::UInt32  ^hKeyTableRomOffset;
 		property System::Byte    ^hEULAVersion;		// 編集可能
-		//property System::UInt32  ^hTitleIDLo;
 		property System::String  ^hTitleIDLo;
 		property System::UInt32  ^hTitleIDHi;
 		property System::Boolean ^hIsAppLauncher;	// TitleIDLoからわかるアプリ種別
@@ -308,12 +305,6 @@ namespace MasterEditorTWL
 		property System::Boolean ^hIsCommonClientKeyForDebugger;
 
 		// Shared2ファイルサイズ Read Only
-		//property System::UInt32  ^hShared2Size0;
-		//property System::UInt32  ^hShared2Size1;
-		//property System::UInt32  ^hShared2Size2;
-		//property System::UInt32  ^hShared2Size3;
-		//property System::UInt32  ^hShared2Size4;
-		//property System::UInt32  ^hShared2Size5;
 		property cli::array<System::UInt32^> ^hShared2SizeArray;
 
 		// カードリージョン Read Only
