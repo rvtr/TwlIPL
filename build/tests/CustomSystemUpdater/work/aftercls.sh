@@ -17,10 +17,9 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-AQUA=//10.116.1.5/
-CLSED_PATH=${AQUA}/TWL_debug/sysmenu/rom/debug_rom/CLS_processed
-DAILY_CLSED_DIR=`date +'%Y%m%d'`_cls_test
-
+AQUA='//10.116.1.5'
+CLSED_PATH="${AQUA}/TWL_debug/sysmenu/rom/debug_rom/CLS_processed"
+DAILY_CLSED_DIR=`date +'%Y%m%d'`_cls
 
 if [ $# -lt 1 ];
 then
@@ -38,3 +37,12 @@ echo "toaqua.rb"
 echo "Copying to Aqua"
 cp -r $1_foraqua ${CLSED_PATH}/${DAILY_CLSED_DIR}
 
+# Shop ROM のコピー
+shopdir="${AQUA}/TWL_debug/shop/rom/tad/${DAILY_CLSED_DIR}"
+/bin/mkdir ${shopdir}
+/bin/cp $1_foraqua/verup/tad/shop* ${shopdir}
+
+# NZV ROM のコピー
+nzvdir="${AQUA}/TWL_debug/nintendo_spot/rom/clsprocessed/"`date +'%Y%m%d'`
+/bin/mkdir ${nzvdir}
+/bin/cp -r $1/verup/tad/HNJ* ${nzvdir}
