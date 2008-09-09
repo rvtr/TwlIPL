@@ -14,8 +14,18 @@
 #define WL_FW_VERSION_SIZE		0x2
 #define WL_NUM_FW_IDX			0x2
 #define WL_NUM_FW_SIZE			0x2
+#define WL_FW1_OFFSET_IDX		0x4
 #define WL_FW_TYPE_IDX			0xc
 #define WL_FW_TYPE_SIZE			0x4
+
+#define WL_FW2_OFFSET_IDX		0xc4
+#define WL_FW2_TYPE_IDX			0xcc
+
+#define WL_FW_SECTION_OFFSET	0x4
+#define WL_FW_VER_MINUSOFFSET	0x2c
+
+#define WL_FW_IDX_OFFSET		3
+
 
 
 
@@ -32,6 +42,9 @@ void getWLInfo( void )
 	
 	if( FS_OpenFileEx( &file, filePath, FS_FILEMODE_R ) )
 	{
+		int value;
+		s32 fwOffset, sectionOffset;
+
 		/*
 		// ÉoÅ[ÉWÉáÉìèÓïÒÇÃì«Ç›éÊÇË
 		FS_SeekFile( &file, WL_FW_VERSION_OFFSET, FS_SEEK_SET );
@@ -70,16 +83,50 @@ void getWLInfo( void )
 		if( res == WL_FW_LOADSIZE )
 		{
 			int value;
-			
+					
 			snprintf( gAllInfo[MENU_WL][WL_VERSION].str.sjis, DISPINFO_BUFSIZE-1, "%d.%d",
 						 filebuf[WL_FW_VERSION_HI_IDX], filebuf[WL_FW_VERSION_LO_IDX] );
 						 
 			gAllInfo[MENU_WL][WL_NUM_FW].iValue = (int) MI_LoadLE8( &filebuf[WL_NUM_FW_IDX] );
 			gAllInfo[MENU_WL][WL_NUM_FW].isNumData = TRUE;
 			
+			fwOffset = (s32)MI_LoadLE32( &filebuf[WL_FW1_OFFSET_IDX] );
+			
 			value = (int) MI_LoadLE32( &filebuf[WL_FW_TYPE_IDX] );
-			gAllInfo[MENU_WL][WL_FW_TYPE].iValue = value;
-			gAllInfo[MENU_WL][WL_FW_TYPE].str.sjis = s_strWLFWType[ value ];	
+			gAllInfo[MENU_WL][WL_FW1_TYPE].iValue = value;
+			gAllInfo[MENU_WL][WL_FW1_TYPE].str.sjis = s_strWLFWType[ value ];
+			
+			FS_SeekFile( &file, fwOffset, FS_SEEK_SET );
+			FS_ReadFile( &file, filebuf, WL_FW_LOADSIZE );
+			sectionOffset = (s32)MI_LoadLE32(  &filebuf[WL_FW_SECTION_OFFSET] );
+			
+			FS_SeekFile( &file, fwOffset + sectionOffset - WL_FW_VER_MINUSOFFSET, FS_SEEK_SET );
+			FS_ReadFile( &file, filebuf, WL_FW_LOADSIZE );
+			snprintf( gAllInfo[MENU_WL][WL_FW1_VER].str.sjis, DISPINFO_BUFSIZE-1, "%08x",
+						MI_LoadLE32( filebuf ) );
+		}
+		
+		if( gAllInfo[MENU_WL][WL_NUM_FW].iValue == 2 )
+		{
+			FS_SeekFile( &file, WL_FW2_OFFSET_IDX, FS_SEEK_SET );
+			FS_ReadFile( &file, filebuf, WL_FW_LOADSIZE );
+			fwOffset = (s32)MI_LoadLE32( filebuf );
+
+			value = (int) MI_LoadLE32( &filebuf[WL_FW2_TYPE_IDX - WL_FW2_OFFSET_IDX] );
+			gAllInfo[MENU_WL][WL_FW2_TYPE].str.sjis = s_strWLFWType[ value ];			
+			
+			FS_SeekFile( &file, fwOffset, FS_SEEK_SET );
+			FS_ReadFile( &file, filebuf, WL_FW_LOADSIZE );
+			sectionOffset = (s32)MI_LoadLE32( &filebuf[WL_FW_SECTION_OFFSET] );
+			
+			FS_SeekFile( &file, fwOffset + sectionOffset - WL_FW_VER_MINUSOFFSET, FS_SEEK_SET );
+			FS_ReadFile( &file, filebuf, WL_FW_LOADSIZE );
+			snprintf( gAllInfo[MENU_WL][WL_FW2_VER].str.sjis, DISPINFO_BUFSIZE-1, "%08x",
+						MI_LoadLE32( filebuf ) );
+		}
+		else
+		{
+			STD_StrLCpy( gAllInfo[MENU_WL][WL_FW2_VER].str.sjis, s_strNA, DISPINFO_BUFSIZE );
 		}
 		
 		FS_CloseFile( &file );
@@ -88,6 +135,8 @@ void getWLInfo( void )
 	{
 		// ì«Ç›çûÇﬂÇ»Ç©Ç¡ÇΩÇÁÇ∆ÇËÇ†Ç¶Ç∏N/AÇ¡Çƒì¸ÇÍÇƒÇ®Ç≠
 		STD_StrLCpy( gAllInfo[MENU_WL][WL_VERSION].str.sjis, s_strNA, DISPINFO_BUFSIZE );
+		STD_StrLCpy( gAllInfo[MENU_WL][WL_FW2_VER].str.sjis, s_strNA, DISPINFO_BUFSIZE );
+		STD_StrLCpy( gAllInfo[MENU_WL][WL_FW1_VER].str.sjis, s_strNA, DISPINFO_BUFSIZE );
 	}
 
 }

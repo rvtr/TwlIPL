@@ -264,7 +264,10 @@ const char *s_strFontMenu[] = {
 const char *s_strWLMenu[] = {
 	"Version",
 	"Num of FW",
-	"FW1 type"
+	"FW1 type",
+	"FW1 version",
+	"FW2 type",
+	"FW2 version"
 };
 
 const char *s_strWhiteMenu[] = {

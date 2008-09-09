@@ -103,7 +103,7 @@ void drawHeader( int menu, int line)
 {
 	u16 buf[256];
 	
-	PrintfSJISSub( HEADER_LEFT, HEADER_UP, TXT_COLOR_RED, "%s %d" , "DisplaySystemInfo", DISPINFO_BIN_IDX );
+	PrintfSJISSub( HEADER_LEFT, HEADER_UP, TXT_COLOR_RED, "%s %d $Rev:$" , "DisplaySystemInfo", DISPINFO_BIN_IDX );
 
 
 	if( menu != MENU_ROOT )

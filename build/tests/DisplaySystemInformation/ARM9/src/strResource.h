@@ -202,16 +202,19 @@
 
 #define SYSMENU_HASH_IDX	5
 
-#define FONTMENU_SIZE			1
+#define FONTMENU_SIZE		1
 
 #define FONT_TIMESTAMP		0
 #define FONT_INFO			1
 
-#define WLMENU_SIZE				3
+#define WLMENU_SIZE			6
 
 #define WL_VERSION			0
 #define WL_NUM_FW			1
-#define WL_FW_TYPE			2
+#define WL_FW1_TYPE			2
+#define WL_FW1_VER			3
+#define WL_FW2_TYPE			4
+#define WL_FW2_VER			5
 
 #define WHITEMENU_SIZE			2
 
@@ -221,21 +224,6 @@
 #define VERSIONMENU_SIZE 		0
 
 #define VERSION_OTHER		0
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 extern int s_numMenu[];
 extern const char *s_strRootMenu[];
