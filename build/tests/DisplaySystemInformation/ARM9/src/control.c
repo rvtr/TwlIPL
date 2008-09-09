@@ -48,6 +48,7 @@ static const char *s_TSDPath[] = {
 static int selectLine[ROOTMENU_SIZE+1];
 BOOL resetUserData( void );
 BOOL breakUserData( u8 idx );
+BOOL resetRTC( void );
 static void TSDi_ClearSettingsDirect( LCFGTWLSettingsData *pTSD );
 static BOOL LCFGi_TSD_WriteSettingsDirectForRecovery( const LCFGTWLSettingsData *pSrcInfo, int index );
 static BOOL LCFGi_TSF_WriteFile( char *pPath, TSFHeader *pHeader, const void *pSrcBody, u8 *pSaveCount );
@@ -81,6 +82,10 @@ BOOL executeControl( int *line, int *changeLine, u8 *mode )
 			case MENU_BREAK_DATA:
 				result &= breakUserData(0);
 				result &= breakUserData(1);
+				break;
+
+			case MENU_RTC_RESET:
+				result = resetRTC();
 				break;
 		}
 		
@@ -199,7 +204,7 @@ ChangeCotnrolResult changeControl( int *menu, int *line, int *changeLine, u8 *mo
 BOOL control( int *menu, int *line, int *changeLine, u8 *mode )
 {
 	int linemax = s_numMenu[*menu]; // 選択中ページの項目数
-	BOOL controlFlag = FALSE;				// 何か操作があったらTRUEになる
+	BOOL controlFlag = FALSE;		// 何か操作があったらTRUEになる
 
 	// 上下で項目変更
 	if( pad.trg & PAD_KEY_UP )
@@ -278,6 +283,7 @@ BOOL control( int *menu, int *line, int *changeLine, u8 *mode )
 				
 				case MENU_RESET_INFO:
 				case MENU_BREAK_DATA:
+				case MENU_RTC_RESET:
 					*mode |= MODE_EXECUTE_MASK;
 					*changeLine = 0;	// デフォルト位置をcancelにしておく
 					break;
@@ -381,5 +387,39 @@ BOOL breakUserData( u8 idx )
 	FS_CloseFile( &file );
 
 	OS_TPrintf("Breaking UserData Succeeded. path: %s\n", s_TSDPath[idx]);
+	return TRUE;
+}
+
+
+BOOL resetRTC( void )
+{
+	RTCResult result;
+	RTCDate date;
+	RTCTime time;
+	
+	date.year = 0;
+	date.month = 1;
+	date.day = 1;
+	date.week = RTC_WEEK_SUNDAY;
+	
+	time.hour = 0;
+	time.minute = 0;
+	time.second = 0;
+	
+	// resultは成功したらゼロが返る
+	result = RTC_SetDate( &date );
+	if( result != RTC_RESULT_SUCCESS )
+	{
+		OS_TPrintf("RTC Date Reset Failed. err: %d", result );
+		return FALSE;
+	}
+	
+	result |= RTC_SetTime( &time );
+	if( result != RTC_RESULT_SUCCESS )
+	{
+		OS_TPrintf("RTC Time Reset Failed. err: %d", result );
+		return FALSE;
+	}
+
 	return TRUE;
 }

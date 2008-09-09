@@ -19,6 +19,7 @@ FontInfo gFontInfo[ OS_SHARED_FONT_MAX ];
 
 void loadFontName( OSSharedFontIndex idx );
 void loadFont( OSSharedFontIndex idx );
+void releaseFont( OSSharedFontIndex idx );
 BOOL checkFontHash( OSSharedFontIndex idx );
 
 
@@ -34,6 +35,7 @@ void getFontInfo( void )
 	// フォントテーブルバッファの確保
 	tableSize = OS_GetSharedFontTableSize();
 	tableBuf = (u8*) Alloc ( (u32)tableSize );
+	SDK_ASSERT( tableBuf );
 	
 	time = OS_GetSharedFontTimestamp();
 	OS_TPrintf("SharedFont Time Stamp %08lx\n", time );
@@ -43,6 +45,7 @@ void getFontInfo( void )
 	if( ! OS_LoadSharedFontTable( (void*)tableBuf ) )
 	{
 		OS_TPrintf("Loading shared font table failed.\n");
+		Free(tableBuf);
 		return;
 	}
 	
@@ -54,8 +57,8 @@ void getFontInfo( void )
 		gFontInfo[fontIdx].size = (u32) OS_GetSharedFontSize( (OSSharedFontIndex)fontIdx );
 		
 		loadFont( fontIdx );
-		
 		gFontInfo[fontIdx].isHashOK = checkFontHash( fontIdx );
+		releaseFont( fontIdx );
 	}
 	
 	Free(tableBuf);
@@ -67,18 +70,10 @@ void loadFontName( OSSharedFontIndex idx )
 	// 名前取得
 	const u8* fontName = OS_GetSharedFontName( (OSSharedFontIndex)idx );
 	int fontNameLength = STD_StrLen( (char*)fontName );
-		
-	if( gFontInfo[idx].name == NULL || 
-		( sizeof( gFontInfo[idx].name ) <= fontNameLength ))
-	{
-		// 名前のところにメモリが割り当てられてなかったり、
-		// 小さかったりした場合は割り当てなおす。
-		
-		// NsysのFreeはNULLを渡すと落ちる仕様・・・
-		if( gFontInfo[idx].name != NULL )
-		{
-			Free( gFontInfo[idx].name );
-		}
+	
+	OS_TPrintf("fontname length: %d\n", fontNameLength );
+	if( gFontInfo[idx].name == NULL ){
+		// 名前のところにメモリが割り当てられてなかったりしたら
 		
 		gFontInfo[idx].name = (u8*) Alloc ( sizeof(u8) * (fontNameLength + 1) );
 	}
@@ -91,24 +86,25 @@ void loadFont( OSSharedFontIndex idx )
 {
 	// でも別に普段必要なわけじゃないからメモリ確保のためにも
 	// ハッシュ値取り終わったら開放するようにするかな？
-	if( gFontInfo[idx].data == NULL || 
-		( sizeof( gFontInfo[idx].data ) <= gFontInfo[idx].size ))
+	if( gFontInfo[idx].data == NULL )
 	{
 		// データバッファにメモリが割り当てられてなかったり、
 		// 小さかったりした場合は割り当てなおす。
-		
-		if( gFontInfo[idx].data != NULL )
-		{
-			Free( gFontInfo[idx].data );
-		}
-		
-		
+				
 		gFontInfo[idx].data = (u8*) Alloc ( gFontInfo[idx].size );
 	}
 	
 	SDK_ASSERT( gFontInfo[idx].data );
 	OS_LoadSharedFont( idx, (void*)gFontInfo[idx].data );
 }	
+
+void releaseFont( OSSharedFontIndex idx )
+{
+	if( gFontInfo[idx].data != NULL )
+	{
+		Free( gFontInfo[idx].data );
+	}
+}
 
 BOOL checkFontHash( OSSharedFontIndex idx )
 {	

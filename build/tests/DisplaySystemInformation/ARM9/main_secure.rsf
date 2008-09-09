@@ -96,7 +96,7 @@ Property
 	# BANNER FILE: generated from Banner Spec File
 	#
 	#BannerFile		./etc/myGameBanner.bnr
-	BannerFile		$(DISPINFO_BANNERPATH)
+	BannerFile		../banner/$(DISPINFO_GAMECODE).bnr
 
 	#
 	# Permit LandingNormalJump: for TWL "ApplicationJump" function [TRUE/FALSE]

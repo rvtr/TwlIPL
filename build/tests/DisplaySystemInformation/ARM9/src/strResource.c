@@ -35,6 +35,7 @@ int s_numMenu[] = {
 	VERSIONMENU_SIZE,
 	0,
 	0,
+	0,
 	ROOTMENU_SIZE
 };
 
@@ -76,7 +77,8 @@ const char *s_strRootMenu[] = {
 	"ÅÉWhitelistÅÑ",
 	"ÅÉInstalled Content VersionÅÑ",
 	"Reset HW Setting to Default",
-	"break HW Setting"
+	"break HW Setting",
+	"Reset RTC Data"
 };
 
 const char *s_strOwnerMenu[] = {
@@ -117,11 +119,21 @@ const char *s_strSecureUserMenu[] = {
 const char *s_strOtherMenu[] = {
 	"Agree EULA",
 	"EULA Version",
-	"Wireless"
+	"Wireless",
+	"RTC Offset",
+	"TP Calib raw x1",
+	"TP Calib raw y1",
+	"TP Calib dx1",
+	"TP Calib dy1",
+	"TP Calib raw x2",
+	"TP Calib raw y2",
+	"TP Calib dx2",
+	"TP Calib dy2",
+	"TP Calib RSV"
 };
 
 const char *s_strNormalHWMenu[] = {
-	"RTC Offset",
+	"RTC Adjustment",
 	"Unique ID"
 };
 
@@ -273,6 +285,7 @@ const char **s_strMetaMenu[] = {
 	s_strFontMenu,
 	s_strWLMenu,
 	s_strWhiteMenu,
+	NULL,
 	NULL,
 	NULL,
 	NULL,

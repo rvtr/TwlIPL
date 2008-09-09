@@ -252,7 +252,9 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 		return;
 	}
 	
-	if( menu == MENU_SECURE_HW && entryLine == SECURE_HW_FUSE )
+	if( ( menu == MENU_SECURE_HW && entryLine == SECURE_HW_FUSE ) ||
+		( menu == MENU_OTHER 	 && entryLine == OTHER_RTC_OFFSET ) || 
+		( menu == MENU_OTHER 	 && entryLine == OTHER_TP_RSV  ) )
 	{
 		// 16•¶š‚ğ8•¶š‚Ì“ñ’i‘g‚İ‚É•ÏX
 		char buf[9] = {0};

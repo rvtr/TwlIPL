@@ -18,6 +18,7 @@
 #define WL_FW_TYPE_SIZE			0x4
 
 
+
 void getWLInfo( void )
 {
 	FSFile file;
@@ -80,6 +81,8 @@ void getWLInfo( void )
 			gAllInfo[MENU_WL][WL_FW_TYPE].iValue = value;
 			gAllInfo[MENU_WL][WL_FW_TYPE].str.sjis = s_strWLFWType[ value ];	
 		}
+		
+		FS_CloseFile( &file );
 	}
 	else
 	{

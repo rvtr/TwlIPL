@@ -19,6 +19,8 @@ typedef struct FontInfo{
 	BOOL isHashOK;	// ハッシュ値が既知のものと一致するか
 } FontInfo;
 
+// 初回読み込みか否か
+static BOOL firstRead;
 
 // NANDアプリ情報
 extern s32 gNumContents;

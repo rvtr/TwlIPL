@@ -23,8 +23,8 @@ void getNormalHWInfo( void )
 	int value;
 
 	value = (int) OS_GetOwnerRtcOffset();
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_OFFSET].iValue = (int) value;
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_OFFSET].isNumData = TRUE;
+	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_ADJUST].iValue = (int) value;
+	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_ADJUST].isNumData = TRUE;
 
 	{
 		int i;

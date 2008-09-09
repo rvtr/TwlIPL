@@ -95,6 +95,7 @@ void getWhitelistHash( void )
 	
 	gAllInfo[MENU_WHITE][WHITE_HASH].str.sjis = s_strCorrect [ cmpHash( digestBuf, &tmd->contents[0].hash ) ];
 	
+	FS_CloseFile( &file );
 	Free( tmd );
 	Free( fileBuf );
 
@@ -107,6 +108,8 @@ void getNumDHTEntry( void )
 	char filePath[NAM_PATH_LEN+1];
 	
 	dht = (DHTFile*) Alloc (DS_HASH_TABLE_SIZE);	
+	SDK_ASSERT(dht);
+	
 	FS_InitFile( &file );
 	NAM_GetTitleBootContentPathFast( filePath , WHITELIST_TITLEID );
 	
@@ -133,6 +136,7 @@ void getNumDHTEntry( void )
 	DC_FlushRange( dht, DHT_GetDatabaseLength( dht ));
 	OS_TPrintf(" dht.header.nums : %d\n", dht->header.nums);
 
+	FS_CloseFile( &file );
 	gAllInfo[MENU_WHITE][WHITE_NUM].iValue = (int)dht->header.nums;
 	gAllInfo[MENU_WHITE][WHITE_NUM].isNumData = TRUE;
 	

@@ -19,7 +19,9 @@
 #define __DISPLAY_INFO_RESOURCE__
 
 // メニューID
-#define MENU_ROOT 			15
+#define ROOTMENU_SIZE 			16
+
+#define MENU_ROOT 			16
 #define MENU_OWNER 			0
 #define MENU_PARENTAL 		1
 #define MENU_SECURE_USER	2
@@ -35,15 +37,18 @@
 #define MENU_VERSION		12
 #define MENU_RESET_INFO		13
 #define MENU_BREAK_DATA		14
+#define MENU_RTC_RESET		15
 
+#define OWNERMENU_SIZE 			6
 
-// 行番号
 #define OWNER_LANGUAGE			0
 #define OWNER_COLOR				1
 #define OWNER_BIRTHDAY			2
 #define OWNER_COUNTRY			3
 #define OWNER_NICKNAME			4
 #define OWNER_COMMENT			5
+
+#define PARENTALMENU_SIZE 		12
 
 #define PARENTAL_FLAG			0
 #define PARENTAL_PICTOCHAT		1
@@ -58,6 +63,8 @@
 #define PARENTAL_QUESTION_ID	10
 #define PARENTAL_ANSWER			11
 
+#define SECURE_USER_MENU_SIZE	8
+
 #define SECURE_USER_INITIAL_SETTINGS	0
 #define SECURE_USER_INITIAL_LAUNCHER	1
 #define SECURE_USER_BROKEN_SETTINGS		2
@@ -67,12 +74,28 @@
 #define SECURE_USER_LASTBOOT_PLATFORM	6
 #define SECURE_USER_LASTBOOT_ID			7
 
-#define OTHER_AGREE_EULA				0
-#define OTHER_EULA_VERSION				1
-#define OTHER_WIRELESS					2
+#define OTHERMENU_SIZE			13
 
-#define NORMAL_HW_RTC_OFFSET	0
+#define OTHER_AGREE_EULA		0
+#define OTHER_EULA_VERSION		1
+#define OTHER_WIRELESS			2
+#define OTHER_RTC_OFFSET		3
+#define OTHER_TP_RAWX1			4
+#define OTHER_TP_RAWY1			5
+#define OTHER_TP_DX1			6
+#define OTHER_TP_DY1			7
+#define OTHER_TP_RAWX2			8
+#define OTHER_TP_RAWY2			9
+#define OTHER_TP_DX2			10
+#define OTHER_TP_DY2			11
+#define OTHER_TP_RSV			12
+
+#define NORMAL_HW_MENU_SIZE 	2
+
+#define NORMAL_HW_RTC_ADJUST	0
 #define NORMAL_HW_UNIQUE_ID		1
+
+#define SECURE_HW_MENU_SIZE 	6
 
 #define SECURE_HW_FORCE_DISABLE	0
 #define SECURE_HW_REGION		1
@@ -80,6 +103,8 @@
 #define SECURE_HW_LANGUAGE		3
 #define SECURE_HW_FUSE			4
 #define SECURE_HW_LAUNCHER_ID	5
+
+#define SCFG_ARM9_MENU_SIZE 	27
 
 #define SCFG_ARM9_ROM_SEC			0
 #define SCFG_ARM9_ROM_STATE			1
@@ -108,6 +133,8 @@
 #define SCFG_ARM9_TOTAL_CHECK		24
 #define SCFG_ARM9_CHECK_ERROR7		25
 #define SCFG_ARM9_CHECK_ERROR9		26
+
+#define SCFG_ARM7_MENU_SIZE 	47
 
 #define SCFG_ARM7_ROM_ARM9_SEC		0
 #define SCFG_ARM7_ROM_ARM9_RSEL		1
@@ -159,6 +186,8 @@
 
 #define SCFG_ARM7_SHARED_OFFSET		47
 
+#define SYSMENU_MENU_SIZE		10
+
 #define SYSMENU_TIMESTAMP		0
 #define SYSMENU_VERSION_NUM		1
 #define SYSMENU_VERSION_STR		2
@@ -173,33 +202,40 @@
 
 #define SYSMENU_HASH_IDX	5
 
+#define FONTMENU_SIZE			1
+
 #define FONT_TIMESTAMP		0
 #define FONT_INFO			1
+
+#define WLMENU_SIZE				3
 
 #define WL_VERSION			0
 #define WL_NUM_FW			1
 #define WL_FW_TYPE			2
 
+#define WHITEMENU_SIZE			2
+
 #define WHITE_NUM			0
 #define WHITE_HASH			1
 
+#define VERSIONMENU_SIZE 		0
+
 #define VERSION_OTHER		0
 
-// 各メニューサイズ
-#define ROOTMENU_SIZE 			15
-#define OWNERMENU_SIZE 			6
-#define PARENTALMENU_SIZE 		12
-#define SECURE_USER_MENU_SIZE	8
-#define OTHERMENU_SIZE			3
-#define NORMAL_HW_MENU_SIZE 	2
-#define SECURE_HW_MENU_SIZE 	6
-#define SCFG_ARM7_MENU_SIZE 	47
-#define SCFG_ARM9_MENU_SIZE 	27
-#define SYSMENU_MENU_SIZE		10
-#define FONTMENU_SIZE			1
-#define WLMENU_SIZE				3
-#define WHITEMENU_SIZE			2
-#define VERSIONMENU_SIZE 		0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 extern int s_numMenu[];
 extern const char *s_strRootMenu[];

@@ -130,6 +130,8 @@ void initInfo( void )
 	infoAlloc( gAllInfo[MENU_SCFG_ARM9], SCFG_ARM9_CHECK_ERROR7, DISPINFO_BUFSIZE, TRUE );
 	infoAlloc( gAllInfo[MENU_SCFG_ARM9], SCFG_ARM9_CHECK_ERROR9, DISPINFO_BUFSIZE, TRUE );
 	infoAlloc( gAllInfo[MENU_WL], WL_VERSION, DISPINFO_BUFSIZE, TRUE );
+	infoAlloc( gAllInfo[MENU_OTHER], OTHER_RTC_OFFSET, DISPINFO_BUFSIZE, TRUE);
+	infoAlloc( gAllInfo[MENU_OTHER], OTHER_TP_RSV, DISPINFO_BUFSIZE, TRUE);
 
 	
 	// utf(u16)
@@ -166,8 +168,7 @@ void infoAlloc( DispInfoEntry *p, u8 index, u8 size, BOOL isSjis )
 void getAllInfo( void )
 // 
 {
-	BOOL SCFGAccessable = FALSE;
-	BOOL fuseRomAccessable = FALSE;
+	static BOOL firstRead = TRUE;
 
 	OS_TPrintf("reflesh Information\n");
 		
@@ -178,15 +179,18 @@ void getAllInfo( void )
 	getHWInfo();
 	getSCFGInfo();
 	getSysmenuInfo();
-	getFontInfo();
-	getWhiteListInfo();
-	getWLInfo();
-	
+
+	if( firstRead ){
+		getWLInfo();
+		getWhiteListInfo();
 #if NAM_ENABLE
 	getContentsVersion();
 #endif
-	
+	}
+
+	getFontInfo();
 	printAllInfo();
+	firstRead = FALSE;
 	OS_TPrintf("reflesh information finished\n");
 }
 
