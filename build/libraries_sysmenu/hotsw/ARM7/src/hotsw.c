@@ -2101,6 +2101,7 @@ static void MonitorThread(void *arg)
  *---------------------------------------------------------------------------*/
 static void CheckCardInsert(BOOL cardExist)
 {
+    // カードは挿さっているのに、ランチャーが認識してなかったらメッセージを送る
     if(cardExist && s_isPulledOut){
         OSIntrMode enabled = OS_DisableInterrupts();
 
@@ -2115,6 +2116,21 @@ static void CheckCardInsert(BOOL cardExist)
         HotSwThreadData.idx_insert = (HotSwThreadData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
 
         (void)OS_RestoreInterrupts( enabled );
+    }
+    // カードは挿さっていて、ランチャーが認識していたらGameモードのID読みをして、抜けてないか調べる
+    else if(cardExist && !s_isPulledOut && !SYSMi_GetWork()->flags.hotsw.isBusyHotSW){
+        // カードのロック
+    	CARD_LockRom(s_CardLockID);
+
+        ReadIDGame(&s_cbData);
+
+        if(s_cbData.id_gam != s_gameID){
+			McPowerOff();
+        }
+        
+	    // カードのロック開放(※ロックIDは開放せずに持ち続ける)
+    	CARD_UnlockRom(s_CardLockID);
+        
     }
 }
 
