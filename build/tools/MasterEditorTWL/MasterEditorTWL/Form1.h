@@ -661,7 +661,7 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 #endif
 			if( appstr != nullptr)
 			{
-				this->Text += " [Supported App: " + appstr + "User ]";
+				this->Text += " [ Supported App: " + appstr + "User ]";
 			}
 
 			// 複数行表示したいが初期値で設定できないのでここで設定
@@ -709,7 +709,7 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 		/// </summary>
 		void InitializeComponent(void)
 		{
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle2 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle1 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -1271,7 +1271,7 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			// labOFLC
 			// 
 			this->labOFLC->AutoSize = true;
-			this->labOFLC->Location = System::Drawing::Point(48, 234);
+			this->labOFLC->Location = System::Drawing::Point(48, 236);
 			this->labOFLC->Name = L"labOFLC";
 			this->labOFLC->Size = System::Drawing::Size(34, 12);
 			this->labOFLC->TabIndex = 33;
@@ -1325,7 +1325,7 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			// labCERO
 			// 
 			this->labCERO->AutoSize = true;
-			this->labCERO->Location = System::Drawing::Point(48, 78);
+			this->labCERO->Location = System::Drawing::Point(47, 78);
 			this->labCERO->Name = L"labCERO";
 			this->labCERO->Size = System::Drawing::Size(36, 12);
 			this->labCERO->TabIndex = 27;
@@ -2506,7 +2506,7 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			this->tboxSDK->Name = L"tboxSDK";
 			this->tboxSDK->ReadOnly = true;
 			this->tboxSDK->ScrollBars = System::Windows::Forms::ScrollBars::Both;
-			this->tboxSDK->Size = System::Drawing::Size(175, 88);
+			this->tboxSDK->Size = System::Drawing::Size(186, 88);
 			this->tboxSDK->TabIndex = 10;
 			// 
 			// labSDK
@@ -2896,7 +2896,7 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			// labCaptionEx
 			// 
 			this->labCaptionEx->AutoSize = true;
-			this->labCaptionEx->Location = System::Drawing::Point(528, 52);
+			this->labCaptionEx->Location = System::Drawing::Point(538, 52);
 			this->labCaptionEx->Name = L"labCaptionEx";
 			this->labCaptionEx->Size = System::Drawing::Size(53, 12);
 			this->labCaptionEx->TabIndex = 11;
@@ -2904,12 +2904,12 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			// 
 			// tboxCaptionEx
 			// 
-			this->tboxCaptionEx->Location = System::Drawing::Point(530, 67);
+			this->tboxCaptionEx->Location = System::Drawing::Point(540, 67);
 			this->tboxCaptionEx->Multiline = true;
 			this->tboxCaptionEx->Name = L"tboxCaptionEx";
 			this->tboxCaptionEx->ReadOnly = true;
-			this->tboxCaptionEx->ScrollBars = System::Windows::Forms::ScrollBars::Vertical;
-			this->tboxCaptionEx->Size = System::Drawing::Size(181, 88);
+			this->tboxCaptionEx->ScrollBars = System::Windows::Forms::ScrollBars::Both;
+			this->tboxCaptionEx->Size = System::Drawing::Size(171, 88);
 			this->tboxCaptionEx->TabIndex = 10;
 			// 
 			// gboxProd
@@ -2996,7 +2996,7 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			// stripItemEnglish
 			// 
 			this->stripItemEnglish->Name = L"stripItemEnglish";
-			this->stripItemEnglish->Size = System::Drawing::Size(152, 22);
+			this->stripItemEnglish->Size = System::Drawing::Size(119, 22);
 			this->stripItemEnglish->Text = L"English";
 			this->stripItemEnglish->Click += gcnew System::EventHandler(this, &Form1::stripItemEnglish_Click);
 			// 
@@ -3005,7 +3005,7 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			this->stripItemJapanese->Checked = true;
 			this->stripItemJapanese->CheckState = System::Windows::Forms::CheckState::Checked;
 			this->stripItemJapanese->Name = L"stripItemJapanese";
-			this->stripItemJapanese->Size = System::Drawing::Size(152, 22);
+			this->stripItemJapanese->Size = System::Drawing::Size(119, 22);
 			this->stripItemJapanese->Text = L"Japanese";
 			this->stripItemJapanese->Click += gcnew System::EventHandler(this, &Form1::stripItemJapanese_Click);
 			// 
@@ -3456,8 +3456,8 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			// 
 			// gridError
 			// 
-			dataGridViewCellStyle2->BackColor = System::Drawing::Color::White;
-			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle2;
+			dataGridViewCellStyle1->BackColor = System::Drawing::Color::White;
+			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
@@ -3730,8 +3730,9 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 
 					case ECSrlResult::ERROR_SIGN_DECRYPT:
 					case ECSrlResult::ERROR_SIGN_VERIFY:
-						this->errMsg( "本ツールはTWL対応ROM専用です。不正なデータを読み込むことはできません。",
-									  "This tool can only read TWL ROM. This can't read an illegal data." );
+						this->errMsg( "不正なROMデータです。TWL対応ROMでないかROMデータが改ざんされている可能性があります。",
+									  "Illegal ROM data. It is not for TWL ROM, or is altered illegally." );
+					break;
 
 					default:
 						this->errMsg( "ROMデータファイルの読み込みに失敗しました。\n再度「ROMデータを開く」を選択してROMデータを読み出してください。", 
@@ -4711,69 +4712,69 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 		// リージョン情報からペアレンタルコントロールの編集可能団体をマスクする
 		void maskParentalForms(void)
 		{
-			this->enableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
-			this->enableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
-			this->enableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
-			this->enableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
-			this->enableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
-			this->enableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
-			this->enableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+			this->enableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO, this->labCERO, nullptr );
+			this->enableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB, this->labESRB, nullptr );
+			this->enableParental( this->combUSK,  this->cboxUSK,  this->cboxAlwaysUSK,  this->labUSK,  nullptr );
+			this->enableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI, this->labPEGI, nullptr );
+			this->enableParental( this->combPEGIPRT,  this->cboxPEGIPRT,  this->cboxAlwaysPEGIPRT,  this->labPEGIPRT,  nullptr );
+			this->enableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC, this->labPEGIBBFC, this->labPEGIBBFC2 );
+			this->enableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC, nullptr );
 			switch( this->combRegion->SelectedIndex )
 			{
 				case 0:
 					// 日本
-					this->enableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
+					this->enableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO, this->labCERO, nullptr );
 
-					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
-					this->disableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
-					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
-					this->disableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
-					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
-					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB, this->labESRB, nullptr );
+					this->disableParental( this->combUSK,  this->cboxUSK,  this->cboxAlwaysUSK,  this->labUSK,  nullptr );
+					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI, this->labPEGI, nullptr );
+					this->disableParental( this->combPEGIPRT,  this->cboxPEGIPRT,  this->cboxAlwaysPEGIPRT,  this->labPEGIPRT,  nullptr );
+					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC, this->labPEGIBBFC, this->labPEGIBBFC2 );
+					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC, nullptr );
 				break;
 
 				case 1:
 					// 米国
-					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
-					this->enableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
-					this->disableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
-					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
-					this->disableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
-					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
-					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO, this->labCERO, nullptr );
+					this->enableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB, this->labESRB, nullptr );
+					this->disableParental( this->combUSK,  this->cboxUSK,  this->cboxAlwaysUSK,  this->labUSK,  nullptr );
+					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI, this->labPEGI, nullptr );
+					this->disableParental( this->combPEGIPRT,  this->cboxPEGIPRT,  this->cboxAlwaysPEGIPRT,  this->labPEGIPRT,  nullptr );
+					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC, this->labPEGIBBFC, this->labPEGIBBFC2 );
+					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC, nullptr );
 				break;
 
 				case 2:
 					// 欧州
-					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
-					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
-					this->enableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
-					this->enableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
-					this->enableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
-					this->enableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
-					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO, this->labCERO, nullptr );
+					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB, this->labESRB, nullptr );
+					this->enableParental( this->combUSK,  this->cboxUSK,  this->cboxAlwaysUSK,  this->labUSK,  nullptr );
+					this->enableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI, this->labPEGI, nullptr );
+					this->enableParental( this->combPEGIPRT,  this->cboxPEGIPRT,  this->cboxAlwaysPEGIPRT,  this->labPEGIPRT,  nullptr );
+					this->enableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC, this->labPEGIBBFC, this->labPEGIBBFC2 );
+					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC, nullptr );
 				break;
 
 				case 3:
 					// 豪州
-					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
-					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
-					this->disableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
-					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
-					this->disableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
-					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
-					this->enableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO, this->labCERO, nullptr );
+					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB, this->labESRB, nullptr );
+					this->disableParental( this->combUSK,  this->cboxUSK,  this->cboxAlwaysUSK,  this->labUSK,  nullptr );
+					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI, this->labPEGI, nullptr );
+					this->disableParental( this->combPEGIPRT,  this->cboxPEGIPRT,  this->cboxAlwaysPEGIPRT,  this->labPEGIPRT,  nullptr );
+					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC, this->labPEGIBBFC, this->labPEGIBBFC2 );
+					this->enableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC, nullptr );
 				break;
 
 				case 4:
 					// 欧州と豪州
-					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO );
-					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB );
-					this->enableParental( this->combUSK, this->cboxUSK, this->cboxAlwaysUSK );
-					this->enableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI );
-					this->enableParental( this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT );
-					this->enableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC );
-					this->enableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC );
+					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO, this->labCERO, nullptr );
+					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB, this->labESRB, nullptr );
+					this->enableParental( this->combUSK,  this->cboxUSK,  this->cboxAlwaysUSK,  this->labUSK,  nullptr );
+					this->enableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI, this->labPEGI, nullptr );
+					this->enableParental( this->combPEGIPRT,  this->cboxPEGIPRT,  this->cboxAlwaysPEGIPRT,  this->labPEGIPRT,  nullptr );
+					this->enableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC, this->labPEGIBBFC, this->labPEGIBBFC2 );
+					this->enableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC, nullptr );
 				break;
 
 				default:
@@ -4936,19 +4937,19 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 						msg + ": 制限が有効であるにもかかわらずレーティング情報が設定されていません。",
 						"Parental Control", msg + ": Rating must be set when control is enable.", true, true ) );
 				}
-				else if( always->Checked )
+				else if( always->Checked && (comb->SelectedIndex == (comb->Items->Count - 1)) )
 				{
 					this->hWarnList->Add( gcnew RCMrcError( 
 						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
 						msg + ": Rating Pendingが指定されています。レーティング年齢が審査されしだい、再度、ROMを提出してください。",
 						"Parental Control", ": Rating Pending is setting. When rating age is examined, Please submit again.", true, true ) );
 				}
-				else if( comb->SelectedIndex == (comb->Items->Count - 1) )
+				else if( always->Checked && (comb->SelectedIndex != (comb->Items->Count - 1)) )
 				{
 					this->hErrorList->Add( gcnew RCMrcError( 
 						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
-						": Rating Pending指定とレーティング年齢を同時に指定することはできません。",
-						"Parental Control", ": Rating setting is either rating pending or rating age.", true, true ) );
+						msg + ": Rating Pending指定とレーティング年齢を同時に指定することはできません。",
+						"Parental Control", msg + ": Rating setting is either rating pending or rating age.", true, true ) );
 				}
 			}
 		} //checkParentalForms()
@@ -5961,21 +5962,41 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 		// ペアレンタルコントロール情報を編集できるようにする
 		void enableParental( System::Windows::Forms::ComboBox ^comb, 
 	                         System::Windows::Forms::CheckBox ^enable, 
-					         System::Windows::Forms::CheckBox ^rp )
+					         System::Windows::Forms::CheckBox ^rp,
+							 System::Windows::Forms::Label    ^lab1, 
+							 System::Windows::Forms::Label    ^lab2 )
 		{
-			comb->Enabled = true;
+			comb->Enabled   = true;
 			enable->Enabled = true;
-			rp->Enabled = true;
+			rp->Enabled     = true;
+			comb->Visible   = true;
+			enable->Visible = true;
+			rp->Visible     = true;
+			lab1->Visible   = true;
+			if( lab2 != nullptr )
+			{
+				lab2->Visible   = true;
+			}
 		}
 		// ペアレンタルコントロール情報を編集できなくする
 		void disableParental( System::Windows::Forms::ComboBox ^comb, 
 	                          System::Windows::Forms::CheckBox ^enable, 
-					          System::Windows::Forms::CheckBox ^rp )
+					          System::Windows::Forms::CheckBox ^rp,
+							  System::Windows::Forms::Label    ^lab1, 
+							  System::Windows::Forms::Label    ^lab2 )
 		{
 			this->clearParental( comb, enable, rp );
-			comb->Enabled = false;
+			comb->Enabled   = false;
 			enable->Enabled = false;
-			rp->Enabled = false;
+			rp->Enabled     = false;
+			comb->Visible   = false;
+			enable->Visible = false;
+			rp->Visible     = false;
+			lab1->Visible   = false;
+			if( lab2 != nullptr )
+			{
+				lab2->Visible   = false;
+			}
 		}
 	private:
 		System::Void combRegion_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e)
@@ -6324,11 +6345,6 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			this->cboxIsWirelessIcon->Checked = *(this->hSrl->hIsWirelessIcon);
 			this->setParentalForms();			// ペアレンタルコントロール関連
 		}
-
-
-
-
-
 
 }; // enf of ref class Form1
 

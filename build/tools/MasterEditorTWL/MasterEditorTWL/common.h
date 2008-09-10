@@ -19,3 +19,4 @@
 #define   METWL_MASK_REGION_KOREA       0x00000020
 #define   METWL_MASK_REGION_ALL         0xffffffff
 #define   METWL_NUMOF_SHARED2FILES		6
+#define   METWL_SEG3_CRC                0x0254

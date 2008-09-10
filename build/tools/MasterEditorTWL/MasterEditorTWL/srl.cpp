@@ -6,6 +6,7 @@
 #include "srl.h"
 #include "utility.h"
 #include "keys.h"
+#include "crc_whole.h"
 #include <acsign/include/acsign.h>
 #include <format_rom_private.h>
 #include <cstring>
@@ -162,6 +163,7 @@ ECSrlResult RCSrl::setRomInfo(void)
 	//this->hForChina   = gcnew System::Byte( this->pRomHeader->s.for_china );
 	this->hRomVersion = gcnew System::Byte( this->pRomHeader->s.rom_version );
 	this->hHeaderCRC  = gcnew System::UInt16( this->pRomHeader->s.header_crc16 );
+	this->hIsOldDevEncrypt = gcnew System::Boolean( (this->pRomHeader->s.developer_encrypt_old != 0)?true:false ); 
 
 	switch( this->pRomHeader->s.game_cmd_param & CARD_LATENCY_MASK )
 	{
@@ -658,7 +660,7 @@ ECSrlResult RCSrl::searchSDKVersion( FILE *fp )
 			}
 			if( rev > 0 )
 			{
-				revstr = "-" + rev.ToString();
+				revstr = " plus" + rev.ToString();
 			}
 			patch = patch / 100;
 			switch( relstep / 10000 )
@@ -721,7 +723,10 @@ ECSrlResult RCSrl::searchLicenses(FILE *fp)
 
 		if( spl->Length >= 2  )		// 念のため
 		{
-			this->hLicenseList->Add( gcnew RCLicense( spl[0], spl[1] ) );
+			if( !spl[1]->StartsWith("BACKUP") && !spl[1]->StartsWith("SSL") && !spl[1]->StartsWith("CPS") )
+			{
+				this->hLicenseList->Add( gcnew RCLicense( spl[0], spl[1] ) );
+			}
 			//System::Diagnostics::Debug::WriteLine( "license " + spl[0] + " " + spl[1] );
 		}
 	}
@@ -941,6 +946,18 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 			"System-Call Library", "This Library is SDK default one.", false, true ) );
 	}
 
+#if 0
+	// セグメント3のCRC
+	u16  crcseg3;
+	BOOL crcret = getSeg3CRCInFp( fp, &crcseg3 );
+	if( !crcret || (crcseg3 != METWL_SEG3_CRC) )
+	{
+		this->hErrorList->Add( gcnew RCMrcError( 
+			"セグメント3CRC", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, 
+			"セグメント3領域に誤りがあります。",
+			"System-Call Library", "This Library is SDK default one.", false, true ) );
+	}
+#endif
 	return ECSrlResult::NOERROR;
 } // mrcNTR()
 
@@ -953,7 +970,8 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 #ifdef METWL_WHETHER_PLATFORM_CHECK
 	// プラットフォームのチェック
 	if( (this->pRomHeader->s.platform_code != PLATFORM_CODE_TWL_HYBLID) && 
-		(this->pRomHeader->s.platform_code != PLATFORM_CODE_TWL_LIMITED) )
+		(this->pRomHeader->s.platform_code != PLATFORM_CODE_TWL_LIMITED) &&
+		(this->pRomHeader->s.enable_signature == 0) )
 	{
 		return ECSrlResult::ERROR_PLATFORM;
 	}
@@ -1200,6 +1218,16 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 
 	// ROMヘッダ以外の領域のチェック
 
+	if( *this->hIsOldDevEncrypt && *this->hHasDSDLPlaySign )
+	{
+		this->hErrorList->Add( gcnew RCMrcError( 
+			"クローンブート署名", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
+			"SDKがクローンブートに対応していないため、ROM出しによってデータに矛盾が生じます。任天堂窓口にご相談ください。",
+			"Clone-Boot Signature",
+			"Since SDK used by this ROM is not support for making Clone-Boot ROM, Mastering ROM will be error. Please contact with nintendo, sorry.",
+			false, true ) );
+	}
+
 	ECSrlResult pctl = this->mrcTWLParentalControl();
 	if( pctl != ECSrlResult::NOERROR )
 	{
@@ -1265,47 +1293,6 @@ ECSrlResult RCSrl::mrcTWLParentalControl(void)
 
 	// リージョンに含まれている団体/含まれていない団体の設定をチェック
 	this->mrcRegionOrganization( region );
-
-	// リージョンに含まれている団体の設定が正しいかどうか
-	if( region == METWL_MASK_REGION_JAPAN )
-	{
-		this->mrcRating( OS_TWL_PCTL_OGN_CERO );
-	}
-	if( region == METWL_MASK_REGION_AMERICA )
-	{
-		this->mrcRating( OS_TWL_PCTL_OGN_ESRB );
-	}
-	if( region == METWL_MASK_REGION_EUROPE )
-	{
-		this->mrcRating( OS_TWL_PCTL_OGN_USK );
-		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_GEN );
-		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_PRT );
-		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_BBFC );
-	}
-	if( region == METWL_MASK_REGION_AUSTRALIA )
-	{
-		this->mrcRating( OS_TWL_PCTL_OGN_OFLC );
-	}
-	if( region == (METWL_MASK_REGION_EUROPE | METWL_MASK_REGION_AUSTRALIA) )
-	{
-		this->mrcRating( OS_TWL_PCTL_OGN_USK );
-		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_GEN );
-		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_PRT );
-		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_BBFC );
-		this->mrcRating( OS_TWL_PCTL_OGN_OFLC );
-	}
-#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
-	if( region == METWL_MASK_REGION_ALL )
-	{
-		this->mrcRating( OS_TWL_PCTL_OGN_CERO );
-		this->mrcRating( OS_TWL_PCTL_OGN_ESRB );
-		this->mrcRating( OS_TWL_PCTL_OGN_USK );
-		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_GEN );
-		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_PRT );
-		this->mrcRating( OS_TWL_PCTL_OGN_PEGI_BBFC );
-		this->mrcRating( OS_TWL_PCTL_OGN_OFLC );
-	}
-#endif //#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
 
 	return ECSrlResult::NOERROR;
 } //mrcParentalControl()
@@ -1386,10 +1373,6 @@ void RCSrl::mrcRegionOrganization( System::UInt32 region )
 			break;
 		}
 	}
-	System::String ^warnEmptyJ = gcnew System::String( "レーティング審査の必要がないソフトだとみなします。審査が必要である場合には、本ツールを用いて修正してください。" );
-	System::String ^warnEmptyE = gcnew System::String( "This ROM is not necessary for CERO rating. If necessary, please set this infomation using this tool." );
-	System::String ^warnFillJ  = gcnew System::String( "リージョンに含まれない団体の情報が設定されていたため、これらの団体の情報を無視して読み込みました。本ツールを用いて修正してください。" );
-	System::String ^warnFillE  = gcnew System::String( "Some organizations is not include in the region. In reading, therefore, settings for all rating organizations are ignored. Please set this infomation using this tool." );
 
 	// リージョンに含まれる団体と含まれない団体をリスト化する
 	System::Collections::Generic::List<System::Byte> ^inList = gcnew System::Collections::Generic::List<System::Byte>();
@@ -1462,32 +1445,16 @@ void RCSrl::mrcRegionOrganization( System::UInt32 region )
 #endif //#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
 	}
 
-	// リージョンに含まれる団体に何も設定されていないときダメ
+	// リージョンに含まれる団体の情報が正しいか調べる
 	for each ( System::Byte ogn in inList )
 	{
-		if( this->pRomHeader->s.parental_control_rating_info[ ogn ] == 0 )
-		{
-			this->hWarnList->Add( gcnew RCMrcError( 
-				"ペアレンタルコントロール情報", 0x2f0, 0x2ff, ognArray[ogn] + warnEmptyJ,
-				"Parental Control", ognArray[ogn] + warnEmptyE, true, true ) );
-			this->clearParentalControl( ogn );
-		}
+		this->mrcRating( ogn );
 	}
-	// リージョンに含まれない団体に何か設定されていたらダメ
-	System::Boolean bSet = false;
+
+	// リージョンに含まれない団体の情報は無視する
 	for each ( System::Byte ogn in exList )
 	{
-		if( this->pRomHeader->s.parental_control_rating_info[ ogn ] != 0 )
-		{
-			bSet = true;
-			this->clearParentalControl( ogn );
-		}
-	}
-	if( bSet )
-	{
-		this->hWarnList->Add( gcnew RCMrcError( 
-			"ペアレンタルコントロール情報", 0x2f0, 0x2ff, warnFillJ,
-			"Parental Control", warnFillE, true, true ) );
+		this->clearParentalControl( ogn );
 	}
 } //mrcRegion
 
@@ -1544,8 +1511,8 @@ void RCSrl::mrcRating( System::Byte ogn )
 	else
 	{
 		// 間違っていたら"未審査"が返ってくる
-		System::String ^str = MasterEditorTWL::transRatingToString( 
-			ogn, true, *(this->hArrayParentalRating[ogn]), false );
+		System::String ^str = 
+			MasterEditorTWL::transRatingToString( ogn, true, *(this->hArrayParentalRating[ogn]), false );
 
 		if( *(this->hArrayParentalAlways[ogn]) == false )
 		{

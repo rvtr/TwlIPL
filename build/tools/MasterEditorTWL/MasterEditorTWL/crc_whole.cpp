@@ -76,6 +76,40 @@ namespace MasterEditorTWL
 
 	/*---------------------------------------------------------------------------*
 
+	 Name:        getSeg3CRCInFp
+
+	 Description: Segment3(0x3000-0x3fff)のCRCを算出
+
+	 Arguments:   [in]  srlファイルのファイルポインタ
+				  [out] CRC格納先
+
+	 Return:      成功ならTRUE.
+
+	 *---------------------------------------------------------------------------*/
+	BOOL getSeg3CRCInFp( FILE *fp, u16 *pCRC )
+	{
+		u16   crc;
+		u16   data[ 0x1000 / 2 ]; // 64Kバイト(512Kビット)
+
+		if( !fp )
+		{
+			return FALSE;
+		}
+
+		// CRCテーブル初期化（製品技術部のコード）
+		inittable(crc_table);
+
+		// 0x3000 から 0x3fff までの CRC をとる
+		fseek( fp, 0x3000, SEEK_SET );
+		fread( (void*)data, sizeof(data), 1, fp );
+		crc = newGetCRC( 0, data, sizeof(data) );
+		*pCRC = crc;
+
+		return TRUE;
+	}
+
+	/*---------------------------------------------------------------------------*
+
 	 Name:        getWholeCRCInFp
 
 	 Description: srlファイル全体のCRCを算出

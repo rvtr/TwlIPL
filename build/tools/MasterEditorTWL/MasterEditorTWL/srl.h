@@ -283,6 +283,7 @@ namespace MasterEditorTWL
 		property System::Boolean ^hIsNormalJump;
 		property System::Boolean ^hIsTmpJump;
 		property System::Boolean ^hHasDSDLPlaySign;	// ROMヘッダ外のSRLからわかる署名の有無
+		property System::Boolean ^hIsOldDevEncrypt;	// 旧開発用暗号フラグが立っている
 
 		// TWL拡張フラグ 一部編集可能
 		property System::Boolean ^hIsCodecTWL;
