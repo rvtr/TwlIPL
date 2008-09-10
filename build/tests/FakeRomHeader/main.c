@@ -299,13 +299,13 @@ static BOOL iMain( SContext *pContext )
                 printf( "ERROR: This option is only for NTR Limited." );
                 return FALSE;
             }
-            if( (rh.s.game_cmd_param & CARD_LATENCY_MASK) != CARD_MROM_GAME_LATENCY )
-            {
-                printf( "ERROR: This option is only for MROM Setting" );
-                return FALSE;
-            }
+            //if( (rh.s.game_cmd_param & CARD_LATENCY_MASK) != CARD_MROM_GAME_LATENCY )
+            //{
+            //    printf( "ERROR: This option is only for MROM Setting" );
+            //    return FALSE;
+            //}
             SetRomSpeedByIndex( &rh, ONETROM );
-            printf( "ROM Speed Type: MROM -> 1TROM\n" );
+            printf( "ROM Speed Type: **** -> 1TROM\n" );
         }
     }
     
