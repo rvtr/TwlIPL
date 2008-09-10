@@ -144,6 +144,8 @@ static u16                  s_bondingOp;
 
 static u32                  s_BootSegBufSize, s_SecureSegBufSize, s_Secure2SegBufSize;
 
+static u32					s_gameID;
+
 static BootSegmentData      *s_pBootSegBuffer;
 static u32                  *s_pSecureSegBuffer;
 static u32                  *s_pSecure2SegBuffer;
@@ -537,6 +539,9 @@ static HotSwState LoadCardData(void)
 
                     goto finalize;
                 }
+                else{
+					s_gameID = s_cbData.id_gam;
+                }
             }
 
             // バナーファイルの読み込み
@@ -916,6 +921,11 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
     // カードのロック
     CARD_LockRom(s_CardLockID);
 
+    ReadIDGame(&s_cbData);
+    if(s_cbData.id_gam != s_gameID){
+		state = HOTSW_GAMEMODE_ID_CHECK_ERROR;
+    }
+    
     while(size > 0 && state == HOTSW_SUCCESS){
         // --- Boot Segment
         if(src >= HOTSW_BOOTSEGMENT_AREA_OFS && src < HOTSW_KEYTABLE_AREA_OFS){
@@ -974,6 +984,13 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
         dest += sendSize;
     }
 
+    ReadIDGame(&s_cbData);
+    if(s_cbData.id_gam != s_gameID){
+        if(state == HOTSW_SUCCESS){
+        	state = HOTSW_GAMEMODE_ID_CHECK_ERROR;
+        }
+    }
+    
     // カードのアンロック
     CARD_UnlockRom(s_CardLockID);
 
@@ -1002,6 +1019,10 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
             retval = CARD_READ_MODE_ERROR;
             break;
 
+          case HOTSW_GAMEMODE_ID_CHECK_ERROR:
+            retval = CARD_READ_ID_CHECK_ERROR;
+            break;
+            
           default:
             retval = CARD_READ_UNEXPECTED_ERROR;
             break;
