@@ -27,12 +27,13 @@
 #include    "revision.h"
 #include    "keys.h"
 
-/*---------------------------------------------------------------------------*
-
-  <できていないところリスト>
-  ++ 製品版srlの実機上での動作確認
-
- *---------------------------------------------------------------------------*/
+#define	CARD_LATENCY_MASK					0x083f1fff
+#define	CARD_MROM_GAME_LATENCY				0x00010017
+#define	CARD_MROM_SECURE_HW_LATENCY			0x001808f8
+#define	CARD_MROM_SECURE_SW_LATENCY			0x051e
+#define	CARD_1TROM_GAME_LATENCY				0x00010657
+#define	CARD_1TROM_SECURE_HW_LATENCY		0x081808f8
+#define	CARD_1TROM_SECURE_SW_LATENCY		0x0d7e
 
 
 /*---------------------------------------------------------------------------*
@@ -63,7 +64,8 @@ typedef struct _SContext
     BOOL bDevFlag;
     BOOL bVerFlag;
 	int  verNum;
-	
+    BOOL bMROM;
+    
     FILE *ifp;
     FILE *ofp;
 }
@@ -73,6 +75,7 @@ SContext;
 static BOOL iMain( SContext *pContext );
 u16 CalcCRC16(u16 start, u8 *data, int size);
 BOOL SignRomHeader( ROM_Header *prh );
+static void SetRomSpeedByIndex(ROM_Header * header, tRomSpeedType idx);
 
 /*---------------------------------------------------------------------------*
 
@@ -104,6 +107,7 @@ void usage()
     printf( "-s    : negate flag for the signature in a ROM Header.\n" );
     printf( "-d    : negate a new developer encrypt flag, and assert an old one.\n" );
     printf( "-v NUM: change ROM version in a ROM Header.\n" );
+    printf( "-m    : [Only NTR limited ROM] Rom speed type replace 1TROM from MROM\n" );
 	printf( "-----------------------------------------------------------------------------\n" );
 }
 
@@ -125,7 +129,7 @@ int main(int argc, char *argv[])
     memset( &context, 0, sizeof(SContext) );
 
     // オプション
-    while( (opt = getopt(argc, argv, "hpsdv:")) >= 0 )
+    while( (opt = getopt(argc, argv, "hpsdmv:")) >= 0 )
     {
         switch( opt )
         {
@@ -149,6 +153,10 @@ int main(int argc, char *argv[])
             case 'v':
                 context.bVerFlag = TRUE;
 				context.verNum   = atoi(optarg);
+            break;
+
+            case 'm':
+                context.bMROM = TRUE;
             break;
 
             default:            // オプション引数が指定されていないときにも実行される
@@ -282,16 +290,35 @@ static BOOL iMain( SContext *pContext )
         {
             printf( "ROM version:    0x%02x -> 0x%02x\n", rh.s.rom_version, pContext->verNum );
 			rh.s.rom_version = pContext->verNum;
-			}
+		}
+		
+		if( pContext->bMROM )
+		{
+            if( rh.s.platform_code != 0x00 )
+            {
+                printf( "ERROR: This option is only for NTR Limited." );
+                return FALSE;
+            }
+            if( (rh.s.game_cmd_param & CARD_LATENCY_MASK) != CARD_MROM_GAME_LATENCY )
+            {
+                printf( "ERROR: This option is only for MROM Setting" );
+                return FALSE;
+            }
+            SetRomSpeedByIndex( &rh, ONETROM );
+            printf( "ROM Speed Type: MROM -> 1TROM\n" );
+        }
     }
     
     // ヘッダCRC計算
     rh.s.header_crc16 = CalcCRC16( CRC16_INIT_VALUE, (u8*)&rh, CALC_CRC16_SIZE );
     
     // 署名
-    if( !SignRomHeader( &rh ) )
+    if( !(pContext->bMROM) )        // NTR専用オプションのときは署名しない
     {
-        return FALSE;
+        if( !SignRomHeader( &rh ) )
+        {
+            return FALSE;
+        }
     }
 
     // ファイルをコピる
@@ -424,5 +451,29 @@ BOOL SignRomHeader( ROM_Header *prh )
 
 	return TRUE;
 } // ECSrlResult RCSrl::signRomHeader(void)
+
+
+/*---------------------------------------------------------------------------*
+
+ ROM Speed Typeの設定
+
+ *---------------------------------------------------------------------------*/
+
+static ROM_LT romSpeedTypeLatencyTable[] = {
+    {CARD_1TROM_GAME_LATENCY, CARD_1TROM_SECURE_HW_LATENCY, CARD_1TROM_SECURE_SW_LATENCY},
+    {CARD_MROM_GAME_LATENCY, CARD_MROM_SECURE_HW_LATENCY, CARD_MROM_SECURE_SW_LATENCY},
+};
+
+static void SetRomSpeedByIndex(ROM_Header * header, tRomSpeedType idx)
+{
+    ROM_LT *l = &romSpeedTypeLatencyTable[idx];
+
+    header->s.game_cmd_param &= ~CARD_LATENCY_MASK;
+    header->s.game_cmd_param |= l->game_latency;
+    header->s.secure_cmd_param &= ~CARD_LATENCY_MASK;
+    header->s.secure_cmd_param |= l->secure_hw_latency;
+    header->s.secure_cmd_latency = l->secure_sw_latency;
+}
+
 
 // end of file
