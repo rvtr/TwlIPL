@@ -1,0 +1,40 @@
+-------------------------------------------------------
+* MasterEditorTWLの別バージョンの作り方
+-------------------------------------------------------
+
+1. 新規でWindowsフォームアプリを作成。
+
+2. Form1.hとForm1.resxをプロジェクトから削除。
+   (それ以外は残す。MasterEditor_*.cppも残す。app.rcも残す。)
+
+3. 残っているファイル以外をMasterEditorTWLからこちらのプロジェクトに追加。
+   (ただしMasterEditorTWL.cppはインクルードしない。mainなので。)
+
+4. プロパティのパスをMasterEditorTWLからコピー。
+   - インクルードディレクトリ(common.hのあるディレクトリのパスを変更。)
+   - ライブラリディレクトリパス
+   - ライブラリファイル名
+
+5. clr:pure から clr に変更。
+
+6. MasterEditorTWLからresourceディレクトリをコピー
+
+7. MasterEditor_*.cppを変更。
+  - using namespace MasterEditorTWL を追加。
+  - using namespace MasterEditorTWL_* をコメントアウト。
+  - #include "Form1.h" を "../../MasterEditorTWL/MasterEditorTWL/Form1.h" に変更。
+
+8. ビルドして実行できたら成功。
+
+9. 上記の設定を Release についても行なう。
+
+
+-------------------------------------------------------
+* インストーラの作成時の注意
+-------------------------------------------------------
+
+・プロパティで必須コンポーネントを3.5から2.0に変更。
+・依存関係の .NET Framework を 2.0 に落とす。
+・manufacture と auther プロパティを nintendo に変更。
+・ProductName プロパティを MasterEditorTWL_* に変更。
+
