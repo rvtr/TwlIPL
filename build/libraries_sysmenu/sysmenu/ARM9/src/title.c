@@ -1396,7 +1396,8 @@ static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_H
 	BOOL ret = TRUE;
 	OSTitleId ntr_fake_titleID;
 	
-#ifdef DEV_WHITELIST_CHECK_SKIP
+#if 0
+// #ifdef DEV_WHITELIST_CHECK_SKIP
 	// 開発版ではハッシュチェックスルーフラグを立てる
 	if( SCFG_GetBondingOption() != 0 )
 	{
