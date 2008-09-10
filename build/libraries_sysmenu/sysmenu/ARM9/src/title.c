@@ -1485,6 +1485,18 @@ static BOOL SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 			if(!s_b_dev) {
 				// デバグ用。ERRORLOG_Init()がすでに呼ばれている事前提
 				ERRORLOG_Printf( "DHT_PAHSE1_FAILED (sub info): hash0Addr-%08x\n", hash0 );
+				if(hash0)
+				{
+					ERRORLOG_Printf( "DHT_PAHSE1_FAILED (buildtime): date : %s time : %s", __DATE__, __TIME__);
+					ERRORLOG_Printf( "DHT_PAHSE1_FAILED (sub info): hash0     - %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+					hash0[0], hash0[1], hash0[2], hash0[3], hash0[4], hash0[5], hash0[6], hash0[7], hash0[8], hash0[9],
+					hash0[10], hash0[11], hash0[12], hash0[13], hash0[14], hash0[15], hash0[16], hash0[17], hash0[18], hash0[19]);
+					ERRORLOG_Printf( "DHT_PAHSE1_FAILED (sub info): calc_hash - %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+					s_calc_hash[0], s_calc_hash[1], s_calc_hash[2], s_calc_hash[3], s_calc_hash[4],
+					s_calc_hash[5], s_calc_hash[6], s_calc_hash[7], s_calc_hash[8], s_calc_hash[9],
+					s_calc_hash[10], s_calc_hash[11], s_calc_hash[12], s_calc_hash[13], s_calc_hash[14],
+					s_calc_hash[15], s_calc_hash[16], s_calc_hash[17], s_calc_hash[18], s_calc_hash[19]);
+				}
 				UTL_SetFatalError(FATAL_ERROR_DHT_PHASE1_FAILED);
 				return FALSE;
 			}
