@@ -927,6 +927,11 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
     if(s_cbData.id_gam != s_gameID){
 		state = HOTSW_GAMEMODE_ID_CHECK_ERROR;
     }
+
+	// [Debug]
+    if(!(reg_MI_EXMEMCNT_L & REG_MI_EXMEMCNT_L_MP_MASK)){
+		state = HOTSW_BUS_LOCK_ERROR;
+    }
     
     while(size > 0 && state == HOTSW_SUCCESS){
         // --- Boot Segment
@@ -1024,6 +1029,10 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
 
           case HOTSW_GAMEMODE_ID_CHECK_ERROR:
             retval = CARD_READ_ID_CHECK_ERROR;
+            break;
+
+          case HOTSW_BUS_LOCK_ERROR:
+            retval = CARD_READ_BUS_LOCK_ERROR;
             break;
             
           default:

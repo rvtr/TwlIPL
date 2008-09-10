@@ -44,6 +44,7 @@ typedef enum CardDataReadState {
     CARD_READ_MODE_ERROR,
     CARD_READ_BUSY,
     CARD_READ_ID_CHECK_ERROR,
+    CARD_READ_BUS_LOCK_ERROR,
     CARD_READ_UNEXPECTED_ERROR
 }
 CardDataReadState;
