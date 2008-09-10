@@ -539,10 +539,6 @@ static HotSwState LoadCardData(void)
 
                     goto finalize;
                 }
-                // [Debug]
-                else{
-					s_gameID = s_cbData.id_gam;
-                }
             }
 
             // バナーファイルの読み込み
@@ -1665,6 +1661,9 @@ static void HotSwThread(void *arg)
             if(HOTSW_IsCardExist()){
                 if(!s_isPulledOut){
                     if(GetMcSlotMode() == SLOT_STATUS_MODE_10){
+                        // [Debug]
+						s_gameID = s_cbData.id_gam;
+                        
                         LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 
                         if( msg->ctrl && msg->value ){
@@ -2130,7 +2129,6 @@ static void CheckCardInsert(BOOL cardExist)
         
 	    // カードのロック開放(※ロックIDは開放せずに持ち続ける)
     	CARD_UnlockRom(s_CardLockID);
-        
     }
 }
 
