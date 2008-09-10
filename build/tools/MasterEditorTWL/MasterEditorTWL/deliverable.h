@@ -2,9 +2,10 @@
 
 // ‘—ŞƒNƒ‰ƒX‚ÌéŒ¾
 
-#include "common.h"
+#include <apptype.h>
 #include <twl/types.h>
 #include <twl/os/common/format_rom.h>
+#include <apptype.h>
 #include "common.h"
 #include "srl.h"
 

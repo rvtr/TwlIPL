@@ -1,6 +1,7 @@
 // crc_whole.h ‚ÌŽÀ‘•
 
 #include "stdafx.h"
+#include <apptype.h>
 #include "common.h"
 #include "crc_whole.h"
 #include <cstring>

@@ -1,11 +1,5 @@
 #pragma once
 
-// ビルドスイッチ
-//#define METWL_VER_APPTYPE_USER
-#define METWL_VER_APPTYPE_SYSTEM
-//#define METWL_VER_APPTYPE_SECURE
-//#define METWL_VER_APPTYPE_LAUNCHER
-
 //#define   METWL_WHETHER_PLATFORM_CHECK	// プラットフォームがTWL対応以外かどうかをチェックする
 //#define   METWL_WHETHER_SIGN_DECRYPT		// 署名を外してダイジェストをベリファイする
 #define   METWL_WHETHER_MRC					// MRC機能を含めるか

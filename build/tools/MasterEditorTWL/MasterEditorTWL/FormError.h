@@ -1,5 +1,6 @@
 #pragma once
 
+#include <apptype.h>
 #include "common.h"
 #include "srl.h"
 

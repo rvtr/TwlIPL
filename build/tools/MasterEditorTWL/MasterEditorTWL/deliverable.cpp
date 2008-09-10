@@ -1,6 +1,7 @@
 // deliverable.h ‚ÌƒNƒ‰ƒXÀ‘•
 
 #include "stdafx.h"
+#include <apptype.h>
 #include "common.h"
 #include "srl.h"
 #include "deliverable.h"

@@ -1,6 +1,7 @@
 // srl.h のクラス実装
 
 #include "stdafx.h"
+#include <apptype.h>
 #include "common.h"
 #include "srl.h"
 #include "utility.h"
@@ -42,6 +43,7 @@ ECSrlResult RCSrl::readFromFile( System::String ^filename )
 	FILE       *fp = NULL;
 	const char *pchFilename = 
 		(const char*)System::Runtime::InteropServices::Marshal::StringToHGlobalAnsi( filename ).ToPointer();
+	ECSrlResult r;
 
 	// ファイルを開いてROMヘッダのみ読み出す
 	if( fopen_s( &fp, pchFilename, "rb" ) != NULL )
@@ -56,18 +58,6 @@ ECSrlResult RCSrl::readFromFile( System::String ^filename )
 		return (ECSrlResult::ERROR_FILE_READ);
 	}
 	{
-		ECSrlResult      r;
-
-#ifdef METWL_WHETHER_SIGN_DECRYPT
-		// 署名チェック
-		r = this->decryptRomHeader();
-		if( r != ECSrlResult::NOERROR )
-		{
-			(void)fclose(fp);
-			return r;
-		}
-#endif //#ifdef METWL_WHETHER_SIGN_DECRYPT
-
 		// ファイルを閉じる前にROMヘッダ以外の領域から設定を取り出す
 		(void)this->hasDSDLPlaySign( fp );
 		r = this->searchSDKVersion( fp );
@@ -86,6 +76,16 @@ ECSrlResult RCSrl::readFromFile( System::String ^filename )
 
 	// ROMヘッダの値をROM固有情報フィールドに反映させる
 	(void)this->setRomInfo();
+
+#ifdef METWL_WHETHER_SIGN_DECRYPT
+	// ひととおり読んだあとに署名チェック
+	r = this->decryptRomHeader();
+	if( r != ECSrlResult::NOERROR )
+	{
+		(void)fclose(fp);
+		return r;
+	}
+#endif //#ifdef METWL_WHETHER_SIGN_DECRYPT
 
 	// すべて設定したあとにMRC
 	{
@@ -429,9 +429,11 @@ ECSrlResult RCSrl::signRomHeader(void)
 	SignatureData   signSrc;						// 署名のもととなるダイジェスト値
 	u8              signDst[ RSA_KEY_LENGTH ];		// 署名の格納先Tmpバッファ
 	u8              decryptBlock[ RSA_KEY_LENGTH ];	// 署名を解除後ブロックバッファ
-	BOOL            result;
+	BOOL            result = false;
 	ROM_Header      rh;
 	int             pos;
+	u8              *privateKey = (u8*)g_devPrivKey_DER;
+	u8              *publicKey  = (u8*)g_devPubKey_DER;
 
 	// ROMヘッダのダイジェストを算出(先頭から証明書領域の直前までが対象)
 	ACSign_DigestUnit(
@@ -440,15 +442,47 @@ ECSrlResult RCSrl::signRomHeader(void)
 		(u32)&(rh.certificate) - (u32)&(rh)		// this->pRomHeader はマネージヒープ上にあるので実アドレスを取得できない
 	);
 
+	// 鍵を選ぶ
+#ifdef METWL_VER_APPTYPE_LAUNCHER
+	if( *this->hIsAppLauncher )
+	{
+		privateKey = (u8*)g_devPrivKey_DER_launcher;
+		publicKey  = (u8*)g_devPubKey_DER_launcher;
+	}
+	else
+#endif //METWL_VER_APPTYPE_LAUNCHER
+#ifdef METWL_VER_APPTYPE_SECURE
+	if( *this->hIsAppSecure )
+	{
+		privateKey = (u8*)g_devPrivKey_DER_secure;
+		publicKey  = (u8*)g_devPubKey_DER_secure;
+	}
+	else
+#endif //METWL_VER_APPTYPE_SECURE
+#ifdef METWL_VER_APPTYPE_SYSTEM
+	if( *this->hIsAppSystem )
+	{
+		privateKey = (u8*)g_devPrivKey_DER_system;
+		publicKey  = (u8*)g_devPubKey_DER_system;
+	}
+	else
+#endif //METWL_VER_APPTYPE_SYSTEM
+#ifdef METWL_VER_APPTYPE_USER
+	{
+		privateKey = (u8*)g_devPrivKey_DER;
+		publicKey  = (u8*)g_devPubKey_DER;
+	}
+#endif //METWL_VER_APPTYPE_USER
+
 	// ダイジェストに署名をかける
-	result = ACSign_Encrypto( signDst, g_devPrivKey_DER, &signSrc, sizeof(SignatureData) ); 
+	result = ACSign_Encrypto( signDst, privateKey, &signSrc, sizeof(SignatureData) ); 
 	if( !result )
 	{
 		return (ECSrlResult::ERROR_SIGN_ENCRYPT);
 	}
 
 	// 署名を解除してダイジェストと一致するかベリファイする
-	result = ACSign_Decrypto( decryptBlock, g_devPubKey_DER, signDst, RSA_KEY_LENGTH );
+	result = ACSign_Decrypto( decryptBlock, publicKey, signDst, RSA_KEY_LENGTH );
 	for( pos=0; pos < RSA_KEY_LENGTH; pos++ )
 	{
 		if( decryptBlock[pos] == 0x0 )			// 解除後ブロックから実データをサーチ
@@ -473,14 +507,43 @@ ECSrlResult RCSrl::decryptRomHeader(void)
 	u8     original[ RSA_KEY_LENGTH ];	// 署名外した後のデータ格納先
 	s32    pos = 0;						// ブロックの先頭アドレス
 	u8     digest[ DIGEST_SIZE_SHA1 ];	// ROMヘッダのダイジェスト
+	u8    *publicKey = (u8*)g_devPubKey_DER;
 	ROM_Header rh;
 
 	// <データの流れ>
 	// (1) 公開鍵で復号した結果(ブロック)をローカル変数(original)に格納
 	// (2) ブロックから余分な部分を取り除いて引数(pDst)にコピー
 
+	// 鍵を選ぶ
+#ifdef METWL_VER_APPTYPE_LAUNCHER
+	if( *this->hIsAppLauncher )
+	{
+		publicKey  = (u8*)g_devPubKey_DER_launcher;
+	}
+	else
+#endif //METWL_VER_APPTYPE_LAUNCHER
+#ifdef METWL_VER_APPTYPE_SECURE
+	if( *this->hIsAppSecure )
+	{
+		publicKey  = (u8*)g_devPubKey_DER_secure;
+	}
+	else
+#endif //METWL_VER_APPTYPE_SECURE
+#ifdef METWL_VER_APPTYPE_SYSTEM
+	if( *this->hIsAppSystem )
+	{
+		publicKey  = (u8*)g_devPubKey_DER_system;
+	}
+	else
+#endif //METWL_VER_APPTYPE_SYSTEM
+#ifdef METWL_VER_APPTYPE_USER
+	{
+		publicKey  = (u8*)g_devPubKey_DER;
+	}
+#endif //METWL_VER_APPTYPE_USER
+
 	// 署名の解除 = 公開鍵で復号
-	if( !ACSign_Decrypto( original, g_devPubKey_DER, this->pRomHeader->signature, RSA_KEY_LENGTH ) )
+	if( !ACSign_Decrypto( original, publicKey, this->pRomHeader->signature, RSA_KEY_LENGTH ) )
 	{
 		return ECSrlResult::ERROR_SIGN_DECRYPT;
 	}
@@ -991,6 +1054,8 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		const int appSystem   = 1;
 		const int appSecure   = 2;
 		const int appLauncher = 3;
+		System::String ^appstrJ = gcnew System::String("");
+		System::String ^appstrE = gcnew System::String("");
 
 		idH = this->pRomHeader->s.titleID_Hi;
 		memcpy( idL, &(this->pRomHeader->s.titleID_Lo[0]), 4 );
@@ -998,18 +1063,26 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		if( (idL[3]=='H') && (idL[2]=='N') && (idL[1]=='A') )   // ランチャアプリかどうかはTitleID_Loの値で決定
 		{
 			apptype = appLauncher;
+			appstrJ = "ランチャーアプリ";
+			appstrE = "Launcher-App.";
 		}
 		else if( idH & TITLE_ID_HI_SECURE_FLAG_MASK )           // 立ってたらセキュアアプリ
 		{
 			apptype = appSecure;
+			appstrJ = "セキュアアプリ";
+			appstrE = "Secure-App.";
 		}
 		else if( (idH & TITLE_ID_HI_APP_TYPE_MASK) == 1 )       // 立ってたらシステムアプリ
 		{
 			apptype = appSystem;
+			appstrJ = "システムアプリ";
+			appstrE = "System-App.";
 		}
 		else if( (idH & TITLE_ID_HI_APP_TYPE_MASK) == 0 )       // 残るはユーザアプリ
 		{
 			apptype = appUser;
+			appstrJ = "ユーザアプリ";
+			appstrE = "User-App.";
 		}
 		else
 		{
@@ -1022,38 +1095,43 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 				"アプリ種別", 0x230, 0x237, "不正な値です。",
 				"Application Type", "Illigal type.", false, true ) );
 		}
-#ifdef METWL_VER_APPTYPE_USER
-		if( apptype != appUser )
-		{
-			this->hWarnList->Add( gcnew RCMrcError( 
-				"アプリ種別", 0x230, 0x237, "ユーザアプリではありません。",
-				"Application Type", "Not USER application.", false, true ) );
-		}
-#endif
-#ifdef METWL_VER_APPTYPE_SYSTEM
-		if( apptype != appSystem )
-		{
-			this->hWarnList->Add( gcnew RCMrcError( 
-				"アプリ種別", 0x230, 0x237, "システムアプリではありません。",
-				"Application Type", "Not SYSTEM application.", false, true ) );
-		}
-#endif
-#ifdef METWL_VER_APPTYPE_SECURE
-		if( apptype != appSecure )
-		{
-			this->hWarnList->Add( gcnew RCMrcError( 
-				"アプリ種別", 0x230, 0x237, "セキュアアプリではありません。",
-				"Application Type", "Not SECURE application.", false, true ) );
-		}
-#endif
+
+		System::Boolean bApp = false;
 #ifdef METWL_VER_APPTYPE_LAUNCHER
-		if( apptype != appLauncher )
+		if( apptype == appLauncher )
+		{
+			bApp = true;
+		}
+		else
+#endif //#ifdef METWL_VER_APPTYPE_LAUNCHER
+#ifdef METWL_VER_APPTYPE_SECURE
+		if( apptype == appSecure )
+		{
+			bApp = true;
+		}
+		else
+#endif //#ifdef METWL_VER_APPTYPE_SECURE
+#ifdef METWL_VER_APPTYPE_SYSTEM
+		if( apptype == appSystem )
+		{
+			bApp = true;
+		}
+		else
+#endif //#ifdef METWL_VER_APPTYPE_SYSTEM
+#ifdef METWL_VER_APPTYPE_USER
+		if( apptype == appUser )
+		{
+			bApp = true;
+		}
+#endif //#ifdef METWL_VER_APPTYPE_USER
+
+		if( !bApp )
 		{
 			this->hWarnList->Add( gcnew RCMrcError( 
-				"アプリ種別", 0x230, 0x237, "ランチャーアプリではありません。",
-				"Application Type", "Not LAUNCHER application.", false, true ) );
+				"アプリ種別", 0x230, 0x237, "このROMデータは" + appstrJ + "です。本プログラムでは非対応です。",
+				"Application Type", "This ROM is " + appstrE + " which is unsurpported by this editor.", false, true ) );
 		}
-#endif
+
 	} // アプリ種別のチェック
 
 	if( (this->pRomHeader->s.access_control.game_card_on != 0) &&

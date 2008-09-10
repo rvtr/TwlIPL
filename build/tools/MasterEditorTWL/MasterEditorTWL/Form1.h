@@ -1,5 +1,6 @@
 #pragma once
 
+#include <apptype.h>
 #include "common.h"
 #include "srl.h"
 #include "deliverable.h"
@@ -648,15 +649,21 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 #endif
 
 			// アプリ種別をつける
-#ifdef METWL_VER_APPTYPE_SYSTEM
-			this->Text += " [FOR SYSTEM APPLICATION]";
+			System::String ^appstr = nullptr;
+#ifdef METWL_VER_APPTYPE_LAUNCHER
+			appstr += "Launcher/";
 #endif
 #ifdef METWL_VER_APPTYPE_SECURE
-			this->Text += " [FOR SECURE APPLICATION]";
+			appstr += "Secure/";
 #endif
-#ifdef METWL_VER_APPTYPE_LAUNCHER
-			this->Text += " [FOR LAUNCHER APPLICATION]";
+#ifdef METWL_VER_APPTYPE_SYSTEM
+			appstr += "System/";
 #endif
+			if( appstr != nullptr)
+			{
+				this->Text += " [Supported App: " + appstr + "User ]";
+			}
+
 			// 複数行表示したいが初期値で設定できないのでここで設定
 			this->tboxGuideRomEditInfo->Text  = "このタブの情報は提出確認書およびマスターROMの作成に必要です。編集してください。";
 			this->tboxGuideRomEditInfo->Text += "\r\nこれらの情報はマスターROMの作成時にROMデータの中に登録されます。";

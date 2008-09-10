@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="C:\twlsdk\build\tools\makerom.TWL;C:\twlsdk\include"
+				AdditionalIncludeDirectories="C:\twlsdk\build\tools\makerom.TWL;C:\twlsdk\include;&quot;C:\Documents and Settings\nishikawa_takeshi\My Documents\Visual Studio 2008\Projects\MasterEditorTWL_Common\user&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
@@ -62,7 +62,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="libacsign_X86.a libaes_X86.a libdigest_X86.a libflags_X86.a $(NOINHERIT)"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\flags\lib\X86;C:\twlsdk\build\tools\makerom.TWL\digest\lib\X86;C:\twlsdk\build\tools\makerom.TWL\aes\lib\X86;C:\twlsdk\build\tools\makerom.TWL\acsign\lib\X86"
+				AdditionalLibraryDirectories="&quot;C:\Documents and Settings\nishikawa_takeshi\My Documents\Visual Studio 2008\Projects\MasterEditorTWL_Common\flags\lib\X86&quot;;C:\twlsdk\build\tools\makerom.TWL\digest\lib\X86;C:\twlsdk\build\tools\makerom.TWL\aes\lib\X86;C:\twlsdk\build\tools\makerom.TWL\acsign\lib\X86"
 				GenerateDebugInformation="true"
 				AssemblyDebug="1"
 				SubSystem="2"
@@ -117,7 +117,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="C:\twlsdk\build\tools\makerom.TWL;C:\twlsdk\include"
+				AdditionalIncludeDirectories="&quot;C:\Documents and Settings\nishikawa_takeshi\My Documents\Visual Studio 2008\Projects\MasterEditorTWL_Common\user&quot;;C:\twlsdk\build\tools\makerom.TWL;C:\twlsdk\include"
 				PreprocessorDefinitions="WIN32;NDEBUG"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="2"
@@ -137,7 +137,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="libacsign_X86.a libaes_X86.a libdigest_X86.a libflags_X86.a $(NoInherit)"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\flags\lib\X86;C:\twlsdk\build\tools\makerom.TWL\digest\lib\X86;C:\twlsdk\build\tools\makerom.TWL\aes\lib\X86;C:\twlsdk\build\tools\makerom.TWL\acsign\lib\X86"
+				AdditionalLibraryDirectories="&quot;C:\Documents and Settings\nishikawa_takeshi\My Documents\Visual Studio 2008\Projects\MasterEditorTWL_Common\flags\lib\X86&quot;;C:\twlsdk\build\tools\makerom.TWL\digest\lib\X86;C:\twlsdk\build\tools\makerom.TWL\aes\lib\X86;C:\twlsdk\build\tools\makerom.TWL\acsign\lib\X86"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				EntryPointSymbol="main"
