@@ -539,6 +539,7 @@ static HotSwState LoadCardData(void)
 
                     goto finalize;
                 }
+                // [Debug]
                 else{
 					s_gameID = s_cbData.id_gam;
                 }
@@ -921,6 +922,7 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
     // カードのロック
     CARD_LockRom(s_CardLockID);
 
+    // [Debug]
     ReadIDGame(&s_cbData);
     if(s_cbData.id_gam != s_gameID){
 		state = HOTSW_GAMEMODE_ID_CHECK_ERROR;
@@ -984,6 +986,7 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
         dest += sendSize;
     }
 
+    // [Debug]
     ReadIDGame(&s_cbData);
     if(s_cbData.id_gam != s_gameID){
         if(state == HOTSW_SUCCESS){
@@ -1730,6 +1733,9 @@ static void PulledOutSequence(void)
 
     s_isPulledOut = TRUE;
 
+	// [Debug]
+    s_gameID = 0;
+    
     // ワンセグのスリープ時シャットダウン対策を戻す
     MCU_EnableDeepSleepToPowerLine( MCU_PWR_LINE_33, TRUE );
 }
