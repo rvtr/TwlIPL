@@ -1,0 +1,40 @@
+
+やたら項目が多いように見えますが、慣れれば1分かからないのでご安心を。
+
+
+１．AppliCooperation A B C をそれぞれインポートする
+
+２．A を起動
+
+３．Set Parameter で適当に文字をセット
+
+４．Launch CooperationB で B へジャンプ
+　　※ この時、＊マークの位置と Set Parameter にセットされている文字を覚えておく
+
+５．Received Parameter に先ほどセットした文字が入っているのを確認
+
+６．Launch Former App で A へリターン
+
+７．A に戻ったとき、４．の時点での状態で復帰しているのを確認（＊の位置と Set Parameter にセットされている文字）
+
+８．Return app test で B へリターン
+
+９．Received Parameter に何も無いことを確認
+
+１０．Launch Former App で A へリターン
+
+１１．A に戻ったとき、４．の時点での状態で復帰しているのを確認（＊の位置と Set Parameter にセットされている文字）
+
+１２．launch C test で C へジャンプ
+
+１３．Return app test で A へリターン
+
+１４．A が初期状態で起動している事を確認して、 Return app test で C へリターン
+
+１５．C から launch C test で C へジャンプ
+
+１６．C から Return app test で C へリターン
+
+１７．A を使って行った３．～１１．の手順を C で行う（ただし、 A の＊マークは C では＄マークになっている）
+
+以上

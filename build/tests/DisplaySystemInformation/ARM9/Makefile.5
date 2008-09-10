@@ -1,0 +1,151 @@
+#/*---------------------------------------------------------------------------*
+#  Project:  TwlIPL - tests - DisplaySystemInformation
+#  File:     makefile
+#
+#  Copyright **** Nintendo.  All rights reserved.
+#
+#  These coded instructions, statements, and computer programs contain
+#  proprietary information of Nintendo of America Inc. and/or Nintendo
+#  Company Ltd., and are protected by Federal copyright law.  They may
+#  not be disclosed to third parties or copied or duplicated in any form,
+#  in whole or in part, without the prior written consent of Nintendo.
+#
+#  $Date::            $
+#  $Rev$
+#  $Author$
+# *---------------------------------------------------------------------------*/
+TARGET_FIRM	= SYSTEMMENU
+TARGET_PLATFORM	=	TWL
+TWL_ARCHGEN   = LIMITED
+
+######################################
+FILE_IDX	=	5
+IS_SECURE_APP	=	FALSE
+IS_NAND_APP	=	TRUE
+NAND_ACCESS	=	TRUE
+AES_SLOT	=	DONTCARE
+INVISIBLE_SCFG	=	FALSE
+GAMECODE	=	021A
+######################################
+
+ROM_HEADER_TEMPLATE		=	$(SYSMENU_ROM_HEADER_DIR)/$(GAMECODE)/rom_header_$(call toLower,$(GAMECODE)).template.sbin
+LIBSYSCALL				=	$(SYSMENU_ROM_HEADER_DIR)/$(GAMECODE)/libsyscall.a
+
+
+MACRO_FLAGS	+=	-DNAM_ENABLE=$(IS_SECURE_APP) -DDISPINFO_BIN_IDX=$(FILE_IDX)
+TWL_NANDAPP	=	$(IS_NAND_APP)
+
+DISP_INFO	= $(call eupath,$(TWL_IPL_RED_ROOT)/build/tests/DisplaySystemInformation)
+
+SUBDIRS          =
+
+MISC_DIR	=	../../../systemMenu_RED/misc
+
+SRCS			=	main.c viewSystemInfo.c drawFunc.c control.c\
+				strResource.c misc.c util.c\
+				get_versionData.c get_sysmenu.c get_scfg.c get_owner.c\
+				get_hw.c get_parental.c get_other.c\
+				get_secureUser.c get_font.c get_wl.c get_whitelist.c\
+				$(MISC_DIR)/src/cmn.c
+
+LINCLUDES		+=	$(MISC_DIR)/include \
+					$(DISP_INFO)/common/include	\
+					$(ES_ROOT)/twl/include
+
+TARGET_BIN		=	DispInfo_$(FILE_IDX).$(FILE_SUFFIX)
+
+SYSMENU_LIBS			=	\
+							liblcfg$(TWL_LIBSUFFIX).a \
+							libsysmenu$(TWL_LIBSUFFIX).a \
+							libsysmmcu$(TWL_LIBSUFFIX).a \
+							libsysmutil$(TWL_LIBSUFFIX).a \
+							libboot$(TWL_LIBSUFFIX).a \
+							libds$(TWL_LIBSUFFIX).a \
+							libhotsw$(TWL_LIBSUFFIX).a \
+							libdht$(TWL_LIBSUFFIX).a \
+							libreloc_info$(TWL_LIBSUFFIX).a \
+							libnamut$(TWL_LIBSUFFIX).a \
+							libsharedfont_launcher$(TWL_LIBSUFFIX).a \
+							WDS$(TWL_LIBSUFFIX).a
+
+SDK_APPEND_LIBS		=		\
+							libes$(TWL_LIBSUFFIX).a		\
+							libboc$(TWL_LIBSUFFIX).a	\
+							libsfs$(TWL_LIBSUFFIX).a	\
+							libnam$(TWL_LIBSUFFIX).a	\
+							libsea$(TWL_LIBSUFFIX).a	\
+							libreboot$(TWL_LIBSUFFIX).a	\
+							libna$(TWL_LIBSUFFIX).a
+
+LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
+
+
+
+#=============================================================================
+
+include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+
+
+ifeq ($(IS_SECURE_APP),TRUE)
+	DEFAULT_COMP_ARM7	=	armadillo
+	WRAM_MAP		=	MAP_TS_SCR
+	APPTYPE			=	SYSTEM
+	MAKEROM			=	$(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
+	ROM_SPEC		=	main_secure.rsf
+	MAKETAD_OPTION		+=	-s
+else
+	WRAM_MAP		=	$(MAKEROM_WRAM_MAPPING)
+	DEFAULT_COMP_ARM7	=	racoon
+	APPTYPE			=	USER
+	ROM_SPEC		=	main_normal.rsf
+endif
+
+ifeq ($(IS_NAND_APP),TRUE)
+	MEDIA		=	NAND
+	FILE_SUFFIX	=	tad
+	BANNARPATH	=	../banner/$(GAMECODE).bnr
+else
+	MEDIA		=	GAMECARD
+	FILE_SUFFIX	=	srl
+	BANNARPATH	=	$(TWLSDK_ROOT)/include/twl/specfiles/default.bnr
+endif
+
+ifeq ($(INVISIBLE_SCFG),TRUE)
+	SCFG_SUFFIX	=	LockSCFG
+else
+	SCFG_SUFFIX	=	UnlockSCFG
+endif
+
+BINDIR			= 	./bin/$(TWL_BUILDTYPE)/DispInfo_$(FILE_IDX)
+OBJDIR			=	./obj/$(TWL_BUILDTYPE)/DispInfo_$(FILE_IDX)
+
+
+MAKEROM_FLAGS		+=	-DDISPINFO_WRAM_MAP=$(WRAM_MAP)	\
+				-DDISPINFO_APPTYPE=$(APPTYPE)	\
+				-DDISPINFO_SECURE=$(IS_SECURE_APP)	\
+				-DDISPINFO_MEDIA=$(MEDIA)	\
+				-DDISPINFO_NANDACCESS=$(NAND_ACCESS)	\
+				-DDISPINFO_LOCKSCFG=$(INVISIBLE_SCFG)	\
+				-DDISPINFO_AES=$(AES_SLOT)	\
+				-DDISPINFO_GAMECODE=$(GAMECODE)	\
+				-DDISPINFO_BANNERPATH=$(BANNARPATH)	\
+				-DROM_HEADER_TEMPLATE='$(call empath,$(ROM_HEADER_TEMPLATE))'
+
+
+DEFAULT_MAKEROM_ARM7_BASE	= ../ARM7_$(DEFAULT_COMP_ARM7)/bin/$(TWL_BUILDTYPE_ARM7)/$(DEFAULT_COMP_ARM7)
+DEFAULT_MAKEROM_ARM7		= $(DEFAULT_MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
+
+
+#----------------------------------------------------------------------------
+do-build:		$(TARGETS)
+
+#----------------------------------------------------------------------------
+
+
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+#include $(TWLSDK_ROOT)/build/buildtools/modulerules
+#include $(TWL_IPL_RED_ROOT)/build/tests/RelocateChecker/buildtools/modulerules
+
+
+#===== End of Makefile =====

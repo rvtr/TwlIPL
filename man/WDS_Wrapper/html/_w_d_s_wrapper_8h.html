@@ -1,0 +1,563 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<title>WDSWrapper: include/WDSWrapper.h</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+<link href="tabs.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- 作成： Doxygen 1.5.6 -->
+<div class="navigation" id="top">
+  <div class="tabs">
+    <ul>
+      <li><a href="index.html"><span>メインページ</span></a></li>
+      <li><a href="classes.html"><span>データ構造</span></a></li>
+      <li class="current"><a href="files.html"><span>ファイル</span></a></li>
+    </ul>
+  </div>
+</div>
+<div class="contents">
+<h1>include/WDSWrapper.h</h1><code>#include &quot;WDS.h&quot;</code><br>
+<table border="0" cellpadding="0" cellspacing="0">
+<tr><td></td></tr>
+<tr><td colspan="2"><br><h2>データ構造</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_w_d_s_wrapper_initialize_param.html">WDSWrapperInitializeParam</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">WDS_WrapperInitialize関数に与える初期化パラメータ  <a href="struct_w_d_s_wrapper_initialize_param.html#_details">[詳細]</a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">struct &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_w_d_s_wrapper_callback_param.html">WDSWrapperCallbackParam</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">WDSラッパーが呼び出すコールバック関数に与えられる引数用の構造体  <a href="struct_w_d_s_wrapper_callback_param.html#_details">[詳細]</a><br></td></tr>
+<tr><td colspan="2"><br><h2>マクロ定義</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#3e27e22a709bb62c707b2c6ece34b79d">WDSWRAPPER_STACKSIZE</a>&nbsp;&nbsp;&nbsp;4096</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">WDSラッパーが使用するスレッドスタックの推奨サイズ  <a href="#3e27e22a709bb62c707b2c6ece34b79d"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#df62a1095c124ff7ed3f8bcc0cd0e79f">WDSWRAPPER_SCANPERIOD</a>&nbsp;&nbsp;&nbsp;3000</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">WDSラッパーがスキャンを継続する時間[msec]  <a href="#df62a1095c124ff7ed3f8bcc0cd0e79f"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">#define&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#79088e3207784ca6f790938a0da75140">WDSWRAPPER_WAITPERIOD</a>&nbsp;&nbsp;&nbsp;3000</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">WDSラッパーがスキャンを中断する時間[msec]  <a href="#79088e3207784ca6f790938a0da75140"></a><br></td></tr>
+<tr><td colspan="2"><br><h2>型定義</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">typedef void(*&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#8370c52f5fc54099274aea1188a1bb25">WDSWrapperCallbackFunc</a> )(void *arg)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">WDSWrapperライブラリが使用するコールバック関数型  <a href="#8370c52f5fc54099274aea1188a1bb25"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">typedef void *(*&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#e92702d8529bfd419ac81648fd75092b">WDSWrapperAlloc</a> )(u32 size)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">WDSラッパー内部で使用するアロケーター型  <a href="#e92702d8529bfd419ac81648fd75092b"></a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">typedef void(*&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#c372630f28c9599a6df9e686e5f0af38">WDSWrapperFree</a> )(void *ptr)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">WDSラッパー内部で使用するアロケーター型  <a href="#c372630f28c9599a6df9e686e5f0af38"></a><br></td></tr>
+<tr><td colspan="2"><br><h2>列挙型</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">WDSWrapperErrCode</a> { <br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265cafb2d50d5d157af646452b155bfc53b">WDSWRAPPER_ERRCODE_SUCCESS</a> =  0, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db407226523f0087e3df9dbd5e69c2e2bdecdb976">WDSWRAPPER_ERRCODE_FAILURE</a> =  1, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db40722654b4eed4bfee309504bc05cc15324f5ed">WDSWRAPPER_ERRCODE_OPERATING</a> =  2, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265b2058b441ae4131ed4dd869ee9c82278">WDSWRAPPER_ERRCODE_INITIALIZED</a> =  3, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265a280d087d837e10b13fdf61721cfe069">WDSWRAPPER_ERRCODE_UNINITIALIZED</a> =  4
+<br>
+ }</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">処理結果をあらわす列挙型  <a href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">[詳細]</a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#7b75a8b054675640f391f3fc5bae97e1">WDSWrapperCallback</a> { <br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#7b75a8b054675640f391f3fc5bae97e11330cb7b6f29efd80d1de157f0220734">WDSWRAPPER_CALLBACK_INITIALIZE</a> =  0, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#7b75a8b054675640f391f3fc5bae97e1b319af0ab6104be1c2764c1589760243">WDSWRAPPER_CALLBACK_CLEANUP</a> =  1, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#7b75a8b054675640f391f3fc5bae97e1d6e797e7adb1af3f5a5cc1bb45aa0cec">WDSWRAPPER_CALLBACK_STARTSCAN</a> =  2, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#7b75a8b054675640f391f3fc5bae97e1aa7e918e0bb4e333760c99ecd381949f">WDSWRAPPER_CALLBACK_STARTSCAN2</a> =  3, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#7b75a8b054675640f391f3fc5bae97e15b05dd0e64de0ee7f1c5da416516742b">WDSWRAPPER_CALLBACK_STOPSCAN</a> =  4
+<br>
+ }</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">コールバック発生要因をあらわす列挙型  <a href="_w_d_s_wrapper_8h.html#7b75a8b054675640f391f3fc5bae97e1">[詳細]</a><br></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top">enum &nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#0c6effbec49c715127e2b674ec3a59ff">WDSWrapperStateThreadState</a> { <br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#0c6effbec49c715127e2b674ec3a59ff6c5db32e5290de400c98869d8d1810b0">WDSWRAPPER_STATE_BEFOREINIT</a>, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#0c6effbec49c715127e2b674ec3a59ff191097930ee9d65ffde55f193aec3144">WDSWRAPPER_STATE_INIT</a>, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#0c6effbec49c715127e2b674ec3a59ff9b7dff8f14ad19b9a8cbb6b786595156">WDSWRAPPER_STATE_WAITINIT</a>, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#0c6effbec49c715127e2b674ec3a59ffdc49f57db5381117ede507b616b01d2e">WDSWRAPPER_STATE_SCAN</a>, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#0c6effbec49c715127e2b674ec3a59ffd9635041daca249d0b9172843d4bc5f0">WDSWRAPPER_STATE_WAITSCAN</a>, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#0c6effbec49c715127e2b674ec3a59ff085dd5cb0b71f26ccbd9937c2d0e89af">WDSWRAPPER_STATE_ENDSCAN</a>, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#0c6effbec49c715127e2b674ec3a59ff3e512f87d29a0be102644fb68eea8032">WDSWRAPPER_STATE_WAITENDSCAN</a>, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#0c6effbec49c715127e2b674ec3a59ff40660c50ad0ae098eb6561ee3952aa65">WDSWRAPPER_STATE_END</a>, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#0c6effbec49c715127e2b674ec3a59ff3a37f0d4fe2c983f0ddea50f6bced4fa">WDSWRAPPER_STATE_WAITEND</a>, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#0c6effbec49c715127e2b674ec3a59ff537798a3cb5bd0cdb1edd711b281d21e">WDSWRAPPER_STATE_IDLE</a>, 
+<br>
+&nbsp;&nbsp;<a class="el" href="_w_d_s_wrapper_8h.html#0c6effbec49c715127e2b674ec3a59ff66241b922402b4f4f046fe91bc495c81">WDSWRAPPER_STATE_TERMINATE</a>
+<br>
+ }</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">WDSラッパーののステートをあらわす列挙型  <a href="_w_d_s_wrapper_8h.html#0c6effbec49c715127e2b674ec3a59ff">[詳細]</a><br></td></tr>
+<tr><td colspan="2"><br><h2>関数</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">WDSWrapperErrCode</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#c80ac8cfc892206f1a9585531a0ea599">WDS_WrapperInitialize</a> (<a class="el" href="struct_w_d_s_wrapper_initialize_param.html">WDSWrapperInitializeParam</a> param)</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">WDSWrapperErrCode</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#3cad55852f36b4adb400debbfcade0c2">WDS_WrapperCleanup</a> (void)</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">WDSWrapperErrCode</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#a2de2e309d323d9f8f0cf439cbd9f59b">WDS_WrapperStartScan</a> (void)</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">WDSWrapperErrCode</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#dddf9ad0118cd79040f8cd77ad3f47ab">WDS_WrapperStopScan</a> (void)</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">WDSWrapperErrCode</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#ef5809caa40c38d3ddd8384cb4fd7270">WDS_WrapperCheckValidBeacon</a> (void)</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">WDSWrapperErrCode</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#974b5c59d51eae0ff3bd43a351d5b25b">WDS_WrapperSetArgumentParam</a> (void)</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top"><a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">WDSWrapperErrCode</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#5201d971f9d90d86f7a53f476c27e024">WDS_WrapperCheckThreadRunning</a> (void)</td></tr>
+
+<tr><td class="memItemLeft" nowrap align="right" valign="top">OSThread *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="_w_d_s_wrapper_8h.html#d895ad01bd9860c7f42ec3f51945215a">WDS_WrapperGetOSThread</a> (void)</td></tr>
+
+</table>
+<hr><h2>マクロ定義</h2>
+<a class="anchor" name="df62a1095c124ff7ed3f8bcc0cd0e79f"></a><!-- doxytag: member="WDSWrapper.h::WDSWRAPPER_SCANPERIOD" ref="df62a1095c124ff7ed3f8bcc0cd0e79f" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define WDSWRAPPER_SCANPERIOD&nbsp;&nbsp;&nbsp;3000          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+WDSラッパーがスキャンを継続する時間[msec] 
+<p>
+
+</div>
+</div><p>
+<a class="anchor" name="3e27e22a709bb62c707b2c6ece34b79d"></a><!-- doxytag: member="WDSWrapper.h::WDSWRAPPER_STACKSIZE" ref="3e27e22a709bb62c707b2c6ece34b79d" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define WDSWRAPPER_STACKSIZE&nbsp;&nbsp;&nbsp;4096          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+WDSラッパーが使用するスレッドスタックの推奨サイズ 
+<p>
+
+</div>
+</div><p>
+<a class="anchor" name="79088e3207784ca6f790938a0da75140"></a><!-- doxytag: member="WDSWrapper.h::WDSWRAPPER_WAITPERIOD" ref="79088e3207784ca6f790938a0da75140" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define WDSWRAPPER_WAITPERIOD&nbsp;&nbsp;&nbsp;3000          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+WDSラッパーがスキャンを中断する時間[msec] 
+<p>
+
+</div>
+</div><p>
+<hr><h2>型定義</h2>
+<a class="anchor" name="e92702d8529bfd419ac81648fd75092b"></a><!-- doxytag: member="WDSWrapper.h::WDSWrapperAlloc" ref="e92702d8529bfd419ac81648fd75092b" args=")(u32 size)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef void*( * <a class="el" href="_w_d_s_wrapper_8h.html#e92702d8529bfd419ac81648fd75092b">WDSWrapperAlloc</a>)(u32 size)          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+WDSラッパー内部で使用するアロケーター型 
+<p>
+
+</div>
+</div><p>
+<a class="anchor" name="8370c52f5fc54099274aea1188a1bb25"></a><!-- doxytag: member="WDSWrapper.h::WDSWrapperCallbackFunc" ref="8370c52f5fc54099274aea1188a1bb25" args=")(void *arg)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef void( * <a class="el" href="_w_d_s_wrapper_8h.html#8370c52f5fc54099274aea1188a1bb25">WDSWrapperCallbackFunc</a>)(void *arg)          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+WDSWrapperライブラリが使用するコールバック関数型 
+<p>
+<dl class="note" compact><dt><b>覚え書き:</b></dt><dd>・引数argは必ずWDSWrapperCallback型変数へのポインタ </dd></dl>
+
+</div>
+</div><p>
+<a class="anchor" name="c372630f28c9599a6df9e686e5f0af38"></a><!-- doxytag: member="WDSWrapper.h::WDSWrapperFree" ref="c372630f28c9599a6df9e686e5f0af38" args=")(void *ptr)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef void( * <a class="el" href="_w_d_s_wrapper_8h.html#c372630f28c9599a6df9e686e5f0af38">WDSWrapperFree</a>)(void *ptr)          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+WDSラッパー内部で使用するアロケーター型 
+<p>
+
+</div>
+</div><p>
+<hr><h2>列挙型</h2>
+<a class="anchor" name="7b75a8b054675640f391f3fc5bae97e1"></a><!-- doxytag: member="WDSWrapper.h::WDSWrapperCallback" ref="7b75a8b054675640f391f3fc5bae97e1" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="_w_d_s_wrapper_8h.html#7b75a8b054675640f391f3fc5bae97e1">WDSWrapperCallback</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+コールバック発生要因をあらわす列挙型 
+<p>
+<dl compact><dt><b>列挙型の値: </b></dt><dd>
+<table border="0" cellspacing="2" cellpadding="0">
+<tr><td valign="top"><em><a class="anchor" name="7b75a8b054675640f391f3fc5bae97e11330cb7b6f29efd80d1de157f0220734"></a><!-- doxytag: member="WDSWRAPPER_CALLBACK_INITIALIZE" ref="7b75a8b054675640f391f3fc5bae97e11330cb7b6f29efd80d1de157f0220734" args="" -->WDSWRAPPER_CALLBACK_INITIALIZE</em>&nbsp;</td><td>
+WDS_WrapperInitialize関数によるコールバック </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="7b75a8b054675640f391f3fc5bae97e1b319af0ab6104be1c2764c1589760243"></a><!-- doxytag: member="WDSWRAPPER_CALLBACK_CLEANUP" ref="7b75a8b054675640f391f3fc5bae97e1b319af0ab6104be1c2764c1589760243" args="" -->WDSWRAPPER_CALLBACK_CLEANUP</em>&nbsp;</td><td>
+WDS_WrapperCleanup関数によるコールバック </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="7b75a8b054675640f391f3fc5bae97e1d6e797e7adb1af3f5a5cc1bb45aa0cec"></a><!-- doxytag: member="WDSWRAPPER_CALLBACK_STARTSCAN" ref="7b75a8b054675640f391f3fc5bae97e1d6e797e7adb1af3f5a5cc1bb45aa0cec" args="" -->WDSWRAPPER_CALLBACK_STARTSCAN</em>&nbsp;</td><td>
+WDS_WrapperStartScan関数によるコールバック </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="7b75a8b054675640f391f3fc5bae97e1aa7e918e0bb4e333760c99ecd381949f"></a><!-- doxytag: member="WDSWRAPPER_CALLBACK_STARTSCAN2" ref="7b75a8b054675640f391f3fc5bae97e1aa7e918e0bb4e333760c99ecd381949f" args="" -->WDSWRAPPER_CALLBACK_STARTSCAN2</em>&nbsp;</td><td>
+WDS_WrapperStartScan関数によるコールバック(間欠スキャン1回終了) </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="7b75a8b054675640f391f3fc5bae97e15b05dd0e64de0ee7f1c5da416516742b"></a><!-- doxytag: member="WDSWRAPPER_CALLBACK_STOPSCAN" ref="7b75a8b054675640f391f3fc5bae97e15b05dd0e64de0ee7f1c5da416516742b" args="" -->WDSWRAPPER_CALLBACK_STOPSCAN</em>&nbsp;</td><td>
+WDS_WrapperStopScan関数によるコールバック </td></tr>
+</table>
+</dl>
+
+</div>
+</div><p>
+<a class="anchor" name="cff247df13a93adf1254463db4072265"></a><!-- doxytag: member="WDSWrapper.h::WDSWrapperErrCode" ref="cff247df13a93adf1254463db4072265" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">WDSWrapperErrCode</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+処理結果をあらわす列挙型 
+<p>
+<dl compact><dt><b>列挙型の値: </b></dt><dd>
+<table border="0" cellspacing="2" cellpadding="0">
+<tr><td valign="top"><em><a class="anchor" name="cff247df13a93adf1254463db4072265cafb2d50d5d157af646452b155bfc53b"></a><!-- doxytag: member="WDSWRAPPER_ERRCODE_SUCCESS" ref="cff247df13a93adf1254463db4072265cafb2d50d5d157af646452b155bfc53b" args="" -->WDSWRAPPER_ERRCODE_SUCCESS</em>&nbsp;</td><td>
+処理成功 </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="cff247df13a93adf1254463db407226523f0087e3df9dbd5e69c2e2bdecdb976"></a><!-- doxytag: member="WDSWRAPPER_ERRCODE_FAILURE" ref="cff247df13a93adf1254463db407226523f0087e3df9dbd5e69c2e2bdecdb976" args="" -->WDSWRAPPER_ERRCODE_FAILURE</em>&nbsp;</td><td>
+処理失敗 </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="cff247df13a93adf1254463db40722654b4eed4bfee309504bc05cc15324f5ed"></a><!-- doxytag: member="WDSWRAPPER_ERRCODE_OPERATING" ref="cff247df13a93adf1254463db40722654b4eed4bfee309504bc05cc15324f5ed" args="" -->WDSWRAPPER_ERRCODE_OPERATING</em>&nbsp;</td><td>
+処理実行中 </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="cff247df13a93adf1254463db4072265b2058b441ae4131ed4dd869ee9c82278"></a><!-- doxytag: member="WDSWRAPPER_ERRCODE_INITIALIZED" ref="cff247df13a93adf1254463db4072265b2058b441ae4131ed4dd869ee9c82278" args="" -->WDSWRAPPER_ERRCODE_INITIALIZED</em>&nbsp;</td><td>
+WDSラッパーライブラリ初期化済み </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="cff247df13a93adf1254463db4072265a280d087d837e10b13fdf61721cfe069"></a><!-- doxytag: member="WDSWRAPPER_ERRCODE_UNINITIALIZED" ref="cff247df13a93adf1254463db4072265a280d087d837e10b13fdf61721cfe069" args="" -->WDSWRAPPER_ERRCODE_UNINITIALIZED</em>&nbsp;</td><td>
+WDSラッパーライブラリ未初期化 </td></tr>
+</table>
+</dl>
+
+</div>
+</div><p>
+<a class="anchor" name="0c6effbec49c715127e2b674ec3a59ff"></a><!-- doxytag: member="WDSWrapper.h::WDSWrapperStateThreadState" ref="0c6effbec49c715127e2b674ec3a59ff" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="_w_d_s_wrapper_8h.html#0c6effbec49c715127e2b674ec3a59ff">WDSWrapperStateThreadState</a>          </td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+WDSラッパーののステートをあらわす列挙型 
+<p>
+<dl compact><dt><b>列挙型の値: </b></dt><dd>
+<table border="0" cellspacing="2" cellpadding="0">
+<tr><td valign="top"><em><a class="anchor" name="0c6effbec49c715127e2b674ec3a59ff6c5db32e5290de400c98869d8d1810b0"></a><!-- doxytag: member="WDSWRAPPER_STATE_BEFOREINIT" ref="0c6effbec49c715127e2b674ec3a59ff6c5db32e5290de400c98869d8d1810b0" args="" -->WDSWRAPPER_STATE_BEFOREINIT</em>&nbsp;</td><td>
+初期化開始待ちステート </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="0c6effbec49c715127e2b674ec3a59ff191097930ee9d65ffde55f193aec3144"></a><!-- doxytag: member="WDSWRAPPER_STATE_INIT" ref="0c6effbec49c715127e2b674ec3a59ff191097930ee9d65ffde55f193aec3144" args="" -->WDSWRAPPER_STATE_INIT</em>&nbsp;</td><td>
+初期化開始ステート </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="0c6effbec49c715127e2b674ec3a59ff9b7dff8f14ad19b9a8cbb6b786595156"></a><!-- doxytag: member="WDSWRAPPER_STATE_WAITINIT" ref="0c6effbec49c715127e2b674ec3a59ff9b7dff8f14ad19b9a8cbb6b786595156" args="" -->WDSWRAPPER_STATE_WAITINIT</em>&nbsp;</td><td>
+初期化完了待ちステート </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="0c6effbec49c715127e2b674ec3a59ffdc49f57db5381117ede507b616b01d2e"></a><!-- doxytag: member="WDSWRAPPER_STATE_SCAN" ref="0c6effbec49c715127e2b674ec3a59ffdc49f57db5381117ede507b616b01d2e" args="" -->WDSWRAPPER_STATE_SCAN</em>&nbsp;</td><td>
+スキャン開始ステート </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="0c6effbec49c715127e2b674ec3a59ffd9635041daca249d0b9172843d4bc5f0"></a><!-- doxytag: member="WDSWRAPPER_STATE_WAITSCAN" ref="0c6effbec49c715127e2b674ec3a59ffd9635041daca249d0b9172843d4bc5f0" args="" -->WDSWRAPPER_STATE_WAITSCAN</em>&nbsp;</td><td>
+スキャン完了待ちステート </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="0c6effbec49c715127e2b674ec3a59ff085dd5cb0b71f26ccbd9937c2d0e89af"></a><!-- doxytag: member="WDSWRAPPER_STATE_ENDSCAN" ref="0c6effbec49c715127e2b674ec3a59ff085dd5cb0b71f26ccbd9937c2d0e89af" args="" -->WDSWRAPPER_STATE_ENDSCAN</em>&nbsp;</td><td>
+スキャン中断ステート </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="0c6effbec49c715127e2b674ec3a59ff3e512f87d29a0be102644fb68eea8032"></a><!-- doxytag: member="WDSWRAPPER_STATE_WAITENDSCAN" ref="0c6effbec49c715127e2b674ec3a59ff3e512f87d29a0be102644fb68eea8032" args="" -->WDSWRAPPER_STATE_WAITENDSCAN</em>&nbsp;</td><td>
+スキャン中断完了待ちステート </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="0c6effbec49c715127e2b674ec3a59ff40660c50ad0ae098eb6561ee3952aa65"></a><!-- doxytag: member="WDSWRAPPER_STATE_END" ref="0c6effbec49c715127e2b674ec3a59ff40660c50ad0ae098eb6561ee3952aa65" args="" -->WDSWRAPPER_STATE_END</em>&nbsp;</td><td>
+WDS解放開始ステート </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="0c6effbec49c715127e2b674ec3a59ff3a37f0d4fe2c983f0ddea50f6bced4fa"></a><!-- doxytag: member="WDSWRAPPER_STATE_WAITEND" ref="0c6effbec49c715127e2b674ec3a59ff3a37f0d4fe2c983f0ddea50f6bced4fa" args="" -->WDSWRAPPER_STATE_WAITEND</em>&nbsp;</td><td>
+WDS解放完了待ちステート </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="0c6effbec49c715127e2b674ec3a59ff537798a3cb5bd0cdb1edd711b281d21e"></a><!-- doxytag: member="WDSWRAPPER_STATE_IDLE" ref="0c6effbec49c715127e2b674ec3a59ff537798a3cb5bd0cdb1edd711b281d21e" args="" -->WDSWRAPPER_STATE_IDLE</em>&nbsp;</td><td>
+アイドルステート </td></tr>
+<tr><td valign="top"><em><a class="anchor" name="0c6effbec49c715127e2b674ec3a59ff66241b922402b4f4f046fe91bc495c81"></a><!-- doxytag: member="WDSWRAPPER_STATE_TERMINATE" ref="0c6effbec49c715127e2b674ec3a59ff66241b922402b4f4f046fe91bc495c81" args="" -->WDSWRAPPER_STATE_TERMINATE</em>&nbsp;</td><td>
+WDSラッパー解放ステート </td></tr>
+</table>
+</dl>
+
+</div>
+</div><p>
+<hr><h2>関数</h2>
+<a class="anchor" name="5201d971f9d90d86f7a53f476c27e024"></a><!-- doxytag: member="WDSWrapper.h::WDS_WrapperCheckThreadRunning" ref="5201d971f9d90d86f7a53f476c27e024" args="(void)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">WDSWrapperErrCode</a> WDS_WrapperCheckThreadRunning           </td>
+          <td>(</td>
+          <td class="paramtype">void&nbsp;</td>
+          <td class="paramname">          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+WDSコントロールスレッドが実行中か確認します <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>なし</em>&nbsp;</td><td></td></tr>
+  </table>
+</dl>
+<dl class="return" compact><dt><b>戻り値:</b></dt><dd>WDSWRAPPER_ERRCODE_SUCCESS: WDSコントロールスレッドが実行中 <p>
+WDSWRAPPER_ERRCODE_FAILURE: WDSコントロールスレッドは停止している <p>
+WDSWRAPPER_ERRCODE_UNINITIALIZED: WDSラッパーライブラリが初期化されていない </dd></dl>
+
+</div>
+</div><p>
+<a class="anchor" name="ef5809caa40c38d3ddd8384cb4fd7270"></a><!-- doxytag: member="WDSWrapper.h::WDS_WrapperCheckValidBeacon" ref="ef5809caa40c38d3ddd8384cb4fd7270" args="(void)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">WDSWrapperErrCode</a> WDS_WrapperCheckValidBeacon           </td>
+          <td>(</td>
+          <td class="paramtype">void&nbsp;</td>
+          <td class="paramname">          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+直前に完了した間欠受信で有効な親機ビーコンを受け取ったか確認します <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>なし</em>&nbsp;</td><td></td></tr>
+  </table>
+</dl>
+<dl class="return" compact><dt><b>戻り値:</b></dt><dd>WDSWRAPPER_ERRCODE_SUCCESS: 直前に完了した間欠受信で有効な親機ビーコンを受け取った <p>
+WDSWRAPPER_ERRCODE_FAILURE: 直前に完了した間欠受信で有効な親機ビーコンを受け取っていない <p>
+WDSWRAPPER_ERRCODE_UNINITIALIZED: WDSラッパーライブラリが初期化されていない </dd></dl>
+<dl class="note" compact><dt><b>覚え書き:</b></dt><dd>ライブラリ初期化時に指定したコールバック関数の中でのみ呼び出して下さい </dd></dl>
+
+</div>
+</div><p>
+<a class="anchor" name="3cad55852f36b4adb400debbfcade0c2"></a><!-- doxytag: member="WDSWrapper.h::WDS_WrapperCleanup" ref="3cad55852f36b4adb400debbfcade0c2" args="(void)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">WDSWrapperErrCode</a> WDS_WrapperCleanup           </td>
+          <td>(</td>
+          <td class="paramtype">void&nbsp;</td>
+          <td class="paramname">          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+WDSコントロールスレッドを停止し、WDSラッパーライブラリを解放します。<br>
+ 解放処理完了の直前にコールバックが発生します。<br>
+ コールバック関数にエラーが通知されることはありません。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>なし</em>&nbsp;</td><td></td></tr>
+  </table>
+</dl>
+<dl class="return" compact><dt><b>戻り値:</b></dt><dd>WDSWRAPPER_ERRCODE_SUCCESS WDSラッパー解放を開始 <p>
+WDSWRAPPER_ERRCODE_OPERATING WDSラッパー解放を実行中 <p>
+WDSWRAPPER_ERRCODE_UNINITIALIZED WDSラッパーライブラリが初期化されていない </dd></dl>
+
+</div>
+</div><p>
+<a class="anchor" name="d895ad01bd9860c7f42ec3f51945215a"></a><!-- doxytag: member="WDSWrapper.h::WDS_WrapperGetOSThread" ref="d895ad01bd9860c7f42ec3f51945215a" args="(void)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">OSThread* WDS_WrapperGetOSThread           </td>
+          <td>(</td>
+          <td class="paramtype">void&nbsp;</td>
+          <td class="paramname">          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+WDSコントロールスレッドが使用しているOSThreadへのポインタを得ます <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>なし</em>&nbsp;</td><td></td></tr>
+  </table>
+</dl>
+<dl class="return" compact><dt><b>戻り値:</b></dt><dd>NULL: WDSラッパーライブラリが初期化されていない <p>
+NULL以外: 実行中・あるいは停止中のOSThreadへのポインタ </dd></dl>
+
+</div>
+</div><p>
+<a class="anchor" name="c80ac8cfc892206f1a9585531a0ea599"></a><!-- doxytag: member="WDSWrapper.h::WDS_WrapperInitialize" ref="c80ac8cfc892206f1a9585531a0ea599" args="(WDSWrapperInitializeParam param)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">WDSWrapperErrCode</a> WDS_WrapperInitialize           </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="struct_w_d_s_wrapper_initialize_param.html">WDSWrapperInitializeParam</a>&nbsp;</td>
+          <td class="paramname"> <em>param</em>          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+WDSラッパーライブラリ初期化の非同期処理を開始します。<br>
+ 初期化処理完了時にコールバックが発生します。<br>
+ コールバック関数でエラー通知を受け取った場合は、ライブラリが自動的に解放されるのを待ってください。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>param</em>&nbsp;</td><td>WDSラッパー初期化パラメータ </td></tr>
+  </table>
+</dl>
+<dl class="return" compact><dt><b>戻り値:</b></dt><dd>WDSWRAPPER_ERRCODE_SUCCESS: 初期化処理を開始 <p>
+WDSWRAPPER_ERRCODE_INITIALIZED: WDSラッパーライブラリは初期化済み <p>
+WDSWRAPPER_ERRCODE_FAILURE: 初期化に失敗 </dd></dl>
+<dl class="note" compact><dt><b>覚え書き:</b></dt><dd>・WDSコントロールスレッドは生成直後から間欠スキャンを実行しています </dd></dl>
+
+</div>
+</div><p>
+<a class="anchor" name="974b5c59d51eae0ff3bd43a351d5b25b"></a><!-- doxytag: member="WDSWrapper.h::WDS_WrapperSetArgumentParam" ref="974b5c59d51eae0ff3bd43a351d5b25b" args="(void)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">WDSWrapperErrCode</a> WDS_WrapperSetArgumentParam           </td>
+          <td>(</td>
+          <td class="paramtype">void&nbsp;</td>
+          <td class="paramname">          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+直前に完了した間欠受信で受け取ったビーコン情報をArgument領域にセットします <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>なし</em>&nbsp;</td><td></td></tr>
+  </table>
+</dl>
+<dl class="return" compact><dt><b>戻り値:</b></dt><dd>WDSWRAPPER_ERRCODE_SUCCESS: 親機ビーコン情報がArgument領域にセットされた <p>
+WDSWRAPPER_ERRCODE_FAILURE: 親機ビーコン情報をArgument領域にセットできなかった <p>
+WDSWRAPPER_ERRCODE_UNINITIALIZED: WDSラッパーライブラリが初期化されていない </dd></dl>
+
+</div>
+</div><p>
+<a class="anchor" name="a2de2e309d323d9f8f0cf439cbd9f59b"></a><!-- doxytag: member="WDSWrapper.h::WDS_WrapperStartScan" ref="a2de2e309d323d9f8f0cf439cbd9f59b" args="(void)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">WDSWrapperErrCode</a> WDS_WrapperStartScan           </td>
+          <td>(</td>
+          <td class="paramtype">void&nbsp;</td>
+          <td class="paramname">          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+WDSコントロールスレッドのステートを間欠受信状態に変更します。<br>
+ ステートの変更に成功すると、以後一回の間欠受信が完了するたびにコールバックが呼び出されます。<br>
+ コールバック関数でエラー通知を受け取った場合は、ライブラリが自動的に解放されるのを待ってください。 <dl class="return" compact><dt><b>戻り値:</b></dt><dd>WDSWRAPPER_ERRCODE_SUCCESS: ステート変更に成功(コールバック発生を待ってください) <p>
+WDSWRAPPER_ERRCODE_FAILURE: 間欠受信に移行できるステートでない(現在のステートが維持されます) <p>
+WDSWRAPPER_ERRCIDE_OPERATING: すでにステートが間欠受信状態 <p>
+WDSWRAPPER_ERRCODE_UNINITIALIZED: WDSラッパーライブラリが初期化されていない </dd></dl>
+
+</div>
+</div><p>
+<a class="anchor" name="dddf9ad0118cd79040f8cd77ad3f47ab"></a><!-- doxytag: member="WDSWrapper.h::WDS_WrapperStopScan" ref="dddf9ad0118cd79040f8cd77ad3f47ab" args="(void)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="_w_d_s_wrapper_8h.html#cff247df13a93adf1254463db4072265">WDSWrapperErrCode</a> WDS_WrapperStopScan           </td>
+          <td>(</td>
+          <td class="paramtype">void&nbsp;</td>
+          <td class="paramname">          </td>
+          <td>&nbsp;)&nbsp;</td>
+          <td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+
+<p>
+WDSコントロールスレッドのステートを間欠受信停止状態に設定します。<br>
+ 間欠受信が実際に停止した際にコールバックが呼び出されます。<br>
+ コールバックでエラーが通知されることはありません。 <dl class="return" compact><dt><b>戻り値:</b></dt><dd>WDSWRAPPER_ERRCODE_SUCCESS: ステート変更に成功 <p>
+WDSWRAPPER_ERRCIDE_OPERATING: すでにステートが間欠受信停止状態 <p>
+WDSWRAPPER_ERRCODE_UNINITIALIZED: WDSラッパーライブラリが初期化されていない </dd></dl>
+<dl class="note" compact><dt><b>覚え書き:</b></dt><dd>ステート変更が行われてから間欠受信が停止するまでには20ms程度の時間がかかります </dd></dl>
+
+</div>
+</div><p>
+</div>
+<hr size="1"><address style="text-align: right;"><small>WDSWrapperに対してThu Jul 3 18:05:09 2008に生成されました。&nbsp;
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border="0"></a> 1.5.6 </small></address>
+</body>
+</html>
