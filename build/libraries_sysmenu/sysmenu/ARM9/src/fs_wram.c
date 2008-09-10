@@ -18,6 +18,7 @@
 #include <twl.h>
 #include "fs_wram.h"
 #include <sysmenu.h>
+#include <sysmenu/errorLog.h>
 /*
     Šî–{ŠT”O
 
@@ -199,6 +200,7 @@ static void FSi_WramThread(void* arg)
             card_read_state = HOTSW_ReadCardData( FSiWramWork.card_src, cmd->addr, (u32)cmd->length);
             FSiWramWork.card_src = (void *)((u32)FSiWramWork.card_src + (u32)cmd->length);
             result = (card_read_state == CARD_READ_SUCCESS) ? cmd->length : 0;
+            if((card_read_state != CARD_READ_SUCCESS)) ERRORLOG_Printf( "FSi_WramThread: read-card error:%d\n", card_read_state );
             break;
         case FS_WRAM_COMMAND_WRITE:
             result = FS_WriteFile( FSiWramWork.p_file, cmd->addr, cmd->length );
