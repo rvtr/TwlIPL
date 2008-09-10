@@ -6250,7 +6250,17 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			result = this->hDeliv->writeSpreadsheet( delivfile, this->hSrl, hcrc, srlfile, !(this->stripItemJapanese->Checked) );
 			if( result != ECDeliverableResult::NOERROR )
 			{
-				this->errMsg( "提出確認書の作成に失敗しました。", "Making the submission sheet is failed." );
+				switch( result )
+				{
+					case ECDeliverableResult::ERROR_FILE_OPEN:
+						this->errMsg( "提出確認書のテンプレートが開けなかったため、提出確認書の作成に失敗しました。", 
+							          "Since a templete of the submission sheet can't be opened, making the sheet is failed." );
+					break;
+
+					default:
+						this->errMsg( "提出確認書の作成に失敗しました。", "Making the submission sheet is failed." );
+					break;
+				}
 				return;
 			}
 			this->sucMsg( "提出確認書の作成に成功しました。", "The submission sheet is made successfully." );

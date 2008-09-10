@@ -945,19 +945,6 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 			"システムコールライブラリ", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, "SDKデフォルトです。",
 			"System-Call Library", "This Library is SDK default one.", false, true ) );
 	}
-
-#if 0
-	// セグメント3のCRC
-	u16  crcseg3;
-	BOOL crcret = getSeg3CRCInFp( fp, &crcseg3 );
-	if( !crcret || (crcseg3 != METWL_SEG3_CRC) )
-	{
-		this->hErrorList->Add( gcnew RCMrcError( 
-			"セグメント3CRC", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, 
-			"セグメント3領域に誤りがあります。",
-			"System-Call Library", "This Library is SDK default one.", false, true ) );
-	}
-#endif
 	return ECSrlResult::NOERROR;
 } // mrcNTR()
 
@@ -1008,8 +995,18 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 				"実ファイルサイズ", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, "中途半端な値です。通常では2のべき乗の値です。",
 				"Actual File Size", "Invalid size. This size is usually power of 2.", false, true ) );
 		}
+		// セグメント3のCRC
+		u16  crcseg3;
+		BOOL crcret = getSeg3CRCInFp( fp, &crcseg3 );
+		if( !crcret || (crcseg3 != METWL_SEG3_CRC) )
+		{
+			this->hErrorList->Add( gcnew RCMrcError( 
+				"セグメント3CRC", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, 
+				"セグメント3領域に誤りがあります。",
+				"System-Call Library", "This Library is SDK default one.", false, true ) );
+		}
 	} //if( *(this->hIsNAND) == false )
-	else
+	else	// NANDアプリのときのみのチェック
 	{
 		if( (romsize < METWL_ROMSIZE_MIN_NAND) || (METWL_ROMSIZE_MAX_NAND < romsize) )
 		{
@@ -1195,25 +1192,35 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 			"Title ID", "Lower 4 bytes don't match ones of Game Code.", false, true ) );
 	}
 
+	System::Boolean bReserved = true;
 	for( i=0; i < (0x2f0 - 0x240); i++ )
 	{
 		if( this->pRomHeader->s.reserved_ltd_F[i] != 0 )
 		{
-			this->hErrorList->Add( gcnew RCMrcError( 
-				"予約領域F", 0x240, 0x2ef, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-				"Reserved Area F", "Invalid data is included. Please set 0 into this area.", false, true ) );
+			bReserved = false;
 		}
 	}
+	if( !bReserved )
+	{
+		this->hErrorList->Add( gcnew RCMrcError( 
+			"予約領域F", 0x240, 0x2ef, "不正な値が含まれています。この領域をすべて0で埋めてください。",
+			"Reserved Area F", "Invalid data is included. Please set 0 into this area.", false, true ) );
+	}
 
+	bReserved = true;
 	for( i=0; i < (0xf80 - 0x378); i++ )
 	{
 		u8 *p = (u8*)this->pRomHeader;
 		if( p[ 0x378 + i ] != 0 )
 		{
-			this->hErrorList->Add( gcnew RCMrcError( 
-				"予約領域D", 0x378, 0xf7f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-				"Reserved Area D", "Invalid data is included. Please set 0 into this area.", false, true ) );
+			bReserved = false;
 		}
+	}
+	if( !bReserved )
+	{
+		this->hErrorList->Add( gcnew RCMrcError( 
+			"予約領域D", 0x378, 0xf7f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
+			"Reserved Area D", "Invalid data is included. Please set 0 into this area.", false, true ) );
 	}
 
 	// ROMヘッダ以外の領域のチェック
@@ -1224,7 +1231,7 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 			"クローンブート署名", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
 			"SDKがクローンブートに対応していないため、ROM出しによってデータに矛盾が生じます。任天堂窓口にご相談ください。",
 			"Clone-Boot Signature",
-			"Since SDK used by this ROM is not support for making Clone-Boot ROM, Mastering ROM will be error. Please contact with nintendo, sorry.",
+			"Since SDK used by this ROM is not support for making Clone-Boot ROM, Mastering ROM will be error. Please contact nintendo, sorry.",
 			false, true ) );
 	}
 

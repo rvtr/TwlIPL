@@ -29,7 +29,15 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 {
 	// テンプレートを読み込む
 	System::Xml::XmlDocument ^doc = gcnew System::Xml::XmlDocument();
-	doc->Load( "../resource/sheet_templete.xml" );
+	try
+	{
+		doc->Load( "../resource/sheet_templete.xml" );
+	}
+	catch ( System::Exception ^ex )	// 改ざんされていたとき
+	{
+		(void)ex;
+		return ECDeliverableResult::ERROR_FILE_OPEN;
+	}
 	System::Xml::XmlElement ^root = doc->DocumentElement;
 
 	// ソフトタイトルetc.は1文字ずつ入れる
