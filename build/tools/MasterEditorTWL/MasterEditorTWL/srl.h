@@ -368,6 +368,8 @@ namespace MasterEditorTWL
 		System::Boolean mrcRegion( System::UInt32 region );		// @ret ƒŠ[ƒWƒ‡ƒ“‚ª³‚µ‚¢‚©‚Ç‚¤‚©
 		void mrcRegionOrganization( System::UInt32 region );
 		void mrcRating( System::Byte ogn );
+		void mrcPadding( FILE *fp );
+		void mrcBanner( FILE *fp );
 
 		// utility
 		void clearParentalControl( System::Byte ogn );
