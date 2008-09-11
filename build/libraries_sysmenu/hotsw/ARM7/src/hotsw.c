@@ -130,6 +130,7 @@ HotSwState HOTSWi_RefreshBadBlock(u32 romMode);
 
 static void CheckCardInsert(BOOL cardExist);
 static void CheckCardPullOut(BOOL cardExist);
+static void SendInsertMessage(void);
 
 static void PulledOutSequence(void);
 
@@ -158,6 +159,8 @@ static BOOL                 s_debuggerFlg;
 
 static BOOL                 s_isPulledOut = TRUE;
 static BOOL                 s_pollingThreadSleepFlg = FALSE;
+
+static volatile BOOL		s_isBusyMonitorThread;
 
 // HMACSHA1の鍵
 static u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = {
@@ -1795,6 +1798,11 @@ static void FinalizeHotSw(HotSwCardState state)
     // カード挿入検出停止
     (void)OS_DisableIrqMask( HOTSW_IF_CARD_DET );
 
+    // ポーリングスレッドが動作中は待つ
+    while(s_isBusyMonitorThread){
+		OS_Sleep(1);
+    }
+
     // ポーリングスレッドを消去
     OS_KillThread( &HotSwThreadData.monitorThread, NULL );
 
@@ -2089,6 +2097,8 @@ static void MonitorThread(void *arg)
             OS_ReceiveMessage(&HotSwThreadData.hotswPollingCtrlQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
         }
 
+		s_isBusyMonitorThread = TRUE;
+        
         isCardExist = HOTSW_IsCardExist();
 
         CheckCardPullOut(isCardExist);
@@ -2097,6 +2107,8 @@ static void MonitorThread(void *arg)
             CheckCardInsert(isCardExist);
             count = 0;
         }
+
+        s_isBusyMonitorThread = FALSE;
     }
 }
 
@@ -2112,15 +2124,7 @@ static void CheckCardInsert(BOOL cardExist)
     if(cardExist && s_isPulledOut){
         OSIntrMode enabled = OS_DisableInterrupts();
 
-        HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].ctrl  = FALSE;
-        HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].value = 0;
-        HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].type  = HOTSW_INSERT;
-
-        // メッセージをキューの先頭に入れる
-        OS_JamMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert], OS_MESSAGE_NOBLOCK);
-
-        // メッセージインデックスをインクリメント
-        HotSwThreadData.idx_insert = (HotSwThreadData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
+        SendInsertMessage();
 
         (void)OS_RestoreInterrupts( enabled );
     }
@@ -2134,12 +2138,35 @@ static void CheckCardInsert(BOOL cardExist)
         ReadIDGame(&s_cbData);
 
         if(s_cbData.id_gam != s_gameID){
+            OSIntrMode enabled;
+            
 			McPowerOff();
+
+            enabled = OS_DisableInterrupts();
+            
+			PulledOutSequence();
+			SendInsertMessage();
+            
+            (void)OS_RestoreInterrupts( enabled );
         }
         
 	    // カードのロック開放(※ロックIDは開放せずに持ち続ける)
     	CARD_UnlockRom(s_PollingLockID);
     }
+}
+
+
+static void SendInsertMessage(void)
+{
+	HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].ctrl  = FALSE;
+	HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].value = 0;
+	HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].type  = HOTSW_INSERT;
+
+	// メッセージをキューの先頭に入れる
+	OS_JamMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert], OS_MESSAGE_NOBLOCK);
+
+	// メッセージインデックスをインクリメント
+	HotSwThreadData.idx_insert = (HotSwThreadData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
 }
 
 
