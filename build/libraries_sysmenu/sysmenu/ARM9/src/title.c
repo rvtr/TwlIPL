@@ -651,6 +651,15 @@ OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
 			{
 OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", 0, len);
 				UTL_SetFatalError(FATAL_ERROR_LOAD_READHEADER_FAILED);
+				// header‚à“f‚¢‚¿‚á‚¦
+				{
+				    FSFile dest;
+				    FS_InitFile( &dest );
+				    (void)FS_CreateFile("nand:/sys/readheader_header.dat", FS_PERMIT_W | FS_PERMIT_R);
+				    FS_OpenFileEx( &dest, "nand:/sys/readheader_header.dat", FS_FILEMODE_W );
+				    FS_WriteFile( &dest, (void *)header, HW_TWL_ROM_HEADER_BUF_SIZE );
+				    FS_CloseFile( &dest );
+				}
 				goto ERROR;
 			}
 		}
@@ -668,6 +677,15 @@ OS_TPrintf("\n");
 }
 OS_TPrintf("RebootSystem failed: logo CRC error\n");
 			UTL_SetFatalError(FATAL_ERROR_LOAD_LOGOCRC_ERROR);
+			// header‚à“f‚¢‚¿‚á‚¦
+			{
+			    FSFile dest;
+			    FS_InitFile( &dest );
+			    (void)FS_CreateFile("nand:/sys/logocrc_header.dat", FS_PERMIT_W | FS_PERMIT_R);
+			    FS_OpenFileEx( &dest, "nand:/sys/logocrc_header.dat", FS_FILEMODE_W );
+			    FS_WriteFile( &dest, (void *)header, HW_TWL_ROM_HEADER_BUF_SIZE );
+			    FS_CloseFile( &dest );
+			}
 			goto ERROR;
         }
         
@@ -707,6 +725,15 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 		if( !SYSMi_AuthenticateHeader( pBootTitle, head ) )
 		{
 			UTL_SetFatalError(FATAL_ERROR_LOAD_AUTH_HEADER_FAILED);
+			// header‚à“f‚¢‚¿‚á‚¦
+			{
+			    FSFile dest;
+			    FS_InitFile( &dest );
+			    (void)FS_CreateFile("nand:/sys/authheader_header.dat", FS_PERMIT_W | FS_PERMIT_R);
+			    FS_OpenFileEx( &dest, "nand:/sys/authheader_header.dat", FS_FILEMODE_W );
+			    FS_WriteFile( &dest, (void *)header, HW_TWL_ROM_HEADER_BUF_SIZE );
+			    FS_CloseFile( &dest );
+			}
 			goto ERROR;
 		}
 		
