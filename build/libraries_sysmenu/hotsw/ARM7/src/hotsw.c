@@ -140,6 +140,7 @@ static char                 encrypt_object_key[] ATTRIBUTE_ALIGN(4) = "encryObj"
 
 static u16                  s_RscLockID;
 static u16                  s_CardLockID;
+static u16					s_PollingLockID;
 static u16                  s_bondingOp;
 
 static u32                  s_BootSegBufSize, s_SecureSegBufSize, s_Secure2SegBufSize;
@@ -263,6 +264,13 @@ void HOTSW_Init(u32 threadPrio)
             // do nothing
         }
         s_CardLockID = (u16)tempLockID;
+
+        // [Debug]
+        // ポーリングスレッド用のロックIDの取得
+        while((tempLockID = OS_GetLockID()) == OS_LOCK_ID_ERROR){
+            // do nothing
+        }
+        s_PollingLockID = (u16)tempLockID;
     }
 
     // カードの状態監視用スレッドの生成 ( DSテレビ対策 )
@@ -345,7 +353,7 @@ static HotSwState LoadCardData(void)
     HotSwState retval = HOTSW_SUCCESS;
     HotSwState state  = HOTSW_SUCCESS;
     u32 romMode = HOTSW_ROM_MODE_NULL;
-
+    
     // カードのロック
     CARD_LockRom(s_CardLockID);
 
@@ -594,7 +602,7 @@ end:
 
     // カードのロック開放(※ロックIDは開放せずに持ち続ける)
     CARD_UnlockRom(s_CardLockID);
-
+    
     return retval;
 }
 
@@ -997,7 +1005,7 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
     
     // カードのアンロック
     CARD_UnlockRom(s_CardLockID);
-
+    
     {
         HotSwPxiMessageForArm9  msg;
         CardDataReadState       retval;
@@ -2118,8 +2126,10 @@ static void CheckCardInsert(BOOL cardExist)
     }
     // カードは挿さっていて、ランチャーが認識していたらGameモードのID読みをして、抜けてないか調べる
     else if(cardExist && !s_isPulledOut && !SYSMi_GetWork()->flags.hotsw.isBusyHotSW){
+		OS_PutString("GameMode ID Check...\n");
+        
         // カードのロック
-    	CARD_LockRom(s_CardLockID);
+    	CARD_LockRom(s_PollingLockID);
 
         ReadIDGame(&s_cbData);
 
@@ -2128,7 +2138,7 @@ static void CheckCardInsert(BOOL cardExist)
         }
         
 	    // カードのロック開放(※ロックIDは開放せずに持ち続ける)
-    	CARD_UnlockRom(s_CardLockID);
+    	CARD_UnlockRom(s_PollingLockID);
     }
 }
 
