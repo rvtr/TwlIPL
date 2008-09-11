@@ -38,11 +38,11 @@ echo "Copying to Aqua"
 cp -r $1_foraqua ${CLSED_PATH}/${DAILY_CLSED_DIR}
 
 # Shop ROM のコピー
-shopdir="${AQUA}/TWL_debug/shop/rom/tad/${DAILY_CLSED_DIR}"
+shopdir="${AQUA}/TWL_debug/shop/rom/cls/${DAILY_CLSED_DIR}"
 /bin/mkdir ${shopdir}
 /bin/cp $1_foraqua/verup/tad/shop* ${shopdir}
 
 # NZV ROM のコピー
 nzvdir="${AQUA}/TWL_debug/nintendo_spot/rom/clsprocessed/"`date +'%Y%m%d'`
 /bin/mkdir ${nzvdir}
-/bin/cp -r $1/verup/tad/HNJ* ${nzvdir}
+/bin/cp -r $1/HNJ* ${nzvdir}
