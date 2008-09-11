@@ -39,9 +39,10 @@
 
 #define LANG_EULA_J				("EULA同意")
 #define LANG_EULA_VER_J			("EULA同意バージョン")
-#define LANG_ICON_J				("アイコン表示")
+#define LANG_ICON_J				("メニュー上でのアイコン表示")
 #define LANG_WIRELESS_ICON_J	("DSワイヤレス通信アイコン表示")
 #define LANG_WIFI_ICON_J		("Wi-Fi通信アイコン表示")
+#define LANG_NO_ICON_J			("アイコンを表示しない")
 #define LANG_REGION_PCTL_J		("リージョンとペアレンタルコントロール")
 #define LANG_REGION_J			("カードリージョン")
 #define LANG_PCTL_RATING_J		("レーティング年齢")
@@ -86,9 +87,10 @@
 
 #define LANG_EULA_E				("Agree EULA")
 #define LANG_EULA_VER_E			("EULA agreement ver.")
-#define LANG_ICON_E				("Icons")
+#define LANG_ICON_E				("Icons on the Menu")
 #define LANG_WIRELESS_ICON_E	("Display an Icon of DS Wireless")
 #define LANG_WIFI_ICON_E		("Display an Icon of Wi-Fi connection")
+#define LANG_NO_ICON_E			("Display No Icon")
 #define LANG_REGION_PCTL_E		("Card Region and Parental Control")
 #define LANG_REGION_E			("Card Region")
 #define LANG_PCTL_RATING_E		("Rating Age")

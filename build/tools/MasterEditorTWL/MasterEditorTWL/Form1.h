@@ -198,9 +198,9 @@ namespace MasterEditorTWL {
 
 
 	private: System::Windows::Forms::CheckBox^  cboxIsEULA;
-	private: System::Windows::Forms::CheckBox^  cboxIsWiFiIcon;
+
 	private: System::Windows::Forms::Label^  labEULA;
-	private: System::Windows::Forms::CheckBox^  cboxIsWirelessIcon;
+
 	private: System::Windows::Forms::NumericUpDown^  numEULA;
 
 
@@ -554,6 +554,12 @@ private: System::Windows::Forms::TextBox^  tboxAppType;
 private: System::Windows::Forms::TextBox^  tboxMedia;
 private: System::Windows::Forms::Label^  labProductNameLimit;
 private: System::Windows::Forms::Label^  labProductNameLimitForeign;
+private: System::Windows::Forms::RadioButton^  rIsWiFiIcon;
+
+
+
+private: System::Windows::Forms::RadioButton^  rIsWirelessIcon;
+private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 
 
 
@@ -772,9 +778,7 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			this->labRegion = (gcnew System::Windows::Forms::Label());
 			this->cboxIsEULA = (gcnew System::Windows::Forms::CheckBox());
 			this->combRegion = (gcnew System::Windows::Forms::ComboBox());
-			this->cboxIsWiFiIcon = (gcnew System::Windows::Forms::CheckBox());
 			this->labEULA = (gcnew System::Windows::Forms::Label());
-			this->cboxIsWirelessIcon = (gcnew System::Windows::Forms::CheckBox());
 			this->numEULA = (gcnew System::Windows::Forms::NumericUpDown());
 			this->cboxIsInputPerson2 = (gcnew System::Windows::Forms::CheckBox());
 			this->gboxPerson2 = (gcnew System::Windows::Forms::GroupBox());
@@ -933,6 +937,9 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			this->tboxGuideRomEditInfo = (gcnew System::Windows::Forms::TextBox());
 			this->gboxParental = (gcnew System::Windows::Forms::GroupBox());
 			this->gboxIcon = (gcnew System::Windows::Forms::GroupBox());
+			this->rIsNoIcon = (gcnew System::Windows::Forms::RadioButton());
+			this->rIsWiFiIcon = (gcnew System::Windows::Forms::RadioButton());
+			this->rIsWirelessIcon = (gcnew System::Windows::Forms::RadioButton());
 			this->gboxEULA = (gcnew System::Windows::Forms::GroupBox());
 			this->tabSubmitInfo = (gcnew System::Windows::Forms::TabPage());
 			this->labProductNameLimit = (gcnew System::Windows::Forms::Label());
@@ -1590,16 +1597,6 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			this->combRegion->TabIndex = 36;
 			this->combRegion->SelectedIndexChanged += gcnew System::EventHandler(this, &Form1::combRegion_SelectedIndexChanged);
 			// 
-			// cboxIsWiFiIcon
-			// 
-			this->cboxIsWiFiIcon->AutoSize = true;
-			this->cboxIsWiFiIcon->Location = System::Drawing::Point(6, 43);
-			this->cboxIsWiFiIcon->Name = L"cboxIsWiFiIcon";
-			this->cboxIsWiFiIcon->Size = System::Drawing::Size(135, 16);
-			this->cboxIsWiFiIcon->TabIndex = 3;
-			this->cboxIsWiFiIcon->Text = L"Wi-Fi通信アイコン表示";
-			this->cboxIsWiFiIcon->UseVisualStyleBackColor = true;
-			// 
 			// labEULA
 			// 
 			this->labEULA->AutoSize = true;
@@ -1608,16 +1605,6 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			this->labEULA->Size = System::Drawing::Size(103, 12);
 			this->labEULA->TabIndex = 7;
 			this->labEULA->Text = L"EULA同意バージョン";
-			// 
-			// cboxIsWirelessIcon
-			// 
-			this->cboxIsWirelessIcon->AutoSize = true;
-			this->cboxIsWirelessIcon->Location = System::Drawing::Point(6, 18);
-			this->cboxIsWirelessIcon->Name = L"cboxIsWirelessIcon";
-			this->cboxIsWirelessIcon->Size = System::Drawing::Size(168, 16);
-			this->cboxIsWirelessIcon->TabIndex = 2;
-			this->cboxIsWirelessIcon->Text = L"DSワイヤレス通信アイコン表示";
-			this->cboxIsWirelessIcon->UseVisualStyleBackColor = true;
 			// 
 			// numEULA
 			// 
@@ -3196,14 +3183,47 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			// 
 			// gboxIcon
 			// 
-			this->gboxIcon->Controls->Add(this->cboxIsWirelessIcon);
-			this->gboxIcon->Controls->Add(this->cboxIsWiFiIcon);
+			this->gboxIcon->Controls->Add(this->rIsNoIcon);
+			this->gboxIcon->Controls->Add(this->rIsWiFiIcon);
+			this->gboxIcon->Controls->Add(this->rIsWirelessIcon);
 			this->gboxIcon->Location = System::Drawing::Point(19, 138);
 			this->gboxIcon->Name = L"gboxIcon";
-			this->gboxIcon->Size = System::Drawing::Size(215, 69);
+			this->gboxIcon->Size = System::Drawing::Size(215, 116);
 			this->gboxIcon->TabIndex = 32;
 			this->gboxIcon->TabStop = false;
-			this->gboxIcon->Text = L"アイコン表示";
+			this->gboxIcon->Text = L"メニュー上でのアイコン表示";
+			// 
+			// rIsNoIcon
+			// 
+			this->rIsNoIcon->AutoSize = true;
+			this->rIsNoIcon->Checked = true;
+			this->rIsNoIcon->Location = System::Drawing::Point(8, 79);
+			this->rIsNoIcon->Name = L"rIsNoIcon";
+			this->rIsNoIcon->Size = System::Drawing::Size(120, 16);
+			this->rIsNoIcon->TabIndex = 6;
+			this->rIsNoIcon->TabStop = true;
+			this->rIsNoIcon->Text = L"アイコンを表示しない";
+			this->rIsNoIcon->UseVisualStyleBackColor = true;
+			// 
+			// rIsWiFiIcon
+			// 
+			this->rIsWiFiIcon->AutoSize = true;
+			this->rIsWiFiIcon->Location = System::Drawing::Point(8, 53);
+			this->rIsWiFiIcon->Name = L"rIsWiFiIcon";
+			this->rIsWiFiIcon->Size = System::Drawing::Size(134, 16);
+			this->rIsWiFiIcon->TabIndex = 5;
+			this->rIsWiFiIcon->Text = L"Wi-Fi通信アイコン表示";
+			this->rIsWiFiIcon->UseVisualStyleBackColor = true;
+			// 
+			// rIsWirelessIcon
+			// 
+			this->rIsWirelessIcon->AutoSize = true;
+			this->rIsWirelessIcon->Location = System::Drawing::Point(8, 27);
+			this->rIsWirelessIcon->Name = L"rIsWirelessIcon";
+			this->rIsWirelessIcon->Size = System::Drawing::Size(167, 16);
+			this->rIsWirelessIcon->TabIndex = 4;
+			this->rIsWirelessIcon->Text = L"DSワイヤレス通信アイコン表示";
+			this->rIsWirelessIcon->UseVisualStyleBackColor = true;
 			// 
 			// gboxEULA
 			// 
@@ -3862,10 +3882,15 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			MasterEditorTWL::appendXmlTag( doc, form, "Mail2", this->tboxMail2->Text );
 			MasterEditorTWL::appendXmlTag( doc, form, "NTSC2", this->tboxNTSC2->Text );
 
+			if( this->rIsWirelessIcon->Checked )
+				MasterEditorTWL::appendXmlTag( doc, form, "DisplayIcon", "Wireless" );
+			else if( this->rIsWiFiIcon->Checked )
+				MasterEditorTWL::appendXmlTag( doc, form, "DisplayIcon", "WiFi" );
+			else
+				MasterEditorTWL::appendXmlTag( doc, form, "DisplayIcon", "None" );
+
 			MasterEditorTWL::appendXmlTag( doc, form, "IsEULA", (this->cboxIsEULA->Checked)?"Y":"N" );
 			MasterEditorTWL::appendXmlTag( doc, form, "EULAVersion", this->numEULA->Value.ToString() );
-			MasterEditorTWL::appendXmlTag( doc, form, "IsWirelessIcon", (this->cboxIsWirelessIcon->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "IsWiFiIcon", (this->cboxIsWiFiIcon->Checked)?"Y":"N" );
 			MasterEditorTWL::appendXmlTag( doc, form, "Region", this->combRegion->SelectedIndex.ToString() );
 			MasterEditorTWL::appendXmlTag( doc, form, "RatingCERO", this->combCERO->SelectedIndex.ToString() );
 			MasterEditorTWL::appendXmlTag( doc, form, "RpCERO", (this->cboxAlwaysCERO->Checked)?"Y":"N" );
@@ -4000,10 +4025,12 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			this->parseTmp( root, "/MasterEditorTWL/Form/Mail2", this->tboxMail2 );
 			this->parseTmp( root, "/MasterEditorTWL/Form/NTSC2", this->tboxNTSC2 );
 
+			rbuts = gcnew cli::array<System::Windows::Forms::RadioButton^>{this->rIsWirelessIcon, this->rIsWiFiIcon, this->rIsNoIcon};
+			strs  = gcnew cli::array<System::String^>{"Wireless","WiFi","None"};
+			this->parseTmp( root, "/MasterEditorTWL/Form/DisplayIcon", rbuts, strs );
+
 			this->parseTmp( root, "/MasterEditorTWL/Form/IsEULA", this->cboxIsEULA );
 			this->parseTmp( root, "/MasterEditorTWL/Form/EULAVersion", this->numEULA );
-			this->parseTmp( root, "/MasterEditorTWL/Form/IsWirelessIcon", this->cboxIsWirelessIcon );
-			this->parseTmp( root, "/MasterEditorTWL/Form/IsWiFiIcon", this->cboxIsWiFiIcon );
 			this->parseTmp( root, "/MasterEditorTWL/Form/Region", this->combRegion );
 			this->parseTmp( root, "/MasterEditorTWL/Form/RatingCERO", this->combCERO );
 			this->parseTmp( root, "/MasterEditorTWL/Form/RpCERO", this->cboxAlwaysCERO );
@@ -4155,8 +4182,9 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 		{
 			this->cboxIsEULA->Enabled = false;
 			this->numEULA->Enabled    = false;
-			this->cboxIsWirelessIcon->Enabled = false;
-			this->cboxIsWiFiIcon->Enabled     = false;
+			this->rIsWirelessIcon->Enabled = false;
+			this->rIsWiFiIcon->Enabled     = false;
+			this->rIsNoIcon->Enabled       = false;
 
 			this->combCERO->Enabled = false;
 			this->cboxCERO->Enabled = false;
@@ -4195,8 +4223,8 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			// TWL拡張領域のいくつかの情報をROMヘッダに反映させる
 			this->hSrl->hIsEULA         = this->cboxIsEULA->Checked;
 			this->hSrl->hEULAVersion    = gcnew System::Byte( System::Decimal::ToByte( this->numEULA->Value ) );
-			this->hSrl->hIsWiFiIcon     = this->cboxIsWiFiIcon->Checked;
-			this->hSrl->hIsWirelessIcon = this->cboxIsWirelessIcon->Checked;
+			this->hSrl->hIsWiFiIcon     = this->rIsWiFiIcon->Checked;
+			this->hSrl->hIsWirelessIcon = this->rIsWirelessIcon->Checked;
 
 			// Srlクラスのプロパティへの反映
 			this->setParentalSrlProperties();
@@ -4372,8 +4400,19 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			// 編集可能情報
 			this->cboxIsEULA->Checked       = *(this->hSrl->hIsEULA);
 			this->numEULA->Value            = *(this->hSrl->hEULAVersion);
-			this->cboxIsWiFiIcon->Checked   = *(this->hSrl->hIsWiFiIcon);
-			this->cboxIsWirelessIcon->Checked = *(this->hSrl->hIsWirelessIcon);
+			if( (  *this->hSrl->hIsWiFiIcon  &&   *this->hSrl->hIsWirelessIcon) ||
+				(!(*this->hSrl->hIsWiFiIcon) && !(*this->hSrl->hIsWirelessIcon)) )
+			{
+				this->rIsNoIcon->Checked = true;
+			}
+			else if( *(this->hSrl->hIsWiFiIcon) && !*(this->hSrl->hIsWirelessIcon) )
+			{
+				this->rIsWiFiIcon->Checked = true;
+			}
+			else
+			{
+				this->rIsWirelessIcon->Checked = true;
+			}
 			this->setParentalForms();			// ペアレンタルコントロール関連
 		} //setSrlForms()
 
@@ -4385,9 +4424,16 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			if( (this->hSrl->hHasDSDLPlaySign != nullptr) && (*(this->hSrl->hHasDSDLPlaySign) == true) )
 			{
 				if( this->stripItemJapanese->Checked == true )
-					this->tboxCaptionEx->Text += gcnew System::String( "DSクローンブート対応. " );
+					this->tboxCaptionEx->Text += gcnew System::String( "DSクローンブート対応.\r\n" );
 				else
-					this->tboxCaptionEx->Text += gcnew System::String( "DS Clone Boot. " );
+					this->tboxCaptionEx->Text += gcnew System::String( "DS Clone Boot.\r\n" );
+			}
+			if( (this->hSrl->hIsSCFGAccess != nullptr) && (*(this->hSrl->hIsSCFGAccess) == true) )
+			{
+				if( this->stripItemJapanese->Checked == true )
+					this->tboxCaptionEx->Text += gcnew System::String( "SCFGレジスタアクセス可能.\r\n" );
+				else
+					this->tboxCaptionEx->Text += gcnew System::String( "SDFC Register Accessible.\r\n" );
 			}
 		}
 
@@ -4897,8 +4943,11 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 
 			// ひととおりエラー登録をした後で
 			// SRLバイナリに影響を与えるエラーが存在するかチェック
-			//return this->isValidAffectRom();
+#ifdef METWL_LIGHT_CHECK
 			return this->isValidAffectRomModified();
+#else
+			return this->isValidAffectRom();
+#endif
 		}
 
 		// ペアレンタルコントロール関連のフォーム入力が正しいか書き込み前チェック
@@ -5095,7 +5144,7 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			tmp = this->tboxCaptionEx->Text->Replace( " ", "" );
 			if( !(this->tboxCaptionEx->Text->Equals("")) && !(tmp->Equals("")) )
 			{
-				this->hDeliv->hCaption += (" " + this->tboxCaptionEx->Text);
+				this->hDeliv->hCaption += ("(" + this->tboxCaptionEx->Text + ")");
 			}
 
 			// 一部のROM情報を登録
@@ -5413,12 +5462,13 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			this->labCaptionEx->Text          = gcnew System::String( "特記事項" );
 
 			// SRL編集可能情報
-			this->labEULA->Text               = gcnew System::String( LANG_EULA_VER_J );
-			this->cboxIsEULA->Text            = gcnew System::String( LANG_EULA_J );
-			this->gboxIcon->Text              = gcnew System::String( LANG_ICON_J );
-			this->cboxIsWirelessIcon->Text    = gcnew System::String( LANG_WIRELESS_ICON_J );
-			this->cboxIsWiFiIcon->Text        = gcnew System::String( LANG_WIFI_ICON_J );
-			this->labRegion->Text             = gcnew System::String( LANG_REGION_J );
+			this->labEULA->Text          = gcnew System::String( LANG_EULA_VER_J );
+			this->cboxIsEULA->Text       = gcnew System::String( LANG_EULA_J );
+			this->gboxIcon->Text         = gcnew System::String( LANG_ICON_J );
+			this->rIsWirelessIcon->Text  = gcnew System::String( LANG_WIRELESS_ICON_J );
+			this->rIsWiFiIcon->Text      = gcnew System::String( LANG_WIFI_ICON_J );
+			this->rIsNoIcon->Text        = gcnew System::String( LANG_NO_ICON_J );
+			this->labRegion->Text        = gcnew System::String( LANG_REGION_J );
 
 			// リージョン
 			index = this->combRegion->SelectedIndex;
@@ -5639,12 +5689,13 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			this->labCaptionEx->Text          = gcnew System::String( "Special Note" );
 
 			// SRL編集可能情報
-			this->labEULA->Text               = gcnew System::String( LANG_EULA_VER_E );
-			this->cboxIsEULA->Text            = gcnew System::String( LANG_EULA_E );
-			this->gboxIcon->Text              = gcnew System::String( LANG_ICON_E );
-			this->cboxIsWirelessIcon->Text    = gcnew System::String( LANG_WIRELESS_ICON_E );
-			this->cboxIsWiFiIcon->Text        = gcnew System::String( LANG_WIFI_ICON_E );
-			this->labRegion->Text             = gcnew System::String( LANG_REGION_E );
+			this->labEULA->Text          = gcnew System::String( LANG_EULA_VER_E );
+			this->cboxIsEULA->Text       = gcnew System::String( LANG_EULA_E );
+			this->gboxIcon->Text         = gcnew System::String( LANG_ICON_E );
+			this->rIsWirelessIcon->Text  = gcnew System::String( LANG_WIRELESS_ICON_E );
+			this->rIsWiFiIcon->Text      = gcnew System::String( LANG_WIFI_ICON_E );
+			this->rIsNoIcon->Text        = gcnew System::String( LANG_NO_ICON_E );
+			this->labRegion->Text        = gcnew System::String( LANG_REGION_E );
 
 			// リージョン
 			index = this->combRegion->SelectedIndex;
@@ -6351,10 +6402,22 @@ private: System::Windows::Forms::Label^  labProductNameLimitForeign;
 			// 編集可能情報を読み込み時の設定に戻す
 			this->cboxIsEULA->Checked       = *(this->hSrl->hIsEULA);
 			this->numEULA->Value            = *(this->hSrl->hEULAVersion);
-			this->cboxIsWiFiIcon->Checked   = *(this->hSrl->hIsWiFiIcon);
-			this->cboxIsWirelessIcon->Checked = *(this->hSrl->hIsWirelessIcon);
+			if( (  *this->hSrl->hIsWiFiIcon  &&   *this->hSrl->hIsWirelessIcon) ||
+				(!(*this->hSrl->hIsWiFiIcon) && !(*this->hSrl->hIsWirelessIcon)) )
+			{
+				this->rIsNoIcon->Checked = true;
+			}
+			else if( *(this->hSrl->hIsWiFiIcon) && !*(this->hSrl->hIsWirelessIcon) )
+			{
+				this->rIsWiFiIcon->Checked = true;
+			}
+			else
+			{
+				this->rIsWirelessIcon->Checked = true;
+			}
 			this->setParentalForms();			// ペアレンタルコントロール関連
 		}
+
 
 }; // enf of ref class Form1
 

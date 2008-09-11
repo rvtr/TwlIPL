@@ -275,6 +275,17 @@ ECSrlResult RCSrl::setRomInfo(void)
 	this->hIsCommonClientKeyForDebugger 
 		= gcnew System::Boolean( (this->pRomHeader->s.access_control.common_client_key_for_debugger_sysmenu != 0)?true:false );
 
+	// SCFG がロックされるか
+	if( (this->pRomHeader->s.arm7_scfg_ext >> 31) != 0 )
+	{
+		this->hIsSCFGAccess = gcnew System::Boolean( true );
+	}
+	else
+	{
+		this->hIsSCFGAccess = gcnew System::Boolean( false );
+	}
+
+
 	// Shared2ファイルサイズ
 	this->hShared2SizeArray = gcnew cli::array<System::UInt32^>(METWL_NUMOF_SHARED2FILES);
 	for( i=0; i < METWL_NUMOF_SHARED2FILES; i++ )
@@ -1205,7 +1216,17 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		}
 	}
 
-	if( (this->pRomHeader->s.arm7_scfg_ext >> 31) != 0 )
+	if( (*this->hIsWiFiIcon == true) && (*this->hIsWirelessIcon == true) )
+	{
+		this->hWarnList->Add( gcnew RCMrcError( 
+			"アイコン表示フラグ", 0x1bf, 0x1bf, 
+			"ワイヤレス通信アイコンとWi-Fi通信アイコンは同時に表示できません。設定を無視して読み込みます。",
+			"Icon Displaying",
+			"Icon displayed on menu is either Wireless Icon or Wi-Fi Icon. This setting was ignored in reading.",
+			true, true ) );		// 修正可能
+	}
+
+	if( *(this->hIsSCFGAccess) == true )
 	{
 		this->hWarnList->Add( gcnew RCMrcError( 
 			"SCFG設定", 0x1b8, 0x1bb, "SCFGレジスタへアクセス可能になっています。",
@@ -1630,7 +1651,7 @@ void RCSrl::mrcPadding(FILE *fp)
 		this->hErrorList->Add( gcnew RCMrcError( 
 			padstrJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
 			"読み出すことができませんでした。",
-			padstrE, "This area couldn't be read", true, true ) );
+			padstrE, "This area couldn't be read", false, true ) );
 		return;
 	}
 
@@ -1641,7 +1662,7 @@ void RCSrl::mrcPadding(FILE *fp)
 		this->hErrorList->Add( gcnew RCMrcError( 
 			padstrJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
 			"読み出すことができませんでした。",
-			padstrE, "This area couldn't be read", true, true ) );
+			padstrE, "This area couldn't be read", false, true ) );
 		delete []buf;
 		return;
 	}
@@ -1662,7 +1683,7 @@ void RCSrl::mrcPadding(FILE *fp)
 			"FFh以外の値が格納されています。 " + romstr + " ROMの容量制限が守られていません。",
 			padstrE,
 			"This area includes illegai data. " + romstr + " Volume constraint is violated.",
-			true, true ) );
+			false, true ) );
 	}
 	delete []buf;
 }
@@ -1704,7 +1725,7 @@ void RCSrl::mrcBanner(FILE *fp)
 			"読み出すことができませんでした。",
 			"Banner File",
 			"The file can't be read.",
-			true, true ) );
+			false, true ) );
 	}
 
 	// バナーの各文字がマップに登録されているかチェック
@@ -1730,7 +1751,7 @@ void RCSrl::mrcBanner(FILE *fp)
 			"使用不可能な文字セットが使用されています。",
 			"Banner File",
 			"A set of illegal charactor code is used.",
-			true, true ) );
+			false, true ) );
 	}
 	delete []banner;
 }

@@ -1,8 +1,9 @@
 #pragma once
 
 //#define   METWL_WHETHER_PLATFORM_CHECK	// プラットフォームがTWL対応以外かどうかをチェックする
-//#define   METWL_WHETHER_SIGN_DECRYPT		// 署名を外してダイジェストをベリファイする
+#define   METWL_WHETHER_SIGN_DECRYPT		// 署名を外してダイジェストをベリファイする
 #define   METWL_WHETHER_MRC					// MRC機能を含めるか
+#define   METWL_LIGHT_CHECK					// 提出条件を緩くするか
 
 // 定数
 #define   METWL_ERRLIST_NORANGE			0			// エラーのアドレス範囲を指定しないことを表す特別な値
