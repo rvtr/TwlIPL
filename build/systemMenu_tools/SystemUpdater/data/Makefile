@@ -46,6 +46,12 @@ LDIRT_CLEAN		=	HNAA.tad \
 IPL_REVISION :=	$(shell LANG=C svn info $(call empath,$(FIRM_ROOT)) | grep 'Revision' | sed s/[^0-9]//g)
 SDK_REVISION :=	$(shell LANG=C svn info $(call empath,$(ROOT)) | grep 'Revision' | sed s/[^0-9]//g)
 
+ifeq ($(FIRM_USE_PRODUCT_KEYS),TRUE)
+FIRM_MODE			=	prod
+else
+FIRM_MODE			=	dev
+endif
+
 include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 do-build :	HNAA.tad \
@@ -73,7 +79,7 @@ HNHA.tad: $(DS_HASH_TABLE_DATA)
 HNLA.tad: $(SYSMENU_VERSION_DIR)/$(SYSMENU_VERSION_FILE)
 	$(MAKETAD) $(call empath,$<) $(SYSMENU_VERSION_MAKETAD_OPTION) -o $@
 
-menu_launcher.nand: ../../../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE)-$(IPL_REVISION)-$(SDK_REVISION).nand
+menu_launcher.nand: ../../../nandfirm/menu-launcher/menu_launcher-$(TWL_BUILD_TYPE)-$(IPL_REVISION)-$(SDK_REVISION).$(FIRM_MODE).nand
 	cp $< ./$@
 
 TWLFontTable.dat: ../../../systemMenu_RED/sharedFont/TWLFontTable_????????.dat
