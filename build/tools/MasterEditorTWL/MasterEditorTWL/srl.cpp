@@ -799,6 +799,26 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 	}
 
 	result = true;
+	for( i=0; i < TITLE_NAME_MAX; i++ )
+	{
+		char c = this->pRomHeader->s.title_name[TITLE_NAME_MAX - i - 1];	// 末尾から探索
+		if( ((0x21 <= c ) && (c <= 0x5f)) || (c == 0x00) )					// 00hと20h以外の使用可能な文字が出てくるまでにスペースが存在したらダメ
+		{
+			break;
+		}
+		else if( c == 0x20 )
+		{
+			result = false;
+		}
+	}
+	if( !result )
+	{
+		this->hErrorList->Add( gcnew RCMrcError( 
+			"ソフトタイトル", 0x0, 0xb, "末尾の未使用部分には00hを登録してください。",
+			"Game Title", "Please use 00h for an unused part.", false, true ) );
+	}
+
+	result = true;
 	for( i=0; i < GAME_CODE_MAX; i++ )
 	{
 		char c = this->pRomHeader->s.game_code[i];
@@ -1033,6 +1053,18 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 				"セグメント3CRC", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, 
 				"セグメント3領域に誤りがあります。",
 				"System-Call Library", "This Library is SDK default one.", false, true ) );
+		}
+
+		u16  NA = this->pRomHeader->s.twl_card_normal_area_rom_offset & 0x7fffUL;
+		u16  KA = this->pRomHeader->s.twl_card_keytable_area_rom_offset;
+		if( (NA == 0) || (KA == 0) || (NA > KA) )
+		{
+			this->hErrorList->Add( gcnew RCMrcError( 
+				"TWL ROMオフセット", 0x90, 0x93,
+				"TWLノーマル領域ROMオフセット(NA)およびTWL専用領域ROMオフセット(KA)はともに1以上で、かつNAはKAを超えてはいけません。",
+				"TWL ROM Offset", 
+				"Both TWL Normal Area ROM Offset(NA) and TWL Limited Area ROM Offset(KA) are bigger than 0. And NA must be smaller than KA, or equals to KA.",
+				false, true ) );
 		}
 	} //if( *(this->hIsNAND) == false )
 	else	// NANDアプリのときのみのチェック
@@ -1694,6 +1726,18 @@ void RCSrl::mrcBanner(FILE *fp)
 	u8  map[ 0x10000 ];
 	u32 i;
 
+	// 本体設定だけはガイドライン無視
+	if( memcmp( this->pRomHeader->s.game_code, "HNB", 3 ) == 0 )
+	{
+		//this->hWarnList->Add( gcnew RCMrcError( 
+		//	"バナーファイル", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
+		//	"本体設定アプリに限ってはバナーの文字コードチェックをスキップします。",
+		//	"Banner File",
+		//	"Only a machine setting app., a charactor code check of the banner file is skip.",
+		//	false, true ) );
+		return;
+	}
+
 	// 使用可能な文字のマップをつくる
 	// 文字コードをインデックスとして使用可能なら 1 が入る
 	// そうでないなら 0 が入る
@@ -1716,7 +1760,6 @@ void RCSrl::mrcBanner(FILE *fp)
 	// バナーを読み込む
 	u32 size = this->pRomHeader->s.banner_size;
 	u8 *banner = new u8[size];
-	System::Diagnostics::Debug::WriteLine( "size: " + size.ToString("X") );
 	fseek( fp, this->pRomHeader->s.banner_offset, SEEK_SET );
 	if( size != fread( banner, 1, size, fp ) )
 	{
@@ -1739,7 +1782,7 @@ void RCSrl::mrcBanner(FILE *fp)
 		index = (index << 8) + banner[i];
 		if( map[ index ] == 0 )
 		{
-			System::Diagnostics::Debug::WriteLine( i.ToString("X") + ":" + index.ToString("X") + ":" + indexbak.ToString("X") );
+			//System::Diagnostics::Debug::WriteLine( i.ToString("X") + ":" + index.ToString("X") + ":" + indexbak.ToString("X") );
 			bResult = false;
 			break;
 		}
