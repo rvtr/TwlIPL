@@ -130,6 +130,7 @@ HotSwState HOTSWi_RefreshBadBlock(u32 romMode);
 
 static void CheckCardInsert(BOOL cardExist);
 static void CheckCardPullOut(BOOL cardExist);
+static void SendInsertMessage(void);
 
 static void PulledOutSequence(void);
 
@@ -140,9 +141,12 @@ static char                 encrypt_object_key[] ATTRIBUTE_ALIGN(4) = "encryObj"
 
 static u16                  s_RscLockID;
 static u16                  s_CardLockID;
+static u16					s_PollingLockID;
 static u16                  s_bondingOp;
 
 static u32                  s_BootSegBufSize, s_SecureSegBufSize, s_Secure2SegBufSize;
+
+static u32					s_gameID;
 
 static BootSegmentData      *s_pBootSegBuffer;
 static u32                  *s_pSecureSegBuffer;
@@ -155,6 +159,8 @@ static BOOL                 s_debuggerFlg;
 
 static BOOL                 s_isPulledOut = TRUE;
 static BOOL                 s_pollingThreadSleepFlg = FALSE;
+
+static volatile BOOL		s_isBusyMonitorThread;
 
 // HMACSHA1の鍵
 static u8 s_digestDefaultKey[ DIGEST_HASH_BLOCK_SIZE_SHA1 ] = {
@@ -261,6 +267,12 @@ void HOTSW_Init(u32 threadPrio)
             // do nothing
         }
         s_CardLockID = (u16)tempLockID;
+
+        // ポーリングスレッド用のロックIDの取得
+        while((tempLockID = OS_GetLockID()) == OS_LOCK_ID_ERROR){
+            // do nothing
+        }
+        s_PollingLockID = (u16)tempLockID;
     }
 
     // カードの状態監視用スレッドの生成 ( DSテレビ対策 )
@@ -343,7 +355,7 @@ static HotSwState LoadCardData(void)
     HotSwState retval = HOTSW_SUCCESS;
     HotSwState state  = HOTSW_SUCCESS;
     u32 romMode = HOTSW_ROM_MODE_NULL;
-
+    
     // カードのロック
     CARD_LockRom(s_CardLockID);
 
@@ -592,7 +604,7 @@ end:
 
     // カードのロック開放(※ロックIDは開放せずに持ち続ける)
     CARD_UnlockRom(s_CardLockID);
-
+    
     return retval;
 }
 
@@ -916,6 +928,15 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
     // カードのロック
     CARD_LockRom(s_CardLockID);
 
+    ReadIDGame(&s_cbData);
+    if(s_cbData.id_gam != s_gameID){
+		state = HOTSW_GAMEMODE_ID_CHECK_ERROR;
+    }
+
+    if(!(reg_MI_EXMEMCNT_L & REG_MI_EXMEMCNT_L_MP_MASK)){
+		state = HOTSW_BUS_LOCK_ERROR;
+    }
+    
     while(size > 0 && state == HOTSW_SUCCESS){
         // --- Boot Segment
         if(src >= HOTSW_BOOTSEGMENT_AREA_OFS && src < HOTSW_KEYTABLE_AREA_OFS){
@@ -974,9 +995,16 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
         dest += sendSize;
     }
 
+    ReadIDGame(&s_cbData);
+    if(s_cbData.id_gam != s_gameID){
+        if(state == HOTSW_SUCCESS){
+        	state = HOTSW_GAMEMODE_ID_CHECK_ERROR;
+        }
+    }
+    
     // カードのアンロック
     CARD_UnlockRom(s_CardLockID);
-
+    
     {
         HotSwPxiMessageForArm9  msg;
         CardDataReadState       retval;
@@ -1002,6 +1030,14 @@ static void ReadCardData(u32 src, u32 dest, u32 size)
             retval = CARD_READ_MODE_ERROR;
             break;
 
+          case HOTSW_GAMEMODE_ID_CHECK_ERROR:
+            retval = CARD_READ_ID_CHECK_ERROR;
+            break;
+
+          case HOTSW_BUS_LOCK_ERROR:
+            retval = CARD_READ_BUS_LOCK_ERROR;
+            break;
+            
           default:
             retval = CARD_READ_UNEXPECTED_ERROR;
             break;
@@ -1632,6 +1668,8 @@ static void HotSwThread(void *arg)
             if(HOTSW_IsCardExist()){
                 if(!s_isPulledOut){
                     if(GetMcSlotMode() == SLOT_STATUS_MODE_10){
+						s_gameID = s_cbData.id_gam;
+                        
                         LockHotSwRsc(&SYSMi_GetWork()->lockCardRsc);
 
                         if( msg->ctrl && msg->value ){
@@ -1709,6 +1747,8 @@ static void PulledOutSequence(void)
 
     s_isPulledOut = TRUE;
 
+    s_gameID = 0;
+    
     // ワンセグのスリープ時シャットダウン対策を戻す
     MCU_EnableDeepSleepToPowerLine( MCU_PWR_LINE_33, TRUE );
 }
@@ -1751,6 +1791,11 @@ static void FinalizeHotSw(HotSwCardState state)
 
     // カード挿入検出停止
     (void)OS_DisableIrqMask( HOTSW_IF_CARD_DET );
+
+    // ポーリングスレッドが動作中は待つ
+    while(s_isBusyMonitorThread){
+		OS_Sleep(1);
+    }
 
     // ポーリングスレッドを消去
     OS_KillThread( &HotSwThreadData.monitorThread, NULL );
@@ -2046,6 +2091,8 @@ static void MonitorThread(void *arg)
             OS_ReceiveMessage(&HotSwThreadData.hotswPollingCtrlQueue, (OSMessage *)&msg, OS_MESSAGE_BLOCK);
         }
 
+		s_isBusyMonitorThread = TRUE;
+        
         isCardExist = HOTSW_IsCardExist();
 
         CheckCardPullOut(isCardExist);
@@ -2054,6 +2101,8 @@ static void MonitorThread(void *arg)
             CheckCardInsert(isCardExist);
             count = 0;
         }
+
+        s_isBusyMonitorThread = FALSE;
     }
 }
 
@@ -2065,21 +2114,53 @@ static void MonitorThread(void *arg)
  *---------------------------------------------------------------------------*/
 static void CheckCardInsert(BOOL cardExist)
 {
+    // カードは挿さっているのに、ランチャーが認識してなかったらメッセージを送る
     if(cardExist && s_isPulledOut){
         OSIntrMode enabled = OS_DisableInterrupts();
 
-        HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].ctrl  = FALSE;
-        HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].value = 0;
-        HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].type  = HOTSW_INSERT;
-
-        // メッセージをキューの先頭に入れる
-        OS_JamMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert], OS_MESSAGE_NOBLOCK);
-
-        // メッセージインデックスをインクリメント
-        HotSwThreadData.idx_insert = (HotSwThreadData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
+        SendInsertMessage();
 
         (void)OS_RestoreInterrupts( enabled );
     }
+    // カードは挿さっていて、ランチャーが認識していたらGameモードのID読みをして、抜けてないか調べる
+    else if(cardExist && !s_isPulledOut && !SYSMi_GetWork()->flags.hotsw.isBusyHotSW){
+		OS_PutString("GameMode ID Check...\n");
+        
+        // カードのロック
+    	CARD_LockRom(s_PollingLockID);
+
+        ReadIDGame(&s_cbData);
+
+        if(s_cbData.id_gam != s_gameID){
+            OSIntrMode enabled;
+            
+			McPowerOff();
+
+            enabled = OS_DisableInterrupts();
+            
+			PulledOutSequence();
+			SendInsertMessage();
+            
+            (void)OS_RestoreInterrupts( enabled );
+        }
+        
+	    // カードのロック開放(※ロックIDは開放せずに持ち続ける)
+    	CARD_UnlockRom(s_PollingLockID);
+    }
+}
+
+
+static void SendInsertMessage(void)
+{
+	HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].ctrl  = FALSE;
+	HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].value = 0;
+	HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert].type  = HOTSW_INSERT;
+
+	// メッセージをキューの先頭に入れる
+	OS_JamMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswInsertMsg[HotSwThreadData.idx_insert], OS_MESSAGE_NOBLOCK);
+
+	// メッセージインデックスをインクリメント
+	HotSwThreadData.idx_insert = (HotSwThreadData.idx_insert+1) % HOTSW_INSERT_MSG_NUM;
 }
 
 
