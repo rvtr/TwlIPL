@@ -6158,6 +6158,13 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 				}
 			}
 
+			// 注意書き 
+			{
+				this->sucMsg( 
+					"提出手順書にしたがい、ROMデータファイル名は \"" + filename + "\"となります。\n" + "\nROMデータファイルを保存するフォルダを選択してください。",
+					"ROM data file name is \"" + filename + "\".\n" + "\nPlease select a folder in which the ROM data is saved."
+				);
+			}
 			// ダイアログからSRLを保存するディレクトリを取得する
 			{
 				System::Windows::Forms::FolderBrowserDialog ^dlg = gcnew (System::Windows::Forms::FolderBrowserDialog);
