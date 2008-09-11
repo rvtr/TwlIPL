@@ -888,6 +888,7 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 	// CRC
 	u16  crc;
 	// セキュア領域
+	if( *this->hIsMediaNand == false )	// カードアプリのときのみ
 	{
 		// セキュア領域はROMヘッダ外
 		u8     *secures;
