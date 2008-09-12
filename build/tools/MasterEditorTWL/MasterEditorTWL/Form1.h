@@ -199,9 +199,9 @@ namespace MasterEditorTWL {
 
 	private: System::Windows::Forms::CheckBox^  cboxIsEULA;
 
-	private: System::Windows::Forms::Label^  labEULA;
 
-	private: System::Windows::Forms::NumericUpDown^  numEULA;
+
+
 
 
 
@@ -778,8 +778,6 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->labRegion = (gcnew System::Windows::Forms::Label());
 			this->cboxIsEULA = (gcnew System::Windows::Forms::CheckBox());
 			this->combRegion = (gcnew System::Windows::Forms::ComboBox());
-			this->labEULA = (gcnew System::Windows::Forms::Label());
-			this->numEULA = (gcnew System::Windows::Forms::NumericUpDown());
 			this->cboxIsInputPerson2 = (gcnew System::Windows::Forms::CheckBox());
 			this->gboxPerson2 = (gcnew System::Windows::Forms::GroupBox());
 			this->labArbit4 = (gcnew System::Windows::Forms::Label());
@@ -970,7 +968,6 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->labAssemblyVersion = (gcnew System::Windows::Forms::Label());
 			this->gboxSrl->SuspendLayout();
 			this->gboxCRC->SuspendLayout();
-			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->numEULA))->BeginInit();
 			this->gboxPerson2->SuspendLayout();
 			this->gboxPerson1->SuspendLayout();
 			this->gboxUsage->SuspendLayout();
@@ -1579,7 +1576,7 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			// cboxIsEULA
 			// 
 			this->cboxIsEULA->AutoSize = true;
-			this->cboxIsEULA->Location = System::Drawing::Point(17, 18);
+			this->cboxIsEULA->Location = System::Drawing::Point(8, 20);
 			this->cboxIsEULA->Name = L"cboxIsEULA";
 			this->cboxIsEULA->Size = System::Drawing::Size(77, 16);
 			this->cboxIsEULA->TabIndex = 0;
@@ -1596,24 +1593,6 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->combRegion->Size = System::Drawing::Size(164, 20);
 			this->combRegion->TabIndex = 36;
 			this->combRegion->SelectedIndexChanged += gcnew System::EventHandler(this, &Form1::combRegion_SelectedIndexChanged);
-			// 
-			// labEULA
-			// 
-			this->labEULA->AutoSize = true;
-			this->labEULA->Location = System::Drawing::Point(14, 44);
-			this->labEULA->Name = L"labEULA";
-			this->labEULA->Size = System::Drawing::Size(103, 12);
-			this->labEULA->TabIndex = 7;
-			this->labEULA->Text = L"EULA同意バージョン";
-			// 
-			// numEULA
-			// 
-			this->numEULA->Location = System::Drawing::Point(130, 39);
-			this->numEULA->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) {255, 0, 0, 0});
-			this->numEULA->Name = L"numEULA";
-			this->numEULA->Size = System::Drawing::Size(45, 19);
-			this->numEULA->TabIndex = 1;
-			this->numEULA->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// cboxIsInputPerson2
 			// 
@@ -3186,7 +3165,7 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->gboxIcon->Controls->Add(this->rIsNoIcon);
 			this->gboxIcon->Controls->Add(this->rIsWiFiIcon);
 			this->gboxIcon->Controls->Add(this->rIsWirelessIcon);
-			this->gboxIcon->Location = System::Drawing::Point(19, 138);
+			this->gboxIcon->Location = System::Drawing::Point(19, 114);
 			this->gboxIcon->Name = L"gboxIcon";
 			this->gboxIcon->Size = System::Drawing::Size(215, 116);
 			this->gboxIcon->TabIndex = 32;
@@ -3228,11 +3207,9 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			// gboxEULA
 			// 
 			this->gboxEULA->Controls->Add(this->cboxIsEULA);
-			this->gboxEULA->Controls->Add(this->numEULA);
-			this->gboxEULA->Controls->Add(this->labEULA);
 			this->gboxEULA->Location = System::Drawing::Point(19, 60);
 			this->gboxEULA->Name = L"gboxEULA";
-			this->gboxEULA->Size = System::Drawing::Size(215, 72);
+			this->gboxEULA->Size = System::Drawing::Size(215, 48);
 			this->gboxEULA->TabIndex = 31;
 			this->gboxEULA->TabStop = false;
 			this->gboxEULA->Text = L"EULA";
@@ -3555,7 +3532,6 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->gboxSrl->PerformLayout();
 			this->gboxCRC->ResumeLayout(false);
 			this->gboxCRC->PerformLayout();
-			(cli::safe_cast<System::ComponentModel::ISupportInitialize^  >(this->numEULA))->EndInit();
 			this->gboxPerson2->ResumeLayout(false);
 			this->gboxPerson2->PerformLayout();
 			this->gboxPerson1->ResumeLayout(false);
@@ -3890,7 +3866,6 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 				MasterEditorTWL::appendXmlTag( doc, form, "DisplayIcon", "None" );
 
 			MasterEditorTWL::appendXmlTag( doc, form, "IsEULA", (this->cboxIsEULA->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "EULAVersion", this->numEULA->Value.ToString() );
 			MasterEditorTWL::appendXmlTag( doc, form, "Region", this->combRegion->SelectedIndex.ToString() );
 			MasterEditorTWL::appendXmlTag( doc, form, "RatingCERO", this->combCERO->SelectedIndex.ToString() );
 			MasterEditorTWL::appendXmlTag( doc, form, "RpCERO", (this->cboxAlwaysCERO->Checked)?"Y":"N" );
@@ -4030,7 +4005,6 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->parseTmp( root, "/MasterEditorTWL/Form/DisplayIcon", rbuts, strs );
 
 			this->parseTmp( root, "/MasterEditorTWL/Form/IsEULA", this->cboxIsEULA );
-			this->parseTmp( root, "/MasterEditorTWL/Form/EULAVersion", this->numEULA );
 			this->parseTmp( root, "/MasterEditorTWL/Form/Region", this->combRegion );
 			this->parseTmp( root, "/MasterEditorTWL/Form/RatingCERO", this->combCERO );
 			this->parseTmp( root, "/MasterEditorTWL/Form/RpCERO", this->cboxAlwaysCERO );
@@ -4181,7 +4155,6 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 		void readOnly( void )
 		{
 			this->cboxIsEULA->Enabled = false;
-			this->numEULA->Enabled    = false;
 			this->rIsWirelessIcon->Enabled = false;
 			this->rIsWiFiIcon->Enabled     = false;
 			this->rIsNoIcon->Enabled       = false;
@@ -4222,7 +4195,6 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 
 			// TWL拡張領域のいくつかの情報をROMヘッダに反映させる
 			this->hSrl->hIsEULA         = this->cboxIsEULA->Checked;
-			this->hSrl->hEULAVersion    = gcnew System::Byte( System::Decimal::ToByte( this->numEULA->Value ) );
 			this->hSrl->hIsWiFiIcon     = this->rIsWiFiIcon->Checked;
 			this->hSrl->hIsWirelessIcon = this->rIsWirelessIcon->Checked;
 
@@ -4399,7 +4371,6 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 
 			// 編集可能情報
 			this->cboxIsEULA->Checked       = *(this->hSrl->hIsEULA);
-			this->numEULA->Value            = *(this->hSrl->hEULAVersion);
 			if( (  *this->hSrl->hIsWiFiIcon  &&   *this->hSrl->hIsWirelessIcon) ||
 				(!(*this->hSrl->hIsWiFiIcon) && !(*this->hSrl->hIsWirelessIcon)) )
 			{
@@ -5462,7 +5433,6 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->labCaptionEx->Text          = gcnew System::String( "特記事項" );
 
 			// SRL編集可能情報
-			this->labEULA->Text          = gcnew System::String( LANG_EULA_VER_J );
 			this->cboxIsEULA->Text       = gcnew System::String( LANG_EULA_J );
 			this->gboxIcon->Text         = gcnew System::String( LANG_ICON_J );
 			this->rIsWirelessIcon->Text  = gcnew System::String( LANG_WIRELESS_ICON_J );
@@ -5689,7 +5659,6 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->labCaptionEx->Text          = gcnew System::String( "Special Note" );
 
 			// SRL編集可能情報
-			this->labEULA->Text          = gcnew System::String( LANG_EULA_VER_E );
 			this->cboxIsEULA->Text       = gcnew System::String( LANG_EULA_E );
 			this->gboxIcon->Text         = gcnew System::String( LANG_ICON_E );
 			this->rIsWirelessIcon->Text  = gcnew System::String( LANG_WIRELESS_ICON_E );
@@ -6408,7 +6377,6 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 
 			// 編集可能情報を読み込み時の設定に戻す
 			this->cboxIsEULA->Checked       = *(this->hSrl->hIsEULA);
-			this->numEULA->Value            = *(this->hSrl->hEULAVersion);
 			if( (  *this->hSrl->hIsWiFiIcon  &&   *this->hSrl->hIsWirelessIcon) ||
 				(!(*this->hSrl->hIsWiFiIcon) && !(*this->hSrl->hIsWirelessIcon)) )
 			{

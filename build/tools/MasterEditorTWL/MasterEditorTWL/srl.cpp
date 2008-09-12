@@ -202,7 +202,6 @@ ECSrlResult RCSrl::setRomInfo(void)
 	this->hIsTmpJump    = gcnew System::Boolean( (this->pRomHeader->s.permit_landing_tmp_jump    != 0)?true:false );
 	this->hNormalRomOffset   = gcnew System::UInt32( (u32)(this->pRomHeader->s.twl_card_normal_area_rom_offset)   * 0x80000 );
 	this->hKeyTableRomOffset = gcnew System::UInt32( (u32)(this->pRomHeader->s.twl_card_keytable_area_rom_offset) * 0x80000 );
-	this->hEULAVersion = gcnew System::Byte( this->pRomHeader->s.agree_EULA_version );
 	this->hPublicSize  = gcnew System::UInt32( this->pRomHeader->s.public_save_data_size );
 	this->hPrivateSize = gcnew System::UInt32( this->pRomHeader->s.private_save_data_size );
 
@@ -340,7 +339,6 @@ ECSrlResult RCSrl::setRomHeader(void)
 
 	// いくつかのフラグをROMヘッダに反映
 	this->pRomHeader->s.exFlags.agree_EULA = (*(this->hIsEULA) == true)?1:0;
-	this->pRomHeader->s.agree_EULA_version = *(this->hEULAVersion);
 	this->pRomHeader->s.exFlags.WiFiConnectionIcon = (*(this->hIsWiFiIcon) == true)?1:0;
 	this->pRomHeader->s.exFlags.DSWirelessIcon     = (*(this->hIsWirelessIcon) == true)?1:0;
 
@@ -966,7 +964,7 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 	if( !bRsv )
 	{
 		this->hErrorList->Add( gcnew RCMrcError( 
-			"予約領域C", 0x078, 0x07f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
+			"予約領域C", 0x160, 0x17f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
 			"Reserved Area C", "Invalid data is included. Please set 0 into this area.", false, true ) );
 	}
 
@@ -1272,7 +1270,7 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 			true, true ) );		// 修正可能
 	}
 
-	if( *(this->hIsSCFGAccess) == true )
+	if( (*this->hIsAppLauncher == false) && (*this->hIsSCFGAccess == true) )
 	{
 		this->hWarnList->Add( gcnew RCMrcError( 
 			"SCFG設定", 0x1b8, 0x1bb, "SCFGレジスタへアクセス可能になっています。",
@@ -1327,10 +1325,10 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 	if( *this->hIsOldDevEncrypt && *this->hHasDSDLPlaySign )
 	{
 		this->hErrorList->Add( gcnew RCMrcError( 
-			"クローンブート署名", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
-			"SDKがクローンブートに対応していないため、ROM出しによってデータに矛盾が生じます。任天堂窓口にご相談ください。",
-			"Clone-Boot Signature",
-			"Since SDK used by this ROM is not support for making Clone-Boot ROM, Mastering ROM will be error. Please contact nintendo, sorry.",
+			"旧開発用暗号フラグ", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
+			"このROMはクローンブート対応アプリですが、製品用本体ではクローンブートができなくなります。",
+			"Old Development Flag",
+			"This ROM supports Clone-Boot, and the flag is old type. Therefore, Clone-Boot is ",
 			false, true ) );
 	}
 
@@ -1359,14 +1357,6 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 			this->hWarnList->Add( gcnew RCMrcError( 
 				"SDKバージョン", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, "本プログラムに登録されているバージョン情報と一致しません。",
 				"SDK Version", "The data doesn't match one registered in this program.", false, true ) );
-		}
-
-		// EULAバージョン
-		if( *(this->hEULAVersion) != *(this->hMrcSpecialList->hEULAVer) )
-		{
-			this->hWarnList->Add( gcnew RCMrcError( 
-				"EULA バージョン", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, "本プログラムに登録されているバージョン情報と一致しません。",
-				"EULA Version", "The data doesn't match one registered in this program.", false, true ) );
 		}
 
 		// Shared2ファイルサイズ

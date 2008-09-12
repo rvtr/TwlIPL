@@ -247,10 +247,6 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 				node->FirstChild->Value = lib;
 			}
 			// ROMî•ñ (TWLŠg’£î•ñ)
-			if( node->FirstChild->Value->Equals( "TagEULAVersion" ) )
-			{
-				node->FirstChild->Value = hSrl->hEULAVersion->ToString();
-			}
 			if( node->FirstChild->Value->Equals( "TagTitleIDLo" ) )
 			{
 				node->FirstChild->Value = hSrl->hTitleIDLo;
