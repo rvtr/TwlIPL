@@ -212,6 +212,34 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\MasterEditorTWL\MasterEditorTWL\Form_deliv.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\MasterEditorTWL\MasterEditorTWL\Form_file.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\MasterEditorTWL\MasterEditorTWL\Form_lang.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\MasterEditorTWL\MasterEditorTWL\Form_pctl.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\MasterEditorTWL\MasterEditorTWL\Form_srl.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\MasterEditorTWL\MasterEditorTWL\Form_tmp.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\MasterEditorTWL\MasterEditorTWL\Form_util.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\MasterEditorTWL\MasterEditorTWL\FormError.cpp"
 				>
 			</File>
