@@ -191,6 +191,8 @@ TwlMain()
 		u32 console = OS_GetRunningConsoleType();
 		enum { IS_TWL_DEBUGGER=0, IS_TWL_CAPTURE, TWL, UNKNOWN };
 		int running = UNKNOWN;
+		BOOL isAdapter;
+		u16 batLevel;
 
 		// SystemUpdaterはデバッグ不可で作成されるためOS_CONSOLE_TWLが取得される
 		// 赤箱にカードを挿してSystemUpdaterを実行した場合も同様（但しOS_CONSOLE_TWLTYPE_RETAILにはならない）
@@ -267,12 +269,29 @@ TwlMain()
 		}
 #endif  // SYSM_BUILD_FOR_DEBUGGER
 
-	    // UNKNOWNはは動作させない
+	    // UNKNOWNは動作させない
 		if (running == UNKNOWN)
 		{
 			kamiFontPrintfMain( 2,  9, 3, " Sorry,                     ");
 			kamiFontPrintfMain( 2, 10, 3, " This SystemUpdater can not ");
 			kamiFontPrintfMain( 2, 11, 3, " execute on UNKNOWN CONSOLE.");
+			DrawInvalidConsole();
+		}
+
+	    // 電池残量が少なければ動作させない
+		while (PM_GetBatteryLevel( &batLevel ) != PM_RESULT_SUCCESS)
+		{
+			OS_Sleep(1);
+		}
+		while (PM_GetACAdapter( &isAdapter ) != PM_RESULT_SUCCESS)
+		{
+			OS_Sleep(1);
+		}
+		if ((batLevel < 3) && ! isAdapter)
+		{
+			kamiFontPrintfMain( 2,  9, 3, " Sorry,                     ");
+			kamiFontPrintfMain( 2, 10, 3, " This SystemUpdater can not ");
+			kamiFontPrintfMain( 2, 11, 3, " execute if battery is low. ");
 			DrawInvalidConsole();
 		}
 	}
