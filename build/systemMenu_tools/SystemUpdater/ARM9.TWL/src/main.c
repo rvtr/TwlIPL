@@ -287,7 +287,8 @@ TwlMain()
 		{
 			OS_Sleep(1);
 		}
-		if ((batLevel < 3) && ! isAdapter)
+		if (((batLevel <= 2) && ! isAdapter) ||
+			 (batLevel <= 1))
 		{
 			kamiFontPrintfMain( 2,  9, 3, " Sorry,                     ");
 			kamiFontPrintfMain( 2, 10, 3, " This SystemUpdater can not ");
