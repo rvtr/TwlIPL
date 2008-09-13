@@ -86,6 +86,15 @@ namespace MasterEditorTWL
 		// ROMヘッダ不記載のROMバイナリ(SRL)固有情報
 		property System::String  ^hBackupMemory;		// バックアップメモリの種別
 
+		// SRL情報の一部を文字列で持っておく
+		property System::String  ^hCERO;
+		property System::String  ^hESRB;
+		property System::String  ^hUSK;
+		property System::String  ^hPEGI;
+		property System::String  ^hPEGI_PRT;
+		property System::String  ^hPEGI_BBFC;
+		property System::String  ^hOFLC;
+
 		// constructor and destructor
 	public:
 

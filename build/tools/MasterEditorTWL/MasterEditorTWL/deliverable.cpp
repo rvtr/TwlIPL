@@ -491,194 +491,34 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 			}
 
 			// ペアレンタルコントロール
-			//if( node->FirstChild->Value->Equals( "TagRatingCERO" ) )
-			//{
-			//	node->FirstChild->Value = hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_CERO ]->ToString();
-			//}
-			//if( node->FirstChild->Value->Equals( "TagRatingCEROStr" ) )
-			//{
-			//	node->FirstChild->Value = MasterEditorTWL::transRatingToString( 
-			//								OS_TWL_PCTL_OGN_CERO, 
-			//								*(hSrl->hArrayParentalEnable[ OS_TWL_PCTL_OGN_CERO ]),
-			//								*(hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_CERO ]),
-			//								english );
-			//}
-			//if( node->FirstChild->Value->Equals( "TagEnableCERO" ) )
-			//{
-			//	if( *(hSrl->hArrayParentalEnable[ OS_TWL_PCTL_OGN_CERO ]) )
-			//		node->FirstChild->Value = gcnew System::String( "○" );
-			//	else
-			//		node->FirstChild->Value = nullptr;
-			//}
-			//if( node->FirstChild->Value->Equals( "TagAlwaysCERO" ) )
-			//{
-			//	if( *(hSrl->hArrayParentalAlways[ OS_TWL_PCTL_OGN_CERO ]) )
-			//		node->FirstChild->Value = gcnew System::String( "○" );
-			//	else
-			//		node->FirstChild->Value = nullptr;
-			//}
-
-			//if( node->FirstChild->Value->Equals( "TagRatingESRB" ) )
-			//{
-			//	node->FirstChild->Value = hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_ESRB ]->ToString();
-			//}
-			//if( node->FirstChild->Value->Equals( "TagRatingESRBStr" ) )
-			//{
-			//	node->FirstChild->Value = MasterEditorTWL::transRatingToString( 
-			//								OS_TWL_PCTL_OGN_ESRB, 
-			//								*(hSrl->hArrayParentalEnable[ OS_TWL_PCTL_OGN_ESRB ]),
-			//								*(hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_ESRB ]),
-			//								english );
-			//}
-			//if( node->FirstChild->Value->Equals( "TagEnableESRB" ) )
-			//{
-			//	if( *(hSrl->hArrayParentalEnable[ OS_TWL_PCTL_OGN_ESRB ]) )
-			//		node->FirstChild->Value = gcnew System::String( "○" );
-			//	else
-			//		node->FirstChild->Value = nullptr;
-			//}
-			//if( node->FirstChild->Value->Equals( "TagAlwaysESRB" ) )
-			//{
-			//	if( *(hSrl->hArrayParentalAlways[ OS_TWL_PCTL_OGN_ESRB ]) )
-			//		node->FirstChild->Value = gcnew System::String( "○" );
-			//	else
-			//		node->FirstChild->Value = nullptr;
-			//}
-
-			//if( node->FirstChild->Value->Equals( "TagRatingUSK" ) )
-			//{
-			//	node->FirstChild->Value = hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_USK ]->ToString();
-			//}
-			//if( node->FirstChild->Value->Equals( "TagRatingUSKStr" ) )
-			//{
-			//	node->FirstChild->Value = MasterEditorTWL::transRatingToString( 
-			//								OS_TWL_PCTL_OGN_USK, 
-			//								*(hSrl->hArrayParentalEnable[ OS_TWL_PCTL_OGN_USK ]),
-			//								*(hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_USK ]),
-			//								english );
-			//}
-			//if( node->FirstChild->Value->Equals( "TagEnableUSK" ) )
-			//{
-			//	if( *(hSrl->hArrayParentalEnable[ OS_TWL_PCTL_OGN_USK ]) )
-			//		node->FirstChild->Value = gcnew System::String( "○" );
-			//	else
-			//		node->FirstChild->Value = nullptr;
-			//}
-			//if( node->FirstChild->Value->Equals( "TagAlwaysUSK" ) )
-			//{
-			//	if( *(hSrl->hArrayParentalAlways[ OS_TWL_PCTL_OGN_USK ]) )
-			//		node->FirstChild->Value = gcnew System::String( "○" );
-			//	else
-			//		node->FirstChild->Value = nullptr;
-			//}
-
-			//if( node->FirstChild->Value->Equals( "TagRatingPEGI" ) )
-			//{
-			//	node->FirstChild->Value = hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_PEGI_GEN ]->ToString();
-			//}
-			//if( node->FirstChild->Value->Equals( "TagRatingPEGIStr" ) )
-			//{
-			//	node->FirstChild->Value = MasterEditorTWL::transRatingToString( 
-			//								OS_TWL_PCTL_OGN_PEGI_GEN, 
-			//								*(hSrl->hArrayParentalEnable[ OS_TWL_PCTL_OGN_PEGI_GEN ]),
-			//								*(hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_PEGI_GEN ]),
-			//								english );
-			//}
-			//if( node->FirstChild->Value->Equals( "TagEnablePEGI" ) )
-			//{
-			//	if( *(hSrl->hArrayParentalEnable[ OS_TWL_PCTL_OGN_PEGI_GEN ]) )
-			//		node->FirstChild->Value = gcnew System::String( "○" );
-			//	else
-			//		node->FirstChild->Value = nullptr;
-			//}
-			//if( node->FirstChild->Value->Equals( "TagAlwaysPEGI" ) )
-			//{
-			//	if( *(hSrl->hArrayParentalAlways[ OS_TWL_PCTL_OGN_PEGI_GEN ]) )
-			//		node->FirstChild->Value = gcnew System::String( "○" );
-			//	else
-			//		node->FirstChild->Value = nullptr;
-			//}
-
-			//if( node->FirstChild->Value->Equals( "TagRatingPEGI_PRT" ) )
-			//{
-			//	node->FirstChild->Value = hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_PEGI_PRT ]->ToString();
-			//}
-			//if( node->FirstChild->Value->Equals( "TagRatingPEGI_PRTStr" ) )
-			//{
-			//	node->FirstChild->Value = MasterEditorTWL::transRatingToString( 
-			//								OS_TWL_PCTL_OGN_PEGI_PRT, 
-			//								*(hSrl->hArrayParentalEnable[ OS_TWL_PCTL_OGN_PEGI_PRT ]),
-			//								*(hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_PEGI_PRT ]),
-			//								english );
-			//}
-			//if( node->FirstChild->Value->Equals( "TagEnablePEGI_PRT" ) )
-			//{
-			//	if( *(hSrl->hArrayParentalEnable[ OS_TWL_PCTL_OGN_PEGI_PRT ]) )
-			//		node->FirstChild->Value = gcnew System::String( "○" );
-			//	else
-			//		node->FirstChild->Value = nullptr;
-			//}
-			//if( node->FirstChild->Value->Equals( "TagAlwaysPEGI_PRT" ) )
-			//{
-			//	if( *(hSrl->hArrayParentalAlways[ OS_TWL_PCTL_OGN_PEGI_PRT ]) )
-			//		node->FirstChild->Value = gcnew System::String( "○" );
-			//	else
-			//		node->FirstChild->Value = nullptr;
-			//}
-
-			//if( node->FirstChild->Value->Equals( "TagRatingPEGI_BBFC" ) )
-			//{
-			//	node->FirstChild->Value = hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_PEGI_BBFC ]->ToString();
-			//}
-			//if( node->FirstChild->Value->Equals( "TagRatingPEGI_BBFCStr" ) )
-			//{
-			//	node->FirstChild->Value = MasterEditorTWL::transRatingToString( 
-			//								OS_TWL_PCTL_OGN_PEGI_BBFC, 
-			//								*(hSrl->hArrayParentalEnable[ OS_TWL_PCTL_OGN_PEGI_BBFC ]),
-			//								*(hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_PEGI_BBFC ]),
-			//								english );
-			//}
-			//if( node->FirstChild->Value->Equals( "TagEnablePEGI_BBFC" ) )
-			//{
-			//	if( *(hSrl->hArrayParentalEnable[ OS_TWL_PCTL_OGN_PEGI_BBFC ]) )
-			//		node->FirstChild->Value = gcnew System::String( "○" );
-			//	else
-			//		node->FirstChild->Value = nullptr;
-			//}
-			//if( node->FirstChild->Value->Equals( "TagAlwaysPEGI_BBFC" ) )
-			//{
-			//	if( *(hSrl->hArrayParentalAlways[ OS_TWL_PCTL_OGN_PEGI_BBFC ]) )
-			//		node->FirstChild->Value = gcnew System::String( "○" );
-			//	else
-			//		node->FirstChild->Value = nullptr;
-			//}
-
-			//if( node->FirstChild->Value->Equals( "TagRatingOFLC" ) )
-			//{
-			//	node->FirstChild->Value = hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_OFLC ]->ToString();
-			//}
-			//if( node->FirstChild->Value->Equals( "TagRatingOFLCStr" ) )
-			//{
-			//	node->FirstChild->Value = MasterEditorTWL::transRatingToString( 
-			//								OS_TWL_PCTL_OGN_OFLC, 
-			//								*(hSrl->hArrayParentalEnable[ OS_TWL_PCTL_OGN_OFLC ]),
-			//								*(hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_OFLC ]),
-			//								english );
-			//}
-			//if( node->FirstChild->Value->Equals( "TagEnableOFLC" ) )
-			//{
-			//	if( *(hSrl->hArrayParentalEnable[ OS_TWL_PCTL_OGN_OFLC ]) )
-			//		node->FirstChild->Value = gcnew System::String( "○" );
-			//	else
-			//		node->FirstChild->Value = nullptr;
-			//}
-			//if( node->FirstChild->Value->Equals( "TagAlwaysOFLC" ) )
-			//{
-			//	if( *(hSrl->hArrayParentalAlways[ OS_TWL_PCTL_OGN_OFLC ]) )
-			//		node->FirstChild->Value = gcnew System::String( "○" );
-			//	else
-			//		node->FirstChild->Value = nullptr;
-			//}
+			if( node->FirstChild->Value->Equals( "TagRatingCERO" ) )
+			{
+				node->FirstChild->Value = this->hCERO;
+			}
+			if( node->FirstChild->Value->Equals( "TagRatingESRB" ) )
+			{
+				node->FirstChild->Value = this->hESRB;
+			}
+			if( node->FirstChild->Value->Equals( "TagRatingUSK" ) )
+			{
+				node->FirstChild->Value = this->hUSK;
+			}
+			if( node->FirstChild->Value->Equals( "TagRatingPEGI" ) )
+			{
+				node->FirstChild->Value = this->hPEGI;
+			}
+			if( node->FirstChild->Value->Equals( "TagRatingPEGI_PRT" ) )
+			{
+				node->FirstChild->Value = this->hPEGI_PRT;
+			}
+			if( node->FirstChild->Value->Equals( "TagRatingPEGI_BBFC" ) )
+			{
+				node->FirstChild->Value = this->hPEGI_BBFC;
+			}
+			if( node->FirstChild->Value->Equals( "TagRatingOFLC" ) )
+			{
+				node->FirstChild->Value = this->hOFLC;
+			}
 
 			// ROM内登録データを1バイトずつ表に書き込む
 			if( node->FirstChild->Value->Equals( "TagRomVersionHex" ) )

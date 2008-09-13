@@ -518,7 +518,7 @@ void RCSrl::setParentalControlHeader(void)
 			}
 			else									// レーティング年齢を設定
 			{
-				rating = OS_TWL_PCTL_OGNINFO_ALWAYS_MASK | ages[ index ];
+				rating = OS_TWL_PCTL_OGNINFO_ENABLE_MASK | ages[ index ];
 			}
 		}
 		this->pRomHeader->s.parental_control_rating_info[i] = rating;

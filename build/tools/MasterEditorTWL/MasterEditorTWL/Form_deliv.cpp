@@ -177,6 +177,85 @@ void Form1::setDeliverableProperties(void)
 	{
 		this->hDeliv->hBackupMemory = this->tboxBackupOther->Text;
 	}
+
+	// SRL情報を文字列で登録
+	if( this->combCERO->SelectedIndex < 0 )
+	{
+		if( this->stripItemJapanese->Checked == true )
+			this->hDeliv->hCERO = gcnew System::String("未定義");
+		else
+			this->hDeliv->hCERO = gcnew System::String("Undefined");
+	}
+	else
+	{
+		this->hDeliv->hCERO = dynamic_cast<System::String^>(this->combCERO->SelectedItem);
+	}
+	if( this->combESRB->SelectedIndex < 0 )
+	{
+		if( this->stripItemJapanese->Checked == true )
+			this->hDeliv->hESRB = gcnew System::String("未定義");
+		else
+			this->hDeliv->hESRB = gcnew System::String("Undefined");
+	}
+	else
+	{
+		this->hDeliv->hESRB = dynamic_cast<System::String^>(this->combESRB->SelectedItem);
+	}
+	if( this->combUSK->SelectedIndex < 0 )
+	{
+		if( this->stripItemJapanese->Checked == true )
+			this->hDeliv->hUSK = gcnew System::String("未定義");
+		else
+			this->hDeliv->hUSK = gcnew System::String("Undefined");
+	}
+	else
+	{
+		this->hDeliv->hUSK = dynamic_cast<System::String^>(this->combUSK->SelectedItem);
+	}
+	if( this->combPEGI->SelectedIndex < 0 )
+	{
+		if( this->stripItemJapanese->Checked == true )
+			this->hDeliv->hPEGI = gcnew System::String("未定義");
+		else
+			this->hDeliv->hPEGI = gcnew System::String("Undefined");
+	}
+	else
+	{
+		this->hDeliv->hPEGI = dynamic_cast<System::String^>(this->combPEGI->SelectedItem);
+	}
+	if( this->combPEGI_PRT->SelectedIndex < 0 )
+	{
+		if( this->stripItemJapanese->Checked == true )
+			this->hDeliv->hPEGI_PRT = gcnew System::String("未定義");
+		else
+			this->hDeliv->hPEGI_PRT = gcnew System::String("Undefined");
+	}
+	else
+	{
+		this->hDeliv->hPEGI_PRT = dynamic_cast<System::String^>(this->combPEGI_PRT->SelectedItem);
+	}
+	if( this->combPEGI_BBFC->SelectedIndex < 0 )
+	{
+		if( this->stripItemJapanese->Checked == true )
+			this->hDeliv->hPEGI_BBFC = gcnew System::String("未定義");
+		else
+			this->hDeliv->hPEGI_BBFC = gcnew System::String("Undefined");
+	}
+	else
+	{
+		this->hDeliv->hPEGI_BBFC = dynamic_cast<System::String^>(this->combPEGI_BBFC->SelectedItem);
+	}
+	if( this->combOFLC->SelectedIndex < 0 )
+	{
+		if( this->stripItemJapanese->Checked == true )
+			this->hDeliv->hOFLC = gcnew System::String("未定義");
+		else
+			this->hDeliv->hOFLC = gcnew System::String("Undefined");
+	}
+	else
+	{
+		this->hDeliv->hOFLC = dynamic_cast<System::String^>(this->combOFLC->SelectedItem);
+	}
 }
 
 // ----------------------------------------------
