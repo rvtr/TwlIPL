@@ -260,9 +260,7 @@ namespace MasterEditorTWL
 		property System::String  ^hLatency;		// MROM/1TROM/Illegal
 
 		// ペアレンタルコントロール
-		property cli::array<System::Byte^>    ^hArrayParentalRating;	// 各団体での制限年齢
-		property cli::array<System::Boolean^> ^hArrayParentalEffect;	// 制限有効フラグ
-		property cli::array<System::Boolean^> ^hArrayParentalAlways;	// 制限強制有効フラグ
+		property cli::array<System::Int32> ^hArrayParentalIndex;		// 表示用のコンボボックスのインデックス
 
 		// TWL専用情報 一部編集可能
 		property System::UInt32  ^hNormalRomOffset;
@@ -322,6 +320,7 @@ namespace MasterEditorTWL
 		// MRC機能でチェックされたエラー情報のリスト
 		property System::Collections::Generic::List<RCMrcError^> ^hErrorList;
 		property System::Collections::Generic::List<RCMrcError^> ^hWarnList;
+		property System::Collections::Generic::List<RCMrcError^> ^hParentalErrorList;	// ペアレンタルコントロールのチェックはsetと同時に行なう
 
 		// MRC追加項目
 		property RCMrcSpecialList ^hMrcSpecialList;
@@ -341,12 +340,17 @@ namespace MasterEditorTWL
 		//
 		ECSrlResult readFromFile ( System::String ^filename );
 		ECSrlResult writeToFile( System::String ^filename );
-
+		
 		// internal method
 	private:
 		// ROM固有情報とROMヘッダの設定
 		ECSrlResult setRomInfo(void);		// ROMヘッダから取得したROM固有情報をフィールドに反映させる
 		ECSrlResult setRomHeader(void);		// ROMヘッダにROM固有情報フィールドの値を反映させる
+
+		// ペアレンタルコントロールの設定
+		void setParentalControlInfo(void);
+		void setOneRatingOrgInfo( int ogn );
+		void setParentalControlHeader(void);
 
 		// ROMヘッダの更新
 		ECSrlResult calcRomHeaderCRC(void);	// ROMヘッダのCRCを再計算
@@ -364,15 +368,8 @@ namespace MasterEditorTWL
 		ECSrlResult mrc( FILE *fp );
 		ECSrlResult mrcNTR( FILE *fp );
 		ECSrlResult mrcTWL( FILE *fp );
-		ECSrlResult mrcTWLParentalControl(void);
-		System::Boolean mrcRegion( System::UInt32 region );		// @ret リージョンが正しいかどうか
-		void mrcRegionOrganization( System::UInt32 region );
-		void mrcRating( System::Byte ogn );
 		void mrcPadding( FILE *fp );
 		void mrcBanner( FILE *fp );
-
-		// utility
-		void clearParentalControl( System::Byte ogn );
 
 	}; // end of ref class RCSrl
 

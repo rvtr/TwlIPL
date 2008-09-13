@@ -340,6 +340,78 @@ System::String^ MasterEditorTWL::transRatingToString( System::Byte ogn, System::
 	return str;
 } // MasterEditorTWL::transRatingToString
 
+// 設定可能なインデックスのリストを取得する
+cli::array<System::Byte>^ MasterEditorTWL::getOgnRatingAges( int ogn )
+{
+	cli::array<System::Byte> ^ages = gcnew cli::array<System::Byte>{0};
+
+	if( ogn == OS_TWL_PCTL_OGN_CERO )
+	{
+		ages = gcnew cli::array<System::Byte>{0,12,15,17,18};
+	}
+	else if( ogn == OS_TWL_PCTL_OGN_ESRB )
+	{
+		ages = gcnew cli::array<System::Byte>{0,3,6,10,13,17};
+	}
+	else if( ogn == OS_TWL_PCTL_OGN_USK )
+	{
+		ages = gcnew cli::array<System::Byte>{0,6,12,16,18};
+	}
+	else if( ogn == OS_TWL_PCTL_OGN_PEGI_GEN )
+	{
+		ages = gcnew cli::array<System::Byte>{0,3,7,12,16,18};
+	}
+	else if( ogn == OS_TWL_PCTL_OGN_PEGI_PRT )
+	{
+		ages = gcnew cli::array<System::Byte>{0,4,6,12,16,18};
+	}
+	else if( ogn == OS_TWL_PCTL_OGN_PEGI_BBFC )
+	{
+		ages = gcnew cli::array<System::Byte>{0,3,4,7,8,12,15,16,18};
+	}
+	else if( ogn == OS_TWL_PCTL_OGN_OFLC )
+	{
+		ages = gcnew cli::array<System::Byte>{0,7,14,15};
+	}
+	return ages;
+}
+
+// 設定可能なインデックスのリストを取得する
+System::String^ MasterEditorTWL::getOgnName( int ogn )
+{
+	System::String ^name = gcnew System::String("");
+
+	if( ogn == OS_TWL_PCTL_OGN_CERO )
+	{
+		name = gcnew System::String("CERO");
+	}
+	else if( ogn == OS_TWL_PCTL_OGN_ESRB )
+	{
+		name = gcnew System::String("ESRB");
+	}
+	else if( ogn == OS_TWL_PCTL_OGN_USK )
+	{
+		name = gcnew System::String("USK");
+	}
+	else if( ogn == OS_TWL_PCTL_OGN_PEGI_GEN )
+	{
+		name = gcnew System::String("PEGI(General)");
+	}
+	else if( ogn == OS_TWL_PCTL_OGN_PEGI_PRT )
+	{
+		name = gcnew System::String("PEGI(Portugal)");
+	}
+	else if( ogn == OS_TWL_PCTL_OGN_PEGI_BBFC )
+	{
+		name = gcnew System::String("PEGI and BBFC");
+	}
+	else if( ogn == OS_TWL_PCTL_OGN_OFLC )
+	{
+		name = gcnew System::String("OFLC");
+	}
+	return name;
+}
+
 //
 // バイト列に特定のパターンが含まれるかどうかマッチングする
 //

@@ -130,38 +130,38 @@ namespace MasterEditorTWL {
 
 
 
-	private: System::Windows::Forms::Label^  labPEGIBBFC2;
+
 	private: System::Windows::Forms::Label^  labOFLC;
-	private: System::Windows::Forms::Label^  labPEGIBBFC;
-	private: System::Windows::Forms::Label^  labPEGIPRT;
+	private: System::Windows::Forms::Label^  labPEGI_BBFC;
+	private: System::Windows::Forms::Label^  labPEGI_PRT;
 	private: System::Windows::Forms::Label^  labPEGI;
 	private: System::Windows::Forms::Label^  labUSK;
 	private: System::Windows::Forms::Label^  labESRB;
 	private: System::Windows::Forms::Label^  labCERO;
-	private: System::Windows::Forms::CheckBox^  cboxAlwaysOFLC;
-	private: System::Windows::Forms::CheckBox^  cboxAlwaysPEGIBBFC;
-	private: System::Windows::Forms::CheckBox^  cboxAlwaysPEGIPRT;
-	private: System::Windows::Forms::CheckBox^  cboxAlwaysPEGI;
-	private: System::Windows::Forms::CheckBox^  cboxAlwaysUSK;
-	private: System::Windows::Forms::CheckBox^  cboxAlwaysESRB;
-	private: System::Windows::Forms::CheckBox^  cboxAlwaysCERO;
+
+
+
+
+
+
+
 	private: System::Windows::Forms::ComboBox^  combOFLC;
-	private: System::Windows::Forms::ComboBox^  combPEGIBBFC;
-	private: System::Windows::Forms::ComboBox^  combPEGIPRT;
+	private: System::Windows::Forms::ComboBox^  combPEGI_BBFC;
+	private: System::Windows::Forms::ComboBox^  combPEGI_PRT;
 	private: System::Windows::Forms::ComboBox^  combPEGI;
 	private: System::Windows::Forms::ComboBox^  combUSK;
 	private: System::Windows::Forms::ComboBox^  combESRB;
 	private: System::Windows::Forms::ComboBox^  combCERO;
-	private: System::Windows::Forms::CheckBox^  cboxOFLC;
-	private: System::Windows::Forms::CheckBox^  cboxPEGIBBFC;
-	private: System::Windows::Forms::CheckBox^  cboxPEGIPRT;
-	private: System::Windows::Forms::CheckBox^  cboxPEGI;
-	private: System::Windows::Forms::CheckBox^  cboxUSK;
-	private: System::Windows::Forms::CheckBox^  cboxESRB;
-	private: System::Windows::Forms::CheckBox^  cboxCERO;
-	private: System::Windows::Forms::Label^  labParentalForceEnable;
+
+
+
+
+
+
+
+
 	private: System::Windows::Forms::Label^  labParentalRating;
-	private: System::Windows::Forms::Label^  labParentalEnable;
+
 
 
 
@@ -672,7 +672,7 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 
 			// 複数行表示したいが初期値で設定できないのでここで設定
 			this->tboxGuideRomEditInfo->Text  = "このタブの情報は提出確認書およびマスターROMの作成に必要です。編集してください。";
-			this->tboxGuideRomEditInfo->Text += "\r\nこれらの情報はマスターROMの作成時にROMデータの中に登録されます。";
+			this->tboxGuideRomEditInfo->Text += "\r\n(マスターROMの作成をするまでROMデータの中には登録されません。)";
 
 			this->tboxGuideErrorInfo->Text  = "このタブには読み込んだROMデータの問題と本プログラムでの入力ミスが列挙されます。";
 			this->tboxGuideErrorInfo->Text += "\r\n赤文字の項目は、本プログラムで修正不可です。ROMデータ作成時の設定をご確認ください。";
@@ -715,7 +715,7 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 		/// </summary>
 		void InitializeComponent(void)
 		{
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle1 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle2 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -743,38 +743,21 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->tboxWholeCRC = (gcnew System::Windows::Forms::TextBox());
 			this->labCaption = (gcnew System::Windows::Forms::Label());
 			this->tboxCaption = (gcnew System::Windows::Forms::TextBox());
-			this->labPEGIBBFC2 = (gcnew System::Windows::Forms::Label());
 			this->labOFLC = (gcnew System::Windows::Forms::Label());
-			this->labPEGIBBFC = (gcnew System::Windows::Forms::Label());
-			this->labPEGIPRT = (gcnew System::Windows::Forms::Label());
+			this->labPEGI_BBFC = (gcnew System::Windows::Forms::Label());
+			this->labPEGI_PRT = (gcnew System::Windows::Forms::Label());
 			this->labPEGI = (gcnew System::Windows::Forms::Label());
 			this->labUSK = (gcnew System::Windows::Forms::Label());
 			this->labESRB = (gcnew System::Windows::Forms::Label());
 			this->labCERO = (gcnew System::Windows::Forms::Label());
-			this->cboxAlwaysOFLC = (gcnew System::Windows::Forms::CheckBox());
-			this->cboxAlwaysPEGIBBFC = (gcnew System::Windows::Forms::CheckBox());
-			this->cboxAlwaysPEGIPRT = (gcnew System::Windows::Forms::CheckBox());
-			this->cboxAlwaysPEGI = (gcnew System::Windows::Forms::CheckBox());
-			this->cboxAlwaysUSK = (gcnew System::Windows::Forms::CheckBox());
-			this->cboxAlwaysESRB = (gcnew System::Windows::Forms::CheckBox());
-			this->cboxAlwaysCERO = (gcnew System::Windows::Forms::CheckBox());
 			this->combOFLC = (gcnew System::Windows::Forms::ComboBox());
-			this->combPEGIBBFC = (gcnew System::Windows::Forms::ComboBox());
-			this->combPEGIPRT = (gcnew System::Windows::Forms::ComboBox());
+			this->combPEGI_BBFC = (gcnew System::Windows::Forms::ComboBox());
+			this->combPEGI_PRT = (gcnew System::Windows::Forms::ComboBox());
 			this->combPEGI = (gcnew System::Windows::Forms::ComboBox());
 			this->combUSK = (gcnew System::Windows::Forms::ComboBox());
 			this->combESRB = (gcnew System::Windows::Forms::ComboBox());
 			this->combCERO = (gcnew System::Windows::Forms::ComboBox());
-			this->cboxOFLC = (gcnew System::Windows::Forms::CheckBox());
-			this->cboxPEGIBBFC = (gcnew System::Windows::Forms::CheckBox());
-			this->cboxPEGIPRT = (gcnew System::Windows::Forms::CheckBox());
-			this->cboxPEGI = (gcnew System::Windows::Forms::CheckBox());
-			this->cboxUSK = (gcnew System::Windows::Forms::CheckBox());
-			this->cboxESRB = (gcnew System::Windows::Forms::CheckBox());
-			this->cboxCERO = (gcnew System::Windows::Forms::CheckBox());
-			this->labParentalForceEnable = (gcnew System::Windows::Forms::Label());
 			this->labParentalRating = (gcnew System::Windows::Forms::Label());
-			this->labParentalEnable = (gcnew System::Windows::Forms::Label());
 			this->labRegion = (gcnew System::Windows::Forms::Label());
 			this->cboxIsEULA = (gcnew System::Windows::Forms::CheckBox());
 			this->combRegion = (gcnew System::Windows::Forms::ComboBox());
@@ -1263,46 +1246,37 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->tboxCaption->Size = System::Drawing::Size(349, 74);
 			this->tboxCaption->TabIndex = 8;
 			// 
-			// labPEGIBBFC2
-			// 
-			this->labPEGIBBFC2->AutoSize = true;
-			this->labPEGIBBFC2->Location = System::Drawing::Point(12, 216);
-			this->labPEGIBBFC2->Name = L"labPEGIBBFC2";
-			this->labPEGIBBFC2->Size = System::Drawing::Size(46, 12);
-			this->labPEGIBBFC2->TabIndex = 35;
-			this->labPEGIBBFC2->Text = L"+ BBFC";
-			// 
 			// labOFLC
 			// 
 			this->labOFLC->AutoSize = true;
-			this->labOFLC->Location = System::Drawing::Point(48, 236);
+			this->labOFLC->Location = System::Drawing::Point(101, 234);
 			this->labOFLC->Name = L"labOFLC";
 			this->labOFLC->Size = System::Drawing::Size(34, 12);
 			this->labOFLC->TabIndex = 33;
 			this->labOFLC->Text = L"OFLC";
 			// 
-			// labPEGIBBFC
+			// labPEGI_BBFC
 			// 
-			this->labPEGIBBFC->AutoSize = true;
-			this->labPEGIBBFC->Location = System::Drawing::Point(12, 204);
-			this->labPEGIBBFC->Name = L"labPEGIBBFC";
-			this->labPEGIBBFC->Size = System::Drawing::Size(77, 12);
-			this->labPEGIBBFC->TabIndex = 32;
-			this->labPEGIBBFC->Text = L"PEGI(General)";
+			this->labPEGI_BBFC->AutoSize = true;
+			this->labPEGI_BBFC->Location = System::Drawing::Point(12, 204);
+			this->labPEGI_BBFC->Name = L"labPEGI_BBFC";
+			this->labPEGI_BBFC->Size = System::Drawing::Size(134, 12);
+			this->labPEGI_BBFC->TabIndex = 32;
+			this->labPEGI_BBFC->Text = L"PEGI(General) and BBFC";
 			// 
-			// labPEGIPRT
+			// labPEGI_PRT
 			// 
-			this->labPEGIPRT->AutoSize = true;
-			this->labPEGIPRT->Location = System::Drawing::Point(12, 182);
-			this->labPEGIPRT->Name = L"labPEGIPRT";
-			this->labPEGIPRT->Size = System::Drawing::Size(76, 12);
-			this->labPEGIPRT->TabIndex = 31;
-			this->labPEGIPRT->Text = L"PEGI Portugal";
+			this->labPEGI_PRT->AutoSize = true;
+			this->labPEGI_PRT->Location = System::Drawing::Point(69, 182);
+			this->labPEGI_PRT->Name = L"labPEGI_PRT";
+			this->labPEGI_PRT->Size = System::Drawing::Size(76, 12);
+			this->labPEGI_PRT->TabIndex = 31;
+			this->labPEGI_PRT->Text = L"PEGI Portugal";
 			// 
 			// labPEGI
 			// 
 			this->labPEGI->AutoSize = true;
-			this->labPEGI->Location = System::Drawing::Point(12, 156);
+			this->labPEGI->Location = System::Drawing::Point(69, 156);
 			this->labPEGI->Name = L"labPEGI";
 			this->labPEGI->Size = System::Drawing::Size(77, 12);
 			this->labPEGI->TabIndex = 30;
@@ -1311,7 +1285,7 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			// labUSK
 			// 
 			this->labUSK->AutoSize = true;
-			this->labUSK->Location = System::Drawing::Point(48, 130);
+			this->labUSK->Location = System::Drawing::Point(102, 130);
 			this->labUSK->Name = L"labUSK";
 			this->labUSK->Size = System::Drawing::Size(27, 12);
 			this->labUSK->TabIndex = 29;
@@ -1320,7 +1294,7 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			// labESRB
 			// 
 			this->labESRB->AutoSize = true;
-			this->labESRB->Location = System::Drawing::Point(48, 104);
+			this->labESRB->Location = System::Drawing::Point(102, 104);
 			this->labESRB->Name = L"labESRB";
 			this->labESRB->Size = System::Drawing::Size(35, 12);
 			this->labESRB->TabIndex = 28;
@@ -1329,116 +1303,53 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			// labCERO
 			// 
 			this->labCERO->AutoSize = true;
-			this->labCERO->Location = System::Drawing::Point(47, 78);
+			this->labCERO->Location = System::Drawing::Point(101, 78);
 			this->labCERO->Name = L"labCERO";
 			this->labCERO->Size = System::Drawing::Size(36, 12);
 			this->labCERO->TabIndex = 27;
 			this->labCERO->Text = L"CERO";
 			// 
-			// cboxAlwaysOFLC
-			// 
-			this->cboxAlwaysOFLC->AutoSize = true;
-			this->cboxAlwaysOFLC->Location = System::Drawing::Point(373, 234);
-			this->cboxAlwaysOFLC->Name = L"cboxAlwaysOFLC";
-			this->cboxAlwaysOFLC->Size = System::Drawing::Size(15, 14);
-			this->cboxAlwaysOFLC->TabIndex = 20;
-			this->cboxAlwaysOFLC->UseVisualStyleBackColor = true;
-			// 
-			// cboxAlwaysPEGIBBFC
-			// 
-			this->cboxAlwaysPEGIBBFC->AutoSize = true;
-			this->cboxAlwaysPEGIBBFC->Location = System::Drawing::Point(373, 208);
-			this->cboxAlwaysPEGIBBFC->Name = L"cboxAlwaysPEGIBBFC";
-			this->cboxAlwaysPEGIBBFC->Size = System::Drawing::Size(15, 14);
-			this->cboxAlwaysPEGIBBFC->TabIndex = 17;
-			this->cboxAlwaysPEGIBBFC->UseVisualStyleBackColor = true;
-			// 
-			// cboxAlwaysPEGIPRT
-			// 
-			this->cboxAlwaysPEGIPRT->AutoSize = true;
-			this->cboxAlwaysPEGIPRT->Location = System::Drawing::Point(373, 182);
-			this->cboxAlwaysPEGIPRT->Name = L"cboxAlwaysPEGIPRT";
-			this->cboxAlwaysPEGIPRT->Size = System::Drawing::Size(15, 14);
-			this->cboxAlwaysPEGIPRT->TabIndex = 14;
-			this->cboxAlwaysPEGIPRT->UseVisualStyleBackColor = true;
-			// 
-			// cboxAlwaysPEGI
-			// 
-			this->cboxAlwaysPEGI->AutoSize = true;
-			this->cboxAlwaysPEGI->Location = System::Drawing::Point(373, 156);
-			this->cboxAlwaysPEGI->Name = L"cboxAlwaysPEGI";
-			this->cboxAlwaysPEGI->Size = System::Drawing::Size(15, 14);
-			this->cboxAlwaysPEGI->TabIndex = 11;
-			this->cboxAlwaysPEGI->UseVisualStyleBackColor = true;
-			// 
-			// cboxAlwaysUSK
-			// 
-			this->cboxAlwaysUSK->AutoSize = true;
-			this->cboxAlwaysUSK->Location = System::Drawing::Point(373, 130);
-			this->cboxAlwaysUSK->Name = L"cboxAlwaysUSK";
-			this->cboxAlwaysUSK->Size = System::Drawing::Size(15, 14);
-			this->cboxAlwaysUSK->TabIndex = 8;
-			this->cboxAlwaysUSK->UseVisualStyleBackColor = true;
-			// 
-			// cboxAlwaysESRB
-			// 
-			this->cboxAlwaysESRB->AutoSize = true;
-			this->cboxAlwaysESRB->Location = System::Drawing::Point(373, 104);
-			this->cboxAlwaysESRB->Name = L"cboxAlwaysESRB";
-			this->cboxAlwaysESRB->Size = System::Drawing::Size(15, 14);
-			this->cboxAlwaysESRB->TabIndex = 5;
-			this->cboxAlwaysESRB->UseVisualStyleBackColor = true;
-			// 
-			// cboxAlwaysCERO
-			// 
-			this->cboxAlwaysCERO->AutoSize = true;
-			this->cboxAlwaysCERO->Location = System::Drawing::Point(373, 78);
-			this->cboxAlwaysCERO->Name = L"cboxAlwaysCERO";
-			this->cboxAlwaysCERO->Size = System::Drawing::Size(15, 14);
-			this->cboxAlwaysCERO->TabIndex = 2;
-			this->cboxAlwaysCERO->UseVisualStyleBackColor = true;
-			// 
 			// combOFLC
 			// 
 			this->combOFLC->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combOFLC->FormattingEnabled = true;
-			this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"G", L"PG", L"M", L"MA15+", L"未審査"});
-			this->combOFLC->Location = System::Drawing::Point(95, 231);
+			this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"年齢制限なし", L"G", L"PG", L"M", L"MA15+", L"審査中"});
+			this->combOFLC->Location = System::Drawing::Point(152, 232);
 			this->combOFLC->Name = L"combOFLC";
-			this->combOFLC->Size = System::Drawing::Size(164, 20);
+			this->combOFLC->Size = System::Drawing::Size(204, 20);
 			this->combOFLC->TabIndex = 18;
 			// 
-			// combPEGIBBFC
+			// combPEGI_BBFC
 			// 
-			this->combPEGIBBFC->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
-			this->combPEGIBBFC->FormattingEnabled = true;
-			this->combPEGIBBFC->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"3歳以上", L"4歳以上推奨", L"7歳以上", L"8歳以上推奨", L"12歳以上", 
-				L"15歳以上", L"16歳以上", L"18歳以上", L"未審査"});
-			this->combPEGIBBFC->Location = System::Drawing::Point(95, 205);
-			this->combPEGIBBFC->Name = L"combPEGIBBFC";
-			this->combPEGIBBFC->Size = System::Drawing::Size(164, 20);
-			this->combPEGIBBFC->TabIndex = 15;
+			this->combPEGI_BBFC->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
+			this->combPEGI_BBFC->FormattingEnabled = true;
+			this->combPEGI_BBFC->Items->AddRange(gcnew cli::array< System::Object^  >(10) {L"年齢制限なし", L"3歳以上", L"4歳以上推奨", L"7歳以上", L"8歳以上推奨", 
+				L"12歳以上", L"15歳以上", L"16歳以上", L"18歳以上", L"審査中"});
+			this->combPEGI_BBFC->Location = System::Drawing::Point(152, 205);
+			this->combPEGI_BBFC->Name = L"combPEGI_BBFC";
+			this->combPEGI_BBFC->Size = System::Drawing::Size(204, 20);
+			this->combPEGI_BBFC->TabIndex = 15;
 			// 
-			// combPEGIPRT
+			// combPEGI_PRT
 			// 
-			this->combPEGIPRT->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
-			this->combPEGIPRT->FormattingEnabled = true;
-			this->combPEGIPRT->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"4歳以上", L"6歳以上", L"12歳以上", L"16歳以上", L"18歳以上", 
-				L"未審査"});
-			this->combPEGIPRT->Location = System::Drawing::Point(95, 179);
-			this->combPEGIPRT->Name = L"combPEGIPRT";
-			this->combPEGIPRT->Size = System::Drawing::Size(164, 20);
-			this->combPEGIPRT->TabIndex = 12;
+			this->combPEGI_PRT->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
+			this->combPEGI_PRT->FormattingEnabled = true;
+			this->combPEGI_PRT->Items->AddRange(gcnew cli::array< System::Object^  >(7) {L"年齢制限なし", L"4歳以上", L"6歳以上", L"12歳以上", L"16歳以上", 
+				L"18歳以上", L"審査中"});
+			this->combPEGI_PRT->Location = System::Drawing::Point(152, 179);
+			this->combPEGI_PRT->Name = L"combPEGI_PRT";
+			this->combPEGI_PRT->Size = System::Drawing::Size(204, 20);
+			this->combPEGI_PRT->TabIndex = 12;
 			// 
 			// combPEGI
 			// 
 			this->combPEGI->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combPEGI->FormattingEnabled = true;
-			this->combPEGI->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"3歳以上", L"7歳以上", L"12歳以上", L"16歳以上", L"18歳以上", 
-				L"未審査"});
-			this->combPEGI->Location = System::Drawing::Point(95, 153);
+			this->combPEGI->Items->AddRange(gcnew cli::array< System::Object^  >(7) {L"年齢制限なし", L"3歳以上", L"7歳以上", L"12歳以上", L"16歳以上", 
+				L"18歳以上", L"審査中"});
+			this->combPEGI->Location = System::Drawing::Point(152, 153);
 			this->combPEGI->Name = L"combPEGI";
-			this->combPEGI->Size = System::Drawing::Size(164, 20);
+			this->combPEGI->Size = System::Drawing::Size(204, 20);
 			this->combPEGI->TabIndex = 9;
 			// 
 			// combUSK
@@ -1446,21 +1357,21 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->combUSK->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combUSK->FormattingEnabled = true;
 			this->combUSK->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"年齢制限なし", L"6歳以上", L"12歳以上", L"16歳以上", L"青少年には不適切", 
-				L"未審査"});
-			this->combUSK->Location = System::Drawing::Point(95, 127);
+				L"審査中"});
+			this->combUSK->Location = System::Drawing::Point(152, 127);
 			this->combUSK->Name = L"combUSK";
-			this->combUSK->Size = System::Drawing::Size(164, 20);
+			this->combUSK->Size = System::Drawing::Size(204, 20);
 			this->combUSK->TabIndex = 6;
 			// 
 			// combESRB
 			// 
 			this->combESRB->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combESRB->FormattingEnabled = true;
-			this->combESRB->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"EC (3歳以上)", L"E (6歳以上)", L"E10+ (10歳以上)", L"T (13歳以上)", 
-				L"M (17歳以上)", L"未審査"});
-			this->combESRB->Location = System::Drawing::Point(95, 101);
+			this->combESRB->Items->AddRange(gcnew cli::array< System::Object^  >(7) {L"年齢制限なし", L"EC (3歳以上)", L"E (6歳以上)", L"E10+ (10歳以上)", 
+				L"T (13歳以上)", L"M (17歳以上)", L"審査中"});
+			this->combESRB->Location = System::Drawing::Point(152, 101);
 			this->combESRB->Name = L"combESRB";
-			this->combESRB->Size = System::Drawing::Size(164, 20);
+			this->combESRB->Size = System::Drawing::Size(204, 20);
 			this->combESRB->TabIndex = 3;
 			// 
 			// combCERO
@@ -1468,106 +1379,25 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->combCERO->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combCERO->FormattingEnabled = true;
 			this->combCERO->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"A (全年齢)", L"B (12歳以上)", L"C (15歳以上)", L"D (17歳以上)", 
-				L"Z (18歳以上)", L"未審査"});
-			this->combCERO->Location = System::Drawing::Point(95, 75);
+				L"Z (18歳以上)", L"審査中"});
+			this->combCERO->Location = System::Drawing::Point(152, 75);
 			this->combCERO->Name = L"combCERO";
-			this->combCERO->Size = System::Drawing::Size(164, 20);
+			this->combCERO->Size = System::Drawing::Size(204, 20);
 			this->combCERO->TabIndex = 0;
-			// 
-			// cboxOFLC
-			// 
-			this->cboxOFLC->AutoSize = true;
-			this->cboxOFLC->Location = System::Drawing::Point(296, 234);
-			this->cboxOFLC->Name = L"cboxOFLC";
-			this->cboxOFLC->Size = System::Drawing::Size(15, 14);
-			this->cboxOFLC->TabIndex = 19;
-			this->cboxOFLC->UseVisualStyleBackColor = true;
-			// 
-			// cboxPEGIBBFC
-			// 
-			this->cboxPEGIBBFC->AutoSize = true;
-			this->cboxPEGIBBFC->Location = System::Drawing::Point(296, 208);
-			this->cboxPEGIBBFC->Name = L"cboxPEGIBBFC";
-			this->cboxPEGIBBFC->Size = System::Drawing::Size(15, 14);
-			this->cboxPEGIBBFC->TabIndex = 16;
-			this->cboxPEGIBBFC->UseVisualStyleBackColor = true;
-			// 
-			// cboxPEGIPRT
-			// 
-			this->cboxPEGIPRT->AutoSize = true;
-			this->cboxPEGIPRT->Location = System::Drawing::Point(296, 182);
-			this->cboxPEGIPRT->Name = L"cboxPEGIPRT";
-			this->cboxPEGIPRT->Size = System::Drawing::Size(15, 14);
-			this->cboxPEGIPRT->TabIndex = 13;
-			this->cboxPEGIPRT->UseVisualStyleBackColor = true;
-			// 
-			// cboxPEGI
-			// 
-			this->cboxPEGI->AutoSize = true;
-			this->cboxPEGI->Location = System::Drawing::Point(296, 156);
-			this->cboxPEGI->Name = L"cboxPEGI";
-			this->cboxPEGI->Size = System::Drawing::Size(15, 14);
-			this->cboxPEGI->TabIndex = 10;
-			this->cboxPEGI->UseVisualStyleBackColor = true;
-			// 
-			// cboxUSK
-			// 
-			this->cboxUSK->AutoSize = true;
-			this->cboxUSK->Location = System::Drawing::Point(296, 130);
-			this->cboxUSK->Name = L"cboxUSK";
-			this->cboxUSK->Size = System::Drawing::Size(15, 14);
-			this->cboxUSK->TabIndex = 7;
-			this->cboxUSK->UseVisualStyleBackColor = true;
-			// 
-			// cboxESRB
-			// 
-			this->cboxESRB->AutoSize = true;
-			this->cboxESRB->Location = System::Drawing::Point(296, 104);
-			this->cboxESRB->Name = L"cboxESRB";
-			this->cboxESRB->Size = System::Drawing::Size(15, 14);
-			this->cboxESRB->TabIndex = 4;
-			this->cboxESRB->UseVisualStyleBackColor = true;
-			// 
-			// cboxCERO
-			// 
-			this->cboxCERO->AutoSize = true;
-			this->cboxCERO->Location = System::Drawing::Point(296, 78);
-			this->cboxCERO->Name = L"cboxCERO";
-			this->cboxCERO->Size = System::Drawing::Size(15, 14);
-			this->cboxCERO->TabIndex = 1;
-			this->cboxCERO->UseVisualStyleBackColor = true;
-			// 
-			// labParentalForceEnable
-			// 
-			this->labParentalForceEnable->AutoSize = true;
-			this->labParentalForceEnable->Location = System::Drawing::Point(359, 59);
-			this->labParentalForceEnable->Name = L"labParentalForceEnable";
-			this->labParentalForceEnable->Size = System::Drawing::Size(41, 12);
-			this->labParentalForceEnable->TabIndex = 0;
-			this->labParentalForceEnable->Text = L"審査中";
 			// 
 			// labParentalRating
 			// 
 			this->labParentalRating->AutoSize = true;
-			this->labParentalRating->Location = System::Drawing::Point(139, 59);
+			this->labParentalRating->Location = System::Drawing::Point(201, 60);
 			this->labParentalRating->Name = L"labParentalRating";
-			this->labParentalRating->Size = System::Drawing::Size(58, 12);
+			this->labParentalRating->Size = System::Drawing::Size(82, 12);
 			this->labParentalRating->TabIndex = 2;
-			this->labParentalRating->Text = L"レーティング";
-			// 
-			// labParentalEnable
-			// 
-			this->labParentalEnable->AutoSize = true;
-			this->labParentalEnable->Location = System::Drawing::Point(273, 59);
-			this->labParentalEnable->Name = L"labParentalEnable";
-			this->labParentalEnable->Size = System::Drawing::Size(62, 12);
-			this->labParentalEnable->TabIndex = 1;
-			this->labParentalEnable->Text = L"制限を有効";
+			this->labParentalRating->Text = L"レーティング情報";
 			// 
 			// labRegion
 			// 
 			this->labRegion->AutoSize = true;
-			this->labRegion->Location = System::Drawing::Point(12, 24);
+			this->labRegion->Location = System::Drawing::Point(71, 24);
 			this->labRegion->Name = L"labRegion";
 			this->labRegion->Size = System::Drawing::Size(75, 12);
 			this->labRegion->TabIndex = 37;
@@ -1588,9 +1418,9 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->combRegion->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combRegion->FormattingEnabled = true;
 			this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"日本のみ", L"米国のみ", L"欧州のみ", L"豪州のみ", L"欧州および豪州"});
-			this->combRegion->Location = System::Drawing::Point(95, 21);
+			this->combRegion->Location = System::Drawing::Point(152, 21);
 			this->combRegion->Name = L"combRegion";
-			this->combRegion->Size = System::Drawing::Size(164, 20);
+			this->combRegion->Size = System::Drawing::Size(204, 20);
 			this->combRegion->TabIndex = 36;
 			this->combRegion->SelectedIndexChanged += gcnew System::EventHandler(this, &Form1::combRegion_SelectedIndexChanged);
 			// 
@@ -3121,41 +2951,24 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			// 
 			this->gboxParental->Controls->Add(this->labRegion);
 			this->gboxParental->Controls->Add(this->combRegion);
-			this->gboxParental->Controls->Add(this->cboxAlwaysPEGIBBFC);
-			this->gboxParental->Controls->Add(this->labPEGIBBFC2);
-			this->gboxParental->Controls->Add(this->cboxPEGIBBFC);
 			this->gboxParental->Controls->Add(this->labParentalRating);
-			this->gboxParental->Controls->Add(this->cboxOFLC);
 			this->gboxParental->Controls->Add(this->labOFLC);
-			this->gboxParental->Controls->Add(this->cboxAlwaysOFLC);
-			this->gboxParental->Controls->Add(this->labParentalEnable);
-			this->gboxParental->Controls->Add(this->cboxAlwaysPEGIPRT);
-			this->gboxParental->Controls->Add(this->labPEGIBBFC);
-			this->gboxParental->Controls->Add(this->cboxPEGIPRT);
-			this->gboxParental->Controls->Add(this->combPEGIBBFC);
+			this->gboxParental->Controls->Add(this->labPEGI_BBFC);
+			this->gboxParental->Controls->Add(this->combPEGI_BBFC);
 			this->gboxParental->Controls->Add(this->combCERO);
-			this->gboxParental->Controls->Add(this->labParentalForceEnable);
 			this->gboxParental->Controls->Add(this->labCERO);
 			this->gboxParental->Controls->Add(this->combOFLC);
-			this->gboxParental->Controls->Add(this->cboxAlwaysPEGI);
-			this->gboxParental->Controls->Add(this->labPEGIPRT);
-			this->gboxParental->Controls->Add(this->cboxPEGI);
-			this->gboxParental->Controls->Add(this->combPEGIPRT);
+			this->gboxParental->Controls->Add(this->labPEGI_PRT);
+			this->gboxParental->Controls->Add(this->combPEGI_PRT);
 			this->gboxParental->Controls->Add(this->combESRB);
-			this->gboxParental->Controls->Add(this->cboxCERO);
 			this->gboxParental->Controls->Add(this->labESRB);
-			this->gboxParental->Controls->Add(this->cboxAlwaysCERO);
-			this->gboxParental->Controls->Add(this->cboxAlwaysUSK);
 			this->gboxParental->Controls->Add(this->labPEGI);
-			this->gboxParental->Controls->Add(this->cboxUSK);
 			this->gboxParental->Controls->Add(this->combPEGI);
 			this->gboxParental->Controls->Add(this->combUSK);
-			this->gboxParental->Controls->Add(this->cboxESRB);
 			this->gboxParental->Controls->Add(this->labUSK);
-			this->gboxParental->Controls->Add(this->cboxAlwaysESRB);
-			this->gboxParental->Location = System::Drawing::Point(252, 60);
+			this->gboxParental->Location = System::Drawing::Point(262, 60);
 			this->gboxParental->Name = L"gboxParental";
-			this->gboxParental->Size = System::Drawing::Size(459, 272);
+			this->gboxParental->Size = System::Drawing::Size(398, 272);
 			this->gboxParental->TabIndex = 33;
 			this->gboxParental->TabStop = false;
 			this->gboxParental->Text = L"リージョンとペアレンタルコントロール";
@@ -3167,7 +2980,7 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->gboxIcon->Controls->Add(this->rIsWirelessIcon);
 			this->gboxIcon->Location = System::Drawing::Point(19, 114);
 			this->gboxIcon->Name = L"gboxIcon";
-			this->gboxIcon->Size = System::Drawing::Size(215, 116);
+			this->gboxIcon->Size = System::Drawing::Size(227, 116);
 			this->gboxIcon->TabIndex = 32;
 			this->gboxIcon->TabStop = false;
 			this->gboxIcon->Text = L"メニュー上でのアイコン表示";
@@ -3209,7 +3022,7 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->gboxEULA->Controls->Add(this->cboxIsEULA);
 			this->gboxEULA->Location = System::Drawing::Point(19, 60);
 			this->gboxEULA->Name = L"gboxEULA";
-			this->gboxEULA->Size = System::Drawing::Size(215, 48);
+			this->gboxEULA->Size = System::Drawing::Size(227, 48);
 			this->gboxEULA->TabIndex = 31;
 			this->gboxEULA->TabStop = false;
 			this->gboxEULA->Text = L"EULA";
@@ -3453,8 +3266,8 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			// 
 			// gridError
 			// 
-			dataGridViewCellStyle1->BackColor = System::Drawing::Color::White;
-			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle1;
+			dataGridViewCellStyle2->BackColor = System::Drawing::Color::White;
+			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle2;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
@@ -3596,555 +3409,32 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 		// ----------------------------------------------
 
 		// 設定ファイルの読み込み
-		void loadInit(void)
-		{
-			System::Xml::XmlDocument ^doc = gcnew System::Xml::XmlDocument();
+		void loadInit(void);
 
-			// xmlファイルの読み込み
-			try
-			{
-				doc->Load( "../resource/ini.xml" );
-			}
-			catch( System::IO::FileNotFoundException ^s )
-			{
-				(void)s;
-				this->sucMsg( "設定ファイルを開くことができませんでした。", "Setting file can't be opened." );
-				return;
-			}
-
-			// <init>タグ : ルート
-			System::Xml::XmlElement ^root = doc->DocumentElement;
-
-			// <rw>タグ
-			System::Boolean bReadOnly = MasterEditorTWL::isXmlEqual( root, "rw", "r" );
-			if( bReadOnly )
-			{
-				this->readOnly();
-			}
-
-			// <output>タグ
-			System::Boolean bXML = MasterEditorTWL::isXmlEqual( root, "output", "XML" );
-
-			// <spcheck>タグ
-			System::Boolean bCheck = MasterEditorTWL::isXmlEqual( root, "spcheck", "ON" );
-
-			if( bCheck )	// チェックするときのみ追加チェック項目を設定
-			{
-				// チェックするかどうか
-				this->hSrl->hMrcSpecialList->hIsCheck = gcnew System::Boolean( true );
-
-				// SDK
-				try
-				{
-					u32 major   = System::UInt32::Parse( MasterEditorTWL::getXPathText( root, "/init/sdk/major" ) );
-					u32 minor   = System::UInt32::Parse( MasterEditorTWL::getXPathText( root, "/init/sdk/minor" ) );
-					u32 relstep = System::UInt32::Parse( MasterEditorTWL::getXPathText( root, "/init/sdk/relstep" ) );
-					u32 sdkver  = (major << 24) | (minor << 16) | (relstep & 0xFFFF);
-					this->hSrl->hMrcSpecialList->hSDKVer = gcnew System::UInt32( sdkver );
-				}
-				catch ( System::Exception ^ex )
-				{
-					(void)ex;
-					this->errMsg( "設定ファイル中のSDKバージョンが読み込めませんでした。バージョンは0とみなされます。", 
-						          "SDK ver. can't be read from setting file. Therefore it is set by 0." );
-					this->hSrl->hMrcSpecialList->hSDKVer = gcnew System::UInt32( 0 );
-				}
-
-				// EULA
-				try
-				{
-					u8 eula = System::Byte::Parse( MasterEditorTWL::getXPathText( root, "/init/eula" ) );
-					this->hSrl->hMrcSpecialList->hEULAVer = gcnew System::Byte( eula );
-				}
-				catch ( System::Exception ^ex )
-				{
-					(void)ex;
-					this->errMsg( "設定ファイル中のEULAバージョンが読み込めませんでした。バージョンは0とみなされます。", 
-						          "EULA ver. can't be read from setting file. Therefore it is set by 0." );
-					this->hSrl->hMrcSpecialList->hEULAVer = gcnew System::Byte( 0 );
-				}
-
-				// Shared2File
-				try
-				{
-					System::Int32 i;
-					for( i=0; i < METWL_NUMOF_SHARED2FILES; i++ )
-					{
-						u8 size = System::UInt32::Parse( MasterEditorTWL::getXPathText( root, "/init/shared2/size" + i.ToString() ) );
-						this->hSrl->hMrcSpecialList->hShared2SizeArray[i] = gcnew System::UInt32( size );
-					}
-				}
-				catch ( System::Exception ^ex )
-				{
-					(void)ex;
-					this->errMsg( "設定ファイル中のShared2ファイルサイズが読み込めませんでした。サイズはすべて0とみなされます。", 
-						          "One of shared2 file sizes can't be read from setting file. Therefore they are set by 0." );
-					System::Int32 i;
-					for( i=0; i < METWL_NUMOF_SHARED2FILES; i++ )
-					{
-						this->hSrl->hMrcSpecialList->hShared2SizeArray[i] = gcnew System::UInt32( 0 );
-					}
-				}
-			} //if( bCheck )
-
-			if( bReadOnly || bXML | bCheck )
-			{
-				System::String ^msgJ = gcnew System::String("動作モード:");
-				System::String ^msgE = gcnew System::String("Processing Mode:");
-				if( bReadOnly )
-				{
-					msgJ += "\nリードオンリーモード";
-					msgE += "\nRead Only Mode";
-				}
-				if( bXML )
-				{
-					msgJ += "\nXML出力モード";
-					msgE += "\nXML Output Mode";
-				}
-				if( bCheck )
-				{
-					msgJ += "\n追加チェックモード";
-					msgE += "\nExtra Check Mode";
-				}
-				this->sucMsg( msgJ, msgE );
-			}
-		}
-
-	private:
 		// SRLのオープン
-		System::Void loadSrl( System::String ^filename )
-		{
-			ECSrlResult result = this->hSrl->readFromFile( filename );
-			if( result != ECSrlResult::NOERROR )
-			{
-				switch( result )
-				{
-					case ECSrlResult::ERROR_PLATFORM:
-						this->errMsg( "本ツールはTWL対応ROM専用です。NTR専用ROMなどのTWL非対応ROMを読み込むことはできません。",
-									  "This tool can only read TWL ROM. This can't read an other data e.g. NTR limited ROM." );
-					break;
+		System::Void loadSrl( System::String ^filename );
 
-					case ECSrlResult::ERROR_SIGN_DECRYPT:
-					case ECSrlResult::ERROR_SIGN_VERIFY:
-						this->errMsg( "不正なROMデータです。TWL対応ROMでないかROMデータが改ざんされている可能性があります。",
-									  "Illegal ROM data. It is not for TWL ROM, or is altered illegally." );
-					break;
-
-					default:
-						this->errMsg( "ROMデータファイルの読み込みに失敗しました。\n再度「ROMデータを開く」を選択してROMデータを読み出してください。", 
-							          "Reading the ROM data file failed. \nPlease read a ROM data file again, with \"Open a ROM data file\"" );
-					break;
-				}
-				return;
-			}
-			this->tboxFile->Text = filename;
-
-			// GUIにROM情報を格納
-			this->setSrlForms();
-
-			// 全体のCRCを算出
-			u16  crc;
-			if( !getWholeCRCInFile( filename, &crc ) )
-			{
-				this->errMsg( "ROMデータのCRC計算に失敗しました。ROMデータの読み込みはキャンセルされました。",
-					          "Calculating CRC of the ROM data failed. Therefore reading ROM data is canceled." );
-				return;
-			}
-			System::UInt16 ^hcrc = gcnew System::UInt16( crc );
-			this->tboxWholeCRC->Clear();
-			this->tboxWholeCRC->AppendText( "0x" );
-			this->tboxWholeCRC->AppendText( hcrc->ToString("X") );
-
-			// 読み込み時エラーを登録する
-			this->rErrorReading->Checked = true;
-			this->setGridError();
-			this->setGridWarn();
-			//if( this->hSrl->hErrorList->Count > 0 )
-			//{
-			//	this->errMsg( "ROMデータにエラーがあります。「エラー情報」タブをご確認ください。",
-			//				  "ROM data include error. Please look the tab \"Setting Error\"." );
-			//	return;
-			//}
-			return;
-		} // openSrl
-
-	private:
 		// SRLの保存
-		System::Void saveSrl( System::String ^filename )
-		{
-			// ROM情報をフォームから取得してSRLバイナリに反映させる
-			this->setSrlProperties();
-			// マスタ書類情報をフォームから取得して書類に反映させる -> 必要なし
-			//this->setDeliverableProperties();
-
-			// ファイルをコピー
-			if( !(filename->Equals( this->tboxFile->Text )) )
-			{
-				System::IO::File::Copy( this->tboxFile->Text, filename, true );
-			}
-
-			// コピーしたファイルにROMヘッダを上書き
-			if( this->hSrl->writeToFile( filename ) != ECSrlResult::NOERROR )
-			{
-				this->errMsg( "ROMデータの保存に失敗しました。", "Saving the ROM data file failed." );
-				return;
-			}
-			this->sucMsg( "ROMデータの保存が成功しました。", "Saving the ROM data file succeeded." );
-			this->tboxFile->Text = filename;
-
-			// 再リード
-			this->loadSrl( filename );
-		}
+		System::Void saveSrl( System::String ^filename );
 
 	private:
+		// ----------------------------------------------
+		// 一時ファイルの取り扱い
+		// ----------------------------------------------
+
 		// 一時保存
-		System::Void saveTmp( System::String ^filename )
-		{
-			System::Xml::XmlDocument ^doc = gcnew System::Xml::XmlDocument();
+		System::Void saveTmp( System::String ^filename );
 
-			doc->AppendChild( doc->CreateXmlDeclaration("1.0","UTF-8",nullptr) );
-			System::Xml::XmlElement ^root = doc->CreateElement( "MasterEditorTWL" );
-			doc->AppendChild( root );
+		// 一時ファイルを読み出す
+		void loadTmp( System::String ^filename );
 
-			// SRLのパス
-			MasterEditorTWL::appendXmlTag( doc, root, "Srl", this->tboxFile->Text );
-
-			// 言語
-			MasterEditorTWL::appendXmlTag( doc, root, "Lang", (this->stripItemJapanese->Checked)?"J":"E" );
-
-			// フォーム
-			System::Xml::XmlElement ^form = doc->CreateElement( "Form" );
-			root->AppendChild( form );
-
-			MasterEditorTWL::appendXmlTag( doc, form, "ProductName", this->tboxProductName->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "ProductCode1", this->tboxProductCode1->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "ProductCode2", this->tboxProductCode2->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "ProductNameForeign", this->tboxProductNameForeign->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "ProductCode1Foreign", this->tboxProductCode1Foreign->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "ProductCode2Foreign1", this->tboxProductCode2Foreign1->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "ProductCode2Foreign2", this->tboxProductCode2Foreign2->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "ProductCode2Foreign3", this->tboxProductCode2Foreign3->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "SubmitVersion", this->numSubmitVersion->Value.ToString() );
-			MasterEditorTWL::appendXmlTag( doc, form, "Backup", this->combBackup->SelectedIndex.ToString() );
-			MasterEditorTWL::appendXmlTag( doc, form, "BackupOther", this->tboxBackupOther->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "ReleaseForeign", (this->cboxReleaseForeign->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "Remarks", this->tboxCaption->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "SubmitWay", (this->rSubmitHand->Checked)?"Hand":"Mail" );
-			if( this->rUsageSale->Checked )
-				MasterEditorTWL::appendXmlTag( doc, form, "Purpose", "Sale" );
-			else if( this->rUsageSample->Checked )
-				MasterEditorTWL::appendXmlTag( doc, form, "Purpose", "Sample" );
-			else if( this->rUsageDst->Checked )
-				MasterEditorTWL::appendXmlTag( doc, form, "Purpose", "Dst" );
-			else if( this->rUsageOther->Checked )
-				MasterEditorTWL::appendXmlTag( doc, form, "Purpose", "Other" );
-			MasterEditorTWL::appendXmlTag( doc, form, "PurposeOther", this->tboxUsageOther->Text );
-
-			MasterEditorTWL::appendXmlTag( doc, form, "Company1", this->tboxCompany1->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "Depart1", this->tboxDepart1->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "Name1", this->tboxPerson1->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "Furigana1", this->tboxFurigana1->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "Tel1", this->tboxTel1->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "Fax1", this->tboxFax1->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "Mail1", this->tboxMail1->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "NTSC1", this->tboxNTSC1->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "InputPerson2", (this->cboxIsInputPerson2->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "Company2", this->tboxCompany2->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "Depart2", this->tboxDepart2->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "Name2", this->tboxPerson2->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "Furigana2", this->tboxFurigana2->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "Tel2", this->tboxTel2->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "Fax2", this->tboxFax2->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "Mail2", this->tboxMail2->Text );
-			MasterEditorTWL::appendXmlTag( doc, form, "NTSC2", this->tboxNTSC2->Text );
-
-			if( this->rIsWirelessIcon->Checked )
-				MasterEditorTWL::appendXmlTag( doc, form, "DisplayIcon", "Wireless" );
-			else if( this->rIsWiFiIcon->Checked )
-				MasterEditorTWL::appendXmlTag( doc, form, "DisplayIcon", "WiFi" );
-			else
-				MasterEditorTWL::appendXmlTag( doc, form, "DisplayIcon", "None" );
-
-			MasterEditorTWL::appendXmlTag( doc, form, "IsEULA", (this->cboxIsEULA->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "Region", this->combRegion->SelectedIndex.ToString() );
-			MasterEditorTWL::appendXmlTag( doc, form, "RatingCERO", this->combCERO->SelectedIndex.ToString() );
-			MasterEditorTWL::appendXmlTag( doc, form, "RpCERO", (this->cboxAlwaysCERO->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "EnableCERO", (this->cboxCERO->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "RatingESRB", this->combESRB->SelectedIndex.ToString() );
-			MasterEditorTWL::appendXmlTag( doc, form, "RpESRB", (this->cboxAlwaysESRB->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "EnableESRB", (this->cboxESRB->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "RatingUSK", this->combUSK->SelectedIndex.ToString() );
-			MasterEditorTWL::appendXmlTag( doc, form, "RpUSK", (this->cboxAlwaysUSK->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "EnableUSK", (this->cboxUSK->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "RatingPEGI", this->combPEGI->SelectedIndex.ToString() );
-			MasterEditorTWL::appendXmlTag( doc, form, "RpPEGI", (this->cboxAlwaysPEGI->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "EnablePEGI", (this->cboxPEGI->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "RatingPEGIPRT", this->combPEGIPRT->SelectedIndex.ToString() );
-			MasterEditorTWL::appendXmlTag( doc, form, "RpPEGIPRT", (this->cboxAlwaysPEGIPRT->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "EnablePEGIPRT", (this->cboxPEGIPRT->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "RatingPEGIBBFC", this->combPEGIBBFC->SelectedIndex.ToString() );
-			MasterEditorTWL::appendXmlTag( doc, form, "RpPEGIBBFC", (this->cboxAlwaysPEGIBBFC->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "EnablePEGIBBFC", (this->cboxPEGIBBFC->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "RatingOFLC", this->combOFLC->SelectedIndex.ToString() );
-			MasterEditorTWL::appendXmlTag( doc, form, "RpOFLC", (this->cboxAlwaysOFLC->Checked)?"Y":"N" );
-			MasterEditorTWL::appendXmlTag( doc, form, "EnableOFLC", (this->cboxOFLC->Checked)?"Y":"N" );
-
-			doc->Save( filename );
-		} //saveTmp()
-
-	private:
-		void loadTmp( System::String ^filename )
-		{
-			System::Xml::XmlDocument ^doc = gcnew System::Xml::XmlDocument;
-			doc->Load( filename );
-			System::Xml::XmlElement  ^root = doc->DocumentElement;
-			System::String ^text;
-
-			// SRL
-			text = MasterEditorTWL::getXPathText( root, "/MasterEditorTWL/Srl" );
-			if( !System::String::IsNullOrEmpty(text) )		// SRLファイル名がないときはスルー
-			{
-				this->loadSrl(text);
-			}
-
-			// 言語
-			text = MasterEditorTWL::getXPathText( root, "/MasterEditorTWL/Lang" );
-			if( !System::String::IsNullOrEmpty(text) && text->Equals("E") )
-			{
-				this->stripItemEnglish->Checked  = true;
-				this->stripItemJapanese->Checked = false;
-				this->changeEnglish();
-			}
-			else
-			{
-				this->stripItemEnglish->Checked  = false;
-				this->stripItemJapanese->Checked = true;
-				this->changeJapanese();
-			}
-
-			// フォーム
-			this->parseTmp( root, "/MasterEditorTWL/Form/ProductName", this->tboxProductName );
-			this->parseTmp( root, "/MasterEditorTWL/Form/ProductCode1", this->tboxProductCode1 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/ProductCode2", this->tboxProductCode2 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/SubmitVersion", this->numSubmitVersion );
-			this->parseTmp( root, "/MasterEditorTWL/Form/Backup", this->combBackup );
-
-			this->tboxBackupOther->Enabled = false;
-			this->tboxBackupOther->Clear();
-			if( this->combBackup->SelectedIndex == (this->combBackup->Items->Count - 1) )
-			{
-				this->parseTmp( root, "/MasterEditorTWL/Form/BackupOther", this->tboxBackupOther );
-				this->tboxBackupOther->Enabled = true;
-			}
-
-			cli::array<System::Windows::Forms::RadioButton^> ^rbuts;
-			cli::array<System::String^> ^strs;
-
-			rbuts = gcnew cli::array<System::Windows::Forms::RadioButton^>{this->rSubmitHand, this->rSubmitPost};
-			strs  = gcnew cli::array<System::String^>{"Hand","Mail"};
-			this->parseTmp( root, "/MasterEditorTWL/Form/SubmitWay", rbuts, strs );
-
-			rbuts = gcnew cli::array<System::Windows::Forms::RadioButton^>{this->rUsageSale, this->rUsageSample, this->rUsageDst, this->rUsageOther};
-			strs  = gcnew cli::array<System::String^>{"Sale","Sample","Dst","Other"};
-			this->parseTmp( root, "/MasterEditorTWL/Form/Purpose", rbuts, strs );
-			this->tboxUsageOther->Enabled = false;
-			this->tboxUsageOther->Clear();
-			if( this->rUsageOther->Checked )
-			{
-				this->tboxUsageOther->Enabled = true;
-				this->parseTmp( root, "/MasterEditorTWL/Form/PurposeOther", this->tboxUsageOther );
-			}
-
-			this->parseTmp( root, "/MasterEditorTWL/Form/ReleaseForeign", this->cboxReleaseForeign );
-			this->tboxProductNameForeign->Enabled   = false;
-			this->tboxProductCode1Foreign->Enabled  = false;
-			this->tboxProductCode2Foreign1->Enabled = false;
-			this->tboxProductCode2Foreign2->Enabled = false;
-			this->tboxProductCode2Foreign3->Enabled = false;
-			this->tboxProductNameForeign->Clear();
-			this->tboxProductCode1Foreign->Clear();
-			this->tboxProductCode2Foreign1->Clear();
-			this->tboxProductCode2Foreign2->Clear();
-			this->tboxProductCode2Foreign3->Clear();
-			if( this->cboxReleaseForeign->Checked )
-			{
-				this->tboxProductNameForeign->Enabled   = true;
-				this->tboxProductCode1Foreign->Enabled  = true;
-				this->tboxProductCode2Foreign1->Enabled = true;
-				this->tboxProductCode2Foreign2->Enabled = true;
-				this->tboxProductCode2Foreign3->Enabled = true;
-				this->parseTmp( root, "/MasterEditorTWL/Form/ProductNameForeign", this->tboxProductNameForeign );
-				this->parseTmp( root, "/MasterEditorTWL/Form/ProductCode1Foreign", this->tboxProductCode1Foreign );
-				this->parseTmp( root, "/MasterEditorTWL/Form/ProductCode2Foreign1", this->tboxProductCode2Foreign1 );
-				this->parseTmp( root, "/MasterEditorTWL/Form/ProductCode2Foreign2", this->tboxProductCode2Foreign2 );
-				this->parseTmp( root, "/MasterEditorTWL/Form/ProductCode2Foreign3", this->tboxProductCode2Foreign3 );
-			}
-			this->parseTmp( root, "/MasterEditorTWL/Form/Remarks", this->tboxCaption );
-
-			this->parseTmp( root, "/MasterEditorTWL/Form/Company1", this->tboxCompany1 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/Depart1", this->tboxDepart1 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/Name1", this->tboxPerson1 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/Furigana1", this->tboxFurigana1 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/Tel1", this->tboxTel1 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/Fax1", this->tboxFax1 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/Mail1", this->tboxMail1 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/NTSC1", this->tboxNTSC1 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/InputPerson2", this->cboxIsInputPerson2 );
-
-			this->parseTmp( root, "/MasterEditorTWL/Form/Company2", this->tboxCompany2 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/Depart2", this->tboxDepart2 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/Name2", this->tboxPerson2 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/Furigana2", this->tboxFurigana2 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/Tel2", this->tboxTel2 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/Fax2", this->tboxFax2 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/Mail2", this->tboxMail2 );
-			this->parseTmp( root, "/MasterEditorTWL/Form/NTSC2", this->tboxNTSC2 );
-
-			rbuts = gcnew cli::array<System::Windows::Forms::RadioButton^>{this->rIsWirelessIcon, this->rIsWiFiIcon, this->rIsNoIcon};
-			strs  = gcnew cli::array<System::String^>{"Wireless","WiFi","None"};
-			this->parseTmp( root, "/MasterEditorTWL/Form/DisplayIcon", rbuts, strs );
-
-			this->parseTmp( root, "/MasterEditorTWL/Form/IsEULA", this->cboxIsEULA );
-			this->parseTmp( root, "/MasterEditorTWL/Form/Region", this->combRegion );
-			this->parseTmp( root, "/MasterEditorTWL/Form/RatingCERO", this->combCERO );
-			this->parseTmp( root, "/MasterEditorTWL/Form/RpCERO", this->cboxAlwaysCERO );
-			this->parseTmp( root, "/MasterEditorTWL/Form/EnableCERO", this->cboxCERO );
-			this->parseTmp( root, "/MasterEditorTWL/Form/RatingESRB", this->combESRB );
-			this->parseTmp( root, "/MasterEditorTWL/Form/RpESRB", this->cboxAlwaysESRB );
-			this->parseTmp( root, "/MasterEditorTWL/Form/EnableESRB", this->cboxESRB );
-			this->parseTmp( root, "/MasterEditorTWL/Form/RatingUSK", this->combUSK );
-			this->parseTmp( root, "/MasterEditorTWL/Form/RpUSK", this->cboxAlwaysUSK );
-			this->parseTmp( root, "/MasterEditorTWL/Form/EnableUSK", this->cboxUSK );
-			this->parseTmp( root, "/MasterEditorTWL/Form/RatingPEGI", this->combPEGI );
-			this->parseTmp( root, "/MasterEditorTWL/Form/RpPEGI", this->cboxAlwaysPEGI );
-			this->parseTmp( root, "/MasterEditorTWL/Form/EnablePEGI", this->cboxPEGI );
-			this->parseTmp( root, "/MasterEditorTWL/Form/RatingPEGIPRT", this->combPEGIPRT );
-			this->parseTmp( root, "/MasterEditorTWL/Form/RpPEGIPRT", this->cboxAlwaysPEGIPRT );
-			this->parseTmp( root, "/MasterEditorTWL/Form/EnablePEGIPRT", this->cboxPEGIPRT );
-			this->parseTmp( root, "/MasterEditorTWL/Form/RatingPEGIBBFC", this->combPEGIBBFC );
-			this->parseTmp( root, "/MasterEditorTWL/Form/RpPEGIBBFC", this->cboxAlwaysPEGIBBFC );
-			this->parseTmp( root, "/MasterEditorTWL/Form/EnablePEGIBBFC", this->cboxPEGIBBFC );
-			this->parseTmp( root, "/MasterEditorTWL/Form/RatingOFLC", this->combOFLC );
-			this->parseTmp( root, "/MasterEditorTWL/Form/RpOFLC", this->cboxAlwaysOFLC );
-			this->parseTmp( root, "/MasterEditorTWL/Form/EnableOFLC", this->cboxOFLC );
-
-			this->maskParentalForms();	// ペアレンタルコントロール情報をリージョンに合わせる
-
-		} //loadTmp()
-
-	private:
 		// 一時保存情報をフォーム情報に変換
-		System::Boolean parseTmp( System::Xml::XmlElement ^root, System::String ^xpath, System::Windows::Forms::ComboBox ^comb )
-		{
-			// コンボボックスの保存情報 - インデックスの範囲に含まれるか調べる(含まれない場合は-1)
-			System::String ^text = MasterEditorTWL::getXPathText( root, xpath );
-			if( System::String::IsNullOrEmpty( text ) )
-				return false;
-
-			try
-			{
-				System::Int32 index = System::Int32::Parse( text );	// テキストにはインデックスが保存されている
-				if( (0 <= index) && (index < comb->Items->Count) )
-				{
-					comb->SelectedIndex = index;
-					return true;
-				}
-				else
-				{
-					comb->SelectedIndex = -1;
-					return false;
-				}
-			}
-			catch ( System::Exception ^ex )	// 改ざんされていたとき
-			{
-				(void)ex;
-				comb->SelectedIndex = -1;
-				return false;
-			}
-			return false;
-		}
-		System::Boolean parseTmp( System::Xml::XmlElement ^root, System::String ^xpath, System::Windows::Forms::NumericUpDown ^num )
-		{
-			// テキストボックスの保存情報 - そのまま代入(ただし最大を超える場合は0にする)
-			System::String ^text = MasterEditorTWL::getXPathText( root, xpath );
-			if( System::String::IsNullOrEmpty( text ) )
-				return false;
-
-			try
-			{
-				System::Int32 val = System::Int32::Parse( text );	// テキストには値が保存されている
-				if( (0 <= val) && (val <= num->Maximum) )
-				{
-					num->Value = val;
-					return true;
-				}
-				else
-				{
-					num->Value = 0;
-					return false;
-				}
-			}
-			catch ( System::Exception ^ex )	// 改ざんされていたとき
-			{
-				(void)ex;
-				num->Value = 0;
-				return false;
-			}
-			return false;
-		}
+		System::Boolean parseTmp( System::Xml::XmlElement ^root, System::String ^xpath, System::Windows::Forms::ComboBox ^comb );
+		System::Boolean parseTmp( System::Xml::XmlElement ^root, System::String ^xpath, System::Windows::Forms::NumericUpDown ^num );
 		System::Boolean parseTmp( System::Xml::XmlElement ^root, System::String ^xpath, 
-								  cli::array<System::Windows::Forms::RadioButton^>^rbuts, cli::array<System::String ^>^textCands )
-		{
-			// ラジオボタンの保存情報 - テキスト候補に合致するか調べる(合致しない場合は先頭のラジオボタンをチェック)
-			System::String ^text = MasterEditorTWL::getXPathText( root, xpath );
-			if( System::String::IsNullOrEmpty( text ) )
-				return false;
-
-			System::Int32 i;
-			System::Boolean bSearch = false;
-			for( i=0; i < rbuts->Length; i++ )	// XML中のテキストがどのラジオボタンのテキストに合致するかチェック
-			{
-				rbuts[i]->Checked = false;
-				if( textCands[i]->Equals( text ) )
-				{
-					rbuts[i]->Checked = true;
-					bSearch = true;
-				}
-			}
-			if( !bSearch )	// 合致しない場合は最初のラジオボタンをチェック
-			{
-				rbuts[0]->Checked = true;
-			}
-			return bSearch;
-		}
-		System::Boolean parseTmp( System::Xml::XmlElement ^root, System::String ^xpath, System::Windows::Forms::CheckBox ^cbox )
-		{
-			// チェックボタンの保存情報 - Y/Nを調べる(それ以外の場合にはチェックしない)
-			System::String ^text = MasterEditorTWL::getXPathText( root, xpath );
-			if( System::String::IsNullOrEmpty( text ) )
-				return false;
-
-			if( text->Equals("Y") )
-				cbox->Checked = true;
-			else
-				cbox->Checked = false;	// 不正な値も含む
-			return cbox->Checked;
-		}
-		System::Boolean parseTmp( System::Xml::XmlElement ^root, System::String ^xpath, System::Windows::Forms::TextBox ^tbox )
-		{
-			// テキストボックスの保存情報 - そのまま代入(ただし長さが合わない場合は空白にする)
-			System::String ^text = MasterEditorTWL::getXPathText( root, xpath );
-			if( System::String::IsNullOrEmpty( text ) )
-				return false;
-
-			if( text->Length > tbox->MaxLength )
-			{
-				tbox->Text = gcnew System::String("");
-				return false;
-			}
-			tbox->Text = text;
-			return true;
-		}
+								  cli::array<System::Windows::Forms::RadioButton^>^rbuts, cli::array<System::String ^>^textCands );
+		System::Boolean parseTmp( System::Xml::XmlElement ^root, System::String ^xpath, System::Windows::Forms::CheckBox ^cbox );
+		System::Boolean parseTmp( System::Xml::XmlElement ^root, System::String ^xpath, System::Windows::Forms::TextBox ^tbox );
 
 	private:
 		// ----------------------------------------------
@@ -4160,26 +3450,12 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->rIsNoIcon->Enabled       = false;
 
 			this->combCERO->Enabled = false;
-			this->cboxCERO->Enabled = false;
-			this->cboxAlwaysCERO->Enabled = false;
 			this->combESRB->Enabled = false;
-			this->cboxESRB->Enabled = false;
-			this->cboxAlwaysESRB->Enabled = false;
 			this->combUSK->Enabled = false;
-			this->cboxUSK->Enabled = false;
-			this->cboxAlwaysUSK->Enabled = false;
 			this->combPEGI->Enabled = false;
-			this->cboxPEGI->Enabled = false;
-			this->cboxAlwaysPEGI->Enabled = false;
-			this->combPEGIPRT->Enabled = false;
-			this->cboxPEGIPRT->Enabled = false;
-			this->cboxAlwaysPEGIPRT->Enabled = false;
-			this->combPEGIBBFC->Enabled = false;
-			this->cboxPEGIBBFC->Enabled = false;
-			this->cboxAlwaysPEGIBBFC->Enabled = false;
+			this->combPEGI_PRT->Enabled = false;
+			this->combPEGI_BBFC->Enabled = false;
 			this->combOFLC->Enabled = false;
-			this->cboxOFLC->Enabled = false;
-			this->cboxAlwaysOFLC->Enabled = false;
 		}
 
 	private:
@@ -4189,1076 +3465,72 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 
 		// ROM情報をフォームから取得してSRLクラスのプロパティに反映させる
 		// (ROMヘッダへの反映やCRCと署名の再計算をしない)
-		void setSrlProperties(void)
-		{
-			// ROMヘッダの[0,0x160)の領域はRead Onlyで変更しない
-
-			// TWL拡張領域のいくつかの情報をROMヘッダに反映させる
-			this->hSrl->hIsEULA         = this->cboxIsEULA->Checked;
-			this->hSrl->hIsWiFiIcon     = this->rIsWiFiIcon->Checked;
-			this->hSrl->hIsWirelessIcon = this->rIsWirelessIcon->Checked;
-
-			// Srlクラスのプロパティへの反映
-			this->setParentalSrlProperties();
-		}
+		void setSrlProperties(void);
 
 		// SRLのROM情報をフォームに反映させる(ファイルが読み込まれていることが前提)
-		void setSrlForms(void)
-		{
-			// NTR互換情報
-			this->tboxTitleName->Text = this->hSrl->hTitleName;
-			this->tboxGameCode->Text  = this->hSrl->hGameCode;
-			this->tboxMakerCode->Text = this->hSrl->hMakerCode;
-			this->tboxPlatform->Text  = this->hSrl->hPlatform;
-			this->tboxRomSize->Text   = this->hSrl->hRomSize;
-			this->tboxRomLatency->Text = this->hSrl->hLatency;
-			if( *(this->hSrl->hRomVersion) == 0xE0 )
-			{
-				this->tboxRemasterVer->Text = gcnew System::String("E");
-				this->cboxRemasterVerE->Checked = true;
-			}
-			else
-			{
-				this->tboxRemasterVer->Text = this->hSrl->hRomVersion->ToString();
-				this->cboxRemasterVerE->Checked = false;
-			}
-
-			this->tboxHeaderCRC->Clear();
-			this->tboxHeaderCRC->AppendText( "0x" );
-			this->tboxHeaderCRC->AppendText( this->hSrl->hHeaderCRC->ToString("X") );
-
-			if( this->hSrl->hPlatform == nullptr )
-			{
-				this->errMsg( "プラットホーム指定が不正です。ROMデータのビルド設定を見直してください。",
-							  "Illegal Platform: Please check build settings of the ROM data.");
-			}
-
-			// TWL拡張情報
-			this->tboxTitleIDLo->Text = this->hSrl->hTitleIDLo;
-			this->tboxTitleIDHi->Text = this->hSrl->hTitleIDHi->ToString("X8");
-			this->tboxNormalRomOffset->Text   = this->hSrl->hNormalRomOffset->ToString("X8");
-			this->tboxKeyTableRomOffset->Text = this->hSrl->hKeyTableRomOffset->ToString("X8");
-			this->tboxPublicSize->Text  = MasterEditorTWL::transSizeToString( this->hSrl->hPublicSize );
-			this->tboxPrivateSize->Text = MasterEditorTWL::transSizeToString( this->hSrl->hPrivateSize );
-			this->cboxIsNormalJump->Checked = *(this->hSrl->hIsNormalJump);
-			this->cboxIsTmpJump->Checked    = *(this->hSrl->hIsTmpJump);
-			this->cboxIsSubBanner->Checked  = *(this->hSrl->hIsSubBanner);
-			this->cboxIsWL->Checked         = *(this->hSrl->hIsWL);
-			if( *(this->hSrl->hIsCodecTWL) == true )
-			{
-				this->tboxIsCodec->Text = gcnew System::String( "TWL" );
-			}
-			else
-			{
-				this->tboxIsCodec->Text = gcnew System::String( "NTR" );
-			}
-			this->cboxIsSD->Checked   = *(this->hSrl->hIsSD);
-			this->cboxIsNAND->Checked = *(this->hSrl->hIsNAND);
-			if( *(this->hSrl->hIsGameCardNitro) == true )
-			{
-				this->tboxIsGameCardOn->Text = gcnew System::String( "ON(NTR)" );
-			}
-			else if( *(this->hSrl->hIsGameCardOn) == true )
-			{
-				this->tboxIsGameCardOn->Text = gcnew System::String( "ON(normal)" );
-			}
-			else
-			{
-				this->tboxIsGameCardOn->Text = gcnew System::String( "OFF" );
-			}
-			this->cboxIsShared2->Checked = *(this->hSrl->hIsShared2);
-			this->tboxShared2Size0->Text = MasterEditorTWL::transSizeToString( this->hSrl->hShared2SizeArray[0] );
-			this->tboxShared2Size1->Text = MasterEditorTWL::transSizeToString( this->hSrl->hShared2SizeArray[1] );
-			this->tboxShared2Size2->Text = MasterEditorTWL::transSizeToString( this->hSrl->hShared2SizeArray[2] );
-			this->tboxShared2Size3->Text = MasterEditorTWL::transSizeToString( this->hSrl->hShared2SizeArray[3] );
-			this->tboxShared2Size4->Text = MasterEditorTWL::transSizeToString( this->hSrl->hShared2SizeArray[4] );
-			this->tboxShared2Size5->Text = MasterEditorTWL::transSizeToString( this->hSrl->hShared2SizeArray[5] );
-
-			// アプリ種別
-			if( *this->hSrl->hIsMediaNand )
-			{
-				this->tboxMedia->Text = gcnew System::String( "NAND" );
-			}
-			else
-			{
-				this->tboxMedia->Text = gcnew System::String( "Game Card" );
-			}
-
-
-			if( *(this->hSrl->hIsAppLauncher) == true )
-			{
-				this->tboxAppType->Text = gcnew System::String( "Launcher" );
-			}
-			else if( *(this->hSrl->hIsAppSecure) == true )
-			{
-				this->tboxAppType->Text = gcnew System::String( "Secure" );
-			}
-			else if( *(this->hSrl->hIsAppSystem) == true )
-			{
-				this->tboxAppType->Text = gcnew System::String( "System" );
-			}
-			else if( *(this->hSrl->hIsAppUser) == true )
-			{
-				this->tboxAppType->Text = gcnew System::String( "User" );
-			}
-			else
-			{
-				this->tboxAppType->Text = gcnew System::String( "UNKNOWN" );
-			}
-
-			System::String ^appother = gcnew System::String("");
-			if( *(this->hSrl->hIsLaunch) == false )
-			{
-				appother += "Not-Launch.\r\n";
-			}
-			if( *(this->hSrl->hIsDataOnly) == true )
-			{
-				appother += "DataOnly.\r\n";
-			}
-			this->tboxAppTypeOther->Text = appother;
-
-			// アクセスコントロール その他
-			System::String ^acc = gcnew System::String("");
-			if( *(this->hSrl->hIsCommonClientKey) == true )
-			{
-				acc += "commonClientKey.\r\n";
-			}
-			if( *(this->hSrl->hIsAesSlotBForES) == true )
-			{
-				acc += "AES-SlotB(ES).\r\n";
-			}
-			if( *(this->hSrl->hIsAesSlotCForNAM) == true )
-			{
-				acc += "AES-SlotC(NAM).\r\n";
-			}
-			if( *(this->hSrl->hIsAesSlotBForJpegEnc) == true )
-			{
-				acc += "AES-SlotB(JpegEnc.).\r\n";
-			}
-			if( *(this->hSrl->hIsAesSlotAForSSL) == true )
-			{
-				acc += "AES-SlotA(SSL).\r\n";
-			}
-			if( *(this->hSrl->hIsCommonClientKeyForDebugger) == true )
-			{
-				acc += "commonClientKey(Debug.).\r\n";
-			}
-			this->tboxAccessOther->Text = acc;
-
-			// 特殊な設定をテキストボックスに反映
-			this->setSrlFormsCaptionEx();
-
-			// SDKバージョンとライブラリ
-			this->tboxSDK->Clear();
-			if( this->hSrl->hSDKList != nullptr )
-			{
-				for each( RCSDKVersion ^ver in this->hSrl->hSDKList )
-				{
-					if( ver->IsStatic )
-						this->tboxSDK->Text += ver->Version + " (main static)\r\n";
-					else
-						this->tboxSDK->Text += ver->Version + "\r\n";
-				}
-			}
-			this->gridLibrary->Rows->Clear();
-			if( this->hSrl->hLicenseList != nullptr )
-			{
-				for each( RCLicense ^lic in this->hSrl->hLicenseList )
-				{
-					this->gridLibrary->Rows->Add( gcnew cli::array<System::Object^>{lic->Publisher, lic->Name} );
-				}
-			}
-
-			// 編集可能情報
-			this->cboxIsEULA->Checked       = *(this->hSrl->hIsEULA);
-			if( (  *this->hSrl->hIsWiFiIcon  &&   *this->hSrl->hIsWirelessIcon) ||
-				(!(*this->hSrl->hIsWiFiIcon) && !(*this->hSrl->hIsWirelessIcon)) )
-			{
-				this->rIsNoIcon->Checked = true;
-			}
-			else if( *(this->hSrl->hIsWiFiIcon) && !*(this->hSrl->hIsWirelessIcon) )
-			{
-				this->rIsWiFiIcon->Checked = true;
-			}
-			else
-			{
-				this->rIsWirelessIcon->Checked = true;
-			}
-			this->setParentalForms();			// ペアレンタルコントロール関連
-		} //setSrlForms()
+		void setSrlForms(void);
 
 		// SRLの特殊な設定をフォームにセットする(言語切り替えで表示を変えたいので独立させる)
-		void setSrlFormsCaptionEx()
-		{
-			// 特殊な設定は備考欄に書き加えておく
-			this->tboxCaptionEx->Clear();
-			if( (this->hSrl->hHasDSDLPlaySign != nullptr) && (*(this->hSrl->hHasDSDLPlaySign) == true) )
-			{
-				if( this->stripItemJapanese->Checked == true )
-					this->tboxCaptionEx->Text += gcnew System::String( "DSクローンブート対応.\r\n" );
-				else
-					this->tboxCaptionEx->Text += gcnew System::String( "DS Clone Boot.\r\n" );
-			}
-			if( (this->hSrl->hIsSCFGAccess != nullptr) && (*(this->hSrl->hIsSCFGAccess) == true) )
-			{
-				if( this->stripItemJapanese->Checked == true )
-					this->tboxCaptionEx->Text += gcnew System::String( "SCFGレジスタアクセス可能.\r\n" );
-				else
-					this->tboxCaptionEx->Text += gcnew System::String( "SDFC Register Accessible.\r\n" );
-			}
-		}
+		void setSrlFormsCaptionEx();
 
-		// ペアレンタルコントロール情報はSRL内にあるが設定が大変なので切り出す
+		// フォームの入力をチェックする
+		System::Boolean checkSrlForms(void);
 
-		// ペアレンタルコントロール関連の情報をフォームから取得してSRLに反映させる
-		void setParentalSrlProperties(void)
-		{
-			// リージョン
-			this->hSrl->hIsRegionJapan     = gcnew System::Boolean(false);
-			this->hSrl->hIsRegionAmerica   = gcnew System::Boolean(false);
-			this->hSrl->hIsRegionEurope    = gcnew System::Boolean(false);
-			this->hSrl->hIsRegionAustralia = gcnew System::Boolean(false);
-			switch( this->combRegion->SelectedIndex )
-			{
-				case 0:
-					this->hSrl->hIsRegionJapan = gcnew System::Boolean(true);
-				break;
+	private:
+		// ---------------------------------------------------------------------
+		// ペアレンタルコントロール設定は複雑なので別に切り出す
+		// ---------------------------------------------------------------------
 
-				case 1:
-					this->hSrl->hIsRegionAmerica = gcnew System::Boolean(true);
-				break;
+		// フォーム入力をSRLに反映させる
+		void setParentalSrlProperties(void);
 
-				case 2:
-					this->hSrl->hIsRegionEurope = gcnew System::Boolean(true);
-				break;
-
-				case 3:
-					this->hSrl->hIsRegionAustralia = gcnew System::Boolean(true);
-				break;
-
-				case 4:
-					this->hSrl->hIsRegionEurope    = gcnew System::Boolean(true);
-					this->hSrl->hIsRegionAustralia = gcnew System::Boolean(true);
-				break;
-
-#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
-				case 5:
-					this->hSrl->hIsRegionJapan     = gcnew System::Boolean(true);
-					this->hSrl->hIsRegionAmerica   = gcnew System::Boolean(true);
-					this->hSrl->hIsRegionEurope    = gcnew System::Boolean(true);
-					this->hSrl->hIsRegionAustralia = gcnew System::Boolean(true);
-				break;
-#endif
-				default:
-				break;
-			}
-
-			System::Byte rating;
-			// CERO
-			switch( this->combCERO->SelectedIndex )
-			{
-				case 0: rating =  0; break;
-				case 1: rating = 12; break;
-				case 2: rating = 15; break;
-				case 3: rating = 17; break;
-				case 4: rating = 18; break;
-				default:
-					rating = 0;		// 未審査
-				break;
-			}
-			this->hSrl->hArrayParentalRating[OS_TWL_PCTL_OGN_CERO] = gcnew System::Byte( rating );
-			this->hSrl->hArrayParentalEffect[OS_TWL_PCTL_OGN_CERO] = gcnew System::Boolean( this->cboxCERO->Checked );
-			this->hSrl->hArrayParentalAlways[OS_TWL_PCTL_OGN_CERO] = gcnew System::Boolean( this->cboxAlwaysCERO->Checked );
-
-			// ESRB
-			switch( this->combESRB->SelectedIndex )
-			{
-				case 0: rating =  3; break;
-				case 1: rating =  6; break;
-				case 2: rating = 10; break;
-				case 3: rating = 13; break;
-				case 4: rating = 17; break;
-				default:
-					rating = 0;
-				break;
-			}
-			this->hSrl->hArrayParentalRating[OS_TWL_PCTL_OGN_ESRB] = gcnew System::Byte( rating );
-			this->hSrl->hArrayParentalEffect[OS_TWL_PCTL_OGN_ESRB] = gcnew System::Boolean( this->cboxESRB->Checked );
-			this->hSrl->hArrayParentalAlways[OS_TWL_PCTL_OGN_ESRB] = gcnew System::Boolean( this->cboxAlwaysESRB->Checked );
-
-			// USK
-			switch( this->combUSK->SelectedIndex )
-			{
-				case 0: rating =  0; break;
-				case 1: rating =  6; break;
-				case 2: rating = 12; break;
-				case 3: rating = 16; break;
-				case 4: rating = 18; break;
-				default:
-					rating = 0;
-				break;
-			}
-			this->hSrl->hArrayParentalRating[OS_TWL_PCTL_OGN_USK] = gcnew System::Byte( rating );
-			this->hSrl->hArrayParentalEffect[OS_TWL_PCTL_OGN_USK] = gcnew System::Boolean( this->cboxUSK->Checked );
-			this->hSrl->hArrayParentalAlways[OS_TWL_PCTL_OGN_USK] = gcnew System::Boolean( this->cboxAlwaysUSK->Checked );
-
-			// PEGI
-			switch( this->combPEGI->SelectedIndex )
-			{
-				case 0: rating =  3; break;
-				case 1: rating =  7; break;
-				case 2: rating = 12; break;
-				case 3: rating = 16; break;
-				case 4: rating = 18; break;
-				default:
-					rating = 0;
-				break;
-			}
-			this->hSrl->hArrayParentalRating[OS_TWL_PCTL_OGN_PEGI_GEN] = gcnew System::Byte( rating );
-			this->hSrl->hArrayParentalEffect[OS_TWL_PCTL_OGN_PEGI_GEN] = gcnew System::Boolean( this->cboxPEGI->Checked );
-			this->hSrl->hArrayParentalAlways[OS_TWL_PCTL_OGN_PEGI_GEN] = gcnew System::Boolean( this->cboxAlwaysPEGI->Checked );
-
-			// PEGIPRT
-			switch( this->combPEGIPRT->SelectedIndex )
-			{
-				case 0: rating =  4; break;
-				case 1: rating =  6; break;
-				case 2: rating = 12; break;
-				case 3: rating = 16; break;
-				case 4: rating = 18; break;
-				default:
-					rating = 0;
-				break;
-			}
-			this->hSrl->hArrayParentalRating[OS_TWL_PCTL_OGN_PEGI_PRT] = gcnew System::Byte( rating );
-			this->hSrl->hArrayParentalEffect[OS_TWL_PCTL_OGN_PEGI_PRT] = gcnew System::Boolean( this->cboxPEGIPRT->Checked );
-			this->hSrl->hArrayParentalAlways[OS_TWL_PCTL_OGN_PEGI_PRT] = gcnew System::Boolean( this->cboxAlwaysPEGIPRT->Checked );
-
-			// PEGIBBFC
-			switch( this->combPEGIBBFC->SelectedIndex )
-			{
-				case 0: rating =  3; break;
-				case 1: rating =  4; break;
-				case 2: rating =  7; break;
-				case 3: rating =  8; break;
-				case 4: rating = 12; break;
-				case 5: rating = 15; break;
-				case 6: rating = 16; break;
-				case 7: rating = 18; break;
-				default:
-					rating = 0;
-				break;
-			}
-			this->hSrl->hArrayParentalRating[OS_TWL_PCTL_OGN_PEGI_BBFC] = gcnew System::Byte( rating );
-			this->hSrl->hArrayParentalEffect[OS_TWL_PCTL_OGN_PEGI_BBFC] = gcnew System::Boolean( this->cboxPEGIBBFC->Checked );
-			this->hSrl->hArrayParentalAlways[OS_TWL_PCTL_OGN_PEGI_BBFC] = gcnew System::Boolean( this->cboxAlwaysPEGIBBFC->Checked );
-
-			// OFLC
-			switch( this->combOFLC->SelectedIndex )
-			{
-				case 0: rating =  0; break;
-				case 1: rating =  7; break;
-				case 2: rating = 14; break;
-				case 3: rating = 15; break;
-				default:
-					rating = 0;
-				break;
-			}
-			this->hSrl->hArrayParentalRating[OS_TWL_PCTL_OGN_OFLC] = gcnew System::Byte( rating );
-			this->hSrl->hArrayParentalEffect[OS_TWL_PCTL_OGN_OFLC] = gcnew System::Boolean( this->cboxOFLC->Checked );
-			this->hSrl->hArrayParentalAlways[OS_TWL_PCTL_OGN_OFLC] = gcnew System::Boolean( this->cboxAlwaysOFLC->Checked );
-		} //setParentalSrlProperties()
-
-		// SRL内のペアレンタルコントロール情報を抜き出してフォームに反映させる
-		void setParentalForms(void)
-		{
-			System::Int32  index;
-
-			// リージョン
-			System::Boolean isJapan   = *(this->hSrl->hIsRegionJapan);
-			System::Boolean isAmerica = *(this->hSrl->hIsRegionAmerica);
-			System::Boolean isEurope  = *(this->hSrl->hIsRegionEurope);
-			System::Boolean isAustralia = *(this->hSrl->hIsRegionAustralia);
-			if( isJapan && !isAmerica && !isEurope && !isAustralia )
-				index = 0;
-			else if( !isJapan && isAmerica && !isEurope && !isAustralia )
-				index = 1;
-			else if( !isJapan && !isAmerica && isEurope && !isAustralia )
-				index = 2;
-			else if( !isJapan && !isAmerica && !isEurope && isAustralia )
-				index = 3;
-			else if( !isJapan && !isAmerica && isEurope && isAustralia )
-				index = 4;
-			else
-				index = -1;	// 不正
-#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
-			if( isJapan && isAmerica && isEurope && isAustralia )
-				index = 5;
-#endif
-			this->combRegion->SelectedIndex = index;
-			this->maskParentalForms();
-
-			// CERO
-			switch( *(hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_CERO ]) )
-			{
-				case 0:
-					if( *(hSrl->hArrayParentalEffect[ OS_TWL_PCTL_OGN_CERO ]) )	// 全年齢か未審査か判定
-						index = 0;
-					else
-						index = 5;
-				break;
-				case 12: index = 1; break;
-				case 15: index = 2; break;
-				case 17: index = 3; break;
-				case 18: index = 4; break;
-				default:
-					index = 5;		// リード時のチェックがあるため起こり得ない
-				break;
-			}
-			this->combCERO->SelectedIndex = index;
-			this->cboxCERO->Checked       = *(hSrl->hArrayParentalEffect[ OS_TWL_PCTL_OGN_CERO ]);
-			this->cboxAlwaysCERO->Checked = *(hSrl->hArrayParentalAlways[ OS_TWL_PCTL_OGN_CERO ]);
-			// ESRB
-			switch( *(hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_ESRB ]) )
-			{
-				case 3:  index = 0; break;
-				case 6:  index = 1; break;
-				case 10: index = 2; break;
-				case 13: index = 3; break;
-				case 17: index = 4; break;
-				case 0:  index = 5; break; // 0はデフォルト値なのでエラーメッセージを出さない(自動的に未審査扱い)
-				default:
-					index = 5;
-				break;
-			}
-			this->combESRB->SelectedIndex = index;
-			this->cboxESRB->Checked       = *(hSrl->hArrayParentalEffect[ OS_TWL_PCTL_OGN_ESRB ]);
-			this->cboxAlwaysESRB->Checked = *(hSrl->hArrayParentalAlways[ OS_TWL_PCTL_OGN_ESRB ]);
-			// USK
-			switch( *(hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_USK ]) )
-			{
-				case 0:
-					if( *(hSrl->hArrayParentalEffect[ OS_TWL_PCTL_OGN_USK ]) )
-						index = 0;
-					else
-						index = 5;
-				break;
-				case 6:  index = 1; break;
-				case 12: index = 2; break;
-				case 16: index = 3; break;
-				case 18: index = 4; break;
-				default:
-					index = 5;
-				break;
-			}
-			this->combUSK->SelectedIndex = index;
-			this->cboxUSK->Checked       = *(hSrl->hArrayParentalEffect[ OS_TWL_PCTL_OGN_USK ]);
-			this->cboxAlwaysUSK->Checked = *(hSrl->hArrayParentalAlways[ OS_TWL_PCTL_OGN_USK ]);
-			// PEGI_GEN
-			switch( *(hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_PEGI_GEN ]) )
-			{
-				case 3:  index = 0; break;
-				case 7:  index = 1; break;
-				case 12: index = 2; break;
-				case 16: index = 3; break;
-				case 18: index = 4; break;
-				case 0:  index = 5; break;
-				default:
-					index = 5;
-				break;
-			}
-			this->combPEGI->SelectedIndex = index;
-			this->cboxPEGI->Checked       = *(hSrl->hArrayParentalEffect[ OS_TWL_PCTL_OGN_PEGI_GEN ]);
-			this->cboxAlwaysPEGI->Checked = *(hSrl->hArrayParentalAlways[ OS_TWL_PCTL_OGN_PEGI_GEN ]);
-			// PEGI_PRT
-			switch( *(hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_PEGI_PRT ]) )
-			{
-				case 4:  index = 0; break;
-				case 6:  index = 1; break;
-				case 12: index = 2; break;
-				case 16: index = 3; break;
-				case 18: index = 4; break;
-				case 0:  index = 5; break;
-				default:
-					index = 5;
-				break;
-			}
-			this->combPEGIPRT->SelectedIndex = index;
-			this->cboxPEGIPRT->Checked       = *(hSrl->hArrayParentalEffect[ OS_TWL_PCTL_OGN_PEGI_PRT ]);
-			this->cboxAlwaysPEGIPRT->Checked = *(hSrl->hArrayParentalAlways[ OS_TWL_PCTL_OGN_PEGI_PRT ]);
-			// PEGI_BBFC
-			switch( *(hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_PEGI_BBFC ]) )
-			{
-				case 3:  index = 0; break;
-				case 4:  index = 1; break;
-				case 7:  index = 2; break;
-				case 8:  index = 3; break;
-				case 12: index = 4; break;
-				case 15: index = 5; break;
-				case 16: index = 6; break;
-				case 18: index = 7; break;
-				case 0:  index = 8; break;
-				default:
-					index = 8;
-				break;
-			}
-			this->combPEGIBBFC->SelectedIndex = index;
-			this->cboxPEGIBBFC->Checked       = *(hSrl->hArrayParentalEffect[ OS_TWL_PCTL_OGN_PEGI_BBFC ]);
-			this->cboxAlwaysPEGIBBFC->Checked = *(hSrl->hArrayParentalAlways[ OS_TWL_PCTL_OGN_PEGI_BBFC ]);
-			// OFLC
-			switch( *(hSrl->hArrayParentalRating[ OS_TWL_PCTL_OGN_OFLC ]) )
-			{
-				case 0:
-					if( *(hSrl->hArrayParentalEffect[ OS_TWL_PCTL_OGN_OFLC ]) )
-						index = 0;
-					else
-						index = 4;
-				break;
-				case 7:  index = 1; break;
-				case 14: index = 2; break;
-				case 15: index = 3; break;
-				default:
-					index = 4; break;
-				break;
-			}
-			this->combOFLC->SelectedIndex = index;
-			this->cboxOFLC->Checked       = *(hSrl->hArrayParentalEffect[ OS_TWL_PCTL_OGN_OFLC ]);
-			this->cboxAlwaysOFLC->Checked = *(hSrl->hArrayParentalAlways[ OS_TWL_PCTL_OGN_OFLC ]);
-		} //setParentalForms()
+		// SRL情報をフォームに反映させる
+		void setParentalForms(void);
 
 		// リージョン情報からペアレンタルコントロールの編集可能団体をマスクする
-		void maskParentalForms(void)
-		{
-			this->enableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO, this->labCERO, nullptr );
-			this->enableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB, this->labESRB, nullptr );
-			this->enableParental( this->combUSK,  this->cboxUSK,  this->cboxAlwaysUSK,  this->labUSK,  nullptr );
-			this->enableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI, this->labPEGI, nullptr );
-			this->enableParental( this->combPEGIPRT,  this->cboxPEGIPRT,  this->cboxAlwaysPEGIPRT,  this->labPEGIPRT,  nullptr );
-			this->enableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC, this->labPEGIBBFC, this->labPEGIBBFC2 );
-			this->enableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC, nullptr );
-			switch( this->combRegion->SelectedIndex )
-			{
-				case 0:
-					// 日本
-					this->enableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO, this->labCERO, nullptr );
+		void maskParentalForms(void);
 
-					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB, this->labESRB, nullptr );
-					this->disableParental( this->combUSK,  this->cboxUSK,  this->cboxAlwaysUSK,  this->labUSK,  nullptr );
-					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI, this->labPEGI, nullptr );
-					this->disableParental( this->combPEGIPRT,  this->cboxPEGIPRT,  this->cboxAlwaysPEGIPRT,  this->labPEGIPRT,  nullptr );
-					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC, this->labPEGIBBFC, this->labPEGIBBFC2 );
-					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC, nullptr );
-				break;
+		// フォーム入力が正しいか書き込み前チェック
+		void checkParentalForms( System::Boolean inRegion, System::Windows::Forms::ComboBox ^comb, System::String ^msg );
 
-				case 1:
-					// 米国
-					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO, this->labCERO, nullptr );
-					this->enableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB, this->labESRB, nullptr );
-					this->disableParental( this->combUSK,  this->cboxUSK,  this->cboxAlwaysUSK,  this->labUSK,  nullptr );
-					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI, this->labPEGI, nullptr );
-					this->disableParental( this->combPEGIPRT,  this->cboxPEGIPRT,  this->cboxAlwaysPEGIPRT,  this->labPEGIPRT,  nullptr );
-					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC, this->labPEGIBBFC, this->labPEGIBBFC2 );
-					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC, nullptr );
-				break;
+		// クリアする
+		void clearParental( System::Windows::Forms::ComboBox ^comb );
 
-				case 2:
-					// 欧州
-					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO, this->labCERO, nullptr );
-					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB, this->labESRB, nullptr );
-					this->enableParental( this->combUSK,  this->cboxUSK,  this->cboxAlwaysUSK,  this->labUSK,  nullptr );
-					this->enableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI, this->labPEGI, nullptr );
-					this->enableParental( this->combPEGIPRT,  this->cboxPEGIPRT,  this->cboxAlwaysPEGIPRT,  this->labPEGIPRT,  nullptr );
-					this->enableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC, this->labPEGIBBFC, this->labPEGIBBFC2 );
-					this->disableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC, nullptr );
-				break;
+		// 編集できるようにする
+		void enableParental( System::Windows::Forms::ComboBox ^comb, 
+							 System::Windows::Forms::Label    ^lab1, 
+							 System::Windows::Forms::Label    ^lab2 );
 
-				case 3:
-					// 豪州
-					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO, this->labCERO, nullptr );
-					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB, this->labESRB, nullptr );
-					this->disableParental( this->combUSK,  this->cboxUSK,  this->cboxAlwaysUSK,  this->labUSK,  nullptr );
-					this->disableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI, this->labPEGI, nullptr );
-					this->disableParental( this->combPEGIPRT,  this->cboxPEGIPRT,  this->cboxAlwaysPEGIPRT,  this->labPEGIPRT,  nullptr );
-					this->disableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC, this->labPEGIBBFC, this->labPEGIBBFC2 );
-					this->enableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC, nullptr );
-				break;
-
-				case 4:
-					// 欧州と豪州
-					this->disableParental( this->combCERO, this->cboxCERO, this->cboxAlwaysCERO, this->labCERO, nullptr );
-					this->disableParental( this->combESRB, this->cboxESRB, this->cboxAlwaysESRB, this->labESRB, nullptr );
-					this->enableParental( this->combUSK,  this->cboxUSK,  this->cboxAlwaysUSK,  this->labUSK,  nullptr );
-					this->enableParental( this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI, this->labPEGI, nullptr );
-					this->enableParental( this->combPEGIPRT,  this->cboxPEGIPRT,  this->cboxAlwaysPEGIPRT,  this->labPEGIPRT,  nullptr );
-					this->enableParental( this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC, this->labPEGIBBFC, this->labPEGIBBFC2 );
-					this->enableParental( this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC, nullptr );
-				break;
-
-				default:
-				break;
-			}
-		} //maskParentalForms()
+		// 編集できなくする
+		void disableParental( System::Windows::Forms::ComboBox ^comb, 
+							  System::Windows::Forms::Label    ^lab1, 
+							  System::Windows::Forms::Label    ^lab2 );
 
 		// ----------------------------------------------
-		// SRL関連のフォームのチェック
+		// フォームのチェック
 		// ----------------------------------------------
 
 		// テキスト入力がされているかチェック
-		System::Boolean checkTextForm( System::String ^formtext, System::String ^labelJ, System::String ^labelE, System::Boolean affectRom )
-		{
-			System::String ^msgJ = gcnew System::String( "入力されていません。" );
-			System::String ^msgE = gcnew System::String( "No item is set. Please retry to input." );
+		System::Boolean checkTextForm( System::String ^formtext, System::String ^labelJ, System::String ^labelE, System::Boolean affectRom );
 
-			System::String ^tmp = formtext->Replace( " ", "" );		// スペースのみの文字列もエラー
-			if( (formtext == nullptr) || formtext->Equals("") || tmp->Equals("") )
-			{
-				this->hErrorList->Add( gcnew RCMrcError( labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true, affectRom ) );
-				return false;
-			}
-			return true;
-		}
 		// 数値入力が正常かどうかチェック
 		System::Boolean checkNumRange( 
-			System::Int32 val, System::Int32 min, System::Int32 max, System::String ^labelJ, System::String ^labelE, System::Boolean affectRom )
-		{
-			System::String ^msgJ = gcnew System::String( "値の範囲が不正です。やり直してください。" );
-			System::String ^msgE = gcnew System::String( "Invalidate range of value. Please retry." );
+			System::Int32 val, System::Int32 min, System::Int32 max, System::String ^labelJ, System::String ^labelE, System::Boolean affectRom );
 
-			if( (val < min) || (max < val) )
-			{
-				this->hErrorList->Add( gcnew RCMrcError( labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true, affectRom ) );
-				return false;
-			}
-			return true;
-		}
 		System::Boolean checkNumRange( System::String ^strval, System::Int32 min, System::Int32 max, 
-									   System::String ^labelJ, System::String ^labelE, System::Boolean affectRom )
-		{
-			try
-			{
-				System::Int32  i = System::Int32::Parse(strval);
-				return (this->checkNumRange( i, min, max, labelJ, labelE, affectRom ));
-			}
-			catch ( System::FormatException ^ex )
-			{
-				(void)ex;
-				return (this->checkNumRange( max+1, min, max, labelJ, labelE, affectRom ));		// 必ず失敗するように max+1 を検査
-			}
-		}
+									   System::String ^labelJ, System::String ^labelE, System::Boolean affectRom );
 		// コンボボックスをチェック
-		System::Boolean checkBoxIndex( System::Windows::Forms::ComboBox ^box, System::String ^labelJ, System::String ^labelE, System::Boolean affectRom )
-		{
-			System::String ^msgJ = gcnew System::String( "選択されていません。" );
-			System::String ^msgE = gcnew System::String( "One item is not selected." );
-			
-			if( box->SelectedIndex < 0 )
-			{
-				this->hErrorList->Add( gcnew RCMrcError( 
-					labelJ, METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, msgJ, labelE, msgE, true, affectRom ) );
-			}
-			return true;
-		}
+		System::Boolean checkBoxIndex( System::Windows::Forms::ComboBox ^box, System::String ^labelJ, System::String ^labelE, System::Boolean affectRom );
 
-		// フォームの入力をチェックする
-		System::Boolean checkSrlForms(void)
-		{
-			// リージョン
-			if( this->checkBoxIndex( this->combRegion, LANG_REGION_J, LANG_REGION_E, true ) == false )
-				return false;
+		// -----------------------------------------------------------------
+		// 提出情報(SRLに影響しない箇所のみ)とフォーム間のデータのやりとり
+		// -----------------------------------------------------------------
 
-			// リージョンを決める
-			System::Boolean bJapan     = false;
-			System::Boolean bAmerica   = false;
-			System::Boolean bEurope    = false;
-			System::Boolean bAustralia = false;
-			switch( this->combRegion->SelectedIndex )
-			{
-				case 0:
-					bJapan = true;
-				break;
-				case 1:
-					bAmerica = true;
-				break;
-				case 2:
-					bEurope = true;
-				break;
-				case 3:
-					bAustralia = true;
-				break;
-				case 4:
-					bEurope    = true;
-					bAustralia = true;
-				break;
+		// 提出確認書にフォームを反映
+		void setDeliverableProperties(void);
 
-#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
-				case 5:
-					bJapan = true;
-					bAmerica = true;
-					bEurope = true;
-					bAustralia = true;
-				break;
-#endif
-				default:
-				break;
-			}
-
-			// ペアレンタルコントロール
-			this->checkParentalForms( bJapan, this->combCERO, this->cboxCERO, this->cboxAlwaysCERO, this->labCERO->Text );
-			this->checkParentalForms( bAmerica, this->combESRB, this->cboxESRB, this->cboxAlwaysESRB, this->labESRB->Text );
-			this->checkParentalForms( bEurope, this->combUSK, this->cboxUSK, this->cboxAlwaysUSK, this->labUSK->Text );
-			this->checkParentalForms( bEurope, this->combPEGI, this->cboxPEGI, this->cboxAlwaysPEGI, this->labPEGI->Text );
-			this->checkParentalForms( bEurope, this->combPEGIPRT, this->cboxPEGIPRT, this->cboxAlwaysPEGIPRT, this->labPEGIPRT->Text );
-			this->checkParentalForms( bEurope, this->combPEGIBBFC, this->cboxPEGIBBFC, this->cboxAlwaysPEGIBBFC, 
-									  this->labPEGIBBFC->Text + " " + this->labPEGIBBFC2->Text );
-			this->checkParentalForms( bAustralia, this->combOFLC, this->cboxOFLC, this->cboxAlwaysOFLC, this->labOFLC->Text );
-
-			// ひととおりエラー登録をした後で
-			// SRLバイナリに影響を与えるエラーが存在するかチェック
-#ifdef METWL_LIGHT_CHECK
-			return this->isValidAffectRomModified();
-#else
-			return this->isValidAffectRom();
-#endif
-		}
-
-		// ペアレンタルコントロール関連のフォーム入力が正しいか書き込み前チェック
-		void checkParentalForms( 
-			System::Boolean inRegion, System::Windows::Forms::ComboBox ^comb, 
-			System::Windows::Forms::CheckBox ^enable, System::Windows::Forms::CheckBox ^always, System::String ^msg )
-		{
-			// リージョンに含まれていないとき: 0クリアが保証されるのでチェック必要なし
-			if( !inRegion )
-				return;
-
-			if( !enable->Checked )	// 有効フラグが立っていないとき
-			{
-				// 何も設定されていない
-				if( !always->Checked && (comb->SelectedIndex == (comb->Items->Count - 1)) )
-				{
-					this->hWarnList->Add( gcnew RCMrcError( 
-						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
-						msg + ": レーティング審査を必要としないソフトであるとみなしてデータを保存します。",
-						"Parental Control", msg + ": Save ROM data as Game soft which needs rating examinination.", true, true ) );
-				}
-				else
-				{
-					this->hErrorList->Add( gcnew RCMrcError( 
-						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
-						msg + ": 制限が無効であるにもかかわらずレーティング情報が設定されています。",
-						"Parental Control", msg + "Rating can be set only when control is enable.", true, true ) );
-				}
-			}
-			else	// 有効フラグが立っているとき
-			{
-				if( !always->Checked && (comb->SelectedIndex == (comb->Items->Count - 1)) )
-				{
-					this->hErrorList->Add( gcnew RCMrcError( 
-						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
-						msg + ": 制限が有効であるにもかかわらずレーティング情報が設定されていません。",
-						"Parental Control", msg + ": Rating must be set when control is enable.", true, true ) );
-				}
-				else if( always->Checked && (comb->SelectedIndex == (comb->Items->Count - 1)) )
-				{
-					this->hWarnList->Add( gcnew RCMrcError( 
-						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
-						msg + ": Rating Pendingが指定されています。レーティング年齢が審査されしだい、再度、ROMを提出してください。",
-						"Parental Control", ": Rating Pending is setting. When rating age is examined, Please submit again.", true, true ) );
-				}
-				else if( always->Checked && (comb->SelectedIndex != (comb->Items->Count - 1)) )
-				{
-					this->hErrorList->Add( gcnew RCMrcError( 
-						"ペアレンタルコントロール情報", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
-						msg + ": Rating Pending指定とレーティング年齢を同時に指定することはできません。",
-						"Parental Control", msg + ": Rating setting is either rating pending or rating age.", true, true ) );
-				}
-			}
-		} //checkParentalForms()
-
-		// ----------------------------------------------
-		// マスタ書類情報(SRL影響なし)をフォームから取得
-		// ----------------------------------------------
-
-		void setDeliverableProperties(void)
-		{
-			// 提出情報
-			this->hDeliv->hProductName    = this->tboxProductName->Text;
-			this->hDeliv->hProductCode1   = this->tboxProductCode1->Text;
-			this->hDeliv->hProductCode2   = this->tboxProductCode2->Text;
-			this->hDeliv->hReleaseForeign = gcnew System::Boolean( this->cboxReleaseForeign->Checked );
-			if( this->cboxReleaseForeign->Checked == true )
-			{
-				this->hDeliv->hProductNameForeign  = this->tboxProductNameForeign->Text;
-				this->hDeliv->hProductCode1Foreign = this->tboxProductCode1Foreign->Text;
-				this->hDeliv->hProductCode2Foreign = gcnew System::String("");
-				this->hDeliv->hProductCode2Foreign = this->tboxProductCode2Foreign1->Text;
-				if( !System::String::IsNullOrEmpty( this->tboxProductCode2Foreign2->Text ) )
-				{
-					this->hDeliv->hProductCode2Foreign += ("/" + this->tboxProductCode2Foreign2->Text);
-				}
-				if( !System::String::IsNullOrEmpty( this->tboxProductCode2Foreign2->Text ) )
-				{
-					this->hDeliv->hProductCode2Foreign += ("/" + this->tboxProductCode2Foreign3->Text);
-				}
-			}
-			else
-			{
-				this->hDeliv->hProductNameForeign  = nullptr;
-				this->hDeliv->hProductCode1Foreign = nullptr;
-				this->hDeliv->hProductCode2Foreign = nullptr;
-			}
-			this->hDeliv->hReleaseYear   = gcnew System::Int32( this->dateRelease->Value.Year  );
-			this->hDeliv->hReleaseMonth  = gcnew System::Int32( this->dateRelease->Value.Month );
-			this->hDeliv->hReleaseDay    = gcnew System::Int32( this->dateRelease->Value.Day   );
-			this->hDeliv->hSubmitYear    = gcnew System::Int32( this->dateSubmit->Value.Year   );
-			this->hDeliv->hSubmitMonth   = gcnew System::Int32( this->dateSubmit->Value.Month  );
-			this->hDeliv->hSubmitDay     = gcnew System::Int32( this->dateSubmit->Value.Day    );
-			this->hDeliv->hSubmitVersion = gcnew System::Int32( System::Decimal::ToInt32( this->numSubmitVersion->Value ) );
-			// SDK
-			this->hDeliv->hSDK = nullptr;
-			if( this->hSrl->hSDKList )
-			{
-				for each( RCSDKVersion ^sdk in this->hSrl->hSDKList )	// 書類には ARM9 static のバージョン情報を記入する
-				{
-					if( sdk->IsStatic )
-						this->hDeliv->hSDK = sdk->Version;
-				}
-			}
-			if( this->hDeliv->hSDK == nullptr )
-			{
-				this->hDeliv->hSDK = gcnew System::String( "Undefined" );
-			}
-			// 提出方法
-			if( this->rSubmitPost->Checked == true )
-			{
-				this->hDeliv->hSubmitWay = this->rSubmitPost->Text;
-			}
-			else
-			{
-				this->hDeliv->hSubmitWay = this->rSubmitHand->Text;
-			}
-			// 用途
-			if( this->rUsageSale->Checked == true )
-			{
-				this->hDeliv->hUsage = this->rUsageSale->Text;
-				this->hDeliv->hUsageOther = nullptr;
-			}
-			else if( this->rUsageSample->Checked == true )
-			{
-				this->hDeliv->hUsage = this->rUsageSample->Text;
-				this->hDeliv->hUsageOther = nullptr;
-			}
-			else if( this->rUsageDst->Checked == true )
-			{
-				this->hDeliv->hUsage = this->rUsageDst->Text;
-				this->hDeliv->hUsageOther = nullptr;
-			}
-			else if( this->rUsageOther->Checked == true )
-			{
-				this->hDeliv->hUsage = this->rUsageOther->Text;
-				this->hDeliv->hUsageOther = this->tboxUsageOther->Text;
-			}
-
-			// 会社情報
-			this->hDeliv->hCompany1    = this->tboxCompany1->Text + " " + this->tboxDepart1->Text;
-			this->hDeliv->hPerson1     = this->tboxPerson1->Text;
-			if( this->stripItemJapanese->Checked == true )
-			{
-				this->hDeliv->hFurigana1 = this->tboxFurigana1->Text;
-			}
-			else
-			{
-				this->hDeliv->hFurigana1 = nullptr;
-			}
-			this->hDeliv->hTel1        = this->tboxTel1->Text;
-			this->hDeliv->hFax1        = this->tboxFax1->Text;
-			this->hDeliv->hMail1       = this->tboxMail1->Text;
-			this->hDeliv->hNTSC1       = this->tboxNTSC1->Text;
-			if( this->cboxIsInputPerson2->Checked == true )
-			{
-				this->hDeliv->hCompany2    = this->tboxCompany2->Text + " " + this->tboxDepart2->Text;
-				this->hDeliv->hPerson2     = this->tboxPerson2->Text;
-				if( this->stripItemJapanese->Checked == true )
-				{
-					this->hDeliv->hFurigana2 = this->tboxFurigana2->Text;
-				}
-				else
-				{
-					this->hDeliv->hFurigana2 = nullptr;
-				}
-				this->hDeliv->hTel2        = this->tboxTel2->Text;
-				this->hDeliv->hFax2        = this->tboxFax2->Text;
-				this->hDeliv->hMail2       = this->tboxMail2->Text;
-				this->hDeliv->hNTSC2       = this->tboxNTSC2->Text;
-			}
-			else
-			{
-				this->hDeliv->hCompany2    = nullptr;
-				this->hDeliv->hPerson2     = nullptr;
-				this->hDeliv->hFurigana2   = nullptr;
-				this->hDeliv->hTel2        = nullptr;
-				this->hDeliv->hFax2        = nullptr;
-				this->hDeliv->hMail2       = nullptr;
-				this->hDeliv->hNTSC2       = nullptr;
-			}
-
-			// 備考
-			System::String ^tmp = this->tboxCaption->Text->Replace( " ", "" );
-			if( this->tboxCaption->Text->Equals("") || tmp->Equals("") )	// スペースのみの文字列は含めない
-			{
-				this->hDeliv->hCaption = nullptr;
-			}
-			else
-			{
-				this->hDeliv->hCaption = this->tboxCaption->Text;
-			}
-			// 備考欄に特殊な設定を追記
-			tmp = this->tboxCaptionEx->Text->Replace( " ", "" );
-			if( !(this->tboxCaptionEx->Text->Equals("")) && !(tmp->Equals("")) )
-			{
-				this->hDeliv->hCaption += ("(" + this->tboxCaptionEx->Text + ")");
-			}
-
-			// 一部のROM情報を登録
-			if( this->combBackup->SelectedIndex != (this->combBackup->Items->Count - 1) )
-			{
-				if( this->combBackup->SelectedIndex > 0 )
-				{
-					this->hDeliv->hBackupMemory = this->combBackup->SelectedItem->ToString();
-				}
-				else
-				{
-					this->hDeliv->hBackupMemory = gcnew System::String("");
-				}
-			}
-			else
-			{
-				this->hDeliv->hBackupMemory = this->tboxBackupOther->Text;
-			}
-		}
-
-		// ----------------------------------------------
-		// マスタ書類情報(SRL影響なし)のフォームチェック
-		// ----------------------------------------------
-
-		System::Boolean checkDeliverableForms(void)
-		{
-			// 不正な場合はダイアログで注意してreturn
-
-			// 提出情報
-			this->checkTextForm( this->tboxProductName->Text, LANG_PRODUCT_NAME_J, LANG_PRODUCT_NAME_E, false );	// SRL作成には問題のないエラー
-			this->checkTextForm( this->tboxProductCode1->Text, LANG_PRODUCT_CODE_J, LANG_PRODUCT_CODE_E, false );
-			this->checkTextForm( this->tboxProductCode2->Text, LANG_PRODUCT_CODE_J, LANG_PRODUCT_CODE_E, false );
-			if( this->cboxReleaseForeign->Checked == true )
-			{
-				this->checkTextForm( this->tboxProductNameForeign->Text, LANG_PRODUCT_NAME_F_J, LANG_PRODUCT_NAME_F_E, false );
-				this->checkTextForm( this->tboxProductCode1Foreign->Text, LANG_PRODUCT_CODE_F_J, LANG_PRODUCT_CODE_F_E, false );
-				this->checkTextForm( this->tboxProductCode2Foreign1->Text, LANG_PRODUCT_CODE_F_J, LANG_PRODUCT_CODE_F_E, false );
-			}
-			if( this->rUsageOther->Checked == true )
-			{
-				this->checkTextForm( this->tboxUsageOther->Text, LANG_USAGE_J, LANG_USAGE_E, false );
-			}
-
-			// 会社情報
-			this->checkTextForm( this->tboxPerson1->Text, LANG_PERSON_J, LANG_PERSON_E, false );
-			this->checkTextForm( this->tboxCompany1->Text, LANG_COMPANY_J, LANG_COMPANY_E, false );
-			this->checkTextForm( this->tboxDepart1->Text, LANG_DEPART_J, LANG_DEPART_E, false );
-			if( this->stripItemJapanese->Checked == true )
-			{
-				this->checkTextForm( this->tboxFurigana1->Text, LANG_FURIGANA_J, LANG_FURIGANA_J, false );
-			}
-			this->checkTextForm( this->tboxTel1->Text, LANG_TEL_J, LANG_TEL_E, false );
-			//this->checkTextForm( this->tboxFax1->Text, LANG_FAX_J, LANG_FAX_E, false );
-			this->checkTextForm( this->tboxMail1->Text, LANG_MAIL_J, LANG_MAIL_E, false );
-			//if( this->stripItemJapanese->Checked == true )
-			//{
-			//	this->checkTextForm( this->tboxNTSC1->Text, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, false );
-			//}
-
-			if( this->cboxIsInputPerson2->Checked == true )
-			{
-				this->checkTextForm( this->tboxPerson2->Text, LANG_PERSON_J, LANG_PERSON_E, false );
-				this->checkTextForm( this->tboxCompany2->Text, LANG_COMPANY_J, LANG_COMPANY_E, false );
-				this->checkTextForm( this->tboxDepart2->Text, LANG_DEPART_J, LANG_DEPART_E, false );
-				if( this->stripItemJapanese->Checked == true )
-				{
-					this->checkTextForm( this->tboxFurigana2->Text, LANG_FURIGANA_J, LANG_FURIGANA_J, false );
-				}
-				this->checkTextForm( this->tboxTel2->Text, LANG_TEL_J, LANG_TEL_E, false );
-				//this->checkTextForm( this->tboxFax2->Text, LANG_FAX_J, LANG_FAX_E, false );
-				this->checkTextForm( this->tboxMail2->Text, LANG_MAIL_J, LANG_MAIL_E, false );
-				//if( this->stripItemJapanese->Checked == true )
-				//{
-				//	this->checkTextForm( this->tboxNTSC2->Text, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, LANG_NTSC_1_J + " " + LANG_NTSC_2_J, false );
-				//}
-			}
-
-			// 一部のROM情報(SRLバイナリに反映されない情報)をここでチェックする
-			this->checkBoxIndex( this->combBackup, LANG_BACKUP_J, LANG_BACKUP_E, false );
-			if( this->combBackup->SelectedIndex == (this->combBackup->Items->Count - 1) )
-			{
-				this->checkTextForm( this->tboxBackupOther->Text, LANG_BACKUP_J, LANG_BACKUP_E, false );
-			}
-
-			// ひととおりエラー登録をした後で
-			// 書類上のエラー(SRLバイナリには影響しない)が存在するかチェック
-			return this->isValidOnlyDeliverable();
-		}
-
-		// ----------------------------------------------
-		// エラー処理
-		// ----------------------------------------------
-
-		// SRLには関係しない書類上のエラーをチェック
-		System::Boolean isValidOnlyDeliverable(void)
-		{
-			System::Int32 count = 0;
-
-			// SRLクラスのエラーリストはすべてSRLに関係するのでチェックしない
-			// -> 入力エラーのみのチェックでよい
-			for each( RCMrcError ^err in this->hErrorList )
-			{
-				if( !err->AffectRom )
-					count++;
-			}
-			return (count == 0);
-		}
-
-		// SRLのバイナリに影響する項目にエラーがあるかチェック
-		System::Boolean isValidAffectRom(void)
-		{
-			System::Int32 count = 0;
-
-			// SRLクラスの修正不可エラーをカウント
-			// (修正可エラーは入力によって修正されてるかもしれないのでチェックしない)
-			for each( RCMrcError ^err in this->hSrl->hErrorList )
-			{
-				if( !err->EnableModify )	// すべてSRLバイナリに影響する
-					count++;
-			}
-
-			// SRLバイナリに影響するエラーの中で
-			// 修正可エラーがフォーム入力によって修正されているかカウント
-			// (エラーリストが更新されていることが前提)
-			for each( RCMrcError ^err in this->hErrorList )
-			{
-				if( err->AffectRom )		// 修正不可エラーは存在しない
-					count++;
-			}
-			return (count == 0);
-		}
-
-		// SRLのバイナリに影響する項目の中で修正可能なエラーだけをチェック
-		System::Boolean isValidAffectRomModified(void)
-		{
-			System::Int32 count = 0;
-			for each( RCMrcError ^err in this->hErrorList )
-			{
-				if( err->AffectRom )		// 修正不可エラーは存在しない
-					count++;
-			}
-			return (count == 0);
-		}
+		// 提出情報のフォームチェック
+		System::Boolean checkDeliverableForms(void);
 
 		// ----------------------------------------------
 		// ダイアログ
@@ -5287,760 +3559,45 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 		// ----------------------------------------------
 
 		// 日本語版と英語版でテキストボックスの文字列制限が変わる
-		void changeMaxLength( System::Windows::Forms::TextBox ^tbox, System::Int32 maxlen )
-		{
-			if( tbox->Text->Length > maxlen )
-				tbox->Text = "";
-
-			tbox->MaxLength = maxlen;
-		}
+		void changeMaxLength( System::Windows::Forms::TextBox ^tbox, System::Int32 maxlen );
 
 		// 日本語版への切り替え
-		void changeJapanese(void)
-		{
-			System::Int32 index;
+		void changeJapanese(void);
 
-			// 入力文字数制限を変更する
-			this->changeMaxLength( this->tboxCompany1, 25 );
-			this->changeMaxLength( this->tboxDepart1,  25 );
-			this->changeMaxLength( this->tboxPerson1,  15 );
-
-			// タイトルバー
-			this->stripFile->Text          = gcnew System::String( "ファイル" );
-			this->stripItemOpenRom->Text   = gcnew System::String( "ROMデータを開く" );
-			this->stripItemSaveTemp->Text  = gcnew System::String( "提出情報を一時保存する" );
-			this->stripItemLoadTemp->Text  = gcnew System::String( "一時保存した提出情報を読み込む" );
-			this->stripMaster->Text        = gcnew System::String( "マスター" );
-			this->stripItemSheet->Text     = gcnew System::String( "提出確認書とマスターROMを作成する" );
-			this->stripItemMasterRom->Text = gcnew System::String( "マスターROMのみを作成する" );
-
-			// 入力ファイル
-			this->labFile->Text = gcnew System::String( "ROMデータファイル" );
-
-			// タブ
-			this->tabRomInfo->Text     = gcnew System::String( "ROM基本情報(確認用)" );
-			this->tabTWLInfo->Text     = gcnew System::String( "TWL拡張情報(確認用)" );
-			this->tabRomEditInfo->Text = gcnew System::String( "ROM登録情報(編集可)" );
-			this->tabSubmitInfo->Text  = gcnew System::String( "提出情報(編集可)" );
-			this->tabCompanyInfo->Text = gcnew System::String( "会社情報(編集可)" );
-			this->tabErrorInfo->Text   = gcnew System::String( "エラー情報(要修正)" );
-
-			// ガイド
-			this->tboxGuideRomInfo->Text = gcnew System::String( "このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。" );
-			this->tboxGuideTWLInfo->Text = gcnew System::String( "このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。" );
-			this->tboxGuideRomEditInfo->Text  = gcnew System::String( "" );
-			this->tboxGuideRomEditInfo->Text += "このタブの情報は提出確認書およびマスターROMの作成に必要です。編集してください。";
-			this->tboxGuideRomEditInfo->Text += "\r\nこれらの情報はマスターROMの作成時にROMデータの中に登録されます。";
-			this->tboxGuideSubmitInfo->Text  = gcnew System::String( "このタブの情報は提出確認書の作成に必要です。入力してください。" );
-			this->tboxGuideCompanyInfo->Text = gcnew System::String( "このタブの情報は提出確認書の作成に必要です。入力してください。" );
-			this->tboxGuideErrorInfo->Text   = gcnew System::String( "" );
-			this->tboxGuideErrorInfo->Text  += "このタブには読み込んだROMデータの問題と本プログラムでの入力ミスが列挙されます。";
-			this->tboxGuideErrorInfo->Text  += "\r\n赤文字の項目は、本プログラムで修正不可です。ROMデータ作成時の設定をご確認ください。";
-			this->tboxGuideErrorInfo->Text  += "\r\n青文字の項目は、本プログラムで修正できますが、修正がマスターROMに反映されます。";
-			this->tboxGuideErrorInfo->Text  += "\r\n黒文字の項目は、提出確認書にのみ反映され、マスターROMには反映されません。";
-
-			// SRL情報
-			this->gboxSrl->Text       = gcnew System::String( "ROMデータ情報" ); 
-			this->labTitleName->Text  = gcnew System::String( "ソフトタイトル" );
-			this->labGameCode->Text   = gcnew System::String( "イニシャルコード" );
-			this->labMakerCode->Text  = gcnew System::String( "メーカコード" );
-			this->labPlatform->Text   = gcnew System::String( "プラットフォーム" );
-			this->labRomType->Text    = gcnew System::String( "ROMタイプ設定" );
-			this->labRomSize->Text    = gcnew System::String( "ROM容量" );
-			this->labRemasterVer->Text   = gcnew System::String( "リマスターバージョン" );
-			this->cboxRemasterVerE->Text = gcnew System::String( "E(準備版)" );
-			this->labHeaderCRC->Text  = gcnew System::String( "ヘッダCRC" );
-			this->labRomCRC->Text     = gcnew System::String( "全体のCRC" );
-			index = this->combBackup->SelectedIndex;
-
-			// バックアップメモリ
-			this->gboxProd->Text	= gcnew System::String( "ROM生産情報(必ず入力してください)" );
-			this->labBackup->Text   = gcnew System::String( LANG_BACKUP_J );
-			this->combBackup->Items->Clear();
-			this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
-				L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"なし", L"その他"});
-			this->combBackup->SelectedIndex = index;
-
-			// 提出情報
-			this->labProductName->Text = gcnew System::String( LANG_PRODUCT_NAME_J );
-			this->labProductCode->Text = gcnew System::String( LANG_PRODUCT_CODE_J );
-			this->labReleaseDate->Text = gcnew System::String( LANG_RELEASE_DATE_J );
-			this->labSubmiteDate->Text = gcnew System::String( LANG_SUBMIT_DATE_J );
-			this->gboxSubmitWay->Text  = gcnew System::String( LANG_SUBMIT_WAY_J );
-			this->rSubmitPost->Text    = gcnew System::String( LANG_SUBMIT_POST_J );
-			this->rSubmitHand->Text    = gcnew System::String( LANG_SUBMIT_HAND_J );
-			this->gboxUsage->Text      = gcnew System::String( LANG_USAGE_J );
-			this->rUsageSale->Text     = gcnew System::String( LANG_USAGE_SALE_J );
-			this->rUsageSample->Text   = gcnew System::String( LANG_USAGE_SAMPLE_J );
-			this->rUsageDst->Text      = gcnew System::String( LANG_USAGE_DST_J );
-			this->rUsageOther->Text    = gcnew System::String( LANG_USAGE_OTHER_J );
-			this->labSubmitVer->Text     = gcnew System::String( LANG_SUBMIT_VER_J );
-			this->labCapSubmitVer->Text  = gcnew System::String( LANG_SUBMIT_VER_CAP_J );
-			this->gboxForeign->Text      = gcnew System::String( LANG_F_J );
-			this->labProductNameForeign->Text = gcnew System::String( LANG_PRODUCT_NAME_F_J );
-			this->labProductCodeForeign->Text = gcnew System::String( LANG_PRODUCT_CODE_F_J );
-			this->cboxReleaseForeign->Text    = gcnew System::String( LANG_RELEASE_F_J );
-			this->labMultiForeign1->Text      = gcnew System::String( LANG_MULTI_F_J );
-			this->labMultiForeign2->Text      = gcnew System::String( LANG_MULTI_F_J );
-			this->labCaption->Text    = gcnew System::String( LANG_CAPTION_J );
-			this->labProductNameLimit->Text = gcnew System::String( LANG_PRODUCT_LIMIT_J );
-			this->labProductNameLimitForeign->Text = gcnew System::String( LANG_PRODUCT_LIMIT_J );
-
-			// 会社情報
-			this->gboxPerson1->Text    = gcnew System::String( LANG_PERSON_1_J );
-			this->gboxPerson2->Text    = gcnew System::String( LANG_PERSON_2_J );
-			this->cboxIsInputPerson2->Text = gcnew System::String( LANG_INPUT_PERSON_2_J );
-			this->labCompany1->Text    = gcnew System::String( LANG_COMPANY_J );
-			this->labDepart1->Text     = gcnew System::String( LANG_DEPART_J );
-			this->labPerson1->Text     = gcnew System::String( LANG_PERSON_J );
-			this->labCompany2->Text    = gcnew System::String( LANG_COMPANY_J );
-			this->labDepart2->Text     = gcnew System::String( LANG_DEPART_J );
-			this->labPerson2->Text     = gcnew System::String( LANG_PERSON_J );
-			this->labArbit1->Text      = gcnew System::String( "(任意)" );
-			this->labArbit2->Text      = gcnew System::String( "(任意)" );
-			this->labArbit3->Text      = gcnew System::String( "(任意)" );
-			this->labArbit4->Text      = gcnew System::String( "(任意)" );
-			// ふりがな情報を有効にする
-			this->tboxFurigana1->Enabled = true;
-			this->labFurigana1->Text = gcnew System::String( LANG_FURIGANA_J );
-			this->tboxFurigana2->Enabled = true;
-			this->labFurigana2->Text = gcnew System::String( LANG_FURIGANA_J );
-			// NTSC-UserIDも日本語版のみ
-			this->tboxNTSC1->Enabled = true;
-			this->tboxNTSC2->Enabled = true;
-			this->labNTSC1Pre->Text  = gcnew System::String( LANG_NTSC_1_J );
-			this->labNTSC1Sur->Text  = gcnew System::String( LANG_NTSC_2_J );
-			this->labNTSC2Pre->Text  = gcnew System::String( LANG_NTSC_1_J );
-			this->labNTSC2Sur->Text  = gcnew System::String( LANG_NTSC_2_J );
-
-			// TWL仕様
-			this->gboxTWLExInfo->Text         = gcnew System::String( "TWL拡張情報" );
-			this->labNormalRomOffset->Text    = gcnew System::String( "TWLノーマル領域ROMオフセット" );
-			this->labKeyTableRomOffset->Text  = gcnew System::String( "TWL専用領域ROMオフセット" );
-			this->cboxIsNormalJump->Text      = gcnew System::String( "ノーマルジャンプ許可" );
-			this->cboxIsTmpJump->Text         = gcnew System::String( "tmpジャンプ許可" );
-			this->cboxIsSubBanner->Text       = gcnew System::String( "サブバナーファイル有効" );
-			this->cboxIsWL->Text              = gcnew System::String( "NTRホワイトリスト署名有効" );
-			this->gboxAccess->Text            = gcnew System::String( "アクセスコントロール情報" );
-			this->cboxIsSD->Text              = gcnew System::String( "SDカード" );
-			this->cboxIsNAND->Text            = gcnew System::String( "NANDフラッシュメモリ" );
-			this->labIsGameCardOn->Text       = gcnew System::String( "ゲームカード電源" );
-			this->labAccessOther->Text        = gcnew System::String( "その他" );
-			this->gboxShared2Size->Text       = gcnew System::String( "Shared2ファイルサイズ" );
-			this->cboxIsShared2->Text         = gcnew System::String( "Shared2ファイル使用" );
-			this->labSDK->Text                = gcnew System::String( "SDKバージョン" );
-			this->labLib->Text                = gcnew System::String( "使用ライブラリ" );
-			this->labCaptionEx->Text          = gcnew System::String( "特記事項" );
-
-			// SRL編集可能情報
-			this->cboxIsEULA->Text       = gcnew System::String( LANG_EULA_J );
-			this->gboxIcon->Text         = gcnew System::String( LANG_ICON_J );
-			this->rIsWirelessIcon->Text  = gcnew System::String( LANG_WIRELESS_ICON_J );
-			this->rIsWiFiIcon->Text      = gcnew System::String( LANG_WIFI_ICON_J );
-			this->rIsNoIcon->Text        = gcnew System::String( LANG_NO_ICON_J );
-			this->labRegion->Text        = gcnew System::String( LANG_REGION_J );
-
-			// リージョン
-			index = this->combRegion->SelectedIndex;
-			this->combRegion->Items->Clear();
-			this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5)
-				{L"日本のみ", L"米国のみ", L"欧州のみ", L"豪州のみ", L"欧州および豪州"});
-#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
-			this->combRegion->Items->Add( gcnew System::String( L"全リージョン" ) );
-#endif
-			this->combRegion->SelectedIndex = index;
-
-			// ペアレンタルコントロール
-			this->gboxParental->Text           = gcnew System::String( LANG_REGION_PCTL_J );
-			this->labParentalRating->Text      = gcnew System::String( LANG_PCTL_RATING_J );
-			this->labParentalEnable->Text      = gcnew System::String( LANG_PCTL_ENABLE_J );
-			this->labParentalForceEnable->Text = gcnew System::String( LANG_PCTL_ALWAYS_J );
-
-			index = this->combCERO->SelectedIndex;	// いったんclearすると現在のindexに意味がなくなるので退避
-			this->combCERO->Items->Clear();
-			this->combCERO->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"A (全年齢)", L"B (12歳以上)", L"C (15歳以上)", L"D (17歳以上)", 
-				L"Z (18歳以上)", L"未審査"});
-			this->combCERO->SelectedIndex = index;
-
-			index = this->combESRB->SelectedIndex;
-			this->combESRB->Items->Clear();
-			this->combESRB->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"EC (3歳以上)", L"E (6歳以上)", L"E10+ (10歳以上)", L"T (13歳以上)", 
-				L"M (17歳以上)", L"未審査"});
-			this->combESRB->SelectedIndex = index;
-
-			index = this->combUSK->SelectedIndex;
-			this->combUSK->Items->Clear();
-			this->combUSK->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"年齢制限なし", L"6歳以上", L"12歳以上", L"16歳以上", L"青少年には不適切", 
-				L"未審査"});
-			this->combUSK->SelectedIndex = index;
-
-			index = this->combPEGI->SelectedIndex;
-			this->combPEGI->Items->Clear();
-			this->combPEGI->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"3歳以上", L"7歳以上", L"12歳以上", L"16歳以上", L"18歳以上", 
-				L"未審査"});
-			this->combPEGI->SelectedIndex = index;
-
-			index = this->combPEGIPRT->SelectedIndex;
-			this->combPEGIPRT->Items->Clear();
-			this->combPEGIPRT->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"4歳以上", L"6歳以上", L"12歳以上", L"16歳以上", L"18歳以上", 
-				L"未審査"});
-			this->combPEGIPRT->SelectedIndex = index;
-
-			index = this->combPEGIBBFC->SelectedIndex;
-			this->combPEGIBBFC->Items->Clear();
-			this->combPEGIBBFC->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"3歳以上", L"4歳以上推奨", L"7歳以上", L"8歳以上推奨", L"12歳以上", 
-				L"15歳以上", L"16歳以上", L"18歳以上", L"未審査"});
-			this->combPEGIBBFC->SelectedIndex = index;
-
-			index = this->combOFLC->SelectedIndex;
-			this->combOFLC->Items->Clear();
-			this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"G", L"PG", L"M", L"MA15+", L"未審査"});
-			this->combOFLC->SelectedIndex = index;
-
-			// エラー情報
-			this->labError->Text = gcnew System::String( "エラー(必ず修正してください。)" );
-			this->colErrorName->HeaderText  = gcnew System::String( "項目名" );
-			this->colErrorBegin->HeaderText = gcnew System::String( "開始" );
-			this->colErrorEnd->HeaderText   = gcnew System::String( "終了" );
-			this->colErrorCause->HeaderText = gcnew System::String( "要因" );
-
-			this->labWarn->Text  = gcnew System::String( "警告(修正は必須ではありませんが情報に誤りがないかご確認ください。)" );
-			this->colWarnName->HeaderText  = gcnew System::String( "項目名" );
-			this->colWarnBegin->HeaderText = gcnew System::String( "開始" );
-			this->colWarnEnd->HeaderText   = gcnew System::String( "終了" );
-			this->colWarnCause->HeaderText = gcnew System::String( "要因" );
-
-			this->gboxErrorTiming->Text = gcnew System::String( "いつの情報を表示するか" );
-			this->rErrorReading->Text   = gcnew System::String( "ROMデータ読み込み時" );
-			this->rErrorCurrent->Text   = gcnew System::String( "現在の入力を反映" );
-
-			// 特殊な設定用のテキストボックスの表記を変更
-			this->setSrlFormsCaptionEx();
-		}
-
-	private:
 		// 英語版への切り替え
-		void changeEnglish(void)
-		{
-			System::Int32 index;
-
-			// 入力文字数制限を変更する
-			this->changeMaxLength( this->tboxCompany1, 40 );
-			this->changeMaxLength( this->tboxDepart1,  40 );
-			this->changeMaxLength( this->tboxPerson1,  30 );
-
-			// タイトルバー
-			this->stripFile->Text          = gcnew System::String( "File" );
-			this->stripItemOpenRom->Text   = gcnew System::String( "Open a ROM data file" );
-			this->stripItemSaveTemp->Text  = gcnew System::String( "Save a temporary info." );
-			this->stripItemLoadTemp->Text  = gcnew System::String( "Load a temporary info. saved previously" );
-			this->stripMaster->Text        = gcnew System::String( "Master" );
-			this->stripItemSheet->Text     = gcnew System::String( "Make a submission sheet and a master ROM data file" );
-			this->stripItemMasterRom->Text = gcnew System::String( "Make a master ROM data file only" );
-
-			// 入力ファイル
-			this->labFile->Text = gcnew System::String( "ROM Data File" );
-
-			// タブ
-			this->tabRomInfo->Text     = gcnew System::String( "ROM Info.(Read Only)" );
-			this->tabTWLInfo->Text     = gcnew System::String( "TWL Info.(Read Only)" );
-			this->tabRomEditInfo->Text = gcnew System::String( "ROM Settings(Editable)" );
-			this->tabSubmitInfo->Text  = gcnew System::String( "Submission Info.(Editable)" );
-			this->tabCompanyInfo->Text = gcnew System::String( "Company Info.(Editable)" );
-			this->tabErrorInfo->Text   = gcnew System::String( "Setting Error" );
-
-			// ガイド
-			this->tboxGuideRomInfo->Text = gcnew System::String( "This tab is for checking ROM data. When ROM data is illegal, please check settings of building ROM data" );
-			this->tboxGuideTWLInfo->Text = gcnew System::String( "This tab is for checking ROM data. When ROM data is illegal, please check settings of building ROM data" );
-			this->tboxGuideRomEditInfo->Text  = gcnew System::String( "" );
-			this->tboxGuideRomEditInfo->Text += "In making a master ROM data, these items will be registered in a master ROM data and a submission sheet.";
-			this->tboxGuideRomEditInfo->Text += "\r\nPlease edit certainly.";
-			this->tboxGuideSubmitInfo->Text  = gcnew System::String( "These items are necessary for making a submission sheet. Please input." );
-			this->tboxGuideCompanyInfo->Text = gcnew System::String( "These items are necessary for making a submission sheet. Please input." );
-			this->tboxGuideErrorInfo->Text   = gcnew System::String( "" );
-			this->tboxGuideErrorInfo->Text  += "This tab discribes errors in the ROM data file and edit mistakes.";
-			this->tboxGuideErrorInfo->Text  += "\r\nItems highlighted by Red can't be modified by this program. Please modify build settings.";
-			this->tboxGuideErrorInfo->Text  += "\r\nItems highlighted by Blue can be modified by this program and will register in a master ROM.";
-			this->tboxGuideErrorInfo->Text  += "\r\nItems highlighted by Black are discribed in a submission sheet and aren't affect a master ROM.";
-
-			// SRL情報
-			this->gboxSrl->Text       = gcnew System::String( "ROM Info." ); 
-			this->labTitleName->Text  = gcnew System::String( "Game Title" );
-			this->labGameCode->Text   = gcnew System::String( "Game Code" );
-			this->labMakerCode->Text  = gcnew System::String( "Maker Code" );
-			this->labPlatform->Text   = gcnew System::String( "Platform" );
-			this->labRomType->Text    = gcnew System::String( "ROM Type" );
-			this->labRomSize->Text    = gcnew System::String( "ROM Size" );
-			this->labRemasterVer->Text   = gcnew System::String( "Release Ver." );
-			this->cboxRemasterVerE->Text = gcnew System::String( "E(Preliminary Ver.)" );
-			this->labHeaderCRC->Text  = gcnew System::String( "Header CRC" );
-			this->labRomCRC->Text     = gcnew System::String( "ROM CRC" );
-			index = this->combBackup->SelectedIndex;
-			// バックアップメモリ
-			this->gboxProd->Text   = gcnew System::String( "ROM Production Info." );
-			this->labBackup->Text  = gcnew System::String( LANG_BACKUP_E );
-			this->combBackup->Items->Clear();
-			this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
-				L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"Nothing", L"Other"});
-			this->combBackup->SelectedIndex = index;
-
-			// 提出情報
-			this->labProductName->Text = gcnew System::String( LANG_PRODUCT_NAME_E );
-			this->labProductCode->Text = gcnew System::String( LANG_PRODUCT_CODE_E );
-			this->labReleaseDate->Text = gcnew System::String( LANG_RELEASE_DATE_E );
-			this->labSubmiteDate->Text = gcnew System::String( LANG_SUBMIT_DATE_E );
-			this->gboxSubmitWay->Text  = gcnew System::String( LANG_SUBMIT_WAY_E );
-			this->rSubmitPost->Text    = gcnew System::String( LANG_SUBMIT_POST_E );
-			this->rSubmitHand->Text    = gcnew System::String( LANG_SUBMIT_HAND_E );
-			this->gboxUsage->Text      = gcnew System::String( LANG_USAGE_E );
-			this->rUsageSale->Text     = gcnew System::String( LANG_USAGE_SALE_E );
-			this->rUsageSample->Text   = gcnew System::String( LANG_USAGE_SAMPLE_E );
-			this->rUsageDst->Text      = gcnew System::String( LANG_USAGE_DST_E );
-			this->rUsageOther->Text    = gcnew System::String( LANG_USAGE_OTHER_E );
-			this->labSubmitVer->Text     = gcnew System::String( LANG_SUBMIT_VER_E );
-			this->labCapSubmitVer->Text  = gcnew System::String( LANG_SUBMIT_VER_CAP_E );
-			this->gboxForeign->Text      = gcnew System::String( LANG_F_E );
-			this->labProductNameForeign->Text = gcnew System::String( LANG_PRODUCT_NAME_F_E );
-			this->labProductCodeForeign->Text = gcnew System::String( LANG_PRODUCT_CODE_F_E );
-			this->cboxReleaseForeign->Text    = gcnew System::String( LANG_RELEASE_F_E );
-			this->labMultiForeign1->Text      = gcnew System::String( LANG_MULTI_F_E );
-			this->labMultiForeign2->Text      = gcnew System::String( LANG_MULTI_F_E );
-			this->labCaption->Text    = gcnew System::String( LANG_CAPTION_E );
-			this->labProductNameLimit->Text = gcnew System::String( LANG_PRODUCT_LIMIT_E );
-			this->labProductNameLimitForeign->Text = gcnew System::String( LANG_PRODUCT_LIMIT_E );
-
-			// 会社情報
-			this->gboxPerson1->Text    = gcnew System::String( LANG_PERSON_1_E );
-			this->gboxPerson2->Text    = gcnew System::String( LANG_PERSON_2_E );
-			this->cboxIsInputPerson2->Text = gcnew System::String( LANG_INPUT_PERSON_2_E );
-			this->labCompany1->Text    = gcnew System::String( LANG_COMPANY_E );
-			this->labDepart1->Text     = gcnew System::String( LANG_DEPART_E );
-			this->labPerson1->Text     = gcnew System::String( LANG_PERSON_E );
-			this->labCompany2->Text    = gcnew System::String( LANG_COMPANY_E );
-			this->labDepart2->Text     = gcnew System::String( LANG_DEPART_E );
-			this->labPerson2->Text     = gcnew System::String( LANG_PERSON_E );
-			this->labArbit1->Text      = gcnew System::String( "(Arbitrary)" );
-			this->labArbit2->Text      = gcnew System::String( "(Arbitrary)" );
-			this->labArbit3->Text      = gcnew System::String( "(Arbitrary)" );
-			this->labArbit4->Text      = gcnew System::String( "(Arbitrary)" );
-			// ふりがな情報を削除
-			this->tboxFurigana1->Clear();
-			this->tboxFurigana1->Enabled = false;
-			this->labFurigana1->Text = gcnew System::String( LANG_FURIGANA_E );
-			this->tboxFurigana2->Clear();
-			this->tboxFurigana2->Enabled = false;
-			this->labFurigana2->Text = gcnew System::String( LANG_FURIGANA_E );
-			this->tboxNTSC1->Enabled = false;
-			this->tboxNTSC1->Text    = gcnew System::String("");
-			this->tboxNTSC2->Enabled = false;
-			this->tboxNTSC2->Text    = gcnew System::String("");
-			this->labNTSC1Pre->Text  = gcnew System::String( LANG_NTSC_1_E );
-			this->labNTSC1Sur->Text  = gcnew System::String( LANG_NTSC_2_E );
-			this->labNTSC2Pre->Text  = gcnew System::String( LANG_NTSC_1_E );
-			this->labNTSC2Sur->Text  = gcnew System::String( LANG_NTSC_2_E );
-
-			// TWL仕様
-			this->gboxTWLExInfo->Text         = gcnew System::String( "TWL Extended Info" );
-			this->labNormalRomOffset->Text    = gcnew System::String( "TWL Normal Area ROM Offset" );
-			this->labKeyTableRomOffset->Text  = gcnew System::String( "TWL Secure Area ROM Offset" );
-			this->cboxIsNormalJump->Text      = gcnew System::String( "Enable Normal App. Jump" );
-			this->cboxIsTmpJump->Text         = gcnew System::String( "Enable Temp. App. Jump" );
-			this->cboxIsSubBanner->Text       = gcnew System::String( "Enable SubBanner File" );
-			this->cboxIsWL->Text              = gcnew System::String( "Enable NTR WhiteList Signature" );
-			this->gboxAccess->Text            = gcnew System::String( "Access Control" );
-			this->cboxIsSD->Text              = gcnew System::String( "SD Card" );
-			this->cboxIsNAND->Text            = gcnew System::String( "NAND Flash Memory" );
-			this->labIsGameCardOn->Text       = gcnew System::String( "Card Power" );
-			this->labAccessOther->Text        = gcnew System::String( "Others" );
-			this->gboxShared2Size->Text       = gcnew System::String( "Size of Shared2 Files" );
-			this->cboxIsShared2->Text         = gcnew System::String( "Use Shared2 Files" );
-			this->labSDK->Text                = gcnew System::String( "SDK Ver." );
-			this->labLib->Text                = gcnew System::String( "Libraries used by the program" );
-			this->labCaptionEx->Text          = gcnew System::String( "Special Note" );
-
-			// SRL編集可能情報
-			this->cboxIsEULA->Text       = gcnew System::String( LANG_EULA_E );
-			this->gboxIcon->Text         = gcnew System::String( LANG_ICON_E );
-			this->rIsWirelessIcon->Text  = gcnew System::String( LANG_WIRELESS_ICON_E );
-			this->rIsWiFiIcon->Text      = gcnew System::String( LANG_WIFI_ICON_E );
-			this->rIsNoIcon->Text        = gcnew System::String( LANG_NO_ICON_E );
-			this->labRegion->Text        = gcnew System::String( LANG_REGION_E );
-
-			// リージョン
-			index = this->combRegion->SelectedIndex;
-			this->combRegion->Items->Clear();
-			this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5)
-				{L"Japan Only", L"USA Only", L"Europe Only", L"Australia Only", L"Europe and Australia"});
-#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
-			this->combRegion->Items->Add( gcnew System::String( L"All Region" ) );
-#endif
-			this->combRegion->SelectedIndex = index;
-
-			// ペアレンタルコントロール
-			this->gboxParental->Text           = gcnew System::String( LANG_REGION_PCTL_E );
-			this->labParentalRating->Text      = gcnew System::String( LANG_PCTL_RATING_E );
-			this->labParentalEnable->Text      = gcnew System::String( LANG_PCTL_ENABLE_E );
-			this->labParentalForceEnable->Text = gcnew System::String( LANG_PCTL_ALWAYS_E );
-
-			index = this->combCERO->SelectedIndex;	// いったんclearすると現在のindexに意味がなくなるので退避
-			this->combCERO->Items->Clear();
-			this->combCERO->Items->AddRange(gcnew cli::array< System::Object^  >(6)
-				{ L"A (All ages)", L"B (aged 12 or older)", L"C (aged 15 or older)", L"D (aged 17 or older)", L"Z (aged 18 or older)", L"Unexamined"});
-			this->combCERO->SelectedIndex = index;
-
-			index = this->combESRB->SelectedIndex;
-			this->combESRB->Items->Clear();
-			this->combESRB->Items->AddRange(gcnew cli::array< System::Object^  >(6)
-				{L"EC (aged 3 or older)", L"E (aged 6 or older)", L"E10+ (aged 10 or older)", L"T (aged 13 or older)",	L"M (aged 17 or older)", L"Unexamined"});
-			this->combESRB->SelectedIndex = index;
-
-			index = this->combUSK->SelectedIndex;
-			this->combUSK->Items->Clear();
-			this->combUSK->Items->AddRange(gcnew cli::array< System::Object^  >(6)
-				{L"All ages", L"aged 6 or older", L"aged 12 or older", L"aged 16 or older", L"Inadequent for young", L"Unexamined"});
-			this->combUSK->SelectedIndex = index;
-
-			index = this->combPEGI->SelectedIndex;
-			this->combPEGI->Items->Clear();
-			this->combPEGI->Items->AddRange(gcnew cli::array< System::Object^  >(6)
-				{L"aged 3 or older", L"aged 7 or older", L"aged 12 or older", L"aged 16 or older", L"aged 18 or older", L"Unexamined"});
-			this->combPEGI->SelectedIndex = index;
-
-			index = this->combPEGIPRT->SelectedIndex;
-			this->combPEGIPRT->Items->Clear();
-			this->combPEGIPRT->Items->AddRange(gcnew cli::array< System::Object^  >(6)
-				{L"aged 4 or older", L"aged 6 or older", L"aged 12 or older", L"aged 16 or older", L"aged 18 or older", L"Unexamined"});
-			this->combPEGIPRT->SelectedIndex = index;
-
-			index = this->combPEGIBBFC->SelectedIndex;
-			this->combPEGIBBFC->Items->Clear();
-			this->combPEGIBBFC->Items->AddRange(gcnew cli::array< System::Object^  >(9)
-				{L"aged 3 or older", L"aged 4 or older recommended", L"aged 7 or older", L"aged 8 or older recommended",
-				 L"aged 12 or older", L"aged 15 or older", L"aged 16 or older", L"aged 18 or older", L"Unexamined"});
-			this->combPEGIBBFC->SelectedIndex = index;
-
-			index = this->combOFLC->SelectedIndex;
-			this->combOFLC->Items->Clear();
-			this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"G", L"PG", L"M", L"MA15+", L"Unexamined"});
-			this->combOFLC->SelectedIndex = index;
-
-			// エラー情報
-			this->labError->Text = gcnew System::String( "Error Information(Modification is necessary.)" );
-			this->colErrorName->HeaderText  = gcnew System::String( "Name" );
-			this->colErrorBegin->HeaderText = gcnew System::String( "Begin" );
-			this->colErrorEnd->HeaderText   = gcnew System::String( "End" );
-			this->colErrorCause->HeaderText = gcnew System::String( "Reason" );
-
-			this->labWarn->Text  = gcnew System::String( "Warning(Modification is not necessary. Please check validity of these information.)" );
-			this->colWarnName->HeaderText  = gcnew System::String( "Name" );
-			this->colWarnBegin->HeaderText = gcnew System::String( "Begin" );
-			this->colWarnEnd->HeaderText   = gcnew System::String( "End" );
-			this->colWarnCause->HeaderText = gcnew System::String( "Reason" );
-
-			this->gboxErrorTiming->Text = gcnew System::String( "Error Of Timing" );
-			this->rErrorReading->Text   = gcnew System::String( "When ROM data was read" );
-			this->rErrorCurrent->Text   = gcnew System::String( "In current settings" );
-
-			// 特殊な設定用のテキストボックスの表記を変更
-			this->setSrlFormsCaptionEx();
-		}
+		void changeEnglish(void);
 
 		// --------------------------------------------------------
 		// エラー情報の登録
 		// --------------------------------------------------------
 
 		// 読み込み時エラーの登録
-	public:
-		void setGridError( void )
-		{
-			this->gridError->Rows->Clear();
-			if( this->hSrl->hErrorList != nullptr )
-			{
-				for each( RCMrcError ^err in this->hSrl->hErrorList )
-				{
-					this->gridError->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
-					this->colorGridError( err );
-				}
-			}
-		}
-
-		void setGridWarn( void )
-		{
-			this->gridWarn->Rows->Clear();
-			if( this->hSrl->hWarnList != nullptr )
-			{
-				for each( RCMrcError ^err in this->hSrl->hWarnList )
-				{
-					this->gridWarn->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
-					this->colorGridWarn( err );
-				}
-			}
-		}
+		void setGridError( void );
+		void setGridWarn( void );
 
 		// 読み込み時に検出した修正可能エラーに現在の入力を反映
-	public:
-		void overloadGridError( void )
-		{
-			this->gridError->Rows->Clear();
-			if( this->hSrl->hErrorList != nullptr )
-			{
-				for each( RCMrcError ^err in this->hSrl->hErrorList )
-				{
-					if( !err->EnableModify )	// 修正可能な情報は表示しない
-					{
-						this->gridError->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
-						this->colorGridError( err );
-					}
-				}
-			}
-			if( this->hErrorList != nullptr )
-			{
-				for each( RCMrcError ^err in this->hErrorList )
-				{
-					this->gridError->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
-					this->colorGridError( err );
-				}
-			}
-		}
-		void overloadGridWarn( void )
-		{
-			this->gridWarn->Rows->Clear();
-			if( this->hSrl->hWarnList != nullptr )
-			{
-				for each( RCMrcError ^err in this->hSrl->hWarnList )
-				{
-					if( !err->EnableModify )
-					{
-						this->gridWarn->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
-						this->colorGridWarn( err );
-					}
-				}
-			}
-			if( this->hWarnList != nullptr )
-			{
-				for each( RCMrcError ^err in this->hWarnList )
-				{
-					this->gridWarn->Rows->Add( err->getAll( this->stripItemJapanese->Checked ) );
-					this->colorGridWarn( err );
-				}
-			}
-		}
+		void overloadGridError( void );
+		void overloadGridWarn( void );
 
 		// セルの色を変える
-	public:
-		void colorGridError( RCMrcError ^err )
-		{
-			if( err->AffectRom && !err->EnableModify )		// SRLに関係ありで修正不可
-			{
-				System::Int32 last = this->gridError->Rows->Count - 2;	// 追加直後の行
-				this->gridError->Rows[ last ]->DefaultCellStyle->ForeColor = System::Drawing::Color::Red;
-			}
-			else if( err->AffectRom && err->EnableModify )	// SRLに関係ありで修正可
-			{
-				System::Int32 last = this->gridError->Rows->Count - 2;
-				this->gridError->Rows[ last ]->DefaultCellStyle->ForeColor = System::Drawing::Color::Blue;
-			}
-		}
-		void colorGridWarn( RCMrcError ^err )
-		{
-			if( err->AffectRom && !err->EnableModify )
-			{
-				System::Int32 last = this->gridWarn->Rows->Count - 2;
-				this->gridWarn->Rows[ last ]->DefaultCellStyle->ForeColor = System::Drawing::Color::Red;
-			}
-			else if( err->AffectRom && err->EnableModify )
-			{
-				System::Int32 last = this->gridWarn->Rows->Count - 2;
-				this->gridWarn->Rows[ last ]->DefaultCellStyle->ForeColor = System::Drawing::Color::Blue;
-			}
-		}
+		void colorGridError( RCMrcError ^err );
+		void colorGridWarn( RCMrcError ^err );
 
 		// まとめて更新
-	public:
-		void updateGrid(void)
-		{
-			if( this->rErrorReading->Checked == true )
-			{
-				this->setGridError();
-				this->setGridWarn();
-			}
-			else
-			{
-				if( !System::String::IsNullOrEmpty(this->tboxFile->Text) )
-				{
-					this->hErrorList->Clear();
-					this->hWarnList->Clear();
-					this->checkSrlForms();
-					this->checkDeliverableForms();
-					this->overloadGridError();
-					this->overloadGridWarn();
-				}
-			}
-		}
+		void updateGrid(void);
 
-	/////////////////////////////////////////////
-	// フォーム操作メソッド
-	/////////////////////////////////////////////
+		// ----------------------------------------------
+		// エラー処理
+		// ----------------------------------------------
 
-	// ファイルパス表示用テキストボックス
-	private:
-		// ドラッグされてまだマウスのボタンが離されていないとき
-		System::Void tboxFile_DragEnter(System::Object^  sender, System::Windows::Forms::DragEventArgs^  e)
-		{
-			if( e->Data->GetDataPresent( DataFormats::FileDrop ) )
-			{
-				e->Effect = DragDropEffects::All;
-			}
-		}
-		// ドラッグされたあとマウスのボタンが離されたとき
-		System::Void tboxFile_DragDrop(System::Object^  sender, System::Windows::Forms::DragEventArgs^  e)
-		{
-			array<String^> ^files = dynamic_cast< array<String^> ^>(e->Data->GetData( DataFormats::FileDrop ) );
-			String ^filename = files[0];
+		// SRLには関係しない書類上のエラーをチェック
+		System::Boolean isValidOnlyDeliverable(void);
 
-			if( System::IO::File::Exists(filename) == false )
-			{
-				this->errMsg( "ROMデータファイルが存在しませんので開くことができません。", 
-							  "The ROM data file is not found. Therefore the file can not be opened." );
-				return;
-			}
-			this->loadSrl( filename );			// ドラッグアンドドロップの時点でボタンを押さなくてもファイルを開く
-			this->tboxFile->Text = filename;
-			//this->sucMsg( "ROMデータファイルのオープンに成功しました。", "The ROM data file is opened successfully." );
-		}
+		// SRLのバイナリに影響する項目にエラーがあるかチェック
+		System::Boolean isValidAffectRom(void);
 
-	// チェックボタンを押したときに他のフォームを有効にする
-	private:
-		System::Void cboxIsInputPerson2_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
-		{
-			this->gboxPerson2->Enabled = this->cboxIsInputPerson2->Checked;
-			if( this->cboxIsInputPerson2->Checked == true )
-			{
-				if( (this->tboxCompany1->Text != nullptr) && !(this->tboxCompany1->Text->Equals("")) )
-				{
-					this->tboxCompany2->Text = gcnew System::String( this->tboxCompany1->Text );
-				}
-				if( (this->tboxDepart1->Text != nullptr) && !(this->tboxDepart1->Text->Equals("")) )
-				{
-					this->tboxDepart2->Text  = gcnew System::String( this->tboxDepart1->Text );
-				}
-			}
-			else
-			{
-				this->tboxCompany2->Clear();
-				this->tboxDepart2->Clear();
-				this->tboxPerson2->Clear();
-				this->tboxFurigana2->Clear();
-				this->tboxTel2->Clear();
-				this->tboxFax2->Clear();
-				this->tboxMail2->Clear();
-				this->tboxNTSC2->Clear();
-			}
-		}
-	private:
-		System::Void rUsageOther_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
-		{
-			this->tboxUsageOther->Enabled = this->rUsageOther->Checked;
-			if( this->rUsageOther->Checked == false )
-			{
-				this->tboxUsageOther->Clear();
-			}
-		}
-	private:
-		System::Void cboxRemasterVerE_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
-		{
-			//this->numRemasterVer->Enabled = !(this->cboxRemasterVerE->Checked);
-			//if( this->cboxRemasterVerE->Checked == false )
-			//{
-			//	this->numRemasterVer->Value = 0;
-			//}
-		}
-	private:
-		System::Void combBackup_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e)
-		{
-			if( this->combBackup->SelectedIndex == (this->combBackup->Items->Count - 1) )
-			{
-				this->tboxBackupOther->Enabled = true;
-			}
-			else
-			{
-				this->tboxBackupOther->Enabled = false;
-				this->tboxBackupOther->Clear();
-			}
-		}
-	private:
-		// ペアレンタルコントロール情報をクリアする
-		void clearParental( System::Windows::Forms::ComboBox ^comb, 
-			                System::Windows::Forms::CheckBox ^enable, 
-							System::Windows::Forms::CheckBox ^rp )
-		{
-			comb->SelectedIndex = comb->Items->Count - 1;	// 「未審査」にする
-			enable->Checked = false;
-			rp->Checked = false;
-		}
-	private:
-		// ペアレンタルコントロール情報を編集できるようにする
-		void enableParental( System::Windows::Forms::ComboBox ^comb, 
-	                         System::Windows::Forms::CheckBox ^enable, 
-					         System::Windows::Forms::CheckBox ^rp,
-							 System::Windows::Forms::Label    ^lab1, 
-							 System::Windows::Forms::Label    ^lab2 )
-		{
-			comb->Enabled   = true;
-			enable->Enabled = true;
-			rp->Enabled     = true;
-			comb->Visible   = true;
-			enable->Visible = true;
-			rp->Visible     = true;
-			lab1->Visible   = true;
-			if( lab2 != nullptr )
-			{
-				lab2->Visible   = true;
-			}
-		}
-		// ペアレンタルコントロール情報を編集できなくする
-		void disableParental( System::Windows::Forms::ComboBox ^comb, 
-	                          System::Windows::Forms::CheckBox ^enable, 
-					          System::Windows::Forms::CheckBox ^rp,
-							  System::Windows::Forms::Label    ^lab1, 
-							  System::Windows::Forms::Label    ^lab2 )
-		{
-			this->clearParental( comb, enable, rp );
-			comb->Enabled   = false;
-			enable->Enabled = false;
-			rp->Enabled     = false;
-			comb->Visible   = false;
-			enable->Visible = false;
-			rp->Visible     = false;
-			lab1->Visible   = false;
-			if( lab2 != nullptr )
-			{
-				lab2->Visible   = false;
-			}
-		}
-	private:
-		System::Void combRegion_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e)
-		{
-			this->maskParentalForms();
-		}
-
-	private:
-		System::Void cboxReleaseForeign_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
-		{
-			this->tboxProductNameForeign->Enabled   = this->cboxReleaseForeign->Checked;
-			this->tboxProductCode1Foreign->Enabled  = this->cboxReleaseForeign->Checked;
-			this->tboxProductCode2Foreign1->Enabled = this->cboxReleaseForeign->Checked;
-			this->tboxProductCode2Foreign2->Enabled = this->cboxReleaseForeign->Checked;
-			this->tboxProductCode2Foreign3->Enabled = this->cboxReleaseForeign->Checked;
-			if( this->cboxReleaseForeign->Checked == false )
-			{
-				this->tboxProductNameForeign->Clear();
-				this->tboxProductCode1Foreign->Clear();
-				this->tboxProductCode2Foreign1->Clear();
-				this->tboxProductCode2Foreign2->Clear();
-				this->tboxProductCode2Foreign3->Clear();
-			}
-		}
+		// SRLのバイナリに影響する項目の中で修正可能なエラーだけをチェック
+		System::Boolean isValidAffectRomModified(void);
 
 	/////////////////////////////////////////////
 	// タイトルバー操作メソッド
@@ -6347,6 +3904,120 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->loadTmp( filename );
 		} //stripItemLoadTemp_Click()
 
+	/////////////////////////////////////////////
+	// フォーム操作メソッド
+	/////////////////////////////////////////////
+
+	// ファイルパス表示用テキストボックス
+	private:
+		// ドラッグされてまだマウスのボタンが離されていないとき
+		System::Void tboxFile_DragEnter(System::Object^  sender, System::Windows::Forms::DragEventArgs^  e)
+		{
+			if( e->Data->GetDataPresent( DataFormats::FileDrop ) )
+			{
+				e->Effect = DragDropEffects::All;
+			}
+		}
+		// ドラッグされたあとマウスのボタンが離されたとき
+		System::Void tboxFile_DragDrop(System::Object^  sender, System::Windows::Forms::DragEventArgs^  e)
+		{
+			array<String^> ^files = dynamic_cast< array<String^> ^>(e->Data->GetData( DataFormats::FileDrop ) );
+			String ^filename = files[0];
+
+			if( System::IO::File::Exists(filename) == false )
+			{
+				this->errMsg( "ROMデータファイルが存在しませんので開くことができません。", 
+							  "The ROM data file is not found. Therefore the file can not be opened." );
+				return;
+			}
+			this->loadSrl( filename );			// ドラッグアンドドロップの時点でボタンを押さなくてもファイルを開く
+			this->tboxFile->Text = filename;
+			//this->sucMsg( "ROMデータファイルのオープンに成功しました。", "The ROM data file is opened successfully." );
+		}
+
+	// チェックボタンを押したときに他のフォームを有効にする
+	private:
+		System::Void cboxIsInputPerson2_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
+		{
+			this->gboxPerson2->Enabled = this->cboxIsInputPerson2->Checked;
+			if( this->cboxIsInputPerson2->Checked == true )
+			{
+				if( (this->tboxCompany1->Text != nullptr) && !(this->tboxCompany1->Text->Equals("")) )
+				{
+					this->tboxCompany2->Text = gcnew System::String( this->tboxCompany1->Text );
+				}
+				if( (this->tboxDepart1->Text != nullptr) && !(this->tboxDepart1->Text->Equals("")) )
+				{
+					this->tboxDepart2->Text  = gcnew System::String( this->tboxDepart1->Text );
+				}
+			}
+			else
+			{
+				this->tboxCompany2->Clear();
+				this->tboxDepart2->Clear();
+				this->tboxPerson2->Clear();
+				this->tboxFurigana2->Clear();
+				this->tboxTel2->Clear();
+				this->tboxFax2->Clear();
+				this->tboxMail2->Clear();
+				this->tboxNTSC2->Clear();
+			}
+		}
+	private:
+		System::Void rUsageOther_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
+		{
+			this->tboxUsageOther->Enabled = this->rUsageOther->Checked;
+			if( this->rUsageOther->Checked == false )
+			{
+				this->tboxUsageOther->Clear();
+			}
+		}
+	private:
+		System::Void cboxRemasterVerE_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
+		{
+			//this->numRemasterVer->Enabled = !(this->cboxRemasterVerE->Checked);
+			//if( this->cboxRemasterVerE->Checked == false )
+			//{
+			//	this->numRemasterVer->Value = 0;
+			//}
+		}
+	private:
+		System::Void combBackup_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e)
+		{
+			if( this->combBackup->SelectedIndex == (this->combBackup->Items->Count - 1) )
+			{
+				this->tboxBackupOther->Enabled = true;
+			}
+			else
+			{
+				this->tboxBackupOther->Enabled = false;
+				this->tboxBackupOther->Clear();
+			}
+		}
+	private:
+		System::Void combRegion_SelectedIndexChanged(System::Object^  sender, System::EventArgs^  e)
+		{
+			this->maskParentalForms();
+		}
+
+	private:
+		System::Void cboxReleaseForeign_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
+		{
+			this->tboxProductNameForeign->Enabled   = this->cboxReleaseForeign->Checked;
+			this->tboxProductCode1Foreign->Enabled  = this->cboxReleaseForeign->Checked;
+			this->tboxProductCode2Foreign1->Enabled = this->cboxReleaseForeign->Checked;
+			this->tboxProductCode2Foreign2->Enabled = this->cboxReleaseForeign->Checked;
+			this->tboxProductCode2Foreign3->Enabled = this->cboxReleaseForeign->Checked;
+			if( this->cboxReleaseForeign->Checked == false )
+			{
+				this->tboxProductNameForeign->Clear();
+				this->tboxProductCode1Foreign->Clear();
+				this->tboxProductCode2Foreign1->Clear();
+				this->tboxProductCode2Foreign2->Clear();
+				this->tboxProductCode2Foreign3->Clear();
+			}
+		}
+
 	private:
 		System::Void rErrorReading_CheckedChanged(System::Object^  sender, System::EventArgs^  e)
 		{
@@ -6392,7 +4063,6 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			}
 			this->setParentalForms();			// ペアレンタルコントロール関連
 		}
-
 
 }; // enf of ref class Form1
 

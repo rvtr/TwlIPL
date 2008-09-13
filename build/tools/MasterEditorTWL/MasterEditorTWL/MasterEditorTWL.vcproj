@@ -212,6 +212,34 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Form_deliv.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Form_file.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Form_lang.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Form_pctl.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Form_srl.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Form_tmp.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Form_util.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\keys.cpp"
 				>
 			</File>

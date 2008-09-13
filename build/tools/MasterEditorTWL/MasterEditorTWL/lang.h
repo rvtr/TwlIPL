@@ -93,6 +93,6 @@
 #define LANG_NO_ICON_E			("Display No Icon")
 #define LANG_REGION_PCTL_E		("Card Region and Parental Control")
 #define LANG_REGION_E			("Card Region")
-#define LANG_PCTL_RATING_E		("Rating Age")
+#define LANG_PCTL_RATING_E		("Rating Information")
 #define LANG_PCTL_ENABLE_E		("Enable Control")
 #define LANG_PCTL_ALWAYS_E		("Rating Pending")

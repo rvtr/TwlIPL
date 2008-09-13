@@ -54,6 +54,20 @@ namespace MasterEditorTWL
 	System::String^ transRatingToString( System::Byte ogn, System::Boolean enable, System::Byte rating, System::Boolean english ); 
 
 	//
+	// ペアレンタルコントロールの各団体の設定可能年齢を取得する
+	//
+	// @arg [in] 団体
+	//
+	cli::array<System::Byte>^ getOgnRatingAges( int ogn );
+
+	//
+	// ペアレンタルコントロールの各団体の団体名を取得する
+	//
+	// @arg [in] 団体
+	//
+	System::String^ getOgnName( int ogn );
+
+	//
 	// バイト列に特定のパターンが含まれるかどうかマッチングする
 	//
 	// @arg [in] テキスト
