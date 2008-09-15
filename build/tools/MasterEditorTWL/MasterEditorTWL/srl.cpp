@@ -950,7 +950,7 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 	for( i=0; i < GAME_CODE_MAX; i++ )
 	{
 		char c = this->pRomHeader->s.game_code[i];
-		if( (c < 0x20) || (0x5f < c) )
+		if( (c < 0x20) || (0x5f < c) )		// 00h‚ð‹–‚³‚È‚¢
 		{
 			result = false;
 		}
@@ -972,7 +972,7 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 	for( i=0; i < MAKER_CODE_MAX; i++ )
 	{
 		char c = this->pRomHeader->s.maker_code[i];
-		if( ((c < 0x20) || (0x5f < c)) && (c != 0x00) )
+		if( (c < 0x20) || (0x5f < c) )
 		{
 			result = false;
 		}
