@@ -1336,7 +1336,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			this->combOFLC->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combOFLC->FormattingEnabled = true;
-			this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"”N—î§ŒÀ‚È‚µ", L"G", L"PG", L"M", L"MA15+", L"R¸’†"});
+			this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"G", L"PG", L"M", L"MA15+", L"R¸’†"});
 			this->combOFLC->Location = System::Drawing::Point(152, 232);
 			this->combOFLC->Name = L"combOFLC";
 			this->combOFLC->Size = System::Drawing::Size(204, 20);

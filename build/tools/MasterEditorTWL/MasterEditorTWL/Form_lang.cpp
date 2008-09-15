@@ -228,8 +228,8 @@ void Form1::changeJapanese(void)
 
 	index = this->combOFLC->SelectedIndex;
 	this->combOFLC->Items->Clear();
-	this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(6)
-		{L"年齢制限なし", L"G", L"PG", L"M", L"MA15+", L"審査中"});
+	this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5)
+		{L"G", L"PG", L"M", L"MA15+", L"審査中"});
 	this->combOFLC->SelectedIndex = index;
 
 	// エラー情報
@@ -454,8 +454,8 @@ void  Form1::changeEnglish(void)
 
 	index = this->combOFLC->SelectedIndex;
 	this->combOFLC->Items->Clear();
-	this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(6)
-		{L"All ages", L"G", L"PG", L"M", L"MA15+", L"Rating Pending"});
+	this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5)
+		{L"G", L"PG", L"M", L"MA15+", L"Rating Pending"});
 	this->combOFLC->SelectedIndex = index;
 
 	// エラー情報
