@@ -532,14 +532,14 @@ private: System::Windows::Forms::Label^  labMultiForeign2;
 private: System::Windows::Forms::DataGridView^  gridLibrary;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibPublisher;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnName;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnBegin;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnEnd;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnCause;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorName;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorBegin;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorEnd;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
+
+
+
+
+
+
+
+
 private: System::Windows::Forms::Label^  labAssemblyVersion;
 private: System::Windows::Forms::Label^  labArbit4;
 private: System::Windows::Forms::Label^  labArbit3;
@@ -560,6 +560,26 @@ private: System::Windows::Forms::RadioButton^  rIsWiFiIcon;
 
 private: System::Windows::Forms::RadioButton^  rIsWirelessIcon;
 private: System::Windows::Forms::RadioButton^  rIsNoIcon;
+private: System::Windows::Forms::ToolStripMenuItem^  stripItemSheetOnly;
+
+
+
+
+
+
+
+
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnName;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnBegin;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnEnd;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnCause;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorName;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorBegin;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorEnd;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
+
+
+
 
 
 
@@ -715,7 +735,9 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 		/// </summary>
 		void InitializeComponent(void)
 		{
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle1 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle2 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle3 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -901,6 +923,7 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->stripMaster = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemSheet = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemMasterRom = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->stripItemSheetOnly = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripLang = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemEnglish = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemJapanese = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -2761,8 +2784,8 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			// 
 			// stripMaster
 			// 
-			this->stripMaster->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {this->stripItemSheet, 
-				this->stripItemMasterRom});
+			this->stripMaster->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {this->stripItemSheet, 
+				this->stripItemMasterRom, this->stripItemSheetOnly});
 			this->stripMaster->Name = L"stripMaster";
 			this->stripMaster->Size = System::Drawing::Size(53, 20);
 			this->stripMaster->Text = L"マスター";
@@ -2780,6 +2803,13 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			this->stripItemMasterRom->Size = System::Drawing::Size(232, 22);
 			this->stripItemMasterRom->Text = L"マスターROMのみを作成";
 			this->stripItemMasterRom->Click += gcnew System::EventHandler(this, &Form1::stripItemMasterRom_Click);
+			// 
+			// stripItemSheetOnly
+			// 
+			this->stripItemSheetOnly->Name = L"stripItemSheetOnly";
+			this->stripItemSheetOnly->Size = System::Drawing::Size(232, 22);
+			this->stripItemSheetOnly->Text = L"提出確認書のみを作成";
+			this->stripItemSheetOnly->Click += gcnew System::EventHandler(this, &Form1::stripItemSheetOnly_Click);
 			// 
 			// stripLang
 			// 
@@ -3223,10 +3253,20 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			// 
 			// gridWarn
 			// 
+			this->gridWarn->AutoSizeRowsMode = System::Windows::Forms::DataGridViewAutoSizeRowsMode::AllCellsExceptHeaders;
 			this->gridWarn->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridWarn->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridWarn->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colWarnName, 
 				this->colWarnBegin, this->colWarnEnd, this->colWarnCause});
+			dataGridViewCellStyle1->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle1->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle1->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+				static_cast<System::Byte>(128)));
+			dataGridViewCellStyle1->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle1->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle1->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle1->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle1;
 			this->gridWarn->GridColor = System::Drawing::SystemColors::Control;
 			this->gridWarn->Location = System::Drawing::Point(24, 228);
 			this->gridWarn->Name = L"gridWarn";
@@ -3268,10 +3308,20 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			// 
 			dataGridViewCellStyle2->BackColor = System::Drawing::Color::White;
 			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle2;
+			this->gridError->AutoSizeRowsMode = System::Windows::Forms::DataGridViewAutoSizeRowsMode::AllCellsExceptHeaders;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
 				this->colErrorBegin, this->colErrorEnd, this->colErrorCause});
+			dataGridViewCellStyle3->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle3->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle3->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+				static_cast<System::Byte>(128)));
+			dataGridViewCellStyle3->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle3->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle3->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle3->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridError->DefaultCellStyle = dataGridViewCellStyle3;
 			this->gridError->GridColor = System::Drawing::SystemColors::Control;
 			this->gridError->Location = System::Drawing::Point(24, 99);
 			this->gridError->Name = L"gridError";
@@ -3414,8 +3464,11 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 		// SRLのオープン
 		System::Void loadSrl( System::String ^filename );
 
-		// SRLの保存
+		// SRLの保存と再読み出し
 		System::Void saveSrl( System::String ^filename );
+
+		// SRLの保存のみ @ret 成否
+		System::Boolean saveSrlCore( System::String ^filename );
 
 	private:
 		// ----------------------------------------------
@@ -3475,6 +3528,82 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 
 		// フォームの入力をチェックする
 		System::Boolean checkSrlForms(void);
+
+	private:
+		// ---------------------------------------------------------------------
+		// リージョン設定は複雑なので別に切り出す
+		// ---------------------------------------------------------------------
+		
+		// フォーム入力をSRLに反映させる
+		void setRegionSrlPropaties(void)
+		{
+			this->hSrl->hIsRegionJapan     = gcnew System::Boolean(false);
+			this->hSrl->hIsRegionAmerica   = gcnew System::Boolean(false);
+			this->hSrl->hIsRegionEurope    = gcnew System::Boolean(false);
+			this->hSrl->hIsRegionAustralia = gcnew System::Boolean(false);
+			switch( this->combRegion->SelectedIndex )
+			{
+				case 0:
+					this->hSrl->hIsRegionJapan = gcnew System::Boolean(true);
+				break;
+
+				case 1:
+					this->hSrl->hIsRegionAmerica = gcnew System::Boolean(true);
+				break;
+
+				case 2:
+					this->hSrl->hIsRegionEurope = gcnew System::Boolean(true);
+				break;
+
+				case 3:
+					this->hSrl->hIsRegionAustralia = gcnew System::Boolean(true);
+				break;
+
+				case 4:
+					this->hSrl->hIsRegionEurope    = gcnew System::Boolean(true);
+					this->hSrl->hIsRegionAustralia = gcnew System::Boolean(true);
+				break;
+
+#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
+				case 5:
+					this->hSrl->hIsRegionJapan     = gcnew System::Boolean(true);
+					this->hSrl->hIsRegionAmerica   = gcnew System::Boolean(true);
+					this->hSrl->hIsRegionEurope    = gcnew System::Boolean(true);
+					this->hSrl->hIsRegionAustralia = gcnew System::Boolean(true);
+				break;
+#endif //defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
+				default:
+				break;
+			}
+		}
+
+		// SRL情報をフォームに反映させる
+		void setRegionForms(void)
+		{
+			System::Boolean isJapan   = *(this->hSrl->hIsRegionJapan);			// リージョン
+			System::Boolean isAmerica = *(this->hSrl->hIsRegionAmerica);
+			System::Boolean isEurope  = *(this->hSrl->hIsRegionEurope);
+			System::Boolean isAustralia = *(this->hSrl->hIsRegionAustralia);
+			System::Int32  index;
+			if( isJapan && !isAmerica && !isEurope && !isAustralia )
+				index = 0;
+			else if( !isJapan && isAmerica && !isEurope && !isAustralia )
+				index = 1;
+			else if( !isJapan && !isAmerica && isEurope && !isAustralia )
+				index = 2;
+			else if( !isJapan && !isAmerica && !isEurope && isAustralia )
+				index = 3;
+			else if( !isJapan && !isAmerica && isEurope && isAustralia )
+				index = 4;
+			else
+				index = -1;	// 不正
+#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
+			if( isJapan && isAmerica && isEurope && isAustralia )
+			index = 5;
+#endif
+			this->combRegion->SelectedIndex = index;
+			this->maskParentalForms();		// ペアレンタルコントロール用フォームの表示/非表示切り替え
+		}
 
 	private:
 		// ---------------------------------------------------------------------
@@ -3708,6 +3837,124 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			}
 			this->saveSrl( filename );
 		} //stripItemMasterRom_Click()
+
+	private:
+		System::Void stripItemSheetOnly_Click(System::Object^  sender, System::EventArgs^  e)
+		{
+			// SRLが読み込まれていないときにはリードさせない
+			if( System::String::IsNullOrEmpty( this->tboxFile->Text ) )
+			{
+				this->errMsg( "ROMデータファイルがオープンされていません。", "ROM file has not opened yet." );
+				return;
+			}
+			System::String ^srlfullpath = this->tboxFile->Text;
+
+			// SRLと書類の両方のフォーム入力をチェックする
+			this->hErrorList->Clear();
+			this->hWarnList->Clear();
+			if( this->checkSrlForms() == false )
+			{
+				this->errMsg( "ROMデータに不正な設定があるため提出確認書の作成ができません。",
+							  "A ROM data and a submission sheet can't be saved, since it has illegal info." );
+				return;
+			}
+			if( this->checkDeliverableForms() == false )
+			{
+				this->errMsg( "入力情報に不足があるため提出確認書を作成できません。",
+							  "Making a submission sheet can't be done, since your input is not enough." );
+				return;
+			}
+
+			// マスタ提出確認書に必要な情報をフォームから取得して更新
+			this->setSrlProperties();	// 先にSrlを更新しておく(この時点ではROMヘッダには反映されない)
+			this->setDeliverableProperties();
+
+			// CRCを算出したいので一時的なファイルにSRLを保存する
+			System::String ^tmpfile = "./tmp.srl";
+			this->saveSrlCore( tmpfile );
+			u16  crc;			// SRL全体のCRCを計算する(書類に記述するため)
+			if( !getWholeCRCInFile( tmpfile, &crc ) )
+			{
+				this->errMsg( "CRCの計算に失敗しました。提出確認書の作成はキャンセルされます。", 
+							  "Calc CRC is failed. Therefore, Making a submission sheet is canceled." );
+				return;
+			}
+			System::UInt16 ^hcrc = gcnew System::UInt16( crc );
+			System::IO::File::Delete( tmpfile );
+
+			// 書類に記載するSRL名を提出手順書に従わせる
+			System::String ^srlfile;
+			{
+				srlfile = gcnew System::String("");
+
+				if( this->cboxRemasterVerE->Checked == true )
+				{
+					srlfile = "T" + this->hSrl->hGameCode + "E" + this->numSubmitVersion->Value.ToString() + ".SRL";
+				}
+				else
+				{
+					srlfile = "T" + this->hSrl->hGameCode + this->hSrl->hRomVersion->ToString() + this->numSubmitVersion->Value.ToString() + ".SRL";
+				}
+			}
+			// 注意書き 
+			{
+				this->sucMsg( 
+					"マスターROMデータは作成されませんが、書類に記載されるCRCは現在の入力を反映して再計算されます。"
+					+ "\nまた、提出確認書に記載されるROMデータファイル名は、提出手順書にしたがい、 \"" + srlfile + "\"となります。",
+					"Re-calculation of CRC code descibed in a submission sheet is based on current input forms, and, "
+					+ "\na ROM data file name discribed in the sheet is \"" + srlfile + "\"."
+				);
+			}
+
+			// ダイアログで書類のファイルパスを決定
+			System::String ^delivfile;
+			{
+				System::Windows::Forms::SaveFileDialog ^dlg = gcnew (SaveFileDialog);
+
+				dlg->InitialDirectory = "c:\\";
+				dlg->Filter      = "xml形式 (*.xml)|*.xml";
+				dlg->FilterIndex = 1;
+				dlg->RestoreDirectory = true;
+
+				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
+				{
+					this->errMsg( "提出確認書の作成がキャンセルされました。", "Making a submission sheet is canceled." );
+					return;
+				}
+				delivfile = dlg->FileName;
+				if( !(dlg->FileName->EndsWith( ".xml" )) )
+				{
+					delivfile += ".xml";
+				}
+			}
+
+			// 書類作成
+			//result = this->hDeliv->write( delivfile, this->hSrl, hcrc, srlfile, !(this->stripItemJapanese->Checked) );
+			ECDeliverableResult  result = this->hDeliv->writeSpreadsheet( delivfile, this->hSrl, hcrc, srlfile, !(this->stripItemJapanese->Checked) );
+			if( result != ECDeliverableResult::NOERROR )
+			{
+				switch( result )
+				{
+					case ECDeliverableResult::ERROR_FILE_OPEN:
+						this->errMsg( "提出確認書のテンプレートが開けなかったため、提出確認書の作成に失敗しました。", 
+							          "Since a templete of the submission sheet can't be opened, making the sheet is failed." );
+					break;
+
+					default:
+						this->errMsg( "提出確認書の作成に失敗しました。", "Making the submission sheet is failed." );
+					break;
+				}
+				return;
+			}
+			// SRLクラスのプロパティを元に戻すため再リード
+			ECSrlResult r = this->hSrl->readFromFile( srlfullpath );	// フォームには反映しない
+			if( r != ECSrlResult::NOERROR )
+			{
+				this->errMsg( "ROMデータファイルの読み込みに失敗しました。\n再度「ROMデータを開く」を選択してROMデータを読み出してください。", 
+							  "Reading the ROM data file failed. \nPlease read a ROM data file again, with \"Open a ROM data file\"" );
+				return;
+			}
+		} //stripItemSheetOnly_Click()
 
 	private:
 		System::Void stripItemSheet_Click(System::Object^  sender, System::EventArgs^  e)
@@ -4061,7 +4308,8 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 			{
 				this->rIsWirelessIcon->Checked = true;
 			}
-			this->setParentalForms();			// ペアレンタルコントロール関連
+			this->setRegionForms();
+			this->setParentalForms();
 		}
 
 }; // enf of ref class Form1

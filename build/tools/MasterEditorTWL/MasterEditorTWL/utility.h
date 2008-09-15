@@ -42,18 +42,6 @@ namespace MasterEditorTWL
 	System::String^ transSizeToString( System::UInt32 ^size );
 
 	//
-	// ペアレンタルコントロールのレーティング値から文字列を取得
-	//
-	// @arg [in] 団体
-	// @arg [in] 有効フラグ(0歳以上か未審査かを判定するために使用する)
-	// @arg [in] レーティング値
-	// @arg [in] 英語フラグ
-	//
-	// @ret レーティングの文字列(団体がおかしいときnullptr)
-	//
-	System::String^ transRatingToString( System::Byte ogn, System::Boolean enable, System::Byte rating, System::Boolean english ); 
-
-	//
 	// ペアレンタルコントロールの各団体の設定可能年齢を取得する
 	//
 	// @arg [in] 団体

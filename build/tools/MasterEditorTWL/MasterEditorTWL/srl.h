@@ -221,7 +221,6 @@ namespace MasterEditorTWL
 		{
 			this->hIsCheck = gcnew System::Boolean( false );
 			this->hSDKVer  = gcnew System::UInt32( 0 );
-			this->hEULAVer = gcnew System::Byte( 0 );
 			this->hShared2SizeArray = gcnew cli::array<System::UInt32^>(METWL_NUMOF_SHARED2FILES);	// ファイルサイズの数に合わせる
 			System::Int32 i;
 			for( i=0; i < METWL_NUMOF_SHARED2FILES; i++ )

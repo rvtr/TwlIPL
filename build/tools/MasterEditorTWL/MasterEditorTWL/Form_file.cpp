@@ -76,20 +76,6 @@ void Form1::loadInit(void)
 			this->hSrl->hMrcSpecialList->hSDKVer = gcnew System::UInt32( 0 );
 		}
 
-		// EULA
-		try
-		{
-			u8 eula = System::Byte::Parse( MasterEditorTWL::getXPathText( root, "/init/eula" ) );
-			this->hSrl->hMrcSpecialList->hEULAVer = gcnew System::Byte( eula );
-		}
-		catch ( System::Exception ^ex )
-		{
-			(void)ex;
-			this->errMsg( "設定ファイル中のEULAバージョンが読み込めませんでした。バージョンは0とみなされます。", 
-				          "EULA ver. can't be read from setting file. Therefore it is set by 0." );
-			this->hSrl->hMrcSpecialList->hEULAVer = gcnew System::Byte( 0 );
-		}
-
 		// Shared2File
 		try
 		{
@@ -196,19 +182,8 @@ System::Void Form1::loadSrl( System::String ^filename )
 // SRLの保存
 System::Void Form1::saveSrl( System::String ^filename )
 {
-	// ROM情報をフォームから取得してSRLバイナリに反映させる
-	this->setSrlProperties();
-	// マスタ書類情報をフォームから取得して書類に反映させる -> 必要なし
-	//this->setDeliverableProperties();
-
-	// ファイルをコピー
-	if( !(filename->Equals( this->tboxFile->Text )) )
-	{
-		System::IO::File::Copy( this->tboxFile->Text, filename, true );
-	}
-
 	// コピーしたファイルにROMヘッダを上書き
-	if( this->hSrl->writeToFile( filename ) != ECSrlResult::NOERROR )
+	if( !this->saveSrlCore( filename ) )
 	{
 		this->errMsg( "ROMデータの保存に失敗しました。", "Saving the ROM data file failed." );
 		return;
@@ -219,3 +194,23 @@ System::Void Form1::saveSrl( System::String ^filename )
 	// 再リード
 	this->loadSrl( filename );
 } // saveSrl()
+
+// SRLの一時保存
+System::Boolean Form1::saveSrlCore( System::String ^filename )
+{
+	// ROM情報をフォームから取得してSRLバイナリに反映させる
+	this->setSrlProperties();
+
+	// ファイルをコピー
+	if( !(filename->Equals( this->tboxFile->Text )) )
+	{
+		System::IO::File::Copy( this->tboxFile->Text, filename, true );
+	}
+
+	// コピーしたファイルにROMヘッダを上書き
+	if( this->hSrl->writeToFile( filename ) != ECSrlResult::NOERROR )
+	{
+		return false;
+	}
+	return true;
+}
