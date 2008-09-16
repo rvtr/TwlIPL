@@ -11,6 +11,7 @@
 (2) 使用に必要な機材
 
 ・マスタリングツール実行バイナリ(mastering.TWL.exe)
+・設定ファイル(mastering.TWL.ini) *マスタリングツールを実行するディレクトリに置いてください。
 ・Windows XP搭載PC
 ・cygwin
 ・実行用USBキー(通称 USBドングル)
