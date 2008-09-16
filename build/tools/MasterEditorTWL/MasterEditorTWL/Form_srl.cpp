@@ -143,17 +143,6 @@ void Form1::setSrlForms(void)
 		this->tboxAppType->Text = gcnew System::String( "UNKNOWN" );
 	}
 
-	System::String ^appother = gcnew System::String("");
-	if( *(this->hSrl->hIsLaunch) == false )
-	{
-		appother += "Not-Launch.\r\n";
-	}
-	if( *(this->hSrl->hIsDataOnly) == true )
-	{
-		appother += "DataOnly.\r\n";
-	}
-	this->tboxAppTypeOther->Text = appother;
-
 	// アクセスコントロール その他
 	System::String ^acc = gcnew System::String("");
 	if( *(this->hSrl->hIsCommonClientKey) == true )
@@ -228,7 +217,27 @@ void Form1::setSrlForms(void)
 // SRLの特殊な設定をフォームにセットする(言語切り替えで表示を変えたいので独立させる)
 void Form1::setSrlFormsCaptionEx()
 {
-	// 特殊な設定は備考欄に書き加えておく
+	if( System::String::IsNullOrEmpty( this->tboxFile->Text ) )
+	{
+		return;
+	}
+	System::String ^appother = gcnew System::String("");
+	if( *(this->hSrl->hIsLaunch) == false )
+	{
+		if( this->stripItemJapanese->Checked == true )
+			appother += "ランチャー非表示.\r\n";
+		else
+			appother += "Not Display On the Launcher.\r\n";
+	}
+	if( *(this->hSrl->hIsDataOnly) == true )
+	{
+		if( this->stripItemJapanese->Checked == true )
+			appother += "データ専用.\r\n";
+		else
+			appother += "Data Only.\r\n";
+	}
+	this->tboxAppTypeOther->Text = appother;
+
 	this->tboxCaptionEx->Clear();
 	if( (this->hSrl->hHasDSDLPlaySign != nullptr) && (*(this->hSrl->hHasDSDLPlaySign) == true) )
 	{

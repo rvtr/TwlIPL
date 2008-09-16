@@ -788,6 +788,7 @@ ECSrlResult RCSrl::searchSDKVersion( FILE *fp )
 			System::UInt16 relstep = (System::UInt16)(0xffff & sdkcode);
 			System::String ^str = nullptr;
 			str += (major.ToString() + "." + minor.ToString() + " ");
+			//System::Diagnostics::Debug::WriteLine( "relstep = " + relstep.ToString() );
 
 			// RELSTEPの解釈
 			//   PR1=10100 PR2=10200 ...
@@ -944,6 +945,24 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 		this->hErrorList->Add( gcnew RCMrcError( 
 			"ソフトタイトル", 0x0, 0xb, "末尾の未使用部分には00hを登録してください。",
 			"Game Title", "Please use 00h for an unused part.", false, true ) );
+	}
+
+	result = true;
+	for( i=1; i < TITLE_NAME_MAX; i++ )
+	{
+		char prev = this->pRomHeader->s.title_name[i-1];
+		char curr = this->pRomHeader->s.title_name[i];
+		if( (prev == 0x00) && (0x21 <= curr) && (curr <= 0x5f) )	// 途中に00hがあるとダメ
+		{
+			result = false;
+			break;
+		}
+	}
+	if( !result )
+	{
+		this->hErrorList->Add( gcnew RCMrcError( 
+			"ソフトタイトル", 0x0, 0xb, "スペース部分には20hを登録してください。",
+			"Game Title", "Please use 20h for an space part.", false, true ) );
 	}
 
 	result = true;
@@ -1642,6 +1661,10 @@ void RCSrl::mrcBanner(FILE *fp)
 	u32  end   = (size < 0x1240)?(size):(0x1240);	// NTR互換領域までのときはTWL拡張領域をサーチしない
 	for( i=0x240; i < end; i+=2 )
 	{
+		if( (0x840 <= i) && (i < 0xA40) )	// 中韓のフォント箇所はチェックしない
+		{
+			continue;
+		}
 		u16 index = banner[i+1];
 		u16 indexbak = index;
 		index = (index << 8) + banner[i];

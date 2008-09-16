@@ -94,6 +94,7 @@ namespace MasterEditorTWL
 		property System::String  ^hPEGI_PRT;
 		property System::String  ^hPEGI_BBFC;
 		property System::String  ^hOFLC;
+		property System::String  ^hAppTypeOther;		// ì¡ãLéñçÄ
 
 		// constructor and destructor
 	public:

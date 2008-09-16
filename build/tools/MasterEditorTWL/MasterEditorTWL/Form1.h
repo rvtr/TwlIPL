@@ -3735,18 +3735,18 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 	private:
 		System::Void stripItemEnglish_Click(System::Object^  sender, System::EventArgs^  e)
 		{
-			this->changeEnglish();
 			this->stripItemEnglish->Checked  = true;
 			this->stripItemJapanese->Checked = false;
+			this->changeEnglish();
 			this->updateGrid();
 		}
 
 	private:
 		System::Void stripItemJapanese_Click(System::Object^  sender, System::EventArgs^  e)
 		{
-			this->changeJapanese();
 			this->stripItemEnglish->Checked  = false;
 			this->stripItemJapanese->Checked = true;
+			this->changeJapanese();
 			this->updateGrid();
 		}
 
@@ -3899,10 +3899,12 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 注意書き 
 			{
 				this->sucMsg( 
-					"マスターROMデータは作成されませんが、書類に記載されるCRCは現在の入力を反映して再計算されます。"
-					+ "\nまた、提出確認書に記載されるROMデータファイル名は、提出手順書にしたがい、 \"" + srlfile + "\"となります。",
-					"Re-calculation of CRC code descibed in a submission sheet is based on current input forms, and, "
-					+ "\na ROM data file name discribed in the sheet is \"" + srlfile + "\"."
+					"マスターROMデータは作成されませんが、書類には現在の入力が反映されます。"
+					+ "\n・書類に記載されるCRCは現在の入力を反映して再計算されるため、読み込んだファイルとは異なる場合があります。"
+					+ "\n・提出確認書に記載されるROMデータファイル名は、提出手順書にしたがい、 \"" + srlfile + "\"となります。",
+					"A submission sheet description is based on current input information."
+					+ "\n・CRC code described in the sheet is different from one of input ROM data. "
+					+ "\n・a ROM data file name discribed in the sheet is \"" + srlfile + "\"."
 				);
 			}
 

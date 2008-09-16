@@ -161,6 +161,13 @@ void Form1::setDeliverableProperties(void)
 		this->hDeliv->hCaption += ("(" + this->tboxCaptionEx->Text + ")");
 	}
 
+	// “Áê‚ÈƒAƒvƒŠí•Ê
+	this->hDeliv->hAppTypeOther = this->tboxAppTypeOther->Text;
+	if( this->hDeliv->hAppTypeOther != nullptr )
+	{
+		this->hDeliv->hAppTypeOther->Replace("\r\n","");
+	}
+
 	// ˆê•”‚ÌROMî•ñ‚ğ“o˜^
 	if( this->combBackup->SelectedIndex != (this->combBackup->Items->Count - 1) )
 	{
