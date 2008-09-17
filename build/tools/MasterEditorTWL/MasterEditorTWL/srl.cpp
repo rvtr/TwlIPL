@@ -1240,9 +1240,9 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		{
 			this->hWarnList->Add( gcnew RCMrcError( 
 				"デバッガ動作禁止フラグ", 0x1f, 0x1f, 
-				"デバッガ上で動作可能な設定になっています。デバッガ向けソフトとしてROMをリリースする場合にはセキュリティ上の問題がないかご確認ください。",
+				"デバッガ上で解析可能な設定になっています。デバッガ向けソフトとしてROMをリリースする場合にはセキュリティ上の問題がないかご確認ください。",
 				"Disable Launch on Debugger Flag", 
-				"This ROM is launched on the debugger. If the ROM is released for the debugger, please check the security settings.", 
+				"This ROM can be analyzed on the debugger. If the ROM is released for the debugger, please check the security settings.", 
 				false, true ) );
 		}
 	}

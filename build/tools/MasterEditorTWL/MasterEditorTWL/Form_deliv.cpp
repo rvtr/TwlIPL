@@ -38,7 +38,7 @@ void Form1::setDeliverableProperties(void)
 		{
 			this->hDeliv->hProductCode2Foreign += ("/" + this->tboxProductCode2Foreign2->Text);
 		}
-		if( !System::String::IsNullOrEmpty( this->tboxProductCode2Foreign2->Text ) )
+		if( !System::String::IsNullOrEmpty( this->tboxProductCode2Foreign3->Text ) )
 		{
 			this->hDeliv->hProductCode2Foreign += ("/" + this->tboxProductCode2Foreign3->Text);
 		}
@@ -68,7 +68,7 @@ void Form1::setDeliverableProperties(void)
 	}
 	if( this->hDeliv->hSDK == nullptr )
 	{
-		this->hDeliv->hSDK = gcnew System::String( "Undefined" );
+		this->hDeliv->hSDK = gcnew System::String( "" );
 	}
 	// ’ño•û–@
 	if( this->rSubmitPost->Checked == true )
