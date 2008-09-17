@@ -3832,7 +3832,14 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				}
 				else
 				{
-					filename = dlg->SelectedPath + filename;
+					if( !dlg->SelectedPath->EndsWith("\\") )
+					{
+						filename = dlg->SelectedPath + "\\" + filename;
+					}
+					else
+					{
+						filename = dlg->SelectedPath + filename;
+					}
 				}
 			}
 			this->saveSrl( filename );
@@ -4026,7 +4033,14 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				}
 				else
 				{
-					srlfile = dlg->SelectedPath + srlfile;
+					if( !dlg->SelectedPath->EndsWith("\\") )
+					{
+						srlfile = dlg->SelectedPath + "\\" + srlfile;
+					}
+					else
+					{
+						srlfile = dlg->SelectedPath + srlfile;
+					}
 				}
 			}
 
