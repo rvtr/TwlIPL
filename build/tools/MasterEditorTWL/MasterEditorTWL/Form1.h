@@ -1346,8 +1346,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			this->combPEGI_BBFC->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combPEGI_BBFC->FormattingEnabled = true;
-			this->combPEGI_BBFC->Items->AddRange(gcnew cli::array< System::Object^  >(10) {L"年齢制限なし", L"3歳以上", L"4歳以上推奨", L"7歳以上", L"8歳以上推奨", 
-				L"12歳以上", L"15歳以上", L"16歳以上", L"18歳以上", L"審査中"});
+			this->combPEGI_BBFC->Items->AddRange(gcnew cli::array< System::Object^  >(10) {L"年齢制限なし(全年齢)", L"3歳以上", L"4歳以上推奨", L"7歳以上", 
+				L"8歳以上推奨", L"12歳以上", L"15歳以上", L"16歳以上", L"18歳以上", L"審査中"});
 			this->combPEGI_BBFC->Location = System::Drawing::Point(152, 205);
 			this->combPEGI_BBFC->Name = L"combPEGI_BBFC";
 			this->combPEGI_BBFC->Size = System::Drawing::Size(204, 20);
@@ -1357,8 +1357,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			this->combPEGI_PRT->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combPEGI_PRT->FormattingEnabled = true;
-			this->combPEGI_PRT->Items->AddRange(gcnew cli::array< System::Object^  >(7) {L"年齢制限なし", L"4歳以上", L"6歳以上", L"12歳以上", L"16歳以上", 
-				L"18歳以上", L"審査中"});
+			this->combPEGI_PRT->Items->AddRange(gcnew cli::array< System::Object^  >(7) {L"年齢制限なし(全年齢)", L"4歳以上", L"6歳以上", L"12歳以上", 
+				L"16歳以上", L"18歳以上", L"審査中"});
 			this->combPEGI_PRT->Location = System::Drawing::Point(152, 179);
 			this->combPEGI_PRT->Name = L"combPEGI_PRT";
 			this->combPEGI_PRT->Size = System::Drawing::Size(204, 20);
@@ -1368,7 +1368,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			this->combPEGI->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combPEGI->FormattingEnabled = true;
-			this->combPEGI->Items->AddRange(gcnew cli::array< System::Object^  >(7) {L"年齢制限なし", L"3歳以上", L"7歳以上", L"12歳以上", L"16歳以上", 
+			this->combPEGI->Items->AddRange(gcnew cli::array< System::Object^  >(7) {L"年齢制限なし(全年齢)", L"3歳以上", L"7歳以上", L"12歳以上", L"16歳以上", 
 				L"18歳以上", L"審査中"});
 			this->combPEGI->Location = System::Drawing::Point(152, 153);
 			this->combPEGI->Name = L"combPEGI";
@@ -1390,7 +1390,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			this->combESRB->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combESRB->FormattingEnabled = true;
-			this->combESRB->Items->AddRange(gcnew cli::array< System::Object^  >(7) {L"年齢制限なし", L"EC (3歳以上)", L"E (6歳以上)", L"E10+ (10歳以上)", 
+			this->combESRB->Items->AddRange(gcnew cli::array< System::Object^  >(7) {L"年齢制限なし(全年齢)", L"EC (3歳以上)", L"E (6歳以上)", L"E10+ (10歳以上)", 
 				L"T (13歳以上)", L"M (17歳以上)", L"審査中"});
 			this->combESRB->Location = System::Drawing::Point(152, 101);
 			this->combESRB->Name = L"combESRB";

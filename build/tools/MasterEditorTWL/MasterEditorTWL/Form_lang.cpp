@@ -199,7 +199,7 @@ void Form1::changeJapanese(void)
 	index = this->combESRB->SelectedIndex;
 	this->combESRB->Items->Clear();
 	this->combESRB->Items->AddRange(gcnew cli::array< System::Object^  >(7) 
-		{L"”N—î§ŒÀ‚È‚µ", L"EC (3ÎˆÈã)", L"E (6ÎˆÈã)", L"E10+ (10ÎˆÈã)", L"T (13ÎˆÈã)", L"M (17ÎˆÈã)", L"R¸’†"});
+		{L"”N—î§ŒÀ‚È‚µ(‘S”N—î)", L"EC (3ÎˆÈã)", L"E (6ÎˆÈã)", L"E10+ (10ÎˆÈã)", L"T (13ÎˆÈã)", L"M (17ÎˆÈã)", L"R¸’†"});
 	this->combESRB->SelectedIndex = index;
 
 	index = this->combUSK->SelectedIndex;
@@ -211,19 +211,19 @@ void Form1::changeJapanese(void)
 	index = this->combPEGI->SelectedIndex;
 	this->combPEGI->Items->Clear();
 	this->combPEGI->Items->AddRange(gcnew cli::array< System::Object^  >(7)
-		{L"”N—î§ŒÀ‚È‚µ", L"3ÎˆÈã", L"7ÎˆÈã", L"12ÎˆÈã", L"16ÎˆÈã", L"18ÎˆÈã", L"R¸’†"});
+		{L"”N—î§ŒÀ‚È‚µ(‘S”N—î)", L"3ÎˆÈã", L"7ÎˆÈã", L"12ÎˆÈã", L"16ÎˆÈã", L"18ÎˆÈã", L"R¸’†"});
 	this->combPEGI->SelectedIndex = index;
 
 	index = this->combPEGI_PRT->SelectedIndex;
 	this->combPEGI_PRT->Items->Clear();
 	this->combPEGI_PRT->Items->AddRange(gcnew cli::array< System::Object^  >(7)
-		{L"”N—î§ŒÀ‚È‚µ", L"4ÎˆÈã", L"6ÎˆÈã", L"12ÎˆÈã", L"16ÎˆÈã", L"18ÎˆÈã", L"R¸’†"});
+		{L"”N—î§ŒÀ‚È‚µ(‘S”N—î)", L"4ÎˆÈã", L"6ÎˆÈã", L"12ÎˆÈã", L"16ÎˆÈã", L"18ÎˆÈã", L"R¸’†"});
 	this->combPEGI_PRT->SelectedIndex = index;
 
 	index = this->combPEGI_BBFC->SelectedIndex;
 	this->combPEGI_BBFC->Items->Clear();
 	this->combPEGI_BBFC->Items->AddRange(gcnew cli::array< System::Object^  >(10)
-		{L"”N—î§ŒÀ‚È‚µ", L"3ÎˆÈã", L"4ÎˆÈã„§", L"7ÎˆÈã", L"8ÎˆÈã„§", L"12ÎˆÈã", L"15ÎˆÈã", L"16ÎˆÈã", L"18ÎˆÈã", L"R¸’†"});
+		{L"”N—î§ŒÀ‚È‚µ(‘S”N—î)", L"3ÎˆÈã", L"4ÎˆÈã„§", L"7ÎˆÈã", L"8ÎˆÈã„§", L"12ÎˆÈã", L"15ÎˆÈã", L"16ÎˆÈã", L"18ÎˆÈã", L"R¸’†"});
 	this->combPEGI_BBFC->SelectedIndex = index;
 
 	index = this->combOFLC->SelectedIndex;

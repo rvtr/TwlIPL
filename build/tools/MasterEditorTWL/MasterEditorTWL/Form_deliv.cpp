@@ -189,7 +189,7 @@ void Form1::setDeliverableProperties(void)
 	if( this->combCERO->SelectedIndex < 0 )
 	{
 		if( this->stripItemJapanese->Checked == true )
-			this->hDeliv->hCERO = gcnew System::String("未定義");
+			this->hDeliv->hCERO = gcnew System::String("不可");
 		else
 			this->hDeliv->hCERO = gcnew System::String("Undefined");
 	}
@@ -200,7 +200,7 @@ void Form1::setDeliverableProperties(void)
 	if( this->combESRB->SelectedIndex < 0 )
 	{
 		if( this->stripItemJapanese->Checked == true )
-			this->hDeliv->hESRB = gcnew System::String("未定義");
+			this->hDeliv->hESRB = gcnew System::String("不可");
 		else
 			this->hDeliv->hESRB = gcnew System::String("Undefined");
 	}
@@ -211,7 +211,7 @@ void Form1::setDeliverableProperties(void)
 	if( this->combUSK->SelectedIndex < 0 )
 	{
 		if( this->stripItemJapanese->Checked == true )
-			this->hDeliv->hUSK = gcnew System::String("未定義");
+			this->hDeliv->hUSK = gcnew System::String("不可");
 		else
 			this->hDeliv->hUSK = gcnew System::String("Undefined");
 	}
@@ -222,7 +222,7 @@ void Form1::setDeliverableProperties(void)
 	if( this->combPEGI->SelectedIndex < 0 )
 	{
 		if( this->stripItemJapanese->Checked == true )
-			this->hDeliv->hPEGI = gcnew System::String("未定義");
+			this->hDeliv->hPEGI = gcnew System::String("不可");
 		else
 			this->hDeliv->hPEGI = gcnew System::String("Undefined");
 	}
@@ -233,7 +233,7 @@ void Form1::setDeliverableProperties(void)
 	if( this->combPEGI_PRT->SelectedIndex < 0 )
 	{
 		if( this->stripItemJapanese->Checked == true )
-			this->hDeliv->hPEGI_PRT = gcnew System::String("未定義");
+			this->hDeliv->hPEGI_PRT = gcnew System::String("不可");
 		else
 			this->hDeliv->hPEGI_PRT = gcnew System::String("Undefined");
 	}
@@ -244,7 +244,7 @@ void Form1::setDeliverableProperties(void)
 	if( this->combPEGI_BBFC->SelectedIndex < 0 )
 	{
 		if( this->stripItemJapanese->Checked == true )
-			this->hDeliv->hPEGI_BBFC = gcnew System::String("未定義");
+			this->hDeliv->hPEGI_BBFC = gcnew System::String("不可");
 		else
 			this->hDeliv->hPEGI_BBFC = gcnew System::String("Undefined");
 	}
@@ -255,7 +255,7 @@ void Form1::setDeliverableProperties(void)
 	if( this->combOFLC->SelectedIndex < 0 )
 	{
 		if( this->stripItemJapanese->Checked == true )
-			this->hDeliv->hOFLC = gcnew System::String("未定義");
+			this->hDeliv->hOFLC = gcnew System::String("不可");
 		else
 			this->hDeliv->hOFLC = gcnew System::String("Undefined");
 	}
