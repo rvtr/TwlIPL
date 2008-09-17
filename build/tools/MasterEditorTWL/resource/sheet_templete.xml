@@ -2143,8 +2143,8 @@
    <Column ss:StyleID="s21" ss:AutoFitWidth="0" ss:Width="5.25" ss:Span="67"/>
    <Row ss:AutoFitHeight="0" ss:Height="18">
     <Cell ss:Index="3" ss:MergeAcross="97" ss:StyleID="s23"><PhoneticText
-      xmlns="urn:schemas-microsoft-com:office:excel">テイシュツカクニンショネンガツカハン</PhoneticText><Data
-      ss:Type="String">ニンテンドーTWLマスターROM提出確認書（2008年9月8日版）</Data></Cell>
+      xmlns="urn:schemas-microsoft-com:office:excel">テイシュツカクニンショネンガツニチハン</PhoneticText><Data
+      ss:Type="String">ニンテンドーTWLマスターROM提出確認書（2008年9月17日版）</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="18">
     <Cell ss:Index="3" ss:StyleID="s24"><PhoneticText
