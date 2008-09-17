@@ -735,9 +735,9 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 		/// </summary>
 		void InitializeComponent(void)
 		{
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle1 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle2 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle3 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle7 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle8 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle9 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -1349,6 +1349,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->combPEGI_BBFC->Items->AddRange(gcnew cli::array< System::Object^  >(10) {L"年齢制限なし(全年齢)", L"3歳以上", L"4歳以上推奨", L"7歳以上", 
 				L"8歳以上推奨", L"12歳以上", L"15歳以上", L"16歳以上", L"18歳以上", L"審査中"});
 			this->combPEGI_BBFC->Location = System::Drawing::Point(152, 205);
+			this->combPEGI_BBFC->MaxDropDownItems = 10;
 			this->combPEGI_BBFC->Name = L"combPEGI_BBFC";
 			this->combPEGI_BBFC->Size = System::Drawing::Size(204, 20);
 			this->combPEGI_BBFC->TabIndex = 15;
@@ -3019,7 +3020,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			this->rIsNoIcon->AutoSize = true;
 			this->rIsNoIcon->Checked = true;
-			this->rIsNoIcon->Location = System::Drawing::Point(8, 79);
+			this->rIsNoIcon->Location = System::Drawing::Point(8, 25);
 			this->rIsNoIcon->Name = L"rIsNoIcon";
 			this->rIsNoIcon->Size = System::Drawing::Size(120, 16);
 			this->rIsNoIcon->TabIndex = 6;
@@ -3030,7 +3031,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// rIsWiFiIcon
 			// 
 			this->rIsWiFiIcon->AutoSize = true;
-			this->rIsWiFiIcon->Location = System::Drawing::Point(8, 53);
+			this->rIsWiFiIcon->Location = System::Drawing::Point(8, 77);
 			this->rIsWiFiIcon->Name = L"rIsWiFiIcon";
 			this->rIsWiFiIcon->Size = System::Drawing::Size(134, 16);
 			this->rIsWiFiIcon->TabIndex = 5;
@@ -3040,7 +3041,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// rIsWirelessIcon
 			// 
 			this->rIsWirelessIcon->AutoSize = true;
-			this->rIsWirelessIcon->Location = System::Drawing::Point(8, 27);
+			this->rIsWirelessIcon->Location = System::Drawing::Point(8, 51);
 			this->rIsWirelessIcon->Name = L"rIsWirelessIcon";
 			this->rIsWirelessIcon->Size = System::Drawing::Size(167, 16);
 			this->rIsWirelessIcon->TabIndex = 4;
@@ -3258,15 +3259,15 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->gridWarn->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridWarn->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colWarnName, 
 				this->colWarnBegin, this->colWarnEnd, this->colWarnCause});
-			dataGridViewCellStyle1->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle1->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle1->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle7->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle7->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle7->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle1->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle1->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle1->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle1->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle1;
+			dataGridViewCellStyle7->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle7->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle7->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle7->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle7;
 			this->gridWarn->GridColor = System::Drawing::SystemColors::Control;
 			this->gridWarn->Location = System::Drawing::Point(24, 228);
 			this->gridWarn->Name = L"gridWarn";
@@ -3306,22 +3307,22 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			// gridError
 			// 
-			dataGridViewCellStyle2->BackColor = System::Drawing::Color::White;
-			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle2;
+			dataGridViewCellStyle8->BackColor = System::Drawing::Color::White;
+			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle8;
 			this->gridError->AutoSizeRowsMode = System::Windows::Forms::DataGridViewAutoSizeRowsMode::AllCellsExceptHeaders;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
 				this->colErrorBegin, this->colErrorEnd, this->colErrorCause});
-			dataGridViewCellStyle3->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle3->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle3->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle9->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle9->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle9->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle3->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle3->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle3->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle3->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridError->DefaultCellStyle = dataGridViewCellStyle3;
+			dataGridViewCellStyle9->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle9->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle9->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle9->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridError->DefaultCellStyle = dataGridViewCellStyle9;
 			this->gridError->GridColor = System::Drawing::SystemColors::Control;
 			this->gridError->Location = System::Drawing::Point(24, 99);
 			this->gridError->Name = L"gridError";
@@ -3826,7 +3827,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 
 				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
 				{
-					this->errMsg( "フォルダの選択がキャンセルされましたので提出確認書は作成されません。", 
+					this->errMsg( "フォルダの選択がキャンセルされましたのでマスターROMは作成されません。", 
 								  "A submission sheet can not be made, since selecting folder is canceled." );
 					return;
 				}
@@ -3842,7 +3843,17 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 					}
 				}
 			}
-			this->saveSrl( filename );
+			try
+			{
+				this->saveSrl( filename );
+			}
+			catch( System::Exception ^ex )
+			{
+				(void)ex;
+				this->errMsg( "マスターROMの保存に失敗しました。",
+							  "Making a master ROM failed." );
+				return;
+			}
 		} //stripItemMasterRom_Click()
 
 	private:
@@ -3878,7 +3889,17 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 
 			// CRCを算出したいので一時的なファイルにSRLを保存する
 			System::String ^tmpfile = "./tmp.srl";
-			this->saveSrlCore( tmpfile );
+			try
+			{
+				this->saveSrlCore( tmpfile );
+			}
+			catch( System::Exception ^ex )
+			{
+				(void)ex;
+				this->errMsg( "CRCの計算に失敗しました。提出確認書の作成はキャンセルされます。", 
+							  "Calc CRC is failed. Therefore, Making a submission sheet is canceled." );
+				return;
+			}
 			u16  crc;			// SRL全体のCRCを計算する(書類に記述するため)
 			if( !getWholeCRCInFile( tmpfile, &crc ) )
 			{
@@ -3910,7 +3931,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 					+ "\n・書類に記載されるCRCは現在の入力を反映して再計算されるため、読み込んだファイルとは異なる場合があります。"
 					+ "\n・提出確認書に記載されるROMデータファイル名は、提出手順書にしたがい、 \"" + srlfile + "\"となります。",
 					"A submission sheet description is based on current input information."
-					+ "\n・CRC code described in the sheet is different from one of input ROM data. "
+					+ "\n・CRC code described in the sheet may be different from one of input ROM data. "
 					+ "\n・a ROM data file name discribed in the sheet is \"" + srlfile + "\"."
 				);
 			}
@@ -3949,6 +3970,11 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 							          "Since a templete of the submission sheet can't be opened, making the sheet is failed." );
 					break;
 
+					case ECDeliverableResult::ERROR_FILE_WRITE:
+						this->errMsg( "提出確認書にデータを書き込みできませんでした。同名ファイルがすでに開かれていないかご確認ください。", 
+							          "Writing data into a submission sheet failed. Please check that the file has been opened already." );
+					break;
+
 					default:
 						this->errMsg( "提出確認書の作成に失敗しました。", "Making the submission sheet is failed." );
 					break;
@@ -3959,10 +3985,11 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			ECSrlResult r = this->hSrl->readFromFile( srlfullpath );	// フォームには反映しない
 			if( r != ECSrlResult::NOERROR )
 			{
-				this->errMsg( "ROMデータファイルの読み込みに失敗しました。\n再度「ROMデータを開く」を選択してROMデータを読み出してください。", 
+				this->errMsg( "ROMデータファイルの再読み込みに失敗しました。\n再度「ROMデータを開く」を選択してROMデータを読み出してください。", 
 							  "Reading the ROM data file failed. \nPlease read a ROM data file again, with \"Open a ROM data file\"" );
 				return;
 			}
+			this->sucMsg( "提出確認書の保存が成功しました。", "Making the submission sheet file succeeded." );
 		} //stripItemSheetOnly_Click()
 
 	private:
@@ -4077,7 +4104,17 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->setDeliverableProperties();
 
 			// SRLを更新
-			this->saveSrl( srlfile );
+			try
+			{
+				this->saveSrl( srlfile );
+			}
+			catch( System::Exception ^ex )
+			{
+				(void)ex;
+				this->errMsg( "マスターROMの保存に失敗しました。提出確認書は作成されません。",
+							  "Making a master ROM failed. And a submission sheet is not made." );
+				return;
+			}
 			u16  crc;			// SRL全体のCRCを計算する(書類に記述するため)
 			if( !getWholeCRCInFile( srlfile, &crc ) )
 			{
@@ -4102,6 +4139,11 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 					case ECDeliverableResult::ERROR_FILE_OPEN:
 						this->errMsg( "提出確認書のテンプレートが開けなかったため、提出確認書の作成に失敗しました。", 
 							          "Since a templete of the submission sheet can't be opened, making the sheet is failed." );
+					break;
+
+					case ECDeliverableResult::ERROR_FILE_WRITE:
+						this->errMsg( "提出確認書にデータを書き込みできませんでした。同名ファイルがすでに開かれていないかご確認ください。", 
+							          "Writing data into a submission sheet failed. Please check that the file has been opened already." );
 					break;
 
 					default:

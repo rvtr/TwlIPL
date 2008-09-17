@@ -33,7 +33,7 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 	{
 		doc->Load( "../resource/sheet_templete.xml" );
 	}
-	catch ( System::Exception ^ex )	// ‰ü‚´‚ñ‚³‚ê‚Ä‚¢‚½‚Æ‚«
+	catch ( System::Exception ^ex )
 	{
 		(void)ex;
 		return ECDeliverableResult::ERROR_FILE_OPEN;
@@ -558,7 +558,15 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 		} // if( (node->FirstChild != nullptr) && (node->FirstChild->Value != nullptr) )
 	} // for( i=0; i < list->Count; i++ )
 
-	doc->Save( hFilename );
+	try
+	{
+		doc->Save( hFilename );
+	}
+	catch ( System::Exception ^ex )
+	{
+		(void)ex;
+		return ECDeliverableResult::ERROR_FILE_WRITE;
+	}
 
 	return ECDeliverableResult::NOERROR;
 } // ECDeliverableResult RCDeliverable::writeSpreadsheet(System::String ^hFilename, MasterEditorTWL::RCSrl ^hSrl)
