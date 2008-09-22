@@ -560,7 +560,7 @@ private: System::Windows::Forms::RadioButton^  rIsWiFiIcon;
 
 private: System::Windows::Forms::RadioButton^  rIsWirelessIcon;
 private: System::Windows::Forms::RadioButton^  rIsNoIcon;
-private: System::Windows::Forms::ToolStripMenuItem^  stripItemSheetOnly;
+
 
 
 
@@ -735,9 +735,9 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 		/// </summary>
 		void InitializeComponent(void)
 		{
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle7 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle8 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle9 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle1 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle2 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle3 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -923,7 +923,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->stripMaster = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemSheet = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemMasterRom = (gcnew System::Windows::Forms::ToolStripMenuItem());
-			this->stripItemSheetOnly = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripLang = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemEnglish = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemJapanese = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -2785,8 +2784,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			// stripMaster
 			// 
-			this->stripMaster->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {this->stripItemSheet, 
-				this->stripItemMasterRom, this->stripItemSheetOnly});
+			this->stripMaster->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {this->stripItemSheet, 
+				this->stripItemMasterRom});
 			this->stripMaster->Name = L"stripMaster";
 			this->stripMaster->Size = System::Drawing::Size(53, 20);
 			this->stripMaster->Text = L"マスター";
@@ -2804,13 +2803,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->stripItemMasterRom->Size = System::Drawing::Size(232, 22);
 			this->stripItemMasterRom->Text = L"マスターROMのみを作成";
 			this->stripItemMasterRom->Click += gcnew System::EventHandler(this, &Form1::stripItemMasterRom_Click);
-			// 
-			// stripItemSheetOnly
-			// 
-			this->stripItemSheetOnly->Name = L"stripItemSheetOnly";
-			this->stripItemSheetOnly->Size = System::Drawing::Size(232, 22);
-			this->stripItemSheetOnly->Text = L"提出確認書のみを作成";
-			this->stripItemSheetOnly->Click += gcnew System::EventHandler(this, &Form1::stripItemSheetOnly_Click);
 			// 
 			// stripLang
 			// 
@@ -3259,15 +3251,15 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->gridWarn->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridWarn->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colWarnName, 
 				this->colWarnBegin, this->colWarnEnd, this->colWarnCause});
-			dataGridViewCellStyle7->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle7->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle7->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle1->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle1->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle1->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle7->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle7->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle7->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle7->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle7;
+			dataGridViewCellStyle1->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle1->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle1->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle1->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle1;
 			this->gridWarn->GridColor = System::Drawing::SystemColors::Control;
 			this->gridWarn->Location = System::Drawing::Point(24, 228);
 			this->gridWarn->Name = L"gridWarn";
@@ -3307,22 +3299,22 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			// gridError
 			// 
-			dataGridViewCellStyle8->BackColor = System::Drawing::Color::White;
-			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle8;
+			dataGridViewCellStyle2->BackColor = System::Drawing::Color::White;
+			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle2;
 			this->gridError->AutoSizeRowsMode = System::Windows::Forms::DataGridViewAutoSizeRowsMode::AllCellsExceptHeaders;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
 				this->colErrorBegin, this->colErrorEnd, this->colErrorCause});
-			dataGridViewCellStyle9->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle9->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle9->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle3->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle3->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle3->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle9->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle9->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle9->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle9->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridError->DefaultCellStyle = dataGridViewCellStyle9;
+			dataGridViewCellStyle3->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle3->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle3->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle3->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridError->DefaultCellStyle = dataGridViewCellStyle3;
 			this->gridError->GridColor = System::Drawing::SystemColors::Control;
 			this->gridError->Location = System::Drawing::Point(24, 99);
 			this->gridError->Name = L"gridError";
@@ -3855,142 +3847,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				return;
 			}
 		} //stripItemMasterRom_Click()
-
-	private:
-		System::Void stripItemSheetOnly_Click(System::Object^  sender, System::EventArgs^  e)
-		{
-			// SRLが読み込まれていないときにはリードさせない
-			if( System::String::IsNullOrEmpty( this->tboxFile->Text ) )
-			{
-				this->errMsg( "ROMデータファイルがオープンされていません。", "ROM file has not opened yet." );
-				return;
-			}
-			System::String ^srlfullpath = this->tboxFile->Text;
-
-			// SRLと書類の両方のフォーム入力をチェックする
-			this->hErrorList->Clear();
-			this->hWarnList->Clear();
-			if( this->checkSrlForms() == false )
-			{
-				this->errMsg( "ROMデータに不正な設定があるため提出確認書の作成ができません。",
-							  "A ROM data and a submission sheet can't be saved, since it has illegal info." );
-				return;
-			}
-			if( this->checkDeliverableForms() == false )
-			{
-				this->errMsg( "入力情報に不足があるため提出確認書を作成できません。",
-							  "Making a submission sheet can't be done, since your input is not enough." );
-				return;
-			}
-
-			// マスタ提出確認書に必要な情報をフォームから取得して更新
-			this->setSrlProperties();	// 先にSrlを更新しておく(この時点ではROMヘッダには反映されない)
-			this->setDeliverableProperties();
-
-			// CRCを算出したいので一時的なファイルにSRLを保存する
-			System::String ^tmpfile = "./tmp.srl";
-			try
-			{
-				this->saveSrlCore( tmpfile );
-			}
-			catch( System::Exception ^ex )
-			{
-				(void)ex;
-				this->errMsg( "CRCの計算に失敗しました。提出確認書の作成はキャンセルされます。", 
-							  "Calc CRC is failed. Therefore, Making a submission sheet is canceled." );
-				return;
-			}
-			u16  crc;			// SRL全体のCRCを計算する(書類に記述するため)
-			if( !getWholeCRCInFile( tmpfile, &crc ) )
-			{
-				this->errMsg( "CRCの計算に失敗しました。提出確認書の作成はキャンセルされます。", 
-							  "Calc CRC is failed. Therefore, Making a submission sheet is canceled." );
-				return;
-			}
-			System::UInt16 ^hcrc = gcnew System::UInt16( crc );
-			System::IO::File::Delete( tmpfile );
-
-			// 書類に記載するSRL名を提出手順書に従わせる
-			System::String ^srlfile;
-			{
-				srlfile = gcnew System::String("");
-
-				if( this->cboxRemasterVerE->Checked == true )
-				{
-					srlfile = "T" + this->hSrl->hGameCode + "E" + this->numSubmitVersion->Value.ToString() + ".SRL";
-				}
-				else
-				{
-					srlfile = "T" + this->hSrl->hGameCode + this->hSrl->hRomVersion->ToString() + this->numSubmitVersion->Value.ToString() + ".SRL";
-				}
-			}
-			// 注意書き 
-			{
-				this->sucMsg( 
-					"マスターROMデータは作成されませんが、書類には現在の入力が反映されます。"
-					+ "\n・書類に記載されるCRCは現在の入力を反映して再計算されるため、読み込んだファイルとは異なる場合があります。"
-					+ "\n・提出確認書に記載されるROMデータファイル名は、提出手順書にしたがい、 \"" + srlfile + "\"となります。",
-					"A submission sheet description is based on current input information."
-					+ "\n・CRC code described in the sheet may be different from one of input ROM data. "
-					+ "\n・a ROM data file name discribed in the sheet is \"" + srlfile + "\"."
-				);
-			}
-
-			// ダイアログで書類のファイルパスを決定
-			System::String ^delivfile;
-			{
-				System::Windows::Forms::SaveFileDialog ^dlg = gcnew (SaveFileDialog);
-
-				dlg->InitialDirectory = "c:\\";
-				dlg->Filter      = "xml形式 (*.xml)|*.xml";
-				dlg->FilterIndex = 1;
-				dlg->RestoreDirectory = true;
-
-				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
-				{
-					this->errMsg( "提出確認書の作成がキャンセルされました。", "Making a submission sheet is canceled." );
-					return;
-				}
-				delivfile = dlg->FileName;
-				if( !(dlg->FileName->EndsWith( ".xml" )) )
-				{
-					delivfile += ".xml";
-				}
-			}
-
-			// 書類作成
-			//result = this->hDeliv->write( delivfile, this->hSrl, hcrc, srlfile, !(this->stripItemJapanese->Checked) );
-			ECDeliverableResult  result = this->hDeliv->writeSpreadsheet( delivfile, this->hSrl, hcrc, srlfile, !(this->stripItemJapanese->Checked) );
-			if( result != ECDeliverableResult::NOERROR )
-			{
-				switch( result )
-				{
-					case ECDeliverableResult::ERROR_FILE_OPEN:
-						this->errMsg( "提出確認書のテンプレートが開けなかったため、提出確認書の作成に失敗しました。", 
-							          "Since a templete of the submission sheet can't be opened, making the sheet is failed." );
-					break;
-
-					case ECDeliverableResult::ERROR_FILE_WRITE:
-						this->errMsg( "提出確認書にデータを書き込みできませんでした。同名ファイルがすでに開かれていないかご確認ください。", 
-							          "Writing data into a submission sheet failed. Please check that the file has been opened already." );
-					break;
-
-					default:
-						this->errMsg( "提出確認書の作成に失敗しました。", "Making the submission sheet is failed." );
-					break;
-				}
-				return;
-			}
-			// SRLクラスのプロパティを元に戻すため再リード
-			ECSrlResult r = this->hSrl->readFromFile( srlfullpath );	// フォームには反映しない
-			if( r != ECSrlResult::NOERROR )
-			{
-				this->errMsg( "ROMデータファイルの再読み込みに失敗しました。\n再度「ROMデータを開く」を選択してROMデータを読み出してください。", 
-							  "Reading the ROM data file failed. \nPlease read a ROM data file again, with \"Open a ROM data file\"" );
-				return;
-			}
-			this->sucMsg( "提出確認書の保存が成功しました。", "Making the submission sheet file succeeded." );
-		} //stripItemSheetOnly_Click()
 
 	private:
 		System::Void stripItemSheet_Click(System::Object^  sender, System::EventArgs^  e)

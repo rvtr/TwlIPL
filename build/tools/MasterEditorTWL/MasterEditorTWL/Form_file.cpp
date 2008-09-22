@@ -48,6 +48,14 @@ void Form1::loadInit(void)
 		this->readOnly();
 	}
 
+	// <lang>タグ
+	if( MasterEditorTWL::isXmlEqual( root, "lang", "E" ) )
+	{
+		this->stripItemEnglish->Checked  = true;
+		this->stripItemJapanese->Checked = false;
+		this->changeEnglish();
+	}
+
 	// <output>タグ
 	System::Boolean bXML = MasterEditorTWL::isXmlEqual( root, "output", "XML" );
 

@@ -48,7 +48,6 @@ void Form1::changeJapanese(void)
 	this->stripMaster->Text        = gcnew System::String( "マスター" );
 	this->stripItemSheet->Text     = gcnew System::String( "提出確認書とマスターROMを作成する" );
 	this->stripItemMasterRom->Text = gcnew System::String( "マスターROMのみを作成する" );
-	this->stripItemSheetOnly->Text = gcnew System::String( "提出確認書のみを作成する" );
 
 	// 入力ファイル
 	this->labFile->Text = gcnew System::String( "ROMデータファイル" );
@@ -271,7 +270,6 @@ void  Form1::changeEnglish(void)
 	this->stripMaster->Text        = gcnew System::String( "Master" );
 	this->stripItemSheet->Text     = gcnew System::String( "Make a submission sheet and a master ROM data file" );
 	this->stripItemMasterRom->Text = gcnew System::String( "Make a master ROM data file only" );
-	this->stripItemSheetOnly->Text = gcnew System::String( "Make a submission sheet only" );
 
 	// 入力ファイル
 	this->labFile->Text = gcnew System::String( "ROM Data File" );
