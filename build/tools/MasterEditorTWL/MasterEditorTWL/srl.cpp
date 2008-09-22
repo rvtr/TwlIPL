@@ -1158,6 +1158,16 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 	}
 #endif
 
+	if( *this->hIsOldDevEncrypt && *this->hHasDSDLPlaySign )
+	{
+		this->hErrorList->Add( gcnew RCMrcError( 
+			"旧開発用暗号フラグ", 0x1c, 0x1c,
+			"このROMはクローンブート対応アプリですが、製品用本体ではクローンブートができなくなります。",
+			"Old Development Flag",
+			"This ROM supports Clone-Boot, and the flag is old type. Therefore, Clone-Boot can't be done.",
+			false, true ) );
+	}
+
 	// 値チェック
 
 	fseek( fp, 0, SEEK_END );
@@ -1189,7 +1199,7 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 				"実ファイルサイズ", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, "中途半端な値です。通常では2のべき乗の値です。",
 				"Actual File Size", "Invalid size. This size is usually power of 2.", false, true ) );
 		}
-		// 1Gbit以上のときの最終領域
+		// 1Gbit以上のときの最終領域が固定値かどうか
 		this->mrcPadding( fp );
 
 		// セグメント3のCRC
@@ -1408,6 +1418,18 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 				"Access Control Info.", "Sizes of shared2 files is setting, but using them is not enabled.", false, true ) );
 		}
 	}
+	if( *this->hIsMediaNand == false )	// カードアプリのときのみ
+	{
+		if( (this->pRomHeader->s.access_control.nand_access != 0) || (this->pRomHeader->s.access_control.sd_card_access != 0) )
+		{
+			this->hErrorList->Add( gcnew RCMrcError( 
+				"アクセスコントロール情報", 0x1b4, 0x1b7,
+				"ゲームカード用ソフトは、NANDフラッシュとSDカードへアクセスできません。アクセスが必要な場合は、弊社業務部にまでご連絡ください。",
+				"Access Control Info.",
+				"Game soft for Game Card does'nt access to NAND frash memory and SD Card. If the soft wish to access them, please contact us.",
+				false, true ) );
+		}
+	}
 
 	if( (*this->hIsWiFiIcon == true) && (*this->hIsWirelessIcon == true) )
 	{
@@ -1470,16 +1492,6 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 	}
 
 	// ROMヘッダ以外の領域のチェック
-
-	if( *this->hIsOldDevEncrypt && *this->hHasDSDLPlaySign )
-	{
-		this->hErrorList->Add( gcnew RCMrcError( 
-			"旧開発用暗号フラグ", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
-			"このROMはクローンブート対応アプリですが、製品用本体ではクローンブートができなくなります。",
-			"Old Development Flag",
-			"This ROM supports Clone-Boot, and the flag is old type. Therefore, Clone-Boot is ",
-			false, true ) );
-	}
 
 	this->mrcBanner( fp );
 
