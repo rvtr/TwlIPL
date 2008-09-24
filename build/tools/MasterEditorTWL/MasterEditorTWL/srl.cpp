@@ -1434,7 +1434,7 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 
 	if( (*this->hIsWiFiIcon == true) && (*this->hIsWirelessIcon == true) )
 	{
-		this->hWarnList->Add( gcnew RCMrcError( 
+		this->hErrorList->Add( gcnew RCMrcError( 
 			"アイコン表示フラグ", 0x1bf, 0x1bf, 
 			"ワイヤレス通信アイコンとWi-Fi通信アイコンは同時に表示できません。設定を無視して読み込みます。",
 			"Icon Displaying",
