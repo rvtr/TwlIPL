@@ -205,9 +205,16 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 			if( node->FirstChild->Value->Equals( "TagRomVersion" ) )
 			{
 				if( *(hSrl->hRomVersion) != 0xE0 )
+				{
 					node->FirstChild->Value = hSrl->hRomVersion->ToString();
+				}
 				else
-					node->FirstChild->Value = gcnew System::String( "E" );
+				{
+					if( english )
+						node->FirstChild->Value = gcnew System::String( "E (Preliminary ver.)" );
+					else
+						node->FirstChild->Value = gcnew System::String( "E (Ž–‘O”Å)" );
+				}
 			}
 			if( node->FirstChild->Value->Equals( "TagSubmitVersion" ) )
 			{

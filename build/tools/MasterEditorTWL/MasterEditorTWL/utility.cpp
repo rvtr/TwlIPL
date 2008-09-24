@@ -362,3 +362,23 @@ void MasterEditorTWL::appendXmlTag( System::Xml::XmlDocument ^doc, System::Xml::
 	node->AppendChild( doc->CreateTextNode( text ) );
 	parent->AppendChild( node );
 }
+
+//
+// ビット数をカウントする
+//
+// @arg [in] 値
+//
+// @ret ビット数
+//
+u32 MasterEditorTWL::countBits( const u32 val )
+{
+	// 分割統治法:隣り合うかたまりごとにビット数をカウントしていく
+	u32 n = val;
+	
+	n = ((n>>1) & 0x55555555) + (n & 0x55555555);
+    n = ((n>>2) & 0x33333333) + (n & 0x33333333);
+    n = ((n>>4) & 0x0f0f0f0f) + (n & 0x0f0f0f0f);
+    n = ((n>>8) & 0x00ff00ff) + (n & 0x00ff00ff);
+    n = (n>>16) + (n & 0x0000ffff);
+    return n;
+}

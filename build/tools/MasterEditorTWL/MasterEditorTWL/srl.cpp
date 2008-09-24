@@ -1175,13 +1175,14 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 	u32  romsize = 1 << (this->pRomHeader->s.rom_size);	// ROM容量
 	if( *(this->hIsMediaNand) == false )		// カードアプリのときのみのチェック
 	{
-		if( (romsize*1024*1024/8) < filesize )
+		u32 filesizeMb = (filesize / (1024*1024)) * 8;
+		if( romsize < filesizeMb )
 		{
 			this->hErrorList->Add( gcnew RCMrcError( 
 				"デバイス容量", 0x14, 0x14, "実ファイルサイズよりも小さい値が指定されています。",
 				"Device Capacity", "Setting data is less than the actual file size.", false, true ) );
 		}
-		else if( filesize < (romsize*1024*1024/8) )
+		else if( filesizeMb < romsize )
 		{
 			this->hWarnList->Add( gcnew RCMrcError(		// 警告
 				"デバイス容量", 0x14, 0x14, "実ファイルサイズに比べて無駄のある値が設定されています。",
@@ -1193,10 +1194,10 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 				"デバイス容量", 0x14, 0x14, "指定可能な容量ではありません。",
 				"Device Capacity", "Invalid capacity.", false, true ) );
 		}
-		if( (filesize % 2) != 0 )
+		if( (filesizeMb < 1) || (MasterEditorTWL::countBits(filesizeMb) != 1) )
 		{
-			this->hErrorList->Add( gcnew RCMrcError( 
-				"実ファイルサイズ", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, "中途半端な値です。通常では2のべき乗の値です。",
+			this->hWarnList->Add( gcnew RCMrcError( 
+				"実ファイルサイズ", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, "中途半端な値です。通常では2のべき乗[Mbit]の値です。",
 				"Actual File Size", "Invalid size. This size is usually power of 2.", false, true ) );
 		}
 		// 1Gbit以上のときの最終領域が固定値かどうか
@@ -1424,7 +1425,7 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		{
 			this->hErrorList->Add( gcnew RCMrcError( 
 				"アクセスコントロール情報", 0x1b4, 0x1b7,
-				"ゲームカード用ソフトは、NANDフラッシュとSDカードへアクセスできません。アクセスが必要な場合は、弊社業務部にまでご連絡ください。",
+				"ゲームカード用ソフトは、NANDフラッシュとSDカードへアクセスできません。アクセスが必要な場合は、弊社窓口にご相談ください。",
 				"Access Control Info.",
 				"Game soft for Game Card does'nt access to NAND frash memory and SD Card. If the soft wish to access them, please contact us.",
 				false, true ) );
@@ -1631,6 +1632,12 @@ void RCSrl::mrcBanner(FILE *fp)
 		//	"Banner File",
 		//	"Only a machine setting app., a charactor code check of the banner file is skip.",
 		//	false, true ) );
+		return;
+	}
+
+	// バナーオフセットにエラーがあるときには調べない
+	if( this->pRomHeader->s.banner_offset == 0 )
+	{
 		return;
 	}
 

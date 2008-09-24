@@ -124,4 +124,13 @@ namespace MasterEditorTWL
 	void appendXmlTag( System::Xml::XmlDocument ^doc, System::Xml::XmlElement ^parent,
 					   System::String ^tag, System::String ^text );
 
+	//
+	// ビット数をカウントする
+	//
+	// @arg [in] 値
+	//
+	// @ret ビット数
+	//
+	u32 countBits( const u32 val );
+
 } // end of namespace MasterEditorTWL

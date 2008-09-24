@@ -3899,7 +3899,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 				this->sucMsg( 
 					"Step1/2: ROMデータファイル(SRL)と提出確認書の情報を一致させるため、まず、入力情報を反映させたROMデータファイルを作成します。\n(キャンセルされたとき、SRLおよび提出確認書は作成されません。)\n"
 					+ "\n  ROMデータファイル名は \"" + srlfile + "\"となります。\n" + "\nROMデータファイルを保存するフォルダを選択してください。",
-					"Step1/2: Firstly, We save ROM file(SRL) because several information in a submission sheet are match those in the ROM data file.\n(When it is canceled, both the SRL and a submission sheet are not made.)"
+					"Step1/2: Firstly, We save ROM file(SRL) because several information in a submission sheet are match those in the ROM data file.\n(When it is canceled, both the SRL and a submission sheet are not made.)\n"
 					+ "\n  ROM data file name is \"" + srlfile + "\".\n" + "\nPlease select a folder in which the ROM data is saved."
 				);
 			}
