@@ -77,6 +77,16 @@ ECSrlResult RCSrl::readFromFile( System::String ^filename )
 		}
 	}
 
+#ifdef METWL_WHETHER_SIGN_DECRYPT
+	// まず署名チェック
+	r = this->decryptRomHeader();
+	if( r != ECSrlResult::NOERROR )
+	{
+		(void)fclose(fp);
+		return r;
+	}
+#endif //#ifdef METWL_WHETHER_SIGN_DECRYPT
+
 	// エラーリストをクリア
 	this->hErrorList = gcnew System::Collections::Generic::List<RCMrcError^>;
 	this->hWarnList  = gcnew System::Collections::Generic::List<RCMrcError^>;
@@ -87,16 +97,6 @@ ECSrlResult RCSrl::readFromFile( System::String ^filename )
 
 	// ROMヘッダの値をROM固有情報フィールドに反映させる
 	(void)this->setRomInfo();
-
-#ifdef METWL_WHETHER_SIGN_DECRYPT
-	// ひととおり読んだあとに署名チェック
-	r = this->decryptRomHeader();
-	if( r != ECSrlResult::NOERROR )
-	{
-		(void)fclose(fp);
-		return r;
-	}
-#endif //#ifdef METWL_WHETHER_SIGN_DECRYPT
 
 	// すべて設定したあとにMRC
 	{
@@ -662,23 +662,25 @@ ECSrlResult RCSrl::decryptRomHeader(void)
 	// (1) 公開鍵で復号した結果(ブロック)をローカル変数(original)に格納
 	// (2) ブロックから余分な部分を取り除いて引数(pDst)にコピー
 
+	ECAppType  type = this->selectAppType();
+
 	// 鍵を選ぶ
 #ifdef METWL_VER_APPTYPE_LAUNCHER
-	if( *this->hIsAppLauncher )
+	if( type == ECAppType::LAUNCHER )
 	{
 		publicKey  = (u8*)g_devPubKey_DER_launcher;
 	}
 	else
 #endif //METWL_VER_APPTYPE_LAUNCHER
 #ifdef METWL_VER_APPTYPE_SECURE
-	if( *this->hIsAppSecure )
+	if( type == ECAppType::SECURE )
 	{
 		publicKey  = (u8*)g_devPubKey_DER_secure;
 	}
 	else
 #endif //METWL_VER_APPTYPE_SECURE
 #ifdef METWL_VER_APPTYPE_SYSTEM
-	if( *this->hIsAppSystem )
+	if( type == ECAppType::SYSTEM )
 	{
 		publicKey  = (u8*)g_devPubKey_DER_system;
 	}
@@ -713,6 +715,35 @@ ECSrlResult RCSrl::decryptRomHeader(void)
 		return ECSrlResult::ERROR_SIGN_VERIFY;
 	}
 	return (ECSrlResult::NOERROR);
+}
+
+//
+// アプリ種別の判定
+//
+ECAppType RCSrl::selectAppType(void)
+{
+	ECAppType  type = ECAppType::ILLEGAL;
+
+	u8  *idL = this->pRomHeader->s.titleID_Lo;
+	u32  idH = this->pRomHeader->s.titleID_Hi;
+
+	if( (idL[3]=='H') && (idL[2]=='N') && (idL[1]=='A') )	// ランチャアプリかどうかはTitleID_Loの値で決定
+    {
+		type = ECAppType::LAUNCHER;
+    }
+    else if( idH & TITLE_ID_HI_SECURE_FLAG_MASK )				// 各ビットは排他的とは限らないのでelse ifにはならない
+    {
+		type = ECAppType::SECURE;
+    }
+    else if( (idH & TITLE_ID_HI_APP_TYPE_MASK) == 1 )
+    {
+		type = ECAppType::SYSTEM;
+    }
+    else if( (idH & TITLE_ID_HI_APP_TYPE_MASK) == 0 )
+    {
+		type = ECAppType::USER;
+    }
+	return type;
 }
 
 //

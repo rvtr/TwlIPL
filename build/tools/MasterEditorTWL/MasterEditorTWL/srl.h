@@ -39,6 +39,21 @@ namespace MasterEditorTWL
 	};
 
 	// -------------------------------------------------------------------
+	// Type : enum class
+	// Name : ECAppType
+	//
+	// Description : RCSrlクラスのアプリ種別を宣言
+	// -------------------------------------------------------------------
+	enum class ECAppType
+	{
+		USER   = 0,
+		SYSTEM,
+		SECURE,
+		LAUNCHER,
+		ILLEGAL,	// 不定
+	};
+
+	// -------------------------------------------------------------------
 	// Type : ref class
 	// Name : RCSDKVersion
 	//
@@ -362,6 +377,7 @@ namespace MasterEditorTWL
 				// @arg [in]  入力ファイルのFP (->SRL読み込み時に実行されるべき)]
 		ECSrlResult searchSDKVersion( FILE *fp );		// SDKバージョンを取得する
 		ECSrlResult searchLicenses( FILE *fp );			// 使用ライセンスを取得する
+		ECAppType selectAppType(void);
 
 		// MRC(Master ROM Checker)機能
 		ECSrlResult mrc( FILE *fp );
