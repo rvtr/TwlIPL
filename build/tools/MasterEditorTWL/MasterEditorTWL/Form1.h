@@ -530,8 +530,8 @@ private: System::Windows::Forms::RadioButton^  rErrorReading;
 
 private: System::Windows::Forms::Label^  labMultiForeign2;
 private: System::Windows::Forms::DataGridView^  gridLibrary;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibPublisher;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
+
+
 
 
 
@@ -577,6 +577,12 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorName;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorBegin;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorEnd;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibPublisher;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
+
+
+
+
 
 
 
@@ -738,6 +744,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle1 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle2 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle3 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle4 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -929,8 +936,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->tabMain = (gcnew System::Windows::Forms::TabControl());
 			this->tabRomInfo = (gcnew System::Windows::Forms::TabPage());
 			this->gridLibrary = (gcnew System::Windows::Forms::DataGridView());
-			this->colLibPublisher = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
-			this->colLibName = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->tboxGuideRomInfo = (gcnew System::Windows::Forms::TextBox());
 			this->tabTWLInfo = (gcnew System::Windows::Forms::TabPage());
 			this->tboxGuideTWLInfo = (gcnew System::Windows::Forms::TextBox());
@@ -971,6 +976,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->colErrorCause = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->labFile = (gcnew System::Windows::Forms::Label());
 			this->labAssemblyVersion = (gcnew System::Windows::Forms::Label());
+			this->colLibPublisher = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->colLibName = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->gboxSrl->SuspendLayout();
 			this->gboxCRC->SuspendLayout();
 			this->gboxPerson2->SuspendLayout();
@@ -2864,28 +2871,27 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			// gridLibrary
 			// 
+			this->gridLibrary->AutoSizeRowsMode = System::Windows::Forms::DataGridViewAutoSizeRowsMode::AllCellsExceptHeaders;
 			this->gridLibrary->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridLibrary->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridLibrary->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(2) {this->colLibPublisher, 
 				this->colLibName});
+			dataGridViewCellStyle1->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle1->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle1->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+				static_cast<System::Byte>(128)));
+			dataGridViewCellStyle1->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle1->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle1->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle1->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridLibrary->DefaultCellStyle = dataGridViewCellStyle1;
 			this->gridLibrary->Location = System::Drawing::Point(337, 189);
 			this->gridLibrary->Name = L"gridLibrary";
+			this->gridLibrary->ReadOnly = true;
 			this->gridLibrary->RowHeadersVisible = false;
 			this->gridLibrary->RowTemplate->Height = 21;
 			this->gridLibrary->Size = System::Drawing::Size(374, 145);
 			this->gridLibrary->TabIndex = 36;
-			// 
-			// colLibPublisher
-			// 
-			this->colLibPublisher->HeaderText = L"Publisher";
-			this->colLibPublisher->Name = L"colLibPublisher";
-			// 
-			// colLibName
-			// 
-			this->colLibName->AutoSizeMode = System::Windows::Forms::DataGridViewAutoSizeColumnMode::Fill;
-			this->colLibName->HeaderText = L"Library Name";
-			this->colLibName->Name = L"colLibName";
-			this->colLibName->ReadOnly = true;
 			// 
 			// tboxGuideRomInfo
 			// 
@@ -3251,15 +3257,15 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->gridWarn->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridWarn->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colWarnName, 
 				this->colWarnBegin, this->colWarnEnd, this->colWarnCause});
-			dataGridViewCellStyle1->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle1->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle1->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle2->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle2->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle2->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle1->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle1->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle1->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle1->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle1;
+			dataGridViewCellStyle2->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle2->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle2->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle2->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle2;
 			this->gridWarn->GridColor = System::Drawing::SystemColors::Control;
 			this->gridWarn->Location = System::Drawing::Point(24, 228);
 			this->gridWarn->Name = L"gridWarn";
@@ -3299,22 +3305,22 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			// 
 			// gridError
 			// 
-			dataGridViewCellStyle2->BackColor = System::Drawing::Color::White;
-			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle2;
+			dataGridViewCellStyle3->BackColor = System::Drawing::Color::White;
+			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle3;
 			this->gridError->AutoSizeRowsMode = System::Windows::Forms::DataGridViewAutoSizeRowsMode::AllCellsExceptHeaders;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
 				this->colErrorBegin, this->colErrorEnd, this->colErrorCause});
-			dataGridViewCellStyle3->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle3->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle3->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle4->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle4->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle4->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle3->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle3->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle3->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle3->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridError->DefaultCellStyle = dataGridViewCellStyle3;
+			dataGridViewCellStyle4->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle4->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle4->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle4->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridError->DefaultCellStyle = dataGridViewCellStyle4;
 			this->gridError->GridColor = System::Drawing::SystemColors::Control;
 			this->gridError->Location = System::Drawing::Point(24, 99);
 			this->gridError->Name = L"gridError";
@@ -3370,6 +3376,19 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 			this->labAssemblyVersion->Size = System::Drawing::Size(101, 12);
 			this->labAssemblyVersion->TabIndex = 37;
 			this->labAssemblyVersion->Text = L"ver.0.0.00000.00000";
+			// 
+			// colLibPublisher
+			// 
+			this->colLibPublisher->HeaderText = L"Publisher";
+			this->colLibPublisher->Name = L"colLibPublisher";
+			this->colLibPublisher->ReadOnly = true;
+			// 
+			// colLibName
+			// 
+			this->colLibName->AutoSizeMode = System::Windows::Forms::DataGridViewAutoSizeColumnMode::Fill;
+			this->colLibName->HeaderText = L"Library Name";
+			this->colLibName->Name = L"colLibName";
+			this->colLibName->ReadOnly = true;
 			// 
 			// Form1
 			// 
@@ -3528,75 +3547,10 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 		// ---------------------------------------------------------------------
 		
 		// フォーム入力をSRLに反映させる
-		void setRegionSrlPropaties(void)
-		{
-			this->hSrl->hIsRegionJapan     = gcnew System::Boolean(false);
-			this->hSrl->hIsRegionAmerica   = gcnew System::Boolean(false);
-			this->hSrl->hIsRegionEurope    = gcnew System::Boolean(false);
-			this->hSrl->hIsRegionAustralia = gcnew System::Boolean(false);
-			switch( this->combRegion->SelectedIndex )
-			{
-				case 0:
-					this->hSrl->hIsRegionJapan = gcnew System::Boolean(true);
-				break;
-
-				case 1:
-					this->hSrl->hIsRegionAmerica = gcnew System::Boolean(true);
-				break;
-
-				case 2:
-					this->hSrl->hIsRegionEurope = gcnew System::Boolean(true);
-				break;
-
-				case 3:
-					this->hSrl->hIsRegionAustralia = gcnew System::Boolean(true);
-				break;
-
-				case 4:
-					this->hSrl->hIsRegionEurope    = gcnew System::Boolean(true);
-					this->hSrl->hIsRegionAustralia = gcnew System::Boolean(true);
-				break;
-
-#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
-				case 5:
-					this->hSrl->hIsRegionJapan     = gcnew System::Boolean(true);
-					this->hSrl->hIsRegionAmerica   = gcnew System::Boolean(true);
-					this->hSrl->hIsRegionEurope    = gcnew System::Boolean(true);
-					this->hSrl->hIsRegionAustralia = gcnew System::Boolean(true);
-				break;
-#endif //defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
-				default:
-				break;
-			}
-		}
+		void setRegionSrlPropaties(void);
 
 		// SRL情報をフォームに反映させる
-		void setRegionForms(void)
-		{
-			System::Boolean isJapan   = *(this->hSrl->hIsRegionJapan);			// リージョン
-			System::Boolean isAmerica = *(this->hSrl->hIsRegionAmerica);
-			System::Boolean isEurope  = *(this->hSrl->hIsRegionEurope);
-			System::Boolean isAustralia = *(this->hSrl->hIsRegionAustralia);
-			System::Int32  index;
-			if( isJapan && !isAmerica && !isEurope && !isAustralia )
-				index = 0;
-			else if( !isJapan && isAmerica && !isEurope && !isAustralia )
-				index = 1;
-			else if( !isJapan && !isAmerica && isEurope && !isAustralia )
-				index = 2;
-			else if( !isJapan && !isAmerica && !isEurope && isAustralia )
-				index = 3;
-			else if( !isJapan && !isAmerica && isEurope && isAustralia )
-				index = 4;
-			else
-				index = -1;	// 不正
-#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
-			if( isJapan && isAmerica && isEurope && isAustralia )
-			index = 5;
-#endif
-			this->combRegion->SelectedIndex = index;
-			this->maskParentalForms();		// ペアレンタルコントロール用フォームの表示/非表示切り替え
-		}
+		void setRegionForms(void);
 
 	private:
 		// ---------------------------------------------------------------------

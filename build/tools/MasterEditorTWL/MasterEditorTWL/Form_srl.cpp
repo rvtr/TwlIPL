@@ -192,6 +192,11 @@ void Form1::setSrlForms(void)
 		for each( RCLicense ^lic in this->hSrl->hLicenseList )
 		{
 			this->gridLibrary->Rows->Add( gcnew cli::array<System::Object^>{lic->Publisher, lic->Name} );
+			if( lic->Publisher->Equals( "NINTENDO" ) && lic->Name->Equals( "DEBUG" ) )
+			{
+				System::Int32 last = this->gridLibrary->Rows->Count - 2;	// ’Ç‰Á’¼Œã‚Ìs
+				this->gridLibrary->Rows[ last ]->DefaultCellStyle->ForeColor = System::Drawing::Color::Red;
+			}
 		}
 	}
 
