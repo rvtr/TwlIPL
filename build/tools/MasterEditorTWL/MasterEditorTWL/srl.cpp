@@ -1302,6 +1302,25 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 			"ROM Control Info.", "Mask ROM can be set. Please set One-time PROM.", false, true ) );
 	}
 
+	if( *this->hIsMediaNand == false )
+	{
+		if( (this->pRomHeader->s.enable_aes == 0) || (this->pRomHeader->s.aes_target_size == 0) )
+		{
+			this->hErrorList->Add( gcnew RCMrcError( 
+				"AES暗号", 0x60, 0x67, "AES暗号が無効になっています。セキュリティ上の問題があります。",
+				"AES Encryption", "AES Encryption is disable. It is a security problem.", false, true ) );
+		}
+	}
+	else		// NANDアプリ
+	{
+		if( (this->pRomHeader->s.enable_aes == 0) || (this->pRomHeader->s.aes_target_size == 0) || (this->pRomHeader->s.aes_target2_size == 0) )
+		{
+			this->hErrorList->Add( gcnew RCMrcError( 
+				"AES暗号", 0x60, 0x67, "AES暗号が無効になっています。セキュリティ上の問題があります。",
+				"AES Encryption", "AES Encryption is disable. It is a security problem.", false, true ) );
+		}
+	}
+
 	// 予約領域
 	System::Boolean bReserved = true;
 	for( i=0; i < 7; i++ )
