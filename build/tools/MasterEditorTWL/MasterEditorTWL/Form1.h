@@ -936,6 +936,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			this->tabMain = (gcnew System::Windows::Forms::TabControl());
 			this->tabRomInfo = (gcnew System::Windows::Forms::TabPage());
 			this->gridLibrary = (gcnew System::Windows::Forms::DataGridView());
+			this->colLibPublisher = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
+			this->colLibName = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->tboxGuideRomInfo = (gcnew System::Windows::Forms::TextBox());
 			this->tabTWLInfo = (gcnew System::Windows::Forms::TabPage());
 			this->tboxGuideTWLInfo = (gcnew System::Windows::Forms::TextBox());
@@ -976,8 +978,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			this->colErrorCause = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->labFile = (gcnew System::Windows::Forms::Label());
 			this->labAssemblyVersion = (gcnew System::Windows::Forms::Label());
-			this->colLibPublisher = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
-			this->colLibName = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->gboxSrl->SuspendLayout();
 			this->gboxCRC->SuspendLayout();
 			this->gboxPerson2->SuspendLayout();
@@ -1438,9 +1438,9 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			this->cboxIsEULA->AutoSize = true;
 			this->cboxIsEULA->Location = System::Drawing::Point(8, 20);
 			this->cboxIsEULA->Name = L"cboxIsEULA";
-			this->cboxIsEULA->Size = System::Drawing::Size(77, 16);
+			this->cboxIsEULA->Size = System::Drawing::Size(157, 16);
 			this->cboxIsEULA->TabIndex = 0;
-			this->cboxIsEULA->Text = L"EULA“¯ˆÓ";
+			this->cboxIsEULA->Text = L"EULA‚Ö‚Ì“¯ˆÓ‚ð•K—v‚Æ‚·‚é";
 			this->cboxIsEULA->UseVisualStyleBackColor = true;
 			// 
 			// combRegion
@@ -2893,6 +2893,19 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			this->gridLibrary->Size = System::Drawing::Size(374, 145);
 			this->gridLibrary->TabIndex = 36;
 			// 
+			// colLibPublisher
+			// 
+			this->colLibPublisher->HeaderText = L"Publisher";
+			this->colLibPublisher->Name = L"colLibPublisher";
+			this->colLibPublisher->ReadOnly = true;
+			// 
+			// colLibName
+			// 
+			this->colLibName->AutoSizeMode = System::Windows::Forms::DataGridViewAutoSizeColumnMode::Fill;
+			this->colLibName->HeaderText = L"Library Name";
+			this->colLibName->Name = L"colLibName";
+			this->colLibName->ReadOnly = true;
+			// 
 			// tboxGuideRomInfo
 			// 
 			this->tboxGuideRomInfo->BackColor = System::Drawing::SystemColors::Info;
@@ -3054,7 +3067,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			this->gboxEULA->Size = System::Drawing::Size(227, 48);
 			this->gboxEULA->TabIndex = 31;
 			this->gboxEULA->TabStop = false;
-			this->gboxEULA->Text = L"EULA";
+			this->gboxEULA->Text = L"EULA(—˜—p‹K–ñ)";
 			// 
 			// tabSubmitInfo
 			// 
@@ -3376,19 +3389,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			this->labAssemblyVersion->Size = System::Drawing::Size(101, 12);
 			this->labAssemblyVersion->TabIndex = 37;
 			this->labAssemblyVersion->Text = L"ver.0.0.00000.00000";
-			// 
-			// colLibPublisher
-			// 
-			this->colLibPublisher->HeaderText = L"Publisher";
-			this->colLibPublisher->Name = L"colLibPublisher";
-			this->colLibPublisher->ReadOnly = true;
-			// 
-			// colLibName
-			// 
-			this->colLibName->AutoSizeMode = System::Windows::Forms::DataGridViewAutoSizeColumnMode::Fill;
-			this->colLibName->HeaderText = L"Library Name";
-			this->colLibName->Name = L"colLibName";
-			this->colLibName->ReadOnly = true;
 			// 
 			// Form1
 			// 

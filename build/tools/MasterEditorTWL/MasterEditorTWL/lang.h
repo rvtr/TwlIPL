@@ -37,7 +37,8 @@
 #define LANG_NTSC_1_J			("NTSC")
 #define LANG_NTSC_2_J			("User ID")
 
-#define LANG_EULA_J				("EULA同意")
+#define LANG_BOX_EULA_J			("EULA(利用規約)")
+#define LANG_EULA_J				("EULAへの同意を必要とする")
 #define LANG_EULA_VER_J			("EULA同意バージョン")
 #define LANG_ICON_J				("メニュー上でのアイコン表示")
 #define LANG_WIRELESS_ICON_J	("DSワイヤレス通信アイコン表示")
@@ -85,7 +86,8 @@
 #define LANG_NTSC_1_E			("")
 #define LANG_NTSC_2_E			("")
 
-#define LANG_EULA_E				("Agree EULA")
+#define LANG_BOX_EULA_E			("EULA")
+#define LANG_EULA_E				("Require EULA Agreement")
 #define LANG_EULA_VER_E			("EULA agreement ver.")
 #define LANG_ICON_E				("Icons on the Menu")
 #define LANG_WIRELESS_ICON_E	("Display an Icon of DS Wireless")

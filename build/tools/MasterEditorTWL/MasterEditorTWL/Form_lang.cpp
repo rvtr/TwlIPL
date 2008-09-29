@@ -168,6 +168,7 @@ void Form1::changeJapanese(void)
 	this->labCaptionEx->Text          = gcnew System::String( "特記事項" );
 
 	// SRL編集可能情報
+	this->gboxEULA->Text         = gcnew System::String( LANG_BOX_EULA_J );
 	this->cboxIsEULA->Text       = gcnew System::String( LANG_EULA_J );
 	this->gboxIcon->Text         = gcnew System::String( LANG_ICON_J );
 	this->rIsWirelessIcon->Text  = gcnew System::String( LANG_WIRELESS_ICON_J );
@@ -392,6 +393,7 @@ void  Form1::changeEnglish(void)
 	this->labCaptionEx->Text          = gcnew System::String( "Special Note" );
 
 	// SRL編集可能情報
+	this->gboxEULA->Text         = gcnew System::String( LANG_BOX_EULA_E );
 	this->cboxIsEULA->Text       = gcnew System::String( LANG_EULA_E );
 	this->gboxIcon->Text         = gcnew System::String( LANG_ICON_E );
 	this->rIsWirelessIcon->Text  = gcnew System::String( LANG_WIRELESS_ICON_E );
