@@ -3194,7 +3194,7 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			this->tabErrorInfo->Name = L"tabErrorInfo";
 			this->tabErrorInfo->Size = System::Drawing::Size(745, 352);
 			this->tabErrorInfo->TabIndex = 5;
-			this->tabErrorInfo->Text = L"エラー情報(要修正)";
+			this->tabErrorInfo->Text = L"エラー情報(確認用)";
 			this->tabErrorInfo->UseVisualStyleBackColor = true;
 			// 
 			// tboxGuideErrorInfo

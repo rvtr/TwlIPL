@@ -58,7 +58,7 @@ void Form1::changeJapanese(void)
 	this->tabRomEditInfo->Text = gcnew System::String( "ROM登録情報(編集可)" );
 	this->tabSubmitInfo->Text  = gcnew System::String( "提出情報(編集可)" );
 	this->tabCompanyInfo->Text = gcnew System::String( "会社情報(編集可)" );
-	this->tabErrorInfo->Text   = gcnew System::String( "エラー情報(要修正)" );
+	this->tabErrorInfo->Text   = gcnew System::String( "エラー情報(確認用)" );
 
 	// ガイド
 	this->tboxGuideRomInfo->Text = gcnew System::String( "このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。" );
@@ -281,7 +281,7 @@ void  Form1::changeEnglish(void)
 	this->tabRomEditInfo->Text = gcnew System::String( "ROM Settings(Editable)" );
 	this->tabSubmitInfo->Text  = gcnew System::String( "Submission Info.(Editable)" );
 	this->tabCompanyInfo->Text = gcnew System::String( "Company Info.(Editable)" );
-	this->tabErrorInfo->Text   = gcnew System::String( "Setting Error" );
+	this->tabErrorInfo->Text   = gcnew System::String( "Error(Read Only)" );
 
 	// ガイド
 	this->tboxGuideRomInfo->Text = gcnew System::String( "This tab is for checking ROM data. When ROM data is illegal, please check settings of building ROM data" );

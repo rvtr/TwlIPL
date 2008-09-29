@@ -1473,9 +1473,9 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 	{
 		if( (this->pRomHeader->s.access_control.nand_access != 0) || (this->pRomHeader->s.access_control.sd_card_access != 0) )
 		{
-			this->hErrorList->Add( gcnew RCMrcError( 
+			this->hWarnList->Add( gcnew RCMrcError( 
 				"アクセスコントロール情報", 0x1b4, 0x1b7,
-				"ゲームカード用ソフトは、NANDフラッシュとSDカードへアクセスできません。アクセスが必要な場合は、弊社窓口にご相談ください。",
+				"ゲームカード用ソフトは、NANDフラッシュメモリとSDカードへアクセスできません。アクセスを希望される場合、弊社窓口にご相談ください。",
 				"Access Control Info.",
 				"Game soft for Game Card does'nt access to NAND frash memory and SD Card. If the soft wish to access them, please contact us.",
 				false, true ) );
