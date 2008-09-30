@@ -4046,7 +4046,6 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 				return;
 			}
 			this->loadSrl( filename );			// ドラッグアンドドロップの時点でボタンを押さなくてもファイルを開く
-			this->tboxFile->Text = filename;
 			//this->sucMsg( "ROMデータファイルのオープンに成功しました。", "The ROM data file is opened successfully." );
 		}
 
