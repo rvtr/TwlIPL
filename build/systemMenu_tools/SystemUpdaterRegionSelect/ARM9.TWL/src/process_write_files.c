@@ -131,6 +131,7 @@ BOOL ProcessWriteFiles(void)
 		}
 	}
 
+	OS_WaitVBlankIntr();
+	kamiFontLoadScreenData();
 	return result;
 }
-

@@ -120,5 +120,7 @@ BOOL ProcessNandfirm(void)
 		}
 	}
 
+	OS_WaitVBlankIntr();
+	kamiFontLoadScreenData();
 	return result;
 }

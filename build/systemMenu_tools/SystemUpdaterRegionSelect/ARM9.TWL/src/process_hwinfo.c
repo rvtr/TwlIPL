@@ -78,12 +78,12 @@ BOOL ProcessHwinfo(void)
 		}
 	}
 
-	if ( hw_info_result)
-	{
-		return TRUE;
-	}
+	if ( !hw_info_result)
 	{
 		kamiFontPrintfConsole(FONT_COLOR_RED, "Write Hardware Info Failure!\n");			
-		return FALSE;
 	}
+	
+	OS_WaitVBlankIntr();
+	kamiFontLoadScreenData();
+	return hw_info_result;
 }

@@ -126,6 +126,10 @@ void ProcessSelectRegion(void)
 
 			if (kamiPadIsTrigger(PAD_BUTTON_B))
 			{
+				while (!FadeOutTick())
+				{
+				    OS_WaitVBlankIntr();
+				}
 				ProcessCancel((const char *)L"\n    Update was Canceld.");
 			}
 			else if (kamiPadIsTrigger(PAD_BUTTON_A))
