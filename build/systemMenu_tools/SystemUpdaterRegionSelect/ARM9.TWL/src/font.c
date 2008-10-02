@@ -306,7 +306,7 @@ void InitFont(void)
 	OS_WaitVBlankIntr();
     NNS_G2dCharCanvasClearArea(&gCanvas2, TXT_COLOR_BLACK, 0,   0, 256,  30);
 
-    NNS_G2dTextCanvasDrawText(&gTextCanvas2, 39, 6,
+    NNS_G2dTextCanvasDrawText(&gTextCanvas2, 55, 6,
         TXT_COLOR_BLACK_BASE, TXT_DRAWTEXT_FLAG_DEFAULT,
         (const char *)SYSTEM_UPDATER_NAME
     );
