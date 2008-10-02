@@ -579,6 +579,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorEnd;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibPublisher;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
+private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareXml;
+private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 
 
 
@@ -930,6 +932,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			this->stripMaster = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemSheet = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemMasterRom = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->stripItemMiddlewareXml = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->stripItemMiddlewareHtml = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripLang = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemEnglish = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemJapanese = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -2791,8 +2795,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			// 
 			// stripMaster
 			// 
-			this->stripMaster->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {this->stripItemSheet, 
-				this->stripItemMasterRom});
+			this->stripMaster->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(4) {this->stripItemSheet, 
+				this->stripItemMasterRom, this->stripItemMiddlewareXml, this->stripItemMiddlewareHtml});
 			this->stripMaster->Name = L"stripMaster";
 			this->stripMaster->Size = System::Drawing::Size(53, 20);
 			this->stripMaster->Text = L"マスター";
@@ -2800,16 +2804,30 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			// stripItemSheet
 			// 
 			this->stripItemSheet->Name = L"stripItemSheet";
-			this->stripItemSheet->Size = System::Drawing::Size(232, 22);
-			this->stripItemSheet->Text = L"提出確認書とマスターROMを作成";
+			this->stripItemSheet->Size = System::Drawing::Size(259, 22);
+			this->stripItemSheet->Text = L"提出確認書とマスターROMを作成する";
 			this->stripItemSheet->Click += gcnew System::EventHandler(this, &Form1::stripItemSheet_Click);
 			// 
 			// stripItemMasterRom
 			// 
 			this->stripItemMasterRom->Name = L"stripItemMasterRom";
-			this->stripItemMasterRom->Size = System::Drawing::Size(232, 22);
-			this->stripItemMasterRom->Text = L"マスターROMのみを作成";
+			this->stripItemMasterRom->Size = System::Drawing::Size(259, 22);
+			this->stripItemMasterRom->Text = L"マスターROMのみを作成する";
 			this->stripItemMasterRom->Click += gcnew System::EventHandler(this, &Form1::stripItemMasterRom_Click);
+			// 
+			// stripItemMiddlewareXml
+			// 
+			this->stripItemMiddlewareXml->Name = L"stripItemMiddlewareXml";
+			this->stripItemMiddlewareXml->Size = System::Drawing::Size(259, 22);
+			this->stripItemMiddlewareXml->Text = L"ミドルウェアリストを作成する(XML形式)";
+			this->stripItemMiddlewareXml->Click += gcnew System::EventHandler(this, &Form1::stripItemMiddlewareXml_Click);
+			// 
+			// stripItemMiddlewareHtml
+			// 
+			this->stripItemMiddlewareHtml->Name = L"stripItemMiddlewareHtml";
+			this->stripItemMiddlewareHtml->Size = System::Drawing::Size(259, 22);
+			this->stripItemMiddlewareHtml->Text = L"ミドルウェアリストを作成する(HTML形式)";
+			this->stripItemMiddlewareHtml->Click += gcnew System::EventHandler(this, &Form1::stripItemMiddlewareHtml_Click);
 			// 
 			// stripLang
 			// 
@@ -3482,6 +3500,18 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 		// SRLの保存のみ @ret 成否
 		System::Boolean saveSrlCore( System::String ^filename );
 
+		// ミドルウェアリストの作成(XML形式)
+		System::Void makeMiddlewareListXml(System::Xml::XmlDocument^ doc);
+
+		// ミドルウェアリストの保存
+		System::Boolean saveMiddlewareListXml( System::String ^filename );
+
+		// ミドルウェアリストの保存(XML->HTML変換)
+		System::Boolean saveMiddlewareListHtml( System::String ^filename );
+
+		// ミドルウェアリストの保存(XSL埋め込み)
+		System::Boolean saveMiddlewareListXmlEmbeddedXsl( System::String ^filename );
+
 	private:
 		// ----------------------------------------------
 		// 一時ファイルの取り扱い
@@ -4018,6 +4048,79 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 			}
 			this->loadTmp( filename );
 		} //stripItemLoadTemp_Click()
+
+	private:
+		System::Void stripItemMiddlewareXml_Click(System::Object^  sender, System::EventArgs^  e)
+		{
+			System::String ^filename = gcnew System::String("");
+
+			if( System::String::IsNullOrEmpty(this->tboxFile->Text) )
+			{
+				this->errMsg( "ROMデータファイルがオープンされていません。", "ROM file has not opened yet." );
+				return;
+			}
+
+			// ダイアログでファイルパスを決定
+			{
+				System::Windows::Forms::SaveFileDialog ^dlg = gcnew (SaveFileDialog);
+
+				dlg->InitialDirectory = "c:\\";
+				dlg->Filter      = "xml形式 (*.xml)|*.xml";
+				dlg->FilterIndex = 1;
+				dlg->RestoreDirectory = true;
+
+				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
+				{
+					return;
+				}
+				filename = dlg->FileName;
+				if( !(dlg->FileName->EndsWith( ".xml" )) )
+				{
+					filename += ".xml";
+				}
+			}
+			if( !this->saveMiddlewareListXmlEmbeddedXsl(filename) )
+			{
+				this->errMsg( "ミドルウェアリストの作成に失敗しました。","Making a middleware list failed." );
+			}
+		} //stripItemMiddlewareXml_Click()
+
+	private:
+		System::Void stripItemMiddlewareHtml_Click(System::Object^  sender, System::EventArgs^  e)
+		{
+			System::String ^filename = gcnew System::String("");
+
+			if( System::String::IsNullOrEmpty(this->tboxFile->Text) )
+			{
+				this->errMsg( "ROMデータファイルがオープンされていません。", "ROM file has not opened yet." );
+				return;
+			}
+
+			// ダイアログでファイルパスを決定
+			{
+				System::Windows::Forms::SaveFileDialog ^dlg = gcnew (SaveFileDialog);
+
+				dlg->InitialDirectory = "c:\\";
+				dlg->Filter      = "html形式 (*.html)|*.html";
+				dlg->FilterIndex = 1;
+				dlg->RestoreDirectory = true;
+
+				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
+				{
+					return;
+				}
+				filename = dlg->FileName;
+				if( !(dlg->FileName->EndsWith( ".html" )) )
+				{
+					filename += ".html";
+				}
+			}
+			if( !this->saveMiddlewareListHtml(filename) )
+			{
+				this->errMsg( "ミドルウェアリストの作成に失敗しました。","Making a middleware list failed." );
+			}
+		} //stripItemMiddlewareHtml_Click
+
 
 	/////////////////////////////////////////////
 	// フォーム操作メソッド

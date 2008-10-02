@@ -21,6 +21,18 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_491C89DAB2F34A939F356C47975E7BD0"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_6EC739CA561443E48045379A268C1657"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_7746D2D347F0423FB46FA2300F6158A4"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -140,6 +152,46 @@
             {
             "SourcePath" = "8:..\\resource\\sheet_templete.xml"
             "TargetName" = "8:sheet_templete.xml"
+            "Tag" = "8:"
+            "Folder" = "8:_99EFE6B595C5432FB4712560C9D29AE5"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_491C89DAB2F34A939F356C47975E7BD0"
+            {
+            "SourcePath" = "8:..\\resource\\middleware.xsl"
+            "TargetName" = "8:middleware.xsl"
+            "Tag" = "8:"
+            "Folder" = "8:_99EFE6B595C5432FB4712560C9D29AE5"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6EC739CA561443E48045379A268C1657"
+            {
+            "SourcePath" = "8:..\\resource\\middleware_e.xsl"
+            "TargetName" = "8:middleware_e.xsl"
             "Tag" = "8:"
             "Folder" = "8:_99EFE6B595C5432FB4712560C9D29AE5"
             "Condition" = "8:"
@@ -789,7 +841,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_7746D2D347F0423FB46FA2300F6158A4"
             {
-            "SourcePath" = "8:..\\Release\\MasterEditorTWL.exe"
+            "SourcePath" = "8:..\\Debug\\MasterEditorTWL.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_1494B8B199184797B9C812877A4DFB7F"

@@ -34,7 +34,13 @@ void Form1::loadInit(void)
 	catch( System::IO::FileNotFoundException ^s )
 	{
 		(void)s;
-		this->sucMsg( "設定ファイルを開くことができませんでした。", "Setting file can't be opened." );
+		this->errMsg( "設定ファイルが見つかりません。", "Setting file is not found." );
+		return;
+	}
+	catch( System::Exception ^s )
+	{
+		(void)s;
+		this->errMsg( "設定ファイルを開くことができませんでした。", "Setting file can't be opened." );
 		return;
 	}
 
@@ -220,5 +226,130 @@ System::Boolean Form1::saveSrlCore( System::String ^filename )
 	{
 		return false;
 	}
+	return true;
+}
+
+// ミドルウェアリストの作成
+System::Void Form1::makeMiddlewareListXml(System::Xml::XmlDocument^ doc)
+{
+	System::Xml::XmlElement ^root = doc->CreateElement( "twl-master-editor" );
+	System::Reflection::Assembly ^ass = System::Reflection::Assembly::GetEntryAssembly();
+	root->SetAttribute( "version", ass->GetName()->Version->ToString() );
+	doc->AppendChild( root );
+
+	// ゲーム情報
+	System::Xml::XmlElement ^game = doc->CreateElement( "game" );
+	root->AppendChild( game );
+	if( System::String::IsNullOrEmpty( this->tboxProductName->Text ) )
+	{
+		MasterEditorTWL::appendXmlTag( doc, game, "product-name", this->tboxTitleName->Text );	// 製品名が未入力のときはソフトタイトルで代用
+	}
+	else
+	{
+		MasterEditorTWL::appendXmlTag( doc, game, "product-name", this->tboxProductName->Text );
+	}
+	MasterEditorTWL::appendXmlTag( doc, game, "title-name",   this->tboxTitleName->Text );
+	MasterEditorTWL::appendXmlTag( doc, game, "game-code",    this->tboxGameCode->Text );
+	MasterEditorTWL::appendXmlTag( doc, game, "rom-version",  this->tboxRemasterVer->Text );
+	MasterEditorTWL::appendXmlTag( doc, game, "submit-version", this->numSubmitVersion->Value.ToString() );
+
+	// ミドルウェアリスト
+	System::Xml::XmlElement ^midlist = doc->CreateElement( "middleware-list" );
+	root->AppendChild( midlist );
+	if( this->hSrl->hLicenseList != nullptr )
+	{
+		for each( RCLicense ^lic in this->hSrl->hLicenseList )
+		{
+			System::Xml::XmlElement ^mid = doc->CreateElement( "middleware" );
+			MasterEditorTWL::appendXmlTag( doc, mid, "publisher", lic->Publisher );
+			MasterEditorTWL::appendXmlTag( doc, mid, "name", lic->Name );
+			midlist->AppendChild( mid );
+		}
+	}
+}
+
+// ミドルウェアリストの保存
+System::Boolean Form1::saveMiddlewareListXml( System::String ^filename )
+{
+	System::Xml::XmlDocument ^doc = gcnew System::Xml::XmlDocument();
+	doc->AppendChild( doc->CreateXmlDeclaration("1.0","UTF-8",nullptr) );
+
+	this->makeMiddlewareListXml( doc );
+
+	try
+	{
+		doc->Save( filename );
+	}
+	catch ( System::Exception ^ex )
+	{
+		(void)ex;
+		return false;
+	}
+	return true;
+}
+
+// ミドルウェアリストの保存
+System::Boolean Form1::saveMiddlewareListXmlEmbeddedXsl( System::String ^filename )
+{
+	System::Xml::XmlDocument ^doc = gcnew System::Xml::XmlDocument();
+	doc->AppendChild( doc->CreateXmlDeclaration("1.0","UTF-8",nullptr) );
+
+	// XSLを埋め込むための宣言たち
+	System::Xml::XmlProcessingInstruction ^proc = doc->CreateProcessingInstruction( "xml-stylesheet", "type='text/xml' href='#stylesheet'" );
+	doc->AppendChild( proc );
+	System::Xml::XmlDocumentType ^doctype = doc->CreateDocumentType( "twl-master-editor", nullptr, nullptr, "<!ATTLIST xsl:stylesheet id ID #REQUIRED>" );
+	doc->AppendChild( doctype );
+
+	this->makeMiddlewareListXml( doc );
+
+	// 埋め込みスタイルシート
+	System::Xml::XmlDocument ^xsl  = gcnew System::Xml::XmlDocument();
+	System::Xml::XmlElement  ^root = doc->DocumentElement;
+	try
+	{
+		xsl->Load("../resource/middleware_e.xsl");
+		root->AppendChild( doc->ImportNode(xsl->DocumentElement, true) );
+	}
+	catch ( System::Exception ^ex )
+	{
+		(void)ex;
+		return false;
+	}
+
+	try
+	{
+		doc->Save( filename );
+	}
+	catch ( System::Exception ^ex )
+	{
+		(void)ex;
+		return false;
+	}
+	return true;
+}
+
+// ミドルウェアリストの保存(XML->HTML変換)
+System::Boolean Form1::saveMiddlewareListHtml( System::String ^filename )
+{
+	System::Xml::Xsl::XslCompiledTransform ^xslt = gcnew System::Xml::Xsl::XslCompiledTransform;
+	System::String ^tmpxml = gcnew System::String( "middleware-tmp.xml" );
+
+	if( !saveMiddlewareListXml(tmpxml) )
+	{
+		return false;
+	}
+
+	try
+	{
+		xslt->Load("../resource/middleware.xsl");
+		xslt->Transform( tmpxml, filename );
+	}
+	catch (System::Exception ^s)
+	{
+		(void)s;
+		System::IO::File::Delete( tmpxml );
+		return false;
+	}
+	System::IO::File::Delete( tmpxml );
 	return true;
 }
