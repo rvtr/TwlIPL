@@ -15,12 +15,6 @@
     {
         "Entry"
         {
-        "MsmKey" = "8:_31B52E9A94A144A3BD6151FA98258359"
-        "OwnerKey" = "8:_C39B001D8DA74DF3B6DDCECC21DD7237"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_36B8A12FA0D745E5960CAE9B0015DA5D"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -33,20 +27,20 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_8393712894EA4947BF72EB0E9D414BF9"
+        "MsmKey" = "8:_5D3FE39CA195418386F2A6A3FA14D875"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_C39B001D8DA74DF3B6DDCECC21DD7237"
-        "OwnerKey" = "8:_5CB57B95663049AC8F21EB946DAF9DE8"
+        "MsmKey" = "8:_6B24B80F04874ABEAC2ABA742CE6FC8D"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_5CB57B95663049AC8F21EB946DAF9DE8"
+        "MsmKey" = "8:_8393712894EA4947BF72EB0E9D414BF9"
+        "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -158,6 +152,46 @@
             {
             "SourcePath" = "8:..\\resource\\ini.xml"
             "TargetName" = "8:ini.xml"
+            "Tag" = "8:"
+            "Folder" = "8:_ACE5398304074CFDAF4425F700E584B4"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_5D3FE39CA195418386F2A6A3FA14D875"
+            {
+            "SourcePath" = "8:..\\resource\\middleware.xsl"
+            "TargetName" = "8:middleware.xsl"
+            "Tag" = "8:"
+            "Folder" = "8:_ACE5398304074CFDAF4425F700E584B4"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6B24B80F04874ABEAC2ABA742CE6FC8D"
+            {
+            "SourcePath" = "8:..\\resource\\middleware_e.xsl"
+            "TargetName" = "8:middleware_e.xsl"
             "Tag" = "8:"
             "Folder" = "8:_ACE5398304074CFDAF4425F700E584B4"
             "Condition" = "8:"
@@ -802,34 +836,6 @@
         }
         "MergeModule"
         {
-            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_31B52E9A94A144A3BD6151FA98258359"
-            {
-            "UseDynamicProperties" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
-            "SourcePath" = "8:microsoft_vc90_crt_x86.msm"
-                "Properties"
-                {
-                }
-            "LanguageId" = "3:0"
-            "Exclude" = "11:FALSE"
-            "Folder" = "8:"
-            "Feature" = "8:"
-            "IsolateTo" = "8:"
-            }
-            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_C39B001D8DA74DF3B6DDCECC21DD7237"
-            {
-            "UseDynamicProperties" = "11:TRUE"
-            "IsDependency" = "11:TRUE"
-            "SourcePath" = "8:policy_9_0_Microsoft_VC90_CRT_x86.msm"
-                "Properties"
-                {
-                }
-            "LanguageId" = "3:0"
-            "Exclude" = "11:FALSE"
-            "Folder" = "8:"
-            "Feature" = "8:"
-            "IsolateTo" = "8:"
-            }
         }
         "ProjectOutput"
         {
