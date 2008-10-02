@@ -103,8 +103,8 @@ BOOL kamiCopyFile(char* srcPath, char* dstPath)
 	return result;
 }
 
-// ダミーのDSメニューラッピング用ファイル作成（UIGランチャーが作っているもの）
-BOOL kamiWriteWrapData(void)
+// ダミーファイル作成
+BOOL kamiCreateDummyData(const char* path)
 {
     FSFile  file;	
     BOOL    open_is_ok;
@@ -112,18 +112,18 @@ BOOL kamiWriteWrapData(void)
 
 	// 既に存在するなら何もしない
     FS_InitFile(&file);
-    open_is_ok = FS_OpenFile(&file, WRAP_DATA_FILE_PATH_IN_NAND);
+    open_is_ok = FS_OpenFile(&file, path);
 	if (open_is_ok)
 	{
 		FS_CloseFile(&file);
-    	OS_Printf("%s is already exist.\n", WRAP_DATA_FILE_PATH_IN_NAND);
+    	OS_Printf("%s is already exist.\n", path);
 		return TRUE;
 	}
 
-	if( FS_CreateFileAuto( WRAP_DATA_FILE_PATH_IN_NAND, FS_PERMIT_R | FS_PERMIT_W ) ) 
+	if( FS_CreateFileAuto( path, FS_PERMIT_R | FS_PERMIT_W ) ) 
 	{
 		FSFile file;
-		if( FS_OpenFileEx( &file, WRAP_DATA_FILE_PATH_IN_NAND, FS_FILEMODE_RW ) ) 
+		if( FS_OpenFileEx( &file, path, FS_FILEMODE_RW ) ) 
 		{
 			(void)FS_SetFileLength( &file, FATFS_CLUSTER_SIZE );
 			FS_CloseFile( &file );

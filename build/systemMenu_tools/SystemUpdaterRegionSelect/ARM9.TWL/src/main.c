@@ -96,6 +96,7 @@ TwlMain()
     GX_Init();
     FX_Init();
     SND_Init();
+	SNDEX_Init();
     TP_Init();
     RTC_Init();
 
@@ -172,23 +173,32 @@ TwlMain()
 
 	result = TRUE;
 
-	// フォーマット
-//	result &= ProcessFormat();
+	// NANDのフォーマットが古ければフォーマット
+	result &= ProcessFormat();
 
 	// 全ハードウェア情報の更新
 	result &= ProcessHwinfo();
 
-	// 必要なファイルの書き込み
-	result &= ProcessWriteFiles();
+	// フォントの書き込み
+	result &= ProcessWriteFont();
 
-	// ダミーのラッピングデータ書き込み
-//	result &= kamiWriteWrapData();
+	// cert.sysの書き込み
+	result &= ProcessWriteCert();
+	
+	// ダミーファイルの生成
+	result &= ProcessWriteDummy();
 
 	// TADのインポート開始
 	result &= ProcessImport();
 
+	// 選択リージョン以外のSystemMenuの消去を行う
+	result &= ProcessDeleteOtherResionSysmenu();
+
 	// NANDファームのインストール開始
 	result &= ProcessNandfirm();
+
+	// 本体初期化を行う
+	result &= ProcessNamutFormat();
 
 	// 更新ログを作成してVersionDownを防ぐ
 	if (result)

@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  SystemUpdater
-  File:     process_write_files.c
+  File:     process_write_cert.c
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -42,13 +42,12 @@ typedef struct _CopyFileList
 /*---------------------------------------------------------------------------*
     内部定数定義
  *---------------------------------------------------------------------------*/
-/*
-static const CopyFileList sCopyFileList[] =
-{
-	{ "rom:/data/TWLFontTable.dat", "nand:sys/TWLFontTable.dat" },
-	{ "rom:/data/cert.sys",         "nand:/sys/cert.sys"        }
+
+static const CopyFileList sCertList =
+{ 
+	"rom:/local/cert.sys",  "nand:/sys/cert.sys"
 };
-*/
+
 /*---------------------------------------------------------------------------*
     内部変数定義
  *---------------------------------------------------------------------------*/
@@ -58,7 +57,7 @@ static const CopyFileList sCopyFileList[] =
  *---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*
-  Name:         ProcessWriteFiles
+  Name:         ProcessWriteCert
 
   Description:  
 
@@ -66,72 +65,22 @@ static const CopyFileList sCopyFileList[] =
 
   Returns:      なし。
  *---------------------------------------------------------------------------*/
-BOOL ProcessWriteFiles(void)
+BOOL ProcessWriteCert(void)
 {
-    FSFile  dir;
-    FSDirectoryEntryInfo   info[1];
-	char full_path[FS_ENTRY_LONGNAME_MAX+6];
-	BOOL find = FALSE;
-	BOOL result = TRUE;
+	BOOL ret;
 
-/*
-	OS_WaitVBlankIntr();
-	NNS_G2dCharCanvasClearArea(&gCanvas,  TXT_COLOR_WHITE, 0,  30, 256, 100);
-	OS_WaitVBlankIntr();
-	NNS_G2dCharCanvasClearArea(&gCanvas2, TXT_COLOR_BLACK, 0, 130, 256,  62);
-	OS_WaitVBlankIntr();
+	ret = kamiCopyFile(sCertList.srcPath, sCertList.dstPath);
 
-	NNS_G2dTextCanvasDrawText(&gTextCanvas, 84, 60,
-		TXT_COLOR_WHITE_BASE, TXT_DRAWTEXT_FLAG_DEFAULT, (const char*)
-		L"Write Files.."
-	);
-*/
-
-	// 適切なディレクトリを開く
-	STD_TSNPrintf(full_path, sizeof(full_path), "rom:/data/%s/%s/", gDirectoryNameConsole[GetConsole()], gDirectoryNameRegion[gRegion]);
-
-	FS_InitFile(&dir);
-	if (!FS_OpenDirectory(&dir, full_path, FS_FILEMODE_R))
+	if (ret)
 	{
-    	kamiFontPrintfConsole(CONSOLE_RED, "Error FS_OpenDirectory()\n");
-		return FALSE;
+		kamiFontPrintfConsole(FONT_COLOR_GREEN, "Write Data2 Success.\n");
 	}
-
-	// .datファイルを検索
-    while (FS_ReadDirectory(&dir, info))
-    {
-        if ((info->attributes & (FS_ATTRIBUTE_DOS_DIRECTORY | FS_ATTRIBUTE_IS_DIRECTORY)) == 0)
-        {
-			char* pExtension;
-
-			// 拡張子のチェック
-			pExtension = STD_SearchCharReverse( info->longname, '.');
-			if (pExtension)
-			{
-				if (!STD_CompareString( pExtension, ".dat") || !STD_CompareString( pExtension, ".DAT")  )
-				{
-					STD_TSNPrintf(full_path, sizeof(full_path), "rom:/data/%s/%s/%s", gDirectoryNameConsole[GetConsole()], gDirectoryNameRegion[gRegion], info->longname);
-					find = TRUE;
-					break;
-				}
-			}
-        }
-	}
-
-	if (find)
+	else
 	{
-		if (kamiCopyFile(full_path, "nand:sys/TWLFontTable.dat"))
-		{
-			kamiFontPrintfConsole(FONT_COLOR_GREEN, "Write Font Data Success.\n");			
-		}
-		else
-		{
-			result = FALSE;
-			kamiFontPrintfConsole(FONT_COLOR_RED, "Write Font Data Failure!\n");
-		}
+		kamiFontPrintfConsole(FONT_COLOR_RED, "Write Data2 Failure!\n");
 	}
 
 	OS_WaitVBlankIntr();
 	kamiFontLoadScreenData();
-	return result;
+	return ret;
 }

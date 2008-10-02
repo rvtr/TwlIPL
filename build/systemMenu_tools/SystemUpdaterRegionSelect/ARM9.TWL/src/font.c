@@ -159,7 +159,7 @@ static void InitCanvas(void)
         void* pFontFile;
         u32 size;
 
-        size = LoadFile( &pFontFile, "/font/tbf_ww_s.NFTR" );
+        size = LoadFile( &pFontFile, "/local/tbf_ww_s.NFTR" );
         NNS_G2D_ASSERT( size > 0 );
 
         NNS_G2dFontInitUTF16(&gFont, pFontFile);
@@ -297,13 +297,7 @@ void UpdateFreePltt(u16 color)
  *---------------------------------------------------------------------------*/
 void InitFont(void)
 {
-	char string1[256];
-	u16  string2[256];
-
     InitCanvas();
-
-	MI_CpuClear8(string1, sizeof(string1));
-	MI_CpuClear8(string2, sizeof(string2));
 
 	OS_WaitVBlankIntr();
     NNS_G2dCharCanvasClear(&gCanvas, TXT_COLOR_WHITE);
@@ -312,11 +306,8 @@ void InitFont(void)
 	OS_WaitVBlankIntr();
     NNS_G2dCharCanvasClearArea(&gCanvas2, TXT_COLOR_BLACK, 0,   0, 256,  30);
 
-	STD_TSPrintf(string1, "System Updater  rev.%s-%s", g_strSDKSvnRevision, g_strIPLSvnRevision);
-	STD_ConvertStringSjisToUnicode(string2, NULL, string1, NULL, NULL);
-
-    NNS_G2dTextCanvasDrawText(&gTextCanvas2, 30, 6,
+    NNS_G2dTextCanvasDrawText(&gTextCanvas2, 39, 6,
         TXT_COLOR_BLACK_BASE, TXT_DRAWTEXT_FLAG_DEFAULT,
-        (const char *)string2
+        (const char *)SYSTEM_UPDATER_NAME
     );
 }

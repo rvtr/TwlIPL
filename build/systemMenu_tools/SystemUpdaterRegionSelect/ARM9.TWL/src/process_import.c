@@ -68,7 +68,7 @@ static u8  sStack[THREAD_STACK_SIZE];
     内部関数宣言
  *---------------------------------------------------------------------------*/
 
-static s32 kamiImportTad(const char* path);
+static s32 kamiImportTad(const char* path, BOOL erase);
 static void ProgressThread(void* arg);
 static void Destructor(void* arg);
 void ProgressDraw(f32 ratio);
@@ -101,6 +101,8 @@ BOOL ProcessImport(void)
 	OS_WaitVBlankIntr();
 	NNS_G2dCharCanvasClearArea(&gCanvas2, TXT_COLOR_BLACK, 0, 130, 256,  62);
 	OS_WaitVBlankIntr();
+	NNS_G2dTextCanvasDrawText(&gTextCanvas, 40, 60,
+		TXT_COLOR_WHITE_BASE, TXT_DRAWTEXT_FLAG_DEFAULT, (const char*)L"Now Import..");
 
 	while(!FadeInTick())
 	{
@@ -156,24 +158,24 @@ BOOL ProcessImport(void)
 					// MAX_RETRY_COUNTまでリトライする
 					for (j=0; j<MAX_RETRY_COUNT; j++)
 					{	
-						nam_result = kamiImportTad(full_path);
+						nam_result = kamiImportTad(full_path, j);
 						if (nam_result == NAM_OK)
 						{
 							break;
 						}
 						else
 						{
-							kamiFontPrintfConsole(CONSOLE_RED, "Import %d Retry!\n", i+1);
+							kamiFontPrintfConsole(CONSOLE_GREEN, "Import %d Retry!\n", i);
 						}
 					}
 
 					if ( nam_result == NAM_OK)
 					{
-						kamiFontPrintfConsole(FONT_COLOR_GREEN, "List : %d Import Success.\n", i+1 );			
+						kamiFontPrintfConsole(FONT_COLOR_GREEN, "List : %d Import Success.\n", i);			
 					}
 					else
 					{
-						kamiFontPrintfConsole(FONT_COLOR_RED, "Error: %d : RetCode = %d\n", i+1, nam_result );
+						kamiFontPrintfConsole(FONT_COLOR_RED, "Error: %d : RetCode = %d\n", i, nam_result );
 						result = FALSE;
 					}
 
@@ -200,7 +202,7 @@ BOOL ProcessImport(void)
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
-static s32 kamiImportTad(const char* path)
+static s32 kamiImportTad(const char* path, BOOL erase)
 {
 	NAMTadInfo tadInfo;
 	OSThread thread;
@@ -215,11 +217,14 @@ static s32 kamiImportTad(const char* path)
 
 	// ESの仕様で古い e-ticket があると新しい e-ticket を使ったインポートができない
 	// 暫定対応として該当タイトルを完全削除してからインポートする
-	nam_result = NAM_DeleteTitleCompletely(tadInfo.titleInfo.titleId);
-	if ( nam_result != NAM_OK )
+	if (erase)
 	{
-		kamiFontPrintfConsole(CONSOLE_RED, "Fail! RetCode=%x\n", nam_result);
-		return FALSE;
+		nam_result = NAM_DeleteTitleCompletely(tadInfo.titleInfo.titleId);
+		if ( nam_result != NAM_OK )
+		{
+			kamiFontPrintfConsole(CONSOLE_RED, "Fail! RetCode=%x\n", nam_result);
+			return FALSE;
+		}
 	}
 
 	// インポート開始フラグを立てる

@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*
   Project:  SystemUpdater
-  File:     process_format.c
+  File:     process_write_font.c
 
   Copyright 2008 Nintendo.  All rights reserved.
 
@@ -15,21 +15,25 @@
   $Author$
  *---------------------------------------------------------------------------*/
 
-#include <stdlib.h>	// atoi
 #include <twl.h>
-#include <twl/nam.h>
 #include "font.h"
 #include "graphics.h"
 #include "keypad.h"
 #include "debugger_hw_reset_control.h"
 #include "debugger_card_rom.h"
 #include "kami_global.h"
-#include "kami_pxi.h"
+#include "kami_copy_file.h"
 #include "kami_font.h"
 
 /*---------------------------------------------------------------------------*
     型定義
  *---------------------------------------------------------------------------*/
+
+typedef struct _CopyFileList
+{
+	char* srcPath;
+	char* dstPath;
+} CopyFileList;
 
 /*---------------------------------------------------------------------------*
     グローバル変数定義
@@ -38,21 +42,23 @@
 /*---------------------------------------------------------------------------*
     内部定数定義
  *---------------------------------------------------------------------------*/
-#define CORRECT_NAND_ARCHIVE_SIZE  0xcde0000
-
+/*
+static const CopyFileList sCopyFileList[] =
+{
+	{ "rom:/data/TWLFontTable.dat", "nand:sys/TWLFontTable.dat" },
+	{ "rom:/data/cert.sys",         "nand:/sys/cert.sys"        }
+};
+*/
 /*---------------------------------------------------------------------------*
     内部変数定義
  *---------------------------------------------------------------------------*/
-static vu8 sIsFormatFinish;
-static u8 sFormatResult;
 
 /*---------------------------------------------------------------------------*
     内部関数定義
  *---------------------------------------------------------------------------*/
-static void FormatCallback(KAMIResult result, void* arg);
 
 /*---------------------------------------------------------------------------*
-  Name:         ProcessFormat
+  Name:         ProcessWriteFont
 
   Description:  
 
@@ -60,88 +66,72 @@ static void FormatCallback(KAMIResult result, void* arg);
 
   Returns:      なし。
  *---------------------------------------------------------------------------*/
-BOOL ProcessFormat(void)
+BOOL ProcessWriteFont(void)
 {
-	FSArchiveResource resource;
+    FSFile  dir;
+    FSDirectoryEntryInfo   info[1];
+	char full_path[FS_ENTRY_LONGNAME_MAX+6];
+	BOOL find = FALSE;
+	BOOL result = TRUE;
 
-	// 既に最新フォーマットであればフォーマットしない	
-	if (FS_GetArchiveResource("nand:/", &resource))
-	{
-		if (resource.totalSize == CORRECT_NAND_ARCHIVE_SIZE)
-		{
-			return TRUE;
-		}
-	}
-
+/*
 	OS_WaitVBlankIntr();
 	NNS_G2dCharCanvasClearArea(&gCanvas,  TXT_COLOR_WHITE, 0,  30, 256, 100);
 	OS_WaitVBlankIntr();
 	NNS_G2dCharCanvasClearArea(&gCanvas2, TXT_COLOR_BLACK, 0, 130, 256,  62);
 	OS_WaitVBlankIntr();
 
-	NNS_G2dTextCanvasDrawText(&gTextCanvas, 74, 72,
+	NNS_G2dTextCanvasDrawText(&gTextCanvas, 84, 60,
 		TXT_COLOR_WHITE_BASE, TXT_DRAWTEXT_FLAG_DEFAULT, (const char*)
-		L"Now Format Nand.."
+		L"Write Files.."
 	);
+*/
 
-	// フォーマット実行
-	sIsFormatFinish = FALSE;
-    ExeFormatAsync(FORMAT_MODE_QUICK, FormatCallback);
+	// 適切なディレクトリを開く
+	STD_TSNPrintf(full_path, sizeof(full_path), "rom:/data/%s/%s/", gDirectoryNameConsole[GetConsole()], gDirectoryNameRegion[gRegion]);
 
-	while(1)
+	FS_InitFile(&dir);
+	if (!FS_OpenDirectory(&dir, full_path, FS_FILEMODE_R))
 	{
-		G3X_Reset();
-		G3_Identity();
-		G3_PolygonAttr(GX_LIGHTMASK_NONE, GX_POLYGONMODE_DECAL, GX_CULL_NONE, 0, 31, 0);
-		G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
-	    OS_WaitVBlankIntr();
-		FadeInTick();
-
-		if (sIsFormatFinish) break;
+    	kamiFontPrintfConsole(CONSOLE_RED, "Error FS_OpenDirectory()\n");
+		return FALSE;
 	}
 
-	if (sFormatResult)
-	{
-		kamiFontPrintfConsole(FONT_COLOR_GREEN, "NAND Format Success.\n");
-	}
-	else
-	{
-		kamiFontPrintfConsole(FONT_COLOR_RED, "NAND Format Failure!\n");		
-	}
+	// .datファイルを検索
+    while (FS_ReadDirectory(&dir, info))
+    {
+        if ((info->attributes & (FS_ATTRIBUTE_DOS_DIRECTORY | FS_ATTRIBUTE_IS_DIRECTORY)) == 0)
+        {
+			char* pExtension;
 
-	// フォーマット後はESに必要なファイルがなくなっているため
-	// ES_InitLibを呼び出すことで作成しておく
-	NAM_End( NULL, NULL );
-	NAM_Init( OS_AllocFromMain, OS_FreeToMain );
-
-	while (!FadeOutTick())
-	{
-		OS_WaitVBlankIntr();
-	}
-
-	return sFormatResult;
-}
-
-
-/*---------------------------------------------------------------------------*
-  Name:         FormatCallback
-
-  Description:  フォーマットコールバック
-
-  Arguments:   
-
-  Returns:      None.
- *---------------------------------------------------------------------------*/
-static void FormatCallback(KAMIResult result, void* /*arg*/)
-{
-	if ( result == KAMI_RESULT_SUCCESS_TRUE )
-	{
-		sFormatResult = TRUE;
-	}
-	else
-	{
-		sFormatResult = FALSE;
+			// 拡張子のチェック
+			pExtension = STD_SearchCharReverse( info->longname, '.');
+			if (pExtension)
+			{
+				if (!STD_CompareString( pExtension, ".dat") || !STD_CompareString( pExtension, ".DAT")  )
+				{
+					STD_TSNPrintf(full_path, sizeof(full_path), "rom:/data/%s/%s/%s", gDirectoryNameConsole[GetConsole()], gDirectoryNameRegion[gRegion], info->longname);
+					find = TRUE;
+					break;
+				}
+			}
+        }
 	}
 
-	sIsFormatFinish = TRUE;
+	if (find)
+	{
+		if (kamiCopyFile(full_path, "nand:sys/TWLFontTable.dat"))
+		{
+			kamiFontPrintfConsole(FONT_COLOR_GREEN, "Write Data1 Success.\n");			
+		}
+		else
+		{
+			result = FALSE;
+			kamiFontPrintfConsole(FONT_COLOR_RED, "Write Data1 Failure!\n");
+		}
+	}
+
+	OS_WaitVBlankIntr();
+	kamiFontLoadScreenData();
+	return result;
 }

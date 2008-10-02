@@ -68,8 +68,12 @@ SRCS		=	main.c \
 				process_log.c \
 				process_finish.c \
 				process_import.c \
-				process_write_files.c \
+				process_write_font.c \
+				process_write_cert.c \
+				process_write_dummy.c \
 				process_nandfirm.c \
+				process_namut_format.c \
+				process_delete_other_region_sysmenu.c \
 				fade.c
 
 LINCLUDES	=	include \

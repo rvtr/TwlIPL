@@ -47,6 +47,7 @@ typedef enum
     íËêîíËã`
  *---------------------------------------------------------------------------*/
 
+#define SYSTEM_UPDATER_NAME         L"System Menu Updater ver.1.0"
 #define SYSTEM_UPDATER_LOG_PATH     "nand:/sys/log/updater.log"
 #define SYSTEM_UPDATER_MAGIC_CODE   44001111
 
@@ -75,12 +76,16 @@ extern BOOL ProcessHwinfo(void);
 extern void ProcessLog(void);
 extern void ProcessFinish(BOOL result);
 extern BOOL ProcessImport(void);
-extern BOOL ProcessWriteFiles(void);
+extern BOOL ProcessWriteFont(void);
+extern BOOL ProcessWriteCert(void);
+extern BOOL ProcessWriteDummy(void);
 extern BOOL FadeOutTick(void);
 extern BOOL FadeInTick(void);
 extern BOOL FadeInMaster(void);
 extern RunningConsole GetConsole(void);
 extern BOOL ProcessNandfirm(void);
+extern BOOL ProcessNamutFormat(void);
+extern BOOL ProcessDeleteOtherResionSysmenu(void);
 
 /*===========================================================================*/
 

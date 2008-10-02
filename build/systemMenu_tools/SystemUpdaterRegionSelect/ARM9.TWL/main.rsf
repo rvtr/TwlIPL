@@ -224,8 +224,8 @@ RomSpec
 	Root		/data
 	File		*
 	HostRoot    ../data
-	Root        /font
-	File        tbf_ww_s.NFTR
+	Root        /local
+	File        tbf_ww_s.NFTR cert.sys
 	HostRoot	$(PRIVKEY_PATH)
 	Root		/key
 	File		$(HWINFO_PRIVKEY) $(HWID_PRIVKEY)
