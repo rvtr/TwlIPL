@@ -63,6 +63,8 @@ System::Void Form1::saveTmp( System::String ^filename )
 	else if( this->rUsageOther->Checked )
 		MasterEditorTWL::appendXmlTag( doc, form, "Purpose", "Other" );
 	MasterEditorTWL::appendXmlTag( doc, form, "PurposeOther", this->tboxUsageOther->Text );
+	MasterEditorTWL::appendXmlTag( doc, form, "ReleaseDate", this->dateRelease->Value.ToString() );
+	MasterEditorTWL::appendXmlTag( doc, form, "SubmitDate", this->dateSubmit->Value.ToString() );
 
 	MasterEditorTWL::appendXmlTag( doc, form, "Company1", this->tboxCompany1->Text );
 	MasterEditorTWL::appendXmlTag( doc, form, "Depart1", this->tboxDepart1->Text );
@@ -99,14 +101,30 @@ System::Void Form1::saveTmp( System::String ^filename )
 	MasterEditorTWL::appendXmlTag( doc, form, "RatingPEGI_BBFC", this->combPEGI_BBFC->SelectedIndex.ToString() );
 	MasterEditorTWL::appendXmlTag( doc, form, "RatingOFLC", this->combOFLC->SelectedIndex.ToString() );
 
-	doc->Save( filename );
+	try
+	{
+		doc->Save( filename );
+	}
+	catch( System::Exception ^ex )
+	{
+		(void)ex;
+		this->errMsg( "一時情報の保存に失敗しました。", "Saving a temporary file failed." );
+	}
 } //saveTmp()
 
 // 一時ファイルの読み出し
 void Form1::loadTmp( System::String ^filename )
 {
 	System::Xml::XmlDocument ^doc = gcnew System::Xml::XmlDocument;
-	doc->Load( filename );
+	try
+	{
+		doc->Load( filename );
+	}
+	catch( System::Exception ^ex )
+	{
+		(void)ex;
+		this->errMsg( "一時情報の読み込みに失敗しました。", "Loading a temporary file failed." );
+	}
 	System::Xml::XmlElement  ^root = doc->DocumentElement;
 	System::String ^text;
 
@@ -138,6 +156,8 @@ void Form1::loadTmp( System::String ^filename )
 	this->parseTmp( root, "/MasterEditorTWL/Form/ProductCode2", this->tboxProductCode2 );
 	this->parseTmp( root, "/MasterEditorTWL/Form/SubmitVersion", this->numSubmitVersion );
 	this->parseTmp( root, "/MasterEditorTWL/Form/Backup", this->combBackup );
+	this->parseTmp( root, "/MasterEditorTWL/Form/ReleaseDate", this->dateRelease );
+	this->parseTmp( root, "/MasterEditorTWL/Form/SubmitDate",  this->dateSubmit );
 
 	this->tboxBackupOther->Enabled = false;
 	this->tboxBackupOther->Clear();
@@ -338,5 +358,25 @@ System::Boolean Form1::parseTmp( System::Xml::XmlElement ^root, System::String ^
 		return false;
 	}
 	tbox->Text = text;
+	return true;
+}
+System::Boolean Form1::parseTmp( System::Xml::XmlElement ^root, System::String ^xpath, System::Windows::Forms::DateTimePicker ^date )
+{
+	System::String ^text = MasterEditorTWL::getXPathText( root, xpath );
+	if( System::String::IsNullOrEmpty( text ) )
+		return false;
+
+	System::Diagnostics::Debug::WriteLine( text );
+
+	try
+	{
+		date->Value = System::DateTime::Parse( text );
+	}
+	catch( System::Exception ^ex )
+	{
+		(void)ex;
+		date->Value = System::DateTime::Now;
+		return false;
+	}
 	return true;
 }
