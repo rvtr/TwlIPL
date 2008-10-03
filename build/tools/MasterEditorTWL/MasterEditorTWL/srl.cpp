@@ -1129,8 +1129,8 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 	if( !bRsv )
 	{
 		this->hErrorList->Add( gcnew RCMrcError( 
-			"ROM情報予約領域", 0x078, 0x07f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-			"Reserved Area for ROM Info.", "Invalid data is included. Please set 0 into this area.", false, true ) );
+			"予約領域", 0x078, 0x07f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
+			"Reserved Area", "Invalid data is included. Please set 0 into this area.", false, true ) );
 	}
 	bRsv = true;
 	for( i=0; i < 32; i++ )
@@ -1144,8 +1144,8 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 	if( !bRsv )
 	{
 		this->hErrorList->Add( gcnew RCMrcError( 
-			"予約領域C", 0x160, 0x17f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-			"Reserved Area C", "Invalid data is included. Please set 0 into this area.", false, true ) );
+			"予約領域", 0x160, 0x17f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
+			"Reserved Area", "Invalid data is included. Please set 0 into this area.", false, true ) );
 	}
 
 	// ROMヘッダ以外の領域のチェック (ファイルから適宜リードする)
@@ -1334,8 +1334,8 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 	if( !bReserved )
 	{
 		this->hErrorList->Add( gcnew RCMrcError( 
-			"予約領域A", 0x015, 0x01b, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-			"Reserved Area A", "Invalid data is included. Please set 0 into this area.", false, true ) );
+			"予約領域", 0x015, 0x01b, "不正な値が含まれています。この領域をすべて0で埋めてください。",
+			"Reserved Area", "Invalid data is included. Please set 0 into this area.", false, true ) );
 	}
 	bReserved = true;
 	for( i=0; i < 39; i++ )
@@ -1349,8 +1349,8 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 	if( !bReserved )
 	{
 		this->hErrorList->Add( gcnew RCMrcError( 
-			"予約領域B", 0x099, 0x0bf, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-			"Reserved Area B", "Invalid data is included. Please set 0 into this area.", false, true ) );
+			"予約領域", 0x099, 0x0bf, "不正な値が含まれています。この領域をすべて0で埋めてください。",
+			"Reserved Area", "Invalid data is included. Please set 0 into this area.", false, true ) );
 	}
 
 	// ROMヘッダのチェック (TWL専用領域)
@@ -1536,12 +1536,12 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 	if( !bReserved )
 	{
 		this->hErrorList->Add( gcnew RCMrcError( 
-			"予約領域F", 0x240, 0x2ef, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-			"Reserved Area F", "Invalid data is included. Please set 0 into this area.", false, true ) );
+			"予約領域", 0x240, 0x2ef, "不正な値が含まれています。この領域をすべて0で埋めてください。",
+			"Reserved Area", "Invalid data is included. Please set 0 into this area.", false, true ) );
 	}
 
 	bReserved = true;
-	for( i=0; i < (0xf80 - 0x378); i++ )
+	for( i=0; i < (0x3a0 - 0x378); i++ )
 	{
 		u8 *p = (u8*)this->pRomHeader;
 		if( p[ 0x378 + i ] != 0 )
@@ -1553,8 +1553,25 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 	if( !bReserved )
 	{
 		this->hErrorList->Add( gcnew RCMrcError( 
-			"予約領域D", 0x378, 0xf7f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-			"Reserved Area D", "Invalid data is included. Please set 0 into this area.", false, true ) );
+			"予約領域", 0x378, 0x39f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
+			"Reserved Area", "Invalid data is included. Please set 0 into this area.", false, true ) );
+	}
+
+	bReserved = true;
+	for( i=0; i < (0xf80 - 0x3b4); i++ )
+	{
+		u8 *p = (u8*)this->pRomHeader;
+		if( p[ 0x3b4 + i ] != 0 )
+		{
+			bReserved = false;
+			break;
+		}
+	}
+	if( !bReserved )
+	{
+		this->hErrorList->Add( gcnew RCMrcError( 
+			"予約領域", 0x3b4, 0xf7f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
+			"Reserved Area", "Invalid data is included. Please set 0 into this area.", false, true ) );
 	}
 
 	// ROMヘッダ以外の領域のチェック
