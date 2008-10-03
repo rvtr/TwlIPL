@@ -1116,38 +1116,6 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 			"ROM Header CRC.", "Calclated CRC is different from Registered one.", false, true ) );
 	}
 
-	// 予約領域
-	System::Boolean bRsv = true;
-	for( i=0; i < 8; i++ )
-	{
-		if( this->pRomHeader->s.ctrl_reserved_B[i] != 0 )
-		{
-			bRsv = false;
-			break;
-		}
-	}
-	if( !bRsv )
-	{
-		this->hErrorList->Add( gcnew RCMrcError( 
-			"予約領域", 0x078, 0x07f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-			"Reserved Area", "Invalid data is included. Please set 0 into this area.", false, true ) );
-	}
-	bRsv = true;
-	for( i=0; i < 32; i++ )
-	{
-		if( this->pRomHeader->s.reserved_C[i] != 0 )
-		{
-			bRsv = false;
-			break;
-		}
-	}
-	if( !bRsv )
-	{
-		this->hErrorList->Add( gcnew RCMrcError( 
-			"予約領域", 0x160, 0x17f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-			"Reserved Area", "Invalid data is included. Please set 0 into this area.", false, true ) );
-	}
-
 	// ROMヘッダ以外の領域のチェック (ファイルから適宜リードする)
 	
 	// システムコールライブラリ
@@ -1321,38 +1289,6 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		}
 	}
 
-	// 予約領域
-	System::Boolean bReserved = true;
-	for( i=0; i < 7; i++ )
-	{
-		if( this->pRomHeader->s.reserved_A[i] != 0 )
-		{
-			bReserved = false;
-			break;
-		}
-	}
-	if( !bReserved )
-	{
-		this->hErrorList->Add( gcnew RCMrcError( 
-			"予約領域", 0x015, 0x01b, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-			"Reserved Area", "Invalid data is included. Please set 0 into this area.", false, true ) );
-	}
-	bReserved = true;
-	for( i=0; i < 39; i++ )
-	{
-		if( this->pRomHeader->s.reserved_B[i] != 0 )
-		{
-			bReserved = false;
-			break;
-		}
-	}
-	if( !bReserved )
-	{
-		this->hErrorList->Add( gcnew RCMrcError( 
-			"予約領域", 0x099, 0x0bf, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-			"Reserved Area", "Invalid data is included. Please set 0 into this area.", false, true ) );
-	}
-
 	// ROMヘッダのチェック (TWL専用領域)
 
 	// 値チェック
@@ -1524,59 +1460,10 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 			"Title ID", "Lower 4 bytes don't match ones of Game Code.", false, true ) );
 	}
 
-	bReserved = true;
-	for( i=0; i < (0x2f0 - 0x240); i++ )
-	{
-		if( this->pRomHeader->s.reserved_ltd_F[i] != 0 )
-		{
-			bReserved = false;
-			break;
-		}
-	}
-	if( !bReserved )
-	{
-		this->hErrorList->Add( gcnew RCMrcError( 
-			"予約領域", 0x240, 0x2ef, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-			"Reserved Area", "Invalid data is included. Please set 0 into this area.", false, true ) );
-	}
-
-	bReserved = true;
-	for( i=0; i < (0x3a0 - 0x378); i++ )
-	{
-		u8 *p = (u8*)this->pRomHeader;
-		if( p[ 0x378 + i ] != 0 )
-		{
-			bReserved = false;
-			break;
-		}
-	}
-	if( !bReserved )
-	{
-		this->hErrorList->Add( gcnew RCMrcError( 
-			"予約領域", 0x378, 0x39f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-			"Reserved Area", "Invalid data is included. Please set 0 into this area.", false, true ) );
-	}
-
-	bReserved = true;
-	for( i=0; i < (0xf80 - 0x3b4); i++ )
-	{
-		u8 *p = (u8*)this->pRomHeader;
-		if( p[ 0x3b4 + i ] != 0 )
-		{
-			bReserved = false;
-			break;
-		}
-	}
-	if( !bReserved )
-	{
-		this->hErrorList->Add( gcnew RCMrcError( 
-			"予約領域", 0x3b4, 0xf7f, "不正な値が含まれています。この領域をすべて0で埋めてください。",
-			"Reserved Area", "Invalid data is included. Please set 0 into this area.", false, true ) );
-	}
-
 	// ROMヘッダ以外の領域のチェック
 
 	this->mrcBanner( fp );
+	this->mrcReservedArea(fp);
 
 	// 追加チェック
 	if( *(this->hMrcSpecialList->hIsCheck) == true )
@@ -1697,6 +1584,62 @@ void RCSrl::mrcPadding(FILE *fp)
 			false, true ) );
 	}
 	delete []buf;
+}
+
+// 予約領域
+void RCSrl::mrcReservedArea(FILE *fp)
+{
+	System::Xml::XmlDocument ^doc = gcnew System::Xml::XmlDocument();
+	try
+	{
+		doc->Load( "../resource/ini.xml" );
+	}
+	catch( System::Exception ^ex )
+	{
+		(void)ex;
+		this->hErrorList->Add( gcnew RCMrcError( 
+			"予約領域", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE,
+			"設定ファイルから予約領域のリストを読み出すことができませんでした。",
+			"Reserved Area",
+			"The list of reserved areas is not found in the setting file.",
+			false, true ) );
+		return;
+	}
+
+	// 設定ファイルから予約領域の情報を読み出す
+	System::Xml::XmlNodeList ^list = doc->SelectNodes( "/init/reserved-list/reserved" );
+	System::Collections::IEnumerator^ iter = list->GetEnumerator();
+	while( iter->MoveNext() )
+	{
+		System::Xml::XmlNode ^area = safe_cast<System::Xml::XmlNode^>(iter->Current);
+		System::Xml::XmlNode ^begin = area->SelectSingleNode( "begin" );	// 相対パス
+		System::Xml::XmlNode ^end   = area->SelectSingleNode( "end" );	// 相対パス
+		if( begin && begin->FirstChild && begin->FirstChild->Value && 
+			end   && end->FirstChild   && end->FirstChild->Value )
+		{
+			System::UInt32 ibeg = System::UInt32::Parse( begin->FirstChild->Value, System::Globalization::NumberStyles::AllowHexSpecifier );
+			System::UInt32 iend = System::UInt32::Parse( end->FirstChild->Value, System::Globalization::NumberStyles::AllowHexSpecifier );
+			System::UInt32 size = iend - ibeg + 1;
+			System::UInt32 i;
+			System::Boolean bReserved = true;
+			for( i=0; i < size; i++ )
+			{
+				u8 *p = (u8*)this->pRomHeader;
+				if( p[ ibeg + i ] != 0 )
+				{
+					bReserved = false;
+					break;
+				}
+			}
+			if( !bReserved )
+			{
+				this->hErrorList->Add( gcnew RCMrcError( 
+					"予約領域", ibeg, iend, "不正な値が含まれています。この領域をすべて0で埋めてください。",
+					"Reserved Area", "Invalid data is included. Please set 0 into this area.", false, true ) );
+			}
+			
+		}
+	}
 }
 
 // バナー

@@ -385,6 +385,7 @@ namespace MasterEditorTWL
 		ECSrlResult mrcTWL( FILE *fp );
 		void mrcPadding( FILE *fp );
 		void mrcBanner( FILE *fp );
+		void mrcReservedArea( FILE *fp );
 
 	}; // end of ref class RCSrl
 
