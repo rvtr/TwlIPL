@@ -1492,6 +1492,21 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 			true, true ) );		// 修正可能
 	}
 
+	if( *this->hIsMediaNand == false )	// カードアプリのときのみ
+	{
+		u32 ideal  = (this->pRomHeader->s.twl_card_keytable_area_rom_offset * 0x80000) + 0x3000;	// TWL KeyTable領域の開始 + KeyTableサイズ
+		u32 actual = this->pRomHeader->s.main_ltd_rom_offset;
+		if( ideal > actual )
+		{
+			this->hErrorList->Add( gcnew RCMrcError( 
+				"拡張常駐モジュール", 0x1c0, 0x1c3,
+				"TWL拡張常駐モジュールの配置に問題があります。弊社窓口にご連絡ください。",
+				"Extended Static Module",
+				"Alignment of TWL Extended Static Module is illegal. Please contact us, sorry.",
+				false, true ) );
+		}
+	}
+
 	if( (*this->hIsAppLauncher == false) && (*this->hIsSCFGAccess == true) )
 	{
 		this->hWarnList->Add( gcnew RCMrcError( 
