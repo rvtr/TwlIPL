@@ -304,34 +304,6 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 			{
 				node->FirstChild->Value = MasterEditorTWL::transSizeToString( hSrl->hPrivateSize );
 			}
-			if( node->FirstChild->Value->Equals( "TagIsRegionJapan" ) )
-			{
-				if( *(hSrl->hIsRegionJapan) == true )
-					node->FirstChild->Value = gcnew System::String("○");
-				else
-					node->FirstChild->Value = nullptr;
-			}
-			if( node->FirstChild->Value->Equals( "TagIsRegionAmerica" ) )
-			{
-				if( *(hSrl->hIsRegionAmerica) == true )
-					node->FirstChild->Value = gcnew System::String("○");
-				else
-					node->FirstChild->Value = nullptr;
-			}
-			if( node->FirstChild->Value->Equals( "TagIsRegionEurope" ) )
-			{
-				if( *(hSrl->hIsRegionEurope) == true )
-					node->FirstChild->Value = gcnew System::String("○");
-				else
-					node->FirstChild->Value = nullptr;
-			}
-			if( node->FirstChild->Value->Equals( "TagIsRegionAustralia" ) )
-			{
-				if( *(hSrl->hIsRegionAustralia) == true )
-					node->FirstChild->Value = gcnew System::String("○");
-				else
-					node->FirstChild->Value = nullptr;
-			}
 			if( node->FirstChild->Value->Equals( "TagIsCodec" ) )
 			{
 				if( *(hSrl->hIsCodecTWL) == true )
@@ -497,6 +469,12 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 				node->FirstChild->Value = this->hCaption;
 			}
 
+			// リージョン
+			if( node->FirstChild->Value->Equals( "TagRegion" ) )
+			{
+				node->FirstChild->Value = this->hRegion;
+			}
+
 			// ペアレンタルコントロール
 			if( node->FirstChild->Value->Equals( "TagRatingCERO" ) )
 			{
@@ -525,6 +503,22 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 			if( node->FirstChild->Value->Equals( "TagRatingOFLC" ) )
 			{
 				node->FirstChild->Value = this->hOFLC;
+			}
+
+			// SRLに登録されないROM仕様
+			if( node->FirstChild->Value->Equals( "TagIsUGC" ) )
+			{
+				if( *(this->hIsUGC) == true )
+					node->FirstChild->Value = gcnew System::String("○");
+				else
+					node->FirstChild->Value = nullptr;
+			}
+			if( node->FirstChild->Value->Equals( "TagIsPhotoEx" ) )
+			{
+				if( *(this->hIsPhotoEx) == true )
+					node->FirstChild->Value = gcnew System::String("○");
+				else
+					node->FirstChild->Value = nullptr;
 			}
 
 			// ROM内登録データを1バイトずつ表に書き込む

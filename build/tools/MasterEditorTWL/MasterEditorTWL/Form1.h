@@ -44,6 +44,9 @@ namespace MasterEditorTWL {
 		System::Collections::Generic::List<RCMrcError ^> ^hErrorList;
 		System::Collections::Generic::List<RCMrcError ^> ^hWarnList;
 
+		// SRLに登録されないROM仕様を読み込み時の状態に戻せる仕組み
+		System::Boolean ^hIsCheckedUGC;			// 読み込み時にチェックされていたか
+		System::Boolean ^hIsCheckedPhotoEx;
 
 	// VC自動追加フィールド
 	private: System::Windows::Forms::GroupBox^  gboxCRC;
@@ -583,6 +586,11 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareXml;
 private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 private: System::Windows::Forms::ToolStripSeparator^  stripItemSepFile1;
 private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
+private: System::Windows::Forms::GroupBox^  gboxOtherSpec;
+private: System::Windows::Forms::CheckBox^  cboxIsUGC;
+private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
+
+
 
 
 
@@ -670,6 +678,8 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->hErrorList->Clear();
 			this->hWarnList = gcnew System::Collections::Generic::List<RCMrcError^>();
 			this->hWarnList->Clear();
+			this->hIsCheckedUGC     = gcnew System::Boolean(false);
+			this->hIsCheckedPhotoEx = gcnew System::Boolean(false);
 
 			// バージョン情報を表示
 			//this->labAssemblyVersion->Text = System::Windows::Forms::Application::ProductVersion;
@@ -701,8 +711,8 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			}
 
 			// 複数行表示したいが初期値で設定できないのでここで設定
-			this->tboxGuideRomEditInfo->Text  = "このタブの情報は提出確認書およびマスターROMの作成に必要です。編集してください。";
-			this->tboxGuideRomEditInfo->Text += "\r\n(マスターROMの作成をするまでROMデータの中には登録されません。)";
+			this->tboxGuideRomEditInfo->Text  = "このタブの各項目への入力は提出確認書およびマスターROMの作成のために必要です。";
+			this->tboxGuideRomEditInfo->Text += "\r\nこれらの情報はマスターROMの作成時にROM内登録データとして登録されます(「その他ROM情報」を除く。)";
 
 			this->tboxGuideErrorInfo->Text  = "このタブには読み込んだROMデータの問題と本プログラムでの入力ミスが列挙されます。";
 			this->tboxGuideErrorInfo->Text += "\r\n赤文字の項目は、本プログラムで修正不可です。ROMデータ作成時の設定をご確認ください。";
@@ -745,10 +755,10 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 		/// </summary>
 		void InitializeComponent(void)
 		{
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle5 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle6 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle7 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle8 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle13 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle14 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle15 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle16 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -951,6 +961,9 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->tboxGuideTWLInfo = (gcnew System::Windows::Forms::TextBox());
 			this->gboxExFlags = (gcnew System::Windows::Forms::GroupBox());
 			this->tabRomEditInfo = (gcnew System::Windows::Forms::TabPage());
+			this->gboxOtherSpec = (gcnew System::Windows::Forms::GroupBox());
+			this->cboxIsUGC = (gcnew System::Windows::Forms::CheckBox());
+			this->cboxIsPhotoEx = (gcnew System::Windows::Forms::CheckBox());
 			this->butSetBack = (gcnew System::Windows::Forms::Button());
 			this->tboxGuideRomEditInfo = (gcnew System::Windows::Forms::TextBox());
 			this->gboxParental = (gcnew System::Windows::Forms::GroupBox());
@@ -1005,6 +1018,7 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->tabTWLInfo->SuspendLayout();
 			this->gboxExFlags->SuspendLayout();
 			this->tabRomEditInfo->SuspendLayout();
+			this->gboxOtherSpec->SuspendLayout();
 			this->gboxParental->SuspendLayout();
 			this->gboxIcon->SuspendLayout();
 			this->gboxEULA->SuspendLayout();
@@ -1435,11 +1449,11 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			// labRegion
 			// 
 			this->labRegion->AutoSize = true;
-			this->labRegion->Location = System::Drawing::Point(71, 24);
+			this->labRegion->Location = System::Drawing::Point(98, 24);
 			this->labRegion->Name = L"labRegion";
-			this->labRegion->Size = System::Drawing::Size(75, 12);
+			this->labRegion->Size = System::Drawing::Size(47, 12);
 			this->labRegion->TabIndex = 37;
-			this->labRegion->Text = L"カードリージョン";
+			this->labRegion->Text = L"リージョン";
 			// 
 			// cboxIsEULA
 			// 
@@ -2813,19 +2827,19 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			// stripItemSheet
 			// 
 			this->stripItemSheet->Name = L"stripItemSheet";
-			this->stripItemSheet->Size = System::Drawing::Size(283, 22);
+			this->stripItemSheet->Size = System::Drawing::Size(304, 22);
 			this->stripItemSheet->Text = L"提出データ一式を作成する";
 			this->stripItemSheet->Click += gcnew System::EventHandler(this, &Form1::stripItemSheet_Click);
 			// 
 			// stripItemSepMaster1
 			// 
 			this->stripItemSepMaster1->Name = L"stripItemSepMaster1";
-			this->stripItemSepMaster1->Size = System::Drawing::Size(280, 6);
+			this->stripItemSepMaster1->Size = System::Drawing::Size(301, 6);
 			// 
 			// stripItemMasterRom
 			// 
 			this->stripItemMasterRom->Name = L"stripItemMasterRom";
-			this->stripItemMasterRom->Size = System::Drawing::Size(283, 22);
+			this->stripItemMasterRom->Size = System::Drawing::Size(304, 22);
 			this->stripItemMasterRom->Text = L"マスターROMのみを作成する";
 			this->stripItemMasterRom->Click += gcnew System::EventHandler(this, &Form1::stripItemMasterRom_Click);
 			// 
@@ -2908,15 +2922,15 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->gridLibrary->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridLibrary->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(2) {this->colLibPublisher, 
 				this->colLibName});
-			dataGridViewCellStyle5->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle5->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle5->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle13->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle13->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle13->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle5->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle5->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle5->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle5->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridLibrary->DefaultCellStyle = dataGridViewCellStyle5;
+			dataGridViewCellStyle13->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle13->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle13->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle13->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridLibrary->DefaultCellStyle = dataGridViewCellStyle13;
 			this->gridLibrary->Location = System::Drawing::Point(337, 189);
 			this->gridLibrary->Name = L"gridLibrary";
 			this->gridLibrary->ReadOnly = true;
@@ -2989,6 +3003,7 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			// 
 			// tabRomEditInfo
 			// 
+			this->tabRomEditInfo->Controls->Add(this->gboxOtherSpec);
 			this->tabRomEditInfo->Controls->Add(this->butSetBack);
 			this->tabRomEditInfo->Controls->Add(this->tboxGuideRomEditInfo);
 			this->tabRomEditInfo->Controls->Add(this->gboxParental);
@@ -3001,9 +3016,40 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->tabRomEditInfo->Text = L"ROM登録情報(編集可)";
 			this->tabRomEditInfo->UseVisualStyleBackColor = true;
 			// 
+			// gboxOtherSpec
+			// 
+			this->gboxOtherSpec->Controls->Add(this->cboxIsUGC);
+			this->gboxOtherSpec->Controls->Add(this->cboxIsPhotoEx);
+			this->gboxOtherSpec->Location = System::Drawing::Point(19, 225);
+			this->gboxOtherSpec->Name = L"gboxOtherSpec";
+			this->gboxOtherSpec->Size = System::Drawing::Size(266, 70);
+			this->gboxOtherSpec->TabIndex = 41;
+			this->gboxOtherSpec->TabStop = false;
+			this->gboxOtherSpec->Text = L"その他ROM仕様";
+			// 
+			// cboxIsUGC
+			// 
+			this->cboxIsUGC->AutoSize = true;
+			this->cboxIsUGC->Location = System::Drawing::Point(8, 18);
+			this->cboxIsUGC->Name = L"cboxIsUGC";
+			this->cboxIsUGC->Size = System::Drawing::Size(210, 16);
+			this->cboxIsUGC->TabIndex = 39;
+			this->cboxIsUGC->Text = L"UGC(User Generated Contents)対応";
+			this->cboxIsUGC->UseVisualStyleBackColor = true;
+			// 
+			// cboxIsPhotoEx
+			// 
+			this->cboxIsPhotoEx->AutoSize = true;
+			this->cboxIsPhotoEx->Location = System::Drawing::Point(8, 46);
+			this->cboxIsPhotoEx->Name = L"cboxIsPhotoEx";
+			this->cboxIsPhotoEx->Size = System::Drawing::Size(96, 16);
+			this->cboxIsPhotoEx->TabIndex = 40;
+			this->cboxIsPhotoEx->Text = L"写真交換対応";
+			this->cboxIsPhotoEx->UseVisualStyleBackColor = true;
+			// 
 			// butSetBack
 			// 
-			this->butSetBack->Location = System::Drawing::Point(43, 289);
+			this->butSetBack->Location = System::Drawing::Point(69, 309);
 			this->butSetBack->Name = L"butSetBack";
 			this->butSetBack->Size = System::Drawing::Size(151, 23);
 			this->butSetBack->TabIndex = 38;
@@ -3040,12 +3086,12 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->gboxParental->Controls->Add(this->combPEGI);
 			this->gboxParental->Controls->Add(this->combUSK);
 			this->gboxParental->Controls->Add(this->labUSK);
-			this->gboxParental->Location = System::Drawing::Point(262, 60);
+			this->gboxParental->Location = System::Drawing::Point(313, 60);
 			this->gboxParental->Name = L"gboxParental";
 			this->gboxParental->Size = System::Drawing::Size(398, 272);
 			this->gboxParental->TabIndex = 33;
 			this->gboxParental->TabStop = false;
-			this->gboxParental->Text = L"リージョンとペアレンタルコントロール";
+			this->gboxParental->Text = L"リージョンとレーティング情報";
 			// 
 			// gboxIcon
 			// 
@@ -3054,7 +3100,7 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->gboxIcon->Controls->Add(this->rIsWirelessIcon);
 			this->gboxIcon->Location = System::Drawing::Point(19, 114);
 			this->gboxIcon->Name = L"gboxIcon";
-			this->gboxIcon->Size = System::Drawing::Size(227, 116);
+			this->gboxIcon->Size = System::Drawing::Size(266, 105);
 			this->gboxIcon->TabIndex = 32;
 			this->gboxIcon->TabStop = false;
 			this->gboxIcon->Text = L"メニュー上でのアイコン表示";
@@ -3096,7 +3142,7 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->gboxEULA->Controls->Add(this->cboxIsEULA);
 			this->gboxEULA->Location = System::Drawing::Point(19, 60);
 			this->gboxEULA->Name = L"gboxEULA";
-			this->gboxEULA->Size = System::Drawing::Size(227, 48);
+			this->gboxEULA->Size = System::Drawing::Size(266, 48);
 			this->gboxEULA->TabIndex = 31;
 			this->gboxEULA->TabStop = false;
 			this->gboxEULA->Text = L"EULA(利用規約)";
@@ -3302,15 +3348,15 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->gridWarn->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridWarn->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colWarnName, 
 				this->colWarnBegin, this->colWarnEnd, this->colWarnCause});
-			dataGridViewCellStyle6->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle6->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle6->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle14->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle14->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle14->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle6->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle6->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle6->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle6->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle6;
+			dataGridViewCellStyle14->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle14->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle14->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle14->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle14;
 			this->gridWarn->GridColor = System::Drawing::SystemColors::Control;
 			this->gridWarn->Location = System::Drawing::Point(24, 228);
 			this->gridWarn->Name = L"gridWarn";
@@ -3350,22 +3396,22 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			// 
 			// gridError
 			// 
-			dataGridViewCellStyle7->BackColor = System::Drawing::Color::White;
-			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle7;
+			dataGridViewCellStyle15->BackColor = System::Drawing::Color::White;
+			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle15;
 			this->gridError->AutoSizeRowsMode = System::Windows::Forms::DataGridViewAutoSizeRowsMode::AllCellsExceptHeaders;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
 				this->colErrorBegin, this->colErrorEnd, this->colErrorCause});
-			dataGridViewCellStyle8->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle8->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle8->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle16->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle16->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle16->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle8->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle8->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle8->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle8->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridError->DefaultCellStyle = dataGridViewCellStyle8;
+			dataGridViewCellStyle16->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle16->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle16->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle16->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridError->DefaultCellStyle = dataGridViewCellStyle16;
 			this->gridError->GridColor = System::Drawing::SystemColors::Control;
 			this->gridError->Location = System::Drawing::Point(24, 99);
 			this->gridError->Name = L"gridError";
@@ -3470,6 +3516,8 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->gboxExFlags->PerformLayout();
 			this->tabRomEditInfo->ResumeLayout(false);
 			this->tabRomEditInfo->PerformLayout();
+			this->gboxOtherSpec->ResumeLayout(false);
+			this->gboxOtherSpec->PerformLayout();
 			this->gboxParental->ResumeLayout(false);
 			this->gboxParental->PerformLayout();
 			this->gboxIcon->ResumeLayout(false);
@@ -3558,6 +3606,8 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->rIsWirelessIcon->Enabled = false;
 			this->rIsWiFiIcon->Enabled     = false;
 			this->rIsNoIcon->Enabled       = false;
+			this->cboxIsUGC->Enabled       = false;
+			this->cboxIsPhotoEx->Enabled   = false;
 
 			this->combCERO->Enabled = false;
 			this->combESRB->Enabled = false;
@@ -3574,6 +3624,27 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			System::Reflection::Assembly ^ass = System::Reflection::Assembly::GetEntryAssembly();
 			System::Version ^ver =  ass->GetName()->Version;
 			return ( ver->Major.ToString() + "." + ver->Minor.ToString() + "." + ver->Build.ToString() );
+		}
+
+		// SRLに登録されないROM仕様のフォーム入力を
+		// 新規読み込みのときにはクリアして
+		// 再読み込みのときには前の状態に戻す
+		void clearOtherForms(void)
+		{
+			this->cboxIsUGC->Checked     = false;
+			this->cboxIsPhotoEx->Checked = false;
+			this->hIsCheckedUGC     = gcnew System::Boolean(false);
+			this->hIsCheckedPhotoEx = gcnew System::Boolean(false);
+		}
+		void saveOtherForms(void)
+		{
+			this->hIsCheckedUGC     = gcnew System::Boolean(this->cboxIsUGC->Checked);
+			this->hIsCheckedPhotoEx = gcnew System::Boolean(this->cboxIsPhotoEx->Checked);
+		}
+		void loadOtherForms(void)
+		{
+			this->cboxIsUGC->Checked     = *(this->hIsCheckedUGC);
+			this->cboxIsPhotoEx->Checked = *(this->hIsCheckedPhotoEx);
 		}
 
 	private:
@@ -3773,6 +3844,7 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 				filename = dlg->FileName;
 			}
 			this->loadSrl( filename );
+			this->clearOtherForms();
 			//this->sucMsg( "ROMデータファイルのオープンに成功しました。", "The ROM data file is opened successfully." );
 		} //stripItemOpenRom_Click()
 
@@ -4239,6 +4311,7 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 				return;
 			}
 			this->loadSrl( filename );			// ドラッグアンドドロップの時点でボタンを押さなくてもファイルを開く
+			this->clearOtherForms();
 			//this->sucMsg( "ROMデータファイルのオープンに成功しました。", "The ROM data file is opened successfully." );
 		}
 
@@ -4370,6 +4443,7 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			}
 			this->setRegionForms();
 			this->setParentalForms();
+			this->loadOtherForms();		// SRLに登録されていないROM仕様のフォームも戻す
 		}
 
 }; // enf of ref class Form1

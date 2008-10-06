@@ -87,6 +87,7 @@ namespace MasterEditorTWL
 		property System::String  ^hBackupMemory;		// バックアップメモリの種別
 
 		// SRL情報の一部を文字列で持っておく
+		property System::String  ^hRegion;
 		property System::String  ^hCERO;
 		property System::String  ^hESRB;
 		property System::String  ^hUSK;
@@ -95,6 +96,10 @@ namespace MasterEditorTWL
 		property System::String  ^hPEGI_BBFC;
 		property System::String  ^hOFLC;
 		property System::String  ^hAppTypeOther;		// 特記事項
+
+		// SRLには登録されないROM仕様
+		property System::Boolean  ^hIsUGC;
+		property System::Boolean  ^hIsPhotoEx;
 
 		// constructor and destructor
 	public:

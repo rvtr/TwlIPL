@@ -186,6 +186,17 @@ void Form1::setDeliverableProperties(void)
 	}
 
 	// SRLî•ñ‚ð•¶Žš—ñ‚Å“o˜^
+	if( this->combRegion->SelectedIndex < 0 )
+	{
+		if( this->stripItemJapanese->Checked == true )
+			this->hDeliv->hRegion = gcnew System::String("•s–¾");
+		else
+			this->hDeliv->hRegion = gcnew System::String("Undefined");
+	}
+	else
+	{
+		this->hDeliv->hRegion = dynamic_cast<System::String^>(this->combRegion->SelectedItem);
+	}
 	if( this->combCERO->SelectedIndex < 0 )
 	{
 		if( this->stripItemJapanese->Checked == true )
@@ -263,6 +274,10 @@ void Form1::setDeliverableProperties(void)
 	{
 		this->hDeliv->hOFLC = dynamic_cast<System::String^>(this->combOFLC->SelectedItem);
 	}
+
+	// SRL‚É‚Í“o˜^‚³‚ê‚È‚¢ROMŽd—l
+	this->hDeliv->hIsUGC = System::Boolean( this->cboxIsUGC->Checked );
+	this->hDeliv->hIsPhotoEx = System::Boolean( this->cboxIsPhotoEx->Checked );
 }
 
 // ----------------------------------------------

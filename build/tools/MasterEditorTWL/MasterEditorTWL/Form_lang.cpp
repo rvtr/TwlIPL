@@ -66,8 +66,8 @@ void Form1::changeJapanese(void)
 	this->tboxGuideRomInfo->Text = gcnew System::String( "このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。" );
 	this->tboxGuideTWLInfo->Text = gcnew System::String( "このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。" );
 	this->tboxGuideRomEditInfo->Text  = gcnew System::String( "" );
-	this->tboxGuideRomEditInfo->Text += "このタブの情報は提出確認書およびマスターROMの作成に必要です。編集してください。";
-	this->tboxGuideRomEditInfo->Text += "\r\n(マスターROMの作成をするまでROMデータの中には登録されません。)";
+	this->tboxGuideRomEditInfo->Text += "このタブの各項目への入力は提出確認書およびマスターROMの作成のために必要です。";
+	this->tboxGuideRomEditInfo->Text += "\r\nこれらの情報はマスターROMの作成時にROM内登録データとして登録されます(「その他ROM情報」を除く。)";
 	this->tboxGuideSubmitInfo->Text  = gcnew System::String( "このタブの情報は提出確認書の作成に必要です。入力してください。" );
 	this->tboxGuideCompanyInfo->Text = gcnew System::String( "このタブの情報は提出確認書の作成に必要です。入力してください。" );
 	this->tboxGuideErrorInfo->Text   = gcnew System::String( "" );
@@ -177,6 +177,9 @@ void Form1::changeJapanese(void)
 	this->rIsWiFiIcon->Text      = gcnew System::String( LANG_WIFI_ICON_J );
 	this->rIsNoIcon->Text        = gcnew System::String( LANG_NO_ICON_J );
 	this->labRegion->Text        = gcnew System::String( LANG_REGION_J );
+	this->gboxOtherSpec->Text    = gcnew System::String( LANG_OTHER_SPEC_J );
+	this->cboxIsUGC->Text        = gcnew System::String( LANG_UGC_J );
+	this->cboxIsPhotoEx->Text    = gcnew System::String( LANG_PHOTO_EX_J );
 
 	// リージョン
 	index = this->combRegion->SelectedIndex;
@@ -292,7 +295,7 @@ void  Form1::changeEnglish(void)
 	this->tboxGuideTWLInfo->Text = gcnew System::String( "This tab is for checking ROM data. When ROM data is illegal, please check settings of building ROM data" );
 	this->tboxGuideRomEditInfo->Text  = gcnew System::String( "" );
 	this->tboxGuideRomEditInfo->Text += "These items is necessary not only to make a submission sheet and but also to make a master ROM data. Please edit certainly.";
-	this->tboxGuideRomEditInfo->Text += "\r\n(In making a master ROM data, these info will be registered in it.)";
+	this->tboxGuideRomEditInfo->Text += "\r\nIn making a master ROM data, these info will be registered in the ROM data(except \"Other Rom Spec\").";
 	this->tboxGuideSubmitInfo->Text  = gcnew System::String( "These items are necessary for making a submission sheet. Please input." );
 	this->tboxGuideCompanyInfo->Text = gcnew System::String( "These items are necessary for making a submission sheet. Please input." );
 	this->tboxGuideErrorInfo->Text   = gcnew System::String( "" );
@@ -404,6 +407,9 @@ void  Form1::changeEnglish(void)
 	this->rIsWiFiIcon->Text      = gcnew System::String( LANG_WIFI_ICON_E );
 	this->rIsNoIcon->Text        = gcnew System::String( LANG_NO_ICON_E );
 	this->labRegion->Text        = gcnew System::String( LANG_REGION_E );
+	this->gboxOtherSpec->Text    = gcnew System::String( LANG_OTHER_SPEC_E );
+	this->cboxIsUGC->Text        = gcnew System::String( LANG_UGC_E );
+	this->cboxIsPhotoEx->Text    = gcnew System::String( LANG_PHOTO_EX_E );
 
 	// リージョン
 	index = this->combRegion->SelectedIndex;

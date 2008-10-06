@@ -167,6 +167,10 @@ System::Void Form1::loadSrl( System::String ^filename )
 	// GUIにROM情報を格納
 	this->setSrlForms();
 
+	// SRLに登録されないROM仕様のフォーム情報も戻るボタンで読み込み時の状態に戻したいが
+	// 読み込み時の状態をSRLに保存しておけないので退避しておく
+	this->saveOtherForms();
+
 	// 全体のCRCを算出
 	u16  crc;
 	if( !getWholeCRCInFile( filename, &crc ) )
@@ -207,7 +211,7 @@ System::Boolean Form1::saveSrl( System::String ^filename )
 	return true;
 } // saveSrl()
 
-// SRLの一時保存
+// SRLの保存
 System::Boolean Form1::saveSrlCore( System::String ^filename )
 {
 	// ROM情報をフォームから取得してSRLバイナリに反映させる
