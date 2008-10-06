@@ -581,6 +581,8 @@ private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibPublisher;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareXml;
 private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
+private: System::Windows::Forms::ToolStripSeparator^  stripItemSepFile1;
+private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 
 
 
@@ -672,7 +674,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 			// バージョン情報を表示
 			//this->labAssemblyVersion->Text = System::Windows::Forms::Application::ProductVersion;
 			System::Reflection::Assembly ^ass = System::Reflection::Assembly::GetEntryAssembly();
-			this->labAssemblyVersion->Text = "ver." + ass->GetName()->Version->ToString();
+			this->labAssemblyVersion->Text = "ver." + this->getVersion();
 
 			// デフォルト値
 			this->hIsSpreadSheet = gcnew System::Boolean( true );
@@ -982,6 +984,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 			this->colErrorCause = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->labFile = (gcnew System::Windows::Forms::Label());
 			this->labAssemblyVersion = (gcnew System::Windows::Forms::Label());
+			this->stripItemSepMaster1 = (gcnew System::Windows::Forms::ToolStripSeparator());
+			this->stripItemSepFile1 = (gcnew System::Windows::Forms::ToolStripSeparator());
 			this->gboxSrl->SuspendLayout();
 			this->gboxCRC->SuspendLayout();
 			this->gboxPerson2->SuspendLayout();
@@ -2766,8 +2770,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 			// 
 			// stripFile
 			// 
-			this->stripFile->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {this->stripItemOpenRom, 
-				this->stripItemSaveTemp, this->stripItemLoadTemp});
+			this->stripFile->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(4) {this->stripItemOpenRom, 
+				this->stripItemSepFile1, this->stripItemSaveTemp, this->stripItemLoadTemp});
 			this->stripFile->Name = L"stripFile";
 			this->stripFile->Size = System::Drawing::Size(51, 20);
 			this->stripFile->Text = L"ファイル";
@@ -2795,8 +2799,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 			// 
 			// stripMaster
 			// 
-			this->stripMaster->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(4) {this->stripItemSheet, 
-				this->stripItemMasterRom, this->stripItemMiddlewareXml, this->stripItemMiddlewareHtml});
+			this->stripMaster->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(5) {this->stripItemSheet, 
+				this->stripItemSepMaster1, this->stripItemMasterRom, this->stripItemMiddlewareXml, this->stripItemMiddlewareHtml});
 			this->stripMaster->Name = L"stripMaster";
 			this->stripMaster->Size = System::Drawing::Size(53, 20);
 			this->stripMaster->Text = L"マスター";
@@ -2805,7 +2809,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 			// 
 			this->stripItemSheet->Name = L"stripItemSheet";
 			this->stripItemSheet->Size = System::Drawing::Size(259, 22);
-			this->stripItemSheet->Text = L"提出確認書とマスターROMを作成する";
+			this->stripItemSheet->Text = L"提出データ一式を作成する";
 			this->stripItemSheet->Click += gcnew System::EventHandler(this, &Form1::stripItemSheet_Click);
 			// 
 			// stripItemMasterRom
@@ -3402,11 +3406,21 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 			// 
 			this->labAssemblyVersion->AutoSize = true;
 			this->labAssemblyVersion->ForeColor = System::Drawing::SystemColors::ControlText;
-			this->labAssemblyVersion->Location = System::Drawing::Point(664, 24);
+			this->labAssemblyVersion->Location = System::Drawing::Point(696, 24);
 			this->labAssemblyVersion->Name = L"labAssemblyVersion";
-			this->labAssemblyVersion->Size = System::Drawing::Size(101, 12);
+			this->labAssemblyVersion->Size = System::Drawing::Size(69, 12);
 			this->labAssemblyVersion->TabIndex = 37;
-			this->labAssemblyVersion->Text = L"ver.0.0.00000.00000";
+			this->labAssemblyVersion->Text = L"ver.0.0.00000";
+			// 
+			// stripItemSepMaster1
+			// 
+			this->stripItemSepMaster1->Name = L"stripItemSepMaster1";
+			this->stripItemSepMaster1->Size = System::Drawing::Size(256, 6);
+			// 
+			// stripItemSepFile1
+			// 
+			this->stripItemSepFile1->Name = L"stripItemSepFile1";
+			this->stripItemSepFile1->Size = System::Drawing::Size(208, 6);
 			// 
 			// Form1
 			// 
@@ -3495,7 +3509,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 		System::Void loadSrl( System::String ^filename );
 
 		// SRLの保存と再読み出し
-		System::Void saveSrl( System::String ^filename );
+		System::Boolean saveSrl( System::String ^filename );
 
 		// SRLの保存のみ @ret 成否
 		System::Boolean saveSrlCore( System::String ^filename );
@@ -3552,6 +3566,14 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 			this->combPEGI_PRT->Enabled = false;
 			this->combPEGI_BBFC->Enabled = false;
 			this->combOFLC->Enabled = false;
+		}
+
+		// バージョン情報を取得
+		System::String^ getVersion( void )
+		{
+			System::Reflection::Assembly ^ass = System::Reflection::Assembly::GetEntryAssembly();
+			System::Version ^ver =  ass->GetName()->Version;
+			return ( ver->Major.ToString() + "." + ver->Minor.ToString() + "." + ver->Build.ToString() );
 		}
 
 	private:
@@ -3822,12 +3844,19 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 			}
 			try
 			{
-				this->saveSrl( filename );
+				if( !this->saveSrl( filename ) )
+				{
+					this->errMsg( "マスターROMの作成に失敗しました。",
+								  "Making a master ROM failed." );
+					return;
+				}
+				this->sucMsg( "マスターROMの作成が成功しました。", "Making the ROM data file succeeded." );
+				this->tboxFile->Text = filename;
 			}
 			catch( System::Exception ^ex )
 			{
 				(void)ex;
-				this->errMsg( "マスターROMの保存に失敗しました。",
+				this->errMsg( "マスターROMの作成に失敗しました。",
 							  "Making a master ROM failed." );
 				return;
 			}
@@ -3836,11 +3865,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 	private:
 		System::Void stripItemSheet_Click(System::Object^  sender, System::EventArgs^  e)
 		{
-			System::String ^delivfile;
 			ECDeliverableResult  result;
-			System::String ^srlfile;
-			System::UInt16 ^hcrc;
-			cli::array<System::String^> ^paths;
 
 			// SRLが読み込まれていないときにはリードさせない
 			if( System::String::IsNullOrEmpty( this->tboxFile->Text ) )
@@ -3866,6 +3891,7 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 			}
 
 			// SRL名を提出手順書に従わせる
+			System::String ^srlfile;
 			{
 				srlfile = gcnew System::String("");
 
@@ -3882,21 +3908,22 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 			// 注意書き 
 			{
 				this->sucMsg( 
-					"Step1/2: ROMデータファイル(SRL)と提出確認書の情報を一致させるため、まず、入力情報を反映させたROMデータファイルを作成します。\n(キャンセルされたとき、SRLおよび提出確認書は作成されません。)\n"
-					+ "\n  ROMデータファイル名は \"" + srlfile + "\"となります。\n" + "\nROMデータファイルを保存するフォルダを選択してください。",
-					"Step1/2: Firstly, We save ROM file(SRL) because several information in a submission sheet are match those in the ROM data file.\n(When it is canceled, both the SRL and a submission sheet are not made.)\n"
-					+ "\n  ROM data file name is \"" + srlfile + "\".\n" + "\nPlease select a folder in which the ROM data is saved."
+					"Step1/3: ROMデータファイルと提出確認書の情報を一致させるため、まず、入力情報を反映させたマスターROMデータファイルを作成します。\n(キャンセルされたとき、提出データ一式は作成されません。)\n"
+					+ "\n  マスターROMデータファイル名は \"" + srlfile + "\"となります。\n" + "\nROMデータファイルを保存するフォルダを選択してください。",
+					"Step1/3: Firstly, We make a master ROM file because all information in a submission sheet are match those in the ROM data file.\n(When it is canceled, both A set of submission data is not made.)\n"
+					+ "\n  The name of the master ROM data file is \"" + srlfile + "\".\n" + "\nPlease select a folder in which the ROM data is saved."
 				);
 			}
 
 			// ダイアログからSRLを保存するディレクトリを取得する
+			System::String ^delivfile;
 			{
 				System::Windows::Forms::FolderBrowserDialog ^dlg = gcnew (System::Windows::Forms::FolderBrowserDialog);
 
 				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
 				{
-					this->errMsg( "フォルダの選択がキャンセルされましたので提出確認書は作成されません。", 
-								  "A submission sheet can not be made, since selecting folder is canceled." );
+					this->errMsg( "フォルダの選択がキャンセルされましたので提出データ一式は作成されません。", 
+								  "A set of submission data can not be made, since selecting folder is canceled." );
 					return;
 				}
 				else
@@ -3910,13 +3937,59 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 						srlfile = dlg->SelectedPath + srlfile;
 					}
 				}
+				if( System::IO::File::Exists( srlfile ) )
+				{
+					System::String ^msg;
+					if( this->stripItemJapanese->Checked )
+						msg = gcnew System::String( srlfile + "はすでに存在します。上書きしますか?" );
+					else
+						msg = gcnew System::String( srlfile + "already exists. Overwrite it?" );
+					if( MessageBox::Show( msg, "Information", MessageBoxButtons::YesNo, MessageBoxIcon::None ) 
+						== System::Windows::Forms::DialogResult::No )
+					{
+						this->errMsg( "ファイルの選択がキャンセルされましたので提出データ一式は作成されません。", 
+									  "Since selecting a file is canceled, a set of submission data can not be made." );
+						return;
+					}
+				}
+
 			}
 
 			// 注意書き 
 			{
 				this->sucMsg( 
-					"Step2/2: 続いて提出確認書を作成します。\nここでキャンセルされたとき、提出確認書はもとよりROMデータファイルも作成されませんのでご注意ください。",
-					"Step2/2: Secondly, We should make a submission sheet. \n(CAUTION: When it is canceled, not only a submission sheet is not made, but also the ROM data file is selected previously.)"
+					"Step2/3: 続いて使用されているミドルウェアのリストを作成します。\nここでキャンセルされたとき、提出データ一式は作成されませんのでご注意ください。",
+					"Step2/3: Secondly, We should make a list of middlewares used by the ROM. \n(CAUTION: When it is canceled, A set of submission data is not made.)"
+				);
+			}
+			// ダイアログでファイルパスを決定
+			System::String ^middlefile;
+			{
+				System::Windows::Forms::SaveFileDialog ^dlg = gcnew (SaveFileDialog);
+
+				dlg->InitialDirectory = "c:\\";
+				dlg->Filter      = "xml形式 (*.xml)|*.xml";
+				dlg->FilterIndex = 1;
+				dlg->RestoreDirectory = true;
+
+				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
+				{
+					this->errMsg( "ミドルウェアリストの作成がキャンセルされました。提出データ一式は作成されません。", 
+						          "Making a list of middlewares is canceled. A set of submission data is not made." );
+					return;
+				}
+				middlefile = dlg->FileName;
+				if( !(dlg->FileName->EndsWith( ".xml" )) )
+				{
+					middlefile += ".xml";
+				}
+			}
+
+			// 注意書き 
+			{
+				this->sucMsg( 
+					"Step3/3: 続いて提出確認書を作成します。\nここでキャンセルされたとき、提出データ一式は作成されませんのでご注意ください。",
+					"Step3/3: Finally, We should make a submission sheet. \n(CAUTION: When it is canceled, A set of submission data is not made, but also the master ROM data and a list of middleware are not made.)"
 				);
 			}
 			// ダイアログでファイルパスを決定
@@ -3930,7 +4003,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 
 				if( dlg->ShowDialog() != System::Windows::Forms::DialogResult::OK )
 				{
-					this->errMsg( "提出確認書の作成がキャンセルされました。", "Making a submission sheet is canceled." );
+					this->errMsg( "提出確認書の作成がキャンセルされました。提出データ一式は作成されません。", 
+						          "Making a submission sheet is canceled. A set of submission data is not made." );
 					return;
 				}
 				delivfile = dlg->FileName;
@@ -3944,32 +4018,46 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 			this->setSrlProperties();	// 先にSrlを更新しておく
 			this->setDeliverableProperties();
 
-			// SRLを更新
+			// 更新後のSRLを別ファイルに作成
 			try
 			{
-				this->saveSrl( srlfile );
+				if( !this->saveSrl( srlfile ) )
+				{
+					this->errMsg( "マスターROMの保存に失敗しました。提出確認書およびミドルウェアリストは作成されません。",
+								  "Making a master ROM failed. And a submission sheet and a list of middlewares are not made." );
+					return;
+				}
+				this->tboxFile->Text = srlfile;
 			}
 			catch( System::Exception ^ex )
 			{
 				(void)ex;
-				this->errMsg( "マスターROMの保存に失敗しました。提出確認書は作成されません。",
-							  "Making a master ROM failed. And a submission sheet is not made." );
+				this->errMsg( "マスターROMの保存に失敗しました。提出確認書およびミドルウェアリストは作成されません。",
+							  "Making a master ROM failed. And a submission sheet and a list of middlewares are not made." );
 				return;
 			}
 			u16  crc;			// SRL全体のCRCを計算する(書類に記述するため)
 			if( !getWholeCRCInFile( srlfile, &crc ) )
 			{
-				this->errMsg( "CRCの計算に失敗しました。提出確認書の作成はキャンセルされます。", 
-							  "Calc CRC is failed. Therefore, Making a submission sheet is canceled." );
+				this->errMsg( "CRCの計算に失敗しました。提出確認書およびミドルウェアリストは作成されません。", 
+							  "Calc CRC is failed. Therefore, And a submission sheet and a list of middlewares are not made." );
 				return;
 			}
-			hcrc = gcnew System::UInt16( crc );
+			System::UInt16 ^hcrc = gcnew System::UInt16( crc );
 			this->tboxWholeCRC->Clear();
 			this->tboxWholeCRC->AppendText( "0x" );
 			this->tboxWholeCRC->AppendText( hcrc->ToString("X") );
 
+			// ミドルウェアのリストを作成
+			if( !this->saveMiddlewareListXmlEmbeddedXsl( middlefile ) )
+			{
+				this->errMsg( "ミドルウェアのリストが作成できませんでした。提出確認書は作成されません。",
+							  "Making a list of middleware failed. And a submission sheet is not made.");
+				return;
+			}
+
 			// 書類作成
-			paths = srlfile->Split(L'\\');			// 余分なパスを削除
+			cli::array<System::String^> ^paths = srlfile->Split(L'\\');			// 余分なパスを削除
 			srlfile = paths[ paths->Length - 1 ];
 			//result = this->hDeliv->write( delivfile, this->hSrl, hcrc, srlfile, !(this->stripItemJapanese->Checked) );
 			result = this->hDeliv->writeSpreadsheet( delivfile, this->hSrl, hcrc, srlfile, !(this->stripItemJapanese->Checked) );
@@ -3993,7 +4081,8 @@ private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareHtml;
 				}
 				return;
 			}
-			this->sucMsg( "提出確認書の作成に成功しました。", "The submission sheet is made successfully." );
+			this->sucMsg( "提出データ一式の作成に成功しました。", "The submission sheet is made successfully." );
+
 		} //stripItemSheet_Click()
 
 	private:

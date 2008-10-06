@@ -194,19 +194,17 @@ System::Void Form1::loadSrl( System::String ^filename )
 } // loadSrl()
 
 // SRLの保存
-System::Void Form1::saveSrl( System::String ^filename )
+System::Boolean Form1::saveSrl( System::String ^filename )
 {
 	// コピーしたファイルにROMヘッダを上書き
 	if( !this->saveSrlCore( filename ) )
 	{
-		this->errMsg( "ROMデータの保存に失敗しました。", "Saving the ROM data file failed." );
-		return;
+		return false;
 	}
-	this->sucMsg( "ROMデータの保存が成功しました。", "Saving the ROM data file succeeded." );
-	this->tboxFile->Text = filename;
 
 	// 再リード
 	this->loadSrl( filename );
+	return true;
 } // saveSrl()
 
 // SRLの一時保存
@@ -234,7 +232,7 @@ System::Void Form1::makeMiddlewareListXml(System::Xml::XmlDocument^ doc)
 {
 	System::Xml::XmlElement ^root = doc->CreateElement( "twl-master-editor" );
 	System::Reflection::Assembly ^ass = System::Reflection::Assembly::GetEntryAssembly();
-	root->SetAttribute( "version", ass->GetName()->Version->ToString() );
+	root->SetAttribute( "version", this->getVersion() );
 	doc->AppendChild( root );
 
 	// ゲーム情報
