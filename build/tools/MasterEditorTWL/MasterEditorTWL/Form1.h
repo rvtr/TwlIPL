@@ -745,10 +745,10 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 		/// </summary>
 		void InitializeComponent(void)
 		{
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle1 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle2 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle3 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle4 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle5 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle6 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle7 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle8 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -929,10 +929,12 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->menuStripAbove = (gcnew System::Windows::Forms::MenuStrip());
 			this->stripFile = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemOpenRom = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->stripItemSepFile1 = (gcnew System::Windows::Forms::ToolStripSeparator());
 			this->stripItemSaveTemp = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemLoadTemp = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripMaster = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemSheet = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->stripItemSepMaster1 = (gcnew System::Windows::Forms::ToolStripSeparator());
 			this->stripItemMasterRom = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemMiddlewareXml = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->stripItemMiddlewareHtml = (gcnew System::Windows::Forms::ToolStripMenuItem());
@@ -984,8 +986,6 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->colErrorCause = (gcnew System::Windows::Forms::DataGridViewTextBoxColumn());
 			this->labFile = (gcnew System::Windows::Forms::Label());
 			this->labAssemblyVersion = (gcnew System::Windows::Forms::Label());
-			this->stripItemSepMaster1 = (gcnew System::Windows::Forms::ToolStripSeparator());
-			this->stripItemSepFile1 = (gcnew System::Windows::Forms::ToolStripSeparator());
 			this->gboxSrl->SuspendLayout();
 			this->gboxCRC->SuspendLayout();
 			this->gboxPerson2->SuspendLayout();
@@ -2783,6 +2783,11 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->stripItemOpenRom->Text = L"ROMデータを開く";
 			this->stripItemOpenRom->Click += gcnew System::EventHandler(this, &Form1::stripItemOpenRom_Click);
 			// 
+			// stripItemSepFile1
+			// 
+			this->stripItemSepFile1->Name = L"stripItemSepFile1";
+			this->stripItemSepFile1->Size = System::Drawing::Size(208, 6);
+			// 
 			// stripItemSaveTemp
 			// 
 			this->stripItemSaveTemp->Name = L"stripItemSaveTemp";
@@ -2808,29 +2813,34 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			// stripItemSheet
 			// 
 			this->stripItemSheet->Name = L"stripItemSheet";
-			this->stripItemSheet->Size = System::Drawing::Size(259, 22);
+			this->stripItemSheet->Size = System::Drawing::Size(283, 22);
 			this->stripItemSheet->Text = L"提出データ一式を作成する";
 			this->stripItemSheet->Click += gcnew System::EventHandler(this, &Form1::stripItemSheet_Click);
+			// 
+			// stripItemSepMaster1
+			// 
+			this->stripItemSepMaster1->Name = L"stripItemSepMaster1";
+			this->stripItemSepMaster1->Size = System::Drawing::Size(280, 6);
 			// 
 			// stripItemMasterRom
 			// 
 			this->stripItemMasterRom->Name = L"stripItemMasterRom";
-			this->stripItemMasterRom->Size = System::Drawing::Size(259, 22);
+			this->stripItemMasterRom->Size = System::Drawing::Size(283, 22);
 			this->stripItemMasterRom->Text = L"マスターROMのみを作成する";
 			this->stripItemMasterRom->Click += gcnew System::EventHandler(this, &Form1::stripItemMasterRom_Click);
 			// 
 			// stripItemMiddlewareXml
 			// 
 			this->stripItemMiddlewareXml->Name = L"stripItemMiddlewareXml";
-			this->stripItemMiddlewareXml->Size = System::Drawing::Size(259, 22);
-			this->stripItemMiddlewareXml->Text = L"ミドルウェアリストを作成する(XML形式)";
+			this->stripItemMiddlewareXml->Size = System::Drawing::Size(304, 22);
+			this->stripItemMiddlewareXml->Text = L"使用ミドルウェア一覧のみを作成する(XML形式)";
 			this->stripItemMiddlewareXml->Click += gcnew System::EventHandler(this, &Form1::stripItemMiddlewareXml_Click);
 			// 
 			// stripItemMiddlewareHtml
 			// 
 			this->stripItemMiddlewareHtml->Name = L"stripItemMiddlewareHtml";
-			this->stripItemMiddlewareHtml->Size = System::Drawing::Size(259, 22);
-			this->stripItemMiddlewareHtml->Text = L"ミドルウェアリストを作成する(HTML形式)";
+			this->stripItemMiddlewareHtml->Size = System::Drawing::Size(304, 22);
+			this->stripItemMiddlewareHtml->Text = L"使用ミドルウェア一覧のみを作成する(HTML形式)";
 			this->stripItemMiddlewareHtml->Click += gcnew System::EventHandler(this, &Form1::stripItemMiddlewareHtml_Click);
 			// 
 			// stripLang
@@ -2898,15 +2908,15 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->gridLibrary->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridLibrary->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(2) {this->colLibPublisher, 
 				this->colLibName});
-			dataGridViewCellStyle1->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle1->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle1->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle5->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle5->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle5->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle1->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle1->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle1->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle1->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridLibrary->DefaultCellStyle = dataGridViewCellStyle1;
+			dataGridViewCellStyle5->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle5->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle5->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle5->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridLibrary->DefaultCellStyle = dataGridViewCellStyle5;
 			this->gridLibrary->Location = System::Drawing::Point(337, 189);
 			this->gridLibrary->Name = L"gridLibrary";
 			this->gridLibrary->ReadOnly = true;
@@ -3292,15 +3302,15 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->gridWarn->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridWarn->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colWarnName, 
 				this->colWarnBegin, this->colWarnEnd, this->colWarnCause});
-			dataGridViewCellStyle2->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle2->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle2->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle6->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle6->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle6->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle2->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle2->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle2->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle2->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle2;
+			dataGridViewCellStyle6->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle6->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle6->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle6->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle6;
 			this->gridWarn->GridColor = System::Drawing::SystemColors::Control;
 			this->gridWarn->Location = System::Drawing::Point(24, 228);
 			this->gridWarn->Name = L"gridWarn";
@@ -3340,22 +3350,22 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			// 
 			// gridError
 			// 
-			dataGridViewCellStyle3->BackColor = System::Drawing::Color::White;
-			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle3;
+			dataGridViewCellStyle7->BackColor = System::Drawing::Color::White;
+			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle7;
 			this->gridError->AutoSizeRowsMode = System::Windows::Forms::DataGridViewAutoSizeRowsMode::AllCellsExceptHeaders;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
 				this->colErrorBegin, this->colErrorEnd, this->colErrorCause});
-			dataGridViewCellStyle4->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle4->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle4->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle8->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle8->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle8->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle4->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle4->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle4->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle4->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridError->DefaultCellStyle = dataGridViewCellStyle4;
+			dataGridViewCellStyle8->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle8->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle8->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle8->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridError->DefaultCellStyle = dataGridViewCellStyle8;
 			this->gridError->GridColor = System::Drawing::SystemColors::Control;
 			this->gridError->Location = System::Drawing::Point(24, 99);
 			this->gridError->Name = L"gridError";
@@ -3411,16 +3421,6 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 			this->labAssemblyVersion->Size = System::Drawing::Size(69, 12);
 			this->labAssemblyVersion->TabIndex = 37;
 			this->labAssemblyVersion->Text = L"ver.0.0.00000";
-			// 
-			// stripItemSepMaster1
-			// 
-			this->stripItemSepMaster1->Name = L"stripItemSepMaster1";
-			this->stripItemSepMaster1->Size = System::Drawing::Size(256, 6);
-			// 
-			// stripItemSepFile1
-			// 
-			this->stripItemSepFile1->Name = L"stripItemSepFile1";
-			this->stripItemSepFile1->Size = System::Drawing::Size(208, 6);
 			// 
 			// Form1
 			// 

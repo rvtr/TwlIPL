@@ -48,8 +48,8 @@ void Form1::changeJapanese(void)
 	this->stripMaster->Text        = gcnew System::String( "マスター" );
 	this->stripItemSheet->Text     = gcnew System::String( "提出データ一式を作成する" );
 	this->stripItemMasterRom->Text = gcnew System::String( "マスターROMのみを作成する" );
-	this->stripItemMiddlewareXml->Text  = gcnew System::String( "ミドルウェアリストを作成する(XML形式)" );
-	this->stripItemMiddlewareHtml->Text = gcnew System::String( "ミドルウェアリストを作成する(HTML形式)" );
+	this->stripItemMiddlewareXml->Text  = gcnew System::String( "使用ミドルウェア一覧のみを作成する(XML形式)" );
+	this->stripItemMiddlewareHtml->Text = gcnew System::String( "使用ミドルウェア一覧のみを作成する(HTML形式)" );
 
 	// 入力ファイル
 	this->labFile->Text = gcnew System::String( "ROMデータファイル" );
@@ -273,8 +273,8 @@ void  Form1::changeEnglish(void)
 	this->stripMaster->Text        = gcnew System::String( "Master" );
 	this->stripItemSheet->Text     = gcnew System::String( "Make a set of submission data" );
 	this->stripItemMasterRom->Text = gcnew System::String( "Make a master ROM data file only" );
-	this->stripItemMiddlewareXml->Text  = gcnew System::String( "Make a middleware list(XML format)" );
-	this->stripItemMiddlewareHtml->Text = gcnew System::String( "Make a middleware list(HTML format)" );
+	this->stripItemMiddlewareXml->Text  = gcnew System::String( "Make a middleware list only(XML format)" );
+	this->stripItemMiddlewareHtml->Text = gcnew System::String( "Make a middleware list only(HTML format)" );
 
 	// 入力ファイル
 	this->labFile->Text = gcnew System::String( "ROM Data File" );
