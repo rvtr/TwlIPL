@@ -63,6 +63,7 @@ typedef struct _SContext
     BOOL bSignFlag;
     BOOL bDevFlag;
     BOOL bVerFlag;
+    BOOL bDebugger;
 	int  verNum;
     BOOL bMROM;
     
@@ -108,6 +109,7 @@ void usage()
     printf( "-d    : negate a new developer encrypt flag, and assert an old one.\n" );
     printf( "-v NUM: change ROM version in a ROM Header.\n" );
     printf( "-m    : [Only NTR limited ROM] Rom speed type replace 1TROM from MROM\n" );
+    printf( "-D    : assert a disable flag of debugger alalysis\n" );
 	printf( "-----------------------------------------------------------------------------\n" );
 }
 
@@ -129,7 +131,7 @@ int main(int argc, char *argv[])
     memset( &context, 0, sizeof(SContext) );
 
     // オプション
-    while( (opt = getopt(argc, argv, "hpsdmv:")) >= 0 )
+    while( (opt = getopt(argc, argv, "hpsdmv:D")) >= 0 )
     {
         switch( opt )
         {
@@ -157,6 +159,10 @@ int main(int argc, char *argv[])
 
             case 'm':
                 context.bMROM = TRUE;
+            break;
+            
+            case 'D':
+                context.bDebugger = TRUE;
             break;
 
             default:            // オプション引数が指定されていないときにも実行される
@@ -306,6 +312,19 @@ static BOOL iMain( SContext *pContext )
             //}
             SetRomSpeedByIndex( &rh, ONETROM );
             printf( "ROM Speed Type: **** -> 1TROM\n" );
+        }
+        
+        if( pContext->bDebugger )
+        {
+            if( rh.s.disable_debug == 0 )
+            {
+                rh.s.disable_debug = 0x1;
+                printf( "Debugger analysis: Enable -> Disable\n" );
+            }
+            else
+            {
+                printf( "Debugger analysis: Originally Disable\n" );
+            }
         }
     }
     
