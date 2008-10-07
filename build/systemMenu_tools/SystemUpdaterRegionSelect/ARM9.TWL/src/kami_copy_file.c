@@ -70,32 +70,6 @@ BOOL kamiCopyFile(char* srcPath, char* dstPath)
 	// ROMファイルクローズ
 	FS_CloseFile(&file);
 
-	// ターゲットファイルオープン
-    FS_InitFile(&file);
-    if (FS_OpenFile(&file, dstPath))
-	{
-		void* pVerifyBuf;
-
-		// NANDファイルリード
-		pVerifyBuf = OS_Alloc( alloc_size );
-		SDK_NULL_ASSERT(pVerifyBuf);
-		DC_InvalidateRange(pVerifyBuf, alloc_size);
-		read_is_ok = FS_ReadFile( &file, pVerifyBuf, (s32)file_size );
-		if (read_is_ok)
-		{
-			DC_FlushRange(pTempBuf,   alloc_size);
-			DC_FlushRange(pVerifyBuf, alloc_size);
-			if (!MI_CpuComp8(pTempBuf, pVerifyBuf, file_size))
-			{
-				FS_CloseFile(&file);
-				OS_Free(pTempBuf);
-				return TRUE;
-			}
-		}
-		FS_CloseFile(&file);
-		OS_Free(pTempBuf);
-	}
-
 	// 一旦対象データを削除する
 	(void)FS_DeleteFile(dstPath);
 

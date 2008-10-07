@@ -230,3 +230,38 @@ RomSpec
 	Root		/key
 	File		$(HWINFO_PRIVKEY) $(HWID_PRIVKEY)
 }
+
+Rating
+{
+	#
+	# Permited age to play for each rating organization
+	#
+	# Supported organization
+	# - CERO			(OGN0)	:	for Japan
+	# - ESRB			(OGN1)	:	for North America
+	# - BBFC			(OGN2)	:	obsolete organization
+	# - USK				(OGN3)	:	for German
+	# - PEGI_GEN		(OGN4)	:	for Europe
+	# - PEGI_FINLAND	(OGN5)	:	obsolete organization
+	# - PEGI_PRT		(OGN6)	:	for Portugal
+	# - PEGI_BBFC		(OGN7)	:	for UK
+	# - OFLC			(OGN8)	:	for Australia and NewZealand
+	# - GRB				(OGN9)	:	for Korea
+	# - OGN10					:	reserved
+	# - OGN11					:	reserved
+	# - OGN12					:	reserved
+	# - OGN13					:	reserved
+	# - OGN14					:	reserved
+	# - OGN15					:	reserved
+	#
+	# Available age [ 0 - 31 / PENDING / FREE ]
+
+	CERO		FREE
+	ESRB		FREE
+	USK			FREE
+	PEGI_GEN	FREE
+	PEGI_PRT	FREE
+	PEGI_BBFC	FREE
+	OFLC		FREE
+	GRB			FREE
+}
