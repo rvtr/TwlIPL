@@ -3830,9 +3830,8 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			{
 				System::Windows::Forms::OpenFileDialog ^dlg = gcnew (OpenFileDialog);
 
-				dlg->InitialDirectory = "c:\\";
-				dlg->Filter      = (this->stripItemJapanese->Checked == true)?"srl形式 (*.srl)|*.srl|All files (*.*)|*.*"
-																	:"srl format (*.srl)|*.srl|All files (*.*)|*.*";
+				dlg->InitialDirectory = System::Environment::GetFolderPath( System::Environment::SpecialFolder::Desktop );//"c:\\";
+				dlg->Filter      = "srl format (*.srl)|*.srl|All files (*.*)|*.*";
 				dlg->FilterIndex = 1;
 				dlg->RestoreDirectory = true;
 
@@ -4039,8 +4038,8 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			{
 				System::Windows::Forms::SaveFileDialog ^dlg = gcnew (SaveFileDialog);
 
-				dlg->InitialDirectory = "c:\\";
-				dlg->Filter      = "xml形式 (*.xml)|*.xml";
+				dlg->InitialDirectory = System::Environment::GetFolderPath( System::Environment::SpecialFolder::Desktop );//"c:\\";
+				dlg->Filter      = "xml format (*.xml)|*.xml";
 				dlg->FilterIndex = 1;
 				dlg->RestoreDirectory = true;
 
@@ -4068,8 +4067,8 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			{
 				System::Windows::Forms::SaveFileDialog ^dlg = gcnew (SaveFileDialog);
 
-				dlg->InitialDirectory = "c:\\";
-				dlg->Filter      = "xml形式 (*.xml)|*.xml";
+				dlg->InitialDirectory = System::Environment::GetFolderPath( System::Environment::SpecialFolder::Desktop );//"c:\\";
+				dlg->Filter      = "xml format (*.xml)|*.xml";
 				dlg->FilterIndex = 1;
 				dlg->RestoreDirectory = true;
 
@@ -4166,8 +4165,8 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			{
 				System::Windows::Forms::SaveFileDialog ^dlg = gcnew (SaveFileDialog);
 
-				dlg->InitialDirectory = "c:\\";
-				dlg->Filter      = "xml形式 (*.xml)|*.xml";
+				dlg->InitialDirectory = System::Environment::GetFolderPath( System::Environment::SpecialFolder::Desktop );//"c:\\";
+				dlg->Filter      = "xml format (*.xml)|*.xml";
 				dlg->FilterIndex = 1;
 				dlg->RestoreDirectory = true;
 
@@ -4193,8 +4192,8 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			{
 				System::Windows::Forms::OpenFileDialog ^dlg = gcnew (OpenFileDialog);
 
-				dlg->InitialDirectory = "c:\\";
-				dlg->Filter      = "xml形式 (*.xml)|*.xml";
+				dlg->InitialDirectory = System::Environment::GetFolderPath( System::Environment::SpecialFolder::Desktop );//"c:\\";
+				dlg->Filter      = "xml format (*.xml)|*.xml";
 				dlg->FilterIndex = 1;
 				dlg->RestoreDirectory = true;
 
@@ -4226,8 +4225,8 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			{
 				System::Windows::Forms::SaveFileDialog ^dlg = gcnew (SaveFileDialog);
 
-				dlg->InitialDirectory = "c:\\";
-				dlg->Filter      = "xml形式 (*.xml)|*.xml";
+				dlg->InitialDirectory = System::Environment::GetFolderPath( System::Environment::SpecialFolder::Desktop );//"c:\\";
+				dlg->Filter      = "xml format (*.xml)|*.xml";
 				dlg->FilterIndex = 1;
 				dlg->RestoreDirectory = true;
 
@@ -4262,8 +4261,8 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			{
 				System::Windows::Forms::SaveFileDialog ^dlg = gcnew (SaveFileDialog);
 
-				dlg->InitialDirectory = "c:\\";
-				dlg->Filter      = "html形式 (*.html)|*.html";
+				dlg->InitialDirectory = System::Environment::GetFolderPath( System::Environment::SpecialFolder::Desktop );//"c:\\";
+				dlg->Filter      = "html format (*.html)|*.html";
 				dlg->FilterIndex = 1;
 				dlg->RestoreDirectory = true;
 
