@@ -64,12 +64,17 @@ BOOL ProcessFormat(void)
 {
 	FSArchiveResource resource;
 
-	// 既に最新フォーマットであればフォーマットしない	
-	if (FS_GetArchiveResource("nand:/", &resource))
-	{
-		if (resource.totalSize == CORRECT_NAND_ARCHIVE_SIZE)
+	// L & R & Start & Select ボタン押しで強制フォーマット
+	if (!(kamiPadIsPress(PAD_BUTTON_L) && kamiPadIsPress(PAD_BUTTON_R) &&
+		kamiPadIsPress(PAD_BUTTON_START) && kamiPadIsPress(PAD_BUTTON_SELECT)))
+	{	
+		// 既に最新フォーマットであればフォーマットしない	
+		if (FS_GetArchiveResource("nand:/", &resource))
 		{
-			return TRUE;
+			if (resource.totalSize == CORRECT_NAND_ARCHIVE_SIZE)
+			{
+				return TRUE;
+			}
 		}
 	}
 
