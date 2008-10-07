@@ -3855,8 +3855,8 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			// SRLが読み込まれていないときにはリードさせない
 			if( System::String::IsNullOrEmpty( this->tboxFile->Text ) )
 			{
-				this->errMsg( "ROMデータファイルがオープンされていませんので、提出確認書の作成ができません。", 
-							  "ROM data file has not opened yet. Therefore a submission sheet can't be made." );
+				this->errMsg( "ROMデータファイルがオープンされていませんので、マスターROMの作成ができません。", 
+							  "ROM data file has not opened yet. A master ROM data can't be made." );
 				return;
 			}
 
@@ -3865,8 +3865,8 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->hWarnList->Clear();
 			if( this->checkSrlForms() == false )
 			{
-				this->errMsg( "ROMデータに不正な設定があるためROMデータの保存ができません。",
-							  "A ROM data and a submission sheet can't be saved, since it has illegal info." );
+				this->errMsg( "不正な設定があるためマスターROMの作成ができません。",
+							  "Setting is illegal. A master ROM data can't be made." );
 				return;
 			}
 
@@ -3965,14 +3965,14 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->hWarnList->Clear();
 			if( this->checkSrlForms() == false )
 			{
-				this->errMsg( "ROMデータに不正な設定があるためROMデータの保存および提出確認書の作成ができません。",
-							  "A ROM data and a submission sheet can't be saved, since it has illegal info." );
+				this->errMsg( "不正な設定があるため提出データの作成ができません。",
+							  "Setting is illegal. Submission data can't be made." );
 				return;
 			}
 			if( this->checkDeliverableForms() == false )
 			{
 				this->errMsg( "入力情報に不足があるため提出確認書を作成できません。",
-							  "Making a submission sheet can't be done, since your input is not enough." );
+							  "Input is not enough. Submission data can't be made." );
 				return;
 			}
 
