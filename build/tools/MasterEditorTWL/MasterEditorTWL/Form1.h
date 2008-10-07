@@ -3912,6 +3912,21 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 						filename = dlg->SelectedPath + filename;
 					}
 				}
+				if( System::IO::File::Exists( filename ) )
+				{
+					System::String ^msg;
+					if( this->stripItemJapanese->Checked )
+						msg = gcnew System::String( filename + "はすでに存在します。上書きしますか?" );
+					else
+						msg = gcnew System::String( filename + "already exists. Overwrite it?" );
+					if( MessageBox::Show( msg, "Information", MessageBoxButtons::YesNo, MessageBoxIcon::None ) 
+						== System::Windows::Forms::DialogResult::No )
+					{
+						this->errMsg( "マスターROMの作成をキャンセルしました。", 
+									  "Making a master ROM is canceled." );
+						return;
+					}
+				}
 			}
 			try
 			{
