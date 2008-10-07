@@ -101,6 +101,9 @@ System::Void Form1::saveTmp( System::String ^filename )
 	MasterEditorTWL::appendXmlTag( doc, form, "RatingPEGI_BBFC", this->combPEGI_BBFC->SelectedIndex.ToString() );
 	MasterEditorTWL::appendXmlTag( doc, form, "RatingOFLC", this->combOFLC->SelectedIndex.ToString() );
 
+	MasterEditorTWL::appendXmlTag( doc, form, "IsUGC", (this->cboxIsUGC->Checked)?"Y":"N" );
+	MasterEditorTWL::appendXmlTag( doc, form, "IsPhotoEx", (this->cboxIsPhotoEx->Checked)?"Y":"N" );
+
 	try
 	{
 		doc->Save( filename );
@@ -243,6 +246,9 @@ void Form1::loadTmp( System::String ^filename )
 	this->parseTmp( root, "/MasterEditorTWL/Form/RatingPEGI_PRT", this->combPEGI_PRT );
 	this->parseTmp( root, "/MasterEditorTWL/Form/RatingPEGI_BBFC", this->combPEGI_BBFC );
 	this->parseTmp( root, "/MasterEditorTWL/Form/RatingOFLC", this->combOFLC );
+
+	this->parseTmp( root, "/MasterEditorTWL/Form/IsUGC", this->cboxIsUGC );
+	this->parseTmp( root, "/MasterEditorTWL/Form/IsPhotoEx", this->cboxIsPhotoEx );
 
 	this->maskParentalForms();	// ペアレンタルコントロール情報をリージョンに合わせる
 
