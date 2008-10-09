@@ -125,7 +125,7 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 	{
 		for each( RCLicense ^lic in hSrl->hLicenseList )
 		{
-			lib += "[" + lic->Publisher + " " + lic->Name + "]. ";
+			lib += "[" + lic->Publisher + " / " + lic->Name + "]. ";
 		}
 	}
 
