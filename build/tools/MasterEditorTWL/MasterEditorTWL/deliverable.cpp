@@ -104,7 +104,11 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 	}
 	if( *(hSrl->hIsAesSlotBForJpegEnc) == true )
 	{
-		access += "AES-SlotB(JpegEnc.). ";
+		access += "AES-SlotB(Jpeg Launcher). ";
+	}
+	if( *(hSrl->hIsAesSlotBForJpegEncUser) == true )
+	{
+		access += "AES-SlotB(Jpeg User). ";
 	}
 	if( *(hSrl->hIsAesSlotAForSSL) == true )
 	{
@@ -121,7 +125,7 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 	{
 		for each( RCLicense ^lic in hSrl->hLicenseList )
 		{
-			lib += lic->Publisher + " " + lic->Name + ". ";
+			lib += "[" + lic->Publisher + " " + lic->Name + "]. ";
 		}
 	}
 

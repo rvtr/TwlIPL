@@ -67,7 +67,7 @@ void Form1::changeJapanese(void)
 	this->tboxGuideTWLInfo->Text = gcnew System::String( "このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。" );
 	this->tboxGuideRomEditInfo->Text  = gcnew System::String( "" );
 	this->tboxGuideRomEditInfo->Text += "このタブの各項目への入力は提出確認書およびマスターROMの作成のために必要です。";
-	this->tboxGuideRomEditInfo->Text += "\r\nこれらの情報はマスターROMの作成時にROM内登録データとして登録されます(「その他ROM情報」を除く。)";
+	this->tboxGuideRomEditInfo->Text += "\r\nこれらの情報はマスターROMの作成時にROM内登録データとして登録されます(「その他ROM情報」を除く)。";
 	this->tboxGuideSubmitInfo->Text  = gcnew System::String( "このタブの情報は提出確認書の作成に必要です。入力してください。" );
 	this->tboxGuideCompanyInfo->Text = gcnew System::String( "このタブの情報は提出確認書の作成に必要です。入力してください。" );
 	this->tboxGuideErrorInfo->Text   = gcnew System::String( "" );

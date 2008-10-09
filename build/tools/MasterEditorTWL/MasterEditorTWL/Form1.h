@@ -712,7 +712,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 
 			// 複数行表示したいが初期値で設定できないのでここで設定
 			this->tboxGuideRomEditInfo->Text  = "このタブの各項目への入力は提出確認書およびマスターROMの作成のために必要です。";
-			this->tboxGuideRomEditInfo->Text += "\r\nこれらの情報はマスターROMの作成時にROM内登録データとして登録されます(「その他ROM情報」を除く。)";
+			this->tboxGuideRomEditInfo->Text += "\r\nこれらの情報はマスターROMの作成時にROM内登録データとして登録されます(「その他ROM情報」を除く)。";
 
 			this->tboxGuideErrorInfo->Text  = "このタブには読み込んだROMデータの問題と本プログラムでの入力ミスが列挙されます。";
 			this->tboxGuideErrorInfo->Text += "\r\n赤文字の項目は、本プログラムで修正不可です。ROMデータ作成時の設定をご確認ください。";

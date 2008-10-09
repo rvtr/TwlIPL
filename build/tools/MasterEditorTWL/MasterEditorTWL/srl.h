@@ -314,6 +314,7 @@ namespace MasterEditorTWL
 		property System::Boolean ^hIsGameCardOn;
 		property System::Boolean ^hIsShared2;
 		property System::Boolean ^hIsAesSlotBForJpegEnc;
+		property System::Boolean ^hIsAesSlotBForJpegEncUser;
 		property System::Boolean ^hIsGameCardNitro;
 		property System::Boolean ^hIsAesSlotAForSSL;
 		property System::Boolean ^hIsCommonClientKeyForDebugger;

@@ -159,7 +159,11 @@ void Form1::setSrlForms(void)
 	}
 	if( *(this->hSrl->hIsAesSlotBForJpegEnc) == true )
 	{
-		acc += "AES-SlotB(JpegEnc.).\r\n";
+		acc += "AES-SlotB(Jpeg Launcher).\r\n";
+	}
+	if( *(this->hSrl->hIsAesSlotBForJpegEncUser) == true )
+	{
+		acc += "AES-SlotB(Jpeg User).\r\n";
 	}
 	if( *(this->hSrl->hIsAesSlotAForSSL) == true )
 	{
@@ -167,7 +171,7 @@ void Form1::setSrlForms(void)
 	}
 	if( *(this->hSrl->hIsCommonClientKeyForDebugger) == true )
 	{
-		acc += "commonClientKey(Debug.).\r\n";
+		acc += "commonClientKey(Debug).\r\n";
 	}
 	this->tboxAccessOther->Text = acc;
 
