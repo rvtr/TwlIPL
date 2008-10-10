@@ -22,12 +22,12 @@ TWL提出用マスターデータを作成するためのツールが含まれています。
 =======================================================================
 
 ○単体版
-MasterEditorTWL.msi              : インストーラ
+MasterEditorTWLSetup.msi         : インストーラ
 MasterEditorTWL_Manual.pdf       : 使用方法マニュアル
 MasterEditorTWL_InstallGuide.pdf : インストール詳細ガイド
 
 ○パッケージ版
-MasterEditorTWL.msi              : インストーラ
+MasterEditorTWL_PackageSetup.msi : インストーラ
 Setup.exe                        : インストール時に必要なファイル
 DotNetFX/                        : インストール時に必要なフォルダ
 WindowsInstaller3_1/             : 同上
