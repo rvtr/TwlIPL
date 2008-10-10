@@ -23,7 +23,6 @@ export SYSM_BUILD_FOR_DEBUGGER	=	TRUE
 
 # SDK configuration for export
 override TWL_ARCHGEN	:= LIMITED
-overrice TWL_CODEGEN	:= THUMB
 export TWL_ARCHGEN
 export OBJDIR			= ./obj.WLAN/$(TWL_BUILDTYPE)
 export DEPENDDIR		= ./depend.WLAN/$(TWL_BUILDTYPE)
@@ -42,25 +41,35 @@ DS_HASH_TABLE				=	$(SYSMENU_ROOT)/build/systemMenu_RED/DSHashTable
 SHARED_FONT_DIR				=	$(SYSMENU_ROOT)/build/systemMenu_RED/sharedFont
 NANDFIRM_DIR                =   $(SYSMENU_ROOT)/build/nandfirm/menu-launcher
 
-SYSTEMUPDATER_DIR			=	$(SYSMENU_ROOT)/build/systemMenu_tools/SystemUpdaterRegionSelect
+SYSTEMUPDATER_DIR			=	$(SYSMENU_ROOT)/build/systemMenu_tools/SystemUpdater
 
 # 実際に書き込みたいファイルの置かれているdataフォルダを指定
-export UPDATER_HOST_ROOT_DIR = $(call empath,$(SYSMENU_ROOT)/build/tests/build4WLDev/data_sysmenu)
+export UPDATER_HOST_ROOT_DIR = $(call empath,$(SYSTEMUPDATER_DIR)/data)
 
-SUBMAKES =	$(SYSMENU_ROOT)/build/libraries_sysmenu/Makefile			\
+ifdef BUILD_TWLSDK
+SUBMAKES +=	Makefile_environment
+endif
+
+SUBMAKES +=	$(SYSMENU_ROOT)/build/tools/Makefile						\
+			$(SYSMENU_ROOT)/build/libraries/Makefile					\
+			$(SYSMENU_ROOT)/build/libraries_sysmenu/Makefile_autogen	\
 																		\
-			$(LAUNCHER_DIR)/banner/Makefile								\
-			$(LAUNCHER_DIR)/ARM9/Makefile_autogen_HNAJ					\
-			$(LAUNCHER_DIR)/ARM9/Makefile_autogen_HNAE					\
+			$(LAUNCHER_DIR)/Makefile_autogen							\
+			$(MACHINESETTINGS_DIR)/Makefile_autogen						\
+			$(WLANFIRM_DIR)/Makefile									\
+			$(DS_HASH_TABLE)/Makefile									\
+			$(SHARED_FONT_DIR)/Makefile									\
+			$(NANDFIRM_DIR)/Makefile									\
+			$(SYSTEMUPDATER_DIR)/data/Makefile							\
 			$(SYSTEMUPDATER_DIR)/banner/Makefile						\
 			$(SYSTEMUPDATER_DIR)/ARM7.TWL/Makefile						\
-			$(SYSTEMUPDATER_DIR)/ARM9.TWL/Makefile_autogen				
+			$(SYSTEMUPDATER_DIR)/ARM9.TWL/Makefile
 
 # COMPILE SWITCH for build SystemMenu
 
 export SYSM_UPDATER_RELEASE				=	TRUE
 
-export SYSM_DO_NOT_SHOW_LAUNCHER		=	FALSE
+export SYSM_DO_NOT_SHOW_LAUNCHER		=	TRUE
 export SYSM_DISABLE_WDS_SCAN			=	FALSE
 
 #############################################
@@ -82,29 +91,20 @@ export SYSM_BUILD_FOR_PRODUCTION_TEST	=	FALSE
 export SYSM_DISABLE_DEBUG				=	TRUE
 export SYSM_USE_WLANFIRM_LOCAL_PUBKEY	=	FALSE
 
-# Option for SystemUpdater
-export IGNORE_VERSION_CHECK	=	TRUE
-
-#############################################
-# inhibit reentrant
-
-FIRST_CALL  ?= TRUE
-SKIP_SUBDIR ?= TRUE
-
 DATE_AND_TIME	?= $(shell date +"%y%m%d %H%M")
 
 DATE		?= $(word 1,$(DATE_AND_TIME))
 TIME		?= $(word 2,$(DATE_AND_TIME))
 TIME_NOZERO	 = $(shell echo $(TIME) | sed -e 's/^0*\(.\)/\1/')
 
-ifneq ($(FIRST_CALL),TRUE)
 INSTALL_TARGETS	 = $(SYSTEMUPDATER_DIR)/ARM9.TWL/bin/$(TWL_BUILDTYPE)/SystemUpdater.srl
 INSTALL_DIR		 = .
-endif
 
 GDIRT_INSTALLED	+= ./$(notdir $(subst .srl,_WL_$(DATE)_*.srl,$(INSTALL_TARGETS)))
 
 #----------------------------------------------------------------------------
+
+SKIP_SUBDIR ?= TRUE
 
 do-build:	do-core
 clean:		cl-core
@@ -115,15 +115,14 @@ clean:		MY_TARGET=clean
 clobber:	MY_TARGET=clobber
 
 do-core:
-ifeq ($(FIRST_CALL),TRUE)
-	@echo Enter remake SKIP_SUBDIR=$(SKIP_SUBDIR)
+ifeq ($(SKIP_SUBDIR),TRUE)
 	+$(REMAKE) -C ./scripts SKIP_SUBDIR=FALSE $(MY_TARGET)
-	+$(REMAKE) FIRST_CALL=FALSE SKIP_SUBDIR=FALSE $(MY_TARGET)
+	+$(REMAKE) SKIP_SUBDIR=FALSE $(MY_TARGET)
 endif
 
 cl-core:
-ifeq ($(FIRST_CALL),TRUE)
-	+$(REMAKE) FIRST_CALL=FALSE SKIP_SUBDIR=FALSE $(MY_TARGET)
+ifeq ($(SKIP_SUBDIR),TRUE)
+	+$(REMAKE) SKIP_SUBDIR=FALSE $(MY_TARGET)
 	+$(REMAKE) -C ./scripts SKIP_SUBDIR=FALSE $(MY_TARGET)
 endif
 
@@ -141,6 +140,5 @@ define DO_INSTALL
 		fi $(AND) ) $(TRUE)
 endef
 
-test:
-	@echo SKIP_SUBDIR=$(SKIP_SUBDIR)
+
 #===== End of Makefile =====

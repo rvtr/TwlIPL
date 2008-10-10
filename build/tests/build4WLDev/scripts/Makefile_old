@@ -23,16 +23,19 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 #----------------------------------------------------------------------------
 
 LAUNCHER_DIR				=	$(SYSMENU_ROOT)/build/systemMenu_RED/Launcher
+MACHINESETTINGS_DIR			=	$(SYSMENU_ROOT)/build/systemMenu_RED/MachineSettings
 
 SYSMENU_LIBRARIES_DIR		=	$(SYSMENU_ROOT)/build/libraries_sysmenu
 
-SYSTEMUPDATER_DIR			=	$(SYSMENU_ROOT)/build/systemMenu_tools/SystemUpdaterRegionSelect
+SYSTEMUPDATER_DIR			=	$(SYSMENU_ROOT)/build/systemMenu_tools/SystemUpdater
 
 SCRIPTS_DIR					=	./
 
-MAKEFILES_ORG			=	$(LAUNCHER_DIR)/ARM9/Makefile
-MAKE_MAKEFILES			=	$(SCRIPTS_DIR)/launcher_makefile_region.pl
-AUTOGEN_MAKEFILES		=	$(LAUNCHER_DIR)/ARM9/Makefile_autogen_HNAJ $(LAUNCHER_DIR)/ARM9/Makefile_autogen_HNAE
+MAKEFILES_ORG			=	$(LAUNCHER_DIR)/Makefile $(LAUNCHER_DIR)/ARM9/Makefile \
+							$(MACHINESETTINGS_DIR)/Makefile $(MACHINESETTINGS_DIR)/ARM9/Makefile
+MAKE_MAKEFILES			=	$(SCRIPTS_DIR)/launcher_makefile.pl
+AUTOGEN_MAKEFILES		=	$(LAUNCHER_DIR)/Makefile_autogen $(LAUNCHER_DIR)/ARM9/Makefile_autogen \
+							$(MACHINESETTINGS_DIR)/Makefile_autogen $(MACHINESETTINGS_DIR)/ARM9/Makefile_autogen
 
 LDIRT_CLEAN				+=	$(AUTOGEN_MAKEFILES)
 
@@ -41,17 +44,24 @@ MAKE_LOADWLAN			=	$(SCRIPTS_DIR)/launcher_loadWlanFirm_c.pl
 AUTOGEN_LOADWLAN		=	$(LAUNCHER_DIR)/ARM9/src/loadWlanFirm_autogen.c
 LDIRT_CLEAN				+=	$(AUTOGEN_LOADWLAN)
 
-SYSUP_ORG				=	$(SYSTEMUPDATER_DIR)/ARM9.TWL/src/process_check_console.c \
-							$(SYSTEMUPDATER_DIR)/ARM9.TWL/src/process_select_region.c \
-							$(SYSTEMUPDATER_DIR)/ARM9.TWL/Makefile
-MAKE_SYSUP				=	$(SCRIPTS_DIR)/systemupdater_source.pl
-AUTOGEN_SYSUP			=	$(SYSTEMUPDATER_DIR)/ARM9.TWL/src/process_check_console_autogen.c \
-							$(SYSTEMUPDATER_DIR)/ARM9.TWL/src/process_select_region_autogen.c \
-							$(SYSTEMUPDATER_DIR)/ARM9.TWL/Makefile_autogen
-LDIRT_CLEAN				+=	$(AUTOGEN_SYSUP)
+MACHSETTING_ORG			=	$(MACHINESETTINGS_DIR)/ARM9/src/MachineSetting.c
+MAKE_MACHSETTING		=	$(SCRIPTS_DIR)/launcher_MachineSetting_c.pl
+AUTOGEN_MACHSETTING		=	$(MACHINESETTINGS_DIR)/ARM9/src/MachineSetting_autogen.c
+LDIRT_CLEAN				+=	$(AUTOGEN_MACHSETTING)
+
+NWM_ORG					=	$(SYSMENU_LIBRARIES_DIR)/Makefile	\
+							$(SYSMENU_LIBRARIES_DIR)/nwm/Makefile	\
+							$(SYSMENU_LIBRARIES_DIR)/nwm/ARM7/Makefile	\
+							$(ROOT)/build/libraries/wm/ARM7.TWL/nwm/src/nwmsp_event_handler.c
+MAKE_NWM				=	$(SCRIPTS_DIR)/launcher_fake_macaddress.pl
+AUTOGEN_NWM				=	$(SYSMENU_LIBRARIES_DIR)/Makefile_autogen	\
+							$(SYSMENU_LIBRARIES_DIR)/nwm/Makefile_autogen	\
+							$(SYSMENU_LIBRARIES_DIR)/nwm/ARM7/Makefile_autogen	\
+							$(ROOT)/build/libraries/wm/ARM7.TWL/nwm/src/nwmsp_event_handler_autogen.c
+LDIRT_CLEAN				+=	$(AUTOGEN_NWM)
 
 
-TARGETS		=	$(AUTOGEN_MAKEFILES) $(AUTOGEN_LOADWLAN) $(AUTOGEN_SYSUP)
+TARGETS		=	$(AUTOGEN_MAKEFILES) $(AUTOGEN_LOADWLAN) $(AUTOGEN_MACHSETTING) $(AUTOGEN_NWM)
 
 #----------------------------------------------------------------------------
 do-build:	$(TARGETS)
@@ -66,9 +76,12 @@ $(AUTOGEN_LOADWLAN): $(LOADWLAN_ORG) $(MAKE_LOADWLAN)
 	@echo "     make:" $@
 	@perl $(MAKE_LOADWLAN)
 
-$(AUTOGEN_SYSUP): $(SYSUP_ORG) $(MAKE_SYSUP)
+$(AUTOGEN_MACHSETTING): $(MACHSETTING_ORG) $(MAKE_MACHSETTING)
 	@echo "     make:" $@
-	@perl $(MAKE_SYSUP)
+	@perl $(MAKE_MACHSETTING)
 
+$(AUTOGEN_NWM): $(NWM_ORG) $(MAKE_NWM)
+	@echo "     make:" $@
+	@perl $(MAKE_NWM)
 
 #===== End of Makefile =====
