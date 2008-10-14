@@ -1,3 +1,7 @@
+
+**** SDK側は UIGブランチを使用してください ****
+
+
 以下のディレクトリ構成でsystemMenuを用意して
 ARM9/Makefileの UPDATER_HOST_ROOT_DIR変数で指定してください。
 
