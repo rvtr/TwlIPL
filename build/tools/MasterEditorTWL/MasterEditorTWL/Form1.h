@@ -755,10 +755,10 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 		/// </summary>
 		void InitializeComponent(void)
 		{
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle5 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle6 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle7 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle8 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle9 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle10 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle11 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle12 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -1549,7 +1549,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->tboxNTSC2->MaxLength = 50;
 			this->tboxNTSC2->Name = L"tboxNTSC2";
 			this->tboxNTSC2->Size = System::Drawing::Size(158, 19);
-			this->tboxNTSC2->TabIndex = 11;
+			this->tboxNTSC2->TabIndex = 15;
 			// 
 			// labFax2
 			// 
@@ -2112,7 +2112,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->tboxProductCode2Foreign3->MaxLength = 4;
 			this->tboxProductCode2Foreign3->Name = L"tboxProductCode2Foreign3";
 			this->tboxProductCode2Foreign3->Size = System::Drawing::Size(46, 19);
-			this->tboxProductCode2Foreign3->TabIndex = 43;
+			this->tboxProductCode2Foreign3->TabIndex = 16;
 			// 
 			// tboxProductCode2Foreign2
 			// 
@@ -2121,7 +2121,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->tboxProductCode2Foreign2->MaxLength = 4;
 			this->tboxProductCode2Foreign2->Name = L"tboxProductCode2Foreign2";
 			this->tboxProductCode2Foreign2->Size = System::Drawing::Size(46, 19);
-			this->tboxProductCode2Foreign2->TabIndex = 42;
+			this->tboxProductCode2Foreign2->TabIndex = 15;
 			// 
 			// labProductCode2Foreign
 			// 
@@ -2922,15 +2922,15 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gridLibrary->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridLibrary->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(2) {this->colLibPublisher, 
 				this->colLibName});
-			dataGridViewCellStyle5->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle5->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle5->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle9->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle9->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle9->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle5->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle5->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle5->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle5->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridLibrary->DefaultCellStyle = dataGridViewCellStyle5;
+			dataGridViewCellStyle9->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle9->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle9->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle9->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridLibrary->DefaultCellStyle = dataGridViewCellStyle9;
 			this->gridLibrary->Location = System::Drawing::Point(337, 189);
 			this->gridLibrary->Name = L"gridLibrary";
 			this->gridLibrary->ReadOnly = true;
@@ -3112,7 +3112,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->rIsNoIcon->Location = System::Drawing::Point(8, 25);
 			this->rIsNoIcon->Name = L"rIsNoIcon";
 			this->rIsNoIcon->Size = System::Drawing::Size(120, 16);
-			this->rIsNoIcon->TabIndex = 6;
+			this->rIsNoIcon->TabIndex = 4;
 			this->rIsNoIcon->TabStop = true;
 			this->rIsNoIcon->Text = L"アイコンを表示しない";
 			this->rIsNoIcon->UseVisualStyleBackColor = true;
@@ -3123,7 +3123,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->rIsWiFiIcon->Location = System::Drawing::Point(8, 77);
 			this->rIsWiFiIcon->Name = L"rIsWiFiIcon";
 			this->rIsWiFiIcon->Size = System::Drawing::Size(134, 16);
-			this->rIsWiFiIcon->TabIndex = 5;
+			this->rIsWiFiIcon->TabIndex = 6;
 			this->rIsWiFiIcon->Text = L"Wi-Fi通信アイコン表示";
 			this->rIsWiFiIcon->UseVisualStyleBackColor = true;
 			// 
@@ -3133,7 +3133,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->rIsWirelessIcon->Location = System::Drawing::Point(8, 51);
 			this->rIsWirelessIcon->Name = L"rIsWirelessIcon";
 			this->rIsWirelessIcon->Size = System::Drawing::Size(167, 16);
-			this->rIsWirelessIcon->TabIndex = 4;
+			this->rIsWirelessIcon->TabIndex = 5;
 			this->rIsWirelessIcon->Text = L"DSワイヤレス通信アイコン表示";
 			this->rIsWirelessIcon->UseVisualStyleBackColor = true;
 			// 
@@ -3348,15 +3348,15 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gridWarn->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridWarn->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colWarnName, 
 				this->colWarnBegin, this->colWarnEnd, this->colWarnCause});
-			dataGridViewCellStyle6->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle6->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle6->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle10->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle10->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle10->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle6->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle6->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle6->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle6->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle6;
+			dataGridViewCellStyle10->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle10->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle10->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle10->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle10;
 			this->gridWarn->GridColor = System::Drawing::SystemColors::Control;
 			this->gridWarn->Location = System::Drawing::Point(24, 228);
 			this->gridWarn->Name = L"gridWarn";
@@ -3396,22 +3396,22 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			// 
 			// gridError
 			// 
-			dataGridViewCellStyle7->BackColor = System::Drawing::Color::White;
-			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle7;
+			dataGridViewCellStyle11->BackColor = System::Drawing::Color::White;
+			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle11;
 			this->gridError->AutoSizeRowsMode = System::Windows::Forms::DataGridViewAutoSizeRowsMode::AllCellsExceptHeaders;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
 				this->colErrorBegin, this->colErrorEnd, this->colErrorCause});
-			dataGridViewCellStyle8->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle8->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle8->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle12->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle12->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle12->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle8->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle8->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle8->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle8->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridError->DefaultCellStyle = dataGridViewCellStyle8;
+			dataGridViewCellStyle12->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle12->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle12->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle12->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridError->DefaultCellStyle = dataGridViewCellStyle12;
 			this->gridError->GridColor = System::Drawing::SystemColors::Control;
 			this->gridError->Location = System::Drawing::Point(24, 99);
 			this->gridError->Name = L"gridError";
