@@ -755,10 +755,10 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 		/// </summary>
 		void InitializeComponent(void)
 		{
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle1 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle2 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle3 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle4 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle5 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle6 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle7 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle8 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -2082,7 +2082,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			// numSubmitVersion
 			// 
 			this->numSubmitVersion->Location = System::Drawing::Point(106, 172);
-			this->numSubmitVersion->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) {9, 0, 0, 0});
+			this->numSubmitVersion->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) {15, 0, 0, 0});
 			this->numSubmitVersion->Name = L"numSubmitVersion";
 			this->numSubmitVersion->Size = System::Drawing::Size(38, 19);
 			this->numSubmitVersion->TabIndex = 9;
@@ -2922,15 +2922,15 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gridLibrary->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridLibrary->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(2) {this->colLibPublisher, 
 				this->colLibName});
-			dataGridViewCellStyle1->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle1->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle1->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle5->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle5->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle5->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle1->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle1->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle1->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle1->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridLibrary->DefaultCellStyle = dataGridViewCellStyle1;
+			dataGridViewCellStyle5->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle5->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle5->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle5->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridLibrary->DefaultCellStyle = dataGridViewCellStyle5;
 			this->gridLibrary->Location = System::Drawing::Point(337, 189);
 			this->gridLibrary->Name = L"gridLibrary";
 			this->gridLibrary->ReadOnly = true;
@@ -3348,15 +3348,15 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gridWarn->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridWarn->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colWarnName, 
 				this->colWarnBegin, this->colWarnEnd, this->colWarnCause});
-			dataGridViewCellStyle2->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle2->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle2->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle6->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle6->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle6->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle2->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle2->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle2->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle2->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle2;
+			dataGridViewCellStyle6->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle6->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle6->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle6->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle6;
 			this->gridWarn->GridColor = System::Drawing::SystemColors::Control;
 			this->gridWarn->Location = System::Drawing::Point(24, 228);
 			this->gridWarn->Name = L"gridWarn";
@@ -3396,22 +3396,22 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			// 
 			// gridError
 			// 
-			dataGridViewCellStyle3->BackColor = System::Drawing::Color::White;
-			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle3;
+			dataGridViewCellStyle7->BackColor = System::Drawing::Color::White;
+			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle7;
 			this->gridError->AutoSizeRowsMode = System::Windows::Forms::DataGridViewAutoSizeRowsMode::AllCellsExceptHeaders;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
 				this->colErrorBegin, this->colErrorEnd, this->colErrorCause});
-			dataGridViewCellStyle4->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle4->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle4->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle8->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle8->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle8->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle4->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle4->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle4->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle4->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridError->DefaultCellStyle = dataGridViewCellStyle4;
+			dataGridViewCellStyle8->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle8->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle8->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle8->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridError->DefaultCellStyle = dataGridViewCellStyle8;
 			this->gridError->GridColor = System::Drawing::SystemColors::Control;
 			this->gridError->Location = System::Drawing::Point(24, 99);
 			this->gridError->Name = L"gridError";
@@ -3876,11 +3876,13 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 
 				if( this->cboxRemasterVerE->Checked == true )
 				{
-					filename = "T" + this->hSrl->hGameCode + "E" + this->numSubmitVersion->Value.ToString() + ".SRL";
+					filename = "T" + this->hSrl->hGameCode + "E"
+						           + System::Decimal::ToByte(this->numSubmitVersion->Value).ToString("X") + ".SRL";
 				}
 				else
 				{
-					filename = "T" + this->hSrl->hGameCode + this->hSrl->hRomVersion->ToString() + this->numSubmitVersion->Value.ToString() + ".SRL";
+					filename = "T" + this->hSrl->hGameCode + this->hSrl->hRomVersion->ToString("X")
+						           + System::Decimal::ToByte(this->numSubmitVersion->Value).ToString("X") + ".SRL";
 				}
 			}
 
@@ -3983,11 +3985,13 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 
 				if( this->cboxRemasterVerE->Checked == true )
 				{
-					srlfile = "T" + this->hSrl->hGameCode + "E" + this->numSubmitVersion->Value.ToString() + ".SRL";
+					srlfile = "T" + this->hSrl->hGameCode + "E"
+						          + System::Decimal::ToByte(this->numSubmitVersion->Value).ToString("X") + ".SRL";
 				}
 				else
 				{
-					srlfile = "T" + this->hSrl->hGameCode + this->hSrl->hRomVersion->ToString() + this->numSubmitVersion->Value.ToString() + ".SRL";
+					srlfile = "T" + this->hSrl->hGameCode + this->hSrl->hRomVersion->ToString("X")
+						          + System::Decimal::ToByte(this->numSubmitVersion->Value).ToString("X") + ".SRL";
 				}
 			}
 

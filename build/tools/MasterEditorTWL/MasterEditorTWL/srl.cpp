@@ -1045,11 +1045,11 @@ ECSrlResult RCSrl::mrcNTR( FILE *fp )
 	}
 
 	u8 romver = this->pRomHeader->s.rom_version;
-	if( ((romver < 0x00) || (0x09 < romver)) && (romver != 0xE0) )
+	if( ((romver < 0x00) || (0x0f < romver)) && (romver != 0xE0) )
 	{
 		this->hErrorList->Add( gcnew RCMrcError( 
-			"リマスターバージョン", 0x1e, 0x1e, "不正な値です。正式版では01h-09hのいずれかの値、事前版ではE0hです。",
-			"Release Ver.", "Invalid data. Please set either one of 01h-09h(Regular ver.), or E0h(Preliminary ver.)", false, true ) );
+			"リマスターバージョン", 0x1e, 0x1e, "不正な値です。正式版では01h-0Fhのいずれかの値、事前版ではE0hを設定してください。",
+			"Release Ver.", "Invalid data. Please set either one of 01h-0Fh(Regular ver.), or E0h(Preliminary ver.)", false, true ) );
 	}
 	if( this->pRomHeader->s.banner_offset == 0 )
 	{

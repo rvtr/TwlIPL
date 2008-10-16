@@ -49,14 +49,13 @@ void Form1::setSrlForms(void)
 	this->tboxPlatform->Text  = this->hSrl->hPlatform;
 	this->tboxRomSize->Text   = this->hSrl->hRomSize;
 	this->tboxRomLatency->Text = this->hSrl->hLatency;
+	this->tboxRemasterVer->Text = this->hSrl->hRomVersion->ToString("X2");
 	if( *(this->hSrl->hRomVersion) == 0xE0 )
 	{
-		this->tboxRemasterVer->Text = gcnew System::String("E");
 		this->cboxRemasterVerE->Checked = true;
 	}
 	else
 	{
-		this->tboxRemasterVer->Text = this->hSrl->hRomVersion->ToString();
 		this->cboxRemasterVerE->Checked = false;
 	}
 
