@@ -3623,7 +3623,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 		{
 			System::Reflection::Assembly ^ass = System::Reflection::Assembly::GetEntryAssembly();
 			System::Version ^ver =  ass->GetName()->Version;
-			return ( ver->Major.ToString() + "." + ver->Minor.ToString() + "." + ver->Build.ToString() );
+			return ( ver->Major.ToString() + "." + ver->Minor.ToString() );
 		}
 
 		// SRLに登録されないROM仕様のフォーム入力を
