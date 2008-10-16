@@ -24,6 +24,7 @@
 #include    <../build/libraries/mb/common/include/mb_fileinfo.h>
 
 //#define HOTSW_DISABLE_FORCE_CARD_OFF
+//#define HOTSW_CHECK_CREATE_MONITOR_THREAD
 
 // カード電源ONからROMヘッダロードまでの期間にスリープに入る時のワンセグ対策しない場合
 //#define HOWSW_ENABLE_DEEP_SLEEP_WHILE_INSERT_CARD
@@ -275,14 +276,32 @@ void HOTSW_Init(u32 threadPrio)
         s_PollingLockID = (u16)tempLockID;
     }
 
-    // カードの状態監視用スレッドの生成 ( DSテレビ対策 )
-    OS_CreateThread(&HotSwThreadData.monitorThread,
-                    MonitorThread,
-                    NULL,
-                    HotSwThreadData.monitorStack + HOTSW_THREAD_STACK_SIZE / sizeof(u64),
-                    HOTSW_THREAD_STACK_SIZE,
-                    threadPrio
-                    );
+    // メッセージキューの初期化
+    OS_InitMessageQueue( &HotSwThreadData.hotswQueue,            &HotSwThreadData.hotswMsgBuffer[0],         HOTSW_MSG_BUFFER_NUM );
+    OS_InitMessageQueue( &HotSwThreadData.hotswDmaQueue,         &HotSwThreadData.hotswDmaMsgBuffer[0],      HOTSW_DMA_MSG_NUM );
+    OS_InitMessageQueue( &HotSwThreadData.hotswPollingCtrlQueue, &HotSwThreadData.hotswPollingCtrlBuffer[0], HOTSW_POLLING_CTRL_BUFFER_NUM );
+    
+    // isLoadRomEmuOnlyフラグが立っている時は、LoadCardData関数においてカードの読み込みがNormalモードで終わってしまうため
+    // MonitorThreadで挿されているかの確認で行っているGameModeのID読みが正常に出来ないため、ID照合で不一致が起こってしまう。
+	// それを防ぐために、isLoadRomEmuOnlyフラグが立っているときは、MonitorThreadを生成・起動しないようにする。
+    // ※ isLoadRomEmuOnlyフラグはHyenaのMain関数でHOTSW_Initが呼ばれる前に処理されている。
+#ifdef HOTSW_CHECK_CREATE_MONITOR_THREAD
+    if(!SYSMi_GetWork()->flags.hotsw.isLoadRomEmuOnly){
+#endif
+        // カードの状態監視用スレッドの生成 ( DSテレビ対策 )
+    	OS_CreateThread(&HotSwThreadData.monitorThread,
+        	            MonitorThread,
+            	        NULL,
+                	    HotSwThreadData.monitorStack + HOTSW_THREAD_STACK_SIZE / sizeof(u64),
+                    	HOTSW_THREAD_STACK_SIZE,
+                    	threadPrio
+                    	);
+
+        // スレッド起動
+        OS_WakeupThreadDirect(&HotSwThreadData.monitorThread);
+#ifdef HOTSW_CHECK_CREATE_MONITOR_THREAD
+    }
+#endif
 
     // カードデータロード用スレッドの生成 ※カード状態監視スレッドと優先度同じだけど、後に作成したこっちのスレッドが優先される
     OS_CreateThread(&HotSwThreadData.hotswThread,
@@ -293,14 +312,8 @@ void HOTSW_Init(u32 threadPrio)
                     threadPrio
                     );
 
-    // メッセージキューの初期化
-    OS_InitMessageQueue( &HotSwThreadData.hotswQueue,            &HotSwThreadData.hotswMsgBuffer[0],         HOTSW_MSG_BUFFER_NUM );
-    OS_InitMessageQueue( &HotSwThreadData.hotswDmaQueue,         &HotSwThreadData.hotswDmaMsgBuffer[0],      HOTSW_DMA_MSG_NUM );
-    OS_InitMessageQueue( &HotSwThreadData.hotswPollingCtrlQueue, &HotSwThreadData.hotswPollingCtrlBuffer[0], HOTSW_POLLING_CTRL_BUFFER_NUM );
-
     // スレッド起動
     OS_WakeupThreadDirect(&HotSwThreadData.hotswThread);
-    OS_WakeupThreadDirect(&HotSwThreadData.monitorThread);
 
     // バッファの設定
     HOTSW_SetBootSegmentBuffer((void *)SYSM_CARD_ROM_HEADER_BAK, SYSM_APP_ROM_HEADER_SIZE );
