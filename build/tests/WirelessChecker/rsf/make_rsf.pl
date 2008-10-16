@@ -78,9 +78,9 @@ foreach my $line ( @lines )
         next;
 	}
 
-    if( $line =~ m/GameCode\t+/ )
+    if( $line =~ m/InitialCode\t+/ )
     {
-        $line =~ s/\t\#?GameCode.*[a-zA-Z0-9]{4}/\tGameCode\t\t\t\t000A/;
+        $line =~ s/\t\#?InitialCode.*[a-zA-Z0-9]{4}/\tInitialCode\t\t\t\t000A/;
     }
 
     if( $line =~ m/TitleName\t+/ )
