@@ -999,7 +999,7 @@
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
    </Borders>
-   <Font ss:FontName="ＭＳ Ｐゴシック" x:CharSet="128" x:Family="Modern"/>
+   <Font ss:FontName="ＭＳ Ｐゴシック" x:CharSet="128" x:Family="Modern" ss:Size="9"/>
    <NumberFormat ss:Format="@"/>
   </Style>
   <Style ss:ID="m20932232">
@@ -11379,6 +11379,14 @@
    </Print>
    <PageBreakZoom>100</PageBreakZoom>
    <Selected/>
+   <Panes>
+    <Pane>
+     <Number>3</Number>
+     <ActiveRow>22</ActiveRow>
+     <ActiveCol>85</ActiveCol>
+     <RangeSelection>R23C86:R23C100</RangeSelection>
+    </Pane>
+   </Panes>
    <ProtectObjects>False</ProtectObjects>
    <ProtectScenarios>False</ProtectScenarios>
   </WorksheetOptions>
