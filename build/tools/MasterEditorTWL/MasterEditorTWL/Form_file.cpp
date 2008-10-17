@@ -253,7 +253,7 @@ System::Void Form1::makeMiddlewareListXml(System::Xml::XmlDocument^ doc)
 	MasterEditorTWL::appendXmlTag( doc, game, "title-name",   this->tboxTitleName->Text );
 	MasterEditorTWL::appendXmlTag( doc, game, "game-code",    this->tboxGameCode->Text );
 	MasterEditorTWL::appendXmlTag( doc, game, "rom-version",  this->tboxRemasterVer->Text );
-	MasterEditorTWL::appendXmlTag( doc, game, "submit-version", this->numSubmitVersion->Value.ToString() );
+	MasterEditorTWL::appendXmlTag( doc, game, "submit-version", System::Decimal::ToByte(this->numSubmitVersion->Value).ToString("X") );
 
 	// ミドルウェアリスト
 	System::Xml::XmlElement ^midlist = doc->CreateElement( "middleware-list" );
