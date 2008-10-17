@@ -64,6 +64,7 @@ typedef struct _SContext
     BOOL bDevFlag;
     BOOL bVerFlag;
     BOOL bDebugger;
+    BOOL bCheckCard;
 	int  verNum;
     BOOL bMROM;
     
@@ -110,6 +111,7 @@ void usage()
     printf( "-v NUM: change ROM version in a ROM Header.\n" );
     printf( "-m    : [Only NTR limited ROM] Rom speed type replace 1TROM from MROM\n" );
     printf( "-D    : assert a disable flag of debugger alalysis\n" );
+    printf( "-c    : assert a check(inspection) card flag\n" );
 	printf( "-----------------------------------------------------------------------------\n" );
 }
 
@@ -131,7 +133,7 @@ int main(int argc, char *argv[])
     memset( &context, 0, sizeof(SContext) );
 
     // オプション
-    while( (opt = getopt(argc, argv, "hpsdmv:D")) >= 0 )
+    while( (opt = getopt(argc, argv, "hpsdmv:Dc")) >= 0 )
     {
         switch( opt )
         {
@@ -163,6 +165,10 @@ int main(int argc, char *argv[])
             
             case 'D':
                 context.bDebugger = TRUE;
+            break;
+            
+            case 'c':
+                context.bCheckCard = TRUE;
             break;
 
             default:            // オプション引数が指定されていないときにも実行される
@@ -324,6 +330,19 @@ static BOOL iMain( SContext *pContext )
             else
             {
                 printf( "Debugger analysis: Originally Disable\n" );
+            }
+        }
+        
+        if( pContext->bCheckCard )
+        {
+            if( rh.s.inspect_card == 0 )
+            {
+                rh.s.inspect_card = 0x1;
+                printf( "Check Card Flag:  Disable -> Enable\n" );
+            }
+            else
+            {
+                printf( "Check Card Flag:  Originally Enable\n" );
             }
         }
     }
