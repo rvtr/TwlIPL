@@ -133,13 +133,9 @@ BOOL SYSM_IsLogoDemoSkip( void )
 // ISデバッガのバナービューモード起動かどうか？
 BOOL SYSMi_IsDebuggerBannerViewMode( void )
 {
-#if 0
 	return ( SYSM_IsRunOnDebugger() &&
-			 SYSMi_IsExistCard() &&
-			 SYSM_GetCardRomHeader()->dbgRomSize == 0 ) ? TRUE : FALSE;
-#else
-	return FALSE;
-#endif
+			 SYSM_IsExistCard() &&
+			 SYSMi_GetWork()->romEmuInfo.isForceBannerViewMode );
 }
 
 // TSD有効？

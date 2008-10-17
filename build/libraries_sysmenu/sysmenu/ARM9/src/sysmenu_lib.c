@@ -32,7 +32,6 @@ extern void LCFG_VerifyAndRecoveryNTRSettings( void );
 // function's prototype-------------------------------------------------------
 static void SYSMi_CopyLCFGDataHWInfo( u32 dst_addr );
 static void SYSMi_CopyLCFGDataSettings( void );
-static TitleProperty *SYSMi_CheckDebuggerBannerViewModeBoot( void );
 static TitleProperty *SYSMi_CheckShortcutBoot1( void );
 static TitleProperty *SYSMi_CheckShortcutBoot2( void );
 void SYSMi_SendKeysToARM7( void );
@@ -221,6 +220,7 @@ TitleProperty *SYSM_ReadParameters( void )
             // リード失敗ファイルが存在する場合は、ファイルをリカバリ
             if( LCFG_RecoveryTWLSettings() ) {
                 if( isRead ) {
+					// [TODO] このままではダメ。両方正常にリードできた時もこのパスに来てしまう。
                     // ミラーデータのうち、一方がリードできていたなら、そのデータをもう片方に反映。
                     (void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer ); // LCFG_READ_TEMP > LCFG_WRITE_TEMP なので、pBufferをそのまま流用
                 }else {
@@ -336,14 +336,6 @@ TitleProperty *SYSM_ReadParameters( void )
     }
 
     //-----------------------------------------------------
-    // ISデバッガバナーViewモード起動
-    //-----------------------------------------------------
-    if( pBootTitle == NULL ) {
-        // ランチャーパラメータによるダイレクトブートがない場合のみ判定
-        pBootTitle = SYSMi_CheckDebuggerBannerViewModeBoot();
-    }
-    
-    //-----------------------------------------------------
     // 量産工程用ショートカットキー or
     // 検査カード起動
     //-----------------------------------------------------
@@ -411,23 +403,6 @@ BOOL SYSM_IsLauncherHidden( void )
 }
 
 
-static TitleProperty *SYSMi_CheckDebuggerBannerViewModeBoot( void )
-{
-    MI_CpuClear8( &s_bootTitleBuf, sizeof(TitleProperty) );
-
-    //-----------------------------------------------------
-    // ISデバッガバナーViewモード起動
-    //-----------------------------------------------------
-    //[TODO]未実装
-#if 0
-    if( SYSMi_IsDebuggerBannerViewMode() ) {
-        return NULL;
-    }
-#endif
-
-    return NULL;
-}
-
 static TitleProperty * SYSMi_ShortcutCardBootSub( void )
 {
     s_bootTitleBuf.flags.isAppRelocate = TRUE;
@@ -462,19 +437,29 @@ static TitleProperty *SYSMi_CheckShortcutBoot1( void )
 {
     MI_CpuClear8( &s_bootTitleBuf, sizeof(TitleProperty) );
     
-    //-----------------------------------------------------
-    // ISデバッガ起動 or
-    // 量産工程用ショートカットキー or
-    // 検査カード起動
-    //-----------------------------------------------------
     if( SYSM_IsExistCard() ) {
-        if( ( SYSM_IsRunOnDebugger() &&      // ISデバッガが有効かつJTAGがまだ有効でない時
-              !( *(u8 *)( HW_SYS_CONF_BUF + HWi_WSYS09_OFFSET ) & HWi_WSYS09_JTAG_CPUJE_MASK ) ) ||
-            SYSM_IsInspectCard() ||
+	    //-----------------------------------------------------
+	    // 量産工程用ショートカットキー or
+	    // 検査カード起動
+	    //-----------------------------------------------------
+        if( SYSM_IsInspectCard() ||
             ( ( PAD_Read() == SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) && 
               ( !LCFG_TSD_IsFinishedBrokenTWLSettings() || !LCFG_TSD_IsFinishedInitialSetting() || !LCFG_TSD_IsFinishedInitialSetting_Launcher() ) )
             ){
             return SYSMi_ShortcutCardBootSub();
+        }
+	    //-----------------------------------------------------
+	    // ISデバッガ起動 or
+	    // ISデバッガバナーViewモード起動
+	    //-----------------------------------------------------
+        if( SYSM_IsRunOnDebugger() &&      // ISデバッガが有効かつJTAGがまだ有効でない時
+            !( *(u8 *)( HW_SYS_CONF_BUF + HWi_WSYS09_OFFSET ) & HWi_WSYS09_JTAG_CPUJE_MASK )
+            ){
+			if( SYSMi_IsDebuggerBannerViewMode() ) {
+	        	return NULL;							// バナービューモード時は、通常起動でランチャーメニューを表示
+			}else {
+				return SYSMi_ShortcutCardBootSub();
+			}
         }
     }
 
