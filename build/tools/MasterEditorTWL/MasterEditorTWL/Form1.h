@@ -40,6 +40,9 @@ namespace MasterEditorTWL {
 		// 書類出力モード(ノーマルXML or XML Spread Sheet)
 		System::Boolean ^hIsSpreadSheet;
 
+		// リードオンリーモード
+		System::Boolean ^hIsReadOnly;
+
 		// 入力エラー情報
 		System::Collections::Generic::List<RCMrcError ^> ^hErrorList;
 		System::Collections::Generic::List<RCMrcError ^> ^hWarnList;
@@ -688,6 +691,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 
 			// デフォルト値
 			this->hIsSpreadSheet = gcnew System::Boolean( true );
+			this->hIsReadOnly    = gcnew System::Boolean( false );
 			this->dateRelease->Value = System::DateTime::Now;
 			this->dateSubmit->Value  = System::DateTime::Now;
 #if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
@@ -3609,6 +3613,8 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->cboxIsUGC->Enabled       = false;
 			this->cboxIsPhotoEx->Enabled   = false;
 
+			this->butSetBack->Enabled = false;
+			this->combRegion->Enabled = false;
 			this->combCERO->Enabled = false;
 			this->combESRB->Enabled = false;
 			this->combUSK->Enabled = false;

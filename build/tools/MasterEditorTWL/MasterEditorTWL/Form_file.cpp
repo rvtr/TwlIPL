@@ -49,6 +49,7 @@ void Form1::loadInit(void)
 
 	// <rw>タグ
 	System::Boolean bReadOnly = MasterEditorTWL::isXmlEqual( root, "rw", "r" );
+	this->hIsReadOnly = System::Boolean( bReadOnly );
 	if( bReadOnly )
 	{
 		this->readOnly();
@@ -96,7 +97,7 @@ void Form1::loadInit(void)
 			System::Int32 i;
 			for( i=0; i < METWL_NUMOF_SHARED2FILES; i++ )
 			{
-				u8 size = System::UInt32::Parse( MasterEditorTWL::getXPathText( root, "/init/shared2/size" + i.ToString() ) );
+				u32 size = System::UInt32::Parse( MasterEditorTWL::getXPathText( root, "/init/shared2/size" + i.ToString() ) );
 				this->hSrl->hMrcSpecialList->hShared2SizeArray[i] = gcnew System::UInt32( size );
 			}
 		}
@@ -115,8 +116,8 @@ void Form1::loadInit(void)
 
 	if( bReadOnly || bXML | bCheck )
 	{
-		System::String ^msgJ = gcnew System::String("動作モード:");
-		System::String ^msgE = gcnew System::String("Processing Mode:");
+		System::String ^msgJ = gcnew System::String("[動作モード]");
+		System::String ^msgE = gcnew System::String("[Processing Mode]");
 		if( bReadOnly )
 		{
 			msgJ += "\nリードオンリーモード";
@@ -166,6 +167,10 @@ System::Void Form1::loadSrl( System::String ^filename )
 
 	// GUIにROM情報を格納
 	this->setSrlForms();
+	if( *(this->hIsReadOnly) )
+	{
+		this->readOnly();	// リードオンリーモードのときフォームをEnableにする
+	}
 
 	// SRLに登録されないROM仕様のフォーム情報も戻るボタンで読み込み時の状態に戻したいが
 	// 読み込み時の状態をSRLに保存しておけないので退避しておく
@@ -194,6 +199,7 @@ System::Void Form1::loadSrl( System::String ^filename )
 	//				  "ROM data include error. Please look the tab \"Setting Error\"." );
 	//	return;
 	//}
+
 	return;
 } // loadSrl()
 
