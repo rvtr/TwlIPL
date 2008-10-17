@@ -208,21 +208,18 @@ ECDeliverableResult RCDeliverable::writeSpreadsheet(
 			}
 			if( node->FirstChild->Value->Equals( "TagRomVersion" ) )
 			{
-				if( *(hSrl->hRomVersion) != 0xE0 )
-				{
-					node->FirstChild->Value = hSrl->hRomVersion->ToString();
-				}
-				else
+				node->FirstChild->Value = hSrl->hRomVersion->ToString("X2");
+				if( *(hSrl->hRomVersion) == 0xE0 )
 				{
 					if( english )
-						node->FirstChild->Value = gcnew System::String( "E (Preliminary ver.)" );
+						node->FirstChild->Value += "(Preliminary ver.)";
 					else
-						node->FirstChild->Value = gcnew System::String( "E (Ž–‘O”Å)" );
+						node->FirstChild->Value += "(Ž–‘O”Å)";
 				}
 			}
 			if( node->FirstChild->Value->Equals( "TagSubmitVersion" ) )
 			{
-				node->FirstChild->Value = this->hSubmitVersion->ToString();
+				node->FirstChild->Value = this->hSubmitVersion->ToString("X");
 			}
 			if( node->FirstChild->Value->Equals( "TagSrlFilename" ) )
 			{
