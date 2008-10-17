@@ -2000,10 +2000,7 @@
   <NamedRange ss:Name="Fax2" ss:RefersTo="=マスターROM提出確認書!R15C69"/>
   <NamedRange ss:Name="Furigana1" ss:RefersTo="=マスターROM提出確認書!R9C20"/>
   <NamedRange ss:Name="Furigana2" ss:RefersTo="=マスターROM提出確認書!R14C20"/>
-  <NamedRange ss:Name="GameCode0" ss:RefersTo="=マスターROM提出確認書!R21C86"/>
-  <NamedRange ss:Name="GameCode1" ss:RefersTo="=マスターROM提出確認書!R21C90"/>
-  <NamedRange ss:Name="GameCode2" ss:RefersTo="=マスターROM提出確認書!R21C94"/>
-  <NamedRange ss:Name="GameCode3" ss:RefersTo="=マスターROM提出確認書!R21C98"/>
+  <NamedRange ss:Name="GameCode" ss:RefersTo="=マスターROM提出確認書!R21C86"/>
   <NamedRange ss:Name="IsCodec" ss:RefersTo="=マスターROM提出確認書!R30C28"/>
   <NamedRange ss:Name="IsEULA" ss:RefersTo="=マスターROM提出確認書!R30C93"/>
   <NamedRange ss:Name="IsGameCardOn" ss:RefersTo="=マスターROM提出確認書!R34C84"/>
@@ -2783,7 +2780,7 @@
       ss:Name="CRC"/></Cell>
     <Cell ss:MergeAcross="16" ss:StyleID="m20932384"><Data ss:Type="String">イニシャルコード</Data></Cell>
     <Cell ss:MergeAcross="14" ss:StyleID="m20932394"><Data ss:Type="String">TagGameCode</Data><NamedCell
-      ss:Name="GameCode0"/></Cell>
+      ss:Name="GameCode"/></Cell>
     <Cell ss:StyleID="s163"/>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="17.0625">
