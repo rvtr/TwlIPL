@@ -1209,9 +1209,9 @@ ECSrlResult RCSrl::mrcTWL( FILE *fp )
 		if( !crcret || (crcseg3 != METWL_SEG3_CRC) )
 		{
 			this->hErrorList->Add( gcnew RCMrcError( 
-				"セグメント3CRC", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, 
+				"セグメント3 CRC", METWL_ERRLIST_NORANGE, METWL_ERRLIST_NORANGE, 
 				"セグメント3領域に誤りがあります。",
-				"System-Call Library", "This Library is SDK default one.", false, true ) );
+				"Segment-3 CRC", "Invalid data exist in Segment-3 area.", false, true ) );
 		}
 
 		u16  NA = this->pRomHeader->s.twl_card_normal_area_rom_offset & 0x7fffUL;

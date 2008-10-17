@@ -364,17 +364,17 @@ void  Form1::changeEnglish(void)
 	this->labArbit2->Text      = gcnew System::String( "(Arbitrary)" );
 	this->labArbit3->Text      = gcnew System::String( "(Arbitrary)" );
 	this->labArbit4->Text      = gcnew System::String( "(Arbitrary)" );
-	// ‚Ó‚è‚ª‚Èî•ñ‚ðíœ
-	this->tboxFurigana1->Clear();
+	// ‚Ó‚è‚ª‚Èî•ñ‚ð“ü—Í‚Å‚«‚È‚¢‚æ‚¤‚É‚·‚é
+	//this->tboxFurigana1->Clear();
 	this->tboxFurigana1->Enabled = false;
 	this->labFurigana1->Text = gcnew System::String( LANG_FURIGANA_E );
-	this->tboxFurigana2->Clear();
+	//this->tboxFurigana2->Clear();
 	this->tboxFurigana2->Enabled = false;
 	this->labFurigana2->Text = gcnew System::String( LANG_FURIGANA_E );
 	this->tboxNTSC1->Enabled = false;
-	this->tboxNTSC1->Text    = gcnew System::String("");
+	//this->tboxNTSC1->Text    = gcnew System::String("");
 	this->tboxNTSC2->Enabled = false;
-	this->tboxNTSC2->Text    = gcnew System::String("");
+	//this->tboxNTSC2->Text    = gcnew System::String("");
 	this->labNTSC1Pre->Text  = gcnew System::String( LANG_NTSC_1_E );
 	this->labNTSC1Sur->Text  = gcnew System::String( LANG_NTSC_2_E );
 	this->labNTSC2Pre->Text  = gcnew System::String( LANG_NTSC_1_E );

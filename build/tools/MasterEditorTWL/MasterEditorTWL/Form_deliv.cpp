@@ -115,7 +115,14 @@ void Form1::setDeliverableProperties(void)
 	this->hDeliv->hTel1        = this->tboxTel1->Text;
 	this->hDeliv->hFax1        = this->tboxFax1->Text;
 	this->hDeliv->hMail1       = this->tboxMail1->Text;
-	this->hDeliv->hNTSC1       = this->tboxNTSC1->Text;
+	if( this->stripItemJapanese->Checked == true )
+	{
+		this->hDeliv->hNTSC1 = this->tboxNTSC1->Text;
+	}
+	else
+	{
+		this->hDeliv->hNTSC1 = nullptr;
+	}
 	if( this->cboxIsInputPerson2->Checked == true )
 	{
 		this->hDeliv->hCompany2    = this->tboxCompany2->Text + " " + this->tboxDepart2->Text;
@@ -131,7 +138,14 @@ void Form1::setDeliverableProperties(void)
 		this->hDeliv->hTel2        = this->tboxTel2->Text;
 		this->hDeliv->hFax2        = this->tboxFax2->Text;
 		this->hDeliv->hMail2       = this->tboxMail2->Text;
-		this->hDeliv->hNTSC2       = this->tboxNTSC2->Text;
+		if( this->stripItemJapanese->Checked == true )
+		{
+			this->hDeliv->hNTSC2 = this->tboxNTSC2->Text;
+		}
+		else
+		{
+			this->hDeliv->hNTSC2 = nullptr;
+		}
 	}
 	else
 	{
