@@ -109,9 +109,10 @@ void usage()
     printf( "-s    : negate flag for the signature in a ROM Header.\n" );
     printf( "-d    : negate a new developer encrypt flag, and assert an old one.\n" );
     printf( "-v NUM: change ROM version in a ROM Header.\n" );
-    printf( "-m    : [Only NTR limited ROM] Rom speed type replace 1TROM from MROM\n" );
-    printf( "-D    : assert a disable flag of debugger alalysis\n" );
-    printf( "-c    : assert a check(inspection) card flag\n" );
+    printf( "-m    : [Only NTR limited ROM] Rom speed type replace 1TROM from MROM.\n" );
+    printf( "-D    : assert a disable flag of debugger alalysis.\n" );
+    printf( "-c    : assert a check(inspection) card flag.\n" );
+    printf( "-f    : force to overwrite a output_file.\n" );
 	printf( "-----------------------------------------------------------------------------\n" );
 }
 
@@ -124,6 +125,7 @@ int main(int argc, char *argv[])
     extern int      optind, opterr;
     struct stat     st;
     BOOL            bResult;
+    BOOL            bForceOverwrite = FALSE;
 
     printf( "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n" );
     printf( "         fakeRomHeader [%s-%s]\n", SDK_REVISION, IPL_REVISION );
@@ -133,7 +135,7 @@ int main(int argc, char *argv[])
     memset( &context, 0, sizeof(SContext) );
 
     // オプション
-    while( (opt = getopt(argc, argv, "hpsdmv:Dc")) >= 0 )
+    while( (opt = getopt(argc, argv, "hpsdmv:Dcf")) >= 0 )
     {
         switch( opt )
         {
@@ -171,6 +173,10 @@ int main(int argc, char *argv[])
                 context.bCheckCard = TRUE;
             break;
 
+            case 'f':
+                bForceOverwrite = TRUE;
+            break;
+
             default:            // オプション引数が指定されていないときにも実行される
                 usage();
                 fprintf( stdout, "error: illegal option\n" );
@@ -206,7 +212,7 @@ int main(int argc, char *argv[])
     }
 
     // 出力ファイルが存在するとき上書きするかどうかを確認する
-    if( stat( pDst, &st )==0 )
+    if( !bForceOverwrite && stat( pDst, &st )==0 )
     {
         char  ans;
         printf( "The %s already exists. Overwrite it? (y or n) ", pDst );
