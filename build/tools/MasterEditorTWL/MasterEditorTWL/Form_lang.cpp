@@ -33,460 +33,360 @@ void Form1::changeMaxLength( System::Windows::Forms::TextBox ^tbox, System::Int3
 // 日本語版への切り替え
 void Form1::changeJapanese(void)
 {
-	System::Int32 index;
-
 	// 入力文字数制限を変更する
 	this->changeMaxLength( this->tboxCompany1, 25 );
 	this->changeMaxLength( this->tboxDepart1,  25 );
 	this->changeMaxLength( this->tboxPerson1,  15 );
 
-	// タイトルバー
-	this->stripFile->Text          = gcnew System::String( "ファイル" );
-	this->stripItemOpenRom->Text   = gcnew System::String( "ROMデータを開く" );
-	this->stripItemSaveTemp->Text  = gcnew System::String( "提出情報を一時保存する" );
-	this->stripItemLoadTemp->Text  = gcnew System::String( "一時保存した提出情報を読み込む" );
-	this->stripMaster->Text        = gcnew System::String( "マスター" );
-	this->stripItemSheet->Text     = gcnew System::String( "提出データ一式を作成する" );
-	this->stripItemMasterRom->Text = gcnew System::String( "マスターROMのみを作成する" );
-	this->stripItemMiddlewareXml->Text  = gcnew System::String( "使用ミドルウェア一覧のみを作成する(XML形式)" );
-	this->stripItemMiddlewareHtml->Text = gcnew System::String( "使用ミドルウェア一覧のみを作成する(HTML形式)" );
-
-	// 入力ファイル
-	this->labFile->Text = gcnew System::String( "ROMデータファイル" );
-
-	// タブ
-	this->tabRomInfo->Text     = gcnew System::String( "ROM基本情報(確認用)" );
-	this->tabTWLInfo->Text     = gcnew System::String( "TWL拡張情報(確認用)" );
-	this->tabRomEditInfo->Text = gcnew System::String( "ROM登録情報(編集可)" );
-	this->tabSubmitInfo->Text  = gcnew System::String( "提出情報(編集可)" );
-	this->tabCompanyInfo->Text = gcnew System::String( "会社情報(編集可)" );
-	this->tabErrorInfo->Text   = gcnew System::String( "エラー情報(確認用)" );
-
-	// ガイド
-	this->tboxGuideRomInfo->Text = gcnew System::String( "このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。" );
-	this->tboxGuideTWLInfo->Text = gcnew System::String( "このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。" );
-	this->tboxGuideRomEditInfo->Text  = gcnew System::String( "" );
-	this->tboxGuideRomEditInfo->Text += "このタブの各項目への入力は提出確認書およびマスターROMの作成のために必要です。";
-	this->tboxGuideRomEditInfo->Text += "\r\nこれらの情報はマスターROMの作成時にROM内登録データとして登録されます(「その他ROM情報」を除く)。";
-	this->tboxGuideSubmitInfo->Text  = gcnew System::String( "このタブの情報は提出確認書の作成に必要です。入力してください。" );
-	this->tboxGuideCompanyInfo->Text = gcnew System::String( "このタブの情報は提出確認書の作成に必要です。入力してください。" );
-	this->tboxGuideErrorInfo->Text   = gcnew System::String( "" );
-	this->tboxGuideErrorInfo->Text  += "このタブには読み込んだROMデータの問題と本プログラムでの入力ミスが列挙されます。";
-	this->tboxGuideErrorInfo->Text  += "\r\n赤文字の項目は、本プログラムで修正不可です。ROMデータ作成時の設定をご確認ください。";
-	this->tboxGuideErrorInfo->Text  += "\r\n青文字の項目は、本プログラムで修正できますが、修正がマスターROMに反映されます。";
-	this->tboxGuideErrorInfo->Text  += "\r\n黒文字の項目は、提出確認書にのみ反映され、マスターROMには反映されません。";
-
-	// SRL情報
-	this->gboxSrl->Text       = gcnew System::String( "ROMデータ情報" ); 
-	this->labTitleName->Text  = gcnew System::String( "ソフトタイトル" );
-	this->labGameCode->Text   = gcnew System::String( "イニシャルコード" );
-	this->labMakerCode->Text  = gcnew System::String( "メーカコード" );
-	this->labPlatform->Text   = gcnew System::String( "プラットフォーム" );
-	this->labRomType->Text    = gcnew System::String( "ROMタイプ設定" );
-	this->labRomSize->Text    = gcnew System::String( "ROM容量" );
-	this->labRemasterVer->Text   = gcnew System::String( "リマスターバージョン" );
-	this->cboxRemasterVerE->Text = gcnew System::String( "E(準備版)" );
-	this->labHeaderCRC->Text  = gcnew System::String( "ヘッダCRC" );
-	this->labRomCRC->Text     = gcnew System::String( "全体のCRC" );
-	index = this->combBackup->SelectedIndex;
-
-	// バックアップメモリ
-	this->gboxProd->Text	= gcnew System::String( "ROM生産情報(必ず入力してください)" );
-	this->labBackup->Text   = gcnew System::String( LANG_BACKUP_J );
-	this->combBackup->Items->Clear();
-	this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
-		L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"なし", L"その他"});
-	this->combBackup->SelectedIndex = index;
-
-	// 提出情報
-	this->labProductName->Text = gcnew System::String( LANG_PRODUCT_NAME_J );
-	this->labProductCode->Text = gcnew System::String( LANG_PRODUCT_CODE_J );
-	this->labReleaseDate->Text = gcnew System::String( LANG_RELEASE_DATE_J );
-	this->labSubmiteDate->Text = gcnew System::String( LANG_SUBMIT_DATE_J );
-	this->gboxSubmitWay->Text  = gcnew System::String( LANG_SUBMIT_WAY_J );
-	this->rSubmitPost->Text    = gcnew System::String( LANG_SUBMIT_POST_J );
-	this->rSubmitHand->Text    = gcnew System::String( LANG_SUBMIT_HAND_J );
-	this->gboxUsage->Text      = gcnew System::String( LANG_USAGE_J );
-	this->rUsageSale->Text     = gcnew System::String( LANG_USAGE_SALE_J );
-	this->rUsageSample->Text   = gcnew System::String( LANG_USAGE_SAMPLE_J );
-	this->rUsageDst->Text      = gcnew System::String( LANG_USAGE_DST_J );
-	this->rUsageOther->Text    = gcnew System::String( LANG_USAGE_OTHER_J );
-	this->labSubmitVer->Text     = gcnew System::String( LANG_SUBMIT_VER_J );
-	this->labCapSubmitVer->Text  = gcnew System::String( LANG_SUBMIT_VER_CAP_J );
-	this->gboxForeign->Text      = gcnew System::String( LANG_F_J );
-	this->labProductNameForeign->Text = gcnew System::String( LANG_PRODUCT_NAME_F_J );
-	this->labProductCodeForeign->Text = gcnew System::String( LANG_PRODUCT_CODE_F_J );
-	this->cboxReleaseForeign->Text    = gcnew System::String( LANG_RELEASE_F_J );
-	this->labMultiForeign1->Text      = gcnew System::String( LANG_MULTI_F_J );
-	this->labMultiForeign2->Text      = gcnew System::String( LANG_MULTI_F_J );
-	this->labCaption->Text    = gcnew System::String( LANG_CAPTION_J );
-	this->labProductNameLimit->Text = gcnew System::String( LANG_PRODUCT_LIMIT_J );
-	this->labProductNameLimitForeign->Text = gcnew System::String( LANG_PRODUCT_LIMIT_J );
-
-	// 会社情報
-	this->gboxPerson1->Text    = gcnew System::String( LANG_PERSON_1_J );
-	this->gboxPerson2->Text    = gcnew System::String( LANG_PERSON_2_J );
-	this->cboxIsInputPerson2->Text = gcnew System::String( LANG_INPUT_PERSON_2_J );
-	this->labCompany1->Text    = gcnew System::String( LANG_COMPANY_J );
-	this->labDepart1->Text     = gcnew System::String( LANG_DEPART_J );
-	this->labPerson1->Text     = gcnew System::String( LANG_PERSON_J );
-	this->labCompany2->Text    = gcnew System::String( LANG_COMPANY_J );
-	this->labDepart2->Text     = gcnew System::String( LANG_DEPART_J );
-	this->labPerson2->Text     = gcnew System::String( LANG_PERSON_J );
-	this->labArbit1->Text      = gcnew System::String( "(任意)" );
-	this->labArbit2->Text      = gcnew System::String( "(任意)" );
-	this->labArbit3->Text      = gcnew System::String( "(任意)" );
-	this->labArbit4->Text      = gcnew System::String( "(任意)" );
-	// ふりがな情報を有効にする
-	this->tboxFurigana1->Enabled = true;
-	this->labFurigana1->Text = gcnew System::String( LANG_FURIGANA_J );
-	this->tboxFurigana2->Enabled = true;
-	this->labFurigana2->Text = gcnew System::String( LANG_FURIGANA_J );
-	// NTSC-UserIDも日本語版のみ
-	this->tboxNTSC1->Enabled = true;
-	this->tboxNTSC2->Enabled = true;
-	this->labNTSC1Pre->Text  = gcnew System::String( LANG_NTSC_1_J );
-	this->labNTSC1Sur->Text  = gcnew System::String( LANG_NTSC_2_J );
-	this->labNTSC2Pre->Text  = gcnew System::String( LANG_NTSC_1_J );
-	this->labNTSC2Sur->Text  = gcnew System::String( LANG_NTSC_2_J );
-
-	// TWL仕様
-	this->gboxTWLExInfo->Text         = gcnew System::String( "TWL拡張情報" );
-	this->labNormalRomOffset->Text    = gcnew System::String( "TWLノーマル領域ROMオフセット" );
-	this->labKeyTableRomOffset->Text  = gcnew System::String( "TWL専用領域ROMオフセット" );
-	this->cboxIsNormalJump->Text      = gcnew System::String( "ノーマルジャンプ許可" );
-	this->cboxIsTmpJump->Text         = gcnew System::String( "tmpジャンプ許可" );
-	this->cboxIsSubBanner->Text       = gcnew System::String( "サブバナーファイル有効" );
-	this->cboxIsWL->Text              = gcnew System::String( "NTRホワイトリスト署名有効" );
-	this->gboxAccess->Text            = gcnew System::String( "アクセスコントロール情報" );
-	this->cboxIsSD->Text              = gcnew System::String( "SDカード" );
-	this->cboxIsNAND->Text            = gcnew System::String( "NANDフラッシュメモリ" );
-	this->labIsGameCardOn->Text       = gcnew System::String( "ゲームカード電源" );
-	this->labAccessOther->Text        = gcnew System::String( "その他" );
-	this->gboxShared2Size->Text       = gcnew System::String( "Shared2ファイルサイズ" );
-	this->cboxIsShared2->Text         = gcnew System::String( "Shared2ファイル使用" );
-	this->labSDK->Text                = gcnew System::String( "SDKバージョン" );
-	this->labLib->Text                = gcnew System::String( "使用ライブラリ" );
-	this->labCaptionEx->Text          = gcnew System::String( "特記事項" );
-
-	// SRL編集可能情報
-	this->gboxEULA->Text         = gcnew System::String( LANG_BOX_EULA_J );
-	this->cboxIsEULA->Text       = gcnew System::String( LANG_EULA_J );
-	this->gboxIcon->Text         = gcnew System::String( LANG_ICON_J );
-	this->rIsWirelessIcon->Text  = gcnew System::String( LANG_WIRELESS_ICON_J );
-	this->rIsWiFiIcon->Text      = gcnew System::String( LANG_WIFI_ICON_J );
-	this->rIsNoIcon->Text        = gcnew System::String( LANG_NO_ICON_J );
-	this->labRegion->Text        = gcnew System::String( LANG_REGION_J );
-	this->gboxOtherSpec->Text    = gcnew System::String( LANG_OTHER_SPEC_J );
-	this->cboxIsUGC->Text        = gcnew System::String( LANG_UGC_J );
-	this->cboxIsPhotoEx->Text    = gcnew System::String( LANG_PHOTO_EX_J );
-
-	// リージョン
-	index = this->combRegion->SelectedIndex;
-	this->combRegion->Items->Clear();
-	this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5)
-		{L"日本のみ", L"米国のみ", L"欧州のみ", L"豪州のみ", L"欧州および豪州"});
-#if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
-	this->combRegion->Items->Add( gcnew System::String( L"全リージョン" ) );
-#endif
-	this->combRegion->SelectedIndex = index;
-
-	//// ペアレンタルコントロール
-	this->gboxParental->Text           = gcnew System::String( LANG_REGION_PCTL_J );
-	this->labParentalRating->Text      = gcnew System::String( LANG_PCTL_RATING_J );
-
-	index = this->combCERO->SelectedIndex;	// いったんclearすると現在のindexに意味がなくなるので退避
-	this->combCERO->Items->Clear();
-	this->combCERO->Items->AddRange(gcnew cli::array< System::Object^  >(6)
-		{L"A (全年齢)", L"B (12歳以上)", L"C (15歳以上)", L"D (17歳以上)", L"Z (18歳以上)", L"審査中"});
-	this->combCERO->SelectedIndex = index;
-
-	index = this->combESRB->SelectedIndex;
-	this->combESRB->Items->Clear();
-	this->combESRB->Items->AddRange(gcnew cli::array< System::Object^  >(7) 
-		{L"年齢制限なし(全年齢)", L"EC (3歳以上)", L"E (6歳以上)", L"E10+ (10歳以上)", L"T (13歳以上)", L"M (17歳以上)", L"審査中"});
-	this->combESRB->SelectedIndex = index;
-
-	index = this->combUSK->SelectedIndex;
-	this->combUSK->Items->Clear();
-	this->combUSK->Items->AddRange(gcnew cli::array< System::Object^  >(6)
-		{L"年齢制限なし", L"6歳以上", L"12歳以上", L"16歳以上", L"青少年には不適切", L"審査中"});
-	this->combUSK->SelectedIndex = index;
-
-	index = this->combPEGI->SelectedIndex;
-	this->combPEGI->Items->Clear();
-	this->combPEGI->Items->AddRange(gcnew cli::array< System::Object^  >(7)
-		{L"年齢制限なし(全年齢)", L"3歳以上", L"7歳以上", L"12歳以上", L"16歳以上", L"18歳以上", L"審査中"});
-	this->combPEGI->SelectedIndex = index;
-
-	index = this->combPEGI_PRT->SelectedIndex;
-	this->combPEGI_PRT->Items->Clear();
-	this->combPEGI_PRT->Items->AddRange(gcnew cli::array< System::Object^  >(7)
-		{L"年齢制限なし(全年齢)", L"4歳以上", L"6歳以上", L"12歳以上", L"16歳以上", L"18歳以上", L"審査中"});
-	this->combPEGI_PRT->SelectedIndex = index;
-
-	index = this->combPEGI_BBFC->SelectedIndex;
-	this->combPEGI_BBFC->Items->Clear();
-	this->combPEGI_BBFC->Items->AddRange(gcnew cli::array< System::Object^  >(10)
-		{L"年齢制限なし(全年齢)", L"3歳以上", L"4歳以上推奨", L"7歳以上", L"8歳以上推奨", L"12歳以上", L"15歳以上", L"16歳以上", L"18歳以上", L"審査中"});
-	this->combPEGI_BBFC->SelectedIndex = index;
-
-	index = this->combOFLC->SelectedIndex;
-	this->combOFLC->Items->Clear();
-	this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5)
-		{L"G", L"PG", L"M", L"MA15+", L"審査中"});
-	this->combOFLC->SelectedIndex = index;
-
-	// エラー情報
-	this->labError->Text = gcnew System::String( "エラー(必ず修正してください。)" );
-	this->colErrorName->HeaderText  = gcnew System::String( "項目名" );
-	this->colErrorBegin->HeaderText = gcnew System::String( "開始" );
-	this->colErrorEnd->HeaderText   = gcnew System::String( "終了" );
-	this->colErrorCause->HeaderText = gcnew System::String( "要因" );
-
-	this->labWarn->Text  = gcnew System::String( "警告(修正は必須ではありませんが情報に誤りがないかご確認ください。)" );
-	this->colWarnName->HeaderText  = gcnew System::String( "項目名" );
-	this->colWarnBegin->HeaderText = gcnew System::String( "開始" );
-	this->colWarnEnd->HeaderText   = gcnew System::String( "終了" );
-	this->colWarnCause->HeaderText = gcnew System::String( "要因" );
-
-	this->gboxErrorTiming->Text = gcnew System::String( "いつの情報を表示するか" );
-	this->rErrorReading->Text   = gcnew System::String( "ROMデータ読み込み時" );
-	this->rErrorCurrent->Text   = gcnew System::String( "現在の入力を反映" );
+	this->changeLanguage( "ja" );
 
 	// 特殊な設定用のテキストボックスの表記を変更
 	this->setSrlFormsCaptionEx();
+
+	// 複数行表示の改行を挿入
+	this->tboxGuideRomEditInfo->Text = this->tboxGuideRomEditInfo->Text->Replace( "<newline>", "\r\n" );
+	this->tboxGuideErrorInfo->Text   = this->tboxGuideErrorInfo->Text->Replace( "<newline>", "\r\n" );
 }
 
 // 英語版への切り替え
 void  Form1::changeEnglish(void)
 {
-	System::Int32 index;
-
-	// 入力文字数制限を変更する
 	this->changeMaxLength( this->tboxCompany1, 40 );
 	this->changeMaxLength( this->tboxDepart1,  40 );
 	this->changeMaxLength( this->tboxPerson1,  30 );
 
-	// タイトルバー
-	this->stripFile->Text          = gcnew System::String( "File" );
-	this->stripItemOpenRom->Text   = gcnew System::String( "Open a ROM data file" );
-	this->stripItemSaveTemp->Text  = gcnew System::String( "Save a temporary info." );
-	this->stripItemLoadTemp->Text  = gcnew System::String( "Load a temporary info. saved previously" );
-	this->stripMaster->Text        = gcnew System::String( "Master" );
-	this->stripItemSheet->Text     = gcnew System::String( "Make a set of submission data" );
-	this->stripItemMasterRom->Text = gcnew System::String( "Make a master ROM data file only" );
-	this->stripItemMiddlewareXml->Text  = gcnew System::String( "Make a middleware list only(XML format)" );
-	this->stripItemMiddlewareHtml->Text = gcnew System::String( "Make a middleware list only(HTML format)" );
+	this->changeLanguage( "en" );
 
-	// 入力ファイル
-	this->labFile->Text = gcnew System::String( "ROM Data File" );
+	this->setSrlFormsCaptionEx();
 
-	// タブ
-	this->tabRomInfo->Text     = gcnew System::String( "ROM Info.(Read Only)" );
-	this->tabTWLInfo->Text     = gcnew System::String( "TWL Info.(Read Only)" );
-	this->tabRomEditInfo->Text = gcnew System::String( "ROM Settings(Editable)" );
-	this->tabSubmitInfo->Text  = gcnew System::String( "Submission Info.(Editable)" );
-	this->tabCompanyInfo->Text = gcnew System::String( "Company Info.(Editable)" );
-	this->tabErrorInfo->Text   = gcnew System::String( "Error(Read Only)" );
+	this->tboxGuideRomEditInfo->Text = this->tboxGuideRomEditInfo->Text->Replace( "<newline>", "\r\n" );
+	this->tboxGuideErrorInfo->Text   = this->tboxGuideErrorInfo->Text->Replace( "<newline>", "\r\n" );
+}
 
-	// ガイド
-	this->tboxGuideRomInfo->Text = gcnew System::String( "This tab is for checking ROM data. When ROM data is illegal, please check settings of building ROM data" );
-	this->tboxGuideTWLInfo->Text = gcnew System::String( "This tab is for checking ROM data. When ROM data is illegal, please check settings of building ROM data" );
-	this->tboxGuideRomEditInfo->Text  = gcnew System::String( "" );
-	this->tboxGuideRomEditInfo->Text += "These items is necessary not only to make a submission sheet and but also to make a master ROM data. Please edit certainly.";
-	this->tboxGuideRomEditInfo->Text += "\r\nIn making a master ROM data, these info will be registered in the ROM data(except \"Other Rom Spec\").";
-	this->tboxGuideSubmitInfo->Text  = gcnew System::String( "These items are necessary for making a submission sheet. Please input." );
-	this->tboxGuideCompanyInfo->Text = gcnew System::String( "These items are necessary for making a submission sheet. Please input." );
-	this->tboxGuideErrorInfo->Text   = gcnew System::String( "" );
-	this->tboxGuideErrorInfo->Text  += "This tab discribes errors in the ROM data file and edit mistakes.";
-	this->tboxGuideErrorInfo->Text  += "\r\nItems highlighted by Red can't be modified by this program. Please modify build settings.";
-	this->tboxGuideErrorInfo->Text  += "\r\nItems highlighted by Blue can be modified by this program and will register in a master ROM.";
-	this->tboxGuideErrorInfo->Text  += "\r\nItems highlighted by Black are discribed in a submission sheet and aren't affect a master ROM.";
+// 言語リソース切り替え
+void MasterEditorTWL::Form1::changeLanguage( System::String ^langname )
+{
+	int  index;
 
-	// SRL情報
-	this->gboxSrl->Text       = gcnew System::String( "ROM Info." ); 
-	this->labTitleName->Text  = gcnew System::String( "Game Title" );
-	this->labGameCode->Text   = gcnew System::String( "Game Code" );
-	this->labMakerCode->Text  = gcnew System::String( "Maker Code" );
-	this->labPlatform->Text   = gcnew System::String( "Platform" );
-	this->labRomType->Text    = gcnew System::String( "ROM Type" );
-	this->labRomSize->Text    = gcnew System::String( "ROM Size" );
-	this->labRemasterVer->Text   = gcnew System::String( "Release Ver." );
-	this->cboxRemasterVerE->Text = gcnew System::String( "E(Preliminary Ver.)" );
-	this->labHeaderCRC->Text  = gcnew System::String( "Header CRC" );
-	this->labRomCRC->Text     = gcnew System::String( "ROM CRC" );
+	System::Threading::Thread::CurrentThread->CurrentUICulture = gcnew System::Globalization::CultureInfo(langname,true);
+	System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(Form1::typeid));
+
+	resources->ApplyResources(this->tboxFile, L"tboxFile");
+	resources->ApplyResources(this->gboxSrl, L"gboxSrl");
+	resources->ApplyResources(this->tboxRemasterVer, L"tboxRemasterVer");
+	resources->ApplyResources(this->tboxRomSize, L"tboxRomSize");
+	resources->ApplyResources(this->tboxPlatform, L"tboxPlatform");
+	resources->ApplyResources(this->labPlatform, L"labPlatform");
+	resources->ApplyResources(this->tboxRomLatency, L"tboxRomLatency");
+	resources->ApplyResources(this->labRomSize, L"labRomSize");
+	resources->ApplyResources(this->labRomType, L"labRomType");
+	resources->ApplyResources(this->tboxMakerCode, L"tboxMakerCode");
+	resources->ApplyResources(this->cboxRemasterVerE, L"cboxRemasterVerE");
+	resources->ApplyResources(this->labMakerCode, L"labMakerCode");
+	resources->ApplyResources(this->labGameCode, L"labGameCode");
+	resources->ApplyResources(this->tboxGameCode, L"tboxGameCode");
+	resources->ApplyResources(this->labTitleName, L"labTitleName");
+	resources->ApplyResources(this->labRemasterVer, L"labRemasterVer");
+	resources->ApplyResources(this->tboxTitleName, L"tboxTitleName");
+	resources->ApplyResources(this->labBackup, L"labBackup");
+
 	index = this->combBackup->SelectedIndex;
-	// バックアップメモリ
-	this->gboxProd->Text   = gcnew System::String( "ROM Production Info." );
-	this->labBackup->Text  = gcnew System::String( LANG_BACKUP_E );
 	this->combBackup->Items->Clear();
-	this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
-		L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"Nothing", L"Other"});
+	resources->ApplyResources(this->combBackup, L"combBackup");
+	this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {resources->GetString(L"combBackup.Items"), resources->GetString(L"combBackup.Items1"), 
+		resources->GetString(L"combBackup.Items2"), resources->GetString(L"combBackup.Items3"), resources->GetString(L"combBackup.Items4"), 
+		resources->GetString(L"combBackup.Items5"), resources->GetString(L"combBackup.Items6"), resources->GetString(L"combBackup.Items7"), 
+		resources->GetString(L"combBackup.Items8")});
 	this->combBackup->SelectedIndex = index;
 
-	// 提出情報
-	this->labProductName->Text = gcnew System::String( LANG_PRODUCT_NAME_E );
-	this->labProductCode->Text = gcnew System::String( LANG_PRODUCT_CODE_E );
-	this->labReleaseDate->Text = gcnew System::String( LANG_RELEASE_DATE_E );
-	this->labSubmiteDate->Text = gcnew System::String( LANG_SUBMIT_DATE_E );
-	this->gboxSubmitWay->Text  = gcnew System::String( LANG_SUBMIT_WAY_E );
-	this->rSubmitPost->Text    = gcnew System::String( LANG_SUBMIT_POST_E );
-	this->rSubmitHand->Text    = gcnew System::String( LANG_SUBMIT_HAND_E );
-	this->gboxUsage->Text      = gcnew System::String( LANG_USAGE_E );
-	this->rUsageSale->Text     = gcnew System::String( LANG_USAGE_SALE_E );
-	this->rUsageSample->Text   = gcnew System::String( LANG_USAGE_SAMPLE_E );
-	this->rUsageDst->Text      = gcnew System::String( LANG_USAGE_DST_E );
-	this->rUsageOther->Text    = gcnew System::String( LANG_USAGE_OTHER_E );
-	this->labSubmitVer->Text     = gcnew System::String( LANG_SUBMIT_VER_E );
-	this->labCapSubmitVer->Text  = gcnew System::String( LANG_SUBMIT_VER_CAP_E );
-	this->gboxForeign->Text      = gcnew System::String( LANG_F_E );
-	this->labProductNameForeign->Text = gcnew System::String( LANG_PRODUCT_NAME_F_E );
-	this->labProductCodeForeign->Text = gcnew System::String( LANG_PRODUCT_CODE_F_E );
-	this->cboxReleaseForeign->Text    = gcnew System::String( LANG_RELEASE_F_E );
-	this->labMultiForeign1->Text      = gcnew System::String( LANG_MULTI_F_E );
-	this->labMultiForeign2->Text      = gcnew System::String( LANG_MULTI_F_E );
-	this->labCaption->Text    = gcnew System::String( LANG_CAPTION_E );
-	this->labProductNameLimit->Text = gcnew System::String( LANG_PRODUCT_LIMIT_E );
-	this->labProductNameLimitForeign->Text = gcnew System::String( LANG_PRODUCT_LIMIT_E );
+	resources->ApplyResources(this->tboxBackupOther, L"tboxBackupOther");
+	resources->ApplyResources(this->gboxCRC, L"gboxCRC");
+	resources->ApplyResources(this->labRomCRC, L"labRomCRC");
+	resources->ApplyResources(this->labHeaderCRC, L"labHeaderCRC");
+	resources->ApplyResources(this->tboxHeaderCRC, L"tboxHeaderCRC");
+	resources->ApplyResources(this->tboxWholeCRC, L"tboxWholeCRC");
+	resources->ApplyResources(this->labCaption, L"labCaption");
+	resources->ApplyResources(this->tboxCaption, L"tboxCaption");
+	resources->ApplyResources(this->labOFLC, L"labOFLC");
+	resources->ApplyResources(this->labPEGI_BBFC, L"labPEGI_BBFC");
+	resources->ApplyResources(this->labPEGI_PRT, L"labPEGI_PRT");
+	resources->ApplyResources(this->labPEGI, L"labPEGI");
+	resources->ApplyResources(this->labUSK, L"labUSK");
+	resources->ApplyResources(this->labESRB, L"labESRB");
+	resources->ApplyResources(this->labCERO, L"labCERO");
 
-	// 会社情報
-	this->gboxPerson1->Text    = gcnew System::String( LANG_PERSON_1_E );
-	this->gboxPerson2->Text    = gcnew System::String( LANG_PERSON_2_E );
-	this->cboxIsInputPerson2->Text = gcnew System::String( LANG_INPUT_PERSON_2_E );
-	this->labCompany1->Text    = gcnew System::String( LANG_COMPANY_E );
-	this->labDepart1->Text     = gcnew System::String( LANG_DEPART_E );
-	this->labPerson1->Text     = gcnew System::String( LANG_PERSON_E );
-	this->labCompany2->Text    = gcnew System::String( LANG_COMPANY_E );
-	this->labDepart2->Text     = gcnew System::String( LANG_DEPART_E );
-	this->labPerson2->Text     = gcnew System::String( LANG_PERSON_E );
-	this->labArbit1->Text      = gcnew System::String( "(Arbitrary)" );
-	this->labArbit2->Text      = gcnew System::String( "(Arbitrary)" );
-	this->labArbit3->Text      = gcnew System::String( "(Arbitrary)" );
-	this->labArbit4->Text      = gcnew System::String( "(Arbitrary)" );
-	// ふりがな情報を入力できないようにする
-	//this->tboxFurigana1->Clear();
-	this->tboxFurigana1->Enabled = false;
-	this->labFurigana1->Text = gcnew System::String( LANG_FURIGANA_E );
-	//this->tboxFurigana2->Clear();
-	this->tboxFurigana2->Enabled = false;
-	this->labFurigana2->Text = gcnew System::String( LANG_FURIGANA_E );
-	this->tboxNTSC1->Enabled = false;
-	//this->tboxNTSC1->Text    = gcnew System::String("");
-	this->tboxNTSC2->Enabled = false;
-	//this->tboxNTSC2->Text    = gcnew System::String("");
-	this->labNTSC1Pre->Text  = gcnew System::String( LANG_NTSC_1_E );
-	this->labNTSC1Sur->Text  = gcnew System::String( LANG_NTSC_2_E );
-	this->labNTSC2Pre->Text  = gcnew System::String( LANG_NTSC_1_E );
-	this->labNTSC2Sur->Text  = gcnew System::String( LANG_NTSC_2_E );
+	resources->ApplyResources(this->combOFLC, L"combOFLC");
+	index = this->combOFLC->SelectedIndex;
+	this->combOFLC->Items->Clear();
+	this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5) {resources->GetString(L"combOFLC.Items"), resources->GetString(L"combOFLC.Items1"), 
+		resources->GetString(L"combOFLC.Items2"), resources->GetString(L"combOFLC.Items3"), resources->GetString(L"combOFLC.Items4")});
+	this->combOFLC->SelectedIndex = index;
 
-	// TWL仕様
-	this->gboxTWLExInfo->Text         = gcnew System::String( "TWL Extended Info" );
-	this->labNormalRomOffset->Text    = gcnew System::String( "TWL Normal Area ROM Offset" );
-	this->labKeyTableRomOffset->Text  = gcnew System::String( "TWL Secure Area ROM Offset" );
-	this->cboxIsNormalJump->Text      = gcnew System::String( "Enable Normal App. Jump" );
-	this->cboxIsTmpJump->Text         = gcnew System::String( "Enable Temp. App. Jump" );
-	this->cboxIsSubBanner->Text       = gcnew System::String( "Enable SubBanner File" );
-	this->cboxIsWL->Text              = gcnew System::String( "Enable NTR WhiteList Signature" );
-	this->gboxAccess->Text            = gcnew System::String( "Access Control" );
-	this->cboxIsSD->Text              = gcnew System::String( "SD Card" );
-	this->cboxIsNAND->Text            = gcnew System::String( "NAND Flash Memory" );
-	this->labIsGameCardOn->Text       = gcnew System::String( "Card Power" );
-	this->labAccessOther->Text        = gcnew System::String( "Others" );
-	this->gboxShared2Size->Text       = gcnew System::String( "Size of Shared2 Files" );
-	this->cboxIsShared2->Text         = gcnew System::String( "Use Shared2 Files" );
-	this->labSDK->Text                = gcnew System::String( "SDK Ver." );
-	this->labLib->Text                = gcnew System::String( "Libraries used by the program" );
-	this->labCaptionEx->Text          = gcnew System::String( "Special Note" );
+	resources->ApplyResources(this->combPEGI_BBFC, L"combPEGI_BBFC");
+	index = this->combPEGI_BBFC->SelectedIndex;
+	this->combPEGI_BBFC->Items->Clear();
+	this->combPEGI_BBFC->Items->AddRange(gcnew cli::array< System::Object^  >(10) {resources->GetString(L"combPEGI_BBFC.Items"), 
+		resources->GetString(L"combPEGI_BBFC.Items1"), resources->GetString(L"combPEGI_BBFC.Items2"), resources->GetString(L"combPEGI_BBFC.Items3"), 
+		resources->GetString(L"combPEGI_BBFC.Items4"), resources->GetString(L"combPEGI_BBFC.Items5"), resources->GetString(L"combPEGI_BBFC.Items6"), 
+		resources->GetString(L"combPEGI_BBFC.Items7"), resources->GetString(L"combPEGI_BBFC.Items8"), resources->GetString(L"combPEGI_BBFC.Items9")});
+	this->combPEGI_BBFC->SelectedIndex = index;
 
-	// SRL編集可能情報
-	this->gboxEULA->Text         = gcnew System::String( LANG_BOX_EULA_E );
-	this->cboxIsEULA->Text       = gcnew System::String( LANG_EULA_E );
-	this->gboxIcon->Text         = gcnew System::String( LANG_ICON_E );
-	this->rIsWirelessIcon->Text  = gcnew System::String( LANG_WIRELESS_ICON_E );
-	this->rIsWiFiIcon->Text      = gcnew System::String( LANG_WIFI_ICON_E );
-	this->rIsNoIcon->Text        = gcnew System::String( LANG_NO_ICON_E );
-	this->labRegion->Text        = gcnew System::String( LANG_REGION_E );
-	this->gboxOtherSpec->Text    = gcnew System::String( LANG_OTHER_SPEC_E );
-	this->cboxIsUGC->Text        = gcnew System::String( LANG_UGC_E );
-	this->cboxIsPhotoEx->Text    = gcnew System::String( LANG_PHOTO_EX_E );
+	resources->ApplyResources(this->combPEGI_PRT, L"combPEGI_PRT");
+	index = this->combPEGI_PRT->SelectedIndex;
+	this->combPEGI_PRT->Items->Clear();
+	this->combPEGI_PRT->Items->AddRange(gcnew cli::array< System::Object^  >(7) {resources->GetString(L"combPEGI_PRT.Items"), 
+		resources->GetString(L"combPEGI_PRT.Items1"), resources->GetString(L"combPEGI_PRT.Items2"), resources->GetString(L"combPEGI_PRT.Items3"), 
+		resources->GetString(L"combPEGI_PRT.Items4"), resources->GetString(L"combPEGI_PRT.Items5"), resources->GetString(L"combPEGI_PRT.Items6")});
+	this->combPEGI_PRT->SelectedIndex = index;
 
-	// リージョン
+	resources->ApplyResources(this->combPEGI, L"combPEGI");
+	index = this->combPEGI->SelectedIndex;
+	this->combPEGI->Items->Clear();
+	this->combPEGI->Items->AddRange(gcnew cli::array< System::Object^  >(7) {resources->GetString(L"combPEGI.Items"), resources->GetString(L"combPEGI.Items1"), 
+		resources->GetString(L"combPEGI.Items2"), resources->GetString(L"combPEGI.Items3"), resources->GetString(L"combPEGI.Items4"), 
+		resources->GetString(L"combPEGI.Items5"), resources->GetString(L"combPEGI.Items6")});
+	this->combPEGI->SelectedIndex = index;
+
+	resources->ApplyResources(this->combUSK, L"combUSK");
+	index = this->combUSK->SelectedIndex;
+	this->combUSK->Items->Clear();
+	this->combUSK->Items->AddRange(gcnew cli::array< System::Object^  >(6) {resources->GetString(L"combUSK.Items"), resources->GetString(L"combUSK.Items1"), 
+		resources->GetString(L"combUSK.Items2"), resources->GetString(L"combUSK.Items3"), resources->GetString(L"combUSK.Items4"), resources->GetString(L"combUSK.Items5")});
+	this->combUSK->SelectedIndex = index;
+
+	resources->ApplyResources(this->combESRB, L"combESRB");
+	index = this->combESRB->SelectedIndex;
+	this->combESRB->Items->Clear();
+	this->combESRB->Items->AddRange(gcnew cli::array< System::Object^  >(7) {resources->GetString(L"combESRB.Items"), resources->GetString(L"combESRB.Items1"), 
+		resources->GetString(L"combESRB.Items2"), resources->GetString(L"combESRB.Items3"), resources->GetString(L"combESRB.Items4"), 
+		resources->GetString(L"combESRB.Items5"), resources->GetString(L"combESRB.Items6")});
+	this->combESRB->SelectedIndex = index;
+
+	resources->ApplyResources(this->combCERO, L"combCERO");
+	index = this->combCERO->SelectedIndex;
+	this->combCERO->Items->Clear();
+	this->combCERO->Items->AddRange(gcnew cli::array< System::Object^  >(6) {resources->GetString(L"combCERO.Items"), resources->GetString(L"combCERO.Items1"), 
+		resources->GetString(L"combCERO.Items2"), resources->GetString(L"combCERO.Items3"), resources->GetString(L"combCERO.Items4"), 
+		resources->GetString(L"combCERO.Items5")});
+	this->combCERO->SelectedIndex = index;
+
+	resources->ApplyResources(this->labParentalRating, L"labParentalRating");
+	resources->ApplyResources(this->labRegion, L"labRegion");
+	resources->ApplyResources(this->cboxIsEULA, L"cboxIsEULA");
+
+	resources->ApplyResources(this->combRegion, L"combRegion");
 	index = this->combRegion->SelectedIndex;
 	this->combRegion->Items->Clear();
-	this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5)
-		{L"Japan Only", L"USA Only", L"Europe Only", L"Australia Only", L"Europe and Australia"});
+	this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5) {resources->GetString(L"combRegion.Items"), resources->GetString(L"combRegion.Items1"), 
+		resources->GetString(L"combRegion.Items2"), resources->GetString(L"combRegion.Items3"), resources->GetString(L"combRegion.Items4")});
 #if defined(METWL_VER_APPTYPE_SYSTEM) || defined(METWL_VER_APPTYPE_SECURE) || defined(METWL_VER_APPTYPE_LAUNCHER)
-	this->combRegion->Items->Add( gcnew System::String( L"All Region" ) );
+	if( langname->Equals( "ja" ) )
+	{
+		this->combRegion->Items->Add( gcnew System::String( L"全リージョン" ) );
+	}
+	else
+	{
+		this->combRegion->Items->Add( gcnew System::String( L"All Region" ) );
+	}
 #endif
 	this->combRegion->SelectedIndex = index;
 
-	//// ペアレンタルコントロール
-	this->gboxParental->Text           = gcnew System::String( LANG_REGION_PCTL_E );
-	this->labParentalRating->Text      = gcnew System::String( LANG_PCTL_RATING_E );
-
-	index = this->combCERO->SelectedIndex;	// いったんclearすると現在のindexに意味がなくなるので退避
-	this->combCERO->Items->Clear();
-	this->combCERO->Items->AddRange(gcnew cli::array< System::Object^  >(6)
-		{L"A (All ages)", L"B (aged 12 or older)", L"C (aged 15 or older)", L"D (aged 17 or older)", L"Z (aged 18 or older)", L"Rating Pending"});
-	this->combCERO->SelectedIndex = index;
-
-	index = this->combESRB->SelectedIndex;
-	this->combESRB->Items->Clear();
-	this->combESRB->Items->AddRange(gcnew cli::array< System::Object^  >(7) 
-		{L"All ages", L"EC (aged 3 or older)", L"E (aged 6 or older)", L"E10+ (aged 10 or older)", L"T (aged 13 or older)",	L"M (aged 17 or older)", L"Rating Pending"});
-	this->combESRB->SelectedIndex = index;
-
-	index = this->combUSK->SelectedIndex;
-	this->combUSK->Items->Clear();
-	this->combUSK->Items->AddRange(gcnew cli::array< System::Object^  >(6)
-		{L"All ages", L"aged 6 or older", L"aged 12 or older", L"aged 16 or older", L"Inadequent for young", L"Rating Pending"});
-	this->combUSK->SelectedIndex = index;
-
-	index = this->combPEGI->SelectedIndex;
-	this->combPEGI->Items->Clear();
-	this->combPEGI->Items->AddRange(gcnew cli::array< System::Object^  >(7)
-		{L"All ages", L"aged 3 or older", L"aged 7 or older", L"aged 12 or older", L"aged 16 or older", L"aged 18 or older", L"Rating Pending"});
-	this->combPEGI->SelectedIndex = index;
-
-	index = this->combPEGI_PRT->SelectedIndex;
-	this->combPEGI_PRT->Items->Clear();
-	this->combPEGI_PRT->Items->AddRange(gcnew cli::array< System::Object^  >(7)
-		{L"All ages", L"aged 4 or older", L"aged 6 or older", L"aged 12 or older", L"aged 16 or older", L"aged 18 or older", L"Rating Pending"});
-	this->combPEGI_PRT->SelectedIndex = index;
-
-	index = this->combPEGI_BBFC->SelectedIndex;
-	this->combPEGI_BBFC->Items->Clear();
-	this->combPEGI_BBFC->Items->AddRange(gcnew cli::array< System::Object^  >(10)
-		{L"All ages", L"aged 3 or older", L"aged 4 or older recommended", L"aged 7 or older", L"aged 8 or older recommended",
-		 L"aged 12 or older", L"aged 15 or older", L"aged 16 or older", L"aged 18 or older", L"Rating Pending"});
-	this->combPEGI_BBFC->SelectedIndex = index;
-
-	index = this->combOFLC->SelectedIndex;
-	this->combOFLC->Items->Clear();
-	this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5)
-		{L"G", L"PG", L"M", L"MA15+", L"Rating Pending"});
-	this->combOFLC->SelectedIndex = index;
-
-	// エラー情報
-	this->labError->Text = gcnew System::String( "Error Information(Modification is necessary.)" );
-	this->colErrorName->HeaderText  = gcnew System::String( "Name" );
-	this->colErrorBegin->HeaderText = gcnew System::String( "Begin" );
-	this->colErrorEnd->HeaderText   = gcnew System::String( "End" );
-	this->colErrorCause->HeaderText = gcnew System::String( "Reason" );
-
-	this->labWarn->Text  = gcnew System::String( "Warning(Modification is not necessary. Please check validity of these information.)" );
-	this->colWarnName->HeaderText  = gcnew System::String( "Name" );
-	this->colWarnBegin->HeaderText = gcnew System::String( "Begin" );
-	this->colWarnEnd->HeaderText   = gcnew System::String( "End" );
-	this->colWarnCause->HeaderText = gcnew System::String( "Reason" );
-
-	this->gboxErrorTiming->Text = gcnew System::String( "Error Of Timing" );
-	this->rErrorReading->Text   = gcnew System::String( "When ROM data was read" );
-	this->rErrorCurrent->Text   = gcnew System::String( "In current settings" );
-
-	// 特殊な設定用のテキストボックスの表記を変更
-	this->setSrlFormsCaptionEx();
+	resources->ApplyResources(this->cboxIsInputPerson2, L"cboxIsInputPerson2");
+	resources->ApplyResources(this->gboxPerson2, L"gboxPerson2");
+	resources->ApplyResources(this->labArbit4, L"labArbit4");
+	resources->ApplyResources(this->labArbit3, L"labArbit3");
+	resources->ApplyResources(this->labNTSC2Sur, L"labNTSC2Sur");
+	resources->ApplyResources(this->tboxNTSC2, L"tboxNTSC2");
+	resources->ApplyResources(this->labFax2, L"labFax2");
+	resources->ApplyResources(this->labNTSC2Pre, L"labNTSC2Pre");
+	resources->ApplyResources(this->tboxFax2, L"tboxFax2");
+	resources->ApplyResources(this->tboxMail2, L"tboxMail2");
+	resources->ApplyResources(this->tboxTel2, L"tboxTel2");
+	resources->ApplyResources(this->tboxFurigana2, L"tboxFurigana2");
+	resources->ApplyResources(this->tboxPerson2, L"tboxPerson2");
+	resources->ApplyResources(this->tboxDepart2, L"tboxDepart2");
+	resources->ApplyResources(this->labDepart2, L"labDepart2");
+	resources->ApplyResources(this->tboxCompany2, L"tboxCompany2");
+	resources->ApplyResources(this->labMail2, L"labMail2");
+	resources->ApplyResources(this->labTel2, L"labTel2");
+	resources->ApplyResources(this->labFurigana2, L"labFurigana2");
+	resources->ApplyResources(this->labPerson2, L"labPerson2");
+	resources->ApplyResources(this->labCompany2, L"labCompany2");
+	resources->ApplyResources(this->gboxPerson1, L"gboxPerson1");
+	resources->ApplyResources(this->labArbit2, L"labArbit2");
+	resources->ApplyResources(this->labArbit1, L"labArbit1");
+	resources->ApplyResources(this->labNTSC1Sur, L"labNTSC1Sur");
+	resources->ApplyResources(this->labFax1, L"labFax1");
+	resources->ApplyResources(this->labNTSC1Pre, L"labNTSC1Pre");
+	resources->ApplyResources(this->tboxNTSC1, L"tboxNTSC1");
+	resources->ApplyResources(this->tboxFax1, L"tboxFax1");
+	resources->ApplyResources(this->tboxMail1, L"tboxMail1");
+	resources->ApplyResources(this->tboxTel1, L"tboxTel1");
+	resources->ApplyResources(this->tboxFurigana1, L"tboxFurigana1");
+	resources->ApplyResources(this->tboxPerson1, L"tboxPerson1");
+	resources->ApplyResources(this->tboxDepart1, L"tboxDepart1");
+	resources->ApplyResources(this->labDepart1, L"labDepart1");
+	resources->ApplyResources(this->tboxCompany1, L"tboxCompany1");
+	resources->ApplyResources(this->labMail1, L"labMail1");
+	resources->ApplyResources(this->labTel1, L"labTel1");
+	resources->ApplyResources(this->labFurigana1, L"labFurigana1");
+	resources->ApplyResources(this->labPerson1, L"labPerson1");
+	resources->ApplyResources(this->labCompany1, L"labCompany1");
+	resources->ApplyResources(this->tboxProductCode2, L"tboxProductCode2");
+	resources->ApplyResources(this->tboxProductCode1, L"tboxProductCode1");
+	resources->ApplyResources(this->tboxProductName, L"tboxProductName");
+	resources->ApplyResources(this->labProductCode2, L"labProductCode2");
+	resources->ApplyResources(this->labProductCode1, L"labProductCode1");
+	resources->ApplyResources(this->dateSubmit, L"dateSubmit");
+	resources->ApplyResources(this->dateRelease, L"dateRelease");
+	resources->ApplyResources(this->gboxUsage, L"gboxUsage");
+	resources->ApplyResources(this->tboxUsageOther, L"tboxUsageOther");
+	resources->ApplyResources(this->rUsageOther, L"rUsageOther");
+	resources->ApplyResources(this->rUsageDst, L"rUsageDst");
+	resources->ApplyResources(this->rUsageSample, L"rUsageSample");
+	resources->ApplyResources(this->rUsageSale, L"rUsageSale");
+	resources->ApplyResources(this->gboxSubmitWay, L"gboxSubmitWay");
+	resources->ApplyResources(this->rSubmitHand, L"rSubmitHand");
+	resources->ApplyResources(this->rSubmitPost, L"rSubmitPost");
+	resources->ApplyResources(this->labSubmiteDate, L"labSubmiteDate");
+	resources->ApplyResources(this->labReleaseDate, L"labReleaseDate");
+	resources->ApplyResources(this->labProductCode, L"labProductCode");
+	resources->ApplyResources(this->labProductName, L"labProductName");
+	resources->ApplyResources(this->labCapSubmitVer, L"labCapSubmitVer");
+	resources->ApplyResources(this->numSubmitVersion, L"numSubmitVersion");
+	resources->ApplyResources(this->labSubmitVer, L"labSubmitVer");
+	resources->ApplyResources(this->labMultiForeign1, L"labMultiForeign1");
+	resources->ApplyResources(this->tboxProductCode2Foreign3, L"tboxProductCode2Foreign3");
+	resources->ApplyResources(this->tboxProductCode2Foreign2, L"tboxProductCode2Foreign2");
+	resources->ApplyResources(this->labProductCode2Foreign, L"labProductCode2Foreign");
+	resources->ApplyResources(this->cboxReleaseForeign, L"cboxReleaseForeign");
+	resources->ApplyResources(this->labProductNameForeign, L"labProductNameForeign");
+	resources->ApplyResources(this->tboxProductNameForeign, L"tboxProductNameForeign");
+	resources->ApplyResources(this->labProductCode1Foreign, L"labProductCode1Foreign");
+	resources->ApplyResources(this->tboxProductCode1Foreign, L"tboxProductCode1Foreign");
+	resources->ApplyResources(this->labProductCodeForeign, L"labProductCodeForeign");
+	resources->ApplyResources(this->tboxProductCode2Foreign1, L"tboxProductCode2Foreign1");
+	resources->ApplyResources(this->gboxShared2Size, L"gboxShared2Size");
+	resources->ApplyResources(this->labShared2Size5, L"labShared2Size5");
+	resources->ApplyResources(this->labShared2Size4, L"labShared2Size4");
+	resources->ApplyResources(this->labShared2Size3, L"labShared2Size3");
+	resources->ApplyResources(this->labShared2Size2, L"labShared2Size2");
+	resources->ApplyResources(this->labShared2Size1, L"labShared2Size1");
+	resources->ApplyResources(this->labShared2Size0, L"labShared2Size0");
+	resources->ApplyResources(this->tboxShared2Size5, L"tboxShared2Size5");
+	resources->ApplyResources(this->tboxShared2Size4, L"tboxShared2Size4");
+	resources->ApplyResources(this->tboxShared2Size3, L"tboxShared2Size3");
+	resources->ApplyResources(this->tboxShared2Size2, L"tboxShared2Size2");
+	resources->ApplyResources(this->tboxShared2Size1, L"tboxShared2Size1");
+	resources->ApplyResources(this->tboxShared2Size0, L"tboxShared2Size0");
+	resources->ApplyResources(this->cboxIsShared2, L"cboxIsShared2");
+	resources->ApplyResources(this->labLib, L"labLib");
+	resources->ApplyResources(this->tboxSDK, L"tboxSDK");
+	resources->ApplyResources(this->labSDK, L"labSDK");
+	resources->ApplyResources(this->gboxTWLExInfo, L"gboxTWLExInfo");
+	resources->ApplyResources(this->labByte1, L"labByte1");
+	resources->ApplyResources(this->labHex4, L"labHex4");
+	resources->ApplyResources(this->labHex3, L"labHex3");
+	resources->ApplyResources(this->tboxIsCodec, L"tboxIsCodec");
+	resources->ApplyResources(this->labIsCodec, L"labIsCodec");
+	resources->ApplyResources(this->labNormalRomOffset, L"labNormalRomOffset");
+	resources->ApplyResources(this->tboxNormalRomOffset, L"tboxNormalRomOffset");
+	resources->ApplyResources(this->labKeyTableRomOffset, L"labKeyTableRomOffset");
+	resources->ApplyResources(this->tboxPrivateSize, L"tboxPrivateSize");
+	resources->ApplyResources(this->labPrivateSize, L"labPrivateSize");
+	resources->ApplyResources(this->tboxKeyTableRomOffset, L"tboxKeyTableRomOffset");
+	resources->ApplyResources(this->labPublicSize, L"labPublicSize");
+	resources->ApplyResources(this->tboxPublicSize, L"tboxPublicSize");
+	resources->ApplyResources(this->cboxIsSubBanner, L"cboxIsSubBanner");
+	resources->ApplyResources(this->cboxIsWL, L"cboxIsWL");
+	resources->ApplyResources(this->cboxIsNormalJump, L"cboxIsNormalJump");
+	resources->ApplyResources(this->cboxIsTmpJump, L"cboxIsTmpJump");
+	resources->ApplyResources(this->gboxAccess, L"gboxAccess");
+	resources->ApplyResources(this->labAccessOther, L"labAccessOther");
+	resources->ApplyResources(this->tboxAccessOther, L"tboxAccessOther");
+	resources->ApplyResources(this->tboxIsGameCardOn, L"tboxIsGameCardOn");
+	resources->ApplyResources(this->labIsGameCardOn, L"labIsGameCardOn");
+	resources->ApplyResources(this->cboxIsNAND, L"cboxIsNAND");
+	resources->ApplyResources(this->cboxIsSD, L"cboxIsSD");
+	resources->ApplyResources(this->gboxTitleID, L"gboxTitleID");
+	resources->ApplyResources(this->labAppType, L"labAppType");
+	resources->ApplyResources(this->labMedia, L"labMedia");
+	resources->ApplyResources(this->tboxAppType, L"tboxAppType");
+	resources->ApplyResources(this->tboxMedia, L"tboxMedia");
+	resources->ApplyResources(this->labHex2, L"labHex2");
+	resources->ApplyResources(this->tboxTitleIDLo, L"tboxTitleIDLo");
+	resources->ApplyResources(this->labTitleIDLo, L"labTitleIDLo");
+	resources->ApplyResources(this->labTitleIDHi, L"labTitleIDHi");
+	resources->ApplyResources(this->tboxTitleIDHi, L"tboxTitleIDHi");
+	resources->ApplyResources(this->tboxAppTypeOther, L"tboxAppTypeOther");
+	resources->ApplyResources(this->labAppTypeOther, L"labAppTypeOther");
+	resources->ApplyResources(this->labCaptionEx, L"labCaptionEx");
+	resources->ApplyResources(this->tboxCaptionEx, L"tboxCaptionEx");
+	resources->ApplyResources(this->gboxProd, L"gboxProd");
+	resources->ApplyResources(this->menuStripAbove, L"menuStripAbove");
+	resources->ApplyResources(this->stripFile, L"stripFile");
+	resources->ApplyResources(this->stripItemOpenRom, L"stripItemOpenRom");
+	resources->ApplyResources(this->stripItemSepFile1, L"stripItemSepFile1");
+	resources->ApplyResources(this->stripItemSaveTemp, L"stripItemSaveTemp");
+	resources->ApplyResources(this->stripItemLoadTemp, L"stripItemLoadTemp");
+	resources->ApplyResources(this->stripMaster, L"stripMaster");
+	resources->ApplyResources(this->stripItemSheet, L"stripItemSheet");
+	resources->ApplyResources(this->stripItemSepMaster1, L"stripItemSepMaster1");
+	resources->ApplyResources(this->stripItemMasterRom, L"stripItemMasterRom");
+	resources->ApplyResources(this->stripItemMiddlewareXml, L"stripItemMiddlewareXml");
+	resources->ApplyResources(this->stripItemMiddlewareHtml, L"stripItemMiddlewareHtml");
+	resources->ApplyResources(this->stripLang, L"stripLang");
+	resources->ApplyResources(this->stripItemEnglish, L"stripItemEnglish");
+	resources->ApplyResources(this->stripItemJapanese, L"stripItemJapanese");
+	resources->ApplyResources(this->tabMain, L"tabMain");
+	resources->ApplyResources(this->tabRomInfo, L"tabRomInfo");
+	resources->ApplyResources(this->gridLibrary, L"gridLibrary");
+	resources->ApplyResources(this->colLibPublisher, L"colLibPublisher");
+	resources->ApplyResources(this->colLibName, L"colLibName");
+	resources->ApplyResources(this->tboxGuideRomInfo, L"tboxGuideRomInfo");
+	resources->ApplyResources(this->tabTWLInfo, L"tabTWLInfo");
+	resources->ApplyResources(this->tboxGuideTWLInfo, L"tboxGuideTWLInfo");
+	resources->ApplyResources(this->gboxExFlags, L"gboxExFlags");
+	resources->ApplyResources(this->tabRomEditInfo, L"tabRomEditInfo");
+	resources->ApplyResources(this->gboxOtherSpec, L"gboxOtherSpec");
+	resources->ApplyResources(this->cboxIsUGC, L"cboxIsUGC");
+	resources->ApplyResources(this->cboxIsPhotoEx, L"cboxIsPhotoEx");
+	resources->ApplyResources(this->butSetBack, L"butSetBack");
+	resources->ApplyResources(this->tboxGuideRomEditInfo, L"tboxGuideRomEditInfo");
+	resources->ApplyResources(this->gboxParental, L"gboxParental");
+	resources->ApplyResources(this->gboxIcon, L"gboxIcon");
+	resources->ApplyResources(this->rIsNoIcon, L"rIsNoIcon");
+	resources->ApplyResources(this->rIsWiFiIcon, L"rIsWiFiIcon");
+	resources->ApplyResources(this->rIsWirelessIcon, L"rIsWirelessIcon");
+	resources->ApplyResources(this->gboxEULA, L"gboxEULA");
+	resources->ApplyResources(this->tabSubmitInfo, L"tabSubmitInfo");
+	resources->ApplyResources(this->labProductNameLimit, L"labProductNameLimit");
+	resources->ApplyResources(this->tboxGuideSubmitInfo, L"tboxGuideSubmitInfo");
+	resources->ApplyResources(this->gboxForeign, L"gboxForeign");
+	resources->ApplyResources(this->labProductNameLimitForeign, L"labProductNameLimitForeign");
+	resources->ApplyResources(this->labMultiForeign2, L"labMultiForeign2");
+	resources->ApplyResources(this->tabCompanyInfo, L"tabCompanyInfo");
+	resources->ApplyResources(this->tboxGuideCompanyInfo, L"tboxGuideCompanyInfo");
+	resources->ApplyResources(this->tabErrorInfo, L"tabErrorInfo");
+	resources->ApplyResources(this->tboxGuideErrorInfo, L"tboxGuideErrorInfo");
+	resources->ApplyResources(this->gboxErrorTiming, L"gboxErrorTiming");
+	resources->ApplyResources(this->rErrorCurrent, L"rErrorCurrent");
+	resources->ApplyResources(this->rErrorReading, L"rErrorReading");
+	resources->ApplyResources(this->labWarn, L"labWarn");
+	resources->ApplyResources(this->labError, L"labError");
+	resources->ApplyResources(this->gridWarn, L"gridWarn");
+	resources->ApplyResources(this->gridError, L"gridError");
+	resources->ApplyResources(this->labFile, L"labFile");
+	resources->ApplyResources(this->labAssemblyVersion, L"labAssemblyVersion");
+	resources->ApplyResources(this->colErrorName, L"colErrorName");
+	resources->ApplyResources(this->colErrorBegin, L"colErrorBegin");
+	resources->ApplyResources(this->colErrorEnd, L"colErrorEnd");
+	resources->ApplyResources(this->colErrorCause, L"colErrorCause");
+	resources->ApplyResources(this->colWarnName, L"colWarnName");
+	resources->ApplyResources(this->colWarnBegin, L"colWarnBegin");
+	resources->ApplyResources(this->colWarnEnd, L"colWarnEnd");
+	resources->ApplyResources(this->colWarnCause, L"colWarnCause");
+	resources->ApplyResources(this, L"$this");
 }
 
 // end of file

@@ -146,18 +146,18 @@ System::Void Form1::loadSrl( System::String ^filename )
 		switch( result )
 		{
 			case ECSrlResult::ERROR_PLATFORM:
-				this->errMsg( "本ツールはTWL対応ROM専用です。NTR専用ROMなどのTWL非対応ROMを読み込むことはできません。",
+				this->errMsg( "本ツールはTWL用です。NTR専用ROMなどのTWL非対応ROMを読み込むことはできません。",
 							  "This tool can only read TWL ROM. This can't read an other data e.g. NTR limited ROM." );
 			break;
 
 			case ECSrlResult::ERROR_SIGN_DECRYPT:
 			case ECSrlResult::ERROR_SIGN_VERIFY:
-				this->errMsg( "不正なROMデータです。TWL対応ROMでないかROMデータが改ざんされている可能性があります。",
+				this->errMsg( "不正なROMデータです。TWL対応/専用ROMでないかROMデータが改ざんされている可能性があります。",
 							  "Illegal ROM data. It is not for TWL ROM, or is altered illegally." );
 			break;
 
 			default:
-				this->errMsg( "ROMデータファイルの読み込みに失敗しました。\n再度「ROMデータを開く」を選択してROMデータを読み出してください。", 
+				this->errMsg( "ROMデータファイルの読み込みに失敗しました。\n再度ROMデータを読み込ませてください。", 
 					          "Reading the ROM data file failed. \nPlease read a ROM data file again, with \"Open a ROM data file\"" );
 			break;
 		}

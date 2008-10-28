@@ -21,7 +21,25 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_2FBB21F2C72D420C96323E9B01AE98FE"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_491C89DAB2F34A939F356C47975E7BD0"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_51367776DB1B459A9BC61A9375741F99"
+        "OwnerKey" = "8:_7746D2D347F0423FB46FA2300F6158A4"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_52A795D53BFB42E2AEDA0D7C06CE7BEF"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -41,6 +59,24 @@
         {
         "MsmKey" = "8:_A3417E9C9F294832AE49B5BDAF95E373"
         "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_F2F774D4BB00497E9255EE39B3BE8568"
+        "OwnerKey" = "8:_51367776DB1B459A9BC61A9375741F99"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_2FBB21F2C72D420C96323E9B01AE98FE"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_7746D2D347F0423FB46FA2300F6158A4"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -125,6 +161,20 @@
     {
         "CustomAction"
         {
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_E5C132F9C6994C919F7171673A5DB7A8"
+            {
+            "Name" = "8:ResourceTransition.exe"
+            "Condition" = "8:"
+            "Object" = "8:_2FBB21F2C72D420C96323E9B01AE98FE"
+            "FileType" = "3:2"
+            "InstallAction" = "3:1"
+            "Arguments" = "8:\"[TARGETDIR]\\bin"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:1"
+            "Identifier" = "8:_3CFA3BCE_7F42_4725_B7E0_C89AF8C8B930"
+            "InstallerClass" = "11:FALSE"
+            "CustomActionData" = "8:"
+            }
         }
         "DefaultFeature"
         {
@@ -168,12 +218,63 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_2FBB21F2C72D420C96323E9B01AE98FE"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:ResourceTransition, Version=1.0.3223.26316, Culture=neutral, processorArchitecture=x86"
+                "ScatterAssemblies"
+                {
+                    "_2FBB21F2C72D420C96323E9B01AE98FE"
+                    {
+                    "Name" = "8:ResourceTransition.exe"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:..\\ResourceTransition\\Release\\ResourceTransition.exe"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_2E7532FD56764A0B8349AAA9E97FD1A4"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_491C89DAB2F34A939F356C47975E7BD0"
             {
             "SourcePath" = "8:..\\resource\\middleware.xsl"
             "TargetName" = "8:middleware.xsl"
             "Tag" = "8:"
             "Folder" = "8:_99EFE6B595C5432FB4712560C9D29AE5"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_52A795D53BFB42E2AEDA0D7C06CE7BEF"
+            {
+            "SourcePath" = "8:..\\MasterEditorTWL.resources.dll"
+            "TargetName" = "8:MasterEditorTWL.resources.dll"
+            "Tag" = "8:"
+            "Folder" = "8:_AB6CC39E2A774B2AB387F6F4C81BE36E"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -264,6 +365,28 @@
                     "Property" = "8:_B23854B2049F4A97BCD9477AFCDBE7EB"
                         "Folders"
                         {
+                            "{9EF0B969-E518-4E46-987F-47570745A589}:_2E7532FD56764A0B8349AAA9E97FD1A4"
+                            {
+                            "Name" = "8:install_bin"
+                            "AlwaysCreate" = "11:FALSE"
+                            "Condition" = "8:"
+                            "Transitive" = "11:FALSE"
+                            "Property" = "8:_BA900236A2504EA0BAB88A628C3904DC"
+                                "Folders"
+                                {
+                                }
+                            }
+                            "{9EF0B969-E518-4E46-987F-47570745A589}:_AB6CC39E2A774B2AB387F6F4C81BE36E"
+                            {
+                            "Name" = "8:ja"
+                            "AlwaysCreate" = "11:FALSE"
+                            "Condition" = "8:"
+                            "Transitive" = "11:FALSE"
+                            "Property" = "8:_0CDFCC11878746AE8F009DBFCAD3F129"
+                                "Folders"
+                                {
+                                }
+                            }
                         }
                     }
                     "{9EF0B969-E518-4E46-987F-47570745A589}:_99EFE6B595C5432FB4712560C9D29AE5"
@@ -307,7 +430,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:MasterEditorTWL"
         "ProductCode" = "8:{B12B5AFF-26D1-47B5-85B6-1E2A7B5106F5}"
-        "PackageCode" = "8:{ABE560BA-10B0-4620-A9B1-EC5700EBDDEE}"
+        "PackageCode" = "8:{69879F78-483D-4A0A-9732-8D5A72E33723}"
         "UpgradeCode" = "8:{CE22C209-7AE1-4F58-8F6B-6D044BA2A118}"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:FALSE"
@@ -836,12 +959,68 @@
         }
         "MergeModule"
         {
+            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_51367776DB1B459A9BC61A9375741F99"
+            {
+            "UseDynamicProperties" = "11:TRUE"
+            "IsDependency" = "11:TRUE"
+            "SourcePath" = "8:policy_9_0_Microsoft_VC90_CRT_x86.msm"
+                "Properties"
+                {
+                }
+            "LanguageId" = "3:0"
+            "Exclude" = "11:FALSE"
+            "Folder" = "8:"
+            "Feature" = "8:"
+            "IsolateTo" = "8:"
+            }
+            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_F2F774D4BB00497E9255EE39B3BE8568"
+            {
+            "UseDynamicProperties" = "11:TRUE"
+            "IsDependency" = "11:TRUE"
+            "SourcePath" = "8:microsoft_vc90_crt_x86.msm"
+                "Properties"
+                {
+                }
+            "LanguageId" = "3:0"
+            "Exclude" = "11:FALSE"
+            "Folder" = "8:"
+            "Feature" = "8:"
+            "IsolateTo" = "8:"
+            }
         }
         "ProjectOutput"
         {
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_65C3DCC3F0554E0F88386C691DC81AD9"
+            {
+            "SourcePath" = "8:"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_1494B8B199184797B9C812877A4DFB7F"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            "ProjectOutputGroupRegister" = "3:1"
+            "OutputConfiguration" = "8:"
+            "OutputGroupCanonicalName" = "8:LocalizedResourceDlls"
+            "OutputProjectGuid" = "8:{F8A4F8F7-A3BD-4DCA-B054-5FF8A09082F5}"
+            "ShowKeyOutput" = "11:TRUE"
+                "ExcludeFilters"
+                {
+                }
+            }
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_7746D2D347F0423FB46FA2300F6158A4"
             {
-            "SourcePath" = "8:..\\Debug\\MasterEditorTWL.exe"
+            "SourcePath" = "8:..\\Release\\MasterEditorTWL.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_1494B8B199184797B9C812877A4DFB7F"

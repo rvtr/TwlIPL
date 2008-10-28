@@ -575,14 +575,14 @@ private: System::Windows::Forms::RadioButton^  rIsNoIcon;
 
 
 
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnName;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnBegin;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnEnd;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnCause;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorName;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorBegin;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorEnd;
-private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
+
+
+
+
+
+
+
+
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibPublisher;
 private: System::Windows::Forms::DataGridViewTextBoxColumn^  colLibName;
 private: System::Windows::Forms::ToolStripMenuItem^  stripItemMiddlewareXml;
@@ -592,6 +592,22 @@ private: System::Windows::Forms::ToolStripSeparator^  stripItemSepMaster1;
 private: System::Windows::Forms::GroupBox^  gboxOtherSpec;
 private: System::Windows::Forms::CheckBox^  cboxIsUGC;
 private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
+
+
+
+
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorName;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorBegin;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorEnd;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colErrorCause;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnName;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnBegin;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnEnd;
+private: System::Windows::Forms::DataGridViewTextBoxColumn^  colWarnCause;
+
+
+
+
 
 
 
@@ -714,14 +730,21 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 				this->Text += " [ Supported App: " + appstr + "User ]";
 			}
 
-			// 複数行表示したいが初期値で設定できないのでここで設定
-			this->tboxGuideRomEditInfo->Text  = "このタブの各項目への入力は提出確認書およびマスターROMの作成のために必要です。";
-			this->tboxGuideRomEditInfo->Text += "\r\nこれらの情報はマスターROMの作成時にROM内登録データとして登録されます(「その他ROM情報」を除く)。";
+			// 複数行表示の改行を挿入
+			this->tboxGuideRomEditInfo->Text = this->tboxGuideRomEditInfo->Text->Replace( "<newline>", "\r\n" );
+			this->tboxGuideErrorInfo->Text   = this->tboxGuideErrorInfo->Text->Replace( "<newline>", "\r\n" );
 
-			this->tboxGuideErrorInfo->Text  = "このタブには読み込んだROMデータの問題と本プログラムでの入力ミスが列挙されます。";
-			this->tboxGuideErrorInfo->Text += "\r\n赤文字の項目は、本プログラムで修正不可です。ROMデータ作成時の設定をご確認ください。";
-			this->tboxGuideErrorInfo->Text += "\r\n青文字の項目は、本プログラムで修正できますが、修正がマスターROMに反映されます。";
-			this->tboxGuideErrorInfo->Text += "\r\n黒文字の項目は、提出確認書にのみ反映され、マスターROMには反映されません。";
+			// 言語バージョンにあわせてメニューにチェックを入れる
+			if( System::Threading::Thread::CurrentThread->CurrentUICulture->Name->StartsWith( "ja" ) )
+			{
+				this->stripItemJapanese->Checked = true;
+				this->stripItemEnglish->Checked  = false;
+			}
+			else
+			{
+				this->stripItemJapanese->Checked = false;
+				this->stripItemEnglish->Checked  = true;
+			}
 
 			this->loadInit();	// 設定ファイルの読み込み
 		}
@@ -759,10 +782,11 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 		/// </summary>
 		void InitializeComponent(void)
 		{
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle9 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle10 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle11 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
-			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle12 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::ComponentModel::ComponentResourceManager^  resources = (gcnew System::ComponentModel::ComponentResourceManager(Form1::typeid));
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle1 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle2 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle3 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
+			System::Windows::Forms::DataGridViewCellStyle^  dataGridViewCellStyle4 = (gcnew System::Windows::Forms::DataGridViewCellStyle());
 			this->tboxFile = (gcnew System::Windows::Forms::TextBox());
 			this->gboxSrl = (gcnew System::Windows::Forms::GroupBox());
 			this->tboxRemasterVer = (gcnew System::Windows::Forms::TextBox());
@@ -1038,11 +1062,9 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			// tboxFile
 			// 
 			this->tboxFile->AllowDrop = true;
-			this->tboxFile->Location = System::Drawing::Point(120, 50);
+			resources->ApplyResources(this->tboxFile, L"tboxFile");
 			this->tboxFile->Name = L"tboxFile";
 			this->tboxFile->ReadOnly = true;
-			this->tboxFile->Size = System::Drawing::Size(607, 19);
-			this->tboxFile->TabIndex = 0;
 			this->tboxFile->DragDrop += gcnew System::Windows::Forms::DragEventHandler(this, &Form1::tboxFile_DragDrop);
 			this->tboxFile->DragEnter += gcnew System::Windows::Forms::DragEventHandler(this, &Form1::tboxFile_DragEnter);
 			// 
@@ -1063,178 +1085,115 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gboxSrl->Controls->Add(this->labTitleName);
 			this->gboxSrl->Controls->Add(this->labRemasterVer);
 			this->gboxSrl->Controls->Add(this->tboxTitleName);
-			this->gboxSrl->Location = System::Drawing::Point(26, 52);
+			resources->ApplyResources(this->gboxSrl, L"gboxSrl");
 			this->gboxSrl->Name = L"gboxSrl";
-			this->gboxSrl->Size = System::Drawing::Size(285, 227);
-			this->gboxSrl->TabIndex = 3;
 			this->gboxSrl->TabStop = false;
-			this->gboxSrl->Text = L"ROMデータ情報";
 			// 
 			// tboxRemasterVer
 			// 
-			this->tboxRemasterVer->Location = System::Drawing::Point(109, 190);
+			resources->ApplyResources(this->tboxRemasterVer, L"tboxRemasterVer");
 			this->tboxRemasterVer->Name = L"tboxRemasterVer";
 			this->tboxRemasterVer->ReadOnly = true;
-			this->tboxRemasterVer->Size = System::Drawing::Size(42, 19);
-			this->tboxRemasterVer->TabIndex = 7;
 			// 
 			// tboxRomSize
 			// 
-			this->tboxRomSize->Location = System::Drawing::Point(109, 162);
+			resources->ApplyResources(this->tboxRomSize, L"tboxRomSize");
 			this->tboxRomSize->Name = L"tboxRomSize";
 			this->tboxRomSize->ReadOnly = true;
-			this->tboxRomSize->Size = System::Drawing::Size(100, 19);
-			this->tboxRomSize->TabIndex = 15;
 			// 
 			// tboxPlatform
 			// 
-			this->tboxPlatform->Location = System::Drawing::Point(109, 106);
+			resources->ApplyResources(this->tboxPlatform, L"tboxPlatform");
 			this->tboxPlatform->Name = L"tboxPlatform";
 			this->tboxPlatform->ReadOnly = true;
-			this->tboxPlatform->Size = System::Drawing::Size(100, 19);
-			this->tboxPlatform->TabIndex = 14;
 			// 
 			// labPlatform
 			// 
-			this->labPlatform->AutoSize = true;
-			this->labPlatform->Location = System::Drawing::Point(22, 109);
+			resources->ApplyResources(this->labPlatform, L"labPlatform");
 			this->labPlatform->Name = L"labPlatform";
-			this->labPlatform->Size = System::Drawing::Size(73, 12);
-			this->labPlatform->TabIndex = 13;
-			this->labPlatform->Text = L"プラットフォーム";
 			// 
 			// tboxRomLatency
 			// 
-			this->tboxRomLatency->Location = System::Drawing::Point(109, 134);
+			resources->ApplyResources(this->tboxRomLatency, L"tboxRomLatency");
 			this->tboxRomLatency->Name = L"tboxRomLatency";
 			this->tboxRomLatency->ReadOnly = true;
-			this->tboxRomLatency->Size = System::Drawing::Size(100, 19);
-			this->tboxRomLatency->TabIndex = 11;
 			// 
 			// labRomSize
 			// 
-			this->labRomSize->AutoSize = true;
-			this->labRomSize->Location = System::Drawing::Point(22, 165);
+			resources->ApplyResources(this->labRomSize, L"labRomSize");
 			this->labRomSize->Name = L"labRomSize";
-			this->labRomSize->Size = System::Drawing::Size(54, 12);
-			this->labRomSize->TabIndex = 9;
-			this->labRomSize->Text = L"ROM容量";
 			// 
 			// labRomType
 			// 
-			this->labRomType->AutoSize = true;
-			this->labRomType->Location = System::Drawing::Point(22, 137);
+			resources->ApplyResources(this->labRomType, L"labRomType");
 			this->labRomType->Name = L"labRomType";
-			this->labRomType->Size = System::Drawing::Size(80, 12);
-			this->labRomType->TabIndex = 7;
-			this->labRomType->Text = L"ROMタイプ設定";
 			// 
 			// tboxMakerCode
 			// 
-			this->tboxMakerCode->Location = System::Drawing::Point(109, 78);
-			this->tboxMakerCode->MaxLength = 2;
+			resources->ApplyResources(this->tboxMakerCode, L"tboxMakerCode");
 			this->tboxMakerCode->Name = L"tboxMakerCode";
 			this->tboxMakerCode->ReadOnly = true;
-			this->tboxMakerCode->Size = System::Drawing::Size(100, 19);
-			this->tboxMakerCode->TabIndex = 2;
 			// 
 			// cboxRemasterVerE
 			// 
-			this->cboxRemasterVerE->AutoSize = true;
-			this->cboxRemasterVerE->Enabled = false;
-			this->cboxRemasterVerE->Location = System::Drawing::Point(157, 192);
+			resources->ApplyResources(this->cboxRemasterVerE, L"cboxRemasterVerE");
 			this->cboxRemasterVerE->Name = L"cboxRemasterVerE";
-			this->cboxRemasterVerE->Size = System::Drawing::Size(75, 16);
-			this->cboxRemasterVerE->TabIndex = 8;
-			this->cboxRemasterVerE->Text = L"E(事前版)";
 			this->cboxRemasterVerE->UseVisualStyleBackColor = true;
 			this->cboxRemasterVerE->CheckedChanged += gcnew System::EventHandler(this, &Form1::cboxRemasterVerE_CheckedChanged);
 			// 
 			// labMakerCode
 			// 
-			this->labMakerCode->AutoSize = true;
-			this->labMakerCode->Location = System::Drawing::Point(22, 81);
+			resources->ApplyResources(this->labMakerCode, L"labMakerCode");
 			this->labMakerCode->Name = L"labMakerCode";
-			this->labMakerCode->Size = System::Drawing::Size(59, 12);
-			this->labMakerCode->TabIndex = 4;
-			this->labMakerCode->Text = L"メーカコード";
 			// 
 			// labGameCode
 			// 
-			this->labGameCode->AutoSize = true;
-			this->labGameCode->Location = System::Drawing::Point(22, 53);
+			resources->ApplyResources(this->labGameCode, L"labGameCode");
 			this->labGameCode->Name = L"labGameCode";
-			this->labGameCode->Size = System::Drawing::Size(78, 12);
-			this->labGameCode->TabIndex = 3;
-			this->labGameCode->Text = L"イニシャルコード";
 			// 
 			// tboxGameCode
 			// 
-			this->tboxGameCode->Location = System::Drawing::Point(109, 50);
-			this->tboxGameCode->MaxLength = 4;
+			resources->ApplyResources(this->tboxGameCode, L"tboxGameCode");
 			this->tboxGameCode->Name = L"tboxGameCode";
 			this->tboxGameCode->ReadOnly = true;
-			this->tboxGameCode->Size = System::Drawing::Size(100, 19);
-			this->tboxGameCode->TabIndex = 1;
 			// 
 			// labTitleName
 			// 
-			this->labTitleName->AutoSize = true;
-			this->labTitleName->Location = System::Drawing::Point(22, 24);
+			resources->ApplyResources(this->labTitleName, L"labTitleName");
 			this->labTitleName->Name = L"labTitleName";
-			this->labTitleName->Size = System::Drawing::Size(65, 12);
-			this->labTitleName->TabIndex = 1;
-			this->labTitleName->Text = L"ソフトタイトル";
 			// 
 			// labRemasterVer
 			// 
-			this->labRemasterVer->AutoSize = true;
-			this->labRemasterVer->Location = System::Drawing::Point(13, 193);
+			resources->ApplyResources(this->labRemasterVer, L"labRemasterVer");
 			this->labRemasterVer->Name = L"labRemasterVer";
-			this->labRemasterVer->Size = System::Drawing::Size(93, 12);
-			this->labRemasterVer->TabIndex = 22;
-			this->labRemasterVer->Text = L"リマスターバージョン";
 			// 
 			// tboxTitleName
 			// 
-			this->tboxTitleName->ImeMode = System::Windows::Forms::ImeMode::NoControl;
-			this->tboxTitleName->Location = System::Drawing::Point(109, 21);
-			this->tboxTitleName->MaxLength = 12;
+			resources->ApplyResources(this->tboxTitleName, L"tboxTitleName");
 			this->tboxTitleName->Name = L"tboxTitleName";
 			this->tboxTitleName->ReadOnly = true;
-			this->tboxTitleName->Size = System::Drawing::Size(100, 19);
-			this->tboxTitleName->TabIndex = 0;
 			// 
 			// labBackup
 			// 
-			this->labBackup->AutoSize = true;
-			this->labBackup->Location = System::Drawing::Point(6, 21);
+			resources->ApplyResources(this->labBackup, L"labBackup");
 			this->labBackup->Name = L"labBackup";
-			this->labBackup->Size = System::Drawing::Size(79, 12);
-			this->labBackup->TabIndex = 12;
-			this->labBackup->Text = L"バックアップメモリ";
 			// 
 			// combBackup
 			// 
 			this->combBackup->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combBackup->FormattingEnabled = true;
-			this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {L"4Kbit EEPROM", L"64Kbit EEPROM", L"512Kbit EEPROM", 
-				L"256Kbit FRAM", L"2Mbit FLASH", L"4Mbit FLASH", L"8Mbit FLASH", L"なし", L"その他"});
-			this->combBackup->Location = System::Drawing::Point(105, 17);
-			this->combBackup->MaxDropDownItems = 9;
+			this->combBackup->Items->AddRange(gcnew cli::array< System::Object^  >(9) {resources->GetString(L"combBackup.Items"), resources->GetString(L"combBackup.Items1"), 
+				resources->GetString(L"combBackup.Items2"), resources->GetString(L"combBackup.Items3"), resources->GetString(L"combBackup.Items4"), 
+				resources->GetString(L"combBackup.Items5"), resources->GetString(L"combBackup.Items6"), resources->GetString(L"combBackup.Items7"), 
+				resources->GetString(L"combBackup.Items8")});
+			resources->ApplyResources(this->combBackup, L"combBackup");
 			this->combBackup->Name = L"combBackup";
-			this->combBackup->Size = System::Drawing::Size(113, 20);
-			this->combBackup->TabIndex = 5;
 			this->combBackup->SelectedIndexChanged += gcnew System::EventHandler(this, &Form1::combBackup_SelectedIndexChanged);
 			// 
 			// tboxBackupOther
 			// 
-			this->tboxBackupOther->Enabled = false;
-			this->tboxBackupOther->Location = System::Drawing::Point(224, 17);
-			this->tboxBackupOther->MaxLength = 20;
+			resources->ApplyResources(this->tboxBackupOther, L"tboxBackupOther");
 			this->tboxBackupOther->Name = L"tboxBackupOther";
-			this->tboxBackupOther->Size = System::Drawing::Size(125, 19);
-			this->tboxBackupOther->TabIndex = 6;
 			// 
 			// gboxCRC
 			// 
@@ -1242,252 +1201,176 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gboxCRC->Controls->Add(this->labHeaderCRC);
 			this->gboxCRC->Controls->Add(this->tboxHeaderCRC);
 			this->gboxCRC->Controls->Add(this->tboxWholeCRC);
-			this->gboxCRC->Location = System::Drawing::Point(26, 285);
+			resources->ApplyResources(this->gboxCRC, L"gboxCRC");
 			this->gboxCRC->Name = L"gboxCRC";
-			this->gboxCRC->Size = System::Drawing::Size(285, 49);
-			this->gboxCRC->TabIndex = 5;
 			this->gboxCRC->TabStop = false;
-			this->gboxCRC->Text = L"CRC";
 			// 
 			// labRomCRC
 			// 
-			this->labRomCRC->AutoSize = true;
-			this->labRomCRC->Location = System::Drawing::Point(146, 20);
+			resources->ApplyResources(this->labRomCRC, L"labRomCRC");
 			this->labRomCRC->Name = L"labRomCRC";
-			this->labRomCRC->Size = System::Drawing::Size(63, 12);
-			this->labRomCRC->TabIndex = 3;
-			this->labRomCRC->Text = L"全体のCRC";
 			// 
 			// labHeaderCRC
 			// 
-			this->labHeaderCRC->AutoSize = true;
-			this->labHeaderCRC->Location = System::Drawing::Point(6, 20);
+			resources->ApplyResources(this->labHeaderCRC, L"labHeaderCRC");
 			this->labHeaderCRC->Name = L"labHeaderCRC";
-			this->labHeaderCRC->Size = System::Drawing::Size(55, 12);
-			this->labHeaderCRC->TabIndex = 2;
-			this->labHeaderCRC->Text = L"ヘッダCRC";
 			// 
 			// tboxHeaderCRC
 			// 
-			this->tboxHeaderCRC->Location = System::Drawing::Point(78, 17);
+			resources->ApplyResources(this->tboxHeaderCRC, L"tboxHeaderCRC");
 			this->tboxHeaderCRC->Name = L"tboxHeaderCRC";
 			this->tboxHeaderCRC->ReadOnly = true;
-			this->tboxHeaderCRC->Size = System::Drawing::Size(55, 19);
-			this->tboxHeaderCRC->TabIndex = 1;
 			// 
 			// tboxWholeCRC
 			// 
-			this->tboxWholeCRC->Location = System::Drawing::Point(215, 17);
+			resources->ApplyResources(this->tboxWholeCRC, L"tboxWholeCRC");
 			this->tboxWholeCRC->Name = L"tboxWholeCRC";
 			this->tboxWholeCRC->ReadOnly = true;
-			this->tboxWholeCRC->Size = System::Drawing::Size(55, 19);
-			this->tboxWholeCRC->TabIndex = 0;
 			// 
 			// labCaption
 			// 
-			this->labCaption->AutoSize = true;
-			this->labCaption->Location = System::Drawing::Point(379, 245);
+			resources->ApplyResources(this->labCaption, L"labCaption");
 			this->labCaption->Name = L"labCaption";
-			this->labCaption->Size = System::Drawing::Size(241, 12);
-			this->labCaption->TabIndex = 8;
-			this->labCaption->Text = L"備考欄 - その他連絡事項があればご記入ください";
 			// 
 			// tboxCaption
 			// 
-			this->tboxCaption->Location = System::Drawing::Point(378, 263);
-			this->tboxCaption->MaxLength = 300;
-			this->tboxCaption->Multiline = true;
+			resources->ApplyResources(this->tboxCaption, L"tboxCaption");
 			this->tboxCaption->Name = L"tboxCaption";
-			this->tboxCaption->Size = System::Drawing::Size(349, 74);
-			this->tboxCaption->TabIndex = 8;
 			// 
 			// labOFLC
 			// 
-			this->labOFLC->AutoSize = true;
-			this->labOFLC->Location = System::Drawing::Point(101, 234);
+			resources->ApplyResources(this->labOFLC, L"labOFLC");
 			this->labOFLC->Name = L"labOFLC";
-			this->labOFLC->Size = System::Drawing::Size(34, 12);
-			this->labOFLC->TabIndex = 33;
-			this->labOFLC->Text = L"OFLC";
 			// 
 			// labPEGI_BBFC
 			// 
-			this->labPEGI_BBFC->AutoSize = true;
-			this->labPEGI_BBFC->Location = System::Drawing::Point(12, 208);
+			resources->ApplyResources(this->labPEGI_BBFC, L"labPEGI_BBFC");
 			this->labPEGI_BBFC->Name = L"labPEGI_BBFC";
-			this->labPEGI_BBFC->Size = System::Drawing::Size(134, 12);
-			this->labPEGI_BBFC->TabIndex = 32;
-			this->labPEGI_BBFC->Text = L"PEGI(General) and BBFC";
 			// 
 			// labPEGI_PRT
 			// 
-			this->labPEGI_PRT->AutoSize = true;
-			this->labPEGI_PRT->Location = System::Drawing::Point(69, 182);
+			resources->ApplyResources(this->labPEGI_PRT, L"labPEGI_PRT");
 			this->labPEGI_PRT->Name = L"labPEGI_PRT";
-			this->labPEGI_PRT->Size = System::Drawing::Size(76, 12);
-			this->labPEGI_PRT->TabIndex = 31;
-			this->labPEGI_PRT->Text = L"PEGI Portugal";
 			// 
 			// labPEGI
 			// 
-			this->labPEGI->AutoSize = true;
-			this->labPEGI->Location = System::Drawing::Point(69, 156);
+			resources->ApplyResources(this->labPEGI, L"labPEGI");
 			this->labPEGI->Name = L"labPEGI";
-			this->labPEGI->Size = System::Drawing::Size(77, 12);
-			this->labPEGI->TabIndex = 30;
-			this->labPEGI->Text = L"PEGI(General)";
 			// 
 			// labUSK
 			// 
-			this->labUSK->AutoSize = true;
-			this->labUSK->Location = System::Drawing::Point(102, 130);
+			resources->ApplyResources(this->labUSK, L"labUSK");
 			this->labUSK->Name = L"labUSK";
-			this->labUSK->Size = System::Drawing::Size(27, 12);
-			this->labUSK->TabIndex = 29;
-			this->labUSK->Text = L"USK";
 			// 
 			// labESRB
 			// 
-			this->labESRB->AutoSize = true;
-			this->labESRB->Location = System::Drawing::Point(102, 104);
+			resources->ApplyResources(this->labESRB, L"labESRB");
 			this->labESRB->Name = L"labESRB";
-			this->labESRB->Size = System::Drawing::Size(35, 12);
-			this->labESRB->TabIndex = 28;
-			this->labESRB->Text = L"ESRB";
 			// 
 			// labCERO
 			// 
-			this->labCERO->AutoSize = true;
-			this->labCERO->Location = System::Drawing::Point(101, 78);
+			resources->ApplyResources(this->labCERO, L"labCERO");
 			this->labCERO->Name = L"labCERO";
-			this->labCERO->Size = System::Drawing::Size(36, 12);
-			this->labCERO->TabIndex = 27;
-			this->labCERO->Text = L"CERO";
 			// 
 			// combOFLC
 			// 
 			this->combOFLC->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combOFLC->FormattingEnabled = true;
-			this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"G", L"PG", L"M", L"MA15+", L"審査中"});
-			this->combOFLC->Location = System::Drawing::Point(152, 232);
+			this->combOFLC->Items->AddRange(gcnew cli::array< System::Object^  >(5) {resources->GetString(L"combOFLC.Items"), resources->GetString(L"combOFLC.Items1"), 
+				resources->GetString(L"combOFLC.Items2"), resources->GetString(L"combOFLC.Items3"), resources->GetString(L"combOFLC.Items4")});
+			resources->ApplyResources(this->combOFLC, L"combOFLC");
 			this->combOFLC->Name = L"combOFLC";
-			this->combOFLC->Size = System::Drawing::Size(204, 20);
-			this->combOFLC->TabIndex = 18;
 			// 
 			// combPEGI_BBFC
 			// 
 			this->combPEGI_BBFC->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combPEGI_BBFC->FormattingEnabled = true;
-			this->combPEGI_BBFC->Items->AddRange(gcnew cli::array< System::Object^  >(10) {L"年齢制限なし(全年齢)", L"3歳以上", L"4歳以上推奨", L"7歳以上", 
-				L"8歳以上推奨", L"12歳以上", L"15歳以上", L"16歳以上", L"18歳以上", L"審査中"});
-			this->combPEGI_BBFC->Location = System::Drawing::Point(152, 205);
-			this->combPEGI_BBFC->MaxDropDownItems = 10;
+			this->combPEGI_BBFC->Items->AddRange(gcnew cli::array< System::Object^  >(10) {resources->GetString(L"combPEGI_BBFC.Items"), 
+				resources->GetString(L"combPEGI_BBFC.Items1"), resources->GetString(L"combPEGI_BBFC.Items2"), resources->GetString(L"combPEGI_BBFC.Items3"), 
+				resources->GetString(L"combPEGI_BBFC.Items4"), resources->GetString(L"combPEGI_BBFC.Items5"), resources->GetString(L"combPEGI_BBFC.Items6"), 
+				resources->GetString(L"combPEGI_BBFC.Items7"), resources->GetString(L"combPEGI_BBFC.Items8"), resources->GetString(L"combPEGI_BBFC.Items9")});
+			resources->ApplyResources(this->combPEGI_BBFC, L"combPEGI_BBFC");
 			this->combPEGI_BBFC->Name = L"combPEGI_BBFC";
-			this->combPEGI_BBFC->Size = System::Drawing::Size(204, 20);
-			this->combPEGI_BBFC->TabIndex = 15;
 			// 
 			// combPEGI_PRT
 			// 
 			this->combPEGI_PRT->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combPEGI_PRT->FormattingEnabled = true;
-			this->combPEGI_PRT->Items->AddRange(gcnew cli::array< System::Object^  >(7) {L"年齢制限なし(全年齢)", L"4歳以上", L"6歳以上", L"12歳以上", 
-				L"16歳以上", L"18歳以上", L"審査中"});
-			this->combPEGI_PRT->Location = System::Drawing::Point(152, 179);
+			this->combPEGI_PRT->Items->AddRange(gcnew cli::array< System::Object^  >(7) {resources->GetString(L"combPEGI_PRT.Items"), 
+				resources->GetString(L"combPEGI_PRT.Items1"), resources->GetString(L"combPEGI_PRT.Items2"), resources->GetString(L"combPEGI_PRT.Items3"), 
+				resources->GetString(L"combPEGI_PRT.Items4"), resources->GetString(L"combPEGI_PRT.Items5"), resources->GetString(L"combPEGI_PRT.Items6")});
+			resources->ApplyResources(this->combPEGI_PRT, L"combPEGI_PRT");
 			this->combPEGI_PRT->Name = L"combPEGI_PRT";
-			this->combPEGI_PRT->Size = System::Drawing::Size(204, 20);
-			this->combPEGI_PRT->TabIndex = 12;
 			// 
 			// combPEGI
 			// 
 			this->combPEGI->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combPEGI->FormattingEnabled = true;
-			this->combPEGI->Items->AddRange(gcnew cli::array< System::Object^  >(7) {L"年齢制限なし(全年齢)", L"3歳以上", L"7歳以上", L"12歳以上", L"16歳以上", 
-				L"18歳以上", L"審査中"});
-			this->combPEGI->Location = System::Drawing::Point(152, 153);
+			this->combPEGI->Items->AddRange(gcnew cli::array< System::Object^  >(7) {resources->GetString(L"combPEGI.Items"), resources->GetString(L"combPEGI.Items1"), 
+				resources->GetString(L"combPEGI.Items2"), resources->GetString(L"combPEGI.Items3"), resources->GetString(L"combPEGI.Items4"), 
+				resources->GetString(L"combPEGI.Items5"), resources->GetString(L"combPEGI.Items6")});
+			resources->ApplyResources(this->combPEGI, L"combPEGI");
 			this->combPEGI->Name = L"combPEGI";
-			this->combPEGI->Size = System::Drawing::Size(204, 20);
-			this->combPEGI->TabIndex = 9;
 			// 
 			// combUSK
 			// 
 			this->combUSK->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combUSK->FormattingEnabled = true;
-			this->combUSK->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"年齢制限なし", L"6歳以上", L"12歳以上", L"16歳以上", L"青少年には不適切", 
-				L"審査中"});
-			this->combUSK->Location = System::Drawing::Point(152, 127);
+			this->combUSK->Items->AddRange(gcnew cli::array< System::Object^  >(6) {resources->GetString(L"combUSK.Items"), resources->GetString(L"combUSK.Items1"), 
+				resources->GetString(L"combUSK.Items2"), resources->GetString(L"combUSK.Items3"), resources->GetString(L"combUSK.Items4"), resources->GetString(L"combUSK.Items5")});
+			resources->ApplyResources(this->combUSK, L"combUSK");
 			this->combUSK->Name = L"combUSK";
-			this->combUSK->Size = System::Drawing::Size(204, 20);
-			this->combUSK->TabIndex = 6;
 			// 
 			// combESRB
 			// 
 			this->combESRB->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combESRB->FormattingEnabled = true;
-			this->combESRB->Items->AddRange(gcnew cli::array< System::Object^  >(7) {L"年齢制限なし(全年齢)", L"EC (3歳以上)", L"E (6歳以上)", L"E10+ (10歳以上)", 
-				L"T (13歳以上)", L"M (17歳以上)", L"審査中"});
-			this->combESRB->Location = System::Drawing::Point(152, 101);
+			this->combESRB->Items->AddRange(gcnew cli::array< System::Object^  >(7) {resources->GetString(L"combESRB.Items"), resources->GetString(L"combESRB.Items1"), 
+				resources->GetString(L"combESRB.Items2"), resources->GetString(L"combESRB.Items3"), resources->GetString(L"combESRB.Items4"), 
+				resources->GetString(L"combESRB.Items5"), resources->GetString(L"combESRB.Items6")});
+			resources->ApplyResources(this->combESRB, L"combESRB");
 			this->combESRB->Name = L"combESRB";
-			this->combESRB->Size = System::Drawing::Size(204, 20);
-			this->combESRB->TabIndex = 3;
 			// 
 			// combCERO
 			// 
 			this->combCERO->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combCERO->FormattingEnabled = true;
-			this->combCERO->Items->AddRange(gcnew cli::array< System::Object^  >(6) {L"A (全年齢)", L"B (12歳以上)", L"C (15歳以上)", L"D (17歳以上)", 
-				L"Z (18歳以上)", L"審査中"});
-			this->combCERO->Location = System::Drawing::Point(152, 75);
+			this->combCERO->Items->AddRange(gcnew cli::array< System::Object^  >(6) {resources->GetString(L"combCERO.Items"), resources->GetString(L"combCERO.Items1"), 
+				resources->GetString(L"combCERO.Items2"), resources->GetString(L"combCERO.Items3"), resources->GetString(L"combCERO.Items4"), 
+				resources->GetString(L"combCERO.Items5")});
+			resources->ApplyResources(this->combCERO, L"combCERO");
 			this->combCERO->Name = L"combCERO";
-			this->combCERO->Size = System::Drawing::Size(204, 20);
-			this->combCERO->TabIndex = 0;
 			// 
 			// labParentalRating
 			// 
-			this->labParentalRating->AutoSize = true;
-			this->labParentalRating->Location = System::Drawing::Point(201, 60);
+			resources->ApplyResources(this->labParentalRating, L"labParentalRating");
 			this->labParentalRating->Name = L"labParentalRating";
-			this->labParentalRating->Size = System::Drawing::Size(82, 12);
-			this->labParentalRating->TabIndex = 2;
-			this->labParentalRating->Text = L"レーティング情報";
 			// 
 			// labRegion
 			// 
-			this->labRegion->AutoSize = true;
-			this->labRegion->Location = System::Drawing::Point(98, 24);
+			resources->ApplyResources(this->labRegion, L"labRegion");
 			this->labRegion->Name = L"labRegion";
-			this->labRegion->Size = System::Drawing::Size(47, 12);
-			this->labRegion->TabIndex = 37;
-			this->labRegion->Text = L"リージョン";
 			// 
 			// cboxIsEULA
 			// 
-			this->cboxIsEULA->AutoSize = true;
-			this->cboxIsEULA->Location = System::Drawing::Point(8, 20);
+			resources->ApplyResources(this->cboxIsEULA, L"cboxIsEULA");
 			this->cboxIsEULA->Name = L"cboxIsEULA";
-			this->cboxIsEULA->Size = System::Drawing::Size(157, 16);
-			this->cboxIsEULA->TabIndex = 0;
-			this->cboxIsEULA->Text = L"EULAへの同意を必要とする";
 			this->cboxIsEULA->UseVisualStyleBackColor = true;
 			// 
 			// combRegion
 			// 
 			this->combRegion->DropDownStyle = System::Windows::Forms::ComboBoxStyle::DropDownList;
 			this->combRegion->FormattingEnabled = true;
-			this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5) {L"日本のみ", L"米国のみ", L"欧州のみ", L"豪州のみ", L"欧州および豪州"});
-			this->combRegion->Location = System::Drawing::Point(152, 21);
+			this->combRegion->Items->AddRange(gcnew cli::array< System::Object^  >(5) {resources->GetString(L"combRegion.Items"), resources->GetString(L"combRegion.Items1"), 
+				resources->GetString(L"combRegion.Items2"), resources->GetString(L"combRegion.Items3"), resources->GetString(L"combRegion.Items4")});
+			resources->ApplyResources(this->combRegion, L"combRegion");
 			this->combRegion->Name = L"combRegion";
-			this->combRegion->Size = System::Drawing::Size(204, 20);
-			this->combRegion->TabIndex = 36;
 			this->combRegion->SelectedIndexChanged += gcnew System::EventHandler(this, &Form1::combRegion_SelectedIndexChanged);
 			// 
 			// cboxIsInputPerson2
 			// 
-			this->cboxIsInputPerson2->AutoSize = true;
-			this->cboxIsInputPerson2->Location = System::Drawing::Point(392, 66);
+			resources->ApplyResources(this->cboxIsInputPerson2, L"cboxIsInputPerson2");
 			this->cboxIsInputPerson2->Name = L"cboxIsInputPerson2";
-			this->cboxIsInputPerson2->Size = System::Drawing::Size(150, 16);
-			this->cboxIsInputPerson2->TabIndex = 7;
-			this->cboxIsInputPerson2->Text = L"担当者2を入力する(任意)";
 			this->cboxIsInputPerson2->UseVisualStyleBackColor = true;
 			this->cboxIsInputPerson2->CheckedChanged += gcnew System::EventHandler(this, &Form1::cboxIsInputPerson2_CheckedChanged);
 			// 
@@ -1512,176 +1395,104 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gboxPerson2->Controls->Add(this->labFurigana2);
 			this->gboxPerson2->Controls->Add(this->labPerson2);
 			this->gboxPerson2->Controls->Add(this->labCompany2);
-			this->gboxPerson2->Enabled = false;
-			this->gboxPerson2->Location = System::Drawing::Point(377, 88);
+			resources->ApplyResources(this->gboxPerson2, L"gboxPerson2");
 			this->gboxPerson2->Name = L"gboxPerson2";
-			this->gboxPerson2->Size = System::Drawing::Size(347, 234);
-			this->gboxPerson2->TabIndex = 14;
 			this->gboxPerson2->TabStop = false;
-			this->gboxPerson2->Text = L"担当者2";
 			// 
 			// labArbit4
 			// 
-			this->labArbit4->AutoSize = true;
-			this->labArbit4->Location = System::Drawing::Point(230, 207);
+			resources->ApplyResources(this->labArbit4, L"labArbit4");
 			this->labArbit4->Name = L"labArbit4";
-			this->labArbit4->Size = System::Drawing::Size(37, 12);
-			this->labArbit4->TabIndex = 15;
-			this->labArbit4->Text = L"(任意)";
 			// 
 			// labArbit3
 			// 
-			this->labArbit3->AutoSize = true;
-			this->labArbit3->Location = System::Drawing::Point(230, 156);
+			resources->ApplyResources(this->labArbit3, L"labArbit3");
 			this->labArbit3->Name = L"labArbit3";
-			this->labArbit3->Size = System::Drawing::Size(37, 12);
-			this->labArbit3->TabIndex = 13;
-			this->labArbit3->Text = L"(任意)";
 			// 
 			// labNTSC2Sur
 			// 
-			this->labNTSC2Sur->AutoSize = true;
-			this->labNTSC2Sur->Location = System::Drawing::Point(18, 214);
+			resources->ApplyResources(this->labNTSC2Sur, L"labNTSC2Sur");
 			this->labNTSC2Sur->Name = L"labNTSC2Sur";
-			this->labNTSC2Sur->Size = System::Drawing::Size(44, 12);
-			this->labNTSC2Sur->TabIndex = 12;
-			this->labNTSC2Sur->Text = L"User ID";
 			// 
 			// tboxNTSC2
 			// 
-			this->tboxNTSC2->Location = System::Drawing::Point(66, 200);
-			this->tboxNTSC2->MaxLength = 50;
+			resources->ApplyResources(this->tboxNTSC2, L"tboxNTSC2");
 			this->tboxNTSC2->Name = L"tboxNTSC2";
-			this->tboxNTSC2->Size = System::Drawing::Size(158, 19);
-			this->tboxNTSC2->TabIndex = 15;
 			// 
 			// labFax2
 			// 
-			this->labFax2->AutoSize = true;
-			this->labFax2->Location = System::Drawing::Point(23, 152);
+			resources->ApplyResources(this->labFax2, L"labFax2");
 			this->labFax2->Name = L"labFax2";
-			this->labFax2->Size = System::Drawing::Size(27, 12);
-			this->labFax2->TabIndex = 4;
-			this->labFax2->Text = L"FAX";
 			// 
 			// labNTSC2Pre
 			// 
-			this->labNTSC2Pre->AutoSize = true;
-			this->labNTSC2Pre->Location = System::Drawing::Point(18, 200);
+			resources->ApplyResources(this->labNTSC2Pre, L"labNTSC2Pre");
 			this->labNTSC2Pre->Name = L"labNTSC2Pre";
-			this->labNTSC2Pre->Size = System::Drawing::Size(35, 12);
-			this->labNTSC2Pre->TabIndex = 11;
-			this->labNTSC2Pre->Text = L"NTSC";
 			// 
 			// tboxFax2
 			// 
-			this->tboxFax2->Location = System::Drawing::Point(66, 149);
-			this->tboxFax2->MaxLength = 20;
+			resources->ApplyResources(this->tboxFax2, L"tboxFax2");
 			this->tboxFax2->Name = L"tboxFax2";
-			this->tboxFax2->Size = System::Drawing::Size(158, 19);
-			this->tboxFax2->TabIndex = 13;
 			// 
 			// tboxMail2
 			// 
-			this->tboxMail2->Location = System::Drawing::Point(66, 175);
-			this->tboxMail2->MaxLength = 50;
+			resources->ApplyResources(this->tboxMail2, L"tboxMail2");
 			this->tboxMail2->Name = L"tboxMail2";
-			this->tboxMail2->Size = System::Drawing::Size(268, 19);
-			this->tboxMail2->TabIndex = 14;
 			// 
 			// tboxTel2
 			// 
-			this->tboxTel2->Location = System::Drawing::Point(66, 125);
-			this->tboxTel2->MaxLength = 20;
+			resources->ApplyResources(this->tboxTel2, L"tboxTel2");
 			this->tboxTel2->Name = L"tboxTel2";
-			this->tboxTel2->Size = System::Drawing::Size(158, 19);
-			this->tboxTel2->TabIndex = 12;
 			// 
 			// tboxFurigana2
 			// 
-			this->tboxFurigana2->Location = System::Drawing::Point(66, 100);
-			this->tboxFurigana2->MaxLength = 50;
+			resources->ApplyResources(this->tboxFurigana2, L"tboxFurigana2");
 			this->tboxFurigana2->Name = L"tboxFurigana2";
-			this->tboxFurigana2->Size = System::Drawing::Size(268, 19);
-			this->tboxFurigana2->TabIndex = 11;
 			// 
 			// tboxPerson2
 			// 
-			this->tboxPerson2->Location = System::Drawing::Point(66, 75);
-			this->tboxPerson2->MaxLength = 50;
+			resources->ApplyResources(this->tboxPerson2, L"tboxPerson2");
 			this->tboxPerson2->Name = L"tboxPerson2";
-			this->tboxPerson2->Size = System::Drawing::Size(268, 19);
-			this->tboxPerson2->TabIndex = 10;
 			// 
 			// tboxDepart2
 			// 
-			this->tboxDepart2->Location = System::Drawing::Point(66, 50);
-			this->tboxDepart2->MaxLength = 50;
+			resources->ApplyResources(this->tboxDepart2, L"tboxDepart2");
 			this->tboxDepart2->Name = L"tboxDepart2";
-			this->tboxDepart2->Size = System::Drawing::Size(268, 19);
-			this->tboxDepart2->TabIndex = 9;
 			// 
 			// labDepart2
 			// 
-			this->labDepart2->AutoSize = true;
-			this->labDepart2->Location = System::Drawing::Point(12, 53);
+			resources->ApplyResources(this->labDepart2, L"labDepart2");
 			this->labDepart2->Name = L"labDepart2";
-			this->labDepart2->Size = System::Drawing::Size(41, 12);
-			this->labDepart2->TabIndex = 7;
-			this->labDepart2->Text = L"部署名";
 			// 
 			// tboxCompany2
 			// 
-			this->tboxCompany2->Location = System::Drawing::Point(66, 25);
-			this->tboxCompany2->MaxLength = 50;
+			resources->ApplyResources(this->tboxCompany2, L"tboxCompany2");
 			this->tboxCompany2->Name = L"tboxCompany2";
-			this->tboxCompany2->Size = System::Drawing::Size(268, 19);
-			this->tboxCompany2->TabIndex = 8;
 			// 
 			// labMail2
 			// 
-			this->labMail2->AutoSize = true;
-			this->labMail2->Location = System::Drawing::Point(18, 178);
+			resources->ApplyResources(this->labMail2, L"labMail2");
 			this->labMail2->Name = L"labMail2";
-			this->labMail2->Size = System::Drawing::Size(38, 12);
-			this->labMail2->TabIndex = 5;
-			this->labMail2->Text = L"e-mail";
 			// 
 			// labTel2
 			// 
-			this->labTel2->AutoSize = true;
-			this->labTel2->Location = System::Drawing::Point(23, 128);
+			resources->ApplyResources(this->labTel2, L"labTel2");
 			this->labTel2->Name = L"labTel2";
-			this->labTel2->Size = System::Drawing::Size(25, 12);
-			this->labTel2->TabIndex = 3;
-			this->labTel2->Text = L"TEL";
 			// 
 			// labFurigana2
 			// 
-			this->labFurigana2->AutoSize = true;
-			this->labFurigana2->Location = System::Drawing::Point(9, 103);
+			resources->ApplyResources(this->labFurigana2, L"labFurigana2");
 			this->labFurigana2->Name = L"labFurigana2";
-			this->labFurigana2->Size = System::Drawing::Size(51, 12);
-			this->labFurigana2->TabIndex = 2;
-			this->labFurigana2->Text = L"(ふりがな)";
 			// 
 			// labPerson2
 			// 
-			this->labPerson2->AutoSize = true;
-			this->labPerson2->Location = System::Drawing::Point(12, 78);
+			resources->ApplyResources(this->labPerson2, L"labPerson2");
 			this->labPerson2->Name = L"labPerson2";
-			this->labPerson2->Size = System::Drawing::Size(38, 12);
-			this->labPerson2->TabIndex = 1;
-			this->labPerson2->Text = L"ご氏名";
 			// 
 			// labCompany2
 			// 
-			this->labCompany2->AutoSize = true;
-			this->labCompany2->Location = System::Drawing::Point(12, 28);
+			resources->ApplyResources(this->labCompany2, L"labCompany2");
 			this->labCompany2->Name = L"labCompany2";
-			this->labCompany2->Size = System::Drawing::Size(41, 12);
-			this->labCompany2->TabIndex = 0;
-			this->labCompany2->Text = L"貴社名";
 			// 
 			// gboxPerson1
 			// 
@@ -1704,239 +1515,146 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gboxPerson1->Controls->Add(this->labFurigana1);
 			this->gboxPerson1->Controls->Add(this->labPerson1);
 			this->gboxPerson1->Controls->Add(this->labCompany1);
-			this->gboxPerson1->Location = System::Drawing::Point(17, 88);
+			resources->ApplyResources(this->gboxPerson1, L"gboxPerson1");
 			this->gboxPerson1->Name = L"gboxPerson1";
-			this->gboxPerson1->Size = System::Drawing::Size(344, 234);
-			this->gboxPerson1->TabIndex = 8;
 			this->gboxPerson1->TabStop = false;
-			this->gboxPerson1->Text = L"担当者1";
 			// 
 			// labArbit2
 			// 
-			this->labArbit2->AutoSize = true;
-			this->labArbit2->Location = System::Drawing::Point(219, 207);
+			resources->ApplyResources(this->labArbit2, L"labArbit2");
 			this->labArbit2->Name = L"labArbit2";
-			this->labArbit2->Size = System::Drawing::Size(37, 12);
-			this->labArbit2->TabIndex = 12;
-			this->labArbit2->Text = L"(任意)";
 			// 
 			// labArbit1
 			// 
-			this->labArbit1->AutoSize = true;
-			this->labArbit1->Location = System::Drawing::Point(219, 156);
+			resources->ApplyResources(this->labArbit1, L"labArbit1");
 			this->labArbit1->Name = L"labArbit1";
-			this->labArbit1->Size = System::Drawing::Size(37, 12);
-			this->labArbit1->TabIndex = 11;
-			this->labArbit1->Text = L"(任意)";
 			// 
 			// labNTSC1Sur
 			// 
-			this->labNTSC1Sur->AutoSize = true;
-			this->labNTSC1Sur->Location = System::Drawing::Point(18, 214);
+			resources->ApplyResources(this->labNTSC1Sur, L"labNTSC1Sur");
 			this->labNTSC1Sur->Name = L"labNTSC1Sur";
-			this->labNTSC1Sur->Size = System::Drawing::Size(44, 12);
-			this->labNTSC1Sur->TabIndex = 10;
-			this->labNTSC1Sur->Text = L"User ID";
 			// 
 			// labFax1
 			// 
-			this->labFax1->AutoSize = true;
-			this->labFax1->Location = System::Drawing::Point(23, 152);
+			resources->ApplyResources(this->labFax1, L"labFax1");
 			this->labFax1->Name = L"labFax1";
-			this->labFax1->Size = System::Drawing::Size(27, 12);
-			this->labFax1->TabIndex = 4;
-			this->labFax1->Text = L"FAX";
 			// 
 			// labNTSC1Pre
 			// 
-			this->labNTSC1Pre->AutoSize = true;
-			this->labNTSC1Pre->Location = System::Drawing::Point(18, 200);
+			resources->ApplyResources(this->labNTSC1Pre, L"labNTSC1Pre");
 			this->labNTSC1Pre->Name = L"labNTSC1Pre";
-			this->labNTSC1Pre->Size = System::Drawing::Size(35, 12);
-			this->labNTSC1Pre->TabIndex = 9;
-			this->labNTSC1Pre->Text = L"NTSC";
 			// 
 			// tboxNTSC1
 			// 
-			this->tboxNTSC1->Location = System::Drawing::Point(66, 200);
-			this->tboxNTSC1->MaxLength = 30;
+			resources->ApplyResources(this->tboxNTSC1, L"tboxNTSC1");
 			this->tboxNTSC1->Name = L"tboxNTSC1";
-			this->tboxNTSC1->Size = System::Drawing::Size(147, 19);
-			this->tboxNTSC1->TabIndex = 8;
 			// 
 			// tboxFax1
 			// 
-			this->tboxFax1->Location = System::Drawing::Point(66, 149);
-			this->tboxFax1->MaxLength = 15;
+			resources->ApplyResources(this->tboxFax1, L"tboxFax1");
 			this->tboxFax1->Name = L"tboxFax1";
-			this->tboxFax1->Size = System::Drawing::Size(147, 19);
-			this->tboxFax1->TabIndex = 5;
 			// 
 			// tboxMail1
 			// 
-			this->tboxMail1->Location = System::Drawing::Point(66, 175);
-			this->tboxMail1->MaxLength = 50;
+			resources->ApplyResources(this->tboxMail1, L"tboxMail1");
 			this->tboxMail1->Name = L"tboxMail1";
-			this->tboxMail1->Size = System::Drawing::Size(261, 19);
-			this->tboxMail1->TabIndex = 6;
 			// 
 			// tboxTel1
 			// 
-			this->tboxTel1->Location = System::Drawing::Point(66, 125);
-			this->tboxTel1->MaxLength = 15;
+			resources->ApplyResources(this->tboxTel1, L"tboxTel1");
 			this->tboxTel1->Name = L"tboxTel1";
-			this->tboxTel1->Size = System::Drawing::Size(147, 19);
-			this->tboxTel1->TabIndex = 4;
 			// 
 			// tboxFurigana1
 			// 
-			this->tboxFurigana1->Location = System::Drawing::Point(66, 100);
-			this->tboxFurigana1->MaxLength = 15;
+			resources->ApplyResources(this->tboxFurigana1, L"tboxFurigana1");
 			this->tboxFurigana1->Name = L"tboxFurigana1";
-			this->tboxFurigana1->Size = System::Drawing::Size(261, 19);
-			this->tboxFurigana1->TabIndex = 3;
 			// 
 			// tboxPerson1
 			// 
-			this->tboxPerson1->Location = System::Drawing::Point(66, 75);
-			this->tboxPerson1->MaxLength = 15;
+			resources->ApplyResources(this->tboxPerson1, L"tboxPerson1");
 			this->tboxPerson1->Name = L"tboxPerson1";
-			this->tboxPerson1->Size = System::Drawing::Size(261, 19);
-			this->tboxPerson1->TabIndex = 2;
 			// 
 			// tboxDepart1
 			// 
-			this->tboxDepart1->Location = System::Drawing::Point(66, 50);
-			this->tboxDepart1->MaxLength = 25;
+			resources->ApplyResources(this->tboxDepart1, L"tboxDepart1");
 			this->tboxDepart1->Name = L"tboxDepart1";
-			this->tboxDepart1->Size = System::Drawing::Size(261, 19);
-			this->tboxDepart1->TabIndex = 1;
 			// 
 			// labDepart1
 			// 
-			this->labDepart1->AutoSize = true;
-			this->labDepart1->Location = System::Drawing::Point(12, 53);
+			resources->ApplyResources(this->labDepart1, L"labDepart1");
 			this->labDepart1->Name = L"labDepart1";
-			this->labDepart1->Size = System::Drawing::Size(41, 12);
-			this->labDepart1->TabIndex = 7;
-			this->labDepart1->Text = L"部署名";
 			// 
 			// tboxCompany1
 			// 
-			this->tboxCompany1->Location = System::Drawing::Point(66, 25);
-			this->tboxCompany1->MaxLength = 25;
+			resources->ApplyResources(this->tboxCompany1, L"tboxCompany1");
 			this->tboxCompany1->Name = L"tboxCompany1";
-			this->tboxCompany1->Size = System::Drawing::Size(261, 19);
-			this->tboxCompany1->TabIndex = 0;
 			// 
 			// labMail1
 			// 
-			this->labMail1->AutoSize = true;
-			this->labMail1->Location = System::Drawing::Point(18, 178);
+			resources->ApplyResources(this->labMail1, L"labMail1");
 			this->labMail1->Name = L"labMail1";
-			this->labMail1->Size = System::Drawing::Size(38, 12);
-			this->labMail1->TabIndex = 5;
-			this->labMail1->Text = L"e-mail";
 			// 
 			// labTel1
 			// 
-			this->labTel1->AutoSize = true;
-			this->labTel1->Location = System::Drawing::Point(23, 128);
+			resources->ApplyResources(this->labTel1, L"labTel1");
 			this->labTel1->Name = L"labTel1";
-			this->labTel1->Size = System::Drawing::Size(25, 12);
-			this->labTel1->TabIndex = 3;
-			this->labTel1->Text = L"TEL";
 			// 
 			// labFurigana1
 			// 
-			this->labFurigana1->AutoSize = true;
-			this->labFurigana1->Location = System::Drawing::Point(9, 103);
+			resources->ApplyResources(this->labFurigana1, L"labFurigana1");
 			this->labFurigana1->Name = L"labFurigana1";
-			this->labFurigana1->Size = System::Drawing::Size(51, 12);
-			this->labFurigana1->TabIndex = 2;
-			this->labFurigana1->Text = L"(ふりがな)";
 			// 
 			// labPerson1
 			// 
-			this->labPerson1->AutoSize = true;
-			this->labPerson1->Location = System::Drawing::Point(12, 78);
+			resources->ApplyResources(this->labPerson1, L"labPerson1");
 			this->labPerson1->Name = L"labPerson1";
-			this->labPerson1->Size = System::Drawing::Size(38, 12);
-			this->labPerson1->TabIndex = 1;
-			this->labPerson1->Text = L"ご氏名";
 			// 
 			// labCompany1
 			// 
-			this->labCompany1->AutoSize = true;
-			this->labCompany1->Location = System::Drawing::Point(12, 28);
+			resources->ApplyResources(this->labCompany1, L"labCompany1");
 			this->labCompany1->Name = L"labCompany1";
-			this->labCompany1->Size = System::Drawing::Size(41, 12);
-			this->labCompany1->TabIndex = 0;
-			this->labCompany1->Text = L"貴社名";
 			// 
 			// tboxProductCode2
 			// 
-			this->tboxProductCode2->Location = System::Drawing::Point(175, 81);
-			this->tboxProductCode2->MaxLength = 4;
+			resources->ApplyResources(this->tboxProductCode2, L"tboxProductCode2");
 			this->tboxProductCode2->Name = L"tboxProductCode2";
-			this->tboxProductCode2->Size = System::Drawing::Size(45, 19);
-			this->tboxProductCode2->TabIndex = 2;
 			// 
 			// tboxProductCode1
 			// 
-			this->tboxProductCode1->Location = System::Drawing::Point(140, 81);
-			this->tboxProductCode1->MaxLength = 1;
+			resources->ApplyResources(this->tboxProductCode1, L"tboxProductCode1");
 			this->tboxProductCode1->Name = L"tboxProductCode1";
-			this->tboxProductCode1->Size = System::Drawing::Size(18, 19);
-			this->tboxProductCode1->TabIndex = 1;
 			// 
 			// tboxProductName
 			// 
-			this->tboxProductName->ImeMode = System::Windows::Forms::ImeMode::NoControl;
-			this->tboxProductName->Location = System::Drawing::Point(106, 53);
-			this->tboxProductName->MaxLength = 30;
+			resources->ApplyResources(this->tboxProductName, L"tboxProductName");
 			this->tboxProductName->Name = L"tboxProductName";
-			this->tboxProductName->Size = System::Drawing::Size(256, 19);
-			this->tboxProductName->TabIndex = 0;
 			// 
 			// labProductCode2
 			// 
-			this->labProductCode2->AutoSize = true;
-			this->labProductCode2->Location = System::Drawing::Point(164, 84);
+			resources->ApplyResources(this->labProductCode2, L"labProductCode2");
 			this->labProductCode2->Name = L"labProductCode2";
-			this->labProductCode2->Size = System::Drawing::Size(11, 12);
-			this->labProductCode2->TabIndex = 33;
-			this->labProductCode2->Text = L"-";
 			// 
 			// labProductCode1
 			// 
-			this->labProductCode1->AutoSize = true;
-			this->labProductCode1->Location = System::Drawing::Point(104, 84);
+			resources->ApplyResources(this->labProductCode1, L"labProductCode1");
 			this->labProductCode1->Name = L"labProductCode1";
-			this->labProductCode1->Size = System::Drawing::Size(37, 12);
-			this->labProductCode1->TabIndex = 32;
-			this->labProductCode1->Text = L"TWL -";
 			// 
 			// dateSubmit
 			// 
 			this->dateSubmit->Format = System::Windows::Forms::DateTimePickerFormat::Short;
-			this->dateSubmit->Location = System::Drawing::Point(106, 140);
+			resources->ApplyResources(this->dateSubmit, L"dateSubmit");
 			this->dateSubmit->MaxDate = System::DateTime(2099, 12, 31, 0, 0, 0, 0);
 			this->dateSubmit->MinDate = System::DateTime(2008, 1, 1, 0, 0, 0, 0);
 			this->dateSubmit->Name = L"dateSubmit";
-			this->dateSubmit->Size = System::Drawing::Size(103, 19);
-			this->dateSubmit->TabIndex = 4;
 			this->dateSubmit->Value = System::DateTime(2008, 7, 30, 17, 43, 18, 405);
 			// 
 			// dateRelease
 			// 
 			this->dateRelease->Format = System::Windows::Forms::DateTimePickerFormat::Short;
-			this->dateRelease->Location = System::Drawing::Point(106, 111);
+			resources->ApplyResources(this->dateRelease, L"dateRelease");
 			this->dateRelease->MaxDate = System::DateTime(2099, 12, 31, 0, 0, 0, 0);
 			this->dateRelease->MinDate = System::DateTime(2008, 1, 1, 0, 0, 0, 0);
 			this->dateRelease->Name = L"dateRelease";
-			this->dateRelease->Size = System::Drawing::Size(103, 19);
-			this->dateRelease->TabIndex = 3;
 			this->dateRelease->Value = System::DateTime(2008, 7, 30, 17, 43, 18, 420);
 			// 
 			// gboxUsage
@@ -1946,260 +1664,156 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gboxUsage->Controls->Add(this->rUsageDst);
 			this->gboxUsage->Controls->Add(this->rUsageSample);
 			this->gboxUsage->Controls->Add(this->rUsageSale);
-			this->gboxUsage->Location = System::Drawing::Point(16, 258);
+			resources->ApplyResources(this->gboxUsage, L"gboxUsage");
 			this->gboxUsage->Name = L"gboxUsage";
-			this->gboxUsage->Size = System::Drawing::Size(346, 79);
-			this->gboxUsage->TabIndex = 6;
 			this->gboxUsage->TabStop = false;
-			this->gboxUsage->Text = L"用途";
 			// 
 			// tboxUsageOther
 			// 
-			this->tboxUsageOther->Enabled = false;
-			this->tboxUsageOther->Location = System::Drawing::Point(71, 47);
-			this->tboxUsageOther->MaxLength = 25;
+			resources->ApplyResources(this->tboxUsageOther, L"tboxUsageOther");
 			this->tboxUsageOther->Name = L"tboxUsageOther";
-			this->tboxUsageOther->Size = System::Drawing::Size(250, 19);
-			this->tboxUsageOther->TabIndex = 4;
 			// 
 			// rUsageOther
 			// 
-			this->rUsageOther->AutoSize = true;
-			this->rUsageOther->Location = System::Drawing::Point(6, 48);
+			resources->ApplyResources(this->rUsageOther, L"rUsageOther");
 			this->rUsageOther->Name = L"rUsageOther";
-			this->rUsageOther->Size = System::Drawing::Size(54, 16);
-			this->rUsageOther->TabIndex = 3;
-			this->rUsageOther->Text = L"その他";
 			this->rUsageOther->UseVisualStyleBackColor = true;
 			this->rUsageOther->CheckedChanged += gcnew System::EventHandler(this, &Form1::rUsageOther_CheckedChanged);
 			// 
 			// rUsageDst
 			// 
-			this->rUsageDst->AutoSize = true;
-			this->rUsageDst->Location = System::Drawing::Point(198, 18);
+			resources->ApplyResources(this->rUsageDst, L"rUsageDst");
 			this->rUsageDst->Name = L"rUsageDst";
-			this->rUsageDst->Size = System::Drawing::Size(87, 16);
-			this->rUsageDst->TabIndex = 2;
-			this->rUsageDst->Text = L"データ配信用";
 			this->rUsageDst->UseVisualStyleBackColor = true;
 			// 
 			// rUsageSample
 			// 
-			this->rUsageSample->AutoSize = true;
-			this->rUsageSample->Location = System::Drawing::Point(104, 18);
+			resources->ApplyResources(this->rUsageSample, L"rUsageSample");
 			this->rUsageSample->Name = L"rUsageSample";
-			this->rUsageSample->Size = System::Drawing::Size(71, 16);
-			this->rUsageSample->TabIndex = 1;
-			this->rUsageSample->Text = L"試遊台用";
 			this->rUsageSample->UseVisualStyleBackColor = true;
 			// 
 			// rUsageSale
 			// 
-			this->rUsageSale->AutoSize = true;
+			resources->ApplyResources(this->rUsageSale, L"rUsageSale");
 			this->rUsageSale->Checked = true;
-			this->rUsageSale->Location = System::Drawing::Point(6, 18);
 			this->rUsageSale->Name = L"rUsageSale";
-			this->rUsageSale->Size = System::Drawing::Size(83, 16);
-			this->rUsageSale->TabIndex = 0;
 			this->rUsageSale->TabStop = true;
-			this->rUsageSale->Text = L"一般販売用";
 			this->rUsageSale->UseVisualStyleBackColor = true;
 			// 
 			// gboxSubmitWay
 			// 
 			this->gboxSubmitWay->Controls->Add(this->rSubmitHand);
 			this->gboxSubmitWay->Controls->Add(this->rSubmitPost);
-			this->gboxSubmitWay->Location = System::Drawing::Point(16, 207);
+			resources->ApplyResources(this->gboxSubmitWay, L"gboxSubmitWay");
 			this->gboxSubmitWay->Name = L"gboxSubmitWay";
-			this->gboxSubmitWay->Size = System::Drawing::Size(155, 45);
-			this->gboxSubmitWay->TabIndex = 5;
 			this->gboxSubmitWay->TabStop = false;
-			this->gboxSubmitWay->Text = L"提出方法";
 			// 
 			// rSubmitHand
 			// 
-			this->rSubmitHand->AutoSize = true;
-			this->rSubmitHand->Location = System::Drawing::Point(82, 18);
+			resources->ApplyResources(this->rSubmitHand, L"rSubmitHand");
 			this->rSubmitHand->Name = L"rSubmitHand";
-			this->rSubmitHand->Size = System::Drawing::Size(56, 16);
-			this->rSubmitHand->TabIndex = 1;
-			this->rSubmitHand->Text = L"手渡し";
 			this->rSubmitHand->UseVisualStyleBackColor = true;
 			// 
 			// rSubmitPost
 			// 
-			this->rSubmitPost->AutoSize = true;
+			resources->ApplyResources(this->rSubmitPost, L"rSubmitPost");
 			this->rSubmitPost->Checked = true;
-			this->rSubmitPost->Location = System::Drawing::Point(6, 18);
 			this->rSubmitPost->Name = L"rSubmitPost";
-			this->rSubmitPost->Size = System::Drawing::Size(47, 16);
-			this->rSubmitPost->TabIndex = 0;
 			this->rSubmitPost->TabStop = true;
-			this->rSubmitPost->Text = L"郵送";
 			this->rSubmitPost->UseVisualStyleBackColor = true;
 			// 
 			// labSubmiteDate
 			// 
-			this->labSubmiteDate->AutoSize = true;
-			this->labSubmiteDate->Location = System::Drawing::Point(14, 143);
+			resources->ApplyResources(this->labSubmiteDate, L"labSubmiteDate");
 			this->labSubmiteDate->Name = L"labSubmiteDate";
-			this->labSubmiteDate->Size = System::Drawing::Size(65, 12);
-			this->labSubmiteDate->TabIndex = 11;
-			this->labSubmiteDate->Text = L"書類提出日";
 			// 
 			// labReleaseDate
 			// 
-			this->labReleaseDate->AutoSize = true;
-			this->labReleaseDate->Location = System::Drawing::Point(15, 114);
+			resources->ApplyResources(this->labReleaseDate, L"labReleaseDate");
 			this->labReleaseDate->Name = L"labReleaseDate";
-			this->labReleaseDate->Size = System::Drawing::Size(65, 12);
-			this->labReleaseDate->TabIndex = 7;
-			this->labReleaseDate->Text = L"発売予定日";
 			// 
 			// labProductCode
 			// 
-			this->labProductCode->AutoSize = true;
-			this->labProductCode->Location = System::Drawing::Point(22, 84);
+			resources->ApplyResources(this->labProductCode, L"labProductCode");
 			this->labProductCode->Name = L"labProductCode";
-			this->labProductCode->Size = System::Drawing::Size(56, 12);
-			this->labProductCode->TabIndex = 6;
-			this->labProductCode->Text = L"製品コード";
 			// 
 			// labProductName
 			// 
-			this->labProductName->AutoSize = true;
-			this->labProductName->Location = System::Drawing::Point(22, 56);
+			resources->ApplyResources(this->labProductName, L"labProductName");
 			this->labProductName->Name = L"labProductName";
-			this->labProductName->Size = System::Drawing::Size(41, 12);
-			this->labProductName->TabIndex = 5;
-			this->labProductName->Text = L"製品名";
 			// 
 			// labCapSubmitVer
 			// 
-			this->labCapSubmitVer->AutoSize = true;
-			this->labCapSubmitVer->Location = System::Drawing::Point(104, 194);
+			resources->ApplyResources(this->labCapSubmitVer, L"labCapSubmitVer");
 			this->labCapSubmitVer->Name = L"labCapSubmitVer";
-			this->labCapSubmitVer->Size = System::Drawing::Size(233, 12);
-			this->labCapSubmitVer->TabIndex = 26;
-			this->labCapSubmitVer->Text = L"* リマスターバージョンが上がると再び0からカウント";
 			// 
 			// numSubmitVersion
 			// 
-			this->numSubmitVersion->Location = System::Drawing::Point(106, 172);
+			resources->ApplyResources(this->numSubmitVersion, L"numSubmitVersion");
 			this->numSubmitVersion->Maximum = System::Decimal(gcnew cli::array< System::Int32 >(4) {15, 0, 0, 0});
 			this->numSubmitVersion->Name = L"numSubmitVersion";
-			this->numSubmitVersion->Size = System::Drawing::Size(38, 19);
-			this->numSubmitVersion->TabIndex = 9;
 			// 
 			// labSubmitVer
 			// 
-			this->labSubmitVer->AutoSize = true;
-			this->labSubmitVer->Location = System::Drawing::Point(15, 174);
+			resources->ApplyResources(this->labSubmitVer, L"labSubmitVer");
 			this->labSubmitVer->Name = L"labSubmitVer";
-			this->labSubmitVer->Size = System::Drawing::Size(74, 12);
-			this->labSubmitVer->TabIndex = 24;
-			this->labSubmitVer->Text = L"提出バージョン";
 			// 
 			// labMultiForeign1
 			// 
-			this->labMultiForeign1->AutoSize = true;
-			this->labMultiForeign1->Location = System::Drawing::Point(217, 96);
+			resources->ApplyResources(this->labMultiForeign1, L"labMultiForeign1");
 			this->labMultiForeign1->Name = L"labMultiForeign1";
-			this->labMultiForeign1->Size = System::Drawing::Size(101, 12);
-			this->labMultiForeign1->TabIndex = 44;
-			this->labMultiForeign1->Text = L"(複数ある場合のみ)";
 			// 
 			// tboxProductCode2Foreign3
 			// 
-			this->tboxProductCode2Foreign3->Enabled = false;
-			this->tboxProductCode2Foreign3->Location = System::Drawing::Point(165, 118);
-			this->tboxProductCode2Foreign3->MaxLength = 4;
+			resources->ApplyResources(this->tboxProductCode2Foreign3, L"tboxProductCode2Foreign3");
 			this->tboxProductCode2Foreign3->Name = L"tboxProductCode2Foreign3";
-			this->tboxProductCode2Foreign3->Size = System::Drawing::Size(46, 19);
-			this->tboxProductCode2Foreign3->TabIndex = 16;
 			// 
 			// tboxProductCode2Foreign2
 			// 
-			this->tboxProductCode2Foreign2->Enabled = false;
-			this->tboxProductCode2Foreign2->Location = System::Drawing::Point(165, 93);
-			this->tboxProductCode2Foreign2->MaxLength = 4;
+			resources->ApplyResources(this->tboxProductCode2Foreign2, L"tboxProductCode2Foreign2");
 			this->tboxProductCode2Foreign2->Name = L"tboxProductCode2Foreign2";
-			this->tboxProductCode2Foreign2->Size = System::Drawing::Size(46, 19);
-			this->tboxProductCode2Foreign2->TabIndex = 15;
 			// 
 			// labProductCode2Foreign
 			// 
-			this->labProductCode2Foreign->AutoSize = true;
-			this->labProductCode2Foreign->Location = System::Drawing::Point(152, 74);
+			resources->ApplyResources(this->labProductCode2Foreign, L"labProductCode2Foreign");
 			this->labProductCode2Foreign->Name = L"labProductCode2Foreign";
-			this->labProductCode2Foreign->Size = System::Drawing::Size(11, 12);
-			this->labProductCode2Foreign->TabIndex = 41;
-			this->labProductCode2Foreign->Text = L"-";
 			// 
 			// cboxReleaseForeign
 			// 
-			this->cboxReleaseForeign->AutoSize = true;
-			this->cboxReleaseForeign->Location = System::Drawing::Point(17, 18);
+			resources->ApplyResources(this->cboxReleaseForeign, L"cboxReleaseForeign");
 			this->cboxReleaseForeign->Name = L"cboxReleaseForeign";
-			this->cboxReleaseForeign->Size = System::Drawing::Size(144, 16);
-			this->cboxReleaseForeign->TabIndex = 11;
-			this->cboxReleaseForeign->Text = L"海外版を発売する(予定)";
 			this->cboxReleaseForeign->UseVisualStyleBackColor = true;
 			this->cboxReleaseForeign->CheckedChanged += gcnew System::EventHandler(this, &Form1::cboxReleaseForeign_CheckedChanged);
 			// 
 			// labProductNameForeign
 			// 
-			this->labProductNameForeign->AutoSize = true;
-			this->labProductNameForeign->Location = System::Drawing::Point(15, 43);
+			resources->ApplyResources(this->labProductNameForeign, L"labProductNameForeign");
 			this->labProductNameForeign->Name = L"labProductNameForeign";
-			this->labProductNameForeign->Size = System::Drawing::Size(41, 12);
-			this->labProductNameForeign->TabIndex = 37;
-			this->labProductNameForeign->Text = L"製品名";
 			// 
 			// tboxProductNameForeign
 			// 
-			this->tboxProductNameForeign->Enabled = false;
-			this->tboxProductNameForeign->Location = System::Drawing::Point(92, 40);
-			this->tboxProductNameForeign->MaxLength = 30;
+			resources->ApplyResources(this->tboxProductNameForeign, L"tboxProductNameForeign");
 			this->tboxProductNameForeign->Name = L"tboxProductNameForeign";
-			this->tboxProductNameForeign->Size = System::Drawing::Size(257, 19);
-			this->tboxProductNameForeign->TabIndex = 12;
 			// 
 			// labProductCode1Foreign
 			// 
-			this->labProductCode1Foreign->AutoSize = true;
-			this->labProductCode1Foreign->Location = System::Drawing::Point(90, 74);
+			resources->ApplyResources(this->labProductCode1Foreign, L"labProductCode1Foreign");
 			this->labProductCode1Foreign->Name = L"labProductCode1Foreign";
-			this->labProductCode1Foreign->Size = System::Drawing::Size(37, 12);
-			this->labProductCode1Foreign->TabIndex = 40;
-			this->labProductCode1Foreign->Text = L"TWL -";
 			// 
 			// tboxProductCode1Foreign
 			// 
-			this->tboxProductCode1Foreign->Enabled = false;
-			this->tboxProductCode1Foreign->Location = System::Drawing::Point(129, 69);
-			this->tboxProductCode1Foreign->MaxLength = 1;
+			resources->ApplyResources(this->tboxProductCode1Foreign, L"tboxProductCode1Foreign");
 			this->tboxProductCode1Foreign->Name = L"tboxProductCode1Foreign";
-			this->tboxProductCode1Foreign->Size = System::Drawing::Size(18, 19);
-			this->tboxProductCode1Foreign->TabIndex = 13;
 			// 
 			// labProductCodeForeign
 			// 
-			this->labProductCodeForeign->AutoSize = true;
-			this->labProductCodeForeign->Location = System::Drawing::Point(15, 74);
+			resources->ApplyResources(this->labProductCodeForeign, L"labProductCodeForeign");
 			this->labProductCodeForeign->Name = L"labProductCodeForeign";
-			this->labProductCodeForeign->Size = System::Drawing::Size(56, 12);
-			this->labProductCodeForeign->TabIndex = 38;
-			this->labProductCodeForeign->Text = L"製品コード";
 			// 
 			// tboxProductCode2Foreign1
 			// 
-			this->tboxProductCode2Foreign1->Enabled = false;
-			this->tboxProductCode2Foreign1->Location = System::Drawing::Point(165, 68);
-			this->tboxProductCode2Foreign1->MaxLength = 4;
+			resources->ApplyResources(this->tboxProductCode2Foreign1, L"tboxProductCode2Foreign1");
 			this->tboxProductCode2Foreign1->Name = L"tboxProductCode2Foreign1";
-			this->tboxProductCode2Foreign1->Size = System::Drawing::Size(46, 19);
-			this->tboxProductCode2Foreign1->TabIndex = 14;
 			// 
 			// gboxShared2Size
 			// 
@@ -2216,159 +1830,97 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gboxShared2Size->Controls->Add(this->tboxShared2Size1);
 			this->gboxShared2Size->Controls->Add(this->tboxShared2Size0);
 			this->gboxShared2Size->Controls->Add(this->cboxIsShared2);
-			this->gboxShared2Size->Location = System::Drawing::Point(547, 54);
+			resources->ApplyResources(this->gboxShared2Size, L"gboxShared2Size");
 			this->gboxShared2Size->Name = L"gboxShared2Size";
-			this->gboxShared2Size->Size = System::Drawing::Size(164, 220);
-			this->gboxShared2Size->TabIndex = 1;
 			this->gboxShared2Size->TabStop = false;
-			this->gboxShared2Size->Text = L"Shared2ファイルサイズ";
 			// 
 			// labShared2Size5
 			// 
-			this->labShared2Size5->AutoSize = true;
-			this->labShared2Size5->Location = System::Drawing::Point(7, 180);
+			resources->ApplyResources(this->labShared2Size5, L"labShared2Size5");
 			this->labShared2Size5->Name = L"labShared2Size5";
-			this->labShared2Size5->Size = System::Drawing::Size(34, 12);
-			this->labShared2Size5->TabIndex = 20;
-			this->labShared2Size5->Text = L"File 5";
 			// 
 			// labShared2Size4
 			// 
-			this->labShared2Size4->AutoSize = true;
-			this->labShared2Size4->Location = System::Drawing::Point(6, 155);
+			resources->ApplyResources(this->labShared2Size4, L"labShared2Size4");
 			this->labShared2Size4->Name = L"labShared2Size4";
-			this->labShared2Size4->Size = System::Drawing::Size(34, 12);
-			this->labShared2Size4->TabIndex = 19;
-			this->labShared2Size4->Text = L"File 4";
 			// 
 			// labShared2Size3
 			// 
-			this->labShared2Size3->AutoSize = true;
-			this->labShared2Size3->Location = System::Drawing::Point(7, 130);
+			resources->ApplyResources(this->labShared2Size3, L"labShared2Size3");
 			this->labShared2Size3->Name = L"labShared2Size3";
-			this->labShared2Size3->Size = System::Drawing::Size(34, 12);
-			this->labShared2Size3->TabIndex = 18;
-			this->labShared2Size3->Text = L"File 3";
 			// 
 			// labShared2Size2
 			// 
-			this->labShared2Size2->AutoSize = true;
-			this->labShared2Size2->Location = System::Drawing::Point(7, 105);
+			resources->ApplyResources(this->labShared2Size2, L"labShared2Size2");
 			this->labShared2Size2->Name = L"labShared2Size2";
-			this->labShared2Size2->Size = System::Drawing::Size(34, 12);
-			this->labShared2Size2->TabIndex = 17;
-			this->labShared2Size2->Text = L"File 2";
 			// 
 			// labShared2Size1
 			// 
-			this->labShared2Size1->AutoSize = true;
-			this->labShared2Size1->Location = System::Drawing::Point(7, 80);
+			resources->ApplyResources(this->labShared2Size1, L"labShared2Size1");
 			this->labShared2Size1->Name = L"labShared2Size1";
-			this->labShared2Size1->Size = System::Drawing::Size(34, 12);
-			this->labShared2Size1->TabIndex = 16;
-			this->labShared2Size1->Text = L"File 1";
 			// 
 			// labShared2Size0
 			// 
-			this->labShared2Size0->AutoSize = true;
-			this->labShared2Size0->Location = System::Drawing::Point(7, 55);
+			resources->ApplyResources(this->labShared2Size0, L"labShared2Size0");
 			this->labShared2Size0->Name = L"labShared2Size0";
-			this->labShared2Size0->Size = System::Drawing::Size(34, 12);
-			this->labShared2Size0->TabIndex = 15;
-			this->labShared2Size0->Text = L"File 0";
 			// 
 			// tboxShared2Size5
 			// 
-			this->tboxShared2Size5->Location = System::Drawing::Point(46, 177);
+			resources->ApplyResources(this->tboxShared2Size5, L"tboxShared2Size5");
 			this->tboxShared2Size5->Name = L"tboxShared2Size5";
 			this->tboxShared2Size5->ReadOnly = true;
-			this->tboxShared2Size5->Size = System::Drawing::Size(90, 19);
-			this->tboxShared2Size5->TabIndex = 8;
-			this->tboxShared2Size5->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// tboxShared2Size4
 			// 
-			this->tboxShared2Size4->Location = System::Drawing::Point(47, 152);
+			resources->ApplyResources(this->tboxShared2Size4, L"tboxShared2Size4");
 			this->tboxShared2Size4->Name = L"tboxShared2Size4";
 			this->tboxShared2Size4->ReadOnly = true;
-			this->tboxShared2Size4->Size = System::Drawing::Size(89, 19);
-			this->tboxShared2Size4->TabIndex = 7;
-			this->tboxShared2Size4->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// tboxShared2Size3
 			// 
-			this->tboxShared2Size3->Location = System::Drawing::Point(47, 127);
+			resources->ApplyResources(this->tboxShared2Size3, L"tboxShared2Size3");
 			this->tboxShared2Size3->Name = L"tboxShared2Size3";
 			this->tboxShared2Size3->ReadOnly = true;
-			this->tboxShared2Size3->Size = System::Drawing::Size(89, 19);
-			this->tboxShared2Size3->TabIndex = 6;
-			this->tboxShared2Size3->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// tboxShared2Size2
 			// 
-			this->tboxShared2Size2->Location = System::Drawing::Point(47, 102);
+			resources->ApplyResources(this->tboxShared2Size2, L"tboxShared2Size2");
 			this->tboxShared2Size2->Name = L"tboxShared2Size2";
 			this->tboxShared2Size2->ReadOnly = true;
-			this->tboxShared2Size2->Size = System::Drawing::Size(89, 19);
-			this->tboxShared2Size2->TabIndex = 5;
-			this->tboxShared2Size2->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// tboxShared2Size1
 			// 
-			this->tboxShared2Size1->Location = System::Drawing::Point(47, 77);
+			resources->ApplyResources(this->tboxShared2Size1, L"tboxShared2Size1");
 			this->tboxShared2Size1->Name = L"tboxShared2Size1";
 			this->tboxShared2Size1->ReadOnly = true;
-			this->tboxShared2Size1->Size = System::Drawing::Size(89, 19);
-			this->tboxShared2Size1->TabIndex = 4;
-			this->tboxShared2Size1->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// tboxShared2Size0
 			// 
-			this->tboxShared2Size0->Location = System::Drawing::Point(47, 52);
+			resources->ApplyResources(this->tboxShared2Size0, L"tboxShared2Size0");
 			this->tboxShared2Size0->Name = L"tboxShared2Size0";
 			this->tboxShared2Size0->ReadOnly = true;
-			this->tboxShared2Size0->Size = System::Drawing::Size(89, 19);
-			this->tboxShared2Size0->TabIndex = 3;
-			this->tboxShared2Size0->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// cboxIsShared2
 			// 
-			this->cboxIsShared2->AutoSize = true;
-			this->cboxIsShared2->Enabled = false;
-			this->cboxIsShared2->Location = System::Drawing::Point(8, 25);
+			resources->ApplyResources(this->cboxIsShared2, L"cboxIsShared2");
 			this->cboxIsShared2->Name = L"cboxIsShared2";
-			this->cboxIsShared2->Size = System::Drawing::Size(123, 16);
-			this->cboxIsShared2->TabIndex = 2;
-			this->cboxIsShared2->Text = L"Shared2ファイル使用";
 			this->cboxIsShared2->UseVisualStyleBackColor = true;
 			// 
 			// labLib
 			// 
-			this->labLib->AutoSize = true;
-			this->labLib->Location = System::Drawing::Point(335, 174);
+			resources->ApplyResources(this->labLib, L"labLib");
 			this->labLib->Name = L"labLib";
-			this->labLib->Size = System::Drawing::Size(70, 12);
-			this->labLib->TabIndex = 31;
-			this->labLib->Text = L"使用ライブラリ";
 			// 
 			// tboxSDK
 			// 
-			this->tboxSDK->Location = System::Drawing::Point(337, 67);
-			this->tboxSDK->Multiline = true;
+			resources->ApplyResources(this->tboxSDK, L"tboxSDK");
 			this->tboxSDK->Name = L"tboxSDK";
 			this->tboxSDK->ReadOnly = true;
-			this->tboxSDK->ScrollBars = System::Windows::Forms::ScrollBars::Both;
-			this->tboxSDK->Size = System::Drawing::Size(186, 88);
-			this->tboxSDK->TabIndex = 10;
 			// 
 			// labSDK
 			// 
-			this->labSDK->AutoSize = true;
-			this->labSDK->Location = System::Drawing::Point(335, 52);
+			resources->ApplyResources(this->labSDK, L"labSDK");
 			this->labSDK->Name = L"labSDK";
-			this->labSDK->Size = System::Drawing::Size(72, 12);
-			this->labSDK->TabIndex = 30;
-			this->labSDK->Text = L"SDKバージョン";
 			// 
 			// gboxTWLExInfo
 			// 
@@ -2385,172 +1937,102 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gboxTWLExInfo->Controls->Add(this->tboxKeyTableRomOffset);
 			this->gboxTWLExInfo->Controls->Add(this->labPublicSize);
 			this->gboxTWLExInfo->Controls->Add(this->tboxPublicSize);
-			this->gboxTWLExInfo->Location = System::Drawing::Point(231, 54);
+			resources->ApplyResources(this->gboxTWLExInfo, L"gboxTWLExInfo");
 			this->gboxTWLExInfo->Name = L"gboxTWLExInfo";
-			this->gboxTWLExInfo->Size = System::Drawing::Size(300, 146);
-			this->gboxTWLExInfo->TabIndex = 24;
 			this->gboxTWLExInfo->TabStop = false;
-			this->gboxTWLExInfo->Text = L"TWL拡張情報";
 			// 
 			// labByte1
 			// 
-			this->labByte1->AutoSize = true;
-			this->labByte1->Location = System::Drawing::Point(585, 29);
+			resources->ApplyResources(this->labByte1, L"labByte1");
 			this->labByte1->Name = L"labByte1";
-			this->labByte1->Size = System::Drawing::Size(29, 12);
-			this->labByte1->TabIndex = 30;
-			this->labByte1->Text = L"Byte";
 			// 
 			// labHex4
 			// 
-			this->labHex4->AutoSize = true;
-			this->labHex4->Location = System::Drawing::Point(261, 46);
+			resources->ApplyResources(this->labHex4, L"labHex4");
 			this->labHex4->Name = L"labHex4";
-			this->labHex4->Size = System::Drawing::Size(11, 12);
-			this->labHex4->TabIndex = 29;
-			this->labHex4->Text = L"h";
 			// 
 			// labHex3
 			// 
-			this->labHex3->AutoSize = true;
-			this->labHex3->Location = System::Drawing::Point(261, 21);
+			resources->ApplyResources(this->labHex3, L"labHex3");
 			this->labHex3->Name = L"labHex3";
-			this->labHex3->Size = System::Drawing::Size(11, 12);
-			this->labHex3->TabIndex = 8;
-			this->labHex3->Text = L"h";
 			// 
 			// tboxIsCodec
 			// 
-			this->tboxIsCodec->Location = System::Drawing::Point(172, 118);
+			resources->ApplyResources(this->tboxIsCodec, L"tboxIsCodec");
 			this->tboxIsCodec->Name = L"tboxIsCodec";
 			this->tboxIsCodec->ReadOnly = true;
-			this->tboxIsCodec->Size = System::Drawing::Size(87, 19);
-			this->tboxIsCodec->TabIndex = 28;
-			this->tboxIsCodec->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// labIsCodec
 			// 
-			this->labIsCodec->AutoSize = true;
-			this->labIsCodec->Location = System::Drawing::Point(55, 121);
+			resources->ApplyResources(this->labIsCodec, L"labIsCodec");
 			this->labIsCodec->Name = L"labIsCodec";
-			this->labIsCodec->Size = System::Drawing::Size(75, 12);
-			this->labIsCodec->TabIndex = 27;
-			this->labIsCodec->Text = L"CODEC Mode";
 			// 
 			// labNormalRomOffset
 			// 
-			this->labNormalRomOffset->AutoSize = true;
-			this->labNormalRomOffset->Location = System::Drawing::Point(7, 21);
+			resources->ApplyResources(this->labNormalRomOffset, L"labNormalRomOffset");
 			this->labNormalRomOffset->Name = L"labNormalRomOffset";
-			this->labNormalRomOffset->Size = System::Drawing::Size(155, 12);
-			this->labNormalRomOffset->TabIndex = 9;
-			this->labNormalRomOffset->Text = L"TWLノーマル領域ROMオフセット";
 			// 
 			// tboxNormalRomOffset
 			// 
-			this->tboxNormalRomOffset->Location = System::Drawing::Point(172, 18);
+			resources->ApplyResources(this->tboxNormalRomOffset, L"tboxNormalRomOffset");
 			this->tboxNormalRomOffset->Name = L"tboxNormalRomOffset";
 			this->tboxNormalRomOffset->ReadOnly = true;
-			this->tboxNormalRomOffset->Size = System::Drawing::Size(87, 19);
-			this->tboxNormalRomOffset->TabIndex = 8;
-			this->tboxNormalRomOffset->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// labKeyTableRomOffset
 			// 
-			this->labKeyTableRomOffset->AutoSize = true;
-			this->labKeyTableRomOffset->Location = System::Drawing::Point(7, 46);
+			resources->ApplyResources(this->labKeyTableRomOffset, L"labKeyTableRomOffset");
 			this->labKeyTableRomOffset->Name = L"labKeyTableRomOffset";
-			this->labKeyTableRomOffset->Size = System::Drawing::Size(142, 12);
-			this->labKeyTableRomOffset->TabIndex = 11;
-			this->labKeyTableRomOffset->Text = L"TWL専用領域ROMオフセット";
 			// 
 			// tboxPrivateSize
 			// 
-			this->tboxPrivateSize->Location = System::Drawing::Point(172, 93);
+			resources->ApplyResources(this->tboxPrivateSize, L"tboxPrivateSize");
 			this->tboxPrivateSize->Name = L"tboxPrivateSize";
 			this->tboxPrivateSize->ReadOnly = true;
-			this->tboxPrivateSize->Size = System::Drawing::Size(87, 19);
-			this->tboxPrivateSize->TabIndex = 13;
-			this->tboxPrivateSize->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// labPrivateSize
 			// 
-			this->labPrivateSize->AutoSize = true;
-			this->labPrivateSize->Location = System::Drawing::Point(31, 96);
+			resources->ApplyResources(this->labPrivateSize, L"labPrivateSize");
 			this->labPrivateSize->Name = L"labPrivateSize";
-			this->labPrivateSize->Size = System::Drawing::Size(123, 12);
-			this->labPrivateSize->TabIndex = 15;
-			this->labPrivateSize->Text = L"Private Save Data Size";
 			// 
 			// tboxKeyTableRomOffset
 			// 
-			this->tboxKeyTableRomOffset->Location = System::Drawing::Point(172, 43);
+			resources->ApplyResources(this->tboxKeyTableRomOffset, L"tboxKeyTableRomOffset");
 			this->tboxKeyTableRomOffset->Name = L"tboxKeyTableRomOffset";
 			this->tboxKeyTableRomOffset->ReadOnly = true;
-			this->tboxKeyTableRomOffset->Size = System::Drawing::Size(87, 19);
-			this->tboxKeyTableRomOffset->TabIndex = 10;
-			this->tboxKeyTableRomOffset->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// labPublicSize
 			// 
-			this->labPublicSize->AutoSize = true;
-			this->labPublicSize->Location = System::Drawing::Point(31, 71);
+			resources->ApplyResources(this->labPublicSize, L"labPublicSize");
 			this->labPublicSize->Name = L"labPublicSize";
-			this->labPublicSize->Size = System::Drawing::Size(118, 12);
-			this->labPublicSize->TabIndex = 14;
-			this->labPublicSize->Text = L"Public Save Data Size";
 			// 
 			// tboxPublicSize
 			// 
-			this->tboxPublicSize->Location = System::Drawing::Point(172, 68);
+			resources->ApplyResources(this->tboxPublicSize, L"tboxPublicSize");
 			this->tboxPublicSize->Name = L"tboxPublicSize";
 			this->tboxPublicSize->ReadOnly = true;
-			this->tboxPublicSize->Size = System::Drawing::Size(87, 19);
-			this->tboxPublicSize->TabIndex = 12;
-			this->tboxPublicSize->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// cboxIsSubBanner
 			// 
-			this->cboxIsSubBanner->AutoSize = true;
-			this->cboxIsSubBanner->Enabled = false;
-			this->cboxIsSubBanner->Location = System::Drawing::Point(14, 62);
+			resources->ApplyResources(this->cboxIsSubBanner, L"cboxIsSubBanner");
 			this->cboxIsSubBanner->Name = L"cboxIsSubBanner";
-			this->cboxIsSubBanner->Size = System::Drawing::Size(131, 16);
-			this->cboxIsSubBanner->TabIndex = 26;
-			this->cboxIsSubBanner->Text = L"サブバナーファイル有効";
 			this->cboxIsSubBanner->UseVisualStyleBackColor = true;
 			// 
 			// cboxIsWL
 			// 
-			this->cboxIsWL->AutoSize = true;
-			this->cboxIsWL->Enabled = false;
-			this->cboxIsWL->Location = System::Drawing::Point(14, 84);
+			resources->ApplyResources(this->cboxIsWL, L"cboxIsWL");
 			this->cboxIsWL->Name = L"cboxIsWL";
-			this->cboxIsWL->Size = System::Drawing::Size(155, 16);
-			this->cboxIsWL->TabIndex = 25;
-			this->cboxIsWL->Text = L"NTRホワイトリスト署名有効";
 			this->cboxIsWL->UseVisualStyleBackColor = true;
 			// 
 			// cboxIsNormalJump
 			// 
-			this->cboxIsNormalJump->AutoSize = true;
-			this->cboxIsNormalJump->Enabled = false;
-			this->cboxIsNormalJump->Location = System::Drawing::Point(14, 18);
+			resources->ApplyResources(this->cboxIsNormalJump, L"cboxIsNormalJump");
 			this->cboxIsNormalJump->Name = L"cboxIsNormalJump";
-			this->cboxIsNormalJump->Size = System::Drawing::Size(121, 16);
-			this->cboxIsNormalJump->TabIndex = 16;
-			this->cboxIsNormalJump->Text = L"ノーマルジャンプ許可";
 			this->cboxIsNormalJump->UseVisualStyleBackColor = true;
 			// 
 			// cboxIsTmpJump
 			// 
-			this->cboxIsTmpJump->AutoSize = true;
-			this->cboxIsTmpJump->Enabled = false;
-			this->cboxIsTmpJump->Location = System::Drawing::Point(14, 40);
+			resources->ApplyResources(this->cboxIsTmpJump, L"cboxIsTmpJump");
 			this->cboxIsTmpJump->Name = L"cboxIsTmpJump";
-			this->cboxIsTmpJump->Size = System::Drawing::Size(103, 16);
-			this->cboxIsTmpJump->TabIndex = 17;
-			this->cboxIsTmpJump->Text = L"tmpジャンプ許可";
 			this->cboxIsTmpJump->UseVisualStyleBackColor = true;
 			// 
 			// gboxAccess
@@ -2561,69 +2043,42 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gboxAccess->Controls->Add(this->labIsGameCardOn);
 			this->gboxAccess->Controls->Add(this->cboxIsNAND);
 			this->gboxAccess->Controls->Add(this->cboxIsSD);
-			this->gboxAccess->Location = System::Drawing::Point(231, 211);
+			resources->ApplyResources(this->gboxAccess, L"gboxAccess");
 			this->gboxAccess->Name = L"gboxAccess";
-			this->gboxAccess->Size = System::Drawing::Size(300, 133);
-			this->gboxAccess->TabIndex = 0;
 			this->gboxAccess->TabStop = false;
-			this->gboxAccess->Text = L"アクセスコントロール情報";
 			// 
 			// labAccessOther
 			// 
-			this->labAccessOther->AutoSize = true;
-			this->labAccessOther->Location = System::Drawing::Point(139, 20);
+			resources->ApplyResources(this->labAccessOther, L"labAccessOther");
 			this->labAccessOther->Name = L"labAccessOther";
-			this->labAccessOther->Size = System::Drawing::Size(36, 12);
-			this->labAccessOther->TabIndex = 5;
-			this->labAccessOther->Text = L"その他";
 			// 
 			// tboxAccessOther
 			// 
-			this->tboxAccessOther->Location = System::Drawing::Point(141, 36);
-			this->tboxAccessOther->Multiline = true;
+			resources->ApplyResources(this->tboxAccessOther, L"tboxAccessOther");
 			this->tboxAccessOther->Name = L"tboxAccessOther";
 			this->tboxAccessOther->ReadOnly = true;
-			this->tboxAccessOther->Size = System::Drawing::Size(142, 85);
-			this->tboxAccessOther->TabIndex = 4;
 			// 
 			// tboxIsGameCardOn
 			// 
-			this->tboxIsGameCardOn->Location = System::Drawing::Point(8, 102);
+			resources->ApplyResources(this->tboxIsGameCardOn, L"tboxIsGameCardOn");
 			this->tboxIsGameCardOn->Name = L"tboxIsGameCardOn";
 			this->tboxIsGameCardOn->ReadOnly = true;
-			this->tboxIsGameCardOn->Size = System::Drawing::Size(122, 19);
-			this->tboxIsGameCardOn->TabIndex = 3;
-			this->tboxIsGameCardOn->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// labIsGameCardOn
 			// 
-			this->labIsGameCardOn->AutoSize = true;
-			this->labIsGameCardOn->Location = System::Drawing::Point(7, 87);
+			resources->ApplyResources(this->labIsGameCardOn, L"labIsGameCardOn");
 			this->labIsGameCardOn->Name = L"labIsGameCardOn";
-			this->labIsGameCardOn->Size = System::Drawing::Size(87, 12);
-			this->labIsGameCardOn->TabIndex = 2;
-			this->labIsGameCardOn->Text = L"ゲームカード電源";
 			// 
 			// cboxIsNAND
 			// 
-			this->cboxIsNAND->AutoSize = true;
-			this->cboxIsNAND->Enabled = false;
-			this->cboxIsNAND->Location = System::Drawing::Point(9, 47);
+			resources->ApplyResources(this->cboxIsNAND, L"cboxIsNAND");
 			this->cboxIsNAND->Name = L"cboxIsNAND";
-			this->cboxIsNAND->Size = System::Drawing::Size(121, 16);
-			this->cboxIsNAND->TabIndex = 1;
-			this->cboxIsNAND->Text = L"NANDフラッシュメモリ";
 			this->cboxIsNAND->UseVisualStyleBackColor = true;
 			// 
 			// cboxIsSD
 			// 
-			this->cboxIsSD->AutoSize = true;
-			this->cboxIsSD->Enabled = false;
-			this->cboxIsSD->Location = System::Drawing::Point(9, 24);
+			resources->ApplyResources(this->cboxIsSD, L"cboxIsSD");
 			this->cboxIsSD->Name = L"cboxIsSD";
-			this->cboxIsSD->Size = System::Drawing::Size(67, 16);
-			this->cboxIsSD->TabIndex = 0;
-			this->cboxIsSD->Text = L"SDカード";
 			this->cboxIsSD->UseVisualStyleBackColor = true;
 			// 
 			// gboxTitleID
@@ -2639,185 +2094,125 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gboxTitleID->Controls->Add(this->tboxTitleIDHi);
 			this->gboxTitleID->Controls->Add(this->tboxAppTypeOther);
 			this->gboxTitleID->Controls->Add(this->labAppTypeOther);
-			this->gboxTitleID->Location = System::Drawing::Point(12, 54);
+			resources->ApplyResources(this->gboxTitleID, L"gboxTitleID");
 			this->gboxTitleID->Name = L"gboxTitleID";
-			this->gboxTitleID->Size = System::Drawing::Size(198, 174);
-			this->gboxTitleID->TabIndex = 23;
 			this->gboxTitleID->TabStop = false;
-			this->gboxTitleID->Text = L"TitleID";
 			// 
 			// labAppType
 			// 
-			this->labAppType->AutoSize = true;
-			this->labAppType->Location = System::Drawing::Point(21, 98);
+			resources->ApplyResources(this->labAppType, L"labAppType");
 			this->labAppType->Name = L"labAppType";
-			this->labAppType->Size = System::Drawing::Size(56, 12);
-			this->labAppType->TabIndex = 11;
-			this->labAppType->Text = L"App. Type";
 			// 
 			// labMedia
 			// 
-			this->labMedia->AutoSize = true;
-			this->labMedia->Location = System::Drawing::Point(39, 73);
+			resources->ApplyResources(this->labMedia, L"labMedia");
 			this->labMedia->Name = L"labMedia";
-			this->labMedia->Size = System::Drawing::Size(35, 12);
-			this->labMedia->TabIndex = 10;
-			this->labMedia->Text = L"Media";
 			// 
 			// tboxAppType
 			// 
-			this->tboxAppType->Location = System::Drawing::Point(83, 95);
+			resources->ApplyResources(this->tboxAppType, L"tboxAppType");
 			this->tboxAppType->Name = L"tboxAppType";
 			this->tboxAppType->ReadOnly = true;
-			this->tboxAppType->Size = System::Drawing::Size(71, 19);
-			this->tboxAppType->TabIndex = 9;
-			this->tboxAppType->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// tboxMedia
 			// 
-			this->tboxMedia->Location = System::Drawing::Point(83, 70);
+			resources->ApplyResources(this->tboxMedia, L"tboxMedia");
 			this->tboxMedia->Name = L"tboxMedia";
 			this->tboxMedia->ReadOnly = true;
-			this->tboxMedia->Size = System::Drawing::Size(71, 19);
-			this->tboxMedia->TabIndex = 8;
-			this->tboxMedia->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// labHex2
 			// 
-			this->labHex2->AutoSize = true;
-			this->labHex2->Location = System::Drawing::Point(157, 48);
+			resources->ApplyResources(this->labHex2, L"labHex2");
 			this->labHex2->Name = L"labHex2";
-			this->labHex2->Size = System::Drawing::Size(11, 12);
-			this->labHex2->TabIndex = 7;
-			this->labHex2->Text = L"h";
 			// 
 			// tboxTitleIDLo
 			// 
-			this->tboxTitleIDLo->Location = System::Drawing::Point(83, 20);
+			resources->ApplyResources(this->tboxTitleIDLo, L"tboxTitleIDLo");
 			this->tboxTitleIDLo->Name = L"tboxTitleIDLo";
 			this->tboxTitleIDLo->ReadOnly = true;
-			this->tboxTitleIDLo->Size = System::Drawing::Size(71, 19);
-			this->tboxTitleIDLo->TabIndex = 1;
-			this->tboxTitleIDLo->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// labTitleIDLo
 			// 
-			this->labTitleIDLo->AutoSize = true;
-			this->labTitleIDLo->Location = System::Drawing::Point(11, 23);
+			resources->ApplyResources(this->labTitleIDLo, L"labTitleIDLo");
 			this->labTitleIDLo->Name = L"labTitleIDLo";
-			this->labTitleIDLo->Size = System::Drawing::Size(63, 12);
-			this->labTitleIDLo->TabIndex = 0;
-			this->labTitleIDLo->Text = L"TitleID Low";
 			// 
 			// labTitleIDHi
 			// 
-			this->labTitleIDHi->AutoSize = true;
-			this->labTitleIDHi->Location = System::Drawing::Point(11, 48);
+			resources->ApplyResources(this->labTitleIDHi, L"labTitleIDHi");
 			this->labTitleIDHi->Name = L"labTitleIDHi";
-			this->labTitleIDHi->Size = System::Drawing::Size(66, 12);
-			this->labTitleIDHi->TabIndex = 2;
-			this->labTitleIDHi->Text = L"TitleID High";
 			// 
 			// tboxTitleIDHi
 			// 
-			this->tboxTitleIDHi->Location = System::Drawing::Point(83, 45);
+			resources->ApplyResources(this->tboxTitleIDHi, L"tboxTitleIDHi");
 			this->tboxTitleIDHi->Name = L"tboxTitleIDHi";
 			this->tboxTitleIDHi->ReadOnly = true;
-			this->tboxTitleIDHi->Size = System::Drawing::Size(71, 19);
-			this->tboxTitleIDHi->TabIndex = 3;
-			this->tboxTitleIDHi->TextAlign = System::Windows::Forms::HorizontalAlignment::Right;
 			// 
 			// tboxAppTypeOther
 			// 
-			this->tboxAppTypeOther->Location = System::Drawing::Point(14, 134);
-			this->tboxAppTypeOther->Multiline = true;
+			resources->ApplyResources(this->tboxAppTypeOther, L"tboxAppTypeOther");
 			this->tboxAppTypeOther->Name = L"tboxAppTypeOther";
 			this->tboxAppTypeOther->ReadOnly = true;
-			this->tboxAppTypeOther->Size = System::Drawing::Size(170, 34);
-			this->tboxAppTypeOther->TabIndex = 4;
 			// 
 			// labAppTypeOther
 			// 
-			this->labAppTypeOther->AutoSize = true;
-			this->labAppTypeOther->Location = System::Drawing::Point(12, 122);
+			resources->ApplyResources(this->labAppTypeOther, L"labAppTypeOther");
 			this->labAppTypeOther->Name = L"labAppTypeOther";
-			this->labAppTypeOther->Size = System::Drawing::Size(58, 12);
-			this->labAppTypeOther->TabIndex = 5;
-			this->labAppTypeOther->Text = L"Other Info.";
 			// 
 			// labCaptionEx
 			// 
-			this->labCaptionEx->AutoSize = true;
-			this->labCaptionEx->Location = System::Drawing::Point(538, 52);
+			resources->ApplyResources(this->labCaptionEx, L"labCaptionEx");
 			this->labCaptionEx->Name = L"labCaptionEx";
-			this->labCaptionEx->Size = System::Drawing::Size(53, 12);
-			this->labCaptionEx->TabIndex = 11;
-			this->labCaptionEx->Text = L"特記事項";
 			// 
 			// tboxCaptionEx
 			// 
-			this->tboxCaptionEx->Location = System::Drawing::Point(540, 67);
-			this->tboxCaptionEx->Multiline = true;
+			resources->ApplyResources(this->tboxCaptionEx, L"tboxCaptionEx");
 			this->tboxCaptionEx->Name = L"tboxCaptionEx";
 			this->tboxCaptionEx->ReadOnly = true;
-			this->tboxCaptionEx->ScrollBars = System::Windows::Forms::ScrollBars::Both;
-			this->tboxCaptionEx->Size = System::Drawing::Size(171, 88);
-			this->tboxCaptionEx->TabIndex = 10;
 			// 
 			// gboxProd
 			// 
 			this->gboxProd->Controls->Add(this->combBackup);
 			this->gboxProd->Controls->Add(this->labBackup);
 			this->gboxProd->Controls->Add(this->tboxBackupOther);
-			this->gboxProd->Location = System::Drawing::Point(378, 36);
+			resources->ApplyResources(this->gboxProd, L"gboxProd");
 			this->gboxProd->Name = L"gboxProd";
-			this->gboxProd->Size = System::Drawing::Size(356, 50);
-			this->gboxProd->TabIndex = 13;
 			this->gboxProd->TabStop = false;
-			this->gboxProd->Text = L"ROM生産情報";
 			// 
 			// menuStripAbove
 			// 
 			this->menuStripAbove->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(3) {this->stripFile, this->stripMaster, 
 				this->stripLang});
-			this->menuStripAbove->Location = System::Drawing::Point(0, 0);
+			resources->ApplyResources(this->menuStripAbove, L"menuStripAbove");
 			this->menuStripAbove->Name = L"menuStripAbove";
-			this->menuStripAbove->Size = System::Drawing::Size(777, 24);
-			this->menuStripAbove->TabIndex = 33;
-			this->menuStripAbove->Text = L"menuStrip1";
 			// 
 			// stripFile
 			// 
 			this->stripFile->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(4) {this->stripItemOpenRom, 
 				this->stripItemSepFile1, this->stripItemSaveTemp, this->stripItemLoadTemp});
 			this->stripFile->Name = L"stripFile";
-			this->stripFile->Size = System::Drawing::Size(51, 20);
-			this->stripFile->Text = L"ファイル";
+			resources->ApplyResources(this->stripFile, L"stripFile");
 			// 
 			// stripItemOpenRom
 			// 
 			this->stripItemOpenRom->Name = L"stripItemOpenRom";
-			this->stripItemOpenRom->Size = System::Drawing::Size(211, 22);
-			this->stripItemOpenRom->Text = L"ROMデータを開く";
+			resources->ApplyResources(this->stripItemOpenRom, L"stripItemOpenRom");
 			this->stripItemOpenRom->Click += gcnew System::EventHandler(this, &Form1::stripItemOpenRom_Click);
 			// 
 			// stripItemSepFile1
 			// 
 			this->stripItemSepFile1->Name = L"stripItemSepFile1";
-			this->stripItemSepFile1->Size = System::Drawing::Size(208, 6);
+			resources->ApplyResources(this->stripItemSepFile1, L"stripItemSepFile1");
 			// 
 			// stripItemSaveTemp
 			// 
 			this->stripItemSaveTemp->Name = L"stripItemSaveTemp";
-			this->stripItemSaveTemp->Size = System::Drawing::Size(211, 22);
-			this->stripItemSaveTemp->Text = L"提出情報を一時保存する";
+			resources->ApplyResources(this->stripItemSaveTemp, L"stripItemSaveTemp");
 			this->stripItemSaveTemp->Click += gcnew System::EventHandler(this, &Form1::stripItemSaveTemp_Click);
 			// 
 			// stripItemLoadTemp
 			// 
 			this->stripItemLoadTemp->Name = L"stripItemLoadTemp";
-			this->stripItemLoadTemp->Size = System::Drawing::Size(211, 22);
-			this->stripItemLoadTemp->Text = L"一時保存した提出情報を開く";
+			resources->ApplyResources(this->stripItemLoadTemp, L"stripItemLoadTemp");
 			this->stripItemLoadTemp->Click += gcnew System::EventHandler(this, &Form1::stripItemLoadTemp_Click);
 			// 
 			// stripMaster
@@ -2825,40 +2220,35 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->stripMaster->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(5) {this->stripItemSheet, 
 				this->stripItemSepMaster1, this->stripItemMasterRom, this->stripItemMiddlewareXml, this->stripItemMiddlewareHtml});
 			this->stripMaster->Name = L"stripMaster";
-			this->stripMaster->Size = System::Drawing::Size(53, 20);
-			this->stripMaster->Text = L"マスター";
+			resources->ApplyResources(this->stripMaster, L"stripMaster");
 			// 
 			// stripItemSheet
 			// 
 			this->stripItemSheet->Name = L"stripItemSheet";
-			this->stripItemSheet->Size = System::Drawing::Size(304, 22);
-			this->stripItemSheet->Text = L"提出データ一式を作成する";
+			resources->ApplyResources(this->stripItemSheet, L"stripItemSheet");
 			this->stripItemSheet->Click += gcnew System::EventHandler(this, &Form1::stripItemSheet_Click);
 			// 
 			// stripItemSepMaster1
 			// 
 			this->stripItemSepMaster1->Name = L"stripItemSepMaster1";
-			this->stripItemSepMaster1->Size = System::Drawing::Size(301, 6);
+			resources->ApplyResources(this->stripItemSepMaster1, L"stripItemSepMaster1");
 			// 
 			// stripItemMasterRom
 			// 
 			this->stripItemMasterRom->Name = L"stripItemMasterRom";
-			this->stripItemMasterRom->Size = System::Drawing::Size(304, 22);
-			this->stripItemMasterRom->Text = L"マスターROMのみを作成する";
+			resources->ApplyResources(this->stripItemMasterRom, L"stripItemMasterRom");
 			this->stripItemMasterRom->Click += gcnew System::EventHandler(this, &Form1::stripItemMasterRom_Click);
 			// 
 			// stripItemMiddlewareXml
 			// 
 			this->stripItemMiddlewareXml->Name = L"stripItemMiddlewareXml";
-			this->stripItemMiddlewareXml->Size = System::Drawing::Size(304, 22);
-			this->stripItemMiddlewareXml->Text = L"使用ミドルウェア一覧のみを作成する(XML形式)";
+			resources->ApplyResources(this->stripItemMiddlewareXml, L"stripItemMiddlewareXml");
 			this->stripItemMiddlewareXml->Click += gcnew System::EventHandler(this, &Form1::stripItemMiddlewareXml_Click);
 			// 
 			// stripItemMiddlewareHtml
 			// 
 			this->stripItemMiddlewareHtml->Name = L"stripItemMiddlewareHtml";
-			this->stripItemMiddlewareHtml->Size = System::Drawing::Size(304, 22);
-			this->stripItemMiddlewareHtml->Text = L"使用ミドルウェア一覧のみを作成する(HTML形式)";
+			resources->ApplyResources(this->stripItemMiddlewareHtml, L"stripItemMiddlewareHtml");
 			this->stripItemMiddlewareHtml->Click += gcnew System::EventHandler(this, &Form1::stripItemMiddlewareHtml_Click);
 			// 
 			// stripLang
@@ -2866,14 +2256,12 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->stripLang->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {this->stripItemEnglish, 
 				this->stripItemJapanese});
 			this->stripLang->Name = L"stripLang";
-			this->stripLang->Size = System::Drawing::Size(65, 20);
-			this->stripLang->Text = L"Language";
+			resources->ApplyResources(this->stripLang, L"stripLang");
 			// 
 			// stripItemEnglish
 			// 
 			this->stripItemEnglish->Name = L"stripItemEnglish";
-			this->stripItemEnglish->Size = System::Drawing::Size(119, 22);
-			this->stripItemEnglish->Text = L"English";
+			resources->ApplyResources(this->stripItemEnglish, L"stripItemEnglish");
 			this->stripItemEnglish->Click += gcnew System::EventHandler(this, &Form1::stripItemEnglish_Click);
 			// 
 			// stripItemJapanese
@@ -2881,8 +2269,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->stripItemJapanese->Checked = true;
 			this->stripItemJapanese->CheckState = System::Windows::Forms::CheckState::Checked;
 			this->stripItemJapanese->Name = L"stripItemJapanese";
-			this->stripItemJapanese->Size = System::Drawing::Size(119, 22);
-			this->stripItemJapanese->Text = L"Japanese";
+			resources->ApplyResources(this->stripItemJapanese, L"stripItemJapanese");
 			this->stripItemJapanese->Click += gcnew System::EventHandler(this, &Form1::stripItemJapanese_Click);
 			// 
 			// tabMain
@@ -2893,11 +2280,9 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->tabMain->Controls->Add(this->tabSubmitInfo);
 			this->tabMain->Controls->Add(this->tabCompanyInfo);
 			this->tabMain->Controls->Add(this->tabErrorInfo);
-			this->tabMain->Location = System::Drawing::Point(12, 93);
+			resources->ApplyResources(this->tabMain, L"tabMain");
 			this->tabMain->Name = L"tabMain";
 			this->tabMain->SelectedIndex = 0;
-			this->tabMain->Size = System::Drawing::Size(753, 377);
-			this->tabMain->TabIndex = 34;
 			this->tabMain->SelectedIndexChanged += gcnew System::EventHandler(this, &Form1::tabMain_SelectedIndexChanged);
 			// 
 			// tabRomInfo
@@ -2911,12 +2296,8 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->tabRomInfo->Controls->Add(this->gboxCRC);
 			this->tabRomInfo->Controls->Add(this->tboxSDK);
 			this->tabRomInfo->Controls->Add(this->labSDK);
-			this->tabRomInfo->Location = System::Drawing::Point(4, 21);
+			resources->ApplyResources(this->tabRomInfo, L"tabRomInfo");
 			this->tabRomInfo->Name = L"tabRomInfo";
-			this->tabRomInfo->Padding = System::Windows::Forms::Padding(3);
-			this->tabRomInfo->Size = System::Drawing::Size(745, 352);
-			this->tabRomInfo->TabIndex = 0;
-			this->tabRomInfo->Text = L"ROM基本情報(確認用)";
 			this->tabRomInfo->UseVisualStyleBackColor = true;
 			// 
 			// gridLibrary
@@ -2926,45 +2307,40 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gridLibrary->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridLibrary->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(2) {this->colLibPublisher, 
 				this->colLibName});
-			dataGridViewCellStyle9->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle9->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle9->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle1->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle1->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle1->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle9->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle9->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle9->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle9->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridLibrary->DefaultCellStyle = dataGridViewCellStyle9;
-			this->gridLibrary->Location = System::Drawing::Point(337, 189);
+			dataGridViewCellStyle1->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle1->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle1->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle1->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridLibrary->DefaultCellStyle = dataGridViewCellStyle1;
+			resources->ApplyResources(this->gridLibrary, L"gridLibrary");
 			this->gridLibrary->Name = L"gridLibrary";
 			this->gridLibrary->ReadOnly = true;
 			this->gridLibrary->RowHeadersVisible = false;
 			this->gridLibrary->RowTemplate->Height = 21;
-			this->gridLibrary->Size = System::Drawing::Size(374, 145);
-			this->gridLibrary->TabIndex = 36;
 			// 
 			// colLibPublisher
 			// 
-			this->colLibPublisher->HeaderText = L"Publisher";
+			resources->ApplyResources(this->colLibPublisher, L"colLibPublisher");
 			this->colLibPublisher->Name = L"colLibPublisher";
 			this->colLibPublisher->ReadOnly = true;
 			// 
 			// colLibName
 			// 
 			this->colLibName->AutoSizeMode = System::Windows::Forms::DataGridViewAutoSizeColumnMode::Fill;
-			this->colLibName->HeaderText = L"Library Name";
+			resources->ApplyResources(this->colLibName, L"colLibName");
 			this->colLibName->Name = L"colLibName";
 			this->colLibName->ReadOnly = true;
 			// 
 			// tboxGuideRomInfo
 			// 
 			this->tboxGuideRomInfo->BackColor = System::Drawing::SystemColors::Info;
-			this->tboxGuideRomInfo->Location = System::Drawing::Point(24, 11);
+			resources->ApplyResources(this->tboxGuideRomInfo, L"tboxGuideRomInfo");
 			this->tboxGuideRomInfo->Name = L"tboxGuideRomInfo";
 			this->tboxGuideRomInfo->ReadOnly = true;
-			this->tboxGuideRomInfo->Size = System::Drawing::Size(687, 19);
-			this->tboxGuideRomInfo->TabIndex = 35;
-			this->tboxGuideRomInfo->Text = L"このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。";
 			// 
 			// tabTWLInfo
 			// 
@@ -2974,23 +2350,16 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->tabTWLInfo->Controls->Add(this->gboxTWLExInfo);
 			this->tabTWLInfo->Controls->Add(this->gboxAccess);
 			this->tabTWLInfo->Controls->Add(this->gboxTitleID);
-			this->tabTWLInfo->Location = System::Drawing::Point(4, 21);
+			resources->ApplyResources(this->tabTWLInfo, L"tabTWLInfo");
 			this->tabTWLInfo->Name = L"tabTWLInfo";
-			this->tabTWLInfo->Padding = System::Windows::Forms::Padding(3);
-			this->tabTWLInfo->Size = System::Drawing::Size(745, 352);
-			this->tabTWLInfo->TabIndex = 1;
-			this->tabTWLInfo->Text = L"TWL拡張情報(確認用)";
 			this->tabTWLInfo->UseVisualStyleBackColor = true;
 			// 
 			// tboxGuideTWLInfo
 			// 
 			this->tboxGuideTWLInfo->BackColor = System::Drawing::SystemColors::Info;
-			this->tboxGuideTWLInfo->Location = System::Drawing::Point(24, 11);
+			resources->ApplyResources(this->tboxGuideTWLInfo, L"tboxGuideTWLInfo");
 			this->tboxGuideTWLInfo->Name = L"tboxGuideTWLInfo";
 			this->tboxGuideTWLInfo->ReadOnly = true;
-			this->tboxGuideTWLInfo->Size = System::Drawing::Size(687, 19);
-			this->tboxGuideTWLInfo->TabIndex = 36;
-			this->tboxGuideTWLInfo->Text = L"このタブの情報は編集不可です。データに誤りがある場合にはROMデータの作成時の設定を見直してください。";
 			// 
 			// gboxExFlags
 			// 
@@ -2998,12 +2367,9 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gboxExFlags->Controls->Add(this->cboxIsTmpJump);
 			this->gboxExFlags->Controls->Add(this->cboxIsWL);
 			this->gboxExFlags->Controls->Add(this->cboxIsSubBanner);
-			this->gboxExFlags->Location = System::Drawing::Point(12, 236);
+			resources->ApplyResources(this->gboxExFlags, L"gboxExFlags");
 			this->gboxExFlags->Name = L"gboxExFlags";
-			this->gboxExFlags->Size = System::Drawing::Size(198, 108);
-			this->gboxExFlags->TabIndex = 35;
 			this->gboxExFlags->TabStop = false;
-			this->gboxExFlags->Text = L"TWL拡張諸フラグ";
 			// 
 			// tabRomEditInfo
 			// 
@@ -3013,63 +2379,43 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->tabRomEditInfo->Controls->Add(this->gboxParental);
 			this->tabRomEditInfo->Controls->Add(this->gboxIcon);
 			this->tabRomEditInfo->Controls->Add(this->gboxEULA);
-			this->tabRomEditInfo->Location = System::Drawing::Point(4, 21);
+			resources->ApplyResources(this->tabRomEditInfo, L"tabRomEditInfo");
 			this->tabRomEditInfo->Name = L"tabRomEditInfo";
-			this->tabRomEditInfo->Size = System::Drawing::Size(745, 352);
-			this->tabRomEditInfo->TabIndex = 2;
-			this->tabRomEditInfo->Text = L"ROM登録情報(編集可)";
 			this->tabRomEditInfo->UseVisualStyleBackColor = true;
 			// 
 			// gboxOtherSpec
 			// 
 			this->gboxOtherSpec->Controls->Add(this->cboxIsUGC);
 			this->gboxOtherSpec->Controls->Add(this->cboxIsPhotoEx);
-			this->gboxOtherSpec->Location = System::Drawing::Point(19, 225);
+			resources->ApplyResources(this->gboxOtherSpec, L"gboxOtherSpec");
 			this->gboxOtherSpec->Name = L"gboxOtherSpec";
-			this->gboxOtherSpec->Size = System::Drawing::Size(266, 70);
-			this->gboxOtherSpec->TabIndex = 41;
 			this->gboxOtherSpec->TabStop = false;
-			this->gboxOtherSpec->Text = L"その他ROM仕様";
 			// 
 			// cboxIsUGC
 			// 
-			this->cboxIsUGC->AutoSize = true;
-			this->cboxIsUGC->Location = System::Drawing::Point(8, 18);
+			resources->ApplyResources(this->cboxIsUGC, L"cboxIsUGC");
 			this->cboxIsUGC->Name = L"cboxIsUGC";
-			this->cboxIsUGC->Size = System::Drawing::Size(210, 16);
-			this->cboxIsUGC->TabIndex = 39;
-			this->cboxIsUGC->Text = L"UGC(User Generated Contents)対応";
 			this->cboxIsUGC->UseVisualStyleBackColor = true;
 			// 
 			// cboxIsPhotoEx
 			// 
-			this->cboxIsPhotoEx->AutoSize = true;
-			this->cboxIsPhotoEx->Location = System::Drawing::Point(8, 46);
+			resources->ApplyResources(this->cboxIsPhotoEx, L"cboxIsPhotoEx");
 			this->cboxIsPhotoEx->Name = L"cboxIsPhotoEx";
-			this->cboxIsPhotoEx->Size = System::Drawing::Size(96, 16);
-			this->cboxIsPhotoEx->TabIndex = 40;
-			this->cboxIsPhotoEx->Text = L"写真交換対応";
 			this->cboxIsPhotoEx->UseVisualStyleBackColor = true;
 			// 
 			// butSetBack
 			// 
-			this->butSetBack->Location = System::Drawing::Point(69, 309);
+			resources->ApplyResources(this->butSetBack, L"butSetBack");
 			this->butSetBack->Name = L"butSetBack";
-			this->butSetBack->Size = System::Drawing::Size(151, 23);
-			this->butSetBack->TabIndex = 38;
-			this->butSetBack->Text = L"読み込み時の設定に戻す";
 			this->butSetBack->UseVisualStyleBackColor = true;
 			this->butSetBack->Click += gcnew System::EventHandler(this, &Form1::butSetBack_Click);
 			// 
 			// tboxGuideRomEditInfo
 			// 
 			this->tboxGuideRomEditInfo->BackColor = System::Drawing::SystemColors::Info;
-			this->tboxGuideRomEditInfo->Location = System::Drawing::Point(24, 11);
-			this->tboxGuideRomEditInfo->Multiline = true;
+			resources->ApplyResources(this->tboxGuideRomEditInfo, L"tboxGuideRomEditInfo");
 			this->tboxGuideRomEditInfo->Name = L"tboxGuideRomEditInfo";
 			this->tboxGuideRomEditInfo->ReadOnly = true;
-			this->tboxGuideRomEditInfo->Size = System::Drawing::Size(687, 34);
-			this->tboxGuideRomEditInfo->TabIndex = 37;
 			// 
 			// gboxParental
 			// 
@@ -3090,66 +2436,45 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gboxParental->Controls->Add(this->combPEGI);
 			this->gboxParental->Controls->Add(this->combUSK);
 			this->gboxParental->Controls->Add(this->labUSK);
-			this->gboxParental->Location = System::Drawing::Point(313, 60);
+			resources->ApplyResources(this->gboxParental, L"gboxParental");
 			this->gboxParental->Name = L"gboxParental";
-			this->gboxParental->Size = System::Drawing::Size(398, 272);
-			this->gboxParental->TabIndex = 33;
 			this->gboxParental->TabStop = false;
-			this->gboxParental->Text = L"リージョンとレーティング情報";
 			// 
 			// gboxIcon
 			// 
 			this->gboxIcon->Controls->Add(this->rIsNoIcon);
 			this->gboxIcon->Controls->Add(this->rIsWiFiIcon);
 			this->gboxIcon->Controls->Add(this->rIsWirelessIcon);
-			this->gboxIcon->Location = System::Drawing::Point(19, 114);
+			resources->ApplyResources(this->gboxIcon, L"gboxIcon");
 			this->gboxIcon->Name = L"gboxIcon";
-			this->gboxIcon->Size = System::Drawing::Size(266, 105);
-			this->gboxIcon->TabIndex = 32;
 			this->gboxIcon->TabStop = false;
-			this->gboxIcon->Text = L"メニュー上でのアイコン表示";
 			// 
 			// rIsNoIcon
 			// 
-			this->rIsNoIcon->AutoSize = true;
+			resources->ApplyResources(this->rIsNoIcon, L"rIsNoIcon");
 			this->rIsNoIcon->Checked = true;
-			this->rIsNoIcon->Location = System::Drawing::Point(8, 25);
 			this->rIsNoIcon->Name = L"rIsNoIcon";
-			this->rIsNoIcon->Size = System::Drawing::Size(120, 16);
-			this->rIsNoIcon->TabIndex = 4;
 			this->rIsNoIcon->TabStop = true;
-			this->rIsNoIcon->Text = L"アイコンを表示しない";
 			this->rIsNoIcon->UseVisualStyleBackColor = true;
 			// 
 			// rIsWiFiIcon
 			// 
-			this->rIsWiFiIcon->AutoSize = true;
-			this->rIsWiFiIcon->Location = System::Drawing::Point(8, 77);
+			resources->ApplyResources(this->rIsWiFiIcon, L"rIsWiFiIcon");
 			this->rIsWiFiIcon->Name = L"rIsWiFiIcon";
-			this->rIsWiFiIcon->Size = System::Drawing::Size(134, 16);
-			this->rIsWiFiIcon->TabIndex = 6;
-			this->rIsWiFiIcon->Text = L"Wi-Fi通信アイコン表示";
 			this->rIsWiFiIcon->UseVisualStyleBackColor = true;
 			// 
 			// rIsWirelessIcon
 			// 
-			this->rIsWirelessIcon->AutoSize = true;
-			this->rIsWirelessIcon->Location = System::Drawing::Point(8, 51);
+			resources->ApplyResources(this->rIsWirelessIcon, L"rIsWirelessIcon");
 			this->rIsWirelessIcon->Name = L"rIsWirelessIcon";
-			this->rIsWirelessIcon->Size = System::Drawing::Size(167, 16);
-			this->rIsWirelessIcon->TabIndex = 5;
-			this->rIsWirelessIcon->Text = L"DSワイヤレス通信アイコン表示";
 			this->rIsWirelessIcon->UseVisualStyleBackColor = true;
 			// 
 			// gboxEULA
 			// 
 			this->gboxEULA->Controls->Add(this->cboxIsEULA);
-			this->gboxEULA->Location = System::Drawing::Point(19, 60);
+			resources->ApplyResources(this->gboxEULA, L"gboxEULA");
 			this->gboxEULA->Name = L"gboxEULA";
-			this->gboxEULA->Size = System::Drawing::Size(266, 48);
-			this->gboxEULA->TabIndex = 31;
 			this->gboxEULA->TabStop = false;
-			this->gboxEULA->Text = L"EULA(利用規約)";
 			// 
 			// tabSubmitInfo
 			// 
@@ -3175,31 +2500,21 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->tabSubmitInfo->Controls->Add(this->labProductCode);
 			this->tabSubmitInfo->Controls->Add(this->labProductName);
 			this->tabSubmitInfo->Controls->Add(this->labProductCode1);
-			this->tabSubmitInfo->Location = System::Drawing::Point(4, 21);
+			resources->ApplyResources(this->tabSubmitInfo, L"tabSubmitInfo");
 			this->tabSubmitInfo->Name = L"tabSubmitInfo";
-			this->tabSubmitInfo->Size = System::Drawing::Size(745, 352);
-			this->tabSubmitInfo->TabIndex = 3;
-			this->tabSubmitInfo->Text = L"提出情報(編集可)";
 			this->tabSubmitInfo->UseVisualStyleBackColor = true;
 			// 
 			// labProductNameLimit
 			// 
-			this->labProductNameLimit->Location = System::Drawing::Point(237, 75);
+			resources->ApplyResources(this->labProductNameLimit, L"labProductNameLimit");
 			this->labProductNameLimit->Name = L"labProductNameLimit";
-			this->labProductNameLimit->Size = System::Drawing::Size(124, 11);
-			this->labProductNameLimit->TabIndex = 39;
-			this->labProductNameLimit->Text = L"(30文字以内)";
-			this->labProductNameLimit->TextAlign = System::Drawing::ContentAlignment::TopRight;
 			// 
 			// tboxGuideSubmitInfo
 			// 
 			this->tboxGuideSubmitInfo->BackColor = System::Drawing::SystemColors::Info;
-			this->tboxGuideSubmitInfo->Location = System::Drawing::Point(24, 11);
+			resources->ApplyResources(this->tboxGuideSubmitInfo, L"tboxGuideSubmitInfo");
 			this->tboxGuideSubmitInfo->Name = L"tboxGuideSubmitInfo";
 			this->tboxGuideSubmitInfo->ReadOnly = true;
-			this->tboxGuideSubmitInfo->Size = System::Drawing::Size(687, 19);
-			this->tboxGuideSubmitInfo->TabIndex = 38;
-			this->tboxGuideSubmitInfo->Text = L"このタブの情報は提出確認書の作成に必要です。入力してください。";
 			// 
 			// gboxForeign
 			// 
@@ -3216,30 +2531,19 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gboxForeign->Controls->Add(this->labProductCode1Foreign);
 			this->gboxForeign->Controls->Add(this->tboxProductNameForeign);
 			this->gboxForeign->Controls->Add(this->labProductNameForeign);
-			this->gboxForeign->Location = System::Drawing::Point(378, 91);
+			resources->ApplyResources(this->gboxForeign, L"gboxForeign");
 			this->gboxForeign->Name = L"gboxForeign";
-			this->gboxForeign->Size = System::Drawing::Size(355, 144);
-			this->gboxForeign->TabIndex = 35;
 			this->gboxForeign->TabStop = false;
-			this->gboxForeign->Text = L"海外版";
 			// 
 			// labProductNameLimitForeign
 			// 
-			this->labProductNameLimitForeign->Location = System::Drawing::Point(225, 62);
+			resources->ApplyResources(this->labProductNameLimitForeign, L"labProductNameLimitForeign");
 			this->labProductNameLimitForeign->Name = L"labProductNameLimitForeign";
-			this->labProductNameLimitForeign->Size = System::Drawing::Size(124, 11);
-			this->labProductNameLimitForeign->TabIndex = 40;
-			this->labProductNameLimitForeign->Text = L"(30文字以内)";
-			this->labProductNameLimitForeign->TextAlign = System::Drawing::ContentAlignment::TopRight;
 			// 
 			// labMultiForeign2
 			// 
-			this->labMultiForeign2->AutoSize = true;
-			this->labMultiForeign2->Location = System::Drawing::Point(217, 121);
+			resources->ApplyResources(this->labMultiForeign2, L"labMultiForeign2");
 			this->labMultiForeign2->Name = L"labMultiForeign2";
-			this->labMultiForeign2->Size = System::Drawing::Size(101, 12);
-			this->labMultiForeign2->TabIndex = 45;
-			this->labMultiForeign2->Text = L"(複数ある場合のみ)";
 			// 
 			// tabCompanyInfo
 			// 
@@ -3247,22 +2551,16 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->tabCompanyInfo->Controls->Add(this->cboxIsInputPerson2);
 			this->tabCompanyInfo->Controls->Add(this->gboxPerson1);
 			this->tabCompanyInfo->Controls->Add(this->gboxPerson2);
-			this->tabCompanyInfo->Location = System::Drawing::Point(4, 21);
+			resources->ApplyResources(this->tabCompanyInfo, L"tabCompanyInfo");
 			this->tabCompanyInfo->Name = L"tabCompanyInfo";
-			this->tabCompanyInfo->Size = System::Drawing::Size(745, 352);
-			this->tabCompanyInfo->TabIndex = 4;
-			this->tabCompanyInfo->Text = L"会社情報(編集可)";
 			this->tabCompanyInfo->UseVisualStyleBackColor = true;
 			// 
 			// tboxGuideCompanyInfo
 			// 
 			this->tboxGuideCompanyInfo->BackColor = System::Drawing::SystemColors::Info;
-			this->tboxGuideCompanyInfo->Location = System::Drawing::Point(24, 11);
+			resources->ApplyResources(this->tboxGuideCompanyInfo, L"tboxGuideCompanyInfo");
 			this->tboxGuideCompanyInfo->Name = L"tboxGuideCompanyInfo";
 			this->tboxGuideCompanyInfo->ReadOnly = true;
-			this->tboxGuideCompanyInfo->Size = System::Drawing::Size(687, 19);
-			this->tboxGuideCompanyInfo->TabIndex = 39;
-			this->tboxGuideCompanyInfo->Text = L"このタブの情報は提出確認書の作成に必要です。入力してください。";
 			// 
 			// tabErrorInfo
 			// 
@@ -3272,78 +2570,53 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->tabErrorInfo->Controls->Add(this->labError);
 			this->tabErrorInfo->Controls->Add(this->gridWarn);
 			this->tabErrorInfo->Controls->Add(this->gridError);
-			this->tabErrorInfo->Location = System::Drawing::Point(4, 21);
+			resources->ApplyResources(this->tabErrorInfo, L"tabErrorInfo");
 			this->tabErrorInfo->Name = L"tabErrorInfo";
-			this->tabErrorInfo->Size = System::Drawing::Size(745, 352);
-			this->tabErrorInfo->TabIndex = 5;
-			this->tabErrorInfo->Text = L"エラー情報(確認用)";
 			this->tabErrorInfo->UseVisualStyleBackColor = true;
 			// 
 			// tboxGuideErrorInfo
 			// 
 			this->tboxGuideErrorInfo->BackColor = System::Drawing::SystemColors::Info;
-			this->tboxGuideErrorInfo->Location = System::Drawing::Point(24, 11);
-			this->tboxGuideErrorInfo->Multiline = true;
+			resources->ApplyResources(this->tboxGuideErrorInfo, L"tboxGuideErrorInfo");
 			this->tboxGuideErrorInfo->Name = L"tboxGuideErrorInfo";
 			this->tboxGuideErrorInfo->ReadOnly = true;
-			this->tboxGuideErrorInfo->Size = System::Drawing::Size(511, 61);
-			this->tboxGuideErrorInfo->TabIndex = 40;
 			// 
 			// gboxErrorTiming
 			// 
 			this->gboxErrorTiming->Controls->Add(this->rErrorCurrent);
 			this->gboxErrorTiming->Controls->Add(this->rErrorReading);
-			this->gboxErrorTiming->Location = System::Drawing::Point(551, 11);
+			resources->ApplyResources(this->gboxErrorTiming, L"gboxErrorTiming");
 			this->gboxErrorTiming->Name = L"gboxErrorTiming";
-			this->gboxErrorTiming->Size = System::Drawing::Size(172, 71);
-			this->gboxErrorTiming->TabIndex = 41;
 			this->gboxErrorTiming->TabStop = false;
-			this->gboxErrorTiming->Text = L"いつの情報を表示するか";
 			// 
 			// rErrorCurrent
 			// 
-			this->rErrorCurrent->AutoSize = true;
-			this->rErrorCurrent->Location = System::Drawing::Point(6, 45);
+			resources->ApplyResources(this->rErrorCurrent, L"rErrorCurrent");
 			this->rErrorCurrent->Name = L"rErrorCurrent";
-			this->rErrorCurrent->Size = System::Drawing::Size(114, 16);
-			this->rErrorCurrent->TabIndex = 1;
 			this->rErrorCurrent->TabStop = true;
-			this->rErrorCurrent->Text = L"現在の入力を反映";
 			this->rErrorCurrent->UseVisualStyleBackColor = true;
 			this->rErrorCurrent->CheckedChanged += gcnew System::EventHandler(this, &Form1::rErrorCurrent_CheckedChanged);
 			// 
 			// rErrorReading
 			// 
-			this->rErrorReading->AutoSize = true;
+			resources->ApplyResources(this->rErrorReading, L"rErrorReading");
 			this->rErrorReading->Checked = true;
-			this->rErrorReading->Location = System::Drawing::Point(6, 18);
 			this->rErrorReading->Name = L"rErrorReading";
-			this->rErrorReading->Size = System::Drawing::Size(134, 16);
-			this->rErrorReading->TabIndex = 0;
 			this->rErrorReading->TabStop = true;
-			this->rErrorReading->Text = L"ROMデータ読み込み時";
 			this->rErrorReading->UseVisualStyleBackColor = true;
 			this->rErrorReading->CheckedChanged += gcnew System::EventHandler(this, &Form1::rErrorReading_CheckedChanged);
 			// 
 			// labWarn
 			// 
-			this->labWarn->AutoSize = true;
+			resources->ApplyResources(this->labWarn, L"labWarn");
 			this->labWarn->ForeColor = System::Drawing::SystemColors::ActiveCaption;
-			this->labWarn->Location = System::Drawing::Point(22, 213);
 			this->labWarn->Name = L"labWarn";
-			this->labWarn->Size = System::Drawing::Size(339, 12);
-			this->labWarn->TabIndex = 40;
-			this->labWarn->Text = L"警告(修正は必須ではありませんが情報に誤りがないかご確認ください。)";
 			// 
 			// labError
 			// 
-			this->labError->AutoSize = true;
+			resources->ApplyResources(this->labError, L"labError");
 			this->labError->ForeColor = System::Drawing::SystemColors::ActiveCaption;
-			this->labError->Location = System::Drawing::Point(22, 84);
 			this->labError->Name = L"labError";
-			this->labError->Size = System::Drawing::Size(145, 12);
-			this->labError->TabIndex = 39;
-			this->labError->Text = L"エラー(必ず修正してください。)";
 			// 
 			// gridWarn
 			// 
@@ -3352,131 +2625,112 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->gridWarn->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridWarn->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colWarnName, 
 				this->colWarnBegin, this->colWarnEnd, this->colWarnCause});
-			dataGridViewCellStyle10->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle10->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle10->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle2->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle2->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle2->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle10->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle10->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle10->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle10->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle10;
+			dataGridViewCellStyle2->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle2->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle2->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle2->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridWarn->DefaultCellStyle = dataGridViewCellStyle2;
 			this->gridWarn->GridColor = System::Drawing::SystemColors::Control;
-			this->gridWarn->Location = System::Drawing::Point(24, 228);
+			resources->ApplyResources(this->gridWarn, L"gridWarn");
 			this->gridWarn->Name = L"gridWarn";
 			this->gridWarn->ReadOnly = true;
 			this->gridWarn->RowHeadersVisible = false;
 			this->gridWarn->RowTemplate->Height = 21;
-			this->gridWarn->Size = System::Drawing::Size(699, 106);
-			this->gridWarn->TabIndex = 38;
 			// 
 			// colWarnName
 			// 
-			this->colWarnName->HeaderText = L"項目名";
+			resources->ApplyResources(this->colWarnName, L"colWarnName");
 			this->colWarnName->Name = L"colWarnName";
 			this->colWarnName->ReadOnly = true;
-			this->colWarnName->Width = 150;
 			// 
 			// colWarnBegin
 			// 
-			this->colWarnBegin->HeaderText = L"開始";
+			resources->ApplyResources(this->colWarnBegin, L"colWarnBegin");
 			this->colWarnBegin->Name = L"colWarnBegin";
 			this->colWarnBegin->ReadOnly = true;
-			this->colWarnBegin->Width = 60;
 			// 
 			// colWarnEnd
 			// 
-			this->colWarnEnd->HeaderText = L"終了";
+			resources->ApplyResources(this->colWarnEnd, L"colWarnEnd");
 			this->colWarnEnd->Name = L"colWarnEnd";
 			this->colWarnEnd->ReadOnly = true;
-			this->colWarnEnd->Width = 60;
 			// 
 			// colWarnCause
 			// 
 			this->colWarnCause->AutoSizeMode = System::Windows::Forms::DataGridViewAutoSizeColumnMode::Fill;
-			this->colWarnCause->HeaderText = L"要因";
+			resources->ApplyResources(this->colWarnCause, L"colWarnCause");
 			this->colWarnCause->Name = L"colWarnCause";
 			this->colWarnCause->ReadOnly = true;
 			// 
 			// gridError
 			// 
-			dataGridViewCellStyle11->BackColor = System::Drawing::Color::White;
-			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle11;
+			dataGridViewCellStyle3->BackColor = System::Drawing::Color::White;
+			this->gridError->AlternatingRowsDefaultCellStyle = dataGridViewCellStyle3;
 			this->gridError->AutoSizeRowsMode = System::Windows::Forms::DataGridViewAutoSizeRowsMode::AllCellsExceptHeaders;
 			this->gridError->BackgroundColor = System::Drawing::SystemColors::Control;
 			this->gridError->ColumnHeadersHeightSizeMode = System::Windows::Forms::DataGridViewColumnHeadersHeightSizeMode::AutoSize;
 			this->gridError->Columns->AddRange(gcnew cli::array< System::Windows::Forms::DataGridViewColumn^  >(4) {this->colErrorName, 
 				this->colErrorBegin, this->colErrorEnd, this->colErrorCause});
-			dataGridViewCellStyle12->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
-			dataGridViewCellStyle12->BackColor = System::Drawing::SystemColors::Window;
-			dataGridViewCellStyle12->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
+			dataGridViewCellStyle4->Alignment = System::Windows::Forms::DataGridViewContentAlignment::MiddleLeft;
+			dataGridViewCellStyle4->BackColor = System::Drawing::SystemColors::Window;
+			dataGridViewCellStyle4->Font = (gcnew System::Drawing::Font(L"MS UI Gothic", 9, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point, 
 				static_cast<System::Byte>(128)));
-			dataGridViewCellStyle12->ForeColor = System::Drawing::SystemColors::ControlText;
-			dataGridViewCellStyle12->SelectionBackColor = System::Drawing::SystemColors::Highlight;
-			dataGridViewCellStyle12->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
-			dataGridViewCellStyle12->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
-			this->gridError->DefaultCellStyle = dataGridViewCellStyle12;
+			dataGridViewCellStyle4->ForeColor = System::Drawing::SystemColors::ControlText;
+			dataGridViewCellStyle4->SelectionBackColor = System::Drawing::SystemColors::Highlight;
+			dataGridViewCellStyle4->SelectionForeColor = System::Drawing::SystemColors::HighlightText;
+			dataGridViewCellStyle4->WrapMode = System::Windows::Forms::DataGridViewTriState::True;
+			this->gridError->DefaultCellStyle = dataGridViewCellStyle4;
 			this->gridError->GridColor = System::Drawing::SystemColors::Control;
-			this->gridError->Location = System::Drawing::Point(24, 99);
+			resources->ApplyResources(this->gridError, L"gridError");
 			this->gridError->Name = L"gridError";
 			this->gridError->ReadOnly = true;
 			this->gridError->RowHeadersVisible = false;
 			this->gridError->RowTemplate->Height = 21;
-			this->gridError->Size = System::Drawing::Size(699, 103);
-			this->gridError->TabIndex = 37;
 			// 
 			// colErrorName
 			// 
-			this->colErrorName->HeaderText = L"項目名";
+			resources->ApplyResources(this->colErrorName, L"colErrorName");
 			this->colErrorName->Name = L"colErrorName";
 			this->colErrorName->ReadOnly = true;
-			this->colErrorName->Width = 150;
 			// 
 			// colErrorBegin
 			// 
-			this->colErrorBegin->HeaderText = L"開始";
+			resources->ApplyResources(this->colErrorBegin, L"colErrorBegin");
 			this->colErrorBegin->Name = L"colErrorBegin";
 			this->colErrorBegin->ReadOnly = true;
-			this->colErrorBegin->Width = 60;
 			// 
 			// colErrorEnd
 			// 
-			this->colErrorEnd->HeaderText = L"終了";
+			resources->ApplyResources(this->colErrorEnd, L"colErrorEnd");
 			this->colErrorEnd->Name = L"colErrorEnd";
 			this->colErrorEnd->ReadOnly = true;
-			this->colErrorEnd->Width = 60;
 			// 
 			// colErrorCause
 			// 
 			this->colErrorCause->AutoSizeMode = System::Windows::Forms::DataGridViewAutoSizeColumnMode::Fill;
-			this->colErrorCause->HeaderText = L"要因";
+			resources->ApplyResources(this->colErrorCause, L"colErrorCause");
 			this->colErrorCause->Name = L"colErrorCause";
 			this->colErrorCause->ReadOnly = true;
 			// 
 			// labFile
 			// 
-			this->labFile->AutoSize = true;
-			this->labFile->Location = System::Drawing::Point(22, 53);
+			resources->ApplyResources(this->labFile, L"labFile");
 			this->labFile->Name = L"labFile";
-			this->labFile->Size = System::Drawing::Size(92, 12);
-			this->labFile->TabIndex = 36;
-			this->labFile->Text = L"ROMデータファイル";
 			// 
 			// labAssemblyVersion
 			// 
-			this->labAssemblyVersion->AutoSize = true;
+			resources->ApplyResources(this->labAssemblyVersion, L"labAssemblyVersion");
 			this->labAssemblyVersion->ForeColor = System::Drawing::SystemColors::ControlText;
-			this->labAssemblyVersion->Location = System::Drawing::Point(696, 24);
 			this->labAssemblyVersion->Name = L"labAssemblyVersion";
-			this->labAssemblyVersion->Size = System::Drawing::Size(69, 12);
-			this->labAssemblyVersion->TabIndex = 37;
-			this->labAssemblyVersion->Text = L"ver.0.0.00000";
 			// 
 			// Form1
 			// 
-			this->AutoScaleDimensions = System::Drawing::SizeF(6, 12);
+			resources->ApplyResources(this, L"$this");
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
-			this->ClientSize = System::Drawing::Size(777, 482);
 			this->Controls->Add(this->labAssemblyVersion);
 			this->Controls->Add(this->labFile);
 			this->Controls->Add(this->tabMain);
@@ -3484,7 +2738,6 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->Controls->Add(this->menuStripAbove);
 			this->MainMenuStrip = this->menuStripAbove;
 			this->Name = L"Form1";
-			this->Text = L"TWL MasterEditor";
 			this->gboxSrl->ResumeLayout(false);
 			this->gboxSrl->PerformLayout();
 			this->gboxCRC->ResumeLayout(false);
@@ -3773,6 +3026,9 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 		// 英語版への切り替え
 		void changeEnglish(void);
 
+		// 言語リソース切り替え
+		void changeLanguage( System::String ^langname );
+
 		// --------------------------------------------------------
 		// エラー情報の登録
 		// --------------------------------------------------------
@@ -3861,7 +3117,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			// SRLが読み込まれていないときにはリードさせない
 			if( System::String::IsNullOrEmpty( this->tboxFile->Text ) )
 			{
-				this->errMsg( "ROMデータファイルがオープンされていませんので、マスターROMの作成ができません。", 
+				this->errMsg( "ROMデータファイルが読み込まれていませんので、マスターROMの作成ができません。", 
 							  "ROM data file has not opened yet. A master ROM data can't be made." );
 				return;
 			}
@@ -3964,7 +3220,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			// SRLが読み込まれていないときにはリードさせない
 			if( System::String::IsNullOrEmpty( this->tboxFile->Text ) )
 			{
-				this->errMsg( "ROMデータファイルがオープンされていません。", "ROM file has not opened yet." );
+				this->errMsg( "ROMデータファイルが読み込まれていません。", "ROM file has not opened yet." );
 				return;
 			}
 
@@ -3973,13 +3229,13 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->hWarnList->Clear();
 			if( this->checkSrlForms() == false )
 			{
-				this->errMsg( "不正な設定があるため提出データの作成ができません。",
+				this->errMsg( "不正な設定があるため提出データを作成できません。",
 							  "Setting is illegal. Submission data can't be made." );
 				return;
 			}
 			if( this->checkDeliverableForms() == false )
 			{
-				this->errMsg( "入力情報に不足があるため提出確認書を作成できません。",
+				this->errMsg( "入力情報に不足があるため提出データを作成できません。",
 							  "Input is not enough. Submission data can't be made." );
 				return;
 			}
@@ -4005,7 +3261,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			{
 				this->sucMsg( 
 					"Step1/3: ROMデータファイルと提出確認書の情報を一致させるため、まず、入力情報を反映させたマスターROMデータファイルを作成します。\n(キャンセルされたとき、提出データ一式は作成されません。)\n"
-					+ "\n  マスターROMデータファイル名は \"" + srlfile + "\"となります。\n" + "\nROMデータファイルを保存するフォルダを選択してください。",
+					+ "\n  マスターROMデータファイル名は \"" + srlfile + "\"となります。\n" + "\nマスターROMデータファイルを保存するフォルダを選択してください。",
 					"Step1/3: Firstly, We make a master ROM file because all information in a submission sheet are match those in the ROM data file.\n(When it is canceled, both A set of submission data is not made.)\n"
 					+ "\n  The name of the master ROM data file is \"" + srlfile + "\".\n" + "\nPlease select a folder in which the ROM data is saved."
 				);
@@ -4043,8 +3299,8 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 					if( MessageBox::Show( msg, "Information", MessageBoxButtons::YesNo, MessageBoxIcon::None ) 
 						== System::Windows::Forms::DialogResult::No )
 					{
-						this->errMsg( "ファイルの選択がキャンセルされましたので提出データ一式は作成されません。", 
-									  "Since selecting a file is canceled, a set of submission data can not be made." );
+						this->errMsg( "ファイルの上書きがキャンセルされましたので提出データ一式は作成されません。", 
+									  "Since overwriting a file is canceled, a set of submission data can not be made." );
 						return;
 					}
 				}
@@ -4054,7 +3310,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			// 注意書き 
 			{
 				this->sucMsg( 
-					"Step2/3: 続いて使用されているミドルウェアのリストを作成します。\nここでキャンセルされたとき、提出データ一式は作成されませんのでご注意ください。",
+					"Step2/3: 続いて、使用されているミドルウェアのリストを作成します。\nここでキャンセルされたとき、提出データ一式は作成されませんのでご注意ください。",
 					"Step2/3: Secondly, We should make a list of middlewares used by the ROM. \n(CAUTION: When it is canceled, A set of submission data is not made.)"
 				);
 			}
@@ -4084,7 +3340,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			// 注意書き 
 			{
 				this->sucMsg( 
-					"Step3/3: 続いて提出確認書を作成します。\nここでキャンセルされたとき、提出データ一式は作成されませんのでご注意ください。",
+					"Step3/3: 続いて、提出確認書を作成します。\nここでキャンセルされたとき、提出データ一式は作成されませんのでご注意ください。",
 					"Step3/3: Finally, We should make a submission sheet. \n(CAUTION: When it is canceled, A set of submission data is not made, but also the master ROM data and a list of middleware are not made.)"
 				);
 			}
@@ -4119,7 +3375,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			{
 				if( !this->saveSrl( srlfile ) )
 				{
-					this->errMsg( "マスターROMの保存に失敗しました。提出確認書およびミドルウェアリストは作成されません。",
+					this->errMsg( "マスターROMの作成に失敗しました。提出確認書およびミドルウェアリストは作成されません。",
 								  "Making a master ROM failed. And a submission sheet and a list of middlewares are not made." );
 					return;
 				}
@@ -4128,7 +3384,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			catch( System::Exception ^ex )
 			{
 				(void)ex;
-				this->errMsg( "マスターROMの保存に失敗しました。提出確認書およびミドルウェアリストは作成されません。",
+				this->errMsg( "マスターROMの作成に失敗しました。提出確認書およびミドルウェアリストは作成されません。",
 							  "Making a master ROM failed. And a submission sheet and a list of middlewares are not made." );
 				return;
 			}
@@ -4242,7 +3498,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 
 			if( System::String::IsNullOrEmpty(this->tboxFile->Text) )
 			{
-				this->errMsg( "ROMデータファイルがオープンされていません。", "ROM file has not opened yet." );
+				this->errMsg( "ROMデータファイルが読み込まれていません。", "ROM file has not opened yet." );
 				return;
 			}
 
@@ -4330,7 +3586,7 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 
 			if( System::IO::File::Exists(filename) == false )
 			{
-				this->errMsg( "ROMデータファイルが存在しませんので開くことができません。", 
+				this->errMsg( "ROMデータファイルが存在しませんので読み込むことができません。", 
 							  "The ROM data file is not found. Therefore the file can not be opened." );
 				return;
 			}
@@ -4469,6 +3725,10 @@ private: System::Windows::Forms::CheckBox^  cboxIsPhotoEx;
 			this->setParentalForms();
 			this->loadOtherForms();		// SRLに登録されていないROM仕様のフォームも戻す
 		}
+
+
+
+
 
 }; // enf of ref class Form1
 
