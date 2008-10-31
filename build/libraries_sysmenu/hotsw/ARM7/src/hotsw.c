@@ -97,7 +97,7 @@ static void ClearCardFlgs(void);
 static void FinalizeHotSw(HotSwCardState state);
 static void ForceNitroModeToFinalize(void);
 static void ForceNormalModeToFinalize(void);
-static BOOL ChangeGameMode(void);
+static BOOL ChangeCardMode(BOOL isApplicationJump);
 static void ClearCardIrq(void);
 static void ClearAllCardRegister(void);
 
@@ -1870,13 +1870,13 @@ final:
 /*---------------------------------------------------------------------------*
   Name:        ForceNitroModeToFinalize
 
-  Description: Nitro互換のGame Modeに強制移行させる
+  Description: カードタイプを見てGame Mode / Game2 Modeに移行させる。
  *---------------------------------------------------------------------------*/
 static void ForceNitroModeToFinalize(void)
 {
     s_cbData.id_gam = 0;
 
-    if(!ChangeGameMode()){
+    if(!ChangeCardMode( FALSE )){
         ClearAllCardRegister();
         McPowerOff();
 
@@ -1914,20 +1914,26 @@ static void ForceNormalModeToFinalize(void)
 
 
 /*---------------------------------------------------------------------------*
-  Name:        ChangeGameMode
+  Name:        ChangeCardMode
 
-  Description: Nitro互換のRomHeaderを読んで、Game Modeに移行させる
+  Description: RomHeader / Secure (Secure2) 領域を読んでCRCを計算・格納し、
+               カードタイプを判別して Gameモード / Game2モードに移行させる
  *---------------------------------------------------------------------------*/
-static BOOL ChangeGameMode(void)
+static BOOL ChangeCardMode(BOOL isApplicationJump)
 {
     HotSwState state;
 
+    // カードのロック
     CARD_LockRom(s_CardLockID);
 
     McPowerOff();
     McPowerOn();
 
-    s_cbData.pBootSegBuf = s_pBootSegBuffer;
+    // バッファを設定
+    s_cbData.pBootSegBuf    = s_pBootSegBuffer;
+    s_cbData.pSecureSegBuf  = s_pSecureSegBuffer;
+    s_cbData.pSecure2SegBuf = s_pSecure2SegBuffer;
+    
     s_cbData.modeType = HOTSW_MODE1;
 
     // ---------------------- Normal Mode ----------------------
@@ -1935,6 +1941,9 @@ static BOOL ChangeGameMode(void)
     state = ReadIDNormal(&s_cbData);
     state = ReadBootSegNormal(&s_cbData);
 
+	// RomHeaderのCRC16の計算
+	SYSMi_GetWork()->flags.hotsw.romHeaderCRC = SVC_GetCRC16( 65535, s_cbData.pBootSegBuf, BOOT_SEGMENT_SIZE );
+    
     if(s_isRomEmu){
         s_cbData.cardType = ROM_EMULATION;
         s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
@@ -1953,19 +1962,46 @@ static BOOL ChangeGameMode(void)
     state = ChangeModeNormal(&s_cbData);
 
     // ---------------------- Secure Mode ----------------------
-    state = s_funcTable[s_isRomEmu].SetPNG_S(&s_cbData);
-    SetMCSCR();
-    state = s_funcTable[s_isRomEmu].ChangeMode_S(&s_cbData);
+    state = ReadSecureModeCardData();
 
-    // ---------------------- Game Mode ----------------------
+    // Secure SegmentのCRC16の計算と格納
+	SYSMi_GetWork()->flags.hotsw.secure1CRC = SVC_GetCRC16( 65535, s_cbData.pSecureSegBuf, SECURE_SEGMENT_SIZE );
+
+	// カード種別の判定
+    // TWLカード      → Game2モード
+    // NTRカード      → Gameモード
+    // アプリジャンプ → Gameモード
+    if(!isApplicationJump && s_cbData.id_nml & HOTSW_ROMID_TWLROM_MASK){
+        s_cbData.modeType = HOTSW_MODE2;
+        
+		// ---------------------- Reset ----------------------
+    	McPowerOff();
+    	McPowerOn();
+
+		// ---------------------- Normal Mode ----------------------
+    	state = ReadSecureModeCardData();
+
+    	MakeBlowfishTableTWL(&s_cbData, 8, s_bondingOp); // s_bondingOpの値はHotSw_Initで格納される
+
+    	GenVA_VB_VD();
+
+    	state = ChangeModeNormal2(&s_cbData);
+    
+		// ---------------------- Secure2 Mode ----------------------
+		state = ReadSecureModeCardData();
+
+    	// Secure SegmentのCRC16の計算と格納
+		SYSMi_GetWork()->flags.hotsw.secure2CRC = SVC_GetCRC16( 65535, s_cbData.pSecure2SegBuf, SECURE_SEGMENT_SIZE );
+    }
+    
+	state = s_funcTable[s_isRomEmu].ChangeMode_S(&s_cbData);
+    
+    // ---------------------- Game2 Mode ----------------------
     state = ReadIDGame(&s_cbData);
 
     if(s_cbData.id_nml != s_cbData.id_gam){
         state = HOTSW_ID_CHECK_ERROR;
     }
-
-    HOTSW_TPrintf("Card Normal ID : 0x%08x\n", s_cbData.id_nml);
-    HOTSW_TPrintf("Card Game   ID : 0x%08x\n", s_cbData.id_gam);
 
 #ifdef USE_NEW_DMA
     HOTSW_WaitNDmaCtrl(HOTSW_NDMA_NO);
@@ -1975,6 +2011,7 @@ static BOOL ChangeGameMode(void)
 
     HOTSW_WaitCardCtrl();
 
+    // カードのアンロック
     CARD_UnlockRom(s_CardLockID);
 
     if(state == HOTSW_SUCCESS){

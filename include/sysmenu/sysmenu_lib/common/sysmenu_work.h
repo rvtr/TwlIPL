@@ -127,6 +127,9 @@ typedef struct SYSM_work {
             vu8			isCardStateChanged;				// カード状態更新フラグ
             vu8			isBusyHotSW;					// 活線挿抜処理中？
             vu8			isKeyTableLoadReady;			// Key Tableのロード準備完了？
+            vu16		romHeaderCRC;
+            vu16		secure1CRC;
+            vu16		secure2CRC;
         }hotsw;
 	}flags; // 9B
 
