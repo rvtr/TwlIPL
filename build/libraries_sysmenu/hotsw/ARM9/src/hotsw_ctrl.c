@@ -44,7 +44,7 @@ static BOOL					s_ReadBusy;
 static OSIrqFunction		s_HotswFuncTable[HOTSW_CALLBACK_FUNCTION_NUM];
 
 static u16                  s_CardLockID;
-
+static BOOL					s_ForceNtrMode;
 
 // ===========================================================================
 // 	Function Describe
@@ -70,6 +70,9 @@ void HOTSW_Init()
 
     // Busyフラグを落としておく
     s_ReadBusy = FALSE;
+
+	// 強制NTRモードフラグをOFF
+	s_ForceNtrMode = FALSE;
     
     // PXI初期化
     PXI_Init();
@@ -190,6 +193,9 @@ void HOTSW_FinalizeHotSWAsync( HotSwCardState cardState )
     msg.msg.finalize = TRUE;
     msg.msg.ctrl     = FALSE;
     msg.msg.cardState= (u8)cardState;
+
+	// 新しく強制NTRモードフラグを追加。ARM7に通知
+	msg.msg.forceNtrMode = s_ForceNtrMode;
     
 	while (PXI_SendWordByFifo(PXI_FIFO_TAG_HOTSW, msg.data, FALSE) != PXI_FIFO_SUCCESS)
     {
@@ -552,4 +558,15 @@ static CardDataReadState ReadPageGame(u32 start_addr, void* buf, u32 size)
     CARD_UnlockRom(s_CardLockID);
     
     return CARD_READ_SUCCESS;
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         HOTSW_SetForceNitroMode
+  
+  Description:  強制的にNTRモードにカードを移行させるかどうかを設定
+ *---------------------------------------------------------------------------*/
+void HOTSW_SetForceNitroMode(BOOL isNtrMode)
+{
+	s_ForceNtrMode = isNtrMode;
 }

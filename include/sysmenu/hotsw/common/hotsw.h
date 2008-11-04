@@ -72,8 +72,9 @@ typedef union HotSwPxiMessageForArm7{
     	u32		ctrl	 :1;
         u32		finalize :1;
         u32		read	 :1;
+        u32		forceNtrMode :1;
         u32		cardState:8;
-    	u32		:20;
+    	u32		:19;
     } msg;
     u32 data;
 } HotSwPxiMessageForArm7;
@@ -97,6 +98,7 @@ typedef struct HotSwMessageForArm7{
     BOOL			 ctrl;
     BOOL			 finalize;
     BOOL			 read;
+    BOOL			 forceNtrMode;
 	HotSwMessageType type;
     HotSwCardState   state;
 } HotSwMessageForArm7;
@@ -139,6 +141,9 @@ BOOL HOTSW_isFinalized(void);
 
 // 活線挿抜処理中かどうかを返す
 BOOL HOTSW_isBusyHotSW(void);
+
+// 強制NTRモード移行かどうかを設定(TWLカード検査用ランチャ用関数)
+void HOTSW_SetForceNitroMode(BOOL isNtrMode);
 
 #ifdef USE_WRAM_LOAD
 // 活栓挿抜処理の初期化

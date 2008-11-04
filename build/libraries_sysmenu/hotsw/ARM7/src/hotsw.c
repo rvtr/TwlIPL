@@ -94,10 +94,10 @@ static BOOL isTwlModeLoad(void);
 static HotSwState ReadSecureModeCardData(void);
 static void ClearCardFlgs(void);
 
-static void FinalizeHotSw(HotSwCardState state);
-static void ForceNitroModeToFinalize(void);
+static void FinalizeHotSw(HotSwCardState state, BOOL forceNtrMode);
+static void ForceNitroModeToFinalize(BOOL forceNtrMode);
 static void ForceNormalModeToFinalize(void);
-static BOOL ChangeCardMode(BOOL isApplicationJump);
+static BOOL ChangeCardMode(BOOL forceNtrMode);
 static void ClearCardIrq(void);
 static void ClearAllCardRegister(void);
 
@@ -1653,7 +1653,7 @@ static void HotSwThread(void *arg)
         }
 
         if( msg->finalize == TRUE && msg->ctrl == FALSE) {
-            FinalizeHotSw( msg->state );
+            FinalizeHotSw( msg->state , msg->forceNtrMode );
         }
 
 #ifdef USE_WRAM_LOAD
@@ -1792,7 +1792,7 @@ static void ClearCardFlgs(void)
 
   Description: アプリ起動時に、活線挿抜関係の後始末を行う。
  *---------------------------------------------------------------------------*/
-static void FinalizeHotSw(HotSwCardState state)
+static void FinalizeHotSw(HotSwCardState state, BOOL forceNtrMode)
 {
     ROM_Header* rh = (void*)SYSM_APP_ROM_HEADER_BUF;
     static BOOL finalized = FALSE;
@@ -1835,7 +1835,7 @@ static void FinalizeHotSw(HotSwCardState state)
 
         // Gameモードに移行
       case HOTSW_CARD_STATE_GAME_MODE:
-        ForceNitroModeToFinalize();
+        ForceNitroModeToFinalize( forceNtrMode );
         break;
 
         // 状態キープ
@@ -1872,11 +1872,11 @@ final:
 
   Description: カードタイプを見てGame Mode / Game2 Modeに移行させる。
  *---------------------------------------------------------------------------*/
-static void ForceNitroModeToFinalize(void)
+static void ForceNitroModeToFinalize(BOOL forceNtrMode)
 {
     s_cbData.id_gam = 0;
 
-    if(!ChangeCardMode( FALSE )){
+    if(!ChangeCardMode( forceNtrMode )){
         ClearAllCardRegister();
         McPowerOff();
 
@@ -1919,7 +1919,7 @@ static void ForceNormalModeToFinalize(void)
   Description: RomHeader / Secure (Secure2) 領域を読んでCRCを計算・格納し、
                カードタイプを判別して Gameモード / Game2モードに移行させる
  *---------------------------------------------------------------------------*/
-static BOOL ChangeCardMode(BOOL isApplicationJump)
+static BOOL ChangeCardMode(BOOL forceNtrMode)
 {
     HotSwState state;
 
@@ -1971,8 +1971,10 @@ static BOOL ChangeCardMode(BOOL isApplicationJump)
     // TWLカード      → Game2モード
     // NTRカード      → Gameモード
     // アプリジャンプ → Gameモード
-    if(!isApplicationJump && s_cbData.id_nml & HOTSW_ROMID_TWLROM_MASK){
+    if(!forceNtrMode && s_cbData.id_nml & HOTSW_ROMID_TWLROM_MASK){
         s_cbData.modeType = HOTSW_MODE2;
+
+		OS_PutString("---------- Game2 Mode...\n");
         
 		// ---------------------- Reset ----------------------
     	McPowerOff();
@@ -1992,6 +1994,9 @@ static BOOL ChangeCardMode(BOOL isApplicationJump)
 
     	// Secure SegmentのCRC16の計算と格納
 		SYSMi_GetWork()->flags.hotsw.secure2CRC = SVC_GetCRC16( 65535, s_cbData.pSecure2SegBuf, SECURE_SEGMENT_SIZE );
+    }
+    else{
+		OS_PutString("---------- Game Mode...\n");
     }
     
 	state = s_funcTable[s_isRomEmu].ChangeMode_S(&s_cbData);
@@ -2296,6 +2301,8 @@ static void InterruptCallbackPxi(PXIFifoTag tag, u32 data, BOOL err)
     HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].finalize  = (d.msg.finalize) ? TRUE : FALSE;
     HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].value     = d.msg.value;
     HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].state     = (HotSwCardState)d.msg.cardState;
+
+    HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl].forceNtrMode = (d.msg.forceNtrMode) ? TRUE : FALSE;
 
     // メッセージ送信
     OS_SendMessage(&HotSwThreadData.hotswQueue, (OSMessage *)&HotSwThreadData.hotswPxiMsg[HotSwThreadData.idx_ctrl], OS_MESSAGE_NOBLOCK);

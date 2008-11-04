@@ -33,6 +33,8 @@
 #include <twl/na.h>
 #include "getSysMenuVersion.h"
 
+#include <sysmenu/util_menuAppManager.h>
+
 // extern data-----------------------------------------------------------------
 
 // define data-----------------------------------------------------------------
@@ -342,27 +344,55 @@ void TwlMain( void )
 
     // start時間計測5
     MEASURE_START(start);
-	
-    // 「ダイレクトブートでない」なら
-    if( !pBootTitle ) {
-        // NAND & カードアプリリスト取得
-        if( !SYSM_IsLogoDemoSkip() )
-        {
-        	SYSM_MakeNandTitleListAsync();    // NANDアプリリストの作成（取得はしていないので注意）
-        }else
-        {
-			sp_titleList = SYSM_GetNandTitleList();
-		}
-    }else
-    {
+
+	// -------------- TWLカード検査用ランチャ --------------
+    // ・ロゴデモはスキップ
+	SYSM_SetLogoDemoSkip( TRUE );
+
+	// ・NANDアプリリスト作成関数は同期版を使う
+    sp_titleList = SYSM_GetNandTitleList();
+
+	// アプリジャンプでない場合
+	if( !pBootTitle ) {
+		// 特定のNANDアプリがあるかどうかチェック
+		u32 i;
+        u32 index = 0;
+        BOOL isCheckProgram = FALSE;
+
+       	for(i = 0; i < LAUNCHER_TITLE_LIST_NUM; i++){
+			TitleID_HiLo tempID = *(TitleID_HiLo *)(&sp_titleList[i].titleID);
+           	if(sp_titleList[i].titleID){
+                // 特定のNANDアプリがあった場合は
+                if(tempID.Lo[0] == 'J' && tempID.Lo[1] == 'R' && tempID.Lo[2] == 'T' && tempID.Lo[3] == 'N'){
+					isCheckProgram = TRUE;
+                    index = i;
+                }
+           	}
+       	}
+
+        // ・NANDアプリに検査プログラムがある → NANDアプリをダイレクトブート
+        // ・NANDアプリに検査プログラムがない → ランチャ起動
+        if(isCheckProgram){
+            pBootTitle = &sp_titleList[index];
+            pBootTitle->flags.isLogoSkip = TRUE;
+        }
+    }
+    // アプリジャンプの場合
+    else {
+		// ・検査プログラム起動かつカードをNTRモードに移行
+		HOTSW_SetForceNitroMode(TRUE);
+
+        // アプリに引き渡すタイトルリスト作成用情報の作成
 		if( !pBootTitle->flags.isLogoSkip )
 		{
-			SYSM_MakeNandTitleListMakerInfoAsync();	// 	アプリに引き渡すタイトルリスト作成用情報の作成
+			SYSM_MakeNandTitleListMakerInfoAsync();	
 		}else
 		{
 			SYSM_MakeNandTitleListMakerInfo();
 		}
-	}
+    }
+    // -----------------------------------------------------
+    
     // end時間計測5
 	MEASURE_RESULT( start, "GetNandTitleList : %dms\n" );
 
