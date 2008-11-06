@@ -363,7 +363,7 @@ void TwlMain( void )
 			TitleID_HiLo tempID = *(TitleID_HiLo *)(&sp_titleList[i].titleID);
            	if(sp_titleList[i].titleID){
                 // 特定のNANDアプリがあった場合は
-                if(tempID.Lo[0] == 'J' && tempID.Lo[1] == 'R' && tempID.Lo[2] == 'T' && tempID.Lo[3] == 'N'){
+                if(tempID.Lo[0] == 'A' && tempID.Lo[1] == 'C' && tempID.Lo[2] == 'T' && tempID.Lo[3] == '0'){
 					isCheckProgram = TRUE;
                     index = i;
                 }
@@ -381,7 +381,7 @@ void TwlMain( void )
     else {
         TitleID_HiLo tempID = *(TitleID_HiLo *)(&pBootTitle->titleID);
         // 指定のアプリの場合
-        if(tempID.Lo[0] == 'J' && tempID.Lo[1] == 'R' && tempID.Lo[2] == 'T' && tempID.Lo[3] == 'N'){
+        if(tempID.Lo[0] == 'A' && tempID.Lo[1] == 'C' && tempID.Lo[2] == 'T' && tempID.Lo[3] == '0'){
 			// ・検査プログラム起動かつカードをNTRモードに移行
 			HOTSW_SetForceNitroMode(TRUE);
         }
