@@ -379,8 +379,15 @@ void TwlMain( void )
     }
     // アプリジャンプの場合
     else {
-		// ・検査プログラム起動かつカードをNTRモードに移行
-		HOTSW_SetForceNitroMode(TRUE);
+        TitleID_HiLo tempID = *(TitleID_HiLo *)(&pBootTitle->titleID);
+        // 指定のアプリの場合
+        if(tempID.Lo[0] == 'J' && tempID.Lo[1] == 'R' && tempID.Lo[2] == 'T' && tempID.Lo[3] == 'N'){
+			// ・検査プログラム起動かつカードをNTRモードに移行
+			HOTSW_SetForceNitroMode(TRUE);
+        }
+        else{
+			HOTSW_SetForceNitroMode(FALSE);
+        }
 
         // アプリに引き渡すタイトルリスト作成用情報の作成
 		if( !pBootTitle->flags.isLogoSkip )
