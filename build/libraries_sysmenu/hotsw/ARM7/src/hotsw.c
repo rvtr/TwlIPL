@@ -59,6 +59,11 @@
 #define     HOTSW_EXMEMCNT_SELB_SHIFT           10
 #endif
 
+// 本体セキュア情報の手前 6byte 分を間借りしてCRC情報を入れておく。
+#define		HOTSW_ROM_HEADER_CRC_BUFFER			(HW_HW_SECURE_INFO - 0x6)
+#define		HOTSW_SECURE1_CRC_BUFFER			(HW_HW_SECURE_INFO - 0x4)
+#define		HOTSW_SECURE2_CRC_BUFFER			(HW_HW_SECURE_INFO - 0x2)
+
 // enum ---------------------------------------------------------------------
 typedef enum HotSwCallBackType{
     HOTSW_CHANGE_GAMEMODE = 0,
@@ -1942,7 +1947,7 @@ static BOOL ChangeCardMode(BOOL forceNtrMode)
     state = ReadBootSegNormal(&s_cbData);
 
 	// RomHeaderのCRC16の計算
-	SYSMi_GetWork()->flags.hotsw.romHeaderCRC = SVC_GetCRC16( 65535, s_cbData.pBootSegBuf, BOOT_SEGMENT_SIZE );
+	*(u16 *)HOTSW_ROM_HEADER_CRC_BUFFER = SVC_GetCRC16( 65535, s_cbData.pBootSegBuf, BOOT_SEGMENT_SIZE );
     
     if(s_isRomEmu){
         s_cbData.cardType = ROM_EMULATION;
@@ -1965,8 +1970,8 @@ static BOOL ChangeCardMode(BOOL forceNtrMode)
     state = ReadSecureModeCardData();
 
     // Secure SegmentのCRC16の計算と格納
-	SYSMi_GetWork()->flags.hotsw.secure1CRC = SVC_GetCRC16( 65535, s_cbData.pSecureSegBuf, SECURE_SEGMENT_SIZE );
-
+	*(u16 *)HOTSW_SECURE1_CRC_BUFFER = SVC_GetCRC16( 65535, s_cbData.pSecureSegBuf, SECURE_SEGMENT_SIZE );
+    
 	// カード種別の判定
     // TWLカード      → Game2モード
     // NTRカード      → Gameモード
@@ -1993,7 +1998,7 @@ static BOOL ChangeCardMode(BOOL forceNtrMode)
 		state = ReadSecureModeCardData();
 
     	// Secure SegmentのCRC16の計算と格納
-		SYSMi_GetWork()->flags.hotsw.secure2CRC = SVC_GetCRC16( 65535, s_cbData.pSecure2SegBuf, SECURE_SEGMENT_SIZE );
+		*(u16 *)HOTSW_SECURE2_CRC_BUFFER = SVC_GetCRC16( 65535, s_cbData.pSecure2SegBuf, SECURE_SEGMENT_SIZE );
     }
     else{
 		OS_PutString("---------- Game Mode...\n");
