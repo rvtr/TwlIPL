@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - firmware
+# Project:  TwlFirm - nandfirm - memory-launcher
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -16,18 +16,36 @@
 # $Author$
 #----------------------------------------------------------------------------
 
+SUBDIRS		=
+
+LINCLUDES	=
+
+#----------------------------------------------------------------------------
+
+TARGET_BIN	=	memory_launcher9.srl
+
+SRCS		=	main.c font.c screen.c
+
+CRT0_O		=	crt0_firm.o
+
+MAKEROM_ARM7		=	../ARM7/bin/$(TWL_BUILDTYPE_ARM7)/memory_launcher7.tef
+MAKEROM_ARM7_BASE       =       $(basename $(MAKEROM_ARM7))
+
+#LCFILE_TEMPLATE =	$(FIRM_SPECDIR)/$(TWL_PROC)-$(TWL_PLATFORM)-PARTNER.lcf.template
+
+LINCLUDES	=	./include
+
+#SRCDIR		=	# using default
+#LCFILE		=	# using default
+
+
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 
 #----------------------------------------------------------------------------
 
-SUBDIRS_P	= \
-			nandfirm-print \
-			sdmc-launcher \
-			memory-launcher \
-			menu-launcher \
+do-build:		$(TARGETS)
 
-#----------------------------------------------------------------------------
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 

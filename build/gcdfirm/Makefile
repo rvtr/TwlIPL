@@ -26,6 +26,7 @@ SUBDIRS		= \
 			gcdfirm-print \
 			sdmc-launcher \
 			sdmc-launcher-writer \
+			memory-launcher-writer \
 
 #----------------------------------------------------------------------------
 
