@@ -14,8 +14,8 @@
   $Rev$
   $Author$
  *---------------------------------------------------------------------------*/
-#ifndef	FIRM_FORMAT_GCDFIRM_H_
-#define	FIRM_FORMAT_GCDFIRM_H_
+#ifndef FIRM_FORMAT_GCDFIRM_H_
+#define FIRM_FORMAT_GCDFIRM_H_
 
 #include <firm/format/firm_common.h>
 #include <firm/format/sign.h>
@@ -69,8 +69,12 @@ typedef struct
     u16     normal_area_offset;
     u16     twl_area_offset;
 
-    /* 0x094-0x0c0 [システム予約領域] */
-    u8      reserved_98h[0x2c];
+    /* 0x094-0x0b8 [システム予約領域] */
+    u8      reserved_98h[0x24];
+
+    /* 0x0b8-0x0c0 [追加データ] */
+    u32     append_offset;
+    u32     append_size;
 
     /* 0x0c0-0x100 [DSカードNINTENDOロゴ重複領域] */
     u8      reserved_C0h[0x3f];
@@ -96,13 +100,13 @@ GCDHeaderHigh;
 typedef struct
 {
     /* 0x000-0x100 */
-	GCDHeaderLow	l;
+    GCDHeaderLow    l;
 
     /* 0x100-0x180 */
     FIRMPaddedSign sign;
 
     /* 0x180-0x200 */
-    GCDHeaderHigh	h;
+    GCDHeaderHigh   h;
 }
 GCDHeader;
 
