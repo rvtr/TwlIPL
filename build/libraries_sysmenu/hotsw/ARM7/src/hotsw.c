@@ -1946,9 +1946,9 @@ static BOOL ChangeCardMode(BOOL forceNtrMode)
     state = ReadIDNormal(&s_cbData);
     state = ReadBootSegNormal(&s_cbData);
 
-	// RomHeader‚ÌCRC16‚ÌŒvŽZ
-	*(u16 *)HOTSW_ROM_HEADER_CRC_BUFFER = SVC_GetCRC16( 65535, s_cbData.pBootSegBuf, BOOT_SEGMENT_SIZE );
-    
+	// RomHeader‚ÌCRC16‚Ì’l‚ðŒvŽZ
+	*(u16 *)HOTSW_ROM_HEADER_CRC_BUFFER = SVC_GetCRC16( 65535, s_cbData.pBootSegBuf, 0x015e );
+
     if(s_isRomEmu){
         s_cbData.cardType = ROM_EMULATION;
         s_cbData.gameCommondParam = s_cbData.pBootSegBuf->rh.s.game_cmd_param & ~SCRAMBLE_MASK;
