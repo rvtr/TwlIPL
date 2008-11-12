@@ -74,6 +74,22 @@ static const u64 sTitleIdListHNL[TITLE_ID_LIST_NUM] =
 	0x0003000f484e4c55,	// Australia HNLU
 };
 
+static const u64 sTitleIdListHNI[TITLE_ID_LIST_NUM] =
+{
+	0x00030005484e494A,	// Japan     HNIJ
+	0x00030005484e4945,	// America   HNIE
+	0x00030005484e4950,	// Europe    HNIP
+	0x00030005484e4955,	// Australia HNIU
+};
+
+static const u64 sTitleIdListHNK[TITLE_ID_LIST_NUM] =
+{
+	0x00030005484e4B4A,	// Japan     HNKJ
+	0x00030005484e4B45,	// America   HNKE
+	0x00030005484e4B50,	// Europe    HNKP
+	0x00030005484e4B55,	// Australia HNKU
+};
+
 /*---------------------------------------------------------------------------*
     内部関数宣言
  *---------------------------------------------------------------------------*/
@@ -128,6 +144,24 @@ BOOL ProcessDeleteOtherResionSysmenu(void)
 		if (i != gRegion)
 		{
 			ret = DeleteTitle( sTitleIdListHNL[i] );
+		}
+	}
+
+	// 選択リージョンと異なる写真帳は消去する
+	for (i=0;i<TITLE_ID_LIST_NUM;i++)
+	{
+		if (i != gRegion)
+		{
+			ret = DeleteTitle( sTitleIdListHNI[i] );
+		}
+	}
+
+	// 選択リージョンと異なるDSiサウンドは消去する
+	for (i=0;i<TITLE_ID_LIST_NUM;i++)
+	{
+		if (i != gRegion)
+		{
+			ret = DeleteTitle( sTitleIdListHNK[i] );
 		}
 	}
 

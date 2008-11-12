@@ -39,7 +39,7 @@
 
 #define THREAD_STACK_SIZE (16*1024)
 
-const char* gDirectoryNameRegion[] =
+static const char* sDirectoryNameRegion[] =
 {
 	"japan",
 	"america",
@@ -47,7 +47,7 @@ const char* gDirectoryNameRegion[] =
 	"australia"
 };
 
-const char* gDirectoryNameConsole[] =
+static const char* sDirectoryNameConsole[] =
 {
 	"debugger",	  // IS_TWL_DEBUGGER
 	"standalone", // IS_TWL_CAPTURE
@@ -72,6 +72,7 @@ static s32 kamiImportTad(const char* path, BOOL erase);
 static void ProgressThread(void* arg);
 static void Destructor(void* arg);
 void ProgressDraw(f32 ratio);
+BOOL ImportDirectoryTad(char* directory);
 
 /*---------------------------------------------------------------------------*
     処理関数定義
@@ -88,11 +89,9 @@ void ProgressDraw(f32 ratio);
  *---------------------------------------------------------------------------*/
 BOOL ProcessImport(void)
 {
-    FSFile  dir;
-    FSDirectoryEntryInfo   info[1];
 	const s32 MAX_RETRY_COUNT = 2;
 	BOOL result = TRUE;
-	char full_path[FS_ENTRY_LONGNAME_MAX+6];
+	char directory[FS_ENTRY_LONGNAME_MAX+6];
 	s32 i=0;
 	s32 j=0;
 
@@ -113,11 +112,44 @@ BOOL ProcessImport(void)
 	    OS_WaitVBlankIntr();
 	}
 
-	// 適切なディレクトリを開く
-	STD_TSNPrintf(full_path, sizeof(full_path), "rom:/data/%s/%s/", gDirectoryNameConsole[GetConsole()], gDirectoryNameRegion[gRegion]);
+	STD_TSNPrintf(directory, sizeof(directory), "rom:/data/%s/%s/", sDirectoryNameConsole[GetConsole()], sDirectoryNameRegion[gRegion]);
+	result &= ImportDirectoryTad(directory);
+
+	STD_TSNPrintf(directory, sizeof(directory), "rom:/data/common/%s/", sDirectoryNameRegion[gRegion]);
+	result &= ImportDirectoryTad(directory);
+
+	STD_TSNPrintf(directory, sizeof(directory), "rom:/data/common/");
+	result &= ImportDirectoryTad(directory);
+
+	while (!FadeOutTick())
+	{
+	    OS_WaitVBlankIntr();
+	}
+
+	return result;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         ImportDirectoryTad
+
+  Description:  指定したディレクトリにあるTADを無条件にImportします。
+
+  Arguments:    path
+
+  Returns:      なし。
+ *---------------------------------------------------------------------------*/
+BOOL ImportDirectoryTad(char* directory)
+{
+    FSFile  dir;
+    FSDirectoryEntryInfo   info[1];
+	const s32 MAX_RETRY_COUNT = 2;
+	BOOL result = TRUE;
+	char full_path[FS_ENTRY_LONGNAME_MAX+6];
+	static s32 listNo=0;
+	s32 j=0;
 
 	FS_InitFile(&dir);
-	if (!FS_OpenDirectory(&dir, full_path, FS_FILEMODE_R))
+	if (!FS_OpenDirectory(&dir, directory, FS_FILEMODE_R))
 	{
     	kamiFontPrintfConsole(CONSOLE_RED, "Error FS_OpenDirectory()\n");
 		return FALSE;
@@ -143,7 +175,7 @@ BOOL ProcessImport(void)
 				if (!STD_CompareString( pExtension, ".tad") || !STD_CompareString( pExtension, ".TAD")  )
 				{
 
-					STD_TSPrintf(string1, "List %d ", ++i);
+					STD_TSPrintf(string1, "List %d ", ++listNo);
 					STD_ConvertStringSjisToUnicode(string2, NULL, string1, NULL, NULL);
 
 					NNS_G2dCharCanvasClearArea(&gCanvas, TXT_COLOR_WHITE, 0, 60, 256, 20);
@@ -152,7 +184,7 @@ BOOL ProcessImport(void)
 					NNS_G2dTextCanvasDrawText(&gTextCanvas, 135, 60,
 						TXT_COLOR_WHITE_BASE, TXT_DRAWTEXT_FLAG_DEFAULT, (const char*)string2);
 
-					STD_TSNPrintf(full_path, sizeof(full_path), "rom:/data/%s/%s/%s", gDirectoryNameConsole[GetConsole()], gDirectoryNameRegion[gRegion], info->longname);
+					STD_TSNPrintf(full_path, sizeof(full_path), "%s/%s", directory, info->longname);
 //            		kamiFontPrintfConsole(CONSOLE_GREEN, "  %s\n", full_path);
 
 					// MAX_RETRY_COUNTまでリトライする
@@ -165,17 +197,17 @@ BOOL ProcessImport(void)
 						}
 						else
 						{
-							kamiFontPrintfConsole(CONSOLE_GREEN, "Import %d Retry!\n", i);
+							kamiFontPrintfConsole(CONSOLE_GREEN, "Import %d Retry!\n", listNo);
 						}
 					}
 
 					if ( nam_result == NAM_OK)
 					{
-						kamiFontPrintfConsole(FONT_COLOR_GREEN, "List : %d Import Success.\n", i);			
+						kamiFontPrintfConsole(FONT_COLOR_GREEN, "List : %d Import Success.\n", listNo);			
 					}
 					else
 					{
-						kamiFontPrintfConsole(FONT_COLOR_RED, "Error: %d : RetCode = %d\n", i, nam_result );
+						kamiFontPrintfConsole(FONT_COLOR_RED, "Error: %d : RetCode = %d\n", listNo, nam_result );
 						result = FALSE;
 					}
 
@@ -183,11 +215,6 @@ BOOL ProcessImport(void)
 				}
 			}
         }
-	}
-
-	while (!FadeOutTick())
-	{
-	    OS_WaitVBlankIntr();
 	}
 
 	return result;

@@ -47,7 +47,7 @@ typedef enum
     íËêîíËã`
  *---------------------------------------------------------------------------*/
 
-#define SYSTEM_UPDATER_NAME         L"SystemUpdater ver.1.0b"
+#define SYSTEM_UPDATER_NAME         L"SystemUpdater ver.1.0c"
 #define SYSTEM_UPDATER_LOG_PATH     "nand:/sys/log/updater.log"
 #define SYSTEM_UPDATER_MAGIC_CODE   44001111
 
@@ -60,8 +60,6 @@ extern const char *g_strSDKSvnRevision;
 extern s32 gLockId;
 extern const u16* sRegionStringArray[4];
 extern OSTWLRegion gRegion;
-extern const char* gDirectoryNameConsole[];
-extern const char* gDirectoryNameRegion[];
 
 /*---------------------------------------------------------------------------*
     ä÷êîêÈåæ

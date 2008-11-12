@@ -6,19 +6,27 @@
 ARM9/Makefileの UPDATER_HOST_ROOT_DIR変数で指定してください。
 
 xxxxx
-  +debugger
+  +common
+  l    +$
   l    +america/*
   l    +australia/*
   l    +europe/*
   l    +japan/*
+  +debugger
+  l    +america/#
+  l    +australia/#
+  l    +europe/#
+  l    +japan/#
   l
   +standalone
-       +america/*
-       +australia/*
-       +europe/*
-       +japan/*
+       +america/#
+       +australia/#
+       +europe/#
+       +japan/#
 
 
-上記の*には、
-全tadとnandファームとフォントデータを置いてください。
+配置図:
+ # -> ランチャーと本体設定のtad (開発機用とデバッガ用で内容が異なるもの）
+ * -> 上記以外でALLリージョンでないtad
+ $ -> 上記以外のtad 及び nandファーム 及び フォントデータ
 

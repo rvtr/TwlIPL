@@ -88,7 +88,7 @@ BOOL ProcessWriteFont(void)
 */
 
 	// 適切なディレクトリを開く
-	STD_TSNPrintf(full_path, sizeof(full_path), "rom:/data/%s/%s/", gDirectoryNameConsole[GetConsole()], gDirectoryNameRegion[gRegion]);
+	STD_TSNPrintf(full_path, sizeof(full_path), "rom:/data/common/");
 
 	FS_InitFile(&dir);
 	if (!FS_OpenDirectory(&dir, full_path, FS_FILEMODE_R))
@@ -110,7 +110,7 @@ BOOL ProcessWriteFont(void)
 			{
 				if (!STD_CompareString( pExtension, ".dat") || !STD_CompareString( pExtension, ".DAT")  )
 				{
-					STD_TSNPrintf(full_path, sizeof(full_path), "rom:/data/%s/%s/%s", gDirectoryNameConsole[GetConsole()], gDirectoryNameRegion[gRegion], info->longname);
+					STD_TSNPrintf(full_path, sizeof(full_path), "rom:/data/common/%s", info->longname);
 					find = TRUE;
 					break;
 				}
