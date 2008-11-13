@@ -651,6 +651,15 @@ OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
 			{
 OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", 0, len);
 				UTL_SetFatalError(FATAL_ERROR_LOAD_READHEADER_FAILED);
+				// header‚à“f‚¢‚¿‚á‚¦
+				{
+				    FSFile dest;
+				    FS_InitFile( &dest );
+				    (void)FS_CreateFile("nand:/sys/readheader_header.dat", FS_PERMIT_W | FS_PERMIT_R);
+				    FS_OpenFileEx( &dest, "nand:/sys/readheader_header.dat", FS_FILEMODE_W );
+				    FS_WriteFile( &dest, (void *)header, HW_TWL_ROM_HEADER_BUF_SIZE );
+				    FS_CloseFile( &dest );
+				}
 				goto ERROR;
 			}
 		}
@@ -668,6 +677,15 @@ OS_TPrintf("\n");
 }
 OS_TPrintf("RebootSystem failed: logo CRC error\n");
 			UTL_SetFatalError(FATAL_ERROR_LOAD_LOGOCRC_ERROR);
+			// header‚à“f‚¢‚¿‚á‚¦
+			{
+			    FSFile dest;
+			    FS_InitFile( &dest );
+			    (void)FS_CreateFile("nand:/sys/logocrc_header.dat", FS_PERMIT_W | FS_PERMIT_R);
+			    FS_OpenFileEx( &dest, "nand:/sys/logocrc_header.dat", FS_FILEMODE_W );
+			    FS_WriteFile( &dest, (void *)header, HW_TWL_ROM_HEADER_BUF_SIZE );
+			    FS_CloseFile( &dest );
+			}
 			goto ERROR;
         }
         
@@ -707,6 +725,15 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode,
 		if( !SYSMi_AuthenticateHeader( pBootTitle, head ) )
 		{
 			UTL_SetFatalError(FATAL_ERROR_LOAD_AUTH_HEADER_FAILED);
+			// header‚à“f‚¢‚¿‚á‚¦
+			{
+			    FSFile dest;
+			    FS_InitFile( &dest );
+			    (void)FS_CreateFile("nand:/sys/authheader_header.dat", FS_PERMIT_W | FS_PERMIT_R);
+			    FS_OpenFileEx( &dest, "nand:/sys/authheader_header.dat", FS_FILEMODE_W );
+			    FS_WriteFile( &dest, (void *)header, HW_TWL_ROM_HEADER_BUF_SIZE );
+			    FS_CloseFile( &dest );
+			}
 			goto ERROR;
 		}
 		
@@ -856,44 +883,6 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 		{
 	        (void)FS_CloseFile(file);
         }
-        
-	// SD‚É‚Ð‚Æ‚Æ‚¨‚è“f‚­
-	{
-	    FSFile dest;
-	    FS_InitFile( &dest );
-	    (void)FS_CreateFile("sdmc:/header.dat", FS_PERMIT_W | FS_PERMIT_R);
-	    FS_OpenFileEx( &dest, "sdmc:/header.dat", FS_FILEMODE_W );
-	    FS_WriteFile( &dest, (void*)SYSM_APP_ROM_HEADER_BUF, HW_TWL_ROM_HEADER_BUF_SIZE );
-	    FS_CloseFile( &dest );
-	    
-	    FS_InitFile( &dest );
-	    (void)FS_CreateFile("sdmc:/arm9flx.dat", FS_PERMIT_W | FS_PERMIT_R);
-	    FS_OpenFileEx( &dest, "sdmc:/arm9flx.dat", FS_FILEMODE_W );
-	    FS_WriteFile( &dest, (void *)destaddr[region_arm9_ntr], length[region_arm9_ntr] );
-	    FS_CloseFile( &dest );
-	    
-	    FS_InitFile( &dest );
-	    (void)FS_CreateFile("sdmc:/arm7flx.dat", FS_PERMIT_W | FS_PERMIT_R);
-	    FS_OpenFileEx( &dest, "sdmc:/arm7flx.dat", FS_FILEMODE_W );
-	    FS_WriteFile( &dest, (void *)destaddr[region_arm7_ntr], length[region_arm7_ntr] );
-	    FS_CloseFile( &dest );
-	    
-	    if( isTwlApp )
-	    {
-		    FS_InitFile( &dest );
-		    (void)FS_CreateFile("sdmc:/arm9ltd.dat", FS_PERMIT_W | FS_PERMIT_R);
-		    FS_OpenFileEx( &dest, "sdmc:/arm9ltd.dat", FS_FILEMODE_W );
-		    FS_WriteFile( &dest, (void *)destaddr[region_arm9_twl], length[region_arm9_twl] );
-		    FS_CloseFile( &dest );
-		    
-		    FS_InitFile( &dest );
-		    (void)FS_CreateFile("sdmc:/arm7ltd.dat", FS_PERMIT_W | FS_PERMIT_R);
-		    FS_OpenFileEx( &dest, "sdmc:/arm7ltd.dat", FS_FILEMODE_W );
-		    FS_WriteFile( &dest, (void *)destaddr[region_arm7_twl], length[region_arm7_twl] );
-		    FS_CloseFile( &dest );
-	    }
-	}
-        
     }
     
     // ƒ‚ƒWƒ…[ƒ‹ÅIƒ[ƒhæ—Ìˆæ‚Ì‚¤‚¿AŒ»Ý‹ó‚¢‚Ä‚¢‚éêŠ‚ðƒNƒŠƒA
@@ -1535,6 +1524,27 @@ static BOOL SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 					s_calc_hash[5], s_calc_hash[6], s_calc_hash[7], s_calc_hash[8], s_calc_hash[9],
 					s_calc_hash[10], s_calc_hash[11], s_calc_hash[12], s_calc_hash[13], s_calc_hash[14],
 					s_calc_hash[15], s_calc_hash[16], s_calc_hash[17], s_calc_hash[18], s_calc_hash[19]);
+					// ƒ‚ƒWƒ…[ƒ‹‚à“f‚¢‚¿‚á‚¦
+						{
+						    FSFile dest;
+						    FS_InitFile( &dest );
+						    (void)FS_CreateFile("nand:/sys/dhtphase1_header.dat", FS_PERMIT_W | FS_PERMIT_R);
+						    FS_OpenFileEx( &dest, "nand:/sys/dhtphase1_header.dat", FS_FILEMODE_W );
+						    FS_WriteFile( &dest, (void *)SYSM_APP_ROM_HEADER_BUF, DHT_DS_HEADER_SIZE );
+						    FS_CloseFile( &dest );
+						    
+						    FS_InitFile( &dest );
+						    (void)FS_CreateFile("nand:/sys/dhtphase1_arm9.dat", FS_PERMIT_W | FS_PERMIT_R);
+						    FS_OpenFileEx( &dest, "nand:/sys/dhtphase1_arm9.dat", FS_FILEMODE_W );
+						    FS_WriteFile( &dest, (void *)hs->main_ram_address, hs->main_size );
+						    FS_CloseFile( &dest );
+						    
+						    FS_InitFile( &dest );
+						    (void)FS_CreateFile("nand:/sys/dhtphase1_arm7.dat", FS_PERMIT_W | FS_PERMIT_R);
+						    FS_OpenFileEx( &dest, "nand:/sys/dhtphase1_arm7.dat", FS_FILEMODE_W );
+						    FS_WriteFile( &dest, (void *)hs->sub_ram_address, hs->sub_size );
+						    FS_CloseFile( &dest );
+						}
 				}
 				UTL_SetFatalError(FATAL_ERROR_DHT_PHASE1_FAILED);
 				return FALSE;

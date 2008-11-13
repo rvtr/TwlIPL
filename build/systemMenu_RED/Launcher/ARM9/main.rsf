@@ -152,7 +152,7 @@ Property
 	#
 	# SDCardAccess: sd card access control [TRUE/FALSE]
 	#
-	SDCardAccess	TRUE
+	#SDCardAccess	TRUE
 
 	#
 	# DisableDebug	：最終ROMでは、アプリジャンプされた際にデバッグできないようにTRUEにする必要があります。
