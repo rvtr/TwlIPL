@@ -127,10 +127,23 @@ static void DrawAlready(SystemUpdaterLog* log)
 	STD_TSPrintf(string1, "This machine has already\nbeen updated.\n\n    ver: %d %d", log->sdk_version, log->ipl_version);
 	STD_ConvertStringSjisToUnicode(string2, NULL, string1, NULL, NULL);
 
+	OS_WaitVBlankIntr();
+	NNS_G2dCharCanvasClearArea(&gCanvas,  TXT_COLOR_WHITE, 0,  30, 256, 100);
+	OS_WaitVBlankIntr();
+	NNS_G2dCharCanvasClearArea(&gCanvas2, TXT_COLOR_BLACK, 0, 130, 256,  62);
+	OS_WaitVBlankIntr();
+
 	NNS_G2dTextCanvasDrawText(&gTextCanvas, 48, 58,
 		TXT_COLOR_WHITE_BASE, TXT_DRAWTEXT_FLAG_DEFAULT, (const char *)string2);
 
 	while(1)
 	{
+		G3X_Reset();
+		G3_Identity();
+		G3_PolygonAttr(GX_LIGHTMASK_NONE, GX_POLYGONMODE_DECAL, GX_CULL_NONE, 0, 31, 0);
+		G3_SwapBuffers(GX_SORTMODE_AUTO, GX_BUFFERMODE_W);
+	    OS_WaitVBlankIntr();
+		FadeInTick();
+		FadeInMaster();
 	}
 }
