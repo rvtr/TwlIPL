@@ -28,7 +28,13 @@ extern "C" {
 
 extern u16 gScreen[32 * 32];
 
-#define CONSOLE_WHITE 15
+#define CONSOLE_BLACK	0
+#define CONSOLE_RED		1
+#define CONSOLE_GREEN	2
+#define CONSOLE_BLUE	3
+#define CONSOLE_YELLOW	4
+#define CONSOLE_WHITE	15
+
 void    ClearScreen(void);
 void    PrintString(s16 x, s16 y, u8 palette, char *text, ...);
 void    ColorString(s16 x, s16 y, s16 length, u8 palette);

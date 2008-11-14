@@ -24,6 +24,7 @@
 
 #define BUFSIZE 256
 
+#define FATAL_ERROR_MAX 51
 #define SCREEN_WIDTH		32
 #define RESULT_LINE_OFFSET	6
 
@@ -40,6 +41,7 @@ extern void* nandfirm_end;
 /*---------------------------------------------------------------------------*
     内部変数定義
  *---------------------------------------------------------------------------*/
+static char * FatalErrorCode[FATAL_ERROR_MAX];
 static BOOL resetConsoleFlag;
 static s16 lineoffset;
 /*---------------------------------------------------------------------------*
@@ -56,6 +58,10 @@ static BOOL writebackFirm( void );
 static int convertLF( char *dst, char *src );
 static void drawMenu( void );
 static void myInit(void);
+static void printConsole(char *text, ...);
+static void printConsoleErr(char *text, ...);
+static u64 parseRedError(const ErrorLogEntry *entry);
+static BOOL putRedError( FSFile *dst, u64 code );
 
 /*---------------------------------------------------------------------------*
   Name:         TwlMain
@@ -92,12 +98,13 @@ TwlMain()
 
 	resetConsoleFlag = TRUE;
 	OS_TPrintf( "boottype : %d\n", OS_GetBootType() );
-    
+	
 	drawMenu();
 	doProc();
 	
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "process finished.");
+	printConsole("process finished.");
 	OS_WaitVBlankIntr();
+	ERRORLOG_End();
 	OS_Terminate();
 }
 
@@ -116,7 +123,7 @@ static void doProc()
 	// 空行挿入
 	lineoffset++;
 	
-	PrintString(0, lineoffset++, CONSOLE_WHITE, "Copying logfile ...") ;
+	printConsole( "Copying logfile ..." );
 	
 	if( copyLogToSD() )
 	{
@@ -144,15 +151,14 @@ static BOOL deleteLogfile( void )
 	
 	if( !FS_DeleteFile( ERRORLOG_LOGFILE_PATH ) )
 	{
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "Delete Failed.") ;
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "func: FS_DeleteFile" );
-		PrintString( 0, lineoffset++, CONSOLE_WHITE,
-			"errorCode : %d", FS_GetArchiveResultCode( ERRORLOG_LOGFILE_PATH ) );
+		printConsoleErr( "Delete Failed." );
+		printConsoleErr( "func: FS_DeleteFile"  );
+		printConsoleErr( "errorCode : %d", FS_GetArchiveResultCode( ERRORLOG_LOGFILE_PATH ) );
 		
 		return FALSE;
 	}
 	
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "Delete Succeeded.") ;
+	printConsole( "Delete Succeeded." );
 	return TRUE;
 }
 
@@ -160,6 +166,9 @@ static BOOL copyLogToSD( void )
 {
 	FSFile src, dst;
 	// 最悪で読み込んだサイズの倍の文字列になる可能性がある
+	BOOL result = TRUE;
+	int idxlog;
+	int sizelog;
 	char buf[BUFSIZE + 1];
 	char winbuf[BUFSIZE*2 +1];
 	s32 readSize;
@@ -173,9 +182,9 @@ static BOOL copyLogToSD( void )
 	
 	if( ! FS_CreateFile( DST_LOGFILE_PATH, FS_PERMIT_R | FS_PERMIT_W ) )
 	{
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "Copy Failed.") ;
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "func: FS_CreateFile" );
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "errorCode : %d", FS_GetArchiveResultCode( DST_LOGFILE_PATH ) );
+		printConsoleErr( "Copy Failed." );
+		printConsoleErr( "func: FS_CreateFile"  );
+		printConsoleErr( "errorCode : %d", FS_GetArchiveResultCode( DST_LOGFILE_PATH )  );
 		return FALSE;
 	}
 	
@@ -183,69 +192,91 @@ static BOOL copyLogToSD( void )
 	if( !FS_OpenFileEx( &dst , DST_LOGFILE_PATH, FS_FILEMODE_RW ))
 	{
 		// 作成したファイルをopenできなかった場合
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "Copy Failed.") ;
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "func: FS_OpenFile / FS_SetFileLength" );
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "errorCode : %d", FS_GetArchiveResultCode( DST_LOGFILE_PATH ) );
+		printConsoleErr( "Copy Failed." );
+		printConsoleErr( "func: FS_OpenFile / FS_SetFileLength"  );
+		printConsoleErr( "errorCode : %d", FS_GetArchiveResultCode( DST_LOGFILE_PATH )  );
 		return FALSE;
 	}
 	
 	// サイズ変更が終わったら、念のためファイルサイズ変更不可なRWLモードで開きなおしておく
-	// →ファイルサイズ可変長に変更
+	// →改行文字の置換やログの置換に伴いファイルサイズ可変長に変更
+	/*
 	FS_CloseFile( &dst );
 
 	if( !FS_OpenFileEx( &dst, DST_LOGFILE_PATH, FS_FILEMODE_RW ) )
 	{
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "Copy Failed.") ;
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "func: FS_OpenFile dst" );
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "errorCode : %d", FS_GetArchiveResultCode( DST_LOGFILE_PATH ) );
+		printConsoleErr( "Copy Failed." );
+		printConsoleErr( "func: FS_OpenFile dst"  );
+		printConsoleErr( "errorCode : %d", FS_GetArchiveResultCode( DST_LOGFILE_PATH )  );
 		return FALSE;
 	}
-	
+	*/
 	if( !FS_OpenFileEx( &src, ERRORLOG_LOGFILE_PATH, FS_FILEMODE_R ) )
 	{
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "Copy Failed.") ;
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "func: FS_OpenFile src" );
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "errorCode : %d", FS_GetArchiveResultCode( DST_LOGFILE_PATH ) );
+		printConsoleErr( "Copy Failed." );
+		printConsoleErr( "func: FS_OpenFile src"  );
+		printConsoleErr( "errorCode : %d", FS_GetArchiveResultCode( DST_LOGFILE_PATH )  );
+		result = FALSE;
+		goto ERRORPATH;
 	}
 	
 	if( !FS_SeekFileToBegin( &src ))
 	{
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "Copy Failed.") ;
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "func: FS_SeekFileToBegin" );
-		return FALSE;
+		printConsoleErr( "Copy Failed." );
+		printConsoleErr( "func: FS_SeekFileToBegin"  );
+		result = FALSE;
+		goto ERRORPATH;
 	}
 	
-	while( ( readSize = FS_ReadFile( &src, buf, 256 )) > 0 )
+	sizelog = ERRORLOG_GetNum();
+	idxlog = 0;
+	while( ( readSize = FS_ReadFile( &src, buf, 256 )) > 0 && 
+			idxlog < sizelog )
 	{
 		int size;
+		const ErrorLogEntry *entry = ERRORLOG_Read( idxlog++ );
+		u64 errorcode;
+		
 		// 改行文字を置換しておく
 		size = convertLF( winbuf, buf );
 		
 		if( FS_WriteFile( &dst, winbuf, size ) < 0 )
 		{
-			PrintString( 0, lineoffset++, CONSOLE_WHITE, "Copy Failed.") ;
-			PrintString( 0, lineoffset++, CONSOLE_WHITE, "func: FS_WriteFile" );
-			return FALSE;
+			printConsoleErr( "Copy Failed." );
+			printConsoleErr( "func: FS_WriteFile"  );
+			result = FALSE;
+			goto ERRORPATH;
 		}
+		
+		// 最上位ビットが立っていたらマッチングしてない
+		if(!((errorcode = parseRedError(entry)) & (0x1ULL << 63)))
+		{
+			if(!putRedError(&dst, errorcode))
+			{
+				result = FALSE;
+				goto ERRORPATH;
+			}
+		}	
 		
 	}
 
+ERRORPATH:
 
 	if( !FS_CloseFile( &src ))
 	{
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "Copy Failed!") ;
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "func: FS_CloseFile(src)" );
+		printConsoleErr( "Copy Failed!" );
+		printConsoleErr( "func: FS_CloseFile(src)"  );
 	}
 
 	
 	if( !FS_CloseFile( &dst ))
 	{
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "Copy Failed.") ;
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "func: FS_CloseFile(dst)" );
+		printConsoleErr( "Copy Failed." );
+		printConsoleErr( "func: FS_CloseFile(dst)"  );
 	}
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "Copy Succeeded.") ;
+	printConsole( "Copy Succeeded." );
 
-	return TRUE;
+	return result;
 
 }
 
@@ -260,20 +291,20 @@ static BOOL writebackFirm( void )
 	
 	if( 800*1024 < fileSize ) 
 	{
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "too large file size.") ;
+		printConsoleErr( "too large file size." );
 		return FALSE;
 	}
 		
 	// 書き込みサイズは512バイトのブロック単位なのでそれに配慮
 	allocSize = MATH_ROUNDUP(fileSize, 512); 
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "fileBegin: %08x", &nandfirm_begin) ;
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "fileEnd: %08x", &nandfirm_end) ;
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "fileSize: %08x", fileSize) ;
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "allocsize: %08x", allocSize) ;
+	printConsole( "fileBegin: %08x", &nandfirm_begin );
+	printConsole( "fileEnd: %08x", &nandfirm_end );
+	printConsole( "fileSize: %08x", fileSize );
+	printConsole( "allocsize: %08x", allocSize );
 	pBuf = OS_Alloc(allocSize);
 	if(pBuf == NULL)
 	{
-		PrintString( 0, lineoffset++, CONSOLE_WHITE, "Alloc failed.") ;
+		printConsoleErr( "Alloc failed." );
 		return FALSE;
 	}
 	
@@ -281,17 +312,17 @@ static BOOL writebackFirm( void )
 	MI_CpuClear8(pBuf, allocSize);
 	DC_FlushRange(pBuf, allocSize);
 	MI_CpuCopy8( &nandfirm_begin, pBuf, fileSize);
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "read firm succeeded.") ;
+	printConsole( "read firm succeeded." );
 	//CARD_ReadRom( MI_DMA_NOT_USE, nandfirm_begin, pBuf, fileSize);
 	
 	// データの書き出し	
 	writeBlock = nandfirmSize/NAND_BLOCK_BYTE + (nandfirmSize % NAND_BLOCK_BYTE != 0);
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "Blocksize : %08x", writeBlock) ;	
+	printConsole( "Blocksize : %08x", writeBlock );	
 	DC_FlushRange(pBuf, allocSize);
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "nandfirm writing...") ;	
+	printConsole( "nandfirm writing..." );	
 	kamiNandWrite( NAND_START_OFFSET/NAND_BLOCK_BYTE, pBuf+NANDFIRM_FILE_START_OFFSET, writeBlock);
 	// まだ書き込まないで出力だけする
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "write firm succeeded.") ;	
+	printConsole( "write firm succeeded." );	
 	OS_Free(pBuf);
 
 	return TRUE;
@@ -300,14 +331,14 @@ static void drawMenu( void )
 {
 	lineoffset = 0;
 	ClearScreen();
-/*	PrintString( 0, lineoffset++, CONSOLE_WHITE, "SystemLog Reader");
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "+-----------------------------+");
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "l A Button : Copy log to SD   l");
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "+-----------------------------+");
+/*	printConsole( "SystemLog Reader" );
+	printConsole( "+-----------------------------+" );
+	printConsole( "l A Button : Copy log to SD   l" );
+	printConsole( "+-----------------------------+" );
 	*/
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "+--------------------+");
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "l System Log Reader  l");
-	PrintString( 0, lineoffset++, CONSOLE_WHITE, "+--------------------+");
+	printConsole( "+--------------------+" );
+	printConsole( "l System Log Reader  l" );
+	printConsole( "+--------------------+" );
 	lineoffset++;
 }
 
@@ -337,6 +368,56 @@ int convertLF( char *dst, char *src )
 	return writesize;
 }
 
+// RedErrorの類ならエラーコードを、そうでなければ最上位ビットを立てて返す
+static u64 parseRedError(const ErrorLogEntry *entry)
+{
+	u64 errorcode;
+	
+	if(entry->isLauncherError)
+	{
+		// REDFormatのログだったらそのまま出力すればいいので拒否
+		return 0x1ULL << 63;
+	}
+	
+	if (STD_TSScanf(entry->errorStr,"%*s [l.%*d] RED FATAL %16llx (%*16llx)", &errorcode) == 1|| 
+		STD_TSScanf(entry->errorStr,"%*s [l.%*d] BOOT %16llx (%*16llx)", &errorcode) == 1 )
+	{
+		printConsole("matched");
+		return errorcode;
+	}
+	
+	// マッチしなかった場合
+	return 0x1ULL << 63;
+}
+
+
+static BOOL putRedError( FSFile *dst, u64 code )
+{
+	char buf[BUFSIZE];
+	u8 counter = 0;
+	
+	// codeのどこかにビットが立っている限りシフトし続ける
+	while(code)
+	{
+		// 末尾のビットが立っていたらcounter番目のエラーが発生している
+		if( code & 0x1 )
+		{
+			STD_TSNPrintf(buf, BUFSIZE, "err: %s\r\n", FatalErrorCode[counter]);
+			
+			if( FS_WriteFile( dst, buf, STD_StrLen(buf) ) < 0 )
+			{
+				printConsoleErr( "Copy Failed." );
+				printConsoleErr( "func: FS_WriteFile"  );
+				return FALSE;
+			}
+		}
+		
+		counter++;
+		code >>= 1;
+	}
+	
+	return TRUE;
+}
 /*---------------------------------------------------------------------------*
   Name:         VBlankIntr
 
@@ -356,6 +437,22 @@ VBlankIntr(void)
 
 
     OS_SetIrqCheckFlag(OS_IE_V_BLANK); // checking VBlank interrupt
+}
+
+static void printConsole(char *text, ...)
+{
+	va_list arglist;
+	
+	va_start( arglist, text);
+	PrintString( 0, lineoffset++, CONSOLE_WHITE, text, arglist) ;
+}
+
+static void printConsoleErr(char *text, ...)
+{
+	va_list arglist;
+	
+	va_start( arglist, text);
+	PrintString( 0, lineoffset++, CONSOLE_RED, text, arglist) ;
 }
 
 /*---------------------------------------------------------------------------*
@@ -455,3 +552,58 @@ void myInit(void)
     GX_DispOn();
     GXS_DispOn();
 }
+
+static char * FatalErrorCode[] = {
+	"FATAL_ERROR_UNDEFINED",
+	"FATAL_ERROR_NAND",
+	"FATAL_ERROR_HWINFO_NORMAL",
+	"FATAL_ERROR_HWINFO_SECURE",
+	"FATAL_ERROR_TWLSETTINGS",
+	"FATAL_ERROR_SHARED_FONT",
+	"FATAL_ERROR_WLANFIRM_AUTH",
+	"FATAL_ERROR_WLANFIRM_LOAD",
+	"FATAL_ERROR_TITLE_LOAD_FAILED",
+	"FATAL_ERROR_TITLE_POINTER_ERROR",
+	"FATAL_ERROR_AUTHENTICATE_FAILED",
+	"FATAL_ERROR_ENTRY_ADDRESS_ERROR",
+	"FATAL_ERROR_TITLE_BOOTTYPE_ERROR",
+	"FATAL_ERROR_SIGN_DECRYPTION_FAILED",
+	"FATAL_ERROR_SIGN_COMPARE_FAILED",
+	"FATAL_ERROR_HEADER_HASH_CALC_FAILED",
+	"FATAL_ERROR_TITLEID_COMPARE_FAILED",
+	"FATAL_ERROR_VALID_SIGN_FLAG_OFF",
+	"FATAL_ERROR_CHECK_TITLE_LAUNCH_RIGHTS_FAILED",
+	"FATAL_ERROR_MODULE_HASH_CHECK_FAILED",
+	"FATAL_ERROR_MODULE_HASH_CALC_FAILED",
+	"FATAL_ERROR_MEDIA_CHECK_FAILED",
+	"FATAL_ERROR_DL_MAGICCODE_CHECK_FAILED",
+	"FATAL_ERROR_DL_SIGN_DECRYPTION_FAILED",
+	"FATAL_ERROR_DL_HASH_CALC_FAILED",
+	"FATAL_ERROR_DL_SIGN_COMPARE_FAILED",
+	"FATAL_ERROR_WHITELIST_INITDB_FAILED",
+	"FATAL_ERROR_WHITELIST_NOTFOUND",
+	"FATAL_ERROR_DHT_PHASE1_FAILED",
+	"FATAL_ERROR_DHT_PHASE2_FAILED",
+	"FATAL_ERROR_LANDING_TMP_JUMP_FLAG_OFF",
+	"FATAL_ERROR_TWL_BOOTTYPE_UNKNOWN",
+	"FATAL_ERROR_NTR_BOOTTYPE_UNKNOWN",
+	"FATAL_ERROR_PLATFORM_UNKNOWN",
+	"FATAL_ERROR_LOAD_UNFINISHED",
+	"FATAL_ERROR_LOAD_OPENFILE_FAILED",
+	"FATAL_ERROR_LOAD_MEMALLOC_FAILED",
+	"FATAL_ERROR_LOAD_SEEKFILE_FAILED",
+	"FATAL_ERROR_LOAD_READHEADER_FAILED",
+	"FATAL_ERROR_LOAD_LOGOCRC_ERROR",
+	"FATAL_ERROR_LOAD_READDLSIGN_FAILED",
+	"FATAL_ERROR_LOAD_RELOCATEINFO_FAILED",
+	"FATAL_ERROR_LOAD_READMODULE_FAILED",
+	"FATAL_ERROR_NINTENDO_LOGO_CHECK_FAILED",
+	"FATAL_ERROR_SYSMENU_VERSION",
+	"FATAL_ERROR_DHT_PHASE1_CALC_FAILED",
+	"FATAL_ERROR_LOAD_UNKNOWN_BOOTTYPE",
+	"FATAL_ERROR_LOAD_AUTH_HEADER_FAILED",
+	"FATAL_ERROR_LOAD_NEVER_STARTED",
+	"FATAL_ERROR_EJECT_CARD_AFTER_LOAD_START",
+	"FATAL_ERROR_TITLEID_COMPARE_FAILED_NTR",
+};
+

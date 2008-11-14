@@ -28,10 +28,11 @@ INSTALL_DIR			= ./
 INSTALL_TARGETS		= $(TARGETS)
 
 BANNER_ICON_NAME	= $(basename $(BANNER_ICON))
-BANNER_ICON_MIDDLE	= $(addprefix $(BANNER_ICON_NAME), .nbfs .nbfc .nbfp)
 
 LDIRT_CLEAN			= $(TARGETS) \
-					  $(BANNER_ICON_MIDDLE) \
+					  $(BANNER_ICON_NAME).nbfs \
+					  $(BANNER_ICON_NAME).nbfc \
+					  $(BANNER_ICON_NAME).nbfp \
 					  $(TARGETS:.bnr=.srl)
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
@@ -41,7 +42,6 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 #----------------------------------------------------------------------------
 do-build:		$(TARGETS)
 
-$(TARGETS):		$(BANNER_SPEC) $(BANNER_ICON) $(BANNER_ICON_MIDDLE)
+$(TARGETS):		$(BANNER_SPEC) $(BANNER_ICON)
+				$(NTEXCONV) -no -bg -bgb -bgnc $(BANNER_ICON) >/dev/null && \
 				$(MAKEBANNER) -N $(BANNER_ICON_NAME) $(BANNER_SPEC) $(TARGETS)
-
-#
