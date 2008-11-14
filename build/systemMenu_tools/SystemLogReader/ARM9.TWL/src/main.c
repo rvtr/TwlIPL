@@ -382,7 +382,6 @@ static u64 parseRedError(const ErrorLogEntry *entry)
 	if (STD_TSScanf(entry->errorStr,"%*s [l.%*d] RED FATAL %16llx (%*16llx)", &errorcode) == 1|| 
 		STD_TSScanf(entry->errorStr,"%*s [l.%*d] BOOT %16llx (%*16llx)", &errorcode) == 1 )
 	{
-		printConsole("matched");
 		return errorcode;
 	}
 	
