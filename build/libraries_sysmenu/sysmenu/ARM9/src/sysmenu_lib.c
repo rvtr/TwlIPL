@@ -219,11 +219,7 @@ TitleProperty *SYSM_ReadParameters( void )
             
             // リード失敗ファイルが存在する場合は、ファイルをリカバリ
             if( LCFG_RecoveryTWLSettings() ) {
-                if( isRead ) {
-					// [TODO] このままではダメ。両方正常にリードできた時もこのパスに来てしまう。
-                    // ミラーデータのうち、一方がリードできていたなら、そのデータをもう片方に反映。
-                    (void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer ); // LCFG_READ_TEMP > LCFG_WRITE_TEMP なので、pBufferをそのまま流用
-                }else {
+                if( !isRead ) {
                     // リードに完全に失敗していた場合は、フラッシュ壊れシーケンスへ。
                     LCFG_TSD_SetFlagFinishedBrokenTWLSettings( FALSE );
                     (void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer ); // LCFG_READ_TEMP > LCFG_WRITE_TEMP なので、pBufferをそのまま流用
@@ -472,14 +468,24 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
     BOOL isSetArgument = FALSE;
     BOOL isBootMSET = FALSE;
     u16 argument = 0;
+#ifndef SYSM_DISABLE_INITIAL_SETTINGS
+	int i;
+	char *p = (char *)LCFG_TSD_GetTPCalibrationPtr();
+#endif
     
     MI_CpuClear8( &s_bootTitleBuf, sizeof(TitleProperty) );
 
 #ifndef SYSM_DISABLE_INITIAL_SETTINGS
+	// タッチパネルキャリブレーションデータがクリアされていないかチェック
+	for( i = 0; i < sizeof(LCFGNTRTPCalibData); i++ ) {
+		if( *p != 0 ) break;
+		p++;
+	}
     //-----------------------------------------------------
     // TWL設定データ破損時のフラッシュ壊れシーケンス起動
     //-----------------------------------------------------
-    if( !LCFG_TSD_IsFinishedBrokenTWLSettings() ) {
+    if( ( i == sizeof(LCFGNTRTPCalibData) ) ||
+		!LCFG_TSD_IsFinishedBrokenTWLSettings() ) {
         argument      = 100;        // フラッシュ壊れシーケンス起動
         isSetArgument = TRUE;
         isBootMSET    = TRUE;
