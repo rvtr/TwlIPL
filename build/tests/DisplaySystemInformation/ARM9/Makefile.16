@@ -61,6 +61,7 @@ SYSMENU_LIBS			=	\
 							libsysmutil$(TWL_LIBSUFFIX).a \
 							libboot$(TWL_LIBSUFFIX).a \
 							libds$(TWL_LIBSUFFIX).a \
+							liberrorlog$(TWL_LIBSUFFIX).a \
 							libhotsw$(TWL_LIBSUFFIX).a \
 							libdht$(TWL_LIBSUFFIX).a \
 							libreloc_info$(TWL_LIBSUFFIX).a \
@@ -104,11 +105,9 @@ endif
 ifeq ($(IS_NAND_APP),TRUE)
 	MEDIA		=	NAND
 	FILE_SUFFIX	=	tad
-	BANNARPATH	=	../banner/$(GAMECODE).bnr
 else
 	MEDIA		=	GAMECARD
 	FILE_SUFFIX	=	srl
-	BANNARPATH	=	$(TWLSDK_ROOT)/include/twl/specfiles/default.bnr
 endif
 
 ifeq ($(INVISIBLE_SCFG),TRUE)
@@ -129,7 +128,6 @@ MAKEROM_FLAGS		+=	-DDISPINFO_WRAM_MAP=$(WRAM_MAP)	\
 				-DDISPINFO_LOCKSCFG=$(INVISIBLE_SCFG)	\
 				-DDISPINFO_AES=$(AES_SLOT)	\
 				-DDISPINFO_GAMECODE=$(GAMECODE)	\
-				-DDISPINFO_BANNERPATH=$(BANNARPATH)	\
 				-DROM_HEADER_TEMPLATE='$(call empath,$(ROM_HEADER_TEMPLATE))'
 
 

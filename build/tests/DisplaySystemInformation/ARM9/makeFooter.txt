@@ -33,6 +33,7 @@ SYSMENU_LIBS			=	\
 							libsysmutil$(TWL_LIBSUFFIX).a \
 							libboot$(TWL_LIBSUFFIX).a \
 							libds$(TWL_LIBSUFFIX).a \
+							liberrorlog$(TWL_LIBSUFFIX).a \
 							libhotsw$(TWL_LIBSUFFIX).a \
 							libdht$(TWL_LIBSUFFIX).a \
 							libreloc_info$(TWL_LIBSUFFIX).a \
