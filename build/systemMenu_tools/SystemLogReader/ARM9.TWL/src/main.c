@@ -21,6 +21,7 @@
 #include "keypad.h"
 #include "font.h"
 #include "screen.h"
+#include <twl/lcfg.h>
 
 #define BUFSIZE 256
 
@@ -28,7 +29,7 @@
 #define SCREEN_WIDTH		32
 #define RESULT_LINE_OFFSET	6
 
-#define DST_LOGFILE_PATH	"sdmc:/sysmenu.log"
+#define DST_LOGFILE_PATH	"sdmc:/"
 #define ERRORLOG_LOGFILE_PATH	"nand:/sys/log/sysmenu.log"
 
 #define NAND_BLOCK_BYTE 			       0x200
@@ -96,8 +97,8 @@ TwlMain()
 
 	ERRORLOG_Init( OS_AllocFromMain, OS_FreeToMain );
 
+	
 	resetConsoleFlag = TRUE;
-	OS_TPrintf( "boottype : %d\n", OS_GetBootType() );
 	
 	drawMenu();
 	doProc();
@@ -165,7 +166,7 @@ static BOOL deleteLogfile( void )
 static BOOL copyLogToSD( void )
 {
 	FSFile src, dst;
-	// 最悪で読み込んだサイズの倍の文字列になる可能性がある
+	// 書き込みサイズは、最悪で読み込んだサイズの倍のになる可能性がある
 	BOOL result = TRUE;
 	int idxlog;
 	int sizelog;
@@ -173,14 +174,33 @@ static BOOL copyLogToSD( void )
 	char winbuf[BUFSIZE*2 +1];
 	s32 readSize;
 	s32 writeSize = 0;
+	char filename[BUFSIZE+1];
+	u8 *lcfgbuf;
+	u8 serial[OS_TWL_HWINFO_SERIALNO_LEN_MAX];	
 	
-	buf[256] = '\0';
+	buf[BUFSIZE] = '\0';
+	
 	FS_InitFile( &dst );
+	printConsole("Reading serial number...");
+	lcfgbuf = OS_Alloc( LCFG_READ_TEMP );
+
+	if( LCFG_ReadTWLSettings( (u8 (*)[LCFG_READ_TEMP]) lcfgbuf ) && LCFG_ReadHWSecureInfo() )
+	{
+		LCFG_THW_GetSerialNo( (u8*)serial );
+		STD_TSNPrintf(  filename , BUFSIZE, "sdmc:/%s.log", serial);	
+	}
+	else
+	{
+		printConsoleErr( "failed to read Serial.");
+		return FALSE;
+	}
+		
+	
 	
 	// まずファイルを削除
-	FS_DeleteFile( DST_LOGFILE_PATH );
+	FS_DeleteFile( filename );
 	
-	if( ! FS_CreateFile( DST_LOGFILE_PATH, FS_PERMIT_R | FS_PERMIT_W ) )
+	if( ! FS_CreateFile( filename, FS_PERMIT_R | FS_PERMIT_W ) )
 	{
 		printConsoleErr( "Copy Failed." );
 		printConsoleErr( "func: FS_CreateFile"  );
@@ -189,7 +209,7 @@ static BOOL copyLogToSD( void )
 	}
 	
 	// ファイル作成に成功
-	if( !FS_OpenFileEx( &dst , DST_LOGFILE_PATH, FS_FILEMODE_RW ))
+	if( !FS_OpenFileEx( &dst , filename, FS_FILEMODE_RW ))
 	{
 		// 作成したファイルをopenできなかった場合
 		printConsoleErr( "Copy Failed." );

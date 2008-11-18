@@ -10,34 +10,37 @@ def putex(str)
 end
 
 
-def buildgcd(buildtype, prodopt)
+def buildgcd(buildtype, prodopt, shortbuild)
 	puts "buildtype : #{buildtype}"
+	puts "**shortbuild**" if shortbuild
 
-	# build TwlIPL Root
-	Dir.chdir(ENV['TWL_IPL_RED_ROOT']) do
-		putex "make -f Makefile.full clean; " +
-					 "makesp CYGPATH_NOCMD=TRUE -j 2 -f Makefile.full TWL_FINALROM=TRUE #{prodopt}"
-	end
-
-	# build nandfirm
-	Dir.chdir(ENV['TWL_IPL_RED_ROOT'] + "/build/nandfirm/menu-launcher") do
-		putex "make clean; make TWL_FINALROM=TRUE #{prodopt}"
-		nandfirm = Dir.glob("menu_launcher*#{buildtype}.nand")
-		if nandfirm.none?
-			puts "build nandfirm failed."
-			exit
-		else
-			nandfirm = nandfirm[0]
+	unless shortbuild
+		# build TwlIPL Root
+		Dir.chdir(ENV['TWL_IPL_RED_ROOT']) do
+			putex "make -f Makefile.full clean; " +
+						 "makesp CYGPATH_NOCMD=TRUE -j 2 -f Makefile.full TWL_FINALROM=TRUE #{prodopt}"
 		end
 
-		
-		putex "$TWLSDK_ROOT/tools/bin/bin2obj.TWL.exe #{nandfirm} nandfirm.#{buildtype}.o " +
-						"-b nandfirm_begin -e nandfirm_end"
-		putex "cp nandfirm.#{buildtype}.o #{Rootdir}/ARM9.TWL/nandfirm/"
+		# build nandfirm
+		Dir.chdir(ENV['TWL_IPL_RED_ROOT'] + "/build/nandfirm/menu-launcher") do
+			putex "make clean; make TWL_FINALROM=TRUE #{prodopt}"
+			nandfirm = Dir.glob("menu_launcher*#{buildtype}.nand")
+			if nandfirm.none?
+				puts "build nandfirm failed."
+				exit
+			else
+				nandfirm = nandfirm[0]
+			end
+
+			
+			putex "$TWLSDK_ROOT/tools/bin/bin2obj.TWL.exe #{nandfirm} nandfirm.#{buildtype}.o " +
+							"-b nandfirm_begin -e nandfirm_end"
+			putex "cp nandfirm.#{buildtype}.o #{Rootdir}/ARM9.TWL/nandfirm/"
+		end
 	end
 
 	# build systemlogreader
-	putex "make clean; make TWL_FINALROM=TRUE #{prodopt}"
+	putex "makesp CYGPATH_NOCMD=TRUE -j 2 clean; makesp CYGPATH_NOCMD=TRUE -j 2 TWL_FINALROM=TRUE #{prodopt}"
 	Dir.chdir(Rootdir + "/ARM9.TWL/bin/ARM9-TS.LTD.thumb/Rom") do
 		if buildtype == "dev"
 			putex 'cp ./SystemLogReader.srl $TWL_IPL_RED_ROOT/build/gcdfirm/memory-launcher-writer/'
@@ -64,15 +67,16 @@ end
 
 Rootdir = ENV['TWL_IPL_RED_ROOT'] + '/build/systemMenu_tools/SystemLogReader'
 prodopt = ""
+shortbuild = false
 
 # default buildtype = dev
-if ARGV.none? || ARGV[0] == 'dev'
+if ARGV.none? || ARGV.include?('dev')
 	build = ["dev"]
 	opt = ["FIRM_USE_PRODUCT_KEYS="]
-elsif ARGV[0] == "prod"
+elsif ARGV.include?("prod")
 	build = ["prod"]
 	opt = ["FIRM_USE_PRODUCT_KEYS=TRUE"]
-elsif ARGV[0] == "full"
+elsif ARGV.include? "full"
 	build = ["dev", "prod"]
 	opt = ["FIRM_USE_PRODUCT_KEYS=", "FIRM_USE_PRODUCT_KEYS=TRUE"]
 else
@@ -80,8 +84,12 @@ else
 	exit
 end
 
+if ARGV.include? "short"
+	shortbuild = true
+end
+
 p build.zip(opt)
 build.zip(opt).each do |b,op|
-	buildgcd(b,op)
+	buildgcd(b,op,shortbuild)
 end
 

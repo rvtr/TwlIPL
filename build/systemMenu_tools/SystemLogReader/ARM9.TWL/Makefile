@@ -46,7 +46,8 @@ ROM_SPEC	=	main.rsf
 
 TARGET_BIN		=	SystemLogReader.srl
 
-LLIBRARIES		+=	liberrorlog$(TWL_LIBSUFFIX).a
+LLIBRARIES		+=	liberrorlog$(TWL_LIBSUFFIX).a	\
+					liblcfg$(TWL_LIBSUFFIX).a
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
