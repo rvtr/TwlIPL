@@ -1487,7 +1487,6 @@ static BOOL SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 				ERRORLOG_Printf( "DHT_PAHSE1_FAILED (sub info): hash0Addr-%08x\n", hash0 );
 				if(hash0)
 				{
-					ERRORLOG_Printf( "DHT_PAHSE1_FAILED (buildtime): date : %s time : %s", __DATE__, __TIME__);
 					ERRORLOG_Printf( "DHT_PAHSE1_FAILED (sub info): hash0     - %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
 					hash0[0], hash0[1], hash0[2], hash0[3], hash0[4], hash0[5], hash0[6], hash0[7], hash0[8], hash0[9],
 					hash0[10], hash0[11], hash0[12], hash0[13], hash0[14], hash0[15], hash0[16], hash0[17], hash0[18], hash0[19]);
