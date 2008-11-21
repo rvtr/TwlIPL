@@ -31,6 +31,7 @@ extern "C" {
  *---------------------------------------------------------------------------*/
 #define FONT_DATA_FILE_PATH_IN_NAND   "nand:sys/TWLFontTable.dat"
 #define WRAP_DATA_FILE_PATH_IN_NAND   "nand:/shared2/launcher/wrap.bin"
+#define DEVKP_DATA_FILE_PATH_IN_NAND  "nand:/sys/dev.kp"
 #define CERT_DATA_FILE_PATH_IN_ROM    "rom:/data/cert.sys"
 #define CERT_DATA_FILE_PATH_IN_NAND   "nand:/sys/cert.sys"
 

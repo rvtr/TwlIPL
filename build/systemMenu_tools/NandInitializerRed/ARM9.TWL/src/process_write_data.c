@@ -37,6 +37,9 @@ enum {
 	MENU_FONT=0,
 	MENU_WRAP,
 	MENU_CERT,
+#ifdef WRITE_DEVKP_ENABLE
+	MENU_DEVKP,
+#endif
 	MENU_RETURN,
 	NUM_OF_MENU_SELECT
 };
@@ -64,7 +67,7 @@ static s8 sMenuSelectNo;
  *---------------------------------------------------------------------------*/
 
 static BOOL WriteFontData(void);
-static BOOL WriteWrapData(void);
+static BOOL WriteDummyData(const char* nandpath);
 static BOOL WriteCertData(void);
 
 /*---------------------------------------------------------------------------*
@@ -100,8 +103,15 @@ void* WriteDataProcess0(void)
 	kamiFontPrintf(3, 10, FONT_COLOR_BLACK, "+-------------------+-----+");
 	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "l   WRITE CERT.SYS  l     l");
 	kamiFontPrintf(3, 12, FONT_COLOR_BLACK, "+-------------------+-----+");
+#ifdef WRITE_DEVKP_ENABLE
+	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "l   WRITE DEV.KP    l     l");
+	kamiFontPrintf(3, 14, FONT_COLOR_BLACK, "+-------------------+-----+");
+	kamiFontPrintf(3, 15, FONT_COLOR_BLACK, "l   RETURN          l     l");
+	kamiFontPrintf(3, 16, FONT_COLOR_BLACK, "+-------------------+-----+");
+#else
 	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "l   RETURN          l     l");
 	kamiFontPrintf(3, 14, FONT_COLOR_BLACK, "+-------------------+-----+");
+#endif
 
 	// 背景全クリア
 	for (i=0;i<24;i++)
@@ -189,11 +199,17 @@ void* WriteDataProcess2(void)
 		result = WriteFontData();
 		break;
 	case MENU_WRAP:
-		result = WriteWrapData();
+		// ダミーのDSメニューラッピング用ファイル作成（UIGランチャーが作っているもの）
+		result = WriteDummyData(WRAP_DATA_FILE_PATH_IN_NAND);
 		break;
 	case MENU_CERT:
 		result = WriteCertData();
 		break;
+#ifdef WRITE_DEVKP_ENABLE
+	case MENU_DEVKP:
+		result = WriteDummyData(DEVKP_DATA_FILE_PATH_IN_NAND);
+		break;
+#endif
 	case MENU_RETURN:
 		FADE_OUT_RETURN( TopmenuProcess0 );
 	}
@@ -218,13 +234,18 @@ void* WriteDataProcess2(void)
 		{
 		case MENU_FONT:
 		case MENU_WRAP:
-#ifdef    MARIOCLUB_VERSION
+#ifdef   MARIOCLUB_VERSION
 			sMenuSelectNo++;
 			return WriteDataProcess2;
-#endif // MARIOCLUB_VERSION
+#endif //MARIOCLUB_VERSION
 		case MENU_CERT:
+#ifdef   WRITE_DEVKP_ENABLE
+			sMenuSelectNo = MENU_DEVKP;
+			return WriteDataProcess2;
+		case MENU_DEVKP:
+#endif //WRITE_DEVKP_ENABLE
 			if (total_result) 
-			{ 
+			{
 				gAutoProcessResult[AUTO_PROCESS_MENU_VARIOUS_DATA] = AUTO_PROCESS_RESULT_SUCCESS; 
 				FADE_OUT_RETURN( AutoProcess1 ); 
 			}
@@ -351,8 +372,8 @@ static BOOL WriteFontData(void)
 	return result;
 }
 
-// ダミーのDSメニューラッピング用ファイル作成（UIGランチャーが作っているもの）
-static BOOL WriteWrapData(void)
+// ダミーファイル作成
+static BOOL WriteDummyData(const char* nandpath)
 {
     FSFile  file;	
     BOOL    open_is_ok;
@@ -360,18 +381,18 @@ static BOOL WriteWrapData(void)
 
 	// 既に存在するなら何もしない
     FS_InitFile(&file);
-    open_is_ok = FS_OpenFile(&file, WRAP_DATA_FILE_PATH_IN_NAND);
+    open_is_ok = FS_OpenFile(&file, nandpath);
 	if (open_is_ok)
 	{
 		FS_CloseFile(&file);
-    	OS_Printf("%s is already exist.\n", WRAP_DATA_FILE_PATH_IN_NAND);
+    	OS_Printf("%s is already exist.\n", nandpath);
 		return TRUE;
 	}
 
-	if( FS_CreateFileAuto( WRAP_DATA_FILE_PATH_IN_NAND, FS_PERMIT_R | FS_PERMIT_W ) ) 
+	if( FS_CreateFileAuto( nandpath, FS_PERMIT_R | FS_PERMIT_W ) ) 
 	{
 		FSFile file;
-		if( FS_OpenFileEx( &file, WRAP_DATA_FILE_PATH_IN_NAND, FS_FILEMODE_RW ) ) 
+		if( FS_OpenFileEx( &file, nandpath, FS_FILEMODE_RW ) ) 
 		{
 			(void)FS_SetFileLength( &file, FATFS_CLUSTER_SIZE );
 			FS_CloseFile( &file );
