@@ -27,6 +27,7 @@ extern "C" {
 #define SYSM_HOTSW_ENABLE_ROMEMU
 #define USE_WRAM_LOAD
 #define INITIAL_KEYTABLE_PRELOAD
+#define HOTSW_FINAL_VERSION
 //#define USE_NEW_DMA
 //#define HOTSW_NO_MESSAGE					// Printf抑制スイッチ
 
