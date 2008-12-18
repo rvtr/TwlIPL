@@ -107,6 +107,12 @@ void ProcessSelectRegion(void)
 
 		kamiPadRead();
 
+#ifdef SKIP_WRITE_HWINFO
+		if (FadeInMaster())
+		{
+			break;
+		}
+#else
 		if (FadeInMaster())
 		{
 			if (kamiPadIsRepeatTrigger(PAD_KEY_DOWN))
@@ -137,7 +143,7 @@ void ProcessSelectRegion(void)
 				break;
 			}
 		}
-
+#endif
 		for (i=0;i<OS_TWL_REGION_AUSTRALIA+1;i++)
 		{
 			if (gRegion != i)

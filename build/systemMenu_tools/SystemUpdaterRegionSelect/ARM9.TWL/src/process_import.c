@@ -151,8 +151,9 @@ BOOL ImportDirectoryTad(char* directory)
 	FS_InitFile(&dir);
 	if (!FS_OpenDirectory(&dir, directory, FS_FILEMODE_R))
 	{
-    	kamiFontPrintfConsole(CONSOLE_RED, "Error FS_OpenDirectory()\n");
-		return FALSE;
+		// 空ディレクトリはMakerom時に削除されるようなのでここではTRUEを返す
+//    	kamiFontPrintfConsole(CONSOLE_GREEN, "%s can not Open.\n", directory);
+		return TRUE;
 	}
 
 	// tadファイルを検索してインポート

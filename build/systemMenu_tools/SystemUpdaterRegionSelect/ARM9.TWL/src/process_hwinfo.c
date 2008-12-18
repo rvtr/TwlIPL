@@ -63,6 +63,10 @@ BOOL ProcessHwinfo(void)
 	BOOL hw_info_result;
 	int i;
 
+#ifdef SKIP_WRITE_HWINFO
+	return TRUE;
+#endif
+
 	// 全ハードウェア情報の更新
 	for (i=0;i<MAX_RETRY_COUNT;i++)
 	{

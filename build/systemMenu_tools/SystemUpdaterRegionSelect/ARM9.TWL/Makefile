@@ -25,6 +25,8 @@ UPDATER_HOST_ROOT_DIR = ../data_sysmenu
 
 # COMPILE SWITCH for build SystemUpdater
 IGNORE_VERSION_CHECK	?=	FALSE
+SKIP_WRITE_HWINFO       ?=	FALSE
+USE_NORMAL_COMMON_KEY   ?=	FALSE
 
 # MAKEROM SWITCH for build SystemUpdater
 SYSM_DISABLE_DEBUG		?=	TRUE
@@ -92,6 +94,10 @@ SRCDIR		=	src \
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
+ifeq ($(SKIP_WRITE_HWINFO),TRUE)
+MAKEROM_FLAGS			+=	-DHWINFO_PRIVKEY='' \
+							-DHWID_PRIVKEY=''
+else
 ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
 ifdef FIRM_USE_PRODUCT_KEYS
 MAKEROM_FLAGS			+=	-DHWINFO_PRIVKEY='private_HWInfo.der' \
@@ -101,9 +107,22 @@ MAKEROM_FLAGS			+=	-DHWINFO_PRIVKEY='private_HWInfo_dev.der' \
 							-DHWID_PRIVKEY='private_HWID_dev.der'
 endif
 endif
+endif
 
 ifeq ($(IGNORE_VERSION_CHECK),TRUE)
 MACRO_FLAGS += -DIGNORE_VERSION_CHECK
+endif
+
+ifeq ($(SKIP_WRITE_HWINFO),TRUE)
+MACRO_FLAGS += -DSKIP_WRITE_HWINFO
+endif
+
+ifeq ($(USE_NORMAL_COMMON_KEY),TRUE)
+MAKEROM_FLAGS			+=	-DComClientKey='TRUE' \
+							-DComClientKeyDebugger='FALSE'
+else
+MAKEROM_FLAGS			+=	-DComClientKey='FALSE' \
+							-DComClientKeyDebugger='TRUE'
 endif
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
