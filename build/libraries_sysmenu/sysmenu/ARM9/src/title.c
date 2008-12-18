@@ -124,6 +124,8 @@ static DHTFile *dht = NULL;
 static const u8* hash0 = NULL;
 static const u8* hash1 = NULL;
 
+static u8 tempcardbuf[4096]; // カード読み込み用バッファ
+
 // const data------------------------------------------------------------------
 static const OSBootType s_launcherToOSBootType[ LAUNCHER_BOOTTYPE_MAX ] = {
     OS_BOOTTYPE_ILLEGAL,	// ILLEGAL
@@ -255,7 +257,6 @@ static BOOL WrapperFunc_ReadCardData(void* dest, s32 offset, s32 length, void* a
 	HOTSW_ReadCardData( (void *)offset, dest, (u32)length);
 	return TRUE;
 }
-
 
 //================================================================================
 // for register SCFG_OP
@@ -859,6 +860,8 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
         
 	// SDにひととおり吐く
 	{
+		int loop;
+		CardDataReadState card_read_state;
 	    FSFile dest;
 	    FS_InitFile( &dest );
 	    (void)FS_CreateFile("sdmc:/header.dat", FS_PERMIT_W | FS_PERMIT_R);
@@ -892,6 +895,20 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 		    FS_WriteFile( &dest, (void *)destaddr[region_arm7_twl], length[region_arm7_twl] );
 		    FS_CloseFile( &dest );
 	    }
+	    
+	    // カードの中身がんばって吐いてもらおう
+	    FS_InitFile( &dest );
+	    (void)FS_CreateFile("sdmc:/card256Mbit.dat", FS_PERMIT_W | FS_PERMIT_R);
+	    FS_OpenFileEx( &dest, "sdmc:/card256Mbit.dat", FS_FILEMODE_W );
+	    for( loop=0; loop<8*1024; loop++)
+	    {
+			DC_InvalidateRange( (void*)tempcardbuf, 4096 );
+	    	card_read_state = HOTSW_ReadCardData( (void *)(loop*4096), (void *)tempcardbuf, 4096);
+	    	if((card_read_state != CARD_READ_SUCCESS)) break;
+		    FS_WriteFile( &dest, (void *)tempcardbuf, 4096 );
+		    UTL_SetBacklightBrightness( loop%5 );
+	    }
+		FS_CloseFile( &dest );
 	}
         
     }
