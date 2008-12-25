@@ -70,7 +70,9 @@ append_ini.xml を C:\Nintendo\MasterEditorTWL\resource\ に置いてください。
     <major> : SDKのメジャーバージョンを指定してください。
     <minor> : SDKのマイナーバージョンを指定してください。
     <relstep> : SDKのリリースバージョンをSDKの規則にしたがって指定してください。
-                SDKの規則を以下に抜粋します。
+                (SDKの規則を以下に抜粋します。)
+                relstepの大小判定はSRL中のSDKバージョンがRELEASE版のときのみに行なわれますので、
+                30000以上の値を指定してください。
 
                 PR1=10100 PR2=10200 ...
                 RC1=20100 RC2=20200 ...
