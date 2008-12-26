@@ -115,6 +115,8 @@ void displayInfoMain( void )
 void initInfo( void )
 // å≈íËï∂éöóÒÇ≈ëŒâûÇ≈Ç´Ç»Ç¢çÄñ⁄Ç…ï∂éöóÒóÃàÊÇäÑÇËìñÇƒÇÈ
 {
+	
+#ifndef VERSION_VIEWER	
 	OS_TPrintf("buffer initialize\n");
 	
 	// sjis (char)
@@ -145,6 +147,7 @@ void initInfo( void )
 	infoAlloc( gAllInfo[MENU_SYSMENU], SYSMENU_VERSION_STR, TWL_SYSMENU_VER_STR_LEN + 1, FALSE );
 
 	OS_TPrintf( "information alloc succeeded\n" );
+#endif
 }
 
 	
@@ -173,7 +176,8 @@ void getAllInfo( void )
 	static BOOL firstRead = TRUE;
 
 	OS_TPrintf("reflesh Information\n");
-		
+
+#ifndef VERSION_VIEWER		
 	getOwnerInfo();
 	getParentalInfo();
 	getSecureUserInfo();
@@ -181,16 +185,21 @@ void getAllInfo( void )
 	getHWInfo();
 	getSCFGInfo();
 	getSysmenuInfo();
-
+	getFontInfo();
+	
 	if( firstRead ){
 		getWLInfo();
 		getWhiteListInfo();
-#if NAM_ENABLE
-	getContentsVersion();
-#endif
 	}
+#endif
 
-	getFontInfo();
+#if NAM_ENABLE
+	if( firstRead ){
+		getContentsVersion();
+	}
+#endif
+
+
 	printAllInfo();
 	firstRead = FALSE;
 	OS_TPrintf("reflesh information finished\n");
@@ -261,6 +270,7 @@ void printAllInfo ( void )
 				continue;
 			}
 			
+#ifndef VERSION_VIEWER
 			if( loop1 == MENU_FONT && FONT_INFO <= loop2 )
 			{
 				int infoType = (loop2 - FONT_INFO) % NUM_FONT_INFO;
@@ -283,7 +293,8 @@ void printAllInfo ( void )
 
 				continue;
 			}
-			
+#endif // ifndef VERSION_VIEWER
+
 			entry = &gAllInfo[loop1][loop2];
 
 			if( entry->isNumData )

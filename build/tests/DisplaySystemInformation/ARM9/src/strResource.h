@@ -19,25 +19,47 @@
 #define __DISPLAY_INFO_RESOURCE__
 
 // ÉÅÉjÉÖÅ[ID
-#define ROOTMENU_SIZE 			16
+#ifdef VERSION_VIEWER
+	#define ROOTMENU_SIZE	1
+	#define MENU_ROOT		1
+	#define MENU_VERSION	0
+	#define MENU_OWNER 			10
+	#define MENU_PARENTAL 		11
+	#define MENU_SECURE_USER	12
+	#define MENU_OTHER			13
+	#define MENU_NORMAL_HW		14
+	#define MENU_SECURE_HW		15
+	#define MENU_SCFG_ARM7		16
+	#define MENU_SCFG_ARM9		17
+	#define MENU_SYSMENU		18
+	#define MENU_FONT			19
+	#define MENU_WL				20
+	#define MENU_WHITE			21
+	#define MENU_RESET_INFO		22
+	#define MENU_BREAK_DATA		23
+	#define MENU_RTC_RESET		24
 
-#define MENU_ROOT 			16
-#define MENU_OWNER 			0
-#define MENU_PARENTAL 		1
-#define MENU_SECURE_USER	2
-#define MENU_OTHER			3
-#define MENU_NORMAL_HW		4
-#define MENU_SECURE_HW		5
-#define MENU_SCFG_ARM7		6
-#define MENU_SCFG_ARM9		7
-#define MENU_SYSMENU		8
-#define MENU_FONT			9
-#define MENU_WL				10
-#define MENU_WHITE			11
-#define MENU_VERSION		12
-#define MENU_RESET_INFO		13
-#define MENU_BREAK_DATA		14
-#define MENU_RTC_RESET		15
+#else
+	#define ROOTMENU_SIZE 			16
+
+	#define MENU_ROOT 			16
+	#define MENU_OWNER 			0
+	#define MENU_PARENTAL 		1
+	#define MENU_SECURE_USER	2
+	#define MENU_OTHER			3
+	#define MENU_NORMAL_HW		4
+	#define MENU_SECURE_HW		5
+	#define MENU_SCFG_ARM7		6
+	#define MENU_SCFG_ARM9		7
+	#define MENU_SYSMENU		8
+	#define MENU_FONT			9
+	#define MENU_WL				10
+	#define MENU_WHITE			11
+	#define MENU_VERSION		12
+	#define MENU_RESET_INFO		13
+	#define MENU_BREAK_DATA		14
+	#define MENU_RTC_RESET		15
+#endif	// else VERSION_VIEWER
 
 #define OWNERMENU_SIZE 			6
 
@@ -268,4 +290,4 @@ extern char *s_strLanguage[];
 extern char *s_strCountry[];
 extern char s_strNA[];	
 
-#endif
+#endif	// ifndef __DISPLAY_INFO_RESOURCE__

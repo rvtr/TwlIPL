@@ -103,8 +103,11 @@ void drawHeader( int menu, int line)
 {
 	u16 buf[256];
 	
-	PrintfSJISSub( HEADER_LEFT, HEADER_UP, TXT_COLOR_RED, "%s %d $Rev:$" , "DisplaySystemInfo", DISPINFO_BIN_IDX );
-
+#ifdef VERSION_VIEWER
+	PrintfSJISSub( HEADER_LEFT, HEADER_UP, TXT_COLOR_RED, "%s $Rev$" , "AppVesionViewer" );
+#else	
+	PrintfSJISSub( HEADER_LEFT, HEADER_UP, TXT_COLOR_RED, "%s %d $Rev$" , "DisplaySystemInfo", DISPINFO_BIN_IDX );
+#endif
 
 	if( menu != MENU_ROOT )
 	{
@@ -121,6 +124,7 @@ void drawHeader( int menu, int line)
 		PutStringUTF16Sub( FOOTER_LEFT, FOOTER_UP + FOOTER_LINES * LINE_OFFSET, TXT_COLOR_BLUE, buf );
 	}
 	
+#ifndef VERSION_VIEWER
 	PutStringUTF16Sub( FOOTER_LEFT, FOOTER_UP + FOOTER_CONTROL1 * LINE_OFFSET, TXT_COLOR_BLUE, (const u16 *)L" A: Decide   B: Back ");
 	
 	if( menu == MENU_SCFG_ARM7 )
@@ -128,6 +132,7 @@ void drawHeader( int menu, int line)
 		PrintfSJISSub( FOOTER_LEFT, FOOTER_UP + FOOTER_REGIST * LINE_OFFSET, TXT_COLOR_RED, s_strSCFGViewMode[ gSelectedARM7SCFGReg ] );
 		PutStringUTF16Sub( FOOTER_LEFT, FOOTER_UP + FOOTER_CONTROL2 * LINE_OFFSET, TXT_COLOR_BLUE, (const u16 *)L" Select: Switch Viewing Area" );
 	}
+#endif
 }
 
 void printData( int x, int y, int color, DispInfoEntry *entry )
@@ -316,6 +321,7 @@ void printValue( int menu,int entryLine, int drawOffset, DispInfoEntry *entry )
 
 void drawRegister( int menu, int selected )
 {
+#ifndef VERSION_VIEWER	
 	// SCFGレジスタのバイナリをサブ画面に描画する
 	int selectRegSize = 1;
 	int selectBitNum;
@@ -415,6 +421,7 @@ void drawRegister( int menu, int selected )
 		printBinary32( REGISTER_DATA_LEFT, REGISTER_DATA_UP + 3*LINE_OFFSET, regExt, selectBitNum - 48, selectRegSize );
 		
 	}
+#endif // ifndef VERSION_VIEWER	
 }
 
 void printBinary32( int x, int y, u32 value, int selected, int selectSize )
@@ -522,6 +529,7 @@ void drawChangeMode( DispInfoEntry *entry,  int changeLine )
 
 void drawExecuteMode( const char *command, int changeLine, u8 mode )
 {
+#ifndef VERSION_VIEWER	
 	int i;
 	
 	// 項目名
@@ -544,6 +552,7 @@ void drawExecuteMode( const char *command, int changeLine, u8 mode )
 	{
 		PrintfSJIS( RESULT_LEFT, RESULT_UP, TXT_COLOR_BLACK, s_strResult[ (mode & MODE_RESULT_MASK) >> MODE_RESULT_SHIFT ] );
 	}
+#endif // VERSION_VIEWER	
 	
 }	
 
@@ -583,6 +592,7 @@ void drawVersion( int idx, int drawLine ,int selected )
 
 void drawFontInfo( int idx, int drawLine, int selected )
 {
+#ifndef VERSION_VIEWER
 	int color = TXT_COLOR_BLACK;
 	int fontIdx = idx / NUM_FONT_INFO;
 	int dataType = idx % NUM_FONT_INFO;
@@ -626,8 +636,8 @@ void drawFontInfo( int idx, int drawLine, int selected )
 		PrintfSJIS( VALUE_LEFT, VALUE_UP + LINE_OFFSET*drawLine , color, s_strCorrect[ gFontInfo[fontIdx].isHashOK ] );
 		break;
 	}
+#endif // ifdef VERSION_VIEWER
 }
-
 void drawMenu( int menu, int line, int changeLine, u8 mode )
 // 情報一覧を描画する
 {

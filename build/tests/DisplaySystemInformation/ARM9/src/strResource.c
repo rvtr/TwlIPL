@@ -19,6 +19,26 @@
 
 
 // VERSION_MENU_SIZE、FONTMENU_SIZEだけコンテンツ数に応じて可変なのでconstではない
+
+#ifdef VERSION_VIEWER
+
+int s_numMenu[] = {
+	VERSIONMENU_SIZE,
+	ROOTMENU_SIZE
+};
+
+const char *s_strRootMenu[] = {
+	"＜Installed Content Version＞"
+};
+
+
+const char **s_strMetaMenu[] = {
+	NULL,
+	s_strRootMenu
+};
+
+#else
+
 int s_numMenu[] = {
 	OWNERMENU_SIZE,
 	PARENTALMENU_SIZE,
@@ -364,10 +384,6 @@ char *s_strResult[] = {
 };
 
 
-char *s_strCorrect[] = {
-	"Incorrect",
-	"Correct"
-};
 
 char *s_strSysMenuKey[] = {
 	"Incorrect",
@@ -380,10 +396,6 @@ char *s_strBool[] = {
 	"TRUE"
 };
 
-char *s_strOK[] = {
-	"CANCEL",
-	"OK"
-};
 
 char *s_strRatingOrg[] = {
 	"CERO",
@@ -696,7 +708,19 @@ char *s_strCountry[] = {
     	"UNKNOWN     ",
 };
 
+
+#endif	// else VERSION_VIEWER
+
+char *s_strOK[] = {
+	"CANCEL",
+	"OK"
+};
+
+char *s_strCorrect[] = {
+	"Incorrect",
+	"Correct"
+};
+
 char s_strNA[] = {
 	"N/A"
 };	
-
