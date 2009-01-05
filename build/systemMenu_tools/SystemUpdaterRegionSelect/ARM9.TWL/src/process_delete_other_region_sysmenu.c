@@ -90,6 +90,24 @@ static const u64 sTitleIdListHNK[TITLE_ID_LIST_NUM] =
 	0x00030005484e4B55,	// Australia HNKU
 };
 
+
+static const u64 sTitleIdListHNF[TITLE_ID_LIST_NUM] =
+{
+	0x00030015484E464A,	// Japan     HNFJ
+	0x00030015484E4645,	// America   HNFE
+	0x00030015484E4650,	// Europe    HNFP
+	0x00030015484E4655,	// Australia HNFU
+};
+
+static const u64 sTitleIdListHNJ[TITLE_ID_LIST_NUM] =
+{
+	0x00030005484E4A4A,	// Japan     HNJJ
+	0x00030005484E4A45,	// America   HNJE
+	0x00030005484E4A50,	// Europe    HNJP
+	0x00030005484E4A55,	// Australia HNJU
+};
+
+
 /*---------------------------------------------------------------------------*
     内部関数宣言
  *---------------------------------------------------------------------------*/
@@ -162,6 +180,24 @@ BOOL ProcessDeleteOtherResionSysmenu(void)
 		if (i != gRegion)
 		{
 			ret = DeleteTitle( sTitleIdListHNK[i] );
+		}
+	}
+
+	// 選択リージョンと異なるショップは消去する
+	for (i=0;i<TITLE_ID_LIST_NUM;i++)
+	{
+		if (i != gRegion)
+		{
+			ret = DeleteTitle( sTitleIdListHNF[i] );
+		}
+	}
+
+	// 選択リージョンと異なるNintendoゾーンは消去する
+	for (i=0;i<TITLE_ID_LIST_NUM;i++)
+	{
+		if (i != gRegion)
+		{
+			ret = DeleteTitle( sTitleIdListHNJ[i] );
 		}
 	}
 

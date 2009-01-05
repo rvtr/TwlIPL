@@ -36,12 +36,17 @@
 /*---------------------------------------------------------------------------*
     内部定数定義
  *---------------------------------------------------------------------------*/
+#ifdef FOR_LOTCHECK
+#define DUMMY_FILE_NUM   1
+#else
 #define DUMMY_FILE_NUM   2
-
+#endif
 static const char* sDummyFileList[DUMMY_FILE_NUM] =
 { 
 	"nand:/shared2/launcher/wrap.bin",	// ないと本体初期化でこける
+#ifndef FOR_LOTCHECK
 	"nand:/sys/dev.kp"					// ないとアプリ管理画面が表示されない
+#endif
 };
 
 /*---------------------------------------------------------------------------*
@@ -73,8 +78,11 @@ BOOL ProcessWriteDummy(void)
 			kamiFontPrintfConsole(FONT_COLOR_RED, "Write Dummy %d Fail!\n", i);
 			ret = FALSE;
 		}
-	} 
-
+	}
+#ifdef FOR_LOTCHECK
+	FS_DeleteFile("nand:/sys/dev.kp");
+#endif
+	
 	OS_WaitVBlankIntr();
 	kamiFontLoadScreenData();
 	return ret;

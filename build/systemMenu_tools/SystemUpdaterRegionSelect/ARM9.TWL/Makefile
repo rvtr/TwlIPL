@@ -21,7 +21,10 @@
 #============================================================================
 
 # SystemMenuファイルの置かれているフォルダを指定(相対もしくは絶対）
-UPDATER_HOST_ROOT_DIR = ../data_sysmenu
+UPDATER_HOST_ROOT_DIR = s:/v1_2
+
+# COMPILE SWITCH for build SystemUpdater（TRUEにすると、ダミーdev.kpを生成しないようになります。）
+FOR_LOTCHECK			?=	FALSE
 
 # COMPILE SWITCH for build SystemUpdater
 IGNORE_VERSION_CHECK	?=	FALSE
@@ -107,6 +110,10 @@ MAKEROM_FLAGS			+=	-DHWINFO_PRIVKEY='private_HWInfo_dev.der' \
 							-DHWID_PRIVKEY='private_HWID_dev.der'
 endif
 endif
+endif
+
+ifeq ($(FOR_LOTCHECK),TRUE)
+MACRO_FLAGS += -DFOR_LOTCHECK
 endif
 
 ifeq ($(IGNORE_VERSION_CHECK),TRUE)
