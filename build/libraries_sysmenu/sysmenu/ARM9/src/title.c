@@ -124,7 +124,10 @@ static DHTFile *dht = NULL;
 static const u8* hash0 = NULL;
 static const u8* hash1 = NULL;
 
-static u8 tempcardbuf[4096]; // カード読み込み用バッファ
+static u8 tempcardbuf[4096] ATTRIBUTE_ALIGN(32); // カード読み込み用バッファ
+
+static u8 mode_save_to_sd = 2; // SDへカード内容をセーブするモード
+							   // 0:しない 1:4MBを2回 2:32MB
 
 // const data------------------------------------------------------------------
 static const OSBootType s_launcherToOSBootType[ LAUNCHER_BOOTTYPE_MAX ] = {
@@ -526,6 +529,11 @@ static void SYSMi_FinalizeHotSWAsync( TitleProperty *pBootTitle, ROM_Header *hea
 	HOTSW_FinalizeHotSWAsync( card_state );
 }
 
+void SYSM_SetMode_Save_To_Sd(u8 mode)
+{
+	mode_save_to_sd = mode;
+}
+
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
 {
 	enum
@@ -863,52 +871,85 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
 		int loop;
 		CardDataReadState card_read_state;
 	    FSFile dest;
+	    char filename[64];
+	    
+		STD_TSNPrintf( filename, 64, "sdmc:/%c%c%c%c_HEADER.dat", head->s.game_code[0],head->s.game_code[1],head->s.game_code[2],head->s.game_code[3] );
 	    FS_InitFile( &dest );
-	    (void)FS_CreateFile("sdmc:/header.dat", FS_PERMIT_W | FS_PERMIT_R);
-	    FS_OpenFileEx( &dest, "sdmc:/header.dat", FS_FILEMODE_W );
+	    (void)FS_CreateFile(filename, FS_PERMIT_W | FS_PERMIT_R);
+	    FS_OpenFileEx( &dest, filename, FS_FILEMODE_W );
 	    FS_WriteFile( &dest, (void*)SYSM_APP_ROM_HEADER_BUF, HW_TWL_ROM_HEADER_BUF_SIZE );
 	    FS_CloseFile( &dest );
 	    
+		STD_TSNPrintf( filename, 64, "sdmc:/%c%c%c%c_ARM9FLX.dat", head->s.game_code[0],head->s.game_code[1],head->s.game_code[2],head->s.game_code[3] );
 	    FS_InitFile( &dest );
-	    (void)FS_CreateFile("sdmc:/arm9flx.dat", FS_PERMIT_W | FS_PERMIT_R);
-	    FS_OpenFileEx( &dest, "sdmc:/arm9flx.dat", FS_FILEMODE_W );
+	    (void)FS_CreateFile(filename, FS_PERMIT_W | FS_PERMIT_R);
+	    FS_OpenFileEx( &dest, filename, FS_FILEMODE_W );
 	    FS_WriteFile( &dest, (void *)destaddr[region_arm9_ntr], length[region_arm9_ntr] );
 	    FS_CloseFile( &dest );
 	    
+		STD_TSNPrintf( filename, 64, "sdmc:/%c%c%c%c_ARM7FLX.dat", head->s.game_code[0],head->s.game_code[1],head->s.game_code[2],head->s.game_code[3] );
 	    FS_InitFile( &dest );
-	    (void)FS_CreateFile("sdmc:/arm7flx.dat", FS_PERMIT_W | FS_PERMIT_R);
-	    FS_OpenFileEx( &dest, "sdmc:/arm7flx.dat", FS_FILEMODE_W );
+	    (void)FS_CreateFile(filename, FS_PERMIT_W | FS_PERMIT_R);
+	    FS_OpenFileEx( &dest, filename, FS_FILEMODE_W );
 	    FS_WriteFile( &dest, (void *)destaddr[region_arm7_ntr], length[region_arm7_ntr] );
 	    FS_CloseFile( &dest );
 	    
 	    if( isTwlApp )
 	    {
+			STD_TSNPrintf( filename, 64, "sdmc:/%c%c%c%c_ARM9LTD.dat", head->s.game_code[0],head->s.game_code[1],head->s.game_code[2],head->s.game_code[3] );
 		    FS_InitFile( &dest );
-		    (void)FS_CreateFile("sdmc:/arm9ltd.dat", FS_PERMIT_W | FS_PERMIT_R);
-		    FS_OpenFileEx( &dest, "sdmc:/arm9ltd.dat", FS_FILEMODE_W );
+		    (void)FS_CreateFile(filename, FS_PERMIT_W | FS_PERMIT_R);
+		    FS_OpenFileEx( &dest, filename, FS_FILEMODE_W );
 		    FS_WriteFile( &dest, (void *)destaddr[region_arm9_twl], length[region_arm9_twl] );
 		    FS_CloseFile( &dest );
 		    
+			STD_TSNPrintf( filename, 64, "sdmc:/%c%c%c%c_ARM7LTD.dat", head->s.game_code[0],head->s.game_code[1],head->s.game_code[2],head->s.game_code[3] );
 		    FS_InitFile( &dest );
-		    (void)FS_CreateFile("sdmc:/arm7ltd.dat", FS_PERMIT_W | FS_PERMIT_R);
-		    FS_OpenFileEx( &dest, "sdmc:/arm7ltd.dat", FS_FILEMODE_W );
+		    (void)FS_CreateFile(filename, FS_PERMIT_W | FS_PERMIT_R);
+		    FS_OpenFileEx( &dest, filename, FS_FILEMODE_W );
 		    FS_WriteFile( &dest, (void *)destaddr[region_arm7_twl], length[region_arm7_twl] );
 		    FS_CloseFile( &dest );
 	    }
 	    
 	    // カードの中身がんばって吐いてもらおう
-	    FS_InitFile( &dest );
-	    (void)FS_CreateFile("sdmc:/card256Mbit.dat", FS_PERMIT_W | FS_PERMIT_R);
-	    FS_OpenFileEx( &dest, "sdmc:/card256Mbit.dat", FS_FILEMODE_W );
-	    for( loop=0; loop<8*1024; loop++)
+	    if( mode_save_to_sd != 0 )
 	    {
-			DC_InvalidateRange( (void*)tempcardbuf, 4096 );
-	    	card_read_state = HOTSW_ReadCardData( (void *)(loop*4096), (void *)tempcardbuf, 4096);
-	    	if((card_read_state != CARD_READ_SUCCESS)) break;
-		    FS_WriteFile( &dest, (void *)tempcardbuf, 4096 );
-		    UTL_SetBacklightBrightness( loop%5 );
-	    }
-		FS_CloseFile( &dest );
+			int readsize = (mode_save_to_sd==1 ? 32 : 256);
+			STD_TSNPrintf( filename, 64, "sdmc:/%c%c%c%c_CARD%dMbit.dat", head->s.game_code[0],head->s.game_code[1],head->s.game_code[2],head->s.game_code[3],readsize );
+		    FS_InitFile( &dest );
+		    (void)FS_CreateFile(filename, FS_PERMIT_W | FS_PERMIT_R);
+		    if(FS_OpenFileEx( &dest, filename, FS_FILEMODE_W ))
+		    {
+			    readsize = readsize / 32;
+			    for( loop=0; loop<readsize*1024; loop++)
+			    {
+					DC_InvalidateRange( (void*)tempcardbuf, 4096 );
+			    	card_read_state = HOTSW_ReadCardData( (void *)(loop*4096), (void *)tempcardbuf, 4096);
+			    	if((card_read_state != CARD_READ_SUCCESS)) break;
+				    FS_WriteFile( &dest, (void *)tempcardbuf, 4096 );
+				    if(loop%10==0) UTL_SetBacklightBrightness( (loop/10)%5 );
+			    }
+				FS_CloseFile( &dest );
+			}
+		}
+	    if( mode_save_to_sd == 1 )
+	    {
+			STD_TSNPrintf( filename, 64, "sdmc:/%c%c%c%c_CARD32Mbit_2.dat", head->s.game_code[0],head->s.game_code[1],head->s.game_code[2],head->s.game_code[3] );
+		    FS_InitFile( &dest );
+		    (void)FS_CreateFile(filename, FS_PERMIT_W | FS_PERMIT_R);
+		    if(FS_OpenFileEx( &dest, filename, FS_FILEMODE_W ))
+		    {
+			    for( loop=0; loop<1*1024; loop++)
+			    {
+					DC_InvalidateRange( (void*)tempcardbuf, 4096 );
+			    	card_read_state = HOTSW_ReadCardData( (void *)(loop*4096), (void *)tempcardbuf, 4096);
+			    	if((card_read_state != CARD_READ_SUCCESS)) break;
+				    FS_WriteFile( &dest, (void *)tempcardbuf, 4096 );
+				    if(loop%10==0) UTL_SetBacklightBrightness( (loop/10)%5 );
+			    }
+				FS_CloseFile( &dest );
+			}
+		}
 	}
         
     }

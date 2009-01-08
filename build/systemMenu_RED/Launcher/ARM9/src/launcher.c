@@ -586,6 +586,14 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 		if( ( pad.trg & PAD_BUTTON_A ) || ( tp_select ) ) {					// メニュー項目への分岐
 			if( pTitleList[selected].flags.isValid )
 			{
+				if( ( pad.cont & PAD_BUTTON_Y ) )
+				{
+					SYSM_SetMode_Save_To_Sd( 1 ); // savetosdモード１（4MB＊２）
+				}
+				if( ( pad.cont & PAD_BUTTON_B ) )
+				{
+					SYSM_SetMode_Save_To_Sd( 0 ); // savetosdモード０（保存しない）
+				}
 				//PlayStream(&strm, filename);
 				ret = &pTitleList[selected];
 				// ブートするアプリのindex番号とTitleIDを本体設定に保存する。（実際の保存は、SYSMライブラリがブート時に行います。）
