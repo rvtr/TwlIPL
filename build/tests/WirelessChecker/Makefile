@@ -61,9 +61,14 @@ LDIRT_CLEAN	+=	$(FONT_RES_LC) $(FONT_RES_NO_LC) *.rsf $(REVISION_C)
 #----------------------------------------------------------------------------
 
 ifeq	($(TWL_NANDAPP),TRUE)
-TARGET_BIN       = WirelessChecker.tad
+TARGET_BIN       = WirelessChecker_nand.tad
 else
 TARGET_BIN       = WirelessChecker.srl
+endif
+
+ifeq	($(TWL_NANDAPP),TRUE)
+LCFILE_AUTOGEN	= $(BINDIR)/$(notdir $(LCFILE_SPEC:.lsf=.autogen.nand.lcf))
+LDRES_AUTOGEN	= $(BINDIR)/$(notdir $(LCFILE_SPEC:.lsf=.autogen.nand.response))
 endif
 
 SRCS             = main.cpp				\
@@ -89,7 +94,6 @@ MAKEROM_ARM7_BASE   =   ./components/racoon_wckr/bin/$(TWL_BUILDTYPE_ARM7)/racoo
 MAKEROM_ARM7        =   $(MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
 
 include	$(TWLSYSTEM_ROOT)/build/buildtools/commondefs
-include $(TWLSDK_ROOT)/build/buildtools/twl/commondefs.add-ins.nadk
 
 LIBRARIES_UNLINK   := libnwm$(TWL_LIBSUFFIX).a
 
