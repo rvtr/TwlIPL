@@ -1,0 +1,20 @@
+＃＃概要
+
+量産ベースで動作するTWLCaptureの生産工程で使用する書込みツール
+
+NandInitializerの機能をベースに
+・sdmcブートではなくmemory-launcherからのブートを前提
+（同ディレクトリからtadを検索するのではなく、objectファイルとしてromに内包）
+・書き込むtadはhnaa,hnba,hnca,hnha,hnlaに決め打ち
+・HWInfoなどを書き込まない
+
+といった変更を施したもの
+
+
+＃＃つかいかた
+
+1. ARM9.TWL/data/dev,prod以下に書き込むtadファイルとnandfirmを入れる
+（既にオブジェクトファイル化したものがあるならそれでもOK、
+ただし、[gamecode].beginと[gamecode].endを
+開始、終了位置シンボルとして埋め込んでいないと駄目）
+2. ./make.rb [dev または prod または full]

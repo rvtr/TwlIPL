@@ -1,0 +1,10 @@
+ここ以下にdevとprod用のnandfirmとHNAA,HNBA,HNCA,HNHA,HNLAをオブジェクトファイル化した
+
+nandfirm.o
+hnaa.o
+hnba.o
+hnca.o
+hnha.o
+hnla.o
+
+を配置する
