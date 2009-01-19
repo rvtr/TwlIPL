@@ -100,12 +100,10 @@ void* NandfirmProcessTWLC1(void)
 static BOOL writebackFirm( void )
 {
 	u8 *pBuf;
-	u8 *pVerifyBuf;
 	u32 allocSize;
 	u32 fileSize = (u32)(&nandfirm_end) - (u32)(&nandfirm_begin);
 	u32 nandfirmSize = fileSize - NANDFIRM_FILE_START_OFFSET;
 	u32 writeBlock;
-	u16 crc1,crc2;
 	BOOL ret = TRUE;
 	
 	if( 800*1024 < fileSize ) 

@@ -217,13 +217,14 @@ void* TopmenuProcess1(void)
 
 void* TopmenuProcess2(void)
 {
+
+#ifndef TWL_CAPTURE_VERSION	
 	switch ( sMenuSelectNo )
 	{
 	case MENU_FORMAT:
 		FADE_OUT_RETURN( FormatProcess0 );
 	case MENU_HARDWARE_INFO:
 		FADE_OUT_RETURN( HWInfoProcess0 );
-
 #ifdef    USE_WIRELESS_FORCE_DISABLE_SETTING
 	case MENU_WIRELESS_SETTING:
 		FADE_OUT_RETURN( WirelessSettingProcess0 );
@@ -245,7 +246,7 @@ void* TopmenuProcess2(void)
 		FADE_OUT_RETURN( mcuProcess0 );
 #endif // NAND_INITIALIZER_LIMITED_MODE
 	}
-
+#endif	// TWL_CAPTURE_VERSION
 	return TopmenuProcess1;
 }
 

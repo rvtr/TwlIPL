@@ -100,12 +100,12 @@ TwlMain()
 	
     // initialize file-system
 	FS_Init(FS_DMA_NOT_USE);
+
 	// SDカードの挿抜イベント監視コールバック設定
 //  FS_RegisterEventHook("sdmc", &sSDHook, SDEvents, NULL);
 
 	// FS_Initの後の方が良い模様
 	InitAllocation();
-
 
     // 表示関連初期化
     InitGraphics();
@@ -118,7 +118,7 @@ TwlMain()
         SDK_ASSERT(p_table != NULL);
         (void)FS_LoadTable(p_table, need_size);
     }
-
+    
 	// 初期シーケンス設定
 	sProcess = TopmenuProcess0;
 
@@ -140,7 +140,10 @@ TwlMain()
 	// NAMライブラリ初期化
 	NAM_Init( OS_AllocFromMain, OS_FreeToMain);
 	NAMUT_Init( OS_AllocFromMain, OS_FreeToMain);
-
+	
+#ifdef TWL_CAPTURE_VERSION
+	kamiFontPrintfConsoleEx(CONSOLE_RED, "[No Signature MODE]\n" );
+#else
 	// HWInfo関連の前準備
 	switch (HWI_Init( OS_AllocFromMain, OS_FreeToMain ))
 	{
@@ -157,7 +160,7 @@ TwlMain()
 		kamiFontPrintfConsoleEx(CONSOLE_RED, "[No Signature MODE]\n" );
 		break;
 	}
-
+#endif
 
     while (1)
     {

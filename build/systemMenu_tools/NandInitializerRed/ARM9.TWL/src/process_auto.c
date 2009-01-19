@@ -30,6 +30,12 @@
 #include "cursor.h"
 #include "keypad.h"
 
+#ifdef TWL_CAPTURE_VERSION
+// TWLCAPTURE生産工程書き込み用
+#include "process_nandfirm_twlc.h"	
+#include "process_import_twlc.h"
+#endif
+
 /*---------------------------------------------------------------------------*
     型定義
  *---------------------------------------------------------------------------*/
@@ -83,8 +89,8 @@ void* AutoProcess0(void)
 	}
 
 	// メニュー初期化
-	sMenuSelectNo = 0;
-
+//	sMenuSelectNo = 0; for twlcapturedebug
+	sMenuSelectNo = AUTO_PROCESS_MENU_IMPORT_TAD;
 	// カーソル消去
 	SetCursorPos((u16)200, (u16)200);
 
@@ -108,19 +114,30 @@ void* AutoProcess1(void)
 	case AUTO_PROCESS_MENU_FORMAT:
 		return FormatProcess0;
 
+#ifndef	 TWL_CAPTURE_VERSION
 	case AUTO_PROCESS_MENU_HARDWARE_INFO:
 		return HWInfoProcess0;
+#endif	// TWL_CAPTURE_VERSION
 
 #ifdef    USE_WRITE_VARIOUS_DATA
 	case AUTO_PROCESS_MENU_VARIOUS_DATA:
 		return WriteDataProcess0;	
 #endif // USE_WRITE_VARIOUS_DATA
 
+
+#ifdef	TWL_CAPTURE_VERSION
+	case AUTO_PROCESS_MENU_IMPORT_TAD:
+		return ImportProcessTWLC0;
+
+	case AUTO_PROCESS_MENU_IMPORT_NANDFIRM:
+		return NandfirmProcessTWLC0;
+#else
 	case AUTO_PROCESS_MENU_IMPORT_TAD:
 		return ImportProcess0;
 
 	case AUTO_PROCESS_MENU_IMPORT_NANDFIRM:
 		return NandfirmProcess0;
+#endif	// TWL_CAPTURE_VERSION
 
 	case AUTO_PROCESS_MENU_MCU:
 		return mcuProcess0;
@@ -170,7 +187,9 @@ void* AutoProcess2(void)
 
 	// メニュー一覧
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    FORMAT NAND            "); 
+#ifndef TWL_CAPTURE_VERSION
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    WRITE HARDWARE INFO    ");
+#endif
 #ifdef    USE_WRITE_VARIOUS_DATA
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    WRITE VARIOUS DATA     ");
 #endif // USE_WRITE_VARIOUS_DATA
