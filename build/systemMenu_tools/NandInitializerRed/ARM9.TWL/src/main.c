@@ -131,6 +131,12 @@ TwlMain()
 #endif
 	kamiFontPrintfConsole( CONSOLE_ORANGE, "+---------------------------+\n");
 
+#ifdef TWL_CAPTURE_VERSION
+	// memory-launcher経由で立ち上がるTWLCaptureSystemWriterでは
+	// RED_LAUNCHER_VERが0でフォーマットに失敗するので強制的に書き換える
+	MI_StoreLE8((void*)HW_TWL_RED_LAUNCHER_VER, 1);
+#endif
+
 #ifdef AUTO_FORMAT_MODE
 //  検査工程ではNANDが初期化されていないがその状態でFATにアクセスすると
 //  問題があるため強制的にフォーマットを行う

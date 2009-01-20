@@ -89,8 +89,8 @@ void* AutoProcess0(void)
 	}
 
 	// メニュー初期化
-//	sMenuSelectNo = 0; for twlcapturedebug
-	sMenuSelectNo = AUTO_PROCESS_MENU_IMPORT_TAD;
+	sMenuSelectNo = 0;
+	
 	// カーソル消去
 	SetCursorPos((u16)200, (u16)200);
 
