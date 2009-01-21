@@ -94,6 +94,10 @@ static void PostInit(void)
     }
     // AESの初期化
     AES_Init(THREAD_PRIO_AES);           // for encrypted NAND
+    // マウント情報初期化
+    // nand,sdmc両方使わない場合でも読んでおかないとHW_TWL_RED_LAUNCHER_VERが立たない
+    FS_InitMountInfo(FALSE ,FALSE);
+    
     /*
         バッテリー残量チェック
     */
