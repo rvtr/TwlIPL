@@ -31,8 +31,13 @@ do_cls() {
 	for target in `find $tmp -name v* -type d | sort -t / -n -k 3.2`
 	do
 		cp -rp $target $1
-		echo "$target"
-		genLic $1
+		t=`echo "$target" | cut -c 5-`
+		if [ -f $t/*.cls ]; then
+			echo "$t:Already cls processed"
+		else
+			genLic $1
+		fi
+#		genLic $1
 	done
 }
 
@@ -42,6 +47,5 @@ do
 	move_data_to_tmp $name
 	do_cls $name
 done
-
 
 rm -rf tmp
