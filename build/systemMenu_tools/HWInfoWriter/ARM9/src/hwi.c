@@ -211,6 +211,11 @@ static BOOL ReadHWInfoFile( void )
 
     retval = LCFGi_THW_ReadSecureInfo();
     if( retval == LCFG_TSF_READ_RESULT_SUCCEEDED ) {
+		
+    // HWノーマル情報、HWセキュア情報をメモリに展開しておく
+    MI_CpuCopyFast( LCFGi_GetHWN(), (void *)HW_PARAM_TWL_HW_NORMAL_INFO, sizeof(LCFGTWLHWNormalInfo) );
+    MI_CpuCopyFast( LCFGi_GetHWS(), (void *)HW_HW_SECURE_INFO, HW_HW_SECURE_INFO_END - HW_HW_SECURE_INFO );
+
         OS_TPrintf( "HW Secure Info read succeeded.\n" );
     }else {
 		result = FALSE;
