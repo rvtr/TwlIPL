@@ -67,6 +67,7 @@ typedef struct _SContext
     BOOL bCheckCard;
 	int  verNum;
     BOOL bMROM;
+    BOOL bNTR;
     
     FILE *ifp;
     FILE *ofp;
@@ -112,6 +113,7 @@ void usage()
     printf( "-m    : [Only NTR limited ROM] Rom speed type replace 1TROM from MROM.\n" );
     printf( "-D    : assert a disable flag of debugger alalysis.\n" );
     printf( "-c    : assert a check(inspection) card flag.\n" );
+    printf( "-N    : skip sign [using for NTR limited ROM]" );
     printf( "-f    : force to overwrite a output_file.\n" );
 	printf( "-----------------------------------------------------------------------------\n" );
 }
@@ -135,7 +137,7 @@ int main(int argc, char *argv[])
     memset( &context, 0, sizeof(SContext) );
 
     // オプション
-    while( (opt = getopt(argc, argv, "hpsdmv:Dcf")) >= 0 )
+    while( (opt = getopt(argc, argv, "hpsdmv:DcfN")) >= 0 )
     {
         switch( opt )
         {
@@ -173,10 +175,14 @@ int main(int argc, char *argv[])
                 context.bCheckCard = TRUE;
             break;
 
+            case 'N':
+                context.bNTR = TRUE;
+            break;
+
             case 'f':
                 bForceOverwrite = TRUE;
             break;
-
+            
             default:            // オプション引数が指定されていないときにも実行される
                 usage();
                 fprintf( stdout, "error: illegal option\n" );
@@ -357,12 +363,16 @@ static BOOL iMain( SContext *pContext )
     rh.s.header_crc16 = CalcCRC16( CRC16_INIT_VALUE, (u8*)&rh, CALC_CRC16_SIZE );
     
     // 署名
-    if( !(pContext->bMROM) )        // NTR専用オプションのときは署名しない
+    if( !(pContext->bMROM) && !(pContext->bNTR) )        // NTR専用オプションのときは署名しない
     {
         if( !SignRomHeader( &rh ) )
         {
             return FALSE;
         }
+    }
+    else
+    {
+        printf( "skip sign\n" );
     }
 
     // ファイルをコピる
