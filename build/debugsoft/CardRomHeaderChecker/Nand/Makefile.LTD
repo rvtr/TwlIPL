@@ -16,13 +16,37 @@
 # $Author$
 #----------------------------------------------------------------------------
 
-SUBMAKES		= 	./Makefile.HYB ./Makefile.LTD
+TARGET_PLATFORM := TWL
+TWL_NANDAPP		:= TRUE
+override TWL_ARCHGEN = LIMITED
+
+SUBDIRS		= 	../common/banner2 \
+				$(ROOT)/build/demos/gx/UnitTours/DEMOLib
+
+TARGET_BIN	= CardRomHeaderChecker.tad
+#INCDIR		= ../common/include
+SRCDIR		= ../common/src
+SRCS		= main.c
+
+ROM_SPEC	=	./ROM-TS_nand.LTD.rsf
 
 #----------------------------------------------------------------------------
 
 include $(TWLSDK_ROOT)/build/buildtools/commondefs
+include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
+
+# インストール指定
+ifneq	($(TWL_IPL_RED_ROOT),)
+INSTALL_DIR	= $(TWL_IPL_RED_ROOT)/debugsoft/CardRomHeaderChecker
+INSTALL_TARGETS	= $(BINDIR)/$(TARGET_BIN)
+endif
+
+
+do-build:	$(TARGETS)
 
 #----------------------------------------------------------------------------
+
+LIBSYSCALL			 = ../common/0CYA/libsyscall.a
 
 include	$(TWLSDK_ROOT)/build/buildtools/modulerules
 

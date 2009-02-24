@@ -160,11 +160,15 @@ void TwlMain(void)
 
     DEMOSetBitmapTextColor(GX_RGBA(31, 31, 31, 1));
     DEMODrawText( 8, row, "End." );
+    row += 2 * shift;
+    DEMODrawText( 8, row, "Press A to check Self-Jump." );
 
     while (1)
     {
+		DEMOReadKey();
         DEMO_DrawFlip();
         OS_WaitVBlankIntr();
+        if(DEMO_IS_TRIG(PAD_BUTTON_A)) OS_RebootSystem();
     }
 }
 

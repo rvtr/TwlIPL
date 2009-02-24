@@ -98,12 +98,12 @@ Property
 	#
 	# Permit LandingNormalJump: for TWL "ApplicationJump" function [TRUE/FALSE]
 	#
-	#PermitLandingNormalJump	FALSE
+	PermitLandingNormalJump	TRUE
 
 	#
 	# Permit LandingTmpJump: for TWL "ApplicationJump" function [TRUE/FALSE]
 	#
-	#PermitLandingTmpJump	FALSE
+	PermitLandingTmpJump	TRUE
 
 	###
 	### Setting for TWL

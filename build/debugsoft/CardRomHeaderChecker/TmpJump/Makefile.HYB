@@ -1,0 +1,71 @@
+#! make -f
+#----------------------------------------------------------------------------
+# Project:  TwlSDK - demos.TWL - nandApp - ExecTmpApp
+# File:     Makefile
+#
+# Copyright 2007-2008 Nintendo.  All rights reserved.
+#
+# These coded instructions, statements, and computer programs contain
+# proprietary information of Nintendo of America Inc. and/or Nintendo
+# Company Ltd., and are protected by Federal copyright law.  They may
+# not be disclosed to third parties or copied or duplicated in any form,
+# in whole or in part, without the prior written consent of Nintendo.
+#
+# $Date:: $
+# $Rev$
+# $Author$
+#----------------------------------------------------------------------------
+
+MISC_DIR				=	$(ROOT)/build/demos.TWL/nandApp/launcher_param/misc
+DATA_DIR				=	$(ROOT)/build/demos.TWL/nandApp/launcher_param/data
+
+SUBDIRS					=	banner
+
+#-------------------------
+#-- NAND アプリのビルドを指定します。
+
+TWL_NANDAPP		=	TRUE
+
+
+#----------------------------------------------------------------------------
+
+TARGET_PLATFORM			=	TWL
+override TWL_ARCHGEN = HYBRID
+
+LINCLUDES				=	$(MISC_DIR) \
+							$(DATA_DIR)
+
+SRCS					=	main.c ExecTmpApp.c \
+							$(MISC_DIR)/misc_simple.c \
+							$(DATA_DIR)/data.c
+
+TARGET_BIN				=	ExecTmpCardRomHeaderChecker.tad
+
+
+#-------------------------
+#-- NAND アプリではいくつかのパラメータの指定のために固有の RSF ファイルが必要です。
+
+ROM_SPEC			=	demo.autogen.hyb.rsf
+ROM_SPEC_TEMPLATE	=	$(ROOT)/include/twl/specfiles/ROM-TS_nand.rsf
+ROM_SPEC_PARAM		=	MakerCode=01					\
+						InitialCode=0CXA					\
+						BannerFile="banner/banner.bnr"	\
+						RomHeaderTemplate="../common/0CXA/rom_header_0cxa.template.sbin"
+
+MAKEROM_ROMROOT		=	./../Nand/bin/$(TWL_BUILDTYPE_ARM9)
+MAKEROM_ROMFILES	=	CardRomHeaderChecker.nand.srl
+
+include $(TWLSDK_ROOT)/build/buildtools/commondefs
+include	$(TWLSDK_ROOT)/build/buildtools/commondefs.gx.demolib
+
+#----------------------------------------------------------------------------
+
+do-build : $(TARGETS)
+
+LIBSYSCALL			 = ../common/0CXA/libsyscall.a
+
+include $(TWLSDK_ROOT)/build/buildtools/modulerules
+
+#----------------------------------------------------------------------------
+
+#===== End of Makefile =====
