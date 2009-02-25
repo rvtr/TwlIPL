@@ -107,56 +107,64 @@ void TwlMain(void)
     DEMOSetBitmapTextColor(COLOR_YELLOW);
     DEMODrawText( 8, row, "TWL Card ROM Header" );
     row += 2 * shift;
-
-    DEMOSetBitmapTextColor(LABEL_COLOR);
-    DEMODrawText( 8, row, "Title Name: " );
-    MI_CpuClear8( str, 100 );
-    MI_CpuCopy8( prhTWL->s.title_name, str, TITLE_NAME_MAX );
-    DEMOSetBitmapTextColor(VALUE_COLOR);
-    DEMODrawText( 96, row, str );
-    row += shift;
-
-    DEMOSetBitmapTextColor(LABEL_COLOR);
-    DEMODrawText( 8, row, "Game Code: " );
-    MI_CpuClear8( str, 100 );
-    MI_CpuCopy8( prhTWL->s.game_code, str, GAME_CODE_MAX );
-    DEMOSetBitmapTextColor(VALUE_COLOR);
-    DEMODrawText( 96, row, str );
-    row += shift;
-
-    DEMOSetBitmapTextColor(LABEL_COLOR);
-    DEMODrawText( 8, row, "TitleID_Hi: " );
-    prhTWL = (ROM_Header*)HW_TWL_CARD_ROM_HEADER_BUF;
-    DEMOSetBitmapTextColor(VALUE_COLOR);
-    DEMODrawText( 96, row, "0x%08x", prhTWL->s.titleID_Hi );
-    row += shift;
-
-    DEMOSetBitmapTextColor(LABEL_COLOR);
-    DEMODrawText( 8, row, "TitleID_Lo: " );
-    MI_CpuClear8( str, 100 );
-    MI_CpuCopy8( prhTWL->s.titleID_Lo, str, 4 );
-    DEMOSetBitmapTextColor(VALUE_COLOR);
-    DEMODrawText( 96, row, str );
-    row += shift;
-
-    DEMOSetBitmapTextColor(LABEL_COLOR);
-    DEMODrawText( 8, row, "Header CRC:" );
-    DEMOSetBitmapTextColor(VALUE_COLOR);
-    DEMODrawText( 96, row, "0x%04x", prhTWL->s.header_crc16 );
-    row += shift;
-
-    crc = CalcCRC16( CRC16_INIT_VALUE, (u8*)prhTWL, CALC_CRC16_SIZE );
-    if( crc == prhTWL->s.header_crc16 )
+    
+    if( OS_IsRunOnTwl() )
     {
-       DEMOSetBitmapTextColor(OK_COLOR);
-       DEMODrawText( 96, row, "0x%04x OK", crc );
-    }
-    else
+	    DEMOSetBitmapTextColor(LABEL_COLOR);
+	    DEMODrawText( 8, row, "Title Name: " );
+	    MI_CpuClear8( str, 100 );
+	    MI_CpuCopy8( prhTWL->s.title_name, str, TITLE_NAME_MAX );
+	    DEMOSetBitmapTextColor(VALUE_COLOR);
+	    DEMODrawText( 96, row, str );
+	    row += shift;
+
+	    DEMOSetBitmapTextColor(LABEL_COLOR);
+	    DEMODrawText( 8, row, "Game Code: " );
+	    MI_CpuClear8( str, 100 );
+	    MI_CpuCopy8( prhTWL->s.game_code, str, GAME_CODE_MAX );
+	    DEMOSetBitmapTextColor(VALUE_COLOR);
+	    DEMODrawText( 96, row, str );
+	    row += shift;
+
+	    DEMOSetBitmapTextColor(LABEL_COLOR);
+	    DEMODrawText( 8, row, "TitleID_Hi: " );
+	    prhTWL = (ROM_Header*)HW_TWL_CARD_ROM_HEADER_BUF;
+	    DEMOSetBitmapTextColor(VALUE_COLOR);
+	    DEMODrawText( 96, row, "0x%08x", prhTWL->s.titleID_Hi );
+	    row += shift;
+
+	    DEMOSetBitmapTextColor(LABEL_COLOR);
+	    DEMODrawText( 8, row, "TitleID_Lo: " );
+	    MI_CpuClear8( str, 100 );
+	    MI_CpuCopy8( prhTWL->s.titleID_Lo, str, 4 );
+	    DEMOSetBitmapTextColor(VALUE_COLOR);
+	    DEMODrawText( 96, row, str );
+	    row += shift;
+
+	    DEMOSetBitmapTextColor(LABEL_COLOR);
+	    DEMODrawText( 8, row, "Header CRC:" );
+	    DEMOSetBitmapTextColor(VALUE_COLOR);
+	    DEMODrawText( 96, row, "0x%04x", prhTWL->s.header_crc16 );
+	    row += shift;
+
+	    crc = CalcCRC16( CRC16_INIT_VALUE, (u8*)prhTWL, CALC_CRC16_SIZE );
+	    if( crc == prhTWL->s.header_crc16 )
+	    {
+	       DEMOSetBitmapTextColor(OK_COLOR);
+	       DEMODrawText( 96, row, "0x%04x OK", crc );
+	    }
+	    else
+	    {
+	       DEMOSetBitmapTextColor(NG_COLOR);
+	       DEMODrawText( 96, row, "0x%04x NG", crc );
+	    }
+	    row += 2 * shift;
+    }else
     {
-       DEMOSetBitmapTextColor(NG_COLOR);
-       DEMODrawText( 96, row, "0x%04x NG", crc );
-    }
-    row += 2 * shift;
+		DEMOSetBitmapTextColor(GX_RGBA(31, 31, 31, 1));
+    	DEMODrawText( 8, row, "Running on NITRO Mode." );
+	    row += 2 * shift;
+	}
 
     DEMOSetBitmapTextColor(GX_RGBA(31, 31, 31, 1));
     DEMODrawText( 8, row, "End." );
