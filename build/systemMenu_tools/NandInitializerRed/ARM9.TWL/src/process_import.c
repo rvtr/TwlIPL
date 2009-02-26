@@ -15,6 +15,8 @@
   $Author$
  *---------------------------------------------------------------------------*/
 
+#include "sort_title.h"
+
 #include <twl.h>
 #include <nitro/snd.h>
 #include <twl/fatfs.h>
@@ -65,6 +67,7 @@ typedef enum {
 // 表示＆インポートできる.TADファイルは最大16個まで
 // しかもＳＤカードのルートに存在するファイルのみというお手軽実装
 #define FILE_NUM_MAX         256
+#define QSORT_BUF_SIZE       ((8+1) * 8) // サイズは(Log2(FILE_NUM_MAX)+1) * 8 bytes 必要 動的確保できるならそっちの方が楽
 
 #define VIEW_LINES_MAX        16
 
@@ -78,6 +81,7 @@ static s32 sMenuSelectNoIndividually;
 static LCFGReadResult (*s_pReadSecureInfoFunc)( void );
 
 static char sFilePath[FILE_NUM_MAX][FS_ENTRY_LONGNAME_MAX];
+static TitleSortSet sTitleSortSet[FILE_NUM_MAX];
 
 static u8 sFileNum;
 
@@ -159,6 +163,7 @@ void* ImportProcess0(void)
 
 	// 配列クリア
 	MI_CpuClear8( sFilePath, sizeof(sFilePath) );
+	MI_CpuClear8( sTitleSortSet, sizeof(sTitleSortSet) );
 
 	// ファイル数初期化
 	sFileNum = 0;
@@ -176,6 +181,8 @@ void* ImportProcess0(void)
 	kamiFontFillChar( 0, BG_COLOR_PINK, BG_COLOR_PINK );
 	kamiFontFillChar( 1, BG_COLOR_PINK, BG_COLOR_PINK );
 	kamiFontFillChar( 2, BG_COLOR_PINK, BG_COLOR_TRANS );
+	
+	FS_InitFile(&dir);
 
     // SDカードのルートディレクトリを検索
     if ( !FS_OpenDirectory(&dir, "sdmc:/", FS_FILEMODE_R | FS_FILEMODE_W) )
@@ -184,6 +191,8 @@ void* ImportProcess0(void)
     }
     else
     {
+		int l;
+		char qsortBuf[QSORT_BUF_SIZE];
         FSDirectoryEntryInfo   info[1];
         OS_Printf("[%s]:\n", "sdmc:/");
 
@@ -208,13 +217,24 @@ void* ImportProcess0(void)
 				{
 					if (!STD_CompareString( pExtension, ".tad") || !STD_CompareString( pExtension, ".TAD")  )
 					{
+						NAMTadInfo tadInfo;
 						char full_path[FS_ENTRY_LONGNAME_MAX+6];
 
 						// フルパスを作成
 						MakeFullPathForSD(info->longname, full_path);
 
 						STD_CopyString( sFilePath[sFileNum], info->longname );
-						kamiFontPrintfConsole(CONSOLE_ORANGE, "%d:%s\n", sFileNum, info->longname);
+						// kamiFontPrintfConsole(CONSOLE_ORANGE, "%d:%s\n", sFileNum, info->longname);
+						
+						// tadファイルの情報取得
+						if (NAM_ReadTadInfo(&tadInfo, full_path) != NAM_OK)
+						{
+							// 失敗したらエラーを表示して現在のファイルを飛ばして先へ進む
+							kamiFontPrintfConsole(CONSOLE_RED, "Error NAM_ReadTadInfo()\n");
+							continue;
+						}
+						sTitleSortSet[sFileNum].titleID = tadInfo.titleInfo.titleId;
+						sTitleSortSet[sFileNum].path = sFilePath[sFileNum];
 
 						if (++sFileNum >= FILE_NUM_MAX)
 						{
@@ -225,7 +245,15 @@ void* ImportProcess0(void)
             }
         }
         (void)FS_CloseDirectory(&dir);
-
+        
+        // ファイルパスをTitleID_lo順にソートする
+        SortTitle( sTitleSortSet, sFileNum, qsortBuf );
+        
+        for( l=0; l<sFileNum; l++ )
+        {
+			kamiFontPrintfConsole(CONSOLE_ORANGE, "%d:%s\n", l, sTitleSortSet[l].path);
+		}
+        
 		kamiFontPrintfConsole(CONSOLE_ORANGE, "--------------------------\n");
 
 //		DumpTadInfo();
@@ -357,7 +385,7 @@ static void* ImportAllOverwriteProcess0(void)
 	for (i=0;i<sFileNum;i++)
 	{
 		// 強制上書き
-		if (ImportTad(sFilePath[i], TAD_WRITE_OPTION_OVERWRITE) == FALSE)
+		if (ImportTad(sTitleSortSet[i].path, TAD_WRITE_OPTION_OVERWRITE) == FALSE)
 		{
 			result = FALSE;
 		}
@@ -408,7 +436,7 @@ static void* ImportAllNonexistentProcess0(void)
 	for (i=0;i<sFileNum;i++)
 	{
 		// 書き込みチャレンジ
-		if (ImportTad(sFilePath[i], TAD_WRITE_OPTION_NONEXISTENT) == FALSE)
+		if (ImportTad(sTitleSortSet[i].path, TAD_WRITE_OPTION_NONEXISTENT) == FALSE)
 		{
 			result = FALSE;
 		}
@@ -536,10 +564,10 @@ void* ImportIndividuallyProcess2(void)
 {
 	BOOL ret;
 
-	if (STD_GetStringLength(sFilePath[sMenuSelectNoIndividually]))
+	if (STD_GetStringLength(sTitleSortSet[sMenuSelectNoIndividually].path))
 	{
 		// 個別インポート
-		ret = ImportTad(sFilePath[sMenuSelectNoIndividually], TAD_WRITE_OPTION_USER);
+		ret = ImportTad(sTitleSortSet[sMenuSelectNoIndividually].path, TAD_WRITE_OPTION_USER);
 	}
 	else
 	{
@@ -774,7 +802,7 @@ static void ShowTadList(void)
 	for (i=0;i<sLines; i++)
 	{
 		// ファイル名追加
-		kamiFontPrintf(3,  (s16)(5+CHAR_OF_MENU_SPACE_INDIVIDUALLY*i), FONT_COLOR_BLACK, "l   %-16.16s l    l", sFilePath[sTadListViewOffset+i]);
+		kamiFontPrintf(3,  (s16)(5+CHAR_OF_MENU_SPACE_INDIVIDUALLY*i), FONT_COLOR_BLACK, "l   %-16.16s l    l", sTitleSortSet[sTadListViewOffset+i].path);
 	}
 }
 
@@ -793,12 +821,12 @@ static void DumpTadInfo(void)
 	NAMTadInfo info;
 
 	// ファイル名の有無を確認
-	if (STD_GetStringLength(sFilePath[sMenuSelectNoIndividually]))
+	if (STD_GetStringLength(sTitleSortSet[sMenuSelectNoIndividually].path))
 	{
 		char full_path[FS_ENTRY_LONGNAME_MAX+6];
 
 		// フルパスを作成
-		MakeFullPathForSD( sFilePath[sMenuSelectNoIndividually], full_path );
+		MakeFullPathForSD( sTitleSortSet[sMenuSelectNoIndividually].path, full_path );
 
 		// TADファイルの情報取得
 		if (NAM_ReadTadInfo(&info, full_path) == NAM_OK)
@@ -811,7 +839,7 @@ static void DumpTadInfo(void)
 			kamiFontPrintfConsole(CONSOLE_ORANGE, "------ tad profile -----\n");
 
 			// File Name
-			kamiFontPrintfConsole(CONSOLE_ORANGE, "%s\n", sFilePath[sMenuSelectNoIndividually]);
+			kamiFontPrintfConsole(CONSOLE_ORANGE, "%s\n", sTitleSortSet[sMenuSelectNoIndividually].path);
 
 			// File Size
 			kamiFontPrintfConsole(CONSOLE_ORANGE, "fileSize      = %d Byte\n", info.fileSize);
