@@ -189,7 +189,7 @@ TwlMain()
 	result &= ProcessWriteDummy();
 
 	// TADのインポート開始
-	result &= ProcessImport();
+	result &= ProcessImport( OS_AllocFromMain, OS_FreeToMain );
 
 	// 選択リージョン以外のSystemMenuの消去を行う
 	result &= ProcessDeleteOtherResionSysmenu();

@@ -73,7 +73,7 @@ extern BOOL ProcessFormat(void);
 extern BOOL ProcessHwinfo(void);
 extern void ProcessLog(void);
 extern void ProcessFinish(BOOL result);
-extern BOOL ProcessImport(void);
+extern BOOL ProcessImport( void *(*alloc)(unsigned long), void (*free)(void *) );
 extern BOOL ProcessWriteFont(void);
 extern BOOL ProcessWriteCert(void);
 extern BOOL ProcessWriteDummy(void);

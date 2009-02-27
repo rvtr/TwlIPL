@@ -85,7 +85,8 @@ SRCS		=	main.c \
 				process_mcu.c \
 				process_wireless_setting.c \
 				hwi.c \
-				debugger_hw_reset_control.c
+				debugger_hw_reset_control.c \
+				sort_title.c
 
 LINCLUDES	=	../../NandInitializerRed/common/include \
 				../../NandInitializerRed/ARM9.TWL/include \

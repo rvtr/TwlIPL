@@ -21,7 +21,7 @@
 #============================================================================
 
 # SystemMenuファイルの置かれているフォルダを指定(相対もしくは絶対）
-UPDATER_HOST_ROOT_DIR = s:/v1_2
+UPDATER_HOST_ROOT_DIR = ./v1_2
 
 # COMPILE SWITCH for build SystemUpdater（TRUEにすると、ダミーdev.kpを生成しないようになります。）
 FOR_LOTCHECK			?=	FALSE
@@ -79,7 +79,8 @@ SRCS		=	main.c \
 				process_nandfirm.c \
 				process_namut_format.c \
 				process_delete_other_region_sysmenu.c \
-				fade.c
+				fade.c \
+				sort_title.c
 
 LINCLUDES	=	include \
 				../common/include \

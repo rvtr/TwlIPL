@@ -28,6 +28,7 @@
 #include "graphics.h"
 #include "kami_global.h"
 #include "font.h"
+#include "sort_title.h"
 
 /*---------------------------------------------------------------------------*
     型定義
@@ -38,6 +39,9 @@
  *---------------------------------------------------------------------------*/
 
 #define THREAD_STACK_SIZE (16*1024)
+
+#define DIR_NUM           3
+#define FULLPATH_LEN      ( FS_ENTRY_LONGNAME_MAX+6 )
 
 static const char* sDirectoryNameRegion[] =
 {
@@ -54,6 +58,11 @@ static const char* sDirectoryNameConsole[] =
 	"standalone", // TWL
 	""			  // UNKNOWN
 };
+
+typedef struct {
+	u8 dirNameIndex;
+	char fileName[FS_ENTRY_LONGNAME_MAX];
+} ImportFileInfo;
 
 /*---------------------------------------------------------------------------*
     内部変数定義
@@ -74,6 +83,10 @@ static void Destructor(void* arg);
 void ProgressDraw(f32 ratio);
 BOOL ImportDirectoryTad(char* directory);
 
+static u32 CountTadInDir( char (*dir_path)[FULLPATH_LEN], u32 dir_num );
+static BOOL MakeList( char (*dir)[FULLPATH_LEN], u32 dir_max, ImportFileInfo *info, TitleSortSet *sortset );
+static BOOL ImportTadFromList( char (*dir)[FULLPATH_LEN], ImportFileInfo *info, TitleSortSet *sortset, u32 import_max );
+
 /*---------------------------------------------------------------------------*
     処理関数定義
  *---------------------------------------------------------------------------*/
@@ -87,13 +100,17 @@ BOOL ImportDirectoryTad(char* directory);
 
   Returns:      なし。
  *---------------------------------------------------------------------------*/
-BOOL ProcessImport(void)
+BOOL ProcessImport( void *(*alloc)(unsigned long), void (*free)(void *) )
 {
 	const s32 MAX_RETRY_COUNT = 2;
 	BOOL result = TRUE;
-	char directory[FS_ENTRY_LONGNAME_MAX+6];
+	char directory[DIR_NUM][FULLPATH_LEN];
 	s32 i=0;
 	s32 j=0;
+	u32 fileCount = 0;
+	ImportFileInfo *importFileInfoList = NULL;
+	TitleSortSet *titleSortSetList = NULL;
+	void *sortBuf = NULL;
 
 	OS_WaitVBlankIntr();
 	NNS_G2dCharCanvasClearArea(&gCanvas,  TXT_COLOR_WHITE, 0,  30, 256, 100);
@@ -112,14 +129,30 @@ BOOL ProcessImport(void)
 	    OS_WaitVBlankIntr();
 	}
 
-	STD_TSNPrintf(directory, sizeof(directory), "rom:/data/%s/%s/", sDirectoryNameConsole[GetConsole()], sDirectoryNameRegion[gRegion]);
-	result &= ImportDirectoryTad(directory);
+	STD_TSNPrintf(directory[0], sizeof(directory[0]), "rom:/data/%s/%s/", sDirectoryNameConsole[GetConsole()], sDirectoryNameRegion[gRegion]);
+	STD_TSNPrintf(directory[1], sizeof(directory[1]), "rom:/data/common/%s/", sDirectoryNameRegion[gRegion]);
+	STD_TSNPrintf(directory[2], sizeof(directory[2]), "rom:/data/common/");
+	
+	// ディレクトリ内の TAD ファイル数をカウントする
+	fileCount = CountTadInDir(directory, DIR_NUM);
 
-	STD_TSNPrintf(directory, sizeof(directory), "rom:/data/common/%s/", sDirectoryNameRegion[gRegion]);
-	result &= ImportDirectoryTad(directory);
-
-	STD_TSNPrintf(directory, sizeof(directory), "rom:/data/common/");
-	result &= ImportDirectoryTad(directory);
+	// ファイル名+ディレクトリインデックス配列、TitleSortInfo 配列を確保
+	importFileInfoList = alloc( sizeof(ImportFileInfo) * fileCount );
+	titleSortSetList = alloc( sizeof(TitleSortSet) * fileCount );
+	
+	// 情報を読み込む
+	result &= MakeList( directory, DIR_NUM, importFileInfoList, titleSortSetList);
+	
+	// TitleSortInfoをソート
+	sortBuf = alloc( MATH_QSortStackSize( fileCount ) );
+	SortTitle( titleSortSetList, fileCount, sortBuf );
+	
+	// インポート
+	result &= ImportTadFromList( directory, importFileInfoList, titleSortSetList, fileCount );
+	
+	// もはや必要ないリストの解放
+	free( importFileInfoList );
+	free( titleSortSetList );
 
 	while (!FadeOutTick())
 	{
@@ -128,6 +161,199 @@ BOOL ProcessImport(void)
 
 	return result;
 }
+
+/*---------------------------------------------------------------------------*
+  Name:         CountTadInDir
+
+  Description:  リストで指定したディレクトリにある TAD の総数を返します。
+
+  Arguments:    dir_list,dir_max
+
+  Returns:      u32
+ *---------------------------------------------------------------------------*/
+static u32 CountTadInDir( char (*dir_list)[FULLPATH_LEN], u32 dir_max )
+{
+	int l;
+	u32 count = 0;
+	for( l=0; l<dir_max; l++ )
+	{
+		char *dirName = dir_list[ l ];
+	    FSFile  dir;
+	    FSDirectoryEntryInfo   info[1];
+
+		FS_InitFile(&dir);
+		if (!FS_OpenDirectory(&dir, dirName, FS_FILEMODE_R))
+		{
+			// 空ディレクトリはMakerom時に削除されるようなのでここでは飛ばす
+			continue;
+		}
+		
+	    while (FS_ReadDirectory(&dir, info))
+	    {
+	        if ((info->attributes & (FS_ATTRIBUTE_DOS_DIRECTORY | FS_ATTRIBUTE_IS_DIRECTORY)) == 0)
+	        {
+				char* pExtension;
+				// 拡張子のチェック
+				pExtension = STD_SearchCharReverse( info->longname, '.');
+				if (pExtension)
+				{
+					if (!STD_CompareString( pExtension, ".tad") || !STD_CompareString( pExtension, ".TAD")  )
+					{
+						count++;
+					}
+				}
+	        }
+		}
+		FS_CloseDirectory( &dir );
+	}
+	return count;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         MakeList
+
+  Description:  リストで指定したディレクトリから ImportTadFromList 
+                を行うのに必要なリストを作成します。
+
+  Arguments:    dir_list, dir_max, info, sortset
+
+  Returns:      BOOL
+ *---------------------------------------------------------------------------*/
+static BOOL MakeList( char (*dir_list)[FULLPATH_LEN], u32 dir_max, ImportFileInfo *info, TitleSortSet *sortset )
+{
+	int l;
+	u32 count = 0;
+	BOOL result = TRUE;
+	
+	for( l=0; l<dir_max; l++ )
+	{
+		char *dirName = dir_list[ l ];
+	    FSFile  dir;
+	    FSDirectoryEntryInfo   fsinfo[1];
+
+		FS_InitFile(&dir);
+		if (!FS_OpenDirectory(&dir, dirName, FS_FILEMODE_R))
+		{
+			// 空ディレクトリはMakerom時に削除されるようなのでここでは飛ばす
+			continue;
+		}
+		
+	    while (FS_ReadDirectory(&dir, fsinfo))
+	    {
+	        if ((fsinfo->attributes & (FS_ATTRIBUTE_DOS_DIRECTORY | FS_ATTRIBUTE_IS_DIRECTORY)) == 0)
+	        {
+				char* pExtension;
+				// 拡張子のチェック
+				pExtension = STD_SearchCharReverse( fsinfo->longname, '.');
+				if (pExtension)
+				{
+					if (!STD_CompareString( pExtension, ".tad") || !STD_CompareString( pExtension, ".TAD")  )
+					{
+						NAMTadInfo tadInfo;
+						char fullPath[FULLPATH_LEN];
+						
+						// フルパス作成
+						STD_TSNPrintf(fullPath, sizeof(fullPath), "%s/%s", dirName, fsinfo->longname);
+
+						// TAD情報取得
+						// tadファイルの情報取得
+						if (NAM_ReadTadInfo(&tadInfo, fullPath) != NAM_OK)
+						{
+							// 失敗したらエラーを表示して次のファイルへ、結果はFalse
+							kamiFontPrintfConsole(CONSOLE_RED, "Error NAM_ReadTadInfo()\n");
+							kamiFontPrintfConsole(CONSOLE_RED, "file : %s\n",fsinfo->longname);
+							result = FALSE;
+							continue;
+						}
+
+						// ImportFileInfo と TitleSortSet に情報を転載
+						info[count].dirNameIndex = (u8)l;
+						STD_TSNPrintf(info[count].fileName, FS_ENTRY_LONGNAME_MAX, fsinfo->longname);
+						sortset[count].index = count;
+						sortset[count].titleID = tadInfo.titleInfo.titleId;
+
+						count++;
+					}
+				}
+	        }
+		}
+	}
+	return result;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         ImportTadFromList
+
+  Description:  MakeList で得たリストの情報に従って TAD をインポートします。
+
+  Arguments:    dir_list, info, sortset, import_max
+
+  Returns:      BOOL
+ *---------------------------------------------------------------------------*/
+static BOOL ImportTadFromList( char (*dir_list)[FULLPATH_LEN], ImportFileInfo *info, TitleSortSet *sortset, u32 import_max )
+{
+	int l;
+	int j;
+	BOOL result = TRUE;
+	s32 listNo=0;
+	
+	for( l=0; l<import_max; l++ )
+	{
+		char *longName = info[ sortset[ l ].index ].fileName;
+		char *dirName = dir_list[ info[ sortset[ l ].index ].dirNameIndex ];
+		char fullPath[FULLPATH_LEN];
+		char string1[256];
+		u16  string2[256];
+		const s32 MAX_RETRY_COUNT = 2;
+		s32  nam_result;
+		char *tlo = (char *)( &sortset[ l ].titleID );
+		
+		// フルパス作成
+		STD_TSNPrintf(fullPath, sizeof(fullPath), "%s/%s", dirName, longName);
+		
+		// インポート
+		STD_TSPrintf(string1, "List %d ", ++listNo);
+		MI_CpuClear8(string2, sizeof(string2));
+		STD_ConvertStringSjisToUnicode(string2, NULL, string1, NULL, NULL);
+
+		NNS_G2dCharCanvasClearArea(&gCanvas, TXT_COLOR_WHITE, 0, 60, 256, 20);
+		NNS_G2dTextCanvasDrawText(&gTextCanvas, 40, 60,
+			TXT_COLOR_WHITE_BASE, TXT_DRAWTEXT_FLAG_DEFAULT, (const char*)L"Now Import..");
+		NNS_G2dTextCanvasDrawText(&gTextCanvas, 135, 60,
+			TXT_COLOR_WHITE_BASE, TXT_DRAWTEXT_FLAG_DEFAULT, (const char*)string2);
+
+		// MAX_RETRY_COUNTまでリトライする
+		for (j=0; j<MAX_RETRY_COUNT; j++)
+		{	
+			nam_result = kamiImportTad(fullPath, j);
+			if (nam_result == NAM_OK)
+			{
+				break;
+			}
+			else
+			{
+				kamiFontPrintfConsole(CONSOLE_GREEN, "Import %d Retry!\n", listNo);
+			}
+		}
+
+		if ( nam_result == NAM_OK)
+		{
+			// kamiFontPrintfConsole(FONT_COLOR_GREEN, "List : %d(%c%c%c%c) Import Success.\n", listNo, tlo[3], tlo[2], tlo[1], tlo[0] );
+			kamiFontPrintfConsole(FONT_COLOR_GREEN, "List : %d Import Success.\n", listNo );
+		}
+		else
+		{
+			// kamiFontPrintfConsole(FONT_COLOR_RED, "Error: %d(%c%c%c%c) : RetCode = %d\n", listNo, tlo[3], tlo[2], tlo[1], tlo[0], nam_result );
+			kamiFontPrintfConsole(FONT_COLOR_RED, "Error: %d : RetCode = %d\n", listNo, nam_result );
+			result = FALSE;
+		}
+
+		kamiFontLoadScreenData();
+
+	}
+	return result;
+}
+
 
 /*---------------------------------------------------------------------------*
   Name:         ImportDirectoryTad
@@ -144,7 +370,7 @@ BOOL ImportDirectoryTad(char* directory)
     FSDirectoryEntryInfo   info[1];
 	const s32 MAX_RETRY_COUNT = 2;
 	BOOL result = TRUE;
-	char full_path[FS_ENTRY_LONGNAME_MAX+6];
+	char full_path[FULLPATH_LEN];
 	static s32 listNo=0;
 	s32 j=0;
 
@@ -157,6 +383,10 @@ BOOL ImportDirectoryTad(char* directory)
 	}
 
 	// tadファイルを検索してインポート
+	// [TODO:]先にfull_pathのリストを作って、NAM_ReadTadInfoで取れるTitleID_loの値でソートしてから
+	// 順番にインポートするように変更する。
+	// この関数を分けるイメージで、各フォルダの名称リストを先に作成する
+	// 
     while (FS_ReadDirectory(&dir, info))
     {
 		s32  nam_result;
