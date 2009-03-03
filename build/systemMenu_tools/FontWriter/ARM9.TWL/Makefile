@@ -31,6 +31,11 @@ MACRO_FLAGS				+=	-DNAND_INITIALIZER_LIMITED_MODE
 # FontWriter用としてビルドする場合定義します。（要:Make Clean）
 MACRO_FLAGS				+=	-DTWL_FONT_WRITER
 #============================================================================
+#============================================================================
+# tadを作成する場合はTRUEを指定
+FONT_WRITER_TAD     = FALSE
+#============================================================================
+
 
 SYSM_DISABLE_DEBUG	= TRUE
 
@@ -43,7 +48,15 @@ TWL_ARCHGEN    		= LIMITED
 TITLEID_LO			= 0FWA
 #TARGET_TAD			=
 
+ifeq ($(FONT_WRITER_TAD),TRUE)
+TWL_NANDAPP         = TRUE
+TARGET_BIN  = FontWriter.tad
+MAKETAD_OPTION	+=	-s
+FONT_WRITER_MEDIA = NAND
+else
 TARGET_BIN	= FontWriter.srl
+FONT_WRITER_MEDIA = GameCard
+endif
 
 LCFILE_SPEC	= ../../NandInitializerRed/ARM9.TWL/ARM9-TS.lsf
 ROM_SPEC	= ./main.rsf
@@ -79,7 +92,8 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
 							-DCARD_REGION='$(CARD_REGION)' \
-							-DDISABLE_DEBUG='$(SYSM_DISABLE_DEBUG)'
+							-DDISABLE_DEBUG='$(SYSM_DISABLE_DEBUG)' \
+							-DFONT_WRITER_MEDIA='$(FONT_WRITER_MEDIA)'
 
 MAKETAD_FLAGS			+=	-s
 
@@ -92,7 +106,8 @@ SDK_APPEND_LIBS			=	\
 							libsfs$(TWL_LIBSUFFIX).a \
 							libnam$(TWL_LIBSUFFIX).a \
 							libsea$(TWL_LIBSUFFIX).a \
-							liblcfg$(TWL_LIBSUFFIX).a
+							liblcfg$(TWL_LIBSUFFIX).a \
+							libna$(TWL_LIBSUFFIX).a
 
 LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
