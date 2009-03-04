@@ -82,7 +82,7 @@ void ProcessSelectRegion(void)
 	OS_WaitVBlankIntr();
 	NNS_G2dCharCanvasClearArea(&gCanvas2, TXT_COLOR_BLACK, 0, 130, 256,  62);
 	OS_WaitVBlankIntr();
-
+#ifndef JP_REGION_ONLY
     NNS_G2dTextCanvasDrawText(&gTextCanvas2, 60, 140,
         TXT_COLOR_BLACK_BASE, TXT_DRAWTEXT_FLAG_DEFAULT,
         (const char *)
@@ -90,17 +90,32 @@ void ProcessSelectRegion(void)
 		L"\xe000 choice.\n"
 		L"\xe001 cancel.\n"
     );
+#else	// JP_REGION_ONLY
+    NNS_G2dTextCanvasDrawText(&gTextCanvas2, 60, 140,
+        TXT_COLOR_BLACK_BASE, TXT_DRAWTEXT_FLAG_DEFAULT,
+        (const char *)
+		L"\n"
+		L"\xe000 choice.\n"
+		L"\xe001 cancel.\n"
+    );
+
+#endif 	// JP_REGION_ONLY
 
 	// ‰t»‚ðŒ©‚Ä‚­‚¾‚³‚¢B
 	CARD_LockRom((u16)gLockId);
 	(void)CARDi_ReadRomIDCoreEx(DEBUGGER_COMMAND_LOOK_SCREEN);
 	CARD_UnlockRom((u16)gLockId);
 
+#ifndef JP_REGION_ONLY
 	gRegion = OS_GetRegion();
+#endif // JP_REGION_ONLY
 
 	while(1)
 	{
+#ifndef JP_REGION_ONLY
 		s32 i;
+#endif // JP_REGION_ONLY
+
 		G3X_Reset();
 		G3_Identity();
 		G3_PolygonAttr(GX_LIGHTMASK_NONE, GX_POLYGONMODE_DECAL, GX_CULL_NONE, 0, 31, 0);
@@ -115,6 +130,8 @@ void ProcessSelectRegion(void)
 #else
 		if (FadeInMaster())
 		{
+
+#ifndef JP_REGION_ONLY
 			if (kamiPadIsRepeatTrigger(PAD_KEY_DOWN))
 			{
 				if (++gRegion > OS_TWL_REGION_AUSTRALIA)
@@ -129,6 +146,7 @@ void ProcessSelectRegion(void)
 					gRegion = OS_TWL_REGION_AUSTRALIA;
 				}
 			}
+#endif // JP_REGION_ONLY
 
 			if (kamiPadIsTrigger(PAD_BUTTON_B))
 			{
@@ -144,6 +162,8 @@ void ProcessSelectRegion(void)
 			}
 		}
 #endif
+
+#ifndef JP_REGION_ONLY
 		for (i=0;i<OS_TWL_REGION_AUSTRALIA+1;i++)
 		{
 			if (gRegion != i)
@@ -155,6 +175,9 @@ void ProcessSelectRegion(void)
 			    NNS_G2dTextCanvasDrawText(&gTextCanvas, 76, sPosArray[i], TXT_COLOR_FREE_BASE, TXT_DRAWTEXT_FLAG_DEFAULT, (const char*)sRegionStringArray[i]);
 			}
 		}
+#else  // JP_REGION_ONLY
+			    NNS_G2dTextCanvasDrawText(&gTextCanvas, 76, sPosArray[0], TXT_COLOR_FREE_BASE, TXT_DRAWTEXT_FLAG_DEFAULT, (const char*)sRegionStringArray[0]);
+#endif // JP_REGION_ONLY
 
 		DrawQuadWithColors(   0,  (s16)(sPosArray[gRegion]+2),  84, (s16)(sPosArray[gRegion]+12), GX_RGB(31, 31, 31), GX_RGB(22, 28, 31));
 		DrawQuadWithColors(  84,  (s16)(sPosArray[gRegion]+2), 172, (s16)(sPosArray[gRegion]+12), GX_RGB(22, 28, 31), GX_RGB(22, 28, 31));
