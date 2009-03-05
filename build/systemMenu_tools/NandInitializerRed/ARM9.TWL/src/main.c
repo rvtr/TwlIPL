@@ -139,8 +139,13 @@ TwlMain()
 
 #ifdef AUTO_FORMAT_MODE
 //  検査工程ではNANDが初期化されていないがその状態でFATにアクセスすると
-//  問題があるため強制的にフォーマットを行う
-	ExeFormat(FORMAT_MODE_QUICK);
+//  問題があるため強制的にフォーマットを行う 2008/06/18
+//	ExeFormat(FORMAT_MODE_QUICK);
+//
+//  Secure情報を読み込む前にフォーマットしてしまうとSecure情報が消えてしまう。
+//  そうするとシリアルNoが書き換わってしまうのでこの処理はなくす。
+//  検査工程と異なりNandInitializerが実行される段階ではフォーマット済みなはず。
+//  仮に未フォーマットであったとしてもBadFormat扱いとなる。2009/03/05
 #endif
 
 	// NAMライブラリ初期化
