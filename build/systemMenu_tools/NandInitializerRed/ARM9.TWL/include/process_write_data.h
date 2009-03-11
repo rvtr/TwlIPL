@@ -39,6 +39,8 @@ extern "C" {
     ä÷êîíËã`
  *---------------------------------------------------------------------------*/
 
+void* WriteDataProcessPre0(void);
+void* WriteDataProcessAfter0(void);
 void* WriteDataProcess0(void);
 void* WriteDataProcess1(void);
 void* WriteDataProcess2(void);

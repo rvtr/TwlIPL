@@ -131,7 +131,9 @@ SDK_APPEND_LIBS			=	\
 							libnam$(TWL_LIBSUFFIX).a \
 							libsea$(TWL_LIBSUFFIX).a \
 							liblcfg$(TWL_LIBSUFFIX).a \
-							libna$(TWL_LIBSUFFIX).a
+							libna$(TWL_LIBSUFFIX).a \
+							liberrorlog$(TWL_LIBSUFFIX).a
+
 
 LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 

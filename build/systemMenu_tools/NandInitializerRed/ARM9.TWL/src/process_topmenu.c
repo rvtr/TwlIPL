@@ -232,7 +232,7 @@ void* TopmenuProcess2(void)
 
 #ifdef    USE_WRITE_VARIOUS_DATA
 	case MENU_WRITE_DATA:
-		FADE_OUT_RETURN( WriteDataProcess0 );
+		FADE_OUT_RETURN( WriteDataProcessPre0 );
 #endif // USE_WRITE_VARIOUS_DATA
 
 #ifndef   NAND_INITIALIZER_LIMITED_MODE

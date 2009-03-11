@@ -300,6 +300,16 @@ BOOL WriteHWInfoFile( u8 region, BOOL wirelessForceOff )
 	u32 installedSoftBoxCount = 0;
 	BOOL result = TRUE;
 
+	// HWID署名ファイルのライト
+	kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSignWriting );
+	
+	if( HWI_WriteHWIDSignFile() ) {
+		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSucceeded );
+	}else {
+		kamiFontPrintfConsoleEx(CONSOLE_RED, pMsgFailed );
+		result = FALSE;
+	}
+
 	// セキュアファイルのライト
 	kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSecureWriting );
 	
@@ -314,16 +324,6 @@ BOOL WriteHWInfoFile( u8 region, BOOL wirelessForceOff )
 	kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgNormalWriting );
 	
 	if( HWI_WriteHWNormalInfoFile() ) {
-		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSucceeded );
-	}else {
-		kamiFontPrintfConsoleEx(CONSOLE_RED, pMsgFailed );
-		result = FALSE;
-	}
-	
-	// HWID署名ファイルのライト
-	kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSignWriting );
-	
-	if( HWI_WriteHWIDSignFile() ) {
 		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSucceeded );
 	}else {
 		kamiFontPrintfConsoleEx(CONSOLE_RED, pMsgFailed );

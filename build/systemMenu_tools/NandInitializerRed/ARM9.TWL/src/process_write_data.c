@@ -28,15 +28,18 @@
 #include "cursor.h"
 #include "keypad.h"
 #include "common_utility.h"
+#include <sysmenu/errorLog.h>
 
 /*---------------------------------------------------------------------------*
     型定義
  *---------------------------------------------------------------------------*/
 
 enum {
-	MENU_FONT=0,
+	MENU_CERT=0,
 	MENU_WRAP,
-	MENU_CERT,
+	MENU_FONT,
+	
+
 #ifdef WRITE_DEVKP_ENABLE
 	MENU_DEVKP,
 #endif
@@ -66,6 +69,7 @@ static s8 sMenuSelectNo;
     内部関数宣言
  *---------------------------------------------------------------------------*/
 
+void WriteDataProcessDrawMenu(void);
 static BOOL WriteFontData(void);
 static BOOL WriteDummyData(const char* nandpath);
 static BOOL WriteCertData(void);
@@ -84,10 +88,45 @@ static BOOL WriteCertData(void);
   Returns:      next sequence
  *---------------------------------------------------------------------------*/
 
-void* WriteDataProcess0(void)
+
+void* WriteDataProcessPre0(void)
+{
+	WriteDataProcessDrawMenu();
+
+#ifndef NAND_INITIALIZER_LIMITED_MODE
+	// オート実行用
+	if (gAutoFlag)
+	{
+		sMenuSelectNo = MENU_CERT;
+		FADE_IN_RETURN( WriteDataProcess2 );
+	}
+#endif
+
+
+	FADE_IN_RETURN( WriteDataProcess1 );
+}
+
+void* WriteDataProcessAfter0(void)
+{
+	WriteDataProcessDrawMenu();
+
+#ifndef NAND_INITIALIZER_LIMITED_MODE
+	// オート実行用
+	if (gAutoFlag)
+	{
+		sMenuSelectNo = MENU_WRAP;
+		FADE_IN_RETURN( WriteDataProcess2 );
+	}
+#endif
+
+	FADE_IN_RETURN( WriteDataProcess1 );
+}
+
+
+void WriteDataProcessDrawMenu(void)
 {
 	int i;
-
+	
 	// 文字列全クリア
 	kamiFontClear();
 
@@ -97,11 +136,11 @@ void* WriteDataProcess0(void)
 
 	// メニュー一覧
 	kamiFontPrintf(3,  6, FONT_COLOR_BLACK, "+-------------------+-----+");
-	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "l   WRITE FONT DATA l     l");
+	kamiFontPrintf(3,  7, FONT_COLOR_BLACK, "l   WRITE CERT.SYS  l     l");
 	kamiFontPrintf(3,  8, FONT_COLOR_BLACK, "+-------------------+-----+");
 	kamiFontPrintf(3,  9, FONT_COLOR_BLACK, "l   WRITE WRAP DATA l     l");
 	kamiFontPrintf(3, 10, FONT_COLOR_BLACK, "+-------------------+-----+");
-	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "l   WRITE CERT.SYS  l     l");
+	kamiFontPrintf(3, 11, FONT_COLOR_BLACK, "l   WRITE FONT DATA l     l");
 	kamiFontPrintf(3, 12, FONT_COLOR_BLACK, "+-------------------+-----+");
 #ifdef WRITE_DEVKP_ENABLE
 	kamiFontPrintf(3, 13, FONT_COLOR_BLACK, "l   WRITE DEV.KP    l     l");
@@ -127,7 +166,6 @@ void* WriteDataProcess0(void)
 	// カーソル消去
 	SetCursorPos((u16)200, (u16)200);
 
-	FADE_IN_RETURN( WriteDataProcess1 );
 }
 
 /*---------------------------------------------------------------------------*
@@ -195,15 +233,18 @@ void* WriteDataProcess2(void)
 
 	switch( sMenuSelectNo )
 	{
-	case MENU_FONT:
-		result = WriteFontData();
+	case MENU_CERT:
+		result = WriteCertData();
+		
+		// sysmenu.logの生成をこのタイミングで行っておく
+		ERRORLOG_Init(OS_AllocFromMain, OS_FreeToMain);
 		break;
 	case MENU_WRAP:
 		// ダミーのDSメニューラッピング用ファイル作成（UIGランチャーが作っているもの）
 		result = WriteDummyData(WRAP_DATA_FILE_PATH_IN_NAND);
 		break;
-	case MENU_CERT:
-		result = WriteCertData();
+	case MENU_FONT:
+		result = WriteFontData();
 		break;
 #ifdef WRITE_DEVKP_ENABLE
 	case MENU_DEVKP:
@@ -232,13 +273,25 @@ void* WriteDataProcess2(void)
 
 		switch(sMenuSelectNo)
 		{
-		case MENU_FONT:
+		case MENU_CERT:
+			if (total_result) 
+			{
+				gAutoProcessResult[AUTO_PROCESS_MENU_VARIOUS_DATA_1] = AUTO_PROCESS_RESULT_SUCCESS; 
+				FADE_OUT_RETURN( AutoProcess1 ); 
+			}
+			else 
+			{ 
+				gAutoProcessResult[AUTO_PROCESS_MENU_VARIOUS_DATA_1] = AUTO_PROCESS_RESULT_FAILURE; 
+				FADE_OUT_RETURN( AutoProcess2); 
+			}
+			
+			/* NOTREACHED */
 		case MENU_WRAP:
 #ifdef   MARIOCLUB_VERSION
 			sMenuSelectNo++;
 			return WriteDataProcess2;
 #endif //MARIOCLUB_VERSION
-		case MENU_CERT:
+		case MENU_FONT:
 #ifdef   WRITE_DEVKP_ENABLE
 			sMenuSelectNo = MENU_DEVKP;
 			return WriteDataProcess2;
@@ -246,12 +299,12 @@ void* WriteDataProcess2(void)
 #endif //WRITE_DEVKP_ENABLE
 			if (total_result) 
 			{
-				gAutoProcessResult[AUTO_PROCESS_MENU_VARIOUS_DATA] = AUTO_PROCESS_RESULT_SUCCESS; 
+				gAutoProcessResult[AUTO_PROCESS_MENU_VARIOUS_DATA_2] = AUTO_PROCESS_RESULT_SUCCESS; 
 				FADE_OUT_RETURN( AutoProcess1 ); 
 			}
 			else 
 			{ 
-				gAutoProcessResult[AUTO_PROCESS_MENU_VARIOUS_DATA] = AUTO_PROCESS_RESULT_FAILURE; 
+				gAutoProcessResult[AUTO_PROCESS_MENU_VARIOUS_DATA_2] = AUTO_PROCESS_RESULT_FAILURE; 
 				FADE_OUT_RETURN( AutoProcess2); 
 			}
 		}

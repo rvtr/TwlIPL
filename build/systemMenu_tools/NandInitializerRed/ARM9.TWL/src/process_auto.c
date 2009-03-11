@@ -113,6 +113,11 @@ void* AutoProcess1(void)
 	{
 	case AUTO_PROCESS_MENU_FORMAT:
 		return FormatProcess0;
+		
+#ifdef    USE_WRITE_VARIOUS_DATA
+	case AUTO_PROCESS_MENU_VARIOUS_DATA_1:
+		return WriteDataProcessPre0;	
+#endif // USE_WRITE_VARIOUS_DATA_1
 
 #ifndef	 TWL_CAPTURE_VERSION
 	case AUTO_PROCESS_MENU_HARDWARE_INFO:
@@ -120,9 +125,9 @@ void* AutoProcess1(void)
 #endif	// TWL_CAPTURE_VERSION
 
 #ifdef    USE_WRITE_VARIOUS_DATA
-	case AUTO_PROCESS_MENU_VARIOUS_DATA:
-		return WriteDataProcess0;	
-#endif // USE_WRITE_VARIOUS_DATA
+	case AUTO_PROCESS_MENU_VARIOUS_DATA_2:
+		return WriteDataProcessAfter0;	
+#endif // USE_WRITE_VARIOUS_DATA_2
 
 
 #ifdef	TWL_CAPTURE_VERSION
@@ -187,11 +192,14 @@ void* AutoProcess2(void)
 
 	// ÉÅÉjÉÖÅ[àÍóó
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    FORMAT NAND            "); 
+#ifdef    USE_WRITE_VARIOUS_DATA
+	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    WRITE VARIOUS DATA1    ");
+#endif // USE_WRITE_VARIOUS_DATA
 #ifndef TWL_CAPTURE_VERSION
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    WRITE HARDWARE INFO    ");
 #endif
 #ifdef    USE_WRITE_VARIOUS_DATA
-	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    WRITE VARIOUS DATA     ");
+	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    WRITE VARIOUS DATA2    ");
 #endif // USE_WRITE_VARIOUS_DATA
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    INPORT TAD FROM SD     ");
 	kamiFontPrintf(3, line += 2, FONT_COLOR_BLACK, "    INPORT NANDFIRM FROM SD");
@@ -272,7 +280,7 @@ void* AutoProcess3(void)
 #ifndef AUTO_FORMAT_MODE
 	if (gAutoProcessResult[AUTO_PROCESS_MENU_MCU] == AUTO_PROCESS_RESULT_SKIP)
 	{
-	    if (kamiPadIsTrigger(PAD_BUTTON_B))
+	    if (kamiPadIsTrigger(PAD_BUTTON_B)) 
 		{
 			FADE_OUT_RETURN( TopmenuProcess0 );
 		}
