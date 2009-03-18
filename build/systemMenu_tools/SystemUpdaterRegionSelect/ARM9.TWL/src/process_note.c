@@ -111,7 +111,7 @@ void ProcessNote(void)
 				{
 	    			OS_WaitVBlankIntr();
 				}
-				ProcessCancel((const char *)L"\n   Update was Canceld.");
+				ProcessCancel((const char *)L"\n   Update was Canceled.");
 			}
 			else if (kamiPadIsTrigger(PAD_BUTTON_A))
 			{
