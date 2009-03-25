@@ -27,6 +27,8 @@ include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include ./commondefs.DSHashTable
 
 MY_DATA				=	$(DS_HASH_TABLE_DATA)
+MY_DATA_EX			=	$(DS_HASH_TABLE_EX_DATA)
+MY_DATA_ADHOC			=	$(DS_HASH_TABLE_ADHOC_DATA)
 MY_APPEND			=	revision.bin
 MY_DATA2			=	data.bin
 
@@ -49,8 +51,8 @@ do-build : $(MY_TAD)
 $(MY_TAD): $(MY_DATA2)
 	$(MAKETAD) $(call empath,$<) $(DS_HASH_TABLE_MAKETAD_OPTION) -o $@
 
-$(MY_DATA2): $(MY_DATA) $(MY_APPEND)
-	cat $(MY_DATA) $(MY_APPEND) > $@
+$(MY_DATA2): $(MY_DATA) $(MY_DATA_EX) $(MY_DATA_ADHOC) $(MY_APPEND)
+	cat $(MY_DATA) $(MY_DATA_EX) $(MY_DATA_ADHOC) $(MY_APPEND) > $@
 
 $(MY_APPEND)::
 	@if test -e $(SYSMENU_ROOT)/.svn; then \

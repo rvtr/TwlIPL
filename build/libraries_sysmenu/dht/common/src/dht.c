@@ -49,7 +49,8 @@ static const u8 g_pubkey_DER[ 0xa2 ] = {
     0x00, 0x01
 };
 
-static const u8 hmac_key[] = DHT_HMAC_KEY;
+static const u8 hmac_key[]      = DHT_HMAC_KEY;     // for phase1, phase2
+static const u8 hmac_key2[]     = DHT_HMAC_KEY2;    // for phase3, phase4
 
 static DHTReadFunc  imageReadFunc;
 static void*        imageBuffer;
@@ -114,6 +115,25 @@ u32 DHT_GetDatabaseLength(const DHTFile* pDHT)
     }
     return sizeof(DHTHeader) + pDHT->header.nums * sizeof(DHTDatabase);
 }
+u32 DHT_GetDatabaseExLength(const DHTFileEx* pDHT)
+{
+    if ( pDHT->header.magic_code != DHT_MAGIC_CODE_EX ) // magic codeチェック
+    {
+        OS_TPrintf("Invalid magic code (magic=0x%08X) [EX].\n", pDHT->header.magic_code);
+        return 0;
+    }
+    return sizeof(DHTHeader) + pDHT->header.nums * sizeof(DHTDatabaseEx);
+}
+u32 DHT_GetDatabaseAdHocLength(const DHTFileAdHoc* pDHT)
+{
+    if ( pDHT->header.magic_code != DHT_MAGIC_CODE_ADHOC ) // magic codeチェック
+    {
+        OS_TPrintf("Invalid magic code (magic=0x%08X) [AdHoc].\n", pDHT->header.magic_code);
+        return 0;
+    }
+    return sizeof(DHTHeader) + pDHT->header.nums * sizeof(DHTDatabaseAdHoc);
+}
+
 static BOOL DHT_CheckDatabase(const DHTFile* pDHT)
 {
     SVCSignHeapContext pool;
@@ -216,6 +236,219 @@ const DHTDatabase* DHT_GetDatabase(const DHTFile* pDHT, const ROM_Header_Short* 
 #endif
     return db;
 }
+/*
+拡張データベースを読み込む (前準備)
+*/
+
+static BOOL DHT_CheckDatabaseEx(const DHTFileEx* pDHT)
+{
+    SVCSignHeapContext pool;
+    static u8 heap[4*1024]; // avoid stack overflow
+    u8 md1[20];
+    u8 md2[20];
+    s32 result;
+    // ファイル署名取り出し
+    SVC_InitSignHeap(&pool, heap, sizeof(heap));
+    SVC_DecryptSign(&pool, md1, pDHT->header.sign, &g_pubkey_DER[29]);
+    // ハッシュ計算
+    SVC_CalcSHA1(md2, DHT_GET_SIGN_TARGET_ADDR(&pDHT->header), DHT_GET_SIGN_TARGET_SIZE_EX(&pDHT->header));
+    // 検証
+    result = SVC_CompareSHA1(md1, md2);
+    if ( !result )
+    {
+        OS_TPrintf("\n");
+        OS_TPrintfEx("SIGN = % 20B [EX]\n", md1);
+        OS_TPrintfEx("HASH = % 20B [EX]\n", md2);
+        OS_TPrintf("Signature is not valid. [EX]\n");
+        return FALSE;
+    }
+    return TRUE;
+}
+
+BOOL DHT_PrepareDatabaseEx(DHTFileEx* pDHT, FSFile* fp)
+{
+    s32 result;
+    s32 length;
+    PROFILE_INIT();
+
+    if ( fp )
+    {
+        // ヘッダ読み込み
+        PROFILE_COUNT();
+        result = FS_ReadFile(fp, &pDHT->header, sizeof(DHTHeader));
+        if ( result != sizeof(DHTHeader) )
+        {
+            OS_TPrintf("Cannot read the DHT header (result=%d). [EX]\n", result);
+            return FALSE;
+        }
+        // 拡張データベース読み込み
+        PROFILE_COUNT();
+        length = (s32)DHT_GetDatabaseExLength(pDHT) - (s32)sizeof(DHTHeader); // ヘッダを除く
+        if ( length < 0 )
+        {
+            OS_TPrintf("Invalid DHT header. [EX]\n");
+            return FALSE;
+        }
+        result = FS_ReadFile(fp, pDHT->database, length);
+        if ( result != length )
+        {
+            OS_TPrintf("Cannot read the DHT database (result=%d). [EX]\n", result);
+            return FALSE;
+        }
+    }
+    else
+    {
+        PROFILE_COUNT();
+        PROFILE_COUNT();
+    }
+
+    // 拡張データベースの検証
+    PROFILE_COUNT();
+    result = DHT_CheckDatabaseEx(pDHT);
+
+    // 結果報告
+#ifdef PRINT_PROFILE
+    PROFILE_COUNT();
+    OS_TPrintf("\nDone to prepare the database. [EX]\n");
+    OS_TPrintf("%10d msec for reading header. [EX]\n",   (int)OS_TicksToMilliSeconds(profile[1]-profile[0]));
+    OS_TPrintf("%10d msec for reading database. [EX]\n", (int)OS_TicksToMilliSeconds(profile[2]-profile[1]));
+    OS_TPrintf("%10d msec for comparing hash. [EX]\n",   (int)OS_TicksToMilliSeconds(profile[3]-profile[2]));
+    OS_TPrintf("\nTotal: %10d msec. [EX]\n",             (int)OS_TicksToMilliSeconds(profile[3]-profile[0]));
+#endif
+    return result;
+}
+
+/*
+ROMヘッダに対応する拡張データベースを手に入れる
+*/
+const DHTDatabaseEx* DHT_GetDatabaseEx(const DHTFileEx* pDHT, const ROM_Header_Short* pROMHeader)
+{
+    u8 data[5];
+    DHTDatabaseEx* db;
+    PROFILE_INIT();
+
+    // 準備
+    PROFILE_COUNT();
+    MI_CpuCopy8( pROMHeader->game_code, data, 4 );
+    data[4] = pROMHeader->rom_version;
+    db = (DHTDatabaseEx*)bsearch(data, pDHT->database, pDHT->header.nums, sizeof(DHTDatabaseEx), CompareGameCodeAndVersion);
+    if ( !db )
+    {
+        OS_TPrintf("Cannot find the database. [EX]\n");
+    }
+#ifdef PRINT_PROFILE
+    PROFILE_COUNT();
+    OS_TPrintf("%10d msec for searching database. [EX]\n", (int)OS_TicksToMilliSeconds(profile[1]-profile[0]));
+#endif
+    return db;
+}
+/*
+個別対応データベースを読み込む (前準備)
+*/
+
+static BOOL DHT_CheckDatabaseAdHoc(const DHTFileAdHoc* pDHT)
+{
+    SVCSignHeapContext pool;
+    static u8 heap[4*1024]; // avoid stack overflow
+    u8 md1[20];
+    u8 md2[20];
+    s32 result;
+    // ファイル署名取り出し
+    SVC_InitSignHeap(&pool, heap, sizeof(heap));
+    SVC_DecryptSign(&pool, md1, pDHT->header.sign, &g_pubkey_DER[29]);
+    // ハッシュ計算
+    SVC_CalcSHA1(md2, DHT_GET_SIGN_TARGET_ADDR(&pDHT->header), DHT_GET_SIGN_TARGET_SIZE_EX(&pDHT->header));
+    // 検証
+    result = SVC_CompareSHA1(md1, md2);
+    if ( !result )
+    {
+        OS_TPrintf("\n");
+        OS_TPrintfEx("SIGN = % 20B [AdHoc]\n", md1);
+        OS_TPrintfEx("HASH = % 20B [AdHoc]\n", md2);
+        OS_TPrintf("Signature is not valid. [AdHoc]\n");
+        return FALSE;
+    }
+    return TRUE;
+}
+
+BOOL DHT_PrepareDatabaseAdHoc(DHTFileAdHoc* pDHT, FSFile* fp)
+{
+    s32 result;
+    s32 length;
+    PROFILE_INIT();
+
+    if ( fp )
+    {
+        // ヘッダ読み込み
+        PROFILE_COUNT();
+        result = FS_ReadFile(fp, &pDHT->header, sizeof(DHTHeader));
+        if ( result != sizeof(DHTHeader) )
+        {
+            OS_TPrintf("Cannot read the DHT header (result=%d). [AdHoc]\n", result);
+            return FALSE;
+        }
+        // 拡張データベース読み込み
+        PROFILE_COUNT();
+        length = (s32)DHT_GetDatabaseAdHocLength(pDHT) - (s32)sizeof(DHTHeader); // ヘッダを除く
+        if ( length < 0 )
+        {
+            OS_TPrintf("Invalid DHT header. [AdHoc]\n");
+            return FALSE;
+        }
+        result = FS_ReadFile(fp, pDHT->database, length);
+        if ( result != length )
+        {
+            OS_TPrintf("Cannot read the DHT database (result=%d). [AdHoc]\n", result);
+            return FALSE;
+        }
+    }
+    else
+    {
+        PROFILE_COUNT();
+        PROFILE_COUNT();
+    }
+
+    // 拡張データベースの検証
+    PROFILE_COUNT();
+    result = DHT_CheckDatabaseAdHoc(pDHT);
+
+    // 結果報告
+#ifdef PRINT_PROFILE
+    PROFILE_COUNT();
+    OS_TPrintf("\nDone to prepare the database. [AdHoc]\n");
+    OS_TPrintf("%10d msec for reading header. [AdHoc]\n",   (int)OS_TicksToMilliSeconds(profile[1]-profile[0]));
+    OS_TPrintf("%10d msec for reading database. [AdHoc]\n", (int)OS_TicksToMilliSeconds(profile[2]-profile[1]));
+    OS_TPrintf("%10d msec for comparing hash. [AdHoc]\n",   (int)OS_TicksToMilliSeconds(profile[3]-profile[2]));
+    OS_TPrintf("\nTotal: %10d msec. [AdHoc]\n",             (int)OS_TicksToMilliSeconds(profile[3]-profile[0]));
+#endif
+    return result;
+}
+
+/*
+ROMヘッダに対応する拡張データベースを手に入れる
+*/
+static const DHTDatabaseAdHoc* DHT_GetDatabaseAdHoc(const DHTFileAdHoc* pDHT, const ROM_Header_Short* pROMHeader)
+{
+    u8 data[5];
+    DHTDatabaseAdHoc* db;
+    PROFILE_INIT();
+
+    // 準備
+    PROFILE_COUNT();
+    MI_CpuCopy8( pROMHeader->game_code, data, 4 );
+    data[4] = pROMHeader->rom_version;
+    db = (DHTDatabaseAdHoc*)bsearch(data, pDHT->database, pDHT->header.nums, sizeof(DHTDatabaseAdHoc), CompareGameCodeAndVersion);
+    if ( !db )
+    {
+        OS_TPrintf("Cannot find the database. [AdHoc]\n");
+    }
+#ifdef PRINT_PROFILE
+    PROFILE_COUNT();
+    OS_TPrintf("%10d msec for searching database. [AdHoc]\n", (int)OS_TicksToMilliSeconds(profile[1]-profile[0]));
+#endif
+    return db;
+}
+
 /*
 ハッシュ計算 (1)
 読み込み済みデータをチェックする
@@ -468,3 +701,141 @@ void DHT_CheckHashPhase2ExUpdate(SVCHMACSHA1Context* ctx, const void* ptr, s32 l
         SVC_HMACSHA1Update(ctx, ptr, (u32)length);
     }
 }
+
+/*
+ハッシュ計算 (3)
+バナーデータをチェックする
+*/
+BOOL DHT_CheckHashPhase3(const u8 *hash, const NTRBannerFile* pBanner)
+{
+    SVCHMACSHA1Context ctx;
+    u8 md[20];
+
+    PROFILE_INIT();
+    PROFILE_COUNT();
+    SVC_HMACSHA1Init(&ctx, hmac_key2, sizeof(hmac_key2));
+
+    // バナーの読み込み (ヘッダ)
+    PROFILE_COUNT();
+    SVC_HMACSHA1Update(&ctx, &pBanner->h, sizeof(BannerHeader));
+
+    // バナーの読み込み (ボディ)
+    if (pBanner->h.version == 0)
+    {
+        OS_TPrintf("Invalid banner format.\n");
+        return FALSE;
+    }
+    PROFILE_COUNT();
+    if ( pBanner->h.version >= 1 )
+    {
+        SVC_HMACSHA1Update(&ctx, &pBanner->v1, sizeof(BannerFileV1));
+    }
+    PROFILE_COUNT();
+    if ( pBanner->h.version >= 2 )
+    {
+        SVC_HMACSHA1Update(&ctx, &pBanner->v2, sizeof(BannerFileV2));
+    }
+    PROFILE_COUNT();
+    if ( pBanner->h.version >= 3 )
+    {
+        SVC_HMACSHA1Update(&ctx, &pBanner->v3, sizeof(BannerFileV3));
+    }
+
+    // 検証
+    PROFILE_COUNT();
+    SVC_HMACSHA1GetHash(&ctx, md);
+    if ( !SVC_CompareSHA1(md, hash) )
+    {
+        OS_TPrintf("\n");
+        OS_TPrintfEx("DB   = % 20B\n", hash);
+        OS_TPrintfEx("HASH = % 20B\n", md);
+        OS_TPrintf("%s: banner_hash is not valid.\n", __func__);
+        return FALSE;
+    }
+    // 結果報告
+#ifdef PRINT_PROFILE
+    PROFILE_COUNT();
+    OS_TPrintf("\nDone to check the hash (phase 3).\n");
+    OS_TPrintf("%10d msec for preparing hash.\n",   (int)OS_TicksToMilliSeconds(profile[1]-profile[0]));
+    OS_TPrintf("%10d msec for scanning header.\n",     (int)OS_TicksToMilliSeconds(profile[2]-profile[1]));
+    OS_TPrintf("%10d msec for scanning V1 body.\n",     (int)OS_TicksToMilliSeconds(profile[3]-profile[2]));
+    OS_TPrintf("%10d msec for scanning V2 body.\n",  (int)OS_TicksToMilliSeconds(profile[4]-profile[3]));
+    OS_TPrintf("%10d msec for scanning V3 body.\n",  (int)OS_TicksToMilliSeconds(profile[5]-profile[4]));
+    OS_TPrintf("%10d msec for comparing hash.\n",   (int)OS_TicksToMilliSeconds(profile[6]-profile[5]));
+    OS_TPrintf("\nTotal: %10d msec.\n",     (int)OS_TicksToMilliSeconds(profile[6]-profile[0]));
+#endif
+    return TRUE;
+}
+
+/*
+ハッシュ計算 (4)
+個別対応
+*/
+BOOL DHT_CheckHashPhase4(const DHTFileAdHoc* pDHT, const ROM_Header_Short* pROMHeader, DHTPhase4Work* work, DHTReadFunc func, void* arg)
+{
+    imageBuffer = work->buffer;
+    imageReadFunc = func;
+    return DHT_CheckHashPhase4Ex(pDHT, pROMHeader, ImageHMACSHA1Update, arg);
+}
+
+BOOL DHT_CheckHashPhase4Ex(const DHTFileAdHoc* pDHT, const ROM_Header_Short* pROMHeader, DHTReadFuncEx funcEx, void* arg)
+{
+    const DHTDatabaseAdHoc* plist;
+    SVCHMACSHA1Context ctx;
+    int i;
+    u8 md[20];
+    PROFILE_INIT();
+
+    if ( !funcEx || !pDHT || !pROMHeader )
+    {
+        return FALSE;
+
+    }
+
+    plist = DHT_GetDatabaseAdHoc(pDHT, pROMHeader);
+
+    if ( !plist )
+    {
+        return TRUE;    // not found in individual list
+    }
+
+    // 準備
+    PROFILE_COUNT();
+    SVC_HMACSHA1Init(&ctx, hmac_key2, sizeof(hmac_key2));
+
+    for (i = 0; i < DHT_INDIVIDUAL_ENTRY_MAX; i++)
+    {
+        if (plist->entry[i].offset == 0)
+        {
+            break;
+        }
+        if ( !funcEx(&ctx, (s32)plist->entry[i].offset, (s32)plist->entry[i].length, arg) )
+        {
+            OS_TPrintf("Cannot read the phase 3 for %.4s(%x).\n", pROMHeader->game_code, pROMHeader->rom_version);
+            return FALSE;
+        }
+    }
+    // 検証
+    PROFILE_COUNT();
+    SVC_HMACSHA1GetHash(&ctx, md);
+
+    if ( !SVC_CompareSHA1(md, plist->hash) )
+    {
+        OS_TPrintf("\n");
+        OS_TPrintfEx("DB   = % 20B\n", plist->hash);
+        OS_TPrintfEx("HASH = % 20B\n", md);
+        OS_TPrintf("%s: phase4list->hash is not valid.\n", __func__);
+        return FALSE;
+    }
+    // 結果報告
+#ifdef PRINT_PROFILE
+    PROFILE_COUNT();
+    OS_TPrintf("\nDone to check the hash (phase 3).\n");
+    OS_TPrintf("%10d msec for preparing hash.\n",   (int)OS_TicksToMilliSeconds(profile[1]-profile[0]));
+    OS_TPrintf("%10d msec for scanning regions.\n",  (int)OS_TicksToMilliSeconds(profile[2]-profile[1]));
+    OS_TPrintf("%10d msec for comparing hash.\n",   (int)OS_TicksToMilliSeconds(profile[3]-profile[2]));
+    OS_TPrintf("\nTotal: %10d msec.\n",     (int)OS_TicksToMilliSeconds(profile[3]-profile[0]));
+#endif
+    return TRUE;
+}
+
