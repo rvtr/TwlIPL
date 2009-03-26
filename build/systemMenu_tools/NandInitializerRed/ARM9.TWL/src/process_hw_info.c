@@ -450,6 +450,9 @@ static BOOL GetNandInitializerSetting(u8* region, u8* wireless, u8* logodemoskip
 		{
 			*logodemoskip = 0; 
 		}
+	}else
+	{
+		*logodemoskip = 0;
 	}
 
 	// REGION: ‚ð“Ç‚ÝŽæ‚é
