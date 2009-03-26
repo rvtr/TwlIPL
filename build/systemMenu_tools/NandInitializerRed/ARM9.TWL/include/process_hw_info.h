@@ -52,7 +52,7 @@ void* HWInfoProcess4(void);
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
-BOOL WriteHWInfoFile( u8 region, BOOL wirelessForceOff );
+BOOL WriteHWInfoFile( u8 region, BOOL wirelessForceOff, BOOL logoDemoSkipForce );
 
 /*===========================================================================*/
 

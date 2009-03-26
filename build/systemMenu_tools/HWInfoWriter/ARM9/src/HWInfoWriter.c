@@ -204,7 +204,7 @@ static void WriteHWInfoFile( u8 region, BOOL isDisableWireless )
 	// -------------------------------------
 	(void)PutStringUTF16( MSG_X * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_BLACK, pMsgSecureWriting );
 	
-	if( HWI_WriteHWSecureInfoFile( region, NULL, isDisableWireless ) ) {
+	if( HWI_WriteHWSecureInfoFile( region, NULL, isDisableWireless, FALSE ) ) {
 		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_BLUE, pMsgSucceeded );
 	}else {
 		(void)PutStringUTF16( ( MSG_X + 20 ) * 8, ( MSG_Y + 2 ) * 8, TXT_COLOR_RED, pMsgFailed );

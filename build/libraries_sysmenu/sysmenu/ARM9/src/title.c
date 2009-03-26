@@ -105,7 +105,9 @@ static OSThread         s_thread;
 static OSThread         s_auth_thread;
 static TWLBannerFile    s_card_bannerBuf;
 
-static MbAuthCode s_authcode;
+static u8 s_authcode[MATH_ROUNDUP32(sizeof(MbAuthCode))] ATTRIBUTE_ALIGN(32);
+static MbAuthCode *sp_authcode = (MbAuthCode *)s_authcode;
+static MbAuthCode bup_num;
 
 static BOOL             s_loadstart = FALSE;
 
@@ -820,10 +822,10 @@ OS_TPrintf("RebootSystem failed: cant seek file(0)\n");
                     UTL_SetFatalError(FATAL_ERROR_LOAD_SEEKFILE_FAILED);
                     goto ERROR;
                 }
-                readLen = FS_ReadFile(file, &s_authcode, (s32)sizeof(s_authcode));
-                if( readLen != (s32)sizeof(s_authcode) )
+                readLen = FS_ReadFile(file, sp_authcode, (s32)sizeof(MbAuthCode));
+                if( readLen != (s32)sizeof(MbAuthCode) )
                 {
-OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", &s_authcode, 0, sizeof(s_authcode), readLen);
+OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", sp_authcode, 0, sizeof(MbAuthCode), readLen);
                     UTL_SetFatalError(FATAL_ERROR_LOAD_READDLSIGN_FAILED);
                     goto ERROR;
                 }
@@ -1457,7 +1459,7 @@ static BOOL SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
         u8 final_hash[SVC_SHA1_DIGEST_SIZE];
 
         // NTRダウンロードアプリ署名のマジックコードチェック
-        if( s_authcode.magic_code[0] != 'a' || s_authcode.magic_code[1] != 'c' ) {
+        if( sp_authcode->magic_code[0] != 'a' || sp_authcode->magic_code[1] != 'c' ) {
             OS_TPrintf("Authenticate failed: Invalid AuthCode.\n");
             UTL_SetFatalError(FATAL_ERROR_DL_MAGICCODE_CHECK_FAILED);
             return FALSE;
@@ -1466,18 +1468,18 @@ static BOOL SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
         // NTRダウンロードアプリ署名（DERフォーマット）の計算、ハッシュの取得。
         MI_CpuClear8( buf, 0x80 );
         SVC_InitSignHeap( &con, (void *)SIGN_HEAP_ADDR, SIGN_HEAP_SIZE );// ヒープの初期化
-        if( !SVC_DecryptSignDER( &con, buf, s_authcode.sign, nitro_dl_sign_key ))
+        if( !SVC_DecryptSignDER( &con, buf, sp_authcode->sign, nitro_dl_sign_key ))
         {
             OS_TPrintf("Authenticate failed: Sign decryption failed.\n");
             UTL_SetFatalError(FATAL_ERROR_DL_SIGN_DECRYPTION_FAILED);
             return FALSE;
         }
-
+        
         // それぞれheader,ARM9FLX,ARM7FLXについてハッシュを計算して、それら3つを並べたものに対してまたハッシュをとる
         if(s_calc_hash)
         {
             // シリアルナンバー付加
-            *(u32 *)(&(s_calc_hash[SVC_SHA1_DIGEST_SIZE * 3])) = s_authcode.serial_number;
+            *(u32 *)(&(s_calc_hash[SVC_SHA1_DIGEST_SIZE * 3])) = sp_authcode->serial_number;
             // 最終ハッシュ計算
             SVC_CalcSHA1( final_hash, s_calc_hash, SVC_SHA1_DIGEST_SIZE * 3 + sizeof(u32));
         }else
@@ -1486,7 +1488,7 @@ static BOOL SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
             UTL_SetFatalError(FATAL_ERROR_DL_HASH_CALC_FAILED);
             return FALSE;
         }
-
+        
         // 計算した最終ハッシュと、署名から得たハッシュとを比較
         if(!SVC_CompareSHA1((const void *)buf, (const void *)final_hash))
         {
@@ -1499,7 +1501,7 @@ static BOOL SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
         }
     }
     OS_TPrintf("Authenticate : total %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
-
+    
     return TRUE;
 }
 

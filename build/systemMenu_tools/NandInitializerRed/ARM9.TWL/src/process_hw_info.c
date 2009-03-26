@@ -71,6 +71,7 @@ enum {
 
 static s8   sMenuSelectNo;
 static BOOL sWirelessForceOff;
+static BOOL sLogoDemoSkipForce;
 
 /*---------------------------------------------------------------------------*
     内部関数宣言
@@ -79,7 +80,7 @@ static BOOL sWirelessForceOff;
 static BOOL WriteHWNormalInfoFile( void );
 static BOOL WriteHWSecureInfoFile( u8 region );
 //static BOOL DeleteHWInfoFile( void );
-static BOOL GetNandInitializerSetting(u8* region, u8* wireless);
+static BOOL GetNandInitializerSetting(u8* region, u8* wireless, u8* logodemoskip);
 
 /*---------------------------------------------------------------------------*
     プロセス関数定義
@@ -210,11 +211,12 @@ void* HWInfoProcess2(void)
 	if (gAutoFlag)
 	{
 		// SDカードのnandinitializer.iniより設定を取得
-		if (!GetNandInitializerSetting((u8 *)&sMenuSelectNo, (u8 *)&sWirelessForceOff))
+		if (!GetNandInitializerSetting((u8 *)&sMenuSelectNo, (u8 *)&sWirelessForceOff, (u8 *)&sLogoDemoSkipForce))
 		{
 			// 設定の取得に失敗した場合はデフォルト設定(REGION_JAPAN/WIRELESS_ENABLE)
 			sMenuSelectNo = 0;
 			sWirelessForceOff = FALSE;
+			sLogoDemoSkipForce = FALSE;
 		}
 	}
 	else
@@ -232,7 +234,7 @@ void* HWInfoProcess2(void)
 	case MENU_REGION_CHINA:
 	case MENU_REGION_KOREA:
 
-		result = WriteHWInfoFile( (u8)sMenuSelectNo, sWirelessForceOff );
+		result = WriteHWInfoFile( (u8)sMenuSelectNo, sWirelessForceOff, sLogoDemoSkipForce );
 
 		// 全リージョンの結果をクリア
 		for (i=0;i<NUM_OF_MENU_SELECT;i++)
@@ -290,7 +292,7 @@ void* HWInfoProcess2(void)
   Returns:      None.
  *---------------------------------------------------------------------------*/
 
-BOOL WriteHWInfoFile( u8 region, BOOL wirelessForceOff )
+BOOL WriteHWInfoFile( u8 region, BOOL wirelessForceOff, BOOL logoDemoSkipForce )
 {
 	static const char *pMsgSecureWriting  	= "Writing Secure File...";
 	static const char *pMsgNormalWriting  	= "Writing Normal File...";
@@ -313,7 +315,7 @@ BOOL WriteHWInfoFile( u8 region, BOOL wirelessForceOff )
 	// セキュアファイルのライト
 	kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSecureWriting );
 	
-	if( HWI_WriteHWSecureInfoFile( region, NULL, wirelessForceOff ) ) {	
+	if( HWI_WriteHWSecureInfoFile( region, NULL, wirelessForceOff, logoDemoSkipForce ) ) {	
 		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSucceeded );
 	}else {
 		kamiFontPrintfConsoleEx(CONSOLE_RED, pMsgFailed );
@@ -392,7 +394,7 @@ static BOOL DeleteHWInfoFile( void )
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
-static BOOL GetNandInitializerSetting(u8* region, u8* wireless)
+static BOOL GetNandInitializerSetting(u8* region, u8* wireless, u8* logodemoskip)
 {
     FSFile  file;	
     BOOL    open_is_ok;
@@ -401,6 +403,7 @@ static BOOL GetNandInitializerSetting(u8* region, u8* wireless)
 	char* pStr;
 	u8    temp_region;
 	u8    temp_wireless;
+	u8    temp_logodemoskip;
 	u32 file_size;
 	u32 alloc_size;
 
@@ -430,6 +433,24 @@ static BOOL GetNandInitializerSetting(u8* region, u8* wireless)
 
 	// ROMファイルクローズ
 	FS_CloseFile(&file);
+	
+	// 強制ロゴデモスキップ設定を読み取る
+	pStr = STD_SearchString( pTempBuf, "LOGO_DEMO_SKIP_FORCE:");
+	if (pStr != NULL)
+	{
+
+		pStr += STD_GetStringLength("LOGO_DEMO_SKIP_FORCE:");
+		temp_logodemoskip = (u8)(*pStr - '0');
+
+		if ( temp_logodemoskip == 1 )
+		{ 
+			*logodemoskip = temp_logodemoskip; 
+		}
+		else
+		{
+			*logodemoskip = 0; 
+		}
+	}
 
 	// REGION: を読み取る
 	pStr = STD_SearchString( pTempBuf, "REGION:");

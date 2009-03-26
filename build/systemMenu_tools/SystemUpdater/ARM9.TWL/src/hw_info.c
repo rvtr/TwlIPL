@@ -70,7 +70,7 @@ BOOL WriteHWInfoFile( u8 region, BOOL wirelessForceOff )
 	BOOL result = TRUE;
 
 	// セキュアファイルのライト
-	if( HWI_WriteHWSecureInfoFile( region, NULL, wirelessForceOff ) ) {	// とりあえず無線は有効で。
+	if( HWI_WriteHWSecureInfoFile( region, NULL, wirelessForceOff, FALSE ) ) {	// とりあえず無線は有効で。
 //		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, pMsgSucceeded );
 	}else {
 		kamiFontPrintfConsoleEx(CONSOLE_RED, pMsgFailed );

@@ -417,7 +417,7 @@ BOOL HWI_WriteHWNormalInfoFile( void )
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
-BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWireless )
+BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWireless, BOOL logoDemoSkipForce )
 {
     BOOL isWrite = TRUE;
     LCFGReadResult result;
@@ -435,6 +435,7 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
     }
 
     LCFG_THW_SetFlagForceDisableWireless( isDisableWireless );
+    LCFG_THW_SetFlagForceLogoDemoSkip( logoDemoSkipForce );
 
 	// ãåÉäÅ[ÉWÉáÉìÇï€ë∂
 	old_region = OS_GetRegion();
