@@ -668,8 +668,8 @@ BOOL PollingInstallWlanFirmware( void )
 		if( GetWlanFirmwareInstallResult( &result ) ) {
 			if( result == WLANFIRM_RESULT_SUCCESS ) {
 				OS_TPrintf( "WLFIRM load finished.\n" );
-				s_isFinished = TRUE; // 正常終了
 				s_result = result;
+				s_isFinished = TRUE; // 正常終了
 			}else {
 				// ロード失敗
 				if( !s_isHotStartWLFirm ) {
@@ -680,8 +680,13 @@ BOOL PollingInstallWlanFirmware( void )
 #ifdef SDK_RELEASE	
 					PMi_SetWirelessLED( PM_WIRELESS_LED_OFF );
 #endif
-					s_isFinished = TRUE;
+					// ここがスレッドセーフでなかったため、s_isFinishedがTRUEになってから、s_isFinishedがTRUEになってから、s_resultがセットされる間に
+					// スレッドスイッチが発生して、他スレッドからPollingInstallWlanFirmware+GetWlanFirmwareInstallFinalResultをリードすると、
+					// 前回のs_resultの値が取得されてしまっていた。
+					// ここで、DSアプリからのHWリセット時は、HotStartに失敗してからColdスタートになるので、s_resultに一時的にFAILが入るが、
+					// このタイミングで上記状態になると、ファームロードは成功しているのに失敗判定されてしまうことになる。
 					s_result = result;
+					s_isFinished = TRUE;
 				}else {
 					// そうでない場合は、ColdStartロードで再度実行。
 					(void)InstallWlanFirmware( FALSE );
