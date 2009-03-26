@@ -59,7 +59,6 @@
 #endif
 
 #include <sysmenu/dht/dht.h>
-#define DS_HASH_TABLE_SIZE  (512*1024)
 
 #define SYSM_TITLE_MESSAGE_ARRAY_MAX        1
 
@@ -257,18 +256,9 @@ static BOOL PrepareDHTDatabase(void)
         return FALSE; // cannot open the file
     }
     length = (int)FS_GetFileLength(&file);
-    if ( length > DS_HASH_TABLE_SIZE )
-    {
-        OS_TPrintf("PrepareDHTDatabase failed: DHT file size (%d) is too large.\n", length );
-        if(!s_b_dev) {
-           ERRORLOG_Printf( "WHITELIST_INITDB_FAILED (sub info): DHT file size (%d) is too large.\n", length );
-        }
-        FS_CloseFile(&file);
-        return FALSE;   // too large
-    }
 
 #if 0   // 1 if using attach_dummyromheader
-    if ( FS_SeekFile(&file, sizeof(ROM_Header), FS_SEEK_SET) )
+    if ( !FS_SeekFile(&file, sizeof(ROM_Header), FS_SEEK_SET) )
     {
         OS_TPrintf("PrepareDHTDatabase failed: DHT file size (%d) is too small.\n", length );
         if(!s_b_dev) {
@@ -279,6 +269,7 @@ static BOOL PrepareDHTDatabase(void)
         FS_CloseFile(&file);
         return FALSE;
     }
+    length -= sizeof(ROM_Header);
 #endif
 
     s_dht.buffer = SYSM_Alloc( (u32)length );
