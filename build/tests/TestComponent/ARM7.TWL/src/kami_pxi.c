@@ -34,6 +34,8 @@
 extern BOOL FATFSi_nandRtfsIo( int driveno, dword block, void* buffer, word count, BOOLEAN reading);
 extern BOOL sdmcFormatNandLog( BOOL verify_flag);
 extern void sdmcGetCID( SDMC_PORT_NO port, u32* dest);
+extern void SPI_Lock(u32 id);
+extern void SPI_Unlock(u32 id);
 
 /*---------------------------------------------------------------------------*
     定数定義
@@ -76,6 +78,7 @@ KamiWork;
  *---------------------------------------------------------------------------*/
 static BOOL kamiInitialized;
 static KamiWork kamiWork;
+static u32  kamiSpiLockId;
 
 /*---------------------------------------------------------------------------*
     内部関数定義
@@ -92,6 +95,11 @@ void KamiPxiInit(void)
         return;
     }
     kamiInitialized = TRUE;
+    kamiSpiLockId = (u32)OS_GetLockID();
+    if (kamiSpiLockId == OS_LOCK_ID_ERROR)
+    {
+        OS_Panic("%s: OS_GetLockID failed.\n", __FUNCTION__);
+    }
 
     PXI_Init();
     PXI_SetFifoRecvCallback(PXI_FIFO_TAG_KAMITEST, KamiPxiCallback);
@@ -283,12 +291,16 @@ static void KamiThread(void *arg)
 
 				if (is_read)
 				{
+			        SPI_Lock(kamiSpiLockId);    // CODEC用SPI排他ロック
 					read = CDC_ReadSpiRegisterEx( page, reg_no );
+			        SPI_Unlock(kamiSpiLockId);  // CODEC用SPI排他ロック
 	            	KamiReturnResultEx(kamiWork.command, KAMI_PXI_RESULT_SUCCESS,  sizeof(u8), (u8*)&read );
 				}
 				else
 				{
+			        SPI_Lock(kamiSpiLockId);    // CODEC用SPI排他ロック
 					CDC_WriteSpiRegisterEx( page, reg_no, (u8)write );
+			        SPI_Unlock(kamiSpiLockId);  // CODEC用SPI排他ロック
 		            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
 				}
 			}

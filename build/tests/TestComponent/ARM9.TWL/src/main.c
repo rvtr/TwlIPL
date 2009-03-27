@@ -101,6 +101,11 @@ TwlMain()
     // initialize file-system
 	FS_Init(FS_DMA_NOT_USE);
 
+	// FATドライバを初期化します。
+	// NANDにアクセスするために必要です。
+	// この関数はTwlSDK_branchUIGには含まれていません。
+	FS_InitFatDriver();
+
 	// SDカードの挿抜イベント監視コールバック設定
 //  FS_RegisterEventHook("sdmc", &sSDHook, SDEvents, NULL);
 
@@ -173,6 +178,7 @@ TwlMain()
 	}
 #endif
 
+/*
 {
 	u8 temp;
 	kamiCodecRead( 1, 31, &temp);
@@ -182,6 +188,8 @@ TwlMain()
 	OS_Printf("temp = %x\n", temp);
 
 }
+*/
+
     while (1)
     {
 		kamiPadRead();
