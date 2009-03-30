@@ -27,13 +27,25 @@
 // function's prototype-------------------------------------------------------
 
 // global variable-------------------------------------------------------------
-BOOL g_isSucceededLoad[ OS_SHARED_FONT_MAX ];
+BOOL g_isSucceededLoad[ OS_SHARED_FONT_CN_KR_MAX ];
+
+const char *str_fontname[ OS_SHARED_FONT_CN_KR_MAX ] = {
+    "SHARE_FONT_WW_L",
+    "SHARE_FONT_WW_M",
+    "SHARE_FONT_WW_S",
+	"SHARE_FONT_CN_L",
+    "SHARE_FONT_CN_M",
+    "SHARE_FONT_CN_S",
+    "SHARE_FONT_KR_L",
+    "SHARE_FONT_KR_M",
+    "SHARE_FONT_KR_S",
+};
 
 // static variable-------------------------------------------------------------
 static u64 s_fontLoadThreadStack[THREAD_STACK_SIZE / sizeof(u64)];
 static OSThread s_fontLoadThread;
 static OSTick s_fontLoadStartTick;
-static u8 *s_pFontBuffer[ OS_SHARED_FONT_MAX ];	// 読み込みはテストなのでロード先はstatic変数にしている。
+static u8 *s_pFontBuffer[ OS_SHARED_FONT_CN_KR_MAX ];	// 読み込みはテストなのでロード先はstatic変数にしている。
 static BOOL s_isStarted = FALSE;
 
 // const data------------------------------------------------------------------
@@ -90,10 +102,10 @@ void LoadSharedFontThread( void *arg )
 	BOOL retval = TRUE;
 	OSSharedFontIndex i;
 	
-	for( i = OS_SHARED_FONT_WW_L; i < OS_SHARED_FONT_MAX; i++ ) {
+	for( i = OS_SHARED_FONT_WW_L; i < OS_SHARED_FONT_CN_KR_MAX; i++ ) {
 		int size;
 		
-		OS_TPrintf( "%s read.\n", OS_GetSharedFontName( i ) );
+		OS_TPrintf( "%s read.\n", str_fontname[ i ] );
 		
 		size = OS_GetSharedFontSize( i );
 		if( size < 0 ) {

@@ -27,7 +27,8 @@ extern "C" {
 
 // define data-------------------------------------------------------
 // global variables--------------------------------------------------
-extern BOOL g_isSucceededLoad[ OS_SHARED_FONT_MAX ];
+extern BOOL g_isSucceededLoad[ OS_SHARED_FONT_CN_KR_MAX ];
+extern const char *str_fontname[ OS_SHARED_FONT_CN_KR_MAX ];
 
 // function----------------------------------------------------------
 BOOL LoadSharedFontInit( void );

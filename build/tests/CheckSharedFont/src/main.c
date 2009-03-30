@@ -81,11 +81,11 @@ void NitroMain(void)
 	        DEMOFillRect(0, 0, GX_LCD_SIZE_X, GX_LCD_SIZE_Y, DEMO_RGB_CLEAR);
 	        DEMOSetBitmapTextColor(GX_RGBA(0, 31, 0, 1));
 	        DEMOSetBitmapTextColor(GX_RGBA(31, 31, 31, 1));
-	        DEMODrawFrame(ox, oy, 240, 10 + OS_SHARED_FONT_MAX * 10, GX_RGBA( 0, 31, 0, 1));
-	        for (i = 0; i < OS_SHARED_FONT_MAX; ++i)
+	        DEMODrawFrame(ox, oy, 240, 10 + OS_SHARED_FONT_CN_KR_MAX * 10, GX_RGBA( 0, 31, 0, 1));
+	        for (i = 0; i < OS_SHARED_FONT_CN_KR_MAX; ++i)
 	        {
 	            DEMODrawText(ox + 10, oy + 5 + i * 10, "%s load %s",
-	                         OS_GetSharedFontName( (OSSharedFontIndex)i ), g_isSucceededLoad[ i ] ? "suceeded" : "failed");
+	                         str_fontname[ i ], g_isSucceededLoad[ i ] ? "suceeded" : "failed");
 	        }
 	    }
 	    DEMO_DrawFlip();

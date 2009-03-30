@@ -26,7 +26,7 @@ TARGET_BIN       = main.srl
 
 SRCS             = main.c loadSharedFont.c
 
-LLIBRARIES		+=	libsharedfont$(TWL_LIBSUFFIX).a
+LLIBRARIES		+=	libsharedfont$(TWL_LIBSUFFIX).a libna$(TWL_LIBSUFFIX).a
 
 ROM_SPEC		=	ROM-TS_nand.rsf
 

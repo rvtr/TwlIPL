@@ -11,6 +11,7 @@
 #   Header                  ( 32 bytes)
 #       TimeStamp           (  4 bytes) : date %y%m%d%H
 #       number              (  2 bytes) : number of font files
+#       region_code         (  1 bytes) : font region code
 #       padding             (  6 bytes) : 
 #       padding             ( 20 bytes) : SHA1 digest of Font info table
 # 
@@ -28,8 +29,8 @@
 use POSIX 'strftime';
 use File::Basename;
 
-if ($#ARGV < 2) {
-    printf STDOUT ("Usage: %s [genFontTable] timestamp [Target font files...]\n", $0);
+if ($#ARGV < 3) {
+    printf STDOUT ("Usage: %s [genFontTable] timestamp region_code [Target font files...]\n", $0);
     exit(-1);
 }
 
@@ -70,6 +71,7 @@ my @files;
 my $num = 0;
 foreach ( @ARGV ) {
     next if( $_ eq $ARGV[0] );
+    next if( $_ eq $ARGV[1] );
     $files[ $num ] = $_;
     $num++;
 }
@@ -160,7 +162,7 @@ foreach ( @ARGV ) {
 {
     # timestampLen  = 0x08;
     # elementNumLen = 0x02;
-    my $padLen      = 0x06;
+    my $padLen      = 0x05;
     my $sha1Len     = 0x14;
     
     open HEADER, ">$headerFile" or die;
@@ -169,12 +171,16 @@ foreach ( @ARGV ) {
     # タイムスタンプの出力
 #   my $timestamp = strftime "%y%m%d%H", localtime;
     my $timestamp = $ARGV[ 0 ];
+	my $region_code = $ARGV[ 1 ];
     printf "timestamp = %s\n", $timestamp;
     syswrite( HEADER, pack( "N", unpack( "L", pack( "H8", $timestamp ) ) ) );
     
     # 要素数の出力
     syswrite( HEADER, pack( "S", $num ) );
-    
+	
+	# リージョンコードの出力
+	syswrite( HEADER, pack( "C", $region_code ) );
+	
     # パディングの出力
     syswrite( HEADER, pack( "x$padLen") );
     
