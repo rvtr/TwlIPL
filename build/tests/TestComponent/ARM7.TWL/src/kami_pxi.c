@@ -27,7 +27,21 @@
 #include <twl/camera.h>
 #include <twl/camera/ARM7/i2c_sharp.h>
 #include <twl/camera/ARM7/i2c_micron.h>
-#include <twl/sdmc.h>
+
+/* sdmc.h はFATFSライブラリ内の非公開ヘッダのため、必要な定義をローカルで持つ。 */
+//#include <twl/sdmc.h>
+
+typedef enum {
+    SDMC_PORT_CARD    = 0x400,
+    SDMC_PORT_NAND    = 0x401
+}SDMC_PORT_NO;
+
+#define TRUE  1                 /* Don't change */
+#define FALSE 0                 /* Don't change */
+
+typedef unsigned char byte;     /* Don't change */
+typedef unsigned short word;    /* Don't change */
+typedef unsigned long dword;    /* Don't change */
 
 #define BOOLEAN int
 

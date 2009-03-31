@@ -23,6 +23,8 @@ override TWL_ARCHGEN		=	LIMITED
 TWL_NO_STD_PCHDR			=	True
 override TARGET_CODEGEN		=	ARM
 
+TARGET_FIRM = SYSTEMMENU
+
 ifndef	TWLSDK_NOCRYPTO
 #----------------------------------------------------------------------------
 
@@ -45,7 +47,7 @@ CRT0_O			=	crt0.SCFG_NOLOCK.o
 CCFLAGS_OPT		=	-O4 -inline off
 
 #----------------------------------------------------------------------------
-include	$(TWLSDK_ROOT)/build/buildtools/commondefs
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD -DSDK_SEA -DSDK_NOINIT
 
@@ -79,10 +81,21 @@ GLIBRARIES		:= $(filter-out libpm_sp$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
 
 LDEPENDS_NEF	 = $(TWL_LIBS) $(LLIBRARIES)
 
+#--------------------------------
+#   install target
+#--------------------------------
+INSTALL_TARGETS	=	$(BINDIR)/$(TARGET_NAME).tef				\
+					$(BINDIR)/$(TARGET_NAME).TWL.FLX.sbin		\
+					$(BINDIR)/$(TARGET_NAME)_defs.TWL.FLX.sbin	\
+					$(BINDIR)/$(TARGET_NAME).TWL.LTD.sbin		\
+					$(BINDIR)/$(TARGET_NAME)_defs.TWL.LTD.sbin
+
+INSTALL_DIR		=	$(SYSMENU_COMPONENTSDIR)/$(TARGET_NAME)_uji/$(TWL_BUILDTYPE)
+
 do-build:	$(TARGETS)
 
 #----------------------------------------------------------------------------
-include	$(TWLSDK_ROOT)/build/buildtools/modulerules
+include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 
 #----------------------------------------------------------------------------
 endif	#ifndef	TWLSDK_NOCRYPTO
