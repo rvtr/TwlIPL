@@ -54,7 +54,6 @@ endif
 #----------------------------------------------------------------------------
 
 SUBDIRS =	\
-			$(TWL_IPL_RED_ROOT)/build/libraries_sysmenu/sysmenu/ARM9		\
 			$(TWL_IPL_RED_ROOT)/build/libraries_sysmenu/namut/ARM9			\
 			$(TWL_IPL_RED_ROOT)/build/libraries_sysmenu/reloc_info/ARM7		\
 			$(TWL_IPL_RED_ROOT)/build/libraries_sysmenu/hotsw/ARM7			\
