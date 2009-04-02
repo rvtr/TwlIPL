@@ -53,11 +53,11 @@ TWL_ARCHGEN    		= LIMITED
 TITLEID_LO				=	0NRA
 #TARGET_TAD				=
 
-TARGET_BIN	= NandInitializerRed.srl
+TARGET_BIN	= TestComponent.srl
 LCFILE_SPEC				=	ARM9-TS.lsf
 ROM_SPEC	= main.rsf
 
-MAKEROM_ARM7_BASE	=	../ARM7.TWL/bin/$(TWL_BUILDTYPE_ARM7)/armadillo
+MAKEROM_ARM7_BASE	=	$(SYSMENU_COMPONENTSDIR)/armadillo_uji/$(TWL_BUILDTYPE_ARM7)/armadillo
 MAKEROM_ARM7		=	$(MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
 
 SRCS		=	main.c \
@@ -66,23 +66,7 @@ SRCS		=	main.c \
 				graphics.c \
 				keypad.c \
 				kami_font.c \
-				kami_write_nandfirm.c \
-				cursor.c \
-				process_format.c \
-				process_topmenu.c \
-				process_hw_info.c \
-				process_eticket.c \
-				process_import.c \
-				process_nandfirm.c \
-				process_norfirm.c \
-				process_auto.c \
-				process_fade.c \
-				process_write_data.c \
-				process_mcu.c \
-				process_wireless_setting.c \
-				hwi.c \
-				debugger_hw_reset_control.c \
-				sort_title.c
+
 
 LINCLUDES	=	../common/include \
 				$(ROOT)/build/libraries/lcfg/ARM9.TWL/include \

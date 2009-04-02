@@ -23,17 +23,18 @@
 #include <twl/os/common/format_rom.h>
 #include <sysmenu/namut.h>
 #include "kami_font.h"
-#include "process_format.h"
-#include "process_topmenu.h"
 #include "graphics.h"
 #include "keypad.h"
 #include "kami_pxi.h"
-#include "process_fade.h"
-#include "hwi.h"
 
 #define SCRAMBLE_MASK 0x00406000
 
 extern void HWInfoWriterInit( void );
+
+/*---------------------------------------------------------------------------*
+    型定義
+ *---------------------------------------------------------------------------*/
+typedef void*  (*Process)(void);
 
 /*---------------------------------------------------------------------------*
     内部変数定義
@@ -47,6 +48,11 @@ static FSEventHook  sSDHook;
  *---------------------------------------------------------------------------*/
 static void VBlankIntr(void);
 static void InitAllocation(void);
+
+static void* DummyProcess0(void)
+{
+    return DummyProcess0;
+}
 
 /*---------------------------------------------------------------------------*
   Name:         TwlMain
@@ -125,16 +131,9 @@ TwlMain()
     }
     
 	// 初期シーケンス設定
-	sProcess = TopmenuProcess0;
+	sProcess = DummyProcess0;
 
-	kamiFontPrintfConsole( CONSOLE_ORANGE, "How to \n");
-	kamiFontPrintfConsole( CONSOLE_ORANGE, "+---------------------------+\n");
-	kamiFontPrintfConsole( CONSOLE_ORANGE, "l A Button    : Select Menu l\n");
-	kamiFontPrintfConsole( CONSOLE_ORANGE, "l Up/Down Key : Change Menu l\n");
-#ifndef NAND_INITIALIZER_LIMITED_MODE
-	kamiFontPrintfConsole( CONSOLE_ORANGE, "l L&R Button  : Auto Init   l\n");
-#endif
-	kamiFontPrintfConsole( CONSOLE_ORANGE, "+---------------------------+\n");
+	kamiFontPrintfConsole( CONSOLE_ORANGE, "This is Test Component\n");
 
 #ifdef TWL_CAPTURE_VERSION
 	// memory-launcher経由で立ち上がるTWLCaptureSystemWriterでは
@@ -156,27 +155,6 @@ TwlMain()
 	// NAMライブラリ初期化
 	NAM_Init( OS_AllocFromMain, OS_FreeToMain);
 	NAMUT_Init( OS_AllocFromMain, OS_FreeToMain);
-	
-#ifdef TWL_CAPTURE_VERSION
-	kamiFontPrintfConsoleEx(CONSOLE_RED, "[No Signature MODE]\n" );
-#else
-	// HWInfo関連の前準備
-	switch (HWI_Init( OS_AllocFromMain, OS_FreeToMain ))
-	{
-	case HWI_INIT_FAILURE:
-		kamiFontPrintfConsoleEx(CONSOLE_RED, "HWI_INIT() Failure!\n" );
-		break;
-	case HWI_INIT_SUCCESS_PRO_SIGNATURE_MODE:
-		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, "[PRO Signature MODE]\n" );
-		break;
-	case HWI_INIT_SUCCESS_DEV_SIGNATURE_MODE:
-		kamiFontPrintfConsoleEx(CONSOLE_ORANGE, "[DEV Signature MODE]\n" );
-		break;
-	case HWI_INIT_SUCCESS_NO_SIGNATRUE_MODE:
-		kamiFontPrintfConsoleEx(CONSOLE_RED, "[No Signature MODE]\n" );
-		break;
-	}
-#endif
 
 /*
 {

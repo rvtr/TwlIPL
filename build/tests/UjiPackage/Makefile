@@ -74,17 +74,25 @@ PACKAGE_TMP			?= ./TwlIPL
 .PHONY: package
 
 package:
-	@echo --- $@ ---;														\
+	@echo --- Copy sources ---;												\
+	mkdir -p $(PACKAGE_TMP);												\
+	mkdir -p $(PACKAGE_TMP)/build;											\
+	mkdir -p $(PACKAGE_TMP)/build/tests;									\
+	mkdir -p $(PACKAGE_TMP)/build/systemMenu_tools;							\
+	$(CP) $(TWL_IPL_RED_ROOT)/build/tests/TestComponent $(PACKAGE_TMP)/build/tests/TestComponent;	\
+	$(CP) $(TWL_IPL_RED_ROOT)/build/systemMenu_tools/common $(PACKAGE_TMP)/build/systemMenu_tools/common;	\
+	echo --- Build TwlIPL ---;												\
+	$(MAKE) full;															\
+	echo --- Packaging ---;												\
 	mkdir -p $(PACKAGE_TMP);												\
 	$(CP) $(TWL_IPL_RED_ROOT)/setup $(PACKAGE_TMP)/setup;					\
-	mkdir -p $(PACKAGE_TMP)/lib;											\
-	$(CP) $(TWL_IPL_RED_ROOT)/lib/ARM9-TS $(PACKAGE_TMP)/lib/ARM9-TS;		\
+	$(CP) $(TWL_IPL_RED_ROOT)/lib $(PACKAGE_TMP)/lib;						\
 	$(CP) $(TWL_IPL_RED_ROOT)/include $(PACKAGE_TMP)/include;				\
 	$(CP) $(TWL_IPL_RED_ROOT)/components $(PACKAGE_TMP)/components;			\
-	mkdir -p $(PACKAGE_TMP)/build;												\
 	$(CP) $(TWL_IPL_RED_ROOT)/build/buildtools $(PACKAGE_TMP)/build/buildtools;	\
 	$(FIND) $(PACKAGE_TMP) -name ".svn" -a -type d -print -prune -exec $(RM) $(VERBOSE) {} \;
 	zip -r $(ARCHIVE_ROOT)/$(ARCHIVE) $(PACKAGE_TMP)
+
 
 
 #===== End of Makefile =====
