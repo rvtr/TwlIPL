@@ -40,16 +40,16 @@ FONT_REGION_CODE =  4
 FONTS			=	NULL \
 					NULL \
 					NULL \
-					$(FONT_DIR)/TBF1_cn_l.NFTR \
-					$(FONT_DIR)/TBF1_cn_m.NFTR \
-					$(FONT_DIR)/TBF1_cn_s.NFTR \
+					$(FONT_DIR)/TBF1-cn_l.NFTR \
+					$(FONT_DIR)/TBF1-cn_m.NFTR \
+					$(FONT_DIR)/TBF1-cn_s.NFTR \
 					NULL \
 					NULL \
 					NULL
 endif # REGION=CN
 
 ifeq ($(FONT_REGION),KR)
-FONT_TIMESTAMP	=	09033000
+FONT_TIMESTAMP	=	09033100
 FONT_REGION_CODE =  5
 FONTS			=	NULL \
 					NULL \
@@ -57,9 +57,9 @@ FONTS			=	NULL \
 					NULL \
 					NULL \
 					NULL \
-					$(FONT_DIR)/TBF1_kr_l.NFTR \
-					$(FONT_DIR)/TBF1_kr_m.NFTR \
-					$(FONT_DIR)/TBF1_kr_s.NFTR
+					$(FONT_DIR)/TBF1-kr_l.NFTR \
+					$(FONT_DIR)/TBF1-kr_m.NFTR \
+					$(FONT_DIR)/TBF1-kr_s.NFTR
 endif # REGION=KR
 
 FONT_RSC		=	$(FONTS)
