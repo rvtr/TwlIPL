@@ -25,7 +25,7 @@
 
 override TARGET_PLATFORM := TWL
 
-SUBMAKES				=	 Makefile.A Makefile.J Makefile.E Makefile.P Makefile.U
+SUBMAKES				=	 Makefile.A Makefile.J Makefile.E Makefile.P Makefile.U Makefile.C Makefile.K
 
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs

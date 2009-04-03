@@ -1,7 +1,7 @@
 #! make -f
 #----------------------------------------------------------------------------
 # Project:  TwlIPL
-# File:     commondefs.systemmenuVersion.A -
+# File:     Makefile -
 #
 # Copyright 2007 Nintendo.  All rights reserved.
 #
@@ -16,15 +16,25 @@
 # $Author: 
 #----------------------------------------------------------------------------
 
+override TARGET_PLATFORM  := TWL
+
+TARGET_FIRM     = SYSTEMMENU
+TWL_NANDAPP     = TRUE
+
+include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+include ./commondefs.sysmenuVersion
+include ./commondefs.sysmenuVersion.local
+
 #---------------------------------------------------------
 # リージョン固有パラメータ
 
-SYSMENU_VERSION_REGION		=	A
-SYSMENU_VERSION_STRING_REGION	=	ALL
-SYSMENU_VERSION_TIMESTAMP	=	09040300
-SYSMENU_VERSION_MAJOR		=	1
-SYSMENU_VERSION_MINOR		=	4
-SYSMENU_VERSION_TAD_VERSION	=	4
+include ./defs.sysmenuVersion.C
+
 
 do-build :  $(TARGET_BIN)
 
+#----------------------------------------------------------------------------
+include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+include ./modulerules.sysmenuVersion
+
+#===== End of Makefile =====
