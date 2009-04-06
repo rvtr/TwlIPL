@@ -344,7 +344,7 @@ static BOOL PrepareDHTDatabase(void)
 #endif
     }
     // 個別対応データベース
-    s_dht.dhtah = (void*)((u32)s_dht.buffer + DHT_GetDatabaseExLength(s_dht.dhtex));
+    s_dht.dhtah = (void*)((u32)s_dht.buffer + DHT_GetDatabaseLength(s_dht.dht) + DHT_GetDatabaseExLength(s_dht.dhtex));
     if ( sizeof(DHTHeader) != FS_ReadFile(&file, &s_dht.dhtah->header, sizeof(DHTHeader)) )
     {
         s_dht.dhtah = NULL;
@@ -1465,7 +1465,7 @@ static BOOL SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
             UTL_SetFatalError(FATAL_ERROR_DL_SIGN_DECRYPTION_FAILED);
             return FALSE;
         }
-        
+
         // それぞれheader,ARM9FLX,ARM7FLXについてハッシュを計算して、それら3つを並べたものに対してまたハッシュをとる
         if(s_calc_hash)
         {
@@ -1479,7 +1479,7 @@ static BOOL SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
             UTL_SetFatalError(FATAL_ERROR_DL_HASH_CALC_FAILED);
             return FALSE;
         }
-        
+
         // 計算した最終ハッシュと、署名から得たハッシュとを比較
         if(!SVC_CompareSHA1((const void *)buf, (const void *)final_hash))
         {
@@ -1492,7 +1492,7 @@ static BOOL SYSMi_AuthenticateNTRDownloadTitle( TitleProperty *pBootTitle)
         }
     }
     OS_TPrintf("Authenticate : total %d ms.\n", OS_TicksToMilliSeconds(OS_GetTick() - start) );
-    
+
     return TRUE;
 }
 
@@ -1719,18 +1719,28 @@ static BOOL SYSMi_AuthenticateNTRCardTitle( TitleProperty *pBootTitle)
 
     // DHTチェックphase3 (バナーチェック)
     OS_TPrintf("DHT Phase3...");
-    if ( !s_dht.hash3 || !DHT_CheckHashPhase3(s_dht.hash3, (NTRBannerFile*)&s_card_bannerBuf) )
+    if ( !s_dht.hash3 )
+    {
+        if(!s_b_dev){
+            // デバグ用。ERRORLOG_Init()がすでに呼ばれている事前提
+            ERRORLOG_Printf( "DHT_PAHSE3_FAILED (sub info): no database no hash\n" );
+#ifndef SYSM_IGNORE_DHT_EX_NOT_FOUND
+            SYSM_Free(p2work);
+            UTL_SetFatalError(FATAL_ERROR_DHT_PHASE3_FAILED);
+            return FALSE;
+#endif
+        }
+    }
+    else if ( !DHT_CheckHashPhase3(s_dht.hash3, (NTRBannerFile*)&s_card_bannerBuf) )
     {
         OS_TPrintf(" DHT Phase3 : Failed.\n");
         if(!s_b_dev){
             // デバグ用。ERRORLOG_Init()がすでに呼ばれている事前提
             ERRORLOG_Printf( "DHT_PAHSE3_FAILED (sub info): hash3Addr-%08x\n", s_dht.hash3 );
-#ifndef SYSM_IGNORE_DHT_EX_NOT_FOUND
 #ifndef SYSM_IGNORE_DHT_PHASE_3
             SYSM_Free(p2work);
             UTL_SetFatalError(FATAL_ERROR_DHT_PHASE3_FAILED);
             return FALSE;
-#endif
 #endif
         }
     }
