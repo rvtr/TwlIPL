@@ -58,7 +58,7 @@ typedef enum
 extern const char *g_strIPLSvnRevision;
 extern const char *g_strSDKSvnRevision;
 extern s32 gLockId;
-extern const u16* sRegionStringArray[4];
+extern const u16* sRegionStringArray[OS_TWL_REGION_MAX];
 extern OSTWLRegion gRegion;
 
 /*---------------------------------------------------------------------------*

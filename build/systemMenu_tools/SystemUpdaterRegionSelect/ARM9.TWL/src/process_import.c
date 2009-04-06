@@ -48,7 +48,9 @@ static const char* sDirectoryNameRegion[] =
 	"japan",
 	"america",
 	"europe",
-	"australia"
+	"australia",
+	"china",
+	"korea"
 };
 
 static const char* sDirectoryNameConsole[] =

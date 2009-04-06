@@ -37,7 +37,7 @@
     íËêîíËã`
  *---------------------------------------------------------------------------*/
 #define TITLE_ID_MUST_ERASE_NUM   3
-#define TITLE_ID_LIST_NUM         4
+#define TITLE_ID_LIST_NUM         OS_TWL_REGION_MAX
 
 /*---------------------------------------------------------------------------*
     ì‡ïîïœêîíËã`
@@ -56,6 +56,9 @@ static const u64 sTitleIdListHNA[TITLE_ID_LIST_NUM] =
 	0x00030017484e4145,	// America   HNAE
 	0x00030017484e4150,	// Europe    HNAP
 	0x00030017484e4155,	// Australia HNAU
+	0x00030017484e4143,	// China     HNAC
+	0x00030017484e414B,	// Korea     HNAK
+
 };
 
 static const u64 sTitleIdListHNB[TITLE_ID_LIST_NUM] =
@@ -64,6 +67,8 @@ static const u64 sTitleIdListHNB[TITLE_ID_LIST_NUM] =
 	0x00030015484e4245,	// America   HNBE
 	0x00030015484e4250,	// Europe    HNBP
 	0x00030015484e4255,	// Australia HNBU
+	0x00030015484e4243,	// China     HNBC
+	0x00030015484e424B,	// Korea     HNBK
 };
 
 static const u64 sTitleIdListHNL[TITLE_ID_LIST_NUM] =
@@ -72,6 +77,8 @@ static const u64 sTitleIdListHNL[TITLE_ID_LIST_NUM] =
 	0x0003000f484e4c45,	// America   HNLE
 	0x0003000f484e4c50,	// Europe    HNLP
 	0x0003000f484e4c55,	// Australia HNLU
+	0x0003000f484e4c43,	// China     HNLC
+	0x0003000f484e4c4B,	// Korea     HNLK
 };
 
 static const u64 sTitleIdListHNI[TITLE_ID_LIST_NUM] =
@@ -80,6 +87,8 @@ static const u64 sTitleIdListHNI[TITLE_ID_LIST_NUM] =
 	0x00030005484e4945,	// America   HNIE
 	0x00030005484e4950,	// Europe    HNIP
 	0x00030005484e4955,	// Australia HNIU
+	0x00030005484e4943,	// China     HNIC
+	0x00030005484e494B,	// Korea     HNIK
 };
 
 static const u64 sTitleIdListHNK[TITLE_ID_LIST_NUM] =
@@ -88,6 +97,8 @@ static const u64 sTitleIdListHNK[TITLE_ID_LIST_NUM] =
 	0x00030005484e4B45,	// America   HNKE
 	0x00030005484e4B50,	// Europe    HNKP
 	0x00030005484e4B55,	// Australia HNKU
+	0x00030005484e4B43,	// China     HNKC
+	0x00030005484e4B4B,	// Korea     HNKK
 };
 
 
@@ -97,6 +108,8 @@ static const u64 sTitleIdListHNF[TITLE_ID_LIST_NUM] =
 	0x00030015484E4645,	// America   HNFE
 	0x00030015484E4650,	// Europe    HNFP
 	0x00030015484E4655,	// Australia HNFU
+	0x00030015484E4643,	// China     HNFC
+	0x00030015484E464B,	// Korea     HNFK
 };
 
 static const u64 sTitleIdListHNJ[TITLE_ID_LIST_NUM] =
@@ -105,6 +118,8 @@ static const u64 sTitleIdListHNJ[TITLE_ID_LIST_NUM] =
 	0x00030005484E4A45,	// America   HNJE
 	0x00030005484E4A50,	// Europe    HNJP
 	0x00030005484E4A55,	// Australia HNJU
+	0x00030005484E4A43,	// China     HNJC
+	0x00030005484E4A4B,	// Korea     HNJK
 };
 
 
