@@ -20,8 +20,14 @@ TWL_IPL_COMMONDEFS_ = TRUE
 
 #FIRM_USE_PRODUCT_KEYS = TRUE
 #SYSM_BUILD_FOR_DEBUGGER = TRUE
+
+# 開発機で全ホワイトリストチェックを無視する場合TRUE (デフォルトはTRUE)
 SYSM_DEV_WHITELIST_CHECK_SKIP ?= TRUE
+
+# バナーハッシュチェックを無視する場合TRUE (デフォルトは FALSE)
 #SYSM_IGNORE_DHT_PHASE_3 = TRUE
+
+# 新ホワイトリストでなくてもFatalにならないようにしたい場合TRUE (デフォルトはTRUE)
 SYSM_IGNORE_DHT_EX_NOT_FOUND ?= TRUE
 
 ifeq	($(TARGET_FIRM),SYSTEMMENU)
