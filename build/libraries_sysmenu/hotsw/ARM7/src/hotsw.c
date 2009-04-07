@@ -24,7 +24,7 @@
 #include    <../build/libraries/mb/common/include/mb_fileinfo.h>
 
 //#define HOTSW_DISABLE_FORCE_CARD_OFF
-//#define HOTSW_CHECK_CREATE_MONITOR_THREAD
+#define HOTSW_CHECK_CREATE_MONITOR_THREAD
 
 // カード電源ONからROMヘッダロードまでの期間にスリープに入る時のワンセグ対策しない場合
 //#define HOWSW_ENABLE_DEEP_SLEEP_WHILE_INSERT_CARD
