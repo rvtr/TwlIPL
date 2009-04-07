@@ -37,29 +37,35 @@ OSTWLRegion gRegion = OS_TWL_REGION_JAPAN;
     “à•”’è”’è‹`
  *---------------------------------------------------------------------------*/
 
-static const u16 POS_Y_JAPAN     =  52;
-static const u16 POS_Y_AMERICA   =  66;
-static const u16 POS_Y_EUROPE    =  80;
-static const u16 POS_Y_AUSTRALIA =  94;
+static const u16 POS_Y_JAPAN     =  44;
+static const u16 POS_Y_AMERICA   =  56;
+static const u16 POS_Y_EUROPE    =  68;
+static const u16 POS_Y_AUSTRALIA =  80;
+static const u16 POS_Y_CHINA     =  92;
+static const u16 POS_Y_KOREA     = 104;
 
 /*---------------------------------------------------------------------------*
     “à•”•Ï”’è‹`
  *---------------------------------------------------------------------------*/
 
-static const u16 sPosArray[4] =
+static const u16 sPosArray[OS_TWL_REGION_MAX] =
 {
 	POS_Y_JAPAN,
 	POS_Y_AMERICA,
 	POS_Y_EUROPE,
-	POS_Y_AUSTRALIA
+	POS_Y_AUSTRALIA,
+	POS_Y_CHINA,
+	POS_Y_KOREA
 };
 
-const u16* sRegionStringArray[4] =
+const u16* sRegionStringArray[OS_TWL_REGION_MAX] =
 {
 	L"region Japan",
 	L"region America",
 	L"region Europe",
-	L"region Australia"
+	L"region Australia",
+	L"region China",
+	L"region Korea"
 };
 
 /*---------------------------------------------------------------------------*
@@ -134,7 +140,7 @@ void ProcessSelectRegion(void)
 #ifndef JP_REGION_ONLY
 			if (kamiPadIsRepeatTrigger(PAD_KEY_DOWN))
 			{
-				if (++gRegion > OS_TWL_REGION_AUSTRALIA)
+				if (++gRegion >= OS_TWL_REGION_MAX)
 				{
 					gRegion = OS_TWL_REGION_JAPAN;
 				}
@@ -143,7 +149,7 @@ void ProcessSelectRegion(void)
 			{
 				if (--gRegion < OS_TWL_REGION_JAPAN)
 				{
-					gRegion = OS_TWL_REGION_AUSTRALIA;
+					gRegion = (OSTWLRegion)(OS_TWL_REGION_MAX-1);
 				}
 			}
 #endif // JP_REGION_ONLY
@@ -164,7 +170,7 @@ void ProcessSelectRegion(void)
 #endif
 
 #ifndef JP_REGION_ONLY
-		for (i=0;i<OS_TWL_REGION_AUSTRALIA+1;i++)
+		for (i=0;i<OS_TWL_REGION_MAX;i++)
 		{
 			if (gRegion != i)
 			{

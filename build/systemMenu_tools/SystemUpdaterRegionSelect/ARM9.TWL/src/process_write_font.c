@@ -110,9 +110,30 @@ BOOL ProcessWriteFont(void)
 			{
 				if (!STD_CompareString( pExtension, ".dat") || !STD_CompareString( pExtension, ".DAT")  )
 				{
-					STD_TSNPrintf(full_path, sizeof(full_path), "rom:/data/common/%s", info->longname);
-					find = TRUE;
-					break;
+					// “ú•Ä‰¢‹
+					if (gRegion < OS_TWL_REGION_CHINA && 
+						!STD_SearchString( info->longname, "_CN_" ) && 
+						!STD_SearchString( info->longname, "_KR_" )) 
+					{
+						STD_TSNPrintf(full_path, sizeof(full_path), "rom:/data/common/%s", info->longname);
+						find = TRUE;
+						break;
+					}
+					// ’†
+					else if (gRegion == OS_TWL_REGION_CHINA && STD_SearchString( info->longname, "_CN_" )) 
+					{
+						STD_TSNPrintf(full_path, sizeof(full_path), "rom:/data/common/%s", info->longname);
+						find = TRUE;
+						break;
+					}
+					// ŠØ
+					else if (gRegion == OS_TWL_REGION_KOREA && STD_SearchString( info->longname, "_KR_" )) 
+					{
+						STD_TSNPrintf(full_path, sizeof(full_path), "rom:/data/common/%s", info->longname);
+						find = TRUE;
+						break;
+					}
+
 				}
 			}
         }

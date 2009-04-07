@@ -114,11 +114,16 @@ void* WriteDataProcessAfter0(void)
 	// オート実行用
 	if (gAutoFlag)
 	{
+#ifdef MARIOCLUB_VERSION
 		sMenuSelectNo = MENU_WRAP;
+#else  // MARIOCLUB_VERSION
+		sMenuSelectNo = MENU_FONT;
+#endif // MARIOCLUB_VERSION
 		FADE_IN_RETURN( WriteDataProcess2 );
 	}
 #endif
 
+// NEVER REACHED
 	FADE_IN_RETURN( WriteDataProcess1 );
 }
 
@@ -180,15 +185,6 @@ void WriteDataProcessDrawMenu(void)
 
 void* WriteDataProcess1(void)
 {
-#ifndef NAND_INITIALIZER_LIMITED_MODE
-	// オート実行用
-	if (gAutoFlag)
-	{
-		sMenuSelectNo = MENU_FONT;
-		return WriteDataProcess2;
-	}
-#endif
-
 	// 選択メニューの変更
     if ( kamiPadIsRepeatTrigger(PAD_KEY_UP) )
 	{
@@ -228,16 +224,18 @@ void* WriteDataProcess1(void)
 
 void* WriteDataProcess2(void)
 {
-	BOOL result;
+	BOOL result = TRUE;
 	s16 y_pos = (s16)(7 + sMenuSelectNo * CHAR_OF_MENU_SPACE);
 
 	switch( sMenuSelectNo )
 	{
 	case MENU_CERT:
+#ifdef   MARIOCLUB_VERSION
 		result = WriteCertData();
 		
 		// sysmenu.logの生成をこのタイミングで行っておく
 		ERRORLOG_Init(OS_AllocFromMain, OS_FreeToMain);
+#endif //MARIOCLUB_VERSION
 		break;
 	case MENU_WRAP:
 		// ダミーのDSメニューラッピング用ファイル作成（UIGランチャーが作っているもの）
@@ -274,6 +272,7 @@ void* WriteDataProcess2(void)
 		switch(sMenuSelectNo)
 		{
 		case MENU_CERT:
+#ifdef   MARIOCLUB_VERSION
 			if (total_result) 
 			{
 				gAutoProcessResult[AUTO_PROCESS_MENU_VARIOUS_DATA_1] = AUTO_PROCESS_RESULT_SUCCESS; 
@@ -284,13 +283,14 @@ void* WriteDataProcess2(void)
 				gAutoProcessResult[AUTO_PROCESS_MENU_VARIOUS_DATA_1] = AUTO_PROCESS_RESULT_FAILURE; 
 				FADE_OUT_RETURN( AutoProcess2); 
 			}
+#else  //MARIOCLUB_VERSION
+				FADE_OUT_RETURN( AutoProcess1 ); 			
+#endif //MARIOCLUB_VERSION
 			
 			/* NOTREACHED */
 		case MENU_WRAP:
-#ifdef   MARIOCLUB_VERSION
 			sMenuSelectNo++;
 			return WriteDataProcess2;
-#endif //MARIOCLUB_VERSION
 		case MENU_FONT:
 #ifdef   WRITE_DEVKP_ENABLE
 			sMenuSelectNo = MENU_DEVKP;
