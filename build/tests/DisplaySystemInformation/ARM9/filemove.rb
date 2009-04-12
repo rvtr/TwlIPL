@@ -1,6 +1,6 @@
 #! ruby -Ks
-startDir = "$TWL_IPL_RED_ROOT/build/tests/DisplaySystemInformation/ARM9/bin/ARM9-TS.LTD.thumb/Rom"
-dstDir = "/build/tests/DisplaySystemInformation/ARM9/bin/ARM9-TS.LTD.thumb/roms"
+startDir = "/cygdrive/c/home/TWL_IPL/build/tests/DisplaySystemInformation/ARM9/bin/ARM9-TS.LTD.thumb/Rom"
+dstDir = "/cygdrive/c/home/TWL_IPL/build/tests/DisplaySystemInformation/ARM9/bin/ARM9-TS.LTD.thumb/roms"
 
 Dir::chdir "./bin/ARM9-TS.LTD.thumb/Rom"
 

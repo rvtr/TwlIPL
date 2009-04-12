@@ -33,20 +33,14 @@ SYSMENU_LIBS			=	\
 							libsysmutil$(TWL_LIBSUFFIX).a \
 							libboot$(TWL_LIBSUFFIX).a \
 							libds$(TWL_LIBSUFFIX).a \
-							liberrorlog$(TWL_LIBSUFFIX).a \
 							libhotsw$(TWL_LIBSUFFIX).a \
 							libdht$(TWL_LIBSUFFIX).a \
 							libreloc_info$(TWL_LIBSUFFIX).a \
 							libnamut$(TWL_LIBSUFFIX).a \
-							libsharedfont_launcher$(TWL_LIBSUFFIX).a \
+							libsharedfont$(TWL_LIBSUFFIX).a \
 							WDS$(TWL_LIBSUFFIX).a
 
 SDK_APPEND_LIBS		=		\
-							libes$(TWL_LIBSUFFIX).a		\
-							libboc$(TWL_LIBSUFFIX).a	\
-							libsfs$(TWL_LIBSUFFIX).a	\
-							libnam$(TWL_LIBSUFFIX).a	\
-							libsea$(TWL_LIBSUFFIX).a	\
 							libreboot$(TWL_LIBSUFFIX).a	\
 							libna$(TWL_LIBSUFFIX).a
 
