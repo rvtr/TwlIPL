@@ -217,6 +217,22 @@ TitleProperty *SYSM_ReadParameters( void )
         if( pBuffer ) {
             // NANDからTWL本体設定データをリード
             BOOL isRead = LCFG_ReadTWLSettings( (u8 (*)[LCFG_READ_TEMP])pBuffer );
+          
+            // [臨時:]中韓の場合は日本語、日本に設定し、初回起動シーケンスは避ける
+		    if( ( (OS_GetRegion()==OS_TWL_REGION_KOREA) || (OS_GetRegion()==OS_TWL_REGION_CHINA) ) && !LCFG_TSD_IsFinishedInitialSetting() )
+		    {
+				if( OS_GetRegion()==OS_TWL_REGION_KOREA)
+				{
+				    LCFG_TSD_SetLanguage( LCFG_TWL_LANG_KOREAN );
+				    LCFG_TSD_SetCountry( LCFG_TWL_COUNTRY_SOUTH_KOREA );
+				}else if(OS_GetRegion()==OS_TWL_REGION_CHINA)
+				{
+				    LCFG_TSD_SetLanguage( LCFG_TWL_LANG_SIMP_CHINESE );
+				    LCFG_TSD_SetCountry( LCFG_TWL_COUNTRY_CHINA );
+				}
+			    LCFG_TSD_SetFlagFinishedInitialSetting(TRUE);
+			    (void)LCFG_WriteTWLSettings( (u8 (*)[ LCFG_WRITE_TEMP ] )pBuffer );
+		    }
             
             // リード失敗ファイルが存在する場合は、ファイルをリカバリ
             if( LCFG_RecoveryTWLSettings() ) {
@@ -503,6 +519,13 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
     if( ( i == sizeof(LCFGNTRTPCalibData) ) ||
 		!LCFG_TSD_IsFinishedBrokenTWLSettings() ) {
         argument      = 100;        // フラッシュ壊れシーケンス起動
+        
+        // [臨時:]中韓のときはタッチパネル設定のみにしておく（言語設定が未完成のため）
+        if( (OS_GetRegion()==OS_TWL_REGION_KOREA) || (OS_GetRegion()==OS_TWL_REGION_CHINA) )
+        {
+			argument      = 101;
+		}
+		
         isSetArgument = TRUE;
         isBootMSET    = TRUE;
     }else 
