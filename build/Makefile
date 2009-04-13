@@ -21,10 +21,6 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-ifneq	($(TWL_KEYSDIR),)
-SUBDIRS =	tools
-endif
-
 SUBDIRS +=	libraries_sysmenu \
 			components \
 			systemMenu_RED
