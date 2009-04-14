@@ -1,6 +1,6 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlFirm - build
+# Project:  TwlIPL - firmware
 # File:     Makefile
 #
 # Copyright 2007 Nintendo.  All rights reserved.
@@ -21,25 +21,10 @@ include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 #----------------------------------------------------------------------------
 
-ifneq	($(TWL_KEYSDIR),)
-SUBDIRS =	tools
-endif
+SUBDIRS		= \
+		  attach_dummyromheader \
+		  rombreaker \
 
-SUBDIRS +=	libraries_sysmenu \
-			components \
-			systemMenu_RED
-
-
-ifneq	($(TWL_KEYSDIR),)
-SUBDIRS +=	libraries \
-			nandfirm \
-			gcdfirm \
-			systemMenu_tools
-endif
-
-ifdef TWL_IPL_WITH_TESTS
-SUBDIRS +=	tests
-endif
 
 #----------------------------------------------------------------------------
 
