@@ -80,7 +80,6 @@ static BOOL sLogoDemoSkipForce;
 static BOOL WriteHWNormalInfoFile( void );
 static BOOL WriteHWSecureInfoFile( u8 region );
 //static BOOL DeleteHWInfoFile( void );
-static BOOL GetNandInitializerSetting(u8* region, u8* wireless, u8* logodemoskip);
 
 /*---------------------------------------------------------------------------*
     プロセス関数定義
@@ -394,7 +393,7 @@ static BOOL DeleteHWInfoFile( void )
 
   Returns:      None.
  *---------------------------------------------------------------------------*/
-static BOOL GetNandInitializerSetting(u8* region, u8* wireless, u8* logodemoskip)
+BOOL GetNandInitializerSetting(u8* region, u8* wireless, u8* logodemoskip)
 {
     FSFile  file;	
     BOOL    open_is_ok;

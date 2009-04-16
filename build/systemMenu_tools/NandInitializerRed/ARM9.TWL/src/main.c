@@ -29,6 +29,8 @@
 #include "keypad.h"
 #include "kami_pxi.h"
 #include "process_fade.h"
+#include "process_hw_info.h"
+#include "process_error.h"
 #include "hwi.h"
 
 #define SCRAMBLE_MASK 0x00406000
@@ -172,6 +174,22 @@ TwlMain()
 		break;
 	}
 #endif
+
+#ifdef    REGION_LIMITATION
+{
+	static u8 tempRegion;
+	static u8 tempWireless;
+	static u8 tempLogodemoskip;
+	BOOL result;
+	
+	result = GetNandInitializerSetting(&tempRegion, &tempWireless, &tempLogodemoskip);
+	
+	if (!result || OS_GetRegion() != tempRegion)
+	{
+		sProcess = errorProcess;
+	}
+}
+#endif // REGION_LIMITATION
 
     while (1)
     {

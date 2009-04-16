@@ -26,6 +26,10 @@
 MACRO_FLAGS				+=	-DAUTO_FORMAT_MODE
 #============================================================================
 #============================================================================
+# NandInitializer.iniで指定されたRegionと本体Regionが異なる場合実行を停止します。
+#MACRO_FLAGS				+=	-DREGION_LIMITATION
+#============================================================================
+#============================================================================
 # ワイヤレスの強制Disableフラグを設定可能にする場合定義します。（要:Make Clean）
 MACRO_FLAGS				+=	-DUSE_WIRELESS_FORCE_DISABLE_SETTING
 #============================================================================
@@ -84,6 +88,7 @@ SRCS		=	main.c \
 				process_write_data.c \
 				process_mcu.c \
 				process_wireless_setting.c \
+				process_error.c \
 				hwi.c \
 				debugger_hw_reset_control.c \
 				sort_title.c

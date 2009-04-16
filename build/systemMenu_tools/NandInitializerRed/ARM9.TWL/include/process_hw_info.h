@@ -33,9 +33,10 @@ extern "C" {
 //typedef void*  (*TpProcess)(void);
 
 /*---------------------------------------------------------------------------*
-    ä÷êîíËã`
+    ä÷êîêÈåæ
  *---------------------------------------------------------------------------*/
 
+extern BOOL GetNandInitializerSetting(u8* region, u8* wireless, u8* logodemoskip);
 void* HWInfoProcess0(void);
 void* HWInfoProcess1(void);
 void* HWInfoProcess2(void);
