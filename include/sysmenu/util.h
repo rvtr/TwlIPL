@@ -81,7 +81,13 @@ typedef enum FatalErrorCode {
     FATAL_ERROR_EJECT_CARD_AFTER_LOAD_START = 49,
     FATAL_ERROR_TITLEID_COMPARE_FAILED_NTR = 50,
 
-	FATAL_ERROR_MAX = 51
+    // 2009/1/ 8 í«â¡		TWL Card Test Launcher ÇÃÇ›ë∂ç›Ç∑ÇÈFatal Error
+	FATAL_ERROR_NOT_FOUND_BOOT_APPLICATION = 51,
+
+    // 2009/2/26 í«â¡		åüç∏äÌÇ≈ìÆçÏÇµÇƒÇ¢Ç»Ç¢èÍçáÇÃFatal Error
+    FATAL_ERROR_NOT_RUN_ON_CHECKER = 52,
+    
+	FATAL_ERROR_MAX = 53
 }FatalErrorCode;
 
 

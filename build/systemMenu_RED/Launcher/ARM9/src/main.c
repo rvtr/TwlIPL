@@ -39,6 +39,7 @@
 
 // define data-----------------------------------------------------------------
 #define INIT_DEVICES_LIKE_UIG_LAUNCHER
+#define FOR_TWL_CARD_TESTER_BUILD
 
 // デバッグ用時間計測スイッチ
 #define MEASURE_TIME				1
@@ -59,6 +60,10 @@ static void PrintPause(void);
 static void PrintError(void);
 static void PrintSystemMenuVersion( void );
 static void CreateDummyWrapFile( void );
+#ifdef FOR_TWL_CARD_TESTER_BUILD
+static BOOL IsRunOnChecker(void);
+static asm void EnableAccessExMainMEM(void);
+#endif
 
 // global variable-------------------------------------------------------------
 
@@ -125,7 +130,9 @@ static const char *fatal_error_msg[FATAL_ERROR_MAX] =
     "LOAD_AUTH_HEADER_FAILED",
     "LOAD_NEVER_STARTED",
     "EJECT_CARD_AFTER_LOAD_START",
-    "TITLEID_COMPARE_FAILED_NTR"
+    "TITLEID_COMPARE_FAILED_NTR",
+    "NOT_FOUND_BOOT_APPLICATION",	// 2009/1/8  追加
+    "NOT_RUN_ON_CHECKER"			// 2009/2/26 追加
 };
 
 //#define DEBUG_LAUNCHER_DUMP
@@ -352,29 +359,36 @@ void TwlMain( void )
 	// ・NANDアプリリスト作成関数は同期版を使う
     sp_titleList = SYSM_GetNandTitleList();
 
+#ifdef FOR_TWL_CARD_TESTER_BUILD
+	// ・プロテクションユニットの変更
+    EnableAccessExMainMEM();
+
+    // ・検査器で動作しているか調べる
+    if( !IsRunOnChecker() )
+    {
+		UTL_SetFatalError( FATAL_ERROR_NOT_RUN_ON_CHECKER );
+    }
+#endif
+    
 	// アプリジャンプでない場合
 	if( !pBootTitle ) {
 		// 特定のNANDアプリがあるかどうかチェック
 		u32 i;
-        u32 index = 0;
-        BOOL isCheckProgram = FALSE;
 
        	for(i = 0; i < LAUNCHER_TITLE_LIST_NUM; i++){
 			TitleID_HiLo tempID = *(TitleID_HiLo *)(&sp_titleList[i].titleID);
            	if(sp_titleList[i].titleID){
                 // 特定のNANDアプリがあった場合は
                 if(tempID.Lo[0] == 'A' && tempID.Lo[1] == 'C' && tempID.Lo[2] == 'T' && tempID.Lo[3] == '0'){
-					isCheckProgram = TRUE;
-                    index = i;
+            		pBootTitle = &sp_titleList[i];
+            		pBootTitle->flags.isLogoSkip = TRUE;
                 }
            	}
        	}
 
-        // ・NANDアプリに検査プログラムがある → NANDアプリをダイレクトブート
-        // ・NANDアプリに検査プログラムがない → ランチャ起動
-        if(isCheckProgram){
-            pBootTitle = &sp_titleList[index];
-            pBootTitle->flags.isLogoSkip = TRUE;
+        // // 2009/1/8 追加		特定のNANDアプリがなかった場合はFatal Errorを発生させる
+        if( !pBootTitle ){
+			UTL_SetFatalError( FATAL_ERROR_NOT_FOUND_BOOT_APPLICATION );
         }
     }
     // アプリジャンプの場合
@@ -457,11 +471,11 @@ void TwlMain( void )
     }
 
 #ifdef SYSM_BUILD_FOR_PRODUCTION_TEST
-    if( !pBootTitle ||
+/*    if( !pBootTitle ||
         ( pBootTitle && ( pBootTitle->flags.bootType != LAUNCHER_BOOTTYPE_ROM ) )
 	) {
 		state = STOP;
-	}
+	}*/
 #endif // SYSM_BUILD_FOR_PRODUCTION_TEST
 
     // チャンネルをロックする
@@ -812,3 +826,62 @@ static void INTR_VBlank(void)
     OS_SetIrqCheckFlag(OS_IE_V_BLANK);                              // Vブランク割込チェックのセット
 }
 
+
+/*---------------------------------------------------------------------------*
+  Desc: プログラムが検査器上で動作しているか？
+        拡張メインメモリのアドレスにマッピングされた検査器レジスタを確認する。
+         
+  Args: なし
+
+  Rtns: ASCIIコードで"TCAT"がリード出来ればTRUEを返す。
+　　　　値が異なる場合は検査器上で動作していないとみなし、FALSEを返す。
+ *---------------------------------------------------------------------------*/
+#ifdef FOR_TWL_CARD_TESTER_BUILD
+// 検査器のレジスタ定義
+#define REG_TCAT_CHECKER_ID_L       ((vu16 *)0x0d000d00)
+#define REG_TCAT_CHECKER_ID_H       ((vu16 *)0x0d000d02)
+ 
+static BOOL IsRunOnChecker(void)
+{
+    const int correct_cid = 0x54434154; // ASCIIコード”TCAT”
+    u32 cid;
+
+    cid = (*REG_TCAT_CHECKER_ID_L | (*REG_TCAT_CHECKER_ID_H << 16));
+
+	return (cid == correct_cid) ? TRUE : FALSE;
+}
+#endif
+
+/*---------------------------------------------------------------------------*
+  Desc: 拡張メインメモリ（c3）領域にアクセスするためにプロテクションユニットの変更  　　　　
+　　　　キャッシュ・ライトバッファは無効
+        
+　      ※ポートチェッカの操作ミスでフリーズするのを避けるため、0x0c0000000から32MB分に設定
+         
+  Args: なし
+
+  Rtns: なし
+ *---------------------------------------------------------------------------*/
+#ifdef FOR_TWL_CARD_TESTER_BUILD
+#define SET_PROTECTION_A( id, adr, siz ) 	ldconst r0, #(adr|HW_C6_PR_##siz|HW_C6_PR_ENABLE)
+#define SET_PROTECTION_B( id, adr, siz )    mcr     p15, 0, r0, c6, id, 0
+#define REGION_BIT(a, b, c, d, e, f, g, h)  (((a) << 0) | ((b) << 1) | ((c) << 2) | ((d) << 3) | ((e) << 4) | ((f) << 5) | ((g) << 6) | ((h) << 7))
+static asm void EnableAccessExMainMEM(void){
+        SET_PROTECTION_A( c3, 0x0c000000, 32MB )
+        SET_PROTECTION_B( c3, 0x0c000000, 32MB )
+
+        /* 命令キャッシュ許可 */
+        mov             r0, #REGION_BIT(0, 1, 0, 0, 0, 0, 1, 0)
+        mcr             p15, 0, r0, c2, c0, 1
+
+        /* データキャッシュ許可 */
+        mov             r0, #REGION_BIT(0, 1, 0, 0, 0, 0, 1, 0)
+        mcr             p15, 0, r0, c2, c0, 0
+
+        /* ライトバッファ許可 */
+        mov             r0, #REGION_BIT(0, 1, 0, 0, 0, 0, 0, 0)
+        mcr             p15, 0, r0, c3, c0, 0
+
+        bx     lr
+}
+#endif

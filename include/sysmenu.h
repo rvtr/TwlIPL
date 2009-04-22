@@ -19,6 +19,8 @@
 
 // Compile switch----------------------
 //#define DEBUG_USED_CARD_SLOT_B_                           // デバッグ用でカードスロットBを使用する場合に有効にする。
+#define SYSM_DISABLE_WLFIRM_LOAD
+#define SYSM_BUILD_FOR_PRODUCTION_TEST	// 2009/1/8 追加
 
 //-------------------------------------
 

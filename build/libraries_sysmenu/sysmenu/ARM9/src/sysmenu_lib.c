@@ -442,10 +442,10 @@ static TitleProperty *SYSMi_CheckShortcutBoot1( void )
 	    // 量産工程用ショートカットキー or
 	    // 検査カード起動
 	    //-----------------------------------------------------
-        if( SYSM_IsInspectCard() ||
+        if( SYSM_IsInspectCard() /*||
             ( ( PAD_Read() == SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) && 
               ( !LCFG_TSD_IsFinishedBrokenTWLSettings() || !LCFG_TSD_IsFinishedInitialSetting() || !LCFG_TSD_IsFinishedInitialSetting_Launcher() ) )
-            ){
+            */){
             return SYSMi_ShortcutCardBootSub();
         }
 	    //-----------------------------------------------------

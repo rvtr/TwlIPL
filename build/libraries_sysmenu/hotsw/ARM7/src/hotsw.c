@@ -25,6 +25,7 @@
 
 //#define HOTSW_DISABLE_FORCE_CARD_OFF
 #define HOTSW_CHECK_CREATE_MONITOR_THREAD
+#define HOTSW_CARD_TESTER_DEBUG
 
 // カード電源ONからROMヘッダロードまでの期間にスリープに入る時のワンセグ対策しない場合
 //#define HOWSW_ENABLE_DEEP_SLEEP_WHILE_INSERT_CARD
@@ -59,7 +60,12 @@
 #define     HOTSW_EXMEMCNT_SELB_SHIFT           10
 #endif
 
-// 本体セキュア情報の手前 6byte 分を間借りしてCRC情報を入れておく。
+// 本体セキュア情報の手前を間借りしてCRC情報を入れておく。
+#ifdef HOTSW_CARD_TESTER_DEBUG
+#define		HOTSW_SECURE_ID_BUFFER				(HW_HW_SECURE_INFO - 0xc)
+#define		HOTSW_ERROR_BUFFER					(HW_HW_SECURE_INFO - 0xa)
+#endif
+#define		HOTSW_EXT_ROM_HEADER_CRC_BUFFER		(HW_HW_SECURE_INFO - 0x8)
 #define		HOTSW_ROM_HEADER_CRC_BUFFER			(HW_HW_SECURE_INFO - 0x6)
 #define		HOTSW_SECURE1_CRC_BUFFER			(HW_HW_SECURE_INFO - 0x4)
 #define		HOTSW_SECURE2_CRC_BUFFER			(HW_HW_SECURE_INFO - 0x2)
@@ -1926,7 +1932,8 @@ static void ForceNormalModeToFinalize(void)
  *---------------------------------------------------------------------------*/
 static BOOL ChangeCardMode(BOOL forceNtrMode)
 {
-    HotSwState state;
+    HotSwState state = HOTSW_SUCCESS;
+    HotSwState retval = HOTSW_SUCCESS;
 
     // カードのロック
     CARD_LockRom(s_CardLockID);
@@ -1943,11 +1950,19 @@ static BOOL ChangeCardMode(BOOL forceNtrMode)
 
     // ---------------------- Normal Mode ----------------------
     state = LoadTable();
+    retval = (retval == HOTSW_SUCCESS) ? state : retval;
+    
     state = ReadIDNormal(&s_cbData);
+	retval = (retval == HOTSW_SUCCESS) ? state : retval;
+
     state = ReadBootSegNormal(&s_cbData);
+    retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
 	// RomHeaderのCRC16の値を計算
-	*(u16 *)HOTSW_ROM_HEADER_CRC_BUFFER = SVC_GetCRC16( 65535, s_cbData.pBootSegBuf, 0x015e );
+	*(u16 *)HOTSW_ROM_HEADER_CRC_BUFFER 	= SVC_GetCRC16( 65535, s_cbData.pBootSegBuf, 0x015e );
+
+    // 拡張RomHeaderのCRC16の値を計算(0x0000_0160～0x0000_0fff)
+    *(u16 *)HOTSW_EXT_ROM_HEADER_CRC_BUFFER	= SVC_GetCRC16( 65535, (u8 *)((u8 *)s_cbData.pBootSegBuf + 0x160), 0x0ea0 );
 
     if(s_isRomEmu){
         s_cbData.cardType = ROM_EMULATION;
@@ -1964,11 +1979,21 @@ static BOOL ChangeCardMode(BOOL forceNtrMode)
 
     MakeBlowfishTableDS(&s_cbData, 8);
     GenVA_VB_VD();
+    
     state = ChangeModeNormal(&s_cbData);
+    retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
     // ---------------------- Secure Mode ----------------------
     state = ReadSecureModeCardData();
+    retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
+#ifdef HOTSW_CARD_TESTER_DEBUG
+    if(retval != HOTSW_SUCCESS)
+    {
+		*(u16 *)HOTSW_ERROR_BUFFER |= 0x0010;
+    }
+#endif
+    
     // Secure SegmentのCRC16の計算と格納
 	*(u16 *)HOTSW_SECURE1_CRC_BUFFER = SVC_GetCRC16( 65535, s_cbData.pSecureSegBuf, SECURE_SEGMENT_SIZE );
     
@@ -1976,7 +2001,7 @@ static BOOL ChangeCardMode(BOOL forceNtrMode)
     // TWLカード      → Game2モード
     // NTRカード      → Gameモード
     // アプリジャンプ → Gameモード
-    if(!forceNtrMode && s_cbData.id_nml & HOTSW_ROMID_TWLROM_MASK){
+    if(!forceNtrMode && (s_cbData.id_nml & HOTSW_ROMID_TWLROM_MASK) && (s_cbData.pBootSegBuf->rh.s.platform_code & PLATFORM_CODE_FLAG_TWL)){
         s_cbData.modeType = HOTSW_MODE2;
 
 		OS_PutString("---------- Game2 Mode...\n");
@@ -1986,17 +2011,30 @@ static BOOL ChangeCardMode(BOOL forceNtrMode)
     	McPowerOn();
 
 		// ---------------------- Normal Mode ----------------------
-    	state = ReadSecureModeCardData();
+//    	state = ReadSecureModeCardData();
+        state  = ReadBootSegNormal(&s_cbData);
+        retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
     	MakeBlowfishTableTWL(&s_cbData, 8, s_bondingOp); // s_bondingOpの値はHotSw_Initで格納される
 
     	GenVA_VB_VD();
 
     	state = ChangeModeNormal2(&s_cbData);
+        retval = (retval == HOTSW_SUCCESS) ? state : retval;
     
 		// ---------------------- Secure2 Mode ----------------------
 		state = ReadSecureModeCardData();
+        retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
+#ifdef HOTSW_CARD_TESTER_DEBUG
+		*(u16 *)HOTSW_SECURE_ID_BUFFER = (u16)s_cbData.id_nml;
+
+	    if(retval != HOTSW_SUCCESS)
+	    {
+			*(u16 *)HOTSW_ERROR_BUFFER |= 0x0100;
+    	}
+#endif
+        
     	// Secure SegmentのCRC16の計算と格納
 		*(u16 *)HOTSW_SECURE2_CRC_BUFFER = SVC_GetCRC16( 65535, s_cbData.pSecure2SegBuf, SECURE_SEGMENT_SIZE );
     }
@@ -2005,14 +2043,23 @@ static BOOL ChangeCardMode(BOOL forceNtrMode)
     }
     
 	state = s_funcTable[s_isRomEmu].ChangeMode_S(&s_cbData);
+    retval = (retval == HOTSW_SUCCESS) ? state : retval;
     
     // ---------------------- Game2 Mode ----------------------
     state = ReadIDGame(&s_cbData);
+    retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
     if(s_cbData.id_nml != s_cbData.id_gam){
-        state = HOTSW_ID_CHECK_ERROR;
+        retval = (retval == HOTSW_SUCCESS) ? HOTSW_ID_CHECK_ERROR : retval;
     }
 
+#ifdef HOTSW_CARD_TESTER_DEBUG
+    if(retval != HOTSW_SUCCESS)
+    {
+		*(u16 *)HOTSW_ERROR_BUFFER |= 0x1000;
+    }
+#endif
+    
 #ifdef USE_NEW_DMA
     HOTSW_WaitNDmaCtrl(HOTSW_NDMA_NO);
 #else
@@ -2024,7 +2071,11 @@ static BOOL ChangeCardMode(BOOL forceNtrMode)
     // カードのアンロック
     CARD_UnlockRom(s_CardLockID);
 
-    if(state == HOTSW_SUCCESS){
+#ifdef HOTSW_CARD_TESTER_DEBUG
+	*(u16 *)HOTSW_ERROR_BUFFER |= retval;
+#endif
+
+    if(retval == HOTSW_SUCCESS){
         return TRUE;
     }
     else{
