@@ -16,15 +16,20 @@
 # $Author$
 #----------------------------------------------------------------------------
 
+#TWL_NANDAPP = TRUE
+
 #============================================================================
 #製品鍵を使った書き込みを行う場合は、TwlIPL/build/buildtools/commondefsの"FIRM_USE_PRODUCT_KEYS=TRUE"を有効にしてください。
 #============================================================================
 
 # SystemMenuファイルの置かれているフォルダを指定(相対もしくは絶対）
-UPDATER_HOST_ROOT_DIR = ./v1_2
+UPDATER_HOST_ROOT_DIR = ./v1_3
 
 # JPリージョンしか選択できなくする場合はTRUEを指定
 JP_REGION_ONLY			?= FALSE
+
+# 中韓リージョンを選択できなくする場合はTRUEを指定
+DISABLE_CK_REGION		?= TRUE
 
 # COMPILE SWITCH for build SystemUpdater（TRUEにすると、ダミーdev.kpを生成しないようになります。）
 FOR_LOTCHECK			?=	FALSE
@@ -120,6 +125,10 @@ ifeq ($(JP_REGION_ONLY),TRUE)
 MACRO_FLAGS += -DJP_REGION_ONLY
 endif
 
+ifeq ($(DISABLE_CK_REGION),TRUE)
+MACRO_FLAGS += -DDISABLE_CK_REGION
+endif
+
 ifeq ($(FOR_LOTCHECK),TRUE)
 MACRO_FLAGS += -DFOR_LOTCHECK
 endif
@@ -146,7 +155,7 @@ MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
 							-DDISABLE_DEBUG='$(SYSM_DISABLE_DEBUG)' \
 							-DUPDATER_HOST_ROOT_DIR='$(UPDATER_HOST_ROOT_DIR)'
 
-MAKETAD_FLAGS			+=	-s
+MAKETAD_OPTION			+=	-s
 
 SYSMENU_LIBS			=	\
 							libnamut$(TWL_LIBSUFFIX).a \

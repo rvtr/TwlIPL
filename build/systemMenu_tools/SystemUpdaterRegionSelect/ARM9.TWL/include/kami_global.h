@@ -47,7 +47,7 @@ typedef enum
     íËêîíËã`
  *---------------------------------------------------------------------------*/
 
-#define SYSTEM_UPDATER_NAME         L"SystemUpdater ver.1.2"
+#define SYSTEM_UPDATER_NAME         L"SystemUpdater ver.1.3"
 #define SYSTEM_UPDATER_LOG_PATH     "nand:/sys/log/updater.log"
 #define SYSTEM_UPDATER_MAGIC_CODE   44001111
 

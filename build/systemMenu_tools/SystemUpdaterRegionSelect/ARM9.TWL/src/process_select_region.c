@@ -23,6 +23,12 @@
 #include "debugger_hw_reset_control.h"
 #include "debugger_card_rom.h"
 
+#ifdef DISABLE_CK_REGION
+#define    SELECT_MAX             OS_TWL_REGION_CHINA
+#else
+#define    SELECT_MAX             OS_TWL_REGION_MAX
+#endif
+
 /*---------------------------------------------------------------------------*
     型定義
  *---------------------------------------------------------------------------*/
@@ -114,6 +120,11 @@ void ProcessSelectRegion(void)
 
 #ifndef JP_REGION_ONLY
 	gRegion = OS_GetRegion();
+	// 中韓リージョンの本体に中韓非対応 Updater を使うと飛び越えるので対応
+	if (gRegion >= SELECT_MAX)
+	{
+		gRegion = OS_TWL_REGION_JAPAN;
+	}
 #endif // JP_REGION_ONLY
 
 	while(1)
@@ -140,7 +151,7 @@ void ProcessSelectRegion(void)
 #ifndef JP_REGION_ONLY
 			if (kamiPadIsRepeatTrigger(PAD_KEY_DOWN))
 			{
-				if (++gRegion >= OS_TWL_REGION_MAX)
+				if (++gRegion >= SELECT_MAX)
 				{
 					gRegion = OS_TWL_REGION_JAPAN;
 				}
@@ -149,7 +160,7 @@ void ProcessSelectRegion(void)
 			{
 				if (--gRegion < OS_TWL_REGION_JAPAN)
 				{
-					gRegion = (OSTWLRegion)(OS_TWL_REGION_MAX-1);
+					gRegion = (OSTWLRegion)(SELECT_MAX-1);
 				}
 			}
 #endif // JP_REGION_ONLY
@@ -170,7 +181,7 @@ void ProcessSelectRegion(void)
 #endif
 
 #ifndef JP_REGION_ONLY
-		for (i=0;i<OS_TWL_REGION_MAX;i++)
+		for (i=0;i<SELECT_MAX;i++)
 		{
 			if (gRegion != i)
 			{
