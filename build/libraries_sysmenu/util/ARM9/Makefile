@@ -39,6 +39,7 @@ INSTALL_TARGETS	=	$(TARGETS)
 INSTALL_DIR		=	$(SYSMENU_INSTALL_LIBDIR)
 
 LINCLUDES		=	$(ROOT)/build/libraries/spi/ARM9/include	\
+					$(SYSMENU_ROOT)/build/libraries_sysmenu/sysmenu/common/include
 
 #----------------------------------------------------------------------------
 

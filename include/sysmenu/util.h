@@ -20,6 +20,9 @@
 
 #include <twl.h>
 #include <twl/os/common/format_rom.h>
+#ifdef SYSM_BUILD_FOR_DEBUGGER
+#include <sysmenu/sysmenu_lib/common/sysmenu_work.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -133,10 +136,12 @@ static inline BOOL UTL_CheckAppRegion( u32 card_region_bitmap )
 {
 #ifdef SYSM_BUILD_FOR_DEBUGGER
 #pragma unused(card_region_bitmap)
-    return TRUE;
-#else
-    return ( card_region_bitmap & ( 0x00000001 << OS_GetRegion() ) ) ? TRUE : FALSE;
+	// デバッガ動作時のみ、リージョンチェックを無効にする。
+	if( SYSM_IsRunOnDebugger() ) {
+		return TRUE;
+	}
 #endif
+    return ( card_region_bitmap & ( 0x00000001 << OS_GetRegion() ) ) ? TRUE : FALSE;
 }
 
 // CRCチェック
