@@ -22,7 +22,6 @@ TARGET_PLATFORM	=	TWL
 
 SRCS			=	main.c
 TARGET_BIN		=	main.tad
-ROM_SPEC		=	main.rsf
 
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
