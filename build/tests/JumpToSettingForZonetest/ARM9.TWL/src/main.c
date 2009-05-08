@@ -5,6 +5,8 @@
 #include "screen.h"
 #include "keypad.h"
 
+#define DAMMY_TITLEID_HI 0x00030005
+#define DAMMY_TITLEID_LO 0x484e4a00
 #define JUMP_GAMECODE 0x00030015484e4241ULL
 #define JUMP_PARAMETER 50
 
@@ -13,7 +15,7 @@ void myInit(void);
 
 void TwlMain( void )
 {
-
+	unsigned char regioncode;
 	myInit();
 	
 	//---- interrupt setting
@@ -21,14 +23,48 @@ void TwlMain( void )
 	OS_EnableIrqMask(OS_IE_V_BLANK);
 	OS_EnableIrq();
 	GX_VBlankIntr(TRUE);
+	
 		
 	PrintString(0, 0, CONSOLE_WHITE, "Press A key To AppJump");
-
+	
+	switch(OS_GetRegion()){
+		case OS_TWL_REGION_JAPAN:
+			regioncode = 'J';
+			break;
+		case OS_TWL_REGION_AMERICA:
+			regioncode = 'E';
+			break;
+		case OS_TWL_REGION_EUROPE:
+			regioncode = 'P';
+			break;
+		case OS_TWL_REGION_AUSTRALIA:
+			regioncode = 'U';
+			break;
+		case OS_TWL_REGION_KOREA:
+			regioncode = 'K';
+			break;
+		case OS_TWL_REGION_CHINA:
+			regioncode = 'C';
+			break;
+		default:
+			PrintString(0, 1, CONSOLE_RED, "Illegal Region setting!");
+			OS_Terminate();
+			goto ERROR;
+	}
+	
+	
 	while(1){
 		kamiPadRead();
 		
 		if(kamiPadIsTrigger(PAD_BUTTON_A)){
 			OSDeliverArgInfo info;
+			u32 dammycode_lo = (u32)(DAMMY_TITLEID_LO | (u32)regioncode);
+			
+			// romheaderÇÃÉ^ÉCÉgÉãIDÇèëÇ´ä∑Ç¶ÇƒÈxÇ∑
+			PrintString(0,3, CONSOLE_WHITE, "%x", dammycode_lo);
+			OS_WaitVBlankIntr();
+			MI_StoreLE32((void*)(HW_TWL_ROM_HEADER_BUF + 0x230), dammycode_lo);
+			MI_StoreLE32((void*)(HW_TWL_ROM_HEADER_BUF + 0x234), DAMMY_TITLEID_HI);
 			
 			OS_InitDeliverArgInfo(&info, 0);
 			OS_SetSysParamToDeliverArg(JUMP_PARAMETER);
@@ -40,8 +76,10 @@ void TwlMain( void )
 		
 		OS_WaitVBlankIntr();
 	}
-		
 	
+ERROR:
+		
+	OS_WaitVBlankIntr();
 	OS_Terminate();
 }
 
