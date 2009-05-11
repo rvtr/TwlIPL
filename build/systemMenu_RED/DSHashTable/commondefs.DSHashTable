@@ -31,6 +31,7 @@ DS_HASH_TABLE_TITLE_ID        :=    $(DS_HASH_TABLE_TITLE_ID_HI)$(DS_HASH_TABLE_
 DS_HASH_TABLE_GROUP_ID        :=    3031
 
 DS_HASH_TABLE_VERSION         :=    $(shell perl -e 'open IN, "$(DS_HASH_TABLE_DATA)"; binmode IN; seek IN, 132, 0; read IN, $$buf, 2; print unpack "S", $$buf; close IN')
+DS_HASH_TABLE_EX_VERSION      :=    $(shell perl -e 'open IN, "$(DS_HASH_TABLE_EX_DATA)"; binmode IN; seek IN, 132, 0; read IN, $$buf, 2; print unpack "S", $$buf; close IN')
 
 #DS_HASH_TABLE_MAJOR_VERSION   :=    $(shell expr $(DS_HASH_TABLE_VERSION) / 256)
 #DS_HASH_TABLE_MINOR_VERSION   :=    $(shell expr $(DS_HASH_TABLE_VERSION) % 256)
