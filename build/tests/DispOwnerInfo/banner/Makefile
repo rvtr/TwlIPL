@@ -62,7 +62,7 @@ $(TARGETS):		$(BANNER_SPEC) $(BANNER_ICON)
 #----------------------------------------------------------------------------
 #  test
 #----------------------------------------------------------------------------
-include $(NITROSDK_ROOT)/build/buildtools/commondefs.emtype.ISD
+#include $(NITROSDK_ROOT)/build/buildtools/commondefs.emtype.ISD
 
 test:			$(TARGETS)
 			$(ADDBANNER) $(TARGETS) $(TARGETS:.bnr=.srl)

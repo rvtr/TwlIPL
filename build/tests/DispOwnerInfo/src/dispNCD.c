@@ -167,7 +167,9 @@ void SEQ_DispNCD_init( void )
 	
 	ClearAllStringSJIS();
 	
-	(void)DrawStringSJIS( 1,  0, YELLOW, (const u8 *)"Disp OwnerInfo [Use SDK]" );
+//	(void)DrawStringSJIS( 1,  0, YELLOW, (const u8 *)"Disp OwnerInfo [Use SDK 2.00 W]" );
+//	(void)DrawStringSJIS( 1,  0, YELLOW, (const u8 *)"Disp OwnerInfo [Use SDK 2.01 WC]" );
+	(void)DrawStringSJIS( 1,  0, YELLOW, (const u8 *)"Disp OwnerInfo [Use SDK 5.01 PR1 WCK]" );
 	
 	DrawNCD_ElementName();
 	DrawNCD_Element();

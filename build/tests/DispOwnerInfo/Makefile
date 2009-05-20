@@ -54,8 +54,8 @@ SUBDIRS				=	banner
 
 #----------------------------------------------------------------------------
 
-TARGET_NEF			=	DebugForIPL2.nef
-TARGET_BIN			=	DebugForIPL2.srl
+TARGET_NEF			=	DispOwnerInfo.nef
+TARGET_BIN			=	DispOwnerInfo.srl
 
 SRCS				=	main.c initFunc.c font.c data.c dispNCD.c myFunc.c myChar.c
 
@@ -74,14 +74,13 @@ MAKEROM_ROMROOT		=	./data
 MAKEROM_ROMFILES	=	*.bin
 
 LINCLUDES			+=	include
-LLIBRARY_DIRS   	+=	mlib/$(NITRO_LIBTYPE)
-LLIBRARIES 			+=	libfnt.a
+LLIBRARY_DIRS   	+=	mlib/$(NITRO_LIBTYPE) $(FONT_DIR)
+LLIBRARIES 			+=	libfnt.a $(FONTS:.dat=.o)
 
 LDIRT_CLEAN			=	$(FONT_DIR)/*.o
 
 include	$(NITROSDK_ROOT)/build/buildtools/commondefs
 
-CCFLAGS			+=	-DSDK_NCD_LOCAL_USE -DD$(IPL2_VER)
 
 #----------------------------------------------------------------------------
 
@@ -89,15 +88,10 @@ do-build:	$(FONT_OBJS)  $(TARGETS)
 
 include	$(NITROSDK_ROOT)/build/buildtools/modulerules
 
-OBJS_STATIC			+=	$(FONT_OBJS)
-
 $(TARGETS) : $(MAKEROM_ARM7)
 
 $(FONT_DIR)/%.o : $(FONT_DIR)/%.dat
 	$(CW_BINDIR)/BinToElf.exe $< -aligndata 4 -endian little -output $@
-
-release:
-	updateReleasetime.plx src/mainMenu.c
 
 
 #===== End of Makefile =====
