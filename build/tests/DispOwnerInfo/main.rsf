@@ -1,0 +1,39 @@
+#
+#  Nitro ROM SPEC FILE
+#
+
+Arm9
+{
+	Static			"$(MAKEROM_ARM9:r).sbin"
+	OverlayDefs		"$(MAKEROM_ARM9:r)_defs.sbin"
+	OverlayTable	"$(MAKEROM_ARM9:r)_table.sbin"
+	Nef				"$(MAKEROM_ARM9:r).nef"
+}
+
+Arm7
+{
+	Static			"$(MAKEROM_ARM7:r).sbin"
+	OverlayDefs		"$(MAKEROM_ARM7:r)_defs.sbin"
+	OverlayTable	"$(MAKEROM_ARM7:r)_table.sbin"
+	Nef				"$(MAKEROM_ARM7:r).nef"
+}
+
+Property
+{
+	BannerFile		./banner/myGameBanner.bnr
+#	RomSpeedType	MROM
+}
+
+RomSpec
+{
+	Offset			0x00000000
+	Segment			ALL
+	
+	Align			512
+	Padding			0xFF
+	
+	HostRoot	data
+	Root		/data
+	File		*.bncmp *.bnfr
+}
+
