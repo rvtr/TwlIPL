@@ -59,6 +59,7 @@ static void VBlankIntr( void );
 // ==================================================================
 /* function */
 
+static const char *isbn[4] = { "0-000000-00-0", "000-0000-000", "0000", " 000" };
 
 // ƒƒCƒ“
 void NitroMain( void )
@@ -66,6 +67,8 @@ void NitroMain( void )
 	/* OS ‰Šú‰» */
 	OS_InitPrintServer();
 	OS_Init();
+//	OS_InitChina();			// SDK 2.01‚Ìê‡
+//	OS_InitChina( isbn );	// SDK 5.1 ‚Ìê‡
 	PXI_InitFifo();
 	OS_InitThread();
 	OS_InitTick();

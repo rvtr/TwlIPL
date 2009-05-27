@@ -21,6 +21,8 @@ Arm7
 Property
 {
 	BannerFile		./banner/myGameBanner.bnr
+#	ForChina		TRUE
+#	ForKorea		TRUE
 #	RomSpeedType	MROM
 }
 
