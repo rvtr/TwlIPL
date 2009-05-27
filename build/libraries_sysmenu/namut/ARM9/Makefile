@@ -12,8 +12,8 @@
 # in whole or in part, without the prior written consent of Nintendo.
 #
 # $Date::            $
-# $Rev:$
-# $Author:$
+# $Rev$
+# $Author$
 #----------------------------------------------------------------------------
 #----------------------------------------------------------------------------
 
@@ -27,11 +27,15 @@ TWL_PROC	    	=	ARM9
 
 INCDIR				= 	include
 
+# es のヘッダを参照します。
+LINCLUDES		+=	$(ES_ROOT)/twl/include
+
 SRCS				=	namut.c
 
 TARGET_LIB			=	libnamut$(TWL_LIBSUFFIX).a
 
 
+include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS		=	$(TARGETS)
@@ -46,7 +50,7 @@ CCFLAGS				+=	-DSMALL_CODE_SIZE	\
 						-DNO_STDIO_H		\
 						-DNO_STDLIB_H
 
-do-build:	$(TARGETS)
+do-build: $(TARGETS)
 
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
 

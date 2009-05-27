@@ -282,7 +282,7 @@ int CleanupMachineMain( void )
         
         case MS_FORMATMACHINE_PROCESSING:
             // 選択を受け付けない
-            if( !NAMUT_Format() )                   // 初期化実行
+            if( !NAMUT_FormatCore(FALSE,TRUE) )                   // 初期化実行
             {
                 sState = MS_FORMATMACHINE_ERROR;
             }

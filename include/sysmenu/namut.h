@@ -52,6 +52,21 @@ void NAMUT_Init(NAMUTAlloc allocFunc, NAMUTFree freeFunc);
 BOOL NAMUT_Format(void);
 
 /*---------------------------------------------------------------------------*
+  Name:         NAMUT_FormatCore
+
+  Description:  本体初期化(NAND初期化)を行います。
+               （システム系の必要なファイルのみを残し他を消去します
+                 ユーザーアプリを common, personalizedに関わらず全て消去するか、
+	　　　　　　 personalizedのみ消去するかを引数で選択できます。
+
+  Arguments:    isForceEraseCommonETicket: TRUE の時は、common, personalizedに関わらずユーザーアプリを全消去
+                                           FALSEの時は、commonETicketを残す（アプリ自身は消去）
+	            isDeleteWifiSettings: WiFi設定を削除するか？（TRUEで削除）
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL NAMUT_FormatCore( BOOL isForceEraseCommonETicket, BOOL isDeleteWiFiSettings );
+
+/*---------------------------------------------------------------------------*
   Name:         NAMUT_GetSoftBoxCount
 
   Description:  NANDの installedカウント、freeカウントを調べて

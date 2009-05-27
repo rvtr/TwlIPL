@@ -21,6 +21,8 @@
 #include <twl/fatfs.h>
 #include <twl/os/common/format_rom.h>
 #include <twl/nam.h>
+#include <es.h>
+#include <estypes.h>
 #include <twl/aes.h>
 #include <twl/os/common/banner.h>
 #include <sysmenu/namut.h>
@@ -31,6 +33,12 @@
 /*---------------------------------------------------------------------------*
     定数定義
  *---------------------------------------------------------------------------*/
+
+// eTicketType
+typedef enum ETicketType {
+	ETICKET_TYPE_COMMON = 0,
+	ETICKET_TYPE_PERSONALIZED = 1
+}ETicketType;
 
 // 本体初期化(NAND初期化)で消去しないタイトルを
 // TitleProperty (TitleID 32bit）のビットで指定します。
@@ -77,7 +85,7 @@ static u32 sNCFGAddr;
     内部関数宣言
  *---------------------------------------------------------------------------*/
 
-static BOOL NAMUTi_DeleteNonprotectedTitle(void);
+static BOOL NAMUTi_DeleteNonprotectedTitle( BOOL isForceEraseCommonETicket );
 static BOOL NAMUTi_ClearSavedataAll(void);
 static BOOL NAMUTi_InitShareData(void);
 static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arcname);
@@ -87,6 +95,8 @@ static BOOL NAMUTi_ClearWiFiSettings( void );
 static BOOL NAMUTi_DeleteShopAccount( void );
 static void* NAMUT_Alloc(u32 size);
 static void NAMUT_Free(void* buffer);
+static s32 GetETicketType(NAMTitleId titleId, ETicketType *pETicketType );
+static s32 GetTicketViews(ESTicketView** pptv, u32* pNumTicket, NAMTitleId titleId);
 
 /*---------------------------------------------------------------------------*
   Name:         NAMUT_Init
@@ -113,19 +123,39 @@ void NAMUT_Init(NAMUTAlloc allocFunc, NAMUTFree freeFunc)
   Name:         NAMUT_Format
 
   Description:  本体初期化(NAND初期化)を行います。
-               （システム系の必要なファイルのみを残し他を消去します）
+               （システム系の必要なファイルのみを残し他を消去します
+                 ユーザーアプリは、common, personalizedに関わらず全て消去します）
 
   Arguments:    None
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-BOOL NAMUT_Format(void)
+BOOL NAMUT_Format( void )
+{
+	return NAMUT_FormatCore( TRUE, TRUE );
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         NAMUT_FormatCore
+
+  Description:  本体初期化(NAND初期化)を行います。
+               （システム系の必要なファイルのみを残し他を消去します
+                 ユーザーアプリを common, personalizedに関わらず全て消去するか、
+	　　　　　　 personalizedのみ消去するかを引数で選択できます。
+
+  Arguments:    isForceEraseCommonETicket: TRUE の時は、common, personalizedに関わらずユーザーアプリを全消去
+                                           FALSEの時は、commonETicketを残す（アプリ自身は消去）
+	            isDeleteWifiSettings: WiFi設定を削除するか？（TRUEで削除）
+
+  Returns:      None
+ *---------------------------------------------------------------------------*/
+BOOL NAMUT_FormatCore( BOOL isForceEraseCommonETicket, BOOL isDeleteWiFiSettings )
 {
     int i;
     BOOL ret = TRUE;
 
     // プロテクトされていないタイトルの削除を行います
-    if (!NAMUTi_DeleteNonprotectedTitle())
+    if (!NAMUTi_DeleteNonprotectedTitle( isForceEraseCommonETicket ))
     {
         ret = FALSE;
         OS_TWarning("Fail! NAMUTi_DeleteNonprotectedTitle()\n");
@@ -172,14 +202,15 @@ BOOL NAMUT_Format(void)
             OS_TWarning("NAMUT_DeleteNandDirectory(%s)\n", sDeleteDirectoryList[i]);
         }
     }
-
-    // WiFi設定データをクリアします
-	if (!NAMUTi_ClearWiFiSettings())
+	
+	// WiFi設定データをクリアします
+	if (isDeleteWiFiSettings &&
+		!NAMUTi_ClearWiFiSettings())
 	{
 		ret = FALSE;
         OS_TWarning("Fail! NAMUTi_ClearWiFiSettings()\n");
 	}
-
+	
     // 本体設定データのクリア
 	if (!NAMUT_ClearTWLSettings( TRUE ))
 	{
@@ -346,11 +377,12 @@ BOOL NAMUT_DeleteNandTmpDirectory(void)
 
   Description:  User App タイトルの削除を行います。
 
-  Arguments:    None
+  Arguments:    isForceEraseCommonETicket : TRUEの時は、common, personalizedに関わらずユーザーアプリを全消去
+	                                        FALSEの時は、commonETicketを残す（アプリ自身は消去）
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-static BOOL NAMUTi_DeleteNonprotectedTitle(void)
+static BOOL NAMUTi_DeleteNonprotectedTitle( BOOL isForceEraseCommonETicket )
 {
     char dirPath[NAM_PATH_LEN];
     u32 title_num;              // NAND にインストールされているアプリの数
@@ -420,12 +452,40 @@ static BOOL NAMUTi_DeleteNonprotectedTitle(void)
             {
                 result = FALSE;
             }
-            // nand:/ticket/titleID_Hi/ 以下を消去
-            STD_TSNPrintf(dirPath, NAM_PATH_LEN, "nand:/ticket/%08x", NAM_GetTitleIdHi(pTitleIdArray[i]) );
-            if ( !FS_DeleteDirectoryAuto( dirPath ) )
-            {
-                result = FALSE;
-            }
+
+       	    // nand:/ticket/titleID_Hi/ 以下を消去
+			{
+				ETicketType eTicketType = ETICKET_TYPE_PERSONALIZED; // default
+				
+				if( isForceEraseCommonETicket ) {
+					// 強制 CommonETicket 消去フラグが有効な場合は、全チケットを消去
+	    	       	STD_TSNPrintf(dirPath, NAM_PATH_LEN, "nand:/ticket/%08x", NAM_GetTitleIdHi(pTitleIdArray[i]) );
+	        	   	if ( !FS_DeleteDirectoryAuto( dirPath ) )
+		            {
+	    	       		result = FALSE;
+	        	   	}
+				}else {
+					// そうでない場合は、CommonETicket 以外のタイトルの eTicket のみ消去
+					if( GetETicketType( pTitleIdArray[i], &eTicketType ) == NAM_OK )
+					{
+						if( eTicketType != ETICKET_TYPE_COMMON )
+						{
+			    	       	STD_TSNPrintf(dirPath, NAM_PATH_LEN, "nand:/ticket/%08x/%08x.tik",
+										  NAM_GetTitleIdHi(pTitleIdArray[i]),
+										  NAM_GetTitleIdLo(pTitleIdArray[i]) );
+			        	   	if ( !FS_DeleteFile( dirPath ) &&
+								 FS_GetArchiveResultCode( dirPath ) != FS_RESULT_ALREADY_DONE )
+							{
+								result = FALSE;
+	        			   	}
+						}
+					}
+					else
+					{
+						result = FALSE;
+					}
+				}
+			}
         }
     }
 
@@ -1093,4 +1153,95 @@ static void NAMUT_Free(void* buffer)
     {
         spFreeFunc(buffer);
     }
+}
+
+
+
+/*---------------------------------------------------------------------------*
+  Name:         GetETicketType
+
+  Description:  指定された titleID の eTicket タイプを取得する
+
+  Arguments:    titleID: common eTicket かどうかを調べたいタイトルの titleID
+	            pETicketType : 結果を格納するESETicketTypeポインタ
+
+  Returns:      NAM_OK  : 取得成功
+	            それ以外: 取得失敗
+ *---------------------------------------------------------------------------*/
+static s32 GetETicketType(NAMTitleId titleId, ETicketType *pETicketType )
+{
+    s32 result;
+	ESTicketView* ptv;
+    u32 numTicket;
+	
+	*pETicketType = ETICKET_TYPE_PERSONALIZED;
+	
+    result = GetTicketViews(&ptv, &numTicket, titleId);
+	
+    if( result == NAM_OK )
+    {
+        if( numTicket > 0 )
+        {
+			// 先頭 eTicket の deviceId が 0x00000000 なら、common eTicket と判断。
+			// ※全ての eTicket を舐める必要はない？
+			if( ptv->deviceId == 0x00000000 ) {
+				*pETicketType = ETICKET_TYPE_COMMON;
+			}
+		}
+        NAMUT_Free(ptv);
+	}
+	return result;
+}
+
+/*---------------------------------------------------------------------------*
+  Name:         GetTicketViews
+
+  Description:  指定されたタイトルの eTicket を取得
+　　　　　　　　※nam_title.c の GetTicketViews 関数をコピペ
+
+  Arguments:    pptv       : 取得成功時に eTicket リストのポインタを格納するポインタ
+	            pNumTicket : 取得成功時に eTicket 数を格納するポインタ
+                titleID    : eTicket を取得したいタイトルの titleID
+
+  Returns:      NAM_OK     : 取得成功
+	            それ以外   : 取得失敗
+ *---------------------------------------------------------------------------*/
+static s32 GetTicketViews(ESTicketView** pptv, u32* pNumTicket, NAMTitleId titleId)
+{
+    s32 result;
+    u32 numTicket;
+    ESTicketView* ptv = NULL;
+
+    result = ES_GetTicketViews(titleId, NULL, &numTicket);
+//  PRINT_RESULT(result);
+
+    if( result != ES_ERR_OK )
+    {
+        return result;
+    }
+
+    if( numTicket != 0 )
+    {
+        ptv = NAMUT_Alloc(sizeof(ESTicketView) * numTicket);
+
+        if( ptv == NULL )
+        {
+            return NAM_NO_MEMORY;
+        }
+
+        result = ES_GetTicketViews(titleId, ptv, &numTicket);
+//      PRINT_RESULT(result);
+    }
+
+    if( result == ES_ERR_OK )
+    {
+        *pptv = ptv;
+        *pNumTicket = numTicket;
+    }
+    else
+    {
+        NAMUT_Free(ptv);
+    }
+
+    return result;
 }
