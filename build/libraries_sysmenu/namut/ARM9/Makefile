@@ -27,15 +27,11 @@ TWL_PROC	    	=	ARM9
 
 INCDIR				= 	include
 
-# es のヘッダを参照します。
-LINCLUDES		+=	$(ES_ROOT)/twl/include
-
 SRCS				=	namut.c
 
 TARGET_LIB			=	libnamut$(TWL_LIBSUFFIX).a
 
 
-include	$(TWLSDK_ROOT)/add-ins/es/commondefs.es
 include	$(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
 INSTALL_TARGETS		=	$(TARGETS)

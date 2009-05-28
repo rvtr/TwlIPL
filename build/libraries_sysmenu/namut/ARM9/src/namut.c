@@ -21,8 +21,6 @@
 #include <twl/fatfs.h>
 #include <twl/os/common/format_rom.h>
 #include <twl/nam.h>
-#include <es.h>
-#include <estypes.h>
 #include <twl/aes.h>
 #include <twl/os/common/banner.h>
 #include <sysmenu/namut.h>
@@ -39,6 +37,18 @@ typedef enum ETicketType {
 	ETICKET_TYPE_COMMON = 0,
 	ETICKET_TYPE_PERSONALIZED = 1
 }ETicketType;
+
+typedef struct {
+	u8               pad1[ 12 ];
+    u32              deviceId;
+	u8				 pad2[ 216 - 16 ];
+} ESTicketView;
+
+typedef s32 ESError;
+#define ES_ERR_OK                                   0
+
+extern ESError ES_GetTicketViews(u64 titleId,  ESTicketView* ticketViewList, 
+        u32* ticketViewCnt);
 
 // 本体初期化(NAND初期化)で消去しないタイトルを
 // TitleProperty (TitleID 32bit）のビットで指定します。
@@ -1220,6 +1230,7 @@ static s32 GetETicketType(NAMTitleId titleId, ETicketType *pETicketType )
   Returns:      NAM_OK     : 取得成功
 	            それ以外   : 取得失敗
  *---------------------------------------------------------------------------*/
+
 static s32 GetTicketViews(ESTicketView** pptv, u32* pNumTicket, NAMTitleId titleId)
 {
     s32 result;
@@ -1319,6 +1330,7 @@ BOOL NAMUT_PrintInstalledTitleETicketType( void )
         }
     }
 
+	OS_TPrintf( "gameCode : titleID       : numTicket : ticket type\n" );
     for (i=0;i<title_num_all;i++)
     {
 		ETicketType eTicketType = ETICKET_TYPE_PERSONALIZED; // default
@@ -1331,9 +1343,13 @@ BOOL NAMUT_PrintInstalledTitleETicketType( void )
 		{
 			u32 titleID_Lo = NAM_GetTitleIdLo( pTitleIdArray[i] );
 			u8 *p = (u8 *)&titleID_Lo;
-			OS_TPrintf( "%c%c%c%c : %llx : %s\n",
+			u32 numTicket = 0;
+			(void)ES_GetTicketViews( pTitleIdArray[i], NULL, &numTicket);
+			OS_TPrintf( "%c%c%c%c     : %llx : %2d        : %s\n",
 						*p++, *p++,	*p++, *p++,
-						pTitleIdArray[i], eTicketType == ETICKET_TYPE_COMMON ? "Common":"Personalized" );
+						pTitleIdArray[i],
+						numTicket,
+						eTicketType == ETICKET_TYPE_COMMON ? "Common":"Personalized" );
 		}
     }
 
