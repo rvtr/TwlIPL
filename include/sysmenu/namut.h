@@ -165,6 +165,8 @@ BOOL NAMUT_DeleteNandTmpDirectory(void);
 BOOL NAMUT_ClearTWLSettings( BOOL doWriteback );
 
 
+BOOL NAMUT_PrintInstalledTitleETicketType( void );
+
 #endif // SDK_ARM9
 
 #ifdef __cplusplus

@@ -85,7 +85,7 @@ static u32 sNCFGAddr;
     内部関数宣言
  *---------------------------------------------------------------------------*/
 
-static BOOL NAMUTi_DeleteNonprotectedTitle( BOOL isForceEraseCommonETicket );
+static BOOL NAMUTi_DeleteNonprotectedTitle( BOOL isForceEraseAllUserApp );
 static BOOL NAMUTi_ClearSavedataAll(void);
 static BOOL NAMUTi_InitShareData(void);
 static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arcname);
@@ -143,19 +143,19 @@ BOOL NAMUT_Format( void )
                  ユーザーアプリを common, personalizedに関わらず全て消去するか、
 	　　　　　　 personalizedのみ消去するかを引数で選択できます。
 
-  Arguments:    isForceEraseCommonETicket: TRUE の時は、common, personalizedに関わらずユーザーアプリを全消去
-                                           FALSEの時は、commonETicketを残す（アプリ自身は消去）
+  Arguments:    isForceEraseAllUserApp: TRUE の時は、common, personalizedに関わらずユーザーアプリを全消去
+                                           FALSEの時は、commonETicketのアプリを残す。
 	            isDeleteWifiSettings: WiFi設定を削除するか？（TRUEで削除）
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-BOOL NAMUT_FormatCore( BOOL isForceEraseCommonETicket, BOOL isDeleteWiFiSettings )
+BOOL NAMUT_FormatCore( BOOL isForceEraseAllUserApp, BOOL isDeleteWiFiSettings )
 {
     int i;
     BOOL ret = TRUE;
 
     // プロテクトされていないタイトルの削除を行います
-    if (!NAMUTi_DeleteNonprotectedTitle( isForceEraseCommonETicket ))
+    if (!NAMUTi_DeleteNonprotectedTitle( isForceEraseAllUserApp ))
     {
         ret = FALSE;
         OS_TWarning("Fail! NAMUTi_DeleteNonprotectedTitle()\n");
@@ -377,12 +377,12 @@ BOOL NAMUT_DeleteNandTmpDirectory(void)
 
   Description:  User App タイトルの削除を行います。
 
-  Arguments:    isForceEraseCommonETicket : TRUEの時は、common, personalizedに関わらずユーザーアプリを全消去
-	                                        FALSEの時は、commonETicketを残す（アプリ自身は消去）
+  Arguments:    isForceEraseAllUserApp : TRUEの時は、common, personalizedに関わらずユーザーアプリを全消去
+	                                     FALSEの時は、commonETicketのアプリを残す
 
   Returns:      None
  *---------------------------------------------------------------------------*/
-static BOOL NAMUTi_DeleteNonprotectedTitle( BOOL isForceEraseCommonETicket )
+static BOOL NAMUTi_DeleteNonprotectedTitle( BOOL isForceEraseAllUserApp )
 {
     char dirPath[NAM_PATH_LEN];
     u32 title_num;              // NAND にインストールされているアプリの数
@@ -443,46 +443,56 @@ static BOOL NAMUTi_DeleteNonprotectedTitle( BOOL isForceEraseCommonETicket )
 
     for (i=0;i<title_num_all;i++)
     {
-        // プロテクト対象以外であればtitleId_Hiディレクトリごと消去する
+        // プロテクト対象以外（ユーザーアプリ）の場合
         if (!(pTitleIdArray[i] & PROTECT_TITLE_PROPERTY))
         {
-            // nand:/title/titleID_Hi/ 以下を消去
-            STD_TSNPrintf(dirPath, NAM_PATH_LEN, "nand:/title/%08x", NAM_GetTitleIdHi(pTitleIdArray[i]) );
-            if ( !FS_DeleteDirectoryAuto( dirPath ) )
-            {
-                result = FALSE;
-            }
-
-       	    // nand:/ticket/titleID_Hi/ 以下を消去
-			{
+			if( isForceEraseAllUserApp ) {
+				// 強制イレースの場合（NandInitializerやSystemUpdaterが利用）
+				
+		        // nand:/title/titleID_Hi/ 以下（ユーザーアプリフォルダ全部）を消去
+		        STD_TSNPrintf(dirPath, NAM_PATH_LEN, "nand:/title/%08x", NAM_GetTitleIdHi(pTitleIdArray[i]) );
+		        if ( !FS_DeleteDirectoryAuto( dirPath ) )
+		        {
+		            result = FALSE;
+		        }
+				
+				// 強制 CommonETicket 消去フラグが有効な場合は、全ユーザーアプリチケットを消去
+	    	    STD_TSNPrintf(dirPath, NAM_PATH_LEN, "nand:/ticket/%08x", NAM_GetTitleIdHi(pTitleIdArray[i]) );
+	        	if ( !FS_DeleteDirectoryAuto( dirPath ) )
+		        {
+	    	       	result = FALSE;
+	        	}
+			}else {
+				// 強制イレースでない場合（本体設定が利用）
+				
 				ETicketType eTicketType = ETICKET_TYPE_PERSONALIZED; // default
 				
-				if( isForceEraseCommonETicket ) {
-					// 強制 CommonETicket 消去フラグが有効な場合は、全チケットを消去
-	    	       	STD_TSNPrintf(dirPath, NAM_PATH_LEN, "nand:/ticket/%08x", NAM_GetTitleIdHi(pTitleIdArray[i]) );
-	        	   	if ( !FS_DeleteDirectoryAuto( dirPath ) )
-		            {
-	    	       		result = FALSE;
-	        	   	}
-				}else {
-					// そうでない場合は、CommonETicket 以外のタイトルの eTicket のみ消去
-					if( GetETicketType( pTitleIdArray[i], &eTicketType ) == NAM_OK )
+				if( GetETicketType( pTitleIdArray[i], &eTicketType ) != NAM_OK )
+				{
+					result = FALSE;
+				}
+				else
+				{
+					if( eTicketType != ETICKET_TYPE_COMMON )
 					{
-						if( eTicketType != ETICKET_TYPE_COMMON )
+				        // nand:/title/[titleID_Hi]/[titleID_Lo] 以下（対象ユーザーアプリのみ）を消去
+				        STD_TSNPrintf(dirPath, NAM_PATH_LEN, "nand:/title/%08x/%08x",
+									  NAM_GetTitleIdHi(pTitleIdArray[i]),
+									  NAM_GetTitleIdLo(pTitleIdArray[i]) );
+				        if ( !FS_DeleteDirectoryAuto( dirPath ) )
+				        {
+				            result = FALSE;
+				        }
+						
+						// nand:/ticket/[titleid_Hi]/[titleID_Lo].tikファイル（対象ユーザーアプリのみ）を削除
+			    	    STD_TSNPrintf(dirPath, NAM_PATH_LEN, "nand:/ticket/%08x/%08x.tik",
+									  NAM_GetTitleIdHi(pTitleIdArray[i]),
+									  NAM_GetTitleIdLo(pTitleIdArray[i]) );
+			        	if ( !FS_DeleteFile( dirPath ) &&
+							 FS_GetArchiveResultCode( dirPath ) != FS_RESULT_ALREADY_DONE )
 						{
-			    	       	STD_TSNPrintf(dirPath, NAM_PATH_LEN, "nand:/ticket/%08x/%08x.tik",
-										  NAM_GetTitleIdHi(pTitleIdArray[i]),
-										  NAM_GetTitleIdLo(pTitleIdArray[i]) );
-			        	   	if ( !FS_DeleteFile( dirPath ) &&
-								 FS_GetArchiveResultCode( dirPath ) != FS_RESULT_ALREADY_DONE )
-							{
-								result = FALSE;
-	        			   	}
-						}
-					}
-					else
-					{
-						result = FALSE;
+							result = FALSE;
+	        			}
 					}
 				}
 			}
@@ -1182,10 +1192,14 @@ static s32 GetETicketType(NAMTitleId titleId, ETicketType *pETicketType )
     {
         if( numTicket > 0 )
         {
-			// 先頭 eTicket の deviceId が 0x00000000 なら、common eTicket と判断。
-			// ※全ての eTicket を舐める必要はない？
-			if( ptv->deviceId == 0x00000000 ) {
-				*pETicketType = ETICKET_TYPE_COMMON;
+            int i;
+			// eTicket は、そのままもしくは追加しかありえないので、プリインストールされたアプリでは、必ずCommon eTikcetが存在する。
+			// よって、全ての eTicket のうち、ひとつでも deviceId が 0x00000000 なら、common eTicket と判断。
+            for( i = 0; i < numTicket; i++ )
+            {
+				if( ptv[i].deviceId == 0x00000000 ) {
+					*pETicketType = ETICKET_TYPE_COMMON;
+				}
 			}
 		}
         NAMUT_Free(ptv);
@@ -1242,6 +1256,89 @@ static s32 GetTicketViews(ESTicketView** pptv, u32* pNumTicket, NAMTitleId title
     {
         NAMUT_Free(ptv);
     }
+
+    return result;
+}
+
+// インストールされているタイトルのeTikcetタイプを出力
+BOOL NAMUT_PrintInstalledTitleETicketType( void )
+{
+    u32 title_num;              // NAND にインストールされているアプリの数
+    u32 title_num_installed;    // NANDにインストールされたことがあるアプリの数
+    u32 title_num_all;          // 上2つをマージしたアプリの数
+    NAMTitleId* pTitleIdArray;
+    NAMTitleId* pTitleIdArrayInstalled;
+    s32 result = TRUE;
+    s32 i,j;
+
+    // タイトル数取得
+    title_num = (u32)NAM_GetNumTitles();
+    title_num_installed = (u32)NAM_GetNumInstalledTitles();
+
+    // タイトルID配列用メモリ確保
+    pTitleIdArray          = NAMUT_Alloc(sizeof(NAMTitleId)*(title_num + title_num_installed));
+    pTitleIdArrayInstalled = NAMUT_Alloc(sizeof(NAMTitleId)*title_num_installed);
+
+    if (pTitleIdArray == NULL || pTitleIdArrayInstalled == NULL)
+    {
+        OS_TWarning("Allocation failed in %s\n", __func__);
+        NAMUT_Free(pTitleIdArray);
+        NAMUT_Free(pTitleIdArrayInstalled); 
+        return FALSE;
+    }
+
+    // タイトルリスト取得
+    if (NAM_GetTitleList(pTitleIdArray, title_num) != NAM_OK ||
+        NAM_GetInstalledTitleList(pTitleIdArrayInstalled, title_num_installed) != NAM_OK)
+    {
+        OS_TWarning("Fail! NAM_Get*TitleList() in %s\n", __func__);
+        NAMUT_Free(pTitleIdArray);
+        NAMUT_Free(pTitleIdArrayInstalled); 
+        return FALSE;
+    }
+
+    // NAM_GetTitleListでは削除されているがeTicketのみ存在するタイトルがリストアップされず
+    // NAM_GetInstalledTitleListではSRLはあるがeTicketがないタイトルがリストアップされない。
+    // そのため両者をマージする
+    title_num_all = title_num;
+    for (i=0;i<title_num_installed;i++)
+    {
+        BOOL find = FALSE;
+        for (j=0;j<title_num;j++)
+        {
+            if (pTitleIdArrayInstalled[i] == pTitleIdArray[j]) 
+            {
+                find = TRUE;
+                break;
+            }
+        }
+        if (find == FALSE)
+        {
+            pTitleIdArray[title_num_all] = pTitleIdArrayInstalled[i];
+            title_num_all++;
+        }
+    }
+
+    for (i=0;i<title_num_all;i++)
+    {
+		ETicketType eTicketType = ETICKET_TYPE_PERSONALIZED; // default
+		
+		if( GetETicketType( pTitleIdArray[i], &eTicketType ) != NAM_OK )
+		{
+			result = FALSE;
+		}
+		else
+		{
+			u32 titleID_Lo = NAM_GetTitleIdLo( pTitleIdArray[i] );
+			u8 *p = (u8 *)&titleID_Lo;
+			OS_TPrintf( "%c%c%c%c : %llx : %s\n",
+						*p++, *p++,	*p++, *p++,
+						pTitleIdArray[i], eTicketType == ETICKET_TYPE_COMMON ? "Common":"Personalized" );
+		}
+    }
+
+    NAMUT_Free(pTitleIdArray);
+    NAMUT_Free(pTitleIdArrayInstalled); 
 
     return result;
 }

@@ -92,6 +92,8 @@ void TwlMain(void)
 		OS_TPrintf( "LCFGTWLSettingsData    : 0x%04x\n", sizeof(LCFGTWLSettingsData) );
 	}
 	
+	(void) NAMUT_PrintInstalledTitleETicketType();
+	
 	// ::::::::::::::::::::::::::::::::::::::::::::::
 	// TWL設定データファイルの読み込み
 	// ::::::::::::::::::::::::::::::::::::::::::::::
