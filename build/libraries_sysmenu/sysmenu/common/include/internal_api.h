@@ -85,14 +85,6 @@ void SYSMi_SetAESKeysForSignJPEG( ROM_Header *pROMH, BOOL *pIsClearSlotB, BOOL *
 // アプリブート用
 void SYSMi_SetAESKeysForAccessControl( BOOL isNtrMode, ROM_Header *pROMH );
 
-#else
-
-// ARM9からJPEG署名用鍵セットをARM7にお願い
-void SYSMi_setJPEGKeyToAESSlotC( void );
-
-// ARM9からSDコピーアプリ用鍵セットをARM7にお願い
-void SYSMi_setSDCopyKeyToAESSlotC( void );
-
 #endif // SDK_ARM7
 
 

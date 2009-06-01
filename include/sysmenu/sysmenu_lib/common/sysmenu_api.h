@@ -112,6 +112,11 @@ extern void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs );					// 起動するR
 extern BOOL SYSM_InitDecryptAESRegion_W( ROM_Header_Short *hs );				// WRAM経由ファイル読み込みのコールバックで使うAESデクリプト処理の初期化
 extern void SYSM_StartDecryptAESRegion_W( const void *wram_addr, const void *orig_addr, u32 size );
 																				// WRAM経由ファイル読み込みのコールバックで使うAESデクリプト処理関数
+
+// ARM9からARM7にAESキーのセットをリクエスト
+void SYSMi_setJPEGKeyToAESSlotC( void );										// ARM9からJPEG署名用鍵セットをARM7にお願い
+void SYSMi_setSDCopyKeyToAESSlotC( void );										// ARM9からSDコピーアプリ用鍵セットをARM7にお願い
+
 // Nintendoロゴ制御
 extern BOOL SYSM_CheckNintendoLogo( u16 *pLogoData );							// Nintendoロゴデータのチェック
 extern void SYSM_LoadNintendoLogo2D( u16 *pLogoData, u16 *pDst, int paletteColorIndex ); // NintendoロゴデータをOBJ_2D形式でロード（pTempBufferには0x700bytes必要)
