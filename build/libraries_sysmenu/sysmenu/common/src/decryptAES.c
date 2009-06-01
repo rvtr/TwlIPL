@@ -18,12 +18,17 @@
 #include <twl.h>
 #include <sysmenu.h>
 #include <twl/aes/common/types.h>
+#include <firm/os/common/boot.h>
+#include "internal_api.h"
 
 // define data-----------------------------------------------------------------
-#define PXI_FIFO_DATA_DECRYPTAES_W_INIT		0
-#define PXI_FIFO_DATA_DECRYPTAES_W_TARGET1	1
-#define PXI_FIFO_DATA_DECRYPTAES_W_TARGET2	2
-#define PXI_FIFO_DATA_DECRYPTAES_NORMAL		3
+#define PXI_FIFO_DATA_DECRYPTAES_W_INIT			0
+#define PXI_FIFO_DATA_DECRYPTAES_W_TARGET1		1
+#define PXI_FIFO_DATA_DECRYPTAES_W_TARGET2		2
+#define PXI_FIFO_DATA_DECRYPTAES_NORMAL			3
+#define PXI_FIFO_DATA_DECRYPTAES_SET_JPEG_KEY	4
+#define PXI_FIFO_DATA_DECRYPTAES_SET_SDCOPY_KEY	5
+
 #define SYSM_DECODE_AES_MESSAGE_ARRAY_MAX   8
 // extern data-----------------------------------------------------------------
 // function's prototype-------------------------------------------------------
@@ -42,6 +47,7 @@ static OSMessageQueue  msgQ4arm7;
 static OSMessage       msgArray4arm7[SYSM_DECODE_AES_MESSAGE_ARRAY_MAX];
 #endif
 // const data------------------------------------------------------------------
+
 
 #ifdef SDK_ARM9
 #include <twl/aes/ARM9/aes_internal.h>
@@ -336,6 +342,38 @@ void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs )
 	OS_TPrintf( "SYSM_StartDecryptAESRegion(arm9):AES decryption finished.\n" );
 }
 
+
+void SYSMi_setJPEGKeyToAESSlotC( void )
+{
+	// ARM7に開始通知
+	s_finished = FALSE;
+	while( PXI_SendWordByFifo(PXI_FIFO_TAG_DECRYPTAES, PXI_FIFO_DATA_DECRYPTAES_SET_JPEG_KEY, FALSE) != PXI_FIFO_SUCCESS )
+    {
+    	OS_TPrintf( "SYSMi_setJPEGKeyToAESSlotC(arm9):ARM9 PXI send error.\n" );
+    }
+    
+	// ARM7からの完了通知を受け取って完了
+	OS_ReceiveMessage(&msgQ4arm9, (OSMessage*)&s_finished, OS_MESSAGE_BLOCK);
+	
+	OS_TPrintf( "SYSMi_setJPEGKeyToAESSlotC(arm9):AES decryption finished.\n" );
+}
+
+void SYSMi_setSDCopyKeyToAESSlotC( void )
+{
+	// ARM7に開始通知
+	s_finished = FALSE;
+	while( PXI_SendWordByFifo(PXI_FIFO_TAG_DECRYPTAES, PXI_FIFO_DATA_DECRYPTAES_SET_SDCOPY_KEY, FALSE) != PXI_FIFO_SUCCESS )
+    {
+    	OS_TPrintf( "SYSMi_setSDCopyKeyToAESSlotC(arm9):ARM9 PXI send error.\n" );
+    }
+    
+	// ARM7からの完了通知を受け取って完了
+	OS_ReceiveMessage(&msgQ4arm9, (OSMessage*)&s_finished, OS_MESSAGE_BLOCK);
+	
+	OS_TPrintf( "SYSMi_setSDCopyKeyToAESSlotC(arm9):AES decryption finished.\n" );
+}
+
+
 #else //SDK_ARM7
 
 #include <twl/aes/ARM7/hi.h>
@@ -343,6 +381,17 @@ void SYSM_StartDecryptAESRegion( ROM_Header_Short *hs )
 #include <firm/aes/ARM7/aes_init.h>
 
 static AESCounter   aesCounter;
+
+// dev_commonKeyはベタで持っていい。
+static const u8 dev_seedNAM[] ATTRIBUTE_ALIGN(4) = {
+	0x4D, 0x04, 0xA4, 0x7F, 0xE3, 0x02, 0x30, 0x2E,
+	0x2A, 0x07, 0x06, 0xE6, 0xD9, 0x06, 0x47, 0x76,
+};
+
+static const u8 dev_seedSlotC[] ATTRIBUTE_ALIGN(4) = {
+	0x3B, 0x06, 0x86, 0x57, 0x33, 0x04, 0x88, 0x11,
+	0x49, 0x04, 0x6B, 0x33, 0x12, 0x02, 0xAC, 0xF3,
+};
 
 #define DMA_SEND         2
 #define DMA_RECV         3
@@ -400,6 +449,21 @@ static void SYSMi_DecryptAESRegion_sub( int target )
 //	OS_TPrintf( "SYSMi_DecryptAESRegion_sub(arm7):target:%d addr:0x%0.8x size:0x%x\n",target+1, SYSMi_GetWork()->addr_AESregion[target], SYSMi_GetWork()->size_AESregion[target] );
 }
 
+static void SYSMi_setSDCopyKeyToAESSlotC( void )
+{
+	void *pSeedNAM =  ( SCFG_GetBondingOption() == SCFG_OP_PRODUCT ) ?
+						&( OSi_GetFromFirmAddr()->rsa_pubkey[ 3 ][ 0x10 ] ) : (void *)dev_seedNAM;
+	void *pSeedSlotC = ( SCFG_GetBondingOption() == SCFG_OP_PRODUCT ) ?
+						&( OSi_GetFromFirmAddr()->rsa_pubkey[ 3 ][ 0x20 ] ) : (void *)dev_seedSlotC;
+	MI_CpuCopy8( pSeedNAM, (u8 *)HW_LAUNCHER_DELIVER_PARAM_BUF + 0x20, AES_BLOCK_SIZE );
+
+	// AESスロットのデフォルト値セット
+	AES_Lock();
+	AES_SetKeySeedC( pSeedSlotC );
+	AES_Unlock();
+}
+
+
 #endif //ifdef SDK_ARM9
 
 static void SYSMi_CallbackDecryptAESRegion(PXIFifoTag tag, u32 data, BOOL err)
@@ -450,12 +514,19 @@ static void SYSMi_DecryptAESThread(void* arg)
 		    {
 				SYSMi_DecryptAESRegion_sub( l );
 			}
+		// PXI 用タグを占有しすぎるのもアレなので、AES 鍵セットの処理も相乗りでここに追加しておく
+		}else if(aes_start == PXI_FIFO_DATA_DECRYPTAES_SET_JPEG_KEY)
+		{
+			SYSMi_SetAESKeysForSignJPEG( (ROM_Header *)HW_TWL_ROM_HEADER_BUF, NULL, NULL );
+		}else if(aes_start == PXI_FIFO_DATA_DECRYPTAES_SET_SDCOPY_KEY)
+		{
+			SYSMi_setSDCopyKeyToAESSlotC();
 		}
 		
 		// ARM9に完了通知
 		while( PXI_SendWordByFifo(PXI_FIFO_TAG_DECRYPTAES, 0, FALSE) != PXI_FIFO_SUCCESS )
 	    {
-	    	OS_TPrintf( "SYSM_StartDecryptAESRegion(arm7):ARM7 PXI send error.\n" );
+	    	OS_TPrintf( "SYSMi_DecryptAESThread(arm7):ARM7 PXI send error.\n" );
 	    }
 	}
 }
@@ -465,6 +536,10 @@ void SYSM_InitDecryptAESPXICallback( void )
 {
 	PXI_SetFifoRecvCallback(PXI_FIFO_TAG_DECRYPTAES, SYSMi_CallbackDecryptAESRegion);
 #ifdef SDK_ARM9
+	while(!PXI_IsCallbackReady(PXI_FIFO_TAG_DECRYPTAES, PXI_PROC_ARM7))
+    {
+		// do nothing
+    }
 	OS_InitMessageQueue(&msgQ4arm9, msgArray4arm9, SYSM_DECODE_AES_MESSAGE_ARRAY_MAX);
 #else
 	OS_InitMessageQueue(&msgQ4arm7, msgArray4arm7, SYSM_DECODE_AES_MESSAGE_ARRAY_MAX);
