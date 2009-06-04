@@ -31,6 +31,8 @@
 
 #define SYSM_DECODE_AES_MESSAGE_ARRAY_MAX   8
 // extern data-----------------------------------------------------------------
+extern void         SDK_SEA_KEY_STORE(void);
+
 // function's prototype-------------------------------------------------------
 // global variable-------------------------------------------------------------
 // static variable-------------------------------------------------------------
@@ -455,7 +457,7 @@ static void SYSMi_setSDCopyKeyToAESSlotC( void )
 						&( OSi_GetFromFirmAddr()->rsa_pubkey[ 3 ][ 0x10 ] ) : (void *)dev_seedNAM;
 	void *pSeedSlotC = ( SCFG_GetBondingOption() == SCFG_OP_PRODUCT ) ?
 						&( OSi_GetFromFirmAddr()->rsa_pubkey[ 3 ][ 0x20 ] ) : (void *)dev_seedSlotC;
-	MI_CpuCopy8( pSeedNAM, (u8 *)HW_LAUNCHER_DELIVER_PARAM_BUF + 0x20, AES_BLOCK_SIZE );
+	MI_CpuCopy8( pSeedNAM, (u8 *)SDK_SEA_KEY_STORE + 0x20, AES_BLOCK_SIZE );
 
 	// AESスロットのデフォルト値セット
 	AES_Lock();
