@@ -21,6 +21,7 @@ SUBDIRS		=
 #----------------------------------------------------------------------------
 
 override TARGET_PLATFORM		=	TWL
+TWL_ARCHGEN	:=	LIMITED
 
 # GameCard, NAND ‚Ì—¼•û‚ðì¬‚·‚é
 
