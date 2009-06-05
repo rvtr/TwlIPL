@@ -14,8 +14,6 @@
   $Rev: 8251 $
   $Author: nishimoto_takashi $
  *---------------------------------------------------------------------------*/
-//#include "../../../include/sysmenu/namut.h"
-
 #include <twl.h>
 #include <twl/fatfs.h>
 #include <twl/os/common/format_rom.h>
@@ -44,7 +42,7 @@
 #define ES_ERR_OK					0
 
 // 表示する対象をユーザーアプリだけにする場合
-//#define USER_APP_ONLY
+#define USER_APP_ONLY
 
 // デバッグ用
 //#define DEBUG_MODE
@@ -79,6 +77,7 @@ typedef struct DataStruct
 {
 	NAMTitleId		id;
 	BOOL			commonTicketFlg;
+    BOOL			isSrlFlg;
     u32				numTicket;
     ETicketType		tType[ETICKET_NUM_MAX];
     
@@ -223,10 +222,17 @@ void TwlMain(void)
   Description:  画面描画関数
 
   メモ：
+    0xf0, // 黒				0xf1, // 赤				0xf2, // 緑
   	0xf3, // 青				0xf4, // 黄				0xf5, // ピンク
 	0xf6, // 水色			0xf7, // くすんだ赤		0xf8, // くすんだ緑
-	0xf9, // くすんだ青 	0xfa, // くすんだ黄色
+	0xf9, // くすんだ青 	0xfa, // くすんだ黄色	0xfb, // 紫
+    0xfc, // うすい青		0xfd, // 灰色			0xfe, // 濃い灰色
  *---------------------------------------------------------------------------*/
+#define COMMON_COLOR			((u8)0xff)
+#define PERSONALIZED_COLOR		((u8)0xfc)
+
+#define GAME_CODE_BASE_X		1
+
 static void DrawScene(DataStruct* list)
 {
 	s32 i;
@@ -236,13 +242,13 @@ static void DrawScene(DataStruct* list)
     DataStruct* p = list;
     
 	// 上画面	一覧表示
-	PutMainScreen( 0,  0, 0xf2, " ------- eTicket Viewer ------- ");
-	PutMainScreen( 2,  2, 0xf4, " Game    Ticket  Ticket");
-    PutMainScreen( 2,  3, 0xf4, "   Code    Num     Type");
-	PutMainScreen( 0,  4, 0xff, " ------------------------------");
-
+	PutMainScreen( 1,  0, 0xf2, "------- eTicket Viewer ------- ");
+	PutMainScreen( 1,  2, 0xf4, "Game        Ticket Ticket");
+    PutMainScreen( 1,  3, 0xf4, "  Code srl    Num    Type");
+	PutMainScreen( 0,  4, 0xff, "--------------------------------");
+    
 	// カーソル表示
-    PutMainScreen( 0, gCurPos+5 , 0xf1, ">>");
+    PutMainScreen( 0, gCurPos+5 , 0xf1, ">");
     
     for ( i=0; i < TITLE_NUM_PAGE; i++, p++)
     {
@@ -254,24 +260,38 @@ static void DrawScene(DataStruct* list)
 
 		ConvertInitialCode(init_code, NAM_GetTitleIdLo(p->id));
         
-    	color = p->commonTicketFlg ? (u8)0xf9 : (u8)0xfa;
-    
-    	PutMainScreen( 3, 5 +i, color, "%s", init_code);
-    	PutMainScreen(11, 5 +i, color, "%d", p->numTicket);
+    	color = p->commonTicketFlg ? COMMON_COLOR : PERSONALIZED_COLOR;
 
+        // ゲームコード表示
+    	PutMainScreen( GAME_CODE_BASE_X, 5 +i, color, "%s", init_code);
+
+        // srlの有無表示
+		if(p->isSrlFlg)
+        {
+			PutMainScreen( GAME_CODE_BASE_X + 7, 5 +i, color, "o");
+        }
+        else
+        {
+			PutMainScreen( GAME_CODE_BASE_X + 7, 5 +i, color, "x");
+        }
+
+        // ETicketの数の表示
+    	PutMainScreen( GAME_CODE_BASE_X + 12, 5 +i, color, "%d", p->numTicket);
+
+        // ETicketのタイプの表示
     	if(p->commonTicketFlg)
     	{
-			PutMainScreen(19, 5 +i, color, "common");
+			PutMainScreen(GAME_CODE_BASE_X + 19, 5 +i, color, "common");
     	}
     	else
     	{
-			PutMainScreen(19, 5 +i, color, "personalized");
+			PutMainScreen(GAME_CODE_BASE_X + 19, 5 +i, color, "personalized");
     	}
     }
 
     // 下画面	詳細表示
 	ConvertInitialCode(init_code, NAM_GetTitleIdLo(list[gCurPos].id));
-    PutSubScreen(3,   2, 0xf6, "Selected Title : [ %s ]", init_code);
+    PutSubScreen(3,   2, 0xf4, "Selected Title : [ %s ]", init_code);
     PutSubScreen(3,   4, 0xff, "- Ticket List -");
 
     for( i=0; i < list[gCurPos].numTicket; i++){
@@ -284,11 +304,11 @@ static void DrawScene(DataStruct* list)
 
         if(list[gCurPos].tType[i] == ETICKET_TYPE_COMMON)
         {
-			PutSubScreen(15, 6+i, 0xf9, "COMMON");
+			PutSubScreen(15, 6+i, COMMON_COLOR, "COMMON");
         }
         else
         {
-			PutSubScreen(15, 6+i, 0xfa, "PERSONALIZED");
+			PutSubScreen(15, 6+i, PERSONALIZED_COLOR, "PERSONALIZED");
         }
     }
 }
@@ -324,6 +344,7 @@ static BOOL GetDataStruct(DataStruct* list, DataStruct* Ilist)
 
         OS_TPrintf("id : 0x%08x\n", titleIdList[i]);
 		list->id = titleIdList[i];
+        list->isSrlFlg = TRUE;
 	}
 
 	MI_CpuClear8(titleIdList, sizeof(titleIdList));
@@ -347,7 +368,8 @@ static BOOL GetDataStruct(DataStruct* list, DataStruct* Ilist)
 		}
 
         OS_TPrintf("id : 0x%08x\n", titleIdList[i]);
-		Ilist->id = titleIdList[i];
+		Ilist->id 		= titleIdList[i];
+        Ilist->isSrlFlg = FALSE;
 	}
 
 	return TRUE;
