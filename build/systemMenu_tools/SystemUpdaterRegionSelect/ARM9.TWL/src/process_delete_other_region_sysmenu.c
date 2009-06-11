@@ -76,16 +76,16 @@ static const u64 sTitleIdListHNB[TITLE_ID_LIST_NUM] =
 
 static const u64 sTitleIdListHND[TITLE_ID_HND_NUM] =
 {
-	0x00030015484e444A,	// ALL       HNDA
-	0x00030015484e4443,	// China     HNDC
-	0x00030015484e444B,	// Korea     HNDK
+	0x00030005484e4441,	// ALL       HNDA
+	0x00030005484e4443,	// China     HNDC
+	0x00030005484e444B,	// Korea     HNDK
 };
 
 static const u64 sTitleIdListHNE[TITLE_ID_HNE_NUM] =
 {
-	0x00030015484e454A,	// ALL       HNEA
-	0x00030015484e4543,	// China     HNEC
-	0x00030015484e454B,	// Korea     HNEK
+	0x00030005484e4541,	// ALL       HNEA
+	0x00030005484e4543,	// China     HNEC
+	0x00030005484e454B,	// Korea     HNEK
 };
 
 static const u64 sTitleIdListHNL[TITLE_ID_LIST_NUM] =
