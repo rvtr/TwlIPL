@@ -39,6 +39,9 @@
 #define TITLE_ID_MUST_ERASE_NUM   3
 #define TITLE_ID_LIST_NUM         OS_TWL_REGION_MAX
 
+#define TITLE_ID_HND_NUM		  3
+#define TITLE_ID_HNE_NUM		  3
+
 /*---------------------------------------------------------------------------*
     内部変数定義
  *---------------------------------------------------------------------------*/
@@ -69,6 +72,20 @@ static const u64 sTitleIdListHNB[TITLE_ID_LIST_NUM] =
 	0x00030015484e4255,	// Australia HNBU
 	0x00030015484e4243,	// China     HNBC
 	0x00030015484e424B,	// Korea     HNBK
+};
+
+static const u64 sTitleIdListHND[TITLE_ID_HND_NUM] =
+{
+	0x00030015484e444A,	// ALL       HNDA
+	0x00030015484e4443,	// China     HNDC
+	0x00030015484e444B,	// Korea     HNDK
+};
+
+static const u64 sTitleIdListHNE[TITLE_ID_HNE_NUM] =
+{
+	0x00030015484e454A,	// ALL       HNEA
+	0x00030015484e4543,	// China     HNEC
+	0x00030015484e454B,	// Korea     HNEK
 };
 
 static const u64 sTitleIdListHNL[TITLE_ID_LIST_NUM] =
@@ -146,6 +163,7 @@ BOOL ProcessDeleteOtherResionSysmenu(void)
 {
 	s32  i;
 	BOOL ret = TRUE;
+	s32 ww_or_ck = 0;
 
 	// ランチャーと本体設定とSysMenuバージョンのALL版は全て消去する
 	for (i=0;i<TITLE_ID_MUST_ERASE_NUM;i++)
@@ -168,6 +186,33 @@ BOOL ProcessDeleteOtherResionSysmenu(void)
 		if (i != gRegion)
 		{
 			ret = DeleteTitle( sTitleIdListHNB[i] );
+		}
+	}
+	
+	// ダウンロードプレイとピクトチャットに関しては、
+	// 中韓版では ALL および異なるリージョンを、
+	// その他リージョンでは ALL 以外のリージョンを消去する
+	if( gRegion < OS_TWL_REGION_CHINA )
+	{
+		ww_or_ck = 0;
+	}else
+	{
+		ww_or_ck = gRegion - OS_TWL_REGION_CHINA + 1;
+	}
+	
+	for (i=0;i<TITLE_ID_HND_NUM;i++)
+	{
+		if (i != ww_or_ck)
+		{
+			ret = DeleteTitle( sTitleIdListHND[i] );
+		}
+	}
+	
+	for (i=0;i<TITLE_ID_HNE_NUM;i++)
+	{
+		if (i != ww_or_ck)
+		{
+			ret = DeleteTitle( sTitleIdListHNE[i] );
 		}
 	}
 
