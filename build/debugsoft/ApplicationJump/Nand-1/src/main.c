@@ -249,13 +249,17 @@ void TwlMain(void)
 	            {
 					OS_TPrintf("Failed to Return Jump.\n");
 					PutMainScreen(1, 16, 0xf1, "ERROR!: Failed to Return Jump.");
+					OS_WaitVBlankIntr();
+					OS_Sleep(1000);
 				}
 	            break;
 	        case JUMPTYPE_ANOTHER_CARD:
 	        	if ( !OS_DoApplicationJump(CARDAPP_ANO_TITLEID, OS_APP_JUMP_NORMAL) )
 	        	{
 					OS_TPrintf("Failed to Jump.\n");
-					PutMainScreen(1, 16, 0xf1, "ERROR!: Failed to Jump.");
+					PutMainScreen(1, 16, 0xf1, "ERROR!: Failed to Jump(ANO).");
+					OS_WaitVBlankIntr();
+					OS_Sleep(1000);
 				}
 	        	break;
 	        case JUMPTYPE_SYSMENU:
@@ -265,7 +269,9 @@ void TwlMain(void)
 	        	if ( !OS_DoApplicationJump(CARDAPP_FAIL_TITLEID, OS_APP_JUMP_NORMAL) )
 	        	{
 					OS_TPrintf("Failed to Jump.\n");
-					PutMainScreen(1, 16, 0xf1, "ERROR!: Failed to Jump.");
+					PutMainScreen(1, 16, 0xf1, "ERROR!: Failed to Jump(FAIL).");
+					OS_WaitVBlankIntr();
+					OS_Sleep(1000);
 				}
 				break;
 	        }

@@ -46,13 +46,14 @@ ROM_SPEC			=	appJumpChecker.autogen.rsf
 ROM_SPEC_TEMPLATE	=	$(ROOT)/include/twl/specfiles/ROM-TS_sys.rsf
 
 ROM_SPEC_PARAM		=	MakerCode=01					\
-						GameCode=456A					\
 						NANDAccess=TRUE					\
 						Media=NAND						\
 						Secure=TRUE						\
 						BannerFile=appjumpchecker.bnr	\
 						PermitLandingNormalJump=TRUE	\
 						WramMapping=MAP_TS_SCR
+						
+#						GameCode=456A					\
 
 COMPONENT_NAME		=	armadillo
 MAKEROM_ARM7_BASE   =   $(TWL_COMPONENTSDIR)/$(COMPONENT_NAME)/$(TWL_BUILDTYPE_ARM7)/$(COMPONENT_NAME)
