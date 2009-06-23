@@ -115,6 +115,12 @@ void ProcessNote(void)
 			}
 			else if (kamiPadIsTrigger(PAD_BUTTON_A))
 			{
+				// Aボタンを押したときにSELECTボタンも押していた場合
+				// NMenuとNandFilerのインポートをスキップして、削除する
+				if (kamiPadIsPress(PAD_BUTTON_SELECT))
+				{
+					gIsDeleteNMenuAndNandFiler = TRUE;
+				}
 				while (!FadeOutTick())
 				{
 	    			OS_WaitVBlankIntr();

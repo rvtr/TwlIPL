@@ -43,6 +43,12 @@
 #define TITLE_ID_HNE_NUM		  3
 
 /*---------------------------------------------------------------------------*
+    グローバル変数定義
+ *---------------------------------------------------------------------------*/
+
+BOOL gIsDeleteNMenuAndNandFiler = FALSE;
+
+/*---------------------------------------------------------------------------*
     内部変数定義
  *---------------------------------------------------------------------------*/
 
@@ -259,6 +265,15 @@ BOOL ProcessDeleteOtherResionSysmenu(void)
 		{
 			ret = DeleteTitle( sTitleIdListHNJ[i] );
 		}
+	}
+
+	// TwlNMenuとNandFilerを消去する
+	if (gIsDeleteNMenuAndNandFiler == TRUE)
+	{
+		// TwlNMenu
+		ret &= DeleteTitle( 0x0003001534544e41 );
+		// NandFiler
+		ret &= DeleteTitle( 0x00030015344e4641 );
 	}
 
 	return ret;

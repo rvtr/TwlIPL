@@ -60,6 +60,7 @@ extern const char *g_strSDKSvnRevision;
 extern s32 gLockId;
 extern const u16* sRegionStringArray[OS_TWL_REGION_MAX];
 extern OSTWLRegion gRegion;
+extern BOOL gIsDeleteNMenuAndNandFiler;
 
 /*---------------------------------------------------------------------------*
     ä÷êîêÈåæ
