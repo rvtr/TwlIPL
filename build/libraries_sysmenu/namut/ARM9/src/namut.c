@@ -530,6 +530,8 @@ static BOOL NAMUTi_ClearSavedataAll( void )
     NAMTitleId* pTitleIdArray;
     NAMTitleInfo namTitleInfo;
     char subBannerPath[ FS_ENTRY_LONGNAME_MAX ];
+	char savePublicPath[FS_ENTRY_LONGNAME_MAX];
+	char savePrivatePath[FS_ENTRY_LONGNAME_MAX];
     BOOL ret = TRUE;
     s32 i;
 
@@ -557,16 +559,23 @@ static BOOL NAMUTi_ClearSavedataAll( void )
         // タイトル情報取得
         if( NAM_ReadTitleInfo(&namTitleInfo, pTitleIdArray[i]) == NAM_OK )
         {
-            // publicSaveSizeが0以上ならフォーマット
-            if (namTitleInfo.publicSaveSize > 0)
-            {
-                ret &= NAMUTi_MountAndFormatOtherTitleSaveData(namTitleInfo.titleId, "otherPub");
-            }
-            // privateSaveSizeが0以上ならフォーマット
-            if (namTitleInfo.privateSaveSize > 0)
-            {
-                ret &= NAMUTi_MountAndFormatOtherTitleSaveData(namTitleInfo.titleId, "otherPrv");
-            }
+			// セーブファイルパス取得
+			if ( NAM_GetTitleSaveFilePath(savePublicPath, savePrivatePath, namTitleInfo.titleId) != NAM_OK )
+			{
+				ret = FALSE;
+			}else
+			{
+	            // publicSaveSizeが0以上ならフォーマット
+	            if (namTitleInfo.publicSaveSize > 0)
+	            {
+	                ret &= NAMUTi_ClearSavedataPublic( savePublicPath, namTitleInfo.titleId );
+	            }
+	            // privateSaveSizeが0以上ならフォーマット
+	            if (namTitleInfo.privateSaveSize > 0)
+	            {
+	                ret &= NAMUTi_ClearSavedataPrivate( savePrivatePath, namTitleInfo.titleId );
+	            }
+	        }
 
             // サブバナーファイルパス取得
             if (NAM_GetTitleBannerFilePath( subBannerPath, namTitleInfo.titleId) == NAM_OK)
