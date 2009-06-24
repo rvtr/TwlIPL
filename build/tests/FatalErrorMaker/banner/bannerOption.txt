@@ -1,0 +1,2 @@
+012A	FatalErrorMaker_card
+0G4A	FatalErrorMaker_nand

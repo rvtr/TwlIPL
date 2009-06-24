@@ -1,0 +1,40 @@
+＃＃概要
+
+量産ベースで動作するTWLCaptureの生産工程で使用する書込みツール
+
+NandInitializerの機能をベースに
+・sdmcブートではなくmemory-launcherからのブートを前提
+（同ディレクトリからtadを検索するのではなく、objectファイルとしてromに内包）
+・書き込むtadはhnaa,hnba,hnca,hnha,hnlaに決め打ち
+・HWInfoなどを書き込まない
+
+といった変更を施したもの
+
+
+＃＃つかいかた
+
+1. 以下の配置で書き込みたいtadファイルとnandfirmを入れる
+
+-ARM9.TWL---include
+          |-src
+          --data---dev---HNAA.tad(開発ビルド用tad)
+                 |     |-HNBA.tad
+                 |     |-HNCA.tad
+                 |     |-HNHA.tad
+                 |     |-HNLA.tad
+                 |     --nandfirm.nand
+                 |
+                 --prod---HNAA.tad(量産用ビルドtad,要mastering,cls)
+                        |-HNBA.tad
+                        |-HNCA.tad
+                        |-HNHA.tad
+                        |-HNLA.tad
+                        --nandfirm.nand
+
+2. ./make.rb [dev/prod/full]
+
+
+・もし該当するtad/nandファイルが無ければ既に配置してある.oファイルを利用する。
+
+
+※あとでちゃんとしたMakefileを書く予定

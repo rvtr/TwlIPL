@@ -1,0 +1,21 @@
+#GCDSF ---  Gcdfirm Spec File
+
+VERSION :		0x0 # GENERATE
+
+RSA_KEY :		$(MAKEFIRM_RSA_PRVKEY)
+OUT_KEY :		rsa_public.sbin
+
+WRAM_RBIN :		./wram_regs/wram_regs.rbin
+
+ARM9_COMP :		FALSE  # TRUE or FALSE, should be before ARM9_SBIN
+ARM9_SBIN :		$(MAKEFIRM_ARM9).TWL.FLX.sbin
+ARM9_ELF :		$(MAKEFIRM_ARM9).tef
+
+ARM7_COMP :		FALSE  # TRUE or FALSE, should be before ARM7_SBIN
+ARM7_SBIN :		$(MAKEFIRM_ARM7).TWL.FLX.sbin
+ARM7_ELF :		$(MAKEFIRM_ARM7).tef
+
+ARM9_X2 :		TRUE  # TRUE or FALSE
+
+#NORFIRM :		$(NORFIRM_BIN)
+#NANDFIRM :		$(NANDFIRM_BIN)

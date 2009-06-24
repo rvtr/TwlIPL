@@ -1,0 +1,52 @@
+#! make -f
+#----------------------------------------------------------------------------
+# Project:  TwlIPL - commondefs - common definitions for build system
+# File:     commondefs
+#
+#  Copyright 2007 Nintendo.  All rights reserved.
+#
+# These coded instructions, statements, and computer programs contain
+# proprietary information of Nintendo of America Inc. and/or Nintendo
+# Company Ltd., and are protected by Federal copyright law.  They may
+# not be disclosed to third parties or copied or duplicated in any form,
+# in whole or in part, without the prior written consent of Nintendo.
+#
+# $Date:: 2007-09-06$
+# $Rev$
+# $Author$
+#----------------------------------------------------------------------------
+ifndef TWL_IPL_COMMONDEFS_
+TWL_IPL_COMMONDEFS_ = TRUE
+
+#FIRM_USE_PRODUCT_KEYS = TRUE
+#SYSM_BUILD_FOR_DEBUGGER = TRUE
+
+# 開発機で全ホワイトリストチェックを無視する場合TRUE (デフォルトはTRUE)
+SYSM_DEV_WHITELIST_CHECK_SKIP ?= TRUE
+
+# バナーハッシュチェックを無視する場合TRUE (デフォルトは FALSE)
+#SYSM_IGNORE_DHT_PHASE_3 = TRUE
+
+# 新ホワイトリストでなくてもFatalにならないようにしたい場合TRUE (デフォルトはTRUE)
+SYSM_IGNORE_DHT_EX_NOT_FOUND ?= TRUE
+
+ifeq	($(TARGET_FIRM),SYSTEMMENU)
+include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs.sysmenu
+else
+include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs.firm
+endif
+
+ifdef FIRM_USE_PRODUCT_KEYS
+MACRO_FLAGS	+= -DFIRM_USE_PRODUCT_KEYS=$(FIRM_USE_PRODUCT_KEYS)
+endif
+
+ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
+TWL_KEYSDIR	:= $(TWL_IPL_RED_PRIVATE_ROOT)/keys
+TWL_IPL_RED_PRIVATE_TOOLSDIR = $(call eupath,$(TWL_IPL_RED_PRIVATE_ROOT)/tools)
+endif
+
+MAKEROM_FLAGS += -s
+
+#----------------------------------------------------------------------------
+endif	# TWL_IPL_COMMONDEFS_
+#----- End of commondefs -----
