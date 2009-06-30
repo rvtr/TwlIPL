@@ -663,6 +663,7 @@ BOOL NAMUTi_DestroySubBanner(const char* path)
     {
         return TRUE;
     }
+    FS_CloseFile(file);
 
     pBanner = NAMUT_Alloc( sizeof(TWLSubBannerFile) );
     if (!pBanner)
