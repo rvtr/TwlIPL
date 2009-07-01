@@ -23,7 +23,7 @@
 #include "TWLHWInfo_api.h"
 #include "TWLSettings_api.h"
 #include "hwi.h"
-
+#include "kami_pxi.h"
 // define data------------------------------------------
 #ifdef FIRM_USE_PRODUCT_KEYS                                                // 鍵選択スイッチ
 #define HWINFO_PRIVKEY_PATH     "rom:key/private_HWInfo.der"                // 製品用秘密鍵
@@ -211,11 +211,8 @@ static BOOL ReadHWInfoFile( void )
 
     retval = LCFGi_THW_ReadSecureInfo();
     if( retval == LCFG_TSF_READ_RESULT_SUCCEEDED ) {
-		
-    // HWノーマル情報、HWセキュア情報をメモリに展開しておく
-    MI_CpuCopyFast( LCFGi_GetHWN(), (void *)HW_PARAM_TWL_HW_NORMAL_INFO, sizeof(LCFGTWLHWNormalInfo) );
-    MI_CpuCopyFast( LCFGi_GetHWS(), (void *)HW_HW_SECURE_INFO, HW_HW_SECURE_INFO_END - HW_HW_SECURE_INFO );
-
+	    // HWセキュア情報をメモリに展開しておく
+	    MI_CpuCopyFast( LCFGi_GetHWS(), (void *)HW_HW_SECURE_INFO, HW_HW_SECURE_INFO_END - HW_HW_SECURE_INFO );
         OS_TPrintf( "HW Secure Info read succeeded.\n" );
     }else {
 		result = FALSE;
@@ -224,6 +221,8 @@ static BOOL ReadHWInfoFile( void )
 
     retval = LCFGi_THW_ReadNormalInfo();
     if( retval == LCFG_TSF_READ_RESULT_SUCCEEDED ) {
+	    // HWノーマル情報をメモリに展開しておく
+    	MI_CpuCopyFast( LCFGi_GetHWN(), (void *)HW_PARAM_TWL_HW_NORMAL_INFO, sizeof(LCFGTWLHWNormalInfo) );
         OS_TPrintf( "HW Normal Info read succeeded.\n" );
     }else {
 		result = FALSE;
@@ -375,6 +374,8 @@ BOOL HWI_WriteHWNormalInfoFile( void )
     LCFGTWLHWNormalInfo Info;
     LCFGReadResult result;
 
+	MI_CpuClear8( &Info, sizeof(LCFGTWLHWNormalInfo) );
+	
     result = LCFGi_THW_ReadNormalInfo();
     if( result != LCFG_TSF_READ_RESULT_SUCCEEDED ) {
         if( !LCFGi_THW_RecoveryNormalInfo( result ) ) {
@@ -383,7 +384,37 @@ BOOL HWI_WriteHWNormalInfoFile( void )
         }
     }
 
-    Info.rtcAdjust = LCFG_THW_GetRTCAdjust();
+#if 0
+	{
+		// 基板検査器でNAND RAWパーティションに書き込まれるRTC補正値を読み出そうと試みたが、完成品検査器で消去されていた。。。
+#define NAND_BLOCK_BYTE             0x200
+#define NAND_RTC_BLOCK              (0x100000*1-NAND_BLOCK_BYTE)/NAND_BLOCK_BYTE
+		int value = 0;
+		u8 *p = OS_Alloc( NAND_BLOCK_BYTE );
+		if ( p == NULL ) return FALSE;
+		DC_FlushRange( p, NAND_BLOCK_BYTE );
+		if ( kamiNandRead( NAND_RTC_BLOCK, p, 1 ) == KAMI_RESULT_SEND_ERROR) return FALSE;
+		if( STD_TSScanf( (const char *)p, "RTC CORRECTION=%d", &value ) < 0 ) return FALSE;
+		Info.rtcAdjust = (u8)value;
+		{
+#define TEST_OUTFILE_PATH	"sdmc:/nanddump.sbin"
+			FSFile file;
+		    (void)FS_DeleteFile( (char *)TEST_OUTFILE_PATH );
+		    if( !FS_CreateFile( TEST_OUTFILE_PATH, FS_PERMIT_R | FS_PERMIT_W ) ) return FALSE;
+		    FS_InitFile( &file );
+		    if( !FS_OpenFileEx( &file, TEST_OUTFILE_PATH, FS_FILEMODE_W ) ) return FALSE;
+			if( !FS_WriteFile( &file, p, NAND_BLOCK_BYTE ) ) return FALSE;
+			(void)FS_CloseFile( &file );
+		}
+		OS_Free( p );
+	}
+#else
+	{
+		// HWI_Init関数でメモリに展開されたHWNormalInfoを使えば、NAND上のHWNormalInfoが消去されていても大丈夫
+	    OSTWLHWNormalInfo *p = (OSTWLHWNormalInfo*)HW_PARAM_TWL_HW_NORMAL_INFO;
+		Info.rtcAdjust = p->rtcAdjust;
+	}
+#endif
 	{
 		int i;
 		u8 serialNo[ LCFG_TWL_HWINFO_MOVABLE_UNIQUE_ID_LEN ];
@@ -403,7 +434,7 @@ BOOL HWI_WriteHWNormalInfoFile( void )
     }
 
 	// MMEMのシステム領域にセット
-	MI_CpuCopyFast( LCFGi_GetHWN(), (void *)HW_PARAM_TWL_HW_NORMAL_INFO, sizeof(LCFGTWLHWNormalInfo) );
+	MI_CpuCopyFast( &Info, (void *)HW_PARAM_TWL_HW_NORMAL_INFO, sizeof(LCFGTWLHWNormalInfo) );
 
     return TRUE;
 }
