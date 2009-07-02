@@ -21,7 +21,7 @@ override TWL_PROC			=	ARM7
 override TWL_ARCHGEN		=	LIMITED
 override TWL_PLATFORM		=	TS
 TWL_NO_STD_PCHDR			=	True
-TARGET_CODEGEN					?=	ALL
+TARGET_CODEGEN					?=	ARM
 
 #----------------------------------------------------------------------------
 DISP_INFO	= $(call eupath,$(TWL_IPL_RED_ROOT)/build/tests/DisplaySystemInformation)

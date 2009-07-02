@@ -23,11 +23,13 @@ void getNormalHWInfo( void )
 	int value;
 
 	
-	value = (int)LCFG_NSD_GetRTCClockAdjust();
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_ADJUST].iValue = value;
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_ADJUST].isNumData = TRUE;
-	gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_ADJUST].fromLCFG = TRUE;
-
+	if( LCFG_ReadHWNormalInfo() )
+	{
+		value = (int)LCFG_THW_GetRTCAdjust();
+		gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_ADJUST].iValue = value;
+		gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_ADJUST].isNumData = TRUE;
+		gAllInfo[MENU_NORMAL_HW][NORMAL_HW_RTC_ADJUST].fromLCFG = TRUE;
+	}
 	{
 		int i;
 		char ascii[] = "0123456789abcdef";
