@@ -27,16 +27,10 @@
 #include "common.h"
 #include "screen.h"
 
-#define TITLE_NUM_CUL  				18
+#define TITLE_MAX_SHOW				19
+#define TITLE_NUM_CUL  				40
 #define TITLE_NUM_PAGE 				(TITLE_NUM_CUL * 2)
 
-#define NTR_AREA_READ_NUM	   		7
-#define TWL_AREA_READ_NUM			7
-#define CARD_READ_SIZE				32
-#define CARD_READ_INTERVAL			0x8000
-
-#define FLX_AREA_DATA_Y_BASE		4
-#define LTD_AREA_DATA_Y_BASE		13
 #define ETICKET_NUM_MAX				10
 
 #define ES_ERR_OK					0
@@ -248,9 +242,11 @@ static void DrawScene(DataStruct* list)
 	PutMainScreen( 0,  4, 0xff, "--------------------------------");
     
 	// カーソル表示
-    PutMainScreen( 0, gCurPos+5 , 0xf1, ">");
+    if( gCurPos <= TITLE_MAX_SHOW ){
+		PutMainScreen( 0, gCurPos+5 , 0xf1, ">");
+    }
     
-    for ( i=0; i < TITLE_NUM_PAGE; i++, p++)
+    for ( i=0; i < TITLE_MAX_SHOW; i++, p++)
     {
 		// そもそも NAND アプリの数が 1ページにも満たない場合は途中で終了する
 		if ( i >= gNandAllAppNum )
