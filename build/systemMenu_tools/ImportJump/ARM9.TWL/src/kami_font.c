@@ -326,7 +326,7 @@ kamiFontPrintfConsole(u8 color, const char *text, ...)
 		else
 		{
 			// 一文字ずつ書き込み
-	        sFontScreenDataMain[((sYPos * 32) + sXPos) % (24 * 32)] = 
+	        sFontScreenDataSub[((sYPos * 32) + sXPos) % (24 * 32)] = 
 				(u16)((color << SCREEN_DATA_COLOR_PLTT_SHIFT) | temp[i]);
 
 			// X座標が右端に到達した場合は改行処理

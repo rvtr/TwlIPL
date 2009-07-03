@@ -79,11 +79,12 @@ BOOL kamiImportTad(NAMTitleId* pTitleID)
 	char savePublicPath[FS_ENTRY_LONGNAME_MAX];
 	char savePrivatePath[FS_ENTRY_LONGNAME_MAX];
 	char subBannerPath[FS_ENTRY_LONGNAME_MAX];
+	int i;
 
 	// 製品用CPUではインポート不可に
 	if ( !((*(u8*)(OS_CHIPTYPE_DEBUGGER_ADDR) & OS_CHIPTYPE_DEBUGGER_MASK)) )
 	{
-		OS_Warning(" Fail : Production CPU\n");
+		kamiFontPrintfConsoleEx(CONSOLE_RED, " Fail : Production CPU\n");
 		return FALSE;
     }
 
@@ -93,14 +94,14 @@ BOOL kamiImportTad(NAMTitleId* pTitleID)
 	// CARD-ROM 領域を一時的なファイルとみなしそのファイルを開きます。
 	if (!FS_CreateFileFromRom(&file, GetImportJumpSetting()->tadRomOffset, GetImportJumpSetting()->tadLength))
 	{
-		OS_Warning(" Fail : FS_CreateFileFromRom\n");
+		kamiFontPrintfConsoleEx(CONSOLE_RED, " Fail : FS_CreateFileFromRom\n");
 		return FALSE;
 	}
 
 	// tadファイルの情報取得
 	if (NAM_ReadTadInfoWithFile(&tadInfo, &file) != NAM_OK)
 	{
-		OS_Warning(" Fail! : NAM_ReadTadInfo\n");
+		kamiFontPrintfConsoleEx(CONSOLE_RED, " Fail! : NAM_ReadTadInfo\n");
 		return FALSE;
 	}
 
@@ -110,7 +111,7 @@ BOOL kamiImportTad(NAMTitleId* pTitleID)
 	// Data Only なら失敗
 	if (tadInfo.titleInfo.titleId & TITLE_ID_DATA_ONLY_FLAG_MASK)
 	{
-		OS_Warning(" Fail! : DATA_ONLY_FLAG is specified in rsf file\n");
+		kamiFontPrintfConsoleEx(CONSOLE_RED, " Fail! : DATA_ONLY_FLAG is specified in rsf file\n");
 		return FALSE;
 	}
 
@@ -119,12 +120,12 @@ BOOL kamiImportTad(NAMTitleId* pTitleID)
 		u8 installed, free;
 		if (!NAMUT_GetSoftBoxCount(&installed, &free))
 		{
-			OS_Warning(" Fail! : Can not get soft box count\n");
+			kamiFontPrintfConsoleEx(CONSOLE_RED, " Fail! : Can not get soft box count\n");
 			return FALSE;
 		}
 		if (free == 0)
 		{
-			OS_Warning(" Fail! : NAND FreeSoftBoxCount == 0\n");
+			kamiFontPrintfConsoleEx(CONSOLE_RED, " Fail! : NAND FreeSoftBoxCount == 0\n");
 			return FALSE;
 		}
 	}
@@ -139,40 +140,54 @@ BOOL kamiImportTad(NAMTitleId* pTitleID)
 		nam_result = NAM_DeleteTitleCompletely(tadInfo.titleInfo.titleId);
 		if ( nam_result != NAM_OK )
 		{
-			kamiFontPrintfConsole(CONSOLE_RED, "Fail! RetCode=%x\n", nam_result);
+			kamiFontPrintfConsoleEx(CONSOLE_RED, "Fail! RetCode=%x\n", nam_result);
 			return FALSE;
 		}
 */
-		// インポート開始フラグを立てる
-		sNowImport = TRUE;
+		for (i=0;i<2;i++)
+		{
+			// インポート開始フラグを立てる
+			sNowImport = TRUE;
 
-	    // 進捗スレッド作成
-		spStack = OS_Alloc(THREAD_STACK_SIZE);
-		MI_CpuClear8(spStack, THREAD_STACK_SIZE);
-	    OS_CreateThread(&thread, ProgressThread, NULL,
-	        (void*)((u32)spStack + THREAD_STACK_SIZE), THREAD_STACK_SIZE, OS_GetCurrentThread()->priority - 1);
-		OS_SetThreadDestructor( &thread, Destructor );
-	    OS_WakeupThreadDirect(&thread);
+		    // 進捗スレッド作成
+			spStack = OS_Alloc(THREAD_STACK_SIZE);
+			MI_CpuClear8(spStack, THREAD_STACK_SIZE);
+		    OS_CreateThread(&thread, ProgressThread, NULL,
+		        (void*)((u32)spStack + THREAD_STACK_SIZE), THREAD_STACK_SIZE, OS_GetCurrentThread()->priority - 1);
+			OS_SetThreadDestructor( &thread, Destructor );
+		    OS_WakeupThreadDirect(&thread);
 
-		// Import開始
-		nam_result = NAM_ImportTadWithFile( &file );
+			// Import開始
+			nam_result = NAM_ImportTadWithFile( &file );
 
-		// 進捗スレッドの自力終了を待つ
-		while (sNowImport){};
+			// 進捗スレッドの自力終了を待つ
+			while (sNowImport){};
+
+			if ( nam_result == NAM_OK )
+			{
+				break;
+			}
+			else
+			{
+				// SystemUpdaterでインポートしたタイトルの上書きインポートには失敗する（鍵が異なるため）
+				// Tadのバージョンダウンは失敗する（rsfのRemasterVersion）
+				// よってインポートに失敗した場合でも一旦消去してから再トライする（一度のみ）
+
+				NAM_DeleteTitleCompletely(tadInfo.titleInfo.titleId);
+			}
+		}
 
 		if ( nam_result == NAM_OK )
 		{
 			// InstalledSoftBoxCount, FreeSoftBoxCount の値を現在のNANDの状態に合わせて更新します。
 			if (!NAMUT_UpdateSoftBoxCount())
 			{
-				OS_Warning(" Fail! : Update Soft Box Count\n");
+				kamiFontPrintfConsoleEx(CONSOLE_RED, " Fail! : Update Soft Box Count\n");
 			}
 		}
 		else
 		{
-			kamiFontPrintfMain( 4, 20, 1, "Import was failed! 0x%x", nam_result);
-			kamiFontLoadScreenData();
-			OS_Warning(" Fail! : NAM Result Code = 0x%x\n", nam_result);
+			kamiFontPrintfConsoleEx(CONSOLE_RED, " Fail! : NamInport Result Code = 0x%x\n", nam_result);
 			return FALSE;
 		}
 	}
@@ -183,7 +198,7 @@ BOOL kamiImportTad(NAMTitleId* pTitleID)
 		// セーブファイルパス取得
 		if ( NAM_GetTitleSaveFilePath(savePublicPath, savePrivatePath, tadInfo.titleInfo.titleId) != NAM_OK )
 		{
-			OS_Warning(" Fail! NAM_GetTitleSaveFilePath\n");
+			kamiFontPrintfConsoleEx(CONSOLE_RED, " Fail! NAM_GetTitleSaveFilePath\n");
 		}
 		else
 		{
@@ -192,7 +207,7 @@ BOOL kamiImportTad(NAMTitleId* pTitleID)
 			{
 				if (NAMUTi_ClearSavedataPublic(savePublicPath, tadInfo.titleInfo.titleId) == FALSE)
 				{
-					OS_Warning(" Fail! NAMUTi_ClearSavedataPublic\n");
+					kamiFontPrintfConsoleEx(CONSOLE_RED, " Fail! NAMUTi_ClearSavedataPublic\n");
 				}
 			}
 
@@ -201,7 +216,7 @@ BOOL kamiImportTad(NAMTitleId* pTitleID)
 			{
 				if (NAMUTi_ClearSavedataPrivate(savePrivatePath, tadInfo.titleInfo.titleId) == FALSE)
 				{
-					OS_Warning(" Fail! NAMUTi_ClearSavedataPrivate\n");
+					kamiFontPrintfConsoleEx(CONSOLE_RED, " Fail! NAMUTi_ClearSavedataPrivate\n");
 				}
 			}
 		}
@@ -213,14 +228,14 @@ BOOL kamiImportTad(NAMTitleId* pTitleID)
 		// サブバナーパス取得
 		if ( NAM_GetTitleBannerFilePath(subBannerPath, tadInfo.titleInfo.titleId) != NAM_OK )
 		{
-			OS_Warning(" Fail! NAM_GetTitleBannerFilePath\n");
+			kamiFontPrintfConsoleEx(CONSOLE_RED, " Fail! NAM_GetTitleBannerFilePath\n");
 		}
 		else
 		{
 			// サブバナー破壊
 			if (NAMUTi_DestroySubBanner(subBannerPath) == FALSE)
 			{
-				OS_Warning(" Fail! NAMUTi_DestroySubBanner\n");
+				kamiFontPrintfConsoleEx(CONSOLE_RED, " Fail! NAMUTi_DestroySubBanner\n");
 			}
 		}	
 	}
