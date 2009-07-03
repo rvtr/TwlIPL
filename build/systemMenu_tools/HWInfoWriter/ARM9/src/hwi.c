@@ -23,7 +23,10 @@
 #include "TWLHWInfo_api.h"
 #include "TWLSettings_api.h"
 #include "hwi.h"
+#if 0
 #include "kami_pxi.h"
+#endif
+
 // define data------------------------------------------
 #ifdef FIRM_USE_PRODUCT_KEYS                                                // 鍵選択スイッチ
 #define HWINFO_PRIVKEY_PATH     "rom:key/private_HWInfo.der"                // 製品用秘密鍵
