@@ -164,10 +164,13 @@ void TwlMain(void)
     MATH_InitRand32( &context, 15 );
 #endif
     
-	(void) GetETicketData();
-    
     ClearScreen();
-    
+
+	PutMainScreen( 7, 12, 0xf6, "--- Now Loading ---");
+	PutSubScreen(  7, 12, 0xf6, "--- Now Loading ---");
+
+	(void) GetETicketData();
+
     while(TRUE)
     {
         // キー入力情報取得
@@ -694,8 +697,21 @@ static void getUserApplication(DataStruct* list)
     s32 count = 0;
 
     DataStruct* p = list;
-    DataStruct buf[TITLE_NUM_PAGE * 2];
+	DataStruct* buf;
 
+	u32 buf_size = sizeof(DataStruct) * gNandAllAppNum;
+    
+    if( gNandAllAppNum != 0 )
+    {
+        buf = MyNAMUT_Alloc( buf_size );
+
+        if( buf == NULL )
+        {
+            gErrorFlg = TRUE;
+			return;
+        }
+    }
+    
     for( i=0; i<gNandAllAppNum; i++, p++ )
     {
         if(!(p->id & TITLE_ID_APP_TYPE_MASK))
@@ -706,10 +722,13 @@ static void getUserApplication(DataStruct* list)
     }
     
     // ユーザーアプリだけのリストをコピー
-	MI_CpuCopy8(buf, list, sizeof(buf));
+	MI_CpuCopy8(buf, list, buf_size);
 
     // アプリ総数の更新
     gNandAllAppNum = count;
+
+    // バッファの開放
+    MyNAMUT_Free(buf);
 }
 #endif
 
