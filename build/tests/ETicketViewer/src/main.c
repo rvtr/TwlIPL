@@ -27,9 +27,9 @@
 #include "common.h"
 #include "screen.h"
 
-#define TITLE_MAX_SHOW				19
-#define TITLE_NUM_CUL  				40
-#define TITLE_NUM_PAGE 				(TITLE_NUM_CUL * 2)
+#define TITLE_SHOW_BASE_Y			5
+#define TITLE_MAX_SHOW				0x10
+#define TITLE_NUM_PAGE 				300
 
 #define ETICKET_NUM_MAX				10
 
@@ -60,6 +60,16 @@ static s32 gNandAllAppNum;
 
 // カーソル位置
 static s32 gCurPos = 0;
+
+// 選択中の要素
+static s32 gCurrentElem;
+
+// ページ数
+static u32 gCurrentPage;
+static u32 gMaxPage;
+
+// Error
+static BOOL gErrorFlg;
 
 // eTicketType
 typedef enum ETicketType {
@@ -141,6 +151,7 @@ void TwlMain(void)
 	gNandAppNum = 0;
 	gNandInstalledAppNum = 0;
 	gNandAllAppNum = 0;
+	gErrorFlg = FALSE;
     
 	FS_Init( FS_DMA_NOT_USE );
     
@@ -162,37 +173,93 @@ void TwlMain(void)
         // キー入力情報取得
 		ReadKey(&gKey);
 
-        // カーソルの移動
         if (gKey.trg & PAD_KEY_DOWN)
         {
 			gCurPos++;
-			if ( gCurPos >= ( gNandAllAppNum < TITLE_NUM_PAGE ? gNandAllAppNum : TITLE_NUM_PAGE) )
-			{
-				gCurPos = 0;
-			}
+            
+            if ( gCurrentPage != gMaxPage )
+            {
+				if ( gCurPos >= TITLE_MAX_SHOW )
+                {
+                    gCurrentPage++;
+					gCurPos = 0;
+                }
+            }
+            else
+            {
+                if( (gNandAllAppNum & 0x0f) == 0 )
+                {
+					if( gCurPos >= TITLE_MAX_SHOW )
+                    {
+                    	gCurrentPage = 0;
+						gCurPos = 0;
+                    }
+                }
+				else if ( gCurPos >= (gNandAllAppNum & 0x0f) ) // バグ
+                {
+                    gCurrentPage = 0;
+					gCurPos = 0;
+                }
+            }
+
+            OS_TPrintf("↓ gCurPos : %x, gCurrentPage : %x, gNandAllAppNum : %x\n", gCurPos, gCurrentPage, gNandAllAppNum);
         }
         if (gKey.trg & PAD_KEY_UP)
         {
-            if( gNandAllAppNum )
+            if( gCurPos == 0)
             {
-				if ( gCurPos == 0 )
-				{
-					if ( gNandAllAppNum < TITLE_NUM_PAGE )
-					{
-						gCurPos = gNandAllAppNum - 1;
-					}
-					else
-					{
-						gCurPos = TITLE_NUM_PAGE - 1;
-					}
-				}
-				else
-				{
-					gCurPos--;
-				}
+            	if ( gCurrentPage == 0 )
+            	{
+                    gCurrentPage = gMaxPage;
+                    gCurPos = ((gNandAllAppNum & 0x0f) == 0) ? TITLE_MAX_SHOW - 1 : (gNandAllAppNum & 0x0f) - 1;
+            	}
+            	else
+            	{
+                    gCurrentPage--;
+					gCurPos = TITLE_MAX_SHOW - 1;
+            	}
             }
-		}
+            else
+            {
+				gCurPos--;
+            }
 
+            OS_TPrintf("↑ gCurPos : %x, gCurrentPage : %x, gNandAllAppNum : %x\n", gCurPos, gCurrentPage, gNandAllAppNum);
+		}
+        
+        if (gKey.trg & PAD_KEY_LEFT)
+        {
+            if(gCurrentPage == 0)
+            {
+				gCurrentPage = gMaxPage;
+            }
+            else
+            {
+				gCurrentPage--;
+            }
+
+			gCurPos = 0;
+
+            OS_TPrintf("← gCurPos : %x, gCurrentPage : %x, gNandAllAppNum : %x\n", gCurPos, gCurrentPage, gNandAllAppNum);
+        }
+        if (gKey.trg & PAD_KEY_RIGHT)
+        {
+			if(gCurrentPage == gMaxPage)
+            {
+				gCurrentPage = 0;
+            }
+            else
+            {
+				gCurrentPage++;
+            }
+
+            gCurPos = 0;
+
+            OS_TPrintf("→ gCurPos : %x, gCurrentPage : %x, gNandAllAppNum : %x\n", gCurPos, gCurrentPage, gNandAllAppNum);
+        }
+
+        // 選択中の要素
+        gCurrentElem = (s32)((u32)(gCurrentPage << 4) + (u32)gCurPos);
         
 		// 画面描画
 		DrawScene(gDataList);
@@ -232,65 +299,87 @@ static void DrawScene(DataStruct* list)
 	s32 i;
 	u8 init_code[5];
 	u8 color;
+    u32 start;
 
     DataStruct* p = list;
-    
+
+	if( gErrorFlg )
+    {
+		PutMainScreen( 10, 12, 0xf1, "--- Error ---");
+		PutSubScreen(  10, 12, 0xf1, "--- Error ---");
+
+        return;
+    }
+
 	// 上画面	一覧表示
 	PutMainScreen( 1,  0, 0xf2, "------- eTicket Viewer ------- ");
-	PutMainScreen( 1,  2, 0xf4, "Game        Ticket Ticket");
-    PutMainScreen( 1,  3, 0xf4, "  Code srl    Num    Type");
+    PutMainScreen( 1,  1, 0xfa, "<Page %d/%d>", (gCurrentPage+1), (gMaxPage+1));
+	PutMainScreen( 1,  2, 0xf4, " Game       Ticket Ticket");
+    PutMainScreen( 1,  3, 0xf4, "  Code  srl   Num    Type");
 	PutMainScreen( 0,  4, 0xff, "--------------------------------");
     
 	// カーソル表示
     if( gCurPos <= TITLE_MAX_SHOW ){
-		PutMainScreen( 0, gCurPos+5 , 0xf1, ">");
+		PutMainScreen( 0, gCurPos+TITLE_SHOW_BASE_Y , 0xf1, ">");
     }
+
+	start = (u32)(gCurrentPage << 4);
+	p += start;
     
-    for ( i=0; i < TITLE_MAX_SHOW; i++, p++)
+    for ( i=(s32)start; i < (start + TITLE_MAX_SHOW); i++, p++)
     {
+		s32 tmp_i;
+        
 		// そもそも NAND アプリの数が 1ページにも満たない場合は途中で終了する
 		if ( i >= gNandAllAppNum )
 		{
 			break;
 		}
-
+        
+		tmp_i = (s32)(i & 0xf);
+        
 		ConvertInitialCode(init_code, NAM_GetTitleIdLo(p->id));
         
     	color = p->commonTicketFlg ? COMMON_COLOR : PERSONALIZED_COLOR;
 
         // ゲームコード表示
-    	PutMainScreen( GAME_CODE_BASE_X, 5 +i, color, "%s", init_code);
+    	PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, color, "%2d:%s", (tmp_i+1), init_code);
 
         // srlの有無表示
 		if(p->isSrlFlg)
         {
-			PutMainScreen( GAME_CODE_BASE_X + 7, 5 +i, color, "o");
+			PutMainScreen( GAME_CODE_BASE_X + 9, TITLE_SHOW_BASE_Y+tmp_i, color, "o");
         }
         else
         {
-			PutMainScreen( GAME_CODE_BASE_X + 7, 5 +i, color, "x");
+			PutMainScreen( GAME_CODE_BASE_X + 9, TITLE_SHOW_BASE_Y+tmp_i, color, "x");
         }
 
         // ETicketの数の表示
-    	PutMainScreen( GAME_CODE_BASE_X + 12, 5 +i, color, "%d", p->numTicket);
+    	PutMainScreen( GAME_CODE_BASE_X + 12, TITLE_SHOW_BASE_Y+tmp_i, color, "%d", p->numTicket);
 
         // ETicketのタイプの表示
     	if(p->commonTicketFlg)
     	{
-			PutMainScreen(GAME_CODE_BASE_X + 19, 5 +i, color, "common");
+			PutMainScreen(GAME_CODE_BASE_X + 19, TITLE_SHOW_BASE_Y+tmp_i, color, "common");
     	}
     	else
     	{
-			PutMainScreen(GAME_CODE_BASE_X + 19, 5 +i, color, "personalized");
+			PutMainScreen(GAME_CODE_BASE_X + 19, TITLE_SHOW_BASE_Y+tmp_i, color, "personalized");
     	}
     }
 
+    PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y, 0xff, "--------------------------------");
+
+    PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y + 1, 0xfa, "Up Down Key   : Next Application");
+    PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y + 2, 0xfa, "Left Right Key: Page Change");
+
     // 下画面	詳細表示
-	ConvertInitialCode(init_code, NAM_GetTitleIdLo(list[gCurPos].id));
+	ConvertInitialCode(init_code, NAM_GetTitleIdLo(list[gCurrentElem].id));
     PutSubScreen(3,   2, 0xf4, "Selected Title : [ %s ]", init_code);
     PutSubScreen(3,   4, 0xff, "- Ticket List -");
 
-    for( i=0; i < list[gCurPos].numTicket; i++){
+    for( i=0; i < list[gCurrentElem].numTicket; i++){
         if(i > 15)
         {
 			break;
@@ -298,7 +387,7 @@ static void DrawScene(DataStruct* list)
         
         PutSubScreen(5, 6+i, 0xf4, "Ticket%d : ", (i+1));
 
-        if(list[gCurPos].tType[i] == ETICKET_TYPE_COMMON)
+        if(list[gCurrentElem].tType[i] == ETICKET_TYPE_COMMON)
         {
 			PutSubScreen(15, 6+i, COMMON_COLOR, "COMMON");
         }
@@ -318,7 +407,7 @@ static void DrawScene(DataStruct* list)
  *---------------------------------------------------------------------------*/
 static BOOL GetDataStruct(DataStruct* list, DataStruct* Ilist)
 {
-	// 36個分のタイトルIDリストバッファ
+	// タイトルIDリストバッファ
 	NAMTitleId titleIdList[TITLE_NUM_PAGE];
 	s32 i;
 
@@ -329,7 +418,7 @@ static BOOL GetDataStruct(DataStruct* list, DataStruct* Ilist)
 		return FALSE;
 	}
 	
-	// データリストの作成（1ページ分）
+	// データリストの作成
 	for ( i=0; i<TITLE_NUM_PAGE; i++, list++)
 	{
 		// そもそも NAND アプリの数が 1ページにも満たない場合は途中で終了する
@@ -354,7 +443,7 @@ static BOOL GetDataStruct(DataStruct* list, DataStruct* Ilist)
 		return FALSE;
 	}
 	
-	// データリストの作成（1ページ分）
+	// データリストの作成
 	for ( i=0; i<TITLE_NUM_PAGE; i++, Ilist++)
 	{
 		// そもそも NAND アプリの数が 1ページにも満たない場合は途中で終了する
@@ -549,7 +638,25 @@ BOOL GetETicketData( void )
 	getUserApplication( gDataList );
 #endif
 
-    OS_TPrintf("gNandAllAppNum : %d\n",gNandAllAppNum);
+	// 必要なページ数を求める
+    gMaxPage = (u32)(gNandAllAppNum >> 4);
+	if( gMaxPage != 0 && (gNandAllAppNum & 0xf) == 0 )
+    {
+		gMaxPage--;
+    }
+    
+    // 現在ページの初期化
+    gCurrentPage = 0;
+
+	OS_TPrintf("gNandAllAppNum : %d\n",gNandAllAppNum);
+    OS_TPrintf("gMaxPage       : %d\n",gMaxPage);
+
+	if( gNandAllAppNum == 0 )
+    {
+		gErrorFlg = TRUE;
+
+        return FALSE;
+    }
     
     // アプリのETicketデータを取得する
     for (i=0; i<gNandAllAppNum; i++)
