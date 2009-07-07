@@ -24,7 +24,7 @@
 
 #define DMA_NO_FS		1
 #define CHECK_APP_NUM	10
-#define REGION_NUM		4
+#define REGION_NUM		6
 
 /*---------------------------------------------------------------------------*
     変数 定義
@@ -53,6 +53,8 @@ const static u32 regioncode[REGION_NUM] = {
 	0x45, // アメリカ
     0x50, // 欧州
     0x55, // オーストラリア
+    0x43, // 中国
+    0x4B  // 韓国
 };
 
 // スペースの都合MAX 7文字で
@@ -123,9 +125,20 @@ static void CheckDisableDebugFlg(void)
     u32 i;
     
     for(i=0; i<CHECK_APP_NUM; i++){
-        // all regionのアプリはそのままでOK
-        if(i != 2 && i != 3 && i != 8 && i != 9){
-        	titleID[i] |= regioncode[gRegion];
+        // 中韓はDLプレイ・ピクトチャットは各国リージョン
+        if( gRegion == OS_TWL_REGION_CHINA || gRegion == OS_TWL_REGION_KOREA )
+        {
+        	if(i != 8 && i != 9)
+            {
+        		titleID[i] |= regioncode[gRegion];
+        	}
+        }
+        else
+        {
+        	if(i != 2 && i != 3 && i != 8 && i != 9)
+            {
+        		titleID[i] |= regioncode[gRegion];
+        	}
         }
 
     	if(NAM_GetTitleBootContentPath( file_path, titleID[i] ) == NAM_OK){
