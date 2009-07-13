@@ -223,10 +223,7 @@ RomSpec
 {
 	Offset		0x00000000
 	Segment		ALL
-	HostRoot	$(TWL_IPL_RED_ROOT)/build/systemMenu_tools/NandInitializerRed/data
-	Root		/data
-	File		cert.sys
-	HostRoot	$(PRIVKEY_PATH)
-	Root		/key
-	File		$(HWINFO_PRIVKEY) $(HWID_PRIVKEY)
+	HostRoot	$(MAKEROM_ROMROOT)
+	Root		/
+	File		$(MAKEROM_ROMFILES)
 }

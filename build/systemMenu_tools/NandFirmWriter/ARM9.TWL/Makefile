@@ -13,35 +13,10 @@
 #
 # $Date:: 2009-03-11#$
 # $Rev: 2763 $
-# $Author: aoki_ryoma $
+# $Author: akabane_jumpei $
 #----------------------------------------------------------------------------
 
 #----------------------------------------------------------------------------
-
-#============================================================================
-#製品鍵を使った書き込みを行う場合は、TwlIPL/build/buildtools/commondefsの"FIRM_USE_PRODUCT_KEYS=TRUE"を有効にしてください。
-#============================================================================
-#============================================================================
-# ワイヤレスの強制Disableフラグを設定可能にする場合定義します。（要:Make Clean）
-# MACRO_FLAGS				+=	-DUSE_WIRELESS_FORCE_DISABLE_SETTING
-#============================================================================
-#============================================================================
-# 各種データを書き込み可能にする場合定義します。（要:Make Clean）
-# 具体的には TWLFontTable.dat wrap.bin cert.sys の3つです。
-# MACRO_FLAGS				+=	-DUSE_WRITE_VARIOUS_DATA
-#============================================================================
-#============================================================================
-# dev.kpを書き込み可能にする場合定義します。（要:Make Clean）
-#MACRO_FLAGS				+=	-DWRITE_DEVKP_ENABLE
-#============================================================================
-#============================================================================
-# マリクラデバッグ用として作成する場合定義します。（要:Make Clean）
-# ・自動処理において"nand:/shared2/launcher/wrap.bin"を作成します。
-# ・自動処理において開発用CLSの証明書(cert.sys)を書き込みます。
-# ・自動処理の最後に本体初期化を行います。
-#MACRO_FLAGS				+=	-DMARIOCLUB_VERSION
-#============================================================================
-
 SYSM_DISABLE_DEBUG	= FALSE
 
 TARGET_FIRM			= SYSTEMMENU
@@ -82,20 +57,7 @@ SRCDIR				=	src \
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-
-#ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
-#ifdef FIRM_USE_PRODUCT_KEYS
-#MAKEROM_FLAGS			+=	-DHWINFO_PRIVKEY='private_HWInfo.der' \
-#							-DHWID_PRIVKEY='private_HWID.der'
-#else
-#MAKEROM_FLAGS			+=	-DHWINFO_PRIVKEY='private_HWInfo_dev.der' \
-#							-DHWID_PRIVKEY='private_HWID_dev.der'
-#endif
-#endif
-
 MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
-							-DPRIVKEY_PATH='$(TWL_KEYSDIR)/rsa' \
-							-DCARD_REGION='$(CARD_REGION)' \
 							-DDISABLE_DEBUG='$(SYSM_DISABLE_DEBUG)'
 
 MAKETAD_FLAGS			+=	-s
