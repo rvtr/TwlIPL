@@ -76,11 +76,14 @@ static BOOL isDamyDevkp()
 	filesize = FS_GetFileLength(&file);
 	
 	FS_CloseFile(&file);
-	
+
+/*	ƒTƒCƒY”»’è“P”p
 	return 
 		filesize == 16384 || filesize == 5 ?
 		TRUE :
 		FALSE ;
+		*/
+	return TRUE;
 }
 
 static void 
