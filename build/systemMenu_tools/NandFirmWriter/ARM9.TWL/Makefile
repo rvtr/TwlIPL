@@ -15,18 +15,8 @@
 # $Rev: 2763 $
 # $Author: akabane_jumpei $
 #----------------------------------------------------------------------------
-
-#----------------------------------------------------------------------------
-SYSM_DISABLE_DEBUG	= FALSE
-
-#TARGET_FIRM			= SYSTEMMENU
 TARGET_PLATFORM		= TWL
 TWL_ARCHGEN    		= LIMITED
-
-#TARGET_CODEGEN   	= THUMB
-
-TITLEID_LO			= 0NRA
-#TARGET_TAD			=
 
 TARGET_BIN			= NandFirmWriter.srl
 LCFILE_SPEC			= ARM9-TS.lsf
@@ -49,14 +39,9 @@ LINCLUDES			=	../common/include \
 SRCDIR				=	src \
 						../../common/ARM9/src
 
-#LCFILE				=	# using default
-
 #----------------------------------------------------------------------------
 
 include $(TWLSDK_ROOT)/build/buildtools/commondefs
-
-MAKEROM_FLAGS		+=	-DTITLEID_LO='$(TITLEID_LO)' \
-						-DDISABLE_DEBUG='$(SYSM_DISABLE_DEBUG)'
 
 MAKETAD_FLAGS		+=	-s
 
@@ -71,11 +56,7 @@ SDK_APPEND_LIBS		=	\
 
 LLIBRARIES			+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
-MAKEROM			 	= $(TWL_TOOLSDIR)/bin/makerom.TWL.exe
-
-#LDIRT_CLEAN		=
-#INSTALL_TARGETS	=
-INSTALL_DIR			=	$(SDK_NMENU_DATADIR)
+#MAKEROM			 = $(TWL_TOOLSDIR)/bin/makerom.TWL.exe
 
 #----------------------------------------------------------------------------
 

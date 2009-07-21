@@ -113,27 +113,12 @@ Property
 	# WRAM mapping: [MAP_BB_HYB/MAP_BB_LTD/MAP_TS_HYB/MAP_TS_LTD]
 	#  don't have to edit
 	#
-	WramMapping		MAP_TS_SCR
+	WramMapping		$(MAKEROM_WRAM_MAPPING)
 
 	#
 	# CardRegion: card region [Japan/America/Europe/Australia/China/Korea]
 	#
 	CardRegion	ALL
-
-	#
-	# CommonClientKey: launcher deliver common client Key [TRUE/FALSE]
-	#
-	#CommonClientKey	TRUE
-
-	#
-	# HwAESSlotB: launcher deliver HW AES slot B setting [TRUE/FALSE]
-	#
-	#HwAESSlotB		TRUE
-
-	#
-	# HwAESSlotC: launcher deliver HW AES slot C setting [TRUE/FALSE]
-	#
-	#HwAESSlotC		TRUE
 
 	#
 	# SDCardAccess: sd card access control [TRUE/FALSE]
@@ -159,7 +144,7 @@ Property
 	#
 	# DisableDebug	：最終ROMでは、実行時にデバッグできないようにTRUEにする必要があります。
 	#
-	DisableDebug	$(DISABLE_DEBUG)
+	#DisableDebug	$(DISABLE_DEBUG)
 
 	###
 	#### END
@@ -201,7 +186,7 @@ AppendProperty
 	#
 	# GameCode for TitleID : Your GameCode in 4 ascii words
 	#
-	GameCode				$(TITLEID_LO)
+	#GameCode				$(TITLEID_LO)
 
 	#
 	# Public save data size: [16K/32K/64K/128K/256K/512K/1M/2M/4M/8M]
