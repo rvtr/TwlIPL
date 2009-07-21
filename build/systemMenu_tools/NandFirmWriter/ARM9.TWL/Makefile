@@ -39,7 +39,6 @@ SRCS				=	main.c \
 						common.c \
 						font.c \
 						screen.c \
-						hwi.c \
 						kami_pxi.c \
 						kami_write_nandfirm.c \
 
@@ -48,7 +47,6 @@ LINCLUDES			=	../common/include \
 						../../common/ARM9/include
 
 SRCDIR				=	src \
-						../../HWInfoWriter/ARM9/src \
 						../../common/ARM9/src
 
 #LCFILE				=	# using default
@@ -57,31 +55,31 @@ SRCDIR				=	src \
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 
-MAKEROM_FLAGS			+=	-DTITLEID_LO='$(TITLEID_LO)' \
-							-DDISABLE_DEBUG='$(SYSM_DISABLE_DEBUG)'
+MAKEROM_FLAGS		+=	-DTITLEID_LO='$(TITLEID_LO)' \
+						-DDISABLE_DEBUG='$(SYSM_DISABLE_DEBUG)'
 
-MAKETAD_FLAGS			+=	-s
+MAKETAD_FLAGS		+=	-s
 
-SYSMENU_LIBS			=	\
-							libnamut$(TWL_LIBSUFFIX).a
+SYSMENU_LIBS		=	\
+						libnamut$(TWL_LIBSUFFIX).a
 
-SDK_APPEND_LIBS			=	\
-							libes$(TWL_LIBSUFFIX).a \
-							libboc$(TWL_LIBSUFFIX).a \
-							libsfs$(TWL_LIBSUFFIX).a \
-							libnam$(TWL_LIBSUFFIX).a \
-							libsea$(TWL_LIBSUFFIX).a \
-							liblcfg$(TWL_LIBSUFFIX).a \
-							libna$(TWL_LIBSUFFIX).a \
-							liberrorlog$(TWL_LIBSUFFIX).a
+SDK_APPEND_LIBS		=	\
+						libes$(TWL_LIBSUFFIX).a \
+						libboc$(TWL_LIBSUFFIX).a \
+						libsfs$(TWL_LIBSUFFIX).a \
+						libnam$(TWL_LIBSUFFIX).a \
+						libsea$(TWL_LIBSUFFIX).a \
+						liblcfg$(TWL_LIBSUFFIX).a \
+						libna$(TWL_LIBSUFFIX).a \
+						liberrorlog$(TWL_LIBSUFFIX).a
 
-LLIBRARIES				+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
+LLIBRARIES			+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
-MAKEROM			 		= $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
+MAKEROM			 	= $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
 
-#LDIRT_CLEAN			=
-#INSTALL_TARGETS		=
-INSTALL_DIR				=	$(SDK_NMENU_DATADIR)
+#LDIRT_CLEAN		=
+#INSTALL_TARGETS	=
+INSTALL_DIR			=	$(SDK_NMENU_DATADIR)
 
 #----------------------------------------------------------------------------
 

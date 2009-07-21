@@ -19,14 +19,12 @@
 #include <nitro/snd.h>
 #include <twl/fatfs.h>
 #include <nitro/card.h>
-#include <twl/nam.h>
 #include <twl/os/common/format_rom.h>
-#include <sysmenu/namut.h>
+#include <twl/lcfg.h>
 #include "kami_pxi.h"
 #include "common.h"
 #include "screen.h"
 #include "kami_write_nandfirm.h"
-#include "hwi.h"
 
 #define SCRAMBLE_MASK 0x00406000
 
@@ -48,6 +46,7 @@ static BOOL gResult;
  *---------------------------------------------------------------------------*/
 static void VBlankIntr(void);
 static void InitAllocation(void);
+static BOOL ReadTWLSettings( void );
 static void DrawScene(void);
 
 /*---------------------------------------------------------------------------*
@@ -141,27 +140,8 @@ TwlMain()
 //  仮に未フォーマットであったとしてもBadFormat扱いとなる。2009/03/05
 #endif
 
-	// NAMライブラリ初期化
-	NAM_Init( OS_AllocFromMain, OS_FreeToMain);
-	NAMUT_Init( OS_AllocFromMain, OS_FreeToMain);
-
 #ifndef TWL_CAPTURE_VERSION
-	// HWInfo関連の前準備
-	switch (HWI_Init( OS_AllocFromMain, OS_FreeToMain ))
-	{
-	case HWI_INIT_FAILURE:
-        OS_PutString("HWI_INIT() Failure!\n");
-		break;
-	case HWI_INIT_SUCCESS_PRO_SIGNATURE_MODE:
-		OS_PutString("[PRO Signature MODE]\n");
-		break;
-	case HWI_INIT_SUCCESS_DEV_SIGNATURE_MODE:
-        OS_PutString("[DEV Signature MODE]\n");
-		break;
-	case HWI_INIT_SUCCESS_NO_SIGNATRUE_MODE:
-        OS_PutString("[No Signature MODE]\n");
-		break;
-	}
+    ReadTWLSettings();
 #endif
 
     gResult = FALSE;
@@ -201,6 +181,31 @@ TwlMain()
         // 画面クリア
         ClearScreen();
     }
+}
+
+
+// TWL設定データのリード
+static BOOL ReadTWLSettings( void )
+{
+    u8 *pBuffer = OS_AllocFromMain( LCFG_READ_TEMP );
+    BOOL result;
+    if( pBuffer ) {
+        result = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ] )pBuffer );
+		// Readに失敗した場合ファイルのリカバリ生成を試みる
+		if (!result)
+		{
+			OS_TPrintf( "TSD read failed. Retry onece more.\n" );
+	        result = LCFG_RecoveryTWLSettings();
+		}
+        OS_FreeToMain( pBuffer );
+    }
+    if( result ) {
+        OS_TPrintf( "TSD read succeeded.\n" );
+    }else {
+        OS_TPrintf( "TSD read failed.\n" );
+    }
+
+	return result;
 }
 
 
