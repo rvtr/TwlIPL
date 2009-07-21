@@ -137,11 +137,6 @@ Property
 	CodecMode		$(MAKEROM_CODEC_MODE)
 
 	#
-	# SCFG: scfg lock [TRUE/FALSE]
-	#
-	LockSCFG		FALSE
-
-	#
 	# DisableDebug	：最終ROMでは、実行時にデバッグできないようにTRUEにする必要があります。
 	#
 	#DisableDebug	$(DISABLE_DEBUG)
@@ -159,11 +154,6 @@ AppendProperty
 	Publisher				Nintendo
 
 	#
-	# Application type : [USER/SYSTEM]
-	#  don't have to edit
-	#AppType					System
-
-	#
 	# launch title on the launcher : [TRUE/FALSE]
 	#  don't have to edit
 	Launch					TRUE
@@ -172,11 +162,6 @@ AppendProperty
 	# Data only title : [TRUE/FALSE]
 	#  don't have to edit
 	DataOnly				FALSE
-
-	#
-	# Secure title : [TRUE/FALSE]
-	#  don't have to edit
-	#Secure					TRUE
 
 	#
 	# Boot allowed Media: [GameCard/NAND]

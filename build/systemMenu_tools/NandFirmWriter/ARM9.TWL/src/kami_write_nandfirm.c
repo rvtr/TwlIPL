@@ -30,9 +30,6 @@
     マクロ定義
  *---------------------------------------------------------------------------*/
 
-// NANDファーム書き込みの際にNVRAMの未割り当て領域＋予約領域を０クリアする場合は定義します（開発用）
-//#define CLEAR_NON_ASIGNED_AREA_AND_RESERVED_AREA_ALL
-
 #define ROUND_UP(value, alignment) \
     (((u32)(value) + (alignment-1)) & ~(alignment-1))
 
@@ -175,7 +172,6 @@ BOOL GetNandFirmBinPath(void)
 					if (!STD_CompareString( pExtension, ".nand") || !STD_CompareString( pExtension, ".NAND"))
 					{
 						STD_CopyString( sFilePath[sFileNum], info->longname );
-						//kamiFontPrintfConsole(CONSOLE_ORANGE, "%d:%s\n", sFileNum, info->longname);
 
 						// 最大16個で終了
 						if (++sFileNum >= FILE_NUM_MAX)
@@ -217,9 +213,6 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	u16 crc_w1, crc_w2;
 	u16 crc_r1, crc_r2;
 	u16 crc_norfirm_reserved_area_w, crc_norfirm_reserved_area_r;
-#ifdef    CLEAR_NON_ASIGNED_AREA_AND_RESERVED_AREA_ALL
-	u32 write_offset;
-#endif // CLEAR_NON_ASIGNED_AREA_AND_RESERVED_AREA_ALL
 
 	// .nandファイルオープン
     FS_InitFile(&file);
@@ -234,7 +227,6 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	file_size  = FS_GetFileLength(&file) ;
 	if (file_size > (800*1024))
 	{
-		//kamiFontPrintfConsoleEx(1, "too big file size!\n");
 		FS_CloseFile(&file);
 		return FALSE;
 	}
@@ -247,7 +239,6 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	pTempBuf = allocFunc( alloc_size );
 	if (pTempBuf == NULL)
 	{
-		//kamiFontPrintfConsoleEx(1, "Fail Alloc()!\n");
 		FS_CloseFile(&file);
 		return FALSE;		
 	}
@@ -260,7 +251,6 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	DC_FlushRange(pTempBuf, file_size);
 	if (!read_is_ok)
 	{
-		//kamiFontPrintfConsoleEx(1, "Fail FS_ReadFile!\n");
 		FS_CloseFile(&file);
 		freeFunc(pTempBuf);
 		return FALSE;
@@ -276,7 +266,6 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	// まずNORHeaderDS領域を書き込む（40byte?）
 	if (NVRAMi_Write(0, sizeof(NORHeaderDS), (void*)pTempBuf) != NVRAM_RESULT_SUCCESS)
 	{
-		//kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Write()\n");
 		result = FALSE;
 	}
 
@@ -288,7 +277,6 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	if (NVRAMi_Read(0, sizeof(NORHeaderDS), pTempBuf) != NVRAM_RESULT_SUCCESS)
 	{
         OS_PutString("Fail NVRAMi_Read()!\n");
-	    //kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Read()!\n");
 	}
 	DC_FlushRange(pTempBuf, sizeof(NORHeaderDS));
 
@@ -299,7 +287,6 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	if ( crc_w1 != crc_r1 )
 	{
 		freeFunc(pTempBuf);
-		//kamiFontPrintfConsoleEx(1, "Fail! CRC check %x!=%x\n", crc_w1, crc_r1);
 		return FALSE;
 	}
 
@@ -313,7 +300,6 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 
 	if (NVRAMi_Write(NVRAM_NORFIRM_RESERVED_ADDRESS, NVRAM_PAGE_SIZE, sNvramPageSizeBuffer) != NVRAM_RESULT_SUCCESS)
 	{
-		//kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Write()\n");
 		result = FALSE;
 	}
 
@@ -325,7 +311,6 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 
 	if (NVRAMi_Read(NVRAM_NORFIRM_RESERVED_ADDRESS, NVRAM_PAGE_SIZE, sNvramPageSizeBuffer) != NVRAM_RESULT_SUCCESS)
 	{
-		//kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Read()\n");
 		result = FALSE;
 	}
 
@@ -336,49 +321,21 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	// NORファームリザーブ領域のCRC比較
 	if ( crc_norfirm_reserved_area_w != crc_norfirm_reserved_area_r )
 	{
-		//kamiFontPrintfConsoleEx(1, "Fail! Norfirm Reserved Area CRC check %x!=%x\n", crc_norfirm_reserved_area_w, crc_norfirm_reserved_area_r);
 		result = FALSE;
 	}
 
-#ifdef CLEAR_NON_ASIGNED_AREA_AND_RESERVED_AREA_ALL
-	DC_InvalidateRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
-	// 未割り当て領域＋予約領域を０クリアします（開発用）
-	if (NVRAMi_Read(NVRAM_CONFIG_DATA_OFFSET_ADDRESS, NVRAM_PAGE_SIZE, &sNvramPageSizeBuffer) != NVRAM_RESULT_SUCCESS)
-	{
-		//kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Read()\n");
-		result = FALSE;
-	}
-    sReservedAreaEndAddress = (u32)(*(u16 *)sNvramPageSizeBuffer << NVRAM_CONFIG_DATA_OFFSET_SHIFT) - 0xA00;// TWL WiFi設定 + NTR WiFi設定 を差し引く
-	//OS_Printf("end = %x\n", sReservedAreaEndAddress);
-
-	MI_CpuFill8( sNvramPageSizeBuffer, 0x00, NVRAM_PAGE_SIZE );
-	DC_FlushRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
-
-	for (write_offset=NVRAM_NON_ASIGNED_AREA_ADDRESS; write_offset < sReservedAreaEndAddress; write_offset += NVRAM_PAGE_SIZE)
-	{
-		if (NVRAMi_Write(write_offset, NVRAM_PAGE_SIZE, sNvramPageSizeBuffer) != NVRAM_RESULT_SUCCESS)
-		{
-			//kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Write()\n");
-			result = FALSE;
-		}
-	}
-	//OS_Printf("write_offset = %x\n", write_offset);
-#else
 	// 未割り当て領域先頭256byte＋予約領域を０クリアします
-
 	MI_CpuFill8( sNvramPageSizeBuffer, 0x00, NVRAM_PAGE_SIZE );
 	DC_FlushRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
 
 	if (NVRAMi_Write(NVRAM_NON_ASIGNED_AREA_ADDRESS, NVRAM_PAGE_SIZE, sNvramPageSizeBuffer) != NVRAM_RESULT_SUCCESS)
 	{
-		//kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Write()\n");
 		result = FALSE;
 	}
 
 	DC_InvalidateRange( sNvramPageSizeBuffer, NVRAM_PAGE_SIZE );
 	if (NVRAMi_Read(NVRAM_CONFIG_DATA_OFFSET_ADDRESS, NVRAM_PAGE_SIZE, &sNvramPageSizeBuffer) != NVRAM_RESULT_SUCCESS)
 	{
-		//kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Read()\n");
 		result = FALSE;
 	}
     sReservedAreaEndAddress = (u32)(*(u16 *)sNvramPageSizeBuffer << NVRAM_CONFIG_DATA_OFFSET_SHIFT) - 0xA00;// TWL WiFi設定 + NTR WiFi設定 を差し引く
@@ -388,27 +345,12 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 
 	if (NVRAMi_Write(sReservedAreaEndAddress - 0x100, NVRAM_PAGE_SIZE, sNvramPageSizeBuffer) != NVRAM_RESULT_SUCCESS)
 	{
-		//kamiFontPrintfConsoleEx(1, "Fail NVRAMi_Write()\n");
 		result = FALSE;
 	}
-#endif
-
-	// NANDログ情報のクリア
-	if (kamiClearNandErrorLog() != KAMI_RESULT_SUCCESS)
-	{
-		//kamiFontPrintfConsoleEx(1, "Fail kamiClearNandErrorLog()\n");
-		result = FALSE;		
-	}
-
-	// nandfirmバージョンの消去（デバッグ用）
-	kamiEraseNandfirmVersion(nandfirm_size);
-
-//	kamiFontPrintfConsoleEx(0, "NAND Firm Import Start!\n");
 
 	// NAND書き込み
 	write_block = nandfirm_size/NAND_BLOCK_BYTE + (nandfirm_size % NAND_BLOCK_BYTE != 0);
 	kamiNandWrite( NAND_FIRM_START_OFFSET/NAND_BLOCK_BYTE, pTempBuf+NAND_FIRM_START_OFFSET, write_block );	// ブロック単位、バイト単位、ブロック単位
-//	kamiFontLoadScreenData();
 	
 	// CRCを計算するので念のためにクリアしてからリードする
 	MI_CpuClear8( pTempBuf, nandfirm_size );
@@ -417,7 +359,6 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	// CRCチェックのためNandからリード
 	if (kamiNandRead(NAND_FIRM_START_OFFSET/NAND_BLOCK_BYTE, pTempBuf, write_block ) == KAMI_RESULT_SEND_ERROR)
 	{
-	    //kamiFontPrintfConsoleEx(1, "kamiNandRead ... %s!\n", "ERROR");
 	}
 	DC_FlushRange(pTempBuf, nandfirm_size);
 
@@ -427,12 +368,10 @@ BOOL kamiWriteNandfirm(const char* pFullPath, NAMAlloc allocFunc, NAMFree freeFu
 	// NAND部分についてのCRCチェック
 	if (crc_w2 == crc_r2)
 	{
-//		kamiFontPrintfConsoleEx(0, "Success! CRC check %x==%x\n", crc_w2, crc_r2);
 	}
 	else
 	{
 		result = FALSE;
-		//kamiFontPrintfConsoleEx(1, "Fail! CRC check %x!=%x\n", crc_w2, crc_r2);
 	}
 
 	// メモリ解放

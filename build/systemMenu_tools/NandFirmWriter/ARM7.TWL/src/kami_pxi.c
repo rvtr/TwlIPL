@@ -210,19 +210,6 @@ static void KamiThread(void *arg)
 			}
 			break;
 
-		case KAMI_CLEAR_NAND_ERRORLOG:
-			{
-				if (sdmcFormatNandLog(TRUE))
-				{
-		            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
-				}
-				else
-				{
-		            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS_FALSE);
-				}
-			}
-			break;
-
         default:
             KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_INVALID_COMMAND);
         }

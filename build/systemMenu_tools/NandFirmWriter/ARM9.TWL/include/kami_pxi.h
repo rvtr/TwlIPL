@@ -58,17 +58,7 @@ typedef void (*KAMICallback)(KAMIResult result, void *arg);
 
 void KamiPxiInit( void );
 
-KAMIResult ExeFormatAsync(FormatMode format_mode, KAMICallback callback);
-KAMIResult ExeFormat(FormatMode format_mode);
 KAMIResult kamiNandIo(u32 block, void* buffer, u32 count, BOOL is_read);
-KAMIResult kamiMcuWriteFirm(void* buffer );
-KAMIResult kamiMcuIo(u32 reg_no, void* buffer, u32 value, BOOL is_read);
-KAMIResult kamiARM7Io(u32 addr, u32* buffer, u32 value, BOOL is_read);
-KAMIResult kamiCDC_GoDsMode( void );
-KAMIResult kamiClearNandErrorLog( void );
-KAMIResult kamiGetCameraModuleTypesAsync( CameraModuleTypes *pTypes, KAMICallback callback, void* arg );
-KAMIResult kamiGetCameraModuleTypes( CameraModuleTypes *pTypes );
-KAMIResult kamiGetNandCID( void* buffer );
 
 // (重要)
 // ARM7が読み書きするためリード前はInvalidate、ライト前はフラッシュしてください。
@@ -80,22 +70,6 @@ static KAMIResult kamiNandRead(u32 block, void* buffer, u32 count)
 static KAMIResult kamiNandWrite(u32 block, void* buffer, u32 count)
 {
 	return kamiNandIo(block, buffer, count, FALSE);
-}
-static KAMIResult kamiMcuRead(u8 reg_no, void* buffer)
-{
-	return kamiMcuIo((u32)reg_no, buffer, 0, TRUE);
-}
-static KAMIResult kamiMcuWrite(u8 reg_no, u8 value)
-{
-	return kamiMcuIo((u32)reg_no, NULL, (u32)value, FALSE);
-}
-static KAMIResult kamiARM7Read(u32 addr, void* buffer)
-{
-	return kamiARM7Io(addr, buffer, 0, TRUE);
-}
-static KAMIResult kamiARM7Write(u32 addr, u8 value)
-{
-	return kamiARM7Io(addr, NULL, value, FALSE);
 }
 
 /*===========================================================================*/
