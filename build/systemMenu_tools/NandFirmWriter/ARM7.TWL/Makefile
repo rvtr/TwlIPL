@@ -66,18 +66,7 @@ LINCLUDES		+=	$(ROOT)/build/libraries/spi/ARM7/include \
 					$(ROOT)/build/libraries/fatfs/ARM7.TWL/include/twl/fatfs/ARM7 \
 					../common/include
 
-
-#LLIBRARIES		+= libwl_sp.TWL.LTD.a libsdio_hcd_twl$(TWL_LIBSUFFIX).a libsdio_busdriver$(TWL_LIBSUFFIX).a libsdio_lib$(TWL_LIBSUFFIX).a libARM7athdrv$(TWL_LIBSUFFIX).a
 LLIBRARIES		+= libwl_sp.TWL.LTD.a
-#LLIBRARIES		+=	libwl_sp$(TWL_LIBSUFFIX).a			\
-#					libcdc_sp$(TWL_LIBSUFFIX).a			\
-#					libtpex_sp$(TWL_LIBSUFFIX).a		\
-#					libmicex_sp$(TWL_LIBSUFFIX).a		\
-#					libsdio_hcd_twl$(TWL_LIBSUFFIX).a	\
-#					libsdio_busdriver$(TWL_LIBSUFFIX).a	\
-#					libsdio_lib$(TWL_LIBSUFFIX).a		\
-#					librompatch_sp$(TWL_LIBSUFFIX).a	\
-#					libARM7athdrv$(TWL_LIBSUFFIX).a
 
 LDEPENDS_NEF	 = $(TWL_LIBS) $(LLIBRARIES)
 

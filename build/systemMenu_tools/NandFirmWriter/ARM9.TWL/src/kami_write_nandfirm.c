@@ -139,18 +139,16 @@ BOOL GetNandFirmBinPath(void)
 	// ファイル数初期化
 	sFileNum = 0;
 
-    // SDカードのルートディレクトリを検索
-    if ( !FS_OpenDirectory(&dir, "sdmc:/", FS_FILEMODE_R | FS_FILEMODE_W) )
+    // ロムアーカイブのルートディレクトリを検索
+    if ( !FS_OpenDirectory(&dir, "rom:/data/", FS_FILEMODE_R | FS_FILEMODE_W) )
     {
         ret = FALSE;
-        OS_TPrintf("Error FS_OpenDirectory(sdmc:/)\n");
+        OS_TPrintf("Error FS_OpenDirectory(rom:/data)\n");
     }
     else
     {
         FSDirectoryEntryInfo   info[1];
-        OS_Printf("[%s]:\n", "sdmc:/");
-
-		//kamiFontPrintfConsole(CONSOLE_ORANGE, "------ nand file list -----\n");
+        OS_Printf("[%s]:\n", "rom:/data/");
 
 		// .nand を探してファイル名を保存しておく
         while (FS_ReadDirectory(&dir, info))

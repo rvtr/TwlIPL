@@ -193,7 +193,7 @@ RomSpec
 {
 	Offset		0x00000000
 	Segment		ALL
-	HostRoot	$(MAKEROM_ROMROOT)
-	Root		/
-	File		$(MAKEROM_ROMFILES)
+	HostRoot	../data
+	Root		/data
+	File		menu_launcher-FINALROM-2869-10333-NWD.prod.nand
 }

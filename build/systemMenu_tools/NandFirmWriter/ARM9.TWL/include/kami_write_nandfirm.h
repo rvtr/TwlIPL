@@ -64,7 +64,7 @@ BOOL NandfirmProcess(void);
 
 static inline void MakeFullPathForSD(char* file_name, char* full_path)
 {
-	STD_CopyString( full_path, "sdmc:/" );
+	STD_CopyString( full_path, "rom:/data/" );
 	STD_ConcatenateString( full_path, file_name );
 }
 

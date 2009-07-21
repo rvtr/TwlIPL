@@ -203,8 +203,7 @@ static void DrawScene(void)
     PutMainScreen( 5, 5, 0xf8, " -                 - ");
 	PutMainScreen( 5, 6, 0xf8, " ------------------- ");
 
-	PutMainScreen( 3, 9, 0xff, "Please Insert SD Card and");
-	PutMainScreen( 3,11, 0xff, "Push A Button.");
+	PutMainScreen( 5,11, 0xff, "Please Push A Button.");
     
     if( gProc )
     {
