@@ -24,16 +24,16 @@ TWL_CODEGEN					?=	ALL
 
 #----------------------------------------------------------------------------
 
-SRCDIR			+=	./src ../../common/ARM7/src
+SRCDIR			+=	./src
 
-SRCS			 =	main.c initScfg.c kami_pxi.c formatter.c mcu_firm.c
+SRCS			 =	main.c initScfg.c kami_pxi.c
 
 TARGET_NAME		 =	racoon
 
 TARGET_NEF		 =	$(TARGET_NAME).tef
 LCFILE_SPEC		 =	$(TARGET_NAME).lsf
-LCFILE_TEMPLATE	=	$(ROOT)/build/components/$(TARGET_NAME).TWL/$(TARGET_NAME).lcf.template
-LDRES_TEMPLATE	=	$(ROOT)/build/components/$(TARGET_NAME).TWL/$(TARGET_NAME).response.template
+LCFILE_TEMPLATE	 =	$(ROOT)/build/components/$(TARGET_NAME).TWL/$(TARGET_NAME).lcf.template
+LDRES_TEMPLATE	 =	$(ROOT)/build/components/$(TARGET_NAME).TWL/$(TARGET_NAME).response.template
 
 CRT0_O			 =	crt0.LTD.TWL.o
 
@@ -60,12 +60,11 @@ LLIBRARY_DIRS	+=	$(TWL_IPL_RED_ROOT)/lib/ARM7-TS/$(TWL_BUILD_DIR) \
 LINCLUDES		+=	$(ROOT)/build/libraries/spi/ARM7/include \
 					$(ROOT)/build/libraries/os/common/include \
 					$(TWL_IPL_RED_ROOT)/include \
-					../common/include \
 					$(ROOT)/build/libraries/init/common/include \
-					../../common/ARM7/include \
 					$(ROOT)/build/libraries/fatfs/ARM7.TWL/include \
 					$(ROOT)/build/libraries/fatfs/ARM7.TWL/include/fatfs \
-					$(ROOT)/build/libraries/fatfs/ARM7.TWL/include/twl/fatfs/ARM7
+					$(ROOT)/build/libraries/fatfs/ARM7.TWL/include/twl/fatfs/ARM7 \
+					../common/include
 
 
 #LLIBRARIES		+= libwl_sp.TWL.LTD.a libsdio_hcd_twl$(TWL_LIBSUFFIX).a libsdio_busdriver$(TWL_LIBSUFFIX).a libsdio_lib$(TWL_LIBSUFFIX).a libARM7athdrv$(TWL_LIBSUFFIX).a

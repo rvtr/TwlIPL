@@ -33,11 +33,9 @@ SRCS				=	main.c \
 						kami_write_nandfirm.c \
 
 LINCLUDES			=	../common/include \
-						$(ROOT)/build/libraries/lcfg/ARM9.TWL/include \
-						../../common/ARM9/include
+						$(ROOT)/build/libraries/lcfg/ARM9.TWL/include 
 
-SRCDIR				=	src \
-						../../common/ARM9/src
+SRCDIR				=	src
 
 #----------------------------------------------------------------------------
 

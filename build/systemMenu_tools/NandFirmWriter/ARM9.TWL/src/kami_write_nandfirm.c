@@ -23,7 +23,6 @@
 #include <nitro/nvram.h>
 #include <../build/libraries/spi/ARM9/include/spi.h>
 
-#include "common_utility.h"
 #include "kami_write_nandfirm.h"
 #include "kami_pxi.h"
 

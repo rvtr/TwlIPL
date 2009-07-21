@@ -68,8 +68,6 @@ Autoload WRAM
 	Object		* (.ltdwram)
 	Object		$(OBJDIR)/main.o
 	Object		$(OBJDIR)/kami_pxi.o
-	Object		$(OBJDIR)/formatter.o
-	Object      $(OBJDIR)/mcu_firm.o
 
 	# caches in fatfs library, that should be on WRAM.
 	# 2007/12/11 OBJECT() による .bss シンボルのリンクがうまくいかないので、

@@ -20,20 +20,19 @@
 #include "kami_pxi.h"
 #include "fifo.h"
 #include "twl/cdc.h"
-#include "formatter.h"
-#include "mcu_firm.h"
 #include <twl/ltdmain_begin.h>
 #include <twl/mcu.h>
 #include <twl/camera.h>
 #include <twl/camera/ARM7/i2c_sharp.h>
 #include <twl/camera/ARM7/i2c_micron.h>
-#include <twl/sdmc.h>
 
+typedef unsigned char byte;     /* Don't change */
+typedef unsigned short word;    /* Don't change */
+typedef unsigned long dword;    /* Don't change */
 #define BOOLEAN int
 
 extern BOOL FATFSi_nandRtfsIo( int driveno, dword block, void* buffer, word count, BOOLEAN reading);
 extern BOOL sdmcFormatNandLog( BOOL verify_flag);
-extern void sdmcGetCID( SDMC_PORT_NO port, u32* dest);
 
 /*---------------------------------------------------------------------------*
     定数定義
@@ -187,20 +186,6 @@ static void KamiThread(void *arg)
         (void)OS_ReceiveMessage(&kamiWork.msgQ, &msg, OS_MESSAGE_BLOCK);
         switch (kamiWork.command)
         {
-        case KAMI_EXE_FORMAT:
-            {
-				result = ExeFormat((FormatMode)kamiWork.data[0]);	// Quick or Full
-				if (result)
-				{
-	                KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS_TRUE);
-				}
-				else
-				{
-	                KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS_FALSE);
-				}
-            }
-            break;
-
 		case KAMI_NAND_IO:
 			{
 				BOOL is_read;
@@ -225,78 +210,6 @@ static void KamiThread(void *arg)
 			}
 			break;
 
-		case KAMI_MCU_WRITE_FIRM:
-			{
-				void* buffer;
-				KAMI_UNPACK_U32((u32 *)(&buffer), &kamiWork.data[1]);
-
-				if ( MCU_WriteFirm( buffer ) )
-				{
-		            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
-				}
-				else
-				{
-		            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS_FALSE);
-				}
-			}
-			break;
-
-		case KAMI_MCU_IO:
-			{
-				BOOL is_read;
-				u32  reg_no;
-				u32  write;
-				u32  read;
-
-				is_read = (BOOL)kamiWork.data[0];
-				KAMI_UNPACK_U32(&reg_no,  &kamiWork.data[1]);
-				KAMI_UNPACK_U32(&write,  &kamiWork.data[5]);
-
-				if (is_read)
-				{
-					read = MCU_ReadRegister( (u8)reg_no );
-	            	KamiReturnResultEx(kamiWork.command, KAMI_PXI_RESULT_SUCCESS,  sizeof(u8), (u8*)&read );
-				}
-				else
-				{
-					MCU_WriteRegister( (u8)reg_no, (u8)write );
-		            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
-				}
-			}
-			break;
-
-		case KAMI_ARM7_IO:
-			{
-				BOOL is_read;
-				u32  addr;
-				u32  write;
-				u32  read;
-
-				is_read = (BOOL)kamiWork.data[0];
-				KAMI_UNPACK_U32(&addr,  &kamiWork.data[1]);
-				KAMI_UNPACK_U32(&write, &kamiWork.data[5]);
-
-				if (is_read)
-				{
-					read = *(u32 *)addr;
-	            	KamiReturnResultEx(kamiWork.command, KAMI_PXI_RESULT_SUCCESS,  sizeof(u32), (u8*)&read );
-				}
-				else
-				{
-					*(u32 *)addr = write;
-					KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
-				}
-			}
-			break;
-
-		case KAMI_CDC_GO_DSMODE:
-			{
-				CDC_Init();	// IIRなどのパラメータ初期化のため
-				CDC_GoDsMode();
-	            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS);
-			}
-			break;
-
 		case KAMI_CLEAR_NAND_ERRORLOG:
 			{
 				if (sdmcFormatNandLog(TRUE))
@@ -307,45 +220,6 @@ static void KamiThread(void *arg)
 				{
 		            KamiReturnResult(kamiWork.command, KAMI_PXI_RESULT_SUCCESS_FALSE);
 				}
-			}
-			break;
-
-        case KAMI_GET_CAMERA_MODULE_TYPE:
-            {
-                CameraModuleTypes types;
-                if (CAMERAi_IsSharpModule(CAMERA_SELECT_IN))
-                {
-                    types.in = CAMERA_MODULE_TYPE_SHARP;
-                }
-                else if (CAMERAi_IsMicronModule(CAMERA_SELECT_IN))
-                {
-                    types.in = CAMERA_MODULE_TYPE_MICRON;
-                }
-                else
-                {
-                    types.in = CAMERA_MODULE_TYPE_UNKNOWN;
-                }
-                if (CAMERAi_IsSharpModule(CAMERA_SELECT_OUT))
-                {
-                    types.out = CAMERA_MODULE_TYPE_SHARP;
-                }
-                else if (CAMERAi_IsMicronModule(CAMERA_SELECT_OUT))
-                {
-                    types.out = CAMERA_MODULE_TYPE_MICRON;
-                }
-                else
-                {
-                    types.out = CAMERA_MODULE_TYPE_UNKNOWN;
-                }
-                KamiReturnResultEx(kamiWork.command, KAMI_PXI_RESULT_SUCCESS, sizeof(CameraModuleTypes), (u8*)&types);
-            }
-            break;
-
-		case KAMI_GET_NAND_CID:
-			{
-				u8 buffer[16];
-				sdmcGetCID( SDMC_PORT_NAND, (u32*)buffer);
-	            KamiReturnResultEx(kamiWork.command, KAMI_PXI_RESULT_SUCCESS, sizeof(buffer), (u8*)buffer );
 			}
 			break;
 
