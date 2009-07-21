@@ -19,7 +19,7 @@
 #----------------------------------------------------------------------------
 SYSM_DISABLE_DEBUG	= FALSE
 
-TARGET_FIRM			= SYSTEMMENU
+#TARGET_FIRM			= SYSTEMMENU
 TARGET_PLATFORM		= TWL
 TWL_ARCHGEN    		= LIMITED
 
@@ -32,7 +32,7 @@ TARGET_BIN			= NandFirmWriter.srl
 LCFILE_SPEC			= ARM9-TS.lsf
 ROM_SPEC			= main.rsf
 
-MAKEROM_ARM7_BASE	= ../ARM7.TWL/bin/$(TWL_BUILDTYPE_ARM7)/armadillo
+MAKEROM_ARM7_BASE	= ../ARM7.TWL/bin/$(TWL_BUILDTYPE_ARM7)/racoon
 MAKEROM_ARM7		= $(MAKEROM_ARM7_BASE).$(TWL_ELF_EXT)
 
 SRCS				=	main.c \
@@ -71,7 +71,7 @@ SDK_APPEND_LIBS		=	\
 
 LLIBRARIES			+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
-MAKEROM			 	= $(TWL_TOOLSDIR)/bin/makerom.TWL.secure.exe
+MAKEROM			 	= $(TWL_TOOLSDIR)/bin/makerom.TWL.exe
 
 #LDIRT_CLEAN		=
 #INSTALL_TARGETS	=

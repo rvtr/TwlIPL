@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*
-  Project:  TwlSDK - components - armadillo.TWL
+  Project:  TwlSDK - components - mongoose.TWL
   File:     main.c
 
-  Copyright 2008 Nintendo.  All rights reserved.
+  Copyright 2007-2009 Nintendo.  All rights reserved.
 
   These coded instructions, statements, and computer programs contain
   proprietary information of Nintendo of America Inc. and/or Nintendo
@@ -10,84 +10,120 @@
   not be disclosed to third parties or copied or duplicated in any form,
   in whole or in part, without the prior written consent of Nintendo.
 
-  $Date:: 2008-08-18#$
-  $Rev: 2182 $
-  $Author: kamikawa $
+  $Date:: 2009-06-11#$
+  $Rev: 10743 $
+  $Author: okajima_manabu $
  *---------------------------------------------------------------------------*/
 
 #include    <nitro/types.h>
 #include    <twl/init/crt0.h>
 #include    <twl/memorymap_sp.h>
 #include    <twl/os.h>
-#include    <twl/os/common/codecmode.h>
-#include    <nitro/pad.h>
-#include    <twl/aes.h>
-#include    <twl/sea.h>
-#include    <twl/fatfs.h>
-#include    <twl/nwm.h>
-#include    <twl/camera.h>
-#include    <sysmenu.h>
-#include    <twl/mcu.h>
-#include    <twl/cdc.h>
-#include    <nitro/snd.h>
-#include    <twl/snd/ARM7/sndex_api.h>
-#include    <twl/rtc.h>
-#include    <nitro/wvr.h>
 #include    <twl/spi.h>
+#include    <twl/fatfs.h>
+#include    <nitro/pad.h>
+#include    <nitro/std.h>
+#include    <nitro/snd.h>
+#ifndef SDK_ARM7COMP_WO_WIRELESS
+#include    <nitro/wvr.h>
+#include    <twl/nwm.h>
+#endif  // SDK_ARM7COMP_WO_WIRELESS
+#ifndef SDK_ARM7COMP_WO_CAMERA
+#include    <twl/camera.h>
+#endif
+#include    <twl/rtc.h>
+#include    <nitro/hw/common/lcd.h>
+#include    <nitro/gx.h>
+#include    <twl/os/common/codecmode.h>
+#include    <twl/cdc.h>
+#include    <twl/snd/ARM7/sndex_api.h>
+#include    <twl/aes.h>
+#include    <twl/mcu.h>
 #include    "nvram_sp.h"
 #include    "kami_pxi.h"
-#include    <firm/os/common/system.h>
+#ifdef SDK_SEA
+#include    <twl/sea.h>
+#endif  // ifdef SDK_SEA
 
 /*---------------------------------------------------------------------------*
     定数定義
  *---------------------------------------------------------------------------*/
-/* 各スレッド優先度 */
-#define THREAD_PRIO_SPI         2
-#define THREAD_PRIO_MCU         4 // 暫定
-#define THREAD_PRIO_SND         6
-#define THREAD_PRIO_NWM_EVENT   7
-#define THREAD_PRIO_NWM_SDIO    8
-#define THREAD_PRIO_FATFS       8
-#define THREAD_PRIO_NWM_COMMAND 9
-#define THREAD_PRIO_NWM_WPA     10
-#define THREAD_PRIO_HOTSW   	11
-#define THREAD_PRIO_AES         12
-#define THREAD_PRIO_SEA         12
-#define THREAD_PRIO_RTC         12
-#define THREAD_PRIO_SNDEX       14
-#define THREAD_PRIO_FS          15
+#ifndef SDK_ARM7COMP_WO_WIRELESS
+#define WM_WL_HEAP_SIZE     0x2100
+#define ATH_DRV_HEAP_SIZE   0x5800
+#define WPA_HEAP_SIZE       0x1C00
+#endif  // SDK_ARM7COMP_WO_WIRELESS
+
+#define MEM_TYPE_WRAM 0
+#define MEM_TYPE_MAIN 1
+
+/* Priorities of each threads */
+#define THREAD_PRIO_MCU     1 //4   /* ハードウェアリセット時に他のスレッドに優先して動く必要アリ */
+#define THREAD_PRIO_SPI     2
+#define THREAD_PRIO_SND     6
+#define THREAD_PRIO_FATFS   8
+#define THREAD_PRIO_AES     12
+#define THREAD_PRIO_SEA     12
+#define THREAD_PRIO_RTC     12
+#define THREAD_PRIO_SNDEX   14
+#define THREAD_PRIO_FS      15
 /* OS_THREAD_LAUNCHER_PRIORITY 16 */
 
-/* ROM 内登録エリアの拡張言語コード */
-#define ROMHEADER_FOR_CHINA_BIT     0x80
-#define ROMHEADER_FOR_KOREA_BIT     0x40
+#ifndef SDK_ARM7COMP_WO_WIRELESS
+#define NWM_DMANO                   NWMSP_DMA_7
+#define THREAD_PRIO_NWM_COMMAND     9
+#define THREAD_PRIO_NWM_EVENT       7
+#define THREAD_PRIO_NWM_SDIO        8
+#define THREAD_PRIO_NWM_WPA         10
+#endif  // SDK_ARM7COMP_WO_WIRELESS
 
-/* 使用 DMA 番号 */
-#define DMA_NO_FATFS        FATFS_DMA_4     // = 0
-#define DMA_NO_NWM          3
+// ROM 内登録エリアの拡張言語コード
+#define ROMHEADER_FOR_CHINA_BIT        0x80
+#define ROMHEADER_FOR_KOREA_BIT        0x40
 
-/* カードチャタリングカウンタ */
-#define     CHATTERING_COUNTER   0x1988		// 100ms分 (0x1988 * 15.3us = 100000us)
-
+#include <nitro/main_begin.h>
+// エラーメッセージ用の文字列(コードサイズ削減のために用意、MAIN に配置するために const にしない)
+static char strARM7[] ="ARM7:";
+static char strMemMAIN[] ="MAIN";
+static char strMemWRAM[] ="WRAM";
+static char strFailedCreateHeap[] ="%sFailedToCreateHeap.(%s)\n";
+static char strHeapSizeIs[] ="%s_HeapSize=%d (Margin:%d)\n";
+static char strInsufficientHeapSize[] ="%sInsufficientHeapSize. (0x%x < 0x%x)\n";
+#include <nitro/main_end.h>
+#include <twl/ltdmain_begin.h>
+static char strWramBeforeAdd[] ="WRAM(BeforeAddToHeap)";
+static char strMainBeforeAdd[] ="MAIN(BeforeAddToHeap)";
+#include <twl/ltdmain_end.h>
 /*---------------------------------------------------------------------------*
     内部関数定義
  *---------------------------------------------------------------------------*/
 static void         PrintDebugInfo(void);
-static OSHeapHandle InitializeAllocateSystem(void);
-static void         InitializeFatfs(void);
-static void         InitializeNwm(OSHeapHandle hh);
-static void			InitializeCardPower(void);
-static void         InitializeCdc(void);
-
+static OSHeapHandle InitializeAllocateSystem(u8 memType);
+static OSHeapHandle InitializeAllocateSystemCore(u8 memType);
+#ifdef SDK_TWLHYB
+static OSHeapHandle InitializeAllocateSystemCoreEx(u8 memType);
+#endif
+static void         DummyThread(void* arg);
 static void         ReadUserInfo(void);
 #ifdef  NVRAM_CONFIG_DATA_EX_VERSION
 static BOOL         IsValidConfigEx(void);
 static u16          GetRomValidLanguage(void);
-static s32          CheckCorrectNCDEx(NVRAMConfigEx* ncdsp);
+static s32          CheckCorrectNCDEx(NVRAMConfigEx * ncdsp);
 #else
-static s32          CheckCorrectNCD(NVRAMConfig* ncdsp);
+static s32          CheckCorrectNCD(NVRAMConfig *ncdsp);
 #endif
 static void         VBlankIntr(void);
+static void         InitializeFatfs(void);
+#ifndef SDK_ARM7COMP_WO_WIRELESS
+static void         InitializeNwm(OSHeapHandle drvHeapHandle, OSHeapHandle wpaHeapHandle);
+#endif  // SDK_ARM7COMP_WO_WIRELESS
+/*---------------------------------------------------------------------------*
+    外部シンボル参照
+ *---------------------------------------------------------------------------*/
+#ifdef  SDK_TWLHYB
+extern void         SDK_LTDAUTOLOAD_LTDWRAM_BSS_END(void);
+extern void         SDK_LTDAUTOLOAD_LTDMAIN_BSS_END(void);
+#endif
 
 /*---------------------------------------------------------------------------*
   Name:         TwlSpMain
@@ -98,64 +134,143 @@ static void         VBlankIntr(void);
 void
 TwlSpMain(void)
 {
-    OSHeapHandle    heapHandle;
+    OSHeapHandle    wramHeapHandle;
+#ifdef  SDK_TWLLTD
+#ifndef SDK_ARM7_ONLY_WRAM
+    OSHeapHandle    mainHeapHandle;
+#endif
+#else
+    OSHeapHandle    mainHeapHandle;
+#endif
 
-    /* OS 初期化 */
+
+#ifndef SDK_ARM7COMP_WO_WIRELESS
+#ifdef  SDK_WIRELESS_IN_VRAM
+    WVR_ShelterExtWram();
+#endif
+#endif
+
+    // OS 初期化
     OS_Init();
     PrintDebugInfo();
 
-    /* NVRAM からユーザー情報読み出し */
+    // NVRAM からユーザー情報読み出し
     ReadUserInfo();
 
-    /* ヒープ領域設定 */
-    heapHandle  =   InitializeAllocateSystem();
+    // ヒープ領域設定
+    wramHeapHandle  =   InitializeAllocateSystem(MEM_TYPE_WRAM);
+#ifdef  SDK_TWLLTD
+#ifndef SDK_ARM7_ONLY_WRAM
+    mainHeapHandle  =   InitializeAllocateSystem(MEM_TYPE_MAIN);
+#endif
+#else
+    mainHeapHandle  =   InitializeAllocateSystem(MEM_TYPE_MAIN);
+#endif
 
-    /* ボタン入力サーチ初期化 */
+    // ボタン入力サーチ初期化
     (void)PAD_InitXYButton();
 
-    /* 割込み許可 */
+    // 割り込み許可
     (void)OS_SetIrqFunction(OS_IE_V_BLANK, VBlankIntr);
     (void)OS_EnableIrqMask(OS_IE_V_BLANK);
     (void)GX_VBlankIntr(TRUE);
     (void)OS_EnableIrq();
     (void)OS_EnableInterrupts();
 
-#ifndef NAND_INITIALIZER_LIMITED_MODE
-    KamiPxiInit();
-#endif
+	KamiPxiInit();
+    
+    // ファイルシステム初期化
+    FS_Init(FS_DMA_NOT_USE);
+    FS_CreateReadServerThread(THREAD_PRIO_FS);
 
-    /* 各ライブラリ初期化 */
-    AES_Init(THREAD_PRIO_AES);                  // AES
-    SEA_Init(THREAD_PRIO_SEA);                  // SEA
-    FS_Init(FS_DMA_NOT_USE);                    // FS for CARD
-    FS_CreateReadServerThread(THREAD_PRIO_FS);  // FS for CARD
-    InitializeFatfs();                          // FAT-FS
-    InitializeNwm(heapHandle);                  // TWL 無線
-    MCU_InitIrq(THREAD_PRIO_MCU);               // マイコン
-
-    if (OSi_IsCodecTwlMode() == TRUE)
+    if (OS_IsRunOnTwl() == TRUE)
     {
-        InitializeCdc();                        // CODEC
-        CAMERA_Init();                          // カメラ
+        InitializeFatfs();    // FATFS 初期化
+#ifndef SDK_ARM7COMP_WO_WIRELESS
+#ifndef SDK_SEA  // ！暫定処置！
+    // NWM 初期化
+#ifdef SDK_TWLLTD
+#ifdef SDK_ARM7_ONLY_WRAM
+        InitializeNwm(wramHeapHandle, wramHeapHandle);      // tarsier コンポーネントでは、ヒープは全て WRAM
+#else
+        InitializeNwm(mainHeapHandle, mainHeapHandle);      // LIMITED モードでは 無線のヒープを MAIN から確保
+#endif
+#else
+        InitializeNwm(wramHeapHandle, mainHeapHandle);      // HYBRID モードでは 無線のヒープを WRAM から確保
+#endif
+#endif  // ifndef SDK_SEA
+#endif  // SDK_ARM7COMP_WO_WIRELESS
+        AES_Init(AES_DMA_5, AES_DMA_6, THREAD_PRIO_AES);      // AES 初期化
+#ifdef SDK_SEA
+        SEA_Init(THREAD_PRIO_SEA);
+#endif  // ifdef SDK_SEA
+        MCU_InitIrq(THREAD_PRIO_MCU);  // MCU 初期化
+
+        CDC_InitLib();  // CODECライブラリ初期化
     }
 
-    SND_Init(THREAD_PRIO_SND);                  // サウンド
-    SNDEX_Init(THREAD_PRIO_SNDEX);              // サウンド拡張
-    RTC_Init(THREAD_PRIO_RTC);                  // RTC
-    WVR_Begin(heapHandle);                      // NITRO 無線
+#ifndef SDK_ARM7COMP_WO_CAMERA
+    if (OSi_IsCodecTwlMode() == TRUE)
+    {
+        // カメラ初期化
+        CAMERA_Init();
+        /* CODEC が TWL モードでないとシャッター音を強制的に鳴らす
+           機能が使用できません。この為、CODEC が TWL モードの場合
+           にのみカメラライブラリを使用可能な状態にします。 */
+    }
+#endif
+
+    // サウンド初期化
+    SND_Init(THREAD_PRIO_SND);
+    if (OS_IsRunOnTwl() == TRUE)
+    {
+        SNDEX_Init(THREAD_PRIO_SNDEX);
+    }
+
+    // RTC 初期化
+    RTC_Init(THREAD_PRIO_RTC);
+
+    // 旧無線初期化
+#ifndef SDK_ARM7COMP_WO_WIRELESS
+
+#ifndef SDK_WIRELESS_IN_VRAM
+
+#ifndef SDK_SEA  // ！暫定処置！
+    WVR_Begin(wramHeapHandle);
+#endif  // ifdef SDK_SEA
+
+#else /* SDK_WIRELESS_IN_VRAM */
+    WVR_Init(wramHeapHandle);
+#endif
+    
+#endif  // SDK_ARM7COMP_WO_WIRELESS
+
+    // SPI 初期化
     SPI_Init(THREAD_PRIO_SPI);
-	InitializeCardPower();						// カード電源ON（検査プログラム用）
 
     while (TRUE)
     {
         OS_Halt();
-    
-        /* ソフトウェアリセット要求は監視しない */
-        /* AGB カートリッジの挿抜チェックは行わない */
-        /* DS カードの挿抜チェックは行わない */
+
+        //---- check reset
+        if (OS_IsResetOccurred())
+        {
+            //VIB_STOP
+            CTRDG_VibPulseEdgeUpdate(NULL);
+
+            OS_ResetSystem();
+        }
+
+        //---- check pull out cartridge
+        CTRDG_CheckPullOut_Polling();
+
+#ifndef SDK_SMALL_BUILD
+        //---- check pull out card
+        CARD_CheckPullOut_Polling();
+#endif
     }
 }
-
+#include <nitro/main_begin.h>
 /*---------------------------------------------------------------------------*
   Name:         PrintDebugInfo
   Description:  ARM7 コンポーネントの情報をデバッグ出力する。
@@ -165,66 +280,47 @@ TwlSpMain(void)
 static void
 PrintDebugInfo(void)
 {
-    OS_TPrintf("ARM7: This component is running on TWL.\n");
-    OS_TPrintf("ARM7: This component is \"armadillo.TWL\".\n");
+    if(OS_IsRunOnTwl())
+    {
+        OS_TPrintf("%s TWL\n",strARM7);
+    }
+    else
+    {
+        OS_TPrintf("%s NITRO\n",strARM7);
+    }
+#ifdef  SDK_SEA
+#ifdef  SDK_TWLLTD
+    OS_TPrintf("%s armadillo.TWL\n",strARM7);
+#else   /* ifdef SDK_TWLLTD */
+#error invalid parameter combination
+#endif  /* ifdef SDK_TWLLTD else */
+#else   /* ifdef SDK_SEA */
+#ifdef  SDK_TWLLTD
+#ifdef  SDK_ARM7_ONLY_WRAM
+    OS_TPrintf("%s tarsier.TWL\n",strARM7);
+#else
+#if defined(SDK_ARM7COMP_WO_WIRELESS) && defined(SDK_ARM7COMP_WO_CAMERA)
+    OS_TPrintf("%s ferret.TWL\n", strARM7);
+#else
+    OS_TPrintf("%s racoon.TWL\n",strARM7);
+#endif
+#endif
+#else   /* ifdef SDK_TWLLTD */
+#ifdef  SDK_WIRELESS_IN_VRAM
+    OS_TPrintf("%s ichneumon.TWL\n",strARM7);
+#else   /* ifdef SDK_WIRELESS_IN_VRAM */
+    OS_TPrintf("%s mongoose.TWL\n",strARM7);
+#endif  /* ifdef SDK_WIRELESS_IN_VRAM else */
+#endif  /* ifdef SDK_TWLLTD else */
+#endif  /* ifdef SDK_SEA else */
 }
+#include <nitro/main_end.h>
 
-/*---------------------------------------------------------------------------*
-  Name:         InitializeAllocateSystem
-  Description:  メモリ割当てシステムを初期化する。
-  Arguments:    None.
-  Returns:      OSHeapHandle - WRAM アリーナ上に確保されたヒープのハンドルを返す。
- *---------------------------------------------------------------------------*/
-static OSHeapHandle
-InitializeAllocateSystem(void)
-{
-    OSHeapHandle    hh;
-    void*           subLo   =   (void*)OS_GetWramSubArenaLo();
-    void*           subHi   =   (void*)OS_GetWramSubArenaHi();
-    void*           privLo  =   (void*)OS_GetWramSubPrivArenaLo();
-    void*           privHi  =   (void*)OS_GetWramSubPrivArenaHi();
-
-    if (((u32)privLo == HW_PRV_WRAM) && ((u32)subHi == HW_PRV_WRAM) && ((u32)subLo < HW_PRV_WRAM))
-    {
-        /* SUB アリーナを SUBPRIV アリーナに吸収 */
-        OS_SetWramSubArenaHi(subLo);
-        OS_SetWramSubPrivArenaLo(subLo);
-        privLo  =   subLo;
-    }
-
-    /* アリーナを 0 クリア */
-    MI_CpuClear8(privLo, (u32)privHi - (u32)privLo);
-
-    /* ヒープ作成初期化 */
-    privLo  =   OS_InitAlloc(OS_ARENA_WRAM_SUBPRIV, privLo, privHi, 1);
-    hh  =   OS_CreateHeap(OS_ARENA_WRAM_SUBPRIV, privLo, privHi);
-    if (hh < 0)
-    {
-        OS_Panic("ARM7: Failed to create heap.\n");
-    }
-
-    /* カレントヒープに設定 */
-    (void)OS_SetCurrentHeap(OS_ARENA_WRAM_SUBPRIV, hh);
-
-    /* ヒープサイズの確認 */
-    {
-        u32     heapSize;
-    
-        heapSize    =   (u32)OS_CheckHeap(OS_ARENA_WRAM_SUBPRIV, hh);
-    
-        if (heapSize <= 0)
-        {
-            OS_Panic("ARM7: Failed to create heap.\n");
-        }
-        OS_TPrintf("ARM7: heap size [%d]\n", heapSize);
-    }
-
-    return hh;
-}
-
+#include    <twl/ltdwram_begin.h>
 /*---------------------------------------------------------------------------*
   Name:         InitializeFatfs
-  Description:  FATFSライブラリを初期化する。
+  Description:  FATFSライブラリを初期化する。FATFS初期化関数内でスレッド休止
+                する為、休止中動作するダミーのスレッドを立てる。
   Arguments:    None.
   Returns:      None.
  *---------------------------------------------------------------------------*/
@@ -237,81 +333,410 @@ InitializeFatfs(void)
         // do nothing
     }
 }
+#include    <twl/ltdwram_end.h>
 
+#ifndef SDK_ARM7COMP_WO_WIRELESS
+#include    <twl/ltdwram_begin.h>
 /*---------------------------------------------------------------------------*
   Name:         InitializeNwm
   Description:  NWMライブラリを初期化する。
-  Arguments:    hh  -   利用可能なヒープのハンドルを指定。
+  Arguments:    None.
   Returns:      None.
  *---------------------------------------------------------------------------*/
 static void
-InitializeNwm(OSHeapHandle hh)
+InitializeNwm(OSHeapHandle drvHeapHandle, OSHeapHandle wpaHeapHandle)
 {
-    NwmspInit   nwmInit;
+    NwmspInit nwmInit;
 
-    /* [TODO] 確保しているヒープ領域が新無線一式が必要としているメモリ量以上かのチェックが必要 */
+    nwmInit.dmaNo = NWM_DMANO;
+    nwmInit.cmdPrio = THREAD_PRIO_NWM_COMMAND;
+    nwmInit.evtPrio = THREAD_PRIO_NWM_EVENT;
+    nwmInit.sdioPrio = THREAD_PRIO_NWM_SDIO;
 
-    nwmInit.cmdPrio         =   THREAD_PRIO_NWM_COMMAND;
-    nwmInit.evtPrio         =   THREAD_PRIO_NWM_EVENT;
-    nwmInit.sdioPrio        =   THREAD_PRIO_NWM_SDIO;
+#ifdef SDK_TWLLTD
+#ifdef SDK_ARM7_ONLY_WRAM
+    nwmInit.drvHeap.id = OS_ARENA_WRAM_SUBPRIV; /* [TODO] */
+#else
+    nwmInit.drvHeap.id = OS_ARENA_MAIN_SUBPRIV; /* [TODO] */
+#endif
+#else
+    nwmInit.drvHeap.id = OS_ARENA_WRAM_SUBPRIV; /* [TODO] */
+#endif
+    nwmInit.drvHeap.handle = drvHeapHandle;
 
-    nwmInit.dmaNo           =   DMA_NO_NWM;
-    nwmInit.drvHeap.id      =   OS_ARENA_WRAM_SUBPRIV;
-    nwmInit.drvHeap.handle  =   hh;
-
-    nwmInit.wpaPrio         =   THREAD_PRIO_NWM_WPA;
-    nwmInit.wpaHeap.id      =   OS_ARENA_WRAM_SUBPRIV;
-    nwmInit.wpaHeap.handle  =   hh;
+    nwmInit.wpaPrio = THREAD_PRIO_NWM_WPA;
+#ifdef SDK_TWLLTD
+#ifdef SDK_ARM7_ONLY_WRAM
+    nwmInit.wpaHeap.id = OS_ARENA_WRAM_SUBPRIV; /* [TODO] */
+#else
+    nwmInit.wpaHeap.id = OS_ARENA_MAIN_SUBPRIV; /* [TODO] */
+#endif
+#else
+    nwmInit.wpaHeap.id = OS_ARENA_MAIN_SUBPRIV; /* [TODO] */
+#endif
+    nwmInit.wpaHeap.handle = wpaHeapHandle;
 
     NWMSP_Init(&nwmInit);
-}
 
+}
+#include    <twl/ltdwram_end.h>
+#endif  // SDK_ARM7COMP_WO_WIRELESS
+
+#include    <twl/ltdwram_begin.h>
 /*---------------------------------------------------------------------------*
-  Name:         InitializeCardPower
-  Description:  カード電源をONする。
-  Arguments:    None.
+  Name:         DummyThread
+  Description:  FATFSライブラリ、CDCライブラリを初期化する際に立てるダミーの
+                スレッド。
+  Arguments:    arg -   使用しない。
   Returns:      None.
  *---------------------------------------------------------------------------*/
 static void
-InitializeCardPower(void)
+DummyThread(void* arg)
 {
-    // チャッタリングカウンタの値を設定
-    reg_MI_MC1 = (u32)((reg_MI_MC1 & ~REG_MI_MC1_CC_MASK) |
-                       (CHATTERING_COUNTER << REG_MI_MC1_CC_SHIFT));
+#pragma unused(arg)
+    while (TRUE)
+    {
+    }
+}
+#include    <twl/ltdwram_end.h>
 
-	// チャタリングカウンタ分待つことによりCDETが0になる
-    OS_SpinWait( OS_MSEC_TO_CPUCYC(200) );
+/*---------------------------------------------------------------------------*
+  Name:         InitializeAllocateSystem
+  Description:  メモリ割当てシステムを初期化する。
+  Arguments:    None.
+  Returns:      OSHeapHandle - WRAM アリーナ上に確保されたヒープのハンドルを返す。
+ *---------------------------------------------------------------------------*/
+static OSHeapHandle  InitializeAllocateSystem(u8 memType)
+{
 
-	// カードスロット１電源ON
-	HOTSWi_TurnCardPowerOn(1);
+    OSHeapHandle    hh;
+
+#ifdef SDK_TWLHYB
+    if( OS_IsRunOnTwl() == TRUE)
+    {
+        hh = InitializeAllocateSystemCoreEx(memType); /* Hybrid を TWL で動作させる */
+    }
+    else
+#endif
+    {
+        hh = InitializeAllocateSystemCore(memType);     /* Hybrid を DS で動作させる or Limited */
+    }
+
+    return hh;
 }
 
 /*---------------------------------------------------------------------------*
-  Name:         InitializeCdc
-  Description:  CDCライブラリを初期化する。
+  Name:         InitializeAllocateSystemCore
+  Description:  メモリ割当てシステムを初期化する。
+                Hybrid を DS で動作させた場合、Limited を TWL で動作させた場合に動作
   Arguments:    None.
-  Returns:      None.
+  Returns:      OSHeapHandle - WRAM アリーナ上に確保されたヒープのハンドルを返す。
  *---------------------------------------------------------------------------*/
-static void
-InitializeCdc(void)
+static OSHeapHandle InitializeAllocateSystemCore(u8 memType)
 {
-	u32 spiLockId;
+    OSHeapHandle    hh;
 
-	spiLockId = (u32)OS_GetLockID();
-	if (spiLockId == OS_LOCK_ID_ERROR)
-	{
-        OS_Warning("OS_GetLockID failed.\n");
-	}
+    /* MAIN */
+    if(memType == MEM_TYPE_MAIN)
+    {
+        {
+            void*   lo  =   (void*)OS_GetSubPrivArenaLo();
+            void*   hi  =   (void*)OS_GetSubPrivArenaHi();
 
-    /* CODEC 初期化 */
-	SPI_Lock(spiLockId);
-    CDC_Init();
-	SPI_Unlock(spiLockId);
+            // アリーナを 0 クリア
+            MI_CpuClear8(lo, (u32)hi - (u32)lo);
+
+            // メモリ割り当て初期化
+            lo  =   OS_InitAlloc(OS_ARENA_MAIN_SUBPRIV, lo, hi, 1);
+            // アリーナ下位アドレスを設定
+            OS_SetArenaLo(OS_ARENA_MAIN_SUBPRIV, lo);
+
+            // ヒープ作成
+            hh  =   OS_CreateHeap(OS_ARENA_MAIN_SUBPRIV, lo, hi);
+
+            if (hh < 0)
+            {
+                OS_Panic(strFailedCreateHeap, strARM7, strMemMAIN);
+            }
+        }
+        // カレントヒープに設定
+        (void)OS_SetCurrentHeap(OS_ARENA_MAIN_SUBPRIV, hh);
+        // ヒープサイズの確認
+        {
+            u32     heapSize;
+
+            heapSize    =   (u32)OS_CheckHeap(OS_ARENA_MAIN_SUBPRIV, hh);
+
+            if( heapSize <= 0) /* ヒープ領域の確保に失敗 */
+            {
+                OS_Panic(strFailedCreateHeap, strARM7, strMemMAIN);
+            }
+
+    #ifdef SDK_TWLLTD
+#ifndef SDK_ARM7COMP_WO_WIRELESS
+            {
+                if ((ATH_DRV_HEAP_SIZE + WPA_HEAP_SIZE) > heapSize)
+                {
+                    OS_Panic(strInsufficientHeapSize, strARM7, heapSize, ATH_DRV_HEAP_SIZE + WPA_HEAP_SIZE);
+                }
+            }
+            OS_TPrintf(strHeapSizeIs, strMemMAIN, heapSize, heapSize - (ATH_DRV_HEAP_SIZE + WPA_HEAP_SIZE) );
+#else
+            OS_TPrintf(strHeapSizeIs, strMemMAIN, heapSize, heapSize);
+#endif
+    #else
+            OS_TPrintf(strHeapSizeIs, strMemMAIN, heapSize, heapSize);
+    #endif
+        }
+    }
+
+    /* WRAM */
+    if( memType == MEM_TYPE_WRAM)
+    {
+        {
+            void*   lo  =   (void*)OS_GetWramSubPrivArenaLo();
+            void*   hi  =   (void*)OS_GetWramSubPrivArenaHi();
+
+            // アリーナを 0 クリア
+            MI_CpuClear8(lo, (u32)hi - (u32)lo);
+
+            // メモリ割り当て初期化
+            lo  =   OS_InitAlloc(OS_ARENA_WRAM_SUBPRIV, lo, hi, 1);
+            // アリーナ下位アドレスを設定
+            OS_SetArenaLo(OS_ARENA_WRAM_SUBPRIV, lo);
+
+            // ヒープ作成
+            hh  =   OS_CreateHeap(OS_ARENA_WRAM_SUBPRIV, lo, hi);
+
+            if (hh < 0)
+            {
+                OS_Panic(strFailedCreateHeap, strARM7, strMemWRAM);
+            }
+        }
+
+        // カレントヒープに設定
+        (void)OS_SetCurrentHeap(OS_ARENA_WRAM_SUBPRIV, hh);
+
+        // ヒープサイズの確認
+        {
+            u32     heapSize;
+
+            heapSize    =   (u32)OS_CheckHeap(OS_ARENA_WRAM_SUBPRIV, hh);
+
+            if( heapSize <= 0) /* ヒープ領域の確保に失敗 */
+            {
+                OS_Panic(strFailedCreateHeap, strARM7, strMemWRAM);
+            }
+
+#ifndef SDK_ARM7COMP_WO_WIRELESS
+            if (WM_WL_HEAP_SIZE > heapSize)
+            {
+                OS_Panic(strInsufficientHeapSize, strARM7, heapSize, WM_WL_HEAP_SIZE);
+            }
+            OS_TPrintf(strHeapSizeIs, strMemWRAM, heapSize, (heapSize-WM_WL_HEAP_SIZE));
+#else
+            OS_TPrintf(strHeapSizeIs, strMemWRAM, heapSize, heapSize);
+#endif
+        }
+    }
+    return hh;
 }
 
-//#ifdef  WM_PRECALC_ALLOWEDCHANNEL
-//extern u16 WMSP_GetAllowedChannel(u16 bitField);
-//#endif
+#ifdef SDK_TWLHYB
+#include    <twl/ltdwram_begin.h>
+/*---------------------------------------------------------------------------*
+  Name:         InitializeAllocateSystemCoreEx
+  Description:  メモリ割当てシステムを初期化する。
+                Hybrid を TWL で動作させた場合に動作
+  Arguments:    None.
+  Returns:      OSHeapHandle - WRAM アリーナ上に確保されたヒープのハンドルを返す。
+ *---------------------------------------------------------------------------*/
+static OSHeapHandle InitializeAllocateSystemCoreEx(u8 memType)
+{
+    OSHeapHandle    hh;
+
+    if(memType == MEM_TYPE_MAIN)
+    {
+        {
+            void*   basicLo =   (void*)OS_GetSubPrivArenaLo();
+            void*   basicHi =   (void*)OS_GetSubPrivArenaHi();
+            void*   extraLo =   (void*)MATH_ROUNDUP((u32)SDK_LTDAUTOLOAD_LTDMAIN_BSS_END, 32);
+            void*   extraHi =   (void*)MATH_ROUNDDOWN(HW_MAIN_MEM_SUB, 32);
+
+// メモリ節約のためにコメントアウト
+/*
+#if SDK_DEBUG
+            // debug information
+            OS_TPrintf("ARM7: MAIN arena basicLo = %p\n", basicLo);
+            OS_TPrintf("ARM7: MAIN arena basicHi = %p\n", basicHi);
+            OS_TPrintf("ARM7: MAIN arena extraLo = %p\n", extraLo);
+            OS_TPrintf("ARM7: MAIN arena extraHi = %p\n", extraHi);
+#endif
+*/
+            // アリーナを 0 クリア
+            MI_CpuClear8(basicLo, (u32)basicHi - (u32)basicLo);
+            MI_CpuClear8(extraLo, (u32)extraHi - (u32)extraLo);
+
+            // メモリ割り当て初期化
+            if ((u32)basicLo < (u32)extraLo)
+            {
+                basicLo =   OS_InitAlloc(OS_ARENA_MAIN_SUBPRIV, basicLo, extraHi, 1);
+                // アリーナ下位アドレスを設定
+                OS_SetArenaLo(OS_ARENA_MAIN_SUBPRIV, basicLo);
+            }
+            else
+            {
+                extraLo =   OS_InitAlloc(OS_ARENA_MAIN_SUBPRIV, extraLo, basicHi, 1);
+            }
+
+            // ヒープ作成
+            hh  =   OS_CreateHeap(OS_ARENA_MAIN_SUBPRIV, basicLo, basicHi);
+
+            if (hh < 0)
+            {
+                OS_Panic(strFailedCreateHeap, strARM7, strMemMAIN);
+            }
+
+            // ヒープサイズの確認
+            {
+                u32     heapSize;
+
+                heapSize    =   (u32)OS_CheckHeap(OS_ARENA_MAIN_SUBPRIV, hh);
+
+                if( heapSize <= 0) /* ヒープ領域の確保に失敗 */
+                {
+                    OS_Panic(strFailedCreateHeap, strARM7, strMemMAIN);
+                }
+
+                OS_TPrintf(strHeapSizeIs, strMainBeforeAdd, heapSize, heapSize);
+            }
+
+            // ヒープに拡張ブロックを追加
+            OS_AddToHeap(OS_ARENA_MAIN_SUBPRIV, hh, extraLo, extraHi);
+        }
+        // カレントヒープに設定
+        (void)OS_SetCurrentHeap(OS_ARENA_MAIN_SUBPRIV, hh);
+        // ヒープサイズの確認
+        {
+            u32     heapSize;
+
+            heapSize    =   (u32)OS_CheckHeap(OS_ARENA_MAIN_SUBPRIV, hh);
+
+            if( heapSize <= 0) /* ヒープ領域の確保に失敗 */
+            {
+                OS_Panic(strFailedCreateHeap, strARM7, strMemMAIN);
+            }
+
+#ifndef SDK_ARM7COMP_WO_WIRELESS
+            if ((WPA_HEAP_SIZE) > heapSize)
+            {
+                OS_Panic(strInsufficientHeapSize, strARM7, heapSize, WPA_HEAP_SIZE);
+            }
+            OS_TPrintf(strHeapSizeIs, strMemMAIN, heapSize, (heapSize-WPA_HEAP_SIZE));
+#else
+            OS_TPrintf(strHeapSizeIs, strMemMAIN, heapSize, heapSize);
+#endif
+        }
+    }
+
+    if(memType == MEM_TYPE_WRAM)
+    {
+        {
+            void*   basicLo =   (void*)OS_GetWramSubPrivArenaLo();
+            void*   basicHi =   (void*)OS_GetWramSubPrivArenaHi();
+            void*   extraLo =   (void*)MATH_ROUNDUP((u32)SDK_LTDAUTOLOAD_LTDWRAM_BSS_END, 32);
+            void*   extraHi =   (void*)MATH_ROUNDDOWN(HW_WRAM_A_HYB_END, 32);
+
+// メモリ節約のためにコメントアウト
+/*
+#if SDK_DEBUG
+            // debug information
+            OS_TPrintf("ARM7: WRAM arena basicLo = %p\n", basicLo);
+            OS_TPrintf("ARM7: WRAM arena basicHi = %p\n", basicHi);
+            OS_TPrintf("ARM7: WRAM arena extraLo = %p\n", extraLo);
+            OS_TPrintf("ARM7: WRAM arena extraHi = %p\n", extraHi);
+#endif
+*/
+            // アリーナを 0 クリア
+            MI_CpuClear8(basicLo, (u32)basicHi - (u32)basicLo);
+            MI_CpuClear8(extraLo, (u32)extraHi - (u32)extraLo);
+
+            // メモリ割り当て初期化
+            if ((u32)basicLo < (u32)extraLo)
+            {
+                basicLo =   OS_InitAlloc(OS_ARENA_WRAM_SUBPRIV, basicLo, extraHi, 1);
+                // アリーナ下位アドレスを設定
+                OS_SetArenaLo(OS_ARENA_WRAM_SUBPRIV, basicLo);
+            }
+            else
+            {
+                extraLo =   OS_InitAlloc(OS_ARENA_WRAM_SUBPRIV, extraLo, basicHi, 1);
+            }
+
+            // ヒープ作成
+            hh  =   OS_CreateHeap(OS_ARENA_WRAM_SUBPRIV, basicLo, basicHi);
+
+            if (hh < 0)
+            {
+                OS_Panic(strFailedCreateHeap, strARM7, strMemWRAM);
+            }
+
+            // ヒープサイズの確認
+            {
+                u32     heapSize;
+
+                heapSize    =   (u32)OS_CheckHeap(OS_ARENA_WRAM_SUBPRIV, hh);
+
+                if( heapSize <= 0) /* ヒープ領域の確保に失敗 */
+                {
+                    OS_Panic(strFailedCreateHeap, strARM7, strMemWRAM);
+                }
+
+                if (WM_WL_HEAP_SIZE > heapSize)
+                {
+                    OS_Panic(strInsufficientHeapSize, strARM7, heapSize, WM_WL_HEAP_SIZE);
+                }
+                OS_TPrintf(strHeapSizeIs, strWramBeforeAdd, heapSize, (heapSize - WM_WL_HEAP_SIZE) );
+            }
+
+            // ヒープに拡張ブロックを追加
+            OS_AddToHeap(OS_ARENA_WRAM_SUBPRIV, hh, extraLo, extraHi);
+        }
+
+        // カレントヒープに設定
+        (void)OS_SetCurrentHeap(OS_ARENA_WRAM_SUBPRIV, hh);
+
+        // ヒープサイズの確認
+        {
+            u32     heapSize;
+
+            heapSize    =   (u32)OS_CheckHeap(OS_ARENA_WRAM_SUBPRIV, hh);
+
+            if( heapSize <= 0) /* ヒープ領域の確保に失敗 */
+            {
+                OS_Panic(strFailedCreateHeap, strARM7, strMemWRAM);
+            }
+
+#ifndef SDK_ARM7COMP_WO_WIRELESS
+            if (ATH_DRV_HEAP_SIZE + WM_WL_HEAP_SIZE > heapSize)
+            {
+                OS_Panic(strInsufficientHeapSize, strARM7, heapSize, WM_WL_HEAP_SIZE + ATH_DRV_HEAP_SIZE );
+            }
+            OS_TPrintf(strHeapSizeIs, strMemWRAM, heapSize, heapSize - (WM_WL_HEAP_SIZE + ATH_DRV_HEAP_SIZE) );
+#else
+            OS_TPrintf(strHeapSizeIs, strMemWRAM, heapSize, (heapSize - WM_WL_HEAP_SIZE) );
+#endif
+        }
+    }
+
+    return hh;
+}
+#include    <twl/ltdwram_end.h>
+#endif
+
+#ifdef  WM_PRECALC_ALLOWEDCHANNEL
+extern u16 WMSP_GetAllowedChannel(u16 bitField);
+#endif
 /*---------------------------------------------------------------------------*
   Name:         ReadUserInfo
 
@@ -405,7 +830,7 @@ static void ReadUserInfo(void)
         // 共有領域に展開
         MI_CpuCopy8(wMac, p, 6);
     }
-/*
+
 #ifdef  WM_PRECALC_ALLOWEDCHANNEL
     // 使用可能チャンネルから使用許可チャンネルを計算
     {
@@ -422,7 +847,6 @@ static void ReadUserInfo(void)
         *((u16 *)p) = allowedChannel;
     }
 #endif
-*/
 }
 
 #ifdef  NVRAM_CONFIG_DATA_EX_VERSION
@@ -642,7 +1066,7 @@ static s32 CheckCorrectNCD(NVRAMConfig *ncdsp)
   Returns:      None.
  *---------------------------------------------------------------------------*/
 extern BOOL PMi_Initialized;
-extern void PM_SelfBlinkProc(void);
+void    PM_SelfBlinkProc(void);
 
 static void
 VBlankIntr(void)

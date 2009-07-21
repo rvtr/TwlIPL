@@ -1,9 +1,9 @@
 #! make -f
 #----------------------------------------------------------------------------
-# Project:  TwlSDK - components - armadillo.TWL
+# Project:  TwlSDK - components - racoon.TWL
 # File:     Makefile
 #
-# Copyright 2008 Nintendo.  All rights reserved.
+# Copyright 2007-2008 Nintendo.  All rights reserved.
 #
 # These coded instructions, statements, and computer programs contain
 # proprietary information of Nintendo of America Inc. and/or Nintendo
@@ -11,35 +11,31 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date:: 2008-08-15#$
-# $Rev: 2167 $
-# $Author: yosiokat $
+# $Date:: 2008-09-18#$
+# $Rev: 8573 $
+# $Author: okubata_ryoma $
 #----------------------------------------------------------------------------
 
-override TARGET_PLATFORM	=	TWL
-override TWL_PROC			=	ARM7
-override TWL_ARCHGEN		=	LIMITED
-##override TWL_PLATFORM		=	TS
-TWL_NO_STD_PCHDR			=	True
-override TARGET_CODEGEN		=	ARM
+override TARGET_PLATFORM	 =	TWL
+override TWL_PROC			 =	ARM7
+override TWL_ARCHGEN		 =	LIMITED
+TWL_NO_STD_PCHDR			 =	True
+TWL_CODEGEN					?=	ALL
 
-ifndef	TWLSDK_NOCRYPTO
 #----------------------------------------------------------------------------
 
-SRCS		=	crt0.SCFG_NOLOCK.c \
-				main.c \
-				kami_pxi.c \
-				formatter.c \
-                mcu_firm.c
+SRCDIR			+=	./src ../../common/ARM7/src
 
-TARGET_NAME		=	armadillo
+SRCS			 =	main.c initScfg.c kami_pxi.c formatter.c mcu_firm.c
 
-TARGET_NEF		=	$(TARGET_NAME).tef
-LCFILE_SPEC		=	$(TARGET_NAME).lsf
+TARGET_NAME		 =	racoon
+
+TARGET_NEF		 =	$(TARGET_NAME).tef
+LCFILE_SPEC		 =	$(TARGET_NAME).lsf
 LCFILE_TEMPLATE	=	$(ROOT)/build/components/$(TARGET_NAME).TWL/$(TARGET_NAME).lcf.template
 LDRES_TEMPLATE	=	$(ROOT)/build/components/$(TARGET_NAME).TWL/$(TARGET_NAME).response.template
 
-CRT0_O			=	crt0.SCFG_NOLOCK.o
+CRT0_O			 =	crt0.LTD.TWL.o
 
 # スタック不足防止の為、インライン展開せずにコンパイルする
 CCFLAGS_OPT		=	-O4 -inline off
@@ -47,10 +43,19 @@ CCFLAGS_OPT		=	-O4 -inline off
 #----------------------------------------------------------------------------
 include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
-MACRO_FLAGS		+=	-DSDK_ARM7COMP_LTD -DSDK_SEA -DSDK_NOINIT
+#MACRO_FLAGS	+=	-DSDK_ARM7COMP_LTD
+
+ifeq ($(TWL_PLATFORM),BB)
+MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037e0000'
+else
+MAKELCF_FLAGS	+=	-DADDRESS_LTDWRAM='0x037c0000'
+endif
 
 MAKELCF_FLAGS	+=	-DISDBG_LIBS_TWL='$(if $(ISDBG_LIBS_TWL),$(ISDBG_LIBS_TWL),libstubsistd_sp$(TWL_LIBSUFFIX).a)'	\
 					-DISDBG_LIBS_NITRO='libstubsisd_sp$(TWL_LIBSUFFIX).a'
+
+LLIBRARY_DIRS	+=	$(TWL_IPL_RED_ROOT)/lib/ARM7-TS/$(TWL_BUILD_DIR) \
+					./obj/ARM7-TS.LTD/$(TWL_BUILD_DIR)
 
 LINCLUDES		+=	$(ROOT)/build/libraries/spi/ARM7/include \
 					$(ROOT)/build/libraries/os/common/include \
@@ -62,20 +67,18 @@ LINCLUDES		+=	$(ROOT)/build/libraries/spi/ARM7/include \
 					$(ROOT)/build/libraries/fatfs/ARM7.TWL/include/fatfs \
 					$(ROOT)/build/libraries/fatfs/ARM7.TWL/include/twl/fatfs/ARM7
 
-SRCDIR		    +=  ../../common/ARM7/src
 
-LLIBRARY_DIRS	+=	$(TWL_IPL_RED_ROOT)/lib/ARM7-TS/$(TWL_BUILD_DIR) \
-					./obj/ARM7-TS.LTD/$(TWL_BUILD_DIR)
-
-LLIBRARIES		+=	libwl_sp$(TWL_LIBSUFFIX).a			\
-					libsdio_sp$(TWL_LIBSUFFIX).a		\
-					libathdrv_sp$(TWL_LIBSUFFIX).a		\
-					libwpa_sp$(TWL_LIBSUFFIX).a			\
-					libhotsw_sp$(TWL_LIBSUFFIX).a		\
-					libreloc_info_sp$(TWL_LIBSUFFIX).a
-
-LLIBRARIES		+=	libpm_sp.SYSMENU$(TWL_LIBSUFFIX).a
-GLIBRARIES		:= $(filter-out libpm_sp$(TWL_LIBSUFFIX).a,$(GLIBRARIES))
+#LLIBRARIES		+= libwl_sp.TWL.LTD.a libsdio_hcd_twl$(TWL_LIBSUFFIX).a libsdio_busdriver$(TWL_LIBSUFFIX).a libsdio_lib$(TWL_LIBSUFFIX).a libARM7athdrv$(TWL_LIBSUFFIX).a
+LLIBRARIES		+= libwl_sp.TWL.LTD.a
+#LLIBRARIES		+=	libwl_sp$(TWL_LIBSUFFIX).a			\
+#					libcdc_sp$(TWL_LIBSUFFIX).a			\
+#					libtpex_sp$(TWL_LIBSUFFIX).a		\
+#					libmicex_sp$(TWL_LIBSUFFIX).a		\
+#					libsdio_hcd_twl$(TWL_LIBSUFFIX).a	\
+#					libsdio_busdriver$(TWL_LIBSUFFIX).a	\
+#					libsdio_lib$(TWL_LIBSUFFIX).a		\
+#					librompatch_sp$(TWL_LIBSUFFIX).a	\
+#					libARM7athdrv$(TWL_LIBSUFFIX).a
 
 LDEPENDS_NEF	 = $(TWL_LIBS) $(LLIBRARIES)
 
@@ -83,8 +86,5 @@ do-build:	$(TARGETS)
 
 #----------------------------------------------------------------------------
 include	$(TWLSDK_ROOT)/build/buildtools/modulerules
-
-#----------------------------------------------------------------------------
-endif	#ifndef	TWLSDK_NOCRYPTO
 
 #===== End of Makefile =====
