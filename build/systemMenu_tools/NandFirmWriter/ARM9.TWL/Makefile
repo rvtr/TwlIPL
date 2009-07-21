@@ -53,15 +53,12 @@ SRCDIR				=	src \
 
 #----------------------------------------------------------------------------
 
-include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
+include $(TWLSDK_ROOT)/build/buildtools/commondefs
 
 MAKEROM_FLAGS		+=	-DTITLEID_LO='$(TITLEID_LO)' \
 						-DDISABLE_DEBUG='$(SYSM_DISABLE_DEBUG)'
 
 MAKETAD_FLAGS		+=	-s
-
-SYSMENU_LIBS		=	\
-						libnamut$(TWL_LIBSUFFIX).a
 
 SDK_APPEND_LIBS		=	\
 						libes$(TWL_LIBSUFFIX).a \
@@ -70,8 +67,7 @@ SDK_APPEND_LIBS		=	\
 						libnam$(TWL_LIBSUFFIX).a \
 						libsea$(TWL_LIBSUFFIX).a \
 						liblcfg$(TWL_LIBSUFFIX).a \
-						libna$(TWL_LIBSUFFIX).a \
-						liberrorlog$(TWL_LIBSUFFIX).a
+						libna$(TWL_LIBSUFFIX).a 
 
 LLIBRARIES			+=	$(SYSMENU_LIBS) $(SDK_APPEND_LIBS)
 
@@ -85,7 +81,6 @@ INSTALL_DIR			=	$(SDK_NMENU_DATADIR)
 
 do-build:		$(TARGETS)
 
-#include	$(TWLSDK_ROOT)/build/buildtools/modulerules
-include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
+include	$(TWLSDK_ROOT)/build/buildtools/modulerules
 
 #===== End of Makefile =====

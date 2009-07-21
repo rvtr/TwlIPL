@@ -21,7 +21,6 @@
 #include <nitro/snd.h>
 #include <twl/nam.h>
 #include <nitro/nvram.h>
-#include <firm/format/firm_common.h>
 #include <../build/libraries/spi/ARM9/include/spi.h>
 
 #include "common_utility.h"
