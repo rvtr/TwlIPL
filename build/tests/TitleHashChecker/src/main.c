@@ -18,12 +18,9 @@
 #include <twl/fatfs.h>
 #include <twl/os/common/format_rom.h>
 #include <twl/nam.h>
-#include <twl/aes.h>
 #include <twl/os/common/banner.h>
-#include <nitro/nvram.h>
 #include <nitro/math/rand.h>
 
-#include "application_jump_private.h"
 #include "common.h"
 #include "screen.h"
 
@@ -35,11 +32,10 @@
 
 #define ES_ERR_OK					0
 
-// 表示する対象をユーザーアプリだけにする場合
-#define USER_APP_ONLY
+#define CRCPOLY     				0x1021
 
-// デバッグ用
-//#define DEBUG_MODE
+// 表示する対象をユーザーアプリだけにする場合
+//#define USER_APP_ONLY
 
 /*---------------------------------------------------------------------------*
     変数 定義
@@ -55,7 +51,6 @@ static KeyInfo  gKey;
 
 // インストールされている NAND アプリの数
 static s32 gNandAppNum;
-static s32 gNandInstalledAppNum;
 static s32 gNandAllAppNum;
 
 // カーソル位置
@@ -71,34 +66,17 @@ static u32 gMaxPage;
 // Error
 static BOOL gErrorFlg;
 
-// eTicketType
-typedef enum ETicketType {
-	ETICKET_TYPE_COMMON = 0,
-	ETICKET_TYPE_PERSONALIZED = 1
-}ETicketType;
-
 typedef struct DataStruct
 {
 	NAMTitleId		id;
-	BOOL			commonTicketFlg;
-    BOOL			isSrlFlg;
-    u32				numTicket;
-    ETicketType		tType[ETICKET_NUM_MAX];
-    
+
+    u8				Sha1_digest[SVC_SHA1_DIGEST_SIZE];
+    u16				crc16;
 } DataStruct;
 
-typedef struct {
-	u8               pad1[ 12 ];
-    u32              deviceId;
-	u8				 pad2[ 216 - 16 ];
-} ESTicketView;
-
-typedef s32 ESError;
-
-extern ESError ES_GetTicketViews(u64 titleId, ESTicketView* ticketViewList, u32* ticketViewCnt);
-
 static DataStruct gDataList[TITLE_NUM_PAGE * 2];
-static DataStruct gInstalledDataList[TITLE_NUM_PAGE];
+
+static u16	crc_table[0x100];
 
 #ifdef DEBUG_MODE
 static MATHRandContext32 context;
@@ -108,7 +86,7 @@ static MATHRandContext32 context;
    Prototype
  *---------------------------------------------------------------------------*/
 static void DrawScene(DataStruct* list);
-static BOOL GetDataStruct(DataStruct* list, DataStruct* Ilist);
+BOOL GetDataStruct(DataStruct* list);
 
 static void ConvertTitleIdLo(u8* code, u8* titleid_lo);
 static void ConvertGameCode(u8* code, u32 game_code);
@@ -117,10 +95,14 @@ static void ConvertInitialCode(u8* code, u32 titleid_lo);
 static void* AllocForNAM(u32 size);
 static void FreeForNAM(void* ptr);
 
-static s32 GetETicketType(DataStruct* data, ETicketType *pETicketType );
-static s32 GetTicketViews(ESTicketView** pptv, u32* pNumTicket, NAMTitleId titleId);
+static BOOL	ProcessTitleHashCheck(void);
+static BOOL	GetAppPath(DataStruct* list, char* path_buf);
+BOOL	CulcuHash(DataStruct* list, char* full_path);
 
-BOOL GetETicketData( void );
+u16 newGetCRC(u16  start, u16 *datap, u32  size);
+static void inittable(unsigned short *table);
+
+
 void* MyNAMUT_Alloc(u32 size);
 void MyNAMUT_Free(void* buffer);
 
@@ -149,7 +131,6 @@ void TwlMain(void)
 	spFreeFunc = FreeForNAM;
 
 	gNandAppNum = 0;
-	gNandInstalledAppNum = 0;
 	gNandAllAppNum = 0;
 	gErrorFlg = FALSE;
     
@@ -158,7 +139,6 @@ void TwlMain(void)
     NAM_Init(AllocForNAM, FreeForNAM);
 
 	MI_CpuClear8( gDataList, sizeof(gDataList));
-	MI_CpuClear8( gInstalledDataList, sizeof(gInstalledDataList));
 
 #ifdef DEBUG_MODE
     MATH_InitRand32( &context, 15 );
@@ -166,10 +146,7 @@ void TwlMain(void)
     
     ClearScreen();
 
-	PutMainScreen( 7, 12, 0xf6, "--- Now Loading ---");
-	PutSubScreen(  7, 12, 0xf6, "--- Now Loading ---");
-
-	(void) GetETicketData();
+	(void)ProcessTitleHashCheck();
 
     while(TRUE)
     {
@@ -303,6 +280,7 @@ static void DrawScene(DataStruct* list)
 	u8 init_code[5];
 	u8 color;
     u32 start;
+    u32* digest;
 
     DataStruct* p = list;
 
@@ -317,8 +295,8 @@ static void DrawScene(DataStruct* list)
 	// 上画面	一覧表示
 	PutMainScreen( 1,  0, 0xf2, "------ Title Hash Checker ------ ");
     PutMainScreen( 1,  1, 0xfa, "<Page %d/%d>", (gCurrentPage+1), (gMaxPage+1));
-	PutMainScreen( 1,  2, 0xf4, " Game       Ticket Ticket");
-    PutMainScreen( 1,  3, 0xf4, "  Code  srl   Num    Type");
+	PutMainScreen( 1,  2, 0xf4, " Game");
+    PutMainScreen( 1,  3, 0xf4, "  Code");
 	PutMainScreen( 0,  4, 0xff, "--------------------------------");
     
 	// カーソル表示
@@ -343,33 +321,10 @@ static void DrawScene(DataStruct* list)
         
 		ConvertInitialCode(init_code, NAM_GetTitleIdLo(p->id));
         
-    	color = p->commonTicketFlg ? COMMON_COLOR : PERSONALIZED_COLOR;
+    	color = COMMON_COLOR;
 
         // ゲームコード表示
     	PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, color, "%2d:%s", (tmp_i+1), init_code);
-
-        // srlの有無表示
-		if(p->isSrlFlg)
-        {
-			PutMainScreen( GAME_CODE_BASE_X + 9, TITLE_SHOW_BASE_Y+tmp_i, color, "o");
-        }
-        else
-        {
-			PutMainScreen( GAME_CODE_BASE_X + 9, TITLE_SHOW_BASE_Y+tmp_i, color, "x");
-        }
-
-        // ETicketの数の表示
-    	PutMainScreen( GAME_CODE_BASE_X + 12, TITLE_SHOW_BASE_Y+tmp_i, color, "%d", p->numTicket);
-
-        // ETicketのタイプの表示
-    	if(p->commonTicketFlg)
-    	{
-			PutMainScreen(GAME_CODE_BASE_X + 19, TITLE_SHOW_BASE_Y+tmp_i, color, "common");
-    	}
-    	else
-    	{
-			PutMainScreen(GAME_CODE_BASE_X + 19, TITLE_SHOW_BASE_Y+tmp_i, color, "personalized");
-    	}
     }
 
     PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y, 0xff, "--------------------------------");
@@ -379,26 +334,82 @@ static void DrawScene(DataStruct* list)
 
     // 下画面	詳細表示
 	ConvertInitialCode(init_code, NAM_GetTitleIdLo(list[gCurrentElem].id));
-    PutSubScreen(3,   2, 0xf4, "Selected Title : [ %s ]", init_code);
-    PutSubScreen(3,   4, 0xff, "- Ticket List -");
+    PutSubScreen(3,   1, 0xf4, "Selected Title : [ %s ]", init_code);
+    PutSubScreen(3,   4, 0xff, "- CRC16 Data -");
+	
+	PutSubScreen(3,   6, 0xf4, "0x%04x", list[gCurrentElem].crc16);
 
-    for( i=0; i < list[gCurrentElem].numTicket; i++){
-        if(i > 15)
-        {
-			break;
-        }
+
+	digest = (u32 *)list[gCurrentElem].Sha1_digest;
+    
+    PutSubScreen(3,  10, 0xff, "- SHA1 Digest Data -");
+
+	PutSubScreen(3,  12, 0xf4, "0x%08x", digest[0]);
+    PutSubScreen(3,  14, 0xf4, "0x%08x", digest[1]);
+    PutSubScreen(3,  16, 0xf4, "0x%08x", digest[2]);
+    PutSubScreen(3,  18, 0xf4, "0x%08x", digest[3]);
+    PutSubScreen(3,  20, 0xf4, "0x%08x", digest[4]);
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         ProcessTitleHashCheck
+
+  Description:  
+ *---------------------------------------------------------------------------*/
+BOOL ProcessTitleHashCheck( void )
+{
+    u32 i;
+    s32 result = TRUE;
+	char full_path[FS_ENTRY_LONGNAME_MAX+6];
+
+    DataStruct* list;
+	
+    
+    // NAND にインポートされているNAND アプリの数を取得する
+    if ( (gNandAppNum = NAM_GetNumTitles()) < 0)
+    {
+		OS_Panic("NAM_GetNumTitles() failed.");
+	}
+
+	gNandAllAppNum = gNandAppNum;
+    
+   	// 情報の取得
+	if ( !GetDataStruct(gDataList) )
+	{
+		OS_Panic("GetDataStruct() failed.");
+	}
+    
+	list = gDataList;
+    
+    // srlのHash値とcrc16を求める
+    for ( i=0; i < gNandAppNum; i++, list++ )
+    {
+		PutMainScreen( 7, 10, 0xf6, "--- Now Loading ---");
+        PutMainScreen( 7, 14, 0xf6, " %2d / %2d compleate", i+1, gNandAppNum);
+
+        PutSubScreen( 7, 10, 0xf6, "--- Now Loading ---");
+		PutSubScreen( 7, 14, 0xf6, " %2d / %2d compleate", i+1, gNandAppNum);
         
-        PutSubScreen(5, 6+i, 0xf4, "Ticket%d : ", (i+1));
+        // バッファのクリア
+		MI_CpuClear8(full_path, sizeof(full_path));
 
-        if(list[gCurrentElem].tType[i] == ETICKET_TYPE_COMMON)
-        {
-			PutSubScreen(15, 6+i, COMMON_COLOR, "COMMON");
-        }
-        else
-        {
-			PutSubScreen(15, 6+i, PERSONALIZED_COLOR, "PERSONALIZED");
-        }
+   		// ファイルパスの取得
+		if ( !GetAppPath(list, full_path) )
+		{
+			OS_Panic("CulcuHash() failed.");
+		}
+
+		// Hash, CRC16の計算
+		if ( !CulcuHash(list, full_path) )
+		{
+			OS_Panic("CulcuHash() failed.");
+		}
     }
+
+	OS_PutString("ProcessTitleHashCheck Finish!!\n");
+    
+    return result;
 }
 
 
@@ -408,7 +419,7 @@ static void DrawScene(DataStruct* list)
   Description:  TitleIDリストを取得する関数
     			NAM_GetTitleList と NAM_GetInstalledTitleList を使う
  *---------------------------------------------------------------------------*/
-static BOOL GetDataStruct(DataStruct* list, DataStruct* Ilist)
+BOOL GetDataStruct(DataStruct* list)
 {
 	// タイトルIDリストバッファ
 	NAMTitleId titleIdList[TITLE_NUM_PAGE];
@@ -432,257 +443,268 @@ static BOOL GetDataStruct(DataStruct* list, DataStruct* Ilist)
 
         OS_TPrintf("id : 0x%08x\n", titleIdList[i]);
 		list->id = titleIdList[i];
-        list->isSrlFlg = TRUE;
 	}
 
 	MI_CpuClear8(titleIdList, sizeof(titleIdList));
 
 	OS_PutString("\n\n");
-    
-    // --- GetInstalledTitleList
-	if ( NAM_GetInstalledTitleList(titleIdList, TITLE_NUM_PAGE) != NAM_OK )
-	{
-		OS_PutString("NAM_GetInstalledTitleList failed.");
-		return FALSE;
-	}
-	
-	// データリストの作成
-	for ( i=0; i<TITLE_NUM_PAGE; i++, Ilist++)
-	{
-		// そもそも NAND アプリの数が 1ページにも満たない場合は途中で終了する
-		if ( i >= gNandInstalledAppNum )
-		{
-			break;
-		}
-
-        OS_TPrintf("id : 0x%08x\n", titleIdList[i]);
-		Ilist->id 		= titleIdList[i];
-        Ilist->isSrlFlg = FALSE;
-	}
 
 	return TRUE;
 }
 
 
 /*---------------------------------------------------------------------------*
-  Name:         GetETicketType
+  Name:         GetAppPath
 
-  Description:  指定された titleID の eTicket タイプを取得する
+  Description:  
 
-  Arguments:    titleID: common eTicket かどうかを調べたいタイトルの titleID
-	            pETicketType : 結果を格納するESETicketTypeポインタ
+  Arguments:    
+	            
 
-  Returns:      NAM_OK  : 取得成功
-	            それ以外: 取得失敗
+  Returns:      
+	            
  *---------------------------------------------------------------------------*/
-static s32 GetETicketType(DataStruct* data, ETicketType *pETicketType )
+static BOOL	GetAppPath(DataStruct* list, char* path_buf)
 {
-    s32 result;
-	ESTicketView* ptv;
-    u32 numTicket;
+    FSFile	dir;
+    BOOL	ret = TRUE;
 
-#ifdef DEBUG_MODE
-    u32 i;
-#endif
-	
-	*pETicketType = ETICKET_TYPE_PERSONALIZED;
-	
-    result = GetTicketViews(&ptv, &numTicket, data->id);
-
-#ifndef DEBUG_MODE
-	data->numTicket = numTicket;
-#else
-	data->numTicket = MATH_Rand32( &context, 10 );
-#endif
+    // ディレクトリパスの作成
+    STD_TSNPrintf( path_buf, FS_ENTRY_LONGNAME_MAX,
+			   "nand:/title/%08x/%08x/content/", (u32)( list->id >> 32 ), list->id );
     
-    if( result == NAM_OK )
+	// .appファイルを見つける
+    if ( !FS_OpenDirectory(&dir, path_buf, FS_FILEMODE_R | FS_FILEMODE_W) )
     {
-        if( numTicket > 0 )
-        {
-            int i;
-			// eTicket は、そのままもしくは追加しかありえないので、プリインストールされたアプリでは、必ずCommon eTikcetが存在する。
-			// よって、全ての eTicket のうち、ひとつでも deviceId が 0x00000000 なら、common eTicket と判断。
-            for( i = 0; i < numTicket; i++ )
-            {
-				if( ptv[i].deviceId == 0x00000000 )
-                {
-					*pETicketType = ETICKET_TYPE_COMMON;
-                    data->tType[i] = ETICKET_TYPE_COMMON;
-				}
-                else
-                {
-					data->tType[i] = ETICKET_TYPE_PERSONALIZED;
-                }
-			}
-		}
-        MyNAMUT_Free(ptv);
-	}
-
-#ifdef DEBUG_MODE
-	for( i=0; i<data->numTicket; i++)
-    {
-        if( MATH_Rand32( &context, 10 ) % 5 )
-        {
-			data->tType[i] = ETICKET_TYPE_COMMON;
-        }
-        else
-        {
-			data->tType[i] = ETICKET_TYPE_PERSONALIZED;
-        }
-    }
-#endif
-    
-	return result;
-}
-
-
-/*---------------------------------------------------------------------------*
-  Name:         GetTicketViews
-
-  Description:  指定されたタイトルの eTicket を取得
-　　　　　　　　※nam_title.c の GetTicketViews 関数をコピペ
-
-  Arguments:    pptv       : 取得成功時に eTicket リストのポインタを格納するポインタ
-	            pNumTicket : 取得成功時に eTicket 数を格納するポインタ
-                titleID    : eTicket を取得したいタイトルの titleID
-
-  Returns:      NAM_OK     : 取得成功
-	            それ以外   : 取得失敗
- *---------------------------------------------------------------------------*/
-static s32 GetTicketViews(ESTicketView** pptv, u32* pNumTicket, NAMTitleId titleId)
-{
-    s32 result;
-    u32 numTicket;
-    ESTicketView* ptv = NULL;
-
-    result = ES_GetTicketViews(titleId, NULL, &numTicket);
-
-    if( result != ES_ERR_OK )
-    {
-        return result;
-    }
-
-    if( numTicket != 0 )
-    {
-        ptv = MyNAMUT_Alloc(sizeof(ESTicketView) * numTicket);
-
-        if( ptv == NULL )
-        {
-            return NAM_NO_MEMORY;
-        }
-
-        result = ES_GetTicketViews(titleId, ptv, &numTicket);
-    }
-
-    if( result == ES_ERR_OK )
-    {
-        *pptv = ptv;
-        *pNumTicket = numTicket;
+    	ret = FALSE;
+    	OS_PutString("Error FS_OpenDirectory\n\n");
     }
     else
     {
-        MyNAMUT_Free(ptv);
+    	FSDirectoryEntryInfo   info[1];
+
+		// .app を探してファイル名を保存しておく
+    	while (FS_ReadDirectory(&dir, info))
+    	{
+        	if ((info->attributes & (FS_ATTRIBUTE_DOS_DIRECTORY | FS_ATTRIBUTE_IS_DIRECTORY)) != 0)
+        	{
+        	}
+        	else
+        	{
+            	char* pExtension;
+          		OS_Printf(" (%d BYTEs)\n", info->filesize);
+
+				// 拡張子のチェック
+				pExtension = STD_SearchCharReverse( info->longname, '.');
+				if (pExtension)
+				{
+					if (!STD_CompareString( pExtension, ".app"))
+					{
+                        STD_ConcatenateString( path_buf, info->longname );
+
+                        OS_TPrintf("OK! File Path : %s\n", path_buf);
+                        
+                        break;
+					}
+				}
+        	}
+    	}
+        
+    	(void)FS_CloseDirectory(&dir);
     }
 
-    return result;
+    return ret;
 }
 
 
 /*---------------------------------------------------------------------------*
-  Name:         GetETicketData
+  Name:         CulcuHash
 
-  Description:  各アプリのETicketデータを取得する
+  Description:  
+
+  Arguments:    
+	            
+
+  Returns:      
+	            
  *---------------------------------------------------------------------------*/
-BOOL GetETicketData( void )
+#define READ_SIZE	0x200 // とりあえずのリードサイズ
+
+BOOL	CulcuHash(DataStruct* list, char* full_path)
 {
-    s32 result = TRUE;
-    s32 i,j;
+    FSFile  file;
+    BOOL    open_is_ok;
+    BOOL	seek_is_ok;
+	BOOL    read_is_ok;
+	u32 	file_size;
+    u32		read_size = 0;
+    u32		data_size = 0;
+    u32		i;
+    u8* 	pTempBuf;
+    SVCHMACSHA1Context hash;
+    
+    FSResult result;
+    
+	// CRC16計算用テーブルの初期化
+    MI_CpuClear8(crc_table, sizeof(crc_table));
+    inittable(crc_table);
 
-    // NAND にインポートされているNAND アプリの数を取得する
-    if ( (gNandAppNum = NAM_GetNumTitles()) < 0)
-    {
-		OS_Panic("NAM_GetNumTitles() failed.");
-	}
-    // 実体があるタイトル数
-    if ( (gNandInstalledAppNum = NAM_GetNumInstalledTitles()) < 0)
-    {
-		OS_Panic("NAM_GetNumInstalledTitles() failed.");
-	}
-   	// 情報の取得
-	if ( !GetDataStruct(gDataList, gInstalledDataList) )
+    // ハッシュ初期化
+    SVC_HMACSHA1Init( &hash, list->Sha1_digest, SVC_SHA1_DIGEST_SIZE );
+    
+    // FS初期化
+    FS_InitFile(&file);
+
+    // ファイルオープン
+    open_is_ok = FS_OpenFile(&file, full_path);
+	if (!open_is_ok)
 	{
-		OS_Panic("GetDataStruct() failed.");
+		OS_Warning("Failure! FS_OpenFile");
+		return FALSE;
 	}
 
-    // NAM_GetTitleList          -- 削除されているがeTicketのみ存在するタイトルがリストアップされない
-    // NAM_GetInstalledTitleList -- SRLはあるがeTicketがないタイトルがリストアップされない
-    // そのため両者をマージする
-    gNandAllAppNum = gNandAppNum;
-    for (i=0; i<gNandInstalledAppNum; i++)
-    {
-        BOOL find = FALSE;
-        for (j=0; j<gNandAppNum; j++)
+    // ファイル長取得
+    file_size  = FS_GetFileLength(&file);
+    OS_TPrintf("File Size : %d bytes\n", file_size);
+
+    // ファイルが大きいものもあるから細切れで読む
+    for(i=1;;i++){
+		MI_CpuClear(pTempBuf, sizeof(pTempBuf));
+
+        // バッファ確保
+    	pTempBuf = spAllocFunc( READ_SIZE );
+    	if (pTempBuf == NULL)
+		{
+			FS_CloseFile(&file);
+        	OS_Warning("Failure! Alloc Buffer");
+			return FALSE;		
+		}
+
+        // 読み込むサイズを決める
+		if( (READ_SIZE * i) >= file_size )
         {
-            if (gInstalledDataList[i].id == gDataList[j].id) 
+			data_size = file_size % READ_SIZE;
+        }
+        else
+        {
+			data_size = READ_SIZE;
+        }
+        
+		// ファイルリード
+		read_is_ok = FS_ReadFile( &file, pTempBuf, READ_SIZE );
+        result = FS_GetResultCode(&file);
+		if (!read_is_ok)
+		{
+			FS_CloseFile(&file);
+			spFreeFunc(pTempBuf);
+        	OS_Warning("Failure! Read File (Error Code : %d)", result);
+			return FALSE;
+		}
+
+        // 読んだサイズを更新
+        read_size += READ_SIZE;
+
+		// Hash値 UpDate
+		SVC_HMACSHA1Update( &hash, pTempBuf, data_size );
+        
+    	// CRC16計算
+		list->crc16 = newGetCRC(list->crc16, (u16 *)pTempBuf, data_size);
+		
+        // ファイルが全部読めたらwhileをぬける
+        if( read_size >= file_size )
+        {
+			break;
+        }
+        else
+        {
+			// ファイルシーク
+			seek_is_ok = FS_SeekFile( &file, READ_SIZE * i, FS_SEEK_SET );
+            result = FS_GetResultCode(&file);
+            if(!seek_is_ok)
             {
-                find = TRUE;
-                break;
+				FS_CloseFile(&file);
+				spFreeFunc(pTempBuf);
+        		OS_Warning("Failure! Seek File [read size : %d bytes] (Error Code : %d)", read_size, result);
+				return FALSE;
             }
         }
-        if (find == FALSE)
-        {
-            MI_CpuCopy8(&gInstalledDataList[i], &gDataList[gNandAllAppNum], sizeof(DataStruct));
-            gNandAllAppNum++;
-        }
+        spFreeFunc( pTempBuf );
     }
 
-#ifdef USER_APP_ONLY
-    // ユーザーアプリだけ抽出する
-	getUserApplication( gDataList );
-#endif
+	OS_TPrintf("CRC16 : 0x%08x\n", list->crc16);
 
-	// 必要なページ数を求める
-    gMaxPage = (u32)(gNandAllAppNum >> 4);
-	if( gMaxPage != 0 && (gNandAllAppNum & 0xf) == 0 )
-    {
-		gMaxPage--;
-    }
+    // Hash値算出
+	SVC_HMACSHA1GetHash( &hash, list->Sha1_digest );
     
-    // 現在ページの初期化
-    gCurrentPage = 0;
+	// ファイルクローズ
+	FS_CloseFile(&file);
 
-	OS_TPrintf("gNandAllAppNum : %d\n",gNandAllAppNum);
-    OS_TPrintf("gMaxPage       : %d\n",gMaxPage);
-
-	if( gNandAllAppNum == 0 )
-    {
-		gErrorFlg = TRUE;
-
-        return FALSE;
-    }
-    
-    // アプリのETicketデータを取得する
-    for (i=0; i<gNandAllAppNum; i++)
-    {
-		ETicketType eTicketType = ETICKET_TYPE_PERSONALIZED; // default
-		
-		if( GetETicketType( &gDataList[i], &eTicketType ) != NAM_OK )
-		{
-			result = FALSE;
-		}
-		else
-		{
-			u32 numTicket = 0;
-
-            (void)ES_GetTicketViews( gDataList[i].id, NULL, &numTicket);
-
-            gDataList[i].commonTicketFlg = (eTicketType == ETICKET_TYPE_COMMON) ? TRUE : FALSE;
-		}
-    }
-    
-    return result;
+    return TRUE;
 }
 
+
+/*---------------------------------------------------------------------------*
+  Name:         newGetCRC
+
+  Description:	CRC計算
+   				製品技術部のCRCテーブルを使ったCRC計算関数
+
+				偶数バイトと奇数バイトを入れ替えてから計算する。
+ *---------------------------------------------------------------------------*/
+u16 newGetCRC
+	( 
+	u16  start,    // CRC初期値（累積値） 
+	u16 *datap,    // データの先頭を指すポインタ、
+	u32  size      // バイト単位でのデータサイズ
+	)
+{
+	u32 i;
+	u16 crc;
+	u8* byte;
+
+	crc  = start;
+	byte = (u8 *)datap;
+
+	for (i=0; i<size; i+=2)
+	{
+		u8 byte0, byte1;
+
+		byte0 = *byte;  byte++;
+		byte1 = *byte;  byte++;
+
+		crc = (crc << 8) ^ crc_table[(crc >> 8) ^ byte1];
+		crc = (crc << 8) ^ crc_table[(crc >> 8) ^ byte0];
+	}
+
+	return crc;
+}
+
+
+/*----------------------------------------------------------------------------
+  関数名
+    inittable - initialize table
+
+  形式
+    static void inittable(unsigned short *table);
+
+  解説
+    CRC算出を高速化するための参照テーブルを作成する。
+----------------------------------------------------------------------------*/
+static void inittable(unsigned short *table)
+{
+    unsigned short  i, j, r;
+
+    for(i = 0; i < 0x100; i++) {
+        r = i << 8;
+        for(j = 0; j < 8; j++) {
+            if(r & 0x8000U)
+                r = (r << 1) ^ CRCPOLY;
+            else
+                r <<= 1;
+        }
+        *table++ = r;
+    }
+}
 
 
 #ifdef USER_APP_ONLY
