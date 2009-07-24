@@ -24,15 +24,17 @@
 #include "common.h"
 #include "screen.h"
 
-#define TITLE_SHOW_BASE_Y			5
-#define TITLE_MAX_SHOW				0x10
-#define TITLE_NUM_PAGE 				300
+#define TITLE_SHOW_BASE_Y					5
+#define TITLE_MAX_SHOW						0x10
+#define TITLE_NUM_PAGE 						300
 
-#define ETICKET_NUM_MAX				10
+#define ETICKET_NUM_MAX						10
 
-#define ES_ERR_OK					0
+#define ES_ERR_OK							0
 
-#define CRCPOLY     				0x1021
+#define CRCPOLY     						0x1021
+
+#define DIGEST_HASH_BLOCK_SIZE_SHA1         (512/8)
 
 // 表示する対象をユーザーアプリだけにする場合
 //#define USER_APP_ONLY
@@ -280,7 +282,7 @@ static void DrawScene(DataStruct* list)
 	u8 init_code[5];
 	u8 color;
     u32 start;
-    u32* digest;
+    u8* digest;
 
     DataStruct* p = list;
 
@@ -293,10 +295,9 @@ static void DrawScene(DataStruct* list)
     }
 
 	// 上画面	一覧表示
-	PutMainScreen( 1,  0, 0xf2, "------ Title Hash Checker ------ ");
+	PutMainScreen( 0,  0, 0xf2, "------ Title Hash Checker ------");
     PutMainScreen( 1,  1, 0xfa, "<Page %d/%d>", (gCurrentPage+1), (gMaxPage+1));
-	PutMainScreen( 1,  2, 0xf4, " Game");
-    PutMainScreen( 1,  3, 0xf4, "  Code");
+    PutMainScreen( 1,  3, 0xf4, "Game Code");
 	PutMainScreen( 0,  4, 0xff, "--------------------------------");
     
 	// カーソル表示
@@ -334,21 +335,20 @@ static void DrawScene(DataStruct* list)
 
     // 下画面	詳細表示
 	ConvertInitialCode(init_code, NAM_GetTitleIdLo(list[gCurrentElem].id));
-    PutSubScreen(3,   1, 0xf4, "Selected Title : [ %s ]", init_code);
-    PutSubScreen(3,   4, 0xff, "- CRC16 Data -");
+    PutSubScreen(2,   1, 0xf4, "Selected Title : [ %s ]", init_code);
+    PutSubScreen(2,   4, 0xff, "- CRC16 Data -");
 	
-	PutSubScreen(3,   6, 0xf4, "0x%04x", list[gCurrentElem].crc16);
+	PutSubScreen(2,   6, 0xf4, "0x%04x", list[gCurrentElem].crc16);
 
 
-	digest = (u32 *)list[gCurrentElem].Sha1_digest;
+	digest = (u8 *)list[gCurrentElem].Sha1_digest;
     
-    PutSubScreen(3,  10, 0xff, "- SHA1 Digest Data -");
+    PutSubScreen(2,  10, 0xff, "- SHA1 Digest Data -");
 
-	PutSubScreen(3,  12, 0xf4, "0x%08x", digest[0]);
-    PutSubScreen(3,  14, 0xf4, "0x%08x", digest[1]);
-    PutSubScreen(3,  16, 0xf4, "0x%08x", digest[2]);
-    PutSubScreen(3,  18, 0xf4, "0x%08x", digest[3]);
-    PutSubScreen(3,  20, 0xf4, "0x%08x", digest[4]);
+    for( i=0; i<10; i++ ){
+		PutSubScreen(2 + (i*3),  12, 0xf4, "%02x ", digest[i]);
+        PutSubScreen(2 + (i*3),  14, 0xf4, "%02x ", digest[i+10]);
+    }
 }
 
 
@@ -397,13 +397,15 @@ BOOL ProcessTitleHashCheck( void )
    		// ファイルパスの取得
 		if ( !GetAppPath(list, full_path) )
 		{
-			OS_Panic("CulcuHash() failed.");
+            gErrorFlg = TRUE;
+//			OS_Panic("CulcuHash() failed.");
 		}
 
 		// Hash, CRC16の計算
 		if ( !CulcuHash(list, full_path) )
 		{
-			OS_Panic("CulcuHash() failed.");
+            gErrorFlg = TRUE;
+//			OS_Panic("CulcuHash() failed.");
 		}
     }
 
@@ -528,7 +530,7 @@ static BOOL	GetAppPath(DataStruct* list, char* path_buf)
   Returns:      
 	            
  *---------------------------------------------------------------------------*/
-#define READ_SIZE	0x200 // とりあえずのリードサイズ
+#define READ_SIZE	0x1000 // MasterEditorでのCRC計算にあわせるためこの値を使う
 
 BOOL	CulcuHash(DataStruct* list, char* full_path)
 {
@@ -540,8 +542,9 @@ BOOL	CulcuHash(DataStruct* list, char* full_path)
     u32		read_size = 0;
     u32		data_size = 0;
     u32		i;
+    u16		crc = 0;
     u8* 	pTempBuf;
-    SVCHMACSHA1Context hash;
+    SVCSHA1Context hash;
     
     FSResult result;
     
@@ -550,8 +553,8 @@ BOOL	CulcuHash(DataStruct* list, char* full_path)
     inittable(crc_table);
 
     // ハッシュ初期化
-    SVC_HMACSHA1Init( &hash, list->Sha1_digest, SVC_SHA1_DIGEST_SIZE );
-    
+    SVC_SHA1Init( &hash );
+
     // FS初期化
     FS_InitFile(&file);
 
@@ -565,12 +568,9 @@ BOOL	CulcuHash(DataStruct* list, char* full_path)
 
     // ファイル長取得
     file_size  = FS_GetFileLength(&file);
-    OS_TPrintf("File Size : %d bytes\n", file_size);
 
     // ファイルが大きいものもあるから細切れで読む
     for(i=1;;i++){
-		MI_CpuClear(pTempBuf, sizeof(pTempBuf));
-
         // バッファ確保
     	pTempBuf = spAllocFunc( READ_SIZE );
     	if (pTempBuf == NULL)
@@ -581,7 +581,7 @@ BOOL	CulcuHash(DataStruct* list, char* full_path)
 		}
 
         // 読み込むサイズを決める
-		if( (READ_SIZE * i) >= file_size )
+		if( (READ_SIZE * i) > file_size )
         {
 			data_size = file_size % READ_SIZE;
         }
@@ -591,7 +591,8 @@ BOOL	CulcuHash(DataStruct* list, char* full_path)
         }
         
 		// ファイルリード
-		read_is_ok = FS_ReadFile( &file, pTempBuf, READ_SIZE );
+		read_is_ok = FS_ReadFile( &file, pTempBuf, READ_SIZE ); // 本来ならばここは data_size分読めばよいが、
+        														// MasterEditorのCRC計算にあわせるため、READ_SIZE分読み込む
         result = FS_GetResultCode(&file);
 		if (!read_is_ok)
 		{
@@ -602,13 +603,14 @@ BOOL	CulcuHash(DataStruct* list, char* full_path)
 		}
 
         // 読んだサイズを更新
-        read_size += READ_SIZE;
+        read_size += data_size;
 
-		// Hash値 UpDate
-		SVC_HMACSHA1Update( &hash, pTempBuf, data_size );
-        
     	// CRC16計算
-		list->crc16 = newGetCRC(list->crc16, (u16 *)pTempBuf, data_size);
+		crc = newGetCRC(crc, (u16 *)pTempBuf, READ_SIZE); 	// 本来ならばここは data_size分の計算をすればよいが、
+															// MasterEditorのCRC計算にあわせるため、READ_SIZE分計算する
+        
+		// Hash値 UpDate
+		SVC_SHA1Update( &hash, pTempBuf, data_size );
 		
         // ファイルが全部読めたらwhileをぬける
         if( read_size >= file_size )
@@ -618,7 +620,7 @@ BOOL	CulcuHash(DataStruct* list, char* full_path)
         else
         {
 			// ファイルシーク
-			seek_is_ok = FS_SeekFile( &file, READ_SIZE * i, FS_SEEK_SET );
+			seek_is_ok = FS_SeekFile( &file, (s32)(READ_SIZE * i), FS_SEEK_SET );
             result = FS_GetResultCode(&file);
             if(!seek_is_ok)
             {
@@ -631,10 +633,17 @@ BOOL	CulcuHash(DataStruct* list, char* full_path)
         spFreeFunc( pTempBuf );
     }
 
-	OS_TPrintf("CRC16 : 0x%08x\n", list->crc16);
+    if(file_size != read_size)
+    {
+		OS_PutString("   Read Size Error!!!\n");
+    }
 
+    OS_PutString("\n\n");
+    
     // Hash値算出
-	SVC_HMACSHA1GetHash( &hash, list->Sha1_digest );
+	SVC_SHA1GetHash( &hash, list->Sha1_digest );
+
+	list->crc16 = crc;
     
 	// ファイルクローズ
 	FS_CloseFile(&file);
@@ -672,8 +681,8 @@ u16 newGetCRC
 		byte0 = *byte;  byte++;
 		byte1 = *byte;  byte++;
 
-		crc = (crc << 8) ^ crc_table[(crc >> 8) ^ byte1];
-		crc = (crc << 8) ^ crc_table[(crc >> 8) ^ byte0];
+		crc = (u16)((crc << 8) ^ crc_table[(crc >> 8) ^ byte1]);
+		crc = (u16)((crc << 8) ^ crc_table[(crc >> 8) ^ byte0]);
 	}
 
 	return crc;
@@ -695,10 +704,10 @@ static void inittable(unsigned short *table)
     unsigned short  i, j, r;
 
     for(i = 0; i < 0x100; i++) {
-        r = i << 8;
+        r = (unsigned short)(i << 8);
         for(j = 0; j < 8; j++) {
             if(r & 0x8000U)
-                r = (r << 1) ^ CRCPOLY;
+                r = (unsigned short)((r << 1) ^ CRCPOLY);
             else
                 r <<= 1;
         }
