@@ -31,6 +31,9 @@
     グローバル変数定義
  *---------------------------------------------------------------------------*/
 
+BOOL gIsDeleteNMenuAndNandFiler = FALSE;
+BOOL gIsForceFormatNand = FALSE;
+
 /*---------------------------------------------------------------------------*
     内部定数定義
  *---------------------------------------------------------------------------*/
@@ -115,9 +118,15 @@ void ProcessNote(void)
 			}
 			else if (kamiPadIsTrigger(PAD_BUTTON_A))
 			{
+				// L & R & Start & Select ボタン押しで強制フォーマット
+				if (kamiPadIsPress(PAD_BUTTON_L) && kamiPadIsPress(PAD_BUTTON_R) &&
+					kamiPadIsPress(PAD_BUTTON_START) && kamiPadIsPress(PAD_BUTTON_SELECT))				
+				{
+					gIsForceFormatNand = TRUE;
+				}
 				// Aボタンを押したときにSELECTボタンも押していた場合
 				// NMenuとNandFilerのインポートをスキップして、削除する
-				if (kamiPadIsPress(PAD_BUTTON_SELECT))
+				else if (kamiPadIsPress(PAD_BUTTON_SELECT))
 				{
 					gIsDeleteNMenuAndNandFiler = TRUE;
 				}

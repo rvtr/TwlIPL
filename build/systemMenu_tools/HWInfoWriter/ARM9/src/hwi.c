@@ -513,10 +513,12 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
 		// 新しいシリアルNoをクリアしておく
 		MI_CpuClear8( serialNoNew, sizeof(serialNoNew) );
 
-		// シリアルNoの先頭が'T'(量産用)または'V'(開発用)でなければ不正なので仮のシリアルNo.を作成する
-		if ( serialNoOld[0] != 'T' && serialNoOld[0] != 'V')
+		// シリアルNoの先頭が'T'(量産用UTL)、'V'(開発用TWL)、'W'(量産用UTL)、'D'(開発用UTL)
+		// でなければ不正なので仮のシリアルNo.を作成する
+		if ( serialNoOld[0] != 'T' && serialNoOld[0] != 'V' && serialNoOld[0] != 'W' && serialNoOld[0] != 'D' )
 		{
 			// 1バイト目は量産用なら'T'、その他なら'V'
+			// TWLorUTLは判別できない
 			if (SCFG_ReadBondingOption() == SCFG_OP_PRODUCT)
 			{
 				serialNoNew[0] = 'T';
@@ -546,18 +548,13 @@ BOOL HWI_WriteHWSecureInfoFile( u8 region, const u8 *pSerialNo, BOOL isDisableWi
 			// 仮シリアルNo.であることの印として14バイト目を'K'とする
 			serialNoNew[13] = 'K';
 		}
-		// シリアルNoの先頭が'T'(量産用)または'V'(開発用)である場合ユニーク数字８桁はそのままで他を変更する
+		// シリアルNoの先頭が'T'(量産用UTL)、'V'(開発用TWL)、'W'(量産用UTL)、'D'(開発用UTL)
+		// である場合先頭文字とユニーク数字８桁はそのままで他を変更する
 		else
 		{
-			// 1バイト目は量産用なら'T'、その他なら'V'
-			if (SCFG_ReadBondingOption() == SCFG_OP_PRODUCT)
-			{
-				serialNoNew[0] = 'T';
-			}
-			else
-			{
-				serialNoNew[0] = 'V';
-			}
+			// 1バイト目はキープ
+			serialNoNew[0] = serialNoOld[0];
+
 			// 2バイト目はリージョン別ASCII
 			serialNoNew[1] = (u8)regionAsciiForSerialNo[region];
 			// 米国リージョン以外は3バイト目にEMS

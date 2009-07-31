@@ -65,8 +65,7 @@ BOOL ProcessFormat(void)
 	FSArchiveResource resource;
 
 	// L & R & Start & Select ボタン押しで強制フォーマット
-	if (!(kamiPadIsPress(PAD_BUTTON_L) && kamiPadIsPress(PAD_BUTTON_R) &&
-		kamiPadIsPress(PAD_BUTTON_START) && kamiPadIsPress(PAD_BUTTON_SELECT)))
+	if (!gIsForceFormatNand)
 	{	
 		// 既に最新フォーマットであればフォーマットしない	
 		if (FS_GetArchiveResource("nand:/", &resource))
