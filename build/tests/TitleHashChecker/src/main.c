@@ -71,7 +71,10 @@ static BOOL gErrorFlg;
 typedef struct DataStruct
 {
 	NAMTitleId		id;
-
+	
+	u8				ver_major;
+	u8				ver_minor;
+	
     u8				Sha1_digest[SVC_SHA1_DIGEST_SIZE];
     u16				crc16;
 } DataStruct;
@@ -297,7 +300,7 @@ static void DrawScene(DataStruct* list)
 	// 上画面	一覧表示
 	PutMainScreen( 0,  0, 0xf2, "------ Title Hash Checker ------");
     PutMainScreen( 1,  1, 0xfa, "<Page %d/%d>", (gCurrentPage+1), (gMaxPage+1));
-    PutMainScreen( 1,  3, 0xf4, "Game Code");
+    PutMainScreen( 1,  3, 0xf4, "GameCode Version");
 	PutMainScreen( 0,  4, 0xff, "--------------------------------");
     
 	// カーソル表示
@@ -325,7 +328,8 @@ static void DrawScene(DataStruct* list)
     	color = COMMON_COLOR;
 
         // ゲームコード表示
-    	PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, color, "%2d:%s", (tmp_i+1), init_code);
+    	PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, color, "%2d:%s  %d.%d",
+					   (tmp_i+1), init_code, list[i].ver_major, list[i].ver_minor);
     }
 
     PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y, 0xff, "--------------------------------");
@@ -385,6 +389,7 @@ BOOL ProcessTitleHashCheck( void )
     // srlのHash値とcrc16を求める
     for ( i=0; i < gNandAppNum; i++, list++ )
     {
+		
 		PutMainScreen( 7, 10, 0xf6, "--- Now Loading ---");
         PutMainScreen( 7, 14, 0xf6, " %2d / %2d compleate", i+1, gNandAppNum);
 
@@ -437,14 +442,25 @@ BOOL GetDataStruct(DataStruct* list)
 	// データリストの作成
 	for ( i=0; i<TITLE_NUM_PAGE; i++, list++)
 	{
+		NAMTitleInfo info;
+		
 		// そもそも NAND アプリの数が 1ページにも満たない場合は途中で終了する
 		if ( i >= gNandAppNum )
 		{
 			break;
 		}
-
+		
         OS_TPrintf("id : 0x%08x\n", titleIdList[i]);
 		list->id = titleIdList[i];
+		
+        // tadバージョンの取得
+        if( NAM_ReadTitleInfo( &info, list->id ) != NAM_OK )
+        {
+			OS_TPrintf("[0x%08x] ReadTitleInfo failed...\n", list->id);
+		}else {
+			list->ver_major = (u8)(info.version >> 8);;
+			list->ver_minor = (u8)(info.version & 0xff);
+		}
 	}
 
 	MI_CpuClear8(titleIdList, sizeof(titleIdList));
