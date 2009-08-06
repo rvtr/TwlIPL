@@ -36,8 +36,13 @@
 
 #define DIGEST_HASH_BLOCK_SIZE_SHA1         (512/8)
 
-// 表示する対象をユーザーアプリだけにする場合
-//#define USER_APP_ONLY
+#define DMA_NO_FS							1
+#define CHECK_APP_NUM						10
+#define REGION_NUM							6
+
+#define NAND_FIRM_INFO_OFS					1
+#define SHARED_FONT_INFO_OFS				2
+
 
 /*---------------------------------------------------------------------------*
     変数 定義
@@ -53,7 +58,6 @@ static KeyInfo  gKey;
 
 // インストールされている NAND アプリの数
 static s32 gNandAppNum;
-static s32 gNandAllAppNum;
 
 // カーソル位置
 static s32 gCurPos = 0;
@@ -68,6 +72,9 @@ static u32 gMaxPage;
 // Error
 static BOOL gErrorFlg;
 
+// ページ変更
+static BOOL gPageChange;
+
 typedef struct DataStruct
 {
 	NAMTitleId		id;
@@ -79,19 +86,65 @@ typedef struct DataStruct
     u16				crc16;
 } DataStruct;
 
+static u8 sFontData_Sha1_digest[SVC_SHA1_DIGEST_SIZE];
+static u8 sNandFirm_Sha1_digest[SVC_SHA1_DIGEST_SIZE];
+
 static DataStruct gDataList[TITLE_NUM_PAGE * 2];
 
 static u16	crc_table[0x100];
 
-#ifdef DEBUG_MODE
-static MATHRandContext32 context;
-#endif
+// --------------------------------------
+//            DisableDebugCheck用
+// --------------------------------------
+static u8 gRegion;
+
+static u8 gDisableDebugFlg[CHECK_APP_NUM];
+static BOOL gError[CHECK_APP_NUM];
+static NAMTitleInfo gInfo[CHECK_APP_NUM];
+
+static NAMTitleId titleID[CHECK_APP_NUM] = {
+	0x00030017484e4100, // ランチャ
+	0x00030015484e4200, // 本体設定
+	0x00030005484e4441, // DSダウンロードプレイ all region
+	0x00030005484e4541, // ピクトチャット		all region
+	0x00030015484e4600, // ショップ
+	0x00030005484e4900, // カメラ
+	0x00030005484e4a00, // ゾーン
+	0x00030005484e4b00, // サウンド
+	0x00030015344e4641, // NandFiler			all region
+	0x0003001534544E41, // TwlNMenu				all region
+};
+
+const static u32 regioncode[REGION_NUM] = {
+	0x4A, // 日本
+	0x45, // アメリカ
+    0x50, // 欧州
+    0x55, // オーストラリア
+    0x43, // 中国
+    0x4B  // 韓国
+};
+
+// スペースの都合MAX 7文字で
+char *gAppName[CHECK_APP_NUM] = {
+	"Menu",
+    "Setting",
+    "DL play",
+    "PctChat",
+    "Shop",
+    "Camera",
+    "NinZone",
+    "Sound",
+    "NFiler",
+    "NMenu"
+};
 
 /*---------------------------------------------------------------------------*
    Prototype
  *---------------------------------------------------------------------------*/
 static void DrawScene(DataStruct* list);
 BOOL GetDataStruct(DataStruct* list);
+void showTitleHashCheck(DataStruct* list);
+void showDisableDebugFlgCheck(void);
 
 static void ConvertTitleIdLo(u8* code, u8* titleid_lo);
 static void ConvertGameCode(u8* code, u32 game_code);
@@ -103,17 +156,16 @@ static void FreeForNAM(void* ptr);
 static BOOL	ProcessTitleHashCheck(void);
 static BOOL	GetAppPath(DataStruct* list, char* path_buf);
 BOOL	CulcuHash(DataStruct* list, char* full_path);
+BOOL	CulcuFontDataHash(DataStruct* list);
 
 u16 newGetCRC(u16  start, u16 *datap, u32  size);
 static void inittable(unsigned short *table);
 
+static void CheckDisableDebugFlg(void);
 
 void* MyNAMUT_Alloc(u32 size);
 void MyNAMUT_Free(void* buffer);
 
-#ifdef USER_APP_ONLY
-static void getUserApplication(DataStruct* list);
-#endif
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*
@@ -136,7 +188,6 @@ void TwlMain(void)
 	spFreeFunc = FreeForNAM;
 
 	gNandAppNum = 0;
-	gNandAllAppNum = 0;
 	gErrorFlg = FALSE;
     
 	FS_Init( FS_DMA_NOT_USE );
@@ -145,14 +196,17 @@ void TwlMain(void)
 
 	MI_CpuClear8( gDataList, sizeof(gDataList));
 
-#ifdef DEBUG_MODE
-    MATH_InitRand32( &context, 15 );
-#endif
-    
     ClearScreen();
 
+    // hash Check
 	(void)ProcessTitleHashCheck();
 
+	// Disable Debug Check
+    CheckDisableDebugFlg();
+
+    // 初期ページの設定
+	gPageChange = TRUE;
+    
     while(TRUE)
     {
         // キー入力情報取得
@@ -172,7 +226,7 @@ void TwlMain(void)
             }
             else
             {
-                if( (gNandAllAppNum & 0x0f) == 0 )
+                if( (gNandAppNum & 0x0f) == 0 )
                 {
 					if( gCurPos >= TITLE_MAX_SHOW )
                     {
@@ -180,14 +234,14 @@ void TwlMain(void)
 						gCurPos = 0;
                     }
                 }
-				else if ( gCurPos >= (gNandAllAppNum & 0x0f) ) // バグ
+				else if ( gCurPos >= (gNandAppNum & 0x0f) ) // バグ
                 {
                     gCurrentPage = 0;
 					gCurPos = 0;
                 }
             }
 
-            OS_TPrintf("↓ gCurPos : %x, gCurrentPage : %x, gNandAllAppNum : %x\n", gCurPos, gCurrentPage, gNandAllAppNum);
+            OS_TPrintf("↓ gCurPos : %x, gCurrentPage : %x, gNandAppNum : %x\n", gCurPos, gCurrentPage, gNandAppNum);
         }
         if (gKey.trg & PAD_KEY_UP)
         {
@@ -196,7 +250,7 @@ void TwlMain(void)
             	if ( gCurrentPage == 0 )
             	{
                     gCurrentPage = gMaxPage;
-                    gCurPos = ((gNandAllAppNum & 0x0f) == 0) ? TITLE_MAX_SHOW - 1 : (gNandAllAppNum & 0x0f) - 1;
+                    gCurPos = ((gNandAppNum & 0x0f) == 0) ? TITLE_MAX_SHOW - 1 : (gNandAppNum & 0x0f) - 1;
             	}
             	else
             	{
@@ -209,7 +263,7 @@ void TwlMain(void)
 				gCurPos--;
             }
 
-            OS_TPrintf("↑ gCurPos : %x, gCurrentPage : %x, gNandAllAppNum : %x\n", gCurPos, gCurrentPage, gNandAllAppNum);
+            OS_TPrintf("↑ gCurPos : %x, gCurrentPage : %x, gNandAppNum : %x\n", gCurPos, gCurrentPage, gNandAppNum);
 		}
         
         if (gKey.trg & PAD_KEY_LEFT)
@@ -225,7 +279,7 @@ void TwlMain(void)
 
 			gCurPos = 0;
 
-            OS_TPrintf("← gCurPos : %x, gCurrentPage : %x, gNandAllAppNum : %x\n", gCurPos, gCurrentPage, gNandAllAppNum);
+            OS_TPrintf("← gCurPos : %x, gCurrentPage : %x, gNandAppNum : %x\n", gCurPos, gCurrentPage, gNandAppNum);
         }
         if (gKey.trg & PAD_KEY_RIGHT)
         {
@@ -240,9 +294,13 @@ void TwlMain(void)
 
             gCurPos = 0;
 
-            OS_TPrintf("→ gCurPos : %x, gCurrentPage : %x, gNandAllAppNum : %x\n", gCurPos, gCurrentPage, gNandAllAppNum);
+            OS_TPrintf("→ gCurPos : %x, gCurrentPage : %x, gNandAppNum : %x\n", gCurPos, gCurrentPage, gNandAppNum);
         }
-
+		if (gKey.trg & PAD_BUTTON_L || gKey.trg & PAD_BUTTON_R)
+        {
+        	gPageChange ^= TRUE;
+        }
+        
         // 選択中の要素
         gCurrentElem = (s32)((u32)(gCurrentPage << 4) + (u32)gCurPos);
         
@@ -281,9 +339,27 @@ void TwlMain(void)
 
 static void DrawScene(DataStruct* list)
 {
+    if(gPageChange)
+    {
+		showTitleHashCheck(list);
+    	PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y + 2, 0xfa, "Up Down Key   : Next Application");
+        PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y + 3, 0xfa, "Left Right Key: Page Change");
+    }
+    else
+    {
+    	showDisableDebugFlgCheck();
+    }
+    
+    PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y, 0xff, "--------------------------------");
+    PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y + 1, 0xfa, "LR Button     : Mode Change");
+    
+}
+
+
+void showTitleHashCheck(DataStruct* list)
+{
 	s32 i;
 	u8 init_code[5];
-	u8 color;
     u32 start;
     u8* digest;
 
@@ -300,7 +376,7 @@ static void DrawScene(DataStruct* list)
 	// 上画面	一覧表示
 	PutMainScreen( 0,  0, 0xf2, "------ Title Hash Checker ------");
     PutMainScreen( 1,  1, 0xfa, "<Page %d/%d>", (gCurrentPage+1), (gMaxPage+1));
-    PutMainScreen( 1,  3, 0xf4, "GameCode Version");
+    PutMainScreen( 1,  3, 0xf4, "GameCode   Version");
 	PutMainScreen( 0,  4, 0xff, "--------------------------------");
     
 	// カーソル表示
@@ -314,29 +390,32 @@ static void DrawScene(DataStruct* list)
     for ( i=(s32)start; i < (start + TITLE_MAX_SHOW); i++, p++)
     {
 		s32 tmp_i;
-        
-		// そもそも NAND アプリの数が 1ページにも満たない場合は途中で終了する
-		if ( i >= gNandAllAppNum )
+
+		if ( i >= gNandAppNum )
 		{
 			break;
 		}
-        
-		tmp_i = (s32)(i & 0xf);
-        
-		ConvertInitialCode(init_code, NAM_GetTitleIdLo(p->id));
-        
-    	color = COMMON_COLOR;
 
-        // ゲームコード表示
-    	PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, color, "%2d:%s  %d.%d",
-					   (tmp_i+1), init_code, list[i].ver_major, list[i].ver_minor);
+        tmp_i = (s32)(i & 0xf);
+        
+        if( i == (gNandAppNum - SHARED_FONT_INFO_OFS) )
+        {
+    		PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, COMMON_COLOR, "Shared Font");
+        }
+        else if( i == (gNandAppNum - NAND_FIRM_INFO_OFS) )
+        {
+    		PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, COMMON_COLOR, "Nand Firm");
+        }
+        else
+        {
+			ConvertInitialCode(init_code, NAM_GetTitleIdLo(p->id));
+
+        	// ゲームコード表示
+    		PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, COMMON_COLOR, "%2d:%s    %d.%d",
+					   		(tmp_i+1), init_code, list[i].ver_major, list[i].ver_minor);
+        }
     }
-
-    PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y, 0xff, "--------------------------------");
-
-    PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y + 1, 0xfa, "Up Down Key   : Next Application");
-    PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y + 2, 0xfa, "Left Right Key: Page Change");
-
+    
     // 下画面	詳細表示
 	ConvertInitialCode(init_code, NAM_GetTitleIdLo(list[gCurrentElem].id));
     PutSubScreen(2,   1, 0xf4, "Selected Title : [ %s ]", init_code);
@@ -354,6 +433,138 @@ static void DrawScene(DataStruct* list)
         PutSubScreen(2 + (i*3),  14, 0xf4, "%02x ", digest[i+10]);
     }
 }
+
+void showDisableDebugFlgCheck(void)
+{
+	s32 i;
+    u8 color;
+    u8 *p;
+    u8 hi, lo;
+    BOOL success = TRUE;
+    
+    for(i=0; i<CHECK_APP_NUM; i++){
+        if(!gError[i]){
+            if(gDisableDebugFlg[i] == '0'){
+				success = FALSE;
+            }
+        }
+    }
+
+    // color : 0xf8 = 緑   0xf1 = 赤   0xff = 白
+    color = success ? (u8)0xf8 : (u8)0xf1;
+
+	PutMainScreen( 0, 0, color, "------ SysMenu Flg Checker -----");
+
+    PutMainScreen( 0, 3, color, "Apli    Code  Flg  tadVer  State");
+    PutMainScreen( 0, 4, color, "--------------------------------");
+	for(i=0; i<CHECK_APP_NUM; i++){
+		PutMainScreen(  0, TITLE_SHOW_BASE_Y+i, color, gAppName[i]);
+
+        p = (u8 *)&titleID[i];
+        PutMainScreen(  8, TITLE_SHOW_BASE_Y+i, color, "%c%c%c%c", *(p+3),*(p+2),*(p+1),*p);
+        
+        PutMainScreen( 14, TITLE_SHOW_BASE_Y+i, color, "(%c)",gDisableDebugFlg[i]);
+
+        if( gDisableDebugFlg[i] != '-'){
+			hi = (u8)(gInfo[i].version >> 8);
+			lo = (u8)(gInfo[i].version & 0xff);
+            
+			PutMainScreen(20, TITLE_SHOW_BASE_Y+i, color, "%d.%d", hi, lo);
+        }
+        else
+        {
+			PutMainScreen(20, TITLE_SHOW_BASE_Y+i, color, "---", gInfo[i].version);
+        }
+
+        if(gDisableDebugFlg[i] == '0')
+        {
+			PutMainScreen(28, TITLE_SHOW_BASE_Y+i, 0xf1, "NG");
+        }
+    }
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         CheckDisableDebugFlg
+
+  Description:  
+ *---------------------------------------------------------------------------*/
+static void CheckDisableDebugFlg(void)
+{
+	char file_path[FS_ENTRY_LONGNAME_MAX];
+    u8 buf[0x1000];
+    u32 i;
+
+	gRegion = OS_GetRegion();
+    
+    for(i=0; i<CHECK_APP_NUM; i++){
+        // 中韓はDLプレイ・ピクトチャットは各国リージョン
+        if( gRegion == OS_TWL_REGION_CHINA || gRegion == OS_TWL_REGION_KOREA )
+        {
+        	if(i != 8 && i != 9)
+            {
+        		titleID[i] |= regioncode[gRegion];
+        	}
+        }
+        else
+        {
+        	if(i != 2 && i != 3 && i != 8 && i != 9)
+            {
+        		titleID[i] |= regioncode[gRegion];
+        	}
+        }
+
+    	if(NAM_GetTitleBootContentPath( file_path, titleID[i] ) == NAM_OK){
+			FSFile f;
+            BOOL bSuccess;
+            s32 readSize;
+            
+			OS_TPrintf(" ok ");
+			OS_TPrintf(" %s ", file_path);
+
+            FS_InitFile(&f);
+
+            // ファイルオープン
+            bSuccess = FS_OpenFileEx(&f, file_path, FS_FILEMODE_R);
+
+            if(!bSuccess){
+                OS_TPrintf(" File Open Error...\n");
+                gError[i] = TRUE;
+				continue;
+            }
+            
+            // ファイルリード
+            readSize = FS_ReadFile(&f, buf, sizeof(buf));
+
+			// Disable Debug Flg のチェック
+            if(((ROM_Header *)buf)->s.disable_debug){
+				gDisableDebugFlg[i] = '1';
+            }
+            else{
+				gDisableDebugFlg[i] = '0';
+            }
+			OS_TPrintf("DisableFlg( %c )", gDisableDebugFlg[i]);
+            
+            // ファイルクローズ
+            bSuccess = FS_CloseFile(&f);
+
+            OS_TPrintf(" File Read/Close Success\n");
+            gError[i] = FALSE;
+    	}
+    	else{
+			OS_TPrintf(" ng \n");
+            gError[i] = TRUE;
+            gDisableDebugFlg[i] = '-';
+    	}
+
+        // tadバージョンの取得
+        if( NAM_ReadTitleInfo( &gInfo[i], titleID[i] ) != NAM_OK )
+        {
+			OS_TPrintf("[0x%08x] ReadTitleInfo failed...\n", titleID[i]);
+        }
+    }
+}
+
 
 
 /*---------------------------------------------------------------------------*
@@ -376,8 +587,6 @@ BOOL ProcessTitleHashCheck( void )
 		OS_Panic("NAM_GetNumTitles() failed.");
 	}
 
-	gNandAllAppNum = gNandAppNum;
-    
    	// 情報の取得
 	if ( !GetDataStruct(gDataList) )
 	{
@@ -403,17 +612,20 @@ BOOL ProcessTitleHashCheck( void )
 		if ( !GetAppPath(list, full_path) )
 		{
             gErrorFlg = TRUE;
-//			OS_Panic("CulcuHash() failed.");
 		}
 
 		// Hash, CRC16の計算
 		if ( !CulcuHash(list, full_path) )
 		{
             gErrorFlg = TRUE;
-//			OS_Panic("CulcuHash() failed.");
 		}
     }
 
+    // SharedフォントとNandファームの値用の2つ
+	gNandAppNum += 2;
+    
+	CulcuFontDataHash(gDataList);
+    
 	OS_PutString("ProcessTitleHashCheck Finish!!\n");
     
     return result;
@@ -668,6 +880,70 @@ BOOL	CulcuHash(DataStruct* list, char* full_path)
 }
 
 
+BOOL	CulcuFontDataHash(DataStruct* list)
+{
+    FSFile  file;
+    BOOL    open_is_ok;
+	BOOL    read_is_ok;
+	u32 	file_size;
+    u8* 	pTempBuf;
+    SVCSHA1Context hash;
+    
+    FSResult result;
+
+    // ケツから2個目をSharedFont用のデータにする
+	DataStruct *data = &list[gNandAppNum-SHARED_FONT_INFO_OFS];
+    
+    // ハッシュ初期化
+    SVC_SHA1Init( &hash );
+
+    // FS初期化
+    FS_InitFile(&file);
+
+    // ファイルオープン
+    open_is_ok = FS_OpenFile(&file, "nand:/sys/TWLFontTable.dat");
+	if (!open_is_ok)
+	{
+		OS_Warning("Failure! FS_OpenFile");
+		return FALSE;
+	}
+
+    // ファイル長取得
+    file_size  = FS_GetFileLength(&file);
+
+    // バッファ確保
+   	pTempBuf = spAllocFunc( file_size );
+   	if (pTempBuf == NULL)
+	{
+		FS_CloseFile(&file);
+       	OS_Warning("Failure! Alloc Buffer");
+		return FALSE;		
+	}
+        
+	// ファイルリード
+	read_is_ok = FS_ReadFile( &file, pTempBuf, (s32)file_size );
+    result = FS_GetResultCode(&file);
+	if (!read_is_ok)
+	{
+		FS_CloseFile(&file);
+		spFreeFunc(pTempBuf);
+    	OS_Warning("Failure! Read File (Error Code : %d)", result);
+		return FALSE;
+	}
+
+	// Hash値 UpDate
+	SVC_CalcSHA1( data->Sha1_digest, pTempBuf, file_size );
+
+    // バッファの開放
+    spFreeFunc( pTempBuf );
+    
+	// ファイルクローズ
+	FS_CloseFile(&file);
+
+    return TRUE;
+}
+
+
 /*---------------------------------------------------------------------------*
   Name:         newGetCRC
 
@@ -730,54 +1006,6 @@ static void inittable(unsigned short *table)
         *table++ = r;
     }
 }
-
-
-#ifdef USER_APP_ONLY
-/*---------------------------------------------------------------------------*
-  Name:         getUserApplication
-
-  Description:  全アプリからユーザーアプリだけを抽出する関数
- *---------------------------------------------------------------------------*/
-static void getUserApplication(DataStruct* list)
-{
-    u32 i;
-    s32 count = 0;
-
-    DataStruct* p = list;
-	DataStruct* buf;
-
-	u32 buf_size = sizeof(DataStruct) * gNandAllAppNum;
-    
-    if( gNandAllAppNum != 0 )
-    {
-        buf = MyNAMUT_Alloc( buf_size );
-
-        if( buf == NULL )
-        {
-            gErrorFlg = TRUE;
-			return;
-        }
-    }
-    
-    for( i=0; i<gNandAllAppNum; i++, p++ )
-    {
-        if(!(p->id & TITLE_ID_APP_TYPE_MASK))
-        {
-			MI_CpuCopy8(p, &buf[count], sizeof(DataStruct));
-            count++;
-        }
-    }
-    
-    // ユーザーアプリだけのリストをコピー
-	MI_CpuCopy8(buf, list, buf_size);
-
-    // アプリ総数の更新
-    gNandAllAppNum = count;
-
-    // バッファの開放
-    MyNAMUT_Free(buf);
-}
-#endif
 
 
 /*---------------------------------------------------------------------------*
