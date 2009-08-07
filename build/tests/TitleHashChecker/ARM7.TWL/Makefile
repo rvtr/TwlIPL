@@ -26,8 +26,7 @@ override TARGET_CODEGEN		=	ARM
 ifndef	TWLSDK_NOCRYPTO
 #----------------------------------------------------------------------------
 
-SRCS		=	crt0.SCFG_NOLOCK.c \
-				main.c \
+SRCS		=	main.c \
 				kami_pxi.c 
 
 TARGET_NAME		=	armadillo
@@ -37,7 +36,7 @@ LCFILE_SPEC		=	$(TARGET_NAME).lsf
 LCFILE_TEMPLATE	=	$(ROOT)/build/components/$(TARGET_NAME).TWL/$(TARGET_NAME).lcf.template
 LDRES_TEMPLATE	=	$(ROOT)/build/components/$(TARGET_NAME).TWL/$(TARGET_NAME).response.template
 
-CRT0_O			=	crt0.SCFG_NOLOCK.o
+CRT0_O			=	crt0.SCR.TWL.o
 
 # スタック不足防止の為、インライン展開せずにコンパイルする
 CCFLAGS_OPT		=	-O4 -inline off
