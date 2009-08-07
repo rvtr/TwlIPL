@@ -76,16 +76,15 @@ static u32 gMaxPage;
 // Error
 static BOOL gErrorFlg;
 
-// ページ変更
-static BOOL gPageChange;
-
 typedef struct DataStruct
 {
 	NAMTitleId		id;
 	
 	u8				ver_major;
 	u8				ver_minor;
-	
+
+	u8				DisableDebugFlg;
+    
     u8				Sha1_digest[SVC_SHA1_DIGEST_SIZE];
     u16				crc16;
 } DataStruct;
@@ -97,58 +96,11 @@ static DataStruct gDataList[TITLE_NUM_PAGE * 2];
 
 static u16	crc_table[0x100];
 
-// --------------------------------------
-//            DisableDebugCheck用
-// --------------------------------------
-static u8 gRegion;
-
-static u8 gDisableDebugFlg[CHECK_APP_NUM];
-static BOOL gError[CHECK_APP_NUM];
-static NAMTitleInfo gInfo[CHECK_APP_NUM];
-
-static NAMTitleId titleID[CHECK_APP_NUM] = {
-	0x00030017484e4100, // ランチャ
-	0x00030015484e4200, // 本体設定
-	0x00030005484e4441, // DSダウンロードプレイ all region
-	0x00030005484e4541, // ピクトチャット		all region
-	0x00030015484e4600, // ショップ
-	0x00030005484e4900, // カメラ
-	0x00030005484e4a00, // ゾーン
-	0x00030005484e4b00, // サウンド
-	0x00030015344e4641, // NandFiler			all region
-	0x0003001534544E41, // TwlNMenu				all region
-};
-
-const static u32 regioncode[REGION_NUM] = {
-	0x4A, // 日本
-	0x45, // アメリカ
-    0x50, // 欧州
-    0x55, // オーストラリア
-    0x43, // 中国
-    0x4B  // 韓国
-};
-
-// スペースの都合MAX 7文字で
-char *gAppName[CHECK_APP_NUM] = {
-	"Menu",
-    "Setting",
-    "DL play",
-    "PctChat",
-    "Shop",
-    "Camera",
-    "NinZone",
-    "Sound",
-    "NFiler",
-    "NMenu"
-};
-
 /*---------------------------------------------------------------------------*
    Prototype
  *---------------------------------------------------------------------------*/
 static void DrawScene(DataStruct* list);
 BOOL GetDataStruct(DataStruct* list);
-void showTitleHashCheck(DataStruct* list);
-void showDisableDebugFlgCheck(void);
 
 static void ConvertTitleIdLo(u8* code, u8* titleid_lo);
 static void ConvertGameCode(u8* code, u32 game_code);
@@ -165,8 +117,6 @@ BOOL CulcuNandFirmHash(DataStruct* list);
 
 u16 newGetCRC(u16  start, u16 *datap, u32  size);
 static void inittable(unsigned short *table);
-
-static void CheckDisableDebugFlg(void);
 
 void* MyNAMUT_Alloc(u32 size);
 void MyNAMUT_Free(void* buffer);
@@ -210,12 +160,6 @@ void TwlMain(void)
     // hash Check
 	ProcessTitleHashCheck();
 
-	// Disable Debug Check
-    CheckDisableDebugFlg();
-
-    // 初期ページの設定
-	gPageChange = TRUE;
-    
     while(TRUE)
     {
         // キー入力情報取得
@@ -305,11 +249,7 @@ void TwlMain(void)
 
             OS_TPrintf("→ gCurPos : %x, gCurrentPage : %x, gNandAppNum : %x\n", gCurPos, gCurrentPage, gNandAppNum);
         }
-		if (gKey.trg & PAD_BUTTON_L || gKey.trg & PAD_BUTTON_R)
-        {
-        	gPageChange ^= TRUE;
-        }
-        
+
         // 選択中の要素
         gCurrentElem = (s32)((u32)(gCurrentPage << 4) + (u32)gCurPos);
         
@@ -341,34 +281,16 @@ void TwlMain(void)
 	0xf9, // くすんだ青 	0xfa, // くすんだ黄色	0xfb, // 紫
     0xfc, // うすい青		0xfd, // 灰色			0xfe, // 濃い灰色
  *---------------------------------------------------------------------------*/
-#define COMMON_COLOR			((u8)0xff)
-#define PERSONALIZED_COLOR		((u8)0xfc)
+#define OK_COLOR		((u8)0xf2)
+#define NG_COLOR		((u8)0xf1)
 
 #define GAME_CODE_BASE_X		1
 
 static void DrawScene(DataStruct* list)
 {
-    if(gPageChange)
-    {
-		showTitleHashCheck(list);
-    	PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y + 2, 0xfa, "Up Down Key   : Next Application");
-        PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y + 3, 0xfa, "Left Right Key: Page Change");
-    }
-    else
-    {
-    	showDisableDebugFlgCheck();
-    }
-    
-    PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y, 0xff, "--------------------------------");
-    PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y + 1, 0xfa, "LR Button     : Mode Change");
-    
-}
-
-
-void showTitleHashCheck(DataStruct* list)
-{
 	s32 i;
 	u8 init_code[5];
+    u8 color;
     u32 start;
     u8* digest;
 
@@ -383,9 +305,9 @@ void showTitleHashCheck(DataStruct* list)
     }
 
 	// 上画面	一覧表示
-	PutMainScreen( 0,  0, 0xf2, "------ Title Hash Checker ------");
-    PutMainScreen( 1,  1, 0xfa, "<Page %d/%d>", (gCurrentPage+1), (gMaxPage+1));
-    PutMainScreen( 1,  3, 0xf4, "GameCode   Version");
+	PutMainScreen( 0,  0, 0xf4, "------ Title Hash Checker ------");
+    PutMainScreen( 1,  1, 0xff, "<Page %d/%d>", (gCurrentPage+1), (gMaxPage+1));
+    PutMainScreen( 1,  3, 0xfa, "GameCode   Version   DebugFlg");
 	PutMainScreen( 0,  4, 0xff, "--------------------------------");
     
 	// カーソル表示
@@ -409,29 +331,42 @@ void showTitleHashCheck(DataStruct* list)
         
         if( i == (gNandAppNum - SHARED_FONT_INFO_OFS) )
         {
-    		PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, COMMON_COLOR, "Shared Font");
+    		PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, OK_COLOR, "%2d:Shared Font", (tmp_i+1));
         }
         else if( i == (gNandAppNum - NAND_FIRM_INFO_OFS) )
         {
-    		PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, COMMON_COLOR, "Nand Firm");
+    		PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, OK_COLOR, "%2d:Nand Firm", (tmp_i+1));
         }
         else
         {
 			ConvertInitialCode(init_code, NAM_GetTitleIdLo(p->id));
 
+            color = (list[i].DisableDebugFlg == '1') ? OK_COLOR : NG_COLOR;
+            
         	// ゲームコード表示
-    		PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, COMMON_COLOR, "%2d:%s    %d.%d",
-					   		(tmp_i+1), init_code, list[i].ver_major, list[i].ver_minor);
+    		PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, color, "%2d:%s    %d.%d       (%c)",
+					   		(tmp_i+1), init_code, list[i].ver_major, list[i].ver_minor, list[i].DisableDebugFlg);
         }
     }
     
     // 下画面	詳細表示
 	ConvertInitialCode(init_code, NAM_GetTitleIdLo(list[gCurrentElem].id));
-    PutSubScreen(2,   1, 0xf4, "Selected Title : [ %s ]", init_code);
-    PutSubScreen(2,   4, 0xff, "- CRC16 Data -");
-	
-	PutSubScreen(2,   6, 0xf4, "0x%04x", list[gCurrentElem].crc16);
 
+    if( gCurrentElem == (gNandAppNum - SHARED_FONT_INFO_OFS) )
+    {
+		PutSubScreen(2,   1, 0xf6, "Shared Font Hash Data");
+    }
+	else if( gCurrentElem == (gNandAppNum - NAND_FIRM_INFO_OFS) )
+    {
+		PutSubScreen(2,   1, 0xf6, "Nand Firm Hash Data");
+    }
+    else
+    {
+    	PutSubScreen(2,   1, 0xf4, "Selected Title : [ %s ]", init_code);
+    	PutSubScreen(2,   4, 0xff, "- CRC16 Data -");
+	
+		PutSubScreen(2,   6, 0xf4, "0x%04x", list[gCurrentElem].crc16);
+    }
 
 	digest = (u8 *)list[gCurrentElem].Sha1_digest;
     
@@ -441,139 +376,11 @@ void showTitleHashCheck(DataStruct* list)
 		PutSubScreen(2 + (i*3),  12, 0xf4, "%02x ", digest[i]);
         PutSubScreen(2 + (i*3),  14, 0xf4, "%02x ", digest[i+10]);
     }
-}
-
-void showDisableDebugFlgCheck(void)
-{
-	s32 i;
-    u8 color;
-    u8 *p;
-    u8 hi, lo;
-    BOOL success = TRUE;
     
-    for(i=0; i<CHECK_APP_NUM; i++){
-        if(!gError[i]){
-            if(gDisableDebugFlg[i] == '0'){
-				success = FALSE;
-            }
-        }
-    }
-
-    // color : 0xf8 = 緑   0xf1 = 赤   0xff = 白
-    color = success ? (u8)0xf8 : (u8)0xf1;
-
-	PutMainScreen( 0, 0, color, "------ SysMenu Flg Checker -----");
-
-    PutMainScreen( 0, 3, color, "Apli    Code  Flg  tadVer  State");
-    PutMainScreen( 0, 4, color, "--------------------------------");
-	for(i=0; i<CHECK_APP_NUM; i++){
-		PutMainScreen(  0, TITLE_SHOW_BASE_Y+i, color, gAppName[i]);
-
-        p = (u8 *)&titleID[i];
-        PutMainScreen(  8, TITLE_SHOW_BASE_Y+i, color, "%c%c%c%c", *(p+3),*(p+2),*(p+1),*p);
-        
-        PutMainScreen( 14, TITLE_SHOW_BASE_Y+i, color, "(%c)",gDisableDebugFlg[i]);
-
-        if( gDisableDebugFlg[i] != '-'){
-			hi = (u8)(gInfo[i].version >> 8);
-			lo = (u8)(gInfo[i].version & 0xff);
-            
-			PutMainScreen(20, TITLE_SHOW_BASE_Y+i, color, "%d.%d", hi, lo);
-        }
-        else
-        {
-			PutMainScreen(20, TITLE_SHOW_BASE_Y+i, color, "---", gInfo[i].version);
-        }
-
-        if(gDisableDebugFlg[i] == '0')
-        {
-			PutMainScreen(28, TITLE_SHOW_BASE_Y+i, 0xf1, "NG");
-        }
-    }
+    PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y, 0xff, "--------------------------------");
+    PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y + 1, 0xff, "LR Button     : Mode Change");
+    PutMainScreen( 0, TITLE_MAX_SHOW + TITLE_SHOW_BASE_Y + 2, 0xff, "Up Down Key   : Next Application");
 }
-
-
-/*---------------------------------------------------------------------------*
-  Name:         CheckDisableDebugFlg
-
-  Description:  
- *---------------------------------------------------------------------------*/
-static void CheckDisableDebugFlg(void)
-{
-	char file_path[FS_ENTRY_LONGNAME_MAX];
-    u8 buf[0x1000];
-    u32 i;
-
-	gRegion = OS_GetRegion();
-    
-    for(i=0; i<CHECK_APP_NUM; i++){
-        // 中韓はDLプレイ・ピクトチャットは各国リージョン
-        if( gRegion == OS_TWL_REGION_CHINA || gRegion == OS_TWL_REGION_KOREA )
-        {
-        	if(i != 8 && i != 9)
-            {
-        		titleID[i] |= regioncode[gRegion];
-        	}
-        }
-        else
-        {
-        	if(i != 2 && i != 3 && i != 8 && i != 9)
-            {
-        		titleID[i] |= regioncode[gRegion];
-        	}
-        }
-
-    	if(NAM_GetTitleBootContentPath( file_path, titleID[i] ) == NAM_OK){
-			FSFile f;
-            BOOL bSuccess;
-            s32 readSize;
-            
-			OS_TPrintf(" ok ");
-			OS_TPrintf(" %s ", file_path);
-
-            FS_InitFile(&f);
-
-            // ファイルオープン
-            bSuccess = FS_OpenFileEx(&f, file_path, FS_FILEMODE_R);
-
-            if(!bSuccess){
-                OS_TPrintf(" File Open Error...\n");
-                gError[i] = TRUE;
-				continue;
-            }
-            
-            // ファイルリード
-            readSize = FS_ReadFile(&f, buf, sizeof(buf));
-
-			// Disable Debug Flg のチェック
-            if(((ROM_Header *)buf)->s.disable_debug){
-				gDisableDebugFlg[i] = '1';
-            }
-            else{
-				gDisableDebugFlg[i] = '0';
-            }
-			OS_TPrintf("DisableFlg( %c )", gDisableDebugFlg[i]);
-            
-            // ファイルクローズ
-            bSuccess = FS_CloseFile(&f);
-
-            OS_TPrintf(" File Read/Close Success\n");
-            gError[i] = FALSE;
-    	}
-    	else{
-			OS_TPrintf(" ng \n");
-            gError[i] = TRUE;
-            gDisableDebugFlg[i] = '-';
-    	}
-
-        // tadバージョンの取得
-        if( NAM_ReadTitleInfo( &gInfo[i], titleID[i] ) != NAM_OK )
-        {
-			OS_TPrintf("[0x%08x] ReadTitleInfo failed...\n", titleID[i]);
-        }
-    }
-}
-
 
 
 /*---------------------------------------------------------------------------*
@@ -842,6 +649,19 @@ BOOL	CulcuNandAppHash(DataStruct* list, char* full_path)
 			return FALSE;
 		}
 
+        // ついでにDisableDebugFlgの状態を見ておく
+		if(i == 1)
+        {
+            if(((ROM_Header *)pTempBuf)->s.disable_debug)
+            {
+				list->DisableDebugFlg = '1';
+            }
+            else
+            {
+				list->DisableDebugFlg = '0';
+            }
+        }
+        
         // 読んだサイズを更新
         read_size += data_size;
 
@@ -975,42 +795,66 @@ BOOL CulcuFontDataHash(DataStruct* list)
   Returns:      
 
  *---------------------------------------------------------------------------*/
+#define NAND_HEADER_SIZE				0x800
+#define NAND_FIRM_REV_SIZE				0x9
+#define READ_NAND_FIRM_SIZE				0x100000
+
 BOOL CulcuNandFirmHash(DataStruct* list)
 {
 	u8* pTempBuf;
-	u32 alloc_size;
+    u32 write_block;
+    u32 culcu_size;
+    BOOL ret = TRUE;
 
+	u8* p;
+    
     // ケツから1個目をSharedFont用のデータにする
 	DataStruct *data = &list[gNandAppNum - NAND_FIRM_INFO_OFS];
-    
-//	nandfirm_size = file_size - NAND_FIRM_START_OFFSET_IN_FILE;
 
 	// バッファ確保
 	// 書き込みがブロック単位(512byte)であることを考慮し512アライメントを確保
-	alloc_size = 0x200; // MATH_ROUNDUP(file_size, 512);
-	pTempBuf = spAllocFunc( alloc_size );
+	pTempBuf = spAllocFunc( READ_NAND_FIRM_SIZE );
 	if (pTempBuf == NULL)
 	{
         OS_Warning("Failure! Alloc Buffer");
 		return FALSE;
 	}
 
-	MI_CpuClear8( pTempBuf, alloc_size );
+	MI_CpuClear8( pTempBuf, READ_NAND_FIRM_SIZE );
 
 	// Nandからリード
-	if (kamiNandRead(NAND_FIRM_START_OFFSET/NAND_BLOCK_BYTE, pTempBuf, alloc_size ) == KAMI_RESULT_SEND_ERROR)
+    write_block = READ_NAND_FIRM_SIZE / NAND_BLOCK_BYTE + (READ_NAND_FIRM_SIZE % NAND_BLOCK_BYTE != 0);
+	if (kamiNandRead(0, pTempBuf, write_block ) == KAMI_RESULT_SEND_ERROR)
 	{
 	    OS_Warning("Failure! Read NandFirm");
 	}
-	DC_FlushRange(pTempBuf, alloc_size);
-
-	// Hash値 UpDate
-	SVC_CalcSHA1( data->Sha1_digest, pTempBuf, alloc_size );
+	DC_FlushRange(pTempBuf, READ_NAND_FIRM_SIZE);
     
+	// Hash計算するサイズを求める
+    culcu_size = MATH_ROUNDUP((*(u32 *)(pTempBuf+0x22c)) + (*(u32 *)(pTempBuf+0x23c)) , 256) + NAND_HEADER_SIZE + NAND_FIRM_REV_SIZE;
+    OS_TPrintf("NandFirm main Size : 0x%08x\n", (*(u32 *)(pTempBuf+0x22c)));
+    OS_TPrintf("NandFirm  sub Size : 0x%08x\n", (*(u32 *)(pTempBuf+0x23c)));
+    OS_TPrintf("NandFirm      Size : 0x%08x\n", culcu_size);
+
+	p = (pTempBuf + (culcu_size - NAND_FIRM_REV_SIZE));
+    
+	OS_TPrintf("Nand Firm rev      : %c%c%c%c %c%c%c%c\n\n"
+               ,*p,*(p+1),*(p+2),*(p+3),*(p+5),*(p+6),*(p+7),*(p+8));
+    
+	// Hash値 UpDate
+    if( culcu_size <= READ_NAND_FIRM_SIZE )
+    {
+        SVC_CalcSHA1( data->Sha1_digest, pTempBuf, culcu_size );
+    }
+    else
+    {
+		OS_TPrintf("Culcu Size is illegal...\n");
+        ret = FALSE;
+    }
 	// メモリ解放
 	spFreeFunc(pTempBuf);
 
-    return TRUE;
+    return ret;
 }
 
 
