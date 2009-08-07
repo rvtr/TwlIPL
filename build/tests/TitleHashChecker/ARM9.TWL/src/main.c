@@ -23,6 +23,7 @@
 
 #include "common.h"
 #include "screen.h"
+#include "kami_pxi.h"
 
 #define TITLE_SHOW_BASE_Y					5
 #define TITLE_MAX_SHOW						0x10
@@ -43,6 +44,9 @@
 #define NAND_FIRM_INFO_OFS					1
 #define SHARED_FONT_INFO_OFS				2
 
+#define NAND_BLOCK_BYTE 			       	0x200
+#define NAND_FIRM_START_OFFSET    	       	0x200
+#define NAND_FIRM_START_OFFSET_IN_FILE     	0x200
 
 /*---------------------------------------------------------------------------*
     変数 定義
@@ -155,8 +159,9 @@ static void FreeForNAM(void* ptr);
 
 static BOOL	ProcessTitleHashCheck(void);
 static BOOL	GetAppPath(DataStruct* list, char* path_buf);
-BOOL	CulcuHash(DataStruct* list, char* full_path);
-BOOL	CulcuFontDataHash(DataStruct* list);
+BOOL CulcuNandAppHash(DataStruct* list, char* full_path);
+BOOL CulcuFontDataHash(DataStruct* list);
+BOOL CulcuNandFirmHash(DataStruct* list);
 
 u16 newGetCRC(u16  start, u16 *datap, u32  size);
 static void inittable(unsigned short *table);
@@ -179,6 +184,10 @@ void TwlMain(void)
     BOOL errorFlg = FALSE;
 
 	InitCommon();
+   	KamiPxiInit();
+
+    FS_Init(FS_DMA_NOT_USE);
+    
     InitScreen();
 
     GX_DispOn();
@@ -199,7 +208,7 @@ void TwlMain(void)
     ClearScreen();
 
     // hash Check
-	(void)ProcessTitleHashCheck();
+	ProcessTitleHashCheck();
 
 	// Disable Debug Check
     CheckDisableDebugFlg();
@@ -615,7 +624,7 @@ BOOL ProcessTitleHashCheck( void )
 		}
 
 		// Hash, CRC16の計算
-		if ( !CulcuHash(list, full_path) )
+		if ( !CulcuNandAppHash(list, full_path) )
 		{
             gErrorFlg = TRUE;
 		}
@@ -623,8 +632,12 @@ BOOL ProcessTitleHashCheck( void )
 
     // SharedフォントとNandファームの値用の2つ
 	gNandAppNum += 2;
-    
+
+    // SharedフォントのSha1値を求める
 	CulcuFontDataHash(gDataList);
+
+    // NandFirmのSha1値を求める
+    CulcuNandFirmHash(gDataList);
     
 	OS_PutString("ProcessTitleHashCheck Finish!!\n");
     
@@ -748,19 +761,18 @@ static BOOL	GetAppPath(DataStruct* list, char* path_buf)
 
 
 /*---------------------------------------------------------------------------*
-  Name:         CulcuHash
+  Name:         CulcuNandAppHash
 
   Description:  
 
   Arguments:    
-	            
 
   Returns:      
-	            
+
  *---------------------------------------------------------------------------*/
 #define READ_SIZE	0x1000 // MasterEditorでのCRC計算にあわせるためこの値を使う
 
-BOOL	CulcuHash(DataStruct* list, char* full_path)
+BOOL	CulcuNandAppHash(DataStruct* list, char* full_path)
 {
     FSFile  file;
     BOOL    open_is_ok;
@@ -836,7 +848,6 @@ BOOL	CulcuHash(DataStruct* list, char* full_path)
     	// CRC16計算
 		crc = newGetCRC(crc, (u16 *)pTempBuf, READ_SIZE); 	// 本来ならばここは data_size分の計算をすればよいが、
 															// MasterEditorのCRC計算にあわせるため、READ_SIZE分計算する
-        
 		// Hash値 UpDate
 		SVC_SHA1Update( &hash, pTempBuf, data_size );
 		
@@ -880,7 +891,17 @@ BOOL	CulcuHash(DataStruct* list, char* full_path)
 }
 
 
-BOOL	CulcuFontDataHash(DataStruct* list)
+/*---------------------------------------------------------------------------*
+  Name:         CulcuFontDataHash
+
+  Description:  
+
+  Arguments:    
+
+  Returns:      
+
+ *---------------------------------------------------------------------------*/
+BOOL CulcuFontDataHash(DataStruct* list)
 {
     FSFile  file;
     BOOL    open_is_ok;
@@ -892,7 +913,7 @@ BOOL	CulcuFontDataHash(DataStruct* list)
     FSResult result;
 
     // ケツから2個目をSharedFont用のデータにする
-	DataStruct *data = &list[gNandAppNum-SHARED_FONT_INFO_OFS];
+	DataStruct *data = &list[gNandAppNum - SHARED_FONT_INFO_OFS];
     
     // ハッシュ初期化
     SVC_SHA1Init( &hash );
@@ -939,6 +960,55 @@ BOOL	CulcuFontDataHash(DataStruct* list)
     
 	// ファイルクローズ
 	FS_CloseFile(&file);
+
+    return TRUE;
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         CulcuNandFirmHash
+
+  Description:  
+
+  Arguments:    
+
+  Returns:      
+
+ *---------------------------------------------------------------------------*/
+BOOL CulcuNandFirmHash(DataStruct* list)
+{
+	u8* pTempBuf;
+	u32 alloc_size;
+
+    // ケツから1個目をSharedFont用のデータにする
+	DataStruct *data = &list[gNandAppNum - NAND_FIRM_INFO_OFS];
+    
+//	nandfirm_size = file_size - NAND_FIRM_START_OFFSET_IN_FILE;
+
+	// バッファ確保
+	// 書き込みがブロック単位(512byte)であることを考慮し512アライメントを確保
+	alloc_size = 0x200; // MATH_ROUNDUP(file_size, 512);
+	pTempBuf = spAllocFunc( alloc_size );
+	if (pTempBuf == NULL)
+	{
+        OS_Warning("Failure! Alloc Buffer");
+		return FALSE;
+	}
+
+	MI_CpuClear8( pTempBuf, alloc_size );
+
+	// Nandからリード
+	if (kamiNandRead(NAND_FIRM_START_OFFSET/NAND_BLOCK_BYTE, pTempBuf, alloc_size ) == KAMI_RESULT_SEND_ERROR)
+	{
+	    OS_Warning("Failure! Read NandFirm");
+	}
+	DC_FlushRange(pTempBuf, alloc_size);
+
+	// Hash値 UpDate
+	SVC_CalcSHA1( data->Sha1_digest, pTempBuf, alloc_size );
+    
+	// メモリ解放
+	spFreeFunc(pTempBuf);
 
     return TRUE;
 }

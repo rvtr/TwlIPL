@@ -25,6 +25,24 @@ extern "C" {
 /*===========================================================================*/
 #include <nitro/types.h>
 
+// フォントの色
+#define COLOR_BLACK			0x10
+#define COLOR_RED			0x11
+#define COLOR_GREEN			0x12
+#define COLOR_BLUE			0x13
+#define COLOR_YELLOW		0x14
+#define COLOR_PURPLE		0x15
+#define COLOR_L_BLUE		0x16
+#define COLOR_D_RED			0x17
+#define COLOR_D_GREEN		0x18
+#define COLOR_D_BLUE		0x19
+#define COLOR_D_YELLOW		0x1a
+#define COLOR_D_PURPLE		0x1b
+#define COLOR_D_L_BLUE		0x1c
+#define COLOR_GRAY			0x1d
+#define COLOR_D_GRAY		0x1e
+#define COLOR_WHITE			0x1f
+
 /*---------------------------------------------------------------------------*
     関数 定義
  *---------------------------------------------------------------------------*/

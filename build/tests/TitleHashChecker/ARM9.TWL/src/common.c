@@ -36,7 +36,6 @@ void InitCommon(void)
 {
     OS_Init();
     OS_InitTick();
-    
     OS_InitAlarm();
     GX_Init();
     GX_DispOff();
