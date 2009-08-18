@@ -28,7 +28,7 @@ TWL_ARCHGEN    		= LIMITED
 TITLEID_LO			= 0NRA
 #TARGET_TAD			=
 
-TARGET_BIN			= NandFirmWriter.srl
+TARGET_BIN			= TitleHashChecker.srl
 LCFILE_SPEC			= ARM9-TS.lsf
 ROM_SPEC			= main.rsf
 

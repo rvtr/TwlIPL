@@ -45,6 +45,30 @@ typedef struct KeyInfo
     u16 rep;    // 押し維持リピート入力
 } KeyInfo;
 
+
+// DS-IPL2ヘッダ
+typedef struct
+{
+	u16		reserved_0h[4];
+	u32		ds_key;
+	u16		ds_arm9_romAdr;
+	u16		ds_arm9_ramAdr;
+	u16		ds_arm7_romAdr;
+	u16		ds_arm7_ramAdr;
+	u16		ds_arm9_romOffsetUnit:3;
+	u16		ds_arm9_ramOffsetUnit:3;
+	u16		ds_arm7_romOffsetUnit:3;
+	u16		ds_arm7_ramOffsetUnit:3;
+	u16		:2;
+	u16		ds_header_ver:2;
+	u16		ds_data_romAdr;
+	u64		card_key;
+	u16		ncd_romAdr;
+	u16		reserved_24h[2];
+	u16		ds_data_crc16;
+}
+NORHeaderDS;
+
 /*---------------------------------------------------------------------------*
    Prototype
  *---------------------------------------------------------------------------*/

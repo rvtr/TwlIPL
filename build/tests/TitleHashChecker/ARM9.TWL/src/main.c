@@ -20,6 +20,8 @@
 #include <twl/nam.h>
 #include <twl/os/common/banner.h>
 #include <nitro/math/rand.h>
+#include <nitro/nvram.h>
+#include <twl/lcfg.h>
 
 #include "common.h"
 #include "screen.h"
@@ -47,6 +49,8 @@
 #define NAND_BLOCK_BYTE 			       	0x200
 #define NAND_FIRM_START_OFFSET    	       	0x200
 #define NAND_FIRM_START_OFFSET_IN_FILE     	0x200
+
+#define TITLE_ID_DATA_ONLY_MASK				0x00000008
 
 /*---------------------------------------------------------------------------*
     変数 定義
@@ -120,6 +124,7 @@ static void inittable(unsigned short *table);
 
 void* MyNAMUT_Alloc(u32 size);
 void MyNAMUT_Free(void* buffer);
+static BOOL ReadTWLSettings( void );
 
 /*---------------------------------------------------------------------------*/
 
@@ -157,6 +162,8 @@ void TwlMain(void)
 
     ClearScreen();
 
+	ReadTWLSettings();
+    
     // hash Check
 	ProcessTitleHashCheck();
 
@@ -341,7 +348,7 @@ static void DrawScene(DataStruct* list)
         {
 			ConvertInitialCode(init_code, NAM_GetTitleIdLo(p->id));
 
-            color = (list[i].DisableDebugFlg == '1') ? OK_COLOR : NG_COLOR;
+            color = (list[i].DisableDebugFlg == '1' || list[i].DisableDebugFlg == '-') ? OK_COLOR : NG_COLOR;
             
         	// ゲームコード表示
     		PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, color, "%2d:%s    %d.%d       (%c)",
@@ -414,13 +421,6 @@ BOOL ProcessTitleHashCheck( void )
     // srlのHash値とcrc16を求める
     for ( i=0; i < gNandAppNum; i++, list++ )
     {
-		
-		PutMainScreen( 7, 10, 0xf6, "--- Now Loading ---");
-        PutMainScreen( 7, 14, 0xf6, " %2d / %2d compleate", i+1, gNandAppNum);
-
-        PutSubScreen( 7, 10, 0xf6, "--- Now Loading ---");
-		PutSubScreen( 7, 14, 0xf6, " %2d / %2d compleate", i+1, gNandAppNum);
-        
         // バッファのクリア
 		MI_CpuClear8(full_path, sizeof(full_path));
 
@@ -435,6 +435,12 @@ BOOL ProcessTitleHashCheck( void )
 		{
             gErrorFlg = TRUE;
 		}
+        
+		PutMainScreen( 7, 10, 0xf6, "--- Now Loading ---");
+        PutMainScreen( 7, 14, 0xf6, " %2d / %2d compleate", i+1, gNandAppNum);
+        
+        PutSubScreen( 7, 10, 0xf6, "--- Now Loading ---");
+        PutSubScreen( 7, 14, 0xf6, " %2d / %2d compleate", i+1, gNandAppNum);
     }
 
     // SharedフォントとNandファームの値用の2つ
@@ -652,13 +658,20 @@ BOOL	CulcuNandAppHash(DataStruct* list, char* full_path)
         // ついでにDisableDebugFlgの状態を見ておく
 		if(i == 1)
         {
-            if(((ROM_Header *)pTempBuf)->s.disable_debug)
+            if( (u32)( list->id >> 32 ) & TITLE_ID_DATA_ONLY_MASK )
             {
-				list->DisableDebugFlg = '1';
+				list->DisableDebugFlg = '-';
             }
             else
             {
-				list->DisableDebugFlg = '0';
+            	if(((ROM_Header *)pTempBuf)->s.disable_debug)
+            	{
+					list->DisableDebugFlg = '1';
+            	}
+            	else
+            	{
+					list->DisableDebugFlg = '0';
+            	}
             }
         }
         
@@ -795,15 +808,19 @@ BOOL CulcuFontDataHash(DataStruct* list)
   Returns:      
 
  *---------------------------------------------------------------------------*/
-#define NAND_HEADER_SIZE				0x800
-#define NAND_FIRM_REV_SIZE				0x9
-#define READ_NAND_FIRM_SIZE				0x100000
+#define NAND_BLOCK_BYTE 			    	0x200
+#define NAND_HEADER_SIZE					0x800
+#define NAND_FIRM_REV_SIZE					0x9
+#define NAND_FIRM_START_OFFSET    	    	0x200
+#define TEMP_BUFFER_SIZE					0x100000
+#define READ_NAND_FIRM_SIZE					(TEMP_BUFFER_SIZE - NAND_FIRM_START_OFFSET)
 
 BOOL CulcuNandFirmHash(DataStruct* list)
 {
 	u8* pTempBuf;
-    u32 write_block;
+    u32 read_block;
     u32 culcu_size;
+    u32 alloc_size;
     BOOL ret = TRUE;
 
 	u8* p;
@@ -813,23 +830,37 @@ BOOL CulcuNandFirmHash(DataStruct* list)
 
 	// バッファ確保
 	// 書き込みがブロック単位(512byte)であることを考慮し512アライメントを確保
-	pTempBuf = spAllocFunc( READ_NAND_FIRM_SIZE );
+	alloc_size = MATH_ROUNDUP(TEMP_BUFFER_SIZE, 512);
+	pTempBuf = spAllocFunc( alloc_size ); //pTempBuf = spAllocFunc( READ_NAND_FIRM_SIZE );
 	if (pTempBuf == NULL)
 	{
         OS_Warning("Failure! Alloc Buffer");
 		return FALSE;
 	}
+	MI_CpuClear8( pTempBuf, TEMP_BUFFER_SIZE ); //MI_CpuClear8( pTempBuf, READ_NAND_FIRM_SIZE );
 
-	MI_CpuClear8( pTempBuf, READ_NAND_FIRM_SIZE );
+    // ------ Nvramからリード ------
+	DC_FlushRange(pTempBuf, sizeof(NORHeaderDS));
+    
+	if (NVRAMi_Read(0, sizeof(NORHeaderDS), pTempBuf) != NVRAM_RESULT_SUCCESS)
+	{
+        OS_PutString("Fail NVRAMi_Read()!\n");
+	}
+	DC_FlushRange(pTempBuf, sizeof(NORHeaderDS));
 
-	// Nandからリード
-    write_block = READ_NAND_FIRM_SIZE / NAND_BLOCK_BYTE + (READ_NAND_FIRM_SIZE % NAND_BLOCK_BYTE != 0);
-	if (kamiNandRead(0, pTempBuf, write_block ) == KAMI_RESULT_SEND_ERROR)
+    
+	// ------ NANDからリード ------
+	DC_FlushRange( pTempBuf, TEMP_BUFFER_SIZE );
+    
+    read_block = READ_NAND_FIRM_SIZE / NAND_BLOCK_BYTE + (READ_NAND_FIRM_SIZE % NAND_BLOCK_BYTE != 0);
+	if (kamiNandRead(NAND_FIRM_START_OFFSET/NAND_BLOCK_BYTE, pTempBuf+NAND_FIRM_START_OFFSET, read_block ) == KAMI_RESULT_SEND_ERROR)
 	{
 	    OS_Warning("Failure! Read NandFirm");
 	}
-	DC_FlushRange(pTempBuf, READ_NAND_FIRM_SIZE);
+	DC_FlushRange( pTempBuf, TEMP_BUFFER_SIZE );
+
     
+    // ------ Hashの計算 ------
 	// Hash計算するサイズを求める
     culcu_size = MATH_ROUNDUP((*(u32 *)(pTempBuf+0x22c)) + (*(u32 *)(pTempBuf+0x23c)) , 256) + NAND_HEADER_SIZE + NAND_FIRM_REV_SIZE;
     OS_TPrintf("NandFirm main Size : 0x%08x\n", (*(u32 *)(pTempBuf+0x22c)));
@@ -1015,6 +1046,31 @@ void VBlankIntr(void)
 
     // IRQ チェックフラグ47をセット
     OS_SetIrqCheckFlag(OS_IE_V_BLANK);
+}
+
+
+// TWL設定データのリード
+static BOOL ReadTWLSettings( void )
+{
+    u8 *pBuffer = OS_AllocFromMain( LCFG_READ_TEMP );
+    BOOL result;
+    if( pBuffer ) {
+        result = LCFG_ReadTWLSettings( (u8 (*)[ LCFG_READ_TEMP ] )pBuffer );
+		// Readに失敗した場合ファイルのリカバリ生成を試みる
+		if (!result)
+		{
+			OS_TPrintf( "TSD read failed. Retry onece more.\n" );
+	        result = LCFG_RecoveryTWLSettings();
+		}
+        OS_FreeToMain( pBuffer );
+    }
+    if( result ) {
+        OS_TPrintf( "TSD read succeeded.\n" );
+    }else {
+        OS_TPrintf( "TSD read failed.\n" );
+    }
+
+	return result;
 }
 
 
