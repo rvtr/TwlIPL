@@ -810,7 +810,7 @@ BOOL CulcuFontDataHash(DataStruct* list)
  *---------------------------------------------------------------------------*/
 #define NAND_BLOCK_BYTE 			    	0x200
 #define NAND_HEADER_SIZE					0x800
-#define NAND_FIRM_REV_SIZE					0x9
+#define NAND_FIRM_REV_SIZE					0xa
 #define NAND_FIRM_START_OFFSET    	    	0x200
 #define TEMP_BUFFER_SIZE					0x100000
 #define READ_NAND_FIRM_SIZE					(TEMP_BUFFER_SIZE - NAND_FIRM_START_OFFSET)
@@ -844,7 +844,7 @@ BOOL CulcuNandFirmHash(DataStruct* list)
     
 	if (NVRAMi_Read(0, sizeof(NORHeaderDS), pTempBuf) != NVRAM_RESULT_SUCCESS)
 	{
-        OS_PutString("Fail NVRAMi_Read()!\n");
+        OS_Warning("Fail NVRAMi_Read()!");
 	}
 	DC_FlushRange(pTempBuf, sizeof(NORHeaderDS));
 
