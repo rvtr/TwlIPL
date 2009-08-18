@@ -21,7 +21,7 @@ include	$(TWLSDK_ROOT)/build/buildtools/commondefs
 
 
 
-TARGETS			=	FakeRomHeader$(SUFFIX).exe
+TARGETS			=	$(PREFIX)$(SUFFIX).exe
 
 SOURCES_C		=	main.c keys.c
 
@@ -60,6 +60,13 @@ MACROS			+= -DKEY_USER
 SUFFIX			=  .user
 endif
 endif
+endif
+
+ifeq ($(FOR_RED),TRUE)
+MACROS			+= -DFOR_RED
+PREFIX			= FakeRomHeader
+else
+PREFIX			= RomVersionChanger
 endif
 
 LDIRT_CLEAN		=	$(OBJECTS) $(TARGETS) *.BAK $(REVISION_H)
