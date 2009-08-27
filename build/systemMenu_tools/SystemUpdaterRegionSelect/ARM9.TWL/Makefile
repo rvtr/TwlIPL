@@ -23,13 +23,13 @@
 #============================================================================
 
 # SystemMenuファイルの置かれているフォルダを指定(相対もしくは絶対）
-UPDATER_HOST_ROOT_DIR = ./v1_3
+UPDATER_HOST_ROOT_DIR = S:/v1_4
 
 # JPリージョンしか選択できなくする場合はTRUEを指定
 JP_REGION_ONLY			?= FALSE
 
 # 中韓リージョンを選択できなくする場合はTRUEを指定
-DISABLE_CK_REGION		?= TRUE
+DISABLE_CK_REGION		?= FALSE
 
 # COMPILE SWITCH for build SystemUpdater（TRUEにすると、ダミーdev.kpを生成しないようになります。）
 FOR_LOTCHECK			?=	FALSE
