@@ -51,7 +51,15 @@ sub deleteTemp {
 	system ("rm -f $digestFile");
 	system ("rm -f $signFile");
 	system ("rm -f $archiveFile");
+	system ("rm -f $versionFile");
+	system ("rm -f $timeStampFile");
+	system ("rm -f $userAreaSizeFile");
+	system ("rm -f $nupHostFile");
+	system ("rm -f $urlEULAFile");
 }
+
+# 事前のテンポラリクリア
+
 
 # 環境変数サーチ
 foreach ( sort keys ( %ENV ) ){
@@ -123,11 +131,13 @@ if (exists($ENV{"TWL_IPL_RED_ROOT"}) ){
 		printf "ERROR: NUP Host Name length less than %d.\n", $length;
 		die;
 	}
-	open NUPHOSTNAME, ">$nupHostFile" or die "File Open Error.\n";
-	binmode NUPHOSTNAME;
-	printf "NUPHostName = $nupHostName\n";
-	syswrite( NUPHOSTNAME, pack( "a$length", $nupHostName ) );
-	close NUPHOSTNAME;
+	if( $nupHostName ne "NULL" ) {
+		open NUPHOSTNAME, ">$nupHostFile" or die "File Open Error.\n";
+		binmode NUPHOSTNAME;
+		printf "NUPHostName = $nupHostName\n";
+		syswrite( NUPHOSTNAME, pack( "a$length", $nupHostName ) );
+		close NUPHOSTNAME;
+	}
 }
 
 # EULA_URLの出力
