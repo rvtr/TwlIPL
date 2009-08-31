@@ -51,6 +51,15 @@
 #define NAND_FIRM_START_OFFSET_IN_FILE     	0x200
 
 #define TITLE_ID_DATA_ONLY_MASK				0x00000008
+#define TITLE_ID_GAMECODE_MASK				0xFFFFFF00
+
+#define OUTPUT_SORT_TITLE_NUM				14
+
+#define OUTPUT_NAND_FIRM_IDX				10
+#define OUTPUT_SHARED_FONT_IDX				12
+
+// デバッグ用
+//#define HASH_CRC_CLCU_SKIP
 
 /*---------------------------------------------------------------------------*
     変数 定義
@@ -91,6 +100,8 @@ typedef struct DataStruct
     
     u8				Sha1_digest[SVC_SHA1_DIGEST_SIZE];
     u16				crc16;
+
+    BOOL			output;
 } DataStruct;
 
 static u8 sFontData_Sha1_digest[SVC_SHA1_DIGEST_SIZE];
@@ -100,6 +111,22 @@ static DataStruct gDataList[TITLE_NUM_PAGE * 2];
 
 static u16	crc_table[0x100];
 
+static const u32 TitleIDTable[14] = {
+	0x484e4100,	 			// 0.HNA*  ランチャ
+    0x484e4200,  			// 1.HNB*  本体設定
+    0x484e4300,	 			// 2.HNC*  無線ファーム
+	0x484e4400,  			// 3.HND*  DLプレイ
+	0x484e4500,  			// 4.HNE*  ピクトチャット
+	0x484e4800,  			// 5.HNH*  ホワイトリスト
+	0x484e4900,  			// 6.HNI*  カメラ
+	0x484e4a00,  			// 7.HNJ*  Nintendoゾーン
+	0x484e4b00,  			// 8.HNK*  サウンド
+	0x484e4c00,  			// 9.HNL*  バージョンデータ 
+	NAND_FIRM_INFO_OFS, 	//10.----  NANDファーム
+	0x344e4641,  			//11.4NFA  Nand Filer
+	SHARED_FONT_INFO_OFS,	//12.----  フォント
+	0x34544e41   			//13.4TNA  TwlNmenu
+};
 /*---------------------------------------------------------------------------*
    Prototype
  *---------------------------------------------------------------------------*/
@@ -126,6 +153,9 @@ void* MyNAMUT_Alloc(u32 size);
 void MyNAMUT_Free(void* buffer);
 static BOOL ReadTWLSettings( void );
 
+static BOOL OutputHashDataForSD( DataStruct* list );
+static BOOL OutputData( FSFile* file, DataStruct* data, u32 index );
+
 /*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*
@@ -148,6 +178,8 @@ void TwlMain(void)
     GX_DispOn();
     GXS_DispOn();
 
+	RTC_Init();
+    
     spAllocFunc = AllocForNAM;
 	spFreeFunc = FreeForNAM;
 
@@ -167,6 +199,8 @@ void TwlMain(void)
     // hash Check
 	ProcessTitleHashCheck();
 
+	OutputHashDataForSD(gDataList);
+    
     while(TRUE)
     {
         // キー入力情報取得
@@ -379,7 +413,8 @@ static void DrawScene(DataStruct* list)
     
     PutSubScreen(2,  10, 0xff, "- SHA1 Digest Data -");
 
-    for( i=0; i<10; i++ ){
+    for( i=0; i<10; i++ )
+    {
 		PutSubScreen(2 + (i*3),  12, 0xf4, "%02x ", digest[i]);
         PutSubScreen(2 + (i*3),  14, 0xf4, "%02x ", digest[i+10]);
     }
@@ -417,7 +452,8 @@ BOOL ProcessTitleHashCheck( void )
 	}
     
 	list = gDataList;
-    
+
+#ifndef HASH_CRC_CLCU_SKIP
     // srlのHash値とcrc16を求める
     for ( i=0; i < gNandAppNum; i++, list++ )
     {
@@ -442,7 +478,8 @@ BOOL ProcessTitleHashCheck( void )
         PutSubScreen( 7, 10, 0xf6, "--- Now Loading ---");
         PutSubScreen( 7, 14, 0xf6, " %2d / %2d compleate", i+1, gNandAppNum);
     }
-
+#endif
+    
     // SharedフォントとNandファームの値用の2つ
 	gNandAppNum += 2;
 
@@ -570,6 +607,152 @@ static BOOL	GetAppPath(DataStruct* list, char* path_buf)
     }
 
     return ret;
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         OutputHashDataForSD
+
+  Description:  
+
+  Arguments:    
+
+  Returns:      
+
+ *---------------------------------------------------------------------------*/
+static BOOL OutputHashDataForSD( DataStruct* list )
+{
+#pragma unused(list)
+    
+    BOOL retval = TRUE;
+	FSFile file;
+	u32 i,j;
+
+    char path_buf[FS_ENTRY_LONGNAME_MAX+6];
+	RTCDate rtc;
+	DataStruct* p;
+
+    
+    // ファイル初期化
+	FS_InitFile(&file);
+
+    // 年月日の取得
+    RTC_GetDate( &rtc );
+
+    // ディレクトリパスの作成
+    STD_TSNPrintf( path_buf, FS_ENTRY_LONGNAME_MAX,
+			   "sdmc:/TitleHashChecker_20%02d%02d%02d.txt", rtc.year, rtc.month, rtc.day  );
+    
+    // ファイルの作成
+    retval = FS_CreateFile( path_buf, FS_PERMIT_R | FS_PERMIT_W );
+
+	if(!retval)
+    {
+		OS_PutString("Fail: CreateFile\n");
+    }
+    
+	// ファイルオープン
+    retval = FS_OpenFileEx( &file, path_buf, FS_PERMIT_W);
+
+	if(!retval)
+    {
+		OS_PutString("Fail: OpenFile\n");
+    }
+
+    // ファイルへ書き込み
+    retval = FS_WriteFile( &file, "**************************\n"  , 27);
+    retval = FS_WriteFile( &file, "*   Title Hash Checker   *\n"  , 27);
+    retval = FS_WriteFile( &file, "**************************\n\n", 28);
+
+//    retval = FS_WriteFile( &file, "GameCode | Title Hash:SRL [SHA1 Digest Data]\n", 45);
+//    retval = FS_WriteFile( &file, "----------------------------------------------------\n", 53);
+
+    // 特定ファイルの書き出し
+    for(i=0; i<OUTPUT_SORT_TITLE_NUM; i++)
+    {
+		p = list;
+
+        // ファーム
+        if( TitleIDTable[i] == NAND_FIRM_INFO_OFS )
+        {
+			retval = OutputData( &file, (p + gNandAppNum - NAND_FIRM_INFO_OFS), i );
+            continue;
+        }
+        // シェアドフォント
+        else if( TitleIDTable[i] == SHARED_FONT_INFO_OFS )
+        {
+			retval = OutputData( &file, (p + gNandAppNum - SHARED_FONT_INFO_OFS), i );
+            continue;
+        }
+        
+        for(j=0; j<gNandAppNum; j++, p++)
+        {
+			if( TitleIDTable[i] == ((u32)(p->id) & TITLE_ID_GAMECODE_MASK))
+            {
+				retval = OutputData( &file, p, i );
+                break;
+            }
+        }
+        
+    }
+
+	p = list;
+    
+    // 残りファイルの書き出し
+    for(i=0; i<gNandAppNum; i++, p++)
+    {
+		if(!p->output)
+        {
+			OutputData( &file, p, i );
+        }
+    }
+    
+    // ファイルクローズ
+	FS_CloseFile( &file );
+
+    return retval;
+}
+
+
+static BOOL OutputData( FSFile* file, DataStruct* data, u32 index )
+{
+	BOOL retval = TRUE;
+	u8 init_code[5];
+    char hash[SVC_SHA1_DIGEST_SIZE*2+1];
+
+    u8* p = data->Sha1_digest;
+    
+	if( index == OUTPUT_NAND_FIRM_IDX )
+    {
+		retval = FS_WriteFile( file, "NandFirm\t", 9);
+    }
+	else if( index == OUTPUT_SHARED_FONT_IDX )
+    {
+		retval = FS_WriteFile( file, "SharedFont\t", 11);
+    }
+	else
+    {
+		ConvertInitialCode(init_code, NAM_GetTitleIdLo(data->id));
+        init_code[4] = '\t';
+
+        retval = FS_WriteFile( file, init_code, 5);
+    }
+
+	STD_TSPrintf( hash, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
+                  p[0] ,p[1] ,p[2] ,p[3] ,p[4] ,p[5] ,p[6] ,p[7] ,p[8] ,p[9], p[10],p[11],p[12],p[13],p[14],p[15],p[16],p[17],p[18],p[19]);
+
+	OS_TPrintf("hash : %s", hash);
+    
+    retval = FS_WriteFile( file, hash , SVC_SHA1_DIGEST_SIZE*2+1);
+    
+	if(!retval)
+    {
+		OS_PutString("Fail: WriteFile\n");
+    }
+
+	data->output = TRUE;
+    
+    return retval;
 }
 
 
