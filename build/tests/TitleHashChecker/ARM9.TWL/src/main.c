@@ -46,6 +46,9 @@
 #define NAND_FIRM_INFO_OFS					1
 #define SHARED_FONT_INFO_OFS				2
 
+#define NAND_FIRM_MAGIC_CODE				0x4649524D
+#define SHARED_FONT_MAGIC_CODE				0x464f4e54
+
 #define NAND_BLOCK_BYTE 			       	0x200
 #define NAND_FIRM_START_OFFSET    	       	0x200
 #define NAND_FIRM_START_OFFSET_IN_FILE     	0x200
@@ -101,13 +104,13 @@ typedef struct DataStruct
     u8				Sha1_digest[SVC_SHA1_DIGEST_SIZE];
     u16				crc16;
 
-    BOOL			output;
+    BOOL			sort;
 } DataStruct;
 
 static u8 sFontData_Sha1_digest[SVC_SHA1_DIGEST_SIZE];
 static u8 sNandFirm_Sha1_digest[SVC_SHA1_DIGEST_SIZE];
 
-static DataStruct gDataList[TITLE_NUM_PAGE * 2];
+static DataStruct gDataList[TITLE_NUM_PAGE];
 
 static u16	crc_table[0x100];
 
@@ -122,9 +125,9 @@ static const u32 TitleIDTable[14] = {
 	0x484e4a00,  			// 7.HNJ*  Nintendoゾーン
 	0x484e4b00,  			// 8.HNK*  サウンド
 	0x484e4c00,  			// 9.HNL*  バージョンデータ 
-	NAND_FIRM_INFO_OFS, 	//10.----  NANDファーム
+	NAND_FIRM_MAGIC_CODE, 	//10.----  NANDファーム
 	0x344e4641,  			//11.4NFA  Nand Filer
-	SHARED_FONT_INFO_OFS,	//12.----  フォント
+	SHARED_FONT_MAGIC_CODE,	//12.----  フォント
 	0x34544e41   			//13.4TNA  TwlNmenu
 };
 /*---------------------------------------------------------------------------*
@@ -153,8 +156,10 @@ void* MyNAMUT_Alloc(u32 size);
 void MyNAMUT_Free(void* buffer);
 static BOOL ReadTWLSettings( void );
 
+static void SortList( DataStruct* list );
+
 static BOOL OutputHashDataForSD( DataStruct* list );
-static BOOL OutputData( FSFile* file, DataStruct* data, u32 index );
+static BOOL OutputData( FSFile* file, DataStruct* data );
 
 /*---------------------------------------------------------------------------*/
 
@@ -199,7 +204,9 @@ void TwlMain(void)
     // hash Check
 	ProcessTitleHashCheck();
 
-	OutputHashDataForSD(gDataList);
+    SortList( gDataList );
+
+	OutputHashDataForSD( gDataList );
     
     while(TRUE)
     {
@@ -369,14 +376,14 @@ static void DrawScene(DataStruct* list)
 		}
 
         tmp_i = (s32)(i & 0xf);
-        
-        if( i == (gNandAppNum - SHARED_FONT_INFO_OFS) )
-        {
-    		PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, OK_COLOR, "%2d:Shared Font", (tmp_i+1));
-        }
-        else if( i == (gNandAppNum - NAND_FIRM_INFO_OFS) )
+
+		if( list[i].id == NAND_FIRM_MAGIC_CODE )
         {
     		PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, OK_COLOR, "%2d:Nand Firm", (tmp_i+1));
+        }
+        else if( list[i].id == SHARED_FONT_MAGIC_CODE )
+        {
+			PutMainScreen( GAME_CODE_BASE_X, TITLE_SHOW_BASE_Y+tmp_i, OK_COLOR, "%2d:Shared Font", (tmp_i+1));
         }
         else
         {
@@ -393,11 +400,11 @@ static void DrawScene(DataStruct* list)
     // 下画面	詳細表示
 	ConvertInitialCode(init_code, NAM_GetTitleIdLo(list[gCurrentElem].id));
 
-    if( gCurrentElem == (gNandAppNum - SHARED_FONT_INFO_OFS) )
+    if( list[gCurrentElem].id == SHARED_FONT_MAGIC_CODE )
     {
 		PutSubScreen(2,   1, 0xf6, "Shared Font Hash Data");
     }
-	else if( gCurrentElem == (gNandAppNum - NAND_FIRM_INFO_OFS) )
+	else if( list[gCurrentElem].id == NAND_FIRM_MAGIC_CODE )
     {
 		PutSubScreen(2,   1, 0xf6, "Nand Firm Hash Data");
     }
@@ -626,7 +633,7 @@ static BOOL OutputHashDataForSD( DataStruct* list )
     
     BOOL retval = TRUE;
 	FSFile file;
-	u32 i,j;
+	u32 i;
 
     char path_buf[FS_ENTRY_LONGNAME_MAX+6];
 	RTCDate rtc;
@@ -659,52 +666,12 @@ static BOOL OutputHashDataForSD( DataStruct* list )
 		OS_PutString("Fail: OpenFile\n");
     }
 
-    // ファイルへ書き込み
-    retval = FS_WriteFile( &file, "**************************\n"  , 27);
-    retval = FS_WriteFile( &file, "*   Title Hash Checker   *\n"  , 27);
-    retval = FS_WriteFile( &file, "**************************\n\n", 28);
-
-//    retval = FS_WriteFile( &file, "GameCode | Title Hash:SRL [SHA1 Digest Data]\n", 45);
-//    retval = FS_WriteFile( &file, "----------------------------------------------------\n", 53);
-
-    // 特定ファイルの書き出し
-    for(i=0; i<OUTPUT_SORT_TITLE_NUM; i++)
-    {
-		p = list;
-
-        // ファーム
-        if( TitleIDTable[i] == NAND_FIRM_INFO_OFS )
-        {
-			retval = OutputData( &file, (p + gNandAppNum - NAND_FIRM_INFO_OFS), i );
-            continue;
-        }
-        // シェアドフォント
-        else if( TitleIDTable[i] == SHARED_FONT_INFO_OFS )
-        {
-			retval = OutputData( &file, (p + gNandAppNum - SHARED_FONT_INFO_OFS), i );
-            continue;
-        }
-        
-        for(j=0; j<gNandAppNum; j++, p++)
-        {
-			if( TitleIDTable[i] == ((u32)(p->id) & TITLE_ID_GAMECODE_MASK))
-            {
-				retval = OutputData( &file, p, i );
-                break;
-            }
-        }
-        
-    }
-
-	p = list;
+    p = list;
     
-    // 残りファイルの書き出し
+    // ファイルへ書き出し
     for(i=0; i<gNandAppNum; i++, p++)
     {
-		if(!p->output)
-        {
-			OutputData( &file, p, i );
-        }
+		retval = OutputData( &file, p );
     }
     
     // ファイルクローズ
@@ -714,7 +681,13 @@ static BOOL OutputHashDataForSD( DataStruct* list )
 }
 
 
-static BOOL OutputData( FSFile* file, DataStruct* data, u32 index )
+/*---------------------------------------------------------------------------*
+  Name:         OutputData
+
+  Description:  
+
+ *---------------------------------------------------------------------------*/
+static BOOL OutputData( FSFile* file, DataStruct* data )
 {
 	BOOL retval = TRUE;
 	u8 init_code[5];
@@ -722,11 +695,11 @@ static BOOL OutputData( FSFile* file, DataStruct* data, u32 index )
 
     u8* p = data->Sha1_digest;
     
-	if( index == OUTPUT_NAND_FIRM_IDX )
+	if( data->id == NAND_FIRM_MAGIC_CODE )
     {
 		retval = FS_WriteFile( file, "NandFirm\t", 9);
     }
-	else if( index == OUTPUT_SHARED_FONT_IDX )
+	else if( data->id == SHARED_FONT_MAGIC_CODE )
     {
 		retval = FS_WriteFile( file, "SharedFont\t", 11);
     }
@@ -749,8 +722,6 @@ static BOOL OutputData( FSFile* file, DataStruct* data, u32 index )
     {
 		OS_PutString("Fail: WriteFile\n");
     }
-
-	data->output = TRUE;
     
     return retval;
 }
@@ -760,10 +731,6 @@ static BOOL OutputData( FSFile* file, DataStruct* data, u32 index )
   Name:         CulcuNandAppHash
 
   Description:  
-
-  Arguments:    
-
-  Returns:      
 
  *---------------------------------------------------------------------------*/
 #define READ_SIZE	0x1000 // MasterEditorでのCRC計算にあわせるためこの値を使う
@@ -971,6 +938,8 @@ BOOL CulcuFontDataHash(DataStruct* list)
 	// Hash値 UpDate
 	SVC_CalcSHA1( data->Sha1_digest, pTempBuf, file_size );
 
+	data->id = SHARED_FONT_MAGIC_CODE;
+    
     // バッファの開放
     spFreeFunc( pTempBuf );
     
@@ -1059,6 +1028,7 @@ BOOL CulcuNandFirmHash(DataStruct* list)
     if( culcu_size <= READ_NAND_FIRM_SIZE )
     {
         SVC_CalcSHA1( data->Sha1_digest, pTempBuf, culcu_size );
+        data->id = NAND_FIRM_MAGIC_CODE;
     }
     else
     {
@@ -1069,6 +1039,75 @@ BOOL CulcuNandFirmHash(DataStruct* list)
 	spFreeFunc(pTempBuf);
 
     return ret;
+}
+
+
+/*---------------------------------------------------------------------------*
+  Name:         SortList
+
+  Description:	
+ *---------------------------------------------------------------------------*/
+static void SortList( DataStruct* list )
+{
+	u32 i,j,count=0;
+
+    u8* tmpList;
+    DataStruct* p;
+    
+    tmpList = spAllocFunc( sizeof(DataStruct) * TITLE_NUM_PAGE );
+    if ( tmpList == NULL )
+	{
+    	OS_Warning("Failure! Alloc Buffer");
+		return ;
+	}
+
+    for(i=0; i<OUTPUT_SORT_TITLE_NUM; i++)
+    {
+		p = list;
+
+        // ファーム
+        if( TitleIDTable[i] == NAND_FIRM_MAGIC_CODE )
+        {
+			MI_CpuCopy8(&p[gNandAppNum - NAND_FIRM_INFO_OFS], ((DataStruct *)tmpList)+count, sizeof(DataStruct));
+            p[gNandAppNum - NAND_FIRM_INFO_OFS].sort = TRUE;
+            count++;
+            continue;
+        }
+        // シェアドフォント
+        else if( TitleIDTable[i] == SHARED_FONT_MAGIC_CODE )
+        {
+			MI_CpuCopy8(&p[gNandAppNum - SHARED_FONT_INFO_OFS], ((DataStruct *)tmpList)+count, sizeof(DataStruct));
+            p[gNandAppNum - SHARED_FONT_INFO_OFS].sort = TRUE;
+			count++;
+            continue;
+        }
+        
+        for(j=0; j<gNandAppNum; j++, p++)
+        {
+			if( TitleIDTable[i] == ((u32)(p->id) & TITLE_ID_GAMECODE_MASK))
+            {
+				MI_CpuCopy8( p, ((DataStruct *)tmpList)+count, sizeof(DataStruct) );
+                p->sort = TRUE;
+                count++;
+                break;
+            }
+        }
+    }
+
+	p = list;
+    
+    // 残りファイルの書き出し
+    for(i=0; i<gNandAppNum; i++, p++)
+    {
+		if(!p->sort)
+        {
+			MI_CpuCopy8(p, ((DataStruct *)tmpList)+count, sizeof(DataStruct));
+            count++;
+        }
+    }
+
+    // ソートが済んだデータを反映する
+    MI_CpuCopy8(tmpList, list, sizeof(DataStruct) * TITLE_NUM_PAGE);
 }
 
 
