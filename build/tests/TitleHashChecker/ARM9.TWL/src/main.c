@@ -56,7 +56,7 @@
 #define TITLE_ID_DATA_ONLY_MASK				0x00000008
 #define TITLE_ID_GAMECODE_MASK				0xFFFFFF00
 
-#define OUTPUT_SORT_TITLE_NUM				14
+#define OUTPUT_SORT_TITLE_NUM				15
 
 #define OUTPUT_NAND_FIRM_IDX				10
 #define OUTPUT_SHARED_FONT_IDX				12
@@ -114,21 +114,22 @@ static DataStruct gDataList[TITLE_NUM_PAGE];
 
 static u16	crc_table[0x100];
 
-static const u32 TitleIDTable[14] = {
+static const u32 TitleIDTable[OUTPUT_SORT_TITLE_NUM] = {
 	0x484e4100,	 			// 0.HNA*  ランチャ
     0x484e4200,  			// 1.HNB*  本体設定
     0x484e4300,	 			// 2.HNC*  無線ファーム
 	0x484e4400,  			// 3.HND*  DLプレイ
 	0x484e4500,  			// 4.HNE*  ピクトチャット
-	0x484e4800,  			// 5.HNH*  ホワイトリスト
-	0x484e4900,  			// 6.HNI*  カメラ
-	0x484e4a00,  			// 7.HNJ*  Nintendoゾーン
-	0x484e4b00,  			// 8.HNK*  サウンド
-	0x484e4c00,  			// 9.HNL*  バージョンデータ 
-	NAND_FIRM_MAGIC_CODE, 	//10.----  NANDファーム
-	0x344e4641,  			//11.4NFA  Nand Filer
-	SHARED_FONT_MAGIC_CODE,	//12.----  フォント
-	0x34544e41   			//13.4TNA  TwlNmenu
+    0x484e4600,             // 5.HNF*  ショップ
+	0x484e4800,  			// 6.HNH*  ホワイトリスト
+	0x484e4900,  			// 7.HNI*  カメラ
+	0x484e4a00,  			// 8.HNJ*  Nintendoゾーン
+	0x484e4b00,  			// 9.HNK*  サウンド
+	0x484e4c00,  			//10.HNL*  バージョンデータ 
+	NAND_FIRM_MAGIC_CODE, 	//11.----  NANDファーム
+	0x344e4641,  			//12.4NFA  Nand Filer
+	SHARED_FONT_MAGIC_CODE,	//13.----  フォント
+	0x34544e41   			//14.4TNA  TwlNmenu
 };
 /*---------------------------------------------------------------------------*
    Prototype
@@ -489,6 +490,9 @@ BOOL ProcessTitleHashCheck( void )
     
     // SharedフォントとNandファームの値用の2つ
 	gNandAppNum += 2;
+
+    // 表示ページ数を求める
+    gMaxPage = (u32)((gNandAppNum & 0xf0) >> 4);
 
     // SharedフォントのSha1値を求める
 	CulcuFontDataHash(gDataList);
@@ -1049,10 +1053,11 @@ BOOL CulcuNandFirmHash(DataStruct* list)
  *---------------------------------------------------------------------------*/
 static void SortList( DataStruct* list )
 {
-	u32 i,j,count=0;
-
+	u32 i,j,sort_count,count=0;
+    
     u8* tmpList;
-    DataStruct* p;
+    DataStruct *p;
+    DataStruct buf;
     
     tmpList = spAllocFunc( sizeof(DataStruct) * TITLE_NUM_PAGE );
     if ( tmpList == NULL )
@@ -1064,7 +1069,7 @@ static void SortList( DataStruct* list )
     for(i=0; i<OUTPUT_SORT_TITLE_NUM; i++)
     {
 		p = list;
-
+        
         // ファーム
         if( TitleIDTable[i] == NAND_FIRM_MAGIC_CODE )
         {
@@ -1094,15 +1099,32 @@ static void SortList( DataStruct* list )
         }
     }
 
-	p = list;
+	sort_count = count;
     
     // 残りファイルの書き出し
+    p = list;
     for(i=0; i<gNandAppNum; i++, p++)
     {
 		if(!p->sort)
         {
 			MI_CpuCopy8(p, ((DataStruct *)tmpList)+count, sizeof(DataStruct));
             count++;
+        }
+    }
+    
+	// 降順に並び替え
+    p = (DataStruct *)tmpList;
+    
+    for(i=sort_count; i<gNandAppNum-1; i++)
+    {
+		for(j=(u32)(gNandAppNum-1); j>=i; j--)
+        {
+			if( (u32)p[j].id > (u32)p[j+1].id )
+            {
+				MI_CpuCopy8(   &p[j],    &buf, sizeof(DataStruct) );
+                MI_CpuCopy8( &p[j+1],   &p[j], sizeof(DataStruct) );
+                MI_CpuCopy8(    &buf, &p[j+1], sizeof(DataStruct) );
+            }
         }
     }
 
