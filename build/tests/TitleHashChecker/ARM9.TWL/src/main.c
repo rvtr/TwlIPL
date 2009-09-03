@@ -127,9 +127,9 @@ static const u32 TitleIDTable[OUTPUT_SORT_TITLE_NUM] = {
 	0x484e4b00,  			// 9.HNK*  サウンド
 	0x484e4c00,  			//10.HNL*  バージョンデータ 
 	NAND_FIRM_MAGIC_CODE, 	//11.----  NANDファーム
-	0x344e4641,  			//12.4NFA  Nand Filer
+	0x344e4600,  			//12.4NF*  Nand Filer
 	SHARED_FONT_MAGIC_CODE,	//13.----  フォント
-	0x34544e41   			//14.4TNA  TwlNmenu
+	0x34544e00   			//14.4TN*  TwlNmenu
 };
 /*---------------------------------------------------------------------------*
    Prototype
@@ -207,7 +207,9 @@ void TwlMain(void)
 
     SortList( gDataList );
 
+#ifndef HASH_CRC_CLCU_SKIP
 	OutputHashDataForSD( gDataList );
+#endif
     
     while(TRUE)
     {
@@ -633,8 +635,6 @@ static BOOL	GetAppPath(DataStruct* list, char* path_buf)
  *---------------------------------------------------------------------------*/
 static BOOL OutputHashDataForSD( DataStruct* list )
 {
-#pragma unused(list)
-    
     BOOL retval = TRUE;
 	FSFile file;
 	u32 i;
@@ -1111,19 +1111,19 @@ static void SortList( DataStruct* list )
             count++;
         }
     }
-    
-	// 降順に並び替え
+
+    // 降順に並び替え
     p = (DataStruct *)tmpList;
     
     for(i=sort_count; i<gNandAppNum-1; i++)
     {
-		for(j=(u32)(gNandAppNum-1); j>=i; j--)
+		for(j=(u32)(gNandAppNum-1); j>i; j--)
         {
-			if( (u32)p[j].id > (u32)p[j+1].id )
+			if( (u32)p[j].id < (u32)p[j-1].id )
             {
 				MI_CpuCopy8(   &p[j],    &buf, sizeof(DataStruct) );
-                MI_CpuCopy8( &p[j+1],   &p[j], sizeof(DataStruct) );
-                MI_CpuCopy8(    &buf, &p[j+1], sizeof(DataStruct) );
+                MI_CpuCopy8( &p[j-1],   &p[j], sizeof(DataStruct) );
+                MI_CpuCopy8(    &buf, &p[j-1], sizeof(DataStruct) );
             }
         }
     }
