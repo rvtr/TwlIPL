@@ -2,6 +2,9 @@
 
 VERSION :		GENERATE
 
+ROMSZ:			0x2000000 # in bytes
+PADDING:		FALSE  # TRUE or FALSE
+
 RSA_KEY :		$(MAKEFIRM_RSA_PRVKEY)
 OUT_KEY :		rsa_public.sbin
 
