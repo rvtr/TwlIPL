@@ -3,7 +3,7 @@
 # Project:  TwlSDK - MB - demos - card_copy
 # File:     Makefile
 #
-# Copyright 2007-2008 Nintendo.  All rights reserved.
+# Copyright 2009 Nintendo.  All rights reserved.
 #
 # These coded instructions, statements, and computer programs contain
 # proprietary information of Nintendo of America Inc. and/or Nintendo
