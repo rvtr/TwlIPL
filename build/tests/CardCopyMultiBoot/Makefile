@@ -50,8 +50,6 @@ SRCS		 = main.c		\
 			   child.c		\
 			   parent.c		\
 			   text.c		\
-			   bt.c		\
-			   gmain.c
 
 # サンプルの簡略化のため WH モジュールを使用します.
 
