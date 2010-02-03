@@ -207,14 +207,32 @@ void MpSendCallback(BOOL result)
 {
 #pragma unused( result )
     CARDRomHeader* rh = (void*)CARD_GetRomHeader();
+    u32 rh_size = sizeof(CARDRomHeaderNTR);
     u32 limit = rh->rom_size + CARD_ROM_PAGE_SIZE;
-    u32 offset = CARD_GAME_AREA_OFFSET + WH_CHILD_SIZE * send_counter[0];
+    u32 offset = WH_CHILD_SIZE * send_counter[0];
 
     BgSetMessage(PLTT_YELLOW, " Sending: ROM addr=0x%x", offset);
 
     if ( offset < limit )
     {
-        CARD_ReadRom( MI_DMA_NOT_USE, (void*)offset, gSendBuf, WH_CHILD_SIZE );
+        if ( offset < rh_size )
+        {
+            u32 rem = rh_size%WH_CHILD_SIZE;
+            MI_CpuCopy8( &((u8*)rh)[offset], gSendBuf, WH_CHILD_SIZE );
+            if ( offset >= MATH_ROUNDDOWN(rh_size, WH_CHILD_SIZE) )
+            {
+                MI_CpuFill8( &gSendBuf[rem], 0, WH_CHILD_SIZE - rem );
+            }
+        }
+        else
+        if ( offset < CARD_GAME_AREA_OFFSET )
+        {
+            MI_CpuFill8(gSendBuf, 0, WH_CHILD_SIZE);
+        }
+        else
+        {
+            CARD_ReadRom( MI_DMA_NOT_USE, (void*)offset, gSendBuf, WH_CHILD_SIZE );
+        }
         gSendBuf[WH_CHILD_SIZE] = FALSE;
         if ( (offset + WH_CHILD_SIZE) >= limit )
         {

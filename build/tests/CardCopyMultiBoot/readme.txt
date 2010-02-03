@@ -1,6 +1,6 @@
 【card_copy操作手順】
 
-1. TWL 開発機へ NMenu または NandInitializer で card_copy.tad をインポート（インポート済みなら不要）
+1. TWL 開発機へ NMenu または NandInitializer で card_copy_*.tad をインポート（インポート済みなら不要）
 2. TWL メニューから「カードコピーマルチブート」 NAND アプリを起動
 3. NTR へ吸い出したい DS カードを差す
 4. NTR の DS ダウンロードメニューを起動

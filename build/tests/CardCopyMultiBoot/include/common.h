@@ -23,6 +23,7 @@ extern "C" {
 
 #include <nitro.h>
 
+#define CARD_SECURE_AREA_OFFSET       0x4000 // 16KB
 #define CARD_GAME_AREA_OFFSET         0x8000 // 32KB
 
 
