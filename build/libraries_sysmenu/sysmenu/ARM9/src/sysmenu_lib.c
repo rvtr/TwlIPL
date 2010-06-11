@@ -25,7 +25,7 @@
 
 // define data-----------------------------------------------------------------
 #define SYSM_PM_RETRY_NUM                5   // PMリトライ回数
-
+#define TITLE_ID_CARD_BOOT       0x0004800000000000 // カードブート
 // extern data-----------------------------------------------------------------
 extern void LCFG_VerifyAndRecoveryNTRSettings( void );
 
@@ -36,6 +36,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot1( void );
 static TitleProperty *SYSMi_CheckShortcutBoot2( void );
 void SYSMi_SendKeysToARM7( void );
 static OSTitleId SYSMi_getTitleIdOfMachineSettings( void );
+static TitleProperty * SYSMi_ShortcutCardBootSub( void );
 
 // global variable-------------------------------------------------------------
 void *(*SYSMi_Alloc)( u32 size  );
@@ -175,7 +176,7 @@ void SYSM_DeleteTmpDirectory( TitleProperty *pBootTitle )
 TitleProperty *SYSM_ReadParameters( void )
 {
     TitleProperty *pBootTitle = NULL;
-    
+
     //-----------------------------------------------------
     // FATALエラーチェック
     //-----------------------------------------------------
@@ -207,7 +208,7 @@ TitleProperty *SYSM_ReadParameters( void )
     // NTRカードアプリARM9コードのロード領域とメモリがかち合うが、先頭0x4000はセキュア領域で別バッファに格納されるので、
     // ここでこれらのパラメータをロードしても大丈夫。
     SYSMi_CopyLCFGDataHWInfo( (u32)s_lcfgBuffer );
-    
+
     //-----------------------------------------------------
     // 本体設定データのリード（※必ずHWSecureInforリード後に実行すること。LanguageBitmapを判定に使うため）
     //-----------------------------------------------------
@@ -216,7 +217,7 @@ TitleProperty *SYSM_ReadParameters( void )
         if( pBuffer ) {
             // NANDからTWL本体設定データをリード
             BOOL isRead = LCFG_ReadTWLSettings( (u8 (*)[LCFG_READ_TEMP])pBuffer );
-            
+
             // リード失敗ファイルが存在する場合は、ファイルをリカバリ
             if( LCFG_RecoveryTWLSettings() ) {
                 if( !isRead ) {
@@ -235,14 +236,14 @@ TitleProperty *SYSM_ReadParameters( void )
         }
         LCFG_VerifyAndRecoveryNTRSettings();                                    // NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
     }
-    
+
     //-----------------------------------------------------
     // システム領域に本体設定をコピー
     //-----------------------------------------------------
     // NTRカードアプリARM9コードのロード領域とメモリがかち合うが、先頭0x4000はセキュア領域で別バッファに格納されるので、
     // ここでこれらのパラメータをロードしても大丈夫。
     SYSMi_CopyLCFGDataSettings();
-    
+
     //-----------------------------------------------------
     // 無線ON/OFFフラグをもとに、LEDを設定する。
     //-----------------------------------------------------
@@ -261,7 +262,7 @@ TitleProperty *SYSM_ReadParameters( void )
             OS_Sleep(1);
         }
     }
-    
+
     //-----------------------------------------------------
     // 各種デバイス設定
     //-----------------------------------------------------
@@ -273,7 +274,7 @@ TitleProperty *SYSM_ReadParameters( void )
         SYSM_SetBackLightBrightness( LCFG_TWL_BACKLIGHT_LEVEL_MAX );
     }
 #endif // SDK_SUPPORT_PMIC_2
-    
+
     // RTC補正
     SYSMi_WriteAdjustRTC();
     // RTC値のチェック
@@ -282,7 +283,7 @@ TitleProperty *SYSM_ReadParameters( void )
     //-----------------------------------------------------
     // ARM7の処理待ち
     //-----------------------------------------------------
-    
+
     // ARM7のランチャーパラメータ取得が完了するのを待つ
     while( !SYSMi_GetWork()->flags.arm7.isARM9Start ) {
         SVC_WaitByLoop( 0x1000 );
@@ -301,29 +302,38 @@ TitleProperty *SYSM_ReadParameters( void )
     if( SYSM_IsHotStart() ) {
         // ホットスタート時は、基本ロゴデモスキップ
         SYSM_SetLogoDemoSkip( TRUE );
-        
+
+#if 0
         if( !SYSM_IsRunOnDebugger() && LCFG_TSD_GetLastTimeBootSoftPlatform() == PLATFORM_CODE_NTR ) {
             // 前回ブートがNTRなら、ランチャーパラメータ無効
             SYSM_SetValidLauncherParam(FALSE);
             MI_CpuClear32( &SYSMi_GetWork()->launcherParam, sizeof(LauncherParam) );
         }
-        
+#endif
+
         if( SYSMi_GetWork()->flags.arm7.isValidLauncherParam ) {
             // ロゴデモスキップ無効？
             if( !SYSM_GetLauncherParamBody()->v1.flags.isLogoSkip ) {
                 SYSM_SetLogoDemoSkip( FALSE );
             }
-            
+
             // アプリ直接起動の指定があったらロゴデモを飛ばして指定アプリ起動
             if( SYSM_GetLauncherParamBody()->v1.bootTitleID ) {
-                s_bootTitleBuf.titleID = SYSM_GetLauncherParamBody()->v1.bootTitleID;
-                s_bootTitleBuf.flags = SYSM_GetLauncherParamBody()->v1.flags;
-                s_bootTitleBuf.pBanner = (TWLBannerFile *)(*(TWLBannerFile **)(SYSM_GetLauncherParamBody()->v1.rsv));
-                pBootTitle = &s_bootTitleBuf;
+                if(SYSM_GetLauncherParamBody()->v1.bootTitleID != TITLE_ID_CARD_BOOT)
+                {
+                    s_bootTitleBuf.titleID = SYSM_GetLauncherParamBody()->v1.bootTitleID;
+                    s_bootTitleBuf.flags = SYSM_GetLauncherParamBody()->v1.flags;
+                    s_bootTitleBuf.pBanner = (TWLBannerFile *)(*(TWLBannerFile **)(SYSM_GetLauncherParamBody()->v1.rsv));
+                    pBootTitle = &s_bootTitleBuf;
+                }
+                else
+                {
+                    pBootTitle = SYSMi_ShortcutCardBootSub();
+                }
             }
         }
     }
-    
+
     // アプリジャンプでないときには、アプリ間パラメタをクリア
     // ※あらかじめNTRカードのセキュア領域を退避せずに直接0x2000000からロードしている場合も容赦なく消すので注意
     if( !pBootTitle )
@@ -339,7 +349,7 @@ TitleProperty *SYSM_ReadParameters( void )
         // ココまでダイレクトブートが設定されていない場合のみ判定
         pBootTitle = SYSMi_CheckShortcutBoot1();
     }
-    
+
     //-----------------------------------------------------
     // その他のショートカット起動
     //-----------------------------------------------------
@@ -358,10 +368,10 @@ static void SYSMi_CopyLCFGDataHWInfo( u32 dst_addr )
     // HotStart時にも保持する必要のあるデータをランチャー用に移動するプリロードパラメータバッファにコピー。
     MI_CpuCopy8( (void *)HW_PARAM_WIRELESS_FIRMWARE_DATA, (void *)(dst_addr + HW_PARAM_TWL_SETTINGS_DATA_SIZE),
                  HW_PARAM_WIRELESS_FIRMWARE_DATA_SIZE );    // 無線ファーム用
-    
+
     // プリロードパラメータアドレスをランチャー向けに変更。
     *(u32 *)HW_PRELOAD_PARAMETER_ADDR = dst_addr;
-    
+
     // HWノーマル情報、HWセキュア情報をメモリに展開しておく
     MI_CpuCopyFast( LCFGi_GetHWN(), (void *)HW_PARAM_TWL_HW_NORMAL_INFO, sizeof(LCFGTWLHWNormalInfo) );
     MI_CpuCopyFast( LCFGi_GetHWS(), (void *)HW_HW_SECURE_INFO, HW_HW_SECURE_INFO_END - HW_HW_SECURE_INFO );
@@ -373,13 +383,13 @@ static void SYSMi_CopyLCFGDataSettings( void )
 {
     // 本体設定データ
     MI_CpuCopyFast( LCFGi_GetTSD(), (void *)HW_PARAM_TWL_SETTINGS_DATA, sizeof(LCFGTWLSettingsData) );
-    
+
     // 本体設定データのLauncherStatus部分をクリアしておく
     {
         LCFGTWLSettingsData *pSettings = (LCFGTWLSettingsData *)HW_PARAM_TWL_SETTINGS_DATA;
         MI_CpuClear32( &pSettings->launcherStatus, sizeof(LCFGTWLLauncherStatus) );
     }
-    
+
     // NTR本体設定データをメモリに展開しておく
     {
         LCFG_NSD_SetLanguage( LCFG_NSD_GetLanguageEx() );
@@ -432,7 +442,7 @@ static TitleProperty * SYSMi_ShortcutCardBootSub( void )
 static TitleProperty *SYSMi_CheckShortcutBoot1( void )
 {
     MI_CpuClear8( &s_bootTitleBuf, sizeof(TitleProperty) );
-    
+
     if( SYSM_IsExistCard() ) {
 	    //-----------------------------------------------------
 	    // 量産工程用ショートカットキー or
@@ -440,7 +450,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot1( void )
 	    //-----------------------------------------------------
         if( LCFG_THW_IsForceLogoDemoSkip() ||
             SYSM_IsInspectCard() ||
-            ( ( PAD_Read() == SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) && 
+            ( ( PAD_Read() == SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) &&
               ( !LCFG_TSD_IsFinishedBrokenTWLSettings() || !LCFG_TSD_IsFinishedInitialSetting() || !LCFG_TSD_IsFinishedInitialSetting_Launcher() ) )
             ){
             return SYSMi_ShortcutCardBootSub();
@@ -473,7 +483,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
 	int i;
 	char *p = (char *)LCFG_TSD_GetTPCalibrationPtr();
 #endif
-    
+
     MI_CpuClear8( &s_bootTitleBuf, sizeof(TitleProperty) );
 
 #ifndef SYSM_DISABLE_INITIAL_SETTINGS
@@ -490,7 +500,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
         argument      = 100;        // フラッシュ壊れシーケンス起動
         isSetArgument = TRUE;
         isBootMSET    = TRUE;
-    }else 
+    }else
 #endif
     //-----------------------------------------------------
     // L+R+Startボタン押下起動で、本体設定のタッチパネル設定を起動
@@ -511,7 +521,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
         isBootMSET    = TRUE;
     }
 #endif
-    
+
     //-----------------------------------------------------
     // ランチャー画面を表示しないバージョンの場合
     // カードがささっていたらカードを起動する
@@ -533,12 +543,12 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
     if( isSetArgument ) {
         OSDeliverArgInfo argInfo;
         int result;
-        
+
         OS_InitDeliverArgInfo(&argInfo, 0);
         OS_DecodeDeliverArg();
         OSi_SetDeliverArgState( OS_DELIVER_ARG_BUF_ACCESSIBLE | OS_DELIVER_ARG_BUF_WRITABLE );
         result = OS_SetSysParamToDeliverArg( (u16)argument );
-        
+
         if(result != OS_DELIVER_ARG_SUCCESS )
         {
             OS_Warning("Failed to Set DeliverArgument.");
@@ -546,7 +556,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
         }
         OS_EncodeDeliverArg();
     }
-    
+
     // 「本体設定ブート」有効時は、本体設定プート決定
     if( isBootMSET ) {
         s_bootTitleBuf.titleID = SYSMi_getTitleIdOfMachineSettings();
@@ -560,7 +570,7 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
         s_bootTitleBuf.flags.isAppLoadCompleted = FALSE;
         return &s_bootTitleBuf;
     }
-    
+
     return NULL;                                                    // 「ブート内容未定」でリターン
 }
 
@@ -575,7 +585,7 @@ static OSTitleId SYSMi_getTitleIdOfMachineSettings( void )
     int validNum = 0;
     NAMTitleId *pTitleIDList = NULL;
     ROM_Header_Short *header = ( ROM_Header_Short *)HW_TWL_ROM_HEADER_BUF;
-    
+
     // インストールされているタイトルの取得
     getNum = NAM_GetNumTitles();
     pTitleIDList = SYSM_Alloc( sizeof(NAMTitleId) * getNum );
@@ -584,7 +594,7 @@ static OSTitleId SYSMi_getTitleIdOfMachineSettings( void )
         return 0;
     }
     (void)NAM_GetTitleList( pTitleIDList, (u32)getNum );
-    
+
     // 取得したタイトルに本体情報のIDがあるかチェック
     for( l = 0; l < getNum; l++ ) {
         char *code = ((char *)&pTitleIDList[l]) + 1;
