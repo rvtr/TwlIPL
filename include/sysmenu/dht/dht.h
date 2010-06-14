@@ -137,10 +137,11 @@ u32 DHT_GetDatabaseAdHocLength(const DHTFileAdHoc* pDHT);
   Arguments:    pDHT        データベースの格納先
                 fp          ファイル構造体へのポインタ
                             DHTHeaderの先頭までシーク済みである必要がある
+                maxLength   読み込みサイズの上限(ヘッダ込み)
 
   Returns:      成功すればTRUE
  *---------------------------------------------------------------------------*/
-BOOL DHT_PrepareDatabase(DHTFile* pDHT, FSFile* fp);
+BOOL DHT_PrepareDatabase(DHTFile* pDHT, FSFile* fp, s32 maxLength);
 
 /*---------------------------------------------------------------------------*
   Name:         DHT_PrepareDatabaseEx
@@ -150,10 +151,11 @@ BOOL DHT_PrepareDatabase(DHTFile* pDHT, FSFile* fp);
   Arguments:    pDHT        拡張データベースの格納先
                 fp          ファイル構造体へのポインタ
                             DHTHeaderの先頭までシーク済みである必要がある
+                maxLength   読み込みサイズの上限(ヘッダ込み)
 
   Returns:      成功すればTRUE
  *---------------------------------------------------------------------------*/
-BOOL DHT_PrepareDatabaseEx(DHTFileEx* pDHT, FSFile* fp);
+BOOL DHT_PrepareDatabaseEx(DHTFileEx* pDHT, FSFile* fp, s32 maxLength);
 
 /*---------------------------------------------------------------------------*
   Name:         DHT_PrepareDatabaseAdHoc
@@ -163,10 +165,11 @@ BOOL DHT_PrepareDatabaseEx(DHTFileEx* pDHT, FSFile* fp);
   Arguments:    pDHT        個別対応データベースの格納先
                 fp          ファイル構造体へのポインタ
                             DHTHeaderの先頭までシーク済みである必要がある
+                maxLength   読み込みサイズの上限(ヘッダ込み)
 
   Returns:      成功すればTRUE
  *---------------------------------------------------------------------------*/
-BOOL DHT_PrepareDatabaseAdHoc(DHTFileAdHoc* pDHT, FSFile* fp);
+BOOL DHT_PrepareDatabaseAdHoc(DHTFileAdHoc* pDHT, FSFile* fp, s32 maxLength);
 
 /*---------------------------------------------------------------------------*
   Name:         DHT_GetDatabase

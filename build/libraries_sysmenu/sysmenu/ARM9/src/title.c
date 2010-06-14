@@ -284,40 +284,28 @@ static BOOL PrepareDHTDatabase(void)
     }
     // 基本データベース
     s_dht.dht = s_dht.buffer;
-    if ( sizeof(DHTHeader) != FS_ReadFile(&file, &s_dht.dht->header, sizeof(DHTHeader)) )
+    if ( !DHT_PrepareDatabase(s_dht.dht, &file, length) )
     {
-        OS_TPrintf("PrepareDHTDatabase failed: cannot read DHTHeader for phase 1/2.\n" );
+        OS_TPrintf("PrepareDHTDatabase failed: cannot read the list for phase 1/2.\n" );
         if(!s_b_dev) {
-           ERRORLOG_Printf( "WHITELIST_INITDB_FAILED (sub info): cannot read DHTHeader for phase 1/2.\n" );
+           ERRORLOG_Printf( "WHITELIST_INITDB_FAILED (sub info): cannot read the list for phase 1/2.\n" );
         }
         SYSM_Free( s_dht.buffer );
         s_dht.buffer = NULL;
         FS_CloseFile(&file);
         return FALSE; // cannot read the file
     }
-    length = (int)DHT_GetDatabaseLength(s_dht.dht) - (int)sizeof(DHTHeader);
-    if ( length < 0 || length != FS_ReadFile(&file, &s_dht.dht->database, length) )
-    {
-        OS_TPrintf("PrepareDHTDatabase failed: cannot read DHTDatabase for phase 1/2.\n" );
-        if(!s_b_dev) {
-           ERRORLOG_Printf( "WHITELIST_INITDB_FAILED (sub info): cannot read DHTDatabase for phase 1/2.\n" );
-        }
-        s_dht.dht = NULL;
-        SYSM_Free( s_dht.buffer );
-        s_dht.buffer = NULL;
-        FS_CloseFile(&file);
-        return FALSE; // cannot read the file
-    }
+    length -= DHT_GetDatabaseLength(s_dht.dht);
     // 拡張データベース
     s_dht.dhtex = (void*)((u32)s_dht.buffer + DHT_GetDatabaseLength(s_dht.dht));
-    if ( sizeof(DHTHeader) != FS_ReadFile(&file, &s_dht.dhtex->header, sizeof(DHTHeader)) )
+    if ( !DHT_PrepareDatabaseEx(s_dht.dhtex, &file, length) )
     {
         s_dht.dhtex = NULL;
-        OS_TPrintf("PrepareDHTDatabase failed: cannot read DHTHeader for phase 3.\n" );
+        OS_TPrintf("PrepareDHTDatabase failed: cannot read the list for phase 3.\n" );
         FS_CloseFile(&file);
 #ifndef SYSM_IGNORE_DHT_EX_NOT_FOUND
         if(!s_b_dev) {
-           ERRORLOG_Printf( "WHITELIST_INITDB_FAILED (sub info): cannot read DHTHeader for phase 3.\n" );
+           ERRORLOG_Printf( "WHITELIST_INITDB_FAILED (sub info): cannot read the list for phase 3.\n" );
         }
         SYSM_Free( s_dht.buffer );
         s_dht.buffer = NULL;
@@ -326,50 +314,22 @@ static BOOL PrepareDHTDatabase(void)
         return TRUE;
 #endif
     }
-    length = (int)DHT_GetDatabaseExLength(s_dht.dhtex) - (int)sizeof(DHTHeader);
-    if ( length < 0 || length != FS_ReadFile(&file, &s_dht.dhtex->database, length) )
-    {
-        s_dht.dhtex = NULL;
-        OS_TPrintf("PrepareDHTDatabase failed: cannot read DHTDatabaseEx for phase 3.\n" );
-        FS_CloseFile(&file);
-#ifndef SYSM_IGNORE_DHT_EX_NOT_FOUND
-        if(!s_b_dev) {
-           ERRORLOG_Printf( "WHITELIST_INITDB_FAILED (sub info): cannot read DHTDatabaseEx for phase 3.\n" );
-        }
-        SYSM_Free( s_dht.buffer );
-        s_dht.buffer = NULL;
-        return FALSE; // cannot read the file
-#else
-        return TRUE;
-#endif
-    }
+    length -= DHT_GetDatabaseExLength(s_dht.dhtex);
     // 個別対応データベース
     s_dht.dhtah = (void*)((u32)s_dht.buffer + DHT_GetDatabaseLength(s_dht.dht) + DHT_GetDatabaseExLength(s_dht.dhtex));
-    if ( sizeof(DHTHeader) != FS_ReadFile(&file, &s_dht.dhtah->header, sizeof(DHTHeader)) )
+    if ( !DHT_PrepareDatabaseAdHoc(s_dht.dhtah, &file, length) )
     {
         s_dht.dhtah = NULL;
-        OS_TPrintf("PrepareDHTDatabase failed: cannot read DHTHeader for phase 4.\n" );
+        OS_TPrintf("PrepareDHTDatabase failed: cannot read the list for phase 4.\n" );
         FS_CloseFile(&file);
         if(!s_b_dev) {
-           ERRORLOG_Printf( "WHITELIST_INITDB_FAILED (sub info): cannot read DHTHeader for phase 4.\n" );
+           ERRORLOG_Printf( "WHITELIST_INITDB_FAILED (sub info): cannot read the list for phase 4.\n" );
         }
         SYSM_Free( s_dht.buffer );
         s_dht.buffer = NULL;
         return FALSE; // phase 3が読めてphase4が読めないことはあり得ない
     }
-    length = (int)DHT_GetDatabaseAdHocLength(s_dht.dhtah) - (int)sizeof(DHTHeader);
-    if ( length < 0 || length != FS_ReadFile(&file, &s_dht.dhtah->database, length) )
-    {
-        s_dht.dhtah = NULL;
-        OS_TPrintf("PrepareDHTDatabase failed: cannot read DHTDatabaseAdHoc for phase 4.\n" );
-        FS_CloseFile(&file);
-        if(!s_b_dev) {
-           ERRORLOG_Printf( "WHITELIST_INITDB_FAILED (sub info): cannot read DHTDatabaseAdHoc for phase 4.\n" );
-        }
-        SYSM_Free( s_dht.buffer );
-        s_dht.buffer = NULL;
-        return FALSE; // phase 3が読めてphase4が読めないことはあり得ない
-    }
+    //length -= DHT_GetDatabaseAdHocLength(s_dht.dhtah);    // パディング部分が残る？
     FS_CloseFile(&file);
     return TRUE;
 }

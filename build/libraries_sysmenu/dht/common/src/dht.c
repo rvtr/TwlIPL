@@ -159,7 +159,7 @@ static BOOL DHT_CheckDatabase(const DHTFile* pDHT)
     return TRUE;
 }
 
-BOOL DHT_PrepareDatabase(DHTFile* pDHT, FSFile* fp)
+BOOL DHT_PrepareDatabase(DHTFile* pDHT, FSFile* fp, s32 maxLength)
 {
     s32 result;
     s32 length;
@@ -177,12 +177,18 @@ BOOL DHT_PrepareDatabase(DHTFile* pDHT, FSFile* fp)
         }
         // データベース読み込み
         PROFILE_COUNT();
-        length = (s32)DHT_GetDatabaseLength(pDHT) - (s32)sizeof(DHTHeader); // ヘッダを除く
-        if ( length < 0 )
+        length = (s32)DHT_GetDatabaseLength(pDHT);
+        if ( length < sizeof(DHTHeader) )
         {
             OS_TPrintf("Invalid DHT header.\n");
             return FALSE;
         }
+        if ( length > maxLength )
+        {
+            OS_TPrintf("Too large size specified in the header.\n");
+            return FALSE;
+        }
+        length -= (s32)sizeof(DHTHeader);   // ヘッダを除く
         result = FS_ReadFile(fp, pDHT->database, length);
         if ( result != length )
         {
@@ -265,7 +271,7 @@ static BOOL DHT_CheckDatabaseEx(const DHTFileEx* pDHT)
     return TRUE;
 }
 
-BOOL DHT_PrepareDatabaseEx(DHTFileEx* pDHT, FSFile* fp)
+BOOL DHT_PrepareDatabaseEx(DHTFileEx* pDHT, FSFile* fp, s32 maxLength)
 {
     s32 result;
     s32 length;
@@ -283,12 +289,18 @@ BOOL DHT_PrepareDatabaseEx(DHTFileEx* pDHT, FSFile* fp)
         }
         // 拡張データベース読み込み
         PROFILE_COUNT();
-        length = (s32)DHT_GetDatabaseExLength(pDHT) - (s32)sizeof(DHTHeader); // ヘッダを除く
-        if ( length < 0 )
+        length = (s32)DHT_GetDatabaseExLength(pDHT);
+        if ( length < sizeof(DHTHeader) )
         {
             OS_TPrintf("Invalid DHT header. [EX]\n");
             return FALSE;
         }
+        if ( length > maxLength )
+        {
+            OS_TPrintf("Too large size specified in the header.\n");
+            return FALSE;
+        }
+        length -= (s32)sizeof(DHTHeader); // ヘッダを除く
         result = FS_ReadFile(fp, pDHT->database, length);
         if ( result != length )
         {
@@ -371,7 +383,7 @@ static BOOL DHT_CheckDatabaseAdHoc(const DHTFileAdHoc* pDHT)
     return TRUE;
 }
 
-BOOL DHT_PrepareDatabaseAdHoc(DHTFileAdHoc* pDHT, FSFile* fp)
+BOOL DHT_PrepareDatabaseAdHoc(DHTFileAdHoc* pDHT, FSFile* fp, s32 maxLength)
 {
     s32 result;
     s32 length;
@@ -389,12 +401,18 @@ BOOL DHT_PrepareDatabaseAdHoc(DHTFileAdHoc* pDHT, FSFile* fp)
         }
         // 拡張データベース読み込み
         PROFILE_COUNT();
-        length = (s32)DHT_GetDatabaseAdHocLength(pDHT) - (s32)sizeof(DHTHeader); // ヘッダを除く
-        if ( length < 0 )
+        length = (s32)DHT_GetDatabaseAdHocLength(pDHT);
+        if ( length < sizeof(DHTHeader) )
         {
             OS_TPrintf("Invalid DHT header. [AdHoc]\n");
             return FALSE;
         }
+        if ( length < maxLength )
+        {
+            OS_TPrintf("Too large size specified in the header.\n");
+            return FALSE;
+        }
+        length -=  (s32)sizeof(DHTHeader); // ヘッダを除く
         result = FS_ReadFile(fp, pDHT->database, length);
         if ( result != length )
         {
