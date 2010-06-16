@@ -188,7 +188,8 @@ void TwlMain( void )
     // you should comment out to clear GX/G2/DMA/TM/PAD register in reboot.c to retreive valid boot time
     STD_TSPrintf((char*)0x02FFCFC0, "\nLauncher Boot Time: %lld usec\n", OS_TicksToMicroSeconds(reg_OS_TM3CNT_L * (1024/64)));
 #endif
-
+    //ロゴスキップのため強制的にisVadlid、isHotStartフラグを立て、isResetSWフラグを立てない
+    *(u8 *)HW_NAND_FIRM_HOTSTART_FLAG = 0x81;
     // システムメニュー初期化----------
     SYSM_Init( Alloc, Free );                       // OS_Initの前でコールする必要あり。
     OS_Init();
