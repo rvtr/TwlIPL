@@ -158,7 +158,7 @@ Property
 	# DisableDebug	：最終ROMでは、アプリジャンプされた際にデバッグできないようにTRUEにする必要があります。
 	#
 	DisableDebug	$(DISABLE_DEBUG)
-	
+
 	###
 	#### END
 }
@@ -222,5 +222,5 @@ RomSpec
 	Segment		ALL
 	HostRoot	../../data
 	Root		/data
-	File		NTR_IPL_font_m.NFTR NoCardBanner.bnr EmptyBanner.bnr NoBanner.bnr fanfare.32.wav bandbrothers_arm7flx_patch.sbin
+	File        NTR_IPL_font_m.NFTR
 }

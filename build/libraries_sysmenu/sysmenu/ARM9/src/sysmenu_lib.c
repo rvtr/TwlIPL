@@ -334,6 +334,7 @@ TitleProperty *SYSM_ReadParameters( void )
         }
     }
 
+#if 0
     // アプリジャンプでないときには、アプリ間パラメタをクリア
     // ※あらかじめNTRカードのセキュア領域を退避せずに直接0x2000000からロードしている場合も容赦なく消すので注意
     if( !pBootTitle )
@@ -357,7 +358,7 @@ TitleProperty *SYSM_ReadParameters( void )
         // ココまでダイレクトブートが設定されていない場合のみ判定
         pBootTitle = SYSMi_CheckShortcutBoot2();
     }
-
+#endif
     return pBootTitle;
 }
 

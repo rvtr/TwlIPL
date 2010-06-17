@@ -335,7 +335,7 @@ void TwlMain( void )
     MEASURE_START(start);
 
     // TMPフォルダのクリーン
-    SYSM_DeleteTmpDirectory( pBootTitle );
+    //SYSM_DeleteTmpDirectory( pBootTitle );
 
     // ダミーのDSメニューラッピング用ファイル作成（UIGランチャーが作っているもの）
     CreateDummyWrapFile();
