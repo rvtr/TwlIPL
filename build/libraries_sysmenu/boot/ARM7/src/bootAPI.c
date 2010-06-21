@@ -332,7 +332,7 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 			}
 
 			// I2Sí‚é~ÅiMCLKÇÕìÆçÏåpë±Åj
-			reg_SND_SMX_CNT &= ~REG_SND_SMX_CNT_E_MASK;
+			//reg_SND_SMX_CNT &= ~REG_SND_SMX_CNT_E_MASK;
 
 			spiLockId = (u32)OS_GetLockID();
 			if (spiLockId == OS_LOCK_ID_ERROR)
