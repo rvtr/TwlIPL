@@ -27,6 +27,17 @@
         http://10.114.1.206:80/~twl-dev/svn/TwlSDK/branches/branch-5_0rcplus_UIG_plus
        ビルド確認: r10813
 
+       タッチパネルが使えるようにするパッチ
+       TwlSDK\build\libraries\cdc\ARM7.TWL\src\cdc_api.c  を
+
+        \\aqua\CTR\開発技術部\ソフトウェア開発G\Release\限定開示\互換モード用SDデータ\TS\TS_20100621Redランチャ\cdc_api で
+        差し替える
+
+       TwlSDK\build\libraries\snd\ARM7.TWL\src\sndex_request.c を
+
+        \\aqua\CTR\開発技術部\ソフトウェア開発G\Release\限定開示\互換モード用SDデータ\TS\TS_20100621Redランチャ\sndex_request.c で
+       差し替える
+
     ③ NItroSystem
        ①でチェックアウトしたTwlIPL\add-ins\NitroSystemを使用
         NitroSystem_forTWL-080408-jp.zip を解凍したものを、
