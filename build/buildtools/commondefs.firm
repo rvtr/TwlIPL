@@ -99,7 +99,7 @@ FIRM_LIBS ?= $(addsuffix $(FIRM_LIBSUFFIX).a,$(FIRM_LIBS_BASE))
 #  MY BUILD TOOLS
 #
 MAKENORFIRM		= $(TWL_IPL_RED_PRIVATE_TOOLSDIR)/bin/makenorfirm.exe
-MAKENANDFIRM	= $(TWL_IPL_RED_PRIVATE_TOOLSDIR)/bin/makenandfirm.exe
+MAKENANDFIRM		:= $(FIRM_TOOLSDIR)/bin/makenandfirm.exe
 MAKEGCDFIRM		= $(TWL_IPL_RED_PRIVATE_TOOLSDIR)/bin/makegcdfirm.exe
 NTEXCONV		:= $(ROOT)/tools/bin/ntexconv.exe
 MAKEBANNER		:= $(TWL_TOOLSDIR)/bin/makebanner.TWL.exe

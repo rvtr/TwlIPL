@@ -36,11 +36,6 @@
  *---------------------------------------------------------------------------*/
 void AESi_PreInitKeys( void )
 {
-    AES_WaitKey();
-
-    reg_AES_AES_ID_B2 = reg_OS_CHIP_ID1 ^ *(const u32*)&OSi_GetFromFirmAddr()->aes_key[2][0];
-    reg_AES_AES_ID_D1 = reg_OS_CHIP_ID0 ^ *(const u32*)&OSi_GetFromFirmAddr()->aes_key[2][8];
-    reg_AES_AES_ID_D2 = reg_OS_CHIP_ID1 ^ *(const u32*)&OSi_GetFromFirmAddr()->aes_key[2][4];
 }
 
 /*---------------------------------------------------------------------------*
