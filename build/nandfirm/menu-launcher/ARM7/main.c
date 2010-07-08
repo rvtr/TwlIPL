@@ -17,6 +17,8 @@
 #include <firm.h>
 #include <twl/mcu.h>
 
+#define FIRM_FOR_CTR
+
 /*
     PROFILE_ENABLE を定義するとある程度のパフォーマンスチェックができます。
     利用するためには、main.cかどこかに、u32 profile[256]; u32 pf_cnt = 0; を
@@ -259,6 +261,8 @@ void TwlSpMain( void )
 
 //    PM_BackLightOn( FALSE );
 
+#ifndef FIRM_FOR_CTR
+
     if ( !FS_LoadStatic( fd ) )
     {
         OS_TPrintf("Failed to call FS_LoadStatic().\n");
@@ -269,6 +273,8 @@ void TwlSpMain( void )
     SetDebugLED(++step); // 0x8f
 
 //    PM_BackLightOn( FALSE );
+
+#endif // FIRM_FOR_CTR
 
     if ( PXI_RecvID() != FIRM_PXI_ID_DONE_STATIC )
     {

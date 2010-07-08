@@ -18,6 +18,8 @@
 #include <twl/lcfg.h>
 #include "print.h"
 
+#define FIRM_FOR_CTR
+
 #ifdef FIRM_USE_PRODUCT_KEYS
 #define RSA_KEY_ADDR    OSi_GetFromFirmAddr()->rsa_pubkey[0]    // åÆä«óù.xlséQè∆
 #else
@@ -349,6 +351,8 @@ void TwlMain( void )
     // 8: after PXI
     PUSH_PROFILE();
 
+#ifndef FIRM_FOR_CTR
+
     if ( !FS_LoadStatic( NULL ) )
     {
         OS_TPrintf("Failed to call FS_LoadStatic().\n");
@@ -357,6 +361,8 @@ void TwlMain( void )
     point++;    // 4
     // 9: after FS_LoadStatic
     PUSH_PROFILE();
+
+#endif // FIRM_FOR_CTR
 
     PXI_NotifyID( FIRM_PXI_ID_DONE_STATIC );
     // 10: after PXI
@@ -391,7 +397,11 @@ void TwlMain( void )
     OS_BootFromFIRM();
 
 end:
+
+#ifndef FIRM_FOR_CTR
     PrintError("Error: %d-%s-%s", point, g_strIPLSvnRevision, g_strSDKSvnRevision);
+#endif // FIRM_FOR_CTR
+
     EraseAll();
 
     // failed
