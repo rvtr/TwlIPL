@@ -218,6 +218,8 @@ void TwlSpMain( void )
 
 //    PM_BackLightOn( FALSE );
 
+#ifndef FIRM_FOR_CTR
+
     if ( (fd = FS_OpenSrl()) < 0 )
     {
         OS_TPrintf("Failed to call FS_OpenSrl().\n");
@@ -228,8 +230,6 @@ void TwlSpMain( void )
     SetDebugLED(++step); // 0x8b
 
 //    PM_BackLightOn( FALSE );
-
-#ifndef FIRM_FOR_CTR
 
     if ( !FS_LoadHeader( fd ) )
     {
