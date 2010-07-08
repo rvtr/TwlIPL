@@ -18,8 +18,6 @@
 #include <twl/lcfg.h>
 #include "print.h"
 
-#define FIRM_FOR_CTR
-
 #ifdef FIRM_USE_PRODUCT_KEYS
 #define RSA_KEY_ADDR    OSi_GetFromFirmAddr()->rsa_pubkey[0]    // 鍵管理.xls参照
 #else
@@ -333,6 +331,8 @@ void TwlMain( void )
     // 6: after PXI
     PUSH_PROFILE();
 
+#ifndef FIRM_FOR_CTR
+
     /* ES (CRYPTO) ライブラリはここまで */
     /* SVN_RSA はここから*/
     // RSA用ヒープ設定
@@ -351,8 +351,6 @@ void TwlMain( void )
     // 8: after PXI
     PUSH_PROFILE();
 
-#ifndef FIRM_FOR_CTR
-
     if ( !FS_LoadStatic( NULL ) )
     {
         OS_TPrintf("Failed to call FS_LoadStatic().\n");
@@ -361,6 +359,12 @@ void TwlMain( void )
     point++;    // 4
     // 9: after FS_LoadStatic
     PUSH_PROFILE();
+
+#else // FIRM_FOR_CTR
+
+    MI_CpuCopyFast( (void*)HW_TWL_MAIN_MEM_SHARED, (void*)HW_ROM_HEADER_BUF, HW_ROM_HEADER_BUF_END - HW_ROM_HEADER_BUF );
+    MI_CpuCopyFast( (void*)HW_TWL_MAIN_MEM_SHARED, (void*)HW_TWL_ROM_HEADER_BUF, HW_TWL_ROM_HEADER_BUF_SIZE );
+    MI_CpuClearFast( (void*)HW_TWL_MAIN_MEM_SHARED, HW_TWL_ROM_HEADER_BUF_SIZE );
 
 #endif // FIRM_FOR_CTR
 

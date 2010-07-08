@@ -18,6 +18,12 @@
 ifndef TWLFIRM_COMMONDEFS_
 TWLFIRM_COMMONDEFS_ = TRUE
 
+FIRM_FOR_CTR = TRUE
+
+ifdef FIRM_FOR_CTR
+MACRO_FLAGS	+= -DFIRM_FOR_CTR
+endif
+
 EMPTY	 	?=
 SPACE 		?= $(EMPTY) $(EMPTY)
 
@@ -28,7 +34,7 @@ TARGET_BIN		?=	$(TARGET_FIRM_BIN)
 #
 override TARGET_PLATFORM	:= TWL
 override TWL_ARCHGEN		:= LIMITED
-override TWL_CODEGEN		:= ARM
+override TWL_CODEGEN		:= THUMB
 override TWL_MEMSIZE		:= 16M
 
 #----------------------------------------------------------------------------

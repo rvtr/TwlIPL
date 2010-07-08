@@ -145,11 +145,15 @@ SDK_WEAK_SYMBOL asm void _start( void )
         mov             r0, #FIRM_PXI_ID_INIT_MMEM
         bl              PXIi_WaitIDByIntf
 
+#ifndef FIRM_FOR_CTR
+
         //---- clear HW_TWL_MAIN_MEM_SHARED
         mov             r0, #0
         ldr             r1, =HW_TWL_MAIN_MEM_SHARED
         mov             r2, #HW_TWL_MAIN_MEM_SHARED_SIZE
         bl              INITi_CpuClearFast
+
+#endif // FIRM_FOR_CTR
 
         //---- notify to clear HW_MAIN_MEM_SHARED
         mov             r0, #FIRM_PXI_ID_INIT_MMEM
