@@ -664,12 +664,15 @@ static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
     // DSダウンロードプレイおよびpictochat等のNTR拡張NANDアプリの時は、ROMヘッダを退避する
     // が、NTR-ROMヘッダは旧無線パッチとデバッガパッチを当てる必要があるため、再配置はrebootライブラリで行う。
 
+    BOOL isTwlApp = TRUE;
+
+#ifndef SYSM_NO_LOAD
+
     // ロード
+    BOOL isCardApp = FALSE;
+    BOOL bSuccess;
     char path[256];
     FSFile  file[1];
-    BOOL bSuccess;
-    BOOL isTwlApp = TRUE;
-    BOOL isCardApp = FALSE;
 
     switch( pBootTitle->flags.bootType )
     {
@@ -712,13 +715,15 @@ OS_TPrintf("RebootSystem failed: cant open file\n");
         goto ERROR;
     }
 
+#endif // SYSM_NO_LOAD
+
     {
         int     i;
         u32     source[region_max];
         u32     length[region_max];
         u32     destaddr[region_max];
-        s32 readLen;
 #ifndef SYSM_NO_LOAD
+        s32 readLen;
         CalcHMACSHA1CallbackArg dht_arg;
         static u8   header[HW_TWL_ROM_HEADER_BUF_SIZE] ATTRIBUTE_ALIGN(32);
         ROM_Header *head = (ROM_Header *)header;
@@ -898,10 +903,10 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", sp_authcode,
             }
         }
 
+#ifndef SYSM_NO_LOAD
+
         // AES初期化（ヘッダと再配置情報がそろってから）
         (void)SYSM_InitDecryptAESRegion_W( (ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF );
-
-#ifndef SYSM_NO_LOAD
 
         for (i = region_arm9_ntr; i < region_max; ++i)
         {
@@ -991,12 +996,12 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
             SVC_HMACSHA1GetHash(&dht_arg.ctx, &s_calc_hash[1 * SVC_SHA1_DIGEST_SIZE]);
         }
 
-#endif // SYSM_NO_LOAD
-
         if(!isCardApp)
         {
             (void)FS_CloseFile(file);
         }
+
+#endif // SYSM_NO_LOAD
     }
 
     // モジュール最終ロード先領域のうち、現在空いている場所をクリア
@@ -1016,10 +1021,16 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
     return;
 
 ERROR:
+
+#ifndef SYSM_NO_LOAD
+
     if(!isCardApp)
     {
         (void)FS_CloseFile(file);
     }
+
+#endif // SYSM_NO_LOAD
+
     // デバグ用。ERRORLOG_Init()がすでに呼ばれている事前提
     ERRORLOG_Printf( "SYSMi_LoadTitleThreadFunc: some error has occurred.\n");
 }
