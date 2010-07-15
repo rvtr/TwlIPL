@@ -544,8 +544,12 @@ MAIN_LOOP_START:
                 PrintPause();
             }
             if( SYSM_IsLoadTitleFinished() ) {
+#ifdef SYSM_NO_LOAD
+                state = BOOT;
+#else // SYSM_NO_LOAD
                 SYSM_StartAuthenticateTitle( pBootTitle );
                 state = AUTHENTICATE;
+#endif // SYSM_NO_LOAD
             }
             if( !direct_boot )
             {

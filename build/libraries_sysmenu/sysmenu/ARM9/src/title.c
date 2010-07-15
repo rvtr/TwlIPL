@@ -889,6 +889,8 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", sp_authcode,
         // AES初期化（ヘッダと再配置情報がそろってから）
         (void)SYSM_InitDecryptAESRegion_W( (ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF );
 
+#ifndef SYSM_NO_LOAD
+
         for (i = region_arm9_ntr; i < region_max; ++i)
         {
             BOOL result;
@@ -976,6 +978,8 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
         {
             SVC_HMACSHA1GetHash(&dht_arg.ctx, &s_calc_hash[1 * SVC_SHA1_DIGEST_SIZE]);
         }
+
+#endif // SYSM_NO_LOAD
 
         if(!isCardApp)
         {
