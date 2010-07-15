@@ -717,10 +717,18 @@ OS_TPrintf("RebootSystem failed: cant open file\n");
         u32     source[region_max];
         u32     length[region_max];
         u32     destaddr[region_max];
-        static u8   header[HW_TWL_ROM_HEADER_BUF_SIZE] ATTRIBUTE_ALIGN(32);
         s32 readLen;
-        ROM_Header *head = (ROM_Header *)header;
+#ifndef SYSM_NO_LOAD
         CalcHMACSHA1CallbackArg dht_arg;
+        static u8   header[HW_TWL_ROM_HEADER_BUF_SIZE] ATTRIBUTE_ALIGN(32);
+        ROM_Header *head = (ROM_Header *)header;
+#else // SYSM_NO_LOAD
+        ROM_Header *head = (ROM_Header *)SYSM_APP_ROM_HEADER_BUF;
+        if( !(head->s.platform_code & PLATFORM_CODE_FLAG_TWL) )
+        {
+            isTwlApp = FALSE;
+        }
+#endif // SYSM_NO_LOAD
 
         // WRAM利用Read関数の準備、
         // 使用するコンポーネントに応じて、WRAMのスロットを解放しておく
@@ -733,6 +741,8 @@ OS_TPrintf("RebootSystem failed: cant open file\n");
         MI_CancelWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM7 );
         MI_CancelWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM9 );
         MI_CancelWramSlot_C( WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_DSP );
+
+#ifndef SYSM_NO_LOAD
 
         // ハッシュ格納用バッファ（ヒープから取っているけど変更するかも）
         s_calc_hash = SYSM_Alloc( region_max * SVC_SHA1_DIGEST_SIZE );
@@ -843,6 +853,8 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", sp_authcode,
         {
             DHT_CheckHashPhase1Init(&dht_arg.ctx, &head->s);
         }
+
+#endif // SYSM_NO_LOAD
 
         // ヘッダ読み込み完了直後の処理
         // ヘッダ読み込み完了フラグを立てる
