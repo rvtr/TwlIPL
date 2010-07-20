@@ -1706,18 +1706,21 @@ static void HotSwThread(void *arg)
                     }
                 }
 
+#ifndef SYSM_NO_LOAD
                 retval = LoadCardData();
 
                 DebugPrintErrorMessage(retval);
-
+#endif
                 s_isPulledOut = FALSE;
 
                 // エラー処理
+#ifndef SYSM_NO_LOAD
                 if(retval != HOTSW_SUCCESS){
                     McPowerOff();
                     PulledOutSequence();
                     break;
                 }
+#endif
             }
 
             // カードが抜けてたら
