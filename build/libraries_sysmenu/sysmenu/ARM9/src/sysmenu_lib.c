@@ -147,8 +147,10 @@ void SYSMi_SendKeysToARM7( void )
     DC_FlushRange( (void *)HW_WRAM_0, sizeof(DeliverBROM9Key) );
     MI_SetWramBank(MI_WRAM_ARM7_ALL);
 
+#ifndef SYSM_NO_LOAD
 #ifdef INITIAL_KEYTABLE_PRELOAD
     SYSMi_GetWork()->flags.hotsw.isKeyTableLoadReady = TRUE;
+#endif
 #endif
 }
 
@@ -288,13 +290,15 @@ TitleProperty *SYSM_ReadParameters( void )
     while( !SYSMi_GetWork()->flags.arm7.isARM9Start ) {
         SVC_WaitByLoop( 0x1000 );
     }
+
+#ifndef SYSM_NO_LOAD
 //#ifdef DEBUG_USED_CARD_SLOT_B_
     // ARM7のカードチェック完了を待つ
     while( !SYSMi_GetWork()->flags.hotsw.is1stCardChecked ) {
         SVC_WaitByLoop( 0x1000 );
     }
 //#endif
-
+#endif // SYSM_NO_LOAD
 
     //-----------------------------------------------------
     // ランチャーパラメータの判定

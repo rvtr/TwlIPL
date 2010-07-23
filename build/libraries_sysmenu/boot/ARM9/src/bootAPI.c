@@ -79,9 +79,11 @@ void BOOT_Ready( void )
 	ROM_Header *dh = (ROM_Header *)(SYSMi_GetWork()->romHeaderNTR);  // DS互換ROMヘッダ（非キャッシュ領域）
 
 	// HOTSW終了処理待ち
+#ifndef SYSM_NO_LOAD
 	while( ! HOTSW_isFinalized() ) {
 		OS_Sleep( 1 );
 	}
+#endif
 
 	// リブート
 	REBOOTi_SetTwlRomHeaderAddr( th );
@@ -133,8 +135,11 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
     (void)OS_ResetRequestIrqMask( (u32)~0 );
 
     // TWL/NTRモード判定
-    if ( ! dh->s.platform_code ||
-         (SYSM_IsRunOnDebugger() && ((SYSMRomEmuInfo*)HOTSW_GetRomEmulationBuffer())->isForceNTRMode) )
+    if ( ! dh->s.platform_code
+#ifndef SYSM_NO_LOAD
+         || (SYSM_IsRunOnDebugger() && ((SYSMRomEmuInfo*)HOTSW_GetRomEmulationBuffer())->isForceNTRMode)
+#endif
+       )
     {
         isNtrMode = TRUE;
     }

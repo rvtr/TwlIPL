@@ -99,12 +99,16 @@ SYSMENU_LIBS			=	\
 							libboot$(TWL_LIBSUFFIX).a \
 							liberrorlog$(TWL_LIBSUFFIX).a \
 							libds$(TWL_LIBSUFFIX).a \
-							libhotsw$(TWL_LIBSUFFIX).a \
 							libdht$(TWL_LIBSUFFIX).a \
 							libreloc_info$(TWL_LIBSUFFIX).a \
 							libnamut$(TWL_LIBSUFFIX).a \
 							libsharedfont_launcher$(TWL_LIBSUFFIX).a \
 							WDS$(TWL_LIBSUFFIX).a
+
+ifneq ($(SYSM_NO_LOAD),TRUE)
+SYSMENU_LIBS			+=	\
+							libhotsw$(TWL_LIBSUFFIX).a
+endif
 
 SDK_APPEND_LIBS		=		\
 							libes$(TWL_LIBSUFFIX).a		\

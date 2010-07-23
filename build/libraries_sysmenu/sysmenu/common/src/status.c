@@ -148,14 +148,22 @@ BOOL SYSM_IsValidTSD( void )
 // 有効なTWL/NTRカードが差さっているか？
 BOOL SYSM_IsExistCard( void )
 {
+#ifdef SYSM_NO_LOAD
+    return TRUE;
+#else // SYSM_NO_LOAD
 	return (BOOL)SYSMi_GetWork()->flags.hotsw.isExistCard;
+#endif SYSM_NO_LOAD
 }
 
 
 // 検査用カードが差さっているか？
 BOOL SYSM_IsInspectCard( void )
 {
+#ifdef SYSM_NO_LOAD
+    return FALSE;
+#else // SYSM_NO_LOAD
 	return ( SYSM_IsExistCard() && SYSMi_GetWork()->flags.hotsw.isInspectCard );
+#endif SYSM_NO_LOAD
 }
 
 

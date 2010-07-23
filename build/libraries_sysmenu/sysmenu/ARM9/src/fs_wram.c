@@ -190,6 +190,8 @@ static void FSi_WramThread(void* arg)
             result = FS_ReadFile( FSiWramWork.p_file, cmd->addr, cmd->length );
 //OS_TPrintf("%s:   (0x%08X)             %d msec\n", __func__, cmd->addr, (int)OS_TicksToMilliSeconds(OS_GetTick()));
             break;
+
+#ifndef SYSM_NO_LOAD
         case FS_WRAM_COMMAND_READ_CARD:
             // カードリード
             if(!FSi_IsValidAddressForARM7(cmd->addr, (u32)cmd->length))
@@ -202,6 +204,8 @@ static void FSi_WramThread(void* arg)
             result = (card_read_state == CARD_READ_SUCCESS) ? cmd->length : 0;
             if((card_read_state != CARD_READ_SUCCESS)) ERRORLOG_Printf( "FSi_WramThread: read-card error:%d\n", card_read_state );
             break;
+#endif // SYSM_NO_LOAD
+
         case FS_WRAM_COMMAND_WRITE:
             result = FS_WriteFile( FSiWramWork.p_file, cmd->addr, cmd->length );
 //OS_TPrintf("%s:                (0x%08X) %d msec\n", __func__, cmd->addr, (int)OS_TicksToMilliSeconds(OS_GetTick()));

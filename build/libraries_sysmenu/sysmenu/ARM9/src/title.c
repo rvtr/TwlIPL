@@ -377,10 +377,15 @@ static BOOL PrepareDHTDatabase(void)
 static BOOL WrapperFunc_ReadCardData(void* dest, s32 offset, s32 length, void* arg)
 {
 #pragma unused(arg)
+
+#ifndef SYSM_NO_LOAD
+
     HOTSW_ReadCardData( (void *)offset, dest, (u32)length);
+
+#endif // SYSM_NO_LOAD
+
     return TRUE;
 }
-
 
 //================================================================================
 // for register SCFG_OP
@@ -611,6 +616,8 @@ static void SYSMi_DHTPhase1Callback(const void* addr, const void* orig_addr, u32
     DHT_CheckHashPhase1Update( &cba->ctx, addr, (s32)calc_len );
 }
 
+#ifndef SYSM_NO_LOAD
+
 static void SYSMi_FinalizeHotSWAsync( TitleProperty *pBootTitle, ROM_Header *head )
 {
     HotSwCardState card_state;
@@ -649,6 +656,8 @@ static void SYSMi_FinalizeHotSWAsync( TitleProperty *pBootTitle, ROM_Header *hea
 
     HOTSW_FinalizeHotSWAsync( card_state );
 }
+
+#endif // SYSM_NO_LOAD
 
 static void SYSMi_LoadTitleThreadFunc( TitleProperty *pBootTitle )
 {
@@ -865,8 +874,12 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", sp_authcode,
         // ヘッダ読み込み完了フラグを立てる
         SYSM_SetHeaderLoadCompleted(TRUE);
 
+#ifndef SYSM_NO_LOAD
+
         // HOTSW終了処理有効化
         SYSMi_FinalizeHotSWAsync( pBootTitle, (void*)SYSM_APP_ROM_HEADER_BUF );
+
+#endif // SYSM_NO_LOAD
 
         // 各領域を読み込む
         source  [region_arm9_ntr] = head->s.main_rom_offset;
@@ -1126,11 +1139,15 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 #define STACK_SIZE 0xc00
     static u64 stack[ STACK_SIZE / sizeof(u64) ];
 
+#ifndef SYSM_NO_LOAD
+
     HOTSW_InvalidHotSWAsync();
     // 値が変化するまでスリープして待つ。
     while( HOTSW_isEnableHotSW() != FALSE ) {
         OS_Sleep( 2 );
     }
+
+#endif // SYSM_NO_LOAD
 
     // DataOnlyなアプリはロードも起動もしない
     if( pBootTitle->titleID & TITLE_ID_DATA_ONLY_FLAG_MASK )

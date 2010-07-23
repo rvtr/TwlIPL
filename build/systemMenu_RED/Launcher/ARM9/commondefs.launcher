@@ -18,6 +18,10 @@
 
 ifneq ($(SYSM_UPDATER_RELEASE),TRUE)
 
+# for CTR
+export SYSM_FOR_CTR = TRUE
+export SYSM_NO_LOAD = TRUE
+
 # COMPILE SWITCH　※最終ROM作成時は、全てFALSEにセットする。SUBDIRのビルド時にも影響するようexportで環境変数設定する。
 export SYSM_DO_NOT_SHOW_LAUNCHER		=	FALSE
 export SYSM_DISABLE_WDS_SCAN			=	TRUE

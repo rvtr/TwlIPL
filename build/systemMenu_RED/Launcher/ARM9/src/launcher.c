@@ -595,6 +595,8 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 		}
 	}
 
+#ifndef SYSM_NO_LOAD
+
     // HOTSW許可・抑制テスト
     {
         static BOOL hotswEnable = TRUE;
@@ -619,7 +621,9 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 			PutStringUTF16(   0, 175, TXT_COLOR_RED, L"HotSw Disable" );
         }
     }
-    
+
+#endif // SYSM_NO_LOAD
+
 	return ret;
 }
 

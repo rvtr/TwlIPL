@@ -232,8 +232,10 @@ void TwlMain( void )
     TP_Init();
     RTC_Init();
     SND_Init();// sound init
+#ifndef SYSM_NO_LOAD
 #ifdef USE_WRAM_LOAD
     HOTSW_Init();
+#endif
 #endif
 
      //NAM‚Ì‰Šú‰»

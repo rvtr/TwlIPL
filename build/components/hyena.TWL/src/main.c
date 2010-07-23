@@ -134,8 +134,10 @@ TwlSpMain(void)
     }
     PMi_SetControl( PMIC_CTL_BKLT1 | PMIC_CTL_BKLT2 );
 
+#ifndef SYSM_NO_LOAD
 #ifdef INITIAL_KEYTABLE_PRELOAD
 	HOTSW_CopyInitialKeyTable();
+#endif
 #endif
     
     // OS ‰Šú‰»
@@ -253,6 +255,8 @@ TwlSpMain(void)
 
     BOOT_Init();
 
+#ifndef SYSM_NO_LOAD
+
     // Šˆð‘}”²‹@”\‰Šú‰»
     if( ( SYSM_GetLauncherParamBody()->v1.flags.isValid ) &&
         ( SYSM_GetLauncherParamBody()->v1.flags.bootType != LAUNCHER_BOOTTYPE_ROM ) &&
@@ -278,6 +282,8 @@ TwlSpMain(void)
 #endif
 
     HOTSW_Init(THREAD_PRIO_HOTSW);
+
+#endif // SYSM_NO_LOAD
 
     while (TRUE)
     {

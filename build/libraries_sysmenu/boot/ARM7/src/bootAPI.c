@@ -191,6 +191,7 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 		// FSによってshared領域にコピーされたランチャー自身のマウントパスのクリア
 		MI_CpuClearFast((char *)HW_TWL_FS_BOOT_SRL_PATH_BUF, OS_MOUNT_PATH_LEN);
 		
+#ifndef SYSM_NO_LOAD
 		// NAND/TMPアプリ用KeyTableの生成
 		if( ! SYSMi_GetWork()->flags.arm9.isCardBoot )
 		{
@@ -203,10 +204,14 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 			HOTSWi_SetSecureSegmentBuffer(HOTSW_MODE1, addr, SECURE_AREA_SIZE);
 			HOTSW_DecryptObjectFile( addr );
 		}
-		
+#endif
+
         // TWL/NTRモード判定
-        if ( ! dh->s.platform_code ||
-             (SYSM_IsRunOnDebugger() && ((SYSMRomEmuInfo*)HOTSW_GetRomEmulationBuffer())->isForceNTRMode) )
+        if ( ! dh->s.platform_code
+#ifndef SYSM_NO_LOAD
+             || (SYSM_IsRunOnDebugger() && ((SYSMRomEmuInfo*)HOTSW_GetRomEmulationBuffer())->isForceNTRMode)
+#endif
+           )
         {
             isNtrMode = TRUE;
         }
