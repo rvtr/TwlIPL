@@ -399,7 +399,7 @@ BOOL DHT_PrepareDatabaseAdHoc(DHTFileAdHoc* pDHT, FSFile* fp, s32 maxLength)
             OS_TPrintf("Cannot read the DHT header (result=%d). [AdHoc]\n", result);
             return FALSE;
         }
-        // 拡張データベース読み込み
+        // 個別対応データベース読み込み
         PROFILE_COUNT();
         length = (s32)DHT_GetDatabaseAdHocLength(pDHT);
         if ( length < sizeof(DHTHeader) )
@@ -407,7 +407,7 @@ BOOL DHT_PrepareDatabaseAdHoc(DHTFileAdHoc* pDHT, FSFile* fp, s32 maxLength)
             OS_TPrintf("Invalid DHT header. [AdHoc]\n");
             return FALSE;
         }
-        if ( length < maxLength )
+        if ( length > maxLength )
         {
             OS_TPrintf("Too large size specified in the header.\n");
             return FALSE;
@@ -426,7 +426,7 @@ BOOL DHT_PrepareDatabaseAdHoc(DHTFileAdHoc* pDHT, FSFile* fp, s32 maxLength)
         PROFILE_COUNT();
     }
 
-    // 拡張データベースの検証
+    // 個別対応データベースの検証
     PROFILE_COUNT();
     result = DHT_CheckDatabaseAdHoc(pDHT);
 
@@ -443,7 +443,7 @@ BOOL DHT_PrepareDatabaseAdHoc(DHTFileAdHoc* pDHT, FSFile* fp, s32 maxLength)
 }
 
 /*
-ROMヘッダに対応する拡張データベースを手に入れる
+ROMヘッダに対応する個別対応データベースを手に入れる
 */
 static const DHTDatabaseAdHoc* DHT_GetDatabaseAdHoc(const DHTFileAdHoc* pDHT, const ROM_Header_Short* pROMHeader)
 {
