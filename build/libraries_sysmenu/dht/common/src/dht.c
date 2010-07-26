@@ -369,7 +369,7 @@ static BOOL DHT_CheckDatabaseAdHoc(const DHTFileAdHoc* pDHT)
     SVC_InitSignHeap(&pool, heap, sizeof(heap));
     SVC_DecryptSign(&pool, md1, pDHT->header.sign, &g_pubkey_DER[29]);
     // ハッシュ計算
-    SVC_CalcSHA1(md2, DHT_GET_SIGN_TARGET_ADDR(&pDHT->header), DHT_GET_SIGN_TARGET_SIZE_EX(&pDHT->header));
+    SVC_CalcSHA1(md2, DHT_GET_SIGN_TARGET_ADDR(&pDHT->header), DHT_GET_SIGN_TARGET_SIZE_ADHOC(&pDHT->header));
     // 検証
     result = SVC_CompareSHA1(md1, md2);
     if ( !result )
