@@ -167,6 +167,10 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 			// カードTWL-ROMヘッダをHW_TWL_CARD_ROM_HEADER_BUFにコピー
 			MI_CpuCopyFast( (void*)SYSM_CARD_ROM_HEADER_BAK, (void*)HW_TWL_CARD_ROM_HEADER_BUF, HW_TWL_CARD_ROM_HEADER_BUF_SIZE );
         }
+#ifdef SYSM_NO_LOAD
+		// セキュア領域をテンポラリから常駐モジュールへコピー
+		MI_CpuCopyFast( (void*)SYSM_CARD_NTR_SECURE_BUF, dh->s.main_ram_address, SECURE_AREA_SIZE );
+#endif
 
         // デバッガによるROMエミュレーション時はNTR-ROMヘッダバッファの
         // ゲームコマンドパラメータをスクランブルOFF設定に書き換える
