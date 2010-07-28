@@ -406,8 +406,10 @@ static void BOOTi_ClearREG_RAM( void )
 #ifdef DEBUG_USED_CARD_SLOT_B_
 	reg_MI_MC_SWP ^= 0x80;												// カードスロットのスワップ
 #endif
+#ifndef SYSM_NO_LOAD
 																		// カード抜けチェックバッファにカードIDをセット
 	((SDKBootCheckInfo*)HW_BOOT_CHECK_INFO_BUF)->nCardID = SYSMi_GetWork()->appCardID;
+#endif
 	
 	*(vu32 *)HW_RESET_PARAMETER_BUF = 0;								// リセットバッファをクリア
 	
