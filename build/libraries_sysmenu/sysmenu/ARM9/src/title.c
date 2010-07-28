@@ -879,8 +879,6 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", sp_authcode,
         // HOTSW終了処理有効化
         SYSMi_FinalizeHotSWAsync( pBootTitle, (void*)SYSM_APP_ROM_HEADER_BUF );
 
-#endif // SYSM_NO_LOAD
-
         // 各領域を読み込む
         source  [region_arm9_ntr] = head->s.main_rom_offset;
         length  [region_arm9_ntr] = head->s.main_size;
@@ -915,8 +913,6 @@ OS_TPrintf("RebootSystem failed: cant read file(%p, %d, %d, %d)\n", sp_authcode,
                 goto ERROR;
             }
         }
-
-#ifndef SYSM_NO_LOAD
 
         // AES初期化（ヘッダと再配置情報がそろってから）
         (void)SYSM_InitDecryptAESRegion_W( (ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF );
