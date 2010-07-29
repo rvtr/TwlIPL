@@ -21,11 +21,11 @@
 
     ① TwlIPLチェックアウト
        file://aqua/svn/TwlIPL/branches/20100611_RedLauncher_Remodel
-       ビルド確認：r2923
+       ビルド確認：r2949
 
     ② TwlSDK(UIG_plus)チェックアウト
         http://10.114.1.206:80/~twl-dev/svn/TwlSDK/branches/branch-5_0rcplus_UIG_plus
-       ビルド確認: r10813
+       ビルド確認: r11366
 
        タッチパネルが使えるようにするパッチ
        TwlSDK\build\libraries\cdc\ARM7.TWL\src\cdc_api.c  を
