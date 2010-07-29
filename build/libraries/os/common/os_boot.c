@@ -131,6 +131,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     {
         OS_Terminate();
     }
+    REBOOTi_EnableCtrFirm();
     REBOOT_Execute(entry, wram_reg, mem_list, code_buf, stack_top, target, scfg, set_jtag, forbid_jtag, psram_4mb);
     OS_Terminate();
 }
