@@ -168,8 +168,17 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 			MI_CpuCopyFast( (void*)SYSM_CARD_ROM_HEADER_BAK, (void*)HW_TWL_CARD_ROM_HEADER_BUF, HW_TWL_CARD_ROM_HEADER_BUF_SIZE );
         }
 #ifdef SYSM_NO_LOAD
-		// セキュア領域をテンポラリから常駐モジュールへコピー
-		MI_CpuCopyFast( (void*)SYSM_CARD_NTR_SECURE_BUF, dh->s.main_ram_address, SECURE_AREA_SIZE );
+        // セキュア領域をテンポラリから常駐モジュールへコピー
+        {
+            u32 *dst = dh->s.main_ram_address;
+            u32 *src = (void*)SYSMi_GetWork()->romRelocateInfo[0].src;
+            // 再配置がある場合は再配置前アドレスへコピー
+            if ( src )
+            {
+                dst = src;
+            }
+            MI_CpuCopyFast( (void*)SYSM_CARD_NTR_SECURE_BUF, dst, SECURE_AREA_SIZE );
+        }
 #endif
 
         // デバッガによるROMエミュレーション時はNTR-ROMヘッダバッファの
