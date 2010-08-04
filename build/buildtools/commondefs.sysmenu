@@ -23,6 +23,9 @@ MACRO_FLAGS	+= -DSYSM_FOR_CTR
 ifdef SYSM_NO_LOAD
 MACRO_FLAGS	+= -DSYSM_NO_LOAD
 endif
+ifdef SYSM_NO_ES
+MACRO_FLAGS	+= -DSYSM_NO_ES
+endif
 endif
 
 NITRO_NO_STD_PCHDR = TRUE # プリコンパイルヘッダ抑止

@@ -2230,7 +2230,9 @@ static void SYSMi_makeTitleIdList( void )
     start = OS_GetTick();
 
     // とりあえずゼロクリア
+#ifndef SYSM_NO_ES
     MI_CpuClear8( (void *)HW_OS_TITLE_ID_LIST, HW_OS_TITLE_ID_LIST_SIZE );
+#endif
 
     // これから起動するアプリがTWLアプリでない
     if( !hs->platform_code )
@@ -2278,7 +2280,9 @@ static void SYSMi_makeTitleIdList( void )
         if( same_maker_code )
         {
             // リストに追加
+#ifndef SYSM_NO_ES
             list->TitleID[count] = id;
+#endif
             // sameMakerFlagをON
             list->sameMakerFlag[count/8] |= (u8)(0x1 << (count%8));
         }
@@ -2289,7 +2293,9 @@ static void SYSMi_makeTitleIdList( void )
           )
         {
             // リストに追加してジャンプ可能フラグON
+#ifndef SYSM_NO_ES
             list->TitleID[count] = id;
+#endif
             list->appJumpFlag[count/8] |= (u8)(0x1 << (count%8));
         }
 
@@ -2306,7 +2312,9 @@ static void SYSMi_makeTitleIdList( void )
                 list->privateFlag[count/8] |= (u8)(0x1 << (count%8));
             }
             // リストに強制追加
+#ifndef SYSM_NO_ES
             list->TitleID[count] = id;
+#endif
         }else
         {
             // セキュアアプリでない && メーカーコードが同じ
@@ -2317,13 +2325,17 @@ static void SYSMi_makeTitleIdList( void )
                 {
                     list->publicFlag[count/8] |= (u8)(0x1 << (count%8));
                     // リストに追加
+#ifndef SYSM_NO_ES
                     list->TitleID[count] = id;
+#endif
                 }
                 if(pe_hs->private_save_data_size != 0)
                 {
                     list->privateFlag[count/8] |= (u8)(0x1 << (count%8));
                     // リストに追加
+#ifndef SYSM_NO_ES
                     list->TitleID[count] = id;
+#endif
                 }
             }
         }
