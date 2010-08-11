@@ -37,6 +37,7 @@
 
 // define data-----------------------------------------------------------------
 #define INIT_DEVICES_LIKE_UIG_LAUNCHER
+#define DISABLE_SLEEP
 
 // デバッグ用時間計測スイッチ
 #define MEASURE_TIME                1
