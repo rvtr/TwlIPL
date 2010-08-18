@@ -26,6 +26,9 @@ endif
 ifdef SYSM_NO_ES
 MACRO_FLAGS	+= -DSYSM_NO_ES
 endif
+ifdef SYSM_NO_WLFIRM
+MACRO_FLAGS	+= -DSYSM_NO_WLFIRM
+endif
 endif
 
 NITRO_NO_STD_PCHDR = TRUE # プリコンパイルヘッダ抑止

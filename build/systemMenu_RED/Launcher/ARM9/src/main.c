@@ -240,7 +240,9 @@ void TwlMain( void )
 #endif
 
      //NAMの初期化
+#if !defined(SYSM_NO_ES) || !defined(SYSM_NO_WLFIRM)
     NAM_Init( Alloc, Free );
+#endif // ! SYSM_NO_ES || ! SYSM_NO_WLFIRM
 
     OS_TPrintf( "SYSM_work size = 0x%x\n", sizeof(SYSM_work) );
 
@@ -317,6 +319,8 @@ void TwlMain( void )
     // end時間計測１-c
     MEASURE_RESULT( start, "SYSM_ReadParameters: %dms\n" );
 
+#ifndef SYSM_NO_ES
+
     // start時間計測4
     MEASURE_START(start);
 
@@ -371,6 +375,8 @@ void TwlMain( void )
     }
     // end時間計測5
     MEASURE_RESULT( start, "GetNandTitleList : %dms\n" );
+
+#endif // SYSM_NO_ES
 
     // start時間計測6
     MEASURE_START(start);
@@ -451,9 +457,11 @@ void TwlMain( void )
     MEASURE_START(start);
 
     // 無線ファームウェアを無線モジュールにダウンロードする。
+#ifndef SYSM_NO_WLFIRM
     if( FALSE == InstallWlanFirmware( SYSM_IsHotStart() ) ) {
         OS_TPrintf( "ERROR: Wireless firmware download failed!\n" );
     }
+#endif // SYSM_NO_WLFIRM
 
     // end時間計測8
     MEASURE_RESULT( start, "Load WlanFirm Time : %dms\n" );
@@ -483,6 +491,7 @@ MAIN_LOOP_START:
         ReadTP();                                               // TP入力の取得
 
         switch( state ) {
+#ifndef SYSM_NO_ES
         case LOGODEMO_INIT:
             LogoInit();
             // 音鳴らすテスト
@@ -525,9 +534,12 @@ MAIN_LOOP_START:
                 state = LOAD_START;
             }
             break;
+#endif // SYSM_NO_ES
         case LOAD_START:
             if( IsFinishedLoadSharedFont()                      // ダイレクトブートの時は、フォントロード終了をここでチェック
+#ifndef SYSM_NO_WLFIRM
                 && PollingInstallWlanFirmware()
+#endif// SYSM_NO_WLFIRM
 #ifndef SYSM_DISABLE_WDS_SCAN                                       // アプリブート前にWDSスキャンは終了しておく必要がある
                 && ( WDS_WrapperStopScan() != WDSWRAPPER_ERRCODE_OPERATING )
 #endif // SYSM_DISABLE_WDS_SCAN
@@ -554,10 +566,12 @@ MAIN_LOOP_START:
                 state = AUTHENTICATE;
 #endif // SYSM_NO_LOAD
             }
+#ifndef SYSM_NO_LOAD
             if( !direct_boot )
             {
                 (void)LauncherFadeout( sp_titleList ); // ダイレクトブートでないときはフェードアウトも行う
             }
+#endif // SYSM_NO_LOAD
             if( ( end == 0 ) &&
                 SYSM_IsLoadTitleFinished() ) {
                 end = OS_GetTick();
@@ -573,9 +587,14 @@ MAIN_LOOP_START:
             }
             break;
         case AUTHENTICATE:
+#ifdef SYSM_NO_LOAD
+            if( direct_boot )
+#else // SYSM_NO_LOAD
             if( ( direct_boot || ( !direct_boot && LauncherFadeout( sp_titleList ) ) ) &&
                 SYSM_IsAuthenticateTitleFinished()
-                ) {
+                )
+#endif // SYSM_NO_LOAD
+            {
                 // メインループ開始から検証終了までの間に起きたFATALの処理
                 if( UTL_IsFatalError() ) {
                     // FATALエラー処理
@@ -612,6 +631,7 @@ MAIN_LOOP_START:
         }
 
         // カードアプリリストの取得（スレッドで随時カード挿抜を通知されるものをメインループで取得）
+#ifndef SYSM_NO_ES
         {
             BOOL changed;
             sp_titleList = SYSM_GetCardTitleList( &changed );
@@ -620,8 +640,10 @@ MAIN_LOOP_START:
                 OS_TPrintf( "Change CARD status.\n" );
             }
         }
+#endif // SYSM_NO_ES
 
         // 無線ファームロードのポーリング
+#ifndef SYSM_NO_WLFIRM
         if( PollingInstallWlanFirmware() &&
             ( GetWlanFirmwareInstallFinalResult() == WLANFIRM_RESULT_SUCCESS )          // ロード成功
             ) {
@@ -637,10 +659,12 @@ MAIN_LOOP_START:
             }
 #endif // SYSM_DISABLE_WDS_SCAN
         }
+#endif // SYSM_NO_WLFIRM
 
         // コマンドフラッシュ
         (void)SND_FlushCommand(SND_COMMAND_NOBLOCK);
 
+#ifndef SYSM_NO_WLFIRM
 #ifndef DISABLE_SLEEP
         // スリープモードへの遷移
         //（無線ファームのロード完了はアプリ側でチェックしてもらう方針）
@@ -650,6 +674,7 @@ MAIN_LOOP_START:
             UTL_GoSleepMode();
         }
 #endif // DISABLE_SLEEP
+#endif // SYSM_NO_WLFIRM
     }
 }
 

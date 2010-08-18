@@ -2125,11 +2125,14 @@ void SYSM_TryToBootTitle( TitleProperty *pBootTitle )
     }
 
     // ダイレクトブート時など、まだSystemMenuVersionのデータがセットされていない場合は、ここでセットする。
+#ifndef SYSM_NO_ES
     if( *(u8 *)HW_SYSM_VER_INFO_CONTENT_LAST_INITIAL_CODE == 0 ) {
         SYSM_SetSystemMenuVersionControlData();
     }
+#endif // SYSM_NO_ES
 
     // デバッガ接続中以外の時のみTWL設定データにブートするタイトルのTitleIDとplatformCodeを保存。
+#ifndef SYSM_NO_LOAD
     if( !SYSM_IsRunOnDebugger() ||                          // スタンドアロン
         (OSi_DetectDebugger() & OS_CONSOLE_TWLDEBUGGER) ) // デバッグ時
     {
@@ -2140,6 +2143,7 @@ void SYSM_TryToBootTitle( TitleProperty *pBootTitle )
             SYSM_Free( pBuffer );
         }
     }
+#endif // SYSM_NO_LOAD
 
     // マウント情報の登録
     SYSMi_GetWork2()->bootTitleProperty = *pBootTitle;
@@ -2154,7 +2158,9 @@ void SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 #endif
 
     // タイトルIDリストの作成
+#ifndef SYSM_NO_ES
     SYSMi_makeTitleIdList();
+#endif // SYSM_NO_ES
 
     // バンブラパッチ
     SYSMi_applyPatchToBandBrothers();

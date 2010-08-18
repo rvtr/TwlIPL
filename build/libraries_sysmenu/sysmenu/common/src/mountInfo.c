@@ -342,6 +342,7 @@ static void SYSMi_ModifySaveDataMount( LauncherBootType bootType, NAMTitleId tit
 
 void SYSMi_SetBootSRLPathToWork2( TitleProperty *pBootTitle )
 {
+#ifndef SYSM_NO_LOAD
 	static char path[ FS_ENTRY_LONGNAME_MAX ];
 	
 	switch( pBootTitle->flags.bootType )
@@ -365,6 +366,12 @@ void SYSMi_SetBootSRLPathToWork2( TitleProperty *pBootTitle )
 	}else {
 		MI_CpuClearFast( SYSMi_GetWork2()->bootContentPath, OS_MOUNT_PATH_LEN );
 	}
+
+#else // SYSM_NO_LOAD
+    STD_CopyLStringZeroFill( SYSMi_GetWork2()->bootContentPath, (char*)(HW_TWL_SHARED_RESERVED_END - OS_MOUNT_PATH_LEN), OS_MOUNT_PATH_LEN );
+
+#endif // SYSM_NO_LOAD
+
 	OS_TPrintf( "boot SRL path : %s\n", SYSMi_GetWork2()->bootContentPath );	// ¦OS_Init‘O‚ÅŒÄ‚Ô‚ÆPrintf‚Å‚«‚È‚¢‚Ì‚Å’ˆÓB
 }
 

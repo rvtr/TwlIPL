@@ -220,6 +220,7 @@ TitleProperty *SYSM_ReadParameters( void )
             // NANDからTWL本体設定データをリード
             BOOL isRead = LCFG_ReadTWLSettings( (u8 (*)[LCFG_READ_TEMP])pBuffer );
 
+#ifndef SYSM_NO_LOAD
             // リード失敗ファイルが存在する場合は、ファイルをリカバリ
             if( LCFG_RecoveryTWLSettings() ) {
                 if( !isRead ) {
@@ -231,12 +232,15 @@ TitleProperty *SYSM_ReadParameters( void )
                 // リカバリ失敗時は、FALTALエラー
                 UTL_SetFatalError( FATAL_ERROR_TWLSETTINGS );
             }
+#endif // SYSM_NO_LOAD
             SYSM_Free( pBuffer );
         }else {
             // メモリ確保ができなかった時は、FATALエラー
             UTL_SetFatalError( FATAL_ERROR_TWLSETTINGS );
         }
+#ifndef SYSM_NO_LOAD
         LCFG_VerifyAndRecoveryNTRSettings();                                    // NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
+#endif // SYSM_NO_LOAD
     }
 
     //-----------------------------------------------------
@@ -277,10 +281,14 @@ TitleProperty *SYSM_ReadParameters( void )
     }
 #endif // SDK_SUPPORT_PMIC_2
 
+#ifndef SYSM_NO_LOAD
+
     // RTC補正
     SYSMi_WriteAdjustRTC();
     // RTC値のチェック
     SYSMi_CheckRTC();
+
+#endif // SYSM_NO_LOAD
 
     //-----------------------------------------------------
     // ARM7の処理待ち
@@ -562,6 +570,8 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
         OS_EncodeDeliverArg();
     }
 
+#ifndef SYSM_NO_ES
+
     // 「本体設定ブート」有効時は、本体設定プート決定
     if( isBootMSET ) {
         s_bootTitleBuf.titleID = SYSMi_getTitleIdOfMachineSettings();
@@ -576,6 +586,8 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
         return &s_bootTitleBuf;
     }
 
+#endif // SYSM_NO_ES
+
     return NULL;                                                    // 「ブート内容未定」でリターン
 }
 
@@ -585,6 +597,9 @@ static TitleProperty *SYSMi_CheckShortcutBoot2( void )
 static OSTitleId SYSMi_getTitleIdOfMachineSettings( void )
 {
     OSTitleId ret = NULL;
+
+#ifndef SYSM_NO_ES
+
     int l;
     int getNum;
     int validNum = 0;
@@ -610,6 +625,8 @@ static OSTitleId SYSMi_getTitleIdOfMachineSettings( void )
         }
     }
     SYSM_Free( pTitleIDList );
+
+#endif // SYSM_NO_ES
 
     return ret;
 }
