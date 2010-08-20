@@ -15,6 +15,8 @@
 	ex.) TWL_IPL_RED_ROOT=c:/TwlIPL
   TWL_IPL_RED_PRIVATE_ROOT（TwlIPL_private を利用する場合のみ）
 	ex.) TWL_IPL_RED_PRIVATE_ROOT=c:/TwlIPL_private
+  TWL_KEYSDIR（互換カーネルに内包するNANDファームを作成する場合）
+    ex.) TWL_KEYSDIR=$(HORIZON_ROOT)/resources/cert/twl.dummy
 
 
 3.開発実機向けのビルド例
@@ -25,7 +27,7 @@
 
     ② TwlSDK(UIG_plus)チェックアウト
         http://10.114.1.206:80/~twl-dev/svn/TwlSDK/branches/branch-5_0rcplus_UIG_plus
-       ビルド確認: r11366
+       ビルド確認: r11367
 
        タッチパネルが使えるようにするパッチ
        TwlSDK\build\libraries\cdc\ARM7.TWL\src\cdc_api.c  を
@@ -53,6 +55,9 @@
        source ./setup
        ＃ TWL_IPL_RED_ROOTが定義されていないと、
        ＃ lcfgの署名の算出が実行されないTwlSDKになってしまう。
+
+       互換カーネルに内包するNANDファームの作成時
+       export TWL_KEYSDIR=$(HORIZON_ROOT)/resources/cert/twl.dummy
 
     ⑤ TwlSDKをビルド（同じCygwin上で続ける）
        ビルド確認：
