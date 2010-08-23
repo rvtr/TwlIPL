@@ -383,6 +383,10 @@ BOOL InstallWlanFirmware( BOOL isHotStartWLFirm )
 	return TRUE;
 #endif // SYSM_DISABLE_WLFIRM_LOAD
 
+    if (!NVRAMi_IsInitialized()) {
+        NVRAMi_Init();
+    }
+
 	if( header->titleID_Lo[3] == '4' )
 	{
 		OS_TPrintf("[Wlan Firm]  This is DEV_UIG_Launcher. Wireless firmware download skipped.\n");
