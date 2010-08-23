@@ -1020,12 +1020,14 @@ OS_TPrintf("RebootSystem failed: cant read file(%d, %d)\n", source[i], len);
     SYSM_SetLoadSucceeded(TRUE);
 
     // ここでスタック壊れていないかチェック
+#ifndef SYSM_NO_LOAD
     if( OS_STACK_NO_ERROR != OS_GetStackStatus( &s_thread ) )
     {
         OS_TPrintf("RebootSystem warning: stack was broken!\n");
         // デバグ用。ERRORLOG_Init()がすでに呼ばれている事前提
         ERRORLOG_Printf( "SYSMi_LoadTitleThreadFunc: stack was broken! %d\n", OS_GetStackStatus( &s_thread ) );
     }
+#endif // SYSM_NO_LOAD
 
     return;
 
@@ -1143,8 +1145,6 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
         OS_Sleep( 2 );
     }
 
-#endif // SYSM_NO_LOAD
-
     // DataOnlyなアプリはロードも起動もしない
     if( pBootTitle->titleID & TITLE_ID_DATA_ONLY_FLAG_MASK )
     {
@@ -1175,7 +1175,12 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
         OS_CreateThread( &s_thread, (void (*)(void *))SYSMi_LoadTitleThreadFunc, (void*)pBootTitle, stack+STACK_SIZE/sizeof(u64), STACK_SIZE,THREAD_PRIO );
         OS_WakeupThreadDirect( &s_thread );
 
-    }else {
+    }
+    else
+
+#endif // SYSM_NO_LOAD
+
+    {
         // アプリロード済み
         SYSM_SetLoadSucceeded(TRUE);
         SYSM_SetLoadFinished(TRUE);
@@ -1192,12 +1197,16 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 // アプリロード済みかどうかをチェック
 BOOL SYSM_IsLoadTitleFinished( void )
 {
+#ifndef SYSM_NO_LOAD
+    return TRUE;
+#else // SYSM_NO_LOAD
     // ロード済みの時は、常にTRUE
     if( !SYSMi_GetWork()->flags.arm9.isLoadFinished ) {
         // ロードスレッドの完了をチェック。
         SYSM_SetLoadFinished(OS_IsThreadTerminated( &s_thread ));
     }
     return SYSMi_GetWork()->flags.arm9.isLoadFinished ? TRUE : FALSE;
+#endif // SYSM_NO_LOAD
 }
 
 
@@ -2236,9 +2245,7 @@ static void SYSMi_makeTitleIdList( void )
     start = OS_GetTick();
 
     // とりあえずゼロクリア
-#ifndef SYSM_NO_ES
     MI_CpuClear8( (void *)HW_OS_TITLE_ID_LIST, HW_OS_TITLE_ID_LIST_SIZE );
-#endif
 
     // これから起動するアプリがTWLアプリでない
     if( !hs->platform_code )
@@ -2286,9 +2293,8 @@ static void SYSMi_makeTitleIdList( void )
         if( same_maker_code )
         {
             // リストに追加
-#ifndef SYSM_NO_ES
             list->TitleID[count] = id;
-#endif
+
             // sameMakerFlagをON
             list->sameMakerFlag[count/8] |= (u8)(0x1 << (count%8));
         }
@@ -2299,9 +2305,8 @@ static void SYSMi_makeTitleIdList( void )
           )
         {
             // リストに追加してジャンプ可能フラグON
-#ifndef SYSM_NO_ES
             list->TitleID[count] = id;
-#endif
+
             list->appJumpFlag[count/8] |= (u8)(0x1 << (count%8));
         }
 
@@ -2318,9 +2323,7 @@ static void SYSMi_makeTitleIdList( void )
                 list->privateFlag[count/8] |= (u8)(0x1 << (count%8));
             }
             // リストに強制追加
-#ifndef SYSM_NO_ES
             list->TitleID[count] = id;
-#endif
         }else
         {
             // セキュアアプリでない && メーカーコードが同じ
@@ -2331,17 +2334,13 @@ static void SYSMi_makeTitleIdList( void )
                 {
                     list->publicFlag[count/8] |= (u8)(0x1 << (count%8));
                     // リストに追加
-#ifndef SYSM_NO_ES
                     list->TitleID[count] = id;
-#endif
                 }
                 if(pe_hs->private_save_data_size != 0)
                 {
                     list->privateFlag[count/8] |= (u8)(0x1 << (count%8));
                     // リストに追加
-#ifndef SYSM_NO_ES
                     list->TitleID[count] = id;
-#endif
                 }
             }
         }

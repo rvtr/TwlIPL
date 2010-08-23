@@ -443,12 +443,14 @@ void TwlMain( void )
     SND_LockChannel((1 << L_CHANNEL) | (1 << R_CHANNEL), 0);
 
     /* ストリームスレッドの起動 */
+#ifndef SYSM_NO_ES
     OS_CreateThread(&s_strmThread,
                     StrmThread,
                     NULL,
                     s_strmThreadStack + THREAD_STACK_SIZE / sizeof(u64),
                     THREAD_STACK_SIZE, STREAM_THREAD_PRIO);
     OS_WakeupThreadDirect(&s_strmThread);
+#endif // SYSM_NO_ES
 
     // end時間計測7
     MEASURE_RESULT( start, "time 7 (etc...) : %dms\n" );

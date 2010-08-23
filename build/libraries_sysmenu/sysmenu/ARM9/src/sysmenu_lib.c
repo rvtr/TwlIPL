@@ -214,6 +214,9 @@ TitleProperty *SYSM_ReadParameters( void )
     //-----------------------------------------------------
     // 本体設定データのリード（※必ずHWSecureInforリード後に実行すること。LanguageBitmapを判定に使うため）
     //-----------------------------------------------------
+#ifdef SYSM_NO_SETTINGFILE
+    MI_CpuCopy8( (void*)HW_PARAM_TWL_SETTINGS_DATA_DEFAULT, LCFGi_GetTSD(), sizeof(LCFGTWLSettingsData) );
+#else // SYSM_NO_SETTINGFILE
     {
         u8 *pBuffer = SYSM_Alloc( LCFG_READ_TEMP );
         if( pBuffer ) {
@@ -242,6 +245,7 @@ TitleProperty *SYSM_ReadParameters( void )
         LCFG_VerifyAndRecoveryNTRSettings();                                    // NTR設定データを読み出して、TWL設定データとベリファイし、必要ならリカバリ
 #endif // SYSM_NO_LOAD
     }
+#endif // SYSM_NO_SETTINGFILE
 
     //-----------------------------------------------------
     // システム領域に本体設定をコピー
@@ -386,8 +390,10 @@ static void SYSMi_CopyLCFGDataHWInfo( u32 dst_addr )
     *(u32 *)HW_PRELOAD_PARAMETER_ADDR = dst_addr;
 
     // HWノーマル情報、HWセキュア情報をメモリに展開しておく
+#ifndef SYSM_NO_HWINFO
     MI_CpuCopyFast( LCFGi_GetHWN(), (void *)HW_PARAM_TWL_HW_NORMAL_INFO, sizeof(LCFGTWLHWNormalInfo) );
     MI_CpuCopyFast( LCFGi_GetHWS(), (void *)HW_HW_SECURE_INFO, HW_HW_SECURE_INFO_END - HW_HW_SECURE_INFO );
+#endif // SYSM_NO_HWINFO
 }
 
 
