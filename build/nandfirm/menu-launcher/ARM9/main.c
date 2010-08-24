@@ -319,6 +319,8 @@ void TwlMain( void )
     // 3: after PostInit
     PUSH_PROFILE();
 
+#ifndef FIRM_FOR_CTR
+
     if ( !TryResolveSrl() )
     {
         goto end;
@@ -326,6 +328,8 @@ void TwlMain( void )
     point++;    // 2
     // 5: after FS_ResolveSrl
     PUSH_PROFILE();
+
+#endif // FIRM_FOR_CTR
 
     PXI_NotifyID( FIRM_PXI_ID_SET_PATH );
     // 6: after PXI
