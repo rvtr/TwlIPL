@@ -329,13 +329,9 @@ void TwlMain( void )
     // 5: after FS_ResolveSrl
     PUSH_PROFILE();
 
-#endif // FIRM_FOR_CTR
-
     PXI_NotifyID( FIRM_PXI_ID_SET_PATH );
     // 6: after PXI
     PUSH_PROFILE();
-
-#ifndef FIRM_FOR_CTR
 
     /* ES (CRYPTO) ƒ‰ƒCƒuƒ‰ƒŠ‚Í‚±‚±‚Ü‚Å */
     /* SVN_RSA ‚Í‚±‚±‚©‚ç*/

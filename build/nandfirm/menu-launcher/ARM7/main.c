@@ -210,6 +210,8 @@ void TwlSpMain( void )
     PUSH_PROFILE();
     SetDebugLED(++step); // 0x89
 
+#ifndef FIRM_FOR_CTR
+
 //    PM_BackLightOn( FALSE );
 
     if ( PXI_RecvID() != FIRM_PXI_ID_SET_PATH )
@@ -222,8 +224,6 @@ void TwlSpMain( void )
     SetDebugLED(++step); // 0x8a
 
 //    PM_BackLightOn( FALSE );
-
-#ifndef FIRM_FOR_CTR
 
     if ( (fd = FS_OpenSrl()) < 0 )
     {
