@@ -1955,11 +1955,16 @@ static BOOL ChangeGameMode(void)
     // ---------------------- Secure Mode ----------------------
     state = s_funcTable[s_isRomEmu].SetPNG_S(&s_cbData);
     SetMCSCR();
+    state  = s_funcTable[s_isRomEmu].ReadID_S(&s_cbData); // ’Ç‰Á
+    state  = s_funcTable[s_isRomEmu].ReadSegment_S(&s_cbData); // ’Ç‰Á
     state = s_funcTable[s_isRomEmu].ChangeMode_S(&s_cbData);
 
     // ---------------------- Game Mode ----------------------
     state = ReadIDGame(&s_cbData);
 
+    state = LoadBannerData(); // ’Ç‰Á
+    state = CheckCardAuthCode(); // ’Ç‰Á
+    
     if(s_cbData.id_nml != s_cbData.id_gam){
         state = HOTSW_ID_CHECK_ERROR;
     }
