@@ -11,9 +11,9 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date:: 
-# $Rev: 
-# $Author: 
+# $Date::
+# $Rev:
+# $Author:
 #----------------------------------------------------------------------------
 
 # バージョンファイルとTADを生成する
@@ -25,8 +25,8 @@
 
 override TARGET_PLATFORM := TWL
 
-SUBMAKES				=	 Makefile.J Makefile.E Makefile.P Makefile.U Makefile.C Makefile.K Makefile.J.kst
-
+#SUBMAKES				=	 Makefile.J Makefile.E Makefile.P Makefile.U Makefile.C Makefile.K Makefile.J.kst
+SUBMAKES				=	 Makefile.A
 
 include $(TWL_IPL_RED_ROOT)/build/buildtools/commondefs
 include $(TWL_IPL_RED_ROOT)/build/buildtools/modulerules
