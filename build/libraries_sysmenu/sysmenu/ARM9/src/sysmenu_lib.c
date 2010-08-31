@@ -189,6 +189,10 @@ TitleProperty *SYSM_ReadParameters( void )
     //-----------------------------------------------------
     // HW情報のリード
     //-----------------------------------------------------
+#ifdef SYSM_NO_HWINFO
+    MI_CpuCopyFast( (void *)HW_PARAM_TWL_HW_NORMAL_INFO, LCFGi_GetHWN(), sizeof(LCFGTWLHWNormalInfo) );
+    MI_CpuCopyFast( (void *)HW_HW_SECURE_INFO, LCFGi_GetHWS(), HW_HW_SECURE_INFO_END - HW_HW_SECURE_INFO );
+#else // SYSM_NO_HWINFO
     // ノーマル情報リード
     if( !LCFG_ReadHWNormalInfo() ) {
 #ifndef SYSM_BUILD_FOR_PRODUCTION_TEST
@@ -203,6 +207,7 @@ TitleProperty *SYSM_ReadParameters( void )
         UTL_SetFatalError( FATAL_ERROR_HWINFO_SECURE );
 #endif // SYSM_BUILD_FOR_PRODUCTION_TEST
     }
+#endif // SYSM_NO_HWINFO
 
     //-----------------------------------------------------
     // システム領域にHWInfoをコピー
@@ -390,8 +395,8 @@ static void SYSMi_CopyLCFGDataHWInfo( u32 dst_addr )
     *(u32 *)HW_PRELOAD_PARAMETER_ADDR = dst_addr;
 
     // HWノーマル情報、HWセキュア情報をメモリに展開しておく
-#ifndef SYSM_NO_HWINFO
     MI_CpuCopyFast( LCFGi_GetHWN(), (void *)HW_PARAM_TWL_HW_NORMAL_INFO, sizeof(LCFGTWLHWNormalInfo) );
+#ifndef SYSM_NO_HWINFO
     MI_CpuCopyFast( LCFGi_GetHWS(), (void *)HW_HW_SECURE_INFO, HW_HW_SECURE_INFO_END - HW_HW_SECURE_INFO );
 #endif // SYSM_NO_HWINFO
 }

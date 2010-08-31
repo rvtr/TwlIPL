@@ -24,7 +24,7 @@ export SYSM_NO_LOAD = TRUE
 export SYSM_NO_ES = TRUE
 export SYSM_NO_WLFIRM = TRUE
 export SYSM_NO_SETTINGFILE = TRUE
-# export SYSM_NO_HWINFO = TRUE
+export SYSM_NO_HWINFO = TRUE
 
 # COMPILE SWITCH　※最終ROM作成時は、全てFALSEにセットする。SUBDIRのビルド時にも影響するようexportで環境変数設定する。
 export SYSM_DO_NOT_SHOW_LAUNCHER		=	FALSE
