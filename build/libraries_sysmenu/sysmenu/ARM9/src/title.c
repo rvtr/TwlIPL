@@ -1160,6 +1160,8 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
         UTL_SetFatalError(FATAL_ERROR_EJECT_CARD_AFTER_LOAD_START);
     }
 
+#endif // SYSM_NO_LOAD
+
     s_loadstart = TRUE;
     s_loadTimes++; // ロード回数のチェック用、二回目以降は非対応の実装なので
 
@@ -1177,9 +1179,6 @@ void SYSM_StartLoadTitle( TitleProperty *pBootTitle )
 
     }
     else
-
-#endif // SYSM_NO_LOAD
-
     {
         // アプリロード済み
         SYSM_SetLoadSucceeded(TRUE);
