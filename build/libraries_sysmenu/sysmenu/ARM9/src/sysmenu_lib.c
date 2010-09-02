@@ -415,10 +415,12 @@ static void SYSMi_CopyLCFGDataSettings( void )
     }
 
     // NTR本体設定データをメモリに展開しておく
+#ifndef SYSM_NO_SETTINGFILE
     {
         LCFG_NSD_SetLanguage( LCFG_NSD_GetLanguageEx() );
         MI_CpuCopy8( LCFGi_GetNSD(), OS_GetSystemWork()->nvramUserInfo, sizeof(LCFGNTRSettingsData) );
     }
+#endif // SYSM_NO_SETTINGFILE
 }
 
 
