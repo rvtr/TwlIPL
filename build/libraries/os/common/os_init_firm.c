@@ -167,6 +167,8 @@ void OS_InitFIRM(void)
 
 #endif // SDK_ARM9
 
+#ifndef FIRM_FOR_CTR
+    // CTRでは互換カーネルへ内包させるため開発鍵を許可
 #ifndef FIRM_USE_PRODUCT_KEYS
     // 開発鍵を使っている時は量産用CPUでは起動しない
 #ifdef SDK_ARM9
@@ -185,6 +187,7 @@ void OS_InitFIRM(void)
     {
         OS_Terminate();
     }
+#endif // FIRM_FOR_CTR
 }
 
 #pragma profile reset

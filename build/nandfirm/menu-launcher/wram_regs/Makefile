@@ -17,7 +17,7 @@
 #----------------------------------------------------------------------------
 
 override TARGET_PLATFORM	:= TWL
-override TARGET_CODEGEN		:= ARM
+override TARGET_CODEGEN		:= ALL
 override TWL_ARCHGEN		:= LIMITED
 
 override TARGET_FINALROM	:= TRUE

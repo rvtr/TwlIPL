@@ -113,6 +113,8 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
 #endif
     mem_list[i++] = NULL;
     SDK_ASSERT(i <= sizeof(mem_list)/sizeof(mem_list[0]));
+#ifndef FIRM_FOR_CTR
+    // CTRでは互換カーネルへ内包させるため開発鍵を許可
 #ifndef FIRM_USE_PRODUCT_KEYS
     // 開発鍵を使っている時は量産用CPUではブートしない
 #ifdef SDK_ARM9
@@ -131,6 +133,7 @@ void OS_BootWithRomHeaderFromFIRM( ROM_Header* rom_header )
     {
         OS_Terminate();
     }
+#endif // FIRM_FOR_CTR
     REBOOTi_EnableCtrFirm();
     REBOOT_Execute(entry, wram_reg, mem_list, code_buf, stack_top, target, scfg, set_jtag, forbid_jtag, psram_4mb);
     OS_Terminate();
