@@ -254,7 +254,9 @@ void TwlMain( void )
     // システムの初期化----------------
     InitAllocator();                                            // ※SYSM_Init以外のSYSMライブラリ関数を呼ぶ前に
 
+#ifndef SYSM_FOR_CTR
     ERRORLOG_Init( Alloc, Free );
+#endif // SYSM_FOR_CTR
 
     // end時間計測１
     MEASURE_RESULT( start, "System Init Time 1: %dms\n" );
@@ -734,7 +736,9 @@ static void PrintError( void )
     PrintfSJIS( 128, 12, TXT_COLOR_BLUE, "SDK:%s", g_strSDKSvnRevision );
     error_code = UTL_GetFatalError();
     PrintfSJIS( 2, 25, TXT_COLOR_RED,"ERROR! - 0x%016llx\n", error_code );
+#ifndef SYSM_FOR_CTR
     ERRORLOG_Write(error_code);
+#endif // SYSM_FOR_CTR
     for(l=0;l<64;l++)
     {
         if( error_code & 0x1 )
