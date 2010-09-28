@@ -2171,7 +2171,9 @@ void SYSM_TryToBootTitle( TitleProperty *pBootTitle )
 #endif // SYSM_NO_ES
 
     // バンブラパッチ
+#ifndef SYSM_FOR_CTR
     SYSMi_applyPatchToBandBrothers();
+#endif // SYSM_FOR_CTR
 
     BOOT_Ready();   // never return.
 
