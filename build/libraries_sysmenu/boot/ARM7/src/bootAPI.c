@@ -183,6 +183,7 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
 
         // デバッガによるROMエミュレーション時はNTR-ROMヘッダバッファの
         // ゲームコマンドパラメータをスクランブルOFF設定に書き換える
+#ifndef SYSM_FOR_CTR
         if ( SYSM_IsRunOnDebugger() )
         {
             // NitroSDKバグ対策でブートメディア種別に関わらずROMヘッダを常時書き換え
@@ -190,6 +191,7 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
         }
         // カードROMヘッダ（非キャッシュ領域）は常時設定
         ch->s.game_cmd_param = SYSMi_GetWork()->gameCommondParam;
+#endif
 
 		// この処理は、DSダウンロードプレイ側で行う。
 		// MI_CpuCopyFast ( ch, (void *)MB_CARD_ROM_HEADER_ADDRESS, 0x160);
