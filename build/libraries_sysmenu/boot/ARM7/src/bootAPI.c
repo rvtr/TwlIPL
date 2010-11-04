@@ -189,9 +189,9 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
             // NitroSDKバグ対策でブートメディア種別に関わらずROMヘッダを常時書き換え
             dh->s.game_cmd_param &= ~SCRAMBLE_MASK;
         }
+#endif
         // カードROMヘッダ（非キャッシュ領域）は常時設定
         ch->s.game_cmd_param = SYSMi_GetWork()->gameCommondParam;
-#endif
 
 		// この処理は、DSダウンロードプレイ側で行う。
 		// MI_CpuCopyFast ( ch, (void *)MB_CARD_ROM_HEADER_ADDRESS, 0x160);
