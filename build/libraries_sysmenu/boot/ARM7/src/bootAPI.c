@@ -214,33 +214,31 @@ void MYFUNC_MajikonPatche(void)
 
 #define MAJIKON_APP_ARM7_STATIC_BUFFER        0x02380000
 #define MAJIKON_APP_ARM7_STATIC_BUFFER_SIZE   0x40000
-/*
-static u32 test_Binary[] =
-{
-    0x10000001, 0x20000002, 0x30000003, 0x40000004,
-    0x50000005, 0x60000006, 0x70000007, 0x80000008,
-    0x90000009, 0xa000000a, 0xb000000b, 0xc000000c,
-    0xd000000d, 0xe000000e, 0xf000000f, 0x10000010,
-    0x11000011, 0x12000012, 0x13000013, 0x14000014,
-    0x15000015, 0x16000016, 0x17000017, 0x18000018,
-    0x19000019, 0x1a00001a, 0x1b00001b, 0x1c00001c,
-    0x1d00001d, 0x1e00001e, 0x1f00001f, 0x20000020,
-    0x21000021, 0x22000022, 0x23000023, 0x24000024,
-    0x25000025, 0x26000026, 0x27000027, 0x28000028,
-    0x29000029, 0x2a00002a, 0x2b00002b, 0x2c00002c,
-    0x2d00002d, 0x2e00002e, 0x2f00002f
-};
- */
 
 static u32 target_code[] =
 {
-    0xE3A0C301, 0xE58CC208, 0xE59F110C, 0xE59F210C,
-/*
-    0xE92D4008, 0xEB000DF7, 0xEB00000B, 0xEBFFF9DD,
-    0xEBFFF89B, 0xEB000234, 0xEB00083D, 0xEB0002E5,
-    0xEB000371, 0xEBFFFC7F, 0xEB000634, 0xEB00069F, 
-    0xEB002663, 0xE8BD4008, 0xE12FFF1E
-  */
+    0xE3A0C301, 0xE58CC208, 0xEB000069, 0xE59F3144,
+    0xE2432040, 0xE59F1140, 0xE1520003, 0xB4910004,
+    0xB4820004, 0xBAFFFFFB, 0xE59F1130, 0xE59F2130,
+    0xE2823028, 0xE4910004, 0xE4820004, 0xE1520003,
+    0xBAFFFFFB, 0xE59F011C, 0xE59F111C, 0xE59F2110,
+    0xE1A0E00F, 0xE12FFF12, 0xE3A00013, 0xE121F000,
+    0xE59FD108, 0xE3A00012, 0xE121F000, 0xE59FD100,
+    0xE59F1100, 0xE04D1001, 0xE24DD004, 0xE3A0001F,
+    0xE12FF000, 0xE241D004, 0xE59F00EC, 0xE0411000,
+    0xE59F20DC, 0xE3A00000, 0xE1510002, 0xB4810004,
+    0xBAFFFFFC, 0xE59F00D4, 0xE5901000, 0xE3510000,
+    0x059F10CC, 0x05801000, 0xEB000075, 0xE3A01000,
+    0xE59F30C0, 0xE593000C, 0xE5932010, 0xE0522000,
+    0xCB0000A8, 0xEB000043, 0xE59F10AC, 0xE3A00000,
+    0xE3800C03, 0xE1C100B0, 0xE3A00000, 0xE3800C03,
+    0xE1C100B2, 0xE59F1094, 0xE59F0094, 0xE5810000,
+    0xE59F1090, 0xE24D2028, 0xE1A0300D, 0xE1520003,
+    0xB4910004, 0xB4820004, 0xBAFFFFFB, 0xE59F0078,
+    0xE3C00003, 0xE59F1074, 0xE0411000, 0xE2811003,
+    0xE3C11003, 0xE3C114FF, 0xE3A02004, 0xE1A02C02,
+    0xE1811002, 0xE59F2058, 0xE59F3058, 0xE59FE058,
+    0xE24DC028
 };
 
 static u32 SearchBinary_Majikon( void )
@@ -275,7 +273,7 @@ static u32 SearchBinary_Majikon( void )
         search_size -= sizeof(u32);
     }
 
-    OS_TPrintf("target address : 0x%08x\n", code_end_address);
+    OS_TPrintf("\ntarget address : 0x%08x\n", code_end_address);
     OS_TPrintf("=====================================\n");
     
     return code_end_address;
@@ -323,12 +321,14 @@ BOOL BOOT_WaitStart( void )
                 0xE3A010C5, 0xE5C21000, 0xE5D21000, 0xE3110080,
                 0x1AFFFFFC, 0xE5D21000, 0xE2011010, 0xE1B01241,
                 0x112FFF1E, 0xE2800001, 0xE3500008, 0xBAFFFFB1,
-                0xE12FFF1E, 0x04004501, 0x04004500,
+                0xEAFFFFFE, 0x04004501, 0x04004500,
             };
 
+            // ↓ パッチコードにジャンプするコード。処理が戻ってこなくていいのでPCの退避は行わない
             u32 patch_jump[] =
             {
-                0xE1A0E00F, 0xE51FF004, 0x02FFF800
+                0xE51FF004, // ldr     pc, [pc, #-4]
+                0x02FFF800  // dcd     0x02fff800;
             };
             
             // カメラLED光らせる処理埋め込み
@@ -336,16 +336,6 @@ BOOL BOOT_WaitStart( void )
 
             // カメラLED光らせる処理に飛ばす処理埋め込み
             MI_CpuCopy8( patch_jump, (u32 *)target_address, sizeof(patch_jump));
-            
-            // ためしに当てたパッチ処理にジャンプ
-            asm
-            {
-                mov     lr, pc
-                ldr     pc, [pc, #-4]
-                dcd     0x02fff800;
-                // ↑の機械コード
-                // 0xE1A0E00F, 0xE51FF004, 0x02FFF800
-            }
         }
         
 		OS_Boot( OS_BOOT_ENTRY_FROM_ROMHEADER, mem_list, target );
