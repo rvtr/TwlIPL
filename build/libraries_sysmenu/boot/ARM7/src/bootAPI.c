@@ -19,6 +19,8 @@
 #include <twl/mcu.h>
 #include <twl/cdc.h>
 #include <twl/aes/ARM7/lo.h>
+#include <nitro/os.h>
+#include <nitro/code32.h>
 #include <sysmenu.h>
 #include <sysmenu/hotsw.h>
 #include <sysmenu/ds.h>
@@ -29,6 +31,8 @@
 #include "reboot.h"
 #include "internal_api.h"
 #include "../../../hotsw/ARM7/include/hotswTypes.h"
+
+#include <twl/mcu/ARM7/control.h>
 
 extern void SPI_Lock(u32 id);
 extern void SPI_Unlock(u32 id);
@@ -62,6 +66,9 @@ static void BOOTi_CheckTitleBlackList( ROM_Header_Short *pROMH );
 static void BOOTi_RebootCallback( void** entryp, void* mem_list, REBOOTTarget* target );
 static void BOOTi_SetMainMemModeForNTR( void );
 void BOOTi_SetMainMemModeForNTRCore( u32 addr );
+//void MYFUNC_MajikonPatche(void);
+
+static u32 SearchBinary_Majikon( void );
 
 // global variables--------------------------------------------------
 
@@ -120,13 +127,166 @@ static const TitleBlackList s_blackList[] = {
 
 void BOOT_Init( void )
 {
-	reg_PXI_MAINPINTF = 0x0000;
+    *( REGType16v *)0x04000180 = 0x0000;
+//	reg_PXI_MAINPINTF = 0x0000;
+}
+
+
+#define MAJIKON_PATCH_ADDR    0x02fff800
+
+/*
+void MYFUNC_MajikonPatche(void)
+{
+    int r, i;
+    
+//    OSIntrMode itrm = OS_DisableInterrupts(); // asm
+    for (r = 0; r < 8; r++)
+    {
+        // I2Ci_SendStart( id )
+        {
+            while (reg_OS_I2C_CNT & REG_OS_I2C_CNT_E_MASK){};
+            reg_OS_I2C_DAT = 0x4a;
+            reg_OS_I2C_CNT = 0xc2;
+
+            while (reg_OS_I2C_CNT & REG_OS_I2C_CNT_E_MASK){};
+            if (!(BOOL)((reg_OS_I2C_CNT & REG_OS_I2C_CNT_ACK_MASK) >> REG_OS_I2C_CNT_ACK_SHIFT))
+            {
+                continue;
+            }
+        }
+
+        // I2Ci_SendMiddle( reg )
+        {
+            while (reg_OS_I2C_CNT & REG_OS_I2C_CNT_E_MASK){};
+            i = 0;
+            while( i++ < 0x150 )
+            {
+                u32 dummy = reg_OS_I2C_CNT;
+            }
+            
+            reg_OS_I2C_DAT = MCU_REG_CAMERA_ADDR; // MCU_REG_LED_TEST_ADDR = 0x63; // 電源赤ランプ
+            reg_OS_I2C_CNT = 0xc0;
+            
+            while (reg_OS_I2C_CNT & REG_OS_I2C_CNT_E_MASK){};
+            if (!(BOOL)((reg_OS_I2C_CNT & REG_OS_I2C_CNT_ACK_MASK) >> REG_OS_I2C_CNT_ACK_SHIFT))
+            {
+                continue;
+            }
+        }
+
+        // I2Ci_SendLast( data )
+        {
+            while (reg_OS_I2C_CNT & REG_OS_I2C_CNT_E_MASK){};
+            i = 0;
+            while( i++ < 0x150 )
+            {
+                u32 dummy = reg_OS_I2C_CNT;
+            }
+            
+            reg_OS_I2C_DAT = 0x01;
+            reg_OS_I2C_CNT = 0xc0;
+
+            while (reg_OS_I2C_CNT & REG_OS_I2C_CNT_E_MASK){};
+            i = 0;
+            while( i++ < 0x150 )
+            {
+                u32 dummy = reg_OS_I2C_CNT;
+            }
+            
+            reg_OS_I2C_CNT = 0xc5;
+            
+            while (reg_OS_I2C_CNT & REG_OS_I2C_CNT_E_MASK){};
+            if (!(BOOL)((reg_OS_I2C_CNT & REG_OS_I2C_CNT_ACK_MASK) >> REG_OS_I2C_CNT_ACK_SHIFT))
+            {
+                continue;
+            }
+            else
+            {
+                break;
+            }
+        }
+        reg_OS_I2C_CNT = 0xc5;
+    }
+//    (void)OS_RestoreInterrupts(itrm); // asm
+}
+*/
+
+
+#define MAJIKON_APP_ARM7_STATIC_BUFFER        0x02380000
+#define MAJIKON_APP_ARM7_STATIC_BUFFER_SIZE   0x40000
+/*
+static u32 test_Binary[] =
+{
+    0x10000001, 0x20000002, 0x30000003, 0x40000004,
+    0x50000005, 0x60000006, 0x70000007, 0x80000008,
+    0x90000009, 0xa000000a, 0xb000000b, 0xc000000c,
+    0xd000000d, 0xe000000e, 0xf000000f, 0x10000010,
+    0x11000011, 0x12000012, 0x13000013, 0x14000014,
+    0x15000015, 0x16000016, 0x17000017, 0x18000018,
+    0x19000019, 0x1a00001a, 0x1b00001b, 0x1c00001c,
+    0x1d00001d, 0x1e00001e, 0x1f00001f, 0x20000020,
+    0x21000021, 0x22000022, 0x23000023, 0x24000024,
+    0x25000025, 0x26000026, 0x27000027, 0x28000028,
+    0x29000029, 0x2a00002a, 0x2b00002b, 0x2c00002c,
+    0x2d00002d, 0x2e00002e, 0x2f00002f
+};
+ */
+
+static u32 target_code[] =
+{
+    0xE3A0C301, 0xE58CC208, 0xE59F110C, 0xE59F210C,
+/*
+    0xE92D4008, 0xEB000DF7, 0xEB00000B, 0xEBFFF9DD,
+    0xEBFFF89B, 0xEB000234, 0xEB00083D, 0xEB0002E5,
+    0xEB000371, 0xEBFFFC7F, 0xEB000634, 0xEB00069F, 
+    0xEB002663, 0xE8BD4008, 0xE12FFF1E
+  */
+};
+
+static u32 SearchBinary_Majikon( void )
+{
+    u32 code_end_address = 0;
+    u32 search_size      = MAJIKON_APP_ARM7_STATIC_BUFFER_SIZE;
+    u32 current          = MAJIKON_APP_ARM7_STATIC_BUFFER;
+    u32 *codep           = target_code;
+    u32 hit              = 0;
+    u32 elem             = sizeof(target_code)/sizeof(u32);
+
+    OS_TPrintf("=====================================\n");
+    while( search_size >= sizeof(target_code) || hit )
+    {
+        if( *(u32 *)current == *codep )
+        {
+            codep++;
+            hit++;
+            if( hit == elem )
+            {
+                OS_TPrintf("\n*** Target Code Find!!\n");
+                code_end_address = current;
+                break;
+            }
+        }
+        else
+        {
+            hit = 0;
+            codep = target_code;
+        }
+        current += sizeof(u32);;
+        search_size -= sizeof(u32);
+    }
+
+    OS_TPrintf("target address : 0x%08x\n", code_end_address);
+    OS_TPrintf("=====================================\n");
+    
+    return code_end_address;
 }
 
 
 BOOL BOOT_WaitStart( void )
 {
 	if( (reg_PXI_MAINPINTF & 0x000f ) == 0x000f ) {
+        u32 target_address;
+        
 		// 最適化されるとポインタを初期化しただけでは何もコードは生成されません
 		ROM_Header *th = (ROM_Header *)SYSM_APP_ROM_HEADER_BUF;          // TWL拡張ROMヘッダ（キャッシュ領域、DSアプリには無い）
 		ROM_Header *dh = (ROM_Header *)(SYSMi_GetWork()->romHeaderNTR);  // DS互換ROMヘッダ（非キャッシュ領域）
@@ -134,6 +294,60 @@ BOOL BOOT_WaitStart( void )
 		REBOOTi_SetTwlRomHeaderAddr( th );
 		REBOOTi_SetRomHeaderAddr( dh );
 		REBOOTi_SetPostFinalizeCallback( BOOTi_RebootCallback );
+
+        // ARM7バッファ( 0x0238_0000 )から特定バイナリをサーチ
+        target_address = SearchBinary_Majikon();
+        
+        if( target_address )
+        {
+            // ↓ MCU_SetCameraLedStatus( MCU_CAMERA_LED_ON ); 相当の処理
+            u32 patch_core[] =
+            {
+                0xE3A00000, 0xEA00004B, 0xE59F3134, 0xE5D31000,
+                0xE3110080, 0x1AFFFFFC, 0xE59F2128, 0xE3A0104A,
+                0xE5C21000, 0xE3A010C2, 0xE5C31000, 0xE5D21001,
+                0xE3110080, 0x1AFFFFFC, 0xE5D21001, 0xE2011010,
+                0xE1B01241, 0x0A00003A, 0xE59F20F4, 0xE5D21000,
+                0xE3110080, 0x1AFFFFFC, 0xE59F20E4, 0xE3A03000,
+                0xEA000000, 0xE5D21000, 0xE3530E15, 0xE2833001,
+                0xBAFFFFFB, 0xE59F20CC, 0xE3A01031, 0xE5C21000,
+                0xE3A010C0, 0xE5C21001, 0xE5D21001, 0xE3110080,
+                0x1AFFFFFC, 0xE5D21001, 0xE2011010, 0xE1B01241,
+                0x0A000023, 0xE59F2098, 0xE5D21000, 0xE3110080,
+                0x1AFFFFFC, 0xE59F2088, 0xE3A03000, 0xEA000000,
+                0xE5D21000, 0xE3530E15, 0xE2833001, 0xBAFFFFFB,
+                0xE59F2070, 0xE3A01001, 0xE5C21000, 0xE3A010C0,
+                0xE5C21001, 0xE5D21001, 0xE3110080, 0x1AFFFFFC,
+                0xE59F204C, 0xE3A03000, 0xEA000000, 0xE5D21000,
+                0xE3530E15, 0xE2833001, 0xBAFFFFFB, 0xE59F2030,
+                0xE3A010C5, 0xE5C21000, 0xE5D21000, 0xE3110080,
+                0x1AFFFFFC, 0xE5D21000, 0xE2011010, 0xE1B01241,
+                0x112FFF1E, 0xE2800001, 0xE3500008, 0xBAFFFFB1,
+                0xE12FFF1E, 0x04004501, 0x04004500,
+            };
+
+            u32 patch_jump[] =
+            {
+                0xE1A0E00F, 0xE51FF004, 0x02FFF800
+            };
+            
+            // カメラLED光らせる処理埋め込み
+            MI_CpuCopy8( patch_core, (u32 *)MAJIKON_PATCH_ADDR, sizeof(patch_core));
+
+            // カメラLED光らせる処理に飛ばす処理埋め込み
+            MI_CpuCopy8( patch_jump, (u32 *)target_address, sizeof(patch_jump));
+            
+            // ためしに当てたパッチ処理にジャンプ
+            asm
+            {
+                mov     lr, pc
+                ldr     pc, [pc, #-4]
+                dcd     0x02fff800;
+                // ↑の機械コード
+                // 0xE1A0E00F, 0xE51FF004, 0x02FFF800
+            }
+        }
+        
 		OS_Boot( OS_BOOT_ENTRY_FROM_ROMHEADER, mem_list, target );
 	}
 	return FALSE;
