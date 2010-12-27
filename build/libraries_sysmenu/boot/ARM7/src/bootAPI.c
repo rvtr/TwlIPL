@@ -31,6 +31,7 @@
 #include "reboot.h"
 #include "internal_api.h"
 #include "../../../hotsw/ARM7/include/hotswTypes.h"
+#include "targetCode.h"
 
 #include <twl/mcu/ARM7/control.h>
 
@@ -131,152 +132,91 @@ void BOOT_Init( void )
 //	reg_PXI_MAINPINTF = 0x0000;
 }
 
-
-#define MAJIKON_PATCH_ADDR    0x02fff800
-
-/*
-void MYFUNC_MajikonPatche(void)
-{
-    int r, i;
-    
-//    OSIntrMode itrm = OS_DisableInterrupts(); // asm
-    for (r = 0; r < 8; r++)
-    {
-        // I2Ci_SendStart( id )
-        {
-            while (reg_OS_I2C_CNT & REG_OS_I2C_CNT_E_MASK){};
-            reg_OS_I2C_DAT = 0x4a;
-            reg_OS_I2C_CNT = 0xc2;
-
-            while (reg_OS_I2C_CNT & REG_OS_I2C_CNT_E_MASK){};
-            if (!(BOOL)((reg_OS_I2C_CNT & REG_OS_I2C_CNT_ACK_MASK) >> REG_OS_I2C_CNT_ACK_SHIFT))
-            {
-                continue;
-            }
-        }
-
-        // I2Ci_SendMiddle( reg )
-        {
-            while (reg_OS_I2C_CNT & REG_OS_I2C_CNT_E_MASK){};
-            i = 0;
-            while( i++ < 0x150 )
-            {
-                u32 dummy = reg_OS_I2C_CNT;
-            }
-            
-            reg_OS_I2C_DAT = MCU_REG_CAMERA_ADDR; // MCU_REG_LED_TEST_ADDR = 0x63; // 電源赤ランプ
-            reg_OS_I2C_CNT = 0xc0;
-            
-            while (reg_OS_I2C_CNT & REG_OS_I2C_CNT_E_MASK){};
-            if (!(BOOL)((reg_OS_I2C_CNT & REG_OS_I2C_CNT_ACK_MASK) >> REG_OS_I2C_CNT_ACK_SHIFT))
-            {
-                continue;
-            }
-        }
-
-        // I2Ci_SendLast( data )
-        {
-            while (reg_OS_I2C_CNT & REG_OS_I2C_CNT_E_MASK){};
-            i = 0;
-            while( i++ < 0x150 )
-            {
-                u32 dummy = reg_OS_I2C_CNT;
-            }
-            
-            reg_OS_I2C_DAT = 0x01;
-            reg_OS_I2C_CNT = 0xc0;
-
-            while (reg_OS_I2C_CNT & REG_OS_I2C_CNT_E_MASK){};
-            i = 0;
-            while( i++ < 0x150 )
-            {
-                u32 dummy = reg_OS_I2C_CNT;
-            }
-            
-            reg_OS_I2C_CNT = 0xc5;
-            
-            while (reg_OS_I2C_CNT & REG_OS_I2C_CNT_E_MASK){};
-            if (!(BOOL)((reg_OS_I2C_CNT & REG_OS_I2C_CNT_ACK_MASK) >> REG_OS_I2C_CNT_ACK_SHIFT))
-            {
-                continue;
-            }
-            else
-            {
-                break;
-            }
-        }
-        reg_OS_I2C_CNT = 0xc5;
-    }
-//    (void)OS_RestoreInterrupts(itrm); // asm
-}
-*/
-
-
-#define MAJIKON_APP_ARM7_STATIC_BUFFER        0x02380000
-#define MAJIKON_APP_ARM7_STATIC_BUFFER_SIZE   0x40000
-
-static u32 target_code[] =
-{
-    0xE3A0C301, 0xE58CC208, 0xEB000069, 0xE59F3144,
-    0xE2432040, 0xE59F1140, 0xE1520003, 0xB4910004,
-    0xB4820004, 0xBAFFFFFB, 0xE59F1130, 0xE59F2130,
-    0xE2823028, 0xE4910004, 0xE4820004, 0xE1520003,
-    0xBAFFFFFB, 0xE59F011C, 0xE59F111C, 0xE59F2110,
-    0xE1A0E00F, 0xE12FFF12, 0xE3A00013, 0xE121F000,
-    0xE59FD108, 0xE3A00012, 0xE121F000, 0xE59FD100,
-    0xE59F1100, 0xE04D1001, 0xE24DD004, 0xE3A0001F,
-    0xE12FF000, 0xE241D004, 0xE59F00EC, 0xE0411000,
-    0xE59F20DC, 0xE3A00000, 0xE1510002, 0xB4810004,
-    0xBAFFFFFC, 0xE59F00D4, 0xE5901000, 0xE3510000,
-    0x059F10CC, 0x05801000, 0xEB000075, 0xE3A01000,
-    0xE59F30C0, 0xE593000C, 0xE5932010, 0xE0522000,
-    0xCB0000A8, 0xEB000043, 0xE59F10AC, 0xE3A00000,
-    0xE3800C03, 0xE1C100B0, 0xE3A00000, 0xE3800C03,
-    0xE1C100B2, 0xE59F1094, 0xE59F0094, 0xE5810000,
-    0xE59F1090, 0xE24D2028, 0xE1A0300D, 0xE1520003,
-    0xB4910004, 0xB4820004, 0xBAFFFFFB, 0xE59F0078,
-    0xE3C00003, 0xE59F1074, 0xE0411000, 0xE2811003,
-    0xE3C11003, 0xE3C114FF, 0xE3A02004, 0xE1A02C02,
-    0xE1811002, 0xE59F2058, 0xE59F3058, 0xE59FE058,
-    0xE24DC028
-};
-
 static u32 SearchBinary_Majikon( void )
 {
-    u32 code_end_address = 0;
-    u32 search_size      = MAJIKON_APP_ARM7_STATIC_BUFFER_SIZE;
-    u32 current          = MAJIKON_APP_ARM7_STATIC_BUFFER;
-    u32 *codep           = target_code;
-    u32 hit              = 0;
-    u32 elem             = sizeof(target_code)/sizeof(u32);
-
+    u32 target_command_address = 0;
+    u32 elem[TARGET_CODE_NUM];
+    u32 i;
+    
     OS_TPrintf("=====================================\n");
-    while( search_size >= sizeof(target_code) || hit )
+    for( i = 0; i < TARGET_CODE_NUM; i++ )
     {
-        if( *(u32 *)current == *codep )
+        u32 count = 0;
+        while( target_code_list[i][count] != 0x0 )
         {
-            codep++;
-            hit++;
-            if( hit == elem )
+            count++;
+        }
+        elem[i] = count * 4;
+        OS_TPrintf("code %d size is 0x%x (%d)\n", i, elem[i], elem[i]);
+    }
+
+    for( i = 0; i < TARGET_CODE_NUM; i++ )
+    {
+        u32 search_size = MAJIKON_APP_ARM7_STATIC_BUFFER_SIZE;
+        u32 current     = MAJIKON_APP_ARM7_STATIC_BUFFER;
+        u32 *codep      = target_code_list[i];
+        u32 hit         = 0;
+        BOOL isFinish   = FALSE;
+
+        OS_TPrintf("\n-----\n");
+        OS_TPrintf("search code %d start\n", i);
+        
+	    while( search_size >= elem[i] || hit )
+	    {
+            if( *(u32 *)current != *codep )
             {
-                OS_TPrintf("\n*** Target Code Find!!\n");
-                code_end_address = current;
+                current     += sizeof(u32);
+                search_size -= sizeof(u32);
+                continue;
+            }
+            
+            while( *(u32 *)current == *codep )
+            {
+                hit += 4;
+                
+	            if( *(u32 *)current == MAJIKON_APP_TARGET_COMMAND )
+	            {
+	                OS_TPrintf("*** Target Command Find!!\n");
+	                target_command_address = current;
+	            }
+
+                if( hit == elem[i] )
+                {
+                    isFinish = TRUE;
+                    break;
+                }
+
+                codep++;
+                current += sizeof(u32);
+                search_size -= sizeof(u32);
+            }
+
+            if( isFinish )
+            {
+                OS_TPrintf("*** Target Code Find!!\n");
                 break;
             }
+
+            target_command_address = 0;
+            hit                    = 0;
+            codep                  = target_code_list[i];
+	    }
+
+        if( isFinish )
+        {
+            OS_TPrintf("Match!!\n");
+            break;
         }
         else
         {
-            hit = 0;
-            codep = target_code;
+            OS_TPrintf("No Match...\n");
         }
-        current += sizeof(u32);;
-        search_size -= sizeof(u32);
     }
 
-    OS_TPrintf("\ntarget address : 0x%08x\n", code_end_address);
+    OS_TPrintf("\ntarget address : 0x%08x\n", target_command_address);
     OS_TPrintf("=====================================\n");
     
-    return code_end_address;
+    return (target_command_address - sizeof(u32)); // 埋め込むコードは2命令あるので、1つ前のアドレスを返す
 }
 
 

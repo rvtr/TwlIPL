@@ -29,7 +29,8 @@ override TWL_CODEGEN 	= ALL
 
 SRCDIR				=	./src
 
-INCDIR				=	../common/include \
+INCDIR				=	./include \
+						../common/include \
 						$(ROOT)/build/libraries/fatfs/ARM7.TWL/include \
 						$(ROOT)/build/libraries/fatfs/ARM7.TWL/include/twl/fatfs/ARM7 \
 
