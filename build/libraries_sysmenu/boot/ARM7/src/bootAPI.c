@@ -67,7 +67,6 @@ static void BOOTi_CheckTitleBlackList( ROM_Header_Short *pROMH );
 static void BOOTi_RebootCallback( void** entryp, void* mem_list, REBOOTTarget* target );
 static void BOOTi_SetMainMemModeForNTR( void );
 void BOOTi_SetMainMemModeForNTRCore( u32 addr );
-//void MYFUNC_MajikonPatche(void);
 
 static u32 SearchBinary_Majikon( void );
 
@@ -136,33 +135,34 @@ void BOOT_Init( void )
 static u32 SearchBinary_Majikon( void )
 {
     u32 target_command_address = 0;
-    u32 elem[TARGET_CODE_NUM];
+    u32 elem[TARGET_ARM_CODE_NUM];
     u32 i;
     
     OS_TPrintf("=====================================\n");
-    for( i = 0; i < TARGET_CODE_NUM; i++ )
+    for( i = 0; i < TARGET_ARM_CODE_NUM; i++ )
     {
         u32 count = 0;
-        while( target_code_list[i][count] != 0x0 )
+        u32 *p;
+
+        elem[i] = 0;
+        p = (u32 *)MI_CpuFind32( target_code_list_arm[i], 0x0, TARGET_ARM_CODE_MAX_SIZE * sizeof(u32) );
+        if( p )
         {
-            count++;
+            elem[i] = (u32)(p - target_code_list_arm[i]) * 4;
         }
-        elem[i] = count * 4;
         OS_TPrintf("code %d size is 0x%x (%d)\n", i, elem[i], elem[i]);
     }
 
-    for( i = 0; i < TARGET_CODE_NUM; i++ )
+    for( i = 0; i < TARGET_ARM_CODE_NUM; i++ )
     {
         u32 search_size = MAJIKON_APP_ARM7_STATIC_BUFFER_SIZE;
         u32 current     = MAJIKON_APP_ARM7_STATIC_BUFFER;
-        u32 *codep      = target_code_list[i];
+        u32 *codep      = target_code_list_arm[i];
         u32 hit         = 0;
         BOOL isFinish   = FALSE;
 
-        OS_TPrintf("\n-----\n");
         OS_TPrintf("search code %d start\n", i);
-        
-	    while( search_size >= elem[i] || hit )
+        while( search_size >= elem[i] || hit )
 	    {
             if( *(u32 *)current != *codep )
             {
@@ -191,16 +191,15 @@ static u32 SearchBinary_Majikon( void )
                 current += sizeof(u32);
                 search_size -= sizeof(u32);
             }
-
+            
             if( isFinish )
             {
                 OS_TPrintf("*** Target Code Find!!\n");
                 break;
             }
-
             target_command_address = 0;
             hit                    = 0;
-            codep                  = target_code_list[i];
+            codep                  = target_code_list_arm[i];
 	    }
 
         if( isFinish )
@@ -236,13 +235,13 @@ BOOL BOOT_WaitStart( void )
 
         // ARM7バッファ( 0x0238_0000 )から特定バイナリをサーチ
         target_address = SearchBinary_Majikon();
-        
+
         if( target_address )
         {
-            // ↓ MCU_SetCameraLedStatus( MCU_CAMERA_LED_ON ); 相当の処理
+            // ↓ MCU_SetCameraLedStatus( MCU_CAMERA_LED_ON ); 相当の処理 (size 0x15c)
             u32 patch_core_arm[] =
             {
-#ifndef MAJIKON_APP_CHECK_BY_CARD_PULLOUT_FUNC
+#ifdef MAJIKON_APP_CHECK_BY_CARD_PULLOUT_FUNC
                 // カメラLED点灯
                 0xE3A00000, 0xEA00004B, 0xE59F3140, 0xE5D31000,
                 0xE3110080, 0x1AFFFFFC, 0xE59F2134, 0xE3A0104A,
@@ -292,17 +291,17 @@ BOOL BOOT_WaitStart( void )
 				0x04004501, 0x04004500, 0x04000208,
 #endif
             };
-
+            
             // ↓ パッチコードにジャンプするコード。処理が戻ってこなくていいのでPCの退避は行わない
             u32 patch_jump[] =
             {
                 0xE51FF004, // ldr     pc, [pc, #-4]
                 0x02FFF800  // dcd     0x02fff800;
             };
-
+            
             // カメラLED光らせる処理埋め込み
             MI_CpuCopy8( patch_core_arm, (u32 *)MAJIKON_PATCH_ADDR, sizeof(patch_core_arm));
-
+            
             // カメラLED光らせる処理に飛ばす処理埋め込み
             MI_CpuCopy8( patch_jump, (u32 *)target_address, sizeof(patch_jump));
         }
