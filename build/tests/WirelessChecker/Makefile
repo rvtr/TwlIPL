@@ -58,12 +58,25 @@ MACRO_FLAGS	+= -DTWLNMENU_USE_LC_FONT
 
 LDIRT_CLEAN	+=	$(FONT_RES_LC) $(FONT_RES_NO_LC) *.rsf $(REVISION_C)
 
+#-----------------------------------
+# For CTR compatibility check
+#
+# To build this imeage, add CHECK_ON_CTR=TRUE.
+# make CHECK_ON_CTR=TRUE
+
+ifeq	($(CHECK_ON_CTR),TRUE)
+BASENAME    += WirelessChecker_for_CTRcheck
+MACRO_FLAGS += -DCHECK_ON_CTR
+else
+BASENAME    += WirelessChecker
+endif
+
 #----------------------------------------------------------------------------
 
 ifeq	($(TWL_NANDAPP),TRUE)
-TARGET_BIN       = WirelessChecker_nand.tad
+TARGET_BIN       = $(BASENAME)_nand.tad
 else
-TARGET_BIN       = WirelessChecker.srl
+TARGET_BIN       = $(BASENAME).srl
 endif
 
 ifeq	($(TWL_NANDAPP),TRUE)

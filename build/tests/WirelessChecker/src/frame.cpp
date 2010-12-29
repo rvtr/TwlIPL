@@ -49,7 +49,17 @@ CFrame::InitDisp()
   
     pcm->Clear(util::COLOR_BLACK);
     pcs->Clear(util::COLOR_BLACK);
-    pcm->Printf(16*5, 0, util::COLOR_WHITE, L"無線機能確認ツール");
+    pcm->Printf(
+#ifdef CHECK_ON_CTR
+        16*1,
+#else
+        16*5,
+#endif
+        0, util::COLOR_WHITE, L"無線機能確認ツール"
+#ifdef CHECK_ON_CTR
+                              L"(CTR互換モードチェック用)"
+#endif
+    );
     pcm->Printf(96, 16*1, util::COLOR_WHITE, L"BUILD TIME: %s %s", L""__DATE__, L""__TIME__);
 
     DrawBorder(pcm, 4, 16*2 + 4, 256 - 8, 192 - (16*2 + 4), util::COLOR_WHITE);
@@ -59,8 +69,11 @@ CFrame::InitDisp()
     pcm->Printf(16*2,  16*5, util::COLOR_WHITE, L"DS無線の初期化テスト");
     pcm->Printf(16*2,  16*6, util::COLOR_WHITE, L"TWL無線の初期化テスト");
     pcm->Printf(16*2,  16*7, util::COLOR_WHITE, L"FATALエラーエミュレーション");
+#ifdef CHECK_ON_CTR
+    pcm->Printf(16*2,  16*8, util::COLOR_WHITE, L"アプリジャンプテスト");
+#else
     pcm->Printf(16*2,  16*8, util::COLOR_WHITE, L"FATALエラーリカバリテスト");
-
+#endif
     DrawBorder(pcs, 4, 16*9 + 4, 256 - 8, 192 - (16*9 + 4), util::COLOR_WHITE);
 }
 
@@ -92,11 +105,20 @@ CFrame::HelpDisp(util::PaletteColor color)
     break;
     case ITEM_TEST_FATAL:
     pHelpString1 = L"FATALエラーを発生させ、TWL無線を使えなくします";
+#ifdef CHECK_ON_CTR
+    pHelpString2 = L"HWリセットで回復します。CTRでは無効です。";
+#else
     pHelpString2 = L"HWリセットで回復します。";
+#endif
     break;
     case ITEM_TEST_RECOVERY:
+#ifdef CHECK_ON_CTR
+    pHelpString1 = L"アプリジャンプをテストします。";
+    pHelpString2 = L"再起動後にDS/TWL無線初期化を確認してください。";
+#else
     pHelpString1 = L"FATALエラーのリカバリーをテストします。";
     pHelpString2 = L"再起動後にTWL無線初期化を確認してください。";
+#endif
     break;
   }
   pcs->Print(8, 16*9 + 8, color, pHelpString1);

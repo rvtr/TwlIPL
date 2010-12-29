@@ -47,7 +47,7 @@ CTestRecovery::RecoveryTest(void)
       End();
       throw L"Enable() é∏îs.\n";
     }
-
+#ifndef CHECK_ON_CTR
     if (FALSE == Wrack())
     {
       Disable();
@@ -65,6 +65,7 @@ CTestRecovery::RecoveryTest(void)
     }
 
     LogPrintf(m_pc, L"FATALÉGÉâÅ[Ç™î≠ê∂ÇµÇ‹ÇµÇΩ.\n");
+#endif
   }
   catch (const wchar_t* string)
   {

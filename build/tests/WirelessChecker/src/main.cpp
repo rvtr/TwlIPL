@@ -47,6 +47,7 @@ TwlMain(void)
     util::Init();
 
     OSDeliverArgInfo argInfo;
+#ifndef CHECK_ON_CTR
     if (TRUE == OS_IsValidDeliverArg())
     {
       OS_InitDeliverArgInfo(&argInfo, 0);
@@ -56,7 +57,7 @@ TwlMain(void)
         isFatalChecking = TRUE;
       }
     }
-
+#endif
     // display on
     util::WaitVBlankIntr();
     util::dispOn();
