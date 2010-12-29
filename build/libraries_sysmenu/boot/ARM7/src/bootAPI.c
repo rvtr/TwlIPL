@@ -68,7 +68,10 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list, REBOOTTarget* t
 static void BOOTi_SetMainMemModeForNTR( void );
 void BOOTi_SetMainMemModeForNTRCore( u32 addr );
 
-static u32 SearchBinary_Majikon( void );
+static u32 SearchBinaryArm( void );
+#ifdef MAJIKON_APP_CHECK_BY_CARD_PULLOUT_FUNC
+static u32 SearchBinaryThumb( void );
+#endif
 
 // global variables--------------------------------------------------
 
@@ -132,7 +135,7 @@ void BOOT_Init( void )
 }
 
 
-static u32 SearchBinary_Majikon( void )
+static u32 SearchBinaryArm( void )
 {
     u32 target_command_address = 0;
     u32 elem[TARGET_ARM_CODE_NUM];
@@ -148,7 +151,7 @@ static u32 SearchBinary_Majikon( void )
         p = (u32 *)MI_CpuFind32( target_code_list_arm[i], 0x0, TARGET_ARM_CODE_MAX_SIZE * sizeof(u32) );
         if( p )
         {
-            elem[i] = (u32)(p - target_code_list_arm[i]) * 4;
+            elem[i] = (u32)(p - target_code_list_arm[i]) * sizeof(u32);
         }
         OS_TPrintf("code %d size is 0x%x (%d)\n", i, elem[i], elem[i]);
     }
@@ -173,9 +176,9 @@ static u32 SearchBinary_Majikon( void )
             
             while( *(u32 *)current == *codep )
             {
-                hit += 4;
+                hit += sizeof(u32);
                 
-	            if( *(u32 *)current == MAJIKON_APP_TARGET_COMMAND )
+	            if( *(u32 *)current == MAJIKON_APP_TARGET_COMMAND_ARM )
 	            {
 	                OS_TPrintf("*** Target Command Find!!\n");
 	                target_command_address = current;
@@ -220,10 +223,104 @@ static u32 SearchBinary_Majikon( void )
 }
 
 
+#ifdef MAJIKON_APP_CHECK_BY_CARD_PULLOUT_FUNC
+static u32 SearchBinaryThumb( void )
+{
+    u32 target_command_address = 0;
+    u32 elem[TARGET_THUMB_CODE_NUM];
+    u32 i;
+    
+    OS_TPrintf("=====================================\n");
+    for( i = 0; i < TARGET_THUMB_CODE_NUM; i++ )
+    {
+        u32 count = 0;
+        u32 *p;
+
+        elem[i] = 0;
+        p = (u32 *)MI_CpuFind32( target_code_list_thumb[i], 0x0, TARGET_THUMB_CODE_MAX_SIZE * sizeof(u16) );
+        if( p )
+        {
+            elem[i] = (u32)(p - (u32 *)target_code_list_thumb[i]) * sizeof(u16);
+        }
+        OS_TPrintf("code %d size is 0x%x (%d)\n", i, elem[i], elem[i]);
+    }
+
+    for( i = 0; i < TARGET_THUMB_CODE_NUM; i++ )
+    {
+        u32 search_size = MAJIKON_APP_ARM7_STATIC_BUFFER_SIZE;
+        u32 current     = MAJIKON_APP_ARM7_STATIC_BUFFER;
+        u32 hit         = 0;
+        BOOL isFinish   = FALSE;
+        u16 *codep      = target_code_list_thumb[i];
+
+        OS_TPrintf("search code %d start\n", i);
+        while( search_size >= elem[i] || hit )
+	    {
+            if( *(u16 *)current != *codep )
+            {
+                current     += sizeof(u16);
+                search_size -= sizeof(u16);
+                continue;
+            }
+            
+            while( *(u16 *)current == *codep )
+            {
+                hit += sizeof(u16);
+
+	            if( *(u16 *)current == MAJIKON_APP_TARGET_COMMAND_THUMB )
+	            {
+	                OS_TPrintf("*** Target Command Find!!\n");
+	                target_command_address = current;
+	            }
+
+                if( hit == elem[i] )
+                {
+                    isFinish = TRUE;
+                    break;
+                }
+
+                codep++;
+                current += sizeof(u16);
+                search_size -= sizeof(u16);
+            }
+            
+            if( isFinish )
+            {
+                OS_TPrintf("*** Target Code Find!!\n");
+                break;
+            }
+            target_command_address = 0;
+            hit                    = 0;
+            codep                  = target_code_list_thumb[i];
+	    }
+
+        if( isFinish )
+        {
+            OS_TPrintf("Match!!\n");
+            break;
+        }
+        else
+        {
+            OS_TPrintf("No Match...\n");
+        }
+    }
+
+    OS_TPrintf("\ntarget address : 0x%08x\n", target_command_address);
+    OS_TPrintf("=====================================\n");
+
+    // [TODO] 2命令前でいいの？要確認。
+    return (target_command_address - sizeof(u16)); // 埋め込むコードは2命令あるので、1つ前のアドレスを返す
+}
+#endif
+
+
 BOOL BOOT_WaitStart( void )
 {
 	if( (reg_PXI_MAINPINTF & 0x000f ) == 0x000f ) {
-        u32 target_address;
+        u32 target_address_arm;
+#ifdef MAJIKON_APP_CHECK_BY_CARD_PULLOUT_FUNC
+        u32 target_address_thumb;
+#endif
         
 		// 最適化されるとポインタを初期化しただけでは何もコードは生成されません
 		ROM_Header *th = (ROM_Header *)SYSM_APP_ROM_HEADER_BUF;          // TWL拡張ROMヘッダ（キャッシュ領域、DSアプリには無い）
@@ -234,78 +331,34 @@ BOOL BOOT_WaitStart( void )
 		REBOOTi_SetPostFinalizeCallback( BOOTi_RebootCallback );
 
         // ARM7バッファ( 0x0238_0000 )から特定バイナリをサーチ
-        target_address = SearchBinary_Majikon();
+        target_address_arm = SearchBinaryArm();
 
-        if( target_address )
-        {
-            // ↓ MCU_SetCameraLedStatus( MCU_CAMERA_LED_ON ); 相当の処理 (size 0x15c)
-            u32 patch_core_arm[] =
-            {
 #ifdef MAJIKON_APP_CHECK_BY_CARD_PULLOUT_FUNC
-                // カメラLED点灯
-                0xE3A00000, 0xEA00004B, 0xE59F3140, 0xE5D31000,
-                0xE3110080, 0x1AFFFFFC, 0xE59F2134, 0xE3A0104A,
-                0xE5C21000, 0xE3A010C2, 0xE5C31000, 0xE5D21001,
-                0xE3110080, 0x1AFFFFFC, 0xE5D21001, 0xE2011010,
-                0xE1B01241, 0x0A00003A, 0xE59F2100, 0xE5D21000,
-                0xE3110080, 0x1AFFFFFC, 0xE59F20F0, 0xE3A03000,
-                0xEA000000, 0xE5D21000, 0xE3530E15, 0xE2833001,
-                0xBAFFFFFB, 0xE59F20D8, 0xE3A01031, 0xE5C21000,
-                0xE3A010C0, 0xE5C21001, 0xE5D21001, 0xE3110080,
-                0x1AFFFFFC, 0xE5D21001, 0xE2011010, 0xE1B01241,
-                0x0A000023, 0xE59F20A4, 0xE5D21000, 0xE3110080,
-                0x1AFFFFFC, 0xE59F2094, 0xE3A03000, 0xEA000000,
-                0xE5D21000, 0xE3530E15, 0xE2833001, 0xBAFFFFFB,
-                0xE59F207C, 0xE3A01001, 0xE5C21000, 0xE3A010C0,
-                0xE5C21001, 0xE5D21001, 0xE3110080, 0x1AFFFFFC,
-                0xE59F2058, 0xE3A03000, 0xEA000000, 0xE5D21000,
-                0xE3530E15, 0xE2833001, 0xBAFFFFFB, 0xE59F203C,
-                0xE3A010C5, 0xE5C21000, 0xE5D21000, 0xE3110080,
-                0x1AFFFFFC, 0xE5D21000, 0xE2011010, 0xE1B01241,
-                0x1A000002, 0xE2800001, 0xE3500008, 0xBAFFFFB1,
-                0xE59F0010, 0xE3A01000, 0xE1C010B0, 0xEAFFFFFE,
-                0x04004501, 0x04004500, 0x04000208,
-#else
-                // 電源LEDが赤になる
-				0xE3A00000, 0xEA00004B, 0xE59F3140, 0xE5D31000,
-				0xE3110080, 0x1AFFFFFC, 0xE59F2134, 0xE3A0104A,
-				0xE5C21000, 0xE3A010C2, 0xE5C31000, 0xE5D21001,
-				0xE3110080, 0x1AFFFFFC, 0xE5D21001, 0xE2011010,
-				0xE1B01241, 0x0A00003A, 0xE59F2100, 0xE5D21000,
-				0xE3110080, 0x1AFFFFFC, 0xE59F20F0, 0xE3A03000,
-				0xEA000000, 0xE5D21000, 0xE3530E15, 0xE2833001,
-				0xBAFFFFFB, 0xE59F20D8, 0xE3A01063, 0xE5C21000,
-				0xE3A010C0, 0xE5C21001, 0xE5D21001, 0xE3110080,
-				0x1AFFFFFC, 0xE5D21001, 0xE2011010, 0xE1B01241,
-				0x0A000023, 0xE59F20A4, 0xE5D21000, 0xE3110080,
-				0x1AFFFFFC, 0xE59F2094, 0xE3A03000, 0xEA000000,
-				0xE5D21000, 0xE3530E15, 0xE2833001, 0xBAFFFFFB,
-				0xE59F207C, 0xE3A01001, 0xE5C21000, 0xE3A010C0,
-				0xE5C21001, 0xE5D21001, 0xE3110080, 0x1AFFFFFC,
-				0xE59F2058, 0xE3A03000, 0xEA000000, 0xE5D21000,
-				0xE3530E15, 0xE2833001, 0xBAFFFFFB, 0xE59F203C,
-				0xE3A010C5, 0xE5C21000, 0xE5D21000, 0xE3110080,
-				0x1AFFFFFC, 0xE5D21000, 0xE2011010, 0xE1B01241,
-				0x1A000002, 0xE2800001, 0xE3500008, 0xBAFFFFB1,
-				0xE59F0010, 0xE3A01000, 0xE1C010B0, 0xEAFFFFFE,
-				0x04004501, 0x04004500, 0x04000208,
+        if( !target_address_arm )
+        {
+            target_address_thumb = SearchBinaryThumb();
+        }
 #endif
-            };
-            
-            // ↓ パッチコードにジャンプするコード。処理が戻ってこなくていいのでPCの退避は行わない
-            u32 patch_jump[] =
-            {
-                0xE51FF004, // ldr     pc, [pc, #-4]
-                0x02FFF800  // dcd     0x02fff800;
-            };
-            
-            // カメラLED光らせる処理埋め込み
+        
+        if( target_address_arm )
+        {
+            // パッチ埋め込み
             MI_CpuCopy8( patch_core_arm, (u32 *)MAJIKON_PATCH_ADDR, sizeof(patch_core_arm));
             
-            // カメラLED光らせる処理に飛ばす処理埋め込み
-            MI_CpuCopy8( patch_jump, (u32 *)target_address, sizeof(patch_jump));
+            // パッチに飛ばす処理埋め込み
+            MI_CpuCopy8( patch_jump_arm, (u32 *)target_address_arm, sizeof(patch_jump_arm));
         }
-        
+#ifdef MAJIKON_APP_CHECK_BY_CARD_PULLOUT_FUNC
+        else if( target_address_thumb )
+        {
+            // パッチ埋め込み
+            MI_CpuCopy8( patch_core_arm, (u32 *)MAJIKON_PATCH_ADDR, sizeof(patch_core_arm));
+            
+            // パッチに飛ばす処理埋め込み
+            MI_CpuCopy8( patch_jump_thumb, (u32 *)target_address_thumb, sizeof(patch_jump_thumb));
+        }
+#endif
+
 		OS_Boot( OS_BOOT_ENTRY_FROM_ROMHEADER, mem_list, target );
 	}
 	return FALSE;
