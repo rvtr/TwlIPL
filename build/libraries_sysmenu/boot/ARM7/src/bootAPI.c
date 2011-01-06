@@ -153,7 +153,6 @@ static u32 SearchBinaryArm( void )
         {
             elem[i] = (u32)(p - target_code_list_arm[i]) * sizeof(u32);
         }
-        OS_TPrintf("code %d size is 0x%x (%d)\n", i, elem[i], elem[i]);
     }
 
     for( i = 0; i < TARGET_ARM_CODE_NUM; i++ )
@@ -164,7 +163,6 @@ static u32 SearchBinaryArm( void )
         u32 hit         = 0;
         BOOL isFinish   = FALSE;
 
-        OS_TPrintf("search code %d start\n", i);
         while( search_size >= elem[i] || hit )
 	    {
             if( *(u32 *)current != *codep )
@@ -210,16 +208,12 @@ static u32 SearchBinaryArm( void )
             OS_TPrintf("Match!!\n");
             break;
         }
-        else
-        {
-            OS_TPrintf("No Match...\n");
-        }
     }
 
     OS_TPrintf("\ntarget address : 0x%08x\n", target_command_address);
     OS_TPrintf("=====================================\n");
     
-    return (target_command_address - sizeof(u32)); // 埋め込むコードは2命令あるので、1つ前のアドレスを返す
+    return target_command_address;
 }
 
 
@@ -240,9 +234,8 @@ static u32 SearchBinaryThumb( void )
         p = (u32 *)MI_CpuFind32( target_code_list_thumb[i], 0x0, TARGET_THUMB_CODE_MAX_SIZE * sizeof(u16) );
         if( p )
         {
-            elem[i] = (u32)(p - (u32 *)target_code_list_thumb[i]) * sizeof(u16);
+            elem[i] = (u32)((u16 *)p - target_code_list_thumb[i]) * sizeof(u16);
         }
-        OS_TPrintf("code %d size is 0x%x (%d)\n", i, elem[i], elem[i]);
     }
 
     for( i = 0; i < TARGET_THUMB_CODE_NUM; i++ )
@@ -299,17 +292,12 @@ static u32 SearchBinaryThumb( void )
             OS_TPrintf("Match!!\n");
             break;
         }
-        else
-        {
-            OS_TPrintf("No Match...\n");
-        }
     }
 
     OS_TPrintf("\ntarget address : 0x%08x\n", target_command_address);
     OS_TPrintf("=====================================\n");
 
-    // [TODO] 2命令前でいいの？要確認。
-    return (target_command_address - sizeof(u16)); // 埋め込むコードは2命令あるので、1つ前のアドレスを返す
+    return target_command_address;
 }
 #endif
 
@@ -334,7 +322,7 @@ BOOL BOOT_WaitStart( void )
         target_address_arm = SearchBinaryArm();
 
 #ifdef MAJIKON_APP_CHECK_BY_CARD_PULLOUT_FUNC
-        if( !target_address_arm )
+        if( target_address_arm == 0x0 )
         {
             target_address_thumb = SearchBinaryThumb();
         }
@@ -346,7 +334,8 @@ BOOL BOOT_WaitStart( void )
             MI_CpuCopy8( patch_core_arm, (u32 *)MAJIKON_PATCH_ADDR, sizeof(patch_core_arm));
             
             // パッチに飛ばす処理埋め込み
-            MI_CpuCopy8( patch_jump_arm, (u32 *)target_address_arm, sizeof(patch_jump_arm));
+            // 埋め込むコードは2命令あるので、1つ前のアドレスを返す
+            MI_CpuCopy8( patch_jump_arm, (u32 *)(target_address_arm - sizeof(u32)), sizeof(patch_jump_arm));
         }
 #ifdef MAJIKON_APP_CHECK_BY_CARD_PULLOUT_FUNC
         else if( target_address_thumb )
@@ -355,6 +344,11 @@ BOOL BOOT_WaitStart( void )
             MI_CpuCopy8( patch_core_arm, (u32 *)MAJIKON_PATCH_ADDR, sizeof(patch_core_arm));
             
             // パッチに飛ばす処理埋め込み
+            // dcd部分が4バイトアライメントとれてないとダメなので調整。
+            if( !(target_address_thumb % 0x4) )
+            {
+                target_address_thumb -= 0x2;
+            }
             MI_CpuCopy8( patch_jump_thumb, (u32 *)target_address_thumb, sizeof(patch_jump_thumb));
         }
 #endif

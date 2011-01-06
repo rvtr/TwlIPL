@@ -27,15 +27,17 @@
 #define MAJIKON_PATCH_ADDR                    0x02fff800
 
 #ifdef MAJIKON_APP_CHECK_BY_CARD_PULLOUT_FUNC
+// カード抜け関数チェック用
 #define MAJIKON_APP_TARGET_COMMAND_ARM        0xE12FFF1E    // [bx  lr] 命令
 #define MAJIKON_APP_TARGET_COMMAND_THUMB      0x4718        // [bx  r3] 命令
 #define TARGET_ARM_CODE_MAX_SIZE              0x40
 #define TARGET_THUMB_CODE_MAX_SIZE            0x80
-#define TARGET_ARM_CODE_NUM                   8
+#define TARGET_ARM_CODE_NUM                   7
 #define TARGET_THUMB_CODE_NUM                 1
 #else
+// _start関数チェック用
 #define MAJIKON_APP_TARGET_COMMAND_ARM        0xE12FFF11    // [bx  r1] 命令
-#define TARGET__ARM_CODE_MAX_SIZE             0x48
+#define TARGET_ARM_CODE_MAX_SIZE              0x48
 #define TARGET_ARM_CODE_NUM                   6
 #endif
 
@@ -52,10 +54,13 @@ u32 patch_jump_arm[] =
 };
 
 #ifdef MAJIKON_APP_CHECK_BY_CARD_PULLOUT_FUNC
+// 注：dcdで定義される値は4バイトアライメントがとれているところに置かないとデータがずれる
 u16 patch_jump_thumb[] =
-{
-    0xFFFF,
-    0xFFFF
+{  
+    0x4801,         // ldr     r0, [pc, #4] ※#2が指定できないのでnopを入れて調整する
+    0x4700,         // bx      r0
+    0x46C0,         // nop     nop
+    0xF800, 0x023F  // dcd     MAJIKON_PATCH_ADDR;
 };
 #endif
 
@@ -232,7 +237,7 @@ u32 target_code_list_arm[TARGET_ARM_CODE_NUM][TARGET_ARM_CODE_MAX_SIZE] =
 		0x1afffff7, 0xe8bd40f8, 0xe12fff1e, 0x03809420,
 		0x027ffc40, 0x038070b4,
 	},
-
+/*
       // デバッグ用
     {
         0xE92D40F8, 0xE59F00E4, 0xE5900004, 0xE3500000,
@@ -252,7 +257,7 @@ u32 target_code_list_arm[TARGET_ARM_CODE_NUM][TARGET_ARM_CODE_MAX_SIZE] =
 		0xE3500000, 0x1AFFFFF7, 0xE8BD40F8, 0xE12FFF1E,
 		0x0380C6A0, 0x03809EA8, 0x02FFFC3C
     },
-    
+*/
 #else
     
     // crt0.cの_start関数を検出する
