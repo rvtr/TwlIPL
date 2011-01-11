@@ -383,11 +383,15 @@ void LauncherInit( TitleProperty *pTitleList )
 	DC_FlushRange(&bg_scr_data2, sizeof(bg_scr_data2));
 	GX_LoadBG2Char(bg_char_data, 0, sizeof(bg_char_data));
 	GX_LoadBG2Scr(bg_scr_data2, 0, sizeof(bg_scr_data2));
-			
+
 	DrawBackLightSwitch();
-	PutStringUTF16(   0,  0, TXT_COLOR_BLUE, L"SYSTEM MENU" );
-	PrintfSJIS( 128,  0, TXT_COLOR_BLUE, "IPL:%s", g_strIPLSvnRevision );
-	PrintfSJIS( 128, 12, TXT_COLOR_BLUE, "SDK:%s", g_strSDKSvnRevision );
+#if 1
+	PutStringUTF16(   0, 10, TXT_COLOR_BLUE, L"Card Pullout Check Func Ver." );
+#else
+    PutStringUTF16(   0, 10, TXT_COLOR_BLUE, L"crt0 Func Ver." );
+#endif
+//	PrintfSJIS( 128,  0, TXT_COLOR_BLUE, "IPL:%s", g_strIPLSvnRevision );
+//	PrintfSJIS( 128, 12, TXT_COLOR_BLUE, "SDK:%s", g_strSDKSvnRevision );
 	
 	SVC_CpuClear( 0x0000, &tpd, sizeof(TpWork), 16 );
 	
