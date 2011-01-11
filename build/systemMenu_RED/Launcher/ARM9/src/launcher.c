@@ -70,6 +70,8 @@
 #define ALPHA_MAX				31
 #define FADE_START				31
 
+#define MAJIKON_APP_CHECK_BY_CARD_PULLOUT_FUNC
+
 // extern data------------------------------------------
 
 extern u32 bg_char_data[8 * 6];
@@ -385,7 +387,7 @@ void LauncherInit( TitleProperty *pTitleList )
 	GX_LoadBG2Scr(bg_scr_data2, 0, sizeof(bg_scr_data2));
 
 	DrawBackLightSwitch();
-#if 1
+#ifdef MAJIKON_APP_CHECK_BY_CARD_PULLOUT_FUNC
 	PutStringUTF16(   0, 10, TXT_COLOR_BLUE, L"Card Pullout Check Func Ver." );
 #else
     PutStringUTF16(   0, 10, TXT_COLOR_BLUE, L"crt0 Func Ver." );
