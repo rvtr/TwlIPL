@@ -24,7 +24,7 @@
 
 #define MAJIKON_APP_ARM7_STATIC_BUFFER        0x02380000
 #define MAJIKON_APP_ARM7_STATIC_BUFFER_SIZE   0x40000
-#define MAJIKON_PATCH_ADDR                    0x02fff800
+#define MAJIKON_PATCH_ADDR                    0x02fff000
 
 #ifdef MAJIKON_APP_CHECK_BY_CARD_PULLOUT_FUNC
 // カード抜け関数チェック用
@@ -50,7 +50,7 @@ extern "C" {
 u32 patch_jump_arm[] =
 {
     0xE51FF004, // ldr     pc, [pc, #-4]
-    0x02FFF800  // dcd     0x02fff800;
+    0x023FF000  // dcd     0x023ff000;
 };
 
 #ifdef MAJIKON_APP_CHECK_BY_CARD_PULLOUT_FUNC
@@ -60,7 +60,7 @@ u16 patch_jump_thumb[] =
     0x4801,         // ldr     r0, [pc, #4] ※#2が指定できないのでnopを入れて調整する
     0x4700,         // bx      r0
     0x46C0,         // nop     nop
-    0xF800, 0x023F  // dcd     MAJIKON_PATCH_ADDR;
+    0xF000, 0x023F  // dcd     MAJIKON_PATCH_ADDR;
 };
 #endif
 
