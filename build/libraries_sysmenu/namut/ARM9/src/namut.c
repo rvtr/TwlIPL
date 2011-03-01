@@ -54,7 +54,7 @@ extern ESError ES_GetTicketViews(u64 titleId,  ESTicketView* ticketViewList,
 // TitleProperty (TitleID 32bit）のビットで指定します。
 // どれか1つでもビットが立っていれば消去の対象から外します。
 #define PROTECT_TITLE_PROPERTY  (TITLE_ID_APP_TYPE_MASK)
-#define CLEAR_DATA_SIZE        16384  // ファイル消去データ用（512の倍数で大きいほど処理が早い）
+#define CLEAR_DATA_SIZE        (16 * 1024 )  // ファイル消去データ用（512の倍数で大きいほど処理が早い）
 
 // 本体初期化(NAND初期化)実行時に
 // 指定ディレクトリ以下は全て消去されます。
@@ -100,6 +100,7 @@ static BOOL NAMUTi_ClearSavedataAll(void);
 static BOOL NAMUTi_InitShareData(void);
 static BOOL NAMUTi_MountAndFormatOtherTitleSaveData(u64 titleID, const char *arcname);
 static BOOL NAMUTi_RandClearFile(const char* path);
+static BOOL FillFileRandom(const char* path);
 static BOOL NAMUTi_CheckExistenceFile(const char* path);
 static BOOL NAMUTi_ClearWiFiSettings( void );
 static BOOL NAMUTi_DeleteShopAccount( void );
@@ -565,6 +566,7 @@ static BOOL NAMUTi_ClearSavedataAll( void )
 				ret = FALSE;
 			}else
 			{
+				OSTick start = OS_GetTick();
 	            // publicSaveSizeが0以上ならフォーマット
 	            if (namTitleInfo.publicSaveSize > 0)
 	            {
@@ -575,6 +577,7 @@ static BOOL NAMUTi_ClearSavedataAll( void )
 	            {
 	                ret &= NAMUTi_ClearSavedataPrivate( savePrivatePath, namTitleInfo.titleId );
 	            }
+				OS_TPrintf( "%llx savedata clear time = %dms\n", pTitleIdArray[i], OS_TicksToMilliSeconds( OS_GetTick() - start ) );
 	        }
 
             // サブバナーファイルパス取得
@@ -605,7 +608,7 @@ static BOOL NAMUTi_ClearSavedataAll( void )
 BOOL NAMUTi_ClearSavedataPublic(const char* path, u64 titleID)
 {
     //----- 乱数クリア
-    if (NAMUTi_RandClearFile(path) == FALSE)
+    if (FillFileRandom(path) == FALSE)
     {
         OS_Warning(" Fail NAMUTi_RandClearFile");
         return FALSE;
@@ -628,7 +631,7 @@ BOOL NAMUTi_ClearSavedataPublic(const char* path, u64 titleID)
 BOOL NAMUTi_ClearSavedataPrivate(const char* path, u64 titleID)
 {
     //----- 乱数クリア
-    if (NAMUTi_RandClearFile(path) == FALSE)
+    if (FillFileRandom(path) == FALSE)
     {
         OS_Warning(" Fail NAMUTi_RandClearFile");
         return FALSE;
@@ -837,17 +840,44 @@ static BOOL NAMUTi_InitShareData(void)
 
   Returns:      None
  *---------------------------------------------------------------------------*/
+
+void NAMUTi_FillRand( MATHRandContext32 *context, u8 *pDst, s32 length );
+void NAMUTi_FillRand( MATHRandContext32 *context, u8 *pDst, s32 length )
+{
+	int i, j, x;
+	u32 rand;
+	u8 *q;
+	x = (s32)( length / sizeof(u32) );
+	for( i = 0; i < x; i++ ) {
+		rand = MATH_Rand32( context, 0 );
+		q    = (u8 *)&rand;
+		for( j = 0; j < sizeof(u32); j++ ) {
+			*pDst++ = *q++;
+		}
+	}
+	x = (s32)( length % sizeof(u32) );
+	if( x > 0 ) {
+		rand = MATH_Rand32( context, 0 );
+		q    = (u8 *)&rand;
+		for( j = 0; j < x; j++ ) {
+			*pDst++ = *q++;
+		}
+	}
+}
+
+
 static BOOL NAMUTi_RandClearFile(const char* path)
 {
     FSFile file;
 
-    // ファイル構造体初期化
+	// ファイル構造体初期化
     FS_InitFile(&file);
 
     // ファイルオープン
     if (FS_OpenFileEx(&file, path, (FS_FILEMODE_RWL)))
     {
         // ファイルをランダムデータでクリア
+		MATHRandContext32 context;
         u32 filesize;
         u8* pClearData = NAMUT_Alloc( CLEAR_DATA_SIZE );
         if (!pClearData)
@@ -857,25 +887,17 @@ static BOOL NAMUTi_RandClearFile(const char* path)
             return FALSE;
         }
 
+		MATH_InitRand32( &context, OS_GetTick() );
+
         for (filesize = FS_GetFileLength(&file); filesize > CLEAR_DATA_SIZE; filesize -= CLEAR_DATA_SIZE)
         {
-            if( AES_Rand(pClearData, CLEAR_DATA_SIZE) != AES_RESULT_SUCCESS )
-            {
-                FS_CloseFile(&file);
-                NAMUT_Free( pClearData );
-                return FALSE;
-            }
+            NAMUTi_FillRand( &context, pClearData, CLEAR_DATA_SIZE);
             FS_WriteFile(&file, pClearData, CLEAR_DATA_SIZE);
         }
 
         if (filesize > 0)
         {
-            if( AES_Rand(pClearData, filesize) != AES_RESULT_SUCCESS )
-            {
-                FS_CloseFile(&file);
-                NAMUT_Free( pClearData );
-                return FALSE;
-            }
+            NAMUTi_FillRand( &context, pClearData, CLEAR_DATA_SIZE);
             FS_WriteFile(&file, pClearData, (s32)filesize);
         }
         FS_CloseFile(&file);
@@ -887,6 +909,98 @@ static BOOL NAMUTi_RandClearFile(const char* path)
     }
     return TRUE;
 }
+
+
+/*---------------------------------------------------------------------------*
+  Name:         FillFileRandom
+
+  Description:  指定されたファイルをランダム値で埋めます。
+
+  Arguments:    path:   対象のファイルのパス。
+
+  Returns:      正常に終了したなら NAM_OK を返します。
+                それ以外はエラーです。
+ *---------------------------------------------------------------------------*/
+inline s32 NAMi_CloseFile(FSFile* pFile, BOOL isSystem)
+{
+    if( FS_CloseFile(pFile) )
+    {
+        return NAM_OK;
+    }
+    else
+    {
+        return isSystem ? NAM_CLOSE_FILE_FAILED_SYSTEM: NAM_CLOSE_FILE_FAILED_USER;
+    }
+}
+
+#define NAM_STREAMING_BUFFER_SIZE (128 * 1024)
+
+static BOOL FillFileRandom(const char* path)
+{
+    u64 seed;
+    MATHRandContext32 rndctx;
+    u32* pBuffer;
+    s32 result = NAM_OK;
+    AESResult aesResult;
+
+    aesResult = AES_Rand(&seed, sizeof(seed));
+    if( aesResult != AES_RESULT_SUCCESS )
+    {
+        return FALSE;
+    }
+    MATH_InitRand32(&rndctx, seed);
+
+    pBuffer = NAMUT_Alloc( NAM_STREAMING_BUFFER_SIZE );
+    if( pBuffer )
+    {
+        BOOL bSuccess;
+        FSFile f;
+
+        FS_InitFile(&f);
+
+        bSuccess = FS_OpenFileEx(&f, path, FS_FILEMODE_RWL);
+        if( bSuccess )
+        {
+            s32 resultClose;
+            u32 fileSize;
+            u32 current;
+
+            fileSize = FS_GetFileLength(&f);
+
+            for( current = 0; current < fileSize; current += NAM_STREAMING_BUFFER_SIZE )
+            {
+                const u32 nextSize = MATH_MIN(NAM_STREAMING_BUFFER_SIZE, fileSize - current);
+                const u32 nextU32  = MATH_DIVUP(nextSize, sizeof(u32));
+                u32* p = pBuffer;
+                u32 i;
+                s32 writtenSize;
+
+                for( i = 0; i < nextU32; ++i )
+                {
+                    *p++ = MATH_Rand32(&rndctx, 0);
+                }
+
+                writtenSize = FS_WriteFile(&f, pBuffer, (s32)nextSize);
+                if( writtenSize != (s32)nextSize )
+                {
+                    result = NAM_WRITE_FILE_FAILED_SYSTEM;
+                    break;
+                }
+            }
+
+            resultClose = NAMi_CloseFile(&f, TRUE);
+        }
+        else
+        {
+            result = NAM_OPEN_FILE_FAILED_SYSTEM;
+        }
+
+        NAMUT_Free(pBuffer);
+    }
+
+	return result == NAM_OK ? TRUE : FALSE;
+}
+
 
 /*---------------------------------------------------------------------------*
   Name:         NAMUTi_CheckExistenceFile
