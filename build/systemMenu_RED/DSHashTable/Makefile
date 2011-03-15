@@ -11,9 +11,9 @@
 # not be disclosed to third parties or copied or duplicated in any form,
 # in whole or in part, without the prior written consent of Nintendo.
 #
-# $Date:: 
-# $Rev: 
-# $Author: 
+# $Date::
+# $Rev:
+# $Author:
 #----------------------------------------------------------------------------
 
 TARGET_FIRM			=	SYSTEMMENU
@@ -36,6 +36,7 @@ MY_TITLE			=	$(DS_HASH_TABLE_TITLE)
 
 #----------------------------------------------------------------------------
 MY_TAD				=	$(MY_TITLE)-$(DS_HASH_TABLE_VERSION)-$(DS_HASH_TABLE_EX_VERSION).tad
+MY_PADDED_DATA			=	$(MY_TAD:.tad=.bin)
 
 #INSTALL_TARGETS	=	$(MY_TAD)
 #INSTALL_DIR		=
@@ -53,6 +54,8 @@ $(MY_TAD): $(MY_DATA2)
 
 $(MY_DATA2): $(MY_DATA) $(MY_DATA_EX) $(MY_DATA_ADHOC) $(MY_APPEND)
 	cat $(MY_DATA) $(MY_DATA_EX) $(MY_DATA_ADHOC) $(MY_APPEND) > $@
+	# for CTR
+	dd if=$@ of=$(MY_PADDED_DATA) bs=320k conv=sync
 
 $(MY_APPEND)::
 	@if test -e $(SYSMENU_ROOT)/.svn; then \
