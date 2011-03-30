@@ -443,7 +443,16 @@ static TitleProperty *SYSMi_CheckShortcutBoot1( void )
             ( ( PAD_Read() == SYSM_PAD_PRODUCTION_SHORTCUT_CARD_BOOT ) && 
               ( !LCFG_TSD_IsFinishedBrokenTWLSettings() || !LCFG_TSD_IsFinishedInitialSetting() || !LCFG_TSD_IsFinishedInitialSetting_Launcher() ) )
             ){
-            return SYSMi_ShortcutCardBootSub();
+            const ROM_Header_Short *header = (ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BAK;
+            
+            if(( header->platform_code & PLATFORM_CODE_FLAG_TWL ) && !UTL_CheckAppRegion( header->card_region_bitmap ))
+            {
+                return NULL;
+            }
+            else
+            {
+                return SYSMi_ShortcutCardBootSub();
+            }
         }
 	    //-----------------------------------------------------
 	    // ISデバッガ起動 or

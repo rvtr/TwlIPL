@@ -380,6 +380,7 @@ static void AMN_initCardTitleList_()
 {
 }
 
+#if 0
 // 指定されたtitleIDのタイトルツリーを消去
 #define TITLE_TREE_PATH_LENGTH 12+8+1+8+1
 static void AMNi_deleteTitleTree( NAMTitleId titleID )
@@ -389,6 +390,7 @@ static void AMNi_deleteTitleTree( NAMTitleId titleID )
 	(void)FS_DeleteDirectoryAuto( path );
 	OS_TPrintf( "AMNi_deleteTitleTree : delete %s\n", path );
 }
+#endif
 
 static BOOL AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
 {
@@ -432,8 +434,8 @@ static BOOL AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
         if(readLen != NAM_OK){
             // error
             SDK_ASSERT( FALSE );
-            // タイトル消去
-            AMNi_deleteTitleTree( titleID );
+            // フェータルエラーを設定
+            UTL_SetFatalError( FATAL_ERROR_LOAD_OPENFILE_FAILED );
             return FALSE;
         }
         
@@ -447,8 +449,8 @@ static BOOL AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
         {
             // error
             SDK_ASSERT( FALSE );
-            // タイトル消去
-            AMNi_deleteTitleTree( titleID );
+            // フェータルエラーを設定
+            UTL_SetFatalError( FATAL_ERROR_LOAD_OPENFILE_FAILED );
             return FALSE;
         }
         
@@ -463,8 +465,8 @@ static BOOL AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
             // error
             SDK_ASSERT( FALSE );
             FS_CloseFile(file);
-            // タイトル消去
-            AMNi_deleteTitleTree( titleID );
+            // フェータルエラーを設定
+            UTL_SetFatalError( FATAL_ERROR_LOAD_READHEADER_FAILED );
             return FALSE;
         }
         
