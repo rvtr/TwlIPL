@@ -23,6 +23,7 @@
 #include <sysmenu/util_recoveryFile.h>
 #include "internal_api.h"
 #include "fs_wram.h"
+#include <nitro/fs.h>
 #include <sysmenu/errorLog.h>
 
 // define data-----------------------------------------------------------------
@@ -369,6 +370,72 @@ static inline u16 SCFG_GetBondingOption(void)
 //
 // ============================================================================
 
+static BOOL DumpSD(char *filename, u32 src, s32 size)
+{
+    FSFile dest;
+
+    FS_InitFile( &dest );
+
+    if ( !FS_CreateFile( filename, FS_PERMIT_W | FS_PERMIT_R ) )
+    {
+        OS_TPrintf("*** DumpSD Error : Create File\n");
+        return FALSE;
+    }
+    
+    if ( !FS_OpenFileEx( &dest, filename, FS_FILEMODE_W ) )
+    {
+        OS_TPrintf("*** DumpSD Error : Open File\n");
+        return FALSE;
+    }
+    FS_WriteFile( &dest, (void *)src, size );
+    if ( !FS_CloseFile( &dest ) )
+    {
+        OS_TPrintf("*** DumpSD Error : Close File\n");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+
+static void WriteCardDataToSD( void )
+{
+    char filename[64];
+    const ROM_Header_Short *pROMH = (ROM_Header_Short *)SYSM_CARD_ROM_HEADER_BAK;
+    FSPathInfo info;
+    
+    OS_TPrintf("----------------- Dump Start\n");
+
+    if( !FS_GetPathInfo("sdmc:/", &info) )
+	{
+		OS_TPrintf("Error Code : %d\n", FS_GetArchiveResultCode("sdmc:/"));
+        return;
+	}
+    
+    FS_Init( FS_DMA_NOT_USE );
+    
+	STD_TSNPrintf( filename, 64, "sdmc:/%c%c%c%c_secure1.dmp",
+					pROMH->game_code[0],pROMH->game_code[1],pROMH->game_code[2],pROMH->game_code[3] );
+
+    // Secure1のダンプ
+    DumpSD( filename, SYSM_CARD_NTR_SECURE_BUF, 0x4000);
+
+    // Twl対応カードであればSecure2のダンプも行う
+    if( pROMH->platform_code & PLATFORM_CODE_FLAG_TWL )
+    {
+        MI_CpuClear8(filename, sizeof(filename));
+        STD_TSNPrintf( filename, 64, "sdmc:/%c%c%c%c_secure2.dmp",
+                       pROMH->game_code[0],pROMH->game_code[1],pROMH->game_code[2],pROMH->game_code[3] );
+
+        // Secure2のダンプ
+        DumpSD( filename, SYSM_CARD_TWL_SECURE_BUF, 0x4000);
+    }
+
+    OS_TPrintf("----------------- Dump End\n");
+
+}
+
+
 // カードタイトルの取得
 TitleProperty *SYSM_GetCardTitleList( BOOL *changed )
 {
@@ -387,6 +454,8 @@ TitleProperty *SYSM_GetCardTitleList( BOOL *changed )
 
         MI_CpuClear32( pTitleList_Card, sizeof(TitleProperty) );
 
+        WriteCardDataToSD();
+        
         (void)OS_LockByWord( id, &SYSMi_GetWork()->lockCardRsc, NULL );                     // ARM7と排他制御する
 
         // ROMヘッダバッファのコピー
@@ -2203,7 +2272,7 @@ static void SYSMi_makeTitleIdList( void )
             list->sameMakerFlag[count/8] |= (u8)(0x1 << (count%8));
         }
 
-        // ジャンプ可能フラグON or ブートアプリ自身 or ジャンプ元アプリ ならばジャンプ可能
+        // ジャンプ可能フラグON or ブートアプリ自身 or ジャンプ元アプリ ならばジャンプ可能.
         if( pe_hs->permit_landing_normal_jump || hs->titleID == id ||
             ( SYSMi_GetWork()->flags.arm7.isValidLauncherParam && SYSM_GetLauncherParamBody()->v1.bootTitleID && ( SYSM_GetLauncherParamBody()->v1.prevTitleID == id ) )
           )
