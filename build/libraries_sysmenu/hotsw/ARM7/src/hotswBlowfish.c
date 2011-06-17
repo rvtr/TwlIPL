@@ -17,6 +17,7 @@
 
 // Function Prototype -------------------------------------------------------
 
+static BLOWFISH_CTX keytable2;
 
 /*---------------------------------------------------------------------------*
   Name:         MakeBlowfishTableDSForNAND
@@ -66,10 +67,21 @@ void MakeBlowfishTableTWL(CardBootData *cbd, s32 keyLen, u16 bondingOp)
     BLOWFISH_CTX *ctx				= &cbd->keyTable2;
 	void 		 *tempCTX;
 
+    static BOOL isFirst = TRUE;
 
     // 製品機の場合
 	if(bondingOp == SCFG_OP_PRODUCT){
-        MI_CpuCopyFast((void *)((OSFromFirm7Buf *)HW_FIRM_FROM_FIRM_BUF)->twl_blowfish, (void *)ctx, sizeof(BLOWFISH_CTX));
+        if( isFirst )
+        {
+            MI_CpuCopyFast((void *)((OSFromFirm7Buf *)HW_FIRM_FROM_FIRM_BUF)->twl_blowfish, (void *)ctx, sizeof(BLOWFISH_CTX));
+
+            MI_CpuCopy8((void *)ctx, (void *)&keytable2, sizeof(BLOWFISH_CTX));
+            isFirst = FALSE;
+        }
+        else
+        {
+            MI_CpuCopyFast((void *)&keytable2, (void *)ctx, sizeof(BLOWFISH_CTX));
+        }
     }
     // 開発機の場合
     else{

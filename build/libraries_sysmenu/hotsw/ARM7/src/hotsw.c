@@ -1957,6 +1957,26 @@ static BOOL ChangeGameMode(void)
     SetMCSCR();
     state = s_funcTable[s_isRomEmu].ChangeMode_S(&s_cbData);
 
+    if(s_cbData.pBootSegBuf->rh.s.platform_code & PLATFORM_CODE_FLAG_TWL)
+    {
+        s_cbData.modeType = HOTSW_MODE2;
+
+        McPowerOff();
+        McPowerOn();
+
+        state = ReadBootSegNormal(&s_cbData);
+
+        MakeBlowfishTableTWL(&s_cbData, 8, s_bondingOp);
+        GenVA_VB_VD();
+
+        state  = ChangeModeNormal2(&s_cbData);
+
+        // ---------------------- Secure2 Mode ----------------------
+        state = s_funcTable[s_isRomEmu].SetPNG_S(&s_cbData);
+        SetMCSCR();
+        state = s_funcTable[s_isRomEmu].ChangeMode_S(&s_cbData);
+    }
+    
     // ---------------------- Game Mode ----------------------
     state = ReadIDGame(&s_cbData);
 
