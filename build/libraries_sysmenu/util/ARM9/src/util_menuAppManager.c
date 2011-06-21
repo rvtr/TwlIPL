@@ -432,19 +432,8 @@ static BOOL AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
         if(readLen != NAM_OK){
             // error
             SDK_ASSERT( FALSE );
-
-            // システムアプリの場合はフェータルに落とし、ユーザーアプリの場合は削除する
-            if( titleID & TITLE_ID_APP_TYPE_MASK )
-            {
-                // フェータルエラーを設定
-                UTL_SetFatalError( FATAL_ERROR_LOAD_OPENFILE_FAILED );
-            }
-            else
-            {
-                // アプリを削除
-                AMNi_deleteTitleTree( titleID );
-            }
-            
+            // タイトル消去
+            AMNi_deleteTitleTree( titleID );
             return FALSE;
         }
         
@@ -458,19 +447,8 @@ static BOOL AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
         {
             // error
             SDK_ASSERT( FALSE );
-
-            // システムアプリの場合はフェータルに落とし、ユーザーアプリの場合は削除する
-            if( titleID & TITLE_ID_APP_TYPE_MASK )
-            {
-                // フェータルエラーを設定
-                UTL_SetFatalError( FATAL_ERROR_LOAD_OPENFILE_FAILED );
-            }
-            else
-            {
-                // アプリを削除
-                AMNi_deleteTitleTree( titleID );
-            }
-
+            // タイトル消去
+            AMNi_deleteTitleTree( titleID );
             return FALSE;
         }
         
@@ -485,19 +463,8 @@ static BOOL AMNi_getAndAddNandTitleData( NAMTitleId titleID, BOOL readShowData )
             // error
             SDK_ASSERT( FALSE );
             FS_CloseFile(file);
-
-            // システムアプリの場合はフェータルに落とし、ユーザーアプリの場合は削除する
-            if( titleID & TITLE_ID_APP_TYPE_MASK )
-            {
-                // フェータルエラーを設定
-                UTL_SetFatalError( FATAL_ERROR_LOAD_READHEADER_FAILED );
-            }
-            else
-            {
-                // アプリを削除
-                AMNi_deleteTitleTree( titleID );
-            }
-            
+            // タイトル消去
+            AMNi_deleteTitleTree( titleID );
             return FALSE;
         }
         
