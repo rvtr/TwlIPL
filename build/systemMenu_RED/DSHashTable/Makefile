@@ -41,7 +41,7 @@ MY_PADDED_DATA			=	$(MY_TAD:.tad=.bin)
 #INSTALL_TARGETS	=	$(MY_TAD)
 #INSTALL_DIR		=
 
-LDIRT_CLEAN			=	$(MY_TAD) $(MY_APPEND) $(MY_DATA2)
+LDIRT_CLEAN			=	$(MY_TAD) $(MY_APPEND) $(MY_DATA2) $(MY_PADDED_DATA)
 
 #----------------------------------------------------------------------------
 
