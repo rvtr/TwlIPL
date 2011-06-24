@@ -38,6 +38,7 @@ def buildgcd(buildtype, prodopt, shortbuild)
 		exit
 	end
 	
+	putex "mkdir -p #{Rootdir}/ARM9.TWL/nandfirm"
 	putex "$TWLSDK_ROOT/tools/bin/bin2obj.TWL.exe #{nandfirm} #{Rootdir}/ARM9.TWL/nandfirm/nandfirm.#{buildtype}.o " +
 		"-b nandfirm_begin -e nandfirm_end"
 
