@@ -1,0 +1,25 @@
+CardboardEraser
+
+インストール中に電源断が発生するなどで
+不正な状態で残ってしまった Cardboard を削除するツールです。
+日米欧豪各リージョンの Cardboard を NAND 内から探索し、
+SystemMenu と同等のファイルチェックを行い、失敗した場合は削除、
+成功した場合は正常にインストールされているとみなして何もしません。
+
+ダイレクトブートに対応しているため、
+起動時に FATAL が発生してしまう本体でも実行することが可能です。
+
+
+ビルドの際は一度 make した srl を memory-launcher-writer に格納して
+最終的なバイナリを生成する必要があるため、
+ $ ruby make.rb [dev|prod|full] [short]
+として実行してください。
+short を指定すると、TWL_IPL_ROOT での make を省略しますが、
+TWL_IPL_ROOT がビルドされた状況によっては不正な ROM が
+生成される可能性があります。
+
+また、ビルドには既に作成された nandfirm が必要になるため、
+TWL_IPL_RED_PRIVATE_ROOT の指定と、該当する USB キーが、
+prod 版をビルドする際は更にマスタリングツール用のドングルが
+必要になります。
+
