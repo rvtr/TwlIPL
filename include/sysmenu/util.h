@@ -85,6 +85,7 @@ typedef enum FatalErrorCode {
     FATAL_ERROR_TITLEID_COMPARE_FAILED_NTR = 50,            // ブート要求されたNTRアプリと実際にロードしたアプリのTitleIDが不一致
     FATAL_ERROR_DHT_PHASE3_FAILED = 51,                     // アプリのNTRホワイトリスト認証失敗（フェーズ３）
     FATAL_ERROR_DHT_PHASE4_FAILED = 52,                     // アプリのNTRホワイトリスト認証失敗（フェーズ４）
+    FATAL_ERROR_BACKUP_DATA_CHECK_FAILED = 53,              // バックアップデータの検証失敗
 
     FATAL_ERROR_MAX = 53
 }FatalErrorCode;

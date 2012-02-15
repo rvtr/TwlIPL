@@ -32,6 +32,9 @@ SRCS			=	sysmenu_lib.c \
 					device.c \
 					keys.c \
 					title.c \
+					SaveDataChecker/lgy_SaveDataChecker.c \
+					SaveDataChecker/lgy_VCK.c \
+					SaveDataChecker/lgy_VCW.c \
 					fs_wram.c \
 					../common/src/status.c \
 					../common/src/pxi.c \

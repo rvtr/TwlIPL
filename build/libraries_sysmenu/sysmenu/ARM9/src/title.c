@@ -24,6 +24,7 @@
 #include "internal_api.h"
 #include "fs_wram.h"
 #include <sysmenu/errorLog.h>
+#include "SaveDataChecker/lgy_SaveDataChecker.h"
 
 // define data-----------------------------------------------------------------
 
@@ -1816,7 +1817,19 @@ static BOOL SYSMi_AuthenticateTitleCore( TitleProperty *pBootTitle)
                 return SYSMi_AuthenticateTWLTitle( pBootTitle );
             case LAUNCHER_BOOTTYPE_ROM:
                 OS_TPrintf( "Authenticate :TWL_ROM start.\n" );
-                return SYSMi_AuthenticateTWLTitle( pBootTitle );
+                if( SYSMi_AuthenticateTWLTitle( pBootTitle ))
+                {
+                    if( CheckBackupData( pBootTitle)) // バックアップデータのチェック
+                    {
+                        return TRUE;
+                    }
+                    else
+                    {
+                        UTL_SetFatalError(FATAL_ERROR_BACKUP_DATA_CHECK_FAILED);
+                        return FALSE;
+                    }
+                }
+                return FALSE;
             case LAUNCHER_BOOTTYPE_TEMP:
                 OS_TPrintf( "Authenticate :TWL_TEMP start.\n" );
                 if (!hs->permit_landing_tmp_jump)
