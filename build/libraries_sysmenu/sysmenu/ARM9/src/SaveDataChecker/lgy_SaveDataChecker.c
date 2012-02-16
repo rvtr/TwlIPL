@@ -85,13 +85,18 @@ void InitializeBackup( void)
 {
     u16 lock_id;
 
+    // HOTSWライブラリのケア（終了処理待ちなど）は必要ない
+#if 0
+    // デバッグ用に表示するだけ
     if( HOTSW_isEnableHotSW())
     {
-        HOTSW_InvalidHotSW();
-        OS_TPrintf( "HOTSW is enable, so HOTSW_InvalidHotSW is done.\n");
+//        HOTSW_InvalidHotSW();
+        OS_TPrintf( "HOTSW is enable!\n");
     }
-    OS_TPrintf( "ok, HOTSW is not enable.\n");
-
+    else
+    {
+        OS_TPrintf( "ok, HOTSW is not enable.\n");
+    }
     if( !HOTSW_isFinalized())
     {
         OS_TPrintf( "HOTSW is not Finalized!\n");
@@ -108,6 +113,7 @@ void InitializeBackup( void)
     {
         OS_TPrintf( "ok, HOTSW is is card load completed.\n");
     }
+#endif
     
     if( !CARD_IsAvailable())
     {
@@ -152,7 +158,7 @@ BOOL readEEPROM( u32 src, void *dst, u32 len)
     }
     CARD_UnlockBackup( lock_id);
 
-    DC_FlushRange( dst, len);
+//    DC_FlushRange( dst, len);
     
     return result;
 }
@@ -162,7 +168,7 @@ BOOL writeEEPROM( u32 dst, const void *src, u32 len)
     BOOL result;
     u16 lock_id;
 
-    DC_FlushRange( src, len);
+//    DC_FlushRange( src, len);
     
     lock_id = (u16)OS_GetLockID();
     CARD_LockBackup( lock_id);
@@ -177,12 +183,51 @@ BOOL writeEEPROM( u32 dst, const void *src, u32 len)
     return result;
 }
 
+#if 1
+BOOL writeAndVerifyEEPROM( u32 address, const void *buffer, void *reload_buffer, u32 len)
+{
+    BOOL w_result, r_result;
+    int  m_result;
+    u16  lock_id;
+    u32  pos;
+
+    // バッファ同士がオーバーラップしていたらエラー
+    pos = (u32)reload_buffer;
+    if( ((u32)buffer <= pos) && (((u32)buffer + len - 1) >= pos))
+    {
+        return FALSE;
+    }
+    pos = (u32)reload_buffer + len - 1;
+    if( ((u32)buffer <= pos) && (((u32)buffer + len - 1) >= pos))
+    {
+        return FALSE;
+    }
+    
+    lock_id = (u16)OS_GetLockID();
+    CARD_LockBackup( lock_id);
+     /* CARD_WriteAndVerifyEeprom() は、 src上のデータをA9-CPUで一時バッファ(CARDi_backup_cache_page_buf)に
+        コピーした上で処理しているので、srcのメモリ空間はA7から見えなくても良い */
+    w_result = CARD_WriteEeprom( address, buffer, len);
+    if( !w_result)
+    {
+        OS_TPrintf( "CARD_WriteEeprom failed! err:%d\n", (int)CARD_GetResultCode());
+    }
+    r_result = CARD_ReadEeprom( address, reload_buffer, len);
+    if( !r_result)
+    {
+        OS_TPrintf( "CARD_ReadEeprom failed! err:%d\n", (int)CARD_GetResultCode());
+    }
+    m_result = MI_CpuComp8( buffer, reload_buffer, len);
+    CARD_UnlockBackup( lock_id);
+    return (w_result && r_result && (m_result == 0));
+}
+#else
 BOOL writeAndVerifyEEPROM( u32 dst, const void *src, u32 len)
 {
     BOOL result;
     u16 lock_id;
 
-    DC_FlushRange( src, len);
+//    DC_FlushRange( src, len);
     
     lock_id = (u16)OS_GetLockID();
     CARD_LockBackup( lock_id);
@@ -196,3 +241,4 @@ BOOL writeAndVerifyEEPROM( u32 dst, const void *src, u32 len)
     CARD_UnlockBackup( lock_id);
     return result;
 }
+#endif

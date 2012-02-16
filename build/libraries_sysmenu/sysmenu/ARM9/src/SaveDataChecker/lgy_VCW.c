@@ -50,17 +50,20 @@ BOOL checkVCW( TitleProperty* tp, u32 ggid)
 #pragma unused( tp)
     u32                 i;
     u32                 *data;
+    u32                 *verify_data;
     u8                  *buf;
     u16                 B_checksum[2];
     VCW                 vcw[2];
     
-    OS_TPrintf("check VCW backup start.\n");
+    OS_TPrintf("check VCW backup start. ggid = 0x%x\n", ggid);
     OS_TPrintf( "header size:0x%x, body size:0x%x\n", sizeof(VCW_SavegameHeader), sizeof(VCW_BodyForCheck));
 
     // EEPROM ‚©‚ç“Ç‚Ýo‚µ
 //    base = MI_AllocWramSlot( MI_WRAM_C, WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM9);
     data = (u32*)(MI_AllocWramSlot( MI_WRAM_C, WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM9));
+    verify_data = (u32*)((u32)data + VCW_BACKUP_READ_SIZE);
     OS_TPrintf("Buffer:0x%x\n", data);
+    OS_TPrintf("verifyBuffer:0x%x\n", verify_data);
     
     InitializeBackup();
     readEEPROM( 0, (u32*)data, VCW_BACKUP_READ_SIZE);
@@ -93,7 +96,7 @@ BOOL checkVCW( TitleProperty* tp, u32 ggid)
     if( VCW_IsModified( &vcw[0]) || VCW_IsModified( &vcw[1]))
     {
         OS_TPrintf( "backup write testing..\n");
-        if( !writeAndVerifyEEPROM( 0, data, VCW_BACKUP_READ_SIZE))
+        if( !writeAndVerifyEEPROM( 0, data, verify_data, VCW_BACKUP_READ_SIZE))
         {
             OS_TPrintf("launch NG!\n");
             VCW_Finalize( &vcw[0]);
@@ -183,7 +186,6 @@ static u16  VCW_Modify( VCW* vcw)
 {
     u16          S_checksum_tmp;
     u32          i;
-    u16          tick;
     u8*          body_u8 = (u8*)(vcw->body);
     u32  calculatedSha1[ MATH_SHA1_DIGEST_SIZE /sizeof(u32)];
     MATHRandContext16   rc16;
@@ -192,12 +194,9 @@ static u16  VCW_Modify( VCW* vcw)
     S_checksum_tmp = VCW_GetChecksum( vcw);
     
     // checksum‚ªB‚É‚È‚é‚æ‚¤‚Éƒ‰ƒ“ƒ_ƒ€‚È1‰ÓŠ‚Ö‘‚«ž‚Ý
-    tick = OS_GetTickLo();
-#if 1
     {
         MATH_CalcSHA1( calculatedSha1, (const void*)vcw->body, sizeof(VCW_BodyForCheck)); 
     }
-#endif
     rseed = (u32)(OS_GetTick()) + *(u32*)(calculatedSha1);
     MATH_InitRand16( &rc16, rseed);
     for( i=0; i<sizeof(VCW_BodyForCheck); i++)
@@ -214,7 +213,7 @@ static u16  VCW_Modify( VCW* vcw)
         body_u8[sizeof(VCW_BodyForCheck) - 1]++;
         vcw->B_checksum += body_u8[sizeof(VCW_BodyForCheck) - 1];
     }
-    OS_TPrintf( "S_checksum:0x%x, A_checksum:0x%x, B_checksum;0x%x\n",
+    OS_TPrintf( "S_checksum:0x%x, A_checksum:0x%x, B_checksum:0x%x\n",
                 S_checksum_tmp,
                 VCW_HeaderChecksumToChecksum( vcw),
                 vcw->B_checksum);

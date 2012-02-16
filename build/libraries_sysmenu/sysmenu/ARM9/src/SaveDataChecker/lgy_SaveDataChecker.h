@@ -25,7 +25,8 @@ void InitializeBackup( void);
 void FinalizeBackup( void);
 BOOL readEEPROM( u32 src, void *dst, u32 len);
 BOOL writeEEPROM( u32 dst, const void *src, u32 len);
-BOOL writeAndVerifyEEPROM( u32 dst, const void *src, u32 len);
+BOOL writeAndVerifyEEPROM( u32 address, const void *buffer, void *reload_buffer, u32 len);
+//BOOL writeAndVerifyEEPROM( u32 dst, const void *src, u32 len);
 
 /*
 // cardnor_NspiIfApi.cpp

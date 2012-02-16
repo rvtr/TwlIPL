@@ -30,6 +30,8 @@
 //NN_COMPILER_ASSERT(VCK_BACKUP_READ_SIZE >= sizeof(VCK_SlotHeader) + sizeof(VCK_ProfileSlotBody));
 //NN_COMPILER_ASSERT(VCK_BACKUP_READ_SIZE % 32 == 0);
 
+// ヘッダのチェックサムをチェックサムに変換する
+static u16 VCK_HeaderChecksumToChecksum( VCK_SlotHeader* header);
 // checksum を算出する
 static u16 getChecksum( void* data);
 // データが工場出荷状態か破壊されていれば TRUE を返す
@@ -53,8 +55,8 @@ TitleID_num;
 BOOL checkVCK( TitleProperty* tp)
 {
     u32                 i;
-    u16                 tick;
     u32                 *data;
+    u32                 *verify_data;
     VCK_SlotHeader      *header;
     VCK_ProfileSlotBody *body;
     u8                  *body_u8;
@@ -69,7 +71,9 @@ BOOL checkVCK( TitleProperty* tp)
     
     // EEPROM から読み出し
     data = (u32*)(MI_AllocWramSlot( MI_WRAM_C, WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM9));
+    verify_data = (u32*)((u32)data + VCK_BACKUP_READ_SIZE);
     OS_TPrintf("Buffer:0x%x\n", data);
+    OS_TPrintf("verifyBuffer:0x%x\n", verify_data);
     
     InitializeBackup();
     readEEPROM( 0, (u32*)data, VCK_BACKUP_READ_SIZE);//sizeof(VCK_SlotHeader) + sizeof(VCK_ProfileSlotBody)が32Bytesの倍数でないため
@@ -97,12 +101,9 @@ BOOL checkVCK( TitleProperty* tp)
     }
     
     // checksumがBになるようにランダムな1箇所へ書き込み
-    tick = OS_GetTickLo();
-#if 1
     {
         MATH_CalcSHA1( calculatedSha1, (const void*)data, sizeof(VCK_ProfileSlotBody)); 
     }
-#endif
     rseed = (u32)(OS_GetTick()) + *(u32*)(calculatedSha1);
     MATH_InitRand16( &rc16, rseed);
     for( i=0; i<sizeof(VCK_ProfileSlotBody); i++)
@@ -112,7 +113,7 @@ BOOL checkVCK( TitleProperty* tp)
     B_checksum = getChecksum( body);
     // 書き込んだ後の checksum が、S_checksum でも マジコンヘッダのchecksum にもならないようにする
     while( (B_checksum == S_checksum) ||
-	   ( B_checksum == (0xFFFF - (header->m_uniqueIdentifier) - (header->m_slotCheckSum))))
+	   ( B_checksum == VCK_HeaderChecksumToChecksum( header)))
     {
         B_checksum -= body_u8[sizeof(VCK_ProfileSlotBody) - 1];
         body_u8[sizeof(VCK_ProfileSlotBody) - 1]++;
@@ -120,20 +121,26 @@ BOOL checkVCK( TitleProperty* tp)
     }
 
     // Backup デバイスへ反映
-    if( writeAndVerifyEEPROM( 0, data, VCK_BACKUP_READ_SIZE))
+    if( writeAndVerifyEEPROM( 0, data, verify_data, VCK_BACKUP_READ_SIZE))
     {
         OS_TPrintf("launch ok.\n");
-        OS_TPrintf("ckecksum:0x%x, B_checksum:0x%x\n", getChecksum(body), B_checksum);
+        OS_TPrintf("S_checksum:0x%x, A_ckecksum:0x%x, B_checksum:0x%x\n", S_checksum, VCK_HeaderChecksumToChecksum(header), B_checksum);
         FinalizeBackup();
         MI_FreeWramSlot( MI_WRAM_C, WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM9);
         return TRUE;
     }
 
     OS_TPrintf("launch NG.\n");
-    OS_TPrintf("S_checksum:0x%x, ckecksum:0x%x, B_checksum:0x%x\n", S_checksum, getChecksum(body), B_checksum);
+    OS_TPrintf("S_checksum:0x%x, A_ckecksum:0x%x, B_checksum:0x%x\n", S_checksum, VCK_HeaderChecksumToChecksum(header), B_checksum);
     FinalizeBackup();
     MI_FreeWramSlot( MI_WRAM_C, WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM9);
     return FALSE;
+}
+
+// ヘッダのチェックサムをチェックサムに変換する
+static u16 VCK_HeaderChecksumToChecksum( VCK_SlotHeader* header)
+{
+    return (u16)(0xFFFF - (header->m_uniqueIdentifier) - (header->m_slotCheckSum));
 }
 
 // checksum を算出する
