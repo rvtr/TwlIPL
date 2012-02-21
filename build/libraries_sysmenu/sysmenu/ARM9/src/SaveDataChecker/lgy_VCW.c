@@ -66,8 +66,13 @@ BOOL checkVCW( TitleProperty* tp, u32 ggid)
     OS_TPrintf("verifyBuffer:0x%x\n", verify_data);
     
     InitializeBackup();
-    readEEPROM( 0, (u32*)data, VCW_BACKUP_READ_SIZE);
-
+    if( !readEEPROM( 0, (u32*)data, VCW_BACKUP_READ_SIZE))
+    {
+        OS_TPrintf("launch NG!\n");
+        FinalizeBackup();
+        MI_FreeWramSlot( MI_WRAM_C, WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM9);
+        return FALSE;
+    }
     buf = (u8*)data;
     VCW_Initialize( &vcw[0], buf, ggid);
     buf = (u8*)data + (sizeof(VCW_SavegameHeader) + sizeof(VCW_BodyForCheck));
@@ -195,14 +200,16 @@ static u16  VCW_Modify( VCW* vcw)
     
     // checksumがBになるようにランダムな1箇所へ書き込み
     {
-        MATH_CalcSHA1( calculatedSha1, (const void*)vcw->body, sizeof(VCW_BodyForCheck)); 
+        MATH_CalcSHA1( calculatedSha1, (const void*)vcw->body, sizeof(VCW_BodyForCheck));
+        
+        rseed = (u32)(OS_GetTick()) + *(u32*)(calculatedSha1);
+        MATH_InitRand16( &rc16, rseed);
+        for( i=0; i<sizeof(VCW_BodyForCheck); i++)
+        {
+            body_u8[i] = (u8)(MATH_Rand16( &rc16, 0xFF));
+        }
     }
-    rseed = (u32)(OS_GetTick()) + *(u32*)(calculatedSha1);
-    MATH_InitRand16( &rc16, rseed);
-    for( i=0; i<sizeof(VCW_BodyForCheck); i++)
-    {
-        body_u8[i] = (u8)(MATH_Rand16( &rc16, 0xFF));
-    }
+
     VCW_UpdateChecksum( vcw);
     vcw->B_checksum = VCW_GetChecksum( vcw);
     // 書き込んだ後の checksum が、S_checksum でも マジコンヘッダのchecksum にもならないようにする

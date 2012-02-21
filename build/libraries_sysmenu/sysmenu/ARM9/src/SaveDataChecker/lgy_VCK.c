@@ -76,7 +76,13 @@ BOOL checkVCK( TitleProperty* tp)
     OS_TPrintf("verifyBuffer:0x%x\n", verify_data);
     
     InitializeBackup();
-    readEEPROM( 0, (u32*)data, VCK_BACKUP_READ_SIZE);//sizeof(VCK_SlotHeader) + sizeof(VCK_ProfileSlotBody)が32Bytesの倍数でないため
+    if( !readEEPROM( 0, (u32*)data, VCK_BACKUP_READ_SIZE))//sizeof(VCK_SlotHeader) + sizeof(VCK_ProfileSlotBody)が32Bytesの倍数でないため
+    {
+        OS_TPrintf("launch NG.\n");
+        FinalizeBackup();
+        MI_FreeWramSlot( MI_WRAM_C, WRAM_SLOT_FOR_FS, WRAM_SIZE_FOR_FS, MI_WRAM_ARM9);
+        return FALSE;
+    }
     header = (VCK_SlotHeader*)data;
     body = (VCK_ProfileSlotBody*)((u8*)data + sizeof(VCK_SlotHeader));
     body_u8 = (u8*)body;
@@ -102,14 +108,16 @@ BOOL checkVCK( TitleProperty* tp)
     
     // checksumがBになるようにランダムな1箇所へ書き込み
     {
-        MATH_CalcSHA1( calculatedSha1, (const void*)data, sizeof(VCK_ProfileSlotBody)); 
+        MATH_CalcSHA1( calculatedSha1, (const void*)data, sizeof(VCK_ProfileSlotBody));
+        
+        rseed = (u32)(OS_GetTick()) + *(u32*)(calculatedSha1);
+        MATH_InitRand16( &rc16, rseed);
+        for( i=0; i<sizeof(VCK_ProfileSlotBody); i++)
+        {
+            body_u8[i] = (u8)(MATH_Rand16( &rc16, 0xFF));
+        }
     }
-    rseed = (u32)(OS_GetTick()) + *(u32*)(calculatedSha1);
-    MATH_InitRand16( &rc16, rseed);
-    for( i=0; i<sizeof(VCK_ProfileSlotBody); i++)
-    {
-        body_u8[i] = (u8)(MATH_Rand16( &rc16, 0xFF));
-    }
+    
     B_checksum = getChecksum( body);
     // 書き込んだ後の checksum が、S_checksum でも マジコンヘッダのchecksum にもならないようにする
     while( (B_checksum == S_checksum) ||
