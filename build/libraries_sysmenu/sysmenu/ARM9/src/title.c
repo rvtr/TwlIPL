@@ -1482,13 +1482,8 @@ static BOOL SYSMi_AuthenticateNTRCardAppHeader( TitleProperty *pBootTitle, ROM_H
     BOOL ret = TRUE;
     OSTitleId ntr_fake_titleID;
 
-#ifdef DEV_WHITELIST_CHECK_SKIP
-    // 開発版ではハッシュチェックスルーフラグを立てる
-    if( SCFG_GetBondingOption() != 0 )
-    {
-        s_b_dev = TRUE;
-    }
-#endif
+    // 開発版・量産版共に、ハッシュチェックはスルーさせる。
+    s_b_dev = TRUE;
 
     // pBootTitle->titleIDとROMヘッダのゲームコードの一致確認をする。
     ntr_fake_titleID =  (u64)( ( head->s.game_code[ 3 ] <<  0 ) |
@@ -2216,7 +2211,7 @@ static void SYSMi_makeTitleIdList( void )
             list->sameMakerFlag[count/8] |= (u8)(0x1 << (count%8));
         }
 
-        // ジャンプ可能フラグON or ブートアプリ自身 or ジャンプ元アプリ ならばジャンプ可能
+        // ジャンプ可能フラグON or ブートアプリ自身 or ジャンプ元アプリ ならばジャンプ可能。
         if( pe_hs->permit_landing_normal_jump || hs->titleID == id ||
             ( SYSMi_GetWork()->flags.arm7.isValidLauncherParam && SYSM_GetLauncherParamBody()->v1.bootTitleID && ( SYSM_GetLauncherParamBody()->v1.prevTitleID == id ) )
           )
