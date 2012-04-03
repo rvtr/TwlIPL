@@ -515,8 +515,8 @@ HotSwState ReadIDSecure(CardBootData *cbd)
 		return HOTSW_PULLED_OUT_ERROR;
     }
 
-    // スクランブルの設定
-    scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
+    // スクランブルの設定(知財用に改造 2012/04/03)
+    scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SCRAMBLE_MASK & ~(CS_MASK | DS_MASK | SE_MASK));
     
     // コマンド作成・設定
 	SetSecureCommand(S_RD_ID, cbd);
@@ -558,7 +558,7 @@ HotSwState ReadIDSecure(CardBootData *cbd)
  *---------------------------------------------------------------------------*/
 HotSwState ReadSegSecure(CardBootData *cbd)
 {
-    u32 			scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
+    u32 			scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SCRAMBLE_MASK & ~(CS_MASK | DS_MASK | SE_MASK));
 	u32				*buf = (cbd->modeType == HOTSW_MODE1) ? cbd->pSecureSegBuf : cbd->pSecure2SegBuf;
     u32				loop, pc, size, interval, i, j=0, k;
 	u64				segNum = 4;
@@ -724,8 +724,8 @@ HotSwState ChangeModeSecure(CardBootData *cbd)
 		return HOTSW_PULLED_OUT_ERROR;
     }
 
-    // スクランブルの設定
-    scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SCRAMBLE_MASK & ~CS_MASK);
+    // スクランブルの設定(知財用に改造 2012/04/03)
+    scrambleMask = HOTSWi_IsRomEmulation() ? 0 : (u32)(SCRAMBLE_MASK & ~(CS_MASK | DS_MASK | SE_MASK));
     
     // コマンド作成・設定
 	SetSecureCommand(S_CHG_MODE, cbd);
@@ -785,8 +785,8 @@ HotSwState ReadIDGame(CardBootData *cbd)
 	reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK | REG_MI_MCCNT0_I_MASK);
 #endif
     
-   	// MCCNT1 レジスタ設定
-	reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | HOTSW_PAGE_STAT;
+   	// MCCNT1 レジスタ設定(知財用に改造 2012/04/03)
+	reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~(CS_MASK | DS_MASK | SE_MASK)) | START_MASK | HOTSW_PAGE_STAT;
 
     // メッセージ受信
 	OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);
@@ -841,8 +841,8 @@ HotSwState ReadPageGame(CardBootData *cbd, u32 start_addr, void* buf, u32 size)
 		reg_HOTSW_MCCNT0 = (u16)((reg_HOTSW_MCCNT0 & HOTSW_E2PROM_CTRL_MASK) | REG_MI_MCCNT0_E_MASK | REG_MI_MCCNT0_I_MASK);
 #endif
         
-   		// MCCNT1 レジスタ設定
-		reg_HOTSW_MCCNT1 = cbd->gameCommondParam | START_MASK | HOTSW_PAGE_1;
+   		// MCCNT1 レジスタ設定(知財用に改造 2012/04/03)
+		reg_HOTSW_MCCNT1 = (cbd->gameCommondParam & ~(CS_MASK | DS_MASK | SE_MASK)) | START_MASK | HOTSW_PAGE_1;
 
     	// メッセージ受信
 		OS_ReceiveMessage(&HotSwThreadData.hotswDmaQueue, (OSMessage *)&s_Msg, OS_MESSAGE_BLOCK);

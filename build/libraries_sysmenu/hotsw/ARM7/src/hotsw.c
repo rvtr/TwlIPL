@@ -681,8 +681,8 @@ static HotSwState ReadSecureModeCardData(void)
 
     u32 secure_ID;
 
-    // PNG設定
-    state  = s_funcTable[s_isRomEmu].SetPNG_S(&s_cbData);
+    // PNG OFF設定(知財用に改造 2012/04/03)
+    state  = SwitchOFFPNGSecure(&s_cbData);
     retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
     // DS側符号生成回路初期値設定 (レジスタ設定)

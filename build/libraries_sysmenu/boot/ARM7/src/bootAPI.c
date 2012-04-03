@@ -139,6 +139,11 @@ BOOL BOOT_WaitStart( void )
 	return FALSE;
 }
 
+
+#define CS_MASK 0x00400000
+#define DS_MASK 0x00002000
+#define SE_MASK 0x00004000
+
 // SDKのFinalize処理後に呼び出される
 static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget* target )
 {
@@ -175,8 +180,9 @@ static void BOOTi_RebootCallback( void** entryp, void* mem_list_v, REBOOTTarget*
             // NitroSDKバグ対策でブートメディア種別に関わらずROMヘッダを常時書き換え
             dh->s.game_cmd_param &= ~SCRAMBLE_MASK;
         }
-        // カードROMヘッダ（非キャッシュ領域）は常時設定
-        ch->s.game_cmd_param = SYSMi_GetWork()->gameCommondParam;
+        // カードROMヘッダ（非キャッシュ領域）は常時設定(知財用に改造 2012/04/03)
+        ch->s.game_cmd_param = SYSMi_GetWork()->gameCommondParam & ~(CS_MASK | DS_MASK | SE_MASK);
+        dh->s.game_cmd_param = SYSMi_GetWork()->gameCommondParam & ~(CS_MASK | DS_MASK | SE_MASK);
 
 		// この処理は、DSダウンロードプレイ側で行う。
 		// MI_CpuCopyFast ( ch, (void *)MB_CARD_ROM_HEADER_ADDRESS, 0x160);
