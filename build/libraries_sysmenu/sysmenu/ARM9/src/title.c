@@ -25,6 +25,8 @@
 #include "fs_wram.h"
 #include <sysmenu/errorLog.h>
 #include "SaveDataChecker/lgy_SaveDataChecker.h"
+#include "SaveDataChecker/lgy_BackupDeviceChecker.h"
+#include "BlackList/lgy_BlackList.h"
 
 // define data-----------------------------------------------------------------
 
@@ -1805,6 +1807,7 @@ static BOOL SYSMi_AuthenticateHeader( TitleProperty *pBootTitle, ROM_Header *hea
 // 認証
 static BOOL SYSMi_AuthenticateTitleCore( TitleProperty *pBootTitle)
 {
+    BOOL resultCard = TRUE;
     ROM_Header_Short *hs = ( ROM_Header_Short *)SYSM_APP_ROM_HEADER_BUF;
     if( hs->platform_code & PLATFORM_CODE_FLAG_TWL )
     {
@@ -1819,15 +1822,26 @@ static BOOL SYSMi_AuthenticateTitleCore( TitleProperty *pBootTitle)
                 OS_TPrintf( "Authenticate :TWL_ROM start.\n" );
                 if( SYSMi_AuthenticateTWLTitle( pBootTitle ))
                 {
-                    if( CheckBackupData( pBootTitle)) // バックアップデータのチェック
+                    /*
+                    if( !CheckBlackList( pBootTitle)) // ブラックリストの確認
                     {
-                        return TRUE;
+                        resultCard = FALSE;
                     }
-                    else
+                    if( !CheckBackupDevice( pBootTitle)) // バックアップデバイスの確認
+                    {
+                        resultCard = FALSE;
+                    }*/
+                    if( !CheckBackupData( pBootTitle)) // バックアップデータのチェック
+                    {
+                        resultCard = FALSE;
+                    }
+
+                    if( !resultCard)
                     {
                         UTL_SetFatalError(FATAL_ERROR_BACKUP_DATA_CHECK_FAILED);
                         return FALSE;
                     }
+                    return TRUE;
                 }
                 return FALSE;
             case LAUNCHER_BOOTTYPE_TEMP:
@@ -1870,7 +1884,30 @@ static BOOL SYSMi_AuthenticateTitleCore( TitleProperty *pBootTitle)
                 return SYSMi_AuthenticateNTRDownloadTitle( pBootTitle );
             case LAUNCHER_BOOTTYPE_ROM:
                 OS_TPrintf( "Authenticate :NTR_ROM start.\n" );
-                return SYSMi_AuthenticateNTRCardTitle( pBootTitle );
+                if( SYSMi_AuthenticateNTRCardTitle( pBootTitle ))
+                {
+                    if( !CheckBlackList( pBootTitle)) // ブラックリストの確認
+                    {
+                        resultCard = FALSE;
+                    }
+                    if( !CheckBackupDevice( pBootTitle)) // バックアップデバイスの確認
+                    {
+                        resultCard = FALSE;
+                    }
+                    /*
+                    if( !CheckBackupData( pBootTitle)) // バックアップデータのチェック
+                    {
+                        resultCard = FALSE;
+                    }*/
+
+                    if( !resultCard)
+                    {
+                        UTL_SetFatalError(FATAL_ERROR_BACKUP_DATA_CHECK_FAILED);
+                        return FALSE;
+                    }
+                    return TRUE;
+                }
+                return FALSE;
             default:
                 UTL_SetFatalError(FATAL_ERROR_NTR_BOOTTYPE_UNKNOWN);
                 return FALSE;

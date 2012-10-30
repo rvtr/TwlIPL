@@ -35,6 +35,8 @@ SRCS			=	sysmenu_lib.c \
 					SaveDataChecker/lgy_SaveDataChecker.c \
 					SaveDataChecker/lgy_VCK.c \
 					SaveDataChecker/lgy_VCW.c \
+					SaveDataChecker/lgy_BackupDeviceChecker.c \
+					Blacklist/lgy_BlackList.c \
 					fs_wram.c \
 					../common/src/status.c \
 					../common/src/pxi.c \
