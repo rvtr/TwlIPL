@@ -399,6 +399,8 @@ static HotSwState LoadCardData(void)
         state  = ReadIDNormal(&s_cbData);
         retval = (retval == HOTSW_SUCCESS) ? state : retval;
 
+        SYSMi_GetWork()->flags.hotsw.id_n = s_cbData.id_nml;
+
         // カードタイプを判別をして、使う関数を切替える IDの最上位ビットが1なら3DM
         s_cbData.cardType = (s_cbData.id_nml & HOTSW_ROMID_1TROM_MASK) ? DS_CARD_TYPE_2 : DS_CARD_TYPE_1;
 
@@ -554,6 +556,8 @@ static HotSwState LoadCardData(void)
             // カードIDの比較をして、一致しなければFALSEを返す
             {
                 u32 secure_ID = (s_cbData.modeType == HOTSW_MODE1) ? s_cbData.id_scr : s_cbData.id_scr2;
+                SYSMi_GetWork()->flags.hotsw.id_g = s_cbData.id_gam;
+                
                 if(secure_ID != s_cbData.id_gam){
                     retval = (retval == HOTSW_SUCCESS) ? HOTSW_ID_CHECK_ERROR : retval;
 
@@ -694,6 +698,8 @@ static HotSwState ReadSecureModeCardData(void)
 
     // カードIDの比較をして、一致しなければFALSEを返す
     secure_ID = (s_cbData.modeType == HOTSW_MODE1) ? s_cbData.id_scr : s_cbData.id_scr2;
+    SYSMi_GetWork()->flags.hotsw.id_s = secure_ID;
+    
     if(s_cbData.id_nml != secure_ID){
         retval = (retval == HOTSW_SUCCESS) ? HOTSW_ID_CHECK_ERROR : retval;
     }
@@ -1761,6 +1767,10 @@ static void PulledOutSequence(void)
     s_isPulledOut = TRUE;
 
     s_gameID = 0;
+
+	SYSMi_GetWork()->flags.hotsw.id_n = 0;
+    SYSMi_GetWork()->flags.hotsw.id_s = 0;
+    SYSMi_GetWork()->flags.hotsw.id_g = 0;
     
     // ワンセグのスリープ時シャットダウン対策を戻す
     MCU_EnableDeepSleepToPowerLine( MCU_PWR_LINE_33, TRUE );

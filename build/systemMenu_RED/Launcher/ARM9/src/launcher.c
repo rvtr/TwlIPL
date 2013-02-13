@@ -619,6 +619,13 @@ static TitleProperty *ProcessPads( TitleProperty *pTitleList )
 			PutStringUTF16(   0, 175, TXT_COLOR_RED, L"HotSw Disable" );
         }
     }
+
+    NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL, 0, 70, 100, 100 );
+    
+    PrintfSJIS( 0,  85, TXT_COLOR_GREEN, "GmCmd:%x", SYSMi_GetWork()->gameCommondParam );
+    PrintfSJIS( 0, 100, TXT_COLOR_GREEN, "IDn:%x", SYSMi_GetWork()->flags.hotsw.id_n );
+    PrintfSJIS( 0, 115, TXT_COLOR_GREEN, "IDs:%x", SYSMi_GetWork()->flags.hotsw.id_s );
+    PrintfSJIS( 0, 130, TXT_COLOR_GREEN, "IDg:%x", SYSMi_GetWork()->flags.hotsw.id_g );
     
 	return ret;
 }
@@ -782,12 +789,12 @@ static void DrawScrollBar( TitleProperty *pTitleList )
 		PutStringUTF16( (int)(BAR_ZERO_X + l * (ITEM_SIZE + ITEM_INTERVAL)),
 						BAR_ZERO_Y,
 						(pTitleList[l].flags.isValid ? (TXT_UCOLOR_G0 + colc_cold) : TXT_COLOR_BLACK),
-						(const u16 *)L"・" );
+						L"\x30FB" );
 	}
 	for(l=0; l<4; l++)
 	{
 		oldx = (int)(bar_left - l%2);
-		PutStringUTF16( oldx, BAR_ZERO_Y - l/2, TXT_UCOLOR_G1, (const u16 *)L"□" );
+		PutStringUTF16( oldx, BAR_ZERO_Y - l/2, TXT_UCOLOR_G1, L"\x25A1" );
 	}
 }
 
@@ -864,7 +871,7 @@ static void DrawBackLightSwitch(void)
 		
 		NNS_G2dCharCanvasClearArea( &gCanvas, TXT_COLOR_NULL, B_LIGHT_DW_BUTTON_TOP_X + 24, B_LIGHT_DW_BUTTON_TOP_Y, 40, 13 );
 		PutStringUTF16( B_LIGHT_DW_BUTTON_TOP_X, B_LIGHT_DW_BUTTON_TOP_Y, TXT_COLOR_RED,
-						L"\xE01c　　　\xE01b" );
+						L"\xE01c     \xE01b" );
 		PrintfSJIS( B_LIGHT_DW_BUTTON_TOP_X + 11, B_LIGHT_DW_BUTTON_TOP_Y, TXT_COLOR_RED,
 						"BL:%2d\n", brightness );
 	}
