@@ -1,0 +1,1016 @@
+#---------------------------------------------------------------------------
+#  Project:  TwlIPL
+#  File:     hyena.lcf.template
+#
+#  Copyright 2007 Nintendo.  All rights reserved.
+#
+#  These coded instructions, statements, and computer programs contain
+#  proprietary information of Nintendo of America Inc. and/or Nintendo
+#  Company Ltd., and are protected by Federal copyright law.  They may
+#  not be disclosed to third parties or copied or duplicated in any form,
+#  in whole or in part, without the prior written consent of Nintendo.
+#
+#  $Date::            $
+#  $Rev$
+#  $Author$
+#---------------------------------------------------------------------------
+
+# check.XXX は、ランチャーがロード可能なサイズおよびautoload後のメモリマップに応じて制限サイズを設定する。
+
+MEMORY
+{
+	hyena				(RWX) :	ORIGIN = 0x02280200,		LENGTH = 0x0	>	hyena.TWL.FLX.sbin
+
+	WRAM				(RWX) :	ORIGIN = 0x037a0000,	LENGTH = 0x0	>>	hyena.TWL.FLX.sbin
+	binary.AUTOLOAD_INFO		(RWX) :	ORIGIN = 0,						LENGTH = 0x0	>>	hyena.TWL.FLX.sbin
+	binary.STATIC_FOOTER		(RWX) :	ORIGIN = 0,						LENGTH = 0x0	>>	hyena.TWL.FLX.sbin
+
+	hyena_defsF		(RW)  :	ORIGIN = 0,						LENGTH = 0x0	>	hyena_defs.TWL.FLX.sbin
+	hyena_tableF	(RW)  :	ORIGIN = 0,						LENGTH = 0x0	>	hyena_table.TWL.FLX.sbin
+
+	check.WORKRAM				(RWX) :	ORIGIN = 0x037a0000,			LENGTH = 0x6a000	>	workram.check
+
+	binary.LTDAUTOLOAD_TOP		(RW)  :	ORIGIN = 0,						LENGTH = 0x0	>	hyena.TWL.LTD.sbin
+	LTDMAIN			(RWX) :	ORIGIN = AFTER(hyena),	LENGTH = 0x0	>>	hyena.TWL.LTD.sbin
+	binary.LTDAUTOLOAD_INFO		(RWX) :	ORIGIN = 0,						LENGTH = 0x0	>>	hyena.TWL.LTD.sbin
+
+	hyena_defsL	(RW)  :	ORIGIN = 0,						LENGTH = 0x0	>	hyena_defs.TWL.LTD.sbin
+	hyena_tableL	(RW)  :	ORIGIN = 0,						LENGTH = 0x0	>	hyena_table.TWL.LTD.sbin
+
+	check.LTDMAIN				(RWX) :	ORIGIN = 0x02280200,			LENGTH = 0xf8000	>	ltdmain.check
+}
+
+KEEP_SECTION
+{
+	.sinit
+}
+
+SECTIONS
+{
+	############################ STATIC #################################
+	.hyena:
+	{
+		ALIGNALL(4);
+		. = ALIGN(4);
+	
+		#
+		#  Definition to refer overlay segment, when same name symbols exist in multiple overlays.
+		#
+	
+		#
+		#  TEXT BLOCK: READ ONLY
+		#
+		SDK_STATIC_START		=.;
+		SDK_STATIC_TEXT_START		=.;
+				#:::::::::: text/rodata
+				OBJECT(_start,*)
+				initScfg.o (.text)
+				crt0.LTD.o (.text)
+				initScfg.o (.rodata)
+				crt0.LTD.o (.rodata)
+				initScfg.o (.init)
+				crt0.LTD.o (.init)
+		. = ALIGN(4);
+		SDK_STATIC_SINIT_START		=.;
+				#:::::::::: ctor
+				initScfg.o (.ctor)
+				crt0.LTD.o (.ctor)
+				initScfg.o (.sinit)
+				crt0.LTD.o (.sinit)
+				WRITEW	0;
+				#:::::::::: ctor
+		SDK_STATIC_SINIT_END		=.;
+				#:::::::::: text/rodata
+		SDK_STATIC_TEXT_END		=.;
+	
+		#
+		#  DATA BLOCK: READ WRITE
+		#
+		. = ALIGN(4);
+		SDK_STATIC_DATA_START		=.;
+				#:::::::::: data
+				initScfg.o (.sdata)
+				crt0.LTD.o (.sdata)
+				initScfg.o (.data)
+				crt0.LTD.o (.data)
+				#:::::::::: data
+		SDK_STATIC_DATA_END		=.;
+		. = ALIGN(4);
+		SDK_STATIC_END			=.;
+	
+		SDK_STATIC_TEXT_SIZE		= SDK_STATIC_TEXT_END - SDK_STATIC_TEXT_START;
+		SDK_STATIC_DATA_SIZE		= SDK_STATIC_DATA_END - SDK_STATIC_DATA_START;
+		SDK_STATIC_SIZE				= SDK_STATIC_END      - SDK_STATIC_START;
+		__sinit__					= SDK_STATIC_SINIT_START;	# for static initializer
+	
+	} > hyena
+
+	.hyena.bss:
+	{
+		ALIGNALL(4);
+		. = ALIGN(4);
+	
+		#
+		#  Definition to refer overlay segment, when same name symbols exist in multiple overlays.
+		#
+	
+		#
+		#  BSS BLOCK
+		#
+		SDK_STATIC_BSS_START		=.;
+				#:::::::::: bss
+				initScfg.o (.sbss)
+				crt0.LTD.o (.sbss)
+				initScfg.o (.bss)
+				crt0.LTD.o (.bss)
+				#:::::::::: bss
+		. = ALIGN(4);
+		SDK_STATIC_BSS_END		= .;
+	
+		SDK_STATIC_BSS_SIZE		= SDK_STATIC_BSS_END - SDK_STATIC_BSS_START;
+	
+	} >> hyena
+	
+	
+	############################ AUTOLOADS ##############################
+	SDK_AUTOLOAD.WRAM.START			= 0x037c0000;
+	SDK_AUTOLOAD.WRAM.END			= SDK_AUTOLOAD.WRAM.START;
+	SDK_AUTOLOAD.WRAM.BSS_END		= SDK_AUTOLOAD.WRAM.START;
+	SDK_AUTOLOAD.WRAM.SIZE			= 0;
+	SDK_AUTOLOAD.WRAM.BSS_SIZE		= 0;
+	SDK_AUTOLOAD_START				= SDK_STATIC_END;
+	SDK_AUTOLOAD_SIZE				= 0;
+	SDK_AUTOLOAD_NUMBER				= 1;
+
+	.WRAM:
+	{
+		ALIGNALL(4);
+		. = ALIGN(4);
+	
+		#
+		#  Definition to refer overlay segment, when same name symbols exist in multiple overlays.
+		#
+	
+		#
+		#   TEXT BLOCK: READ ONLY
+		#
+		SDK_AUTOLOAD_WRAM_ID		=0;
+		SDK_AUTOLOAD.WRAM.ID		=0;
+		SDK_AUTOLOAD.WRAM.START	=.;
+		SDK_AUTOLOAD.WRAM.TEXT_START	=.;
+				#:::::::::: text/rodata
+				main.o (.text)
+				OBJECT( MainTaskRoutine 		, libwl_sp.TWL.LTD.a )
+				OBJECT( AddTask 				, libwl_sp.TWL.LTD.a )
+				OBJECT( DeleteTask 				, libwl_sp.TWL.LTD.a )
+				OBJECT( LowestIdleTask 			, libwl_sp.TWL.LTD.a )
+				OBJECT( ExecuteMessage 			, libwl_sp.TWL.LTD.a )
+				OBJECT( NewHeapBuf 				, libwl_sp.TWL.LTD.a )
+				OBJECT( DeleteHeapBuf 			, libwl_sp.TWL.LTD.a )
+				OBJECT( AllocateHeapBuf 		, libwl_sp.TWL.LTD.a )
+				OBJECT( ReleaseHeapBuf 			, libwl_sp.TWL.LTD.a )
+				OBJECT( MoveHeapBuf 			, libwl_sp.TWL.LTD.a )
+				OBJECT( AddHeapBuf 				, libwl_sp.TWL.LTD.a )
+				OBJECT( GetHeapBufNextAdrs 		, libwl_sp.TWL.LTD.a )
+				OBJECT( RequestCmdTask 			, libwl_sp.TWL.LTD.a )
+				OBJECT( SendMessageToWmDirect 	, libwl_sp.TWL.LTD.a )
+				OBJECT( WStart 					, libwl_sp.TWL.LTD.a )
+				OBJECT( WStop 					, libwl_sp.TWL.LTD.a )
+				OBJECT( WSetStaState 			, libwl_sp.TWL.LTD.a )
+				OBJECT( WlIntr 					, libwl_sp.TWL.LTD.a )
+				OBJECT( WlIntrPreTbtt 			, libwl_sp.TWL.LTD.a )
+				OBJECT( WlIntrTbtt 				, libwl_sp.TWL.LTD.a )
+				OBJECT( WlIntrActEnd 			, libwl_sp.TWL.LTD.a )
+				OBJECT( WlIntrCntOvf 			, libwl_sp.TWL.LTD.a )
+				OBJECT( WlIntrTxErr 			, libwl_sp.TWL.LTD.a )
+				OBJECT( WlIntrRxCntup 			, libwl_sp.TWL.LTD.a )
+				OBJECT( WlIntrTxEnd 			, libwl_sp.TWL.LTD.a )
+				OBJECT( WlIntrRxEnd 			, libwl_sp.TWL.LTD.a )
+				OBJECT( WlIntrMpEnd 			, libwl_sp.TWL.LTD.a )
+				OBJECT( WlIntrStartTx 			, libwl_sp.TWL.LTD.a )
+				OBJECT( WlIntrStartRx 			, libwl_sp.TWL.LTD.a )
+				OBJECT( SetParentTbttTxq 		, libwl_sp.TWL.LTD.a )
+				OBJECT( MacBugTxMp 				, libwl_sp.TWL.LTD.a )
+				OBJECT( AdjustRingPointer 		, libwl_sp.TWL.LTD.a )
+				OBJECT( CheckKeyTxEnd 			, libwl_sp.TWL.LTD.a )
+				OBJECT( WlIntrTxBeaconTask 		, libwl_sp.TWL.LTD.a )
+				OBJECT( WlIntrTxEndTask 		, libwl_sp.TWL.LTD.a )
+				OBJECT( WlIntrRxEndTask 		, libwl_sp.TWL.LTD.a )
+				OBJECT( WlIntrMpEndTask 		, libwl_sp.TWL.LTD.a )
+				OBJECT( SetParentTbttTxqTask 	, libwl_sp.TWL.LTD.a )
+				OBJECT( TakeoutRxFrame 			, libwl_sp.TWL.LTD.a )
+				OBJECT( InitTxCtrl 				, libwl_sp.TWL.LTD.a )
+				OBJECT( InitRxCtrl 				, libwl_sp.TWL.LTD.a )
+				OBJECT( WaitLoop_Rxpe			, libwl_sp.TWL.LTD.a )
+				OBJECT( WaitLoop_Waitus			, libwl_sp.TWL.LTD.a )
+				OBJECT( WaitLoop_ClrAid			, libwl_sp.TWL.LTD.a )
+				OBJECT( WaitLoop_BbpAccess		, libwl_sp.TWL.LTD.a )
+				OBJECT( WaitLoop_RfAccess		, libwl_sp.TWL.LTD.a )
+				OBJECT( BMILZData,                      libathdrv_sp.TWL.LTD.a )
+				OBJECT( bmiBufferSend,                  libathdrv_sp.TWL.LTD.a )
+				OBJECT( BMIWriteMemory,                 libathdrv_sp.TWL.LTD.a )
+				OBJECT(FATFSi_lfi2text, libfatfs_sp.TWL.LTD.a)
+				OBJECT(FATFSi_pc_findin, libfatfs_sp.TWL.LTD.a)
+				OBJECT(FATFSi_pc_patcmp_vfat, libfatfs_sp.TWL.LTD.a)
+				OBJECT(FATFSi_pc_ascii_mfile, libfatfs_sp.TWL.LTD.a)
+				OBJECT(FATFSi_map_ascii_to_unicode, libfatfs_sp.TWL.LTD.a)
+				OBJECT(SDCARD_Intr_Thread, libfatfs_sp.TWL.LTD.a)
+				OBJECT(FATFSi_unicode_cmp_to_ascii_char, libfatfs_sp.TWL.LTD.a)
+				OBJECT(FATFSi_pc_read_blk, libfatfs_sp.TWL.LTD.a)
+				OBJECT(FATFSi_rtfs_memset,           libfatfs_sp.TWL.LTD.a)
+				OBJECT(FATFSi_faxx_check_free_space, libfatfs_sp.TWL.LTD.a)
+				OBJECT(fat32_check_freespace,        libfatfs_sp.TWL.LTD.a)
+				OBJECT(fat16_check_freespace,        libfatfs_sp.TWL.LTD.a)
+				OBJECT(SDCARDi_CpuReadFifoAes,  libfatfs_sp.TWL.LTD.a)
+				OBJECT(SDCARDi_DmaReadFifoAes,  libfatfs_sp.TWL.LTD.a)
+				OBJECT(SDCARDi_CpuWriteFifoAes, libfatfs_sp.TWL.LTD.a)
+				OBJECT(SDCARDi_DmaWriteFifoAes, libfatfs_sp.TWL.LTD.a)
+				OBJECT(SYSFPGA_irq,             libfatfs_sp.TWL.LTD.a)
+				OBJECT(SDCARDi_CpuRecvFast,     libfatfs_sp.TWL.LTD.a)
+				OBJECT(SDCARDi_CpuSendFast,     libfatfs_sp.TWL.LTD.a)
+				OBJECT(SD_OrFPGA,               libfatfs_sp.TWL.LTD.a)
+				OBJECT(SD_AndFPGA,              libfatfs_sp.TWL.LTD.a)
+				OBJECT(SD_SetFPGA,              libfatfs_sp.TWL.LTD.a)
+				OBJECT(SD_GetFPGA,              libfatfs_sp.TWL.LTD.a)
+				OBJECT(SD_CheckFPGAReg,         libfatfs_sp.TWL.LTD.a)
+				OBJECT(NDMA_irq_Handler,        libfatfs_sp.TWL.LTD.a)
+				OBJECT(SDCARD_irq_Handler,      libfatfs_sp.TWL.LTD.a)
+				OBJECT(SDCARDi_ReadCore,   libfatfs_sp.TWL.LTD.a)
+				OBJECT(SDCARDi_WriteCore,  libfatfs_sp.TWL.LTD.a)
+				OBJECT(SDCARD_TimerStart,  libfatfs_sp.TWL.LTD.a)
+				OBJECT(SDCARD_TimerStop,   libfatfs_sp.TWL.LTD.a)
+				OBJECT(SDCARDi_Access,     libfatfs_sp.TWL.LTD.a)
+				OBJECT(SD_Command,         libfatfs_sp.TWL.LTD.a)
+				OBJECT(SD_SendStatus,      libfatfs_sp.TWL.LTD.a)
+				OBJECT(SD_MultiReadBlock,  libfatfs_sp.TWL.LTD.a)
+				OBJECT(SD_MultiWriteBlock, libfatfs_sp.TWL.LTD.a)
+				OBJECT(SD_TransCommand,    libfatfs_sp.TWL.LTD.a)
+				OBJECT(SD_TransReadyFPGA,  libfatfs_sp.TWL.LTD.a)
+				OBJECT(SD_TransEndFPGA,    libfatfs_sp.TWL.LTD.a)
+				OBJECT(SD_CheckStatus,     libfatfs_sp.TWL.LTD.a)
+				OBJECT(SD_EnableClock,     libfatfs_sp.TWL.LTD.a)
+				OBJECT(SD_DisableClock,    libfatfs_sp.TWL.LTD.a)
+				OBJECT(SD_EnableSeccnt,    libfatfs_sp.TWL.LTD.a)
+				libsubpsyscall.a (.text)
+				libsyscall_sp.twl.a (.text)
+				MSL_C_NITRO_Ai_LE.a (.text)
+				MSL_Extras_NITRO_Ai_LE.a (.text)
+				MSL_CPP_NITRO_Ai_LE.a (.text)
+				FP_fastI_v4t_LE.a (.text)
+				NITRO_Runtime_Ai_LE.a (.text)
+				libos_sp.TWL.LTD.a (.text)
+				libmi_sp.TWL.LTD.a (.text)
+				libpad_sp.TWL.LTD.a (.text)
+				libpxi_sp.TWL.LTD.a (.text)
+				libstd_sp.TWL.LTD.a (.text)
+				libexi_sp.TWL.LTD.a (.text)
+				libsnd_sp.TWL.LTD.a (.text)
+				libspi_sp.TWL.LTD.a (.text)
+				libpm_sp.SYSMENU.TWL.LTD.a (.text)
+				libmath_sp.TWL.LTD.a (.text)
+				libscfg_sp.TWL.LTD.a (.text)
+				libtp_sp.TWL.LTD.a (.text)
+				libmic_sp.TWL.LTD.a (.text)
+				libfs_sp.TWL.LTD.a (.text)
+				libcard_sp.TWL.LTD.a (.text)
+				libi2c_sp.TWL.LTD.a (.text)
+				libcamera_sp.TWL.LTD.a (.text)
+				libcdc_sp.TWL.LTD.a (.text)
+				libsndex_sp.TWL.LTD.a (.text)
+				libtpex_sp.TWL.LTD.a (.text)
+				libmicex_sp.TWL.LTD.a (.text)
+				libmcu_sp.TWL.LTD.a (.text)
+				libsdio_sp.TWL.LTD.a (.text)
+				libnvram_sp.TWL.LTD.a (.text)
+				librtc_sp.TWL.LTD.a (.text)
+				libboot_sp.TWL.LTD.a (.text)
+				libreboot_sp.TWL.LTD.a (.text)
+				libhotsw_sp.TWL.LTD.a (.text)
+				libreloc_info_sp.TWL.LTD.a (.text)
+				libsysmenu_sp.TWL.LTD.a (.text)
+				libsysmmcu_sp.TWL.LTD.a (.text)
+				libds_sp.TWL.LTD.a (.text)
+				libaes_sp.firm.LTD.a (.text)
+				libsea_sp.TWL.LTD.a (.text)
+				libcrypto_sp.TWL.LTD.a (.text)
+				* (.exception)
+				* (.rsvwram)
+		. = ALIGN(4);
+		SDK_STATIC_ETABLE_START =.;
+		__exception_table_start__ =.;
+				EXCEPTION
+		__exception_table_end__ =.;
+		SDK_STATIC_ETABLE_END =.;
+				main.o (.rodata)
+				libsubpsyscall.a (.rodata)
+				libsyscall_sp.twl.a (.rodata)
+				MSL_C_NITRO_Ai_LE.a (.rodata)
+				MSL_Extras_NITRO_Ai_LE.a (.rodata)
+				MSL_CPP_NITRO_Ai_LE.a (.rodata)
+				FP_fastI_v4t_LE.a (.rodata)
+				NITRO_Runtime_Ai_LE.a (.rodata)
+				libos_sp.TWL.LTD.a (.rodata)
+				libmi_sp.TWL.LTD.a (.rodata)
+				libpad_sp.TWL.LTD.a (.rodata)
+				libpxi_sp.TWL.LTD.a (.rodata)
+				libstd_sp.TWL.LTD.a (.rodata)
+				libexi_sp.TWL.LTD.a (.rodata)
+				libsnd_sp.TWL.LTD.a (.rodata)
+				libspi_sp.TWL.LTD.a (.rodata)
+				libpm_sp.SYSMENU.TWL.LTD.a (.rodata)
+				libmath_sp.TWL.LTD.a (.rodata)
+				libscfg_sp.TWL.LTD.a (.rodata)
+				libtp_sp.TWL.LTD.a (.rodata)
+				libmic_sp.TWL.LTD.a (.rodata)
+				libfs_sp.TWL.LTD.a (.rodata)
+				libcard_sp.TWL.LTD.a (.rodata)
+				libi2c_sp.TWL.LTD.a (.rodata)
+				libcamera_sp.TWL.LTD.a (.rodata)
+				libcdc_sp.TWL.LTD.a (.rodata)
+				libsndex_sp.TWL.LTD.a (.rodata)
+				libtpex_sp.TWL.LTD.a (.rodata)
+				libmicex_sp.TWL.LTD.a (.rodata)
+				libmcu_sp.TWL.LTD.a (.rodata)
+				libsdio_sp.TWL.LTD.a (.rodata)
+				libnvram_sp.TWL.LTD.a (.rodata)
+				librtc_sp.TWL.LTD.a (.rodata)
+				libboot_sp.TWL.LTD.a (.rodata)
+				libreboot_sp.TWL.LTD.a (.rodata)
+				libhotsw_sp.TWL.LTD.a (.rodata)
+				libreloc_info_sp.TWL.LTD.a (.rodata)
+				libsysmenu_sp.TWL.LTD.a (.rodata)
+				libsysmmcu_sp.TWL.LTD.a (.rodata)
+				libds_sp.TWL.LTD.a (.rodata)
+				libaes_sp.firm.LTD.a (.rodata)
+				libsea_sp.TWL.LTD.a (.rodata)
+				libcrypto_sp.TWL.LTD.a (.rodata)
+				main.o (.init)
+				libsubpsyscall.a (.init)
+				libsyscall_sp.twl.a (.init)
+				MSL_C_NITRO_Ai_LE.a (.init)
+				MSL_Extras_NITRO_Ai_LE.a (.init)
+				MSL_CPP_NITRO_Ai_LE.a (.init)
+				FP_fastI_v4t_LE.a (.init)
+				NITRO_Runtime_Ai_LE.a (.init)
+				libos_sp.TWL.LTD.a (.init)
+				libmi_sp.TWL.LTD.a (.init)
+				libpad_sp.TWL.LTD.a (.init)
+				libpxi_sp.TWL.LTD.a (.init)
+				libstd_sp.TWL.LTD.a (.init)
+				libexi_sp.TWL.LTD.a (.init)
+				libsnd_sp.TWL.LTD.a (.init)
+				libspi_sp.TWL.LTD.a (.init)
+				libpm_sp.SYSMENU.TWL.LTD.a (.init)
+				libmath_sp.TWL.LTD.a (.init)
+				libscfg_sp.TWL.LTD.a (.init)
+				libtp_sp.TWL.LTD.a (.init)
+				libmic_sp.TWL.LTD.a (.init)
+				libfs_sp.TWL.LTD.a (.init)
+				libcard_sp.TWL.LTD.a (.init)
+				libi2c_sp.TWL.LTD.a (.init)
+				libcamera_sp.TWL.LTD.a (.init)
+				libcdc_sp.TWL.LTD.a (.init)
+				libsndex_sp.TWL.LTD.a (.init)
+				libtpex_sp.TWL.LTD.a (.init)
+				libmicex_sp.TWL.LTD.a (.init)
+				libmcu_sp.TWL.LTD.a (.init)
+				libsdio_sp.TWL.LTD.a (.init)
+				libnvram_sp.TWL.LTD.a (.init)
+				librtc_sp.TWL.LTD.a (.init)
+				libboot_sp.TWL.LTD.a (.init)
+				libreboot_sp.TWL.LTD.a (.init)
+				libhotsw_sp.TWL.LTD.a (.init)
+				libreloc_info_sp.TWL.LTD.a (.init)
+				libsysmenu_sp.TWL.LTD.a (.init)
+				libsysmmcu_sp.TWL.LTD.a (.init)
+				libds_sp.TWL.LTD.a (.init)
+				libaes_sp.firm.LTD.a (.init)
+				libsea_sp.TWL.LTD.a (.init)
+				libcrypto_sp.TWL.LTD.a (.init)
+		. = ALIGN(4);
+		SDK_AUTOLOAD.WRAM.SINIT_START	=.;
+				#:::::::::: ctor
+				main.o (.ctor)
+				libsubpsyscall.a (.ctor)
+				libsyscall_sp.twl.a (.ctor)
+				MSL_C_NITRO_Ai_LE.a (.ctor)
+				MSL_Extras_NITRO_Ai_LE.a (.ctor)
+				MSL_CPP_NITRO_Ai_LE.a (.ctor)
+				FP_fastI_v4t_LE.a (.ctor)
+				NITRO_Runtime_Ai_LE.a (.ctor)
+				libos_sp.TWL.LTD.a (.ctor)
+				libmi_sp.TWL.LTD.a (.ctor)
+				libpad_sp.TWL.LTD.a (.ctor)
+				libpxi_sp.TWL.LTD.a (.ctor)
+				libstd_sp.TWL.LTD.a (.ctor)
+				libexi_sp.TWL.LTD.a (.ctor)
+				libsnd_sp.TWL.LTD.a (.ctor)
+				libspi_sp.TWL.LTD.a (.ctor)
+				libpm_sp.SYSMENU.TWL.LTD.a (.ctor)
+				libmath_sp.TWL.LTD.a (.ctor)
+				libscfg_sp.TWL.LTD.a (.ctor)
+				libtp_sp.TWL.LTD.a (.ctor)
+				libmic_sp.TWL.LTD.a (.ctor)
+				libfs_sp.TWL.LTD.a (.ctor)
+				libcard_sp.TWL.LTD.a (.ctor)
+				libi2c_sp.TWL.LTD.a (.ctor)
+				libcamera_sp.TWL.LTD.a (.ctor)
+				libcdc_sp.TWL.LTD.a (.ctor)
+				libsndex_sp.TWL.LTD.a (.ctor)
+				libtpex_sp.TWL.LTD.a (.ctor)
+				libmicex_sp.TWL.LTD.a (.ctor)
+				libmcu_sp.TWL.LTD.a (.ctor)
+				libsdio_sp.TWL.LTD.a (.ctor)
+				libnvram_sp.TWL.LTD.a (.ctor)
+				librtc_sp.TWL.LTD.a (.ctor)
+				libboot_sp.TWL.LTD.a (.ctor)
+				libreboot_sp.TWL.LTD.a (.ctor)
+				libhotsw_sp.TWL.LTD.a (.ctor)
+				libreloc_info_sp.TWL.LTD.a (.ctor)
+				libsysmenu_sp.TWL.LTD.a (.ctor)
+				libsysmmcu_sp.TWL.LTD.a (.ctor)
+				libds_sp.TWL.LTD.a (.ctor)
+				libaes_sp.firm.LTD.a (.ctor)
+				libsea_sp.TWL.LTD.a (.ctor)
+				libcrypto_sp.TWL.LTD.a (.ctor)
+				main.o (.sinit)
+				libsubpsyscall.a (.sinit)
+				libsyscall_sp.twl.a (.sinit)
+				MSL_C_NITRO_Ai_LE.a (.sinit)
+				MSL_Extras_NITRO_Ai_LE.a (.sinit)
+				MSL_CPP_NITRO_Ai_LE.a (.sinit)
+				FP_fastI_v4t_LE.a (.sinit)
+				NITRO_Runtime_Ai_LE.a (.sinit)
+				libos_sp.TWL.LTD.a (.sinit)
+				libmi_sp.TWL.LTD.a (.sinit)
+				libpad_sp.TWL.LTD.a (.sinit)
+				libpxi_sp.TWL.LTD.a (.sinit)
+				libstd_sp.TWL.LTD.a (.sinit)
+				libexi_sp.TWL.LTD.a (.sinit)
+				libsnd_sp.TWL.LTD.a (.sinit)
+				libspi_sp.TWL.LTD.a (.sinit)
+				libpm_sp.SYSMENU.TWL.LTD.a (.sinit)
+				libmath_sp.TWL.LTD.a (.sinit)
+				libscfg_sp.TWL.LTD.a (.sinit)
+				libtp_sp.TWL.LTD.a (.sinit)
+				libmic_sp.TWL.LTD.a (.sinit)
+				libfs_sp.TWL.LTD.a (.sinit)
+				libcard_sp.TWL.LTD.a (.sinit)
+				libi2c_sp.TWL.LTD.a (.sinit)
+				libcamera_sp.TWL.LTD.a (.sinit)
+				libcdc_sp.TWL.LTD.a (.sinit)
+				libsndex_sp.TWL.LTD.a (.sinit)
+				libtpex_sp.TWL.LTD.a (.sinit)
+				libmicex_sp.TWL.LTD.a (.sinit)
+				libmcu_sp.TWL.LTD.a (.sinit)
+				libsdio_sp.TWL.LTD.a (.sinit)
+				libnvram_sp.TWL.LTD.a (.sinit)
+				librtc_sp.TWL.LTD.a (.sinit)
+				libboot_sp.TWL.LTD.a (.sinit)
+				libreboot_sp.TWL.LTD.a (.sinit)
+				libhotsw_sp.TWL.LTD.a (.sinit)
+				libreloc_info_sp.TWL.LTD.a (.sinit)
+				libsysmenu_sp.TWL.LTD.a (.sinit)
+				libsysmmcu_sp.TWL.LTD.a (.sinit)
+				libds_sp.TWL.LTD.a (.sinit)
+				libaes_sp.firm.LTD.a (.sinit)
+				libsea_sp.TWL.LTD.a (.sinit)
+				libcrypto_sp.TWL.LTD.a (.sinit)
+				WRITEW	0;
+				#:::::::::: ctor
+		SDK_AUTOLOAD.WRAM.SINIT_END	=.;
+				#:::::::::: text/rodata
+		SDK_AUTOLOAD.WRAM.TEXT_END	=.;
+	
+		#
+		#  DATA BLOCK: READ WRITE BLOCK
+		#
+		. = ALIGN(4);
+		SDK_AUTOLOAD.WRAM.DATA_START	=.;
+				#:::::::::: data
+				* (.wram)
+				* (.ltdwram)
+				main.o (.sdata)
+				libsubpsyscall.a (.sdata)
+				libsyscall_sp.twl.a (.sdata)
+				MSL_C_NITRO_Ai_LE.a (.sdata)
+				MSL_Extras_NITRO_Ai_LE.a (.sdata)
+				MSL_CPP_NITRO_Ai_LE.a (.sdata)
+				FP_fastI_v4t_LE.a (.sdata)
+				NITRO_Runtime_Ai_LE.a (.sdata)
+				libos_sp.TWL.LTD.a (.sdata)
+				libmi_sp.TWL.LTD.a (.sdata)
+				libpad_sp.TWL.LTD.a (.sdata)
+				libpxi_sp.TWL.LTD.a (.sdata)
+				libstd_sp.TWL.LTD.a (.sdata)
+				libexi_sp.TWL.LTD.a (.sdata)
+				libsnd_sp.TWL.LTD.a (.sdata)
+				libspi_sp.TWL.LTD.a (.sdata)
+				libpm_sp.SYSMENU.TWL.LTD.a (.sdata)
+				libmath_sp.TWL.LTD.a (.sdata)
+				libscfg_sp.TWL.LTD.a (.sdata)
+				libtp_sp.TWL.LTD.a (.sdata)
+				libmic_sp.TWL.LTD.a (.sdata)
+				libfs_sp.TWL.LTD.a (.sdata)
+				libcard_sp.TWL.LTD.a (.sdata)
+				libi2c_sp.TWL.LTD.a (.sdata)
+				libcamera_sp.TWL.LTD.a (.sdata)
+				libcdc_sp.TWL.LTD.a (.sdata)
+				libsndex_sp.TWL.LTD.a (.sdata)
+				libtpex_sp.TWL.LTD.a (.sdata)
+				libmicex_sp.TWL.LTD.a (.sdata)
+				libmcu_sp.TWL.LTD.a (.sdata)
+				libsdio_sp.TWL.LTD.a (.sdata)
+				libnvram_sp.TWL.LTD.a (.sdata)
+				librtc_sp.TWL.LTD.a (.sdata)
+				libboot_sp.TWL.LTD.a (.sdata)
+				libreboot_sp.TWL.LTD.a (.sdata)
+				libhotsw_sp.TWL.LTD.a (.sdata)
+				libreloc_info_sp.TWL.LTD.a (.sdata)
+				libsysmenu_sp.TWL.LTD.a (.sdata)
+				libsysmmcu_sp.TWL.LTD.a (.sdata)
+				libds_sp.TWL.LTD.a (.sdata)
+				libaes_sp.firm.LTD.a (.sdata)
+				libsea_sp.TWL.LTD.a (.sdata)
+				libcrypto_sp.TWL.LTD.a (.sdata)
+				main.o (.data)
+				libsubpsyscall.a (.data)
+				libsyscall_sp.twl.a (.data)
+				MSL_C_NITRO_Ai_LE.a (.data)
+				MSL_Extras_NITRO_Ai_LE.a (.data)
+				MSL_CPP_NITRO_Ai_LE.a (.data)
+				FP_fastI_v4t_LE.a (.data)
+				NITRO_Runtime_Ai_LE.a (.data)
+				libos_sp.TWL.LTD.a (.data)
+				libmi_sp.TWL.LTD.a (.data)
+				libpad_sp.TWL.LTD.a (.data)
+				libpxi_sp.TWL.LTD.a (.data)
+				libstd_sp.TWL.LTD.a (.data)
+				libexi_sp.TWL.LTD.a (.data)
+				libsnd_sp.TWL.LTD.a (.data)
+				libspi_sp.TWL.LTD.a (.data)
+				libpm_sp.SYSMENU.TWL.LTD.a (.data)
+				libmath_sp.TWL.LTD.a (.data)
+				libscfg_sp.TWL.LTD.a (.data)
+				libtp_sp.TWL.LTD.a (.data)
+				libmic_sp.TWL.LTD.a (.data)
+				libfs_sp.TWL.LTD.a (.data)
+				libcard_sp.TWL.LTD.a (.data)
+				libi2c_sp.TWL.LTD.a (.data)
+				libcamera_sp.TWL.LTD.a (.data)
+				libcdc_sp.TWL.LTD.a (.data)
+				libsndex_sp.TWL.LTD.a (.data)
+				libtpex_sp.TWL.LTD.a (.data)
+				libmicex_sp.TWL.LTD.a (.data)
+				libmcu_sp.TWL.LTD.a (.data)
+				libsdio_sp.TWL.LTD.a (.data)
+				libnvram_sp.TWL.LTD.a (.data)
+				librtc_sp.TWL.LTD.a (.data)
+				libboot_sp.TWL.LTD.a (.data)
+				libreboot_sp.TWL.LTD.a (.data)
+				libhotsw_sp.TWL.LTD.a (.data)
+				libreloc_info_sp.TWL.LTD.a (.data)
+				libsysmenu_sp.TWL.LTD.a (.data)
+				libsysmmcu_sp.TWL.LTD.a (.data)
+				libds_sp.TWL.LTD.a (.data)
+				libaes_sp.firm.LTD.a (.data)
+				libsea_sp.TWL.LTD.a (.data)
+				libcrypto_sp.TWL.LTD.a (.data)
+				#:::::::::: data
+		SDK_AUTOLOAD.WRAM.DATA_END	=.;
+		. = ALIGN(4);
+		SDK_AUTOLOAD.WRAM.END	=.;
+	
+		SDK_AUTOLOAD.WRAM.TEXT_SIZE	= SDK_AUTOLOAD.WRAM.TEXT_END - SDK_AUTOLOAD.WRAM.TEXT_START;
+		SDK_AUTOLOAD.WRAM.DATA_SIZE	= SDK_AUTOLOAD.WRAM.DATA_END - SDK_AUTOLOAD.WRAM.DATA_START;
+		SDK_AUTOLOAD.WRAM.SIZE		= SDK_AUTOLOAD.WRAM.END      - SDK_AUTOLOAD.WRAM.START;
+		SDK_AUTOLOAD_SIZE			= SDK_AUTOLOAD_SIZE + SDK_AUTOLOAD.WRAM.SIZE;
+	
+	} > WRAM
+
+	.WRAM.bss:
+	{
+		ALIGNALL(4);
+		. = ALIGN(4);
+	
+		#
+		#  Definition to refer overlay segment, when same name symbols exist in multiple overlays.
+		#
+	
+		#
+		#  BSS BLOCK
+		#
+		SDK_AUTOLOAD.WRAM.BSS_START	= .;
+				#:::::::::: bss
+				* (.wram.bss)
+				* (.ltdwram.bss)
+				main.o (.sbss)
+				libsubpsyscall.a (.sbss)
+				libsyscall_sp.twl.a (.sbss)
+				MSL_C_NITRO_Ai_LE.a (.sbss)
+				MSL_Extras_NITRO_Ai_LE.a (.sbss)
+				MSL_CPP_NITRO_Ai_LE.a (.sbss)
+				FP_fastI_v4t_LE.a (.sbss)
+				NITRO_Runtime_Ai_LE.a (.sbss)
+				libos_sp.TWL.LTD.a (.sbss)
+				libmi_sp.TWL.LTD.a (.sbss)
+				libpad_sp.TWL.LTD.a (.sbss)
+				libpxi_sp.TWL.LTD.a (.sbss)
+				libstd_sp.TWL.LTD.a (.sbss)
+				libexi_sp.TWL.LTD.a (.sbss)
+				libsnd_sp.TWL.LTD.a (.sbss)
+				libspi_sp.TWL.LTD.a (.sbss)
+				libpm_sp.SYSMENU.TWL.LTD.a (.sbss)
+				libmath_sp.TWL.LTD.a (.sbss)
+				libscfg_sp.TWL.LTD.a (.sbss)
+				libtp_sp.TWL.LTD.a (.sbss)
+				libmic_sp.TWL.LTD.a (.sbss)
+				libfs_sp.TWL.LTD.a (.sbss)
+				libcard_sp.TWL.LTD.a (.sbss)
+				libi2c_sp.TWL.LTD.a (.sbss)
+				libcamera_sp.TWL.LTD.a (.sbss)
+				libcdc_sp.TWL.LTD.a (.sbss)
+				libsndex_sp.TWL.LTD.a (.sbss)
+				libtpex_sp.TWL.LTD.a (.sbss)
+				libmicex_sp.TWL.LTD.a (.sbss)
+				libmcu_sp.TWL.LTD.a (.sbss)
+				libsdio_sp.TWL.LTD.a (.sbss)
+				libnvram_sp.TWL.LTD.a (.sbss)
+				librtc_sp.TWL.LTD.a (.sbss)
+				libboot_sp.TWL.LTD.a (.sbss)
+				libreboot_sp.TWL.LTD.a (.sbss)
+				libhotsw_sp.TWL.LTD.a (.sbss)
+				libreloc_info_sp.TWL.LTD.a (.sbss)
+				libsysmenu_sp.TWL.LTD.a (.sbss)
+				libsysmmcu_sp.TWL.LTD.a (.sbss)
+				libds_sp.TWL.LTD.a (.sbss)
+				libaes_sp.firm.LTD.a (.sbss)
+				libsea_sp.TWL.LTD.a (.sbss)
+				libcrypto_sp.TWL.LTD.a (.sbss)
+				main.o (.bss)
+				libsubpsyscall.a (.bss)
+				libsyscall_sp.twl.a (.bss)
+				MSL_C_NITRO_Ai_LE.a (.bss)
+				MSL_Extras_NITRO_Ai_LE.a (.bss)
+				MSL_CPP_NITRO_Ai_LE.a (.bss)
+				FP_fastI_v4t_LE.a (.bss)
+				NITRO_Runtime_Ai_LE.a (.bss)
+				libos_sp.TWL.LTD.a (.bss)
+				libmi_sp.TWL.LTD.a (.bss)
+				libpad_sp.TWL.LTD.a (.bss)
+				libpxi_sp.TWL.LTD.a (.bss)
+				libstd_sp.TWL.LTD.a (.bss)
+				libexi_sp.TWL.LTD.a (.bss)
+				libsnd_sp.TWL.LTD.a (.bss)
+				libspi_sp.TWL.LTD.a (.bss)
+				libpm_sp.SYSMENU.TWL.LTD.a (.bss)
+				libmath_sp.TWL.LTD.a (.bss)
+				libscfg_sp.TWL.LTD.a (.bss)
+				libtp_sp.TWL.LTD.a (.bss)
+				libmic_sp.TWL.LTD.a (.bss)
+				libfs_sp.TWL.LTD.a (.bss)
+				libcard_sp.TWL.LTD.a (.bss)
+				libi2c_sp.TWL.LTD.a (.bss)
+				libcamera_sp.TWL.LTD.a (.bss)
+				libcdc_sp.TWL.LTD.a (.bss)
+				libsndex_sp.TWL.LTD.a (.bss)
+				libtpex_sp.TWL.LTD.a (.bss)
+				libmicex_sp.TWL.LTD.a (.bss)
+				libmcu_sp.TWL.LTD.a (.bss)
+				libsdio_sp.TWL.LTD.a (.bss)
+				libnvram_sp.TWL.LTD.a (.bss)
+				librtc_sp.TWL.LTD.a (.bss)
+				libboot_sp.TWL.LTD.a (.bss)
+				libreboot_sp.TWL.LTD.a (.bss)
+				libhotsw_sp.TWL.LTD.a (.bss)
+				libreloc_info_sp.TWL.LTD.a (.bss)
+				libsysmenu_sp.TWL.LTD.a (.bss)
+				libsysmmcu_sp.TWL.LTD.a (.bss)
+				libds_sp.TWL.LTD.a (.bss)
+				libaes_sp.firm.LTD.a (.bss)
+				libsea_sp.TWL.LTD.a (.bss)
+				libcrypto_sp.TWL.LTD.a (.bss)
+				* (.rsvwram.bss)
+				#:::::::::: bss
+		. = ALIGN(4);
+		SDK_AUTOLOAD.WRAM.BSS_END	= .;
+	
+		SDK_AUTOLOAD.WRAM.BSS_SIZE	= SDK_AUTOLOAD.WRAM.BSS_END - SDK_AUTOLOAD.WRAM.BSS_START;
+	
+	} >> WRAM
+
+
+	SDK_AUTOLOAD_WRAM_START			= SDK_AUTOLOAD.WRAM.START;
+	SDK_AUTOLOAD_WRAM_END			= SDK_AUTOLOAD.WRAM.END;
+	SDK_MOUNT_INFO_TABLE			= SDK_AUTOLOAD.WRAM.BSS_END;
+	SDK_AUTOLOAD_WRAM_BSS_END		= SDK_MOUNT_INFO_TABLE + 0x400;
+	SDK_AUTOLOAD_WRAM_SIZE			= SDK_AUTOLOAD.WRAM.SIZE;
+	SDK_AUTOLOAD_WRAM_BSS_SIZE		= SDK_AUTOLOAD.WRAM.BSS_SIZE;
+
+	############################ AUTOLOAD_INFO ##########################
+	.binary.AUTOLOAD_INFO:
+	{
+				WRITEW ADDR(.WRAM);
+				WRITEW SDK_AUTOLOAD.WRAM.SIZE;
+				WRITEW SDK_AUTOLOAD.WRAM.SINIT_START;
+				WRITEW SDK_AUTOLOAD.WRAM.BSS_SIZE;
+	
+	} > binary.AUTOLOAD_INFO
+	
+	SDK_AUTOLOAD_LIST			= SDK_AUTOLOAD_START + SDK_AUTOLOAD_SIZE;
+	SDK_AUTOLOAD_LIST_END		= SDK_AUTOLOAD_START + SDK_AUTOLOAD_SIZE + SIZEOF(.binary.AUTOLOAD_INFO);
+	SDK_AUTOLOAD_SIZE			= SDK_AUTOLOAD_SIZE  + SIZEOF(.binary.AUTOLOAD_INFO);
+
+	############################ STATIC_FOOTER ##########################
+	.binary.STATIC_FOOTER:
+	{
+		WRITEW 0xdec00621;		# LE(0x2106C0DE) = NITRO CODE
+		WRITEW _start_ModuleParams - ADDR(.hyena);
+		WRITEW 0;			# NO DIGEST
+		WRITEW _start_LtdModuleParams - ADDR(.hyena);
+	} > binary.STATIC_FOOTER
+
+	############################ OVERLAYS ###############################
+	SDK_OVERLAY_NUMBER 			= 0;
+
+
+	############################ OVERLAYDEFS ############################
+	.hyena_defsF:
+	{
+		###  hyena module information 
+				WRITEW ADDR(.hyena);				# load address
+				WRITEW _start;								# entry address
+				WRITEW SDK_STATIC_SIZE + SDK_AUTOLOAD_SIZE;	# size of module
+				WRITEW _start_AutoloadDoneCallback;			# callback autoload done
+		
+		###  overlay filename 
+	
+	} > hyena_defsF
+
+	############################ OVERLAYTABLE ###########################
+	.hyena_tableF:
+	{
+	
+	} > hyena_tableF
+
+	############################ OTHERS #################################
+	SDK_SEA_KEY_STORE		= SDK_AUTOLOAD_WRAM_BSS_END;
+	SDK_WRAM_ARENA_LO		= SDK_AUTOLOAD_WRAM_BSS_END + 0x40;
+
+	SDK_IRQ_STACKSIZE		= 1024;	# allocated in WRAM
+	SDK_SYS_STACKSIZE		= 1024;		# allocated in WRAM
+	SDK_SYS_STACKSIZE_SIGN	= (SDK_SYS_STACKSIZE < 0x80000000) * 2 - 1;
+
+	.check.WORKRAM:
+	{
+		. = . + SDK_AUTOLOAD_WRAM_BSS_END - SDK_AUTOLOAD.WRAM.START + 0x080 + SDK_IRQ_STACKSIZE + SDK_SYS_STACKSIZE * SDK_SYS_STACKSIZE_SIGN;
+	
+	} > check.WORKRAM
+
+	########################### LTDAUTOLOADS ############################
+	SDK_LTDAUTOLOAD.LTDMAIN.START		= SDK_STATIC_BSS_END;
+	SDK_LTDAUTOLOAD.LTDMAIN.END			= SDK_LTDAUTOLOAD.LTDMAIN.START;
+	SDK_LTDAUTOLOAD.LTDMAIN.BSS_END		= SDK_LTDAUTOLOAD.LTDMAIN.START;
+	SDK_LTDAUTOLOAD.LTDMAIN.SIZE		= 0;
+	SDK_LTDAUTOLOAD.LTDMAIN.BSS_SIZE	= 0;
+	SDK_LTDAUTOLOAD_TOP_START			= 0x02e80000;
+	SDK_LTDAUTOLOAD_TOP_SIZE			= 4;	# STATIC 領域が無い代わりに 4 bytes のダミーがバイナリファイルの先頭に入る #
+	SDK_LTDAUTOLOAD_START				= SDK_LTDAUTOLOAD_TOP_START + SDK_LTDAUTOLOAD_TOP_SIZE;
+	SDK_LTDAUTOLOAD_SIZE				= 0;
+	SDK_LTDAUTOLOAD_NUMBER				= 1;
+
+	.binary.LTDAUTOLOAD_TOP:
+	{
+				WRITEW 0;
+	
+	} > binary.LTDAUTOLOAD_TOP
+
+	.LTDMAIN:
+	{
+		ALIGNALL(4);
+		. = ALIGN(4);
+	
+		#
+		#  Definition to refer overlay segment, when same name symbols exist in multiple overlays.
+		#
+	
+		SDK_LTDAUTOLOAD_LTDMAIN_ID		=0;
+		SDK_LTDAUTOLOAD.LTDMAIN.ID		=0;
+		SDK_LTDAUTOLOAD.LTDMAIN.START	=.;
+		#
+		#  TEXT BLOCK: READ ONLY
+		#
+		SDK_LTDAUTOLOAD.LTDMAIN.TEXT_START	=.;
+				#:::::::::: text/rodata
+				libwm_sp.TWL.LTD.a (.text)
+				libnwm_sp.SYSMENU.TWL.LTD.a (.text)
+				libwvr_sp.TWL.LTD.a (.text)
+				libwl_sp.TWL.LTD.a (.text)
+				libwpa_sp.TWL.LTD.a (.text)
+				libathdrv_sp.TWL.LTD.a (.text)
+				libfatfs_sp.TWL.LTD.a (.text)
+				libdht_sp.TWL.LTD.a (.text)
+				libsea_sp.TWL.LTD.a (.text)
+				libcrypto_sp.TWL.LTD.a (.text)
+				libistdsubparm.a (.text)
+				libstubsisd_sp.TWL.LTD.a (.text)
+				libwm_sp.TWL.LTD.a (.rodata)
+				libnwm_sp.SYSMENU.TWL.LTD.a (.rodata)
+				libwvr_sp.TWL.LTD.a (.rodata)
+				libwl_sp.TWL.LTD.a (.rodata)
+				libwpa_sp.TWL.LTD.a (.rodata)
+				libathdrv_sp.TWL.LTD.a (.rodata)
+				libfatfs_sp.TWL.LTD.a (.rodata)
+				libdht_sp.TWL.LTD.a (.rodata)
+				libsea_sp.TWL.LTD.a (.rodata)
+				libcrypto_sp.TWL.LTD.a (.rodata)
+				libistdsubparm.a (.rodata)
+				libstubsisd_sp.TWL.LTD.a (.rodata)
+				libwm_sp.TWL.LTD.a (.init)
+				libnwm_sp.SYSMENU.TWL.LTD.a (.init)
+				libwvr_sp.TWL.LTD.a (.init)
+				libwl_sp.TWL.LTD.a (.init)
+				libwpa_sp.TWL.LTD.a (.init)
+				libathdrv_sp.TWL.LTD.a (.init)
+				libfatfs_sp.TWL.LTD.a (.init)
+				libdht_sp.TWL.LTD.a (.init)
+				libsea_sp.TWL.LTD.a (.init)
+				libcrypto_sp.TWL.LTD.a (.init)
+				libistdsubparm.a (.init)
+				libstubsisd_sp.TWL.LTD.a (.init)
+		. = ALIGN(4);
+		SDK_LTDAUTOLOAD.LTDMAIN.SINIT_START	=.;
+				#:::::::::: ctor
+				libwm_sp.TWL.LTD.a (.ctor)
+				libnwm_sp.SYSMENU.TWL.LTD.a (.ctor)
+				libwvr_sp.TWL.LTD.a (.ctor)
+				libwl_sp.TWL.LTD.a (.ctor)
+				libwpa_sp.TWL.LTD.a (.ctor)
+				libathdrv_sp.TWL.LTD.a (.ctor)
+				libfatfs_sp.TWL.LTD.a (.ctor)
+				libdht_sp.TWL.LTD.a (.ctor)
+				libsea_sp.TWL.LTD.a (.ctor)
+				libcrypto_sp.TWL.LTD.a (.ctor)
+				libistdsubparm.a (.ctor)
+				libstubsisd_sp.TWL.LTD.a (.ctor)
+				libwm_sp.TWL.LTD.a (.sinit)
+				libnwm_sp.SYSMENU.TWL.LTD.a (.sinit)
+				libwvr_sp.TWL.LTD.a (.sinit)
+				libwl_sp.TWL.LTD.a (.sinit)
+				libwpa_sp.TWL.LTD.a (.sinit)
+				libathdrv_sp.TWL.LTD.a (.sinit)
+				libfatfs_sp.TWL.LTD.a (.sinit)
+				libdht_sp.TWL.LTD.a (.sinit)
+				libsea_sp.TWL.LTD.a (.sinit)
+				libcrypto_sp.TWL.LTD.a (.sinit)
+				libistdsubparm.a (.sinit)
+				libstubsisd_sp.TWL.LTD.a (.sinit)
+				WRITEW	0;
+				#:::::::::: ctor
+		SDK_LTDAUTOLOAD.LTDMAIN.SINIT_END	=.;
+				#:::::::::: text/rodata
+		SDK_LTDAUTOLOAD.LTDMAIN.TEXT_END		=.;
+	
+		#
+		#  DATA BLOCK: READ WRITE BLOCK
+		#
+		. = ALIGN(4);
+		SDK_LTDAUTOLOAD.LTDMAIN.DATA_START	=.;
+				#:::::::::: data
+				libwm_sp.TWL.LTD.a (.sdata)
+				libnwm_sp.SYSMENU.TWL.LTD.a (.sdata)
+				libwvr_sp.TWL.LTD.a (.sdata)
+				libwl_sp.TWL.LTD.a (.sdata)
+				libwpa_sp.TWL.LTD.a (.sdata)
+				libathdrv_sp.TWL.LTD.a (.sdata)
+				libfatfs_sp.TWL.LTD.a (.sdata)
+				libdht_sp.TWL.LTD.a (.sdata)
+				libsea_sp.TWL.LTD.a (.sdata)
+				libcrypto_sp.TWL.LTD.a (.sdata)
+				libistdsubparm.a (.sdata)
+				libstubsisd_sp.TWL.LTD.a (.sdata)
+				libwm_sp.TWL.LTD.a (.data)
+				libnwm_sp.SYSMENU.TWL.LTD.a (.data)
+				libwvr_sp.TWL.LTD.a (.data)
+				libwl_sp.TWL.LTD.a (.data)
+				libwpa_sp.TWL.LTD.a (.data)
+				libathdrv_sp.TWL.LTD.a (.data)
+				libfatfs_sp.TWL.LTD.a (.data)
+				libdht_sp.TWL.LTD.a (.data)
+				libsea_sp.TWL.LTD.a (.data)
+				libcrypto_sp.TWL.LTD.a (.data)
+				libistdsubparm.a (.data)
+				libstubsisd_sp.TWL.LTD.a (.data)
+				* (.ltdmain)
+				#:::::::::: data
+		SDK_LTDAUTOLOAD.LTDMAIN.DATA_END		=.;
+		. = ALIGN(4);
+		SDK_LTDAUTOLOAD.LTDMAIN.END	=.;
+	
+		SDK_LTDAUTOLOAD.LTDMAIN.TEXT_SIZE	= SDK_LTDAUTOLOAD.LTDMAIN.TEXT_END - SDK_LTDAUTOLOAD.LTDMAIN.TEXT_START;
+		SDK_LTDAUTOLOAD.LTDMAIN.DATA_SIZE	= SDK_LTDAUTOLOAD.LTDMAIN.DATA_END - SDK_LTDAUTOLOAD.LTDMAIN.DATA_START;
+		SDK_LTDAUTOLOAD.LTDMAIN.SIZE			= SDK_LTDAUTOLOAD.LTDMAIN.END      - SDK_LTDAUTOLOAD.LTDMAIN.START;
+		SDK_LTDAUTOLOAD_SIZE							= SDK_LTDAUTOLOAD_SIZE + SDK_LTDAUTOLOAD.LTDMAIN.SIZE;
+	
+	} > LTDMAIN
+
+	.LTDMAIN.bss:
+	{
+		ALIGNALL(4);
+		. = ALIGN(4);
+	
+		#
+		#  Definition to refer overlay segment, when same name symbols exist in multiple overlays.
+		#
+	
+		#
+		#  BSS BLOCK
+		#
+		SDK_LTDAUTOLOAD.LTDMAIN.BSS_START	=.;
+				#:::::::::: bss
+				libwm_sp.TWL.LTD.a (.sbss)
+				libnwm_sp.SYSMENU.TWL.LTD.a (.sbss)
+				libwvr_sp.TWL.LTD.a (.sbss)
+				libwl_sp.TWL.LTD.a (.sbss)
+				libwpa_sp.TWL.LTD.a (.sbss)
+				libathdrv_sp.TWL.LTD.a (.sbss)
+				libfatfs_sp.TWL.LTD.a (.sbss)
+				libdht_sp.TWL.LTD.a (.sbss)
+				libsea_sp.TWL.LTD.a (.sbss)
+				libcrypto_sp.TWL.LTD.a (.sbss)
+				libistdsubparm.a (.sbss)
+				libstubsisd_sp.TWL.LTD.a (.sbss)
+				libwm_sp.TWL.LTD.a (.bss)
+				libnwm_sp.SYSMENU.TWL.LTD.a (.bss)
+				libwvr_sp.TWL.LTD.a (.bss)
+				libwl_sp.TWL.LTD.a (.bss)
+				libwpa_sp.TWL.LTD.a (.bss)
+				libathdrv_sp.TWL.LTD.a (.bss)
+				libfatfs_sp.TWL.LTD.a (.bss)
+				libdht_sp.TWL.LTD.a (.bss)
+				libsea_sp.TWL.LTD.a (.bss)
+				libcrypto_sp.TWL.LTD.a (.bss)
+				libistdsubparm.a (.bss)
+				libstubsisd_sp.TWL.LTD.a (.bss)
+				* (.ltdmain.bss)
+				#:::::::::: bss
+		. = ALIGN(4);
+		SDK_LTDAUTOLOAD.LTDMAIN.BSS_END		=.;
+	
+		SDK_LTDAUTOLOAD.LTDMAIN.BSS_SIZE		= SDK_LTDAUTOLOAD.LTDMAIN.BSS_END - SDK_LTDAUTOLOAD.LTDMAIN.BSS_START;
+	
+	} >> LTDMAIN
+
+
+	SDK_LTDAUTOLOAD_LTDMAIN_START		= SDK_LTDAUTOLOAD.LTDMAIN.START;
+	SDK_LTDAUTOLOAD_LTDMAIN_END			= SDK_LTDAUTOLOAD.LTDMAIN.END;
+	SDK_LTDAUTOLOAD_LTDMAIN_BSS_END		= SDK_LTDAUTOLOAD.LTDMAIN.BSS_END;
+	SDK_LTDAUTOLOAD_LTDMAIN_SIZE		= SDK_LTDAUTOLOAD.LTDMAIN.SIZE;
+	SDK_LTDAUTOLOAD_LTDMAIN_BSS_SIZE	= SDK_LTDAUTOLOAD.LTDMAIN.BSS_SIZE;
+
+	######################### LTDAUTOLOAD_INFO ##########################
+	.binary.LTDAUTOLOAD_INFO:
+	{
+				WRITEW ADDR(.LTDMAIN);
+				WRITEW SDK_LTDAUTOLOAD.LTDMAIN.SIZE;
+				WRITEW SDK_LTDAUTOLOAD.LTDMAIN.SINIT_START;
+				WRITEW SDK_LTDAUTOLOAD.LTDMAIN.BSS_SIZE;
+	
+	} > binary.LTDAUTOLOAD_INFO
+	
+	SDK_LTDAUTOLOAD_LIST		= SDK_LTDAUTOLOAD_START + SDK_LTDAUTOLOAD_SIZE;
+	SDK_LTDAUTOLOAD_LIST_END	= SDK_LTDAUTOLOAD_LIST + SIZEOF(.binary.LTDAUTOLOAD_INFO);
+	SDK_LTDAUTOLOAD_SIZE		= SDK_LTDAUTOLOAD_SIZE + SIZEOF(.binary.LTDAUTOLOAD_INFO);
+
+	########################### LTDOVERLAYS #############################
+	SDK_LTDOVERLAY_NUMBER			= 0;
+
+
+	########################## LTDOVERLAYDEFS ###########################
+	.hyena_defsL:
+	{
+		###  TWL limited extended static module information
+				WRITEW SDK_LTDAUTOLOAD_TOP_START;						# load address
+				WRITEW SDK_MOUNT_INFO_TABLE;							# address of the FS mount information table
+				WRITEW SDK_LTDAUTOLOAD_SIZE + SDK_LTDAUTOLOAD_TOP_SIZE;	# size of module
+				WRITEW 0;												# padding
+		
+		###  TWL limited overlay filename
+	
+	} > hyena_defsL
+
+	######################### LTDOVERLAYTABLE ###########################
+	.hyena_tableL:
+	{
+	
+	} > hyena_tableL
+
+	############################ OTHERS #################################
+	SDK_SUBPRIV_ARENA_LO	= SDK_LTDAUTOLOAD.LTDMAIN.BSS_END;
+	.check.LTDMAIN:
+	{
+		. = SDK_SUBPRIV_ARENA_LO;
+	
+	} > check.LTDMAIN
+
+}
