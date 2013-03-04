@@ -1,0 +1,1290 @@
+#---------------------------------------------------------------------------
+#  Project:  TwlSDK - include
+#  File:     ARM9-TS.lcf.template
+#
+#  Copyright 2007 Nintendo.  All rights reserved.
+#
+#  These coded instructions, statements, and computer programs contain
+#  proprietary information of Nintendo of America Inc. and/or Nintendo
+#  Company Ltd., and are protected by Federal copyright law.  They may
+#  not be disclosed to third parties or copied or duplicated in any form,
+#  in whole or in part, without the prior written consent of Nintendo.
+#
+#  $Date::            $
+#  $Rev$
+#  $Author$
+#---------------------------------------------------------------------------
+MEMORY
+{
+	HNAA				(RWX) :	ORIGIN = 0x02680200,		LENGTH = 0x0	>	HNAA.TWL.FLX.sbin
+
+	ITCM				(RWX) :	ORIGIN = 0x01ff8000,	LENGTH = 0x0	>>	HNAA.TWL.FLX.sbin
+	DTCM				(RWX) :	ORIGIN = 0x0e000000,	LENGTH = 0x0	>>	HNAA.TWL.FLX.sbin
+	binary.AUTOLOAD_INFO		(RWX) :	ORIGIN = 0,						LENGTH = 0x0	>>	HNAA.TWL.FLX.sbin
+	binary.STATIC_FOOTER		(RWX) :	ORIGIN = 0,						LENGTH = 0x0	>>	HNAA.TWL.FLX.sbin
+
+	HNAA_defsF		(RW)  :	ORIGIN = 0,						LENGTH = 0x0	>	HNAA_defs.TWL.FLX.sbin
+	HNAA_tableF	(RW)  :	ORIGIN = 0,						LENGTH = 0x0	>	HNAA_table.TWL.FLX.sbin
+
+	dummy.MAIN_EX.NITRO			(RW)  :	ORIGIN = 0x023e0000,	LENGTH = 0x0
+	arena.MAIN.NITRO			(RW)  :	ORIGIN = AFTER(HNAA),	LENGTH = 0x0
+	arena.MAIN_EX.NITRO			(RW)  :	ORIGIN = AFTER(dummy.MAIN_EX.NITRO),	LENGTH = 0x0
+	arena.ITCM					(RW)  :	ORIGIN = AFTER(ITCM),	LENGTH = 0x0
+	arena.DTCM					(RW)  :	ORIGIN = AFTER(DTCM),	LENGTH = 0x0
+
+	check.ITCM					(RW)  :	ORIGIN = 0x0,					LENGTH = 0x08000	>	itcm.check
+	check.DTCM					(RW)  :	ORIGIN = 0x0,					LENGTH = 0x04000	>	dtcm.check
+	check.MAIN.NITRO			(RW)  :	ORIGIN = 0x02000000,			LENGTH = 0x0f80000	>	main.nitro.check
+
+	binary.LTDAUTOLOAD_TOP		(RW)  :	ORIGIN = 0,						LENGTH = 0x0	>	HNAA.TWL.LTD.sbin
+	binary.LTDAUTOLOAD_INFO		(RWX) :	ORIGIN = 0,						LENGTH = 0x0	>>	HNAA.TWL.LTD.sbin
+
+	HNAA_defsL	(RW)  :	ORIGIN = 0,						LENGTH = 0x0	>	HNAA_defs.TWL.LTD.sbin
+	HNAA_tableL	(RW)  :	ORIGIN = 0,						LENGTH = 0x0	>	HNAA_table.TWL.LTD.sbin
+
+	dummy.MAIN_EX.TWL			(RW)  :	ORIGIN = 0x0d000000,	LENGTH = 0x0
+	arena.MAIN.TWL				(RW)  :	ORIGIN = AFTER(HNAA),	LENGTH = 0x0
+	arena.MAIN_EX.TWL			(RW)  :	ORIGIN = AFTER(dummy.MAIN_EX.TWL,HNAA),	LENGTH = 0x0
+
+	check.MAIN.TWL				(RW)  :	ORIGIN = 0x02000000,			LENGTH = 0x0f80000	>	main.twl.check
+
+	binary.MODULE_FILES			(RW)  :	ORIGIN = 0,						LENGTH = 0x0	>	component.files
+}
+
+FORCE_ACTIVE
+{
+	SVC_SoftReset
+}
+
+KEEP_SECTION
+{
+	.sinit
+}
+
+SECTIONS
+{
+	############################ STATIC #################################
+	.HNAA:
+	{
+		ALIGNALL(4);
+		. = ALIGN(32);	# Fit to cache line
+	
+		#
+		#  Definition to refer overlay segment, when same name symbols exist in multiple overlays.
+		#
+	
+		#
+		#  TEXT BLOCK: READ ONLY
+		#
+		SDK_STATIC_START		=.;
+		SDK_STATIC_TEXT_START		=.;
+				#:::::::::: text/rodata
+				libsyscall.a (.text)
+				OBJECT(_start,*)
+				crt0.FLX.TWL.o (.text)
+				crt0.FLX.TWL.o (.rodata)
+				#
+				# .version セクションを追加しています。
+				# このセクションに含まれる情報はロットチェックの際に
+				# 必要となりますので、必ずこの位置に残すようにして下さい。
+				#
+				* (.version)
+				OBJECT(TwlMain,*)
+				main.o (.text)
+				launcher.o (.text)
+				sound.o (.text)
+				loadWlanFirm.o (.text)
+				loadSharedFont.o (.text)
+				scanWDS.o (.text)
+				logoDemo.o (.text)
+				logoData.o (.text)
+				misc.o (.text)
+				cmn.o (.text)
+				BGData_Launcher.o (.text)
+				getSysMenuVersion.o (.text)
+				liblcfg.TWL.LTD.thumb.a (.text)
+				libsysmutil.TWL.LTD.thumb.a (.text)
+				libsysmenu.TWL.LTD.thumb.a (.text)
+				libsysmmcu.TWL.LTD.thumb.a (.text)
+				libboot.TWL.LTD.thumb.a (.text)
+				liberrorlog.TWL.LTD.thumb.a (.text)
+				libds.TWL.LTD.thumb.a (.text)
+				libhotsw.TWL.LTD.thumb.a (.text)
+				libdht.TWL.LTD.thumb.a (.text)
+				libreloc_info.TWL.LTD.thumb.a (.text)
+				libnamut.TWL.LTD.thumb.a (.text)
+				libsharedfont_launcher.TWL.LTD.thumb.a (.text)
+				WDS.TWL.LTD.thumb.a (.text)
+				libes.TWL.LTD.thumb.a (.text)
+				libboc.TWL.LTD.thumb.a (.text)
+				libsfs.TWL.LTD.thumb.a (.text)
+				libnam.TWL.LTD.thumb.a (.text)
+				libsea.TWL.LTD.thumb.a (.text)
+				libreboot.TWL.LTD.thumb.a (.text)
+				libnnsfnd.TWL.LTD.thumb.a (.text)
+				libnnsmcs.TWL.LTD.thumb.a (.text)
+				libnnsgfd.TWL.LTD.thumb.a (.text)
+				libnnsg2d.TWL.LTD.thumb.a (.text)
+				libnnsg3d.TWL.LTD.thumb.a (.text)
+				libnnssnd.TWL.LTD.thumb.a (.text)
+				libcard.TWL.LTD.thumb.a (.text)
+				libcp.TWL.LTD.thumb.a (.text)
+				libel.TWL.LTD.thumb.a (.text)
+				libenv.TWL.LTD.thumb.a (.text)
+				libext.TWL.LTD.thumb.a (.text)
+				libfs.TWL.LTD.thumb.a (.text)
+				libfx.TWL.LTD.thumb.a (.text)
+				libgx.TWL.LTD.thumb.a (.text)
+				libmath.TWL.LTD.thumb.a (.text)
+				libmb.TWL.LTD.thumb.a (.text)
+				libmi.TWL.LTD.thumb.a (.text)
+				libnvram.TWL.LTD.thumb.a (.text)
+				libos.TWL.LTD.thumb.a (.text)
+				libprc.TWL.LTD.thumb.a (.text)
+				libpxi.TWL.LTD.thumb.a (.text)
+				librtc.TWL.LTD.thumb.a (.text)
+				libscfg.TWL.LTD.thumb.a (.text)
+				libsnd.TWL.LTD.thumb.a (.text)
+				libspi.TWL.LTD.thumb.a (.text)
+				libstd.TWL.LTD.thumb.a (.text)
+				libwbt.TWL.LTD.thumb.a (.text)
+				libwfs.TWL.LTD.thumb.a (.text)
+				libwm.TWL.LTD.thumb.a (.text)
+				libctrdg.TWL.LTD.thumb.a (.text)
+				libcrypto.TWL.LTD.thumb.a (.text)
+				libcht.TWL.LTD.thumb.a (.text)
+				libsyscall.a (.text)
+				libsyscall.twl.a (.text)
+				crt0.FLX.TWL.o (.text)
+				libistdmainpthumb.a (.text)
+				libisdmainpthumb.a (.text)
+				MSL_C_NITRO_T_LE.a (.text)
+				MSL_Extras_NITRO_T_LE.a (.text)
+				MSL_CPP_NITRO_T_LE.a (.text)
+				FP_fastI_v5t_LE.a (.text)
+				NITRO_Runtime_T_LE.a (.text)
+				librtcex.TWL.LTD.thumb.a (.text)
+				libcamera.TWL.LTD.thumb.a (.text)
+				libnwm.TWL.LTD.thumb.a (.text)
+				libmicex.TWL.LTD.thumb.a (.text)
+				libfatfs.TWL.LTD.thumb.a (.text)
+				libsndex.TWL.LTD.thumb.a (.text)
+				libdsp.TWL.LTD.thumb.a (.text)
+				libdsp_g711.TWL.LTD.thumb.a (.text)
+				libdsp_graphics.TWL.LTD.thumb.a (.text)
+				libaes.TWL.LTD.thumb.a (.text)
+				libna.TWL.LTD.thumb.a (.text)
+				* (.exception)
+		. = ALIGN(4);
+		SDK_STATIC_ETABLE_START		=.;
+		__exception_table_start__	=.;
+				EXCEPTION
+		__exception_table_end__		=.;
+		SDK_STATIC_ETABLE_END		=.;
+				main.o (.rodata)
+				launcher.o (.rodata)
+				sound.o (.rodata)
+				loadWlanFirm.o (.rodata)
+				loadSharedFont.o (.rodata)
+				scanWDS.o (.rodata)
+				logoDemo.o (.rodata)
+				logoData.o (.rodata)
+				misc.o (.rodata)
+				cmn.o (.rodata)
+				BGData_Launcher.o (.rodata)
+				getSysMenuVersion.o (.rodata)
+				liblcfg.TWL.LTD.thumb.a (.rodata)
+				libsysmutil.TWL.LTD.thumb.a (.rodata)
+				libsysmenu.TWL.LTD.thumb.a (.rodata)
+				libsysmmcu.TWL.LTD.thumb.a (.rodata)
+				libboot.TWL.LTD.thumb.a (.rodata)
+				liberrorlog.TWL.LTD.thumb.a (.rodata)
+				libds.TWL.LTD.thumb.a (.rodata)
+				libhotsw.TWL.LTD.thumb.a (.rodata)
+				libdht.TWL.LTD.thumb.a (.rodata)
+				libreloc_info.TWL.LTD.thumb.a (.rodata)
+				libnamut.TWL.LTD.thumb.a (.rodata)
+				libsharedfont_launcher.TWL.LTD.thumb.a (.rodata)
+				WDS.TWL.LTD.thumb.a (.rodata)
+				libes.TWL.LTD.thumb.a (.rodata)
+				libboc.TWL.LTD.thumb.a (.rodata)
+				libsfs.TWL.LTD.thumb.a (.rodata)
+				libnam.TWL.LTD.thumb.a (.rodata)
+				libsea.TWL.LTD.thumb.a (.rodata)
+				libreboot.TWL.LTD.thumb.a (.rodata)
+				libnnsfnd.TWL.LTD.thumb.a (.rodata)
+				libnnsmcs.TWL.LTD.thumb.a (.rodata)
+				libnnsgfd.TWL.LTD.thumb.a (.rodata)
+				libnnsg2d.TWL.LTD.thumb.a (.rodata)
+				libnnsg3d.TWL.LTD.thumb.a (.rodata)
+				libnnssnd.TWL.LTD.thumb.a (.rodata)
+				libcard.TWL.LTD.thumb.a (.rodata)
+				libcp.TWL.LTD.thumb.a (.rodata)
+				libel.TWL.LTD.thumb.a (.rodata)
+				libenv.TWL.LTD.thumb.a (.rodata)
+				libext.TWL.LTD.thumb.a (.rodata)
+				libfs.TWL.LTD.thumb.a (.rodata)
+				libfx.TWL.LTD.thumb.a (.rodata)
+				libgx.TWL.LTD.thumb.a (.rodata)
+				libmath.TWL.LTD.thumb.a (.rodata)
+				libmb.TWL.LTD.thumb.a (.rodata)
+				libmi.TWL.LTD.thumb.a (.rodata)
+				libnvram.TWL.LTD.thumb.a (.rodata)
+				libos.TWL.LTD.thumb.a (.rodata)
+				libprc.TWL.LTD.thumb.a (.rodata)
+				libpxi.TWL.LTD.thumb.a (.rodata)
+				librtc.TWL.LTD.thumb.a (.rodata)
+				libscfg.TWL.LTD.thumb.a (.rodata)
+				libsnd.TWL.LTD.thumb.a (.rodata)
+				libspi.TWL.LTD.thumb.a (.rodata)
+				libstd.TWL.LTD.thumb.a (.rodata)
+				libwbt.TWL.LTD.thumb.a (.rodata)
+				libwfs.TWL.LTD.thumb.a (.rodata)
+				libwm.TWL.LTD.thumb.a (.rodata)
+				libctrdg.TWL.LTD.thumb.a (.rodata)
+				libcrypto.TWL.LTD.thumb.a (.rodata)
+				libcht.TWL.LTD.thumb.a (.rodata)
+				libsyscall.a (.rodata)
+				libsyscall.twl.a (.rodata)
+				crt0.FLX.TWL.o (.rodata)
+				libistdmainpthumb.a (.rodata)
+				libisdmainpthumb.a (.rodata)
+				MSL_C_NITRO_T_LE.a (.rodata)
+				MSL_Extras_NITRO_T_LE.a (.rodata)
+				MSL_CPP_NITRO_T_LE.a (.rodata)
+				FP_fastI_v5t_LE.a (.rodata)
+				NITRO_Runtime_T_LE.a (.rodata)
+				librtcex.TWL.LTD.thumb.a (.rodata)
+				libcamera.TWL.LTD.thumb.a (.rodata)
+				libnwm.TWL.LTD.thumb.a (.rodata)
+				libmicex.TWL.LTD.thumb.a (.rodata)
+				libfatfs.TWL.LTD.thumb.a (.rodata)
+				libsndex.TWL.LTD.thumb.a (.rodata)
+				libdsp.TWL.LTD.thumb.a (.rodata)
+				libdsp_g711.TWL.LTD.thumb.a (.rodata)
+				libdsp_graphics.TWL.LTD.thumb.a (.rodata)
+				libaes.TWL.LTD.thumb.a (.rodata)
+				libna.TWL.LTD.thumb.a (.rodata)
+				main.o (.init)
+				launcher.o (.init)
+				sound.o (.init)
+				loadWlanFirm.o (.init)
+				loadSharedFont.o (.init)
+				scanWDS.o (.init)
+				logoDemo.o (.init)
+				logoData.o (.init)
+				misc.o (.init)
+				cmn.o (.init)
+				BGData_Launcher.o (.init)
+				getSysMenuVersion.o (.init)
+				liblcfg.TWL.LTD.thumb.a (.init)
+				libsysmutil.TWL.LTD.thumb.a (.init)
+				libsysmenu.TWL.LTD.thumb.a (.init)
+				libsysmmcu.TWL.LTD.thumb.a (.init)
+				libboot.TWL.LTD.thumb.a (.init)
+				liberrorlog.TWL.LTD.thumb.a (.init)
+				libds.TWL.LTD.thumb.a (.init)
+				libhotsw.TWL.LTD.thumb.a (.init)
+				libdht.TWL.LTD.thumb.a (.init)
+				libreloc_info.TWL.LTD.thumb.a (.init)
+				libnamut.TWL.LTD.thumb.a (.init)
+				libsharedfont_launcher.TWL.LTD.thumb.a (.init)
+				WDS.TWL.LTD.thumb.a (.init)
+				libes.TWL.LTD.thumb.a (.init)
+				libboc.TWL.LTD.thumb.a (.init)
+				libsfs.TWL.LTD.thumb.a (.init)
+				libnam.TWL.LTD.thumb.a (.init)
+				libsea.TWL.LTD.thumb.a (.init)
+				libreboot.TWL.LTD.thumb.a (.init)
+				libnnsfnd.TWL.LTD.thumb.a (.init)
+				libnnsmcs.TWL.LTD.thumb.a (.init)
+				libnnsgfd.TWL.LTD.thumb.a (.init)
+				libnnsg2d.TWL.LTD.thumb.a (.init)
+				libnnsg3d.TWL.LTD.thumb.a (.init)
+				libnnssnd.TWL.LTD.thumb.a (.init)
+				libcard.TWL.LTD.thumb.a (.init)
+				libcp.TWL.LTD.thumb.a (.init)
+				libel.TWL.LTD.thumb.a (.init)
+				libenv.TWL.LTD.thumb.a (.init)
+				libext.TWL.LTD.thumb.a (.init)
+				libfs.TWL.LTD.thumb.a (.init)
+				libfx.TWL.LTD.thumb.a (.init)
+				libgx.TWL.LTD.thumb.a (.init)
+				libmath.TWL.LTD.thumb.a (.init)
+				libmb.TWL.LTD.thumb.a (.init)
+				libmi.TWL.LTD.thumb.a (.init)
+				libnvram.TWL.LTD.thumb.a (.init)
+				libos.TWL.LTD.thumb.a (.init)
+				libprc.TWL.LTD.thumb.a (.init)
+				libpxi.TWL.LTD.thumb.a (.init)
+				librtc.TWL.LTD.thumb.a (.init)
+				libscfg.TWL.LTD.thumb.a (.init)
+				libsnd.TWL.LTD.thumb.a (.init)
+				libspi.TWL.LTD.thumb.a (.init)
+				libstd.TWL.LTD.thumb.a (.init)
+				libwbt.TWL.LTD.thumb.a (.init)
+				libwfs.TWL.LTD.thumb.a (.init)
+				libwm.TWL.LTD.thumb.a (.init)
+				libctrdg.TWL.LTD.thumb.a (.init)
+				libcrypto.TWL.LTD.thumb.a (.init)
+				libcht.TWL.LTD.thumb.a (.init)
+				libsyscall.a (.init)
+				libsyscall.twl.a (.init)
+				crt0.FLX.TWL.o (.init)
+				libistdmainpthumb.a (.init)
+				libisdmainpthumb.a (.init)
+				MSL_C_NITRO_T_LE.a (.init)
+				MSL_Extras_NITRO_T_LE.a (.init)
+				MSL_CPP_NITRO_T_LE.a (.init)
+				FP_fastI_v5t_LE.a (.init)
+				NITRO_Runtime_T_LE.a (.init)
+				librtcex.TWL.LTD.thumb.a (.init)
+				libcamera.TWL.LTD.thumb.a (.init)
+				libnwm.TWL.LTD.thumb.a (.init)
+				libmicex.TWL.LTD.thumb.a (.init)
+				libfatfs.TWL.LTD.thumb.a (.init)
+				libsndex.TWL.LTD.thumb.a (.init)
+				libdsp.TWL.LTD.thumb.a (.init)
+				libdsp_g711.TWL.LTD.thumb.a (.init)
+				libdsp_graphics.TWL.LTD.thumb.a (.init)
+				libaes.TWL.LTD.thumb.a (.init)
+				libna.TWL.LTD.thumb.a (.init)
+		. = ALIGN(4);
+		SDK_STATIC_SINIT_START		=.;
+				#:::::::::: ctor
+				main.o (.ctor)
+				launcher.o (.ctor)
+				sound.o (.ctor)
+				loadWlanFirm.o (.ctor)
+				loadSharedFont.o (.ctor)
+				scanWDS.o (.ctor)
+				logoDemo.o (.ctor)
+				logoData.o (.ctor)
+				misc.o (.ctor)
+				cmn.o (.ctor)
+				BGData_Launcher.o (.ctor)
+				getSysMenuVersion.o (.ctor)
+				liblcfg.TWL.LTD.thumb.a (.ctor)
+				libsysmutil.TWL.LTD.thumb.a (.ctor)
+				libsysmenu.TWL.LTD.thumb.a (.ctor)
+				libsysmmcu.TWL.LTD.thumb.a (.ctor)
+				libboot.TWL.LTD.thumb.a (.ctor)
+				liberrorlog.TWL.LTD.thumb.a (.ctor)
+				libds.TWL.LTD.thumb.a (.ctor)
+				libhotsw.TWL.LTD.thumb.a (.ctor)
+				libdht.TWL.LTD.thumb.a (.ctor)
+				libreloc_info.TWL.LTD.thumb.a (.ctor)
+				libnamut.TWL.LTD.thumb.a (.ctor)
+				libsharedfont_launcher.TWL.LTD.thumb.a (.ctor)
+				WDS.TWL.LTD.thumb.a (.ctor)
+				libes.TWL.LTD.thumb.a (.ctor)
+				libboc.TWL.LTD.thumb.a (.ctor)
+				libsfs.TWL.LTD.thumb.a (.ctor)
+				libnam.TWL.LTD.thumb.a (.ctor)
+				libsea.TWL.LTD.thumb.a (.ctor)
+				libreboot.TWL.LTD.thumb.a (.ctor)
+				libnnsfnd.TWL.LTD.thumb.a (.ctor)
+				libnnsmcs.TWL.LTD.thumb.a (.ctor)
+				libnnsgfd.TWL.LTD.thumb.a (.ctor)
+				libnnsg2d.TWL.LTD.thumb.a (.ctor)
+				libnnsg3d.TWL.LTD.thumb.a (.ctor)
+				libnnssnd.TWL.LTD.thumb.a (.ctor)
+				libcard.TWL.LTD.thumb.a (.ctor)
+				libcp.TWL.LTD.thumb.a (.ctor)
+				libel.TWL.LTD.thumb.a (.ctor)
+				libenv.TWL.LTD.thumb.a (.ctor)
+				libext.TWL.LTD.thumb.a (.ctor)
+				libfs.TWL.LTD.thumb.a (.ctor)
+				libfx.TWL.LTD.thumb.a (.ctor)
+				libgx.TWL.LTD.thumb.a (.ctor)
+				libmath.TWL.LTD.thumb.a (.ctor)
+				libmb.TWL.LTD.thumb.a (.ctor)
+				libmi.TWL.LTD.thumb.a (.ctor)
+				libnvram.TWL.LTD.thumb.a (.ctor)
+				libos.TWL.LTD.thumb.a (.ctor)
+				libprc.TWL.LTD.thumb.a (.ctor)
+				libpxi.TWL.LTD.thumb.a (.ctor)
+				librtc.TWL.LTD.thumb.a (.ctor)
+				libscfg.TWL.LTD.thumb.a (.ctor)
+				libsnd.TWL.LTD.thumb.a (.ctor)
+				libspi.TWL.LTD.thumb.a (.ctor)
+				libstd.TWL.LTD.thumb.a (.ctor)
+				libwbt.TWL.LTD.thumb.a (.ctor)
+				libwfs.TWL.LTD.thumb.a (.ctor)
+				libwm.TWL.LTD.thumb.a (.ctor)
+				libctrdg.TWL.LTD.thumb.a (.ctor)
+				libcrypto.TWL.LTD.thumb.a (.ctor)
+				libcht.TWL.LTD.thumb.a (.ctor)
+				libsyscall.a (.ctor)
+				libsyscall.twl.a (.ctor)
+				crt0.FLX.TWL.o (.ctor)
+				libistdmainpthumb.a (.ctor)
+				libisdmainpthumb.a (.ctor)
+				MSL_C_NITRO_T_LE.a (.ctor)
+				MSL_Extras_NITRO_T_LE.a (.ctor)
+				MSL_CPP_NITRO_T_LE.a (.ctor)
+				FP_fastI_v5t_LE.a (.ctor)
+				NITRO_Runtime_T_LE.a (.ctor)
+				librtcex.TWL.LTD.thumb.a (.ctor)
+				libcamera.TWL.LTD.thumb.a (.ctor)
+				libnwm.TWL.LTD.thumb.a (.ctor)
+				libmicex.TWL.LTD.thumb.a (.ctor)
+				libfatfs.TWL.LTD.thumb.a (.ctor)
+				libsndex.TWL.LTD.thumb.a (.ctor)
+				libdsp.TWL.LTD.thumb.a (.ctor)
+				libdsp_g711.TWL.LTD.thumb.a (.ctor)
+				libdsp_graphics.TWL.LTD.thumb.a (.ctor)
+				libaes.TWL.LTD.thumb.a (.ctor)
+				libna.TWL.LTD.thumb.a (.ctor)
+				main.o (.sinit)
+				launcher.o (.sinit)
+				sound.o (.sinit)
+				loadWlanFirm.o (.sinit)
+				loadSharedFont.o (.sinit)
+				scanWDS.o (.sinit)
+				logoDemo.o (.sinit)
+				logoData.o (.sinit)
+				misc.o (.sinit)
+				cmn.o (.sinit)
+				BGData_Launcher.o (.sinit)
+				getSysMenuVersion.o (.sinit)
+				liblcfg.TWL.LTD.thumb.a (.sinit)
+				libsysmutil.TWL.LTD.thumb.a (.sinit)
+				libsysmenu.TWL.LTD.thumb.a (.sinit)
+				libsysmmcu.TWL.LTD.thumb.a (.sinit)
+				libboot.TWL.LTD.thumb.a (.sinit)
+				liberrorlog.TWL.LTD.thumb.a (.sinit)
+				libds.TWL.LTD.thumb.a (.sinit)
+				libhotsw.TWL.LTD.thumb.a (.sinit)
+				libdht.TWL.LTD.thumb.a (.sinit)
+				libreloc_info.TWL.LTD.thumb.a (.sinit)
+				libnamut.TWL.LTD.thumb.a (.sinit)
+				libsharedfont_launcher.TWL.LTD.thumb.a (.sinit)
+				WDS.TWL.LTD.thumb.a (.sinit)
+				libes.TWL.LTD.thumb.a (.sinit)
+				libboc.TWL.LTD.thumb.a (.sinit)
+				libsfs.TWL.LTD.thumb.a (.sinit)
+				libnam.TWL.LTD.thumb.a (.sinit)
+				libsea.TWL.LTD.thumb.a (.sinit)
+				libreboot.TWL.LTD.thumb.a (.sinit)
+				libnnsfnd.TWL.LTD.thumb.a (.sinit)
+				libnnsmcs.TWL.LTD.thumb.a (.sinit)
+				libnnsgfd.TWL.LTD.thumb.a (.sinit)
+				libnnsg2d.TWL.LTD.thumb.a (.sinit)
+				libnnsg3d.TWL.LTD.thumb.a (.sinit)
+				libnnssnd.TWL.LTD.thumb.a (.sinit)
+				libcard.TWL.LTD.thumb.a (.sinit)
+				libcp.TWL.LTD.thumb.a (.sinit)
+				libel.TWL.LTD.thumb.a (.sinit)
+				libenv.TWL.LTD.thumb.a (.sinit)
+				libext.TWL.LTD.thumb.a (.sinit)
+				libfs.TWL.LTD.thumb.a (.sinit)
+				libfx.TWL.LTD.thumb.a (.sinit)
+				libgx.TWL.LTD.thumb.a (.sinit)
+				libmath.TWL.LTD.thumb.a (.sinit)
+				libmb.TWL.LTD.thumb.a (.sinit)
+				libmi.TWL.LTD.thumb.a (.sinit)
+				libnvram.TWL.LTD.thumb.a (.sinit)
+				libos.TWL.LTD.thumb.a (.sinit)
+				libprc.TWL.LTD.thumb.a (.sinit)
+				libpxi.TWL.LTD.thumb.a (.sinit)
+				librtc.TWL.LTD.thumb.a (.sinit)
+				libscfg.TWL.LTD.thumb.a (.sinit)
+				libsnd.TWL.LTD.thumb.a (.sinit)
+				libspi.TWL.LTD.thumb.a (.sinit)
+				libstd.TWL.LTD.thumb.a (.sinit)
+				libwbt.TWL.LTD.thumb.a (.sinit)
+				libwfs.TWL.LTD.thumb.a (.sinit)
+				libwm.TWL.LTD.thumb.a (.sinit)
+				libctrdg.TWL.LTD.thumb.a (.sinit)
+				libcrypto.TWL.LTD.thumb.a (.sinit)
+				libcht.TWL.LTD.thumb.a (.sinit)
+				libsyscall.a (.sinit)
+				libsyscall.twl.a (.sinit)
+				crt0.FLX.TWL.o (.sinit)
+				libistdmainpthumb.a (.sinit)
+				libisdmainpthumb.a (.sinit)
+				MSL_C_NITRO_T_LE.a (.sinit)
+				MSL_Extras_NITRO_T_LE.a (.sinit)
+				MSL_CPP_NITRO_T_LE.a (.sinit)
+				FP_fastI_v5t_LE.a (.sinit)
+				NITRO_Runtime_T_LE.a (.sinit)
+				librtcex.TWL.LTD.thumb.a (.sinit)
+				libcamera.TWL.LTD.thumb.a (.sinit)
+				libnwm.TWL.LTD.thumb.a (.sinit)
+				libmicex.TWL.LTD.thumb.a (.sinit)
+				libfatfs.TWL.LTD.thumb.a (.sinit)
+				libsndex.TWL.LTD.thumb.a (.sinit)
+				libdsp.TWL.LTD.thumb.a (.sinit)
+				libdsp_g711.TWL.LTD.thumb.a (.sinit)
+				libdsp_graphics.TWL.LTD.thumb.a (.sinit)
+				libaes.TWL.LTD.thumb.a (.sinit)
+				libna.TWL.LTD.thumb.a (.sinit)
+				WRITEW	0;
+				#:::::::::: ctor
+		SDK_STATIC_SINIT_END		=.;
+				#:::::::::: text/rodata
+		SDK_STATIC_TEXT_END		=.;
+	
+		#
+		#  DATA BLOCK: READ WRITE
+		#
+		. = ALIGN(32);	# Fit to cache line
+		SDK_STATIC_DATA_START		=.;
+				#:::::::::: data
+				main.o (.sdata)
+				launcher.o (.sdata)
+				sound.o (.sdata)
+				loadWlanFirm.o (.sdata)
+				loadSharedFont.o (.sdata)
+				scanWDS.o (.sdata)
+				logoDemo.o (.sdata)
+				logoData.o (.sdata)
+				misc.o (.sdata)
+				cmn.o (.sdata)
+				BGData_Launcher.o (.sdata)
+				getSysMenuVersion.o (.sdata)
+				liblcfg.TWL.LTD.thumb.a (.sdata)
+				libsysmutil.TWL.LTD.thumb.a (.sdata)
+				libsysmenu.TWL.LTD.thumb.a (.sdata)
+				libsysmmcu.TWL.LTD.thumb.a (.sdata)
+				libboot.TWL.LTD.thumb.a (.sdata)
+				liberrorlog.TWL.LTD.thumb.a (.sdata)
+				libds.TWL.LTD.thumb.a (.sdata)
+				libhotsw.TWL.LTD.thumb.a (.sdata)
+				libdht.TWL.LTD.thumb.a (.sdata)
+				libreloc_info.TWL.LTD.thumb.a (.sdata)
+				libnamut.TWL.LTD.thumb.a (.sdata)
+				libsharedfont_launcher.TWL.LTD.thumb.a (.sdata)
+				WDS.TWL.LTD.thumb.a (.sdata)
+				libes.TWL.LTD.thumb.a (.sdata)
+				libboc.TWL.LTD.thumb.a (.sdata)
+				libsfs.TWL.LTD.thumb.a (.sdata)
+				libnam.TWL.LTD.thumb.a (.sdata)
+				libsea.TWL.LTD.thumb.a (.sdata)
+				libreboot.TWL.LTD.thumb.a (.sdata)
+				libnnsfnd.TWL.LTD.thumb.a (.sdata)
+				libnnsmcs.TWL.LTD.thumb.a (.sdata)
+				libnnsgfd.TWL.LTD.thumb.a (.sdata)
+				libnnsg2d.TWL.LTD.thumb.a (.sdata)
+				libnnsg3d.TWL.LTD.thumb.a (.sdata)
+				libnnssnd.TWL.LTD.thumb.a (.sdata)
+				libcard.TWL.LTD.thumb.a (.sdata)
+				libcp.TWL.LTD.thumb.a (.sdata)
+				libel.TWL.LTD.thumb.a (.sdata)
+				libenv.TWL.LTD.thumb.a (.sdata)
+				libext.TWL.LTD.thumb.a (.sdata)
+				libfs.TWL.LTD.thumb.a (.sdata)
+				libfx.TWL.LTD.thumb.a (.sdata)
+				libgx.TWL.LTD.thumb.a (.sdata)
+				libmath.TWL.LTD.thumb.a (.sdata)
+				libmb.TWL.LTD.thumb.a (.sdata)
+				libmi.TWL.LTD.thumb.a (.sdata)
+				libnvram.TWL.LTD.thumb.a (.sdata)
+				libos.TWL.LTD.thumb.a (.sdata)
+				libprc.TWL.LTD.thumb.a (.sdata)
+				libpxi.TWL.LTD.thumb.a (.sdata)
+				librtc.TWL.LTD.thumb.a (.sdata)
+				libscfg.TWL.LTD.thumb.a (.sdata)
+				libsnd.TWL.LTD.thumb.a (.sdata)
+				libspi.TWL.LTD.thumb.a (.sdata)
+				libstd.TWL.LTD.thumb.a (.sdata)
+				libwbt.TWL.LTD.thumb.a (.sdata)
+				libwfs.TWL.LTD.thumb.a (.sdata)
+				libwm.TWL.LTD.thumb.a (.sdata)
+				libctrdg.TWL.LTD.thumb.a (.sdata)
+				libcrypto.TWL.LTD.thumb.a (.sdata)
+				libcht.TWL.LTD.thumb.a (.sdata)
+				libsyscall.a (.sdata)
+				libsyscall.twl.a (.sdata)
+				crt0.FLX.TWL.o (.sdata)
+				libistdmainpthumb.a (.sdata)
+				libisdmainpthumb.a (.sdata)
+				MSL_C_NITRO_T_LE.a (.sdata)
+				MSL_Extras_NITRO_T_LE.a (.sdata)
+				MSL_CPP_NITRO_T_LE.a (.sdata)
+				FP_fastI_v5t_LE.a (.sdata)
+				NITRO_Runtime_T_LE.a (.sdata)
+				librtcex.TWL.LTD.thumb.a (.sdata)
+				libcamera.TWL.LTD.thumb.a (.sdata)
+				libnwm.TWL.LTD.thumb.a (.sdata)
+				libmicex.TWL.LTD.thumb.a (.sdata)
+				libfatfs.TWL.LTD.thumb.a (.sdata)
+				libsndex.TWL.LTD.thumb.a (.sdata)
+				libdsp.TWL.LTD.thumb.a (.sdata)
+				libdsp_g711.TWL.LTD.thumb.a (.sdata)
+				libdsp_graphics.TWL.LTD.thumb.a (.sdata)
+				libaes.TWL.LTD.thumb.a (.sdata)
+				libna.TWL.LTD.thumb.a (.sdata)
+				* (.ltdmain)
+				main.o (.data)
+				launcher.o (.data)
+				sound.o (.data)
+				loadWlanFirm.o (.data)
+				loadSharedFont.o (.data)
+				scanWDS.o (.data)
+				logoDemo.o (.data)
+				logoData.o (.data)
+				misc.o (.data)
+				cmn.o (.data)
+				BGData_Launcher.o (.data)
+				getSysMenuVersion.o (.data)
+				liblcfg.TWL.LTD.thumb.a (.data)
+				libsysmutil.TWL.LTD.thumb.a (.data)
+				libsysmenu.TWL.LTD.thumb.a (.data)
+				libsysmmcu.TWL.LTD.thumb.a (.data)
+				libboot.TWL.LTD.thumb.a (.data)
+				liberrorlog.TWL.LTD.thumb.a (.data)
+				libds.TWL.LTD.thumb.a (.data)
+				libhotsw.TWL.LTD.thumb.a (.data)
+				libdht.TWL.LTD.thumb.a (.data)
+				libreloc_info.TWL.LTD.thumb.a (.data)
+				libnamut.TWL.LTD.thumb.a (.data)
+				libsharedfont_launcher.TWL.LTD.thumb.a (.data)
+				WDS.TWL.LTD.thumb.a (.data)
+				libes.TWL.LTD.thumb.a (.data)
+				libboc.TWL.LTD.thumb.a (.data)
+				libsfs.TWL.LTD.thumb.a (.data)
+				libnam.TWL.LTD.thumb.a (.data)
+				libsea.TWL.LTD.thumb.a (.data)
+				libreboot.TWL.LTD.thumb.a (.data)
+				libnnsfnd.TWL.LTD.thumb.a (.data)
+				libnnsmcs.TWL.LTD.thumb.a (.data)
+				libnnsgfd.TWL.LTD.thumb.a (.data)
+				libnnsg2d.TWL.LTD.thumb.a (.data)
+				libnnsg3d.TWL.LTD.thumb.a (.data)
+				libnnssnd.TWL.LTD.thumb.a (.data)
+				libcard.TWL.LTD.thumb.a (.data)
+				libcp.TWL.LTD.thumb.a (.data)
+				libel.TWL.LTD.thumb.a (.data)
+				libenv.TWL.LTD.thumb.a (.data)
+				libext.TWL.LTD.thumb.a (.data)
+				libfs.TWL.LTD.thumb.a (.data)
+				libfx.TWL.LTD.thumb.a (.data)
+				libgx.TWL.LTD.thumb.a (.data)
+				libmath.TWL.LTD.thumb.a (.data)
+				libmb.TWL.LTD.thumb.a (.data)
+				libmi.TWL.LTD.thumb.a (.data)
+				libnvram.TWL.LTD.thumb.a (.data)
+				libos.TWL.LTD.thumb.a (.data)
+				libprc.TWL.LTD.thumb.a (.data)
+				libpxi.TWL.LTD.thumb.a (.data)
+				librtc.TWL.LTD.thumb.a (.data)
+				libscfg.TWL.LTD.thumb.a (.data)
+				libsnd.TWL.LTD.thumb.a (.data)
+				libspi.TWL.LTD.thumb.a (.data)
+				libstd.TWL.LTD.thumb.a (.data)
+				libwbt.TWL.LTD.thumb.a (.data)
+				libwfs.TWL.LTD.thumb.a (.data)
+				libwm.TWL.LTD.thumb.a (.data)
+				libctrdg.TWL.LTD.thumb.a (.data)
+				libcrypto.TWL.LTD.thumb.a (.data)
+				libcht.TWL.LTD.thumb.a (.data)
+				libsyscall.a (.data)
+				libsyscall.twl.a (.data)
+				crt0.FLX.TWL.o (.data)
+				libistdmainpthumb.a (.data)
+				libisdmainpthumb.a (.data)
+				MSL_C_NITRO_T_LE.a (.data)
+				MSL_Extras_NITRO_T_LE.a (.data)
+				MSL_CPP_NITRO_T_LE.a (.data)
+				FP_fastI_v5t_LE.a (.data)
+				NITRO_Runtime_T_LE.a (.data)
+				librtcex.TWL.LTD.thumb.a (.data)
+				libcamera.TWL.LTD.thumb.a (.data)
+				libnwm.TWL.LTD.thumb.a (.data)
+				libmicex.TWL.LTD.thumb.a (.data)
+				libfatfs.TWL.LTD.thumb.a (.data)
+				libsndex.TWL.LTD.thumb.a (.data)
+				libdsp.TWL.LTD.thumb.a (.data)
+				libdsp_g711.TWL.LTD.thumb.a (.data)
+				libdsp_graphics.TWL.LTD.thumb.a (.data)
+				libaes.TWL.LTD.thumb.a (.data)
+				libna.TWL.LTD.thumb.a (.data)
+				. = ALIGN(4);
+				
+		SDK_LTDOVERLAYTABLE_DIGEST	=.;
+				. = . + 20;
+		SDK_LTDOVERLAYTABLE_DIGEST_END	=.;
+		SDK_OVERLAYTABLE_DIGEST	=.;
+				. = . + 20;
+		SDK_OVERLAYTABLE_DIGEST_END	=.;
+		SDK_OVERLAY_DIGEST		=.;
+				. = . + 0 * 20;
+				. = . + 0 * 20;
+		SDK_OVERLAY_DIGEST_END	=.;
+				#:::::::::: data
+				. = ALIGN(32);
+		SDK_STATIC_DATA_END		=.;
+		SDK_STATIC_END			=.;
+	
+		SDK_STATIC_TEXT_SIZE	= SDK_STATIC_TEXT_END - SDK_STATIC_TEXT_START;
+		SDK_STATIC_DATA_SIZE	= SDK_STATIC_DATA_END - SDK_STATIC_DATA_START;
+		SDK_STATIC_SIZE			= SDK_STATIC_END      - SDK_STATIC_START;
+		__sinit__				= SDK_STATIC_SINIT_START;	# for static initializer
+	
+	} > HNAA
+
+	.HNAA.bss:
+	{
+		ALIGNALL(4);
+		. = ALIGN(32);	# Fit to cache line
+	
+		#
+		#  Definition to refer overlay segment, when same name symbols exist in multiple overlays.
+		#
+	
+		#
+		#  BSS BLOCK
+		#
+		SDK_STATIC_BSS_START	=.;
+				#:::::::::: bss
+				main.o (.sbss)
+				launcher.o (.sbss)
+				sound.o (.sbss)
+				loadWlanFirm.o (.sbss)
+				loadSharedFont.o (.sbss)
+				scanWDS.o (.sbss)
+				logoDemo.o (.sbss)
+				logoData.o (.sbss)
+				misc.o (.sbss)
+				cmn.o (.sbss)
+				BGData_Launcher.o (.sbss)
+				getSysMenuVersion.o (.sbss)
+				liblcfg.TWL.LTD.thumb.a (.sbss)
+				libsysmutil.TWL.LTD.thumb.a (.sbss)
+				libsysmenu.TWL.LTD.thumb.a (.sbss)
+				libsysmmcu.TWL.LTD.thumb.a (.sbss)
+				libboot.TWL.LTD.thumb.a (.sbss)
+				liberrorlog.TWL.LTD.thumb.a (.sbss)
+				libds.TWL.LTD.thumb.a (.sbss)
+				libhotsw.TWL.LTD.thumb.a (.sbss)
+				libdht.TWL.LTD.thumb.a (.sbss)
+				libreloc_info.TWL.LTD.thumb.a (.sbss)
+				libnamut.TWL.LTD.thumb.a (.sbss)
+				libsharedfont_launcher.TWL.LTD.thumb.a (.sbss)
+				WDS.TWL.LTD.thumb.a (.sbss)
+				libes.TWL.LTD.thumb.a (.sbss)
+				libboc.TWL.LTD.thumb.a (.sbss)
+				libsfs.TWL.LTD.thumb.a (.sbss)
+				libnam.TWL.LTD.thumb.a (.sbss)
+				libsea.TWL.LTD.thumb.a (.sbss)
+				libreboot.TWL.LTD.thumb.a (.sbss)
+				libnnsfnd.TWL.LTD.thumb.a (.sbss)
+				libnnsmcs.TWL.LTD.thumb.a (.sbss)
+				libnnsgfd.TWL.LTD.thumb.a (.sbss)
+				libnnsg2d.TWL.LTD.thumb.a (.sbss)
+				libnnsg3d.TWL.LTD.thumb.a (.sbss)
+				libnnssnd.TWL.LTD.thumb.a (.sbss)
+				libcard.TWL.LTD.thumb.a (.sbss)
+				libcp.TWL.LTD.thumb.a (.sbss)
+				libel.TWL.LTD.thumb.a (.sbss)
+				libenv.TWL.LTD.thumb.a (.sbss)
+				libext.TWL.LTD.thumb.a (.sbss)
+				libfs.TWL.LTD.thumb.a (.sbss)
+				libfx.TWL.LTD.thumb.a (.sbss)
+				libgx.TWL.LTD.thumb.a (.sbss)
+				libmath.TWL.LTD.thumb.a (.sbss)
+				libmb.TWL.LTD.thumb.a (.sbss)
+				libmi.TWL.LTD.thumb.a (.sbss)
+				libnvram.TWL.LTD.thumb.a (.sbss)
+				libos.TWL.LTD.thumb.a (.sbss)
+				libprc.TWL.LTD.thumb.a (.sbss)
+				libpxi.TWL.LTD.thumb.a (.sbss)
+				librtc.TWL.LTD.thumb.a (.sbss)
+				libscfg.TWL.LTD.thumb.a (.sbss)
+				libsnd.TWL.LTD.thumb.a (.sbss)
+				libspi.TWL.LTD.thumb.a (.sbss)
+				libstd.TWL.LTD.thumb.a (.sbss)
+				libwbt.TWL.LTD.thumb.a (.sbss)
+				libwfs.TWL.LTD.thumb.a (.sbss)
+				libwm.TWL.LTD.thumb.a (.sbss)
+				libctrdg.TWL.LTD.thumb.a (.sbss)
+				libcrypto.TWL.LTD.thumb.a (.sbss)
+				libcht.TWL.LTD.thumb.a (.sbss)
+				libsyscall.a (.sbss)
+				libsyscall.twl.a (.sbss)
+				crt0.FLX.TWL.o (.sbss)
+				libistdmainpthumb.a (.sbss)
+				libisdmainpthumb.a (.sbss)
+				MSL_C_NITRO_T_LE.a (.sbss)
+				MSL_Extras_NITRO_T_LE.a (.sbss)
+				MSL_CPP_NITRO_T_LE.a (.sbss)
+				FP_fastI_v5t_LE.a (.sbss)
+				NITRO_Runtime_T_LE.a (.sbss)
+				librtcex.TWL.LTD.thumb.a (.sbss)
+				libcamera.TWL.LTD.thumb.a (.sbss)
+				libnwm.TWL.LTD.thumb.a (.sbss)
+				libmicex.TWL.LTD.thumb.a (.sbss)
+				libfatfs.TWL.LTD.thumb.a (.sbss)
+				libsndex.TWL.LTD.thumb.a (.sbss)
+				libdsp.TWL.LTD.thumb.a (.sbss)
+				libdsp_g711.TWL.LTD.thumb.a (.sbss)
+				libdsp_graphics.TWL.LTD.thumb.a (.sbss)
+				libaes.TWL.LTD.thumb.a (.sbss)
+				libna.TWL.LTD.thumb.a (.sbss)
+				* (.ltdmain.bss)
+				main.o (.bss)
+				launcher.o (.bss)
+				sound.o (.bss)
+				loadWlanFirm.o (.bss)
+				loadSharedFont.o (.bss)
+				scanWDS.o (.bss)
+				logoDemo.o (.bss)
+				logoData.o (.bss)
+				misc.o (.bss)
+				cmn.o (.bss)
+				BGData_Launcher.o (.bss)
+				getSysMenuVersion.o (.bss)
+				liblcfg.TWL.LTD.thumb.a (.bss)
+				libsysmutil.TWL.LTD.thumb.a (.bss)
+				libsysmenu.TWL.LTD.thumb.a (.bss)
+				libsysmmcu.TWL.LTD.thumb.a (.bss)
+				libboot.TWL.LTD.thumb.a (.bss)
+				liberrorlog.TWL.LTD.thumb.a (.bss)
+				libds.TWL.LTD.thumb.a (.bss)
+				libhotsw.TWL.LTD.thumb.a (.bss)
+				libdht.TWL.LTD.thumb.a (.bss)
+				libreloc_info.TWL.LTD.thumb.a (.bss)
+				libnamut.TWL.LTD.thumb.a (.bss)
+				libsharedfont_launcher.TWL.LTD.thumb.a (.bss)
+				WDS.TWL.LTD.thumb.a (.bss)
+				libes.TWL.LTD.thumb.a (.bss)
+				libboc.TWL.LTD.thumb.a (.bss)
+				libsfs.TWL.LTD.thumb.a (.bss)
+				libnam.TWL.LTD.thumb.a (.bss)
+				libsea.TWL.LTD.thumb.a (.bss)
+				libreboot.TWL.LTD.thumb.a (.bss)
+				libnnsfnd.TWL.LTD.thumb.a (.bss)
+				libnnsmcs.TWL.LTD.thumb.a (.bss)
+				libnnsgfd.TWL.LTD.thumb.a (.bss)
+				libnnsg2d.TWL.LTD.thumb.a (.bss)
+				libnnsg3d.TWL.LTD.thumb.a (.bss)
+				libnnssnd.TWL.LTD.thumb.a (.bss)
+				libcard.TWL.LTD.thumb.a (.bss)
+				libcp.TWL.LTD.thumb.a (.bss)
+				libel.TWL.LTD.thumb.a (.bss)
+				libenv.TWL.LTD.thumb.a (.bss)
+				libext.TWL.LTD.thumb.a (.bss)
+				libfs.TWL.LTD.thumb.a (.bss)
+				libfx.TWL.LTD.thumb.a (.bss)
+				libgx.TWL.LTD.thumb.a (.bss)
+				libmath.TWL.LTD.thumb.a (.bss)
+				libmb.TWL.LTD.thumb.a (.bss)
+				libmi.TWL.LTD.thumb.a (.bss)
+				libnvram.TWL.LTD.thumb.a (.bss)
+				libos.TWL.LTD.thumb.a (.bss)
+				libprc.TWL.LTD.thumb.a (.bss)
+				libpxi.TWL.LTD.thumb.a (.bss)
+				librtc.TWL.LTD.thumb.a (.bss)
+				libscfg.TWL.LTD.thumb.a (.bss)
+				libsnd.TWL.LTD.thumb.a (.bss)
+				libspi.TWL.LTD.thumb.a (.bss)
+				libstd.TWL.LTD.thumb.a (.bss)
+				libwbt.TWL.LTD.thumb.a (.bss)
+				libwfs.TWL.LTD.thumb.a (.bss)
+				libwm.TWL.LTD.thumb.a (.bss)
+				libctrdg.TWL.LTD.thumb.a (.bss)
+				libcrypto.TWL.LTD.thumb.a (.bss)
+				libcht.TWL.LTD.thumb.a (.bss)
+				libsyscall.a (.bss)
+				libsyscall.twl.a (.bss)
+				crt0.FLX.TWL.o (.bss)
+				libistdmainpthumb.a (.bss)
+				libisdmainpthumb.a (.bss)
+				MSL_C_NITRO_T_LE.a (.bss)
+				MSL_Extras_NITRO_T_LE.a (.bss)
+				MSL_CPP_NITRO_T_LE.a (.bss)
+				FP_fastI_v5t_LE.a (.bss)
+				NITRO_Runtime_T_LE.a (.bss)
+				librtcex.TWL.LTD.thumb.a (.bss)
+				libcamera.TWL.LTD.thumb.a (.bss)
+				libnwm.TWL.LTD.thumb.a (.bss)
+				libmicex.TWL.LTD.thumb.a (.bss)
+				libfatfs.TWL.LTD.thumb.a (.bss)
+				libsndex.TWL.LTD.thumb.a (.bss)
+				libdsp.TWL.LTD.thumb.a (.bss)
+				libdsp_g711.TWL.LTD.thumb.a (.bss)
+				libdsp_graphics.TWL.LTD.thumb.a (.bss)
+				libaes.TWL.LTD.thumb.a (.bss)
+				libna.TWL.LTD.thumb.a (.bss)
+				#:::::::::: bss
+		. = ALIGN(32);
+		SDK_STATIC_BSS_END		= .;
+	
+		SDK_STATIC_BSS_SIZE		= SDK_STATIC_BSS_END - SDK_STATIC_BSS_START;
+
+	} >> HNAA
+	
+	
+	############################ AUTOLOADS ##############################
+	SDK_AUTOLOAD.ITCM.START			= 0x01ff8000;
+	SDK_AUTOLOAD.ITCM.END			= SDK_AUTOLOAD.ITCM.START;
+	SDK_AUTOLOAD.ITCM.BSS_END		= SDK_AUTOLOAD.ITCM.START;
+	SDK_AUTOLOAD.ITCM.SIZE			= 0;
+	SDK_AUTOLOAD.ITCM.BSS_SIZE		= 0;
+	SDK_AUTOLOAD.DTCM.START			= 0x02fe0000;
+	SDK_AUTOLOAD.DTCM.END			= SDK_AUTOLOAD.DTCM.START;
+	SDK_AUTOLOAD.DTCM.BSS_END		= SDK_AUTOLOAD.DTCM.START;
+	SDK_AUTOLOAD.DTCM.SIZE			= 0;
+	SDK_AUTOLOAD.DTCM.BSS_SIZE		= 0;
+	SDK_AUTOLOAD_START				= SDK_STATIC_END;
+	SDK_AUTOLOAD_SIZE				= 0;
+	SDK_AUTOLOAD_NUMBER				= 2;
+
+	.ITCM:
+	{
+		ALIGNALL(4);
+		. = ALIGN(32);
+
+		#
+		#  Definition to refer overlay segment, when same name symbols exist in multiple overlays.
+		#
+	
+		#
+		#   TEXT BLOCK: READ ONLY
+		#
+		SDK_AUTOLOAD_ITCM_ID		=0;
+		SDK_AUTOLOAD.ITCM.ID		=0;
+		SDK_AUTOLOAD.ITCM.START	=.;
+		SDK_AUTOLOAD.ITCM.TEXT_START	=.;
+				#:::::::::: text/rodata
+		. = ALIGN(4);
+		SDK_AUTOLOAD.ITCM.SINIT_START	= .;
+				#:::::::::: ctor
+				WRITEW 0;
+				#:::::::::: ctor
+		SDK_AUTOLOAD.ITCM.SINIT_END	= .;
+				#:::::::::: text/rodata
+		SDK_AUTOLOAD.ITCM.TEXT_END	=.;
+	
+		#
+		#  DATA BLOCK: READ WRITE BLOCK
+		#
+		. = ALIGN(32);
+		SDK_AUTOLOAD.ITCM.DATA_START	=.;
+				#:::::::::: data
+				* (.itcm)
+				#:::::::::: data
+		SDK_AUTOLOAD.ITCM.DATA_END	=.;
+		. = ALIGN(32);
+		SDK_AUTOLOAD.ITCM.END	=.;
+	
+		SDK_AUTOLOAD.ITCM.TEXT_SIZE	= SDK_AUTOLOAD.ITCM.TEXT_END - SDK_AUTOLOAD.ITCM.TEXT_START;
+		SDK_AUTOLOAD.ITCM.DATA_SIZE	= SDK_AUTOLOAD.ITCM.DATA_END - SDK_AUTOLOAD.ITCM.DATA_START;
+		SDK_AUTOLOAD.ITCM.SIZE		= SDK_AUTOLOAD.ITCM.END      - SDK_AUTOLOAD.ITCM.START;
+		SDK_AUTOLOAD_SIZE			= SDK_AUTOLOAD_SIZE + SDK_AUTOLOAD.ITCM.SIZE;
+	
+	} > ITCM
+
+	.ITCM.bss:
+	{
+		ALIGNALL(4);
+		. = ALIGN(32);
+	
+		#
+		#  Definition to refer overlay segment, when same name symbols exist in multiple overlays.
+		#
+	
+		#
+		#  BSS BLOCK
+		#
+		SDK_AUTOLOAD.ITCM.BSS_START	= .;
+				#:::::::::: bss
+				* (.itcm.bss)
+				#:::::::::: bss
+		. = ALIGN(32);
+		SDK_AUTOLOAD.ITCM.BSS_END	= .;
+	
+		SDK_AUTOLOAD.ITCM.BSS_SIZE	= SDK_AUTOLOAD.ITCM.BSS_END - SDK_AUTOLOAD.ITCM.BSS_START;
+	
+	} >> ITCM
+
+	.DTCM:
+	{
+		ALIGNALL(4);
+		. = ALIGN(32);
+
+		#
+		#  Definition to refer overlay segment, when same name symbols exist in multiple overlays.
+		#
+	
+		#
+		#   TEXT BLOCK: READ ONLY
+		#
+		SDK_AUTOLOAD_DTCM_ID		=0;
+		SDK_AUTOLOAD.DTCM.ID		=0;
+		SDK_AUTOLOAD.DTCM.START	=.;
+		SDK_AUTOLOAD.DTCM.TEXT_START	=.;
+				#:::::::::: text/rodata
+		. = ALIGN(4);
+		SDK_AUTOLOAD.DTCM.SINIT_START	= .;
+				#:::::::::: ctor
+				WRITEW 0;
+				#:::::::::: ctor
+		SDK_AUTOLOAD.DTCM.SINIT_END	= .;
+				#:::::::::: text/rodata
+		SDK_AUTOLOAD.DTCM.TEXT_END	=.;
+	
+		#
+		#  DATA BLOCK: READ WRITE BLOCK
+		#
+		. = ALIGN(32);
+		SDK_AUTOLOAD.DTCM.DATA_START	=.;
+				#:::::::::: data
+				* (.dtcm)
+				#:::::::::: data
+		SDK_AUTOLOAD.DTCM.DATA_END	=.;
+		. = ALIGN(32);
+		SDK_AUTOLOAD.DTCM.END	=.;
+	
+		SDK_AUTOLOAD.DTCM.TEXT_SIZE	= SDK_AUTOLOAD.DTCM.TEXT_END - SDK_AUTOLOAD.DTCM.TEXT_START;
+		SDK_AUTOLOAD.DTCM.DATA_SIZE	= SDK_AUTOLOAD.DTCM.DATA_END - SDK_AUTOLOAD.DTCM.DATA_START;
+		SDK_AUTOLOAD.DTCM.SIZE		= SDK_AUTOLOAD.DTCM.END      - SDK_AUTOLOAD.DTCM.START;
+		SDK_AUTOLOAD_SIZE			= SDK_AUTOLOAD_SIZE + SDK_AUTOLOAD.DTCM.SIZE;
+	
+	} > DTCM
+
+	.DTCM.bss:
+	{
+		ALIGNALL(4);
+		. = ALIGN(32);
+	
+		#
+		#  Definition to refer overlay segment, when same name symbols exist in multiple overlays.
+		#
+	
+		#
+		#  BSS BLOCK
+		#
+		SDK_AUTOLOAD.DTCM.BSS_START	= .;
+				#:::::::::: bss
+				* (.dtcm.bss)
+				#:::::::::: bss
+		. = ALIGN(32);
+		SDK_AUTOLOAD.DTCM.BSS_END	= .;
+	
+		SDK_AUTOLOAD.DTCM.BSS_SIZE	= SDK_AUTOLOAD.DTCM.BSS_END - SDK_AUTOLOAD.DTCM.BSS_START;
+	
+	} >> DTCM
+
+
+	SDK_AUTOLOAD_ITCM_START			= SDK_AUTOLOAD.ITCM.START;
+	SDK_AUTOLOAD_ITCM_END			= SDK_AUTOLOAD.ITCM.END;
+	SDK_AUTOLOAD_ITCM_BSS_END		= SDK_AUTOLOAD.ITCM.BSS_END;
+	SDK_AUTOLOAD_ITCM_SIZE			= SDK_AUTOLOAD.ITCM.SIZE;
+	SDK_AUTOLOAD_ITCM_BSS_SIZE		= SDK_AUTOLOAD.ITCM.BSS_SIZE;
+	SDK_AUTOLOAD_DTCM_START			= SDK_AUTOLOAD.DTCM.START;
+	SDK_AUTOLOAD_DTCM_END			= SDK_AUTOLOAD.DTCM.END;
+	SDK_AUTOLOAD_DTCM_BSS_END		= SDK_AUTOLOAD.DTCM.BSS_END;
+	SDK_AUTOLOAD_DTCM_SIZE			= SDK_AUTOLOAD.DTCM.SIZE;
+	SDK_AUTOLOAD_DTCM_BSS_SIZE		= SDK_AUTOLOAD.DTCM.BSS_SIZE;
+
+	############################ AUTOLOAD_INFO ##########################
+	.binary.AUTOLOAD_INFO:
+	{
+				WRITEW ADDR(.ITCM);
+				WRITEW SDK_AUTOLOAD.ITCM.SIZE;
+				WRITEW SDK_AUTOLOAD.ITCM.SINIT_START;
+				WRITEW SDK_AUTOLOAD.ITCM.BSS_SIZE;
+				WRITEW ADDR(.DTCM);
+				WRITEW SDK_AUTOLOAD.DTCM.SIZE;
+				WRITEW SDK_AUTOLOAD.DTCM.SINIT_START;
+				WRITEW SDK_AUTOLOAD.DTCM.BSS_SIZE;
+	
+	} > binary.AUTOLOAD_INFO
+	
+	SDK_AUTOLOAD_LIST		= SDK_AUTOLOAD_START + SDK_AUTOLOAD_SIZE;
+	SDK_AUTOLOAD_LIST_END	= SDK_AUTOLOAD_START + SDK_AUTOLOAD_SIZE + SIZEOF(.binary.AUTOLOAD_INFO);
+	SDK_AUTOLOAD_SIZE		= SDK_AUTOLOAD_SIZE  + SIZEOF(.binary.AUTOLOAD_INFO);
+
+	############################ STATIC_FOOTER ##########################
+	.binary.STATIC_FOOTER:
+	{
+		WRITEW 0xdec00621;		# LE(0x2106C0DE) = NITRO CODE
+		WRITEW _start_ModuleParams - ADDR(.HNAA);
+		WRITEW SDK_OVERLAY_DIGEST  - ADDR(.HNAA);
+		WRITEW _start_LtdModuleParams - ADDR(.HNAA);
+	} > binary.STATIC_FOOTER
+
+	############################ OVERLAYS ###############################
+	SDK_OVERLAY_NUMBER			= 0;
+
+
+	############################ OVERLAYDEFS ############################
+	.HNAA_defsF:
+	{
+		###  HNAA module information 
+				WRITEW ADDR(.HNAA);				# load address
+				WRITEW _start;								# entry address
+				WRITEW SDK_STATIC_SIZE + SDK_AUTOLOAD_SIZE;	# size of module
+				WRITEW _start_AutoloadDoneCallback;			# callback autoload done
+		
+		###  overlay filename 
+	
+	} > HNAA_defsF
+
+	############################ OVERLAYTABLE ###########################
+	.HNAA_tableF:
+	{
+	
+	} > HNAA_tableF
+
+	############################ ARENA ##################################
+	.dummy.MAIN_EX.NITRO:
+	{
+		. = ALIGN(32);
+	
+	} > dummy.MAIN_EX.NITRO
+	
+	.arena.MAIN.NITRO:
+	{
+		. = ALIGN(32);
+		SDK_SECTION_ARENA_START		=.;
+	
+	} > arena.MAIN.NITRO
+	
+	.arena.MAIN_EX.NITRO:
+	{
+		. = ALIGN(32);
+		SDK_SECTION_ARENA_EX_START	=.;
+	
+	} > arena.MAIN_EX.NITRO
+	
+	.arena.ITCM:
+	{
+		. = ALIGN(32);
+		SDK_SECTION_ARENA_ITCM_START	=.;
+	
+	} > arena.ITCM
+	
+	.arena.DTCM:
+	{
+		. = ALIGN(32);
+		SDK_SECTION_ARENA_DTCM_START	=.;
+	
+	} > arena.DTCM
+
+	############################ OTHERS #################################
+	SDK_MAIN_ARENA_LO = SDK_SECTION_ARENA_START;
+	SDK_IRQ_STACKSIZE = 2048;	# allocated in DTCM
+	SDK_SYS_STACKSIZE = 0;		# when 0 means all remains of DTCM
+	SDK_SYS_STACKSIZE_SIGN = (SDK_SYS_STACKSIZE < 0x80000000) * 2 - 1;
+
+	.check.ITCM:
+	{
+		. = . + SDK_AUTOLOAD_ITCM_SIZE + SDK_AUTOLOAD_ITCM_BSS_SIZE;
+	
+	} > check.ITCM
+
+	.check.DTCM:
+	{
+		. = . + SDK_AUTOLOAD_DTCM_SIZE + SDK_AUTOLOAD_DTCM_BSS_SIZE;
+		. = . + 0x080 + SDK_IRQ_STACKSIZE + SDK_SYS_STACKSIZE * SDK_SYS_STACKSIZE_SIGN;
+	} > check.DTCM
+
+	.check.MAIN.NITRO:
+	{
+		. = SDK_SECTION_ARENA_START;
+	
+	} > check.MAIN.NITRO
+
+	########################### LTDAUTOLOADS ############################
+	SDK_LTDAUTOLOAD.LTDMAIN.START		= SDK_STATIC_BSS_END;
+	SDK_LTDAUTOLOAD.LTDMAIN.END			= SDK_LTDAUTOLOAD.LTDMAIN.START;
+	SDK_LTDAUTOLOAD.LTDMAIN.BSS_END		= SDK_LTDAUTOLOAD.LTDMAIN.START;
+	SDK_LTDAUTOLOAD.LTDMAIN.SIZE		= 0;
+	SDK_LTDAUTOLOAD.LTDMAIN.BSS_SIZE	= 0;
+	SDK_LTDAUTOLOAD_TOP_START			= 0x02400000;
+	SDK_LTDAUTOLOAD_TOP_SIZE			= 4;	# STATIC 領域が無い代わりに 4 bytes のダミーがバイナリファイルの先頭に入る #
+	SDK_LTDAUTOLOAD_START				= SDK_LTDAUTOLOAD_TOP_START + SDK_LTDAUTOLOAD_TOP_SIZE;
+	SDK_LTDAUTOLOAD_SIZE				= 0;
+	SDK_LTDAUTOLOAD_NUMBER				= 0;
+
+	.binary.LTDAUTOLOAD_TOP:
+	{
+				WRITEW 0;
+	
+	} > binary.LTDAUTOLOAD_TOP
+
+
+	SDK_LTDAUTOLOAD_LTDMAIN_START		= SDK_LTDAUTOLOAD.LTDMAIN.START;
+	SDK_LTDAUTOLOAD_LTDMAIN_END			= SDK_LTDAUTOLOAD.LTDMAIN.END;
+	SDK_LTDAUTOLOAD_LTDMAIN_BSS_END		= SDK_LTDAUTOLOAD.LTDMAIN.BSS_END;
+	SDK_LTDAUTOLOAD_LTDMAIN_SIZE		= SDK_LTDAUTOLOAD.LTDMAIN.SIZE;
+	SDK_LTDAUTOLOAD_LTDMAIN_BSS_SIZE	= SDK_LTDAUTOLOAD.LTDMAIN.BSS_SIZE;
+
+	######################### LTDAUTOLOAD_INFO ##########################
+	.binary.LTDAUTOLOAD_INFO:
+	{
+	
+	} > binary.LTDAUTOLOAD_INFO
+
+	SDK_LTDAUTOLOAD_LIST		= SDK_LTDAUTOLOAD_START + SDK_LTDAUTOLOAD_SIZE;
+	SDK_LTDAUTOLOAD_LIST_END	= SDK_LTDAUTOLOAD_LIST + SIZEOF(.binary.LTDAUTOLOAD_INFO);
+	SDK_LTDAUTOLOAD_SIZE		= SDK_LTDAUTOLOAD_SIZE + SIZEOF(.binary.LTDAUTOLOAD_INFO);
+
+	########################### LTDOVERLAYS #############################
+	SDK_LTDOVERLAY_NUMBER			= 0;
+
+
+	########################## LTDOVERLAYDEFS ###########################
+	.HNAA_defsL:
+	{
+		###  TWL limited extended static module information
+				WRITEW SDK_LTDAUTOLOAD_TOP_START;						# load address
+				WRITEW 0;												# padding
+				WRITEW SDK_LTDAUTOLOAD_SIZE + SDK_LTDAUTOLOAD_TOP_SIZE;	# size of module
+				WRITEW 0;												# padding
+		
+		###  TWL limited overlay filename
+	
+	} > HNAA_defsL
+
+	######################### LTDOVERLAYTABLE ###########################
+	.HNAA_tableL:
+	{
+	
+	} > HNAA_tableL
+
+	############################ ARENA ##################################
+	.dummy.MAIN_EX.TWL:
+	{
+		. = ALIGN(32);
+	
+	} > dummy.MAIN_EX.TWL
+
+	.arena.MAIN.TWL:
+	{
+		. = ALIGN(32);
+		SDK_LTDMAIN_ARENA_LO	=.;
+	
+	} > arena.MAIN.TWL
+
+	.arena.MAIN_EX.TWL:
+	{
+		. = ALIGN(32);
+		SDK_LTDMAIN_EX_ARENA_LO	=.;
+	
+	} > arena.MAIN_EX.TWL
+
+	.check.MAIN.TWL:
+	{
+		. = SDK_LTDMAIN_ARENA_LO;
+	
+	} > check.MAIN.TWL
+
+	############################ OTHERS #################################
+	# Module filelist
+	.binary.MODULE_FILES:
+	{
+		WRITES ("HNAA.TWL.FLX.sbin");
+		WRITES ("HNAA_defs.TWL.FLX.sbin");
+		WRITES ("HNAA_table.TWL.FLX.sbin");
+		WRITES ("HNAA.TWL.LTD.sbin");
+		WRITES ("HNAA_defs.TWL.LTD.sbin");
+		WRITES ("HNAA_table.TWL.LTD.sbin");
+	
+	} > binary.MODULE_FILES
+
+}

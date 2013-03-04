@@ -1,0 +1,22 @@
+#TLF --- TWLROM List File
+T,"d:/Nitro_CwProjects/TWL_IPL_RED_cust/twlipl/build/systemMenu_RED/MachineSettings/ARM9"
+V,1.1
+H,"./bin/ARM9-TS.LTD.thumb/Release/HNBA.TWL.FLX_header.sbin","./bin/ARM9-TS.LTD.thumb/Release/HNBA.TWL.FLX_files.sbin",1
+9,"./bin/ARM9-TS.LTD.thumb/Release/HNBA.tef","./bin/ARM9-TS.LTD.thumb/Release/HNBA.TWL.FLX.sbin_LZ","*","./bin/ARM9-TS.LTD.thumb/Release/HNBA_defs.TWL.FLX.sbin_LZ","*"
+7,"d:/Nitro_CwProjects/TWL_IPL_RED_cust/twlsdk/components/armadillo_SYSMENU/ARM7-TS.LTD/Release/armadillo_SYSMENU.tef","d:/Nitro_CwProjects/TWL_IPL_RED_cust/twlsdk/components/armadillo_SYSMENU/ARM7-TS.LTD/Release/armadillo_SYSMENU.TWL.FLX.sbin","*","d:/Nitro_CwProjects/TWL_IPL_RED_cust/twlsdk/components/armadillo_SYSMENU/ARM7-TS.LTD/Release/armadillo_SYSMENU_defs.TWL.FLX.sbin","*"
+
+# File Images
+F,00000000,00004000,ff,ffff,ffff,"bin/ARM9-TS.LTD.thumb/Release/HNBA.TWL.FLX_header.sbin","*",51344287,1024,1
+F,00004000,00041520,ff,ffff,0008,"bin/ARM9-TS.LTD.thumb/Release/HNBA.TWL.FLX.sbin_LZ","*",51344287,1024,1
+F,00041800,00041c6c,ff,ffff,000c,"d:/Nitro_CwProjects/TWL_IPL_RED_cust/twlsdk/components/armadillo_SYSMENU/ARM7-TS.LTD/Release/armadillo_SYSMENU.TWL.FLX.sbin","*",51087d7c,1024,1
+F,00042000,0004202d,ff,ffff,0010,"bin/ARM9-TS.LTD.thumb/Release/HNBA.TWL.FLX_files.sbin","*",51344287,1024,1
+F,00042400,00042408,ff,ffff,0012,"*FILEALLOC","*",00000000,1024,1
+F,00042800,00044bc0,ff,ffff,001a,"../banner/banner.bnr","*",5114b134,1024,1
+F,00044c00,0005eeac,ff,0000,ffff,"../../data/NTR_IPL_font_m.NFTR","/data/NTR_IPL_font_m.NFTR",4726fa77,1024,0
+P,0005f000,000630ec,ff
+P,000630ec,00063100,00
+P,00063100,00063600,ff
+F,00063800,0006ced4,ff,ffff,0070,"bin/ARM9-TS.LTD.thumb/Release/HNBA.TWL.LTD.sbin_LZ","*",51344287,1024,1
+F,0006d000,000d8048,ff,ffff,0074,"d:/Nitro_CwProjects/TWL_IPL_RED_cust/twlsdk/components/armadillo_SYSMENU/ARM7-TS.LTD/Release/armadillo_SYSMENU.TWL.LTD.sbin","*",51087d7c,1024,1
+P,000d8048,000d8400,ff
+#

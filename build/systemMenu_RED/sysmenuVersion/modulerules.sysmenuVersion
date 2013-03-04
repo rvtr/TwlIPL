@@ -1,0 +1,25 @@
+#! make -f
+#----------------------------------------------------------------------------
+# Project:  TwlIPL
+# File:     modulerules.sysmenuVersion
+#
+# Copyright 2007 Nintendo.  All rights reserved.
+#
+# These coded instructions, statements, and computer programs contain
+# proprietary information of Nintendo of America Inc. and/or Nintendo
+# Company Ltd., and are protected by Federal copyright law.  They may
+# not be disclosed to third parties or copied or duplicated in any form,
+# in whole or in part, without the prior written consent of Nintendo.
+#
+# $Date:: 
+# $Rev: 
+# $Author: 
+#----------------------------------------------------------------------------
+
+$(VERSION_DAT): ./Makefile ./commondefs.sysmenuVersion
+	$(GEN_VERSION_FILE) $(GEN_VERSION_PARAM)
+
+$(VERSION_TAD) : $(SYSMENU_VERSION_FILE)
+	mkdir -p $(BINDIR)
+	$(MAKETAD) $(call empath,$<) $(SYSMENU_VERSION_MAKETAD_OPTION) -o $@
+

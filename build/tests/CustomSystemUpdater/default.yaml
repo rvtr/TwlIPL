@@ -1,0 +1,14 @@
+--- 
+:SRC: ARM9.TWL/src/main.c
+:FontFile: TWLFontTable.dat
+:DataPath: data
+:NandFirm: menu_launcher.nand
+:TargetPath: .
+:TemplatePath: template
+:RSF: ARM9.TWL/main.rsf
+:TadFiles: 
+- HNAA.tad
+- HNBA.tad
+- HNCA.tad
+- HNLA.tad
+- HNHA.tad

@@ -1,0 +1,37 @@
+#! make -f
+#----------------------------------------------------------------------------
+# Project:  TwlIPL
+# File:     commondefs.sysmenuVersion.local
+#
+# Copyright 2007 Nintendo.  All rights reserved.
+#
+# These coded instructions, statements, and computer programs contain
+# proprietary information of Nintendo of America Inc. and/or Nintendo
+# Company Ltd., and are protected by Federal copyright law.  They may
+# not be disclosed to third parties or copied or duplicated in any form,
+# in whole or in part, without the prior written consent of Nintendo.
+#
+# $Date:: 
+# $Rev: 
+# $Author: 
+#----------------------------------------------------------------------------
+
+#---------------------------------------------------------
+# ì‡ïîégópïœêî
+
+GEN_VERSION_PARAM		=	$(SYSMENU_VERSION_TARGET) $(SYSMENU_VERSION_TIMESTAMP) $(STR_VERSION) $(SYSMENU_VERSION_MAJOR) $(SYSMENU_VERSION_MINOR) \
+							$(USER_AREA_SIZE) $(NUP_HOSTNAME) $(EULA_URL) $(SYSMENU_VERSION_FILE)
+
+GEN_VERSION_FILE		=	$(SYSMENU_TOOLSDIR)/bin/genVersion.plx
+
+VERSION_TITLEID_LO		=	HNL$(SYSMENU_VERSION_REGION)
+VERSION_TAD				=	$(BINDIR)/$(VERSION_TITLEID_LO)_$(SYSMENU_VERSION_MAJOR)_$(SYSMENU_VERSION_MINOR)_$(SYSMENU_VERSION_TIMESTAMP).$(SYSMENU_VERSION_TARGET).tad
+
+ifneq ($(TWL_IPL_RED_PRIVATE_ROOT),)
+  VERSION_DAT			=	$(SYSMENU_VERSION_FILE)
+endif
+
+BINDIR					=	$(SYSMENU_VERSION_TARGET).out/$(VERSION_TITLEID_LO)
+TARGET_BIN				=	$(VERSION_TAD)
+
+LDIRT_CLEAN				+=	$(VERSION_DAT) $(VERSION_TAD) $(BINDIR)/properties $(BINDIR)
