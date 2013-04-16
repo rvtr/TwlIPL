@@ -55,7 +55,7 @@ $(MY_TAD): $(MY_DATA2)
 $(MY_DATA2): $(MY_DATA) $(MY_DATA_EX) $(MY_DATA_ADHOC) $(MY_APPEND)
 	cat $(MY_DATA) $(MY_DATA_EX) $(MY_DATA_ADHOC) $(MY_APPEND) > $@
 	# for CTR
-	dd if=$@ of=$(MY_PADDED_DATA) bs=320k conv=sync
+	dd if=$@ of=$(MY_PADDED_DATA) bs=368k conv=sync
 
 $(MY_APPEND)::
 	@if test -e $(SYSMENU_ROOT)/.svn; then \
