@@ -455,6 +455,12 @@ BOOL ProcessTitleHashCheck( void )
 		OS_Panic("NAM_GetNumTitles() failed.");
 	}
 
+    // アプリの数が 300 を過ぎていたらエラーにする
+    if ( gNandAppNum >= TITLE_NUM_PAGE )
+    {
+        OS_Panic("NAM_GetNumTitles() failed.");
+    }
+    
    	// 情報の取得
 	if ( !GetDataStruct(gDataList) )
 	{
