@@ -1,9 +1,0 @@
-TestMakerで
-
-make boottest
-make
-
-したあと、このディレクトリが作業ディレクトリになっている状態でrombreak.batを実行。
-（要するにexplorerからダブルクリックでOK）
-
-これでbraek_devおよびbreak_prodの中にsrlとtadまでが完成。
